@@ -65,8 +65,8 @@ public:
     typedef QList<Intercept> Intercepts;
 
 public:
-    WallEdge(Line::Side &lineSide, int section, coord_t lineOffset,
-             Vertex &lineVertex, int edge);
+    WallEdge(Line::Side &lineSide, int section, int edge,
+             coord_t lineOffset, Vertex &lineVertex);
 
     WallEdge(HEdge &hedge, int section, int edge);
 

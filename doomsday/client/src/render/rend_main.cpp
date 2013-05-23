@@ -1264,11 +1264,16 @@ static void wallSectionLightLevelDeltas(WallEdge const &leftEdge, WallEdge const
         return;
     }
 
-    leftDelta  = calcLightLevelDelta(leftEdge.normal());
-    rightDelta = calcLightLevelDelta(rightEdge.normal());
+    leftDelta = calcLightLevelDelta(leftEdge.normal());
 
-    if(!de::fequal(leftDelta, rightDelta))
+    if(leftEdge.normal() == rightEdge.normal())
     {
+        rightDelta = leftDelta;
+    }
+    else
+    {
+        rightDelta = calcLightLevelDelta(rightEdge.normal());
+
         // Linearly interpolate to find the light level delta values for the
         // vertical edges of this wall section.
         coord_t const lineLength = side.line().length();

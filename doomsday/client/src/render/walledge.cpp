@@ -103,6 +103,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
           lineVertex    (other.lineVertex),
           isValid       (other.isValid),
           materialOrigin(other.materialOrigin),
+          edgeNormal    (other.edgeNormal),
           hplane        (other.hplane)
     {}
 
@@ -322,8 +323,8 @@ private:
     Instance &operator = (Instance const &); // no assignment
 };
 
-WallEdge::WallEdge(Line::Side &lineSide, int section, coord_t lineOffset,
-    Vertex &lineVertex, int edge)
+WallEdge::WallEdge(Line::Side &lineSide, int section, int edge,
+                   coord_t lineOffset, Vertex &lineVertex)
     : d(new Instance(this, &lineSide, section, edge, lineOffset, &lineVertex))
 {
     DENG_ASSERT(lineSide.hasSections());
@@ -431,12 +432,13 @@ static bool shouldSmoothNormals(Surface &sufA, Surface &sufB, binangle_t angleDi
 }
 
 /**
- * Find the neighbor side for the specified edge which we will use to calculate
- * the edge normal.
+ * Find the neighbor surface for the specified edge which we will use to calculate
+ * the smoothed edge normal.
  *
  * @todo: Use the half-edge rings instead of LineOwners.
  */
-static Line::Side *findSideBlendNeighbor(Line::Side const &side, int edge, binangle_t *diff = 0)
+static Surface *findBlendNeighbor(Line::Side const &side, int section, int edge,
+                                  binangle_t *diff = 0)
 {
     // Is smoothing disabled?
     if(!rendLightWallAngleSmooth)
@@ -471,7 +473,9 @@ static Line::Side *findSideBlendNeighbor(Line::Side const &side, int edge, binan
         otherSide = &neighbor->back();
 
     // We can only smooth if the neighbor has a surface.
-    return otherSide->hasSections()? otherSide : 0;
+    if(!otherSide->hasSections()) return 0;
+
+    return &otherSide->surface(section);
 }
 
 void WallEdge::prepare()
@@ -510,25 +514,23 @@ void WallEdge::prepare()
     // Sanity check.
     d->assertInterceptsInRange(bottom, top);
 
-    // Determine the edge normal.
+    /**
+     * Determine the edge normal.
+     * @todo Do not assume the neighbor is the middle section of @var otherSide.
+     * @todo Cache the smoothed normal value somewhere.
+     */
+    Surface &surface = d->lineSide->surface(d->section);
     binangle_t angleDiff;
-    if(Line::Side *otherSide = findSideBlendNeighbor(*d->lineSide, d->edge, &angleDiff))
+    Surface *blendSurface = findBlendNeighbor(*d->lineSide, d->section, d->edge, &angleDiff);
+
+    if(blendSurface && shouldSmoothNormals(surface, *blendSurface, angleDiff))
     {
-        /// @todo Do not assume the neighbor is the middle section of @var otherSide.
-        /// @todo Cache the smoothed normal value somewhere. -ds
-
-        Surface &sufA = d->lineSide->surface(d->section);
-        Surface &sufB = otherSide->surface(d->section);
-
-        if(shouldSmoothNormals(sufA, sufB, angleDiff))
-        {
-            // Average normals.
-            d->edgeNormal = Vector3f(sufA.normal() + sufB.normal()) / 2;
-        }
+        // Average normals.
+        d->edgeNormal = Vector3f(surface.normal() + blendSurface->normal()) / 2;
     }
     else
     {
-        d->edgeNormal = d->lineSide->surface(d->section).normal();
+        d->edgeNormal = surface.normal();
     }
 }
 
