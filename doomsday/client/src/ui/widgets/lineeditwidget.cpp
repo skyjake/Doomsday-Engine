@@ -125,12 +125,12 @@ DENG2_OBSERVES(Atlas, Reposition)
         drawable.addBuffer(ID_BUF_TEXT, new VertexBuf);
         drawable.addBufferWithNewProgram(ID_BUF_CURSOR, new VertexBuf, "cursor");
 
-        self.root().shaders().build(drawable.program(), "generic.tex_color")
+        self.root().shaders().build(drawable.program(), "generic.textured.color")
                 << uMvpMatrix
                 //<< uColor
                 << uTex;
 
-        self.root().shaders().build(drawable.program("cursor"), "generic.color")
+        self.root().shaders().build(drawable.program("cursor"), "generic.color_ucolor")
                 << uMvpMatrix
                 << uColor;
 

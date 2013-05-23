@@ -57,7 +57,7 @@ DENG2_PIMPL(TaskBarWidget)
         };
         buf->setVertices(gl::TriangleStrip, verts, 4, gl::Static);
 
-        self.root().shaders().build(drawable.program(), "generic.color")
+        self.root().shaders().build(drawable.program(), "generic.color_ucolor")
                 << uMvpMatrix
                 << uColor;
 

@@ -12,7 +12,7 @@ group generic {
     # Simple shader with untextured vertices. There is an additional constant
     # color applied to all vertices. Uses a combined model-view-projection
     # matrix.
-    shader color {
+    shader color_ucolor {
         vertex = "
             uniform highp mat4 uMvpMatrix;
             uniform highp vec4 uColor;
@@ -32,29 +32,59 @@ group generic {
             }"
     }
     
-    # Simple shader with one texture plus a color per vertex. Uses a
-    # combined model-view-projection matrix.
-    shader tex_color {
-        vertex = "
-            uniform highp mat4 uMvpMatrix;
-            attribute highp vec4 aVertex;
-            attribute highp vec2 aUV;
-            attribute highp vec4 aColor;
-            varying highp vec2 vUV;
-            varying highp vec4 vColor;
+    group textured {    
+        # Simple shader with one texture plus a color per vertex. Uses a
+        # combined model-view-projection matrix.
+        shader color {
+            vertex = "
+                uniform highp mat4 uMvpMatrix;
+                attribute highp vec4 aVertex;
+                attribute highp vec2 aUV;
+                attribute highp vec4 aColor;
+                varying highp vec2 vUV;
+                varying highp vec4 vColor;
             
-            void main(void) {
-                gl_Position = uMvpMatrix * aVertex;
-                vUV = aUV;
-                vColor = aColor;
-            }"
-        fragment = "
-            uniform sampler2D uTex;
-            varying highp vec2 vUV;
-            varying highp vec4 vColor;
+                void main(void) {
+                    gl_Position = uMvpMatrix * aVertex;
+                    vUV = aUV;
+                    vColor = aColor;
+                }"
+            fragment = "
+                uniform sampler2D uTex;
+                varying highp vec2 vUV;
+                varying highp vec4 vColor;
 
-            void main(void) {
-                gl_FragColor = vColor * texture2D(uTex, vUV);
-            }"
+                void main(void) {
+                    gl_FragColor = vColor * texture2D(uTex, vUV);
+                }"
+        }
+    
+        # Simple shader with one texture plus a color per vertex. There is
+        # an additional constant color applied to all vertices. Uses a
+        # combined model-view-projection matrix.
+        shader color_ucolor {
+            vertex = "
+                uniform highp mat4 uMvpMatrix;
+                uniform highp vec4 uColor;
+                attribute highp vec4 aVertex;
+                attribute highp vec2 aUV;
+                attribute highp vec4 aColor;
+                varying highp vec2 vUV;
+                varying highp vec4 vColor;
+            
+                void main(void) {
+                    gl_Position = uMvpMatrix * aVertex;
+                    vUV = aUV;
+                    vColor = aColor * uColor;
+                }"
+            fragment = "
+                uniform sampler2D uTex;
+                varying highp vec2 vUV;
+                varying highp vec4 vColor;
+
+                void main(void) {
+                    gl_FragColor = vColor * texture2D(uTex, vUV);
+                }"
+        }
     }
 }
