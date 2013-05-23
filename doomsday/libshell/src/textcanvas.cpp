@@ -237,7 +237,7 @@ void TextCanvas::drawWrappedText(Vector2i const &pos, String const &text,
     for(int y = 0; y < wraps.height(); ++y)
     {
         WrappedLine const &span = wraps.line(y);
-        String part = text.substr(span.range.start, span.range.size());
+        String part = text.substr(span.range);
         int x = 0;
         if(lineAlignment.testFlag(AlignRight))
         {
