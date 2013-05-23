@@ -119,6 +119,7 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
     Drawable drawable;
     GLUniform uMvpMatrix;
     GLUniform uTex;
+    GLUniform uShadowColor;
     GLUniform uColor;
     GLUniform uBgMvpMatrix;
     GLUniform uBgTex;
@@ -138,11 +139,12 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
           font(0),
           buf(0),
           entryAtlas(0),
-          uMvpMatrix("uMvpMatrix", GLUniform::Mat4),
-          uTex      ("uTex",       GLUniform::Sampler2D),
-          uColor    ("uColor",     GLUniform::Vec4),
+          uMvpMatrix  ("uMvpMatrix", GLUniform::Mat4),
+          uTex        ("uTex",       GLUniform::Sampler2D),
+          uShadowColor("uColor",     GLUniform::Vec4),
+          uColor      ("uColor",     GLUniform::Vec4),
           uBgMvpMatrix("uMvpMatrix", GLUniform::Mat4),
-          uBgTex    ("uTex",       GLUniform::Sampler2D)
+          uBgTex      ("uTex",       GLUniform::Sampler2D)
     {
         updateStyle();
     }
@@ -210,15 +212,15 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
         uColor = Vector4f(1, 1, 1, 1);
 
         drawable.addBufferWithNewProgram(bgBuf = new VertexBuf, "bg");
-        self.root().shaders().build(drawable.program("bg"), "generic.tex_color")
+        self.root().shaders().build(drawable.program("bg"), "generic.textured.color")
                 << uBgMvpMatrix
                 << uBgTex;
 
         // Vertex buffer for the log entries.
         drawable.addBuffer(buf = new VertexBuf);
-        self.root().shaders().build(drawable.program(), "generic.tex_color")
+        self.root().shaders().build(drawable.program(), "generic.textured.color_ucolor")
                 << uMvpMatrix
-                //<< uColor
+                << uShadowColor
                 << uTex;
     }
 
@@ -360,7 +362,7 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
         uBgMvpMatrix = projMatrix;
     }
 
-    void drawEntries()
+    void updateGeometry()
     {
         // While we're drawing, new entries shouldn't be added.
         DENG2_GUARD(sink);
@@ -389,8 +391,6 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
         int yBottom = contentSize.y + visibleOffset;
 
         maxScroll = maxVisibleOffset(contentSize.y);
-        uMvpMatrix = projMatrix *
-                Matrix4f::translate(Vector2f(pos.topLeft + Vector2i(margin, 0)));
 
         firstVisibleIndex = -1;
         lastVisibleIndex = -1;
@@ -447,7 +447,7 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
             VertexBuf::Vertices verts;
 
             VertexBuf::Type v;
-            v.rgba = Vector4f(0, 0, 0, .8f);
+            v.rgba = Vector4f(0, 0, 0, .5f);
             v.texCoord = self.root().atlas().imageRectf(bgTex).middle();
 
             v.pos = pos.topLeft; verts << v;
@@ -458,10 +458,21 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
             bgBuf->setVertices(gl::TriangleStrip, verts, gl::Static);
         }
 
+        updateGeometry();
+
         GLState &st = GLState::push();
         st.setScissor(pos);
 
-        drawEntries();
+        // First draw the shadow of the text.
+        uMvpMatrix = projMatrix *
+                     Matrix4f::translate(Vector2f(pos.topLeft + Vector2i(margin, 2)));
+        uShadowColor = Vector4f(0, 0, 0, 1);
+        drawable.draw();
+
+        // Draw the text itself.
+        uMvpMatrix = projMatrix *
+                     Matrix4f::translate(Vector2f(pos.topLeft + Vector2i(margin, 0)));
+        uShadowColor = Vector4f(1, 1, 1, 1);
         drawable.draw();
 
         GLState::pop();
