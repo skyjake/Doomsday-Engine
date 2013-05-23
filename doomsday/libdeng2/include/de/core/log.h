@@ -306,7 +306,10 @@ public:
 
         /// Entry is not from a local source. Could be used to mark entries
         /// originating from a remote LogBuffer (over the network).
-        Remote = 0x20
+        Remote = 0x20,
+
+        /// Entry level is not included in the output.
+        OmitLevel = 0x40
     };
     Q_DECLARE_FLAGS(Flags, Flag)
 

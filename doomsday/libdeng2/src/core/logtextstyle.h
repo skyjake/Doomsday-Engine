@@ -40,13 +40,17 @@ enum LogTextStyle
     LOG_MSG
 };
 
-char const *TEXT_STYLE_NORMAL        = DENG2_STR_ESCAPE("0");
-char const *TEXT_STYLE_STRONG        = DENG2_STR_ESCAPE("1");
-char const *TEXT_STYLE_LOG_TIME      = DENG2_STR_ESCAPE("2");
-char const *TEXT_STYLE_LOG_LEVEL     = DENG2_STR_ESCAPE("3");
-char const *TEXT_STYLE_LOG_BAD_LEVEL = DENG2_STR_ESCAPE("4");
-char const *TEXT_STYLE_SECTION       = DENG2_STR_ESCAPE("5");
-char const *TEXT_STYLE_MESSAGE       = DENG2_STR_ESCAPE("6");
+char const *TEXT_STYLE_NORMAL          = DENG2_STR_ESCAPE("0");
+char const *TEXT_STYLE_STRONG          = DENG2_STR_ESCAPE("1");
+char const *TEXT_STYLE_LOG_TIME        = DENG2_STR_ESCAPE("2");
+char const *TEXT_STYLE_LOG_LEVEL       = DENG2_STR_ESCAPE("3");
+char const *TEXT_STYLE_LOG_BAD_LEVEL   = DENG2_STR_ESCAPE("4");
+char const *TEXT_STYLE_LOG_DEBUG_LEVEL = DENG2_STR_ESCAPE("7");
+char const *TEXT_STYLE_SECTION         = DENG2_STR_ESCAPE("5");
+char const *TEXT_STYLE_MESSAGE         = DENG2_STR_ESCAPE("6");
+char const *TEXT_STYLE_BAD_MESSAGE     = DENG2_STR_ESCAPE("8");
+char const *TEXT_STYLE_DEBUG_MESSAGE   = DENG2_STR_ESCAPE("9");
+char const *TEXT_MARK_INDENT           = DENG2_STR_ESCAPE(">");
 
 } // namespace de
 
