@@ -49,13 +49,13 @@ using namespace de;
 static String const LEGACY_WIDGET_NAME = "legacy";
 
 DENG2_PIMPL(ClientWindow),
-    DENG2_OBSERVES(KeyEventSource,   KeyEvent),
-    DENG2_OBSERVES(MouseEventSource, MouseStateChange),
+DENG2_OBSERVES(KeyEventSource,   KeyEvent),
+DENG2_OBSERVES(MouseEventSource, MouseStateChange),
 #ifndef WIN32
-    DENG2_OBSERVES(MouseEventSource, MouseAxisEvent),
-    DENG2_OBSERVES(MouseEventSource, MouseButtonEvent),
+  DENG2_OBSERVES(MouseEventSource, MouseAxisEvent),
+  DENG2_OBSERVES(MouseEventSource, MouseButtonEvent),
 #endif
-    DENG2_OBSERVES(Canvas,           FocusChange)
+DENG2_OBSERVES(Canvas,           FocusChange)
 {
     bool needMainInit;
     bool needRecreateCanvas;

@@ -116,7 +116,8 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
     VertexBuf *buf;
     VertexBuf *bgBuf;
     AtlasTexture *entryAtlas;
-    Drawable drawable;
+    Drawable contents;
+    Drawable background;
     GLUniform uMvpMatrix;
     GLUniform uTex;
     GLUniform uShadowColor;
@@ -211,14 +212,14 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
         uTex = entryAtlas;
         uColor = Vector4f(1, 1, 1, 1);
 
-        drawable.addBufferWithNewProgram(bgBuf = new VertexBuf, "bg");
-        self.root().shaders().build(drawable.program("bg"), "generic.textured.color")
+        background.addBuffer(bgBuf = new VertexBuf);
+        self.root().shaders().build(background.program(), "generic.textured.color")
                 << uBgMvpMatrix
                 << uBgTex;
 
         // Vertex buffer for the log entries.
-        drawable.addBuffer(buf = new VertexBuf);
-        self.root().shaders().build(drawable.program(), "generic.textured.color_ucolor")
+        contents.addBuffer(buf = new VertexBuf);
+        self.root().shaders().build(contents.program(), "generic.textured.color_ucolor")
                 << uMvpMatrix
                 << uShadowColor
                 << uTex;
@@ -463,17 +464,20 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
         GLState &st = GLState::push();
         st.setScissor(pos);
 
+        // Draw the background.
+        background.draw();
+
         // First draw the shadow of the text.
         uMvpMatrix = projMatrix *
-                     Matrix4f::translate(Vector2f(pos.topLeft + Vector2i(margin, 2)));
+                     Matrix4f::translate(Vector2f(pos.topLeft + Vector2i(margin, 0)));
         uShadowColor = Vector4f(0, 0, 0, 1);
-        drawable.draw();
+        contents.draw();
 
         // Draw the text itself.
         uMvpMatrix = projMatrix *
-                     Matrix4f::translate(Vector2f(pos.topLeft + Vector2i(margin, 0)));
+                     Matrix4f::translate(Vector2f(pos.topLeft + Vector2i(margin, -2)));
         uShadowColor = Vector4f(1, 1, 1, 1);
-        drawable.draw();
+        contents.draw();
 
         GLState::pop();
 
