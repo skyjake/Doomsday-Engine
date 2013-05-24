@@ -71,7 +71,7 @@ enum {
 //If set allows any mobj to trigger the line's special
 #define ML_ALLTRIGGER       0x0400
 
-#define ML_VALID_MASK       (ML_BLOCKMONSTERS|ML_SECRET|ML_SOUNDBLOCK|ML_DONTDRAW|ML_MAPPED|ML_PASSUSE|ML_ALLTRIGGER)
+#define ML_VALID_MASK       (ML_BLOCKMONSTERS|ML_TWOSIDED|ML_SECRET|ML_SOUNDBLOCK|ML_DONTDRAW|ML_MAPPED|ML_PASSUSE|ML_ALLTRIGGER)
 
 // Special activation types
 #define SPAC_CROSS          0 // when player crosses line
