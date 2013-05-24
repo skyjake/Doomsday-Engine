@@ -28,6 +28,7 @@
 #include "Line"
 #include "WallSpec"
 
+#include "TriangleStripBuilder"
 #include "IHPlane"
 
 class HEdge;
@@ -44,7 +45,7 @@ namespace de {
  *
  * @ingroup map
  */
-class WallEdge
+class WallEdge : public IEdge
 {
     DENG2_NO_COPY  (WallEdge)
     DENG2_NO_ASSIGN(WallEdge)
@@ -53,20 +54,23 @@ public:
     /// Invalid range geometry was found during prepare() @ingroup errors
     DENG2_ERROR(InvalidError);
 
-    class Intercept : public de::IHPlane::IIntercept
+    class Intercept : public IEdge::IIntercept,
+                      public IHPlane::IIntercept
     {
     public:
-        Intercept(WallEdge *owner, double distance = 0);
+        Intercept(WallEdge &owner, double distance = 0);
 
-        WallEdge &owner() const;
+        bool operator < (Intercept const &other) const;
 
-        de::Vector3d origin() const;
+        double distance() const;
+
+        Vector3d origin() const;
 
     private:
-        WallEdge *_owner;
+        DENG2_PRIVATE(d)
     };
 
-    typedef QList<Intercept> Intercepts;
+    typedef QList<Intercept *> Intercepts;
 
 public:
     /**
@@ -80,9 +84,19 @@ public:
 
     WallSpec const &spec() const;
 
+    /// Implements IEdge.
     bool isValid() const;
 
-    de::Vector2d const &origin() const;
+    /// Implements IEdge.
+    Intercept const &from() const;
+
+    /// Implements IEdge.
+    Intercept const &to() const;
+
+    /// Implements IEdge.
+    Vector2f const &materialOrigin() const;
+
+    Vector2d const &origin() const;
 
     coord_t mapLineOffset() const;
 
@@ -94,15 +108,12 @@ public:
 
     int divisionCount() const;
 
-    Intercept const &bottom() const;
-
-    Intercept const &top() const;
+    inline Intercept const &bottom() const { return from(); }
+    inline Intercept const &top() const { return to(); }
 
     int firstDivision() const;
 
     int lastDivision() const;
-
-    de::Vector2f const &materialOrigin() const;
 
     de::Vector3f const &normal() const;
 

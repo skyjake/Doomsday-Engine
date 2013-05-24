@@ -45,19 +45,32 @@ static bool shouldSmoothNormals(Surface &sufA, Surface &sufB, binangle_t angleDi
     return INRANGE_OF(angleDiff, BANG_180, BANG_45);
 }
 
-WallEdge::Intercept::Intercept(WallEdge *owner, double distance)
+DENG2_PIMPL_NOREF(WallEdge::Intercept)
+{
+    /// Wall edge instance which owns "this" intercept.
+    WallEdge &owner;
+
+    Instance(WallEdge &owner) : owner(owner) {}
+};
+
+WallEdge::Intercept::Intercept(WallEdge &owner, double distance)
     : IHPlane::IIntercept(distance),
-      _owner(owner)
+      d(new Instance(owner))
 {}
 
-WallEdge &WallEdge::Intercept::owner() const
+bool WallEdge::Intercept::operator < (Intercept const &other) const
 {
-    return *_owner;
+    return distance() < other.distance();
+}
+
+double WallEdge::Intercept::distance() const
+{
+    return IHPlane::IIntercept::distance();
 }
 
 Vector3d WallEdge::Intercept::origin() const
 {
-    return Vector3d(_owner->origin(), distance());
+    return Vector3d(d->owner.origin(), distance());
 }
 
 DENG2_PIMPL(WallEdge), public IHPlane
@@ -92,6 +105,14 @@ DENG2_PIMPL(WallEdge), public IHPlane
               intercepts        (other.intercepts),
               needSortIntercepts(other.needSortIntercepts)
         {}
+
+        ~HPlane() { clearIntercepts(); }
+
+        void clearIntercepts()
+        {
+            qDeleteAll(intercepts);
+        }
+
     } hplane;
 
     Instance(Public *i, WallSpec const &spec, Line::Side *mapSide, int edge,
@@ -131,9 +152,9 @@ DENG2_PIMPL(WallEdge), public IHPlane
     {
         for(int i = 0; i < hplane.intercepts.count(); ++i)
         {
-            WallEdge::Intercept &icpt = hplane.intercepts[i];
-            if(de::fequal(icpt.distance(), distance))
-                return &icpt;
+            WallEdge::Intercept *icpt = hplane.intercepts[i];
+            if(de::fequal(icpt->distance(), distance))
+                return icpt;
         }
         return 0;
     }
@@ -144,8 +165,8 @@ DENG2_PIMPL(WallEdge), public IHPlane
         if(find(distance))
             return 0;
 
-        hplane.intercepts.append(WallEdge::Intercept(&self, distance));
-        WallEdge::Intercept *newIntercept = &hplane.intercepts.last();
+        hplane.intercepts.append(new WallEdge::Intercept(self, distance));
+        WallEdge::Intercept *newIntercept = hplane.intercepts.last();
 
         // The addition of a new intercept means we'll need to resort.
         hplane.needSortIntercepts = true;
@@ -176,7 +197,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
     {
         if(index >= 0 && index < interceptCount())
         {
-            return hplane.intercepts[index];
+            return *hplane.intercepts[index];
         }
         /// @throw IHPlane::UnknownInterceptError The specified intercept index is not valid.
         throw IHPlane::UnknownInterceptError("HPlane2::at", QString("Index '%1' does not map to a known intercept (count: %2)")
@@ -193,9 +214,9 @@ DENG2_PIMPL(WallEdge), public IHPlane
     void printIntercepts() const
     {
         uint index = 0;
-        foreach(WallEdge::Intercept const &icpt, hplane.intercepts)
+        foreach(WallEdge::Intercept const *icpt, hplane.intercepts)
         {
-            LOG_DEBUG(" %u: >%1.2f ") << (index++) << icpt.distance();
+            LOG_DEBUG(" %u: >%1.2f ") << (index++) << icpt->distance();
         }
     }
 #endif
@@ -206,9 +227,9 @@ DENG2_PIMPL(WallEdge), public IHPlane
     void assertInterceptsInRange(coord_t low, coord_t hi) const
     {
 #ifdef DENG_DEBUG
-        foreach(WallEdge::Intercept const &icpt, hplane.intercepts)
+        foreach(WallEdge::Intercept const *icpt, hplane.intercepts)
         {
-            DENG2_ASSERT(icpt.distance() >= low && icpt.distance() <= hi);
+            DENG2_ASSERT(icpt->distance() >= low && icpt->distance() <= hi);
         }
 #else
         DENG2_UNUSED2(low, hi);
@@ -466,16 +487,16 @@ int WallEdge::divisionCount() const
     return d->isValid? d->interceptCount() - 2 : 0;
 }
 
-WallEdge::Intercept const &WallEdge::bottom() const
+WallEdge::Intercept const &WallEdge::from() const
 {
     d->verifyValid();
-    return d->hplane.intercepts[0];
+    return *d->hplane.intercepts[0];
 }
 
-WallEdge::Intercept const &WallEdge::top() const
+WallEdge::Intercept const &WallEdge::to() const
 {
     d->verifyValid();
-    return d->hplane.intercepts[d->interceptCount()-1];
+    return *d->hplane.intercepts[d->interceptCount()-1];
 }
 
 int WallEdge::firstDivision() const
@@ -493,7 +514,7 @@ int WallEdge::lastDivision() const
 WallEdge::Intercept const &WallEdge::at(int index) const
 {
     d->verifyValid();
-    return d->hplane.intercepts[index];
+    return *d->hplane.intercepts[index];
 }
 
 WallEdge::Intercepts const &WallEdge::intercepts() const
