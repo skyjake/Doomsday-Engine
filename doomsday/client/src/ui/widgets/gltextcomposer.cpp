@@ -50,11 +50,12 @@ DENG2_PIMPL(GLTextComposer)
 
     void releaseLines()
     {
-        DENG2_ASSERT(atlas != 0);
-
-        foreach(Line const &line, lines)
+        if(atlas)
         {
-            atlas->release(line.id);
+            foreach(Line const &line, lines)
+            {
+                atlas->release(line.id);
+            }
         }
         lines.clear();
     }

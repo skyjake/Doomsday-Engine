@@ -103,6 +103,7 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
     int lastMaxScroll;
     int firstVisibleIndex;
     int lastVisibleIndex;
+    Animation scrollOpacity;
 
     // Style.
     Font const *font;
@@ -111,6 +112,7 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
     ColorBank::Color dimmedColor;
     ColorBank::Color accentColor;
     int margin;
+    int scrollBarWidth;
 
     // GL objects.
     VertexBuf *buf;
@@ -127,6 +129,7 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
     Matrix4f projMatrix;
     Matrix4f viewMatrix;
     Id bgTex;
+    Id scrollTex;
 
     Instance(Public *i)
         : Base(i),
@@ -137,6 +140,7 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
           lastMaxScroll(0),
           firstVisibleIndex(-1),
           lastVisibleIndex(-1),
+          scrollOpacity(0, Animation::EaseBoth),
           font(0),
           buf(0),
           entryAtlas(0),
@@ -173,6 +177,7 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
 
         font = &st.fonts().font("log.normal");
         margin = st.rules().rule("gap").valuei();
+        scrollBarWidth = st.rules().rule("log.scrollbar").valuei();
 
         normalColor    = st.colors().color("log.normal");
         highlightColor = st.colors().color("log.highlight");
@@ -205,9 +210,12 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
                 Atlas::BackingStore | Atlas::AllowDefragment,
                 GLTexture::maximumSize().min(Atlas::Size(2048, 1024)));
 
-        bgTex = self.root().atlas().alloc(Image::solidColor(Image::Color(255, 255, 255, 255),
-                                                            Image::Size(1, 1)));
+        Image solidWhitePixel = Image::solidColor(Image::Color(255, 255, 255, 255),
+                                                  Image::Size(1, 1));
+        bgTex = self.root().atlas().alloc(solidWhitePixel);
         uBgTex = self.root().atlas();
+
+        scrollTex = entryAtlas->alloc(solidWhitePixel);
 
         uTex = entryAtlas;
         uColor = Vector4f(1, 1, 1, 1);
@@ -230,6 +238,7 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
         self.root().atlas().release(bgTex);
 
         clearCache();
+
         delete entryAtlas;
         entryAtlas = 0;
     }
@@ -363,6 +372,19 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
         uBgMvpMatrix = projMatrix;
     }
 
+    void restartScrollOpacityFade()
+    {
+        if(visibleOffset.target() == 0)
+        {
+            scrollOpacity.setValue(0, .5f);
+        }
+        else
+        {
+            scrollOpacity = .4f;
+            scrollOpacity.setValue(.03f, 8, 3);
+        }
+    }
+
     void updateGeometry()
     {
         // While we're drawing, new entries shouldn't be added.
@@ -396,8 +418,9 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
         firstVisibleIndex = -1;
         lastVisibleIndex = -1;
 
-        // Copy all visible entries to the buffer.
         VertexBuf::Vertices verts;
+
+        // Copy all visible entries to the buffer.
         for(int idx = sink.entryCount() - 1; yBottom > 0 && idx >= 0; --idx)
         {
             CacheEntry *entry = cache[idx];
@@ -414,25 +437,35 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
             }
         }
 
-        buf->setVertices(gl::TriangleStrip, verts, gl::Dynamic);
-
         // Draw the scroll indicator.
-
-        /*
-        if(d->showScrollIndicator && d->visibleOffset > 0)
+        if(scrollOpacity > 0)
         {
-            int const indHeight = de::clamp(2, de::floor(float(buf.height() * buf.height()) /
-                                                   float(d->totalHeight())), buf.height() / 2);
-            float const indPos = float(d->visibleOffset) / float(maxScroll);
-            int const avail = buf.height() - indHeight;
+            int const indHeight = de::clamp(
+                        margin * 2,
+                        int(float(contentSize.y * contentSize.y) / float(totalHeight())),
+                        contentSize.y / 2);
+            float const indPos = float(visibleOffset) / float(maxScroll);
+            float const avail = contentSize.y - indHeight;
             for(int i = 0; i < indHeight; ++i)
             {
-                buf.put(Vector2i(buf.width() - 1, i + avail - indPos * avail),
-                        TextCanvas::Char(':', TextCanvas::Char::Reverse));
+                VertexBuf::Vertices quad;
+                VertexBuf::Type v;
+                v.rgba = Vector4f(1, 1, 1, scrollOpacity) * accentColor / 255.f;
+                v.texCoord = entryAtlas->imageRectf(scrollTex).middle();
+
+                Rectanglef indRect(Vector2f(contentSize.x + margin - 2*scrollBarWidth, avail - indPos * avail + indHeight),
+                                   Vector2f(contentSize.x + margin - scrollBarWidth, avail - indPos * avail));
+
+                v.pos = indRect.topLeft; quad << v;
+                v.pos = indRect.topRight(); quad << v;
+                v.pos = indRect.bottomLeft(); quad << v;
+                v.pos = indRect.bottomRight; quad << v;
+
+                VertexBuf::concatenate(quad, verts);
             }
         }
-        targetCanvas().draw(buf, pos.topLeft);
-        */
+
+        buf->setVertices(gl::TriangleStrip, verts, gl::Dynamic);
 
         // We won't keep an unlimited number of entries in memory; delete the
         // oldest ones if limit has been reached.
@@ -551,10 +584,12 @@ bool LogWidget::handleEvent(Event const &event)
     {
     case DDKEY_PGUP:
         d->setVisibleOffset(int(d->visibleOffset.target()) + pageSize);
+        d->restartScrollOpacityFade();
         return true;
 
     case DDKEY_PGDN:
         d->setVisibleOffset(de::max(0, int(d->visibleOffset.target()) - pageSize));
+        d->restartScrollOpacityFade();
         return true;
 
     default:

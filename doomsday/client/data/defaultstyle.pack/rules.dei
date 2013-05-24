@@ -10,3 +10,7 @@ rule gap  { constant $= UNIT * 3 }
 group taskbar {
     rule height { constant = 40 }
 }
+
+group log {
+    rule scrollbar { constant $= UNIT }
+}
