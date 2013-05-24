@@ -89,6 +89,47 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
         }
         return true;
     }
+
+    int findMaxWrapWithStep(int const stepSize, int const begin, int end,
+                            int const availableWidth,
+                            int *wrapPosMax)
+    {
+        QChar const newline('\n');
+        int bestEnd = end;
+        int stepCounter = stepSize;
+
+        if(wrapPosMax) *wrapPosMax = begin + 1;
+
+        while(end < text.size() && text.at(end) != newline)
+        {
+            ++end;
+
+            if(!--stepCounter)
+            {
+                stepCounter = stepSize;
+
+                if(rangeAdvanceWidth(Rangei(begin, end)) > availableWidth)
+                {
+                    // Went too far.
+                    if(wrapPosMax) *wrapPosMax = --end;
+                    break;
+                }
+
+                // We have verified this fits in the available width.
+                bestEnd = end;
+            }
+        }
+
+        return bestEnd;
+    }
+
+    int findMaxWrap(int const begin, int const availableWidth, int &wrapPosMax)
+    {
+        // Crude search.
+        int end = findMaxWrapWithStep(8, begin, begin, availableWidth, NULL);
+        // Accurate search.
+        return findMaxWrapWithStep(1, begin, end, availableWidth, &wrapPosMax);
+    }
 };
 
 FontLineWrapping::FontLineWrapping() : d(new Instance)
@@ -148,7 +189,7 @@ void FontLineWrapping::wrapTextToWidth(String const &text, Font::RichFormat cons
 
         // Quick check: does the remainder fit?
         Rangei range(begin, text.size());
-        int visWidth = d->rangeVisibleWidth(range);
+        int visWidth = d->rangeAdvanceWidth(range);
         if(visWidth <= availWidth)
         {
             d->lines.append(Instance::Line(WrappedLine(Rangei(begin, text.size())),
@@ -157,23 +198,12 @@ void FontLineWrapping::wrapTextToWidth(String const &text, Font::RichFormat cons
         }
 
         // Newlines always cause a wrap.
-        int end = begin;
-        int wrapPosMax = begin + 1;
-        while(end < text.size() && text.at(end) != newline)
-        {
-            ++end;
-
-            if(d->rangeVisibleWidth(Rangei(begin, end)) > availWidth)
-            {
-                // Went too far.
-                wrapPosMax = --end;
-                break;
-            }
-        }
+        int wrapPosMax;
+        int end = d->findMaxWrap(begin, availWidth, wrapPosMax);
 
         DENG2_ASSERT(end != text.size());
 
-        // Find a good (whitespace) break point.
+        // Rewind to find a good (whitespace) break point.
         while(!text.at(end).isSpace())
         {
             if(--end == begin)
