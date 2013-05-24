@@ -20,6 +20,8 @@
 #define LIBGUI_VERTEXBUILDER_H
 
 #include <QVector>
+#include <de/Vector>
+#include <de/Rectangle>
 
 namespace de {
 
@@ -37,6 +39,27 @@ struct VertexBuilder
         Vertices operator + (Vertices const &other) const {
             Vertices v(*this);
             return v += other;
+        }
+        Vertices &makeQuad(Rectanglef const &rect, Vector4f const &color, Vector2f const &uv) {
+            Vertices quad;
+            VertexType v;
+            v.rgba = color;
+            v.texCoord = uv;
+            v.pos = rect.topLeft;      quad << v;
+            v.pos = rect.topRight();   quad << v;
+            v.pos = rect.bottomLeft(); quad << v;
+            v.pos = rect.bottomRight;  quad << v;
+            return *this += quad;
+        }
+        Vertices &makeQuad(Rectanglef const &rect, Vector4f const &color, Rectanglef const &uv) {
+            Vertices quad;
+            VertexType v;
+            v.rgba = color;
+            v.pos = rect.topLeft;      v.texCoord = uv.topLeft;      quad << v;
+            v.pos = rect.topRight();   v.texCoord = uv.topRight();   quad << v;
+            v.pos = rect.bottomLeft(); v.texCoord = uv.bottomLeft(); quad << v;
+            v.pos = rect.bottomRight;  v.texCoord = uv.bottomRight;  quad << v;
+            return *this += quad;
         }
     };
 

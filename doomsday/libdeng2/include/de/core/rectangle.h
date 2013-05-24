@@ -60,6 +60,11 @@ public:
         return RectangleType(qr.left(), qr.top(), qr.width(), qr.height());
     }    
 
+    // Automatic conversion to a Rectanglef.
+    operator Rectangle<Vector2f, Vector2f> () const {
+        return Rectangle<Vector2f, Vector2f>(topLeft.x, topLeft.y, width(), height());
+    }
+
     SizeType width() const { return abs(bottomRight.x - topLeft.x); }
     SizeType height() const { return abs(bottomRight.y - topLeft.y); }
     Size size() const { return Size(width(), height()); }

@@ -448,21 +448,13 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
             float const indPos = float(visibleOffset) / float(maxScroll);
             float const avail = contentSize.y - indHeight;
             for(int i = 0; i < indHeight; ++i)
-            {
-                VertexBuf::Builder quad;
-                VertexBuf::Type v;
-                v.rgba = Vector4f(1, 1, 1, scrollOpacity) * accentColor / 255.f;
-                v.texCoord = entryAtlas->imageRectf(scrollTex).middle();
-
-                Rectanglef indRect(Vector2f(contentSize.x + margin - 2*scrollBarWidth, avail - indPos * avail + indHeight),
-                                   Vector2f(contentSize.x + margin - scrollBarWidth, avail - indPos * avail));
-
-                v.pos = indRect.topLeft; quad << v;
-                v.pos = indRect.topRight(); quad << v;
-                v.pos = indRect.bottomLeft(); quad << v;
-                v.pos = indRect.bottomRight; quad << v;
-
-                verts += quad;
+            {                
+                verts.makeQuad(Rectanglef(Vector2f(contentSize.x + margin - 2*scrollBarWidth,
+                                                   avail - indPos * avail + indHeight),
+                                          Vector2f(contentSize.x + margin - scrollBarWidth,
+                                                   avail - indPos * avail)),
+                               Vector4f(1, 1, 1, scrollOpacity) * accentColor / 255.f,
+                               entryAtlas->imageRectf(scrollTex).middle());
             }
         }
 
@@ -479,18 +471,10 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
         if(self.checkPlace(pos) || !bgBuf->isReady())
         {
             // Update the background quad.
-            VertexBuf::Vertices verts;
-
-            VertexBuf::Type v;
-            v.rgba = Vector4f(0, 0, 0, .5f);
-            v.texCoord = self.root().atlas().imageRectf(bgTex).middle();
-
-            v.pos = pos.topLeft; verts << v;
-            v.pos = pos.topRight(); verts << v;
-            v.pos = pos.bottomLeft(); verts << v;
-            v.pos = pos.bottomRight; verts << v;
-
-            bgBuf->setVertices(gl::TriangleStrip, verts, gl::Static);
+            bgBuf->setVertices(gl::TriangleStrip,
+                               VertexBuf::Builder().makeQuad(pos, Vector4f(0, 0, 0, .666f),
+                                                             self.root().atlas().imageRectf(bgTex).middle()),
+                               gl::Static);
         }
 
         updateGeometry();

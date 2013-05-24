@@ -211,11 +211,6 @@ void GLTextComposer::makeVertices(Vertices &triStrip,
             Vector2ui const size = d->atlas->imageRect(d->lines[i].id).size();
             Rectanglef const uv  = d->atlas->imageRectf(d->lines[i].id);
 
-            Vertex v;
-            VertexBuf::Builder quad;
-
-            v.rgba = Vector4f(1, 1, 1, 1); // should be a param
-
             Vector2f linePos = p + Vector2f(d->wraps->lineIndent(i), 0);
 
             // Align the line.
@@ -228,12 +223,7 @@ void GLTextComposer::makeVertices(Vertices &triStrip,
                 linePos.x += (int(rect.width()) - int(size.x)) / 2;
             }
 
-            v.pos = linePos;                            v.texCoord = uv.topLeft;      quad << v;
-            v.pos = linePos + Vector2f(size.x, 0);      v.texCoord = uv.topRight();   quad << v;
-            v.pos = linePos + Vector2f(0, size.y);      v.texCoord = uv.bottomLeft(); quad << v;
-            v.pos = linePos + Vector2f(size.x, size.y); v.texCoord = uv.bottomRight;  quad << v;
-
-            triStrip += quad;
+            triStrip.makeQuad(Rectanglef::fromSize(linePos, size), Vector4f(1, 1, 1, 1), uv);
         }
         p.y += d->font->lineSpacing().value();
     }

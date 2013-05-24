@@ -159,16 +159,9 @@ DENG2_OBSERVES(Atlas, Reposition)
 
         Vector4f bgColor = self.style().colors().colorf("background");
 
+        // The background.
         VertexBuf::Builder verts;
-        VertexBuf::Type v;
-
-        v.rgba     = bgColor;
-        v.texCoord = atlas().imageRectf(bgTex).middle();
-
-        v.pos = pos.topLeft;      verts << v;
-        v.pos = pos.topRight();   verts << v;
-        v.pos = pos.bottomLeft(); verts << v;
-        v.pos = pos.bottomRight;  verts << v;
+        verts.makeQuad(pos, bgColor, atlas().imageRectf(bgTex).middle());
 
         // Text lines.
         Rectanglei const contentRect = pos.shrunk(margin);
@@ -192,16 +185,9 @@ DENG2_OBSERVES(Atlas, Reposition)
                 Vector2i start = wraps.charTopLeftInPixels(i, i == startPos.y? startPos.x : span.start) + offset;
                 Vector2i end   = wraps.charTopLeftInPixels(i, i == endPos.y?   endPos.x   : span.end)   + offset;
 
-                VertexBuf::Builder quad;
-                v.rgba = Vector4f(1, 1, 1, 1);
-                v.texCoord = atlas().imageRectf(bgTex).middle();
-
-                v.pos = start; quad << v;
-                v.pos = end; quad << v;
-                v.pos = start + Vector2i(0, 1); quad << v;
-                v.pos = end + Vector2i(0, 1); quad << v;
-
-                verts += quad;
+                verts.makeQuad(Rectanglef(start, end + Vector2i(0, 1)),
+                               Vector4f(1, 1, 1, 1),
+                               atlas().imageRectf(bgTex).middle());
             }
         }
 
@@ -209,18 +195,15 @@ DENG2_OBSERVES(Atlas, Reposition)
                 .setVertices(gl::TriangleStrip, verts, gl::Static);
 
         // Cursor.
-        verts.clear();
-        v.rgba = Vector4f(1, 1, 1, 1);
-        v.texCoord = atlas().imageRectf(bgTex).middle();
-
         Vector2i const cursorPos = self.lineCursorPos();
         Vector2f const cp = wraps.charTopLeftInPixels(cursorPos.y, cursorPos.x) +
                 contentRect.topLeft;
 
-        v.pos = cp + Vector2f(-1, 0); verts << v;
-        v.pos = cp + Vector2f(1,  0); verts << v;
-        v.pos = cp + Vector2f(-1, font->height().value()); verts << v;
-        v.pos = cp + Vector2f(1,  font->height().value()); verts << v;
+        verts.clear();
+        verts.makeQuad(Rectanglef(cp + Vector2f(-1, 0),
+                                  cp + Vector2f(1, font->height().value())),
+                       Vector4f(1, 1, 1, 1),
+                       atlas().imageRectf(bgTex).middle());
 
         drawable.buffer<VertexBuf>(ID_BUF_CURSOR)
                 .setVertices(gl::TriangleStrip, verts, gl::Static);
