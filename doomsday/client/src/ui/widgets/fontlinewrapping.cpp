@@ -21,6 +21,8 @@
 using namespace de;
 using namespace de::shell;
 
+static QChar const NEWLINE('\n');
+
 DENG2_PIMPL_NOREF(FontLineWrapping)
 {
     Font const *font;
@@ -85,22 +87,32 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
     {
         for(int i = range.start; i < range.end; ++i)
         {
-            if(!text.at(i).isSpace()) return false;
+            if(!text.at(i).isSpace())
+                return false;
         }
         return true;
+    }
+
+    bool containsNewline(Rangei const &range) const
+    {
+        for(int i = range.start; i < range.end; ++i)
+        {
+            if(text.at(i) == NEWLINE)
+                return true;
+        }
+        return false;
     }
 
     int findMaxWrapWithStep(int const stepSize, int const begin, int end,
                             int const availableWidth,
                             int *wrapPosMax)
     {
-        QChar const newline('\n');
         int bestEnd = end;
         int stepCounter = stepSize;
 
         if(wrapPosMax) *wrapPosMax = begin + 1;
 
-        while(end < text.size() && text.at(end) != newline)
+        while(end < text.size() && text.at(end) != NEWLINE)
         {
             ++end;
 
@@ -114,12 +126,10 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
                     if(wrapPosMax) *wrapPosMax = --end;
                     break;
                 }
-
                 // We have verified this fits in the available width.
                 bestEnd = end;
             }
         }
-
         return bestEnd;
     }
 
@@ -164,8 +174,6 @@ void FontLineWrapping::wrapTextToWidth(String const &text, int maxWidth)
 
 void FontLineWrapping::wrapTextToWidth(String const &text, Font::RichFormat const &format, int maxWidth)
 {
-    QChar const newline('\n');
-
     clear();
 
     int const MIN_LINE_WIDTH = 120;
@@ -189,12 +197,15 @@ void FontLineWrapping::wrapTextToWidth(String const &text, Font::RichFormat cons
 
         // Quick check: does the remainder fit?
         Rangei range(begin, text.size());
-        int visWidth = d->rangeAdvanceWidth(range);
-        if(visWidth <= availWidth)
+        if(!d->containsNewline(range))
         {
-            d->lines.append(Instance::Line(WrappedLine(Rangei(begin, text.size())),
-                                           visWidth, d->indent));
-            break;
+            int visWidth = d->rangeAdvanceWidth(range);
+            if(visWidth <= availWidth)
+            {
+                d->lines.append(Instance::Line(WrappedLine(Rangei(begin, text.size())),
+                                               visWidth, d->indent));
+                break;
+            }
         }
 
         // Newlines always cause a wrap.
@@ -203,25 +214,7 @@ void FontLineWrapping::wrapTextToWidth(String const &text, Font::RichFormat cons
 
         DENG2_ASSERT(end != text.size());
 
-        // Rewind to find a good (whitespace) break point.
-        while(!text.at(end).isSpace())
-        {
-            if(--end == begin)
-            {
-                // Ran out of non-space chars, force a break.
-                end = wrapPosMax;
-                break;
-            }
-        }
-
-        // If there is only whitespace remaining on the line,
-        // just use the max wrap -- blank lines are not pretty.
-        if(d->isAllSpace(Rangei(begin, end)))
-        {
-            end = wrapPosMax;
-        }
-
-        if(text.at(end) == newline)
+        if(text.at(end) == NEWLINE)
         {
             // The newline will be omitted from the wrapped lines.
             d->appendLine(Rangei(begin, end));
@@ -229,6 +222,24 @@ void FontLineWrapping::wrapTextToWidth(String const &text, Font::RichFormat cons
         }
         else
         {
+            // Rewind to find a good (whitespace) break point.
+            while(!text.at(end).isSpace())
+            {
+                if(--end == begin)
+                {
+                    // Ran out of non-space chars, force a break.
+                    end = wrapPosMax;
+                    break;
+                }
+            }
+
+            // If there is only whitespace remaining on the line,
+            // just use the max wrap -- blank lines are not pretty.
+            if(d->isAllSpace(Rangei(begin, end)))
+            {
+                end = wrapPosMax;
+            }
+
             while(end < text.size() && text.at(end).isSpace()) ++end;
             d->appendLine(Rangei(begin, end));
             begin = end;

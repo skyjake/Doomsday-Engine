@@ -472,7 +472,8 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
         {
             // Update the background quad.
             bgBuf->setVertices(gl::TriangleStrip,
-                               VertexBuf::Builder().makeQuad(pos, Vector4f(0, 0, 0, .666f),
+                               VertexBuf::Builder().makeQuad(pos,
+                                                             self.style().colors().colorf("background"),
                                                              self.root().atlas().imageRectf(bgTex).middle()),
                                gl::Static);
         }

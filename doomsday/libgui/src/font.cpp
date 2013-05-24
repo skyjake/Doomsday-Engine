@@ -191,7 +191,7 @@ String Font::RichFormat::initFromStyledText(String const &styledText)
                 break;
 
             case '5': // Log section style
-                format->sizeFactor = 1.f;
+                format->sizeFactor = .9f;
                 format->weight = Light;
                 format->style = Italic;
                 format->colorIndex = AccentColor;
