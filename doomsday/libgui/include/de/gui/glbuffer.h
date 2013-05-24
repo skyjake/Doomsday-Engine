@@ -28,6 +28,7 @@
 
 #include "libgui.h"
 #include "opengl.h"
+#include "../VertexBuilder"
 
 namespace de {
 
@@ -181,6 +182,7 @@ class GLBufferT : public GLBuffer
 public:
     typedef VertexType Type;
     typedef QVector<VertexType> Vertices;
+    typedef typename VertexBuilder<VertexType>::Vertices Builder;
 
 public:
     GLBufferT() {
@@ -201,15 +203,6 @@ public:
 
     void setVertices(gl::Primitive primitive, Vertices const &vertices, gl::Usage usage) {
         GLBuffer::setVertices(primitive, vertices.size(), vertices.constData(), sizeof(VertexType) * vertices.size(), usage);
-    }
-
-    static void concatenate(Vertices const &triStripSequence, Vertices &longTriStrip) {
-        if(!triStripSequence.size()) return;
-        if(!longTriStrip.isEmpty()) {
-            longTriStrip << longTriStrip.back();
-            longTriStrip << triStripSequence.front();
-        }
-        longTriStrip << triStripSequence;
     }
 };
 

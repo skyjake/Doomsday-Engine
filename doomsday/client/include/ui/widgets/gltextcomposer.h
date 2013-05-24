@@ -35,7 +35,7 @@ class GLTextComposer
 public:
     typedef de::Vertex2TexRgba    Vertex;
     typedef de::GLBufferT<Vertex> VertexBuf;
-    typedef VertexBuf::Vertices   Vertices;
+    typedef VertexBuf::Builder    Vertices;
 
     /**
      * Flags for specifying alignment.

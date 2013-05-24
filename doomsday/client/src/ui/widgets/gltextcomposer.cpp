@@ -212,7 +212,7 @@ void GLTextComposer::makeVertices(Vertices &triStrip,
             Rectanglef const uv  = d->atlas->imageRectf(d->lines[i].id);
 
             Vertex v;
-            Vertices quad;
+            VertexBuf::Builder quad;
 
             v.rgba = Vector4f(1, 1, 1, 1); // should be a param
 
@@ -233,7 +233,7 @@ void GLTextComposer::makeVertices(Vertices &triStrip,
             v.pos = linePos + Vector2f(0, size.y);      v.texCoord = uv.bottomLeft(); quad << v;
             v.pos = linePos + Vector2f(size.x, size.y); v.texCoord = uv.bottomRight;  quad << v;
 
-            VertexBuf::concatenate(quad, triStrip);
+            triStrip += quad;
         }
         p.y += d->font->lineSpacing().value();
     }

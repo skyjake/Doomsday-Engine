@@ -159,7 +159,7 @@ DENG2_OBSERVES(Atlas, Reposition)
 
         Vector4f bgColor = self.style().colors().colorf("background");
 
-        VertexBuf::Vertices verts;
+        VertexBuf::Builder verts;
         VertexBuf::Type v;
 
         v.rgba     = bgColor;
@@ -192,7 +192,7 @@ DENG2_OBSERVES(Atlas, Reposition)
                 Vector2i start = wraps.charTopLeftInPixels(i, i == startPos.y? startPos.x : span.start) + offset;
                 Vector2i end   = wraps.charTopLeftInPixels(i, i == endPos.y?   endPos.x   : span.end)   + offset;
 
-                VertexBuf::Vertices quad;
+                VertexBuf::Builder quad;
                 v.rgba = Vector4f(1, 1, 1, 1);
                 v.texCoord = atlas().imageRectf(bgTex).middle();
 
@@ -201,7 +201,7 @@ DENG2_OBSERVES(Atlas, Reposition)
                 v.pos = start + Vector2i(0, 1); quad << v;
                 v.pos = end + Vector2i(0, 1); quad << v;
 
-                VertexBuf::concatenate(quad, verts);
+                verts += quad;
             }
         }
 

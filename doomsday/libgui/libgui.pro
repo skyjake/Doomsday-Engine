@@ -71,6 +71,7 @@ HEADERS += \
     include/de/MouseEventSource \
     include/de/PersistentCanvasWindow \
     include/de/RowAtlasAllocator \
+    include/de/VertexBuilder \
     \
     include/de/gui/atlas.h \
     include/de/gui/atlastexture.h \
@@ -101,7 +102,8 @@ HEADERS += \
     include/de/gui/mouseeventsource.h \
     include/de/gui/opengl.h \
     include/de/gui/persistentcanvaswindow.h \
-    include/de/gui/rowatlasallocator.h
+    include/de/gui/rowatlasallocator.h \
+    include/de/gui/vertexbuilder.h
 
 # Sources and private headers.
 SOURCES +=  \

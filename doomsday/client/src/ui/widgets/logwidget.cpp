@@ -29,6 +29,7 @@
 #include <de/LogBuffer>
 #include <de/AtlasTexture>
 #include <de/Drawable>
+#include <de/VertexBuilder>
 
 #include <QImage>
 #include <QPainter>
@@ -418,7 +419,7 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
         firstVisibleIndex = -1;
         lastVisibleIndex = -1;
 
-        VertexBuf::Vertices verts;
+        VertexBuf::Builder verts;
 
         // Copy all visible entries to the buffer.
         for(int idx = sink.entryCount() - 1; yBottom > 0 && idx >= 0; --idx)
@@ -448,7 +449,7 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
             float const avail = contentSize.y - indHeight;
             for(int i = 0; i < indHeight; ++i)
             {
-                VertexBuf::Vertices quad;
+                VertexBuf::Builder quad;
                 VertexBuf::Type v;
                 v.rgba = Vector4f(1, 1, 1, scrollOpacity) * accentColor / 255.f;
                 v.texCoord = entryAtlas->imageRectf(scrollTex).middle();
@@ -461,7 +462,7 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
                 v.pos = indRect.bottomLeft(); quad << v;
                 v.pos = indRect.bottomRight; quad << v;
 
-                VertexBuf::concatenate(quad, verts);
+                verts += quad;
             }
         }
 
