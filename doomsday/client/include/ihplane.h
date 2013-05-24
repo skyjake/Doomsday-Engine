@@ -71,7 +71,7 @@ public:
          */
         virtual ddouble distance() const { return _distance; }
 
-    private:
+    protected:
         ddouble _distance;
     };
 

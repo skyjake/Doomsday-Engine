@@ -45,6 +45,11 @@ static bool shouldSmoothNormals(Surface &sufA, Surface &sufB, binangle_t angleDi
     return INRANGE_OF(angleDiff, BANG_180, BANG_45);
 }
 
+static bool interceptSorter(WallEdge::Intercept *a, WallEdge::Intercept *b)
+{
+    return *a < *b;
+}
+
 DENG2_PIMPL_NOREF(WallEdge::Intercept)
 {
     /// Wall edge instance which owns "this" intercept.
@@ -68,6 +73,11 @@ double WallEdge::Intercept::distance() const
     return IHPlane::IIntercept::distance();
 }
 
+void WallEdge::Intercept::setDistance(double newDistance)
+{
+    IHPlane::IIntercept::_distance = newDistance;
+}
+
 Vector3d WallEdge::Intercept::origin() const
 {
     return Vector3d(d->owner.origin(), distance());
@@ -85,6 +95,10 @@ DENG2_PIMPL(WallEdge), public IHPlane
     bool isValid;
     Vector2f materialOrigin;
     Vector3f edgeNormal;
+
+    /// Intercepts for the bottom and top edges are allocated with "this".
+    WallEdge::Intercept bottom;
+    WallEdge::Intercept top;
 
     /// Data for the IHPlane model.
     struct HPlane
@@ -104,14 +118,13 @@ DENG2_PIMPL(WallEdge), public IHPlane
             : partition         (other.partition),
               intercepts        (other.intercepts),
               needSortIntercepts(other.needSortIntercepts)
-        {}
-
-        ~HPlane() { clearIntercepts(); }
-
-        void clearIntercepts()
         {
-            qDeleteAll(intercepts);
+#ifdef DENG2_QT_4_7_OR_NEWER
+            intercepts.reserve(2 + 2);
+#endif
         }
+
+        ~HPlane() { DENG_ASSERT(intercepts.isEmpty()); }
 
     } hplane;
 
@@ -123,8 +136,21 @@ DENG2_PIMPL(WallEdge), public IHPlane
           edge(edge),
           lineOffset(lineOffset),
           lineVertex(lineVertex),
-          isValid(false)
-    {}
+          isValid(false),
+          bottom(*i),
+          top(*i)
+    {
+        coord_t lo, hi;
+        R_SideSectionCoords(*mapSide, spec.section, spec.flags.testFlag(WallSpec::SkyClip),
+                            &lo, &hi, &materialOrigin);
+
+        bottom.setDistance(lo);
+        top.setDistance(hi);
+
+        isValid = (top.distance() >= bottom.distance());
+    }
+
+    ~Instance() { clearIntercepts(); }
 
     void verifyValid() const
     {
@@ -179,14 +205,18 @@ DENG2_PIMPL(WallEdge), public IHPlane
         // Any work to do?
         if(!hplane.needSortIntercepts) return;
 
-        qSort(hplane.intercepts.begin(), hplane.intercepts.end());
-
+        qSort(hplane.intercepts.begin(), hplane.intercepts.end(), interceptSorter);
         hplane.needSortIntercepts = false;
     }
 
     // Implements IHPlane
     void clearIntercepts()
     {
+        foreach(WallEdge::Intercept *icpt, hplane.intercepts)
+        {
+            if(icpt == &bottom || icpt == &top) continue;
+            delete icpt;
+        }
         hplane.intercepts.clear();
         // An empty intercept list is logically sorted.
         hplane.needSortIntercepts = false;
@@ -388,40 +418,35 @@ DENG2_PIMPL(WallEdge), public IHPlane
 
     void prepare()
     {
-        coord_t bottom, top;
-        R_SideSectionCoords(*mapSide, spec.section, spec.flags.testFlag(WallSpec::SkyClip),
-                            &bottom, &top, &materialOrigin);
-
-        isValid = (top >= bottom);
         if(!isValid) return;
 
         materialOrigin.x += lineOffset;
 
-        configure(Partition(lineVertex->origin(), Vector2d(0, top - bottom)));
+        coord_t const lo = bottom.distance();
+        coord_t const hi = top.distance();
+
+        configure(Partition(lineVertex->origin(), Vector2d(0, hi - lo)));
 
         // Intercepts are sorted in ascending distance order.
 
-        // The first intercept is the bottom.
-        intercept(bottom);
-
-        if(top > bottom)
+        if(!de::fequal(hi, lo))
         {
             // Add intercepts for neighboring planes (the "divisions").
-            addPlaneIntercepts(bottom, top);
-        }
+            addPlaneIntercepts(lo, hi);
 
-        // The last intercept is the top.
-        intercept(top);
-
-        if(interceptCount() > 2) // First two are always sorted.
-        {
             // Sorting may be required. This shouldn't take too long...
             // There seldom are more than two or three intercepts.
             sortAndMergeIntercepts();
         }
 
+        // The first intercept is the bottom.
+        hplane.intercepts.prepend(&bottom);
+
+        // The last intercept is the top.
+        hplane.intercepts.append(&top);
+
         // Sanity check.
-        assertInterceptsInRange(bottom, top);
+        assertInterceptsInRange(lo, hi);
 
         // Determine the edge normal.
         /// @todo Cache the smoothed normal value somewhere.

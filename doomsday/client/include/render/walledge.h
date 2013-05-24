@@ -66,6 +66,11 @@ public:
 
         Vector3d origin() const;
 
+        friend class WallEdge;
+
+    protected:
+        void setDistance(double newDistance);
+
     private:
         DENG2_PRIVATE(d)
     };
@@ -74,7 +79,7 @@ public:
 
 public:
     /**
-     * @param spec  Wall section spec. A copy is made.
+     * @param spec  Geometry specification for the wall section. A copy is made.
      */
     WallEdge(WallSpec const &spec, HEdge &hedge, int edge);
 
