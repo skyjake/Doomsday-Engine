@@ -463,6 +463,9 @@ public:
         w *= scalar;
         return *this;
     }
+    Vector4 operator / (ddouble scalar) const {
+        return *this * (1.0 / scalar);
+    }
     inline Vector4 &operator /= (ddouble scalar) {
         return (*this) *= 1.0 / scalar;
     }
