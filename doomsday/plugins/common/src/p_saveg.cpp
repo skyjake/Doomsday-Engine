@@ -2704,7 +2704,10 @@ static void SV_ReadLine(Line *li)
     if(ver >= 4)
         P_SetIntp(li, DMU_FLAGS, SV_ReadShort());
 
-    short flags = SV_ReadShort();
+    int flags = SV_ReadShort();
+
+    if(xli->flags & ML_TWOSIDED)
+        flags |= ML_TWOSIDED;
 
     if(ver < 4)
     {
@@ -2715,11 +2718,6 @@ static void SV_ReadLine(Line *li)
         {
             ddLineFlags |= DDLF_BLOCKING;
             flags &= ~0x0001;
-        }
-
-        if(flags & 0x0004) // old ML_TWOSIDED flag
-        {
-            flags &= ~0x0004;
         }
 
         if(flags & 0x0008) // old ML_DONTPEGTOP flag
@@ -2829,6 +2827,7 @@ static void SV_ReadLine(Line *li)
         if(ver >= 2)
         {
             float rgba[4];
+            int flags;
 
             for(int k = 0; k < 3; ++k)
                 rgba[k] = (float) SV_ReadByte() / 255.f;
@@ -2845,7 +2844,18 @@ static void SV_ReadLine(Line *li)
             P_SetFloatpv(si, DMU_MIDDLE_COLOR, rgba);
 
             P_SetIntp(si, DMU_MIDDLE_BLENDMODE, SV_ReadLong());
-            P_SetIntp(si, DMU_FLAGS, SV_ReadShort());
+
+            flags = SV_ReadShort();
+#if __JHEXEN__
+            if(mapVersion < 12)
+#else
+            if(hdr->version < 12)
+#endif
+            {
+                if(P_GetIntp(si, DMU_FLAGS) & SDF_SUPPRESS_BACK_SECTOR)
+                    flags |= SDF_SUPPRESS_BACK_SECTOR;
+            }
+            P_SetIntp(si, DMU_FLAGS, flags);
         }
     }
 

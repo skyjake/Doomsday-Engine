@@ -1002,32 +1002,34 @@ static int findSectorNeighborsForStairBuild(void* ptr, void* context)
  * @warning DO NOT USE THIS ANYWHERE ELSE!
  */
 typedef struct spreadsectorparams_s {
-    Sector* baseSec;
-    Material* material;
-    Sector* foundSec;
+    Sector *baseSec;
+    Material *material;
+    Sector *foundSec;
     coord_t height, stairSize;
 } spreadsectorparams_t;
 
-int findAdjacentSectorForSpread(void* ptr, void* context)
+/// @return  0= continue iteration; otherwise stop.
+static int findAdjacentSectorForSpread(void *ptr, void *context)
 {
-    Line* li = (Line*) ptr;
-    spreadsectorparams_t* params = (spreadsectorparams_t*) context;
-    Sector* frontSec, *backSec;
-    xsector_t* xsec;
+    Line *li = (Line *) ptr;
+    spreadsectorparams_t *params = (spreadsectorparams_t *) context;
+    Sector *frontSec, *backSec;
+    xsector_t *xsec;
+
+    if(!(P_ToXLine(li)->flags & ML_TWOSIDED))
+        return false;
 
     frontSec = P_GetPtrp(li, DMU_FRONT_SECTOR);
-    if(!frontSec)
-        return false; // Continue iteration.
+    if(!frontSec) return false;
 
     if(params->baseSec != frontSec)
-        return false; // Continue iteration.
+        return false;
 
     backSec = P_GetPtrp(li, DMU_BACK_SECTOR);
-    if(!backSec)
-        return false; // Continue iteration.
+    if(!backSec) return false;
 
     if(P_GetPtrp(backSec, DMU_FLOOR_MATERIAL) != params->material)
-        return false; // Continue iteration.
+        return false;
 
     /**
      * @note The placement of this step height addition is vital to ensure
@@ -1038,11 +1040,11 @@ int findAdjacentSectorForSpread(void* ptr, void* context)
 
     xsec = P_ToXSector(backSec);
     if(xsec->specialData)
-        return false; // Continue iteration.
+        return false;
 
     // This looks good.
     params->foundSec = backSec;
-    return true; // Stop iteration.
+    return true;
 }
 #endif
 
@@ -1124,7 +1126,8 @@ int EV_BuildStairs(Line* line, stair_e type)
 
         while(P_Iteratep(params.baseSec, DMU_LINE, &params,
                           findAdjacentSectorForSpread))
-        {   // We found another sector to spread to.
+        {
+            // We found another sector to spread to.
             floor = Z_Calloc(sizeof(*floor), PU_MAP, 0);
             floor->thinker.function = T_MoveFloor;
             Thinker_Add(&floor->thinker);
@@ -1297,15 +1300,18 @@ int EV_BuildStairs(Line* line, byte* args, int direction,
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
 typedef struct {
-    Sector*         sector;
-    Line*           foundLine;
+    Sector *sector;
+    Line *foundLine;
 } findfirsttwosidedparams_t;
 
-int findFirstTwosided(void *ptr, void *context)
+static int findFirstTwosided(void *ptr, void *context)
 {
-    Line* li = (Line*) ptr;
-    findfirsttwosidedparams_t* params = (findfirsttwosidedparams_t*) context;
-    Sector* backSec = P_GetPtrp(li, DMU_BACK_SECTOR);
+    Line *li = (Line *) ptr;
+    findfirsttwosidedparams_t *params = (findfirsttwosidedparams_t *) context;
+    Sector *backSec = P_GetPtrp(li, DMU_BACK_SECTOR);
+
+    if(!(P_ToXLine(li)->flags & ML_TWOSIDED))
+        return false;
 
     if(backSec && !(params->sector && backSec == params->sector))
     {
@@ -1318,15 +1324,14 @@ int findFirstTwosided(void *ptr, void *context)
 #endif
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-int EV_DoDonut(Line* line)
+int EV_DoDonut(Line *line)
 {
     int rtn = 0;
-    Sector* sec, *outer, *ring;
-    iterlist_t* list;
+    Sector *sec, *outer, *ring;
+    iterlist_t *list;
 
     list = P_GetSectorIterListForTag(P_ToXLine(line)->tag, false);
-    if(!list)
-        return rtn;
+    if(!list) return rtn;
 
     IterList_SetIteratorDirection(list, ITERLIST_FORWARD);
     IterList_RewindIterator(list);
@@ -1343,6 +1348,7 @@ int EV_DoDonut(Line* line)
 
         params.sector = NULL;
         params.foundLine = NULL;
+
         if(P_Iteratep(sec, DMU_LINE, &params, findFirstTwosided))
         {
             ring = P_GetPtrp(params.foundLine, DMU_BACK_SECTOR);
@@ -1356,7 +1362,8 @@ int EV_DoDonut(Line* line)
         }
 
         if(outer && ring)
-        {   // Found both parts of the donut.
+        {
+            // Found both parts of the donut.
             floor_t* floor;
             coord_t destHeight = P_GetDoublep(outer, DMU_FLOOR_HEIGHT);
 

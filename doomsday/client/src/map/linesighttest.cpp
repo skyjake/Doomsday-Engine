@@ -133,10 +133,7 @@ DENG2_PIMPL(LineSightTest)
         Sector const *frontSec = side.sectorPtr();
         Sector const *backSec  = side.back().sectorPtr();
 
-        bool noBack = !side.back().hasSections() ||
-                      (!side.line().definesPolyobj() &&
-                          (!side.leftHEdge()->twin().hasBspLeaf() ||
-                           side.leftHEdge()->twin().bspLeaf().isDegenerate()));
+        bool noBack = side.considerOneSided();
 
         if(!noBack && !(flags & LS_PASSLEFT))
         {

@@ -129,8 +129,15 @@ void R_SideSectionCoords(Line::Side const &side, int section, bool skyClip,
 
     if(side.considerOneSided())
     {
-        bottom = frontSec->floor().visHeight();
-        top    = frontSec->ceiling().visHeight();
+        if(section == Line::Side::Middle)
+        {
+            bottom = frontSec->floor().visHeight();
+            top    = frontSec->ceiling().visHeight();
+        }
+        else
+        {
+            bottom = top = frontSec->floor().visHeight();
+        }
 
         if(retMaterialOrigin)
         {
@@ -384,13 +391,7 @@ bool R_SideBackClosed(Line::Side const &side, bool ignoreOpacity)
     if(!side.hasSector()) return false;
     if(side.line().isSelfReferencing()) return false; // Never.
 
-    if(!side.line().definesPolyobj())
-    {
-        HEdge const &hedge = *side.leftHEdge();
-        if(!hedge.twin().hasBspLeaf() || hedge.twin().bspLeaf().isDegenerate()) return true;
-    }
-
-    if(!side.back().hasSector()) return true;
+    if(side.considerOneSided()) return true;
 
     Sector const &frontSec = side.sector();
     Sector const &backSec  = side.back().sector();

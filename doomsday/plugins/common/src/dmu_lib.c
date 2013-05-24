@@ -366,14 +366,16 @@ void P_DestroyAllTagLists(void)
     P_DestroySectorTagLists();
 }
 
-Sector* P_GetNextSector(Line* line, Sector* sec)
+Sector *P_GetNextSector(Line *line, Sector *sec)
 {
-    Sector* frontSec;
+    Sector *frontSec;
     if(!sec || !line)
         return 0;
-    frontSec = P_GetPtrp(line, DMU_FRONT_SECTOR);
-    if(!frontSec)
+
+    if(!(P_ToXLine(line)->flags & ML_TWOSIDED))
         return 0;
+
+    frontSec = P_GetPtrp(line, DMU_FRONT_SECTOR);
     if(frontSec == sec)
         return P_GetPtrp(line, DMU_BACK_SECTOR);
     return frontSec;

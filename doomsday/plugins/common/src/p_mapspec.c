@@ -65,32 +65,36 @@ iterlist_t* spechit = 0; /// For crossed line specials.
 
 // CODE --------------------------------------------------------------------
 
-int spreadSoundToNeighbors(void* ptr, void* context)
+/// @return  0= continue iteration; otherwise stop.
+static int spreadSoundToNeighbors(void *ptr, void *context)
 {
-    spreadsoundtoneighborsparams_t* params = (spreadsoundtoneighborsparams_t*) context;
-    Line* li = (Line*) ptr;
-    Sector* frontSec = P_GetPtrp(li, DMU_FRONT_SECTOR);
-    Sector* backSec = P_GetPtrp(li, DMU_BACK_SECTOR);
-    Sector* other;
-    xline_t* xline;
+    spreadsoundtoneighborsparams_t *parm = (spreadsoundtoneighborsparams_t *) context;
+    Line *li = (Line *) ptr;
+    xline_t *xline = P_ToXLine(li);
+    Sector *frontSec, *backSec, *other;
+    assert(xline);
 
-    if(!(frontSec && backSec)) return false; // Continue iteration.
+    if(!(xline->flags & ML_TWOSIDED)) return false;
+
+    frontSec = P_GetPtrp(li, DMU_FRONT_SECTOR);
+    if(!frontSec) return false;
+
+    backSec  = P_GetPtrp(li, DMU_BACK_SECTOR);
+    if(!backSec) return false;
 
     P_SetTraceOpening(li);
-    if(!(P_TraceOpening()->range > 0)) return false; // Continue iteration.
+    if(!(P_TraceOpening()->range > 0)) return false;
 
-    other = (frontSec == params->baseSec? backSec : frontSec);
-    xline = P_ToXLine(li);
-    assert(xline);
+    other = (frontSec == parm->baseSec? backSec : frontSec);
 
     if(xline->flags & ML_SOUNDBLOCK)
     {
-        if(!params->soundBlocks)
-            P_RecursiveSound(params->soundTarget, other, 1);
+        if(!parm->soundBlocks)
+            P_RecursiveSound(parm->soundTarget, other, 1);
     }
     else
     {
-        P_RecursiveSound(params->soundTarget, other, params->soundBlocks);
+        P_RecursiveSound(parm->soundTarget, other, parm->soundBlocks);
     }
 
     return false; // Continue iteration.

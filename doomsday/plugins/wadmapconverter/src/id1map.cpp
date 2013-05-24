@@ -348,11 +348,18 @@ void Id1Map::transferLinesAndSides()
         mside_t *front = ((i)->sides[RIGHT] >= 0? &sides[(i)->sides[RIGHT]] : 0);
         mside_t *back  = ((i)->sides[LEFT]  >= 0? &sides[(i)->sides[LEFT]] : 0);
 
+        int sideFlags = (mapFormat == MF_DOOM64? SDF_MIDDLE_STRETCH : 0);
+
+        // Interpret the lack of a ML_TWOSIDED line flag to mean the
+        // suppression of the side relative back sector.
+        if(!(i->flags & 0x4 /*ML_TWOSIDED*/) && front && back)
+            sideFlags |= SDF_SUPPRESS_BACK_SECTOR;
+
         int lineIdx = MPE_LineCreate(i->v[0], i->v[1], front? front->sector : -1,
                                      back? back->sector : -1, i->ddFlags, i->index);
         if(front)
         {
-            MPE_LineAddSide(lineIdx, RIGHT, (mapFormat == MF_DOOM64? SDF_MIDDLE_STRETCH : 0),
+            MPE_LineAddSide(lineIdx, RIGHT, sideFlags,
                             composeMaterialRef(front->topMaterial),
                             front->offset[VX], front->offset[VY], 1, 1, 1,
                             composeMaterialRef(front->middleMaterial),
@@ -363,7 +370,7 @@ void Id1Map::transferLinesAndSides()
         }
         if(back)
         {
-            MPE_LineAddSide(lineIdx, LEFT, (mapFormat == MF_DOOM64? SDF_MIDDLE_STRETCH : 0),
+            MPE_LineAddSide(lineIdx, LEFT, sideFlags,
                             composeMaterialRef(back->topMaterial),
                             back->offset[VX], back->offset[VY], 1, 1, 1,
                             composeMaterialRef(back->middleMaterial),

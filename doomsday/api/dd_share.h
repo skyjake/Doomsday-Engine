@@ -438,11 +438,15 @@ enum {
 
 /// @addtogroup sdefFlags
 ///@{
-#define SDF_BLENDTOPTOMID       0x0001
-#define SDF_BLENDMIDTOTOP       0x0002
-#define SDF_BLENDMIDTOBOTTOM    0x0004
-#define SDF_BLENDBOTTOMTOMID    0x0008
-#define SDF_MIDDLE_STRETCH      0x0010 ///< Stretch the middle surface to reach from floor to ceiling.
+#define SDF_BLENDTOPTOMID           0x0001
+#define SDF_BLENDMIDTOTOP           0x0002
+#define SDF_BLENDMIDTOBOTTOM        0x0004
+#define SDF_BLENDBOTTOMTOMID        0x0008
+#define SDF_MIDDLE_STRETCH          0x0010 ///< Stretch the middle surface to reach from floor to ceiling.
+
+/// Suppress the relative back sector and consider this as one-sided for the
+/// purposes of rendering and line of sight tests.
+#define SDF_SUPPRESS_BACK_SECTOR    0x0020
 ///@}
 
 /**

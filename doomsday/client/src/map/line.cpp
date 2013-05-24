@@ -151,6 +151,9 @@ int Line::Side::lineSideId() const
 
 bool Line::Side::considerOneSided() const
 {
+    // Are we suppressing the back sector?
+    if(d->flags & SDF_SUPPRESS_BACK_SECTOR) return true;
+
     if(!back().hasSector()) return true;
     // Front side of a "one-way window"?
     if(!back().hasSections()) return true;

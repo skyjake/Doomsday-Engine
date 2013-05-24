@@ -40,6 +40,13 @@ enum {
 };
 
 #define ML_BLOCKMONSTERS    0x0002
+
+/**
+ * If not present on a two-sided line suppress the back sector and instead
+ * consider the line as if it were one-sided. For mod compatibility purposes.
+ */
+#define ML_TWOSIDED         0x0004
+
 #define ML_SECRET           0x0020 // don't map as two sided: IT'S A SECRET!
 #define ML_SOUNDBLOCK       0x0040 // don't let sound cross two of these
 #define ML_DONTDRAW         0x0080 // don't draw on the automap

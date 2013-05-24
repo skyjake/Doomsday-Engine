@@ -47,6 +47,12 @@ enum {
 // Blocks monsters only.
 #define ML_BLOCKMONSTERS    0x0002
 
+/**
+ * If not present on a two-sided line suppress the back sector and instead
+ * consider the line as if it were one-sided. For mod compatibility purposes.
+ */
+#define ML_TWOSIDED         0x0004
+
 // In AutoMap: don't map as two sided: IT'S A SECRET!
 #define ML_SECRET           0x0020
 

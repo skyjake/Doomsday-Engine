@@ -1693,13 +1693,10 @@ int PTR_ShootTraverse(intercept_t const *in, void *parameters)
     int divisor;
     coord_t pos[3], frac, slope, dist, thingTopSlope, thingBottomSlope,
           cTop, cBottom, d[3], step, stepv[3], tracePos[3], cFloor, cCeil;
-    Line* li;
-    mobj_t* th;
-    const divline_t* trace = P_TraceLOS();
-    const TraceOpening* opening;
-    Sector* frontSec = 0, *backSec = 0;
-    BspLeaf* contact, *originSub;
-    xline_t* xline;
+    mobj_t *th;
+    divline_t const *trace = P_TraceLOS();
+    TraceOpening const *opening;
+    BspLeaf *contact, *originSub;
     boolean lineWasHit;
 
     tracePos[VX] = FIX2FLT(trace->origin[VX]);
@@ -1708,14 +1705,17 @@ int PTR_ShootTraverse(intercept_t const *in, void *parameters)
 
     if(in->type == ICPT_LINE)
     {
-        li = in->d.line;
-        xline = P_ToXLine(li);
+        Line *li = in->d.line;
+        xline_t *xline = P_ToXLine(li);
+        Sector *frontSec = 0, *backSec = 0;
 
-        frontSec = P_GetPtrp(li, DMU_FRONT_SECTOR);
         backSec = P_GetPtrp(li, DMU_BACK_SECTOR);
 
-        if(!backSec && Line_PointXYOnSide(li, tracePos[VX], tracePos[VY]) < 0)
-            return false; // Continue traversal.
+        if(!backSec || !(xline->flags & ML_TWOSIDED))
+        {
+            if(Line_PointXYOnSide(li, tracePos[VX], tracePos[VY]) < 0)
+                return false; // Continue traversal.
+        }
 
         if(xline->special)
             P_ActivateLine(li, shootThing, 0, SPAC_IMPACT);
@@ -1733,6 +1733,8 @@ int PTR_ShootTraverse(intercept_t const *in, void *parameters)
         opening = P_TraceOpening();
 
         dist = attackRange * in->distance;
+
+        frontSec = P_GetPtrp(li, DMU_FRONT_SECTOR);
 
         if(!FEQUAL(P_GetDoublep(frontSec, DMU_FLOOR_HEIGHT),
                    P_GetDoublep(backSec,  DMU_FLOOR_HEIGHT)))
@@ -1994,23 +1996,22 @@ if(lineWasHit)
 int PTR_AimTraverse(intercept_t const *in, void *parameters)
 {
     coord_t slope, thingTopSlope, thingBottomSlope, dist;
-    mobj_t* th;
-    Line* li;
-    Sector* backSec, *frontSec;
+    mobj_t *th;
 
     if(in->type == ICPT_LINE)
     {
+        Line *li = in->d.line;
+        Sector *backSec, *frontSec;
         coord_t fFloor, bFloor;
         coord_t fCeil, bCeil;
-        const TraceOpening* opening;
+        TraceOpening const *opening;
 
-        li = in->d.line;
-
-        if(!(frontSec = P_GetPtrp(li, DMU_FRONT_SECTOR)) ||
+        if(!(P_ToXLine(li)->flags & ML_TWOSIDED) ||
+           !(frontSec = P_GetPtrp(li, DMU_FRONT_SECTOR)) ||
            !(backSec  = P_GetPtrp(li, DMU_BACK_SECTOR)))
         {
             coord_t tracePos[3];
-            const divline_t* trace = P_TraceLOS();
+            divline_t const *trace = P_TraceLOS();
 
             tracePos[VX] = FIX2FLT(trace->origin[VX]);
             tracePos[VY] = FIX2FLT(trace->origin[VY]);
@@ -2532,17 +2533,18 @@ static void P_HitSlideLine(Line* ld)
     tmMove[MY] = newLen * FIX2FLT(finesine[an]);
 }
 
-int PTR_SlideTraverse(const intercept_t* in, void* paramaters)
+int PTR_SlideTraverse(intercept_t const *in, void *parameters)
 {
-    const TraceOpening* opening;
-    Line* li;
+    TraceOpening const *opening;
+    Line *li;
 
     if(in->type != ICPT_LINE)
         Con_Error("PTR_SlideTraverse: Not a line?");
 
     li = in->d.line;
 
-    if(!P_GetPtrp(li, DMU_FRONT_SECTOR) || !P_GetPtrp(li, DMU_BACK_SECTOR))
+    if(!(P_ToXLine(li)->flags & ML_TWOSIDED) ||
+       !P_GetPtrp(li, DMU_FRONT_SECTOR) || !P_GetPtrp(li, DMU_BACK_SECTOR))
     {
         if(Line_PointXYOnSide(li, slideMo->origin[VX], slideMo->origin[VY]) < 0)
             return false; // Don't hit the back side.

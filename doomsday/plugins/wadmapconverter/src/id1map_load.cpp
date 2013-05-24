@@ -58,7 +58,6 @@ size_t ElementSizeForMapLumpType(MapFormatId mapFormat, MapLumpType type)
 static void interpretLineDefFlags(mline_t *l, MapFormatId mapFormat)
 {
 #define ML_BLOCKING              1 ///< Solid, is an obstacle.
-#define ML_TWOSIDED              4 ///< Backside will not be present at all if not two sided.
 #define ML_DONTPEGTOP            8 ///< Upper texture unpegged.
 #define ML_DONTPEGBOTTOM        16 ///< Lower texture unpegged.
 
@@ -93,11 +92,6 @@ static void interpretLineDefFlags(mline_t *l, MapFormatId mapFormat)
         l->flags &= ~ML_BLOCKING;
     }
 
-    if(l->flags & ML_TWOSIDED)
-    {
-        l->flags &= ~ML_TWOSIDED;
-    }
-
     if(l->flags & ML_DONTPEGTOP)
     {
         l->ddFlags |= DDLF_DONTPEGTOP;
@@ -114,7 +108,6 @@ static void interpretLineDefFlags(mline_t *l, MapFormatId mapFormat)
 #undef ML_INVALID
 #undef ML_DONTPEGBOTTOM
 #undef ML_DONTPEGTOP
-#undef ML_TWOSIDED
 #undef ML_BLOCKING
 }
 
