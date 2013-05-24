@@ -45,7 +45,7 @@ namespace de {
  *
  * @ingroup map
  */
-class WallEdge : public IEdge
+class WallEdge : public WorldEdge
 {
     DENG2_NO_COPY  (WallEdge)
     DENG2_NO_ASSIGN(WallEdge)
@@ -85,42 +85,35 @@ public:
 
     inline Intercept const & operator [] (int index) const { return at(index); }
 
-    Intercept const &at(int index) const;
-
     WallSpec const &spec() const;
-
-    /// Implements IEdge.
-    bool isValid() const;
-
-    /// Implements IEdge.
-    Intercept const &from() const;
-
-    /// Implements IEdge.
-    Intercept const &to() const;
-
-    /// Implements IEdge.
-    Vector2f const &materialOrigin() const;
-
-    Vector2d const &origin() const;
 
     coord_t mapLineOffset() const;
 
     Line::Side &mapSide() const;
 
-    Surface &surface() const;
+    inline Surface &surface() const { return mapSide().surface(spec().section); }
+
+    /// Implement IEdge.
+    bool isValid() const;
+
+    /// Implement IEdge.
+    Intercept const &from() const;
+
+    /// Implement IEdge.
+    Intercept const &to() const;
 
     int section() const;
 
     int divisionCount() const;
 
-    inline Intercept const &bottom() const { return from(); }
-    inline Intercept const &top() const { return to(); }
-
     int firstDivision() const;
 
     int lastDivision() const;
 
-    de::Vector3f const &normal() const;
+    Intercept const &at(int index) const;
+
+    inline Intercept const &bottom() const { return from(); }
+    inline Intercept const &top() const { return to(); }
 
     Intercepts const &intercepts() const;
 

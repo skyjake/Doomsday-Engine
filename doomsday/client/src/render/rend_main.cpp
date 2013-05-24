@@ -1247,21 +1247,21 @@ static float calcLightLevelDelta(Vector3f const &normal)
 static void wallSectionLightLevelDeltas(WallEdge const &leftEdge, WallEdge const &rightEdge,
     float &leftDelta, float &rightDelta)
 {
-    leftDelta = calcLightLevelDelta(leftEdge.normal());
+    leftDelta = calcLightLevelDelta(leftEdge.normal);
 
-    if(leftEdge.normal() == rightEdge.normal())
+    if(leftEdge.normal == rightEdge.normal)
     {
         rightDelta = leftDelta;
     }
     else
     {
-        rightDelta = calcLightLevelDelta(rightEdge.normal());
+        rightDelta = calcLightLevelDelta(rightEdge.normal);
 
         // Linearly interpolate to find the light level delta values for the
         // vertical edges of this wall section.
         coord_t const lineLength = leftEdge.mapSide().line().length();
         coord_t const sectionOffset = leftEdge.mapLineOffset();
-        coord_t const sectionWidth = de::abs(Vector2d(rightEdge.origin() - leftEdge.origin()).length());
+        coord_t const sectionWidth = de::abs(Vector2d(rightEdge.origin - leftEdge.origin).length());
 
         float deltaDiff = rightDelta - leftDelta;
         rightDelta = leftDelta + ((sectionOffset + sectionWidth) / lineLength) * deltaDiff;
@@ -1439,11 +1439,11 @@ static bool writeWallGeometry(WallEdge **edges, BiasSurface &biasSurface,
     parm.surfaceLightLevelDL = leftLightLevelDelta;
     parm.surfaceLightLevelDR = rightLightLevelDelta;
     parm.blendMode           = BM_NORMAL;
-    parm.materialOrigin      = &leftEdge.materialOrigin();
+    parm.materialOrigin      = &leftEdge.materialOrigin;
     parm.materialScale       = &materialScale;
 
     parm.isWall = true;
-    parm.wall.sectionWidth   = de::abs(Vector2d(rightEdge.origin() - leftEdge.origin()).length());
+    parm.wall.sectionWidth   = de::abs(Vector2d(rightEdge.origin - leftEdge.origin).length());
     parm.wall.leftEdge       = &leftEdge;
     parm.wall.rightEdge      = &rightEdge;
 
@@ -1864,7 +1864,6 @@ static void writeLeafSkyMaskStrips(SkyFixEdge::FixType fixType)
             // Prepare the edge geometry
             SkyFixEdge skyEdge(hedge, fixType, (direction == Anticlockwise)? Line::To : Line::From,
                                startMaterialOffset);
-            skyEdge.prepare();
 
             if(skyEdge.isValid() && skyEdge.bottom().distance() < skyEdge.top().distance())
             {
@@ -1890,7 +1889,6 @@ static void writeLeafSkyMaskStrips(SkyFixEdge::FixType fixType)
             // Prepare the edge geometry
             SkyFixEdge skyEdge(hedge, fixType, (direction == Anticlockwise)? Line::From : Line::To,
                                startMaterialOffset);
-            skyEdge.prepare();
 
             // Stop if we've reached a "null" edge.
             bool endStrip = false;

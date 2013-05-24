@@ -31,7 +31,7 @@ namespace de {
 /**
  * @ingroup render
  */
-class SkyFixEdge : public IEdge
+class SkyFixEdge : public WorldEdge
 {
 public:
     enum FixType
@@ -49,9 +49,12 @@ public:
 
         coord_t distance() const;
 
-        void setDistance(coord_t distance);
-
         Vector3d origin() const;
+
+        friend class SkyFixEdge;
+
+    protected:
+        void setDistance(double newDistance);
 
     private:
         DENG2_PRIVATE(d)
@@ -64,20 +67,19 @@ public:
      */
     SkyFixEdge(HEdge &hedge, FixType fixType, int edge, float materialOffsetS = 0);
 
-    void prepare();
-
+    /// Implement IEdge.
     bool isValid() const;
 
-    Vector2d const &origin() const;
-
+    /// Implement IEdge.
     Intercept const &from() const;
 
+    /// Implement IEdge.
     Intercept const &to() const;
+
+    Intercept const &at(int index) const;
 
     inline Intercept const &bottom() const { return from(); }
     inline Intercept const &top() const { return to(); }
-
-    Vector2f const &materialOrigin() const;
 
 private:
     DENG2_PRIVATE(d)

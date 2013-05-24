@@ -78,7 +78,7 @@ void SkyFixEdge::Intercept::setDistance(coord_t distance)
 
 Vector3d SkyFixEdge::Intercept::origin() const
 {
-    return Vector3d(d->owner.origin(), d->distance);
+    return Vector3d(d->owner.origin, d->distance);
 }
 
 DENG2_PIMPL(SkyFixEdge)
@@ -89,17 +89,15 @@ DENG2_PIMPL(SkyFixEdge)
 
     Intercept bottom;
     Intercept top;
-    Vector2f materialOrigin;
     bool isValid;
 
-    Instance(Public *i, HEdge &hedge, FixType fixType, int edge, float materialOffsetS)
+    Instance(Public *i, HEdge &hedge, FixType fixType, int edge)
         : Base(i),
           hedge(&hedge),
           fixType(fixType),
           edge(edge),
           bottom(*i),
           top(*i),
-          materialOrigin(materialOffsetS, 0),
           isValid(false)
     {}
 
@@ -156,52 +154,52 @@ DENG2_PIMPL(SkyFixEdge)
 
         return (planeZ > skyZ);
     }
+
+    void prepare()
+    {
+        if(!wallSectionNeedsSkyFix())
+        {
+            isValid = false;
+            return;
+        }
+
+        Sector const *frontSec = hedge->sectorPtr();
+        Sector const *backSec  = hedge->twin().hasBspLeaf() && !hedge->twin().bspLeaf().isDegenerate()? hedge->twin().sectorPtr() : 0;
+        Plane const *ffloor = &frontSec->floor();
+        Plane const *fceil  = &frontSec->ceiling();
+        Plane const *bceil  = backSec? &backSec->ceiling() : 0;
+        Plane const *bfloor = backSec? &backSec->floor()   : 0;
+
+        bottom.setDistance(0);
+        top.setDistance(0);
+
+        if(fixType == Upper)
+        {
+            top.setDistance(skyFixCeilZ(fceil, bceil));
+            bottom.setDistance(de::max((backSec && bceil->surface().hasSkyMaskedMaterial() )? bceil->visHeight() : fceil->visHeight(),  ffloor->visHeight()));
+        }
+        else
+        {
+            top.setDistance(de::min((backSec && bfloor->surface().hasSkyMaskedMaterial())? bfloor->visHeight() : ffloor->visHeight(), fceil->visHeight()));
+            bottom.setDistance(skyFixFloorZ(ffloor, bfloor));
+        }
+
+        isValid = bottom < top;
+    }
 };
 
 SkyFixEdge::SkyFixEdge(HEdge &hedge, FixType fixType, int edge, float materialOffsetS)
-    : d(new Instance(this, hedge, fixType, edge, materialOffsetS))
-{}
-
-void SkyFixEdge::prepare()
+    : WorldEdge(EdgeAttribs(edge? hedge.twin().origin() : hedge.origin(),
+                            Vector2f(materialOffsetS, 0))),
+      d(new Instance(this, hedge, fixType, edge))
 {
-    if(!d->wallSectionNeedsSkyFix())
-    {
-        d->isValid = false;
-        return;
-    }
-
-    Sector const *frontSec = d->hedge->sectorPtr();
-    Sector const *backSec  = d->hedge->twin().hasBspLeaf() && !d->hedge->twin().bspLeaf().isDegenerate()? d->hedge->twin().sectorPtr() : 0;
-    Plane const *ffloor = &frontSec->floor();
-    Plane const *fceil  = &frontSec->ceiling();
-    Plane const *bceil  = backSec? &backSec->ceiling() : 0;
-    Plane const *bfloor = backSec? &backSec->floor()   : 0;
-
-    d->bottom.setDistance(0);
-    d->top.setDistance(0);
-
-    if(d->fixType == Upper)
-    {
-        d->top.setDistance(skyFixCeilZ(fceil, bceil));
-        d->bottom.setDistance(de::max((backSec && bceil->surface().hasSkyMaskedMaterial() )? bceil->visHeight() : fceil->visHeight(),  ffloor->visHeight()));
-    }
-    else
-    {
-        d->top.setDistance(de::min((backSec && bfloor->surface().hasSkyMaskedMaterial())? bfloor->visHeight() : ffloor->visHeight(), fceil->visHeight()));
-        d->bottom.setDistance(skyFixFloorZ(ffloor, bfloor));
-    }
-
-    d->isValid = d->bottom < d->top;
+    /// @todo Defer until necessary.
+    d->prepare();
 }
 
 bool SkyFixEdge::isValid() const
 {
     return d->isValid;
-}
-
-Vector2d const &SkyFixEdge::origin() const
-{
-    return d->edge? d->hedge->twin().origin() : d->hedge->origin();
 }
 
 SkyFixEdge::Intercept const &SkyFixEdge::from() const
@@ -212,11 +210,6 @@ SkyFixEdge::Intercept const &SkyFixEdge::from() const
 SkyFixEdge::Intercept const &SkyFixEdge::to() const
 {
     return d->top;
-}
-
-Vector2f const &SkyFixEdge::materialOrigin() const
-{
-    return d->materialOrigin;
 }
 
 } // namespace de

@@ -32,6 +32,8 @@ namespace de {
 /**
  * Abstract interface for a component that can be interpreted as an "edge"
  * geometry.
+ *
+ * @ingroup math
  */
 class IEdge
 {
@@ -58,9 +60,62 @@ public:
     virtual IIntercept const &from() const = 0;
 
     virtual IIntercept const &to() const = 0;
-
-    virtual Vector2f const &materialOrigin() const = 0;
 };
+
+} // namespace de
+
+namespace de {
+
+/**
+ * @ingroup world
+ */
+struct EdgeAttribs
+{
+    Vector2d origin;
+    Vector2f materialOrigin;
+    Vector3f normal;
+
+    EdgeAttribs(Vector2d const &origin        = Vector2d(),
+                Vector2f const materialOrigin = Vector2f(),
+                Vector3f const &normal        = Vector3f())
+        : origin(origin),
+          materialOrigin(materialOrigin),
+          normal(normal)
+    {}
+};
+
+} // namespace de
+
+namespace de {
+
+/**
+ * @ingroup render
+ */
+class AbstractEdge : public EdgeAttribs, public IEdge
+{
+public:
+    typedef IIntercept Intercept;
+
+public:
+    AbstractEdge(EdgeAttribs const &attribs = EdgeAttribs())
+        : EdgeAttribs(attribs)
+    {}
+
+    virtual ~AbstractEdge() {}
+};
+
+} // namespace de
+
+namespace de {
+
+/**
+ * @ingroup world
+ */
+typedef AbstractEdge WorldEdge;
+
+} // namespace de
+
+namespace de {
 
 typedef QVarLengthArray<rvertex_t, 24> PositionBuffer;
 typedef QVarLengthArray<rtexcoord_t, 24> TexCoordBuffer;
@@ -112,7 +167,7 @@ public:
      *
      * @param edge  Edge geometry to extend with.
      */
-    void extend(IEdge &edge);
+    void extend(AbstractEdge &edge);
 
     /**
      * Submit an edge geometry to extend the current triangle strip geometry.
@@ -123,7 +178,7 @@ public:
      *
      * @see extend()
      */
-    inline TriangleStripBuilder &operator << (IEdge &edge) {
+    inline TriangleStripBuilder &operator << (AbstractEdge &edge) {
         extend(edge);
         return *this;
     }

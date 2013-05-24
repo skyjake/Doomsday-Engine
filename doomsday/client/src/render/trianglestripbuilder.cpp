@@ -77,13 +77,13 @@ void TriangleStripBuilder::begin(ClockDirection direction, int reserveElements)
     d->texcoords.reset();
 }
 
-void TriangleStripBuilder::extend(IEdge &edge)
+void TriangleStripBuilder::extend(AbstractEdge &edge)
 {
     // Silently ignore invalid edges.
     if(!edge.isValid()) return;
 
-    IEdge::IIntercept const &from = edge.from();
-    IEdge::IIntercept const &to   = edge.to();
+    AbstractEdge::Intercept const &from = edge.from();
+    AbstractEdge::Intercept const &to   = edge.to();
 
     d->reserveElements(2);
 
@@ -94,9 +94,9 @@ void TriangleStripBuilder::extend(IEdge &edge)
     {
         coord_t edgeLength = to.distance() - from.distance();
 
-        d->texcoords->append(rtexcoord_s(edge.materialOrigin() +
+        d->texcoords->append(rtexcoord_s(edge.materialOrigin +
                                          Vector2f(0, (d->direction == Anticlockwise? 0 : edgeLength))));
-        d->texcoords->append(rtexcoord_s(edge.materialOrigin() +
+        d->texcoords->append(rtexcoord_s(edge.materialOrigin +
                                          Vector2f(0, (d->direction == Anticlockwise? edgeLength : 0))));
     }
 }

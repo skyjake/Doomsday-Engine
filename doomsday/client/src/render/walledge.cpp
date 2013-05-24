@@ -80,7 +80,7 @@ void WallEdge::Intercept::setDistance(double newDistance)
 
 Vector3d WallEdge::Intercept::origin() const
 {
-    return Vector3d(d->owner.origin(), distance());
+    return Vector3d(d->owner.origin, distance());
 }
 
 DENG2_PIMPL(WallEdge), public IHPlane
@@ -93,8 +93,6 @@ DENG2_PIMPL(WallEdge), public IHPlane
     Vertex *lineVertex;
 
     bool isValid;
-    Vector2f materialOrigin;
-    Vector3f edgeNormal;
 
     /// Intercepts for the bottom and top edges are allocated with "this".
     WallEdge::Intercept bottom;
@@ -142,8 +140,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
     {
         coord_t lo, hi;
         R_SideSectionCoords(*mapSide, spec.section, spec.flags.testFlag(WallSpec::SkyClip),
-                            &lo, &hi, &materialOrigin);
-
+                            &lo, &hi, &self.materialOrigin);
         bottom.setDistance(lo);
         top.setDistance(hi);
 
@@ -420,7 +417,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
     {
         if(!isValid) return;
 
-        materialOrigin.x += lineOffset;
+        self.materialOrigin.x += lineOffset;
 
         coord_t const lo = bottom.distance();
         coord_t const hi = top.distance();
@@ -457,17 +454,18 @@ DENG2_PIMPL(WallEdge), public IHPlane
         if(blendSurface && shouldSmoothNormals(surface, *blendSurface, angleDiff))
         {
             // Average normals.
-            edgeNormal = Vector3f(surface.normal() + blendSurface->normal()) / 2;
+            self.normal = Vector3f(surface.normal() + blendSurface->normal()) / 2;
         }
         else
         {
-            edgeNormal = surface.normal();
+            self.normal = surface.normal();
         }
     }
 };
 
 WallEdge::WallEdge(WallSpec const &spec, HEdge &hedge, int edge)
-    : d(new Instance(this, spec, &hedge.lineSide(), edge,
+    : WorldEdge(EdgeAttribs((edge? hedge.twin() : hedge.vertex()).origin())),
+      d(new Instance(this, spec, &hedge.lineSide(), edge,
                            hedge.lineOffset() + (edge? hedge.length() : 0),
                            edge? &hedge.twin().vertex() : &hedge.vertex()))
 {
@@ -487,19 +485,9 @@ Line::Side &WallEdge::mapSide() const
     return *d->mapSide;
 }
 
-Surface &WallEdge::surface() const
-{
-    return d->mapSide->surface(d->spec.section);
-}
-
 int WallEdge::section() const
 {
     return d->spec.section;
-}
-
-Vector2d const &WallEdge::origin() const
-{
-    return d->partition().origin;
 }
 
 coord_t WallEdge::mapLineOffset() const
@@ -551,16 +539,4 @@ WallEdge::Intercepts const &WallEdge::intercepts() const
 WallSpec const &WallEdge::spec() const
 {
     return d->spec;
-}
-
-Vector2f const &WallEdge::materialOrigin() const
-{
-    d->verifyValid();
-    return d->materialOrigin;
-}
-
-Vector3f const &WallEdge::normal() const
-{
-    d->verifyValid();
-    return d->edgeNormal;
 }
