@@ -35,29 +35,35 @@ public:
     enum Flag
     {
         /// Force the geometry to be opaque, irrespective of material opacity.
-        ForceOpaque           = 0x01,
+        ForceOpaque           = 0x001,
+
+        /// Fade out the geometry the closer it is to the viewer.
+        NearFade              = 0x002,
 
         /**
          * Clip the geometry if the neighbor plane surface relevant for the
-         * specified section (i.e., the floor if @c Side::Bottom or ceiling
-         * if @c Side::Top) has a sky-masked material bound to it.
+         * specified section (i.e., the floor if @c Side::Bottom or ceiling if
+         * @c Side::Top) has a sky-masked material bound to it.
          */
-        SkyClip               = 0x02,
+        SkyClip               = 0x004,
+
+        /// Sort the dynamic light projections by descending luminosity.
+        SortDynLights         = 0x008,
 
         /// Do not generate geometry for dynamic lights.
-        NoDynLights           = 0x04,
+        NoDynLights           = 0x010,
 
         /// Do not generate geometry for dynamic (mobj) shadows.
-        NoDynShadows          = 0x08,
+        NoDynShadows          = 0x020,
 
         /// Do not generate geometry for faked radiosity.
-        NoFakeRadio           = 0x10,
+        NoFakeRadio           = 0x040,
 
         /// Do not apply angle based light level deltas.
-        NoLightDeltas         = 0x20,
+        NoLightDeltas         = 0x080,
 
         /// Do not smooth edge normals.
-        NoEdgeNormalSmoothing = 0x40,
+        NoEdgeNormalSmoothing = 0x100,
 
         DefaultFlags = ForceOpaque | SkyClip
     };

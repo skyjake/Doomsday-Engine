@@ -17,6 +17,9 @@
  * 02110-1301 USA</small>
  */
 
+#include "de_base.h"
+
+#include "map/p_players.h" // viewPlayer
 #include "render/rend_main.h"
 
 #include "render/walledge.h"
@@ -42,10 +45,21 @@ static bool useWallSectionLightLevelDeltas(Line::Side const &side, int section)
 
 WallSpec WallSpec::fromMapSide(Line::Side const &side, int section) // static
 {
+    bool const isTwoSidedMiddle = (section == Line::Side::Middle && !side.considerOneSided());
+
     WallSpec spec(section);
 
-    if(side.line().definesPolyobj() || (section == Line::Side::Middle && !side.considerOneSided()))
+    if(side.line().definesPolyobj() || isTwoSidedMiddle)
         spec.flags &= ~WallSpec::ForceOpaque;
+
+    if(isTwoSidedMiddle)
+    {
+        if(viewPlayer && ((viewPlayer->shared.flags & (DDPF_NOCLIP|DDPF_CAMERA)) ||
+                           !side.line().isFlagged(DDLF_BLOCKING)))
+            spec.flags |= WallSpec::NearFade;
+
+        spec.flags |= WallSpec::SortDynLights;
+    }
 
     // Suppress the sky clipping in debug mode.
     if(devRendSkyMode)

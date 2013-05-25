@@ -1333,38 +1333,46 @@ static uint projectSurfaceShadows(Surface &surface, float glowStrength,
                                      surface.tangent(), surface.bitangent(), surface.normal());
 }
 
-static bool writeWallGeometry(WallEdge **edges, BiasSurface &biasSurface,
-    MapElement &mapElement, coord_t *bottomZ = 0, coord_t *topZ = 0)
+static void writeWallGeometry(WallEdge **edges, BiasSurface &biasSurface,
+    MapElement &biasSurfaceOwner,
+    coord_t *retBottomZ = 0, coord_t *retTopZ = 0, bool *retWroteOpaque = 0)
 {
     BspLeaf *bspLeaf = currentBspLeaf;
     DENG_ASSERT(!isNullLeaf(bspLeaf));
 
-    WallEdge const &leftEdge  = *edges[0];
-    WallEdge const &rightEdge = *edges[1];
+    if(retBottomZ)     *retBottomZ     = 0;
+    if(retTopZ)        *retTopZ        = 0;
+    if(retWroteOpaque) *retWroteOpaque = false;
+
+    WallEdge const &leftEdge    = *edges[0];
+    WallEdge const &rightEdge   = *edges[1];
 
     if(!leftEdge.isValid() || !rightEdge.isValid() ||
        de::fequal(leftEdge.bottom().distance(), rightEdge.top().distance()))
-        return false;
+        return;
 
-    if(bottomZ) *bottomZ = leftEdge.bottom().distance();
-    if(topZ)    *topZ    = rightEdge.top().distance();
-
-    WallSpec const &wallSpec = leftEdge.spec();
-    Line::Side &side = leftEdge.mapSide();
-    Surface &surface = leftEdge.surface();
-
-    bool const isTwoSidedMiddle =
-        (wallSpec.section == Line::Side::Middle && !side.considerOneSided());
+    WallSpec const &wallSpec    = leftEdge.spec();
+    Line::Side &side            = leftEdge.mapSide();
+    Surface &surface            = side.surface(wallSpec.section);
+    bool const isTwoSidedMiddle = (wallSpec.section == Line::Side::Middle && !side.considerOneSided());
 
     float opacity = surface.opacity();
+    if(!(opacity > .001f))
+        return;
+
+    // Determine which Material to use.
+    /// @todo Should have chosen by now...
+    Material *material = chooseSurfaceMaterialForTexturingMode(surface);
+
+    // A drawable material is required.
+    if(!material || !material->isDrawable())
+        return;
 
     // Apply a fade out when the viewer is near to this geometry?
     bool didNearFade = false;
-    if(isTwoSidedMiddle &&
-       ((viewPlayer->shared.flags & (DDPF_NOCLIP|DDPF_CAMERA)) ||
-            !(side.line().isFlagged(DDLF_BLOCKING))) &&
-       (vOrigin[VY] > leftEdge.bottom().distance() &&
-            vOrigin[VY] < rightEdge.top().distance()))
+
+    if(wallSpec.flags.testFlag(WallSpec::NearFade) &&
+       (vOrigin[VY] > leftEdge.bottom().distance() && vOrigin[VY] < rightEdge.top().distance()))
     {
         mobj_t const *mo = viewPlayer->shared.mo;
 
@@ -1401,20 +1409,13 @@ static bool writeWallGeometry(WallEdge **edges, BiasSurface &biasSurface,
         }
     }
 
-    if(opacity <= 0) return false;
-
-    // Determine which Material to use.
-    Material *material = chooseSurfaceMaterialForTexturingMode(surface);
-
-    // Surfaces without a drawable material are never rendered.
-    if(!material || !material->isDrawable())
-        return false;
+    if(!(opacity > .001f))
+        return;
 
     Vector2f materialScale((surface.flags() & DDSUF_MATERIAL_FLIPH)? -1 : 1,
                            (surface.flags() & DDSUF_MATERIAL_FLIPV)? -1 : 1);
 
-    Vector3d texTL(leftEdge.top().origin());
-    Vector3d texBR(rightEdge.bottom().origin());
+    Vector3d texQuad[] = { leftEdge.top().origin(), rightEdge.bottom().origin() };
 
     // Calculate the light level deltas for this wall section?
     float leftLightLevelDelta = 0, rightLightLevelDelta = 0;
@@ -1428,12 +1429,12 @@ static bool writeWallGeometry(WallEdge **edges, BiasSurface &biasSurface,
     parm.flags               = RPF_DEFAULT;
     parm.forceOpaque         = wallSpec.flags.testFlag(WallSpec::ForceOpaque);
     parm.alpha               = parm.forceOpaque? 1 : opacity;
-    parm.mapElement          = &mapElement;
+    parm.mapElement          = &biasSurfaceOwner;
     parm.elmIdx              = wallSpec.section;
     parm.bsuf                = &biasSurface;
     parm.normal              = &surface.normal();
-    parm.texTL               = &texTL;
-    parm.texBR               = &texBR;
+    parm.texTL               = &texQuad[0];
+    parm.texBR               = &texQuad[1];
     parm.surfaceLightLevelDL = leftLightLevelDelta;
     parm.surfaceLightLevelDR = rightLightLevelDelta;
     parm.blendMode           = BM_NORMAL;
@@ -1486,15 +1487,15 @@ static bool writeWallGeometry(WallEdge **edges, BiasSurface &biasSurface,
     if(!wallSpec.flags.testFlag(WallSpec::NoDynLights) &&
        !(parm.flags & RPF_SKYMASK))
     {
-        parm.lightListIdx = projectSurfaceLights(surface, parm.glowing, texTL, texBR,
-                                                 isTwoSidedMiddle);
+        parm.lightListIdx = projectSurfaceLights(surface, parm.glowing, texQuad[0], texQuad[1],
+                                                 wallSpec.flags.testFlag(WallSpec::SortDynLights));
     }
 
     // Project dynamic shadows?
     if(!wallSpec.flags.testFlag(WallSpec::NoDynShadows) &&
        !(parm.flags & RPF_SKYMASK))
     {
-        parm.shadowListIdx = projectSurfaceShadows(surface, parm.glowing, texTL, texBR);
+        parm.shadowListIdx = projectSurfaceShadows(surface, parm.glowing, texQuad[0], texQuad[1]);
     }
 
     /*
@@ -1569,7 +1570,9 @@ static bool writeWallGeometry(WallEdge **edges, BiasSurface &biasSurface,
 
     R_FreeRendVertices(rvertices);
 
-    return opaque && !didNearFade;
+    if(retBottomZ)     *retBottomZ     = leftEdge.bottom().distance();
+    if(retTopZ)        *retTopZ        = rightEdge.top().distance();
+    if(retWroteOpaque) *retWroteOpaque = opaque && !didNearFade;
 }
 
 static void writeWallSection(HEdge &hedge, int section,
@@ -1585,9 +1588,7 @@ static void writeWallSection(HEdge &hedge, int section,
     WallEdge rightEdge(spec, hedge, Line::To);
     WallEdge *edges[] = { &leftEdge, &rightEdge };
 
-    bool wroteOpaque = writeWallGeometry(edges, biasSurface, hedge, retBottomZ, retTopZ);
-
-    if(retWroteOpaque) *retWroteOpaque = wroteOpaque;
+    writeWallGeometry(edges, biasSurface, hedge, retBottomZ, retTopZ, retWroteOpaque);
 }
 
 /**
