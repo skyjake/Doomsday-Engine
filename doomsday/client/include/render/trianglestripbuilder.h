@@ -48,8 +48,6 @@ public:
         }
 
         virtual coord_t distance() const = 0;
-
-        virtual Vector3d origin() const = 0;
     };
 
 public:
@@ -94,12 +92,18 @@ namespace de {
 class AbstractEdge : public EdgeAttribs, public IEdge
 {
 public:
-    typedef IEvent Event;
-
     typedef int EventIndex;
 
     /// Special identifier used to mark an invalid event index.
     enum { InvalidIndex = -1 };
+
+    class Event : public IEvent
+    {
+    public:
+        virtual ~Event() {}
+
+        virtual Vector3d origin() const = 0;
+    };
 
 public:
     AbstractEdge(EdgeAttribs const &attribs = EdgeAttribs())
@@ -107,6 +111,10 @@ public:
     {}
 
     virtual ~AbstractEdge() {}
+
+    virtual Event const &first() const = 0;
+
+    virtual Event const &last() const = 0;
 };
 
 } // namespace de

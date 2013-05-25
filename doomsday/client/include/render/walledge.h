@@ -54,8 +54,7 @@ public:
     /// Invalid range geometry was found during prepare() @ingroup errors
     DENG2_ERROR(InvalidError);
 
-    class Event : public IEdge::IEvent,
-                  public IHPlane::IIntercept
+    class Event : public WorldEdge::Event, public IHPlane::IIntercept
     {
     public:
         Event(WallEdge &owner, double distance = 0);
@@ -108,14 +107,12 @@ public:
 
     EventIndex lastDivision() const;
 
-    Events const &events() const;
-
     inline Event const &bottom() const { return first(); }
     inline Event const &top() const { return last(); }
 
-    inline Event const &at(EventIndex index) const {
-        return *events().at(index);
-    }
+    Events const &events() const;
+
+    Event const &at(EventIndex index) const;
 
 private:
     DENG2_PRIVATE(d)

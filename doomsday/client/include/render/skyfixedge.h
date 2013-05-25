@@ -40,7 +40,7 @@ public:
         Upper
     };
 
-    class Event : public IEdge::IEvent
+    class Event : public WorldEdge::Event
     {
     public:
         Event(SkyFixEdge &owner, coord_t distance = 0);

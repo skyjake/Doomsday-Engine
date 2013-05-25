@@ -58,7 +58,8 @@ DENG2_PIMPL_NOREF(SkyFixEdge::Event)
 };
 
 SkyFixEdge::Event::Event(SkyFixEdge &owner, coord_t distance)
-    : d(new Instance(owner, distance))
+    : WorldEdge::Event(),
+      d(new Instance(owner, distance))
 {}
 
 bool SkyFixEdge::Event::operator < (Event const &other) const
