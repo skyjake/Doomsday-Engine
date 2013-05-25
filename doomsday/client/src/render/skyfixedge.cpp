@@ -79,7 +79,7 @@ void SkyFixEdge::Event::setDistance(coord_t distance)
 
 Vector3d SkyFixEdge::Event::origin() const
 {
-    return Vector3d(d->owner.origin, d->distance);
+    return Vector3d(d->owner.origin(), d->distance);
 }
 
 DENG2_PIMPL(SkyFixEdge)
@@ -190,12 +190,16 @@ DENG2_PIMPL(SkyFixEdge)
 };
 
 SkyFixEdge::SkyFixEdge(HEdge &hedge, FixType fixType, int edge, float materialOffsetS)
-    : WorldEdge(EdgeAttribs(edge? hedge.twin().origin() : hedge.origin(),
-                            Vector2f(materialOffsetS, 0))),
+    : WorldEdge(EdgeAttribs(Vector2f(materialOffsetS, 0))),
       d(new Instance(this, hedge, fixType, edge))
 {
     /// @todo Defer until necessary.
     d->prepare();
+}
+
+Vector2d const &SkyFixEdge::origin() const
+{
+    return (d->edge? d->hedge->twin() : *d->hedge).origin();
 }
 
 bool SkyFixEdge::isValid() const

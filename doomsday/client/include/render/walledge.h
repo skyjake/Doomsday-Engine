@@ -86,6 +86,11 @@ public:
         return at(index);
     }
 
+    /**
+     * Returns the origin of the edge in the map coordinate space.
+     */
+    Vector2d const &origin() const;
+
     WallSpec const &spec() const;
 
     Line::Side &mapSide() const;

@@ -1301,7 +1301,7 @@ static void wallSectionLightLevelDeltas(WallEdge const &leftEdge, WallEdge const
         // vertical edges of this wall section.
         coord_t const lineLength = leftEdge.mapSide().line().length();
         coord_t const sectionOffset = leftEdge.mapSideOffset();
-        coord_t const sectionWidth = de::abs(Vector2d(rightEdge.origin - leftEdge.origin).length());
+        coord_t const sectionWidth = de::abs(Vector2d(rightEdge.origin() - leftEdge.origin()).length());
 
         float deltaDiff = rightDelta - leftDelta;
         rightDelta = leftDelta + ((sectionOffset + sectionWidth) / lineLength) * deltaDiff;
@@ -1455,7 +1455,7 @@ static void writeWallSection(HEdge &hedge, int section,
         parm.materialScale       = &materialScale;
 
         parm.isWall = true;
-        parm.wall.sectionWidth   = de::abs(Vector2d(rightEdge.origin - leftEdge.origin).length());
+        parm.wall.sectionWidth   = de::abs(Vector2d(rightEdge.origin() - leftEdge.origin()).length());
         parm.wall.leftEdge       = &leftEdge;
         parm.wall.rightEdge      = &rightEdge;
 

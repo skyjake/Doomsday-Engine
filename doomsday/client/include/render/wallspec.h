@@ -62,8 +62,11 @@ public:
         /// Do not apply angle based light level deltas.
         NoLightDeltas         = 0x080,
 
+        /// Do not intercept edges with neighboring geometries.
+        NoEdgeDivisions       = 0x100,
+
         /// Do not smooth edge normals.
-        NoEdgeNormalSmoothing = 0x100,
+        NoEdgeNormalSmoothing = 0x200,
 
         DefaultFlags = ForceOpaque | SkyClip
     };

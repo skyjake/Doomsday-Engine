@@ -1088,7 +1088,7 @@ void Rend_RadioWallSection(WallEdge const &leftEdge, WallEdge const &rightEdge,
 
     coord_t const lineLength    = side.line().length();
     coord_t const sectionOffset = leftEdge.mapSideOffset();
-    coord_t const sectionWidth  = de::abs(Vector2d(rightEdge.origin - leftEdge.origin).length());
+    coord_t const sectionWidth  = de::abs(Vector2d(rightEdge.origin() - leftEdge.origin()).length());
 
     LineSideRadioData &frData = Rend_RadioDataForLineSide(side);
 

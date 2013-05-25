@@ -67,6 +67,11 @@ public:
      */
     SkyFixEdge(HEdge &hedge, FixType fixType, int edge, float materialOffsetS = 0);
 
+    /**
+     * Returns the origin of the edge in the map coordinate space.
+     */
+    Vector2d const &origin() const;
+
     /// Implement IEdge.
     bool isValid() const;
 

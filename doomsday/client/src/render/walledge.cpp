@@ -76,7 +76,7 @@ void WallEdge::Event::setDistance(double newDistance)
 
 Vector3d WallEdge::Event::origin() const
 {
-    return Vector3d(d->owner.origin, distance());
+    return Vector3d(d->owner.origin(), distance());
 }
 
 static bool eventSorter(WorldEdge::Event *a, WorldEdge::Event *b)
@@ -207,7 +207,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
         // Any work to do?
         if(!needSortEvents) return;
 
-        qSort(events.begin(), events.top(), eventSorter);
+        qSort(events.begin(), events.end(), eventSorter);
         needSortEvents = false;
     }
 
@@ -273,13 +273,9 @@ DENG2_PIMPL(WallEdge), public IHPlane
     {
         DENG_ASSERT(top > bottom);
 
-        // Retrieve the bottom owner node.
+        // Retrieve the vertex owner node.
         LineOwner *base = mapSide->line().vertexOwner(*mapVertex);
         if(!base) return;
-
-        // Check for neighborhood division?
-        if(spec.section == Line::Side::Middle && mapSide->back().hasSector())
-            return;
 
         Sector const *frontSec = mapSide->sectorPtr();
         LineOwner *own = base;
@@ -433,7 +429,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
         coord_t const hi = top.distance();
 
         // Add intecepts for neighbor planes?
-        if(!de::fequal(hi, lo))
+        if(!spec.flags.testFlag(WallSpec::NoEdgeDivisions) && !de::fequal(hi, lo))
         {
             configure(Partition(mapVertex->origin(), Vector2d(0, hi - lo)));
 
@@ -467,8 +463,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
 };
 
 WallEdge::WallEdge(WallSpec const &spec, HEdge &hedge, int edge)
-    : WorldEdge(EdgeAttribs((edge? hedge.twin() : hedge.vertex()).origin(),
-                            Vector2f(hedge.lineOffset() + (edge? hedge.length() : 0), 0))),
+    : WorldEdge(EdgeAttribs(Vector2f(hedge.lineOffset() + (edge? hedge.length() : 0), 0))),
       d(new Instance(this, spec, &hedge.lineSide(), edge,
                            hedge.lineOffset() + (edge? hedge.length() : 0),
                            edge? &hedge.twin().vertex() : &hedge.vertex()))
@@ -479,9 +474,9 @@ WallEdge::WallEdge(WallSpec const &spec, HEdge &hedge, int edge)
     d->prepare();
 }
 
-bool WallEdge::isValid() const
+Vector2d const &WallEdge::origin() const
 {
-    return d->isValid;
+    return d->mapVertex->origin();
 }
 
 WallSpec const &WallEdge::spec() const
@@ -523,6 +518,11 @@ WallEdge::Events const &WallEdge::events() const
 WallEdge::Event const &WallEdge::at(EventIndex index) const
 {
     return *events().at(index);
+}
+
+bool WallEdge::isValid() const
+{
+    return d->isValid;
 }
 
 WallEdge::Event const &WallEdge::first() const

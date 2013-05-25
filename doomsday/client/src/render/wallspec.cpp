@@ -50,7 +50,10 @@ WallSpec WallSpec::fromMapSide(Line::Side const &side, int section) // static
     WallSpec spec(section);
 
     if(side.line().definesPolyobj() || isTwoSidedMiddle)
+    {
         spec.flags &= ~WallSpec::ForceOpaque;
+        spec.flags |= WallSpec::NoEdgeDivisions;
+    }
 
     if(isTwoSidedMiddle)
     {
