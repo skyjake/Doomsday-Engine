@@ -1202,6 +1202,50 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
             !(p.alpha < 1 || !ms.isOpaque() || p.blendMode > 0));
 }
 
+/**
+ * Fade the specified @a opacity value to fully transparent the closer the view
+ * player is to the geometry.
+ *
+ * @note When the viewer is close enough we should NOT try to occlude with this
+ * section in the angle clipper, otherwise HOM would occur when directly on top
+ * of the wall (e.g., passing through an opaque waterfall).
+ *
+ * @return  @c true= fading was applied (see above note), otherwise @c false.
+ */
+static bool nearFadeOpacity(WallEdge const &leftEdge, WallEdge const &rightEdge,
+                            float &opacity)
+{
+    if(vOrigin[VY] < leftEdge.bottom().distance() || vOrigin[VY] > rightEdge.top().distance())
+        return false;
+
+    mobj_t const *mo = viewPlayer->shared.mo;
+
+    Line const &line = leftEdge.mapSide().line();
+    coord_t linePoint[2]     = { line.fromOrigin().x, line.fromOrigin().y };
+    coord_t lineDirection[2] = {  line.direction().x,  line.direction().y };
+    vec2d_t result;
+    double pos = V2d_ProjectOnLine(result, mo->origin, linePoint, lineDirection);
+
+    if(!(pos > 0 && pos < 1))
+        return false;
+
+    coord_t const maxDistance = mo->radius * .8f;
+
+    Vector2d delta = Vector2d(result) - Vector2d(mo->origin);
+    coord_t distance = delta.length();
+
+    if(de::abs(distance) > maxDistance)
+        return false;
+
+    if(distance > 0)
+    {
+        opacity = (opacity / maxDistance) * distance;
+        opacity = de::clamp(0.f, opacity, 1.f);
+    }
+
+    return true;
+}
+
 static Material *chooseSurfaceMaterialForTexturingMode(Surface const &surface)
 {
     switch(renderTextures)
@@ -1357,7 +1401,7 @@ static void writeWallGeometry(WallEdge **edges, BiasSurface &biasSurface,
     bool const isTwoSidedMiddle = (wallSpec.section == Line::Side::Middle && !side.considerOneSided());
 
     float opacity = surface.opacity();
-    if(!(opacity > .001f))
+    if(opacity < .001f)
         return;
 
     // Determine which Material to use.
@@ -1370,209 +1414,172 @@ static void writeWallGeometry(WallEdge **edges, BiasSurface &biasSurface,
 
     // Apply a fade out when the viewer is near to this geometry?
     bool didNearFade = false;
-
-    if(wallSpec.flags.testFlag(WallSpec::NearFade) &&
-       (vOrigin[VY] > leftEdge.bottom().distance() && vOrigin[VY] < rightEdge.top().distance()))
+    if(wallSpec.flags.testFlag(WallSpec::NearFade))
     {
-        mobj_t const *mo = viewPlayer->shared.mo;
+        didNearFade = nearFadeOpacity(leftEdge, rightEdge, opacity);
+    }
 
-        Line const &line = side.line();
-        coord_t linePoint[2]     = { line.fromOrigin().x, line.fromOrigin().y };
-        coord_t lineDirection[2] = {  line.direction().x,  line.direction().y };
-        vec2d_t result;
-        double pos = V2d_ProjectOnLine(result, mo->origin, linePoint, lineDirection);
+    bool wroteOpaque = false;
+    if(opacity >= .001f)
+    {
+        bool const skyMasked = material->isSkyMasked() && !devRendSkyMode;
 
-        if(pos > 0 && pos < 1)
+        MaterialSnapshot const &ms = material->prepare(mapSurfaceMaterialSpec(GL_REPEAT, GL_REPEAT));
+
+        Vector2f const materialScale((surface.flags() & DDSUF_MATERIAL_FLIPH)? -1 : 1,
+                                     (surface.flags() & DDSUF_MATERIAL_FLIPV)? -1 : 1);
+
+        Vector3d const texQuad[] = { leftEdge.top().origin(), rightEdge.bottom().origin() };
+
+        rvertex_t *rvertices;
+        rendworldpoly_params_t parm; zap(parm);
+
+        parm.flags               = RPF_DEFAULT | (skyMasked? RPF_SKYMASK : 0);
+        parm.forceOpaque         = wallSpec.flags.testFlag(WallSpec::ForceOpaque);
+        parm.alpha               = parm.forceOpaque? 1 : opacity;
+        parm.mapElement          = &biasSurfaceOwner;
+        parm.elmIdx              = wallSpec.section;
+        parm.bsuf                = &biasSurface;
+        parm.normal              = &surface.normal();
+        parm.texTL               = &texQuad[0];
+        parm.texBR               = &texQuad[1];
+
+        // Calculate the light level deltas for this wall section?
+        if(!wallSpec.flags.testFlag(WallSpec::NoLightDeltas))
         {
-            /**
-             * Fade out the closer the viewPlayer gets and clamp.
-             *
-             * @note When the viewer is close enough we should NOT try to
-             * occlude with this section in the angle clipper, otherwise HOM
-             * would occur when directly on top of the wall (e.g., passing
-             * through an opaque waterfall).
-             */
-            coord_t const minDistance = mo->radius * .8f;
+            wallSectionLightLevelDeltas(leftEdge, rightEdge,
+                                        parm.surfaceLightLevelDL, parm.surfaceLightLevelDR);
+        }
 
-            Vector2d delta = Vector2d(result) - Vector2d(mo->origin);
-            coord_t distance = delta.length();
+        parm.blendMode           = BM_NORMAL;
+        parm.materialOrigin      = &leftEdge.materialOrigin;
+        parm.materialScale       = &materialScale;
 
-            if(de::abs(distance) < minDistance)
+        parm.isWall = true;
+        parm.wall.sectionWidth   = de::abs(Vector2d(rightEdge.origin - leftEdge.origin).length());
+        parm.wall.leftEdge       = &leftEdge;
+        parm.wall.rightEdge      = &rightEdge;
+
+        if(!skyMasked)
+        {
+            if(isTwoSidedMiddle)
             {
-                if(distance > 0)
+                parm.blendMode = surface.blendMode();
+                if(parm.blendMode == BM_NORMAL && noSpriteTrans)
+                    parm.blendMode = BM_ZEROALPHA; // "no translucency" mode
+            }
+
+            if(glowFactor > .0001f)
+            {
+                if(material == surface.materialPtr())
                 {
-                    opacity = (opacity / minDistance) * distance;
-                    opacity = de::clamp(0.f, opacity, 1.f);
+                    parm.glowing = ms.glowStrength();
                 }
-                didNearFade = true;
+                else
+                {
+                    Material *actualMaterial =
+                        surface.hasMaterial()? surface.materialPtr()
+                                             : &App_Materials().find(de::Uri("System", Path("missing"))).material();
+
+                    MaterialSnapshot const &ms = actualMaterial->prepare(Rend_MapSurfaceMaterialSpec());
+                    parm.glowing = ms.glowStrength();
+                }
+
+                parm.glowing *= glowFactor; // Global scale factor.
             }
-        }
-    }
 
-    if(!(opacity > .001f))
-        return;
-
-    Vector2f materialScale((surface.flags() & DDSUF_MATERIAL_FLIPH)? -1 : 1,
-                           (surface.flags() & DDSUF_MATERIAL_FLIPV)? -1 : 1);
-
-    Vector3d texQuad[] = { leftEdge.top().origin(), rightEdge.bottom().origin() };
-
-    // Calculate the light level deltas for this wall section?
-    float leftLightLevelDelta = 0, rightLightLevelDelta = 0;
-    if(!wallSpec.flags.testFlag(WallSpec::NoLightDeltas))
-    {
-        wallSectionLightLevelDeltas(leftEdge, rightEdge, leftLightLevelDelta, rightLightLevelDelta);
-    }
-
-    rendworldpoly_params_t parm; zap(parm);
-
-    parm.flags               = RPF_DEFAULT;
-    parm.forceOpaque         = wallSpec.flags.testFlag(WallSpec::ForceOpaque);
-    parm.alpha               = parm.forceOpaque? 1 : opacity;
-    parm.mapElement          = &biasSurfaceOwner;
-    parm.elmIdx              = wallSpec.section;
-    parm.bsuf                = &biasSurface;
-    parm.normal              = &surface.normal();
-    parm.texTL               = &texQuad[0];
-    parm.texBR               = &texQuad[1];
-    parm.surfaceLightLevelDL = leftLightLevelDelta;
-    parm.surfaceLightLevelDR = rightLightLevelDelta;
-    parm.blendMode           = BM_NORMAL;
-    parm.materialOrigin      = &leftEdge.materialOrigin;
-    parm.materialScale       = &materialScale;
-
-    parm.isWall = true;
-    parm.wall.sectionWidth   = de::abs(Vector2d(rightEdge.origin - leftEdge.origin).length());
-    parm.wall.leftEdge       = &leftEdge;
-    parm.wall.rightEdge      = &rightEdge;
-
-    MaterialSnapshot const &ms = material->prepare(mapSurfaceMaterialSpec(GL_REPEAT, GL_REPEAT));
-
-    // Fill in the remaining params data.
-    if(material->isSkyMasked() && !devRendSkyMode)
-    {
-        parm.flags |= RPF_SKYMASK;
-    }
-    else
-    {
-        if(isTwoSidedMiddle)
-        {
-            parm.blendMode = surface.blendMode();
-            if(parm.blendMode == BM_NORMAL && noSpriteTrans)
-                parm.blendMode = BM_ZEROALPHA; // "no translucency" mode
+            side.chooseSurfaceTintColors(wallSpec.section, &parm.surfaceColor, &parm.wall.surfaceColor2);
         }
 
-        if(glowFactor > .0001f)
+        // Project dynamic Lights?
+        if(!wallSpec.flags.testFlag(WallSpec::NoDynLights) && !skyMasked)
         {
-            if(material == surface.materialPtr())
+            parm.lightListIdx =
+                projectSurfaceLights(surface, parm.glowing, texQuad[0], texQuad[1],
+                                     wallSpec.flags.testFlag(WallSpec::SortDynLights));
+        }
+
+        // Project dynamic shadows?
+        if(!wallSpec.flags.testFlag(WallSpec::NoDynShadows) && !skyMasked)
+        {
+            parm.shadowListIdx =
+                projectSurfaceShadows(surface, parm.glowing, texQuad[0], texQuad[1]);
+        }
+
+        /*
+         * Geometry write/drawing begins.
+         */
+
+        if(isTwoSidedMiddle && side.sectorPtr() != currentBspLeaf->sectorPtr())
+        {
+            // Temporarily modify the draw state.
+            currentSectorLightColor = Rend_SectorLightColor(side.sector());
+            currentSectorLightLevel = side.sector().lightLevel();
+        }
+
+        // Allocate enough vertices for the divisions too.
+        if(leftEdge.divisionCount() || rightEdge.divisionCount())
+        {
+            // Use two fans.
+            rvertices = R_AllocRendVertices(3 + leftEdge.divisionCount() +
+                                            3 + rightEdge.divisionCount());
+        }
+        else
+        {
+            // Use a quad.
+            rvertices = R_AllocRendVertices(4);
+        }
+
+        // Vertex coords.
+        // Bottom Left.
+        V3f_Set(rvertices[0].pos, leftEdge.bottom().origin().x,
+                                  leftEdge.bottom().origin().y,
+                                  leftEdge.bottom().origin().z);
+        // Top Left.
+        V3f_Set(rvertices[1].pos, leftEdge.top().origin().x,
+                                  leftEdge.top().origin().y,
+                                  leftEdge.top().origin().z);
+        // Bottom Right.
+        V3f_Set(rvertices[2].pos, rightEdge.bottom().origin().x,
+                                  rightEdge.bottom().origin().y,
+                                  rightEdge.bottom().origin().z);
+        // Top Right.
+        V3f_Set(rvertices[3].pos, rightEdge.top().origin().x,
+                                  rightEdge.top().origin().y,
+                                  rightEdge.top().origin().z);
+
+        // Draw this section.
+        wroteOpaque = renderWorldPoly(rvertices, 4, parm, ms);
+        if(wroteOpaque)
+        {
+            // Render FakeRadio for this section?
+            if(!wallSpec.flags.testFlag(WallSpec::NoFakeRadio) && !skyMasked &&
+               !(parm.glowing > 0) && currentSectorLightLevel > 0)
             {
-                parm.glowing = ms.glowStrength();
-            }
-            else
-            {
-                Material *actualMaterial = surface.hasMaterial()? surface.materialPtr()
-                                                                : &App_Materials().find(de::Uri("System", Path("missing"))).material();
+                Rend_RadioUpdateForLineSide(side);
 
-                MaterialSnapshot const &ms = actualMaterial->prepare(Rend_MapSurfaceMaterialSpec());
-                parm.glowing = ms.glowStrength();
-            }
+                // Determine the shadow properties.
+                /// @todo Make cvars out of constants.
+                float shadowSize = 2 * (8 + 16 - currentSectorLightLevel * 16);
+                float shadowDark = Rend_RadioCalcShadowDarkness(currentSectorLightLevel);
 
-            parm.glowing *= glowFactor; // Global scale factor.
+                Rend_RadioWallSection(leftEdge, rightEdge, shadowDark, shadowSize);
+            }
         }
 
-        side.chooseSurfaceTintColors(wallSpec.section, &parm.surfaceColor, &parm.wall.surfaceColor2);
-    }
-
-    // Project dynamic Lights?
-    if(!wallSpec.flags.testFlag(WallSpec::NoDynLights) &&
-       !(parm.flags & RPF_SKYMASK))
-    {
-        parm.lightListIdx = projectSurfaceLights(surface, parm.glowing, texQuad[0], texQuad[1],
-                                                 wallSpec.flags.testFlag(WallSpec::SortDynLights));
-    }
-
-    // Project dynamic shadows?
-    if(!wallSpec.flags.testFlag(WallSpec::NoDynShadows) &&
-       !(parm.flags & RPF_SKYMASK))
-    {
-        parm.shadowListIdx = projectSurfaceShadows(surface, parm.glowing, texQuad[0], texQuad[1]);
-    }
-
-    /*
-     * Geometry write/drawing begins.
-     */
-
-    if(isTwoSidedMiddle && side.sectorPtr() != currentBspLeaf->sectorPtr())
-    {
-        // Temporarily modify the draw state.
-        currentSectorLightColor = Rend_SectorLightColor(side.sector());
-        currentSectorLightLevel = side.sector().lightLevel();
-    }
-
-    rvertex_t *rvertices;
-    // Allocate enough vertices for the divisions too.
-    if(leftEdge.divisionCount() || rightEdge.divisionCount())
-    {
-        // Use two fans.
-        rvertices = R_AllocRendVertices(3 + leftEdge.divisionCount() +
-                                        3 + rightEdge.divisionCount());
-    }
-    else
-    {
-        // Use a quad.
-        rvertices = R_AllocRendVertices(4);
-    }
-
-    // Vertex coords.
-    // Bottom Left.
-    V3f_Set(rvertices[0].pos, leftEdge.bottom().origin().x,
-                              leftEdge.bottom().origin().y,
-                              leftEdge.bottom().origin().z);
-    // Top Left.
-    V3f_Set(rvertices[1].pos, leftEdge.top().origin().x,
-                              leftEdge.top().origin().y,
-                              leftEdge.top().origin().z);
-    // Bottom Right.
-    V3f_Set(rvertices[2].pos, rightEdge.bottom().origin().x,
-                              rightEdge.bottom().origin().y,
-                              rightEdge.bottom().origin().z);
-    // Top Right.
-    V3f_Set(rvertices[3].pos, rightEdge.top().origin().x,
-                              rightEdge.top().origin().y,
-                              rightEdge.top().origin().z);
-
-    // Draw this section.
-    bool opaque = renderWorldPoly(rvertices, 4, parm, ms);
-    if(opaque)
-    {
-        // Render FakeRadio for this section?
-        if(!wallSpec.flags.testFlag(WallSpec::NoFakeRadio) &&
-           !(parm.flags & RPF_SKYMASK) &&
-           !(parm.glowing > 0) && currentSectorLightLevel > 0)
+        if(isTwoSidedMiddle && side.sectorPtr() != currentBspLeaf->sectorPtr())
         {
-            Rend_RadioUpdateForLineSide(side);
-
-            // Determine the shadow properties.
-            /// @todo Make cvars out of constants.
-            float shadowSize = 2 * (8 + 16 - currentSectorLightLevel * 16);
-            float shadowDark = Rend_RadioCalcShadowDarkness(currentSectorLightLevel);
-
-            Rend_RadioWallSection(leftEdge, rightEdge, shadowDark, shadowSize);
+            // Undo temporary draw state changes.
+            currentSectorLightColor = Rend_SectorLightColor(currentBspLeaf->sector());
+            currentSectorLightLevel = currentBspLeaf->sector().lightLevel();
         }
-    }
 
-    if(isTwoSidedMiddle && side.sectorPtr() != currentBspLeaf->sectorPtr())
-    {
-        // Undo temporary draw state changes.
-        currentSectorLightColor = Rend_SectorLightColor(currentBspLeaf->sector());
-        currentSectorLightLevel = currentBspLeaf->sector().lightLevel();
+        R_FreeRendVertices(rvertices);
     }
-
-    R_FreeRendVertices(rvertices);
 
     if(retBottomZ)     *retBottomZ     = leftEdge.bottom().distance();
     if(retTopZ)        *retTopZ        = rightEdge.top().distance();
-    if(retWroteOpaque) *retWroteOpaque = opaque && !didNearFade;
+    if(retWroteOpaque) *retWroteOpaque = wroteOpaque && !didNearFade;
 }
 
 static void writeWallSection(HEdge &hedge, int section,
