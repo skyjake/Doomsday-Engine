@@ -93,9 +93,7 @@ public:
 
     coord_t mapSideOffset() const;
 
-    int mapSideSection() const;
-
-    inline Surface &surface() const { return mapSide().surface(mapSideSection()); }
+    inline Surface &surface() const { return mapSide().surface(spec().section); }
 
     /// Implement IEdge.
     bool isValid() const;

@@ -166,7 +166,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
             if(de::fequal(icpt->distance(), distance))
                 return i;
         }
-        return WorldEdge::InvalidIndex;
+        return WallEdge::InvalidIndex;
     }
 
     inline bool haveEvent(double distance) {
@@ -495,11 +495,6 @@ bool WallEdge::isValid() const
 Line::Side &WallEdge::mapSide() const
 {
     return *d->mapSide;
-}
-
-int WallEdge::mapSideSection() const
-{
-    return d->spec.section;
 }
 
 coord_t WallEdge::mapSideOffset() const

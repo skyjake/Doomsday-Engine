@@ -1341,7 +1341,6 @@ static bool writeWallGeometry(WallEdge **edges, BiasSurface &biasSurface,
 
     WallEdge const &leftEdge  = *edges[0];
     WallEdge const &rightEdge = *edges[1];
-    WallSpec const &spec      = leftEdge.spec();
 
     if(!leftEdge.isValid() || !rightEdge.isValid() ||
        de::fequal(leftEdge.bottom().distance(), rightEdge.top().distance()))
@@ -1350,14 +1349,12 @@ static bool writeWallGeometry(WallEdge **edges, BiasSurface &biasSurface,
     if(bottomZ) *bottomZ = leftEdge.bottom().distance();
     if(topZ)    *topZ    = rightEdge.top().distance();
 
-    ///
-    Line::Side &side  = leftEdge.mapSide();
-    Line &line        = side.line();
-    int const section = leftEdge.mapSideSection();
-    Surface &surface  = leftEdge.surface();
+    WallSpec const &wallSpec = leftEdge.spec();
+    Line::Side &side = leftEdge.mapSide();
+    Surface &surface = leftEdge.surface();
 
-    bool const isTwoSidedMiddle = (section == Line::Side::Middle &&
-                                   side.hasSections() && side.back().hasSections());
+    bool const isTwoSidedMiddle =
+        (wallSpec.section == Line::Side::Middle && !side.considerOneSided());
 
     float opacity = surface.opacity();
 
@@ -1365,12 +1362,13 @@ static bool writeWallGeometry(WallEdge **edges, BiasSurface &biasSurface,
     bool didNearFade = false;
     if(isTwoSidedMiddle &&
        ((viewPlayer->shared.flags & (DDPF_NOCLIP|DDPF_CAMERA)) ||
-            !(line.isFlagged(DDLF_BLOCKING))) &&
+            !(side.line().isFlagged(DDLF_BLOCKING))) &&
        (vOrigin[VY] > leftEdge.bottom().distance() &&
             vOrigin[VY] < rightEdge.top().distance()))
     {
         mobj_t const *mo = viewPlayer->shared.mo;
 
+        Line const &line = side.line();
         coord_t linePoint[2]     = { line.fromOrigin().x, line.fromOrigin().y };
         coord_t lineDirection[2] = {  line.direction().x,  line.direction().y };
         vec2d_t result;
@@ -1420,7 +1418,7 @@ static bool writeWallGeometry(WallEdge **edges, BiasSurface &biasSurface,
 
     // Calculate the light level deltas for this wall section?
     float leftLightLevelDelta = 0, rightLightLevelDelta = 0;
-    if(!spec.flags.testFlag(WallSpec::NoLightDeltas))
+    if(!wallSpec.flags.testFlag(WallSpec::NoLightDeltas))
     {
         wallSectionLightLevelDeltas(leftEdge, rightEdge, leftLightLevelDelta, rightLightLevelDelta);
     }
@@ -1428,10 +1426,10 @@ static bool writeWallGeometry(WallEdge **edges, BiasSurface &biasSurface,
     rendworldpoly_params_t parm; zap(parm);
 
     parm.flags               = RPF_DEFAULT;
-    parm.forceOpaque         = spec.flags.testFlag(WallSpec::ForceOpaque);
+    parm.forceOpaque         = wallSpec.flags.testFlag(WallSpec::ForceOpaque);
     parm.alpha               = parm.forceOpaque? 1 : opacity;
     parm.mapElement          = &mapElement;
-    parm.elmIdx              = section;
+    parm.elmIdx              = wallSpec.section;
     parm.bsuf                = &biasSurface;
     parm.normal              = &surface.normal();
     parm.texTL               = &texTL;
@@ -1481,11 +1479,11 @@ static bool writeWallGeometry(WallEdge **edges, BiasSurface &biasSurface,
             parm.glowing *= glowFactor; // Global scale factor.
         }
 
-        side.chooseSurfaceTintColors(section, &parm.surfaceColor, &parm.wall.surfaceColor2);
+        side.chooseSurfaceTintColors(wallSpec.section, &parm.surfaceColor, &parm.wall.surfaceColor2);
     }
 
     // Project dynamic Lights?
-    if(!spec.flags.testFlag(WallSpec::NoDynLights) &&
+    if(!wallSpec.flags.testFlag(WallSpec::NoDynLights) &&
        !(parm.flags & RPF_SKYMASK))
     {
         parm.lightListIdx = projectSurfaceLights(surface, parm.glowing, texTL, texBR,
@@ -1493,7 +1491,7 @@ static bool writeWallGeometry(WallEdge **edges, BiasSurface &biasSurface,
     }
 
     // Project dynamic shadows?
-    if(!spec.flags.testFlag(WallSpec::NoDynShadows) &&
+    if(!wallSpec.flags.testFlag(WallSpec::NoDynShadows) &&
        !(parm.flags & RPF_SKYMASK))
     {
         parm.shadowListIdx = projectSurfaceShadows(surface, parm.glowing, texTL, texBR);
@@ -1547,10 +1545,9 @@ static bool writeWallGeometry(WallEdge **edges, BiasSurface &biasSurface,
     if(opaque)
     {
         // Render FakeRadio for this section?
-        if(!spec.flags.testFlag(WallSpec::NoFakeRadio) &&
+        if(!wallSpec.flags.testFlag(WallSpec::NoFakeRadio) &&
            !(parm.flags & RPF_SKYMASK) &&
-           !(parm.glowing > 0) && currentSectorLightLevel > 0 &&
-           !line.definesPolyobj())
+           !(parm.glowing > 0) && currentSectorLightLevel > 0)
         {
             Rend_RadioUpdateForLineSide(side);
 
