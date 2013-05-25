@@ -643,6 +643,7 @@ SOURCES += \
     src/ui/widgets/legacywidget.cpp \
     src/ui/widgets/lineeditwidget.cpp \
     src/ui/widgets/logwidget.cpp \
+    src/ui/widgets/styledlogsinkformatter.cpp \
     src/ui/widgets/taskbarwidget.cpp \
     src/ui/widgets/widgetactions.cpp \
     src/ui/windowsystem.cpp \
