@@ -1377,39 +1377,42 @@ static uint projectSurfaceShadows(Surface &surface, float glowStrength,
                                      surface.tangent(), surface.bitangent(), surface.normal());
 }
 
-static void writeWallGeometry(WallEdge **edges, BiasSurface &biasSurface,
-    MapElement &biasSurfaceOwner,
+static void writeWallSection(HEdge &hedge, int section,
     coord_t *retBottomZ = 0, coord_t *retTopZ = 0, bool *retWroteOpaque = 0)
 {
     BspLeaf *bspLeaf = currentBspLeaf;
     DENG_ASSERT(!isNullLeaf(bspLeaf));
+    DENG_ASSERT(hedge.isFlagged(HEdge::FacingFront));
+    DENG_ASSERT(hedge.hasLineSide() && hedge.lineSide().hasSections());
 
     if(retBottomZ)     *retBottomZ     = 0;
     if(retTopZ)        *retTopZ        = 0;
     if(retWroteOpaque) *retWroteOpaque = false;
 
-    WallEdge const &leftEdge    = *edges[0];
-    WallEdge const &rightEdge   = *edges[1];
+    Line::Side &side = hedge.lineSide();
+    Surface &surface = side.surface(section);
 
-    if(!leftEdge.isValid() || !rightEdge.isValid() ||
-       de::fequal(leftEdge.bottom().distance(), rightEdge.top().distance()))
-        return;
-
-    WallSpec const &wallSpec    = leftEdge.spec();
-    Line::Side &side            = leftEdge.mapSide();
-    Surface &surface            = side.surface(wallSpec.section);
-    bool const isTwoSidedMiddle = (wallSpec.section == Line::Side::Middle && !side.considerOneSided());
-
+    // Skip nearly transparent surfaces.
     float opacity = surface.opacity();
     if(opacity < .001f)
         return;
 
     // Determine which Material to use.
-    /// @todo Should have chosen by now...
     Material *material = chooseSurfaceMaterialForTexturingMode(surface);
 
     // A drawable material is required.
     if(!material || !material->isDrawable())
+        return;
+
+    // Generate edge geometries.
+    WallSpec const wallSpec = WallSpec::fromMapSide(side, section);
+
+    WallEdge leftEdge(wallSpec, hedge, Line::From);
+    WallEdge rightEdge(wallSpec, hedge, Line::To);
+
+    // Do the edge geometries describe a valid polygon?
+    if(!leftEdge.isValid() || !rightEdge.isValid() ||
+       de::fequal(leftEdge.bottom().distance(), rightEdge.top().distance()))
         return;
 
     // Apply a fade out when the viewer is near to this geometry?
@@ -1422,24 +1425,24 @@ static void writeWallGeometry(WallEdge **edges, BiasSurface &biasSurface,
     bool wroteOpaque = false;
     if(opacity >= .001f)
     {
-        bool const skyMasked = material->isSkyMasked() && !devRendSkyMode;
+        bool const skyMasked       = material->isSkyMasked() && !devRendSkyMode;
+        bool const twoSidedMiddle  = (wallSpec.section == Line::Side::Middle && !side.considerOneSided());
 
-        MaterialSnapshot const &ms = material->prepare(mapSurfaceMaterialSpec(GL_REPEAT, GL_REPEAT));
+        MaterialSnapshot const &ms = material->prepare(Rend_MapSurfaceMaterialSpec());
 
         Vector2f const materialScale((surface.flags() & DDSUF_MATERIAL_FLIPH)? -1 : 1,
                                      (surface.flags() & DDSUF_MATERIAL_FLIPV)? -1 : 1);
 
-        Vector3d const texQuad[] = { leftEdge.top().origin(), rightEdge.bottom().origin() };
+        Vector3d const texQuad[]   = { leftEdge.top().origin(), rightEdge.bottom().origin() };
 
-        rvertex_t *rvertices;
         rendworldpoly_params_t parm; zap(parm);
 
         parm.flags               = RPF_DEFAULT | (skyMasked? RPF_SKYMASK : 0);
         parm.forceOpaque         = wallSpec.flags.testFlag(WallSpec::ForceOpaque);
         parm.alpha               = parm.forceOpaque? 1 : opacity;
-        parm.mapElement          = &biasSurfaceOwner;
+        parm.mapElement          = &hedge;
         parm.elmIdx              = wallSpec.section;
-        parm.bsuf                = &biasSurface;
+        parm.bsuf                = &hedge.biasSurfaceForGeometryGroup(wallSpec.section);
         parm.normal              = &surface.normal();
         parm.texTL               = &texQuad[0];
         parm.texBR               = &texQuad[1];
@@ -1462,7 +1465,7 @@ static void writeWallGeometry(WallEdge **edges, BiasSurface &biasSurface,
 
         if(!skyMasked)
         {
-            if(isTwoSidedMiddle)
+            if(twoSidedMiddle)
             {
                 parm.blendMode = surface.blendMode();
                 if(parm.blendMode == BM_NORMAL && noSpriteTrans)
@@ -1510,7 +1513,7 @@ static void writeWallGeometry(WallEdge **edges, BiasSurface &biasSurface,
          * Geometry write/drawing begins.
          */
 
-        if(isTwoSidedMiddle && side.sectorPtr() != currentBspLeaf->sectorPtr())
+        if(twoSidedMiddle && side.sectorPtr() != currentBspLeaf->sectorPtr())
         {
             // Temporarily modify the draw state.
             currentSectorLightColor = Rend_SectorLightColor(side.sector());
@@ -1518,6 +1521,7 @@ static void writeWallGeometry(WallEdge **edges, BiasSurface &biasSurface,
         }
 
         // Allocate enough vertices for the divisions too.
+        rvertex_t *rvertices;
         if(leftEdge.divisionCount() || rightEdge.divisionCount())
         {
             // Use two fans.
@@ -1531,22 +1535,16 @@ static void writeWallGeometry(WallEdge **edges, BiasSurface &biasSurface,
         }
 
         // Vertex coords.
-        // Bottom Left.
-        V3f_Set(rvertices[0].pos, leftEdge.bottom().origin().x,
-                                  leftEdge.bottom().origin().y,
-                                  leftEdge.bottom().origin().z);
-        // Top Left.
-        V3f_Set(rvertices[1].pos, leftEdge.top().origin().x,
-                                  leftEdge.top().origin().y,
-                                  leftEdge.top().origin().z);
-        // Bottom Right.
-        V3f_Set(rvertices[2].pos, rightEdge.bottom().origin().x,
-                                  rightEdge.bottom().origin().y,
-                                  rightEdge.bottom().origin().z);
-        // Top Right.
-        V3f_Set(rvertices[3].pos, rightEdge.top().origin().x,
-                                  rightEdge.top().origin().y,
-                                  rightEdge.top().origin().z);
+        rvertex_t &bottomLeft  = rvertices[0];
+        rvertex_t &topLeft     = rvertices[1];
+        rvertex_t &bottomRight = rvertices[2];
+        rvertex_t &topRight    = rvertices[3];
+
+        V3f_Set(bottomLeft.pos,   leftEdge.bottom().origin().x,  leftEdge.bottom().origin().y,  leftEdge.bottom().origin().z);
+        V3f_Set(   topLeft.pos,      leftEdge.top().origin().x,     leftEdge.top().origin().y,     leftEdge.top().origin().z);
+
+        V3f_Set(bottomRight.pos, rightEdge.bottom().origin().x, rightEdge.bottom().origin().y, rightEdge.bottom().origin().z);
+        V3f_Set(   topRight.pos,    rightEdge.top().origin().x,    rightEdge.top().origin().y,    rightEdge.top().origin().z);
 
         // Draw this section.
         wroteOpaque = renderWorldPoly(rvertices, 4, parm, ms);
@@ -1567,7 +1565,7 @@ static void writeWallGeometry(WallEdge **edges, BiasSurface &biasSurface,
             }
         }
 
-        if(isTwoSidedMiddle && side.sectorPtr() != currentBspLeaf->sectorPtr())
+        if(twoSidedMiddle && side.sectorPtr() != currentBspLeaf->sectorPtr())
         {
             // Undo temporary draw state changes.
             currentSectorLightColor = Rend_SectorLightColor(currentBspLeaf->sector());
@@ -1580,22 +1578,6 @@ static void writeWallGeometry(WallEdge **edges, BiasSurface &biasSurface,
     if(retBottomZ)     *retBottomZ     = leftEdge.bottom().distance();
     if(retTopZ)        *retTopZ        = rightEdge.top().distance();
     if(retWroteOpaque) *retWroteOpaque = wroteOpaque && !didNearFade;
-}
-
-static void writeWallSection(HEdge &hedge, int section,
-    coord_t *retBottomZ = 0, coord_t *retTopZ = 0, bool *retWroteOpaque = 0)
-{
-    DENG_ASSERT(hedge.isFlagged(HEdge::FacingFront));
-    DENG_ASSERT(hedge.hasLineSide() && hedge.lineSide().hasSections());
-
-    WallSpec const spec = WallSpec::fromMapSide(hedge.lineSide(), section);
-    BiasSurface &biasSurface = hedge.biasSurfaceForGeometryGroup(section);
-
-    WallEdge leftEdge(spec, hedge, Line::From);
-    WallEdge rightEdge(spec, hedge, Line::To);
-    WallEdge *edges[] = { &leftEdge, &rightEdge };
-
-    writeWallGeometry(edges, biasSurface, hedge, retBottomZ, retTopZ, retWroteOpaque);
 }
 
 /**
