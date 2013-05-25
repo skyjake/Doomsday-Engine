@@ -66,6 +66,8 @@ String Font::RichFormat::initFromStyledText(String const &styledText)
     Rangei range; // within styledText
     int offset = 0; // from styled to plain
 
+    QList<FormatRange> stack;
+
     // Insert the first range.
     _ranges << FormatRange();
     format = &_ranges.back();
@@ -85,6 +87,9 @@ String Font::RichFormat::initFromStyledText(String const &styledText)
                 plain += styledText.substr(range);
                 format->range.end -= offset; // within plain
 
+                // Put it on the stack so it can be returned to.
+                stack << *format;
+
                 // Start a new range (copying the current one).
                 _ranges << FormatRange(*format);
                 format = &_ranges.back();
@@ -95,11 +100,22 @@ String Font::RichFormat::initFromStyledText(String const &styledText)
             char ch = styledText[range.end + 1].toLatin1();
             switch(ch)
             {
-            case '.':
-                format->sizeFactor = 1.f;
-                format->colorIndex = OriginalColor;
-                format->weight = OriginalWeight;
-                format->style = OriginalStyle;
+            case '.': // pop a format off the stack
+                if(!stack.isEmpty())
+                {
+                    FormatRange prev = stack.takeLast();
+                    format->sizeFactor = prev.sizeFactor;
+                    format->colorIndex = prev.colorIndex;
+                    format->weight = prev.weight;
+                    format->style = prev.style;
+                }
+                else
+                {
+                    format->sizeFactor = 1.f;
+                    format->colorIndex = OriginalColor;
+                    format->weight = OriginalWeight;
+                    format->style = OriginalStyle;
+                }
                 break;
 
             case '>':
@@ -142,73 +158,21 @@ String Font::RichFormat::initFromStyledText(String const &styledText)
             case 'B': // Highlight color
             case 'C': // Dimmed color
             case 'D': // Accent color
-            case 'E':
-            case 'F':
                 format->colorIndex = ch - 'A';
                 break;
 
-            case '0': // Normal style
-            case '6': // Message style
-                format->sizeFactor = 1.f;
-                format->weight = OriginalWeight;
-                format->style = OriginalStyle;
-                format->colorIndex = OriginalColor;
-                break;
-
-            case '1': // Strong style
-                format->sizeFactor = 1.f;
-                format->weight = Bold;
-                format->style = OriginalStyle;
-                format->colorIndex = OriginalColor;
-                break;
-
-            case '2': // Log time style
-                format->sizeFactor = .8f;
-                format->weight = Light;
-                format->style = OriginalStyle;
-                format->colorIndex = DimmedColor;
-                break;
-
-            case '3': // Log level style
-                format->sizeFactor = .8f;
-                format->weight = Bold;
-                format->style = OriginalStyle;
-                format->colorIndex = OriginalColor;
-                break;
-
-            case '4': // Bad log level style
-                format->sizeFactor = .8f;
-                format->weight = Bold;
-                format->style = OriginalStyle;
-                format->colorIndex = AccentColor;
-                break;
-
-            case '7': // Debug log level style
-                format->sizeFactor = .8f;
-                format->weight = Normal;
-                format->style = OriginalStyle;
-                format->colorIndex = OriginalColor;
-                break;
-
-            case '5': // Log section style
-                format->sizeFactor = .9f;
-                format->weight = Light;
-                format->style = Italic;
-                format->colorIndex = AccentColor;
-                break;
-
-            case '8': // Bad message style
-                format->sizeFactor = 1.f;
-                format->weight = Bold;
-                format->style = Regular;
-                format->colorIndex = HighlightColor;
-                break;
-
-            case '9': // Debug message style
-                format->sizeFactor = .8f;
-                format->weight = Normal;
-                format->style = Regular;
-                format->colorIndex = DimmedColor;
+            case '0':
+            case '1':
+            case '2':
+            case '3':
+            case '4':
+            case '5':
+            case '6':
+                if(_style)
+                {
+                    _style->richStyleFormat(ch - '0', format->sizeFactor, format->weight,
+                                            format->style, format->colorIndex);
+                }
                 break;
             }
 

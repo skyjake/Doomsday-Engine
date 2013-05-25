@@ -60,6 +60,34 @@ public:
     class RichFormat
     {
     public:
+        enum ContentStyle {
+            NormalStyle    = 0,
+            MajorStyle     = 1,
+            MinorStyle     = 2,
+            MetaStyle      = 3,
+            MajorMetaStyle = 4,
+            MinorMetaStyle = 5,
+            AuxMetaStyle   = 6
+        };
+        enum Weight {
+            OriginalWeight = -1,
+            Normal         = 0,
+            Light          = 1,
+            Bold           = 2
+        };
+        enum Style {
+            OriginalStyle  = -1,
+            Regular        = 0,
+            Italic         = 1
+        };
+        enum Color {
+            OriginalColor  = -1,
+            NormalColor    = 0,
+            HighlightColor = 1,
+            DimmedColor    = 2,
+            AccentColor    = 3
+        };
+
         /**
          * Interface for an object providing style information: fonts and
          * colors.
@@ -77,6 +105,9 @@ public:
              * @return Color values (RGBA 0...255).
              */
             virtual Color richStyleColor(int index) const = 0;
+
+            virtual void richStyleFormat(int contentStyle, float &sizeFactor, Weight &fontWeight,
+                                         Style &fontStyle, int &colorIndex) const = 0;
         };
 
     public:
@@ -107,25 +138,6 @@ public:
          * @return Corresponding plain text for use with the methods of Font.
          */
         String initFromStyledText(String const &styledText);
-
-        enum Weight {
-            OriginalWeight = -1,
-            Normal         = 0,
-            Light          = 1,
-            Bold           = 2
-        };
-        enum Style {
-            OriginalStyle  = -1,
-            Regular        = 0,
-            Italic         = 1
-        };
-        enum Color {
-            OriginalColor  = -1,
-            NormalColor    = 0,
-            HighlightColor = 1,
-            DimmedColor    = 2,
-            AccentColor    = 3
-        };
 
         /**
          * Clips this RichFormat so that it covers only the specified range.

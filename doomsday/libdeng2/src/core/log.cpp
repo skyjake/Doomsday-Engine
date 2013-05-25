@@ -285,9 +285,9 @@ String LogEntry::asText(Flags const &formattingFlags, int shortenSection) const
                     "FATAL!"
                 };
                 output << "\t"
-                    << (_level >= LogEntry::WARNING? TEXT_STYLE_LOG_BAD_LEVEL :
-                        _level <= LogEntry::DEBUG?   TEXT_STYLE_LOG_DEBUG_LEVEL :
-                                                     TEXT_STYLE_LOG_LEVEL)
+                    << (_level >= LogEntry::WARNING? TEXT_STYLE_BAD_SECTION :
+                        _level <= LogEntry::DEBUG?   TEXT_STYLE_DEBUG_SECTION :
+                                                     TEXT_STYLE_SECTION)
                     << levelNames[_level] << "\t";
             }
         }
@@ -298,7 +298,10 @@ String LogEntry::asText(Flags const &formattingFlags, int shortenSection) const
     {
         if(flags.testFlag(Styled))
         {
-            output << TEXT_MARK_INDENT << TEXT_STYLE_SECTION;
+            output << TEXT_MARK_INDENT
+                   << (_level >= LogEntry::WARNING? TEXT_STYLE_BAD_SECTION :
+                       _level <= LogEntry::DEBUG?   TEXT_STYLE_DEBUG_SECTION :
+                                                    TEXT_STYLE_SECTION);
         }
 
         // Process the section: shortening and possible abbreviation.
