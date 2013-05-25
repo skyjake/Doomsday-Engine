@@ -45,40 +45,40 @@ static bool shouldSmoothNormals(Surface &sufA, Surface &sufB, binangle_t angleDi
     return INRANGE_OF(angleDiff, BANG_180, BANG_45);
 }
 
-static bool interceptSorter(WallEdge::Intercept *a, WallEdge::Intercept *b)
+static bool interceptSorter(WallEdge::Event *a, WallEdge::Event *b)
 {
     return *a < *b;
 }
 
-DENG2_PIMPL_NOREF(WallEdge::Intercept)
+DENG2_PIMPL_NOREF(WallEdge::Event)
 {
-    /// Wall edge instance which owns "this" intercept.
+    /// Wall edge instance which owns "this" event.
     WallEdge &owner;
 
     Instance(WallEdge &owner) : owner(owner) {}
 };
 
-WallEdge::Intercept::Intercept(WallEdge &owner, double distance)
+WallEdge::Event::Event(WallEdge &owner, double distance)
     : IHPlane::IIntercept(distance),
       d(new Instance(owner))
 {}
 
-bool WallEdge::Intercept::operator < (Intercept const &other) const
+bool WallEdge::Event::operator < (Event const &other) const
 {
     return distance() < other.distance();
 }
 
-double WallEdge::Intercept::distance() const
+double WallEdge::Event::distance() const
 {
     return IHPlane::IIntercept::distance();
 }
 
-void WallEdge::Intercept::setDistance(double newDistance)
+void WallEdge::Event::setDistance(double newDistance)
 {
     IHPlane::IIntercept::_distance = newDistance;
 }
 
-Vector3d WallEdge::Intercept::origin() const
+Vector3d WallEdge::Event::origin() const
 {
     return Vector3d(d->owner.origin, distance());
 }
@@ -86,17 +86,17 @@ Vector3d WallEdge::Intercept::origin() const
 DENG2_PIMPL(WallEdge), public IHPlane
 {
     WallSpec spec;
-    Line::Side *mapSide;
     int edge;
 
-    coord_t lineOffset;
-    Vertex *lineVertex;
+    Line::Side *mapSide;
+    coord_t mapSideOffset;
+    Vertex *mapVertex;
 
     bool isValid;
 
-    /// Intercepts for the bottom and top edges are allocated with "this".
-    WallEdge::Intercept bottom;
-    WallEdge::Intercept top;
+    /// Events for the bottom and top points are allocated with "this".
+    WallEdge::Event bottom;
+    WallEdge::Event top;
 
     /// Data for the IHPlane model.
     struct HPlane
@@ -104,8 +104,8 @@ DENG2_PIMPL(WallEdge), public IHPlane
         /// The partition line.
         Partition partition;
 
-        /// Intercept points along the half-plane.
-        WallEdge::Intercepts intercepts;
+        /// All the intercept events along the half-plane.
+        WallEdge::Events intercepts;
 
         /// Set to @c true when @var intercepts requires sorting.
         bool needSortIntercepts;
@@ -127,13 +127,13 @@ DENG2_PIMPL(WallEdge), public IHPlane
     } hplane;
 
     Instance(Public *i, WallSpec const &spec, Line::Side *mapSide, int edge,
-             coord_t lineOffset, Vertex *lineVertex)
+             coord_t sideOffset, Vertex *mapVertex)
         : Base(i),
           spec(spec),
-          mapSide(mapSide),
           edge(edge),
-          lineOffset(lineOffset),
-          lineVertex(lineVertex),
+          mapSide(mapSide),
+          mapSideOffset(sideOffset),
+          mapVertex(mapVertex),
           isValid(false),
           bottom(*i),
           top(*i)
@@ -158,6 +158,26 @@ DENG2_PIMPL(WallEdge), public IHPlane
         }
     }
 
+    WallEdge::EventIndex toEventIndex(double distance)
+    {
+        for(WallEdge::EventIndex i = 0; i < hplane.intercepts.count(); ++i)
+        {
+            WallEdge::Event *icpt = hplane.intercepts[i];
+            if(de::fequal(icpt->distance(), distance))
+                return i;
+        }
+        return WorldEdge::InvalidIndex;
+    }
+
+    inline bool haveEvent(double distance) {
+        return toEventIndex(distance) != WallEdge::InvalidIndex;
+    }
+
+    WallEdge::Event &createEvent(double distance)
+    {
+        return *intercept(distance);
+    }
+
     // Implements IHPlane
     void configure(Partition const &newPartition)
     {
@@ -171,25 +191,11 @@ DENG2_PIMPL(WallEdge), public IHPlane
         return hplane.partition;
     }
 
-    WallEdge::Intercept *find(double distance)
-    {
-        for(int i = 0; i < hplane.intercepts.count(); ++i)
-        {
-            WallEdge::Intercept *icpt = hplane.intercepts[i];
-            if(de::fequal(icpt->distance(), distance))
-                return icpt;
-        }
-        return 0;
-    }
-
     // Implements IHPlane
-    WallEdge::Intercept const *intercept(double distance)
+    WallEdge::Event *intercept(double distance)
     {
-        if(find(distance))
-            return 0;
-
-        hplane.intercepts.append(new WallEdge::Intercept(self, distance));
-        WallEdge::Intercept *newIntercept = hplane.intercepts.last();
+        hplane.intercepts.append(new WallEdge::Event(self, distance));
+        WallEdge::Event *newIntercept = hplane.intercepts.last();
 
         // The addition of a new intercept means we'll need to resort.
         hplane.needSortIntercepts = true;
@@ -209,7 +215,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
     // Implements IHPlane
     void clearIntercepts()
     {
-        foreach(WallEdge::Intercept *icpt, hplane.intercepts)
+        foreach(WallEdge::Event *icpt, hplane.intercepts)
         {
             if(icpt == &bottom || icpt == &top) continue;
             delete icpt;
@@ -220,15 +226,15 @@ DENG2_PIMPL(WallEdge), public IHPlane
     }
 
     // Implements IHPlane
-    WallEdge::Intercept const &at(int index) const
+    WallEdge::Event const &at(WallEdge::EventIndex index) const
     {
         if(index >= 0 && index < interceptCount())
         {
             return *hplane.intercepts[index];
         }
         /// @throw IHPlane::UnknownInterceptError The specified intercept index is not valid.
-        throw IHPlane::UnknownInterceptError("HPlane2::at", QString("Index '%1' does not map to a known intercept (count: %2)")
-                                                                .arg(index).arg(interceptCount()));
+        throw IHPlane::UnknownInterceptError("HPlane::at", QString("Index '%1' does not map to a known intercept (count: %2)")
+                                                               .arg(index).arg(interceptCount()));
     }
 
     // Implements IHPlane
@@ -240,8 +246,8 @@ DENG2_PIMPL(WallEdge), public IHPlane
 #ifdef DENG_DEBUG
     void printIntercepts() const
     {
-        uint index = 0;
-        foreach(WallEdge::Intercept const *icpt, hplane.intercepts)
+        WallEdge::EventIndex index = 0;
+        foreach(WallEdge::Event const *icpt, hplane.intercepts)
         {
             LOG_DEBUG(" %u: >%1.2f ") << (index++) << icpt->distance();
         }
@@ -254,7 +260,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
     void assertInterceptsInRange(coord_t low, coord_t hi) const
     {
 #ifdef DENG_DEBUG
-        foreach(WallEdge::Intercept const *icpt, hplane.intercepts)
+        foreach(WallEdge::Event const *icpt, hplane.intercepts)
         {
             DENG2_ASSERT(icpt->distance() >= low && icpt->distance() <= hi);
         }
@@ -268,7 +274,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
         DENG_ASSERT(top > bottom);
 
         // Retrieve the start owner node.
-        LineOwner *base = mapSide->line().vertexOwner(*lineVertex);
+        LineOwner *base = mapSide->line().vertexOwner(*mapVertex);
         if(!base) return;
 
         // Check for neighborhood division?
@@ -313,8 +319,12 @@ DENG2_PIMPL(WallEdge), public IHPlane
 
                                 if(plane.visHeight() > bottom && plane.visHeight() < top)
                                 {
-                                    if(intercept(plane.visHeight()))
+                                    coord_t distance = plane.visHeight();
+
+                                    if(!haveEvent(distance))
                                     {
+                                        createEvent(distance);
+
                                         // Have we reached the div limit?
                                         if(interceptCount() == WALLEDGE_MAX_INTERCEPTS)
                                             stopScan = true;
@@ -348,8 +358,10 @@ DENG2_PIMPL(WallEdge), public IHPlane
 
                             if(z > bottom && z < top)
                             {
-                                if(intercept(z))
+                                if(!haveEvent(z))
                                 {
+                                    createEvent(z);
+
                                     // All clipped away.
                                     stopScan = true;
                                 }
@@ -417,12 +429,12 @@ DENG2_PIMPL(WallEdge), public IHPlane
     {
         if(!isValid) return;
 
-        self.materialOrigin.x += lineOffset;
+        self.materialOrigin.x += mapSideOffset;
 
         coord_t const lo = bottom.distance();
         coord_t const hi = top.distance();
 
-        configure(Partition(lineVertex->origin(), Vector2d(0, hi - lo)));
+        configure(Partition(mapVertex->origin(), Vector2d(0, hi - lo)));
 
         // Intercepts are sorted in ascending distance order.
 
@@ -485,14 +497,14 @@ Line::Side &WallEdge::mapSide() const
     return *d->mapSide;
 }
 
-int WallEdge::section() const
+int WallEdge::mapSideSection() const
 {
     return d->spec.section;
 }
 
-coord_t WallEdge::mapLineOffset() const
+coord_t WallEdge::mapSideOffset() const
 {
-    return d->lineOffset;
+    return d->mapSideOffset;
 }
 
 int WallEdge::divisionCount() const
@@ -500,37 +512,29 @@ int WallEdge::divisionCount() const
     return d->isValid? d->interceptCount() - 2 : 0;
 }
 
-WallEdge::Intercept const &WallEdge::from() const
+WallEdge::Event const &WallEdge::first() const
 {
     d->verifyValid();
     return *d->hplane.intercepts[0];
 }
 
-WallEdge::Intercept const &WallEdge::to() const
+WallEdge::Event const &WallEdge::last() const
 {
     d->verifyValid();
     return *d->hplane.intercepts[d->interceptCount()-1];
 }
 
-int WallEdge::firstDivision() const
+WallEdge::EventIndex WallEdge::firstDivision() const
 {
-    d->verifyValid();
-    return 1;
+    return divisionCount()? 1 : InvalidIndex;
 }
 
-int WallEdge::lastDivision() const
+WallEdge::EventIndex WallEdge::lastDivision() const
 {
-    d->verifyValid();
-    return d->interceptCount()-2;
+    return divisionCount()? d->interceptCount() - 2 : InvalidIndex;
 }
 
-WallEdge::Intercept const &WallEdge::at(int index) const
-{
-    d->verifyValid();
-    return *d->hplane.intercepts[index];
-}
-
-WallEdge::Intercepts const &WallEdge::intercepts() const
+WallEdge::Events const &WallEdge::events() const
 {
     d->verifyValid();
     return d->hplane.intercepts;

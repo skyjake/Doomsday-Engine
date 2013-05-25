@@ -47,7 +47,7 @@ static coord_t skyFixCeilZ(Plane const *frontCeil, Plane const *backCeil)
     return theMap->skyFixCeiling();
 }
 
-DENG2_PIMPL_NOREF(SkyFixEdge::Intercept)
+DENG2_PIMPL_NOREF(SkyFixEdge::Event)
 {
     SkyFixEdge &owner;
     coord_t distance;
@@ -57,26 +57,26 @@ DENG2_PIMPL_NOREF(SkyFixEdge::Intercept)
     {}
 };
 
-SkyFixEdge::Intercept::Intercept(SkyFixEdge &owner, coord_t distance)
+SkyFixEdge::Event::Event(SkyFixEdge &owner, coord_t distance)
     : d(new Instance(owner, distance))
 {}
 
-bool SkyFixEdge::Intercept::operator < (Intercept const &other) const
+bool SkyFixEdge::Event::operator < (Event const &other) const
 {
     return d->distance < other.distance();
 }
 
-coord_t SkyFixEdge::Intercept::distance() const
+coord_t SkyFixEdge::Event::distance() const
 {
     return d->distance;
 }
 
-void SkyFixEdge::Intercept::setDistance(coord_t distance)
+void SkyFixEdge::Event::setDistance(coord_t distance)
 {
     d->distance = distance;
 }
 
-Vector3d SkyFixEdge::Intercept::origin() const
+Vector3d SkyFixEdge::Event::origin() const
 {
     return Vector3d(d->owner.origin, d->distance);
 }
@@ -87,8 +87,8 @@ DENG2_PIMPL(SkyFixEdge)
     FixType fixType;
     int edge;
 
-    Intercept bottom;
-    Intercept top;
+    Event bottom;
+    Event top;
     bool isValid;
 
     Instance(Public *i, HEdge &hedge, FixType fixType, int edge)
@@ -202,12 +202,12 @@ bool SkyFixEdge::isValid() const
     return d->isValid;
 }
 
-SkyFixEdge::Intercept const &SkyFixEdge::from() const
+SkyFixEdge::Event const &SkyFixEdge::first() const
 {
     return d->bottom;
 }
 
-SkyFixEdge::Intercept const &SkyFixEdge::to() const
+SkyFixEdge::Event const &SkyFixEdge::last() const
 {
     return d->top;
 }

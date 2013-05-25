@@ -391,7 +391,7 @@ void R_DivVerts(rvertex_t *dst, rvertex_t const *src,
 
     for(int n = 0; n < rightEdge.divisionCount(); ++n)
     {
-        WallEdge::Intercept const &icpt = rightEdge.at(rightEdge.lastDivision() - n);
+        WallEdge::Event const &icpt = rightEdge.at(rightEdge.lastDivision() - n);
         dst[numL + 2 + n].pos[VX] = src[2].pos[VX];
         dst[numL + 2 + n].pos[VY] = src[2].pos[VY];
         dst[numL + 2 + n].pos[VZ] = float( icpt.distance() );
@@ -404,7 +404,7 @@ void R_DivVerts(rvertex_t *dst, rvertex_t const *src,
 
     for(int n = 0; n < leftEdge.divisionCount(); ++n)
     {
-        WallEdge::Intercept const &icpt = leftEdge.at(leftEdge.firstDivision() + n);
+        WallEdge::Event const &icpt = leftEdge.at(leftEdge.firstDivision() + n);
         dst[2 + n].pos[VX] = src[0].pos[VX];
         dst[2 + n].pos[VY] = src[0].pos[VY];
         dst[2 + n].pos[VZ] = float( icpt.distance() );
@@ -433,7 +433,7 @@ void R_DivTexCoords(rtexcoord_t *dst, rtexcoord_t const *src,
     float const rightHeight = tR - bR;
     for(int n = 0; n < rightEdge.divisionCount(); ++n)
     {
-        WallEdge::Intercept const &icpt = rightEdge.at(rightEdge.lastDivision() - n);
+        WallEdge::Event const &icpt = rightEdge.at(rightEdge.lastDivision() - n);
         float inter = (float( icpt.distance() ) - bR) / rightHeight;
         dst[numL + 2 + n].st[0] = src[3].st[0];
         dst[numL + 2 + n].st[1] = src[2].st[1] + (src[3].st[1] - src[2].st[1]) * inter;
@@ -447,7 +447,7 @@ void R_DivTexCoords(rtexcoord_t *dst, rtexcoord_t const *src,
     float const leftHeight = tL - bL;
     for(int n = 0; n < leftEdge.divisionCount(); ++n)
     {
-        WallEdge::Intercept const &icpt = leftEdge.at(leftEdge.firstDivision() + n);
+        WallEdge::Event const &icpt = leftEdge.at(leftEdge.firstDivision() + n);
         float inter = (float( icpt.distance() ) - bL) / leftHeight;
         dst[2 + n].st[0] = src[0].st[0];
         dst[2 + n].st[1] = src[0].st[1] + (src[1].st[1] - src[0].st[1]) * inter;
@@ -478,7 +478,7 @@ void R_DivVertColors(ColorRawf *dst, ColorRawf const *src,
     float const rightHeight = tR - bR;
     for(int n = 0; n < rightEdge.divisionCount(); ++n)
     {
-        WallEdge::Intercept const &icpt = rightEdge.at(rightEdge.lastDivision() - n);
+        WallEdge::Event const &icpt = rightEdge.at(rightEdge.lastDivision() - n);
         float inter = (float( icpt.distance() ) - bR) / rightHeight;
         for(int c = 0; c < 4; ++c)
         {
@@ -494,7 +494,7 @@ void R_DivVertColors(ColorRawf *dst, ColorRawf const *src,
     float const leftHeight = tL - bL;
     for(int n = 0; n < leftEdge.divisionCount(); ++n)
     {
-        WallEdge::Intercept const &icpt = leftEdge.at(leftEdge.firstDivision() + n);
+        WallEdge::Event const &icpt = leftEdge.at(leftEdge.firstDivision() + n);
         float inter = (float( icpt.distance() ) - bL) / leftHeight;
         for(int c = 0; c < 4; ++c)
         {

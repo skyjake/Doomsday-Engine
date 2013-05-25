@@ -82,8 +82,8 @@ void TriangleStripBuilder::extend(AbstractEdge &edge)
     // Silently ignore invalid edges.
     if(!edge.isValid()) return;
 
-    AbstractEdge::Intercept const &from = edge.from();
-    AbstractEdge::Intercept const &to   = edge.to();
+    AbstractEdge::Event const &from = edge.first();
+    AbstractEdge::Event const &to   = edge.last();
 
     d->reserveElements(2);
 

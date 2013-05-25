@@ -1260,7 +1260,7 @@ static void wallSectionLightLevelDeltas(WallEdge const &leftEdge, WallEdge const
         // Linearly interpolate to find the light level delta values for the
         // vertical edges of this wall section.
         coord_t const lineLength = leftEdge.mapSide().line().length();
-        coord_t const sectionOffset = leftEdge.mapLineOffset();
+        coord_t const sectionOffset = leftEdge.mapSideOffset();
         coord_t const sectionWidth = de::abs(Vector2d(rightEdge.origin - leftEdge.origin).length());
 
         float deltaDiff = rightDelta - leftDelta;
@@ -1353,7 +1353,7 @@ static bool writeWallGeometry(WallEdge **edges, BiasSurface &biasSurface,
     ///
     Line::Side &side  = leftEdge.mapSide();
     Line &line        = side.line();
-    int const section = leftEdge.section();
+    int const section = leftEdge.mapSideSection();
     Surface &surface  = leftEdge.surface();
 
     bool const isTwoSidedMiddle = (section == Line::Side::Middle &&

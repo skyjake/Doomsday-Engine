@@ -54,13 +54,13 @@ public:
     /// Invalid range geometry was found during prepare() @ingroup errors
     DENG2_ERROR(InvalidError);
 
-    class Intercept : public IEdge::IIntercept,
-                      public IHPlane::IIntercept
+    class Event : public IEdge::IEvent,
+                  public IHPlane::IIntercept
     {
     public:
-        Intercept(WallEdge &owner, double distance = 0);
+        Event(WallEdge &owner, double distance = 0);
 
-        bool operator < (Intercept const &other) const;
+        bool operator < (Event const &other) const;
 
         double distance() const;
 
@@ -75,7 +75,7 @@ public:
         DENG2_PRIVATE(d)
     };
 
-    typedef QList<Intercept *> Intercepts;
+    typedef QList<Event *> Events;
 
 public:
     /**
@@ -83,39 +83,43 @@ public:
      */
     WallEdge(WallSpec const &spec, HEdge &hedge, int edge);
 
-    inline Intercept const & operator [] (int index) const { return at(index); }
+    inline Event const &operator [] (EventIndex index) const {
+        return at(index);
+    }
 
     WallSpec const &spec() const;
 
-    coord_t mapLineOffset() const;
-
     Line::Side &mapSide() const;
 
-    inline Surface &surface() const { return mapSide().surface(spec().section); }
+    coord_t mapSideOffset() const;
+
+    int mapSideSection() const;
+
+    inline Surface &surface() const { return mapSide().surface(mapSideSection()); }
 
     /// Implement IEdge.
     bool isValid() const;
 
     /// Implement IEdge.
-    Intercept const &from() const;
+    Event const &first() const;
 
     /// Implement IEdge.
-    Intercept const &to() const;
-
-    int section() const;
+    Event const &last() const;
 
     int divisionCount() const;
 
-    int firstDivision() const;
+    EventIndex firstDivision() const;
 
-    int lastDivision() const;
+    EventIndex lastDivision() const;
 
-    Intercept const &at(int index) const;
+    Events const &events() const;
 
-    inline Intercept const &bottom() const { return from(); }
-    inline Intercept const &top() const { return to(); }
+    inline Event const &bottom() const { return first(); }
+    inline Event const &top() const { return last(); }
 
-    Intercepts const &intercepts() const;
+    inline Event const &at(EventIndex index) const {
+        return *events().at(index);
+    }
 
 private:
     DENG2_PRIVATE(d)

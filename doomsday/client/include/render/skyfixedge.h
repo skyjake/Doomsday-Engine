@@ -40,12 +40,12 @@ public:
         Upper
     };
 
-    class Intercept : public IEdge::IIntercept
+    class Event : public IEdge::IEvent
     {
     public:
-        Intercept(SkyFixEdge &owner, coord_t distance = 0);
+        Event(SkyFixEdge &owner, coord_t distance = 0);
 
-        bool operator < (Intercept const &other) const;
+        bool operator < (Event const &other) const;
 
         coord_t distance() const;
 
@@ -71,15 +71,13 @@ public:
     bool isValid() const;
 
     /// Implement IEdge.
-    Intercept const &from() const;
+    Event const &first() const;
 
     /// Implement IEdge.
-    Intercept const &to() const;
+    Event const &last() const;
 
-    Intercept const &at(int index) const;
-
-    inline Intercept const &bottom() const { return from(); }
-    inline Intercept const &top() const { return to(); }
+    inline Event const &bottom() const { return first(); }
+    inline Event const &top() const { return last(); }
 
 private:
     DENG2_PRIVATE(d)

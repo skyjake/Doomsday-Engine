@@ -38,12 +38,12 @@ namespace de {
 class IEdge
 {
 public:
-    class IIntercept
+    class IEvent
     {
     public:
-        virtual ~IIntercept() {}
+        virtual ~IEvent() {}
 
-        virtual bool operator < (IIntercept const &other) const {
+        virtual bool operator < (IEvent const &other) const {
             return distance() < other.distance();
         }
 
@@ -57,9 +57,9 @@ public:
 
     virtual bool isValid() const = 0;
 
-    virtual IIntercept const &from() const = 0;
+    virtual IEvent const &first() const = 0;
 
-    virtual IIntercept const &to() const = 0;
+    virtual IEvent const &last() const = 0;
 };
 
 } // namespace de
@@ -94,7 +94,12 @@ namespace de {
 class AbstractEdge : public EdgeAttribs, public IEdge
 {
 public:
-    typedef IIntercept Intercept;
+    typedef IEvent Event;
+
+    typedef int EventIndex;
+
+    /// Special identifier used to mark an invalid event index.
+    enum { InvalidIndex = -1 };
 
 public:
     AbstractEdge(EdgeAttribs const &attribs = EdgeAttribs())
