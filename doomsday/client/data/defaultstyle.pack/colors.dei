@@ -1,7 +1,7 @@
 # Colors for the default UI style
 
 color text       { rgb  <1.0, 1.0, 1.0> }
-color background { rgba <0.0, 0.0, 0.0, 0.5> }
+color background { rgba <0.0, 0.0, 0.0, 0.666> }
 
 group editor {
     color cursor { rgb <1.0, 0.8, 0.4, 0.7> }

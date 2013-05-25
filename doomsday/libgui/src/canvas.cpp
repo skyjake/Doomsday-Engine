@@ -303,7 +303,6 @@ void Canvas::notifyReady()
 
     d->readyNotified = true;
 
-    LOG_AS("Canvas");
     LOG_DEBUG("Notifying GL ready");
 
     DENG2_FOR_AUDIENCE(GLReady, i) i->canvasGLReady(*this);

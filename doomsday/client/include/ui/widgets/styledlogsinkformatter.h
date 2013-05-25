@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef STYLEDLOGSINKFORMATTER_H
-#define STYLEDLOGSINKFORMATTER_H
+#ifndef DENG_CLIENT_STYLEDLOGSINKFORMATTER_H
+#define DENG_CLIENT_STYLEDLOGSINKFORMATTER_H
 
 #include <de/LogSink>
 #include <de/String>
