@@ -433,6 +433,39 @@ Vector3f const &Rend_SectorLightColor(Sector const &sector)
     return sector.lightColor();
 }
 
+Material *Rend_ChooseMapSurfaceMaterial(Surface const &surface)
+{
+    switch(renderTextures)
+    {
+    case 0: // No texture mode.
+    case 1: // Normal mode.
+        if(devNoTexFix && surface.hasFixMaterial())
+        {
+            // Missing material debug mode -- use special "missing" material.
+            return &App_Materials().find(de::Uri("System", Path("missing"))).material();
+        }
+
+        // Use the surface-bound material.
+        return surface.materialPtr();
+
+    case 2: // Lighting debug mode.
+        if(surface.hasMaterial() && !(!devNoTexFix && surface.hasFixMaterial()))
+        {
+            if(!surface.hasSkyMaskedMaterial() || devRendSkyMode)
+            {
+                // Use the special "gray" material.
+                return &App_Materials().find(de::Uri("System", Path("gray"))).material();
+            }
+        }
+        break;
+
+    default: break;
+    }
+
+    // No material, then.
+    return 0;
+}
+
 static void lightVertex(ColorRawf &color, rvertex_t const &vtx, float lightLevel,
                         Vector3f const &ambientColor)
 {
@@ -473,12 +506,6 @@ int RIT_FirstDynlightIterator(dynlight_t const *dyn, void *parameters)
     dynlight_t const **ptr = (dynlight_t const **)parameters;
     *ptr = dyn;
     return 1; // Stop iteration.
-}
-
-static inline MaterialVariantSpec const &mapSurfaceMaterialSpec(int wrapS, int wrapT)
-{
-    return App_Materials().variantSpec(MapSurfaceContext, 0, 0, 0, 0, wrapS, wrapT,
-                                       -1, -1, -1, true, true, false, false);
 }
 
 /**
@@ -537,7 +564,9 @@ void Rend_AddMaskedPoly(rvertex_t const *rvertices, ColorRawf const *rcolors,
         }
 
         // Choose a specific variant for use as a middle wall section.
-        material = material->generalCase().chooseVariant(mapSurfaceMaterialSpec(wrapS, wrapT), true);
+        material = material->generalCase()
+                       .chooseVariant(Rend_MapSurfaceMaterialSpec(wrapS, wrapT),
+                                      true /*can create variant*/);
     }
 
     VS_WALL(vis)->material = material;
@@ -1246,39 +1275,6 @@ static bool nearFadeOpacity(WallEdge const &leftEdge, WallEdge const &rightEdge,
     return true;
 }
 
-static Material *chooseSurfaceMaterialForTexturingMode(Surface const &surface)
-{
-    switch(renderTextures)
-    {
-    case 0: // No texture mode.
-    case 1: // Normal mode.
-        if(devNoTexFix && surface.hasFixMaterial())
-        {
-            // Missing material debug mode -- use special "missing" material.
-            return &App_Materials().find(de::Uri("System", Path("missing"))).material();
-        }
-
-        // Use the surface-bound material.
-        return surface.materialPtr();
-
-    case 2: // Lighting debug mode.
-        if(surface.hasMaterial() && !(!devNoTexFix && surface.hasFixMaterial()))
-        {
-            if(!surface.hasSkyMaskedMaterial() || devRendSkyMode)
-            {
-                // Use the special "gray" material.
-                return &App_Materials().find(de::Uri("System", Path("gray"))).material();
-            }
-        }
-        break;
-
-    default: break;
-    }
-
-    // No material, then.
-    return 0;
-}
-
 /**
  * The DOOM lighting model applies a sector light level delta when drawing
  * walls based on their 2D world angle.
@@ -1398,7 +1394,7 @@ static void writeWallSection(HEdge &hedge, int section,
         return;
 
     // Determine which Material to use.
-    Material *material = chooseSurfaceMaterialForTexturingMode(surface);
+    Material *material = Rend_ChooseMapSurfaceMaterial(surface);
 
     // A drawable material is required.
     if(!material || !material->isDrawable())
@@ -1646,9 +1642,12 @@ static void writeLeafPlane(Plane &plane)
     if(eyeToSurface.dot(surface.normal()) < 0)
         return;
 
-    Material *material = chooseSurfaceMaterialForTexturingMode(surface);
-    // We must have a drawable material.
-    if(!material || !material->isDrawable()) return;
+    // Determine which Material to use.
+    Material *material = Rend_ChooseMapSurfaceMaterial(surface);
+
+    // A drawable material is required.
+    if(!material || !material->isDrawable())
+        return;
 
     // Skip planes with a sky-masked material?
     if(!devRendSkyMode)
@@ -1726,7 +1725,7 @@ static void writeLeafPlane(Plane &plane)
                            plane.visHeight(),
                            &rvertices, &numVertices);
 
-    MaterialSnapshot const &ms = material->prepare(mapSurfaceMaterialSpec(GL_REPEAT, GL_REPEAT));
+    MaterialSnapshot const &ms = material->prepare(Rend_MapSurfaceMaterialSpec());
 
     if(!(parm.flags & RPF_SKYMASK))
     {
@@ -1993,7 +1992,7 @@ static void writeLeafSkyMask(int skyCap = SKYCAP_LOWER|SKYCAP_UPPER)
             // Map RTU configuration from the special "gray" material.
             MaterialSnapshot const &ms =
                 App_Materials().find(de::Uri("System", Path("gray")))
-                    .material().prepare(mapSurfaceMaterialSpec(GL_REPEAT, GL_REPEAT));
+                    .material().prepare(Rend_MapSurfaceMaterialSpec());
             RL_MapRtu(RTU_PRIMARY, &ms.unit(RTU_PRIMARY));
         }
     }
@@ -3377,10 +3376,15 @@ static void Rend_DrawVertexIndices()
     glEnable(GL_DEPTH_TEST);
 }
 
+MaterialVariantSpec const &Rend_MapSurfaceMaterialSpec(int wrapS, int wrapT)
+{
+    return App_Materials().variantSpec(MapSurfaceContext, 0, 0, 0, 0, wrapS, wrapT,
+                                       -1, -1, -1, true, true, false, false);
+}
+
 MaterialVariantSpec const &Rend_MapSurfaceMaterialSpec()
 {
-    return App_Materials().variantSpec(MapSurfaceContext, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
-                                       -1, -1, -1, true, true, false, false);
+    return Rend_MapSurfaceMaterialSpec(GL_REPEAT, GL_REPEAT);
 }
 
 texturevariantspecification_t &Rend_MapSurfaceShinyTextureSpec()

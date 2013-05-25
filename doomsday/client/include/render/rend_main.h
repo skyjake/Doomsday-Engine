@@ -150,7 +150,14 @@ void Rend_DrawLightModMatrix();
  */
 de::Vector3f const &Rend_SectorLightColor(Sector const &sector);
 
+/**
+ * Selects a Material for the given map @a surface considering the current map
+ * renderer configuration.
+ */
+Material *Rend_ChooseMapSurfaceMaterial(Surface const &surface);
+
 de::MaterialVariantSpec const &Rend_MapSurfaceMaterialSpec();
+de::MaterialVariantSpec const &Rend_MapSurfaceMaterialSpec(int wrapS, int wrapT);
 
 texturevariantspecification_t &Rend_MapSurfaceShinyTextureSpec();
 
