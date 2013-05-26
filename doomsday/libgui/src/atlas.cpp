@@ -152,6 +152,8 @@ Atlas::Atlas(Flags const &flags, Size const &totalSize)
 
 void Atlas::setAllocator(IAllocator *allocator)
 {
+    DENG2_GUARD(this);
+
     clear();
     d->allocator.reset(allocator);
     if(d->allocator.get())
@@ -164,6 +166,8 @@ void Atlas::setAllocator(IAllocator *allocator)
 
 void Atlas::clear()
 {
+    DENG2_GUARD(this);
+
     if(d->allocator.get())
     {
         d->allocator->clear();
@@ -178,6 +182,8 @@ void Atlas::clear()
 
 void Atlas::setTotalSize(Size const &totalSize)
 {
+    DENG2_GUARD(this);
+
     d->totalSize = totalSize;
 
     if(d->allocator.get())
@@ -195,6 +201,8 @@ void Atlas::setTotalSize(Size const &totalSize)
 
 Atlas::Size Atlas::totalSize() const
 {
+    DENG2_GUARD(this);
+
     return d->totalSize;
 }
 
@@ -205,6 +213,7 @@ Id Atlas::alloc(Image const &image)
         return Id::None;
     }
 
+    DENG2_GUARD(this);
     DENG2_ASSERT(d->allocator.get());
 
     Rectanglei rect;
@@ -250,6 +259,7 @@ void Atlas::release(Id const &id)
 {
     if(id.isNone()) return;
 
+    DENG2_GUARD(this);
     DENG2_ASSERT(d->allocator.get());
 
     d->allocator->release(id);
@@ -258,6 +268,8 @@ void Atlas::release(Id const &id)
 
 bool Atlas::contains(Id const &id) const
 {
+    DENG2_GUARD(this);
+
     if(d->allocator.get())
     {
         return d->allocator->ids().contains(id);
@@ -267,6 +279,7 @@ bool Atlas::contains(Id const &id) const
 
 int Atlas::imageCount() const
 {
+    DENG2_GUARD(this);
     DENG2_ASSERT(d->allocator.get());
 
     return d->allocator->count();
@@ -274,6 +287,7 @@ int Atlas::imageCount() const
 
 Atlas::Ids Atlas::allImages() const
 {
+    DENG2_GUARD(this);
     DENG2_ASSERT(d->allocator.get());
 
     return d->allocator->ids();
@@ -281,6 +295,7 @@ Atlas::Ids Atlas::allImages() const
 
 Rectanglei Atlas::imageRect(Id const &id) const
 {
+    DENG2_GUARD(this);
     DENG2_ASSERT(d->allocator.get());
 
     Rectanglei rect;
@@ -290,6 +305,7 @@ Rectanglei Atlas::imageRect(Id const &id) const
 
 Rectanglef Atlas::imageRectf(Id const &id) const
 {
+    DENG2_GUARD(this);
     DENG2_ASSERT(d->allocator.get());
 
     Rectanglei rect;
@@ -304,6 +320,7 @@ Rectanglef Atlas::imageRectf(Id const &id) const
 
 Image Atlas::image(Id const &id) const
 {
+    DENG2_GUARD(this);
     if(d->hasBacking() && d->allocator.get() && contains(id))
     {
         return d->backing.subImage(imageRect(id));
@@ -313,6 +330,8 @@ Image Atlas::image(Id const &id) const
 
 void Atlas::commit() const
 {
+    DENG2_GUARD(this);
+
     if(!d->needCommit || !d->hasBacking()) return;
 
     LOG_AS("Atlas");

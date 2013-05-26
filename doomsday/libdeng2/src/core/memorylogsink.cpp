@@ -57,16 +57,22 @@ LogSink &MemoryLogSink::operator << (String const &)
 
 int MemoryLogSink::entryCount() const
 {
+    DENG2_GUARD(this);
+
     return _entries.size();
 }
 
 LogEntry const &MemoryLogSink::entry(int index) const
 {
+    DENG2_GUARD(this);
+
     return *_entries[index];
 }
 
 void MemoryLogSink::remove(int pos, int n)
 {
+    DENG2_GUARD(this);
+
     while(n-- > 0)
     {
         delete _entries.takeAt(pos);
