@@ -42,7 +42,8 @@ public:
     enum State {
         NotReady,       ///< Asset is not available at the moment.
         Ready,          ///< Asset is available immediately.
-        Recoverable     ///< Asset is available but not immediately (e.g., needs reloading from disk).
+        Recoverable,    ///< Asset is available but not immediately (e.g., needs reloading from disk).
+        Recovering      ///< Asset is presently being recovered and will soon be available.
     };
 
     /**
