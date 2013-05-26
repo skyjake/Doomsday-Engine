@@ -50,14 +50,14 @@ static coord_t skyFixCeilZ(Plane const *frontCeil, Plane const *backCeil)
 DENG2_PIMPL_NOREF(SkyFixEdge::Event)
 {
     SkyFixEdge &owner;
-    coord_t distance;
+    double distance;
 
-    Instance(SkyFixEdge &owner, coord_t distance)
+    Instance(SkyFixEdge &owner, double distance)
         : owner(owner), distance(distance)
     {}
 };
 
-SkyFixEdge::Event::Event(SkyFixEdge &owner, coord_t distance)
+SkyFixEdge::Event::Event(SkyFixEdge &owner, double distance)
     : WorldEdge::Event(),
       d(new Instance(owner, distance))
 {}
@@ -67,19 +67,14 @@ bool SkyFixEdge::Event::operator < (Event const &other) const
     return d->distance < other.distance();
 }
 
-coord_t SkyFixEdge::Event::distance() const
+double SkyFixEdge::Event::distance() const
 {
     return d->distance;
 }
 
-void SkyFixEdge::Event::setDistance(coord_t distance)
-{
-    d->distance = distance;
-}
-
 Vector3d SkyFixEdge::Event::origin() const
 {
-    return Vector3d(d->owner.origin(), d->distance);
+    return d->owner.pOrigin() + d->owner.pDirection() * distance();
 }
 
 DENG2_PIMPL(SkyFixEdge)
@@ -87,6 +82,11 @@ DENG2_PIMPL(SkyFixEdge)
     HEdge *hedge;
     FixType fixType;
     int edge;
+
+    Vector3d pOrigin;
+    Vector3d pDirection;
+
+    coord_t lo, hi;
 
     Event bottom;
     Event top;
@@ -97,8 +97,8 @@ DENG2_PIMPL(SkyFixEdge)
           hedge(&hedge),
           fixType(fixType),
           edge(edge),
-          bottom(*i),
-          top(*i),
+          bottom(*i, 0),
+          top(*i, 1),
           isValid(false)
     {}
 
@@ -171,35 +171,43 @@ DENG2_PIMPL(SkyFixEdge)
         Plane const *bceil  = backSec? &backSec->ceiling() : 0;
         Plane const *bfloor = backSec? &backSec->floor()   : 0;
 
-        bottom.setDistance(0);
-        top.setDistance(0);
-
         if(fixType == Upper)
         {
-            top.setDistance(skyFixCeilZ(fceil, bceil));
-            bottom.setDistance(de::max((backSec && bceil->surface().hasSkyMaskedMaterial() )? bceil->visHeight() : fceil->visHeight(),  ffloor->visHeight()));
+            hi = skyFixCeilZ(fceil, bceil);
+            lo = de::max((backSec && bceil->surface().hasSkyMaskedMaterial() )? bceil->visHeight() : fceil->visHeight(),  ffloor->visHeight());
         }
         else
         {
-            top.setDistance(de::min((backSec && bfloor->surface().hasSkyMaskedMaterial())? bfloor->visHeight() : ffloor->visHeight(), fceil->visHeight()));
-            bottom.setDistance(skyFixFloorZ(ffloor, bfloor));
+            hi = de::min((backSec && bfloor->surface().hasSkyMaskedMaterial())? bfloor->visHeight() : ffloor->visHeight(), fceil->visHeight());
+            lo = skyFixFloorZ(ffloor, bfloor);
         }
 
-        isValid = bottom < top;
+        isValid = hi > lo;
+        if(!isValid)
+            return;
+
+        pOrigin = Vector3d(self.origin(), lo);
+        pDirection = Vector3d(0, 0, hi - lo);
     }
 };
 
 SkyFixEdge::SkyFixEdge(HEdge &hedge, FixType fixType, int edge, float materialOffsetS)
-    : WorldEdge(EdgeAttribs(Vector2f(materialOffsetS, 0))),
+    : WorldEdge((edge? hedge.twin() : hedge).origin(),
+                EdgeAttribs(Vector2f(materialOffsetS, 0))),
       d(new Instance(this, hedge, fixType, edge))
 {
     /// @todo Defer until necessary.
     d->prepare();
 }
 
-Vector2d const &SkyFixEdge::origin() const
+Vector3d const &SkyFixEdge::pOrigin() const
 {
-    return (d->edge? d->hedge->twin() : *d->hedge).origin();
+    return d->pOrigin;
+}
+
+Vector3d const &SkyFixEdge::pDirection() const
+{
+    return d->pDirection;
 }
 
 bool SkyFixEdge::isValid() const
@@ -215,6 +223,16 @@ SkyFixEdge::Event const &SkyFixEdge::first() const
 SkyFixEdge::Event const &SkyFixEdge::last() const
 {
     return d->top;
+}
+
+SkyFixEdge::Event const &SkyFixEdge::at(EventIndex index) const
+{
+    if(index >= 0 && index < 2)
+    {
+        return index == 0? d->bottom : d->top;
+    }
+    /// @throw InvalidIndexError The specified event index is not valid.
+    throw Error("SkyFixEdge::at", QString("Index '%1' does not map to a known event (count: 2)").arg(index));
 }
 
 } // namespace de

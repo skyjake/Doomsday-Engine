@@ -65,11 +65,6 @@ public:
 
         Vector3d origin() const;
 
-        friend class WallEdge;
-
-    protected:
-        void setDistance(double newDistance);
-
     private:
         DENG2_PRIVATE(d)
     };
@@ -86,10 +81,8 @@ public:
         return at(index);
     }
 
-    /**
-     * Returns the origin of the edge in the map coordinate space.
-     */
-    Vector2d const &origin() const;
+    Vector3d const &pOrigin() const;
+    Vector3d const &pDirection() const;
 
     WallSpec const &spec() const;
 

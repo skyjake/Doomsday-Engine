@@ -47,7 +47,7 @@ public:
             return distance() < other.distance();
         }
 
-        virtual coord_t distance() const = 0;
+        virtual double distance() const = 0;
     };
 
 public:
@@ -69,15 +69,12 @@ namespace de {
  */
 struct EdgeAttribs
 {
-    Vector2d origin;
     Vector2f materialOrigin;
     Vector3f normal;
 
-    EdgeAttribs(Vector2d const &origin        = Vector2d(),
-                Vector2f const materialOrigin = Vector2f(),
+    EdgeAttribs(Vector2f const materialOrigin = Vector2f(),
                 Vector3f const &normal        = Vector3f())
-        : origin(origin),
-          materialOrigin(materialOrigin),
+        : materialOrigin(materialOrigin),
           normal(normal)
     {}
 };
@@ -124,7 +121,46 @@ namespace de {
 /**
  * @ingroup world
  */
-typedef AbstractEdge WorldEdge;
+class WorldEdge : public AbstractEdge
+{
+public:
+    class Event : public AbstractEdge::Event
+    {
+    public:
+        virtual ~Event() {}
+
+        virtual Vector3d origin() const = 0;
+
+        inline coord_t z() const { return origin().z; }
+    };
+
+public:
+    WorldEdge(Vector2d origin_, EdgeAttribs const &attribs = EdgeAttribs())
+        : AbstractEdge(attribs), _origin(origin_)
+    {}
+
+    virtual ~WorldEdge() {}
+
+    /**
+     * Returns the X|Y origin of the edge in the map coordinate space.
+     */
+    Vector2d const &origin() const { return _origin; }
+
+    virtual Event const &first() const = 0;
+
+    virtual Event const &last() const = 0;
+
+    virtual Event const &at(EventIndex index) const = 0;
+
+    virtual int divisionCount() const { return 0; }
+
+    virtual EventIndex firstDivision() const { return InvalidIndex; }
+
+    virtual EventIndex lastDivision() const { return InvalidIndex; }
+
+private:
+    Vector2d _origin;
+};
 
 } // namespace de
 

@@ -164,14 +164,12 @@ texturevariantspecification_t &Rend_MapSurfaceShinyTextureSpec();
 texturevariantspecification_t &Rend_MapSurfaceShinyMaskTextureSpec();
 
 void R_DivVerts(rvertex_t *dst, rvertex_t const *src,
-    de::WallEdge const &leftEdge, de::WallEdge const &rightEdge);
+    de::WorldEdge const &leftEdge, de::WorldEdge const &rightEdge);
 
 void R_DivTexCoords(rtexcoord_t *dst, rtexcoord_t const *src,
-    de::WallEdge const &leftEdge, de::WallEdge const &rightEdge,
-    float bL, float tL, float bR, float tR);
+    de::WorldEdge const &leftEdge, de::WorldEdge const &rightEdge);
 
 void R_DivVertColors(ColorRawf *dst, ColorRawf const *src,
-    de::WallEdge const &leftEdge, de::WallEdge const &rightEdge,
-    float bL, float tL, float bR, float tR);
+    de::WorldEdge const &leftEdge, de::WorldEdge const &rightEdge);
 
 #endif // DENG_RENDER_MAIN_H

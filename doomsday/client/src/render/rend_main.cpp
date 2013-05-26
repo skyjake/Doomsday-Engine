@@ -1145,51 +1145,40 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
             std::memcpy(origColors, rcolors, sizeof(origColors));
         }
 
-        float const bL = origVerts[0].pos[VZ];
-        float const tL = origVerts[1].pos[VZ];
-        float const bR = origVerts[2].pos[VZ];
-        float const tR = origVerts[3].pos[VZ];
-
         R_DivVerts(rvertices, origVerts, leftEdge, rightEdge);
-        R_DivTexCoords(primaryCoords, origTexCoords, leftEdge, rightEdge,
-                       bL, tL, bR, tR);
+        R_DivTexCoords(primaryCoords, origTexCoords, leftEdge, rightEdge);
 
         if(rcolors)
         {
-            R_DivVertColors(rcolors, origColors, leftEdge, rightEdge,
-                            bL, tL, bR, tR);
+            R_DivVertColors(rcolors, origColors, leftEdge, rightEdge);
         }
 
         if(interCoords)
         {
             rtexcoord_t origTexCoords2[4];
             std::memcpy(origTexCoords2, interCoords, sizeof(origTexCoords2));
-            R_DivTexCoords(interCoords, origTexCoords2, leftEdge, rightEdge,
-                           bL, tL, bR, tR);
+            R_DivTexCoords(interCoords, origTexCoords2, leftEdge, rightEdge);
         }
 
         if(modCoords)
         {
             rtexcoord_t origTexCoords5[4];
             std::memcpy(origTexCoords5, modCoords, sizeof(origTexCoords5));
-            R_DivTexCoords(modCoords, origTexCoords5, leftEdge, rightEdge,
-                           bL, tL, bR, tR);
+            R_DivTexCoords(modCoords, origTexCoords5, leftEdge, rightEdge);
         }
 
         if(shinyTexCoords)
         {
             rtexcoord_t origShinyTexCoords[4];
             std::memcpy(origShinyTexCoords, shinyTexCoords, sizeof(origShinyTexCoords));
-            R_DivTexCoords(shinyTexCoords, origShinyTexCoords, leftEdge, rightEdge,
-                           bL, tL, bR, tR);
+            R_DivTexCoords(shinyTexCoords, origShinyTexCoords, leftEdge, rightEdge);
         }
 
         if(shinyColors)
         {
             ColorRawf origShinyColors[4];
             std::memcpy(origShinyColors, shinyColors, sizeof(origShinyColors));
-            R_DivVertColors(shinyColors, origShinyColors, leftEdge, rightEdge,
-                            bL, tL, bR, tR);
+            R_DivVertColors(shinyColors, origShinyColors, leftEdge, rightEdge);
         }
 
         RL_AddPolyWithCoordsModulationReflection(PT_FAN, p.flags | (hasDynlights? RPF_HAS_DYNLIGHTS : 0),
@@ -1244,7 +1233,7 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
 static bool nearFadeOpacity(WallEdge const &leftEdge, WallEdge const &rightEdge,
                             float &opacity)
 {
-    if(vOrigin[VY] < leftEdge.bottom().distance() || vOrigin[VY] > rightEdge.top().distance())
+    if(vOrigin[VY] < leftEdge.bottom().z() || vOrigin[VY] > rightEdge.top().z())
         return false;
 
     mobj_t const *mo = viewPlayer->shared.mo;
@@ -1408,7 +1397,7 @@ static void writeWallSection(HEdge &hedge, int section,
 
     // Do the edge geometries describe a valid polygon?
     if(!leftEdge.isValid() || !rightEdge.isValid() ||
-       de::fequal(leftEdge.bottom().distance(), rightEdge.top().distance()))
+       de::fequal(leftEdge.bottom().z(), rightEdge.top().z()))
         return;
 
     // Apply a fade out when the viewer is near to this geometry?
@@ -1571,8 +1560,8 @@ static void writeWallSection(HEdge &hedge, int section,
         R_FreeRendVertices(rvertices);
     }
 
-    if(retBottomZ)     *retBottomZ     = leftEdge.bottom().distance();
-    if(retTopZ)        *retTopZ        = rightEdge.top().distance();
+    if(retBottomZ)     *retBottomZ     = leftEdge.bottom().z();
+    if(retTopZ)        *retTopZ        = rightEdge.top().z();
     if(retWroteOpaque) *retWroteOpaque = wroteOpaque && !didNearFade;
 }
 
@@ -1851,7 +1840,7 @@ static void writeLeafSkyMaskStrips(SkyFixEdge::FixType fixType)
             SkyFixEdge skyEdge(hedge, fixType, (direction == Anticlockwise)? Line::To : Line::From,
                                startMaterialOffset);
 
-            if(skyEdge.isValid() && skyEdge.bottom().distance() < skyEdge.top().distance())
+            if(skyEdge.isValid() && skyEdge.bottom().z() < skyEdge.top().z())
             {
                 // A new strip begins.
                 stripBuilder.begin(direction);
@@ -1859,8 +1848,8 @@ static void writeLeafSkyMaskStrips(SkyFixEdge::FixType fixType)
 
                 // Update the strip build state.
                 startNode     = &hedge;
-                startZBottom  = skyEdge.bottom().distance();
-                startZTop     = skyEdge.top().distance();
+                startZBottom  = skyEdge.bottom().z();
+                startZTop     = skyEdge.top().z();
                 startMaterial = skyMaterial;
             }
         }
@@ -1878,14 +1867,14 @@ static void writeLeafSkyMaskStrips(SkyFixEdge::FixType fixType)
 
             // Stop if we've reached a "null" edge.
             bool endStrip = false;
-            if(!(skyEdge.isValid() && skyEdge.bottom().distance() < skyEdge.top().distance()))
+            if(!(skyEdge.isValid() && skyEdge.bottom().z() < skyEdge.top().z()))
             {
                 endStrip = true;
             }
             // Must we split the strip here?
             else if(&hedge != startNode &&
-                    (!de::fequal(skyEdge.bottom().distance(), startZBottom) ||
-                     !de::fequal(skyEdge.top().distance(), startZTop) ||
+                    (!de::fequal(skyEdge.bottom().z(), startZBottom) ||
+                     !de::fequal(skyEdge.top().z(), startZTop) ||
                      (splitOnMaterialChange && skyMaterial != startMaterial)))
             {
                 endStrip = true;

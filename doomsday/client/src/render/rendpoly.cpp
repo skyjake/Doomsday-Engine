@@ -373,7 +373,7 @@ void Rtu_TranslateOffset(rtexmapunit_t *rtu, Vector2f const &st)
 }
 
 void R_DivVerts(rvertex_t *dst, rvertex_t const *src,
-    WallEdge const &leftEdge, WallEdge const &rightEdge)
+    WorldEdge const &leftEdge, WorldEdge const &rightEdge)
 {
 #define COPYVERT(d, s)  (d)->pos[VX] = (s)->pos[VX]; \
     (d)->pos[VY] = (s)->pos[VY]; \
@@ -391,10 +391,9 @@ void R_DivVerts(rvertex_t *dst, rvertex_t const *src,
 
     for(int n = 0; n < rightEdge.divisionCount(); ++n)
     {
-        WallEdge::Event const &icpt = rightEdge.at(rightEdge.lastDivision() - n);
-        dst[numL + 2 + n].pos[VX] = src[2].pos[VX];
-        dst[numL + 2 + n].pos[VY] = src[2].pos[VY];
-        dst[numL + 2 + n].pos[VZ] = float( icpt.distance() );
+        WorldEdge::Event const &icpt = rightEdge.at(rightEdge.lastDivision() - n);
+        Vector3d const &origin = icpt.origin();
+        V3f_Set(dst[numL + 2 + n].pos, origin.x, origin.y, origin.z);
     }
 
     // Left fan:
@@ -404,18 +403,16 @@ void R_DivVerts(rvertex_t *dst, rvertex_t const *src,
 
     for(int n = 0; n < leftEdge.divisionCount(); ++n)
     {
-        WallEdge::Event const &icpt = leftEdge.at(leftEdge.firstDivision() + n);
-        dst[2 + n].pos[VX] = src[0].pos[VX];
-        dst[2 + n].pos[VY] = src[0].pos[VY];
-        dst[2 + n].pos[VZ] = float( icpt.distance() );
+        WorldEdge::Event const &icpt = leftEdge.at(leftEdge.firstDivision() + n);
+        Vector3d const &origin = icpt.origin();
+        V3f_Set(dst[2 + n].pos, origin.x, origin.y, origin.z);
     }
 
 #undef COPYVERT
 }
 
 void R_DivTexCoords(rtexcoord_t *dst, rtexcoord_t const *src,
-    WallEdge const &leftEdge, WallEdge const &rightEdge,
-    float bL, float tL, float bR, float tR)
+    WorldEdge const &leftEdge, WorldEdge const &rightEdge)
 {
 #define COPYTEXCOORD(d, s)    (d)->st[0] = (s)->st[0]; \
     (d)->st[1] = (s)->st[1];
@@ -430,13 +427,11 @@ void R_DivTexCoords(rtexcoord_t *dst, rtexcoord_t const *src,
     COPYTEXCOORD(&dst[numL + 1], &src[3]);
     COPYTEXCOORD(&dst[numL + numR-1], &src[2]);
 
-    float const rightHeight = tR - bR;
     for(int n = 0; n < rightEdge.divisionCount(); ++n)
     {
-        WallEdge::Event const &icpt = rightEdge.at(rightEdge.lastDivision() - n);
-        float inter = (float( icpt.distance() ) - bR) / rightHeight;
+        WorldEdge::Event const &icpt = rightEdge.at(rightEdge.lastDivision() - n);
         dst[numL + 2 + n].st[0] = src[3].st[0];
-        dst[numL + 2 + n].st[1] = src[2].st[1] + (src[3].st[1] - src[2].st[1]) * inter;
+        dst[numL + 2 + n].st[1] = src[2].st[1] + (src[3].st[1] - src[2].st[1]) * icpt.distance();
     }
 
     // Left fan:
@@ -444,21 +439,18 @@ void R_DivTexCoords(rtexcoord_t *dst, rtexcoord_t const *src,
     COPYTEXCOORD(&dst[1], &src[0]);
     COPYTEXCOORD(&dst[numL - 1], &src[1]);
 
-    float const leftHeight = tL - bL;
     for(int n = 0; n < leftEdge.divisionCount(); ++n)
     {
-        WallEdge::Event const &icpt = leftEdge.at(leftEdge.firstDivision() + n);
-        float inter = (float( icpt.distance() ) - bL) / leftHeight;
+        WorldEdge::Event const &icpt = leftEdge.at(leftEdge.firstDivision() + n);
         dst[2 + n].st[0] = src[0].st[0];
-        dst[2 + n].st[1] = src[0].st[1] + (src[1].st[1] - src[0].st[1]) * inter;
+        dst[2 + n].st[1] = src[0].st[1] + (src[1].st[1] - src[0].st[1]) * icpt.distance();
     }
 
 #undef COPYTEXCOORD
 }
 
 void R_DivVertColors(ColorRawf *dst, ColorRawf const *src,
-    WallEdge const &leftEdge, WallEdge const &rightEdge,
-    float bL, float tL, float bR, float tR)
+    WorldEdge const &leftEdge, WorldEdge const &rightEdge)
 {
 #define COPYVCOLOR(d, s)    (d)->rgba[CR] = (s)->rgba[CR]; \
     (d)->rgba[CG] = (s)->rgba[CG]; \
@@ -475,11 +467,10 @@ void R_DivVertColors(ColorRawf *dst, ColorRawf const *src,
     COPYVCOLOR(&dst[numL + 1], &src[3]);
     COPYVCOLOR(&dst[numL + numR-1], &src[2]);
 
-    float const rightHeight = tR - bR;
     for(int n = 0; n < rightEdge.divisionCount(); ++n)
     {
-        WallEdge::Event const &icpt = rightEdge.at(rightEdge.lastDivision() - n);
-        float inter = (float( icpt.distance() ) - bR) / rightHeight;
+        WorldEdge::Event const &icpt = rightEdge.at(rightEdge.lastDivision() - n);
+        double inter = icpt.distance();
         for(int c = 0; c < 4; ++c)
         {
             dst[numL + 2 + n].rgba[c] = src[2].rgba[c] + (src[3].rgba[c] - src[2].rgba[c]) * inter;
@@ -491,11 +482,10 @@ void R_DivVertColors(ColorRawf *dst, ColorRawf const *src,
     COPYVCOLOR(&dst[1], &src[0]);
     COPYVCOLOR(&dst[numL - 1], &src[1]);
 
-    float const leftHeight = tL - bL;
     for(int n = 0; n < leftEdge.divisionCount(); ++n)
     {
-        WallEdge::Event const &icpt = leftEdge.at(leftEdge.firstDivision() + n);
-        float inter = (float( icpt.distance() ) - bL) / leftHeight;
+        WorldEdge::Event const &icpt = leftEdge.at(leftEdge.firstDivision() + n);
+        double inter = icpt.distance();
         for(int c = 0; c < 4; ++c)
         {
             dst[2 + n].rgba[c] = src[0].rgba[c] + (src[1].rgba[c] - src[0].rgba[c]) * inter;

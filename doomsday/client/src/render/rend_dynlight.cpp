@@ -68,14 +68,9 @@ static void drawDynlight(dynlight_t const &dyn, renderlightprojectionparams_t &p
                 rtexcoord_t origTexCoords[4]; std::memcpy(origTexCoords, rtexcoords, sizeof(rtexcoord_t) * 4);
                 ColorRawf origColors[4]; std::memcpy(origColors, rcolors, sizeof(ColorRawf) * 4);
 
-                float bL = parm.rvertices[0].pos[VZ];
-                float tL = parm.rvertices[1].pos[VZ];
-                float bR = parm.rvertices[2].pos[VZ];
-                float tR = parm.rvertices[3].pos[VZ];
-
                 R_DivVerts(rvertices, origVerts, leftEdge, rightEdge);
-                R_DivTexCoords(rtexcoords, origTexCoords, leftEdge, rightEdge, bL, tL, bR, tR);
-                R_DivVertColors(rcolors, origColors, leftEdge, rightEdge, bL, tL, bR, tR);
+                R_DivTexCoords(rtexcoords, origTexCoords, leftEdge, rightEdge);
+                R_DivVertColors(rcolors, origColors, leftEdge, rightEdge);
             }
             else
             {

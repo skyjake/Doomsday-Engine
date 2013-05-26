@@ -1041,14 +1041,9 @@ static void drawWallSectionShadow(rvertex_t const *origVertices,
             ColorRawf origColors[4];
             std::memcpy(origColors, rcolors, sizeof(ColorRawf) * 4);
 
-            float const bL = origVertices[0].pos[VZ];
-            float const tL = origVertices[1].pos[VZ];
-            float const bR = origVertices[2].pos[VZ];
-            float const tR = origVertices[3].pos[VZ];
-
             R_DivVerts(rvertices, origVertices, leftEdge, rightEdge);
-            R_DivTexCoords(rtexcoords, origTexCoords, leftEdge, rightEdge, bL, tL, bR, tR);
-            R_DivVertColors(rcolors, origColors, leftEdge, rightEdge, bL, tL, bR, tR);
+            R_DivTexCoords(rtexcoords, origTexCoords, leftEdge, rightEdge);
+            R_DivVertColors(rcolors, origColors, leftEdge, rightEdge);
 
             RL_AddPolyWithCoords(PT_FAN, RPF_DEFAULT|RPF_SHADOW,
                                  3 + rightEdge.divisionCount(),

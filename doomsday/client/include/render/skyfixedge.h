@@ -43,18 +43,13 @@ public:
     class Event : public WorldEdge::Event
     {
     public:
-        Event(SkyFixEdge &owner, coord_t distance = 0);
+        Event(SkyFixEdge &owner, double distance = 0);
 
         bool operator < (Event const &other) const;
 
-        coord_t distance() const;
+        double distance() const;
 
         Vector3d origin() const;
-
-        friend class SkyFixEdge;
-
-    protected:
-        void setDistance(double newDistance);
 
     private:
         DENG2_PRIVATE(d)
@@ -67,10 +62,8 @@ public:
      */
     SkyFixEdge(HEdge &hedge, FixType fixType, int edge, float materialOffsetS = 0);
 
-    /**
-     * Returns the origin of the edge in the map coordinate space.
-     */
-    Vector2d const &origin() const;
+    Vector3d const &pOrigin() const;
+    Vector3d const &pDirection() const;
 
     /// Implement IEdge.
     bool isValid() const;
@@ -83,6 +76,8 @@ public:
 
     inline Event const &bottom() const { return first(); }
     inline Event const &top() const { return last(); }
+
+    Event const &at(EventIndex index) const;
 
 private:
     DENG2_PRIVATE(d)

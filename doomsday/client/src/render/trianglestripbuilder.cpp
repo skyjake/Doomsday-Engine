@@ -92,7 +92,7 @@ void TriangleStripBuilder::extend(AbstractEdge &edge)
 
     if(d->buildTexCoords)
     {
-        coord_t edgeLength = to.distance() - from.distance();
+        double edgeLength = to.origin().z - from.origin().z;
 
         d->texcoords->append(rtexcoord_s(edge.materialOrigin +
                                          Vector2f(0, (d->direction == Anticlockwise? 0 : edgeLength))));

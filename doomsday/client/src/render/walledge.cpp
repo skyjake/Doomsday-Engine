@@ -69,14 +69,9 @@ double WallEdge::Event::distance() const
     return IHPlane::IIntercept::distance();
 }
 
-void WallEdge::Event::setDistance(double newDistance)
-{
-    _distance = newDistance;
-}
-
 Vector3d WallEdge::Event::origin() const
 {
-    return Vector3d(d->owner.origin(), distance());
+    return d->owner.pOrigin() + d->owner.pDirection() * distance();
 }
 
 static bool eventSorter(WorldEdge::Event *a, WorldEdge::Event *b)
@@ -91,14 +86,19 @@ DENG2_PIMPL(WallEdge), public IHPlane
 
     Line::Side *mapSide;
     coord_t mapSideOffset;
-    Vertex *mapVertex;
+    LineOwner *mapLineOwner;
 
     /// The half-plane which partitions the surface coordinate space.
     Partition hplane;
 
+    Vector3d pOrigin;
+    Vector3d pDirection;
+
+    coord_t lo, hi;
+
     /// Events for the special termination points are allocated with "this".
-    WallEdge::Event bottom;
-    WallEdge::Event top;
+    Event bottom;
+    Event top;
 
     /// All events along the partition line.
     Events events;
@@ -109,24 +109,24 @@ DENG2_PIMPL(WallEdge), public IHPlane
     bool isValid;
 
     Instance(Public *i, WallSpec const &spec, Line::Side *mapSide, int edge,
-             coord_t sideOffset, Vertex *mapVertex)
+             coord_t sideOffset, LineOwner *mapLineOwner)
         : Base(i),
           spec(spec),
           edge(edge),
           mapSide(mapSide),
           mapSideOffset(sideOffset),
-          mapVertex(mapVertex),
-          bottom(*i),
-          top(*i),
+          mapLineOwner(mapLineOwner),
+          lo(0), hi(0),
+          bottom(*i, 0),
+          top(*i, 1),
           needSortEvents(false),
           isValid(false)
     {
-        coord_t lo, hi;
         Vector2f materialOffset;
         R_SideSectionCoords(*mapSide, spec.section, spec.flags.testFlag(WallSpec::SkyClip),
                             &lo, &hi, &materialOffset);
 
-        isValid = (hi >= lo);
+        isValid = (hi > lo);
 
         self.materialOrigin += materialOffset;
 
@@ -135,11 +135,9 @@ DENG2_PIMPL(WallEdge), public IHPlane
 #endif
 
         // The first event is the bottom termination event.
-        bottom.setDistance(lo);
         events.append(&bottom);
 
         // The last event is the top termination event.
-        top.setDistance(hi);
         events.append(&top);
     }
 
@@ -232,9 +230,9 @@ DENG2_PIMPL(WallEdge), public IHPlane
         {
             return *events[index];
         }
-        /// @throw IHPlane::UnknownInterceptError The specified intercept index is not valid.
-        throw IHPlane::UnknownInterceptError("WallEdge::at", QString("Index '%1' does not map to a known intercept (count: %2)")
-                                                                .arg(index).arg(interceptCount()));
+        /// @throw UnknownInterceptError The specified intercept index is not valid.
+        throw UnknownInterceptError("WallEdge::at", QString("Index '%1' does not map to a known intercept (count: %2)")
+                                                        .arg(index).arg(interceptCount()));
     }
 
     // Implements IHPlane
@@ -257,7 +255,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
     /**
      * Ensure all intercepts do not exceed the specified closed range.
      */
-    void assertInterceptsInRange(coord_t low, coord_t hi) const
+    void assertInterceptsInRange(double low, double hi) const
     {
 #ifdef DENG_DEBUG
         foreach(Event const *icpt, events)
@@ -269,22 +267,26 @@ DENG2_PIMPL(WallEdge), public IHPlane
 #endif
     }
 
+    inline double distanceTo(coord_t worldHeight) const
+    {
+        return (worldHeight - lo) / (hi - lo);
+    }
+
+    /**
+     * @todo: Use the half-edge rings instead of LineOwners.
+     */
     void addNeighborIntercepts(coord_t bottom, coord_t top)
     {
-        DENG_ASSERT(top > bottom);
-
-        // Retrieve the vertex owner node.
-        LineOwner *base = mapSide->line().vertexOwner(*mapVertex);
-        if(!base) return;
+        if(!mapLineOwner) return;
 
         Sector const *frontSec = mapSide->sectorPtr();
-        LineOwner *own = base;
+        LineOwner *own = mapLineOwner;
         bool stopScan = false;
         do
         {
             own = &own->navigate(edge? Anticlockwise : Clockwise);
 
-            if(own == base)
+            if(own == mapLineOwner)
             {
                 stopScan = true;
             }
@@ -315,7 +317,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
 
                                 if(plane.visHeight() > bottom && plane.visHeight() < top)
                                 {
-                                    coord_t distance = plane.visHeight();
+                                    double distance = distanceTo(plane.visHeight());
 
                                     if(!haveEvent(distance))
                                     {
@@ -354,9 +356,11 @@ DENG2_PIMPL(WallEdge), public IHPlane
 
                             if(z > bottom && z < top)
                             {
-                                if(!haveEvent(z))
+                                double distance = distanceTo(z);
+
+                                if(!haveEvent(distance))
                                 {
-                                    createEvent(z);
+                                    createEvent(distance);
 
                                     // All clipped away.
                                     stopScan = true;
@@ -425,13 +429,13 @@ DENG2_PIMPL(WallEdge), public IHPlane
     {
         if(!isValid) return;
 
-        coord_t const lo = bottom.distance();
-        coord_t const hi = top.distance();
+        pOrigin = Vector3d(self.origin(), lo);
+        pDirection = Vector3d(0, 0, hi - lo);
 
         // Add intecepts for neighbor planes?
         if(!spec.flags.testFlag(WallSpec::NoEdgeDivisions) && !de::fequal(hi, lo))
         {
-            configure(Partition(mapVertex->origin(), Vector2d(0, hi - lo)));
+            configure(Partition(Vector2d(), Vector2d(0, hi - lo)));
 
             // Add intercepts (the "divisions") in ascending distance order.
             addNeighborIntercepts(lo, hi);
@@ -442,7 +446,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
         }
 
         // Sanity check.
-        assertInterceptsInRange(lo, hi);
+        assertInterceptsInRange(0, 1);
 
         // Determine the edge normal.
         /// @todo Cache the smoothed normal value somewhere.
@@ -463,10 +467,11 @@ DENG2_PIMPL(WallEdge), public IHPlane
 };
 
 WallEdge::WallEdge(WallSpec const &spec, HEdge &hedge, int edge)
-    : WorldEdge(EdgeAttribs(Vector2f(hedge.lineOffset() + (edge? hedge.length() : 0), 0))),
+    : WorldEdge((edge? hedge.twin() : hedge).origin(),
+                EdgeAttribs(Vector2f(hedge.lineOffset() + (edge? hedge.length() : 0), 0))),
       d(new Instance(this, spec, &hedge.lineSide(), edge,
                            hedge.lineOffset() + (edge? hedge.length() : 0),
-                           edge? &hedge.twin().vertex() : &hedge.vertex()))
+                           hedge.lineSide().line().vertexOwner((edge? hedge.twin() : hedge).vertex())))
 {
     DENG_ASSERT(hedge.hasLineSide() && hedge.lineSide().hasSections());
 
@@ -474,9 +479,14 @@ WallEdge::WallEdge(WallSpec const &spec, HEdge &hedge, int edge)
     d->prepare();
 }
 
-Vector2d const &WallEdge::origin() const
+Vector3d const &WallEdge::pOrigin() const
 {
-    return d->mapVertex->origin();
+    return d->pOrigin;
+}
+
+Vector3d const &WallEdge::pDirection() const
+{
+    return d->pDirection;
 }
 
 WallSpec const &WallEdge::spec() const
