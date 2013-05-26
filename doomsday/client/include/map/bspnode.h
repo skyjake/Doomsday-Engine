@@ -1,4 +1,4 @@
-/** @file bspnode.h World Map BSP Node.
+/** @file map/bspnode.h World Map BSP Node.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -48,11 +48,7 @@ public:
     DENG2_ERROR(InvalidChildError);
 
     /// Child element identifiers:
-    enum
-    {
-        Right,
-        Left
-    };
+    enum { Right, Left };
 
 public:
     BspNode(de::Partition const &partition);
@@ -61,22 +57,6 @@ public:
      * Returns the Partition for the BSP node.
      */
     de::Partition const &partition() const;
-
-    /**
-     * Convenient accessor method for returning the direction of the partition
-     * for the BSP node.
-     *
-     * @see partition()
-     */
-    inline de::Vector2d const &partitionDirection() const { return partition().direction; }
-
-    /**
-     * Convenient accessor method for returning the origin of the partition for
-     * the BSP node.
-     *
-     * @see partition()
-     */
-    inline de::Vector2d const &partitionOrigin() const { return partition().origin; }
 
     /**
      * Returns @c true iff the specified child is configured for the BSP node.
@@ -110,8 +90,7 @@ public:
      *
      * @see hasChild()
      */
-    inline de::MapElement *childPtr(int left) const
-    {
+    inline de::MapElement *childPtr(int left) const {
         return hasChild(left)? &child(left) : 0;
     }
 
