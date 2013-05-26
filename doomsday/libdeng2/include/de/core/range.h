@@ -20,6 +20,7 @@
 #define LIBDENG2_RANGE_H
 
 #include "../libdeng2.h"
+#include "../math.h"
 
 #include <QString>
 
@@ -38,6 +39,11 @@ struct Range
     Range(Type const &a = 0, Type const &b = 0) : start(a), end(b) {}
     inline Type size() const { return end - start; }
     inline bool contains(Type const &i) const { return i >= start && i < end; }
+    inline Range &operator |= (Type const &value) {
+        start = de::min(start, value);
+        end   = de::max(end,   value);
+        return *this;
+    }
     inline bool operator == (Range const &other) const {
         return start == other.start && end == other.end;
     }
