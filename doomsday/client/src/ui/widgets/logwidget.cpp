@@ -102,8 +102,7 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
     Animation visibleOffset;
     int maxScroll;
     int lastMaxScroll;
-    int firstVisibleIndex;
-    int lastVisibleIndex;
+    Rangei visibleRange;
     Animation scrollOpacity;
 
     // Style.
@@ -139,8 +138,7 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
           visibleOffset(0),
           maxScroll(0),
           lastMaxScroll(0),
-          firstVisibleIndex(-1),
-          lastVisibleIndex(-1),
+          visibleRange(Rangei(-1, -1)),
           scrollOpacity(0, Animation::EaseBoth),
           font(0),
           buf(0),
@@ -176,8 +174,8 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
     {
         Style const &st = self.style();
 
-        font = &st.fonts().font("log.normal");
-        margin = st.rules().rule("gap").valuei();
+        font           = &st.fonts().font("log.normal");
+        margin         = st.rules().rule("gap").valuei();
         scrollBarWidth = st.rules().rule("log.scrollbar").valuei();
 
         normalColor    = st.colors().color("log.normal");
@@ -319,14 +317,6 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
             delete cache.takeFirst();
             numPruned++;
         }
-
-        // Adjust the visible range appropriately.
-        firstVisibleIndex -= numPruned;
-        lastVisibleIndex  -= numPruned;
-        if(lastVisibleIndex >= 0 && firstVisibleIndex < 0)
-        {
-            firstVisibleIndex = 0;
-        }
     }
 
     duint contentWidth() const
@@ -407,19 +397,17 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
 
     void releaseExcessComposedEntries()
     {
-        if(lastVisibleIndex < 0 || firstVisibleIndex < 0) return;
-
-        int const visRange = lastVisibleIndex - firstVisibleIndex;
+        if(visibleRange < 0) return;
 
         // Excess entries before the visible range.
-        int excess = firstVisibleIndex - visRange;
+        int excess = visibleRange.start - visibleRange.size();
         for(int i = 0; i <= excess; ++i)
         {
             cache[i]->clear();
         }
 
         // Excess entries after the visible range.
-        excess = lastVisibleIndex + visRange;
+        excess = visibleRange.end + visibleRange.size();
         for(int i = excess; i < cache.size(); ++i)
         {
             cache[i]->clear();
@@ -441,8 +429,7 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
         }
         else
         {
-            scrollOpacity = .4f;
-            scrollOpacity.setValue(.03f, 8, 3);
+            scrollOpacity.setValueFrom(.4f, .025f, 5, 2);
         }
     }
 
@@ -465,6 +452,10 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
         // Get new entries.
         cacheEntries();
 
+        // We won't keep an unlimited number of entries in memory; delete the
+        // oldest ones if limit has been reached.
+        prune();
+
         // We should now have a cached entry for each log entry. Not all of them
         // are composed, though.
         DENG2_ASSERT(cache.size() == sink.entryCount());
@@ -474,10 +465,8 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
         // Draw in reverse, as much as we need.
         int yBottom = contentSize.y + visibleOffset;
 
-        maxScroll = maxVisibleOffset(contentSize.y);
-
-        firstVisibleIndex = -1;
-        lastVisibleIndex = -1;
+        maxScroll    = maxVisibleOffset(contentSize.y);
+        visibleRange = Rangei(-1, -1);
 
         VertexBuf::Builder verts;
 
@@ -493,8 +482,8 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
                 // This entry is visible.
                 entry->make(verts, yBottom);
 
-                if(lastVisibleIndex == -1) lastVisibleIndex = idx;
-                firstVisibleIndex = idx;
+                if(visibleRange.end == -1) visibleRange.end = idx;
+                visibleRange.start = idx;
             }
         }
 
@@ -519,10 +508,6 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
         }
 
         buf->setVertices(gl::TriangleStrip, verts, gl::Dynamic);
-
-        // We won't keep an unlimited number of entries in memory; delete the
-        // oldest ones if limit has been reached.
-        prune();
     }
 
     void draw()
