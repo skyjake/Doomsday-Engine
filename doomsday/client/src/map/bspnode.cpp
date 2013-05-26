@@ -55,14 +55,6 @@ DENG2_PIMPL(BspNode)
     }
 };
 
-BspNode::BspNode(Vector2d partitionOrigin, Vector2d partitionDirection)
-    : MapElement(DMU_BSPNODE),
-      d(new Instance(this, Partition(partitionOrigin, partitionDirection)))
-{
-    setRightAABox(0);
-    setLeftAABox(0);
-}
-
 BspNode::BspNode(Partition const &partition_)
     : MapElement(DMU_BSPNODE), d(new Instance(this, partition_))
 {

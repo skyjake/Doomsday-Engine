@@ -110,8 +110,8 @@ static void cornerNormalPoint(Vector2d const &lineADirection, double dist1,
     if(!point) return;
 
     // Normal shift to produce the lines we need to find the intersection.
-    Partition lineA(norm1, lineADirection);
-    Partition lineB(norm2, lineBDirection);
+    Partition lineA(lineADirection, norm1);
+    Partition lineB(lineBDirection, norm2);
 
     if(!lineA.isParallelTo(lineB))
     {

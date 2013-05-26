@@ -38,16 +38,16 @@ namespace de {
 class Partition
 {
 public:
-    Vector2d origin;
     Vector2d direction;
+    Vector2d origin;
 
 public:
-    Partition(Vector2d const &origin    = Vector2d(0, 0),
-              Vector2d const &direction = Vector2d(0, 0))
-        : origin(origin), direction(direction) {}
+    Partition(Vector2d const &direction = Vector2d(),
+              Vector2d const &origin    = Vector2d())
+        : direction(direction), origin(origin) {}
 
     Partition(Partition const &other)
-        : origin(other.origin), direction(other.direction) {}
+        : direction(other.direction), origin(other.origin) {}
 
     /**
      * Where does the given @a point lie relative to the partition line?
@@ -60,16 +60,6 @@ public:
      */
     ddouble pointOnSide(Vector2d const &point) const {
         return (origin.y - point.y) * direction.x - (origin.x - point.x) * direction.y;
-    }
-
-    /**
-     * @copydoc pointOnSide()
-     *
-     * @param x  X coordinate for the point.
-     * @param y  Y coordinate for the point.
-     */
-    inline ddouble pointOnSide(ddouble x, ddouble y) const {
-        return pointOnSide(Vector2d(x, y));
     }
 
     /**
@@ -125,7 +115,7 @@ public:
     {
         String str;
         QTextStream s(&str);
-        s << origin.asText() << " " << direction.x << "|" << direction.y;
+        s << direction.x << "/" << direction.y << " " << origin.asText();
         return str;
     }
 };

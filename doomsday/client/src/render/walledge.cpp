@@ -435,7 +435,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
         // Add intecepts for neighbor planes?
         if(!spec.flags.testFlag(WallSpec::NoEdgeDivisions) && !de::fequal(hi, lo))
         {
-            configure(Partition(Vector2d(), Vector2d(0, hi - lo)));
+            configure(Partition(Vector2d(0, hi - lo)));
 
             // Add intercepts (the "divisions") in ascending distance order.
             addNeighborIntercepts(lo, hi);

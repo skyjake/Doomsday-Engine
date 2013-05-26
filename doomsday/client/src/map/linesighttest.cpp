@@ -285,8 +285,8 @@ DENG2_PIMPL(LineSightTest)
 
             // Does the ray intersect the partition?
             /// @todo Optionally use the fixed precision version -ds
-            dint const fromSide = bspNode->partition().pointOnSide(from.x, from.y) < 0;
-            dint const toSide   = bspNode->partition().pointOnSide(to.x, to.y) < 0;
+            dint const fromSide = bspNode->partition().pointOnSide(Vector2d(from.x, from.y)) < 0;
+            dint const toSide   = bspNode->partition().pointOnSide(Vector2d(to.x, to.y)) < 0;
             if(fromSide != toSide)
             {
                 // Yes.

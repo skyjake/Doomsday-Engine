@@ -55,13 +55,6 @@ public:
     };
 
 public:
-    /**
-     * @param origin  2D point in the map coordinate space which describes the
-     *                origin of the half-plane.
-     * @param angle   2D vector in the map coordinate space which describes the
-     *                angle of the half-plane.
-     */
-    BspNode(de::Vector2d partitionOrigin, de::Vector2d partitionDirection);
     BspNode(de::Partition const &partition);
 
     /**
@@ -70,20 +63,20 @@ public:
     de::Partition const &partition() const;
 
     /**
-     * Convenient accessor method for returning the origin of the partition for
-     * the BSP node.
-     *
-     * @see partition()
-     */
-    inline de::Vector2d const &partitionOrigin() const { return partition().origin; }
-
-    /**
      * Convenient accessor method for returning the direction of the partition
      * for the BSP node.
      *
      * @see partition()
      */
     inline de::Vector2d const &partitionDirection() const { return partition().direction; }
+
+    /**
+     * Convenient accessor method for returning the origin of the partition for
+     * the BSP node.
+     *
+     * @see partition()
+     */
+    inline de::Vector2d const &partitionOrigin() const { return partition().origin; }
 
     /**
      * Returns @c true iff the specified child is configured for the BSP node.
