@@ -103,10 +103,9 @@ DENG2_PIMPL(HPlane)
     /// Set to @c true when @var intercepts requires sorting.
     bool needSortIntercepts;
 
-    Instance(Public *i, Vector2d const &partitionOrigin,
-             Vector2d const &partitionDirection)
+    Instance(Public *i, Partition const &partition_)
         : Base(i),
-          partition(partitionOrigin, partitionDirection),
+          partition(partition_),
           length(partition.direction.length()),
           angle(M_DirectionToAngleXY(partition.direction.x, partition.direction.y)),
           slopeType(M_SlopeTypeXY(partition.direction.x, partition.direction.y)),
@@ -135,8 +134,8 @@ DENG2_PIMPL(HPlane)
     }
 };
 
-HPlane::HPlane(Vector2d const &partitionOrigin, Vector2d const &partitionDirection)
-    : d(new Instance(this, partitionOrigin, partitionDirection))
+HPlane::HPlane(Partition const &partition)
+    : d(new Instance(this, partition))
 {}
 
 void HPlane::clearIntercepts()

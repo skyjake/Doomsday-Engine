@@ -123,13 +123,9 @@ public:
 
 public:
     /**
-     * Construct a new half-plane with the given origin and direction.
-     *
-     * @param partitionOrigin     Origin of the partition line.
-     * @param partitionDirection  Direction of the partition line.
+     * Construct a new half-plane from the given @a partition line.
      */
-    HPlane(Vector2d const &partitionOrigin    = Vector2d(0, 0),
-           Vector2d const &partitionDirection = Vector2d(0, 0));
+    explicit HPlane(Partition const &partition = Partition());
 
     /**
      * Reconfigure the half-plane according to the given line segment.
