@@ -36,7 +36,7 @@ struct Range
     Type start;
     Type end;
 
-    Range(Type const &a = 0, Type const &b = 0) : start(a), end(b) {}
+    explicit Range(Type const &a = 0, Type const &b = 0) : start(a), end(b) {}
     inline Type size() const { return end - start; }
     inline bool contains(Type const &i) const { return i >= start && i < end; }
     inline Range &operator |= (Type const &value) {
@@ -44,11 +44,23 @@ struct Range
         end   = de::max(end,   value);
         return *this;
     }
+    inline Range &operator &= (Range const &other) {
+        start = de::max(start, other.start);
+        end   = de::min(end,   other.end);
+        if(end > start) end = start;
+        return *this;
+    }
     inline bool operator == (Range const &other) const {
         return start == other.start && end == other.end;
     }
     inline bool operator < (Range const &other) const {
         return start < other.start;
+    }
+    inline bool operator < (Type const &value) const {
+        return start < value && end < value;
+    }
+    inline bool operator > (Type const &value) const {
+        return start > value && end > value;
     }
     inline Range<Type> operator + (Type offset) const {
         return Range<Type>(start + offset, end + offset);
