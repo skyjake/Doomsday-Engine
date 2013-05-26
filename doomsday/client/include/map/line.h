@@ -76,18 +76,10 @@ public:
     DENG2_DEFINE_AUDIENCE(FlagsChange, void lineFlagsChanged(Line &line, int oldFlags))
 
     /// Logical edge identifiers:
-    enum
-    {
-        From,
-        To
-    };
+    enum { From, To };
 
     /// Logical side identifiers:
-    enum
-    {
-        Front,
-        Back
-    };
+    enum { Front, Back };
 
     /**
      * Logical side of which there are always two (a front and a back).
@@ -95,36 +87,6 @@ public:
     class Side : public de::MapElement
     {
     public:
-        /**
-         * Line side section of which there are three (middle, bottom and top).
-         */
-        class Section
-        {
-            Section(Side &side);
-
-        public:
-            /**
-             * Returns the surface for the section.
-             */
-            Surface &surface();
-
-            /// @copydoc surface()
-            Surface const &surface() const;
-
-            /**
-             * Returns the sound emitter for the section.
-             */
-            ddmobj_base_t &soundEmitter();
-
-            /// @copydoc soundEmitter();
-            ddmobj_base_t const &soundEmitter() const;
-
-            friend class Side;
-
-        private:
-            DENG2_PRIVATE(d)
-        };
-
         /// Section identifiers:
         enum
         {
@@ -225,32 +187,14 @@ public:
         void addSections();
 
         /**
-         * Returns the specified section of the side.
-         *
-         * @param sectionId  Identifier of the section to return.
-         *
-         * @see hasSections(), addSections()
-         */
-        Section &section(int sectionId);
-
-        /// @copydoc section()
-        Section const &section(int sectionId) const;
-
-        /**
          * Returns the specified surface of the side.
          *
          * @param sectionId  Identifier of the surface to return.
-         *
-         * @see section()
          */
-        inline Surface &surface(int sectionId) {
-            return section(sectionId).surface();
-        }
+        Surface &surface(int sectionId);
 
         /// @copydoc surface()
-        inline Surface const &surface(int sectionId) const {
-            return const_cast<Surface const &>(const_cast<Side *>(this)->surface(sectionId));
-        }
+        Surface const &surface(int sectionId) const;
 
         /**
          * Returns the middle surface of the side.
@@ -287,84 +231,71 @@ public:
          *
          * @param sectionId  Identifier of the sound emitter to return.
          *
-         * @see section(), Section::soundEmitter()
+         * @see Section::soundEmitter()
          */
-        inline ddmobj_base_t &soundEmitter(int sectionId) {
-            return section(sectionId).soundEmitter();
-        }
+        ddmobj_base_t &soundEmitter(int sectionId);
 
-        /// @copydoc surface()
-        inline ddmobj_base_t const &soundEmitter(int sectionId) const {
-            return const_cast<ddmobj_base_t const &>(const_cast<Side *>(this)->soundEmitter(sectionId));
-        }
+        /// @copydoc soundEmitter()
+        ddmobj_base_t const &soundEmitter(int sectionId) const;
 
         /**
          * Returns the middle sound emitter of the side.
          *
-         * @see section(), Section::soundEmitter()
+         * @see Section::soundEmitter()
          */
-        inline ddmobj_base_t &middleSoundEmitter() {
-            return section(Middle).soundEmitter();
-        }
+        inline ddmobj_base_t &middleSoundEmitter() { return soundEmitter(Middle); }
 
         /// @copydoc middleSoundEmitter()
-        inline ddmobj_base_t const &middleSoundEmitter() const {
-            return section(Middle).soundEmitter();
-        }
-
-        /**
-         * Update the middle sound emitter origin according to the point defined by
-         * the owning line's vertices and the current @em sharp heights of the sector
-         * on this side of the line.
-         */
-        void updateMiddleSoundEmitterOrigin();
+        inline ddmobj_base_t const &middleSoundEmitter() const { return soundEmitter(Middle); }
 
         /**
          * Returns the bottom sound emitter (tee-hee) for the side.
          *
-         * @see section(), Section::soundEmitter()
+         * @see Section::soundEmitter()
          */
-        inline ddmobj_base_t &bottomSoundEmitter() {
-            return section(Bottom).soundEmitter();
-        }
+        inline ddmobj_base_t &bottomSoundEmitter() { return soundEmitter(Bottom); }
 
         /// @copydoc bottomSoundEmitter()
-        inline ddmobj_base_t const &bottomSoundEmitter() const {
-            return section(Bottom).soundEmitter();
-        }
-
-        /**
-         * Update the bottom sound emitter origin according to the point defined by
-         * the owning line's vertices and the current @em sharp heights of the sector
-         * on this side of the line.
-         */
-        void updateBottomSoundEmitterOrigin();
+        inline ddmobj_base_t const &bottomSoundEmitter() const { return soundEmitter(Bottom); }
 
         /**
          * Returns the top sound emitter for the side.
          *
-         * @see section(), Section::soundEmitter()
+         * @see Section::soundEmitter()
          */
-        inline ddmobj_base_t &topSoundEmitter() {
-            return section(Top).soundEmitter();
-        }
+        inline ddmobj_base_t &topSoundEmitter() { return soundEmitter(Top); }
 
         /// @copydoc topSoundEmitter()
-        inline ddmobj_base_t const &topSoundEmitter() const {
-            return section(Top).soundEmitter();
-        }
+        inline ddmobj_base_t const &topSoundEmitter() const { return soundEmitter(Top); }
 
         /**
-         * Update the top sound emitter origin according to the point defined by the
-         * owning line's vertices and the current @em sharp heights of the sector on
-         * this side of the line.
+         * Update the sound emitter origin of the specified surface section. This
+         * point is determined according to the center point of the owning line and
+         * the current @em sharp heights of the sector on "this" side of the line.
          */
-        void updateTopSoundEmitterOrigin();
+        void updateSoundEmitterOrigin(int sectionId);
 
         /**
-         * Update the side's sound emitter origins according to the points defined by
-         * the Line's vertices and the plane heights of the Sector on this side.
-         * If no Sections are defined this is a no-op.
+         * Update the @em middle sound emitter origin for the side.
+         * @see updateSoundEmitterOrigin()
+         */
+        inline void updateMiddleSoundEmitterOrigin() { updateSoundEmitterOrigin(Middle); }
+
+        /**
+         * Update the @em bottom sound emitter origin for the side.
+         * @see updateSoundEmitterOrigin()
+         */
+        inline void updateBottomSoundEmitterOrigin() { updateSoundEmitterOrigin(Bottom); }
+
+        /**
+         * Update the @em top sound emitter origin for the side.
+         * @see updateSoundEmitterOrigin()
+         */
+        inline void updateTopSoundEmitterOrigin() { updateSoundEmitterOrigin(Top); }
+
+        /**
+         * Update ALL sound emitter origins for the side.
+         * @see updateSoundEmitterOrigin()
          */
         void updateAllSoundEmitterOrigins();
 

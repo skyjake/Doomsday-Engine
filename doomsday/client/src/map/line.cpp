@@ -1,4 +1,4 @@
-/** @file line.cpp World Map Line.
+/** @file map/line.cpp World Map Line.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -18,8 +18,9 @@
  * 02110-1301 USA</small>
  */
 
-#include <de/mathutil.h>
+//#include <de/mathutil.h>
 
+#include <de/libdeng2.h>
 #include <de/Vector>
 
 #include "m_misc.h"
@@ -37,36 +38,19 @@
 
 using namespace de;
 
-DENG2_PIMPL_NOREF(Line::Side::Section)
+/**
+ * Line side section of which there are three (middle, bottom and top).
+ */
+struct Section
 {
     Surface surface;
     ddmobj_base_t soundEmitter;
 
-    Instance(Side &side) : surface(dynamic_cast<MapElement &>(side))
+    Section(Line::Side &side) : surface(dynamic_cast<MapElement &>(side))
     {
-        std::memset(&soundEmitter, 0, sizeof(soundEmitter));
+        zap(soundEmitter);
     }
 };
-
-Line::Side::Section::Section(Line::Side &side)
-    : d(new Instance(side))
-{}
-
-Surface &Line::Side::Section::surface() {
-    return d->surface;
-}
-
-Surface const &Line::Side::Section::surface() const {
-    return const_cast<Surface const &>(const_cast<Section *>(this)->surface());
-}
-
-ddmobj_base_t &Line::Side::Section::soundEmitter() {
-    return d->soundEmitter;
-}
-
-ddmobj_base_t const &Line::Side::Section::soundEmitter() const {
-    return const_cast<ddmobj_base_t const &>(const_cast<Section *>(this)->soundEmitter());
-}
 
 DENG2_PIMPL_NOREF(Line::Side)
 #ifdef __CLIENT__
@@ -90,7 +74,7 @@ DENG2_PIMPL_NOREF(Line::Side)
     Line &line;
 
     /// Sections.
-    std::auto_ptr<Sections> sections;
+    QScopedPointer<Sections> sections;
 
     /// Attributed sector (not owned).
     Sector *sector;
@@ -120,19 +104,37 @@ DENG2_PIMPL_NOREF(Line::Side)
 #ifdef __CLIENT__
     void lineFlagsChanged(Line &line, int oldFlags)
     {
-        if(sections.get())
+        if(!sections.isNull())
         {
             if((line.flags() & DDLF_DONTPEGTOP) != (oldFlags & DDLF_DONTPEGTOP))
             {
-                sections->top.surface().markAsNeedingDecorationUpdate();
+                sections->top.surface.markAsNeedingDecorationUpdate();
             }
             if((line.flags() & DDLF_DONTPEGBOTTOM) != (oldFlags & DDLF_DONTPEGBOTTOM))
             {
-                sections->bottom.surface().markAsNeedingDecorationUpdate();
+                sections->bottom.surface.markAsNeedingDecorationUpdate();
             }
         }
     }
 #endif
+
+    /**
+     * Retrieve the Section associated with @a sectionId.
+     */
+    Section &sectionById(int sectionId)
+    {
+        if(!sections.isNull())
+        {
+            switch(sectionId)
+            {
+            case Middle: return sections->middle;
+            case Bottom: return sections->bottom;
+            case Top:    return sections->top;
+            }
+        }
+        /// @throw Line::InvalidSectionIdError The given section identifier is not valid.
+        throw Line::InvalidSectionIdError("Line::Side::section", QString("Invalid section id %1").arg(sectionId));
+    }
 };
 
 Line::Side::Side(Line &line, Sector *sector)
@@ -186,7 +188,7 @@ Sector &Line::Side::sector() const
 
 bool Line::Side::hasSections() const
 {
-    return d->sections.get() != 0;
+    return !d->sections.isNull();
 }
 
 void Line::Side::addSections()
@@ -197,26 +199,24 @@ void Line::Side::addSections()
     d->sections.reset(new Instance::Sections(*this));
 }
 
-Line::Side::Section &Line::Side::section(int sectionId)
+Surface &Line::Side::surface(int sectionId)
 {
-    if(hasSections())
-    {
-        switch(sectionId)
-        {
-        case Middle: return d->sections->middle;
-        case Bottom: return d->sections->bottom;
-        case Top:    return d->sections->top;
-
-        default:     break;
-        }
-    }
-    /// @throw Line::InvalidSectionIdError The given section identifier is not valid.
-    throw Line::InvalidSectionIdError("Line::Side::section", QString("Invalid section id %1").arg(sectionId));
+    return d->sectionById(sectionId).surface;
 }
 
-Line::Side::Section const &Line::Side::section(int sectionId) const
+Surface const &Line::Side::surface(int sectionId) const
 {
-    return const_cast<Section const &>(const_cast<Side *>(this)->section(sectionId));
+    return const_cast<Surface const &>(const_cast<Side *>(this)->surface(sectionId));
+}
+
+ddmobj_base_t &Line::Side::soundEmitter(int sectionId)
+{
+    return d->sectionById(sectionId).soundEmitter;
+}
+
+ddmobj_base_t const &Line::Side::soundEmitter(int sectionId) const
+{
+    return const_cast<ddmobj_base_t const &>(const_cast<Side *>(this)->soundEmitter(sectionId));
 }
 
 HEdge *Line::Side::leftHEdge() const
@@ -239,13 +239,13 @@ void Line::Side::setRightHEdge(HEdge *newRightHEdge)
     d->rightHEdge = newRightHEdge;
 }
 
-void Line::Side::updateMiddleSoundEmitterOrigin()
+void Line::Side::updateSoundEmitterOrigin(int sectionId)
 {
-    LOG_AS("Line::Side::updateMiddleSoundEmitterOrigin");
+    LOG_AS("Line::Side::updateSoundEmitterOrigin");
 
     if(!hasSections()) return;
 
-    ddmobj_base_t &emitter = d->sections->middle.soundEmitter();
+    ddmobj_base_t &emitter = d->sectionById(sectionId).soundEmitter;
 
     Vector2d lineCenter = d->line.center();
     emitter.origin[VX] = lineCenter.x;
@@ -255,68 +255,44 @@ void Line::Side::updateMiddleSoundEmitterOrigin()
     coord_t const ffloor = d->sector->floor().height();
     coord_t const fceil  = d->sector->ceiling().height();
 
-    if(!back().hasSections() || d->line.isSelfReferencing())
+    /// @todo fixme what if considered one-sided?
+    switch(sectionId)
     {
-        emitter.origin[VZ] = (ffloor + fceil) / 2;
-    }
-    else
-    {
-        emitter.origin[VZ] = (de::max(ffloor, back().sector().floor().height()) +
-                              de::min(fceil,  back().sector().ceiling().height())) / 2;
-    }
-}
+    case Middle:
+        if(!back().hasSections() || d->line.isSelfReferencing())
+        {
+            emitter.origin[VZ] = (ffloor + fceil) / 2;
+        }
+        else
+        {
+            emitter.origin[VZ] = (de::max(ffloor, back().sector().floor().height()) +
+                                  de::min(fceil,  back().sector().ceiling().height())) / 2;
+        }
+        break;
 
-void Line::Side::updateBottomSoundEmitterOrigin()
-{
-    LOG_AS("Line::Side::updateBottomSoundEmitterOrigin");
+    case Bottom:
+        if(!back().hasSections() || d->line.isSelfReferencing() ||
+           back().sector().floor().height() <= ffloor)
+        {
+            emitter.origin[VZ] = ffloor;
+        }
+        else
+        {
+            emitter.origin[VZ] = (de::min(back().sector().floor().height(), fceil) + ffloor) / 2;
+        }
+        break;
 
-    if(!hasSections()) return;
-
-    ddmobj_base_t &emitter = d->sections->bottom.soundEmitter();
-
-    Vector2d lineCenter = d->line.center();
-    emitter.origin[VX] = lineCenter.x;
-    emitter.origin[VY] = lineCenter.y;
-
-    DENG_ASSERT(d->sector != 0);
-    coord_t const ffloor = d->sector->floor().height();
-    coord_t const fceil  = d->sector->ceiling().height();
-
-    if(!back().hasSections() || d->line.isSelfReferencing() ||
-       back().sector().floor().height() <= ffloor)
-    {
-        emitter.origin[VZ] = ffloor;
-    }
-    else
-    {
-        emitter.origin[VZ] = (de::min(back().sector().floor().height(), fceil) + ffloor) / 2;
-    }
-}
-
-void Line::Side::updateTopSoundEmitterOrigin()
-{
-    LOG_AS("Line::Side::updateTopSoundEmitterOrigin");
-
-    if(!hasSections()) return;
-
-    ddmobj_base_t &emitter = d->sections->top.soundEmitter();
-
-    Vector2d lineCenter = d->line.center();
-    emitter.origin[VX] = lineCenter.x;
-    emitter.origin[VY] = lineCenter.y;
-
-    DENG_ASSERT(d->sector != 0);
-    coord_t const ffloor = d->sector->floor().height();
-    coord_t const fceil  = d->sector->ceiling().height();
-
-    if(!back().hasSections() || d->line.isSelfReferencing() ||
-       back().sector().ceiling().height() >= fceil)
-    {
-        emitter.origin[VZ] = fceil;
-    }
-    else
-    {
-        emitter.origin[VZ] = (de::max(back().sector().ceiling().height(), ffloor) + fceil) / 2;
+    case Top:
+        if(!back().hasSections() || d->line.isSelfReferencing() ||
+           back().sector().ceiling().height() >= fceil)
+        {
+            emitter.origin[VZ] = fceil;
+        }
+        else
+        {
+            emitter.origin[VZ] = (de::max(back().sector().ceiling().height(), ffloor) + fceil) / 2;
+        }
+        break;
     }
 }
 
@@ -403,8 +379,6 @@ void Line::Side::chooseSurfaceTintColors(int sectionId, Vector3f const **topColo
                 *bottomColor = 0;
             }
             return;
-
-        default: DENG_ASSERT(false); // Invalid section.
         }
     }
     /// @throw Line::InvalidSectionIdError The given section identifier is not valid.
