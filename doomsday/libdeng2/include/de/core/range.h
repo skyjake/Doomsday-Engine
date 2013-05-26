@@ -47,7 +47,7 @@ struct Range
     inline Range &operator &= (Range const &other) {
         start = de::max(start, other.start);
         end   = de::min(end,   other.end);
-        if(end > start) end = start;
+        if(start > end) end = start;
         return *this;
     }
     inline bool operator == (Range const &other) const {
