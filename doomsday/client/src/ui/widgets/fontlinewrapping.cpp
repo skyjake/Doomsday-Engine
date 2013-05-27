@@ -165,6 +165,7 @@ void FontLineWrapping::clear()
 {
     d->lines.clear();
     d->text.clear();
+    d->indent = 0;
 }
 
 void FontLineWrapping::wrapTextToWidth(String const &text, int maxWidth)
@@ -174,6 +175,8 @@ void FontLineWrapping::wrapTextToWidth(String const &text, int maxWidth)
 
 void FontLineWrapping::wrapTextToWidth(String const &text, Font::RichFormat const &format, int maxWidth)
 {
+    String newText = text;
+
     clear();
 
     int const MIN_LINE_WIDTH = 120;
@@ -181,7 +184,7 @@ void FontLineWrapping::wrapTextToWidth(String const &text, Font::RichFormat cons
     if(maxWidth <= 1 || !d->font) return;
 
     // This is the text that we will be wrapping.
-    d->text   = text;
+    d->text   = newText;
     d->format = format;
 
     int begin = 0;

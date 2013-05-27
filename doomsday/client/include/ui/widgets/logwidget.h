@@ -80,6 +80,9 @@ public slots:
      */
     void scrollToBottom();
 
+protected slots:
+    void pruneExcessEntries();
+
 signals:
     void scrollPositionChanged(int pos);
     void scrollMaxChanged(int maximum);
