@@ -26,8 +26,6 @@
 #ifndef DENG_WORLD_MAP_BSP_LINESEGMENT
 #define DENG_WORLD_MAP_BSP_LINESEGMENT
 
-#include <de/mathutil.h> // M_InverseAngle
-
 #include <de/Error>
 #include <de/Vector>
 
@@ -76,26 +74,17 @@ public:
     DENG2_ERROR(MissingSectorError);
 
     /// Logical side identifiers:
-    enum
-    {
-        Front,
-        Back
-    };
+    enum { Front, Back };
 
     /// Vertex identifiers:
-    enum
-    {
-        From,
-        To
-    };
+    enum { From, To };
 
     /// Edge identifiers:
-    enum
-    {
-        Left,
-        Right
-    };
+    enum { Left, Right };
 
+    /**
+     * Logical side of which there are always two (a front and a back).
+     */
     class Side
     {
         DENG2_NO_COPY(Side)
@@ -354,14 +343,6 @@ public:
          * @see inverseAngle(), direction()
          */
         coord_t angle() const;
-
-        /**
-         * Returns the inverted world angle for "this" side of the line segment
-         * (i.e., rotated 180 degrees).
-         *
-         * @see angle()
-         */
-        inline coord_t inverseAngle() const { return M_InverseAngle(angle()); }
 
         /**
          * Calculates the @em parallel distance from "this" side of the line segment

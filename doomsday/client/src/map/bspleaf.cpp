@@ -77,9 +77,9 @@ DENG2_PIMPL(BspLeaf)
     /// Used by legacy algorithms to prevent repeated processing.
     int validCount;
 
-    Instance(Public *i)
+    Instance(Public *i, Sector *sector_ = 0)
         : Base(i),
-          sector(0),
+          sector(sector_),
           polyobj(0),
 #ifdef __CLIENT__
           fanBase(0),
@@ -183,7 +183,9 @@ DENG2_PIMPL(BspLeaf)
 #endif // __CLIENT__
 };
 
-BspLeaf::BspLeaf() : MapElement(DMU_BSPLEAF), d(new Instance(this))
+BspLeaf::BspLeaf(Sector *sector)
+    : MapElement(DMU_BSPLEAF),
+      d(new Instance(this, sector))
 {
 #ifdef __CLIENT__
     _shadows = 0;

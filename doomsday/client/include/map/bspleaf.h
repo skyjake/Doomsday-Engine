@@ -74,7 +74,11 @@ public: /// @todo Make private:
 #endif // __CLIENT__
 
 public:
-    BspLeaf();
+    /**
+     * Construct a new BSP leaf and optionally attribute it to @a sector.
+     * Ownership is unaffected.
+     */
+    explicit BspLeaf(Sector *sector = 0);
 
     /**
      * Returns @c true iff the BSP leaf is "degenerate", which is to say there

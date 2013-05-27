@@ -43,6 +43,7 @@
 
 #include "render/r_main.h" /// validCount @todo Remove me
 
+#include "map/bsp/convexsubspace.h"
 #include "map/bsp/edgetip.h"
 #include "map/bsp/hplane.h"
 #include "map/bsp/linesegment.h"
@@ -65,7 +66,7 @@ typedef QHash<MapElement *, BspTreeNode *> BuiltBspElementMap;
 typedef QList<HEdge *> HEdgeSortBuffer;
 
 /// Used when collecting line segments to build a leaf. @todo Refactor away.
-typedef QList<LineSegment::Side *> LineSegmentSideList;
+typedef QList<LineSegment::Side *> LineSegmentList;
 
 DENG2_PIMPL(Partitioner)
 {
@@ -1200,217 +1201,82 @@ DENG2_PIMPL(Partitioner)
         }
     }
 
-    struct Choice
-    {
-        /// The sector choice.
-        Sector *sector;
-
-        /// Number of referencing line segments of each type:
-        int norm;
-        int part;
-        int self;
-
-        Choice(Sector &sector)
-            : sector(&sector), norm(0), part(0), self(0)
-        {}
-
-        /**
-         * Perform heuristic comparison between two choices to determine
-         * a preference order. The algorithm used weights the two choices
-         * according to the number and "type" of the referencing line
-         * segments.
-         *
-         * @return  @c true if "this" choice is rated better than @a other.
-         */
-        bool operator < (Choice const &other) const
-        {
-            if(norm == other.norm)
-            {
-                if(part == other.part)
-                {
-                    if(self == other.self)
-                    {
-                        // All equal; use the unique indices to stablize.
-                        return sector->indexInMap() < other.sector->indexInMap();
-                    }
-                    return self > other.self;
-                }
-                return part > other.part;
-            }
-            return norm > other.norm;
-        }
-
-        /**
-         * Account for a new line segment which references this choice.
-         * Consider collinear segments only once.
-         */
-        void account(LineSegment::Side &seg)
-        {
-            // Determine the type of reference and increment the count.
-            if(!seg.hasMapSide())
-            {
-                Line *mapLine = seg.partitionMapLine();
-                if(mapLine && mapLine->validCount() == validCount)
-                    return;
-
-                part += 1;
-
-                if(mapLine)
-                    mapLine->setValidCount(validCount);
-            }
-            else
-            {
-                if(seg.mapLine().validCount() == validCount)
-                    return;
-
-                if(seg.mapLine().isSelfReferencing())
-                {
-                    self += 1;
-                }
-                else
-                {
-                    norm += 1;
-                }
-
-                seg.mapLine().setValidCount(validCount);
-            }
-        }
-    };
-    typedef QHash<Sector *, Choice> ChoiceHash;
-
     /**
-     * Pick a sector from the list of line segments to attribute to any BSP
-     * leaf we might subsequently produce for them.
-     *
-     * This choice is determined with a heuristic accounting of the number of
-     * references to each candidate sector. References are divided according
-     * the "type" of the referencing line segment into groups for rating.
+     * Construct a new BspLeaf with geometry from the @a convexSet.
      */
-    Sector *chooseSectorForBspLeaf(LineSegmentSideList const &segments)
+    BspLeaf *buildBspLeaf(ConvexSubspace const &convexSet)
     {
-        ChoiceHash candidates;
-
-        // We will consider collinear segments only once.
-        validCount++;
-
-        foreach(LineSegment::Side *seg, segments)
-        {
-            // Segments with no sector can't help us.
-            if(!seg->hasSector()) continue;
-
-            Sector *sector = seg->sectorPtr();
-
-            // Is this a new choice?
-            ChoiceHash::iterator found = candidates.find(sector);
-            if(found == candidates.end())
-            {
-                // Yes, record it.
-                found = candidates.insert(sector, Choice(*sector));
-            }
-
-            // Account for a new segment referencing this sector.
-            found.value().account(*seg);
-        }
-
-        if(candidates.isEmpty()) return 0; // Eeek!
-
-        // Sort our choices such that our preferred sector appears first. This
-        // shouldn't take too long, typically there is no more than two or three
-        // to choose from.
-        QList<Choice> sortedCandidates = candidates.values();
-        qSort(sortedCandidates.begin(), sortedCandidates.end());
-
-        // We'll choose the highest rated choice.
-        return sortedCandidates.first().sector;
-    }
-
-    /**
-     * Attempt to construct a new BspLeaf with a geometry from the list of
-     * line segments.
-     *
-     * @param segments  List of line segments from which to build the leaf
-     *                  geometry. Ownership of the list and it's contents is
-     *                  given to this function. Once emptied, ownership of the
-     *                  list is then returned to the caller.
-     *
-     * @return  Newly created BspLeaf.
-     */
-    BspLeaf *buildBspLeaf(LineSegmentSideList &segments)
-    {
-        BspLeaf *leaf = new BspLeaf;
+        // Did we produce a degenerate subspace?
+        bool const isDegenerate = convexSet.isDegenerate();
 
         // Determine which sector to attribute the BSP leaf to.
-        leaf->setSector(chooseSectorForBspLeaf(segments));
+        BspLeaf *leaf = new BspLeaf(convexSet.chooseSectorForBspLeaf());
 
-        if(!segments.isEmpty())
+        // There is now one more BspLeaf;
+        numLeafs += 1;
+
+        // Construct the (initial!) geometry for the leaf.
+        Polygon *poly = 0;
+        foreach(LineSegment::Side *seg, convexSet.segments())
         {
-            // Did we produce degenerate geometry?
-            bool const isDegenerate = segments.count() < 3;
+            // Attribute the line segment to the BSP leaf.
+            seg->setBspLeaf(leaf);
 
-            Polygon *poly = 0;
-            while(!segments.isEmpty())
+            if(isDegenerate)
             {
-                LineSegment::Side *seg = segments.takeFirst();
-
-                // Attribute the line segment to new BSP leaf.
-                seg->setBspLeaf(leaf);
-
-                if(isDegenerate)
+                if(seg->hasLeft())
                 {
-                    if(seg->hasLeft())
-                    {
-                        seg->left().setRight(seg->hasRight()? &seg->right() : 0);
-                    }
-                    if(seg->hasRight())
-                    {
-                        seg->right().setLeft(seg->hasLeft()? &seg->left() : 0);
-                    }
-                    continue;
+                    seg->left().setRight(seg->hasRight()? &seg->right() : 0);
                 }
-
-                // Time to construct the polygon geometry?
-                if(!poly)
+                if(seg->hasRight())
                 {
-                    poly = new Polygon;
+                    seg->right().setLeft(seg->hasLeft()? &seg->left() : 0);
                 }
-
-                HEdge *hedge = new HEdge(seg->from(), seg->mapSidePtr());
-
-                // Is there already a half-edge on the back side we need to twin with?
-                if(seg->back().hasHEdge())
-                {
-                    seg->back().hedge()._twin = hedge;
-                    hedge->_twin = seg->back().hedgePtr();
-                }
-
-                // Link the new half-edge for this line segment to the head of the list
-                // in the new polygon geometry.
-                hedge->_next = poly->_hedge;
-                poly->_hedge = hedge;
-
-                // There is now one more half-edge in this polygon.
-                poly->_hedgeCount += 1;
-
-                // Link the new half-edge with this line segment.
-                seg->setHEdge(hedge);
-
-                // There is now one more HEdge.
-                numHEdges += 1;
+                continue;
             }
 
-            // Assign any built polygon geometry to the BSP leaf (takes ownership).
-            leaf->setPoly(poly);
-
-            if(poly)
+            // Time to construct the polygon geometry?
+            if(!poly)
             {
-                // Link the half-edges with the leaf.
-                /// @todo Encapsulate in BspLeaf.
-                HEdge *hedgeIt = poly->firstHEdge();
-                do
-                {
-                    hedgeIt->_bspLeaf = leaf;
-                } while((hedgeIt = hedgeIt->_next));
+                poly = new Polygon;
             }
+
+            HEdge *hedge = new HEdge(seg->from(), seg->mapSidePtr());
+
+            // Is there a half-edge on the back side we need to twin with?
+            if(seg->back().hasHEdge())
+            {
+                seg->back().hedge()._twin = hedge;
+                hedge->_twin = seg->back().hedgePtr();
+            }
+
+            // Link the new half-edge for this line segment to the head of
+            // the list in the new polygon geometry.
+            hedge->_next = poly->_hedge;
+            poly->_hedge = hedge;
+
+            // There is now one more half-edge in this polygon.
+            poly->_hedgeCount += 1;
+
+            // Link the new half-edge with this line segment.
+            seg->setHEdge(hedge);
+
+            // There is now one more HEdge.
+            numHEdges += 1;
+        }
+
+        // Assign any built polygon geometry to the BSP leaf (takes ownership).
+        leaf->setPoly(poly);
+
+        if(poly)
+        {
+            // Link the half-edges with the leaf.
+            /// @todo Encapsulate in BspLeaf.
+            HEdge *hedgeIt = poly->firstHEdge();
+            do
+            {
+                hedgeIt->_bspLeaf = leaf;
+            } while((hedgeIt = hedgeIt->_next));
         }
 
         return leaf;
@@ -1551,20 +1417,14 @@ DENG2_PIMPL(Partitioner)
         }
         else
         {
-            // No partition required/possible - already convex (or degenerate).
-            LineSegmentSideList collectedSegs = collectLineSegmentSides(lineSegs);
+            // No partition required/possible -- already convex (or degenerate).
+            LineSegmentList collectedSegs = collectLineSegments(lineSegs);
+            ConvexSubspace convexSet(collectedSegs);
 
-            // Construct a new BSP leaf.
-            BspLeaf *leaf = buildBspLeaf(collectedSegs);
+            bspElement = buildBspLeaf(convexSet);
 
-            DENG_ASSERT(collectedSegs.isEmpty());
-
+            // Cleanup.
             lineSegs.clear();
-
-            // There is now one more BspLeaf;
-            numLeafs += 1;
-
-            bspElement = leaf;
         }
 
         return newTreeNode(bspElement, rightTree, leftTree);
@@ -1880,9 +1740,9 @@ DENG2_PIMPL(Partitioner)
         return vtx;
     }
 
-    LineSegmentSideList collectLineSegmentSides(SuperBlock &partList)
+    LineSegmentList collectLineSegments(SuperBlock &partList)
     {
-        LineSegmentSideList lineSegs;
+        LineSegmentList segs;
 
         // Iterative pre-order traversal of SuperBlock.
         SuperBlock *cur = &partList;
@@ -1891,13 +1751,13 @@ DENG2_PIMPL(Partitioner)
         {
             while(cur)
             {
-                LineSegment::Side *lineSeg;
-                while((lineSeg = cur->pop()))
+                LineSegment::Side *seg;
+                while((seg = cur->pop()))
                 {
                     // Disassociate the line segment from the blockmap.
-                    lineSeg->setBMapBlock(0);
+                    seg->setBMapBlock(0);
 
-                    lineSegs.append(lineSeg);
+                    segs.append(seg);
                 }
 
                 if(prev == cur->parentPtr())
@@ -1927,7 +1787,7 @@ DENG2_PIMPL(Partitioner)
                 cur = prev->parentPtr();
             }
         }
-        return lineSegs;
+        return segs;
     }
 
     bool release(MapElement *elm)
@@ -2098,13 +1958,15 @@ void Partitioner::build()
 
         // Find the left-most segment.
         LineSegment::Side *left = &side;
-        while(left->hasLeft()) { left = &left->left(); }
+        while(left->hasLeft() && left->left().hasHEdge())
+        { left = &left->left(); }
 
         side.mapSide().setLeftHEdge(left->hedgePtr());
 
         // Find the right-most segment.
         LineSegment::Side *right = &side;
-        while(right->hasRight()) { right = &right->right(); }
+        while(right->hasRight() && right->right().hasHEdge())
+        { right = &right->right(); }
 
         side.mapSide().setRightHEdge(right->hedgePtr());
     }

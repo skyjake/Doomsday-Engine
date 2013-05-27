@@ -18,6 +18,8 @@
  */
 
 #include <QHash>
+#include <QList>
+#include <QtAlgorithms>
 
 #include "Line"
 #include "Sector"
@@ -31,9 +33,9 @@ namespace de {
 namespace bsp {
 
 /**
- * Represents a choice of sector for BSP leaf attribution.
+ * Represents a candidate sector for BSP leaf attribution.
  */
-struct Choice
+struct SectorCandidate
 {
     /// The sector choice.
     Sector *sector;
@@ -43,19 +45,18 @@ struct Choice
     int part;
     int self;
 
-    Choice(Sector &sector)
+    SectorCandidate(Sector &sector)
         : sector(&sector), norm(0), part(0), self(0)
     {}
 
     /**
-     * Perform heuristic comparison between two choices to determine
-     * a preference order. The algorithm used weights the two choices
-     * according to the number and "type" of the referencing line
-     * segments.
+     * Perform heuristic comparison between two choices to determine a
+     * preference order. The algorithm used weights the two choices according
+     * to the number and "type" of the referencing line segments.
      *
      * @return  @c true if "this" choice is rated better than @a other.
      */
-    bool operator < (Choice const &other) const
+    bool operator < (SectorCandidate const &other) const
     {
         if(norm == other.norm)
         {
@@ -109,7 +110,7 @@ struct Choice
         }
     }
 };
-typedef QHash<Sector *, Choice> ChoiceHash;
+typedef QHash<Sector *, SectorCandidate> SectorCandidateHash;
 
 DENG2_PIMPL_NOREF(ConvexSubspace)
 {
@@ -141,12 +142,27 @@ DENG2_PIMPL_NOREF(ConvexSubspace)
 
     void chooseSector()
     {
+        needChooseSector = false;
         sector = 0;
 
-        // We will consider collinear segments only once.
+        // No candidates?
+        if(segments.isEmpty()) return;
+
+        // Only one candidate?
+        if(segments.count() == 1)
+        {
+            // Lets hope its a good one...
+            sector = (*segments.constBegin())->sectorPtr();
+            return;
+        }
+
+        /*
+         * Multiple candidates.
+         * We will consider collinear segments only once.
+         */
         validCount++;
 
-        ChoiceHash candidates;
+        SectorCandidateHash candidates;
         foreach(LineSegment::Side *seg, segments)
         {
             // Segments with no sector can't help us.
@@ -154,12 +170,12 @@ DENG2_PIMPL_NOREF(ConvexSubspace)
 
             Sector *cand = seg->sectorPtr();
 
-            // Is this a new choice?
-            ChoiceHash::iterator found = candidates.find(cand);
+            // Is this a new candidate?
+            SectorCandidateHash::iterator found = candidates.find(cand);
             if(found == candidates.end())
             {
                 // Yes, record it.
-                found = candidates.insert(sector, Choice(*cand));
+                found = candidates.insert(sector, SectorCandidate(*cand));
             }
 
             // Account for a new segment referencing this sector.
@@ -168,16 +184,14 @@ DENG2_PIMPL_NOREF(ConvexSubspace)
 
         if(candidates.isEmpty()) return; // Eeek!
 
-        // Sort our choices such that our preferred sector appears first. This
-        // shouldn't take too long, typically there is no more than two or three
-        // to choose from.
-        QList<Choice> sortedCandidates = candidates.values();
+        // Sort our candidates such that our preferred sector appears first.
+        // This shouldn't take too long, typically there is no more than two or
+        // three to choose from.
+        QList<SectorCandidate> sortedCandidates = candidates.values();
         qSort(sortedCandidates.begin(), sortedCandidates.end());
 
-        // We'll choose the highest rated choice.
+        // We'll choose the highest rated candidate.
         sector = sortedCandidates.first().sector;
-
-        needChooseSector = false;
     }
 
 private:
@@ -198,11 +212,11 @@ ConvexSubspace::ConvexSubspace(ConvexSubspace const &other)
     : d(new Instance(*other.d))
 {}
 
-void ConvexSubspace::addSegments(QList<LineSegment::Side *> const &segments)
+void ConvexSubspace::addSegments(QList<LineSegment::Side *> const &newSegments)
 {
     int sizeBefore = d->segments.size();
 
-    d->segments.unite(segments.toSet());
+    d->segments.unite(Segments::fromList(newSegments));
 
     if(d->segments.size() != sizeBefore)
     {
@@ -211,11 +225,11 @@ void ConvexSubspace::addSegments(QList<LineSegment::Side *> const &segments)
     }
 }
 
-void ConvexSubspace::addOneSegment(LineSegment::Side const &segment)
+void ConvexSubspace::addOneSegment(LineSegment::Side const &newSegment)
 {
     int sizeBefore = d->segments.size();
 
-    d->segments.insert(const_cast<LineSegment::Side *>(&segment));
+    d->segments.insert(const_cast<LineSegment::Side *>(&newSegment));
 
     if(d->segments.size() != sizeBefore)
     {

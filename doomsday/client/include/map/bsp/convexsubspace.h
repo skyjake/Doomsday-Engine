@@ -48,6 +48,7 @@ namespace bsp {
  */
 class ConvexSubspace
 {
+public:
     /// The set of line segments.
     typedef QSet<LineSegment::Side *> Segments;
 
@@ -67,7 +68,27 @@ public:
      */
     ConvexSubspace(QList<LineSegment::Side *> const &segments);
 
+    /**
+     * Construct a convex subspace by duplicating @a other.
+     */
     ConvexSubspace(ConvexSubspace const &other);
+
+    /**
+     * Returns the total number of segments in the subspace.
+     */
+    inline int segmentCount() const { return segments().count(); }
+
+    /**
+     * Returns @c true iff the subspace is "degenerate", which is to say there
+     * are fewer than @em three line segments in the set.
+     */
+    inline bool isDegenerate() const { return segmentCount() < 3; }
+
+    /**
+     * Returns @c true iff the subspace is "empty", which is to say there are
+     * zero line segments in the set.
+     */
+    inline bool isEmpty() const { return segmentCount() == 0; }
 
     /**
      * Add more line segments to the subspace. It is assumed that the new set
@@ -91,12 +112,13 @@ public:
     void addOneSegment(LineSegment::Side const &segment);
 
     /**
-     * Determines from the set of line segments which set to attribute to any
-     * BSP leaf we might subsequently produce for them.
+     * Determines from the set of line segments which sector to attribute to
+     * any BSP leaf we might subsequently produce for them.
      *
-     * This choice is determined with a heuristic accounting of the number of
-     * references to each candidate sector. References are divided into groups
-     * according to the "type" of the referencing line segment for rating.
+     * This choice is presently determined with a heuristic accounting of the
+     * number of references to each candidate sector. References are divided
+     * into groups according to the "type" of the referencing line segment for
+     * rating.
      */
     Sector *chooseSectorForBspLeaf() const;
 
@@ -109,13 +131,13 @@ public:
     /**
      * Change the BspLeaf to which the subspace is attributed.
      *
-     * @param newBspLeaf  BSP leaf to attribute (ownership is not affected).
+     * @param newBspLeaf  BSP leaf to attribute (ownership is unaffected).
      *                    Can be @c 0 (to clear the attribution).
      */
     void setBspLeaf(BspLeaf *newBspLeaf);
 
     /**
-     * Provides access to the set line segments for efficient traversal.
+     * Provides access to the set of line segments for efficient traversal.
      */
     Segments const &segments() const;
 
