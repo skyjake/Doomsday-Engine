@@ -187,6 +187,7 @@ DENG_HEADERS += \
     $$SRC/include/m_profiler.h \
     $$SRC/include/map/blockmap.h \
     $$SRC/include/map/bsp/bsptreenode.h \
+    $$SRC/include/map/bsp/convexsubspace.h \
     $$SRC/include/map/bsp/edgetip.h \
     $$SRC/include/map/bsp/hplane.h \
     $$SRC/include/map/bsp/linesegment.h \
@@ -360,6 +361,7 @@ SOURCES += \
     $$SRC/src/m_misc.cpp \
     $$SRC/src/m_nodepile.cpp \
     $$SRC/src/map/blockmap.cpp \
+    $$SRC/src/map/bsp/convexsubspace.cpp \
     $$SRC/src/map/bsp/hplane.cpp \
     $$SRC/src/map/bsp/linesegment.cpp \
     $$SRC/src/map/bsp/partitioner.cpp \
