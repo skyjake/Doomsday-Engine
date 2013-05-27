@@ -64,7 +64,7 @@ void LegacyWidget::viewResized()
     if(BusyMode_Active() || isDisabled() || Sys_IsShuttingDown()) return;
 
     LOG_AS("LegacyWidget");
-    LOG_DEBUG("View resized to ") << root().viewSize().asText();
+    LOG_TRACE("View resized to ") << root().viewSize().asText();
 
     // Update viewports.
     R_SetViewGrid(0, 0);

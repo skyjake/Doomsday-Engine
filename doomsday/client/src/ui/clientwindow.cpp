@@ -100,6 +100,7 @@ DENG2_OBSERVES(Canvas,           FocusChange)
         LogWidget *log = new LogWidget;
         log->rule()
                 .setInput(Rule::Left,   root.viewLeft())
+                .setInput(Rule::Width,  root.viewWidth())
                 .setInput(Rule::Bottom, test->rule().top())
                 .setInput(Rule::Top,    root.viewTop() + 200);
         root.add(log);
@@ -336,7 +337,7 @@ void ClientWindow::canvasGLResized(Canvas &canvas)
     LOG_AS("ClientWindow");
 
     Canvas::Size size = canvas.size();
-    LOG_DEBUG("Canvas resized to ") << size.asText();
+    LOG_TRACE("Canvas resized to ") << size.asText();
 
     // Tell the widgets.
     d->root.setViewSize(size);
