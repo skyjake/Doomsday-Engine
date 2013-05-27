@@ -38,30 +38,30 @@
 
 using namespace de;
 
-/**
- * @todo Pruning:
- * - during widget update()
- *  ...whenever the sink is idle and no rewrapping is ongoing
- *  ...excess entries are deleted from the sink
- * - the same excess entries are deleted from the cache
- * - if something is pruned, existing cache sink indices are adjusted to match the new sink indices
- * - update totalHeight
- */
-
 DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
 {
     typedef GLBufferT<Vertex2TexRgba> VertexBuf;
 
-    /// Cache of drawable entries.
-    struct CacheEntry : public Lockable
+    /**
+     * Cached log entry ready for drawing. The styled text of the entry is
+     * wrapped onto multiple lines according to the available content width.
+     *
+     * CacheEntry is Lockable because it is accessed both by the main thread
+     * when drawing and by RewrapTask when wrapping the cached entries to a
+     * resized content width.
+     */
+    class CacheEntry : public Lockable
     {
-        int sinkIndex;
+        int _height; ///< Current height of the entry, in pixels.
+
+    public:
+        int sinkIndex; ///< Index of the corresponding entry in the Sink (for sorting).
         Font::RichFormat format;
         FontLineWrapping wraps;
         GLTextComposer composer;
 
         CacheEntry(int index, Font const &font, Font::RichFormat::IStyle &richStyle, Atlas &atlas)
-            : sinkIndex(index), format(richStyle)
+            : _height(0), sinkIndex(index), format(richStyle)
         {
             wraps.setFont(font);
             composer.setAtlas(atlas);
@@ -75,8 +75,7 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
 
         int height() const
         {
-            DENG2_GUARD(this);
-            return wraps.height() * wraps.font().lineSpacing().valuei();
+            return _height;
         }
 
         bool needWrap() const
@@ -92,12 +91,22 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
             wraps.wrapTextToWidth(plain, format, width);
             composer.setText(plain, format);
             composer.setWrapping(wraps);
+            recalculateHeight();
         }
 
-        void rewrap(int width)
+        /// Returns the difference in the entry's height (in pixels).
+        int rewrap(int width)
         {
             DENG2_GUARD(this);
+            int oldHeight = _height;
             wraps.wrapTextToWidth(wraps.text(), format, width);
+            recalculateHeight();
+            return _height - oldHeight;
+        }
+
+        void recalculateHeight()
+        {
+            _height = wraps.height() * wraps.font().lineSpacing().valuei();
         }
 
         void make(GLTextComposer::Vertices &verts, int y)
@@ -113,6 +122,16 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
         }
     };
 
+    /**
+     * Log sink that wraps log entries as rich text to multiple lines before
+     * they are shown by LogWidget. The wrapping is done by a TaskPool in the
+     * background.
+     *
+     * Whenever all the wrapping tasks are complete, LogWidget will be notified
+     * and it will check if excess entries should be removed. Entries are only
+     * removed from the sink (and cache) during a prune, in the main thread,
+     * and during this no background tasks are running.
+     */
     class WrappingMemoryLogSink : public MemoryLogSink
     {
     public:
@@ -121,12 +140,21 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
               _maxEntries(1000),
               _next(0),
               _width(0)
-        {}
+        {
+            // Whenever the pool is idle, we'll check if pruning should be done.
+            QObject::connect(&_pool, SIGNAL(allTasksDone()),
+                             d->thisPublic, SLOT(pruneExcessEntries()));
+        }
 
         ~WrappingMemoryLogSink()
         {
             _pool.waitForDone();
             clear();
+        }
+
+        bool isBusy() const
+        {
+            return !_pool.isDone();
         }
 
         int maxEntries() const { return _maxEntries; }
@@ -136,6 +164,13 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
             DENG2_GUARD(_wrappedEntries);
             qDeleteAll(_wrappedEntries);
             _wrappedEntries.clear();
+        }
+
+        void remove(int pos, int n = 1)
+        {
+            DENG2_GUARD(this);
+            MemoryLogSink::remove(pos, n);
+            _next -= n;
         }
 
         void setWidth(int wrapWidth)
@@ -157,6 +192,11 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
         }
 
     protected:
+        /**
+         * Asynchronous task for wrapping an incoming entry as rich text in the
+         * background. WrapTask is responsible for creating the CacheEntry
+         * instances for the LogWidget's entry cache.
+         */
         class WrapTask : public Task
         {
         public:
@@ -172,7 +212,7 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
                                                     *_sink.d->entryAtlas);
                 cached->wrap(_styledText, _sink._width);
 
-                usleep(75000); // TODO -- remove this testing aid
+                //usleep(75000); // TODO -- remove this testing aid
 
                 DENG2_GUARD_FOR(_sink._wrappedEntries, G);
                 _sink._wrappedEntries << cached;
@@ -184,6 +224,9 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
             String _styledText;
         };
 
+        /**
+         * Schedules wrapping tasks for all incoming entries.
+         */
         void beginWorkOnNext()
         {
             while(_width > 0 && _next >= 0 && _next < entryCount())
@@ -201,18 +244,26 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
         int _maxEntries;
         StyledLogSinkFormatter _formatter;
         int _next;
-        struct WrappedEntries : public QList<CacheEntry *>, public Lockable {};
-        WrappedEntries _wrappedEntries;
         TaskPool _pool;
         int _width;
+
+        struct WrappedEntries : public QList<CacheEntry *>, public Lockable {};
+        WrappedEntries _wrappedEntries;
     };
 
-    // Log entries.
     WrappingMemoryLogSink sink;
 
     QList<CacheEntry *> cache; ///< Indices match entry indices in sink.
     int cacheWidth;
 
+    /**
+     * Asynchronous task that iterates through the cached entries in reverse
+     * order and rewraps their existing content to a new maximum width. The
+     * task is cancellable because an existing wrap should be abandoned if the
+     * widget content width changes again during a rewrap.
+     *
+     * The total height of the entries is updated as the entries are rewrapped.
+     */
     class RewrapTask : public Task
     {
         LogWidget::Instance *d;
@@ -229,8 +280,17 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
         {
             while(_next >= 0 && _cancelLevel == d->cancelRewrap)
             {
-                d->cache[_next--]->rewrap(_width);
-                //usleep(10000);
+                CacheEntry *e = d->cache[_next--];
+
+                // Rewrap and update total height.
+                int delta = e->rewrap(_width);
+                d->totalHeight += delta;
+
+                if(_next < d->visibleRange.end)
+                {
+                    // Above the visible range, no need to rush.
+                    TimeDelta(.001).sleep();
+                }
             }
         }
     };
@@ -254,6 +314,7 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
     ColorBank::Color highlightColor;
     ColorBank::Color dimmedColor;
     ColorBank::Color accentColor;
+    ColorBank::Color dimAccentColor;
     int margin;
     int scrollBarWidth;
 
@@ -338,6 +399,7 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
         highlightColor = st.colors().color("log.highlight");
         dimmedColor    = st.colors().color("log.dimmed");
         accentColor    = st.colors().color("log.accent");
+        dimAccentColor = st.colors().color("log.dimaccent");
     }
 
     Font::RichFormat::IStyle::Color richStyleColor(int index) const
@@ -356,6 +418,9 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
 
         case Font::RichFormat::AccentColor:
             return accentColor;
+
+        case Font::RichFormat::DimAccentColor:
+            return dimAccentColor;
         }
     }
 
@@ -407,7 +472,7 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
             sizeFactor = .8f;
             fontWeight = Font::RichFormat::Light;
             fontStyle  = Font::RichFormat::Italic;
-            colorIndex = Font::RichFormat::NormalColor;
+            colorIndex = Font::RichFormat::DimAccentColor;
             break;
 
         case Font::RichFormat::AuxMetaStyle:
@@ -456,25 +521,6 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
 
         delete entryAtlas;
         entryAtlas = 0;
-    }
-
-    void prune()
-    {
-        /*
-        int numPruned = 0;
-
-        // Remove old entries if there are too many.
-        int excess = sink.entryCount() - maxEntries;
-        if(excess > 0)
-        {
-            sink.remove(0, excess);
-        }
-        while(excess-- > 0 && !cache.isEmpty())
-        {
-            delete cache.takeFirst();
-            numPruned++;
-        }
-        */
     }
 
     duint contentWidth() const
@@ -567,6 +613,49 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
         }
     }
 
+    /**
+     * Removes entries from the sink and the cache.
+     */
+    void prune()
+    {
+        DENG2_ASSERT_IN_MAIN_THREAD();
+
+        if(isRewrapping())
+        {
+            // Rewrapper is busy, let's not do this right now.
+            return;
+        }
+
+        // We must lock the sink so no new entries are added.
+        DENG2_GUARD(sink);
+
+        if(sink.isBusy())
+        {
+            // New entries are being added, prune later.
+            return;
+        }
+
+        fetchNewCachedEntries();
+
+        DENG2_ASSERT(sink.entryCount() == cache.size());
+
+        int num = sink.entryCount() - sink.maxEntries();
+        if(num > 0)
+        {
+            sink.remove(0, num);
+            for(int i = 0; i < num; ++i)
+            {
+                totalHeight -= cache[0]->height();
+                delete cache.takeFirst();
+            }
+            // Adjust existing indices to match.
+            for(int i = 0; i < cache.size(); ++i)
+            {
+                cache[i]->sinkIndex -= num;
+            }
+        }
+    }
+
     void updateProjection()
     {
         projMatrix = self.root().projMatrix2D();
@@ -620,7 +709,6 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
         for(int idx = cache.size() - 1; yBottom > 0 && idx >= 0; --idx)
         {
             CacheEntry *entry = cache[idx];
-
             yBottom -= entry->height();
 
             if(yBottom < contentSize.y)
@@ -705,6 +793,8 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
 
 LogWidget::LogWidget(String const &name) : GuiWidget(name), d(new Instance(this))
 {
+    connect(&d->rewrapPool, SIGNAL(allTasksDone()), this, SLOT(pruneExcessEntries()));
+
     rule().setInput(Rule::Width, Const(600)); // TODO -- from rule defs
     LogBuffer::appBuffer().addSink(d->sink);
 }
@@ -744,10 +834,14 @@ void LogWidget::viewResized()
     d->updateProjection();
 }
 
+void LogWidget::update()
+{
+    GuiWidget::update();
+}
+
 void LogWidget::draw()
 {
     d->sink.setWidth(d->contentWidth());
-
     d->draw();
 }
 
@@ -785,7 +879,7 @@ void LogWidget::scrollToBottom()
 
 void LogWidget::pruneExcessEntries()
 {
-
+    d->prune();
 }
 
 void LogWidget::glInit()

@@ -71,6 +71,7 @@ public:
 
     // Events.
     void viewResized();
+    void update();
     void draw();
     bool handleEvent(de::Event const &event);
 
