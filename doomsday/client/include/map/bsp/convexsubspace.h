@@ -81,12 +81,16 @@ public:
     /**
      * Returns @c true iff the subspace is "degenerate", which is to say there
      * are fewer than @em three line segments in the set.
+     *
+     * @see segmentCount()
      */
     inline bool isDegenerate() const { return segmentCount() < 3; }
 
     /**
      * Returns @c true iff the subspace is "empty", which is to say there are
      * zero line segments in the set.
+     *
+     * Equivalent to @code segmentCount() == 0 @endcode
      */
     inline bool isEmpty() const { return segmentCount() == 0; }
 
@@ -98,6 +102,8 @@ public:
      *                  of the segments is @em NOT given to the subspace. Note
      *                  that duplicates or any which are already present are
      *                  pruned automatically.
+     *
+     * @see addOneSegment()
      */
     void addSegments(QList<LineSegment::Side *> const &segments);
 
@@ -108,8 +114,27 @@ public:
      * @param segment  Line segment to add. Ownership is @em NOT given to the
      *                 subspace. Note that if the segment is already present in
      *                 the set it will be pruned (nothing will happen).
+     *
+     * @see operator<<(), addSegments()
      */
     void addOneSegment(LineSegment::Side const &segment);
+
+    /**
+     * Add @a segment to the subspace which is assumed to conform to,
+     * or is compatible with the subspace.
+     *
+     * @param segment  Line segment to add. Ownership is @em NOT given to the
+     *                 subspace. Note that if the segment is already present in
+     *                 the set it will be pruned (nothing will happen).
+     *
+     * @return  Reference to this subspace.
+     *
+     * @see addOneSegment()
+     */
+    inline ConvexSubspace &operator << (LineSegment::Side const &segment) {
+        addOneSegment(segment);
+        return *this;
+    }
 
     /**
      * Determines from the set of line segments which sector to attribute to
@@ -125,6 +150,8 @@ public:
     /**
      * The BspLeaf to which the subspace has been attributed. May return @c 0
      * if not attributed.
+     *
+     * @see setBspLeaf()
      */
     BspLeaf *bspLeaf() const;
 
@@ -133,6 +160,8 @@ public:
      *
      * @param newBspLeaf  BSP leaf to attribute (ownership is unaffected).
      *                    Can be @c 0 (to clear the attribution).
+     *
+     * @see bspLeaf()
      */
     void setBspLeaf(BspLeaf *newBspLeaf);
 

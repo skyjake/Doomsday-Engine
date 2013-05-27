@@ -185,8 +185,8 @@ DENG2_PIMPL_NOREF(ConvexSubspace)
         if(candidates.isEmpty()) return; // Eeek!
 
         // Sort our candidates such that our preferred sector appears first.
-        // This shouldn't take too long, typically there is no more than two or
-        // three to choose from.
+        // This shouldn't take too long, typically there are no more than two
+        // or three to choose from.
         QList<SectorCandidate> sortedCandidates = candidates.values();
         qSort(sortedCandidates.begin(), sortedCandidates.end());
 
