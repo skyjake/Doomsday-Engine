@@ -158,6 +158,7 @@ String Font::RichFormat::initFromStyledText(String const &styledText)
             case 'B': // Highlight color
             case 'C': // Dimmed color
             case 'D': // Accent color
+            case 'E': // Dim Accent color
                 format->colorIndex = ch - 'A';
                 break;
 

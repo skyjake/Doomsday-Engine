@@ -85,7 +85,8 @@ public:
             NormalColor    = 0,
             HighlightColor = 1,
             DimmedColor    = 2,
-            AccentColor    = 3
+            AccentColor    = 3,
+            DimAccentColor = 4
         };
 
         /**
