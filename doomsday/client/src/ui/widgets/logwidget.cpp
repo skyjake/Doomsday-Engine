@@ -141,8 +141,6 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
         void setWidth(int wrapWidth)
         {
             _width = wrapWidth;
-
-            // All existing entries need to be rewrapped for this width.
             beginWorkOnNext();
         }
 
@@ -218,30 +216,29 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
     class RewrapTask : public Task
     {
         LogWidget::Instance *d;
+        duint32 _cancelLevel;
         int _next;
         int _width;
 
     public:
         RewrapTask(LogWidget::Instance *wd, int startFrom, int width)
-            : d(wd), _next(startFrom), _width(width)
+            : d(wd), _cancelLevel(wd->cancelRewrap), _next(startFrom), _width(width)
         {}
 
         void runTask()
         {
-            qDebug() << "rewrap to" << _width;
-            while(_next >= 0 && !d->cancelRewrap)
+            while(_next >= 0 && _cancelLevel == d->cancelRewrap)
             {
-                //qDebug() << "rewrap entry" << _next;
                 d->cache[_next--]->rewrap(_width);
-
-                //usleep(50000); // TEST
+                //usleep(10000);
             }
-            qDebug() << "rewrap complete";
         }
     };
 
     TaskPool rewrapPool; ///< Used when rewrapping existing cached entries.
-    bool cancelRewrap;
+    volatile duint32 cancelRewrap;
+
+    enum { CancelAllRewraps = 0xffffffff };
 
     // State.
     Animation visibleOffset;
@@ -281,7 +278,7 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
         : Base(i),
           sink(this),
           cacheWidth(0),
-          cancelRewrap(false),
+          cancelRewrap(0),
           visibleOffset(0),
           totalHeight(0),
           maxScroll(0),
@@ -312,10 +309,16 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
         clearCache();
     }
 
+    void cancelRewraps()
+    {
+        cancelRewrap = CancelAllRewraps;
+        rewrapPool.waitForDone();
+        cancelRewrap = 0;
+    }
+
     void clearCache()
     {
-        cancelRewrap = true;
-        rewrapPool.waitForDone();
+        cancelRewraps();
 
         entryAtlas->clear();
         cache.clear();
@@ -532,13 +535,11 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
         if(isRewrapping())
         {
             // Cancel an existing rewrap.
-            cancelRewrap = true;
-            rewrapPool.waitForDone();
+            cancelRewrap++;
         }
 
         // Start a rewrapping task that goes through all the existing entries,
         // starting from the latest entry.
-        cancelRewrap = false;
         rewrapPool.start(new RewrapTask(this, cache.size() - 1, contentWidth()));
     }
 
