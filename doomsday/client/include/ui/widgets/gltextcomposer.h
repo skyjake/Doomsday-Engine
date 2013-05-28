@@ -24,6 +24,7 @@
 #include <de/Atlas>
 #include <de/GLBuffer>
 
+#include "alignment.h"
 #include "fontlinewrapping.h"
 
 /**
@@ -36,22 +37,6 @@ public:
     typedef de::Vertex2TexRgba    Vertex;
     typedef de::GLBufferT<Vertex> VertexBuf;
     typedef VertexBuf::Builder    Vertices;
-
-    /**
-     * Flags for specifying alignment.
-     */
-    enum AlignmentFlag
-    {
-        AlignTop    = 0x1,
-        AlignBottom = 0x2,
-        AlignLeft   = 0x4,
-        AlignRight  = 0x8,
-
-        AlignCenter = 0,
-
-        DefaultAlignment = AlignCenter
-    };
-    Q_DECLARE_FLAGS(Alignment, AlignmentFlag)
 
 public:
     GLTextComposer();
@@ -78,7 +63,8 @@ public:
 
     void makeVertices(Vertices &triStrip,
                       de::Vector2i const &topLeft,
-                      Alignment const &lineAlign);
+                      Alignment const &lineAlign,
+                      de::Vector4f const &color = de::Vector4f(1, 1, 1, 1));
 
     /**
      * Generates vertices for all the text lines and concatenates them
@@ -89,12 +75,11 @@ public:
     void makeVertices(Vertices &triStrip,
                       de::Rectanglei const &rect,
                       Alignment const &alignInRect,
-                      Alignment const &lineAlign);
+                      Alignment const &lineAlign,
+                      de::Vector4f const &color = de::Vector4f(1, 1, 1, 1));
 
 private:
     DENG2_PRIVATE(d)
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(GLTextComposer::Alignment)
 
 #endif // DENG_CLIENT_GLTEXTCOMPOSER_H

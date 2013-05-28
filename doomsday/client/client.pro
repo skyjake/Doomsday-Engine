@@ -356,6 +356,7 @@ DENG_HEADERS += \
     include/ui/ui2_main.h \
     include/ui/ui_main.h \
     include/ui/ui_panel.h \
+    include/ui/widgets/alignment.h \
     include/ui/widgets/busywidget.h \
     include/ui/widgets/buttonwidget.h \ 
     include/ui/widgets/consolecommandwidget.h \

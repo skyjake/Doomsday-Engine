@@ -167,15 +167,17 @@ bool GLTextComposer::update()
 
 void GLTextComposer::makeVertices(Vertices &triStrip,
                                   Vector2i const &topLeft,
-                                  Alignment const &lineAlign)
+                                  Alignment const &lineAlign,
+                                  Vector4f const &color)
 {
-    makeVertices(triStrip, Rectanglei(topLeft, topLeft), AlignTop | AlignLeft, lineAlign);
+    makeVertices(triStrip, Rectanglei(topLeft, topLeft), AlignTopLeft, lineAlign, color);
 }
 
 void GLTextComposer::makeVertices(Vertices &triStrip,
                                   Rectanglei const &rect,
                                   Alignment const &alignInRect,
-                                  Alignment const &lineAlign)
+                                  Alignment const &lineAlign,
+                                  Vector4f const &color)
 {
     // Top left corner.
     Vector2f p = rect.topLeft;
@@ -183,22 +185,7 @@ void GLTextComposer::makeVertices(Vertices &triStrip,
     Vector2i const contentSize(d->wraps->width(), d->wraps->totalHeightInPixels());
 
     // Apply alignment within the provided rectangle.
-    if(alignInRect.testFlag(AlignRight))
-    {
-        p.x += int(rect.width()) - contentSize.x;
-    }
-    else if(!alignInRect.testFlag(AlignLeft))
-    {
-        p.x += (int(rect.width()) - contentSize.x) / 2;
-    }
-    if(alignInRect.testFlag(AlignBottom))
-    {
-        p.y += int(rect.height()) - contentSize.y;
-    }
-    else if(!alignInRect.testFlag(AlignTop))
-    {
-        p.y += (int(rect.height()) - contentSize.y) / 2;
-    }
+    p = applyAlignment(alignInRect, p, contentSize, rect);
 
     DENG2_ASSERT(d->wraps->height() == d->lines.size());
 
@@ -223,7 +210,7 @@ void GLTextComposer::makeVertices(Vertices &triStrip,
                 linePos.x += (int(rect.width()) - int(size.x)) / 2;
             }
 
-            triStrip.makeQuad(Rectanglef::fromSize(linePos, size), Vector4f(1, 1, 1, 1), uv);
+            triStrip.makeQuad(Rectanglef::fromSize(linePos, size), color, uv);
         }
         p.y += d->font->lineSpacing().value();
     }
