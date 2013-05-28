@@ -208,7 +208,7 @@ Atlas::Size Atlas::totalSize() const
 
 Id Atlas::alloc(Image const &image)
 {
-    if(image.size() == Image::Size(0, 0))
+    if(image.isNull())
     {
         return Id::None;
     }

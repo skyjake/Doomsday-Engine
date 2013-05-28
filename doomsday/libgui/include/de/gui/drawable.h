@@ -106,10 +106,10 @@ public:
      * @param id  Identifier of the buffer.
      * @return GL buffer.
      */
-    GLBuffer &buffer(Id id) const;
+    GLBuffer &buffer(Id id = 1) const;
 
     template <typename VBType>
-    VBType &buffer(Id id) const {
+    VBType &buffer(Id id = 1) const {
         DENG2_ASSERT(dynamic_cast<VBType *>(&buffer(id)) != 0);
         return static_cast<VBType &>(buffer(id));
     }

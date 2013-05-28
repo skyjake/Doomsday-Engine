@@ -190,6 +190,11 @@ void *Image::bits()
     return d->refPixels.base();
 }
 
+bool Image::isNull() const
+{
+    return size() == Size(0, 0);
+}
+
 bool Image::isGLCompatible() const
 {
     if(d->format == UseQImageFormat)
