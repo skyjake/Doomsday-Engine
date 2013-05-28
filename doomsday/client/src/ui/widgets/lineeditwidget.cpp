@@ -52,7 +52,6 @@ DENG2_OBSERVES(Atlas, Reposition)
     Drawable drawable;
     GLUniform uMvpMatrix;
     GLUniform uColor;
-    GLUniform uTex;
 
     Instance(Public *i)
         : Base(i),
@@ -61,8 +60,7 @@ DENG2_OBSERVES(Atlas, Reposition)
           margin(0),
           needGeometry(false),
           uMvpMatrix("uMvpMatrix", GLUniform::Mat4),
-          uColor    ("uColor",     GLUniform::Vec4),
-          uTex      ("uTex",       GLUniform::Sampler2D)
+          uColor    ("uColor",     GLUniform::Vec4)
     {
         height = new ScalarRule(0);
 
@@ -116,9 +114,6 @@ DENG2_OBSERVES(Atlas, Reposition)
         composer.setAtlas(atlas());
         composer.setText(self.text());
 
-        // We'll be using the shared atlas.
-        uTex = atlas();
-
         // Temporary background texture for development...
         bgTex = atlas().alloc(Image::solidColor(Image::Color(255, 255, 255, 255), Image::Size(1, 1)));
 
@@ -127,8 +122,7 @@ DENG2_OBSERVES(Atlas, Reposition)
 
         self.root().shaders().build(drawable.program(), "generic.textured.color")
                 << uMvpMatrix
-                //<< uColor
-                << uTex;
+                << self.root().uAtlas();
 
         self.root().shaders().build(drawable.program("cursor"), "generic.color_ucolor")
                 << uMvpMatrix
@@ -165,9 +159,7 @@ DENG2_OBSERVES(Atlas, Reposition)
 
         // Text lines.
         Rectanglei const contentRect = pos.shrunk(margin);
-        composer.makeVertices(verts, contentRect,
-                              GLTextComposer::AlignLeft,
-                              GLTextComposer::AlignLeft);
+        composer.makeVertices(verts, contentRect, AlignLeft, AlignLeft);
 
         // Underline the possible suggested completion.
         if(self.isSuggestingCompletion())

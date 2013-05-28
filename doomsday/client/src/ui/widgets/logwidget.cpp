@@ -113,7 +113,7 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
         {
             DENG2_GUARD(this);
             composer.update();
-            composer.makeVertices(verts, Vector2i(0, y), GLTextComposer::AlignLeft);
+            composer.makeVertices(verts, Vector2i(0, y), AlignLeft);
         }
 
         void clear()
@@ -329,7 +329,6 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
     GLUniform uShadowColor;
     GLUniform uColor;
     GLUniform uBgMvpMatrix;
-    GLUniform uBgTex;
     Matrix4f projMatrix;
     Matrix4f viewMatrix;
     Id bgTex;
@@ -353,8 +352,7 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
           uTex        ("uTex",       GLUniform::Sampler2D),
           uShadowColor("uColor",     GLUniform::Vec4),
           uColor      ("uColor",     GLUniform::Vec4),
-          uBgMvpMatrix("uMvpMatrix", GLUniform::Mat4),
-          uBgTex      ("uTex",       GLUniform::Sampler2D)
+          uBgMvpMatrix("uMvpMatrix", GLUniform::Mat4)
     {
         updateStyle();
     }
@@ -493,7 +491,6 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
         Image solidWhitePixel = Image::solidColor(Image::Color(255, 255, 255, 255),
                                                   Image::Size(1, 1));
         bgTex = self.root().atlas().alloc(solidWhitePixel);
-        uBgTex = self.root().atlas();
 
         scrollTex = entryAtlas->alloc(solidWhitePixel);
 
@@ -503,7 +500,7 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
         background.addBuffer(bgBuf = new VertexBuf);
         self.root().shaders().build(background.program(), "generic.textured.color")
                 << uBgMvpMatrix
-                << uBgTex;
+                << self.root().uAtlas();
 
         // Vertex buffer for the log entries.
         contents.addBuffer(buf = new VertexBuf);
@@ -752,8 +749,8 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
             // Update the background quad.
             bgBuf->setVertices(gl::TriangleStrip,
                                VertexBuf::Builder().makeQuad(pos,
-                                                             self.style().colors().colorf("background"),
-                                                             self.root().atlas().imageRectf(bgTex).middle()),
+                                   self.style().colors().colorf("background"),
+                                   self.root().atlas().imageRectf(bgTex).middle()),
                                gl::Static);
         }
 
