@@ -31,6 +31,9 @@ class BspLeaf;
 class Sector;
 
 namespace de {
+
+class Polygon;
+
 namespace bsp {
 
 /**
@@ -78,14 +81,6 @@ public:
      * Returns the total number of segments in the subspace.
      */
     inline int segmentCount() const { return segments().count(); }
-
-    /**
-     * Returns @c true iff the subspace is "degenerate", which is to say there
-     * are fewer than @em three line segments in the set.
-     *
-     * @see segmentCount()
-     */
-    inline bool isDegenerate() const { return segmentCount() < 3; }
 
     /**
      * Returns @c true iff the subspace is "empty", which is to say there are
@@ -136,6 +131,8 @@ public:
         addOneSegment(segment);
         return *this;
     }
+
+    Polygon *buildLeafGeometry() const;
 
     /**
      * Determines from the set of line segments which sector to attribute to

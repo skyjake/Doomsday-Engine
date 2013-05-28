@@ -20,13 +20,20 @@
 #include <QHash>
 #include <QtAlgorithms>
 
+#include <de/mathutil.h>
+
+#include "HEdge"
 #include "Line"
+#include "Polygon"
 #include "Sector"
 #include "map/bsp/linesegment.h"
 
 #include "render/r_main.h" /// validCount @todo Remove me
 
 #include "map/bsp/convexsubspace.h"
+
+/// Smallest difference between two angles before being considered equal (in degrees).
+static coord_t const ANG_EPSILON = 1.0 / 1024.0;
 
 namespace de {
 namespace bsp {
@@ -113,8 +120,13 @@ typedef QHash<Sector *, SectorCandidate> SectorCandidateHash;
 
 DENG2_PIMPL_NOREF(ConvexSubspace)
 {
+    typedef QList<LineSegment::Side *> SegmentList;
+
     /// The set of line segments.
     Segments segments;
+
+    /// A clockwise ordering of the line segments.
+    SegmentList clockwiseSegments;
 
     /// Chosen map sector for this subspace (if any).
     Sector *sector;
@@ -138,6 +150,66 @@ DENG2_PIMPL_NOREF(ConvexSubspace)
           needChooseSector(other.needChooseSector),
           bspLeaf         (other.bspLeaf)
     {}
+
+    Vector2d findCenter()
+    {
+        Vector2d center;
+        int numPoints = 0;
+        foreach(LineSegment::Side *segment, segments)
+        {
+            center += segment->from().origin();
+            numPoints += 1;
+        }
+        if(numPoints)
+        {
+            center /= numPoints;
+        }
+        return center;
+    }
+
+    /**
+     * Sort the line segments in a clockwise order (i.e., descending angles)
+     * according to their position/orientation relative to the center of the
+     * subspace.
+     */
+    void orderSegments()
+    {
+        clockwiseSegments = SegmentList::fromSet(segments);
+
+        // Any work to do?
+        if(clockwiseSegments.isEmpty())
+            return;
+
+        // Sort the segments by angle (from the middle point to the start vertex).
+        Vector2d center = findCenter();
+
+        /// "double bubble"
+        int const numSegments = clockwiseSegments.count();
+        for(int pass = 0; pass < numSegments - 1; ++pass)
+        {
+            bool swappedAny = false;
+            for(int i = 0; i < numSegments - 1; ++i)
+            {
+                LineSegment::Side const *a = clockwiseSegments.at(i);
+                LineSegment::Side const *b = clockwiseSegments.at(i+1);
+
+                Vector2d v1Dist = a->from().origin() - center;
+                Vector2d v2Dist = b->from().origin() - center;
+
+                coord_t v1Angle = M_DirectionToAngleXY(v1Dist.x, v1Dist.y);
+                coord_t v2Angle = M_DirectionToAngleXY(v2Dist.x, v2Dist.y);
+
+                if(v1Angle + ANG_EPSILON < v2Angle)
+                {
+                    clockwiseSegments.swap(i, i + 1);
+                    swappedAny = true;
+                }
+            }
+            if(!swappedAny) break;
+        }
+
+        // LOG_DEBUG("Sorted segments around %s") << center.asText();
+    }
 
     void chooseSector()
     {
@@ -248,6 +320,67 @@ void ConvexSubspace::addOneSegment(LineSegment::Side const &newSegment)
     {
         LOG_DEBUG("ConvexSubspace pruned one duplicate segment");
     }
+}
+
+Polygon *ConvexSubspace::buildLeafGeometry() const
+{
+    if(isEmpty())
+        return 0;
+
+    d->orderSegments();
+
+    // Construct the polygon and ring of half-edges.
+    Polygon *poly = new Polygon;
+
+    // Iterate backwards so that the half-edges can be linked clockwise.
+    for(int i = d->clockwiseSegments.count(); i-- > 0; )
+    {
+        LineSegment::Side *seg = d->clockwiseSegments[i];
+        HEdge *hedge = new HEdge(seg->from(), seg->mapSidePtr());
+
+        // Link the new half-edge for this line segment to the head of
+        // the list in the new polygon geometry.
+        hedge->_next = poly->_hedge;
+        poly->_hedge = hedge;
+
+        // There is now one more half-edge in this polygon.
+        poly->_hedgeCount += 1;
+
+        // Is there a half-edge on the back side we need to twin with?
+        if(seg->back().hasHEdge())
+        {
+            seg->back().hedge()._twin = hedge;
+            hedge->_twin = seg->back().hedgePtr();
+        }
+
+        // Link the new half-edge with this line segment.
+        seg->setHEdge(hedge);
+    }
+
+    // Link the half-edges anticlockwise and close the ring.
+    HEdge *hedge = poly->_hedge;
+    forever
+    {
+        if(hedge->hasNext())
+        {
+            // Link anticlockwise.
+            hedge->_next->_prev = hedge;
+            hedge = hedge->_next;
+        }
+        else
+        {
+            // Circular link.
+            hedge->_next = poly->_hedge;
+            hedge->_next->_prev = hedge;
+            break;
+        }
+    }
+
+    /// @todo Polygon should encapsulate.
+    poly->updateAABox();
+    poly->updateCenter();
+
+    return poly;
 }
 
 Sector *ConvexSubspace::chooseSectorForBspLeaf() const

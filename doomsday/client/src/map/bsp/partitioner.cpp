@@ -63,9 +63,6 @@ typedef QList<ConvexSubspace> ConvexSubspaces;
 
 typedef QHash<MapElement *, BspTreeNode *> BuiltBspElementMap;
 
-/// Used when sorting half-edges by angle around a map point.
-typedef QList<HEdge *> HEdgeSortBuffer;
-
 /// Used when collecting line segments to build a leaf. @todo Refactor away.
 typedef QList<LineSegment::Side *> LineSegmentList;
 
@@ -1334,186 +1331,49 @@ DENG2_PIMPL(Partitioner)
         return newTreeNode(bspElement, rightTree, leftTree);
     }
 
-    /**
-     * Sort half-edges by angle (from the middle point to the start vertex).
-     * The desired order (clockwise) means descending angles.
-     */
-    static void sortHEdgesByAngleAroundPoint(HEdgeSortBuffer &hedges,
-        int lastHEdgeIndex, Vector2d const &point)
+    static bool hasSegmentLinkedToMap(ConvexSubspace const &convexSet)
     {
-        /// @par Algorithm
-        /// "double bubble"
-        for(int pass = 0; pass < lastHEdgeIndex; ++pass)
+        foreach(LineSegment::Side *seg, convexSet.segments())
         {
-            bool swappedAny = false;
-            for(int i = 0; i < lastHEdgeIndex; ++i)
-            {
-                HEdge const *hedge1 = hedges.at(i);
-                HEdge const *hedge2 = hedges.at(i+1);
-
-                Vector2d v1Dist = hedge1->origin() - point;
-                Vector2d v2Dist = hedge2->origin() - point;
-
-                coord_t v1Angle = M_DirectionToAngleXY(v1Dist.x, v1Dist.y);
-                coord_t v2Angle = M_DirectionToAngleXY(v2Dist.x, v2Dist.y);
-
-                if(v1Angle + ANG_EPSILON < v2Angle)
-                {
-                    hedges.swap(i, i + 1);
-                    swappedAny = true;
-                }
-            }
-            if(!swappedAny) break;
+            if(seg->hasMapSide())
+                return true;
         }
-    }
-
-    /**
-     * Sort the half-edges linked within the given geometry face in a clockwise
-     * order according to their position/orientation relative to the specified
-     * point.
-     *
-     * @param poly        Map geometry polygon containing the list of half-edges
-     *                    to be sorted.
-     * @param point       Map space point around which to order.
-     * @param sortBuffer  Buffer to use for sorting of the hedges.
-     *
-     * @attention Do NOT move this into Polygon. Although this clearly envies the
-     * access rights of the Polygon class this algorithm belongs here in the BSP
-     * partitioner. -ds
-     */
-    static void clockwiseOrder(Polygon &poly, Vector2d const &point,
-                               HEdgeSortBuffer &sortBuffer)
-    {
-        if(!poly._hedge) return;
-
-        // Insert the half-edges into the sort buffer.
-#ifdef DENG2_QT_4_7_OR_NEWER
-        sortBuffer.reserve(poly._hedgeCount);
-#endif
-        int i = 0;
-        for(HEdge *hedge = poly._hedge; hedge; hedge = hedge->_next, ++i)
-        {
-            sortBuffer.insert(i, hedge);
-        }
-
-        sortHEdgesByAngleAroundPoint(sortBuffer, poly._hedgeCount -1, point);
-
-        // Re-link the half-edge list in the order of the sort buffer.
-        poly._hedge = 0;
-        for(int i = 0; i < poly._hedgeCount; ++i)
-        {
-            int idx = (poly._hedgeCount - 1) - i;
-            int j = idx % poly._hedgeCount;
-
-            sortBuffer[j]->_next = poly._hedge;
-            poly._hedge = sortBuffer[j];
-        }
-    }
-
-    static Vector2d findPolyCenter(Polygon const &poly)
-    {
-        Vector2d center;
-        int numPoints = 0;
-        HEdge const *hedge = poly.firstHEdge();
-        forever
-        {
-            center += hedge->origin();
-            numPoints += 1;
-
-            if(!hedge->hasNext())
-                break;
-            hedge = &hedge->next();
-        }
-        if(numPoints)
-        {
-            center /= numPoints;
-        }
-        return center;
-    }
-
-    void clockwisePoly(Polygon &poly, HEdgeSortBuffer &sortBuffer)
-    {
-        Vector2d center = findPolyCenter(poly);
-        clockwiseOrder(poly, center, sortBuffer);
-
-        // LOG_DEBUG("Sorted Polygon half-edges around %s" << center.asText();
-        // poly.print();
-
-        // Construct the polygon's half-edge ring.
-        if(poly._hedge)
-        {
-            HEdge *hedge = poly._hedge;
-            forever
-            {
-                if(hedge->hasNext())
-                {
-                    // Reverse link.
-                    hedge->_next->_prev = hedge;
-                    hedge = hedge->_next;
-                }
-                else
-                {
-                    // Circular link.
-                    hedge->_next = poly._hedge;
-                    hedge->_next->_prev = hedge;
-                    break;
-                }
-            }
-        }
+        return false;
     }
 
     void buildLeafGeometries()
     {
-        for(int i = 0; i < convexSubspaces.size(); ++i)
+        foreach(ConvexSubspace const &convexSet, convexSubspaces)
         {
-            ConvexSubspace &convexSet = convexSubspaces[i];
+            bool const isDegenerate = convexSet.segmentCount() < 3;
 
-            // Did we produce a degenerate subspace?
-            if(!convexSet.isDegenerate())
+            /// @todo Move BSP leaf construction here.
+            BspLeaf *leaf = convexSet.bspLeaf();
+
+            if(!isDegenerate)
             {
-                // Construct geometry for the leaf.
-                BspLeaf *leaf = convexSet.bspLeaf();
-                Polygon *poly = new Polygon;
+                if(!hasSegmentLinkedToMap(convexSet))
+                    throw Error("Partitioner::buildLeafGeometries",
+                                QString("ConvexSubspace 0x%1 has no map line linked segment")
+                                    .arg(dintptr(&convexSet), 0, 16));
 
-                foreach(LineSegment::Side *seg, convexSet.segments())
+                // Construct a new polygon geometry and assign it to
+                // the BSP leaf (takes ownership).
+                leaf->setPoly(convexSet.buildLeafGeometry());
+
+                // Link the half-edges with the leaf and account.
+                HEdge *base = leaf->poly().firstHEdge();
+                HEdge *hedgeIt = base;
+                do
                 {
-                    HEdge *hedge = new HEdge(seg->from(), seg->mapSidePtr());
-
-                    // Is there a half-edge on the back side we need to twin with?
-                    if(seg->back().hasHEdge())
-                    {
-                        seg->back().hedge()._twin = hedge;
-                        hedge->_twin = seg->back().hedgePtr();
-                    }
-
-                    // Link the new half-edge for this line segment to the head of
-                    // the list in the new polygon geometry.
-                    hedge->_next = poly->_hedge;
-                    poly->_hedge = hedge;
-
-                    // There is now one more half-edge in this polygon.
-                    poly->_hedgeCount += 1;
-
-                    // Link the new half-edge with this line segment.
-                    seg->setHEdge(hedge);
+                    // Attribute the half edge to the BSP leaf.
+                    /// @todo Encapsulate in BspLeaf.
+                    hedgeIt->_bspLeaf = leaf;
 
                     // There is now one more HEdge.
                     numHEdges += 1;
-                }
 
-                // Assign any built polygon geometry to the BSP leaf (takes ownership).
-                leaf->setPoly(poly);
-
-                if(poly)
-                {
-                    // Link the half-edges with the leaf.
-                    /// @todo Encapsulate in BspLeaf.
-                    HEdge *hedgeIt = poly->firstHEdge();
-                    do
-                    {
-                        hedgeIt->_bspLeaf = leaf;
-                    } while((hedgeIt = hedgeIt->_next));
-                }
+                } while((hedgeIt = &hedgeIt->next()) != base);
             }
             else
             {
@@ -1531,90 +1391,72 @@ DENG2_PIMPL(Partitioner)
                 }
             }
 
-            BspLeaf *leaf = convexSet.bspLeaf();
+            // Determine which sector to attribute to the BSP leaf.
             leaf->setSector(convexSet.chooseSectorForBspLeaf());
-        }
-
-        HEdgeSortBuffer sortBuffer;
-        foreach(BspTreeNode *node, treeNodeMap)
-        {
-            if(!node->isLeaf()) continue;
-
-            BspLeaf *leaf = node->userData()->castTo<BspLeaf>();
-
-            if(leaf->hasPoly())
-            {
-                /*
-                 * Finalize the built geometry.
-                 */
-                Polygon &geom = leaf->poly();
-                HEdge *base = geom.firstHEdge();
-
-                // Sort the half-edges.
-                clockwisePoly(geom, sortBuffer);
-
-                // Add a twin half-edge for any which don't yet have one.
-                HEdge *hedgeIt = base;
-                do
-                {
-                    HEdge &hedge = *hedgeIt;
-                    if(!hedge.hasTwin())
-                    {
-                        DENG_ASSERT(&hedge.next() != &hedge);
-                        DENG_ASSERT(&hedge.next().vertex() != &hedge.vertex());
-
-                        hedge._twin = new HEdge(hedge.next().vertex());
-                        hedge._twin->_twin = &hedge;
-
-                        // There is now one more HEdge.
-                        numHEdges += 1;
-                    }
-
-                } while((hedgeIt = &hedgeIt->next()) != base);
-
-                if(!sanityCheckHasRealHEdge(*leaf))
-                    throw Error("Partitioner::buildLeafGeometries",
-                                QString("BSP Leaf 0x%1 has no line-linked half-edge")
-                                    .arg(dintptr(leaf), 0, 16));
-
-                /// @todo Polygon should encapsulate.
-                geom.updateAABox();
-                geom.updateCenter();
-
-#ifdef DENG_DEBUG
-                // See if we built a partial geometry...
-                {
-                    uint gaps = 0;
-                    HEdge *hedgeIt = base;
-                    do
-                    {
-                        HEdge &hedge = *hedgeIt;
-
-                        if(hedge.next().origin() != hedge.twin().origin())
-                        {
-                            gaps++;
-                        }
-                    } while((hedgeIt = &hedgeIt->next()) != base);
-
-                    if(gaps > 0)
-                    {
-                        LOG_WARNING("Polygon geometry for BSP leaf [%p] (at %s) in sector %i "
-                                    "is not contiguous %i gaps/overlaps (%i half-edges).")
-                            << de::dintptr(leaf)
-                            << geom.center().asText()
-                            << leaf->sector().indexInArchive()
-                            << gaps << leaf->hedgeCount();
-                        geom.print();
-                    }
-                }
-#endif
-            }
-
             if(!leaf->hasSector())
             {
                 LOG_WARNING("BspLeaf %p is degenerate/orphan (%d half-edges).")
                     << de::dintptr(leaf) << leaf->hedgeCount();
             }
+        }
+
+        /*
+         * Finalize the built geometry by adding a twin half-edge for any
+         * which don't yet have one.
+         */
+        foreach(ConvexSubspace const &convexSet, convexSubspaces)
+        {
+            BspLeaf *leaf = convexSet.bspLeaf();
+            if(!leaf->hasPoly())
+                continue;
+
+            Polygon &geom = leaf->poly();
+            HEdge *base = geom.firstHEdge();
+            HEdge *hedgeIt = base;
+            do
+            {
+                HEdge &hedge = *hedgeIt;
+                if(!hedge.hasTwin())
+                {
+                    DENG_ASSERT(&hedge.next() != &hedge);
+                    DENG_ASSERT(&hedge.next().vertex() != &hedge.vertex());
+
+                    hedge._twin = new HEdge(hedge.next().vertex());
+                    hedge._twin->_twin = &hedge;
+
+                    // There is now one more HEdge.
+                    numHEdges += 1;
+                }
+
+            } while((hedgeIt = &hedgeIt->next()) != base);
+
+#ifdef DENG_DEBUG
+            // See if we built a partial geometry...
+            {
+                uint gaps = 0;
+                HEdge *hedgeIt = base;
+                do
+                {
+                    HEdge &hedge = *hedgeIt;
+
+                    if(hedge.next().origin() != hedge.twin().origin())
+                    {
+                        gaps++;
+                    }
+                } while((hedgeIt = &hedgeIt->next()) != base);
+
+                if(gaps > 0)
+                {
+                    LOG_WARNING("Polygon geometry for BSP leaf [%p] (at %s) in sector %i "
+                                "is not contiguous %i gaps/overlaps (%i half-edges).")
+                        << de::dintptr(leaf)
+                        << leaf->poly().center().asText()
+                        << leaf->sector().indexInArchive()
+                        << gaps << leaf->hedgeCount();
+                    geom.print();
+                }
+            }
+#endif
         }
     }
 
@@ -1839,17 +1681,6 @@ DENG2_PIMPL(Partitioner)
         {
             i->unclosedSectorFound(sector, nearPoint);
         }
-    }
-
-    bool sanityCheckHasRealHEdge(BspLeaf const &leaf) const
-    {
-        HEdge const *base = leaf.firstHEdge();
-        HEdge const *hedge = base;
-        do
-        {
-            if(hedge->hasLineSide()) return true;
-        } while((hedge = &hedge->next()) != base);
-        return false;
     }
 
 #ifdef DENG_DEBUG
