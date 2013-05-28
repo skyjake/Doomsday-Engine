@@ -18,7 +18,6 @@
  */
 
 #include <QHash>
-#include <QList>
 #include <QtAlgorithms>
 
 #include "Line"
@@ -175,7 +174,7 @@ DENG2_PIMPL_NOREF(ConvexSubspace)
             if(found == candidates.end())
             {
                 // Yes, record it.
-                found = candidates.insert(sector, SectorCandidate(*cand));
+                found = candidates.insert(cand, SectorCandidate(*cand));
             }
 
             // Account for a new segment referencing this sector.
@@ -223,6 +222,15 @@ void ConvexSubspace::addSegments(QList<LineSegment::Side *> const &newSegments)
         // We'll need to rethink our sector choice.
         d->needChooseSector = true;
     }
+
+#ifdef DENG_DEBUG
+    int numSegmentsAdded = d->segments.size() - sizeBefore;
+    if(numSegmentsAdded < newSegments.size())
+    {
+        LOG_DEBUG("ConvexSubspace pruned %i duplicate segments")
+            << (newSegments.size() - numSegmentsAdded);
+    }
+#endif
 }
 
 void ConvexSubspace::addOneSegment(LineSegment::Side const &newSegment)
@@ -235,6 +243,10 @@ void ConvexSubspace::addOneSegment(LineSegment::Side const &newSegment)
     {
         // We'll need to rethink our sector choice.
         d->needChooseSector = true;
+    }
+    else
+    {
+        LOG_DEBUG("ConvexSubspace pruned one duplicate segment");
     }
 }
 

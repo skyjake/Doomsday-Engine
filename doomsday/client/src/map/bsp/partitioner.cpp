@@ -59,6 +59,7 @@ typedef std::vector<Vertex *> Vertexes;
 
 typedef QList<EdgeTips> EdgeTipSets;
 typedef QList<LineSegment *> LineSegments;
+typedef QList<ConvexSubspace> ConvexSubspaces;
 
 typedef QHash<MapElement *, BspTreeNode *> BuiltBspElementMap;
 
@@ -84,6 +85,9 @@ DENG2_PIMPL(Partitioner)
 
     /// Line segments in the plane.
     LineSegments lineSegments;
+
+    /// Convex subspaces in the plane.
+    ConvexSubspaces convexSubspaces;
 
     /// A set of EdgeTips for each unique line segment vertex.
     /// @note May be larger than @var numVertexes (deallocation is lazy).
@@ -790,32 +794,6 @@ DENG2_PIMPL(Partitioner)
                                             other.front().mapSidePtr(),
                                             other.front().partitionMapLine());
 
-        seg.front().setBspLeaf(other.front().bspLeaf());
-        seg.back().setBspLeaf(other.back().bspLeaf());
-
-        if(other.front().hasHEdge())
-        {
-            seg.front().setHEdge(new HEdge(other.front().hedge()));
-
-            // There is now one more HEdge.
-            numHEdges += 1;
-        }
-
-        if(other.back().hasHEdge())
-        {
-            seg.back().setHEdge(new HEdge(other.back().hedge()));
-
-            // There is now one more HEdge.
-            numHEdges += 1;
-
-            // Do we need to twin the new half-edge pair?
-            if(seg.front().hasHEdge())
-            {
-                seg.front().hedge()._twin = seg.back().hedgePtr();
-                seg.back().hedge()._twin  = seg.front().hedgePtr();
-            }
-        }
-
         return seg;
     }
 
@@ -837,51 +815,33 @@ DENG2_PIMPL(Partitioner)
         LineSegment &oldSeg = frontLeft.line();
         LineSegment &newSeg = cloneLineSegment(oldSeg);
 
-        // Now perform the split, updating vertex and relative segment links.
+        // Perform the split, updating vertex and relative segment links.
         LineSegment::Side &frontRight = newSeg.side(frontLeft.lineSideId());
 
         oldSeg.replaceVertex(frontLeft.lineSideId() ^ LineSegment::To, *newVert);
         newSeg.replaceVertex(frontLeft.lineSideId(),                   *newVert);
 
-        if(frontRight.hasHEdge())
+        LineSegment::Side &backRight = frontLeft.back();
+        LineSegment::Side &backLeft  = frontRight.back();
+
+        if(ConvexSubspace *convexSet = frontLeft.convexSubspace())
         {
-            frontRight.hedge()._vertex = newVert;
+            *convexSet << frontRight;
+            frontRight.setConvexSubspace(convexSet);
         }
 
         frontLeft.setRight(&frontRight);
         frontRight.setLeft(&frontLeft);
 
         // Handle the twin.
-        LineSegment::Side &backRight = frontLeft.back();
-        LineSegment::Side &backLeft  = frontRight.back();
+        if(ConvexSubspace *convexSet = backRight.convexSubspace())
+        {
+            *convexSet << backLeft;
+            backLeft.setConvexSubspace(convexSet);
+        }
 
         backLeft.setRight(&backRight);
         backRight.setLeft(&backLeft);
-
-        //if(frontLeft.back().hasSector())
-        {
-            if(backRight.hasHEdge())
-            {
-                backRight.hedge()._vertex = newVert;
-
-                // Has this already been added to a geometry?
-                if(backRight.bspLeaf() != 0)
-                {
-                    // Update the in-geometry references.
-                    backRight.hedge()._next = backLeft.hedgePtr();
-
-                    // There is now one more half-edge in this leaf geometry.
-                    backRight.bspLeaf()->poly()._hedgeCount += 1;
-                }
-            }
-
-            // Ensure the new back left line segment side is inserted into the
-            // same block as the old back right line segment side.
-            if(SuperBlock *bmapBlock = backRight.bmapBlockPtr())
-            {
-                linkLineSegmentSideInSuperBlockmap(*bmapBlock, backLeft);
-            }
-        }
 
         /**
          * @todo Optimize: Avoid clearing tips by implementing update logic.
@@ -1013,6 +973,14 @@ DENG2_PIMPL(Partitioner)
             // Calculate the intersection point and split this line segment.
             Vector2d point = intersectPartition(lineSeg, fromDist, toDist);
             LineSegment::Side &newFrontRight = splitLineSegment(lineSeg, point);
+
+            // Ensure the new back left segment is inserted into the same block as
+            // the old back right segment.
+            SuperBlock *backLeftBlock = lineSeg.back().bmapBlockPtr();
+            if(backLeftBlock)
+            {
+                linkLineSegmentSideInSuperBlockmap(*backLeftBlock, newFrontRight.back());
+            }
 
             interceptPartition(lineSeg, LineSegment::To);
 
@@ -1202,87 +1170,6 @@ DENG2_PIMPL(Partitioner)
     }
 
     /**
-     * Construct a new BspLeaf with geometry from the @a convexSet.
-     */
-    BspLeaf *buildBspLeaf(ConvexSubspace const &convexSet)
-    {
-        // Did we produce a degenerate subspace?
-        bool const isDegenerate = convexSet.isDegenerate();
-
-        // Determine which sector to attribute the BSP leaf to.
-        BspLeaf *leaf = new BspLeaf(convexSet.chooseSectorForBspLeaf());
-
-        // There is now one more BspLeaf;
-        numLeafs += 1;
-
-        // Construct the (initial!) geometry for the leaf.
-        Polygon *poly = 0;
-        foreach(LineSegment::Side *seg, convexSet.segments())
-        {
-            // Attribute the line segment to the BSP leaf.
-            seg->setBspLeaf(leaf);
-
-            if(isDegenerate)
-            {
-                if(seg->hasLeft())
-                {
-                    seg->left().setRight(seg->hasRight()? &seg->right() : 0);
-                }
-                if(seg->hasRight())
-                {
-                    seg->right().setLeft(seg->hasLeft()? &seg->left() : 0);
-                }
-                continue;
-            }
-
-            // Time to construct the polygon geometry?
-            if(!poly)
-            {
-                poly = new Polygon;
-            }
-
-            HEdge *hedge = new HEdge(seg->from(), seg->mapSidePtr());
-
-            // Is there a half-edge on the back side we need to twin with?
-            if(seg->back().hasHEdge())
-            {
-                seg->back().hedge()._twin = hedge;
-                hedge->_twin = seg->back().hedgePtr();
-            }
-
-            // Link the new half-edge for this line segment to the head of
-            // the list in the new polygon geometry.
-            hedge->_next = poly->_hedge;
-            poly->_hedge = hedge;
-
-            // There is now one more half-edge in this polygon.
-            poly->_hedgeCount += 1;
-
-            // Link the new half-edge with this line segment.
-            seg->setHEdge(hedge);
-
-            // There is now one more HEdge.
-            numHEdges += 1;
-        }
-
-        // Assign any built polygon geometry to the BSP leaf (takes ownership).
-        leaf->setPoly(poly);
-
-        if(poly)
-        {
-            // Link the half-edges with the leaf.
-            /// @todo Encapsulate in BspLeaf.
-            HEdge *hedgeIt = poly->firstHEdge();
-            do
-            {
-                hedgeIt->_bspLeaf = leaf;
-            } while((hedgeIt = hedgeIt->_next));
-        }
-
-        return leaf;
-    }
-
-    /**
      * Create a new BspNode element.
      *
      * @param partition    Half-plane partition line. A copy is made.
@@ -1409,22 +1296,39 @@ DENG2_PIMPL(Partitioner)
                 return rightTree? rightTree : leftTree;
 
             // Construct a new BSP node and link up the child elements.
-            MapElement *rightChildBspElement = reinterpret_cast<MapElement *>(rightTree->userData());
-            MapElement *leftChildBspElement  = reinterpret_cast<MapElement *>(leftTree->userData());
-
             bspElement = newBspNode(partition, rightBounds, leftBounds,
-                                    rightChildBspElement, leftChildBspElement);
+                                    rightTree->userData(), leftTree->userData());
         }
         else
         {
             // No partition required/possible -- already convex (or degenerate).
-            LineSegmentList collectedSegs = collectLineSegments(lineSegs);
-            ConvexSubspace convexSet(collectedSegs);
+            LineSegmentList segments = collectLineSegments(lineSegs);
 
-            bspElement = buildBspLeaf(convexSet);
+            convexSubspaces.append(ConvexSubspace());
+            ConvexSubspace &convexSet = convexSubspaces.last();
 
-            // Cleanup.
+            convexSet.addSegments(segments);
+
+            // Attribute all line segments to the convex subspace.
+            foreach(LineSegment::Side *seg, segments)
+            {
+                seg->setConvexSubspace(&convexSet);
+            }
+
+            // Produce a BSP leaf.
+            /// @todo Defer until necessary.
+            BspLeaf *leaf = new BspLeaf;
+
+            // There is now one more BspLeaf;
+            numLeafs += 1;
+
+            // Attribute the leaf to the convex subspace.
+            convexSet.setBspLeaf(leaf);
+
+            // We have finished with the SuperBlock at this node.
             lineSegs.clear();
+
+            bspElement = leaf;
         }
 
         return newTreeNode(bspElement, rightTree, leftTree);
@@ -1558,15 +1462,79 @@ DENG2_PIMPL(Partitioner)
         }
     }
 
-    /**
-     * Sort the half-edges in each BSP leaf geometry into a clockwise order.
-     *
-     * @note This cannot be done during partitionSpace() as splitting a line
-     * segment with a twin will result in another half-edge being inserted into
-     * that twin's leaf geometry (usually in the wrong place order-wise).
-     */
-    void windLeafs()
+    void buildLeafGeometries()
     {
+        for(int i = 0; i < convexSubspaces.size(); ++i)
+        {
+            ConvexSubspace &convexSet = convexSubspaces[i];
+
+            // Did we produce a degenerate subspace?
+            if(!convexSet.isDegenerate())
+            {
+                // Construct geometry for the leaf.
+                BspLeaf *leaf = convexSet.bspLeaf();
+                Polygon *poly = new Polygon;
+
+                foreach(LineSegment::Side *seg, convexSet.segments())
+                {
+                    HEdge *hedge = new HEdge(seg->from(), seg->mapSidePtr());
+
+                    // Is there a half-edge on the back side we need to twin with?
+                    if(seg->back().hasHEdge())
+                    {
+                        seg->back().hedge()._twin = hedge;
+                        hedge->_twin = seg->back().hedgePtr();
+                    }
+
+                    // Link the new half-edge for this line segment to the head of
+                    // the list in the new polygon geometry.
+                    hedge->_next = poly->_hedge;
+                    poly->_hedge = hedge;
+
+                    // There is now one more half-edge in this polygon.
+                    poly->_hedgeCount += 1;
+
+                    // Link the new half-edge with this line segment.
+                    seg->setHEdge(hedge);
+
+                    // There is now one more HEdge.
+                    numHEdges += 1;
+                }
+
+                // Assign any built polygon geometry to the BSP leaf (takes ownership).
+                leaf->setPoly(poly);
+
+                if(poly)
+                {
+                    // Link the half-edges with the leaf.
+                    /// @todo Encapsulate in BspLeaf.
+                    HEdge *hedgeIt = poly->firstHEdge();
+                    do
+                    {
+                        hedgeIt->_bspLeaf = leaf;
+                    } while((hedgeIt = hedgeIt->_next));
+                }
+            }
+            else
+            {
+                // Degenerate. Unlink the neighbor segments.
+                foreach(LineSegment::Side *seg, convexSet.segments())
+                {
+                    if(seg->hasLeft())
+                    {
+                        seg->left().setRight(seg->hasRight()? &seg->right() : 0);
+                    }
+                    if(seg->hasRight())
+                    {
+                        seg->right().setLeft(seg->hasLeft()? &seg->left() : 0);
+                    }
+                }
+            }
+
+            BspLeaf *leaf = convexSet.bspLeaf();
+            leaf->setSector(convexSet.chooseSectorForBspLeaf());
+        }
+
         HEdgeSortBuffer sortBuffer;
         foreach(BspTreeNode *node, treeNodeMap)
         {
@@ -1605,7 +1573,7 @@ DENG2_PIMPL(Partitioner)
                 } while((hedgeIt = &hedgeIt->next()) != base);
 
                 if(!sanityCheckHasRealHEdge(*leaf))
-                    throw Error("Partitioner::windLeafs",
+                    throw Error("Partitioner::buildLeafGeometries",
                                 QString("BSP Leaf 0x%1 has no line-linked half-edge")
                                     .arg(dintptr(leaf), 0, 16));
 
@@ -1740,12 +1708,12 @@ DENG2_PIMPL(Partitioner)
         return vtx;
     }
 
-    LineSegmentList collectLineSegments(SuperBlock &partList)
+    LineSegmentList collectLineSegments(SuperBlock &superblock)
     {
-        LineSegmentList segs;
+        LineSegmentList segments;
 
         // Iterative pre-order traversal of SuperBlock.
-        SuperBlock *cur = &partList;
+        SuperBlock *cur = &superblock;
         SuperBlock *prev = 0;
         while(cur)
         {
@@ -1757,7 +1725,7 @@ DENG2_PIMPL(Partitioner)
                     // Disassociate the line segment from the blockmap.
                     seg->setBMapBlock(0);
 
-                    segs.append(seg);
+                    segments << seg;
                 }
 
                 if(prev == cur->parentPtr())
@@ -1787,7 +1755,8 @@ DENG2_PIMPL(Partitioner)
                 cur = prev->parentPtr();
             }
         }
-        return segs;
+
+        return segments;
     }
 
     bool release(MapElement *elm)
@@ -1942,7 +1911,7 @@ void Partitioner::build()
     d->rootNode = d->partitionSpace(rootBlock);
 
     // At this point we know that *something* useful was built.
-    d->windLeafs();
+    d->buildLeafGeometries();
 
     // Find the half-edges at the edge of each map line side.
     /// @todo Optimize: Performing a search for both sides of the same map

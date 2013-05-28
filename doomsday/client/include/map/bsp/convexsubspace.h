@@ -20,6 +20,7 @@
 #ifndef DENG_WORLD_MAP_BSP_CONVEXSUBSPACE
 #define DENG_WORLD_MAP_BSP_CONVEXSUBSPACE
 
+#include <QList>
 #include <QSet>
 
 #include <de/Error>
@@ -120,8 +121,8 @@ public:
     void addOneSegment(LineSegment::Side const &segment);
 
     /**
-     * Add @a segment to the subspace which is assumed to conform to,
-     * or is compatible with the subspace.
+     * Add @a segment to the subspace which is assumed to conform to, or is
+     * compatible with the subspace.
      *
      * @param segment  Line segment to add. Ownership is @em NOT given to the
      *                 subspace. Note that if the segment is already present in

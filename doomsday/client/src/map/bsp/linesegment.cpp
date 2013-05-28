@@ -23,7 +23,7 @@
  * 02110-1301 USA</small>
  */
 
-#include <de/mathutil.h>
+//#include <de/mathutil.h>
 #include <de/vector1.h> /// @todo remove me
 
 #include "m_misc.h" // M_BoxOnLineSide2
@@ -31,6 +31,7 @@
 #include <de/Observers>
 
 #include "HEdge"
+#include "map/bsp/convexsubspace.h"
 #include "map/bsp/superblockmap.h"
 
 #include "map/bsp/linesegment.h"
@@ -59,12 +60,12 @@ DENG2_PIMPL_NOREF(LineSegment::Side)
     LineSegment::Side *rightNeighbor;
     LineSegment::Side *leftNeighbor;
 
-    /// The superblock that contains "this" segment, or @c 0 if the segment is no
-    /// longer in any superblock (e.g., has been attributed to a BSP leaf).
+    /// The superblock that contains "this" segment, or @c 0 if the segment is
+    /// no longer in any superblock (e.g., attributed to a convex subspace).
     SuperBlock *bmapBlock;
 
-    /// BSP leaf to which "this" segment is attributed; otherwise @c 0.
-    BspLeaf *bspLeaf;
+    /// Convex subspace which "this" segment is attributed; otherwise @c 0.
+    ConvexSubspace *convexSubspace;
 
     /// Map sector attributed to the line segment. Can be @c 0 for partition lines.
     Sector *sector;
@@ -86,7 +87,7 @@ DENG2_PIMPL_NOREF(LineSegment::Side)
           rightNeighbor(0),
           leftNeighbor(0),
           bmapBlock(0),
-          bspLeaf(0),
+          convexSubspace(0),
           sector(0),
           pLength(0),
           pAngle(0),
@@ -161,14 +162,14 @@ void LineSegment::Side::setHEdge(HEdge *newHEdge)
     d->hedge = newHEdge;
 }
 
-BspLeaf *LineSegment::Side::bspLeaf() const
+ConvexSubspace *LineSegment::Side::convexSubspace() const
 {
-    return d->bspLeaf;
+    return d->convexSubspace;
 }
 
-void LineSegment::Side::setBspLeaf(BspLeaf *newBspLeaf)
+void LineSegment::Side::setConvexSubspace(ConvexSubspace *newConvexSubspace)
 {
-    d->bspLeaf = newBspLeaf;
+    d->convexSubspace = newConvexSubspace;
 }
 
 bool LineSegment::Side::hasMapSide() const

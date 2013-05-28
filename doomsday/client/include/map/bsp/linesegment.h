@@ -40,6 +40,7 @@ class HEdge;
 namespace de {
 namespace bsp {
 
+class ConvexSubspace;
 class SuperBlock;
 
 /**
@@ -422,19 +423,19 @@ public:
         void setHEdge(HEdge *newHEdge);
 
         /**
-         * Returns a pointer to the BSP leaf to which "this" side of the
+         * Returns a pointer to the ConvexSubspace to which "this" side of the
          * line segment is attributed. May return @c 0 if not yet attributed.
          */
-        BspLeaf *bspLeaf() const;
+        ConvexSubspace *convexSubspace() const;
 
         /**
-         * Change the BSP leaf to which "this" side of the line segment is
-         * attributed.
+         * Change the convex subspace to which "this" side of the line segment
+         * is attributed.
          *
-         * @param newBspLeaf  BSP leaf to attribute. Can be @c 0 (to clear
-         *                    the attribution).
+         * @param newConvexSubspace  ConvexSubspace to attribute. Can be @c 0
+         *                           (to clear the attribution).
          */
-        void setBspLeaf(BspLeaf *newBspLeaf);
+        void setConvexSubspace(ConvexSubspace *newConvexSubspace);
 
         /**
          * To be called to update precalculated vectors, distances, etc...
