@@ -22,6 +22,7 @@
 
 #include <de/AtlasTexture>
 #include <de/GLTexture>
+#include <de/GLUniform>
 
 using namespace de;
 
@@ -29,11 +30,13 @@ DENG2_PIMPL(GuiRootWidget)
 {
     ClientWindow *window;
     QScopedPointer<AtlasTexture> atlas; ///< Shared atlas for most UI graphics/text.
+    GLUniform uTexAtlas;
 
     Instance(Public *i, ClientWindow *win)
         : Base(i),
           window(win),
-          atlas(0)
+          atlas(0),
+          uTexAtlas("uTex", GLUniform::Sampler2D)
     {}
 
     ~Instance()
@@ -67,8 +70,14 @@ AtlasTexture &GuiRootWidget::atlas()
         d->atlas.reset(AtlasTexture::newWithRowAllocator(
                            Atlas::BackingStore | Atlas::AllowDefragment,
                            GLTexture::maximumSize().min(GLTexture::Size(4096, 4096))));
+        d->uTexAtlas = *d->atlas;
     }
     return *d->atlas;
+}
+
+GLUniform &GuiRootWidget::uAtlas()
+{
+    return d->uTexAtlas;
 }
 
 GLShaderBank &GuiRootWidget::shaders()

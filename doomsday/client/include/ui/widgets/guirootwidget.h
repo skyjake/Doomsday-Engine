@@ -22,6 +22,7 @@
 #include <de/RootWidget>
 #include <de/AtlasTexture>
 #include <de/GLShaderBank>
+#include <de/GLUniform>
 #include <de/Matrix>
 
 class ClientWindow;
@@ -48,7 +49,9 @@ public:
     ClientWindow &window();
 
     de::AtlasTexture &atlas();
-    de::GLShaderBank &shaders();
+    de::GLUniform &uAtlas();
+
+    static de::GLShaderBank &shaders();
 
     /**
      * Returns the default projection for 2D graphics.
