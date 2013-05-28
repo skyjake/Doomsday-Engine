@@ -21,6 +21,7 @@
 #define LIBDENG2_RECTANGLE_H
 
 #include "../Vector"
+#include "math.h"
 #include <QRect>
 
 #ifdef WIN32
@@ -67,12 +68,17 @@ public:
 
     SizeType width() const { return abs(bottomRight.x - topLeft.x); }
     SizeType height() const { return abs(bottomRight.y - topLeft.y); }
+    SizeType area() const { return width() * height(); }
+    bool isNull() const { return area() == 0; }
     Size size() const { return Size(width(), height()); }
     void moveTopLeft(CornerVectorType const &point) {
         Size s = size();
         topLeft = point;
         bottomRight.x = point.x + s.x;
         bottomRight.y = point.y + s.y;
+    }
+    RectangleType moved(CornerVectorType const &delta) const {
+        return RectangleType(topLeft + delta, bottomRight + delta);
     }
     void setWidth(SizeType w) { bottomRight.x = topLeft.x + w; }
     void setHeight(SizeType h) { bottomRight.y = topLeft.y + h; }
