@@ -39,6 +39,7 @@
 #include "ui/widgets/lineeditwidget.h"
 #include "ui/widgets/consolecommandwidget.h"
 #include "ui/widgets/logwidget.h"
+#include "ui/widgets/labelwidget.h"
 #include "ui/mouse_qt.h"
 
 #include "dd_main.h"
@@ -102,8 +103,19 @@ DENG2_OBSERVES(Canvas,           FocusChange)
                 .setInput(Rule::Left,   root.viewLeft())
                 .setInput(Rule::Width,  root.viewWidth())
                 .setInput(Rule::Bottom, test->rule().top())
-                .setInput(Rule::Top,    root.viewTop() + 200);
+                .setInput(Rule::Top,    root.viewHeight() / 2);
         root.add(log);
+
+        LabelWidget *lab = new LabelWidget;
+        lab->setText("Hello World");
+        lab->setImage(ClientApp::windowSystem().style().images().image("logo.256"));
+        lab->setSizePolicy(LabelWidget::Expand, LabelWidget::Expand);
+        lab->rule()
+                .setInput(Rule::Left,   root.viewLeft())
+                //.setInput(Rule::Width,  root.viewWidth())
+                //.setInput(Rule::Top,    root.viewTop())
+                .setInput(Rule::Bottom, log->rule().top());
+        root.add(lab);
 
         // Initially the widget is disabled. It will be enabled when the window
         // is visible and ready to be drawn.
