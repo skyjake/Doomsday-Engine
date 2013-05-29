@@ -64,25 +64,6 @@ HEdge::HEdge(Vertex &vertex, Line::Side *lineSide)
     d->lineSide = lineSide;
 }
 
-HEdge::HEdge(HEdge const &other)
-    : MapElement(DMU_HEDGE), d(new Instance(this))
-{
-    _vertex = other._vertex;
-    _next = other._next;
-    _prev = other._prev;
-    _twin = other._twin;
-    _bspLeaf = other._bspLeaf;
-    _angle = other._angle;
-    _length = other._length;
-    _lineOffset = other._lineOffset;
-#ifdef __CLIENT__
-    std::memcpy(_bsuf, other._bsuf, sizeof(_bsuf));
-#endif
-    _flags = other._flags;
-
-    d->lineSide = other.d->lineSide;
-}
-
 HEdge::~HEdge()
 {
 #ifdef __CLIENT__

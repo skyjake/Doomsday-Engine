@@ -45,6 +45,9 @@ class Sector;
  */
 class HEdge : public de::MapElement
 {
+    DENG2_NO_COPY(HEdge)
+    DENG2_NO_ASSIGN(HEdge)
+
 public:
     /// Required BSP leaf is missing. @ingroup errors
     DENG2_ERROR(MissingBspLeafError);
@@ -105,7 +108,6 @@ public: /// @todo Make private:
 
 public:
     HEdge(Vertex &vertex, Line::Side *lineSide = 0);
-    HEdge(HEdge const &other);
     ~HEdge();
 
     /**
