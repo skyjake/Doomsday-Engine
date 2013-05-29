@@ -155,62 +155,61 @@ public Font::RichFormat::IStyle
     /**
      * Determines where the label's image and text should be drawn.
      *
-     * @param imageRect  Placement of the image.
-     * @param textRect   Placement of the text.
+     * @param laoyut  Placement of the image and text.
      */
-    void contentPlacement(Rectanglef &imageRect, Rectanglei &textRect) const
+    void contentPlacement(ContentLayout &layout) const
     {
         Rectanglei const contentRect = self.rule().recti().shrunk(margin);
 
         // Determine the sizes of the elements first.
-        imageRect = Rectanglef::fromSize(image.size());
-        textRect  = Rectanglei::fromSize(textSize());
+        layout.image = Rectanglef::fromSize(image.size());
+        layout.text  = Rectanglei::fromSize(textSize());
 
         if(horizPolicy == Filled)
         {
             if(textAlign & (AlignLeft | AlignRight))
             {
-                imageRect.setWidth(int(contentRect.width()) - int(textRect.width()) - gap);
+                layout.image.setWidth(int(contentRect.width()) - int(layout.text.width()) - gap);
             }
             else
             {
-                imageRect.setWidth(contentRect.width());
-                textRect.setWidth(contentRect.width());
+                layout.image.setWidth(contentRect.width());
+                layout.text.setWidth(contentRect.width());
             }
         }
         if(vertPolicy == Filled)
         {
             if(textAlign & (AlignTop | AlignBottom))
             {
-                imageRect.setHeight(int(contentRect.height()) - int(textRect.height()) - gap);
+                layout.image.setHeight(int(contentRect.height()) - int(layout.text.height()) - gap);
             }
             else
             {
-                imageRect.setHeight(contentRect.height());
-                textRect.setHeight(contentRect.height());
+                layout.image.setHeight(contentRect.height());
+                layout.text.setHeight(contentRect.height());
             }
         }
 
         // By default the image and the text are centered over each other.
-        imageRect.move((Vector2f(textRect.size()) - imageRect.size()) / 2);
+        layout.image.move((Vector2f(layout.text.size()) - layout.image.size()) / 2);
 
         // Determine the position of the image in relation to the text
         // (keeping the image at its current position).
         if(textAlign & AlignLeft)
         {
-            textRect.moveLeft(imageRect.left() - textRect.width() - gap);
+            layout.text.moveLeft(layout.image.left() - layout.text.width() - gap);
         }
         if(textAlign & AlignRight)
         {
-            textRect.moveLeft(imageRect.right() + gap);
+            layout.text.moveLeft(layout.image.right() + gap);
         }
         if(textAlign & AlignTop)
         {
-            textRect.moveTop(imageRect.top() - textRect.height() - gap);
+            layout.text.moveTop(layout.image.top() - layout.text.height() - gap);
         }
         if(textAlign & AlignBottom)
         {
-            textRect.moveTop(imageRect.bottom() + gap);
+            layout.text.moveTop(layout.image.bottom() + gap);
         }
 
         // Align the image in relation to the text on the other axis.
@@ -218,47 +217,47 @@ public Font::RichFormat::IStyle
         {
             if(imageAlign & AlignTop)
             {
-                imageRect.moveTop(textRect.top());
+                layout.image.moveTop(layout.text.top());
             }
             if(imageAlign & AlignBottom)
             {
-                imageRect.moveTop(textRect.bottom() - imageRect.height());
+                layout.image.moveTop(layout.text.bottom() - layout.image.height());
             }
         }
         if(textAlign & (AlignTop | AlignBottom))
         {
             if(imageAlign & AlignLeft)
             {
-                imageRect.moveLeft(textRect.left());
+                layout.image.moveLeft(layout.text.left());
             }
             if(imageAlign & AlignRight)
             {
-                imageRect.moveLeft(textRect.right() - imageRect.width());
+                layout.image.moveLeft(layout.text.right() - layout.image.width());
             }
         }
 
         // Align the combination within the content.
-        Rectanglef combined = imageRect | textRect;
+        Rectanglef combined = layout.image | layout.text;
 
         Vector2f delta = applyAlignment(align, combined.size(), contentRect);
         delta -= combined.topLeft;
 
-        imageRect.move(delta);
-        textRect.move(delta.toVector2i());
+        layout.image.move(delta);
+        layout.text.move(delta.toVector2i());
 
         if(hasImage())
         {
             // Figure out how much room is left for the image.
-            Rectanglef const rect = imageRect;
+            Rectanglef const rect = layout.image;
 
             // Fit the image.
             if(!imageFit.testFlag(FitToWidth))
             {
-                imageRect.setWidth(image.width());
+                layout.image.setWidth(image.width());
             }
             if(!imageFit.testFlag(FitToHeight))
             {
-                imageRect.setHeight(image.height());
+                layout.image.setHeight(image.height());
             }
 
             // Should the original aspect ratio be preserved?
@@ -266,29 +265,29 @@ public Font::RichFormat::IStyle
             {
                 if(imageFit & FitToWidth)
                 {
-                    imageRect.setHeight(image.height() * imageRect.width() / image.width());
+                    layout.image.setHeight(image.height() * layout.image.width() / image.width());
                 }
                 if(imageFit & FitToHeight)
                 {
-                    imageRect.setWidth(image.width() * imageRect.height() / image.height());
+                    layout.image.setWidth(image.width() * layout.image.height() / image.height());
 
                     if(imageFit.testFlag(FitToWidth))
                     {
                         float scale = 1;
-                        if(imageRect.width() > rect.width())
+                        if(layout.image.width() > rect.width())
                         {
-                            scale = float(rect.width()) / float(imageRect.width());
+                            scale = float(rect.width()) / float(layout.image.width());
                         }
-                        else if(imageRect.height() > rect.height())
+                        else if(layout.image.height() > rect.height())
                         {
-                            scale = float(rect.height()) / float(imageRect.height());
+                            scale = float(rect.height()) / float(layout.image.height());
                         }
-                        imageRect.setSize(Vector2f(imageRect.size()) * scale);
+                        layout.image.setSize(Vector2f(layout.image.size()) * scale);
                     }
                 }
             }
 
-            applyAlignment(imageAlign, imageRect, rect);
+            applyAlignment(imageAlign, layout.image, rect);
         }
     }
 
@@ -340,11 +339,10 @@ public Font::RichFormat::IStyle
             composer.setText(plain, format);
             composer.update();
 
-            // Figure out the non-filled size of the content.
-            Rectanglef imgPos;
-            Rectanglei textPos;
-            contentPlacement(imgPos, textPos);
-            Rectanglef combined = imgPos | textPos;
+            // Figure out the actual size of the content.
+            ContentLayout layout;
+            contentPlacement(layout);
+            Rectanglef combined = layout.image | layout.text;
             width->set(combined.width() + 2 * margin);
             height->set(combined.height() + 2 * margin);
         }
@@ -354,11 +352,13 @@ public Font::RichFormat::IStyle
     {
         needGeometry = false;
 
-        Rectanglef imgPos;
-        Rectanglei textPos;
-        contentPlacement(imgPos, textPos);
+        ContentLayout layout;
+        contentPlacement(layout);
 
         VertexBuf::Builder verts;
+
+        // Derived classes may insert additional geometry under the label.
+        self.makeAdditionalGeometry(Background, verts, layout);
 
         // Background for testing.
         //verts.makeQuad(self.rule().rect(), Vector4f(.5f, 0, .5f, .5f),
@@ -366,15 +366,19 @@ public Font::RichFormat::IStyle
 
         if(hasImage())
         {
-            verts.makeQuad(imgPos, Vector4f(1, 1, 1, 1), atlas().imageRectf(imageTex));
+            verts.makeQuad(layout.image, Vector4f(1, 1, 1, 1), atlas().imageRectf(imageTex));
         }
         if(hasText())
         {
             // Shadow + text.
             /*composer.makeVertices(verts, textPos.topLeft + Vector2i(0, 2),
                                   lineAlign, Vector4f(0, 0, 0, 1));*/
-            composer.makeVertices(verts, textPos, AlignCenter, lineAlign);
+            composer.makeVertices(verts, layout.text, AlignCenter, lineAlign);
         }
+
+        // Derived classes may insert additional geometry over the label.
+        self.makeAdditionalGeometry(Overlay, verts, layout);
+
         drawable.buffer<VertexBuf>().setVertices(gl::TriangleStrip, verts, gl::Static);
     }
 
@@ -385,6 +389,7 @@ public Font::RichFormat::IStyle
         {
             updateGeometry();
         }
+        self.updateModelViewProjection();
         drawable.draw();
     }
 
@@ -430,9 +435,21 @@ void LabelWidget::glDeinit()
     d->glDeinit();
 }
 
-void LabelWidget::viewResized()
+void LabelWidget::makeAdditionalGeometry(LabelWidget::AdditionalGeometryKind,
+                                         VertexBuilder<Vertex2TexRgba>::Vertices &,
+                                         ContentLayout const &)
+{
+    // Reserved for derived classes.
+}
+
+void LabelWidget::updateModelViewProjection()
 {
     d->uMvpMatrix = root().projMatrix2D();
+}
+
+void LabelWidget::viewResized()
+{
+    updateModelViewProjection();
 }
 
 void LabelWidget::setWidthPolicy(SizePolicy policy)
