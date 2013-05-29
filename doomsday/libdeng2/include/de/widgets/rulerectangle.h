@@ -65,6 +65,8 @@ public:
     RuleRectangle &setRect(RuleRectangle const &rect);
     RuleRectangle &setSize(Rule const &width, Rule const &height);
 
+    void clearInput(Rule::Semantic inputRule);
+
     /**
      * Returns an input rule.
      */
