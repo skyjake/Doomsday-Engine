@@ -168,9 +168,6 @@ SuperBlock::Segments SuperBlock::collateAllSegments()
             LineSegment::Side *seg;
             while((seg = cur->pop()))
             {
-                // Disassociate the line segment from the blockmap.
-                seg->setBMapBlock(0);
-
                 segments << seg;
             }
 

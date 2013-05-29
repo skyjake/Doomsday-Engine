@@ -995,12 +995,56 @@ DENG2_PIMPL(Partitioner)
      * @param rights    Set of line segments on the right side of the partition.
      * @param lefts     Set of line segments on the left side of the partition.
      */
-    void partitionSegments(LineSegmentList &segments, SuperBlock &rights,
+    void partitionSegments(SuperBlock &segments, SuperBlock &rights,
                            SuperBlock &lefts)
     {
-        while(!segments.isEmpty())
+        /**
+         * @todo Revise this algorithm so that @var segments is not modified
+         * during the partitioning process.
+         */
+
+        // Iterative pre-order traversal of SuperBlock.
+        SuperBlock *cur = &segments;
+        SuperBlock *prev = 0;
+        while(cur)
         {
-            partitionOneSegment(*segments.takeFirst(), rights, lefts);
+            while(cur)
+            {
+                LineSegment::Side *seg;
+                while((seg = cur->pop()))
+                {
+                    // Disassociate the line segment from the blockmap.
+                    seg->setBMapBlock(0);
+
+                    partitionOneSegment(*seg, rights, lefts);
+                }
+
+                if(prev == cur->parentPtr())
+                {
+                    // Descending - right first, then left.
+                    prev = cur;
+                    if(cur->hasRight()) cur = cur->rightPtr();
+                    else                cur = cur->leftPtr();
+                }
+                else if(prev == cur->rightPtr())
+                {
+                    // Last moved up the right branch - descend the left.
+                    prev = cur;
+                    cur = cur->leftPtr();
+                }
+                else if(prev == cur->leftPtr())
+                {
+                    // Last moved up the left branch - continue upward.
+                    prev = cur;
+                    cur = cur->parentPtr();
+                }
+            }
+
+            if(prev)
+            {
+                // No left child - back up.
+                cur = prev->parentPtr();
+            }
         }
 
         // Sanity checks...
@@ -1225,11 +1269,8 @@ DENG2_PIMPL(Partitioner)
             // Partition the line segements into two subsets according to their
             // spacial relationship with the half-plane (splitting any which
             // intersect).
-            LineSegmentList segments = bmap.collateAllSegments();
+            partitionSegments(bmap, rightBMap, leftBMap);
             bmap.clear(); // Should be empty.
-
-            partitionSegments(segments, rightBMap, leftBMap);
-            DENG_ASSERT(segments.isEmpty());
 
             addPartitionLineSegments(rightBMap, leftBMap);
 
@@ -1261,10 +1302,13 @@ DENG2_PIMPL(Partitioner)
 
             convexSet.addSegments(segments);
 
-            // Attribute all line segments to the convex subspace.
             foreach(LineSegment::Side *seg, segments)
             {
+                // Attribute the segment to the convex subspace.
                 seg->setConvexSubspace(&convexSet);
+
+                // Disassociate the segment from the blockmap.
+                seg->setBMapBlock(0);
             }
 
             // Produce a BSP leaf.

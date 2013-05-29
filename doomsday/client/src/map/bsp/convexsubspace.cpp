@@ -38,126 +38,185 @@ static coord_t const ANG_EPSILON = 1.0 / 1024.0;
 namespace de {
 namespace bsp {
 
-/**
- * Represents a candidate sector for BSP leaf attribution.
- */
-struct SectorCandidate
+typedef LineSegment::Side Segment;
+typedef QList<Segment *> SegmentList;
+
+struct OrderedSegment
 {
-    /// The sector choice.
+    Segment *segment;
+    double fromAngle;
+    double toAngle;
+};
+
+typedef QList<OrderedSegment> OrderedSegments;
+
+/**
+ * Represents a clockwise ordering of a subset of the line segments and
+ * implements logic for partitioning that subset into @em contiguous ranges
+ * for geometry construction.
+ */
+struct Continuity
+{
+    typedef QList<OrderedSegment *> OrderedSegmentList;
+
+    /// Front sector uniformly referenced by all line segments.
     Sector *sector;
+
+    /// Coverage metric.
+    double coverage;
+
+    /// Number of discordant (i.e., non-contiguous) line segments.
+    int discordSegments;
 
     /// Number of referencing line segments of each type:
     int norm;
     int part;
     int self;
 
-    SectorCandidate(Sector &sector)
-        : sector(&sector), norm(0), part(0), self(0)
+    /// The ordered line segments.
+    OrderedSegmentList orderedSegs;
+
+    Continuity(Sector *sector)
+        : sector(sector), discordSegments(0), coverage(0)
     {}
 
     /**
-     * Perform heuristic comparison between two choices to determine a
-     * preference order. The algorithm used weights the two choices according
-     * to the number and "type" of the referencing line segments.
+     * Perform heuristic comparison between two continuities to determine a
+     * preference order for BSP sector attribution. The algorithm used weights
+     * the two choices according to the number and "type" of the referencing
+     * line segments and the "coverage" metric.
      *
      * @return  @c true if "this" choice is rated better than @a other.
+     *
+     * @todo Remove when heuristic sector selection is no longer necessary.
      */
-    bool operator < (SectorCandidate const &other) const
+    bool operator < (Continuity const &other) const
     {
         if(norm == other.norm)
         {
-            if(part == other.part)
-            {
-                if(self == other.self)
-                {
-                    // All equal; use the unique indices to stablize.
-                    return sector->indexInMap() < other.sector->indexInMap();
-                }
-                return self > other.self;
-            }
-            return part > other.part;
+            return !(coverage < other.coverage);
         }
         return norm > other.norm;
     }
 
     /**
-     * Account for a new line segment which references this choice.
-     * Consider collinear segments only once.
+     * Assumes that segments are added in clockwise order.
      */
-    void account(LineSegment::Side &seg)
+    void addOneSegment(OrderedSegment const &oseg)
     {
-        // Determine the type of reference and increment the count.
+        DENG_ASSERT(oseg.segment->sectorPtr() == sector);
+        orderedSegs.append(const_cast<OrderedSegment *>(&oseg));
+
+        // Account for the new line segment.
+        Segment const &seg = *oseg.segment;
         if(!seg.hasMapSide())
         {
-            Line *mapLine = seg.partitionMapLine();
-            if(mapLine && mapLine->validCount() == validCount)
-                return;
-
             part += 1;
-
-            if(mapLine)
-                mapLine->setValidCount(validCount);
+        }
+        else if(seg.mapSide().line().isSelfReferencing())
+        {
+            self += 1;
         }
         else
         {
-            if(seg.mapLine().validCount() == validCount)
-                return;
-
-            if(seg.mapLine().isSelfReferencing())
-            {
-                self += 1;
-            }
-            else
-            {
-                norm += 1;
-            }
-
-            seg.mapLine().setValidCount(validCount);
+            norm += 1;
         }
     }
+
+    void evaluate()
+    {
+        // Calculate the 'coverage' metric.
+        coverage = 0;
+        foreach(OrderedSegment const *oseg, orderedSegs)
+        {
+            if(oseg->fromAngle > oseg->toAngle)
+                coverage += oseg->fromAngle - oseg->toAngle;
+            else
+                coverage += oseg->fromAngle + (360.0 - oseg->toAngle);
+        }
+
+        // Account discontiguous segments.
+        discordSegments = 0;
+        for(int i = 0; i < orderedSegs.count() - 1; ++i)
+        {
+            Segment const &segA = *orderedSegs[i  ]->segment;
+            Segment const &segB = *orderedSegs[i+1]->segment;
+
+            if(segB.from().origin() != segA.to().origin())
+                discordSegments += 1;
+        }
+        if(orderedSegs.count() > 1)
+        {
+            Segment const &segB = *orderedSegs.last()->segment;
+            Segment const &segA = *orderedSegs.first()->segment;
+
+            if(segB.to().origin() != segA.from().origin())
+                discordSegments += 1;
+        }
+    }
+
+#ifdef DENG_DEBUG
+    void debugPrint() const
+    {
+        LOG_INFO("Continuity [%p] (sector:%i, coverage:%f, discord:%i)")
+            << de::dintptr(this)
+            << (sector? sector->indexInArchive() : -1)
+            << coverage
+            << discordSegments;
+
+        foreach(OrderedSegment const *oseg, orderedSegs)
+        {
+            LOG_INFO("[%p] Angle: %1.6f %s -> Angle: %1.6f %s")
+                << de::dintptr(oseg)
+                << oseg->fromAngle
+                << oseg->segment->from().origin().asText()
+                << oseg->toAngle
+                << oseg->segment->to().origin().asText();
+        }
+    }
+#endif
 };
-typedef QHash<Sector *, SectorCandidate> SectorCandidateHash;
 
 DENG2_PIMPL_NOREF(ConvexSubspace)
 {
-    typedef QList<LineSegment::Side *> SegmentList;
+    typedef QList<Continuity> Continuities;
 
     /// The set of line segments.
     Segments segments;
 
-    /// A clockwise ordering of the line segments.
-    SegmentList clockwiseSegments;
+    /// Line segment continuity map.
+    Continuities continuities;
+
+    /// Set to @c true when the continuity map needs to be rebuilt.
+    bool needRebuildContinuityMap;
 
     /// Chosen map sector for this subspace (if any).
     Sector *sector;
-
-    /// Set to @c true when should to rethink our chosen sector.
-    bool needChooseSector;
 
     /// BSP leaf attributed to the subspace (if any).
     BspLeaf *bspLeaf;
 
     Instance()
-        : sector(0),
-          needChooseSector(true),
+        : needRebuildContinuityMap(false),
+          sector(0),
           bspLeaf(0)
     {}
 
     Instance(Instance const &other)
         : de::IPrivate(),
-          segments        (other.segments),
-          sector          (other.sector),
-          needChooseSector(other.needChooseSector),
-          bspLeaf         (other.bspLeaf)
+          segments                (other.segments),
+          needRebuildContinuityMap(other.needRebuildContinuityMap),
+          sector                  (other.sector),
+          bspLeaf                 (other.bspLeaf)
     {}
 
     Vector2d findCenter()
     {
         Vector2d center;
         int numPoints = 0;
-        foreach(LineSegment::Side *segment, segments)
+        foreach(Segment *seg, segments)
         {
-            center += segment->from().origin();
+            center += seg->from().origin();
             numPoints += 1;
         }
         if(numPoints)
@@ -168,38 +227,38 @@ DENG2_PIMPL_NOREF(ConvexSubspace)
     }
 
     /**
-     * Sort the line segments in a clockwise order (i.e., descending angles)
-     * according to their position/orientation relative to the center of the
-     * subspace.
+     * Returns a list of all the line segments sorted in a clockwise order
+     * (i.e., descending angles) according to their position/orientation
+     * relative to @a point.
      */
-    void orderSegments()
+    OrderedSegments orderedSegments(Vector2d const &point)
     {
-        clockwiseSegments = SegmentList::fromSet(segments);
+        OrderedSegments clockwiseSegments;
 
-        // Any work to do?
-        if(clockwiseSegments.isEmpty())
-            return;
+        foreach(Segment *seg, segments)
+        {
+            Vector2d fromDist = seg->from().origin() - point;
+            Vector2d toDist   = seg->to().origin() - point;
 
-        // Sort the segments by angle (from the middle point to the start vertex).
-        Vector2d center = findCenter();
+            OrderedSegment oseg;
+            oseg.segment   = seg;
+            oseg.fromAngle = M_DirectionToAngleXY(fromDist.x, fromDist.y);
+            oseg.toAngle   = M_DirectionToAngleXY(toDist.x, toDist.y);
 
-        /// "double bubble"
+            clockwiseSegments.append(oseg);
+        }
+
+        // Sort the segments (algorithm: "double bubble").
         int const numSegments = clockwiseSegments.count();
         for(int pass = 0; pass < numSegments - 1; ++pass)
         {
             bool swappedAny = false;
             for(int i = 0; i < numSegments - 1; ++i)
             {
-                LineSegment::Side const *a = clockwiseSegments.at(i);
-                LineSegment::Side const *b = clockwiseSegments.at(i+1);
+                OrderedSegment const &a = clockwiseSegments.at(i);
+                OrderedSegment const &b = clockwiseSegments.at(i+1);
 
-                Vector2d v1Dist = a->from().origin() - center;
-                Vector2d v2Dist = b->from().origin() - center;
-
-                coord_t v1Angle = M_DirectionToAngleXY(v1Dist.x, v1Dist.y);
-                coord_t v2Angle = M_DirectionToAngleXY(v2Dist.x, v2Dist.y);
-
-                if(v1Angle + ANG_EPSILON < v2Angle)
+                if(a.fromAngle + ANG_EPSILON < b.fromAngle)
                 {
                     clockwiseSegments.swap(i, i + 1);
                     swappedAny = true;
@@ -208,61 +267,36 @@ DENG2_PIMPL_NOREF(ConvexSubspace)
             if(!swappedAny) break;
         }
 
-        // LOG_DEBUG("Sorted segments around %s") << center.asText();
+        // LOG_DEBUG("Ordered segments around %s") << point.asText();
+        return clockwiseSegments;
     }
 
-    void chooseSector()
+    void buildContinuityMap(Vector2d const &center, OrderedSegments const &clockwiseOrder)
     {
-        needChooseSector = false;
-        sector = 0;
+        needRebuildContinuityMap = false;
 
-        // No candidates?
-        if(segments.isEmpty()) return;
+        typedef QHash<Sector *, Continuity *> SectorContinuityMap;
+        SectorContinuityMap scMap;
 
-        // Only one candidate?
-        if(segments.count() == 1)
+        foreach(OrderedSegment const &oseg, clockwiseOrder)
         {
-            // Lets hope its a good one...
-            sector = (*segments.constBegin())->sectorPtr();
-            return;
-        }
+            Sector *frontSector = oseg.segment->sectorPtr();
 
-        /*
-         * Multiple candidates.
-         * We will consider collinear segments only once.
-         */
-        validCount++;
-
-        SectorCandidateHash candidates;
-        foreach(LineSegment::Side *seg, segments)
-        {
-            // Segments with no sector can't help us.
-            if(!seg->hasSector()) continue;
-
-            Sector *cand = seg->sectorPtr();
-
-            // Is this a new candidate?
-            SectorCandidateHash::iterator found = candidates.find(cand);
-            if(found == candidates.end())
+            SectorContinuityMap::iterator found = scMap.find(frontSector);
+            if(found == scMap.end())
             {
-                // Yes, record it.
-                found = candidates.insert(cand, SectorCandidate(*cand));
+                continuities.append(Continuity(frontSector));
+                found = scMap.insert(frontSector, &continuities.last());
             }
 
-            // Account for a new segment referencing this sector.
-            found.value().account(*seg);
+            Continuity *conty = found.value();
+            conty->addOneSegment(oseg);
         }
 
-        if(candidates.isEmpty()) return; // Eeek!
-
-        // Sort our candidates such that our preferred sector appears first.
-        // This shouldn't take too long, typically there are no more than two
-        // or three to choose from.
-        QList<SectorCandidate> sortedCandidates = candidates.values();
-        qSort(sortedCandidates.begin(), sortedCandidates.end());
-
-        // We'll choose the highest rated candidate.
-        sector = sortedCandidates.first().sector;
+        for(int i = 0; i < continuities.count(); ++i)
+        {
+            continuities[i].evaluate();
+        }
     }
 
 private:
@@ -291,8 +325,8 @@ void ConvexSubspace::addSegments(QList<LineSegment::Side *> const &newSegments)
 
     if(d->segments.size() != sizeBefore)
     {
-        // We'll need to rethink our sector choice.
-        d->needChooseSector = true;
+        // We'll need to rebuild the continuity map.
+        d->needRebuildContinuityMap = true;
     }
 
 #ifdef DENG_DEBUG
@@ -313,8 +347,8 @@ void ConvexSubspace::addOneSegment(LineSegment::Side const &newSegment)
 
     if(d->segments.size() != sizeBefore)
     {
-        // We'll need to rethink our sector choice.
-        d->needChooseSector = true;
+        // We'll need to rebuild the continuity map.
+        d->needRebuildContinuityMap = true;
     }
     else
     {
@@ -327,15 +361,34 @@ Polygon *ConvexSubspace::buildLeafGeometry() const
     if(isEmpty())
         return 0;
 
-    d->orderSegments();
+    Vector2d center = d->findCenter();
+    OrderedSegments clockwiseSegments = d->orderedSegments(center);
+
+    d->buildContinuityMap(center, clockwiseSegments);
+
+    // Choose a sector to attribute to any BSP leaf we might produce.
+    qSort(d->continuities.begin(), d->continuities.end());
+    d->sector = d->continuities.first().sector;
+
+#ifdef DENG_DEBUG
+    LOG_INFO("\nConvexSubspace %s BSP sector:%i (%i continuities)")
+        << center.asText()
+        << (d->sector? d->sector->indexInArchive() : -1)
+        << d->continuities.count();
+
+    foreach(Continuity const &conty, d->continuities)
+    {
+        conty.debugPrint();
+    }
+#endif
 
     // Construct the polygon and ring of half-edges.
     Polygon *poly = new Polygon;
 
     // Iterate backwards so that the half-edges can be linked clockwise.
-    for(int i = d->clockwiseSegments.count(); i-- > 0; )
+    for(int i = clockwiseSegments.size(); i-- > 0; )
     {
-        LineSegment::Side *seg = d->clockwiseSegments[i];
+        Segment *seg = clockwiseSegments[i].segment;
         HEdge *hedge = new HEdge(seg->from(), seg->mapSidePtr());
 
         // Link the new half-edge for this line segment to the head of
@@ -385,11 +438,7 @@ Polygon *ConvexSubspace::buildLeafGeometry() const
 
 Sector *ConvexSubspace::chooseSectorForBspLeaf() const
 {
-    // Do we need to rethink our choice?
-    if(d->needChooseSector)
-    {
-        d->chooseSector();
-    }
+    DENG_ASSERT(!d->needRebuildContinuityMap);
     return d->sector;
 }
 
