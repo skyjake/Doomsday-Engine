@@ -273,7 +273,14 @@ public:
     LineSegment::Side *pop();
 
     /**
-     * Provides access to the list of line segments for efficient traversal.
+     * Collate (unlink) all line segments from "this" and all child blocks
+     * to a new segment list.
+     */
+    Segments collateAllSegments();
+
+    /**
+     * Provides access to the list of line segments in the block, for efficient
+     * traversal.
      */
     Segments const &segments() const;
 

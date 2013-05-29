@@ -150,6 +150,61 @@ SuperBlock *SuperBlock::addChild(ChildId childId, bool splitVertical)
     return new SuperBlock(*this, childId, splitVertical);
 }
 
+SuperBlock::Segments SuperBlock::collateAllSegments()
+{
+    Segments segments;
+
+#ifdef DENG2_QT_4_7_OR_NEWER
+    segments.reserve(totalSegmentCount());
+#endif
+
+    // Iterative pre-order traversal of SuperBlock.
+    SuperBlock *cur = this;
+    SuperBlock *prev = 0;
+    while(cur)
+    {
+        while(cur)
+        {
+            LineSegment::Side *seg;
+            while((seg = cur->pop()))
+            {
+                // Disassociate the line segment from the blockmap.
+                seg->setBMapBlock(0);
+
+                segments << seg;
+            }
+
+            if(prev == cur->parentPtr())
+            {
+                // Descending - right first, then left.
+                prev = cur;
+                if(cur->hasRight()) cur = cur->rightPtr();
+                else                cur = cur->leftPtr();
+            }
+            else if(prev == cur->rightPtr())
+            {
+                // Last moved up the right branch - descend the left.
+                prev = cur;
+                cur = cur->leftPtr();
+            }
+            else if(prev == cur->leftPtr())
+            {
+                // Last moved up the left branch - continue upward.
+                prev = cur;
+                cur = cur->parentPtr();
+            }
+        }
+
+        if(prev)
+        {
+            // No left child - back up.
+            cur = prev->parentPtr();
+        }
+    }
+
+    return segments;
+}
+
 SuperBlock::Segments const &SuperBlock::segments() const
 {
     return d->segments;
