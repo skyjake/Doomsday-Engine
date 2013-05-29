@@ -528,14 +528,14 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
 
     void clampVisibleOffset(int visibleHeight)
     {
-        setVisibleOffset(de::min(int(visibleOffset), maxVisibleOffset(visibleHeight)));
+        setVisibleOffset(de::min(int(visibleOffset), maxVisibleOffset(visibleHeight)), 0);
     }
 
-    void setVisibleOffset(int off)
+    void setVisibleOffset(int off, float span)
     {
         if(int(visibleOffset) != off)
         {
-            visibleOffset.setValue(off, .3f);
+            visibleOffset.setValue(off, span);
             emit self.scrollPositionChanged(off);
         }
     }
@@ -560,7 +560,7 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
             // existing entries.
             if(visibleOffset.target() > 0)
             {
-                visibleOffset.adjustTarget(visibleOffset.target() + cached->height());
+                visibleOffset.shift(cached->height());
                 emit self.scrollPositionChanged(visibleOffset.target());
             }
         }
@@ -847,13 +847,27 @@ bool LogWidget::handleEvent(Event const &event)
 
     switch(ev.ddKey())
     {
-    case DDKEY_PGUP:
-        d->setVisibleOffset(int(d->visibleOffset.target()) + pageSize);
+    case DDKEY_PGUP:        
+        if(ev.modifiers().testFlag(KeyEvent::Shift))
+        {
+            d->setVisibleOffset(d->maxScroll, .3f);
+        }
+        else
+        {
+            d->setVisibleOffset(int(d->visibleOffset.target()) + pageSize, .3f);
+        }
         d->restartScrollOpacityFade();
         return true;
 
     case DDKEY_PGDN:
-        d->setVisibleOffset(de::max(0, int(d->visibleOffset.target()) - pageSize));
+        if(ev.modifiers().testFlag(KeyEvent::Shift))
+        {
+            scrollToBottom();
+        }
+        else
+        {
+            d->setVisibleOffset(de::max(0, int(d->visibleOffset.target()) - pageSize), .3f);
+        }
         d->restartScrollOpacityFade();
         return true;
 
@@ -866,7 +880,7 @@ bool LogWidget::handleEvent(Event const &event)
 
 void LogWidget::scrollToBottom()
 {
-    d->setVisibleOffset(0);
+    d->setVisibleOffset(0, .3f);
 }
 
 void LogWidget::pruneExcessEntries()
