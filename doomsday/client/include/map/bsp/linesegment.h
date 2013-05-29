@@ -392,6 +392,12 @@ public:
         int boxOnSide(AABoxd const &box) const;
 
         /**
+         * Returns the axis-aligned bounding box of the line segment (derived from
+         * the coordinates of the two vertexes).
+         */
+        inline AABoxd aaBox() const { return line().aaBox(); }
+
+        /**
          * Returns @c true iff a half-edge is linked to "this" side of the line segment.
          *
          * @see hedge()
@@ -521,6 +527,14 @@ public:
      * @see to()
      */
     inline de::Vector2d const &toOrigin() const { return to().origin(); }
+
+    /**
+     * Returns the axis-aligned bounding box of the line segment (derived from
+     * the coordinates of the two vertexes).
+     *
+     * @todo Cache this result.
+     */
+    AABoxd aaBox() const;
 
     /**
      * Replace the specified edge vertex of the line segment.

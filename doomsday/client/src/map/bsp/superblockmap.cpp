@@ -32,17 +32,17 @@ using namespace de::bsp;
 
 struct SuperBlock::Instance
 {
-    /// SuperBlockmap that owns this SuperBlock.
+    /// Owning SuperBlockmap.
     SuperBlockmap &bmap;
 
     /// KdTree node in the owning SuperBlockmap.
     KdTreeNode *tree;
 
-    /// LineSegmentSides completely contained by this block.
-    SuperBlock::LineSegmentSides lineSegments;
+    /// Line segments (completely?) contained by the block.
+    SuperBlock::Segments segments;
 
-    /// Number of map and partition line segments contained by this block
-    /// (including all sub-blocks below it).
+    /// Running totals of the number of line segments in this and all child
+    /// blocks.
     int mapNum;
     int partNum;
 
@@ -55,21 +55,21 @@ struct SuperBlock::Instance
         KdTreeNode_Delete(tree);
     }
 
-    inline void linkLineSegmentSide(LineSegment::Side &lineSeg)
+    inline void linkSegment(LineSegment::Side &seg)
     {
-        lineSegments.prepend(&lineSeg);
+        segments.prepend(&seg);
     }
 
-    inline void incrementLineSegmentSideCount(LineSegment::Side const &lineSeg)
+    inline void incrementSegmentCount(LineSegment::Side const &seg)
     {
-        if(lineSeg.hasMapSide()) mapNum++;
-        else                     partNum++;
+        if(seg.hasMapSide()) mapNum++;
+        else                 partNum++;
     }
 
-    inline void decrementLineSegmentSideCount(LineSegment::Side const &lineSeg)
+    inline void decrementSegmentCount(LineSegment::Side const &seg)
     {
-        if(lineSeg.hasMapSide()) mapNum--;
-        else                     partNum--;
+        if(seg.hasMapSide()) mapNum--;
+        else                 partNum--;
     }
 };
 
@@ -150,12 +150,12 @@ SuperBlock *SuperBlock::addChild(ChildId childId, bool splitVertical)
     return new SuperBlock(*this, childId, splitVertical);
 }
 
-SuperBlock::LineSegmentSides const &SuperBlock::lineSegments() const
+SuperBlock::Segments const &SuperBlock::segments() const
 {
-    return d->lineSegments;
+    return d->segments;
 }
 
-uint SuperBlock::lineSegmentCount(bool addMap, bool addPart) const
+uint SuperBlock::segmentCount(bool addMap, bool addPart) const
 {
     uint total = 0;
     if(addMap)  total += d->mapNum;
@@ -163,36 +163,30 @@ uint SuperBlock::lineSegmentCount(bool addMap, bool addPart) const
     return total;
 }
 
-static void initAABoxFromLineSegmentSideVertexes(AABoxd &aaBox, LineSegment::Side const &lineSeg)
-{
-    Vector2d min = lineSeg.from().origin().min(lineSeg.to().origin());
-    Vector2d max = lineSeg.from().origin().max(lineSeg.to().origin());
-    V2d_Set(aaBox.min, min.x, min.y);
-    V2d_Set(aaBox.max, max.x, max.y);
-}
-
 /// @todo Optimize: Cache this result.
-void SuperBlock::findLineSegmentSideBounds(AABoxd &bounds)
+AABoxd SuperBlock::findSegmentBounds()
 {
+    AABoxd bounds;
     bool initialized = false;
-    AABoxd lineSegBounds;
 
-    foreach(LineSegment::Side *lineSeg, d->lineSegments)
+    foreach(LineSegment::Side *seg, d->segments)
     {
-        initAABoxFromLineSegmentSideVertexes(lineSegBounds, *lineSeg);
+        AABoxd segBounds = seg->aaBox();
         if(initialized)
         {
-            V2d_UniteBox(bounds.arvec2, lineSegBounds.arvec2);
+            V2d_UniteBox(bounds.arvec2, segBounds.arvec2);
         }
         else
         {
-            V2d_CopyBox(bounds.arvec2, lineSegBounds.arvec2);
+            V2d_CopyBox(bounds.arvec2, segBounds.arvec2);
             initialized = true;
         }
     }
+
+    return bounds;
 }
 
-SuperBlock &SuperBlock::push(LineSegment::Side &lineSeg)
+SuperBlock &SuperBlock::push(LineSegment::Side &seg)
 {
     SuperBlock *sb = this;
     forever
@@ -200,12 +194,12 @@ SuperBlock &SuperBlock::push(LineSegment::Side &lineSeg)
         DENG2_ASSERT(sb);
 
         // Update line segment counts.
-        sb->d->incrementLineSegmentSideCount(lineSeg);
+        sb->d->incrementSegmentCount(seg);
 
         if(sb->isLeaf())
         {
             // No further subdivision possible.
-            sb->d->linkLineSegmentSide(lineSeg);
+            sb->d->linkSegment(seg);
             break;
         }
 
@@ -216,28 +210,28 @@ SuperBlock &SuperBlock::push(LineSegment::Side &lineSeg)
         {
             // Wider than tall.
             int midPoint = (sb->bounds().minX + sb->bounds().maxX) / 2;
-            p1 = lineSeg.from().origin().x >= midPoint? LEFT : RIGHT;
-            p2 =   lineSeg.to().origin().x >= midPoint? LEFT : RIGHT;
+            p1 = seg.from().origin().x >= midPoint? LEFT : RIGHT;
+            p2 =   seg.to().origin().x >= midPoint? LEFT : RIGHT;
             splitVertical = false;
         }
         else
         {
             // Taller than wide.
             int midPoint = (sb->bounds().minY + sb->bounds().maxY) / 2;
-            p1 = lineSeg.from().origin().y >= midPoint? LEFT : RIGHT;
-            p2 =   lineSeg.to().origin().y >= midPoint? LEFT : RIGHT;
+            p1 = seg.from().origin().y >= midPoint? LEFT : RIGHT;
+            p2 =   seg.to().origin().y >= midPoint? LEFT : RIGHT;
             splitVertical = true;
         }
 
         if(p1 != p2)
         {
             // Line crosses midpoint; link it in and return.
-            sb->d->linkLineSegmentSide(lineSeg);
+            sb->d->linkSegment(seg);
             break;
         }
 
-        // The lineSeg lies in one half of this block. Create the sub-block
-        // if it doesn't already exist, and loop back to add the lineSeg.
+        // The segments lies in one half of this block. Create the sub-block
+        // if it doesn't already exist, and loop back to add the seg.
         if(!sb->hasChild(p1))
         {
             sb->addChild(p1, (int)splitVertical);
@@ -250,18 +244,19 @@ SuperBlock &SuperBlock::push(LineSegment::Side &lineSeg)
 
 LineSegment::Side *SuperBlock::pop()
 {
-    if(d->lineSegments.isEmpty())
+    if(d->segments.isEmpty())
         return 0;
 
-    LineSegment::Side *lineSeg = d->lineSegments.takeFirst();
+    LineSegment::Side *seg = d->segments.takeFirst();
 
     // Update line segment counts.
-    d->decrementLineSegmentSideCount(*lineSeg);
+    d->decrementSegmentCount(*seg);
 
-    return lineSeg;
+    return seg;
 }
 
-int SuperBlock::traverse(int (*callback)(SuperBlock *, void *), void *parameters)
+int SuperBlock::traverse(int (*callback)(SuperBlock *, void *),
+                         void *parameters)
 {
     if(!callback) return false; // Continue iteration.
 
@@ -321,27 +316,27 @@ void SuperBlockmap::clear()
     root().clear();
 }
 
-static void findLineSegmentSideBoundsWorker(SuperBlock &block, AABoxd &bounds, bool *initialized)
+static void findSegmentBoundsWorker(SuperBlock &block, AABoxd &bounds,
+                                    bool *initialized)
 {
     DENG2_ASSERT(initialized);
-    if(block.lineSegmentCount(true, true))
+    if(block.segmentCount(true, true))
     {
-        AABoxd lineSegBounds;
-        block.findLineSegmentSideBounds(lineSegBounds);
+        AABoxd blockSegmentBounds = block.findSegmentBounds();
         if(*initialized)
         {
-            V2d_AddToBox(bounds.arvec2, lineSegBounds.min);
+            V2d_AddToBox(bounds.arvec2, blockSegmentBounds.min);
         }
         else
         {
-            V2d_InitBox(bounds.arvec2, lineSegBounds.min);
+            V2d_InitBox(bounds.arvec2, blockSegmentBounds.min);
             *initialized = true;
         }
-        V2d_AddToBox(bounds.arvec2, lineSegBounds.max);
+        V2d_AddToBox(bounds.arvec2, blockSegmentBounds.max);
     }
 }
 
-AABoxd SuperBlockmap::findLineSegmentSideBounds()
+AABoxd SuperBlockmap::findSegmentBounds()
 {
     bool initialized = false;
     AABoxd bounds;
@@ -353,7 +348,7 @@ AABoxd SuperBlockmap::findLineSegmentSideBounds()
     {
         while(cur)
         {
-            findLineSegmentSideBoundsWorker(*cur, bounds, &initialized);
+            findSegmentBoundsWorker(*cur, bounds, &initialized);
 
             if(prev == cur->parentPtr())
             {

@@ -423,6 +423,16 @@ Vertex &LineSegment::vertex(int to) const
     return to? *d->to : *d->from;
 }
 
+AABoxd LineSegment::aaBox() const
+{
+    AABoxd bounds;
+    Vector2d min = d->from->origin().min(d->to->origin());
+    Vector2d max = d->from->origin().max(d->to->origin());
+    V2d_Set(bounds.min, min.x, min.y);
+    V2d_Set(bounds.max, max.x, max.y);
+    return bounds;
+}
+
 void LineSegment::replaceVertex(int to, Vertex &newVertex)
 {
     d->replaceVertex(to, newVertex);

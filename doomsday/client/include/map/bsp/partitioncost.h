@@ -1,4 +1,4 @@
-/** @file partitioncost.h BSP builder partition cost evaluation.
+/** @file map/bsp/partitioncost.h BSP Builder Partition Cost.
  *
  * Originally based on glBSP 2.24 (in turn, based on BSP 2.3)
  * @see http://sourceforge.net/projects/glbsp/
@@ -56,17 +56,17 @@ struct PartitionCost
         mapLeft(0), partRight(0), partLeft(0)
     {}
 
-    inline PartitionCost &addLineSegmentSideRight(LineSegment::Side const &lineSeg)
+    inline PartitionCost &addSegmentRight(LineSegment::Side const &seg)
     {
-        if(lineSeg.hasMapSide()) mapRight += 1;
-        else                     partRight += 1;
+        if(seg.hasMapSide()) mapRight += 1;
+        else                 partRight += 1;
         return *this;
     }
 
-    inline PartitionCost &addLineSegmentSideLeft(LineSegment::Side const &lineSeg)
+    inline PartitionCost &addSegmentLeft(LineSegment::Side const &seg)
     {
-        if(lineSeg.hasMapSide()) mapLeft += 1;
-        else                     partLeft += 1;
+        if(seg.hasMapSide()) mapLeft += 1;
+        else                 partLeft += 1;
         return *this;
     }
 

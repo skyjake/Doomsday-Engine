@@ -1,4 +1,4 @@
-/** @file superblockmap.h BSP Builder SuperBlockmap.
+/** @file map/bsp/superblockmap.h BSP Builder SuperBlockmap.
  *
  * Originally based on glBSP 2.24 (in turn, based on BSP 2.3)
  * @see http://sourceforge.net/projects/glbsp/
@@ -60,17 +60,17 @@ public:
     SuperBlock &root();
 
     /**
-     * Find the axis-aligned bounding box defined by the vertices of all
-     * LineSegmentSides within this superblockmap. If there are no LineSegmentSides
-     * linked to this then @a bounds will be initialized to the "cleared"
-     * state (i.e., min[x,y] > max[x,y]).
+     * Find the axis-aligned bounding box defined by the vertices of all line
+     * segments in the blockmap. If empty an AABox initialized to the "cleared"
+     * state (i.e., min > max) will be returned.
      *
-     * @return bounds  Determined bounds are written here.
+     * @return  Determined line segment bounds.
      */
-    AABoxd findLineSegmentSideBounds();
+    AABoxd findSegmentBounds();
 
     /**
-     * Empty this SuperBlockmap clearing all LineSegmentSides and sub-blocks.
+     * Empty the SuperBlockmap unlinking the line segments and clearing all
+     * blocks.
      */
     void clear();
 
@@ -100,7 +100,7 @@ private:
 class SuperBlock
 {
 public:
-    typedef QList<LineSegment::Side *> LineSegmentSides;
+    typedef QList<LineSegment::Side *> Segments;
 
     /// A SuperBlock may be subdivided with two child subblocks which are
     /// uniquely identifiable by these associated ids.
@@ -118,9 +118,9 @@ public:
 
 private:
     /**
-     * SuperBlock objects must be constructed within the context of an
-     * owning SuperBlockmap. Instantiation outside of this context is not
-     * permitted. @ref SuperBlockmap
+     * SuperBlock objects must be constructed within the context of an owning
+     * SuperBlockmap. Instantiation outside of this context is not permitted.
+     * @ref SuperBlockmap
      */
     SuperBlock(SuperBlockmap &blockmap);
     SuperBlock(SuperBlock &parentPtr, ChildId childId, bool splitVertical);
@@ -129,8 +129,8 @@ private:
     /**
      * Attach a new SuperBlock instance as a child of this.
      * @param childId  Unique identifier of the child.
-     * @param splitVertical  @c true= Subdivide this block on the y axis
-     *                       rather than the x axis.
+     * @param splitVertical  @c true= Subdivide this block on the y axis rather
+     *                       than the x axis.
      */
     SuperBlock *addChild(ChildId childId, bool splitVertical);
 
@@ -142,24 +142,24 @@ public:
     SuperBlock &clear();
 
     /**
-     * Retrieve the SuperBlockmap which owns this block.
-     * @return  The owning SuperBlockmap instance.
+     * Retrieve SuperBlockmap owner of the block.
      */
     SuperBlockmap &blockmap() const;
 
     /**
-     * Retrieve the axis-aligned bounding box defined for this superblock
-     * during instantiation. Note that this is NOT the bounds defined by
-     * the linked LineSegmentSides' vertices (see SuperBlock::findLineSegmentSideBounds()).
+     * Retrieve the axis-aligned bounding box of the block in the blockmap.
+     * Not to be confused with the bounds defined by the line segment geometry
+     * which is determined by @ref findSegmentBounds().
      *
-     * @return  Axis-aligned bounding box.
+     * @return  Axis-aligned bounding box of the block.
      */
     AABox const &bounds() const;
 
     /**
-     * Is this block small enough to be considered a "leaf"? A leaf in this
-     * context is a block whose dimensions are <= [256, 256] and thus can
-     * not be subdivided any further.
+     * Returns true if the block's dimensions are small enough that it should
+     * be considered a "leaf". Blocks in a SuperBlockmap are only subdivided
+     * until they reach an (x:256, y:256) lower bound on their dimensions. At
+     * which point they are considered as a "leaf".
      */
     bool isLeaf() const
     {
@@ -218,10 +218,10 @@ public:
     inline SuperBlock *leftPtr()  const { return childPtr(LEFT); }
 
     /**
-     * Perform a depth-first traversal over all child superblocks and
-     * then ultimately visiting this instance, making a callback for
-     * each object visited. Iteration ends when all superblocks have
-     * been visited or @a callback returns a non-zero value.
+     * Perform a depth-first traversal over all child superblocks and then
+     * ultimately visiting this instance, making a callback for each object
+     * visited. Iteration ends when all superblocks have been visited or a
+     * callback returns a non-zero value.
      *
      * @param callback       Callback function ptr.
      * @param parameters     Passed to the callback.
@@ -231,43 +231,42 @@ public:
     int traverse(int (*callback)(SuperBlock *, void *), void *parameters = 0);
 
     /**
-     * Find the axis-aligned bounding box defined by the vertices of all
-     * LineSegmentSides within this superblock. If there are no LineSegmentSides
-     * linked to this then @a bounds will be initialized to the "cleared"
-     * state (i.e., min[x,y] > max[x,y]).
+     * Find the axis-aligned bounding box defined by the vertices of all line
+     * segments in the block. If empty an AABox initialized to the "cleared"
+     * state (i.e., min > max) will be returned.
      *
-     * @param bounds  Determined bounds are written here.
+     * @return  Determined line segment bounds.
      */
-    void findLineSegmentSideBounds(AABoxd &bounds);
+    AABoxd findSegmentBounds();
 
     /**
-     * Retrieve the total number of LineSegmentSides linked in this superblock
-     * (including any within child superblocks).
+     * Retrieve the total number of line segments in this and all child blocks.
      *
-     * @param addMap  Include the map line segments in the total.
-     * @param addPart Include the partition line segments in the total.
+     * @param addMap  Include map line segments in the total.
+     * @param addPart Include partition line segments in the total.
      *
-     * @return  Total line segment count.
+     * @return  Determined line segment total.
      */
-    uint lineSegmentCount(bool addMap, bool addPart) const;
+    uint segmentCount(bool addMap, bool addPart) const;
 
     /// Convenience functions for retrieving line segment totals:
-    inline uint partLineSegmentSideCount() const {  return lineSegmentCount(false, true); }
-    inline uint mapLineSegmentSideCount() const {  return lineSegmentCount(true, false); }
-    inline uint totalLineSegmentSideCount() const { return lineSegmentCount(true, true); }
+    inline uint partSegmentCount() const  { return segmentCount(false, true); }
+    inline uint mapSegmentCount() const   { return segmentCount(true, false); }
+    inline uint totalSegmentCount() const { return segmentCount(true, true);  }
 
     /**
-     * Push (link) the given LineSegment::Side onto the FIFO list of line segments
-     * linked to this superblock.
+     * Push (link) the given line segment onto the FIFO list of segments linked
+     * to this superblock.
      *
-     * @param lineSeg  LineSegment::Side instance to add.
-     * @return  SuperBlock that @a lineSeg was linked to.
+     * @param segment  Line segment to add.
+     *
+     * @return  SuperBlock that @a segment was linked to.
      */
-    SuperBlock &push(LineSegment::Side &lineSeg);
+    SuperBlock &push(LineSegment::Side &segment);
 
     /**
-     * Pop (unlink) the next LineSegment::Side from the FIFO list of line segments
-     * linked to this superblock.
+     * Pop (unlink) the next line segment from the FIFO list of segments linked
+     * to this superblock.
      *
      * @return  Previous top-most line segment; otherwise @c 0 (empty).
      */
@@ -276,12 +275,12 @@ public:
     /**
      * Provides access to the list of line segments for efficient traversal.
      */
-    LineSegmentSides const &lineSegments() const;
+    Segments const &segments() const;
 
     /**
-     * SuperBlockmap creates instances of SuperBlock so it needs to use
-     * the special private constructor that takes an existing superblock
-     * object reference as a parameter.
+     * SuperBlockmap creates instances of SuperBlock so it needs to use the
+     * special private constructor that takes an existing superblock object
+     * reference as a parameter.
      */
     friend struct SuperBlockmap::Instance;
 
