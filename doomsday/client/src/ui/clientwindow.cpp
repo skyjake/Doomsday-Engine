@@ -109,11 +109,11 @@ DENG2_OBSERVES(Canvas,           FocusChange)
         LabelWidget *lab = new LabelWidget;
         lab->setText("Hello World");
         lab->setImage(ClientApp::windowSystem().style().images().image("logo.256"));
-        lab->setSizePolicy(LabelWidget::Expand, LabelWidget::Expand);
+        //lab->setSizePolicy(LabelWidget::Fixed, LabelWidget::Expand);
         lab->rule()
                 .setInput(Rule::Left,   root.viewLeft())
-                //.setInput(Rule::Width,  root.viewWidth())
-                //.setInput(Rule::Top,    root.viewTop())
+                .setInput(Rule::Width,  root.viewWidth())
+                .setInput(Rule::Top,    root.viewTop())
                 .setInput(Rule::Bottom, log->rule().top());
         root.add(lab);
 

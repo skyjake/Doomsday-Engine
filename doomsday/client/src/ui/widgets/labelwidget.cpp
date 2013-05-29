@@ -65,9 +65,9 @@ public Font::RichFormat::IStyle
         : Base(i),
           horizPolicy(Fixed), vertPolicy(Fixed),
           align(AlignCenter),
-          textAlign(AlignRight),
-          lineAlign(AlignLeft),
-          imageAlign(AlignTop),
+          textAlign(AlignCenter),
+          lineAlign(AlignCenter),
+          imageAlign(AlignCenter),
           imageFit(OriginalAspectRatio | FitToSize),
           font(0),
           wrapWidth(0),
@@ -373,7 +373,7 @@ public Font::RichFormat::IStyle
             // Shadow + text.
             /*composer.makeVertices(verts, textPos.topLeft + Vector2i(0, 2),
                                   lineAlign, Vector4f(0, 0, 0, 1));*/
-            composer.makeVertices(verts, textPos.topLeft, lineAlign);
+            composer.makeVertices(verts, textPos, AlignCenter, lineAlign);
         }
         drawable.buffer<VertexBuf>().setVertices(gl::TriangleStrip, verts, gl::Static);
     }
