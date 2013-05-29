@@ -1,2 +1,6 @@
 # Images for the default UI style
 
+group logo {
+    image 256 { path = "graphics/deng-logo-256.png" }
+    image 512 { path = "graphics/deng-logo-512.png" }
+}

@@ -17,7 +17,7 @@ group {
     condition: Version.OS == 'macx'
     
     font default {
-        family: Lucida Grande
+        family: Helvetica Neue
         size: 16pt
         weight: normal
         style: normal
