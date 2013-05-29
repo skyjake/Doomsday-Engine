@@ -68,7 +68,6 @@ public Font::RichFormat::IStyle
           textAlign(AlignRight),
           lineAlign(AlignLeft),
           imageAlign(AlignTop),
-          imageAlign(AlignTop),
           imageFit(OriginalAspectRatio | FitToSize),
           font(0),
           wrapWidth(0),
