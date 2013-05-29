@@ -71,11 +71,24 @@ public:
     SizeType area() const { return width() * height(); }
     bool isNull() const { return area() == 0; }
     Size size() const { return Size(width(), height()); }
+    void moveLeft(Type const &value) {
+        bottomRight.x = value + width();
+        topLeft.x = value;
+    }
+    void moveTop(Type const &value) {
+        bottomRight.y = value + height();
+        topLeft.y = value;
+    }
     void moveTopLeft(CornerVectorType const &point) {
         Size s = size();
         topLeft = point;
         bottomRight.x = point.x + s.x;
         bottomRight.y = point.y + s.y;
+    }
+    RectangleType &move(CornerVectorType const &delta) {
+        topLeft     += delta;
+        bottomRight += delta;
+        return *this;
     }
     RectangleType moved(CornerVectorType const &delta) const {
         return RectangleType(topLeft + delta, bottomRight + delta);
