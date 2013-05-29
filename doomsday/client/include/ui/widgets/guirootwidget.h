@@ -51,6 +51,7 @@ public:
     de::AtlasTexture &atlas();
     de::GLUniform &uAtlas();
     de::Id solidWhitePixel() const;
+    de::Id roundCorners() const;
 
     static de::GLShaderBank &shaders();
 

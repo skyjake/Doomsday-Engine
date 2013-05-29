@@ -24,6 +24,9 @@
 #include <de/GLTexture>
 #include <de/GLUniform>
 
+#include <QImage>
+#include <QPainter>
+
 using namespace de;
 
 DENG2_PIMPL(GuiRootWidget)
@@ -32,6 +35,7 @@ DENG2_PIMPL(GuiRootWidget)
     QScopedPointer<AtlasTexture> atlas; ///< Shared atlas for most UI graphics/text.
     GLUniform uTexAtlas;
     Id solidWhiteTex;
+    Id roundCorners;
 
     Instance(Public *i, ClientWindow *win)
         : Base(i),
@@ -57,9 +61,19 @@ DENG2_PIMPL(GuiRootWidget)
                             GLTexture::maximumSize().min(GLTexture::Size(4096, 4096))));
             uTexAtlas = *atlas;
 
+            // Solid general purpose textures.
             Image const solidWhitePixel = Image::solidColor(Image::Color(255, 255, 255, 255),
                                                             Image::Size(1, 1));
             solidWhiteTex = atlas->alloc(solidWhitePixel);
+
+            QImage corners(QSize(20, 20), QImage::Format_ARGB32);
+            corners.fill(QColor(255, 255, 255, 0).rgba());
+            QPainter painter(&corners);
+            painter.setPen(QPen(Qt::white, 3));
+            painter.setBrush(Qt::NoBrush);
+            painter.setRenderHint(QPainter::Antialiasing, true);
+            painter.drawEllipse(QPoint(10, 10), 8, 8);
+            roundCorners = atlas->alloc(corners);
         }
     }
 };
@@ -94,6 +108,12 @@ Id GuiRootWidget::solidWhitePixel() const
 {
     d->initAtlas();
     return d->solidWhiteTex;
+}
+
+Id GuiRootWidget::roundCorners() const
+{
+    d->initAtlas();
+    return d->roundCorners;
 }
 
 GLShaderBank &GuiRootWidget::shaders()

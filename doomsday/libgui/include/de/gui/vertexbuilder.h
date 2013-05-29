@@ -61,6 +61,117 @@ struct VertexBuilder
             v.pos = rect.bottomRight;  v.texCoord = uv.bottomRight;  quad << v;
             return *this += quad;
         }
+        Vertices &makeFlexibleFrame(Rectanglef const &rect, float cornerThickness,
+                                    Vector4f const &color, Rectanglef const &uv) {
+            Vector2f const uvOff = uv.size() / 2;
+            Vertices verts;
+            VertexType v;
+
+            v.rgba = color;
+
+            // Top left corner.
+            v.pos      = rect.topLeft;
+            v.texCoord = uv.topLeft;
+            verts << v;
+
+            v.pos      = rect.topLeft + Vector2f(0, cornerThickness);
+            v.texCoord = uv.topLeft + Vector2f(0, uvOff.y);
+            verts << v;
+
+            v.pos      = rect.topLeft + Vector2f(cornerThickness, 0);
+            v.texCoord = uv.topLeft + Vector2f(uvOff.x, 0);
+            verts << v;
+
+            v.pos      = rect.topLeft + Vector2f(cornerThickness, cornerThickness);
+            v.texCoord = uv.topLeft + uvOff;
+            verts << v;
+
+            // Top right corner.
+            v.pos      = rect.topRight() + Vector2f(-cornerThickness, 0);
+            v.texCoord = uv.topRight() + Vector2f(-uvOff.x, 0);
+            verts << v;
+
+            v.pos      = rect.topRight() + Vector2f(-cornerThickness, cornerThickness);
+            v.texCoord = uv.topRight() + Vector2f(-uvOff.x, uvOff.y);
+            verts << v;
+
+            v.pos      = rect.topRight();
+            v.texCoord = uv.topRight();
+            verts << v;
+
+            v.pos      = rect.topRight() + Vector2f(0, cornerThickness);
+            v.texCoord = uv.topRight() + Vector2f(0, uvOff.y);
+            verts << v;
+
+            // Discontinuity.
+            verts << v;
+            verts << v;
+
+            v.pos      = rect.topRight() + Vector2f(-cornerThickness, cornerThickness);
+            v.texCoord = uv.topRight() + Vector2f(-uvOff.x, uvOff.y);
+            verts << v;
+
+            // Bottom right corner.
+            v.pos      = rect.bottomRight + Vector2f(0, -cornerThickness);
+            v.texCoord = uv.bottomRight + Vector2f(0, -uvOff.y);
+            verts << v;
+
+            v.pos      = rect.bottomRight + Vector2f(-cornerThickness, -cornerThickness);
+            v.texCoord = uv.bottomRight + Vector2f(-uvOff.x, -uvOff.y);
+            verts << v;
+
+            v.pos      = rect.bottomRight;
+            v.texCoord = uv.bottomRight;
+            verts << v;
+
+            v.pos      = rect.bottomRight + Vector2f(-cornerThickness, 0);
+            v.texCoord = uv.bottomRight + Vector2f(-uvOff.x, 0);
+            verts << v;
+
+            // Discontinuity.
+            verts << v;
+            verts << v;
+
+            v.pos      = rect.bottomRight + Vector2f(-cornerThickness, -cornerThickness);
+            v.texCoord = uv.bottomRight + Vector2f(-uvOff.x, -uvOff.y);
+            verts << v;
+
+            // Bottom left corner.
+            v.pos      = rect.bottomLeft() + Vector2f(cornerThickness, 0);
+            v.texCoord = uv.bottomLeft() + Vector2f(uvOff.x, 0);
+            verts << v;
+
+            v.pos      = rect.bottomLeft() + Vector2f(cornerThickness, -cornerThickness);
+            v.texCoord = uv.bottomLeft() + Vector2f(uvOff.x, -uvOff.y);
+            verts << v;
+
+            v.pos      = rect.bottomLeft();
+            v.texCoord = uv.bottomLeft();
+            verts << v;
+
+            v.pos      = rect.bottomLeft() + Vector2f(0, -cornerThickness);
+            v.texCoord = uv.bottomLeft() + Vector2f(0, -uvOff.y);
+            verts << v;
+
+            // Discontinuity.
+            verts << v;
+            verts << v;
+
+            // Closing the loop.
+            v.pos      = rect.bottomLeft() + Vector2f(cornerThickness, -cornerThickness);
+            v.texCoord = uv.bottomLeft() + Vector2f(uvOff.x, -uvOff.y);
+            verts << v;
+
+            v.pos      = rect.topLeft + Vector2f(0, cornerThickness);
+            v.texCoord = uv.topLeft + Vector2f(0, uvOff.y);
+            verts << v;
+
+            v.pos      = rect.topLeft + Vector2f(cornerThickness, cornerThickness);
+            v.texCoord = uv.topLeft + Vector2f(uvOff.x, uvOff.y);
+            verts << v;
+
+            return *this += verts;
+        }
     };
 
     static void concatenate(Vertices const &stripSequence, Vertices &destStrip)
