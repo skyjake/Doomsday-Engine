@@ -48,7 +48,6 @@ DENG2_OBSERVES(Atlas, Reposition)
     // GL objects.
     bool needGeometry;
     GLTextComposer composer;
-    Id bgTex;
     Drawable drawable;
     GLUniform uMvpMatrix;
     GLUniform uColor;
@@ -114,9 +113,6 @@ DENG2_OBSERVES(Atlas, Reposition)
         composer.setAtlas(atlas());
         composer.setText(self.text());
 
-        // Temporary background texture for development...
-        bgTex = atlas().alloc(Image::solidColor(Image::Color(255, 255, 255, 255), Image::Size(1, 1)));
-
         drawable.addBuffer(ID_BUF_TEXT, new VertexBuf);
         drawable.addBufferWithNewProgram(ID_BUF_CURSOR, new VertexBuf, "cursor");
 
@@ -133,7 +129,6 @@ DENG2_OBSERVES(Atlas, Reposition)
 
     void glDeinit()
     {
-        atlas().release(bgTex);
         composer.release();
     }
 
@@ -155,11 +150,13 @@ DENG2_OBSERVES(Atlas, Reposition)
 
         // The background.
         VertexBuf::Builder verts;
-        verts.makeQuad(pos, bgColor, atlas().imageRectf(bgTex).middle());
+        verts.makeQuad(pos, bgColor, atlas().imageRectf(self.root().solidWhitePixel()).middle());
 
         // Text lines.
         Rectanglei const contentRect = pos.shrunk(margin);
         composer.makeVertices(verts, contentRect, AlignLeft, AlignLeft);
+
+        Rectanglef const solidWhiteUv = atlas().imageRectf(self.root().solidWhitePixel());
 
         // Underline the possible suggested completion.
         if(self.isSuggestingCompletion())
@@ -178,8 +175,7 @@ DENG2_OBSERVES(Atlas, Reposition)
                 Vector2i end   = wraps.charTopLeftInPixels(i, i == endPos.y?   endPos.x   : span.end)   + offset;
 
                 verts.makeQuad(Rectanglef(start, end + Vector2i(0, 1)),
-                               Vector4f(1, 1, 1, 1),
-                               atlas().imageRectf(bgTex).middle());
+                               Vector4f(1, 1, 1, 1), solidWhiteUv.middle());
             }
         }
 
@@ -194,8 +190,7 @@ DENG2_OBSERVES(Atlas, Reposition)
         verts.clear();
         verts.makeQuad(Rectanglef(cp + Vector2f(-1, 0),
                                   cp + Vector2f(1, font->height().value())),
-                       Vector4f(1, 1, 1, 1),
-                       atlas().imageRectf(bgTex).middle());
+                       Vector4f(1, 1, 1, 1), solidWhiteUv.middle());
 
         drawable.buffer<VertexBuf>(ID_BUF_CURSOR)
                 .setVertices(gl::TriangleStrip, verts, gl::Static);

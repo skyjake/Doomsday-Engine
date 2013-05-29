@@ -31,6 +31,7 @@ DENG2_PIMPL(GuiRootWidget)
     ClientWindow *window;
     QScopedPointer<AtlasTexture> atlas; ///< Shared atlas for most UI graphics/text.
     GLUniform uTexAtlas;
+    Id solidWhiteTex;
 
     Instance(Public *i, ClientWindow *win)
         : Base(i),
@@ -45,6 +46,21 @@ DENG2_PIMPL(GuiRootWidget)
         // class destructor will destroy all widgets, but this class governs
         // shared GL resources, so we'll ask the widgets to do this now.
         self.notifyTree(&Widget::deinitialize);
+    }
+
+    void initAtlas()
+    {
+        if(atlas.isNull())
+        {
+            atlas.reset(AtlasTexture::newWithRowAllocator(
+                            Atlas::BackingStore | Atlas::AllowDefragment,
+                            GLTexture::maximumSize().min(GLTexture::Size(4096, 4096))));
+            uTexAtlas = *atlas;
+
+            Image const solidWhitePixel = Image::solidColor(Image::Color(255, 255, 255, 255),
+                                                            Image::Size(1, 1));
+            solidWhiteTex = atlas->alloc(solidWhitePixel);
+        }
     }
 };
 
@@ -65,19 +81,19 @@ ClientWindow &GuiRootWidget::window()
 
 AtlasTexture &GuiRootWidget::atlas()
 {
-    if(d->atlas.isNull())
-    {
-        d->atlas.reset(AtlasTexture::newWithRowAllocator(
-                           Atlas::BackingStore | Atlas::AllowDefragment,
-                           GLTexture::maximumSize().min(GLTexture::Size(4096, 4096))));
-        d->uTexAtlas = *d->atlas;
-    }
+    d->initAtlas();
     return *d->atlas;
 }
 
 GLUniform &GuiRootWidget::uAtlas()
 {
     return d->uTexAtlas;
+}
+
+Id GuiRootWidget::solidWhitePixel() const
+{
+    d->initAtlas();
+    return d->solidWhiteTex;
 }
 
 GLShaderBank &GuiRootWidget::shaders()

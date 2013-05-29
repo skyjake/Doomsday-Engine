@@ -50,6 +50,7 @@ public:
 
     de::AtlasTexture &atlas();
     de::GLUniform &uAtlas();
+    de::Id solidWhitePixel() const;
 
     static de::GLShaderBank &shaders();
 

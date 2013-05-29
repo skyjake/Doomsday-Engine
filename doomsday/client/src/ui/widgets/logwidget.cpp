@@ -331,7 +331,6 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
     GLUniform uBgMvpMatrix;
     Matrix4f projMatrix;
     Matrix4f viewMatrix;
-    Id bgTex;
     Id scrollTex;
 
     Instance(Public *i)
@@ -490,8 +489,6 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
 
         Image solidWhitePixel = Image::solidColor(Image::Color(255, 255, 255, 255),
                                                   Image::Size(1, 1));
-        bgTex = self.root().atlas().alloc(solidWhitePixel);
-
         scrollTex = entryAtlas->alloc(solidWhitePixel);
 
         uTex = entryAtlas;
@@ -512,8 +509,6 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
 
     void glDeinit()
     {
-        self.root().atlas().release(bgTex);
-
         clearCache();
 
         delete entryAtlas;
@@ -750,7 +745,7 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
             bgBuf->setVertices(gl::TriangleStrip,
                                VertexBuf::Builder().makeQuad(pos,
                                    self.style().colors().colorf("background"),
-                                   self.root().atlas().imageRectf(bgTex).middle()),
+                                   self.root().atlas().imageRectf(self.root().solidWhitePixel()).middle()),
                                gl::Static);
         }
 
