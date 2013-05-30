@@ -36,6 +36,7 @@ DENG2_PIMPL(GuiRootWidget)
     GLUniform uTexAtlas;
     Id solidWhiteTex;
     Id roundCorners;
+    Id gradientFrame;
 
     Instance(Public *i, ClientWindow *win)
         : Base(i),
@@ -61,21 +62,45 @@ DENG2_PIMPL(GuiRootWidget)
                             GLTexture::maximumSize().min(GLTexture::Size(4096, 4096))));
             uTexAtlas = *atlas;
 
-            // Solid general purpose textures.
+            // Solid general purpose textures:
+
+            // One solid white pixel.
             Image const solidWhitePixel = Image::solidColor(Image::Color(255, 255, 255, 255),
                                                             Image::Size(1, 1));
             solidWhiteTex = atlas->alloc(solidWhitePixel);
 
-            QImage corners(QSize(20, 20), QImage::Format_ARGB32);
-            corners.fill(QColor(255, 255, 255, 0).rgba());
-            QPainter painter(&corners);
-            painter.setRenderHint(QPainter::Antialiasing, true);
-            painter.setBrush(Qt::NoBrush);
-            painter.setPen(QPen(Qt::white, 1));
-            painter.drawEllipse(QPoint(11, 11), 8, 8);
-            painter.setPen(QPen(Qt::black, 1));
-            painter.drawEllipse(QPoint(10, 10), 8, 8);
-            roundCorners = atlas->alloc(corners);
+            // Rounded corners.
+            {
+                QImage corners(QSize(20, 20), QImage::Format_ARGB32);
+                corners.fill(QColor(255, 255, 255, 0).rgba());
+                QPainter painter(&corners);
+                painter.setRenderHint(QPainter::Antialiasing, true);
+                painter.setBrush(Qt::NoBrush);
+                painter.setPen(QPen(Qt::white, 1));
+                painter.drawEllipse(QPoint(11, 11), 8, 8);
+                painter.setPen(QPen(Qt::black, 1));
+                painter.drawEllipse(QPoint(10, 10), 8, 8);
+                roundCorners = atlas->alloc(corners);
+            }
+
+            // Gradient frame.
+            {
+                QImage frame(QSize(12, 12), QImage::Format_ARGB32);
+                frame.fill(QColor(255, 255, 255, 0).rgba());
+                QPainter painter(&frame);
+                painter.setBrush(Qt::NoBrush);
+                painter.setPen(QColor(0, 0, 0, 255));
+                painter.drawRect(QRect(0, 0, 11, 11));
+                painter.setPen(QColor(255, 255, 255, 255));
+                painter.drawRect(QRect(1, 1, 9, 9));
+                painter.setPen(QColor(255, 255, 255, 192));
+                painter.drawRect(QRect(2, 2, 7, 7));
+                painter.setPen(QColor(255, 255, 255, 128));
+                painter.drawRect(QRect(3, 3, 5, 5));
+                painter.setPen(QColor(255, 255, 255, 64));
+                painter.drawRect(QRect(4, 4, 3, 3));
+                gradientFrame = atlas->alloc(frame);
+            }
         }
     }
 };
@@ -116,6 +141,12 @@ Id GuiRootWidget::roundCorners() const
 {
     d->initAtlas();
     return d->roundCorners;
+}
+
+Id GuiRootWidget::gradientFrame() const
+{
+    d->initAtlas();
+    return d->gradientFrame;
 }
 
 GLShaderBank &GuiRootWidget::shaders()

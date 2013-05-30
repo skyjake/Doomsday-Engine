@@ -47,8 +47,8 @@ void ButtonWidget::makeAdditionalGeometry(AdditionalGeometryKind kind,
         verts.makeQuad(rule().recti(), style().colors().colorf("background"),
                        root().atlas().imageRectf(root().solidWhitePixel()).middle());
 
-        /*verts.makeFlexibleFrame(rule().rect(), 10, Vector4f(1, 1, 1, .5f),
-                                root().atlas().imageRectf(root().roundCorners()));*/
+        verts.makeFlexibleFrame(rule().rect(), 6, Vector4f(1, 1, 1, .15f),
+                                root().atlas().imageRectf(root().gradientFrame()));
     }
 }
 

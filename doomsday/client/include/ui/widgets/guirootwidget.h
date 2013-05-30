@@ -52,6 +52,7 @@ public:
     de::GLUniform &uAtlas();
     de::Id solidWhitePixel() const;
     de::Id roundCorners() const;
+    de::Id gradientFrame() const;
 
     static de::GLShaderBank &shaders();
 
