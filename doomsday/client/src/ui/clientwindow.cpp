@@ -36,10 +36,7 @@
 #include "ui/widgets/legacywidget.h"
 #include "ui/widgets/busywidget.h"
 #include "ui/widgets/taskbarwidget.h"
-#include "ui/widgets/lineeditwidget.h"
-#include "ui/widgets/consolecommandwidget.h"
-#include "ui/widgets/logwidget.h"
-#include "ui/widgets/labelwidget.h"
+#include "ui/widgets/consolewidget.h"
 #include "ui/mouse_qt.h"
 
 #include "dd_main.h"
@@ -82,13 +79,25 @@ DENG2_OBSERVES(Canvas,           FocusChange)
                 .setRightBottom(root.viewRight(), root.viewBottom());
         root.add(legacy);
 
-        /*
         TaskBarWidget *taskBar = new TaskBarWidget;
         taskBar->rule()
                 .setInput(Rule::Left,   root.viewLeft())
                 .setInput(Rule::Bottom, root.viewBottom())
                 .setInput(Rule::Width,  root.viewWidth());
-        root.add(taskBar);*/
+        root.add(taskBar);
+
+        ConsoleWidget *console = new ConsoleWidget;
+        console->rule()
+                .setInput(Rule::Bottom, taskBar->rule().top())
+                .setInput(Rule::Left,   root.viewLeft())
+                .setInput(Rule::Top,    root.viewTop());
+        root.add(console);
+
+        root.setFocus(&console->commandLine());
+/*
+        ButtonWidget *button = new ButtonWidget;
+        button->rule()
+        root.add(button);
 
         ConsoleCommandWidget *test = new ConsoleCommandWidget;
         test->rule()
@@ -116,6 +125,7 @@ DENG2_OBSERVES(Canvas,           FocusChange)
                 .setInput(Rule::Top,    root.viewTop())
                 .setInput(Rule::Bottom, log->rule().top());
         root.add(lab);
+*/
 
         // Initially the widget is disabled. It will be enabled when the window
         // is visible and ready to be drawn.

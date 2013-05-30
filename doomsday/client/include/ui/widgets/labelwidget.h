@@ -87,6 +87,8 @@ public:
 
     void setImageFit(ContentFit const &fit);
 
+    void setImageScale(float scaleFactor);
+
     enum SizePolicy {
         Fixed,  ///< Size is fixed, content positioned inside.
         Filled, ///< Size is fixed, content expands to fill entire area.

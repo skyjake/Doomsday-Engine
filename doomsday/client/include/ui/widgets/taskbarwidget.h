@@ -20,6 +20,7 @@
 #define DENG_CLIENT_TASKBARWIDGET_H
 
 #include "guiwidget.h"
+#include "consolecommandwidget.h"
 
 /**
  * Task bar that acts as the primary UI element of the client's UI.

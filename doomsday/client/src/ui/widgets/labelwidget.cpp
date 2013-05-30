@@ -40,6 +40,7 @@ public Font::RichFormat::IStyle
     Alignment lineAlign;
     Alignment imageAlign;
     ContentFit imageFit;
+    float imageScale;
 
     ConstantRule *width;
     ConstantRule *height;
@@ -69,6 +70,7 @@ public Font::RichFormat::IStyle
           lineAlign(AlignCenter),
           imageAlign(AlignCenter),
           imageFit(OriginalAspectRatio | FitToSize),
+          imageScale(1),
           font(0),
           wrapWidth(0),
           needImageUpdate(false),
@@ -250,8 +252,9 @@ public Font::RichFormat::IStyle
             // Figure out how much room is left for the image.
             Rectanglef const rect = layout.image;
 
+            /*
             // Fit the image.
-            if(!imageFit.testFlag(FitToWidth))
+            if(imageFit.testFlag(FitToWidth))
             {
                 layout.image.setWidth(image.width());
             }
@@ -259,6 +262,7 @@ public Font::RichFormat::IStyle
             {
                 layout.image.setHeight(image.height());
             }
+            */
 
             // Should the original aspect ratio be preserved?
             if(imageFit & OriginalAspectRatio)
@@ -288,6 +292,14 @@ public Font::RichFormat::IStyle
             }
 
             applyAlignment(imageAlign, layout.image, rect);
+
+            // Scale the image?
+            if(!fequal(imageScale, 1.f))
+            {
+                Vector2f delta = layout.image.size() * (imageScale - 1);
+                layout.image.topLeft -= delta/2;
+                layout.image.bottomRight += delta/2;
+            }
         }
     }
 
@@ -412,6 +424,21 @@ void LabelWidget::setImage(Image const &image)
 {
     d->image = image;
     d->needImageUpdate = true;
+}
+
+void LabelWidget::setImageAlignment(Alignment const &imageAlign)
+{
+    d->imageAlign = imageAlign;
+}
+
+void LabelWidget::setImageFit(ContentFit const &fit)
+{
+    d->imageFit = fit;
+}
+
+void LabelWidget::setImageScale(float scaleFactor)
+{
+    d->imageScale = scaleFactor;
 }
 
 void LabelWidget::update()

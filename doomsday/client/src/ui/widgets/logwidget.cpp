@@ -787,7 +787,6 @@ LogWidget::LogWidget(String const &name) : GuiWidget(name), d(new Instance(this)
 {
     connect(&d->rewrapPool, SIGNAL(allTasksDone()), this, SLOT(pruneExcessEntries()));
 
-    rule().setInput(Rule::Width, Const(600)); // TODO -- from rule defs
     LogBuffer::appBuffer().addSink(d->sink);
 }
 

@@ -17,8 +17,9 @@
  */
 
 #include "ui/widgets/taskbarwidget.h"
-#include "ui/widgets/lineeditwidget.h"
 #include "ui/widgets/guirootwidget.h"
+#include "ui/widgets/labelwidget.h"
+#include "ui/widgets/buttonwidget.h"
 
 #include <de/Drawable>
 #include <de/GLBuffer>
@@ -29,6 +30,8 @@ DENG2_PIMPL(TaskBarWidget)
 {
     typedef GLBufferT<Vertex2Rgba> VertexBuf;
 
+    ConsoleCommandWidget *cmdLine;
+
     Drawable drawable;
     GLUniform uMvpMatrix;
     GLUniform uColor;
@@ -36,6 +39,7 @@ DENG2_PIMPL(TaskBarWidget)
 
     Instance(Public *i)
         : Base(i),
+          cmdLine(0),
           uMvpMatrix("uMvpMatrix", GLUniform::Mat4),
           uColor    ("uColor",     GLUniform::Vec4)
     {
@@ -77,12 +81,43 @@ DENG2_PIMPL(TaskBarWidget)
 
 TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
 {
+    LabelWidget *logo = new LabelWidget;
+    logo->setImage(style().images().image("logo.px128"));
+    //logo->setSizePolicy(LabelWidget::Filled, LabelWidget::Filled);
+    logo->rule()
+            .setInput(Rule::Height, rule().height())
+            .setInput(Rule::Width,  rule().height())
+            .setInput(Rule::Right,  rule().right())
+            .setInput(Rule::Bottom, rule().bottom());
+    add(logo);
+
+    Rule const &gap = style().rules().rule("gap");
+
+    /*
+    ButtonWidget *consoleButton = new ButtonWidget;
+    consoleButton->setText(DENG2_STR_ESCAPE("b") ">");
+    consoleButton->setWidthPolicy(ButtonWidget::Expand);
+    consoleButton->rule()
+            .setInput(Rule::Left,   rule().left() + gap)
+            .setInput(Rule::Top,    rule().top() + gap)
+            .setInput(Rule::Width,  style().fonts().font("default").height() + gap * 2)
+            .setInput(Rule::Height, consoleButton->rule().width());
+    add(consoleButton);
+
     // The task bar has a number of child widgets.
-    LineEditWidget *cmdLine = new LineEditWidget("commandline");
+    d->cmdLine = new ConsoleCommandWidget("commandline");
+    d->cmdLine->rule()
+            .setInput(Rule::Left,   consoleButton->rule().right() + gap)
+            .setInput(Rule::Bottom, rule().bottom() - gap)
+            .setInput(Rule::Right,  rule().right() - gap);
+    add(d->cmdLine);
 
-    add(cmdLine);
+    rule().setInput(Rule::Height, d->cmdLine->rule().height() + gap * 2);
 
-    rule().setInput(Rule::Height, style().rules().rule("taskbar.height"));
+    // Height of the taskbar is defined by the style.
+    //rule().setInput(Rule::Height, style().rules().rule("taskbar.height"));*/
+
+    rule().setInput(Rule::Height, style().fonts().font("default").height() + gap * 2);
 }
 
 void TaskBarWidget::glInit()

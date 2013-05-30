@@ -1,4 +1,4 @@
-/** @file buttonwidget.h  Clickable button widget.
+/** @file consolewidget.h  Console commandline and message history.
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -13,43 +13,36 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details. You should have received a copy of the GNU
  * General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small>
+ * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef DENG_CLIENT_BUTTONWIDGET_H
-#define DENG_CLIENT_BUTTONWIDGET_H
+#ifndef DENG_CLIENT_CONSOLEWIDGET_H
+#define DENG_CLIENT_CONSOLEWIDGET_H
 
-#include <de/Action>
-
-#include "labelwidget.h"
+#include "guiwidget.h"
+#include "consolecommandwidget.h"
+#include "logwidget.h"
 
 /**
- * Clickable button widget.
+ * Console command line and message history.
  */
-class ButtonWidget : public LabelWidget
+class ConsoleWidget : public GuiWidget
 {
 public:
-    ButtonWidget(de::String const &name = "");
+    ConsoleWidget();
 
-    /**
-     * Sets the action of the button. It gets triggered when the button is
-     * pressed.
-     *
-     * @param action  Action instance. Widget takes ownership.
-     */
-    void setAction(de::Action *action);
+    ConsoleCommandWidget &commandLine();
+    LogWidget &log();
 
     // Events.
     bool handleEvent(de::Event const &event);
 
 protected:
-    void makeAdditionalGeometry(AdditionalGeometryKind kind,
-                                de::VertexBuilder<de::Vertex2TexRgba>::Vertices &verts,
-                                ContentLayout const &layout);
-    void updateModelViewProjection();
+    void glInit();
+    void glDeinit();
 
 private:
     DENG2_PRIVATE(d)
 };
 
-#endif // DENG_CLIENT_BUTTONWIDGET_H
+#endif // DENG_CLIENT_CONSOLEWIDGET_H

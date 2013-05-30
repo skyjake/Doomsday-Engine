@@ -10,7 +10,7 @@ group editor {
 group log {
     color normal    { rgb <0.85, 0.85, 0.8> }
     color highlight { rgb <1.0, 1.0, 1.0> }
-    color dimmed    { rgba <0.85, 0.85, 0.8, 0.85> }
+    color dimmed    { rgb <0.72, 0.72, 0.68> }
     color accent    { rgb <1.0, 0.8, 0.4> }
-    color dimaccent { rgba <1.0, 0.8, 0.4, 0.85> }
+    color dimaccent { rgb <0.85, 0.68, 0.34> }
 }

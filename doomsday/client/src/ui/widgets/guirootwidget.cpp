@@ -69,9 +69,11 @@ DENG2_PIMPL(GuiRootWidget)
             QImage corners(QSize(20, 20), QImage::Format_ARGB32);
             corners.fill(QColor(255, 255, 255, 0).rgba());
             QPainter painter(&corners);
-            painter.setPen(QPen(Qt::white, 3));
-            painter.setBrush(Qt::NoBrush);
             painter.setRenderHint(QPainter::Antialiasing, true);
+            painter.setBrush(Qt::NoBrush);
+            painter.setPen(QPen(Qt::white, 1));
+            painter.drawEllipse(QPoint(11, 11), 8, 8);
+            painter.setPen(QPen(Qt::black, 1));
             painter.drawEllipse(QPoint(10, 10), 8, 8);
             roundCorners = atlas->alloc(corners);
         }
