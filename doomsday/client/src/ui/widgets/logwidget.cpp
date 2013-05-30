@@ -301,6 +301,7 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
     enum { CancelAllRewraps = 0xffffffff };
 
     // State.
+    bool pageKeysEnabled;
     Animation visibleOffset;
     int totalHeight;
     int maxScroll;
@@ -339,6 +340,7 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
           sink(this),
           cacheWidth(0),
           cancelRewrap(0),
+          pageKeysEnabled(true),
           visibleOffset(0),
           totalHeight(0),
           maxScroll(0),
@@ -840,6 +842,11 @@ void LogWidget::setContentYOffset(Animation const &anim)
     }
 }
 
+void LogWidget::enablePageKeys(bool enabled)
+{
+    d->pageKeysEnabled = enabled;
+}
+
 void LogWidget::viewResized()
 {
     d->updateProjection();
@@ -866,7 +873,8 @@ bool LogWidget::handleEvent(Event const &event)
 
     switch(ev.ddKey())
     {
-    case DDKEY_PGUP:        
+    case DDKEY_PGUP:
+        if(!d->pageKeysEnabled) return false;
         if(ev.modifiers().testFlag(KeyEvent::Shift))
         {
             d->setVisibleOffset(d->maxScroll, .3f);
@@ -879,6 +887,7 @@ bool LogWidget::handleEvent(Event const &event)
         return true;
 
     case DDKEY_PGDN:
+        if(!d->pageKeysEnabled) return false;
         if(ev.modifiers().testFlag(KeyEvent::Shift))
         {
             scrollToBottom();

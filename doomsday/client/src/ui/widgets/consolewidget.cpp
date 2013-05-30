@@ -53,6 +53,17 @@ DENG2_PIMPL(ConsoleWidget)
     void glDeinit()
     {
     }
+
+    void expandLog(int delta, bool useOffsetAnimation)
+    {
+        height->set(height->scalar().target() + delta, .25f);
+
+        if(useOffsetAnimation)
+        {
+            // Sync the log content with the height animation.
+            log->setContentYOffset(Animation::range(Animation::EaseIn, delta, 0, .25f));
+        }
+    }
 };
 
 ConsoleWidget::ConsoleWidget() : GuiWidget("Console"), d(new Instance(this))
@@ -121,10 +132,20 @@ bool ConsoleWidget::handleEvent(Event const &event)
     if(event.type() == Event::KeyPress)
     {
         KeyEvent const &key = static_cast<KeyEvent const &>(event);
+
+        if(key.qtKey() == Qt::Key_PageUp ||
+           key.qtKey() == Qt::Key_PageDown)
+        {
+            d->log->enablePageKeys(true);
+            d->expandLog(rule().top().valuei(), false);
+            return true;
+        }
+
         if(key.qtKey() == Qt::Key_F5)
         {
             d->height->set(0);
             d->log->scrollToBottom();
+            d->log->enablePageKeys(false);
             return true;
         }
     }
@@ -133,7 +154,5 @@ bool ConsoleWidget::handleEvent(Event const &event)
 
 void ConsoleWidget::logContentHeightIncreased(int delta)
 {
-    d->height->set(d->height->scalar().target() + delta, .25f);
-    // Sync the log content with the height animation.
-    d->log->setContentYOffset(Animation::range(Animation::EaseIn, delta, 0, .25f));
+    d->expandLog(delta, true);
 }

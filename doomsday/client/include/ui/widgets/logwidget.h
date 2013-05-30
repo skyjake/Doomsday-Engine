@@ -72,6 +72,13 @@ public:
 
     void setContentYOffset(de::Animation const &anim);
 
+    /**
+     * Enables or disables scrolling with Page Up/Down keys.
+     *
+     * @param enabled  @c true to enable Page Up/Down.
+     */
+    void enablePageKeys(bool enabled);
+
     // Events.
     void viewResized();
     void update();
