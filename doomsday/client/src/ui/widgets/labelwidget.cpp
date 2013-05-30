@@ -162,9 +162,10 @@ public Font::RichFormat::IStyle
     void contentPlacement(ContentLayout &layout) const
     {
         Rectanglei const contentRect = self.rule().recti().shrunk(margin);
+        Vector2f const imageSize = image.size() * imageScale;
 
         // Determine the sizes of the elements first.
-        layout.image = Rectanglef::fromSize(image.size());
+        layout.image = Rectanglef::fromSize(imageSize);
         layout.text  = Rectanglei::fromSize(textSize());
 
         if(horizPolicy == Filled)
@@ -290,14 +291,6 @@ public Font::RichFormat::IStyle
             }
 
             applyAlignment(imageAlign, layout.image, rect);
-
-            // Scale the image?
-            if(!fequal(imageScale, 1.f))
-            {
-                Vector2f delta = layout.image.size() * (imageScale - 1);
-                layout.image.topLeft -= delta/2;
-                layout.image.bottomRight += delta/2;
-            }
         }
     }
 
@@ -422,6 +415,11 @@ void LabelWidget::setImage(Image const &image)
 {
     d->image = image;
     d->needImageUpdate = true;
+}
+
+void LabelWidget::setTextAlignment(const Alignment &textAlign)
+{
+    d->textAlign = textAlign;
 }
 
 void LabelWidget::setImageAlignment(Alignment const &imageAlign)
