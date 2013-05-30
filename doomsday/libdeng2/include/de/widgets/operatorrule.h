@@ -52,6 +52,11 @@ public:
 
     OperatorRule(Operator op, Rule const &left, Rule const &right);
 
+public:
+    static OperatorRule &maximum(Rule const &left, Rule const &right) {
+        return *refless(new OperatorRule(Maximum, left, right));
+    }
+
 protected:
     ~OperatorRule();
 
