@@ -179,13 +179,10 @@ void GLTextComposer::makeVertices(Vertices &triStrip,
                                   Alignment const &lineAlign,
                                   Vector4f const &color)
 {
-    // Top left corner.
-    Vector2f p = rect.topLeft;
-
     Vector2i const contentSize(d->wraps->width(), d->wraps->totalHeightInPixels());
 
     // Apply alignment within the provided rectangle.
-    p = applyAlignment(alignInRect, p, contentSize, rect);
+    Vector2f p = applyAlignment(alignInRect, contentSize, rect);
 
     DENG2_ASSERT(d->wraps->height() == d->lines.size());
 
