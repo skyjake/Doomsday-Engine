@@ -22,18 +22,28 @@
 #include "ui/widgets/consolecommandwidget.h"
 #include "ui/widgets/logwidget.h"
 
+#include <de/ScalarRule>
+#include <de/KeyEvent>
+
 using namespace de;
 
 DENG2_PIMPL(ConsoleWidget)
 {
     ConsoleCommandWidget *cmdLine;
     LogWidget *log;
+    ScalarRule *height;
 
     Instance(Public *i)
         : Base(i),
           cmdLine(0),
           log(0)
     {
+        height = new ScalarRule(0);
+    }
+
+    ~Instance()
+    {
+        releaseRef(height);
     }
 
     void glInit()
@@ -45,7 +55,7 @@ DENG2_PIMPL(ConsoleWidget)
     }
 };
 
-ConsoleWidget::ConsoleWidget() : GuiWidget("taskbar"), d(new Instance(this))
+ConsoleWidget::ConsoleWidget() : GuiWidget("Console"), d(new Instance(this))
 {
     Rule const &gap = style().rules().rule("gap");
 
@@ -74,11 +84,15 @@ ConsoleWidget::ConsoleWidget() : GuiWidget("taskbar"), d(new Instance(this))
             .setInput(Rule::Left,   rule().left())
             .setInput(Rule::Right,  rule().right())
             .setInput(Rule::Bottom, d->cmdLine->rule().top())
-            .setInput(Rule::Top,    rule().top());
+            .setInput(Rule::Top,    OperatorRule::maximum(rule().top(), Const(0)));
     add(d->log);
 
+    connect(d->log, SIGNAL(contentHeightIncreased(int)), this, SLOT(logContentHeightIncreased(int)));
+
     // Width of the console is defined by the style.
-    rule().setInput(Rule::Width, style().rules().rule("console.width"));
+    rule()
+        .setInput(Rule::Width, style().rules().rule("console.width"))
+        .setInput(Rule::Height, d->cmdLine->rule().height() + *d->height);
 }
 
 ConsoleCommandWidget &ConsoleWidget::commandLine()
@@ -102,7 +116,24 @@ void ConsoleWidget::glDeinit()
     d->glDeinit();
 }
 
-bool ConsoleWidget::handleEvent(const Event &event)
+bool ConsoleWidget::handleEvent(Event const &event)
 {
+    if(event.type() == Event::KeyPress)
+    {
+        KeyEvent const &key = static_cast<KeyEvent const &>(event);
+        if(key.qtKey() == Qt::Key_F5)
+        {
+            d->height->set(0);
+            d->log->scrollToBottom();
+            return true;
+        }
+    }
     return false;
+}
+
+void ConsoleWidget::logContentHeightIncreased(int delta)
+{
+    d->height->set(d->height->scalar().target() + delta, .25f);
+    // Sync the log content with the height animation.
+    d->log->setContentYOffset(Animation::range(Animation::EaseIn, delta, 0, .25f));
 }

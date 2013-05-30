@@ -79,44 +79,20 @@ DENG2_PIMPL(TaskBarWidget)
     }
 };
 
-TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
+TaskBarWidget::TaskBarWidget() : GuiWidget("TaskBar"), d(new Instance(this))
 {
+    Rule const &gap = style().rules().rule("gap");
+
     LabelWidget *logo = new LabelWidget;
     logo->setImage(style().images().image("logo.px128"));
-    //logo->setSizePolicy(LabelWidget::Filled, LabelWidget::Filled);
     logo->rule()
             .setInput(Rule::Height, rule().height())
             .setInput(Rule::Width,  rule().height())
-            .setInput(Rule::Right,  rule().right())
+            .setInput(Rule::Right,  rule().right() - gap)
             .setInput(Rule::Bottom, rule().bottom());
     add(logo);
 
-    Rule const &gap = style().rules().rule("gap");
-
-    /*
-    ButtonWidget *consoleButton = new ButtonWidget;
-    consoleButton->setText(DENG2_STR_ESCAPE("b") ">");
-    consoleButton->setWidthPolicy(ButtonWidget::Expand);
-    consoleButton->rule()
-            .setInput(Rule::Left,   rule().left() + gap)
-            .setInput(Rule::Top,    rule().top() + gap)
-            .setInput(Rule::Width,  style().fonts().font("default").height() + gap * 2)
-            .setInput(Rule::Height, consoleButton->rule().width());
-    add(consoleButton);
-
-    // The task bar has a number of child widgets.
-    d->cmdLine = new ConsoleCommandWidget("commandline");
-    d->cmdLine->rule()
-            .setInput(Rule::Left,   consoleButton->rule().right() + gap)
-            .setInput(Rule::Bottom, rule().bottom() - gap)
-            .setInput(Rule::Right,  rule().right() - gap);
-    add(d->cmdLine);
-
-    rule().setInput(Rule::Height, d->cmdLine->rule().height() + gap * 2);
-
-    // Height of the taskbar is defined by the style.
-    //rule().setInput(Rule::Height, style().rules().rule("taskbar.height"));*/
-
+    // Taskbar height depends on the font size.
     rule().setInput(Rule::Height, style().fonts().font("default").height() + gap * 2);
 }
 

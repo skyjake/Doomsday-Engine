@@ -307,6 +307,7 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
     int lastMaxScroll;
     Rangei visibleRange;
     Animation scrollOpacity;
+    Animation contentOffset;
 
     // Style.
     Font const *font;
@@ -542,6 +543,8 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
 
     void fetchNewCachedEntries()
     {
+        int oldHeight = totalHeight;
+
         while(CacheEntry *cached = sink.nextCachedEntry())
         {
             // Find a suitable place according to the original index in the sink;
@@ -563,6 +566,11 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
                 visibleOffset.shift(cached->height());
                 emit self.scrollPositionChanged(visibleOffset.target());
             }
+        }
+
+        if(totalHeight > oldHeight)
+        {
+            emit self.contentHeightIncreased(totalHeight - oldHeight);
         }
     }
 
@@ -698,7 +706,7 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
         VertexBuf::Builder verts;
 
         // Copy all visible entries to the buffer.
-        for(int idx = cache.size() - 1; yBottom > 0 && idx >= 0; --idx)
+        for(int idx = cache.size() - 1; yBottom > -contentOffset && idx >= 0; --idx)
         {
             CacheEntry *entry = cache[idx];
             yBottom -= entry->height();
@@ -759,13 +767,13 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
 
         // First draw the shadow of the text.
         uMvpMatrix = projMatrix *
-                     Matrix4f::translate(Vector2f(pos.topLeft + Vector2i(margin, 0)));
+                     Matrix4f::translate(Vector2f(pos.topLeft + Vector2i(margin, contentOffset)));
         uShadowColor = Vector4f(0, 0, 0, 1);
         contents.draw();
 
         // Draw the text itself.
         uMvpMatrix = projMatrix *
-                     Matrix4f::translate(Vector2f(pos.topLeft + Vector2i(margin, -2)));
+                     Matrix4f::translate(Vector2f(pos.topLeft + Vector2i(margin, contentOffset - 2)));
         uShadowColor = Vector4f(1, 1, 1, 1);
         contents.draw();
 
@@ -818,6 +826,18 @@ int LogWidget::maximumScroll() const
 void LogWidget::scroll(int to)
 {
     d->visibleOffset = de::max(0, to);
+}
+
+void LogWidget::setContentYOffset(Animation const &anim)
+{
+    if(d->visibleOffset > 0)
+    {
+        d->contentOffset = 0;
+    }
+    else
+    {
+        d->contentOffset = anim;
+    }
 }
 
 void LogWidget::viewResized()

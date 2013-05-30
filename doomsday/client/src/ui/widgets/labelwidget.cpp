@@ -252,9 +252,8 @@ public Font::RichFormat::IStyle
             // Figure out how much room is left for the image.
             Rectanglef const rect = layout.image;
 
-            /*
             // Fit the image.
-            if(imageFit.testFlag(FitToWidth))
+            if(!imageFit.testFlag(FitToWidth))
             {
                 layout.image.setWidth(image.width());
             }
@@ -262,7 +261,6 @@ public Font::RichFormat::IStyle
             {
                 layout.image.setHeight(image.height());
             }
-            */
 
             // Should the original aspect ratio be preserved?
             if(imageFit & OriginalAspectRatio)

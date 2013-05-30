@@ -21,6 +21,7 @@
 
 #include <QObject>
 #include <de/LogSink>
+#include <de/Animation>
 
 #include "guiwidget.h"
 
@@ -69,6 +70,8 @@ public:
      */
     void scroll(int to);
 
+    void setContentYOffset(de::Animation const &anim);
+
     // Events.
     void viewResized();
     void update();
@@ -87,6 +90,7 @@ protected slots:
 signals:
     void scrollPositionChanged(int pos);
     void scrollMaxChanged(int maximum);
+    void contentHeightIncreased(int delta);
 
 protected:
     void glInit();

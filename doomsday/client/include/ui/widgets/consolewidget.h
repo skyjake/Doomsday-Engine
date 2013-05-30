@@ -19,15 +19,22 @@
 #ifndef DENG_CLIENT_CONSOLEWIDGET_H
 #define DENG_CLIENT_CONSOLEWIDGET_H
 
+#include <QObject>
+
 #include "guiwidget.h"
 #include "consolecommandwidget.h"
 #include "logwidget.h"
 
 /**
  * Console command line and message history.
+ *
+ * ConsoleWidget expects to be bottom-left anchored. It resizes its height
+ * automatically. The user can drag the right edge to resize the widget.
  */
-class ConsoleWidget : public GuiWidget
+class ConsoleWidget : public QObject, public GuiWidget
 {
+    Q_OBJECT
+
 public:
     ConsoleWidget();
 
@@ -36,6 +43,9 @@ public:
 
     // Events.
     bool handleEvent(de::Event const &event);
+
+protected slots:
+    void logContentHeightIncreased(int delta);
 
 protected:
     void glInit();

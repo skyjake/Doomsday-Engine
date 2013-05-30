@@ -89,8 +89,7 @@ DENG2_OBSERVES(Canvas,           FocusChange)
         ConsoleWidget *console = new ConsoleWidget;
         console->rule()
                 .setInput(Rule::Bottom, taskBar->rule().top())
-                .setInput(Rule::Left,   root.viewLeft())
-                .setInput(Rule::Top,    root.viewTop());
+                .setInput(Rule::Left,   root.viewLeft());
         root.add(console);
 
         root.setFocus(&console->commandLine());

@@ -360,6 +360,7 @@ DENG_HEADERS += \
     include/ui/widgets/busywidget.h \
     include/ui/widgets/buttonwidget.h \ 
     include/ui/widgets/consolecommandwidget.h \
+    include/ui/widgets/consolewidget.h \
     include/ui/widgets/gltextcomposer.h \
     include/ui/widgets/guirootwidget.h \
     include/ui/widgets/guiwidget.h \
@@ -389,8 +390,7 @@ INCLUDEPATH += \
 
 HEADERS += \
     $$DENG_API_HEADERS \
-    $$DENG_HEADERS \
-    include/ui/widgets/consolewidget.h
+    $$DENG_HEADERS
 
 # Platform-specific sources.
 win32 {
@@ -637,6 +637,7 @@ SOURCES += \
     src/ui/widgets/busywidget.cpp \
     src/ui/widgets/buttonwidget.cpp \
     src/ui/widgets/consolecommandwidget.cpp \
+    src/ui/widgets/consolewidget.cpp \
     src/ui/widgets/gltextcomposer.cpp \
     src/ui/widgets/guirootwidget.cpp \
     src/ui/widgets/guiwidget.cpp \
@@ -657,8 +658,7 @@ SOURCES += \
     src/updater/updaterdialog.cpp \
     src/updater/updatersettings.cpp \
     src/updater/updatersettingsdialog.cpp \
-    src/uri.cpp \
-    src/ui/widgets/consolewidget.cpp
+    src/uri.cpp
 
 !deng_nosdlmixer:!deng_nosdl {
     HEADERS += include/audio/sys_audiod_sdlmixer.h
