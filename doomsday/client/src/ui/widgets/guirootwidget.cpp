@@ -62,7 +62,7 @@ DENG2_PIMPL(GuiRootWidget)
                             GLTexture::maximumSize().min(GLTexture::Size(4096, 4096))));
             uTexAtlas = *atlas;
 
-            // Solid general purpose textures:
+            // A set of general purpose textures:
 
             // One solid white pixel.
             Image const solidWhitePixel = Image::solidColor(Image::Color(255, 255, 255, 255),

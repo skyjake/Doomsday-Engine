@@ -85,6 +85,7 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("TaskBar"), d(new Instance(this))
 
     LabelWidget *logo = new LabelWidget;
     logo->setImage(style().images().image("logo.px128"));
+    logo->setImageScale(.75f);
     logo->rule()
             .setInput(Rule::Height, rule().height())
             .setInput(Rule::Width,  rule().height())
