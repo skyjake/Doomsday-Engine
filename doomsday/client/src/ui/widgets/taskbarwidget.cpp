@@ -24,13 +24,18 @@
 #include <de/Drawable>
 #include <de/GLBuffer>
 
+#include "../../updater/versioninfo.h"
+#include "dd_main.h"
+
 using namespace de;
 
-DENG2_PIMPL(TaskBarWidget)
+DENG2_PIMPL(TaskBarWidget),
+DENG2_OBSERVES(Games, GameChange)
 {
     typedef GLBufferT<Vertex2Rgba> VertexBuf;
 
     ConsoleCommandWidget *cmdLine;
+    LabelWidget *status;
 
     Drawable drawable;
     GLUniform uMvpMatrix;
@@ -40,10 +45,18 @@ DENG2_PIMPL(TaskBarWidget)
     Instance(Public *i)
         : Base(i),
           cmdLine(0),
+          status(0),
           uMvpMatrix("uMvpMatrix", GLUniform::Mat4),
           uColor    ("uColor",     GLUniform::Vec4)
     {
         uColor = Vector4f(1, 1, 1, 1);
+
+        App_Games().audienceForGameChange += this;
+    }
+
+    ~Instance()
+    {
+        App_Games().audienceForGameChange -= this;
     }
 
     void glInit()
@@ -77,6 +90,23 @@ DENG2_PIMPL(TaskBarWidget)
     {
         projMatrix = self.root().projMatrix2D();
     }
+
+    void currentGameChanged(Game &)
+    {
+        updateStatus();
+    }
+
+    void updateStatus()
+    {
+        if(App_GameLoaded())
+        {
+            status->setText(Str_Text(App_Games().current().identityKey()));
+        }
+        else
+        {
+            status->setText("No game loaded");
+        }
+    }
 };
 
 TaskBarWidget::TaskBarWidget() : GuiWidget("TaskBar"), d(new Instance(this))
@@ -86,12 +116,25 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("TaskBar"), d(new Instance(this))
     LabelWidget *logo = new LabelWidget;
     logo->setImage(style().images().image("logo.px128"));
     logo->setImageScale(.75f);
+    logo->setImageFit(FitToHeight | OriginalAspectRatio);
+    logo->setText(DENG2_STR_ESCAPE("b") + VersionInfo().base());
+    logo->setWidthPolicy(LabelWidget::Expand);
+    logo->setTextAlignment(AlignLeft);
     logo->rule()
             .setInput(Rule::Height, rule().height())
-            .setInput(Rule::Width,  rule().height())
-            .setInput(Rule::Right,  rule().right() - gap)
+            .setInput(Rule::Right,  rule().right())
             .setInput(Rule::Bottom, rule().bottom());
     add(logo);
+
+    d->status = new LabelWidget;
+    d->status->setWidthPolicy(LabelWidget::Expand);
+    d->status->rule()
+            .setInput(Rule::Height, rule().height())
+            .setInput(Rule::Bottom, rule().bottom())
+            .setInput(Rule::Left,   rule().left());
+    add(d->status);
+
+    d->updateStatus();
 
     // Taskbar height depends on the font size.
     rule().setInput(Rule::Height, style().fonts().font("default").height() + gap * 2);
