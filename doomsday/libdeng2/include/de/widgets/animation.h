@@ -51,7 +51,9 @@ public:
     DENG2_ERROR(ClockMissingError);
 
 public:
-    Animation(float value = 0, Style style = EaseIn);
+    Animation(float value = 0, Style style = EaseIn);    
+    Animation(Animation const &other);
+    Animation &operator = (Animation const &other);
 
     void setStyle(Style s);
 
@@ -158,6 +160,8 @@ public:
     static void setClock(Clock const *clock);
 
     static Time currentTime();
+
+    static Animation range(Style style, float from, float to, TimeDelta span, TimeDelta delay = 0);
 
 private:
     DENG2_PRIVATE(d)
