@@ -20,6 +20,7 @@
 #include "ui/widgets/guirootwidget.h"
 #include "clientapp.h"
 #include <de/garbage.h>
+#include <de/MouseEvent>
 
 using namespace de;
 
@@ -132,6 +133,35 @@ bool GuiWidget::hitTest(Vector2i const &pos) const
         return false;
     }
     return rule().recti().contains(pos);
+}
+
+GuiWidget::MouseClickStatus GuiWidget::handleMouseClick(Event const &event)
+{
+    if(event.type() == Event::MouseButton)
+    {
+        MouseEvent const &mouse = event.as<MouseEvent>();
+        if(mouse.button() != MouseEvent::Left)
+        {
+            return MouseClickUnrelated;
+        }
+
+        if(mouse.state() == MouseEvent::Pressed && hitTest(mouse.pos()))
+        {
+            root().routeMouse(this);
+            return MouseClickStarted;
+        }
+
+        if(mouse.state() == MouseEvent::Released && root().isEventRouted(event.type(), this))
+        {
+            root().routeMouse(0);
+            if(hitTest(mouse.pos()))
+            {
+                return MouseClickFinished;
+            }
+            return MouseClickAborted;
+        }
+    }
+    return MouseClickUnrelated;
 }
 
 void GuiWidget::glInit()

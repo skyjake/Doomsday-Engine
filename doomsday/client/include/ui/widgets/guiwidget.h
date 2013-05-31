@@ -94,6 +94,15 @@ public:
      */
     virtual bool hitTest(de::Vector2i const &pos) const;
 
+    enum MouseClickStatus {
+        MouseClickUnrelated, ///< Event was not related to mouse clicks.
+        MouseClickStarted,
+        MouseClickFinished,
+        MouseClickAborted
+    };
+
+    MouseClickStatus handleMouseClick(de::Event const &event);
+
 protected:
     virtual void glInit();
     virtual void glDeinit();
