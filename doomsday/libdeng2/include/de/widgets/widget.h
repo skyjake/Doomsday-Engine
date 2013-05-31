@@ -54,6 +54,9 @@ public:
         /// Widget will only receive events if it has focus.
         HandleEventsOnlyWhenFocused = 0x4,
 
+        /// Widget cannot be hit by a pointer device.
+        Unhittable = 0x8,
+
         DefaultBehavior = 0
     };
     Q_DECLARE_FLAGS(Behaviors, Behavior)
