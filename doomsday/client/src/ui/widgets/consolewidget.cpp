@@ -58,6 +58,13 @@ DENG2_PIMPL(ConsoleWidget)
     {
         height->set(height->scalar().target() + delta, .25f);
 
+        if(self.rule().top().valuei() <= 0)
+        {
+            // The expansion has reached the top of the screen, so we
+            // can enable PageUp/Dn keys for the log.
+            log->enablePageKeys(true);
+        }
+
         if(useOffsetAnimation)
         {
             // Sync the log content with the height animation.
