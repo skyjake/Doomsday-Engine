@@ -157,6 +157,7 @@ protected:
     void keyReleaseEvent(QKeyEvent *ev);
     void mousePressEvent(QMouseEvent *ev);
     void mouseReleaseEvent(QMouseEvent *ev);
+    void mouseMoveEvent(QMouseEvent *ev);
     void wheelEvent(QWheelEvent *ev);
     void showEvent(QShowEvent *ev);
 

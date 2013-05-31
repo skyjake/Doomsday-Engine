@@ -1,4 +1,4 @@
-/** @file keyevent.h Input event from a keyboard.
+/** @file keyevent.h  Input event from a keyboard.
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *

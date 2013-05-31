@@ -1,4 +1,4 @@
-/** @file mouseeventsource.h  Object that produces mouse events.
+/** @file mouseevent.cpp
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,36 +16,29 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBGUI_MOUSEEVENTSOURCE_H
-#define LIBGUI_MOUSEEVENTSOURCE_H
-
-#include "libgui.h"
-#include "mouseevent.h"
-#include <de/Vector>
-#include <de/Observers>
+#include "de/MouseEvent"
 
 namespace de {
 
-/**
- * Object that produces mouse events.
- */
-class LIBGUI_PUBLIC MouseEventSource
+MouseEvent::MouseEvent() : Event(MouseButton), _button(Unknown), _state(Released)
+{}
+
+MouseEvent::MouseEvent(MotionType motion, Vector2i const &pos)
+    : Event(motion == Absolute? MousePosition :
+            motion == Wheel?    MouseWheel :
+                                MouseMotion),
+      _axisValue(pos), _button(Unknown), _state(Released)
+{}
+
+MouseEvent::MouseEvent(Button button, ButtonState state)
+    : Event(MouseButton), _button(button), _state(state)
+{}
+
+MouseEvent::MotionType MouseEvent::motion() const
 {
-public:
-    enum State
-    {
-        Untrapped,
-        Trapped
-    };
-
-    DENG2_DEFINE_AUDIENCE(MouseStateChange, void mouseStateChanged(State))
-
-    DENG2_DEFINE_AUDIENCE(MouseEvent,       void mouseEvent(MouseEvent const &))
-
-public:
-    virtual ~MouseEventSource() {}
-};
+    return type() == MousePosition? Absolute :
+           type() == MouseMotion?   Relative :
+                                    Wheel;
+}
 
 } // namespace de
-
-#endif // LIBGUI_MOUSEEVENTSOURCE_H

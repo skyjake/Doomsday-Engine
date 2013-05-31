@@ -68,6 +68,7 @@ HEADERS += \
     include/de/ImageBank \
     include/de/KeyEvent \
     include/de/KeyEventSource \
+    include/de/MouseEvent \
     include/de/MouseEventSource \
     include/de/PersistentCanvasWindow \
     include/de/RowAtlasAllocator \
@@ -99,6 +100,7 @@ HEADERS += \
     include/de/gui/keyevent.h \
     include/de/gui/keyeventsource.h \
     include/de/gui/libgui.h \
+    include/de/gui/mouseevent.h \
     include/de/gui/mouseeventsource.h \
     include/de/gui/opengl.h \
     include/de/gui/persistentcanvaswindow.h \
@@ -129,6 +131,7 @@ SOURCES +=  \
     src/image.cpp \
     src/imagebank.cpp \
     src/keyevent.cpp \
+    src/mouseevent.cpp \
     src/persistentcanvaswindow.cpp \
     src/rowatlasallocator.cpp
 

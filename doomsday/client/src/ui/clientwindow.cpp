@@ -50,8 +50,7 @@ DENG2_PIMPL(ClientWindow),
 DENG2_OBSERVES(KeyEventSource,   KeyEvent),
 DENG2_OBSERVES(MouseEventSource, MouseStateChange),
 #ifndef WIN32
-  DENG2_OBSERVES(MouseEventSource, MouseAxisEvent),
-  DENG2_OBSERVES(MouseEventSource, MouseButtonEvent),
+  DENG2_OBSERVES(MouseEventSource, MouseEvent),
 #endif
 DENG2_OBSERVES(Canvas,           FocusChange)
 {
@@ -145,8 +144,7 @@ DENG2_OBSERVES(Canvas,           FocusChange)
         self.canvas().audienceForMouseStateChange += this;
 
 #ifndef WIN32 // On Windows, DirectInput bypasses the mouse input from Canvas.
-        self.canvas().audienceForMouseAxisEvent += this;
-        self.canvas().audienceForMouseButtonEvent += this;
+        self.canvas().audienceForMouseEvent += this;
 #endif
     }
 
@@ -214,32 +212,36 @@ DENG2_OBSERVES(Canvas,           FocusChange)
     }
 
 #ifndef WIN32
-    void mouseAxisEvent(MouseEventSource::Axis axis, Vector2i const &value)
+    void mouseEvent(MouseEvent const &event)
     {
-        switch(axis)
+        switch(event.type())
         {
-        case MouseEventSource::Motion:
-            Mouse_Qt_SubmitMotion(IMA_POINTER, value.x, value.y);
+        case Event::MouseButton:
+            Mouse_Qt_SubmitButton(
+                        event.button() == MouseEvent::Left?     IMB_LEFT :
+                        event.button() == MouseEvent::Middle?   IMB_MIDDLE :
+                        event.button() == MouseEvent::Right?    IMB_RIGHT :
+                        event.button() == MouseEvent::XButton1? IMB_EXTRA1 :
+                        event.button() == MouseEvent::XButton2? IMB_EXTRA2 : IMB_MAXBUTTONS,
+                        event.state() == MouseEvent::Pressed);
             break;
 
-        case MouseEventSource::Wheel:
-            Mouse_Qt_SubmitMotion(IMA_WHEEL, value.x, value.y);
+        case Event::MousePosition:
+            // Pass onto the window system.
+            ClientApp::windowSystem().processEvent(event);
+            break;
+
+        case Event::MouseMotion:
+            Mouse_Qt_SubmitMotion(IMA_POINTER, event.pos().x, event.pos().y);
+            break;
+
+        case Event::MouseWheel:
+            Mouse_Qt_SubmitMotion(IMA_WHEEL, event.pos().x, event.pos().y);
             break;
 
         default:
             break;
         }
-    }
-
-    void mouseButtonEvent(MouseEventSource::Button button, MouseEventSource::ButtonState state)
-    {
-        Mouse_Qt_SubmitButton(
-                    button == MouseEventSource::Left?     IMB_LEFT :
-                    button == MouseEventSource::Middle?   IMB_MIDDLE :
-                    button == MouseEventSource::Right?    IMB_RIGHT :
-                    button == MouseEventSource::XButton1? IMB_EXTRA1 :
-                    button == MouseEventSource::XButton2? IMB_EXTRA2 : IMB_MAXBUTTONS,
-                    state == MouseEventSource::Pressed);
     }
 #endif // !WIN32
 
