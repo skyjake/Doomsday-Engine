@@ -25,6 +25,8 @@
 #include "../Event"
 #include "../Id"
 
+#include <QList>
+
 namespace de {
 
 class Widget;
@@ -115,6 +117,21 @@ public:
 
     String focusNext() const;
     String focusPrev() const;
+
+    /**
+     * Routines specific types of events to another widget. It will be
+     * the only one offered those events.
+     *
+     * @param types    List of event types.
+     * @param routeTo  Widget to route events to. Caller must ensure
+     *                 that the widget is not destroyed while the
+     *                 routing is in effect.
+     */
+    void setEventRouting(QList<int> const &types, Widget *routeTo);
+
+    void clearEventRouting();
+
+    bool isEventRouted(int type, Widget *to) const;
 
     // Tree organization.
     void clear();

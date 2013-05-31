@@ -54,6 +54,8 @@ public:
     int type() const { return _type; }
 
     bool isKeyDown() const { return _type == KeyPress || _type == KeyRepeat; }
+    bool isMouse() const { return _type == MouseButton || _type == MouseMotion ||
+                _type == MousePosition || _type == MouseWheel; }
 
     template <typename Type>
     Type &as() {

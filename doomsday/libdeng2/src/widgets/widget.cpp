@@ -33,6 +33,9 @@ DENG2_PIMPL(Widget)
     String focusNext;
     String focusPrev;
 
+    typedef QMap<int, Widget *> Routing;
+    Routing routing;
+
     typedef QList<Widget *> Children;
     typedef QMap<String, Widget *> NamedChildren;
     Children children;
@@ -173,6 +176,31 @@ String Widget::focusPrev() const
     return d->focusPrev;
 }
 
+void Widget::setEventRouting(QList<int> const &types, Widget *routeTo)
+{
+    foreach(int type, types)
+    {
+        if(routeTo)
+        {
+            d->routing.insert(type, routeTo);
+        }
+        else
+        {
+            d->routing.remove(type);
+        }
+    }
+}
+
+void Widget::clearEventRouting()
+{
+    d->routing.clear();
+}
+
+bool Widget::isEventRouted(int type, Widget *to) const
+{
+    return d->routing.contains(type) && d->routing[type] == to;
+}
+
 void Widget::clear()
 {
     d->clear();
@@ -277,6 +305,12 @@ bool Widget::dispatchEvent(Event const &event, bool (Widget::*memberFunc)(Event 
     {
         // The focused widget is offered events before dispatching to the tree.
         return false;
+    }
+
+    // Routing has priority.
+    if(d->routing.contains(event.type()))
+    {
+        return d->routing[event.type()]->dispatchEvent(event, memberFunc);
     }
 
     // Tree is traversed in reverse order.
