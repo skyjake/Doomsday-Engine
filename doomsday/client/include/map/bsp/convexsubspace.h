@@ -21,7 +21,6 @@
 #define DENG_WORLD_MAP_BSP_CONVEXSUBSPACE
 
 #include <QList>
-#include <QSet>
 
 #include <de/Error>
 
@@ -35,6 +34,26 @@ namespace de {
 class Polygon;
 
 namespace bsp {
+
+struct OrderedSegment
+{
+    LineSegment::Side *segment;
+    double fromAngle;
+    double toAngle;
+
+#ifdef DENG_DEBUG
+    void debugPrint() const
+    {
+        LOG_INFO("[%p] Angle: %1.6f %s -> Angle: %1.6f %s")
+            << de::dintptr(this)
+            << fromAngle
+            << (segment? segment->from().origin().asText() : "(null)")
+            << toAngle
+            << (segment? segment->to().origin().asText() : "(null)");
+    }
+#endif
+};
+typedef QList<OrderedSegment> OrderedSegments;
 
 /**
  * Models a @em logical convex subspace in the partition plane, providing the
@@ -52,10 +71,6 @@ namespace bsp {
  */
 class ConvexSubspace
 {
-public:
-    /// The set of line segments.
-    typedef QSet<LineSegment::Side *> Segments;
-
 public:
     /**
      * Construct an empty convex subspace.
@@ -80,7 +95,7 @@ public:
     /**
      * Returns the total number of segments in the subspace.
      */
-    inline int segmentCount() const { return segments().count(); }
+    int segmentCount() const;
 
     /**
      * Returns @c true iff the subspace is "empty", which is to say there are
@@ -89,6 +104,12 @@ public:
      * Equivalent to @code segmentCount() == 0 @endcode
      */
     inline bool isEmpty() const { return segmentCount() == 0; }
+
+    /**
+     * Returns @c true iff at least one line segment in the set is derived from
+     * a map line.
+     */
+    bool hasMapLineSegment() const;
 
     /**
      * Add more line segments to the subspace. It is assumed that the new set
@@ -164,9 +185,9 @@ public:
     void setBspLeaf(BspLeaf *newBspLeaf);
 
     /**
-     * Provides access to the set of line segments for efficient traversal.
+     * Provides a clockwise ordered list of the line segments in the subspace.
      */
-    Segments const &segments() const;
+    OrderedSegments const &segments() const;
 
 private:
     DENG2_PRIVATE(d)

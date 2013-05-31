@@ -18,6 +18,7 @@
  */
 
 #include <QHash>
+#include <QSet>
 #include <QtAlgorithms>
 
 #include <de/mathutil.h>
@@ -40,15 +41,6 @@ namespace bsp {
 
 typedef LineSegment::Side Segment;
 typedef QList<Segment *> SegmentList;
-
-struct OrderedSegment
-{
-    Segment *segment;
-    double fromAngle;
-    double toAngle;
-};
-
-typedef QList<OrderedSegment> OrderedSegments;
 
 /**
  * Represents a clockwise ordering of a subset of the line segments and
@@ -166,12 +158,7 @@ struct Continuity
 
         foreach(OrderedSegment const *oseg, orderedSegs)
         {
-            LOG_INFO("[%p] Angle: %1.6f %s -> Angle: %1.6f %s")
-                << de::dintptr(oseg)
-                << oseg->fromAngle
-                << oseg->segment->from().origin().asText()
-                << oseg->toAngle
-                << oseg->segment->to().origin().asText();
+            oseg->debugPrint();
         }
     }
 #endif
@@ -179,16 +166,20 @@ struct Continuity
 
 DENG2_PIMPL_NOREF(ConvexSubspace)
 {
+    typedef QSet<Segment *> Segments;
     typedef QList<Continuity> Continuities;
 
     /// The set of line segments.
     Segments segments;
 
+    /// The same line segments in a clockwise order with angle info.
+    OrderedSegments orderedSegments;
+
+    /// Set to @c true when the ordered segment list needs to be rebuilt.
+    bool needRebuildOrderedSegments;
+
     /// Line segment continuity map.
     Continuities continuities;
-
-    /// Set to @c true when the continuity map needs to be rebuilt.
-    bool needRebuildContinuityMap;
 
     /// Chosen map sector for this subspace (if any).
     Sector *sector;
@@ -197,17 +188,18 @@ DENG2_PIMPL_NOREF(ConvexSubspace)
     BspLeaf *bspLeaf;
 
     Instance()
-        : needRebuildContinuityMap(false),
+        : needRebuildOrderedSegments(false),
           sector(0),
           bspLeaf(0)
     {}
 
     Instance(Instance const &other)
         : de::IPrivate(),
-          segments                (other.segments),
-          needRebuildContinuityMap(other.needRebuildContinuityMap),
-          sector                  (other.sector),
-          bspLeaf                 (other.bspLeaf)
+          segments                  (other.segments),
+          orderedSegments           (other.orderedSegments),
+          needRebuildOrderedSegments(other.needRebuildOrderedSegments),
+          sector                    (other.sector),
+          bspLeaf                   (other.bspLeaf)
     {}
 
     Vector2d findCenter()
@@ -217,7 +209,8 @@ DENG2_PIMPL_NOREF(ConvexSubspace)
         foreach(Segment *seg, segments)
         {
             center += seg->from().origin();
-            numPoints += 1;
+            center += seg->to().origin();
+            numPoints += 2;
         }
         if(numPoints)
         {
@@ -227,13 +220,17 @@ DENG2_PIMPL_NOREF(ConvexSubspace)
     }
 
     /**
-     * Returns a list of all the line segments sorted in a clockwise order
-     * (i.e., descending angles) according to their position/orientation
-     * relative to @a point.
+     * Builds the ordered list of line segments, which, is sorted firstly in
+     * a clockwise order (i.e., descending angles) according to the origin of
+     * their 'from' vertex relative to @a point. A secondary ordering is also
+     * applied such that line segments with the same origin coordinates are
+     * sorted by descending 'to' angle.
      */
-    OrderedSegments orderedSegments(Vector2d const &point)
+    void buildOrderedSegments(Vector2d const &point)
     {
-        OrderedSegments clockwiseSegments;
+        needRebuildOrderedSegments = false;
+
+        orderedSegments.clear();
 
         foreach(Segment *seg, segments)
         {
@@ -245,40 +242,64 @@ DENG2_PIMPL_NOREF(ConvexSubspace)
             oseg.fromAngle = M_DirectionToAngleXY(fromDist.x, fromDist.y);
             oseg.toAngle   = M_DirectionToAngleXY(toDist.x, toDist.y);
 
-            clockwiseSegments.append(oseg);
+            orderedSegments.append(oseg);
         }
 
-        // Sort the segments (algorithm: "double bubble").
-        int const numSegments = clockwiseSegments.count();
+        // Sort algorithm: "double bubble".
+
+        // Order by descending 'from' angle.
+        int const numSegments = orderedSegments.count();
         for(int pass = 0; pass < numSegments - 1; ++pass)
         {
             bool swappedAny = false;
             for(int i = 0; i < numSegments - 1; ++i)
             {
-                OrderedSegment const &a = clockwiseSegments.at(i);
-                OrderedSegment const &b = clockwiseSegments.at(i+1);
-
+                OrderedSegment const &a = orderedSegments.at(i);
+                OrderedSegment const &b = orderedSegments.at(i+1);
                 if(a.fromAngle + ANG_EPSILON < b.fromAngle)
                 {
-                    clockwiseSegments.swap(i, i + 1);
+                    orderedSegments.swap(i, i + 1);
                     swappedAny = true;
                 }
             }
             if(!swappedAny) break;
         }
 
+        for(int pass = 0; pass < numSegments - 1; ++pass)
+        {
+            bool swappedAny = false;
+            for(int i = 0; i < numSegments - 1; ++i)
+            {
+                OrderedSegment const &a = orderedSegments.at(i);
+                OrderedSegment const &b = orderedSegments.at(i+1);
+                if(a.fromAngle == b.fromAngle)
+                {
+                    if(b.segment->length() > a.segment->length())
+                    {
+                        orderedSegments.swap(i, i + 1);
+                        swappedAny = true;
+                    }
+                }
+            }
+            if(!swappedAny) break;
+        }
+
         // LOG_DEBUG("Ordered segments around %s") << point.asText();
-        return clockwiseSegments;
     }
 
-    void buildContinuityMap(Vector2d const &center, OrderedSegments const &clockwiseOrder)
+    void buildContinuityMap()
     {
-        needRebuildContinuityMap = false;
+        if(needRebuildOrderedSegments)
+        {
+            buildOrderedSegments(findCenter());
+        }
+
+        continuities.clear();
 
         typedef QHash<Sector *, Continuity *> SectorContinuityMap;
         SectorContinuityMap scMap;
 
-        foreach(OrderedSegment const &oseg, clockwiseOrder)
+        foreach(OrderedSegment const &oseg, orderedSegments)
         {
             Sector *frontSector = oseg.segment->sectorPtr();
 
@@ -307,7 +328,7 @@ ConvexSubspace::ConvexSubspace()
     : d(new Instance())
 {}
 
-ConvexSubspace::ConvexSubspace(QList<LineSegment::Side *> const &segments)
+ConvexSubspace::ConvexSubspace(QList<Segment *> const &segments)
     : d(new Instance())
 {
     addSegments(segments);
@@ -317,16 +338,16 @@ ConvexSubspace::ConvexSubspace(ConvexSubspace const &other)
     : d(new Instance(*other.d))
 {}
 
-void ConvexSubspace::addSegments(QList<LineSegment::Side *> const &newSegments)
+void ConvexSubspace::addSegments(QList<Segment *> const &newSegments)
 {
     int sizeBefore = d->segments.size();
 
-    d->segments.unite(Segments::fromList(newSegments));
+    d->segments.unite(QSet<Segment *>::fromList(newSegments));
 
     if(d->segments.size() != sizeBefore)
     {
-        // We'll need to rebuild the continuity map.
-        d->needRebuildContinuityMap = true;
+        // We'll need to rebuild the ordered segment list.
+        d->needRebuildOrderedSegments = true;
     }
 
 #ifdef DENG_DEBUG
@@ -339,16 +360,16 @@ void ConvexSubspace::addSegments(QList<LineSegment::Side *> const &newSegments)
 #endif
 }
 
-void ConvexSubspace::addOneSegment(LineSegment::Side const &newSegment)
+void ConvexSubspace::addOneSegment(Segment const &newSegment)
 {
     int sizeBefore = d->segments.size();
 
-    d->segments.insert(const_cast<LineSegment::Side *>(&newSegment));
+    d->segments.insert(const_cast<Segment *>(&newSegment));
 
     if(d->segments.size() != sizeBefore)
     {
-        // We'll need to rebuild the continuity map.
-        d->needRebuildContinuityMap = true;
+        // We'll need to rebuild the ordered segment list.
+        d->needRebuildOrderedSegments = true;
     }
     else
     {
@@ -361,10 +382,7 @@ Polygon *ConvexSubspace::buildLeafGeometry() const
     if(isEmpty())
         return 0;
 
-    Vector2d center = d->findCenter();
-    OrderedSegments clockwiseSegments = d->orderedSegments(center);
-
-    d->buildContinuityMap(center, clockwiseSegments);
+    d->buildContinuityMap();
 
     // Choose a sector to attribute to any BSP leaf we might produce.
     qSort(d->continuities.begin(), d->continuities.end());
@@ -372,7 +390,7 @@ Polygon *ConvexSubspace::buildLeafGeometry() const
 
 #ifdef DENG_DEBUG
     LOG_INFO("\nConvexSubspace %s BSP sector:%i (%i continuities)")
-        << center.asText()
+        << d->findCenter().asText()
         << (d->sector? d->sector->indexInArchive() : -1)
         << d->continuities.count();
 
@@ -386,9 +404,9 @@ Polygon *ConvexSubspace::buildLeafGeometry() const
     Polygon *poly = new Polygon;
 
     // Iterate backwards so that the half-edges can be linked clockwise.
-    for(int i = clockwiseSegments.size(); i-- > 0; )
+    for(int i = d->orderedSegments.size(); i-- > 0; )
     {
-        Segment *seg = clockwiseSegments[i].segment;
+        Segment *seg = d->orderedSegments[i].segment;
         HEdge *hedge = new HEdge(seg->from(), seg->mapSidePtr());
 
         // Link the new half-edge for this line segment to the head of
@@ -438,7 +456,6 @@ Polygon *ConvexSubspace::buildLeafGeometry() const
 
 Sector *ConvexSubspace::chooseSectorForBspLeaf() const
 {
-    DENG_ASSERT(!d->needRebuildContinuityMap);
     return d->sector;
 }
 
@@ -452,9 +469,28 @@ void ConvexSubspace::setBspLeaf(BspLeaf *newBspLeaf)
     d->bspLeaf = newBspLeaf;
 }
 
-ConvexSubspace::Segments const &ConvexSubspace::segments() const
+int ConvexSubspace::segmentCount() const
 {
-    return d->segments;
+    return d->segments.count();
+}
+
+bool ConvexSubspace::hasMapLineSegment() const
+{
+    foreach(Segment *seg, d->segments)
+    {
+        if(seg->hasMapSide())
+            return true;
+    }
+    return false;
+}
+
+OrderedSegments const &ConvexSubspace::segments() const
+{
+    if(d->needRebuildOrderedSegments)
+    {
+        d->buildOrderedSegments(d->findCenter());
+    }
+    return d->orderedSegments;
 }
 
 } // namespace bsp

@@ -32,6 +32,7 @@
 
 #include <de/Error>
 #include <de/Log>
+#include <de/LogBuffer>
 
 #include "map/gamemap.h"
 #include "BspLeaf"
@@ -787,8 +788,12 @@ DENG2_PIMPL(Partitioner)
      *
      * @note If the line segment has a twin it is also split.
      */
-    LineSegment::Side &splitLineSegment(LineSegment::Side &frontLeft, Vector2d const &point)
+    LineSegment::Side &splitLineSegment(LineSegment::Side &frontLeft,
+        Vector2d const &point, bool updateEdgeTips = true)
     {
+        DENG_ASSERT(point != frontLeft.from().origin() &&
+                    point != frontLeft.to().origin());
+
         //LOG_DEBUG("Splitting line segment %p at %s.")
         //    << de::dintptr(&frontLeft) << point.asText();
 
@@ -830,30 +835,33 @@ DENG2_PIMPL(Partitioner)
         backLeft.setRight(&backRight);
         backRight.setLeft(&backLeft);
 
-        /**
-         * @todo Optimize: Avoid clearing tips by implementing update logic.
-         */
-        edgeTips(oldSeg.from()).clearByLineSegment(oldSeg);
-        edgeTips(oldSeg.to()  ).clearByLineSegment(oldSeg);
+        if(updateEdgeTips)
+        {
+            /**
+             * @todo Optimize: Avoid clearing tips by implementing update logic.
+             */
+            edgeTips(oldSeg.from()).clearByLineSegment(oldSeg);
+            edgeTips(oldSeg.to()  ).clearByLineSegment(oldSeg);
 
-        edgeTips(newSeg.from()).clearByLineSegment(newSeg);
-        edgeTips(newSeg.to()  ).clearByLineSegment(newSeg);
+            edgeTips(newSeg.from()).clearByLineSegment(newSeg);
+            edgeTips(newSeg.to()  ).clearByLineSegment(newSeg);
 
-        edgeTips(oldSeg.from()).add(oldSeg.front().angle(),
-                                    oldSeg.front().hasSector()? &oldSeg.front() : 0,
-                                    oldSeg.back().hasSector()?  &oldSeg.back()  : 0);
+            edgeTips(oldSeg.from()).add(oldSeg.front().angle(),
+                                        oldSeg.front().hasSector()? &oldSeg.front() : 0,
+                                        oldSeg.back().hasSector()?  &oldSeg.back()  : 0);
 
-        edgeTips(oldSeg.to()  ).add(oldSeg.back().angle(),
-                                    oldSeg.back().hasSector()?  &oldSeg.back()  : 0,
-                                    oldSeg.front().hasSector()? &oldSeg.front() : 0);
+            edgeTips(oldSeg.to()  ).add(oldSeg.back().angle(),
+                                        oldSeg.back().hasSector()?  &oldSeg.back()  : 0,
+                                        oldSeg.front().hasSector()? &oldSeg.front() : 0);
 
-        edgeTips(newSeg.from()).add(newSeg.front().angle(),
-                                    newSeg.front().hasSector()? &newSeg.front() : 0,
-                                    newSeg.back().hasSector()?  &newSeg.back()  : 0);
+            edgeTips(newSeg.from()).add(newSeg.front().angle(),
+                                        newSeg.front().hasSector()? &newSeg.front() : 0,
+                                        newSeg.back().hasSector()?  &newSeg.back()  : 0);
 
-        edgeTips(newSeg.to()  ).add(newSeg.back().angle(),
-                                    newSeg.back().hasSector()?  &newSeg.back()  : 0,
-                                    newSeg.front().hasSector()? &newSeg.front() : 0);
+            edgeTips(newSeg.to()  ).add(newSeg.back().angle(),
+                                        newSeg.back().hasSector()?  &newSeg.back()  : 0,
+                                        newSeg.front().hasSector()? &newSeg.front() : 0);
+        }
 
         return frontRight;
     }
@@ -1327,35 +1335,58 @@ DENG2_PIMPL(Partitioner)
         return newTreeNode(bspElement, rightTree, leftTree);
     }
 
-    static bool hasSegmentLinkedToMap(ConvexSubspace const &convexSet)
+    void splitOverlappingLineSegments()
     {
-        foreach(LineSegment::Side *seg, convexSet.segments())
+        foreach(ConvexSubspace const &subspace, convexSubspaces)
         {
-            if(seg->hasMapSide())
-                return true;
+            OrderedSegments convexSet = subspace.segments();
+            int const numSegments = convexSet.count();
+            for(int i = 0; i < numSegments - 1; ++i)
+            {
+                int k = i;
+                while(de::fequal(convexSet[i].fromAngle, convexSet[k + 1].fromAngle) &&
+                      k < numSegments)
+                { k++; }
+
+                for(int l = i; l < k; ++l)
+                {
+                    OrderedSegment &a = convexSet[l];
+                    for(int m = l + 1; m <= k; ++m)
+                    {
+                        OrderedSegment &b = convexSet[m];
+
+                        if(de::fequal(b.segment->length(), a.segment->length()))
+                            continue;
+
+                        splitLineSegment(*a.segment, b.segment->to().origin(),
+                                         false /*don't update edge tips*/);
+                    }
+                }
+
+                i = k;
+            }
         }
-        return false;
     }
 
     void buildLeafGeometries()
     {
-        foreach(ConvexSubspace const &convexSet, convexSubspaces)
+        foreach(ConvexSubspace const &subspace, convexSubspaces)
         {
-            bool const isDegenerate = convexSet.segmentCount() < 3;
+            bool const isDegenerate = subspace.segmentCount() < 3;
 
             /// @todo Move BSP leaf construction here.
-            BspLeaf *leaf = convexSet.bspLeaf();
+            BspLeaf *leaf = subspace.bspLeaf();
 
             if(!isDegenerate)
             {
-                if(!hasSegmentLinkedToMap(convexSet))
+                if(!subspace.hasMapLineSegment())
                     throw Error("Partitioner::buildLeafGeometries",
-                                QString("ConvexSubspace 0x%1 has no map line linked segment")
-                                    .arg(dintptr(&convexSet), 0, 16));
+                                QString("ConvexSubspace 0x%1 has no map line segment")
+                                    .arg(dintptr(&subspace), 0, 16));
 
                 // Construct a new polygon geometry and assign it to
                 // the BSP leaf (takes ownership).
-                leaf->setPoly(convexSet.buildLeafGeometry());
+                leaf->setPoly(subspace.buildLeafGeometry());
 
                 // Link the half-edges with the leaf and account.
                 HEdge *base = leaf->poly().firstHEdge();
@@ -1371,24 +1402,9 @@ DENG2_PIMPL(Partitioner)
 
                 } while((hedgeIt = &hedgeIt->next()) != base);
             }
-            else
-            {
-                // Degenerate. Unlink the neighbor segments.
-                foreach(LineSegment::Side *seg, convexSet.segments())
-                {
-                    if(seg->hasLeft())
-                    {
-                        seg->left().setRight(seg->hasRight()? &seg->right() : 0);
-                    }
-                    if(seg->hasRight())
-                    {
-                        seg->right().setLeft(seg->hasLeft()? &seg->left() : 0);
-                    }
-                }
-            }
 
             // Determine which sector to attribute to the BSP leaf.
-            leaf->setSector(convexSet.chooseSectorForBspLeaf());
+            leaf->setSector(subspace.chooseSectorForBspLeaf());
             if(!leaf->hasSector())
             {
                 LOG_WARNING("BspLeaf %p is degenerate/orphan (%d half-edges).")
@@ -1415,7 +1431,7 @@ DENG2_PIMPL(Partitioner)
                 if(!hedge.hasTwin())
                 {
                     DENG_ASSERT(&hedge.next() != &hedge);
-                    DENG_ASSERT(&hedge.next().vertex() != &hedge.vertex());
+                    //DENG_ASSERT(&hedge.next().vertex() != &hedge.vertex());
 
                     hedge._twin = new HEdge(hedge.next().vertex());
                     hedge._twin->_twin = &hedge;
@@ -1687,6 +1703,7 @@ void Partitioner::build()
     d->rootNode = d->partitionSpace(rootBlock);
 
     // At this point we know that *something* useful was built.
+    d->splitOverlappingLineSegments();
     d->buildLeafGeometries();
 
     // Find the half-edges at the edge of each map line side.
