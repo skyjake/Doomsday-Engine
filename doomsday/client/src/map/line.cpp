@@ -162,7 +162,11 @@ bool Line::Side::considerOneSided() const
 
     if(!d->line.definesPolyobj())
     {
-        DENG_ASSERT(d->leftHEdge != 0);
+        // If there no half-edge is present then convex subspace on "this" side
+        // must have been degenerate (thus no geometry).
+        if(!d->leftHEdge)
+            return true;
+
         HEdge &hedge = *d->leftHEdge;
         if(!hedge.twin().hasBspLeaf() || !hedge.twin().hasSector() || hedge.twin().bspLeaf().isDegenerate())
             return true;
