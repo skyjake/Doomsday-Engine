@@ -32,7 +32,7 @@ using namespace de;
 DENG2_PIMPL(TaskBarWidget),
 DENG2_OBSERVES(Games, GameChange)
 {
-    typedef GLBufferT<Vertex2Rgba> VertexBuf;
+    typedef DefaultVertexBuf VertexBuf;
 
     ConsoleCommandWidget *cmdLine;
     LabelWidget *status;
@@ -50,6 +50,7 @@ DENG2_OBSERVES(Games, GameChange)
           uColor    ("uColor",     GLUniform::Vec4)
     {
         uColor = Vector4f(1, 1, 1, 1);
+        self.set(Background(self.style().colors().colorf("background")));
 
         App_Games().audienceForGameChange += this;
     }
@@ -61,18 +62,7 @@ DENG2_OBSERVES(Games, GameChange)
 
     void glInit()
     {
-        VertexBuf *buf = new VertexBuf;
-        drawable.addBuffer(buf);
-
-        Vector4f bgColor = self.style().colors().colorf("background");
-
-        VertexBuf::Type verts[] = {
-            { Vector2f(0, 0), bgColor },
-            { Vector2f(1, 0), bgColor },
-            { Vector2f(0, 1), bgColor },
-            { Vector2f(1, 1), bgColor }
-        };
-        buf->setVertices(gl::TriangleStrip, verts, 4, gl::Static);
+        drawable.addBuffer(new VertexBuf);
 
         self.root().shaders().build(drawable.program(), "generic.color_ucolor")
                 << uMvpMatrix
@@ -83,12 +73,25 @@ DENG2_OBSERVES(Games, GameChange)
 
     void glDeinit()
     {
+        drawable.clear();
+    }
 
+    void updateGeometry()
+    {
+        Rectanglei pos;
+        if(self.hasChangedPlace(pos) || self.geometryRequested())
+        {
+            self.requestGeometry(false);
+
+            VertexBuf::Builder verts;
+            self.glMakeGeometry(verts);
+            drawable.buffer<VertexBuf>().setVertices(gl::TriangleStrip, verts, gl::Static);
+        }
     }
 
     void updateProjection()
     {
-        projMatrix = self.root().projMatrix2D();
+        uMvpMatrix = self.root().projMatrix2D();
     }
 
     void currentGameChanged(Game &)
@@ -158,11 +161,6 @@ void TaskBarWidget::viewResized()
 
 void TaskBarWidget::draw()
 {
-    Rectanglei pos = rule().recti();
-
-    d->uMvpMatrix = d->projMatrix *
-            Matrix4f::scaleThenTranslate(Vector2f(pos.width(), pos.height()),
-                                         Vector3f(pos.left(), pos.top()));
-
+    d->updateGeometry();
     d->drawable.draw();
 }

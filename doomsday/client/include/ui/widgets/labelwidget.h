@@ -21,6 +21,7 @@
 
 #include <de/Image>
 #include <de/GLBuffer>
+#include <de/GLUniform>
 
 #include "guiwidget.h"
 #include "alignment.h"
@@ -114,38 +115,24 @@ public:
     void update();
     void draw();
 
-protected:
-    void glInit();
-    void glDeinit();
-
-    enum AdditionalGeometryKind {
-        Background,
-        Overlay
-    };
-
     struct ContentLayout {
         de::Rectanglef image;
         de::Rectanglei text;
     };
 
-    /**
-     * Derived classes can override this method to augment their own geometry
-     * onto or under the label. The geometry must use the shared UI atlas for
-     * texturing.
-     *
-     * @param kind    What phase of the drawing is ongoing.
-     * @param verts   Vertex builder to add vertices to.
-     * @param layout  Layout of the content.
-     */
-    virtual void makeAdditionalGeometry(AdditionalGeometryKind kind,
-                                        de::VertexBuilder<de::Vertex2TexRgba>::Vertices &verts,
-                                        ContentLayout const &layout);
+    void contentLayout(ContentLayout &layout);
+
+protected:
+    void glInit();
+    void glDeinit();
+
+    void glMakeGeometry(DefaultVertexBuf::Builder &verts);
 
     /**
      * Called before drawing to update the model-view-projection matrix.
      * Derived classes may override this to set a custom matrix for the label.
      */
-    virtual void updateModelViewProjection();
+    virtual void updateModelViewProjection(de::GLUniform &uMvp);
 
 private:
     DENG2_PRIVATE(d)

@@ -58,7 +58,6 @@ public Font::RichFormat::IStyle
     bool needImageUpdate;
 
     Id imageTex;
-    bool needGeometry;
     Drawable drawable;
     GLUniform uMvpMatrix;
 
@@ -75,7 +74,6 @@ public Font::RichFormat::IStyle
           wrapWidth(0),
           needImageUpdate(false),
           imageTex(Id::None),
-          needGeometry(false),
           uMvpMatrix("uMvpMatrix", GLUniform::Mat4)
     {
         width  = new ConstantRule(0);
@@ -100,7 +98,7 @@ public Font::RichFormat::IStyle
 
         wraps.setFont(*font);
         wrapWidth = 0;
-        needGeometry = true;
+        self.requestGeometry();
     }
 
     Color richStyleColor(int index) const
@@ -333,7 +331,7 @@ public Font::RichFormat::IStyle
         if(wrapWidth != availableTextWidth())
         {
             wrapWidth = availableTextWidth();
-            needGeometry = true;
+            self.requestGeometry();
 
             Font::RichFormat format;
             String plain = format.initFromStyledText(styledText);
@@ -353,52 +351,27 @@ public Font::RichFormat::IStyle
 
     void updateGeometry()
     {
-        needGeometry = false;
-
-        ContentLayout layout;
-        contentPlacement(layout);
+        self.requestGeometry(false);
 
         VertexBuf::Builder verts;
-
-        // Derived classes may insert additional geometry under the label.
-        self.makeAdditionalGeometry(Background, verts, layout);
-
-        // Background for testing.
-        //verts.makeQuad(self.rule().rect(), Vector4f(.5f, 0, .5f, .5f),
-        //               atlas().imageRectf(self.root().solidWhitePixel()).middle());
-
-        if(hasImage())
-        {
-            verts.makeQuad(layout.image, Vector4f(1, 1, 1, 1), atlas().imageRectf(imageTex));
-        }
-        if(hasText())
-        {
-            // Shadow + text.
-            /*composer.makeVertices(verts, textPos.topLeft + Vector2i(0, 2),
-                                  lineAlign, Vector4f(0, 0, 0, 1));*/
-            composer.makeVertices(verts, layout.text, AlignCenter, lineAlign);
-        }
-
-        // Derived classes may insert additional geometry over the label.
-        self.makeAdditionalGeometry(Overlay, verts, layout);
-
+        self.glMakeGeometry(verts);
         drawable.buffer<VertexBuf>().setVertices(gl::TriangleStrip, verts, gl::Static);
     }
 
     void draw()
     {
         Rectanglei pos;
-        if(self.checkPlace(pos) || needGeometry)
+        if(self.hasChangedPlace(pos) || self.geometryRequested())
         {
             updateGeometry();
         }
-        self.updateModelViewProjection();
+        self.updateModelViewProjection(uMvpMatrix);
         drawable.draw();
     }
 
     void atlasContentRepositioned(Atlas &)
     {
-        needGeometry = true;
+        self.requestGeometry();
     }
 };
 
@@ -448,6 +421,11 @@ void LabelWidget::draw()
     d->draw();
 }
 
+void LabelWidget::contentLayout(LabelWidget::ContentLayout &layout)
+{
+    d->contentPlacement(layout);
+}
+
 void LabelWidget::glInit()
 {
     d->glInit();
@@ -458,21 +436,35 @@ void LabelWidget::glDeinit()
     d->glDeinit();
 }
 
-void LabelWidget::makeAdditionalGeometry(LabelWidget::AdditionalGeometryKind,
-                                         VertexBuilder<Vertex2TexRgba>::Vertices &,
-                                         ContentLayout const &)
+void LabelWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
 {
-    // Reserved for derived classes.
+    // Background/frame.
+    GuiWidget::glMakeGeometry(verts);
+
+    ContentLayout layout;
+    contentLayout(layout);
+
+    if(d->hasImage())
+    {
+        verts.makeQuad(layout.image, Vector4f(1, 1, 1, 1), d->atlas().imageRectf(d->imageTex));
+    }
+    if(d->hasText())
+    {
+        // Shadow + text.
+        /*composer.makeVertices(verts, textPos.topLeft + Vector2i(0, 2),
+                              lineAlign, Vector4f(0, 0, 0, 1));*/
+        d->composer.makeVertices(verts, layout.text, AlignCenter, d->lineAlign);
+    }
 }
 
-void LabelWidget::updateModelViewProjection()
+void LabelWidget::updateModelViewProjection(GLUniform &uMvp)
 {
-    d->uMvpMatrix = root().projMatrix2D();
+    uMvp = root().projMatrix2D();
 }
 
 void LabelWidget::viewResized()
 {
-    updateModelViewProjection();
+    updateModelViewProjection(d->uMvpMatrix);
 }
 
 void LabelWidget::setWidthPolicy(SizePolicy policy)

@@ -89,7 +89,7 @@ DENG2_PIMPL(GuiRootWidget)
                 frame.fill(QColor(255, 255, 255, 0).rgba());
                 QPainter painter(&frame);
                 painter.setBrush(Qt::NoBrush);
-                painter.setPen(QColor(0, 0, 0, 255));
+                painter.setPen(QColor(0, 0, 0, 160));
                 painter.drawRect(QRect(0, 0, 11, 11));
                 painter.setPen(QColor(255, 255, 255, 255));
                 painter.drawRect(QRect(1, 1, 9, 9));

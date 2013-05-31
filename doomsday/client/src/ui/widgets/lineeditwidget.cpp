@@ -46,7 +46,6 @@ DENG2_OBSERVES(Atlas, Reposition)
     Time blinkTime;
 
     // GL objects.
-    bool needGeometry;
     GLTextComposer composer;
     Drawable drawable;
     GLUniform uMvpMatrix;
@@ -57,7 +56,6 @@ DENG2_OBSERVES(Atlas, Reposition)
           wraps(static_cast<FontLineWrapping &>(i->lineWraps())),
           font(0),
           margin(0),
-          needGeometry(false),
           uMvpMatrix("uMvpMatrix", GLUniform::Mat4),
           uColor    ("uColor",     GLUniform::Vec4)
     {
@@ -82,6 +80,8 @@ DENG2_OBSERVES(Atlas, Reposition)
 
         font   = &st.fonts().font("editor.plaintext");
         margin = st.rules().rule("gap").valuei();
+
+        self.set(Background(self.style().colors().colorf("background")));
 
         // Update the line wrapper's font.
         wraps.setFont(*font);
@@ -134,63 +134,33 @@ DENG2_OBSERVES(Atlas, Reposition)
 
     void updateGeometry()
     {
-        if(composer.update())
-        {
-            needGeometry = true;
-        }
+        if(composer.update()) self.requestGeometry();
 
+        // Do we actually need to update geometry?
         Rectanglei pos;
-        if(!self.checkPlace(pos) && !needGeometry)
+        if(!self.hasChangedPlace(pos) && !self.geometryRequested())
         {
             return;
         }
-        needGeometry = false;
 
-        Vector4f bgColor = self.style().colors().colorf("background");
+        // Generate all geometry.
+        self.requestGeometry(false);
 
-        // The background.
         VertexBuf::Builder verts;
-        verts.makeQuad(pos, bgColor, atlas().imageRectf(self.root().solidWhitePixel()).middle());
-
-        // Text lines.
-        Rectanglei const contentRect = pos.shrunk(margin);
-        composer.makeVertices(verts, contentRect, AlignLeft, AlignLeft);
-
-        Rectanglef const solidWhiteUv = atlas().imageRectf(self.root().solidWhitePixel());
-
-        // Underline the possible suggested completion.
-        if(self.isSuggestingCompletion())
-        {
-            Rangei const   comp     = self.completionRange();
-            Vector2i const startPos = self.linePos(comp.start);
-            Vector2i const endPos   = self.linePos(comp.end);
-
-            Vector2i const offset = contentRect.topLeft + Vector2i(0, font->ascent().valuei() + 2);
-
-            // It may span multiple lines.
-            for(int i = startPos.y; i <= endPos.y; ++i)
-            {
-                Rangei const span = wraps.line(i).range;
-                Vector2i start = wraps.charTopLeftInPixels(i, i == startPos.y? startPos.x : span.start) + offset;
-                Vector2i end   = wraps.charTopLeftInPixels(i, i == endPos.y?   endPos.x   : span.end)   + offset;
-
-                verts.makeQuad(Rectanglef(start, end + Vector2i(0, 1)),
-                               Vector4f(1, 1, 1, 1), solidWhiteUv.middle());
-            }
-        }
-
+        self.glMakeGeometry(verts);
         drawable.buffer<VertexBuf>(ID_BUF_TEXT)
                 .setVertices(gl::TriangleStrip, verts, gl::Static);
 
         // Cursor.
         Vector2i const cursorPos = self.lineCursorPos();
         Vector2f const cp = wraps.charTopLeftInPixels(cursorPos.y, cursorPos.x) +
-                contentRect.topLeft;
+                contentRect().topLeft;
 
         verts.clear();
         verts.makeQuad(Rectanglef(cp + Vector2f(-1, 0),
                                   cp + Vector2f(1, font->height().value())),
-                       Vector4f(1, 1, 1, 1), solidWhiteUv.middle());
+                       Vector4f(1, 1, 1, 1),
+                       atlas().imageRectf(self.root().solidWhitePixel()).middle());
 
         drawable.buffer<VertexBuf>(ID_BUF_CURSOR)
                 .setVertices(gl::TriangleStrip, verts, gl::Static);
@@ -203,7 +173,12 @@ DENG2_OBSERVES(Atlas, Reposition)
 
     void atlasContentRepositioned(Atlas &)
     {
-        needGeometry = true;
+        self.requestGeometry();
+    }
+
+    inline Rectanglei contentRect() const
+    {
+        return self.rule().recti().shrunk(margin);
     }
 };
 
@@ -227,6 +202,38 @@ void LineEditWidget::glInit()
 void LineEditWidget::glDeinit()
 {
     d->glDeinit();
+}
+
+void LineEditWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
+{
+    GuiWidget::glMakeGeometry(verts);
+
+    // Text lines.
+    Rectanglei const contentRect = d->contentRect();
+    d->composer.makeVertices(verts, contentRect, AlignLeft, AlignLeft);
+
+    Rectanglef const solidWhiteUv = d->atlas().imageRectf(root().solidWhitePixel());
+
+    // Underline the possible suggested completion.
+    if(isSuggestingCompletion())
+    {
+        Rangei const   comp     = completionRange();
+        Vector2i const startPos = linePos(comp.start);
+        Vector2i const endPos   = linePos(comp.end);
+
+        Vector2i const offset = contentRect.topLeft + Vector2i(0, d->font->ascent().valuei() + 2);
+
+        // It may span multiple lines.
+        for(int i = startPos.y; i <= endPos.y; ++i)
+        {
+            Rangei const span = d->wraps.line(i).range;
+            Vector2i start = d->wraps.charTopLeftInPixels(i, i == startPos.y? startPos.x : span.start) + offset;
+            Vector2i end   = d->wraps.charTopLeftInPixels(i, i == endPos.y?   endPos.x   : span.end)   + offset;
+
+            verts.makeQuad(Rectanglef(start, end + Vector2i(0, 1)),
+                           Vector4f(1, 1, 1, 1), solidWhiteUv.middle());
+        }
+    }
 }
 
 void LineEditWidget::viewResized()
@@ -292,7 +299,7 @@ void LineEditWidget::numberOfLinesChanged(int /*lineCount*/)
 
 void LineEditWidget::cursorMoved()
 {
-    d->needGeometry = true;
+    requestGeometry();
     d->blinkTime = Time();
 }
 

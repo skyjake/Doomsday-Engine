@@ -28,8 +28,11 @@ DENG2_PIMPL(GuiWidget)
     RuleRectangle rule;
     Rectanglei savedPos;
     bool inited;
+    bool needGeometry;
+    Background background;
 
-    Instance(Public *i) : Base(i), inited(false) {}
+    Instance(Public *i) : Base(i), inited(false), needGeometry(true)
+    {}
 
     ~Instance()
     {
@@ -69,6 +72,16 @@ static void deleteGuiWidget(void *ptr)
 void GuiWidget::deleteLater()
 {
     Garbage_TrashInstance(this, deleteGuiWidget);
+}
+
+void GuiWidget::set(Background const &bg)
+{
+    d->background = bg;
+}
+
+GuiWidget::Background const &GuiWidget::background() const
+{
+    return d->background;
 }
 
 void GuiWidget::initialize()
@@ -111,13 +124,57 @@ void GuiWidget::update()
     }
 }
 
+bool GuiWidget::hitTest(Vector2i const &pos) const
+{
+    if(behavior().testFlag(Unhittable))
+    {
+        // Can never be hit by anything.
+        return false;
+    }
+    return rule().recti().contains(pos);
+}
+
 void GuiWidget::glInit()
 {}
 
 void GuiWidget::glDeinit()
 {}
 
-bool GuiWidget::checkPlace(Rectanglei &currentPlace)
+void GuiWidget::requestGeometry(bool yes)
+{
+    d->needGeometry = yes;
+}
+
+bool GuiWidget::geometryRequested() const
+{
+    return d->needGeometry;
+}
+
+void GuiWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
+{
+    // Is there a solid fill?
+    if(d->background.solidFill.w > 0)
+    {
+        verts.makeQuad(rule().recti(),
+                       d->background.solidFill,
+                       root().atlas().imageRectf(root().solidWhitePixel()).middle());
+    }
+
+    switch(d->background.type)
+    {
+    case Background::GradientFrame:
+        verts.makeFlexibleFrame(rule().recti(),
+                                d->background.thickness,
+                                d->background.color,
+                                root().atlas().imageRectf(root().gradientFrame()));
+        break;
+
+    case Background::None:
+        break;
+    }
+}
+
+bool GuiWidget::hasChangedPlace(Rectanglei &currentPlace)
 {
     currentPlace = rule().recti();
     bool changed = (d->savedPos != currentPlace);

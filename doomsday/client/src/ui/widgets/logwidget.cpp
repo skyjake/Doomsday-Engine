@@ -400,6 +400,8 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
         dimmedColor    = st.colors().color("log.dimmed");
         accentColor    = st.colors().color("log.accent");
         dimAccentColor = st.colors().color("log.dimaccent");
+
+        self.set(Background(st.colors().colorf("background")));
     }
 
     Font::RichFormat::IStyle::Color richStyleColor(int index) const
@@ -516,6 +518,9 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
 
         delete entryAtlas;
         entryAtlas = 0;
+
+        contents.clear();
+        background.clear();
     }
 
     duint contentWidth() const
@@ -749,14 +754,12 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
     void draw()
     {
         Rectanglei pos;
-        if(self.checkPlace(pos) || !bgBuf->isReady())
+        if(self.hasChangedPlace(pos) || !bgBuf->isReady())
         {
             // Update the background quad.
-            bgBuf->setVertices(gl::TriangleStrip,
-                               VertexBuf::Builder().makeQuad(pos,
-                                   self.style().colors().colorf("background"),
-                                   self.root().atlas().imageRectf(self.root().solidWhitePixel()).middle()),
-                               gl::Static);
+            VertexBuf::Builder bgVerts;
+            self.glMakeGeometry(bgVerts);
+            bgBuf->setVertices(gl::TriangleStrip, bgVerts, gl::Static);
         }
 
         updateGeometry();
