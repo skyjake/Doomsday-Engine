@@ -85,9 +85,11 @@ DENG2_OBSERVES(Canvas,           FocusChange)
                 .setInput(Rule::Width,  root.viewWidth());
         root.add(taskBar);
 
+        Rule const &unit = ClientApp::windowSystem().style().rules().rule("unit");
+
         ConsoleWidget *console = new ConsoleWidget;
         console->rule()
-                .setInput(Rule::Bottom, taskBar->rule().top())
+                .setInput(Rule::Bottom, taskBar->rule().top() - unit)
                 .setInput(Rule::Left,   root.viewLeft());
         root.add(console);
 
@@ -214,6 +216,13 @@ DENG2_OBSERVES(Canvas,           FocusChange)
 #ifndef WIN32
     void mouseEvent(MouseEvent const &event)
     {
+        if(ClientApp::windowSystem().processEvent(event))
+        {
+            // Eaten by the window system.
+            return;
+        }
+
+        // Fall back to legacy handling.
         switch(event.type())
         {
         case Event::MouseButton:
@@ -224,11 +233,6 @@ DENG2_OBSERVES(Canvas,           FocusChange)
                         event.button() == MouseEvent::XButton1? IMB_EXTRA1 :
                         event.button() == MouseEvent::XButton2? IMB_EXTRA2 : IMB_MAXBUTTONS,
                         event.state() == MouseEvent::Pressed);
-            break;
-
-        case Event::MousePosition:
-            // Pass onto the window system.
-            ClientApp::windowSystem().processEvent(event);
             break;
 
         case Event::MouseMotion:
