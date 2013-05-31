@@ -19,14 +19,76 @@
 #include "ui/widgets/buttonwidget.h"
 #include "ui/widgets/guirootwidget.h"
 
+#include <de/MouseEvent>
+#include <de/Animation>
+
 using namespace de;
 
 DENG2_PIMPL(ButtonWidget)
 {
+    enum State {
+        Up,
+        Hover,
+        Down
+    };
+    State state;
     Action *action;
+    Animation scale;
+    Animation frameOpacity;
+    bool animating;
 
-    Instance(Public *i) : Base(i)
-    {}
+    Instance(Public *i)
+        : Base(i), state(Up), action(0),
+          scale(1.f),
+          frameOpacity(.15f, Animation::Linear),
+          animating(false)
+    {
+        updateBackground();
+    }
+
+    void updateHover(Vector2i const &pos)
+    {
+        if(state == Down) return;
+
+        if(self.hitTest(pos))
+        {
+            if(state == Up)
+            {
+                state = Hover;
+                scale.setStyle(Animation::EaseIn);
+                scale.setValue(1.1f, .15f);
+                frameOpacity.setValue(.5f, .15f);
+                animating = true;
+            }
+        }
+        else if(state == Hover)
+        {
+            state = Up;
+            scale.setStyle(Animation::EaseIn);
+            scale.setValue(1.f, .3f);
+            frameOpacity.setValue(.15f, .75f);
+            animating = true;
+        }
+    }
+
+    void updateBackground()
+    {
+        self.set(Background(self.style().colors().colorf("background"),
+                            Background::GradientFrame, Vector4f(1, 1, 1, frameOpacity), 6));
+    }
+
+    void updateAnimation()
+    {
+        if(animating)
+        {
+            updateBackground();
+            self.requestGeometry();
+            if(scale.done() && frameOpacity.done())
+            {
+                animating = false;
+            }
+        }
+    }
 };
 
 ButtonWidget::ButtonWidget(String const &name) : LabelWidget(name), d(new Instance(this))
@@ -34,26 +96,26 @@ ButtonWidget::ButtonWidget(String const &name) : LabelWidget(name), d(new Instan
 
 bool ButtonWidget::handleEvent(Event const &event)
 {
+    if(event.type() == Event::MousePosition)
+    {
+        d->updateHover(event.as<MouseEvent>().pos());
+    }
     return false;
 }
 
-void ButtonWidget::makeAdditionalGeometry(AdditionalGeometryKind kind,
-                                          VertexBuilder<Vertex2TexRgba>::Vertices &verts,
-                                          ContentLayout const &layout)
+void ButtonWidget::updateModelViewProjection(GLUniform &uMvp)
 {
-    // Draw a frame for the button.
-    if(kind == Background)
-    {
-        verts.makeQuad(rule().recti(), style().colors().colorf("background"),
-                       root().atlas().imageRectf(root().solidWhitePixel()).middle());
+    Rectanglef const &pos = rule().rect();
 
-        verts.makeFlexibleFrame(rule().rect(), 6, Vector4f(1, 1, 1, .15f),
-                                root().atlas().imageRectf(root().gradientFrame()));
-    }
+    // Apply a scale animation to indicate button response.
+    uMvp = root().projMatrix2D() *
+            Matrix4f::scaleThenTranslate(d->scale, pos.middle()) *
+            Matrix4f::translate(-pos.middle());
 }
 
-void ButtonWidget::updateModelViewProjection()
+void ButtonWidget::update()
 {
-    // Apply a scale animation to indicate button response.
-    LabelWidget::updateModelViewProjection();
+    LabelWidget::update();
+
+    d->updateAnimation();
 }

@@ -40,13 +40,11 @@ public:
     void setAction(de::Action *action);
 
     // Events.
+    void update();
     bool handleEvent(de::Event const &event);
 
 protected:
-    void makeAdditionalGeometry(AdditionalGeometryKind kind,
-                                de::VertexBuilder<de::Vertex2TexRgba>::Vertices &verts,
-                                ContentLayout const &layout);
-    void updateModelViewProjection();
+    void updateModelViewProjection(de::GLUniform &uMvp);
 
 private:
     DENG2_PRIVATE(d)
