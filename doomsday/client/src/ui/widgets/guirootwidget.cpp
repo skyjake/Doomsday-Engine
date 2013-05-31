@@ -89,15 +89,13 @@ DENG2_PIMPL(GuiRootWidget)
                 frame.fill(QColor(255, 255, 255, 0).rgba());
                 QPainter painter(&frame);
                 painter.setBrush(Qt::NoBrush);
-                painter.setPen(QColor(0, 0, 0, 160));
-                painter.drawRect(QRect(0, 0, 11, 11));
-                painter.setPen(QColor(255, 255, 255, 255));
+                painter.setPen(QColor(255, 255, 255, 32));
                 painter.drawRect(QRect(1, 1, 9, 9));
-                painter.setPen(QColor(255, 255, 255, 192));
+                painter.setPen(QColor(255, 255, 255, 64));
                 painter.drawRect(QRect(2, 2, 7, 7));
                 painter.setPen(QColor(255, 255, 255, 128));
                 painter.drawRect(QRect(3, 3, 5, 5));
-                painter.setPen(QColor(255, 255, 255, 64));
+                painter.setPen(QColor(255, 255, 255, 255));
                 painter.drawRect(QRect(4, 4, 3, 3));
                 gradientFrame = atlas->alloc(frame);
             }
@@ -158,6 +156,15 @@ Matrix4f GuiRootWidget::projMatrix2D() const
 {
     RootWidget::Size const size = viewSize();
     return Matrix4f::ortho(0, size.x, 0, size.y);
+}
+
+void GuiRootWidget::routeMouse(Widget *routeTo)
+{
+    setEventRouting(QList<int>()
+                    << Event::MouseButton
+                    << Event::MouseMotion
+                    << Event::MousePosition
+                    << Event::MouseWheel, routeTo);
 }
 
 void GuiRootWidget::update()

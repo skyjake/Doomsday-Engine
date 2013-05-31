@@ -61,6 +61,8 @@ public:
      */
     de::Matrix4f projMatrix2D() const;
 
+    void routeMouse(de::Widget *routeTo);
+
     // Events.
     void update();
 
