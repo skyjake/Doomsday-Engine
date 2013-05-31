@@ -46,28 +46,46 @@ DENG2_PIMPL(ButtonWidget)
         updateBackground();
     }
 
+    void setState(State st)
+    {
+        if(state == st) return;
+
+        State const prev = state;
+        state = st;
+        animating = true;
+
+        switch(st)
+        {
+        case Up:
+            scale.setStyle(prev == Down? Animation::Bounce : Animation::EaseIn);
+            scale.setValue(1.f, .3f);
+            frameOpacity.setValue(.15f, .6f);
+            break;
+
+        case Hover:
+            //scale.setStyle(Animation::EaseIn);
+            //scale.setValue(1.1f, .15f);
+            frameOpacity.setValue(.4f, .15f);
+            break;
+
+        case Down:
+            scale.setValue(.9f);
+            frameOpacity.setValue(.5f);
+            break;
+        }
+    }
+
     void updateHover(Vector2i const &pos)
     {
         if(state == Down) return;
 
         if(self.hitTest(pos))
         {
-            if(state == Up)
-            {
-                state = Hover;
-                scale.setStyle(Animation::EaseIn);
-                scale.setValue(1.1f, .15f);
-                frameOpacity.setValue(.5f, .15f);
-                animating = true;
-            }
+            if(state == Up) setState(Hover);
         }
         else if(state == Hover)
         {
-            state = Up;
-            scale.setStyle(Animation::EaseIn);
-            scale.setValue(1.f, .3f);
-            frameOpacity.setValue(.15f, .75f);
-            animating = true;
+            setState(Up);
         }
     }
 
@@ -96,9 +114,38 @@ ButtonWidget::ButtonWidget(String const &name) : LabelWidget(name), d(new Instan
 
 bool ButtonWidget::handleEvent(Event const &event)
 {
-    if(event.type() == Event::MousePosition)
+    if(event.isMouse())
     {
-        d->updateHover(event.as<MouseEvent>().pos());
+        MouseEvent const &mouse = event.as<MouseEvent>();
+
+        if(mouse.type() == Event::MousePosition)
+        {
+            d->updateHover(mouse.pos());
+        }
+        else if(mouse.type() == Event::MouseButton)
+        {
+            switch(handleMouseClick(event))
+            {
+            case MouseClickStarted:
+                d->setState(Instance::Down);
+                return true;
+
+            case MouseClickFinished:
+                d->setState(Instance::Up);
+                if(d->action && hitTest(mouse.pos()))
+                {
+                    d->action->trigger();
+                }
+                return true;
+
+            case MouseClickAborted:
+                d->setState(Instance::Up);
+                return true;
+
+            default:
+                break;
+            }
+        }
     }
     return false;
 }

@@ -68,19 +68,20 @@ ConsoleCommandWidget::ConsoleCommandWidget(String const &name)
 
 bool ConsoleCommandWidget::handleEvent(Event const &event)
 {
-    if(!event.isKeyDown()) return false;
-
-    KeyEvent const &key = event.as<KeyEvent>();
-
-    // Override the handling of the Enter key.
-    if(key.qtKey() == Qt::Key_Return || key.qtKey() == Qt::Key_Enter)
+    if(event.isKeyDown())
     {
-        String const entered = d->history.enter();
+        KeyEvent const &key = event.as<KeyEvent>();
 
-        // Execute the command right away.
-        Con_Execute(CMDS_CONSOLE, entered.toUtf8(), false, false);
+        // Override the handling of the Enter key.
+        if(key.qtKey() == Qt::Key_Return || key.qtKey() == Qt::Key_Enter)
+        {
+            String const entered = d->history.enter();
 
-        return true;
+            // Execute the command right away.
+            Con_Execute(CMDS_CONSOLE, entered.toUtf8(), false, false);
+
+            return true;
+        }
     }
 
     if(LineEditWidget::handleEvent(event))
@@ -89,6 +90,10 @@ bool ConsoleCommandWidget::handleEvent(Event const &event)
         return true;
     }
 
-    // Fallback to history navigation.
-    return d->history.handleControlKey(key.qtKey());
+    if(event.isKeyDown())
+    {
+        // Fallback to history navigation.
+        return d->history.handleControlKey(event.as<KeyEvent>().qtKey());
+    }
+    return false;
 }

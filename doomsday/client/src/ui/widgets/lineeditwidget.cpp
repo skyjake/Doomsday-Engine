@@ -23,6 +23,7 @@
 #include "ui/style.h"
 
 #include <de/KeyEvent>
+#include <de/MouseEvent>
 #include <de/ScalarRule>
 #include <de/Drawable>
 
@@ -187,8 +188,6 @@ LineEditWidget::LineEditWidget(String const &name)
       AbstractLineEditor(new FontLineWrapping),
       d(new Instance(this))
 {
-    setBehavior(HandleEventsOnlyWhenFocused);
-
     // The widget's height is tied to the number of lines.
     rule().setInput(Rule::Height, *d->height);
 }
@@ -265,7 +264,20 @@ void LineEditWidget::draw()
 
 bool LineEditWidget::handleEvent(Event const &event)
 {
-    if(event.isKeyDown())
+    switch(handleMouseClick(event))
+    {
+    case MouseClickStarted:
+        return true;
+
+    case MouseClickFinished:
+        root().setFocus(this);
+        return true;
+
+    default:
+        break;
+    }
+
+    if(hasFocus() && event.isKeyDown())
     {
         KeyEvent const &key = event.as<KeyEvent>();
 
@@ -283,6 +295,7 @@ bool LineEditWidget::handleEvent(Event const &event)
             return true;
         }
     }
+
     return GuiWidget::handleEvent(event);
 }
 
