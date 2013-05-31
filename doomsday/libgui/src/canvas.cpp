@@ -375,7 +375,8 @@ void Canvas::mousePressEvent(QMouseEvent *ev)
 
     DENG2_FOR_AUDIENCE(MouseEvent, i)
     {
-        i->mouseEvent(MouseEvent(translateButton(ev->button()), MouseEvent::Pressed));
+        i->mouseEvent(MouseEvent(translateButton(ev->button()), MouseEvent::Pressed,
+                                 Vector2i(ev->pos().x(), ev->pos().y())));
     }
 }
 
@@ -391,7 +392,8 @@ void Canvas::mouseReleaseEvent(QMouseEvent* ev)
 
     DENG2_FOR_AUDIENCE(MouseEvent, i)
     {
-        i->mouseEvent(MouseEvent(translateButton(ev->button()), MouseEvent::Released));
+        i->mouseEvent(MouseEvent(translateButton(ev->button()), MouseEvent::Released,
+                                 Vector2i(ev->pos().x(), ev->pos().y())));
     }
 }
 

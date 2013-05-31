@@ -58,7 +58,7 @@ public:
 public:
     MouseEvent();
     MouseEvent(MotionType motion, Vector2i const &pos);
-    MouseEvent(Button button, ButtonState state);
+    MouseEvent(Button button, ButtonState state, Vector2i const &pos);
 
     MotionType motion() const;
     Vector2i const &pos() const { return _axisValue; }

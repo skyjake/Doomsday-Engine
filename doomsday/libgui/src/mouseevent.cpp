@@ -30,8 +30,8 @@ MouseEvent::MouseEvent(MotionType motion, Vector2i const &pos)
       _axisValue(pos), _button(Unknown), _state(Released)
 {}
 
-MouseEvent::MouseEvent(Button button, ButtonState state)
-    : Event(MouseButton), _button(button), _state(state)
+MouseEvent::MouseEvent(Button button, ButtonState state, Vector2i const &pos)
+    : Event(MouseButton), _axisValue(pos), _button(button), _state(state)
 {}
 
 MouseEvent::MotionType MouseEvent::motion() const
