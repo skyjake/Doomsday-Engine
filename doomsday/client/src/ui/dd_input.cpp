@@ -983,7 +983,7 @@ void DD_ConvertEvent(de::Event const &event, ddevent_t *ddEvent)
     case de::Event::KeyPress:
     case de::Event::KeyRelease:
     {
-        KeyEvent const &kev = static_cast<KeyEvent const &>(event);
+        KeyEvent const &kev = event.as<KeyEvent>();
 
         ddEvent->device       = IDEV_KEYBOARD;
         ddEvent->type         = E_TOGGLE;

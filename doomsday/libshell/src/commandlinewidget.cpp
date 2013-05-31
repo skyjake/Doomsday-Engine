@@ -42,7 +42,7 @@ bool CommandLineWidget::handleEvent(Event const &event)
 {
     // There are only key press events.
     DENG2_ASSERT(event.type() == Event::KeyPress);
-    KeyEvent const &ev = static_cast<KeyEvent const &>(event);
+    KeyEvent const &ev = event.as<KeyEvent>();
 
     // Override the editor's normal Enter handling.
     if(ev.key() == Qt::Key_Enter)

@@ -110,7 +110,7 @@ bool LineEditWidget::handleEvent(Event const &event)
 {
     // There are only key press events.
     DENG2_ASSERT(event.type() == Event::KeyPress);
-    KeyEvent const &ev = static_cast<KeyEvent const &>(event);
+    KeyEvent const &ev = event.as<KeyEvent>();
 
     bool eaten = true;
 

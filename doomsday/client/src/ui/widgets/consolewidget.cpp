@@ -131,7 +131,7 @@ bool ConsoleWidget::handleEvent(Event const &event)
 {
     if(event.type() == Event::KeyPress)
     {
-        KeyEvent const &key = static_cast<KeyEvent const &>(event);
+        KeyEvent const &key = event.as<KeyEvent>();
 
         if(key.qtKey() == Qt::Key_PageUp ||
            key.qtKey() == Qt::Key_PageDown)

@@ -134,9 +134,7 @@ bool TextWidget::handleEvent(Event const &event)
     // We only support KeyEvents.
     if(event.type() == Event::KeyPress)
     {
-        DENG2_ASSERT(dynamic_cast<KeyEvent const *>(&event) != 0);
-
-        KeyEvent const &keyEvent = static_cast<KeyEvent const &>(event);
+        KeyEvent const &keyEvent = event.as<KeyEvent>();
 
         foreach(Action *act, d->actions)
         {

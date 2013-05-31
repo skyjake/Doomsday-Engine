@@ -70,7 +70,7 @@ bool ConsoleCommandWidget::handleEvent(Event const &event)
 {
     if(!event.isKeyDown()) return false;
 
-    KeyEvent const &key = static_cast<KeyEvent const &>(event);
+    KeyEvent const &key = event.as<KeyEvent>();
 
     // Override the handling of the Enter key.
     if(key.qtKey() == Qt::Key_Return || key.qtKey() == Qt::Key_Enter)

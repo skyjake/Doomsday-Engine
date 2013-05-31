@@ -260,7 +260,7 @@ bool LineEditWidget::handleEvent(Event const &event)
 {
     if(event.isKeyDown())
     {
-        KeyEvent const &key = static_cast<KeyEvent const &>(event);
+        KeyEvent const &key = event.as<KeyEvent>();
 
         // Control character.
         if(handleControlKey(key.qtKey(), key.modifiers().testFlag(KeyEvent::Control)))

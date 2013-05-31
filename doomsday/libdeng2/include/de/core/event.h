@@ -50,6 +50,18 @@ public:
 
     bool isKeyDown() const { return _type == KeyPress || _type == KeyRepeat; }
 
+    template <typename Type>
+    Type &as() {
+        DENG2_ASSERT(dynamic_cast<Type *>(this) != 0);
+        return *static_cast<Type *>(this);
+    }
+
+    template <typename Type>
+    Type const &as() const {
+        DENG2_ASSERT(dynamic_cast<Type const *>(this) != 0);
+        return *static_cast<Type const *>(this);
+    }
+
 private:
     int _type;
 };

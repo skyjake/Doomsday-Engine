@@ -867,7 +867,7 @@ bool LogWidget::handleEvent(Event const &event)
 {
     if(!event.isKeyDown()) return false;
 
-    KeyEvent const &ev = static_cast<KeyEvent const &>(event);
+    KeyEvent const &ev = event.as<KeyEvent>();
 
     int pageSize = scrollPageSize();
 

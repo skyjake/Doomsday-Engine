@@ -586,7 +586,7 @@ void Info::BlockElement::add(Info::Element *elem)
     if(elem->name() && _contents.contains(elem->name()))
     {
         if(!elem->isBlock() || !info().d->allowDuplicateBlocksOfType.contains(
-                    elem->castTo<BlockElement>().blockType()))
+                    elem->as<BlockElement>().blockType()))
         {
             LOG_AS("Info::BlockElement");
             LOG_WARNING("Block '%s' already has an element named '%s'")
@@ -614,7 +614,7 @@ Info::Element::Value Info::BlockElement::keyValue(String const &name) const
 {
     Element *e = find(name);
     if(!e || !e->isKey()) return Value();
-    return e->castTo<KeyElement>().value();
+    return e->as<KeyElement>().value();
 }
 
 Info::Element *Info::BlockElement::findByPath(String const &path) const
@@ -640,7 +640,7 @@ Info::Element *Info::BlockElement::findByPath(String const &path) const
     if(e->isBlock())
     {
         // Descend into sub-blocks.
-        return e->castTo<BlockElement>().findByPath(remainder);
+        return e->as<BlockElement>().findByPath(remainder);
     }
     return e;
 }
@@ -700,7 +700,7 @@ bool Info::findValueForKey(String const &key, String &value) const
     Element const *element = findByPath(key);
     if(element && element->isKey())
     {
-        value = element->castTo<KeyElement>().value();
+        value = element->as<KeyElement>().value();
         return true;
     }
     return false;

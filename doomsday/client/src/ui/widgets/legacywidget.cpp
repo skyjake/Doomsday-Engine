@@ -201,7 +201,7 @@ bool LegacyWidget::handleEvent(Event const &event)
     if(event.type() == Event::KeyPress ||
        event.type() == Event::KeyRelease)
     {
-        KeyEvent const &ev = static_cast<KeyEvent const &>(event);
+        KeyEvent const &ev = event.as<KeyEvent>();
         Keyboard_Submit(ev.state() == KeyEvent::Pressed? IKE_DOWN : IKE_UP,
                         ev.ddKey(), ev.nativeCode(), ev.text().toLatin1());
     }
