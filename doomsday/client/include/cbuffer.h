@@ -1,3 +1,5 @@
+#error "cbuffer.h is no longer in use"
+#if 0
 /** @file cbuffer.h
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -148,3 +150,4 @@ uint CBuffer_GetLines(CBuffer* cb, uint reqCount, int firstIdx, cbline_t const**
 #endif
 
 #endif /* LIBDENG_CONSOLE_BUFFER_H */
+#endif

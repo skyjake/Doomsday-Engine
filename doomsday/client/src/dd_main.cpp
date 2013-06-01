@@ -1244,7 +1244,7 @@ static int DD_ActivateGameWorker(void* parameters)
     DD_ReadGameHelp();
 
     // Re-init to update the title, background etc.
-    Rend_ConsoleInit();
+    //Rend_ConsoleInit();
 
     // Reset the tictimer so than any fractional accumulation is not added to
     // the tic/game timer of the newly-loaded game.

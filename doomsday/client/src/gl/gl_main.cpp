@@ -601,7 +601,7 @@ void GL_TotalReset()
     if(isDedicated) return;
 
     // Update the secondary title and the game status.
-    Rend_ConsoleUpdateTitle();
+    //Rend_ConsoleUpdateTitle();
 
     // Release all texture memory.
     GL_ResetTextureManager();
@@ -622,7 +622,7 @@ void GL_TotalRestore()
 
     // Choose fonts again.
     R_LoadSystemFonts();
-    Con_Resize();
+    //Con_Resize();
 
     /// @todo fixme: Should this use the default MapInfo def if none found? -ds
     ded_mapinfo_t *mapInfo = 0;

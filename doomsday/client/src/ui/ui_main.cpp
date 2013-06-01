@@ -31,7 +31,6 @@
 #include "gl/texturecontent.h"
 #include "render/rend_main.h"
 #include "render/rend_font.h"
-#include "render/rend_console.h" // move Rend_ConsoleUpdateTitle somewhere more suitable
 #include "MaterialSnapshot"
 #include "Material"
 
@@ -161,7 +160,7 @@ void UI_End(void)
     uiAlpha = uiTargetAlpha = 1.0;
 
     // Update the secondary title and the game status.
-    Rend_ConsoleUpdateTitle();
+    //Rend_ConsoleUpdateTitle();
 
     // Restore the engine state
     tickFrame = true;

@@ -22,7 +22,9 @@
 #define CLIENT_CLIENTWINDOW_H
 
 #include <de/PersistentCanvasWindow>
+
 #include "ui/widgets/guirootwidget.h"
+#include "ui/widgets/consolewidget.h"
 #include "resource/image.h"
 
 /**
@@ -56,7 +58,8 @@ public:
 public:
     ClientWindow(de::String const &id = "main");
 
-    GuiRootWidget &root();
+    GuiRootWidget &root();    
+    ConsoleWidget &console();
 
     /**
      * Sets the operating mode of the window. In Busy mode, the normal

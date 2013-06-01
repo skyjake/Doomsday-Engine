@@ -1,4 +1,5 @@
-/** @file rend_console.cpp Console Rendering.
+#if 0
+* /** @file rend_console.cpp Console Rendering.
  *
  * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright &copy; 2005-2013 Daniel Swanson <danij@dengine.net>
@@ -948,3 +949,4 @@ void Rend_Console()
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();
 }
+#endif

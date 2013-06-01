@@ -42,6 +42,8 @@ public:
     LogWidget &log();
     de::Rule const &shift();
 
+    bool isOpen() const;
+
     // Events.
     void viewResized();
     bool handleEvent(de::Event const &event);
@@ -49,6 +51,7 @@ public:
 public slots:
     void open();
     void close();
+    void clearLog();
 
 protected slots:
     void logContentHeightIncreased(int delta);

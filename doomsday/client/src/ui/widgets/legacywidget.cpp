@@ -32,7 +32,7 @@
 #include "network/net_main.h"
 #include "render/r_main.h"
 #include "render/rend_list.h"
-#include "render/rend_console.h"
+//#include "render/rend_console.h"
 #include "audio/s_main.h"
 #include "gl/gl_main.h"
 #include "gl/sys_opengl.h"
@@ -179,7 +179,7 @@ void LegacyWidget::draw()
     }
 
     // Draw console.
-    Rend_Console();
+    //Rend_Console();
 
     // End any open DGL sequence.
     DGL_End();

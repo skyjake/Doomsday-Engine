@@ -61,6 +61,7 @@ DENG2_OBSERVES(Canvas,           FocusChange)
 
     /// Root of the nomal UI widgets of this window.
     GuiRootWidget root;
+    ConsoleWidget *console;
 
     GuiRootWidget busyRoot;
 
@@ -70,6 +71,7 @@ DENG2_OBSERVES(Canvas,           FocusChange)
           needRecreateCanvas(false),
           mode(Normal),
           root(thisPublic),
+          console(0),
           busyRoot(thisPublic)
     {
         /// @todo The decision whether to receive input notifications from the
@@ -108,7 +110,7 @@ DENG2_OBSERVES(Canvas,           FocusChange)
 
         Rule const &unit = ClientApp::windowSystem().style().rules().rule("unit");
 
-        ConsoleWidget *console = new ConsoleWidget;
+        console = new ConsoleWidget;
         console->rule()
                 .setInput(Rule::Bottom, taskBar->rule().top() - unit)
                 .setInput(Rule::Left,   root.viewLeft() + console->shift());
@@ -263,6 +265,11 @@ ClientWindow::ClientWindow(String const &id)
 GuiRootWidget &ClientWindow::root()
 {
     return d->mode == Busy? d->busyRoot : d->root;
+}
+
+ConsoleWidget &ClientWindow::console()
+{
+    return *d->console;
 }
 
 void ClientWindow::setMode(Mode const &mode)

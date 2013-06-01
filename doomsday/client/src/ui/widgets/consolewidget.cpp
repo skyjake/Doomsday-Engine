@@ -156,6 +156,11 @@ Rule const &ConsoleWidget::shift()
     return *d->horizShift;
 }
 
+bool ConsoleWidget::isOpen() const
+{
+    return d->opened;
+}
+
 void ConsoleWidget::viewResized()
 {
     if(!d->opened)
@@ -260,11 +265,9 @@ bool ConsoleWidget::handleEvent(Event const &event)
             return true;
         }
 
-        if(key.qtKey() == Qt::Key_F5)
+        if(key.qtKey() == Qt::Key_F5) // Clear history.
         {
-            d->height->set(0);
-            d->log->scrollToBottom();
-            d->log->enablePageKeys(false);
+            clearLog();
             return true;
         }
     }
@@ -295,6 +298,13 @@ void ConsoleWidget::close()
     {
         root().setFocus(0);
     }
+}
+
+void ConsoleWidget::clearLog()
+{
+    d->height->set(0);
+    d->log->scrollToBottom();
+    d->log->enablePageKeys(false);
 }
 
 void ConsoleWidget::logContentHeightIncreased(int delta)

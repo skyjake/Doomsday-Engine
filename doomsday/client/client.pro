@@ -152,7 +152,6 @@ DENG_HEADERS += \
     include/audio/sys_audio.h \
     include/audio/sys_audiod_dummy.h \
     include/busymode.h \
-    include/cbuffer.h \
     include/client/cl_def.h \
     include/client/cl_frame.h \
     include/client/cl_infine.h \
@@ -282,7 +281,6 @@ DENG_HEADERS += \
     include/render/r_things.h \
     include/render/rend_bias.h \
     include/render/rend_clip.h \
-    include/render/rend_console.h \
     include/render/rend_decor.h \
     include/render/rend_dynlight.h \
     include/render/rend_fakeradio.h \
@@ -450,7 +448,6 @@ SOURCES += \
     src/audio/s_wav.cpp \
     src/audio/sys_audiod_dummy.cpp \
     src/busymode.cpp \
-    src/cbuffer.cpp \
     src/client/cl_frame.cpp \
     src/client/cl_infine.cpp \
     src/client/cl_main.cpp \
@@ -563,7 +560,6 @@ SOURCES += \
     src/render/r_things.cpp \
     src/render/rend_bias.cpp \
     src/render/rend_clip.cpp \
-    src/render/rend_console.cpp \
     src/render/rend_decor.cpp \
     src/render/rend_dynlight.cpp \
     src/render/rend_fakeradio.cpp \

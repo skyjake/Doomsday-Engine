@@ -1,3 +1,4 @@
+#if 0
 /** @file cbuffer.cpp
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -595,3 +596,4 @@ void CBuffer_Write(CBuffer* cb, int flags, const char* txt)
     }
     lock(cb, false);
 }
+#endif
