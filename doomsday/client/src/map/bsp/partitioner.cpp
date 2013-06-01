@@ -32,7 +32,6 @@
 
 #include <de/Error>
 #include <de/Log>
-#include <de/LogBuffer>
 
 #include "map/gamemap.h"
 #include "BspLeaf"
@@ -1379,6 +1378,7 @@ DENG2_PIMPL(Partitioner)
 
             if(!isDegenerate)
             {
+                // Sanity check.
                 if(!subspace.hasMapLineSegment())
                     throw Error("Partitioner::buildLeafGeometries",
                                 QString("ConvexSubspace 0x%1 has no map line segment")
@@ -1405,6 +1405,7 @@ DENG2_PIMPL(Partitioner)
 
             // Determine which sector to attribute to the BSP leaf.
             leaf->setSector(subspace.chooseSectorForBspLeaf());
+
             if(!leaf->hasSector())
             {
                 LOG_WARNING("BspLeaf %p is degenerate/orphan (%d half-edges).")
@@ -1431,7 +1432,7 @@ DENG2_PIMPL(Partitioner)
                 if(!hedge.hasTwin())
                 {
                     DENG_ASSERT(&hedge.next() != &hedge);
-                    //DENG_ASSERT(&hedge.next().vertex() != &hedge.vertex());
+                    DENG_ASSERT(&hedge.next().vertex() != &hedge.vertex());
 
                     hedge._twin = new HEdge(hedge.next().vertex());
                     hedge._twin->_twin = &hedge;

@@ -181,6 +181,9 @@ DENG2_PIMPL_NOREF(ConvexSubspace)
     /// Line segment continuity map.
     Continuities continuities;
 
+    /// Set to @c true when the continuity mpa needs to be rebuilt.
+    bool needRebuildContinuities;
+
     /// Chosen map sector for this subspace (if any).
     Sector *sector;
 
@@ -189,6 +192,7 @@ DENG2_PIMPL_NOREF(ConvexSubspace)
 
     Instance()
         : needRebuildOrderedSegments(false),
+          needRebuildContinuities   (false),
           sector(0),
           bspLeaf(0)
     {}
@@ -198,6 +202,7 @@ DENG2_PIMPL_NOREF(ConvexSubspace)
           segments                  (other.segments),
           orderedSegments           (other.orderedSegments),
           needRebuildOrderedSegments(other.needRebuildOrderedSegments),
+          needRebuildContinuities   (other.needRebuildContinuities),
           sector                    (other.sector),
           bspLeaf                   (other.bspLeaf)
     {}
@@ -285,6 +290,10 @@ DENG2_PIMPL_NOREF(ConvexSubspace)
         }
 
         // LOG_DEBUG("Ordered segments around %s") << point.asText();
+
+        // As the ordered segments have changed we'll need to rebuild the
+        // continuities also.
+        needRebuildContinuities = true;
     }
 
     void buildContinuityMap()
@@ -293,6 +302,8 @@ DENG2_PIMPL_NOREF(ConvexSubspace)
         {
             buildOrderedSegments(findCenter());
         }
+
+        needRebuildContinuities = false;
 
         continuities.clear();
 
@@ -318,6 +329,22 @@ DENG2_PIMPL_NOREF(ConvexSubspace)
         {
             continuities[i].evaluate();
         }
+
+        // Choose a sector to attribute to any BSP leaf we might produce.
+        qSort(continuities.begin(), continuities.end());
+        sector = continuities.first().sector;
+
+/*#ifdef DENG_DEBUG
+        LOG_INFO("\nConvexSubspace %s BSP sector:%i (%i continuities)")
+            << findCenter().asText()
+            << (sector? sector->indexInArchive() : -1)
+            << continuities.count();
+
+        foreach(Continuity const &conty, continuities)
+        {
+            conty.debugPrint();
+        }
+#endif*/
     }
 
 private:
@@ -348,6 +375,9 @@ void ConvexSubspace::addSegments(QList<Segment *> const &newSegments)
     {
         // We'll need to rebuild the ordered segment list.
         d->needRebuildOrderedSegments = true;
+
+        // Also, we'll need to rebuild the continuity map.
+        d->needRebuildContinuities = true;
     }
 
 #ifdef DENG_DEBUG
@@ -370,6 +400,9 @@ void ConvexSubspace::addOneSegment(Segment const &newSegment)
     {
         // We'll need to rebuild the ordered segment list.
         d->needRebuildOrderedSegments = true;
+
+        // Also, we'll need to rebuild the continuity map.
+        d->needRebuildContinuities = true;
     }
     else
     {
@@ -379,26 +412,12 @@ void ConvexSubspace::addOneSegment(Segment const &newSegment)
 
 Polygon *ConvexSubspace::buildLeafGeometry() const
 {
-    if(isEmpty())
-        return 0;
+    if(isEmpty()) return 0;
 
-    d->buildContinuityMap();
-
-    // Choose a sector to attribute to any BSP leaf we might produce.
-    qSort(d->continuities.begin(), d->continuities.end());
-    d->sector = d->continuities.first().sector;
-
-#ifdef DENG_DEBUG
-    LOG_INFO("\nConvexSubspace %s BSP sector:%i (%i continuities)")
-        << d->findCenter().asText()
-        << (d->sector? d->sector->indexInArchive() : -1)
-        << d->continuities.count();
-
-    foreach(Continuity const &conty, d->continuities)
+    if(d->needRebuildContinuities)
     {
-        conty.debugPrint();
+        d->buildContinuityMap();
     }
-#endif
 
     // Construct the polygon and ring of half-edges.
     Polygon *poly = new Polygon;
@@ -456,6 +475,12 @@ Polygon *ConvexSubspace::buildLeafGeometry() const
 
 Sector *ConvexSubspace::chooseSectorForBspLeaf() const
 {
+    if(isEmpty()) return 0;
+
+    if(d->needRebuildContinuities)
+    {
+        d->buildContinuityMap();
+    }
     return d->sector;
 }
 
