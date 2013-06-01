@@ -318,6 +318,7 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
     ColorBank::Color accentColor;
     ColorBank::Color dimAccentColor;
     int margin;
+    int topMargin;
     int scrollBarWidth;
 
     // GL objects.
@@ -348,6 +349,9 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
           visibleRange(Rangei(-1, -1)),
           scrollOpacity(0, Animation::EaseBoth),
           font(0),
+          margin(0),
+          topMargin(0),
+          scrollBarWidth(0),
           buf(0),
           entryAtlas(0),
           uMvpMatrix  ("uMvpMatrix", GLUniform::Mat4),
@@ -393,6 +397,7 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
 
         font           = &st.fonts().font("log.normal");
         margin         = st.rules().rule("gap").valuei();
+        topMargin      = st.rules().rule("gap").valuei();
         scrollBarWidth = st.rules().rule("log.scrollbar").valuei();
 
         normalColor    = st.colors().color("log.normal");
@@ -488,6 +493,7 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
 
     void glInit()
     {
+        // Private atlas for the composed entry text lines.
         entryAtlas = AtlasTexture::newWithRowAllocator(
                 Atlas::BackingStore | Atlas::AllowDefragment,
                 GLTexture::maximumSize().min(Atlas::Size(2048, 1024)));
@@ -685,7 +691,7 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
     void updateGeometry()
     {
         Rectanglei pos = self.rule().recti();
-        Vector2i const contentSize(contentWidth(), pos.height());
+        Vector2i const contentSize(contentWidth(), int(pos.height()) - topMargin);
 
         // If the width of the widget changes, text needs to be reflowed with the
         // new width.
@@ -764,21 +770,23 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
 
         updateGeometry();
 
-        GLState &st = GLState::push();
-        st.setScissor(pos);
-
         // Draw the background.
         background.draw();
 
+        GLState &st = GLState::push();
+        st.setScissor(pos.adjusted(Vector2i(0, topMargin), Vector2i()));
+
         // First draw the shadow of the text.
         uMvpMatrix = projMatrix *
-                     Matrix4f::translate(Vector2f(pos.topLeft + Vector2i(margin, contentOffset)));
+                     Matrix4f::translate(Vector2f(pos.topLeft +
+                                                  Vector2i(margin, topMargin + contentOffset)));
         uShadowColor = Vector4f(0, 0, 0, 1);
         contents.draw();
 
         // Draw the text itself.
         uMvpMatrix = projMatrix *
-                     Matrix4f::translate(Vector2f(pos.topLeft + Vector2i(margin, contentOffset - 2)));
+                     Matrix4f::translate(Vector2f(pos.topLeft +
+                                                  Vector2i(margin, topMargin + contentOffset - 2)));
         uShadowColor = Vector4f(1, 1, 1, 1);
         contents.draw();
 
@@ -826,6 +834,11 @@ int LogWidget::scrollPageSize() const
 int LogWidget::maximumScroll() const
 {
     return d->lastMaxScroll;
+}
+
+int LogWidget::topMargin() const
+{
+    return d->topMargin;
 }
 
 void LogWidget::scroll(int to)

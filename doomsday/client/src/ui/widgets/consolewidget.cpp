@@ -56,7 +56,7 @@ DENG2_PIMPL(ConsoleWidget)
 
     void expandLog(int delta, bool useOffsetAnimation)
     {
-        height->set(height->scalar().target() + delta, .25f);
+        height->set(height->scalar().target() + delta + log->topMargin(), .25f);
 
         if(self.rule().top().valuei() <= 0)
         {

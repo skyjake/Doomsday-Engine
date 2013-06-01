@@ -82,7 +82,7 @@ DENG2_OBSERVES(Atlas, Reposition)
         font   = &st.fonts().font("editor.plaintext");
         margin = st.rules().rule("gap").valuei();
 
-        self.set(Background(self.style().colors().colorf("background")));
+        updateBackground();
 
         // Update the line wrapper's font.
         wraps.setFont(*font);
@@ -102,6 +102,20 @@ DENG2_OBSERVES(Atlas, Reposition)
     void updateProjection()
     {
         uMvpMatrix = self.root().projMatrix2D();
+    }
+
+    void updateBackground()
+    {
+        Background bg(self.style().colors().colorf("background"));
+        /*
+        if(self.hasFocus())
+        {
+            bg.type = Background::GradientFrame;
+            bg.thickness = 6;
+            bg.color = Vector4f(1, 1, 1, .15f);
+        }
+        */
+        self.set(bg);
     }
 
     AtlasTexture &atlas()
@@ -244,6 +258,7 @@ void LineEditWidget::viewResized()
 void LineEditWidget::update()
 {
     GuiWidget::update();
+    d->updateBackground();
     updateLineWraps(WrapUnlessWrappedAlready);
 }
 

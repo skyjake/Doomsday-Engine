@@ -62,6 +62,12 @@ public:
     int maximumScroll() const;
 
     /**
+     * Returns the amount of space between the top edge of the widget and the
+     * topmost content line.
+     */
+    int topMargin() const;
+
+    /**
      * Scrolls the view to a specified position. Position 0 means the bottom of
      * the log entry buffer, while maximumScroll() is the top of the buffer
      * (the oldest entry).
