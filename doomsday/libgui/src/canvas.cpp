@@ -33,7 +33,6 @@
 #include <QResizeEvent>
 #include <QPaintEvent>
 #include <QImage>
-#include <QCursor>
 #include <QTimer>
 #include <QTime>
 #include <QDebug>
@@ -419,12 +418,19 @@ void Canvas::wheelEvent(QWheelEvent *ev)
         ev->ignore();
         return;
     }*/
-
     ev->accept();
 
     bool continuousMovement = (d->prevWheelAt.elapsed() < MOUSE_WHEEL_CONTINUOUS_THRESHOLD_MS);
     int axis = (ev->orientation() == Qt::Horizontal? 0 : 1);
     int dir = (ev->delta() < 0? -1 : 1);
+
+    DENG2_FOR_AUDIENCE(MouseEvent, i)
+    {
+        i->mouseEvent(MouseEvent(MouseEvent::FineAngle,
+                                 axis == 0? Vector2i(ev->delta(), 0) :
+                                            Vector2i(0, ev->delta()),
+                                 Vector2i(ev->pos().x(), ev->pos().y())));
+    }
 
     if(!continuousMovement || d->wheelDir[axis] != dir)
     {
@@ -432,10 +438,10 @@ void Canvas::wheelEvent(QWheelEvent *ev)
 
         DENG2_FOR_AUDIENCE(MouseEvent, i)
         {
-            i->mouseEvent(MouseEvent(MouseEvent::Wheel,
+            i->mouseEvent(MouseEvent(MouseEvent::Step,
                                      axis == 0? Vector2i(dir, 0) :
-                                     axis == 1? Vector2i(0, dir) :
-                                                Vector2i()));
+                                     axis == 1? Vector2i(0, dir) : Vector2i(),
+                                     !d->mouseGrabbed? Vector2i(ev->pos().x(), ev->pos().y()) : Vector2i()));
         }
     }
 

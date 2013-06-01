@@ -20,18 +20,43 @@
 
 namespace de {
 
-MouseEvent::MouseEvent() : Event(MouseButton), _button(Unknown), _state(Released)
+MouseEvent::MouseEvent()
+    : Event(MouseButton),
+      _wheelMotion(FineAngle),
+      _button(Unknown),
+      _state(Released)
 {}
 
 MouseEvent::MouseEvent(MotionType motion, Vector2i const &pos)
     : Event(motion == Absolute? MousePosition :
-            motion == Wheel?    MouseWheel :
-                                MouseMotion),
-      _axisValue(pos), _button(Unknown), _state(Released)
+            motion == Relative? MouseMotion :
+                                MouseWheel),
+      _pos(pos),
+      _wheelMotion(FineAngle),
+      _button(Unknown),
+      _state(Released)
+{
+    if(motion == Wheel)
+    {
+        _pos = Vector2i();
+        _wheel = pos;
+    }
+}
+
+MouseEvent::MouseEvent(WheelMotion wheelMotion, Vector2i const &wheel, Vector2i const &pos)
+    : Event(MouseWheel),
+      _pos(pos),
+      _wheelMotion(wheelMotion),
+      _wheel(wheel),
+      _button(Unknown),
+      _state(Released)
 {}
 
 MouseEvent::MouseEvent(Button button, ButtonState state, Vector2i const &pos)
-    : Event(MouseButton), _axisValue(pos), _button(button), _state(state)
+    : Event(MouseButton),
+      _pos(pos),
+      _button(button),
+      _state(state)
 {}
 
 MouseEvent::MotionType MouseEvent::motion() const
