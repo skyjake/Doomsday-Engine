@@ -72,6 +72,27 @@ DENG2_OBSERVES(Canvas,           FocusChange)
           root(thisPublic),
           busyRoot(thisPublic)
     {
+        /// @todo The decision whether to receive input notifications from the
+        /// canvas is really a concern for the input drivers.
+
+        // Listen to input.
+        self.canvas().audienceForKeyEvent += this;
+        self.canvas().audienceForMouseStateChange += this;
+
+#ifndef WIN32 // On Windows, DirectInput bypasses the mouse input from Canvas.
+        self.canvas().audienceForMouseEvent += this;
+#endif
+    }
+
+    ~Instance()
+    {
+        self.canvas().audienceForFocusChange -= this;
+        self.canvas().audienceForMouseStateChange -= this;
+        self.canvas().audienceForKeyEvent -= this;
+    }
+
+    void setupUI()
+    {
         LegacyWidget *legacy = new LegacyWidget(LEGACY_WIDGET_NAME);
         legacy->rule()
                 .setLeftTop    (root.viewLeft(),  root.viewTop())
@@ -94,38 +115,6 @@ DENG2_OBSERVES(Canvas,           FocusChange)
         root.add(console);
 
         root.setFocus(&console->commandLine());
-/*
-        ButtonWidget *button = new ButtonWidget;
-        button->rule()
-        root.add(button);
-
-        ConsoleCommandWidget *test = new ConsoleCommandWidget;
-        test->rule()
-                .setInput(Rule::Left,   root.viewLeft())
-                .setInput(Rule::Bottom, root.viewBottom())
-                .setInput(Rule::Width,  root.viewWidth());
-        root.add(test);
-        root.setFocus(test);
-
-        LogWidget *log = new LogWidget;
-        log->rule()
-                .setInput(Rule::Left,   root.viewLeft())
-                .setInput(Rule::Width,  root.viewWidth())
-                .setInput(Rule::Bottom, test->rule().top())
-                .setInput(Rule::Top,    root.viewHeight() / 2);
-        root.add(log);
-
-        LabelWidget *lab = new LabelWidget;
-        lab->setText("Hello World");
-        lab->setImage(ClientApp::windowSystem().style().images().image("logo.256"));
-        //lab->setSizePolicy(LabelWidget::Fixed, LabelWidget::Expand);
-        lab->rule()
-                .setInput(Rule::Left,   root.viewLeft())
-                .setInput(Rule::Width,  root.viewWidth())
-                .setInput(Rule::Top,    root.viewTop())
-                .setInput(Rule::Bottom, log->rule().top());
-        root.add(lab);
-*/
 
         // Initially the widget is disabled. It will be enabled when the window
         // is visible and ready to be drawn.
@@ -137,24 +126,6 @@ DENG2_OBSERVES(Canvas,           FocusChange)
                 .setLeftTop    (busyRoot.viewLeft(),  busyRoot.viewTop())
                 .setRightBottom(busyRoot.viewRight(), busyRoot.viewBottom());
         busyRoot.add(busy);
-
-        /// @todo The decision whether to receive input notifications from the
-        /// canvas is really a concern for the input drivers.
-
-        // Listen to input.
-        self.canvas().audienceForKeyEvent += this;
-        self.canvas().audienceForMouseStateChange += this;
-
-#ifndef WIN32 // On Windows, DirectInput bypasses the mouse input from Canvas.
-        self.canvas().audienceForMouseEvent += this;
-#endif
-    }
-
-    ~Instance()
-    {
-        self.canvas().audienceForFocusChange -= this;
-        self.canvas().audienceForMouseStateChange -= this;
-        self.canvas().audienceForKeyEvent -= this;
     }
 
     void setMode(Mode const &newMode)
@@ -287,6 +258,8 @@ ClientWindow::ClientWindow(String const &id)
     LOG_DEBUG("Window icon: ") << NativePath(iconPath).pretty();
     setWindowIcon(QIcon(iconPath));
 #endif
+
+    d->setupUI();
 }
 
 GuiRootWidget &ClientWindow::root()
