@@ -1126,22 +1126,32 @@ DENG2_PIMPL(Partitioner)
                 continue;
             }
 
-            // This is definitely open space.
-            // Choose the non-self-referencing sector when we can.
-            Sector *sector = cur.after;
-            if(cur.after != next.before)
-            {
-                if(!cur.selfRef && !next.selfRef)
-                {
-                    LOG_DEBUG("Sector mismatch (#%d %s != #%d %s.")
-                        << cur.after->indexInMap()
-                        << cur.vertex().origin().asText()
-                        << next.before->indexInMap()
-                        << next.vertex().origin().asText();
-                }
+            /*
+             * This is definitely open space.
+             */
 
-                if(cur.selfRef && !next.selfRef)
-                    sector = next.before;
+            Sector *sector = cur.after;
+            if(!cur.before && next.before == next.after)
+            {
+                sector = next.before;
+            }
+            else
+            {
+                // Choose the non-self-referencing sector when we can.
+                if(cur.after != next.before)
+                {
+                    if(!cur.selfRef && !next.selfRef)
+                    {
+                        LOG_DEBUG("Sector mismatch (#%d %s != #%d %s.")
+                            << cur.after->indexInMap()
+                            << cur.vertex().origin().asText()
+                            << next.before->indexInMap()
+                            << next.vertex().origin().asText();
+                    }
+
+                    if(cur.selfRef && !next.selfRef)
+                        sector = next.before;
+                }
             }
 
             DENG_ASSERT(sector != 0);
@@ -1159,11 +1169,10 @@ DENG2_PIMPL(Partitioner)
             linkSegmentInSuperBlockmap(lefts,  newSeg.back());
 
             /*
-            LineSegment::Side *left = right->twinPtr();
             LOG_DEBUG("Built line segment from %s to %s (sector #%i)")
-                << cur.vertex().origin().asText()
-                << next.vertex().origin().asText()
-                << sector->indexInArchive()
+                << newSeg.from().origin().asText()
+                << newSeg.to().origin().asText()
+                << sector->indexInArchive();
             */
         }
     }
