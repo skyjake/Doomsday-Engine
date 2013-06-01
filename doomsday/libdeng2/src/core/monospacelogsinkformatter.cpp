@@ -157,7 +157,7 @@ QList<String> MonospaceLogSinkFormatter::logEntryToTextLines(LogEntry const &ent
         }
 
         // Check for formatting symbols.
-        lineText.replace(DENG2_STR_ESCAPE("R"), String(maxLen - _minimumIndent, '-'));
+        lineText.replace(DENG2_ESC("R"), String(maxLen - _minimumIndent, '-'));
 
         resultLines.append(lineText);
 

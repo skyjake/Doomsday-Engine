@@ -120,7 +120,7 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("TaskBar"), d(new Instance(this))
     logo->setImage(style().images().image("logo.px128"));
     logo->setImageScale(.75f);
     logo->setImageFit(FitToHeight | OriginalAspectRatio);
-    logo->setText(DENG2_STR_ESCAPE("b") + VersionInfo().base());
+    logo->setText(DENG2_ESC("b") + VersionInfo().base());
     logo->setWidthPolicy(LabelWidget::Expand);
     logo->setTextAlignment(AlignLeft);
     logo->rule()

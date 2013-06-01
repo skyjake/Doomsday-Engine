@@ -1832,7 +1832,7 @@ void Con_PrintRuler(void)
 
     if(consoleDump)
     {
-        LogBuffer_Msg(DENG2_STR_ESCAPE("R") "\n");
+        LogBuffer_Msg(DENG2_ESC("R") "\n");
     }
 }
 
