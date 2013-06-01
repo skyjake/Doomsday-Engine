@@ -111,10 +111,8 @@ DENG2_OBSERVES(Canvas,           FocusChange)
         ConsoleWidget *console = new ConsoleWidget;
         console->rule()
                 .setInput(Rule::Bottom, taskBar->rule().top() - unit)
-                .setInput(Rule::Left,   root.viewLeft());
+                .setInput(Rule::Left,   root.viewLeft() + console->shift());
         root.add(console);
-
-        root.setFocus(&console->commandLine());
 
         // Initially the widget is disabled. It will be enabled when the window
         // is visible and ready to be drawn.

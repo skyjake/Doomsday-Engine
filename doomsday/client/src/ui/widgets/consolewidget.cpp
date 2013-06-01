@@ -34,9 +34,11 @@ DENG2_PIMPL(ConsoleWidget)
 {
     ConsoleCommandWidget *cmdLine;
     LogWidget *log;
+    ScalarRule *horizShift;
     ScalarRule *height;
     ScalarRule *width;
 
+    bool opened;
     bool grabHover;
     int grabWidth;
     bool grabbed;
@@ -45,18 +47,21 @@ DENG2_PIMPL(ConsoleWidget)
         : Base(i),
           cmdLine(0),
           log(0),
+          opened(true),
           grabHover(false),
           grabWidth(0),
           grabbed(false)
     {
-        width  = new ScalarRule(self.style().rules().rule("console.width").valuei());
-        height = new ScalarRule(0);
+        horizShift = new ScalarRule(0);
+        width      = new ScalarRule(self.style().rules().rule("console.width").valuei());
+        height     = new ScalarRule(0);
 
-        grabWidth = self.style().rules().rule("unit").valuei();
+        grabWidth  = self.style().rules().rule("unit").valuei();
     }
 
     ~Instance()
     {
+        releaseRef(horizShift);
         releaseRef(width);
         releaseRef(height);
     }
@@ -132,6 +137,8 @@ ConsoleWidget::ConsoleWidget() : GuiWidget("Console"), d(new Instance(this))
         .setInput(Rule::Width, OperatorRule::minimum(ClientWindow::main().root().viewWidth(),
                                                      OperatorRule::maximum(*d->width, Const(320))))
         .setInput(Rule::Height, d->cmdLine->rule().height() + *d->height);
+
+    close();
 }
 
 ConsoleCommandWidget &ConsoleWidget::commandLine()
@@ -142,6 +149,20 @@ ConsoleCommandWidget &ConsoleWidget::commandLine()
 LogWidget &ConsoleWidget::log()
 {
     return *d->log;
+}
+
+Rule const &ConsoleWidget::shift()
+{
+    return *d->horizShift;
+}
+
+void ConsoleWidget::viewResized()
+{
+    if(!d->opened)
+    {
+        // Make sure it stays shifted out of the view.
+        d->horizShift->set(-rule().width().valuei() - 1);
+    }
 }
 
 void ConsoleWidget::glInit()
@@ -157,6 +178,23 @@ void ConsoleWidget::glDeinit()
 
 bool ConsoleWidget::handleEvent(Event const &event)
 {
+    if(!d->opened)
+    {
+        // Just check for the opening event.
+        if(event.isKeyDown())
+        {
+            KeyEvent const &key = event.as<KeyEvent>();
+            if(key.qtKey() == Qt::Key_Escape &&
+               key.modifiers().testFlag(KeyEvent::Shift))
+            {
+                open();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // Hovering over the right edge shows the <-> cursor.
     if(event.type() == Event::MousePosition)
     {
         MouseEvent const &mouse = event.as<MouseEvent>();
@@ -184,6 +222,7 @@ bool ConsoleWidget::handleEvent(Event const &event)
         }
     }
 
+    // Dragging the right edge resizes the widget.
     if(d->grabHover && event.type() == Event::MouseButton)
     {
         switch(handleMouseClick(event))
@@ -206,6 +245,13 @@ bool ConsoleWidget::handleEvent(Event const &event)
     {
         KeyEvent const &key = event.as<KeyEvent>();
 
+        if(!d->grabbed && key.qtKey() == Qt::Key_Escape &&
+           key.modifiers().testFlag(KeyEvent::Shift))
+        {
+            close();
+            return true;
+        }
+
         if(key.qtKey() == Qt::Key_PageUp ||
            key.qtKey() == Qt::Key_PageDown)
         {
@@ -223,6 +269,32 @@ bool ConsoleWidget::handleEvent(Event const &event)
         }
     }
     return false;
+}
+
+void ConsoleWidget::open()
+{
+    if(d->opened) return;
+
+    d->opened = true;
+    d->horizShift->set(0, .3f);
+
+    if(hasRoot())
+    {
+        root().setFocus(d->cmdLine);
+    }
+}
+
+void ConsoleWidget::close()
+{
+    if(!d->opened) return;
+
+    d->opened = false;
+    d->horizShift->set(-rule().width().valuei() - 1, .3f);
+
+    if(hasRoot())
+    {
+        root().setFocus(0);
+    }
 }
 
 void ConsoleWidget::logContentHeightIncreased(int delta)

@@ -40,9 +40,15 @@ public:
 
     ConsoleCommandWidget &commandLine();
     LogWidget &log();
+    de::Rule const &shift();
 
     // Events.
+    void viewResized();
     bool handleEvent(de::Event const &event);
+
+public slots:
+    void open();
+    void close();
 
 protected slots:
     void logContentHeightIncreased(int delta);
