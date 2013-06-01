@@ -135,6 +135,11 @@ bool GuiWidget::hitTest(Vector2i const &pos) const
     return rule().recti().contains(pos);
 }
 
+bool GuiWidget::hitTest(Event const &event) const
+{
+    return event.isMouse() && hitTest(event.as<MouseEvent>().pos());
+}
+
 GuiWidget::MouseClickStatus GuiWidget::handleMouseClick(Event const &event)
 {
     if(event.type() == Event::MouseButton)

@@ -94,6 +94,8 @@ public:
      */
     virtual bool hitTest(de::Vector2i const &pos) const;
 
+    bool hitTest(de::Event const &event) const;
+
     enum MouseClickStatus {
         MouseClickUnrelated, ///< Event was not related to mouse clicks.
         MouseClickStarted,
