@@ -25,6 +25,7 @@
 #include "clientapp.h"
 
 #include <de/KeyEvent>
+#include <de/MouseEvent>
 #include <de/MemoryLogSink>
 #include <de/LogBuffer>
 #include <de/AtlasTexture>
@@ -534,6 +535,11 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
         return de::max(margin, self.rule().width().valuei() - 2 * margin);
     }
 
+    int contentHeight() const
+    {
+        return int(self.rule().height().valuei()) - topMargin;
+    }
+
     int maxVisibleOffset(int visibleHeight)
     {
         // Determine total height of all entries.
@@ -690,8 +696,7 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
 
     void updateGeometry()
     {
-        Rectanglei pos = self.rule().recti();
-        Vector2i const contentSize(contentWidth(), int(pos.height()) - topMargin);
+        Vector2i const contentSize(contentWidth(), contentHeight());
 
         // If the width of the widget changes, text needs to be reflowed with the
         // new width.
@@ -773,24 +778,27 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
         // Draw the background.
         background.draw();
 
-        GLState &st = GLState::push();
-        st.setScissor(pos.adjusted(Vector2i(0, topMargin), Vector2i()));
+        if(pos.height() > duint(topMargin))
+        {
+            GLState &st = GLState::push();
+            st.setScissor(pos.adjusted(Vector2i(0, topMargin), Vector2i()));
 
-        // First draw the shadow of the text.
-        uMvpMatrix = projMatrix *
-                     Matrix4f::translate(Vector2f(pos.topLeft +
-                                                  Vector2i(margin, topMargin + contentOffset)));
-        uShadowColor = Vector4f(0, 0, 0, 1);
-        contents.draw();
+            // First draw the shadow of the text.
+            uMvpMatrix = projMatrix *
+                         Matrix4f::translate(Vector2f(pos.topLeft +
+                                                      Vector2i(margin, topMargin + contentOffset)));
+            uShadowColor = Vector4f(0, 0, 0, 1);
+            contents.draw();
 
-        // Draw the text itself.
-        uMvpMatrix = projMatrix *
-                     Matrix4f::translate(Vector2f(pos.topLeft +
-                                                  Vector2i(margin, topMargin + contentOffset - 2)));
-        uShadowColor = Vector4f(1, 1, 1, 1);
-        contents.draw();
+            // Draw the text itself.
+            uMvpMatrix = projMatrix *
+                         Matrix4f::translate(Vector2f(pos.topLeft +
+                                                      Vector2i(margin, topMargin + contentOffset - 2)));
+            uShadowColor = Vector4f(1, 1, 1, 1);
+            contents.draw();
 
-        GLState::pop();
+            GLState::pop();
+        }
 
         // We don't need to keep all entries ready for drawing immediately.
         releaseExcessComposedEntries();
@@ -881,6 +889,18 @@ void LogWidget::draw()
 
 bool LogWidget::handleEvent(Event const &event)
 {
+    if(event.type() == Event::MouseWheel && hitTest(event))
+    {
+        MouseEvent const &mouse = event.as<MouseEvent>();
+        if(mouse.wheelMotion() == MouseEvent::FineAngle)
+        {
+            d->setVisibleOffset(de::clamp(0, int(d->visibleOffset.target()) +
+                                          mouse.wheel().y / 2, d->maxScroll), .05f);
+            d->restartScrollOpacityFade();
+        }
+        return true;
+    }
+
     if(!event.isKeyDown()) return false;
 
     KeyEvent const &ev = event.as<KeyEvent>();
