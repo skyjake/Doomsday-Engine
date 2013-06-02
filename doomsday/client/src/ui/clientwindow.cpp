@@ -62,6 +62,7 @@ DENG2_OBSERVES(Canvas,           FocusChange)
 
     /// Root of the nomal UI widgets of this window.
     GuiRootWidget root;
+    TaskBarWidget *taskBar;
     ConsoleWidget *console;
 
     GuiRootWidget busyRoot;
@@ -102,7 +103,7 @@ DENG2_OBSERVES(Canvas,           FocusChange)
                 .setRightBottom(root.viewRight(), root.viewBottom());
         root.add(legacy);
 
-        TaskBarWidget *taskBar = new TaskBarWidget;
+        taskBar = new TaskBarWidget;
         taskBar->rule()
                 .setInput(Rule::Left,   root.viewLeft())
                 .setInput(Rule::Bottom, root.viewBottom() + taskBar->shift())
@@ -118,6 +119,7 @@ DENG2_OBSERVES(Canvas,           FocusChange)
         root.add(console);
 
         QObject::connect(taskBar, SIGNAL(closed()), console, SLOT(close()));
+        QObject::connect(taskBar, SIGNAL(opened()), console, SLOT(clearLog()));
 
         taskBar->setOpeningAction(new CommandAction("menu open"));
         taskBar->setClosingAction(new CommandAction("menu close"));
@@ -155,11 +157,13 @@ DENG2_OBSERVES(Canvas,           FocusChange)
         self.raise();
         self.activateWindow();
 
+        /*
         // Automatically grab the mouse from the get-go if in fullscreen mode.
         if(Mouse_IsPresent() && self.isFullScreen())
         {
             self.canvas().trapMouse();
         }
+        */
 
         self.canvas().audienceForFocusChange += this;
 
@@ -271,6 +275,11 @@ ClientWindow::ClientWindow(String const &id)
 GuiRootWidget &ClientWindow::root()
 {
     return d->mode == Busy? d->busyRoot : d->root;
+}
+
+TaskBarWidget &ClientWindow::taskBar()
+{
+    return *d->taskBar;
 }
 
 ConsoleWidget &ClientWindow::console()

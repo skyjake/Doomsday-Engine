@@ -24,6 +24,7 @@
 #include "ui/sys_input.h"
 #include "ui/busyvisual.h"
 #include "ui/windowsystem.h"
+#include "ui/widgets/taskbarwidget.h"
 #include "dd_def.h"
 #include "dd_main.h"
 #include "dd_loop.h"
@@ -195,6 +196,20 @@ bool LegacyWidget::handleEvent(Event const &event)
      * @todo Input drivers need to support Unicode text; for now we have to
      * submit as Latin1.
      */
+
+    // Clicking on the game view will trap the mouse automatically.
+    Canvas &canvas = root().window().canvas();
+    if(!canvas.isMouseTrapped() && event.type() == Event::MouseButton &&
+       App_GameLoaded())
+    {
+        MouseEvent const &mouse = event.as<MouseEvent>();
+        if(mouse.state() == MouseEvent::Pressed)
+        {
+            canvas.trapMouse();
+            root().window().taskBar().close();
+            return true;
+        }
+    }
 
     // Note: repeat events are ignored here as the legacy input system does
     // its own.

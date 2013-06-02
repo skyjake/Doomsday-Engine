@@ -24,7 +24,6 @@
 #include <de/PersistentCanvasWindow>
 
 #include "ui/widgets/guirootwidget.h"
-#include "ui/widgets/consolewidget.h"
 #include "resource/image.h"
 
 /**
@@ -38,6 +37,9 @@
  * A helpful macro that changes the origin of the window space coordinate system.
  */
 #define FLIP(y)             (DENG_WINDOW->height() - (y+1))
+
+class ConsoleWidget;
+class TaskBarWidget;
 
 /**
  * Top-level window that contains a libdeng2 UI widgets. @ingroup gui
@@ -58,7 +60,8 @@ public:
 public:
     ClientWindow(de::String const &id = "main");
 
-    GuiRootWidget &root();    
+    GuiRootWidget &root();
+    TaskBarWidget &taskBar();
     ConsoleWidget &console();
 
     /**

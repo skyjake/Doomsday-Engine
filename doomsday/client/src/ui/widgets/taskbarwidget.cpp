@@ -20,6 +20,7 @@
 #include "ui/widgets/guirootwidget.h"
 #include "ui/widgets/labelwidget.h"
 #include "ui/widgets/buttonwidget.h"
+#include "ui/clientwindow.h"
 #include "ui/commandaction.h"
 
 #include <de/KeyEvent>
@@ -44,6 +45,7 @@ DENG2_OBSERVES(Games, GameChange)
 
     QScopedPointer<Action> openAction;
     QScopedPointer<Action> closeAction;
+    bool mouseWasTrappedWhenOpening;
 
     // GL objects:
     Drawable drawable;
@@ -55,6 +57,7 @@ DENG2_OBSERVES(Games, GameChange)
         : Base(i),
           opened(true),
           status(0),
+          mouseWasTrappedWhenOpening(false),
           uMvpMatrix("uMvpMatrix", GLUniform::Mat4),
           uColor    ("uColor",     GLUniform::Vec4)
     {
@@ -250,6 +253,7 @@ void TaskBarWidget::open()
     if(!d->opened)
     {
         d->opened = true;
+
         d->vertShift->set(0, .2f);
         d->logo->setOpacity(1, .2f);
         d->status->setOpacity(1, .2f);
@@ -259,6 +263,17 @@ void TaskBarWidget::open()
         if(!d->openAction.isNull())
         {
             d->openAction->trigger();
+        }
+
+        // Untrap the mouse if it is trapped.
+        if(hasRoot())
+        {
+            Canvas &canvas = root().window().canvas();
+            d->mouseWasTrappedWhenOpening = canvas.isMouseTrapped();
+            if(canvas.isMouseTrapped())
+            {
+                canvas.trapMouse(false);
+            }
         }
     }
 }
@@ -277,6 +292,16 @@ void TaskBarWidget::close()
         if(!d->closeAction.isNull())
         {
             d->closeAction->trigger();
+        }
+
+        // Retrap the mouse if it was trapped when opening.
+        if(hasRoot())
+        {
+            Canvas &canvas = root().window().canvas();
+            if(d->mouseWasTrappedWhenOpening)
+            {
+                canvas.trapMouse();
+            }
         }
     }
 }

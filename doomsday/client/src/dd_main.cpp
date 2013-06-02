@@ -68,6 +68,10 @@
 #include "m_misc.h"
 #include "api_map.h"
 
+#ifdef __CLIENT__
+#  include "ui/widgets/taskbarwidget.h"
+#endif
+
 extern int renderTextures;
 
 using namespace de;
@@ -1447,6 +1451,15 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
     GL_PurgeDeferredTasks();
     GL_ResetTextureManager();
     GL_SetFilter(false);
+
+    {
+        ClientWindow &mainWin = ClientWindow::main();
+        mainWin.taskBar().close();
+        if(mainWin.isFullScreen())
+        {
+            mainWin.canvas().trapMouse();
+        }
+    }
 #endif
 
     // If a game is presently loaded; unload it.
@@ -1684,6 +1697,11 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
      *       busy mode (which would normally do this for us on end).
      */
     DD_ClearEvents();
+
+    if(!App_GameLoaded())
+    {
+        ClientWindow::main().taskBar().open();
+    }
 #endif
     return true;
 }

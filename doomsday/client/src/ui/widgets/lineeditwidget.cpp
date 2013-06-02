@@ -186,7 +186,7 @@ DENG2_OBSERVES(Atlas, Reposition)
 
     void updateHover(Vector2i const &pos)
     {
-        if(self.hitTest(pos))
+        if(!self.hasFocus() && self.hitTest(pos))
         {
             if(hovering.target() < 1)
             {
