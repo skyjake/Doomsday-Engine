@@ -117,7 +117,10 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("TaskBar"), d(new Instance(this))
 {
     Rule const &gap = style().rules().rule("gap");
 
-    LabelWidget *logo = new LabelWidget;
+    Background bg(style().colors().colorf("background"));
+
+    ButtonWidget *logo = new ButtonWidget;
+    logo->setAction(new CommandAction("panel"));
     logo->setImage(style().images().image("logo.px128"));
     logo->setImageScale(.6f);
     logo->setImageFit(FitToHeight | OriginalAspectRatio);
@@ -132,6 +135,7 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("TaskBar"), d(new Instance(this))
 
     // Currently loaded game.
     d->status = new LabelWidget;
+    d->status->set(bg);
     d->status->setWidthPolicy(LabelWidget::Expand);
     d->status->rule()
             .setInput(Rule::Height, rule().height())
@@ -151,6 +155,7 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("TaskBar"), d(new Instance(this))
             .setInput(Rule::Bottom, rule().bottom());
     add(console);
 
+    /*
     ButtonWidget *panel = new ButtonWidget;
     panel->setImage(style().images().image("gear"));
     panel->setWidthPolicy(LabelWidget::Expand);
@@ -161,8 +166,8 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("TaskBar"), d(new Instance(this))
             .setInput(Rule::Height, rule().height())
             .setInput(Rule::Left,   console->rule().right())
             .setInput(Rule::Bottom, rule().bottom());
+    add(panel);*/
 
-    add(panel);
     // Taskbar height depends on the font size.
     rule().setInput(Rule::Height, style().fonts().font("default").height() + gap * 2);
 }
@@ -186,5 +191,5 @@ void TaskBarWidget::viewResized()
 void TaskBarWidget::draw()
 {
     d->updateGeometry();
-    d->drawable.draw();
+    //d->drawable.draw();
 }
