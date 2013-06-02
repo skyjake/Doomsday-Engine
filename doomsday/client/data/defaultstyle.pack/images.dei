@@ -5,3 +5,5 @@ group logo {
     image px256 { path = "graphics/deng-logo-256.png" }
     image px512 { path = "graphics/deng-logo-512.png" }
 }
+
+image gear { path = "graphics/gear.png" }

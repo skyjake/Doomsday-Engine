@@ -152,8 +152,10 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("TaskBar"), d(new Instance(this))
     add(console);
 
     ButtonWidget *panel = new ButtonWidget;
-    panel->setText("Settings");
+    panel->setImage(style().images().image("gear"));
     panel->setWidthPolicy(LabelWidget::Expand);
+    panel->setHeightPolicy(LabelWidget::Filled);
+    panel->setImageFit(FitToHeight | OriginalAspectRatio);
     panel->setAction(new CommandAction("panel"));
     panel->rule()
             .setInput(Rule::Height, rule().height())
