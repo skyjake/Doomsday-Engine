@@ -20,6 +20,7 @@
 #include "ui/widgets/guirootwidget.h"
 #include "ui/widgets/labelwidget.h"
 #include "ui/widgets/buttonwidget.h"
+#include "ui/commandaction.h"
 
 #include <de/Drawable>
 #include <de/GLBuffer>
@@ -118,7 +119,7 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("TaskBar"), d(new Instance(this))
 
     LabelWidget *logo = new LabelWidget;
     logo->setImage(style().images().image("logo.px128"));
-    logo->setImageScale(.75f);
+    logo->setImageScale(.6f);
     logo->setImageFit(FitToHeight | OriginalAspectRatio);
     logo->setText(DENG2_ESC("b") + VersionInfo().base());
     logo->setWidthPolicy(LabelWidget::Expand);
@@ -129,16 +130,37 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("TaskBar"), d(new Instance(this))
             .setInput(Rule::Bottom, rule().bottom());
     add(logo);
 
+    // Currently loaded game.
     d->status = new LabelWidget;
     d->status->setWidthPolicy(LabelWidget::Expand);
     d->status->rule()
             .setInput(Rule::Height, rule().height())
             .setInput(Rule::Bottom, rule().bottom())
-            .setInput(Rule::Left,   rule().left());
-    add(d->status);
+            .setInput(Rule::Right,  logo->rule().left());
+    add(d->status);        
 
     d->updateStatus();
 
+    ButtonWidget *console = new ButtonWidget;
+    console->setText("Console");
+    console->setWidthPolicy(LabelWidget::Expand);
+    console->setAction(new CommandAction("contoggle"));
+    console->rule()
+            .setInput(Rule::Height, rule().height())
+            .setInput(Rule::Left,   rule().left())
+            .setInput(Rule::Bottom, rule().bottom());
+    add(console);
+
+    ButtonWidget *panel = new ButtonWidget;
+    panel->setText("Settings");
+    panel->setWidthPolicy(LabelWidget::Expand);
+    panel->setAction(new CommandAction("panel"));
+    panel->rule()
+            .setInput(Rule::Height, rule().height())
+            .setInput(Rule::Left,   console->rule().right())
+            .setInput(Rule::Bottom, rule().bottom());
+
+    add(panel);
     // Taskbar height depends on the font size.
     rule().setInput(Rule::Height, style().fonts().font("default").height() + gap * 2);
 }

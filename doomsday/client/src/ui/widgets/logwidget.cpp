@@ -119,6 +119,7 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
 
         void clear()
         {
+            DENG2_GUARD(this);
             composer.release();
         }
     };
@@ -711,7 +712,7 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
 
         // We won't keep an unlimited number of entries in memory; delete the
         // oldest ones if limit has been reached.
-        prune();
+        //prune();
 
         clampVisibleOffset(contentSize.y);
 

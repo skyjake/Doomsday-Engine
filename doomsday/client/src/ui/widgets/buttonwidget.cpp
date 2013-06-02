@@ -32,13 +32,13 @@ DENG2_PIMPL(ButtonWidget)
         Down
     };
     State state;
-    Action *action;
+    QScopedPointer<Action> action;
     Animation scale;
     Animation frameOpacity;
     bool animating;
 
     Instance(Public *i)
-        : Base(i), state(Up), action(0),
+        : Base(i), state(Up),
           scale(1.f),
           frameOpacity(.15f, Animation::Linear),
           animating(false)
@@ -112,6 +112,11 @@ DENG2_PIMPL(ButtonWidget)
 ButtonWidget::ButtonWidget(String const &name) : LabelWidget(name), d(new Instance(this))
 {}
 
+void ButtonWidget::setAction(Action *action)
+{
+    d->action.reset(action);
+}
+
 bool ButtonWidget::handleEvent(Event const &event)
 {
     if(event.isMouse())
@@ -132,7 +137,7 @@ bool ButtonWidget::handleEvent(Event const &event)
 
             case MouseClickFinished:
                 d->setState(Instance::Up);
-                if(d->action && hitTest(mouse.pos()))
+                if(!d->action.isNull() && hitTest(mouse.pos()))
                 {
                     d->action->trigger();
                 }
