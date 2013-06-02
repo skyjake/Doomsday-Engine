@@ -70,7 +70,7 @@ DENG2_PIMPL(ButtonWidget)
 
         case Down:
             scale.setValue(.9f);
-            frameOpacity.setValue(0);//.5f);
+            frameOpacity.setValue(0);
             break;
         }
     }

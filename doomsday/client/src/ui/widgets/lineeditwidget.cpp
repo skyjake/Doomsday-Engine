@@ -45,6 +45,7 @@ DENG2_OBSERVES(Atlas, Reposition)
     Font const *font;
     int margin;
     Time blinkTime;
+    Animation hovering;
 
     // GL objects.
     GLTextComposer composer;
@@ -57,6 +58,7 @@ DENG2_OBSERVES(Atlas, Reposition)
           wraps(static_cast<FontLineWrapping &>(i->lineWraps())),
           font(0),
           margin(0),
+          hovering(0, Animation::Linear),
           uMvpMatrix("uMvpMatrix", GLUniform::Mat4),
           uColor    ("uColor",     GLUniform::Vec4)
     {
@@ -107,14 +109,13 @@ DENG2_OBSERVES(Atlas, Reposition)
     void updateBackground()
     {
         Background bg(self.style().colors().colorf("background"));
-        /*
-        if(self.hasFocus())
+        if(hovering > 0)
         {
             bg.type = Background::GradientFrame;
             bg.thickness = 6;
-            bg.color = Vector4f(1, 1, 1, .15f);
+            bg.color = Vector4f(1, 1, 1, .15f * hovering);
+            self.requestGeometry();
         }
-        */
         self.set(bg);
     }
 
@@ -149,6 +150,8 @@ DENG2_OBSERVES(Atlas, Reposition)
 
     void updateGeometry()
     {
+        updateBackground();
+
         if(composer.update()) self.requestGeometry();
 
         // Do we actually need to update geometry?
@@ -179,6 +182,21 @@ DENG2_OBSERVES(Atlas, Reposition)
 
         drawable.buffer<VertexBuf>(ID_BUF_CURSOR)
                 .setVertices(gl::TriangleStrip, verts, gl::Static);
+    }
+
+    void updateHover(Vector2i const &pos)
+    {
+        if(self.hitTest(pos))
+        {
+            if(hovering.target() < 1)
+            {
+                hovering.setValue(1, .15f);
+            }
+        }
+        else if(hovering.target() > 0)
+        {
+            hovering.setValue(0, .6f);
+        }
     }
 
     void contentChanged()
@@ -279,6 +297,11 @@ void LineEditWidget::draw()
 
 bool LineEditWidget::handleEvent(Event const &event)
 {
+    if(event.type() == Event::MousePosition)
+    {
+        d->updateHover(event.as<MouseEvent>().pos());
+    }
+
     switch(handleMouseClick(event))
     {
     case MouseClickStarted:
