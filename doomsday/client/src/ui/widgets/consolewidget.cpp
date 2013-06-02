@@ -189,6 +189,7 @@ bool ConsoleWidget::handleEvent(Event const &event)
         if(event.isKeyDown())
         {
             KeyEvent const &key = event.as<KeyEvent>();
+
             if(key.qtKey() == Qt::Key_Escape &&
                key.modifiers().testFlag(KeyEvent::Shift))
             {
@@ -250,8 +251,7 @@ bool ConsoleWidget::handleEvent(Event const &event)
     {
         KeyEvent const &key = event.as<KeyEvent>();
 
-        if(!d->grabbed && key.qtKey() == Qt::Key_Escape &&
-           key.modifiers().testFlag(KeyEvent::Shift))
+        if(!d->grabbed && key.qtKey() == Qt::Key_Escape)
         {
             close();
             return true;

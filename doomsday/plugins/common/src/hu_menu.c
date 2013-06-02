@@ -6456,6 +6456,17 @@ D_CMD(MenuOpen)
 {
     if(argc > 1)
     {
+        if(!stricmp(argv[1], "open"))
+        {
+            Hu_MenuCommand(MCMD_OPEN);
+            return true;
+        }
+        if(!stricmp(argv[1], "close"))
+        {
+            Hu_MenuCommand(MCMD_CLOSE);
+            return true;
+        }
+
         mn_page_t* page = Hu_MenuFindPageByName(argv[1]);
         if(page)
         {

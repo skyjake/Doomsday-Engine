@@ -37,6 +37,7 @@
 #include "ui/widgets/busywidget.h"
 #include "ui/widgets/taskbarwidget.h"
 #include "ui/widgets/consolewidget.h"
+#include "ui/commandaction.h"
 #include "ui/mouse_qt.h"
 
 #include "dd_main.h"
@@ -104,7 +105,7 @@ DENG2_OBSERVES(Canvas,           FocusChange)
         TaskBarWidget *taskBar = new TaskBarWidget;
         taskBar->rule()
                 .setInput(Rule::Left,   root.viewLeft())
-                .setInput(Rule::Bottom, root.viewBottom())
+                .setInput(Rule::Bottom, root.viewBottom() + taskBar->shift())
                 .setInput(Rule::Width,  root.viewWidth());
         root.add(taskBar);
 
@@ -115,6 +116,11 @@ DENG2_OBSERVES(Canvas,           FocusChange)
                 .setInput(Rule::Bottom, taskBar->rule().top() - unit)
                 .setInput(Rule::Left,   root.viewLeft() + console->shift());
         root.add(console);
+
+        QObject::connect(taskBar, SIGNAL(closed()), console, SLOT(close()));
+
+        taskBar->setOpeningAction(new CommandAction("menu open"));
+        taskBar->setClosingAction(new CommandAction("menu close"));
 
         // Initially the widget is disabled. It will be enabled when the window
         // is visible and ready to be drawn.

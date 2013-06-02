@@ -19,20 +19,40 @@
 #ifndef DENG_CLIENT_TASKBARWIDGET_H
 #define DENG_CLIENT_TASKBARWIDGET_H
 
+#include <QObject>
+#include <de/Action>
+
 #include "guiwidget.h"
 #include "consolecommandwidget.h"
 
 /**
  * Task bar that acts as the primary UI element of the client's UI.
  */
-class TaskBarWidget : public GuiWidget
+class TaskBarWidget : public QObject, public GuiWidget
 {
+    Q_OBJECT
+
 public:
     TaskBarWidget();
+
+    bool isOpen() const;
+    de::Rule const &shift();
+
+    void setOpeningAction(de::Action *action);
+    void setClosingAction(de::Action *action);
 
     // Events.
     void viewResized();
     void draw();
+    bool handleEvent(de::Event const &event);
+
+public slots:
+    void open();
+    void close();
+
+signals:
+    void opened();
+    void closed();
 
 protected:
     void glInit();

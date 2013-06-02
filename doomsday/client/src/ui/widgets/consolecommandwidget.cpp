@@ -68,7 +68,7 @@ ConsoleCommandWidget::ConsoleCommandWidget(String const &name)
 
 bool ConsoleCommandWidget::handleEvent(Event const &event)
 {
-    if(event.isKeyDown())
+    if(hasFocus() && event.isKeyDown())
     {
         KeyEvent const &key = event.as<KeyEvent>();
 
@@ -90,7 +90,7 @@ bool ConsoleCommandWidget::handleEvent(Event const &event)
         return true;
     }
 
-    if(event.isKeyDown())
+    if(hasFocus() && event.isKeyDown())
     {
         // Fallback to history navigation.
         return d->history.handleControlKey(event.as<KeyEvent>().qtKey());
