@@ -66,9 +66,11 @@ public:
         /// a map line that has no Sector on the relevant side).
         Sector *before;
         Sector *after;
+        bool meetAtVertex;
 
     public:
-        Intercept(double distance, LineSegment::Side &lineSeg, int edge);
+        Intercept(double distance, LineSegment::Side &lineSeg, int edge,
+                  bool meetAtVertex);
 
         bool operator < (Intercept const &other) const {
             return _distance < other._distance;
@@ -158,13 +160,17 @@ public:
      * @param lineSeg   Line segment to perform intersection with.
      * @param edge      Line segment edge identifier of the vertex to associate
      *                  with any resulting intercept.
+     *
+     * @param meetAtVertex  @c true intercept point is close enough to the
+     *                      @a edge vertex to be considered incident.
+     *
      * @param edgeTips  Set of EdgeTips for the identified @a edge of
      *                  @a lineSeg. (@todo Refactor away -ds)
      *
      * @return  The resultant new intercept; otherwise @a 0.
      */
     Intercept *intercept(LineSegment::Side const &lineSeg, int edge,
-                         EdgeTips const &edgeTips);
+                         bool meetAtVertex, EdgeTips const &edgeTips);
 
     /**
      * Sort and then merge near-intercepts from the given list.

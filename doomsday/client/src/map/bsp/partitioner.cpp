@@ -900,9 +900,9 @@ DENG2_PIMPL(Partitioner)
     }
 
     /// @todo refactor away -ds
-    inline void interceptPartition(LineSegment::Side &seg, int edge)
+    inline void interceptPartition(LineSegment::Side &seg, int edge, bool meetAtVertex = false)
     {
-        hplane.intercept(seg, edge, edgeTips(seg.vertex(edge)));
+        hplane.intercept(seg, edge, meetAtVertex, edgeTips(seg.vertex(edge)));
     }
 
     /**
@@ -949,7 +949,8 @@ DENG2_PIMPL(Partitioner)
             {
                 // Direction determines which edge of the line segment interfaces
                 // with the new half-plane intercept.
-                interceptPartition(seg, (fromDist < DIST_EPSILON? LineSegment::From : LineSegment::To));
+                interceptPartition(seg, (fromDist < DIST_EPSILON? LineSegment::From : LineSegment::To),
+                                   true /*incident with the edge vertex*/);
             }
             linkSegmentInSuperBlockmap(rights, seg);
             break;
@@ -958,7 +959,8 @@ DENG2_PIMPL(Partitioner)
         case LeftIntercept:
             if(rel == LeftIntercept)
             {
-                interceptPartition(seg, (fromDist > -DIST_EPSILON? LineSegment::From : LineSegment::To));
+                interceptPartition(seg, (fromDist > -DIST_EPSILON? LineSegment::From : LineSegment::To),
+                                   true /*incident with the edge vertex*/);
             }
             linkSegmentInSuperBlockmap(lefts, seg);
             break;
@@ -1093,17 +1095,21 @@ DENG2_PIMPL(Partitioner)
         }
 
         // Create new line segments.
+        Sector *prevSector = 0;
         for(int i = 0; i < hplane.intercepts().count() - 1; ++i)
         {
             HPlane::Intercept const &cur  = hplane.intercepts()[i];
             HPlane::Intercept const &next = hplane.intercepts()[i+1];
 
-            if(!cur.after && !next.before)
-                continue;
-
             // Does this range overlap the partition line segment?
             if(partSeg && cur.distance() >= nearDist && next.distance() <= farDist)
                 continue;
+
+            if(!cur.after && !next.before)
+            {
+                prevSector = 0;
+                continue;
+            }
 
             // Check for some nasty open/closed or close/open cases.
             if(cur.after && !next.before)
@@ -1113,6 +1119,7 @@ DENG2_PIMPL(Partitioner)
                     Vector2d nearPoint = (cur.vertex().origin() + next.vertex().origin()) / 2;
                     notifyUnclosedSectorFound(*cur.after, nearPoint);
                 }
+                prevSector = 0;
                 continue;
             }
 
@@ -1123,15 +1130,26 @@ DENG2_PIMPL(Partitioner)
                     Vector2d nearPoint = (cur.vertex().origin() + next.vertex().origin()) / 2;
                     notifyUnclosedSectorFound(*next.before, nearPoint);
                 }
+                prevSector = 0;
                 continue;
             }
 
             /*
              * This is definitely open space.
              */
+            Vertex &fromVertex = cur.vertex();
+            Vertex &toVertex   = next.vertex();
 
             Sector *sector = cur.after;
-            if(!cur.before && next.before == next.after)
+            if(prevSector && cur.meetAtVertex && cur.before == cur.after)
+            {
+                sector = prevSector;
+            }
+            else if(prevSector && next.meetAtVertex && next.before == next.after)
+            {
+                sector = prevSector;
+            }
+            else if(!cur.before && next.before == next.after)
             {
                 sector = next.before;
             }
@@ -1142,7 +1160,7 @@ DENG2_PIMPL(Partitioner)
                 {
                     if(!cur.selfRef && !next.selfRef)
                     {
-                        LOG_DEBUG("Sector mismatch (#%d %s != #%d %s.")
+                        LOG_DEBUG("Sector mismatch #%d %s != #%d %s")
                             << cur.after->indexInMap()
                             << cur.vertex().origin().asText()
                             << next.before->indexInMap()
@@ -1157,7 +1175,7 @@ DENG2_PIMPL(Partitioner)
             DENG_ASSERT(sector != 0);
 
             LineSegment &newSeg =
-                buildLineSegmentBetweenVertexes(cur.vertex(), next.vertex(),
+                buildLineSegmentBetweenVertexes(fromVertex, toVertex,
                                                 sector, sector, 0 /*no map line*/,
                                                 partSeg? &partSeg->mapLine() : 0);
 
@@ -1170,10 +1188,12 @@ DENG2_PIMPL(Partitioner)
 
             /*
             LOG_DEBUG("Built line segment from %s to %s (sector #%i)")
-                << newSeg.from().origin().asText()
-                << newSeg.to().origin().asText()
+                << fromVertex.origin().asText()
+                << toVertex.origin().asText()
                 << sector->indexInArchive();
             */
+
+            prevSector = sector;
         }
     }
 
@@ -1265,11 +1285,11 @@ DENG2_PIMPL(Partitioner)
             // Reconfigure the half-plane for the next round of partitioning.
             hplane.configure(*partSeg);
 
-            //LOG_TRACE("%s, line segment %p %s %s.")
+            //LOG_TRACE("%s, line segment [%p] %s %s.")
             //    << hplane.partition().asText()
-            //    << de::dintptr(*partSeg)
-            //    << partSeg->fromOrigin().asText()
-            //    << partSeg->toOrigin().asText()
+            //    << de::dintptr(partSeg)
+            //    << partSeg->from().origin().asText()
+            //    << partSeg->to().origin().asText();
 
             // Take a copy of the current partition - we'll need this for any
             // BspNode we produce later.

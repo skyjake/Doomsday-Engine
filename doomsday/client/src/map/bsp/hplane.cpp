@@ -43,10 +43,12 @@
 namespace de {
 namespace bsp {
 
-HPlane::Intercept::Intercept(ddouble distance, LineSegment::Side &lineSeg, int edge)
+HPlane::Intercept::Intercept(ddouble distance, LineSegment::Side &lineSeg, int edge,
+    bool meetAtVertex)
     : selfRef(false),
       before(0),
       after(0),
+      meetAtVertex(meetAtVertex),
       _distance(distance),
       _lineSeg(&lineSeg),
       _edge(edge)
@@ -68,8 +70,8 @@ void HPlane::Intercept::debugPrint() const
     LOG_INFO("Vertex #%i %s beforeSector: #%d afterSector: #%d %s")
         << vertex().indexInMap()
         << vertex().origin().asText()
-        << (before? before->indexInMap() : -1)
-        << (after? after->indexInMap() : -1)
+        << (before? before->indexInArchive() : -1)
+        << (after? after->indexInArchive() : -1)
         << (selfRef? "SELFREF" : "");
 }
 #endif
@@ -229,7 +231,7 @@ double HPlane::intersect(LineSegment::Side const &lineSeg, int edge)
 }
 
 HPlane::Intercept *HPlane::intercept(LineSegment::Side const &lineSeg, int edge,
-    EdgeTips const &edgeTips)
+    bool meetAtVertex, EdgeTips const &edgeTips)
 {
     // Already present for this vertex?
     Vertex &vertex = lineSeg.vertex(edge);
@@ -237,7 +239,7 @@ HPlane::Intercept *HPlane::intercept(LineSegment::Side const &lineSeg, int edge,
 
     coord_t distToVertex = intersect(lineSeg, edge);
 
-    d->intercepts.append(Intercept(distToVertex, const_cast<LineSegment::Side &>(lineSeg), edge));
+    d->intercepts.append(Intercept(distToVertex, const_cast<LineSegment::Side &>(lineSeg), edge, meetAtVertex));
     Intercept *newIntercept = &d->intercepts.last();
 
     newIntercept->selfRef = (lineSeg.hasMapSide() && lineSeg.mapLine().isSelfReferencing());
@@ -403,7 +405,7 @@ void HPlane::printIntercepts() const
     uint index = 0;
     foreach(Intercept const &icpt, d->intercepts)
     {
-        LOG_DEBUG(" %u: >%1.2f ") << (index++) << icpt.distance();
+        LOG_DEBUG(" %u: >%1.2f") << (index++) << icpt.distance();
         icpt.debugPrint();
     }
 }
