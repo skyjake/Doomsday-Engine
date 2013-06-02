@@ -49,6 +49,7 @@ public Font::RichFormat::IStyle
     Font const *font;
     int margin;
     int gap;
+    Animation opacity;
 
     String styledText;
     FontLineWrapping wraps;
@@ -60,6 +61,7 @@ public Font::RichFormat::IStyle
     Id imageTex;
     Drawable drawable;
     GLUniform uMvpMatrix;
+    GLUniform uColor;
 
     Instance(Public *i)
         : Base(i),
@@ -74,11 +76,14 @@ public Font::RichFormat::IStyle
           wrapWidth(0),
           needImageUpdate(false),
           imageTex(Id::None),
-          uMvpMatrix("uMvpMatrix", GLUniform::Mat4)
+          uMvpMatrix("uMvpMatrix", GLUniform::Mat4),
+          uColor    ("uColor",     GLUniform::Vec4)
     {
         width  = new ConstantRule(0);
         height = new ConstantRule(0);
 
+        opacity = 1;
+        uColor = Vector4f(1, 1, 1, 1);
         updateStyle();
     }
 
@@ -129,8 +134,8 @@ public Font::RichFormat::IStyle
     void glInit()
     {
         drawable.addBuffer(new VertexBuf);
-        self.root().shaders().build(drawable.program(), "generic.textured.color")
-                << uMvpMatrix << self.root().uAtlas();
+        self.root().shaders().build(drawable.program(), "generic.textured.color_ucolor")
+                << uMvpMatrix << uColor << self.root().uAtlas();
 
         composer.setAtlas(atlas());
         composer.setWrapping(wraps);
@@ -418,6 +423,7 @@ void LabelWidget::update()
 
 void LabelWidget::draw()
 {
+    d->uColor = Vector4f(1, 1, 1, d->opacity);
     d->draw();
 }
 
@@ -491,4 +497,9 @@ void LabelWidget::setHeightPolicy(SizePolicy policy)
     {
         rule().clearInput(Rule::Height);
     }
+}
+
+void LabelWidget::setOpacity(float opacity, TimeDelta span)
+{
+    d->opacity.setValue(opacity, span);
 }
