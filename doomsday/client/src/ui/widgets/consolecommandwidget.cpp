@@ -71,6 +71,11 @@ void ConsoleCommandWidget::focusGained()
     emit gotFocus();
 }
 
+void ConsoleCommandWidget::focusLost()
+{
+    emit lostFocus();
+}
+
 bool ConsoleCommandWidget::handleEvent(Event const &event)
 {
     if(hasFocus() && event.isKeyDown())

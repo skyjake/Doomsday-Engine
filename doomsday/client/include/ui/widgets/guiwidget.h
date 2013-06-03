@@ -80,6 +80,24 @@ public:
 
     Background const &background() const;
 
+    /**
+     * Sets the opacity of the widget. Child widgets' opacity is also affected.
+     *
+     * @param opacity  Opacity.
+     * @param span     Animation transition span.
+     */
+    void setOpacity(float opacity, de::TimeDelta span = 0);
+
+    /**
+     * Determines the widget's current opacity.
+     */
+    float opacity() const;
+
+    /**
+     * Determines the widget's opacity factored into the ancestor's opacities.
+     */
+    float visibleOpacity() const;
+
     // Events.
     void initialize();
     void deinitialize();

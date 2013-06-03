@@ -110,8 +110,6 @@ public:
     void setWidthPolicy(SizePolicy policy);
     void setHeightPolicy(SizePolicy policy);
 
-    void setOpacity(float opacity, de::TimeDelta span = 0);
-
     // Events.
     void viewResized();
     void update();

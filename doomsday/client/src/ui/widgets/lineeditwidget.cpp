@@ -52,6 +52,7 @@ DENG2_OBSERVES(Atlas, Reposition)
     Drawable drawable;
     GLUniform uMvpMatrix;
     GLUniform uColor;
+    GLUniform uCursorColor;
 
     Instance(Public *i)
         : Base(i),
@@ -59,14 +60,15 @@ DENG2_OBSERVES(Atlas, Reposition)
           font(0),
           margin(0),
           hovering(0, Animation::Linear),
-          uMvpMatrix("uMvpMatrix", GLUniform::Mat4),
-          uColor    ("uColor",     GLUniform::Vec4)
+          uMvpMatrix  ("uMvpMatrix", GLUniform::Mat4),
+          uColor      ("uColor",     GLUniform::Vec4),
+          uCursorColor("uColor",     GLUniform::Vec4)
     {
         height = new ScalarRule(0);
 
         updateStyle();
 
-        uColor = Vector4f(1, 1, 1, 1);
+        uCursorColor = Vector4f(1, 1, 1, 1);
     }
 
     ~Instance()
@@ -132,13 +134,14 @@ DENG2_OBSERVES(Atlas, Reposition)
         drawable.addBuffer(ID_BUF_TEXT, new VertexBuf);
         drawable.addBufferWithNewProgram(ID_BUF_CURSOR, new VertexBuf, "cursor");
 
-        self.root().shaders().build(drawable.program(), "generic.textured.color")
+        self.root().shaders().build(drawable.program(), "generic.textured.color_ucolor")
                 << uMvpMatrix
+                << uColor
                 << self.root().uAtlas();
 
         self.root().shaders().build(drawable.program("cursor"), "generic.color_ucolor")
                 << uMvpMatrix
-                << uColor;
+                << uCursorColor;
 
         updateProjection();
     }
@@ -282,14 +285,19 @@ void LineEditWidget::update()
 
 void LineEditWidget::draw()
 {
+    float const opac = visibleOpacity();
+
     // Blink the cursor.
     Vector4f col = style().colors().colorf("editor.cursor");
-    col.w *= (int(d->blinkTime.since() * 2) & 1? .25f : 1.f);
+    col.w *= (int(d->blinkTime.since() * 2) & 1? .25f : 1.f) * opac;
     if(!hasFocus())
     {
         col.w = 0;
     }
-    d->uColor = col;
+    d->uCursorColor = col;
+
+    // Overall opacity.
+    d->uColor = Vector4f(1, 1, 1, opac);
 
     d->updateGeometry();
     d->drawable.draw();

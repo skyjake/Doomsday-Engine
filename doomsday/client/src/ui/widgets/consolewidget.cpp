@@ -126,6 +126,9 @@ ConsoleWidget::ConsoleWidget() : GuiWidget("Console"), d(new Instance(this))
     // Keep the button at the bottom of the expanding command line.
     //consoleButton->rule().setInput(Rule::Bottom, d->cmdLine->rule().bottom());
 
+    d->button->setOpacity(.5f);
+    d->cmdLine->setOpacity(.5f);
+
     // The Log is attached to the top of the command line.
     d->log = new LogWidget("log");
     d->log->rule()
@@ -145,6 +148,9 @@ ConsoleWidget::ConsoleWidget() : GuiWidget("Console"), d(new Instance(this))
         .setInput(Rule::Bottom, d->cmdLine->rule().top() - unit);
 
     closeLog();
+
+    connect(d->cmdLine, SIGNAL(gotFocus()), this, SLOT(setFullyOpaque()));
+    connect(d->cmdLine, SIGNAL(lostFocus()), this, SLOT(setTranslucent()));
 }
 
 ButtonWidget &ConsoleWidget::button()
@@ -340,4 +346,16 @@ void ConsoleWidget::showFullLog()
 void ConsoleWidget::logContentHeightIncreased(int delta)
 {
     d->expandLog(delta, true);
+}
+
+void ConsoleWidget::setFullyOpaque()
+{
+    d->button->setOpacity(1, .25f);
+    d->cmdLine->setOpacity(1, .25f);
+}
+
+void ConsoleWidget::setTranslucent()
+{
+    d->button->setOpacity(.5f, .25f);
+    d->cmdLine->setOpacity(.5f, .25f);
 }

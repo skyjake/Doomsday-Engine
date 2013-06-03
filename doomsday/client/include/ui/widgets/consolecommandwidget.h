@@ -37,10 +37,12 @@ public:
 
     // Events.
     void focusGained();
+    void focusLost();
     bool handleEvent(de::Event const &event);
 
 signals:
     void gotFocus();
+    void lostFocus();
 
 private:
     DENG2_PRIVATE(d)

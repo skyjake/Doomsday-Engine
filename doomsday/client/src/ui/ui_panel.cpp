@@ -31,6 +31,7 @@
 #include "de_graphics.h"
 #include "de_ui.h"
 
+#include "ui/widgets/taskbarwidget.h"
 #include "render/rend_font.h"
 
 #include <de/DisplayMode>
@@ -1231,7 +1232,8 @@ D_CMD(OpenPanel)
     cvarbutton_t* cvb;
     int i;
 
-    Con_Execute(CMDS_DDAY, "conclose", true, false);
+    //Con_Execute(CMDS_DDAY, "conclose", true, false);
+    ClientWindow::main().taskBar().close();
 
     populateDisplayResolutions();
 

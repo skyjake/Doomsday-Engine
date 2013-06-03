@@ -49,7 +49,6 @@ public Font::RichFormat::IStyle
     Font const *font;
     int margin;
     int gap;
-    Animation opacity;
 
     String styledText;
     FontLineWrapping wraps;
@@ -82,7 +81,6 @@ public Font::RichFormat::IStyle
         width  = new ConstantRule(0);
         height = new ConstantRule(0);
 
-        opacity = 1;
         uColor = Vector4f(1, 1, 1, 1);
         updateStyle();
     }
@@ -423,7 +421,7 @@ void LabelWidget::update()
 
 void LabelWidget::draw()
 {
-    d->uColor = Vector4f(1, 1, 1, d->opacity);
+    d->uColor = Vector4f(1, 1, 1, visibleOpacity());
     d->draw();
 }
 
@@ -497,9 +495,4 @@ void LabelWidget::setHeightPolicy(SizePolicy policy)
     {
         rule().clearInput(Rule::Height);
     }
-}
-
-void LabelWidget::setOpacity(float opacity, TimeDelta span)
-{
-    d->opacity.setValue(opacity, span);
 }

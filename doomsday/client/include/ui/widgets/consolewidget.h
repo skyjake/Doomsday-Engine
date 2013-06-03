@@ -57,6 +57,8 @@ public slots:
     void closeLog();
     void clearLog();
     void showFullLog();
+    void setFullyOpaque();
+    void setTranslucent();
 
 protected slots:
     void logContentHeightIncreased(int delta);

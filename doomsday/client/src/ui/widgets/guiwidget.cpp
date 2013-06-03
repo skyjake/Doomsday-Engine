@@ -31,8 +31,11 @@ DENG2_PIMPL(GuiWidget)
     bool inited;
     bool needGeometry;
     Background background;
+    Animation opacity;
 
-    Instance(Public *i) : Base(i), inited(false), needGeometry(true)
+    Instance(Public *i)
+        : Base(i), inited(false), needGeometry(true),
+          opacity(1.f, Animation::Linear)
     {}
 
     ~Instance()
@@ -83,6 +86,30 @@ void GuiWidget::set(Background const &bg)
 GuiWidget::Background const &GuiWidget::background() const
 {
     return d->background;
+}
+
+void GuiWidget::setOpacity(float opacity, TimeDelta span)
+{
+    d->opacity.setValue(opacity, span);
+}
+
+float GuiWidget::opacity() const
+{
+    return d->opacity;
+}
+
+float GuiWidget::visibleOpacity() const
+{
+    float opacity = d->opacity;
+    for(Widget *i = parent(); i != 0; i = i->parent())
+    {
+        GuiWidget *w = dynamic_cast<GuiWidget *>(i);
+        if(w)
+        {
+            opacity *= w->d->opacity;
+        }
+    }
+    return opacity;
 }
 
 void GuiWidget::initialize()
