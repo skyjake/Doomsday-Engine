@@ -1452,6 +1452,7 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
     GL_ResetTextureManager();
     GL_SetFilter(false);
 
+    // Trap the mouse automatically when loading a game in fullscreen.
     {
         ClientWindow &mainWin = ClientWindow::main();
         mainWin.taskBar().close();
@@ -1701,6 +1702,10 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
     if(!App_GameLoaded())
     {
         ClientWindow::main().taskBar().open();
+    }
+    else
+    {
+        ClientWindow::main().console().clearLog();
     }
 #endif
     return true;

@@ -23,7 +23,7 @@
 #include <de/Action>
 
 #include "guiwidget.h"
-#include "consolecommandwidget.h"
+#include "consolewidget.h"
 
 /**
  * Task bar that acts as the primary UI element of the client's UI.
@@ -34,6 +34,9 @@ class TaskBarWidget : public QObject, public GuiWidget
 
 public:
     TaskBarWidget();
+
+    ConsoleWidget &console();
+    ConsoleCommandWidget &commandLine();
 
     bool isOpen() const;
     de::Rule const &shift();

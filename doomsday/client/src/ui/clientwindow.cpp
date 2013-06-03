@@ -63,7 +63,7 @@ DENG2_OBSERVES(Canvas,           FocusChange)
     /// Root of the nomal UI widgets of this window.
     GuiRootWidget root;
     TaskBarWidget *taskBar;
-    ConsoleWidget *console;
+    //ConsoleWidget *console;
 
     GuiRootWidget busyRoot;
 
@@ -73,7 +73,7 @@ DENG2_OBSERVES(Canvas,           FocusChange)
           needRecreateCanvas(false),
           mode(Normal),
           root(thisPublic),
-          console(0),
+          //console(0),
           busyRoot(thisPublic)
     {
         /// @todo The decision whether to receive input notifications from the
@@ -110,6 +110,7 @@ DENG2_OBSERVES(Canvas,           FocusChange)
                 .setInput(Rule::Width,  root.viewWidth());
         root.add(taskBar);
 
+        /*
         Rule const &unit = ClientApp::windowSystem().style().rules().rule("unit");
 
         console = new ConsoleWidget;
@@ -117,12 +118,16 @@ DENG2_OBSERVES(Canvas,           FocusChange)
                 .setInput(Rule::Bottom, taskBar->rule().top() - unit)
                 .setInput(Rule::Left,   root.viewLeft() + console->shift());
         root.add(console);
-
-        QObject::connect(taskBar, SIGNAL(closed()), console, SLOT(close()));
-        QObject::connect(taskBar, SIGNAL(opened()), console, SLOT(clearLog()));
+        */
 
         taskBar->setOpeningAction(new CommandAction("menu open"));
         taskBar->setClosingAction(new CommandAction("menu close"));
+
+        //connect(taskBar, SIGNAL(opened()), console, SLOT(clearLog()));
+        //connect(taskBar, SIGNAL(opened()), console, SLOT(open()));
+        //connect(taskBar, SIGNAL(closed()), console, SLOT(close()));
+
+        root.setFocus(&taskBar->commandLine());
 
         // Initially the widget is disabled. It will be enabled when the window
         // is visible and ready to be drawn.
@@ -284,7 +289,7 @@ TaskBarWidget &ClientWindow::taskBar()
 
 ConsoleWidget &ClientWindow::console()
 {
-    return *d->console;
+    return d->taskBar->console();
 }
 
 void ClientWindow::setMode(Mode const &mode)

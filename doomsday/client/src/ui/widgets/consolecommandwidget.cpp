@@ -66,6 +66,11 @@ ConsoleCommandWidget::ConsoleCommandWidget(String const &name)
     d->updateLexicon();
 }
 
+void ConsoleCommandWidget::focusGained()
+{
+    emit gotFocus();
+}
+
 bool ConsoleCommandWidget::handleEvent(Event const &event)
 {
     if(hasFocus() && event.isKeyDown())

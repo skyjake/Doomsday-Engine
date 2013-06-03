@@ -63,6 +63,8 @@
 #  include "clientapp.h"
 #  include "ui/windowsystem.h"
 #  include "ui/clientwindow.h"
+#  include "ui/widgets/consolewidget.h"
+#  include "ui/widgets/taskbarwidget.h"
 #  include "ui/busyvisual.h"
 #  include "updater/downloaddialog.h"
 #endif
@@ -1463,11 +1465,11 @@ void Con_Open(int yes)
 #ifdef __CLIENT__
     if(yes)
     {
-        ClientWindow::main().console().open();
+        ClientWindow::main().console().openLog();
     }
     else
     {
-        ClientWindow::main().console().close();
+        ClientWindow::main().console().closeLog();
     }
 #endif
 
@@ -2619,7 +2621,7 @@ D_CMD(OpenClose)
     }
     else
     {
-        Con_Open(!ClientWindow::main().console().isOpen());
+        Con_Open(!ClientWindow::main().console().isLogOpen());
     }
     return true;
 }

@@ -28,13 +28,19 @@
  * Whenever the current game changes, the lexicon is automatically updated to
  * include the terms of the loaded game.
  */
-class ConsoleCommandWidget : public LineEditWidget
+class ConsoleCommandWidget : public QObject, public LineEditWidget
 {
+    Q_OBJECT
+
 public:
     ConsoleCommandWidget(de::String const &name = "");
 
     // Events.
+    void focusGained();
     bool handleEvent(de::Event const &event);
+
+signals:
+    void gotFocus();
 
 private:
     DENG2_PRIVATE(d)

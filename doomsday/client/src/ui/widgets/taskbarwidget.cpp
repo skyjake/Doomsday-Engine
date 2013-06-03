@@ -20,6 +20,7 @@
 #include "ui/widgets/guirootwidget.h"
 #include "ui/widgets/labelwidget.h"
 #include "ui/widgets/buttonwidget.h"
+#include "ui/widgets/consolecommandwidget.h"
 #include "ui/clientwindow.h"
 #include "ui/commandaction.h"
 
@@ -39,6 +40,7 @@ DENG2_OBSERVES(Games, GameChange)
     typedef DefaultVertexBuf VertexBuf;
 
     bool opened;
+    ConsoleWidget *console;
     ButtonWidget *logo;
     LabelWidget *status;
     ScalarRule *vertShift;
@@ -131,9 +133,44 @@ DENG2_OBSERVES(Games, GameChange)
 TaskBarWidget::TaskBarWidget() : GuiWidget("TaskBar"), d(new Instance(this))
 {
     Rule const &gap = style().rules().rule("gap");
+    //Rule const &unit = style().rules().rule("unit");
 
     Background bg(style().colors().colorf("background"));
 
+    /*
+    d->consoleButton = new ButtonWidget;
+    d->consoleButton->setText(DENG2_ESC("b") ">");
+    d->consoleButton->rule()
+            .setInput(Rule::Left,   rule().left())
+            .setInput(Rule::Height, style().fonts().font("default").height() + gap * 2)
+            .setInput(Rule::Width,  d->consoleButton->rule().height());
+    add(d->consoleButton);
+
+    // The task bar has a number of child widgets.
+    d->cmdLine = new ConsoleCommandWidget("commandline");
+    d->cmdLine->rule()
+            .setInput(Rule::Left,   d->consoleButton->rule().right())
+            .setInput(Rule::Bottom, rule().bottom());
+    add(d->cmdLine);
+    */
+
+    d->console = new ConsoleWidget;
+    d->console->rule()
+            .setInput(Rule::Left, rule().left() + d->console->shift());
+    add(d->console);
+
+    // Position the console button and command line in the task bar.
+    d->console->button().rule()
+            .setInput(Rule::Left,   rule().left())
+            .setInput(Rule::Width,  d->console->button().rule().height())
+            .setInput(Rule::Bottom, rule().bottom())
+            .setInput(Rule::Height, rule().height());
+
+    d->console->commandLine().rule()
+            .setInput(Rule::Left,   d->console->button().rule().right())
+            .setInput(Rule::Bottom, rule().bottom());
+
+    // DE logo.
     d->logo = new ButtonWidget;
     d->logo->setAction(new CommandAction("panel"));
     d->logo->setImage(style().images().image("logo.px128"));
@@ -158,8 +195,12 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("TaskBar"), d(new Instance(this))
             .setInput(Rule::Right,  d->logo->rule().left());
     add(d->status);        
 
+    // The command line extends all the way to the status indicator.
+    d->console->commandLine().rule().setInput(Rule::Right, d->status->rule().left());
+
     d->updateStatus();
 
+    /*
     ButtonWidget *console = new ButtonWidget;
     console->setText("Console");
     console->setWidthPolicy(LabelWidget::Expand);
@@ -170,7 +211,6 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("TaskBar"), d(new Instance(this))
             .setInput(Rule::Bottom, rule().bottom());
     add(console);
 
-    /*
     ButtonWidget *panel = new ButtonWidget;
     panel->setImage(style().images().image("gear"));
     panel->setWidthPolicy(LabelWidget::Expand);
@@ -185,6 +225,16 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("TaskBar"), d(new Instance(this))
 
     // Taskbar height depends on the font size.
     rule().setInput(Rule::Height, style().fonts().font("default").height() + gap * 2);
+}
+
+ConsoleWidget &TaskBarWidget::console()
+{
+    return *d->console;
+}
+
+ConsoleCommandWidget &TaskBarWidget::commandLine()
+{
+    return d->console->commandLine();
 }
 
 bool TaskBarWidget::isOpen() const
@@ -234,15 +284,33 @@ bool TaskBarWidget::handleEvent(Event const &event)
     if(event.type() == Event::KeyPress)
     {
         KeyEvent const &key = event.as<KeyEvent>();
+
+        // Esc opens and closes the task bar.
         if(key.qtKey() == Qt::Key_Escape)
         {
-            if(isOpen())
-                close();
-            else
-                open();
+            // Shift-Esc opens the console.
+            if(key.modifiers().testFlag(KeyEvent::Shift))
+            {
+                root().setFocus(&d->console->commandLine());
+                if(isOpen()) return true;
+            }
 
-            if(!key.modifiers().testFlag(KeyEvent::Shift))
-                return true;
+            if(isOpen())
+            {
+                if(d->console->isLogOpen())
+                {
+                    d->console->closeLog();
+                    root().setFocus(0);
+                    return true;
+                }
+                // Also closes the console log.
+                close();
+            }
+            else
+            {
+                open();
+            }
+            return true;
         }
     }
     return false;
@@ -253,6 +321,8 @@ void TaskBarWidget::open()
     if(!d->opened)
     {
         d->opened = true;
+
+        d->console->clearLog();
 
         d->vertShift->set(0, .2f);
         d->logo->setOpacity(1, .2f);
@@ -274,6 +344,11 @@ void TaskBarWidget::open()
             {
                 canvas.trapMouse(false);
             }
+
+            if(!App_GameLoaded())
+            {
+                root().setFocus(&d->console->commandLine());
+            }
         }
     }
 }
@@ -283,9 +358,16 @@ void TaskBarWidget::close()
     if(d->opened)
     {
         d->opened = false;
+
+        // Slide the task bar down.
         d->vertShift->set(rule().height().valuei() + style().rules().rule("unit").valuei(), .2f);
         d->logo->setOpacity(0, .2f);
         d->status->setOpacity(0, .2f);
+
+        d->console->closeLog();
+
+        // Clear focus now; callbacks/signal handlers may set the focus elsewhere.
+        if(hasRoot()) root().setFocus(0);
 
         emit closed();
 
@@ -305,4 +387,3 @@ void TaskBarWidget::close()
         }
     }
 }
-

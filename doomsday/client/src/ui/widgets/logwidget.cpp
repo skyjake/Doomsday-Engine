@@ -538,7 +538,7 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
 
     int contentHeight() const
     {
-        return int(self.rule().height().valuei()) - topMargin;
+        return int(self.rule().height().valuei()) - 2 * topMargin;
     }
 
     int maxVisibleOffset(int visibleHeight)
@@ -779,10 +779,10 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
         // Draw the background.
         background.draw();
 
-        if(pos.height() > duint(topMargin))
+        if(pos.height() > 2 * duint(topMargin))
         {
             GLState &st = GLState::push();
-            st.setScissor(pos.adjusted(Vector2i(0, topMargin), Vector2i()));
+            st.setScissor(pos.adjusted(Vector2i(0, topMargin), Vector2i(0, -topMargin)));
 
             // First draw the shadow of the text.
             uMvpMatrix = projMatrix *

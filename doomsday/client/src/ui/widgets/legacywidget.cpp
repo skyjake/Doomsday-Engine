@@ -203,8 +203,16 @@ bool LegacyWidget::handleEvent(Event const &event)
        App_GameLoaded())
     {
         MouseEvent const &mouse = event.as<MouseEvent>();
-        if(mouse.state() == MouseEvent::Pressed)
+        if(mouse.state() == MouseEvent::Pressed && hitTest(mouse.pos()))
         {
+            if(root().focus())
+            {
+                // First click will remove UI focus, allowing LegacyWidget
+                // to receive events.
+                root().setFocus(0);
+                return true;
+            }
+
             canvas.trapMouse();
             root().window().taskBar().close();
             return true;

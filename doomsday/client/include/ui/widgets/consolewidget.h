@@ -22,6 +22,7 @@
 #include <QObject>
 
 #include "guiwidget.h"
+#include "buttonwidget.h"
 #include "consolecommandwidget.h"
 #include "logwidget.h"
 
@@ -38,20 +39,24 @@ class ConsoleWidget : public QObject, public GuiWidget
 public:
     ConsoleWidget();
 
+    ButtonWidget &button();
     ConsoleCommandWidget &commandLine();
     LogWidget &log();
+
     de::Rule const &shift();
 
-    bool isOpen() const;
+    bool isLogOpen() const;
 
     // Events.
     void viewResized();
+    void update();
     bool handleEvent(de::Event const &event);
 
 public slots:
-    void open();
-    void close();
+    void openLog();
+    void closeLog();
     void clearLog();
+    void showFullLog();
 
 protected slots:
     void logContentHeightIncreased(int delta);
