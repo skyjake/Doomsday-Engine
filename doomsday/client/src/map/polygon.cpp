@@ -20,6 +20,7 @@
 
 #include <de/mathutil.h>
 
+#include "BspLeaf"
 #include "HEdge"
 
 #include "map/polygon.h"
@@ -34,8 +35,12 @@ DENG2_PIMPL(Polygon)
     /// Center of vertices.
     Vector2d center;
 
+    /// BSP leaf to which the polygon is attributed (if any).
+    BspLeaf *bspLeaf;
+
     Instance(Public *i)
-        : Base(i)
+        : Base(i),
+          bspLeaf(0)
     {}
 
     ~Instance()
@@ -70,6 +75,26 @@ DENG2_PIMPL(Polygon)
 Polygon::Polygon()
     : _hedge(0), _hedgeCount(0), d(new Instance(this))
 {}
+
+bool Polygon::hasBspLeaf() const
+{
+    return d->bspLeaf != 0;
+}
+
+BspLeaf &Polygon::bspLeaf() const
+{
+    if(d->bspLeaf)
+    {
+        return *d->bspLeaf;
+    }
+    /// @throw MissingBspLeafError Attempted with no BSP leaf attributed.
+    throw MissingBspLeafError("Polygon::bspLeaf", "No BSP leaf is attributed");
+}
+
+void Polygon::setBspLeaf(BspLeaf *newBspLeaf)
+{
+    d->bspLeaf = newBspLeaf;
+}
 
 HEdge *Polygon::firstHEdge() const
 {

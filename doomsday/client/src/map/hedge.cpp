@@ -20,6 +20,7 @@
 
 #include <de/Log>
 
+#include "Polygon"
 #include "Sector"
 
 #ifdef __CLIENT__
@@ -35,9 +36,13 @@ DENG2_PIMPL(HEdge)
     /// Map Line::Side attributed to the half-edge. Can be @c 0 (partition segment).
     Line::Side *lineSide;
 
+    /// Polygon geometry to which the half-edge is attributed (if any).
+    Polygon *poly;
+
     Instance(Public *i)
         : Base(i),
-          lineSide(0)
+          lineSide(0),
+          poly(0)
     {}
 
     inline HEdge **neighborAdr(ClockDirection direction) {
@@ -52,7 +57,6 @@ HEdge::HEdge(Vertex &vertex, Line::Side *lineSide)
     _next = 0;
     _prev = 0;
     _twin = 0;
-    _bspLeaf = 0;
     _angle = 0;
     _length = 0;
     _lineOffset = 0;
@@ -113,19 +117,24 @@ HEdge &HEdge::twin() const
     throw MissingTwinError("HEdge::twin", "No twin half-edge is associated");
 }
 
-bool HEdge::hasBspLeaf() const
+bool HEdge::hasPoly() const
 {
-    return _bspLeaf != 0;
+    return d->poly != 0;
 }
 
-BspLeaf &HEdge::bspLeaf() const
+Polygon &HEdge::poly() const
 {
-    if(_bspLeaf)
+    if(d->poly)
     {
-        return *_bspLeaf;
+        return *d->poly;
     }
-    /// @throw MissingBspLeafError Attempted with no BSP leaf associated.
-    throw MissingBspLeafError("HEdge::bspLeaf", "No BSP leaf is associated");
+    /// @throw MissingPolygonError Attempted with no Polygon attributed.
+    throw MissingPolygonError("HEdge::poly", "No polygon is attributed");
+}
+
+void HEdge::setPoly(Polygon *newPolygon)
+{
+    d->poly = newPolygon;
 }
 
 bool HEdge::hasLineSide() const

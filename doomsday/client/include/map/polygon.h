@@ -23,8 +23,10 @@
 
 #include <de/aabox.h>
 
+#include <de/Error>
 #include <de/Vector>
 
+class BspLeaf;
 class HEdge;
 
 namespace de {
@@ -36,6 +38,10 @@ namespace de {
  */
 class Polygon
 {
+public:
+    /// No BSP leaf is attributed. @ingroup errors
+    DENG2_ERROR(MissingBspLeafError);
+
 public: /// @todo Make private:
     /// First half-edge in the face geometry. Ordered by angle, clockwise starting
     /// from the smallest angle.
@@ -46,6 +52,28 @@ public: /// @todo Make private:
 
 public:
     Polygon();
+
+    /**
+     * Returns @c true iff a BSP leaf is attributed to the polygon.
+     */
+    bool hasBspLeaf() const;
+
+    /**
+     * Returns the BSP leaf attributed to the polygon.
+     *
+     * @see hasBspLeaf()
+     */
+    BspLeaf &bspLeaf() const;
+
+    /**
+     * Change the BSP leaf attributed to the polygon.
+     *
+     * @param newBspLeaf  New BSP leaf to attribute the polygon. Ownership is
+     *                    unaffected. Can be @c 0 (to clear the attribution).
+     *
+     * @see hasBspLeaf(), bspLeaf()
+     */
+    void setBspLeaf(BspLeaf *newBspLeaf);
 
     /**
      * Returns a pointer to the first half-edge of the Face of the polygon (note

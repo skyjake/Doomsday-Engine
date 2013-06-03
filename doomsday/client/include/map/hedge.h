@@ -24,7 +24,6 @@
 #include <de/Error>
 
 #include "MapElement"
-#include "BspLeaf"
 #include "Line"
 #include "Vertex"
 
@@ -32,7 +31,12 @@
 struct BiasSurface;
 #endif
 
+class BspLeaf;
 class Sector;
+
+namespace de {
+class Polygon;
+}
 
 /**
  * Map geometry half-edge.
@@ -49,11 +53,11 @@ class HEdge : public de::MapElement
     DENG2_NO_ASSIGN(HEdge)
 
 public:
-    /// Required BSP leaf is missing. @ingroup errors
-    DENG2_ERROR(MissingBspLeafError);
-
     /// Required neighbor half-edge is missing. @ingroup errors
     DENG2_ERROR(MissingNeighborError);
+
+    /// Required polygon is missing. @ingroup errors
+    DENG2_ERROR(MissingPolygonError);
 
     /// Required twin half-edge is missing. @ingroup errors
     DENG2_ERROR(MissingTwinError);
@@ -86,9 +90,6 @@ public: /// @todo Make private:
 
     /// Linked @em twin half-edge (that on the other side of "this" half-edge).
     HEdge *_twin;
-
-    /// The @em face of the half-edge (a BSP leaf).
-    BspLeaf *_bspLeaf;
 
     /// Point along the attributed line at which v1 occurs; otherwise @c 0.
     coord_t _lineOffset;
@@ -187,14 +188,40 @@ public:
     inline HEdge *twinPtr() const { return hasTwin()? &twin() : 0; }
 
     /**
-     * Returns @c true iff a BspLeaf is linked to the half-edge.
+     * Returns @c true iff the half-edge is part of some Polygon.
      */
-    bool hasBspLeaf() const;
+    bool hasPoly() const;
+
+    /**
+     * Returns the Polygon the half-edge is a part of.
+     *
+     * @see hasPoly()
+     */
+    de::Polygon &poly() const;
+
+    /**
+     * Change the Polygon to which the half-edge is attributed.
+     *
+     * @param newPolygon  New Polygon to attribute to the half-edge. Ownership is
+     *                    unaffected. Can be @c 0 (to clear the attribution).
+     *
+     * @see hasPoly(), poly()
+     */
+    void setPoly(de::Polygon *newPolygon);
+
+    /**
+     * Returns @c true iff a BspLeaf is linked to the half-edge.
+     *
+     * @see hasPoly(), Polygon::hasBspLeaf()
+     */
+    inline bool hasBspLeaf() const { return hasPoly() && poly().hasBspLeaf(); }
 
     /**
      * Returns the BspLeaf linked to the half-edge.
+     *
+     * @see poly(), Polygon::bspLeaf()
      */
-    BspLeaf &bspLeaf() const;
+    inline BspLeaf &bspLeaf() const { return poly().bspLeaf(); }
 
     /**
      * Convenience accessor which determines whether a BspLeaf with an attributed

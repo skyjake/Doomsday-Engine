@@ -433,6 +433,10 @@ Polygon *ConvexSubspace::buildLeafGeometry() const
         hedge->_next = poly->_hedge;
         poly->_hedge = hedge;
 
+        // Attribute the half edge to the Polygon.
+        /// @todo Encapsulate in Polygon.
+        hedge->setPoly(poly);
+
         // There is now one more half-edge in this polygon.
         poly->_hedgeCount += 1;
 

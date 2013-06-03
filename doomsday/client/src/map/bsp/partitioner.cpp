@@ -1417,15 +1417,11 @@ DENG2_PIMPL(Partitioner)
                 // the BSP leaf (takes ownership).
                 leaf->setPoly(subspace.buildLeafGeometry());
 
-                // Link the half-edges with the leaf and account.
+                // Account for the new half-edges.
                 HEdge *base = leaf->poly().firstHEdge();
                 HEdge *hedgeIt = base;
                 do
                 {
-                    // Attribute the half edge to the BSP leaf.
-                    /// @todo Encapsulate in BspLeaf.
-                    hedgeIt->_bspLeaf = leaf;
-
                     // There is now one more HEdge.
                     numHEdges += 1;
 

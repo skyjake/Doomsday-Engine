@@ -224,6 +224,12 @@ void BspLeaf::setPoly(Polygon *newPolygon)
 
     // Assign the new polygon (if any).
     d->polygon.reset(newPolygon);
+
+    if(newPolygon)
+    {
+        // Attribute the new polygon to "this" BSP leaf.
+        newPolygon->setBspLeaf(this);
+    }
 }
 
 Vector2d const &BspLeaf::worldGridOffset() const
