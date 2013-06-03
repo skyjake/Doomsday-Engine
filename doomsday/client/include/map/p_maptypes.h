@@ -25,7 +25,7 @@
 #ifdef __cplusplus
 #  include "vertex.h"
 #endif
-#include "hedge.h"
+#include "segment.h"
 #include "line.h"
 #include "surface.h"
 #include "plane.h"

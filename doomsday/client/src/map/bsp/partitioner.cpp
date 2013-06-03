@@ -36,7 +36,7 @@
 #include "map/gamemap.h"
 #include "BspLeaf"
 #include "BspNode"
-#include "HEdge"
+#include "Segment"
 #include "Line"
 #include "Sector"
 #include "Vertex"
@@ -77,7 +77,7 @@ DENG2_PIMPL(Partitioner)
     /// Running totals of constructed BSP map elements.
     int numNodes;
     int numLeafs;
-    int numHEdges;
+    int numSegments;
     int numVertexes;
 
     /// Line segments in the plane.
@@ -109,7 +109,7 @@ DENG2_PIMPL(Partitioner)
       : Base(i),
         splitCostFactor(splitCostFactor),
         map(&map),
-        numNodes(0), numLeafs(0), numHEdges(0), numVertexes(0),
+        numNodes(0), numLeafs(0), numSegments(0), numVertexes(0),
         rootNode(0)
     {}
 
@@ -1363,19 +1363,37 @@ DENG2_PIMPL(Partitioner)
         return newTreeNode(bspElement, rightTree, leftTree);
     }
 
+    /**
+     * Split any overlapping line segments in the convex subspaces, creating new
+     * line segments (and vertices) as required. A subspace may well include such
+     * overlapping segments as if they do not break the convexity rule they won't
+     * have been split during the partitioning process.
+     *
+     * @todo Perform the split in partitionSpace()
+     */
     void splitOverlappingLineSegments()
     {
         foreach(ConvexSubspace const &subspace, convexSubspaces)
         {
+            /*
+             * The subspace provides a specially ordered list of the segments to
+             * simplify this task. The primary clockwise ordering (decreasing angle
+             * relative to the center of the subspace) places overlapping segments
+             * adjacently. The secondary anticlockwise ordering sorts the overlapping
+             * segments enabling the use of single pass algorithm here.
+             */
             OrderedSegments convexSet = subspace.segments();
             int const numSegments = convexSet.count();
             for(int i = 0; i < numSegments - 1; ++i)
             {
+                // Determine the indice range of the partially overlapping segments.
                 int k = i;
                 while(de::fequal(convexSet[i].fromAngle, convexSet[k + 1].fromAngle) &&
                       k < numSegments)
                 { k++; }
 
+                // Split each overlapping segment at the point defined by the end
+                // vertex of each of the other overlapping segments.
                 for(int l = i; l < k; ++l)
                 {
                     OrderedSegment &a = convexSet[l];
@@ -1383,6 +1401,7 @@ DENG2_PIMPL(Partitioner)
                     {
                         OrderedSegment &b = convexSet[m];
 
+                        // Segments of the same length will not be split.
                         if(de::fequal(b.segment->length(), a.segment->length()))
                             continue;
 
@@ -1400,11 +1419,10 @@ DENG2_PIMPL(Partitioner)
     {
         foreach(ConvexSubspace const &subspace, convexSubspaces)
         {
-            bool const isDegenerate = subspace.segmentCount() < 3;
-
             /// @todo Move BSP leaf construction here.
             BspLeaf *leaf = subspace.bspLeaf();
 
+            bool const isDegenerate = subspace.segmentCount() < 3;
             if(!isDegenerate)
             {
                 // Sanity check.
@@ -1418,14 +1436,14 @@ DENG2_PIMPL(Partitioner)
                 leaf->setPoly(subspace.buildLeafGeometry());
 
                 // Account for the new half-edges.
-                HEdge *base = leaf->poly().firstHEdge();
-                HEdge *hedgeIt = base;
+                HEdge *firstHEdge = leaf->poly().firstHEdge();
+                HEdge *hedge = firstHEdge;
                 do
                 {
-                    // There is now one more HEdge.
-                    numHEdges += 1;
+                    // There is now one more Segment.
+                    numSegments += 1;
 
-                } while((hedgeIt = &hedgeIt->next()) != base);
+                } while((hedge = &hedge->next()) != firstHEdge);
             }
 
             // Determine which sector to attribute to the BSP leaf.
@@ -1434,7 +1452,7 @@ DENG2_PIMPL(Partitioner)
             if(!leaf->hasSector())
             {
                 LOG_WARNING("BspLeaf %p is degenerate/orphan (%d half-edges).")
-                    << de::dintptr(leaf) << leaf->hedgeCount();
+                    << de::dintptr(leaf) << (leaf->hasPoly()? leaf->poly().hedgeCount() : 0);
             }
         }
 
@@ -1445,56 +1463,52 @@ DENG2_PIMPL(Partitioner)
         foreach(ConvexSubspace const &convexSet, convexSubspaces)
         {
             BspLeaf *leaf = convexSet.bspLeaf();
-            if(!leaf->hasPoly())
-                continue;
 
-            Polygon &geom = leaf->poly();
-            HEdge *base = geom.firstHEdge();
-            HEdge *hedgeIt = base;
-            do
+            if(leaf->hasPoly())
             {
-                HEdge &hedge = *hedgeIt;
-                if(!hedge.hasTwin())
-                {
-                    DENG_ASSERT(&hedge.next() != &hedge);
-                    DENG_ASSERT(&hedge.next().vertex() != &hedge.vertex());
+                Polygon &geom     = leaf->poly();
+                HEdge *firstHEdge = geom.firstHEdge();
 
-                    hedge._twin = new HEdge(hedge.next().vertex());
-                    hedge._twin->_twin = &hedge;
-
-                    // There is now one more HEdge.
-                    numHEdges += 1;
-                }
-
-            } while((hedgeIt = &hedgeIt->next()) != base);
-
-#ifdef DENG_DEBUG
-            // See if we built a partial geometry...
-            {
-                uint gaps = 0;
-                HEdge *hedgeIt = base;
+                HEdge *hedge = firstHEdge;
                 do
                 {
-                    HEdge &hedge = *hedgeIt;
-
-                    if(hedge.next().origin() != hedge.twin().origin())
+                    if(!hedge->hasTwin())
                     {
-                        gaps++;
-                    }
-                } while((hedgeIt = &hedgeIt->next()) != base);
+                        DENG_ASSERT(&hedge->next() != hedge);
+                        DENG_ASSERT(&hedge->next().vertex() != &hedge->vertex());
 
-                if(gaps > 0)
+                        hedge->setTwin(new HEdge(hedge->next().vertex()));
+                        hedge->twin().setTwin(hedge);
+                    }
+
+                } while((hedge = &hedge->next()) != firstHEdge);
+
+#ifdef DENG_DEBUG
+                // See if we built a partial geometry...
                 {
-                    LOG_WARNING("Polygon geometry for BSP leaf [%p] (at %s) in sector %i "
-                                "is not contiguous %i gaps/overlaps (%i half-edges).")
-                        << de::dintptr(leaf)
-                        << leaf->poly().center().asText()
-                        << leaf->sector().indexInArchive()
-                        << gaps << leaf->hedgeCount();
-                    geom.print();
+                    int discontinuities = 0;
+                    HEdge *hedge = firstHEdge;
+                    do
+                    {
+                        if(hedge->next().origin() != hedge->twin().origin())
+                        {
+                            discontinuities++;
+                        }
+                    } while((hedge = &hedge->next()) != firstHEdge);
+
+                    if(discontinuities)
+                    {
+                        LOG_WARNING("Polygon geometry for BSP leaf [%p] (at %s) in sector %i "
+                                    "is not contiguous %i gaps/overlaps (%i half-edges).")
+                            << de::dintptr(leaf)
+                            << geom.center().asText()
+                            << leaf->sector().indexInArchive()
+                            << discontinuities << geom.hedgeCount();
+                        geom.print();
+                    }
                 }
-            }
 #endif
+            }
         }
     }
 
@@ -1607,8 +1621,8 @@ DENG2_PIMPL(Partitioner)
             }
             break; }
 
-        case DMU_HEDGE:
-            /// @todo fixme: Implement a mechanic for tracking HEdge ownership.
+        case DMU_SEGMENT:
+            /// @todo fixme: Implement a mechanic for tracking Segment ownership.
             return true;
 
         case DMU_BSPLEAF:
@@ -1742,21 +1756,21 @@ void Partitioner::build()
         LineSegment::Side &seg = lineSeg->side(i);
 
         if(!seg.hasMapSide()) continue;
-        if(!seg.hasHEdge()) continue; // Oh dear...
+        if(!seg.hasSegment()) continue; // Oh dear...
 
         // Find the left-most segment.
         LineSegment::Side *left = &seg;
-        while(left->hasLeft() && left->left().hasHEdge())
+        while(left->hasLeft() && left->left().hasSegment())
         { left = &left->left(); }
 
-        seg.mapSide().setLeftHEdge(left->hedgePtr());
+        seg.mapSide().setLeftSegment(left->segmentPtr());
 
         // Find the right-most segment.
         LineSegment::Side *right = &seg;
-        while(right->hasRight() && right->right().hasHEdge())
+        while(right->hasRight() && right->right().hasSegment())
         { right = &right->right(); }
 
-        seg.mapSide().setRightHEdge(right->hedgePtr());
+        seg.mapSide().setRightSegment(right->segmentPtr());
     }
 }
 
@@ -1775,9 +1789,9 @@ int Partitioner::numLeafs()
     return d->numLeafs;
 }
 
-int Partitioner::numHEdges()
+int Partitioner::numSegments()
 {
-    return d->numHEdges;
+    return d->numSegments;
 }
 
 int Partitioner::numVertexes()

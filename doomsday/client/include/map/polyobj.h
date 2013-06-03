@@ -27,8 +27,7 @@
 
 #include "dd_share.h"
 
-#include "BspLeaf"
-
+class BspLeaf;
 class Line;
 class Vertex;
 
@@ -102,7 +101,7 @@ public:
      *
      * @see hasBspLeaf(), BspLeaf::hasSector()
      */
-    inline bool hasSector() const { return hasBspLeaf() && bspLeaf().hasSector(); }
+    bool hasSector() const;
 
     /**
      * Convenience accessor which returns the Sector of the BspLeaf linked to the
@@ -110,7 +109,7 @@ public:
      *
      * @see bspLeaf(), BspLeaf::sector()
      */
-    inline Sector &sector() const { return bspLeaf().sector(); }
+    Sector &sector() const;
 
     /**
      * Convenience accessor which returns a pointer to the Sector of the BspLeaf
@@ -120,7 +119,7 @@ public:
      *
      * @see hasBspLeaf(), BspLeaf::sectorPtr()
      */
-    inline Sector *sectorPtr() const { return hasBspLeaf()? bspLeaf().sectorPtr() : 0; }
+    Sector *sectorPtr() const;
 
     /**
      * Returns the sound emitter for the polyobj.

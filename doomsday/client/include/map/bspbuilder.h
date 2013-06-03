@@ -76,14 +76,14 @@ public:
     BspTreeNode *root() const;
 
     /**
-     * Retrieve the number of HEdges owned by this Partitioner. When the build
-     * completes this number will be the total number of half-edges that were
+     * Retrieve the number of Segments owned by this Partitioner. When the build
+     * completes this number will be the total number of line segments that were
      * produced during that process. Note that as BspLeaf ownership is claimed
      * this number will decrease respectively.
      *
-     * @return  Current number of HEdges owned by this Partitioner.
+     * @return  Current number of Segments owned by this Partitioner.
      */
-    int numHEdges();
+    int numSegments();
 
     /**
      * Retrieve the number of BspLeafs owned by this Partitioner. When the

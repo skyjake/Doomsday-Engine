@@ -34,7 +34,7 @@
 #ifndef DENG_RENDER_FAKERADIO
 #define DENG_RENDER_FAKERADIO
 
-#include "HEdge"
+#include "Segment"
 #include "Line"
 #include "Sector"
 #include "Vertex"

@@ -329,62 +329,63 @@ static void createObjlink(BspLeaf &bspLeaf, void *object, objtype_t type)
     link->type = type;
 }
 
-static void processHEdge(HEdge *hedge, void *parameters)
+static void processSegment(Segment *seg, void *parameters)
 {
     contactfinderparams_t *parms = (contactfinderparams_t *) parameters;
-    DENG_ASSERT(hedge != 0 && parms != 0);
-    DENG_ASSERT(!hedge->bspLeaf().isDegenerate());
+    DENG_ASSERT(seg != 0 && parms != 0);
+    DENG_ASSERT(seg->hasBspLeaf() && !seg->bspLeaf().isDegenerate());
+
+    BspLeaf &leaf = seg->bspLeaf();
 
     // There must be a back BSP leaf to spread to.
-    if(!hedge->twin().hasBspLeaf()) return;
+    if(!seg->hasBack() || !seg->back().hasBspLeaf()) return;
+
+    BspLeaf &backLeaf = seg->back().bspLeaf();
 
     // Never spread to degenerate BspLeafs.
-    if(hedge->twin().bspLeaf().isDegenerate()) return;
-
-    BspLeaf *leaf     = &hedge->bspLeaf();
-    BspLeaf *backLeaf = &hedge->twin().bspLeaf();
+    if(backLeaf.isDegenerate()) return;
 
     // Which way does the spread go?
-    if(!(leaf->validCount() == validCount && backLeaf->validCount() != validCount))
+    if(!(leaf.validCount() == validCount && backLeaf.validCount() != validCount))
     {
         return; // Not eligible for spreading.
     }
 
     // Is the leaf on the back side outside the origin's AABB?
-    if(backLeaf->poly().aaBox().maxX <= parms->box[BOXLEFT]   ||
-       backLeaf->poly().aaBox().minX >= parms->box[BOXRIGHT]  ||
-       backLeaf->poly().aaBox().maxY <= parms->box[BOXBOTTOM] ||
-       backLeaf->poly().aaBox().minY >= parms->box[BOXTOP])
+    if(backLeaf.poly().aaBox().maxX <= parms->box[BOXLEFT]   ||
+       backLeaf.poly().aaBox().minX >= parms->box[BOXRIGHT]  ||
+       backLeaf.poly().aaBox().maxY <= parms->box[BOXBOTTOM] ||
+       backLeaf.poly().aaBox().minY >= parms->box[BOXTOP])
         return;
 
     // Too far from the object?
-    coord_t distance = hedge->pointOnSide(parms->objOrigin) / hedge->length();
+    coord_t distance = seg->pointOnSide(parms->objOrigin) / seg->length();
     if(de::abs(distance) >= parms->objRadius)
         return;
 
     // Do not spread if the sector on the back side is closed with no height.
-    if(backLeaf->hasSector())
+    if(backLeaf.hasSector())
     {
-        Sector const &frontSec = leaf->sector();
-        Sector const &backSec  = backLeaf->sector();
+        Sector const &frontSec = leaf.sector();
+        Sector const &backSec  = backLeaf.sector();
 
         if(backSec.ceiling().height() <= backSec.floor().height())
             return;
 
-        if(leaf->hasSector() &&
+        if(leaf.hasSector() &&
            (backSec.ceiling().height() <= frontSec.floor().height() ||
             backSec.floor().height() >= frontSec.ceiling().height()))
             return;
     }
 
     // Don't spread if the middle material covers the opening.
-    if(hedge->hasLineSide())
+    if(seg->hasLineSide())
     {
-        // On which side of the line are we? (distance is from hedge to origin).
-        Line::Side &side = hedge->line().side(hedge->lineSideId() ^ (distance < 0));
+        // On which side of the line are we? (distance is from segment to origin).
+        Line::Side &side = seg->line().side(seg->lineSide().sideId() ^ (distance < 0));
 
-        Sector *frontSec = side.isFront()? leaf->sectorPtr() : backLeaf->sectorPtr();
-        Sector *backSec  = side.isFront()? backLeaf->sectorPtr() : leaf->sectorPtr();
+        Sector *frontSec = side.isFront()? leaf.sectorPtr() : backLeaf.sectorPtr();
+        Sector *backSec  = side.isFront()? backLeaf.sectorPtr() : leaf.sectorPtr();
 
         // One-way window?
         if(backSec && !side.back().hasSections())
@@ -415,12 +416,12 @@ static void processHEdge(HEdge *hedge, void *parameters)
     }
 
     // During next step, obj will continue spreading from there.
-    backLeaf->setValidCount(validCount);
+    backLeaf.setValidCount(validCount);
 
     // Link up a new contact with the back BSP leaf.
-    linkObjToBspLeaf(*backLeaf, parms->obj, parms->objType);
+    linkObjToBspLeaf(backLeaf, parms->obj, parms->objType);
 
-    spreadInBspLeaf(backLeaf, parms);
+    spreadInBspLeaf(&backLeaf, parms);
 }
 
 /**
@@ -434,14 +435,14 @@ static void processHEdge(HEdge *hedge, void *parameters)
  */
 static void spreadInBspLeaf(BspLeaf *bspLeaf, void *parameters)
 {
-    if(!bspLeaf || bspLeaf->isDegenerate()) return;
+    if(!bspLeaf) return;
 
-    HEdge *base = bspLeaf->firstHEdge();
-    HEdge *hedge = base;
-    do
+    foreach(Segment *seg, bspLeaf->clockwiseSegments())
     {
-        processHEdge(hedge, parameters);
-    } while((hedge = &hedge->next()) != base);
+        if(!seg->hasBspLeaf()) continue;
+
+        processSegment(seg, parameters);
+    }
 }
 
 /**

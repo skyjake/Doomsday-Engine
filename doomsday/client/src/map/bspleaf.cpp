@@ -25,7 +25,7 @@
 
 #include <de/Log>
 
-#include "HEdge"
+#include "Segment"
 #include "Polyobj"
 #include "Sector"
 #include "Vertex"
@@ -51,6 +51,9 @@ DENG2_PIMPL(BspLeaf)
     /// Convex polygon geometry assigned to the BSP leaf (owned).
     QScopedPointer<Polygon> polygon;
 
+    /// All line segments in the BSP leaf.
+    Segments segments;
+
     /// Offset to align the top left of materials in the built geometry to the
     /// map coordinate space grid.
     Vector2d worldGridOffset;
@@ -63,7 +66,7 @@ DENG2_PIMPL(BspLeaf)
 
 #ifdef __CLIENT__
 
-    /// HEdge whose vertex to use as the base for a trifan.
+    /// Half-edge whose vertex to use as the base for a trifan.
     /// If @c 0 the center point will be used instead.
     HEdge *fanBase;
 
@@ -106,7 +109,7 @@ DENG2_PIMPL(BspLeaf)
 #ifdef __CLIENT__
 
     /**
-     * Determine the HEdge from whose vertex is suitable for use as the center point
+     * Determine the Segment from whose vertex is suitable for use as the center point
      * of a trifan primitive.
      *
      * Note that we do not want any overlapping or zero-area (degenerate) triangles.
@@ -229,17 +232,35 @@ void BspLeaf::setPoly(Polygon *newPolygon)
     {
         // Attribute the new polygon to "this" BSP leaf.
         newPolygon->setBspLeaf(this);
+
+        // Update the world grid offset.
+        d->worldGridOffset = Vector2d(fmod(newPolygon->aaBox().minX, 64), fmod(newPolygon->aaBox().maxY, 64));
     }
+    else
+    {
+        d->worldGridOffset = Vector2d(0, 0);
+    }
+}
+
+Segment *BspLeaf::newSegment(Line::Side *mapSide, HEdge *hedge)
+{
+    d->segments.prepend(new Segment(mapSide, hedge));
+    return d->segments.first();
+}
+
+BspLeaf::Segments const &BspLeaf::clockwiseSegments() const
+{
+    return d->segments;
+}
+
+BspLeaf::Segments const &BspLeaf::segments() const
+{
+    return d->segments;
 }
 
 Vector2d const &BspLeaf::worldGridOffset() const
 {
     return d->worldGridOffset;
-}
-
-void BspLeaf::updateWorldGridOffset()
-{
-    d->worldGridOffset = Vector2d(fmod(d->polygon->aaBox().minX, 64), fmod(d->polygon->aaBox().maxY, 64));
 }
 
 bool BspLeaf::hasSector() const
@@ -305,7 +326,8 @@ HEdge *BspLeaf::fanBase() const
 int BspLeaf::numFanVertices() const
 {
     // Are we to use one of the half-edge vertexes as the fan base?
-    return hedgeCount() + (fanBase()? 0 : 2);
+    if(!hasPoly()) return 0;
+    return d->polygon->hedgeCount() + (fanBase()? 0 : 2);
 }
 
 BiasSurface &BspLeaf::biasSurfaceForGeometryGroup(int groupId)

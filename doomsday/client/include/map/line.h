@@ -35,7 +35,7 @@
 #include "Surface"
 #include "Vertex"
 
-class HEdge;
+class Segment;
 class LineOwner;
 class Sector;
 
@@ -119,14 +119,14 @@ public:
         /**
          * Returns the logical identifier for the side (Front or Back).
          */
-        int lineSideId() const;
+        int sideId() const;
 
         /**
          * Returns @c true iff this is the front side of the owning line.
          *
          * @see lineSideId()
          */
-        inline bool isFront() const { return lineSideId() == Front; }
+        inline bool isFront() const { return sideId() == Front; }
 
         /**
          * Returns @c true iff this is the back side of the owning line.
@@ -140,7 +140,7 @@ public:
          *
          * @see lineSideId(), line(), Line::side(),
          */
-        inline Side &back() const { return line().side(lineSideId() ^ 1); }
+        inline Side &back() const { return line().side(sideId() ^ 1); }
 
         /**
          * Determines whether "this" side of the respective line should be
@@ -156,7 +156,7 @@ public:
          *
          * @see lineSideId(), line(), Line::vertex(),
          */
-        inline Vertex &vertex(int to) const { return line().vertex(lineSideId() ^ to); }
+        inline Vertex &vertex(int to) const { return line().vertex(sideId() ^ to); }
 
         /**
          * Returns the relative From Vertex for the side, from the Line owner.
@@ -323,7 +323,7 @@ public:
         /**
          * Returns a pointer the left-most half-edge for the side; otherwise @c 0.
          */
-        HEdge *leftHEdge() const;
+        Segment *leftSegment() const;
 
         /**
          * Change the left-most half-edge for the side.
@@ -332,12 +332,12 @@ public:
          *
          * @todo Refactor away. Only needed presently because of Polyobj.
          */
-        void setLeftHEdge(HEdge *newHEdge);
+        void setLeftSegment(Segment *newHEdge);
 
         /**
          * Returns a pointer to the right-most half-edge for the side; otherwise @c 0.
          */
-        HEdge *rightHEdge() const;
+        Segment *rightSegment() const;
 
         /**
          * Change the right-most half-edge for the side.
@@ -346,7 +346,7 @@ public:
          *
          * @todo Refactor away. Only needed presently because of Polyobj.
          */
-        void setRightHEdge(HEdge *newHEdge);
+        void setRightSegment(Segment *newHEdge);
 
         /**
          * Update the tangent space normals of the side's surfaces according to the

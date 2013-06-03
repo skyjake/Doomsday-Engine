@@ -27,7 +27,7 @@
 
 #include "map/p_maptypes.h"
 #include "map/gamemap.h"
-#include "HEdge"
+#include "Segment"
 
 #include "render/r_main.h" // validCount
 
@@ -51,12 +51,12 @@ static void notifyGeometryChanged(Polyobj &po)
     // Shadow bias must be informed when surfaces move/deform.
     foreach(Line *line, po.lines())
     {
-        HEdge *hedge = line->front().leftHEdge();
-        if(!hedge) continue;
+        Segment *segment = line->front().leftSegment();
+        if(!segment) continue;
 
         for(int i = 0; i < 3; ++i)
         {
-            SB_SurfaceMoved(&hedge->biasSurfaceForGeometryGroup(i));
+            SB_SurfaceMoved(&segment->biasSurfaceForGeometryGroup(i));
         }
     }
 #else // !__CLIENT__
@@ -101,9 +101,10 @@ polyobj_s::~polyobj_s()
 {
     foreach(Line *line, lines())
     {
-        HEdge *hedge = line->front().leftHEdge();
-        delete hedge->twinPtr();
-        delete hedge;
+        Segment *segment = line->front().leftSegment();
+        delete segment->hedge().twinPtr();
+        delete &segment->hedge();
+        delete segment;
     }
 
     delete static_cast<Lines *>(_lines);
@@ -176,6 +177,21 @@ BspLeaf &Polyobj::bspLeaf() const
     }
     /// @throw Polyobj::NotLinkedError Attempted while the polyobj is not linked to the BSP.
     throw Polyobj::NotLinkedError("Polyobj::bspLeaf", "Polyobj is not presently linked in the BSP");
+}
+
+bool Polyobj::hasSector() const
+{
+    return hasBspLeaf() && bspLeaf().hasSector();
+}
+
+Sector &Polyobj::sector() const
+{
+    return bspLeaf().sector();
+}
+
+Sector *Polyobj::sectorPtr() const
+{
+    return hasBspLeaf()? bspLeaf().sectorPtr() : 0;
 }
 
 ddmobj_base_t &Polyobj::soundEmitter()
@@ -437,8 +453,8 @@ bool Polyobj::rotate(angle_t delta)
             line->updateAABox();
             line->updateSlopeType();
 
-            // HEdge angle must be kept in sync.
-            line->front().leftHEdge()->_angle = BANG_TO_ANGLE(line->angle());
+            // Segment angle must be kept in sync.
+            line->front().leftSegment()->setAngle(BANG_TO_ANGLE(line->angle()));
         }
         updateAABox();
         angle += delta;
@@ -464,8 +480,8 @@ bool Polyobj::rotate(angle_t delta)
                 line->updateAABox();
                 line->updateSlopeType();
 
-                // HEdge angle must be kept in sync.
-                line->front().leftHEdge()->_angle = BANG_TO_ANGLE(line->angle());
+                // Segment angle must be kept in sync.
+                line->front().leftSegment()->setAngle(BANG_TO_ANGLE(line->angle()));
             }
             updateAABox();
             angle -= delta;

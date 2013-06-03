@@ -25,7 +25,7 @@
 
 #include "BspLeaf"
 #include "BspNode"
-#include "HEdge"
+#include "Segment"
 #include "Line"
 #include "Polyobj"
 #include "Sector"
@@ -253,20 +253,19 @@ DENG2_PIMPL(LineSightTest)
             }
         }
 
-        // Check the edges of the Polygon geometry.
-        if(HEdge const *base = bspLeaf.firstHEdge())
+        // Check the line segment geometries.
+        foreach(Segment const *seg, bspLeaf.segments())
         {
-            HEdge const *hedge = base;
-            do
-            {
-                if(hedge->hasLineSide() && hedge->line().validCount() != validCount)
-                {
-                    hedge->line().setValidCount(validCount);
+            if(!seg->hasLineSide())
+                continue;
 
-                    if(!crossLine(hedge->lineSide()))
-                        return false;
-                }
-            } while((hedge = &hedge->next()) != base);
+            if(seg->line().validCount() != validCount)
+            {
+                seg->line().setValidCount(validCount);
+
+                if(!crossLine(seg->lineSide()))
+                    return false;
+            }
         }
 
         return true; // Continue traversal.

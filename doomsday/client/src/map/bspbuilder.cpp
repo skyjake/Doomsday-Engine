@@ -26,7 +26,7 @@
 #include <de/Vector>
 
 #include "BspLeaf"
-#include "HEdge"
+#include "Segment"
 #include "Sector"
 #include "map/bsp/partitioner.h"
 
@@ -176,9 +176,9 @@ int BspBuilder::numLeafs()
     return d->partitioner.numLeafs();
 }
 
-int BspBuilder::numHEdges()
+int BspBuilder::numSegments()
 {
-    return d->partitioner.numHEdges();
+    return d->partitioner.numSegments();
 }
 
 int BspBuilder::numVertexes()

@@ -22,7 +22,7 @@
 #ifndef LIBDENG_RENDER_VLIGHT_H
 #define LIBDENG_RENDER_VLIGHT_H
 
-#include "BspLeaf"
+class BspLeaf;
 
 #ifdef __cplusplus
 extern "C" {

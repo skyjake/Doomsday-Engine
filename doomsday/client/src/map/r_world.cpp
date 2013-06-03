@@ -260,7 +260,7 @@ void R_SideSectionCoords(Line::Side const &side, int section, bool skyClip,
                 bool const clipTop    = !(fceil->surface().hasSkyMaskedMaterial()  && bceil->surface().hasSkyMaskedMaterial());
 #endif
 
-                HEdge &hedge = *side.leftHEdge();
+                Segment &segment = *side.leftSegment();
 
                 coord_t openBottom, openTop;
                 if(!side.line().isSelfReferencing())
@@ -270,8 +270,9 @@ void R_SideSectionCoords(Line::Side const &side, int section, bool skyClip,
                 }
                 else
                 {
-                    openBottom = hedge.sector().floor().visHeight();
-                    openTop    = hedge.sector().ceiling().visHeight();
+                    Sector &frontSec = segment.sector();
+                    openBottom = frontSec.floor().visHeight();
+                    openTop    = frontSec.ceiling().visHeight();
                 }
 
                 int const matHeight      = surface->material().height();

@@ -1,7 +1,6 @@
 /** @file map/hedge.cpp World Map Geometry Half-Edge.
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright � 2011-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,72 +17,51 @@
  * 02110-1301 USA</small>
  */
 
-#include <de/Log>
-
 #include "Polygon"
-#include "Sector"
-
-#ifdef __CLIENT__
-#  include "render/rend_bias.h"
-#endif
+#include "Vertex"
 
 #include "map/hedge.h"
 
-using namespace de;
+namespace de {
 
 DENG2_PIMPL(HEdge)
 {
-    /// Map Line::Side attributed to the half-edge. Can be @c 0 (partition segment).
-    Line::Side *lineSide;
+    /// Vertex of the half-edge.
+    Vertex *vertex;
+
+    /// Linked @em twin half-edge (that on the other side of "this" half-edge).
+    HEdge *twin;
+
+    /// Next half-edge (clockwise) around the @em face.
+    HEdge *next;
+
+    /// Previous half-edge (anticlockwise) around the @em face.
+    HEdge *prev;
 
     /// Polygon geometry to which the half-edge is attributed (if any).
     Polygon *poly;
 
-    Instance(Public *i)
+    Instance(Public *i, Vertex &vertex)
         : Base(i),
-          lineSide(0),
+          vertex(&vertex),
+          twin(0),
+          next(0),
+          prev(0),
           poly(0)
     {}
 
     inline HEdge **neighborAdr(ClockDirection direction) {
-        return direction == Clockwise? &self._next : &self._prev;
+        return direction == Clockwise? &next : &prev;
     }
 };
 
-HEdge::HEdge(Vertex &vertex, Line::Side *lineSide)
-    : MapElement(DMU_HEDGE), d(new Instance(this))
-{
-    _vertex = &vertex;
-    _next = 0;
-    _prev = 0;
-    _twin = 0;
-    _angle = 0;
-    _length = 0;
-    _lineOffset = 0;
-#ifdef __CLIENT__
-    std::memset(_bsuf, 0, sizeof(_bsuf));
-#endif
-    _flags = 0;
-
-    d->lineSide = lineSide;
-}
-
-HEdge::~HEdge()
-{
-#ifdef __CLIENT__
-    for(uint i = 0; i < 3; ++i)
-    {
-        if(_bsuf[i])
-        {
-            SB_DestroySurface(_bsuf[i]);
-        }
-    }
-#endif
-}
+HEdge::HEdge(Vertex &vertex)
+    : d(new Instance(this, vertex))
+{}
 
 Vertex &HEdge::vertex() const
 {
-    return *_vertex;
+    return *d->vertex;
 }
 
 bool HEdge::hasNeighbor(ClockDirection direction) const
@@ -102,19 +80,29 @@ HEdge &HEdge::neighbor(ClockDirection direction) const
     throw MissingNeighborError("HEdge::neighbor", QString("No %1 neighbor is attributed").arg(direction == Clockwise? "Clockwise" : "Anticlockwise"));
 }
 
+void HEdge::setNeighbor(ClockDirection direction, HEdge const *newNeighbor)
+{
+    *d->neighborAdr(direction) = const_cast<HEdge *>(newNeighbor);
+}
+
 bool HEdge::hasTwin() const
 {
-    return _twin != 0;
+    return d->twin != 0;
 }
 
 HEdge &HEdge::twin() const
 {
-    if(_twin)
+    if(d->twin)
     {
-        return *_twin;
+        return *d->twin;
     }
     /// @throw MissingTwinError Attempted with no twin associated.
     throw MissingTwinError("HEdge::twin", "No twin half-edge is associated");
+}
+
+void HEdge::setTwin(HEdge const *newTwin)
+{
+    d->twin = const_cast<HEdge *>(newTwin);
 }
 
 bool HEdge::hasPoly() const
@@ -132,128 +120,9 @@ Polygon &HEdge::poly() const
     throw MissingPolygonError("HEdge::poly", "No polygon is attributed");
 }
 
-void HEdge::setPoly(Polygon *newPolygon)
+void HEdge::setPoly(Polygon const *newPolygon)
 {
-    d->poly = newPolygon;
+    d->poly = const_cast<Polygon *>(newPolygon);
 }
 
-bool HEdge::hasLineSide() const
-{
-    return d->lineSide != 0;
-}
-
-Line::Side &HEdge::lineSide() const
-{
-    if(d->lineSide)
-    {
-        return *d->lineSide;
-    }
-    /// @throw MissingLineError Attempted with no line attributed.
-    throw MissingLineSideError("HEdge::lineSide", "No line.side is attributed");
-}
-
-coord_t HEdge::lineOffset() const
-{
-    if(d->lineSide)
-    {
-        return _lineOffset;
-    }
-    /// @throw MissingLineError Attempted with no line attributed.
-    throw MissingLineSideError("HEdge::lineOffset", "No line.side is attributed");
-}
-
-angle_t HEdge::angle() const
-{
-    return _angle;
-}
-
-coord_t HEdge::length() const
-{
-    return _length;
-}
-
-HEdge::Flags HEdge::flags() const
-{
-    return _flags;
-}
-
-void HEdge::setFlags(Flags flagsToChange, FlagOp operation)
-{
-    applyFlagOperation(_flags, flagsToChange, operation);
-}
-
-#ifdef __CLIENT__
-
-BiasSurface &HEdge::biasSurfaceForGeometryGroup(uint groupId)
-{
-    if(groupId <= Line::Side::Top)
-    {
-        DENG2_ASSERT(_bsuf[groupId] != 0);
-        return *_bsuf[groupId];
-    }
-    /// @throw InvalidGeometryGroupError Attempted with an invalid geometry group id.
-    throw UnknownGeometryGroupError("HEdge::biasSurfaceForGeometryGroup", QString("Invalid group id %1").arg(groupId));
-}
-
-#endif // __CLIENT__
-
-coord_t HEdge::pointDistance(const_pvec2d_t point, coord_t *offset) const
-{
-    DENG_ASSERT(point != 0);
-    /// @todo Why are we calculating this every time?
-    Vector2d direction = twin().origin() - _vertex->origin();
-
-    coord_t fromOriginV1[2] = { origin().x, origin().y };
-    coord_t directionV1[2]  = { direction.x, direction.y };
-    return V2d_PointLineDistance(point, fromOriginV1, directionV1, offset);
-}
-
-coord_t HEdge::pointOnSide(const_pvec2d_t point) const
-{
-    DENG_ASSERT(point != 0);
-    /// @todo Why are we calculating this every time?
-    Vector2d direction = twin().origin() - _vertex->origin();
-
-    coord_t fromOriginV1[2] = { origin().x, origin().y };
-    coord_t directionV1[2]  = { direction.x, direction.y };
-    return V2d_PointOnLineSide(point, fromOriginV1, directionV1);
-}
-
-int HEdge::property(setargs_t &args) const
-{
-    switch(args.prop)
-    {
-    case DMU_VERTEX0:
-        DMU_GetValue(DMT_HEDGE_V, &_vertex, &args, 0);
-        break;
-    case DMU_VERTEX1: {
-        Vertex *twinVertex = &twin().vertex();
-        DMU_GetValue(DMT_HEDGE_V, &twinVertex, &args, 0);
-        break; }
-    case DMU_LENGTH:
-        DMU_GetValue(DMT_HEDGE_LENGTH, &_length, &args, 0);
-        break;
-    case DMU_OFFSET: {
-        coord_t offset = d->lineSide? _lineOffset : 0;
-        DMU_GetValue(DMT_HEDGE_OFFSET, &offset, &args, 0);
-        break; }
-    case DMU_SIDE:
-        DMU_GetValue(DMT_HEDGE_SIDE, &d->lineSide, &args, 0);
-        break;
-    case DMU_LINE: {
-        Line *lineAdr = d->lineSide? &d->lineSide->line() : 0;
-        DMU_GetValue(DMT_HEDGE_LINE, &lineAdr, &args, 0);
-        break; }
-    case DMU_SECTOR: {
-        Sector *sector = sectorPtr();
-        DMU_GetValue(DMT_HEDGE_SECTOR, &sector, &args, 0);
-        break; }
-    case DMU_ANGLE:
-        DMU_GetValue(DMT_HEDGE_ANGLE, &_angle, &args, 0);
-        break;
-    default:
-        return MapElement::property(args);
-    }
-
-    return false; // Continue iteration.
-}
+} // namespace de

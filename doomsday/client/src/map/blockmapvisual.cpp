@@ -30,10 +30,14 @@
 #include "de_play.h"
 #include "de_ui.h"
 
+#include "HEdge"
+
 #include "map/blockmap.h"
 #include "map/gamemap.h"
 
 #include "map/blockmapvisual.h"
+
+using namespace de;
 
 byte bmapShowDebug = 0; // 1 = mobjs, 2 = lines, 3 = BSP leafs, 4 = polyobjs.
 float bmapDebugSize = 1.5f;
@@ -76,8 +80,10 @@ static int rendBspLeaf(BspLeaf *bspLeaf, void * /*parameters*/)
         float length, dx, dy, normal[2], unit[2];
         vec2f_t start, end;
 
-        HEdge *base = bspLeaf->firstHEdge();
-        HEdge *hedge = base;
+        de::Polygon const &poly = bspLeaf->poly();
+        HEdge *firstHEdge = poly.firstHEdge();
+
+        HEdge *hedge = firstHEdge;
         do
         {
             V2f_Set(start, hedge->origin().x, hedge->origin().y);
@@ -135,7 +141,8 @@ static int rendBspLeaf(BspLeaf *bspLeaf, void * /*parameters*/)
                 glVertex2f(start[VX],   end[VY]);
                 glVertex2f(start[VX], start[VY]);
             glEnd();
-        } while((hedge = &hedge->next()) != base);
+
+        } while((hedge = &hedge->next()) != firstHEdge);
 
         bspLeaf->setValidCount(validCount);
     }

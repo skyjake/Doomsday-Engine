@@ -284,9 +284,9 @@ void SB_InitForMap(char const *uniqueID)
     uint numVertIllums = 0;
 
     // First, determine the total number of vertexillum_ts we need.
-    foreach(HEdge *hedge, theMap->hedges())
+    foreach(Segment *segment, theMap->segments())
     {
-        if(hedge->hasLineSide())
+        if(segment->hasLineSide())
             numVertIllums++;
     }
 
@@ -313,9 +313,9 @@ void SB_InitForMap(char const *uniqueID)
     }
 
     // Allocate bias surfaces and attach vertexillum_ts.
-    foreach(HEdge *hedge, theMap->hedges())
+    foreach(Segment *segment, theMap->segments())
     {
-        if(!hedge->hasLineSide()) continue;
+        if(!segment->hasLineSide()) continue;
 
         for(int i = 0; i < 3; ++i)
         {
@@ -325,7 +325,7 @@ void SB_InitForMap(char const *uniqueID)
             bsuf->illum = illums;
             illums += 4;
 
-            hedge->_bsuf[i] = bsuf;
+            segment->setBiasSurface(i, bsuf);
         }
     }
 
@@ -350,7 +350,7 @@ void SB_InitForMap(char const *uniqueID)
     foreach(Polyobj *polyobj, theMap->polyobjs())
     foreach(Line *line, polyobj->lines())
     {
-        HEdge *hedge = line->front().leftHEdge();
+        Segment *segment = line->front().leftSegment();
 
         for(int i = 0; i < 3; ++i)
         {
@@ -360,7 +360,7 @@ void SB_InitForMap(char const *uniqueID)
             bsuf->illum = illums;
             illums += 4;
 
-            hedge->_bsuf[i] = bsuf;
+            segment->setBiasSurface(i, bsuf);
         }
     }
 
@@ -481,7 +481,7 @@ static void updateAffected(BiasSurface *bsuf, Vector2d const &from,
         if(src->intensity <= 0)
             continue;
 
-        // Calculate minimum 2D distance to the hedge.
+        // Calculate minimum 2D distance to the segment.
         float distance = 0;
         for(int k = 0; k < 2; ++k)
         {
@@ -784,11 +784,11 @@ void SB_RendPoly(struct ColorRawf_s *rcolors, BiasSurface *bsuf,
          * @todo This could be enhanced so that only the lights on the
          * right side of the surface are taken into consideration.
          */
-        if(mapElement->type() == DMU_HEDGE)
+        if(mapElement->type() == DMU_SEGMENT)
         {
-            HEdge const *hedge = mapElement->castTo<HEdge>();
+            Segment const *segment = mapElement->castTo<Segment>();
 
-            updateAffected(bsuf, hedge->origin(), hedge->twin().origin(), surfaceNormal);
+            updateAffected(bsuf, segment->from().origin(), segment->to().origin(), surfaceNormal);
         }
         else
         {

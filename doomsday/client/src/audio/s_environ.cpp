@@ -251,22 +251,21 @@ static boolean calcBspLeafReverb(BspLeaf *bspLeaf)
     float total = 0;
     // The other reverb properties can be found out by taking a look at the
     // materials of all surfaces in the BSP leaf.
-    HEdge *base = bspLeaf->firstHEdge();
-    HEdge *hedge = base;
-    do
+    foreach(Segment *segment, bspLeaf->segments())
     {
-        if(hedge->hasLineSide() && hedge->lineSide().hasSections() && hedge->lineSide().middle().hasMaterial())
-        {
-            Material &material = hedge->lineSide().middle().material();
-            AudioEnvironmentClass env = material.audioEnvironment();
-            if(!(env >= 0 && env < NUM_AUDIO_ENVIRONMENT_CLASSES))
-                env = AEC_WOOD; // Assume it's wood if unknown.
+        if(!segment->hasLineSide() || !segment->lineSide().hasSections() ||
+           !segment->lineSide().middle().hasMaterial())
+            continue;
 
-            total += hedge->length();
+        Material &material = segment->lineSide().middle().material();
+        AudioEnvironmentClass env = material.audioEnvironment();
+        if(!(env >= 0 && env < NUM_AUDIO_ENVIRONMENT_CLASSES))
+            env = AEC_WOOD; // Assume it's wood if unknown.
 
-            envSpaceAccum[env] += hedge->length();
-        }
-    } while((hedge = &hedge->next()) != base);
+        total += segment->length();
+
+        envSpaceAccum[env] += segment->length();
+    }
 
     if(!total)
     {

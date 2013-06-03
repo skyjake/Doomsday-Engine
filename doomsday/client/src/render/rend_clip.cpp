@@ -966,7 +966,11 @@ int C_CheckBspLeaf(BspLeaf &leaf)
     if(devNoCulling) return true;
 
     // Do we need to resize the angle list buffer?
-    if(leaf.hedgeCount() > anglistSize)
+    de::Polygon const &poly = leaf.poly();
+    HEdge const *firstHEdge = poly.firstHEdge();
+    int const hedgeCount    = poly.hedgeCount();
+
+    if(hedgeCount > anglistSize)
     {
         anglistSize *= 2;
         if(!anglistSize)
@@ -976,22 +980,21 @@ int C_CheckBspLeaf(BspLeaf &leaf)
 
     // Find angles to all corners.
     int n = 0;
-    HEdge const *base = leaf.firstHEdge();
-    HEdge const *hedge = base;
+    HEdge const *hedge = firstHEdge;
     do
     {
         // Shift for more accuracy.
         anglist[n++] = bamsAtan2(int( (hedge->origin().y - vOrigin[VZ]) * 100 ),
                                  int( (hedge->origin().x - vOrigin[VX]) * 100 ));
 
-    } while((hedge = &hedge->next()) != base);
+    } while((hedge = &hedge->next()) != firstHEdge);
 
     // Check each of the ranges defined by the edges.
-    for(int i = 0; i < leaf.hedgeCount() - 1; ++i)
+    for(int i = 0; i < hedgeCount - 1; ++i)
     {
         // The last edge won't be checked. This is because the edges
         // define a closed, convex polygon and the last edge's range is
-        // always already covered by the previous edges. (Right?)
+        // always already covered by the previous edges.
         int end = i + 1;
 
         // If even one of the edges is not contained by a clipnode,

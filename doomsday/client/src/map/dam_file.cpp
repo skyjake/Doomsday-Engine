@@ -664,12 +664,12 @@ static void writeBspLeaf(GameMap *map, BspLeaf *s)
     writeLong((long) s->_hedgeCount);
     if(!s->_hedge) return;
 
-    HEdge const *base = s->_hedge;
-    HEdge const *hedge = base;
+    Segment const *base = s->_hedge;
+    Segment const *segment = base;
     do
     {
-        writeLong(map->hedgeIndex(hedge) + 1);
-    } while((hedge = hedge->next) != base);
+        writeLong(map->hedgeIndex(segment) + 1);
+    } while((segment = segment->next) != base);
 }
 
 static void readBspLeaf(GameMap *map, BspLeaf *s)
@@ -701,20 +701,20 @@ static void readBspLeaf(GameMap *map, BspLeaf *s)
         return;
     }
 
-    HEdge *prevHEdge = 0;
+    Segment *prevHEdge = 0;
     for(uint i = 0; i < s->_hedgeCount; ++i)
     {
-        HEdge *hedge = map->hedges().at((unsigned) readLong() - 1);
+        Segment *segment = map->hedges().at((unsigned) readLong() - 1);
         if(!prevHEdge)
         {
-            s->_hedge  = hedge;
-            prevHEdge = hedge;
+            s->_hedge  = segment;
+            prevHEdge = segment;
         }
         else
         {
-            prevHEdge->next = hedge;
-            hedge->prev = prevHEdge;
-            prevHEdge = hedge;
+            prevHEdge->next = segment;
+            segment->prev = prevHEdge;
+            prevHEdge = segment;
         }
     }
 
@@ -750,7 +750,7 @@ static void archiveBspLeafs(GameMap* map, boolean write)
         assertSegment(DAMSEG_END);
 }
 
-static void writeSeg(GameMap *map, HEdge *s)
+static void writeSeg(GameMap *map, Segment *s)
 {
     DENG_ASSERT(map && s);
 
@@ -768,7 +768,7 @@ static void writeSeg(GameMap *map, HEdge *s)
     writeLong(s->twin? (map->hedgeIndex(s->prev) + 1) : 0);
 }
 
-static void readSeg(GameMap *map, HEdge *s)
+static void readSeg(GameMap *map, Segment *s)
 {
     DENG_ASSERT(map && s);
     long obIdx;
@@ -973,7 +973,7 @@ static void writePolyobj(GameMap *map, uint idx)
     for(uint i = 0; i < p->lineCount; ++i)
     {
         Line *line = p->lines[i];
-        HEdge *he = line->front()._leftHEdge;
+        Segment *he = line->front()._leftHEdge;
 
         writeLong(map->vertexIndex(he->_v[0]) + 1);
         writeLong(map->vertexIndex(he->_v[1]) + 1);
@@ -1013,11 +1013,11 @@ static void readPolyobj(GameMap *map, uint idx)
     // Polyobj line list.
     p->lineCount = (uint) readLong();
 
-    HEdge *hedges = (HEdge *) Z_Calloc(sizeof(HEdge) * p->lineCount, PU_MAP, 0);
+    Segment *hedges = (Segment *) Z_Calloc(sizeof(Segment) * p->lineCount, PU_MAP, 0);
     p->lines = (Line **) Z_Malloc(sizeof(Line *) * (p->lineCount + 1), PU_MAP, 0);
     for(uint i = 0; i < p->lineCount; ++i)
     {
-        HEdge *he = hedges + i;
+        Segment *he = hedges + i;
 
         he->_v[0] = map->_vertexes[(unsigned) readLong() - 1];
         he->_v[1] = map->_vertexes[(unsigned) readLong() - 1];

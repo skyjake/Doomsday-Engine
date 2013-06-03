@@ -43,7 +43,7 @@ typedef enum audioenvironmentclass_e {
 /**
  * Requests re-calculation of the reverb properties of the given sector. Should
  * be called whenever any of the properties governing reverb properties have
- * changed (i.e. hedge/plane texture or plane height changes).
+ * changed (i.e. segment/plane texture or plane height changes).
  *
  * Call S_UpdateReverbForSector() to do the actual calculation.
  *

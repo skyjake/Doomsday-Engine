@@ -30,7 +30,7 @@
 
 #include <de/Observers>
 
-#include "HEdge"
+#include "Segment"
 #include "map/bsp/convexsubspace.h"
 #include "map/bsp/superblockmap.h"
 
@@ -77,8 +77,8 @@ DENG2_PIMPL_NOREF(LineSegment::Side)
     coord_t pPerp;
     slopetype_t pSlopeType;
 
-    /// Half-edge produced from this segment (if any, not owned).
-    HEdge *hedge;
+    /// Segment produced from this segment (if any, not owned).
+    Segment *segment;
 
     Instance(LineSegment &line)
         : line(&line),
@@ -94,7 +94,7 @@ DENG2_PIMPL_NOREF(LineSegment::Side)
           pPara(0),
           pPerp(0),
           pSlopeType(ST_VERTICAL),
-          hedge(0)
+          segment(0)
     {}
 
     inline LineSegment::Side **neighborAdr(int edge) {
@@ -142,24 +142,24 @@ coord_t LineSegment::Side::angle() const
     return d->pAngle;
 }
 
-bool LineSegment::Side::hasHEdge() const
+bool LineSegment::Side::hasSegment() const
 {
-    return d->hedge != 0;
+    return d->segment != 0;
 }
 
-HEdge &LineSegment::Side::hedge() const
+Segment &LineSegment::Side::segment() const
 {
-    if(d->hedge)
+    if(d->segment)
     {
-        return *d->hedge;
+        return *d->segment;
     }
-    /// @throw MissingHEdgeError Attempted with no half-edge associated.
-    throw MissingHEdgeError("LineSegment::Side::hedge", "No half-edge is associated");
+    /// @throw MissingSegmentError Attempted with no segment associated.
+    throw MissingSegmentError("LineSegment::Side::segment", "No segment is associated");
 }
 
-void LineSegment::Side::setHEdge(HEdge *newHEdge)
+void LineSegment::Side::setSegment(Segment *newSegment)
 {
-    d->hedge = newHEdge;
+    d->segment = newSegment;
 }
 
 ConvexSubspace *LineSegment::Side::convexSubspace() const

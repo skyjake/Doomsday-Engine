@@ -802,19 +802,20 @@ boolean MPE_End()
         map->_polyobjs.append(editMap.polyobjs.takeFirst());
         Polyobj *polyobj = map->_polyobjs.back();
 
-        // Create a hedge for each line of this polyobj.
+        // Create a segment for each line of this polyobj.
         foreach(Line *line, polyobj->lines())
         {
             // Polyobj has ownership of the half-edges.
-            HEdge *hedge = new HEdge(line->from(), &line->front());
+            HEdge *hedge = new HEdge(line->from());
 
-            hedge->_twin = new HEdge(line->to());
-            hedge->_twin->_twin = hedge;
+            hedge->setTwin(new HEdge(line->to()));
+            hedge->twin().setTwin(hedge);
 
-            hedge->_length = line->length();
+            Segment *segment = new Segment(&line->front(), hedge);
+            segment->setLength(line->length());
 
-            line->front().setLeftHEdge(hedge);
-            line->front().setRightHEdge(hedge);
+            line->front().setLeftSegment(segment);
+            line->front().setRightSegment(segment);
         }
 
         polyobj->buildUniqueVertexes();

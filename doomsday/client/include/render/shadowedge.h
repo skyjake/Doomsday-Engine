@@ -37,7 +37,7 @@ static coord_t const SHADOWEDGE_OPEN_THRESHOLD = 8; // world units (Z axis)
 class ShadowEdge
 {
 public:
-    ShadowEdge(HEdge &leftMostHEdge, int edge);
+    ShadowEdge(Segment &leftMostHEdge, int edge);
 
     void prepare(int planeIndex);
 

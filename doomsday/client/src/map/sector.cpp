@@ -454,23 +454,21 @@ void Sector::planeHeightChanged(Plane &plane, coord_t oldHeight)
     // Inform the shadow bias of changed geometry.
     foreach(BspLeaf *bspLeaf, d->bspLeafs)
     {
-        if(!bspLeaf->isDegenerate())
-        {
-            HEdge *base = bspLeaf->firstHEdge();
-            HEdge *hedge = base;
-            do
-            {
-                if(hedge->hasLineSide())
-                {
-                    for(uint i = 0; i < 3; ++i)
-                    {
-                        SB_SurfaceMoved(&hedge->biasSurfaceForGeometryGroup(i));
-                    }
-                }
-            } while((hedge = &hedge->next()) != base);
+        if(bspLeaf->isDegenerate())
+             continue;
 
-            SB_SurfaceMoved(&bspLeaf->biasSurfaceForGeometryGroup(plane.inSectorIndex()));
+        foreach(Segment *seg, bspLeaf->segments())
+        {
+            if(!seg->hasLineSide())
+                continue;
+
+            for(uint i = 0; i < 3; ++i)
+            {
+                SB_SurfaceMoved(&seg->biasSurfaceForGeometryGroup(i));
+            }
         }
+
+        SB_SurfaceMoved(&bspLeaf->biasSurfaceForGeometryGroup(plane.inSectorIndex()));
     }
 
 #endif // __CLIENT__

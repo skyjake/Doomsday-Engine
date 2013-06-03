@@ -34,19 +34,19 @@
 
 #define DMT_VERTEX_ORIGIN DDVT_DOUBLE
 
-#define DMT_HEDGE_SIDE DDVT_PTR
+#define DMT_SEGMENT_SIDE DDVT_PTR
 
-#define DMT_HEDGE_V DDVT_PTR             // [Start, End] of the segment.
-#define DMT_HEDGE_LINE DDVT_PTR
-#define DMT_HEDGE_SECTOR DDVT_PTR
-#define DMT_HEDGE_BSPLEAF DDVT_PTR
-#define DMT_HEDGE_TWIN DDVT_PTR
-#define DMT_HEDGE_ANGLE DDVT_ANGLE
-#define DMT_HEDGE_SIDEID DDVT_BYTE         // 0=front, 1=back
-#define DMT_HEDGE_LENGTH DDVT_DOUBLE     // Accurate length of the segment (v1 -> v2).
-#define DMT_HEDGE_OFFSET DDVT_DOUBLE
-#define DMT_HEDGE_NEXT DDVT_PTR
-#define DMT_HEDGE_PREV DDVT_PTR
+#define DMT_SEGMENT_V DDVT_PTR             // [Start, End] of the segment.
+#define DMT_SEGMENT_LINE DDVT_PTR
+#define DMT_SEGMENT_SECTOR DDVT_PTR
+#define DMT_SEGMENT_BSPLEAF DDVT_PTR
+#define DMT_SEGMENT_TWIN DDVT_PTR
+#define DMT_SEGMENT_ANGLE DDVT_ANGLE
+#define DMT_SEGMENT_SIDEID DDVT_BYTE         // 0=front, 1=back
+#define DMT_SEGMENT_LENGTH DDVT_DOUBLE     // Accurate length of the segment (v1 -> v2).
+#define DMT_SEGMENT_OFFSET DDVT_DOUBLE
+#define DMT_SEGMENT_NEXT DDVT_PTR
+#define DMT_SEGMENT_PREV DDVT_PTR
 
 #define DMT_BSPLEAF_HEDGECOUNT DDVT_UINT
 #define DMT_BSPLEAF_HEDGE DDVT_PTR
@@ -124,7 +124,7 @@ struct intercept_s;
 // Opaque types for public use.
 struct bspleaf_s;
 struct bspnode_s;
-struct hedge_s;
+struct segment_s;
 struct line_s;
 struct mobj_s;
 struct plane_s;
@@ -135,7 +135,7 @@ struct material_s;
 
 typedef struct bspleaf_s    BspLeaf;
 typedef struct bspnode_s    BspNode;
-typedef struct hedge_s      HEdge;
+typedef struct segment_s    Segment;
 typedef struct line_s       Line;
 typedef struct plane_s      Plane;
 typedef struct sector_s     Sector;
@@ -146,10 +146,10 @@ typedef struct material_s   Material;
 #elif defined __cplusplus
 
 // Foward declarations.
-class BspLeaf;
 class Line;
 class Sector;
 class Material;
+class BspLeaf;
 
 #endif
 

@@ -395,7 +395,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
         if(mapSide->line().definesPolyobj())
             return 0;
 
-        LineOwner const *farVertOwner = mapSide->line().vertexOwner(mapSide->lineSideId() ^ edge);
+        LineOwner const *farVertOwner = mapSide->line().vertexOwner(mapSide->sideId() ^ edge);
         Line *neighbor;
         if(R_SideBackClosed(*mapSide))
         {
@@ -466,14 +466,14 @@ DENG2_PIMPL(WallEdge), public IHPlane
     }
 };
 
-WallEdge::WallEdge(WallSpec const &spec, HEdge &hedge, int edge)
-    : WorldEdge((edge? hedge.twin() : hedge).origin(),
-                EdgeAttribs(Vector2f(hedge.lineOffset() + (edge? hedge.length() : 0), 0))),
-      d(new Instance(this, spec, &hedge.lineSide(), edge,
-                           hedge.lineOffset() + (edge? hedge.length() : 0),
-                           hedge.lineSide().line().vertexOwner((edge? hedge.twin() : hedge).vertex())))
+WallEdge::WallEdge(WallSpec const &spec, Segment &segment, int edge)
+    : WorldEdge((edge? segment.to() : segment.from()).origin(),
+                EdgeAttribs(Vector2f(segment.lineSideOffset() + (edge? segment.length() : 0), 0))),
+      d(new Instance(this, spec, &segment.lineSide(), edge,
+                           segment.lineSideOffset() + (edge? segment.length() : 0),
+                           segment.lineSide().line().vertexOwner(edge? segment.to() : segment.from())))
 {
-    DENG_ASSERT(hedge.hasLineSide() && hedge.lineSide().hasSections());
+    DENG_ASSERT(segment.hasLineSide() && segment.lineSide().hasSections());
 
     /// @todo Defer until necessary.
     d->prepare();

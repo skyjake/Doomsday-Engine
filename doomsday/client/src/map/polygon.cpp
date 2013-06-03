@@ -19,6 +19,9 @@
  */
 
 #include <de/mathutil.h>
+#include <de/vector1.h> /// @todo remove me
+
+#include <de/Log>
 
 #include "BspLeaf"
 #include "HEdge"
@@ -49,21 +52,21 @@ DENG2_PIMPL(Polygon)
         if(self._hedge)
         {
             HEdge *he = self._hedge;
-            if(he->_next == he || !he->_next)
+            if(!he->hasNext() || &he->next() == he)
             {
                 delete he;
             }
             else
             {
                 // Break the ring, if linked.
-                if(he->_prev)
+                if(he->hasPrev())
                 {
-                    he->_prev->_next = 0;
+                    he->prev().setNext(0);
                 }
 
                 while(he)
                 {
-                    HEdge *next = he->_next;
+                    HEdge *next = he->hasNext()? &he->next() : 0;
                     delete he;
                     he = next;
                 }

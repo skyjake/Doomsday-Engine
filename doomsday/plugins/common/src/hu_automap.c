@@ -579,11 +579,11 @@ static void rendLine2(uiwidget_t* obj, float x1, float y1, float x2, float y2,
     }
 }
 
-static int rendSeg(void* hedge_, void* data)
+static int rendSeg(void *segment_, void* data)
 {
-    assert(NULL != hedge_ && NULL != data && ((uiwidget_t*)data)->type == GUI_AUTOMAP);
+    assert(segment_ != 0 && data != 0 && ((uiwidget_t *)data)->type == GUI_AUTOMAP);
     {
-    HEdge* hedge = (HEdge*) hedge_;
+    Segment *segment = (Segment *) segment_;
     uiwidget_t* obj = (uiwidget_t*)data;
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     Sector* frontSector, *backSector;
@@ -593,7 +593,7 @@ static int rendSeg(void* hedge_, void* data)
     Line* line;
     xline_t* xLine;
 
-    line = P_GetPtrp(hedge, DMU_LINE);
+    line = P_GetPtrp(segment, DMU_LINE);
     if(!line) return false;
 
     xLine = P_ToXLine(line);
@@ -683,7 +683,7 @@ static int rendSeg(void* hedge_, void* data)
 
 static int rendBspLeafHEdges(BspLeaf* bspLeaf, void* context)
 {
-    return P_Iteratep(bspLeaf, DMU_HEDGE, context, rendSeg);
+    return P_Iteratep(bspLeaf, DMU_SEGMENT, context, rendSeg);
 }
 
 /**
@@ -716,7 +716,7 @@ static void renderWalls(uiwidget_t* obj, int objType, boolean addToLists)
         // walls, not just those visible *now* (note rotation).
         for(i = 0; i < numbspleafs; ++i)
         {
-            P_Iteratep(P_ToPtr(DMU_BSPLEAF, i), DMU_HEDGE, obj, rendSeg);
+            P_Iteratep(P_ToPtr(DMU_BSPLEAF, i), DMU_SEGMENT, obj, rendSeg);
         }
     }
 }
@@ -781,7 +781,7 @@ static void rendLinedef(Line* line, float r, float g, float b, float a,
 
 /**
  * Rather than draw the instead this will draw the line of which
- * the hedge is a part.
+ * the segment is a part.
  */
 int rendPolyobjLine(Line* line, void* context)
 {

@@ -153,7 +153,7 @@ static inline float calcTexCoordY(float z, float bottom, float top, float texHei
     return bottom - z;
 }
 
-/// @todo This algorithm should be rewritten to work at HEdge level.
+/// @todo This algorithm should be rewritten to work at Segment level.
 static void scanNeighbor(bool scanTop, Line::Side const &side, edge_t *edge,
                          bool toLeft)
 {
@@ -164,7 +164,7 @@ static void scanNeighbor(bool scanTop, Line::Side const &side, edge_t *edge,
     coord_t lengthDelta = 0, gap = 0;
     coord_t iFFloor, iFCeil;
     coord_t iBFloor, iBCeil;
-    int scanSecSide = side.lineSideId();
+    int scanSecSide = side.sideId();
     Sector const *startSector = side.sectorPtr();
     Sector const *scanSector;
     bool clockwise = toLeft;
@@ -220,7 +220,7 @@ static void scanNeighbor(bool scanTop, Line::Side const &side, edge_t *edge,
         lengthDelta = 0;
         if(!stopScan)
         {
-            // This line will attribute to this hedge's shadow edge.
+            // This line will attribute to this segment's shadow edge.
             // Store identity for later use.
             edge->diff = diff;
             edge->line = iter;
@@ -242,7 +242,7 @@ static void scanNeighbor(bool scanTop, Line::Side const &side, edge_t *edge,
             }
 
             // Does this line's length contribute to the alignment of the
-            // texture on the hedge shadow edge being rendered?
+            // texture on the segment shadow edge being rendered?
             if(scanTop)
             {
                 if(iter->hasBackSector() &&
@@ -473,7 +473,7 @@ static void scanNeighbors(shadowcorner_t top[2], shadowcorner_t bottom[2],
 static void scanEdges(shadowcorner_t topCorners[2], shadowcorner_t bottomCorners[2],
     shadowcorner_t sideCorners[2], edgespan_t spans[2], Line::Side const &side)
 {
-    int const lineSideId = side.lineSideId();
+    int const lineSideId = side.sideId();
 
     std::memset(sideCorners, 0, sizeof(shadowcorner_t) * 2);
 
@@ -1077,9 +1077,10 @@ void Rend_RadioWallSection(WallEdge const &leftEdge, WallEdge const &rightEdge,
     if(shadowSize <= 0) return;
 
     Line::Side &side            = leftEdge.mapSide();
-    HEdge const *hedge          = side.leftHEdge();
-    Sector const *frontSec      = hedge->sectorPtr();
-    Sector const *backSec       = hedge->twin().hasBspLeaf() && !hedge->twin().bspLeaf().isDegenerate() && leftEdge.spec().section != Line::Side::Middle? hedge->twin().bspLeaf().sectorPtr() : 0;
+    Segment const *segment      = side.leftSegment();
+    Sector const *frontSec      = segment->sectorPtr();
+    Sector const *backSec       = (segment->hasBack() && segment->back().hasBspLeaf() && !segment->back().bspLeaf().isDegenerate() &&
+                                   leftEdge.spec().section != Line::Side::Middle)? segment->back().sectorPtr() : 0;
 
     coord_t const lineLength    = side.line().length();
     coord_t const sectionOffset = leftEdge.mapSideOffset();
@@ -1254,6 +1255,8 @@ static void writeShadowSection(int planeIndex, Line::Side &side, float shadowDar
     DENG_ASSERT(side.hasSections());
     DENG_ASSERT(!side.line().definesPolyobj());
 
+    if(!side.leftSegment()) return;
+
     if(!(shadowDark > .0001)) return;
 
     Plane const &plane = side.sector().plane(planeIndex);
@@ -1269,12 +1272,12 @@ static void writeShadowSection(int planeIndex, Line::Side &side, float shadowDar
     // If the sector containing the shadowing line section is fully closed (i.e., volume
     // is not positive) then skip shadow drawing entirely.
     /// @todo Encapsulate this logic in ShadowEdge -ds
-    HEdge *leftMostHEdge = side.leftHEdge();
-    if(!leftMostHEdge || !leftMostHEdge->hasBspLeaf() ||
-       !leftMostHEdge->bspLeaf().hasWorldVolume()) return;
+    if(!side.leftSegment()->hasBspLeaf() ||
+       !side.leftSegment()->bspLeaf().hasWorldVolume())
+        return;
 
-    ShadowEdge leftEdge(*side.leftHEdge(), Line::From);
-    ShadowEdge rightEdge(*side.leftHEdge(), Line::To);
+    ShadowEdge leftEdge(*side.leftSegment(), Line::From);
+    ShadowEdge rightEdge(*side.leftSegment(), Line::To);
 
     leftEdge.prepare(planeIndex);
     rightEdge.prepare(planeIndex);

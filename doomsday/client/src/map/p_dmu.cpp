@@ -82,7 +82,7 @@ char const *DMU_Str(uint prop)
     {
         { DMU_NONE, "(invalid)" },
         { DMU_VERTEX, "DMU_VERTEX" },
-        { DMU_HEDGE, "DMU_HEDGE" },
+        { DMU_SEGMENT, "DMU_SEGMENT" },
         { DMU_LINE, "DMU_LINE" },
         { DMU_SIDE, "DMU_SIDE" },
         { DMU_BSPNODE, "DMU_BSPNODE" },
@@ -167,7 +167,7 @@ int DMU_GetType(void const *ptr)
     switch(elem->type())
     {
     case DMU_VERTEX:
-    case DMU_HEDGE:
+    case DMU_SEGMENT:
     case DMU_LINE:
     case DMU_SIDE:
     case DMU_BSPLEAF:
@@ -304,7 +304,7 @@ int P_ToIndex(void const *ptr)
     switch(elem->type())
     {
     case DMU_VERTEX:
-    case DMU_HEDGE:
+    case DMU_SEGMENT:
     case DMU_LINE:
     case DMU_SIDE:
     case DMU_BSPLEAF:
@@ -333,8 +333,8 @@ void *P_ToPtr(int type, int index)
     case DMU_VERTEX:
         return theMap->vertexes().at(index);
 
-    case DMU_HEDGE:
-        return theMap->hedges().at(index);
+    case DMU_SEGMENT:
+        return theMap->segments().at(index);
 
     case DMU_LINE:
         return theMap->lines().at(index);
@@ -377,7 +377,7 @@ int P_Count(int type)
     switch(type)
     {
     case DMU_VERTEX:    return theMap->vertexCount();
-    case DMU_HEDGE:     return theMap->hedgeCount();
+    case DMU_SEGMENT:   return theMap->segmentCount();
     case DMU_LINE:      return theMap->lineCount();
     case DMU_SIDE:      return theMap->sideCount();
     case DMU_BSPNODE:   return theMap->bspNodeCount();
@@ -432,16 +432,11 @@ int P_Iteratep(void *elPtr, uint prop, void *context, int (*callback) (void *p, 
     case DMU_BSPLEAF:
         switch(prop)
         {
-        case DMU_HEDGE:
-            if(HEdge *base = elem->castTo<BspLeaf>()->firstHEdge())
+        case DMU_SEGMENT:
+            foreach(Segment *seg, elem->castTo<BspLeaf>()->segments())
             {
-                HEdge *hedge = base;
-                do
-                {
-                    int result = callback(hedge, context);
-                    if(result) return result;
-
-                } while((hedge = &hedge->next()) != base);
+                int result = callback(seg, context);
+                if(result) return result;
             }
             return false; // Continue iteration.
 
@@ -466,9 +461,9 @@ int P_Callback(int type, int index, void *context, int (*callback)(void *p, void
             return callback(theMap->vertexes().at(index), context);
         break;
 
-    case DMU_HEDGE:
-        if(index >= 0 && index < theMap->hedgeCount())
-            return callback(theMap->hedges().at(index), context);
+    case DMU_SEGMENT:
+        if(index >= 0 && index < theMap->segmentCount())
+            return callback(theMap->segments().at(index), context);
         break;
 
     case DMU_LINE:
@@ -537,7 +532,7 @@ int P_Callbackp(int type, void *elPtr, void *context, int (*callback)(void *p, v
     switch(type)
     {
     case DMU_VERTEX:
-    case DMU_HEDGE:
+    case DMU_SEGMENT:
     case DMU_LINE:
     case DMU_SIDE:
     case DMU_BSPNODE:

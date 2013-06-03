@@ -31,7 +31,7 @@
 #include "TriangleStripBuilder"
 #include "IHPlane"
 
-class HEdge;
+class Segment;
 class Surface;
 
 /// Maximum number of intercepts in a WallEdge.
@@ -75,7 +75,7 @@ public:
     /**
      * @param spec  Geometry specification for the wall section. A copy is made.
      */
-    WallEdge(WallSpec const &spec, HEdge &hedge, int edge);
+    WallEdge(WallSpec const &spec, Segment &segment, int edge);
 
     inline Event const &operator [] (EventIndex index) const {
         return at(index);

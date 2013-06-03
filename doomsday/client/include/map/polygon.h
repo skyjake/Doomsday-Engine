@@ -27,9 +27,10 @@
 #include <de/Vector>
 
 class BspLeaf;
-class HEdge;
 
 namespace de {
+
+class HEdge;
 
 /**
  * Polygon geometry.
@@ -47,7 +48,7 @@ public: /// @todo Make private:
     /// from the smallest angle.
     HEdge *_hedge;
 
-    /// Number of HEdge's in the face.
+    /// Number of Segment's in the face.
     int _hedgeCount;
 
 public:

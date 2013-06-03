@@ -25,8 +25,9 @@
 
 #include "m_misc.h"
 
-#include "HEdge"
+#include "BspLeaf"
 #include "Sector"
+#include "Segment"
 #include "Vertex"
 
 #include "map/line.h"
@@ -80,10 +81,10 @@ DENG2_PIMPL_NOREF(Line::Side)
     Sector *sector;
 
     /// Left-most half-edge on this side of the owning line (not owned).
-    HEdge *leftHEdge;
+    Segment *leftSegment;
 
     /// Right-most half-edge on this side of the owning line (not owned).
-    HEdge *rightHEdge;
+    Segment *rightSegment;
 
     /// Framecount of last time shadows were drawn on this side.
     int shadowVisCount;
@@ -92,8 +93,8 @@ DENG2_PIMPL_NOREF(Line::Side)
         : flags(0),
           line(line),
           sector(sector),
-          leftHEdge(0),
-          rightHEdge(0),
+          leftSegment(0),
+          rightSegment(0),
           shadowVisCount(0)
     {
 #ifdef __CLIENT__
@@ -146,7 +147,7 @@ Line &Line::Side::line() const
     return d->line;
 }
 
-int Line::Side::lineSideId() const
+int Line::Side::sideId() const
 {
     return &d->line.front() == this? Line::Front : Line::Back;
 }
@@ -164,11 +165,15 @@ bool Line::Side::considerOneSided() const
     {
         // If there no half-edge is present then convex subspace on "this" side
         // must have been degenerate (thus no geometry).
-        if(!d->leftHEdge)
+        if(!d->leftSegment)
             return true;
 
-        HEdge &hedge = *d->leftHEdge;
-        if(!hedge.twin().hasBspLeaf() || !hedge.twin().hasSector() || hedge.twin().bspLeaf().isDegenerate())
+        Segment &segment = *d->leftSegment;
+        if(!segment.back().hasBspLeaf())
+            return true;
+
+        BspLeaf &backLeaf = segment.back().bspLeaf();
+        if(!backLeaf.hasSector() || backLeaf.isDegenerate())
             return true;
     }
 
@@ -223,24 +228,24 @@ ddmobj_base_t const &Line::Side::soundEmitter(int sectionId) const
     return const_cast<ddmobj_base_t const &>(const_cast<Side *>(this)->soundEmitter(sectionId));
 }
 
-HEdge *Line::Side::leftHEdge() const
+Segment *Line::Side::leftSegment() const
 {
-    return d->leftHEdge;
+    return d->leftSegment;
 }
 
-void Line::Side::setLeftHEdge(HEdge *newLeftHEdge)
+void Line::Side::setLeftSegment(Segment *newLeftSegment)
 {
-    d->leftHEdge = newLeftHEdge;
+    d->leftSegment = newLeftSegment;
 }
 
-HEdge *Line::Side::rightHEdge() const
+Segment *Line::Side::rightSegment() const
 {
-    return d->rightHEdge;
+    return d->rightSegment;
 }
 
-void Line::Side::setRightHEdge(HEdge *newRightHEdge)
+void Line::Side::setRightSegment(Segment *newRightSegment)
 {
-    d->rightHEdge = newRightHEdge;
+    d->rightSegment = newRightSegment;
 }
 
 void Line::Side::updateSoundEmitterOrigin(int sectionId)

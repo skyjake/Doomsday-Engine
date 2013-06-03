@@ -1362,19 +1362,19 @@ static uint projectSurfaceShadows(Surface &surface, float glowStrength,
                                      surface.tangent(), surface.bitangent(), surface.normal());
 }
 
-static void writeWallSection(HEdge &hedge, int section,
-    coord_t *retBottomZ = 0, coord_t *retTopZ = 0, bool *retWroteOpaque = 0)
+static void writeWallSection(Segment &segment, int section,
+    bool *retWroteOpaque = 0, coord_t *retBottomZ = 0, coord_t *retTopZ = 0)
 {
     BspLeaf *bspLeaf = currentBspLeaf;
     DENG_ASSERT(!isNullLeaf(bspLeaf));
-    DENG_ASSERT(hedge.isFlagged(HEdge::FacingFront));
-    DENG_ASSERT(hedge.hasLineSide() && hedge.lineSide().hasSections());
+    DENG_ASSERT(segment.isFlagged(Segment::FacingFront));
+    DENG_ASSERT(segment.hasLineSide() && segment.lineSide().hasSections());
 
+    if(retWroteOpaque) *retWroteOpaque = false;
     if(retBottomZ)     *retBottomZ     = 0;
     if(retTopZ)        *retTopZ        = 0;
-    if(retWroteOpaque) *retWroteOpaque = false;
 
-    Line::Side &side = hedge.lineSide();
+    Line::Side &side = segment.lineSide();
     Surface &surface = side.surface(section);
 
     // Skip nearly transparent surfaces.
@@ -1392,8 +1392,8 @@ static void writeWallSection(HEdge &hedge, int section,
     // Generate edge geometries.
     WallSpec const wallSpec = WallSpec::fromMapSide(side, section);
 
-    WallEdge leftEdge(wallSpec, hedge, Line::From);
-    WallEdge rightEdge(wallSpec, hedge, Line::To);
+    WallEdge leftEdge(wallSpec, segment, Line::From);
+    WallEdge rightEdge(wallSpec, segment, Line::To);
 
     // Do the edge geometries describe a valid polygon?
     if(!leftEdge.isValid() || !rightEdge.isValid() ||
@@ -1425,9 +1425,9 @@ static void writeWallSection(HEdge &hedge, int section,
         parm.flags               = RPF_DEFAULT | (skyMasked? RPF_SKYMASK : 0);
         parm.forceOpaque         = wallSpec.flags.testFlag(WallSpec::ForceOpaque);
         parm.alpha               = parm.forceOpaque? 1 : opacity;
-        parm.mapElement          = &hedge;
+        parm.mapElement          = &segment;
         parm.elmIdx              = wallSpec.section;
-        parm.bsuf                = &hedge.biasSurfaceForGeometryGroup(wallSpec.section);
+        parm.bsuf                = &segment.biasSurfaceForGeometryGroup(wallSpec.section);
         parm.normal              = &surface.normal();
         parm.texTL               = &texQuad[0];
         parm.texBR               = &texQuad[1];
@@ -1560,9 +1560,9 @@ static void writeWallSection(HEdge &hedge, int section,
         R_FreeRendVertices(rvertices);
     }
 
+    if(retWroteOpaque) *retWroteOpaque = wroteOpaque && !didNearFade;
     if(retBottomZ)     *retBottomZ     = leftEdge.bottom().z();
     if(retTopZ)        *retTopZ        = rightEdge.top().z();
-    if(retWroteOpaque) *retWroteOpaque = wroteOpaque && !didNearFade;
 }
 
 /**
@@ -1584,20 +1584,22 @@ static uint buildLeafPlaneGeometry(BspLeaf const &leaf, ClockDirection direction
     DENG_ASSERT(!leaf.isDegenerate());
     DENG_ASSERT(verts != 0);
 
-    HEdge *fanBase = leaf.fanBase();
-    HEdge *baseNode = fanBase? fanBase : leaf.firstHEdge();
+    de::Polygon const &poly = leaf.poly();
+    HEdge *firstHEdge       = poly.firstHEdge();
+    int const hedgeCount    = poly.hedgeCount();
 
-    uint totalVerts = leaf.hedgeCount() + (!fanBase? 2 : 0);
-    *verts = R_AllocRendVertices(totalVerts);
+    HEdge *fanBase  = leaf.fanBase();
+    uint totalVerts = hedgeCount + (!fanBase? 2 : 0);    *verts = R_AllocRendVertices(totalVerts);
 
-    uint n = 0;
+    int n = 0;
     if(!fanBase)
     {
-        V3f_Set((*verts)[n].pos, leaf.poly().center().x, leaf.poly().center().y, height);
+        V3f_Set((*verts)[n].pos, poly.center().x, poly.center().y, height);
         n++;
     }
 
     // Add the vertices for each hedge.
+    HEdge *baseNode = fanBase? fanBase : firstHEdge;
     HEdge *node = baseNode;
     do
     {
@@ -1608,9 +1610,7 @@ static uint buildLeafPlaneGeometry(BspLeaf const &leaf, ClockDirection direction
     // The last vertex is always equal to the first.
     if(!fanBase)
     {
-        V3f_Set((*verts)[n].pos, leaf.firstHEdge()->origin().x,
-                                 leaf.firstHEdge()->origin().y,
-                                 height);
+        V3f_Set((*verts)[n].pos, firstHEdge->origin().x, firstHEdge->origin().y, height);
     }
 
     if(vertsSize) *vertsSize = totalVerts;
@@ -1808,7 +1808,7 @@ static void writeLeafSkyMaskStrips(SkyFixEdge::FixType fixType)
 
     // Configure the strip build state (we'll most likely need to break
     // edge loop into multiple strips).
-    HEdge *startNode          = 0;
+    Segment *startNode        = 0;
     coord_t startZBottom      = 0;
     coord_t startZTop         = 0;
     Material *startMaterial   = 0;
@@ -1818,26 +1818,27 @@ static void writeLeafSkyMaskStrips(SkyFixEdge::FixType fixType)
     int relPlane = fixType == SkyFixEdge::Upper? Plane::Ceiling : Plane::Floor;
 
     // Begin generating geometry.
-    HEdge *base = bspLeaf->firstHEdge();
-    HEdge *hedgeIt = base;
+    BspLeaf::Segments const &segments = bspLeaf->clockwiseSegments();
+    int const segCount = segments.count();
+    int i = 0;
     forever
     {
-        HEdge &hedge = *hedgeIt;
+        Segment &seg = *segments.at(i);
 
         // Are we monitoring material changes?
         Material *skyMaterial = 0;
         if(splitOnMaterialChange)
         {
-            skyMaterial = hedge.sector().planeSurface(relPlane).materialPtr();
+            skyMaterial = seg.sector().planeSurface(relPlane).materialPtr();
         }
 
         // Add a first (left) edge to the current strip?
         if(startNode == 0)
         {
-            startMaterialOffset = float( hedge.hasLineSide()? hedge.lineOffset() : 0 );
+            startMaterialOffset = seg.lineSideOffset();
 
             // Prepare the edge geometry
-            SkyFixEdge skyEdge(hedge, fixType, (direction == Anticlockwise)? Line::To : Line::From,
+            SkyFixEdge skyEdge(seg, fixType, (direction == Anticlockwise)? Line::To : Line::From,
                                startMaterialOffset);
 
             if(skyEdge.isValid() && skyEdge.bottom().z() < skyEdge.top().z())
@@ -1847,7 +1848,7 @@ static void writeLeafSkyMaskStrips(SkyFixEdge::FixType fixType)
                 stripBuilder << skyEdge;
 
                 // Update the strip build state.
-                startNode     = &hedge;
+                startNode     = &seg;
                 startZBottom  = skyEdge.bottom().z();
                 startZTop     = skyEdge.top().z();
                 startMaterial = skyMaterial;
@@ -1859,10 +1860,10 @@ static void writeLeafSkyMaskStrips(SkyFixEdge::FixType fixType)
         // Add the i'th (right) edge to the current strip?
         if(startNode != 0)
         {
-            startMaterialOffset += hedge.length() * (direction == Anticlockwise? -1 : 1);
+            startMaterialOffset += seg.length() * (direction == Anticlockwise? -1 : 1);
 
             // Prepare the edge geometry
-            SkyFixEdge skyEdge(hedge, fixType, (direction == Anticlockwise)? Line::From : Line::To,
+            SkyFixEdge skyEdge(seg, fixType, (direction == Anticlockwise)? Line::From : Line::To,
                                startMaterialOffset);
 
             // Stop if we've reached a "null" edge.
@@ -1872,7 +1873,7 @@ static void writeLeafSkyMaskStrips(SkyFixEdge::FixType fixType)
                 endStrip = true;
             }
             // Must we split the strip here?
-            else if(&hedge != startNode &&
+            else if(&seg != startNode &&
                     (!de::fequal(skyEdge.bottom().z(), startZBottom) ||
                      !de::fequal(skyEdge.top().z(), startZTop) ||
                      (splitOnMaterialChange && skyMaterial != startMaterial)))
@@ -1886,7 +1887,7 @@ static void writeLeafSkyMaskStrips(SkyFixEdge::FixType fixType)
                 stripBuilder << skyEdge;
             }
 
-            if(endStrip || &hedge.neighbor(direction) == base)
+            if(endStrip || de::wrap(i + (direction == Clockwise? 1 : -1), 0, segCount) == 0)
             {
                 // End the current strip.
                 startNode = 0;
@@ -1909,10 +1910,10 @@ static void writeLeafSkyMaskStrips(SkyFixEdge::FixType fixType)
         if(beginNewStrip) continue;
 
         // On to the next node.
-        hedgeIt = &hedgeIt->neighbor(direction);
+        i = de::wrap(i + (direction == Clockwise? 1 : -1), 0, segCount);
 
         // Are we done?
-        if(hedgeIt == base) break;
+        if(i == 0) break;
     }
 }
 
@@ -2001,19 +2002,19 @@ static void writeLeafSkyMask(int skyCap = SKYCAP_LOWER|SKYCAP_UPPER)
     }
 }
 
-static bool coveredOpenRange(HEdge &hedge, coord_t middleBottomZ, coord_t middleTopZ,
+static bool coveredOpenRange(Segment &segment, coord_t middleBottomZ, coord_t middleTopZ,
     bool wroteOpaqueMiddle)
 {
-    if(hedge.lineSide().considerOneSided())
+    if(segment.lineSide().considerOneSided())
     {
         return wroteOpaqueMiddle;
     }
 
-    //if(hedge.line().isSelfReferencing())
+    //if(segment.line().isSelfReferencing())
     //   return false; /// @todo Why? -ds
 
-    Sector const &frontSec = hedge.sector();
-    Sector const &backSec  = hedge.twin().sector();
+    Sector const &frontSec = segment.sector();
+    Sector const &backSec  = segment.back().sector();
 
     coord_t const ffloor   = frontSec.floor().visHeight();
     coord_t const fceil    = frontSec.ceiling().visHeight();
@@ -2026,7 +2027,7 @@ static bool coveredOpenRange(HEdge &hedge, coord_t middleBottomZ, coord_t middle
         coord_t xbottom = de::max(bfloor, ffloor);
         coord_t xtop    = de::min(bceil,  fceil);
 
-        Surface const &middle = hedge.lineSide().middle();
+        Surface const &middle = segment.lineSide().middle();
         xbottom += middle.visMaterialOrigin().y;
         xtop    += middle.visMaterialOrigin().y;
 
@@ -2037,7 +2038,7 @@ static bool coveredOpenRange(HEdge &hedge, coord_t middleBottomZ, coord_t middle
     if(wroteOpaqueMiddle && middleCoversOpening)
         return true;
 
-    Line::Side const &front = hedge.lineSide();
+    Line::Side const &front = segment.lineSide();
 
     if(   (bceil <= ffloor &&
                (front.top().hasMaterial()    || front.middle().hasMaterial()))
@@ -2084,37 +2085,36 @@ static void writeLeafWallSections()
     BspLeaf *leaf = currentBspLeaf;
     DENG_ASSERT(!isNullLeaf(leaf));
 
-    HEdge *hedgeIt = leaf->firstHEdge();
-    do
+    foreach(Segment *seg, leaf->segments())
     {
-        HEdge &hedge = *hedgeIt;
+        // We are only interested in wall sections with front facing half-edges.
+        if(!seg->isFlagged(Segment::FacingFront))
+            continue;
 
-        // We are only interested in wall sections for front facing half-edges.
-        if(hedge.isFlagged(HEdge::FacingFront))
-        if(hedge.hasLineSide() && hedge.lineSide().hasSections())
+        // Only line segments with wall sections will be drawn.
+        if(!seg->hasLineSide() || !seg->lineSide().hasSections())
+            continue;
+
+        // Done here because of the logic of doom.exe wrt the automap.
+        reportWallSectionDrawn(seg->line());
+
+        bool wroteOpaqueMiddle = false;
+        coord_t middleBottomZ = 0, middleTopZ = 0;
+
+        writeWallSection(*seg, Line::Side::Bottom);
+        writeWallSection(*seg, Line::Side::Top);
+        writeWallSection(*seg, Line::Side::Middle,
+                         &wroteOpaqueMiddle, &middleBottomZ, &middleTopZ);
+
+        // We can occlude the angle range defined by the X|Y origins of the
+        // line segment if the open range has been covered (when the viewer
+        // is not in the void).
+        if(!P_IsInVoid(viewPlayer) &&
+           coveredOpenRange(*seg, middleBottomZ, middleTopZ, wroteOpaqueMiddle))
         {
-            // Done here because of the logic of doom.exe wrt the automap.
-            reportWallSectionDrawn(hedge.line());
-
-            coord_t middleBottomZ = 0, middleTopZ = 0;
-            bool wroteOpaqueMiddle = false;
-
-            writeWallSection(hedge, Line::Side::Bottom);
-            writeWallSection(hedge, Line::Side::Top);
-            writeWallSection(hedge, Line::Side::Middle,
-                             &middleBottomZ, &middleTopZ, &wroteOpaqueMiddle);
-
-            // We can occlude the angle range defined by the X|Y origins of the
-            // half-edge if the open range has been covered (when the viewer is
-            // not in the void).
-            if(!P_IsInVoid(viewPlayer) &&
-               coveredOpenRange(hedge, middleBottomZ, middleTopZ, wroteOpaqueMiddle))
-            {
-                C_AddRangeFromViewRelPoints(hedge.origin(), hedge.twin().origin());
-            }
+            C_AddRangeFromViewRelPoints(seg->from().origin(), seg->to().origin());
         }
-
-    } while((hedgeIt = &hedgeIt->next()) != leaf->firstHEdge());
+    }
 }
 
 static void writeLeafPolyobjs()
@@ -2127,25 +2127,29 @@ static void writeLeafPolyobjs()
 
     foreach(Line *line, po->lines())
     {
-        HEdge &hedge = *line->front().leftHEdge();
+        Segment *seg = line->front().leftSegment();
 
-        // We are only interested in wall sections for front facing half-edges.
-        if(hedge.isFlagged(HEdge::FacingFront))
-        if(hedge.lineSide().hasSections())
+        // We are only interested in front facing line segments.
+        if(!seg->isFlagged(Segment::FacingFront))
+            continue;
+
+        // Only line segments with wall sections will be drawn.
+        if(!seg->hasLineSide() || !seg->lineSide().hasSections())
+            continue;
+
+        // Done here because of the logic of doom.exe wrt the automap.
+        reportWallSectionDrawn(seg->line());
+
+        bool wroteOpaqueMiddle = false;
+
+        writeWallSection(*seg, Line::Side::Middle, &wroteOpaqueMiddle);
+
+        // We can occlude the angle range defined by the X|Y origins of the
+        // line segment if the open range has been covered (when the viewer
+        // is not in the void).
+        if(!P_IsInVoid(viewPlayer) && wroteOpaqueMiddle)
         {
-            // Done here because of the logic of doom.exe wrt the automap.
-            reportWallSectionDrawn(hedge.line());
-
-            bool wroteOpaqueMiddle = false;
-
-            writeWallSection(hedge, Line::Side::Middle, 0, 0, &wroteOpaqueMiddle);
-
-            // We can occlude the wall range if the opening is filled (when the
-            // viewer is not in the void).
-            if(!P_IsInVoid(viewPlayer) && wroteOpaqueMiddle)
-            {
-                C_AddRangeFromViewRelPoints(hedge.origin(), hedge.twin().origin());
-            }
+            C_AddRangeFromViewRelPoints(seg->from().origin(), seg->to().origin());
         }
     }
 }
@@ -2161,33 +2165,30 @@ static void writeLeafPlanes()
     }
 }
 
-static void markFrontFacingHEdges()
+static void markFrontFacingSegments()
 {
     BspLeaf *bspLeaf = currentBspLeaf;
     DENG_ASSERT(!isNullLeaf(bspLeaf));
 
-    HEdge *base = bspLeaf->firstHEdge();
-    HEdge *hedge = base;
-    do
+    foreach(Segment *seg, bspLeaf->segments())
     {
-        // Occlusions can only happen where two sectors contact.
-        if(hedge->hasLineSide())
-        {
-            // Which way is it facing?
-            double dot = viewFacingDot(hedge->origin(), hedge->twin().origin());
-            hedge->setFlags(HEdge::FacingFront, dot < 0? UnsetFlags : SetFlags);
-        }
-    } while((hedge = &hedge->next()) != base);
+        if(!seg->hasLineSide())
+            continue;
+
+        // Which way is it facing?
+        double dot = viewFacingDot(seg->from().origin(), seg->to().origin());
+        seg->setFlags(Segment::FacingFront, dot < 0? UnsetFlags : SetFlags);
+    }
 
     if(Polyobj *po = bspLeaf->firstPolyobj())
     {
         foreach(Line *line, po->lines())
         {
-            HEdge *hedge = line->front().leftHEdge();
+            Segment *seg = line->front().leftSegment();
 
             // Which way is it facing?
-            double dot = viewFacingDot(hedge->origin(), hedge->twin().origin());
-            hedge->setFlags(HEdge::FacingFront, dot < 0? UnsetFlags : SetFlags);
+            double dot = viewFacingDot(seg->from().origin(), seg->to().origin());
+            seg->setFlags(Segment::FacingFront, dot < 0? UnsetFlags : SetFlags);
         }
     }
 }
@@ -2204,46 +2205,6 @@ static inline bool canOccludeSectorPairBoundary(Sector const &frontSec,
               backPlane.surface().hasSkyMaskedMaterial());
 }
 
-static void occludeHEdge(HEdge const &hedge, bool frontFacing)
-{
-    DENG_ASSERT(hedge.hasSector());
-
-    if(frontFacing != hedge.isFlagged(HEdge::FacingFront)) return;
-
-    // Edges without map line sections can never occlude.
-    if(!hedge.hasLineSide() || !hedge.lineSide().hasSections()) return;
-
-    // Occlusions should only happen where two sectors meet.
-    if(!hedge.twin().hasBspLeaf() || hedge.twin().bspLeaf().isDegenerate() ||
-       !hedge.twin().sectorPtr()) return;
-
-    Sector const &frontSec = hedge.sector();
-    Sector const &backSec  = hedge.twin().sector();
-
-    // Choose start and end vertexes so that it's facing forward.
-    Vertex const &from = frontFacing? hedge.vertex() : hedge.twin().vertex();
-    Vertex const &to   = frontFacing? hedge.twin().vertex() : hedge.vertex();
-
-    coord_t openBottom, openTop;
-    R_VisOpenRange(hedge.lineSide(), &frontSec, &backSec, &openBottom, &openTop);
-
-    // Does the floor create an occlusion?
-    if(((openBottom > frontSec.floor().visHeight() && vOrigin[VY] <= openBottom) ||
-        (openBottom >  backSec.floor().visHeight() && vOrigin[VY] >= openBottom))
-       && canOccludeSectorPairBoundary(frontSec, backSec, false))
-    {
-        C_AddViewRelOcclusion(from.origin(), to.origin(), openBottom, false);
-    }
-
-    // Does the ceiling create an occlusion?
-    if(((openTop < frontSec.ceiling().visHeight() && vOrigin[VY] >= openTop) ||
-        (openTop <  backSec.ceiling().visHeight() && vOrigin[VY] <= openTop))
-       && canOccludeSectorPairBoundary(frontSec, backSec, true))
-    {
-        C_AddViewRelOcclusion(from.origin(), to.origin(), openTop, true);
-    }
-}
-
 /**
  * Add angle clipper occlusion ranges for the edges of the current leaf.
  */
@@ -2255,46 +2216,83 @@ static void occludeLeaf(bool frontFacing)
     if(devNoCulling) return;
     if(P_IsInVoid(viewPlayer)) return;
 
-    HEdge *base = leaf->firstHEdge();
-    HEdge *hedge = base;
-    do
+    foreach(Segment *seg, leaf->clockwiseSegments())
     {
-        occludeHEdge(*hedge, frontFacing);
-    } while((hedge = &hedge->next()) != base);
-}
+        DENG_ASSERT(seg->hasBspLeaf() && seg->bspLeaf().hasSector());
 
-/// If @a hedge is @em not front facing this is no-op.
-static inline void clipFrontFacingHEdge(HEdge &hedge)
-{
-    if(hedge.isFlagged(HEdge::FacingFront))
-    {
-        if(!C_CheckRangeFromViewRelPoints(hedge.origin(), hedge.twin().origin()))
+        if(frontFacing != seg->isFlagged(Segment::FacingFront))
+            continue;
+
+        // Edges without map line sections can never occlude.
+        if(!seg->hasLineSide() || !seg->lineSide().hasSections())
+            continue;
+
+        // Occlusions should only happen where two sectors meet.
+        if(!seg->hasBack() || !seg->back().hasBspLeaf())
+            continue;
+
+        BspLeaf &backLeaf = seg->back().bspLeaf();
+        if(backLeaf.isDegenerate() || !backLeaf.hasSector())
+            continue;
+
+        Sector const &frontSec = seg->sector();
+        Sector const &backSec  = seg->back().sector();
+
+        // Choose start and end vertexes so that it's facing forward.
+        Vertex const &from = frontFacing? seg->from() : seg->to();
+        Vertex const &to   = frontFacing? seg->to()   : seg->from();
+
+        coord_t openBottom, openTop;
+        R_VisOpenRange(seg->lineSide(), &frontSec, &backSec, &openBottom, &openTop);
+
+        // Does the floor create an occlusion?
+        if(((openBottom > frontSec.floor().visHeight() && vOrigin[VY] <= openBottom)
+            || (openBottom >  backSec.floor().visHeight() && vOrigin[VY] >= openBottom))
+           && canOccludeSectorPairBoundary(frontSec, backSec, false))
         {
-            hedge.setFlags(HEdge::FacingFront, UnsetFlags);
+            C_AddViewRelOcclusion(from.origin(), to.origin(), openBottom, false);
+        }
+
+        // Does the ceiling create an occlusion?
+        if(((openTop < frontSec.ceiling().visHeight() && vOrigin[VY] >= openTop)
+            || (openTop <  backSec.ceiling().visHeight() && vOrigin[VY] <= openTop))
+           && canOccludeSectorPairBoundary(frontSec, backSec, true))
+        {
+            C_AddViewRelOcclusion(from.origin(), to.origin(), openTop, true);
         }
     }
 }
 
-static void clipFrontFacingHEdges()
+/// If @a segment is @em not front facing this is no-op.
+static inline void clipFrontFacingSegment(Segment &segment)
+{
+    if(segment.isFlagged(Segment::FacingFront))
+    {
+        if(!C_CheckRangeFromViewRelPoints(segment.from().origin(), segment.to().origin()))
+        {
+            segment.setFlags(Segment::FacingFront, UnsetFlags);
+        }
+    }
+}
+
+static void clipFrontFacingSegments()
 {
     BspLeaf *bspLeaf = currentBspLeaf;
     DENG_ASSERT(!isNullLeaf(bspLeaf));
 
-    HEdge *base = bspLeaf->firstHEdge();
-    HEdge *hedge = base;
-    do
+    foreach(Segment *seg, bspLeaf->segments())
     {
-        if(hedge->hasLineSide())
-        {
-            clipFrontFacingHEdge(*hedge);
-        }
-    } while((hedge = &hedge->next()) != base);
+        if(!seg->hasLineSide())
+            continue;
+
+        clipFrontFacingSegment(*seg);
+    }
 
     if(Polyobj *po = bspLeaf->firstPolyobj())
     {
         foreach(Line *line, po->lines())
         {
-            clipFrontFacingHEdge(*line->front().leftHEdge());
+            clipFrontFacingSegment(*line->front().leftSegment());
         }
     }
 }
@@ -2310,7 +2308,7 @@ static void drawCurrentLeaf()
     // Mark the sector visible for this frame.
     leaf->sector()._frameFlags |= SIF_VISIBLE;
 
-    markFrontFacingHEdges();
+    markFrontFacingSegments();
     R_InitForBspLeaf(*leaf);
     Rend_RadioBspLeafEdges(*leaf);
 
@@ -2324,7 +2322,7 @@ static void drawCurrentLeaf()
     LO_ClipInBspLeaf(leaf->indexInMap());
     occludeLeaf(true /* front facing */);
 
-    clipFrontFacingHEdges();
+    clipFrontFacingSegments();
 
     if(leaf->hasPolyobj())
     {
@@ -2901,35 +2899,36 @@ static void Rend_DrawSurfaceVectors()
     glDisable(GL_CULL_FACE);
 
     Vector3d origin;
-    foreach(HEdge *hedge, theMap->hedges())
+    foreach(BspLeaf *bspLeaf, theMap->bspLeafs())
+    foreach(Segment *segment, bspLeaf->segments())
     {
-        if(!hedge->hasLineSide() || hedge->line().definesPolyobj())
+        if(!bspLeaf->hasSector())
             continue;
 
-        if(!hedge->hasBspLeaf() || !hedge->hasSector())
+        if(!segment->hasLineSide() || segment->line().definesPolyobj())
             continue;
 
-        if(!hedge->twin().hasBspLeaf() || hedge->twin().bspLeaf().isDegenerate() ||
-           !hedge->twin().hasSector())
+        if(!segment->back().hasBspLeaf() || segment->back().bspLeaf().isDegenerate() ||
+           !segment->back().bspLeaf().hasSector())
         {
-            coord_t const bottom = hedge->sector().floor().visHeight();
-            coord_t const top = hedge->sector().ceiling().visHeight();
-            Vector2d center = (hedge->twin().origin() + hedge->origin()) / 2;
-            Surface *suf = &hedge->lineSide().middle();
+            coord_t const bottom = segment->sector().floor().visHeight();
+            coord_t const top = segment->sector().ceiling().visHeight();
+            Vector2d center = (segment->to().origin() + segment->from().origin()) / 2;
+            Surface *suf = &segment->lineSide().middle();
 
             origin = Vector3d(center, bottom + (top - bottom) / 2);
             drawSurfaceTangentSpaceVectors(suf, origin);
         }
         else
         {
-            Sector *backSec  = hedge->twin().sectorPtr();
-            Line::Side &side = hedge->lineSide();
+            Sector *backSec  = segment->back().sectorPtr();
+            Line::Side &side = segment->lineSide();
 
             if(side.middle().hasMaterial())
             {
-                coord_t const bottom = hedge->sector().floor().visHeight();
-                coord_t const top = hedge->sector().ceiling().visHeight();
-                Vector2d center = (hedge->twin().origin() + hedge->origin()) / 2;
+                coord_t const bottom = segment->sector().floor().visHeight();
+                coord_t const top = segment->sector().ceiling().visHeight();
+                Vector2d center = (segment->to().origin() + segment->from().origin()) / 2;
                 Surface *suf = &side.middle();
 
                 origin = Vector3d(center, bottom + (top - bottom) / 2);
@@ -2937,13 +2936,13 @@ static void Rend_DrawSurfaceVectors()
             }
 
             if(backSec->ceiling().visHeight() <
-               hedge->sector().ceiling().visHeight() &&
-               !(hedge->sector().ceilingSurface().hasSkyMaskedMaterial() &&
+               segment->sector().ceiling().visHeight() &&
+               !(segment->sector().ceilingSurface().hasSkyMaskedMaterial() &&
                  backSec->ceilingSurface().hasSkyMaskedMaterial()))
             {
                 coord_t const bottom = backSec->ceiling().visHeight();
-                coord_t const top = hedge->sector().ceiling().visHeight();
-                Vector2d center = (hedge->twin().origin() + hedge->origin()) / 2;
+                coord_t const top = segment->sector().ceiling().visHeight();
+                Vector2d center = (segment->to().origin() + segment->from().origin()) / 2;
                 Surface *suf = &side.top();
 
                 origin = Vector3d(center, bottom + (top - bottom) / 2);
@@ -2951,13 +2950,13 @@ static void Rend_DrawSurfaceVectors()
             }
 
             if(backSec->floor().visHeight() >
-               hedge->sector().floor().visHeight() &&
-               !(hedge->sector().floorSurface().hasSkyMaskedMaterial() &&
+               segment->sector().floor().visHeight() &&
+               !(segment->sector().floorSurface().hasSkyMaskedMaterial() &&
                  backSec->floorSurface().hasSkyMaskedMaterial()))
             {
-                coord_t const bottom = hedge->sector().floor().visHeight();
+                coord_t const bottom = segment->sector().floor().visHeight();
                 coord_t const top = backSec->floor().visHeight();
-                Vector2d center = (hedge->twin().origin() + hedge->origin()) / 2;
+                Vector2d center = (segment->to().origin() + segment->from().origin()) / 2;
                 Surface *suf = &side.bottom();
 
                 origin = Vector3d(center, bottom + (top - bottom) / 2);

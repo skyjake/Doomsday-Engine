@@ -21,12 +21,15 @@
 #include <QSet>
 #include <QtAlgorithms>
 
+#include <de/binangle.h>
 #include <de/mathutil.h>
 
+#include "BspLeaf"
 #include "HEdge"
 #include "Line"
 #include "Polygon"
 #include "Sector"
+#include "Segment"
 #include "map/bsp/linesegment.h"
 
 #include "render/r_main.h" /// validCount @todo Remove me
@@ -39,8 +42,7 @@ static coord_t const ANG_EPSILON = 1.0 / 1024.0;
 namespace de {
 namespace bsp {
 
-typedef LineSegment::Side Segment;
-typedef QList<Segment *> SegmentList;
+typedef QList<LineSegment::Side *> SegmentList;
 
 /**
  * Represents a clockwise ordering of a subset of the line segments and
@@ -100,7 +102,7 @@ struct Continuity
         orderedSegs.append(const_cast<OrderedSegment *>(&oseg));
 
         // Account for the new line segment.
-        Segment const &seg = *oseg.segment;
+        LineSegment::Side const &seg = *oseg.segment;
         if(!seg.hasMapSide())
         {
             part += 1;
@@ -131,16 +133,16 @@ struct Continuity
         discordSegments = 0;
         for(int i = 0; i < orderedSegs.count() - 1; ++i)
         {
-            Segment const &segA = *orderedSegs[i  ]->segment;
-            Segment const &segB = *orderedSegs[i+1]->segment;
+            LineSegment::Side const &segA = *orderedSegs[i  ]->segment;
+            LineSegment::Side const &segB = *orderedSegs[i+1]->segment;
 
             if(segB.from().origin() != segA.to().origin())
                 discordSegments += 1;
         }
         if(orderedSegs.count() > 1)
         {
-            Segment const &segB = *orderedSegs.last()->segment;
-            Segment const &segA = *orderedSegs.first()->segment;
+            LineSegment::Side const &segB = *orderedSegs.last()->segment;
+            LineSegment::Side const &segA = *orderedSegs.first()->segment;
 
             if(segB.to().origin() != segA.from().origin())
                 discordSegments += 1;
@@ -166,7 +168,7 @@ struct Continuity
 
 DENG2_PIMPL_NOREF(ConvexSubspace)
 {
-    typedef QSet<Segment *> Segments;
+    typedef QSet<LineSegment::Side *> Segments;
     typedef QList<Continuity> Continuities;
 
     /// The set of line segments.
@@ -211,7 +213,7 @@ DENG2_PIMPL_NOREF(ConvexSubspace)
     {
         Vector2d center;
         int numPoints = 0;
-        foreach(Segment *seg, segments)
+        foreach(LineSegment::Side *seg, segments)
         {
             center += seg->from().origin();
             center += seg->to().origin();
@@ -237,7 +239,7 @@ DENG2_PIMPL_NOREF(ConvexSubspace)
 
         orderedSegments.clear();
 
-        foreach(Segment *seg, segments)
+        foreach(LineSegment::Side *seg, segments)
         {
             Vector2d fromDist = seg->from().origin() - point;
             Vector2d toDist   = seg->to().origin() - point;
@@ -355,7 +357,7 @@ ConvexSubspace::ConvexSubspace()
     : d(new Instance())
 {}
 
-ConvexSubspace::ConvexSubspace(QList<Segment *> const &segments)
+ConvexSubspace::ConvexSubspace(QList<LineSegment::Side *> const &segments)
     : d(new Instance())
 {
     addSegments(segments);
@@ -365,11 +367,11 @@ ConvexSubspace::ConvexSubspace(ConvexSubspace const &other)
     : d(new Instance(*other.d))
 {}
 
-void ConvexSubspace::addSegments(QList<Segment *> const &newSegments)
+void ConvexSubspace::addSegments(QList<LineSegment::Side *> const &newSegments)
 {
     int sizeBefore = d->segments.size();
 
-    d->segments.unite(QSet<Segment *>::fromList(newSegments));
+    d->segments.unite(QSet<LineSegment::Side *>::fromList(newSegments));
 
     if(d->segments.size() != sizeBefore)
     {
@@ -390,11 +392,11 @@ void ConvexSubspace::addSegments(QList<Segment *> const &newSegments)
 #endif
 }
 
-void ConvexSubspace::addOneSegment(Segment const &newSegment)
+void ConvexSubspace::addOneSegment(LineSegment::Side const &newSegment)
 {
     int sizeBefore = d->segments.size();
 
-    d->segments.insert(const_cast<Segment *>(&newSegment));
+    d->segments.insert(const_cast<LineSegment::Side *>(&newSegment));
 
     if(d->segments.size() != sizeBefore)
     {
@@ -425,47 +427,64 @@ Polygon *ConvexSubspace::buildLeafGeometry() const
     // Iterate backwards so that the half-edges can be linked clockwise.
     for(int i = d->orderedSegments.size(); i-- > 0; )
     {
-        Segment *seg = d->orderedSegments[i].segment;
-        HEdge *hedge = new HEdge(seg->from(), seg->mapSidePtr());
+        LineSegment::Side *lineSeg = d->orderedSegments[i].segment;
+        Line::Side *mapSide = lineSeg->mapSidePtr();
+        HEdge *hedge = new HEdge(lineSeg->from());
+
+        // Assign ownership of the segment to the BSP leaf.
+        Segment *seg = d->bspLeaf->newSegment(mapSide, hedge);
+
+        if(mapSide)
+        {
+            seg->setLineSideOffset(Vector2d(mapSide->from().origin() - lineSeg->from().origin()).length());
+        }
+
+        seg->setLength(Vector2d(lineSeg->to().origin() - lineSeg->from().origin()).length());
+
+        seg->setAngle(bamsAtan2(int( lineSeg->to().origin().y - lineSeg->from().origin().y ),
+                                int( lineSeg->to().origin().x - lineSeg->from().origin().x )) << FRACBITS);
 
         // Link the new half-edge for this line segment to the head of
         // the list in the new polygon geometry.
-        hedge->_next = poly->_hedge;
+        hedge->setNext(poly->_hedge);
         poly->_hedge = hedge;
 
-        // Attribute the half edge to the Polygon.
-        /// @todo Encapsulate in Polygon.
-        hedge->setPoly(poly);
-
-        // There is now one more half-edge in this polygon.
-        poly->_hedgeCount += 1;
-
         // Is there a half-edge on the back side we need to twin with?
-        if(seg->back().hasHEdge())
+        if(lineSeg->back().hasSegment())
         {
-            seg->back().hedge()._twin = hedge;
-            hedge->_twin = seg->back().hedgePtr();
+            lineSeg->back().segment().hedge().setTwin(hedge);
+            hedge->setTwin(&lineSeg->back().segment().hedge());
+
+            seg->setBack(&lineSeg->back().segment());
+            seg->back().setBack(seg);
         }
 
-        // Link the new half-edge with this line segment.
-        seg->setHEdge(hedge);
+        // Link the new half-edge with the line segment.
+        lineSeg->setSegment(seg);
     }
 
     // Link the half-edges anticlockwise and close the ring.
     HEdge *hedge = poly->_hedge;
     forever
     {
+        // There is now one more half-edge in this polygon.
+        poly->_hedgeCount += 1;
+
+        // Attribute the half edge to the Polygon.
+        /// @todo Encapsulate in Polygon.
+        hedge->setPoly(poly);
+
         if(hedge->hasNext())
         {
             // Link anticlockwise.
-            hedge->_next->_prev = hedge;
-            hedge = hedge->_next;
+            hedge->next().setPrev(hedge);
+            hedge = &hedge->next();
         }
         else
         {
             // Circular link.
-            hedge->_next = poly->_hedge;
-            hedge->_next->_prev = hedge;
+            hedge->setNext(poly->_hedge);
+            hedge->next().setPrev(hedge);
             break;
         }
     }
@@ -505,7 +524,7 @@ int ConvexSubspace::segmentCount() const
 
 bool ConvexSubspace::hasMapLineSegment() const
 {
-    foreach(Segment *seg, d->segments)
+    foreach(LineSegment::Side *seg, d->segments)
     {
         if(seg->hasMapSide())
             return true;

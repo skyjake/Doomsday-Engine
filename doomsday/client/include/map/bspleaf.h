@@ -21,14 +21,17 @@
 #ifndef DENG_WORLD_MAP_BSPLEAF
 #define DENG_WORLD_MAP_BSPLEAF
 
+#include <QList>
+
 #include <de/Error>
 #include <de/Vector>
 
 #include "MapElement"
+#include "Line"
 #include "Polygon"
 
-class HEdge;
 class Sector;
+class Segment;
 struct polyobj_s;
 
 #ifdef __CLIENT__
@@ -50,7 +53,7 @@ public:
     /// An invalid polygon was specified @ingroup errors
     DENG2_ERROR(InvalidPolygonError);
 
-    /// No polygon is assigned. @ingroup errors
+    /// Required polygon geometry is missing. @ingroup errors
     DENG2_ERROR(MissingPolygonError);
 
     /// Required sector attribution is missing. @ingroup errors
@@ -60,6 +63,8 @@ public:
     /// The referenced geometry group does not exist. @ingroup errors
     DENG2_ERROR(UnknownGeometryGroupError);
 #endif
+
+    typedef QList<Segment *> Segments;
 
 public: /// @todo Make private:
 #ifdef __CLIENT__
@@ -118,23 +123,18 @@ public:
      */
     void setPoly(de::Polygon *newPolygon);
 
-    /**
-     * Convenience accessor which returns a pointer to the first HEdge from the
-     * convex Polygon geometry attributed to the BSP leaf. If no geometry is
-     * attributed @c 0 is returned.
-     *
-     * @see hasPoly(), Polygon::firstHEdge()
-     */
-    inline HEdge *firstHEdge() const { return hasPoly()? poly().firstHEdge() : 0; }
+    Segment *newSegment(Line::Side *mapSide, de::HEdge *hedge);
 
     /**
-     * Convenience accessor which returns the total number of half-edges in the
-     * convex Polygon geometry attributed to the BSP leaf. If no geometry is
-     * attributed @c 0 is returned.
-     *
-     * @see hasPoly(), Polygon::hedgeCount()
+     * Provides a clockwise ordered list of all the line segments which comprise
+     * the convex geometry assigned to the BSP leaf.
      */
-    inline int hedgeCount() const { return hasPoly()? poly().hedgeCount() : 0; }
+    Segments const &clockwiseSegments() const;
+
+    /**
+     * Provides a list of all the line segments attributed to the BSP leaf.
+     */
+    Segments const &segments() const;
 
     /**
      * Returns @c true iff a sector is attributed to the BSP leaf. The only time
@@ -200,13 +200,6 @@ public:
     void setFirstPolyobj(struct polyobj_s *newPolyobj);
 
     /**
-     * Update the world grid offset.
-     *
-     * @pre Axis-aligned bounding box must have been initialized.
-     */
-    void updateWorldGridOffset();
-
-    /**
      * Returns the vector described by the offset from the map coordinate space
      * origin to the top most, left most point of the geometry of the BSP leaf.
      *
@@ -228,15 +221,15 @@ public:
 #ifdef __CLIENT__
 
     /**
-     * Returns a pointer to the HEdge of the BSP leaf which has been chosen for
+     * Returns a pointer to the half-edge of the BSP leaf which has been chosen for
      * use as the base for a triangle fan geometry. May return @c 0 if no suitable
      * base was determined.
      */
-    HEdge *fanBase() const;
+    de::HEdge *fanBase() const;
 
     /**
      * Returns the number of vertices needed for the BSP leaf's triangle fan.
-     * @note May incurr updating the fan base HEdge if not already determined.
+     * @note May incurr updating the fan base Segment if not already determined.
      *
      * @see fanBase()
      */

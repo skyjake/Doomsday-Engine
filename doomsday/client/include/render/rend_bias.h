@@ -128,7 +128,7 @@ void SB_EndFrame(void);
  * @param numVertices   Number of vertices (in the array) to be lit.
  * @param normal        Surface normal.
  * @param sectorLightLevel Sector light level.
- * @param mapElement    Ptr to either a HEdge or BspLeaf.
+ * @param mapElement    Ptr to either a Segment or BspLeaf.
  * @param elmIdx        Used with BspLeafs to select a specific plane.
  */
 void SB_RendPoly(struct ColorRawf_s *rcolors, BiasSurface *bsuf,

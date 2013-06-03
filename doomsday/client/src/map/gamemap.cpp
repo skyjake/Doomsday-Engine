@@ -50,7 +50,7 @@ DENG2_PIMPL(GameMap)
     MapElement *bspRoot;
 
     /// BSP element LUTs:
-    HEdges hedges;
+    Segments segments;
     BspNodes bspNodes;
     BspLeafs bspLeafs;
 
@@ -96,53 +96,11 @@ DENG2_PIMPL(GameMap)
         }
     }
 
-    void collatePolyHEdges(BspBuilder &builder, de::Polygon &geom)
-    {
-        HEdge *base = geom.firstHEdge();
-        if(!base) return;
-
-        HEdge *hedge = base;
-        do
-        {
-            // Take ownership of this HEdge.
-            builder.take(hedge);
-
-            // Add this HEdge to the LUT.
-            hedge->setIndexInMap(hedges.count());
-            hedges.append(hedge);
-
-            if(hedge->hasLineSide())
-            {
-                Vertex const &vtx = hedge->lineSide().from();
-                hedge->_lineOffset = Vector2d(vtx.origin() - hedge->origin()).length();
-            }
-
-            // Calculate the length of the segment.
-            hedge->_length = Vector2d(hedge->twin().origin() - hedge->origin()).length();
-            if(hedge->_length == 0)
-                hedge->_length = 0.01f; // Hmm...
-
-            hedge->_angle = bamsAtan2(int( hedge->twin().origin().y - hedge->origin().y ),
-                                      int( hedge->twin().origin().x - hedge->origin().x )) << FRACBITS;
-
-            if(!hedge->twin().hasBspLeaf())
-            {
-                // Take ownership of the twin HEdge also.
-                HEdge *twin = hedge->twinPtr();
-                builder.take(twin);
-
-                // Add this HEdge to the LUT.
-                twin->setIndexInMap(hedges.count());
-                hedges.append(twin);
-            }
-        } while((hedge = &hedge->next()) != base);
-    }
-
     void collateBspElements(BspBuilder &builder, BspTreeNode &tree)
     {
         if(tree.isLeaf())
         {
-            // Take ownership of the built BspLeaf.
+            // Take ownership of the BspLeaf.
             DENG2_ASSERT(tree.userData() != 0);
             BspLeaf *leaf = tree.userData()->castTo<BspLeaf>();
             builder.take(leaf);
@@ -151,14 +109,14 @@ DENG2_PIMPL(GameMap)
             leaf->setIndexInMap(bspLeafs.count());
             bspLeafs.append(leaf);
 
-            if(leaf->hasPoly())
+            foreach(Segment *seg, leaf->segments())
             {
-                de::Polygon &geom = leaf->poly();
+                // Take ownership of the Segment.
+                builder.take(seg);
 
-                collatePolyHEdges(builder, geom);
-
-                /// @todo leaf should observe.
-                leaf->updateWorldGridOffset();
+                // Add this segment to the LUT.
+                seg->setIndexInMap(segments.count());
+                segments.append(seg);
             }
 
             return;
@@ -512,9 +470,9 @@ MapElement *GameMap::bspRoot() const
     return d->bspRoot;
 }
 
-GameMap::HEdges const &GameMap::hedges() const
+GameMap::Segments const &GameMap::segments() const
 {
-    return d->hedges;
+    return d->segments;
 }
 
 GameMap::BspNodes const &GameMap::bspNodes() const
@@ -530,7 +488,7 @@ GameMap::BspLeafs const &GameMap::bspLeafs() const
 bool GameMap::buildBsp()
 {
     /// @todo Test @em ALL preconditions!
-    DENG2_ASSERT(d->hedges.isEmpty());
+    DENG2_ASSERT(d->segments.isEmpty());
     DENG2_ASSERT(d->bspLeafs.isEmpty());
     DENG2_ASSERT(d->bspNodes.isEmpty());
 
@@ -560,17 +518,17 @@ bool GameMap::buildBsp()
             rightBranchDpeth = leftBranchDepth = 0;
         }
 
-        LOG_INFO("BSP built: (%d:%d) %d Nodes, %d Leafs, %d HEdges, %d Vertexes.")
+        LOG_INFO("BSP built: (%d:%d) %d Nodes, %d Leafs, %d Segments, %d Vertexes.")
                 << rightBranchDpeth << leftBranchDepth
-                << nodeBuilder.numNodes()  << nodeBuilder.numLeafs()
-                << nodeBuilder.numHEdges() << nodeBuilder.numVertexes();
+                << nodeBuilder.numNodes() << nodeBuilder.numLeafs()
+                << nodeBuilder.numSegments() << nodeBuilder.numVertexes();
 
         /*
          * Take ownership of all the built map data elements.
          */
 #ifdef DENG2_QT_4_7_OR_NEWER
         _vertexes.reserve(_vertexes.count() + nodeBuilder.numVertexes());
-        d->hedges.reserve(nodeBuilder.numHEdges());
+        d->segments.reserve(nodeBuilder.numSegments());
         d->bspNodes.reserve(nodeBuilder.numNodes());
         d->bspLeafs.reserve(nodeBuilder.numLeafs());
 #endif
@@ -1908,11 +1866,11 @@ static Material *chooseFixMaterial(Line::Side &side, int section)
     {
         // Our first choice is a material on an adjacent wall section.
         // Try the left neighbor first.
-        Line *other = R_FindLineNeighbor(frontSec, &side.line(), side.line().vertexOwner(side.lineSideId()),
+        Line *other = R_FindLineNeighbor(frontSec, &side.line(), side.line().vertexOwner(side.sideId()),
                                          false /*next clockwise*/);
         if(!other)
             // Try the right neighbor.
-            other = R_FindLineNeighbor(frontSec, &side.line(), side.line().vertexOwner(side.lineSideId()^1),
+            other = R_FindLineNeighbor(frontSec, &side.line(), side.line().vertexOwner(side.sideId()^1),
                                        true /*next anti-clockwise*/);
 
         if(other)

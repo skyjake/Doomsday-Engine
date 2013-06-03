@@ -25,7 +25,7 @@
 
 #include <de/Vector>
 
-#include "HEdge"
+#include "Segment"
 
 class Line;
 

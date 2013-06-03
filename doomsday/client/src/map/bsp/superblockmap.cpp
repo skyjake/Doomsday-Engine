@@ -30,8 +30,6 @@
 using namespace de;
 using namespace de::bsp;
 
-typedef LineSegment::Side Segment;
-
 struct SuperBlock::Instance
 {
     /// Owning SuperBlockmap.
@@ -57,18 +55,18 @@ struct SuperBlock::Instance
         KdTreeNode_Delete(tree);
     }
 
-    inline void linkSegment(Segment &seg)
+    inline void linkSegment(LineSegment::Side &seg)
     {
         segments.prepend(&seg);
     }
 
-    inline void incrementSegmentCount(Segment const &seg)
+    inline void incrementSegmentCount(LineSegment::Side const &seg)
     {
         if(seg.hasMapSide()) mapNum++;
         else                 partNum++;
     }
 
-    inline void decrementSegmentCount(Segment const &seg)
+    inline void decrementSegmentCount(LineSegment::Side const &seg)
     {
         if(seg.hasMapSide()) mapNum--;
         else                 partNum--;
@@ -154,7 +152,7 @@ SuperBlock::Segments SuperBlock::collateAllSegments()
     {
         while(cur)
         {
-            Segment *seg;
+            LineSegment::Side *seg;
             while((seg = cur->pop()))
             {
                 segments << seg;
@@ -210,7 +208,7 @@ AABoxd SuperBlock::findSegmentBounds()
     AABoxd bounds;
     bool initialized = false;
 
-    foreach(Segment *seg, d->segments)
+    foreach(LineSegment::Side *seg, d->segments)
     {
         AABoxd segBounds = seg->aaBox();
         if(initialized)
@@ -227,7 +225,7 @@ AABoxd SuperBlock::findSegmentBounds()
     return bounds;
 }
 
-SuperBlock &SuperBlock::push(Segment &seg)
+SuperBlock &SuperBlock::push(LineSegment::Side &seg)
 {
     SuperBlock *sb = this;
     forever
@@ -281,12 +279,12 @@ SuperBlock &SuperBlock::push(Segment &seg)
     return *sb;
 }
 
-Segment *SuperBlock::pop()
+LineSegment::Side *SuperBlock::pop()
 {
     if(d->segments.isEmpty())
         return 0;
 
-    Segment *seg = d->segments.takeFirst();
+    LineSegment::Side *seg = d->segments.takeFirst();
 
     // Update line segment counts.
     d->decrementSegmentCount(*seg);

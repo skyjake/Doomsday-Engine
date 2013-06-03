@@ -90,7 +90,7 @@ public:
     typedef QList<Line *> Lines;
     typedef QList<Polyobj *> Polyobjs;
 
-    typedef QList<HEdge *> HEdges;
+    typedef QList<Segment *> Segments;
     typedef QList<BspNode *> BspNodes;
     typedef QList<BspLeaf *> BspLeafs;
 
@@ -238,14 +238,14 @@ public:
     de::MapElement *bspRoot() const;
 
     /**
-     * Provides access to the list of half-edges for efficient traversal.
+     * Provides access to the list of line segments for efficient traversal.
      */
-    HEdges const &hedges() const;
+    Segments const &segments() const;
 
     /**
-     * Returns the total number of HEdges in the map.
+     * Returns the total number of line segments in the map.
      */
-    inline int hedgeCount() const { return hedges().count(); }
+    inline int segmentCount() const { return segments().count(); }
 
     /**
      * Provides access to the list of BSP nodes for efficient traversal.

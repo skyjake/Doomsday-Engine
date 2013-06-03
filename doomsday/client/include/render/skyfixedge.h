@@ -24,7 +24,7 @@
 
 #include "TriangleStripBuilder" /// @todo remove me
 
-class HEdge;
+class Segment;
 
 namespace de {
 
@@ -57,10 +57,10 @@ public:
 
 public:
     /**
-     * @param hedge    HEdge from which to determine sky fix coordinates.
+     * @param segment    Segment from which to determine sky fix coordinates.
      * @param fixType  Fix type.
      */
-    SkyFixEdge(HEdge &hedge, FixType fixType, int edge, float materialOffsetS = 0);
+    SkyFixEdge(Segment &segment, FixType fixType, int edge, float materialOffsetS = 0);
 
     Vector3d const &pOrigin() const;
     Vector3d const &pDirection() const;
