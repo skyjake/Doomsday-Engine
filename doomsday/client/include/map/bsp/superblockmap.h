@@ -82,14 +82,6 @@ private:
     DENG2_PRIVATE(d)
 };
 
-#ifdef RIGHT
-#  undef RIGHT
-#endif
-
-#ifdef LEFT
-#  undef LEFT
-#endif
-
 /**
  * Subblocks:
  * RIGHT - has the lower coordinates.
@@ -104,17 +96,7 @@ public:
 
     /// A SuperBlock may be subdivided with two child subblocks which are
     /// uniquely identifiable by these associated ids.
-    enum ChildId
-    {
-        RIGHT,
-        LEFT
-    };
-
-    /// Assert that the specified value is a valid @a childId.
-    static void inline assertValidChildId(ChildId DENG_DEBUG_ONLY(childId))
-    {
-        DENG_ASSERT(childId == RIGHT || childId == LEFT);
-    }
+    enum ChildId { Right, Left };
 
 private:
     /**
@@ -134,8 +116,8 @@ private:
      */
     SuperBlock *addChild(ChildId childId, bool splitVertical);
 
-    inline SuperBlock *addRight(bool splitVertical) { return addChild(RIGHT, splitVertical); }
-    inline SuperBlock *addLeft(bool splitVertical)  { return addChild(LEFT,  splitVertical); }
+    inline SuperBlock *addRight(bool splitVertical) { return addChild(Right, splitVertical); }
+    inline SuperBlock *addLeft(bool splitVertical)  { return addChild(Left,  splitVertical); }
 
 public:
 
@@ -169,31 +151,11 @@ public:
     }
 
     /**
-     * Returns @c true iff the block has a parent.
-     */
-    bool hasParent() const;
-
-    /**
      * Returns a pointer to the parent block; otherwise @c 0.
      *
      * @see hasParent()
      */
-    SuperBlock *parentPtr() const;
-
-    /**
-     * Returns @c true iff the block has the specified @a child subblock.
-     */
-    bool hasChild(ChildId child) const;
-
-    /**
-     * Returns @c true iff the block has a right child subblock.
-     */
-    inline bool hasRight() const { return hasChild(RIGHT); }
-
-    /**
-     * Returns @c true iff the block has a left child subblock.
-     */
-    inline bool hasLeft() const  { return hasChild(LEFT); }
+    SuperBlock *parent() const;
 
     /**
      * Retrieve a child of this subblock. Callers must first determine if a
@@ -203,19 +165,19 @@ public:
      * @param childId  Subblock identifier.
      * @return  Selected subblock.
      */
-    SuperBlock *childPtr(ChildId childId) const;
+    SuperBlock *child(ChildId childId) const;
 
     /**
      * Returns the right subblock.
-     * @see SuperBlock::childPtr()
+     * @see SuperBlock::child()
      */
-    inline SuperBlock *rightPtr() const { return childPtr(RIGHT); }
+    inline SuperBlock *right() const { return child(Right); }
 
     /**
      * Returns the left subblock.
      * @see SuperBlock::childPtr()
      */
-    inline SuperBlock *leftPtr()  const { return childPtr(LEFT); }
+    inline SuperBlock *left()  const { return child(Left); }
 
     /**
      * Perform a depth-first traversal over all child superblocks and then
@@ -247,12 +209,12 @@ public:
      *
      * @return  Determined line segment total.
      */
-    uint segmentCount(bool addMap, bool addPart) const;
+    int segmentCount(bool addMap, bool addPart) const;
 
     /// Convenience functions for retrieving line segment totals:
-    inline uint partSegmentCount() const  { return segmentCount(false, true); }
-    inline uint mapSegmentCount() const   { return segmentCount(true, false); }
-    inline uint totalSegmentCount() const { return segmentCount(true, true);  }
+    inline int partSegmentCount() const  { return segmentCount(false, true); }
+    inline int mapSegmentCount() const   { return segmentCount(true, false); }
+    inline int totalSegmentCount() const { return segmentCount(true, true);  }
 
     /**
      * Push (link) the given line segment onto the FIFO list of segments linked

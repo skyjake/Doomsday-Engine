@@ -1,4 +1,4 @@
-/** @file superblockmap.cpp BSP Builder Superblock. 
+/** @file map/bsp/superblockmap.cpp BSP Builder Super Blockmap.
  *
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
@@ -30,6 +30,8 @@
 using namespace de;
 using namespace de::bsp;
 
+typedef LineSegment::Side Segment;
+
 struct SuperBlock::Instance
 {
     /// Owning SuperBlockmap.
@@ -55,18 +57,18 @@ struct SuperBlock::Instance
         KdTreeNode_Delete(tree);
     }
 
-    inline void linkSegment(LineSegment::Side &seg)
+    inline void linkSegment(Segment &seg)
     {
         segments.prepend(&seg);
     }
 
-    inline void incrementSegmentCount(LineSegment::Side const &seg)
+    inline void incrementSegmentCount(Segment const &seg)
     {
         if(seg.hasMapSide()) mapNum++;
         else                 partNum++;
     }
 
-    inline void decrementSegmentCount(LineSegment::Side const &seg)
+    inline void decrementSegmentCount(Segment const &seg)
     {
         if(seg.hasMapSide()) mapNum--;
         else                 partNum--;
@@ -81,7 +83,7 @@ SuperBlock::SuperBlock(SuperBlock& parent, ChildId childId, bool splitVertical)
     : d(new Instance(parent.blockmap()))
 {
     d->tree = KdTreeNode_AddChild(parent.d->tree, 0.5, int(splitVertical),
-                                  childId==LEFT, this);
+                                  childId==Left, this);
 }
 
 SuperBlock::~SuperBlock()
@@ -118,35 +120,22 @@ AABox const &SuperBlock::bounds() const
     return *KdTreeNode_Bounds(d->tree);
 }
 
-SuperBlock *SuperBlock::parentPtr() const
+SuperBlock *SuperBlock::parent() const
 {
     KdTreeNode *pNode = KdTreeNode_Parent(d->tree);
     if(!pNode) return 0;
     return static_cast<SuperBlock *>(KdTreeNode_UserData(pNode));
 }
 
-bool SuperBlock::hasParent() const
+SuperBlock *SuperBlock::child(ChildId childId) const
 {
-    return parentPtr() != 0;
-}
-
-SuperBlock *SuperBlock::childPtr(ChildId childId) const
-{
-    assertValidChildId(childId);
-    KdTreeNode *subtree = KdTreeNode_Child(d->tree, childId==LEFT);
+    KdTreeNode *subtree = KdTreeNode_Child(d->tree, childId == Left);
     if(!subtree) return 0;
     return static_cast<SuperBlock *>(KdTreeNode_UserData(subtree));
 }
 
-bool SuperBlock::hasChild(ChildId childId) const
-{
-    assertValidChildId(childId);
-    return 0 != childPtr(childId);
-}
-
 SuperBlock *SuperBlock::addChild(ChildId childId, bool splitVertical)
 {
-    assertValidChildId(childId);
     return new SuperBlock(*this, childId, splitVertical);
 }
 
@@ -165,37 +154,37 @@ SuperBlock::Segments SuperBlock::collateAllSegments()
     {
         while(cur)
         {
-            LineSegment::Side *seg;
+            Segment *seg;
             while((seg = cur->pop()))
             {
                 segments << seg;
             }
 
-            if(prev == cur->parentPtr())
+            if(prev == cur->parent())
             {
                 // Descending - right first, then left.
                 prev = cur;
-                if(cur->hasRight()) cur = cur->rightPtr();
-                else                cur = cur->leftPtr();
+                if(cur->right()) cur = cur->right();
+                else             cur = cur->left();
             }
-            else if(prev == cur->rightPtr())
+            else if(prev == cur->right())
             {
                 // Last moved up the right branch - descend the left.
                 prev = cur;
-                cur = cur->leftPtr();
+                cur = cur->left();
             }
-            else if(prev == cur->leftPtr())
+            else if(prev == cur->left())
             {
                 // Last moved up the left branch - continue upward.
                 prev = cur;
-                cur = cur->parentPtr();
+                cur = cur->parent();
             }
         }
 
         if(prev)
         {
             // No left child - back up.
-            cur = prev->parentPtr();
+            cur = prev->parent();
         }
     }
 
@@ -207,9 +196,9 @@ SuperBlock::Segments const &SuperBlock::segments() const
     return d->segments;
 }
 
-uint SuperBlock::segmentCount(bool addMap, bool addPart) const
+int SuperBlock::segmentCount(bool addMap, bool addPart) const
 {
-    uint total = 0;
+    int total = 0;
     if(addMap)  total += d->mapNum;
     if(addPart) total += d->partNum;
     return total;
@@ -221,7 +210,7 @@ AABoxd SuperBlock::findSegmentBounds()
     AABoxd bounds;
     bool initialized = false;
 
-    foreach(LineSegment::Side *seg, d->segments)
+    foreach(Segment *seg, d->segments)
     {
         AABoxd segBounds = seg->aaBox();
         if(initialized)
@@ -238,13 +227,11 @@ AABoxd SuperBlock::findSegmentBounds()
     return bounds;
 }
 
-SuperBlock &SuperBlock::push(LineSegment::Side &seg)
+SuperBlock &SuperBlock::push(Segment &seg)
 {
     SuperBlock *sb = this;
     forever
     {
-        DENG2_ASSERT(sb);
-
         // Update line segment counts.
         sb->d->incrementSegmentCount(seg);
 
@@ -262,16 +249,16 @@ SuperBlock &SuperBlock::push(LineSegment::Side &seg)
         {
             // Wider than tall.
             int midPoint = (sb->bounds().minX + sb->bounds().maxX) / 2;
-            p1 = seg.from().origin().x >= midPoint? LEFT : RIGHT;
-            p2 =   seg.to().origin().x >= midPoint? LEFT : RIGHT;
+            p1 = seg.from().origin().x >= midPoint? Left : Right;
+            p2 =   seg.to().origin().x >= midPoint? Left : Right;
             splitVertical = false;
         }
         else
         {
             // Taller than wide.
             int midPoint = (sb->bounds().minY + sb->bounds().maxY) / 2;
-            p1 = seg.from().origin().y >= midPoint? LEFT : RIGHT;
-            p2 =   seg.to().origin().y >= midPoint? LEFT : RIGHT;
+            p1 = seg.from().origin().y >= midPoint? Left : Right;
+            p2 =   seg.to().origin().y >= midPoint? Left : Right;
             splitVertical = true;
         }
 
@@ -284,22 +271,22 @@ SuperBlock &SuperBlock::push(LineSegment::Side &seg)
 
         // The segments lies in one half of this block. Create the sub-block
         // if it doesn't already exist, and loop back to add the seg.
-        if(!sb->hasChild(p1))
+        if(!sb->child(p1))
         {
-            sb->addChild(p1, (int)splitVertical);
+            sb->addChild(p1, splitVertical);
         }
 
-        sb = sb->childPtr(p1);
+        sb = sb->child(p1);
     }
     return *sb;
 }
 
-LineSegment::Side *SuperBlock::pop()
+Segment *SuperBlock::pop()
 {
     if(d->segments.isEmpty())
         return 0;
 
-    LineSegment::Side *seg = d->segments.takeFirst();
+    Segment *seg = d->segments.takeFirst();
 
     // Update line segment counts.
     d->decrementSegmentCount(*seg);
@@ -307,8 +294,7 @@ LineSegment::Side *SuperBlock::pop()
     return seg;
 }
 
-int SuperBlock::traverse(int (*callback)(SuperBlock *, void *),
-                         void *parameters)
+int SuperBlock::traverse(int (*callback)(SuperBlock *, void *), void *parameters)
 {
     if(!callback) return false; // Continue iteration.
 
@@ -402,31 +388,31 @@ AABoxd SuperBlockmap::findSegmentBounds()
         {
             findSegmentBoundsWorker(*cur, bounds, &initialized);
 
-            if(prev == cur->parentPtr())
+            if(prev == cur->parent())
             {
                 // Descending - right first, then left.
                 prev = cur;
-                if(cur->hasRight()) cur = cur->rightPtr();
-                else                cur = cur->leftPtr();
+                if(cur->right()) cur = cur->right();
+                else             cur = cur->left();
             }
-            else if(prev == cur->rightPtr())
+            else if(prev == cur->right())
             {
                 // Last moved up the right branch - descend the left.
                 prev = cur;
-                cur = cur->leftPtr();
+                cur = cur->left();
             }
-            else if(prev == cur->leftPtr())
+            else if(prev == cur->left())
             {
                 // Last moved up the left branch - continue upward.
                 prev = cur;
-                cur = cur->parentPtr();
+                cur = cur->parent();
             }
         }
 
         if(prev)
         {
             // No left child - back up.
-            cur = prev->parentPtr();
+            cur = prev->parent();
         }
     }
 

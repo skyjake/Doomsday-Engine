@@ -576,16 +576,16 @@ DENG2_PIMPL(Partitioner)
         }
 
         // Handle sub-blocks recursively.
-        if(block.hasRight())
+        if(block.right())
         {
-            bool unsuitable = !evalPartitionCostForSuperBlock(*block.rightPtr(), best, bestCost,
+            bool unsuitable = !evalPartitionCostForSuperBlock(*block.right(), best, bestCost,
                                                               seg, cost);
             if(unsuitable) return false;
         }
 
-        if(block.hasLeft())
+        if(block.left())
         {
-            bool unsuitable = !evalPartitionCostForSuperBlock(*block.leftPtr(), best, bestCost,
+            bool unsuitable = !evalPartitionCostForSuperBlock(*block.left(), best, bestCost,
                                                               seg, cost);
             if(unsuitable) return false;
         }
@@ -719,31 +719,31 @@ DENG2_PIMPL(Partitioner)
             {
                 chooseNextPartitionFromSuperBlock(*cur, candidates, &best, bestCost);
 
-                if(prev == cur->parentPtr())
+                if(prev == cur->parent())
                 {
                     // Descending - right first, then left.
                     prev = cur;
-                    if(cur->hasRight()) cur = cur->rightPtr();
-                    else                cur = cur->leftPtr();
+                    if(cur->right()) cur = cur->right();
+                    else             cur = cur->left();
                 }
-                else if(prev == cur->rightPtr())
+                else if(prev == cur->right())
                 {
                     // Last moved up the right branch - descend the left.
                     prev = cur;
-                    cur = cur->leftPtr();
+                    cur = cur->left();
                 }
-                else if(prev == cur->leftPtr())
+                else if(prev == cur->left())
                 {
                     // Last moved up the left branch - continue upward.
                     prev = cur;
-                    cur = cur->parentPtr();
+                    cur = cur->parent();
                 }
             }
 
             if(prev)
             {
                 // No left child - back up.
-                cur = prev->parentPtr();
+                cur = prev->parent();
             }
         }
 
@@ -1028,31 +1028,31 @@ DENG2_PIMPL(Partitioner)
                     partitionOneSegment(*seg, rights, lefts);
                 }
 
-                if(prev == cur->parentPtr())
+                if(prev == cur->parent())
                 {
                     // Descending - right first, then left.
                     prev = cur;
-                    if(cur->hasRight()) cur = cur->rightPtr();
-                    else                cur = cur->leftPtr();
+                    if(cur->right()) cur = cur->right();
+                    else             cur = cur->left();
                 }
-                else if(prev == cur->rightPtr())
+                else if(prev == cur->right())
                 {
                     // Last moved up the right branch - descend the left.
                     prev = cur;
-                    cur = cur->leftPtr();
+                    cur = cur->left();
                 }
-                else if(prev == cur->leftPtr())
+                else if(prev == cur->left())
                 {
                     // Last moved up the left branch - continue upward.
                     prev = cur;
-                    cur = cur->parentPtr();
+                    cur = cur->parent();
                 }
             }
 
             if(prev)
             {
                 // No left child - back up.
-                cur = prev->parentPtr();
+                cur = prev->parent();
             }
         }
 
