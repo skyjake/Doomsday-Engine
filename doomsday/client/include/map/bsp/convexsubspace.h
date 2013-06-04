@@ -106,12 +106,6 @@ public:
     inline bool isEmpty() const { return segmentCount() == 0; }
 
     /**
-     * Returns @c true iff at least one line segment in the set is derived from
-     * a map line.
-     */
-    bool hasMapLineSegment() const;
-
-    /**
      * Add more line segments to the subspace. It is assumed that the new set
      * conforms to, or is compatible with the subspace.
      *
@@ -153,24 +147,22 @@ public:
         return *this;
     }
 
-    Polygon *buildLeafGeometry() const;
-
     /**
-     * Determines from the set of line segments which sector to attribute to
-     * any BSP leaf we might subsequently produce for them.
+     * Build and assign all geometries to the BSP leaf specified. Note that
+     * any existing geometries will be replaced (thus destroyed by BspLeaf).
+     * Also, a map sector is chosen and attributed to the BSP leaf.
      *
-     * This choice is presently determined with a heuristic accounting of the
-     * number of references to each candidate sector. References are divided
-     * into groups according to the "type" of the referencing line segment for
-     * rating.
+     * @param bspLeaf  BSP leaf to build geometry for.
      */
-    Sector *chooseSectorForBspLeaf() const;
+    void buildGeometry(BspLeaf &bspLeaf) const;
 
     /**
      * The BspLeaf to which the subspace has been attributed. May return @c 0
      * if not attributed.
      *
      * @see setBspLeaf()
+     *
+     * @todo Refactor away.
      */
     BspLeaf *bspLeaf() const;
 
@@ -181,6 +173,8 @@ public:
      *                    Can be @c 0 (to clear the attribution).
      *
      * @see bspLeaf()
+     *
+     * @todo Refactor away.
      */
     void setBspLeaf(BspLeaf *newBspLeaf);
 

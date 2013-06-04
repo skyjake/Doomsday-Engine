@@ -1420,41 +1420,19 @@ DENG2_PIMPL(Partitioner)
         foreach(ConvexSubspace const &subspace, convexSubspaces)
         {
             /// @todo Move BSP leaf construction here.
-            BspLeaf *leaf = subspace.bspLeaf();
+            BspLeaf &bspLeaf = *subspace.bspLeaf();
 
-            bool const isDegenerate = subspace.segmentCount() < 3;
-            if(!isDegenerate)
+            subspace.buildGeometry(bspLeaf);
+
+            // Account the new segments.
+            /// @todo Refactor away.
+            foreach(OrderedSegment const &oseg, subspace.segments())
             {
-                // Sanity check.
-                if(!subspace.hasMapLineSegment())
-                    throw Error("Partitioner::buildLeafGeometries",
-                                QString("ConvexSubspace 0x%1 has no map line segment")
-                                    .arg(dintptr(&subspace), 0, 16));
-
-                // Construct a new polygon geometry and assign it to
-                // the BSP leaf (takes ownership).
-                leaf->setPoly(subspace.buildLeafGeometry());
-
-                // Account for the new segments.
-                HEdge *firstHEdge = leaf->poly().firstHEdge();
-                HEdge *hedge = firstHEdge;
-                do
+                if(oseg.segment->hasSegment())
                 {
-                    if(hedge->mapElement())
-                    {
-                        // There is now one more Segment.
-                        numSegments += 1;
-                    }
-                } while((hedge = &hedge->next()) != firstHEdge);
-            }
-
-            // Determine which sector to attribute to the BSP leaf.
-            leaf->setSector(subspace.chooseSectorForBspLeaf());
-
-            if(!leaf->hasSector())
-            {
-                LOG_WARNING("BspLeaf %p is degenerate/orphan (%d half-edges).")
-                    << de::dintptr(leaf) << (leaf->hasPoly()? leaf->poly().hedgeCount() : 0);
+                    // There is now one more Segment.
+                    numSegments += 1;
+                }
             }
         }
 

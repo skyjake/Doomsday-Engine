@@ -209,6 +209,20 @@ DENG2_PIMPL_NOREF(ConvexSubspace)
           bspLeaf                   (other.bspLeaf)
     {}
 
+    /**
+     * Returns @c true iff at least one line segment in the set is derived from
+     * a map line.
+     */
+    bool hasMapLineSegment()
+    {
+        foreach(LineSegment::Side *seg, segments)
+        {
+            if(seg->hasMapSide())
+                return true;
+        }
+        return false;
+    }
+
     Vector2d findCenter()
     {
         Vector2d center;
@@ -412,102 +426,123 @@ void ConvexSubspace::addOneSegment(LineSegment::Side const &newSegment)
     }
 }
 
-Polygon *ConvexSubspace::buildLeafGeometry() const
+void ConvexSubspace::buildGeometry(BspLeaf &leaf) const
 {
-    if(isEmpty()) return 0;
+    LOG_AS("ConvexSubspace::buildGeometry");
 
     if(d->needRebuildContinuities)
     {
         d->buildContinuityMap();
     }
 
-    // Construct the polygon and ring of half-edges.
-    Polygon *poly = new Polygon;
-
-    // Iterate backwards so that the half-edges can be linked clockwise.
-    for(int i = d->orderedSegments.size(); i-- > 0; )
+    bool const isDegenerate = segmentCount() < 3;
+    if(!isDegenerate)
     {
-        LineSegment::Side *lineSeg = d->orderedSegments[i].segment;
-        Line::Side *mapSide = lineSeg->mapSidePtr();
-        HEdge *hedge = new HEdge(lineSeg->from());
+        // Sanity check.
+        if(!d->hasMapLineSegment())
+            throw Error("ConvexSubspace::buildGeometry", "No map line segment");
 
-        // Ownership of the segment will be assigned to the space partitioner.
-        Segment *seg = new Segment(mapSide, hedge);
+        // Construct the polygon and ring of half-edges.
+        Polygon *poly = new Polygon;
 
-        // Attribute the half-edge to the segment.
-        hedge->setMapElement(seg);
-
-        if(mapSide)
+        // Iterate backwards so that the half-edges can be linked clockwise.
+        for(int i = d->orderedSegments.size(); i-- > 0; )
         {
-            seg->setLineSideOffset(Vector2d(mapSide->from().origin() - lineSeg->from().origin()).length());
-        }
+            LineSegment::Side *lineSeg = d->orderedSegments[i].segment;
+            Line::Side *mapSide = lineSeg->mapSidePtr();
+            HEdge *hedge = new HEdge(lineSeg->from());
 
-        seg->setLength(Vector2d(lineSeg->to().origin() - lineSeg->from().origin()).length());
+            // Ownership of the segment will be assigned to the space partitioner.
+            Segment *seg = new Segment(mapSide, hedge);
 
-        seg->setAngle(bamsAtan2(int( lineSeg->to().origin().y - lineSeg->from().origin().y ),
-                                int( lineSeg->to().origin().x - lineSeg->from().origin().x )) << FRACBITS);
+            // Attribute the half-edge to the segment.
+            hedge->setMapElement(seg);
 
-        // Link the new half-edge for this line segment to the head of
-        // the list in the new polygon geometry.
-        hedge->setNext(poly->_hedge);
-        poly->_hedge = hedge;
+            if(mapSide)
+            {
+                seg->setLineSideOffset(Vector2d(mapSide->from().origin() - lineSeg->from().origin()).length());
+            }
 
-        // Is there a half-edge on the back side we need to twin with?
-        if(lineSeg->back().hasSegment())
-        {
-            lineSeg->back().segment().hedge().setTwin(hedge);
-            hedge->setTwin(&lineSeg->back().segment().hedge());
+            seg->setLength(Vector2d(lineSeg->to().origin() - lineSeg->from().origin()).length());
 
-            seg->setBack(&lineSeg->back().segment());
-            seg->back().setBack(seg);
-        }
+            seg->setAngle(bamsAtan2(int( lineSeg->to().origin().y - lineSeg->from().origin().y ),
+                                    int( lineSeg->to().origin().x - lineSeg->from().origin().x )) << FRACBITS);
 
-        // Link the new segment with the line segment.
-        lineSeg->setSegment(seg);
-    }
-
-    // Link the half-edges anticlockwise and close the ring.
-    HEdge *hedge = poly->_hedge;
-    forever
-    {
-        // There is now one more half-edge in this polygon.
-        poly->_hedgeCount += 1;
-
-        // Attribute the half edge to the Polygon.
-        /// @todo Encapsulate in Polygon.
-        hedge->setPoly(poly);
-
-        if(hedge->hasNext())
-        {
-            // Link anticlockwise.
-            hedge->next().setPrev(hedge);
-            hedge = &hedge->next();
-        }
-        else
-        {
-            // Circular link.
+            // Link the new half-edge for this line segment to the head of
+            // the list in the new polygon geometry.
             hedge->setNext(poly->_hedge);
-            hedge->next().setPrev(hedge);
-            break;
+            poly->_hedge = hedge;
+
+            // Is there a half-edge on the back side we need to twin with?
+            if(lineSeg->back().hasSegment())
+            {
+                lineSeg->back().segment().hedge().setTwin(hedge);
+                hedge->setTwin(&lineSeg->back().segment().hedge());
+
+                seg->setBack(&lineSeg->back().segment());
+                seg->back().setBack(seg);
+            }
+
+            // Link the new segment with the line segment.
+            lineSeg->setSegment(seg);
         }
+
+        // Link the half-edges anticlockwise and close the ring.
+        HEdge *hedge = poly->_hedge;
+        forever
+        {
+            // There is now one more half-edge in this polygon.
+            poly->_hedgeCount += 1;
+
+            // Attribute the half edge to the Polygon.
+            /// @todo Encapsulate in Polygon.
+            hedge->setPoly(poly);
+
+            if(hedge->hasNext())
+            {
+                // Link anticlockwise.
+                hedge->next().setPrev(hedge);
+                hedge = &hedge->next();
+            }
+            else
+            {
+                // Circular link.
+                hedge->setNext(poly->_hedge);
+                hedge->next().setPrev(hedge);
+                break;
+            }
+        }
+
+        /// @todo Polygon should encapsulate.
+        poly->updateAABox();
+        poly->updateCenter();
+
+        // Assign the polygon geometry to the BSP leaf (takes ownership).
+        leaf.setPoly(poly);
     }
 
-    /// @todo Polygon should encapsulate.
-    poly->updateAABox();
-    poly->updateCenter();
+    // Determine which sector to attribute to the BSP leaf.
+    leaf.setSector(d->sector);
 
-    return poly;
+    if(!leaf.hasSector())
+    {
+        LOG_WARNING("BspLeaf %p is degenerate/orphan (%d half-edges).")
+            << de::dintptr(&leaf) << (leaf.hasPoly()? leaf.poly().hedgeCount() : 0);
+    }
 }
 
-Sector *ConvexSubspace::chooseSectorForBspLeaf() const
+int ConvexSubspace::segmentCount() const
 {
-    if(isEmpty()) return 0;
+    return d->segments.count();
+}
 
-    if(d->needRebuildContinuities)
+OrderedSegments const &ConvexSubspace::segments() const
+{
+    if(d->needRebuildOrderedSegments)
     {
-        d->buildContinuityMap();
+        d->buildOrderedSegments(d->findCenter());
     }
-    return d->sector;
+    return d->orderedSegments;
 }
 
 BspLeaf *ConvexSubspace::bspLeaf() const
@@ -518,30 +553,6 @@ BspLeaf *ConvexSubspace::bspLeaf() const
 void ConvexSubspace::setBspLeaf(BspLeaf *newBspLeaf)
 {
     d->bspLeaf = newBspLeaf;
-}
-
-int ConvexSubspace::segmentCount() const
-{
-    return d->segments.count();
-}
-
-bool ConvexSubspace::hasMapLineSegment() const
-{
-    foreach(LineSegment::Side *seg, d->segments)
-    {
-        if(seg->hasMapSide())
-            return true;
-    }
-    return false;
-}
-
-OrderedSegments const &ConvexSubspace::segments() const
-{
-    if(d->needRebuildOrderedSegments)
-    {
-        d->buildOrderedSegments(d->findCenter());
-    }
-    return d->orderedSegments;
 }
 
 } // namespace bsp
