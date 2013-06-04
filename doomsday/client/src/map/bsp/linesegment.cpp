@@ -77,7 +77,7 @@ DENG2_PIMPL_NOREF(LineSegment::Side)
     coord_t pPerp;
     slopetype_t pSlopeType;
 
-    /// Segment produced from this segment (if any, not owned).
+    /// Segment produced from this map line segment (if any, not owned).
     Segment *segment;
 
     Instance(LineSegment &line)

@@ -22,9 +22,9 @@
 
 #include <de/Vector>
 
-#include "TriangleStripBuilder" /// @todo remove me
+#include "Segment"
 
-class Segment;
+#include "TriangleStripBuilder" /// @todo remove me
 
 namespace de {
 
@@ -57,7 +57,7 @@ public:
 
 public:
     /**
-     * @param segment    Segment from which to determine sky fix coordinates.
+     * @param segment  Segment from which to determine sky fix coordinates.
      * @param fixType  Fix type.
      */
     SkyFixEdge(Segment &segment, FixType fixType, int edge, float materialOffsetS = 0);

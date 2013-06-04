@@ -20,6 +20,7 @@
 #include <QtAlgorithms>
 
 #include "Sector"
+#include "Segment"
 
 #include "map/r_world.h" // R_SideSectionCoords
 #include "map/lineowner.h"

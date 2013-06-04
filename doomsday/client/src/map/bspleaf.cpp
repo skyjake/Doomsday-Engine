@@ -109,7 +109,7 @@ DENG2_PIMPL(BspLeaf)
 #ifdef __CLIENT__
 
     /**
-     * Determine the Segment from whose vertex is suitable for use as the center point
+     * Determine the half-edge whose vertex is suitable for use as the center point
      * of a trifan primitive.
      *
      * Note that we do not want any overlapping or zero-area (degenerate) triangles.

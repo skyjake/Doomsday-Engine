@@ -80,10 +80,10 @@ DENG2_PIMPL_NOREF(Line::Side)
     /// Attributed sector (not owned).
     Sector *sector;
 
-    /// Left-most half-edge on this side of the owning line (not owned).
+    /// Left-most segment on this side of the owning line (not owned).
     Segment *leftSegment;
 
-    /// Right-most half-edge on this side of the owning line (not owned).
+    /// Right-most segment on this side of the owning line (not owned).
     Segment *rightSegment;
 
     /// Framecount of last time shadows were drawn on this side.
@@ -163,8 +163,8 @@ bool Line::Side::considerOneSided() const
 
     if(!d->line.definesPolyobj())
     {
-        // If there no half-edge is present then convex subspace on "this" side
-        // must have been degenerate (thus no geometry).
+        // If no segment is linked then the convex subspace on "this" side must
+        // have been degenerate (thus no geometry).
         if(!d->leftSegment)
             return true;
 
@@ -233,9 +233,9 @@ Segment *Line::Side::leftSegment() const
     return d->leftSegment;
 }
 
-void Line::Side::setLeftSegment(Segment *newLeftSegment)
+void Line::Side::setLeftSegment(Segment *newSegment)
 {
-    d->leftSegment = newLeftSegment;
+    d->leftSegment = newSegment;
 }
 
 Segment *Line::Side::rightSegment() const
@@ -243,9 +243,9 @@ Segment *Line::Side::rightSegment() const
     return d->rightSegment;
 }
 
-void Line::Side::setRightSegment(Segment *newRightSegment)
+void Line::Side::setRightSegment(Segment *newSegment)
 {
-    d->rightSegment = newRightSegment;
+    d->rightSegment = newSegment;
 }
 
 void Line::Side::updateSoundEmitterOrigin(int sectionId)

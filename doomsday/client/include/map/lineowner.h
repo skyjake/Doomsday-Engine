@@ -25,8 +25,6 @@
 
 #include <de/Vector>
 
-#include "Segment"
-
 class Line;
 
 /**

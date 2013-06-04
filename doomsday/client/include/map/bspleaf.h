@@ -229,7 +229,7 @@ public:
 
     /**
      * Returns the number of vertices needed for the BSP leaf's triangle fan.
-     * @note May incurr updating the fan base Segment if not already determined.
+     * @note May incurr updating the fan base half-edge if not already determined.
      *
      * @see fanBase()
      */

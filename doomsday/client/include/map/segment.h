@@ -36,6 +36,9 @@ struct BiasSurface;
 class BspLeaf;
 class Sector;
 
+/**
+ * @todo Consolidate/merge with bsp::LineSegment
+ */
 class Segment : public de::MapElement
 {
     DENG2_NO_COPY(Segment)

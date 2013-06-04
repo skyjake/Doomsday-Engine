@@ -23,9 +23,7 @@
 
 #include <de/Vector>
 
-#include "Line"
-
-class BspLeaf;
+#include "Segment"
 
 namespace de {
 
@@ -37,7 +35,7 @@ static coord_t const SHADOWEDGE_OPEN_THRESHOLD = 8; // world units (Z axis)
 class ShadowEdge
 {
 public:
-    ShadowEdge(Segment &leftMostHEdge, int edge);
+    ShadowEdge(Segment &leftMostSegment, int edge);
 
     void prepare(int planeIndex);
 

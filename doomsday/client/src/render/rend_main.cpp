@@ -2087,7 +2087,7 @@ static void writeLeafWallSections()
 
     foreach(Segment *seg, leaf->segments())
     {
-        // We are only interested in wall sections with front facing half-edges.
+        // We are only interested in front facing line segments.
         if(!seg->isFlagged(Segment::FacingFront))
             continue;
 

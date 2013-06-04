@@ -48,7 +48,7 @@ public: /// @todo Make private:
     /// from the smallest angle.
     HEdge *_hedge;
 
-    /// Number of Segment's in the face.
+    /// Number of half-edge's in the face.
     int _hedgeCount;
 
 public:

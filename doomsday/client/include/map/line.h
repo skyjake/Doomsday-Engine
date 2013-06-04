@@ -321,32 +321,32 @@ public:
         inline Sector *sectorPtr() const { return hasSector()? &sector() : 0; }
 
         /**
-         * Returns a pointer the left-most half-edge for the side; otherwise @c 0.
+         * Returns a pointer the left-most segment for the side; otherwise @c 0.
          */
         Segment *leftSegment() const;
 
         /**
-         * Change the left-most half-edge for the side.
+         * Change the left-most segment for the side.
          *
-         * @param newHEdge  New half-edge to set as the left-most. Can be @c 0.
+         * @param newSegment   New segment to set as the left-most. Can be @c 0.
          *
          * @todo Refactor away. Only needed presently because of Polyobj.
          */
-        void setLeftSegment(Segment *newHEdge);
+        void setLeftSegment(Segment *newSegment);
 
         /**
-         * Returns a pointer to the right-most half-edge for the side; otherwise @c 0.
+         * Returns a pointer to the right-most segment for the side; otherwise @c 0.
          */
         Segment *rightSegment() const;
 
         /**
-         * Change the right-most half-edge for the side.
+         * Change the right-most segment for the side.
          *
-         * @param newHEdge  New half-edge to set as the right-most. Can be @c 0.
+         * @param newSegment  New segment to set as the right-most. Can be @c 0.
          *
          * @todo Refactor away. Only needed presently because of Polyobj.
          */
-        void setRightSegment(Segment *newHEdge);
+        void setRightSegment(Segment *newSegment);
 
         /**
          * Update the tangent space normals of the side's surfaces according to the
