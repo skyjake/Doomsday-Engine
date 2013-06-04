@@ -243,7 +243,6 @@ void LineEditWidget::setEmptyContentHint(String const &hintText)
     {
         // A child widget will show the hint text.
         d->hint = new LabelWidget;
-        d->hint->setText(hintText);
         d->hint->setFont("editor.hint");
         d->hint->setTextColor("editor.hint");
         d->hint->setAlignment(AlignLeft);
@@ -252,11 +251,7 @@ void LineEditWidget::setEmptyContentHint(String const &hintText)
         d->hint->setOpacity(0);
         add(d->hint);
     }
-    else
-    {
-        // Just update the text.
-        d->hint->setText(hintText);
-    }
+    d->hint->setText(hintText);
 }
 
 void LineEditWidget::glInit()
