@@ -35,6 +35,11 @@ Font::RichFormat::RichFormat(RichFormat const &other)
     : _style(other._style), _ranges(other._ranges)
 {}
 
+void Font::RichFormat::clear()
+{
+    _ranges.clear();
+}
+
 void Font::RichFormat::setStyle(IStyle const &style)
 {
     _style = &style;

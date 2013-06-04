@@ -116,6 +116,8 @@ public:
         RichFormat(IStyle const &style);
         RichFormat(RichFormat const &other);
 
+        void clear();
+
         bool haveStyle() const;
         void setStyle(IStyle const &style);
         IStyle const &style() const;
