@@ -60,7 +60,7 @@ public:
     GuiWidget(de::String const &name = "");
 
     GuiRootWidget &root();
-    Style const &style();
+    Style const &style() const;
 
     /**
      * Returns the rule rectangle that defines the placement of the widget on
@@ -76,7 +76,19 @@ public:
 
     void deleteLater();
 
+    void setFont(de::DotPath const &id);
+    void setTextColor(de::DotPath const &id);
     void set(Background const &bg);
+
+    de::Font const &font() const;
+    de::ColorBank::Color textColor() const;
+    de::ColorBank::Colorf textColorf() const;
+
+    /**
+     * Determines whether the contents of the widget are scissor-clipped to its
+     * boundaries.
+     */
+    bool clipped() const;
 
     Background const &background() const;
 
@@ -102,6 +114,7 @@ public:
     void initialize();
     void deinitialize();
     void update();
+    void drawIfVisible();
 
     /**
      * Determines if the widget occupies on-screen position @a pos.
@@ -158,6 +171,12 @@ protected:
      * last call to hasChangedPlace(); otherwise, @c false.
      */
     bool hasChangedPlace(de::Rectanglei &currentPlace);
+
+    /**
+     * Called during GuiWidget::update() whenever the style of the widget has
+     * been marked as changed.
+     */
+    virtual void updateStyle();
 
 private:
     DENG2_PRIVATE(d)

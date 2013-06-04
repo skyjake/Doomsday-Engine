@@ -46,7 +46,6 @@ public Font::RichFormat::IStyle
     ConstantRule *height;
 
     // Style.
-    Font const *font;
     int margin;
     int gap;
 
@@ -71,7 +70,6 @@ public Font::RichFormat::IStyle
           imageAlign(AlignCenter),
           imageFit(OriginalAspectRatio | FitToSize),
           imageScale(1),
-          font(0),
           wrapWidth(0),
           needImageUpdate(false),
           imageTex(Id::None),
@@ -81,7 +79,7 @@ public Font::RichFormat::IStyle
         width  = new ConstantRule(0);
         height = new ConstantRule(0);
 
-        uColor = Vector4f(1, 1, 1, 1);
+        uColor = Vector4f(1, 1, 1, 1);        
         updateStyle();
     }
 
@@ -95,18 +93,18 @@ public Font::RichFormat::IStyle
     {
         Style const &st = self.style();
 
-        font   = &st.fonts().font("default");
         margin = st.rules().rule("gap").valuei();
         gap    = margin / 2;
 
-        wraps.setFont(*font);
+        wraps.setFont(self.font());
         wrapWidth = 0;
+
         self.requestGeometry();
     }
 
-    Color richStyleColor(int index) const
+    Color richStyleColor(int /*index*/) const
     {
-        return Vector4ub(255, 255, 255, 255);
+        return self.textColor();
     }
 
     void richStyleFormat(int contentStyle, float &sizeFactor, Font::RichFormat::Weight &fontWeight,
@@ -116,9 +114,9 @@ public Font::RichFormat::IStyle
         {
         default:
             sizeFactor = 1.f;
-            fontWeight = Font::RichFormat::Normal;
-            fontStyle  = Font::RichFormat::Regular;
-            colorIndex = Font::RichFormat::NormalColor;
+            fontWeight = Font::RichFormat::OriginalWeight;
+            fontStyle  = Font::RichFormat::OriginalStyle;
+            colorIndex = Font::RichFormat::OriginalColor;
             break;
         }
     }
@@ -336,7 +334,7 @@ public Font::RichFormat::IStyle
             wrapWidth = availableTextWidth();
             self.requestGeometry();
 
-            Font::RichFormat format;
+            Font::RichFormat format(*this);
             String plain = format.initFromStyledText(styledText);
             wraps.wrapTextToWidth(plain, format, wrapWidth);
 
@@ -393,7 +391,17 @@ void LabelWidget::setImage(Image const &image)
     d->needImageUpdate = true;
 }
 
-void LabelWidget::setTextAlignment(const Alignment &textAlign)
+String LabelWidget::text() const
+{
+    return d->styledText;
+}
+
+void LabelWidget::setAlignment(Alignment const &align)
+{
+    d->align = align;
+}
+
+void LabelWidget::setTextAlignment(Alignment const &textAlign)
 {
     d->textAlign = textAlign;
 }
@@ -421,8 +429,12 @@ void LabelWidget::update()
 
 void LabelWidget::draw()
 {
-    d->uColor = Vector4f(1, 1, 1, visibleOpacity());
-    d->draw();
+    float const opac = visibleOpacity();
+    if(opac > 0)
+    {
+        d->uColor = Vector4f(1, 1, 1, opac);
+        d->draw();
+    }
 }
 
 void LabelWidget::contentLayout(LabelWidget::ContentLayout &layout)
@@ -459,6 +471,11 @@ void LabelWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
                               lineAlign, Vector4f(0, 0, 0, 1));*/
         d->composer.makeVertices(verts, layout.text, AlignCenter, d->lineAlign);
     }
+}
+
+void LabelWidget::updateStyle()
+{
+    d->updateStyle();
 }
 
 void LabelWidget::updateModelViewProjection(GLUniform &uMvp)

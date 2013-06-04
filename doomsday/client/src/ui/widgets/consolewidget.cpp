@@ -313,8 +313,6 @@ bool ConsoleWidget::handleEvent(Event const &event)
 
 void ConsoleWidget::openLog()
 {
-    qDebug() << "ConsoleWidget: openLog, opened" << d->opened;
-
     if(d->opened) return;
 
     d->opened = true;
@@ -323,8 +321,6 @@ void ConsoleWidget::openLog()
 
 void ConsoleWidget::closeLog()
 {
-    qDebug() << "ConsoleWidget: closeLog, opened" << d->opened;
-
     if(!d->opened) return;
 
     d->opened = false;

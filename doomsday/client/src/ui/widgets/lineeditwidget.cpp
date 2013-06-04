@@ -17,6 +17,7 @@
  */
 
 #include "ui/widgets/lineeditwidget.h"
+#include "ui/widgets/labelwidget.h"
 #include "ui/widgets/fontlinewrapping.h"
 #include "ui/widgets/guirootwidget.h"
 #include "ui/widgets/gltextcomposer.h"
@@ -40,8 +41,7 @@ DENG2_OBSERVES(Atlas, Reposition)
 
     ScalarRule *height;
     FontLineWrapping &wraps;
-    String hint; ///< Styled.
-    FontLineWrapping wrappedHint;
+    LabelWidget *hint;
 
     // Style.
     Font const *font;
@@ -51,7 +51,6 @@ DENG2_OBSERVES(Atlas, Reposition)
 
     // GL objects.
     GLTextComposer composer;
-    GLTextComposer hintComposer;
     Drawable drawable;
     GLUniform uMvpMatrix;
     GLUniform uColor;
@@ -60,6 +59,7 @@ DENG2_OBSERVES(Atlas, Reposition)
     Instance(Public *i)
         : Base(i),
           wraps(static_cast<FontLineWrapping &>(i->lineWraps())),
+          hint(0),
           font(0),
           margin(0),
           hovering(0, Animation::Linear),
@@ -69,6 +69,7 @@ DENG2_OBSERVES(Atlas, Reposition)
     {
         height = new ScalarRule(0);
 
+        self.setFont("editor.plaintext");
         updateStyle();
 
         uCursorColor = Vector4f(1, 1, 1, 1);
@@ -86,7 +87,7 @@ DENG2_OBSERVES(Atlas, Reposition)
     {
         Style const &st = self.style();
 
-        font   = &st.fonts().font("editor.plaintext");
+        font   = &self.font();
         margin = st.rules().rule("gap").valuei();
 
         updateBackground();
@@ -95,9 +96,6 @@ DENG2_OBSERVES(Atlas, Reposition)
         wraps.setFont(*font);
         wraps.clear();
         composer.setWrapping(wraps);
-
-        wrappedHint.setFont(st.fonts().font("editor.hint"));
-        hintComposer.setWrapping(wrappedHint);
 
         contentChanged();
     }
@@ -136,9 +134,6 @@ DENG2_OBSERVES(Atlas, Reposition)
         composer.setAtlas(atlas());
         composer.setText(self.text());
 
-        hintComposer.setAtlas(atlas());
-        hintComposer.setStyledText(hint);
-
         drawable.addBuffer(ID_BUF_TEXT, new VertexBuf);
         drawable.addBufferWithNewProgram(ID_BUF_CURSOR, new VertexBuf, "cursor");
 
@@ -157,12 +152,11 @@ DENG2_OBSERVES(Atlas, Reposition)
     void glDeinit()
     {
         composer.release();
-        hintComposer.release();
     }
 
     bool showingHint() const
     {
-        return self.text().isEmpty() && !hint.isEmpty() && !self.hasFocus();
+        return self.text().isEmpty() && !hint->text().isEmpty() && !self.hasFocus();
     }
 
     void updateGeometry()
@@ -170,7 +164,6 @@ DENG2_OBSERVES(Atlas, Reposition)
         updateBackground();
 
         if(composer.update())     self.requestGeometry();
-        if(hintComposer.update()) self.requestGeometry();
 
         // Do we actually need to update geometry?
         Rectanglei pos;
@@ -238,14 +231,32 @@ LineEditWidget::LineEditWidget(String const &name)
       AbstractLineEditor(new FontLineWrapping),
       d(new Instance(this))
 {
+    setBehavior(ContentClipping);
+
     // The widget's height is tied to the number of lines.
     rule().setInput(Rule::Height, *d->height);
 }
 
 void LineEditWidget::setEmptyContentHint(String const &hintText)
 {
-    d->hint = hintText;
-    d->wrappedHint.clear();
+    if(!d->hint)
+    {
+        // A child widget will show the hint text.
+        d->hint = new LabelWidget;
+        d->hint->setText(hintText);
+        d->hint->setFont("editor.hint");
+        d->hint->setTextColor("editor.hint");
+        d->hint->setAlignment(AlignLeft);
+        d->hint->setBehavior(Unhittable | ContentClipping);
+        d->hint->rule().setRect(rule());
+        d->hint->setOpacity(0);
+        add(d->hint);
+    }
+    else
+    {
+        // Just update the text.
+        d->hint->setText(hintText);
+    }
 }
 
 void LineEditWidget::glInit()
@@ -267,16 +278,7 @@ void LineEditWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
     Rectanglef const solidWhiteUv = d->atlas().imageRectf(root().solidWhitePixel());
 
     // Text lines.
-    if(!d->showingHint())
-    {
-        d->composer.makeVertices(verts, contentRect, AlignLeft, AlignLeft,
-                                 style().colors().colorf("text"));
-    }
-    else
-    {
-        d->hintComposer.makeVertices(verts, contentRect, AlignLeft, AlignLeft,
-                                     style().colors().colorf("accent"));
-    }
+    d->composer.makeVertices(verts, contentRect, AlignLeft, AlignLeft, textColorf());
 
     // Underline the possible suggested completion.
     if(isSuggestingCompletion())
@@ -300,10 +302,14 @@ void LineEditWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
     }
 }
 
+void LineEditWidget::updateStyle()
+{
+    d->updateStyle();
+}
+
 void LineEditWidget::viewResized()
 {
     updateLineWraps(RewrapNow);
-    d->wrappedHint.clear(); // Force rewrap.
     d->updateProjection();
 }
 
@@ -324,9 +330,10 @@ void LineEditWidget::update()
 
     // Rewrap content if necessary.
     updateLineWraps(WrapUnlessWrappedAlready);
-    if(d->wrappedHint.isEmpty())
+
+    if(d->hint)
     {
-        d->wrappedHint.wrapTextToWidth(d->hint, d->contentRect().width());
+        d->hint->setOpacity(d->showingHint()? 1 : 0);
     }
 }
 

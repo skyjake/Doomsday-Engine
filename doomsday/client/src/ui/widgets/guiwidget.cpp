@@ -21,6 +21,7 @@
 #include "clientapp.h"
 #include <de/garbage.h>
 #include <de/MouseEvent>
+#include <de/GLState>
 
 using namespace de;
 
@@ -30,12 +31,22 @@ DENG2_PIMPL(GuiWidget)
     Rectanglei savedPos;
     bool inited;
     bool needGeometry;
+    bool styleChanged;
     Background background;
     Animation opacity;
 
+    // Style.
+    DotPath fontId;
+    DotPath textColorId;
+
     Instance(Public *i)
-        : Base(i), inited(false), needGeometry(true),
-          opacity(1.f, Animation::Linear)
+        : Base(i),
+          inited(false),
+          needGeometry(true),
+          styleChanged(false),
+          opacity(1.f, Animation::Linear),
+          fontId("default"),
+          textColorId("text")
     {}
 
     ~Instance()
@@ -53,9 +64,36 @@ GuiRootWidget &GuiWidget::root()
     return static_cast<GuiRootWidget &>(Widget::root());
 }
 
-Style const &GuiWidget::style()
+Style const &GuiWidget::style() const
 {
     return ClientApp::windowSystem().style();
+}
+
+Font const &GuiWidget::font() const
+{
+    return style().fonts().font(d->fontId);
+}
+
+void GuiWidget::setFont(DotPath const &id)
+{
+    d->fontId = id;
+    d->styleChanged = true;
+}
+
+ColorBank::Color GuiWidget::textColor() const
+{
+    return style().colors().color(d->textColorId);
+}
+
+ColorBank::Colorf GuiWidget::textColorf() const
+{
+    return style().colors().colorf(d->textColorId);
+}
+
+void GuiWidget::setTextColor(DotPath const &id)
+{
+    d->textColorId = id;
+    d->styleChanged = true;
 }
 
 RuleRectangle &GuiWidget::rule()
@@ -81,6 +119,11 @@ void GuiWidget::deleteLater()
 void GuiWidget::set(Background const &bg)
 {
     d->background = bg;
+}
+
+bool GuiWidget::clipped() const
+{
+    return behavior().testFlag(ContentClipping);
 }
 
 GuiWidget::Background const &GuiWidget::background() const
@@ -149,6 +192,29 @@ void GuiWidget::update()
     if(!d->inited)
     {
         initialize();
+    }
+    if(d->styleChanged)
+    {
+        d->styleChanged = false;
+        updateStyle();
+    }
+}
+
+void GuiWidget::drawIfVisible()
+{
+    if(!isHidden())
+    {
+        if(clipped())
+        {
+            GLState::push().setScissor(rule().recti());
+        }
+
+        draw();
+
+        if(clipped())
+        {
+            GLState::pop();
+        }
     }
 }
 
@@ -243,3 +309,6 @@ bool GuiWidget::hasChangedPlace(Rectanglei &currentPlace)
     d->savedPos = currentPlace;
     return changed;
 }
+
+void GuiWidget::updateStyle()
+{}

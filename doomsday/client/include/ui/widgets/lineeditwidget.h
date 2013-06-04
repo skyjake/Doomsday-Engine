@@ -52,6 +52,7 @@ protected:
     void glInit();
     void glDeinit();
     void glMakeGeometry(DefaultVertexBuf::Builder &verts);
+    void updateStyle();
 
     int maximumWidth() const;
     void numberOfLinesChanged(int lineCount);

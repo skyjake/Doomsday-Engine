@@ -34,3 +34,30 @@ def scale(value, factor)
     end
     return Text(floor(Number(amount) * factor)) + unit
 end
+
+def colorMix(a, b, amount)
+    # Returns a color where vectors 'a' and 'b' are interpolated by
+    # 'amount'. If 'amount' is 0, the result is 'a'; if 'amount' is 1,
+    # the result is 'b'.
+    if len(a) < 4: a += [1.0]
+    if len(b) < 4: b += [1.0]
+    
+    for i in [0, 1, 2, 3]
+        a[i] = Number(a[i])
+        b[i] = Number(b[i])
+    end
+    
+    inv = 1.0 - amount    
+    return [a[0] * inv + b[0] * amount,
+            a[1] * inv + b[1] * amount,
+            a[2] * inv + b[2] * amount,
+            a[3] * inv + b[3] * amount]
+end
+
+def colorAlpha(colorVector, alpha)
+    # Returns a new color with the alpha value changed to 'alpha'.
+    v = colorVector
+    if len(v) >= 4: v[3] = alpha
+    elsif len(v) == 3: v += [alpha]
+    return v
+end

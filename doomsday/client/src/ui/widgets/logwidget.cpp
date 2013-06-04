@@ -362,6 +362,7 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
           uColor      ("uColor",     GLUniform::Vec4),
           uBgMvpMatrix("uMvpMatrix", GLUniform::Mat4)
     {
+        self.setFont("log.normal");
         updateStyle();
     }
 
@@ -397,7 +398,7 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
 
         Style const &st = self.style();
 
-        font           = &st.fonts().font("log.normal");
+        font           = &self.font();
         margin         = st.rules().rule("gap").valuei();
         topMargin      = st.rules().rule("gap").valuei();
         scrollBarWidth = st.rules().rule("log.scrollbar").valuei();

@@ -66,6 +66,8 @@ public:
     void setText(de::String const &text);
     void setImage(de::Image const &image);
 
+    de::String text() const;
+
     /**
      * Sets the alignment of the entire contents of the widget inside its
      * rectangle.
@@ -125,8 +127,8 @@ public:
 protected:
     void glInit();
     void glDeinit();
-
     void glMakeGeometry(DefaultVertexBuf::Builder &verts);
+    void updateStyle();
 
     /**
      * Called before drawing to update the model-view-projection matrix.

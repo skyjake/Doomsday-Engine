@@ -1,17 +1,20 @@
 # Colors for the default UI style
 
-color text       { rgb  <1.0, 1.0, 1.0> }
-color background { rgba <0.0, 0.0, 0.0, 0.666> }
+script { import gui }
+
+color text       { rgb <1.0, 1.0, 1.0> }
+color background { rgb <0.0, 0.0, 0.0, 0.666> }
 color accent     { rgb <1.0, 0.8, 0.4> }
 
 group editor {
-    color cursor { rgb <1.0, 0.8, 0.4, 0.7> }
+    color cursor { rgb $= gui.colorAlpha(accent.rgb, 0.7) }
+    color hint   { rgb $= gui.colorMix(text.rgb, accent.rgb, 0.5) }
 }
 
 group log {
     color normal    { rgb <0.85, 0.85, 0.8> }
     color highlight { rgb <1.0, 1.0, 1.0> }
     color dimmed    { rgb <0.72, 0.72, 0.68> }
-    color accent    { rgb <1.0, 0.8, 0.4> }
+    color accent    { rgb $= accent.rgb }
     color dimaccent { rgb <0.85, 0.68, 0.34> }
 }
