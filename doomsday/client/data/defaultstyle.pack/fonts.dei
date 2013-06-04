@@ -42,4 +42,8 @@ group log {
 
 group editor {
     font plaintext inherits default {}
+    font hint inherits default {
+        style: italic
+        weight: light
+    }
 }

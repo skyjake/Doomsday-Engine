@@ -292,7 +292,8 @@ bool TaskBarWidget::handleEvent(Event const &event)
             if(key.modifiers().testFlag(KeyEvent::Shift))
             {
                 root().setFocus(&d->console->commandLine());
-                if(isOpen()) return true;
+                if(!isOpen()) open(false /* no action */);
+                return true;
             }
 
             if(isOpen())
@@ -316,7 +317,7 @@ bool TaskBarWidget::handleEvent(Event const &event)
     return false;
 }
 
-void TaskBarWidget::open()
+void TaskBarWidget::open(bool doAction)
 {
     if(!d->opened)
     {
@@ -330,9 +331,12 @@ void TaskBarWidget::open()
 
         emit opened();
 
-        if(!d->openAction.isNull())
+        if(doAction)
         {
-            d->openAction->trigger();
+            if(!d->openAction.isNull())
+            {
+                d->openAction->trigger();
+            }
         }
 
         // Untrap the mouse if it is trapped.

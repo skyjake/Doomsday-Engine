@@ -33,8 +33,17 @@ class LineEditWidget : public GuiWidget, public de::shell::AbstractLineEditor
 public:
     LineEditWidget(de::String const &name = "");
 
+    /**
+     * Sets the text that will be shown in the editor when it is empty.
+     *
+     * @param hintText  Hint text.
+     */
+    void setEmptyContentHint(de::String const &hintText);
+
     // Events.
     void viewResized();
+    void focusGained();
+    void focusLost();
     void update();
     void draw();
     bool handleEvent(de::Event const &event);

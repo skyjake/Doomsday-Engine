@@ -35,9 +35,9 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
             : line(ln), width(w), indent(ind) {}
     };
     QList<Line> lines;
-    String text;
+    String text;                ///< Plain text.
     Font::RichFormat format;
-    int indent;
+    int indent;                 ///< Current left indentation (in pixels).
 
     Instance() : font(0), indent(0) {}
 

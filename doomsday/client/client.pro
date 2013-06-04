@@ -350,6 +350,7 @@ DENG_HEADERS += \
     include/ui/nativeui.h \
     include/ui/p_control.h \
     include/ui/style.h \
+    include/ui/signalaction.h \
     include/ui/sys_input.h \
     include/ui/ui2_main.h \
     include/ui/ui_main.h \
@@ -654,7 +655,8 @@ SOURCES += \
     src/updater/updaterdialog.cpp \
     src/updater/updatersettings.cpp \
     src/updater/updatersettingsdialog.cpp \
-    src/uri.cpp
+    src/uri.cpp \
+    src/ui/signalaction.cpp
 
 !deng_nosdlmixer:!deng_nosdl {
     HEADERS += include/audio/sys_audiod_sdlmixer.h

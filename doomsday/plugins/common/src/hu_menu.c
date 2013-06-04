@@ -5270,7 +5270,7 @@ void Hu_MenuCommand(menucommand_e cmd)
 
             S_LocalSound(SFX_MENU_OPEN, NULL);
 
-            Con_Open(false);
+            //Con_Open(false);
 
             Hu_FogEffectSetAlphaTarget(1);
             Hu_MenuSetAlpha(1);

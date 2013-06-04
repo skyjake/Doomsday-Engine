@@ -148,6 +148,13 @@ void GLTextComposer::setText(String const &text)
     setText(text, Font::RichFormat::fromPlainText(text));
 }
 
+void GLTextComposer::setStyledText(const String &styledText)
+{
+    d->format.clear();
+    d->text = d->format.initFromStyledText(styledText);
+    d->needRaster = true;
+}
+
 void GLTextComposer::setText(String const &text, Font::RichFormat const &format)
 {
     d->text = text;

@@ -68,11 +68,13 @@ ConsoleCommandWidget::ConsoleCommandWidget(String const &name)
 
 void ConsoleCommandWidget::focusGained()
 {
+    LineEditWidget::focusGained();
     emit gotFocus();
 }
 
 void ConsoleCommandWidget::focusLost()
 {
+    LineEditWidget::focusLost();
     emit lostFocus();
 }
 

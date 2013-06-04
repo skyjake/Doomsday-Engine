@@ -30,6 +30,9 @@
 /**
  * Manages lines of text on an atlas and produces geometry for drawing the
  * text.
+ *
+ * Relies on a pre-existing FontLineWrapping where the text content has been
+ * wrapped onto multiple lines and laid out appropriately.
  */
 class GLTextComposer
 {
@@ -45,6 +48,7 @@ public:
     void setWrapping(FontLineWrapping const &wrappedLines);
 
     void setText(de::String const &text);
+    void setStyledText(de::String const &styledText);
     void setText(de::String const &text, de::Font::RichFormat const &format);
 
     /**

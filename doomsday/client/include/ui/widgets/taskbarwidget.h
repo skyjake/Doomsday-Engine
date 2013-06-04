@@ -50,7 +50,7 @@ public:
     bool handleEvent(de::Event const &event);
 
 public slots:
-    void open();
+    void open(bool doAction = true);
     void close();
 
 signals:

@@ -59,6 +59,7 @@ public slots:
     void showFullLog();
     void setFullyOpaque();
     void setTranslucent();
+    void focusOnCommandLine();
 
 protected slots:
     void logContentHeightIncreased(int delta);

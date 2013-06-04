@@ -40,6 +40,8 @@ DENG2_OBSERVES(Atlas, Reposition)
 
     ScalarRule *height;
     FontLineWrapping &wraps;
+    String hint; ///< Styled.
+    FontLineWrapping wrappedHint;
 
     // Style.
     Font const *font;
@@ -49,6 +51,7 @@ DENG2_OBSERVES(Atlas, Reposition)
 
     // GL objects.
     GLTextComposer composer;
+    GLTextComposer hintComposer;
     Drawable drawable;
     GLUniform uMvpMatrix;
     GLUniform uColor;
@@ -91,8 +94,10 @@ DENG2_OBSERVES(Atlas, Reposition)
         // Update the line wrapper's font.
         wraps.setFont(*font);
         wraps.clear();
-
         composer.setWrapping(wraps);
+
+        wrappedHint.setFont(st.fonts().font("editor.hint"));
+        hintComposer.setWrapping(wrappedHint);
 
         contentChanged();
     }
@@ -131,6 +136,9 @@ DENG2_OBSERVES(Atlas, Reposition)
         composer.setAtlas(atlas());
         composer.setText(self.text());
 
+        hintComposer.setAtlas(atlas());
+        hintComposer.setStyledText(hint);
+
         drawable.addBuffer(ID_BUF_TEXT, new VertexBuf);
         drawable.addBufferWithNewProgram(ID_BUF_CURSOR, new VertexBuf, "cursor");
 
@@ -149,13 +157,20 @@ DENG2_OBSERVES(Atlas, Reposition)
     void glDeinit()
     {
         composer.release();
+        hintComposer.release();
+    }
+
+    bool showingHint() const
+    {
+        return self.text().isEmpty() && !hint.isEmpty() && !self.hasFocus();
     }
 
     void updateGeometry()
     {
         updateBackground();
 
-        if(composer.update()) self.requestGeometry();
+        if(composer.update())     self.requestGeometry();
+        if(hintComposer.update()) self.requestGeometry();
 
         // Do we actually need to update geometry?
         Rectanglei pos;
@@ -227,6 +242,12 @@ LineEditWidget::LineEditWidget(String const &name)
     rule().setInput(Rule::Height, *d->height);
 }
 
+void LineEditWidget::setEmptyContentHint(String const &hintText)
+{
+    d->hint = hintText;
+    d->wrappedHint.clear();
+}
+
 void LineEditWidget::glInit()
 {
     LOG_AS("LineEditWidget");
@@ -242,11 +263,20 @@ void LineEditWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
 {
     GuiWidget::glMakeGeometry(verts);
 
-    // Text lines.
     Rectanglei const contentRect = d->contentRect();
-    d->composer.makeVertices(verts, contentRect, AlignLeft, AlignLeft);
-
     Rectanglef const solidWhiteUv = d->atlas().imageRectf(root().solidWhitePixel());
+
+    // Text lines.
+    if(!d->showingHint())
+    {
+        d->composer.makeVertices(verts, contentRect, AlignLeft, AlignLeft,
+                                 style().colors().colorf("text"));
+    }
+    else
+    {
+        d->hintComposer.makeVertices(verts, contentRect, AlignLeft, AlignLeft,
+                                     style().colors().colorf("accent"));
+    }
 
     // Underline the possible suggested completion.
     if(isSuggestingCompletion())
@@ -273,14 +303,31 @@ void LineEditWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
 void LineEditWidget::viewResized()
 {
     updateLineWraps(RewrapNow);
+    d->wrappedHint.clear(); // Force rewrap.
     d->updateProjection();
+}
+
+void LineEditWidget::focusGained()
+{
+    d->contentChanged();
+}
+
+void LineEditWidget::focusLost()
+{
+    d->contentChanged();
 }
 
 void LineEditWidget::update()
 {
     GuiWidget::update();
     d->updateBackground();
+
+    // Rewrap content if necessary.
     updateLineWraps(WrapUnlessWrappedAlready);
+    if(d->wrappedHint.isEmpty())
+    {
+        d->wrappedHint.wrapTextToWidth(d->hint, d->contentRect().width());
+    }
 }
 
 void LineEditWidget::draw()

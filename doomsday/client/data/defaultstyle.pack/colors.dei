@@ -2,6 +2,7 @@
 
 color text       { rgb  <1.0, 1.0, 1.0> }
 color background { rgba <0.0, 0.0, 0.0, 0.666> }
+color accent     { rgb <1.0, 0.8, 0.4> }
 
 group editor {
     color cursor { rgb <1.0, 0.8, 0.4, 0.7> }

@@ -22,6 +22,7 @@
 #include "ui/widgets/consolecommandwidget.h"
 #include "ui/widgets/logwidget.h"
 #include "ui/clientwindow.h"
+#include "ui/signalaction.h"
 
 #include <de/ScalarRule>
 #include <de/KeyEvent>
@@ -99,6 +100,8 @@ ConsoleWidget::ConsoleWidget() : GuiWidget("Console"), d(new Instance(this))
 
     d->button = new ButtonWidget;
     d->button->setText(DENG2_ESC("b") ">");
+    // Until we have a menu widget...
+    d->button->setAction(new SignalAction(this, SLOT(focusOnCommandLine())));
     add(d->button);
 
     /*
@@ -110,6 +113,7 @@ ConsoleWidget::ConsoleWidget() : GuiWidget("Console"), d(new Instance(this))
     */
 
     d->cmdLine = new ConsoleCommandWidget("commandline");
+    d->cmdLine->setEmptyContentHint("Enter commands here");
     add(d->cmdLine);
 
     connect(d->cmdLine, SIGNAL(gotFocus()), this, SLOT(openLog()));
@@ -309,21 +313,18 @@ bool ConsoleWidget::handleEvent(Event const &event)
 
 void ConsoleWidget::openLog()
 {
+    qDebug() << "ConsoleWidget: openLog, opened" << d->opened;
+
     if(d->opened) return;
 
     d->opened = true;
     d->horizShift->set(0, .3f);
-
-    /*
-    if(hasRoot())
-    {
-        root().setFocus(d->cmdLine);
-    }
-    */
 }
 
 void ConsoleWidget::closeLog()
 {
+    qDebug() << "ConsoleWidget: closeLog, opened" << d->opened;
+
     if(!d->opened) return;
 
     d->opened = false;
@@ -358,4 +359,9 @@ void ConsoleWidget::setTranslucent()
 {
     d->button->setOpacity(.5f, .25f);
     d->cmdLine->setOpacity(.5f, .25f);
+}
+
+void ConsoleWidget::focusOnCommandLine()
+{
+    root().setFocus(d->cmdLine);
 }
