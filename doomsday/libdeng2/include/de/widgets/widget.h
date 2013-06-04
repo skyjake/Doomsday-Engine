@@ -59,6 +59,9 @@ public:
         /// Widget cannot be hit by a pointer device.
         Unhittable = 0x8,
 
+        /// Widget's content will not extend beyoud its boundaries.
+        ContentClipping = 0x10,
+
         DefaultBehavior = 0
     };
     Q_DECLARE_FLAGS(Behaviors, Behavior)
@@ -165,6 +168,8 @@ public:
 private:
     DENG2_PRIVATE(d)
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(Widget::Behaviors)
 
 } // namespace de
 
