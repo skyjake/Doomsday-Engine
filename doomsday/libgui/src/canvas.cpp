@@ -229,6 +229,11 @@ bool Canvas::isMouseTrapped() const
     return d->mouseGrabbed;
 }
 
+bool Canvas::isGLReady() const
+{
+    return d->readyNotified;
+}
+
 void Canvas::copyAudiencesFrom(Canvas const &other)
 {
     audienceForGLReady          = other.audienceForGLReady;
@@ -289,7 +294,7 @@ void Canvas::showEvent(QShowEvent* ev)
 #ifdef WIN32
         makeCurrent();
         getAllOpenGLEntryPoints();
-        doneCurrent();
+        //doneCurrent();
 #endif
         QTimer::singleShot(1, this, SLOT(notifyReady()));
     }

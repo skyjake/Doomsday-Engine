@@ -57,7 +57,7 @@ public:
      * of text that contains style information (as escape sequences that start
      * with the Esc ASCII code 0x1b).
      */
-    class RichFormat
+    class LIBGUI_PUBLIC RichFormat
     {
     public:
         enum ContentStyle {
@@ -93,7 +93,7 @@ public:
          * Interface for an object providing style information: fonts and
          * colors.
          */
-        class IStyle
+        class LIBGUI_PUBLIC IStyle
         {
         public:
             typedef Vector4ub Color;
@@ -158,7 +158,7 @@ public:
          * @note Iterator::next() must be called before at least once after
          * constructing the instance to move the iterator onto the first range.
          */
-        struct Iterator
+        struct LIBGUI_PUBLIC Iterator
         {
             RichFormat const &format;
             int index;

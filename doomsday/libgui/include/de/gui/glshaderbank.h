@@ -35,7 +35,7 @@ class GLProgram;
  *
  * Shaders and programs cannot be accessed until OpenGL is ready.
  */
-class GLShaderBank : public InfoBank
+class LIBGUI_PUBLIC GLShaderBank : public InfoBank
 {
 public:
     GLShaderBank();

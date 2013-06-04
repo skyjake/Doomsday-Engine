@@ -105,7 +105,7 @@ DENG2_PIMPL(CanvasWindow)
             i->canvasGLInit(*canvas);
         }
 
-        canvas->doneCurrent();
+        //canvas->doneCurrent();
         canvas->updateGL();
 
         // Reacquire the focus.

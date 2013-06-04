@@ -29,7 +29,7 @@ namespace de {
 /**
  * Log sink that stores log entries in memory.
  */
-class MemoryLogSink : public LogSink, public Lockable
+class DENG2_PUBLIC MemoryLogSink : public LogSink, public Lockable
 {
 public:
     MemoryLogSink(LogEntry::Level minimumLevel = LogEntry::DEBUG);

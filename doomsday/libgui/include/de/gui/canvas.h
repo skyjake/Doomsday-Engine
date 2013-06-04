@@ -130,6 +130,8 @@ public:
      */
     bool isMouseTrapped() const;
 
+    bool isGLReady() const;
+
     /**
      * Replaces the current audiences of this canvas with another canvas's
      * audiences.
