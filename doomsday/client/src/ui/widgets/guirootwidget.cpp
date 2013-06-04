@@ -169,8 +169,11 @@ void GuiRootWidget::routeMouse(Widget *routeTo)
 
 void GuiRootWidget::update()
 {
-    // Allow GL operations.
-    window().canvas().makeCurrent();
+    if(window().canvas().isGLReady())
+    {
+        // Allow GL operations.
+        window().canvas().makeCurrent();
 
-    RootWidget::update();
+        RootWidget::update();
+    }
 }

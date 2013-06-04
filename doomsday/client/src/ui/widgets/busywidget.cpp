@@ -63,6 +63,8 @@ void BusyWidget::viewResized()
 
 void BusyWidget::update()
 {
+    GuiWidget::update();
+
     DENG_ASSERT(BusyMode_Active());
     BusyMode_Loop();
 }

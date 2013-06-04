@@ -6467,12 +6467,14 @@ D_CMD(MenuOpen)
             return true;
         }
 
-        mn_page_t* page = Hu_MenuFindPageByName(argv[1]);
-        if(page)
         {
-            Hu_MenuCommand(MCMD_OPEN);
-            Hu_MenuSetActivePage(page);
-            return true;
+            mn_page_t* page = Hu_MenuFindPageByName(argv[1]);
+            if(page)
+            {
+                Hu_MenuCommand(MCMD_OPEN);
+                Hu_MenuSetActivePage(page);
+                return true;
+            }
         }
         return false;
     }

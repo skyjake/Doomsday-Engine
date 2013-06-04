@@ -202,7 +202,7 @@ void GuiWidget::update()
 
 void GuiWidget::drawIfVisible()
 {
-    if(!isHidden())
+    if(!isHidden() && d->inited)
     {
         if(clipped())
         {

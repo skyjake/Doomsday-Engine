@@ -83,6 +83,8 @@ void LegacyWidget::viewResized()
 
 void LegacyWidget::update()
 {    
+    GuiWidget::update();
+
     if(isDisabled()) return;
 
     //LOG_DEBUG("Legacy update");

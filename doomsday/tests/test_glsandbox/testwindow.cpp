@@ -234,7 +234,7 @@ DENG2_OBSERVES(Bank, Load)
 
             self.canvas().makeCurrent();
             testpic.setImage(imageBank.image(path));
-            self.canvas().doneCurrent();
+            //self.canvas().doneCurrent();
 
             imageBank.unload(path);
         }
