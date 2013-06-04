@@ -1435,14 +1435,16 @@ DENG2_PIMPL(Partitioner)
                 // the BSP leaf (takes ownership).
                 leaf->setPoly(subspace.buildLeafGeometry());
 
-                // Account for the new half-edges.
+                // Account for the new segments.
                 HEdge *firstHEdge = leaf->poly().firstHEdge();
                 HEdge *hedge = firstHEdge;
                 do
                 {
-                    // There is now one more Segment.
-                    numSegments += 1;
-
+                    if(hedge->mapElement())
+                    {
+                        // There is now one more Segment.
+                        numSegments += 1;
+                    }
                 } while((hedge = &hedge->next()) != firstHEdge);
             }
 

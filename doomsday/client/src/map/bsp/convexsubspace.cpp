@@ -431,8 +431,11 @@ Polygon *ConvexSubspace::buildLeafGeometry() const
         Line::Side *mapSide = lineSeg->mapSidePtr();
         HEdge *hedge = new HEdge(lineSeg->from());
 
-        // Assign ownership of the segment to the BSP leaf.
-        Segment *seg = d->bspLeaf->newSegment(mapSide, hedge);
+        // Ownership of the segment will be assigned to the space partitioner.
+        Segment *seg = new Segment(mapSide, hedge);
+
+        // Attribute the half-edge to the segment.
+        hedge->setMapElement(seg);
 
         if(mapSide)
         {
@@ -459,7 +462,7 @@ Polygon *ConvexSubspace::buildLeafGeometry() const
             seg->back().setBack(seg);
         }
 
-        // Link the new half-edge with the line segment.
+        // Link the new segment with the line segment.
         lineSeg->setSegment(seg);
     }
 

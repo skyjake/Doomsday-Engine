@@ -41,13 +41,17 @@ DENG2_PIMPL(HEdge)
     /// Polygon geometry to which the half-edge is attributed (if any).
     Polygon *poly;
 
+    /// MapElement to which the half-edge is attributed (if any).
+    MapElement *mapElement;
+
     Instance(Public *i, Vertex &vertex)
         : Base(i),
           vertex(&vertex),
           twin(0),
           next(0),
           prev(0),
-          poly(0)
+          poly(0),
+          mapElement(0)
     {}
 
     inline HEdge **neighborAdr(ClockDirection direction) {
@@ -123,6 +127,16 @@ Polygon &HEdge::poly() const
 void HEdge::setPoly(Polygon const *newPolygon)
 {
     d->poly = const_cast<Polygon *>(newPolygon);
+}
+
+MapElement *HEdge::mapElement() const
+{
+    return d->mapElement;
+}
+
+void HEdge::setMapElement(MapElement *newMapElement)
+{
+    d->mapElement = newMapElement;
 }
 
 } // namespace de

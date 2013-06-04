@@ -233,19 +233,29 @@ void BspLeaf::setPoly(Polygon *newPolygon)
         // Attribute the new polygon to "this" BSP leaf.
         newPolygon->setBspLeaf(this);
 
+        // Rebuild the ordered segment list.
+        d->segments.clear();
+#ifdef DENG2_QT_4_7_OR_NEWER
+        d->segments.reserve(newPolygon->hedgeCount());
+#endif
+        HEdge *firstHEdge = newPolygon->firstHEdge();
+        HEdge *hedge = firstHEdge;
+        do
+        {
+            if(MapElement *elem = hedge->mapElement())
+            {
+                d->segments.append(elem->castTo<Segment>());
+            }
+        } while((hedge = &hedge->next()) != firstHEdge);
+
         // Update the world grid offset.
-        d->worldGridOffset = Vector2d(fmod(newPolygon->aaBox().minX, 64), fmod(newPolygon->aaBox().maxY, 64));
+        d->worldGridOffset = Vector2d(fmod(newPolygon->aaBox().minX, 64),
+                                      fmod(newPolygon->aaBox().maxY, 64));
     }
     else
     {
         d->worldGridOffset = Vector2d(0, 0);
     }
-}
-
-Segment *BspLeaf::newSegment(Line::Side *mapSide, HEdge *hedge)
-{
-    d->segments.prepend(new Segment(mapSide, hedge));
-    return d->segments.first();
 }
 
 BspLeaf::Segments const &BspLeaf::clockwiseSegments() const

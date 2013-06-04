@@ -23,6 +23,7 @@
 #include <de/Error>
 #include <de/Vector>
 
+#include "MapElement"
 #include "Vertex"
 
 namespace de {
@@ -194,6 +195,22 @@ public:
      * @see hasPoly(), poly()
      */
     void setPoly(Polygon const *newPolygon);
+
+    /**
+     * Returns a pointer to the map element attributed to the half-edge. May return
+     * @c 0 if not attributed.
+     */
+    MapElement *mapElement() const;
+
+    /**
+     * Change the MapElement to which the half-edge is attributed.
+     *
+     * @param newMapElement  New MapElement to attribute to the half-edge. Ownership
+     *                       is unaffected. Can be @c 0 (to clear the attribution).
+     *
+     * @see mapElement()
+     */
+    void setMapElement(MapElement *newMapElement);
 
 private:
     DENG2_PRIVATE(d)

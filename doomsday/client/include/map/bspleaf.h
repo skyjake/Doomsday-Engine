@@ -123,8 +123,6 @@ public:
      */
     void setPoly(de::Polygon *newPolygon);
 
-    Segment *newSegment(Line::Side *mapSide, de::HEdge *hedge);
-
     /**
      * Provides a clockwise ordered list of all the line segments which comprise
      * the convex geometry assigned to the BSP leaf.
