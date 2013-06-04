@@ -140,7 +140,6 @@ void GLTextComposer::setAtlas(Atlas &atlas)
 void GLTextComposer::setWrapping(FontLineWrapping const &wrappedLines)
 {
     d->wraps = &wrappedLines;
-    d->font = &d->wraps->font();
 }
 
 void GLTextComposer::setText(String const &text)
@@ -164,6 +163,13 @@ void GLTextComposer::setText(String const &text, Font::RichFormat const &format)
 
 bool GLTextComposer::update()
 {
+    DENG2_ASSERT(d->wraps != 0);
+    if(d->font != &d->wraps->font())
+    {
+        d->font = &d->wraps->font();
+        d->needRaster = true;
+    }
+
     if(d->needRaster)
     {
         d->releaseLines();
@@ -186,6 +192,9 @@ void GLTextComposer::makeVertices(Vertices &triStrip,
                                   Alignment const &lineAlign,
                                   Vector4f const &color)
 {
+    DENG2_ASSERT(d->wraps != 0);
+    DENG2_ASSERT(d->font != 0);
+
     Vector2i const contentSize(d->wraps->width(), d->wraps->totalHeightInPixels());
 
     // Apply alignment within the provided rectangle.

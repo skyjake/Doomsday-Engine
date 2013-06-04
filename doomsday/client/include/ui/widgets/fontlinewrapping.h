@@ -40,6 +40,7 @@ public:
 
     bool isEmpty() const;
     void clear();
+    void reset();
     void wrapTextToWidth(de::String const &text, int maxWidth);
     void wrapTextToWidth(de::String const &text, de::Font::RichFormat const &format, int maxWidth);
 

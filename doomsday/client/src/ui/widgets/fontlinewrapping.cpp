@@ -163,8 +163,13 @@ bool FontLineWrapping::isEmpty() const
 
 void FontLineWrapping::clear()
 {
-    d->lines.clear();
+    reset();
     d->text.clear();
+}
+
+void FontLineWrapping::reset()
+{
+    d->lines.clear();
     d->indent = 0;
 }
 
@@ -334,7 +339,7 @@ Vector2i FontLineWrapping::charTopLeftInPixels(int line, int charIndex)
                        de::min(span.range.end, span.range.start + charIndex));
 
     Vector2i cp;
-    cp.x = d->font->advanceWidth(d->rangeText(range));
+    cp.x = d->rangeAdvanceWidth(range);
     cp.y = line * d->font->lineSpacing().valuei();
 
     return cp;
