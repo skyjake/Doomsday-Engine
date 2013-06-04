@@ -298,8 +298,10 @@ bool TaskBarWidget::handleEvent(Event const &event)
 
             if(isOpen())
             {
+                // First press of Esc will just dismiss the console.
                 if(d->console->isLogOpen())
                 {
+                    d->console->commandLine().setText("");
                     d->console->closeLog();
                     root().setFocus(0);
                     return true;
