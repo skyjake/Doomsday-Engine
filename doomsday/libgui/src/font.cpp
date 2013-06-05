@@ -23,6 +23,10 @@
 #include <QImage>
 #include <QPainter>
 
+#if defined(WIN32) || defined(MACOSX)
+#  define LIBGUI_ACCURATE_TEXT_BOUNDS
+#endif
+
 namespace de {
 
 Font::RichFormat::RichFormat() : _style(0)
@@ -466,7 +470,13 @@ QImage Font::rasterize(String const &textLine,
         return QImage();
     }
 
+#ifdef LIBGUI_ACCURATE_TEXT_BOUNDS
     Rectanglei const bounds = measure(textLine, format);
+#else
+    Rectanglei const bounds(0, 0,
+                            advanceWidth(textLine, format),
+                            d->metrics->height());
+#endif
 
     QColor fgColor(foreground.x, foreground.y, foreground.z, foreground.w);
     QColor bgColor(background.x, background.y, background.z, background.w);

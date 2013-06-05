@@ -32,7 +32,7 @@ group {
 }
 
 group {
-    condition: Version.OS == 'unix'
+    condition: Version.OS == 'linux'
 
     font default {
         family: Liberation Sans
