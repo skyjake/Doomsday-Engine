@@ -471,13 +471,18 @@ QImage Font::rasterize(String const &textLine,
     QColor fgColor(foreground.x, foreground.y, foreground.z, foreground.w);
     QColor bgColor(background.x, background.y, background.z, background.w);
 
-    QImage img(QSize(bounds.width(),
+    QImage img(QSize(bounds.width() + 1,
                      de::max(duint(d->metrics->height()), bounds.height()) + 1),
                QImage::Format_ARGB32);
     img.fill(bgColor.rgba());
 
     QPainter painter(&img);
     painter.setCompositionMode(QPainter::CompositionMode_Source);
+
+/*#ifdef WIN32
+    painter.setRenderHint(QPainter::Antialiasing);
+    painter.setRenderHint(QPainter::TextAntialiasing);
+#endif*/
 
     int advance = 0;
     RichFormat::Iterator iter(format);

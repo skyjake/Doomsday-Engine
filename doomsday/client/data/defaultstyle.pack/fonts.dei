@@ -7,7 +7,7 @@
 script { import Version, gui }
 
 font default condition "Version.OS == 'windows'" {
-    family: Verdana
+    family: Segoe UI
     size: 12pt
     weight: normal
     style: normal
