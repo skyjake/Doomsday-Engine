@@ -130,6 +130,7 @@ GLTextComposer::GLTextComposer() : d(new Instance(this))
 void GLTextComposer::release()
 {
     d->releaseLines();
+    setState(false);
 }
 
 void GLTextComposer::setAtlas(Atlas &atlas)
@@ -152,6 +153,7 @@ void GLTextComposer::setStyledText(const String &styledText)
     d->format.clear();
     d->text = d->format.initFromStyledText(styledText);
     d->needRaster = true;
+    setState(false);
 }
 
 void GLTextComposer::setText(String const &text, Font::RichFormat const &format)
@@ -159,6 +161,7 @@ void GLTextComposer::setText(String const &text, Font::RichFormat const &format)
     d->text = text;
     d->format = format;
     d->needRaster = true; // Force a redo of everything.
+    setState(false);
 }
 
 bool GLTextComposer::update()
@@ -175,6 +178,9 @@ bool GLTextComposer::update()
         d->releaseLines();
         d->needRaster = false;
     }
+
+    setState(true);
+
     return d->allocLines();
 }
 
@@ -192,6 +198,8 @@ void GLTextComposer::makeVertices(Vertices &triStrip,
                                   Alignment const &lineAlign,
                                   Vector4f const &color)
 {
+    if(!isReady()) return;
+
     DENG2_ASSERT(d->wraps != 0);
     DENG2_ASSERT(d->font != 0);
 

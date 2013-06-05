@@ -34,7 +34,7 @@
  * Relies on a pre-existing FontLineWrapping where the text content has been
  * wrapped onto multiple lines and laid out appropriately.
  */
-class GLTextComposer
+class GLTextComposer : public de::Asset
 {
 public:
     typedef de::Vertex2TexRgba    Vertex;
@@ -53,7 +53,8 @@ public:
 
     /**
      * Makes sure all the lines are allocated on the atlas. After this all the
-     * allocated lines match the ones in the wrapping.
+     * allocated lines match the ones in the wrapping. This must be called
+     * before makeVertices().
      *
      * @return @c true, if any allocations were changed and makeVertices()
      * should be called again.
