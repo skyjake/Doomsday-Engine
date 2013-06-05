@@ -29,6 +29,7 @@
 namespace de {
 
 class Face;
+class Mesh;
 
 /**
  * Half-edge geometry.
@@ -51,7 +52,12 @@ public:
     DENG2_ERROR(MissingFaceError);
 
 public:
-    HEdge(Vertex &vertex);
+    HEdge(Mesh &mesh, Vertex &vertex);
+
+    /**
+     * Returns the mesh the half-edge is a part of.
+     */
+    Mesh &mesh() const;
 
     /**
      * Returns the vertex of the half-edge.

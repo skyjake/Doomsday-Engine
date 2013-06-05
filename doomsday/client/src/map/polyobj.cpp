@@ -87,6 +87,7 @@ polyobj_s::polyobj_s(de::Vector2d const &origin_)
     dest[0] = dest[1] = 0;
     angle = destAngle = 0;
     angleSpeed = 0;
+    _mesh = new de::Mesh;
     _lines = new Lines;
     _uniqueVertexes = new Vertexes;
     _originalPts = new VertexCoords;
@@ -101,21 +102,24 @@ polyobj_s::~polyobj_s()
 {
     foreach(Line *line, lines())
     {
-        Segment *segment = line->front().leftSegment();
-        delete segment->hedge().twinPtr();
-        delete &segment->hedge();
-        delete segment;
+        delete line->front().leftSegment();
     }
 
     delete static_cast<Lines *>(_lines);
     delete static_cast<Vertexes *>(_uniqueVertexes);
     delete static_cast<VertexCoords *>(_originalPts);
     delete static_cast<VertexCoords *>(_prevPts);
+    delete static_cast<de::Mesh *>(_mesh);
 }
 
 void Polyobj::setCollisionCallback(void (*func) (mobj_t *mobj, void *line, void *polyobj)) // static
 {
     collisionCallback = func;
+}
+
+de::Mesh &Polyobj::mesh() const
+{
+    return *static_cast<de::Mesh *>(_mesh);
 }
 
 bool Polyobj::isLinked()

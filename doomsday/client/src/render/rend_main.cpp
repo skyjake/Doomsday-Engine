@@ -1585,10 +1585,9 @@ static uint buildLeafPlaneGeometry(BspLeaf const &leaf, ClockDirection direction
     DENG_ASSERT(verts != 0);
 
     Face const &face = *leaf.poly().firstFace();
-    int const hedgeCount = leaf.poly().hedgeCount();
 
     HEdge *fanBase  = leaf.fanBase();
-    uint totalVerts = hedgeCount + (!fanBase? 2 : 0);
+    uint totalVerts = face.hedgeCount() + (!fanBase? 2 : 0);
 
     *verts = R_AllocRendVertices(totalVerts);
 

@@ -83,20 +83,20 @@ public:
     inline Vertex &to() const { return hedge().twin().vertex(); }
 
     /**
-     * Returns @c true iff a Polygon attributed to a BSP leaf is associated
+     * Returns @c true iff a polygon attributed to a BSP leaf is associated
      * with the line segment.
      *
-     * @see HEdge::hasPoly(), Polygon::hasBspLeaf()
+     * @see HEdge::hasFace(), Face::mapElement()
      */
     inline bool hasBspLeaf() const {
         return hedge().hasFace() && hedge().face().mapElement() != 0;
     }
 
     /**
-     * Convenience accessor which returns the BspLeaf attributed to the Polygon
+     * Convenience accessor which returns the BspLeaf attributed to the polygon
      * of which the line segment is a part.
      *
-     * @see hasBspLeaf(), Polygon::bspLeaf()
+     * @see hasBspLeaf(), Face::mapElement()
      */
     inline BspLeaf &bspLeaf() const {
         return *hedge().face().mapElement()->castTo<BspLeaf>();
@@ -104,7 +104,7 @@ public:
 
     /**
      * Convenience accessor which returns the Sector attributed to the BspLeaf
-     * attributed to the Polygon of which the line segment is a part.
+     * attributed to the polygon of which the line segment is a part.
      *
      * @see BspLeaf::sector()
      */
@@ -112,7 +112,7 @@ public:
 
     /**
      * Convenience accessor which returns a pointer to the Sector attributed to
-     * the BspLeaf attributed to the Polygon of which the line segment is a part.
+     * the BspLeaf attributed to the polygon of which the line segment is a part.
      *
      * @see hasBspLeaf(), BspLeaf::sectorPtr()
      */

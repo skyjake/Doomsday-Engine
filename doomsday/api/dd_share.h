@@ -715,6 +715,7 @@ enum { MX, MY, MZ };
     angle_t         angle; \
     angle_t         destAngle; /* Destination angle. */ \
     angle_t         angleSpeed; /* Rotation speed. */ \
+    void           *_mesh; \
     void           *_lines; \
     void           *_uniqueVertexes; \
     void           *_originalPts; /* Used as the base for the rotations. */ \

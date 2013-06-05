@@ -28,10 +28,10 @@
 
 #include <de/Log>
 
-#include "Polygon"
+#include "Mesh"
 #include "Polyobj"
-#include "Segment"
 #include "Sector"
+#include "Segment"
 #include "Vertex"
 
 #ifdef __CLIENT__
@@ -52,13 +52,13 @@ ddouble triangleArea(Vector2d const &v1, Vector2d const &v2, Vector2d const &v3)
 
 DENG2_PIMPL(BspLeaf)
 {
-    typedef QSet<Polygon *> Polygons;
+    typedef QSet<Mesh *> Meshes;
 
     /// Convex polygon geometry assigned to the BSP leaf (owned).
-    QScopedPointer<Polygon> polygon;
+    QScopedPointer<Mesh> polygon;
 
     /// Additional polygon geometries assigned to the BSP leaf (owned).
-    Polygons extraPolygons;
+    Meshes extraPolygons;
 
     /// Clockwise ordering of the line segments from the primary polygon.
     Segments clockwiseSegments;
@@ -137,10 +137,10 @@ DENG2_PIMPL(BspLeaf)
         if(polygon.isNull())
             return;
 
-#ifdef DENG2_QT_4_7_OR_NEWER
-        clockwiseSegments.reserve(polygon->hedgeCount());
-#endif
         Face const &face = *polygon->firstFace();
+#ifdef DENG2_QT_4_7_OR_NEWER
+        clockwiseSegments.reserve(face.hedgeCount());
+#endif
 
         HEdge *hedge = face.hedge();
         do
@@ -171,7 +171,7 @@ DENG2_PIMPL(BspLeaf)
                     << de::dintptr(&self)
                     << face.center().asText()
                     << sector->indexInArchive()
-                    << discontinuities << polygon->hedgeCount();
+                    << discontinuities << face.hedgeCount();
                 face.print();
             }
         }
@@ -192,7 +192,7 @@ DENG2_PIMPL(BspLeaf)
         int numSegments = clockwiseSegments.count();
         foreach(Polygon *poly, extraPolygons)
         {
-            numSegments += poly->hedgeCount();
+            numSegments += poly->firstFace()->hedgeCount();
         }
 #ifdef DENG2_QT_4_7_OR_NEWER
         allSegments.reserve(numSegments);
@@ -243,7 +243,7 @@ DENG2_PIMPL(BspLeaf)
 
         fanBase = firstNode;
 
-        if(polygon->hedgeCount() > 3)
+        if(polygon->firstFace()->hedgeCount() > 3)
         {
             // Splines with higher vertex counts demand checking.
             Vertex const *base, *a, *b;
@@ -311,7 +311,7 @@ bool BspLeaf::hasPoly() const
     return !d->polygon.isNull();
 }
 
-Polygon &BspLeaf::poly()
+Mesh &BspLeaf::poly()
 {
     if(!d->polygon.isNull())
     {
@@ -321,14 +321,14 @@ Polygon &BspLeaf::poly()
     throw MissingPolygonError("BspLeaf::poly", "No polygon is assigned");
 }
 
-Polygon const &BspLeaf::poly() const
+Mesh const &BspLeaf::poly() const
 {
-    return const_cast<Polygon const &>(const_cast<BspLeaf *>(this)->poly());
+    return const_cast<Mesh const &>(const_cast<BspLeaf *>(this)->poly());
 }
 
-void BspLeaf::assignPoly(Polygon *newPoly)
+void BspLeaf::assignPoly(Mesh *newPoly)
 {
-    if(newPoly && newPoly->hedgeCount() < 3 /*!newPoly->firstFace()->isConvex()*/)
+    if(newPoly && !newPoly->firstFace()->isConvex())
     {
         /// @throw InvalidPolygonError Attempted to assign a non-convex polygon.
         throw InvalidPolygonError("BspLeaf::setPoly", "Non-convex polygons cannot be assigned");
@@ -356,7 +356,7 @@ void BspLeaf::assignPoly(Polygon *newPoly)
     }
 }
 
-void BspLeaf::assignExtraPoly(de::Polygon *newPoly)
+void BspLeaf::assignExtraPoly(de::Mesh *newPoly)
 {
     int const sizeBefore = d->extraPolygons.size();
 
@@ -459,7 +459,7 @@ int BspLeaf::numFanVertices() const
 {
     // Are we to use one of the half-edge vertexes as the fan base?
     if(!hasPoly()) return 0;
-    return d->polygon->hedgeCount() + (fanBase()? 0 : 2);
+    return d->polygon->firstFace()->hedgeCount() + (fanBase()? 0 : 2);
 }
 
 BiasSurface &BspLeaf::biasSurfaceForGeometryGroup(int groupId)

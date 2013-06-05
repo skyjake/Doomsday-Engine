@@ -805,12 +805,12 @@ boolean MPE_End()
         // Create a segment for each line of this polyobj.
         foreach(Line *line, polyobj->lines())
         {
-            // Polyobj has ownership of the half-edges.
-            HEdge *hedge = new HEdge(line->from());
+            HEdge *hedge = polyobj->mesh().newHEdge(line->from());
 
-            hedge->setTwin(new HEdge(line->to()));
+            hedge->setTwin(polyobj->mesh().newHEdge(line->to()));
             hedge->twin().setTwin(hedge);
 
+            // Polyobj has ownership of the line segments.
             Segment *segment = new Segment(&line->front(), hedge);
             segment->setLength(line->length());
 

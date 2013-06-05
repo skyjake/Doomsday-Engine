@@ -206,6 +206,7 @@ DENG_HEADERS += \
     $$SRC/include/map/line.h \
     $$SRC/include/map/lineowner.h \
     $$SRC/include/map/linesighttest.h \
+    $$SRC/include/map/mesh.h \
     $$SRC/include/map/p_dmu.h \
     $$SRC/include/map/p_intercept.h \
     $$SRC/include/map/p_mapdata.h \
@@ -216,7 +217,6 @@ DENG_HEADERS += \
     $$SRC/include/map/p_players.h \
     $$SRC/include/map/p_ticker.h \
     $$SRC/include/map/plane.h \
-    $$SRC/include/map/polygon.h \
     $$SRC/include/map/polyobj.h \
     $$SRC/include/map/propertyvalue.h \
     $$SRC/include/map/r_world.h \
@@ -380,6 +380,7 @@ SOURCES += \
     $$SRC/src/map/line.cpp \
     $$SRC/src/map/linesighttest.cpp \
     $$SRC/src/map/mapelement.cpp \
+    $$SRC/src/map/mesh.cpp \
     $$SRC/src/map/p_data.cpp \
     $$SRC/src/map/p_dmu.cpp \
     $$SRC/src/map/p_intercept.cpp \
@@ -390,7 +391,6 @@ SOURCES += \
     $$SRC/src/map/p_think.cpp \
     $$SRC/src/map/p_ticker.cpp \
     $$SRC/src/map/plane.cpp \
-    $$SRC/src/map/polygon.cpp \
     $$SRC/src/map/polyobj.cpp \
     $$SRC/src/map/propertyvalue.cpp \
     $$SRC/src/map/r_world.cpp \

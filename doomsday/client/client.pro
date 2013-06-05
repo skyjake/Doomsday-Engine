@@ -119,8 +119,8 @@ DENG_HEADERS += \
     include/HEdge \
     include/IHPlane \
     include/Line \
+    include/Mesh \
     include/Plane \
-    include/Polygon \
     include/Polyobj \
     include/WallEdge \
     include/WallSpec \
@@ -253,6 +253,7 @@ DENG_HEADERS += \
     include/map/lineowner.h \
     include/map/linesighttest.h \
     include/map/mapelement.h \
+    include/map/mesh.h \
     include/map/p_dmu.h \
     include/map/p_intercept.h \
     include/map/p_mapdata.h \
@@ -264,7 +265,6 @@ DENG_HEADERS += \
     include/map/p_players.h \
     include/map/p_ticker.h \
     include/map/plane.h \
-    include/map/polygon.h \
     include/map/polyobj.h \
     include/map/propertyvalue.h \
     include/map/r_world.h \
@@ -531,6 +531,7 @@ SOURCES += \
     src/map/line.cpp \
     src/map/linesighttest.cpp \
     src/map/mapelement.cpp \
+    src/map/mesh.cpp \
     src/map/p_data.cpp \
     src/map/p_dmu.cpp \
     src/map/p_intercept.cpp \
@@ -542,7 +543,6 @@ SOURCES += \
     src/map/p_think.cpp \
     src/map/p_ticker.cpp \
     src/map/plane.cpp \
-    src/map/polygon.cpp \
     src/map/polyobj.cpp \
     src/map/propertyvalue.cpp \
     src/map/r_world.cpp \

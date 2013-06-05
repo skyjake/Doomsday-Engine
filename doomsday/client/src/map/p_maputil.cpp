@@ -97,7 +97,7 @@ bool P_IsPointInBspLeaf(Vector2d const &point, BspLeaf const &bspLeaf)
     if(bspLeaf.isDegenerate())
         return false; // Obviously not.
 
-    de::Polygon const &poly = bspLeaf.poly();
+    de::Mesh const &poly = bspLeaf.poly();
     HEdge const *firstHEdge = poly.firstFace()->hedge();
 
     HEdge const *hedge = firstHEdge;

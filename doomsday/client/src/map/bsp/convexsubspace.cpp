@@ -27,7 +27,7 @@
 #include "BspLeaf"
 #include "HEdge"
 #include "Line"
-#include "Polygon"
+#include "Mesh"
 #include "Sector"
 #include "Segment"
 #include "map/bsp/linesegment.h"
@@ -415,15 +415,15 @@ void ConvexSubspace::buildGeometry(BspLeaf &leaf) const
 
         if(!conty.discordSegs.isEmpty())
         {
-            // Construct a new polygon and set of half-edges.
-            Polygon *poly = new Polygon;
-            Face *face = poly->firstFace();
+            // Construct a new mesh and set of half-edges.
+            Mesh *mesh = new Mesh;
+            Face *face = mesh->newFace();
 
             foreach(OrderedSegment const *oseg, conty.discordSegs)
             {
                 LineSegment::Side *lineSeg = oseg->segment;
                 Line::Side *mapSide = lineSeg->mapSidePtr();
-                HEdge *hedge = new HEdge(lineSeg->from());
+                HEdge *hedge = mesh->newHEdge(lineSeg->from());
 
                 // Ownership of the segment will be assigned to the space partitioner.
                 Segment *seg = new Segment(mapSide, hedge);
@@ -442,7 +442,7 @@ void ConvexSubspace::buildGeometry(BspLeaf &leaf) const
                                         int( lineSeg->to().origin().x - lineSeg->from().origin().x )) << FRACBITS);
 
                 // Link the new half-edge for this line segment to the head of
-                // the list in the new polygon geometry.
+                // the list in the new face geometry.
                 hedge->setNext(face->hedge());
                 face->setHEdge(hedge);
 
@@ -464,10 +464,11 @@ void ConvexSubspace::buildGeometry(BspLeaf &leaf) const
             HEdge *hedge = face->hedge();
             forever
             {
-                // There is now one more half-edge in this polygon.
-                poly->_hedgeCount += 1;
+                // There is now one more half-edge in this face.
+                /// @todo Face should encapsulate.
+                face->_hedgeCount += 1;
 
-                // Attribute the half edge to the Face.
+                // Attribute the half-edge to the Face.
                 hedge->setFace(face);
 
                 if(hedge->hasNext())
@@ -489,19 +490,19 @@ void ConvexSubspace::buildGeometry(BspLeaf &leaf) const
             face->updateAABox();
             face->updateCenter();
 
-            // Attribute the new polygon to the BSP leaf.
-            leaf.assignExtraPoly(poly);
+            // Assign the mesh to the BSP leaf (takes ownership).
+            leaf.assignExtraPoly(mesh);
         }
     }
 
-    // Choose a sector to attribute to any BSP leaf we might produce.
+    // Determine which sector to attribute to the BSP leaf.
     qSort(d->continuities.begin(), d->continuities.end());
-    Sector *sector = d->continuities.first().sector;
+    leaf.setSector(d->continuities.first().sector);
 
 /*#ifdef DENG_DEBUG
     LOG_INFO("\nConvexSubspace %s BSP sector:%i (%i continuities)")
         << d->findCenter().asText()
-        << (sector? sector->indexInArchive() : -1)
+        << (leaf.hasSector()? leaf.sector().indexInArchive() : -1)
         << d->continuities.count();
 
     foreach(Continuity const &conty, d->continuities)
@@ -512,9 +513,9 @@ void ConvexSubspace::buildGeometry(BspLeaf &leaf) const
 
     if(!isDegenerate)
     {
-        // Construct the polygon and ring of half-edges.
-        Polygon *poly = new Polygon;
-        Face *face = poly->firstFace();
+        // Construct a new mesh and ring of half-edges.
+        Mesh *mesh = new Mesh;
+        Face *face = mesh->newFace();
 
         // Iterate backwards so that the half-edges can be linked clockwise.
         for(int i = d->orderedSegments.size(); i-- > 0; )
@@ -525,7 +526,7 @@ void ConvexSubspace::buildGeometry(BspLeaf &leaf) const
                 continue;
 
             Line::Side *mapSide = lineSeg->mapSidePtr();
-            HEdge *hedge = new HEdge(lineSeg->from());
+            HEdge *hedge = mesh->newHEdge(lineSeg->from());
 
             // Ownership of the segment will be assigned to the space partitioner.
             Segment *seg = new Segment(mapSide, hedge);
@@ -544,7 +545,7 @@ void ConvexSubspace::buildGeometry(BspLeaf &leaf) const
                                     int( lineSeg->to().origin().x - lineSeg->from().origin().x )) << FRACBITS);
 
             // Link the new half-edge for this line segment to the head of
-            // the list in the new face geometry.
+            // the list in the new Face geometry.
             hedge->setNext(face->hedge());
             face->setHEdge(hedge);
 
@@ -566,10 +567,11 @@ void ConvexSubspace::buildGeometry(BspLeaf &leaf) const
         HEdge *hedge = face->hedge();
         forever
         {
-            // There is now one more half-edge in this polygon.
-            poly->_hedgeCount += 1;
+            // There is now one more half-edge in this face.
+            /// @todo Face should encapsulate.
+            face->_hedgeCount += 1;
 
-            // Attribute the half edge to the Face.
+            // Attribute the half-edge to the Face.
             hedge->setFace(face);
 
             if(hedge->hasNext())
@@ -591,17 +593,15 @@ void ConvexSubspace::buildGeometry(BspLeaf &leaf) const
         face->updateAABox();
         face->updateCenter();
 
-        // Assign the polygon geometry to the BSP leaf (takes ownership).
-        leaf.assignPoly(poly);
+        // Assign the mesh to the BSP leaf (takes ownership).
+        leaf.assignPoly(mesh);
     }
-
-    // Determine which sector to attribute to the BSP leaf.
-    leaf.setSector(sector);
 
     if(!leaf.hasSector())
     {
         LOG_WARNING("BspLeaf %p is degenerate/orphan (%d half-edges).")
-            << de::dintptr(&leaf) << (leaf.hasPoly()? leaf.poly().hedgeCount() : 0);
+            << de::dintptr(&leaf)
+            << (leaf.hasPoly()? leaf.poly().firstFace()->hedgeCount() : 0);
     }
 }
 

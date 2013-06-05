@@ -29,7 +29,7 @@
 #include "MapElement"
 #include "HEdge"
 #include "Line"
-#include "Polygon"
+#include "Mesh"
 
 class Sector;
 class Segment;
@@ -42,7 +42,7 @@ struct ShadowLink;
 
 /**
  * Map data element describing a @em leaf in a binary space partition tree (BSP)
- * (a two dimensional convex polygon).
+ * (a two dimensioned convex polygon).
  *
  * @see http://en.wikipedia.org/wiki/Binary_space_partitioning
  *
@@ -95,24 +95,24 @@ public:
     inline bool isDegenerate() const { return !hasPoly(); }
 
     /**
-     * Determines whether a convex Polygon geometry is assigned to the BSP leaf.
+     * Determines whether a convex polygon geometry is assigned to the BSP leaf.
      *
      * @see poly(), setPoly()
      */
     bool hasPoly() const;
 
     /**
-     * Provides access to the convex Polygon geometry assigned to the BSP leaf.
+     * Provides access to the convex polygon geometry assigned to the BSP leaf.
      *
      * @see hasPoly(), assignPoly()
      */
-    de::Polygon &poly();
+    de::Mesh &poly();
 
     /// @copydoc poly()
-    de::Polygon const &poly() const;
+    de::Mesh const &poly() const;
 
     /**
-     * Change the Polygon geometry assigned to the BSP leaf. Before the geometry
+     * Change the polygon geometry assigned to the BSP leaf. Before the geometry
      * is accepted it is first conformance tested to ensure that it represents
      * a valid, simple convex polygon.
      *
@@ -122,7 +122,7 @@ public:
      *
      * @see hasPoly(), poly()
      */
-    void assignPoly(de::Polygon *polygon);
+    void assignPoly(de::Mesh *polygon);
 
     /**
      * Assign an additional Polygon geometry to the BSP leaf.
@@ -130,7 +130,7 @@ public:
      * @param polygon  New polygon to be assigned to the BSP leaf. Ownership
      *                 of the polygon is given to the BspLeaf.
      */
-    void assignExtraPoly(de::Polygon *polygon);
+    void assignExtraPoly(de::Mesh *polygon);
 
     /**
      * Provides a clockwise ordered list of all the line segments which comprise
@@ -178,7 +178,7 @@ public:
      * Determines whether the BSP leaf has a positive world volume. For this to
      * be true the following criteria must be met:
      *
-     * - The Polygon geometry is @em not degenerate (see @ref isDegenerate()).
+     * - The polygon geometry is @em not degenerate (see @ref isDegenerate()).
      * - A sector is attributed (see @ref hasSector())
      * - The height of floor is lower than that of the ceiling plane for the
      *   attributed sector.

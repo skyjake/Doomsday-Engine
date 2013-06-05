@@ -29,7 +29,7 @@
 namespace de {
 
 class HEdge;
-class Polygon;
+class Mesh;
 
 /**
  * Face geometry.
@@ -42,12 +42,16 @@ class Face
     DENG2_NO_ASSIGN(Face)
 
 public:
-    explicit Face(Polygon &poly);
+    /// Total number of half-edge's in the face geometry.
+    int _hedgeCount;
+
+public:
+    explicit Face(Mesh &mesh);
 
     /**
-     * Returns the Polygon mesh the face is a part of.
+     * Returns the mesh the face is a part of.
      */
-    Polygon &poly() const;
+    Mesh &mesh() const;
 
     /**
      * Returns a pointer to the first half-edge in the face geometry (note that
@@ -55,6 +59,11 @@ public:
      * no half-edge linked to the face.
      */
     HEdge *hedge() const;
+
+    /**
+     * Total number of half-edges in the face geometry.
+     */
+    int hedgeCount() const;
 
     /**
      * Change the first half-edge in the face geometry.

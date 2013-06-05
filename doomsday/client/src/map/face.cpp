@@ -22,7 +22,7 @@
 #include <de/Log>
 
 #include "HEdge"
-#include "Polygon"
+#include "Mesh"
 
 #include "Face"
 
@@ -30,8 +30,8 @@ namespace de {
 
 DENG2_PIMPL_NOREF(Face)
 {
-    /// Polygon mesh which owns the face.
-    Polygon *poly;
+    /// Mesh which owns the face.
+    Mesh *mesh;
 
     /// First half-edge in the face geometry.
     HEdge *hedge;
@@ -45,21 +45,21 @@ DENG2_PIMPL_NOREF(Face)
     /// Center of vertices.
     Vector2d center;
 
-    Instance(Polygon &poly)
-        : poly(&poly),
+    Instance(Mesh &mesh)
+        : mesh(&mesh),
           hedge(0),
           mapElement(0)
     {}
 };
 
-Face::Face(Polygon &poly)
-    : d(new Instance(poly))
+Face::Face(Mesh &mesh)
+    : _hedgeCount(0), d(new Instance(mesh))
 {}
 
-Polygon &Face::poly() const
+Mesh &Face::mesh() const
 {
-    DENG_ASSERT(d->poly != 0);
-    return *d->poly;
+    DENG_ASSERT(d->mesh != 0);
+    return *d->mesh;
 }
 
 HEdge *Face::hedge() const
@@ -70,6 +70,11 @@ HEdge *Face::hedge() const
 void Face::setHEdge(HEdge *newHEdge)
 {
     d->hedge = newHEdge;
+}
+
+int Face::hedgeCount() const
+{
+    return _hedgeCount;
 }
 
 AABoxd const &Face::aaBox() const
@@ -106,7 +111,7 @@ void Face::updateCenter()
 bool Face::isConvex() const
 {
     /// @todo Implement full conformance checking.
-    return true; //_hedgeCount > 2;
+    return _hedgeCount > 2;
 }
 
 MapElement *Face::mapElement() const

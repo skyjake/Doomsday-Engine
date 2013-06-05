@@ -1450,7 +1450,7 @@ DENG2_PIMPL(Partitioner)
                 HEdge *hedge = &seg->segment().hedge();
                 DENG_ASSERT(!hedge->hasTwin());
 
-                hedge->setTwin(new HEdge(seg->back().from()));
+                hedge->setTwin(hedge->poly().newHEdge(seg->back().from()));
                 hedge->twin().setTwin(hedge);
             }
         }

@@ -27,6 +27,8 @@
 
 #include "dd_share.h"
 
+#include "Mesh"
+
 class BspLeaf;
 class Line;
 class Vertex;
@@ -48,16 +50,21 @@ public:
     typedef QList<Line *> Lines;
     typedef QList<Vertex *> Vertexes;
 
-public:
     static void setCollisionCallback(void (*func) (struct mobj_s *mobj, void *line, void *polyobj));
 
 public:
     DD_BASE_POLYOBJ_ELEMENTS()
 
+public:
     polyobj_s(de::Vector2d const &origin = de::Vector2d(0, 0));
 
     /// @note: Does nothing about the user data section.
     ~polyobj_s();
+
+    /**
+     * Provides access to the mesh owned by the polyobj.
+     */
+    de::Mesh &mesh() const;
 
     /**
      * Returns @c true if the polyobj is presently linked in the owning GameMap.

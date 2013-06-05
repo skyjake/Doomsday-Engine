@@ -31,7 +31,7 @@ class Sector;
 
 namespace de {
 
-class Polygon;
+class Mesh;
 
 namespace bsp {
 

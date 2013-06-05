@@ -17,7 +17,7 @@
  * 02110-1301 USA</small>
  */
 
-#include "Polygon"
+#include "Mesh"
 #include "Vertex"
 
 #include "map/hedge.h"
@@ -26,6 +26,9 @@ namespace de {
 
 DENG2_PIMPL(HEdge)
 {
+    /// Mesh owner of the half-edge.
+    Mesh *mesh;
+
     /// Vertex of the half-edge.
     Vertex *vertex;
 
@@ -44,8 +47,9 @@ DENG2_PIMPL(HEdge)
     /// MapElement to which the half-edge is attributed (if any).
     MapElement *mapElement;
 
-    Instance(Public *i, Vertex &vertex)
+    Instance(Public *i, Mesh &mesh, Vertex &vertex)
         : Base(i),
+          mesh(&mesh),
           vertex(&vertex),
           twin(0),
           next(0),
@@ -59,9 +63,15 @@ DENG2_PIMPL(HEdge)
     }
 };
 
-HEdge::HEdge(Vertex &vertex)
-    : d(new Instance(this, vertex))
+HEdge::HEdge(Mesh &mesh, Vertex &vertex)
+    : d(new Instance(this, mesh, vertex))
 {}
+
+Mesh &HEdge::mesh() const
+{
+    DENG_ASSERT(d->mesh != 0);
+    return *d->mesh;
+}
 
 Vertex &HEdge::vertex() const
 {
