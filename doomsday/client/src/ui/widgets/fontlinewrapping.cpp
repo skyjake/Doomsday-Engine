@@ -219,8 +219,7 @@ void FontLineWrapping::wrapTextToWidth(String const &text, Font::RichFormat cons
         // Newlines always cause a wrap.
         int wrapPosMax;
         int end = d->findMaxWrap(begin, availWidth, wrapPosMax);
-
-        DENG2_ASSERT(end != text.size());
+        if(end <= begin) break;
 
         if(text.at(end) == NEWLINE)
         {
@@ -241,6 +240,8 @@ void FontLineWrapping::wrapTextToWidth(String const &text, Font::RichFormat cons
                 }
             }
 
+            DENG2_ASSERT(end > begin);
+
             // If there is only whitespace remaining on the line,
             // just use the max wrap -- blank lines are not pretty.
             if(d->isAllSpace(Rangei(begin, end)))
@@ -254,8 +255,11 @@ void FontLineWrapping::wrapTextToWidth(String const &text, Font::RichFormat cons
         }
     }
 
-    // Mark the final line.
-    d->lines.last().line.isFinal = true;
+    if(!d->lines.isEmpty())
+    {
+        // Mark the final line.
+        d->lines.last().line.isFinal = true;
+    }
 }
 
 String const &FontLineWrapping::text() const
