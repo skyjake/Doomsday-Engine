@@ -28,7 +28,7 @@
 
 namespace de {
 
-class Polygon;
+class Face;
 
 /**
  * Half-edge geometry.
@@ -47,8 +47,8 @@ public:
     /// Required neighbor half-edge is missing. @ingroup errors
     DENG2_ERROR(MissingNeighborError);
 
-    /// Required polygon is missing. @ingroup errors
-    DENG2_ERROR(MissingPolygonError);
+    /// Required face is missing. @ingroup errors
+    DENG2_ERROR(MissingFaceError);
 
 public:
     HEdge(Vertex &vertex);
@@ -175,26 +175,26 @@ public:
     void setTwin(HEdge const *newTwin);
 
     /**
-     * Returns @c true iff the half-edge is part of some Polygon.
+     * Returns @c true iff the half-edge is part of some Face geometry.
      */
-    bool hasPoly() const;
+    bool hasFace() const;
 
     /**
-     * Returns the Polygon the half-edge is a part of.
+     * Returns the Face geometry the half-edge is a part of.
      *
-     * @see hasPoly()
+     * @see hasFace()
      */
-    Polygon &poly() const;
+    Face &face() const;
 
     /**
-     * Change the Polygon to which the half-edge is attributed.
+     * Change the Face to which the half-edge is attributed.
      *
-     * @param newPolygon  New Polygon to attribute to the half-edge. Ownership is
-     *                    unaffected. Can be @c 0 (to clear the attribution).
+     * @param newFace  New Face to attribute to the half-edge. Ownership is
+     *                 unaffected. Can be @c 0 (to clear the attribution).
      *
-     * @see hasPoly(), poly()
+     * @see hasFace(), face()
      */
-    void setPoly(Polygon const *newPolygon);
+    void setFace(Face const *newFace);
 
     /**
      * Returns a pointer to the map element attributed to the half-edge. May return

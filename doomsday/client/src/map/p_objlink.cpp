@@ -351,11 +351,13 @@ static void processSegment(Segment *seg, void *parameters)
         return; // Not eligible for spreading.
     }
 
+    AABoxd const &backLeafAABox = backLeaf.poly().firstFace()->aaBox();
+
     // Is the leaf on the back side outside the origin's AABB?
-    if(backLeaf.poly().aaBox().maxX <= parms->box[BOXLEFT]   ||
-       backLeaf.poly().aaBox().minX >= parms->box[BOXRIGHT]  ||
-       backLeaf.poly().aaBox().maxY <= parms->box[BOXBOTTOM] ||
-       backLeaf.poly().aaBox().minY >= parms->box[BOXTOP])
+    if(backLeafAABox.maxX <= parms->box[BOXLEFT]   ||
+       backLeafAABox.minX >= parms->box[BOXRIGHT]  ||
+       backLeafAABox.maxY <= parms->box[BOXBOTTOM] ||
+       backLeafAABox.minY >= parms->box[BOXTOP])
         return;
 
     // Too far from the object?
@@ -515,13 +517,15 @@ static void spreadContactsForBspLeaf(objlinkblockmap_t &obm, BspLeaf const &bspL
 {
     DENG_ASSERT(!bspLeaf.isDegenerate());
 
+    AABoxd const &leafAABox = bspLeaf.poly().firstFace()->aaBox();
+
     uint minBlock[2];
-    toObjlinkBlockmapCell(obm, minBlock, bspLeaf.poly().aaBox().minX - maxRadius,
-                                         bspLeaf.poly().aaBox().minY - maxRadius);
+    toObjlinkBlockmapCell(obm, minBlock, leafAABox.minX - maxRadius,
+                                         leafAABox.minY - maxRadius);
 
     uint maxBlock[2];
-    toObjlinkBlockmapCell(obm, maxBlock, bspLeaf.poly().aaBox().maxX + maxRadius,
-                                         bspLeaf.poly().aaBox().maxY + maxRadius);
+    toObjlinkBlockmapCell(obm, maxBlock, leafAABox.maxX + maxRadius,
+                                         leafAABox.maxY + maxRadius);
 
     for(uint y = minBlock[1]; y <= maxBlock[1]; ++y)
     for(uint x = minBlock[0]; x <= maxBlock[0]; ++x)

@@ -24,16 +24,16 @@
 #include <de/Error>
 
 #include "MapElement"
+#include "BspLeaf"
+#include "Face"
 #include "HEdge"
 #include "Line"
-#include "Polygon"
 #include "Vertex"
 
 #ifdef __CLIENT__
 struct BiasSurface;
 #endif
 
-class BspLeaf;
 class Sector;
 
 /**
@@ -89,7 +89,7 @@ public:
      * @see HEdge::hasPoly(), Polygon::hasBspLeaf()
      */
     inline bool hasBspLeaf() const {
-        return hedge().hasPoly() && hedge().poly().hasBspLeaf();
+        return hedge().hasFace() && hedge().face().mapElement() != 0;
     }
 
     /**
@@ -98,7 +98,9 @@ public:
      *
      * @see hasBspLeaf(), Polygon::bspLeaf()
      */
-    inline BspLeaf &bspLeaf() const { return hedge().poly().bspLeaf(); }
+    inline BspLeaf &bspLeaf() const {
+        return *hedge().face().mapElement()->castTo<BspLeaf>();
+    }
 
     /**
      * Convenience accessor which returns the Sector attributed to the BspLeaf

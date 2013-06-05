@@ -967,7 +967,7 @@ int C_CheckBspLeaf(BspLeaf &leaf)
 
     // Do we need to resize the angle list buffer?
     de::Polygon const &poly = leaf.poly();
-    HEdge const *firstHEdge = poly.firstHEdge();
+    HEdge const *firstHEdge = poly.firstFace()->hedge();
     int const hedgeCount    = poly.hedgeCount();
 
     if(hedgeCount > anglistSize)

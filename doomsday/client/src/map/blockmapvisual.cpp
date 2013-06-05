@@ -80,10 +80,9 @@ static int rendBspLeaf(BspLeaf *bspLeaf, void * /*parameters*/)
         float length, dx, dy, normal[2], unit[2];
         vec2f_t start, end;
 
-        de::Polygon const &poly = bspLeaf->poly();
-        HEdge *firstHEdge = poly.firstHEdge();
+        Face const &face = *bspLeaf->poly().firstFace();
 
-        HEdge *hedge = firstHEdge;
+        HEdge *hedge = face.hedge();
         do
         {
             V2f_Set(start, hedge->origin().x, hedge->origin().y);
@@ -127,9 +126,9 @@ static int rendBspLeaf(BspLeaf *bspLeaf, void * /*parameters*/)
                 GL_BlendMode(BM_NORMAL);
             }
 
-            // Draw a bounding box for the leaf's geometry.
-            V2f_Set(start, bspLeaf->poly().aaBox().minX, bspLeaf->poly().aaBox().minY);
-            V2f_Set(end,   bspLeaf->poly().aaBox().maxX, bspLeaf->poly().aaBox().maxY);
+            // Draw a bounding box for the leaf's face geometry.
+            V2f_Set(start, face.aaBox().minX, face.aaBox().minY);
+            V2f_Set(end,   face.aaBox().maxX, face.aaBox().maxY);
 
             glBegin(GL_LINES);
                 glVertex2f(start[VX], start[VY]);
@@ -142,7 +141,7 @@ static int rendBspLeaf(BspLeaf *bspLeaf, void * /*parameters*/)
                 glVertex2f(start[VX], start[VY]);
             glEnd();
 
-        } while((hedge = &hedge->next()) != firstHEdge);
+        } while((hedge = &hedge->next()) != face.hedge());
 
         bspLeaf->setValidCount(validCount);
     }

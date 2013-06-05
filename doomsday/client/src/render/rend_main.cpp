@@ -1584,22 +1584,23 @@ static uint buildLeafPlaneGeometry(BspLeaf const &leaf, ClockDirection direction
     DENG_ASSERT(!leaf.isDegenerate());
     DENG_ASSERT(verts != 0);
 
-    de::Polygon const &poly = leaf.poly();
-    HEdge *firstHEdge       = poly.firstHEdge();
-    int const hedgeCount    = poly.hedgeCount();
+    Face const &face = *leaf.poly().firstFace();
+    int const hedgeCount = leaf.poly().hedgeCount();
 
     HEdge *fanBase  = leaf.fanBase();
-    uint totalVerts = hedgeCount + (!fanBase? 2 : 0);    *verts = R_AllocRendVertices(totalVerts);
+    uint totalVerts = hedgeCount + (!fanBase? 2 : 0);
+
+    *verts = R_AllocRendVertices(totalVerts);
 
     int n = 0;
     if(!fanBase)
     {
-        V3f_Set((*verts)[n].pos, poly.center().x, poly.center().y, height);
+        V3f_Set((*verts)[n].pos, face.center().x, face.center().y, height);
         n++;
     }
 
     // Add the vertices for each hedge.
-    HEdge *baseNode = fanBase? fanBase : firstHEdge;
+    HEdge *baseNode = fanBase? fanBase : face.hedge();
     HEdge *node = baseNode;
     do
     {
@@ -1610,7 +1611,7 @@ static uint buildLeafPlaneGeometry(BspLeaf const &leaf, ClockDirection direction
     // The last vertex is always equal to the first.
     if(!fanBase)
     {
-        V3f_Set((*verts)[n].pos, firstHEdge->origin().x, firstHEdge->origin().y, height);
+        V3f_Set((*verts)[n].pos, face.hedge()->origin().x, face.hedge()->origin().y, height);
     }
 
     if(vertsSize) *vertsSize = totalVerts;
@@ -1622,9 +1623,11 @@ static void writeLeafPlane(Plane &plane)
     BspLeaf *leaf = currentBspLeaf;
     DENG_ASSERT(!isNullLeaf(leaf));
 
+    Face const &face = *leaf->poly().firstFace();
+
     Surface const &surface = plane.surface();
-    Vector3f eyeToSurface(vOrigin[VX] - leaf->poly().center().x,
-                          vOrigin[VZ] - leaf->poly().center().y,
+    Vector3f eyeToSurface(vOrigin[VX] - face.center().x,
+                          vOrigin[VZ] - face.center().y,
                           vOrigin[VY] - plane.visHeight());
 
     // Skip planes facing away from the viewer.
@@ -1651,18 +1654,18 @@ static void writeLeafPlane(Plane &plane)
     // Add the Y offset to orient the Y flipped material.
     /// @todo fixme: What is this meant to do? -ds
     if(plane.type() == Plane::Ceiling)
-        materialOrigin.y -= leaf->poly().aaBox().maxY - leaf->poly().aaBox().minY;
+        materialOrigin.y -= face.aaBox().maxY - face.aaBox().minY;
     materialOrigin.y = -materialOrigin.y;
 
     Vector2f materialScale((surface.flags() & DDSUF_MATERIAL_FLIPH)? -1 : 1,
                            (surface.flags() & DDSUF_MATERIAL_FLIPV)? -1 : 1);
 
     // Set the texture origin, Y is flipped for the ceiling.
-    Vector3d texTL(leaf->poly().aaBox().minX,
-                   leaf->poly().aaBox().arvec2[plane.type() == Plane::Floor? 1 : 0][VY],
+    Vector3d texTL(face.aaBox().minX,
+                   face.aaBox().arvec2[plane.type() == Plane::Floor? 1 : 0][VY],
                    plane.visHeight());
-    Vector3d texBR(leaf->poly().aaBox().maxX,
-                   leaf->poly().aaBox().arvec2[plane.type() == Plane::Floor? 0 : 1][VY],
+    Vector3d texBR(face.aaBox().maxX,
+                   face.aaBox().arvec2[plane.type() == Plane::Floor? 0 : 1][VY],
                    plane.visHeight());
 
     rendworldpoly_params_t parm; zap(parm);
@@ -2973,7 +2976,7 @@ static void Rend_DrawSurfaceVectors()
 
         foreach(Plane *plane, sector.planes())
         {
-            origin = Vector3d(bspLeaf->poly().center(), plane->visHeight());
+            origin = Vector3d(bspLeaf->poly().firstFace()->center(), plane->visHeight());
 
             if(plane->type() != Plane::Middle && plane->surface().hasSkyMaskedMaterial())
                 origin.z = theMap->skyFix(plane->type() == Plane::Ceiling);

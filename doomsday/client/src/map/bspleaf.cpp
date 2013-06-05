@@ -28,8 +28,9 @@
 
 #include <de/Log>
 
-#include "Segment"
+#include "Polygon"
 #include "Polyobj"
+#include "Segment"
 #include "Sector"
 #include "Vertex"
 
@@ -139,38 +140,39 @@ DENG2_PIMPL(BspLeaf)
 #ifdef DENG2_QT_4_7_OR_NEWER
         clockwiseSegments.reserve(polygon->hedgeCount());
 #endif
-        HEdge *firstHEdge = polygon->firstHEdge();
-        HEdge *hedge = firstHEdge;
+        Face const &face = *polygon->firstFace();
+
+        HEdge *hedge = face.hedge();
         do
         {
             if(MapElement *elem = hedge->mapElement())
             {
                 clockwiseSegments.append(elem->castTo<Segment>());
             }
-        } while((hedge = &hedge->next()) != firstHEdge);
+        } while((hedge = &hedge->next()) != face.hedge());
 
 #ifdef DENG_DEBUG
         // See if we received a partial geometry...
         {
             int discontinuities = 0;
-            HEdge *hedge = firstHEdge;
+            HEdge *hedge = face.hedge();
             do
             {
                 if(hedge->next().origin() != hedge->twin().origin())
                 {
                     discontinuities++;
                 }
-            } while((hedge = &hedge->next()) != firstHEdge);
+            } while((hedge = &hedge->next()) != face.hedge());
 
             if(discontinuities)
             {
-                LOG_WARNING("Polygon geometry for BSP leaf [%p] (at %s) in sector %i "
+                LOG_WARNING("Face geometry for BSP leaf [%p] (at %s) in sector %i "
                             "is not contiguous %i gaps/overlaps (%i half-edges).")
                     << de::dintptr(&self)
-                    << polygon->center().asText()
+                    << face.center().asText()
                     << sector->indexInArchive()
                     << discontinuities << polygon->hedgeCount();
-                polygon->print();
+                face.print();
             }
         }
 #endif
@@ -201,15 +203,15 @@ DENG2_PIMPL(BspLeaf)
 
         foreach(Polygon *poly, extraPolygons)
         {
-            HEdge *firstHEdge = poly->firstHEdge();
-            HEdge *hedge = firstHEdge;
+            Face const &face = *poly->firstFace();
+            HEdge *hedge = face.hedge();
             do
             {
                 if(MapElement *elem = hedge->mapElement())
                 {
                     allSegments.append(elem->castTo<Segment>());
                 }
-            } while((hedge = &hedge->next()) != firstHEdge);
+            } while((hedge = &hedge->next()) != face.hedge());
         }
     }
 
@@ -237,7 +239,7 @@ DENG2_PIMPL(BspLeaf)
     {
 #define MIN_TRIANGLE_EPSILON  (0.1) ///< Area
 
-        HEdge *firstNode = polygon->firstHEdge();
+        HEdge *firstNode = polygon->firstFace()->hedge();
 
         fanBase = firstNode;
 
@@ -326,7 +328,7 @@ Polygon const &BspLeaf::poly() const
 
 void BspLeaf::assignPoly(Polygon *newPoly)
 {
-    if(newPoly && !newPoly->isConvex())
+    if(newPoly && newPoly->hedgeCount() < 3 /*!newPoly->firstFace()->isConvex()*/)
     {
         /// @throw InvalidPolygonError Attempted to assign a non-convex polygon.
         throw InvalidPolygonError("BspLeaf::setPoly", "Non-convex polygons cannot be assigned");
@@ -337,16 +339,16 @@ void BspLeaf::assignPoly(Polygon *newPoly)
 
     if(newPoly)
     {
-        // Attribute the new polygon to "this" BSP leaf.
-        newPoly->setBspLeaf(this);
+        // Attribute the new face geometry to "this" BSP leaf.
+        newPoly->firstFace()->setMapElement(this);
 
         // We'll need to update segment lists.
         d->needUpdateClockwiseSegments = true;
         d->needUpdateAllSegments = true;
 
         // Update the world grid offset.
-        d->worldGridOffset = Vector2d(fmod(newPoly->aaBox().minX, 64),
-                                      fmod(newPoly->aaBox().maxY, 64));
+        d->worldGridOffset = Vector2d(fmod(newPoly->firstFace()->aaBox().minX, 64),
+                                      fmod(newPoly->firstFace()->aaBox().maxY, 64));
     }
     else
     {
@@ -362,8 +364,8 @@ void BspLeaf::assignExtraPoly(de::Polygon *newPoly)
 
     if(d->extraPolygons.size() != sizeBefore)
     {
-        // Attribute the new polygon to "this" BSP leaf.
-        newPoly->setBspLeaf(this);
+        // Attribute the new face geometry to "this" BSP leaf.
+        newPoly->firstFace()->setMapElement(this);
 
         // We'll need to update the all segment list.
         d->needUpdateAllSegments = true;

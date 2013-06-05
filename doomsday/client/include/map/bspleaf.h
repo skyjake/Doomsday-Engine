@@ -27,6 +27,7 @@
 #include <de/Vector>
 
 #include "MapElement"
+#include "HEdge"
 #include "Line"
 #include "Polygon"
 

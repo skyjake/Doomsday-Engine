@@ -370,13 +370,15 @@ void Sector::updateAABox()
     {
         if(leaf->isDegenerate()) continue;
 
+        AABoxd const &leafAABox = leaf->poly().firstFace()->aaBox();
+
         if(!isFirst)
         {
-            V2d_UniteBox(d->aaBox.arvec2, leaf->poly().aaBox().arvec2);
+            V2d_UniteBox(d->aaBox.arvec2, leafAABox.arvec2);
         }
         else
         {
-            V2d_CopyBox(d->aaBox.arvec2, leaf->poly().aaBox().arvec2);
+            V2d_CopyBox(d->aaBox.arvec2, leafAABox.arvec2);
             isFirst = false;
         }
     }
@@ -390,8 +392,10 @@ void Sector::updateRoughArea()
     {
         if(leaf->isDegenerate()) continue;
 
-        d->roughArea += (leaf->poly().aaBox().maxX - leaf->poly().aaBox().minX) *
-                        (leaf->poly().aaBox().maxY - leaf->poly().aaBox().minY);
+        AABoxd const &leafAABox = leaf->poly().firstFace()->aaBox();
+
+        d->roughArea += (leafAABox.maxX - leafAABox.minX) *
+                        (leafAABox.maxY - leafAABox.minY);
     }
 }
 

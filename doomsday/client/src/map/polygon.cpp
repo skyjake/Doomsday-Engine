@@ -18,13 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#include <de/mathutil.h>
-#include <de/vector1.h> /// @todo remove me
-
-#include <de/Log>
-
-#include "BspLeaf"
 #include "HEdge"
+#include "Face"
 
 #include "map/polygon.h"
 
@@ -32,43 +27,36 @@ namespace de {
 
 DENG2_PIMPL(Polygon)
 {
-    /// Vertex bounding box in the map coordinate space.
-    AABoxd aaBox;
-
-    /// Center of vertices.
-    Vector2d center;
-
-    /// BSP leaf to which the polygon is attributed (if any).
-    BspLeaf *bspLeaf;
+    /// Face geometry.
+    Face face;
 
     Instance(Public *i)
         : Base(i),
-          bspLeaf(0)
+          face(self)
     {}
 
     ~Instance()
     {
-        // Clear the half-edges.
-        if(self._hedge)
+        // Clear all the half-edges.
+        if(HEdge *hedge = face.hedge())
         {
-            HEdge *he = self._hedge;
-            if(!he->hasNext() || &he->next() == he)
+            if(!hedge->hasNext() || &hedge->next() == hedge)
             {
-                delete he;
+                delete hedge;
             }
             else
             {
                 // Break the ring, if linked.
-                if(he->hasPrev())
+                if(hedge->hasPrev())
                 {
-                    he->prev().setNext(0);
+                    hedge->prev().setNext(0);
                 }
 
-                while(he)
+                while(hedge)
                 {
-                    HEdge *next = he->hasNext()? &he->next() : 0;
-                    delete he;
-                    he = next;
+                    HEdge *next = hedge->hasNext()? &hedge->next() : 0;
+                    delete hedge;
+                    hedge = next;
                 }
             }
         }
@@ -76,97 +64,17 @@ DENG2_PIMPL(Polygon)
 };
 
 Polygon::Polygon()
-    : _hedge(0), _hedgeCount(0), d(new Instance(this))
+    : _hedgeCount(0), d(new Instance(this))
 {}
 
-bool Polygon::hasBspLeaf() const
+Face *Polygon::firstFace() const
 {
-    return d->bspLeaf != 0;
-}
-
-BspLeaf &Polygon::bspLeaf() const
-{
-    if(d->bspLeaf)
-    {
-        return *d->bspLeaf;
-    }
-    /// @throw MissingBspLeafError Attempted with no BSP leaf attributed.
-    throw MissingBspLeafError("Polygon::bspLeaf", "No BSP leaf is attributed");
-}
-
-void Polygon::setBspLeaf(BspLeaf *newBspLeaf)
-{
-    d->bspLeaf = newBspLeaf;
-}
-
-HEdge *Polygon::firstHEdge() const
-{
-    return _hedge;
+    return &d->face;
 }
 
 int Polygon::hedgeCount() const
 {
     return _hedgeCount;
 }
-
-AABoxd const &Polygon::aaBox() const
-{
-    return d->aaBox;
-}
-
-void Polygon::updateAABox()
-{
-    d->aaBox.clear();
-
-    HEdge *base = _hedge;
-    if(!base) return; // Very odd...
-
-    HEdge *hedgeIt = base;
-    V2d_InitBoxXY(d->aaBox.arvec2, hedgeIt->origin().x, hedgeIt->origin().y);
-
-    while((hedgeIt = &hedgeIt->next()) != base)
-    {
-        V2d_AddToBoxXY(d->aaBox.arvec2, hedgeIt->origin().x, hedgeIt->origin().y);
-    }
-}
-
-Vector2d const &Polygon::center() const
-{
-    return d->center;
-}
-
-void Polygon::updateCenter()
-{
-    // The center is the middle of our AABox.
-    d->center = Vector2d(d->aaBox.min) + (Vector2d(d->aaBox.max) - Vector2d(d->aaBox.min)) / 2;
-}
-
-bool Polygon::isConvex() const
-{
-    /// @todo Implement full conformance checking.
-    return _hedgeCount > 2;
-}
-
-#ifdef DENG_DEBUG
-void Polygon::print() const
-{
-    HEdge const *base = _hedge;
-    if(!base) return;
-
-    LOG_INFO("Half-edges:");
-    HEdge const *hedgeIt = base;
-    do
-    {
-        HEdge const &hedge = *hedgeIt;
-        coord_t angle = M_DirectionToAngleXY(hedge.origin().x - d->center.x,
-                                             hedge.origin().y - d->center.y);
-
-        LOG_INFO("  [%p]: Angle %1.6f %s -> %s")
-            << de::dintptr(&hedge) << angle
-            << hedge.origin().asText() << hedge.twin().origin().asText();
-
-    } while((hedgeIt = &hedgeIt->next()) != base);
-}
-#endif
 
 } // namespace de

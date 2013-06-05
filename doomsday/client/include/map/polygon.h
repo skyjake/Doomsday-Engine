@@ -1,4 +1,4 @@
-/** @file map/polygon.h World Map Polygon Geometry.
+/** @file data/polygon.h Polygon Mesh Geometry.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -18,117 +18,38 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_WORLD_MAP_POLYGON
-#define DENG_WORLD_MAP_POLYGON
+#ifndef DENG_DATA_POLYGON
+#define DENG_DATA_POLYGON
 
-#include <de/aabox.h>
-
-#include <de/Error>
-#include <de/Vector>
-
-class BspLeaf;
+#include <de/libdeng2.h>
 
 namespace de {
 
-class HEdge;
+class Face;
 
 /**
- * Polygon geometry.
+ * Polygon mesh geometry.
  *
- * @ingroup map
+ * @ingroup data
  */
 class Polygon
 {
-public:
-    /// No BSP leaf is attributed. @ingroup errors
-    DENG2_ERROR(MissingBspLeafError);
-
-public: /// @todo Make private:
-    /// First half-edge in the face geometry. Ordered by angle, clockwise starting
-    /// from the smallest angle.
-    HEdge *_hedge;
-
-    /// Number of half-edge's in the face.
+public: /// @todo make private:
+    /// Total number of half-edge's in the polygon.
     int _hedgeCount;
 
 public:
     Polygon();
 
     /**
-     * Returns @c true iff a BSP leaf is attributed to the polygon.
+     * Returns a pointer to the first Face of the polygon.
      */
-    bool hasBspLeaf() const;
-
-    /**
-     * Returns the BSP leaf attributed to the polygon.
-     *
-     * @see hasBspLeaf()
-     */
-    BspLeaf &bspLeaf() const;
-
-    /**
-     * Change the BSP leaf attributed to the polygon.
-     *
-     * @param newBspLeaf  New BSP leaf to attribute the polygon. Ownership is
-     *                    unaffected. Can be @c 0 (to clear the attribution).
-     *
-     * @see hasBspLeaf(), bspLeaf()
-     */
-    void setBspLeaf(BspLeaf *newBspLeaf);
-
-    /**
-     * Returns a pointer to the first half-edge of the Face of the polygon (note
-     * that half-edges are sorted in a clockwise order). May return @c 0 if there
-     * is no half-edge linked to the face.
-     */
-    HEdge *firstHEdge() const;
+    Face *firstFace() const;
 
     /**
      * Total number of half-edges in the polygon.
      */
     int hedgeCount() const;
-
-    /**
-     * Returns the axis-aligned bounding box which encompases all the vertexes
-     * which define the geometry.
-     */
-    AABoxd const &aaBox() const;
-
-    /**
-     * Update the geometry's axis-aligned bounding box to encompass all vertexes.
-     */
-    void updateAABox();
-
-    /**
-     * Returns the point described by the average origin coordinates of all the
-     * vertexes which define the geometry.
-     */
-    Vector2d const &center() const;
-
-    /**
-     * Update the center point of the geometry.
-     *
-     * @pre Axis-aligned bounding box must have been initialized.
-     */
-    void updateCenter();
-
-    /**
-     * Determines whether the geometry of the polygon is currently convex.
-     *
-     * @note Due to the potential computational complexity of determining convexity
-     * this should be called sparingly/only when necessary.
-     *
-     * @todo Cache this result.
-     */
-    bool isConvex() const;
-
-#ifdef DENG_DEBUG
-    /**
-     * Output a textual, human-readable description/representation of the polygon
-     * to the application's output log.
-     */
-    void print() const;
-#endif
 
 private:
     DENG2_PRIVATE(d)
@@ -136,4 +57,4 @@ private:
 
 } // namespace de
 
-#endif // DENG_WORLD_MAP_POLYGON
+#endif // DENG_DATA_POLYGON

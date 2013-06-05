@@ -417,6 +417,7 @@ void ConvexSubspace::buildGeometry(BspLeaf &leaf) const
         {
             // Construct a new polygon and set of half-edges.
             Polygon *poly = new Polygon;
+            Face *face = poly->firstFace();
 
             foreach(OrderedSegment const *oseg, conty.discordSegs)
             {
@@ -442,8 +443,8 @@ void ConvexSubspace::buildGeometry(BspLeaf &leaf) const
 
                 // Link the new half-edge for this line segment to the head of
                 // the list in the new polygon geometry.
-                hedge->setNext(poly->_hedge);
-                poly->_hedge = hedge;
+                hedge->setNext(face->hedge());
+                face->setHEdge(hedge);
 
                 // Is there a half-edge on the back side we need to twin with?
                 if(lineSeg->back().hasSegment())
@@ -460,15 +461,14 @@ void ConvexSubspace::buildGeometry(BspLeaf &leaf) const
             }
 
             // Link the half-edges anticlockwise and close the ring.
-            HEdge *hedge = poly->_hedge;
+            HEdge *hedge = face->hedge();
             forever
             {
                 // There is now one more half-edge in this polygon.
                 poly->_hedgeCount += 1;
 
-                // Attribute the half edge to the Polygon.
-                /// @todo Encapsulate in Polygon.
-                hedge->setPoly(poly);
+                // Attribute the half edge to the Face.
+                hedge->setFace(face);
 
                 if(hedge->hasNext())
                 {
@@ -479,11 +479,15 @@ void ConvexSubspace::buildGeometry(BspLeaf &leaf) const
                 else
                 {
                     // Circular link.
-                    hedge->setNext(poly->_hedge);
+                    hedge->setNext(face->hedge());
                     hedge->next().setPrev(hedge);
                     break;
                 }
             }
+
+            /// @todo Face should encapsulate.
+            face->updateAABox();
+            face->updateCenter();
 
             // Attribute the new polygon to the BSP leaf.
             leaf.assignExtraPoly(poly);
@@ -510,6 +514,7 @@ void ConvexSubspace::buildGeometry(BspLeaf &leaf) const
     {
         // Construct the polygon and ring of half-edges.
         Polygon *poly = new Polygon;
+        Face *face = poly->firstFace();
 
         // Iterate backwards so that the half-edges can be linked clockwise.
         for(int i = d->orderedSegments.size(); i-- > 0; )
@@ -539,9 +544,9 @@ void ConvexSubspace::buildGeometry(BspLeaf &leaf) const
                                     int( lineSeg->to().origin().x - lineSeg->from().origin().x )) << FRACBITS);
 
             // Link the new half-edge for this line segment to the head of
-            // the list in the new polygon geometry.
-            hedge->setNext(poly->_hedge);
-            poly->_hedge = hedge;
+            // the list in the new face geometry.
+            hedge->setNext(face->hedge());
+            face->setHEdge(hedge);
 
             // Is there a half-edge on the back side we need to twin with?
             if(lineSeg->back().hasSegment())
@@ -558,15 +563,14 @@ void ConvexSubspace::buildGeometry(BspLeaf &leaf) const
         }
 
         // Link the half-edges anticlockwise and close the ring.
-        HEdge *hedge = poly->_hedge;
+        HEdge *hedge = face->hedge();
         forever
         {
             // There is now one more half-edge in this polygon.
             poly->_hedgeCount += 1;
 
-            // Attribute the half edge to the Polygon.
-            /// @todo Encapsulate in Polygon.
-            hedge->setPoly(poly);
+            // Attribute the half edge to the Face.
+            hedge->setFace(face);
 
             if(hedge->hasNext())
             {
@@ -577,15 +581,15 @@ void ConvexSubspace::buildGeometry(BspLeaf &leaf) const
             else
             {
                 // Circular link.
-                hedge->setNext(poly->_hedge);
+                hedge->setNext(face->hedge());
                 hedge->next().setPrev(hedge);
                 break;
             }
         }
 
-        /// @todo Polygon should encapsulate.
-        poly->updateAABox();
-        poly->updateCenter();
+        /// @todo Face should encapsulate.
+        face->updateAABox();
+        face->updateCenter();
 
         // Assign the polygon geometry to the BSP leaf (takes ownership).
         leaf.assignPoly(poly);

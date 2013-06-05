@@ -1,6 +1,6 @@
 /** @file map/hedge.cpp World Map Geometry Half-Edge.
  *
- * @authors Copyright Â© 2011-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2011-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -38,8 +38,8 @@ DENG2_PIMPL(HEdge)
     /// Previous half-edge (anticlockwise) around the @em face.
     HEdge *prev;
 
-    /// Polygon geometry to which the half-edge is attributed (if any).
-    Polygon *poly;
+    /// Face geometry to which the half-edge is attributed (if any).
+    Face *face;
 
     /// MapElement to which the half-edge is attributed (if any).
     MapElement *mapElement;
@@ -50,7 +50,7 @@ DENG2_PIMPL(HEdge)
           twin(0),
           next(0),
           prev(0),
-          poly(0),
+          face(0),
           mapElement(0)
     {}
 
@@ -109,24 +109,24 @@ void HEdge::setTwin(HEdge const *newTwin)
     d->twin = const_cast<HEdge *>(newTwin);
 }
 
-bool HEdge::hasPoly() const
+bool HEdge::hasFace() const
 {
-    return d->poly != 0;
+    return d->face != 0;
 }
 
-Polygon &HEdge::poly() const
+Face &HEdge::face() const
 {
-    if(d->poly)
+    if(d->face)
     {
-        return *d->poly;
+        return *d->face;
     }
-    /// @throw MissingPolygonError Attempted with no Polygon attributed.
-    throw MissingPolygonError("HEdge::poly", "No polygon is attributed");
+    /// @throw MissingFaceError Attempted with no Face attributed.
+    throw MissingFaceError("HEdge::face", "No face is attributed");
 }
 
-void HEdge::setPoly(Polygon const *newPolygon)
+void HEdge::setFace(Face const *newFace)
 {
-    d->poly = const_cast<Polygon *>(newPolygon);
+    d->face = const_cast<Face *>(newFace);
 }
 
 MapElement *HEdge::mapElement() const

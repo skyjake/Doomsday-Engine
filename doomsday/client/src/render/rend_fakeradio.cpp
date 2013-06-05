@@ -1337,8 +1337,9 @@ void Rend_RadioBspLeafEdges(BspLeaf &bspLeaf)
     // Any need to continue?
     if(shadowDark < .0001f) return;
 
-    Vector3f eyeToSurface(vOrigin[VX] - bspLeaf.poly().center().x,
-                          vOrigin[VZ] - bspLeaf.poly().center().y);
+    Face const &face = *bspLeaf.poly().firstFace();
+    Vector3f eyeToSurface(vOrigin[VX] - face.center().x,
+                          vOrigin[VZ] - face.center().y);
 
     // Do we need to enlarge the size of the doPlanes array?
     if(sector.planeCount() > doPlaneSize)

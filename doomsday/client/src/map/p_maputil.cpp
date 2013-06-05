@@ -98,7 +98,7 @@ bool P_IsPointInBspLeaf(Vector2d const &point, BspLeaf const &bspLeaf)
         return false; // Obviously not.
 
     de::Polygon const &poly = bspLeaf.poly();
-    HEdge const *firstHEdge = poly.firstHEdge();
+    HEdge const *firstHEdge = poly.firstFace()->hedge();
 
     HEdge const *hedge = firstHEdge;
     do

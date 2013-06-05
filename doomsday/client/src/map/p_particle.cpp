@@ -659,13 +659,15 @@ static void P_NewParticle(ptcgen_t *gen)
         if(!bspLeaf || bspLeaf->isDegenerate())
             goto spawn_failed;
 
+        AABoxd const &leafAABox = bspLeaf->poly().firstFace()->aaBox();
+
         // Try a couple of times to get a good random spot.
         for(i = 0; i < 10; ++i) // Max this many tries before giving up.
         {
-            float x = bspLeaf->poly().aaBox().minX +
-                RNG_RandFloat() * (bspLeaf->poly().aaBox().maxX - bspLeaf->poly().aaBox().minX);
-            float y = bspLeaf->poly().aaBox().minY +
-                RNG_RandFloat() * (bspLeaf->poly().aaBox().maxY - bspLeaf->poly().aaBox().minY);
+            float x = leafAABox.minX +
+                RNG_RandFloat() * (leafAABox.maxX - leafAABox.minX);
+            float y = leafAABox.minY +
+                RNG_RandFloat() * (leafAABox.maxY - leafAABox.minY);
 
             pt->origin[VX] = FLT2FIX(x);
             pt->origin[VY] = FLT2FIX(y);
