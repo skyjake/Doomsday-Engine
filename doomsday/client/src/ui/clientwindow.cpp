@@ -50,9 +50,7 @@ static String const LEGACY_WIDGET_NAME = "legacy";
 DENG2_PIMPL(ClientWindow),
 DENG2_OBSERVES(KeyEventSource,   KeyEvent),
 DENG2_OBSERVES(MouseEventSource, MouseStateChange),
-#ifndef WIN32
-  DENG2_OBSERVES(MouseEventSource, MouseEvent),
-#endif
+DENG2_OBSERVES(MouseEventSource, MouseEvent),
 DENG2_OBSERVES(Canvas,           FocusChange)
 {
     bool needMainInit;
@@ -82,10 +80,7 @@ DENG2_OBSERVES(Canvas,           FocusChange)
         // Listen to input.
         self.canvas().audienceForKeyEvent += this;
         self.canvas().audienceForMouseStateChange += this;
-
-#ifndef WIN32 // On Windows, DirectInput bypasses the mouse input from Canvas.
         self.canvas().audienceForMouseEvent += this;
-#endif
     }
 
     ~Instance()
@@ -199,7 +194,6 @@ DENG2_OBSERVES(Canvas,           FocusChange)
         Mouse_Trap(state == MouseEventSource::Trapped);
     }
 
-#ifndef WIN32
     void mouseEvent(MouseEvent const &event)
     {
         if(ClientApp::windowSystem().processEvent(event))
@@ -233,7 +227,6 @@ DENG2_OBSERVES(Canvas,           FocusChange)
             break;
         }
     }
-#endif // !WIN32
 
     void canvasFocusChanged(Canvas &canvas, bool hasFocus)
     {
