@@ -33,15 +33,16 @@
 #  include <direct.h>
 #  include <io.h>
 #  include <conio.h>
-#  ifndef O_BINARY
-#    define O_BINARY 0
-#  endif
 #  define open _open
 #endif
 
 #if defined(UNIX)
 #  include <unistd.h>
 #  include <string.h>
+#endif
+
+#ifndef O_BINARY
+#  define O_BINARY 0
 #endif
 
 #include <stdlib.h>
