@@ -376,13 +376,14 @@ int P_Count(int type)
 {
     switch(type)
     {
-    case DMU_VERTEX:    return theMap->vertexCount();
-    case DMU_SEGMENT:   return theMap->segmentCount();
-    case DMU_LINE:      return theMap->lineCount();
-    case DMU_SIDE:      return theMap->sideCount();
-    case DMU_BSPNODE:   return theMap->bspNodeCount();
-    case DMU_BSPLEAF:   return theMap->bspLeafCount();
-    case DMU_SECTOR:    return theMap->sectorCount();
+    case DMU_VERTEX:    return theMap? theMap->vertexCount()  : 0;
+    case DMU_SEGMENT:   return theMap? theMap->segmentCount() : 0;
+    case DMU_LINE:      return theMap? theMap->lineCount()    : 0;
+    case DMU_SIDE:      return theMap? theMap->sideCount()    : 0;
+    case DMU_BSPNODE:   return theMap? theMap->bspNodeCount() : 0;
+    case DMU_BSPLEAF:   return theMap? theMap->bspLeafCount() : 0;
+    case DMU_SECTOR:    return theMap? theMap->sectorCount()  : 0;
+
     case DMU_MATERIAL:  return (int)App_Materials().count();
 
     default:
@@ -433,7 +434,7 @@ int P_Iteratep(void *elPtr, uint prop, void *context, int (*callback) (void *p, 
         switch(prop)
         {
         case DMU_SEGMENT:
-            foreach(Segment *seg, elem->castTo<BspLeaf>()->segments())
+            foreach(Segment *seg, elem->castTo<BspLeaf>()->allSegments())
             {
                 int result = callback(seg, context);
                 if(result) return result;

@@ -169,7 +169,7 @@ bool Line::Side::considerOneSided() const
             return true;
 
         Segment &segment = *d->leftSegment;
-        if(!segment.back().hasBspLeaf())
+        if(!segment.hasBack() || !segment.back().hasBspLeaf())
             return true;
 
         BspLeaf &backLeaf = segment.back().bspLeaf();

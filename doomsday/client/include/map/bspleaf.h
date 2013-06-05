@@ -103,7 +103,7 @@ public:
     /**
      * Provides access to the convex Polygon geometry assigned to the BSP leaf.
      *
-     * @see hasPoly(), setPoly()
+     * @see hasPoly(), assignPoly()
      */
     de::Polygon &poly();
 
@@ -115,13 +115,21 @@ public:
      * is accepted it is first conformance tested to ensure that it represents
      * a valid, simple convex polygon.
      *
-     * @param newPolygon  New polygon to be assigned to the BSP leaf. Ownership
-     *                    of the polygon is given to the BspLeaf if it passes
-     *                    all conformance checks.
+     * @param polygon  New polygon to be assigned to the BSP leaf. Ownership
+     *                 of the polygon is given to the BspLeaf if it passes all
+     *                 conformance checks.
      *
      * @see hasPoly(), poly()
      */
-    void setPoly(de::Polygon *newPolygon);
+    void assignPoly(de::Polygon *polygon);
+
+    /**
+     * Assign an additional Polygon geometry to the BSP leaf.
+     *
+     * @param polygon  New polygon to be assigned to the BSP leaf. Ownership
+     *                 of the polygon is given to the BspLeaf.
+     */
+    void assignExtraPoly(de::Polygon *polygon);
 
     /**
      * Provides a clockwise ordered list of all the line segments which comprise
@@ -132,7 +140,7 @@ public:
     /**
      * Provides a list of all the line segments attributed to the BSP leaf.
      */
-    Segments const &segments() const;
+    Segments const &allSegments() const;
 
     /**
      * Returns @c true iff a sector is attributed to the BSP leaf. The only time

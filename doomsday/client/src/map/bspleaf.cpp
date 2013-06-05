@@ -20,6 +20,9 @@
 
 #include <cmath> // fmod
 
+#include <QSet>
+#include <QtAlgorithms>
+
 #include <de/mathutil.h>
 #include <de/memoryzone.h>
 
@@ -48,11 +51,25 @@ ddouble triangleArea(Vector2d const &v1, Vector2d const &v2, Vector2d const &v3)
 
 DENG2_PIMPL(BspLeaf)
 {
+    typedef QSet<Polygon *> Polygons;
+
     /// Convex polygon geometry assigned to the BSP leaf (owned).
     QScopedPointer<Polygon> polygon;
 
-    /// All line segments in the BSP leaf.
-    Segments segments;
+    /// Additional polygon geometries assigned to the BSP leaf (owned).
+    Polygons extraPolygons;
+
+    /// Clockwise ordering of the line segments from the primary polygon.
+    Segments clockwiseSegments;
+
+    /// Set to @c true when the clockwise segment list needs updating.
+    bool needUpdateClockwiseSegments;
+
+    /// All line segments in the BSP leaf from all polygons.
+    Segments allSegments;
+
+    /// Set to @c true when the all segment list need updating.
+    bool needUpdateAllSegments;
 
     /// Offset to align the top left of materials in the built geometry to the
     /// map coordinate space grid.
@@ -82,6 +99,8 @@ DENG2_PIMPL(BspLeaf)
 
     Instance(Public *i, Sector *sector_ = 0)
         : Base(i),
+          needUpdateClockwiseSegments(false),
+          needUpdateAllSegments(false),
           sector(sector_),
           polyobj(0),
 #ifdef __CLIENT__
@@ -94,6 +113,8 @@ DENG2_PIMPL(BspLeaf)
 
     ~Instance()
     {
+        qDeleteAll(extraPolygons);
+
 #ifdef __CLIENT__
         if(self._bsuf)
         {
@@ -104,6 +125,92 @@ DENG2_PIMPL(BspLeaf)
             Z_Free(self._bsuf);
         }
 #endif // __CLIENT__
+    }
+
+    void updateClockwiseSegments()
+    {
+        needUpdateClockwiseSegments = false;
+
+        clockwiseSegments.clear();
+
+        if(polygon.isNull())
+            return;
+
+#ifdef DENG2_QT_4_7_OR_NEWER
+        clockwiseSegments.reserve(polygon->hedgeCount());
+#endif
+        HEdge *firstHEdge = polygon->firstHEdge();
+        HEdge *hedge = firstHEdge;
+        do
+        {
+            if(MapElement *elem = hedge->mapElement())
+            {
+                clockwiseSegments.append(elem->castTo<Segment>());
+            }
+        } while((hedge = &hedge->next()) != firstHEdge);
+
+#ifdef DENG_DEBUG
+        // See if we received a partial geometry...
+        {
+            int discontinuities = 0;
+            HEdge *hedge = firstHEdge;
+            do
+            {
+                if(hedge->next().origin() != hedge->twin().origin())
+                {
+                    discontinuities++;
+                }
+            } while((hedge = &hedge->next()) != firstHEdge);
+
+            if(discontinuities)
+            {
+                LOG_WARNING("Polygon geometry for BSP leaf [%p] (at %s) in sector %i "
+                            "is not contiguous %i gaps/overlaps (%i half-edges).")
+                    << de::dintptr(&self)
+                    << polygon->center().asText()
+                    << sector->indexInArchive()
+                    << discontinuities << polygon->hedgeCount();
+                polygon->print();
+            }
+        }
+#endif
+    }
+
+    void updateAllSegments()
+    {
+        needUpdateAllSegments = false;
+
+        if(needUpdateClockwiseSegments)
+        {
+            updateClockwiseSegments();
+        }
+
+        allSegments.clear();
+
+        int numSegments = clockwiseSegments.count();
+        foreach(Polygon *poly, extraPolygons)
+        {
+            numSegments += poly->hedgeCount();
+        }
+#ifdef DENG2_QT_4_7_OR_NEWER
+        allSegments.reserve(numSegments);
+#endif
+
+        // Populate the segment list.
+        allSegments.append(clockwiseSegments);
+
+        foreach(Polygon *poly, extraPolygons)
+        {
+            HEdge *firstHEdge = poly->firstHEdge();
+            HEdge *hedge = firstHEdge;
+            do
+            {
+                if(MapElement *elem = hedge->mapElement())
+                {
+                    allSegments.append(elem->castTo<Segment>());
+                }
+            } while((hedge = &hedge->next()) != firstHEdge);
+        }
     }
 
 #ifdef __CLIENT__
@@ -217,40 +324,29 @@ Polygon const &BspLeaf::poly() const
     return const_cast<Polygon const &>(const_cast<BspLeaf *>(this)->poly());
 }
 
-void BspLeaf::setPoly(Polygon *newPolygon)
+void BspLeaf::assignPoly(Polygon *newPoly)
 {
-    if(newPolygon && !newPolygon->isConvex())
+    if(newPoly && !newPoly->isConvex())
     {
         /// @throw InvalidPolygonError Attempted to assign a non-convex polygon.
         throw InvalidPolygonError("BspLeaf::setPoly", "Non-convex polygons cannot be assigned");
     }
 
     // Assign the new polygon (if any).
-    d->polygon.reset(newPolygon);
+    d->polygon.reset(newPoly);
 
-    if(newPolygon)
+    if(newPoly)
     {
         // Attribute the new polygon to "this" BSP leaf.
-        newPolygon->setBspLeaf(this);
+        newPoly->setBspLeaf(this);
 
-        // Rebuild the ordered segment list.
-        d->segments.clear();
-#ifdef DENG2_QT_4_7_OR_NEWER
-        d->segments.reserve(newPolygon->hedgeCount());
-#endif
-        HEdge *firstHEdge = newPolygon->firstHEdge();
-        HEdge *hedge = firstHEdge;
-        do
-        {
-            if(MapElement *elem = hedge->mapElement())
-            {
-                d->segments.append(elem->castTo<Segment>());
-            }
-        } while((hedge = &hedge->next()) != firstHEdge);
+        // We'll need to update segment lists.
+        d->needUpdateClockwiseSegments = true;
+        d->needUpdateAllSegments = true;
 
         // Update the world grid offset.
-        d->worldGridOffset = Vector2d(fmod(newPolygon->aaBox().minX, 64),
-                                      fmod(newPolygon->aaBox().maxY, 64));
+        d->worldGridOffset = Vector2d(fmod(newPoly->aaBox().minX, 64),
+                                      fmod(newPoly->aaBox().maxY, 64));
     }
     else
     {
@@ -258,14 +354,38 @@ void BspLeaf::setPoly(Polygon *newPolygon)
     }
 }
 
-BspLeaf::Segments const &BspLeaf::clockwiseSegments() const
+void BspLeaf::assignExtraPoly(de::Polygon *newPoly)
 {
-    return d->segments;
+    int const sizeBefore = d->extraPolygons.size();
+
+    d->extraPolygons.insert(newPoly);
+
+    if(d->extraPolygons.size() != sizeBefore)
+    {
+        // Attribute the new polygon to "this" BSP leaf.
+        newPoly->setBspLeaf(this);
+
+        // We'll need to update the all segment list.
+        d->needUpdateAllSegments = true;
+    }
 }
 
-BspLeaf::Segments const &BspLeaf::segments() const
+BspLeaf::Segments const &BspLeaf::clockwiseSegments() const
 {
-    return d->segments;
+    if(d->needUpdateClockwiseSegments)
+    {
+        d->updateClockwiseSegments();
+    }
+    return d->clockwiseSegments;
+}
+
+BspLeaf::Segments const &BspLeaf::allSegments() const
+{
+    if(d->needUpdateAllSegments)
+    {
+        d->updateAllSegments();
+    }
+    return d->allSegments;
 }
 
 Vector2d const &BspLeaf::worldGridOffset() const

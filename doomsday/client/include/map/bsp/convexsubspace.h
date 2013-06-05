@@ -41,6 +41,12 @@ struct OrderedSegment
     double fromAngle;
     double toAngle;
 
+    bool operator == (OrderedSegment const &other) const
+    {
+        return de::fequal(fromAngle, other.fromAngle) &&
+               de::fequal(toAngle, other.toAngle);
+    }
+
 #ifdef DENG_DEBUG
     void debugPrint() const
     {

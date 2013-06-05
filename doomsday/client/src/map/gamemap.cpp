@@ -85,8 +85,8 @@ DENG2_PIMPL(GameMap)
 
     void collateVertexes(BspBuilder &builder)
     {
-        uint bspVertexCount = builder.numVertexes();
-        for(uint i = 0; i < bspVertexCount; ++i)
+        int bspVertexCount = builder.numVertexes();
+        for(int i = 0; i < bspVertexCount; ++i)
         {
             // Take ownership of this Vertex.
             Vertex *vertex = &builder.vertex(i);
@@ -109,7 +109,7 @@ DENG2_PIMPL(GameMap)
             leaf->setIndexInMap(bspLeafs.count());
             bspLeafs.append(leaf);
 
-            foreach(Segment *seg, leaf->segments())
+            foreach(Segment *seg, leaf->allSegments())
             {
                 // Take ownership of the Segment.
                 builder.take(seg);

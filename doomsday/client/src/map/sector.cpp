@@ -457,7 +457,7 @@ void Sector::planeHeightChanged(Plane &plane, coord_t oldHeight)
         if(bspLeaf->isDegenerate())
              continue;
 
-        foreach(Segment *seg, bspLeaf->segments())
+        foreach(Segment *seg, bspLeaf->allSegments())
         {
             if(!seg->hasLineSide())
                 continue;

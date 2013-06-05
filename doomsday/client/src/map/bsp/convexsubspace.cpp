@@ -70,6 +70,9 @@ struct Continuity
     /// The ordered line segments.
     OrderedSegmentList orderedSegs;
 
+    /// The discordant line segments.
+    OrderedSegmentList discordSegs;
+
     Continuity(Sector *sector)
         : sector(sector), discordSegments(0), coverage(0)
     {}
@@ -99,7 +102,19 @@ struct Continuity
     void addOneSegment(OrderedSegment const &oseg)
     {
         DENG_ASSERT(oseg.segment->sectorPtr() == sector);
-        orderedSegs.append(const_cast<OrderedSegment *>(&oseg));
+
+        // Separate the discordant duplicates.
+        OrderedSegmentList *list = &orderedSegs;
+        foreach(OrderedSegment const *other, orderedSegs)
+        {
+            if(oseg == *other)
+            {
+                list = &discordSegs;
+                break;
+            }
+        }
+
+        list->append(const_cast<OrderedSegment *>(&oseg));
 
         // Account for the new line segment.
         LineSegment::Side const &seg = *oseg.segment;
@@ -115,21 +130,17 @@ struct Continuity
         {
             norm += 1;
         }
+
+        // Update the 'coverage' metric.
+        if(oseg.fromAngle > oseg.toAngle)
+            coverage += oseg.fromAngle - oseg.toAngle;
+        else
+            coverage += oseg.fromAngle + (360.0 - oseg.toAngle);
     }
 
     void evaluate()
     {
-        // Calculate the 'coverage' metric.
-        coverage = 0;
-        foreach(OrderedSegment const *oseg, orderedSegs)
-        {
-            if(oseg->fromAngle > oseg->toAngle)
-                coverage += oseg->fromAngle - oseg->toAngle;
-            else
-                coverage += oseg->fromAngle + (360.0 - oseg->toAngle);
-        }
-
-        // Account discontiguous segments.
+        // Account remaining discontiguous segments.
         discordSegments = 0;
         for(int i = 0; i < orderedSegs.count() - 1; ++i)
         {
@@ -162,6 +173,10 @@ struct Continuity
         {
             oseg->debugPrint();
         }
+        foreach(OrderedSegment const *oseg, discordSegs)
+        {
+            oseg->debugPrint();
+        }
     }
 #endif
 };
@@ -183,19 +198,11 @@ DENG2_PIMPL_NOREF(ConvexSubspace)
     /// Line segment continuity map.
     Continuities continuities;
 
-    /// Set to @c true when the continuity mpa needs to be rebuilt.
-    bool needRebuildContinuities;
-
-    /// Chosen map sector for this subspace (if any).
-    Sector *sector;
-
     /// BSP leaf attributed to the subspace (if any).
     BspLeaf *bspLeaf;
 
     Instance()
         : needRebuildOrderedSegments(false),
-          needRebuildContinuities   (false),
-          sector(0),
           bspLeaf(0)
     {}
 
@@ -204,16 +211,14 @@ DENG2_PIMPL_NOREF(ConvexSubspace)
           segments                  (other.segments),
           orderedSegments           (other.orderedSegments),
           needRebuildOrderedSegments(other.needRebuildOrderedSegments),
-          needRebuildContinuities   (other.needRebuildContinuities),
-          sector                    (other.sector),
           bspLeaf                   (other.bspLeaf)
     {}
 
     /**
-     * Returns @c true iff at least one line segment in the set is derived from
-     * a map line.
+     * Returns @c true iff at least one line segment in the set is derived
+     * from a map line.
      */
-    bool hasMapLineSegment()
+    bool haveMapLineSegment()
     {
         foreach(LineSegment::Side *seg, segments)
         {
@@ -306,61 +311,6 @@ DENG2_PIMPL_NOREF(ConvexSubspace)
         }
 
         // LOG_DEBUG("Ordered segments around %s") << point.asText();
-
-        // As the ordered segments have changed we'll need to rebuild the
-        // continuities also.
-        needRebuildContinuities = true;
-    }
-
-    void buildContinuityMap()
-    {
-        if(needRebuildOrderedSegments)
-        {
-            buildOrderedSegments(findCenter());
-        }
-
-        needRebuildContinuities = false;
-
-        continuities.clear();
-
-        typedef QHash<Sector *, Continuity *> SectorContinuityMap;
-        SectorContinuityMap scMap;
-
-        foreach(OrderedSegment const &oseg, orderedSegments)
-        {
-            Sector *frontSector = oseg.segment->sectorPtr();
-
-            SectorContinuityMap::iterator found = scMap.find(frontSector);
-            if(found == scMap.end())
-            {
-                continuities.append(Continuity(frontSector));
-                found = scMap.insert(frontSector, &continuities.last());
-            }
-
-            Continuity *conty = found.value();
-            conty->addOneSegment(oseg);
-        }
-
-        for(int i = 0; i < continuities.count(); ++i)
-        {
-            continuities[i].evaluate();
-        }
-
-        // Choose a sector to attribute to any BSP leaf we might produce.
-        qSort(continuities.begin(), continuities.end());
-        sector = continuities.first().sector;
-
-/*#ifdef DENG_DEBUG
-        LOG_INFO("\nConvexSubspace %s BSP sector:%i (%i continuities)")
-            << findCenter().asText()
-            << (sector? sector->indexInArchive() : -1)
-            << continuities.count();
-
-        foreach(Continuity const &conty, continuities)
-        {
-            conty.debugPrint();
-        }
-#endif*/
     }
 
 private:
@@ -391,9 +341,6 @@ void ConvexSubspace::addSegments(QList<LineSegment::Side *> const &newSegments)
     {
         // We'll need to rebuild the ordered segment list.
         d->needRebuildOrderedSegments = true;
-
-        // Also, we'll need to rebuild the continuity map.
-        d->needRebuildContinuities = true;
     }
 
 #ifdef DENG_DEBUG
@@ -416,9 +363,6 @@ void ConvexSubspace::addOneSegment(LineSegment::Side const &newSegment)
     {
         // We'll need to rebuild the ordered segment list.
         d->needRebuildOrderedSegments = true;
-
-        // Also, we'll need to rebuild the continuity map.
-        d->needRebuildContinuities = true;
     }
     else
     {
@@ -429,19 +373,141 @@ void ConvexSubspace::addOneSegment(LineSegment::Side const &newSegment)
 void ConvexSubspace::buildGeometry(BspLeaf &leaf) const
 {
     LOG_AS("ConvexSubspace::buildGeometry");
+    bool const isDegenerate = segmentCount() < 3;
 
-    if(d->needRebuildContinuities)
+    // Sanity check.
+    if(!isDegenerate && !d->haveMapLineSegment())
+        throw Error("ConvexSubspace::buildGeometry", "No map line segment");
+
+    if(d->needRebuildOrderedSegments)
     {
-        d->buildContinuityMap();
+        d->buildOrderedSegments(d->findCenter());
     }
 
-    bool const isDegenerate = segmentCount() < 3;
+    /*
+     * Build the continuity map.
+     */
+    d->continuities.clear();
+
+    typedef QHash<Sector *, Continuity *> SectorContinuityMap;
+    SectorContinuityMap scMap;
+
+    foreach(OrderedSegment const &oseg, d->orderedSegments)
+    {
+        Sector *frontSector = oseg.segment->sectorPtr();
+
+        SectorContinuityMap::iterator found = scMap.find(frontSector);
+        if(found == scMap.end())
+        {
+            d->continuities.append(Continuity(frontSector));
+            found = scMap.insert(frontSector, &d->continuities.last());
+        }
+
+        Continuity *conty = found.value();
+        conty->addOneSegment(oseg);
+    }
+
+    for(int i = 0; i < d->continuities.count(); ++i)
+    {
+        Continuity &conty = d->continuities[i];
+
+        conty.evaluate();
+
+        if(!conty.discordSegs.isEmpty())
+        {
+            // Construct a new polygon and set of half-edges.
+            Polygon *poly = new Polygon;
+
+            foreach(OrderedSegment const *oseg, conty.discordSegs)
+            {
+                LineSegment::Side *lineSeg = oseg->segment;
+                Line::Side *mapSide = lineSeg->mapSidePtr();
+                HEdge *hedge = new HEdge(lineSeg->from());
+
+                // Ownership of the segment will be assigned to the space partitioner.
+                Segment *seg = new Segment(mapSide, hedge);
+
+                // Attribute the half-edge to the segment.
+                hedge->setMapElement(seg);
+
+                if(mapSide)
+                {
+                    seg->setLineSideOffset(Vector2d(mapSide->from().origin() - lineSeg->from().origin()).length());
+                }
+
+                seg->setLength(Vector2d(lineSeg->to().origin() - lineSeg->from().origin()).length());
+
+                seg->setAngle(bamsAtan2(int( lineSeg->to().origin().y - lineSeg->from().origin().y ),
+                                        int( lineSeg->to().origin().x - lineSeg->from().origin().x )) << FRACBITS);
+
+                // Link the new half-edge for this line segment to the head of
+                // the list in the new polygon geometry.
+                hedge->setNext(poly->_hedge);
+                poly->_hedge = hedge;
+
+                // Is there a half-edge on the back side we need to twin with?
+                if(lineSeg->back().hasSegment())
+                {
+                    lineSeg->back().segment().hedge().setTwin(hedge);
+                    hedge->setTwin(&lineSeg->back().segment().hedge());
+
+                    seg->setBack(&lineSeg->back().segment());
+                    seg->back().setBack(seg);
+                }
+
+                // Link the new segment with the line segment.
+                lineSeg->setSegment(seg);
+            }
+
+            // Link the half-edges anticlockwise and close the ring.
+            HEdge *hedge = poly->_hedge;
+            forever
+            {
+                // There is now one more half-edge in this polygon.
+                poly->_hedgeCount += 1;
+
+                // Attribute the half edge to the Polygon.
+                /// @todo Encapsulate in Polygon.
+                hedge->setPoly(poly);
+
+                if(hedge->hasNext())
+                {
+                    // Link anticlockwise.
+                    hedge->next().setPrev(hedge);
+                    hedge = &hedge->next();
+                }
+                else
+                {
+                    // Circular link.
+                    hedge->setNext(poly->_hedge);
+                    hedge->next().setPrev(hedge);
+                    break;
+                }
+            }
+
+            // Attribute the new polygon to the BSP leaf.
+            leaf.assignExtraPoly(poly);
+        }
+    }
+
+    // Choose a sector to attribute to any BSP leaf we might produce.
+    qSort(d->continuities.begin(), d->continuities.end());
+    Sector *sector = d->continuities.first().sector;
+
+/*#ifdef DENG_DEBUG
+    LOG_INFO("\nConvexSubspace %s BSP sector:%i (%i continuities)")
+        << d->findCenter().asText()
+        << (sector? sector->indexInArchive() : -1)
+        << d->continuities.count();
+
+    foreach(Continuity const &conty, d->continuities)
+    {
+        conty.debugPrint();
+    }
+#endif*/
+
     if(!isDegenerate)
     {
-        // Sanity check.
-        if(!d->hasMapLineSegment())
-            throw Error("ConvexSubspace::buildGeometry", "No map line segment");
-
         // Construct the polygon and ring of half-edges.
         Polygon *poly = new Polygon;
 
@@ -449,6 +515,10 @@ void ConvexSubspace::buildGeometry(BspLeaf &leaf) const
         for(int i = d->orderedSegments.size(); i-- > 0; )
         {
             LineSegment::Side *lineSeg = d->orderedSegments[i].segment;
+
+            if(lineSeg->hasSegment())
+                continue;
+
             Line::Side *mapSide = lineSeg->mapSidePtr();
             HEdge *hedge = new HEdge(lineSeg->from());
 
@@ -518,11 +588,11 @@ void ConvexSubspace::buildGeometry(BspLeaf &leaf) const
         poly->updateCenter();
 
         // Assign the polygon geometry to the BSP leaf (takes ownership).
-        leaf.setPoly(poly);
+        leaf.assignPoly(poly);
     }
 
     // Determine which sector to attribute to the BSP leaf.
-    leaf.setSector(d->sector);
+    leaf.setSector(sector);
 
     if(!leaf.hasSector())
     {

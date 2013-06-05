@@ -2085,7 +2085,7 @@ static void writeLeafWallSections()
     BspLeaf *leaf = currentBspLeaf;
     DENG_ASSERT(!isNullLeaf(leaf));
 
-    foreach(Segment *seg, leaf->segments())
+    foreach(Segment *seg, leaf->allSegments())
     {
         // We are only interested in front facing line segments.
         if(!seg->isFlagged(Segment::FacingFront))
@@ -2170,7 +2170,7 @@ static void markFrontFacingSegments()
     BspLeaf *bspLeaf = currentBspLeaf;
     DENG_ASSERT(!isNullLeaf(bspLeaf));
 
-    foreach(Segment *seg, bspLeaf->segments())
+    foreach(Segment *seg, bspLeaf->allSegments())
     {
         if(!seg->hasLineSide())
             continue;
@@ -2280,7 +2280,7 @@ static void clipFrontFacingSegments()
     BspLeaf *bspLeaf = currentBspLeaf;
     DENG_ASSERT(!isNullLeaf(bspLeaf));
 
-    foreach(Segment *seg, bspLeaf->segments())
+    foreach(Segment *seg, bspLeaf->allSegments())
     {
         if(!seg->hasLineSide())
             continue;
@@ -2900,7 +2900,7 @@ static void Rend_DrawSurfaceVectors()
 
     Vector3d origin;
     foreach(BspLeaf *bspLeaf, theMap->bspLeafs())
-    foreach(Segment *segment, bspLeaf->segments())
+    foreach(Segment *segment, bspLeaf->allSegments())
     {
         if(!bspLeaf->hasSector())
             continue;

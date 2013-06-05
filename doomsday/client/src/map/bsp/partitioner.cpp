@@ -1441,53 +1441,17 @@ DENG2_PIMPL(Partitioner)
          * which don't yet have one.
          */
         foreach(ConvexSubspace const &convexSet, convexSubspaces)
+        foreach(OrderedSegment const &oseg, convexSet.segments())
         {
-            BspLeaf *leaf = convexSet.bspLeaf();
+            LineSegment::Side *seg = oseg.segment;
 
-            if(leaf->hasPoly())
+            if(seg->hasSegment() && !seg->back().hasSegment())
             {
-                Polygon &geom     = leaf->poly();
-                HEdge *firstHEdge = geom.firstHEdge();
+                HEdge *hedge = &seg->segment().hedge();
+                DENG_ASSERT(!hedge->hasTwin());
 
-                HEdge *hedge = firstHEdge;
-                do
-                {
-                    if(!hedge->hasTwin())
-                    {
-                        DENG_ASSERT(&hedge->next() != hedge);
-                        DENG_ASSERT(&hedge->next().vertex() != &hedge->vertex());
-
-                        hedge->setTwin(new HEdge(hedge->next().vertex()));
-                        hedge->twin().setTwin(hedge);
-                    }
-
-                } while((hedge = &hedge->next()) != firstHEdge);
-
-#ifdef DENG_DEBUG
-                // See if we built a partial geometry...
-                {
-                    int discontinuities = 0;
-                    HEdge *hedge = firstHEdge;
-                    do
-                    {
-                        if(hedge->next().origin() != hedge->twin().origin())
-                        {
-                            discontinuities++;
-                        }
-                    } while((hedge = &hedge->next()) != firstHEdge);
-
-                    if(discontinuities)
-                    {
-                        LOG_WARNING("Polygon geometry for BSP leaf [%p] (at %s) in sector %i "
-                                    "is not contiguous %i gaps/overlaps (%i half-edges).")
-                            << de::dintptr(leaf)
-                            << geom.center().asText()
-                            << leaf->sector().indexInArchive()
-                            << discontinuities << geom.hedgeCount();
-                        geom.print();
-                    }
-                }
-#endif
+                hedge->setTwin(new HEdge(seg->back().from()));
+                hedge->twin().setTwin(hedge);
             }
         }
     }

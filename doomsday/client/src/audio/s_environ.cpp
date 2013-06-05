@@ -251,7 +251,7 @@ static boolean calcBspLeafReverb(BspLeaf *bspLeaf)
     float total = 0;
     // The other reverb properties can be found out by taking a look at the
     // materials of all surfaces in the BSP leaf.
-    foreach(Segment *segment, bspLeaf->segments())
+    foreach(Segment *segment, bspLeaf->allSegments())
     {
         if(!segment->hasLineSide() || !segment->lineSide().hasSections() ||
            !segment->lineSide().middle().hasMaterial())

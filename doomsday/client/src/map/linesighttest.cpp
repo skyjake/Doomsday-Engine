@@ -254,7 +254,7 @@ DENG2_PIMPL(LineSightTest)
         }
 
         // Check the line segment geometries.
-        foreach(Segment const *seg, bspLeaf.segments())
+        foreach(Segment const *seg, bspLeaf.allSegments())
         {
             if(!seg->hasLineSide())
                 continue;
