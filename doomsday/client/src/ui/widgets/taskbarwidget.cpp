@@ -286,7 +286,7 @@ bool TaskBarWidget::handleEvent(Event const &event)
         KeyEvent const &key = event.as<KeyEvent>();
 
         // Esc opens and closes the task bar.
-        if(key.qtKey() == Qt::Key_Escape)
+        if(key.ddKey() == DDKEY_ESCAPE)
         {
             // Shift-Esc opens the console.
             if(key.modifiers().testFlag(KeyEvent::Shift))

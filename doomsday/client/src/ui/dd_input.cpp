@@ -46,6 +46,8 @@
 #define MAX_AXIS_FILTER 40
 
 #define KBDQUESIZE      32
+
+#if 0
 #define MAX_DOWNKEYS    16      // Most keyboards support 6 or 7.
 
 typedef struct repeater_s {
@@ -55,6 +57,7 @@ typedef struct repeater_s {
     timespan_t timer;       // How's the time?
     int count;              // How many times has been repeated?
 } repeater_t;
+#endif
 
 typedef struct {
     ddevent_t events[MAXEVENTS];
@@ -76,7 +79,7 @@ static void postEvents(void);
 
 // The initial and secondary repeater delays (tics).
 int     repWait1 = 15, repWait2 = 3;
-int     keyRepeatDelay1 = 430, keyRepeatDelay2 = 85;    // milliseconds
+//int     keyRepeatDelay1 = 430, keyRepeatDelay2 = 85;    // milliseconds
 unsigned int  mouseFreq = 0;
 boolean shiftDown = false, altDown = false;
 
@@ -105,7 +108,7 @@ static char defaultShiftTable[96] = // Contains characters 32 to 127.
 /* 120 */   'X', 'Y', 'Z', 0, 0, 0, 0, 0
 };
 
-static repeater_t keyReps[MAX_DOWNKEYS];
+//static repeater_t keyReps[MAX_DOWNKEYS];
 
 static float oldPOV = IJOY_POV_CENTER;
 
@@ -125,8 +128,8 @@ static byte devRendJoyState = false; ///< cvar
 void DD_RegisterInput(void)
 {
     // Cvars
-    C_VAR_INT("input-key-delay1", &keyRepeatDelay1, CVF_NO_MAX, 50, 0);
-    C_VAR_INT("input-key-delay2", &keyRepeatDelay2, CVF_NO_MAX, 20, 0);
+    //C_VAR_INT("input-key-delay1", &keyRepeatDelay1, CVF_NO_MAX, 50, 0);
+    //C_VAR_INT("input-key-delay2", &keyRepeatDelay2, CVF_NO_MAX, 20, 0);
     C_VAR_BYTE("input-sharp", &useSharpInputEvents, 0, 0, 1);
 
 #if _DEBUG
@@ -1237,11 +1240,12 @@ byte DD_ModKey(byte key)
 #undef DD_ClearKeyRepeaters
 DENG_EXTERN_C void DD_ClearKeyRepeaters(void)
 {
-    memset(keyReps, 0, sizeof(keyReps));
+    //memset(keyReps, 0, sizeof(keyReps));
 }
 
 void DD_ClearKeyRepeaterForKey(int ddkey, int native)
 {
+    /*
     int k;
 
     // Clear any repeaters with this key.
@@ -1263,6 +1267,7 @@ void DD_ClearKeyRepeaterForKey(int ddkey, int native)
         keyReps[k].key = 0;
         memset(keyReps[k].text, 0, sizeof(keyReps[k].text));
     }
+    */
 }
 
 /**
@@ -1271,7 +1276,7 @@ void DD_ClearKeyRepeaterForKey(int ddkey, int native)
  */
 void DD_ReadKeyboard(void)
 {
-    uint            i, k;
+    //uint            i, k;
     ddevent_t       ev;
     size_t          n, numkeyevs = 0;
     keyevent_t      keyevs[KBDQUESIZE];
@@ -1281,6 +1286,7 @@ void DD_ReadKeyboard(void)
     ev.type = E_TOGGLE;
     ev.toggle.state = ETOG_REPEAT;
 
+#if 0
     // Post key repeat events.
     /// @todo Move this to a ticker function?
     for(i = 0; i < MAX_DOWNKEYS; ++i)
@@ -1310,6 +1316,7 @@ void DD_ReadKeyboard(void)
             }
         }
     }
+#endif
 
     // Read the new keyboard events.
     if(!novideo)
@@ -1323,11 +1330,15 @@ void DD_ReadKeyboard(void)
         keyevent_t *ke = &keyevs[n];
 
         // Check the type of the event.
-        if(ke->type == IKE_DOWN)   // Key pressed?
+        if(ke->type == IKE_DOWN)
         {
             ev.toggle.state = ETOG_DOWN;
         }
-        else if(ke->type == IKE_UP) // Key released?
+        else if(ke->type == IKE_REPEAT)
+        {
+            ev.toggle.state = ETOG_REPEAT;
+        }
+        else if(ke->type == IKE_UP)
         {
             ev.toggle.state = ETOG_UP;
         }
@@ -1340,6 +1351,7 @@ void DD_ReadKeyboard(void)
 
         DEBUG_VERBOSE2_Message(("toggle.id: %i/%c [%s:%u]\n", ev.toggle.id, ev.toggle.id, ev.toggle.text, (uint)strlen(ev.toggle.text)));
 
+#if 0
         // Maintain the repeater table.
         if(ev.toggle.state == ETOG_DOWN)
         {
@@ -1359,6 +1371,7 @@ void DD_ReadKeyboard(void)
         {
             DD_ClearKeyRepeaterForKey(ev.toggle.id, ke->native);
         }
+#endif
 
         // Post the event.
         DD_PostEvent(&ev);

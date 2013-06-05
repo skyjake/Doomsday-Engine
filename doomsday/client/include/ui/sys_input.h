@@ -41,7 +41,8 @@ extern "C" {
 enum {
     IKE_NONE,
     IKE_DOWN,
-    IKE_UP
+    IKE_UP,
+    IKE_REPEAT
 };
 
 // Mouse buttons.

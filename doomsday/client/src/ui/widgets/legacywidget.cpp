@@ -221,13 +221,14 @@ bool LegacyWidget::handleEvent(Event const &event)
         }
     }
 
-    // Note: repeat events are ignored here as the legacy input system does
-    // its own.
     if(event.type() == Event::KeyPress ||
+       event.type() == Event::KeyRepeat ||
        event.type() == Event::KeyRelease)
     {
         KeyEvent const &ev = event.as<KeyEvent>();
-        Keyboard_Submit(ev.state() == KeyEvent::Pressed? IKE_DOWN : IKE_UP,
+        Keyboard_Submit(ev.state() == KeyEvent::Pressed? IKE_DOWN :
+                        ev.state() == KeyEvent::Repeat?  IKE_REPEAT :
+                                                         IKE_UP,
                         ev.ddKey(), ev.nativeCode(), ev.text().toLatin1());
     }
 
