@@ -120,7 +120,10 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
         void clear()
         {
             DENG2_GUARD(this);
-            composer.release();
+            if(composer.isReady())
+            {
+                composer.release();
+            }
         }
     };
 
@@ -393,7 +396,7 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
     }
 
     void updateStyle()
-    {
+    {        
         // TODO -- stop wrapping tasks in the sink
 
         Style const &st = self.style();
@@ -731,7 +734,7 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
             CacheEntry *entry = cache[idx];
             yBottom -= entry->height();
 
-            if(yBottom < contentSize.y)
+            if(yBottom + contentOffset < contentSize.y)
             {
                 // This entry is visible.
                 entry->make(verts, yBottom);
