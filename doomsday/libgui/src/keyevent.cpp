@@ -36,6 +36,12 @@
 #  include "imKStoUCS_x11.c"
 #  define XFREE_KEYMAPPING
 static int x11ScancodeToDDKey(int scancode);
+#  ifdef KeyPress
+#    undef KeyPress
+#  endif
+#  ifdef KeyRelease
+#    undef KeyRelease
+#  endif
 #endif
 
 #ifdef WIN32
