@@ -39,7 +39,9 @@
 
 using namespace de;
 
-DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
+DENG2_PIMPL(LogWidget),
+DENG2_OBSERVES(Atlas, Reposition),
+public Font::RichFormat::IStyle
 {
     typedef GLBufferT<Vertex2TexRgba> VertexBuf;
 
@@ -330,6 +332,7 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
     VertexBuf *buf;
     VertexBuf *bgBuf;
     AtlasTexture *entryAtlas;
+    bool entryAtlasLayoutChanged;
     Drawable contents;
     Drawable background;
     GLUniform uMvpMatrix;
@@ -359,6 +362,7 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
           scrollBarWidth(0),
           buf(0),
           entryAtlas(0),
+          entryAtlasLayoutChanged(false),
           uMvpMatrix  ("uMvpMatrix", GLUniform::Mat4),
           uTex        ("uTex",       GLUniform::Sampler2D),
           uShadowColor("uColor",     GLUniform::Vec4),
@@ -503,6 +507,7 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
         entryAtlas = AtlasTexture::newWithRowAllocator(
                 Atlas::BackingStore | Atlas::AllowDefragment,
                 GLTexture::maximumSize().min(Atlas::Size(2048, 1024)));
+        entryAtlas->audienceForReposition += this;
 
         Image solidWhitePixel = Image::solidColor(Image::Color(255, 255, 255, 255),
                                                   Image::Size(1, 1));
@@ -533,6 +538,14 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
 
         contents.clear();
         background.clear();
+    }
+
+    void atlasContentRepositioned(Atlas &atlas)
+    {
+        if(entryAtlas == &atlas)
+        {
+            entryAtlasLayoutChanged = true;
+        }
     }
 
     duint contentWidth() const
@@ -719,29 +732,46 @@ DENG2_PIMPL(LogWidget), public Font::RichFormat::IStyle
         //prune();
 
         clampVisibleOffset(contentSize.y);
-
-        // Draw in reverse, as much as we need.
-        int yBottom = contentSize.y + visibleOffset;
-
-        maxScroll    = maxVisibleOffset(contentSize.y);
-        visibleRange = Rangei(-1, -1);
+        maxScroll = maxVisibleOffset(contentSize.y);
 
         VertexBuf::Builder verts;
 
-        // Copy all visible entries to the buffer.
-        for(int idx = cache.size() - 1; yBottom > -contentOffset && idx >= 0; --idx)
+        for(int attempt = 0; attempt < 2; ++attempt)
         {
-            CacheEntry *entry = cache[idx];
-            yBottom -= entry->height();
+            // Draw in reverse, as much as we need.
+            int yBottom = contentSize.y + visibleOffset;
+            visibleRange = Rangei(-1, -1);
+            entryAtlasLayoutChanged = false;
 
-            if(yBottom + contentOffset < contentSize.y)
+            // Find the visible range and update all visible entries.
+            for(int idx = cache.size() - 1; yBottom > -contentOffset && idx >= 0; --idx)
             {
-                // This entry is visible.
-                entry->make(verts, yBottom);
+                CacheEntry *entry = cache[idx];
+                yBottom -= entry->height();
 
-                if(visibleRange.end == -1) visibleRange.end = idx;
-                visibleRange.start = idx;
+                if(yBottom + contentOffset < contentSize.y)
+                {
+                    // Rasterize and allocate if needed.
+                    entry->make(verts, yBottom);
+
+                    // Update the visible range.
+                    if(visibleRange.end == -1)
+                    {
+                        visibleRange.end = idx;
+                    }
+                    visibleRange.start = idx;
+                }
             }
+
+            if(entryAtlasLayoutChanged)
+            {
+                // Oops, the atlas was optimized during the loop and some items'
+                // positions are obsolete.
+                verts.clear();
+                continue;
+            }
+
+            break;
         }
 
         // Draw the scroll indicator.

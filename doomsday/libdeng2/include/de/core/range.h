@@ -62,6 +62,12 @@ struct Range
     inline bool operator > (Type const &value) const {
         return start > value && end > value;
     }
+    inline bool operator <= (Type const &value) const {
+        return !(*this > value);
+    }
+    inline bool operator >= (Type const &value) const {
+        return !(*this < value);
+    }
     inline Range<Type> operator + (Type offset) const {
         return Range<Type>(start + offset, end + offset);
     }
