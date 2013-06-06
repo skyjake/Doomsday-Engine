@@ -357,7 +357,7 @@ void BspLeaf::assignPoly(Mesh *newPoly)
     }
 }
 
-void BspLeaf::assignExtraMesh(de::Mesh &newMesh)
+void BspLeaf::assignExtraMesh(Mesh &newMesh)
 {
     int const sizeBefore = d->extraMeshes.size();
 

@@ -24,23 +24,18 @@
 #include <QList>
 #include <QSet>
 
-#include <de/mathutil.h>
-
 #include "EntityDatabase"
 #include "m_nodepile.h"
 #include "p_particle.h"
 #include "Polyobj"
 
-#ifdef __CLIENT__
-#  include "render/lightgrid.h"
-#endif
-
-class Vertex;
-class Line;
-class Sector;
-class Plane;
 class BspLeaf;
 class BspNode;
+class Line;
+class Plane;
+class Sector;
+class Segment;
+class Vertex;
 
 struct thinkerlist_s;
 struct clmoinfo_s;
@@ -73,6 +68,10 @@ struct clplane_s;
 struct clpolyobj_s;
 
 namespace de {
+
+#ifdef __CLIENT__
+class LightGrid;
+#endif
 
 /**
  * World map.
@@ -110,6 +109,15 @@ public:
         size_t numLists;
         struct thinkerlist_s **lists;
         boolean inited;
+
+        thinkers_s()
+            : iddealer(0),
+              numLists(0),
+              lists(0),
+              inited(false)
+        {
+            zap(idtable);
+        }
     } thinkers;
 
     // Client only data:

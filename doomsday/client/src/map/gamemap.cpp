@@ -18,21 +18,34 @@
  * 02110-1301 USA</small>
  */
 
-#include <cmath>
+#include <de/memory.h>
+#include <de/memoryzone.h>
 
-#include <de/libdeng2.h>
+#include "de_platform.h"
+#include "de_console.h" // Con_GetInteger
 
-#include "de_base.h"
-#include "de_console.h"
-#include "de_play.h"
-#include "de_system.h"
+#include "dd_main.h"
 
-#include <BspBuilder>
-#include "edit_map.h"
+#include "BspLeaf"
+#include "BspNode"
+#include "Line"
+#include "Plane"
+#include "Polyobj"
+#include "Sector"
+#include "Segment"
+#include "Vertex"
+
+#include "BspBuilder"
+
 #include "map/blockmap.h"
 #include "map/generators.h"
+#include "map/p_intercept.h"
+#include "map/p_maputil.h"
+#include "map/p_object.h"
+#include "map/r_world.h"
+
+#include "edit_map.h" // bspFactor
 #include "render/r_main.h" // validCount
-#include "r_util.h"
 
 #include "map/gamemap.h"
 
@@ -65,7 +78,8 @@ DENG2_PIMPL(GameMap)
     QScopedPointer<LightGrid> lightGrid;
 #endif
 
-    coord_t skyFix[2]; // [floor, ceiling]
+    coord_t skyFloorHeight;
+    coord_t skyCeilingHeight;
 
     // Current LOS trace state.
     /// @todo Does not belong here.
@@ -73,14 +87,21 @@ DENG2_PIMPL(GameMap)
     divline_t traceLine;
 
     Instance(Public *i)
-        : Base(i),
-          bspRoot(0),
-          generators(0)
+        : Base            (i),
+          bspRoot         (0),
+          generators      (0),
+          skyFloorHeight  (DDMAXFLOAT),
+          skyCeilingHeight(DDMINFLOAT)
     {
-        std::memset(&bounds,       0, sizeof(bounds));
-        std::memset(skyFix,        0, sizeof(skyFix));
-        std::memset(&traceOpening, 0, sizeof(traceOpening));
-        std::memset(&traceLine,    0, sizeof(traceLine));
+        zap(traceOpening);
+        zap(traceLine);
+    }
+
+    ~Instance()
+    {
+        qDeleteAll(segments);
+        qDeleteAll(bspNodes);
+        qDeleteAll(bspLeafs);
     }
 
     void collateVertexes(BspBuilder &builder)
@@ -379,18 +400,15 @@ DENG2_PIMPL(GameMap)
 
 GameMap::GameMap() : d(new Instance(this))
 {
-    std::memset(_oldUniqueId, 0, sizeof(_oldUniqueId));
-    std::memset(&thinkers, 0, sizeof(thinkers));
-    std::memset(&clMobjHash, 0, sizeof(clMobjHash));
-    std::memset(&clActivePlanes, 0, sizeof(clActivePlanes));
-    std::memset(&clActivePolyobjs, 0, sizeof(clActivePolyobjs));
+    zap(_oldUniqueId);
+    zap(clMobjHash);
+    zap(clActivePlanes);
+    zap(clActivePolyobjs);
     entityDatabase = 0;
     mobjBlockmap = 0;
     polyobjBlockmap = 0;
     lineBlockmap = 0;
     bspLeafBlockmap = 0;
-    std::memset(&mobjNodes, 0, sizeof(mobjNodes));
-    std::memset(&lineNodes, 0, sizeof(lineNodes));
     lineLinks = 0;
     _globalGravity = 0;
     _effectiveGravity = 0;
@@ -711,8 +729,8 @@ void GameMap::initSkyFix()
 {
     Time begunAt;
 
-    d->skyFix[Plane::Floor]   = DDMAXFLOAT;
-    d->skyFix[Plane::Ceiling] = DDMINFLOAT;
+    d->skyFloorHeight   = DDMAXFLOAT;
+    d->skyCeilingHeight = DDMINFLOAT;
 
     // Update for sector plane heights and mobjs which intersect the ceiling.
     foreach(Sector *sector, _sectors)
@@ -725,14 +743,13 @@ void GameMap::initSkyFix()
 
 coord_t GameMap::skyFix(bool ceiling) const
 {
-    Plane::Type plane = ceiling? Plane::Ceiling : Plane::Floor;
-    return d->skyFix[plane];
+    return ceiling? d->skyCeilingHeight : d->skyFloorHeight;
 }
 
 void GameMap::setSkyFix(bool ceiling, coord_t newHeight)
 {
-    Plane::Type plane = ceiling? Plane::Ceiling : Plane::Floor;
-    d->skyFix[plane] = newHeight;
+    if(ceiling) d->skyCeilingHeight = newHeight;
+    else        d->skyFloorHeight   = newHeight;
 }
 
 int GameMap::toSideIndex(int lineIndex, int backSide) // static
@@ -816,18 +833,16 @@ Generators *GameMap::generators()
 
 void GameMap::initNodePiles()
 {
-    DENG_ASSERT(lineLinks == 0);
+    Time begunAt;
 
-    uint starttime = 0;
-
-    VERBOSE( Con_Message("GameMap::InitNodePiles: Initializing...") )
-    VERBOSE2( starttime = Timer_RealMilliseconds() )
+    LOG_VERBOSE("Initializing map link-node piles...");
 
     // Initialize node piles and line rings.
     NP_Init(&mobjNodes, 256);  // Allocate a small pile.
     NP_Init(&lineNodes, lineCount() + 1000);
 
     // Allocate the rings.
+    DENG_ASSERT(lineLinks == 0);
     lineLinks = (nodeindex_t *) Z_Malloc(sizeof(*lineLinks) * lineCount(), PU_MAPSTATIC, 0);
 
     for(int i = 0; i < lineCount(); ++i)
@@ -836,7 +851,7 @@ void GameMap::initNodePiles()
     }
 
     // How much time did we spend?
-    VERBOSE2( Con_Message("  Done in %.2f seconds.", (Timer_RealMilliseconds() - starttime) / 1000.0f) )
+    LOG_INFO(String("GameMap::initNodePiles: Done in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 }
 
 void GameMap::initLineBlockmap(const_pvec2d_t min_, const_pvec2d_t max_)
@@ -844,7 +859,7 @@ void GameMap::initLineBlockmap(const_pvec2d_t min_, const_pvec2d_t max_)
 #define BLOCKMAP_MARGIN      8 // size guardband around map
 #define CELL_SIZE            MAPBLOCKUNITS
 
-    DENG2_ASSERT(min_ && max_ && lineBlockmap == 0);
+    DENG_ASSERT(min_ && max_ && lineBlockmap == 0);
 
     // Setup the blockmap area to enclose the whole map, plus a margin
     // (margin is needed for a map that fits entirely inside one blockmap cell).
@@ -864,7 +879,7 @@ void GameMap::initMobjBlockmap(const_pvec2d_t min_, const_pvec2d_t max_)
 #define BLOCKMAP_MARGIN      8 // size guardband around map
 #define CELL_SIZE            MAPBLOCKUNITS
 
-    DENG2_ASSERT(min_ && max_ && mobjBlockmap == 0);
+    DENG_ASSERT(min_ && max_ && mobjBlockmap == 0);
 
     // Setup the blockmap area to enclose the whole map, plus a margin
     // (margin is needed for a map that fits entirely inside one blockmap cell).
@@ -884,7 +899,7 @@ void GameMap::initPolyobjBlockmap(const_pvec2d_t min_, const_pvec2d_t max_)
 #define BLOCKMAP_MARGIN      8 // size guardband around map
 #define CELL_SIZE            MAPBLOCKUNITS
 
-    DENG2_ASSERT(min_ && max_ && polyobjBlockmap == 0);
+    DENG_ASSERT(min_ && max_ && polyobjBlockmap == 0);
 
     // Setup the blockmap area to enclose the whole map, plus a margin
     // (margin is needed for a map that fits entirely inside one blockmap cell).
@@ -904,7 +919,7 @@ void GameMap::initBspLeafBlockmap(const_pvec2d_t min_, const_pvec2d_t max_)
 #define BLOCKMAP_MARGIN      8 // size guardband around map
 #define CELL_SIZE            MAPBLOCKUNITS
 
-    DENG2_ASSERT(min_ && max_);
+    DENG_ASSERT(min_ && max_);
 
     // Setup the blockmap area to enclose the whole map, plus a margin
     // (margin is needed for a map that fits entirely inside one blockmap cell).

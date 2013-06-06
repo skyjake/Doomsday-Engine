@@ -88,7 +88,7 @@ public:
      * Returns @c true iff the BSP leaf is "degenerate", which is to say there
      * is no convex Polygon assigned to it.
      *
-     * Equivalent to @code !hasPoly() @endcode
+     * Equivalent to @code !hasFace() @endcode
      */
     inline bool isDegenerate() const { return !hasFace(); }
 
