@@ -240,9 +240,9 @@ public:
      *
      * @param groupId  Geometry group identifier for the bias surface.
      */
-    BiasSurface &biasSurfaceForGeometryGroup(uint groupId);
+    BiasSurface &biasSurface(int groupId);
 
-    void setBiasSurface(uint groupId, BiasSurface *biasSurface);
+    void setBiasSurface(int groupId, BiasSurface *biasSurface);
 
 #endif // __CLIENT__
 

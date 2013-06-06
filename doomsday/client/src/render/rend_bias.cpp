@@ -321,11 +321,12 @@ void SB_InitForMap(char const *uniqueID)
         {
             BiasSurface *bsuf = SB_CreateSurface();
 
-            bsuf->size = 4;
+            bsuf->size  = 4;
             bsuf->illum = illums;
-            illums += 4;
 
             segment->setBiasSurface(i, bsuf);
+
+            illums += bsuf->size;
         }
     }
 
@@ -338,12 +339,12 @@ void SB_InitForMap(char const *uniqueID)
         {
             BiasSurface *bsuf = SB_CreateSurface();
 
-            bsuf->size = bspLeaf->numFanVertices();
+            bsuf->size  = bspLeaf->numFanVertices();
             bsuf->illum = illums;
-            illums += bsuf->size;
 
-            DENG2_ASSERT(bspLeaf->_bsuf != 0);
-            bspLeaf->_bsuf[i] = bsuf;
+            bspLeaf->setBiasSurface(i, bsuf);
+
+            illums += bsuf->size;
         }
     }
 

@@ -1427,7 +1427,7 @@ static void writeWallSection(Segment &segment, int section,
         parm.alpha               = parm.forceOpaque? 1 : opacity;
         parm.mapElement          = &segment;
         parm.elmIdx              = wallSpec.section;
-        parm.bsuf                = &segment.biasSurfaceForGeometryGroup(wallSpec.section);
+        parm.bsuf                = &segment.biasSurface(wallSpec.section);
         parm.normal              = &surface.normal();
         parm.texTL               = &texQuad[0];
         parm.texBR               = &texQuad[1];
@@ -1673,7 +1673,7 @@ static void writeLeafPlane(Plane &plane)
     parm.isWall              = false;
     parm.mapElement          = leaf;
     parm.elmIdx              = plane.inSectorIndex();
-    parm.bsuf                = &leaf->biasSurfaceForGeometryGroup(plane.inSectorIndex());
+    parm.bsuf                = &leaf->biasSurface(plane.inSectorIndex());
     parm.normal              = &surface.normal();
     parm.texTL               = &texTL;
     parm.texBR               = &texBR;

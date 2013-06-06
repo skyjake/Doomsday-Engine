@@ -73,9 +73,6 @@ public: /// @todo Make private:
 
     ShadowLink *_shadows;
 
-    /// Sector::planeCount() size.
-    BiasSurface **_bsuf;
-
     uint _reverb[NUM_REVERB_DATA];
 
 #endif // __CLIENT__
@@ -257,7 +254,9 @@ public:
      *
      * @param groupId  Geometry group identifier for the bias surface.
      */
-    BiasSurface &biasSurfaceForGeometryGroup(int groupId);
+    BiasSurface &biasSurface(int groupId);
+
+    void setBiasSurface(int groupId, BiasSurface *biasSurface);
 
     /**
      * Returns the first ShadowLink associated with the BSP leaf; otherwise @c 0.

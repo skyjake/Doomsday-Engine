@@ -196,20 +196,20 @@ void Segment::setFlags(Flags flagsToChange, FlagOp operation)
 
 #ifdef __CLIENT__
 
-BiasSurface &Segment::biasSurfaceForGeometryGroup(uint groupId)
+BiasSurface &Segment::biasSurface(int groupId)
 {
-    if(groupId <= Line::Side::Top)
+    if(groupId >= 0 && groupId <= int(Line::Side::Top))
     {
         DENG2_ASSERT(d->bsuf[groupId] != 0);
         return *d->bsuf[groupId];
     }
     /// @throw InvalidGeometryGroupError Attempted with an invalid geometry group id.
-    throw UnknownGeometryGroupError("Segment::biasSurfaceForGeometryGroup", QString("Invalid group id %1").arg(groupId));
+    throw UnknownGeometryGroupError("Segment::biasSurface", QString("Invalid group id %1").arg(groupId));
 }
 
-void Segment::setBiasSurface(uint groupId, BiasSurface *biasSurface)
+void Segment::setBiasSurface(int groupId, BiasSurface *biasSurface)
 {
-    if(groupId <= Line::Side::Top)
+    if(groupId >= 0 && groupId <= int(Line::Side::Top))
     {
         if(d->bsuf[groupId])
         {
@@ -219,7 +219,7 @@ void Segment::setBiasSurface(uint groupId, BiasSurface *biasSurface)
         return;
     }
     /// @throw InvalidGeometryGroupError Attempted with an invalid geometry group id.
-    throw UnknownGeometryGroupError("Segment::setBiasSurfaceForGeometryGroup", QString("Invalid group id %1").arg(groupId));
+    throw UnknownGeometryGroupError("Segment::setBiasSurface", QString("Invalid group id %1").arg(groupId));
 }
 
 #endif // __CLIENT__

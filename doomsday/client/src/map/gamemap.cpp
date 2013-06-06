@@ -198,50 +198,6 @@ DENG2_PIMPL(GameMap)
         foreach(Plane *plane, sector->planes())
         {
             plane->updateSoundEmitterOrigin();
-
-#ifdef __CLIENT__
-            // Resize the biassurface lists for the BSP leaf planes.
-            foreach(BspLeaf *bspLeaf, sector->bspLeafs())
-            {
-                if(bspLeaf->isDegenerate()) continue;
-
-                int n = 0;
-
-                BiasSurface **newList = (BiasSurface **) Z_Calloc(sector->planeCount() * sizeof(BiasSurface *), PU_MAP, 0);
-                // Copy the existing list?
-                if(bspLeaf->_bsuf)
-                {
-                    for(; n < sector->planeCount() - 1 /* exclude newly added */; ++n)
-                    {
-                        newList[n] = bspLeaf->_bsuf[n];
-                    }
-                    Z_Free(bspLeaf->_bsuf);
-                    bspLeaf->_bsuf = 0;
-                }
-
-                /*
-                 * @todo So where is this data initialized now? -ds
-                 * If we are in map setup mode, don't create the biassurfaces now,
-                 * as planes are created before the bias system is available.
-                 */
-                /*if(!ddMapSetup)
-                {
-                    BiasSurface *bsuf = SB_CreateSurface();
-
-                    bsuf->size = Rend_NumFanVerticesForBspLeaf(bspLeaf);
-                    bsuf->illum = (vertexillum_t *) Z_Calloc(sizeof(vertexillum_t) * bsuf->size, PU_MAP, 0);
-
-                    for(uint k = 0; k < bsuf->size; ++k)
-                    {
-                        SB_InitVertexIllum(&bsuf->illum[k]);
-                    }
-
-                    newList[n] = bsuf;
-                }*/
-
-                bspLeaf->_bsuf = newList;
-            }
-#endif
         }
     }
 

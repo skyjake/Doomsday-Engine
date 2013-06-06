@@ -88,15 +88,6 @@ DENG2_PIMPL(Sector)
 
     ~Instance()
     {
-#ifdef __CLIENT__
-        // Destroy the biassurfaces for each plane.
-        foreach(BspLeaf *bspLeaf, bspLeafs)
-        for(int i = 0; i < self.planeCount(); ++i)
-        {
-            SB_DestroySurface(bspLeaf->_bsuf[i]);
-        }
-#endif
-
         qDeleteAll(planes);
     }
 
@@ -468,11 +459,11 @@ void Sector::planeHeightChanged(Plane &plane, coord_t oldHeight)
 
             for(uint i = 0; i < 3; ++i)
             {
-                SB_SurfaceMoved(&seg->biasSurfaceForGeometryGroup(i));
+                SB_SurfaceMoved(&seg->biasSurface(i));
             }
         }
 
-        SB_SurfaceMoved(&bspLeaf->biasSurfaceForGeometryGroup(plane.inSectorIndex()));
+        SB_SurfaceMoved(&bspLeaf->biasSurface(plane.inSectorIndex()));
     }
 
 #endif // __CLIENT__

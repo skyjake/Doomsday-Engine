@@ -56,7 +56,7 @@ static void notifyGeometryChanged(Polyobj &po)
 
         for(int i = 0; i < 3; ++i)
         {
-            SB_SurfaceMoved(&segment->biasSurfaceForGeometryGroup(i));
+            SB_SurfaceMoved(&segment->biasSurface(i));
         }
     }
 #else // !__CLIENT__
