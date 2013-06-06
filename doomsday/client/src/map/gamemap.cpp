@@ -1151,7 +1151,7 @@ void GameMap::linkBspLeaf(BspLeaf &bspLeaf)
     // BspLeafs without sectors don't get in.
     if(!bspLeaf.hasSector()) return;
 
-    AABoxd aaBox = bspLeaf.poly().firstFace()->aaBox();
+    AABoxd aaBox = bspLeaf.face().aaBox();
 
     BlockmapCellBlock cellBlock;
     Blockmap_CellBlock(bspLeafBlockmap, &cellBlock, &aaBox);
@@ -1188,7 +1188,7 @@ static int blockmapCellBspLeafsIterator(void *object, void *context)
             ok = false;
 
         // Check the bounds.
-        AABoxd const &leafAABox = bspLeaf->poly().firstFace()->aaBox();
+        AABoxd const &leafAABox = bspLeaf->face().aaBox();
 
         if(args->box &&
            (leafAABox.maxX < args->box->minX ||

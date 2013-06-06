@@ -169,10 +169,10 @@ static void findBspLeafsAffectingSector(GameMap *map, Sector *sec)
 
         // Is this BSP leaf close enough?
         if(bspLeaf->sectorPtr() == sec || // leaf is IN this sector
-           (bspLeaf->poly().firstFace()->center().x > affectionBounds.minX &&
-            bspLeaf->poly().firstFace()->center().y > affectionBounds.minY &&
-            bspLeaf->poly().firstFace()->center().x < affectionBounds.maxX &&
-            bspLeaf->poly().firstFace()->center().y < affectionBounds.maxY))
+           (bspLeaf->face().center().x > affectionBounds.minX &&
+            bspLeaf->face().center().y > affectionBounds.minY &&
+            bspLeaf->face().center().x < affectionBounds.maxX &&
+            bspLeaf->face().center().y < affectionBounds.maxY))
         {
             // It will contribute to the reverb settings of this sector.
             setBspLeafSectorOwner(&bspLeafOwnerList, bspLeaf);
@@ -245,8 +245,8 @@ static boolean calcBspLeafReverb(BspLeaf *bspLeaf)
     // Space is the rough volume of the BSP leaf (bounding box).
     bspLeaf->_reverb[SRD_SPACE] =
         (int) (bspLeaf->sector().ceiling().height() - bspLeaf->sector().floor().height()) *
-        (bspLeaf->poly().firstFace()->aaBox().maxX - bspLeaf->poly().firstFace()->aaBox().minX) *
-        (bspLeaf->poly().firstFace()->aaBox().maxY - bspLeaf->poly().firstFace()->aaBox().minY);
+        (bspLeaf->face().aaBox().maxX - bspLeaf->face().aaBox().minX) *
+        (bspLeaf->face().aaBox().maxY - bspLeaf->face().aaBox().minY);
 
     float total = 0;
     // The other reverb properties can be found out by taking a look at the

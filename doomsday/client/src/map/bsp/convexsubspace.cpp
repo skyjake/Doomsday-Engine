@@ -491,7 +491,7 @@ void ConvexSubspace::buildGeometry(BspLeaf &leaf) const
             face->updateCenter();
 
             // Assign the mesh to the BSP leaf (takes ownership).
-            leaf.assignExtraPoly(mesh);
+            leaf.assignExtraMesh(*mesh);
         }
     }
 
@@ -601,7 +601,7 @@ void ConvexSubspace::buildGeometry(BspLeaf &leaf) const
     {
         LOG_WARNING("BspLeaf %p is degenerate/orphan (%d half-edges).")
             << de::dintptr(&leaf)
-            << (leaf.hasPoly()? leaf.poly().firstFace()->hedgeCount() : 0);
+            << (leaf.hasFace()? leaf.face().hedgeCount() : 0);
     }
 }
 

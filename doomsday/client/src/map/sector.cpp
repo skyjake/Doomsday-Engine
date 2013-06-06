@@ -370,7 +370,7 @@ void Sector::updateAABox()
     {
         if(leaf->isDegenerate()) continue;
 
-        AABoxd const &leafAABox = leaf->poly().firstFace()->aaBox();
+        AABoxd const &leafAABox = leaf->face().aaBox();
 
         if(!isFirst)
         {
@@ -392,7 +392,7 @@ void Sector::updateRoughArea()
     {
         if(leaf->isDegenerate()) continue;
 
-        AABoxd const &leafAABox = leaf->poly().firstFace()->aaBox();
+        AABoxd const &leafAABox = leaf->face().aaBox();
 
         d->roughArea += (leafAABox.maxX - leafAABox.minX) *
                         (leafAABox.maxY - leafAABox.minY);

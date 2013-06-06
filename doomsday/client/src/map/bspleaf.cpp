@@ -58,7 +58,7 @@ DENG2_PIMPL(BspLeaf)
     QScopedPointer<Mesh> polygon;
 
     /// Additional polygon geometries assigned to the BSP leaf (owned).
-    Meshes extraPolygons;
+    Meshes extraMeshes;
 
     /// Clockwise ordering of the line segments from the primary polygon.
     Segments clockwiseSegments;
@@ -114,7 +114,7 @@ DENG2_PIMPL(BspLeaf)
 
     ~Instance()
     {
-        qDeleteAll(extraPolygons);
+        qDeleteAll(extraMeshes);
 
 #ifdef __CLIENT__
         if(self._bsuf)
@@ -137,7 +137,7 @@ DENG2_PIMPL(BspLeaf)
         if(polygon.isNull())
             return;
 
-        Face const &face = *polygon->firstFace();
+        Face const &face = self.face();
 #ifdef DENG2_QT_4_7_OR_NEWER
         clockwiseSegments.reserve(face.hedgeCount());
 #endif
@@ -190,9 +190,10 @@ DENG2_PIMPL(BspLeaf)
         allSegments.clear();
 
         int numSegments = clockwiseSegments.count();
-        foreach(Polygon *poly, extraPolygons)
+        foreach(Mesh *mesh, extraMeshes)
+        foreach(Face *face, mesh->faces())
         {
-            numSegments += poly->firstFace()->hedgeCount();
+            numSegments += face->hedgeCount();
         }
 #ifdef DENG2_QT_4_7_OR_NEWER
         allSegments.reserve(numSegments);
@@ -201,17 +202,17 @@ DENG2_PIMPL(BspLeaf)
         // Populate the segment list.
         allSegments.append(clockwiseSegments);
 
-        foreach(Polygon *poly, extraPolygons)
+        foreach(Mesh *mesh, extraMeshes)
+        foreach(Face *face, mesh->faces())
         {
-            Face const &face = *poly->firstFace();
-            HEdge *hedge = face.hedge();
+            HEdge *hedge = face->hedge();
             do
             {
                 if(MapElement *elem = hedge->mapElement())
                 {
                     allSegments.append(elem->castTo<Segment>());
                 }
-            } while((hedge = &hedge->next()) != face.hedge());
+            } while((hedge = &hedge->next()) != face->hedge());
         }
     }
 
@@ -239,11 +240,12 @@ DENG2_PIMPL(BspLeaf)
     {
 #define MIN_TRIANGLE_EPSILON  (0.1) ///< Area
 
-        HEdge *firstNode = polygon->firstFace()->hedge();
+        Face const &face = self.face();
+        HEdge *firstNode = face.hedge();
 
         fanBase = firstNode;
 
-        if(polygon->firstFace()->hedgeCount() > 3)
+        if(face.hedgeCount() > 3)
         {
             // Splines with higher vertex counts demand checking.
             Vertex const *base, *a, *b;
@@ -306,24 +308,24 @@ BspLeaf::BspLeaf(Sector *sector)
 #endif
 }
 
-bool BspLeaf::hasPoly() const
+bool BspLeaf::hasFace() const
 {
     return !d->polygon.isNull();
 }
 
-Mesh &BspLeaf::poly()
+Face &BspLeaf::face()
 {
     if(!d->polygon.isNull())
     {
-        return *d->polygon;
+        return *d->polygon->firstFace();
     }
     /// @throw MissingPolygonError Attempted with no polygon assigned.
-    throw MissingPolygonError("BspLeaf::poly", "No polygon is assigned");
+    throw MissingFaceError("BspLeaf::poly", "No polygon is assigned");
 }
 
-Mesh const &BspLeaf::poly() const
+Face const &BspLeaf::face() const
 {
-    return const_cast<Mesh const &>(const_cast<BspLeaf *>(this)->poly());
+    return const_cast<Face const &>(const_cast<BspLeaf *>(this)->face());
 }
 
 void BspLeaf::assignPoly(Mesh *newPoly)
@@ -356,16 +358,19 @@ void BspLeaf::assignPoly(Mesh *newPoly)
     }
 }
 
-void BspLeaf::assignExtraPoly(de::Mesh *newPoly)
+void BspLeaf::assignExtraMesh(de::Mesh &newMesh)
 {
-    int const sizeBefore = d->extraPolygons.size();
+    int const sizeBefore = d->extraMeshes.size();
 
-    d->extraPolygons.insert(newPoly);
+    d->extraMeshes.insert(&newMesh);
 
-    if(d->extraPolygons.size() != sizeBefore)
+    if(d->extraMeshes.size() != sizeBefore)
     {
-        // Attribute the new face geometry to "this" BSP leaf.
-        newPoly->firstFace()->setMapElement(this);
+        // Attribute all faces to "this" BSP leaf.
+        foreach(Face *face, newMesh.faces())
+        {
+            face->setMapElement(this);
+        }
 
         // We'll need to update the all segment list.
         d->needUpdateAllSegments = true;
@@ -458,8 +463,8 @@ HEdge *BspLeaf::fanBase() const
 int BspLeaf::numFanVertices() const
 {
     // Are we to use one of the half-edge vertexes as the fan base?
-    if(!hasPoly()) return 0;
-    return d->polygon->firstFace()->hedgeCount() + (fanBase()? 0 : 2);
+    if(!hasFace()) return 0;
+    return face().hedgeCount() + (fanBase()? 0 : 2);
 }
 
 BiasSurface &BspLeaf::biasSurfaceForGeometryGroup(int groupId)

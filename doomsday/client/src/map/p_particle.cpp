@@ -659,7 +659,7 @@ static void P_NewParticle(ptcgen_t *gen)
         if(!bspLeaf || bspLeaf->isDegenerate())
             goto spawn_failed;
 
-        AABoxd const &leafAABox = bspLeaf->poly().firstFace()->aaBox();
+        AABoxd const &leafAABox = bspLeaf->face().aaBox();
 
         // Try a couple of times to get a good random spot.
         for(i = 0; i < 10; ++i) // Max this many tries before giving up.

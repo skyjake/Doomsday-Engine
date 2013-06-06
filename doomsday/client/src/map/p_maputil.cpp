@@ -97,10 +97,9 @@ bool P_IsPointInBspLeaf(Vector2d const &point, BspLeaf const &bspLeaf)
     if(bspLeaf.isDegenerate())
         return false; // Obviously not.
 
-    de::Mesh const &poly = bspLeaf.poly();
-    HEdge const *firstHEdge = poly.firstFace()->hedge();
+    Face const &face = bspLeaf.face();
 
-    HEdge const *hedge = firstHEdge;
+    HEdge const *hedge = face.hedge();
     do
     {
         Vertex const &va = hedge->vertex();
@@ -113,7 +112,7 @@ bool P_IsPointInBspLeaf(Vector2d const &point, BspLeaf const &bspLeaf)
             return false;
         }
 
-    } while((hedge = &hedge->next()) != firstHEdge);
+    } while((hedge = &hedge->next()) != face.hedge());
 
     return true;
 }

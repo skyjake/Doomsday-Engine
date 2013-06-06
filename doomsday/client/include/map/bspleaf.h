@@ -27,6 +27,7 @@
 #include <de/Vector>
 
 #include "MapElement"
+#include "Face"
 #include "HEdge"
 #include "Line"
 #include "Mesh"
@@ -54,8 +55,8 @@ public:
     /// An invalid polygon was specified @ingroup errors
     DENG2_ERROR(InvalidPolygonError);
 
-    /// Required polygon geometry is missing. @ingroup errors
-    DENG2_ERROR(MissingPolygonError);
+    /// Required face geometry is missing. @ingroup errors
+    DENG2_ERROR(MissingFaceError);
 
     /// Required sector attribution is missing. @ingroup errors
     DENG2_ERROR(MissingSectorError);
@@ -92,24 +93,26 @@ public:
      *
      * Equivalent to @code !hasPoly() @endcode
      */
-    inline bool isDegenerate() const { return !hasPoly(); }
+    inline bool isDegenerate() const { return !hasFace(); }
 
     /**
-     * Determines whether a convex polygon geometry is assigned to the BSP leaf.
+     * Determines whether a convex face geometry (a polygon) is assigned to the
+     * BSP leaf.
      *
-     * @see poly(), setPoly()
+     * @see face(), setFace()
      */
-    bool hasPoly() const;
+    bool hasFace() const;
 
     /**
-     * Provides access to the convex polygon geometry assigned to the BSP leaf.
+     * Provides access to the convex face geometry (a polygon) assigned to the
+     * BSP leaf.
      *
-     * @see hasPoly(), assignPoly()
+     * @see hasFace(), assignPoly()
      */
-    de::Mesh &poly();
+    de::Face &face();
 
-    /// @copydoc poly()
-    de::Mesh const &poly() const;
+    /// @copydoc face()
+    de::Face const &face() const;
 
     /**
      * Change the polygon geometry assigned to the BSP leaf. Before the geometry
@@ -120,26 +123,33 @@ public:
      *                 of the polygon is given to the BspLeaf if it passes all
      *                 conformance checks.
      *
-     * @see hasPoly(), poly()
+     * @see hasFace(), face()
      */
     void assignPoly(de::Mesh *polygon);
 
     /**
-     * Assign an additional Polygon geometry to the BSP leaf.
+     * Assign an additional mesh geometry to the BSP leaf. Such @em extra meshes
+     * are used to represent geometry which would result in a non-manifold mesh
+     * if incorporated in the primary mesh for the map.
      *
-     * @param polygon  New polygon to be assigned to the BSP leaf. Ownership
-     *                 of the polygon is given to the BspLeaf.
+     * @param mesh  New mesh to be assigned to the BSP leaf. Ownership of the
+     *              mesh is given to the BspLeaf.
      */
-    void assignExtraPoly(de::Mesh *polygon);
+    void assignExtraMesh(de::Mesh &mesh);
 
     /**
      * Provides a clockwise ordered list of all the line segments which comprise
-     * the convex geometry assigned to the BSP leaf.
+     * the convex face geometry (a polygon) assigned to the BSP leaf.
+     *
+     * @see allSegments(), assignPoly()
      */
     Segments const &clockwiseSegments() const;
 
     /**
-     * Provides a list of all the line segments attributed to the BSP leaf.
+     * Provides a list of all the line segments from the convex face geometry and
+     * any @em extra meshes assigned to the BSP leaf.
+     *
+     * @see clockwiseSegments(), assignExtraMesh()
      */
     Segments const &allSegments() const;
 

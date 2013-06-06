@@ -1584,7 +1584,7 @@ static uint buildLeafPlaneGeometry(BspLeaf const &leaf, ClockDirection direction
     DENG_ASSERT(!leaf.isDegenerate());
     DENG_ASSERT(verts != 0);
 
-    Face const &face = *leaf.poly().firstFace();
+    Face const &face = leaf.face();
 
     HEdge *fanBase  = leaf.fanBase();
     uint totalVerts = face.hedgeCount() + (!fanBase? 2 : 0);
@@ -1622,7 +1622,7 @@ static void writeLeafPlane(Plane &plane)
     BspLeaf *leaf = currentBspLeaf;
     DENG_ASSERT(!isNullLeaf(leaf));
 
-    Face const &face = *leaf->poly().firstFace();
+    Face const &face = leaf->face();
 
     Surface const &surface = plane.surface();
     Vector3f eyeToSurface(vOrigin[VX] - face.center().x,
@@ -2975,7 +2975,7 @@ static void Rend_DrawSurfaceVectors()
 
         foreach(Plane *plane, sector.planes())
         {
-            origin = Vector3d(bspLeaf->poly().firstFace()->center(), plane->visHeight());
+            origin = Vector3d(bspLeaf->face().center(), plane->visHeight());
 
             if(plane->type() != Plane::Middle && plane->surface().hasSkyMaskedMaterial())
                 origin.z = theMap->skyFix(plane->type() == Plane::Ceiling);
