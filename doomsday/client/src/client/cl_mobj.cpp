@@ -31,6 +31,8 @@
 #include "de_play.h"
 #include "de_audio.h"
 
+using namespace de;
+
 /// Convert 8.8/10.6 fixed point to 16.16.
 #define UNFIXED8_8(x)   (((x) << 16) / 256)
 #define UNFIXED10_6(x)  (((x) << 16) / 64)

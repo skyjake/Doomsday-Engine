@@ -35,6 +35,8 @@
 
 #include "audio/s_environ.h"
 
+using namespace de;
+
 // Used for vertex sector owners, side line owners and reverb BSP leafs.
 typedef struct ownernode_s {
     void *data;
@@ -72,7 +74,7 @@ const char* S_AudioEnvironmentName(AudioEnvironmentClass env)
     return "";
 }
 
-AudioEnvironmentClass S_AudioEnvironmentForMaterial(const Uri* uri)
+AudioEnvironmentClass S_AudioEnvironmentForMaterial(uri_s const *uri)
 {
     if(uri)
     {
@@ -81,7 +83,7 @@ AudioEnvironmentClass S_AudioEnvironmentForMaterial(const Uri* uri)
         {
             for(int k = 0; k < env->count.num; ++k)
             {
-                Uri* ref = env->materials[k];
+                uri_s *ref = env->materials[k];
                 if(!ref || !Uri_Equality(ref, uri)) continue;
 
                 // See if we recognise the material name.

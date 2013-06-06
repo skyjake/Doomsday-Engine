@@ -1,4 +1,6 @@
-/**\file p_mobj.cpp
+/** @file map/p_mobj.cpp  Map Objects.
+ *
+ * Various routines for moving mobjs, collision and Z checking.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -14,17 +16,10 @@
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small>
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
-
-/**
- * Map Objects
- *
- * Contains various routines for moving mobjs, collision and Z checking.
- */
-
-// HEADER FILES ------------------------------------------------------------
 
 #include <math.h>
 
@@ -40,25 +35,9 @@
 #include "render/r_main.h" // validCount, viewport
 #include "render/r_things.h" // useSRVO
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
+using namespace de;
 
 static mobj_t *unusedMobjs = NULL;
-
-// CODE --------------------------------------------------------------------
 
 /**
  * Called during map loading.

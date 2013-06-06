@@ -26,6 +26,8 @@
 #include "map/gamemap.h"
 #include "render/sky.h"
 
+using namespace de;
+
 int P_MobjTicker(thinker_t* th, void* context)
 {
     DENG_UNUSED(context);

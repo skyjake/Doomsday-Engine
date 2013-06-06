@@ -36,6 +36,8 @@
 
 #include "map/gamemap.h"
 
+using namespace de;
+
 D_CMD(BLEditor);
 
 void SBE_MenuSave(ui_object_t *ob);

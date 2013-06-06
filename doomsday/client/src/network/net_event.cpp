@@ -35,26 +35,12 @@
 #  include "map/gamemap.h"
 #endif
 
-// MACROS ------------------------------------------------------------------
+using namespace de;
 
 #define MASTER_QUEUE_LEN    16
 #define NETEVENT_QUEUE_LEN  32
 #define MASTER_HEARTBEAT    120 // seconds
 #define MASTER_UPDATETIME   3 // seconds
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // The master action queue.
 static masteraction_t masterQueue[MASTER_QUEUE_LEN];
@@ -68,8 +54,6 @@ static int neqHead, neqTail;
 // Countdown for master updates.
 static timespan_t masterHeartbeat = 0;
 #endif
-
-// CODE --------------------------------------------------------------------
 
 /**
  * Add a master action command to the queue. The master action stuff really

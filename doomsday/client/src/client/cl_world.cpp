@@ -35,6 +35,8 @@
 #include "client/cl_world.h"
 #include "r_util.h"
 
+using namespace de;
+
 #define MAX_TRANSLATIONS    16384
 
 #define MVF_CEILING         0x1 // Move ceiling.

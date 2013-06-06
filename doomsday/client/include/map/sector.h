@@ -38,8 +38,11 @@
 #endif
 
 class BspLeaf;
-class GameMap;
 class Surface;
+
+namespace de {
+class GameMap;
+}
 
 /**
  * @defgroup sectorFrameFlags Sector frame flags
@@ -212,7 +215,7 @@ public:
      *
      * @param map  Map to collate sides from. @todo Refactor away.
      */
-    void buildSides(GameMap const &map);
+    void buildSides(de::GameMap const &map);
 
     /**
      * Provides access to the list of BSP leafs which reference the sector, for
@@ -230,7 +233,7 @@ public:
      *
      * @param map  Map to collate BSP leafs from. @todo Refactor away.
      */
-    void buildBspLeafs(GameMap const &map);
+    void buildBspLeafs(de::GameMap const &map);
 
     /**
      * Provides access to the list of BSP leafs which contribute to the environmental

@@ -24,10 +24,11 @@
 
 #include <de/Vector>
 
-class GameMap;
 class Sector;
 
 namespace de {
+
+class GameMap;
 
 /**
  * Simple global illumination method utilizing a 2D grid of light levels, achieving

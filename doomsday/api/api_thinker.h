@@ -58,7 +58,15 @@ DENG_API_TYPEDEF(Thinker)
     void (*Run)(void);
     void (*Add)(thinker_t* th);
     void (*Remove)(thinker_t* th);
-    void (*SetStasis)(thinker_t* th, boolean on);
+
+    /**
+     * Change the 'in stasis' state of a thinker (stop it from thinking).
+     *
+     * @param th  The thinker to change.
+     * @param on  @c true, put into stasis.
+     */
+    void (*SetStasis)(thinker_t *th, boolean on);
+
     int (*Iterate)(thinkfunc_t func, int (*callback) (thinker_t*, void*), void* context);
 }
 DENG_API_T(Thinker);

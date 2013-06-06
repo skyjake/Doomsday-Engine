@@ -21,6 +21,7 @@
 
 #include "HEdge"
 #include "Face"
+#include "Vertex"
 
 #include "map/mesh.h"
 

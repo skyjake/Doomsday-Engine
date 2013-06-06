@@ -1,4 +1,4 @@
-/** @file gamemap.cpp World Map.
+/** @file map/gamemap.cpp World Map.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -39,7 +39,7 @@
 /// Size of Blockmap blocks in map units. Must be an integer power of two.
 #define MAPBLOCKUNITS               (128)
 
-using namespace de;
+namespace de {
 
 DENG2_PIMPL(GameMap)
 {
@@ -684,7 +684,7 @@ void GameMap::initLightGrid()
 
 #endif // __CLIENT__
 
-de::Uri GameMap::uri() const
+Uri GameMap::uri() const
 {
     return _uri;
 }
@@ -2004,3 +2004,5 @@ void GameMap::updateMissingMaterialsForLinesOfSector(Sector const &sec)
 }
 
 #endif // __CLIENT__
+
+} // namespace de

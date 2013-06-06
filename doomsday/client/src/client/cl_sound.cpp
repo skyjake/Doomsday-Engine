@@ -1,4 +1,4 @@
-/** @file
+/** @file cl_sound.cpp Clientside Sounds.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -17,12 +17,6 @@
  * http://www.gnu.org/licenses</small>
  */
 
-/**
- * cl_sound.c: Clientside Sounds
- */
-
-// HEADER FILES ------------------------------------------------------------
-
 #include "de_base.h"
 #include "de_console.h"
 #include "de_network.h"
@@ -31,23 +25,7 @@
 
 #include "client/cl_sound.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
+using namespace de;
 
 /**
  * Read a sound delta from the message buffer and play it.

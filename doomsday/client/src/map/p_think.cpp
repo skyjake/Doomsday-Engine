@@ -31,31 +31,40 @@ typedef struct thinkerlist_s {
     thinker_t thinkerCap;
 } thinkerlist_t;
 
-static thid_t newMobjID(GameMap* map)
+boolean Thinker_IsMobjFunc(thinkfunc_t func)
+{
+    return (func && func == reinterpret_cast<thinkfunc_t>(gx.MobjThinker));
+}
+
+namespace de {
+
+static thid_t newMobjID(GameMap *map)
 {
     assert(map);
     // Increment the ID dealer until a free ID is found.
-    // @todo What if all IDs are in use? 65535 thinkers!?
+    /// @todo fixme: What if all IDs are in use? 65535 thinkers!?
     while(GameMap_IsUsedMobjID(map, ++map->thinkers.iddealer)) {}
+
     // Mark this ID as used.
     GameMap_SetMobjID(map, map->thinkers.iddealer, true);
+
     return map->thinkers.iddealer;
 }
 
-void GameMap_ClearMobjIDs(GameMap* map)
+void GameMap_ClearMobjIDs(GameMap *map)
 {
     assert(map);
     memset(map->thinkers.idtable, 0, sizeof(map->thinkers.idtable));
     map->thinkers.idtable[0] |= 1; // ID zero is always "used" (it's not a valid ID).
 }
 
-boolean GameMap_IsUsedMobjID(GameMap* map, thid_t id)
+boolean GameMap_IsUsedMobjID(GameMap *map, thid_t id)
 {
     assert(map);
     return map->thinkers.idtable[id >> 5] & (1 << (id & 31) /*(id % 32) */ );
 }
 
-void GameMap_SetMobjID(GameMap* map, thid_t id, boolean inUse)
+void GameMap_SetMobjID(GameMap *map, thid_t id, boolean inUse)
 {
     int c = id >> 5, bit = 1 << (id & 31); //(id % 32);
     assert(map);
@@ -89,16 +98,6 @@ struct mobj_s* GameMap_MobjByID(GameMap* map, int id)
     GameMap_IterateThinkers(map, reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
                             0x1/*mobjs are public*/, mobjIdLookup, &lookup);
     return lookup.result;
-}
-
-/**
- * Locates a mobj by it's unique identifier in the CURRENT map.
- */
-#undef P_MobjForID
-DENG_EXTERN_C struct mobj_s* P_MobjForID(int id)
-{
-    if(!theMap) return NULL;
-    return GameMap_MobjByID(theMap, id);
 }
 
 static void linkThinkerToList(thinker_t* th, thinkerlist_t* list)
@@ -282,11 +281,6 @@ void GameMap_ThinkerRemove(GameMap* map, thinker_t* th)
     th->function = (thinkfunc_t) -1;
 }
 
-boolean Thinker_IsMobjFunc(thinkfunc_t func)
-{
-    return (func && func == reinterpret_cast<thinkfunc_t>(gx.MobjThinker));
-}
-
 void GameMap_InitThinkerLists(GameMap* map, byte flags)
 {
     assert(map);
@@ -354,38 +348,50 @@ int GameMap_IterateThinkers(GameMap* map, thinkfunc_t func, byte flags,
     return result;
 }
 
+} // namespace de
+
+using namespace de;
+
+/**
+ * Locates a mobj by it's unique identifier in the CURRENT map.
+ */
+#undef P_MobjForID
+DENG_EXTERN_C struct mobj_s *P_MobjForID(int id)
+{
+    if(!theMap) return 0;
+    return GameMap_MobjByID(theMap, id);
+}
+
+#undef Thinker_Init
 void Thinker_Init(void)
 {
     if(!theMap) return;
     GameMap_InitThinkerLists(theMap, 0x1); // Init the public thinker lists.
 }
 
-/// @note Part of the Doomsday public API.
+#undef Thinker_Run
 void Thinker_Run(void)
 {
     if(!theMap) return;
     GameMap_IterateThinkers(theMap, NULL, 0x1 | 0x2, runThinker, NULL);
 }
 
-void Thinker_Add(thinker_t* th)
+#undef Thinker_Add
+void Thinker_Add(thinker_t *th)
 {
     if(!theMap) return;
     GameMap_ThinkerAdd(theMap, th, true); // This is a public thinker.
 }
 
-void Thinker_Remove(thinker_t* th)
+#undef Thinker_Remove
+void Thinker_Remove(thinker_t *th)
 {
     if(!theMap) return;
     GameMap_ThinkerRemove(theMap, th);
 }
 
-/**
- * Change the 'in stasis' state of a thinker (stop it from thinking).
- *
- * @param th            The thinker to change.
- * @param on            @c true, put into stasis.
- */
-void Thinker_SetStasis(thinker_t* th, boolean on)
+#undef Thinker_SetStasis
+void Thinker_SetStasis(thinker_t *th, boolean on)
 {
     if(th)
     {
@@ -393,7 +399,8 @@ void Thinker_SetStasis(thinker_t* th, boolean on)
     }
 }
 
-int Thinker_Iterate(thinkfunc_t func, int (*callback) (thinker_t*, void*), void* context)
+#undef Thinker_Iterate
+int Thinker_Iterate(thinkfunc_t func, int (*callback) (thinker_t *, void *), void *context)
 {
     if(!theMap) return false; // Continue iteration.
     return GameMap_IterateThinkers(theMap, func, 0x1, callback, context);

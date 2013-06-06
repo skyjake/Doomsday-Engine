@@ -33,7 +33,7 @@
 #include "server/sv_pool.h"
 #include "audio/s_main.h"
 
-// MACROS ------------------------------------------------------------------
+using namespace de;
 
 #define DEFAULT_DELTA_BASE_SCORE    10000
 
@@ -44,8 +44,6 @@
 // need to be sent.
 
 #define PLANE_SKIP_LIMIT            (40)
-
-// TYPES -------------------------------------------------------------------
 
 typedef struct reg_mobj_s {
     // Links to next and prev mobj in the register hash.
@@ -79,22 +77,12 @@ typedef struct cregister_s {
     dt_poly_t*          polyObjs;
 } cregister_t;
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
 void            Sv_RegisterWorld(cregister_t* reg, boolean isInitial);
 void            Sv_NewDelta(void* deltaPtr, deltatype_t type, uint id);
 boolean         Sv_IsVoidDelta(const void* delta);
 void            Sv_PoolQueueClear(pool_t* pool);
 void            Sv_GenerateNewDeltas(cregister_t* reg, int clientNumber,
                                      boolean doUpdate);
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 // The register contains the previous state of the world.
 cregister_t worldRegister;
@@ -105,15 +93,11 @@ cregister_t initialRegister;
 // Each client has its own pool for deltas.
 pool_t pools[DDMAXPLAYERS];
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
 static float deltaBaseScores[NUM_DELTA_TYPES];
 
 // Keep this zeroed out. Used if the register doesn't have data for
 // the mobj being compared.
 static dt_mobj_t dummyZeroMobj;
-
-// CODE --------------------------------------------------------------------
 
 /**
  * Called once for each map, from R_SetupMap(). Initialize the world

@@ -25,6 +25,8 @@
 
 #include "map/gamemap.h"
 
+using namespace de;
+
 player_t *viewPlayer;
 player_t ddPlayers[DDMAXPLAYERS];
 int consolePlayer;

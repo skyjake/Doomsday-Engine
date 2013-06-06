@@ -23,9 +23,9 @@
 #include "dd_share.h"
 #include "uri.hh"
 
-class GameMap;
-
 namespace de {
+
+class GameMap;
 
 /**
  * @ingroup resource

@@ -32,6 +32,8 @@
 #include "map/gamemap.h"
 #include "render/r_main.h"
 
+using namespace de;
+
 extern int gotFrame;
 
 ident_t clientID;

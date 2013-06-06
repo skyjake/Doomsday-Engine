@@ -39,6 +39,8 @@
 #include <de/NumberValue>
 #include <de/Log>
 
+using namespace de;
+
 // This is absolute maximum bandwidth rating. Frame size is practically
 // unlimited with this score.
 #define MAX_BANDWIDTH_RATING    100

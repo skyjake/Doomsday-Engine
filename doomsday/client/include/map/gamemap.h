@@ -1,4 +1,4 @@
-/** @file gamemap.h World Map.
+/** @file map/gamemap.h World Map.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -72,6 +72,8 @@ typedef enum {
 struct clplane_s;
 struct clpolyobj_s;
 
+namespace de {
+
 /**
  * World map.
  *
@@ -98,7 +100,7 @@ public:
     typedef QSet<Surface *> SurfaceSet;
 
 public:
-    de::Uri _uri;
+    Uri _uri;
     char _oldUniqueId[256];
 
     struct thinkers_s {
@@ -146,7 +148,7 @@ public:
      * This ID is the name of the lump tag that marks the beginning of map
      * data, e.g. "MAP03" or "E2M8".
      */
-    de::Uri uri() const;
+    Uri uri() const;
 
     /// @return  The old 'unique' identifier of the map.
     char const *oldUniqueId() const;
@@ -235,7 +237,7 @@ public:
     /**
      * Returns the root element for the map's BSP tree.
      */
-    de::MapElement *bspRoot() const;
+    MapElement *bspRoot() const;
 
     /**
      * Provides access to the list of line segments for efficient traversal.
@@ -278,7 +280,7 @@ public:
      *
      * @return  BspLeaf instance for that BSP node's leaf.
      */
-    BspLeaf *bspLeafAtPoint(de::Vector2d const &point) const;
+    BspLeaf *bspLeafAtPoint(Vector2d const &point) const;
 
     /**
      * @copydoc bspLeafAtPoint()
@@ -287,7 +289,7 @@ public:
      * with vanilla DOOM. Note that this means there is a maximum size for the
      * point: it cannot exceed the fixed-point 16.16 range (about 65k units).
      */
-    BspLeaf *bspLeafAtPoint_FixedPrecision(de::Vector2d const &point) const;
+    BspLeaf *bspLeafAtPoint_FixedPrecision(Vector2d const &point) const;
 
     int mobjsBoxIterator(AABoxd const &box,
         int (*callback) (struct mobj_s *, void *), void *parameters = 0) const;
@@ -625,7 +627,7 @@ public: /// @todo Make private:
      *
      * @see hasLightGrid()
      */
-    de::LightGrid &lightGrid();
+    LightGrid &lightGrid();
 
     /**
      * Initialize the ambient lighting grid (smoothed sector lighting).
@@ -726,5 +728,7 @@ void GameMap_SetMobjID(GameMap *map, thid_t id, boolean inUse);
 
 // The current map.
 DENG_EXTERN_C GameMap *theMap;
+
+} // namespace de
 
 #endif // DENG_WORLD_MAP_H

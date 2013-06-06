@@ -24,7 +24,10 @@
 
 #include "api_uri.h"
 
+namespace de {
 class GameMap;
+}
+
 class Sector;
 
 typedef enum audioenvironmentclass_e {
@@ -59,7 +62,7 @@ void S_MarkSectorReverbDirty(Sector *sec);
  * two dimensions at least), they do not move and are not created/destroyed
  * once the map has been loaded; this step can be pre-processed.
  */
-void S_DetermineBspLeafsAffectingSectorReverb(GameMap *map);
+void S_DetermineBspLeafsAffectingSectorReverb(de::GameMap *map);
 
 /**
  * Recalculates reverb properties for a sector. One must first mark the sector

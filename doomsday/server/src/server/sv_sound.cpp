@@ -27,6 +27,8 @@
 
 #include <de/Log>
 
+using namespace de;
+
 static inline boolean isRealMobj(const mobj_t* base)
 {
     return base && base->thinker.id != 0;

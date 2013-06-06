@@ -55,7 +55,11 @@ static EntityDefIdMap entityDefIdMap;
 
 extern "C" boolean mapSetup; // We are currently setting up a map.
 
+namespace de {
+
 GameMap *theMap; // Available globally inside the engine.
+
+}
 
 #undef P_MapExists
 DENG_EXTERN_C boolean P_MapExists(char const *uriCString)

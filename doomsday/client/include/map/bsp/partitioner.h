@@ -28,13 +28,15 @@
 
 #include "map/bsp/bsptreenode.h" /// @todo remove me
 
-class GameMap;
 class BspLeaf;
 class Segment;
 class Line;
 class Sector;
 
 namespace de {
+
+class GameMap;
+
 namespace bsp {
 
 /// Minimum length of a half-edge post partitioning. Used in cost evaluation.

@@ -22,13 +22,15 @@
 #include <QList>
 #include "Vertex"
 
+namespace de {
 class GameMap;
+}
 
 DENG_EXTERN_C int bspFactor;
 
 void MPE_Register();
 
-GameMap *MPE_GetLastBuiltMap();
+de::GameMap *MPE_GetLastBuiltMap();
 
 bool MPE_GetLastBuiltMapResult();
 
