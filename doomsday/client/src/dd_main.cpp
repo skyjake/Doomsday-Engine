@@ -1708,6 +1708,9 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
         ClientWindow::main().console().clearLog();
     }
 #endif
+
+    App_Games().notifyGameChange();
+
     return true;
 }
 

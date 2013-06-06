@@ -154,6 +154,10 @@ public:
      */
     void locateStartupResources(Game &game);
 
+    /// @todo This should be an internal private method; the App needs to be
+    /// responsible for changing the current game.
+    void notifyGameChange();
+
 private:
     DENG2_PRIVATE(d)
 };

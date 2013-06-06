@@ -83,8 +83,11 @@ void Games::setCurrent(Game &game)
     // Ensure the specified game is actually in this collection (NullGame is implicitly).
     DENG_ASSERT(isNullGame(game) || id(game) > 0);
     d->currentGame = &game;
+}
 
-    DENG2_FOR_AUDIENCE(GameChange, i) i->currentGameChanged(game);
+void Games::notifyGameChange()
+{
+    DENG2_FOR_AUDIENCE(GameChange, i) i->currentGameChanged(current());
 }
 
 int Games::numPlayable() const
