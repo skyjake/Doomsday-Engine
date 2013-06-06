@@ -59,11 +59,29 @@ byte useModels = true;
 float rModelAspectMod = 1 / 1.2f; //.833334f;
 
 static StringPool* modelRepository; // Owns model_t instances.
-static modeldef_t** stateModefs;
+static std::vector<int> stateModefs; // Index to the modefs array.
 
 static float avertexnormals[NUMVERTEXNORMALS][3] = {
 #include "tab_anorms.h"
 };
+
+static int indexOfModelDef(ModelDef const *mf)
+{
+    return mf - &modefs[0];
+}
+
+static ModelDef *modelDefForState(int stateIndex)
+{
+    DENG2_ASSERT(stateIndex >= 0);
+    DENG2_ASSERT(stateIndex < int(stateModefs.size()));
+
+    if(stateModefs[stateIndex] < 0) return 0;
+
+    DENG2_ASSERT(stateModefs[stateIndex] >= 0);
+    DENG2_ASSERT(stateModefs[stateIndex] < int(modefs.size()));
+
+    return &modefs[stateModefs[stateIndex]];
+}
 
 /**
  * Packed: pppppppy yyyyyyyy. Yaw is on the XY plane.
@@ -721,7 +739,7 @@ static model_t *loadModel(String path)
  */
 static modeldef_t *getStateModel(state_t &st, int select)
 {
-    modeldef_t *modef = stateModefs[&st - states];
+    modeldef_t *modef = modelDefForState(&st - states);
     if(!modef) return 0;
 
     if(select)
@@ -835,7 +853,7 @@ float Models_ModelForMobj(mobj_t* mo, modeldef_t** modef, modeldef_t** nextmodef
             int max = 20; // Let's not be here forever...
             while(!stopScan)
             {
-                if(!((!stateModefs[it - states] ||
+                if(!((!modelDefForState(it - states) ||
                       getStateModel(*it, mo->selector)->interRange[0] > 0) &&
                      it->nextState > 0))
                 {
@@ -935,7 +953,7 @@ static void scaleModelToSprite(modeldef_t &mf, int sprite, int frame)
 
 static float calcModelVisualRadius(modeldef_t *def)
 {
-    if(!def || !def->sub[0].modelId) return 0;
+    if(!def || def->sub.empty() || !def->sub[0].modelId) return 0;
 
     // Use the first frame bounds.
     float min[3], max[3];
@@ -1186,7 +1204,7 @@ static void setupModel(ded_model_t& def)
     {
         scaleModel(*modef, modef->resize, modef->offset[VY]);
     }
-    else if(modef->state && modef->sub[0].flags & MFF_AUTOSCALE)
+    else if(modef->state && !modef->sub.empty() && modef->sub[0].flags & MFF_AUTOSCALE)
     {
         int sprNum   = Def_GetSpriteNum(def.sprite.id);
         int sprFrame = def.spriteFrame;
@@ -1206,19 +1224,21 @@ static void setupModel(ded_model_t& def)
         int stateNum = modef->state - states;
 
         // Associate this modeldef with its state.
-        if(!stateModefs[stateNum])
+        if(stateModefs[stateNum] < 0)
         {
             // No modef; use this.
-            stateModefs[stateNum] = modef;
+            stateModefs[stateNum] = indexOfModelDef(modef);
         }
         else
         {
             // Must check intermark; smallest wins!
-            modeldef_t* other = stateModefs[stateNum];
+            modeldef_t* other = modelDefForState(stateNum);
 
             if((modef->interMark <= other->interMark && // Should never be ==
                 modef->select == other->select) || modef->select < other->select) // Smallest selector?
-                stateModefs[stateNum] = modef;
+            {
+                stateModefs[stateNum] = indexOfModelDef(modef);
+            }
         }
     }
 
@@ -1306,8 +1326,11 @@ void Models_Init(void)
     }
 
     // Clear the modef pointers of all States.
-    stateModefs = (modeldef_t**) M_Realloc(stateModefs, countStates.num * sizeof(*stateModefs));
-    memset(stateModefs, 0, countStates.num * sizeof(*stateModefs));
+    stateModefs.clear();
+    for(int i = 0; i < countStates.num; ++i)
+    {
+        stateModefs.push_back(-1);
+    }
 
     // Read in the model files and their data.
     // Use the latest definition available for each sprite ID.
@@ -1382,12 +1405,9 @@ void Models_Init(void)
 
 void Models_Shutdown(void)
 {
-    /// @todo Why only centralized memory deallocation? Bad design...
+    /// @todo Why only centralized memory deallocation? Bad (lazy) design...
     modefs.clear();
-    if(stateModefs)
-    {
-        M_Free(stateModefs); stateModefs = 0;
-    }
+    stateModefs.clear();
 
     clearModelList();
 
@@ -1429,9 +1449,9 @@ DENG_EXTERN_C void Models_CacheForState(int stateIndex)
 {
     if(!useModels) return;
     if(stateIndex <= 0 || stateIndex >= defs.count.states.num) return;
-    if(!stateModefs[stateIndex]) return;
+    if(stateModefs[stateIndex] < 0) return;
 
-    Models_Cache(stateModefs[stateIndex]);
+    Models_Cache(modelDefForState(stateIndex));
 }
 
 int Models_CacheForMobj(thinker_t* th, void* /*context*/)

@@ -1157,7 +1157,7 @@ void R_ProjectSprite(mobj_t *mo)
         floorClip += R_GetBobOffset(mo);
     }
 
-    if(mf)
+    if(mf && !mf->sub.empty())
     {
         // Determine the rotation angles (in degrees).
         if(mf->sub[0].flags & MFF_ALIGN_YAW)
