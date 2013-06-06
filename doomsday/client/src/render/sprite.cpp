@@ -135,7 +135,7 @@ static int drawThinkerId(thinker_t *thinker, void *context)
 /**
  * Debugging aid for visualizing thinker IDs.
  */
-void Rend_DrawThinkerIds(void)
+void Rend_DrawThinkerIds()
 {
     float eye[3];
 
@@ -148,7 +148,7 @@ void Rend_DrawThinkerIds(void)
     eye[VY] = vOrigin[VZ];
     eye[VZ] = vOrigin[VY];
 
-    GameMap_IterateThinkers(theMap, NULL, 0x1 | 0x2, drawThinkerId, eye);
+    theMap->iterateThinkers(NULL, 0x1 | 0x2, drawThinkerId, eye);
 
     // Restore previous state.
     glEnable(GL_DEPTH_TEST);

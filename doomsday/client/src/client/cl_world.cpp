@@ -65,8 +65,12 @@ typedef struct {
     int* serverToLocal;
 } indextranstable_t;
 
-void Cl_MoverThinker(clplane_t* mover);
-void Cl_PolyMoverThinker(clpolyobj_t* mover);
+/**
+ * Plane mover. Makes changes in planes using DMU.
+ */
+void Cl_MoverThinker(clplane_t *mover);
+
+void Cl_PolyMoverThinker(clpolyobj_t *mover);
 
 static MaterialArchive* serverMaterials;
 static indextranstable_t xlatMobjType;
@@ -175,64 +179,52 @@ int Cl_LocalMobjState(int serverMobjState)
     return xlatMobjState.serverToLocal[serverMobjState];
 }
 
-static boolean GameMap_IsValidClPlane(GameMap *map, int i)
+boolean GameMap::isValidClPlane(int i)
 {
-    assert(map);
-    if(!map->clActivePlanes[i]) return false;
-    return (map->clActivePlanes[i]->thinker.function == reinterpret_cast<thinkfunc_t>(Cl_MoverThinker));
+    if(!clActivePlanes[i]) return false;
+    return (clActivePlanes[i]->thinker.function == reinterpret_cast<thinkfunc_t>(Cl_MoverThinker));
 }
 
-static boolean GameMap_IsValidClPolyobj(GameMap* map, int i)
+boolean GameMap::isValidClPolyobj(int i)
 {
-    assert(map);
-    if(!map->clActivePolyobjs[i]) return false;
-    return (map->clActivePolyobjs[i]->thinker.function == reinterpret_cast<thinkfunc_t>(Cl_PolyMoverThinker));
+    if(!clActivePolyobjs[i]) return false;
+    return (clActivePolyobjs[i]->thinker.function == reinterpret_cast<thinkfunc_t>(Cl_PolyMoverThinker));
 }
 
-void GameMap_InitClMovers(GameMap* map)
+void GameMap::initClMovers()
 {
-    assert(map);
-    memset(map->clActivePlanes, 0, sizeof(map->clActivePlanes));
-    memset(map->clActivePolyobjs, 0, sizeof(map->clActivePolyobjs));
+    std::memset(clActivePlanes, 0, sizeof(clActivePlanes));
+    std::memset(clActivePolyobjs, 0, sizeof(clActivePolyobjs));
 }
 
-void GameMap_ResetClMovers(GameMap* map)
+void GameMap::resetClMovers()
 {
-    int i;
-    assert(map);
-
-    for(i = 0; i < CLIENT_MAX_MOVERS; ++i)
+    for(int i = 0; i < CLIENT_MAX_MOVERS; ++i)
     {
-        if(GameMap_IsValidClPlane(map, i))
+        if(isValidClPlane(i))
         {
-            GameMap_ThinkerRemove(map, &map->clActivePlanes[i]->thinker);
+            thinkerRemove(clActivePlanes[i]->thinker);
         }
-        if(GameMap_IsValidClPolyobj(map, i))
+        if(isValidClPolyobj(i))
         {
-            GameMap_ThinkerRemove(map, &map->clActivePolyobjs[i]->thinker);
+            thinkerRemove(clActivePolyobjs[i]->thinker);
         }
     }
 }
 
-/**
- * Clears the arrays that track active plane and polyobj mover thinkers.
- */
-void Cl_WorldInit(void)
+void Cl_WorldInit()
 {
     if(theMap)
     {
-        GameMap_InitClMovers(theMap);
+        theMap->initClMovers();
     }
 
     serverMaterials = 0;
-    memset(&xlatMobjType, 0, sizeof(xlatMobjType));
-    memset(&xlatMobjState, 0, sizeof(xlatMobjState));
+    std::memset(&xlatMobjType, 0, sizeof(xlatMobjType));
+    std::memset(&xlatMobjState, 0, sizeof(xlatMobjState));
 }
 
-/**
- * Removes all the active movers.
- */
-void Cl_WorldReset(void)
+void Cl_WorldReset()
 {
     if(serverMaterials)
     {
@@ -245,78 +237,65 @@ void Cl_WorldReset(void)
 
     if(theMap)
     {
-        GameMap_ResetClMovers(theMap);
+        theMap->resetClMovers();
     }
 }
 
-int GameMap_ClPlaneIndex(GameMap* map, clplane_t* mover)
+int GameMap::clPlaneIndex(clplane_t *mover)
 {
-    int i;
-    assert(map);
-    if(!map->clActivePlanes) return -1;
+    if(!clActivePlanes) return -1;
 
     /// @todo Optimize lookup.
-    for(i = 0; i < CLIENT_MAX_MOVERS; ++i)
+    for(int i = 0; i < CLIENT_MAX_MOVERS; ++i)
     {
-        if(map->clActivePlanes[i] == mover)
+        if(clActivePlanes[i] == mover)
             return i;
     }
     return -1;
 }
 
-int GameMap_ClPolyobjIndex(GameMap* map, clpolyobj_t* mover)
+int GameMap::clPolyobjIndex(clpolyobj_t *mover)
 {
-    int i;
-    assert(map);
-    if(!map->clActivePolyobjs) return -1;
+    if(!clActivePolyobjs) return -1;
 
     /// @todo Optimize lookup.
-    for(i = 0; i < CLIENT_MAX_MOVERS; ++i)
+    for(int i = 0; i < CLIENT_MAX_MOVERS; ++i)
     {
-        if(map->clActivePolyobjs[i] == mover)
+        if(clActivePolyobjs[i] == mover)
             return i;
     }
     return -1;
 }
 
-void GameMap_DeleteClPlane(GameMap* map, clplane_t* mover)
+void GameMap::deleteClPlane(clplane_t *mover)
 {
-    int index;
-    assert(map);
-
-    index = GameMap_ClPlaneIndex(map, mover);
+    int index = clPlaneIndex(mover);
     if(index < 0)
     {
-        DEBUG_Message(("GameMap_DeleteClPlane: Mover in sector #%i not removed!\n", mover->sectorIndex));
+        DEBUG_Message(("GameMap::deleteClPlane: Mover in sector #%i not removed!", mover->sectorIndex));
         return;
     }
 
-    DEBUG_Message(("GameMap_DeleteClPlane: Removing mover [%i] (sector: #%i).\n", index, mover->sectorIndex));
-    GameMap_ThinkerRemove(map, &mover->thinker);
+    DEBUG_Message(("GameMap::deleteClPlane: Removing mover [%i] (sector: #%i).", index, mover->sectorIndex));
+    thinkerRemove(mover->thinker);
 }
 
-void GameMap_DeleteClPolyobj(GameMap* map, clpolyobj_t* mover)
+void GameMap::deleteClPolyobj(clpolyobj_t *mover)
 {
-    int index;
-    assert(map);
-
-    index = GameMap_ClPolyobjIndex(map, mover);
+    int index = clPolyobjIndex(mover);
     if(index < 0)
     {
-        DEBUG_Message(("GameMap_DeleteClPolyobj: Mover not removed!\n"));
+        DEBUG_Message(("GameMap::deleteClPolyobj: Mover not removed!"));
         return;
     }
 
-    DEBUG_Message(("GameMap_DeleteClPolyobj: Removing mover [%i].\n", index));
-    GameMap_ThinkerRemove(map, &mover->thinker);
+    DEBUG_Message(("GameMap::deleteClPolyobj: Removing mover [%i].", index));
+    thinkerRemove(mover->thinker);
 }
 
-/**
- * Plane mover. Makes changes in planes using DMU.
- */
-void Cl_MoverThinker(clplane_t* mover)
+void Cl_MoverThinker(clplane_t *mover)
 {
-    GameMap* map = theMap; /// @todo Do not assume mover is from the CURRENT map.
+    GameMap *map = theMap; /// @todo Do not assume mover is from the CURRENT map.
     coord_t original;
     boolean remove = false;
     boolean freeMove;
@@ -326,7 +305,7 @@ void Cl_MoverThinker(clplane_t* mover)
     if(!Cl_GameReady()) return;
 
 #ifdef _DEBUG
-    if(GameMap_ClPlaneIndex(map, mover) < 0)
+    if(map->clPlaneIndex(mover) < 0)
     {
         Con_Message("Cl_MoverThinker: Running a mover that is not in activemovers!");
     }
@@ -385,7 +364,7 @@ void Cl_MoverThinker(clplane_t* mover)
             // It stops.
             P_SetDouble(DMU_SECTOR, mover->sectorIndex, mover->dmuPlane | DMU_SPEED, 0);
 
-            GameMap_DeleteClPlane(map, mover);
+            map->deleteClPlane(mover);
         }
     }
 }
@@ -406,14 +385,14 @@ clplane_t *GameMap::newClPlane(uint sectorIndex, clplanetype_t type, coord_t des
     // Remove any existing movers for the same plane.
     for(int i = 0; i < CLIENT_MAX_MOVERS; ++i)
     {
-        if(GameMap_IsValidClPlane(this, i) &&
+        if(isValidClPlane(i) &&
            clActivePlanes[i]->sectorIndex == sectorIndex &&
            clActivePlanes[i]->type == type)
         {
             DEBUG_Message(("GameMap::newClPlane: Removing existing mover [%i] in sector #%i, type %s",
                            i, sectorIndex, type == CPT_FLOOR? "floor" : "ceiling"));
 
-            GameMap_DeleteClPlane(this, clActivePlanes[i]);
+            deleteClPlane(clActivePlanes[i]);
         }
     }
 
@@ -442,7 +421,7 @@ clplane_t *GameMap::newClPlane(uint sectorIndex, clplanetype_t type, coord_t des
         P_SetDouble(DMU_SECTOR, sectorIndex, dmuPlane | DMU_TARGET_HEIGHT, dest);
         P_SetFloat(DMU_SECTOR, sectorIndex, dmuPlane | DMU_SPEED, speed);
 
-        GameMap_ThinkerAdd(this, &mov->thinker, false /*not public*/);
+        thinkerAdd(mov->thinker, false /*not public*/);
 
         // Immediate move?
         if(FEQUAL(speed, 0))
@@ -514,63 +493,56 @@ void Cl_PolyMoverThinker(clpolyobj_t *mover)
     if(!mover->move && !mover->rotate)
     {
         /// @todo Do not assume the move is from the CURRENT map.
-        GameMap_DeleteClPolyobj(theMap, mover);
+        theMap->deleteClPolyobj(mover);
     }
 }
 
-clpolyobj_t *GameMap_ClPolyobjByPolyobjIndex(GameMap *map, uint index)
+clpolyobj_t *GameMap::clPolyobjByPolyobjIndex(uint index)
 {
-    DENG_ASSERT(map);
-
     for(int i = 0; i < CLIENT_MAX_MOVERS; ++i)
     {
-        if(!GameMap_IsValidClPolyobj(map, i)) continue;
+        if(!isValidClPolyobj(i)) continue;
 
-        if(map->clActivePolyobjs[i]->number == int(index))
-            return map->clActivePolyobjs[i];
+        if(clActivePolyobjs[i]->number == int(index))
+            return clActivePolyobjs[i];
     }
 
     return 0;
 }
 
-/**
- * @note Assumes there is no existing ClPolyobj for Polyobj @a index.
- */
-clpolyobj_t *GameMap_NewClPolyobj(GameMap *map, uint polyobjIndex)
+clpolyobj_t *GameMap::newClPolyobj(uint polyobjIndex)
 {
-    DENG_ASSERT(map);
-
     // Take the first unused slot.
     for(int i = 0; i < CLIENT_MAX_MOVERS; ++i)
     {
-        if(map->clActivePolyobjs[i]) continue;
+        if(clActivePolyobjs[i]) continue;
 
-        DEBUG_Message(("GameMap_NewClPolyobj: New polymover [%i] for polyobj #%i.\n", i, polyobjIndex));
+        DEBUG_Message(("GameMap::newClPolyobj: New polymover [%i] for polyobj #%i.\n", i, polyobjIndex));
 
-        clpolyobj_t *mover = (clpolyobj_t *) Z_Calloc(sizeof(clpolyobj_t), PU_MAP, &map->clActivePolyobjs[i]);
-        map->clActivePolyobjs[i] = mover;
+        clpolyobj_t *mover = (clpolyobj_t *) Z_Calloc(sizeof(clpolyobj_t), PU_MAP, &clActivePolyobjs[i]);
+        clActivePolyobjs[i] = mover;
         mover->thinker.function = reinterpret_cast<thinkfunc_t>(Cl_PolyMoverThinker);
-        mover->polyobj = map->_polyobjs.at(polyobjIndex);
+        mover->polyobj = _polyobjs.at(polyobjIndex);
         mover->number = polyobjIndex;
-        GameMap_ThinkerAdd(map, &mover->thinker, false /*not public*/);
+        thinkerAdd(mover->thinker, false /*not public*/);
         return mover;
     }
 
     return 0; // Not successful.
 }
 
-clpolyobj_t* Cl_FindOrMakeActivePoly(uint polyobjIndex)
+clpolyobj_t *Cl_FindOrMakeActivePoly(uint polyobjIndex)
 {
-    GameMap* map = theMap;
-    clpolyobj_t* mover = GameMap_ClPolyobjByPolyobjIndex(map, polyobjIndex);
+    DENG_ASSERT(theMap != 0);
+    clpolyobj_t *mover = theMap->clPolyobjByPolyobjIndex(polyobjIndex);
     if(mover) return mover;
     // Not found; make a new one.
-    return GameMap_NewClPolyobj(map, polyobjIndex);
+    return theMap->newClPolyobj(polyobjIndex);
 }
 
 void Cl_SetPolyMover(uint number, int move, int rotate)
 {
-    clpolyobj_t* mover = Cl_FindOrMakeActivePoly(number);
+    clpolyobj_t *mover = Cl_FindOrMakeActivePoly(number);
     if(!mover)
     {
         Con_Message("Cl_SetPolyMover: Out of polymovers.");
@@ -582,21 +554,18 @@ void Cl_SetPolyMover(uint number, int move, int rotate)
     if(rotate) mover->rotate = true;
 }
 
-clplane_t* GameMap_ClPlaneBySectorIndex(GameMap* map, uint sectorIndex, clplanetype_t type)
+clplane_t *GameMap::clPlaneBySectorIndex(uint sectorIndex, clplanetype_t type)
 {
-    int i;
-    assert(map);
-
-    for(i = 0; i < CLIENT_MAX_MOVERS; ++i)
+    for(int i = 0; i < CLIENT_MAX_MOVERS; ++i)
     {
-        if(!GameMap_IsValidClPlane(map, i)) continue;
-        if(map->clActivePlanes[i]->sectorIndex != sectorIndex) continue;
-        if(map->clActivePlanes[i]->type != type) continue;
+        if(!isValidClPlane(i)) continue;
+        if(clActivePlanes[i]->sectorIndex != sectorIndex) continue;
+        if(clActivePlanes[i]->type != type) continue;
 
         // Found it!
-        return map->clActivePlanes[i];
+        return clActivePlanes[i];
     }
-    return NULL;
+    return 0;
 }
 
 /**

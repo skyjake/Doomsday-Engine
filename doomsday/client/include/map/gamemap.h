@@ -483,12 +483,37 @@ public:
      */
     int clMobjIterator(int (*callback) (struct mobj_s *, void *), void *context);
 
+    void initClMovers();
+
+    void resetClMovers();
+
     /**
      * Allocate a new client-side plane mover.
      *
      * @return  The new mover or @c NULL if arguments are invalid.
      */
     struct clplane_s *newClPlane(uint sectornum, clplanetype_t type, coord_t dest, float speed);
+
+    void deleteClPlane(struct clplane_s *mover);
+
+    int clPlaneIndex(struct clplane_s *mover);
+
+    struct clplane_s *clPlaneBySectorIndex(uint sectorIndex, clplanetype_t type);
+
+    boolean isValidClPlane(int i);
+
+    /**
+     * @note Assumes there is no existing ClPolyobj for Polyobj @a index.
+     */
+    struct clpolyobj_s *newClPolyobj(uint polyobjIndex);
+
+    void deleteClPolyobj(struct clpolyobj_s *mover);
+
+    int clPolyobjIndex(struct clpolyobj_s *mover);
+
+    struct clpolyobj_s *clPolyobjByPolyobjIndex(uint index);
+
+    boolean isValidClPolyobj(int i);
 
     /**
      * Returns the set of decorated surfaces for the map.
@@ -553,6 +578,66 @@ public:
      * otherwise @c 0.
      */
     Line::Side *sideByIndex(int index) const;
+
+    /**
+     * Returns @c true iff the thinker lists been initialized.
+     */
+    boolean thinkerListInited() const;
+
+    /**
+     * Init the thinker lists.
+     *
+     * @param flags  @c 0x1 = Init public thinkers.
+     *               @c 0x2 = Init private (engine-internal) thinkers.
+     */
+    void initThinkerLists(byte flags);
+
+    /**
+     * Iterate the list of thinkers making a callback for each.
+     *
+     * @param thinkFunc  If not @c NULL, only make a callback for thinkers
+     *                   whose function matches this.
+     * @param flags      Thinker filter flags.
+     * @param callback   The callback to make. Iteration will continue
+     *                   until a callback returns a non-zero value.
+     * @param context  Passed to the callback function.
+     */
+    int iterateThinkers(thinkfunc_t thinkFunc, byte flags,
+        int (*callback) (thinker_t *th, void *), void *context);
+
+    /**
+     * @param thinker     Thinker to be added.
+     * @param makePublic  @c true = @a thinker will be visible publically
+     *                    via the Doomsday public API thinker interface(s).
+     */
+    void thinkerAdd(thinker_t &thinker, boolean makePublic);
+
+    /**
+     * Deallocation is lazy -- it will not actually be freed until its
+     * thinking turn comes up.
+     */
+    void thinkerRemove(thinker_t &thinker);
+
+    /**
+     * Locates a mobj by it's unique identifier in the map.
+     *
+     * @param id    Unique id of the mobj to lookup.
+     */
+    struct mobj_s *mobjById(int id);
+
+    /// @todo Make private.
+    void clearMobjIds();
+
+    /**
+     * @param id    Thinker id to test.
+     */
+    boolean isUsedMobjId(thid_t id);
+
+    /**
+     * @param id    New thinker id.
+     * @param inUse In-use state of @a id. @c true = the id is in use.
+     */
+    void setMobjId(thid_t id, boolean inUse);
 
 public: /// @todo Make private:
 
@@ -659,72 +744,6 @@ public: /// @todo Make private:
 private:
     DENG2_PRIVATE(d)
 };
-
-/**
- * Have the thinker lists been initialized yet?
- * @param map       GameMap instance.
- */
-boolean GameMap_ThinkerListInited(GameMap *map);
-
-/**
- * Init the thinker lists.
- *
- * @param map       GameMap instance.
- * @param flags     @c 0x1 = Init public thinkers.
- *                  @c 0x2 = Init private (engine-internal) thinkers.
- */
-void GameMap_InitThinkerLists(GameMap *map, byte flags);
-
-/**
- * Iterate the list of thinkers making a callback for each.
- *
- * @param map  GameMap instance.
- * @param thinkFunc  If not @c NULL, only make a callback for thinkers
- *                   whose function matches this.
- * @param flags  Thinker filter flags.
- * @param callback  The callback to make. Iteration will continue
- *                  until a callback returns a non-zero value.
- * @param context  Passed to the callback function.
- */
-int GameMap_IterateThinkers(GameMap *map, thinkfunc_t thinkFunc, byte flags,
-    int (*callback) (thinker_t *th, void *), void *context);
-
-/**
- * @param map  GameMap instance.
- * @param thinker  Thinker to be added.
- * @param makePublic  @c true = @a thinker will be visible publically
- *                    via the Doomsday public API thinker interface(s).
- */
-void GameMap_ThinkerAdd(GameMap *map, thinker_t *thinker, boolean makePublic);
-
-/**
- * Deallocation is lazy -- it will not actually be freed until its
- * thinking turn comes up.
- *
- * @param map   GameMap instance.
- */
-void GameMap_ThinkerRemove(GameMap *map, thinker_t *thinker);
-
-/**
- * Locates a mobj by it's unique identifier in the map.
- *
- * @param map   GameMap instance.
- * @param id    Unique id of the mobj to lookup.
- */
-struct mobj_s *GameMap_MobjByID(GameMap *map, int id);
-
-/**
- * @param map   GameMap instance.
- * @param id    Thinker id to test.
- */
-boolean GameMap_IsUsedMobjID(GameMap* map, thid_t id);
-
-/**
- * @param map   GameMap instance.
- * @param id    New thinker id.
- * @param inUse In-use state of @a id. @c true = the id is in use.
- */
-void GameMap_SetMobjID(GameMap *map, thid_t id, boolean inUse);
 
 // The current map.
 DENG_EXTERN_C GameMap *theMap;

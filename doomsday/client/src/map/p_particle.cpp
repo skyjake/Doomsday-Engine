@@ -87,13 +87,13 @@ void PtcGen_Delete(ptcgen_t *gen)
 
 static int destroyGenerator(ptcgen_t *gen, void *parameters)
 {
-    DENG_ASSERT(gen);
+    DENG_ASSERT(gen != 0);
     DENG_UNUSED(parameters);
 
-    GameMap *map = theMap; /// @todo Do not assume generator is from the CURRENT map.
+    /// @todo Do not assume generator is from the CURRENT map.
 
-    Generators_Unlink(map->generators(), gen);
-    GameMap_ThinkerRemove(map, &gen->thinker);
+    Generators_Unlink(theMap->generators(), gen);
+    theMap->thinkerRemove(gen->thinker);
 
     PtcGen_Delete(gen);
     return false; // Can be used as an iterator, so continue.
@@ -132,8 +132,7 @@ static ptcgenid_t findIdForNewGenerator(Generators *gens)
  */
 static ptcgen_t *P_NewGenerator()
 {
-    GameMap *map = theMap;
-    Generators *gens = map->generators();
+    Generators *gens = theMap->generators();
     ptcgenid_t id = findIdForNewGenerator(gens);
     if(id)
     {
@@ -149,7 +148,7 @@ static ptcgen_t *P_NewGenerator()
 
         // Link the thinker to the list of (private) thinkers.
         gen->thinker.function = (thinkfunc_t) P_PtcGenThinker;
-        GameMap_ThinkerAdd(map, &gen->thinker, false);
+        theMap->thinkerAdd(gen->thinker, false);
 
         // Link the generator into this collection.
         Generators_Link(gens, id-1, gen);
@@ -1185,14 +1184,14 @@ static void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
  */
 void P_PtcGenThinker(ptcgen_t *gen)
 {
-    DENG_ASSERT(gen);
+    DENG_ASSERT(gen != 0);
     ded_ptcgen_t const *def = gen->def;
 
     // Source has been destroyed?
-    if(!(gen->flags & PGF_UNTRIGGERED) && !GameMap_IsUsedMobjID(theMap, gen->srcid))
+    if(!(gen->flags & PGF_UNTRIGGERED) && !theMap->isUsedMobjId(gen->srcid))
     {
         // Blasted... Spawning new particles becomes impossible.
-        gen->source = NULL;
+        gen->source = 0;
     }
 
     // Time to die?
@@ -1226,12 +1225,12 @@ void P_PtcGenThinker(ptcgen_t *gen)
                     theMap->clMobjIterator(PIT_ClientMobjParticles, gen);
                 }
 #endif
-                GameMap_IterateThinkers(theMap, reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
+                theMap->iterateThinkers(reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
                                         0x1 /*mobjs are public*/,
                                         manyNewParticles, gen);
 
                 // The generator has no real source.
-                gen->source = NULL;
+                gen->source = 0;
             }
             else
             {

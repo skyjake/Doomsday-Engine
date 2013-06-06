@@ -1421,7 +1421,7 @@ void Rend_CacheForMap()
         {
             spritedef_t *sprDef = &sprites[i];
 
-            if(GameMap_IterateThinkers(theMap, reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
+            if(theMap->iterateThinkers(reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
                                        0x1/* All mobjs are public*/,
                                        findSpriteOwner, sprDef))
             {
@@ -1447,7 +1447,7 @@ void Rend_CacheForMap()
     if(useModels && precacheSkins)
     {
         // All mobjs are public.
-        GameMap_IterateThinkers(theMap, reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
+        theMap->iterateThinkers(reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
                                 0x1, Models_CacheForMobj, NULL);
     }
 }

@@ -111,9 +111,6 @@ static void materialsTicker(timespan_t elapsed)
 
 #endif // __CLIENT__
 
-/**
- * Doomsday's own play-ticker.
- */
 void P_Ticker(timespan_t elapsed)
 {
     P_ControlTicker(elapsed);
@@ -122,14 +119,14 @@ void P_Ticker(timespan_t elapsed)
     materialsTicker(elapsed);
 #endif
 
-    if(!theMap || !GameMap_ThinkerListInited(theMap)) return; // Not initialized yet.
+    if(!theMap || !theMap->thinkerListInited()) return; // Not initialized yet.
 
     if(DD_IsSharpTick())
     {
         Sky_Ticker();
 
         // Check all mobjs (always public).
-        GameMap_IterateThinkers(theMap, reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
+        theMap->iterateThinkers(reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
                                 0x1, P_MobjTicker, NULL);
     }
 }

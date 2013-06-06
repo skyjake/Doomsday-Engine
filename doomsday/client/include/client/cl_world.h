@@ -28,8 +28,15 @@
 extern "C" {
 #endif
 
-void            Cl_WorldInit(void);
-void            Cl_WorldReset(void);
+/**
+ * Clears the arrays that track active plane and polyobj mover thinkers.
+ */
+void Cl_WorldInit(void);
+
+/**
+ * Removes all the active movers.
+ */
+void Cl_WorldReset(void);
 
 /**
  * Handles the PSV_MATERIAL_ARCHIVE packet sent by the server. The list of
@@ -50,15 +57,15 @@ void Cl_ReadServerMobjStateIDs(void);
 int Cl_LocalMobjType(int serverMobjType);
 int Cl_LocalMobjState(int serverMobjState);
 
-void            Cl_SetPolyMover(uint number, int move, int rotate);
+void Cl_SetPolyMover(uint number, int move, int rotate);
 
-void            Cl_ReadSectorDelta2(int deltaType, boolean skip);
-void            Cl_ReadSideDelta2(int deltaType, boolean skip);
-void            Cl_ReadPolyDelta2(boolean skip);
+void Cl_ReadSectorDelta2(int deltaType, boolean skip);
+void Cl_ReadSideDelta2(int deltaType, boolean skip);
+void Cl_ReadPolyDelta2(boolean skip);
 
-int             Cl_ReadSectorDelta(void); // obsolete
-int             Cl_ReadSideDelta(void); // obsolete
-int             Cl_ReadPolyDelta(void); // obsolete
+int Cl_ReadSectorDelta(void); // obsolete
+int Cl_ReadSideDelta(void); // obsolete
+int Cl_ReadPolyDelta(void); // obsolete
 
 #ifdef __cplusplus
 } // extern "C"

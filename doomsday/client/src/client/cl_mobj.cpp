@@ -150,32 +150,31 @@ static void ClMobj_UnlinkInHash(mobj_t* mo)
 #endif
 }
 
-mobj_t* ClMobj_MobjForInfo(clmoinfo_t* info)
+mobj_t *ClMobj_MobjForInfo(clmoinfo_t *info)
 {
-    assert(info->startMagic == CLM_MAGIC1);
-    assert(info->endMagic == CLM_MAGIC2);
+    DENG_ASSERT(info->startMagic == CLM_MAGIC1);
+    DENG_ASSERT(info->endMagic == CLM_MAGIC2);
 
     return (mobj_t*) ((char*)info + sizeof(clmoinfo_t));
 }
 
 #undef ClMobj_Find
-struct mobj_s* ClMobj_Find(thid_t id)
+struct mobj_s *ClMobj_Find(thid_t id)
 {
-    cmhash_t* hash = ClMobj_Hash(id);
-    clmoinfo_t* info;
+    cmhash_t *hash = ClMobj_Hash(id);
 
-    if(!id) return NULL;
+    if(!id) return 0;
 
     // Scan the existing client mobjs.
-    for(info = hash->first; info; info = info->next)
+    for(clmoinfo_t *info = hash->first; info; info = info->next)
     {
-        mobj_t* mo = ClMobj_MobjForInfo(info);
+        mobj_t *mo = ClMobj_MobjForInfo(info);
         if(mo->thinker.id == id)
             return mo;
     }
 
     // Not found!
-    return NULL;
+    return 0;
 }
 
 int GameMap::clMobjIterator(int (*callback) (mobj_t *, void *), void *context)
@@ -189,21 +188,11 @@ int GameMap::clMobjIterator(int (*callback) (mobj_t *, void *), void *context)
     return true;
 }
 
-/**
- * Unlinks the mobj from sectorlinks and if the object is solid,
- * the blockmap.
- */
 void ClMobj_Unlink(mobj_t* mo)
 {
     P_MobjUnlink(mo);
 }
 
-/**
- * Links the mobj into sectorlinks and if the object is solid, the
- * blockmap. Linking to sectorlinks makes the mobj visible and linking
- * to the blockmap makes it possible to interact with it (collide).
- * If the client mobj is Hidden, it will not be linked anywhere.
- */
 void ClMobj_Link(mobj_t* mo)
 {
     clmoinfo_t* info = ClMobj_GetInfo(mo);
@@ -224,9 +213,10 @@ void ClMobj_Link(mobj_t* mo)
                    (mo->ddFlags & DDMF_SOLID ? DDLINK_BLOCKMAP : 0));
 }
 
+#undef ClMobj_EnableLocalActions
 void ClMobj_EnableLocalActions(struct mobj_s *mo, boolean enable)
 {
-    clmoinfo_t* info = ClMobj_GetInfo(mo);
+    clmoinfo_t *info = ClMobj_GetInfo(mo);
     if(!isClient || !info) return;
     if(enable)
     {
@@ -240,6 +230,7 @@ void ClMobj_EnableLocalActions(struct mobj_s *mo, boolean enable)
     }
 }
 
+#undef ClMobj_LocalActionsEnabled
 boolean ClMobj_LocalActionsEnabled(struct mobj_s *mo)
 {
     clmoinfo_t* info = ClMobj_GetInfo(mo);
@@ -247,11 +238,6 @@ boolean ClMobj_LocalActionsEnabled(struct mobj_s *mo)
     return (info->flags & CLMF_LOCAL_ACTIONS) != 0;
 }
 
-/**
- * Change the state of a mobj.
- *
- * @todo  Should use the gameside function for this?
- */
 void ClMobj_SetState(mobj_t *mo, int stnum)
 {
     if(stnum < 0)
@@ -264,12 +250,8 @@ void ClMobj_SetState(mobj_t *mo, int stnum)
     while(!mo->tics && stnum > 0);
 }
 
-/**
- * Make the real player mobj identical with the client mobj.
- * The client mobj is always unlinked. Only the *real* mobj is visible.
- * (The real mobj was created by the Game.)
- */
-void Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj, int flags, boolean onFloor)
+void Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj,
+                             int flags, boolean onFloor)
 {
     if(!localMobj || !remoteClientMobj)
     {
@@ -506,34 +488,12 @@ void Cl_PredictMovement(void)
 #endif
 }
 
-/**
- * Create a new client mobj.
- *
- * Memory layout of a client mobj:
- * - client mobj magic1 (4 bytes)
- * - engineside clmobj info
- * - client mobj magic2 (4 bytes)
- * - gameside mobj (mobjSize bytes) <- this is returned from the function
- *
- * To check whether a given mobj_t is a clmobj_t, just check the presence of
- * the client mobj magic number (by calling Cl_IsClientMobj()).
- * The clmoinfo_s can then be accessed with ClMobj_GetInfo().
- *
- * @param id  Identifier of the client mobj. Every client mobj has a unique
- *            identifier.
- *
- * @return  Pointer to the gameside mobj.
- */
-mobj_t* ClMobj_Create(thid_t id)
+mobj_t *ClMobj_Create(thid_t id)
 {
-    void* data = 0;
-    clmoinfo_t* info = 0;
-    mobj_t* mo = 0; // Gameside object.
-
     // Allocate enough memory for all the data.
-    data = Z_Calloc(sizeof(clmoinfo_t) + MOBJ_SIZE, PU_MAP, 0);
-    info = (clmoinfo_t *) data;
-    mo = (mobj_t *) ((char *)data + sizeof(clmoinfo_t));
+    void *data       = Z_Calloc(sizeof(clmoinfo_t) + MOBJ_SIZE, PU_MAP, 0);
+    clmoinfo_t *info = (clmoinfo_t *) data;
+    mobj_t *mo       = (mobj_t *) ((char *)data + sizeof(clmoinfo_t));
 
     // Initialize the data.
     info->time = Timer_RealMilliseconds();
@@ -542,23 +502,17 @@ mobj_t* ClMobj_Create(thid_t id)
     mo->ddFlags = DDMF_REMOTE;
 
     ClMobj_LinkInHash(mo, id);
-    GameMap_SetMobjID(theMap, id, true); // Mark this ID as used.
+    theMap->setMobjId(id, true); // Mark this ID as used.
 
     // Client mobjs are full-fludged game mobjs as well.
     mo->thinker.function = reinterpret_cast<thinkfunc_t>(gx.MobjThinker);
-    GameMap_ThinkerAdd(theMap, (thinker_t*) mo, true);
+    theMap->thinkerAdd(reinterpret_cast<thinker_t &>(*mo), true);
 
     return mo;
 }
 
-/**
- * Destroys the client mobj. Before this is called, the client mobj should be
- * unlinked from the thinker list (GameMap_ThinkerRemove).
- */
-void ClMobj_Destroy(mobj_t* mo)
+void ClMobj_Destroy(mobj_t *mo)
 {
-    clmoinfo_t* info = 0;
-
 #ifdef _DEBUG
     checkMobjHash();
 #endif
@@ -566,13 +520,13 @@ void ClMobj_Destroy(mobj_t* mo)
     DEBUG_VERBOSE2_Message(("ClMobj_Destroy: mobj %i being destroyed.\n", mo->thinker.id));
 
     CL_ASSERT_CLMOBJ(mo);
-    info = ClMobj_GetInfo(mo);
+    clmoinfo_t *info = ClMobj_GetInfo(mo);
 
     // Stop any sounds originating from this mobj.
     S_StopSound(0, mo);
 
     // The ID is free once again.
-    GameMap_SetMobjID(theMap, mo->thinker.id, false);
+    theMap->setMobjId(mo->thinker.id, false);
     ClMobj_UnlinkInHash(mo);
     ClMobj_Unlink(mo); // from block/sector
 
@@ -584,30 +538,15 @@ void ClMobj_Destroy(mobj_t* mo)
 #endif
 }
 
-/**
- * Determines whether a mobj is a client mobj.
- *
- * @param mo  Mobj to check.
- *
- * @return  @c true, if the mobj is a client mobj; otherwise @c false.
- */
-boolean Cl_IsClientMobj(mobj_t* mo)
+boolean Cl_IsClientMobj(mobj_t *mo)
 {
     return ClMobj_GetInfo(mo) != 0;
 }
 
-/**
- * Determines whether a client mobj is valid for playsim.
- * The primary reason for it not to be valid is that we haven't received
- * enough information about it yet.
- *
- * @param mo  Mobj to check.
- *
- * @return  @c true, if the mobj is a client mobj; otherwise @c false.
- */
-boolean ClMobj_IsValid(mobj_t* mo)
+#undef ClMobj_IsValid
+boolean ClMobj_IsValid(mobj_t *mo)
 {
-    clmoinfo_t* info = ClMobj_GetInfo(mo);
+    clmoinfo_t *info = ClMobj_GetInfo(mo);
 
     if(!Cl_IsClientMobj(mo)) return true;
     if(info->flags & (CLMF_HIDDEN | CLMF_UNPREDICTABLE))
@@ -623,9 +562,9 @@ boolean ClMobj_IsValid(mobj_t* mo)
     return true;
 }
 
-clmoinfo_t* ClMobj_GetInfo(mobj_t* mo)
+clmoinfo_t *ClMobj_GetInfo(mobj_t *mo)
 {
-    clmoinfo_t* info = (clmoinfo_t*) ((char*)mo - sizeof(clmoinfo_t));
+    clmoinfo_t *info = (clmoinfo_t *) ((char *)mo - sizeof(clmoinfo_t));
     if(!mo || info->startMagic != CLM_MAGIC1 || info->endMagic != CLM_MAGIC2)
     {
         // There is no valid info block preceding the mobj.
@@ -634,15 +573,9 @@ clmoinfo_t* ClMobj_GetInfo(mobj_t* mo)
     return info;
 }
 
-/**
- * Call for Hidden client mobjs to make then visible.
- * If a sound is waiting, it's now played.
- *
- * @return              @c true, if the mobj was revealed.
- */
 boolean ClMobj_Reveal(mobj_t *mo)
 {
-    clmoinfo_t* info = ClMobj_GetInfo(mo);
+    clmoinfo_t *info = ClMobj_GetInfo(mo);
 
     CL_ASSERT_CLMOBJ(mo);
 
@@ -685,7 +618,7 @@ boolean ClMobj_Reveal(mobj_t *mo)
  *
  * @param mo  Client mobj (must be solid).
  */
-static boolean ClMobj_IsStuckInsideLocalPlayer(mobj_t* mo)
+static boolean ClMobj_IsStuckInsideLocalPlayer(mobj_t *mo)
 {
     int i;
     mobj_t* plmo;
@@ -1000,10 +933,6 @@ void ClMobj_ReadDelta2(boolean skip)
     }
 }
 
-/**
- * Null mobjs deltas have their own type in a PSV_FRAME2 packet.
- * Here we remove the mobj in question.
- */
 void ClMobj_ReadNullDelta2(boolean skip)
 {
     mobj_t *mo;

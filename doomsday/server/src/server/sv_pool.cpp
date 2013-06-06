@@ -1496,7 +1496,7 @@ coord_t Sv_MobjDistance(const mobj_t* mo, const ownerinfo_t* info, boolean isRea
     coord_t z;
 
     /// @todo Do not assume mobj is from the CURRENT map.
-    if(isReal && !GameMap_IsUsedMobjID(theMap, mo->thinker.id))
+    if(isReal && !theMap->isUsedMobjId(mo->thinker.id))
     {
         // This mobj does not exist any more!
         return DDMAXFLOAT;
@@ -2052,12 +2052,12 @@ int Sv_GetTargetPools(pool_t** targets, int clientsMask)
  *
  * When updating, the destroyed mobjs are removed from the register.
  */
-void Sv_NewNullDeltas(cregister_t* reg, boolean doUpdate, pool_t** targets)
+void Sv_NewNullDeltas(cregister_t *reg, boolean doUpdate, pool_t **targets)
 {
-    int                 i;
-    mobjhash_t*         hash;
-    reg_mobj_t*         obj, *next = 0;
-    mobjdelta_t         null;
+    int i;
+    mobjhash_t *hash;
+    reg_mobj_t *obj, *next = 0;
+    mobjdelta_t null;
 
     for(i = 0, hash = reg->mobjs; i < REG_MOBJ_HASH_SIZE; ++i, hash++)
     {
@@ -2067,7 +2067,7 @@ void Sv_NewNullDeltas(cregister_t* reg, boolean doUpdate, pool_t** targets)
             next = obj->next;
 
             /// @todo Do not assume mobj is from the CURRENT map.
-            if(!GameMap_IsUsedMobjID(theMap, obj->mo.thinker.id))
+            if(!theMap->isUsedMobjId(obj->mo.thinker.id))
             {
                 // This object no longer exists!
                 Sv_NewDelta(&null, DT_MOBJ, obj->mo.thinker.id);
@@ -2132,16 +2132,16 @@ static int newMobjDelta(thinker_t* th, void* context)
 /**
  * Mobj deltas are generated for all mobjs that have changed.
  */
-void Sv_NewMobjDeltas(cregister_t* reg, boolean doUpdate, pool_t** targets)
+void Sv_NewMobjDeltas(cregister_t *reg, boolean doUpdate, pool_t **targets)
 {
-    newmobjdeltaparams_t params;
+    newmobjdeltaparams_t parm;
 
-    params.reg = reg;
-    params.doUpdate = doUpdate;
-    params.targets = targets;
+    parm.reg = reg;
+    parm.doUpdate = doUpdate;
+    parm.targets = targets;
 
-    GameMap_IterateThinkers(theMap, reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
-                            0x1 /*mobjs are public*/, newMobjDelta, &params);
+    theMap->iterateThinkers(reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
+                            0x1 /*mobjs are public*/, newMobjDelta, &parm);
 }
 
 /**

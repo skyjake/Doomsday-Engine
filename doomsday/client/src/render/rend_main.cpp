@@ -2816,7 +2816,7 @@ static void Rend_DrawBoundingBoxes()
 
     if(devMobjBBox)
     {
-        GameMap_IterateThinkers(theMap, reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
+        theMap->iterateThinkers(reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
                                 0x1, drawMobjBBox, NULL);
     }
 

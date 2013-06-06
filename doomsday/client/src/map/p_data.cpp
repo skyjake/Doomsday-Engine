@@ -188,7 +188,7 @@ DENG_EXTERN_C boolean P_LoadMap(char const *uriCString)
         theMap->initSkyFix();
 
         // Init the thinker lists (public and private).
-        GameMap_InitThinkerLists(theMap, 0x1 | 0x2);
+        theMap->initThinkerLists(0x1 | 0x2);
 
 #ifdef __CLIENT__
         if(isClient)

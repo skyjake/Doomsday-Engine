@@ -1512,7 +1512,7 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
         /// @todo Why is this being done here?
         if(theMap)
         {
-            GameMap_InitThinkerLists(theMap, 0x1|0x2);
+            theMap->initThinkerLists(0x1|0x2);
         }
 
         Con_ClearDatabases();

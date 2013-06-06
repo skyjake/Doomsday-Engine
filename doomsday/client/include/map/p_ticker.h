@@ -1,4 +1,4 @@
-/** @file
+/** @file map/p_ticker.h Timed Playsim Events.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -17,13 +17,12 @@
  * http://www.gnu.org/licenses</small>
  */
 
-/*
- * p_ticker.h: Timed Playsim Events
+#ifndef DENG_MAP_PLAY_TICKER_H
+#define DENG_MAP_PLAY_TICKER_H
+
+/**
+ * Doomsday's own play-ticker.
  */
+void P_Ticker(timespan_t time);
 
-#ifndef __DOOMSDAY_PLAY_TICKER_H__
-#define __DOOMSDAY_PLAY_TICKER_H__
-
-void            P_Ticker(timespan_t time);
-
-#endif
+#endif // DENG_MAP_PLAY_TICKER_H

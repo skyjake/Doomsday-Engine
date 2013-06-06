@@ -43,7 +43,7 @@
 #define CLMF_KNOWN_Y        0x20000
 #define CLMF_KNOWN_Z        0x40000
 #define CLMF_KNOWN_STATE    0x80000
-#define CLMF_KNOWN          0xf0000 // combination of all the KNOWN-flags
+#define CLMF_KNOWN          0xf0000 ///< combination of all the KNOWN-flags
 
 // Magic number for client mobj information.
 #define CLM_MAGIC1          0xdecafed1
@@ -57,29 +57,85 @@
  * gameside mobjs. The last 4 bytes must be CLM_MAGIC.
  */
 typedef struct clmoinfo_s {
-    uint            startMagic;     // The client mobj magic number (CLM_MAGIC1).
+    uint            startMagic; // The client mobj magic number (CLM_MAGIC1).
     struct clmoinfo_s *next, *prev;
     int             flags;
-    uint            time;           // Time of last update.
-    int             sound;          // Queued sound ID.
-    float           volume;         // Volume for queued sound.
-    uint            endMagic;       // The client mobj magic number (CLM_MAGIC2).
+    uint            time; // Time of last update.
+    int             sound; // Queued sound ID.
+    float           volume; // Volume for queued sound.
+    uint            endMagic; // The client mobj magic number (CLM_MAGIC2).
 } clmoinfo_t;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void            Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj, int flags, boolean onFloor);
+/**
+ * Make the real player mobj identical with the client mobj.
+ * The client mobj is always unlinked. Only the *real* mobj is visible.
+ * (The real mobj was created by the Game.)
+ */
+void Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj, int flags,
+                             boolean onFloor);
 
-mobj_t         *ClMobj_Create(thid_t id);
-void            ClMobj_Destroy(mobj_t *mo);
-clmoinfo_t     *ClMobj_GetInfo(mobj_t* mo);
-mobj_t         *ClMobj_MobjForInfo(clmoinfo_t* info);
-void            ClMobj_Unlink(mobj_t *cmo); // needed?
-void            ClMobj_Link(mobj_t *cmo); // needed?
-void            ClMobj_SetState(mobj_t *mo, int stnum); // needed?
-void            ClMobj_CheckPlanes(mobj_t *mo, boolean justCreated);
+/**
+ * Create a new client mobj.
+ *
+ * Memory layout of a client mobj:
+ * - client mobj magic1 (4 bytes)
+ * - engineside clmobj info
+ * - client mobj magic2 (4 bytes)
+ * - gameside mobj (mobjSize bytes) <- this is returned from the function
+ *
+ * To check whether a given mobj_t is a clmobj_t, just check the presence of
+ * the client mobj magic number (by calling Cl_IsClientMobj()).
+ * The clmoinfo_s can then be accessed with ClMobj_GetInfo().
+ *
+ * @param id  Identifier of the client mobj. Every client mobj has a unique
+ *            identifier.
+ *
+ * @return  Pointer to the gameside mobj.
+ */
+mobj_t *ClMobj_Create(thid_t id);
+
+/**
+ * Destroys the client mobj. Before this is called, the client mobj should be
+ * unlinked from the thinker list (GameMap_ThinkerRemove).
+ */
+void ClMobj_Destroy(mobj_t *mo);
+
+clmoinfo_t *ClMobj_GetInfo(mobj_t *mo);
+
+mobj_t *ClMobj_MobjForInfo(clmoinfo_t *info);
+
+/**
+ * Call for Hidden client mobjs to make then visible.
+ * If a sound is waiting, it's now played.
+ *
+ * @return  @c true, if the mobj was revealed.
+ */
+boolean ClMobj_Reveal(mobj_t *cmo);
+
+/**
+ * Unlinks the mobj from sectorlinks and if the object is solid,
+ * the blockmap.
+ */
+void ClMobj_Unlink(mobj_t *cmo); // needed?
+
+/**
+ * Links the mobj into sectorlinks and if the object is solid, the
+ * blockmap. Linking to sectorlinks makes the mobj visible and linking
+ * to the blockmap makes it possible to interact with it (collide).
+ * If the client mobj is Hidden, it will not be linked anywhere.
+ */
+void ClMobj_Link(mobj_t *cmo); // needed?
+
+/**
+ * Change the state of a mobj.
+ *
+ * @todo  Should use the gameside function for this?
+ */
+void ClMobj_SetState(mobj_t *mo, int stnum); // needed?
 
 /**
  * Reads a single mobj delta (inside PSV_FRAME2 packet) from the message buffer
@@ -90,11 +146,22 @@ void            ClMobj_CheckPlanes(mobj_t *mo, boolean justCreated);
  *
  * @param skip  If @c true, all read data is ignored.
  */
-void            ClMobj_ReadDelta2(boolean skip);
+void ClMobj_ReadDelta2(boolean skip);
 
-void            ClMobj_ReadNullDelta2(boolean skip);
+/**
+ * Null mobjs deltas have their own type in a PSV_FRAME2 packet.
+ * Here we remove the mobj in question.
+ */
+void ClMobj_ReadNullDelta2(boolean skip);
 
-boolean         Cl_IsClientMobj(mobj_t* mo); // public
+/**
+ * Determines whether a mobj is a client mobj.
+ *
+ * @param mo  Mobj to check.
+ *
+ * @return  @c true, if the mobj is a client mobj; otherwise @c false.
+ */
+boolean Cl_IsClientMobj(mobj_t *mo); // public
 
 #ifdef __cplusplus
 } // extern "C"

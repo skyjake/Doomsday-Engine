@@ -1,4 +1,4 @@
-/** @file
+/** @file map/p_think.cpp
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -38,69 +38,65 @@ boolean Thinker_IsMobjFunc(thinkfunc_t func)
 
 namespace de {
 
-static thid_t newMobjID(GameMap *map)
+static thid_t newMobjID(GameMap &map)
 {
-    assert(map);
     // Increment the ID dealer until a free ID is found.
     /// @todo fixme: What if all IDs are in use? 65535 thinkers!?
-    while(GameMap_IsUsedMobjID(map, ++map->thinkers.iddealer)) {}
+    while(map.isUsedMobjId(++map.thinkers.iddealer)) {}
 
     // Mark this ID as used.
-    GameMap_SetMobjID(map, map->thinkers.iddealer, true);
+    map.setMobjId(map.thinkers.iddealer, true);
 
-    return map->thinkers.iddealer;
+    return map.thinkers.iddealer;
 }
 
-void GameMap_ClearMobjIDs(GameMap *map)
+void GameMap::clearMobjIds()
 {
-    assert(map);
-    memset(map->thinkers.idtable, 0, sizeof(map->thinkers.idtable));
-    map->thinkers.idtable[0] |= 1; // ID zero is always "used" (it's not a valid ID).
+    std::memset(thinkers.idtable, 0, sizeof(thinkers.idtable));
+    thinkers.idtable[0] |= 1; // ID zero is always "used" (it's not a valid ID).
 }
 
-boolean GameMap_IsUsedMobjID(GameMap *map, thid_t id)
+boolean GameMap::isUsedMobjId(thid_t id)
 {
-    assert(map);
-    return map->thinkers.idtable[id >> 5] & (1 << (id & 31) /*(id % 32) */ );
+    return thinkers.idtable[id >> 5] & (1 << (id & 31) /*(id % 32) */ );
 }
 
-void GameMap_SetMobjID(GameMap *map, thid_t id, boolean inUse)
+void GameMap::setMobjId(thid_t id, boolean inUse)
 {
     int c = id >> 5, bit = 1 << (id & 31); //(id % 32);
-    assert(map);
 
-    if(inUse) map->thinkers.idtable[c] |= bit;
-    else      map->thinkers.idtable[c] &= ~bit;
+    if(inUse) thinkers.idtable[c] |= bit;
+    else      thinkers.idtable[c] &= ~bit;
 }
 
 typedef struct mobjidlookup_s {
     thid_t id;
-    mobj_t* result;
+    mobj_t *result;
 } mobjidlookup_t;
 
-static int mobjIdLookup(thinker_t* thinker, void* context)
+static int mobjIdLookup(thinker_t *thinker, void *context)
 {
-    mobjidlookup_t* lookup = (mobjidlookup_t*) context;
+    mobjidlookup_t *lookup = (mobjidlookup_t *) context;
     if(thinker->id == lookup->id)
     {
-        lookup->result = (mobj_t*) thinker;
+        lookup->result = (mobj_t *) thinker;
         return true; // Stop iteration.
     }
     return false; // Continue iteration.
 }
 
-struct mobj_s* GameMap_MobjByID(GameMap* map, int id)
+struct mobj_s *GameMap::mobjById(int id)
 {
-    // @todo  A hash table wouldn't hurt (see client's mobj id table).
+    /// @todo  A hash table wouldn't hurt (see client's mobj id table).
     mobjidlookup_t lookup;
     lookup.id = id;
     lookup.result = 0;
-    GameMap_IterateThinkers(map, reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
-                            0x1/*mobjs are public*/, mobjIdLookup, &lookup);
+    iterateThinkers(reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
+                    0x1/*mobjs are public*/, mobjIdLookup, &lookup);
     return lookup.result;
 }
 
-static void linkThinkerToList(thinker_t* th, thinkerlist_t* list)
+static void linkThinkerToList(thinker_t *th, thinkerlist_t *list)
 {
     // Link the thinker to the thinker list.
     list->thinkerCap.prev->next = th;
@@ -109,27 +105,26 @@ static void linkThinkerToList(thinker_t* th, thinkerlist_t* list)
     list->thinkerCap.prev = th;
 }
 
-static void unlinkThinkerFromList(thinker_t* th)
+static void unlinkThinkerFromList(thinker_t *th)
 {
     th->next->prev = th->prev;
     th->prev->next = th->next;
 }
 
-static void initThinkerList(thinkerlist_t* list)
+static void initThinkerList(thinkerlist_t *list)
 {
     list->thinkerCap.prev = list->thinkerCap.next = &list->thinkerCap;
 }
 
-static thinkerlist_t* listForThinkFunc(GameMap* map, thinkfunc_t func, boolean isPublic,
+static thinkerlist_t *listForThinkFunc(GameMap &map, thinkfunc_t func, boolean isPublic,
     boolean canCreate)
 {
     thinkerlist_t* list;
     size_t i;
-    assert(map);
 
-    for(i = 0; i < map->thinkers.numLists; ++i)
+    for(i = 0; i < map.thinkers.numLists; ++i)
     {
-        list = map->thinkers.lists[i];
+        list = map.thinkers.lists[i];
 
         if(list->thinkerCap.function == func && list->isPublic == isPublic)
             return list;
@@ -138,8 +133,8 @@ static thinkerlist_t* listForThinkFunc(GameMap* map, thinkfunc_t func, boolean i
     if(!canCreate) return NULL;
 
     // A new thinker type.
-    map->thinkers.lists = (thinkerlist_t **) Z_Realloc(map->thinkers.lists, sizeof(thinkerlist_t*) * ++map->thinkers.numLists, PU_APPSTATIC);
-    map->thinkers.lists[map->thinkers.numLists-1] = list = (thinkerlist_t *) Z_Calloc(sizeof(thinkerlist_t), PU_APPSTATIC, 0);
+    map.thinkers.lists = (thinkerlist_t **) Z_Realloc(map.thinkers.lists, sizeof(thinkerlist_t*) * ++map.thinkers.numLists, PU_APPSTATIC);
+    map.thinkers.lists[map.thinkers.numLists-1] = list = (thinkerlist_t *) Z_Calloc(sizeof(thinkerlist_t), PU_APPSTATIC, 0);
 
     initThinkerList(list);
     list->isPublic = isPublic;
@@ -150,7 +145,7 @@ static thinkerlist_t* listForThinkFunc(GameMap* map, thinkfunc_t func, boolean i
     return list;
 }
 
-static int runThinker(thinker_t* th, void* context)
+static int runThinker(thinker_t *th, void *context)
 {
     DENG_UNUSED(context);
 
@@ -164,7 +159,7 @@ static int runThinker(thinker_t* th, void* context)
 
             if(th->id)
             {
-                mobj_t* mo = (mobj_t*) th;
+                mobj_t *mo = (mobj_t *) th;
 #ifdef __CLIENT__
                 if(!Cl_IsClientMobj(mo))
                 {
@@ -195,21 +190,21 @@ static int runThinker(thinker_t* th, void* context)
     return false; // Continue iteration.
 }
 
-static int iterateThinkers(thinkerlist_t* list, int (*callback) (thinker_t*, void*),
-    void* context)
+static int iterateThinkerList(thinkerlist_t *list, int (*callback) (thinker_t *, void *),
+    void *context)
 {
     int result = false;
 
     if(list)
     {
-        thinker_t* th, *next;
+        thinker_t *th, *next;
 
         th = list->thinkerCap.next;
         while(th != &list->thinkerCap && th)
         {
 #ifdef LIBDENG_FAKE_MEMORY_ZONE
-            assert(th->next != NULL);
-            assert(th->prev != NULL);
+            DENG_ASSERT(th->next != 0);
+            DENG_ASSERT(th->prev != 0);
 #endif
 
             next = th->next;
@@ -222,80 +217,70 @@ static int iterateThinkers(thinkerlist_t* list, int (*callback) (thinker_t*, voi
     return result;
 }
 
-void GameMap_ThinkerAdd(GameMap* map, thinker_t* th, boolean makePublic)
+void GameMap::thinkerAdd(thinker_t &th, boolean makePublic)
 {
-    assert(map);
-    if(!th) return;
-
-    if(!th->function)
-    {
-        Con_Error("GameMap_ThinkerAdd: Invalid thinker function.");
-    }
+    if(!th.function)
+        throw Error("GameMap::thinkerAdd", "Invalid thinker function");
 
     // Will it need an ID?
-    if(Thinker_IsMobjFunc(th->function))
+    if(Thinker_IsMobjFunc(th.function))
     {
         // It is a mobj, give it an ID (not for client mobjs, though, they
         // already have an id).
 #ifdef __CLIENT__
-        if(!Cl_IsClientMobj((mobj_t*)th))
+        if(!Cl_IsClientMobj(reinterpret_cast<mobj_t *>(&th)))
 #endif
         {
-            th->id = newMobjID(map);
+            th.id = newMobjID(*this);
         }
     }
     else
     {
         // Zero is not a valid ID.
-        th->id = 0;
+        th.id = 0;
     }
 
     // Link the thinker to the thinker list.
-    linkThinkerToList(th, listForThinkFunc(map, th->function, makePublic, true));
+    linkThinkerToList(&th, listForThinkFunc(*this, th.function, makePublic, true));
 }
 
-void GameMap_ThinkerRemove(GameMap* map, thinker_t* th)
+void GameMap::thinkerRemove(thinker_t &th)
 {
-    assert(map);
-
     // Has got an ID?
-    if(th->id)
+    if(th.id)
     {
-        // Flag the ID as free.
-        GameMap_SetMobjID(map, th->id, false);
+        // Flag the identifier as free.
+        setMobjId(th.id, false);
 
 #ifdef __SERVER__
         // Then it must be a mobj.
-        mobj_t* mo = (mobj_t *) th;
+        mobj_t *mo = reinterpret_cast<mobj_t *>(&th);
 
         // If the state of the mobj is the NULL state, this is a
         // predictable mobj removal (result of animation reaching its
         // end) and shouldn't be included in netGame deltas.
         if(!mo->state || mo->state == states)
         {
-            Sv_MobjRemoved(th->id);
+            Sv_MobjRemoved(th.id);
         }
 #endif
     }
 
-    th->function = (thinkfunc_t) -1;
+    th.function = (thinkfunc_t) -1;
 }
 
-void GameMap_InitThinkerLists(GameMap* map, byte flags)
+void GameMap::initThinkerLists(byte flags)
 {
-    assert(map);
-    if(!map->thinkers.inited)
+    if(!thinkers.inited)
     {
-        map->thinkers.numLists = 0;
-        map->thinkers.lists = NULL;
+        thinkers.numLists = 0;
+        thinkers.lists = 0;
     }
     else
     {
-        size_t i;
-
-        for(i = 0; i < map->thinkers.numLists; ++i)
+        for(size_t i = 0; i < thinkers.numLists; ++i)
         {
-            thinkerlist_t* list = map->thinkers.lists[i];
+            thinkerlist_t *list = thinkers.lists[i];
 
             if(list->isPublic && !(flags & 0x1)) continue;
             if(!list->isPublic && !(flags & 0x2)) continue;
@@ -304,45 +289,41 @@ void GameMap_InitThinkerLists(GameMap* map, byte flags)
         }
     }
 
-    GameMap_ClearMobjIDs(map);
-    map->thinkers.inited = true;
+    clearMobjIds();
+    thinkers.inited = true;
 }
 
-boolean GameMap_ThinkerListInited(GameMap* map)
+boolean GameMap::thinkerListInited() const
 {
-    assert(map);
-    return map->thinkers.inited;
+    return thinkers.inited;
 }
 
-int GameMap_IterateThinkers(GameMap* map, thinkfunc_t func, byte flags,
-    int (*callback) (thinker_t*, void*), void* context)
+int GameMap::iterateThinkers(thinkfunc_t func, byte flags,
+    int (*callback) (thinker_t *, void *), void *context)
 {
+    if(!thinkers.inited) return false;
+
     int result = false;
-    size_t i;
-    assert(map);
-
-    if(!map->thinkers.inited) return false;
-
     if(func)
     {
         // We might have both public and shared lists for this func.
         if(flags & 0x1)
-            result = iterateThinkers(listForThinkFunc(map, func, true, false),
-                                     callback, context);
+            result = iterateThinkerList(listForThinkFunc(*this, func, true, false),
+                                        callback, context);
         if(!result && (flags & 0x2))
-            result = iterateThinkers(listForThinkFunc(map, func, false, false),
-                                     callback, context);
+            result = iterateThinkerList(listForThinkFunc(*this, func, false, false),
+                                        callback, context);
         return result;
     }
 
-    for(i = 0; i < map->thinkers.numLists; ++i)
+    for(size_t i = 0; i < thinkers.numLists; ++i)
     {
-        thinkerlist_t* list = map->thinkers.lists[i];
+        thinkerlist_t *list = thinkers.lists[i];
 
         if(list->isPublic && !(flags & 0x1)) continue;
         if(!list->isPublic && !(flags & 0x2)) continue;
 
-        result = iterateThinkers(list, callback, context);
+        result = iterateThinkerList(list, callback, context);
         if(result) break;
     }
     return result;
@@ -359,35 +340,35 @@ using namespace de;
 DENG_EXTERN_C struct mobj_s *P_MobjForID(int id)
 {
     if(!theMap) return 0;
-    return GameMap_MobjByID(theMap, id);
+    return theMap->mobjById(id);
 }
 
 #undef Thinker_Init
-void Thinker_Init(void)
+void Thinker_Init()
 {
     if(!theMap) return;
-    GameMap_InitThinkerLists(theMap, 0x1); // Init the public thinker lists.
+    theMap->initThinkerLists(0x1); // Init the public thinker lists.
 }
 
 #undef Thinker_Run
-void Thinker_Run(void)
+void Thinker_Run()
 {
     if(!theMap) return;
-    GameMap_IterateThinkers(theMap, NULL, 0x1 | 0x2, runThinker, NULL);
+    theMap->iterateThinkers(NULL, 0x1 | 0x2, runThinker, NULL);
 }
 
 #undef Thinker_Add
 void Thinker_Add(thinker_t *th)
 {
-    if(!theMap) return;
-    GameMap_ThinkerAdd(theMap, th, true); // This is a public thinker.
+    if(!th || !theMap) return;
+    theMap->thinkerAdd(*th, true); // This is a public thinker.
 }
 
 #undef Thinker_Remove
 void Thinker_Remove(thinker_t *th)
 {
-    if(!theMap) return;
-    GameMap_ThinkerRemove(theMap, th);
+    if(!th || !theMap) return;
+    theMap->thinkerRemove(*th);
 }
 
 #undef Thinker_SetStasis
@@ -403,7 +384,7 @@ void Thinker_SetStasis(thinker_t *th, boolean on)
 int Thinker_Iterate(thinkfunc_t func, int (*callback) (thinker_t *, void *), void *context)
 {
     if(!theMap) return false; // Continue iteration.
-    return GameMap_IterateThinkers(theMap, func, 0x1, callback, context);
+    return theMap->iterateThinkers(func, 0x1, callback, context);
 }
 
 DENG_DECLARE_API(Thinker) =

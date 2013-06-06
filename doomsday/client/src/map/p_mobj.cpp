@@ -88,7 +88,7 @@ mobj_t* P_MobjCreate(thinkfunc_t function, coord_t const pos[3], angle_t angle,
     mo->thinker.function = function;
     if(mo->thinker.function)
     {
-        GameMap_ThinkerAdd(theMap, &mo->thinker, true); // Make it public.
+        theMap->thinkerAdd(mo->thinker, true); // Make it public.
     }
 
     return mo;
@@ -110,7 +110,7 @@ DENG_EXTERN_C mobj_t* P_MobjCreateXYZ(thinkfunc_t function, coord_t x, coord_t y
  * awaiting removal (which occurs when its turn for thinking comes around).
  */
 #undef P_MobjDestroy
-DENG_EXTERN_C void P_MobjDestroy(mobj_t* mo)
+DENG_EXTERN_C void P_MobjDestroy(mobj_t *mo)
 {
 #ifdef _DEBUG
     if(mo->ddFlags & DDMF_MISSILE)
@@ -124,7 +124,7 @@ DENG_EXTERN_C void P_MobjDestroy(mobj_t* mo)
 
     S_StopSound(0, mo);
 
-    GameMap_ThinkerRemove(theMap, (thinker_t *) mo);
+    theMap->thinkerRemove(reinterpret_cast<thinker_t &>(*mo));
 }
 
 /**
@@ -286,7 +286,7 @@ D_CMD(InspectMobj)
     id = strtol(argv[1], NULL, 10);
 
     // Find the mobj.
-    mo = GameMap_MobjByID(theMap, id);
+    mo = theMap->mobjById(id);
     if(!mo)
     {
         Con_Printf("Mobj with id %i not found.\n", id);
