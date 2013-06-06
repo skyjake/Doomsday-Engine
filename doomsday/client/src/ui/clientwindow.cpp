@@ -33,8 +33,11 @@
 
 #include "gl/sys_opengl.h"
 #include "gl/gl_main.h"
-#include "ui/legacywidget.h"
-#include "ui/busywidget.h"
+#include "ui/widgets/legacywidget.h"
+#include "ui/widgets/busywidget.h"
+#include "ui/widgets/taskbarwidget.h"
+#include "ui/widgets/consolewidget.h"
+#include "ui/commandaction.h"
 #include "ui/mouse_qt.h"
 
 #include "dd_main.h"
@@ -45,13 +48,10 @@ using namespace de;
 static String const LEGACY_WIDGET_NAME = "legacy";
 
 DENG2_PIMPL(ClientWindow),
-    DENG2_OBSERVES(KeyEventSource,   KeyEvent),
-    DENG2_OBSERVES(MouseEventSource, MouseStateChange),
-#ifndef WIN32
-    DENG2_OBSERVES(MouseEventSource, MouseAxisEvent),
-    DENG2_OBSERVES(MouseEventSource, MouseButtonEvent),
-#endif
-    DENG2_OBSERVES(Canvas,           FocusChange)
+DENG2_OBSERVES(KeyEventSource,   KeyEvent),
+DENG2_OBSERVES(MouseEventSource, MouseStateChange),
+DENG2_OBSERVES(MouseEventSource, MouseEvent),
+DENG2_OBSERVES(Canvas,           FocusChange)
 {
     bool needMainInit;
     bool needRecreateCanvas;
@@ -60,6 +60,8 @@ DENG2_PIMPL(ClientWindow),
 
     /// Root of the nomal UI widgets of this window.
     GuiRootWidget root;
+    TaskBarWidget *taskBar;
+    //ConsoleWidget *console;
 
     GuiRootWidget busyRoot;
 
@@ -69,13 +71,58 @@ DENG2_PIMPL(ClientWindow),
           needRecreateCanvas(false),
           mode(Normal),
           root(thisPublic),
+          //console(0),
           busyRoot(thisPublic)
+    {
+        /// @todo The decision whether to receive input notifications from the
+        /// canvas is really a concern for the input drivers.
+
+        // Listen to input.
+        self.canvas().audienceForKeyEvent += this;
+        self.canvas().audienceForMouseStateChange += this;
+        self.canvas().audienceForMouseEvent += this;
+    }
+
+    ~Instance()
+    {
+        self.canvas().audienceForFocusChange -= this;
+        self.canvas().audienceForMouseStateChange -= this;
+        self.canvas().audienceForKeyEvent -= this;
+    }
+
+    void setupUI()
     {
         LegacyWidget *legacy = new LegacyWidget(LEGACY_WIDGET_NAME);
         legacy->rule()
                 .setLeftTop    (root.viewLeft(),  root.viewTop())
                 .setRightBottom(root.viewRight(), root.viewBottom());
         root.add(legacy);
+
+        taskBar = new TaskBarWidget;
+        taskBar->rule()
+                .setInput(Rule::Left,   root.viewLeft())
+                .setInput(Rule::Bottom, root.viewBottom() + taskBar->shift())
+                .setInput(Rule::Width,  root.viewWidth());
+        root.add(taskBar);
+
+        /*
+        Rule const &unit = ClientApp::windowSystem().style().rules().rule("unit");
+
+        console = new ConsoleWidget;
+        console->rule()
+                .setInput(Rule::Bottom, taskBar->rule().top() - unit)
+                .setInput(Rule::Left,   root.viewLeft() + console->shift());
+        root.add(console);
+        */
+
+        taskBar->setOpeningAction(new CommandAction("menu open"));
+        taskBar->setClosingAction(new CommandAction("menu close"));
+
+        //connect(taskBar, SIGNAL(opened()), console, SLOT(clearLog()));
+        //connect(taskBar, SIGNAL(opened()), console, SLOT(open()));
+        //connect(taskBar, SIGNAL(closed()), console, SLOT(close()));
+
+        root.setFocus(&taskBar->commandLine());
 
         // Initially the widget is disabled. It will be enabled when the window
         // is visible and ready to be drawn.
@@ -87,25 +134,6 @@ DENG2_PIMPL(ClientWindow),
                 .setLeftTop    (busyRoot.viewLeft(),  busyRoot.viewTop())
                 .setRightBottom(busyRoot.viewRight(), busyRoot.viewBottom());
         busyRoot.add(busy);
-
-        /// @todo The decision whether to receive input notifications from the
-        /// canvas is really a concern for the input drivers.
-
-        // Listen to input.
-        self.canvas().audienceForKeyEvent += this;
-        self.canvas().audienceForMouseStateChange += this;
-
-#ifndef WIN32 // On Windows, DirectInput bypasses the mouse input from Canvas.
-        self.canvas().audienceForMouseAxisEvent += this;
-        self.canvas().audienceForMouseButtonEvent += this;
-#endif
-    }
-
-    ~Instance()
-    {
-        self.canvas().audienceForFocusChange -= this;
-        self.canvas().audienceForMouseStateChange -= this;
-        self.canvas().audienceForKeyEvent -= this;
     }
 
     void setMode(Mode const &newMode)
@@ -129,11 +157,13 @@ DENG2_PIMPL(ClientWindow),
         self.raise();
         self.activateWindow();
 
+        /*
         // Automatically grab the mouse from the get-go if in fullscreen mode.
         if(Mouse_IsPresent() && self.isFullScreen())
         {
             self.canvas().trapMouse();
         }
+        */
 
         self.canvas().audienceForFocusChange += this;
 
@@ -144,6 +174,8 @@ DENG2_PIMPL(ClientWindow),
             self.canvas().setFocus();
         }
 #endif
+
+        self.canvas().makeCurrent();
 
         DD_FinishInitializationAfterWindowReady();
     }
@@ -162,35 +194,39 @@ DENG2_PIMPL(ClientWindow),
         Mouse_Trap(state == MouseEventSource::Trapped);
     }
 
-#ifndef WIN32
-    void mouseAxisEvent(MouseEventSource::Axis axis, Vector2i const &value)
+    void mouseEvent(MouseEvent const &event)
     {
-        switch(axis)
+        if(ClientApp::windowSystem().processEvent(event))
         {
-        case MouseEventSource::Motion:
-            Mouse_Qt_SubmitMotion(IMA_POINTER, value.x, value.y);
+            // Eaten by the window system.
+            return;
+        }
+
+        // Fall back to legacy handling.
+        switch(event.type())
+        {
+        case Event::MouseButton:
+            Mouse_Qt_SubmitButton(
+                        event.button() == MouseEvent::Left?     IMB_LEFT :
+                        event.button() == MouseEvent::Middle?   IMB_MIDDLE :
+                        event.button() == MouseEvent::Right?    IMB_RIGHT :
+                        event.button() == MouseEvent::XButton1? IMB_EXTRA1 :
+                        event.button() == MouseEvent::XButton2? IMB_EXTRA2 : IMB_MAXBUTTONS,
+                        event.state() == MouseEvent::Pressed);
             break;
 
-        case MouseEventSource::Wheel:
-            Mouse_Qt_SubmitMotion(IMA_WHEEL, value.x, value.y);
+        case Event::MouseMotion:
+            Mouse_Qt_SubmitMotion(IMA_POINTER, event.pos().x, event.pos().y);
+            break;
+
+        case Event::MouseWheel:
+            Mouse_Qt_SubmitMotion(IMA_WHEEL, event.pos().x, event.pos().y);
             break;
 
         default:
             break;
         }
     }
-
-    void mouseButtonEvent(MouseEventSource::Button button, MouseEventSource::ButtonState state)
-    {
-        Mouse_Qt_SubmitButton(
-                    button == MouseEventSource::Left?     IMB_LEFT :
-                    button == MouseEventSource::Middle?   IMB_MIDDLE :
-                    button == MouseEventSource::Right?    IMB_RIGHT :
-                    button == MouseEventSource::XButton1? IMB_EXTRA1 :
-                    button == MouseEventSource::XButton2? IMB_EXTRA2 : IMB_MAXBUTTONS,
-                    state == MouseEventSource::Pressed);
-    }
-#endif // !WIN32
 
     void canvasFocusChanged(Canvas &canvas, bool hasFocus)
     {
@@ -230,11 +266,23 @@ ClientWindow::ClientWindow(String const &id)
     LOG_DEBUG("Window icon: ") << NativePath(iconPath).pretty();
     setWindowIcon(QIcon(iconPath));
 #endif
+
+    d->setupUI();
 }
 
 GuiRootWidget &ClientWindow::root()
 {
     return d->mode == Busy? d->busyRoot : d->root;
+}
+
+TaskBarWidget &ClientWindow::taskBar()
+{
+    return *d->taskBar;
+}
+
+ConsoleWidget &ClientWindow::console()
+{
+    return d->taskBar->console();
 }
 
 void ClientWindow::setMode(Mode const &mode)
@@ -307,7 +355,7 @@ void ClientWindow::canvasGLResized(Canvas &canvas)
     LOG_AS("ClientWindow");
 
     Canvas::Size size = canvas.size();
-    LOG_DEBUG("Canvas resized to ") << size.asText();
+    LOG_TRACE("Canvas resized to ") << size.asText();
 
     // Tell the widgets.
     d->root.setViewSize(size);

@@ -25,6 +25,7 @@
 #include "dd_share.h"
 #include <de/types.h>
 #include <de/str.h>
+#include <de/Observers>
 #include <QList>
 
 namespace de {
@@ -61,9 +62,13 @@ public:
     /// Game instances.
     typedef QList<Game *> All;
 
+    /**
+     * Notified when the current game is changed.
+     */
+    DENG2_DEFINE_AUDIENCE(GameChange, void currentGameChanged(Game &newGame))
+
 public:
     Games();
-    ~Games();
 
     /// Register the console commands, variables, etc..., of this module.
     static void consoleRegister();
@@ -110,6 +115,8 @@ public:
      */
     Game &byIndex(int idx) const;
 
+    void clear();
+
     /**
      * Add a new Game to this collection. If @a game is already present in the
      * collection this is no-op.
@@ -147,9 +154,12 @@ public:
      */
     void locateStartupResources(Game &game);
 
+    /// @todo This should be an internal private method; the App needs to be
+    /// responsible for changing the current game.
+    void notifyGameChange();
+
 private:
-    struct Instance;
-    Instance *d;
+    DENG2_PRIVATE(d)
 };
 
 } // namespace de

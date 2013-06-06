@@ -57,7 +57,7 @@ public:
      * Acquires a reference to the reference-counted object. Use the
      * template to get the correct type of pointer from a derived class.
      *
-     * @see de::holdRef() for a slightly more convenient way to hold a reference.
+     * See de::holdRef() for a slightly more convenient way to hold a reference.
      */
     template <typename Type>
     inline Type *ref() {
@@ -75,7 +75,7 @@ public:
      * Releases a reference that was acquired earlier with ref(). The
      * object destroys itself when the reference counter hits zero.
      *
-     * @see de::releaseRef() for a more convenient way to release a reference.
+     * See de::releaseRef() for a more convenient way to release a reference.
      */
     void release() const;
 

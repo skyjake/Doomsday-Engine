@@ -40,30 +40,33 @@ DENG2_PIMPL(Games)
     /// Special "null-game" object for this collection.
     NullGame *nullGame;
 
-    Instance(Public &a)
-        : Base(a), games(), currentGame(0), nullGame(0)
-    {}
+    Instance(Public *i) : Base(i), games(), currentGame(0), nullGame(0)
+    {
+        /*
+         * One-time creation and initialization of the special "null-game"
+         * object (activated once created).
+         */
+        currentGame = nullGame = new NullGame;
+    }
 
     ~Instance()
     {
+        clear();
+        delete nullGame;
+    }
+
+    void clear()
+    {
+        DENG2_ASSERT(nullGame != 0);
+
         qDeleteAll(games);
-        if(nullGame) delete nullGame;
+        games.clear();
+        currentGame = nullGame;
     }
 };
 
-Games::Games() : d(new Instance(*this))
-{
-    /*
-     * One-time creation and initialization of the special "null-game"
-     * object (activated once created).
-     */
-    d->currentGame = d->nullGame = new NullGame();
-}
-
-Games::~Games()
-{
-    delete d;
-}
+Games::Games() : d(new Instance(this))
+{}
 
 Game &Games::current() const
 {
@@ -80,6 +83,11 @@ void Games::setCurrent(Game &game)
     // Ensure the specified game is actually in this collection (NullGame is implicitly).
     DENG_ASSERT(isNullGame(game) || id(game) > 0);
     d->currentGame = &game;
+}
+
+void Games::notifyGameChange()
+{
+    DENG2_FOR_AUDIENCE(GameChange, i) i->currentGameChanged(current());
 }
 
 int Games::numPlayable() const
@@ -147,6 +155,11 @@ Game &Games::byIndex(int idx) const
         throw NotFoundError("Games::byIndex", QString("There is no Game at index %i").arg(idx));
     }
     return *d->games[idx];
+}
+
+void Games::clear()
+{
+    d->clear();
 }
 
 Games::All const &Games::all() const

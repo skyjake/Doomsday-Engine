@@ -128,6 +128,12 @@ DENG2_PIMPL_NOREF(RuleRectangle), public DelegateRule::ISource
         connectInputToOutputs(inputRule, true);
     }
 
+    void clearInputRule(Rule::Semantic inputRule)
+    {
+        connectInputToOutputs(inputRule, false);
+        ruleRef(inputRule) = 0;
+    }
+
     void updateWidth()
     {
         if(inputRules[Rule::Width])
@@ -365,11 +371,25 @@ RuleRectangle &RuleRectangle::setRightBottom(Rule const &right, Rule const &bott
     return *this;
 }
 
+RuleRectangle &RuleRectangle::setRect(RuleRectangle const &rect)
+{
+    setInput(Rule::Left,   rect.left());
+    setInput(Rule::Top,    rect.top());
+    setInput(Rule::Right,  rect.right());
+    setInput(Rule::Bottom, rect.bottom());
+    return *this;
+}
+
 RuleRectangle &RuleRectangle::setSize(Rule const &width, Rule const &height)
 {
     setInput(Rule::Width,  width);
     setInput(Rule::Height, height);
     return *this;
+}
+
+void RuleRectangle::clearInput(Rule::Semantic inputRule)
+{
+    d->clearInputRule(inputRule);
 }
 
 Rule const &RuleRectangle::inputRule(Rule::Semantic inputRule)

@@ -419,6 +419,27 @@ private:
     Instance *d;
 };
 
+/**
+ * Utility class for specifying paths that use a dot (.) as the path separator.
+ */
+class DotPath : public Path
+{
+public:
+    DotPath(String const &path = "")        : Path(path, '.') {}
+    DotPath(QString const &str)             : Path(str, '.') {}
+    DotPath(char const *nullTerminatedCStr) : Path(nullTerminatedCStr, '.') {}
+    DotPath(Path const &other)              : Path(other) {}
+    DotPath(DotPath const &other)           : Path(other.toStringRef(), other.separator()) {}
+
+    bool operator == (DotPath const &other) const {
+        return Path::operator == (other);
+    }
+
+    bool operator != (DotPath const &other) const {
+        return Path::operator != (other);
+    }
+};
+
 } // namespace de
 
 namespace std {

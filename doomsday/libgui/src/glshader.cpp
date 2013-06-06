@@ -41,6 +41,7 @@ DENG2_PIMPL(GLShader)
         if(!name)
         {
             name = glCreateShader(type == Vertex? GL_VERTEX_SHADER : GL_FRAGMENT_SHADER);
+            LIBGUI_ASSERT_GL_OK();
             if(!name)
             {
                 throw AllocError("GLShader::alloc", "Failed to create shader");

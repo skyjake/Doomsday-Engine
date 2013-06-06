@@ -25,6 +25,7 @@
 
 #include "../libdeng2.h"
 #include "../Block"
+#include "../Range"
 
 namespace de {
 
@@ -112,6 +113,10 @@ public:
 
     String substr(int position, int n = -1) const {
         return mid(position, n);
+    }
+
+    String substr(Rangei const &range) const {
+        return mid(range.start, range.size());
     }
 
     /**

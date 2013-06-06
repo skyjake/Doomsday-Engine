@@ -33,7 +33,6 @@
 #include <QResizeEvent>
 #include <QPaintEvent>
 #include <QImage>
-#include <QCursor>
 #include <QTimer>
 #include <QTime>
 #include <QDebug>
@@ -48,7 +47,7 @@ DENG2_PIMPL(Canvas)
     CanvasWindow *parent;
     bool readyNotified;
     Size currentSize;
-    bool mouseDisabled;
+    //bool mouseDisabled;
     bool mouseGrabbed;
 #ifdef WIN32
     bool altIsDown;
@@ -61,20 +60,19 @@ DENG2_PIMPL(Canvas)
         : Base(i),
           parent(parentWindow),
           readyNotified(false),
-          mouseDisabled(false),
+          //mouseDisabled(false),
           mouseGrabbed(false)
     {
         wheelDir[0] = wheelDir[1] = 0;
 #ifdef WIN32
         altIsDown = false;
 #endif
-
-        mouseDisabled = App::commandLine().has("-nomouse");
+        //mouseDisabled = App::commandLine().has("-nomouse");
     }
 
     void grabMouse()
     {
-        if(!self.isVisible() || mouseDisabled) return;
+        if(!self.isVisible()/* || mouseDisabled*/) return;
 
         LOG_DEBUG("grabbing mouse (already grabbed? %b)") << mouseGrabbed;
 
@@ -91,7 +89,7 @@ DENG2_PIMPL(Canvas)
 
     void ungrabMouse()
     {
-        if(!self.isVisible() || mouseDisabled) return;
+        if(!self.isVisible()/* || mouseDisabled*/) return;
 
         LOG_DEBUG("ungrabbing mouse (presently grabbed? %b)") << mouseGrabbed;
 
@@ -121,7 +119,7 @@ DENG2_PIMPL(Canvas)
         //LOG_AS("Canvas");
 
         ev->accept();
-        if(ev->isAutoRepeat()) return; // Ignore repeats, we do our own.
+        //if(ev->isAutoRepeat()) return; // Ignore repeats, we do our own.
 
         /*
         qDebug() << "Canvas: key press" << ev->key() << QString("0x%1").arg(ev->key(), 0, 16)
@@ -154,12 +152,17 @@ DENG2_PIMPL(Canvas)
 
         DENG2_FOR_PUBLIC_AUDIENCE(KeyEvent, i)
         {
-            i->keyEvent(KeyEvent(ev->type() == QEvent::KeyPress? KeyEvent::Pressed :
+            i->keyEvent(KeyEvent(ev->isAutoRepeat()?             KeyEvent::Repeat :
+                                 ev->type() == QEvent::KeyPress? KeyEvent::Pressed :
                                                                  KeyEvent::Released,
                                  ev->key(),
                                  KeyEvent::ddKeyFromQt(ev->key(), ev->nativeVirtualKey(), ev->nativeScanCode()),
                                  nativeCode(ev),
-                                 ev->text()));
+                                 ev->text(),
+                                 (ev->modifiers().testFlag(Qt::ShiftModifier)?   KeyEvent::Shift   : KeyEvent::NoModifiers) |
+                                 (ev->modifiers().testFlag(Qt::ControlModifier)? KeyEvent::Control : KeyEvent::NoModifiers) |
+                                 (ev->modifiers().testFlag(Qt::AltModifier)?     KeyEvent::Alt     : KeyEvent::NoModifiers) |
+                                 (ev->modifiers().testFlag(Qt::MetaModifier)?    KeyEvent::Meta    : KeyEvent::NoModifiers)));
         }
     }
 };
@@ -174,6 +177,7 @@ Canvas::Canvas(CanvasWindow* parent, QGLWidget* shared)
     // We will be doing buffer swaps manually (for timing purposes).
     setAutoBufferSwap(false);
 
+    setMouseTracking(true);
     setFocusPolicy(Qt::StrongFocus);
 }
 
@@ -208,7 +212,7 @@ Canvas::Size Canvas::size() const
 
 void Canvas::trapMouse(bool trap)
 {
-    if(d->mouseDisabled) return;
+    //if(d->mouseDisabled) return;
 
     if(trap)
     {
@@ -225,6 +229,11 @@ bool Canvas::isMouseTrapped() const
     return d->mouseGrabbed;
 }
 
+bool Canvas::isGLReady() const
+{
+    return d->readyNotified;
+}
+
 void Canvas::copyAudiencesFrom(Canvas const &other)
 {
     audienceForGLReady          = other.audienceForGLReady;
@@ -236,8 +245,7 @@ void Canvas::copyAudiencesFrom(Canvas const &other)
     audienceForKeyEvent         = other.audienceForKeyEvent;
 
     audienceForMouseStateChange = other.audienceForMouseStateChange;
-    audienceForMouseAxisEvent   = other.audienceForMouseAxisEvent;
-    audienceForMouseButtonEvent = other.audienceForMouseButtonEvent;
+    audienceForMouseEvent       = other.audienceForMouseEvent;
 }
 
 GLTarget &Canvas::renderTarget() const
@@ -286,7 +294,7 @@ void Canvas::showEvent(QShowEvent* ev)
 #ifdef WIN32
         makeCurrent();
         getAllOpenGLEntryPoints();
-        doneCurrent();
+        //doneCurrent();
 #endif
         QTimer::singleShot(1, this, SLOT(notifyReady()));
     }
@@ -298,7 +306,6 @@ void Canvas::notifyReady()
 
     d->readyNotified = true;
 
-    LOG_AS("Canvas");
     LOG_DEBUG("Notifying GL ready");
 
     DENG2_FOR_AUDIENCE(GLReady, i) i->canvasGLReady(*this);
@@ -343,86 +350,103 @@ void Canvas::keyReleaseEvent(QKeyEvent *ev)
     d->handleKeyEvent(ev);
 }
 
-static MouseEventSource::Button translateButton(Qt::MouseButton btn)
+static MouseEvent::Button translateButton(Qt::MouseButton btn)
 {
-    if(btn == Qt::LeftButton)   return MouseEventSource::Left;
+    if(btn == Qt::LeftButton)   return MouseEvent::Left;
 #ifdef DENG2_QT_4_7_OR_NEWER
-    if(btn == Qt::MiddleButton) return MouseEventSource::Middle;
+    if(btn == Qt::MiddleButton) return MouseEvent::Middle;
 #else
-    if(btn == Qt::MidButton)    return MouseEventSource::Middle;
+    if(btn == Qt::MidButton)    return MouseEvent::Middle;
 #endif
-    if(btn == Qt::RightButton)  return MouseEventSource::Right;
-    if(btn == Qt::XButton1)     return MouseEventSource::XButton1;
-    if(btn == Qt::XButton2)     return MouseEventSource::XButton2;
+    if(btn == Qt::RightButton)  return MouseEvent::Right;
+    if(btn == Qt::XButton1)     return MouseEvent::XButton1;
+    if(btn == Qt::XButton2)     return MouseEvent::XButton2;
 
-    return MouseEventSource::Unknown;
+    return MouseEvent::Unknown;
 }
 
 void Canvas::mousePressEvent(QMouseEvent *ev)
 {
+    /*
     if(!d->mouseGrabbed)
     {
         // The mouse will be grabbed when the button is released.
         ev->ignore();
         return;
-    }
+    }*/
 
     ev->accept();
 
-    DENG2_FOR_AUDIENCE(MouseButtonEvent, i)
+    DENG2_FOR_AUDIENCE(MouseEvent, i)
     {
-        i->mouseButtonEvent(translateButton(ev->button()), MouseEventSource::Pressed);
+        i->mouseEvent(MouseEvent(translateButton(ev->button()), MouseEvent::Pressed,
+                                 Vector2i(ev->pos().x(), ev->pos().y())));
     }
 }
 
 void Canvas::mouseReleaseEvent(QMouseEvent* ev)
 {
-    if(d->mouseDisabled)
+    /*if(d->mouseDisabled)
     {
         ev->ignore();
         return;
-    }
+    }*/
 
     ev->accept();
 
+    DENG2_FOR_AUDIENCE(MouseEvent, i)
+    {
+        i->mouseEvent(MouseEvent(translateButton(ev->button()), MouseEvent::Released,
+                                 Vector2i(ev->pos().x(), ev->pos().y())));
+    }
+}
+
+void Canvas::mouseMoveEvent(QMouseEvent *ev)
+{
+    ev->accept();
+
+    // Absolute events are only emitted when the mouse is untrapped.
     if(!d->mouseGrabbed)
     {
-        // Start grabbing after a click.
-        trapMouse();
-        return;
-    }
-
-    DENG2_FOR_AUDIENCE(MouseButtonEvent, i)
-    {
-        i->mouseButtonEvent(translateButton(ev->button()), MouseEventSource::Released);
+        DENG2_FOR_AUDIENCE(MouseEvent, i)
+        {
+            i->mouseEvent(MouseEvent(MouseEvent::Absolute,
+                                     Vector2i(ev->pos().x(), ev->pos().y())));
+        }
     }
 }
 
 void Canvas::wheelEvent(QWheelEvent *ev)
 {
-    if(d->mouseDisabled)
+    /*if(d->mouseDisabled)
     {
         ev->ignore();
         return;
-    }
-
+    }*/
     ev->accept();
 
     bool continuousMovement = (d->prevWheelAt.elapsed() < MOUSE_WHEEL_CONTINUOUS_THRESHOLD_MS);
     int axis = (ev->orientation() == Qt::Horizontal? 0 : 1);
     int dir = (ev->delta() < 0? -1 : 1);
 
+    DENG2_FOR_AUDIENCE(MouseEvent, i)
+    {
+        i->mouseEvent(MouseEvent(MouseEvent::FineAngle,
+                                 axis == 0? Vector2i(ev->delta(), 0) :
+                                            Vector2i(0, ev->delta()),
+                                 Vector2i(ev->pos().x(), ev->pos().y())));
+    }
+
     if(!continuousMovement || d->wheelDir[axis] != dir)
     {
         d->wheelDir[axis] = dir;
-        //qDebug() << "Canvas: signal wheel axis" << axis << "dir" << dir;
 
-        DENG2_FOR_AUDIENCE(MouseAxisEvent, i)
+        DENG2_FOR_AUDIENCE(MouseEvent, i)
         {
-            i->mouseAxisEvent(MouseEventSource::Wheel,
-                              axis == 0? Vector2i(dir, 0) :
-                              axis == 1? Vector2i(0, dir) :
-                                         Vector2i());
+            i->mouseEvent(MouseEvent(MouseEvent::Step,
+                                     axis == 0? Vector2i(dir, 0) :
+                                     axis == 1? Vector2i(0, dir) : Vector2i(),
+                                     !d->mouseGrabbed? Vector2i(ev->pos().x(), ev->pos().y()) : Vector2i()));
         }
     }
 

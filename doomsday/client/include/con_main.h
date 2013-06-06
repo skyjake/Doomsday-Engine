@@ -30,6 +30,8 @@
 #include "de_system.h"
 #include "ui/dd_input.h"
 
+#include <de/shell/Lexicon> // known words
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -182,7 +184,7 @@ void Con_ShutdownDatabases(void);
 void Con_Ticker(timespan_t time);
 
 /// @return  @c true iff the event is 'eaten'.
-boolean Con_Responder(ddevent_t const *ev);
+//boolean Con_Responder(ddevent_t const *ev);
 
 /**
  * Attempt to change the 'open' state of the console.
@@ -191,18 +193,19 @@ boolean Con_Responder(ddevent_t const *ev);
 void Con_Open(int yes);
 
 /// To be called after a resolution change to resize the console.
-void Con_Resize(void);
+//void Con_Resize(void);
 
-boolean Con_IsActive(void);
+//boolean Con_IsActive(void);
 
-boolean Con_IsLocked(void);
+//boolean Con_IsLocked(void);
 
-boolean Con_InputMode(void);
+//boolean Con_InputMode(void);
 
-char* Con_CommandLine(void);
+//char* Con_CommandLine(void);
 
-uint Con_CommandLineCursorPosition(void);
+//uint Con_CommandLineCursorPosition(void);
 
+#if 0
 struct cbuffer_s* Con_HistoryBuffer(void);
 
 uint Con_HistoryOffset(void);
@@ -226,6 +229,7 @@ void Con_SetFontLeading(float value);
 int Con_FontTracking(void);
 
 void Con_SetFontTracking(int value);
+#endif
 
 void Con_AddCommand(const ccmdtemplate_t* cmd);
 void Con_AddCommandList(const ccmdtemplate_t* cmdList);
@@ -403,5 +407,10 @@ void Con_PrintCCmdUsage(ccmd_t* ccmd, boolean printInfo);
 #ifdef __cplusplus
 } // extern "C"
 #endif
+
+/**
+ * Collects all the known words of the console into a Lexicon.
+ */
+de::shell::Lexicon Con_Lexicon();
 
 #endif /* LIBDENG_CONSOLE_MAIN_H */

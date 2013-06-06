@@ -210,7 +210,7 @@ void R_LoadSystemFonts()
     loadFontIfNeeded(R_ChooseVariableFont(FS_BOLD,   DENG_WINDOW->width(), DENG_WINDOW->height()), &fontVariable[FS_BOLD]);
     loadFontIfNeeded(R_ChooseVariableFont(FS_LIGHT,  DENG_WINDOW->width(), DENG_WINDOW->height()), &fontVariable[FS_LIGHT]);
 
-    Con_SetFont(fontFixed);
+    //Con_SetFont(fontFixed);
 
 #endif
 }
@@ -616,7 +616,7 @@ void R_Update()
     RL_DeleteLists();
 
     // Update the secondary title and the game status.
-    Rend_ConsoleUpdateTitle();
+    //Rend_ConsoleUpdateTitle();
 #endif
 
 #if _DEBUG

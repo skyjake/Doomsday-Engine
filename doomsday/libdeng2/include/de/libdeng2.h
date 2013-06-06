@@ -173,7 +173,7 @@
  * Forms an escape sequence string literal. Escape sequences begin
  * with an ASCII Escape character.
  */
-#define DENG2_STR_ESCAPE(StringLiteral) "\x1b" StringLiteral
+#define DENG2_ESC(StringLiteral) "\x1b" StringLiteral
 
 /**
  * Macro for defining an opaque type in the C wrapper API.

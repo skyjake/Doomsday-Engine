@@ -236,7 +236,7 @@ void Rend_Register()
     Rend_ParticleRegister();
     Rend_RadioRegister();
     Rend_SpriteRegister();
-    Rend_ConsoleRegister();
+    //Rend_ConsoleRegister();
     Vignette_Register();
 }
 

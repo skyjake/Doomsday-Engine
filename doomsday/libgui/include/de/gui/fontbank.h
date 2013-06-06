@@ -49,7 +49,7 @@ public:
      *
      * @return  Font instance.
      */
-    Font const &font(Path const &path) const;
+    Font const &font(DotPath const &path) const;
 
 protected:
     virtual ISource *newSourceFromInfo(String const &id);

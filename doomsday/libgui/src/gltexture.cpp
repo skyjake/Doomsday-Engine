@@ -141,8 +141,7 @@ DENG2_PIMPL(GLTexture)
     {
         DENG2_ASSERT(name != 0);
 
-        glBindTexture(texTarget, name);
-        LIBGUI_ASSERT_GL_OK();
+        glBindTexture(texTarget, name); LIBGUI_ASSERT_GL_OK();
     }
 
     void glUnbind() const
@@ -169,9 +168,11 @@ DENG2_PIMPL(GLTexture)
     void glImage(int level, Size const &size, Image::GLFormat const &glFormat,
                  void const *data, CubeFace face = PositiveX)
     {
+        /// @todo GLES2: Check for the BGRA extension.
+        GLenum const internalFormat = (glFormat.format == GL_BGRA? GL_RGBA : glFormat.format);
         glPixelStorei(GL_UNPACK_ALIGNMENT, glFormat.rowAlignment);
         glTexImage2D(isCube()? glFace(face) : texTarget,
-                     level, glFormat.format, size.x, size.y, 0,
+                     level, internalFormat, size.x, size.y, 0,
                      glFormat.format, glFormat.type, data);
 
         LIBGUI_ASSERT_GL_OK();
@@ -368,8 +369,7 @@ void GLTexture::generateMipmap()
     if(d->name)
     {
         d->glBind();
-        glGenerateMipmap(d->texTarget);
-        LIBGUI_ASSERT_GL_OK();
+        glGenerateMipmap(d->texTarget); LIBGUI_ASSERT_GL_OK();
         d->glUnbind();
 
         d->flags |= MipmapAvailable;
@@ -410,6 +410,13 @@ void GLTexture::glBindToUnit(int unit) const
     {
         d->glUpdateParamsOfBoundTexture();
     }
+}
+
+GLTexture::Size GLTexture::maximumSize()
+{
+    int v = 0;
+    glGetIntegerv(GL_MAX_TEXTURE_SIZE, &v); LIBGUI_ASSERT_GL_OK();
+    return Size(v, v);
 }
 
 void GLTexture::aboutToUse() const

@@ -1,4 +1,7 @@
-/** @file rend_console.h
+#error "rend_console.h is no longer in use"
+
+#if 0
+* /** @file rend_console.h
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
@@ -66,3 +69,4 @@ void Rend_ConsoleFPS(const Point2Raw* origin);
 #endif
 
 #endif /* LIBDENG_CONSOLE_RENDER_H */
+#endif

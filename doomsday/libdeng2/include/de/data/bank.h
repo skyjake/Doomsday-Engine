@@ -23,7 +23,7 @@
 #include <set>
 
 #include "../libdeng2.h"
-#include "../Path"
+#include "../DotPath"
 #include "../PathTree"
 #include "../ISerializable"
 #include "../Observers"
@@ -45,7 +45,8 @@ namespace de {
  *
  * Data items are identified using Paths. Serializable data items can be stored
  * in a persistent cache ("hot storage"), from where they can be deserialized
- * quickly in the future.
+ * quickly in the future. @note Bank uses DotPath, so the path separator is
+ * assumed to be "." unless explicitly specified in the arguments.
  *
  * Data is kept cached on multiple levels: in memory, in hot storage
  * (serialized in a file), or in cold storage (unprocessed source data). When a
@@ -163,7 +164,7 @@ public:
         virtual ISerializable *asSerializable() { return 0; }
 
         /// Returns the size of the data that it occupies in memory.
-        virtual duint sizeInMemory() const = 0;
+        virtual duint sizeInMemory() const { return 0; }
 
         /// Called to notify the data that it is leaving the memory cache.
         virtual void aboutToUnload() {}
@@ -175,13 +176,13 @@ public:
      * Notified when a data item has been loaded to memory (cache level
      * InMemory). May be called from the background thread, if one is running.
      */
-    DENG2_DEFINE_AUDIENCE(Load, void bankLoaded(Path const &path))
+    DENG2_DEFINE_AUDIENCE(Load, void bankLoaded(DotPath const &path))
 
     /**
      * Notified when a data item's cache level changes (in addition to the Load
      * notification).
      */
-    DENG2_DEFINE_AUDIENCE(CacheLevel, void bankCacheLevelChanged(Path const &path, CacheLevel level))
+    DENG2_DEFINE_AUDIENCE(CacheLevel, void bankCacheLevelChanged(DotPath const &path, CacheLevel level))
 
 public:
     /**
@@ -238,9 +239,9 @@ public:
      * @param source  Source information that is required for loading the data to
      *                memory. Bank takes ownership.
      */
-    void add(Path const &path, ISource *source);
+    void add(DotPath const &path, ISource *source);
 
-    void remove(Path const &path);
+    void remove(DotPath const &path);
 
     /**
      * Determines whether the Bank contains an item (not a folder).
@@ -249,7 +250,7 @@ public:
      *
      * @return  @c true or @c false.
      */
-    bool has(Path const &path) const;
+    bool has(DotPath const &path) const;
 
     /**
      * Collects a list of the paths of all items in the bank.
@@ -271,7 +272,7 @@ public:
      * @param path        Identifier of the data.
      * @param importance  When/how to carry out the load request (with BackgroundThread).
      */
-    void load(Path const &path, Importance importance = Immediately);
+    void load(DotPath const &path, Importance importance = Immediately);
 
     void loadAll();
 
@@ -291,7 +292,7 @@ public:
      *
      * @return IData instance. Ownership kept by the Bank.
      */
-    IData &data(Path const &path) const;
+    IData &data(DotPath const &path) const;
 
     /**
      * Moves a data item to a lower cache level. When using BackgroundThread,
@@ -301,7 +302,7 @@ public:
      * @param path     Identifier of the data.
      * @param toLevel  Destination level for the data.
      */
-    void unload(Path const &path, CacheLevel toLevel = InHotStorage);
+    void unload(DotPath const &path, CacheLevel toLevel = InHotStorage);
 
     /**
      * Moves all data items to a lower cache level.
@@ -315,7 +316,7 @@ public:
      *
      * @param path  Identifier of the data.
      */
-    void clearFromCache(Path const &path);
+    void clearFromCache(DotPath const &path);
 
     /**
      * Moves excess items on each cache level to lower level(s).

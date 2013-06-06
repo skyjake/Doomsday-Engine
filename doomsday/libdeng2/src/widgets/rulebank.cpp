@@ -45,8 +45,6 @@ DENG2_PIMPL(RuleBank)
 
         RuleData(Rule *r) : rule(holdRef(r)) {}
         ~RuleData() { releaseRef(rule); }
-
-        duint sizeInMemory() const { return 0; /* we don't count */ }
     };
 
     Instance(Public *i) : Base(i) {}
@@ -62,7 +60,7 @@ void RuleBank::addFromInfo(File const &file)
     addFromInfoBlocks("rule");
 }
 
-Rule const &RuleBank::rule(Path const &path) const
+Rule const &RuleBank::rule(DotPath const &path) const
 {
     return *static_cast<Instance::RuleData &>(data(path)).rule;
 }

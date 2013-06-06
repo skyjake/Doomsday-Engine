@@ -251,40 +251,45 @@ String LogEntry::asText(Flags const &formattingFlags, int shortenSection) const
     if(!flags.testFlag(Simple))
     {    
         // Begin with the timestamp.
-        if(flags & Styled) output << TEXT_STYLE_LOG_TIME;
+        if(flags.testFlag(Styled)) output << TEXT_STYLE_LOG_TIME;
     
         output << _when.asText(Date::BuildNumberAndTime) << " ";
 
-        if(!flags.testFlag(Styled))
+        if(!flags.testFlag(OmitLevel))
         {
-            char const *levelNames[LogEntry::MAX_LOG_LEVELS] = {
-                "(...)",
-                "(deb)",
-                "(vrb)",
-                "",
-                "(i)",
-                "(WRN)",
-                "(ERR)",
-                "(!!!)"        
-            };
-            output << qSetPadChar(' ') << qSetFieldWidth(5) << levelNames[_level] <<
-                      qSetFieldWidth(0) << " ";
-        }
-        else
-        {
-            char const *levelNames[LogEntry::MAX_LOG_LEVELS] = {
-                "Trace",
-                "Debug",
-                "Verbose",
-                "",
-                "Info",
-                "Warning",
-                "ERROR",
-                "FATAL!"        
-            };
-            output << "\t" 
-                << (_level >= LogEntry::WARNING? TEXT_STYLE_LOG_BAD_LEVEL : TEXT_STYLE_LOG_LEVEL)
-                << levelNames[_level] << "\t\r";
+            if(!flags.testFlag(Styled))
+            {
+                char const *levelNames[LogEntry::MAX_LOG_LEVELS] = {
+                    "(...)",
+                    "(deb)",
+                    "(vrb)",
+                    "",
+                    "(i)",
+                    "(WRN)",
+                    "(ERR)",
+                    "(!!!)"
+                };
+                output << qSetPadChar(' ') << qSetFieldWidth(5) << levelNames[_level] <<
+                          qSetFieldWidth(0) << " ";
+            }
+            else
+            {
+                char const *levelNames[LogEntry::MAX_LOG_LEVELS] = {
+                    "Trace",
+                    "Debug",
+                    "Verbose",
+                    "",
+                    "Info",
+                    "Warning",
+                    "ERROR",
+                    "FATAL!"
+                };
+                output << "\t"
+                    << (_level >= LogEntry::WARNING? TEXT_STYLE_BAD_SECTION :
+                        _level <= LogEntry::DEBUG?   TEXT_STYLE_DEBUG_SECTION :
+                                                     TEXT_STYLE_SECTION)
+                    << levelNames[_level] << "\t";
+            }
         }
     }
 
@@ -293,7 +298,10 @@ String LogEntry::asText(Flags const &formattingFlags, int shortenSection) const
     {
         if(flags.testFlag(Styled))
         {
-            output << TEXT_STYLE_SECTION;
+            output << TEXT_MARK_INDENT
+                   << (_level >= LogEntry::WARNING? TEXT_STYLE_BAD_SECTION :
+                       _level <= LogEntry::DEBUG?   TEXT_STYLE_DEBUG_SECTION :
+                                                    TEXT_STYLE_SECTION);
         }
 
         // Process the section: shortening and possible abbreviation.
@@ -362,7 +370,10 @@ String LogEntry::asText(Flags const &formattingFlags, int shortenSection) const
 
     if(flags.testFlag(Styled))
     {
-        output << TEXT_STYLE_MESSAGE;
+        output << TEXT_MARK_INDENT
+               << (_level >= LogEntry::WARNING? TEXT_STYLE_BAD_MESSAGE :
+                   _level <= LogEntry::DEBUG?   TEXT_STYLE_DEBUG_MESSAGE :
+                                                TEXT_STYLE_MESSAGE);
     }
     
     // Message text with the arguments formatted.
@@ -376,12 +387,7 @@ String LogEntry::asText(Flags const &formattingFlags, int shortenSection) const
         DENG2_FOR_EACH_CONST(Args, i, _args) patArgs << *i;
         output << _format % patArgs;
     }
-    
-    if(flags & Styled)
-    {
-        output << TEXT_STYLE_MESSAGE;
-    }
-    
+        
     return result;
 }
 

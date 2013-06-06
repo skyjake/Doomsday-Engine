@@ -17,13 +17,14 @@
  */
 
 #include "de_platform.h"
-#include "ui/legacywidget.h"
+#include "ui/widgets/legacywidget.h"
 #include "ui/dd_input.h"
 #include "ui/ui_main.h"
 #include "ui/ui2_main.h"
 #include "ui/sys_input.h"
 #include "ui/busyvisual.h"
 #include "ui/windowsystem.h"
+#include "ui/widgets/taskbarwidget.h"
 #include "dd_def.h"
 #include "dd_main.h"
 #include "dd_loop.h"
@@ -33,7 +34,7 @@
 #include "network/net_main.h"
 #include "render/r_main.h"
 #include "render/rend_list.h"
-#include "render/rend_console.h"
+//#include "render/rend_console.h"
 #include "audio/s_main.h"
 #include "gl/gl_main.h"
 #include "gl/sys_opengl.h"
@@ -65,7 +66,7 @@ void LegacyWidget::viewResized()
     if(BusyMode_Active() || isDisabled() || Sys_IsShuttingDown()) return;
 
     LOG_AS("LegacyWidget");
-    LOG_DEBUG("View resized to ") << root().viewSize().asText();
+    LOG_TRACE("View resized to ") << root().viewSize().asText();
 
     // Update viewports.
     R_SetViewGrid(0, 0);
@@ -83,6 +84,8 @@ void LegacyWidget::viewResized()
 
 void LegacyWidget::update()
 {    
+    GuiWidget::update();
+
     if(isDisabled()) return;
 
     //LOG_DEBUG("Legacy update");
@@ -189,7 +192,7 @@ void LegacyWidget::draw()
     }
 
     // Draw console.
-    Rend_Console();
+    //Rend_Console();
 
     // End any open DGL sequence.
     DGL_End();
@@ -206,11 +209,36 @@ bool LegacyWidget::handleEvent(Event const &event)
      * submit as Latin1.
      */
 
+    // Clicking on the game view will trap the mouse automatically.
+    Canvas &canvas = root().window().canvas();
+    if(!canvas.isMouseTrapped() && event.type() == Event::MouseButton &&
+       App_GameLoaded())
+    {
+        MouseEvent const &mouse = event.as<MouseEvent>();
+        if(mouse.state() == MouseEvent::Pressed && hitTest(mouse.pos()))
+        {
+            if(root().focus())
+            {
+                // First click will remove UI focus, allowing LegacyWidget
+                // to receive events.
+                root().setFocus(0);
+                return true;
+            }
+
+            canvas.trapMouse();
+            root().window().taskBar().close();
+            return true;
+        }
+    }
+
     if(event.type() == Event::KeyPress ||
+       event.type() == Event::KeyRepeat ||
        event.type() == Event::KeyRelease)
     {
-        KeyEvent const &ev = static_cast<KeyEvent const &>(event);
-        Keyboard_Submit(ev.state() == KeyEvent::Pressed? IKE_DOWN : IKE_UP,
+        KeyEvent const &ev = event.as<KeyEvent>();
+        Keyboard_Submit(ev.state() == KeyEvent::Pressed? IKE_DOWN :
+                        ev.state() == KeyEvent::Repeat?  IKE_REPEAT :
+                                                         IKE_UP,
                         ev.ddKey(), ev.nativeCode(), ev.text().toLatin1());
     }
 

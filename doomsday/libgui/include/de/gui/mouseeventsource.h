@@ -20,6 +20,7 @@
 #define LIBGUI_MOUSEEVENTSOURCE_H
 
 #include "libgui.h"
+#include "mouseevent.h"
 #include <de/Vector>
 #include <de/Observers>
 
@@ -37,32 +38,9 @@ public:
         Trapped
     };
 
-    enum Axis
-    {
-        Motion,     ///< Relative motion of the pointer.
-        Position,   ///< Absolute position of the pointer.
-        Wheel       ///< Wheel motion.
-    };
-
-    enum Button
-    {
-        Unknown  = -1,
-        Left     = 0,
-        Middle   = 1,
-        Right    = 2,
-        XButton1 = 3,
-        XButton2 = 4
-    };
-
-    enum ButtonState
-    {
-        Released,   ///< Released button.
-        Pressed     ///< Pressed button.
-    };
-
     DENG2_DEFINE_AUDIENCE(MouseStateChange, void mouseStateChanged(State))
-    DENG2_DEFINE_AUDIENCE(MouseAxisEvent,   void mouseAxisEvent   (Axis, Vector2i const &))
-    DENG2_DEFINE_AUDIENCE(MouseButtonEvent, void mouseButtonEvent (Button, ButtonState))
+
+    DENG2_DEFINE_AUDIENCE(MouseEvent,       void mouseEvent(MouseEvent const &))
 
 public:
     virtual ~MouseEventSource() {}

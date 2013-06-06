@@ -21,12 +21,12 @@
 #ifndef LIBDENG2_VECTOR_H
 #define LIBDENG2_VECTOR_H
 
-#include "math.h"
-#include "Error"
-#include "ISerializable"
-#include "Writer"
-#include "Reader"
-#include "String"
+#include "../math.h"
+#include "../Error"
+#include "../ISerializable"
+#include "../Writer"
+#include "../Reader"
+#include "../String"
 
 #include <QTextStream>
 #include <cmath>
@@ -57,13 +57,16 @@ public:
     Vector2(Type a = Type(0), Type b = Type(0)) : x(a), y(b) {}
     Vector2(Type const *ab) : x(ab[0]), y(ab[1]) {}
 
-    /// Conversion operator to a float vector.
+    /// Implicit conversion operator to a float vector.
     operator Vector2<dfloat> () const {
         return Vector2<dfloat>(dfloat(x), dfloat(y));
     }
-    /// Conversion operator to a double vector.
+    /// Implicit conversion operator to a double vector.
     operator Vector2<ddouble> () const {
         return Vector2<ddouble>(ddouble(x), ddouble(y));
+    }
+    Vector2<dint> toVector2i() const {
+        return Vector2<dint>(dint(x), dint(y));
     }
     Type &operator [] (int index) {
         DENG2_ASSERT(index >= 0 && index <= 1);
@@ -94,6 +97,9 @@ public:
     }
     Vector2 operator / (ddouble scalar) const {
         return *this * (1.0 / scalar);
+    }
+    Vector2 operator / (Vector2 const &other) const {
+        return Vector2(x / other.x, y / other.y);
     }
     Vector2 &operator += (Vector2 const &other) {
         x += other.x;
@@ -217,13 +223,16 @@ public:
     Vector3(Vector2<Type> const &v2, Type c = 0) : Vector2<Type>(v2), z(c) {}
     Vector3(Type const *abc) : Vector2<Type>(abc), z(abc[2]) {}
 
-    /// Conversion operator to a float vector.
+    /// Implicit conversion operator to a float vector.
     operator Vector3<dfloat> () const {
         return Vector3<dfloat>(Vector2<Type>::x, Vector2<Type>::y, z);
     }
-    /// Conversion operator to a double vector.
+    /// Implicit conversion operator to a double vector.
     operator Vector3<ddouble> () const {
         return Vector3<ddouble>(Vector2<Type>::x, Vector2<Type>::y, z);
+    }
+    Vector3<dint> toVector3i() const {
+        return Vector3<dint>(dint(Vector2<Type>::x), dint(Vector2<Type>::y), dint(z));
     }
     Type &operator [] (int index) {
         DENG2_ASSERT(index >= 0 && index <= 2);
@@ -402,13 +411,16 @@ public:
     Vector4(Vector3<Type> const &v3, Type d = 0) : Vector3<Type>(v3), w(d) {}
     Vector4(Type const *abcd) : Vector3<Type>(abcd), w(abcd[3]) {}
 
-    /// Conversion operator to a float vector.
+    /// Implicit conversion operator to a float vector.
     operator Vector4<dfloat> () const {
         return Vector4<dfloat>(Vector3<Type>::x, Vector3<Type>::y, Vector3<Type>::z, w);
     }
-    /// Conversion operator to a double vector.
+    /// Implicit conversion operator to a double vector.
     operator Vector4<ddouble> () const {
         return Vector4<ddouble>(Vector3<Type>::x, Vector3<Type>::y, Vector3<Type>::z, w);
+    }
+    Vector4<dint> toVector4i() const {
+        return Vector4<dint>(dint(Vector3<Type>::x), dint(Vector3<Type>::y), dint(Vector3<Type>::z), dint(w));
     }
     Type &operator [] (int index) {
         DENG2_ASSERT(index >= 0 && index <= 3);
@@ -462,6 +474,9 @@ public:
         Vector3<Type>::operator *= (scalar);
         w *= scalar;
         return *this;
+    }
+    Vector4 operator / (ddouble scalar) const {
+        return *this * (1.0 / scalar);
     }
     inline Vector4 &operator /= (ddouble scalar) {
         return (*this) *= 1.0 / scalar;

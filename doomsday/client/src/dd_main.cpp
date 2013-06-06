@@ -35,6 +35,7 @@
 #include <de/NativePath>
 #include <de/binangle.h>
 #ifdef __CLIENT__
+#  include "clientapp.h"
 #  include <de/DisplayMode>
 #endif
 
@@ -66,6 +67,10 @@
 #include "updater.h"
 #include "m_misc.h"
 #include "api_map.h"
+
+#ifdef __CLIENT__
+#  include "ui/widgets/taskbarwidget.h"
+#endif
 
 extern int renderTextures;
 
@@ -158,9 +163,6 @@ static size_t numSessionResourceFileList;
 #ifndef WIN32
 extern GETGAMEAPI GetGameAPI;
 #endif
-
-// The app's Game collection.
-static Games *games;
 
 // The app's MapArchive.
 static MapArchive mapArchive;
@@ -716,15 +718,16 @@ static void destroyPathList(ddstring_t*** list, size_t* listSize)
 
 boolean App_GameLoaded()
 {
-    if(!games) return false;
-    return !isNullGame(games->current());
+#ifdef __CLIENT__
+    if(!ClientApp::haveApp()) return false;
+#endif
+    return !isNullGame(App_Games().current());
 }
 
 void DD_DestroyGames()
 {
     destroyPathList(&sessionResourceFileList, &numSessionResourceFileList);
-
-    delete games;
+    App_Games().clear();
 }
 
 /**
@@ -931,7 +934,7 @@ static int DD_LoadGameStartupResourcesWorker(void* parameters)
      */
     Con_Message("Loading game resources%s", verbose >= 1? ":" : "...");
 
-    de::Game::Manifests const& gameManifests = games->current().manifests();
+    de::Game::Manifests const& gameManifests = App_Games().current().manifests();
     int const numPackages = gameManifests.count(RC_PACKAGE);
     int packageIdx = 0;
     for(de::Game::Manifests::const_iterator i = gameManifests.find(RC_PACKAGE);
@@ -1185,10 +1188,10 @@ static int DD_ActivateGameWorker(void* parameters)
     // Now that resources have been located we can begin to initialize the game.
     if(App_GameLoaded() && gx.PreInit)
     {
-        DENG_ASSERT(games->current().pluginId() != 0);
+        DENG_ASSERT(App_Games().current().pluginId() != 0);
 
-        DD_SetActivePluginId(games->current().pluginId());
-        gx.PreInit(games->id(games->current()));
+        DD_SetActivePluginId(App_Games().current().pluginId());
+        gx.PreInit(App_Games().id(App_Games().current()));
         DD_SetActivePluginId(0);
     }
 
@@ -1209,7 +1212,7 @@ static int DD_ActivateGameWorker(void* parameters)
     }
     else
     {
-        configFileName = games->current().mainConfig();
+        configFileName = App_Games().current().mainConfig();
     }
 
     Con_Message("Parsing primary config \"%s\"...", F_PrettyPath(Str_Text(configFileName)));
@@ -1225,7 +1228,7 @@ static int DD_ActivateGameWorker(void* parameters)
         B_BindGameDefaults();
 
         // Read bindings for this game and merge with the working set.
-        Con_ParseCommands2(Str_Text(games->current().bindingConfig()), CPCF_ALLOW_SAVE_BINDINGS);
+        Con_ParseCommands2(Str_Text(App_Games().current().bindingConfig()), CPCF_ALLOW_SAVE_BINDINGS);
     }
 #endif
 
@@ -1245,7 +1248,7 @@ static int DD_ActivateGameWorker(void* parameters)
     DD_ReadGameHelp();
 
     // Re-init to update the title, background etc.
-    Rend_ConsoleInit();
+    //Rend_ConsoleInit();
 
     // Reset the tictimer so than any fractional accumulation is not added to
     // the tic/game timer of the newly-loaded game.
@@ -1266,7 +1269,7 @@ static int DD_ActivateGameWorker(void* parameters)
 
     if(gx.PostInit)
     {
-        DD_SetActivePluginId(games->current().pluginId());
+        DD_SetActivePluginId(App_Games().current().pluginId());
         gx.PostInit();
         DD_SetActivePluginId(0);
     }
@@ -1282,8 +1285,15 @@ static int DD_ActivateGameWorker(void* parameters)
 
 de::Games &App_Games()
 {
-    DENG2_ASSERT(games != 0);
-    return *games;
+#ifdef __CLIENT__
+    return ClientApp::games();
+#endif
+
+#ifdef __SERVER__
+    /// @todo Add a ServerApp class, move this there.
+    static Games serverGames;
+    return serverGames;
+#endif
 }
 
 de::Game &App_CurrentGame()
@@ -1314,7 +1324,7 @@ boolean DD_GameInfo(GameInfo *info)
 
     if(App_GameLoaded())
     {
-        populateGameInfo(*info, games->current());
+        populateGameInfo(*info, App_Games().current());
         return true;
     }
 
@@ -1328,12 +1338,11 @@ boolean DD_GameInfo(GameInfo *info)
 void DD_AddGameResource(gameid_t gameId, resourceclassid_t classId, int rflags,
     char const *names, void *params)
 {
-    if(!games) Con_Error("DD_AddGameResource: Game collection not yet initialized.");
     if(!VALID_RESOURCECLASSID(classId)) Con_Error("DD_AddGameResource: Unknown resource class %i.", (int)classId);
     if(!names || !names[0]) Con_Error("DD_AddGameResource: Invalid name argument.");
 
     // Construct and attach the new resource record.
-    de::Game &game = games->byId(gameId);
+    de::Game &game = App_Games().byId(gameId);
     ResourceManifest *manifest = new ResourceManifest(classId, rflags);
     game.addManifest(*manifest);
 
@@ -1367,10 +1376,9 @@ gameid_t DD_DefineGame(GameDef const *def)
     }
 
     // Game mode identity keys must be unique. Ensure that is the case.
-    DENG_ASSERT(games);
     try
     {
-        /*de::Game& game =*/ games->byIdentityKey(def->identityKey);
+        /*de::Game& game =*/ App_Games().byIdentityKey(def->identityKey);
 #if _DEBUG
         Con_Message("Warning: DD_DefineGame: Failed adding game \"%s\", identity key '%s' already in use, ignoring.", def->defaultTitle, def->identityKey);
 #endif
@@ -1384,17 +1392,16 @@ gameid_t DD_DefineGame(GameDef const *def)
 
     // Add this game to our records.
     game->setPluginId(DD_ActivePluginId());
-    games->add(*game);
-    return games->id(*game);
+    App_Games().add(*game);
+    return App_Games().id(*game);
 }
 
 #undef DD_GameIdForKey
 gameid_t DD_GameIdForKey(char const *identityKey)
 {
-    DENG_ASSERT(games);
     try
     {
-        return games->id(games->byIdentityKey(identityKey));
+        return App_Games().id(App_Games().byIdentityKey(identityKey));
     }
     catch(Games::NotFoundError const &)
     {
@@ -1444,6 +1451,16 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
     GL_PurgeDeferredTasks();
     GL_ResetTextureManager();
     GL_SetFilter(false);
+
+    // Trap the mouse automatically when loading a game in fullscreen.
+    {
+        ClientWindow &mainWin = ClientWindow::main();
+        mainWin.taskBar().close();
+        if(mainWin.isFullScreen())
+        {
+            mainWin.canvas().trapMouse();
+        }
+    }
 #endif
 
     // If a game is presently loaded; unload it.
@@ -1518,15 +1535,15 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
         Con_ClearDatabases();
 
         { // Tell the plugin it is being unloaded.
-            void* unloader = DD_FindEntryPoint(games->current().pluginId(), "DP_Unload");
+            void* unloader = DD_FindEntryPoint(App_Games().current().pluginId(), "DP_Unload");
             DEBUG_Message(("DD_ChangeGame: Calling DP_Unload (%p)\n", unloader));
-            DD_SetActivePluginId(games->current().pluginId());
+            DD_SetActivePluginId(App_Games().current().pluginId());
             if(unloader) ((pluginfunc_t)unloader)();
             DD_SetActivePluginId(0);
         }
 
         // The current game is now the special "null-game".
-        games->setCurrent(games->nullGame());
+        App_Games().setCurrent(App_Games().nullGame());
 
         Con_InitDatabases();
         DD_Register();
@@ -1598,7 +1615,7 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
     }
 
     // This is now the current game.
-    games->setCurrent(game);
+    App_Games().setCurrent(game);
 
 #ifdef __CLIENT__
     DD_ComposeMainWindowTitle(buf);
@@ -1639,9 +1656,9 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
         {
             // Tell the plugin it is being loaded.
             /// @todo Must this be done in the main thread?
-            void* loader = DD_FindEntryPoint(games->current().pluginId(), "DP_Load");
+            void* loader = DD_FindEntryPoint(App_Games().current().pluginId(), "DP_Load");
             DEBUG_Message(("DD_ChangeGame: Calling DP_Load (%p)\n", loader));
-            DD_SetActivePluginId(games->current().pluginId());
+            DD_SetActivePluginId(App_Games().current().pluginId());
             if(loader) ((pluginfunc_t)loader)();
             DD_SetActivePluginId(0);
         }
@@ -1663,7 +1680,7 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
 
         if(App_GameLoaded())
         {
-            de::Game::printBanner(games->current());
+            de::Game::printBanner(App_Games().current());
         }
         else
         {
@@ -1681,7 +1698,19 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
      *       busy mode (which would normally do this for us on end).
      */
     DD_ClearEvents();
+
+    if(!App_GameLoaded())
+    {
+        ClientWindow::main().taskBar().open();
+    }
+    else
+    {
+        ClientWindow::main().console().clearLog();
+    }
 #endif
+
+    App_Games().notifyGameChange();
+
     return true;
 }
 
@@ -1718,7 +1747,7 @@ de::Game* DD_AutoselectGame(void)
         char const* identityKey = CommandLine_Next();
         try
         {
-            de::Game& game = games->byIdentityKey(identityKey);
+            de::Game& game = App_Games().byIdentityKey(identityKey);
             if(game.allStartupFilesFound())
             {
                 return &game;
@@ -1729,9 +1758,9 @@ de::Game* DD_AutoselectGame(void)
     }
 
     // If but one lonely game; select it.
-    if(games->numPlayable() == 1)
+    if(App_Games().numPlayable() == 1)
     {
-        return games->firstPlayable();
+        return App_Games().firstPlayable();
     }
 
     // We don't know what to do.
@@ -1756,9 +1785,6 @@ int DD_EarlyInit()
 
     // Register the engine's console commands and variables.
     DD_Register();
-
-    // Instantiate the Games collection.
-    games = new Games();
 
     return true;
 }
@@ -1898,7 +1924,7 @@ boolean DD_Init(void)
 
     // Try to locate all required data files for all registered games.
     Con_InitProgress2(200, .25f, 1); // Second half.
-    games->locateAllResources();
+    App_Games().locateAllResources();
 
     // Attempt automatic game selection.
     if(!CommandLine_Exists("-noautoselect") || isDedicated)
@@ -2742,7 +2768,7 @@ D_CMD(Load)
     // Are we loading a game?
     try
     {
-        Game &game = games->byIdentityKey(Str_Text(searchPath));
+        Game &game = App_Games().byIdentityKey(Str_Text(searchPath));
         if(!game.allStartupFilesFound())
         {
             Con_Message("Failed to locate all required startup resources:");
@@ -2817,7 +2843,7 @@ static bool tryUnloadFile(de::Uri const& search)
         QByteArray pathUtf8 = NativePath(foundFileUri.asText()).pretty().toUtf8();
 
         // Do not attempt to unload a resource required by the current game.
-        if(games->current().isRequiredFile(file))
+        if(App_Games().current().isRequiredFile(file))
         {
             Con_Message("\"%s\" is required by the current game.\n"
                         "Required game files cannot be unloaded in isolation.",
@@ -2850,7 +2876,7 @@ D_CMD(Unload)
             Con_Message("There is no game currently loaded.");
             return true;
         }
-        return DD_ChangeGame(games->nullGame());
+        return DD_ChangeGame(App_Games().nullGame());
     }
 
     AutoStr *searchPath = AutoStr_NewStd();
@@ -2872,10 +2898,10 @@ D_CMD(Unload)
     {
         try
         {
-            Game &game = games->byIdentityKey(Str_Text(searchPath));
+            Game &game = App_Games().byIdentityKey(Str_Text(searchPath));
             if(App_GameLoaded())
             {
-                return DD_ChangeGame(games->nullGame());
+                return DD_ChangeGame(App_Games().nullGame());
             }
 
             Con_Message("%s is not currently loaded.", Str_Text(game.identityKey()));
@@ -2930,7 +2956,7 @@ D_CMD(ReloadGame)
         Con_Message("No game is presently loaded.");
         return true;
     }
-    DD_ChangeGame(games->current(), true/* allow reload */);
+    DD_ChangeGame(App_Games().current(), true/* allow reload */);
     return true;
 }
 

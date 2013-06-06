@@ -22,7 +22,8 @@
 #define CLIENT_CLIENTWINDOW_H
 
 #include <de/PersistentCanvasWindow>
-#include "ui/guirootwidget.h"
+
+#include "ui/widgets/guirootwidget.h"
 #include "resource/image.h"
 
 /**
@@ -36,6 +37,9 @@
  * A helpful macro that changes the origin of the window space coordinate system.
  */
 #define FLIP(y)             (DENG_WINDOW->height() - (y+1))
+
+class ConsoleWidget;
+class TaskBarWidget;
 
 /**
  * Top-level window that contains a libdeng2 UI widgets. @ingroup gui
@@ -57,6 +61,8 @@ public:
     ClientWindow(de::String const &id = "main");
 
     GuiRootWidget &root();
+    TaskBarWidget &taskBar();
+    ConsoleWidget &console();
 
     /**
      * Sets the operating mode of the window. In Busy mode, the normal

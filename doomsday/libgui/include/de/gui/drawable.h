@@ -23,6 +23,7 @@
 
 #include <de/libdeng2.h>
 #include <de/Asset>
+#include <de/String>
 
 #include "../GLBuffer"
 #include "../GLProgram"
@@ -78,8 +79,12 @@ class LIBGUI_PUBLIC Drawable : public AssetGroup
 
 public:
     /// User-provided (nonzero) identifier. Buffer identifiers define the
-    /// drawing order of the buffers.
+    /// drawing order of the buffers. (Note that this is not a de::Id.)
     typedef duint Id;
+
+    /// User-provided name. Buffers, programs, and states can optionally be
+    /// also identified using textual names.
+    typedef String Name;
 
     typedef QList<Id> Ids;
 
@@ -101,7 +106,17 @@ public:
      * @param id  Identifier of the buffer.
      * @return GL buffer.
      */
-    GLBuffer &buffer(Id id) const;
+    GLBuffer &buffer(Id id = 1) const;
+
+    template <typename VBType>
+    VBType &buffer(Id id = 1) const {
+        DENG2_ASSERT(dynamic_cast<VBType *>(&buffer(id)) != 0);
+        return static_cast<VBType &>(buffer(id));
+    }
+
+    GLBuffer &buffer(Name const &bufferName) const;
+
+    Id bufferId(Name const &bufferName) const;
 
     /**
      * Finds an exising program.
@@ -110,7 +125,13 @@ public:
      */
     GLProgram &program(Id id = 0) const;
 
+    GLProgram &program(Name const &programName) const;
+
+    Id programId(Name const &programName) const;
+
     GLProgram const &programForBuffer(Id bufferId) const;
+
+    GLProgram const &programForBuffer(Name const &bufferName) const;
 
     /**
      * Finds an existing state.
@@ -119,20 +140,29 @@ public:
      */
     GLState &state(Id id) const;
 
+    GLState &state(Name const &stateName) const;
+
+    Id stateId(Name const &stateName) const;
+
     GLState const *stateForBuffer(Id bufferId) const;
 
+    GLState const *stateForBuffer(Name const &bufferName) const;
+
     /**
-     * Adds a new buffer or replaces an existing one.
+     * Adds a new buffer or replaces an existing one. The buffer will use the
+     * default program.
      *
      * @param id      Identifier of the buffer.
      * @param buffer  GL buffer. Drawable gets ownership.
      */
     void addBuffer(Id id, GLBuffer *buffer);
 
+    Id addBuffer(Name const &bufferName, GLBuffer *buffer);
+
     /**
      * Adds a new buffer, reserving an unused identifier for it. The chosen
      * identifier is larger than any of the buffer identifiers currently in
-     * use.
+     * use. The buffer will use the default program.
      *
      * @param buffer  GL buffer. Drawable gets ownership.
      *
@@ -141,11 +171,28 @@ public:
     Id addBuffer(GLBuffer *buffer);
 
     /**
+     * Adds a new buffer, reserving an unused identifier for it. The chosen
+     * identifier is larger than any of the buffer identifiers currently in
+     * use. The buffer will use a new program.
+     *
+     * @param buffer  GL buffer. Drawable gets ownership.
+     *
+     * @return  Identifier chosen for the buffer.
+     */
+    Id addBufferWithNewProgram(GLBuffer *buffer, Name const &programName = "");
+
+    void addBufferWithNewProgram(Id id, GLBuffer *buffer, Name const &programName = "");
+
+    Id addBufferWithNewProgram(Name const &bufferName, GLBuffer *buffer, Name const &programName = "");
+
+    /**
      * Creates a program or replaces an existing one with a blank program.
      * @param id  Identifier of the program. Cannot be zero.
      * @return GL program.
      */
     GLProgram &addProgram(Id id);
+
+    Id addProgram(Name const &programName);
 
     /**
      * Creates a state or replaces an existing one with a default state.
@@ -154,9 +201,15 @@ public:
      */
     GLState &addState(Id id, GLState const &state = GLState());
 
+    Id addState(Name const &stateName, GLState const &state = GLState());
+
     void removeBuffer(Id id);
     void removeProgram(Id id);
     void removeState(Id id);
+
+    void removeBuffer(Name const &bufferName);
+    void removeProgram(Name const &programName);
+    void removeState(Name const &stateName);
 
     /**
      * Sets the program to be used with a buffer.
@@ -167,6 +220,10 @@ public:
      */
     void setProgram(Id bufferId, GLProgram &program);
 
+    void setProgram(Id bufferId, Name const &programName);
+    void setProgram(Name const &bufferName, GLProgram &program);
+    void setProgram(Name const &bufferName, Name const &programName);
+
     /**
      * Sets the program to be used with all buffers.
      *
@@ -174,6 +231,8 @@ public:
      *                 must not be destroyed while Drawable is using it.
      */
     void setProgram(GLProgram &program);
+
+    void setProgram(Name const &programName);
 
     /**
      * Sets the state to be used with a buffer.
@@ -184,6 +243,10 @@ public:
      */
     void setState(Id bufferId, GLState &state);
 
+    void setState(Name const &bufferName, GLState &state);
+    void setState(Id bufferId, Name const &stateName);
+    void setState(Name const &bufferName, Name const &stateName);
+
     /**
      * Sets the state to be used with all buffers.
      *
@@ -191,6 +254,8 @@ public:
      *               must not be destroyed while Drawable is using it.
      */
     void setState(GLState &state);
+
+    void setState(Name const &stateName);
 
     /**
      * Removes the state configured for a buffer. When the buffer is drawn, the
@@ -200,6 +265,8 @@ public:
      * @param bufferId  Buffer whose state is to be unset.
      */
     void unsetState(Id bufferId);
+
+    void unsetState(Name const &bufferName);
 
     /**
      * Removes the state configured for all buffers. When drawing, the current

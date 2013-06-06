@@ -72,8 +72,6 @@ DENG2_PIMPL(FontBank)
 
         FontData(Font *f = 0) : font(f) {}
         ~FontData() { delete font; }
-
-        duint sizeInMemory() const { return 0; /* we don't count */ }
     };
 
     Instance(Public *i) : Base(i)
@@ -90,7 +88,7 @@ void FontBank::addFromInfo(File const &file)
     addFromInfoBlocks("font");
 }
 
-Font const &FontBank::font(Path const &path) const
+Font const &FontBank::font(DotPath const &path) const
 {
     return *static_cast<Instance::FontData &>(data(path)).font;
 }

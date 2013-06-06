@@ -1,4 +1,4 @@
-/** @file guiwidget.cpp  Base class for graphical widgets.
+/** @file signalaction.cpp
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,50 +16,17 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#include "ui/guiwidget.h"
-#include "ui/guirootwidget.h"
-#include "clientapp.h"
-#include <de/garbage.h>
+#include "ui/signalaction.h"
 
 using namespace de;
 
-DENG2_PIMPL(GuiWidget)
+SignalAction::SignalAction(QObject *target, char const *slot) : Action()
 {
-    RuleRectangle rule;
-
-    Instance(Public *i) : Base(i)
-    {}
-};
-
-GuiWidget::GuiWidget(String const &name) : Widget(name), d(new Instance(this))
-{}
-
-GuiRootWidget &GuiWidget::root()
-{
-    return static_cast<GuiRootWidget &>(Widget::root());
+    connect(this, SIGNAL(triggered()), target, slot);
 }
 
-Style const &GuiWidget::style()
+void SignalAction::trigger()
 {
-    return ClientApp::windowSystem().style();
-}
-
-RuleRectangle &GuiWidget::rule()
-{
-    return d->rule;
-}
-
-RuleRectangle const &GuiWidget::rule() const
-{
-    return d->rule;
-}
-
-static void deleteGuiWidget(void *ptr)
-{
-    delete reinterpret_cast<GuiWidget *>(ptr);
-}
-
-void GuiWidget::deleteLater()
-{
-    Garbage_TrashInstance(this, deleteGuiWidget);
+    Action::trigger();
+    emit triggered();
 }

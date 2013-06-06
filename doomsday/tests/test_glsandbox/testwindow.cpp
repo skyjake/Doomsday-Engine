@@ -89,7 +89,7 @@ DENG2_OBSERVES(Bank, Load)
         atlas->setTotalSize(Vector2ui(256, 256));
         atlas->setMagFilter(gl::Nearest);
 
-        imageBank.add(Path("rtt.cube", '.'), "/data/graphics/testpic.png");
+        imageBank.add("rtt.cube", "/data/graphics/testpic.png");
         //imageBank.loadAll();
         imageBank.audienceForLoad += this;
     }
@@ -119,7 +119,7 @@ DENG2_OBSERVES(Bank, Load)
 
         // Textures.
         testpic.setAutoGenMips(true);
-        imageBank.load(Path("rtt.cube", '.'));
+        imageBank.load("rtt.cube");
         //testpic.setImage(imageBank.image("rtt/cube"));
         //testpic.setImage(QImage(":/images/testpic.png"));
         testpic.setWrapT(gl::RepeatMirrored);
@@ -225,16 +225,16 @@ DENG2_OBSERVES(Bank, Load)
         cv.renderTarget().setClearColor(Vector4f(.2f, .2f, .2f, 0));
     }
 
-    void bankLoaded(Path const &path)
+    void bankLoaded(DotPath const &path)
     {
         LOG_INFO("Bank item \"%s\" loaded") << path;
-        if(path == "rtt/cube")
+        if(path == "rtt.cube")
         {
             DENG2_ASSERT_IN_MAIN_THREAD();
 
             self.canvas().makeCurrent();
             testpic.setImage(imageBank.image(path));
-            self.canvas().doneCurrent();
+            //self.canvas().doneCurrent();
 
             imageBank.unload(path);
         }

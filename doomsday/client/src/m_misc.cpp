@@ -23,6 +23,8 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include "de_platform.h"
+
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <fcntl.h>
@@ -31,6 +33,7 @@
 #  include <direct.h>
 #  include <io.h>
 #  include <conio.h>
+#  define open _open
 #endif
 
 #if defined(UNIX)
@@ -38,11 +41,14 @@
 #  include <string.h>
 #endif
 
+#ifndef O_BINARY
+#  define O_BINARY 0
+#endif
+
 #include <stdlib.h>
 #include <ctype.h>
 #include <math.h>
 
-#include "de_platform.h"
 #include "de_base.h"
 #include "de_console.h"
 #include "de_system.h"
@@ -255,10 +261,6 @@ int M_BoxOnLineSide2(const AABoxd* box, double const linePoint[], double const l
 
 #undef NORMALIZE
 }
-
-#ifndef O_BINARY
-#  define O_BINARY 0
-#endif
 
 DENG_EXTERN_C boolean M_WriteFile(const char* name, const char* source, size_t length)
 {

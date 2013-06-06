@@ -282,7 +282,7 @@ TextureManifest const &TextureScheme::findByResourceUri(de::Uri const &uri) cons
         }
     }
     /// @throw NotFoundError  No manifest was found with a matching resource URI.
-    throw NotFoundError("TextureScheme::findByResourceUri", "No manifest found with a resource URI matching \"" + uri + "\"");
+    throw NotFoundError("TextureScheme::findByResourceUri", "No manifest found with a resource URI matching \"" + uri.asText() + "\"");
 }
 
 TextureManifest &TextureScheme::findByResourceUri(de::Uri const &uri)

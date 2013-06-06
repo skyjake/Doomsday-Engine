@@ -63,7 +63,6 @@ DENG2_PIMPL(ColorBank)
         Vector4d color;
 
         ColorData(Vector4d const &c = Vector4d()) : color(c) {}
-        duint sizeInMemory() const { return 0; /* we don't count */ }
     };
 
     Instance(Public *i) : Base(i)
@@ -80,7 +79,7 @@ void ColorBank::addFromInfo(File const &file)
     addFromInfoBlocks("color");
 }
 
-ColorBank::Color ColorBank::color(Path const &path) const
+ColorBank::Color ColorBank::color(DotPath const &path) const
 {
     Colorf col = colorf(path);
     return Color(round<dbyte>(col.x * 255),
@@ -89,7 +88,7 @@ ColorBank::Color ColorBank::color(Path const &path) const
                  round<dbyte>(col.w * 255));
 }
 
-ColorBank::Colorf ColorBank::colorf(Path const &path) const
+ColorBank::Colorf ColorBank::colorf(DotPath const &path) const
 {
     Vector4d clamped = static_cast<Instance::ColorData &>(data(path)).color;
     clamped = clamped.max(Vector4d(0, 0, 0, 0)).min(Vector4d(1, 1, 1, 1));

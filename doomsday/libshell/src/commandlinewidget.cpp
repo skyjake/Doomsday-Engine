@@ -19,6 +19,7 @@
 #include "de/shell/CommandLineWidget"
 #include "de/shell/TextRootWidget"
 #include "de/shell/KeyEvent"
+#include "de/shell/EditorHistory"
 #include <de/String>
 
 namespace de {
@@ -26,83 +27,13 @@ namespace shell {
 
 DENG2_PIMPL(CommandLineWidget)
 {
-    /**
-     * Line of text with a cursor.
-     */
-    struct Command
-    {
-        String text;
-        String original; ///< For undoing editing in history.
-        int cursor; ///< Index in range [0...text.size()]
+    EditorHistory history;
 
-        Command() : cursor(0) {}
-    };
-
-    // Command history.
-    QList<Command> history;
-    int historyPos;
-
-    Instance(Public &i) : Base(i), historyPos(0)
-    {
-        history.append(Command());
-    }
-
-    ~Instance() {}
-
-    Command &command()
-    {
-        DENG2_ASSERT(historyPos >= 0 && historyPos < history.size());
-        return history[historyPos];
-    }
-
-    Command const &command() const
-    {
-        DENG2_ASSERT(historyPos >= 0 && historyPos < history.size());
-        return history[historyPos];
-    }
-
-    void updateCommandFromEditor()
-    {
-        command().text = self.text();
-        command().cursor = self.cursor();
-    }
-
-    void updateEditor()
-    {
-        self.setText(command().text);
-        self.setCursor(command().cursor);
-    }
-
-    bool navigateHistory(int offset)
-    {
-        if((offset < 0 && historyPos >= -offset) ||
-           (offset > 0 && historyPos < history.size() - offset))
-        {
-            // Save the current state.
-            updateCommandFromEditor();
-
-            historyPos += offset;
-
-            // Update to the historical state.
-            updateEditor();
-            return true;
-        }
-        return false;
-    }
-
-    void restoreTextsToOriginal()
-    {
-        for(int i = 0; i < history.size(); ++i)
-        {
-            Command &cmd = history[i];
-            cmd.text = cmd.original;
-            cmd.cursor = de::min(cmd.cursor, cmd.text.size());
-        }
-    }
+    Instance(Public *i) : Base(i), history(i) {}
 };
 
-CommandLineWidget::CommandLineWidget(de::String const &name)
-    : LineEditWidget(name), d(new Instance(*this))
+CommandLineWidget::CommandLineWidget(String const &name)
+    : LineEditWidget(name), d(new Instance(this))
 {
     setPrompt("> ");
 }
@@ -111,72 +42,23 @@ bool CommandLineWidget::handleEvent(Event const &event)
 {
     // There are only key press events.
     DENG2_ASSERT(event.type() == Event::KeyPress);
-    KeyEvent const &ev = static_cast<KeyEvent const &>(event);
+    KeyEvent const &ev = event.as<KeyEvent>();
 
-    bool eaten = true;
-
-    // Control char?
-    if(ev.text().isEmpty())
+    // Override the editor's normal Enter handling.
+    if(ev.key() == Qt::Key_Enter)
     {
-        // Override the editor's normal Enter handling.
-        if(ev.key() == Qt::Key_Enter)
-        {
-            d->updateCommandFromEditor();
-
-            String entered = d->command().text;
-
-            // Update the history.
-            if(d->historyPos < d->history.size() - 1)
-            {
-                if(d->history.last().text.isEmpty())
-                {
-                    // Prune an empty entry in the end of history.
-                    d->history.removeLast();
-                }
-                // Currently back in the history; duplicate the edited entry.
-                d->history.append(d->command());
-            }
-
-            d->history.last().original = entered;
-
-            // Move on.
-            d->history.append(Instance::Command());
-            d->historyPos = d->history.size() - 1;
-            d->updateEditor();
-            d->restoreTextsToOriginal();
-
-            emit commandEntered(entered);
-
-            return true;
-        }
-
-        eaten = LineEditWidget::handleEvent(event);
-
-        if(!eaten)
-        {
-            // History navigation.
-            switch(ev.key())
-            {
-            case Qt::Key_Up:
-                d->navigateHistory(-1);
-                eaten = true;
-                break;
-
-            case Qt::Key_Down:
-                d->navigateHistory(+1);
-                eaten = true;
-                break;
-
-            default:
-                break;
-            }
-        }
-        return eaten;
+        String const entered = d->history.enter();
+        emit commandEntered(entered);
+        return true;
     }
-    else
+
+    if(LineEditWidget::handleEvent(event))
     {
-        return LineEditWidget::handleEvent(event);
+        return true;
     }
+
+    // Final fallback: history navigation.
+    return d->history.handleControlKey(ev.key());
 }
 
 } // namespace shell

@@ -21,8 +21,8 @@
  * Clientside Player Management
  */
 
-#ifndef LIBDENG_CLIENT_PLAYER_H
-#define LIBDENG_CLIENT_PLAYER_H
+#ifndef DENG_CLIENT_PLAYER_H
+#define DENG_CLIENT_PLAYER_H
 
 #include "cl_mobj.h"
 
@@ -81,4 +81,4 @@ boolean         ClPlayer_IsFreeToMove(int plrnum);
 } // extern "C"
 #endif
 
-#endif // LIBDENG_CLIENT_PLAYER_H
+#endif // DENG_CLIENT_PLAYER_H

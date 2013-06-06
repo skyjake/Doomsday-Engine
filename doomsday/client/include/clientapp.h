@@ -20,10 +20,12 @@
 #define CLIENTAPP_H
 
 #include <de/GuiApp>
+#include <de/GLShaderBank>
 #include "network/serverlink.h"
 #include "ui/inputsystem.h"
 #include "ui/windowsystem.h"
-#include "ui/widgetactions.h"
+#include "ui/widgets/widgetactions.h"
+#include "Games"
 
 /**
  * The client application.
@@ -43,11 +45,14 @@ public:
     void postFrame();
 
 public:
+    static bool haveApp();
     static ClientApp &app();
     static ServerLink &serverLink();
     static InputSystem &inputSystem();
     static WindowSystem &windowSystem();
     static WidgetActions &widgetActions();
+    static de::GLShaderBank &glShaderBank();
+    static de::Games &games();
 
 private:
     DENG2_PRIVATE(d)

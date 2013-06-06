@@ -48,9 +48,12 @@ public:
     class DENG2_PUBLIC IFormatter
     {
     public:
+        typedef QList<String> Lines;
+
+    public:
         virtual ~IFormatter() {}
 
-        virtual QList<String> logEntryToTextLines(LogEntry const &entry) = 0;
+        virtual Lines logEntryToTextLines(LogEntry const &entry) = 0;
     };
 
 public:

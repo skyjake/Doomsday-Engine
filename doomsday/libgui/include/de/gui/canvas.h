@@ -130,6 +130,8 @@ public:
      */
     bool isMouseTrapped() const;
 
+    bool isGLReady() const;
+
     /**
      * Replaces the current audiences of this canvas with another canvas's
      * audiences.
@@ -157,6 +159,7 @@ protected:
     void keyReleaseEvent(QKeyEvent *ev);
     void mousePressEvent(QMouseEvent *ev);
     void mouseReleaseEvent(QMouseEvent *ev);
+    void mouseMoveEvent(QMouseEvent *ev);
     void wheelEvent(QWheelEvent *ev);
     void showEvent(QShowEvent *ev);
 

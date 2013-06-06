@@ -54,8 +54,7 @@
 #include "de_filesys.h"
 
 #include "resource/fonts.h"
-#include "ui/busyvisual.h"
-#include "cbuffer.h"
+//#include "cbuffer.h"
 #include "Game"
 #include <de/LogBuffer>
 
@@ -63,6 +62,10 @@
 #  include <de/DisplayMode>
 #  include "clientapp.h"
 #  include "ui/windowsystem.h"
+#  include "ui/clientwindow.h"
+#  include "ui/widgets/consolewidget.h"
+#  include "ui/widgets/taskbarwidget.h"
+#  include "ui/busyvisual.h"
 #  include "updater/downloaddialog.h"
 #endif
 
@@ -110,10 +113,10 @@ D_CMD(Clear);
 D_CMD(Echo);
 #ifdef __CLIENT__
 D_CMD(Font);
+D_CMD(OpenClose);
 #endif
 D_CMD(Help);
 D_CMD(If);
-D_CMD(OpenClose);
 D_CMD(Parse);
 D_CMD(Quit);
 D_CMD(Repeat);
@@ -135,44 +138,45 @@ int     CmdReturnValue = 0;
 
 byte    ConsoleSilent = false;
 
-int     conCompMode = 0;        // Completion mode.
+//int     conCompMode = 0;        // Completion mode.
 byte    conSilentCVars = 1;
 byte    consoleDump = true;
-int     consoleActiveKey = '`'; // Tilde.
-byte    consoleSnapBackOnPrint = false;
+//int     consoleActiveKey = '`'; // Tilde.
+//byte    consoleSnapBackOnPrint = false;
 
 char* prbuff = NULL; // Print buffer, used by conPrintf.
 
-static CBuffer* histBuf = NULL; // The console history buffer (log).
-static uint bLineOff; // How many lines from the last in the histBuf?
+//static CBuffer* histBuf = NULL; // The console history buffer (log).
+//static uint bLineOff; // How many lines from the last in the histBuf?
 
-static char** oldCmds = NULL; // The old commands buffer.
-static uint oldCmdsSize = 0, oldCmdsMax = 0;
-static uint ocPos; // How many cmds from the last in the oldCmds buffer.
+//static char** oldCmds = NULL; // The old commands buffer.
+//static uint oldCmdsSize = 0, oldCmdsMax = 0;
+//static uint ocPos; // How many cmds from the last in the oldCmds buffer.
 
 static boolean ConsoleInited;   // Has Con_Init() been called?
-static boolean ConsoleActive;   // Is the console active?
-static timespan_t ConsoleTime;  // How many seconds has the console been open?
 
-static char cmdLine[CMDLINE_SIZE+1]; // The command line.
-static uint cmdCursor;          // Position of the cursor on the command line.
-static boolean cmdInsMode;      // Are we in insert input mode.
-static boolean conInputLock;    // While locked, most user input is disabled.
+//static boolean ConsoleActive;   // Is the console active?
+//static timespan_t ConsoleTime;  // How many seconds has the console been open?
+
+//static char cmdLine[CMDLINE_SIZE+1]; // The command line.
+//static uint cmdCursor;          // Position of the cursor on the command line.
+//static boolean cmdInsMode;      // Are we in insert input mode.
+//static boolean conInputLock;    // While locked, most user input is disabled.
 
 static execbuff_t* exBuff;
 static int exBuffSize;
 static execbuff_t* curExec;
 
 // The console font.
-static fontid_t consoleFont;
-static int consoleFontTracking;
-static float consoleFontLeading;
-static float consoleFontScale[2];
+//static fontid_t consoleFont;
+//static int consoleFontTracking;
+//static float consoleFontLeading;
+//static float consoleFontScale[2];
 
-static void (*consolePrintFilter) (char* text); // Maybe alters text.
+//static void (*consolePrintFilter) (char* text); // Maybe alters text.
 
-static uint complPos; // Where is the completion cursor?
-static uint lastCompletion; // The last completed known word match (1-based index).
+//static uint complPos; // Where is the completion cursor?
+//static uint lastCompletion; // The last completed known word match (1-based index).
 
 void Con_Register(void)
 {
@@ -180,16 +184,18 @@ void Con_Register(void)
     C_CMD("after",          "is",   Wait);
     C_CMD("alias",          NULL,   Alias);
     C_CMD("clear",          "",     Clear);
+#ifdef __CLIENT__
     C_CMD_FLAGS("conclose",       "",     OpenClose,    CMDF_NO_DEDICATED);
     C_CMD_FLAGS("conopen",        "",     OpenClose,    CMDF_NO_DEDICATED);
     C_CMD_FLAGS("contoggle",      "",     OpenClose,    CMDF_NO_DEDICATED);
+#endif
     C_CMD("dec",            NULL,   IncDec);
     C_CMD("echo",           "s*",   Echo);
     C_CMD("print",          "s*",   Echo);
     C_CMD("exec",           "s*",   Parse);
-#ifdef __CLIENT__
+/*#ifdef __CLIENT__
     C_CMD("font",           NULL,   Font);
-#endif
+#endif*/
     C_CMD("help",           "",     Help);
     C_CMD("if",             NULL,   If);
     C_CMD("inc",            NULL,   IncDec);
@@ -211,12 +217,14 @@ void Con_Register(void)
     C_CMD("fatalerror",     NULL,   DebugError);
 #endif
 
+    /*
     // Console
     C_VAR_INT("con-completion", &conCompMode, 0, 0, 1);
     C_VAR_BYTE("con-dump", &consoleDump, 0, 0, 1);
     C_VAR_INT("con-key-activate", &consoleActiveKey, 0, 0, 255);
     C_VAR_BYTE("con-var-silent", &conSilentCVars, 0, 0, 1);
     C_VAR_BYTE("con-snapback", &consoleSnapBackOnPrint, 0, 0, 1);
+    */
 
     // Games
     C_CMD("listgames",      "",     ListGames);
@@ -229,6 +237,7 @@ void Con_Register(void)
     Con_TransitionRegister();
 }
 
+#if 0
 void Con_ResizeHistoryBuffer(void)
 {
     int maxLength = 70;
@@ -259,6 +268,7 @@ void Con_ResizeHistoryBuffer(void)
 
     CBuffer_SetMaxLineLength(Con_HistoryBuffer(), maxLength);
 }
+#endif
 
 static void PrepareCmdArgs(cmdargs_t *cargs, const char *lpCmdLine)
 {
@@ -371,6 +381,7 @@ static void PrepareCmdArgs(cmdargs_t *cargs, const char *lpCmdLine)
 #undef IS_ESC_CHAR
 }
 
+#if 0
 static void clearCommandHistory(void)
 {
     if(!oldCmds) return;
@@ -383,6 +394,7 @@ static void clearCommandHistory(void)
     free(oldCmds), oldCmds = NULL;
     oldCmdsSize = 0, oldCmdsMax = 0;
 }
+#endif
 
 boolean Con_Init(void)
 {
@@ -396,15 +408,16 @@ boolean Con_Init(void)
 
     Con_Message("Initializing the console...");
 
+    exBuff = NULL;
+    exBuffSize = 0;
+
+#if 0
     histBuf = CBuffer_New(512, 70, 0);
     bLineOff = 0;
 
     oldCmds = NULL;
     oldCmdsSize = 0, oldCmdsMax = 0;
     ocPos = 0; // No commands yet.
-
-    exBuff = NULL;
-    exBuffSize = 0;
 
     complPos = 0;
     lastCompletion = 0;
@@ -420,10 +433,12 @@ boolean Con_Init(void)
     consolePrintFilter = 0;
 
     ConsoleTime = 0;
-    ConsoleInited = true;
     ConsoleActive = false;
 
-    Rend_ConsoleInit();
+    //Rend_ConsoleInit();
+#endif
+
+    ConsoleInited = true;
 
     return true;
 }
@@ -442,16 +457,19 @@ void Con_Shutdown(void)
         M_Free(prbuff); prbuff = 0;
     }
 
+#if 0
     if(histBuf)
     {
         CBuffer_Delete(histBuf); histBuf = 0;
     }
 
     clearCommandHistory();
+#endif
 
     ConsoleInited = false;
 }
 
+#if 0
 boolean Con_IsActive(void)
 {
     return ConsoleActive;
@@ -510,14 +528,18 @@ con_textfilter_t Con_PrintFilter(void)
         Con_Error("Con_PrintFilter: Console is not yet initialised.");
     return consolePrintFilter;
 }
+#endif
 
-void Con_SetPrintFilter(con_textfilter_t printFilter)
+void Con_SetPrintFilter(con_textfilter_t /*printFilter*/)
 {
+    /*
     if(!ConsoleInited)
         Con_Error("Con_SetPrintFilter: Console is not yet initialised.");
     consolePrintFilter = printFilter;
+    */
 }
 
+#if 0
 void Con_FontScale(float* scaleX, float* scaleY)
 {
     if(!ConsoleInited)
@@ -571,6 +593,7 @@ void Con_SetFontTracking(int value)
     Con_ResizeHistoryBuffer();
     Rend_ConsoleResize(true/*force*/);
 }
+#endif
 
 #ifdef __CLIENT__
 /**
@@ -687,6 +710,8 @@ void Con_Ticker(timespan_t time)
     {
         Con_TransitionTicker(time);
     }
+
+    /*
 #ifdef __CLIENT__
     Rend_ConsoleTicker(time);
 #endif
@@ -695,6 +720,7 @@ void Con_Ticker(timespan_t time)
         return;                 // We have nothing further to do here.
 
     ConsoleTime += time;        // Increase the ticker.
+    */
 }
 
 /**
@@ -1122,7 +1148,8 @@ static void Con_SplitIntoSubCommands(const char *command,
 #undef BUFFSIZE
 }
 
-#ifdef __CLIENT__
+#if 0
+//#ifdef __CLIENT__
 /**
  * Ambiguous string check. 'amb' is cut at the first character that
  * differs when compared to 'str' (case ignored).
@@ -1362,7 +1389,8 @@ int Con_Executef(byte src, int silent, const char *command, ...)
     return Con_Execute(src, buffer, silent, false);
 }
 
-#ifdef __CLIENT__
+#if 0
+//#ifdef __CLIENT__
 static const char* getCommandFromHistory(uint idx)
 {
     if(idx < oldCmdsSize) return oldCmds[idx];
@@ -1429,10 +1457,27 @@ static void updateCmdLine(void)
 
     cmdCursor = complPos = (uint) strlen(cmdLine);
 }
-#endif // __CLIENT__
+#endif
+//#endif // __CLIENT__
 
 void Con_Open(int yes)
 {
+#ifdef __CLIENT__
+    if(yes)
+    {
+        ClientWindow::main().console().openLog();
+    }
+    else
+    {
+        ClientWindow::main().console().closeLog();
+    }
+#endif
+
+#ifdef __SERVER__
+    DENG_UNUSED(yes);
+#endif
+
+    /*
     if(isDedicated)
         yes = true;
 
@@ -1455,9 +1500,10 @@ void Con_Open(int yes)
 
 #ifdef __CLIENT__
     B_ActivateContext(B_ContextByName(CONSOLE_BINDING_CONTEXT_NAME), yes);
-#endif
+#endif*/
 }
 
+#if 0
 void Con_Resize(void)
 {
     if(!ConsoleInited) return;
@@ -1822,9 +1868,11 @@ boolean Con_Responder(const ddevent_t* ev)
     // The console is very hungry for keys...
     return true;
 }
+#endif
 
 void Con_PrintRuler(void)
 {
+    /*
     if(!ConsoleInited || ConsoleSilent)
         return;
 
@@ -1832,8 +1880,11 @@ void Con_PrintRuler(void)
 
     if(consoleDump)
     {
-        LogBuffer_Msg(DENG2_STR_ESCAPE("R") "\n");
-    }
+    */
+
+    LogBuffer_Msg(DENG2_ESC("R") "\n");
+
+    //}
 }
 
 /// @param flags  @ref consolePrintFlags
@@ -1867,6 +1918,7 @@ static void conPrintf(int flags, const char* format, va_list args)
     }
 #endif
 
+    /*
     if(!isDedicated && !novideo)
     {
         int cblFlags = 0;
@@ -1890,7 +1942,7 @@ static void conPrintf(int flags, const char* format, va_list args)
             // Now that something new has been printed, it will be shown.
             bLineOff = 0;
         }
-    }
+    }*/
 }
 
 void Con_Printf(const char* format, ...)
@@ -2002,7 +2054,7 @@ void Con_Error(char const *error, ...)
 {
     static boolean errorInProgress = false;
 
-    int i, numBufLines;
+    //int i, numBufLines;
     char buff[2048], err[256];
     va_list argptr;
 
@@ -2044,6 +2096,7 @@ void Con_Error(char const *error, ...)
     LogBuffer_Msg("\n");
 
     strcpy(buff, "");
+    /*
     if(histBuf != NULL)
     {
         // Flush anything still in the write buffer.
@@ -2057,6 +2110,7 @@ void Con_Error(char const *error, ...)
             strcat(buff, "\n");
         }
     }
+    */
     strcat(buff, "\n");
     strcat(buff, err);
 
@@ -2140,23 +2194,40 @@ static void Con_Alias(char *aName, char *command)
     Con_AddAlias(aName, command);
 }
 
+static int addToTerms(knownword_t const *word, void *parameters)
+{
+    shell::Lexicon *lexi = reinterpret_cast<shell::Lexicon *>(parameters);
+    lexi->addTerm(Str_Text(Con_KnownWordToString(word)));
+    return 0;
+}
+
+shell::Lexicon Con_Lexicon()
+{
+    shell::Lexicon lexi;
+    Con_IterateKnownWords(0, WT_ANY, addToTerms, &lexi);
+    lexi.setAdditionalWordChars("-_.");
+    return lexi;
+}
+
 D_CMD(Help)
 {
     DENG2_UNUSED3(src, argc, argv);
 
+    /*
 #ifdef __CLIENT__
     char actKeyName[40];   
     strcpy(actKeyName, B_ShortNameForKey(consoleActiveKey));
     actKeyName[0] = toupper(actKeyName[0]);
 #endif
+*/
 
     Con_PrintRuler();
     Con_FPrintf(CPF_YELLOW | CPF_CENTER, "-=- " DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT " Console -=-\n");
 
 #ifdef __CLIENT__
     Con_Printf("Keys:\n");
-    Con_Printf("%-14s Open/close the console.\n", actKeyName);
-    Con_Printf("Alt-%-10s Switch between half and full screen mode.\n", actKeyName);
+    //Con_Printf("%-14s Open/close the console.\n", actKeyName);
+    //Con_Printf("Alt-%-10s Switch between half and full screen mode.\n", actKeyName);
     Con_Printf("F5             Clear the buffer.\n");
     Con_Printf("Alt-C          Clear the command line.\n");
     Con_Printf("Insert         Switch between replace and insert modes.\n");
@@ -2181,8 +2252,13 @@ D_CMD(Clear)
 {
     DENG2_UNUSED3(src, argc, argv);
 
+    /*
     CBuffer_Clear(histBuf);
-    bLineOff = 0;
+    bLineOff = 0;*/
+
+#ifdef __CLIENT__
+    ClientWindow::main().console().clearLog();
+#endif
     return true;
 }
 
@@ -2193,6 +2269,7 @@ D_CMD(Version)
     Con_Printf("%s %s\n", DOOMSDAY_NICENAME, DOOMSDAY_VERSION_FULLTEXT);
     Con_Printf("Homepage: %s\n", DOOMSDAY_HOMEURL);
     Con_Printf("Project homepage: %s\n", DENGPROJECT_HOMEURL);
+
     // Print the version info of the current game if loaded.
     if(App_GameLoaded())
     {
@@ -2525,6 +2602,8 @@ D_CMD(If)
     return true;
 }
 
+#ifdef __CLIENT__
+
 /**
  * Console command to open/close the console prompt.
  */
@@ -2542,13 +2621,12 @@ D_CMD(OpenClose)
     }
     else
     {
-        Con_Open(!ConsoleActive);
+        Con_Open(!ClientWindow::main().console().isLogOpen());
     }
     return true;
 }
 
-#ifdef __CLIENT__
-
+#if 0
 D_CMD(Font)
 {
     DENG2_UNUSED(src);
@@ -2655,6 +2733,7 @@ D_CMD(Font)
 
     return false;
 }
+#endif
 
 #endif // __CLIENT__
 

@@ -99,6 +99,9 @@ public:
     Size size() const;
     Rectanglei rect() const;
 
+    duint width() const { return size().x; }
+    duint height() const { return size().y; }
+
     /**
      * Number of bits per pixel.
      */
@@ -117,6 +120,11 @@ public:
     void const *bits() const;
 
     void *bits();
+
+    /**
+     * Determines if the image has a zero size (no pixels).
+     */
+    bool isNull() const;
 
     /**
      * Determines if the image format can be uploaded to OpenGL without
@@ -150,6 +158,8 @@ public:
 public:
     static GLFormat glFormat(Format imageFormat);
     static GLFormat glFormat(QImage::Format qtImageFormat);
+
+    static Image solidColor(Color const &color, Size const &size);
 
 private:
     DENG2_PRIVATE(d)

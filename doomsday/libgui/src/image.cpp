@@ -190,6 +190,11 @@ void *Image::bits()
     return d->refPixels.base();
 }
 
+bool Image::isNull() const
+{
+    return size() == Size(0, 0);
+}
+
 bool Image::isGLCompatible() const
 {
     if(d->format == UseQImageFormat)
@@ -310,6 +315,7 @@ void Image::fill(Rectanglei const &rect, Color const &color)
     IMAGE_ASSERT_EDITABLE(d);
 
     QPainter painter(&d->image);
+    painter.setCompositionMode(QPainter::CompositionMode_Source);
     painter.fillRect(QRect(rect.topLeft.x, rect.topLeft.y, rect.width(), rect.height()),
                      QColor(color.x, color.y, color.z, color.w));
 }
@@ -430,14 +436,24 @@ Image::GLFormat Image::glFormat(QImage::Format format)
         return GLFormat(GL_RGB, GL_UNSIGNED_BYTE, 1);
 
     case QImage::Format_RGB32:
-        return GLFormat(GL_RGB, GL_UNSIGNED_BYTE, 4);
+        /// @todo Is GL_BGR in any GL standard spec? Check for EXT_bgra.
+        return GLFormat(GL_BGR, GL_UNSIGNED_BYTE, 4);
 
     case QImage::Format_ARGB32:
-        return GLFormat(GL_RGBA, GL_UNSIGNED_BYTE, 4);
+        /// @todo Is GL_BGRA in any GL standard spec? Check for EXT_bgra.
+        return GLFormat(GL_BGRA, GL_UNSIGNED_BYTE, 4);
 
     default:
         break;
     }
     return GLFormat(GL_RGBA, GL_UNSIGNED_BYTE, 4);
 }
+
+Image Image::solidColor(Color const &color, Size const &size)
+{
+    QImage img(QSize(size.x, size.y), QImage::Format_ARGB32);
+    img.fill(QColor(color.x, color.y, color.z, color.w).rgba());
+    return img;
+}
+
 } // namespace de

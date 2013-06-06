@@ -65,9 +65,6 @@ public:
      */
     void clear();
 
-    /*GLProgram &build(IByteArray const &vertexShaderSource,
-                     IByteArray const &fragmentShaderSource);*/
-
     /**
      * Builds a program out of two shaders. GLProgram retains a reference to
      * both shaders.

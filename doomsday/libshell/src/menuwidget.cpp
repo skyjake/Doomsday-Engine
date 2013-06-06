@@ -352,7 +352,7 @@ bool MenuWidget::handleEvent(Event const &event)
 
     if(event.type() != Event::KeyPress) return false;
 
-    KeyEvent const &ev = static_cast<KeyEvent const &>(event);
+    KeyEvent const &ev = event.as<KeyEvent>();
 
     // Check menu-related control keys.
     if(ev.text().isEmpty())

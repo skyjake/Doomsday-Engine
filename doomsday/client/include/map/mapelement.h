@@ -84,6 +84,7 @@ public:
 
     void setIndexInMap(int newIndex = NoIndex);
 
+    /// @todo Rename to as().
     template <typename Type>
     inline Type *castTo()
     {
@@ -92,6 +93,7 @@ public:
         return t;
     }
 
+    /// @todo Rename to as().
     template <typename Type>
     inline Type const *castTo() const
     {

@@ -33,8 +33,14 @@ class DENG2_PUBLIC Event
 public:
     /// Event type codes.
     enum {
-        KeyPress = 1,
-        KeyRelease = 2
+        KeyPress      = 1,
+        KeyRelease    = 2,
+        KeyRepeat     = 3,
+
+        MouseButton   = 4,
+        MouseMotion   = 5,
+        MousePosition = 6,
+        MouseWheel    = 7
     };
 
 public:
@@ -46,6 +52,22 @@ public:
      * Returns the type code of the event.
      */
     int type() const { return _type; }
+
+    bool isKeyDown() const { return _type == KeyPress || _type == KeyRepeat; }
+    bool isMouse() const { return _type == MouseButton || _type == MouseMotion ||
+                _type == MousePosition || _type == MouseWheel; }
+
+    template <typename Type>
+    Type &as() {
+        DENG2_ASSERT(dynamic_cast<Type *>(this) != 0);
+        return *static_cast<Type *>(this);
+    }
+
+    template <typename Type>
+    Type const &as() const {
+        DENG2_ASSERT(dynamic_cast<Type const *>(this) != 0);
+        return *static_cast<Type const *>(this);
+    }
 
 private:
     int _type;

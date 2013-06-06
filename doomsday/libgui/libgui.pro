@@ -58,6 +58,7 @@ HEADERS += \
     include/de/GLBuffer \
     include/de/GLProgram \
     include/de/GLShader \
+    include/de/GLShaderBank \
     include/de/GLState \
     include/de/GLTarget \
     include/de/GLTexture \
@@ -67,9 +68,11 @@ HEADERS += \
     include/de/ImageBank \
     include/de/KeyEvent \
     include/de/KeyEventSource \
+    include/de/MouseEvent \
     include/de/MouseEventSource \
     include/de/PersistentCanvasWindow \
     include/de/RowAtlasAllocator \
+    include/de/VertexBuilder \
     \
     include/de/gui/atlas.h \
     include/de/gui/atlastexture.h \
@@ -86,6 +89,7 @@ HEADERS += \
     include/de/gui/glentrypoints.h \
     include/de/gui/glprogram.h \
     include/de/gui/glshader.h \
+    include/de/gui/glshaderbank.h \
     include/de/gui/glstate.h \
     include/de/gui/gltarget.h \
     include/de/gui/gltexture.h \
@@ -96,10 +100,12 @@ HEADERS += \
     include/de/gui/keyevent.h \
     include/de/gui/keyeventsource.h \
     include/de/gui/libgui.h \
+    include/de/gui/mouseevent.h \
     include/de/gui/mouseeventsource.h \
     include/de/gui/opengl.h \
     include/de/gui/persistentcanvaswindow.h \
-    include/de/gui/rowatlasallocator.h
+    include/de/gui/rowatlasallocator.h \
+    include/de/gui/vertexbuilder.h
 
 # Sources and private headers.
 SOURCES +=  \
@@ -116,6 +122,7 @@ SOURCES +=  \
     src/glentrypoints.cpp \
     src/glprogram.cpp \
     src/glshader.cpp \
+    src/glshaderbank.cpp \
     src/glstate.cpp \
     src/gltarget.cpp \
     src/gltexture.cpp \
@@ -124,6 +131,7 @@ SOURCES +=  \
     src/image.cpp \
     src/imagebank.cpp \
     src/keyevent.cpp \
+    src/mouseevent.cpp \
     src/persistentcanvaswindow.cpp \
     src/rowatlasallocator.cpp
 

@@ -199,6 +199,12 @@ public:
 
     void glBindToUnit(int unit) const;
 
+public:
+    /**
+     * Determines the maximum supported texture size.
+     */
+    static Size maximumSize();
+
 protected:
     /**
      * Derived classes can override this to perform additional tasks

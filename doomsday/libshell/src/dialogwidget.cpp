@@ -84,7 +84,7 @@ bool DialogWidget::handleEvent(Event const &event)
 {
     if(event.type() == Event::KeyPress)
     {
-        KeyEvent const &ev = static_cast<KeyEvent const &>(event);
+        KeyEvent const &ev = event.as<KeyEvent>();
         if(ev.key() == Qt::Key_Escape)
         {
             reject();

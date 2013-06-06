@@ -5270,7 +5270,7 @@ void Hu_MenuCommand(menucommand_e cmd)
 
             S_LocalSound(SFX_MENU_OPEN, NULL);
 
-            Con_Open(false);
+            //Con_Open(false);
 
             Hu_FogEffectSetAlphaTarget(1);
             Hu_MenuSetAlpha(1);
@@ -6456,12 +6456,25 @@ D_CMD(MenuOpen)
 {
     if(argc > 1)
     {
-        mn_page_t* page = Hu_MenuFindPageByName(argv[1]);
-        if(page)
+        if(!stricmp(argv[1], "open"))
         {
             Hu_MenuCommand(MCMD_OPEN);
-            Hu_MenuSetActivePage(page);
             return true;
+        }
+        if(!stricmp(argv[1], "close"))
+        {
+            Hu_MenuCommand(MCMD_CLOSE);
+            return true;
+        }
+
+        {
+            mn_page_t* page = Hu_MenuFindPageByName(argv[1]);
+            if(page)
+            {
+                Hu_MenuCommand(MCMD_OPEN);
+                Hu_MenuSetActivePage(page);
+                return true;
+            }
         }
         return false;
     }

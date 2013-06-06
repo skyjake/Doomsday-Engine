@@ -71,6 +71,11 @@ public:
     float value() const;
 
     /**
+     * Determines the rule's current value (as integer). Otherwise same as value().
+     */
+    int valuei() const;
+
+    /**
      * Marks the rule invalid, causing all dependent rules to be invalid, too.
      */
     virtual void invalidate();

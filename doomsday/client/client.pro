@@ -160,7 +160,6 @@ DENG_HEADERS += \
     include/audio/sys_audio.h \
     include/audio/sys_audiod_dummy.h \
     include/busymode.h \
-    include/cbuffer.h \
     include/client/cl_def.h \
     include/client/cl_frame.h \
     include/client/cl_infine.h \
@@ -295,7 +294,6 @@ DENG_HEADERS += \
     include/render/r_things.h \
     include/render/rend_bias.h \
     include/render/rend_clip.h \
-    include/render/rend_console.h \
     include/render/rend_decor.h \
     include/render/rend_dynlight.h \
     include/render/rend_fakeradio.h \
@@ -357,27 +355,39 @@ DENG_HEADERS += \
     include/ui/b_main.h \
     include/ui/b_util.h \
     include/ui/busyvisual.h \
-    include/ui/busywidget.h \
     include/ui/clientwindow.h \
     include/ui/commandaction.h \
     include/ui/dd_input.h \
     include/ui/dd_ui.h \
     include/ui/fi_main.h \
     include/ui/finaleinterpreter.h \
-    include/ui/guirootwidget.h \
-    include/ui/guiwidget.h \
     include/ui/inputsystem.h \
     include/ui/joystick.h \
-    include/ui/legacywidget.h \
     include/ui/mouse_qt.h \
     include/ui/nativeui.h \
     include/ui/p_control.h \
     include/ui/style.h \
+    include/ui/signalaction.h \
     include/ui/sys_input.h \
     include/ui/ui2_main.h \
     include/ui/ui_main.h \
     include/ui/ui_panel.h \
-    include/ui/widgetactions.h \
+    include/ui/widgets/alignment.h \
+    include/ui/widgets/busywidget.h \
+    include/ui/widgets/buttonwidget.h \ 
+    include/ui/widgets/consolecommandwidget.h \
+    include/ui/widgets/consolewidget.h \
+    include/ui/widgets/gltextcomposer.h \
+    include/ui/widgets/guirootwidget.h \
+    include/ui/widgets/guiwidget.h \
+    include/ui/widgets/fontlinewrapping.h \
+    include/ui/widgets/labelwidget.h \
+    include/ui/widgets/legacywidget.h \
+    include/ui/widgets/lineeditwidget.h \
+    include/ui/widgets/logwidget.h \
+    include/ui/widgets/styledlogsinkformatter.h \
+    include/ui/widgets/taskbarwidget.h \
+    include/ui/widgets/widgetactions.h \
     include/ui/windowsystem.h \
     include/ui/zonedebug.h \
     include/updater.h \
@@ -456,7 +466,6 @@ SOURCES += \
     src/audio/s_wav.cpp \
     src/audio/sys_audiod_dummy.cpp \
     src/busymode.cpp \
-    src/cbuffer.cpp \
     src/client/cl_frame.cpp \
     src/client/cl_infine.cpp \
     src/client/cl_main.cpp \
@@ -573,7 +582,6 @@ SOURCES += \
     src/render/r_things.cpp \
     src/render/rend_bias.cpp \
     src/render/rend_clip.cpp \
-    src/render/rend_console.cpp \
     src/render/rend_decor.cpp \
     src/render/rend_dynlight.cpp \
     src/render/rend_fakeradio.cpp \
@@ -635,16 +643,12 @@ SOURCES += \
     src/ui/b_main.cpp \
     src/ui/b_util.cpp \
     src/ui/busyvisual.cpp \
-    src/ui/busywidget.cpp \
     src/ui/clientwindow.cpp \
     src/ui/commandaction.cpp \
     src/ui/dd_input.cpp \
     src/ui/fi_main.cpp \
     src/ui/finaleinterpreter.cpp \
-    src/ui/guirootwidget.cpp \
-    src/ui/guiwidget.cpp \
     src/ui/inputsystem.cpp \
-    src/ui/legacywidget.cpp \
     src/ui/mouse_qt.cpp \
     src/ui/nativeui.cpp \
     src/ui/p_control.cpp \
@@ -653,7 +657,21 @@ SOURCES += \
     src/ui/ui2_main.cpp \
     src/ui/ui_main.cpp \
     src/ui/ui_panel.cpp \
-    src/ui/widgetactions.cpp \
+    src/ui/widgets/busywidget.cpp \
+    src/ui/widgets/buttonwidget.cpp \
+    src/ui/widgets/consolecommandwidget.cpp \
+    src/ui/widgets/consolewidget.cpp \
+    src/ui/widgets/gltextcomposer.cpp \
+    src/ui/widgets/guirootwidget.cpp \
+    src/ui/widgets/guiwidget.cpp \
+    src/ui/widgets/fontlinewrapping.cpp \
+    src/ui/widgets/labelwidget.cpp \
+    src/ui/widgets/legacywidget.cpp \
+    src/ui/widgets/lineeditwidget.cpp \
+    src/ui/widgets/logwidget.cpp \
+    src/ui/widgets/styledlogsinkformatter.cpp \
+    src/ui/widgets/taskbarwidget.cpp \
+    src/ui/widgets/widgetactions.cpp \
     src/ui/windowsystem.cpp \
     src/ui/zonedebug.cpp \
     src/updater/downloaddialog.cpp \
@@ -663,7 +681,8 @@ SOURCES += \
     src/updater/updaterdialog.cpp \
     src/updater/updatersettings.cpp \
     src/updater/updatersettingsdialog.cpp \
-    src/uri.cpp
+    src/uri.cpp \
+    src/ui/signalaction.cpp
 
 !deng_nosdlmixer:!deng_nosdl {
     HEADERS += include/audio/sys_audiod_sdlmixer.h

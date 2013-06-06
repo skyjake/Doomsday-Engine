@@ -115,8 +115,8 @@ RuleRectangle const &TextWidget::rule() const
 
 Vector2i TextWidget::cursorPosition() const
 {
-    return Vector2i(floor(rule().left().value()),
-                    floor(rule().top().value()));
+    return Vector2i(rule().left().valuei(),
+                    rule().top().valuei());
 }
 
 void TextWidget::addAction(Action *action)
@@ -134,9 +134,7 @@ bool TextWidget::handleEvent(Event const &event)
     // We only support KeyEvents.
     if(event.type() == Event::KeyPress)
     {
-        DENG2_ASSERT(dynamic_cast<KeyEvent const *>(&event) != 0);
-
-        KeyEvent const &keyEvent = static_cast<KeyEvent const &>(event);
+        KeyEvent const &keyEvent = event.as<KeyEvent>();
 
         foreach(Action *act, d->actions)
         {

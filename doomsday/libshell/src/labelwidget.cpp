@@ -18,6 +18,7 @@
 
 #include "de/shell/LabelWidget"
 #include "de/shell/TextRootWidget"
+#include "de/shell/MonospaceLineWrapping"
 #include <de/ConstantRule>
 
 namespace de {
@@ -27,7 +28,7 @@ DENG2_PIMPL_NOREF(LabelWidget)
 {
     TextCanvas::Char background;
     String label;
-    LineWrapping wraps;
+    MonospaceLineWrapping wraps;
     TextCanvas::Char::Attribs attribs;
     Alignment align;
     bool vertExpand;
@@ -109,7 +110,7 @@ void LabelWidget::update()
 {
     if(d->wraps.isEmpty())
     {
-        d->updateWraps(de::floor(rule().width().value()));
+        d->updateWraps(rule().width().valuei());
     }
 }
 

@@ -1,4 +1,4 @@
-/** @file guirootwidget.h  Graphical root widget.
+/** @file buttonwidget.h  Clickable button widget.
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -13,39 +13,43 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details. You should have received a copy of the GNU
  * General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
-#ifndef CLIENT_GUIROOTWIDGET_H
-#define CLIENT_GUIROOTWIDGET_H
+#ifndef DENG_CLIENT_BUTTONWIDGET_H
+#define DENG_CLIENT_BUTTONWIDGET_H
 
-#include <de/RootWidget>
+#include <de/Action>
 
-class ClientWindow;
+#include "labelwidget.h"
 
 /**
- * Graphical root widget.
+ * Clickable button widget.
+ *
  * @ingroup gui
  */
-class GuiRootWidget : public de::RootWidget
+class ButtonWidget : public LabelWidget
 {
 public:
-    GuiRootWidget(ClientWindow *window = 0);
+    ButtonWidget(de::String const &name = "");
 
     /**
-     * Sets the window in which the root widget resides.
+     * Sets the action of the button. It gets triggered when the button is
+     * pressed.
      *
-     * @param window  Client window instance.
+     * @param action  Action instance. Widget takes ownership.
      */
-    void setWindow(ClientWindow *window);
+    void setAction(de::Action *action);
 
-    /**
-     * Returns the window in which the root widget resides.
-     */
-    ClientWindow &window();
+    // Events.
+    void update();
+    bool handleEvent(de::Event const &event);
+
+protected:
+    void updateModelViewProjection(de::GLUniform &uMvp);
 
 private:
     DENG2_PRIVATE(d)
 };
 
-#endif // CLIENT_GUIROOTWIDGET_H
+#endif // DENG_CLIENT_BUTTONWIDGET_H

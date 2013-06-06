@@ -17,7 +17,7 @@
  */
 
 #include "de_platform.h"
-#include "ui/busywidget.h"
+#include "ui/widgets/busywidget.h"
 #include "ui/busyvisual.h"
 #include "busymode.h"
 #include "sys_system.h"
@@ -63,6 +63,8 @@ void BusyWidget::viewResized()
 
 void BusyWidget::update()
 {
+    GuiWidget::update();
+
     DENG_ASSERT(BusyMode_Active());
     BusyMode_Loop();
 }

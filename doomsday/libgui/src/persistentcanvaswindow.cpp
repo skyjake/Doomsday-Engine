@@ -660,7 +660,7 @@ DENG2_PIMPL(PersistentCanvasWindow)
             queue << Task(Task::NotifyModeChange, .1);
         }
 
-        if(trapped || newState.isFullscreen())
+        if(trapped /*|| newState.isFullscreen()*/)
         {
             queue << Task(Task::TrapMouse);
         }

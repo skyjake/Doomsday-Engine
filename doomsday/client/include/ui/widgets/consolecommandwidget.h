@@ -1,4 +1,4 @@
-/** @file guiwidget.h  Base class for graphical widgets.
+/** @file consolecommandwidget.h  Text editor with a history buffer.
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,43 +16,38 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef DENG_CLIENT_GUIWIDGET_H
-#define DENG_CLIENT_GUIWIDGET_H
+#ifndef DENG_CLIENT_CONSOLECOMMANDWIDGET_H
+#define DENG_CLIENT_CONSOLECOMMANDWIDGET_H
 
-#include <de/Widget>
-#include <de/RuleRectangle>
-#include "ui/style.h"
-
-class GuiRootWidget;
+#include "lineeditwidget.h"
 
 /**
- * Base class for graphical widgets.
+ * Text editor with a history buffer. Entered commands are executed as console
+ * commands. Uses the console Lexicon for word completion.
+ *
+ * Whenever the current game changes, the lexicon is automatically updated to
+ * include the terms of the loaded game.
+ *
  * @ingroup gui
  */
-class GuiWidget : public de::Widget
+class ConsoleCommandWidget : public QObject, public LineEditWidget
 {
+    Q_OBJECT
+
 public:
-    GuiWidget(de::String const &name = "");
+    ConsoleCommandWidget(de::String const &name = "");
 
-    GuiRootWidget &root();
-    Style const &style();
+    // Events.
+    void focusGained();
+    void focusLost();
+    bool handleEvent(de::Event const &event);
 
-    /**
-     * Returns the rule rectangle that defines the placement of the widget on
-     * the target canvas.
-     */
-    de::RuleRectangle &rule();
-
-    /**
-     * Returns the rule rectangle that defines the placement of the widget on
-     * the target canvas.
-     */
-    de::RuleRectangle const &rule() const;
-
-    void deleteLater();
+signals:
+    void gotFocus();
+    void lostFocus();
 
 private:
     DENG2_PRIVATE(d)
 };
 
-#endif // DENG_CLIENT_GUIWIDGET_H
+#endif // DENG_CLIENT_CONSOLECOMMANDWIDGET_H

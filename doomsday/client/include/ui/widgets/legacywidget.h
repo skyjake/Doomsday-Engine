@@ -1,4 +1,5 @@
-/** @file guirootwidget.cpp  Graphical root widget.
+/** @file legacywidget.h  Widget for legacy UI components.
+ * @ingroup gui
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -13,32 +14,31 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details. You should have received a copy of the GNU
  * General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small>
+ * http://www.gnu.org/licenses</small> 
  */
 
-#include "ui/guirootwidget.h"
+#ifndef CLIENT_LEGACYWIDGET_H
+#define CLIENT_LEGACYWIDGET_H
 
-using namespace de;
+#include "guiwidget.h"
 
-DENG2_PIMPL(GuiRootWidget)
+/**
+ * Widget for legacy UI components.
+ *
+ * @ingroup gui
+ */
+class LegacyWidget : public GuiWidget
 {
-    ClientWindow *window;
+public:
+    LegacyWidget(de::String const &name = "");
 
-    Instance(Public *i, ClientWindow *win) : Base(i), window(win)
-    {}
+    void viewResized();
+    void update();
+    void draw();
+    bool handleEvent(de::Event const &event);
+
+private:
+    DENG2_PRIVATE(d)
 };
 
-GuiRootWidget::GuiRootWidget(ClientWindow *window)
-    : d(new Instance(this, window))
-{}
-
-void GuiRootWidget::setWindow(ClientWindow *window)
-{
-    d->window = window;
-}
-
-ClientWindow &GuiRootWidget::window()
-{
-    DENG2_ASSERT(d->window != 0);
-    return *d->window;
-}
+#endif // CLIENT_LEGACYWIDGET_H

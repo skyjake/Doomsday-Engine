@@ -25,6 +25,7 @@
 #include <de/Id>
 #include <de/Rectangle>
 #include <de/Observers>
+#include <de/Lockable>
 
 #include "../Image"
 
@@ -38,7 +39,7 @@ namespace de {
  *
  * @ingroup gui
  */
-class LIBGUI_PUBLIC Atlas
+class LIBGUI_PUBLIC Atlas : public Lockable
 {
 public:
     typedef Image::Size Size;

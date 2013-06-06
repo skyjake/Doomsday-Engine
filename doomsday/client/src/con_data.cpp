@@ -32,7 +32,7 @@
 #include "de_platform.h"
 #include "de_console.h"
 
-#include "cbuffer.h"
+//#include "cbuffer.h"
 #include "Games"
 #include "dd_help.h"
 #include "dd_main.h"
@@ -1440,7 +1440,7 @@ static int aproposPrinter(knownword_t const* word, void* matching)
     // See if 'matching' is anywhere in the known word.
     if(strcasestr(Str_Text(text), (const char*)matching))
     {
-        int const maxLen = CBuffer_MaxLineLength(Con_HistoryBuffer());
+        int const maxLen = 80; //CBuffer_MaxLineLength(Con_HistoryBuffer());
         int avail;
         ddstring_t buf;
         char const* wType[KNOWNWORDTYPE_COUNT] = {

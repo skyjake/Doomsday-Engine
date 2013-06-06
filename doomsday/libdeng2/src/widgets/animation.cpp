@@ -148,6 +148,15 @@ DENG2_PIMPL_NOREF(Animation)
 Animation::Animation(float val, Style s) : d(new Instance(val, s))
 {}
 
+Animation::Animation(Animation const &other) : d(new Instance(*other.d))
+{}
+
+Animation &Animation::operator = (Animation const &other)
+{
+    d.reset(new Instance(*other.d));
+    return *this;
+}
+
 void Animation::setStyle(Animation::Style s)
 {
     d->style = s;
@@ -308,6 +317,13 @@ Time Animation::currentTime()
         throw ClockMissingError("Animation::clock", "Animation has no clock");
     }
     return _clock->time();
+}
+
+Animation Animation::range(Style style, float from, float to, TimeDelta span, TimeDelta delay)
+{
+    Animation anim(from, style);
+    anim.setValue(to, span, delay);
+    return anim;
 }
 
 } // namespace de

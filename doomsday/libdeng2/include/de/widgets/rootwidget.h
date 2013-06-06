@@ -64,7 +64,8 @@ public:
 
     /**
      * Sets the focus widget. It is the first widget to be offered input
-     * events.
+     * events. As focus changes from widget to widget, they will be notified of
+     * this via the focusGained() and focusLost() methods.
      *
      * @param widget  Widget to have focus. Set to @c NULL to clear focus.
      */

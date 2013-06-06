@@ -180,13 +180,13 @@ public:
      * @param attribs        Character attributes.
      * @param lineAlignment  Alignment for lines.
      */
-    void drawWrappedText(Coord const &pos, String const &text, LineWrapping const &wraps,
+    void drawWrappedText(Coord const &pos, String const &text, ILineWrapping const &wraps,
                          Char::Attribs const &attribs = Char::DefaultAttributes,
                          Alignment lineAlignment = AlignLeft);
 
     void clearRichFormat();
 
-    void setRichFormatRange(Char::Attribs const &attribs, Range const &range);
+    void setRichFormatRange(Char::Attribs const &attribs, Rangei const &range);
 
     void drawLineRect(Rectanglei const &rect, Char::Attribs const &attribs = Char::DefaultAttributes);
 

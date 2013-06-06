@@ -61,9 +61,6 @@ protected:
     void commitFull(Image const &fullImage) const;
 
     void commit(Image const &image, Vector2i const &topLeft) const;
-
-private:
-    DENG2_PRIVATE(d)
 };
 
 } // namespace de

@@ -29,24 +29,15 @@
 
 namespace de {
 
-enum LogTextStyle
-{
-    NORMAL,
-    STRONG,
-    LOG_TIME,
-    LOG_LEVEL,
-    LOG_BAD_LEVEL,
-    LOG_SECTION,
-    LOG_MSG
-};
-
-char const *TEXT_STYLE_NORMAL        = DENG2_STR_ESCAPE("0");
-char const *TEXT_STYLE_STRONG        = DENG2_STR_ESCAPE("1");
-char const *TEXT_STYLE_LOG_TIME      = DENG2_STR_ESCAPE("2");
-char const *TEXT_STYLE_LOG_LEVEL     = DENG2_STR_ESCAPE("3");
-char const *TEXT_STYLE_LOG_BAD_LEVEL = DENG2_STR_ESCAPE("4");
-char const *TEXT_STYLE_SECTION       = DENG2_STR_ESCAPE("5");
-char const *TEXT_STYLE_MESSAGE       = DENG2_STR_ESCAPE("6");
+char const *TEXT_STYLE_NORMAL          = DENG2_ESC("0"); // normal
+char const *TEXT_STYLE_MESSAGE         = DENG2_ESC("0"); // normal
+char const *TEXT_STYLE_BAD_MESSAGE     = DENG2_ESC("1"); // major
+char const *TEXT_STYLE_DEBUG_MESSAGE   = DENG2_ESC("2"); // minor
+char const *TEXT_STYLE_SECTION         = DENG2_ESC("3"); // meta
+char const *TEXT_STYLE_BAD_SECTION     = DENG2_ESC("4"); // major meta
+char const *TEXT_STYLE_DEBUG_SECTION   = DENG2_ESC("5"); // minor meta
+char const *TEXT_STYLE_LOG_TIME        = DENG2_ESC("6"); // aux meta
+char const *TEXT_MARK_INDENT           = DENG2_ESC(">");
 
 } // namespace de
 

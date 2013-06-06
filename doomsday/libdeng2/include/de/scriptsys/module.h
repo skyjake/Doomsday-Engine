@@ -30,12 +30,12 @@ class Record;
 class Script;
 
 /**
- * Modules are scripts that are loaded from the file system and then stay
- * in memory for other scripts to use. For instance, a module could contain
- * functions that are useful for many other scripts. Scripts can use the
- * import statement to gain access to a module's namespace. The module's
- * source script is executed only the first time it gets imported --
- * subsequent calls simply provide a reference to the existing module's namespace.
+ * Modules are scripts that are loaded from the file system and then stay in
+ * memory for other scripts to use. For instance, a module could contain
+ * functions that are useful for many other scripts. Scripts can use the import
+ * statement to gain access to a module's namespace. The module's source script
+ * is executed only the first time it gets imported -- subsequent calls simply
+ * provide a reference to the existing module's namespace.
  *
  * @ingroup script
  */

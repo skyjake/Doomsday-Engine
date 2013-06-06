@@ -97,6 +97,11 @@ void TaskPool::waitForDone()
     d->waitForEmpty();
 }
 
+bool TaskPool::isDone() const
+{
+    return d->isEmpty();
+}
+
 void TaskPool::taskFinished(Task &task)
 {
     d->remove(&task);

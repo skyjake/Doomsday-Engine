@@ -28,7 +28,7 @@
 #include "de_graphics.h"
 #include "de_ui.h"
 
-#include "cbuffer.h"
+//#include "cbuffer.h"
 #include "gl/texturecontent.h"
 #include "resource/image.h"
 #include "resource/font.h"
@@ -290,6 +290,7 @@ static void drawPositionIndicator(float x, float y, float radius, float pos,
 
 #define LINE_COUNT 4
 
+#if 0
 /**
  * @return  Number of new lines since the old ones.
  */
@@ -420,6 +421,7 @@ static void drawConsoleOutput(void)
 
 #undef LINE_COUNT
 }
+#endif
 
 void BusyVisual_Render(void)
 {
@@ -451,11 +453,12 @@ void BusyVisual_Render(void)
                               DENG_WINDOW->height()/12, pos, task->name);
     }
 
+    /*
     // Output from the console?
     if(task->mode & BUSYF_CONSOLE_OUTPUT)
     {
         drawConsoleOutput();
-    }
+    }*/
 
 #ifdef _DEBUG
     Z_DebugDrawer();
@@ -463,12 +466,6 @@ void BusyVisual_Render(void)
 
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();
-
-    // The frame is ready to be shown.
-/*  Window *wnd = Window::main();
-    DENG_ASSERT(wnd != 0);
-    wnd->swapBuffers();
-*/
 }
 
 /**

@@ -19,8 +19,8 @@
 #ifndef LIBSHELL_MAIN_H
 #define LIBSHELL_MAIN_H
 
-#include <QList>
 #include <de/String>
+#include <de/Range>
 
 /*
  * The LIBSHELL_PUBLIC macro is used for declaring exported symbols. It must be
@@ -42,42 +42,43 @@
 namespace de {
 namespace shell {
 
-struct Range
+/// Line of word-wrapped text.
+struct LIBSHELL_PUBLIC WrappedLine
 {
-    int start;
-    int end;
-
-    Range(int a = 0, int b = 0) : start(a), end(b) {}
-    inline int size() const { return end - start; }
-    inline bool contains(int i) const { return i >= start && i < end; }
-};
-
-/// Word wrapping.
-struct WrappedLine
-{
-    Range range;
+    Rangei range;
     bool isFinal;
 
-    WrappedLine(Range const &range_, bool final = false)
+    WrappedLine(Rangei const &range_, bool final = false)
         : range(range_), isFinal(final) {}
 };
 
-class LineWrapping : public QList<WrappedLine>
+class LIBSHELL_PUBLIC ILineWrapping
 {
 public:
-    /**
-     * Determines word wrapping for a line of text given a maximum line width.
-     *
-     * @param text      Text to wrap.
-     * @param maxWidth  Maximum width for each text line.
-     *
-     * @return List of positions in @a text where to break the lines. Total number
-     * of word-wrapped lines is equal to the size of the returned list.
-     */
-    void wrapTextToWidth(String const &text, int maxWidth);
+    virtual ~ILineWrapping() {}
 
-    int width() const;
-    int height() const;
+    virtual bool isEmpty() const = 0;
+    virtual void clear() = 0;
+    virtual void wrapTextToWidth(String const &text, int maxWidth) = 0;
+    virtual WrappedLine line(int index) const = 0;
+
+    /// Determines the visible maximum width of the wrapped content.
+    virtual int width() const = 0;
+
+    /// Determines the number of lines in the wrapped content.
+    virtual int height() const = 0;
+
+    /// Returns the advance width of the range.
+    virtual int rangeWidth(Rangei const &range) const = 0;
+
+    /**
+     * Calculates which index in the provided content range occupies a
+     * character at a given width.
+     *
+     * @param range  Range within the content.
+     * @param width  Advance width to check.
+     */
+    virtual int indexAtWidth(Rangei const &range, int width) const = 0;
 };
 
 } // namespace shell

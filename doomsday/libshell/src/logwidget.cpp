@@ -20,7 +20,7 @@
 #include "de/shell/KeyEvent"
 #include "de/shell/TextRootWidget"
 #include <de/MonospaceLogSinkFormatter>
-#include <de/Lockable>
+#include <de/MemoryLogSink>
 #include <de/LogBuffer>
 #include <QList>
 
@@ -31,63 +31,18 @@ namespace shell {
  * Log sink for incoming entries (local and remote). Rather than formatting the
  * entries immediately, we keep a copy of them for formatting prior to drawing.
  */
-class Sink : public LogSink, public Lockable
+class Sink : public MemoryLogSink
 {
 public:
-    Sink(LogWidget &widget) : LogSink(), _widget(widget)
-    {}
+    Sink(LogWidget &widget) : MemoryLogSink(), _widget(widget) {}
 
-    ~Sink()
+    void addedNewEntry(LogEntry &)
     {
-        qDeleteAll(_entries);
-    }
-
-    void clear()
-    {
-        DENG2_GUARD(this);
-
-        qDeleteAll(_entries);
-        _entries.clear();
-    }
-
-    LogSink &operator << (LogEntry const &entry)
-    {
-        DENG2_GUARD(this);
-
-        _entries.append(new LogEntry(entry));
         _widget.root().requestDraw();
-        return *this;
-    }
-
-    LogSink &operator << (String const &plainText)
-    {
-        DENG2_UNUSED(plainText);
-        return *this;
-    }
-
-    void flush() {}
-
-    int entryCount() const
-    {
-        return _entries.size();
-    }
-
-    LogEntry const &entry(int index) const
-    {
-        return *_entries[index];
-    }
-
-    void remove(int pos, int n = 1)
-    {
-        while(n-- > 0)
-        {
-            delete _entries.takeAt(pos);
-        }
     }
 
 private:
     LogWidget &_widget;
-    QList<LogEntry *> _entries;
 };
 
 DENG2_PIMPL(LogWidget)
@@ -199,7 +154,7 @@ int LogWidget::scrollPosition() const
 
 int LogWidget::scrollPageSize() const
 {
-    return de::max(1, de::floor(rule().height().value()) - 1);
+    return de::max(1, rule().height().valuei() - 1);
 }
 
 int LogWidget::maximumScroll() const
@@ -238,7 +193,8 @@ void LogWidget::draw()
 
         // No cached entry for this, generate one.
         LogEntry const &entry = d->sink.entry(idx);
-        QList<String> lines = d->formatter.logEntryToTextLines(entry);
+
+        MonospaceLogSinkFormatter::Lines lines = d->formatter.logEntryToTextLines(entry);
 
         TextCanvas *buf = new TextCanvas(Vector2ui(pos.width(), lines.size()));
         d->cache.append(buf);
@@ -308,7 +264,7 @@ bool LogWidget::handleEvent(Event const &event)
 {
     if(event.type() != Event::KeyPress) return false;
 
-    KeyEvent const &ev = static_cast<KeyEvent const &>(event);
+    KeyEvent const &ev = event.as<KeyEvent>();
 
     int pageSize = scrollPageSize();
 

@@ -47,10 +47,10 @@ public:
      */
     ImageBank(Flags const &flags = BackgroundThread | DisableHotStorage);
 
-    void add(Path const &path, String const &imageFilePath);
+    void add(DotPath const &path, String const &imageFilePath);
     void addFromInfo(File const &file);
 
-    Image &image(Path const &path) const;
+    Image &image(DotPath const &path) const;
 
 protected:
     ISource *newSourceFromInfo(String const &id);

@@ -141,7 +141,7 @@ bool ChoiceWidget::handleEvent(Event const &ev)
 {
     if(ev.type() == Event::KeyPress)
     {
-        KeyEvent const &event = static_cast<KeyEvent const &>(ev);
+        KeyEvent const &event = ev.as<KeyEvent>();
         if(!event.text().isEmpty() || event.key() == Qt::Key_Enter)
         {
             DENG2_ASSERT(!isOpen());

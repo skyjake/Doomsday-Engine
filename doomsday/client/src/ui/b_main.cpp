@@ -189,7 +189,7 @@ static int globalContextFallback(const ddevent_t* ddev)
 #ifdef __CLIENT__
     if(UI_Responder(ddev)) return true;     // Eaten.
 #endif
-    if(Con_Responder(ddev)) return true;    // Eaten.
+    //if(Con_Responder(ddev)) return true;    // Eaten.
 
     if(App_GameLoaded())
     {
@@ -293,10 +293,12 @@ void B_InitialContextActivations(void)
     B_ActivateContext(B_ContextByName(GLOBAL_BINDING_CONTEXT_NAME), true);
     B_ActivateContext(B_ContextByName(DEFAULT_BINDING_CONTEXT_NAME), true);
 
+    /*
     if(Con_IsActive())
     {
         B_ActivateContext(B_ContextByName(CONSOLE_BINDING_CONTEXT_NAME), true);
     }
+    */
 }
 
 void B_BindDefaults(void)

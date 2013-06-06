@@ -20,13 +20,13 @@
 #ifndef LIBDENG2_MATRIX_H
 #define LIBDENG2_MATRIX_H
 
-#include "libdeng2.h"
-#include "math.h"
-#include "Vector"
-#include "Writer"
-#include "Reader"
-#include "String"
-#include "ByteRefArray"
+#include "../libdeng2.h"
+#include "../math.h"
+#include "../Vector"
+#include "../Writer"
+#include "../Reader"
+#include "../String"
+#include "../ByteRefArray"
 
 #include <QTextStream>
 

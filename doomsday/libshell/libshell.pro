@@ -24,13 +24,16 @@ INCLUDEPATH += include
 
 # Public headers.
 HEADERS += \
+    include/de/shell/AbstractLineEditor \
     include/de/shell/AbstractLink \
     include/de/shell/Action \
     include/de/shell/ChoiceWidget \
     include/de/shell/CommandLineWidget \
     include/de/shell/DialogWidget \
     include/de/shell/DoomsdayInfo \
+    include/de/shell/EditorHistory \
     include/de/shell/InputDialog \
+    include/de/shell/ITextEditor \
     include/de/shell/KeyEvent \
     include/de/shell/LabelWidget \
     include/de/shell/Lexicon \
@@ -39,19 +42,23 @@ HEADERS += \
     include/de/shell/LocalServer \
     include/de/shell/LogWidget \
     include/de/shell/MenuWidget \
+    include/de/shell/MonospaceLineWrapping \
     include/de/shell/Protocol \
     include/de/shell/ServerFinder \
     include/de/shell/TextCanvas \
     include/de/shell/TextRootWidget \
     include/de/shell/TextWidget \
     \
+    include/de/shell/abstractlineeditor.h \
     include/de/shell/abstractlink.h \
     include/de/shell/action.h \
     include/de/shell/choicewidget.h \
     include/de/shell/commandlinewidget.h \
     include/de/shell/dialogwidget.h \
     include/de/shell/doomsdayinfo.h \
+    include/de/shell/editorhistory.h \
     include/de/shell/inputdialog.h \
+    include/de/shell/itexteditor.h \
     include/de/shell/keyevent.h \
     include/de/shell/labelwidget.h \
     include/de/shell/lexicon.h \
@@ -61,6 +68,7 @@ HEADERS += \
     include/de/shell/localserver.h \
     include/de/shell/logwidget.h \
     include/de/shell/menuwidget.h \
+    include/de/shell/monospacelinewrapping.h \
     include/de/shell/protocol.h \
     include/de/shell/serverfinder.h \
     include/de/shell/textcanvas.h \
@@ -69,12 +77,14 @@ HEADERS += \
 
 # Sources and private headers.
 SOURCES += \
+    src/abstractlineeditor.cpp \
     src/abstractlink.cpp \
     src/action.cpp \
     src/choicewidget.cpp \
     src/commandlinewidget.cpp \
     src/dialogwidget.cpp \
     src/doomsdayinfo.cpp \
+    src/editorhistory.cpp \
     src/inputdialog.cpp \
     src/labelwidget.cpp \
     src/lexicon.cpp \
@@ -84,6 +94,7 @@ SOURCES += \
     src/localserver.cpp \
     src/logwidget.cpp \
     src/menuwidget.cpp \
+    src/monospacelinewrapping.cpp \
     src/protocol.cpp \
     src/serverfinder.cpp \
     src/textcanvas.cpp \

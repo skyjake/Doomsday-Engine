@@ -25,8 +25,8 @@
 
 #ifdef __cplusplus
 
-#include <de/String>
-#include <de/Time>
+#include "../String"
+#include "../Time"
 
 namespace de {
 
