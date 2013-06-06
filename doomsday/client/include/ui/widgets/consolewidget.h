@@ -31,6 +31,8 @@
  *
  * ConsoleWidget expects to be bottom-left anchored. It resizes its height
  * automatically. The user can drag the right edge to resize the widget.
+ *
+ * @ingroup gui
  */
 class ConsoleWidget : public QObject, public GuiWidget
 {

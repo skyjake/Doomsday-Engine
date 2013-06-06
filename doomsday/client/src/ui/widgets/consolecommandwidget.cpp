@@ -104,7 +104,7 @@ bool ConsoleCommandWidget::handleEvent(Event const &event)
 
     if(hasFocus() && event.isKeyDown())
     {
-        // Fallback to history navigation.
+        // Fall back to history navigation.
         return d->history.handleControlKey(event.as<KeyEvent>().qtKey());
     }
     return false;

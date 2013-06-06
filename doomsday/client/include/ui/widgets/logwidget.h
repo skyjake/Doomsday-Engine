@@ -27,6 +27,8 @@
 
 /**
  * Widget for output message log.
+ *
+ * @ingroup gui
  */
 class LogWidget : public QObject, public GuiWidget
 {

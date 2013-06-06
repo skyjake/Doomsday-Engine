@@ -41,7 +41,7 @@ class LIBGUI_PUBLIC Font
 {
 public:   
     /**
-     * Rich formatting instructions for a string of text.
+     * Rich formatting instructions for a string of plain text.
      *
      * The formatting instructions are composed of a sequence of ranges that
      * specify various modifications to the original font. It is important to
@@ -155,7 +155,7 @@ public:
         /**
          * Iterates the rich format ranges of a RichFormat.
          *
-         * @note Iterator::next() must be called before at least once after
+         * @note Iterator::next() must be called at least once after
          * constructing the instance to move the iterator onto the first range.
          */
         struct LIBGUI_PUBLIC Iterator
@@ -163,6 +163,7 @@ public:
             RichFormat const &format;
             int index;
 
+        public:
             Iterator(RichFormat const &f);
             bool hasNext() const;
             void next();
@@ -200,7 +201,6 @@ public:
     Font();
 
     Font(Font const &other);
-
     Font(QFont const &font);
 
     QFont toQFont() const;
@@ -216,10 +216,20 @@ public:
      */
     Rectanglei measure(String const &textLine) const;
 
+    /**
+     * Determines the size of the given line of rich text, i.e., how large an
+     * area is covered by the glyphs. (0,0) is at the baseline, left edge of
+     * the line. The rectangle may extend into negative coordinates.
+     *
+     * @param textLine  Text to measure.
+     * @param format    Rich formatting for @a textLine.
+     *
+     * @return Rectangle covered by the text.
+     */
     Rectanglei measure(String const &textLine, RichFormat const &format) const;
 
     /**
-     * Returns the advance width of a line of text. This is not the same as
+     * Returns the advance width of a line of text. This may not be the same as
      * the width of the rectangle returned by measure().
      *
      * @param textLine  Text to measure.

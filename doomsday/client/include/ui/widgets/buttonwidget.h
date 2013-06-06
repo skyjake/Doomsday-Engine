@@ -25,6 +25,8 @@
 
 /**
  * Clickable button widget.
+ *
+ * @ingroup gui
  */
 class ButtonWidget : public LabelWidget
 {

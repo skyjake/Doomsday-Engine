@@ -29,20 +29,59 @@ class GuiRootWidget;
 
 /**
  * Base class for graphical widgets.
+ *
+ * Each GuiWidget has one RuleRectangle that defines the widget's position in
+ * the view. However, all widgets are allowed to draw outside this rectangle
+ * and react to events occurring outside it. In essence, all widgets thus cover
+ * the entire view area and can be thought as a (hierarchical) stack.
+ *
+ * GuiWidget is the base class for all widgets of a GUI application. However, a
+ * GuiWidget does not necessarily need to have a visible portion on the screen:
+ * its entire purpose may be to handle events, for example.
+ *
+ * The common features GuiWidget offers to all widgets are:
+ *
+ * - Background geometry builder. All widgets may use this to build geometry for
+ *   the background of the widget. However, widgets are also allowed to fully
+ *   generate all of their geometry from scratch.
+ *
+ * - Access to the UI Style.
+ *
+ * - GuiWidget can be told which font and text color to use using a style
+ *   definition identifier (e.g., "editor.hint"). These style elements are then
+ *   conveniently accessible using methods of GuiWidget.
+ *
+ * - Opacity properity. Opacities respect the hierarchical organization of
+ *   widgets: GuiWidget::visibleOpacity() returns the opacity of a particular
+ *   widget where all the parent widgets' opacities are factored in.
+ *
+ * - Hit testing: checking if a view space point should be considered to be
+ *   inside the widget. The default implementation simply checks if the point is
+ *   inside the widget's rectangle. Derived classes may override this to adapt
+ *   hit testing to their particular visual shape.
+ *
+ * - Logic for handling more complicated interactions such as a mouse pointer
+ *   click (press then release inside or outside).
+ *
  * @ingroup gui
  */
 class GuiWidget : public de::Widget
 {
 public:
+    /**
+     * Properties of the widget's background's apperance.
+     * GuiWidget::glMakeGeometry() uses this to construct the background
+     * geometry of the widget.
+     */
     struct Background {
         enum Type {
-            None,
-            GradientFrame
+            None,               ///< No background or solid fill.
+            GradientFrame       ///< Use the "gradient frame" from the UI atlas.
         };
         de::Vector4f solidFill; ///< Always applied if opacity > 0.
         Type type;
-        de::Vector4f color;
-        float thickness;
+        de::Vector4f color;     ///< Secondary color.
+        float thickness;        ///< Frame border thickenss.
 
         Background() : type(None), thickness(0) {}
         Background(de::Vector4f const &solid) : solidFill(solid), type(None), thickness(0) {}
@@ -85,8 +124,9 @@ public:
     de::ColorBank::Colorf textColorf() const;
 
     /**
-     * Determines whether the contents of the widget are scissor-clipped to its
-     * boundaries.
+     * Determines whether the contents of the widget are supposed to be clipped
+     * to its boundaries. The Widget::ContentClipping behavior flag is used for
+     * storing this information.
      */
     bool clipped() const;
 
@@ -137,7 +177,21 @@ public:
     MouseClickStatus handleMouseClick(de::Event const &event);
 
 protected:
+    /**
+     * Called by GuiWidget::update() the first time an update is being carried
+     * out. Native GL is guaranteed to be available at this time, so the widget
+     * must allocate all its GL resources during this method. Note that widgets
+     * cannot always allocate GL resources during their constructors because GL
+     * may not be initialized yet at that time.
+     */
     virtual void glInit();
+
+    /**
+     * Called by GuiWidget before the widget is destroyed. This is the
+     * appropriate place for the widget to release its GL resources. If one
+     * waits until the widget's destructor to do so, it may already have lost
+     * access to some required information (such as the root widget).
+     */
     virtual void glDeinit();
 
     /**

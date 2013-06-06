@@ -27,6 +27,8 @@
  *
  * As a graphical widget, widget placement and line wrapping is handled in
  * terms of pixels rather than characters.
+ *
+ * @ingroup gui
  */
 class LineEditWidget : public GuiWidget, public de::shell::AbstractLineEditor
 {

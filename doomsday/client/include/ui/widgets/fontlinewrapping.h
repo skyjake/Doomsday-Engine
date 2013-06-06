@@ -38,12 +38,21 @@ public:
     void setFont(de::Font const &font);
     de::Font const &font() const;
 
-    bool isEmpty() const;
+    /**
+     * Clears the wrapping completely. The text is also cleared.
+     */
     void clear();
+
+    /**
+     * Resets the existing wrapping (isEmpty() will return @c true) but does not
+     * clear the text.
+     */
     void reset();
+
     void wrapTextToWidth(de::String const &text, int maxWidth);
     void wrapTextToWidth(de::String const &text, de::Font::RichFormat const &format, int maxWidth);
 
+    bool isEmpty() const;
     de::String const &text() const;
     de::shell::WrappedLine line(int index) const;
     int width() const;
@@ -52,13 +61,28 @@ public:
     int indexAtWidth(de::Rangei const &range, int width) const;
 
     /**
-     * Calculates the total height of the wrapped lined in pixels, taking into
-     * consideration the appropriate amount of line spacing.
+     * Calculates the total height of the wrapped lined in pixels. If there are
+     * multiple lines, takes into consideration the appropriate leading between
+     * lines.
      */
     int totalHeightInPixels() const;
 
+    /**
+     * Determines the coordinates of a character's top left corner in pixels.
+     *
+     * @param line       Wrapped line number.
+     * @param charIndex  Index of the character on the wrapped line. Each
+     *                   wrapped line is indexed starting from zero.
+     *
+     * @return XY coordinates of the character.
+     */
     de::Vector2i charTopLeftInPixels(int line, int charIndex);
 
+    /**
+     * Returns the left indentation for a wrapped line.
+     *
+     * @param index  Wrapped line number.
+     */
     int lineIndent(int index) const;
 
 private:

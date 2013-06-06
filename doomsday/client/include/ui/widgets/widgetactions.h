@@ -27,7 +27,9 @@
 
 /**
  * User actions bound to widgets. Traditionally called the bindings and binding
- * contexts. @ingroup ui
+ * contexts.
+ *
+ * @ingroup gui
  *
  * @todo "WidgetActions" is a work-in-progress name.
  *

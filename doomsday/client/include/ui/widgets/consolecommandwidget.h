@@ -27,6 +27,8 @@
  *
  * Whenever the current game changes, the lexicon is automatically updated to
  * include the terms of the loaded game.
+ *
+ * @ingroup gui
  */
 class ConsoleCommandWidget : public QObject, public LineEditWidget
 {

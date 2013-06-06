@@ -24,6 +24,7 @@
 
 /**
  * Widget for legacy UI components.
+ *
  * @ingroup gui
  */
 class LegacyWidget : public GuiWidget

@@ -29,6 +29,7 @@ class ClientWindow;
 
 /**
  * Graphical root widget.
+ *
  * @ingroup gui
  */
 class GuiRootWidget : public de::RootWidget

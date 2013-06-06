@@ -71,8 +71,13 @@ public:
     /// Returns the advance width of the range.
     virtual int rangeWidth(Rangei const &range) const = 0;
 
-    /// Calculates which index in the provided content range occupies a
-    /// character at a given width.
+    /**
+     * Calculates which index in the provided content range occupies a
+     * character at a given width.
+     *
+     * @param range  Range within the content.
+     * @param width  Advance width to check.
+     */
     virtual int indexAtWidth(Rangei const &range, int width) const = 0;
 };
 

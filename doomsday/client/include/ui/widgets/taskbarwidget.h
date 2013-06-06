@@ -27,6 +27,8 @@
 
 /**
  * Task bar that acts as the primary UI element of the client's UI.
+ *
+ * @ingroup gui
  */
 class TaskBarWidget : public QObject, public GuiWidget
 {

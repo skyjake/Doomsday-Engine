@@ -57,6 +57,8 @@
  *
  * Additionally, LabelWidget::setImageFit() defines how the image will be
  * scaled inside the area reserved for the image.
+ *
+ * @ingroup gui
  */
 class LabelWidget : public GuiWidget
 {
