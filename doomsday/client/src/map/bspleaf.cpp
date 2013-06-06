@@ -1,4 +1,4 @@
-/** @file bspleaf.cpp World Map BSP Leaf.
+/** @file map/bspleaf.cpp World Map BSP Leaf.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -57,7 +57,7 @@ DENG2_PIMPL(BspLeaf)
     /// Convex polygon geometry assigned to the BSP leaf (owned).
     QScopedPointer<Mesh> polygon;
 
-    /// Additional polygon geometries assigned to the BSP leaf (owned).
+    /// Additional meshes assigned to the BSP leaf (owned).
     Meshes extraMeshes;
 
     /// Clockwise ordering of the line segments from the primary polygon.
@@ -191,9 +191,8 @@ DENG2_PIMPL(BspLeaf)
 
         int numSegments = clockwiseSegments.count();
         foreach(Mesh *mesh, extraMeshes)
-        foreach(Face *face, mesh->faces())
         {
-            numSegments += face->hedgeCount();
+            numSegments += mesh->hedgeCount();
         }
 #ifdef DENG2_QT_4_7_OR_NEWER
         allSegments.reserve(numSegments);
@@ -203,16 +202,12 @@ DENG2_PIMPL(BspLeaf)
         allSegments.append(clockwiseSegments);
 
         foreach(Mesh *mesh, extraMeshes)
-        foreach(Face *face, mesh->faces())
+        foreach(HEdge *hedge, mesh->hedges())
         {
-            HEdge *hedge = face->hedge();
-            do
+            if(MapElement *elem = hedge->mapElement())
             {
-                if(MapElement *elem = hedge->mapElement())
-                {
-                    allSegments.append(elem->castTo<Segment>());
-                }
-            } while((hedge = &hedge->next()) != face->hedge());
+                allSegments.append(elem->castTo<Segment>());
+            }
         }
     }
 
@@ -319,8 +314,8 @@ Face &BspLeaf::face()
     {
         return *d->polygon->firstFace();
     }
-    /// @throw MissingPolygonError Attempted with no polygon assigned.
-    throw MissingFaceError("BspLeaf::poly", "No polygon is assigned");
+    /// @throw MissingFaceError Attempted with no face assigned.
+    throw MissingFaceError("BspLeaf::face", "No face is assigned");
 }
 
 Face const &BspLeaf::face() const
@@ -333,7 +328,7 @@ void BspLeaf::assignPoly(Mesh *newPoly)
     if(newPoly && !newPoly->firstFace()->isConvex())
     {
         /// @throw InvalidPolygonError Attempted to assign a non-convex polygon.
-        throw InvalidPolygonError("BspLeaf::setPoly", "Non-convex polygons cannot be assigned");
+        throw InvalidPolygonError("BspLeaf::assignPoly", "Non-convex polygons cannot be assigned");
     }
 
     // Assign the new polygon (if any).

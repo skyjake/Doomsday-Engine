@@ -65,6 +65,36 @@ public:
     Face *newFace();
 
     /**
+     * Returns the total number of vertexes in the mesh.
+     */
+    //inline int vertexCount() const { return vertexes().count(); }
+
+    /**
+     * Returns the total number of faces in the mesh.
+     */
+    inline int faceCount() const { return faces().count(); }
+
+    /**
+     * Returns the total number of half-edges in the mesh.
+     */
+    inline int hedgeCount() const { return hedges().count(); }
+
+    /**
+     * Returns @c true iff there are no vertexes in the mesh.
+     */
+    //inline bool vertexesIsEmpty() const { return vertexes().isEmpty(); }
+
+    /**
+     * Returns @c true iff there are no faces in the mesh.
+     */
+    inline bool facesIsEmpty() const { return faces().isEmpty(); }
+
+    /**
+     * Returns @c true iff there are no half-edges in the mesh.
+     */
+    inline bool hedgesIsEmpty() const { return hedges().isEmpty(); }
+
+    /**
      * Provides access to the set of all vertexes in the mesh.
      */
     //Vertexes const &vertexes() const;
