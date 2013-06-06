@@ -113,6 +113,7 @@ public Font::RichFormat::IStyle
         switch(contentStyle)
         {
         default:
+        case Font::RichFormat::NormalStyle:
             sizeFactor = 1.f;
             fontWeight = Font::RichFormat::OriginalWeight;
             fontStyle  = Font::RichFormat::OriginalStyle;
