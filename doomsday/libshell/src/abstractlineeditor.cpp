@@ -150,7 +150,8 @@ DENG2_PIMPL(AbstractLineEditor)
     void insert(String const &str)
     {
         acceptCompletion();
-        text.insert(cursor++, str);
+        text.insert(cursor, str);
+        cursor += str.size();
         rewrapNow();
     }
 
