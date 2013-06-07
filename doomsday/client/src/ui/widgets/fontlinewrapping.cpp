@@ -30,20 +30,39 @@ static QChar const NEWLINE('\n');
 DENG2_PIMPL_NOREF(FontLineWrapping)
 {
     Font const *font;
-    struct Line {
-        WrappedLine line;
-        int width;
-        int indent;
 
-        Line(WrappedLine const &ln = WrappedLine(Rangei()), int w = 0, int ind = 0)
-            : line(ln), width(w), indent(ind) {}
+    struct Line
+    {
+        WrappedLine line;
+        LineInfo info;
+        int width; ///< Total width of the line (in pixels).
+
+        Line(WrappedLine const &ln = WrappedLine(Rangei()), int lineWidth = 0, int leftIndent = 0)
+            : line(ln), width(lineWidth)
+        {
+            info.indent = leftIndent;
+        }
     };
-    QList<Line> lines;
+
+    typedef QList<Line *> Lines;
+    Lines lines;
+
     String text;                ///< Plain text.
     Font::RichFormat format;
     int indent;                 ///< Current left indentation (in pixels).
 
     Instance() : font(0), indent(0) {}
+
+    ~Instance()
+    {
+        clearLines();
+    }
+
+    void clearLines()
+    {
+        qDeleteAll(lines);
+        lines.clear();
+    }
 
     String rangeText(Rangei const &range) const
     {
@@ -84,14 +103,52 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
         return markWidth;
     }
 
-    void appendLine(Rangei const &range)
+    void appendLine(Rangei const &range, int width = -1)
     {
+        if(width < 0)
+        {
+            // Determine the full width now.
+            width = rangeVisibleWidth(range);
+        }
+
+        Line *line = new Line(WrappedLine(range), width, indent);
+
+        // Determine segments in the line.
+        int tab = 0;
+        int pos = range.start;
+        Font::RichFormat rich = format.subRange(range);
+        Font::RichFormat::Iterator iter(rich);
+        while(iter.hasNext())
+        {
+            iter.next();
+
+            if(iter.tabStop() != Font::RichFormat::NoTabStop)
+            {
+                int const start = range.start + iter.range().start;
+                if(start > pos)
+                {
+                    line->info.segs << LineInfo::Segment(Rangei(pos, start), tab);
+                    pos = start;
+                }
+
+                if(iter.tabStop() == Font::RichFormat::NextTabStop)
+                {
+                    tab++;
+                }
+                else if(iter.tabStop() >= 0)
+                {
+                    tab = iter.tabStop();
+                }
+            }
+        }
+
+        // The final segment.
+        line->info.segs << LineInfo::Segment(Rangei(pos, range.end), tab);
+
+        lines << line;
+
         // Check for possible indent for following lines.
-        int indentMark = rangeIndentMarkWidth(range);
-
-        lines << Line(WrappedLine(range), rangeVisibleWidth(range), indent);
-
-        indent += indentMark;
+        indent += rangeIndentMarkWidth(range);
     }
 
     bool isAllSpace(Rangei const &range) const
@@ -148,6 +205,7 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
     {
         // Crude search.
         int end = findMaxWrapWithStep(8, begin, begin, availableWidth, NULL);
+
         // Accurate search.
         return findMaxWrapWithStep(1, begin, end, availableWidth, &wrapPosMax);
     }
@@ -180,7 +238,7 @@ void FontLineWrapping::clear()
 
 void FontLineWrapping::reset()
 {
-    d->lines.clear();
+    d->clearLines();
     d->indent = 0;
 }
 
@@ -221,7 +279,7 @@ void FontLineWrapping::wrapTextToWidth(String const &text, Font::RichFormat cons
             int visWidth = d->rangeAdvanceWidth(range);
             if(visWidth <= availWidth)
             {
-                d->lines << Instance::Line(WrappedLine(range), visWidth, d->indent);
+                d->appendLine(range, visWidth);
                 break;
             }
         }
@@ -268,15 +326,20 @@ void FontLineWrapping::wrapTextToWidth(String const &text, Font::RichFormat cons
     if(!d->lines.isEmpty())
     {
         // Mark the final line.
-        d->lines.last().line.isFinal = true;
+        d->lines.last()->line.isFinal = true;
     }
 
     /*
     qDebug() << "Wrapped:" << d->text;
-    foreach(Instance::Line const &ln, d->lines)
+    foreach(Instance::Line const *ln, d->lines)
     {
-        qDebug() << ln.line.range.asText() << d->text.substr(ln.line.range)
-                 << "indent:" << ln.indent << "tabstart:" << ln.tabStart;
+        qDebug() << ln->line.range.asText() << d->text.substr(ln->line.range)
+                 << "indent:" << ln->info.indent << "segments:" << ln->info.segs.size();
+        foreach(LineInfo::Segment const &s, ln->info.segs)
+        {
+            qDebug() << "- seg" << s.range.asText() << d->text.substr(s.range)
+                     << "tab:" << s.tabStop;
+        }
     }
     */
 }
@@ -289,7 +352,7 @@ String const &FontLineWrapping::text() const
 WrappedLine FontLineWrapping::line(int index) const
 {
     DENG2_ASSERT(index >= 0 && index < height());
-    return d->lines[index].line;
+    return d->lines[index]->line;
 }
 
 int FontLineWrapping::width() const
@@ -297,7 +360,7 @@ int FontLineWrapping::width() const
     int w = 0;
     for(int i = 0; i < d->lines.size(); ++i)
     {
-        w = de::max(w, d->lines[i].width);
+        w = de::max(w, d->lines[i]->width);
     }
     return w;
 }
@@ -357,7 +420,7 @@ Vector2i FontLineWrapping::charTopLeftInPixels(int line, int charIndex)
 {    
     if(line >= height()) return Vector2i();
 
-    WrappedLine const span = d->lines[line].line;
+    WrappedLine const span = d->lines[line]->line;
     Rangei const range(span.range.start,
                        de::min(span.range.end, span.range.start + charIndex));
 
@@ -368,7 +431,7 @@ Vector2i FontLineWrapping::charTopLeftInPixels(int line, int charIndex)
     return cp;
 }
 
-int FontLineWrapping::lineIndent(int index) const
+FontLineWrapping::LineInfo const &FontLineWrapping::lineInfo(int index) const
 {
-    return d->lines[index].indent;
+    return d->lines[index]->info;
 }

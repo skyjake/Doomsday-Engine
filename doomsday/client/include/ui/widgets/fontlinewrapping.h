@@ -78,12 +78,25 @@ public:
      */
     de::Vector2i charTopLeftInPixels(int line, int charIndex);
 
+    struct LineInfo
+    {
+        struct Segment {
+            de::Rangei range;
+            int tabStop;
+            Segment(de::Rangei const &r, int tab = 0) : range(r), tabStop(tab) {}
+        };
+        typedef QList<Segment> Segments;
+        Segments segs;
+
+        int indent; ///< Left indentation to apply to the entire line.
+    };
+
     /**
      * Returns the left indentation for a wrapped line.
      *
      * @param index  Wrapped line number.
      */
-    int lineIndent(int index) const;
+    LineInfo const &lineInfo(int index) const;
 
 private:
     DENG2_PRIVATE(d)

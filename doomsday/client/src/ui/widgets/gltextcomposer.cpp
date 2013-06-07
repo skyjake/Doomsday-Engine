@@ -219,7 +219,7 @@ void GLTextComposer::makeVertices(Vertices &triStrip,
             Vector2ui const size = d->atlas->imageRect(d->lines[i].id).size();
             Rectanglef const uv  = d->atlas->imageRectf(d->lines[i].id);
 
-            Vector2f linePos = p + Vector2f(d->wraps->lineIndent(i), 0);
+            Vector2f linePos = p + Vector2f(d->wraps->lineInfo(i).indent, 0);
 
             // Align the line.
             if(lineAlign.testFlag(AlignRight))
