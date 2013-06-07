@@ -1,4 +1,4 @@
-/** @file map/face.h World Map Face Geometry.
+/** @file data/face.h Mesh Geometry Face.
  *
  * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
  *
@@ -17,31 +17,25 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_WORLD_MAP_FACE
-#define DENG_WORLD_MAP_FACE
+#ifndef DENG_DATA_MESH_FACE_H
+#define DENG_DATA_MESH_FACE_H
 
 #include <de/aabox.h>
 
 #include <de/Vector>
 
-#include "MapElement"
+#include "Mesh"
 
 namespace de {
 
-class HEdge;
-class Mesh;
-
 /**
- * Face geometry.
+ * Mesh face geometry.
  *
- * @ingroup map
+ * @ingroup data
  */
-class Face
+class Face : public Mesh::Element
 {
-    DENG2_NO_COPY  (Face)
-    DENG2_NO_ASSIGN(Face)
-
-public:
+public: /// @todo make private:
     /// Total number of half-edge's in the face geometry.
     int _hedgeCount;
 
@@ -49,9 +43,9 @@ public:
     explicit Face(Mesh &mesh);
 
     /**
-     * Returns the mesh the face is a part of.
+     * Total number of half-edges in the face geometry.
      */
-    Mesh &mesh() const;
+    int hedgeCount() const;
 
     /**
      * Returns a pointer to the first half-edge in the face geometry (note that
@@ -61,14 +55,9 @@ public:
     HEdge *hedge() const;
 
     /**
-     * Total number of half-edges in the face geometry.
-     */
-    int hedgeCount() const;
-
-    /**
      * Change the first half-edge in the face geometry.
      */
-    void setHEdge(HEdge *newHEdge);
+    void setHEdge(HEdge const *newHEdge);
 
     /**
      * Returns the axis-aligned bounding box which encompases all the vertexes
@@ -105,28 +94,10 @@ public:
     bool isConvex() const;
 
     /**
-     * Returns a pointer to the map element attributed to the face. May return @c 0
-     * if not attributed.
+     * Returns a textual human-readable description/representation of the face
+     * suitable for writing to the application's output log.
      */
-    MapElement *mapElement() const;
-
-    /**
-     * Change the MapElement to which the face is attributed.
-     *
-     * @param newMapElement  New MapElement to attribute to the face. Ownership is
-     *                       unaffected. Can be @c 0 (to clear the attribution).
-     *
-     * @see mapElement()
-     */
-    void setMapElement(MapElement *newMapElement);
-
-#ifdef DENG_DEBUG
-    /**
-     * Output a textual, human-readable description/representation of the face to
-     * the application's output log.
-     */
-    void print() const;
-#endif
+    String description() const;
 
 private:
     DENG2_PRIVATE(d)
@@ -134,4 +105,4 @@ private:
 
 } // namespace de
 
-#endif // DENG_WORLD_MAP_FACE
+#endif // DENG_DATA_MESH_FACE_H

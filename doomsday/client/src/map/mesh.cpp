@@ -27,6 +27,37 @@
 
 namespace de {
 
+DENG2_PIMPL_NOREF(Mesh::Element)
+{
+    /// Mesh owner of the element.
+    Mesh &mesh;
+
+    /// MapElement to which the mesh element is attributed (if any).
+    MapElement *mapElement;
+
+    Instance(Mesh &mesh) : mesh(mesh), mapElement(0)
+    {}
+};
+
+Mesh::Element::Element(Mesh &mesh)
+    : d(new Instance(mesh))
+{}
+
+Mesh &Mesh::Element::mesh() const
+{
+    return d->mesh;
+}
+
+MapElement *Mesh::Element::mapElement() const
+{
+    return d->mapElement;
+}
+
+void Mesh::Element::setMapElement(MapElement const *newMapElement)
+{
+    d->mapElement = const_cast<MapElement *>(newMapElement);
+}
+
 DENG2_PIMPL(Mesh)
 {
     /// All vertexes in the mesh.

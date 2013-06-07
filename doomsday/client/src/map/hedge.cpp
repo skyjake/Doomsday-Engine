@@ -1,4 +1,4 @@
-/** @file map/hedge.cpp World Map Geometry Half-Edge.
+/** @file data/hedge.cpp Mesh Geometry Half-Edge.
  *
  * @authors Copyright © 2011-2013 Daniel Swanson <danij@dengine.net>
  *
@@ -17,23 +17,24 @@
  * 02110-1301 USA</small>
  */
 
-#include "Mesh"
-#include "Vertex"
+#include <de/Log>
+
+#include "Face"
 
 #include "map/hedge.h"
 
 namespace de {
 
-DENG2_PIMPL(HEdge)
+DENG2_PIMPL_NOREF(HEdge)
 {
-    /// Mesh owner of the half-edge.
-    Mesh *mesh;
-
     /// Vertex of the half-edge.
     Vertex *vertex;
 
     /// Linked @em twin half-edge (that on the other side of "this" half-edge).
     HEdge *twin;
+
+    /// Face geometry to which the half-edge is attributed (if any).
+    Face *face;
 
     /// Next half-edge (clockwise) around the @em face.
     HEdge *next;
@@ -41,21 +42,12 @@ DENG2_PIMPL(HEdge)
     /// Previous half-edge (anticlockwise) around the @em face.
     HEdge *prev;
 
-    /// Face geometry to which the half-edge is attributed (if any).
-    Face *face;
-
-    /// MapElement to which the half-edge is attributed (if any).
-    MapElement *mapElement;
-
-    Instance(Public *i, Mesh &mesh, Vertex &vertex)
-        : Base(i),
-          mesh(&mesh),
-          vertex(&vertex),
+    Instance(Vertex &vertex)
+        : vertex(&vertex),
           twin(0),
-          next(0),
-          prev(0),
           face(0),
-          mapElement(0)
+          next(0),
+          prev(0)
     {}
 
     inline HEdge **neighborAdr(ClockDirection direction) {
@@ -64,39 +56,12 @@ DENG2_PIMPL(HEdge)
 };
 
 HEdge::HEdge(Mesh &mesh, Vertex &vertex)
-    : d(new Instance(this, mesh, vertex))
+    : Mesh::Element(mesh), d(new Instance(vertex))
 {}
-
-Mesh &HEdge::mesh() const
-{
-    DENG_ASSERT(d->mesh != 0);
-    return *d->mesh;
-}
 
 Vertex &HEdge::vertex() const
 {
     return *d->vertex;
-}
-
-bool HEdge::hasNeighbor(ClockDirection direction) const
-{
-    return (*d->neighborAdr(direction)) != 0;
-}
-
-HEdge &HEdge::neighbor(ClockDirection direction) const
-{
-    HEdge **neighborAdr = d->neighborAdr(direction);
-    if(*neighborAdr)
-    {
-        return **neighborAdr;
-    }
-    /// @throw MissingNeighborError Attempted with no relevant neighbor attributed.
-    throw MissingNeighborError("HEdge::neighbor", QString("No %1 neighbor is attributed").arg(direction == Clockwise? "Clockwise" : "Anticlockwise"));
-}
-
-void HEdge::setNeighbor(ClockDirection direction, HEdge const *newNeighbor)
-{
-    *d->neighborAdr(direction) = const_cast<HEdge *>(newNeighbor);
 }
 
 bool HEdge::hasTwin() const
@@ -139,14 +104,25 @@ void HEdge::setFace(Face const *newFace)
     d->face = const_cast<Face *>(newFace);
 }
 
-MapElement *HEdge::mapElement() const
+bool HEdge::hasNeighbor(ClockDirection direction) const
 {
-    return d->mapElement;
+    return (*d->neighborAdr(direction)) != 0;
 }
 
-void HEdge::setMapElement(MapElement *newMapElement)
+HEdge &HEdge::neighbor(ClockDirection direction) const
 {
-    d->mapElement = newMapElement;
+    HEdge **neighborAdr = d->neighborAdr(direction);
+    if(*neighborAdr)
+    {
+        return **neighborAdr;
+    }
+    /// @throw MissingNeighborError Attempted with no relevant neighbor attributed.
+    throw MissingNeighborError("HEdge::neighbor", QString("No %1 neighbor is attributed").arg(direction == Clockwise? "Clockwise" : "Anticlockwise"));
+}
+
+void HEdge::setNeighbor(ClockDirection direction, HEdge const *newNeighbor)
+{
+    *d->neighborAdr(direction) = const_cast<HEdge *>(newNeighbor);
 }
 
 } // namespace de

@@ -1,4 +1,4 @@
-/** @file map/face.cpp World Map Face Geometry.
+/** @file data/face.cpp Mesh Geometry Face.
  *
  * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
  *
@@ -22,22 +22,15 @@
 #include <de/Log>
 
 #include "HEdge"
-#include "Mesh"
 
-#include "Face"
+#include "map/face.h"
 
 namespace de {
 
 DENG2_PIMPL_NOREF(Face)
 {
-    /// Mesh which owns the face.
-    Mesh *mesh;
-
     /// First half-edge in the face geometry.
     HEdge *hedge;
-
-    /// MapElement to which the half-edge is attributed (if any).
-    MapElement *mapElement;
 
     /// Vertex bounding box.
     AABoxd aaBox;
@@ -45,21 +38,19 @@ DENG2_PIMPL_NOREF(Face)
     /// Center of vertices.
     Vector2d center;
 
-    Instance(Mesh &mesh)
-        : mesh(&mesh),
-          hedge(0),
-          mapElement(0)
+    Instance() : hedge(0)
     {}
 };
 
 Face::Face(Mesh &mesh)
-    : _hedgeCount(0), d(new Instance(mesh))
+    : Mesh::Element(mesh),
+      _hedgeCount(0),
+      d(new Instance())
 {}
 
-Mesh &Face::mesh() const
+int Face::hedgeCount() const
 {
-    DENG_ASSERT(d->mesh != 0);
-    return *d->mesh;
+    return _hedgeCount;
 }
 
 HEdge *Face::hedge() const
@@ -67,14 +58,9 @@ HEdge *Face::hedge() const
     return d->hedge;
 }
 
-void Face::setHEdge(HEdge *newHEdge)
+void Face::setHEdge(HEdge const *newHEdge)
 {
-    d->hedge = newHEdge;
-}
-
-int Face::hedgeCount() const
-{
-    return _hedgeCount;
+    d->hedge = const_cast<HEdge *>(newHEdge);
 }
 
 AABoxd const &Face::aaBox() const
@@ -88,12 +74,12 @@ void Face::updateAABox()
 
     if(!d->hedge) return; // Very odd...
 
-    HEdge *hedgeIt = d->hedge;
-    V2d_InitBoxXY(d->aaBox.arvec2, hedgeIt->origin().x, hedgeIt->origin().y);
+    HEdge const *hedge = d->hedge;
+    V2d_InitBoxXY(d->aaBox.arvec2, hedge->origin().x, hedge->origin().y);
 
-    while((hedgeIt = &hedgeIt->next()) != d->hedge)
+    while((hedge = &hedge->next()) != d->hedge)
     {
-        V2d_AddToBoxXY(d->aaBox.arvec2, hedgeIt->origin().x, hedgeIt->origin().y);
+        V2d_AddToBoxXY(d->aaBox.arvec2, hedge->origin().x, hedge->origin().y);
     }
 }
 
@@ -105,7 +91,8 @@ Vector2d const &Face::center() const
 void Face::updateCenter()
 {
     // The center is the middle of our AABox.
-    d->center = Vector2d(d->aaBox.min) + (Vector2d(d->aaBox.max) - Vector2d(d->aaBox.min)) / 2;
+    d->center = Vector2d(d->aaBox.min)
+              + (Vector2d(d->aaBox.max) - Vector2d(d->aaBox.min)) / 2;
 }
 
 bool Face::isConvex() const
@@ -114,35 +101,28 @@ bool Face::isConvex() const
     return _hedgeCount > 2;
 }
 
-MapElement *Face::mapElement() const
+String Face::description() const
 {
-    return d->mapElement;
-}
+    String text = String("Face [0x%1] comprises %2 half-edges")
+            .arg(de::dintptr(this), 0, 16).arg(_hedgeCount);
 
-void Face::setMapElement(MapElement *newMapElement)
-{
-    d->mapElement = newMapElement;
-}
-
-#ifdef DENG_DEBUG
-void Face::print() const
-{
-    if(!d->hedge) return;
-
-    LOG_INFO("Half-edges:");
-    HEdge const *hedgeIt = d->hedge;
-    do
+    if(HEdge const *hedge = d->hedge)
     {
-        HEdge const &hedge = *hedgeIt;
-        coord_t angle = M_DirectionToAngleXY(hedge.origin().x - d->center.x,
-                                             hedge.origin().y - d->center.y);
+        do
+        {
+            Vector2d direction = hedge->origin() - d->center;
+            coord_t angle      = M_DirectionToAngleXY(direction.x, direction.y);
 
-        LOG_INFO("  [%p]: Angle %1.6f %s -> %s")
-            << de::dintptr(&hedge) << angle
-            << hedge.origin().asText() << hedge.twin().origin().asText();
+            text += String("\n  [0x%1]: Angle %2.6f %3 -> %4")
+                        .arg(de::dintptr(hedge), 0, 16)
+                        .arg(angle)
+                        .arg(hedge->origin().asText())
+                        .arg(hedge->twin().origin().asText());
 
-    } while((hedgeIt = &hedgeIt->next()) != d->hedge);
+        } while((hedge = &hedge->next()) != d->hedge);
+    }
+
+    return text;
 }
-#endif
 
 } // namespace de

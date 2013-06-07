@@ -17,12 +17,12 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_DATA_MESH
-#define DENG_DATA_MESH
+#ifndef DENG_DATA_MESH_H
+#define DENG_DATA_MESH_H
 
 #include <QSet>
 
-#include <de/libdeng2.h>
+#include "MapElement"
 
 class Vertex;
 
@@ -45,6 +45,45 @@ public:
     //typedef QSet<Vertex *> Vertexes;
     typedef QSet<Face *> Faces;
     typedef QSet<HEdge *> HEdges;
+
+    /**
+     * Base class for all elements of a mesh.
+     */
+    class Element
+    {
+        DENG2_NO_COPY  (Element)
+        DENG2_NO_ASSIGN(Element)
+
+    public:
+        explicit Element(Mesh &mesh);
+
+        virtual ~Element() {}
+
+        /**
+         * Returns the mesh the element is a part of.
+         */
+        Mesh &mesh() const;
+
+        /**
+         * Returns a pointer to the map element attributed to the mesh element.
+         * May return @c 0 if not attributed.
+         */
+        MapElement *mapElement() const;
+
+        /**
+         * Change the map element to which the mesh element is attributed.
+         *
+         * @param newMapElement  MapElement to attribute to the mesh element.
+         *                       Ownership is unaffected. Can be @c 0 (to
+         *                       clear the attribution).
+         *
+         * @see mapElement()
+         */
+        void setMapElement(MapElement const *newMapElement);
+
+    private:
+        DENG2_PRIVATE(d)
+    };
 
 public:
     Mesh();
@@ -122,4 +161,4 @@ private:
 
 } // namespace de
 
-#endif // DENG_DATA_MESH
+#endif // DENG_DATA_MESH_H
