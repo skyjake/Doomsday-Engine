@@ -43,7 +43,7 @@ namespace de {
  * Helper/utility class intended to simplify the process of generating
  * sections of wall geometry from a map Line segment.
  *
- * @ingroup map
+ * @ingroup world
  */
 class WallEdge : public WorldEdge
 {

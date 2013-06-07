@@ -1,6 +1,6 @@
 /**
  * @file entitydatabase.h
- * Entity property value database. @ingroup map
+ * Entity property value database. @ingroup world
  *
  * The EntityDatabase is used in the process of transferring mobj spawn spot
  * information and stuff like line action specials from the wad map loader

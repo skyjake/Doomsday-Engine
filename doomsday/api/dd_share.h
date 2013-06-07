@@ -296,15 +296,15 @@ enum {
 
 //------------------------------------------------------------------------
 //
-// Map Data
+// World Data
 //
 //------------------------------------------------------------------------
 
-/// @defgroup map Map Data
+/// @defgroup world World Data
 
 /**
  * @defgroup dmu Map Update (DMU)
- * @ingroup map
+ * @ingroup world
  */
 ///@{
 
@@ -483,14 +483,14 @@ typedef struct ddmobj_base_s {
     DD_BASE_DDMOBJ_ELEMENTS()
 } ddmobj_base_t;
 
-/// R_SetupMap() modes. @ingroup map
+/// R_SetupMap() modes. @ingroup world
 enum {
     DDSMM_AFTER_LOADING,    ///< After loading a savegame...
     DDSMM_FINALIZE,         ///< After everything else is done.
     DDSMM_INITIALIZE        ///< Before anything else if done.
 };
 
-/// Sector reverb data indices. @ingroup map
+/// Sector reverb data indices. @ingroup world
 enum {
     SRD_VOLUME,
     SRD_SPACE,
@@ -499,10 +499,10 @@ enum {
     NUM_REVERB_DATA
 };
 
-/// Environmental audio characteristics. @ingroup map
+/// Environmental audio characteristics. @ingroup world
 typedef float AudioEnvironmentFactors[NUM_REVERB_DATA];
 
-/// Side section indices. @ingroup map
+/// Side section indices. @ingroup world
 typedef enum sidesection_e {
     SS_MIDDLE,
     SS_BOTTOM,
@@ -511,7 +511,7 @@ typedef enum sidesection_e {
 
 #define VALID_SIDESECTION(v) ((v) >= SS_MIDDLE && (v) <= SS_TOP)
 
-/// Helper macro for converting SideSection indices to their associated DMU flag. @ingroup map
+/// Helper macro for converting SideSection indices to their associated DMU flag. @ingroup world
 #define DMU_FLAG_FOR_SIDESECTION(s) (\
     (s) == SS_MIDDLE? DMU_MIDDLE_OF_SIDE : \
     (s) == SS_BOTTOM? DMU_BOTTOM_OF_SIDE : DMU_TOP_OF_SIDE)
@@ -584,7 +584,7 @@ typedef struct traceopening_s {
 //------------------------------------------------------------------------
 
 /// @defgroup mobj Map Objects
-/// @ingroup map
+/// @ingroup world
 
 /**
  * Linknodes are used when linking mobjs to lines. Each mobj has a ring
@@ -702,7 +702,7 @@ enum { MX, MY, MZ };
     int             health;\
     mobjinfo_t     *info; /* &mobjinfo[mobj->type] */
 
-/// Base Polyobj elements. Games MUST use this as the basis for Polyobj. @ingroup map
+/// Base Polyobj elements. Games MUST use this as the basis for Polyobj. @ingroup world
 #define DD_BASE_POLYOBJ_ELEMENTS() \
     DD_BASE_DDMOBJ_ELEMENTS() \
 \

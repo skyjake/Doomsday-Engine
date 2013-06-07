@@ -1,5 +1,5 @@
 /** @file world/p_maptypes.h Convenience header for including all map data types.
- * @ingroup map
+ * @ingroup world
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>

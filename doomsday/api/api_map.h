@@ -3,7 +3,7 @@
  * World data comprises the map and all the objects in it. The public API
  * includes accessing and modifying map data objects via DMU.
  *
- * @ingroup map
+ * @ingroup world
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -160,7 +160,7 @@ typedef void const *MapElementPtrConst;
 extern "C" {
 #endif
 
-/// @addtogroup map
+/// @addtogroup world
 ///@{
 
 DENG_API_TYPEDEF(Map)
@@ -623,7 +623,7 @@ DENG_API_T(Map);
 #define P_FreeDummy                         _api_Map.FreeDummy
 #define P_IsDummy                           _api_Map.IsDummy
 #define P_DummyExtraData                    _api_Map.DummyExtraData
-#define P_CountMapObjs                  _api_Map.CountMapObjs
+#define P_CountMapObjs                      _api_Map.CountMapObjs
 #define P_GetGMOByte                        _api_Map.GetGMOByte
 #define P_GetGMOShort                       _api_Map.GetGMOShort
 #define P_GetGMOInt                         _api_Map.GetGMOInt

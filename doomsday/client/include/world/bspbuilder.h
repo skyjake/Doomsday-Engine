@@ -33,7 +33,7 @@ namespace de {
  *
  * BspBuilder constructs a BSP object object tree for the specified map.
  *
- * @ingroup map
+ * @ingroup world
  */
 class BspBuilder
 {

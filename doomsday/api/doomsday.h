@@ -113,7 +113,7 @@
 
 /**
  * @defgroup polyobj Polygon Objects
- * @ingroup map
+ * @ingroup world
  */
 
 /**

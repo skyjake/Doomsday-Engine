@@ -1,5 +1,5 @@
 /** @file api_mapedit.h Public API for creating maps.
- * @ingroup map
+ * @ingroup world
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
@@ -26,7 +26,7 @@
 #include "api_base.h"
 
 /// @defgroup mapEdit Map Editor
-/// @ingroup map
+/// @ingroup world
 ///@{
 
 /// Value types.

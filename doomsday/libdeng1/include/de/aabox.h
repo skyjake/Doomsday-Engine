@@ -26,7 +26,7 @@
 
 /**
  * Axis-aligned bounding box with integer precision.
- * Handy POD structure for manipulation of bounding boxes. @ingroup map
+ * Handy POD structure for manipulation of bounding boxes. @ingroup world
  */
 typedef struct aabox_s {
     union {
@@ -71,7 +71,7 @@ typedef struct aabox_s {
 
 /**
  * Axis-aligned bounding box with floating-point precision.
- * Handy POD structure for manipulation of bounding boxes. @ingroup map
+ * Handy POD structure for manipulation of bounding boxes. @ingroup world
  */
 typedef struct aaboxf_s {
     union {
@@ -116,7 +116,7 @@ typedef struct aaboxf_s {
 
 /**
  * Axis-aligned bounding box with double floating-point precision.
- * Handy POD structure for manipulation of bounding boxes. @ingroup map
+ * Handy POD structure for manipulation of bounding boxes. @ingroup world
  */
 typedef struct aaboxd_s {
     union {

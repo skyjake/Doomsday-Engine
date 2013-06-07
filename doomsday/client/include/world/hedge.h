@@ -31,7 +31,7 @@ namespace de {
 /**
  * Mesh half-edge geometry.
  *
- * @ingroup map
+ * @ingroup world
  */
 class HEdge : public Mesh::Element
 {
