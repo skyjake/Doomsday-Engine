@@ -59,6 +59,7 @@ struct Font::RichFormat::Instance
         FormatRange(Rangei const &r = Rangei(), Format const &frm = Format())
             : range(r), format(frm) {}
     };
+
     typedef QList<FormatRange> Ranges;
     Ranges ranges;
 

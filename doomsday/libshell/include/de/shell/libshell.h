@@ -42,7 +42,9 @@
 namespace de {
 namespace shell {
 
-/// Line of word-wrapped text.
+/**
+ * Line of word-wrapped text.
+ */
 struct LIBSHELL_PUBLIC WrappedLine
 {
     Rangei range;
