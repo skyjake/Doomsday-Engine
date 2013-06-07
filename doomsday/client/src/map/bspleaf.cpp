@@ -1,4 +1,4 @@
-/** @file map/bspleaf.cpp World Map BSP Leaf.
+/** @file world/bspleaf.cpp World BSP Leaf.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -23,16 +23,13 @@
 #include <QSet>
 #include <QtAlgorithms>
 
-#include <de/mathutil.h>
 #include <de/memoryzone.h>
 
 #include <de/Log>
 
-#include "Mesh"
 #include "Polyobj"
 #include "Sector"
 #include "Segment"
-#include "Vertex"
 
 #ifdef __CLIENT__
 #  include "render/rend_bias.h"
@@ -101,11 +98,11 @@ DENG2_PIMPL(BspLeaf)
     /// Used by legacy algorithms to prevent repeated processing.
     int validCount;
 
-    Instance(Public *i, Sector *sector_ = 0)
+    Instance(Public *i, Sector *sector = 0)
         : Base(i),
           needUpdateClockwiseSegments(false),
           needUpdateAllSegments(false),
-          sector(sector_),
+          sector(sector),
           polyobj(0),
 #ifdef __CLIENT__
           fanBase(0),
@@ -171,13 +168,13 @@ DENG2_PIMPL(BspLeaf)
 
             if(discontinuities)
             {
-                LOG_WARNING("Face geometry for BSP leaf [%p] (at %s) in sector %i "
-                            "is not contiguous %i gaps/overlaps (%i half-edges).")
+                LOG_WARNING("Face geometry for BSP leaf [%p] at %s in sector %i "
+                            "is not contiguous (%i gaps/overlaps).\n%s")
                     << de::dintptr(&self)
                     << face.center().asText()
                     << sector->indexInArchive()
-                    << discontinuities << face.hedgeCount();
-                face.print();
+                    << discontinuities
+                    << face.description();
             }
         }
 #endif
@@ -298,8 +295,7 @@ DENG2_PIMPL(BspLeaf)
 };
 
 BspLeaf::BspLeaf(Sector *sector)
-    : MapElement(DMU_BSPLEAF),
-      d(new Instance(this, sector))
+    : MapElement(DMU_BSPLEAF), d(new Instance(this, sector))
 {
 #ifdef __CLIENT__
     _shadows = 0;
@@ -312,7 +308,7 @@ bool BspLeaf::hasFace() const
     return !d->polygon.isNull();
 }
 
-Face &BspLeaf::face()
+Face const &BspLeaf::face() const
 {
     if(!d->polygon.isNull())
     {
@@ -320,11 +316,6 @@ Face &BspLeaf::face()
     }
     /// @throw MissingFaceError Attempted with no face assigned.
     throw MissingFaceError("BspLeaf::face", "No face is assigned");
-}
-
-Face const &BspLeaf::face() const
-{
-    return const_cast<Face const &>(const_cast<BspLeaf *>(this)->face());
 }
 
 void BspLeaf::assignPoly(Mesh *newPoly)
@@ -365,6 +356,9 @@ void BspLeaf::assignExtraMesh(Mesh &newMesh)
 
     if(d->extraMeshes.size() != sizeBefore)
     {
+        LOG_AS("BspLeaf");
+        LOG_DEBUG("Assigned extra mesh to leaf [%p].") << de::dintptr(this);
+
         // Attribute all faces to "this" BSP leaf.
         foreach(Face *face, newMesh.faces())
         {
