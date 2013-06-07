@@ -33,8 +33,8 @@
 #include "de_play.h"
 #include "de_defs.h"
 
-#include "map/gamemap.h"
-#include "map/linesighttest.h"
+#include "world/gamemap.h"
+#include "world/linesighttest.h"
 #include "MaterialSnapshot"
 #include "MaterialVariantSpec"
 #include "Texture"

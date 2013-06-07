@@ -185,46 +185,6 @@ DENG_HEADERS += \
     $$SRC/include/m_misc.h \
     $$SRC/include/m_nodepile.h \
     $$SRC/include/m_profiler.h \
-    $$SRC/include/map/blockmap.h \
-    $$SRC/include/map/bsp/bsptreenode.h \
-    $$SRC/include/map/bsp/convexsubspace.h \
-    $$SRC/include/map/bsp/edgetip.h \
-    $$SRC/include/map/bsp/hplane.h \
-    $$SRC/include/map/bsp/linesegment.h \
-    $$SRC/include/map/bsp/partitioncost.h \
-    $$SRC/include/map/bsp/partitioner.h \
-    $$SRC/include/map/bsp/superblockmap.h \
-    $$SRC/include/map/bspbuilder.h \
-    $$SRC/include/map/bspleaf.h \
-    $$SRC/include/map/bspnode.h \
-    $$SRC/include/map/dam_file.h \
-    $$SRC/include/map/entitydatabase.h \
-    $$SRC/include/map/face.h \
-    $$SRC/include/map/gamemap.h \
-    $$SRC/include/map/generators.h \
-    $$SRC/include/map/hedge.h \
-    $$SRC/include/map/line.h \
-    $$SRC/include/map/lineowner.h \
-    $$SRC/include/map/linesighttest.h \
-    $$SRC/include/map/mesh.h \
-    $$SRC/include/map/p_dmu.h \
-    $$SRC/include/map/p_intercept.h \
-    $$SRC/include/map/p_mapdata.h \
-    $$SRC/include/map/p_maptypes.h \
-    $$SRC/include/map/p_maputil.h \
-    $$SRC/include/map/p_object.h \
-    $$SRC/include/map/p_particle.h \
-    $$SRC/include/map/p_players.h \
-    $$SRC/include/map/p_ticker.h \
-    $$SRC/include/map/plane.h \
-    $$SRC/include/map/polyobj.h \
-    $$SRC/include/map/propertyvalue.h \
-    $$SRC/include/map/r_world.h \
-    $$SRC/include/map/reject.h \
-    $$SRC/include/map/sector.h \
-    $$SRC/include/map/segment.h \
-    $$SRC/include/map/surface.h \
-    $$SRC/include/map/vertex.h \
     $$SRC/include/network/masterserver.h \
     $$SRC/include/network/monitor.h \
     $$SRC/include/network/net_buf.h \
@@ -267,7 +227,47 @@ DENG_HEADERS += \
     $$SRC/include/ui/finaleinterpreter.h \
     $$SRC/include/ui/p_control.h \
     $$SRC/include/ui/ui2_main.h \
-    $$SRC/include/uri.hh
+    $$SRC/include/uri.hh \
+    $$SRC/include/world/blockmap.h \
+    $$SRC/include/world/bsp/bsptreenode.h \
+    $$SRC/include/world/bsp/convexsubspace.h \
+    $$SRC/include/world/bsp/edgetip.h \
+    $$SRC/include/world/bsp/hplane.h \
+    $$SRC/include/world/bsp/linesegment.h \
+    $$SRC/include/world/bsp/partitioncost.h \
+    $$SRC/include/world/bsp/partitioner.h \
+    $$SRC/include/world/bsp/superblockmap.h \
+    $$SRC/include/world/bspbuilder.h \
+    $$SRC/include/world/bspleaf.h \
+    $$SRC/include/world/bspnode.h \
+    $$SRC/include/world/dam_file.h \
+    $$SRC/include/world/entitydatabase.h \
+    $$SRC/include/world/face.h \
+    $$SRC/include/world/gamemap.h \
+    $$SRC/include/world/generators.h \
+    $$SRC/include/world/hedge.h \
+    $$SRC/include/world/line.h \
+    $$SRC/include/world/lineowner.h \
+    $$SRC/include/world/linesighttest.h \
+    $$SRC/include/world/mesh.h \
+    $$SRC/include/world/p_dmu.h \
+    $$SRC/include/world/p_intercept.h \
+    $$SRC/include/world/p_mapdata.h \
+    $$SRC/include/world/p_maptypes.h \
+    $$SRC/include/world/p_maputil.h \
+    $$SRC/include/world/p_object.h \
+    $$SRC/include/world/p_particle.h \
+    $$SRC/include/world/p_players.h \
+    $$SRC/include/world/p_ticker.h \
+    $$SRC/include/world/plane.h \
+    $$SRC/include/world/polyobj.h \
+    $$SRC/include/world/propertyvalue.h \
+    $$SRC/include/world/r_world.h \
+    $$SRC/include/world/reject.h \
+    $$SRC/include/world/sector.h \
+    $$SRC/include/world/segment.h \
+    $$SRC/include/world/surface.h \
+    $$SRC/include/world/vertex.h
 
 INCLUDEPATH += \
     include \
@@ -362,43 +362,6 @@ SOURCES += \
     $$SRC/src/m_decomp64.cpp \
     $$SRC/src/m_misc.cpp \
     $$SRC/src/m_nodepile.cpp \
-    $$SRC/src/map/blockmap.cpp \
-    $$SRC/src/map/bsp/convexsubspace.cpp \
-    $$SRC/src/map/bsp/hplane.cpp \
-    $$SRC/src/map/bsp/linesegment.cpp \
-    $$SRC/src/map/bsp/partitioner.cpp \
-    $$SRC/src/map/bsp/superblockmap.cpp \
-    $$SRC/src/map/bspbuilder.cpp \
-    $$SRC/src/map/bspleaf.cpp \
-    $$SRC/src/map/bspnode.cpp \
-    $$SRC/src/map/dam_file.cpp \
-    $$SRC/src/map/entitydatabase.cpp \
-    $$SRC/src/map/face.cpp \
-    $$SRC/src/map/gamemap.cpp \
-    $$SRC/src/map/generators.cpp \
-    $$SRC/src/map/hedge.cpp \
-    $$SRC/src/map/line.cpp \
-    $$SRC/src/map/linesighttest.cpp \
-    $$SRC/src/map/mapelement.cpp \
-    $$SRC/src/map/mesh.cpp \
-    $$SRC/src/map/p_data.cpp \
-    $$SRC/src/map/p_dmu.cpp \
-    $$SRC/src/map/p_intercept.cpp \
-    $$SRC/src/map/p_maputil.cpp \
-    $$SRC/src/map/p_mobj.cpp \
-    $$SRC/src/map/p_particle.cpp \
-    $$SRC/src/map/p_players.cpp \
-    $$SRC/src/map/p_think.cpp \
-    $$SRC/src/map/p_ticker.cpp \
-    $$SRC/src/map/plane.cpp \
-    $$SRC/src/map/polyobj.cpp \
-    $$SRC/src/map/propertyvalue.cpp \
-    $$SRC/src/map/r_world.cpp \
-    $$SRC/src/map/reject.cpp \
-    $$SRC/src/map/sector.cpp \
-    $$SRC/src/map/segment.cpp \
-    $$SRC/src/map/surface.cpp \
-    $$SRC/src/map/vertex.cpp \
     $$SRC/src/network/masterserver.cpp \
     $$SRC/src/network/monitor.cpp \
     $$SRC/src/network/net_buf.cpp \
@@ -441,7 +404,44 @@ SOURCES += \
     $$SRC/src/ui/finaleinterpreter.cpp \
     $$SRC/src/ui/p_control.cpp \
     $$SRC/src/ui/ui2_main.cpp \
-    $$SRC/src/uri.cpp
+    $$SRC/src/uri.cpp \
+    $$SRC/src/world/blockmap.cpp \
+    $$SRC/src/world/bsp/convexsubspace.cpp \
+    $$SRC/src/world/bsp/hplane.cpp \
+    $$SRC/src/world/bsp/linesegment.cpp \
+    $$SRC/src/world/bsp/partitioner.cpp \
+    $$SRC/src/world/bsp/superblockmap.cpp \
+    $$SRC/src/world/bspbuilder.cpp \
+    $$SRC/src/world/bspleaf.cpp \
+    $$SRC/src/world/bspnode.cpp \
+    $$SRC/src/world/dam_file.cpp \
+    $$SRC/src/world/entitydatabase.cpp \
+    $$SRC/src/world/face.cpp \
+    $$SRC/src/world/gamemap.cpp \
+    $$SRC/src/world/generators.cpp \
+    $$SRC/src/world/hedge.cpp \
+    $$SRC/src/world/line.cpp \
+    $$SRC/src/world/linesighttest.cpp \
+    $$SRC/src/world/mapelement.cpp \
+    $$SRC/src/world/mesh.cpp \
+    $$SRC/src/world/p_data.cpp \
+    $$SRC/src/world/p_dmu.cpp \
+    $$SRC/src/world/p_intercept.cpp \
+    $$SRC/src/world/p_maputil.cpp \
+    $$SRC/src/world/p_mobj.cpp \
+    $$SRC/src/world/p_particle.cpp \
+    $$SRC/src/world/p_players.cpp \
+    $$SRC/src/world/p_think.cpp \
+    $$SRC/src/world/p_ticker.cpp \
+    $$SRC/src/world/plane.cpp \
+    $$SRC/src/world/polyobj.cpp \
+    $$SRC/src/world/propertyvalue.cpp \
+    $$SRC/src/world/r_world.cpp \
+    $$SRC/src/world/reject.cpp \
+    $$SRC/src/world/sector.cpp \
+    $$SRC/src/world/segment.cpp \
+    $$SRC/src/world/surface.cpp \
+    $$SRC/src/world/vertex.cpp
 
 OTHER_FILES += \
     data/cphelp.txt \

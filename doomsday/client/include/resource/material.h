@@ -24,7 +24,7 @@
 #include "MapElement"
 #include "def_data.h"
 #include "audio/s_environ.h"
-#include "map/p_dmu.h" // setargs_t
+#include "world/p_dmu.h" // setargs_t
 #ifdef __CLIENT__
 #  include "MaterialContext"
 #endif

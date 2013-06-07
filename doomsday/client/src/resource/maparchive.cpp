@@ -31,7 +31,7 @@
 #include "de_base.h"
 #include "de_edit.h"
 #include "de_filesys.h"
-#include "map/gamemap.h"
+#include "world/gamemap.h"
 
 #include "resource/maparchive.h"
 

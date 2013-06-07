@@ -33,7 +33,7 @@
 
 #include "render/r_main.h"
 #include "render/rend_main.h"
-#include "map/p_players.h"
+#include "world/p_players.h"
 
 // MACROS ------------------------------------------------------------------
 

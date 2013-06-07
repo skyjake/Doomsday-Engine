@@ -19,7 +19,7 @@
 
 #include "de_base.h"
 
-#include "map/p_players.h" // viewPlayer
+#include "world/p_players.h" // viewPlayer
 #include "render/rend_main.h"
 
 #include "render/walledge.h"

@@ -20,7 +20,7 @@
 #ifndef LIBDENG_SOUND_MAIN_H
 #define LIBDENG_SOUND_MAIN_H
 
-#include "map/p_object.h"
+#include "world/p_object.h"
 #include "def_main.h"
 #include "api_sound.h"
 #include "api_audiod.h"

@@ -23,7 +23,7 @@
 #include "de_render.h"
 #include "de_system.h"
 
-#include "map/gamemap.h"
+#include "world/gamemap.h"
 #include "MaterialSnapshot"
 #include "WallEdge"
 

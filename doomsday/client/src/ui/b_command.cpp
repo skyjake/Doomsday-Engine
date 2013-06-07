@@ -22,7 +22,7 @@
 #include "de_console.h"
 #include "de_misc.h"
 
-#include "map/p_players.h"
+#include "world/p_players.h"
 #include "ui/b_main.h"
 #include "ui/b_command.h"
 #include "ui/commandaction.h"

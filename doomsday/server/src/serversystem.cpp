@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details. You should have received a copy of the GNU
  * General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "serversystem.h"
@@ -27,8 +27,8 @@
 #include "network/monitor.h"
 #include "con_main.h"
 #include "dd_loop.h"
-#include "map/gamemap.h"
-#include "map/p_players.h"
+#include "world/gamemap.h"
+#include "world/p_players.h"
 
 #include <de/Address>
 #include <de/Beacon>

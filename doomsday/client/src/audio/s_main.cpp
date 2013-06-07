@@ -39,7 +39,7 @@
 #include "de_defs.h"
 
 #include "audio/sys_audio.h"
-#include "map/p_players.h"
+#include "world/p_players.h"
 #include "BspLeaf"
 
 // MACROS ------------------------------------------------------------------

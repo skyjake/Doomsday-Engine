@@ -24,7 +24,7 @@
 #ifndef __DOOMSDAY_CLIENT_H__
 #define __DOOMSDAY_CLIENT_H__
 
-#include "map/p_object.h"
+#include "world/p_object.h"
 
 #ifdef __cplusplus
 extern "C" {

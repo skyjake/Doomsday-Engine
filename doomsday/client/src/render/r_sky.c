@@ -26,7 +26,7 @@
 #include "de_console.h"
 #include "de_graphics.h"
 
-#include "map/r_world.h"
+#include "world/r_world.h"
 #include "render/r_sky.h"
 #include "def_data.h"
 #include "client/cl_def.h"

@@ -45,7 +45,7 @@
 //#  include "render/rend_console.h"
 #  include "render/rend_main.h"
 #  include "render/lightgrid.h"
-#  include "map/blockmapvisual.h"
+#  include "world/blockmapvisual.h"
 #  include "edit_bias.h"
 #endif
 
@@ -56,7 +56,7 @@
 #include "dd_def.h"
 #include "dd_main.h"
 #include "dd_loop.h"
-#include "map/p_players.h"
+#include "world/p_players.h"
 
 #include <de/Value>
 

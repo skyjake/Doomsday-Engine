@@ -1,4 +1,4 @@
-/** @file rend_particle.cpp Particle Effect Rendering. 
+/** @file rend_particle.cpp Particle Effect Rendering.
  * @ingroup render
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -32,8 +32,8 @@
 
 #include "resource/image.h"
 #include "gl/texturecontent.h"
-#include "map/generators.h"
-#include "map/gamemap.h"
+#include "world/generators.h"
+#include "world/gamemap.h"
 
 using namespace de;
 

@@ -229,49 +229,6 @@ DENG_HEADERS += \
     include/m_misc.h \
     include/m_nodepile.h \
     include/m_profiler.h \
-    include/map/blockmap.h \
-    include/map/blockmapvisual.h \
-    include/map/bsp/bsptreenode.h \
-    include/map/bsp/convexsubspace.h \
-    include/map/bsp/edgetip.h \
-    include/map/bsp/hplane.h \
-    include/map/bsp/linesegment.h \
-    include/map/bsp/partitioncost.h \
-    include/map/bsp/partitioner.h \
-    include/map/bsp/superblockmap.h \
-    include/map/bspbuilder.h \
-    include/map/bspleaf.h \
-    include/map/bspnode.h \
-    include/map/dam_file.h \
-    include/map/entitydatabase.h \
-    include/map/face.h \
-    include/map/gamemap.h \
-    include/map/generators.h \
-    include/map/hedge.h \
-    include/map/line.h \
-    include/map/lineowner.h \
-    include/map/linesighttest.h \
-    include/map/mapelement.h \
-    include/map/mesh.h \
-    include/map/p_dmu.h \
-    include/map/p_intercept.h \
-    include/map/p_mapdata.h \
-    include/map/p_maptypes.h \
-    include/map/p_maputil.h \
-    include/map/p_object.h \
-    include/map/p_objlink.h \
-    include/map/p_particle.h \
-    include/map/p_players.h \
-    include/map/p_ticker.h \
-    include/map/plane.h \
-    include/map/polyobj.h \
-    include/map/propertyvalue.h \
-    include/map/r_world.h \
-    include/map/reject.h \
-    include/map/sector.h \
-    include/map/segment.h \
-    include/map/surface.h \
-    include/map/vertex.h \
     include/network/masterserver.h \
     include/network/monitor.h \
     include/network/net_buf.h \
@@ -392,6 +349,49 @@ DENG_HEADERS += \
     include/ui/zonedebug.h \
     include/updater.h \
     include/uri.hh \
+    include/world/blockmap.h \
+    include/world/blockmapvisual.h \
+    include/world/bsp/bsptreenode.h \
+    include/world/bsp/convexsubspace.h \
+    include/world/bsp/edgetip.h \
+    include/world/bsp/hplane.h \
+    include/world/bsp/linesegment.h \
+    include/world/bsp/partitioncost.h \
+    include/world/bsp/partitioner.h \
+    include/world/bsp/superblockmap.h \
+    include/world/bspbuilder.h \
+    include/world/bspleaf.h \
+    include/world/bspnode.h \
+    include/world/dam_file.h \
+    include/world/entitydatabase.h \
+    include/world/face.h \
+    include/world/gamemap.h \
+    include/world/generators.h \
+    include/world/hedge.h \
+    include/world/line.h \
+    include/world/lineowner.h \
+    include/world/linesighttest.h \
+    include/world/mapelement.h \
+    include/world/mesh.h \
+    include/world/p_dmu.h \
+    include/world/p_intercept.h \
+    include/world/p_mapdata.h \
+    include/world/p_maptypes.h \
+    include/world/p_maputil.h \
+    include/world/p_object.h \
+    include/world/p_objlink.h \
+    include/world/p_particle.h \
+    include/world/p_players.h \
+    include/world/p_ticker.h \
+    include/world/plane.h \
+    include/world/polyobj.h \
+    include/world/propertyvalue.h \
+    include/world/r_world.h \
+    include/world/reject.h \
+    include/world/sector.h \
+    include/world/segment.h \
+    include/world/surface.h \
+    include/world/vertex.h \
     src/updater/downloaddialog.h \
     src/updater/processcheckdialog.h \
     src/updater/updateavailabledialog.h \
@@ -521,45 +521,6 @@ SOURCES += \
     src/m_misc.cpp \
     src/m_nodepile.cpp \
     src/main_client.cpp \
-    src/map/blockmap.cpp \
-    src/map/blockmapvisual.cpp \
-    src/map/bsp/convexsubspace.cpp \
-    src/map/bsp/hplane.cpp \
-    src/map/bsp/linesegment.cpp \
-    src/map/bsp/partitioner.cpp \
-    src/map/bsp/superblockmap.cpp \
-    src/map/bspbuilder.cpp \
-    src/map/bspleaf.cpp \
-    src/map/bspnode.cpp \
-    src/map/dam_file.cpp \
-    src/map/entitydatabase.cpp \
-    src/map/face.cpp \
-    src/map/gamemap.cpp \
-    src/map/generators.cpp \
-    src/map/hedge.cpp \
-    src/map/line.cpp \
-    src/map/linesighttest.cpp \
-    src/map/mapelement.cpp \
-    src/map/mesh.cpp \
-    src/map/p_data.cpp \
-    src/map/p_dmu.cpp \
-    src/map/p_intercept.cpp \
-    src/map/p_maputil.cpp \
-    src/map/p_mobj.cpp \
-    src/map/p_objlink.cpp \
-    src/map/p_particle.cpp \
-    src/map/p_players.cpp \
-    src/map/p_think.cpp \
-    src/map/p_ticker.cpp \
-    src/map/plane.cpp \
-    src/map/polyobj.cpp \
-    src/map/propertyvalue.cpp \
-    src/map/r_world.cpp \
-    src/map/reject.cpp \
-    src/map/sector.cpp \
-    src/map/segment.cpp \
-    src/map/surface.cpp \
-    src/map/vertex.cpp \
     src/network/masterserver.cpp \
     src/network/monitor.cpp \
     src/network/net_buf.cpp \
@@ -682,7 +643,46 @@ SOURCES += \
     src/updater/updatersettings.cpp \
     src/updater/updatersettingsdialog.cpp \
     src/uri.cpp \
-    src/ui/signalaction.cpp
+    src/ui/signalaction.cpp \
+    src/world/blockmap.cpp \
+    src/world/blockmapvisual.cpp \
+    src/world/bsp/convexsubspace.cpp \
+    src/world/bsp/hplane.cpp \
+    src/world/bsp/linesegment.cpp \
+    src/world/bsp/partitioner.cpp \
+    src/world/bsp/superblockmap.cpp \
+    src/world/bspbuilder.cpp \
+    src/world/bspleaf.cpp \
+    src/world/bspnode.cpp \
+    src/world/dam_file.cpp \
+    src/world/entitydatabase.cpp \
+    src/world/face.cpp \
+    src/world/gamemap.cpp \
+    src/world/generators.cpp \
+    src/world/hedge.cpp \
+    src/world/line.cpp \
+    src/world/linesighttest.cpp \
+    src/world/mapelement.cpp \
+    src/world/mesh.cpp \
+    src/world/p_data.cpp \
+    src/world/p_dmu.cpp \
+    src/world/p_intercept.cpp \
+    src/world/p_maputil.cpp \
+    src/world/p_mobj.cpp \
+    src/world/p_objlink.cpp \
+    src/world/p_particle.cpp \
+    src/world/p_players.cpp \
+    src/world/p_think.cpp \
+    src/world/p_ticker.cpp \
+    src/world/plane.cpp \
+    src/world/polyobj.cpp \
+    src/world/propertyvalue.cpp \
+    src/world/r_world.cpp \
+    src/world/reject.cpp \
+    src/world/sector.cpp \
+    src/world/segment.cpp \
+    src/world/surface.cpp \
+    src/world/vertex.cpp
 
 !deng_nosdlmixer:!deng_nosdl {
     HEADERS += include/audio/sys_audiod_sdlmixer.h

@@ -27,7 +27,7 @@
 #include "def_main.h"
 #include "m_profiler.h"
 #include "MaterialVariantSpec"
-#include "map/gamemap.h"
+#include "world/gamemap.h"
 
 #include <de/math.h>
 #include <de/vector1.h>

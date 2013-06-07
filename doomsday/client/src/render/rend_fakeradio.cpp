@@ -32,8 +32,8 @@
 #include "gl/sys_opengl.h"
 #include "MaterialSnapshot"
 #include "MaterialVariantSpec"
-#include "map/gamemap.h"
-#include "map/lineowner.h"
+#include "world/gamemap.h"
+#include "world/lineowner.h"
 #include "WallEdge"
 
 #include "render/rendpoly.h"

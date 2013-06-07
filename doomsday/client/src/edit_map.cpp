@@ -39,8 +39,8 @@
 #include "de_filesys.h"
 
 #include "audio/s_environ.h"
-#include "map/lineowner.h"
-#include "map/gamemap.h"
+#include "world/lineowner.h"
+#include "world/gamemap.h"
 #ifdef __CLIENT__
 #  include "render/rend_main.h"
 #endif

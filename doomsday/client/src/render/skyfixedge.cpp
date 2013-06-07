@@ -22,9 +22,9 @@
 #include "Sector"
 #include "Segment"
 
-#include "map/gamemap.h"
-#include "map/p_players.h"
-#include "map/r_world.h"
+#include "world/gamemap.h"
+#include "world/p_players.h"
+#include "world/r_world.h"
 
 #include "render/rend_main.h"
 

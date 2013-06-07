@@ -31,7 +31,7 @@
 #include "api_map.h"
 #include "api_materialarchive.h"
 
-#include "map/gamemap.h"
+#include "world/gamemap.h"
 #include "client/cl_world.h"
 #include "r_util.h"
 

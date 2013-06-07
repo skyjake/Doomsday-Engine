@@ -23,8 +23,8 @@
 #include "Sector"
 #include "Segment"
 
-#include "map/r_world.h"
-#include "map/lineowner.h"
+#include "world/r_world.h"
+#include "world/lineowner.h"
 
 #include "render/rend_main.h"
 

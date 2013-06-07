@@ -28,8 +28,8 @@
 #include "de_base.h"
 #include "de_render.h"
 
-#include "map/lineowner.h"
-#include "map/gamemap.h"
+#include "world/lineowner.h"
+#include "world/gamemap.h"
 #include "Vertex"
 
 #include "render/rend_fakeradio.h"

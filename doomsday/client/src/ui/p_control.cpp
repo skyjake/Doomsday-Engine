@@ -34,7 +34,7 @@
 #include "de_graphics.h"
 #include "dd_main.h"
 
-#include "map/p_players.h"
+#include "world/p_players.h"
 #ifdef __CLIENT__
 #  include "ui/b_main.h"
 #  include "ui/b_device.h"

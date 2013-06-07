@@ -28,7 +28,7 @@
 #include "lzss.h"
 #include "dd_share.h"
 #include "net_msg.h"
-#include "map/p_mapdata.h"
+#include "world/p_mapdata.h"
 #include <de/Record>
 #include <de/smoother.h>
 

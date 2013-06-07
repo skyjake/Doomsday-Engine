@@ -34,9 +34,9 @@
 #include "de_ui.h"
 
 #include "gl/svg.h"
-#include "map/p_players.h"
-#include "map/p_objlink.h"
-#include "map/r_world.h"
+#include "world/p_players.h"
+#include "world/p_objlink.h"
+#include "world/r_world.h"
 #include "render/vignette.h"
 #include "api_render.h"
 

@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details. You should have received a copy of the GNU
  * General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de_platform.h"
@@ -30,7 +30,7 @@
 #include "dd_loop.h"
 #include "sys_system.h"
 #include "edit_bias.h"
-#include "map/gamemap.h"
+#include "world/gamemap.h"
 #include "network/net_main.h"
 #include "render/r_main.h"
 #include "render/rend_list.h"
@@ -83,7 +83,7 @@ void LegacyWidget::viewResized()
 }
 
 void LegacyWidget::update()
-{    
+{
     GuiWidget::update();
 
     if(isDisabled()) return;

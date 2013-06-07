@@ -21,7 +21,7 @@
 #ifndef LIBDENG_RENDER_PARTICLE_H
 #define LIBDENG_RENDER_PARTICLE_H
 
-#include "map/p_particle.h"
+#include "world/p_particle.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -49,7 +49,7 @@
 #include "render/vlight.h"
 #endif
 
-//#include "map/r_world.h"
+//#include "world/r_world.h"
 #include "r_util.h"
 
 #endif /* DOOMSDAY_CLIENT_RENDERER */

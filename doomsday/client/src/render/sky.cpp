@@ -29,7 +29,7 @@
 
 #include "def_data.h"
 #include "client/cl_def.h"
-#include "map/r_world.h"
+#include "world/r_world.h"
 
 #include "MaterialSnapshot"
 #include "MaterialVariantSpec"

@@ -23,7 +23,7 @@
 #include <QObject>
 #include <QSet>
 #include "shelluser.h"
-#include "map/r_world.h"
+#include "world/r_world.h"
 
 /**
  * All remote shell users.

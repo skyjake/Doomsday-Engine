@@ -60,9 +60,9 @@
 #include "de_resource.h"
 
 #include "gl/svg.h"
-#include "map/p_players.h"
-#include "map/p_maputil.h"
-#include "map/p_objlink.h"
+#include "world/p_players.h"
+#include "world/p_maputil.h"
+#include "world/p_objlink.h"
 #include "ui/p_control.h"
 #include "updater.h"
 #include "m_misc.h"

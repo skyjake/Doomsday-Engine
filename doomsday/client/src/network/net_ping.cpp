@@ -30,7 +30,7 @@
 #include "de_system.h"
 #include "de_network.h"
 
-#include "map/p_players.h"
+#include "world/p_players.h"
 
 // MACROS ------------------------------------------------------------------
 

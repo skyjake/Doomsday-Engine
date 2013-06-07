@@ -24,7 +24,7 @@
 #include "de_graphics.h"
 #include "de_misc.h"
 
-#include "map/p_players.h"
+#include "world/p_players.h"
 
 #include "render/rend_main.h"
 #include "render/rend_list.h"

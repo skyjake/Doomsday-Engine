@@ -43,12 +43,12 @@
 #include "SkyFixEdge"
 #include "TriangleStripBuilder"
 
-#include "map/blockmapvisual.h"
-#include "map/gamemap.h"
-#include "map/lineowner.h"
-#include "map/p_objlink.h"
-#include "map/p_players.h"
-#include "map/r_world.h"
+#include "world/blockmapvisual.h"
+#include "world/gamemap.h"
+#include "world/lineowner.h"
+#include "world/p_objlink.h"
+#include "world/p_players.h"
+#include "world/r_world.h"
 
 #include "render/sprite.h"
 

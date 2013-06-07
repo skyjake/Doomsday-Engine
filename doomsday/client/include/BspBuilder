@@ -1,2 +1,2 @@
-#include "map/bspbuilder.h"
-#include "map/bsp/bsptreenode.h"
+#include "world/bspbuilder.h"
+#include "world/bsp/bsptreenode.h"
