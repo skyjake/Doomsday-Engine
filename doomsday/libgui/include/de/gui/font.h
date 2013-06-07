@@ -25,6 +25,7 @@
 #include <de/String>
 #include <de/Vector>
 #include <de/Range>
+#include <de/EscapeParser>
 
 #include <QFont>
 #include <QImage>
@@ -122,6 +123,8 @@ public:
         RichFormat(IStyle const &style);
         RichFormat(RichFormat const &other);
 
+        RichFormat &operator = (RichFormat const &other);
+
         void clear();
 
         bool haveStyle() const;
@@ -158,7 +161,7 @@ public:
          */
         RichFormat subRange(Rangei const &range) const;
 
-        TabStops const &tabStops() const { return _tabs; }
+        TabStops const &tabStops() const;
 
         int tabStopXWidth(int stop) const;
 
@@ -190,28 +193,7 @@ public:
         };
 
     private:
-        IStyle const *_style;
-
-        struct FormatRange
-        {
-            Rangei range;
-            float sizeFactor;
-            Weight weight;
-            Style style;
-            int colorIndex;
-            bool markIndent;
-            int tabStop;
-
-            FormatRange() : sizeFactor(1.f), weight(OriginalWeight),
-                style(OriginalStyle), colorIndex(-1), markIndent(false),
-                tabStop(NoTabStop) {}
-        };
-        typedef QList<FormatRange> Ranges;
-        Ranges _ranges;
-
-        /// Tab stops are only applicable on the first line of a set of wrapped
-        /// lines. Subsequent lines use the latest accessed tab stop as the indent.
-        TabStops _tabs;
+        DENG2_PRIVATE(d)
     };
 
 public:
