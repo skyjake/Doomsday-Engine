@@ -72,6 +72,7 @@ namespace de {
 #ifdef __CLIENT__
 class LightGrid;
 #endif
+class Mesh;
 
 /**
  * World map.

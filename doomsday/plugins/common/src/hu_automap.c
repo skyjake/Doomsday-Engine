@@ -2286,10 +2286,10 @@ void UIAutomap_SetWorldBounds(uiwidget_t* obj, coord_t lowX, coord_t hiX, coord_
     // Update minScaleMTOF.
     calcViewScaleFactors(obj);
 
-#ifdef _DEBUG
-    Con_Message("SetWorldBounds: low=%f,%f hi=%f,%f minScaleMTOF=%f", lowX, lowY, hiX, hiY,
+/*#ifdef _DEBUG
+    Con_Message("UIAutomap_SetWorldBounds: low=%f,%f hi=%f,%f minScaleMTOF=%f", lowX, lowY, hiX, hiY,
                 am->minScaleMTOF);
-#endif
+#endif*/
 
     // Choose a default view scale factor.
     UIAutomap_SetScale(obj, am->minScaleMTOF * 2.4f);

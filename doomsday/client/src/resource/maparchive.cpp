@@ -139,7 +139,7 @@ GameMap *MapArchive::Info::loadMap(/*bool forceRetry = false*/)
     }*/
 
     // Try a JIT conversion with the help of a plugin.
-    if(GameMap *map = convertMap())
+    if(GameMap *map = convert())
         return map;
 
     LOG_WARNING("Failed conversion of \"%s\".") << _uri;
@@ -167,15 +167,15 @@ GameMap *MapArchive::Info::loadCachedMap()
 }
 #endif
 
-GameMap *MapArchive::Info::convertMap()
+GameMap *MapArchive::Info::convert()
 {
-    LOG_AS("MapArchive::Info::convertMap");
+    LOG_AS("MapArchive::convert");
 
     // At least one available converter?
     if(!Plug_CheckForHook(HOOK_MAP_CONVERT))
         return 0;
 
-    LOG_VERBOSE("Attempting \"%s\"...") << _uri;
+    //LOG_DEBUG("Attempting \"%s\"...") << _uri;
 
     lumpnum_t markerLumpNum = markerLumpNumForPath(_uri.path());
     if(markerLumpNum < 0)

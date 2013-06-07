@@ -728,7 +728,7 @@ boolean MPE_End()
     if(!editMapInited)
         return false;
 
-    LOG_DEBUG("New Elements: %d Vertexes, %d Lines, %d Sectors")
+    LOG_DEBUG("New elements: %d Vertexes, %d Lines and %d Sectors.")
         << editMap.vertexes.count() << editMap.lines.count() << editMap.sectors.count();
 
     /*
@@ -824,7 +824,7 @@ boolean MPE_End()
 
     map->updateBounds();
     AABoxd const &mapBounds = map->bounds();
-    LOG_INFO("Map bounds: min%s max%s")
+    LOG_INFO("Bounds min:%s max:%s.")
         << Vector2d(mapBounds.min).asText()
         << Vector2d(mapBounds.max).asText();
 

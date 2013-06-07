@@ -469,7 +469,9 @@ bool GameMap::buildBsp()
     // It begins...
     Time begunAt;
 
-    LOG_INFO("Building BSP using tunable split factor of %d...") << bspFactor;
+    LOG_AS("GameMap::buildBsp");
+    LOG_TRACE("Building BSP for \"%s\" with split cost factor %d...")
+        << _uri << bspFactor;
 
     // Instantiate and configure a new BSP builder.
     BspBuilder nodeBuilder(*this, bspFactor);
@@ -492,10 +494,11 @@ bool GameMap::buildBsp()
             rightBranchDpeth = leftBranchDepth = 0;
         }
 
-        LOG_INFO("BSP built: (%d:%d) %d Nodes, %d Leafs, %d Segments, %d Vertexes.")
-                << rightBranchDpeth << leftBranchDepth
+        LOG_INFO("Built %d Nodes, %d Leafs, %d Segments and %d Vertexes."
+                 "\nTree balance is %d:%d.")
                 << nodeBuilder.numNodes() << nodeBuilder.numLeafs()
-                << nodeBuilder.numSegments() << nodeBuilder.numVertexes();
+                << nodeBuilder.numSegments() << nodeBuilder.numVertexes()
+                << rightBranchDpeth << leftBranchDepth;
 
         /*
          * Take ownership of all the built map data elements.
@@ -555,7 +558,7 @@ bool GameMap::buildBsp()
     }
 
     // How much time did we spend?
-    LOG_INFO(String("BSP build completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
+    LOG_INFO(String("Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 
     return builtOK;
 }
@@ -729,6 +732,8 @@ void GameMap::initSkyFix()
 {
     Time begunAt;
 
+    LOG_AS("GameMap::initSkyFix");
+
     d->skyFloorHeight   = DDMAXFLOAT;
     d->skyCeilingHeight = DDMINFLOAT;
 
@@ -738,7 +743,7 @@ void GameMap::initSkyFix()
         d->updateMapSkyFixForSector(*sector);
     }
 
-    LOG_INFO(String("GameMap::initSkyFix: Done in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
+    LOG_INFO(String("Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 }
 
 coord_t GameMap::skyFix(bool ceiling) const
@@ -835,7 +840,8 @@ void GameMap::initNodePiles()
 {
     Time begunAt;
 
-    LOG_VERBOSE("Initializing map link-node piles...");
+    LOG_AS("GameMap::initNodePiles");
+    LOG_TRACE("Initializing...");
 
     // Initialize node piles and line rings.
     NP_Init(&mobjNodes, 256);  // Allocate a small pile.
@@ -851,7 +857,7 @@ void GameMap::initNodePiles()
     }
 
     // How much time did we spend?
-    LOG_INFO(String("GameMap::initNodePiles: Done in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
+    LOG_INFO(String("Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 }
 
 void GameMap::initLineBlockmap(const_pvec2d_t min_, const_pvec2d_t max_)

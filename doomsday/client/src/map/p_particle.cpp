@@ -160,14 +160,16 @@ static ptcgen_t *P_NewGenerator()
 
 void P_PtcInitForMap()
 {
-    de::Time begunAt;
+    Time begunAt;
+
+    LOG_AS("P_PtcInitForMap");
 
     // Spawn all type-triggered particle generators.
     // Let's hope there aren't too many...
     P_SpawnTypeParticleGens();
     P_SpawnMapParticleGens();
 
-    LOG_INFO(String("P_PtcInitForMap: Done in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
+    LOG_INFO(String("Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 }
 
 void P_MapSpawnPlaneParticleGens()

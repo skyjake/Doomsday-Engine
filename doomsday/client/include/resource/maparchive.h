@@ -84,7 +84,7 @@ public:
          *
          * @return  Pointer to the converted GameMap; otherwise @c 0.
          */
-        GameMap *convertMap();
+        GameMap *convert();
 
         Uri _uri;
         /*ddstring_t cachedMapPath;

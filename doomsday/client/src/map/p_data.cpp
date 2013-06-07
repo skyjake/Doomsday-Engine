@@ -116,9 +116,9 @@ DENG_EXTERN_C boolean P_LoadMap(char const *uriCString)
 
     if((theMap = App_MapArchive().loadMap(uri)))
     {
-        LOG_INFO("Map Elements: %d Vertexes, %d Lines, %d Sectors, %d BSP Nodes, %d BSP Leafs")
+        LOG_INFO("Map elements: %d Vertexes, %d Lines, %d Sectors, %d BSP Nodes, %d BSP Leafs and %d Segments")
             << theMap->vertexCount() << theMap->lineCount() << theMap->sectorCount()
-            << theMap->bspNodeCount() << theMap->bspLeafCount();
+            << theMap->bspNodeCount() << theMap->bspLeafCount() << theMap->segmentCount();
 
         // Call the game's setup routines.
         if(gx.SetupForMapData)

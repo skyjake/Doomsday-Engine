@@ -253,9 +253,11 @@ void SB_Clear()
 
 void SB_InitForMap(char const *uniqueID)
 {
-    de::Time begunAt;
-
     DENG_ASSERT(theMap);
+
+    Time begunAt;
+
+    LOG_AS("SB_InitForMap");
 
     // Start with no sources whatsoever.
     numSources = 0;
@@ -365,7 +367,7 @@ void SB_InitForMap(char const *uniqueID)
         }
     }
 
-    LOG_INFO(String("SB_InitForMap: Done in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
+    LOG_INFO(String("Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 }
 
 void SB_SetColor(float *dest, float *src)

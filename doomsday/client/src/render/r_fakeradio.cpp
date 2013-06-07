@@ -226,6 +226,8 @@ void Rend_RadioInitForMap()
 
     Time begunAt;
 
+    LOG_AS("Rend_RadioInitForMap");
+
     lineSideRadioData = reinterpret_cast<LineSideRadioData *>(Z_Calloc(sizeof(*lineSideRadioData) * theMap->sideCount(), PU_MAP, 0));
 
     foreach(Vertex *vertex, theMap->vertexes())
@@ -281,5 +283,5 @@ void Rend_RadioInitForMap()
         }
     }
 
-    LOG_INFO(String("Rend_RadioInitForMap: Done in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
+    LOG_INFO(String("Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 }

@@ -921,7 +921,7 @@ DENG2_PIMPL(Partitioner)
      * @param rights  Set of line segments on the right side of the partition.
      * @param lefts   Set of line segments on the left side of the partition.
      */
-    void partitionOneSegment(LineSegment::Side &seg, SuperBlock &rights, SuperBlock &lefts)
+    void divideOneSegment(LineSegment::Side &seg, SuperBlock &rights, SuperBlock &lefts)
     {
         coord_t fromDist, toDist;
         LineRelationship rel = hplane.relationship(seg, &fromDist, &toDist);
@@ -1004,8 +1004,7 @@ DENG2_PIMPL(Partitioner)
      * @param rights    Set of line segments on the right side of the partition.
      * @param lefts     Set of line segments on the left side of the partition.
      */
-    void partitionSegments(SuperBlock &segments, SuperBlock &rights,
-                           SuperBlock &lefts)
+    void divideSegments(SuperBlock &segments, SuperBlock &rights, SuperBlock &lefts)
     {
         /**
          * @todo Revise this algorithm so that @var segments is not modified
@@ -1025,7 +1024,7 @@ DENG2_PIMPL(Partitioner)
                     // Disassociate the line segment from the blockmap.
                     seg->setBMapBlock(0);
 
-                    partitionOneSegment(*seg, rights, lefts);
+                    divideOneSegment(*seg, rights, lefts);
                 }
 
                 if(prev == cur->parent())
@@ -1058,10 +1057,10 @@ DENG2_PIMPL(Partitioner)
 
         // Sanity checks...
         if(!rights.totalSegmentCount())
-            throw Error("Partitioner::partitionSegments", "Right set is empty");
+            throw Error("Partitioner::divideSegments", "Right set is empty");
 
         if(!lefts.totalSegmentCount())
-            throw Error("Partitioner::partitionSegments", "Left set is empty");
+            throw Error("Partitioner::divideSegments", "Left set is empty");
     }
 
     /**
@@ -1160,7 +1159,7 @@ DENG2_PIMPL(Partitioner)
                 {
                     if(!cur.selfRef && !next.selfRef)
                     {
-                        LOG_DEBUG("Sector mismatch #%d %s != #%d %s")
+                        LOG_DEBUG("Sector mismatch #%d %s != #%d %s.")
                             << cur.after->indexInMap()
                             << cur.vertex().origin().asText()
                             << next.before->indexInMap()
@@ -1271,9 +1270,9 @@ DENG2_PIMPL(Partitioner)
      *
      * @return  Newly created subtree; otherwise @c 0 (degenerate).
      */
-    BspTreeNode *partitionSpace(SuperBlock &bmap)
+    BspTreeNode *divideSpace(SuperBlock &bmap)
     {
-        LOG_AS("Partitioner::partitionSpace");
+        LOG_AS("Partitioner::divideSpace");
 
         MapElement *bspElement = 0; ///< Built BSP map element at this node.
         BspTreeNode *rightTree = 0, *leftTree = 0;
@@ -1305,7 +1304,7 @@ DENG2_PIMPL(Partitioner)
             // Partition the line segements into two subsets according to their
             // spacial relationship with the half-plane (splitting any which
             // intersect).
-            partitionSegments(bmap, rightBMap, leftBMap);
+            divideSegments(bmap, rightBMap, leftBMap);
             bmap.clear(); // Should be empty.
 
             addPartitionLineSegments(rightBMap, leftBMap);
@@ -1316,8 +1315,8 @@ DENG2_PIMPL(Partitioner)
             AABoxd leftBounds  = leftBMap.findSegmentBounds();
 
             // Recurse on each suspace, first the right space then left.
-            rightTree = partitionSpace(rightBMap);
-            leftTree  = partitionSpace(leftBMap);
+            rightTree = divideSpace(rightBMap);
+            leftTree  = divideSpace(leftBMap);
 
             // Collapse degenerates upward.
             if(!rightTree || !leftTree)
@@ -1369,7 +1368,7 @@ DENG2_PIMPL(Partitioner)
      * overlapping segments as if they do not break the convexity rule they won't
      * have been split during the partitioning process.
      *
-     * @todo Perform the split in partitionSpace()
+     * @todo Perform the split in divideSpace()
      */
     void splitOverlappingLineSegments()
     {
@@ -1684,7 +1683,7 @@ void Partitioner::build()
 
     d->createInitialLineSegments(rootBlock);
 
-    d->rootNode = d->partitionSpace(rootBlock);
+    d->rootNode = d->divideSpace(rootBlock);
 
     // At this point we know that *something* useful was built.
     d->splitOverlappingLineSegments();
