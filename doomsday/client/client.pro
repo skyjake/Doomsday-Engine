@@ -181,7 +181,6 @@ DENG_HEADERS += \
     include/de_audio.h \
     include/de_base.h \
     include/de_console.h \
-    include/de_dam.h \
     include/de_defs.h \
     include/de_edit.h \
     include/de_filesys.h \
@@ -365,7 +364,6 @@ DENG_HEADERS += \
     include/world/bspbuilder.h \
     include/world/bspleaf.h \
     include/world/bspnode.h \
-    include/world/dam_file.h \
     include/world/dmuargs.h \
     include/world/entitydatabase.h \
     include/world/generators.h \
@@ -658,7 +656,6 @@ SOURCES += \
     src/world/bspbuilder.cpp \
     src/world/bspleaf.cpp \
     src/world/bspnode.cpp \
-    src/world/dam_file.cpp \
     src/world/dmuargs.cpp \
     src/world/entitydatabase.cpp \
     src/world/generators.cpp \

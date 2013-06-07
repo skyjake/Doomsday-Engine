@@ -35,10 +35,10 @@
 #include "de_play.h"
 #include "de_misc.h"
 #include "de_edit.h"
-#include "de_dam.h"
 #include "de_filesys.h"
 
 #include "audio/s_environ.h"
+#include "resource/maparchive.h"
 #include "world/lineowner.h"
 #include "world/map.h"
 #ifdef __CLIENT__

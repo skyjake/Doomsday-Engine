@@ -149,7 +149,6 @@ DENG_HEADERS += \
     $$SRC/include/de_audio.h \
     $$SRC/include/de_base.h \
     $$SRC/include/de_console.h \
-    $$SRC/include/de_dam.h \
     $$SRC/include/de_defs.h \
     $$SRC/include/de_edit.h \
     $$SRC/include/de_filesys.h \
@@ -244,7 +243,6 @@ DENG_HEADERS += \
     $$SRC/include/world/bspbuilder.h \
     $$SRC/include/world/bspleaf.h \
     $$SRC/include/world/bspnode.h \
-    $$SRC/include/world/dam_file.h \
     $$SRC/include/world/entitydatabase.h \
     $$SRC/include/world/generators.h \
     $$SRC/include/world/line.h \
@@ -418,7 +416,6 @@ SOURCES += \
     $$SRC/src/world/bspbuilder.cpp \
     $$SRC/src/world/bspleaf.cpp \
     $$SRC/src/world/bspnode.cpp \
-    $$SRC/src/world/dam_file.cpp \
     $$SRC/src/world/dmuargs.cpp \
     $$SRC/src/world/entitydatabase.cpp \
     $$SRC/src/world/generators.cpp \
