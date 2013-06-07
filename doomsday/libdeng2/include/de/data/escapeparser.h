@@ -19,9 +19,9 @@
 #ifndef LIBDENG2_ESCAPEPARSER_H
 #define LIBDENG2_ESCAPEPARSER_H
 
-#include <de/libdeng2.h>
-#include <de/String>
-#include <de/Observers>
+#include "../libdeng2.h"
+#include "../String"
+#include "../Observers"
 
 namespace de {
 
