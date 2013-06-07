@@ -36,12 +36,13 @@ Font::RichFormat::RichFormat(IStyle const &style) : _style(&style)
 {}
 
 Font::RichFormat::RichFormat(RichFormat const &other)
-    : _style(other._style), _ranges(other._ranges)
+    : _style(other._style), _ranges(other._ranges), _tabs(other._tabs)
 {}
 
 void Font::RichFormat::clear()
 {
     _ranges.clear();
+    _tabs.clear();
 }
 
 void Font::RichFormat::setStyle(IStyle const &style)
@@ -81,6 +82,8 @@ String Font::RichFormat::initFromStyledText(String const &styledText)
     _ranges << FormatRange();
     format = &_ranges.back();
 
+    _tabs.clear();
+
     forever
     {
         range.end = styledText.indexOf(QChar('\x1b'), range.start);
@@ -103,13 +106,19 @@ String Font::RichFormat::initFromStyledText(String const &styledText)
                 _ranges << FormatRange(*format);
                 format = &_ranges.back();
                 format->range = Rangei(range.end - offset, range.end - offset);
+
+                // Some properties do not copy over.
+                format->markIndent = false;
+                format->tabStop = NoTabStop;
             }
 
             // Check the escape sequence.
+            int escLen = 2;
             char ch = styledText[range.end + 1].toLatin1();
             switch(ch)
             {
             case '.': // pop a format off the stack
+                stack.takeLast(); // ignore the one just added
                 if(!stack.isEmpty())
                 {
                     FormatRange prev = stack.takeLast();
@@ -117,6 +126,8 @@ String Font::RichFormat::initFromStyledText(String const &styledText)
                     format->colorIndex = prev.colorIndex;
                     format->weight = prev.weight;
                     format->style = prev.style;
+                    format->markIndent = false;
+                    format->tabStop = NoTabStop;
                 }
                 else
                 {
@@ -124,11 +135,32 @@ String Font::RichFormat::initFromStyledText(String const &styledText)
                     format->colorIndex = OriginalColor;
                     format->weight = OriginalWeight;
                     format->style = OriginalStyle;
+                    format->markIndent = false;
+                    format->tabStop = NoTabStop;
                 }
                 break;
 
             case '>':
                 format->markIndent = true;
+                break;
+
+            case '\t':
+                format->tabStop = NextTabStop;
+                break;
+
+            case 'T':
+                escLen = 3;
+                format->tabStop = styledText[range.end + 2].toLatin1() - 'a';
+                break;
+
+            case '(':
+                // Sequence of tab stops effective in the entire content.
+                _tabs.clear();
+                for(int i = range.end + 2; styledText[i] != ')' && i < styledText.size(); ++i, ++escLen)
+                {
+                    _tabs.append(styledText[i].toLatin1() - 'a' + 1);
+                }
+                escLen++;
                 break;
 
             case 'b':
@@ -187,8 +219,8 @@ String Font::RichFormat::initFromStyledText(String const &styledText)
             }
 
             // Advance the scanner.
-            range.start = range.end + 2;
-            offset += 2; // skipped chars
+            range.start = range.end + escLen;
+            offset += escLen; // skipped chars
         }
         else
         {
@@ -216,7 +248,13 @@ String Font::RichFormat::initFromStyledText(String const &styledText)
                  << "size:" << r.sizeFactor
                  << "weight:" << r.weight
                  << "style:" << r.style
-                 << "color:" << r.colorIndex;
+                 << "color:" << r.colorIndex
+                 << "tab:" << r.tabStop;
+    }
+    qDebug() << "Tabs:" << _tabs.size();
+    foreach(int i, _tabs)
+    {
+        qDebug() << i;
     }*/
 
     return plain;
@@ -247,6 +285,23 @@ Font::RichFormat Font::RichFormat::subRange(Rangei const &range) const
     }
 
     return sub;
+}
+
+int Font::RichFormat::tabStopXWidth(int stop) const
+{
+    if(stop < 0 || _tabs.isEmpty()) return 0;
+
+    DENG2_ASSERT(stop < 50);
+
+    int x = 0;
+    for(int i = 0; i <= stop; ++i)
+    {
+        if(i >= _tabs.size())
+            x += _tabs.last();
+        else
+            x += _tabs[i];
+    }
+    return x;
 }
 
 Font::RichFormat::Iterator::Iterator(RichFormat const &f) : format(f), index(-1) {}
@@ -308,6 +363,11 @@ Font::RichFormat::IStyle::Color Font::RichFormat::Iterator::color() const
 bool Font::RichFormat::Iterator::markIndent() const
 {
     return format._ranges[index].markIndent;
+}
+
+int Font::RichFormat::Iterator::tabStop() const
+{
+    return format._ranges[index].tabStop;
 }
 
 DENG2_PIMPL(Font)
@@ -381,6 +441,28 @@ DENG2_PIMPL(Font)
         }
         return *metrics;
     }
+
+    /*
+    int jumpToTabStop(RichFormat::Iterator const &rich, int pos)
+    {
+        if(rich.format.tabStops().isEmpty() || rich.tabStop() == RichFormat::NoTabStop)
+        {
+            return pos;
+        }
+
+        if(rich.tabStop() == RichFormat::NextTabStop)
+        {
+            int stop = 0;
+            forever
+            {
+                int x = rich.format.tabStopXWidth(stop++) * metrics->xHeight();
+                if(x >= pos) return x;
+            }
+        }
+
+        return de::max(pos, rich.format.tabStopXWidth(rich.tabStop()) * metrics->xHeight());
+    }
+    */
 };
 
 Font::Font() : d(new Instance(this))
@@ -419,7 +501,7 @@ Rectanglei Font::measure(String const &textLine, RichFormat const &format) const
 
         if(rect.height() == 0)
         {
-            // It seems measuring the bounds of a Tab character produce
+            // It seems measuring the bounds of a Tab character produces
             // strange results (position 100000?).
             rect = Rectanglei(0, 0, rect.width(), 0);
         }
@@ -488,11 +570,6 @@ QImage Font::rasterize(String const &textLine,
 
     QPainter painter(&img);
     painter.setCompositionMode(QPainter::CompositionMode_Source);
-
-/*#ifdef WIN32
-    painter.setRenderHint(QPainter::Antialiasing);
-    painter.setRenderHint(QPainter::TextAntialiasing);
-#endif*/
 
     int advance = 0;
     RichFormat::Iterator iter(format);

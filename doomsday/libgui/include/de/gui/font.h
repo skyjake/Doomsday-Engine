@@ -40,6 +40,8 @@ namespace de {
 class LIBGUI_PUBLIC Font
 {
 public:   
+    typedef QVector<int> TabStops;
+
     /**
      * Rich formatting instructions for a string of plain text.
      *
@@ -87,6 +89,10 @@ public:
             DimmedColor    = 2,
             AccentColor    = 3,
             DimAccentColor = 4
+        };
+        enum {
+            NoTabStop      = -2,
+            NextTabStop    = -1
         };
 
         /**
@@ -152,6 +158,10 @@ public:
          */
         RichFormat subRange(Rangei const &range) const;
 
+        TabStops const &tabStops() const { return _tabs; }
+
+        int tabStopXWidth(int stop) const;
+
         /**
          * Iterates the rich format ranges of a RichFormat.
          *
@@ -176,6 +186,7 @@ public:
             int colorIndex() const;
             IStyle::Color color() const;
             bool markIndent() const;
+            int tabStop() const;
         };
 
     private:
@@ -189,12 +200,18 @@ public:
             Style style;
             int colorIndex;
             bool markIndent;
+            int tabStop;
 
             FormatRange() : sizeFactor(1.f), weight(OriginalWeight),
-                style(OriginalStyle), colorIndex(-1), markIndent(false) {}
+                style(OriginalStyle), colorIndex(-1), markIndent(false),
+                tabStop(NoTabStop) {}
         };
         typedef QList<FormatRange> Ranges;
         Ranges _ranges;
+
+        /// Tab stops are only applicable on the first line of a set of wrapped
+        /// lines. Subsequent lines use the latest accessed tab stop as the indent.
+        TabStops _tabs;
     };
 
 public:
@@ -221,8 +238,8 @@ public:
      * area is covered by the glyphs. (0,0) is at the baseline, left edge of
      * the line. The rectangle may extend into negative coordinates.
      *
-     * @param textLine  Text to measure.
-     * @param format    Rich formatting for @a textLine.
+     * @param textLine     Text to measure.
+     * @param format       Rich formatting for @a textLine.
      *
      * @return Rectangle covered by the text.
      */
