@@ -2266,9 +2266,13 @@ D_CMD(Version)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    Con_Printf("%s %s\n", DOOMSDAY_NICENAME, DOOMSDAY_VERSION_FULLTEXT);
-    Con_Printf("Homepage: %s\n", DOOMSDAY_HOMEURL);
-    Con_Printf("Project homepage: %s\n", DENGPROJECT_HOMEURL);
+    //Con_Printf("%s %s\n", DOOMSDAY_NICENAME, DOOMSDAY_VERSION_FULLTEXT);
+    //Con_Printf("Homepage: %s\n", DOOMSDAY_HOMEURL);
+    //Con_Printf("Project homepage: %s\n", DENGPROJECT_HOMEURL);
+
+    LOG_MSG(DENG2_ESC("D") DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_FULLTEXT
+            DENG2_ESC("0") "\nHomepage: " DENG2_ESC("i") DOOMSDAY_HOMEURL
+            DENG2_ESC(".") "\nProject homepage: " DENG2_ESC("i") DENGPROJECT_HOMEURL);
 
     // Print the version info of the current game if loaded.
     if(App_GameLoaded())
