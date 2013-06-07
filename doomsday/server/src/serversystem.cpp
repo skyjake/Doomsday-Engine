@@ -27,7 +27,7 @@
 #include "network/monitor.h"
 #include "con_main.h"
 #include "dd_loop.h"
-#include "world/gamemap.h"
+#include "world/map.h"
 #include "world/p_players.h"
 
 #include <de/Address>

@@ -67,26 +67,26 @@ public:
     de::Mesh &mesh() const;
 
     /**
-     * Returns @c true if the polyobj is presently linked in the owning GameMap.
+     * Returns @c true if the polyobj is presently linked in the owning Map.
      */
     bool isLinked();
 
     /**
-     * (Re)link the polyobj in the owning GameMap. Ownership is not affected.
-     * To be called @em after rotation and/or translation to re-link the polyobj
-     * and thereby complete the process.
+     * (Re)link the polyobj in the owning Map. Ownership is not affected. To be
+     * called @em after rotation and/or translation to re-link the polyobj and
+     * thereby complete the process.
      *
-     * Linking only occurs if the polyobj is not presently linked (subsequent calls
-     * are ignored).
+     * Linking only occurs if the polyobj is not presently linked (subsequent
+     * calls are ignored).
      */
     void link();
 
     /**
-     * Unlink the polyobj in the owning GameMap. To be called @em before attempting
+     * Unlink the polyobj in the owning Map. To be called @em before attempting
      * to rotate and/or translate the polyobj to initiate the process.
      *
-     * Unlinking only occurs if the polyobj is presently linked (subsequent calls
-     * are ignored).
+     * Unlinking only occurs if the polyobj is presently linked (subsequent
+     * calls are ignored).
      */
     void unlink();
 

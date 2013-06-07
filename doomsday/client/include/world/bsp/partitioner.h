@@ -35,7 +35,7 @@ class Sector;
 
 namespace de {
 
-class GameMap;
+class Map;
 
 namespace bsp {
 
@@ -66,7 +66,7 @@ public:
         void oneWayWindowFound(Line &line, Sector &backFacingSector))
 
 public:
-    Partitioner(GameMap const &map, int splitCostFactor = 7);
+    Partitioner(Map const &map, int splitCostFactor = 7);
 
     /**
      * Set the cost factor associated with splitting an existing half-edge.

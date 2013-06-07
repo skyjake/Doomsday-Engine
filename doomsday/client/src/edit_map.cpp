@@ -40,7 +40,7 @@
 
 #include "audio/s_environ.h"
 #include "world/lineowner.h"
-#include "world/gamemap.h"
+#include "world/map.h"
 #ifdef __CLIENT__
 #  include "render/rend_main.h"
 #endif
@@ -52,15 +52,15 @@ using namespace de;
 /**
  * Editable map data elements.
  *
- * @todo Move into GameMap.
+ * @todo Move into Map.
  */
 class EditableMap
 {
 public:
-    GameMap::Vertexes vertexes;
-    GameMap::Lines lines;
-    GameMap::Sectors sectors;
-    GameMap::Polyobjs polyobjs;
+    Map::Vertexes vertexes;
+    Map::Lines lines;
+    Map::Sectors sectors;
+    Map::Polyobjs polyobjs;
 
     /// Map entity data (things, line specials, etc...).
     EntityDatabase *entityDatabase;
@@ -91,8 +91,8 @@ public:
         line->setIndexInMap(lines.count());
         lines.append(line);
 
-        line->front().setIndexInMap(GameMap::toSideIndex(line->indexInMap(), Line::Front));
-        line->back().setIndexInMap(GameMap::toSideIndex(line->indexInMap(), Line::Back));
+        line->front().setIndexInMap(Map::toSideIndex(line->indexInMap(), Line::Front));
+        line->back().setIndexInMap(Map::toSideIndex(line->indexInMap(), Line::Back));
 
         return line;
     }
@@ -284,7 +284,7 @@ static EditableMap editMap; // singleton
 static bool editMapInited;
 static bool lastBuiltMapResult;
 
-static GameMap *lastBuiltMap;
+static Map *lastBuiltMap;
 
 int bspFactor = 7;
 
@@ -692,7 +692,7 @@ static void buildVertexLineOwnerRings()
     }
 }
 
-GameMap *MPE_GetLastBuiltMap()
+Map *MPE_GetLastBuiltMap()
 {
     return lastBuiltMap;
 }
@@ -738,7 +738,7 @@ boolean MPE_End()
     printMissingMaterialsInDict();
     clearMaterialDict();
 
-    GameMap *map = new GameMap;
+    Map *map = new Map;
 
     /*
      * Perform cleanup on the loaded map data.

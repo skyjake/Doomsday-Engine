@@ -31,7 +31,7 @@
 #include "de_filesys.h"
 
 #include "Game"
-#include "world/gamemap.h"
+#include "world/map.h"
 #include "world/propertyvalue.h"
 #include "render/rend_bias.h"
 #include "render/vlight.h"
@@ -57,7 +57,7 @@ extern "C" boolean mapSetup; // We are currently setting up a map.
 
 namespace de {
 
-GameMap *theMap; // Available globally inside the engine.
+Map *theMap; // Available globally inside the engine.
 
 }
 
@@ -488,8 +488,8 @@ void P_ShutdownMapEntityDefs()
     clearEntityDefs();
 }
 
-#undef P_CountGameMapObjs
-DENG_EXTERN_C uint P_CountGameMapObjs(int entityId)
+#undef P_CountMapObjs
+DENG_EXTERN_C uint P_CountMapObjs(int entityId)
 {
     if(!theMap || !theMap->entityDatabase) return 0;
     EntityDatabase *db = theMap->entityDatabase;

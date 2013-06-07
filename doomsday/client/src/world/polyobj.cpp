@@ -26,7 +26,7 @@
 #include "de_base.h"
 
 #include "world/p_maptypes.h"
-#include "world/gamemap.h"
+#include "world/map.h"
 #include "Segment"
 
 #include "render/r_main.h" // validCount

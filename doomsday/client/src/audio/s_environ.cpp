@@ -147,7 +147,7 @@ static void setBspLeafSectorOwner(ownerlist_t *ownerList, BspLeaf *bspLeaf)
     ownerList->head = node;
 }
 
-static void findBspLeafsAffectingSector(GameMap *map, Sector *sec)
+static void findBspLeafsAffectingSector(Map *map, Sector *sec)
 {
     if(!sec || !sec->sideCount()) return;
 
@@ -213,7 +213,7 @@ static void findBspLeafsAffectingSector(GameMap *map, Sector *sec)
     }
 }
 
-void S_DetermineBspLeafsAffectingSectorReverb(GameMap *map)
+void S_DetermineBspLeafsAffectingSectorReverb(Map *map)
 {
     Time begunAt;
 

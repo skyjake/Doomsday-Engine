@@ -41,7 +41,7 @@ class BspLeaf;
 class Surface;
 
 namespace de {
-class GameMap;
+class Map;
 }
 
 /**
@@ -215,7 +215,7 @@ public:
      *
      * @param map  Map to collate sides from. @todo Refactor away.
      */
-    void buildSides(de::GameMap const &map);
+    void buildSides(de::Map const &map);
 
     /**
      * Provides access to the list of BSP leafs which reference the sector, for
@@ -233,7 +233,7 @@ public:
      *
      * @param map  Map to collate BSP leafs from. @todo Refactor away.
      */
-    void buildBspLeafs(de::GameMap const &map);
+    void buildBspLeafs(de::Map const &map);
 
     /**
      * Provides access to the list of BSP leafs which contribute to the environmental

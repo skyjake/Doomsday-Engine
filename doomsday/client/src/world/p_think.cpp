@@ -24,7 +24,7 @@
 #include "de_console.h"
 #include "de_network.h"
 
-#include "world/gamemap.h"
+#include "world/map.h"
 
 typedef struct thinkerlist_s {
     boolean isPublic; ///< All thinkers in this list are visible publically.
@@ -38,7 +38,7 @@ boolean Thinker_IsMobjFunc(thinkfunc_t func)
 
 namespace de {
 
-static thid_t newMobjID(GameMap &map)
+static thid_t newMobjID(Map &map)
 {
     // Increment the ID dealer until a free ID is found.
     /// @todo fixme: What if all IDs are in use? 65535 thinkers!?
@@ -50,18 +50,18 @@ static thid_t newMobjID(GameMap &map)
     return map.thinkers.iddealer;
 }
 
-void GameMap::clearMobjIds()
+void Map::clearMobjIds()
 {
     std::memset(thinkers.idtable, 0, sizeof(thinkers.idtable));
     thinkers.idtable[0] |= 1; // ID zero is always "used" (it's not a valid ID).
 }
 
-boolean GameMap::isUsedMobjId(thid_t id)
+boolean Map::isUsedMobjId(thid_t id)
 {
     return thinkers.idtable[id >> 5] & (1 << (id & 31) /*(id % 32) */ );
 }
 
-void GameMap::setMobjId(thid_t id, boolean inUse)
+void Map::setMobjId(thid_t id, boolean inUse)
 {
     int c = id >> 5, bit = 1 << (id & 31); //(id % 32);
 
@@ -85,7 +85,7 @@ static int mobjIdLookup(thinker_t *thinker, void *context)
     return false; // Continue iteration.
 }
 
-struct mobj_s *GameMap::mobjById(int id)
+struct mobj_s *Map::mobjById(int id)
 {
     /// @todo  A hash table wouldn't hurt (see client's mobj id table).
     mobjidlookup_t lookup;
@@ -116,7 +116,7 @@ static void initThinkerList(thinkerlist_t *list)
     list->thinkerCap.prev = list->thinkerCap.next = &list->thinkerCap;
 }
 
-static thinkerlist_t *listForThinkFunc(GameMap &map, thinkfunc_t func, boolean isPublic,
+static thinkerlist_t *listForThinkFunc(Map &map, thinkfunc_t func, boolean isPublic,
     boolean canCreate)
 {
     thinkerlist_t* list;
@@ -217,10 +217,10 @@ static int iterateThinkerList(thinkerlist_t *list, int (*callback) (thinker_t *,
     return result;
 }
 
-void GameMap::thinkerAdd(thinker_t &th, boolean makePublic)
+void Map::thinkerAdd(thinker_t &th, boolean makePublic)
 {
     if(!th.function)
-        throw Error("GameMap::thinkerAdd", "Invalid thinker function");
+        throw Error("Map::thinkerAdd", "Invalid thinker function");
 
     // Will it need an ID?
     if(Thinker_IsMobjFunc(th.function))
@@ -244,7 +244,7 @@ void GameMap::thinkerAdd(thinker_t &th, boolean makePublic)
     linkThinkerToList(&th, listForThinkFunc(*this, th.function, makePublic, true));
 }
 
-void GameMap::thinkerRemove(thinker_t &th)
+void Map::thinkerRemove(thinker_t &th)
 {
     // Has got an ID?
     if(th.id)
@@ -269,7 +269,7 @@ void GameMap::thinkerRemove(thinker_t &th)
     th.function = (thinkfunc_t) -1;
 }
 
-void GameMap::initThinkerLists(byte flags)
+void Map::initThinkerLists(byte flags)
 {
     if(!thinkers.inited)
     {
@@ -293,12 +293,12 @@ void GameMap::initThinkerLists(byte flags)
     thinkers.inited = true;
 }
 
-boolean GameMap::thinkerListInited() const
+boolean Map::thinkerListInited() const
 {
     return thinkers.inited;
 }
 
-int GameMap::iterateThinkers(thinkfunc_t func, byte flags,
+int Map::iterateThinkers(thinkfunc_t func, byte flags,
     int (*callback) (thinker_t *, void *), void *context)
 {
     if(!thinkers.inited) return false;

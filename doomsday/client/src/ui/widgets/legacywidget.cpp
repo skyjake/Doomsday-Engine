@@ -30,7 +30,7 @@
 #include "dd_loop.h"
 #include "sys_system.h"
 #include "edit_bias.h"
-#include "world/gamemap.h"
+#include "world/map.h"
 #include "network/net_main.h"
 #include "render/r_main.h"
 #include "render/rend_list.h"

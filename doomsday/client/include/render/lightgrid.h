@@ -28,7 +28,7 @@ class Sector;
 
 namespace de {
 
-class GameMap;
+class Map;
 
 /**
  * Simple global illumination method utilizing a 2D grid of light levels, achieving
@@ -56,7 +56,7 @@ public:
      * @note Initialization may take some time depending on the complexity of the map
      * (world dimensions, number of sectors) and should therefore be done "off-line".
      */
-    LightGrid(GameMap &map);
+    LightGrid(Map &map);
 
     /**
      * Register the console comands and variables of this module.

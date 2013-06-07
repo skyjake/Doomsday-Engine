@@ -32,7 +32,7 @@
 #include "de_misc.h"
 #include "de_filesys.h"
 
-#include "world/gamemap.h"
+#include "world/map.h"
 #include "world/p_mapdata.h"
 
 // Global archived map format version identifier. Increment when making
@@ -161,7 +161,7 @@ static void endSegment(void)
     writeLong(DAMSEG_END);
 }
 
-static void writeVertex(GameMap const *map, uint idx)
+static void writeVertex(Map const *map, uint idx)
 {
     Vertex const *v = &map->vertexes[idx];
 
@@ -183,7 +183,7 @@ static void writeVertex(GameMap const *map, uint idx)
     }
 }
 
-static void readVertex(GameMap *map, uint idx)
+static void readVertex(Map *map, uint idx)
 {
     Vertex *v = &map->vertexes[idx];
 
@@ -215,7 +215,7 @@ static void readVertex(GameMap *map, uint idx)
     }
 }
 
-static void archiveVertexes(GameMap *map, boolean write)
+static void archiveVertexes(Map *map, boolean write)
 {
     int i;
 
@@ -243,7 +243,7 @@ static void archiveVertexes(GameMap *map, boolean write)
         assertSegment(DAMSEG_END);
 }
 
-static void writeLine(GameMap *map, uint idx)
+static void writeLine(Map *map, uint idx)
 {
     DENG_ASSERT(map);
 
@@ -278,7 +278,7 @@ static void writeLine(GameMap *map, uint idx)
     }
 }
 
-static void readLine(GameMap *map, uint idx)
+static void readLine(Map *map, uint idx)
 {
     DENG_ASSERT(map);
 
@@ -321,7 +321,7 @@ static void readLine(GameMap *map, uint idx)
     }
 }
 
-static void archiveLines(GameMap* map, boolean write)
+static void archiveLines(Map * map, boolean write)
 {
     uint i;
 
@@ -349,7 +349,7 @@ static void archiveLines(GameMap* map, boolean write)
         assertSegment(DAMSEG_END);
 }
 
-static void writeSide(GameMap *map, uint idx)
+static void writeSide(Map *map, uint idx)
 {
     DENG_ASSERT(map);
 
@@ -375,7 +375,7 @@ static void writeSide(GameMap *map, uint idx)
     writeShort(s->_flags);
 }
 
-static void readSide(GameMap *map, uint idx)
+static void readSide(Map *map, uint idx)
 {
     DENG_ASSERT(map);
 
@@ -407,7 +407,7 @@ static void readSide(GameMap *map, uint idx)
     s->updateSoundEmitterOrigins();
 }
 
-static void archiveSides(GameMap *map, boolean write)
+static void archiveSides(Map *map, boolean write)
 {
     if(write)
         beginSegment(DAMSEG_SIDES);
@@ -437,7 +437,7 @@ static void archiveSides(GameMap *map, boolean write)
         assertSegment(DAMSEG_END);
 }
 
-static void writeSector(GameMap *map, uint idx)
+static void writeSector(Map *map, uint idx)
 {
     DENG_ASSERT(map);
 
@@ -507,7 +507,7 @@ static void writeSector(GameMap *map, uint idx)
     }
 }
 
-static void readSector(GameMap *map, uint idx)
+static void readSector(Map *map, uint idx)
 {
     DENG_ASSERT(map);
 
@@ -615,7 +615,7 @@ static void readSector(GameMap *map, uint idx)
     }
 }
 
-static void archiveSectors(GameMap *map, boolean write)
+static void archiveSectors(Map *map, boolean write)
 {
     DENG_ASSERT(map);
 
@@ -643,7 +643,7 @@ static void archiveSectors(GameMap *map, boolean write)
         assertSegment(DAMSEG_END);
 }
 
-static void writeBspLeaf(GameMap *map, BspLeaf *s)
+static void writeBspLeaf(Map *map, BspLeaf *s)
 {
     DENG_ASSERT(map && s);
 
@@ -672,7 +672,7 @@ static void writeBspLeaf(GameMap *map, BspLeaf *s)
     } while((segment = segment->next) != base);
 }
 
-static void readBspLeaf(GameMap *map, BspLeaf *s)
+static void readBspLeaf(Map *map, BspLeaf *s)
 {
     DENG_ASSERT(map && s);
 
@@ -721,7 +721,7 @@ static void readBspLeaf(GameMap *map, BspLeaf *s)
     s->_hedge->prev = prevHEdge;
 }
 
-static void archiveBspLeafs(GameMap* map, boolean write)
+static void archiveBspLeafs(Map * map, boolean write)
 {
     //uint i;
     DENG2_UNUSED(map);
@@ -750,7 +750,7 @@ static void archiveBspLeafs(GameMap* map, boolean write)
         assertSegment(DAMSEG_END);
 }
 
-static void writeSeg(GameMap *map, Segment *s)
+static void writeSeg(Map *map, Segment *s)
 {
     DENG_ASSERT(map && s);
 
@@ -768,7 +768,7 @@ static void writeSeg(GameMap *map, Segment *s)
     writeLong(s->twin? (map->hedgeIndex(s->prev) + 1) : 0);
 }
 
-static void readSeg(GameMap *map, Segment *s)
+static void readSeg(Map *map, Segment *s)
 {
     DENG_ASSERT(map && s);
     long obIdx;
@@ -793,7 +793,7 @@ static void readSeg(GameMap *map, Segment *s)
     s->prev = (obIdx == 0? NULL : map->hedges().at((unsigned) obIdx - 1));
 }
 
-static void archiveSegs(GameMap *map, boolean write)
+static void archiveSegs(Map *map, boolean write)
 {
     DENG_UNUSED(map);
     //uint                i;
@@ -824,7 +824,7 @@ static void archiveSegs(GameMap *map, boolean write)
 
 #define NF_LEAF            0x80000000
 
-static void writeBspReference(GameMap* map, de::MapElement* bspRef)
+static void writeBspReference(Map * map, de::MapElement* bspRef)
 {
     assert(map);
     if(bspRef->type() == DMU_BSPLEAF)
@@ -833,7 +833,7 @@ static void writeBspReference(GameMap* map, de::MapElement* bspRef)
         writeLong((long)map->bspNodeIndex(bspRef->castTo<BspNode>()));
 }
 
-static MapElement *readBspReference(GameMap *map)
+static MapElement *readBspReference(Map *map)
 {
     DENG_ASSERT(map);
     long idx = readLong();
@@ -846,7 +846,7 @@ static MapElement *readBspReference(GameMap *map)
 
 #undef NF_LEAF
 
-static void writeNode(GameMap *map, BspNode *n)
+static void writeNode(Map *map, BspNode *n)
 {
     DENG_ASSERT(map && n);
 
@@ -866,7 +866,7 @@ static void writeNode(GameMap *map, BspNode *n)
     writeBspReference(map, n->_children[LEFT]);
 }
 
-static void readNode(GameMap *map, BspNode *n)
+static void readNode(Map *map, BspNode *n)
 {
     DENG_ASSERT(map && n);
 
@@ -886,7 +886,7 @@ static void readNode(GameMap *map, BspNode *n)
     n->_children[LEFT]  = readBspReference(map);
 }
 
-static void archiveNodes(GameMap* map, boolean write)
+static void archiveNodes(Map * map, boolean write)
 {
     DENG_UNUSED(map);
     //uint i;
@@ -915,7 +915,7 @@ static void archiveNodes(GameMap* map, boolean write)
         assertSegment(DAMSEG_END);
 }
 
-static void archiveBlockmap(GameMap *map, boolean write)
+static void archiveBlockmap(Map *map, boolean write)
 {
     DENG_UNUSED(map);
 
@@ -930,7 +930,7 @@ static void archiveBlockmap(GameMap *map, boolean write)
         assertSegment(DAMSEG_END);
 }
 
-static void archiveReject(GameMap *map, boolean write)
+static void archiveReject(Map *map, boolean write)
 {
     DENG_UNUSED(map);
 
@@ -945,7 +945,7 @@ static void archiveReject(GameMap *map, boolean write)
         assertSegment(DAMSEG_END);
 }
 
-static void writePolyobj(GameMap *map, uint idx)
+static void writePolyobj(Map *map, uint idx)
 {
     DENG_ASSERT(map);
 
@@ -986,7 +986,7 @@ static void writePolyobj(GameMap *map, uint idx)
     }
 }
 
-static void readPolyobj(GameMap *map, uint idx)
+static void readPolyobj(Map *map, uint idx)
 {
     DENG_ASSERT(map);
 
@@ -1042,7 +1042,7 @@ static void readPolyobj(GameMap *map, uint idx)
     p->lines[p->lineCount] = NULL; // Terminate.
 }
 
-static void archivePolyobjs(GameMap* map, boolean write)
+static void archivePolyobjs(Map * map, boolean write)
 {
     uint i;
 
@@ -1070,7 +1070,7 @@ static void archivePolyobjs(GameMap* map, boolean write)
         assertSegment(DAMSEG_END);
 }
 
-static void archiveMap(GameMap *map, boolean write)
+static void archiveMap(Map *map, boolean write)
 {
     if(write)
         beginSegment(DAMSEG_MAP);
@@ -1155,7 +1155,7 @@ static void archiveHeader(boolean write)
         assertSegment(DAMSEG_END);
 }
 
-static boolean doArchiveMap(GameMap* map, const char* path, boolean write)
+static boolean doArchiveMap(Map * map, const char* path, boolean write)
 {
     if(NULL == path || !path[0])
         return false;
@@ -1183,12 +1183,12 @@ static boolean doArchiveMap(GameMap* map, const char* path, boolean write)
     return true;
 }
 
-boolean DAM_MapWrite(GameMap* map, const char* path)
+boolean DAM_MapWrite(Map * map, const char* path)
 {
     return doArchiveMap(map, path, true);
 }
 
-boolean DAM_MapRead(GameMap* map, const char* path)
+boolean DAM_MapRead(Map * map, const char* path)
 {
     return doArchiveMap(map, path, false);
 }

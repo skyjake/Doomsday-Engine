@@ -315,7 +315,7 @@ DENG_API_TYPEDEF(Map)
      *
      * The validCount flags are used to avoid checking lines that are marked
      * in multiple mapblocks, so increment validCount before the first call
-     * to GameMap_IterateCellLines(then make one or more calls to it.
+     * to Map::iterateCellLines() then make one or more calls to it.
      */
     int             (*Box_AllLinesIterator)(const AABoxd* box, int (*callback) (Line*, void*), void* parameters);
 
@@ -471,7 +471,7 @@ DENG_API_TYPEDEF(Map)
     void*           (*DummyExtraData)(MapElementPtr dummy);
 
     // Map Entities
-    uint            (*CountGameMapObjs)(int entityId);
+    uint            (*CountMapObjs)(int entityId);
     byte            (*GetGMOByte)(int entityId, int elementIndex, int propertyId);
     short           (*GetGMOShort)(int entityId, int elementIndex, int propertyId);
     int             (*GetGMOInt)(int entityId, int elementIndex, int propertyId);
@@ -623,7 +623,7 @@ DENG_API_T(Map);
 #define P_FreeDummy                         _api_Map.FreeDummy
 #define P_IsDummy                           _api_Map.IsDummy
 #define P_DummyExtraData                    _api_Map.DummyExtraData
-#define P_CountGameMapObjs                  _api_Map.CountGameMapObjs
+#define P_CountMapObjs                  _api_Map.CountMapObjs
 #define P_GetGMOByte                        _api_Map.GetGMOByte
 #define P_GetGMOShort                       _api_Map.GetGMOShort
 #define P_GetGMOInt                         _api_Map.GetGMOInt

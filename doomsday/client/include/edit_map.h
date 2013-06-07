@@ -23,14 +23,14 @@
 #include "Vertex"
 
 namespace de {
-class GameMap;
+class Map;
 }
 
 DENG_EXTERN_C int bspFactor;
 
 void MPE_Register();
 
-de::GameMap *MPE_GetLastBuiltMap();
+de::Map *MPE_GetLastBuiltMap();
 
 bool MPE_GetLastBuiltMapResult();
 

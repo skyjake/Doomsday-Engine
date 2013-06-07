@@ -30,7 +30,7 @@
 
 #include "MaterialSnapshot"
 #include "MaterialVariantSpec"
-#include "world/gamemap.h"
+#include "world/map.h"
 #include "Texture"
 
 using namespace de;

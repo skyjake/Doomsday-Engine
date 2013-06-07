@@ -32,7 +32,7 @@
 #include "gl/sys_opengl.h"
 #include "MaterialSnapshot"
 #include "MaterialVariantSpec"
-#include "world/gamemap.h"
+#include "world/map.h"
 #include "world/lineowner.h"
 #include "WallEdge"
 

@@ -40,12 +40,12 @@ boolean DAM_MapIsValid(const char* cachedMapPath, lumpnum_t markerLumpNum);
 /**
  * Write the current state of the map into a Doomsday Archived Map.
  */
-boolean DAM_MapWrite(GameMap* map, const char* path);
+boolean DAM_MapWrite(Map * map, const char* path);
 
 /**
  * Load a map from a Doomsday Archived Map.
  */
-boolean DAM_MapRead(GameMap* map, const char* path);
+boolean DAM_MapRead(Map * map, const char* path);
 
 #ifdef __cplusplus
 } // extern "C"

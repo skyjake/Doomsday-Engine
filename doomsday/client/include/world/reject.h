@@ -24,7 +24,7 @@
 #define DENG_WORLD_REJECT_H
 
 #if 0 // Needs updating
-class GameMap;
+class Map;
 
 /**
  * The REJECT resource is a LUT that provides the results of trivial
@@ -71,7 +71,7 @@ class GameMap;
  * Initially all sectors are in individual groups. Next, we scan the line
  * list. For each 2-sectored line, merge the two sector groups into one.
  */
-byte *BuildRejectForMap(GameMap const &map);
+byte *BuildRejectForMap(Map const &map);
 #endif
 
 #endif // DENG_WORLD_REJECT_H

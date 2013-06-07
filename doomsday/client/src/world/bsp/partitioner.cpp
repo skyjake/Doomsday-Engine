@@ -33,7 +33,7 @@
 #include <de/Error>
 #include <de/Log>
 
-#include "world/gamemap.h"
+#include "world/map.h"
 #include "BspLeaf"
 #include "BspNode"
 #include "Segment"
@@ -72,7 +72,7 @@ DENG2_PIMPL(Partitioner)
     int splitCostFactor;
 
     /// The map we are building BSP data for (not owned).
-    GameMap const *map;
+    Map const *map;
 
     /// Running totals of constructed BSP map elements.
     int numNodes;
@@ -105,7 +105,7 @@ DENG2_PIMPL(Partitioner)
     /// The "current" binary space half-plane.
     HPlane hplane;
 
-    Instance(Public *i, GameMap const &map, int splitCostFactor)
+    Instance(Public *i, Map const &map, int splitCostFactor)
       : Base(i),
         splitCostFactor(splitCostFactor),
         map(&map),
@@ -1642,7 +1642,7 @@ DENG2_PIMPL(Partitioner)
 #endif
 };
 
-Partitioner::Partitioner(GameMap const &map, int splitCostFactor)
+Partitioner::Partitioner(Map const &map, int splitCostFactor)
     : d(new Instance(this, map, splitCostFactor))
 {
     d->initForMap();

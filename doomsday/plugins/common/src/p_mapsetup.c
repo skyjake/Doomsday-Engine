@@ -439,7 +439,7 @@ static void loadMapSpots(void)
 {
     uint i;
 
-    numMapSpots = P_CountGameMapObjs(MO_THING);
+    numMapSpots = P_CountMapObjs(MO_THING);
     if(numMapSpots > 0)
         mapSpots = Z_Malloc(numMapSpots * sizeof(mapspot_t), PU_MAP, 0);
     else

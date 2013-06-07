@@ -23,7 +23,7 @@
 #include "de_play.h"
 #include "de_misc.h"
 
-#include "world/gamemap.h"
+#include "world/map.h"
 #include "render/sky.h"
 
 using namespace de;

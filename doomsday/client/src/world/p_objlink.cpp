@@ -28,7 +28,7 @@
 #include "de_defs.h"
 
 #include "gridmap.h"
-#include "world/gamemap.h"
+#include "world/map.h"
 #include "MaterialSnapshot"
 
 #include "world/p_objlink.h"

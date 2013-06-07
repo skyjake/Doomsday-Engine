@@ -100,7 +100,7 @@ mobj_t *ClMobj_Create(thid_t id);
 
 /**
  * Destroys the client mobj. Before this is called, the client mobj should be
- * unlinked from the thinker list (GameMap_ThinkerRemove).
+ * unlinked from the thinker list by calling Map::thinkerRemove().
  */
 void ClMobj_Destroy(mobj_t *mo);
 

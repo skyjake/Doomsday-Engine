@@ -25,7 +25,7 @@
 #include "de_defs.h" // Def_GetGenerator
 
 #include "Materials"
-#include "world/gamemap.h"
+#include "world/map.h"
 #include "world/r_world.h" /// ddMapSetup @todo remove me
 #include "render/r_main.h" /// frameTimePos
 
@@ -314,7 +314,7 @@ bool Surface::setMaterial(Material *newMaterial, bool isMissingFix)
             if(!ddMapSetup)
             {
 #ifdef __CLIENT__
-                GameMap *map = theMap; /// @todo Do not assume surface is from the CURRENT map.
+                Map *map = theMap; /// @todo Do not assume surface is from the CURRENT map.
 
                 // If this plane's surface is in the decorated list, remove it.
                 map->decoratedSurfaces().remove(this);

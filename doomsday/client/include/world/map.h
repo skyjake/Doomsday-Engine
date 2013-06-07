@@ -1,4 +1,4 @@
-/** @file world/gamemap.h World Map.
+/** @file world/map.h World Map.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -79,7 +79,7 @@ class Mesh;
  *
  * @ingroup world
  */
-class GameMap
+class Map
 {
 public:
 #ifdef __CLIENT__
@@ -150,8 +150,8 @@ public:
     int _ambientLightLevel; // Ambient lightlevel for the current map.
 
 public:
-    GameMap();
-    ~GameMap();
+    Map();
+    ~Map();
 
     /**
      * This ID is the name of the lump tag that marks the beginning of map
@@ -335,14 +335,14 @@ public:
     /**
      * Retrieve an immutable copy of the LOS trace line state.
      *
-     * @todo GameMap should not own this data.
+     * @todo Map should not own this data.
      */
     divline_t const &traceLine() const;
 
     /**
      * Retrieve an immutable copy of the LOS TraceOpening state.
      *
-     * @todo GameMap should not own this data.
+     * @todo Map should not own this data.
      */
     TraceOpening const &traceOpening() const;
 
@@ -352,7 +352,7 @@ public:
      *
      * If @a line is not owned by the map this is a no-op.
      *
-     * @todo GameMap should not own this data.
+     * @todo Map should not own this data.
      *
      * @param line  Map line to configure the opening for.
      */
@@ -755,7 +755,7 @@ private:
 };
 
 // The current map.
-DENG_EXTERN_C GameMap *theMap;
+DENG_EXTERN_C Map *theMap;
 
 } // namespace de
 

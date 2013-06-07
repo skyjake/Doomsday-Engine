@@ -365,12 +365,12 @@ DENG_HEADERS += \
     include/world/dam_file.h \
     include/world/entitydatabase.h \
     include/world/face.h \
-    include/world/gamemap.h \
     include/world/generators.h \
     include/world/hedge.h \
     include/world/line.h \
     include/world/lineowner.h \
     include/world/linesighttest.h \
+    include/world/map.h \
     include/world/mapelement.h \
     include/world/mesh.h \
     include/world/p_dmu.h \
@@ -657,11 +657,11 @@ SOURCES += \
     src/world/dam_file.cpp \
     src/world/entitydatabase.cpp \
     src/world/face.cpp \
-    src/world/gamemap.cpp \
     src/world/generators.cpp \
     src/world/hedge.cpp \
     src/world/line.cpp \
     src/world/linesighttest.cpp \
+    src/world/map.cpp \
     src/world/mapelement.cpp \
     src/world/mesh.cpp \
     src/world/p_data.cpp \

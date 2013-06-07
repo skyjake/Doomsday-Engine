@@ -51,7 +51,7 @@ extern int gotFrame; ///< @todo Remove this...
 /**
  * @return  Pointer to the hash chain with the specified id.
  */
-static cmhash_t* GameMap_ClMobjHash(GameMap* map, thid_t id)
+static cmhash_t* Map_ClMobjHash(Map* map, thid_t id)
 {
     assert(map);
     return &map->clMobjHash[(uint) id % CLIENT_MOBJ_HASH_SIZE];
@@ -61,7 +61,7 @@ static cmhash_t* GameMap_ClMobjHash(GameMap* map, thid_t id)
 static cmhash_t* ClMobj_Hash(thid_t id)
 {
     if(!theMap) return NULL;
-    return GameMap_ClMobjHash(theMap, id);
+    return Map_ClMobjHash(theMap, id);
 }
 
 #ifdef _DEBUG
@@ -92,7 +92,7 @@ void checkMobjHash(void)
 static void ClMobj_LinkInHash(mobj_t* mo, thid_t id)
 {
     /// @todo Do not assume the CURRENT map.
-    cmhash_t* hash = GameMap_ClMobjHash(theMap, id);
+    cmhash_t* hash = Map_ClMobjHash(theMap, id);
     clmoinfo_t* info = ClMobj_GetInfo(mo);
 
     CL_ASSERT_CLMOBJ(mo);
@@ -177,7 +177,7 @@ struct mobj_s *ClMobj_Find(thid_t id)
     return 0;
 }
 
-int GameMap::clMobjIterator(int (*callback) (mobj_t *, void *), void *context)
+int Map::clMobjIterator(int (*callback) (mobj_t *, void *), void *context)
 {
     for(int i = 0; i < CLIENT_MOBJ_HASH_SIZE; ++i)
     for(clmoinfo_t *info = clMobjHash[i].first; info; info = info->next)
@@ -339,12 +339,12 @@ void Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj,
     }
 }
 
-void GameMap::initClMobjs()
+void Map::initClMobjs()
 {
     std::memset(clMobjHash, 0, sizeof(clMobjHash));
 }
 
-void GameMap::destroyClMobjs()
+void Map::destroyClMobjs()
 {
     for(int i = 0; i < CLIENT_MOBJ_HASH_SIZE; ++i)
     for(clmoinfo_t *info = clMobjHash[i].first; info; info = info->next)
@@ -358,7 +358,7 @@ void GameMap::destroyClMobjs()
     clMobjReset();
 }
 
-void GameMap::clMobjReset()
+void Map::clMobjReset()
 {
     Cl_ResetFrame();
 
@@ -366,7 +366,7 @@ void GameMap::clMobjReset()
     std::memset(clMobjHash, 0, sizeof(clMobjHash));
 }
 
-void GameMap::expireClMobjs()
+void Map::expireClMobjs()
 {
     uint nowTime = Timer_RealMilliseconds();
 
@@ -392,7 +392,7 @@ void GameMap::expireClMobjs()
             if(nowTime - info->time > CLMOBJ_TIMEOUT)
             {
 #ifdef DENG_DEBUG
-                Con_Message("GameMap::expireClMobjs: Mobj %i has expired (%i << %i), in state %s [%c%c%c].",
+                Con_Message("Map::expireClMobjs: Mobj %i has expired (%i << %i), in state %s [%c%c%c].",
                             mo->thinker.id,
                             info->time, nowTime,
                             Def_GetStateName(mo->state),

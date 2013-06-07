@@ -23,7 +23,7 @@
 #ifndef DENG_WORLD_MAP_BSPBUILDER
 #define DENG_WORLD_MAP_BSPBUILDER
 
-#include "world/gamemap.h"
+#include "world/map.h"
 #include "world/bsp/bsptreenode.h"
 
 namespace de {
@@ -51,7 +51,7 @@ public:
      *             completed (ownership is unaffected).
      * @param splitCostFactor  Cost factor attributed to splitting a half-edge.
      */
-    BspBuilder(GameMap const &map, int splitCostFactor = DEFAULT_PARTITION_COST_HEDGESPLIT);
+    BspBuilder(Map const &map, int splitCostFactor = DEFAULT_PARTITION_COST_HEDGESPLIT);
 
     /**
      * Set the cost factor associated with splitting an existing half-edge.

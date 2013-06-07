@@ -29,7 +29,7 @@
 #include "de_misc.h"
 #include "de_play.h"
 
-#include "world/gamemap.h"
+#include "world/map.h"
 #include "render/r_main.h"
 
 using namespace de;

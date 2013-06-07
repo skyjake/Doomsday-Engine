@@ -2432,7 +2432,7 @@ int DD_GetInteger(int ddvalue)
         return F_LumpCount();
 
     case DD_MAP_MUSIC: {
-        if(GameMap *map = theMap)
+        if(Map *map = theMap)
         {
             de::Uri mapUri = map->uri();
             if(ded_mapinfo_t *mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&mapUri)))

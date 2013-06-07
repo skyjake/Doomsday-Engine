@@ -30,7 +30,7 @@
 #include "Game"
 #include "def_main.h"
 #include "network/net_main.h"
-#include "world/gamemap.h"
+#include "world/map.h"
 #include "world/p_players.h"
 #include "world/p_maptypes.h"
 
@@ -120,7 +120,7 @@ void ShellUser::sendGameState()
 
     // Check the map's information from definitions.
     /// @todo DD_GetVariable() is not an appropriate place to ask for this --
-    /// should be moved to the GameMap class. (Ditto for the ID query below.)
+    /// should be moved to the Map class. (Ditto for the ID query below.)
     char const *name = reinterpret_cast<char const *>(DD_GetVariable(DD_MAP_NAME));
     if(name) mapTitle = name;
 

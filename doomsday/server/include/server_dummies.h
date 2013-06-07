@@ -30,7 +30,7 @@
 #define SERVER_DUMMIES_H
 
 #include <de/libdeng1.h>
-#include "world/gamemap.h"
+#include "world/map.h"
 
 #ifndef __SERVER__
 #  error "Attempted to include server's header in a non-server build"

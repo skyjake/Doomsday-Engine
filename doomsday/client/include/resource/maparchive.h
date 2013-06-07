@@ -25,7 +25,7 @@
 
 namespace de {
 
-class GameMap;
+class Map;
 
 /**
  * @ingroup resource
@@ -57,7 +57,7 @@ public:
          *
          * @return  Pointer to the loaded map; otherwise @c 0.
          */
-        GameMap *loadMap(/*bool forceRetry = false*/);
+        Map *loadMap(/*bool forceRetry = false*/);
 
         friend class MapArchive;
 
@@ -73,18 +73,18 @@ public:
          *
          * @see isCachedMapDataAvailable()
          *
-         * @return  Pointer to the loaded GameMap; otherwise @c 0.
+         * @return  Pointer to the loaded Map; otherwise @c 0.
          */
-        GameMap *loadCachedMap();
+        Map *loadCachedMap();
 #endif
 
         /**
          * Attempt to peform a JIT conversion of the map data with the help
          * of a map converter plugin.
          *
-         * @return  Pointer to the converted GameMap; otherwise @c 0.
+         * @return  Pointer to the converted Map; otherwise @c 0.
          */
-        GameMap *convert();
+        Map *convert();
 
         Uri _uri;
         /*ddstring_t cachedMapPath;
@@ -137,9 +137,9 @@ public:
      *   createInfo(@a uri).loadMap();
      * @endcode
      *
-     * @return  Pointer to the loaded GameMap; otherwise @c 0.
+     * @return  Pointer to the loaded Map; otherwise @c 0.
      */
-    inline GameMap *loadMap(Uri const &uri)
+    inline Map *loadMap(Uri const &uri)
     {
         // Record this map if we haven't already and then load it in!
         return createInfo(uri).loadMap();

@@ -28,7 +28,7 @@
 #include "de_defs.h"
 #include "de_misc.h"
 #include "de_play.h"
-#include "world/gamemap.h"
+#include "world/map.h"
 
 #include "render/rend_bias.h"
 

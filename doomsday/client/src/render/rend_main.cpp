@@ -44,7 +44,7 @@
 #include "TriangleStripBuilder"
 
 #include "world/blockmapvisual.h"
-#include "world/gamemap.h"
+#include "world/map.h"
 #include "world/lineowner.h"
 #include "world/p_objlink.h"
 #include "world/p_players.h"

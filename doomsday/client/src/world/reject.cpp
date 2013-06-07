@@ -27,11 +27,11 @@
 #include <cmath>
 
 #include "de_base.h"
-#include "world/gamemap.h"
+#include "world/map.h"
 
 using namespace de;
 
-void BuildRejectForMap(GameMap const &map)
+void BuildRejectForMap(Map const &map)
 {
     int *secGroups = M_Malloc(sizeof(int) * map.sectorCount());
     int group = 0;

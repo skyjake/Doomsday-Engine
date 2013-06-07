@@ -31,7 +31,7 @@
 
 #include "BspLeaf"
 #include "Sector"
-#include "world/gamemap.h"
+#include "world/map.h"
 #include "world/p_maputil.h" // P_IsPointInBspLeaf
 #include "world/p_players.h" // viewPlayer
 
@@ -346,7 +346,7 @@ DENG2_OBSERVES(Sector, LightColorChange),
 DENG2_OBSERVES(Sector, LightLevelChange)
 {
     /// Map for which we provide an ambient lighting grid.
-    GameMap &map;
+    Map &map;
 
     /// Origin of the grid in the map coordinate space.
     Vector2d origin;
@@ -363,7 +363,7 @@ DENG2_OBSERVES(Sector, LightLevelChange)
     /// Set to @c true when a full update is needed.
     bool needUpdate;
 
-    Instance(Public *i, GameMap &map)
+    Instance(Public *i, Map &map)
         : Base(i),
           map(map),
           needUpdate(false)
@@ -843,7 +843,7 @@ DENG2_OBSERVES(Sector, LightLevelChange)
     }
 };
 
-LightGrid::LightGrid(GameMap &map)
+LightGrid::LightGrid(Map &map)
     : d(new Instance(this, map))
 {
     d->initialize();

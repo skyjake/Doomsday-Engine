@@ -31,7 +31,7 @@
 #include "de_base.h"
 #include "de_edit.h"
 #include "de_filesys.h"
-#include "world/gamemap.h"
+#include "world/map.h"
 
 #include "resource/maparchive.h"
 
@@ -121,7 +121,7 @@ de::Uri MapArchive::Info::mapUri() const
     return _uri;
 }
 
-GameMap *MapArchive::Info::loadMap(/*bool forceRetry = false*/)
+Map *MapArchive::Info::loadMap(/*bool forceRetry = false*/)
 {
     //if(lastLoadAttemptFailed && !forceRetry)
     //    return false;
@@ -131,7 +131,7 @@ GameMap *MapArchive::Info::loadMap(/*bool forceRetry = false*/)
     // Load from cache?
     /*if(mapCache && cachedMapFound)
     {
-        if(GameMap *map = loadCachedMap())
+        if(Map *map = loadCachedMap())
             return map;
 
         lastLoadAttemptFailed = true;
@@ -139,7 +139,7 @@ GameMap *MapArchive::Info::loadMap(/*bool forceRetry = false*/)
     }*/
 
     // Try a JIT conversion with the help of a plugin.
-    if(GameMap *map = convert())
+    if(Map *map = convert())
         return map;
 
     LOG_WARNING("Failed conversion of \"%s\".") << _uri;
@@ -157,9 +157,9 @@ bool MapArchive::Info::isCachedMapDataAvailable()
     return cachedMapFound;
 }
 
-GameMap *MapArchive::Info::loadCachedMap()
+Map *MapArchive::Info::loadCachedMap()
 {
-    GameMap *map = DAM_MapRead(Str_Text(&cachedMapPath));
+    Map *map = DAM_MapRead(Str_Text(&cachedMapPath));
     if(!map) return 0;
 
     map->_uri = _uri;
@@ -167,7 +167,7 @@ GameMap *MapArchive::Info::loadCachedMap()
 }
 #endif
 
-GameMap *MapArchive::Info::convert()
+Map *MapArchive::Info::convert()
 {
     LOG_AS("MapArchive::convert");
 
@@ -192,7 +192,7 @@ GameMap *MapArchive::Info::convert()
     if(!MPE_GetLastBuiltMapResult())
         return 0;
 
-    GameMap *map = MPE_GetLastBuiltMap();
+    Map *map = MPE_GetLastBuiltMap();
     DENG_ASSERT(map != 0);
 
     map->_uri = _uri;

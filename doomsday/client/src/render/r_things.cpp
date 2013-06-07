@@ -35,7 +35,7 @@
 #include "de_resource.h"
 
 #include "gl/sys_opengl.h" // TODO: get rid of this
-#include "world/gamemap.h"
+#include "world/map.h"
 
 #include "def_main.h"
 #ifdef __CLIENT__
@@ -1388,7 +1388,7 @@ typedef struct {
 
 int RIT_AddSprite(void *ptr, void *parameters)
 {
-    GameMap *map = theMap; /// @todo Do not assume mobj is from the CURRENT map.
+    Map *map = theMap; /// @todo Do not assume mobj is from the CURRENT map.
 
     mobj_t *mo = (mobj_t *) ptr;
     addspriteparams_t *params = (addspriteparams_t *)parameters;

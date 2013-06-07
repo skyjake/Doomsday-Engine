@@ -536,7 +536,7 @@ Line *R_FindSolidLineNeighbor(Sector const *sector, Line const *line,
 
 #endif // __CLIENT__
 
-static void resetAllMapPlaneVisHeights(GameMap &map)
+static void resetAllMapPlaneVisHeights(Map &map)
 {
     foreach(Sector *sector, map.sectors())
     foreach(Plane *plane, sector->planes())
@@ -545,7 +545,7 @@ static void resetAllMapPlaneVisHeights(GameMap &map)
     }
 }
 
-static void updateAllMapSectors(GameMap &map)
+static void updateAllMapSectors(Map &map)
 {
     foreach(Sector *sector, map.sectors())
     {

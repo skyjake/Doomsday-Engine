@@ -55,7 +55,7 @@ struct mobj_s* ClPlayer_ClMobj(int plrNum)
     return 0;
 }
 
-void GameMap_ClMobjReset(GameMap* map)
+void Map_ClMobjReset(Map * map)
 {
     DENG_UNUSED(map);
 }*/

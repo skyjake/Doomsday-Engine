@@ -24,7 +24,7 @@
 #include "de_play.h"
 #include "de_misc.h"
 
-#include "world/gamemap.h"
+#include "world/map.h"
 #include "render/r_main.h" // validCount
 
 using namespace de;
@@ -177,7 +177,7 @@ DENG_EXTERN_C int P_MobjUnlink(mobj_t* mo)
  * Unlinks the mobj from all the lines it's been linked to. Can be called
  * without checking that the list does indeed contain lines.
  */
-boolean GameMap_UnlinkMobjFromLines(GameMap* map, mobj_t* mo)
+boolean Map_UnlinkMobjFromLines(Map* map, mobj_t* mo)
 {
     linknode_t* tn;
     nodeindex_t nix;
@@ -210,11 +210,11 @@ boolean GameMap_UnlinkMobjFromLines(GameMap* map, mobj_t* mo)
 /**
  * @note Caller must ensure a mobj is linked only once to any given line.
  *
- * @param map  GameMap instance.
- * @param mo  Mobj to be linked.
+ * @param map   Map instance.
+ * @param mo    Mobj to be linked.
  * @param line  Line to link the mobj to.
  */
-void GameMap_LinkMobjToLine(GameMap *map, mobj_t *mo, Line *line)
+void Map_LinkMobjToLine(Map *map, mobj_t *mo, Line *line)
 {
     DENG_ASSERT(map);
 
@@ -231,7 +231,7 @@ void GameMap_LinkMobjToLine(GameMap *map, mobj_t *mo, Line *line)
 }
 
 typedef struct {
-    GameMap *map;
+    Map *map;
     mobj_t *mo;
     AABoxd box;
 } linelinker_data_t;
@@ -258,14 +258,14 @@ int PIT_LinkToLines(Line *ld, void *parameters)
     // legally cross one.
     if(!ld->hasFrontSector() || !ld->hasBackSector()) return false;
 
-    GameMap_LinkMobjToLine(p->map, p->mo, ld);
+    Map_LinkMobjToLine(p->map, p->mo, ld);
     return false;
 }
 
 /**
  * @note Caller must ensure that the mobj is currently unlinked.
  */
-void GameMap_LinkMobjToLines(GameMap* map, mobj_t* mo)
+void Map_LinkMobjToLines(Map* map, mobj_t* mo)
 {
     linelinker_data_t p;
     vec2d_t point;
@@ -352,7 +352,7 @@ DENG_EXTERN_C void P_MobjLink(mobj_t *mo, byte flags)
  * The callback function will be called once for each line that crosses
  * trough the object. This means all the lines will be two-sided.
  */
-int GameMap_MobjLinesIterator(GameMap *map, mobj_t *mo,
+int Map_MobjLinesIterator(Map *map, mobj_t *mo,
     int (*callback) (Line *, void *), void* parameters)
 {
     DENG_ASSERT(map);
@@ -380,7 +380,7 @@ int GameMap_MobjLinesIterator(GameMap *map, mobj_t *mo,
  * partly inside). This is not a 3D check; the mobj may actually reside
  * above or under the sector.
  */
-int GameMap_MobjSectorsIterator(GameMap *map, mobj_t *mo,
+int Map_MobjSectorsIterator(Map *map, mobj_t *mo,
     int (*callback) (Sector *, void *), void *parameters)
 {
     DENG_ASSERT(map);
@@ -431,7 +431,7 @@ int GameMap_MobjSectorsIterator(GameMap *map, mobj_t *mo,
     return result;
 }
 
-int GameMap_LineMobjsIterator(GameMap *map, Line *line,
+int Map_LineMobjsIterator(Map *map, Line *line,
     int (*callback) (mobj_t *, void *), void *parameters)
 {
     DENG_ASSERT(map);
@@ -463,7 +463,7 @@ int GameMap_LineMobjsIterator(GameMap *map, Line *line,
  * (Lovely name; actually this is a combination of SectorMobjs and
  * a bunch of LineMobjs iterations.)
  */
-int GameMap_SectorTouchingMobjsIterator(GameMap *map, Sector *sector,
+int Map_SectorTouchingMobjsIterator(Map *map, Sector *sector,
     int (*callback) (mobj_t *, void *), void *parameters)
 {
     DENG_ASSERT(map);
@@ -620,14 +620,14 @@ void P_LinkMobjToLines(mobj_t *mo)
 {
     /// @todo Do not assume mobj is from the current map.
     if(!theMap) return;
-    GameMap_LinkMobjToLines(theMap, mo);
+    Map_LinkMobjToLines(theMap, mo);
 }
 
 boolean P_UnlinkMobjFromLines(mobj_t *mo)
 {
     /// @todo Do not assume mobj is from the current map.
     if(!theMap) return false;
-    return GameMap_UnlinkMobjFromLines(theMap, mo);
+    return Map_UnlinkMobjFromLines(theMap, mo);
 }
 
 #undef P_MobjLinesIterator
@@ -635,7 +635,7 @@ DENG_EXTERN_C int P_MobjLinesIterator(mobj_t *mo, int (*callback) (Line *, void 
 {
     /// @todo Do not assume mobj is in the current map.
     if(!theMap) return false; // Continue iteration.
-    return GameMap_MobjLinesIterator(theMap, mo, callback, parameters);
+    return Map_MobjLinesIterator(theMap, mo, callback, parameters);
 }
 
 #undef P_MobjSectorsIterator
@@ -643,7 +643,7 @@ DENG_EXTERN_C int P_MobjSectorsIterator(mobj_t *mo, int (*callback) (Sector *, v
 {
     /// @todo Do not assume mobj is in the current map.
     if(!theMap) return false; // Continue iteration.
-    return GameMap_MobjSectorsIterator(theMap, mo, callback, parameters);
+    return Map_MobjSectorsIterator(theMap, mo, callback, parameters);
 }
 
 #undef P_LineMobjsIterator
@@ -651,7 +651,7 @@ DENG_EXTERN_C int P_LineMobjsIterator(Line *line, int (*callback) (mobj_t *, voi
 {
     /// @todo Do not assume line is in the current map.
     if(!theMap) return false; // Continue iteration.
-    return GameMap_LineMobjsIterator(theMap, line, callback, parameters);
+    return Map_LineMobjsIterator(theMap, line, callback, parameters);
 }
 
 /**
@@ -667,7 +667,7 @@ DENG_EXTERN_C int P_SectorTouchingMobjsIterator(Sector *sector, int (*callback) 
 {
     /// @todo Do not assume sector is in the current map.
     if(!theMap) return false; // Continue iteration.
-    return GameMap_SectorTouchingMobjsIterator(theMap, sector, callback, parameters);
+    return Map_SectorTouchingMobjsIterator(theMap, sector, callback, parameters);
 }
 
 #undef P_MobjsBoxIterator

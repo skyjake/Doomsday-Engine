@@ -35,7 +35,7 @@
 #include "de_ui.h"
 #include "de_defs.h"
 
-#include "world/gamemap.h"
+#include "world/map.h"
 #include "gl/texturecontent.h"
 #include "ui/windowsystem.h"
 #include "resource/colorpalettes.h"

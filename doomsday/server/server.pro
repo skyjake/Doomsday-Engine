@@ -243,12 +243,12 @@ DENG_HEADERS += \
     $$SRC/include/world/dam_file.h \
     $$SRC/include/world/entitydatabase.h \
     $$SRC/include/world/face.h \
-    $$SRC/include/world/gamemap.h \
     $$SRC/include/world/generators.h \
     $$SRC/include/world/hedge.h \
     $$SRC/include/world/line.h \
     $$SRC/include/world/lineowner.h \
     $$SRC/include/world/linesighttest.h \
+    $$SRC/include/world/map.h \
     $$SRC/include/world/mesh.h \
     $$SRC/include/world/p_dmu.h \
     $$SRC/include/world/p_intercept.h \
@@ -417,11 +417,11 @@ SOURCES += \
     $$SRC/src/world/dam_file.cpp \
     $$SRC/src/world/entitydatabase.cpp \
     $$SRC/src/world/face.cpp \
-    $$SRC/src/world/gamemap.cpp \
     $$SRC/src/world/generators.cpp \
     $$SRC/src/world/hedge.cpp \
     $$SRC/src/world/line.cpp \
     $$SRC/src/world/linesighttest.cpp \
+    $$SRC/src/world/map.cpp \
     $$SRC/src/world/mapelement.cpp \
     $$SRC/src/world/mesh.cpp \
     $$SRC/src/world/p_data.cpp \

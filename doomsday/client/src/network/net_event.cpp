@@ -32,7 +32,7 @@
 
 #ifdef __SERVER__
 #  include "serversystem.h"
-#  include "world/gamemap.h"
+#  include "world/map.h"
 #endif
 
 using namespace de;

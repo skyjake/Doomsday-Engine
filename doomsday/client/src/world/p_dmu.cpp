@@ -2130,7 +2130,7 @@ DENG_EXTERN_C boolean P_MapExists(char const* uriCString);
 DENG_EXTERN_C boolean P_MapIsCustom(char const* uriCString);
 DENG_EXTERN_C AutoStr* P_MapSourceFile(char const* uriCString);
 DENG_EXTERN_C boolean P_LoadMap(char const* uriCString);
-DENG_EXTERN_C uint P_CountGameMapObjs(int entityId);
+DENG_EXTERN_C uint P_CountMapObjs(int entityId);
 
 // p_mapdata.cpp
 DENG_EXTERN_C byte P_GetGMOByte(int entityId, int elementIndex, int propertyId);
@@ -2365,7 +2365,7 @@ DENG_DECLARE_API(Map) =
     P_FreeDummy,
     P_IsDummy,
     P_DummyExtraData,
-    P_CountGameMapObjs,
+    P_CountMapObjs,
     P_GetGMOByte,
     P_GetGMOShort,
     P_GetGMOInt,

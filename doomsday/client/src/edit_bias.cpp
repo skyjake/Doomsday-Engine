@@ -34,7 +34,7 @@
 #include "de_play.h"
 #include "de_filesys.h"
 
-#include "world/gamemap.h"
+#include "world/map.h"
 
 using namespace de;
 

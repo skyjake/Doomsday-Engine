@@ -29,7 +29,7 @@
 #include "de_render.h"
 
 #include "world/lineowner.h"
-#include "world/gamemap.h"
+#include "world/map.h"
 #include "Vertex"
 
 #include "render/rend_fakeradio.h"

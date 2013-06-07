@@ -24,7 +24,7 @@
 
 #include "BspLeaf"
 #include "Line"
-#include "world/gamemap.h"
+#include "world/map.h"
 #include "world/p_players.h"
 #include "world/p_maptypes.h"
 #ifdef __CLIENT__
@@ -245,7 +245,7 @@ Sector::Sides const &Sector::sides() const
     return d->sides;
 }
 
-void Sector::buildSides(GameMap const &map)
+void Sector::buildSides(Map const &map)
 {
     d->sides.clear();
 
@@ -310,7 +310,7 @@ Sector::BspLeafs const &Sector::bspLeafs() const
     return d->bspLeafs;
 }
 
-void Sector::buildBspLeafs(GameMap const &map)
+void Sector::buildBspLeafs(Map const &map)
 {
     d->bspLeafs.clear();
 
@@ -415,7 +415,7 @@ void Sector::planeHeightChanged(Plane &plane, coord_t oldHeight)
 
     updateSoundEmitterOrigin();
 #ifdef __CLIENT__
-    /// @todo GameMap should observe.
+    /// @todo Map should observe.
     theMap->updateMissingMaterialsForLinesOfSector(*this);
     S_MarkSectorReverbDirty(this);
 #endif

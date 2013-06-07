@@ -33,7 +33,7 @@
 #include "HEdge"
 
 #include "world/blockmap.h"
-#include "world/gamemap.h"
+#include "world/map.h"
 
 #include "world/blockmapvisual.h"
 
@@ -522,7 +522,7 @@ void Rend_BlockmapDebug(void)
     mobj_t* followMobj = NULL;
     Blockmap* blockmap;
     Point2Raw origin;
-    GameMap* map;
+    Map* map;
     float scale;
 
     // Disabled?

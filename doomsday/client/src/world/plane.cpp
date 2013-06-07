@@ -24,7 +24,7 @@
 
 #include "audio/s_environ.h"
 #include "Line"
-#include "world/gamemap.h" /// @todo remove me.
+#include "world/map.h" /// @todo remove me.
 #include "world/r_world.h" // ddMapSetup
 #include "render/r_main.h" // frameTimePos
 
@@ -91,21 +91,21 @@ DENG2_PIMPL(Plane)
         DENG_ASSERT(theMap != 0);
 
         // If this plane is currently being watched, remove it.
-        /// @todo GameMap should observe Deletion.
+        /// @todo Map should observe Deletion.
         theMap->trackedPlanes().remove(&self);
 
         // If this plane's surface is in the moving list, remove it.
-        /// @todo GameMap should observe Deletion.
+        /// @todo Map should observe Deletion.
         theMap->scrollingSurfaces().remove(&surface);
 
 #ifdef __CLIENT__
 
         // If this plane's surface is in the glowing list, remove it.
-        /// @todo GameMap should observe Deletion.
+        /// @todo Map should observe Deletion.
         theMap->glowingSurfaces().remove(&surface);
 
         // If this plane's surface is in the decorated list, remove it.
-        /// @todo GameMap should observe Deletion.
+        /// @todo Map should observe Deletion.
         theMap->decoratedSurfaces().remove(&surface);
 
 #endif // __CLIENT__
@@ -144,7 +144,7 @@ DENG2_PIMPL(Plane)
         // Notify interested parties of the change.
         notifyHeightChanged(oldHeight);
 
-        /// @todo GameMap should observe.
+        /// @todo Map should observe.
         if(!ddMapSetup)
         {
             if(theMap)

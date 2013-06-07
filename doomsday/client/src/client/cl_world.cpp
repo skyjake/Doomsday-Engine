@@ -31,7 +31,7 @@
 #include "api_map.h"
 #include "api_materialarchive.h"
 
-#include "world/gamemap.h"
+#include "world/map.h"
 #include "client/cl_world.h"
 #include "r_util.h"
 
@@ -179,25 +179,25 @@ int Cl_LocalMobjState(int serverMobjState)
     return xlatMobjState.serverToLocal[serverMobjState];
 }
 
-boolean GameMap::isValidClPlane(int i)
+boolean Map::isValidClPlane(int i)
 {
     if(!clActivePlanes[i]) return false;
     return (clActivePlanes[i]->thinker.function == reinterpret_cast<thinkfunc_t>(Cl_MoverThinker));
 }
 
-boolean GameMap::isValidClPolyobj(int i)
+boolean Map::isValidClPolyobj(int i)
 {
     if(!clActivePolyobjs[i]) return false;
     return (clActivePolyobjs[i]->thinker.function == reinterpret_cast<thinkfunc_t>(Cl_PolyMoverThinker));
 }
 
-void GameMap::initClMovers()
+void Map::initClMovers()
 {
     std::memset(clActivePlanes, 0, sizeof(clActivePlanes));
     std::memset(clActivePolyobjs, 0, sizeof(clActivePolyobjs));
 }
 
-void GameMap::resetClMovers()
+void Map::resetClMovers()
 {
     for(int i = 0; i < CLIENT_MAX_MOVERS; ++i)
     {
@@ -241,7 +241,7 @@ void Cl_WorldReset()
     }
 }
 
-int GameMap::clPlaneIndex(clplane_t *mover)
+int Map::clPlaneIndex(clplane_t *mover)
 {
     if(!clActivePlanes) return -1;
 
@@ -254,7 +254,7 @@ int GameMap::clPlaneIndex(clplane_t *mover)
     return -1;
 }
 
-int GameMap::clPolyobjIndex(clpolyobj_t *mover)
+int Map::clPolyobjIndex(clpolyobj_t *mover)
 {
     if(!clActivePolyobjs) return -1;
 
@@ -267,35 +267,35 @@ int GameMap::clPolyobjIndex(clpolyobj_t *mover)
     return -1;
 }
 
-void GameMap::deleteClPlane(clplane_t *mover)
+void Map::deleteClPlane(clplane_t *mover)
 {
     int index = clPlaneIndex(mover);
     if(index < 0)
     {
-        DEBUG_Message(("GameMap::deleteClPlane: Mover in sector #%i not removed!", mover->sectorIndex));
+        DEBUG_Message(("Map::deleteClPlane: Mover in sector #%i not removed!", mover->sectorIndex));
         return;
     }
 
-    DEBUG_Message(("GameMap::deleteClPlane: Removing mover [%i] (sector: #%i).", index, mover->sectorIndex));
+    DEBUG_Message(("Map::deleteClPlane: Removing mover [%i] (sector: #%i).", index, mover->sectorIndex));
     thinkerRemove(mover->thinker);
 }
 
-void GameMap::deleteClPolyobj(clpolyobj_t *mover)
+void Map::deleteClPolyobj(clpolyobj_t *mover)
 {
     int index = clPolyobjIndex(mover);
     if(index < 0)
     {
-        DEBUG_Message(("GameMap::deleteClPolyobj: Mover not removed!"));
+        DEBUG_Message(("Map::deleteClPolyobj: Mover not removed!"));
         return;
     }
 
-    DEBUG_Message(("GameMap::deleteClPolyobj: Removing mover [%i].", index));
+    DEBUG_Message(("Map::deleteClPolyobj: Removing mover [%i].", index));
     thinkerRemove(mover->thinker);
 }
 
 void Cl_MoverThinker(clplane_t *mover)
 {
-    GameMap *map = theMap; /// @todo Do not assume mover is from the CURRENT map.
+    Map *map = theMap; /// @todo Do not assume mover is from the CURRENT map.
     coord_t original;
     boolean remove = false;
     boolean freeMove;
@@ -369,11 +369,11 @@ void Cl_MoverThinker(clplane_t *mover)
     }
 }
 
-clplane_t *GameMap::newClPlane(uint sectorIndex, clplanetype_t type, coord_t dest, float speed)
+clplane_t *Map::newClPlane(uint sectorIndex, clplanetype_t type, coord_t dest, float speed)
 {
     int dmuPlane = (type == CPT_FLOOR ? DMU_FLOOR_OF_SECTOR : DMU_CEILING_OF_SECTOR);
 
-    DEBUG_Message(("GameMap::newClPlane: Sector #%i, type:%s, dest:%f, speed:%f",
+    DEBUG_Message(("Map::newClPlane: Sector #%i, type:%s, dest:%f, speed:%f",
                    sectorIndex, type == CPT_FLOOR? "floor" : "ceiling", dest, speed));
 
     if(int( sectorIndex ) >= sectorCount())
@@ -389,7 +389,7 @@ clplane_t *GameMap::newClPlane(uint sectorIndex, clplanetype_t type, coord_t des
            clActivePlanes[i]->sectorIndex == sectorIndex &&
            clActivePlanes[i]->type == type)
         {
-            DEBUG_Message(("GameMap::newClPlane: Removing existing mover [%i] in sector #%i, type %s",
+            DEBUG_Message(("Map::newClPlane: Removing existing mover [%i] in sector #%i, type %s",
                            i, sectorIndex, type == CPT_FLOOR? "floor" : "ceiling"));
 
             deleteClPlane(clActivePlanes[i]);
@@ -401,7 +401,7 @@ clplane_t *GameMap::newClPlane(uint sectorIndex, clplanetype_t type, coord_t des
     {
         if(clActivePlanes[i]) continue;
 
-        DEBUG_Message(("GameMap::newClPlane: ...new mover [%i]", i));
+        DEBUG_Message(("Map::newClPlane: ...new mover [%i]", i));
 
         // Allocate a new clplane_t thinker.
         clplane_t *mov = clActivePlanes[i] = (clplane_t *) Z_Calloc(sizeof(clplane_t), PU_MAP, &clActivePlanes[i]);
@@ -432,7 +432,7 @@ clplane_t *GameMap::newClPlane(uint sectorIndex, clplanetype_t type, coord_t des
         return mov;
     }
 
-    Con_Error("GameMap::newClPlane: Exhausted activemovers.");
+    Con_Error("Map::newClPlane: Exhausted activemovers.");
     exit(1); // Unreachable.
 }
 
@@ -497,7 +497,7 @@ void Cl_PolyMoverThinker(clpolyobj_t *mover)
     }
 }
 
-clpolyobj_t *GameMap::clPolyobjByPolyobjIndex(uint index)
+clpolyobj_t *Map::clPolyobjByPolyobjIndex(uint index)
 {
     for(int i = 0; i < CLIENT_MAX_MOVERS; ++i)
     {
@@ -510,14 +510,14 @@ clpolyobj_t *GameMap::clPolyobjByPolyobjIndex(uint index)
     return 0;
 }
 
-clpolyobj_t *GameMap::newClPolyobj(uint polyobjIndex)
+clpolyobj_t *Map::newClPolyobj(uint polyobjIndex)
 {
     // Take the first unused slot.
     for(int i = 0; i < CLIENT_MAX_MOVERS; ++i)
     {
         if(clActivePolyobjs[i]) continue;
 
-        DEBUG_Message(("GameMap::newClPolyobj: New polymover [%i] for polyobj #%i.\n", i, polyobjIndex));
+        DEBUG_Message(("Map::newClPolyobj: New polymover [%i] for polyobj #%i.\n", i, polyobjIndex));
 
         clpolyobj_t *mover = (clpolyobj_t *) Z_Calloc(sizeof(clpolyobj_t), PU_MAP, &clActivePolyobjs[i]);
         clActivePolyobjs[i] = mover;
@@ -554,7 +554,7 @@ void Cl_SetPolyMover(uint number, int move, int rotate)
     if(rotate) mover->rotate = true;
 }
 
-clplane_t *GameMap::clPlaneBySectorIndex(uint sectorIndex, clplanetype_t type)
+clplane_t *Map::clPlaneBySectorIndex(uint sectorIndex, clplanetype_t type)
 {
     for(int i = 0; i < CLIENT_MAX_MOVERS; ++i)
     {
@@ -577,7 +577,7 @@ void Cl_ReadSectorDelta2(int deltaType, boolean /*skip*/)
     DENG_UNUSED(deltaType);
 
     /// @todo Do not assume the CURRENT map.
-    GameMap *map = theMap;
+    Map *map = theMap;
 
 #define PLN_FLOOR   0
 #define PLN_CEILING 1

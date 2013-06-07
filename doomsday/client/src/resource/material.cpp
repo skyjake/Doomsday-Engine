@@ -23,7 +23,7 @@
 #include "api_map.h"
 #include "audio/s_environ.h"
 #include "world/r_world.h"
-#include "world/gamemap.h" // theMap - Remove me
+#include "world/map.h" // theMap - Remove me
 #include "r_util.h" // R_NameForBlendMode
 #include <de/math.h>
 #include <QtAlgorithms>

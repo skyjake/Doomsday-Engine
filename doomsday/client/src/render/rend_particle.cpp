@@ -33,7 +33,7 @@
 #include "resource/image.h"
 #include "gl/texturecontent.h"
 #include "world/generators.h"
-#include "world/gamemap.h"
+#include "world/map.h"
 
 using namespace de;
 

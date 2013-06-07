@@ -19,7 +19,7 @@
 
 #include "de_base.h"
 #include "de_network.h" // playback / clientPaused
-#include "world/gamemap.h" // theMap - remove me
+#include "world/map.h" // theMap - remove me
 #include "render/r_main.h" // frameCount, frameTimePos
 #include <de/Log>
 #include <de/mathutil.h>

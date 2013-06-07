@@ -31,7 +31,7 @@
 
 #include "api_audiod.h"
 #include "api_audiod_sfx.h"
-#include "world/gamemap.h"
+#include "world/map.h"
 #include "world/p_maptypes.h"
 
 #ifdef __cplusplus
