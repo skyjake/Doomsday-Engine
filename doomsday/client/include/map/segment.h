@@ -236,13 +236,21 @@ public:
 #ifdef __CLIENT__
 
     /**
-     * Retrieve the bias surface for specified geometry @a groupId
+     * Retrieve the bias surface for specified geometry @a group.
      *
-     * @param groupId  Geometry group identifier for the bias surface.
+     * @param group  Geometry group identifier for the bias surface.
      */
-    BiasSurface &biasSurface(int groupId);
+    BiasSurface &biasSurface(int group);
 
-    void setBiasSurface(int groupId, BiasSurface *biasSurface);
+    /**
+     * Assign a new bias surface to the specified geometry @a group.
+     *
+     * @param group        Geometry group identifier for the surface.
+     * @param biasSurface  New BiasSurface for the identified @a group. Any
+     *                     existing bias surface will be replaced (destroyed).
+     *                     Ownership is given to the segment.
+     */
+    void setBiasSurface(int group, BiasSurface *biasSurface);
 
 #endif // __CLIENT__
 

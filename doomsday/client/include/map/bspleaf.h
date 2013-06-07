@@ -1,4 +1,4 @@
-/** @file map/bspleaf.h World Map BSP Leaf.
+/** @file world/bspleaf.h World BSP Leaf.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -18,8 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_WORLD_MAP_BSPLEAF
-#define DENG_WORLD_MAP_BSPLEAF
+#ifndef DENG_WORLD_BSPLEAF_H
+#define DENG_WORLD_BSPLEAF_H
 
 #include <QList>
 
@@ -27,8 +27,6 @@
 #include <de/Vector>
 
 #include "MapElement"
-#include "Face"
-#include "HEdge"
 #include "Line"
 #include "Mesh"
 
@@ -39,15 +37,22 @@ struct polyobj_s;
 #ifdef __CLIENT__
 struct BiasSurface;
 struct ShadowLink;
-#endif // __CLIENT__
+#endif
 
 /**
- * Map data element describing a @em leaf in a binary space partition tree (BSP)
- * (a two dimensioned convex polygon).
+ * Represents a leaf in the map's binary space partition (BSP) tree. Each leaf
+ * defines a two dimensioned convex subspace region (which, may be represented
+ * by a face (polygon) in the map's half-edge @ref Mesh geometry).
+ *
+ * On client side a leaf also provides / links to various geometry data assets
+ * and properties used to visualize the subspace.
+ *
+ * Each leaf is attributed to a @ref Sector in the map (with the exception of
+ * wholly degenerate subspaces which may occur during the partitioning process).
  *
  * @see http://en.wikipedia.org/wiki/Binary_space_partitioning
  *
- * @ingroup map
+ * @ingroup world
  */
 class BspLeaf : public de::MapElement
 {
@@ -93,28 +98,23 @@ public:
     inline bool isDegenerate() const { return !hasFace(); }
 
     /**
-     * Determines whether a convex face geometry (a polygon) is assigned to the
-     * BSP leaf.
+     * Determines whether a convex face geometry (a polygon) is assigned.
      *
      * @see face(), setFace()
      */
     bool hasFace() const;
 
     /**
-     * Provides access to the convex face geometry (a polygon) assigned to the
-     * BSP leaf.
+     * Provides access to the assigned convex face geometry (a polygon).
      *
      * @see hasFace(), assignPoly()
      */
-    de::Face &face();
-
-    /// @copydoc face()
     de::Face const &face() const;
 
     /**
-     * Change the polygon geometry assigned to the BSP leaf. Before the geometry
-     * is accepted it is first conformance tested to ensure that it represents
-     * a valid, simple convex polygon.
+     * Change the convex face geometry assigned to the BSP leaf. Before the
+     * geometry is accepted it is first conformance tested to ensure that it
+     * represents a valid, simple convex polygon.
      *
      * @param polygon  New polygon to be assigned to the BSP leaf. Ownership
      *                 of the polygon is given to the BspLeaf if it passes all
@@ -125,9 +125,9 @@ public:
     void assignPoly(de::Mesh *polygon);
 
     /**
-     * Assign an additional mesh geometry to the BSP leaf. Such @em extra meshes
-     * are used to represent geometry which would result in a non-manifold mesh
-     * if incorporated in the primary mesh for the map.
+     * Assign an additional mesh geometry to the BSP leaf. Such @em extra
+     * meshes are used to represent geometry which would otherwise result in a
+     * non-manifold mesh if incorporated in the primary mesh for the map.
      *
      * @param mesh  New mesh to be assigned to the BSP leaf. Ownership of the
      *              mesh is given to the BspLeaf.
@@ -143,17 +143,17 @@ public:
     Segments const &clockwiseSegments() const;
 
     /**
-     * Provides a list of all the line segments from the convex face geometry and
-     * any @em extra meshes assigned to the BSP leaf.
+     * Provides a list of all the line segments from the convex face geometry
+     * and any @em extra meshes assigned to the BSP leaf.
      *
      * @see clockwiseSegments(), assignExtraMesh()
      */
     Segments const &allSegments() const;
 
     /**
-     * Returns @c true iff a sector is attributed to the BSP leaf. The only time
-     * a leaf might not be attributed to a sector is if the map geometry was
-     * @em orphaned by the partitioning algorithm (a bug).
+     * Returns @c true iff a sector is attributed to the BSP leaf. The only
+     * time a leaf might not be attributed to a sector is if the map geometry
+     * was @em orphaned by the partitioning algorithm (a bug).
      */
     bool hasSector() const;
 
@@ -182,8 +182,8 @@ public:
     void setSector(Sector *newSector);
 
     /**
-     * Determines whether the BSP leaf has a positive world volume. For this to
-     * be true the following criteria must be met:
+     * Determines whether the BSP leaf has a positive world volume. For this
+     * to be true the following criteria must be met:
      *
      * - The polygon geometry is @em not degenerate (see @ref isDegenerate()).
      * - A sector is attributed (see @ref hasSector())
@@ -196,7 +196,7 @@ public:
     bool hasWorldVolume(bool useVisualHeights = true) const;
 
     /**
-     * Returns @c true iff there is at least one polyobj linked with the BSP leaf.
+     * Returns @c true iff at least one polyobj is linked to the BSP leaf.
      */
     inline bool hasPolyobj() { return firstPolyobj() != 0; }
 
@@ -235,43 +235,53 @@ public:
 #ifdef __CLIENT__
 
     /**
-     * Returns a pointer to the half-edge of the BSP leaf which has been chosen for
-     * use as the base for a triangle fan geometry. May return @c 0 if no suitable
-     * base was determined.
+     * Returns a pointer to the face geometry half-edge which has been chosen
+     * for use as the base for a triangle fan GL primitive. May return @c 0 if
+     * no suitable base was determined.
      */
     de::HEdge *fanBase() const;
 
     /**
-     * Returns the number of vertices needed for the BSP leaf's triangle fan.
-     * @note May incurr updating the fan base half-edge if not already determined.
+     * Returns the number of vertices needed for a triangle fan GL primitive.
+     *
+     * @note When first called after a face geometry is assigned a new 'base'
+     * half-edge for the triangle fan primitive will be determined.
      *
      * @see fanBase()
      */
     int numFanVertices() const;
 
     /**
-     * Retrieve the bias surface for specified geometry @a groupId
+     * Retrieve the bias surface for specified geometry @a group.
      *
-     * @param groupId  Geometry group identifier for the bias surface.
+     * @param group  Geometry group identifier for the bias surface.
      */
-    BiasSurface &biasSurface(int groupId);
-
-    void setBiasSurface(int groupId, BiasSurface *biasSurface);
+    BiasSurface &biasSurface(int group);
 
     /**
-     * Returns the first ShadowLink associated with the BSP leaf; otherwise @c 0.
+     * Assign a new bias surface to the specified geometry @a group.
+     *
+     * @param group        Geometry group identifier for the surface.
+     * @param biasSurface  New BiasSurface for the identified @a group. Any
+     *                     existing bias surface will be replaced (destroyed).
+     *                     Ownership is given to the BSP leaf.
+     */
+    void setBiasSurface(int group, BiasSurface *biasSurface);
+
+    /**
+     * Returns a pointer to the first ShadowLink; otherwise @c 0.
      */
     ShadowLink *firstShadowLink() const;
 
     /**
-     * Returns the frame number of the last time sprites were projected for the
-     * BSP leaf.
+     * Returns the frame number of the last time mobj sprite projection was
+     * performed for the BSP leaf.
      */
     int addSpriteCount() const;
 
     /**
-     * Change the frame number of the last time sprites were projected for the
-     * BSP leaf.
+     * Change the frame number of the last time mobj sprite projection was
+     * performed for the BSP leaf.
      *
      * @param newFrameCount  New frame number.
      */
@@ -286,4 +296,4 @@ private:
     DENG2_PRIVATE(d)
 };
 
-#endif // DENG_WORLD_MAP_BSPLEAF
+#endif // DENG_WORLD_BSPLEAF_H
