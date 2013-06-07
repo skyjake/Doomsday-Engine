@@ -198,8 +198,8 @@ public:
     Type type() const;
 
 protected:
-    int property(setargs_t &args) const;
-    int setProperty(setargs_t const &args);
+    int property(DmuArgs &args) const;
+    int setProperty(DmuArgs const &args);
 
 private:
     DENG2_PRIVATE(d)

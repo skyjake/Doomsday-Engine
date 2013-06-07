@@ -54,12 +54,12 @@ MapElement &MapElement::operator = (MapElement const &other)
     return *this;
 }
 
-int MapElement::property(setargs_t &args) const
+int MapElement::property(DmuArgs &args) const
 {
     switch(args.prop)
     {
     case DMU_ARCHIVE_INDEX:
-        DMU_GetValue(DMT_ARCHIVE_INDEX, &_indexInArchive, &args, 0);
+        args.setValue(DMT_ARCHIVE_INDEX, &_indexInArchive, 0);
         break;
 
     default:
@@ -71,7 +71,7 @@ int MapElement::property(setargs_t &args) const
     return false; // Continue iteration.
 }
 
-int MapElement::setProperty(setargs_t const &args)
+int MapElement::setProperty(DmuArgs const &args)
 {
     /// @throw WritePropertyError  The requested property is not writable.
     throw WritePropertyError(QString("%1::setProperty").arg(DMU_Str(_type)),

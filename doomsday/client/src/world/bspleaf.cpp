@@ -516,12 +516,12 @@ void BspLeaf::setAddSpriteCount(int newFrameCount)
 
 #endif // __CLIENT__
 
-int BspLeaf::property(setargs_t &args) const
+int BspLeaf::property(DmuArgs &args) const
 {
     switch(args.prop)
     {
     case DMU_SECTOR:
-        DMU_GetValue(DMT_BSPLEAF_SECTOR, &d->sector, &args, 0);
+        args.setValue(DMT_BSPLEAF_SECTOR, &d->sector, 0);
         break;
     default:
         return MapElement::property(args);

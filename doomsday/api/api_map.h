@@ -373,7 +373,20 @@ DENG_API_TYPEDEF(Map)
      */
     void            (*SetTraceOpening)(Line* line);
 
-    // Map Updates (DMU)
+    /*
+     * Map Updates (DMU):
+     *
+     * The Map Update API is used for accessing and making changes to map data
+     * during gameplay. From here, the relevant engine's subsystems will be
+     * notified of changes in the map data they use, thus allowing them to
+     * update their status whenever needed.
+     */
+
+    /**
+     * Translate a DMU element/property constant to a string. Primarily intended
+     * for error/debug messages.
+     */
+    char const*     (*Str)(uint prop);
 
     /**
      * Determines the type of the map data object.
@@ -612,6 +625,7 @@ DENG_API_T(Map);
 #define P_TraceOpening                      _api_Map.traceOpening
 #define P_SetTraceOpening                   _api_Map.SetTraceOpening
 
+#define DMU_Str                             _api_Map.Str
 #define DMU_GetType                         _api_Map.GetType
 #define P_ToIndex                           _api_Map.ToIndex
 #define P_ToPtr                             _api_Map.ToPtr

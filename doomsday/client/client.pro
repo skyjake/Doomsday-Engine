@@ -366,6 +366,7 @@ DENG_HEADERS += \
     include/world/bspleaf.h \
     include/world/bspnode.h \
     include/world/dam_file.h \
+    include/world/dmuargs.h \
     include/world/entitydatabase.h \
     include/world/generators.h \
     include/world/line.h \
@@ -373,7 +374,6 @@ DENG_HEADERS += \
     include/world/linesighttest.h \
     include/world/map.h \
     include/world/mapelement.h \
-    include/world/p_dmu.h \
     include/world/p_intercept.h \
     include/world/p_mapdata.h \
     include/world/p_maptypes.h \
@@ -647,6 +647,7 @@ SOURCES += \
     src/updater/updatersettingsdialog.cpp \
     src/uri.cpp \
     src/ui/signalaction.cpp \
+    src/world/api_map.cpp \
     src/world/blockmap.cpp \
     src/world/blockmapvisual.cpp \
     src/world/bsp/convexsubspace.cpp \
@@ -658,6 +659,7 @@ SOURCES += \
     src/world/bspleaf.cpp \
     src/world/bspnode.cpp \
     src/world/dam_file.cpp \
+    src/world/dmuargs.cpp \
     src/world/entitydatabase.cpp \
     src/world/generators.cpp \
     src/world/line.cpp \
@@ -665,7 +667,6 @@ SOURCES += \
     src/world/map.cpp \
     src/world/mapelement.cpp \
     src/world/p_data.cpp \
-    src/world/p_dmu.cpp \
     src/world/p_intercept.cpp \
     src/world/p_maputil.cpp \
     src/world/p_mobj.cpp \

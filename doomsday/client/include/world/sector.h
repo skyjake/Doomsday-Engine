@@ -466,8 +466,8 @@ public:
     void setValidCount(int newValidCount);
 
 protected:
-    int property(setargs_t &args) const;
-    int setProperty(setargs_t const &args);
+    int property(DmuArgs &args) const;
+    int setProperty(DmuArgs const &args);
 
     // Observes Plane HeightChange.
     void planeHeightChanged(Plane &plane, coord_t oldHeight);

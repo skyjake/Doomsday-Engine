@@ -650,6 +650,12 @@ public:
 
 public: /// @todo Make private:
 
+    /**
+     * Initializes the dummy element arrays used with the DMU API, with a
+     * fixed number of dummies.
+     */
+    static void initDummies();
+
     void finishMapElements();
 
     /**

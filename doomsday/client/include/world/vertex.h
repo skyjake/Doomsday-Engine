@@ -125,7 +125,7 @@ public:
     inline void setY(coord_t newPosition) { setOriginComponent(1, newPosition); }
 
 protected:
-    int property(setargs_t &args) const;
+    int property(DmuArgs &args) const;
 
 public:
     /**

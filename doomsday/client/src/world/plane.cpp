@@ -339,24 +339,24 @@ Plane::Type Plane::type() const
     return d->type;
 }
 
-int Plane::property(setargs_t &args) const
+int Plane::property(DmuArgs &args) const
 {
     switch(args.prop)
     {
     case DMU_EMITTER:
-        DMU_GetValue(DMT_PLANE_EMITTER, &d->soundEmitter, &args, 0);
+        args.setValue(DMT_PLANE_EMITTER, &d->soundEmitter, 0);
         break;
     case DMU_SECTOR:
-        DMU_GetValue(DMT_PLANE_SECTOR, &d->sector, &args, 0);
+        args.setValue(DMT_PLANE_SECTOR, &d->sector, 0);
         break;
     case DMU_HEIGHT:
-        DMU_GetValue(DMT_PLANE_HEIGHT, &d->height, &args, 0);
+        args.setValue(DMT_PLANE_HEIGHT, &d->height, 0);
         break;
     case DMU_TARGET_HEIGHT:
-        DMU_GetValue(DMT_PLANE_TARGET, &d->targetHeight, &args, 0);
+        args.setValue(DMT_PLANE_TARGET, &d->targetHeight, 0);
         break;
     case DMU_SPEED:
-        DMU_GetValue(DMT_PLANE_SPEED, &d->speed, &args, 0);
+        args.setValue(DMT_PLANE_SPEED, &d->speed, 0);
         break;
     default:
         return MapElement::property(args);
@@ -365,20 +365,20 @@ int Plane::property(setargs_t &args) const
     return false; // Continue iteration.
 }
 
-int Plane::setProperty(setargs_t const &args)
+int Plane::setProperty(DmuArgs const &args)
 {
     switch(args.prop)
     {
     case DMU_HEIGHT: {
         coord_t newHeight = d->height;
-        DMU_SetValue(DMT_PLANE_HEIGHT, &newHeight, &args, 0);
+        args.value(DMT_PLANE_HEIGHT, &newHeight, 0);
         d->applySharpHeightChange(newHeight);
         break; }
     case DMU_TARGET_HEIGHT:
-        DMU_SetValue(DMT_PLANE_TARGET, &d->targetHeight, &args, 0);
+        args.value(DMT_PLANE_TARGET, &d->targetHeight, 0);
         break;
     case DMU_SPEED:
-        DMU_SetValue(DMT_PLANE_SPEED, &d->speed, &args, 0);
+        args.value(DMT_PLANE_SPEED, &d->speed, 0);
         break;
     default:
         return MapElement::setProperty(args);

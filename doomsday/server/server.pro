@@ -231,6 +231,7 @@ DENG_HEADERS += \
     $$SRC/include/ui/p_control.h \
     $$SRC/include/ui/ui2_main.h \
     $$SRC/include/uri.hh \
+    $$SRC/include/world/dmuargs.h \
     $$SRC/include/world/blockmap.h \
     $$SRC/include/world/bsp/bsptreenode.h \
     $$SRC/include/world/bsp/convexsubspace.h \
@@ -250,7 +251,6 @@ DENG_HEADERS += \
     $$SRC/include/world/lineowner.h \
     $$SRC/include/world/linesighttest.h \
     $$SRC/include/world/map.h \
-    $$SRC/include/world/p_dmu.h \
     $$SRC/include/world/p_intercept.h \
     $$SRC/include/world/p_mapdata.h \
     $$SRC/include/world/p_maptypes.h \
@@ -408,6 +408,7 @@ SOURCES += \
     $$SRC/src/ui/p_control.cpp \
     $$SRC/src/ui/ui2_main.cpp \
     $$SRC/src/uri.cpp \
+    $$SRC/src/world/api_map.cpp \
     $$SRC/src/world/blockmap.cpp \
     $$SRC/src/world/bsp/convexsubspace.cpp \
     $$SRC/src/world/bsp/hplane.cpp \
@@ -418,6 +419,7 @@ SOURCES += \
     $$SRC/src/world/bspleaf.cpp \
     $$SRC/src/world/bspnode.cpp \
     $$SRC/src/world/dam_file.cpp \
+    $$SRC/src/world/dmuargs.cpp \
     $$SRC/src/world/entitydatabase.cpp \
     $$SRC/src/world/generators.cpp \
     $$SRC/src/world/line.cpp \
@@ -425,7 +427,6 @@ SOURCES += \
     $$SRC/src/world/map.cpp \
     $$SRC/src/world/mapelement.cpp \
     $$SRC/src/world/p_data.cpp \
-    $$SRC/src/world/p_dmu.cpp \
     $$SRC/src/world/p_intercept.cpp \
     $$SRC/src/world/p_maputil.cpp \
     $$SRC/src/world/p_mobj.cpp \

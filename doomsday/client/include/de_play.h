@@ -34,7 +34,7 @@
 #include "BspNode"
 #include "Sector"
 #include "Polyobj"
-#include "world/p_dmu.h"
+#include "world/dmuargs.h"
 #include "world/p_object.h"
 #include "world/p_intercept.h"
 #include "world/p_maputil.h"

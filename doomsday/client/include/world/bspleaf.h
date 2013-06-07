@@ -290,7 +290,7 @@ public:
 #endif // __CLIENT__
 
 protected:
-    int property(setargs_t &args) const;
+    int property(DmuArgs &args) const;
 
 private:
     DENG2_PRIVATE(d)

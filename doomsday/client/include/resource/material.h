@@ -24,7 +24,7 @@
 #include "MapElement"
 #include "def_data.h"
 #include "audio/s_environ.h"
-#include "world/p_dmu.h" // setargs_t
+#include "world/dmuargs.h"
 #ifdef __CLIENT__
 #  include "MaterialContext"
 #endif
@@ -983,7 +983,7 @@ protected:
     // Observes Texture Deletion.
     void textureBeingDeleted(de::Texture const &texture);
 
-    int property(setargs_t &args) const;
+    int property(DmuArgs &args) const;
 
 private:
     DENG2_PRIVATE(d)

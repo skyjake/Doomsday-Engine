@@ -98,19 +98,19 @@ void Vertex::setOriginComponent(int component, coord_t newPosition)
     }
 }
 
-int Vertex::property(setargs_t &args) const
+int Vertex::property(DmuArgs &args) const
 {
     switch(args.prop)
     {
     case DMU_X:
-        DMU_GetValue(DMT_VERTEX_ORIGIN, &d->origin.x, &args, 0);
+        args.setValue(DMT_VERTEX_ORIGIN, &d->origin.x, 0);
         break;
     case DMU_Y:
-        DMU_GetValue(DMT_VERTEX_ORIGIN, &d->origin.y, &args, 0);
+        args.setValue(DMT_VERTEX_ORIGIN, &d->origin.y, 0);
         break;
     case DMU_XY:
-        DMU_GetValue(DMT_VERTEX_ORIGIN, &d->origin.x, &args, 0);
-        DMU_GetValue(DMT_VERTEX_ORIGIN, &d->origin.y, &args, 1);
+        args.setValue(DMT_VERTEX_ORIGIN, &d->origin.x, 0);
+        args.setValue(DMT_VERTEX_ORIGIN, &d->origin.y, 1);
         break;
     default:
         return MapElement::property(args);

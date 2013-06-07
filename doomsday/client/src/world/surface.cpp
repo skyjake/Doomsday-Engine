@@ -581,7 +581,7 @@ void Surface::markAsNeedingDecorationUpdate()
 }
 #endif // __CLIENT__
 
-int Surface::property(setargs_t &args) const
+int Surface::property(DmuArgs &args) const
 {
     switch(args.prop)
     {
@@ -589,117 +589,117 @@ int Surface::property(setargs_t &args) const
         Material *mat = d->material;
         if(d->materialIsMissingFix)
             mat = 0;
-        DMU_GetValue(DMT_SURFACE_MATERIAL, &mat, &args, 0);
+        args.setValue(DMT_SURFACE_MATERIAL, &mat, 0);
         break; }
 
     case DMU_OFFSET_X:
-        DMU_GetValue(DMT_SURFACE_OFFSET, &d->materialOrigin.x, &args, 0);
+        args.setValue(DMT_SURFACE_OFFSET, &d->materialOrigin.x, 0);
         break;
 
     case DMU_OFFSET_Y:
-        DMU_GetValue(DMT_SURFACE_OFFSET, &d->materialOrigin.y, &args, 0);
+        args.setValue(DMT_SURFACE_OFFSET, &d->materialOrigin.y, 0);
         break;
 
     case DMU_OFFSET_XY:
-        DMU_GetValue(DMT_SURFACE_OFFSET, &d->materialOrigin.x, &args, 0);
-        DMU_GetValue(DMT_SURFACE_OFFSET, &d->materialOrigin.y, &args, 1);
+        args.setValue(DMT_SURFACE_OFFSET, &d->materialOrigin.x, 0);
+        args.setValue(DMT_SURFACE_OFFSET, &d->materialOrigin.y, 1);
         break;
 
     case DMU_TANGENT_X: {
         float x = tangent().x;
-        DMU_GetValue(DMT_SURFACE_TANGENT, &x, &args, 0);
+        args.setValue(DMT_SURFACE_TANGENT, &x, 0);
         break; }
 
     case DMU_TANGENT_Y: {
         float y = tangent().y;
-        DMU_GetValue(DMT_SURFACE_TANGENT, &y, &args, 0);
+        args.setValue(DMT_SURFACE_TANGENT, &y, 0);
         break; }
 
     case DMU_TANGENT_Z: {
         float z = tangent().z;
-        DMU_GetValue(DMT_SURFACE_TANGENT, &z, &args, 0);
+        args.setValue(DMT_SURFACE_TANGENT, &z, 0);
         break; }
 
     case DMU_TANGENT_XYZ: {
         Vector3f const &tan = tangent();
-        DMU_GetValue(DMT_SURFACE_TANGENT, &tan.x, &args, 0);
-        DMU_GetValue(DMT_SURFACE_TANGENT, &tan.y, &args, 1);
-        DMU_GetValue(DMT_SURFACE_TANGENT, &tan.z, &args, 2);
+        args.setValue(DMT_SURFACE_TANGENT, &tan.x, 0);
+        args.setValue(DMT_SURFACE_TANGENT, &tan.y, 1);
+        args.setValue(DMT_SURFACE_TANGENT, &tan.z, 2);
         break; }
 
     case DMU_BITANGENT_X: {
         float x = bitangent().x;
-        DMU_GetValue(DMT_SURFACE_BITANGENT, &x, &args, 0);
+        args.setValue(DMT_SURFACE_BITANGENT, &x, 0);
         break; }
 
     case DMU_BITANGENT_Y: {
         float y = bitangent().y;
-        DMU_GetValue(DMT_SURFACE_BITANGENT, &y, &args, 0);
+        args.setValue(DMT_SURFACE_BITANGENT, &y, 0);
         break; }
 
     case DMU_BITANGENT_Z: {
         float z = bitangent().z;
-        DMU_GetValue(DMT_SURFACE_BITANGENT, &z, &args, 0);
+        args.setValue(DMT_SURFACE_BITANGENT, &z, 0);
         break; }
 
     case DMU_BITANGENT_XYZ: {
         Vector3f const &btn = bitangent();
-        DMU_GetValue(DMT_SURFACE_BITANGENT, &btn.x, &args, 0);
-        DMU_GetValue(DMT_SURFACE_BITANGENT, &btn.y, &args, 1);
-        DMU_GetValue(DMT_SURFACE_BITANGENT, &btn.z, &args, 2);
+        args.setValue(DMT_SURFACE_BITANGENT, &btn.x, 0);
+        args.setValue(DMT_SURFACE_BITANGENT, &btn.y, 1);
+        args.setValue(DMT_SURFACE_BITANGENT, &btn.z, 2);
         break; }
 
     case DMU_NORMAL_X: {
         float x = normal().x;
-        DMU_GetValue(DMT_SURFACE_NORMAL, &x, &args, 0);
+        args.setValue(DMT_SURFACE_NORMAL, &x, 0);
         break; }
 
     case DMU_NORMAL_Y: {
         float y = normal().y;
-        DMU_GetValue(DMT_SURFACE_NORMAL, &y, &args, 0);
+        args.setValue(DMT_SURFACE_NORMAL, &y, 0);
         break; }
 
     case DMU_NORMAL_Z: {
         float z = normal().z;
-        DMU_GetValue(DMT_SURFACE_NORMAL, &z, &args, 0);
+        args.setValue(DMT_SURFACE_NORMAL, &z, 0);
         break; }
 
     case DMU_NORMAL_XYZ: {
         Vector3f const &nrm = normal();
-        DMU_GetValue(DMT_SURFACE_NORMAL, &nrm.x, &args, 0);
-        DMU_GetValue(DMT_SURFACE_NORMAL, &nrm.y, &args, 1);
-        DMU_GetValue(DMT_SURFACE_NORMAL, &nrm.z, &args, 2);
+        args.setValue(DMT_SURFACE_NORMAL, &nrm.x, 0);
+        args.setValue(DMT_SURFACE_NORMAL, &nrm.y, 1);
+        args.setValue(DMT_SURFACE_NORMAL, &nrm.z, 2);
         break; }
 
     case DMU_COLOR:
-        DMU_GetValue(DMT_SURFACE_RGBA, &d->tintColor.x, &args, 0);
-        DMU_GetValue(DMT_SURFACE_RGBA, &d->tintColor.y, &args, 1);
-        DMU_GetValue(DMT_SURFACE_RGBA, &d->tintColor.z, &args, 2);
-        DMU_GetValue(DMT_SURFACE_RGBA, &d->opacity, &args, 2);
+        args.setValue(DMT_SURFACE_RGBA, &d->tintColor.x, 0);
+        args.setValue(DMT_SURFACE_RGBA, &d->tintColor.y, 1);
+        args.setValue(DMT_SURFACE_RGBA, &d->tintColor.z, 2);
+        args.setValue(DMT_SURFACE_RGBA, &d->opacity, 2);
         break;
 
     case DMU_COLOR_RED:
-        DMU_GetValue(DMT_SURFACE_RGBA, &d->tintColor.x, &args, 0);
+        args.setValue(DMT_SURFACE_RGBA, &d->tintColor.x, 0);
         break;
 
     case DMU_COLOR_GREEN:
-        DMU_GetValue(DMT_SURFACE_RGBA, &d->tintColor.y, &args, 0);
+        args.setValue(DMT_SURFACE_RGBA, &d->tintColor.y, 0);
         break;
 
     case DMU_COLOR_BLUE:
-        DMU_GetValue(DMT_SURFACE_RGBA, &d->tintColor.z, &args, 0);
+        args.setValue(DMT_SURFACE_RGBA, &d->tintColor.z, 0);
         break;
 
     case DMU_ALPHA:
-        DMU_GetValue(DMT_SURFACE_RGBA, &d->opacity, &args, 0);
+        args.setValue(DMT_SURFACE_RGBA, &d->opacity, 0);
         break;
 
     case DMU_BLENDMODE:
-        DMU_GetValue(DMT_SURFACE_BLENDMODE, &d->blendMode, &args, 0);
+        args.setValue(DMT_SURFACE_BLENDMODE, &d->blendMode, 0);
         break;
 
     case DMU_FLAGS:
-        DMU_GetValue(DMT_SURFACE_FLAGS, &d->flags, &args, 0);
+        args.setValue(DMT_SURFACE_FLAGS, &d->flags, 0);
         break;
 
     default:
@@ -709,74 +709,74 @@ int Surface::property(setargs_t &args) const
     return false; // Continue iteration.
 }
 
-int Surface::setProperty(setargs_t const &args)
+int Surface::setProperty(DmuArgs const &args)
 {
     switch(args.prop)
     {
     case DMU_BLENDMODE: {
         blendmode_t newBlendMode;
-        DMU_SetValue(DMT_SURFACE_BLENDMODE, &newBlendMode, &args, 0);
+        args.value(DMT_SURFACE_BLENDMODE, &newBlendMode, 0);
         setBlendMode(newBlendMode);
         break; }
 
     case DMU_FLAGS:
-        DMU_SetValue(DMT_SURFACE_FLAGS, &d->flags, &args, 0);
+        args.value(DMT_SURFACE_FLAGS, &d->flags, 0);
         break;
 
     case DMU_COLOR: {
         float red, green, blue;
-        DMU_SetValue(DMT_SURFACE_RGBA, &red,   &args, 0);
-        DMU_SetValue(DMT_SURFACE_RGBA, &green, &args, 1);
-        DMU_SetValue(DMT_SURFACE_RGBA, &blue,  &args, 2);
+        args.value(DMT_SURFACE_RGBA, &red,   0);
+        args.value(DMT_SURFACE_RGBA, &green, 1);
+        args.value(DMT_SURFACE_RGBA, &blue,  2);
         setTintColor(red, green, blue);
         break; }
 
     case DMU_COLOR_RED: {
         float r;
-        DMU_SetValue(DMT_SURFACE_RGBA, &r, &args, 0);
+        args.value(DMT_SURFACE_RGBA, &r, 0);
         setTintRed(r);
         break; }
 
     case DMU_COLOR_GREEN: {
         float g;
-        DMU_SetValue(DMT_SURFACE_RGBA, &g, &args, 0);
+        args.value(DMT_SURFACE_RGBA, &g, 0);
         setTintGreen(g);
         break; }
 
     case DMU_COLOR_BLUE: {
         float b;
-        DMU_SetValue(DMT_SURFACE_RGBA, &b, &args, 0);
+        args.value(DMT_SURFACE_RGBA, &b, 0);
         setTintBlue(b);
         break; }
 
     case DMU_ALPHA: {
         float a;
-        DMU_SetValue(DMT_SURFACE_RGBA, &a, &args, 0);
+        args.value(DMT_SURFACE_RGBA, &a, 0);
         setOpacity(a);
         break; }
 
     case DMU_MATERIAL: {
         Material *newMaterial;
-        DMU_SetValue(DMT_SURFACE_MATERIAL, &newMaterial, &args, 0);
+        args.value(DMT_SURFACE_MATERIAL, &newMaterial, 0);
         setMaterial(newMaterial);
         break; }
 
     case DMU_OFFSET_X: {
         float offX;
-        DMU_SetValue(DMT_SURFACE_OFFSET, &offX, &args, 0);
+        args.value(DMT_SURFACE_OFFSET, &offX, 0);
         setMaterialOriginX(offX);
         break; }
 
     case DMU_OFFSET_Y: {
         float offY;
-        DMU_SetValue(DMT_SURFACE_OFFSET, &offY, &args, 0);
+        args.value(DMT_SURFACE_OFFSET, &offY, 0);
         setMaterialOriginY(offY);
         break; }
 
     case DMU_OFFSET_XY: {
         Vector2f newOrigin = d->materialOrigin;
-        DMU_SetValue(DMT_SURFACE_OFFSET, &newOrigin.x, &args, 0);
-        DMU_SetValue(DMT_SURFACE_OFFSET, &newOrigin.y, &args, 1);
+        args.value(DMT_SURFACE_OFFSET, &newOrigin.x, 0);
+        args.value(DMT_SURFACE_OFFSET, &newOrigin.y, 1);
         setMaterialOrigin(newOrigin);
         break; }
 

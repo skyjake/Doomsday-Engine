@@ -23,7 +23,7 @@
 #include <de/Error>
 
 #include "dd_share.h"
-#include "world/p_dmu.h"
+#include "world/dmuargs.h"
 
 namespace de {
 
@@ -121,7 +121,7 @@ public:
      * @param args  Property arguments.
      * @return  Always @c 0 (can be used as an iterator).
      */
-    virtual int property(setargs_t &args) const;
+    virtual int property(DmuArgs &args) const;
 
     /**
      * Update a property value, selected by DMU_* name.
@@ -135,7 +135,7 @@ public:
      * @param args  Property arguments.
      * @return  Always @c 0 (can be used as an iterator).
      */
-    virtual int setProperty(setargs_t const &args);
+    virtual int setProperty(DmuArgs const &args);
 
 private:
     int _type;

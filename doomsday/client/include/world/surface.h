@@ -32,7 +32,7 @@
 #ifdef __CLIENT__
 #  include "MaterialSnapshot"
 #endif
-#include "world/p_dmu.h"
+#include "world/dmuargs.h"
 
 class BspLeaf;
 
@@ -437,8 +437,8 @@ public:
     /// @deprecated Unnecessary; refactor away.
     bool isAttachedToMap() const;
 
-    int property(setargs_t &args) const;
-    int setProperty(setargs_t const &args);
+    int property(DmuArgs &args) const;
+    int setProperty(DmuArgs const &args);
 
 private:
     DENG2_PRIVATE(d)

@@ -246,38 +246,38 @@ coord_t Segment::pointOnSide(const_pvec2d_t point) const
     return V2d_PointOnLineSide(point, fromOriginV1, directionV1);
 }
 
-int Segment::property(setargs_t &args) const
+int Segment::property(DmuArgs &args) const
 {
     switch(args.prop)
     {
     case DMU_VERTEX0: {
         Vertex *vtx = &from();
-        DMU_GetValue(DMT_SEGMENT_V, &vtx, &args, 0);
+        args.setValue(DMT_SEGMENT_V, &vtx, 0);
         break; }
     case DMU_VERTEX1: {
         Vertex *vtx = &to();
-        DMU_GetValue(DMT_SEGMENT_V, &vtx, &args, 0);
+        args.setValue(DMT_SEGMENT_V, &vtx, 0);
         break; }
     case DMU_LENGTH:
-        DMU_GetValue(DMT_SEGMENT_LENGTH, &d->length, &args, 0);
+        args.setValue(DMT_SEGMENT_LENGTH, &d->length, 0);
         break;
     case DMU_OFFSET: {
         coord_t offset = d->lineSide? d->lineSideOffset : 0;
-        DMU_GetValue(DMT_SEGMENT_OFFSET, &offset, &args, 0);
+        args.setValue(DMT_SEGMENT_OFFSET, &offset, 0);
         break; }
     case DMU_SIDE:
-        DMU_GetValue(DMT_SEGMENT_SIDE, &d->lineSide, &args, 0);
+        args.setValue(DMT_SEGMENT_SIDE, &d->lineSide, 0);
         break;
     case DMU_LINE: {
         Line *lineAdr = d->lineSide? &d->lineSide->line() : 0;
-        DMU_GetValue(DMT_SEGMENT_LINE, &lineAdr, &args, 0);
+        args.setValue(DMT_SEGMENT_LINE, &lineAdr, 0);
         break; }
     case DMU_SECTOR: {
         Sector *sector = sectorPtr();
-        DMU_GetValue(DMT_SEGMENT_SECTOR, &sector, &args, 0);
+        args.setValue(DMT_SEGMENT_SECTOR, &sector, 0);
         break; }
     case DMU_ANGLE:
-        DMU_GetValue(DMT_SEGMENT_ANGLE, &d->angle, &args, 0);
+        args.setValue(DMT_SEGMENT_ANGLE, &d->angle, 0);
         break;
     default:
         return MapElement::property(args);

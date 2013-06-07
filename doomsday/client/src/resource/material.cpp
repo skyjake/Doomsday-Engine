@@ -755,23 +755,23 @@ void Material::clearVariants()
 
 #endif // __CLIENT__
 
-int Material::property(setargs_t &args) const
+int Material::property(DmuArgs &args) const
 {
     switch(args.prop)
     {
     case DMU_FLAGS: {
         short flags_ = flags();
-        DMU_GetValue(DMT_MATERIAL_FLAGS, &flags_, &args, 0);
+        args.setValue(DMT_MATERIAL_FLAGS, &flags_, 0);
         break; }
 
     case DMU_WIDTH: {
         int width_ = width();
-        DMU_GetValue(DMT_MATERIAL_WIDTH, &width_, &args, 0);
+        args.setValue(DMT_MATERIAL_WIDTH, &width_, 0);
         break; }
 
     case DMU_HEIGHT: {
         int height_ = height();
-        DMU_GetValue(DMT_MATERIAL_HEIGHT, &height_, &args, 0);
+        args.setValue(DMT_MATERIAL_HEIGHT, &height_, 0);
         break; }
 
     default:

@@ -471,44 +471,44 @@ void Sector::planeHeightChanged(Plane &plane, coord_t oldHeight)
     DENG2_UNUSED(oldHeight);
 }
 
-int Sector::property(setargs_t &args) const
+int Sector::property(DmuArgs &args) const
 {
     switch(args.prop)
     {
     case DMU_LIGHT_LEVEL:
-        DMU_GetValue(DMT_SECTOR_LIGHTLEVEL, &d->lightLevel, &args, 0);
+        args.setValue(DMT_SECTOR_LIGHTLEVEL, &d->lightLevel, 0);
         break;
     case DMU_COLOR:
-        DMU_GetValue(DMT_SECTOR_RGB, &d->lightColor.x, &args, 0);
-        DMU_GetValue(DMT_SECTOR_RGB, &d->lightColor.y, &args, 1);
-        DMU_GetValue(DMT_SECTOR_RGB, &d->lightColor.z, &args, 2);
+        args.setValue(DMT_SECTOR_RGB, &d->lightColor.x, 0);
+        args.setValue(DMT_SECTOR_RGB, &d->lightColor.y, 1);
+        args.setValue(DMT_SECTOR_RGB, &d->lightColor.z, 2);
         break;
     case DMU_COLOR_RED:
-        DMU_GetValue(DMT_SECTOR_RGB, &d->lightColor.x, &args, 0);
+        args.setValue(DMT_SECTOR_RGB, &d->lightColor.x, 0);
         break;
     case DMU_COLOR_GREEN:
-        DMU_GetValue(DMT_SECTOR_RGB, &d->lightColor.y, &args, 0);
+        args.setValue(DMT_SECTOR_RGB, &d->lightColor.y, 0);
         break;
     case DMU_COLOR_BLUE:
-        DMU_GetValue(DMT_SECTOR_RGB, &d->lightColor.z, &args, 0);
+        args.setValue(DMT_SECTOR_RGB, &d->lightColor.z, 0);
         break;
     case DMU_EMITTER: {
         ddmobj_base_t const *soundEmitterAdr = &d->soundEmitter;
-        DMU_GetValue(DMT_SECTOR_EMITTER, &soundEmitterAdr, &args, 0);
+        args.setValue(DMT_SECTOR_EMITTER, &soundEmitterAdr, 0);
         break; }
     case DMT_MOBJS:
-        DMU_GetValue(DMT_SECTOR_MOBJLIST, &_mobjList, &args, 0);
+        args.setValue(DMT_SECTOR_MOBJLIST, &_mobjList, 0);
         break;
     case DMU_VALID_COUNT:
-        DMU_GetValue(DMT_SECTOR_VALIDCOUNT, &d->validCount, &args, 0);
+        args.setValue(DMT_SECTOR_VALIDCOUNT, &d->validCount, 0);
         break;
     case DMU_FLOOR_PLANE: {
         Plane *pln = d->planes[Plane::Floor];
-        DMU_GetValue(DMT_SECTOR_FLOORPLANE, &pln, &args, 0);
+        args.setValue(DMT_SECTOR_FLOORPLANE, &pln, 0);
         break; }
     case DMU_CEILING_PLANE: {
         Plane* pln = d->planes[Plane::Ceiling];
-        DMU_GetValue(DMT_SECTOR_CEILINGPLANE, &pln, &args, 0);
+        args.setValue(DMT_SECTOR_CEILINGPLANE, &pln, 0);
         break; }
     default:
         return MapElement::property(args);
@@ -517,39 +517,39 @@ int Sector::property(setargs_t &args) const
     return false; // Continue iteration.
 }
 
-int Sector::setProperty(setargs_t const &args)
+int Sector::setProperty(DmuArgs const &args)
 {
     switch(args.prop)
     {
     case DMU_COLOR: {
         Vector3f newLightColor;
-        DMU_SetValue(DMT_SECTOR_RGB, &newLightColor.x, &args, 0);
-        DMU_SetValue(DMT_SECTOR_RGB, &newLightColor.y, &args, 1);
-        DMU_SetValue(DMT_SECTOR_RGB, &newLightColor.z, &args, 2);
+        args.value(DMT_SECTOR_RGB, &newLightColor.x, 0);
+        args.value(DMT_SECTOR_RGB, &newLightColor.y, 1);
+        args.value(DMT_SECTOR_RGB, &newLightColor.z, 2);
         setLightColor(newLightColor);
         break; }
     case DMU_COLOR_RED: {
         float newStrength;
-        DMU_SetValue(DMT_SECTOR_RGB, &newStrength, &args, 0);
+        args.value(DMT_SECTOR_RGB, &newStrength, 0);
         setLightRed(newStrength);
         break; }
     case DMU_COLOR_GREEN: {
         float newStrength;
-        DMU_SetValue(DMT_SECTOR_RGB, &newStrength, &args, 0);
+        args.value(DMT_SECTOR_RGB, &newStrength, 0);
         setLightGreen(newStrength);
         break; }
     case DMU_COLOR_BLUE: {
         float newStrength;
-        DMU_SetValue(DMT_SECTOR_RGB, &newStrength, &args, 0);
+        args.value(DMT_SECTOR_RGB, &newStrength, 0);
         setLightBlue(newStrength);
         break; }
     case DMU_LIGHT_LEVEL: {
         float newLightLevel;
-        DMU_SetValue(DMT_SECTOR_LIGHTLEVEL, &newLightLevel, &args, 0);
+        args.value(DMT_SECTOR_LIGHTLEVEL, &newLightLevel, 0);
         setLightLevel(newLightLevel);
         break; }
     case DMU_VALID_COUNT:
-        DMU_SetValue(DMT_SECTOR_VALIDCOUNT, &d->validCount, &args, 0);
+        args.value(DMT_SECTOR_VALIDCOUNT, &d->validCount, 0);
         break;
     default:
         return MapElement::setProperty(args);

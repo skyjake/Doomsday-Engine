@@ -404,19 +404,19 @@ void Line::Side::setShadowVisCount(int newCount)
     d->shadowVisCount = newCount;
 }
 
-int Line::Side::property(setargs_t &args) const
+int Line::Side::property(DmuArgs &args) const
 {
     switch(args.prop)
     {
     case DMU_SECTOR:
-        DMU_GetValue(DMT_LINESIDE_SECTOR, &d->sector, &args, 0);
+        args.setValue(DMT_LINESIDE_SECTOR, &d->sector, 0);
         break;
     case DMU_LINE: {
         Line *line = &d->line;
-        DMU_GetValue(DMT_LINESIDE_LINE, &line, &args, 0);
+        args.setValue(DMT_LINESIDE_LINE, &line, 0);
         break; }
     case DMU_FLAGS:
-        DMU_GetValue(DMT_LINESIDE_FLAGS, &d->flags, &args, 0);
+        args.setValue(DMT_LINESIDE_FLAGS, &d->flags, 0);
         break;
     default:
         return MapElement::property(args);
@@ -424,7 +424,7 @@ int Line::Side::property(setargs_t &args) const
     return false; // Continue iteration.
 }
 
-int Line::Side::setProperty(setargs_t const &args)
+int Line::Side::setProperty(DmuArgs const &args)
 {
     /**
      * @todo fixme: Changing the sector references via the DMU API has been
@@ -444,17 +444,17 @@ int Line::Side::setProperty(setargs_t const &args)
     {
     /*case DMU_SECTOR: {
         Sector *newSector = sectorPtr();
-        DMU_SetValue(DMT_LINESIDE_SECTOR, &d->sector, &args, 0);
+        args.value(DMT_LINESIDE_SECTOR, &d->sector, 0);
         break; } */
 
     /*case DMU_LINE: { // Never changeable - throw exception?
         Line *line = &_line;
-        DMU_SetValue(DMT_LINESIDE_LINE, &line, &args, 0);
+        args.value(DMT_LINESIDE_LINE, &line, 0);
         break; }*/
 
     case DMU_FLAGS: {
         int newFlags = d->flags;
-        DMU_SetValue(DMT_LINESIDE_FLAGS, &newFlags, &args, 0);
+        args.value(DMT_LINESIDE_FLAGS, &newFlags, 0);
         setFlags(newFlags);
         break; }
 
@@ -698,65 +698,65 @@ void Line::setValidCount(int newValidCount)
     d->validCount = newValidCount;
 }
 
-int Line::property(setargs_t &args) const
+int Line::property(DmuArgs &args) const
 {
     switch(args.prop)
     {
     case DMU_VERTEX0:
-        DMU_GetValue(DMT_LINE_V, &d->from, &args, 0);
+        args.setValue(DMT_LINE_V, &d->from, 0);
         break;
     case DMU_VERTEX1:
-        DMU_GetValue(DMT_LINE_V, &d->to, &args, 0);
+        args.setValue(DMT_LINE_V, &d->to, 0);
         break;
     case DMU_DX:
-        DMU_GetValue(DMT_LINE_DX, &d->direction.x, &args, 0);
+        args.setValue(DMT_LINE_DX, &d->direction.x, 0);
         break;
     case DMU_DY:
-        DMU_GetValue(DMT_LINE_DY, &d->direction.y, &args, 0);
+        args.setValue(DMT_LINE_DY, &d->direction.y, 0);
         break;
     case DMU_DXY:
-        DMU_GetValue(DMT_LINE_DX, &d->direction.x, &args, 0);
-        DMU_GetValue(DMT_LINE_DY, &d->direction.y, &args, 1);
+        args.setValue(DMT_LINE_DX, &d->direction.x, 0);
+        args.setValue(DMT_LINE_DY, &d->direction.y, 1);
         break;
     case DMU_LENGTH:
-        DMU_GetValue(DMT_LINE_LENGTH, &d->length, &args, 0);
+        args.setValue(DMT_LINE_LENGTH, &d->length, 0);
         break;
     case DMU_ANGLE: {
         angle_t lineAngle = BANG_TO_ANGLE(d->angle);
-        DMU_GetValue(DDVT_ANGLE, &lineAngle, &args, 0);
+        args.setValue(DDVT_ANGLE, &lineAngle, 0);
         break; }
     case DMU_SLOPETYPE:
-        DMU_GetValue(DMT_LINE_SLOPETYPE, &d->slopeType, &args, 0);
+        args.setValue(DMT_LINE_SLOPETYPE, &d->slopeType, 0);
         break;
     case DMU_FLAGS:
-        DMU_GetValue(DMT_LINE_FLAGS, &d->flags, &args, 0);
+        args.setValue(DMT_LINE_FLAGS, &d->flags, 0);
         break;
     case DMU_FRONT: {
         /// @todo Update the games so that sides without sections can be returned.
         Line::Side const *frontAdr = hasFrontSections()? &d->front : 0;
-        DMU_GetValue(DDVT_PTR, &frontAdr, &args, 0);
+        args.setValue(DDVT_PTR, &frontAdr, 0);
         break; }
     case DMU_BACK: {
         /// @todo Update the games so that sides without sections can be returned.
         Line::Side const *backAdr = hasBackSections()? &d->back : 0;
-        DMU_GetValue(DDVT_PTR, &backAdr, &args, 0);
+        args.setValue(DDVT_PTR, &backAdr, 0);
         break; }
     case DMU_BOUNDING_BOX:
         if(args.valueType == DDVT_PTR)
         {
             AABoxd const *aaBoxAdr = &d->aaBox;
-            DMU_GetValue(DDVT_PTR, &aaBoxAdr, &args, 0);
+            args.setValue(DDVT_PTR, &aaBoxAdr, 0);
         }
         else
         {
-            DMU_GetValue(DMT_LINE_AABOX, &d->aaBox.minX, &args, 0);
-            DMU_GetValue(DMT_LINE_AABOX, &d->aaBox.maxX, &args, 1);
-            DMU_GetValue(DMT_LINE_AABOX, &d->aaBox.minY, &args, 2);
-            DMU_GetValue(DMT_LINE_AABOX, &d->aaBox.maxY, &args, 3);
+            args.setValue(DMT_LINE_AABOX, &d->aaBox.minX, 0);
+            args.setValue(DMT_LINE_AABOX, &d->aaBox.maxX, 1);
+            args.setValue(DMT_LINE_AABOX, &d->aaBox.minY, 2);
+            args.setValue(DMT_LINE_AABOX, &d->aaBox.maxY, 3);
         }
         break;
     case DMU_VALID_COUNT:
-        DMU_GetValue(DMT_LINE_VALIDCOUNT, &d->validCount, &args, 0);
+        args.setValue(DMT_LINE_VALIDCOUNT, &d->validCount, 0);
         break;
     default:
         return MapElement::property(args);
@@ -765,7 +765,7 @@ int Line::property(setargs_t &args) const
     return false; // Continue iteration.
 }
 
-int Line::setProperty(setargs_t const &args)
+int Line::setProperty(DmuArgs const &args)
 {
     /**
      * @todo fixme: Changing the side references via the DMU API has been
@@ -778,21 +778,21 @@ int Line::setProperty(setargs_t const &args)
     {
     /*case DMU_FRONT: {
         SideDef *newFrontSideDef = frontSideDefPtr();
-        DMU_SetValue(DMT_LINE_SIDE, &newFrontSideDef, &args, 0);
+        args.value(DMT_LINE_SIDE, &newFrontSideDef, 0);
         d->front._sideDef = newFrontSideDef;
         break; }
     case DMU_BACK: {
         SideDef *newBackSideDef = backSideDefPtr();
-        DMU_SetValue(DMT_LINE_SIDE, &newBackSideDef, &args, 0);
+        args.value(DMT_LINE_SIDE, &newBackSideDef, 0);
         d->back._sideDef = newBackSideDef;
         break; }*/
 
     case DMU_VALID_COUNT:
-        DMU_SetValue(DMT_LINE_VALIDCOUNT, &d->validCount, &args, 0);
+        args.value(DMT_LINE_VALIDCOUNT, &d->validCount, 0);
         break;
     case DMU_FLAGS: {
         int newFlags = d->flags;
-        DMU_SetValue(DMT_LINE_FLAGS, &newFlags, &args, 0);
+        args.value(DMT_LINE_FLAGS, &newFlags, 0);
         setFlags(newFlags);
         break; }
 

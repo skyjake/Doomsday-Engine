@@ -889,7 +889,7 @@ static int DD_BeginGameChangeWorker(void* parameters)
     ddgamechange_paramaters_t* p = (ddgamechange_paramaters_t*)parameters;
     DENG_ASSERT(p);
 
-    P_InitMapUpdate();
+    Map::initDummies();
     P_InitMapEntityDefs();
 
     if(p->initiatedBusyMode)
