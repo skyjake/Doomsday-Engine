@@ -18,6 +18,7 @@
  */
 
 #include "de/MonospaceLogSinkFormatter"
+#include "de/EscapeParser"
 #include <de/math.h>
 
 namespace de {
@@ -76,7 +77,11 @@ QList<String> MonospaceLogSinkFormatter::logEntryToTextLines(LogEntry const &ent
             }
         }
     }
-    String message = entry.asText(entryFlags, cutSection);
+
+    // Get rid of any escape sequences in the text.
+    EscapeParser esc;
+    esc.parse(entry.asText(entryFlags, cutSection));
+    String message = esc.plainText();
 
     // Remember for the next line.
     _sectionOfPreviousLine      = section;
