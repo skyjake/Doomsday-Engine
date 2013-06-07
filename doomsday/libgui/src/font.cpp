@@ -649,4 +649,9 @@ Rule const &Font::lineSpacing() const
     return *d->lineSpacingRule;
 }
 
+int Font::xHeight() const
+{
+    return d->metrics->xHeight();
+}
+
 } // namespace de

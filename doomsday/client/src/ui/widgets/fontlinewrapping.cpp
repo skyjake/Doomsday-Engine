@@ -47,6 +47,7 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
     typedef QList<Line *> Lines;
     Lines lines;
 
+    int maxWidth;
     String text;                ///< Plain text.
     Font::RichFormat format;
     int indent;                 ///< Current left indentation (in pixels).
@@ -116,8 +117,10 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
         // Determine segments in the line.
         int tab = 0;
         int pos = range.start;
+
         Font::RichFormat rich = format.subRange(range);
         Font::RichFormat::Iterator iter(rich);
+
         while(iter.hasNext())
         {
             iter.next();
@@ -144,6 +147,22 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
 
         // The final segment.
         line->info.segs << LineInfo::Segment(Rangei(pos, range.end), tab);
+
+        // Determine segment widths.
+        if(line->info.segs.size() == 1)
+        {
+            line->info.segs[0].width = width;
+        }
+        else
+        {
+            for(int i = 0; i < line->info.segs.size(); ++i)
+            {
+                line->info.segs[i].width = (
+                            i < line->info.segs.size() - 1?
+                                rangeAdvanceWidth(line->info.segs[i].range) :
+                                rangeVisibleWidth(line->info.segs[i].range));
+            }
+        }
 
         lines << line;
 
@@ -209,6 +228,17 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
         // Accurate search.
         return findMaxWrapWithStep(1, begin, end, availableWidth, &wrapPosMax);
     }
+
+    bool isWrappable(int at)
+    {
+        if(text.at(at).isSpace()) return true;
+        if(at > 0)
+        {
+            QChar const prev = text.at(at - 1);
+            if(prev == '/' || prev == '\\') return true;
+        }
+        return false;
+    }
 };
 
 FontLineWrapping::FontLineWrapping() : d(new Instance)
@@ -258,8 +288,9 @@ void FontLineWrapping::wrapTextToWidth(String const &text, Font::RichFormat cons
     if(maxWidth <= 1 || !d->font) return;
 
     // This is the text that we will be wrapping.
-    d->text   = newText;
-    d->format = format;
+    d->maxWidth = maxWidth;
+    d->text     = newText;
+    d->format   = format;
 
     int begin = 0;
     forever
@@ -298,7 +329,7 @@ void FontLineWrapping::wrapTextToWidth(String const &text, Font::RichFormat cons
         else
         {
             // Rewind to find a good (whitespace) break point.
-            while(!text.at(end).isSpace())
+            while(!d->isWrappable(end))
             {
                 if(--end == begin)
                 {
@@ -416,6 +447,11 @@ int FontLineWrapping::totalHeightInPixels() const
     return pixels;
 }
 
+int FontLineWrapping::maximumWidth() const
+{
+    return d->maxWidth;
+}
+
 Vector2i FontLineWrapping::charTopLeftInPixels(int line, int charIndex)
 {    
     if(line >= height()) return Vector2i();
@@ -434,4 +470,14 @@ Vector2i FontLineWrapping::charTopLeftInPixels(int line, int charIndex)
 FontLineWrapping::LineInfo const &FontLineWrapping::lineInfo(int index) const
 {
     return d->lines[index]->info;
+}
+
+int FontLineWrapping::LineInfo::highestTabStop() const
+{
+    int stop = 0;
+    foreach(Segment const &seg, segs)
+    {
+        stop = de::max(stop, seg.tabStop);
+    }
+    return stop;
 }

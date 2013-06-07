@@ -263,6 +263,8 @@ public:
     Rule const &descent() const;
     Rule const &lineSpacing() const;
 
+    int xHeight() const;
+
 private:
     DENG2_PRIVATE(d)
 };

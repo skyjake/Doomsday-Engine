@@ -32,10 +32,16 @@ DENG2_PIMPL(GLTextComposer)
     bool needRaster;
 
     struct Line {
-        Id id;
-        Rangei range;
+        struct Segment {
+            Id id;
+            Rangei range;
+            int x;
+            int width;
 
-        Line() : id(Id::None) {}
+            Segment() : id(Id::None), x(0), width(0) {}
+            int right() const { return x + width; }
+        };
+        QList<Segment> segs;
     };
     typedef QList<Line> Lines;
     Lines lines;
@@ -52,12 +58,38 @@ DENG2_PIMPL(GLTextComposer)
     {
         if(atlas)
         {
-            foreach(Line const &line, lines)
+            for(int i = 0; i < lines.size(); ++i)
             {
-                atlas->release(line.id);
+                releaseLine(i);
             }
         }
         lines.clear();
+    }
+
+    void releaseLine(int index)
+    {
+        Line &ln = lines[index];
+        for(int i = 0; i < ln.segs.size(); ++i)
+        {
+            atlas->release(ln.segs[i].id);
+        }
+        ln.segs.clear();
+    }
+
+    bool matchingSegments(int lineIndex, FontLineWrapping::LineInfo const &info) const
+    {
+        if(info.segs.size() != lines[lineIndex].segs.size())
+        {
+            return false;
+        }
+        for(int i = 0; i < info.segs.size(); ++i)
+        {
+            if(info.segs[i].range != lines[lineIndex].segs[i].range)
+            {
+                return false;
+            }
+        }
+        return true;
     }
 
     bool allocLines()
@@ -66,55 +98,64 @@ DENG2_PIMPL(GLTextComposer)
 
         for(int i = 0; i < wraps->height(); ++i)
         {
-            shell::WrappedLine const span = wraps->line(i);
+            FontLineWrapping::LineInfo const &info = wraps->lineInfo(i);
 
             if(i < lines.size())
             {
-                if(lines[i].range == span.range)
+                // Is the rasterized copy up to date?
+                if(matchingSegments(i, info))
                 {
-                    // This can be kept as is.
+                    // This line can be kept as is.
                     continue;
                 }
 
                 // Needs to be redone.
-                atlas->release(lines[i].id);
+                releaseLine(i);
             }
 
             changed = true;
 
-            String const part = text.substr(span.range);
-
             if(i >= lines.size())
             {
                 // Need another line.
-                lines.append(Line());
+                lines << Line();
             }
+
+            DENG2_ASSERT(lines[i].segs.isEmpty());
 
             Line &line = lines[i];
-            line.range = span.range;
-
-            // The color is white unless a style is defined.
-            Vector4ub fgColor(255, 255, 255, 255);
-
-            if(format.haveStyle())
+            for(int k = 0; k < info.segs.size(); ++k)
             {
-                fgColor = format.style().richStyleColor(Font::RichFormat::NormalColor);
+                Line::Segment seg;
+                seg.range = info.segs[k].range;
+
+                String const part = text.substr(seg.range);
+
+                // The color is white unless a style is defined.
+                Vector4ub fgColor(255, 255, 255, 255);
+
+                if(format.haveStyle())
+                {
+                    fgColor = format.style().richStyleColor(Font::RichFormat::NormalColor);
+                }
+
+                // Set up the background color to be transparent with no
+                // change of color in the alphablended smooth edges.
+                Vector4ub bgColor = fgColor;
+                bgColor.w = 0;
+
+                seg.id = atlas->alloc(font->rasterize(part, format.subRange(seg.range),
+                                                      fgColor, bgColor));
+
+                line.segs << seg;
             }
-
-            // Set up the background color to be transparent with no
-            // change of color in the alphablended smooth edges.
-            Vector4ub bgColor = fgColor;
-            bgColor.w = 0;
-
-            line.id = atlas->alloc(font->rasterize(part, format.subRange(span.range),
-                                                   fgColor, bgColor));
         }
 
         // Remove the excess lines.
         while(lines.size() > wraps->height())
         {
-            atlas->release(lines.back().id);
-            lines.takeLast();
+            releaseLine(lines.size() - 1);
+            lines.removeLast();
             changed = true;
         }
 
@@ -210,29 +251,104 @@ void GLTextComposer::makeVertices(Vertices &triStrip,
 
     DENG2_ASSERT(d->wraps->height() == d->lines.size());
 
+    // Align segments based on tab stops.
+    int highestTab = 0;
+    for(int i = 0; i < d->lines.size(); ++i)
+    {
+        highestTab = de::max(highestTab, d->wraps->lineInfo(i).highestTabStop());
+
+        // Initialize the segments with indentation.
+        for(int k = 0; k < d->lines[i].segs.size(); ++k)
+        {
+            Instance::Line::Segment &seg = d->lines[i].segs[k];
+
+            seg.x = d->wraps->lineInfo(i).indent;
+
+            // Determine the width of this segment.
+            seg.width = d->wraps->lineInfo(i).segs[k].width;
+        }
+    }
+
+    // Align each tab stop with other the matching stops on the other lines.
+    for(int tab = 1; tab <= highestTab; ++tab)
+    {
+        int maxRight = 0;
+
+        // Find the maximum right edge for this spot.
+        for(int i = 0; i < d->lines.size(); ++i)
+        {
+            FontLineWrapping::LineInfo const &info = d->wraps->lineInfo(i);
+            for(int k = 0; k < info.segs.size(); ++k)
+            {
+                Instance::Line::Segment &seg = d->lines[i].segs[k];
+                if(info.segs[k].tabStop < tab)
+                {
+                    maxRight = de::max(maxRight, seg.right());
+                }
+            }
+        }
+
+        // Move the segments to this position.
+        for(int i = 0; i < d->lines.size(); ++i)
+        {
+            FontLineWrapping::LineInfo const &info = d->wraps->lineInfo(i);
+            for(int k = 0; k < info.segs.size(); ++k)
+            {
+                if(info.segs[k].tabStop == tab)
+                {
+                    d->lines[i].segs[k].x = maxRight;
+                }
+            }
+        }
+    }
+
+    // Compress lines to fit into the maximum allowed width.
+    for(int i = 0; i < d->lines.size(); ++i)
+    {
+        Instance::Line &line = d->lines[i];
+
+        if(!d->wraps->lineInfo(i).segs.last().tabStop)
+            continue;
+
+        if(line.segs.last().right() > d->wraps->maximumWidth())
+        {
+            // Needs compressing.
+            line.segs.last().x = d->wraps->maximumWidth() - line.segs.last().width;
+
+            // Move the previous segs until overlaps are resolved.
+            for(int k = line.segs.size() - 2; k > 0; --k)
+            {
+                if(line.segs[k].right() > line.segs[k + 1].x)
+                {
+                    line.segs[k].x = line.segs[k + 1].x - line.segs[k].width;
+                }
+                else break;
+            }
+        }
+    }
+
     // Generate vertices for each line.
     for(int i = 0; i < d->wraps->height(); ++i)
     {
-        // Empty lines are skipped.
-        if(!d->lines[i].id.isNone())
+        Instance::Line const &line = d->lines[i];
+        FontLineWrapping::LineInfo const &info = d->wraps->lineInfo(i);
+
+        Vector2f linePos = p;
+
+        for(int k = 0; k < info.segs.size(); ++k)
         {
-            Vector2ui const size = d->atlas->imageRect(d->lines[i].id).size();
-            Rectanglef const uv  = d->atlas->imageRectf(d->lines[i].id);
+            Instance::Line::Segment const &seg = line.segs[k];
 
-            Vector2f linePos = p + Vector2f(d->wraps->lineInfo(i).indent, 0);
+            // Empty lines are skipped.
+            if(seg.id.isNone()) continue;
 
-            // Align the line.
-            if(lineAlign.testFlag(AlignRight))
-            {
-                linePos.x += int(rect.width()) - int(size.x);
-            }
-            else if(!lineAlign.testFlag(AlignLeft))
-            {
-                linePos.x += (int(rect.width()) - int(size.x)) / 2;
-            }
+            Vector2ui const size = d->atlas->imageRect(seg.id).size();
+            Rectanglef const uv  = d->atlas->imageRectf(seg.id);
 
-            triStrip.makeQuad(Rectanglef::fromSize(linePos, size), color, uv);
+            triStrip.makeQuad(Rectanglef::fromSize(linePos + Vector2f(seg.x, 0), size),
+                              color, uv);
         }
+
         p.y += d->font->lineSpacing().value();
     }
 }

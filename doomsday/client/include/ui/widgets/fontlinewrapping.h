@@ -68,6 +68,11 @@ public:
     int totalHeightInPixels() const;
 
     /**
+     * Returns the maximum width given to wrapTextToWidth().
+     */
+    int maximumWidth() const;
+
+    /**
      * Determines the coordinates of a character's top left corner in pixels.
      *
      * @param line       Wrapped line number.
@@ -83,12 +88,18 @@ public:
         struct Segment {
             de::Rangei range;
             int tabStop;
-            Segment(de::Rangei const &r, int tab = 0) : range(r), tabStop(tab) {}
+            int width;
+
+            Segment(de::Rangei const &r, int tab = 0) : range(r), tabStop(tab), width(0)
+            {}
         };
         typedef QList<Segment> Segments;
         Segments segs;
 
-        int indent; ///< Left indentation to apply to the entire line.
+        int indent;         ///< Left indentation to apply to the entire line.
+
+    public:
+        int highestTabStop() const;
     };
 
     /**
