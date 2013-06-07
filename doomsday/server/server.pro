@@ -167,6 +167,7 @@ DENG_HEADERS += \
     $$SRC/include/def_main.h \
     $$SRC/include/dualstring.h \
     $$SRC/include/edit_map.h \
+    $$SRC/include/face.h \
     $$SRC/include/filehandle.h \
     $$SRC/include/filesys/file.h \
     $$SRC/include/filesys/filehandlebuilder.h \
@@ -180,11 +181,13 @@ DENG_HEADERS += \
     $$SRC/include/filetype.h \
     $$SRC/include/game.h \
     $$SRC/include/gridmap.h \
+    $$SRC/include/hedge.h \
     $$SRC/include/library.h \
     $$SRC/include/m_decomp64.h \
     $$SRC/include/m_misc.h \
     $$SRC/include/m_nodepile.h \
     $$SRC/include/m_profiler.h \
+    $$SRC/include/mesh.h \
     $$SRC/include/network/masterserver.h \
     $$SRC/include/network/monitor.h \
     $$SRC/include/network/net_buf.h \
@@ -242,14 +245,11 @@ DENG_HEADERS += \
     $$SRC/include/world/bspnode.h \
     $$SRC/include/world/dam_file.h \
     $$SRC/include/world/entitydatabase.h \
-    $$SRC/include/world/face.h \
     $$SRC/include/world/generators.h \
-    $$SRC/include/world/hedge.h \
     $$SRC/include/world/line.h \
     $$SRC/include/world/lineowner.h \
     $$SRC/include/world/linesighttest.h \
     $$SRC/include/world/map.h \
-    $$SRC/include/world/mesh.h \
     $$SRC/include/world/p_dmu.h \
     $$SRC/include/world/p_intercept.h \
     $$SRC/include/world/p_mapdata.h \
@@ -346,6 +346,7 @@ SOURCES += \
     $$SRC/src/def_read.cpp \
     $$SRC/src/dualstring.cpp \
     $$SRC/src/edit_map.cpp \
+    $$SRC/src/face.cpp \
     $$SRC/src/filesys/file.cpp \
     $$SRC/src/filesys/filehandle.cpp \
     $$SRC/src/filesys/fileid.cpp \
@@ -358,10 +359,12 @@ SOURCES += \
     $$SRC/src/filesys/sys_direc.cpp \
     $$SRC/src/game.cpp \
     $$SRC/src/gridmap.cpp \
+    $$SRC/src/hedge.cpp \
     $$SRC/src/library.cpp \
     $$SRC/src/m_decomp64.cpp \
     $$SRC/src/m_misc.cpp \
     $$SRC/src/m_nodepile.cpp \
+    $$SRC/src/mesh.cpp \
     $$SRC/src/network/masterserver.cpp \
     $$SRC/src/network/monitor.cpp \
     $$SRC/src/network/net_buf.cpp \
@@ -416,14 +419,11 @@ SOURCES += \
     $$SRC/src/world/bspnode.cpp \
     $$SRC/src/world/dam_file.cpp \
     $$SRC/src/world/entitydatabase.cpp \
-    $$SRC/src/world/face.cpp \
     $$SRC/src/world/generators.cpp \
-    $$SRC/src/world/hedge.cpp \
     $$SRC/src/world/line.cpp \
     $$SRC/src/world/linesighttest.cpp \
     $$SRC/src/world/map.cpp \
     $$SRC/src/world/mapelement.cpp \
-    $$SRC/src/world/mesh.cpp \
     $$SRC/src/world/p_data.cpp \
     $$SRC/src/world/p_dmu.cpp \
     $$SRC/src/world/p_intercept.cpp \

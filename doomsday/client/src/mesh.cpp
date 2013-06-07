@@ -23,7 +23,7 @@
 #include "Face"
 #include "Vertex"
 
-#include "world/mesh.h"
+#include "mesh.h"
 
 namespace de {
 

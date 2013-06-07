@@ -21,7 +21,7 @@
 
 #include "Face"
 
-#include "world/hedge.h"
+#include "hedge.h"
 
 namespace de {
 

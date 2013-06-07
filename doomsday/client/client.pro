@@ -200,6 +200,7 @@ DENG_HEADERS += \
     include/dualstring.h \
     include/edit_bias.h \
     include/edit_map.h \
+    include/face.h \
     include/filehandle.h \
     include/filesys/file.h \
     include/filesys/filehandlebuilder.h \
@@ -223,12 +224,14 @@ DENG_HEADERS += \
     include/gl/sys_opengl.h \
     include/gl/texturecontent.h \
     include/gridmap.h \
+    include/hedge.h \
     include/ihplane.h \
     include/library.h \
     include/m_decomp64.h \
     include/m_misc.h \
     include/m_nodepile.h \
     include/m_profiler.h \
+    include/mesh.h \
     include/network/masterserver.h \
     include/network/monitor.h \
     include/network/net_buf.h \
@@ -364,15 +367,12 @@ DENG_HEADERS += \
     include/world/bspnode.h \
     include/world/dam_file.h \
     include/world/entitydatabase.h \
-    include/world/face.h \
     include/world/generators.h \
-    include/world/hedge.h \
     include/world/line.h \
     include/world/lineowner.h \
     include/world/linesighttest.h \
     include/world/map.h \
     include/world/mapelement.h \
-    include/world/mesh.h \
     include/world/p_dmu.h \
     include/world/p_intercept.h \
     include/world/p_mapdata.h \
@@ -492,6 +492,7 @@ SOURCES += \
     src/dualstring.cpp \
     src/edit_bias.cpp \
     src/edit_map.cpp \
+    src/face.cpp \
     src/filesys/file.cpp \
     src/filesys/filehandle.cpp \
     src/filesys/fileid.cpp \
@@ -516,11 +517,13 @@ SOURCES += \
     src/gl/svg.cpp \
     src/gl/sys_opengl.cpp \
     src/gridmap.cpp \
+    src/hedge.cpp \
     src/library.cpp \
     src/m_decomp64.cpp \
     src/m_misc.cpp \
     src/m_nodepile.cpp \
     src/main_client.cpp \
+    src/mesh.cpp \
     src/network/masterserver.cpp \
     src/network/monitor.cpp \
     src/network/net_buf.cpp \
@@ -656,14 +659,11 @@ SOURCES += \
     src/world/bspnode.cpp \
     src/world/dam_file.cpp \
     src/world/entitydatabase.cpp \
-    src/world/face.cpp \
     src/world/generators.cpp \
-    src/world/hedge.cpp \
     src/world/line.cpp \
     src/world/linesighttest.cpp \
     src/world/map.cpp \
     src/world/mapelement.cpp \
-    src/world/mesh.cpp \
     src/world/p_data.cpp \
     src/world/p_dmu.cpp \
     src/world/p_intercept.cpp \

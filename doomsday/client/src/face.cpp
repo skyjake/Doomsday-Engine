@@ -23,7 +23,7 @@
 
 #include "HEdge"
 
-#include "world/face.h"
+#include "face.h"
 
 namespace de {
 
