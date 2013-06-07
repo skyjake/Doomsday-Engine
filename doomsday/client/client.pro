@@ -244,6 +244,7 @@ DENG_HEADERS += \
     include/network/ui_mpi.h \
     include/partition.h \
     include/r_util.h \
+    include/render/blockmapvisual.h \
     include/render/lightgrid.h \
     include/render/lumobj.h \
     include/render/materialcontext.h \
@@ -352,7 +353,6 @@ DENG_HEADERS += \
     include/updater.h \
     include/uri.hh \
     include/world/blockmap.h \
-    include/world/blockmapvisual.h \
     include/world/bsp/bsptreenode.h \
     include/world/bsp/convexsubspace.h \
     include/world/bsp/edgetip.h \
@@ -535,6 +535,7 @@ SOURCES += \
     src/network/ui_mpi.cpp \
     src/r_util.cpp \
     src/render/api_render.cpp \
+    src/render/blockmapvisual.cpp \
     src/render/lightgrid.cpp \
     src/render/lumobj.cpp \
     src/render/r_draw.cpp \
@@ -647,7 +648,6 @@ SOURCES += \
     src/ui/signalaction.cpp \
     src/world/api_map.cpp \
     src/world/blockmap.cpp \
-    src/world/blockmapvisual.cpp \
     src/world/bsp/convexsubspace.cpp \
     src/world/bsp/hplane.cpp \
     src/world/bsp/linesegment.cpp \

@@ -39,17 +39,17 @@
 #include "MaterialSnapshot"
 #include "MaterialVariantSpec"
 #include "Texture"
-#include "WallEdge"
-#include "SkyFixEdge"
-#include "TriangleStripBuilder"
 
-#include "world/blockmapvisual.h"
 #include "world/map.h"
 #include "world/lineowner.h"
 #include "world/p_objlink.h"
 #include "world/p_players.h"
 #include "world/r_world.h"
 
+#include "WallEdge"
+#include "SkyFixEdge"
+#include "TriangleStripBuilder"
+#include "render/blockmapvisual.h"
 #include "render/sprite.h"
 
 #include "gl/sys_opengl.h"
