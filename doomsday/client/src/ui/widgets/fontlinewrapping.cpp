@@ -1,5 +1,9 @@
 /** @file fontlinewrapping.cpp  Font line wrapping.
  *
+ * @todo Performance|Refactor: Add a class dedicated for measuring text. Allow
+ * measuring in increments, one character at a time, without re-measuring the
+ * whole range. Allow seeking forward and backward with the measurer.
+ *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
@@ -64,23 +68,30 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
         return 0;
     }
 
-    void appendLine(Rangei const &range)
+    int rangeIndentMarkWidth(Rangei const &range) const
     {
-        lines.append(Line(WrappedLine(range), rangeVisibleWidth(range), indent));
-
-        // Check for possible indent for following lines.
         Font::RichFormat rich = format.subRange(range);
         Font::RichFormat::Iterator iter(rich);
-        int newIndent = indent;
+        int markWidth = 0;
         while(iter.hasNext())
         {
             iter.next();
             if(iter.markIndent())
             {
-                newIndent = indent + rangeAdvanceWidth(Rangei(0, iter.range().start) + range.start);
+                markWidth = rangeAdvanceWidth(Rangei(0, iter.range().start) + range.start);
             }
         }
-        indent = newIndent;
+        return markWidth;
+    }
+
+    void appendLine(Rangei const &range)
+    {
+        // Check for possible indent for following lines.
+        int indentMark = rangeIndentMarkWidth(range);
+
+        lines << Line(WrappedLine(range), rangeVisibleWidth(range), indent);
+
+        indent += indentMark;
     }
 
     bool isAllSpace(Rangei const &range) const
@@ -204,14 +215,13 @@ void FontLineWrapping::wrapTextToWidth(String const &text, Font::RichFormat cons
         int availWidth = maxWidth - d->indent;
 
         // Quick check: does the remainder fit?
-        Rangei range(begin, text.size());
+        Rangei const range(begin, text.size());
         if(!d->containsNewline(range))
         {
             int visWidth = d->rangeAdvanceWidth(range);
             if(visWidth <= availWidth)
             {
-                d->lines.append(Instance::Line(WrappedLine(Rangei(begin, text.size())),
-                                               visWidth, d->indent));
+                d->lines << Instance::Line(WrappedLine(range), visWidth, d->indent);
                 break;
             }
         }
@@ -260,6 +270,15 @@ void FontLineWrapping::wrapTextToWidth(String const &text, Font::RichFormat cons
         // Mark the final line.
         d->lines.last().line.isFinal = true;
     }
+
+    /*
+    qDebug() << "Wrapped:" << d->text;
+    foreach(Instance::Line const &ln, d->lines)
+    {
+        qDebug() << ln.line.range.asText() << d->text.substr(ln.line.range)
+                 << "indent:" << ln.indent << "tabstart:" << ln.tabStart;
+    }
+    */
 }
 
 String const &FontLineWrapping::text() const
