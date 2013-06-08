@@ -322,7 +322,7 @@ void GLTextComposer::makeVertices(Vertices &triStrip,
             continue;
 
         Instance::Line::Segment &seg = line.segs.last();
-        if(seg.right() > d->wraps->maximumWidth())
+        if(seg.right() > d->wraps->maximumWidth() + 1)
         {
             // Needs compressing (up to 15%).
             seg.compressed = true;
@@ -351,7 +351,21 @@ void GLTextComposer::makeVertices(Vertices &triStrip,
                 size.x = seg.width;
             }
 
-            Rectanglef const uv  = d->atlas->imageRectf(seg.id);
+            // Line alignment.
+            /// @todo How to center/right-align text that uses tab stops?
+            if(line.segs.size() == 1 && !d->wraps->lineInfo(0).segs[0].tabStop)
+            {
+                if(lineAlign.testFlag(AlignRight))
+                {
+                    linePos.x += int(rect.width()) - int(size.x);
+                }
+                else if(!lineAlign.testFlag(AlignLeft))
+                {
+                    linePos.x += (int(rect.width()) - int(size.x)) / 2;
+                }
+            }
+
+            Rectanglef const uv = d->atlas->imageRectf(seg.id);
 
             triStrip.makeQuad(Rectanglef::fromSize(linePos + Vector2f(seg.x, 0), size),
                               color, uv);
