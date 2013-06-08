@@ -69,12 +69,10 @@ using namespace de;
 boolean ddMapSetup;
 timespan_t ddMapTime;
 
-/*
 // Should we be caching successfully loaded maps?
 static byte mapCache = true; // cvar
 
 static char const *mapCacheDir = "mapcache/";
-*/
 
 static inline lumpnum_t markerLumpNumForPath(String path)
 {
@@ -91,20 +89,19 @@ static String composeUniqueMapId(de::File1 &markerLump)
               .toLower();
 }
 
-#if 0
-/// Calculate the identity key for maps loaded from the specified @a path.
-static ushort cacheIdForMap(char const *path)
+/// Determine the identity key for maps loaded from the specified @a sourcePath.
+static String cacheIdForMap(String const &sourcePath)
 {
-    DENG_ASSERT(path && path[0]);
+    DENG_ASSERT(!sourcePath.isEmpty());
 
-    ushort identifier = 0;
-    for(uint i = 0; path[i]; ++i)
+    ushort id = 0;
+    for(int i = 0; i < sourcePath.size(); ++i)
     {
-        identifier ^= path[i] << ((i * 3) % 11);
+        id ^= sourcePath.at(i).unicode() << ((i * 3) % 11);
     }
-    return identifier;
+
+    return String("%1").arg(id, 4, 16);
 }
-#endif
 
 namespace de {
 
@@ -116,11 +113,9 @@ DENG2_PIMPL(World)
     struct CacheRecord
     {
         Uri mapUri;                 ///< Unique identifier for the map.
-        /*
-        String path;                ///< Path to the cached map data.
-        bool dataAvailable;
-        bool lastLoadAttemptFailed;
-        */
+        //String path;                ///< Path to the cached map data.
+        //bool dataAvailable;
+        //bool lastLoadAttemptFailed;
     };
 
     typedef QMap<String, CacheRecord> Records;
@@ -134,35 +129,32 @@ DENG2_PIMPL(World)
     Instance(Public *i) : Base(i), map(0)
     {}
 
-#if 0
+    void notifyMapChange()
+    {
+        DENG2_FOR_PUBLIC_AUDIENCE(MapChange, i)
+        {
+            i->currentMapChanged();
+        }
+    }
+
     /**
-     * Compose the relative path (relative to the runtime directory) to the directory
-     * within the archived map cache where maps from the specified source will reside.
+     * Compose the relative path (relative to the runtime directory) to the
+     * directory of the cache where maps from this source (e.g., the add-on
+     * which contains the map) will reside.
      *
-     * @param sourcePath  Path to the primary resource file for the original map data.
+     * @param sourcePath  Path to the primary resource file (the source) for
+     *                    the original map data.
+     *
      * @return  The composed path.
      */
-    static AutoStr *cachePath(char const *path)
+    static Path cachePath(String sourcePath)
     {
-        if(!path || !path[0]) return 0;
-
-        DENG_ASSERT(App_GameLoaded());
-
-        ddstring_t const *gameIdentityKey = App_CurrentGame().identityKey();
-        ushort mapPathIdentifier   = cacheIdForMap(path);
-
-        AutoStr *mapFileName = AutoStr_NewStd();
-        F_FileName(mapFileName, path);
+        if(sourcePath.isEmpty()) return String();
 
         // Compose the final path.
-        AutoStr *path = AutoStr_NewStd();
-        Str_Appendf(path, "%s%s/%s-%04X/", mapCacheDir, Str_Text(gameIdentityKey),
-                                           Str_Text(mapFileName), mapPathIdentifier);
-        F_ExpandBasePath(path, path);
-
-        return path;
+        return mapCacheDir + String(Str_Text(App_CurrentGame().identityKey()))
+               / sourcePath.fileName() + '-' + cacheIdForMap(sourcePath);
     }
-#endif
 
     /**
      * Try to locate a cache record for a map by URI.
@@ -182,8 +174,8 @@ DENG2_PIMPL(World)
     }
 
     /**
-     * Create a new CacheRecord for the map. If an existing record is found
-     * it will be returned instead (becomes a no-op).
+     * Create a new CacheRecord for the map. If an existing record is found it
+     * will be returned instead (becomes a no-op).
      *
      * @param uri  Map identifier.
      *
@@ -195,32 +187,26 @@ DENG2_PIMPL(World)
         if(CacheRecord *record = findCacheRecord(uri))
             return *record;
 
-        /*
-        // Compose the cache directory path and ensure it exists.
-        String cachePath;
-        lumpnum_t markerLumpNum = F_LumpNumForName(uri.path().toString().toLatin1().constData());
-        if(markerLumpNum >= 0)
-        {
-            AutoStr *cacheDir = cachePath(Str_Text(F_ComposeLumpFilePath(markerLumpNum)));
-            F_MakePath(Str_Text(cacheDir));
-
-            // Compose the full path to the cached map data file.
-            AutoStr *name = AutoStr_NewStd();
-            F_FileName(name, Str_Text(F_LumpName(markerLumpNum)));
-
-            cachePath = String(Str_Text(cacheDir)) + String(Str_Text(name)) + ".dcm";
-        }
-        */
-
+        // Prepare a new record.
         CacheRecord rec;
         rec.mapUri = uri;
-        //rec.path = cachePath;
+
+        // Compose the cache directory path.
+        /*lumpnum_t markerLumpNum = App_FileSystem().lumpNumForName(uri.path().toString().toLatin1().constData());
+        if(markerLumpNum >= 0)
+        {
+            File1 &lump = App_FileSystem().nameIndex().lump(markerLumpNum);
+            String cacheDir = cachePath(lump.container().composePath());
+
+            rec.path = cacheDir + lump.name() + ".dcm";
+        }*/
+
         return records.insert(uri.resolved(), rec).value();
     }
 
     /**
-     * Attempt to peform a JIT conversion of the map data with the help
-     * of a converter plugin.
+     * Attempt to peform a JIT conversion of the map data with the help of a
+     * converter plugin.
      *
      * @return  Pointer to the converted Map; otherwise @c 0.
      */
@@ -229,7 +215,7 @@ DENG2_PIMPL(World)
         // Record this map if we haven't already.
         /*CacheRecord &record =*/ createCacheRecord(uri);
 
-        // At least one available converter?
+        // We require a map converter for this.
         if(!Plug_CheckForHook(HOOK_MAP_CONVERT))
             return 0;
 
@@ -239,13 +225,14 @@ DENG2_PIMPL(World)
         if(markerLumpNum < 0)
             return 0;
 
-        // Ask each converter in turn whether the map format is
-        // recognizable and if so to interpret and transfer it to us
-        // via the map editing interface.
+        // Ask each converter in turn whether the map format is recognizable
+        // and if so to interpret and transfer it to us via the runtime map
+        // editing interface.
         if(!DD_CallHooks(HOOK_MAP_CONVERT, 0, (void *) reinterpret_cast<uri_s const *>(&uri)))
             return 0;
 
         // A converter signalled success.
+
         // Were we able to produce a valid map from the data it provided?
         if(!MPE_GetLastBuiltMapResult())
             return 0;
@@ -264,20 +251,11 @@ DENG2_PIMPL(World)
         // Are we caching this map?
         /*if(mapCache)
         {
-            AutoStr *cacheDir = mapCachePath(Str_Text(F_ComposeLumpFilePath(markerLumpNum())));
-
-            AutoStr *cachePath = AutoStr_NewStd();
-            F_FileName(cachePath, F_LumpName(markerLumpName));
-
-            Str_Append(cachePath, ".dcm");
-            Str_Prepend(cachePath, Str_Text(cacheDir));
-            F_ExpandBasePath(cachePath, cachePath);
-
             // Ensure the destination directory exists.
-            F_MakePath(Str_Text(cacheDir));
+            F_MakePath(rec.cachePath.toUtf8().constData());
 
             // Cache the map!
-            DAM_MapWrite(map, Str_Text(cachePath));
+            DAM_MapWrite(map, rec.cachePath);
         }*/
 
         return map;
@@ -381,8 +359,8 @@ bool World::loadMap(de::Uri const &uri)
 
     if(isServer)
     {
-        // Whenever the map changes, remote players must tell us when
-        // they're ready to begin receiving frames.
+        // Whenever the map changes, remote players must tell us when they're
+        // ready to begin receiving frames.
         for(uint i = 0; i < DDMAXPLAYERS; ++i)
         {
             //player_t *plr = &ddPlayers[i];
@@ -565,8 +543,8 @@ void World::setupMap(int mode)
     case DDSMM_AFTER_LOADING:
         DENG_ASSERT(d->map);
 
-        // Update everything again. Its possible that after loading we
-        // now have more HOMs to fix, etc..
+        // Update everything again. Its possible that after loading we now have
+        // more HOMs to fix, etc..
         d->map->initSkyFix();
 
         updateAllMapSectors(*d->map);
@@ -581,9 +559,9 @@ void World::setupMap(int mode)
 
         if(gameTime > 20000000 / TICSPERSEC)
         {
-            // In very long-running games, gameTime will become so large that it cannot be
-            // accurately converted to 35 Hz integer tics. Thus it needs to be reset back
-            // to zero.
+            // In very long-running games, gameTime will become so large that
+            // it cannot be accurately converted to 35 Hz integer tics. Thus it
+            // needs to be reset back to zero.
             gameTime = 0;
         }
 
@@ -609,17 +587,17 @@ void World::setupMap(int mode)
 #ifdef __CLIENT__
         d->map->buildSurfaceLists();
 
-        float startTime = Timer_Seconds();
+        Time begunPrecacheAt;
         Rend_CacheForMap();
         App_Materials().processCacheQueue();
-        VERBOSE( Con_Message("Precaching took %.2f seconds.", Timer_Seconds() - startTime) )
+        LOG_INFO(String("Precaching completed in %1 seconds.").arg(begunPrecacheAt.since(), 0, 'g', 2));
 #endif
 
         S_SetupForChangedMap();
 
         // Map setup has been completed.
 
-        // Run any commands specified in Map CacheRecord.
+        // Run any commands specified in MapInfo.
         Uri mapUri = d->map->uri();
         ded_mapinfo_t *mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&mapUri));
         if(mapInfo && mapInfo->execute)
@@ -627,7 +605,8 @@ void World::setupMap(int mode)
             Con_Execute(CMDS_SCRIPT, mapInfo->execute, true, false);
         }
 
-        // Run the special map setup command, which the user may alias to do something useful.
+        // Run the special map setup command, which the user may alias to do
+        // something useful.
         String cmd = "init-" + mapUri.resolved();
         if(Con_IsValidCommand(cmd.toUtf8().constData()))
         {
@@ -635,41 +614,35 @@ void World::setupMap(int mode)
         }
 
 #ifdef __CLIENT__
-        // Clear any input events that might have accumulated during the
-        // setup period.
+        // Clear any input events that might have accumulated during setup.
         DD_ClearEvents();
 #endif
 
-        // Now that the setup is done, let's reset the tictimer so it'll
+        // Now that the setup is done, let's reset the timer so that it will
         // appear that no time has passed during the setup.
         DD_ResetTimer();
 
-        // Kill all local commands and determine the invoid status of players.
+        // Determine the invoid status of players.
         for(int i = 0; i < DDMAXPLAYERS; ++i)
         {
-            player_t *plr = &ddPlayers[i];
-            ddplayer_t *ddpl = &plr->shared;
+            ddplayer_t &ddpl = ddPlayers[i].shared;
 
-            //clients[i].numTics = 0;
+            ddpl.inVoid = true;
 
-            // Determine if the player is in the void.
-            ddpl->inVoid = true;
-            if(ddpl->mo)
+            if(mobj_t *mo = ddpl.mo)
             {
-                BspLeaf *bspLeaf = d->map->bspLeafAtPoint(ddpl->mo->origin);
-                if(bspLeaf)
+                if(BspLeaf *bspLeaf = d->map->bspLeafAtPoint(mo->origin))
                 {
-                    /// @todo $nplanes
-                    if(ddpl->mo->origin[VZ] >= bspLeaf->sector().floor().visHeight() &&
-                       ddpl->mo->origin[VZ] < bspLeaf->sector().ceiling().visHeight() - 4)
+                    if(mo->origin[VZ] >= bspLeaf->sector().floor().visHeight() &&
+                       mo->origin[VZ] < bspLeaf->sector().ceiling().visHeight() - 4)
                     {
-                        ddpl->inVoid = false;
+                        ddpl.inVoid = false;
                     }
                 }
             }
         }
 
-        // Reset the map tick timer.
+        // Reset map time.
         ddMapTime = 0;
 
         // We've finished setting up the map.
@@ -680,9 +653,11 @@ void World::setupMap(int mode)
         firstFrameAfterLoad = true;
 #endif
 
-        DENG2_FOR_AUDIENCE(MapChange, i) i->currentMapChanged();
-
         Z_PrintStatus();
+
+        // Inform interested parties that the "current" map has changed.
+        d->notifyMapChange();
+
         return; }
 
     default:
