@@ -301,6 +301,8 @@ DENG2_PIMPL(World)
      */
     Map *loadMap(Uri const &uri/*, bool forceRetry = false*/)
     {
+        LOG_AS("World::loadMap");
+
         // Record this map if we haven't already.
         /*CacheRecord &rec =*/ createCacheRecord(uri);
 
@@ -327,66 +329,34 @@ DENG2_PIMPL(World)
         //rec.lastLoadAttemptFailed = true;
         return 0;
     }
-};
 
-World::World() : d(new Instance(this))
-{}
-
-void World::consoleRegister() // static
-{
-    //C_VAR_BYTE("map-cache", &mapCache, 0, 0, 1);
-}
-
-bool World::hasMap() const
-{
-    return d->map != 0;
-}
-
-Map &World::map() const
-{
-    if(d->map)
+    /**
+     * Replace the current map with @a map.
+     */
+    void changeMap(Map *newMap)
     {
-        return *d->map;
-    }
-    /// @throw MapError Attempted with no map loaded.
-    throw MapError("World::map", "No map is currently loaded");
-}
+        // This is now the current map (if any).
+        map = newMap;
 
-bool World::loadMap(de::Uri const &uri)
-{
-    LOG_AS("World::loadMap");
-    LOG_MSG("Loading \"%s\"...") << uri;
+        if(!map) return;
 
-    if(isServer)
-    {
-        // Whenever the map changes, remote players must tell us when they're
-        // ready to begin receiving frames.
-        for(uint i = 0; i < DDMAXPLAYERS; ++i)
-        {
-            //player_t *plr = &ddPlayers[i];
-            if(/*!(plr->shared.flags & DDPF_LOCAL) &&*/ clients[i].connected)
-            {
-                LOG_DEBUG("Client %i marked as 'not ready' to receive frames.") << i;
-                clients[i].ready = false;
-            }
-        }
-    }
+#define COLUMN(A, B) "\n" _E(">") _E("Ta") "  " << A << " " _E("Tb") << B
 
-    Z_FreeTags(PU_MAP, PU_PURGELEVEL - 1);
-
-    if((d->map = d->loadMap(uri)))
-    {
-        LOG_INFO("Map elements: %d Vertexes, %d Lines, %d Sectors, %d BSP Nodes, %d BSP Leafs and %d Segments")
-            << d->map->vertexCount()  << d->map->lineCount()    << d->map->sectorCount()
-            << d->map->bspNodeCount() << d->map->bspLeafCount() << d->map->segmentCount();
+        LOG_INFO(_E("D") "Current map elements:" _E("."))
+                << COLUMN("Vertexes",  map->vertexCount())
+                << COLUMN("Lines",     map->lineCount())
+                << COLUMN("Sectors",   map->sectorCount())
+                << COLUMN("BSP Nodes", map->bspNodeCount())
+                << COLUMN("BSP Leafs", map->bspLeafCount())
+                << COLUMN("Segments",  map->segmentCount());
 
         // Call the game's setup routines.
         if(gx.SetupForMapData)
         {
-            gx.SetupForMapData(DMU_VERTEX,  d->map->vertexCount());
-            gx.SetupForMapData(DMU_LINE,    d->map->lineCount());
-            gx.SetupForMapData(DMU_SIDE,    d->map->sideCount());
-            gx.SetupForMapData(DMU_SECTOR,  d->map->sectorCount());
+            gx.SetupForMapData(DMU_VERTEX,  map->vertexCount());
+            gx.SetupForMapData(DMU_LINE,    map->lineCount());
+            gx.SetupForMapData(DMU_SIDE,    map->sideCount());
+            gx.SetupForMapData(DMU_SECTOR,  map->sectorCount());
         }
 
         // Do any initialization/error checking work we need to do.
@@ -394,20 +364,20 @@ bool World::loadMap(de::Uri const &uri)
         P_InitUnusedMobjList();
 
         // Must be called before any mobjs are spawned.
-        d->map->initNodePiles();
+        map->initNodePiles();
 
 #ifdef __CLIENT__
         // Prepare the client-side data.
         if(isClient)
         {
-            d->map->initClMobjs();
+            map->initClMobjs();
         }
 
         Rend_DecorInitForMap();
 #endif
 
         // See what mapinfo says about this map.
-        Uri mapUri = d->map->uri();
+        Uri mapUri = map->uri();
         ded_mapinfo_t *mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&mapUri));
         if(!mapInfo)
         {
@@ -429,35 +399,35 @@ bool World::loadMap(de::Uri const &uri)
         // Setup accordingly.
         if(mapInfo)
         {
-            d->map->_globalGravity = mapInfo->gravity;
-            d->map->_ambientLightLevel = mapInfo->ambient * 255;
+            map->_globalGravity = mapInfo->gravity;
+            map->_ambientLightLevel = mapInfo->ambient * 255;
         }
         else
         {
             // No map info found, so set some basic stuff.
-            d->map->_globalGravity = 1.0f;
-            d->map->_ambientLightLevel = 0;
+            map->_globalGravity = 1.0f;
+            map->_ambientLightLevel = 0;
         }
 
-        d->map->_effectiveGravity = d->map->_globalGravity;
+        map->_effectiveGravity = map->_globalGravity;
 
 #ifdef __CLIENT__
         Rend_RadioInitForMap();
 #endif
 
-        d->map->initSkyFix();
+        map->initSkyFix();
 
         // Init the thinker lists (public and private).
-        d->map->initThinkerLists(0x1 | 0x2);
+        map->initThinkerLists(0x1 | 0x2);
 
 #ifdef __CLIENT__
         if(isClient)
         {
-            d->map->clMobjReset();
+            map->clMobjReset();
         }
 
         // Tell shadow bias to initialize the bias light sources.
-        SB_InitForMap(d->map->oldUniqueId());
+        SB_InitForMap(map->oldUniqueId());
 
         // Clear player data, too, since we just lost all clmobjs.
         Cl_InitPlayers();
@@ -492,18 +462,62 @@ bool World::loadMap(de::Uri const &uri)
         R_InitShadowProjectionListsForMap(); // Projected mobj shadows.
         VL_InitForMap(); // Converted vlights (from lumobjs) management.
 
-        d->map->initLightGrid();
+        map->initLightGrid();
 
         R_InitRendPolyPools();
 #endif
 
         // Init Particle Generator links.
         P_PtcInitForMap();
+    }
+};
 
-        return true;
+World::World() : d(new Instance(this))
+{}
+
+void World::consoleRegister() // static
+{
+    //C_VAR_BYTE("map-cache", &mapCache, 0, 0, 1);
+}
+
+bool World::hasMap() const
+{
+    return d->map != 0;
+}
+
+Map &World::map() const
+{
+    if(d->map)
+    {
+        return *d->map;
+    }
+    /// @throw MapError Attempted with no map loaded.
+    throw MapError("World::map", "No map is currently loaded");
+}
+
+bool World::loadMap(de::Uri const &uri)
+{
+    LOG_MSG("Loading map \"%s\"...") << uri;
+
+    if(isServer)
+    {
+        // Whenever the map changes, remote players must tell us when they're
+        // ready to begin receiving frames.
+        for(uint i = 0; i < DDMAXPLAYERS; ++i)
+        {
+            //player_t *plr = &ddPlayers[i];
+            if(/*!(plr->shared.flags & DDPF_LOCAL) &&*/ clients[i].connected)
+            {
+                LOG_DEBUG("Client %i marked as 'not ready' to receive frames.") << i;
+                clients[i].ready = false;
+            }
+        }
     }
 
-    return false;
+    Z_FreeTags(PU_MAP, PU_PURGELEVEL - 1);
+
+    d->changeMap(d->loadMap(uri));
+    return d->map != 0;
 }
 
 static void resetAllMapPlaneVisHeights(Map &map)
@@ -529,6 +543,8 @@ static void updateAllMapSectors(Map &map)
 
 void World::setupMap(int mode)
 {
+    LOG_AS("World::setupMap");
+
     switch(mode)
     {
     case DDSMM_INITIALIZE:
