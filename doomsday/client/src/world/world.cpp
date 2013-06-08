@@ -153,7 +153,7 @@ DENG2_PIMPL(World)
 
         // Compose the final path.
         return mapCacheDir + String(Str_Text(App_CurrentGame().identityKey()))
-               / sourcePath.fileName() + '-' + cacheIdForMap(sourcePath);
+               / sourcePath.fileNameWithoutExtension() + '-' + cacheIdForMap(sourcePath);
     }
 
     /**
