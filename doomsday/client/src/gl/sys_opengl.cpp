@@ -27,6 +27,7 @@
 #include "gl/sys_opengl.h"
 
 #include <de/libdeng2.h>
+#include <QSet>
 #include <QStringList>
 
 #ifdef WIN32
@@ -182,40 +183,55 @@ static void printGLUInfo(void)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    Con_Message("OpenGL information:");
-    Con_Message("  Vendor: %s", glGetString(GL_VENDOR));
-    Con_Message("  Renderer: %s", glGetString(GL_RENDERER));
-    Con_Message("  Version: %s", glGetString(GL_VERSION));
+    LOG_MSG(_E("b") "OpenGL information:");
+
+    de::String str;
+    QTextStream os(&str);
+
+#define COLUMNS(A, B) _E("Ta") "  " A " " _E("Tb") << B << "\n"
+
+    os << COLUMNS("Version:",  (char const *) glGetString(GL_VERSION));
+    os << COLUMNS("Vendor:",   (char const *) glGetString(GL_VENDOR));
+    os << COLUMNS("Renderer:", (char const *) glGetString(GL_RENDERER));
+
+    LOG_MSG("%s") << str.rightStrip();
+
+    str.clear();
+    os.setString(&str);
+
+    os << "Capabilities:\n";
 
 #ifdef USE_TEXTURE_COMPRESSION_S3
     if(GL_state.extensions.texCompressionS3)
     {
         glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, &iVal);
-        Con_Message("  Available Compressed Texture Formats: %i", iVal);
+        os << COLUMNS("Compressed texture formats:", iVal);
     }
 #endif
 
     glGetIntegerv(GL_MAX_TEXTURE_UNITS, &iVal);
-    Con_Message("  Available Texture Units: %i", iVal);
+    os << COLUMNS("Available texture units:", iVal);
 
     if(GL_state.extensions.texFilterAniso)
     {
         glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &iVal);
-        Con_Message("  Maximum Texture Anisotropy: %i", iVal);
+        os << COLUMNS("Maximum texture anisotropy:", iVal);
     }
     else
     {
-        Con_Message("  Variable Texture Anisotropy Unavailable.");
+        os << _E("Ta") "  Variable texture anisotropy unavailable.";
     }
 
     glGetIntegerv(GL_MAX_TEXTURE_SIZE, &iVal);
-    Con_Message("  Maximum Texture Size: %i", iVal);
+    os << COLUMNS("Maximum texture size:", iVal);
 
     glGetFloatv(GL_LINE_WIDTH_GRANULARITY, fVals);
-    Con_Message("  Line Width Granularity: %3.1f", fVals[0]);
+    os << COLUMNS("Line width granularity:", fVals[0]);
 
     glGetFloatv(GL_LINE_WIDTH_RANGE, fVals);
-    Con_Message("  Line Width Range: %3.1f...%3.1f", fVals[0], fVals[1]);
+    os << COLUMNS("Line width range:", fVals[0] << "..." << fVals[1]);
+
+    LOG_MSG("%s") << str.rightStrip();
 
     Sys_GLPrintExtensions();
 }
@@ -628,33 +644,55 @@ boolean Sys_GLQueryExtension(const char* name, const GLubyte* extensions)
     return false;
 }
 
+static de::String omitGLPrefix(de::String str)
+{
+    if(str.startsWith("GL_")) return str.substr(3);
+    return str;
+}
+
 static void printExtensions(QStringList extensions)
 {
-    QString const indent(4, ' ');
-
-    while(!extensions.isEmpty())
+    // Find all the prefixes.
+    QSet<QString> prefixes;
+    foreach(QString ext, extensions)
     {
-        QString str = indent;
-        if(verbose)
+        ext = omitGLPrefix(ext);
+        int pos = ext.indexOf("_");
+        if(pos > 0)
         {
-            // Show full names.
-            str += extensions.takeFirst();
+            prefixes.insert(ext.left(pos));
         }
-        else
+    }
+
+    QStringList sortedPrefixes = prefixes.toList();
+    qSort(sortedPrefixes);
+    foreach(QString prefix, sortedPrefixes)
+    {
+        de::String str;
+        QTextStream os(&str);
+
+        os << "    " << prefix << " extensions:\n        " _E(">") _E("2");
+
+        bool first = true;
+        foreach(QString ext, extensions)
         {
-            // Two on one line, clamp to 30 characters max.
-            str += extensions.takeFirst().leftJustified(30, ' ', true /*truncate*/);
-            if(!extensions.isEmpty())
-                str += " " + extensions.takeFirst().leftJustified(30, ' ', true /*truncate*/);
+            ext = omitGLPrefix(ext);
+            if(ext.startsWith(prefix))
+            {
+                ext.remove(0, prefix.size() + 1);
+                if(!first) os << ", ";
+                os << ext;
+                first = false;
+            }
         }
 
-        Con_Message(str.toUtf8().constData());
+        LOG_MSG("%s") << str;
     }
 }
 
 void Sys_GLPrintExtensions(void)
 {
-    Con_Message("  Extensions:");
+    LOG_MSG(_E("b") "OpenGL Extensions:");
     printExtensions(QString((char const *) glGetString(GL_EXTENSIONS)).split(" ", QString::SkipEmptyParts));
 
 #if WIN32

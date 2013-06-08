@@ -19,6 +19,7 @@
 #include "de/Font"
 
 #include <de/ConstantRule>
+#include <de/EscapeParser>
 #include <QFontMetrics>
 #include <QImage>
 #include <QPainter>
@@ -29,219 +30,268 @@
 
 namespace de {
 
-Font::RichFormat::RichFormat() : _style(0)
+struct Font::RichFormat::Instance
+    : public de::IPrivate,
+      DENG2_OBSERVES(EscapeParser, PlainText),
+      DENG2_OBSERVES(EscapeParser, EscapeSequence)
+{
+    IStyle const *style;
+
+    struct Format
+    {
+        float sizeFactor;
+        Weight weight;
+        Style style;
+        int colorIndex;
+        bool markIndent;
+        int tabStop;
+
+        Format() : sizeFactor(1.f), weight(OriginalWeight),
+            style(OriginalStyle), colorIndex(-1), markIndent(false),
+            tabStop(0) {}
+    };
+
+    struct FormatRange
+    {
+        Rangei range;
+        Format format;
+
+        FormatRange(Rangei const &r = Rangei(), Format const &frm = Format())
+            : range(r), format(frm) {}
+    };
+
+    typedef QList<FormatRange> Ranges;
+    Ranges ranges;
+
+    /// Tab stops are only applicable on the first line of a set of wrapped
+    /// lines. Subsequent lines use the latest accessed tab stop as the indent.
+    TabStops tabs;
+
+    EscapeParser esc;
+    QList<Format> stack;
+    int plainPos;
+
+    Instance() : style(0) {}
+
+    Instance(IStyle const &style) : style(&style) {}
+
+    Instance(Instance const &other)
+        : style(other.style), ranges(other.ranges), tabs(other.tabs)
+    {}
+
+    void handlePlainText(Rangei const &range)
+    {
+        Rangei plainRange(plainPos, plainPos + range.size());
+        plainPos += range.size();
+
+        // Append a formatted range using the stack's current format.
+        ranges << Instance::FormatRange(plainRange, stack.last());
+
+        // Single range properties.
+        stack.last().markIndent = false;
+    }
+
+    void handleEscapeSequence(Rangei const &range)
+    {
+        // Save the previous format on the stack.
+        stack << Instance::Format(stack.last());
+
+        String const code = esc.originalText().substr(range);
+
+        // Check the escape sequence.
+        char ch = code[0].toLatin1();
+
+        switch(ch)
+        {
+        case '(':
+            // Sequence of tab stops effective in the entire content.
+            tabs.clear();
+            for(int i = 1; i < code.size() - 1; ++i)
+            {
+                tabs << (code[i].toLatin1() - 'a' + 1);
+            }
+            break;
+
+        case '.': // pop a format off the stack
+            stack.removeLast(); // ignore the one just added
+            if(stack.size() > 1)
+            {
+                stack.removeLast();
+            }
+            break;
+
+        case '>':
+            stack.last().markIndent = true;
+            break;
+
+        case '\t':
+            stack.last().tabStop++;
+            break;
+
+        case 'T':
+            stack.last().tabStop = de::max(0, code[1].toLatin1() - 'a');
+            break;
+
+        case 'b':
+            stack.last().weight = Bold;
+            break;
+
+        case 'l':
+            stack.last().weight = Light;
+            break;
+
+        case 'w':
+            stack.last().weight = Normal;
+            break;
+
+        case 'r':
+            stack.last().style = Regular;
+            break;
+
+        case 'i':
+            stack.last().style = Italic;
+            break;
+
+        case 's':
+            stack.last().sizeFactor = .8f;
+            break;
+
+        case 't':
+            stack.last().sizeFactor = .75f;
+            break;
+
+        case 'n':
+            stack.last().sizeFactor = .6f;
+            break;
+
+        case 'A': // Normal color
+        case 'B': // Highlight color
+        case 'C': // Dimmed color
+        case 'D': // Accent color
+        case 'E': // Dim Accent color
+            stack.last().colorIndex = ch - 'A';
+            break;
+
+        case '0':
+        case '1':
+        case '2':
+        case '3':
+        case '4':
+        case '5':
+        case '6':
+            if(style)
+            {
+                style->richStyleFormat(ch - '0',
+                                       stack.last().sizeFactor,
+                                       stack.last().weight,
+                                       stack.last().style,
+                                       stack.last().colorIndex);
+            }
+            break;
+        }
+    }
+};
+
+Font::RichFormat::RichFormat() : d(new RichFormat::Instance)
 {}
 
-Font::RichFormat::RichFormat(IStyle const &style) : _style(&style)
+Font::RichFormat::RichFormat(IStyle const &style) : d(new RichFormat::Instance(style))
 {}
 
-Font::RichFormat::RichFormat(RichFormat const &other)
-    : _style(other._style), _ranges(other._ranges)
+Font::RichFormat::RichFormat(RichFormat const &other) : d(new RichFormat::Instance(*other.d))
 {}
+
+Font::RichFormat &Font::RichFormat::operator = (RichFormat const &other)
+{
+    d.reset(new RichFormat::Instance(*other.d));
+    return *this;
+}
 
 void Font::RichFormat::clear()
 {
-    _ranges.clear();
+    d->ranges.clear();
+    d->tabs.clear();
 }
 
 void Font::RichFormat::setStyle(IStyle const &style)
 {
-    _style = &style;
+    d->style = &style;
 }
 
 bool Font::RichFormat::haveStyle() const
 {
-    return _style != 0;
+    return d->style != 0;
 }
 
 Font::RichFormat::IStyle const &Font::RichFormat::style() const
 {
-    return *_style;
+    return *d->style;
 }
 
 Font::RichFormat Font::RichFormat::fromPlainText(String const &plainText)
 {
-    FormatRange all;
+    Instance::FormatRange all;
     all.range = Rangei(0, plainText.size());
     RichFormat form;
-    form._ranges << all;
+    form.d->ranges << all;
     return form;
 }
 
 String Font::RichFormat::initFromStyledText(String const &styledText)
 {
-    String plain;
-    FormatRange *format = 0;
-    Rangei range; // within styledText
-    int offset = 0; // from styled to plain
+    d->tabs.clear();
+    d->stack.clear();
+    d->stack << Instance::Format();
+    d->plainPos = 0;
 
-    QList<FormatRange> stack;
+    d->esc.audienceForEscapeSequence += d;
+    d->esc.audienceForPlainText += d;
 
-    // Insert the first range.
-    _ranges << FormatRange();
-    format = &_ranges.back();
-
-    forever
-    {
-        range.end = styledText.indexOf(QChar('\x1b'), range.start);
-        if(range.end >= 0)
-        {
-            // Empty ranges do not cause insertion of new formats.
-            if(range.size() > 0)
-            {
-                // Update current range's end.
-                format->range.end = range.end;
-
-                // Update plaintext.
-                plain += styledText.substr(range);
-                format->range.end -= offset; // within plain
-
-                // Put it on the stack so it can be returned to.
-                stack << *format;
-
-                // Start a new range (copying the current one).
-                _ranges << FormatRange(*format);
-                format = &_ranges.back();
-                format->range = Rangei(range.end - offset, range.end - offset);
-            }
-
-            // Check the escape sequence.
-            char ch = styledText[range.end + 1].toLatin1();
-            switch(ch)
-            {
-            case '.': // pop a format off the stack
-                if(!stack.isEmpty())
-                {
-                    FormatRange prev = stack.takeLast();
-                    format->sizeFactor = prev.sizeFactor;
-                    format->colorIndex = prev.colorIndex;
-                    format->weight = prev.weight;
-                    format->style = prev.style;
-                }
-                else
-                {
-                    format->sizeFactor = 1.f;
-                    format->colorIndex = OriginalColor;
-                    format->weight = OriginalWeight;
-                    format->style = OriginalStyle;
-                }
-                break;
-
-            case '>':
-                format->markIndent = true;
-                break;
-
-            case 'b':
-                format->weight = Bold;
-                break;
-
-            case 'l':
-                format->weight = Light;
-                break;
-
-            case 'w':
-                format->weight = Normal;
-                break;
-
-            case 'r':
-                format->style = Regular;
-                break;
-
-            case 'i':
-                format->style = Italic;
-                break;
-
-            case 's':
-                format->sizeFactor = .8f;
-                break;
-
-            case 't':
-                format->sizeFactor = .75f;
-                break;
-
-            case 'n':
-                format->sizeFactor = .6f;
-                break;
-
-            case 'A': // Normal color
-            case 'B': // Highlight color
-            case 'C': // Dimmed color
-            case 'D': // Accent color
-            case 'E': // Dim Accent color
-                format->colorIndex = ch - 'A';
-                break;
-
-            case '0':
-            case '1':
-            case '2':
-            case '3':
-            case '4':
-            case '5':
-            case '6':
-                if(_style)
-                {
-                    _style->richStyleFormat(ch - '0', format->sizeFactor, format->weight,
-                                            format->style, format->colorIndex);
-                }
-                break;
-            }
-
-            // Advance the scanner.
-            range.start = range.end + 2;
-            offset += 2; // skipped chars
-        }
-        else
-        {
-            // No more styles.
-            range.end = styledText.size();
-            format->range.end = range.end;
-            plain += styledText.substr(range);
-            format->range.end -= offset;
-            if(!format->range.size())
-            {
-                // Don't keep an empty range at the end.
-                _ranges.takeLast();
-            }
-            break;
-        }
-    }
+    d->esc.parse(styledText);
 
     /*
     qDebug() << "Styled text:" << styledText;
-    qDebug() << "plain:" << plain;
-    foreach(FormatRange const &r, _ranges)
+    qDebug() << "plain:" << d->esc.plainText();
+    foreach(Instance::FormatRange const &r, d->ranges)
     {
         qDebug() << r.range.asText()
-                 << plain.substr(r.range)
-                 << "size:" << r.sizeFactor
-                 << "weight:" << r.weight
-                 << "style:" << r.style
-                 << "color:" << r.colorIndex;
-    }*/
+                 << d->esc.plainText().substr(r.range)
+                 << "size:" << r.format.sizeFactor
+                 << "weight:" << r.format.weight
+                 << "style:" << r.format.style
+                 << "color:" << r.format.colorIndex
+                 << "tab:" << r.format.tabStop;
+    }
+    qDebug() << "Tabs:" << d->tabs.size();
+    foreach(int i, d->tabs)
+    {
+        qDebug() << i;
+    }
+    */
 
-    return plain;
+    return d->esc.plainText();
 }
 
 Font::RichFormat Font::RichFormat::subRange(Rangei const &range) const
 {
     RichFormat sub(*this);
 
-    for(int i = 0; i < sub._ranges.size(); ++i)
+    for(int i = 0; i < sub.d->ranges.size(); ++i)
     {
-        Rangei &sr = sub._ranges[i].range;
+        Rangei &sr = sub.d->ranges[i].range;
 
         sr -= range.start;
         if(sr.end < 0 || sr.start >= range.size())
         {
             // This range is outside the subrange.
-            sub._ranges.removeAt(i--);
+            sub.d->ranges.removeAt(i--);
             continue;
         }
         sr.start = de::max(sr.start, 0);
         sr.end   = de::min(sr.end, range.size());
         if(!sr.size())
         {
-            sub._ranges.removeAt(i--);
+            sub.d->ranges.removeAt(i--);
             continue;
         }
     }
@@ -249,17 +299,39 @@ Font::RichFormat Font::RichFormat::subRange(Rangei const &range) const
     return sub;
 }
 
+Font::TabStops const &Font::RichFormat::tabStops() const
+{
+    return d->tabs;
+}
+
+int Font::RichFormat::tabStopXWidth(int stop) const
+{
+    if(stop < 0 || d->tabs.isEmpty()) return 0;
+
+    DENG2_ASSERT(stop < 50);
+
+    int x = 0;
+    for(int i = 0; i <= stop; ++i)
+    {
+        if(i >= d->tabs.size())
+            x += d->tabs.last();
+        else
+            x += d->tabs[i];
+    }
+    return x;
+}
+
 Font::RichFormat::Iterator::Iterator(RichFormat const &f) : format(f), index(-1) {}
 
 bool Font::RichFormat::Iterator::hasNext() const
 {
-    return index + 1 < format._ranges.size();
+    return index + 1 < format.d->ranges.size();
 }
 
 void Font::RichFormat::Iterator::next()
 {
     index++;
-    DENG2_ASSERT(index < format._ranges.size());
+    DENG2_ASSERT(index < format.d->ranges.size());
 }
 
 bool Font::RichFormat::Iterator::isOriginal() const
@@ -272,34 +344,34 @@ bool Font::RichFormat::Iterator::isOriginal() const
 
 Rangei Font::RichFormat::Iterator::range() const
 {
-    return format._ranges[index].range;
+    return format.d->ranges[index].range;
 }
 
 float Font::RichFormat::Iterator::sizeFactor() const
 {
-    return format._ranges[index].sizeFactor;
+    return format.d->ranges[index].format.sizeFactor;
 }
 
 Font::RichFormat::Weight Font::RichFormat::Iterator::weight() const
 {
-    return format._ranges[index].weight;
+    return format.d->ranges[index].format.weight;
 }
 
 Font::RichFormat::Style Font::RichFormat::Iterator::style() const
 {
-    return format._ranges[index].style;
+    return format.d->ranges[index].format.style;
 }
 
 int Font::RichFormat::Iterator::colorIndex() const
 {
-    return format._ranges[index].colorIndex;
+    return format.d->ranges[index].format.colorIndex;
 }
 
 Font::RichFormat::IStyle::Color Font::RichFormat::Iterator::color() const
 {
-    if(format._style)
+    if(format.d->style)
     {
-        return format._style->richStyleColor(colorIndex());
+        return format.d->style->richStyleColor(colorIndex());
     }
     // Fall back to white.
     return Vector4ub(255, 255, 255, 255);
@@ -307,7 +379,12 @@ Font::RichFormat::IStyle::Color Font::RichFormat::Iterator::color() const
 
 bool Font::RichFormat::Iterator::markIndent() const
 {
-    return format._ranges[index].markIndent;
+    return format.d->ranges[index].format.markIndent;
+}
+
+int Font::RichFormat::Iterator::tabStop() const
+{
+    return format.d->ranges[index].format.tabStop;
 }
 
 DENG2_PIMPL(Font)
@@ -381,6 +458,28 @@ DENG2_PIMPL(Font)
         }
         return *metrics;
     }
+
+    /*
+    int jumpToTabStop(RichFormat::Iterator const &rich, int pos)
+    {
+        if(rich.format.tabStops().isEmpty() || rich.tabStop() == RichFormat::NoTabStop)
+        {
+            return pos;
+        }
+
+        if(rich.tabStop() == RichFormat::NextTabStop)
+        {
+            int stop = 0;
+            forever
+            {
+                int x = rich.format.tabStopXWidth(stop++) * metrics->xHeight();
+                if(x >= pos) return x;
+            }
+        }
+
+        return de::max(pos, rich.format.tabStopXWidth(rich.tabStop()) * metrics->xHeight());
+    }
+    */
 };
 
 Font::Font() : d(new Instance(this))
@@ -419,7 +518,7 @@ Rectanglei Font::measure(String const &textLine, RichFormat const &format) const
 
         if(rect.height() == 0)
         {
-            // It seems measuring the bounds of a Tab character produce
+            // It seems measuring the bounds of a Tab character produces
             // strange results (position 100000?).
             rect = Rectanglei(0, 0, rect.width(), 0);
         }
@@ -489,11 +588,6 @@ QImage Font::rasterize(String const &textLine,
     QPainter painter(&img);
     painter.setCompositionMode(QPainter::CompositionMode_Source);
 
-/*#ifdef WIN32
-    painter.setRenderHint(QPainter::Antialiasing);
-    painter.setRenderHint(QPainter::TextAntialiasing);
-#endif*/
-
     int advance = 0;
     RichFormat::Iterator iter(format);
     while(iter.hasNext())
@@ -552,6 +646,11 @@ Rule const &Font::descent() const
 Rule const &Font::lineSpacing() const
 {
     return *d->lineSpacingRule;
+}
+
+int Font::xHeight() const
+{
+    return d->metrics->xHeight();
 }
 
 } // namespace de

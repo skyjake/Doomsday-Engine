@@ -803,36 +803,40 @@ cvartype_t Con_GetVariableType(char const* path)
     return var->type;
 }
 
-void Con_PrintCVar(cvar_t* var, const char* prefix)
+void Con_PrintCVar(cvar_t* var, char const *prefix)
 {
     DENG_ASSERT(inited);
 
-    char equals = '=';
-    AutoStr* path;
-
     if(!var) return;
 
+    char equals = '=';
     if((var->flags & CVF_PROTECTED) || (var->flags & CVF_READ_ONLY))
         equals = ':';
 
-    if(prefix)
-        Con_Printf("%s", prefix);
+    de::String str;
+    QTextStream os(&str);
 
-    path = CVar_ComposePath(var);
+    if(prefix) os << prefix;
+
+    AutoStr* path = CVar_ComposePath(var);
+
+    os << _E("b") << Str_Text(path) << _E(".") << " " << equals << " " << _E(">");
+
     switch(var->type)
     {
-    case CVT_BYTE:      Con_Printf("%s %c %d",       Str_Text(path), equals, CV_BYTE(var)); break;
-    case CVT_INT:       Con_Printf("%s %c %d",       Str_Text(path), equals, CV_INT(var)); break;
-    case CVT_FLOAT:     Con_Printf("%s %c %g",       Str_Text(path), equals, CV_FLOAT(var)); break;
-    case CVT_CHARPTR:   Con_Printf("%s %c \"%s\"",   Str_Text(path), equals, CV_CHARPTR(var)); break;
+    case CVT_BYTE:      os << CV_BYTE(var); break;
+    case CVT_INT:       os << CV_INT(var); break;
+    case CVT_FLOAT:     os << CV_FLOAT(var); break;
+    case CVT_CHARPTR:   os << "\"" << CV_CHARPTR(var) << "\""; break;
     case CVT_URIPTR: {
         AutoStr* valPath = (CV_URIPTR(var)? Uri_ToString(CV_URIPTR(var)) : NULL);
-        Con_Printf("%s %c \"%s\"",   Str_Text(path), equals, (CV_URIPTR(var)? Str_Text(valPath) : ""));
+        os << "\"" << (CV_URIPTR(var)? Str_Text(valPath) : "") << "\"";
         break; }
-
-    default:            Con_Printf("%s (bad type!)", Str_Text(path)); break;
+    default:
+        DENG_ASSERT(false);
+        break;
     }
-    Con_Printf("\n");
+    LOG_MSG("%s") << str;
 }
 
 void Con_AddCommand(ccmdtemplate_t const* ccmd)
@@ -845,13 +849,7 @@ void Con_AddCommand(ccmdtemplate_t const* ccmd)
 
     if(!ccmd) return;
 
-    if(!ccmd->name)
-        Con_Error("Con_AddCommand: CCmd missing a name.");
-
-/*#if _DEBUG
-Con_Message("Con_AddCommand: '%s' \"%s\" (%i).", ccmd->name,
-            ccmd->argTemplate, ccmd->flags);
-#endif*/
+    DENG_ASSERT(ccmd->name != 0);
 
     // Decode the usage string if present.
     if(ccmd->argTemplate != 0)
@@ -1440,48 +1438,34 @@ static int aproposPrinter(knownword_t const* word, void* matching)
     // See if 'matching' is anywhere in the known word.
     if(strcasestr(Str_Text(text), (const char*)matching))
     {
-        int const maxLen = 80; //CBuffer_MaxLineLength(Con_HistoryBuffer());
-        int avail;
-        ddstring_t buf;
         char const* wType[KNOWNWORDTYPE_COUNT] = {
-            "[cmd]", "[var]", "[alias]", "[game]"
+            "cmd ", "var ", "alias ", "game "
         };
 
-        Str_Init(&buf);
-        Str_Appendf(&buf, "%7s ", wType[word->type]);
-        Str_Appendf(&buf, "%-25s", Str_Text(text));
+        de::String str;
+        QTextStream os(&str);
 
-        avail = maxLen - Str_Length(&buf) - 4;
-        if(avail > 0)
+        os << _E("l") << wType[word->type]
+           << _E("0") << _E("b") << Str_Text(text) << " " << _E("2") << _E(">");
+
+        // Look for a short description.
+        de::String tmp;
+        if(word->type == WT_CCMD || word->type == WT_CVAR)
         {
-            ddstring_t tmp; Str_Init(&tmp);
-
-            // Look for a short description.
-            if(word->type == WT_CCMD || word->type == WT_CVAR)
+            char const* desc = DH_GetString(DH_Find(Str_Text(text)), HST_DESCRIPTION);
+            if(desc)
             {
-                char const* desc = DH_GetString(DH_Find(Str_Text(text)), HST_DESCRIPTION);
-                if(desc)
-                {
-                    Str_Set(&tmp, desc);
-                }
+                tmp = desc;
             }
-            else if(word->type == WT_GAME)
-            {
-                Str_Set(&tmp, Str_Text(reinterpret_cast<de::Game*>(word->data)->title()));
-            }
-
-            // Truncate.
-            if(Str_Length(&tmp) > avail - 3)
-            {
-                Str_Truncate(&tmp, avail);
-                Str_Append(&tmp, "...");
-            }
-            Str_Appendf(&buf, " %s", Str_Text(&tmp));
-            Str_Free(&tmp);
+        }
+        else if(word->type == WT_GAME)
+        {
+            tmp = Str_Text(reinterpret_cast<de::Game*>(word->data)->title());
         }
 
-        Con_Printf("%s\n", Str_Text(&buf));
-        Str_Free(&buf);
+        os << tmp;
+
+        LOG_MSG("%s") << str;
     }
 
     return 0;
@@ -1608,9 +1592,10 @@ static int printKnownWordWorker(knownword_t const* word, void* parameters)
             return 0; // Skip overloaded variants.
 
         if((str = DH_GetString(DH_Find(ccmd->name), HST_DESCRIPTION)))
-            Con_FPrintf(CPF_LIGHT|CPF_YELLOW, "  %s (%s)\n", ccmd->name, str);
+            LOG_MSG(_E("b") "%s " _E(">") _E("2") "%s")
+                    << ccmd->name << str;
         else
-            Con_FPrintf(CPF_LIGHT|CPF_YELLOW, "  %s\n", ccmd->name);
+            LOG_MSG(_E("b") "%s") << ccmd->name;
         break; }
 
     case WT_CVAR: {
@@ -1619,17 +1604,17 @@ static int printKnownWordWorker(knownword_t const* word, void* parameters)
         if(cvar->flags & CVF_HIDE)
             return 0; // Skip hidden variables.
 
-        Con_PrintCVar(cvar, "  ");
+        Con_PrintCVar(cvar, "");
         break; }
 
     case WT_CALIAS: {
         calias_t* cal = (calias_t*) word->data;
-        Con_FPrintf(CPF_LIGHT|CPF_YELLOW, "  %s == %s\n", cal->name, cal->command);
+        LOG_MSG(_E("b") "%s" _E(".") " == " _E(">") "%s") << cal->name << cal->command;
         break; }
 
     case WT_GAME: {
         de::Game* game = (de::Game*) word->data;
-        Con_FPrintf(CPF_LIGHT|CPF_BLUE, "  %s\n", Str_Text(game->identityKey()));
+        LOG_MSG(_E("1") "%s") << Str_Text(game->identityKey());
         break; }
 
     default:

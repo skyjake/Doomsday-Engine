@@ -53,6 +53,9 @@ struct Range
     inline bool operator == (Range const &other) const {
         return start == other.start && end == other.end;
     }
+    inline bool operator != (Range const &other) const {
+        return !(*this == other);
+    }
     inline bool operator < (Range const &other) const {
         return start < other.start;
     }

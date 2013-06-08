@@ -68,6 +68,11 @@ public:
     int totalHeightInPixels() const;
 
     /**
+     * Returns the maximum width given to wrapTextToWidth().
+     */
+    int maximumWidth() const;
+
+    /**
      * Determines the coordinates of a character's top left corner in pixels.
      *
      * @param line       Wrapped line number.
@@ -78,12 +83,31 @@ public:
      */
     de::Vector2i charTopLeftInPixels(int line, int charIndex);
 
+    struct LineInfo
+    {
+        struct Segment {
+            de::Rangei range;
+            int tabStop;
+            int width;
+
+            Segment(de::Rangei const &r, int tab = 0) : range(r), tabStop(tab), width(0)
+            {}
+        };
+        typedef QList<Segment> Segments;
+        Segments segs;
+
+        int indent;         ///< Left indentation to apply to the entire line.
+
+    public:
+        int highestTabStop() const;
+    };
+
     /**
      * Returns the left indentation for a wrapped line.
      *
      * @param index  Wrapped line number.
      */
-    int lineIndent(int index) const;
+    LineInfo const &lineInfo(int index) const;
 
 private:
     DENG2_PRIVATE(d)

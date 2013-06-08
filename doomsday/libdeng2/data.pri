@@ -16,6 +16,7 @@ HEADERS += \
     include/de/Date \
     include/de/DictionaryValue \
     include/de/DotPath \
+    include/de/EscapeParser \
     include/de/FIFO \
     include/de/FixedByteArray \
     include/de/IBlock \
@@ -64,6 +65,7 @@ HEADERS += \
     include/de/data/counted.h \
     include/de/data/date.h \
     include/de/data/dictionaryvalue.h \
+    include/de/data/escapeparser.h \
     include/de/data/fifo.h \
     include/de/data/fixedbytearray.h \
     include/de/data/huffman.h \
@@ -114,6 +116,7 @@ SOURCES += \
     src/data/counted.cpp \
     src/data/date.cpp \
     src/data/dictionaryvalue.cpp \
+    src/data/escapeparser.cpp \
     src/data/fixedbytearray.cpp \
     src/data/huffman.cpp \
     src/data/info.cpp \

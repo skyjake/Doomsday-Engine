@@ -136,10 +136,9 @@ FileHandle* FileHandleBuilder::fromLump(File1& lump, bool dontBuffer)
         hndl->d->pos = hndl->d->data = (uint8_t*) M_Malloc(hndl->d->size);
         if(!hndl->d->data) Con_Error("FileHandleBuilder::fromFileLump: Failed on allocation of %lu bytes for data buffer.", (unsigned long) hndl->d->size);
 
-#if _DEBUG
-        LOG_VERBOSE("[%p] Buffering \"%s:%s\"...")
-            << dintptr(hndl) << NativePath(lump.container().composePath()).pretty() << NativePath(lump.composePath()).pretty();
-#endif
+        LOG_DEV_TRACE("[%p] Buffering \"%s:%s\"...",
+            dintptr(hndl) << NativePath(lump.container().composePath()).pretty() << NativePath(lump.composePath()).pretty());
+
         lump.read((uint8_t*)hndl->d->data, 0, lump.size());
     }
     return hndl;

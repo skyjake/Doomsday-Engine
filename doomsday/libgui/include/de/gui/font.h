@@ -25,6 +25,7 @@
 #include <de/String>
 #include <de/Vector>
 #include <de/Range>
+#include <de/EscapeParser>
 
 #include <QFont>
 #include <QImage>
@@ -40,6 +41,8 @@ namespace de {
 class LIBGUI_PUBLIC Font
 {
 public:   
+    typedef QVector<int> TabStops;
+
     /**
      * Rich formatting instructions for a string of plain text.
      *
@@ -116,6 +119,8 @@ public:
         RichFormat(IStyle const &style);
         RichFormat(RichFormat const &other);
 
+        RichFormat &operator = (RichFormat const &other);
+
         void clear();
 
         bool haveStyle() const;
@@ -152,6 +157,10 @@ public:
          */
         RichFormat subRange(Rangei const &range) const;
 
+        TabStops const &tabStops() const;
+
+        int tabStopXWidth(int stop) const;
+
         /**
          * Iterates the rich format ranges of a RichFormat.
          *
@@ -176,25 +185,11 @@ public:
             int colorIndex() const;
             IStyle::Color color() const;
             bool markIndent() const;
+            int tabStop() const;
         };
 
     private:
-        IStyle const *_style;
-
-        struct FormatRange
-        {
-            Rangei range;
-            float sizeFactor;
-            Weight weight;
-            Style style;
-            int colorIndex;
-            bool markIndent;
-
-            FormatRange() : sizeFactor(1.f), weight(OriginalWeight),
-                style(OriginalStyle), colorIndex(-1), markIndent(false) {}
-        };
-        typedef QList<FormatRange> Ranges;
-        Ranges _ranges;
+        DENG2_PRIVATE(d)
     };
 
 public:
@@ -221,8 +216,8 @@ public:
      * area is covered by the glyphs. (0,0) is at the baseline, left edge of
      * the line. The rectangle may extend into negative coordinates.
      *
-     * @param textLine  Text to measure.
-     * @param format    Rich formatting for @a textLine.
+     * @param textLine     Text to measure.
+     * @param format       Rich formatting for @a textLine.
      *
      * @return Rectangle covered by the text.
      */
@@ -263,6 +258,8 @@ public:
     Rule const &ascent() const;
     Rule const &descent() const;
     Rule const &lineSpacing() const;
+
+    int xHeight() const;
 
 private:
     DENG2_PRIVATE(d)

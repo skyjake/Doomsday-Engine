@@ -28,8 +28,8 @@
 #include "fontlinewrapping.h"
 
 /**
- * Manages lines of text on an atlas and produces geometry for drawing the
- * text.
+ * Allocates and releases lines of text on an atlas and produces geometry for
+ * drawing the text.
  *
  * Relies on a pre-existing FontLineWrapping where the text content has been
  * wrapped onto multiple lines and laid out appropriately.
