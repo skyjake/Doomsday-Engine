@@ -49,6 +49,11 @@ public:
      */
     World();
 
+    /**
+     * To be called to register the cvars and ccmds for this module.
+     */
+    static void consoleRegister();
+
     bool hasMap() const;
 
     Map &map() const;
@@ -59,6 +64,8 @@ public:
 
     /// @todo Refactor away.
     void clearMap();
+
+    void resetMapArchive();
 
 private:
     DENG2_PRIVATE(d)

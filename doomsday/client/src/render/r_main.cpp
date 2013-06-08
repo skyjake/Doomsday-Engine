@@ -599,7 +599,7 @@ void R_Update()
     P_UpdateParticleGens(); // Defs might've changed.
 
     // Reset the archived map cache (the available maps may have changed).
-    App_MapArchive().reset();
+    App_World().resetMapArchive();
 
     for(uint i = 0; i < DDMAXPLAYERS; ++i)
     {

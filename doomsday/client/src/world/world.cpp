@@ -35,6 +35,7 @@
 
 #include "audio/s_main.h"
 #include "network/net_main.h"
+#include "resource/maparchive.h"
 
 #include "render/r_main.h" // R_ResetViewer
 
@@ -67,12 +68,20 @@ DENG2_PIMPL(World)
     /// Current map.
     Map *map;
 
+    /// The map archive.
+    MapArchive mapArchive;
+
     Instance(Public *i) : Base(i), map(0)
     {}
 };
 
 World::World() : d(new Instance(this))
 {}
+
+void World::consoleRegister() // static
+{
+    MapArchive::consoleRegister();
+}
 
 bool World::hasMap() const
 {
@@ -110,7 +119,7 @@ bool World::loadMap(de::Uri const &uri)
 
     Z_FreeTags(PU_MAP, PU_PURGELEVEL - 1);
 
-    if((d->map = App_MapArchive().loadMap(uri)))
+    if((d->map = d->mapArchive.loadMap(uri)))
     {
         LOG_INFO("Map elements: %d Vertexes, %d Lines, %d Sectors, %d BSP Nodes, %d BSP Leafs and %d Segments")
             << d->map->vertexCount()  << d->map->lineCount()    << d->map->sectorCount()
@@ -407,6 +416,11 @@ void World::setupMap(int mode)
 void World::clearMap()
 {
     d->map = 0;
+}
+
+void World::resetMapArchive()
+{
+    d->mapArchive.reset();
 }
 
 } // namespace de

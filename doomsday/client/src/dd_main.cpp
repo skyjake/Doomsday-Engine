@@ -170,9 +170,6 @@ static size_t numSessionResourceFileList;
 extern GETGAMEAPI GetGameAPI;
 #endif
 
-// The app's MapArchive.
-static MapArchive mapArchive;
-
 // The app's global Material collection.
 static Materials *materials;
 
@@ -551,11 +548,6 @@ void DD_CreateFileSystemSchemes()
     }
 }
 
-MapArchive &App_MapArchive()
-{
-    return mapArchive;
-}
-
 Textures &App_Textures()
 {
     if(!textures) throw Error("App_Textures", "Textures collection not yet initialized");
@@ -666,7 +658,7 @@ void DD_Register(void)
     Materials::consoleRegister();
     Textures::consoleRegister();
     Net_Register();
-    MapArchive::consoleRegister();
+    World::consoleRegister();
     MPE_Register();
     FI_Register();
 }

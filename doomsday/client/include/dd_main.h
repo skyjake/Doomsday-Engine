@@ -34,7 +34,6 @@
 #include "api_plugin.h"
 #include "api_gameexport.h"
 #include "Materials"
-#include "resource/maparchive.h"
 #include "resource/textures.h"
 #include "filesys/sys_direc.h"
 #include <de/c_wrapper.h>
@@ -191,9 +190,6 @@ de::Game &App_CurrentGame();
 
 /// @return  The application's global World.
 de::World &App_World();
-
-/// @return  The application's global MapArchive.
-de::MapArchive &App_MapArchive();
 
 /// @return  The application's global Material collection.
 de::Materials &App_Materials();
