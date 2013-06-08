@@ -51,8 +51,9 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
     String text;                ///< Plain text.
     Font::RichFormat format;
     int indent;                 ///< Current left indentation (in pixels).
+    int tabStop;
 
-    Instance() : font(0), indent(0) {}
+    Instance() : font(0), indent(0), tabStop(0) {}
 
     ~Instance()
     {
@@ -115,7 +116,6 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
         Line *line = new Line(WrappedLine(range), width, indent);
 
         // Determine segments in the line.
-        int tab = 0;
         int pos = range.start;
 
         Font::RichFormat rich = format.subRange(range);
@@ -125,28 +125,21 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
         {
             iter.next();
 
-            if(iter.tabStop() != Font::RichFormat::NoTabStop)
+            if(iter.tabStop() != tabStop)
             {
                 int const start = range.start + iter.range().start;
                 if(start > pos)
                 {
-                    line->info.segs << LineInfo::Segment(Rangei(pos, start), tab);
+                    line->info.segs << LineInfo::Segment(Rangei(pos, start), tabStop);
                     pos = start;
                 }
 
-                if(iter.tabStop() == Font::RichFormat::NextTabStop)
-                {
-                    tab++;
-                }
-                else if(iter.tabStop() >= 0)
-                {
-                    tab = iter.tabStop();
-                }
+                tabStop = iter.tabStop();
             }
         }
 
         // The final segment.
-        line->info.segs << LineInfo::Segment(Rangei(pos, range.end), tab);
+        line->info.segs << LineInfo::Segment(Rangei(pos, range.end), tabStop);
 
         // Determine segment widths.
         if(line->info.segs.size() == 1)
@@ -270,6 +263,7 @@ void FontLineWrapping::reset()
 {
     d->clearLines();
     d->indent = 0;
+    d->tabStop = 0;
 }
 
 void FontLineWrapping::wrapTextToWidth(String const &text, int maxWidth)
@@ -360,7 +354,7 @@ void FontLineWrapping::wrapTextToWidth(String const &text, Font::RichFormat cons
         d->lines.last()->line.isFinal = true;
     }
 
-    /*
+#if 0
     qDebug() << "Wrapped:" << d->text;
     foreach(Instance::Line const *ln, d->lines)
     {
@@ -372,7 +366,7 @@ void FontLineWrapping::wrapTextToWidth(String const &text, Font::RichFormat cons
                      << "tab:" << s.tabStop;
         }
     }
-    */
+#endif
 }
 
 String const &FontLineWrapping::text() const
