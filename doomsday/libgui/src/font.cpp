@@ -48,7 +48,7 @@ struct Font::RichFormat::Instance
 
         Format() : sizeFactor(1.f), weight(OriginalWeight),
             style(OriginalStyle), colorIndex(-1), markIndent(false),
-            tabStop(NoTabStop) {}
+            tabStop(0) {}
     };
 
     struct FormatRange
@@ -89,7 +89,6 @@ struct Font::RichFormat::Instance
 
         // Single range properties.
         stack.last().markIndent = false;
-        stack.last().tabStop = NoTabStop;
     }
 
     void handleEscapeSequence(Rangei const &range)
@@ -126,11 +125,11 @@ struct Font::RichFormat::Instance
             break;
 
         case '\t':
-            stack.last().tabStop = NextTabStop;
+            stack.last().tabStop++;
             break;
 
         case 'T':
-            stack.last().tabStop = code[1].toLatin1() - 'a';
+            stack.last().tabStop = de::max(0, code[1].toLatin1() - 'a');
             break;
 
         case 'b':

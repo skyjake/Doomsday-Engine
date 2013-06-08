@@ -91,10 +91,6 @@ public:
             AccentColor    = 3,
             DimAccentColor = 4
         };
-        enum {
-            NoTabStop      = -2,
-            NextTabStop    = -1
-        };
 
         /**
          * Interface for an object providing style information: fonts and
