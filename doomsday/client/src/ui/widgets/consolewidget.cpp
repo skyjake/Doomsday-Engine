@@ -99,7 +99,7 @@ ConsoleWidget::ConsoleWidget() : GuiWidget("Console"), d(new Instance(this))
     Rule const &unit = style().rules().rule("unit");
 
     d->button = new ButtonWidget;
-    d->button->setText(DENG2_ESC("b") ">");
+    d->button->setText(_E("b") ">");
     // Until we have a menu widget...
     d->button->setAction(new SignalAction(this, SLOT(focusOnCommandLine())));
     add(d->button);
