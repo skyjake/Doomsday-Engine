@@ -635,15 +635,17 @@ public Font::RichFormat::IStyle
     {
         if(visibleRange < 0) return;
 
+        int len = de::max(10, visibleRange.size());
+
         // Excess entries before the visible range.
-        int excess = visibleRange.start - visibleRange.size();
+        int excess = visibleRange.start - len;
         for(int i = 0; i <= excess; ++i)
         {
             cache[i]->clear();
         }
 
         // Excess entries after the visible range.
-        excess = visibleRange.end + visibleRange.size();
+        excess = visibleRange.end + len;
         for(int i = excess; i < cache.size(); ++i)
         {
             cache[i]->clear();
