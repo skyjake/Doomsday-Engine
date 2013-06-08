@@ -1,4 +1,6 @@
-/** @file
+/** @file network/net_event.cpp  Network Events.
+ *
+ * Network events include clients joining and leaving.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
@@ -17,14 +19,6 @@
  * http://www.gnu.org/licenses</small>
  */
 
-/**
- * net_event.c: Network Events
- *
- * Network events include clients joining and leaving.
- */
-
-// HEADER FILES ------------------------------------------------------------
-
 #include "de_platform.h"
 #include "de_system.h"
 #include "de_console.h"
@@ -32,7 +26,7 @@
 
 #ifdef __SERVER__
 #  include "serversystem.h"
-#  include "world/map.h"
+#  include "dd_main.h"
 #endif
 
 using namespace de;
@@ -156,7 +150,8 @@ void N_NETicker(timespan_t time)
         masterHeartbeat -= time;
 
         // Update master every 2 minutes.
-        if(masterAware && App_ServerSystem().isListening() && theMap && masterHeartbeat < 0)
+        if(masterAware && App_ServerSystem().isListening() &&
+           App_World().hasMap() && masterHeartbeat < 0)
         {
             masterHeartbeat = MASTER_HEARTBEAT;
             N_MasterAnnounceServer(true);

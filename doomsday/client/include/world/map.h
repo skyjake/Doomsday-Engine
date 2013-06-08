@@ -760,9 +760,6 @@ private:
     DENG2_PRIVATE(d)
 };
 
-// The current map.
-DENG_EXTERN_C Map *theMap;
-
 } // namespace de
 
 #endif // DENG_WORLD_MAP_H

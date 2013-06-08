@@ -65,7 +65,6 @@ static MaterialArchive* materialDict;
  */
 void Sv_GetInfo(serverinfo_t *info)
 {
-    DENG_ASSERT(theMap != 0);
     DENG_ASSERT(info != 0);
 
     de::zapPtr(info);
@@ -89,7 +88,7 @@ void Sv_GetInfo(serverinfo_t *info)
     info->canJoin = (isServer != 0 && Sv_GetNumPlayers() < svMaxPlayers);
 
     // Identifier of the current map.
-    QByteArray mapPath = theMap->uri().resolved().toUtf8();
+    QByteArray mapPath = App_World().map().uri().resolved().toUtf8();
     qstrncpy(info->map, mapPath.constData(), sizeof(info->map) - 1);
 
     // These are largely unused at the moment... Mainly intended for

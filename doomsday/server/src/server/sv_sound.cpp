@@ -47,8 +47,8 @@ static void identifySoundEmitter(mobj_t **base, Sector **sector, Polyobj **poly,
 
     if(!*base || isRealMobj(*base)) return;
 
-    theMap->identifySoundEmitter(*reinterpret_cast<ddmobj_base_t*>(*base),
-                                 sector, poly, plane, surface);
+    App_World().map().identifySoundEmitter(*reinterpret_cast<ddmobj_base_t*>(*base),
+                                           sector, poly, plane, surface);
 
 #ifdef DENG_DEBUG
     if(!*sector && !*poly && !*plane && !*surface)

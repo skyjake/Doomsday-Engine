@@ -265,7 +265,8 @@ DENG_HEADERS += \
     $$SRC/include/world/sector.h \
     $$SRC/include/world/segment.h \
     $$SRC/include/world/surface.h \
-    $$SRC/include/world/vertex.h
+    $$SRC/include/world/vertex.h \
+    $$SRC/include/world/world.h \
 
 INCLUDEPATH += \
     include \
@@ -439,7 +440,8 @@ SOURCES += \
     $$SRC/src/world/sector.cpp \
     $$SRC/src/world/segment.cpp \
     $$SRC/src/world/surface.cpp \
-    $$SRC/src/world/vertex.cpp
+    $$SRC/src/world/vertex.cpp \
+    $$SRC/src/world/world.cpp
 
 OTHER_FILES += \
     data/cphelp.txt \

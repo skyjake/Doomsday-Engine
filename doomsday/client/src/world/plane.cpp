@@ -23,9 +23,12 @@
 #include "de_base.h"
 
 #include "audio/s_environ.h"
+
 #include "Line"
 #include "world/map.h" /// @todo remove me.
 #include "world/r_world.h" // ddMapSetup
+#include "world/world.h"
+
 #include "render/r_main.h" // frameTimePos
 
 #include "world/plane.h"
@@ -88,25 +91,25 @@ DENG2_PIMPL(Plane)
 
     ~Instance()
     {
-        DENG_ASSERT(theMap != 0);
+        Map &map = App_World().map();
 
         // If this plane is currently being watched, remove it.
         /// @todo Map should observe Deletion.
-        theMap->trackedPlanes().remove(&self);
+        map.trackedPlanes().remove(&self);
 
         // If this plane's surface is in the moving list, remove it.
         /// @todo Map should observe Deletion.
-        theMap->scrollingSurfaces().remove(&surface);
+        map.scrollingSurfaces().remove(&surface);
 
 #ifdef __CLIENT__
 
         // If this plane's surface is in the glowing list, remove it.
         /// @todo Map should observe Deletion.
-        theMap->glowingSurfaces().remove(&surface);
+        map.glowingSurfaces().remove(&surface);
 
         // If this plane's surface is in the decorated list, remove it.
         /// @todo Map should observe Deletion.
-        theMap->decoratedSurfaces().remove(&surface);
+        map.decoratedSurfaces().remove(&surface);
 
 #endif // __CLIENT__
 
@@ -147,9 +150,9 @@ DENG2_PIMPL(Plane)
         /// @todo Map should observe.
         if(!ddMapSetup)
         {
-            if(theMap)
+            if(App_World().hasMap())
             {
-                theMap->trackedPlanes().insert(&self);
+                App_World().map().trackedPlanes().insert(&self);
             }
 
 #ifdef __CLIENT__

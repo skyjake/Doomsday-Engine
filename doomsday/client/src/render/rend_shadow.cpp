@@ -185,8 +185,6 @@ static void initShadowPrimitive()
 
 void Rend_RenderMobjShadows()
 {
-    DENG_ASSERT(theMap != 0);
-
     // Disabled. (Awaiting a heuristic analyser to enable it on selective mobjs.)
     /// @todo Re-enable mobj shadows.
     return;
@@ -202,7 +200,7 @@ void Rend_RenderMobjShadows()
     // Initialize the invariant parts of our shadow primitive now.
     initShadowPrimitive();
 
-    foreach(Sector *sector, theMap->sectors())
+    foreach(Sector *sector, App_World().map().sectors())
     {
         // We are only interested in those mobjs within sectors marked as
         // 'visible' for the current render frame (viewer dependent).

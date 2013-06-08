@@ -23,11 +23,14 @@
 #include <de/Log>
 
 #include "de_defs.h" // Def_GetGenerator
+#include "dd_main.h"
 
 #include "Materials"
+
 #include "world/map.h"
-#include "world/r_world.h" /// ddMapSetup @todo remove me
-#include "render/r_main.h" /// frameTimePos
+#include "world/world.h" // ddMapSetup
+
+#include "render/r_main.h" // frameTimePos
 
 #include "world/surface.h"
 
@@ -40,7 +43,7 @@ int const Surface::MAX_SMOOTH_MATERIAL_MOVE = 8;
 DENG2_PIMPL(Surface)
 {
     /// Owning map element, either @c DMU_SIDE, or @c DMU_PLANE.
-    de::MapElement &owner;
+    MapElement &owner;
 
     /// Tangent space vectors:
     Vector3f tangent;
@@ -134,7 +137,7 @@ DENG2_PIMPL(Surface)
             self._decorationData.needsUpdate = true;
 #endif
             /// @todo Do not assume surface is from the CURRENT map.
-            theMap->scrollingSurfaces().insert(&self);
+            App_World().map().scrollingSurfaces().insert(&self);
         }
     }
 
@@ -314,13 +317,13 @@ bool Surface::setMaterial(Material *newMaterial, bool isMissingFix)
             if(!ddMapSetup)
             {
 #ifdef __CLIENT__
-                Map *map = theMap; /// @todo Do not assume surface is from the CURRENT map.
+                Map &map = App_World().map(); /// @todo Do not assume surface is from the CURRENT map.
 
                 // If this plane's surface is in the decorated list, remove it.
-                map->decoratedSurfaces().remove(this);
+                map.decoratedSurfaces().remove(this);
 
                 // If this plane's surface is in the glowing list, remove it.
-                map->glowingSurfaces().remove(this);
+                map.glowingSurfaces().remove(this);
 #endif // __CLIENT__
 
                 if(newMaterial)
@@ -328,12 +331,12 @@ bool Surface::setMaterial(Material *newMaterial, bool isMissingFix)
 #ifdef __CLIENT__
                     if(newMaterial->hasGlow())
                     {
-                        map->glowingSurfaces().insert(this);
+                        map.glowingSurfaces().insert(this);
                     }
 
                     if(newMaterial->isDecorated())
                     {
-                        map->decoratedSurfaces().insert(this);
+                        map.decoratedSurfaces().insert(this);
                     }
 #endif // __CLIENT__
 

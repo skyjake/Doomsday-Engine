@@ -309,7 +309,7 @@ static boolean calcBspLeafReverb(BspLeaf *bspLeaf)
     bspLeaf->_reverb[SRD_DAMPING] = v;
 
     /* DEBUG_Message(("bspLeaf %04i: vol:%3i sp:%3i dec:%3i dam:%3i\n",
-                      theMap->bspLeafIndex(bspLeaf), bspLeaf->reverb[SRD_VOLUME],
+                      App_World().map().bspLeafIndex(bspLeaf), bspLeaf->reverb[SRD_VOLUME],
                       bspLeaf->reverb[SRD_SPACE], bspLeaf->reverb[SRD_DECAY],
                       bspLeaf->reverb[SRD_DAMPING])); */
 

@@ -508,17 +508,18 @@ void R_Init()
 
 static void R_UpdateMap()
 {
-    if(!theMap) return;
+    if(!App_World().hasMap()) return;
+    Map &map = App_World().map();
 
 #ifdef __CLIENT__
     // Update all world surfaces.
-    foreach(Sector *sector, theMap->sectors())
+    foreach(Sector *sector, map.sectors())
     foreach(Plane *plane, sector->planes())
     {
         plane->surface().markAsNeedingDecorationUpdate();
     }
 
-    foreach(Line *line, theMap->lines())
+    foreach(Line *line, map.lines())
     for(int i = 0; i < 2; ++i)
     {
         Line::Side &side = line->side(i);
@@ -530,18 +531,18 @@ static void R_UpdateMap()
     }
 
     /// @todo Is this even necessary?
-    foreach(Polyobj *polyobj, theMap->polyobjs())
+    foreach(Polyobj *polyobj, map.polyobjs())
     foreach(Line *line, polyobj->lines())
     {
         line->front().middle().markAsNeedingDecorationUpdate();
     }
 
-    theMap->buildSurfaceLists();
+    map.buildSurfaceLists();
 
 #endif
 
     // See what mapinfo says about this map.
-    de::Uri mapUri = theMap->uri();
+    de::Uri mapUri = map.uri();
     ded_mapinfo_t *mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&mapUri));
     if(!mapInfo)
     {
@@ -563,17 +564,17 @@ static void R_UpdateMap()
 
     if(mapInfo)
     {
-        theMap->_globalGravity     = mapInfo->gravity;
-        theMap->_ambientLightLevel = mapInfo->ambient * 255;
+        map._globalGravity     = mapInfo->gravity;
+        map._ambientLightLevel = mapInfo->ambient * 255;
     }
     else
     {
         // No theMap info found, so set some basic stuff.
-        theMap->_globalGravity = 1.0f;
-        theMap->_ambientLightLevel = 0;
+        map._globalGravity = 1.0f;
+        map._ambientLightLevel = 0;
     }
 
-    theMap->_effectiveGravity = theMap->_globalGravity;
+    map._effectiveGravity = map._globalGravity;
 
 #ifdef __CLIENT__
     // Recalculate the light range mod matrix.
@@ -781,10 +782,10 @@ void R_NewSharpWorld()
         R_CheckViewerLimits(vd->lastSharp, &sharpView);
     }
 
-    if(theMap)
+    if(App_World().hasMap())
     {
-        theMap->updateTrackedPlanes();
-        theMap->updateScrollingSurfaces();
+        App_World().map().updateTrackedPlanes();
+        App_World().map().updateScrollingSurfaces();
     }
 }
 
@@ -801,11 +802,11 @@ void R_CreateMobjLinks()
     }
 #endif
 
-    if(!theMap) return;
+    if(!App_World().hasMap()) return;
 
 BEGIN_PROF( PROF_MOBJ_INIT_ADD );
 
-    foreach(Sector *sector, theMap->sectors())
+    foreach(Sector *sector, App_World().map().sectors())
     for(mobj_t *iter = sector->firstMobj(); iter; iter = iter->sNext)
     {
         R_ObjlinkCreate(*iter); // For spreading purposes.
@@ -821,18 +822,18 @@ void R_BeginWorldFrame()
 #ifdef __CLIENT__
 
     // Clear all flags that can be cleared before each frame.
-    foreach(Sector *sector, theMap->sectors())
+    foreach(Sector *sector, App_World().map().sectors())
     {
         sector->_frameFlags &= ~SIF_FRAME_CLEAR;
     }
 
-    theMap->lerpTrackedPlanes(resetNextViewer);
-    theMap->lerpScrollingSurfaces(resetNextViewer);
+    App_World().map().lerpTrackedPlanes(resetNextViewer);
+    App_World().map().lerpScrollingSurfaces(resetNextViewer);
 
     if(!freezeRLs)
     {
         // Initialize and/or update the LightGrid.
-        theMap->initLightGrid();
+        App_World().map().initLightGrid();
 
         SB_BeginFrame();
         LO_BeginWorldFrame();
@@ -1129,7 +1130,7 @@ DENG_EXTERN_C void R_RenderPlayerView(int num)
     // GL is in 3D transformation state only during the frame.
     GL_SwitchTo3DState(true, currentViewport, vd);
 
-    if(theMap)
+    if(App_World().hasMap())
     {
         Rend_RenderMap();
     }
@@ -1384,7 +1385,7 @@ void Rend_CacheForMap()
     {
         MaterialVariantSpec const &spec = Rend_MapSurfaceMaterialSpec();
 
-        foreach(Line *line, theMap->lines())
+        foreach(Line *line, App_World().map().lines())
         for(int i = 0; i < 2; ++i)
         {
             Line::Side &side = line->side(i);
@@ -1400,7 +1401,7 @@ void Rend_CacheForMap()
                 App_Materials().cache(side.bottom().material(), spec);
         }
 
-        foreach(Sector *sector, theMap->sectors())
+        foreach(Sector *sector, App_World().map().sectors())
         {
             // Skip sectors with no line sides as their planes will never be drawn.
             if(!sector->sideCount()) continue;
@@ -1421,9 +1422,9 @@ void Rend_CacheForMap()
         {
             spritedef_t *sprDef = &sprites[i];
 
-            if(theMap->iterateThinkers(reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
-                                       0x1/* All mobjs are public*/,
-                                       findSpriteOwner, sprDef))
+            if(App_World().map().iterateThinkers(reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
+                                                 0x1/* All mobjs are public*/,
+                                                 findSpriteOwner, sprDef))
             {
                 // This sprite is used by some state of at least one mobj.
 
@@ -1447,8 +1448,8 @@ void Rend_CacheForMap()
     if(useModels && precacheSkins)
     {
         // All mobjs are public.
-        theMap->iterateThinkers(reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
-                                0x1, Models_CacheForMobj, NULL);
+        App_World().map().iterateThinkers(reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
+                                          0x1, Models_CacheForMobj, NULL);
     }
 }
 

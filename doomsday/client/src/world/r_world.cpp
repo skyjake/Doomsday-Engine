@@ -33,20 +33,15 @@
 #include "de_misc.h"
 
 #include "world/lineowner.h"
+#include "world/world.h"
 #include "Plane"
+
 #ifdef __CLIENT__
 #  include "MaterialSnapshot"
 #  include "MaterialVariantSpec"
 #endif
 
-#include <de/Observers>
-
 using namespace de;
-
-boolean ddMapSetup;
-
-/// Notified when the current map changes.
-MapChangeAudience audienceForMapChange;
 
 #undef R_SetupFog
 DENG_EXTERN_C void R_SetupFog(float start, float end, float density, float *rgb)
@@ -535,167 +530,3 @@ Line *R_FindSolidLineNeighbor(Sector const *sector, Line const *line,
 }
 
 #endif // __CLIENT__
-
-static void resetAllMapPlaneVisHeights(Map &map)
-{
-    foreach(Sector *sector, map.sectors())
-    foreach(Plane *plane, sector->planes())
-    {
-        plane->resetVisHeight();
-    }
-}
-
-static void updateAllMapSectors(Map &map)
-{
-    foreach(Sector *sector, map.sectors())
-    {
-        sector->updateSoundEmitterOrigin();
-#ifdef __CLIENT__
-        map.updateMissingMaterialsForLinesOfSector(*sector);
-        S_MarkSectorReverbDirty(sector);
-#endif
-    }
-}
-
-#undef R_SetupMap
-DENG_EXTERN_C void R_SetupMap(int mode, int flags)
-{
-    DENG_UNUSED(flags);
-
-    switch(mode)
-    {
-    case DDSMM_INITIALIZE:
-        // A new map is about to be setup.
-        ddMapSetup = true;
-
-#ifdef __CLIENT__
-        App_Materials().purgeCacheQueue();
-#endif
-        return;
-
-    case DDSMM_AFTER_LOADING:
-        DENG_ASSERT(theMap);
-
-        // Update everything again. Its possible that after loading we
-        // now have more HOMs to fix, etc..
-        theMap->initSkyFix();
-
-        updateAllMapSectors(*theMap);
-        resetAllMapPlaneVisHeights(*theMap);
-
-        theMap->initPolyobjs();
-        DD_ResetTimer();
-        return;
-
-    case DDSMM_FINALIZE: {
-        DENG_ASSERT(theMap);
-
-        if(gameTime > 20000000 / TICSPERSEC)
-        {
-            // In very long-running games, gameTime will become so large that it cannot be
-            // accurately converted to 35 Hz integer tics. Thus it needs to be reset back
-            // to zero.
-            gameTime = 0;
-        }
-
-        // We are now finished with the map entity db.
-        EntityDatabase_Delete(theMap->entityDatabase);
-
-#ifdef __SERVER__
-        // Init server data.
-        Sv_InitPools();
-#endif
-
-#ifdef __CLIENT__
-        // Recalculate the light range mod matrix.
-        Rend_UpdateLightModMatrix();
-#endif
-
-        theMap->initPolyobjs();
-        P_MapSpawnPlaneParticleGens();
-
-        updateAllMapSectors(*theMap);
-        resetAllMapPlaneVisHeights(*theMap);
-
-#ifdef __CLIENT__
-        theMap->buildSurfaceLists();
-
-        float startTime = Timer_Seconds();
-        Rend_CacheForMap();
-        App_Materials().processCacheQueue();
-        VERBOSE( Con_Message("Precaching took %.2f seconds.", Timer_Seconds() - startTime) )
-#endif
-
-        S_SetupForChangedMap();
-
-        // Map setup has been completed.
-
-        // Run any commands specified in Map Info.
-        de::Uri mapUri = theMap->uri();
-        ded_mapinfo_t *mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&mapUri));
-        if(mapInfo && mapInfo->execute)
-        {
-            Con_Execute(CMDS_SCRIPT, mapInfo->execute, true, false);
-        }
-
-        // Run the special map setup command, which the user may alias to do something useful.
-        String cmd = "init-" + mapUri.resolved();
-        if(Con_IsValidCommand(cmd.toUtf8().constData()))
-        {
-            Con_Executef(CMDS_SCRIPT, false, "%s", cmd.toUtf8().constData());
-        }
-
-#ifdef __CLIENT__
-        // Clear any input events that might have accumulated during the
-        // setup period.
-        DD_ClearEvents();
-#endif
-
-        // Now that the setup is done, let's reset the tictimer so it'll
-        // appear that no time has passed during the setup.
-        DD_ResetTimer();
-
-        // Kill all local commands and determine the invoid status of players.
-        for(int i = 0; i < DDMAXPLAYERS; ++i)
-        {
-            player_t *plr = &ddPlayers[i];
-            ddplayer_t *ddpl = &plr->shared;
-
-            //clients[i].numTics = 0;
-
-            // Determine if the player is in the void.
-            ddpl->inVoid = true;
-            if(ddpl->mo)
-            {
-                BspLeaf *bspLeaf = theMap->bspLeafAtPoint(ddpl->mo->origin);
-                if(bspLeaf)
-                {
-                    /// @todo $nplanes
-                    if(ddpl->mo->origin[VZ] >= bspLeaf->sector().floor().visHeight() &&
-                       ddpl->mo->origin[VZ] < bspLeaf->sector().ceiling().visHeight() - 4)
-                    {
-                        ddpl->inVoid = false;
-                    }
-                }
-            }
-        }
-
-        // Reset the map tick timer.
-        ddMapTime = 0;
-
-        // We've finished setting up the map.
-        ddMapSetup = false;
-
-        // Inform the timing system to suspend the starting of the clock.
-        firstFrameAfterLoad = true;
-
-        DENG2_FOR_AUDIENCE(MapChange, i) i->currentMapChanged();
-
-        Z_PrintStatus();
-        return; }
-
-    default:
-        Con_Error("R_SetupMap: Unknown setup mode %i", mode);
-        exit(1); // Unreachable.
-    }
-}

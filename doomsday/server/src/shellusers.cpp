@@ -18,6 +18,7 @@
  */
 
 #include "shellusers.h"
+#include "dd_main.h"
 #include <QTimer>
 
 static int const PLAYER_INFO_INTERVAL = 2500; // ms
@@ -41,7 +42,7 @@ DENG2_PIMPL_NOREF(ShellUsers)
 
 ShellUsers::ShellUsers() : d(new Instance)
 {
-    audienceForMapChange += this;
+    App_World().audienceForMapChange += this;
 
     // Player information is sent periodically to all shell users.
     connect(d->infoTimer, SIGNAL(timeout()), this, SLOT(sendPlayerInfoToAll()));
@@ -52,7 +53,7 @@ ShellUsers::~ShellUsers()
 {
     d->infoTimer->stop();
 
-    audienceForMapChange -= this;
+    App_World().audienceForMapChange -= this;
 
     foreach(ShellUser *user, d->users)
     {

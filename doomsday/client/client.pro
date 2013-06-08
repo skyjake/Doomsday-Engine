@@ -390,6 +390,7 @@ DENG_HEADERS += \
     include/world/segment.h \
     include/world/surface.h \
     include/world/vertex.h \
+    include/world/world.h \
     src/updater/downloaddialog.h \
     src/updater/processcheckdialog.h \
     src/updater/updateavailabledialog.h \
@@ -680,7 +681,8 @@ SOURCES += \
     src/world/sector.cpp \
     src/world/segment.cpp \
     src/world/surface.cpp \
-    src/world/vertex.cpp
+    src/world/vertex.cpp \
+    src/world/world.cpp
 
 !deng_nosdlmixer:!deng_nosdl {
     HEADERS += include/audio/sys_audiod_sdlmixer.h

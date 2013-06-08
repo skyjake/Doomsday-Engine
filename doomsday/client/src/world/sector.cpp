@@ -22,6 +22,8 @@
 
 #include <de/Log>
 
+#include "dd_main.h"
+
 #include "BspLeaf"
 #include "Line"
 #include "world/map.h"
@@ -416,7 +418,7 @@ void Sector::planeHeightChanged(Plane &plane, coord_t oldHeight)
     updateSoundEmitterOrigin();
 #ifdef __CLIENT__
     /// @todo Map should observe.
-    theMap->updateMissingMaterialsForLinesOfSector(*this);
+    App_World().map().updateMissingMaterialsForLinesOfSector(*this);
     S_MarkSectorReverbDirty(this);
 #endif
 

@@ -535,8 +535,9 @@ static int projectOmniLightToSurface(lumobj_t *lum, void *parameters)
 void LO_InitForMap()
 {
     // First initialize the BSP leaf links (root pointers).
-    bspLeafLumObjList = (lumlistnode_t **) Z_Calloc(sizeof(*bspLeafLumObjList) * theMap->bspLeafCount(),
-                                                    PU_MAPSTATIC, 0);
+    bspLeafLumObjList = (lumlistnode_t **)
+        Z_Calloc(sizeof(*bspLeafLumObjList) * App_World().map().bspLeafCount(),
+                 PU_MAPSTATIC, 0);
 
     maxLuminous = 0;
     luminousBlockSet = 0; // Will have already been free'd.
@@ -596,7 +597,7 @@ void LO_BeginWorldFrame()
     listNodeCursor = listNodeFirst;
     if(bspLeafLumObjList)
     {
-        std::memset(bspLeafLumObjList, 0, sizeof(lumlistnode_t *) * theMap->bspLeafCount());
+        std::memset(bspLeafLumObjList, 0, sizeof(lumlistnode_t *) * App_World().map().bspLeafCount());
     }
     numLuminous = 0;
 }
@@ -1035,13 +1036,13 @@ static void createGlowLightForSurface(Surface &suf)
 void LO_AddLuminousMobjs()
 {
     if(!useDynLights && !useWallGlow) return;
-    if(!theMap) return;
+    if(!App_World().hasMap()) return;
 
 BEGIN_PROF( PROF_LUMOBJ_INIT_ADD );
 
     if(useDynLights)
     {
-        foreach(Sector *sector, theMap->sectors())
+        foreach(Sector *sector, App_World().map().sectors())
         for(mobj_t *iter = sector->firstMobj(); iter; iter = iter->sNext)
         {
             iter->lumIdx = 0;
@@ -1052,7 +1053,7 @@ BEGIN_PROF( PROF_LUMOBJ_INIT_ADD );
     // Create dynlights for all glowing surfaces.
     if(useWallGlow)
     {
-        foreach(Surface *surface, theMap->glowingSurfaces())
+        foreach(Surface *surface, App_World().map().glowingSurfaces())
         {
             createGlowLightForSurface(*surface);
         }
@@ -1131,7 +1132,7 @@ static boolean LOIT_ClipLumObj(void *data, void * /*context*/)
 
         luminousClipped[lumIdx] = 1;
 
-        if(LineSightTest(eye, origin, -1, 1, LS_PASSLEFT | LS_PASSOVER | LS_PASSUNDER).trace(*theMap->bspRoot()))
+        if(LineSightTest(eye, origin, -1, 1, LS_PASSLEFT | LS_PASSOVER | LS_PASSUNDER).trace(*App_World().map().bspRoot()))
         {
             luminousClipped[lumIdx] = 0; // Will have a halo.
         }
@@ -1142,7 +1143,7 @@ static boolean LOIT_ClipLumObj(void *data, void * /*context*/)
 
 void LO_ClipInBspLeaf(int bspLeafIdx)
 {
-    BspLeaf &leaf = *theMap->bspLeafs().at(bspLeafIdx);
+    BspLeaf &leaf = *App_World().map().bspLeafs().at(bspLeafIdx);
 
     if(leaf.isDegenerate()) return;
 
@@ -1187,7 +1188,7 @@ boolean LOIT_ClipLumObjBySight(void *data, void *context)
 
 void LO_ClipInBspLeafBySight(int bspLeafIdx)
 {
-    BspLeaf &leaf = *theMap->bspLeafs().at(bspLeafIdx);
+    BspLeaf &leaf = *App_World().map().bspLeafs().at(bspLeafIdx);
 
     if(leaf.isDegenerate()) return;
 
@@ -1217,14 +1218,14 @@ int LOIT_UnlinkMobjLumobj(thinker_t *th, void * /*context*/)
     return false; // Continue iteration.
 }
 
-void LO_UnlinkMobjLumobjs(void)
+void LO_UnlinkMobjLumobjs()
 {
-    if(!useDynLights && theMap)
-    {
-        // Mobjs are always public.
-        theMap->iterateThinkers(reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
-                                0x1, LOIT_UnlinkMobjLumobj, NULL);
-    }
+    if(!App_World().hasMap()) return;
+    if(useDynLights) return;
+
+    // Mobjs are always public.
+    App_World().map().iterateThinkers(reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
+                                      0x1, LOIT_UnlinkMobjLumobj, NULL);
 }
 
 /**

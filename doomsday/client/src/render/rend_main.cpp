@@ -175,9 +175,9 @@ static bool firstBspLeaf; // No range checking for the first one.
 
 static void markLightGridForFullUpdate()
 {
-    if(!theMap) return;
-    if(!theMap->hasLightGrid()) return;
-    theMap->lightGrid().markAllForUpdate();
+    if(!App_World().hasMap()) return;
+    if(!App_World().map().hasLightGrid()) return;
+    App_World().map().lightGrid().markAllForUpdate();
 }
 
 void Rend_Register()
@@ -1933,7 +1933,7 @@ static coord_t skyPlaneZ(BspLeaf *bspLeaf, int skyCap)
     DENG_ASSERT(bspLeaf);
     Plane::Type const plane = (skyCap & SKYCAP_UPPER)? Plane::Ceiling : Plane::Floor;
     if(!bspLeaf->hasSector() || !P_IsInVoid(viewPlayer))
-        return theMap->skyFix(plane == Plane::Ceiling);
+        return App_World().map().skyFix(plane == Plane::Ceiling);
     return bspLeaf->sector().plane(plane).visHeight();
 }
 
@@ -2421,7 +2421,7 @@ static void traverseBspAndDrawLeafs(MapElement *bspElement)
 
 void Rend_RenderMap()
 {
-    DENG_ASSERT(theMap != 0);
+    DENG_ASSERT(App_World().hasMap());
 
     // Set to true if dynlights are inited for this frame.
     loInited = false;
@@ -2477,7 +2477,7 @@ void Rend_RenderMap()
         currentBspLeaf = 0;
 
         // Draw the world!
-        traverseBspAndDrawLeafs(theMap->bspRoot());
+        traverseBspAndDrawLeafs(App_World().map().bspRoot());
 
         Rend_RenderMobjShadows();
     }
@@ -2503,13 +2503,13 @@ void Rend_UpdateLightModMatrix()
 
     std::memset(lightModRange, 0, sizeof(float) * 255);
 
-    if(!theMap)
+    if(!App_World().hasMap())
     {
         rAmbient = 0;
         return;
     }
 
-    int mapAmbient = theMap->ambientLightLevel();
+    int mapAmbient = App_World().map().ambientLightLevel();
     if(mapAmbient > ambientLight)
         rAmbient = mapAmbient;
     else
@@ -2816,13 +2816,13 @@ static void Rend_DrawBoundingBoxes()
 
     if(devMobjBBox)
     {
-        theMap->iterateThinkers(reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
-                                0x1, drawMobjBBox, NULL);
+        App_World().map().iterateThinkers(reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
+                                          0x1, drawMobjBBox, NULL);
     }
 
     if(devPolyobjBBox)
     {
-        foreach(Polyobj const *polyobj, theMap->polyobjs())
+        foreach(Polyobj const *polyobj, App_World().map().polyobjs())
         {
             Sector const &sec = polyobj->sector();
             coord_t width  = (polyobj->aaBox.maxX - polyobj->aaBox.minX)/2;
@@ -2896,12 +2896,13 @@ static void drawSurfaceTangentSpaceVectors(Surface *suf, Vector3d const &origin)
  */
 static void Rend_DrawSurfaceVectors()
 {
-    if(devSurfaceVectors == 0 || !theMap) return;
+    if(!devSurfaceVectors) return;
+    if(!App_World().hasMap()) return;
 
     glDisable(GL_CULL_FACE);
 
     Vector3d origin;
-    foreach(BspLeaf *bspLeaf, theMap->bspLeafs())
+    foreach(BspLeaf *bspLeaf, App_World().map().bspLeafs())
     foreach(Segment *segment, bspLeaf->allSegments())
     {
         if(!bspLeaf->hasSector())
@@ -2967,7 +2968,7 @@ static void Rend_DrawSurfaceVectors()
         }
     }
 
-    foreach(BspLeaf *bspLeaf, theMap->bspLeafs())
+    foreach(BspLeaf *bspLeaf, App_World().map().bspLeafs())
     {
         if(bspLeaf->isDegenerate()) continue;
         if(!bspLeaf->hasSector()) continue;
@@ -2978,13 +2979,13 @@ static void Rend_DrawSurfaceVectors()
             origin = Vector3d(bspLeaf->face().center(), plane->visHeight());
 
             if(plane->type() != Plane::Middle && plane->surface().hasSkyMaskedMaterial())
-                origin.z = theMap->skyFix(plane->type() == Plane::Ceiling);
+                origin.z = App_World().map().skyFix(plane->type() == Plane::Ceiling);
 
             drawSurfaceTangentSpaceVectors(&plane->surface(), origin);
         }
     }
 
-    foreach(Polyobj *polyobj, theMap->polyobjs())
+    foreach(Polyobj *polyobj, App_World().map().polyobjs())
     {
         Sector const &sector = polyobj->sector();
         float zPos = sector.floor().height() + (sector.ceiling().height() - sector.floor().height())/2;
@@ -3033,7 +3034,8 @@ static void drawSoundOrigin(Vector3d const &origin, char const *label, Vector3d 
  */
 static void Rend_DrawSoundOrigins()
 {
-    if(!devSoundOrigins || !theMap) return;
+    if(!devSoundOrigins) return;
+    if(!App_World().hasMap()) return;
 
     glDisable(GL_DEPTH_TEST);
     glEnable(GL_TEXTURE_2D);
@@ -3042,7 +3044,7 @@ static void Rend_DrawSoundOrigins()
 
     if(devSoundOrigins & SOF_SIDE)
     {
-        foreach(Line *line, theMap->lines())
+        foreach(Line *line, App_World().map().lines())
         for(int i = 0; i < 2; ++i)
         {
             Line::Side &side = line->side(i);
@@ -3063,7 +3065,7 @@ static void Rend_DrawSoundOrigins()
 
     if(devSoundOrigins & (SOF_SECTOR|SOF_PLANE))
     {
-        foreach(Sector *sec, theMap->sectors())
+        foreach(Sector *sec, App_World().map().sectors())
         {
             char buf[80];
 
@@ -3249,8 +3251,7 @@ static void Rend_DrawVertexIndices()
     float oldLineWidth = -1;
 
     if(!devVertexBars && !devVertexIndices) return;
-
-    DENG_ASSERT(theMap);
+    if(!App_World().hasMap()) return;
 
     glDisable(GL_DEPTH_TEST);
 
@@ -3260,7 +3261,7 @@ static void Rend_DrawVertexIndices()
         oldLineWidth = DGL_GetFloat(DGL_LINE_WIDTH);
         DGL_SetFloat(DGL_LINE_WIDTH, 2);
 
-        foreach(Vertex *vertex, theMap->vertexes())
+        foreach(Vertex *vertex, App_World().map().vertexes())
         {
             // Not a line vertex?
             LineOwner const *own = vertex->firstLineOwner();
@@ -3290,7 +3291,7 @@ static void Rend_DrawVertexIndices()
     glEnable(GL_POINT_SMOOTH);
     DGL_SetFloat(DGL_POINT_SIZE, 6);
 
-    foreach(Vertex *vertex, theMap->vertexes())
+    foreach(Vertex *vertex, App_World().map().vertexes())
     {
         // Not a line vertex?
         LineOwner const *own = vertex->firstLineOwner();
@@ -3319,7 +3320,7 @@ static void Rend_DrawVertexIndices()
         eye[VY] = vOrigin[VZ];
         eye[VZ] = vOrigin[VY];
 
-        foreach(Vertex *vertex, theMap->vertexes())
+        foreach(Vertex *vertex, App_World().map().vertexes())
         {
             coord_t pos[3], dist;
 

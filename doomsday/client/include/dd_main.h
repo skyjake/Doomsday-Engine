@@ -30,6 +30,7 @@
 
 #include "dd_types.h"
 #include "Games"
+#include "world/world.h"
 #include "api_plugin.h"
 #include "api_gameexport.h"
 #include "Materials"
@@ -183,10 +184,13 @@ de::ResourceClass& DD_ResourceClassByName(de::String name);
 de::String DD_MaterialSchemeNameForTextureScheme(de::String textureSchemeName);
 
 /// @return  The application's global Game collection.
-de::Games& App_Games();
+de::Games &App_Games();
 
 /// @return  The current Game in the application's global collection.
 de::Game &App_CurrentGame();
+
+/// @return  The application's global World.
+de::World &App_World();
 
 /// @return  The application's global MapArchive.
 de::MapArchive &App_MapArchive();

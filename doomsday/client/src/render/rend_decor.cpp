@@ -413,7 +413,7 @@ static uint generateDecorLights(MaterialSnapshot::Decoration const &decor,
             if(Surface::DecorSource *source = suf.newDecoration())
             {
                 source->origin  = origin;
-                source->bspLeaf = theMap->bspLeafAtPoint(origin);
+                source->bspLeaf = App_World().map().bspLeafAtPoint(origin);
                 source->decor   = &decor;
                 decorCount++;
             }
@@ -518,7 +518,7 @@ BEGIN_PROF( PROF_DECOR_BEGIN_FRAME );
 
     recycleSources();
 
-    foreach(Surface *surface, theMap->decoratedSurfaces())
+    foreach(Surface *surface, App_World().map().decoratedSurfaces())
     {
         plotSourcesForSurface(*surface);
     }

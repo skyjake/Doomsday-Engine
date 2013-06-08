@@ -237,10 +237,12 @@ void Rend_ParticleInitForNewFrame(void)
 
 void Rend_ParticleMarkInSectorVisible(Sector *sector)
 {
-    if(!useParticles || !theMap || !sector) return;
+    if(!useParticles) return;
+    if(!App_World().hasMap()) return;
+    if(!sector) return;
 
     /// @todo Do the assume sector is from the CURRENT map.
-    gens = theMap->generators();
+    gens = App_World().map().generators();
     if(!gens) return;
 
     Generators_IterateList(gens, sector->indexInMap(),
@@ -409,7 +411,7 @@ static void setupModelParamsForParticle(rendmodelparams_t* params,
     params->origin[VZ] = params->gzt = origin[VY];
     params->distance = dist;
 
-    BspLeaf *bspLeaf = theMap->bspLeafAtPoint(Vector2d(origin[VX], origin[VY]));
+    BspLeaf *bspLeaf = App_World().map().bspLeafAtPoint(Vector2d(origin[VX], origin[VY]));
 
     params->extraScale = size; // Extra scaling factor.
     params->mf = &modefs[dst->model];
@@ -458,9 +460,9 @@ static void setupModelParamsForParticle(rendmodelparams_t* params,
     {
         collectaffectinglights_params_t lparams;
 
-        if(useBias && theMap->hasLightGrid())
+        if(useBias && App_World().map().hasLightGrid())
         {
-            Vector3f tmp = theMap->lightGrid().evaluate(params->origin);
+            Vector3f tmp = App_World().map().lightGrid().evaluate(params->origin);
             V3f_Set(params->ambientColor, tmp.x, tmp.y, tmp.z);
         }
         else
@@ -872,9 +874,10 @@ static void renderPass(boolean useBlending)
 
 void Rend_RenderParticles()
 {
-    if(!useParticles || !theMap) return;
+    if(!useParticles) return;
+    if(!App_World().hasMap()) return;
 
-    gens = theMap->generators();
+    gens = App_World().map().generators();
     if(!gens) return;
 
     // No visible particles at all?
@@ -957,9 +960,10 @@ static int drawGeneratorOrigin(ptcgen_t* gen, void* parameters)
 
 void Rend_RenderGenerators()
 {
-    if(!devDrawGenerators || !theMap) return;
+    if(!devDrawGenerators) return;
+    if(!App_World().hasMap()) return;
 
-    gens = theMap->generators();
+    gens = App_World().map().generators();
     if(!gens) return;
 
     float eye[3];

@@ -51,9 +51,9 @@ using namespace de;
 DENG_EXTERN_C divline_t const *P_TraceLOS()
 {
     static divline_t emptyLOS;
-    if(theMap)
+    if(App_World().hasMap())
     {
-        return &theMap->traceLine();
+        return &App_World().map().traceLine();
     }
     return &emptyLOS;
 }
@@ -62,9 +62,9 @@ DENG_EXTERN_C divline_t const *P_TraceLOS()
 DENG_EXTERN_C TraceOpening const *P_TraceOpening()
 {
     static TraceOpening zeroOpening;
-    if(theMap)
+    if(App_World().hasMap())
     {
-        return &theMap->traceOpening();
+        return &App_World().map().traceOpening();
     }
     return &zeroOpening;
 }
@@ -72,24 +72,24 @@ DENG_EXTERN_C TraceOpening const *P_TraceOpening()
 #undef P_SetTraceOpening
 DENG_EXTERN_C void P_SetTraceOpening(Line *line)
 {
-    if(!theMap || !line) return;
+    if(!line || !App_World().hasMap()) return;
     /// @todo Do not assume line is from the CURRENT map.
-    theMap->setTraceOpening(*line);
+    App_World().map().setTraceOpening(*line);
 }
 
 #undef P_BspLeafAtPoint_FixedPrecision
 DENG_EXTERN_C BspLeaf *P_BspLeafAtPoint_FixedPrecision(const_pvec2d_t point)
 {
-    if(!theMap) return 0;
-    return theMap->bspLeafAtPoint_FixedPrecision(point);
+    if(!App_World().hasMap()) return 0;
+    return App_World().map().bspLeafAtPoint_FixedPrecision(point);
 }
 
 #undef P_BspLeafAtPoint_FixedPrecisionXY
 DENG_EXTERN_C BspLeaf *P_BspLeafAtPoint_FixedPrecisionXY(coord_t x, coord_t y)
 {
-    if(!theMap) return 0;
+    if(!App_World().hasMap()) return 0;
     coord_t point[2] = { x, y };
-    return theMap->bspLeafAtPoint_FixedPrecision(point);
+    return App_World().map().bspLeafAtPoint_FixedPrecision(point);
 }
 
 bool P_IsPointInBspLeaf(Vector2d const &point, BspLeaf const &bspLeaf)
@@ -119,10 +119,8 @@ bool P_IsPointInBspLeaf(Vector2d const &point, BspLeaf const &bspLeaf)
 
 bool P_IsPointInSector(Vector2d const &point, Sector const &sector)
 {
-    DENG_ASSERT(theMap != 0);
-
     /// @todo Do not assume @a sector is from the current map.
-    BspLeaf *bspLeaf = theMap->bspLeafAtPoint(point);
+    BspLeaf *bspLeaf = App_World().map().bspLeafAtPoint(point);
     if(bspLeaf->sectorPtr() != &sector)
         return false;
 
@@ -518,7 +516,7 @@ int Map_SectorTouchingMobjsIterator(Map *map, Sector *sector,
 int PIT_AddLineIntercepts(Line *line, void * /*parameters*/)
 {
     /// @todo Do not assume line is from the current map.
-    divline_t const &traceLos = theMap->traceLine();
+    divline_t const &traceLos = App_World().map().traceLine();
     int s1, s2;
 
     fixed_t lineFromX[2] = { DBL2FIX(line->fromOrigin().x), DBL2FIX(line->fromOrigin().y) };
@@ -561,7 +559,7 @@ int PIT_AddMobjIntercepts(mobj_t *mo, void * /*parameters*/)
 
     // Check a corner to corner crossection for hit.
     /// @todo Do not assume mobj is from the current map.
-    divline_t const &traceLos = theMap->traceLine();
+    divline_t const &traceLos = App_World().map().traceLine();
     vec2d_t from, to;
     if((traceLos.direction[VX] ^ traceLos.direction[VY]) > 0)
     {
@@ -605,53 +603,53 @@ int PIT_AddMobjIntercepts(mobj_t *mo, void * /*parameters*/)
 void P_LinkMobjInBlockmap(mobj_t *mo)
 {
     /// @todo Do not assume mobj is from the current map.
-    if(!theMap || !mo) return;
-    theMap->linkMobj(*mo);
+    if(!mo || !App_World().hasMap()) return;
+    App_World().map().linkMobj(*mo);
 }
 
 boolean P_UnlinkMobjFromBlockmap(mobj_t *mo)
 {
     /// @todo Do not assume mobj is from the current map.
-    if(!theMap || !mo) return false;
-    return theMap->unlinkMobj(*mo);
+    if(!mo || !App_World().hasMap()) return false;
+    return App_World().map().unlinkMobj(*mo);
 }
 
 void P_LinkMobjToLines(mobj_t *mo)
 {
     /// @todo Do not assume mobj is from the current map.
-    if(!theMap) return;
-    Map_LinkMobjToLines(theMap, mo);
+    if(!App_World().hasMap()) return;
+    Map_LinkMobjToLines(&App_World().map(), mo);
 }
 
 boolean P_UnlinkMobjFromLines(mobj_t *mo)
 {
     /// @todo Do not assume mobj is from the current map.
-    if(!theMap) return false;
-    return Map_UnlinkMobjFromLines(theMap, mo);
+    if(!App_World().hasMap()) return false;
+    return Map_UnlinkMobjFromLines(&App_World().map(), mo);
 }
 
 #undef P_MobjLinesIterator
 DENG_EXTERN_C int P_MobjLinesIterator(mobj_t *mo, int (*callback) (Line *, void *), void *parameters)
 {
     /// @todo Do not assume mobj is in the current map.
-    if(!theMap) return false; // Continue iteration.
-    return Map_MobjLinesIterator(theMap, mo, callback, parameters);
+    if(!App_World().hasMap()) return false; // Continue iteration.
+    return Map_MobjLinesIterator(&App_World().map(), mo, callback, parameters);
 }
 
 #undef P_MobjSectorsIterator
 DENG_EXTERN_C int P_MobjSectorsIterator(mobj_t *mo, int (*callback) (Sector *, void *), void *parameters)
 {
     /// @todo Do not assume mobj is in the current map.
-    if(!theMap) return false; // Continue iteration.
-    return Map_MobjSectorsIterator(theMap, mo, callback, parameters);
+    if(!App_World().hasMap()) return false; // Continue iteration.
+    return Map_MobjSectorsIterator(&App_World().map(), mo, callback, parameters);
 }
 
 #undef P_LineMobjsIterator
 DENG_EXTERN_C int P_LineMobjsIterator(Line *line, int (*callback) (mobj_t *, void *), void *parameters)
 {
     /// @todo Do not assume line is in the current map.
-    if(!theMap) return false; // Continue iteration.
-    return Map_LineMobjsIterator(theMap, line, callback, parameters);
+    if(!App_World().hasMap()) return false; // Continue iteration.
+    return Map_LineMobjsIterator(&App_World().map(), line, callback, parameters);
 }
 
 /**
@@ -666,86 +664,86 @@ DENG_EXTERN_C int P_LineMobjsIterator(Line *line, int (*callback) (mobj_t *, voi
 DENG_EXTERN_C int P_SectorTouchingMobjsIterator(Sector *sector, int (*callback) (mobj_t *, void *), void *parameters)
 {
     /// @todo Do not assume sector is in the current map.
-    if(!theMap) return false; // Continue iteration.
-    return Map_SectorTouchingMobjsIterator(theMap, sector, callback, parameters);
+    if(!App_World().hasMap()) return false; // Continue iteration.
+    return Map_SectorTouchingMobjsIterator(&App_World().map(), sector, callback, parameters);
 }
 
 #undef P_MobjsBoxIterator
 DENG_EXTERN_C int P_MobjsBoxIterator(AABoxd const *box,
     int (*callback) (mobj_t *, void *), void *parameters)
 {
-    if(!theMap || !box) return false; // Continue iteration.
-    return theMap->mobjsBoxIterator(*box, callback, parameters);
+    if(!box || !App_World().hasMap()) return false; // Continue iteration.
+    return App_World().map().mobjsBoxIterator(*box, callback, parameters);
 }
 
 #undef P_PolyobjsBoxIterator
 DENG_EXTERN_C int P_PolyobjsBoxIterator(AABoxd const *box,
     int (*callback) (struct polyobj_s *, void *), void *parameters)
 {
-    if(!theMap || !box) return false; // Continue iteration.
-    return theMap->polyobjsBoxIterator(*box, callback, parameters);
+    if(!box || !App_World().hasMap()) return false; // Continue iteration.
+    return App_World().map().polyobjsBoxIterator(*box, callback, parameters);
 }
 
 #undef P_LinesBoxIterator
 DENG_EXTERN_C int P_LinesBoxIterator(AABoxd const *box,
     int (*callback) (Line *, void *), void *parameters)
 {
-    if(!theMap || !box) return false; // Continue iteration.
-    return theMap->linesBoxIterator(*box, callback, parameters);
+    if(!box || !App_World().hasMap()) return false; // Continue iteration.
+    return App_World().map().linesBoxIterator(*box, callback, parameters);
 }
 
 #undef P_PolyobjLinesBoxIterator
 DENG_EXTERN_C int P_PolyobjLinesBoxIterator(AABoxd const *box,
     int (*callback) (Line *, void *), void *parameters)
 {
-    if(!theMap || !box) return false; // Continue iteration.
-    return theMap->polyobjLinesBoxIterator(*box, callback, parameters);
+    if(!box || !App_World().hasMap()) return false; // Continue iteration.
+    return App_World().map().polyobjLinesBoxIterator(*box, callback, parameters);
 }
 
 #undef P_BspLeafsBoxIterator
 DENG_EXTERN_C int P_BspLeafsBoxIterator(AABoxd const *box, Sector *sector,
     int (*callback) (BspLeaf *, void *), void *parameters)
 {
-    if(!theMap || !box) return false; // Continue iteration.
-    return theMap->bspLeafsBoxIterator(*box, sector, callback, parameters);
+    if(!box || !App_World().hasMap()) return false; // Continue iteration.
+    return App_World().map().bspLeafsBoxIterator(*box, sector, callback, parameters);
 }
 
 #undef P_AllLinesBoxIterator
 DENG_EXTERN_C int P_AllLinesBoxIterator(AABoxd const *box,
     int (*callback) (Line *, void *), void *parameters)
 {
-    if(!theMap || !box) return false; // Continue iteration.
-    return theMap->allLinesBoxIterator(*box, callback, parameters);
+    if(!box || !App_World().hasMap()) return false; // Continue iteration.
+    return App_World().map().allLinesBoxIterator(*box, callback, parameters);
 }
 
 #undef P_PathTraverse2
 DENG_EXTERN_C int P_PathTraverse2(const_pvec2d_t from, const_pvec2d_t to,
     int flags, traverser_t callback, void *parameters)
 {
-    if(!theMap) return false; // Continue iteration.
-    return theMap->pathTraverse(from, to, flags, callback, parameters);
+    if(!App_World().hasMap()) return false; // Continue iteration.
+    return App_World().map().pathTraverse(from, to, flags, callback, parameters);
 }
 
 #undef P_PathTraverse
 DENG_EXTERN_C int P_PathTraverse(const_pvec2d_t from, const_pvec2d_t to,
     int flags, traverser_t callback)
 {
-    if(!theMap) return false; // Continue iteration.
-    return theMap->pathTraverse(from, to, flags, callback);
+    if(!App_World().hasMap()) return false; // Continue iteration.
+    return App_World().map().pathTraverse(from, to, flags, callback);
 }
 
 #undef P_PathXYTraverse2
 DENG_EXTERN_C int P_PathXYTraverse2(coord_t fromX, coord_t fromY,
     coord_t toX, coord_t toY, int flags, traverser_t callback, void* paramaters)
 {
-    if(!theMap) return false; // Continue iteration.
-    return theMap->pathTraverse(fromX, fromY, toX, toY, flags, callback, paramaters);
+    if(!App_World().hasMap()) return false; // Continue iteration.
+    return App_World().map().pathTraverse(fromX, fromY, toX, toY, flags, callback, paramaters);
 }
 
 #undef P_PathXYTraverse
 DENG_EXTERN_C int P_PathXYTraverse(coord_t fromX, coord_t fromY, coord_t toX, coord_t toY, int flags,
     traverser_t callback)
 {
-    if(!theMap) return false; // Continue iteration.
-    return theMap->pathTraverse(fromX, fromY, toX, toY, flags, callback);
+    if(!App_World().hasMap()) return false; // Continue iteration.
+    return App_World().map().pathTraverse(fromX, fromY, toX, toY, flags, callback);
 }

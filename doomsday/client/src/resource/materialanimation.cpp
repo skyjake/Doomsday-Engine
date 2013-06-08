@@ -112,10 +112,10 @@ DENG2_PIMPL(Material::Animation)
             if(context == MapSurfaceContext)
             {
                 // Surfaces using this material may need to be updated.
-                if(theMap)
+                if(App_World().hasMap())
                 {
                     /// @todo Replace with a de::Observers-based mechanism.
-                    theMap->updateSurfacesOnMaterialChange(material);
+                    App_World().map().updateSurfacesOnMaterialChange(material);
                 }
             }
         }

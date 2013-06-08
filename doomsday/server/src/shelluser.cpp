@@ -125,9 +125,9 @@ void ShellUser::sendGameState()
     if(name) mapTitle = name;
 
     // Check the map's information from definitions.
-    if(theMap)
+    if(App_World().hasMap())
     {
-        de::Uri mapUri = theMap->uri();
+        de::Uri mapUri = App_World().map().uri();
         ded_mapinfo_t *mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&mapUri));
         if(mapInfo)
         {
@@ -141,11 +141,11 @@ void ShellUser::sendGameState()
 
 void ShellUser::sendMapOutline()
 {
-    if(!theMap) return;
+    if(!App_World().hasMap()) return;
 
     QScopedPointer<shell::MapOutlinePacket> packet(new shell::MapOutlinePacket);
 
-    foreach(Line *line, theMap->lines())
+    foreach(Line *line, App_World().map().lines())
     {
         packet->addLine(Vector2i(line->fromOrigin().x, line->fromOrigin().y),
                         Vector2i(line->toOrigin().x, line->toOrigin().y),
@@ -158,7 +158,7 @@ void ShellUser::sendMapOutline()
 
 void ShellUser::sendPlayerInfo()
 {
-    if(!theMap) return;
+    if(!App_World().hasMap()) return;
 
     QScopedPointer<shell::PlayerInfoPacket> packet(new shell::PlayerInfoPacket);
 

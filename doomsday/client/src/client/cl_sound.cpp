@@ -75,9 +75,9 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
     {        
         int index = deltaId;
 
-        if(index >= 0 && index < theMap->sectorCount())
+        if(index >= 0 && index < App_World().map().sectorCount())
         {
-            sector = theMap->sectors().at(index);
+            sector = App_World().map().sectors().at(index);
         }
         else
         {
@@ -89,7 +89,7 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
     {
         int index = deltaId;
 
-        side = theMap->sideByIndex(index);
+        side = App_World().map().sideByIndex(index);
         if(!side)
         {
             LOG_WARNING("Cl_ReadSoundDelta2: DT_SIDE_SOUND contains invalid side index %d, skipping") << index;
@@ -102,9 +102,9 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
 
         LOG_DEBUG("DT_POLY_SOUND: poly=%d") << index;
 
-        if(index >= 0 && index < theMap->polyobjCount())
+        if(index >= 0 && index < App_World().map().polyobjCount())
         {
-            poly = theMap->polyobjs().at(index);
+            poly = App_World().map().polyobjs().at(index);
             emitter = (mobj_t *) poly;
         }
         else
@@ -227,7 +227,7 @@ ifdef _DEBUG
 Con_Printf("Cl_ReadSoundDelta2(%i): Start snd=%i [%x] vol=%.2f",
            type, sound, flags, volume);
 if(cmo) Con_Printf(", mo=%i\n", cmo->mo.thinker.id);
-else if(sector) Con_Printf(", sector=%i\n", theMap->sectorIndex(sector));
+else if(sector) Con_Printf(", sector=%i\n", App_World().map().sectorIndex(sector));
 else if(poly) Con_Printf(", poly=%i\n", GET_POLYOBJ_IDX(poly));
 else Con_Printf("\n");
 #endif
@@ -246,7 +246,7 @@ else Con_Printf("\n");
 Con_Printf("Cl_ReadSoundDelta2(%i): Stop sound %i",
            type, sound);
 if(cmo)  Con_Printf(", mo=%i\n", cmo->mo.thinker.id);
-else if(sector) Con_Printf(", sector=%i\n", theMap->sectorIndex(sector));
+else if(sector) Con_Printf(", sector=%i\n", App_World().map().sectorIndex(sector));
 else if(poly) Con_Printf(", poly=%i\n", GET_POLYOBJ_IDX(poly));
 else Con_Printf("\n");
 #endif
@@ -308,12 +308,12 @@ void Cl_Sound(void)
     else if(flags & SNDF_SECTOR)
     {
         int num = (int)Reader_ReadPackedUInt16(msgReader);
-        if(num >= theMap->sectorCount())
+        if(num >= App_World().map().sectorCount())
         {
             Con_Message("Cl_Sound: Invalid sector number %i.", num);
             return;
         }
-        mo = (mobj_t *) &theMap->sectors().at(num)->soundEmitter();
+        mo = (mobj_t *) &App_World().map().sectors().at(num)->soundEmitter();
         //S_StopSound(0, mo);
         S_LocalSoundAtVolume(sound, mo, volume / 127.0f);
     }

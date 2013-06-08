@@ -626,9 +626,9 @@ void GL_TotalRestore()
 
     /// @todo fixme: Should this use the default MapInfo def if none found? -ds
     ded_mapinfo_t *mapInfo = 0;
-    if(theMap)
+    if(App_World().hasMap())
     {
-        de::Uri mapUri = theMap->uri();
+        de::Uri mapUri = App_World().map().uri();
         mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&mapUri));
     }
 

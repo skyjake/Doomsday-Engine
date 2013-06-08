@@ -26,6 +26,7 @@
 #include "network/net_event.h"
 #include "network/monitor.h"
 #include "con_main.h"
+#include "dd_main.h"
 #include "dd_loop.h"
 #include "world/map.h"
 #include "world/p_players.h"
@@ -126,7 +127,7 @@ DENG2_PIMPL(ServerSystem)
             lastBeaconUpdateAt = clock.time();
 
             // Update the status message in the server's presence beacon.
-            if(serverSock && theMap)
+            if(serverSock && App_World().hasMap())
             {
                 serverinfo_t info;
                 Sv_GetInfo(&info);

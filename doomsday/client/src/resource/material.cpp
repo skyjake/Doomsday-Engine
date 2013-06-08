@@ -17,16 +17,20 @@
  * 02110-1301 USA</small>
  */
 
+#include <QtAlgorithms>
+
+#include <de/math.h>
+
 #include "de_base.h"
 #include "def_main.h"
 
-#include "api_map.h"
-#include "audio/s_environ.h"
-#include "world/r_world.h"
-#include "world/map.h" // theMap - Remove me
 #include "r_util.h" // R_NameForBlendMode
-#include <de/math.h>
-#include <QtAlgorithms>
+
+//#include "api_map.h"
+#include "audio/s_environ.h"
+#include "world/world.h" // theMap - Remove me
+
+#include "resource/r_data.h" // R_FindTextureByResourceUri
 
 #include "resource/material.h"
 
@@ -411,10 +415,10 @@ DENG2_PIMPL(Material)
     /// Notify interested parties of a change in world dimensions.
     void notifyDimensionsChanged()
     {
-        if(theMap)
+        if(App_World().hasMap())
         {
             /// @todo Replace with a de::Observers-based mechanism.
-            theMap->updateSurfacesOnMaterialChange(self);
+            App_World().map().updateSurfacesOnMaterialChange(self);
         }
     }
 

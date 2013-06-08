@@ -253,11 +253,11 @@ void SB_Clear()
 
 void SB_InitForMap(char const *uniqueID)
 {
-    DENG_ASSERT(theMap);
-
     Time begunAt;
 
     LOG_AS("SB_InitForMap");
+
+    Map &map = App_World().map();
 
     // Start with no sources whatsoever.
     numSources = 0;
@@ -286,7 +286,7 @@ void SB_InitForMap(char const *uniqueID)
     uint numVertIllums = 0;
 
     // First, determine the total number of vertexillum_ts we need.
-    foreach(Segment *segment, theMap->segments())
+    foreach(Segment *segment, map.segments())
     {
         if(segment->hasLineSide())
             numVertIllums++;
@@ -294,7 +294,7 @@ void SB_InitForMap(char const *uniqueID)
 
     numVertIllums *= 3 * 4;
 
-    foreach(Sector *sector, theMap->sectors())
+    foreach(Sector *sector, map.sectors())
     foreach(BspLeaf *bspLeaf, sector->bspLeafs())
     {
         if(bspLeaf->isDegenerate()) continue;
@@ -302,7 +302,7 @@ void SB_InitForMap(char const *uniqueID)
         numVertIllums += bspLeaf->numFanVertices() * sector->planeCount();
     }
 
-    foreach(Polyobj *polyobj, theMap->polyobjs())
+    foreach(Polyobj *polyobj, map.polyobjs())
     {
         numVertIllums += polyobj->lineCount() * 3 * 4;
     }
@@ -315,7 +315,7 @@ void SB_InitForMap(char const *uniqueID)
     }
 
     // Allocate bias surfaces and attach vertexillum_ts.
-    foreach(Segment *segment, theMap->segments())
+    foreach(Segment *segment, map.segments())
     {
         if(!segment->hasLineSide()) continue;
 
@@ -332,7 +332,7 @@ void SB_InitForMap(char const *uniqueID)
         }
     }
 
-    foreach(Sector *sector, theMap->sectors())
+    foreach(Sector *sector, map.sectors())
     foreach(BspLeaf *bspLeaf, sector->bspLeafs())
     {
         if(bspLeaf->isDegenerate()) continue;
@@ -350,7 +350,7 @@ void SB_InitForMap(char const *uniqueID)
         }
     }
 
-    foreach(Polyobj *polyobj, theMap->polyobjs())
+    foreach(Polyobj *polyobj, map.polyobjs())
     foreach(Line *line, polyobj->lines())
     {
         Segment *segment = line->front().leftSegment();
@@ -658,6 +658,8 @@ void SB_BeginFrame()
 
 BEGIN_PROF( PROF_BIAS_UPDATE );
 
+    Map &map = App_World().map();
+
     // The time that applies on this frame.
     currentTimeSB = Timer_RealMilliseconds();
 
@@ -674,7 +676,7 @@ BEGIN_PROF( PROF_BIAS_UPDATE );
             float const maxLevel = s->sectorLevel[1];
             float const oldIntensity = s->intensity;
 
-            Sector &sector = theMap->bspLeafAtPoint(s->origin)->sector();
+            Sector &sector = map.bspLeafAtPoint(s->origin)->sector();
 
             // The lower intensities are useless for light emission.
             if(sector.lightLevel() >= maxLevel)
@@ -919,8 +921,8 @@ float *SB_GetCasted(vertexillum_t *illum, int sourceIndex,
 
 static Vector3f ambientLight(Vector3d const &point)
 {
-    if(theMap->hasLightGrid())
-        return theMap->lightGrid().evaluate(point);
+    if(App_World().map().hasLightGrid())
+        return App_World().map().lightGrid().evaluate(point);
     return Vector3f(0, 0, 0);
 }
 
@@ -1035,7 +1037,8 @@ void SB_EvalPoint(float light[4], vertexillum_t *illum,
         Vector3d delta = Vector3d(s->origin) - point;
         Vector3d surfacePoint = point + delta / 100;
 
-        if(useSightCheck && !LineSightTest(s->origin, surfacePoint).trace(*theMap->bspRoot()))
+        if(useSightCheck &&
+           !LineSightTest(s->origin, surfacePoint).trace(*App_World().map().bspRoot()))
         {
             // LOS fail.
             if(casted)

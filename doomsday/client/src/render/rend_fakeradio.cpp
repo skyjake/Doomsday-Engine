@@ -1437,7 +1437,7 @@ void Rend_DrawShadowOffsetVerts()
     static const float red[4] = { 1.f, .2f, .2f, 1.f};
     static const float yellow[4] = {.7f, .7f, .2f, 1.f};
 
-    if(!theMap) return;
+    if(!App_World().hasMap()) return;
 
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -1449,7 +1449,7 @@ void Rend_DrawShadowOffsetVerts()
                             GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
     glEnable(GL_TEXTURE_2D);
 
-    foreach(Line *line, theMap->lines())
+    foreach(Line *line, App_World().map().lines())
     for(uint k = 0; k < 2; ++k)
     {
         Vertex &vtx = line->vertex(k);

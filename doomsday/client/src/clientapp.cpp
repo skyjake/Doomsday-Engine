@@ -74,6 +74,7 @@ DENG2_PIMPL(ClientApp)
     ServerLink *svLink;
     GLShaderBank shaderBank;
     Games games;
+    World world;
 
     Instance(Public *i)
         : Base(i),
@@ -262,4 +263,9 @@ GLShaderBank &ClientApp::glShaderBank()
 Games &ClientApp::games()
 {
     return app().d->games;
+}
+
+World &ClientApp::world()
+{
+    return app().d->world;
 }

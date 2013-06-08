@@ -119,14 +119,17 @@ void P_Ticker(timespan_t elapsed)
     materialsTicker(elapsed);
 #endif
 
-    if(!theMap || !theMap->thinkerListInited()) return; // Not initialized yet.
+    if(!App_World().hasMap()) return;
+
+    Map &map = App_World().map();
+    if(!map.thinkerListInited()) return; // Not initialized yet.
 
     if(DD_IsSharpTick())
     {
         Sky_Ticker();
 
         // Check all mobjs (always public).
-        theMap->iterateThinkers(reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
-                                0x1, P_MobjTicker, NULL);
+        map.iterateThinkers(reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
+                            0x1, P_MobjTicker, NULL);
     }
 }

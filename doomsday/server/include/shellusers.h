@@ -23,12 +23,13 @@
 #include <QObject>
 #include <QSet>
 #include "shelluser.h"
-#include "world/r_world.h"
+#include "world/world.h"
 
 /**
  * All remote shell users.
  */
-class ShellUsers : public QObject, public IMapChangeObserver
+class ShellUsers : public QObject,
+    DENG2_OBSERVES(de::World, MapChange)
 {
     Q_OBJECT
 

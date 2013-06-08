@@ -214,9 +214,9 @@ void Map::resetClMovers()
 
 void Cl_WorldInit()
 {
-    if(theMap)
+    if(App_World().hasMap())
     {
-        theMap->initClMovers();
+        App_World().map().initClMovers();
     }
 
     serverMaterials = 0;
@@ -235,9 +235,9 @@ void Cl_WorldReset()
     setTableSize(&xlatMobjType, 0);
     setTableSize(&xlatMobjState, 0);
 
-    if(theMap)
+    if(App_World().hasMap())
     {
-        theMap->resetClMovers();
+        App_World().map().resetClMovers();
     }
 }
 
@@ -295,7 +295,7 @@ void Map::deleteClPolyobj(clpolyobj_t *mover)
 
 void Cl_MoverThinker(clplane_t *mover)
 {
-    Map *map = theMap; /// @todo Do not assume mover is from the CURRENT map.
+    Map &map = App_World().map(); /// @todo Do not assume mover is from the CURRENT map.
     coord_t original;
     boolean remove = false;
     boolean freeMove;
@@ -305,7 +305,7 @@ void Cl_MoverThinker(clplane_t *mover)
     if(!Cl_GameReady()) return;
 
 #ifdef _DEBUG
-    if(map->clPlaneIndex(mover) < 0)
+    if(map.clPlaneIndex(mover) < 0)
     {
         Con_Message("Cl_MoverThinker: Running a mover that is not in activemovers!");
     }
@@ -364,7 +364,7 @@ void Cl_MoverThinker(clplane_t *mover)
             // It stops.
             P_SetDouble(DMU_SECTOR, mover->sectorIndex, mover->dmuPlane | DMU_SPEED, 0);
 
-            map->deleteClPlane(mover);
+            map.deleteClPlane(mover);
         }
     }
 }
@@ -493,7 +493,7 @@ void Cl_PolyMoverThinker(clpolyobj_t *mover)
     if(!mover->move && !mover->rotate)
     {
         /// @todo Do not assume the move is from the CURRENT map.
-        theMap->deleteClPolyobj(mover);
+        App_World().map().deleteClPolyobj(mover);
     }
 }
 
@@ -533,11 +533,10 @@ clpolyobj_t *Map::newClPolyobj(uint polyobjIndex)
 
 clpolyobj_t *Cl_FindOrMakeActivePoly(uint polyobjIndex)
 {
-    DENG_ASSERT(theMap != 0);
-    clpolyobj_t *mover = theMap->clPolyobjByPolyobjIndex(polyobjIndex);
+    clpolyobj_t *mover = App_World().map().clPolyobjByPolyobjIndex(polyobjIndex);
     if(mover) return mover;
     // Not found; make a new one.
-    return theMap->newClPolyobj(polyobjIndex);
+    return App_World().map().newClPolyobj(polyobjIndex);
 }
 
 void Cl_SetPolyMover(uint number, int move, int rotate)
@@ -577,7 +576,7 @@ void Cl_ReadSectorDelta2(int deltaType, boolean /*skip*/)
     DENG_UNUSED(deltaType);
 
     /// @todo Do not assume the CURRENT map.
-    Map *map = theMap;
+    Map &map = App_World().map();
 
 #define PLN_FLOOR   0
 #define PLN_CEILING 1
@@ -590,9 +589,9 @@ void Cl_ReadSectorDelta2(int deltaType, boolean /*skip*/)
     ushort num = Reader_ReadUInt16(msgReader);
 
 #ifdef _DEBUG
-    DENG_ASSERT(num < theMap->sectorCount());
+    DENG_ASSERT(num < map.sectorCount());
 #endif
-    Sector *sec = theMap->sectors().at(num);
+    Sector *sec = map.sectors().at(num);
 
     // Flags.
     int df = Reader_ReadPackedUInt32(msgReader);
@@ -650,20 +649,20 @@ void Cl_ReadSectorDelta2(int deltaType, boolean /*skip*/)
     // Do we need to start any moving planes?
     if(df & SDF_FLOOR_HEIGHT)
     {
-        map->newClPlane(num, CPT_FLOOR, height[PLN_FLOOR], 0);
+        map.newClPlane(num, CPT_FLOOR, height[PLN_FLOOR], 0);
     }
     else if(df & (SDF_FLOOR_TARGET | SDF_FLOOR_SPEED))
     {
-        map->newClPlane(num, CPT_FLOOR, target[PLN_FLOOR], speed[PLN_FLOOR]);
+        map.newClPlane(num, CPT_FLOOR, target[PLN_FLOOR], speed[PLN_FLOOR]);
     }
 
     if(df & SDF_CEILING_HEIGHT)
     {
-        map->newClPlane(num, CPT_CEILING, height[PLN_CEILING], 0);
+        map.newClPlane(num, CPT_CEILING, height[PLN_CEILING], 0);
     }
     else if(df & (SDF_CEILING_TARGET | SDF_CEILING_SPEED))
     {
-        map->newClPlane(num, CPT_CEILING, target[PLN_CEILING], speed[PLN_CEILING]);
+        map.newClPlane(num, CPT_CEILING, target[PLN_CEILING], speed[PLN_CEILING]);
     }
 
 #undef PLN_CEILING
@@ -733,7 +732,7 @@ void Cl_ReadSideDelta2(int deltaType, boolean skip)
     if(skip)
         return;
 
-    Line::Side *side = theMap->sideByIndex(num);
+    Line::Side *side = App_World().map().sideByIndex(num);
     DENG_ASSERT(side != 0);
 
     if(df & SIDF_TOP_MATERIAL)
@@ -827,8 +826,7 @@ void Cl_ReadPolyDelta2(boolean skip)
     if(skip)
         return;
 
-    DENG_ASSERT(num < theMap->polyobjCount());
-    po = theMap->polyobjs().at(num);
+    po = App_World().map().polyobjs().at(num);
 
     if(df & PODF_DEST_X)
         po->dest[VX] = destX;

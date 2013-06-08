@@ -222,15 +222,16 @@ static int linkShadowLineToBspLeafWorker(BspLeaf *bspLeaf, void *context)
 
 void Rend_RadioInitForMap()
 {
-    DENG_ASSERT(theMap != 0);
-
     Time begunAt;
 
     LOG_AS("Rend_RadioInitForMap");
 
-    lineSideRadioData = reinterpret_cast<LineSideRadioData *>(Z_Calloc(sizeof(*lineSideRadioData) * theMap->sideCount(), PU_MAP, 0));
+    Map &map = App_World().map();
 
-    foreach(Vertex *vertex, theMap->vertexes())
+    lineSideRadioData = reinterpret_cast<LineSideRadioData *>(
+        Z_Calloc(sizeof(*lineSideRadioData) * map.sideCount(), PU_MAP, 0));
+
+    foreach(Vertex *vertex, map.vertexes())
     {
         Rend_RadioUpdateVertexShadowOffsets(*vertex);
     }
@@ -251,7 +252,7 @@ void Rend_RadioInitForMap()
 
     AABoxd bounds;
 
-    foreach(Line *line, theMap->lines())
+    foreach(Line *line, map.lines())
     {
         if(!Rend_RadioLineCastsShadow(*line)) continue;
 
@@ -278,8 +279,8 @@ void Rend_RadioInitForMap()
 
             // Link the shadowing line to all the BspLeafs whose axis-aligned
             // bounding box intersects 'bounds'.
-            theMap->bspLeafsBoxIterator(bounds, side.sectorPtr(),
-                                        linkShadowLineToBspLeafWorker, &side);
+            map.bspLeafsBoxIterator(bounds, side.sectorPtr(),
+                                    linkShadowLineToBspLeafWorker, &side);
         }
     }
 

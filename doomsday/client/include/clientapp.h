@@ -1,6 +1,7 @@
 /** @file clientapp.h  The client application.
  *
- * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -26,6 +27,7 @@
 #include "ui/windowsystem.h"
 #include "ui/widgets/widgetactions.h"
 #include "Games"
+#include "world/world.h"
 
 /**
  * The client application.
@@ -53,6 +55,7 @@ public:
     static WidgetActions &widgetActions();
     static de::GLShaderBank &glShaderBank();
     static de::Games &games();
+    static de::World &world();
 
 private:
     DENG2_PRIVATE(d)

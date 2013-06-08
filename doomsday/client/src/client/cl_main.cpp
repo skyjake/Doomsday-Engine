@@ -91,9 +91,9 @@ void Cl_CleanUp()
     clientPaused = false;
     handshakeReceived = false;
 
-    if(theMap)
+    if(App_World().hasMap())
     {
-        theMap->destroyClMobjs();
+        App_World().map().destroyClMobjs();
     }
 
     Cl_InitPlayers();
@@ -479,9 +479,9 @@ void Cl_Ticker(timespan_t ticLength)
 #endif
     }
 
-    if(theMap)
+    if(App_World().hasMap())
     {
-        theMap->expireClMobjs();
+        App_World().map().expireClMobjs();
     }
 }
 

@@ -59,16 +59,22 @@
 #include "de_filesys.h"
 #include "de_resource.h"
 
+#include "updater.h"
+#include "m_misc.h"
+
 #include "gl/svg.h"
+
+#include "api_map.h"
 #include "world/p_players.h"
 #include "world/p_maputil.h"
 #include "world/p_objlink.h"
+#include "world/world.h"
+
 #include "ui/p_control.h"
-#include "updater.h"
-#include "m_misc.h"
-#include "api_map.h"
 
 #ifdef __CLIENT__
+#  include "render/rend_bias.h"
+#  include "render/vlight.h"
 #  include "ui/widgets/taskbarwidget.h"
 #endif
 
@@ -1502,9 +1508,9 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
         if(isClient)
         {
             // If a map was loaded; unload it.
-            if(theMap)
+            if(App_World().hasMap())
             {
-                theMap->clMobjReset();
+                App_World().map().clMobjReset();
             }
             // Clear player data, too, since we just lost all clmobjs.
             Cl_InitPlayers();
@@ -1514,7 +1520,7 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
         // Most memory is allocated from the zone.
         //Z_FreeTags(PU_MAP, PU_PURGELEVEL - 1);
         Z_FreeTags(PU_GAMESTATIC, PU_PURGELEVEL - 1);
-        theMap = 0;
+        App_World().clearMap();
 
         P_ShutdownMapEntityDefs();
 
@@ -1525,12 +1531,6 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
         DD_ClearRuntimeTextureSchemes();
 
         Sfx_InitLogical();
-
-        /// @todo Why is this being done here?
-        if(theMap)
-        {
-            theMap->initThinkerLists(0x1|0x2);
-        }
 
         Con_ClearDatabases();
 
@@ -1712,6 +1712,19 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
     App_Games().notifyGameChange();
 
     return true;
+}
+
+de::World &App_World()
+{
+#ifdef __CLIENT__
+    return ClientApp::world();
+#endif
+
+#ifdef __SERVER__
+    /// @todo Add a ServerApp class, move this there.
+    static World serverWorld;
+    return serverWorld;
+#endif
 }
 
 boolean DD_IsShuttingDown(void)
@@ -2432,9 +2445,9 @@ int DD_GetInteger(int ddvalue)
         return F_LumpCount();
 
     case DD_MAP_MUSIC: {
-        if(Map *map = theMap)
+        if(App_World().hasMap())
         {
-            de::Uri mapUri = map->uri();
+            de::Uri mapUri = App_World().map().uri();
             if(ded_mapinfo_t *mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&mapUri)))
             {
                 return Def_GetMusicNum(mapInfo->music);
@@ -2481,7 +2494,7 @@ void *DD_GetVariable(int ddvalue)
         return &gx;
 
     case DD_POLYOBJ_COUNT:
-        value = theMap? theMap->polyobjCount() : 0;
+        value = App_World().hasMap()? App_World().map().polyobjCount() : 0;
         return &value;
 
     case DD_TRACE_ADDRESS:
@@ -2492,9 +2505,9 @@ void *DD_GetVariable(int ddvalue)
         return translationTables;
 
     case DD_MAP_NAME:
-        if(theMap)
+        if(App_World().hasMap())
         {
-            de::Uri mapUri = theMap->uri();
+            de::Uri mapUri = App_World().map().uri();
             ded_mapinfo_t *mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&mapUri));
             if(mapInfo && mapInfo->name[0])
             {
@@ -2509,9 +2522,9 @@ void *DD_GetVariable(int ddvalue)
         return NULL;
 
     case DD_MAP_AUTHOR:
-        if(theMap)
+        if(App_World().hasMap())
         {
-            de::Uri mapUri = theMap->uri();
+            de::Uri mapUri = App_World().map().uri();
             ded_mapinfo_t* mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&mapUri));
             if(mapInfo && mapInfo->author[0])
             {
@@ -2521,19 +2534,19 @@ void *DD_GetVariable(int ddvalue)
         return NULL;
 
     case DD_MAP_MIN_X:
-        valueD = theMap? theMap->bounds().minX : 0;
+        valueD = App_World().hasMap()? App_World().map().bounds().minX : 0;
         return &valueD;
 
     case DD_MAP_MIN_Y:
-        valueD = theMap? theMap->bounds().minY : 0;
+        valueD = App_World().hasMap()? App_World().map().bounds().minY : 0;
         return &valueD;
 
     case DD_MAP_MAX_X:
-        valueD = theMap? theMap->bounds().maxX : 0;
+        valueD = App_World().hasMap()? App_World().map().bounds().maxX : 0;
         return &valueD;
 
     case DD_MAP_MAX_Y:
-        valueD = theMap? theMap->bounds().maxY : 0;
+        valueD = App_World().hasMap()? App_World().map().bounds().maxY : 0;
         return &valueD;
 
     case DD_PSPRITE_OFFSET_X:
@@ -2549,7 +2562,7 @@ void *DD_GetVariable(int ddvalue)
         return &cplrThrustMul;*/
 
     case DD_GRAVITY:
-        valueD = theMap? theMap->gravity() : 0;
+        valueD = App_World().hasMap()? App_World().map().gravity() : 0;
         return &valueD;
 
 #ifdef __CLIENT__
@@ -2628,8 +2641,8 @@ void DD_SetVariable(int ddvalue, void *parm)
             return;*/
 
         case DD_GRAVITY:
-            if(theMap)
-                theMap->setGravity(*(coord_t*) parm);
+            if(App_World().hasMap())
+                App_World().map().setGravity(*(coord_t*) parm);
             return;
 
         case DD_PSPRITE_OFFSET_X:
@@ -2966,8 +2979,12 @@ DENG_EXTERN_C boolean DD_IsSharpTick(void);
 // net_main.c
 DENG_EXTERN_C void Net_SendPacket(int to_player, int type, const void* data, size_t length);
 
-// r_world.cpp
-DENG_EXTERN_C void R_SetupMap(int mode, int flags);
+#undef R_SetupMap
+DENG_EXTERN_C void R_SetupMap(int mode, int flags)
+{
+    DENG_UNUSED(flags);
+    App_World().setupMap(mode);
+}
 
 // sys_system.c
 DENG_EXTERN_C void Sys_Quit(void);

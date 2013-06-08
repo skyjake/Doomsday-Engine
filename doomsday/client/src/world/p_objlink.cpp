@@ -234,7 +234,7 @@ void R_InitObjlinkBlockmapForMap()
 {
     // Determine the dimensions of the objlink blockmaps in blocks.
     coord_t min[2], max[2];
-    theMap->bounds(min, max);
+    App_World().map().bounds(min, max);
 
     uint width  = uint( de::ceil((max[VX] - min[VX]) / coord_t( BLOCK_WIDTH  )) );
     uint height = uint( de::ceil((max[VY] - min[VY]) / coord_t( BLOCK_HEIGHT )) );
@@ -249,8 +249,9 @@ void R_InitObjlinkBlockmapForMap()
     }
 
     // Initialize obj => BspLeaf contact lists.
-    bspLeafContacts = (objcontactlist_t *) Z_Calloc(sizeof *bspLeafContacts * theMap->bspLeafCount(),
-                                                    PU_MAPSTATIC, 0);
+    bspLeafContacts = (objcontactlist_t *)
+        Z_Calloc(sizeof *bspLeafContacts * App_World().map().bspLeafCount(),
+                 PU_MAPSTATIC, 0);
 }
 
 void R_DestroyObjlinkBlockmap()
@@ -625,7 +626,7 @@ void R_InitForNewFrame()
     contCursor = contFirst;
     if(bspLeafContacts)
     {
-        std::memset(bspLeafContacts, 0, theMap->bspLeafCount() * sizeof *bspLeafContacts);
+        std::memset(bspLeafContacts, 0, App_World().map().bspLeafCount() * sizeof *bspLeafContacts);
     }
 }
 

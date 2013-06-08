@@ -17,23 +17,16 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_WORLD_H
-#define DENG_WORLD_H
+#ifndef DENG_WORLD_P_MAPUTIL2_H
+#define DENG_WORLD_P_MAPUTIL2_H
 
-#include <de/Observers>
+#include <de/binangle.h>
+
 #include <de/Vector>
 
-#include "resource/r_data.h"
 #include "Line"
-#include "Plane"
 #include "Sector"
 #include "Vertex"
-
-/// @todo The MapChange audience belongs in a class.
-DENG2_DECLARE_AUDIENCE(MapChange, void currentMapChanged())
-DENG2_EXTERN_AUDIENCE(MapChange)
-
-extern boolean ddMapSetup;
 
 void R_SetRelativeHeights(Sector const *front, Sector const *back, int planeIndex,
     coord_t *fz = 0, coord_t *bz = 0, coord_t *bhz = 0);
@@ -129,4 +122,4 @@ Line *R_FindSolidLineNeighbor(Sector const *sector, Line const *line,
 
 #endif // __CLIENT__
 
-#endif // DENG_WORLD_H
+#endif // DENG_WORLD_P_MAPUTIL2_H

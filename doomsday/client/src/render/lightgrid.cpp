@@ -706,7 +706,7 @@ DENG2_OBSERVES(Sector, LightLevelChange)
         delete[] sampleResults;
 
         // Find the blocks of all sectors.
-        foreach(Sector *sector, theMap->sectors())
+        foreach(Sector *sector, map.sectors())
         {
             int count = 0, changedCount = 0;
 
@@ -768,7 +768,7 @@ DENG2_OBSERVES(Sector, LightLevelChange)
                 }
             }
 
-            // LOG_DEBUG("  Sector %i: %i / %i") << theMap->sectorIndex(s) << changedCount << count;
+            // LOG_DEBUG("  Sector %i: %i / %i") << map.sectorIndex(s) << changedCount << count;
 
             Sector::LightGridData &lgData = sector->lightGridData();
             lgData.changedBlockCount = changedCount;

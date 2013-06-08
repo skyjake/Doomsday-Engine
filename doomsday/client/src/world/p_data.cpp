@@ -19,32 +19,22 @@
  */
 
 #include <cmath>
-
-#define DENG_NO_API_MACROS_MAP
-
-#include "de_base.h"
-#include "de_defs.h"
-#include "de_network.h"
-#include "de_play.h"
-#include "de_render.h"
-#include "de_system.h"
-#include "de_filesys.h"
-
-#include "Game"
-#include "world/map.h"
-#include "world/propertyvalue.h"
-#include "render/rend_bias.h"
-#include "render/vlight.h"
-
 #include <map>
-#include <EntityDatabase>
+
+#include <de/memory.h>
 
 #include <de/Error>
 #include <de/Log>
 #include <de/String>
 #include <de/StringPool>
-#include <de/binangle.h>
-#include <de/memory.h>
+
+#include "de_base.h"
+#include "de_play.h"
+
+#include "EntityDatabase"
+
+#include "world/map.h"
+#include "world/propertyvalue.h"
 
 using namespace de;
 
@@ -52,199 +42,6 @@ using namespace de;
 static StringPool *entityDefs;
 typedef std::map<int, StringPool::Id> EntityDefIdMap;
 static EntityDefIdMap entityDefIdMap;
-
-extern "C" boolean mapSetup; // We are currently setting up a map.
-
-namespace de {
-
-Map *theMap; // Available globally inside the engine.
-
-}
-
-#undef P_MapExists
-DENG_EXTERN_C boolean P_MapExists(char const *uriCString)
-{
-    de::Uri uri(uriCString, RC_NULL);
-    lumpnum_t lumpNum = W_CheckLumpNumForName2(uri.path().toString().toLatin1(), true/*quiet please*/);
-    return (lumpNum >= 0);
-}
-
-#undef P_MapIsCustom
-DENG_EXTERN_C boolean P_MapIsCustom(char const *uriCString)
-{
-    de::Uri uri(uriCString, RC_NULL);
-    lumpnum_t lumpNum = W_CheckLumpNumForName2(uri.path().toString().toLatin1(), true/*quiet please*/);
-    return (lumpNum >= 0 && W_LumpIsCustom(lumpNum));
-}
-
-#undef P_MapSourceFile
-DENG_EXTERN_C AutoStr *P_MapSourceFile(char const *uriCString)
-{
-    de::Uri uri(uriCString, RC_NULL);
-    lumpnum_t lumpNum = W_CheckLumpNumForName2(uri.path().toString().toLatin1(), true/*quiet please*/);
-    if(lumpNum < 0) return AutoStr_NewStd();
-    return W_LumpSourceFile(lumpNum);
-}
-
-#undef P_LoadMap
-DENG_EXTERN_C boolean P_LoadMap(char const *uriCString)
-{
-    if(!uriCString || !uriCString[0])
-    {
-        App_FatalError("P_LoadMap: Invalid Uri argument.");
-    }
-
-    de::Uri uri(uriCString, RC_NULL);
-    LOG_MSG("Loading map \"%s\"...") << uri;
-
-    if(isServer)
-    {
-        // Whenever the map changes, remote players must tell us when
-        // they're ready to begin receiving frames.
-        for(uint i = 0; i < DDMAXPLAYERS; ++i)
-        {
-            //player_t *plr = &ddPlayers[i];
-            if(/*!(plr->shared.flags & DDPF_LOCAL) &&*/ clients[i].connected)
-            {
-                LOG_DEBUG("Client %i marked as 'not ready' to receive frames.") << i;
-                clients[i].ready = false;
-            }
-        }
-    }
-
-    Z_FreeTags(PU_MAP, PU_PURGELEVEL - 1);
-
-    if((theMap = App_MapArchive().loadMap(uri)))
-    {
-        LOG_INFO("Map elements: %d Vertexes, %d Lines, %d Sectors, %d BSP Nodes, %d BSP Leafs and %d Segments")
-            << theMap->vertexCount() << theMap->lineCount() << theMap->sectorCount()
-            << theMap->bspNodeCount() << theMap->bspLeafCount() << theMap->segmentCount();
-
-        // Call the game's setup routines.
-        if(gx.SetupForMapData)
-        {
-            gx.SetupForMapData(DMU_VERTEX,  theMap->vertexCount());
-            gx.SetupForMapData(DMU_LINE,    theMap->lineCount());
-            gx.SetupForMapData(DMU_SIDE,    theMap->sideCount());
-            gx.SetupForMapData(DMU_SECTOR,  theMap->sectorCount());
-        }
-
-        // Do any initialization/error checking work we need to do.
-        // Must be called before we go any further.
-        P_InitUnusedMobjList();
-
-        // Must be called before any mobjs are spawned.
-        theMap->initNodePiles();
-
-#ifdef __CLIENT__
-        // Prepare the client-side data.
-        if(isClient)
-        {
-            theMap->initClMobjs();
-        }
-
-        Rend_DecorInitForMap();
-#endif
-
-        // See what mapinfo says about this map.
-        de::Uri mapUri = theMap->uri();
-        ded_mapinfo_t *mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&mapUri));
-        if(!mapInfo)
-        {
-            de::Uri defaultMapUri("*", RC_NULL);
-            mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&defaultMapUri));
-        }
-
-#ifdef __CLIENT__
-        ded_sky_t *skyDef = 0;
-        if(mapInfo)
-        {
-            skyDef = Def_GetSky(mapInfo->skyID);
-            if(!skyDef)
-                skyDef = &mapInfo->sky;
-        }
-        Sky_Configure(skyDef);
-#endif
-
-        // Setup accordingly.
-        if(mapInfo)
-        {
-            theMap->_globalGravity = mapInfo->gravity;
-            theMap->_ambientLightLevel = mapInfo->ambient * 255;
-        }
-        else
-        {
-            // No map info found, so set some basic stuff.
-            theMap->_globalGravity = 1.0f;
-            theMap->_ambientLightLevel = 0;
-        }
-
-        theMap->_effectiveGravity = theMap->_globalGravity;
-
-#ifdef __CLIENT__
-        Rend_RadioInitForMap();
-#endif
-
-        theMap->initSkyFix();
-
-        // Init the thinker lists (public and private).
-        theMap->initThinkerLists(0x1 | 0x2);
-
-#ifdef __CLIENT__
-        if(isClient)
-        {
-            theMap->clMobjReset();
-        }
-
-        // Tell shadow bias to initialize the bias light sources.
-        SB_InitForMap(theMap->oldUniqueId());
-
-        // Clear player data, too, since we just lost all clmobjs.
-        Cl_InitPlayers();
-
-        RL_DeleteLists();
-        Rend_UpdateLightModMatrix();
-#endif
-
-        // Invalidate old cmds and init player values.
-        for(uint i = 0; i < DDMAXPLAYERS; ++i)
-        {
-            player_t *plr = &ddPlayers[i];
-
-            /*
-            if(isServer && plr->shared.inGame)
-                clients[i].runTime = SECONDS_TO_TICKS(gameTime);*/
-
-            plr->extraLight = plr->targetExtraLight = 0;
-            plr->extraLightCounter = 0;
-        }
-
-        // Make sure that the next frame doesn't use a filtered viewer.
-        R_ResetViewer();
-
-#ifdef __CLIENT__
-        // Material animations should begin from their first step.
-        App_Materials().restartAllAnimations();
-
-        R_InitObjlinkBlockmapForMap();
-
-        LO_InitForMap(); // Lumobj management.
-        R_InitShadowProjectionListsForMap(); // Projected mobj shadows.
-        VL_InitForMap(); // Converted vlights (from lumobjs) management.
-
-        theMap->initLightGrid();
-
-        R_InitRendPolyPools();
-#endif
-
-        // Init Particle Generator links.
-        P_PtcInitForMap();
-
-        return true;
-    }
-
-    return false;
-}
 
 static int clearEntityDefsWorker(StringPool::Id id, void * /*parameters*/)
 {
@@ -488,14 +285,6 @@ void P_ShutdownMapEntityDefs()
     clearEntityDefs();
 }
 
-#undef P_CountMapObjs
-DENG_EXTERN_C uint P_CountMapObjs(int entityId)
-{
-    if(!theMap || !theMap->entityDatabase) return 0;
-    EntityDatabase *db = theMap->entityDatabase;
-    return EntityDatabase_EntityCount(db, P_MapEntityDef(entityId));
-}
-
 boolean P_SetMapEntityProperty(EntityDatabase *db, MapEntityPropertyDef *propertyDef,
     int elementIndex, valuetype_t valueType, void *valueAdr)
 {
@@ -545,11 +334,11 @@ static void setValue(void *dst, valuetype_t dstType, PropertyValue const *pvalue
 DENG_EXTERN_C byte P_GetGMOByte(int entityId, int elementIndex, int propertyId)
 {
     byte returnVal = 0;
-    if(theMap && theMap->entityDatabase)
+    if(App_World().hasMap() && App_World().map().entityDatabase)
     {
         try
         {
-            EntityDatabase *db = theMap->entityDatabase;
+            EntityDatabase *db = App_World().map().entityDatabase;
             MapEntityPropertyDef *propDef = entityPropertyDef(entityId, propertyId);
 
             setValue(&returnVal, DDVT_BYTE, EntityDatabase_Property(db, propDef, elementIndex));
@@ -566,11 +355,11 @@ DENG_EXTERN_C byte P_GetGMOByte(int entityId, int elementIndex, int propertyId)
 DENG_EXTERN_C short P_GetGMOShort(int entityId, int elementIndex, int propertyId)
 {
     short returnVal = 0;
-    if(theMap && theMap->entityDatabase)
+    if(App_World().hasMap() && App_World().map().entityDatabase)
     {
         try
         {
-            EntityDatabase *db = theMap->entityDatabase;
+            EntityDatabase *db = App_World().map().entityDatabase;
             MapEntityPropertyDef *propDef = entityPropertyDef(entityId, propertyId);
 
             setValue(&returnVal, DDVT_SHORT, EntityDatabase_Property(db, propDef, elementIndex));
@@ -587,11 +376,11 @@ DENG_EXTERN_C short P_GetGMOShort(int entityId, int elementIndex, int propertyId
 DENG_EXTERN_C int P_GetGMOInt(int entityId, int elementIndex, int propertyId)
 {
     int returnVal = 0;
-    if(theMap && theMap->entityDatabase)
+    if(App_World().hasMap() && App_World().map().entityDatabase)
     {
         try
         {
-            EntityDatabase *db = theMap->entityDatabase;
+            EntityDatabase *db = App_World().map().entityDatabase;
             MapEntityPropertyDef *propDef = entityPropertyDef(entityId, propertyId);
 
             setValue(&returnVal, DDVT_INT, EntityDatabase_Property(db, propDef, elementIndex));
@@ -608,11 +397,11 @@ DENG_EXTERN_C int P_GetGMOInt(int entityId, int elementIndex, int propertyId)
 DENG_EXTERN_C fixed_t P_GetGMOFixed(int entityId, int elementIndex, int propertyId)
 {
     fixed_t returnVal = 0;
-    if(theMap && theMap->entityDatabase)
+    if(App_World().hasMap() && App_World().map().entityDatabase)
     {
         try
         {
-            EntityDatabase *db = theMap->entityDatabase;
+            EntityDatabase *db = App_World().map().entityDatabase;
             MapEntityPropertyDef *propDef = entityPropertyDef(entityId, propertyId);
 
             setValue(&returnVal, DDVT_FIXED, EntityDatabase_Property(db, propDef, elementIndex));
@@ -629,11 +418,11 @@ DENG_EXTERN_C fixed_t P_GetGMOFixed(int entityId, int elementIndex, int property
 DENG_EXTERN_C angle_t P_GetGMOAngle(int entityId, int elementIndex, int propertyId)
 {
     angle_t returnVal = 0;
-    if(theMap && theMap->entityDatabase)
+    if(App_World().hasMap() && App_World().map().entityDatabase)
     {
         try
         {
-            EntityDatabase *db = theMap->entityDatabase;
+            EntityDatabase *db = App_World().map().entityDatabase;
             MapEntityPropertyDef *propDef = entityPropertyDef(entityId, propertyId);
 
             setValue(&returnVal, DDVT_ANGLE, EntityDatabase_Property(db, propDef, elementIndex));
@@ -650,11 +439,11 @@ DENG_EXTERN_C angle_t P_GetGMOAngle(int entityId, int elementIndex, int property
 DENG_EXTERN_C float P_GetGMOFloat(int entityId, int elementIndex, int propertyId)
 {
     float returnVal = 0;
-    if(theMap && theMap->entityDatabase)
+    if(App_World().hasMap() && App_World().map().entityDatabase)
     {
         try
         {
-            EntityDatabase *db = theMap->entityDatabase;
+            EntityDatabase *db = App_World().map().entityDatabase;
             MapEntityPropertyDef *propDef = entityPropertyDef(entityId, propertyId);
 
             setValue(&returnVal, DDVT_FLOAT, EntityDatabase_Property(db, propDef, elementIndex));

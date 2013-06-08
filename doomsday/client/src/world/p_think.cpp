@@ -339,36 +339,36 @@ using namespace de;
 #undef P_MobjForID
 DENG_EXTERN_C struct mobj_s *P_MobjForID(int id)
 {
-    if(!theMap) return 0;
-    return theMap->mobjById(id);
+    if(!App_World().hasMap()) return 0;
+    return App_World().map().mobjById(id);
 }
 
 #undef Thinker_Init
 void Thinker_Init()
 {
-    if(!theMap) return;
-    theMap->initThinkerLists(0x1); // Init the public thinker lists.
+    if(!App_World().hasMap()) return;
+    App_World().map().initThinkerLists(0x1); // Init the public thinker lists.
 }
 
 #undef Thinker_Run
 void Thinker_Run()
 {
-    if(!theMap) return;
-    theMap->iterateThinkers(NULL, 0x1 | 0x2, runThinker, NULL);
+    if(!App_World().hasMap()) return;
+    App_World().map().iterateThinkers(NULL, 0x1 | 0x2, runThinker, NULL);
 }
 
 #undef Thinker_Add
 void Thinker_Add(thinker_t *th)
 {
-    if(!th || !theMap) return;
-    theMap->thinkerAdd(*th, true); // This is a public thinker.
+    if(!th || !App_World().hasMap()) return;
+    App_World().map().thinkerAdd(*th, true); // This is a public thinker.
 }
 
 #undef Thinker_Remove
 void Thinker_Remove(thinker_t *th)
 {
-    if(!th || !theMap) return;
-    theMap->thinkerRemove(*th);
+    if(!th || !App_World().hasMap()) return;
+    App_World().map().thinkerRemove(*th);
 }
 
 #undef Thinker_SetStasis
@@ -383,8 +383,8 @@ void Thinker_SetStasis(thinker_t *th, boolean on)
 #undef Thinker_Iterate
 int Thinker_Iterate(thinkfunc_t func, int (*callback) (thinker_t *, void *), void *context)
 {
-    if(!theMap) return false; // Continue iteration.
-    return theMap->iterateThinkers(func, 0x1, callback, context);
+    if(!App_World().hasMap()) return false; // Continue iteration.
+    return App_World().map().iterateThinkers(func, 0x1, callback, context);
 }
 
 DENG_DECLARE_API(Thinker) =

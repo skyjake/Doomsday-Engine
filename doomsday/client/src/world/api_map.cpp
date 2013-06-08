@@ -35,6 +35,7 @@
 #include "api_map.h"
 
 #include "world/dmuargs.h"
+#include "world/world.h"
 
 #ifdef __CLIENT__
 #  include "render/lightgrid.h"
@@ -317,19 +318,19 @@ void *P_ToPtr(int type, int index)
     switch(type)
     {
     case DMU_VERTEX:
-        return theMap->vertexes().at(index);
+        return App_World().map().vertexes().at(index);
 
     case DMU_SEGMENT:
-        return theMap->segments().at(index);
+        return App_World().map().segments().at(index);
 
     case DMU_LINE:
-        return theMap->lines().at(index);
+        return App_World().map().lines().at(index);
 
     case DMU_SIDE:
-        return theMap->sideByIndex(index);
+        return App_World().map().sideByIndex(index);
 
     case DMU_SECTOR:
-        return theMap->sectors().at(index);
+        return App_World().map().sectors().at(index);
 
     case DMU_PLANE: {
         /// @todo Throw exception.
@@ -338,10 +339,10 @@ void *P_ToPtr(int type, int index)
         return 0; /* Unreachable. */ }
 
     case DMU_BSPLEAF:
-        return theMap->bspLeafs().at(index);
+        return App_World().map().bspLeafs().at(index);
 
     case DMU_BSPNODE:
-        return theMap->bspNodes().at(index);
+        return App_World().map().bspNodes().at(index);
 
     case DMU_MATERIAL:
         /// @note @a index is 1-based.
@@ -362,13 +363,13 @@ int P_Count(int type)
 {
     switch(type)
     {
-    case DMU_VERTEX:    return theMap? theMap->vertexCount()  : 0;
-    case DMU_SEGMENT:   return theMap? theMap->segmentCount() : 0;
-    case DMU_LINE:      return theMap? theMap->lineCount()    : 0;
-    case DMU_SIDE:      return theMap? theMap->sideCount()    : 0;
-    case DMU_BSPNODE:   return theMap? theMap->bspNodeCount() : 0;
-    case DMU_BSPLEAF:   return theMap? theMap->bspLeafCount() : 0;
-    case DMU_SECTOR:    return theMap? theMap->sectorCount()  : 0;
+    case DMU_VERTEX:    return App_World().hasMap()? App_World().map().vertexCount()  : 0;
+    case DMU_SEGMENT:   return App_World().hasMap()? App_World().map().segmentCount() : 0;
+    case DMU_LINE:      return App_World().hasMap()? App_World().map().lineCount()    : 0;
+    case DMU_SIDE:      return App_World().hasMap()? App_World().map().sideCount()    : 0;
+    case DMU_BSPNODE:   return App_World().hasMap()? App_World().map().bspNodeCount() : 0;
+    case DMU_BSPLEAF:   return App_World().hasMap()? App_World().map().bspLeafCount() : 0;
+    case DMU_SECTOR:    return App_World().hasMap()? App_World().map().sectorCount()  : 0;
 
     case DMU_MATERIAL:  return (int)App_Materials().count();
 
@@ -444,39 +445,39 @@ int P_Callback(int type, int index, void *context, int (*callback)(void *p, void
     switch(type)
     {
     case DMU_VERTEX:
-        if(index >= 0 && index < theMap->vertexCount())
-            return callback(theMap->vertexes().at(index), context);
+        if(index >= 0 && index < App_World().map().vertexCount())
+            return callback(App_World().map().vertexes().at(index), context);
         break;
 
     case DMU_SEGMENT:
-        if(index >= 0 && index < theMap->segmentCount())
-            return callback(theMap->segments().at(index), context);
+        if(index >= 0 && index < App_World().map().segmentCount())
+            return callback(App_World().map().segments().at(index), context);
         break;
 
     case DMU_LINE:
-        if(index >= 0 && index < theMap->lineCount())
-            return callback(theMap->lines().at(index), context);
+        if(index >= 0 && index < App_World().map().lineCount())
+            return callback(App_World().map().lines().at(index), context);
         break;
 
     case DMU_SIDE: {
-        Line::Side *side = theMap->sideByIndex(index);
+        Line::Side *side = App_World().map().sideByIndex(index);
         if(side)
             return callback(side, context);
         break; }
 
     case DMU_BSPNODE:
-        if(index >= 0 && index < theMap->bspNodeCount())
-            return callback(theMap->bspNodes().at(index), context);
+        if(index >= 0 && index < App_World().map().bspNodeCount())
+            return callback(App_World().map().bspNodes().at(index), context);
         break;
 
     case DMU_BSPLEAF:
-        if(index >= 0 && index < theMap->bspLeafCount())
-            return callback(theMap->bspLeafs().at(index), context);
+        if(index >= 0 && index < App_World().map().bspLeafCount())
+            return callback(App_World().map().bspLeafs().at(index), context);
         break;
 
     case DMU_SECTOR:
-        if(index >= 0 && index < theMap->sectorCount())
-            return callback(theMap->sectors().at(index), context);
+        if(index >= 0 && index < App_World().map().sectorCount())
+            return callback(App_World().map().sectors().at(index), context);
         break;
 
     case DMU_PLANE: {
@@ -1493,13 +1494,48 @@ void P_GetPtrpv(void *ptr, uint prop, void *params)
     }
 }
 
-// p_data.cpp
-DENG_EXTERN_C boolean P_MapExists(char const* uriCString);
+#undef P_MapExists
+DENG_EXTERN_C boolean P_MapExists(char const *uriCString)
+{
+    de::Uri uri(uriCString, RC_NULL);
+    lumpnum_t lumpNum = W_CheckLumpNumForName2(uri.path().toString().toLatin1(), true/*quiet please*/);
+    return (lumpNum >= 0);
+}
 
-DENG_EXTERN_C boolean P_MapIsCustom(char const* uriCString);
-DENG_EXTERN_C AutoStr* P_MapSourceFile(char const* uriCString);
-DENG_EXTERN_C boolean P_LoadMap(char const* uriCString);
-DENG_EXTERN_C uint P_CountMapObjs(int entityId);
+#undef P_MapIsCustom
+DENG_EXTERN_C boolean P_MapIsCustom(char const *uriCString)
+{
+    de::Uri uri(uriCString, RC_NULL);
+    lumpnum_t lumpNum = W_CheckLumpNumForName2(uri.path().toString().toLatin1(), true/*quiet please*/);
+    return (lumpNum >= 0 && W_LumpIsCustom(lumpNum));
+}
+
+#undef P_MapSourceFile
+DENG_EXTERN_C AutoStr *P_MapSourceFile(char const *uriCString)
+{
+    de::Uri uri(uriCString, RC_NULL);
+    lumpnum_t lumpNum = W_CheckLumpNumForName2(uri.path().toString().toLatin1(), true/*quiet please*/);
+    if(lumpNum < 0) return AutoStr_NewStd();
+    return W_LumpSourceFile(lumpNum);
+}
+
+#undef P_LoadMap
+DENG_EXTERN_C boolean P_LoadMap(char const *uriCString)
+{
+    if(!uriCString || !uriCString[0])
+    {
+        App_FatalError("P_LoadMap: Invalid Uri argument.");
+    }
+    return App_World().loadMap(de::Uri(uriCString, RC_NULL));
+}
+
+#undef P_CountMapObjs
+DENG_EXTERN_C uint P_CountMapObjs(int entityId)
+{
+    if(!App_World().hasMap() || !App_World().map().entityDatabase) return 0;
+    EntityDatabase *db = App_World().map().entityDatabase;
+    return EntityDatabase_EntityCount(db, P_MapEntityDef(entityId));
+}
 
 // p_mapdata.cpp
 DENG_EXTERN_C byte P_GetGMOByte(int entityId, int elementIndex, int propertyId);
@@ -1533,9 +1569,9 @@ DENG_EXTERN_C int P_PathXYTraverse(coord_t fromX, coord_t fromY, coord_t toX, co
 DENG_EXTERN_C boolean P_CheckLineSight(const_pvec3d_t from, const_pvec3d_t to, coord_t bottomSlope,
     coord_t topSlope, int flags)
 {
-    if(!theMap) return false; // I guess?
+    if(!App_World().hasMap()) return false; // I guess?
     return LineSightTest(Vector3d(from), Vector3d(to),
-                         dfloat(bottomSlope), dfloat(topSlope), flags).trace(*theMap->bspRoot());
+                         dfloat(bottomSlope), dfloat(topSlope), flags).trace(*App_World().map().bspRoot());
 }
 
 DENG_EXTERN_C const divline_t* P_TraceLOS(void);
@@ -1579,15 +1615,15 @@ DENG_EXTERN_C void P_PolyobjLink(Polyobj *po)
 #undef P_PolyobjByID
 DENG_EXTERN_C Polyobj *P_PolyobjByID(int index)
 {
-    if(!theMap) return 0;
-    return theMap->polyobjs().at(index);
+    if(!App_World().hasMap()) return 0;
+    return App_World().map().polyobjs().at(index);
 }
 
 #undef P_PolyobjByTag
 DENG_EXTERN_C Polyobj *P_PolyobjByTag(int tag)
 {
-    if(!theMap) return 0;
-    return theMap->polyobjByTag(tag);
+    if(!App_World().hasMap()) return 0;
+    return App_World().map().polyobjByTag(tag);
 }
 
 #undef P_PolyobjMove

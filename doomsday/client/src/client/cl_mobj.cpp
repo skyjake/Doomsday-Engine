@@ -51,37 +51,34 @@ extern int gotFrame; ///< @todo Remove this...
 /**
  * @return  Pointer to the hash chain with the specified id.
  */
-static cmhash_t* Map_ClMobjHash(Map* map, thid_t id)
+static cmhash_t *Map_ClMobjHash(Map &map, thid_t id)
 {
-    assert(map);
-    return &map->clMobjHash[(uint) id % CLIENT_MOBJ_HASH_SIZE];
+    return &map.clMobjHash[(uint) id % CLIENT_MOBJ_HASH_SIZE];
 }
 
 /// @note Part of the Doomsday public API.
-static cmhash_t* ClMobj_Hash(thid_t id)
+static cmhash_t *ClMobj_Hash(thid_t id)
 {
-    if(!theMap) return NULL;
-    return Map_ClMobjHash(theMap, id);
+    if(!App_World().hasMap()) return 0;
+    return Map_ClMobjHash(App_World().map(), id);
 }
 
 #ifdef _DEBUG
-void checkMobjHash(void)
+void checkMobjHash()
 {
-    int i;
-    assert(theMap != 0);
-    for(i = 0; i < CLIENT_MOBJ_HASH_SIZE; ++i)
+    for(int i = 0; i < CLIENT_MOBJ_HASH_SIZE; ++i)
     {
         int count1 = 0, count2 = 0;
-        clmoinfo_t* info;
-        for(info = theMap->clMobjHash[i].first; info; info = info->next, count1++)
+        clmoinfo_t *info;
+        for(info = App_World().map().clMobjHash[i].first; info; info = info->next, count1++)
         {
-            assert(ClMobj_MobjForInfo(info) != 0);
+            DENG_ASSERT(ClMobj_MobjForInfo(info) != 0);
         }
-        for(info = theMap->clMobjHash[i].last; info; info = info->prev, count2++)
+        for(info = App_World().map().clMobjHash[i].last; info; info = info->prev, count2++)
         {
-            assert(ClMobj_MobjForInfo(info) != 0);
+            DENG_ASSERT(ClMobj_MobjForInfo(info) != 0);
         }
-        assert(count1 == count2);
+        DENG_ASSERT(count1 == count2);
     }
 }
 #endif
@@ -89,11 +86,11 @@ void checkMobjHash(void)
 /**
  * Links the clmobj into the client mobj hash table.
  */
-static void ClMobj_LinkInHash(mobj_t* mo, thid_t id)
+static void ClMobj_LinkInHash(mobj_t *mo, thid_t id)
 {
     /// @todo Do not assume the CURRENT map.
-    cmhash_t* hash = Map_ClMobjHash(theMap, id);
-    clmoinfo_t* info = ClMobj_GetInfo(mo);
+    cmhash_t *hash = Map_ClMobjHash(App_World().map(), id);
+    clmoinfo_t *info = ClMobj_GetInfo(mo);
 
     CL_ASSERT_CLMOBJ(mo);
 
@@ -502,11 +499,11 @@ mobj_t *ClMobj_Create(thid_t id)
     mo->ddFlags = DDMF_REMOTE;
 
     ClMobj_LinkInHash(mo, id);
-    theMap->setMobjId(id, true); // Mark this ID as used.
+    App_World().map().setMobjId(id, true); // Mark this ID as used.
 
     // Client mobjs are full-fludged game mobjs as well.
     mo->thinker.function = reinterpret_cast<thinkfunc_t>(gx.MobjThinker);
-    theMap->thinkerAdd(reinterpret_cast<thinker_t &>(*mo), true);
+    App_World().map().thinkerAdd(reinterpret_cast<thinker_t &>(*mo), true);
 
     return mo;
 }
@@ -526,7 +523,7 @@ void ClMobj_Destroy(mobj_t *mo)
     S_StopSound(0, mo);
 
     // The ID is free once again.
-    theMap->setMobjId(mo->thinker.id, false);
+    App_World().map().setMobjId(mo->thinker.id, false);
     ClMobj_UnlinkInHash(mo);
     ClMobj_Unlink(mo); // from block/sector
 

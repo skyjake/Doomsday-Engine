@@ -130,7 +130,7 @@ void LegacyWidget::draw()
         if(App_GameLoaded())
         {
             // Interpolate the world ready for drawing view(s) of it.
-            if(theMap)
+            if(App_World().hasMap())
             {
                 R_BeginWorldFrame();
             }
@@ -174,9 +174,9 @@ void LegacyWidget::draw()
         /*
          * Draw debug information.
          */
-        if(theMap && theMap->hasLightGrid())
+        if(App_World().hasMap() && App_World().map().hasLightGrid())
         {
-            theMap->lightGrid().drawDebugVisual();
+            App_World().map().lightGrid().drawDebugVisual();
         }
         Net_Drawer();
         S_Drawer();

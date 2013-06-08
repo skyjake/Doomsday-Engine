@@ -17,6 +17,8 @@
  * 02110-1301 USA</small>
  */
 
+#include "dd_main.h"
+
 #include "BspLeaf"
 #include "Plane"
 #include "Sector"
@@ -37,7 +39,7 @@ static coord_t skyFixFloorZ(Plane const *frontFloor, Plane const *backFloor)
     DENG_UNUSED(backFloor);
     if(devRendSkyMode || P_IsInVoid(viewPlayer))
         return frontFloor->visHeight();
-    return theMap->skyFixFloor();
+    return App_World().map().skyFixFloor();
 }
 
 static coord_t skyFixCeilZ(Plane const *frontCeil, Plane const *backCeil)
@@ -45,7 +47,7 @@ static coord_t skyFixCeilZ(Plane const *frontCeil, Plane const *backCeil)
     DENG_UNUSED(backCeil);
     if(devRendSkyMode || P_IsInVoid(viewPlayer))
         return frontCeil->visHeight();
-    return theMap->skyFixCeiling();
+    return App_World().map().skyFixCeiling();
 }
 
 DENG2_PIMPL_NOREF(SkyFixEdge::Event)

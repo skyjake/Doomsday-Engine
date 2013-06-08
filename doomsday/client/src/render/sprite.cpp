@@ -137,18 +137,18 @@ static int drawThinkerId(thinker_t *thinker, void *context)
  */
 void Rend_DrawThinkerIds()
 {
-    float eye[3];
-
-    if(!devThinkerIds || !theMap) return;
+    if(!devThinkerIds) return;
+    if(!App_World().hasMap()) return;
 
     glDisable(GL_DEPTH_TEST);
     glEnable(GL_TEXTURE_2D);
 
+    float eye[3];
     eye[VX] = vOrigin[VX];
     eye[VY] = vOrigin[VZ];
     eye[VZ] = vOrigin[VY];
 
-    theMap->iterateThinkers(NULL, 0x1 | 0x2, drawThinkerId, eye);
+    App_World().map().iterateThinkers(NULL, 0x1 | 0x2, drawThinkerId, eye);
 
     // Restore previous state.
     glEnable(GL_DEPTH_TEST);
@@ -329,10 +329,10 @@ static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
     {
         collectaffectinglights_params_t lparams;
 
-        if(useBias && theMap->hasLightGrid())
+        if(useBias && App_World().map().hasLightGrid())
         {
             // Evaluate the position in the light grid.
-            Vector3f tmp = theMap->lightGrid().evaluate(spr->origin);
+            Vector3f tmp = App_World().map().lightGrid().evaluate(spr->origin);
             V3f_Set(params->ambientColor, tmp.x, tmp.y, tmp.z);
         }
         else
@@ -720,9 +720,9 @@ static void setupModelParamsForVisPSprite(rendmodelparams_t *params, vispsprite_
     {
         collectaffectinglights_params_t lparams;
 
-        if(useBias && theMap->hasLightGrid())
+        if(useBias && App_World().map().hasLightGrid())
         {
-            Vector3f tmp = theMap->lightGrid().evaluate(params->origin);
+            Vector3f tmp = App_World().map().lightGrid().evaluate(params->origin);
             V3f_Set(params->ambientColor, tmp.x, tmp.y, tmp.z);
         }
         else

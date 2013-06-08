@@ -43,6 +43,7 @@
 #include "world/p_maputil.h"
 #include "world/p_object.h"
 #include "world/r_world.h"
+#include "world/world.h"
 
 #include "edit_map.h" // bspFactor
 #include "render/r_main.h" // validCount

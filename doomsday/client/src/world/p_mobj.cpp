@@ -88,7 +88,7 @@ mobj_t* P_MobjCreate(thinkfunc_t function, coord_t const pos[3], angle_t angle,
     mo->thinker.function = function;
     if(mo->thinker.function)
     {
-        theMap->thinkerAdd(mo->thinker, true); // Make it public.
+        App_World().map().thinkerAdd(mo->thinker, true); // Make it public.
     }
 
     return mo;
@@ -124,7 +124,7 @@ DENG_EXTERN_C void P_MobjDestroy(mobj_t *mo)
 
     S_StopSound(0, mo);
 
-    theMap->thinkerRemove(reinterpret_cast<thinker_t &>(*mo));
+    App_World().map().thinkerRemove(reinterpret_cast<thinker_t &>(*mo));
 }
 
 /**
@@ -286,7 +286,7 @@ D_CMD(InspectMobj)
     id = strtol(argv[1], NULL, 10);
 
     // Find the mobj.
-    mo = theMap->mobjById(id);
+    mo = App_World().map().mobjById(id);
     if(!mo)
     {
         Con_Printf("Mobj with id %i not found.\n", id);

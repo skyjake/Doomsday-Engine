@@ -536,10 +536,10 @@ float R_ShadowStrength(mobj_t *mo)
         return 0;
 
     // Sample the ambient light level at the mobj's position.
-    if(useBias && theMap->hasLightGrid())
+    if(useBias && App_World().map().hasLightGrid())
     {
         // Evaluate in the light grid.
-        ambientLightLevel = theMap->lightGrid().evaluateLightLevel(mo->origin);
+        ambientLightLevel = App_World().map().lightGrid().evaluateLightLevel(mo->origin);
     }
     else
     {
@@ -912,10 +912,10 @@ void getLightingParams(coord_t x, coord_t y, coord_t z, BspLeaf *bspLeaf,
     {
         collectaffectinglights_params_t lparams;
 
-        if(useBias && theMap->hasLightGrid())
+        if(useBias && App_World().map().hasLightGrid())
         {
             // Evaluate the position in the light grid.
-            Vector3f tmp = theMap->lightGrid().evaluate(Vector3d(x, y, z));
+            Vector3f tmp = App_World().map().lightGrid().evaluate(Vector3d(x, y, z));
             V3f_Set(ambientColor, tmp.x, tmp.y, tmp.z);
         }
         else
@@ -1388,7 +1388,7 @@ typedef struct {
 
 int RIT_AddSprite(void *ptr, void *parameters)
 {
-    Map *map = theMap; /// @todo Do not assume mobj is from the CURRENT map.
+    Map &map = App_World().map(); /// @todo Do not assume mobj is from the CURRENT map.
 
     mobj_t *mo = (mobj_t *) ptr;
     addspriteparams_t *params = (addspriteparams_t *)parameters;
@@ -1410,10 +1410,10 @@ int RIT_AddSprite(void *ptr, void *parameters)
                mo->origin[VZ] >= sec.floor().height())
             {
                 coord_t visibleTop = mo->origin[VZ] + material->height();
-                if(visibleTop > map->skyFixCeiling())
+                if(visibleTop > map.skyFixCeiling())
                 {
                     // Raise skyfix ceiling.
-                    map->setSkyFixCeiling(visibleTop + 16/*leeway*/);
+                    map.setSkyFixCeiling(visibleTop + 16/*leeway*/);
                 }
             }
         }

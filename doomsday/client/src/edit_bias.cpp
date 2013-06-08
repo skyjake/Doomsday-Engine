@@ -346,7 +346,7 @@ static boolean SBE_Save(char const *name)
     ddstring_t fileName; Str_Init(&fileName);
     if(!name || !name[0])
     {
-        de::String mapPath = theMap->uri().resolvedRef() + ".ded";
+        de::String mapPath = App_World().map().uri().resolvedRef() + ".ded";
         Str_Set(&fileName, mapPath.toUtf8().constData());
     }
     else
@@ -372,7 +372,7 @@ static boolean SBE_Save(char const *name)
 
     Con_Printf("Saving to \"%s\"...\n", F_PrettyPath(Str_Text(&fileName)));
 
-    char const *uid = theMap->oldUniqueId();
+    char const *uid = App_World().map().oldUniqueId();
     fprintf(file, "# %i Bias Lights for %s\n\n", numSources, uid);
 
     // Since there can be quite a lot of these, make sure we'll skip
@@ -698,7 +698,7 @@ static void SBE_DrawLevelGauge(Point2Raw const *origin, int height)
     else
         src = SBE_GetNearest();
 
-    BspLeaf *bspLeaf = theMap->bspLeafAtPoint(src->origin);
+    BspLeaf *bspLeaf = App_World().map().bspLeafAtPoint(src->origin);
     if(!bspLeaf) return;
 
     Sector &sector = bspLeaf->sector();
@@ -784,7 +784,8 @@ void SBE_DrawHUD()
     float const opacity = .8f;
 
     if(!editActive || editHidden) return;
-    if(!theMap) return;
+
+    if(!App_World().hasMap()) return;
 
     DENG_ASSERT_IN_MAIN_THREAD();
 
@@ -817,7 +818,7 @@ void SBE_DrawHUD()
 
     // The map ID.
     origin.y = top - size.height / 2;
-    UI_TextOutEx2(theMap->oldUniqueId(), &origin, UI_Color(UIC_TITLE), opacity, ALIGN_LEFT, DTF_ONLY_SHADOW);
+    UI_TextOutEx2(App_World().map().oldUniqueId(), &origin, UI_Color(UIC_TITLE), opacity, ALIGN_LEFT, DTF_ONLY_SHADOW);
 
     glDisable(GL_TEXTURE_2D);
 
