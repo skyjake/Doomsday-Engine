@@ -254,8 +254,13 @@ D_CMD(ListGames)
         return true;
     }
 
-    Con_FPrintf(CPF_YELLOW, "Registered Games:\n");
-    Con_Printf("Key: '!'= Incomplete/Not playable '*'= Loaded\n");
+    //Con_FPrintf(CPF_YELLOW, "Registered Games:\n");
+    //Con_Printf("Key: '!'= Incomplete/Not playable '*'= Loaded\n");
+
+    LOG_MSG(_E("1") "Registered Games:");
+    LOG_VERBOSE("Key: %s'!'=Incomplete/Not playable %s'*'=Loaded")
+            << _E(">") _E("D") << _E("B");
+
     Con_PrintRuler();
 
     de::Games::GameList found;
@@ -263,19 +268,30 @@ D_CMD(ListGames)
     // Sort so we get a nice alphabetical list.
     qSort(found.begin(), found.end());
 
+    de::String list;
+
     int numCompleteGames = 0;
     DENG2_FOR_EACH_CONST(de::Games::GameList, i, found)
     {
         de::Game *game = i->game;
 
-        Con_Printf(" %s %-16s %s (%s)\n",      game->isCurrent()? "*" :
-                                   !game->allStartupFilesFound()? "!" : " ",
-                   Str_Text(game->identityKey()), Str_Text(game->title()),
-                   Str_Text(game->author()));
+        if(!list.isEmpty()) list += "\n";
+
+        list += de::String(_E("0")
+                           _E("Ta") "%1%2 "
+                           _E("Tb") "%3 "
+                           _E("Tc") _E("2") "%4 " _E("i") "(%5)")
+                .arg(game->isCurrent()? _E("B") _E("b") :
+                     !game->allStartupFilesFound()? _E("D") : "")
+                .arg(game->isCurrent()? "*" : !game->allStartupFilesFound()? "!" : " ")
+                .arg(Str_Text(game->identityKey()))
+                .arg(Str_Text(game->title()))
+                .arg(Str_Text(game->author()));
 
         if(game->allStartupFilesFound())
             numCompleteGames++;
     }
+    LOG_MSG("%s") << list;
 
     Con_PrintRuler();
     Con_Printf("%i of %i games playable.\n", numCompleteGames, games.count());

@@ -1882,7 +1882,7 @@ void Con_PrintRuler(void)
     {
     */
 
-    LogBuffer_Msg(DENG2_ESC("R") "\n");
+    LogBuffer_Msg(_E("R") "\n");
 
     //}
 }
@@ -2221,30 +2221,28 @@ D_CMD(Help)
 #endif
 */
 
-    Con_PrintRuler();
-    Con_FPrintf(CPF_YELLOW | CPF_CENTER, "-=- " DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT " Console -=-\n");
+    //Con_PrintRuler();
+
+    LOG_MSG(_E("1") DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT " Console");
+
+#define COLUMN(A, B) "\n" _E("Ta") _E("b") "  " << A << " " _E(".") _E("Tb") << B
 
 #ifdef __CLIENT__
-    Con_Printf("Keys:\n");
-    //Con_Printf("%-14s Open/close the console.\n", actKeyName);
-    //Con_Printf("Alt-%-10s Switch between half and full screen mode.\n", actKeyName);
-    Con_Printf("F5             Clear the buffer.\n");
-    Con_Printf("Alt-C          Clear the command line.\n");
-    Con_Printf("Insert         Switch between replace and insert modes.\n");
-    Con_Printf("Shift-Left     Move cursor to the start of the command line.\n");
-    Con_Printf("Shift-Right    Move cursor to the end of the command line.\n");
-    Con_Printf("Shift-PgUp/Dn  Move console window up/down.\n");
-    Con_Printf("Home           Jump to the beginning of the buffer.\n");
-    Con_Printf("End            Jump to the end of the buffer.\n");
-    Con_Printf("PageUp/Down    Scroll up/down a couple of lines.\n");
-    Con_Printf("\n");
+    LOG_MSG(_E("D") "Keys:" _E("."))
+            << COLUMN("Esc", "Open/close the taskbar")
+            << COLUMN("Shift-Esc", "Open the console")
+            << COLUMN("F5", "Clear the console message history")
+            << COLUMN("Home", "Jump to beginning of line")
+            << COLUMN("End", "Jump to end of line")
+            << COLUMN("PageUp/Down", "Scroll up/down in the history, or expand the history to full height")
+            << COLUMN("Shift-PgUp/Dn", "Jump to the top/bottom of the history");
 #endif
-    Con_Printf("Getting started:\n");
-    Con_Printf("Enter \"help (what)\" for information about (what).\n");
-    Con_Printf("Enter \"listcmds\"  to list available commands.\n");
-    Con_Printf("Enter \"listgames\" to list installed games and their status.\n");
-    Con_Printf("Enter \"listvars\"  to list available variables.\n");
-    Con_PrintRuler();
+    LOG_MSG(_E("D") "Getting started:");
+    LOG_MSG("  " _E(">") "Enter " _E("b") "help (what)" _E(".") " for information about " _E("l") "(what)");
+    LOG_MSG("  " _E(">") "Enter " _E("b") "listcmds" _E(".") " to list available commands");
+    LOG_MSG("  " _E(">") "Enter " _E("b") "listgames" _E(".") " to list installed games and their status");
+    LOG_MSG("  " _E(">") "Enter " _E("b") "listvars" _E(".") " to list available variables");
+    //Con_PrintRuler();
     return true;
 }
 
@@ -2270,9 +2268,11 @@ D_CMD(Version)
     //Con_Printf("Homepage: %s\n", DOOMSDAY_HOMEURL);
     //Con_Printf("Project homepage: %s\n", DENGPROJECT_HOMEURL);
 
-    LOG_MSG(DENG2_ESC("D") DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_FULLTEXT
-            DENG2_ESC("0") "\nHomepage: " DENG2_ESC("i") DOOMSDAY_HOMEURL
-            DENG2_ESC(".") "\nProject homepage: " DENG2_ESC("i") DENGPROJECT_HOMEURL);
+    LOG_MSG(_E("D") DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_FULLTEXT);
+    LOG_MSG("Homepage: "
+            _E("\t") _E("i") DOOMSDAY_HOMEURL
+            _E(".") _E(".") "\nProject homepage: "
+            _E("\t") _E("i") DENGPROJECT_HOMEURL);
 
     // Print the version info of the current game if loaded.
     if(App_GameLoaded())

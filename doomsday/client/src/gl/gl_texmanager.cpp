@@ -534,10 +534,8 @@ static void uploadContentUnmanaged(texturecontent_t const &content)
     GLUploadMethod uploadMethod = GL_ChooseUploadMethod(content);
     if(uploadMethod == Immediate)
     {
-#ifdef DENG_DEBUG
-        LOG_VERBOSE("Uploading texture (%i:%ix%i) while not busy! Should be precached in busy mode?")
-            << content.name << content.width << content.height;
-#endif
+        LOG_DEBUG("Uploading texture (%i:%ix%i) while not busy! Should be precached in busy mode?")
+                << content.name << content.width << content.height;
     }
 
     GL_UploadTextureContent(content, uploadMethod);

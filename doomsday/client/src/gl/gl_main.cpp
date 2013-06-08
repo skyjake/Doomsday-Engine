@@ -283,20 +283,21 @@ void GL_SetGamma()
 
 static void printConfiguration()
 {
-    static char const *enabled[] = { "disabled", "enabled" };
+    LOG_VERBOSE(_E("b") "Render configuration:");
 
-    Con_Printf("Render configuration:\n");
-    Con_Printf("  Multisampling: %s", enabled[GL_state.features.multisample? 1:0]);
+    LOG_VERBOSE("  Multisampling: %b") << GL_state.features.multisample;
     if(GL_state.features.multisample)
-        Con_Printf(" (sf:%i)\n", GL_state.multisampleFormat);
-    else
-        Con_Printf("\n");
-    Con_Printf("  Multitexturing: %s\n", numTexUnits > 1? (envModAdd? "full" : "partial") : "not available");
-    Con_Printf("  Texture Anisotropy: %s\n", GL_state.features.texFilterAniso? "variable" : "fixed");
-    Con_Printf("  Texture Compression: %s\n", enabled[GL_state.features.texCompression? 1:0]);
-    Con_Printf("  Texture NPOT: %s\n", enabled[GL_state.features.texNonPowTwo? 1:0]);
+    {
+        LOG_VERBOSE("  Multisampling format: %i") << GL_state.multisampleFormat;
+    }
+    LOG_VERBOSE("  Multitexturing: %s") << (numTexUnits > 1? (envModAdd? "full" : "partial") : "not available");
+    LOG_VERBOSE("  Texture Anisotropy: %s") << (GL_state.features.texFilterAniso? "variable" : "fixed");
+    LOG_VERBOSE("  Texture Compression: %b") << GL_state.features.texCompression;
+    LOG_VERBOSE("  Texture NPOT: %b") << GL_state.features.texNonPowTwo;
     if(GL_state.forceFinishBeforeSwap)
-        Con_Message("  glFinish() forced before swapping buffers.");
+    {
+        LOG_VERBOSE("  glFinish() forced before swapping buffers.");
+    }
 }
 
 boolean GL_EarlyInit()
@@ -304,7 +305,7 @@ boolean GL_EarlyInit()
     if(novideo) return true;
     if(initGLOk) return true; // Already initialized.
 
-    Con_Message("Initializing Render subsystem...");
+    LOG_INFO("Initializing Render subsystem...");
 
     gamma_support = !CommandLine_Check("-noramp");
 
@@ -321,7 +322,7 @@ boolean GL_EarlyInit()
     // Check the maximum texture size.
     if(GL_state.maxTexSize == 256)
     {
-        Con_Message("Using restricted texture w/h ratio (1:8).");
+        LOG_WARNING("Using restricted texture w/h ratio (1:8)");
         ratioLimit = 8;
     }
     // Set a custom maximum size?
@@ -332,17 +333,17 @@ boolean GL_EarlyInit()
         if(GL_state.maxTexSize < customSize)
             customSize = GL_state.maxTexSize;
         GL_state.maxTexSize = customSize;
-        Con_Message("Using maximum texture size of %i x %i.", GL_state.maxTexSize, GL_state.maxTexSize);
+        LOG_INFO("Using maximum texture size of %i x %i") << GL_state.maxTexSize << GL_state.maxTexSize;
     }
     if(CommandLine_Check("-outlines"))
     {
         fillOutlines = false;
-        Con_Message("Textures have outlines.");
+        LOG_INFO("Textures have outlines");
     }
 
     renderTextures = !CommandLine_Exists("-notex");
 
-    VERBOSE( printConfiguration() );
+    printConfiguration();
 
     // Initialize the renderer into a 2D state.
     GL_Init2DState();

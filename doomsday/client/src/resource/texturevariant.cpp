@@ -380,17 +380,11 @@ uint Texture::Variant::prepare()
     GL_UploadTextureContent(c, uploadMethod);
 
 #ifdef DENG_DEBUG
-    LOG_VERBOSE("Prepared \"%s\" variant (glName:%u)%s")
+    LOG_DEBUG("Prepared \"%s\" variant (glName:%u)%s")
         << d->texture.manifest().composeUri() << uint(d->glTexName)
         << (uploadMethod == Immediate? " while not busy!" : "");
-
-    if(verbose >= 2)
-    {
-        String textualVariantSpec = d->spec.asText();
-        LOG_INFO("  Content: %s") << Image_Description(&image);
-        LOG_INFO("  Specification [%p]: %s")
-            << de::dintptr(&d->spec) << textualVariantSpec;
-    }
+    LOG_TRACE("  Content: %s") << Image_Description(&image);
+    LOG_TRACE("  Specification [%p]: %s") << de::dintptr(&d->spec) << d->spec.asText();
 #endif
 
     // Are we setting the logical dimensions to the pixel dimensions
@@ -398,10 +392,10 @@ uint Texture::Variant::prepare()
     if(d->texture.width() == 0 && d->texture.height() == 0)
     {
         Vector2i dimensions = Image_Dimensions(&image);
-#ifdef DENG_DEBUG
-        LOG_VERBOSE("World dimensions for \"%s\" taken from image pixels %s.")
+
+        LOG_DEBUG("World dimensions for \"%s\" taken from image pixels %s.")
             << d->texture.manifest().composeUri() << dimensions.asText();
-#endif
+
         d->texture.setDimensions(dimensions);
     }
 

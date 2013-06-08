@@ -307,7 +307,7 @@ uint8_t *Image_LoadFromFile(image_t *img, filehandle_s *_file)
     // Still not interpreted?
     if(!img->pixels)
     {
-        LOG_VERBOSE("\"%s\" unrecognized, trying fallback loader...")
+        LOG_DEBUG("\"%s\" unrecognized, trying fallback loader...")
             << NativePath(filePath).pretty();
         return NULL; // Not a recognised format. It may still be loadable, however.
     }
