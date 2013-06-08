@@ -37,8 +37,9 @@ DENG2_PIMPL(GLTextComposer)
             Rangei range;
             int x;
             int width;
+            bool compressed;
 
-            Segment() : id(Id::None), x(0), width(0) {}
+            Segment() : id(Id::None), x(0), width(0), compressed(false) {}
             int right() const { return x + width; }
         };
         QList<Segment> segs;
@@ -260,12 +261,19 @@ void GLTextComposer::makeVertices(Vertices &triStrip,
         // Initialize the segments with indentation.
         for(int k = 0; k < d->lines[i].segs.size(); ++k)
         {
-            Instance::Line::Segment &seg = d->lines[i].segs[k];
-
-            seg.x = d->wraps->lineInfo(i).indent;
-
             // Determine the width of this segment.
-            seg.width = d->wraps->lineInfo(i).segs[k].width;
+            d->lines[i].segs[k].width = d->wraps->lineInfo(i).segs[k].width;
+        }
+    }
+
+    for(int i = 0; i < d->lines.size(); ++i)
+    {
+        d->lines[i].segs[0].x = d->wraps->lineInfo(i).indent;
+
+        for(int k = 1; k < d->lines[i].segs.size(); ++k)
+        {
+            Instance::Line::Segment &seg = d->lines[i].segs[k];
+            seg.x = d->lines[i].segs[k - 1].right();
         }
     }
 
@@ -291,12 +299,15 @@ void GLTextComposer::makeVertices(Vertices &triStrip,
         // Move the segments to this position.
         for(int i = 0; i < d->lines.size(); ++i)
         {
+            int localRight = maxRight;
+
             FontLineWrapping::LineInfo const &info = d->wraps->lineInfo(i);
             for(int k = 0; k < info.segs.size(); ++k)
             {
                 if(info.segs[k].tabStop == tab)
                 {
-                    d->lines[i].segs[k].x = maxRight;
+                    d->lines[i].segs[k].x = localRight;
+                    localRight += info.segs[k].width;
                 }
             }
         }
@@ -310,20 +321,12 @@ void GLTextComposer::makeVertices(Vertices &triStrip,
         if(!d->wraps->lineInfo(i).segs.last().tabStop)
             continue;
 
-        if(line.segs.last().right() > d->wraps->maximumWidth())
+        Instance::Line::Segment &seg = line.segs.last();
+        if(seg.right() > d->wraps->maximumWidth())
         {
-            // Needs compressing.
-            line.segs.last().x = d->wraps->maximumWidth() - line.segs.last().width;
-
-            // Move the previous segs until overlaps are resolved.
-            for(int k = line.segs.size() - 2; k > 0; --k)
-            {
-                if(line.segs[k].right() > line.segs[k + 1].x)
-                {
-                    line.segs[k].x = line.segs[k + 1].x - line.segs[k].width;
-                }
-                else break;
-            }
+            // Needs compressing (up to 15%).
+            seg.compressed = true;
+            seg.width = de::max(int(seg.width * .85f), d->wraps->maximumWidth() - seg.x);
         }
     }
 
@@ -342,7 +345,12 @@ void GLTextComposer::makeVertices(Vertices &triStrip,
             // Empty lines are skipped.
             if(seg.id.isNone()) continue;
 
-            Vector2ui const size = d->atlas->imageRect(seg.id).size();
+            Vector2ui size = d->atlas->imageRect(seg.id).size();
+            if(seg.compressed)
+            {
+                size.x = seg.width;
+            }
+
             Rectanglef const uv  = d->atlas->imageRectf(seg.id);
 
             triStrip.makeQuad(Rectanglef::fromSize(linePos + Vector2f(seg.x, 0), size),
