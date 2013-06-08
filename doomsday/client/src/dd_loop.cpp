@@ -62,7 +62,7 @@ int rFrameCount = 0;
 byte devShowFrameTimeDeltas = false;
 byte processSharpEventsAfterTickers = true;
 
-timespan_t sysTime, gameTime, demoTime, ddMapTime;
+timespan_t sysTime, gameTime, demoTime;
 //timespan_t frameStartTime;
 
 boolean stopTime = false; // If true the time counters won't be incremented

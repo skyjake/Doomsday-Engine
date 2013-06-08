@@ -284,7 +284,6 @@ DENG_HEADERS += \
     include/resource/hq2x.h \
     include/resource/image.h \
     include/resource/lumpcache.h \
-    include/resource/maparchive.h \
     include/resource/material.h \
     include/resource/materialarchive.h \
     include/resource/materialmanifest.h \
@@ -576,7 +575,6 @@ SOURCES += \
     src/resource/fonts.cpp \
     src/resource/hq2x.cpp \
     src/resource/image.cpp \
-    src/resource/maparchive.cpp \
     src/resource/material.cpp \
     src/resource/materialanimation.cpp \
     src/resource/materialarchive.cpp \

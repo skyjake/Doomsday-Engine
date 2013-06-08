@@ -65,7 +65,10 @@ public:
     /// @todo Refactor away.
     void clearMap();
 
-    void resetMapArchive();
+    /**
+     * Reset the map cache removing all existing records.
+     */
+    void resetMapCache();
 
 private:
     DENG2_PRIVATE(d)
@@ -74,5 +77,6 @@ private:
 } // namespace de
 
 DENG_EXTERN_C boolean ddMapSetup;
+DENG_EXTERN_C timespan_t ddMapTime;
 
 #endif // DENG_WORLD_H

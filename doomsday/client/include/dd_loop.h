@@ -29,7 +29,7 @@ extern "C" {
 #endif
 
 extern int rFrameCount;
-extern timespan_t sysTime, gameTime, demoTime, ddMapTime;
+extern timespan_t sysTime, gameTime, demoTime;
 extern boolean tickFrame;
 
 /**

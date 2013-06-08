@@ -204,7 +204,6 @@ DENG_HEADERS += \
     $$SRC/include/resource/font.h \
     $$SRC/include/resource/image.h \
     $$SRC/include/resource/lumpcache.h \
-    $$SRC/include/resource/maparchive.h \
     $$SRC/include/resource/material.h \
     $$SRC/include/resource/materialarchive.h \
     $$SRC/include/resource/materialmanifest.h \
@@ -382,7 +381,6 @@ SOURCES += \
     $$SRC/src/resource/compositetexture.cpp \
     $$SRC/src/resource/hq2x.cpp \
     $$SRC/src/resource/image.cpp \
-    $$SRC/src/resource/maparchive.cpp \
     $$SRC/src/resource/material.cpp \
     $$SRC/src/resource/materialarchive.cpp \
     $$SRC/src/resource/materialmanifest.cpp \

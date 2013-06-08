@@ -38,7 +38,6 @@
 #include "de_filesys.h"
 
 #include "audio/s_environ.h"
-#include "resource/maparchive.h"
 #include "world/lineowner.h"
 #include "world/map.h"
 #ifdef __CLIENT__

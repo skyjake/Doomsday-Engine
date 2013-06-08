@@ -18,15 +18,20 @@
  * 02110-1301 USA</small>
  */
 
+#include <QMap>
+#include <QtAlgorithms>
+
 #include <de/memoryzone.h>
 #include <de/timer.h>
 
 #include <de/Error>
+#include <de/Log>
 
 #include "de_base.h"
 #include "de_console.h"
 #include "de_defs.h"
 #include "de_play.h"
+#include "de_filesys.h"
 
 #include "Materials"
 
@@ -34,8 +39,8 @@
 #include "Sector"
 
 #include "audio/s_main.h"
+#include "edit_map.h"
 #include "network/net_main.h"
-#include "resource/maparchive.h"
 
 #include "render/r_main.h" // R_ResetViewer
 
@@ -59,20 +64,291 @@
 
 #include "world/world.h"
 
+using namespace de;
+
 boolean ddMapSetup;
+timespan_t ddMapTime;
+
+/*
+// Should we be caching successfully loaded maps?
+static byte mapCache = true; // cvar
+
+static char const *mapCacheDir = "mapcache/";
+*/
+
+static inline lumpnum_t markerLumpNumForPath(String path)
+{
+    return App_FileSystem().lumpNumForName(path);
+}
+
+static String composeUniqueMapId(de::File1 &markerLump)
+{
+    return String("%1|%2|%3|%4")
+              .arg(markerLump.name().fileNameWithoutExtension())
+              .arg(markerLump.container().name().fileNameWithoutExtension())
+              .arg(markerLump.container().hasCustom()? "pwad" : "iwad")
+              .arg(Str_Text(App_CurrentGame().identityKey()))
+              .toLower();
+}
+
+#if 0
+/// Calculate the identity key for maps loaded from the specified @a path.
+static ushort cacheIdForMap(char const *path)
+{
+    DENG_ASSERT(path && path[0]);
+
+    ushort identifier = 0;
+    for(uint i = 0; path[i]; ++i)
+    {
+        identifier ^= path[i] << ((i * 3) % 11);
+    }
+    return identifier;
+}
+#endif
 
 namespace de {
 
 DENG2_PIMPL(World)
 {
+    /**
+     * Information about a map in the cache.
+     */
+    struct CacheRecord
+    {
+        Uri mapUri;                 ///< Unique identifier for the map.
+        /*
+        String path;                ///< Path to the cached map data.
+        bool dataAvailable;
+        bool lastLoadAttemptFailed;
+        */
+    };
+
+    typedef QMap<String, CacheRecord> Records;
+
     /// Current map.
     Map *map;
 
-    /// The map archive.
-    MapArchive mapArchive;
+    /// Map cache records.
+    Records records;
 
     Instance(Public *i) : Base(i), map(0)
     {}
+
+#if 0
+    /**
+     * Compose the relative path (relative to the runtime directory) to the directory
+     * within the archived map cache where maps from the specified source will reside.
+     *
+     * @param sourcePath  Path to the primary resource file for the original map data.
+     * @return  The composed path.
+     */
+    static AutoStr *cachePath(char const *path)
+    {
+        if(!path || !path[0]) return 0;
+
+        DENG_ASSERT(App_GameLoaded());
+
+        ddstring_t const *gameIdentityKey = App_CurrentGame().identityKey();
+        ushort mapPathIdentifier   = cacheIdForMap(path);
+
+        AutoStr *mapFileName = AutoStr_NewStd();
+        F_FileName(mapFileName, path);
+
+        // Compose the final path.
+        AutoStr *path = AutoStr_NewStd();
+        Str_Appendf(path, "%s%s/%s-%04X/", mapCacheDir, Str_Text(gameIdentityKey),
+                                           Str_Text(mapFileName), mapPathIdentifier);
+        F_ExpandBasePath(path, path);
+
+        return path;
+    }
+#endif
+
+    /**
+     * Try to locate a cache record for a map by URI.
+     *
+     * @param uri  Map identifier.
+     *
+     * @return  Pointer to the found CacheRecord; otherwise @c 0.
+     */
+    CacheRecord *findCacheRecord(Uri const &uri) const
+    {
+        Records::iterator found = records.find(uri.resolved());
+        if(found != records.end())
+        {
+            return &found.value();
+        }
+        return 0; // Not found.
+    }
+
+    /**
+     * Create a new CacheRecord for the map. If an existing record is found
+     * it will be returned instead (becomes a no-op).
+     *
+     * @param uri  Map identifier.
+     *
+     * @return  Possibly newly-created CacheRecord.
+     */
+    CacheRecord &createCacheRecord(Uri const &uri)
+    {
+        // Do we have an existing record for this?
+        if(CacheRecord *record = findCacheRecord(uri))
+            return *record;
+
+        /*
+        // Compose the cache directory path and ensure it exists.
+        String cachePath;
+        lumpnum_t markerLumpNum = F_LumpNumForName(uri.path().toString().toLatin1().constData());
+        if(markerLumpNum >= 0)
+        {
+            AutoStr *cacheDir = cachePath(Str_Text(F_ComposeLumpFilePath(markerLumpNum)));
+            F_MakePath(Str_Text(cacheDir));
+
+            // Compose the full path to the cached map data file.
+            AutoStr *name = AutoStr_NewStd();
+            F_FileName(name, Str_Text(F_LumpName(markerLumpNum)));
+
+            cachePath = String(Str_Text(cacheDir)) + String(Str_Text(name)) + ".dcm";
+        }
+        */
+
+        CacheRecord rec;
+        rec.mapUri = uri;
+        //rec.path = cachePath;
+        return records.insert(uri.resolved(), rec).value();
+    }
+
+    /**
+     * Attempt to peform a JIT conversion of the map data with the help
+     * of a converter plugin.
+     *
+     * @return  Pointer to the converted Map; otherwise @c 0.
+     */
+    Map *convertMap(Uri const &uri)
+    {
+        // Record this map if we haven't already.
+        /*CacheRecord &record =*/ createCacheRecord(uri);
+
+        // At least one available converter?
+        if(!Plug_CheckForHook(HOOK_MAP_CONVERT))
+            return 0;
+
+        //LOG_DEBUG("Attempting \"%s\"...") << uri;
+
+        lumpnum_t markerLumpNum = markerLumpNumForPath(uri.path());
+        if(markerLumpNum < 0)
+            return 0;
+
+        // Ask each converter in turn whether the map format is
+        // recognizable and if so to interpret and transfer it to us
+        // via the map editing interface.
+        if(!DD_CallHooks(HOOK_MAP_CONVERT, 0, (void *) reinterpret_cast<uri_s const *>(&uri)))
+            return 0;
+
+        // A converter signalled success.
+        // Were we able to produce a valid map from the data it provided?
+        if(!MPE_GetLastBuiltMapResult())
+            return 0;
+
+        Map *map = MPE_GetLastBuiltMap();
+        DENG_ASSERT(map != 0);
+
+        map->_uri = uri;
+
+        // Generate the unique map id.
+        File1 &markerLump       = App_FileSystem().nameIndex().lump(markerLumpNum);
+        String uniqueId         = composeUniqueMapId(markerLump);
+        QByteArray uniqueIdUtf8 = uniqueId.toUtf8();
+        qstrncpy(map->_oldUniqueId, uniqueIdUtf8.constData(), sizeof(map->_oldUniqueId));
+
+        // Are we caching this map?
+        /*if(mapCache)
+        {
+            AutoStr *cacheDir = mapCachePath(Str_Text(F_ComposeLumpFilePath(markerLumpNum())));
+
+            AutoStr *cachePath = AutoStr_NewStd();
+            F_FileName(cachePath, F_LumpName(markerLumpName));
+
+            Str_Append(cachePath, ".dcm");
+            Str_Prepend(cachePath, Str_Text(cacheDir));
+            F_ExpandBasePath(cachePath, cachePath);
+
+            // Ensure the destination directory exists.
+            F_MakePath(Str_Text(cacheDir));
+
+            // Cache the map!
+            DAM_MapWrite(map, Str_Text(cachePath));
+        }*/
+
+        return map;
+    }
+
+#if 0
+    /**
+     * Returns @c true iff data for the map is available in the cache.
+     */
+    bool isCacheDataAvailable(CacheRecord &rec)
+    {
+        if(DAM_MapIsValid(Str_Text(&rec.path), markerLumpNum()))
+        {
+            rec.dataAvailable = true;
+        }
+        return rec.dataAvailable;
+    }
+
+    /**
+     * Attempt to load data for the map from the cache.
+     *
+     * @see isCachedDataAvailable()
+     *
+     * @return  Pointer to the loaded Map; otherwise @c 0.
+     */
+    Map *loadMapFromCache(Uri const &uri)
+    {
+        // Record this map if we haven't already.
+        CacheRecord &rec = createCacheRecord(uri);
+
+        Map *map = DAM_MapRead(Str_Text(&rec.path));
+        if(!map) return 0;
+
+        map->_uri = rec.mapUri;
+        return map;
+    }
+#endif
+
+    /**
+     * Attempt to load the associated map data.
+     *
+     * @return  Pointer to the loaded map; otherwise @c 0.
+     */
+    Map *loadMap(Uri const &uri/*, bool forceRetry = false*/)
+    {
+        // Record this map if we haven't already.
+        /*CacheRecord &rec =*/ createCacheRecord(uri);
+
+        //if(rec.lastLoadAttemptFailed && !forceRetry)
+        //    return false;
+
+        //rec.lastLoadAttemptFailed = false;
+
+        // Load from cache?
+        /*if(mapCache && rec.dataAvailable)
+        {
+            if(Map *map = loadMapFromCache(uri))
+                return map;
+
+            rec.lastLoadAttemptFailed = true;
+            return 0;
+        }*/
+
+        // Try a JIT conversion with the help of a plugin.
+        if(Map *map = convertMap(uri))
+            return map;
+
+        LOG_WARNING("Failed conversion of \"%s\".") << uri;
+        //rec.lastLoadAttemptFailed = true;
+        return 0;
+    }
 };
 
 World::World() : d(new Instance(this))
@@ -80,7 +356,7 @@ World::World() : d(new Instance(this))
 
 void World::consoleRegister() // static
 {
-    MapArchive::consoleRegister();
+    //C_VAR_BYTE("map-cache", &mapCache, 0, 0, 1);
 }
 
 bool World::hasMap() const
@@ -100,7 +376,8 @@ Map &World::map() const
 
 bool World::loadMap(de::Uri const &uri)
 {
-    LOG_MSG("Loading map \"%s\"...") << uri;
+    LOG_AS("World::loadMap");
+    LOG_MSG("Loading \"%s\"...") << uri;
 
     if(isServer)
     {
@@ -119,7 +396,7 @@ bool World::loadMap(de::Uri const &uri)
 
     Z_FreeTags(PU_MAP, PU_PURGELEVEL - 1);
 
-    if((d->map = d->mapArchive.loadMap(uri)))
+    if((d->map = d->loadMap(uri)))
     {
         LOG_INFO("Map elements: %d Vertexes, %d Lines, %d Sectors, %d BSP Nodes, %d BSP Leafs and %d Segments")
             << d->map->vertexCount()  << d->map->lineCount()    << d->map->sectorCount()
@@ -342,7 +619,7 @@ void World::setupMap(int mode)
 
         // Map setup has been completed.
 
-        // Run any commands specified in Map Info.
+        // Run any commands specified in Map CacheRecord.
         Uri mapUri = d->map->uri();
         ded_mapinfo_t *mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&mapUri));
         if(mapInfo && mapInfo->execute)
@@ -418,9 +695,9 @@ void World::clearMap()
     d->map = 0;
 }
 
-void World::resetMapArchive()
+void World::resetMapCache()
 {
-    d->mapArchive.reset();
+    d->records.clear();
 }
 
 } // namespace de
