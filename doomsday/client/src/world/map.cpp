@@ -66,10 +66,8 @@ struct EditableElements
     Map::Sectors sectors;
     Map::Polyobjs polyobjs;
 
-    /// Map entities and element properties (things, line specials, etc...).
-    EntityDatabase *entityDatabase;
-
-    EditableElements() : entityDatabase(0) {}
+    EditableElements()
+    {}
 
     ~EditableElements()
     {
@@ -689,10 +687,12 @@ DENG2_PIMPL(Map)
 Map::Map() : d(new Instance(this))
 {
     zap(_oldUniqueId);
+#ifdef __CLIENT__
     zap(clMobjHash);
     zap(clActivePlanes);
     zap(clActivePolyobjs);
-    entityDatabase = 0;
+#endif
+    entityDatabase = EntityDatabase_New();
     lineLinks = 0;
     _globalGravity = 0;
     _effectiveGravity = 0;
@@ -2378,10 +2378,8 @@ bool Map::endEditing()
     buildVertexLineOwnerRings(d->editable);
 
     /*
-     * Acquire ownership of the map elements from the editable map.
+     * Move the editable elements to the "static" element lists.
      */
-    entityDatabase = d->editable.entityDatabase; // Take ownership.
-    d->editable.entityDatabase = 0;
 
     DENG2_ASSERT(d->vertexes.isEmpty());
 #ifdef DENG2_QT_4_7_OR_NEWER
@@ -2566,6 +2564,38 @@ Polyobj *Map::createPolyobj(Vector2d const &origin)
     po->setIndexInMap(d->editable.polyobjs.count() - 1);
 
     return po;
+}
+
+Map::Vertexes const &Map::editableVertexes() const
+{
+    if(!d->editingEnabled)
+        /// @throw EditError  Attempted when not editing.
+        throw EditError("Map::editableVertexes", "Editing is not enabled");
+    return d->editable.vertexes;
+}
+
+Map::Lines const &Map::editableLines() const
+{
+    if(!d->editingEnabled)
+        /// @throw EditError  Attempted when not editing.
+        throw EditError("Map::editableLines", "Editing is not enabled");
+    return d->editable.lines;
+}
+
+Map::Sectors const &Map::editableSectors() const
+{
+    if(!d->editingEnabled)
+        /// @throw EditError  Attempted when not editing.
+        throw EditError("Map::editableSectors", "Editing is not enabled");
+    return d->editable.sectors;
+}
+
+Map::Polyobjs const &Map::editablePolyobjs() const
+{
+    if(!d->editingEnabled)
+        /// @throw EditError  Attempted when not editing.
+        throw EditError("Map::editablePolyobjs", "Editing is not enabled");
+    return d->editable.polyobjs;
 }
 
 void EditableElements::clearAll()

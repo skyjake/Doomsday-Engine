@@ -207,9 +207,6 @@ boolean MPE_Begin(char const *mapUri)
         delete editMap;
 
     editMap = new Map;
-    // Initialize the game-specific map entity property database.
-    editMap->editable.entityDatabase = EntityDatabase_New();
-
     lastBuiltMapResult = false; // Failed (default).
 
     editMapInited = true;
@@ -279,20 +276,20 @@ int MPE_LineCreate(int v1, int v2, int frontSectorIdx, int backSectorIdx, int fl
 {
     if(!editMapInited) return -1;
 
-    if(frontSectorIdx >= editMap->editable.sectors.count()) return -1;
-    if(backSectorIdx  >= editMap->editable.sectors.count()) return -1;
-    if(v1 < 0 || v1 >= editMap->editable.vertexes.count()) return -1;
-    if(v2 < 0 || v2 >= editMap->editable.vertexes.count()) return -1;
+    if(frontSectorIdx >= editMap->editableSectorCount()) return -1;
+    if(backSectorIdx  >= editMap->editableSectorCount()) return -1;
+    if(v1 < 0 || v1 >= editMap->editableVertexCount()) return -1;
+    if(v2 < 0 || v2 >= editMap->editableVertexCount()) return -1;
     if(v1 == v2) return -1;
 
     // Next, check the length is not zero.
     /// @todo fixme: We need to allow these... -ds
-    Vertex *vtx1 = editMap->editable.vertexes[v1];
-    Vertex *vtx2 = editMap->editable.vertexes[v2];
+    Vertex *vtx1 = editMap->editableVertexes().at(v1);
+    Vertex *vtx2 = editMap->editableVertexes().at(v2);
     if(de::abs(Vector2d(vtx1->origin() - vtx2->origin()).length()) <= 0.0001) return -1;
 
-    Sector *frontSector = (frontSectorIdx >= 0? editMap->editable.sectors[frontSectorIdx] : 0);
-    Sector *backSector  = (backSectorIdx  >= 0? editMap->editable.sectors[ backSectorIdx] : 0);
+    Sector *frontSector = (frontSectorIdx >= 0? editMap->editableSectors().at(frontSectorIdx) : 0);
+    Sector *backSector  = (backSectorIdx  >= 0? editMap->editableSectors().at(backSectorIdx) : 0);
 
     return editMap->createLine(*vtx1, *vtx2, flags, frontSector, backSector,
                               archiveIndex)->indexInMap();
@@ -308,9 +305,9 @@ void MPE_LineAddSide(int lineIdx, int sideId, short flags, ddstring_t const *top
 {
     if(!editMapInited) return;
 
-    if(lineIdx < 0 || lineIdx >= editMap->editable.lines.count()) return;
+    if(lineIdx < 0 || lineIdx >= editMap->editableLineCount()) return;
 
-    Line *line = editMap->editable.lines[lineIdx];
+    Line *line = editMap->editableLines().at(lineIdx);
     Line::Side &side = line->side(sideId);
 
     side.setFlags(flags);
@@ -341,9 +338,9 @@ int MPE_PlaneCreate(int sectorIdx, coord_t height, ddstring_t const *materialUri
 {
     if(!editMapInited) return -1;
 
-    if(sectorIdx < 0 || sectorIdx >= editMap->editable.sectors.count()) return -1;
+    if(sectorIdx < 0 || sectorIdx >= editMap->editableSectorCount()) return -1;
 
-    Sector *sector = editMap->editable.sectors[sectorIdx];
+    Sector *sector = editMap->editableSectors().at(sectorIdx);
     Plane *plane = sector->addPlane(Vector3f(normalX, normalY, normalZ), height);
 
     plane->setIndexInArchive(archiveIndex);
@@ -382,9 +379,9 @@ int MPE_PolyobjCreate(int *lines, int lineCount, int tag, int sequenceType,
     // already part of another polyobj.
     for(int i = 0; i < lineCount; ++i)
     {
-        if(lines[i] < 0 || lines[i] >= editMap->editable.lines.count()) return -1;
+        if(lines[i] < 0 || lines[i] >= editMap->editableLineCount()) return -1;
 
-        Line *line = editMap->editable.lines[lines[i]];
+        Line *line = editMap->editableLines().at(lines[i]);
         if(line->definesPolyobj()) return -1;
     }
 
@@ -394,7 +391,7 @@ int MPE_PolyobjCreate(int *lines, int lineCount, int tag, int sequenceType,
 
     for(int i = 0; i < lineCount; ++i)
     {
-        Line *line = editMap->editable.lines[lines[i]];
+        Line *line = editMap->editableLines().at(lines[i]);
 
         // This line belongs to a polyobj.
         line->setPolyobj(po);
@@ -432,7 +429,7 @@ boolean MPE_GameObjProperty(char const *entityName, int elementIndex,
         return false;
     }
 
-    return P_SetMapEntityProperty(editMap->editable.entityDatabase,
+    return P_SetMapEntityProperty(editMap->entityDatabase,
                                   propertyDef, elementIndex, type, valueAdr);
 }
 

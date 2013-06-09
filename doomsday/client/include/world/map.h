@@ -90,17 +90,17 @@ public:
     /// Base error for runtime map editing errors. @ingroup errors
     DENG2_ERROR(EditError);
 
-    typedef QList<Vertex *> Vertexes;
-    typedef QList<Sector *> Sectors;
-    typedef QList<Line *> Lines;
+    typedef QList<Vertex *>  Vertexes;
+    typedef QList<Line *>    Lines;
     typedef QList<Polyobj *> Polyobjs;
+    typedef QList<Sector *>  Sectors;
 
-    typedef QList<Segment *> Segments;
     typedef QList<BspNode *> BspNodes;
     typedef QList<BspLeaf *> BspLeafs;
+    typedef QList<Segment *> Segments;
 
-    typedef QSet<Plane *> PlaneSet;
-    typedef QSet<Surface *> SurfaceSet;
+    typedef QSet<Plane *>    PlaneSet;
+    typedef QSet<Surface *>  SurfaceSet;
 
 public:
     Uri _uri;
@@ -124,13 +124,14 @@ public:
         }
     } thinkers;
 
-    // Client only data:
+#ifdef __CLIENT__
     cmhash_t clMobjHash[CLIENT_MOBJ_HASH_SIZE];
 
     struct clplane_s *clActivePlanes[CLIENT_MAX_MOVERS];
     struct clpolyobj_s *clActivePolyobjs[CLIENT_MAX_MOVERS];
-    // End client only data.
+#endif
 
+    /// Map entities and element properties (things, line specials, etc...).
     EntityDatabase *entityDatabase;
 
 public:
@@ -761,6 +762,34 @@ public:
                          int archiveIndex = MapElement::NoIndex);
 
     Polyobj *createPolyobj(Vector2d const &origin);
+
+    /**
+     * Provides a list of all the editable vertexes in the map.
+     */
+    Vertexes const &editableVertexes() const;
+
+    inline int editableVertexCount() const { return editableVertexes().count(); }
+
+    /**
+     * Provides a list of all the editable lines in the map.
+     */
+    Lines const &editableLines() const;
+
+    inline int editableLineCount() const { return editableLines().count(); }
+
+    /**
+     * Provides a list of all the editable sectors in the map.
+     */
+    Sectors const &editableSectors() const;
+
+    inline int editableSectorCount() const { return editableSectors().count(); }
+
+    /**
+     * Provides a list of all the editable polyobjs in the map.
+     */
+    Polyobjs const &editablePolyobjs() const;
+
+    inline int editablePolyobjCount() const { return editablePolyobjs().count(); }
 
 private:
     DENG2_PRIVATE(d)
