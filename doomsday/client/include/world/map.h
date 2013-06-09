@@ -87,6 +87,9 @@ public:
     DENG2_ERROR(MissingLightGridError);
 #endif
 
+    /// Base error for runtime map editing errors. @ingroup errors
+    DENG2_ERROR(EditError);
+
     typedef QList<Vertex *> Vertexes;
     typedef QList<Sector *> Sectors;
     typedef QList<Line *> Lines;
@@ -149,9 +152,27 @@ public:
 
     int _ambientLightLevel; // Ambient lightlevel for the current map.
 
+    struct EditableElements
+    {
+        Map::Vertexes vertexes;
+        Map::Lines lines;
+        Map::Sectors sectors;
+        Map::Polyobjs polyobjs;
+
+        /// Map entities and element properties (things, line specials, etc...).
+        EntityDatabase *entityDatabase;
+
+        EditableElements() : entityDatabase(0) {}
+    } editable;
+
 public:
     Map();
     ~Map();
+
+    /**
+     * To be called to register the cvars and ccmds for this module.
+     */
+    static void consoleRegister();
 
     /**
      * This ID is the name of the lump tag that marks the beginning of map
@@ -755,6 +776,30 @@ public: /// @todo Make private:
     void updateMissingMaterialsForLinesOfSector(Sector const &sec);
 
 #endif // __CLIENT__
+
+public:
+    /*
+     * Runtime map editiing:
+     */
+
+    /// @return @c true= a new BSP was built successfully for the map.
+    bool endEditing();
+
+    Vertex *createVertex(Vector2d const &origin,
+                         int archiveIndex = MapElement::NoIndex);
+
+    Line *createLine(Vertex &v1, Vertex &v2, int flags = 0,
+                     Sector *frontSector = 0, Sector *backSector = 0,
+                     int archiveIndex = MapElement::NoIndex);
+
+    Sector *createSector(float lightLevel, Vector3f const &lightColor,
+                         int archiveIndex = MapElement::NoIndex);
+
+    Polyobj *createPolyobj(Vector2d const &origin);
+
+    void clearEditableElements();
+
+    void pruneEditableVertexes();
 
 private:
     DENG2_PRIVATE(d)

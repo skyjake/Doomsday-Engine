@@ -659,7 +659,6 @@ void DD_Register(void)
     Textures::consoleRegister();
     Net_Register();
     World::consoleRegister();
-    MPE_Register();
     FI_Register();
 }
 

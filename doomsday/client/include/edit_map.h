@@ -1,4 +1,4 @@
-/** @file edit_map.h: Runtime map editing.
+/** @file world/edit_map.h Internal runtime map editing interface.
  *
  * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
  *
@@ -16,22 +16,13 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG_MAP_EDITOR_H
-#define LIBDENG_MAP_EDITOR_H
+#ifndef DENG_WORLD_EDITMAP_H
+#define DENG_WORLD_EDITMAP_H
 
-#include <QList>
-#include "Vertex"
-
-namespace de {
-class Map;
-}
-
-DENG_EXTERN_C int bspFactor;
-
-void MPE_Register();
-
-de::Map *MPE_GetLastBuiltMap();
+#include "world/map.h"
 
 bool MPE_GetLastBuiltMapResult();
 
-#endif // LIBDENG_MAP_EDITOR_H
+de::Map *MPE_TakeMap();
+
+#endif // DENG_WORLD_EDITMAP_H
