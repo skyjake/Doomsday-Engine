@@ -27,6 +27,7 @@
 
 #include "Materials"
 
+#include "world/entitydatabase.h"
 #include "world/p_mapdata.h"
 #include "world/map.h"
 
@@ -403,7 +404,7 @@ int MPE_PolyobjCreate(int *lines, int lineCount, int tag, int sequenceType,
 
 #undef MPE_GameObjProperty
 boolean MPE_GameObjProperty(char const *entityName, int elementIndex,
-    char const *propertyName, valuetype_t type, void *valueAdr)
+    char const *propertyName, valuetype_t valueType, void *valueAdr)
 {
     LOG_AS("MPE_GameObjProperty");
 
@@ -429,8 +430,17 @@ boolean MPE_GameObjProperty(char const *entityName, int elementIndex,
         return false;
     }
 
-    return P_SetMapEntityProperty(editMap->entityDatabase,
-                                  propertyDef, elementIndex, type, valueAdr);
+    try
+    {
+        EntityDatabase &entities = editMap->entityDatabase();
+        entities.setProperty(propertyDef, elementIndex, valueType, valueAdr);
+        return true;
+    }
+    catch(Error const &er)
+    {
+        LOG_WARNING("%s. Ignoring.") << er.asText();
+    }
+    return false;
 }
 
 // p_data.cpp

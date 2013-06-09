@@ -24,7 +24,6 @@
 #include <QList>
 #include <QSet>
 
-#include "EntityDatabase"
 #include "m_nodepile.h"
 #include "p_particle.h"
 #include "Polyobj"
@@ -69,6 +68,7 @@ struct clpolyobj_s;
 
 namespace de {
 
+class EntityDatabase;
 #ifdef __CLIENT__
 class LightGrid;
 #endif
@@ -130,9 +130,6 @@ public:
     struct clplane_s *clActivePlanes[CLIENT_MAX_MOVERS];
     struct clpolyobj_s *clActivePolyobjs[CLIENT_MAX_MOVERS];
 #endif
-
-    /// Map entities and element properties (things, line specials, etc...).
-    EntityDatabase *entityDatabase;
 
 public:
     nodepile_t mobjNodes, lineNodes; // All kinds of wacky links.
@@ -479,6 +476,8 @@ public:
      * @param polyobj  Polyobj to be unlinked.
      */
     void unlinkPolyobj(Polyobj &polyobj);
+
+    EntityDatabase &entityDatabase() const;
 
     /**
      * Retrieve a pointer to the Generators collection for the map. If no collection

@@ -116,19 +116,6 @@ MapEntityDef *P_MapEntityDefByName(char const *name);
  */
 AutoStr *P_NameForMapEntityDef(MapEntityDef *def);
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
-#include "../EntityDatabase"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-boolean P_SetMapEntityProperty(EntityDatabase *db, MapEntityPropertyDef *propertyDef,
-                               int elementIndex, valuetype_t valueType, void* valueAdr);
-
 /**
  * To be called to initialize the game map object defs.
  */

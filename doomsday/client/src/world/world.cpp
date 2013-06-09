@@ -581,9 +581,6 @@ void World::setupMap(int mode)
             gameTime = 0;
         }
 
-        // We are now finished with the map entity db.
-        EntityDatabase_Delete(d->map->entityDatabase);
-
 #ifdef __SERVER__
         // Init server data.
         Sv_InitPools();

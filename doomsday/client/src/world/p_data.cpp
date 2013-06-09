@@ -285,20 +285,6 @@ void P_ShutdownMapEntityDefs()
     clearEntityDefs();
 }
 
-boolean P_SetMapEntityProperty(EntityDatabase *db, MapEntityPropertyDef *propertyDef,
-    int elementIndex, valuetype_t valueType, void *valueAdr)
-{
-    try
-    {
-        return EntityDatabase_SetProperty(db, propertyDef, elementIndex, valueType, valueAdr);
-    }
-    catch(Error const &er)
-    {
-        LOG_WARNING("%s. Ignoring.") << er.asText();
-    }
-    return false;
-}
-
 static MapEntityPropertyDef *entityPropertyDef(int entityId, int propertyId)
 {
     // Is this a known entity?
@@ -315,16 +301,16 @@ static MapEntityPropertyDef *entityPropertyDef(int entityId, int propertyId)
     return property; // Found it.
 }
 
-static void setValue(void *dst, valuetype_t dstType, PropertyValue const *pvalue)
+static void setValue(void *dst, valuetype_t dstType, PropertyValue const &pvalue)
 {
     switch(dstType)
     {
-    case DDVT_FIXED: *((fixed_t *) dst) = pvalue->asFixed(); break;
-    case DDVT_FLOAT: *(  (float *) dst) = pvalue->asFloat(); break;
-    case DDVT_BYTE:  *(   (byte *) dst) = pvalue->asByte();  break;
-    case DDVT_INT:   *(    (int *) dst) = pvalue->asInt32(); break;
-    case DDVT_SHORT: *(  (short *) dst) = pvalue->asInt16(); break;
-    case DDVT_ANGLE: *((angle_t *) dst) = pvalue->asAngle(); break;
+    case DDVT_FIXED: *((fixed_t *) dst) = pvalue.asFixed(); break;
+    case DDVT_FLOAT: *(  (float *) dst) = pvalue.asFloat(); break;
+    case DDVT_BYTE:  *(   (byte *) dst) = pvalue.asByte();  break;
+    case DDVT_INT:   *(    (int *) dst) = pvalue.asInt32(); break;
+    case DDVT_SHORT: *(  (short *) dst) = pvalue.asInt16(); break;
+    case DDVT_ANGLE: *((angle_t *) dst) = pvalue.asAngle(); break;
     default:
         throw Error("setValue", QString("Unknown value type %d").arg(dstType));
     }
@@ -334,14 +320,14 @@ static void setValue(void *dst, valuetype_t dstType, PropertyValue const *pvalue
 DENG_EXTERN_C byte P_GetGMOByte(int entityId, int elementIndex, int propertyId)
 {
     byte returnVal = 0;
-    if(App_World().hasMap() && App_World().map().entityDatabase)
+    if(App_World().hasMap())
     {
         try
         {
-            EntityDatabase *db = App_World().map().entityDatabase;
+            EntityDatabase &db = App_World().map().entityDatabase();
             MapEntityPropertyDef *propDef = entityPropertyDef(entityId, propertyId);
 
-            setValue(&returnVal, DDVT_BYTE, EntityDatabase_Property(db, propDef, elementIndex));
+            setValue(&returnVal, DDVT_BYTE, db.property(propDef, elementIndex));
         }
         catch(Error const &er)
         {
@@ -355,14 +341,14 @@ DENG_EXTERN_C byte P_GetGMOByte(int entityId, int elementIndex, int propertyId)
 DENG_EXTERN_C short P_GetGMOShort(int entityId, int elementIndex, int propertyId)
 {
     short returnVal = 0;
-    if(App_World().hasMap() && App_World().map().entityDatabase)
+    if(App_World().hasMap())
     {
         try
         {
-            EntityDatabase *db = App_World().map().entityDatabase;
+            EntityDatabase &db = App_World().map().entityDatabase();
             MapEntityPropertyDef *propDef = entityPropertyDef(entityId, propertyId);
 
-            setValue(&returnVal, DDVT_SHORT, EntityDatabase_Property(db, propDef, elementIndex));
+            setValue(&returnVal, DDVT_SHORT, db.property(propDef, elementIndex));
         }
         catch(Error const &er)
         {
@@ -376,14 +362,14 @@ DENG_EXTERN_C short P_GetGMOShort(int entityId, int elementIndex, int propertyId
 DENG_EXTERN_C int P_GetGMOInt(int entityId, int elementIndex, int propertyId)
 {
     int returnVal = 0;
-    if(App_World().hasMap() && App_World().map().entityDatabase)
+    if(App_World().hasMap())
     {
         try
         {
-            EntityDatabase *db = App_World().map().entityDatabase;
+            EntityDatabase &db = App_World().map().entityDatabase();
             MapEntityPropertyDef *propDef = entityPropertyDef(entityId, propertyId);
 
-            setValue(&returnVal, DDVT_INT, EntityDatabase_Property(db, propDef, elementIndex));
+            setValue(&returnVal, DDVT_INT, db.property(propDef, elementIndex));
         }
         catch(Error const &er)
         {
@@ -397,14 +383,14 @@ DENG_EXTERN_C int P_GetGMOInt(int entityId, int elementIndex, int propertyId)
 DENG_EXTERN_C fixed_t P_GetGMOFixed(int entityId, int elementIndex, int propertyId)
 {
     fixed_t returnVal = 0;
-    if(App_World().hasMap() && App_World().map().entityDatabase)
+    if(App_World().hasMap())
     {
         try
         {
-            EntityDatabase *db = App_World().map().entityDatabase;
+            EntityDatabase &db = App_World().map().entityDatabase();
             MapEntityPropertyDef *propDef = entityPropertyDef(entityId, propertyId);
 
-            setValue(&returnVal, DDVT_FIXED, EntityDatabase_Property(db, propDef, elementIndex));
+            setValue(&returnVal, DDVT_FIXED, db.property(propDef, elementIndex));
         }
         catch(Error const &er)
         {
@@ -418,14 +404,14 @@ DENG_EXTERN_C fixed_t P_GetGMOFixed(int entityId, int elementIndex, int property
 DENG_EXTERN_C angle_t P_GetGMOAngle(int entityId, int elementIndex, int propertyId)
 {
     angle_t returnVal = 0;
-    if(App_World().hasMap() && App_World().map().entityDatabase)
+    if(App_World().hasMap())
     {
         try
         {
-            EntityDatabase *db = App_World().map().entityDatabase;
+            EntityDatabase &db = App_World().map().entityDatabase();
             MapEntityPropertyDef *propDef = entityPropertyDef(entityId, propertyId);
 
-            setValue(&returnVal, DDVT_ANGLE, EntityDatabase_Property(db, propDef, elementIndex));
+            setValue(&returnVal, DDVT_ANGLE, db.property(propDef, elementIndex));
         }
         catch(Error const &er)
         {
@@ -439,14 +425,14 @@ DENG_EXTERN_C angle_t P_GetGMOAngle(int entityId, int elementIndex, int property
 DENG_EXTERN_C float P_GetGMOFloat(int entityId, int elementIndex, int propertyId)
 {
     float returnVal = 0;
-    if(App_World().hasMap() && App_World().map().entityDatabase)
+    if(App_World().hasMap())
     {
         try
         {
-            EntityDatabase *db = App_World().map().entityDatabase;
+            EntityDatabase &db = App_World().map().entityDatabase();
             MapEntityPropertyDef *propDef = entityPropertyDef(entityId, propertyId);
 
-            setValue(&returnVal, DDVT_FLOAT, EntityDatabase_Property(db, propDef, elementIndex));
+            setValue(&returnVal, DDVT_FLOAT, db.property(propDef, elementIndex));
         }
         catch(Error const &er)
         {

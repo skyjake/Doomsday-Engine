@@ -18,27 +18,37 @@
  * 02110-1301 USA</small>
  */
 
+#include <map>
+
+#include <de/Log>
+
 #include "de_base.h"
 #include "world/p_mapdata.h"
 #include "world/propertyvalue.h"
 
-#include <map>
-#include <de/Error>
-#include <de/Log>
+#include "world/entitydatabase.h"
 
-struct entitydatabase_s
+// An entity is a set of one or more properties.
+// Key is the unique identifier of said property in the
+// MapEntityPropertyDef it is derived from.
+typedef std::map<int, PropertyValue *> Entity;
+
+// Entities are stored in a set, each associated with a unique map element index.
+typedef std::map<int, Entity> Entities;
+
+// Entities are grouped in sets by their unique identifier.
+typedef std::map<int, Entities> EntitySet;
+
+namespace de {
+
+DENG2_PIMPL(EntityDatabase)
 {
-private:
-    // An entity is a set of one or more properties.
-    // Key is the unique identifier of said property in the MapEntityPropertyDef it is derived from.
-    typedef std::map<int, PropertyValue*> Entity;
-    // Entities are stored in a set, each associated with a unique map element index.
-    typedef std::map<int, Entity> Entities;
-    // Entities are grouped in sets by their unique identifier.
-    typedef std::map<int, Entities> EntitySet;
+    EntitySet entitySets;
 
-public:
-    ~entitydatabase_s()
+    Instance(Public *i) : Base(i)
+    {}
+
+    ~Instance()
     {
         DENG2_FOR_EACH(EntitySet, setIt, entitySets)
         DENG2_FOR_EACH(Entities, entityIt, setIt->second)
@@ -48,84 +58,21 @@ public:
         }
     }
 
-    /// @return Total number of entities by definition @a entityDef.
-    uint entityCount(MapEntityDef const* entityDef)
-    {
-        DENG2_ASSERT(entityDef);
-        Entities* set = entities(entityDef->id);
-        return set->size();
-    }
-
-    /// @return @c true= An entity by definition @a entityDef and @a elementIndex is known/present.
-    bool hasEntity(MapEntityDef const* entityDef, int elementIndex)
-    {
-        DENG2_ASSERT(entityDef);
-        Entities* set = entities(entityDef->id);
-        return entityByElementIndex(*set, elementIndex, false /*do not create*/) != 0;
-    }
-
     /**
-     * Lookup a known entity element property value in the database.
-     *
-     * @throws de::Error If @a elementIndex is out-of-range.
-     *
-     * @param def           Definition of the property to lookup an element value for.
-     * @param elementIndex  Unique element index of the value to lookup.
-     *
-     * @return The found PropertyValue.
+     * Lookup the set in which entities with the unique identifier
+     * @a entityId are stored.
      */
-    PropertyValue const& property(MapEntityPropertyDef const* def, int elementIndex)
-    {
-        DENG2_ASSERT(def);
-        Entities* set = entities(def->entity->id);
-        Entity* entity = entityByElementIndex(*set, elementIndex, false /*do not create*/);
-        if(!entity) throw de::Error("property", QString("There is no element %1 of type %2")
-                                                    .arg(elementIndex).arg(Str_Text(P_NameForMapEntityDef(def->entity))));
-
-        Entity::const_iterator found = entity->find(def->id);
-        DENG2_ASSERT(found != entity->end()); // Sanity check.
-        return *found->second;
-    }
-
-    /**
-     * Replace/add a value for a known entity element property to the database.
-     *
-     * @param def           Definition of the property to add an element value for.
-     * @param elementIndex  Unique element index for the value.
-     * @param value         The new PropertyValue. Ownership passes to this database.
-     */
-    void setProperty(MapEntityPropertyDef const* def, int elementIndex, PropertyValue* value)
-    {
-        DENG2_ASSERT(def);
-        Entities* set = entities(def->entity->id);
-        Entity* entity = entityByElementIndex(*set, elementIndex, true);
-        if(!entity) throw de::Error("setProperty", "Failed adding new entity element record");
-
-        // Do we already have a record for this?
-        Entity::iterator found = entity->find(def->id);
-        if(found != entity->end())
-        {
-            PropertyValue** adr = &found->second;
-            delete *adr;
-            *adr = value;
-            return;
-        }
-
-        // Add a new record.
-        entity->insert(std::pair<int, PropertyValue*>(def->id, value));
-    }
-
-private:
-    /// Lookup the set in which entities with the unique identifier @a entityId are stored.
-    Entities* entities(int entityId)
+    Entities *entities(int entityId)
     {
         std::pair<EntitySet::iterator, bool> result;
         result = entitySets.insert(std::pair<int, Entities>(entityId, Entities()));
         return &result.first->second;
     }
 
-    /// Lookup an entity in @a set by its unique @a elementIndex.
-    Entity* entityByElementIndex(Entities& set, int elementIndex, bool canCreate)
+    /**
+     * Lookup an entity in @a set by its unique @a elementIndex.
+     */
+    Entity *entityByElementIndex(Entities& set, int elementIndex, bool canCreate)
     {
         // Do we already have a record for this entity?
         Entities::iterator found = set.find(elementIndex);
@@ -138,46 +85,62 @@ private:
         result = set.insert(std::pair<int, Entity>(elementIndex, Entity()));
         return &result.first->second;
     }
-
-    EntitySet entitySets;
 };
 
-EntityDatabase* EntityDatabase_New(void)
+EntityDatabase::EntityDatabase() : d(new Instance(this))
+{}
+
+uint EntityDatabase::entityCount(MapEntityDef const *entityDef)
 {
-    void* region = Z_Calloc(sizeof(entitydatabase_s), PU_MAPSTATIC, 0);
-    return new (region) entitydatabase_s();
+    DENG2_ASSERT(entityDef);
+    Entities *set = d->entities(entityDef->id);
+    return set->size();
 }
 
-void EntityDatabase_Delete(EntityDatabase* db)
+bool EntityDatabase::hasEntity(MapEntityDef const *entityDef, int elementIndex)
 {
-    if(!db) return;
-    db->~entitydatabase_s();
-    Z_Free(db);
+    DENG2_ASSERT(entityDef);
+    Entities *set = d->entities(entityDef->id);
+    return d->entityByElementIndex(*set, elementIndex, false /*do not create*/) != 0;
 }
 
-uint EntityDatabase_EntityCount(EntityDatabase* db, MapEntityDef* entityDef)
+PropertyValue const &EntityDatabase::property(MapEntityPropertyDef const *def,
+    int elementIndex)
 {
-    DENG2_ASSERT(db);
-    return db->entityCount(entityDef);
+    DENG2_ASSERT(def);
+    Entities *set = d->entities(def->entity->id);
+    Entity *entity = d->entityByElementIndex(*set, elementIndex, false /*do not create*/);
+    if(!entity)
+        throw Error("EntityDatabase::property", QString("There is no element %1 of type %2")
+                                                    .arg(elementIndex)
+                                                    .arg(Str_Text(P_NameForMapEntityDef(def->entity))));
+
+    Entity::const_iterator found = entity->find(def->id);
+    DENG2_ASSERT(found != entity->end()); // Sanity check.
+    return *found->second;
 }
 
-boolean EntityDatabase_HasEntity(EntityDatabase* db, MapEntityDef* entityDef, int elementIndex)
+void EntityDatabase::setProperty(MapEntityPropertyDef const *def, int elementIndex,
+    PropertyValue *value)
 {
-    DENG2_ASSERT(db);
-    return CPP_BOOL(db->hasEntity(entityDef, elementIndex));
+    DENG2_ASSERT(def);
+    Entities *set = d->entities(def->entity->id);
+    Entity *entity = d->entityByElementIndex(*set, elementIndex, true);
+    if(!entity)
+        throw Error("EntityDatabase::setProperty", "Failed adding new entity element record");
+
+    // Do we already have a record for this?
+    Entity::iterator found = entity->find(def->id);
+    if(found != entity->end())
+    {
+        PropertyValue **adr = &found->second;
+        delete *adr;
+        *adr = value;
+        return;
+    }
+
+    // Add a new record.
+    entity->insert(std::pair<int, PropertyValue *>(def->id, value));
 }
 
-PropertyValue const* EntityDatabase_Property(EntityDatabase* db,
-    struct mapentitypropertydef_s* propertyDef, int elementIndex)
-{
-    DENG2_ASSERT(db);
-    return &db->property(propertyDef, elementIndex);
-}
-
-boolean EntityDatabase_SetProperty(EntityDatabase* db, MapEntityPropertyDef* propertyDef,
-    int elementIndex, valuetype_t valueType, void* valueAdr)
-{
-    DENG2_ASSERT(db);
-    db->setProperty(propertyDef, elementIndex, BuildPropertyValue(valueType, valueAdr));
-    return true;
-}
+} // namespace de

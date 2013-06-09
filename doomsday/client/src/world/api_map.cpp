@@ -35,6 +35,7 @@
 #include "api_map.h"
 
 #include "world/dmuargs.h"
+#include "world/entitydatabase.h"
 #include "world/world.h"
 
 #ifdef __CLIENT__
@@ -1532,9 +1533,9 @@ DENG_EXTERN_C boolean P_LoadMap(char const *uriCString)
 #undef P_CountMapObjs
 DENG_EXTERN_C uint P_CountMapObjs(int entityId)
 {
-    if(!App_World().hasMap() || !App_World().map().entityDatabase) return 0;
-    EntityDatabase *db = App_World().map().entityDatabase;
-    return EntityDatabase_EntityCount(db, P_MapEntityDef(entityId));
+    if(!App_World().hasMap()) return 0;
+    EntityDatabase &entities = App_World().map().entityDatabase();
+    return entities.entityCount(P_MapEntityDef(entityId));
 }
 
 // p_mapdata.cpp

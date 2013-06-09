@@ -1,19 +1,6 @@
-/**
- * @file entitydatabase.h
- * Entity property value database. @ingroup world
+/** @file world/entitydatabase.h World entity property database.
  *
- * The EntityDatabase is used in the process of transferring mobj spawn spot
- * information and stuff like line action specials from the wad map loader
- * plugin via the engine, through to the game plugin.
- *
- * The primary reason for its existence is that the engine does not know about
- * the game specific properties of the map data types. The engine does not care
- * at all about the values or indeed even what properties are registered; it is
- * simply a way of piping information from one part of the system to another.
- *
- * @todo C++ allows making this even more generic: a set/map of polymorphic objects.
- *
- * @author Copyright &copy; 2007-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -30,43 +17,76 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_MAP_ENTITYDATABASE_H
-#define LIBDENG_MAP_ENTITYDATABASE_H
+#ifndef DENG_WORLD_ENTITYDATABASE_H
+#define DENG_WORLD_ENTITYDATABASE_H
+
+#include <de/libdeng2.h>
+#include <de/Error>
 
 #include "api_mapedit.h" // valuetype_t
+#include "world/propertyvalue.h"
+#include "world/p_mapdata.h"
 
-#ifdef __cplusplus
-class PropertyValue;
-
-extern "C" {
-#endif
+namespace de {
 
 /**
- * C Wrapper API:
+ * An EntityDatabase is used in the process of transferring mobj spawn spot
+ * information and stuff like line action specials from the wad map loader
+ * plugin via the engine, through to the game plugin.
+ *
+ * The primary reason for its existence is that the engine does not know about
+ * the game specific properties of the map data types. The engine does not care
+ * at all about the values or indeed even what properties are registered; it is
+ * simply a way of piping information from one part of the system to another.
+ *
+ * @todo C++ allows making this more generic: a set/map of polymorphic objects
+ * e.g., QVariant.
  */
+class EntityDatabase
+{
+public:
+    EntityDatabase();
 
-struct mapentitydef_s;
-struct mapentitypropertydef_s;
+    /// @return Total number of entities by definition @a entityDef.
+    uint entityCount(MapEntityDef const *entityDef);
 
-struct entitydatabase_s;
-typedef struct entitydatabase_s EntityDatabase;
+    /**
+     * Returns @c true iff an entity with definition @a entityDef and
+     * @a elementIndex is known/present.
+     */
+    bool hasEntity(MapEntityDef const *entityDef, int elementIndex);
 
-EntityDatabase* EntityDatabase_New(void);
+    /**
+     * Lookup a known entity element property value in the database.
+     *
+     * @param def           Definition of the property to lookup an element value for.
+     * @param elementIndex  Unique element index of the value to lookup.
+     *
+     * @return The found PropertyValue.
+     */
+    PropertyValue const &property(MapEntityPropertyDef const *def, int elementIndex);
 
-void EntityDatabase_Delete(EntityDatabase* db);
+    /**
+     * Replace/add a value for a known entity element property to the database.
+     *
+     * @param def           Definition of the property to add an element value for.
+     * @param elementIndex  Unique element index for the value.
+     * @param value         The new PropertyValue. Ownership passes to this database.
+     */
+    void setProperty(MapEntityPropertyDef const *def, int elementIndex,
+                     PropertyValue *value);
 
-uint EntityDatabase_EntityCount(EntityDatabase* db, struct mapentitydef_s* entityDef);
+    /// @copydoc setProperty
+    inline void setProperty(MapEntityPropertyDef const *def, int elementIndex,
+                            valuetype_t valueType, void *valueAdr)
+    {
+        setProperty(def, elementIndex, BuildPropertyValue(valueType, valueAdr));
+    }
 
-boolean EntityDatabase_HasEntity(EntityDatabase* db, struct mapentitydef_s* entityDef, int elementIndex);
+private:
+    DENG2_PRIVATE(d)
+};
 
-#ifdef __cplusplus
-PropertyValue const* EntityDatabase_Property(EntityDatabase* db, struct mapentitypropertydef_s* propertyDef, int elementIndex);
-#endif
+} // namespace de
 
-boolean EntityDatabase_SetProperty(EntityDatabase* db, struct mapentitypropertydef_s* propertyDef, int elementIndex, valuetype_t valueType, void* valueAdr);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
-#endif // LIBDENG_MAP_ENTITYDATABASE_H
+#endif // DENG_WORLD_ENTITYDATABASE_H

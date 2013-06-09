@@ -40,6 +40,7 @@
 #include "BspBuilder"
 
 #include "world/blockmap.h"
+#include "world/entitydatabase.h"
 #include "world/generators.h"
 #include "world/lineowner.h"
 #include "world/p_intercept.h"
@@ -103,6 +104,9 @@ DENG2_PIMPL(Map)
     Segments segments;
     BspNodes bspNodes;
     BspLeafs bspLeafs;
+
+    /// Map entities and element properties (things, line specials, etc...).
+    EntityDatabase entityDatabase;
 
     /// Blockmaps:
     Blockmap *mobjBlockmap;
@@ -692,7 +696,6 @@ Map::Map() : d(new Instance(this))
     zap(clActivePlanes);
     zap(clActivePolyobjs);
 #endif
-    entityDatabase = EntityDatabase_New();
     lineLinks = 0;
     _globalGravity = 0;
     _effectiveGravity = 0;
@@ -707,8 +710,6 @@ Map::~Map()
     // Client only data:
     // mobjHash/activePlanes/activePolyobjs - free them!
     // End client only data.
-
-    EntityDatabase_Delete(entityDatabase);
 
     // mobj/line/polyobj/bspLeaf blockmaps - free them!
     // mobjNodes/lineNodes/lineLinks - free them!
@@ -994,6 +995,11 @@ void Map::initPolyobjs()
         po->unlink();
         po->link();
     }
+}
+
+EntityDatabase &Map::entityDatabase() const
+{
+    return d->entityDatabase;
 }
 
 Generators *Map::generators()
