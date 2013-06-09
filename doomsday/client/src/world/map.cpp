@@ -59,10 +59,35 @@ static int bspSplitFactor = 7; // cvar
 
 namespace de {
 
+struct EditableElements
+{
+    Map::Vertexes vertexes;
+    Map::Lines lines;
+    Map::Sectors sectors;
+    Map::Polyobjs polyobjs;
+
+    /// Map entities and element properties (things, line specials, etc...).
+    EntityDatabase *entityDatabase;
+
+    EditableElements() : entityDatabase(0) {}
+
+    ~EditableElements()
+    {
+        clearAll();
+    }
+
+    void clearAll();
+
+    void pruneVertexes();
+};
+
 DENG2_PIMPL(Map)
 {
     /// @c true= editing is currently enabled.
     bool editingEnabled;
+
+    /// Editable map element LUTs:
+    EditableElements editable;
 
     /// Boundary points which encompass the entire map.
     AABoxd bounds;
@@ -551,8 +576,6 @@ Map::Map() : d(new Instance(this))
 /// @todo fixme: Free all memory we have ownership of.
 Map::~Map()
 {
-    clearEditableElements();
-
     // thinker lists - free them!
 
     // Client only data:
@@ -2260,7 +2283,7 @@ static bool vertexHasValidLineOwnerRing(Vertex &v)
  * the lines which the vertex belongs to sorted by angle, (the rings are
  * arranged in clockwise order, east = 0).
  */
-void buildVertexLineOwnerRings(Map &map)
+void buildVertexLineOwnerRings(EditableElements &editable)
 {
     LOG_AS("buildVertexLineOwnerRings");
 
@@ -2268,10 +2291,10 @@ void buildVertexLineOwnerRings(Map &map)
      * Step 1: Find and link up all line owners.
      */
     // We know how many vertex line owners we need (numLines * 2).
-    LineOwner *lineOwners = (LineOwner *) Z_Malloc(sizeof(LineOwner) * map.editable.lines.count() * 2, PU_MAPSTATIC, 0);
+    LineOwner *lineOwners = (LineOwner *) Z_Malloc(sizeof(LineOwner) * editable.lines.count() * 2, PU_MAPSTATIC, 0);
     LineOwner *allocator = lineOwners;
 
-    foreach(Line *line, map.editable.lines)
+    foreach(Line *line, editable.lines)
     for(uint p = 0; p < 2; ++p)
     {
         setVertexLineOwner(&line->vertex(p), line, &allocator);
@@ -2280,7 +2303,7 @@ void buildVertexLineOwnerRings(Map &map)
     /*
      * Step 2: Sort line owners of each vertex and finalize the rings.
      */
-    foreach(Vertex *v, map.editable.vertexes)
+    foreach(Vertex *v, editable.vertexes)
     {
         if(!v->_numLineOwners) continue;
 
@@ -2338,69 +2361,69 @@ bool Map::endEditing()
         return true; // Huh?
 
     LOG_DEBUG("New elements: %d Vertexes, %d Lines and %d Sectors.")
-        << editable.vertexes.count()
-        << editable.lines.count()
-        << editable.sectors.count();
+        << d->editable.vertexes.count()
+        << d->editable.lines.count()
+        << d->editable.sectors.count();
 
     /*
      * Perform cleanup on the loaded map data.
      */
 
-    pruneEditableVertexes();
+    d->editable.pruneVertexes();
 
     /// Ensure lines with only one sector are flagged as blocking.
     /// @todo Refactor away.
-    foreach(Line *line, editable.lines)
+    foreach(Line *line, d->editable.lines)
     {
         if(!line->hasFrontSector() || !line->hasBackSector())
             line->setFlags(DDLF_BLOCKING);
     }
 
-    buildVertexLineOwnerRings(*this);
+    buildVertexLineOwnerRings(d->editable);
 
     /*
      * Acquire ownership of the map elements from the editable map.
      */
-    entityDatabase = editable.entityDatabase; // Take ownership.
-    editable.entityDatabase = 0;
+    entityDatabase = d->editable.entityDatabase; // Take ownership.
+    d->editable.entityDatabase = 0;
 
     DENG2_ASSERT(d->vertexes.isEmpty());
 #ifdef DENG2_QT_4_7_OR_NEWER
-    d->vertexes.reserve(editable.vertexes.count());
+    d->vertexes.reserve(d->editable.vertexes.count());
 #endif
-    while(!editable.vertexes.isEmpty())
+    while(!d->editable.vertexes.isEmpty())
     {
-        d->vertexes.append(editable.vertexes.takeFirst());
+        d->vertexes.append(d->editable.vertexes.takeFirst());
     }
 
     // Collate sectors:
     DENG2_ASSERT(d->sectors.isEmpty());
 #ifdef DENG2_QT_4_7_OR_NEWER
-    d->sectors.reserve(editable.sectors.count());
+    d->sectors.reserve(d->editable.sectors.count());
 #endif
-    while(!editable.sectors.isEmpty())
+    while(!d->editable.sectors.isEmpty())
     {
-        d->sectors.append(editable.sectors.takeFirst());
+        d->sectors.append(d->editable.sectors.takeFirst());
     }
 
     // Collate lines:
     DENG2_ASSERT(d->lines.isEmpty());
 #ifdef DENG2_QT_4_7_OR_NEWER
-    d->lines.reserve(editable.lines.count());
+    d->lines.reserve(d->editable.lines.count());
 #endif
-    while(!editable.lines.isEmpty())
+    while(!d->editable.lines.isEmpty())
     {
-        d->lines.append(editable.lines.takeFirst());
+        d->lines.append(d->editable.lines.takeFirst());
     }
 
     // Collate polyobjs:
     DENG2_ASSERT(d->polyobjs.isEmpty());
 #ifdef DENG2_QT_4_7_OR_NEWER
-    d->polyobjs.reserve(editable.polyobjs.count());
+    d->polyobjs.reserve(d->editable.polyobjs.count());
 #endif
-    while(!editable.polyobjs.isEmpty())
+    while(!d->editable.polyobjs.isEmpty())
     {
-        d->polyobjs.append(editable.polyobjs.takeFirst());
+        d->polyobjs.append(d->editable.polyobjs.takeFirst());
         Polyobj *polyobj = d->polyobjs.back();
 
         // Create a segment for each line of this polyobj.
@@ -2451,7 +2474,7 @@ bool Map::endEditing()
     bool builtOK = buildBsp();
 
     // Destroy the rest of editable map, we are finished with it.
-    clearEditableElements();
+    d->editable.clearAll();
 
     d->editingEnabled = false;
 
@@ -2483,12 +2506,12 @@ Vertex *Map::createVertex(Vector2d const &origin, int archiveIndex)
         throw EditError("Map::createVertex", "Editing is not enabled");
 
     Vertex *vtx = new Vertex(origin);
-    editable.vertexes.append(vtx);
+    d->editable.vertexes.append(vtx);
 
     vtx->setIndexInArchive(archiveIndex);
 
     /// @todo Don't do this here.
-    vtx->setIndexInMap(editable.vertexes.count() - 1);
+    vtx->setIndexInMap(d->editable.vertexes.count() - 1);
 
     return vtx;
 }
@@ -2501,12 +2524,12 @@ Line *Map::createLine(Vertex &v1, Vertex &v2, int flags, Sector *frontSector,
         throw EditError("Map::createLine", "Editing is not enabled");
 
     Line *line = new Line(v1, v2, flags, frontSector, backSector);
-    editable.lines.append(line);
+    d->editable.lines.append(line);
 
     line->setIndexInArchive(archiveIndex);
 
     /// @todo Don't do this here.
-    line->setIndexInMap(editable.lines.count() - 1);
+    line->setIndexInMap(d->editable.lines.count() - 1);
     line->front().setIndexInMap(Map::toSideIndex(line->indexInMap(), Line::Front));
     line->back().setIndexInMap(Map::toSideIndex(line->indexInMap(), Line::Back));
 
@@ -2521,12 +2544,12 @@ Sector *Map::createSector(float lightLevel, Vector3f const &lightColor,
         throw EditError("Map::createSector", "Editing is not enabled");
 
     Sector *sector = new Sector(lightLevel, lightColor);
-    editable.sectors.append(sector);
+    d->editable.sectors.append(sector);
 
     sector->setIndexInArchive(archiveIndex);
 
     /// @todo Don't do this here.
-    sector->setIndexInMap(editable.sectors.count() - 1);
+    sector->setIndexInMap(d->editable.sectors.count() - 1);
 
     return sector;
 }
@@ -2539,35 +2562,31 @@ Polyobj *Map::createPolyobj(Vector2d const &origin)
 
     void *region = M_Calloc(POLYOBJ_SIZE);
     Polyobj *po = new (region) Polyobj(origin);
-    editable.polyobjs.append(po);
+    d->editable.polyobjs.append(po);
 
     /// @todo Don't do this here.
-    po->setIndexInMap(editable.polyobjs.count() - 1);
+    po->setIndexInMap(d->editable.polyobjs.count() - 1);
 
     return po;
 }
 
-void Map::clearEditableElements()
+void EditableElements::clearAll()
 {
-    if(!d->editingEnabled)
-        /// @throw EditError  Attempted when not editing.
-        throw EditError("Map::clearEditableElements", "Editing is not enabled");
+    qDeleteAll(vertexes);
+    vertexes.clear();
 
-    qDeleteAll(editable.vertexes);
-    editable.vertexes.clear();
+    qDeleteAll(lines);
+    lines.clear();
 
-    qDeleteAll(editable.lines);
-    editable.lines.clear();
+    qDeleteAll(sectors);
+    sectors.clear();
 
-    qDeleteAll(editable.sectors);
-    editable.sectors.clear();
-
-    foreach(Polyobj *po, editable.polyobjs)
+    foreach(Polyobj *po, polyobjs)
     {
         po->~Polyobj();
         M_Free(po);
     }
-    editable.polyobjs.clear();
+    polyobjs.clear();
 }
 
 struct VertexInfo
@@ -2606,20 +2625,16 @@ struct VertexInfo
     }
 };
 
-void Map::pruneEditableVertexes()
+void EditableElements::pruneVertexes()
 {
-    if(!d->editingEnabled)
-        /// @throw EditError  Attempted when not editing.
-        throw EditError("Map::pruneEditableVertexes", "Editing is not enabled");
-
     /*
      * Step 1 - Find equivalent vertexes:
      */
 
     // Populate the vertex info.
-    QVector<VertexInfo> vertexInfo(editable.vertexes.count());
-    for(int i = 0; i < editable.vertexes.count(); ++i)
-        vertexInfo[i].vertex = editable.vertexes[i];
+    QVector<VertexInfo> vertexInfo(vertexes.count());
+    for(int i = 0; i < vertexes.count(); ++i)
+        vertexInfo[i].vertex = vertexes[i];
 
     {
         // Sort a copy to place near vertexes adjacently.
@@ -2646,14 +2661,14 @@ void Map::pruneEditableVertexes()
      */
 
     // Count line -> vertex references.
-    foreach(Line *line, editable.lines)
+    foreach(Line *line, lines)
     {
         vertexInfo[line->from().indexInMap()].refCount++;
         vertexInfo[  line->to().indexInMap()].refCount++;
     }
 
     // Perform the replacement.
-    foreach(Line *line, editable.lines)
+    foreach(Line *line, lines)
     {
         while(vertexInfo[line->from().indexInMap()].equiv)
         {
@@ -2687,7 +2702,7 @@ void Map::pruneEditableVertexes()
         if(info.refCount)
             continue;
 
-        editable.vertexes.removeOne(vertex);
+        vertexes.removeOne(vertex);
         delete vertex;
 
         prunedCount += 1;
@@ -2698,11 +2713,11 @@ void Map::pruneEditableVertexes()
     {
         // Re-index with a contiguous range of indices.
         uint idx = 0;
-        foreach(Vertex *vertex, editable.vertexes)
+        foreach(Vertex *vertex, vertexes)
             vertex->setIndexInMap(idx++);
 
         /// Update lines. @todo Line should handle this itself.
-        foreach(Line *line, editable.lines)
+        foreach(Line *line, lines)
         {
             line->updateSlopeType();
             line->updateAABox();

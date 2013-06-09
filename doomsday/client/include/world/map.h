@@ -142,19 +142,6 @@ public:
 
     int _ambientLightLevel; // Ambient lightlevel for the current map.
 
-    struct EditableElements
-    {
-        Map::Vertexes vertexes;
-        Map::Lines lines;
-        Map::Sectors sectors;
-        Map::Polyobjs polyobjs;
-
-        /// Map entities and element properties (things, line specials, etc...).
-        EntityDatabase *entityDatabase;
-
-        EditableElements() : entityDatabase(0) {}
-    } editable;
-
 public:
     Map();
     ~Map();
@@ -783,10 +770,6 @@ public:
                          int archiveIndex = MapElement::NoIndex);
 
     Polyobj *createPolyobj(Vector2d const &origin);
-
-    void clearEditableElements();
-
-    void pruneEditableVertexes();
 
 private:
     DENG2_PRIVATE(d)
