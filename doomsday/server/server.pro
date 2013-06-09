@@ -343,7 +343,6 @@ SOURCES += \
     $$SRC/src/def_main.cpp \
     $$SRC/src/def_read.cpp \
     $$SRC/src/dualstring.cpp \
-    $$SRC/src/edit_map.cpp \
     $$SRC/src/face.cpp \
     $$SRC/src/filesys/file.cpp \
     $$SRC/src/filesys/filehandle.cpp \
@@ -406,6 +405,7 @@ SOURCES += \
     $$SRC/src/ui/ui2_main.cpp \
     $$SRC/src/uri.cpp \
     $$SRC/src/world/api_map.cpp \
+    $$SRC/src/world/api_mapedit.cpp \
     $$SRC/src/world/blockmap.cpp \
     $$SRC/src/world/bsp/convexsubspace.cpp \
     $$SRC/src/world/bsp/hplane.cpp \

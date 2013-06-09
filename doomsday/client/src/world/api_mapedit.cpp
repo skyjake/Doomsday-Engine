@@ -1,4 +1,4 @@
-/** @file world/edit_map.cpp Internal runtime map editing interface.
+/** @file world/api_mapedit.cpp Internal runtime map editing interface.
  *
  * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
  *
@@ -23,7 +23,6 @@
 
 #include "de_platform.h"
 #include "de_console.h"
-#include "api_mapedit.h"
 #include "dd_main.h"
 
 #include "Materials"
@@ -32,6 +31,7 @@
 #include "world/map.h"
 
 #include "edit_map.h"
+#include "api_mapedit.h"
 
 using namespace de;
 

@@ -489,7 +489,6 @@ SOURCES += \
     src/def_read.cpp \
     src/dualstring.cpp \
     src/edit_bias.cpp \
-    src/edit_map.cpp \
     src/face.cpp \
     src/filesys/file.cpp \
     src/filesys/filehandle.cpp \
@@ -646,6 +645,7 @@ SOURCES += \
     src/uri.cpp \
     src/ui/signalaction.cpp \
     src/world/api_map.cpp \
+    src/world/api_mapedit.cpp \
     src/world/blockmap.cpp \
     src/world/bsp/convexsubspace.cpp \
     src/world/bsp/hplane.cpp \
