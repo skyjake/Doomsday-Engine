@@ -187,7 +187,6 @@ static cvar_t* addVariable(cvartemplate_t const& tpl)
     }
 
     newVar = (cvar_t*) M_Malloc(sizeof *newVar);
-    if(!newVar) throw de::Error("Con_AddVariable", QString("Failed on allocation of %u bytes for new CVar.").arg(sizeof *newVar));
 
     newVar->flags = tpl.flags;
     newVar->type = tpl.type;
@@ -540,8 +539,6 @@ void CVar_SetString2(cvar_t* var, char const* text, int svFlags)
     // Allocate a new string.
     var->flags |= CVF_CAN_FREE;
     CV_CHARPTR(var) = (char*) M_Malloc(newLen + 1);
-    if(!CV_CHARPTR(var))
-        Con_Error("CVar::SetString: Failed on allocation of %lu bytes for new string value.", (unsigned long) (newLen + 1));
     qstrcpy(CV_CHARPTR(var), text);
 
     // Make the change notification callback
@@ -1162,7 +1159,6 @@ void Con_PrintCCmdUsage(ccmd_t* ccmd, boolean printInfo)
             // Lets indent for neatness.
             size_t const infoLen = strlen(info);
             char* line, *infoCopy, *infoCopyBuf = (char*) M_Malloc(infoLen+1);
-            if(!infoCopyBuf) Con_Error("Con_PrintCCmdUsage: Failed on allocation of %lu bytes for info copy buffer.", (unsigned long) (infoLen+1));
 
             memcpy(infoCopyBuf, info, infoLen+1);
 
@@ -1504,7 +1500,6 @@ static void printHelpAbout(char const* query)
             // Lets indent for neatness.
             size_t const infoLen = strlen(info);
             char* line, *infoCopy, *infoCopyBuf = (char*) M_Malloc(infoLen+1);
-            if(!infoCopyBuf) Con_Error("CCmdHelpWhat: Failed on allocation of %lu bytes for info copy buffer.", (unsigned long) (infoLen+1));
 
             memcpy(infoCopyBuf, info, infoLen+1);
 
