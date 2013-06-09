@@ -2225,17 +2225,17 @@ D_CMD(Help)
 
     LOG_MSG(_E("1") DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT " Console");
 
-#define COLUMN(A, B) "\n" _E("Ta") _E("b") "  " << A << " " _E(".") _E("Tb") << B
+#define TABBED(A, B) "\n" _E("Ta") _E("b") "  " << A << " " _E(".") _E("Tb") << B
 
 #ifdef __CLIENT__
     LOG_MSG(_E("D") "Keys:" _E("."))
-            << COLUMN("Esc", "Open/close the taskbar")
-            << COLUMN("Shift-Esc", "Open the console")
-            << COLUMN("F5", "Clear the console message history")
-            << COLUMN("Home", "Jump to beginning of line")
-            << COLUMN("End", "Jump to end of line")
-            << COLUMN("PageUp/Down", "Scroll up/down in the history, or expand the history to full height")
-            << COLUMN("Shift-PgUp/Dn", "Jump to the top/bottom of the history");
+            << TABBED("Esc", "Open/close the taskbar")
+            << TABBED("Shift-Esc", "Open the console")
+            << TABBED("F5", "Clear the console message history")
+            << TABBED("Home", "Jump to beginning of line")
+            << TABBED("End", "Jump to end of line")
+            << TABBED("PgUp/Dn", "Scroll up/down in the history, or expand the history to full height")
+            << TABBED("Shift-PgUp/Dn", "Jump to the top/bottom of the history");
 #endif
     LOG_MSG(_E("D") "Getting started:");
     LOG_MSG("  " _E(">") "Enter " _E("b") "help (what)" _E(".") " for information about " _E("l") "(what)");
@@ -2243,6 +2243,9 @@ D_CMD(Help)
     LOG_MSG("  " _E(">") "Enter " _E("b") "listgames" _E(".") " to list installed games and their status");
     LOG_MSG("  " _E(">") "Enter " _E("b") "listvars" _E(".") " to list available variables");
     //Con_PrintRuler();
+
+#undef TABBED
+
     return true;
 }
 

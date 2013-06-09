@@ -188,11 +188,11 @@ static void printGLUInfo(void)
     de::String str;
     QTextStream os(&str);
 
-#define COLUMNS(A, B) _E("Ta") "  " A " " _E("Tb") << B << "\n"
+#define TABBED(A, B) _E("Ta") "  " A " " _E("Tb") << B << "\n"
 
-    os << COLUMNS("Version:",  (char const *) glGetString(GL_VERSION));
-    os << COLUMNS("Vendor:",   (char const *) glGetString(GL_VENDOR));
-    os << COLUMNS("Renderer:", (char const *) glGetString(GL_RENDERER));
+    os << TABBED("Version:",  (char const *) glGetString(GL_VERSION));
+    os << TABBED("Vendor:",   (char const *) glGetString(GL_VENDOR));
+    os << TABBED("Renderer:", (char const *) glGetString(GL_RENDERER));
 
     LOG_MSG("%s") << str.rightStrip();
 
@@ -205,17 +205,17 @@ static void printGLUInfo(void)
     if(GL_state.extensions.texCompressionS3)
     {
         glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, &iVal);
-        os << COLUMNS("Compressed texture formats:", iVal);
+        os << TABBED("Compressed texture formats:", iVal);
     }
 #endif
 
     glGetIntegerv(GL_MAX_TEXTURE_UNITS, &iVal);
-    os << COLUMNS("Available texture units:", iVal);
+    os << TABBED("Available texture units:", iVal);
 
     if(GL_state.extensions.texFilterAniso)
     {
         glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &iVal);
-        os << COLUMNS("Maximum texture anisotropy:", iVal);
+        os << TABBED("Maximum texture anisotropy:", iVal);
     }
     else
     {
@@ -223,17 +223,19 @@ static void printGLUInfo(void)
     }
 
     glGetIntegerv(GL_MAX_TEXTURE_SIZE, &iVal);
-    os << COLUMNS("Maximum texture size:", iVal);
+    os << TABBED("Maximum texture size:", iVal);
 
     glGetFloatv(GL_LINE_WIDTH_GRANULARITY, fVals);
-    os << COLUMNS("Line width granularity:", fVals[0]);
+    os << TABBED("Line width granularity:", fVals[0]);
 
     glGetFloatv(GL_LINE_WIDTH_RANGE, fVals);
-    os << COLUMNS("Line width range:", fVals[0] << "..." << fVals[1]);
+    os << TABBED("Line width range:", fVals[0] << "..." << fVals[1]);
 
     LOG_MSG("%s") << str.rightStrip();
 
     Sys_GLPrintExtensions();
+
+#undef TABBED
 }
 
 #if 0
