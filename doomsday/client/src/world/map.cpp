@@ -162,6 +162,132 @@ DENG2_PIMPL(Map)
         qDeleteAll(bspLeafs);
     }
 
+    /**
+     * @pre Axis-aligned bounding boxes of all Sectors must be initialized.
+     */
+    void updateBounds()
+    {
+        bool isFirst = true;
+        foreach(Line *line, lines)
+        {
+            if(isFirst)
+            {
+                // The first line's bounds are used as is.
+                V2d_CopyBox(bounds.arvec2, line->aaBox().arvec2);
+                isFirst = false;
+            }
+            else
+            {
+                // Expand the bounding box.
+                V2d_UniteBox(bounds.arvec2, line->aaBox().arvec2);
+            }
+        }
+    }
+
+    bool buildBsp()
+    {
+        /// @todo Test @em ALL preconditions!
+        DENG2_ASSERT(segments.isEmpty());
+        DENG2_ASSERT(bspLeafs.isEmpty());
+        DENG2_ASSERT(bspNodes.isEmpty());
+
+        // It begins...
+        Time begunAt;
+
+        LOG_AS("Map::buildBsp");
+        LOG_TRACE("Building BSP for \"%s\" with split cost factor %d...")
+            << self._uri << bspSplitFactor;
+
+        // Instantiate and configure a new BSP builder.
+        BspBuilder nodeBuilder(self, bspSplitFactor);
+
+        // Build the BSP.
+        bool builtOK = nodeBuilder.buildBsp();
+        if(builtOK)
+        {
+            BspTreeNode &treeRoot = *nodeBuilder.root();
+
+            // Determine the max depth of the two main branches.
+            dint32 rightBranchDpeth, leftBranchDepth;
+            if(!treeRoot.isLeaf())
+            {
+                rightBranchDpeth = dint32( treeRoot.right().height() );
+                leftBranchDepth  = dint32(  treeRoot.left().height() );
+            }
+            else
+            {
+                rightBranchDpeth = leftBranchDepth = 0;
+            }
+
+            LOG_INFO("Built %d Nodes, %d Leafs, %d Segments and %d Vertexes."
+                     "\nTree balance is %d:%d.")
+                    << nodeBuilder.numNodes() << nodeBuilder.numLeafs()
+                    << nodeBuilder.numSegments() << nodeBuilder.numVertexes()
+                    << rightBranchDpeth << leftBranchDepth;
+
+            /*
+             * Take ownership of all the built map data elements.
+             */
+#ifdef DENG2_QT_4_7_OR_NEWER
+            vertexes.reserve(vertexes.count() + nodeBuilder.numVertexes());
+            segments.reserve(nodeBuilder.numSegments());
+            bspNodes.reserve(nodeBuilder.numNodes());
+            bspLeafs.reserve(nodeBuilder.numLeafs());
+#endif
+            collateVertexes(nodeBuilder);
+
+            BspTreeNode *rootNode = nodeBuilder.root();
+            bspRoot = rootNode->userData(); // We'll formally take ownership shortly...
+
+            // Iterative pre-order traversal of the BspBuilder's map element tree.
+            BspTreeNode *cur = rootNode;
+            BspTreeNode *prev = 0;
+            while(cur)
+            {
+                while(cur)
+                {
+                    if(cur->userData())
+                    {
+                        // Acquire ownership of and collate all map data elements at
+                        // this node of the tree.
+                        collateBspElements(nodeBuilder, *cur);
+                    }
+
+                    if(prev == cur->parentPtr())
+                    {
+                        // Descending - right first, then left.
+                        prev = cur;
+                        if(cur->hasRight()) cur = cur->rightPtr();
+                        else                cur = cur->leftPtr();
+                    }
+                    else if(prev == cur->rightPtr())
+                    {
+                        // Last moved up the right branch - descend the left.
+                        prev = cur;
+                        cur = cur->leftPtr();
+                    }
+                    else if(prev == cur->leftPtr())
+                    {
+                        // Last moved up the left branch - continue upward.
+                        prev = cur;
+                        cur = cur->parentPtr();
+                    }
+                }
+
+                if(prev)
+                {
+                    // No left child - back up.
+                    cur = prev->parentPtr();
+                }
+            }
+        }
+
+        // How much time did we spend?
+        LOG_INFO(String("Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
+
+        return builtOK;
+    }
+
     void collateVertexes(BspBuilder &builder)
     {
         int bspVertexCount = builder.numVertexes();
@@ -611,136 +737,6 @@ Map::BspNodes const &Map::bspNodes() const
 Map::BspLeafs const &Map::bspLeafs() const
 {
     return d->bspLeafs;
-}
-
-bool Map::buildBsp()
-{
-    /// @todo Test @em ALL preconditions!
-    DENG2_ASSERT(d->segments.isEmpty());
-    DENG2_ASSERT(d->bspLeafs.isEmpty());
-    DENG2_ASSERT(d->bspNodes.isEmpty());
-
-    // It begins...
-    Time begunAt;
-
-    LOG_AS("Map::buildBsp");
-    LOG_TRACE("Building BSP for \"%s\" with split cost factor %d...")
-        << _uri << bspSplitFactor;
-
-    // Instantiate and configure a new BSP builder.
-    BspBuilder nodeBuilder(*this, bspSplitFactor);
-
-    // Build the BSP.
-    bool builtOK = nodeBuilder.buildBsp();
-    if(builtOK)
-    {
-        BspTreeNode &treeRoot = *nodeBuilder.root();
-
-        // Determine the max depth of the two main branches.
-        dint32 rightBranchDpeth, leftBranchDepth;
-        if(!treeRoot.isLeaf())
-        {
-            rightBranchDpeth = dint32( treeRoot.right().height() );
-            leftBranchDepth  = dint32(  treeRoot.left().height() );
-        }
-        else
-        {
-            rightBranchDpeth = leftBranchDepth = 0;
-        }
-
-        LOG_INFO("Built %d Nodes, %d Leafs, %d Segments and %d Vertexes."
-                 "\nTree balance is %d:%d.")
-                << nodeBuilder.numNodes() << nodeBuilder.numLeafs()
-                << nodeBuilder.numSegments() << nodeBuilder.numVertexes()
-                << rightBranchDpeth << leftBranchDepth;
-
-        /*
-         * Take ownership of all the built map data elements.
-         */
-#ifdef DENG2_QT_4_7_OR_NEWER
-        d->vertexes.reserve(d->vertexes.count() + nodeBuilder.numVertexes());
-        d->segments.reserve(nodeBuilder.numSegments());
-        d->bspNodes.reserve(nodeBuilder.numNodes());
-        d->bspLeafs.reserve(nodeBuilder.numLeafs());
-#endif
-        d->collateVertexes(nodeBuilder);
-
-        BspTreeNode *rootNode = nodeBuilder.root();
-        d->bspRoot = rootNode->userData(); // We'll formally take ownership shortly...
-
-        // Iterative pre-order traversal of the BspBuilder's map element tree.
-        BspTreeNode *cur = rootNode;
-        BspTreeNode *prev = 0;
-        while(cur)
-        {
-            while(cur)
-            {
-                if(cur->userData())
-                {
-                    // Acquire ownership of and collate all map data elements at
-                    // this node of the tree.
-                    d->collateBspElements(nodeBuilder, *cur);
-                }
-
-                if(prev == cur->parentPtr())
-                {
-                    // Descending - right first, then left.
-                    prev = cur;
-                    if(cur->hasRight()) cur = cur->rightPtr();
-                    else                cur = cur->leftPtr();
-                }
-                else if(prev == cur->rightPtr())
-                {
-                    // Last moved up the right branch - descend the left.
-                    prev = cur;
-                    cur = cur->leftPtr();
-                }
-                else if(prev == cur->leftPtr())
-                {
-                    // Last moved up the left branch - continue upward.
-                    prev = cur;
-                    cur = cur->parentPtr();
-                }
-            }
-
-            if(prev)
-            {
-                // No left child - back up.
-                cur = prev->parentPtr();
-            }
-        }
-    }
-
-    // How much time did we spend?
-    LOG_INFO(String("Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
-
-    return builtOK;
-}
-
-void Map::finishMapElements()
-{
-    d->finishLines();
-    d->finishSectors();
-    d->finishPlanes();
-}
-
-void Map::updateBounds()
-{
-    bool isFirst = true;
-    foreach(Line *line, d->lines)
-    {
-        if(isFirst)
-        {
-            // The first line's bounds are used as is.
-            V2d_CopyBox(d->bounds.arvec2, line->aaBox().arvec2);
-            isFirst = false;
-        }
-        else
-        {
-            // Expand the bounding box.
-            V2d_UniteBox(d->bounds.arvec2, line->aaBox().arvec2);
-        }
-    }
 }
 
 #ifdef __CLIENT__
@@ -2446,7 +2442,7 @@ bool Map::endEditing()
         polyobj->updateOriginalVertexCoords();
     }
 
-    updateBounds();
+    d->updateBounds();
     AABoxd const &mapBounds = bounds();
     LOG_INFO("Bounds min:%s max:%s.")
         << Vector2d(mapBounds.min).asText()
@@ -2471,7 +2467,7 @@ bool Map::endEditing()
     /*
      * Build a BSP.
      */
-    bool builtOK = buildBsp();
+    bool builtOK = d->buildBsp();
 
     // Destroy the rest of editable map, we are finished with it.
     d->editable.clearAll();
@@ -2483,7 +2479,9 @@ bool Map::endEditing()
         return false;
     }
 
-    finishMapElements();
+    d->finishLines();
+    d->finishSectors();
+    d->finishPlanes();
 
     // We can now initialize the BSP leaf blockmap.
     d->initBspLeafBlockmap(min, max);

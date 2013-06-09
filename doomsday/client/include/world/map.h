@@ -683,13 +683,6 @@ public: /// @todo Make private:
      */
     static void initDummies();
 
-    void finishMapElements();
-
-    /**
-     * @pre Axis-aligned bounding boxes of all Sectors must be initialized.
-     */
-    void updateBounds();
-
     /**
      * Initialize the node piles and link rings. To be called after map load.
      */
@@ -731,8 +724,6 @@ public: /// @todo Make private:
      */
     void initLightGrid();
 #endif
-
-    bool buildBsp();
 
     /**
      * To be called in response to a Material property changing which may
