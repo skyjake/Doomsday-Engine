@@ -205,8 +205,7 @@ DENG2_PIMPL(World)
     }
 
     /**
-     * Attempt to peform a JIT conversion of the map data with the help of a
-     * converter plugin.
+     * Attempt JIT conversion of the map data with the help of a plugin.
      *
      * @return  Pointer to the converted Map; otherwise @c 0.
      */

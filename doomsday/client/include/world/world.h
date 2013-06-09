@@ -1,5 +1,14 @@
 /** @file world/world.h World.
  *
+ * Ideas for improvement:
+ *
+ * "background loading" - it would be very cool if map loading happened in
+ * another thread. This way we could be keeping busy while players watch the
+ * intermission animations.
+ *
+ * "seamless world" - multiple concurrent maps with no perceivable delay when
+ * players move between them.
+ *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
