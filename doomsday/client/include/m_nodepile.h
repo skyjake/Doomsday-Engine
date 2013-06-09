@@ -26,6 +26,8 @@
 
 #define NP_ROOT_NODE ((void*) -1)
 
+#include "dd_types.h"
+
 struct linknode_s;                 // Defined in dd_share.h.
 
 typedef struct nodepile_s {
