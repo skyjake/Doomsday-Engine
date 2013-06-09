@@ -18,13 +18,15 @@
  * 02110-1301 USA</small>
  */
 
+#include <cmath>
+
+#include <de/binangle.h>
 #include <de/memory.h>
 #include <de/memoryzone.h>
 
 #include "de_platform.h"
+#include "de_base.h"
 #include "de_console.h" // Con_GetInteger
-
-#include "dd_main.h"
 
 #include "BspLeaf"
 #include "BspNode"
@@ -39,6 +41,7 @@
 
 #include "world/blockmap.h"
 #include "world/generators.h"
+#include "world/lineowner.h"
 #include "world/p_intercept.h"
 #include "world/p_maputil.h"
 #include "world/p_object.h"
@@ -58,6 +61,9 @@ namespace de {
 
 DENG2_PIMPL(Map)
 {
+    /// @c true= editing is currently enabled.
+    bool editingEnabled;
+
     /// Boundary points which encompass the entire map.
     AABoxd bounds;
 
@@ -90,6 +96,7 @@ DENG2_PIMPL(Map)
 
     Instance(Public *i)
         : Base            (i),
+          editingEnabled  (true),
           bspRoot         (0),
           generators      (0),
           skyFloorHeight  (DDMAXFLOAT),
@@ -420,6 +427,8 @@ Map::Map() : d(new Instance(this))
 /// @todo fixme: Free all memory we have ownership of.
 Map::~Map()
 {
+    clearEditableElements();
+
     // thinker lists - free them!
 
     // Client only data:
@@ -1988,5 +1997,646 @@ void Map::updateMissingMaterialsForLinesOfSector(Sector const &sec)
 }
 
 #endif // __CLIENT__
+
+/// Runtime map editing -----------------------------------------------------
+
+/// Used when sorting vertex line owners.
+static Vertex *rootVtx;
+
+/**
+ * Compares the angles of two lines that share a common vertex.
+ *
+ * pre: rootVtx must point to the vertex common between a and b
+ *      which are (lineowner_t*) ptrs.
+ */
+static int lineAngleSorter(void const *a, void const *b)
+{
+    binangle_t angles[2];
+
+    LineOwner *own[2] = { (LineOwner *)a, (LineOwner *)b };
+    for(uint i = 0; i < 2; ++i)
+    {
+        if(own[i]->_link[Anticlockwise]) // We have a cached result.
+        {
+            angles[i] = own[i]->angle();
+        }
+        else
+        {
+            Line *line = &own[i]->line();
+            Vertex const &otherVtx = line->vertex(&line->from() == rootVtx? 1:0);
+
+            fixed_t dx = otherVtx.origin().x - rootVtx->origin().x;
+            fixed_t dy = otherVtx.origin().y - rootVtx->origin().y;
+
+            own[i]->_angle = angles[i] = bamsAtan2(-100 *dx, 100 * dy);
+
+            // Mark as having a cached angle.
+            own[i]->_link[Anticlockwise] = (LineOwner *) 1;
+        }
+    }
+
+    return (angles[1] - angles[0]);
+}
+
+/**
+ * Merge left and right line owner lists into a new list.
+ *
+ * @return  The newly merged list.
+ */
+static LineOwner *mergeLineOwners(LineOwner *left, LineOwner *right,
+    int (*compare) (void const *a, void const *b))
+{
+    LineOwner tmp;
+    LineOwner *np = &tmp;
+
+    tmp._link[Clockwise] = np;
+    while(left && right)
+    {
+        if(compare(left, right) <= 0)
+        {
+            np->_link[Clockwise] = left;
+            np = left;
+
+            left = &left->next();
+        }
+        else
+        {
+            np->_link[Clockwise] = right;
+            np = right;
+
+            right = &right->next();
+        }
+    }
+
+    // At least one of these lists is now empty.
+    if(left)
+    {
+        np->_link[Clockwise] = left;
+    }
+    if(right)
+    {
+        np->_link[Clockwise] = right;
+    }
+
+    // Is the list empty?
+    if(!tmp.hasNext())
+        return NULL;
+
+    return &tmp.next();
+}
+
+static LineOwner *splitLineOwners(LineOwner *list)
+{
+    if(!list) return NULL;
+
+    LineOwner *lista = list;
+    LineOwner *listb = list;
+    LineOwner *listc = list;
+
+    do
+    {
+        listc = listb;
+        listb = &listb->next();
+        lista = &lista->next();
+        if(lista)
+        {
+            lista = &lista->next();
+        }
+    } while(lista);
+
+    listc->_link[Clockwise] = NULL;
+    return listb;
+}
+
+/**
+ * This routine uses a recursive mergesort algorithm; O(NlogN)
+ */
+static LineOwner *sortLineOwners(LineOwner *list,
+    int (*compare) (void const *a, void const *b))
+{
+    if(list && list->_link[Clockwise])
+    {
+        LineOwner *p = splitLineOwners(list);
+
+        // Sort both halves and merge them back.
+        list = mergeLineOwners(sortLineOwners(list, compare),
+                               sortLineOwners(p, compare), compare);
+    }
+    return list;
+}
+
+static void setVertexLineOwner(Vertex *vtx, Line *lineptr, LineOwner **storage)
+{
+    if(!lineptr) return;
+
+    // Has this line already been registered with this vertex?
+    LineOwner const *own = vtx->firstLineOwner();
+    while(own)
+    {
+        if(&own->line() == lineptr)
+            return; // Yes, we can exit.
+
+        own = &own->next();
+    }
+
+    // Add a new owner.
+    vtx->_numLineOwners++;
+    LineOwner *newOwner = (*storage)++;
+
+    newOwner->_line = lineptr;
+    newOwner->_link[Anticlockwise] = NULL;
+
+    // Link it in.
+    // NOTE: We don't bother linking everything at this stage since we'll
+    // be sorting the lists anyway. After which we'll finish the job by
+    // setting the prev and circular links.
+    // So, for now this is only linked singlely, forward.
+    newOwner->_link[Clockwise] = vtx->_lineOwners;
+    vtx->_lineOwners = newOwner;
+
+    // Link the line to its respective owner node.
+    if(vtx == &lineptr->from())
+        lineptr->_vo1 = newOwner;
+    else
+        lineptr->_vo2 = newOwner;
+}
+
+#ifdef DENG2_DEBUG
+/**
+ * Determines whether the specified vertex @a v has a correctly formed line
+ * owner ring.
+ */
+static bool vertexHasValidLineOwnerRing(Vertex &v)
+{
+    LineOwner const *base = v.firstLineOwner();
+    LineOwner const *cur = base;
+    do
+    {
+        if(&cur->prev().next() != cur) return false;
+        if(&cur->next().prev() != cur) return false;
+
+    } while((cur = &cur->next()) != base);
+    return true;
+}
+#endif
+
+/**
+ * Generates the line owner rings for each vertex. Each ring includes all
+ * the lines which the vertex belongs to sorted by angle, (the rings are
+ * arranged in clockwise order, east = 0).
+ */
+void buildVertexLineOwnerRings(Map &map)
+{
+    LOG_AS("buildVertexLineOwnerRings");
+
+    /*
+     * Step 1: Find and link up all line owners.
+     */
+    // We know how many vertex line owners we need (numLines * 2).
+    LineOwner *lineOwners = (LineOwner *) Z_Malloc(sizeof(LineOwner) * map.editable.lines.count() * 2, PU_MAPSTATIC, 0);
+    LineOwner *allocator = lineOwners;
+
+    foreach(Line *line, map.editable.lines)
+    for(uint p = 0; p < 2; ++p)
+    {
+        setVertexLineOwner(&line->vertex(p), line, &allocator);
+    }
+
+    /*
+     * Step 2: Sort line owners of each vertex and finalize the rings.
+     */
+    foreach(Vertex *v, map.editable.vertexes)
+    {
+        if(!v->_numLineOwners) continue;
+
+        // Sort them; ordered clockwise by angle.
+        rootVtx = v;
+        v->_lineOwners = sortLineOwners(v->_lineOwners, lineAngleSorter);
+
+        // Finish the linking job and convert to relative angles.
+        // They are only singly linked atm, we need them to be doubly
+        // and circularly linked.
+        binangle_t firstAngle = v->_lineOwners->angle();
+        LineOwner *last = v->_lineOwners;
+        LineOwner *p = &last->next();
+        while(p)
+        {
+            p->_link[Anticlockwise] = last;
+
+            // Convert to a relative angle between last and this.
+            last->_angle = last->angle() - p->angle();
+
+            last = p;
+            p = &p->next();
+        }
+        last->_link[Clockwise] = v->_lineOwners;
+        v->_lineOwners->_link[Anticlockwise] = last;
+
+        // Set the angle of the last owner.
+        last->_angle = last->angle() - firstAngle;
+
+/*#ifdef DENG2_DEBUG
+        LOG_VERBOSE("Vertex #%i: line owners #%i")
+            << editmap.vertexes.indexOf(v) << v->lineOwnerCount();
+
+        LineOwner const *base = v->firstLineOwner();
+        LineOwner const *cur = base;
+        uint idx = 0;
+        do
+        {
+            LOG_VERBOSE("  %i: p= #%05i this= #%05i n= #%05i, dANG= %-3.f")
+                << idx << cur->prev().line().indexInMap() << cur->line().indexInMap()
+                << cur->next().line().indexInMap() << BANG2DEG(cur->angle());
+
+            idx++;
+        } while((cur = &cur->next()) != base);
+#endif*/
+
+        // Sanity check.
+        DENG2_ASSERT(vertexHasValidLineOwnerRing(*v));
+    }
+}
+
+bool Map::endEditing()
+{
+    if(!d->editingEnabled)
+        return true; // Huh?
+
+    LOG_DEBUG("New elements: %d Vertexes, %d Lines and %d Sectors.")
+        << editable.vertexes.count()
+        << editable.lines.count()
+        << editable.sectors.count();
+
+    /*
+     * Perform cleanup on the loaded map data.
+     */
+
+    pruneEditableVertexes();
+
+    /// Ensure lines with only one sector are flagged as blocking.
+    /// @todo Refactor away.
+    foreach(Line *line, editable.lines)
+    {
+        if(!line->hasFrontSector() || !line->hasBackSector())
+            line->setFlags(DDLF_BLOCKING);
+    }
+
+    buildVertexLineOwnerRings(*this);
+
+    /*
+     * Acquire ownership of the map elements from the editable map.
+     */
+    entityDatabase = editable.entityDatabase; // Take ownership.
+    editable.entityDatabase = 0;
+
+    DENG2_ASSERT(_vertexes.isEmpty());
+#ifdef DENG2_QT_4_7_OR_NEWER
+    _vertexes.reserve(editable.vertexes.count());
+#endif
+    while(!editable.vertexes.isEmpty())
+    {
+        _vertexes.append(editable.vertexes.takeFirst());
+    }
+
+    // Collate sectors:
+    DENG2_ASSERT(_sectors.isEmpty());
+#ifdef DENG2_QT_4_7_OR_NEWER
+    _sectors.reserve(editable.sectors.count());
+#endif
+    while(!editable.sectors.isEmpty())
+    {
+        _sectors.append(editable.sectors.takeFirst());
+    }
+
+    // Collate lines:
+    DENG2_ASSERT(_lines.isEmpty());
+#ifdef DENG2_QT_4_7_OR_NEWER
+    _lines.reserve(editable.lines.count());
+#endif
+    while(!editable.lines.isEmpty())
+    {
+        _lines.append(editable.lines.takeFirst());
+        _lines.back();
+    }
+
+    // Collate polyobjs:
+    DENG2_ASSERT(_polyobjs.isEmpty());
+#ifdef DENG2_QT_4_7_OR_NEWER
+    _polyobjs.reserve(editable.polyobjs.count());
+#endif
+    while(!editable.polyobjs.isEmpty())
+    {
+        _polyobjs.append(editable.polyobjs.takeFirst());
+        Polyobj *polyobj = _polyobjs.back();
+
+        // Create a segment for each line of this polyobj.
+        foreach(Line *line, polyobj->lines())
+        {
+            HEdge *hedge = polyobj->mesh().newHEdge(line->from());
+
+            hedge->setTwin(polyobj->mesh().newHEdge(line->to()));
+            hedge->twin().setTwin(hedge);
+
+            // Polyobj has ownership of the line segments.
+            Segment *segment = new Segment(&line->front(), hedge);
+            segment->setLength(line->length());
+
+            line->front().setLeftSegment(segment);
+            line->front().setRightSegment(segment);
+        }
+
+        polyobj->buildUniqueVertexes();
+        polyobj->updateOriginalVertexCoords();
+    }
+
+    updateBounds();
+    AABoxd const &mapBounds = bounds();
+    LOG_INFO("Bounds min:%s max:%s.")
+        << Vector2d(mapBounds.min).asText()
+        << Vector2d(mapBounds.max).asText();
+
+    /*
+     * Build blockmaps.
+     */
+    vec2d_t min, max;
+    bounds(min, max);
+
+    initLineBlockmap(min, max);
+    foreach(Line *line, lines())
+    {
+        linkLine(*line);
+    }
+
+    // The mobj and polyobj blockmaps are maintained dynamically.
+    initMobjBlockmap(min, max);
+    initPolyobjBlockmap(min, max);
+
+    /*
+     * Build a BSP.
+     */
+    bool builtOK = buildBsp();
+
+    // Destroy the rest of editable map, we are finished with it.
+    clearEditableElements();
+
+    d->editingEnabled = false;
+
+    if(!builtOK)
+    {
+        return false;
+    }
+
+    finishMapElements();
+
+    // We can now initialize the BSP leaf blockmap.
+    initBspLeafBlockmap(min, max);
+    foreach(BspLeaf *bspLeaf, bspLeafs())
+    {
+        linkBspLeaf(*bspLeaf);
+    }
+
+#ifdef __CLIENT__
+    S_DetermineBspLeafsAffectingSectorReverb(this);
+#endif
+
+    return true;
+}
+
+Vertex *Map::createVertex(Vector2d const &origin, int archiveIndex)
+{
+    if(!d->editingEnabled)
+        /// @throw EditError  Attempted when not editing.
+        throw EditError("Map::createVertex", "Editing is not enabled");
+
+    Vertex *vtx = new Vertex(origin);
+    editable.vertexes.append(vtx);
+
+    vtx->setIndexInArchive(archiveIndex);
+
+    /// @todo Don't do this here.
+    vtx->setIndexInMap(editable.vertexes.count() - 1);
+
+    return vtx;
+}
+
+Line *Map::createLine(Vertex &v1, Vertex &v2, int flags, Sector *frontSector,
+    Sector *backSector, int archiveIndex)
+{
+    if(!d->editingEnabled)
+        /// @throw EditError  Attempted when not editing.
+        throw EditError("Map::createLine", "Editing is not enabled");
+
+    Line *line = new Line(v1, v2, flags, frontSector, backSector);
+    editable.lines.append(line);
+
+    line->setIndexInArchive(archiveIndex);
+
+    /// @todo Don't do this here.
+    line->setIndexInMap(editable.lines.count() - 1);
+    line->front().setIndexInMap(Map::toSideIndex(line->indexInMap(), Line::Front));
+    line->back().setIndexInMap(Map::toSideIndex(line->indexInMap(), Line::Back));
+
+    return line;
+}
+
+Sector *Map::createSector(float lightLevel, Vector3f const &lightColor,
+    int archiveIndex)
+{
+    if(!d->editingEnabled)
+        /// @throw EditError  Attempted when not editing.
+        throw EditError("Map::createSector", "Editing is not enabled");
+
+    Sector *sector = new Sector(lightLevel, lightColor);
+    editable.sectors.append(sector);
+
+    sector->setIndexInArchive(archiveIndex);
+
+    /// @todo Don't do this here.
+    sector->setIndexInMap(editable.sectors.count() - 1);
+
+    return sector;
+}
+
+Polyobj *Map::createPolyobj(Vector2d const &origin)
+{
+    if(!d->editingEnabled)
+        /// @throw EditError  Attempted when not editing.
+        throw EditError("Map::createPolyobj", "Editing is not enabled");
+
+    void *region = M_Calloc(POLYOBJ_SIZE);
+    Polyobj *po = new (region) Polyobj(origin);
+    editable.polyobjs.append(po);
+
+    /// @todo Don't do this here.
+    po->setIndexInMap(editable.polyobjs.count() - 1);
+
+    return po;
+}
+
+void Map::clearEditableElements()
+{
+    if(!d->editingEnabled)
+        /// @throw EditError  Attempted when not editing.
+        throw EditError("Map::clearEditableElements", "Editing is not enabled");
+
+    qDeleteAll(editable.vertexes);
+    editable.vertexes.clear();
+
+    qDeleteAll(editable.lines);
+    editable.lines.clear();
+
+    qDeleteAll(editable.sectors);
+    editable.sectors.clear();
+
+    foreach(Polyobj *po, editable.polyobjs)
+    {
+        po->~Polyobj();
+        M_Free(po);
+    }
+    editable.polyobjs.clear();
+}
+
+struct VertexInfo
+{
+    /// Vertex for this info.
+    Vertex *vertex;
+
+    /// Determined equivalent vertex.
+    Vertex *equiv;
+
+    /// Line -> Vertex reference count.
+    uint refCount;
+
+    VertexInfo()
+        : vertex(0), equiv(0), refCount(0)
+    {}
+
+    /// @todo Math here is not correct (rounding directionality). -ds
+    int compareVertexOrigins(VertexInfo const &other) const
+    {
+        DENG_ASSERT(vertex != 0 && other.vertex != 0);
+
+        if(this == &other) return 0;
+        if(vertex == other.vertex) return 0;
+
+        // Order is firstly X axis major.
+        if(int(vertex->origin().x) != int(other.vertex->origin().x))
+            return int(vertex->origin().x) - int(other.vertex->origin().x);
+
+        // Order is secondly Y axis major.
+        return int(vertex->origin().y) - int(other.vertex->origin().y);
+    }
+
+    bool operator < (VertexInfo const &other) const {
+        return compareVertexOrigins(other) < 0;
+    }
+};
+
+void Map::pruneEditableVertexes()
+{
+    if(!d->editingEnabled)
+        /// @throw EditError  Attempted when not editing.
+        throw EditError("Map::pruneEditableVertexes", "Editing is not enabled");
+
+    /*
+     * Step 1 - Find equivalent vertexes:
+     */
+
+    // Populate the vertex info.
+    QVector<VertexInfo> vertexInfo(editable.vertexes.count());
+    for(int i = 0; i < editable.vertexes.count(); ++i)
+        vertexInfo[i].vertex = editable.vertexes[i];
+
+    {
+        // Sort a copy to place near vertexes adjacently.
+        QVector<VertexInfo> sortedInfo(vertexInfo);
+        qSort(sortedInfo.begin(), sortedInfo.end());
+
+        // Locate equivalent vertexes in the sorted info.
+        for(int i = 0; i < sortedInfo.count() - 1; ++i)
+        {
+            VertexInfo &a = sortedInfo[i];
+            VertexInfo &b = sortedInfo[i + 1];
+
+            // Are these equivalent?
+            /// @todo fixme: What about polyobjs? They need unique vertexes! -ds
+            if(a.compareVertexOrigins(b) == 0)
+            {
+                b.equiv = (a.equiv? a.equiv : a.vertex);
+            }
+        }
+    }
+
+    /*
+     * Step 2 - Replace line references to equivalent vertexes:
+     */
+
+    // Count line -> vertex references.
+    foreach(Line *line, editable.lines)
+    {
+        vertexInfo[line->from().indexInMap()].refCount++;
+        vertexInfo[  line->to().indexInMap()].refCount++;
+    }
+
+    // Perform the replacement.
+    foreach(Line *line, editable.lines)
+    {
+        while(vertexInfo[line->from().indexInMap()].equiv)
+        {
+            VertexInfo &info = vertexInfo[line->from().indexInMap()];
+
+            info.refCount--;
+            line->replaceFrom(*info.equiv);
+
+            vertexInfo[line->from().indexInMap()].refCount++;
+        }
+
+        while(vertexInfo[line->to().indexInMap()].equiv)
+        {
+            VertexInfo &info = vertexInfo[line->to().indexInMap()];
+
+            info.refCount--;
+            line->replaceTo(*info.equiv);
+
+            vertexInfo[line->to().indexInMap()].refCount++;
+        }
+    }
+
+    /*
+     * Step 3 - Prune vertexes:
+     */
+    uint prunedCount = 0, numUnused = 0;
+    foreach(VertexInfo const &info, vertexInfo)
+    {
+        Vertex *vertex = info.vertex;
+
+        if(info.refCount)
+            continue;
+
+        editable.vertexes.removeOne(vertex);
+        delete vertex;
+
+        prunedCount += 1;
+        if(!info.equiv) numUnused += 1;
+    }
+
+    if(prunedCount)
+    {
+        // Re-index with a contiguous range of indices.
+        uint idx = 0;
+        foreach(Vertex *vertex, editable.vertexes)
+            vertex->setIndexInMap(idx++);
+
+        /// Update lines. @todo Line should handle this itself.
+        foreach(Line *line, editable.lines)
+        {
+            line->updateSlopeType();
+            line->updateAABox();
+        }
+
+        LOG_INFO("Pruned %d vertexes (%d equivalents, %d unused).")
+            << prunedCount << (prunedCount - numUnused) << numUnused;
+    }
+}
 
 } // namespace de
