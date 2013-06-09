@@ -116,7 +116,9 @@ struct Font::RichFormat::Instance
             stack.removeLast(); // ignore the one just added
             if(stack.size() > 1)
             {
-                stack.removeLast();
+                Format form = stack.takeLast();
+                stack.last().tabStop = form.tabStop; // Retain tab stop.
+                stack.last().markIndent = form.markIndent;
             }
             break;
 
