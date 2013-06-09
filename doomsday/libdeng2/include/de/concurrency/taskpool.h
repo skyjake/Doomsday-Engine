@@ -57,7 +57,8 @@ public:
      * Starts a new concurrent task. Ownership of the task is given to the
      * pool.
      *
-     * @param task  Task instance. Ownership given.
+     * @param task      Task instance. Ownership given.
+     * @param priority  Priority of the task.
      */
     void start(Task *task, Priority priority = LowPriority);
 

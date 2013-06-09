@@ -39,7 +39,7 @@ public:
      * Creates a number of rules based on information in an Info document.
      * The contents of the file are parsed first.
      *
-     * @param source  File with Info source containing rule definitions.
+     * @param file  File with Info source containing rule definitions.
      */
     void addFromInfo(File const &file);
 

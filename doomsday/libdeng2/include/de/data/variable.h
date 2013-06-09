@@ -210,7 +210,8 @@ public:
     /**
      * Sets the mode flags of the variable.
      *
-     * @param flags  New mode flags that will replace the current ones.
+     * @param flags      New mode flags.
+     * @param operation  What to do with @a flags.
      */
     void setMode(Flags const &flags, FlagOp operation = ReplaceFlags);
 
