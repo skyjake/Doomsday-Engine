@@ -44,7 +44,7 @@ using namespace de;
 
 typedef struct clplane_s {
     thinker_t   thinker;
-    uint        sectorIndex;
+    int         sectorIndex;
     clplanetype_t type;
     int         property; // floor or ceiling
     int         dmuPlane;
@@ -55,14 +55,14 @@ typedef struct clplane_s {
 typedef struct clpolyobj_s {
     thinker_t   thinker;
     int         number;
-    Polyobj*    polyobj;
+    Polyobj    *polyobj;
     boolean     move;
     boolean     rotate;
 } clpolyobj_t;
 
 typedef struct {
     int size;
-    int* serverToLocal;
+    int *serverToLocal;
 } indextranstable_t;
 
 /**
@@ -369,14 +369,17 @@ void Cl_MoverThinker(clplane_t *mover)
     }
 }
 
-clplane_t *Map::newClPlane(uint sectorIndex, clplanetype_t type, coord_t dest, float speed)
+clplane_t *Map::newClPlane(int sectorIndex, clplanetype_t type, coord_t dest, float speed)
 {
+    LOG_AS("Map::newClPlane");
+
     int dmuPlane = (type == CPT_FLOOR ? DMU_FLOOR_OF_SECTOR : DMU_CEILING_OF_SECTOR);
 
-    DEBUG_Message(("Map::newClPlane: Sector #%i, type:%s, dest:%f, speed:%f",
-                   sectorIndex, type == CPT_FLOOR? "floor" : "ceiling", dest, speed));
+    LOG_DEBUG("Sector #%i, type:%s, dest:%f, speed:%f")
+            << sectorIndex << (type == CPT_FLOOR? "floor" : "ceiling")
+            << dest << speed;
 
-    if(int( sectorIndex ) >= sectorCount())
+    if(sectorIndex < 0 || sectorIndex >= sectorCount())
     {
         DENG_ASSERT(false); // Invalid Sector index.
         return 0;
@@ -389,8 +392,8 @@ clplane_t *Map::newClPlane(uint sectorIndex, clplanetype_t type, coord_t dest, f
            clActivePlanes[i]->sectorIndex == sectorIndex &&
            clActivePlanes[i]->type == type)
         {
-            DEBUG_Message(("Map::newClPlane: Removing existing mover [%i] in sector #%i, type %s",
-                           i, sectorIndex, type == CPT_FLOOR? "floor" : "ceiling"));
+            LOG_DEBUG("Removing existing mover #%i in sector #%i, type %s")
+                    << i << sectorIndex << (type == CPT_FLOOR? "floor" : "ceiling");
 
             deleteClPlane(clActivePlanes[i]);
         }
@@ -401,7 +404,7 @@ clplane_t *Map::newClPlane(uint sectorIndex, clplanetype_t type, coord_t dest, f
     {
         if(clActivePlanes[i]) continue;
 
-        DEBUG_Message(("Map::newClPlane: ...new mover [%i]", i));
+        LOG_DEBUG("New mover #%i") << i;
 
         // Allocate a new clplane_t thinker.
         clplane_t *mov = clActivePlanes[i] = (clplane_t *) Z_Calloc(sizeof(clplane_t), PU_MAP, &clActivePlanes[i]);
@@ -432,13 +435,14 @@ clplane_t *Map::newClPlane(uint sectorIndex, clplanetype_t type, coord_t dest, f
         return mov;
     }
 
-    Con_Error("Map::newClPlane: Exhausted activemovers.");
-    exit(1); // Unreachable.
+    throw Error("Map::newClPlane", "Exhausted activemovers");
 }
 
 void Cl_PolyMoverThinker(clpolyobj_t *mover)
 {
     DENG_ASSERT(mover != 0);
+
+    LOG_AS("Cl_PolyMoverThinker");
 
     Polyobj *po = mover->polyobj;
     if(mover->move)
@@ -474,8 +478,8 @@ void Cl_PolyMoverThinker(clpolyobj_t *mover)
         //    /* && po->destAngle != -1*/) || !po->angleSpeed)
         if(!po->angleSpeed || ABS(dist >> 2) <= ABS(speed >> 2))
         {
-            DEBUG_Message(("Cl_PolyMoverThinker: Mover %i reached end of turn, destAngle=%x.\n",
-                           mover->number, po->destAngle));
+            LOG_DEBUG("Mover %i reached end of turn, destAngle=%i.")
+                    << mover->number << po->destAngle;
 
             // We'll arrive at the destination.
             mover->rotate = false;
@@ -497,32 +501,34 @@ void Cl_PolyMoverThinker(clpolyobj_t *mover)
     }
 }
 
-clpolyobj_t *Map::clPolyobjByPolyobjIndex(uint index)
+clpolyobj_t *Map::clPolyobjByPolyobjIndex(int index)
 {
     for(int i = 0; i < CLIENT_MAX_MOVERS; ++i)
     {
         if(!isValidClPolyobj(i)) continue;
 
-        if(clActivePolyobjs[i]->number == int(index))
+        if(clActivePolyobjs[i]->number == index)
             return clActivePolyobjs[i];
     }
 
     return 0;
 }
 
-clpolyobj_t *Map::newClPolyobj(uint polyobjIndex)
+clpolyobj_t *Map::newClPolyobj(int polyobjIndex)
 {
+    LOG_AS("Map::newClPolyobj");
+
     // Take the first unused slot.
     for(int i = 0; i < CLIENT_MAX_MOVERS; ++i)
     {
         if(clActivePolyobjs[i]) continue;
 
-        DEBUG_Message(("Map::newClPolyobj: New polymover [%i] for polyobj #%i.\n", i, polyobjIndex));
+        LOG_DEBUG("New polymover [%i] for polyobj #%i.") << i << polyobjIndex;
 
         clpolyobj_t *mover = (clpolyobj_t *) Z_Calloc(sizeof(clpolyobj_t), PU_MAP, &clActivePolyobjs[i]);
         clActivePolyobjs[i] = mover;
         mover->thinker.function = reinterpret_cast<thinkfunc_t>(Cl_PolyMoverThinker);
-        mover->polyobj = _polyobjs.at(polyobjIndex);
+        mover->polyobj = polyobjs().at(polyobjIndex);
         mover->number = polyobjIndex;
         thinkerAdd(mover->thinker, false /*not public*/);
         return mover;
@@ -553,7 +559,7 @@ void Cl_SetPolyMover(uint number, int move, int rotate)
     if(rotate) mover->rotate = true;
 }
 
-clplane_t *Map::clPlaneBySectorIndex(uint sectorIndex, clplanetype_t type)
+clplane_t *Map::clPlaneBySectorIndex(int sectorIndex, clplanetype_t type)
 {
     for(int i = 0; i < CLIENT_MAX_MOVERS; ++i)
     {

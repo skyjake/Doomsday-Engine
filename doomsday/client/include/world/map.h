@@ -131,11 +131,6 @@ public:
     struct clpolyobj_s *clActivePolyobjs[CLIENT_MAX_MOVERS];
     // End client only data.
 
-    Vertexes _vertexes;
-    Sectors _sectors;
-    Lines _lines;
-    Polyobjs _polyobjs;
-
     EntityDatabase *entityDatabase;
 
 public:
@@ -212,17 +207,26 @@ public:
      */
     int ambientLightLevel() const;
 
-    Vertexes const &vertexes() const { return _vertexes; }
+    /**
+     * Provides a list of all the non-editable vertexes in the map.
+     */
+    Vertexes const &vertexes() const;
 
     inline int vertexCount() const { return vertexes().count(); }
 
-    Lines const &lines() const { return _lines; }
+    /**
+     * Provides a list of all the non-editable lines in the map.
+     */
+    Lines const &lines() const;
 
     inline int lineCount() const { return lines().count(); }
 
     inline int sideCount() const { return lines().count() * 2; }
 
-    Sectors const &sectors() const { return _sectors; }
+    /**
+     * Provides a list of all the non-editable sectors in the map.
+     */
+    Sectors const &sectors() const;
 
     inline int sectorCount() const { return sectors().count(); }
 
@@ -242,9 +246,9 @@ public:
         Polyobj **poly, Plane **plane, Surface **surface) const;
 
     /**
-     * Provides access to the list of polyobjs for efficient traversal.
+     * Provides a list of all the non-editable polyobjs in the map.
      */
-    Polyobjs const &polyobjs() const { return _polyobjs; }
+    Polyobjs const &polyobjs() const;
 
     /**
      * Returns the total number of Polyobjs in the map.
@@ -537,26 +541,26 @@ public:
      *
      * @return  The new mover or @c NULL if arguments are invalid.
      */
-    struct clplane_s *newClPlane(uint sectornum, clplanetype_t type, coord_t dest, float speed);
+    struct clplane_s *newClPlane(int sectorIdx, clplanetype_t type, coord_t dest, float speed);
 
     void deleteClPlane(struct clplane_s *mover);
 
     int clPlaneIndex(struct clplane_s *mover);
 
-    struct clplane_s *clPlaneBySectorIndex(uint sectorIndex, clplanetype_t type);
+    struct clplane_s *clPlaneBySectorIndex(int index, clplanetype_t type);
 
     boolean isValidClPlane(int i);
 
     /**
      * @note Assumes there is no existing ClPolyobj for Polyobj @a index.
      */
-    struct clpolyobj_s *newClPolyobj(uint polyobjIndex);
+    struct clpolyobj_s *newClPolyobj(int polyobjIndex);
 
     void deleteClPolyobj(struct clpolyobj_s *mover);
 
     int clPolyobjIndex(struct clpolyobj_s *mover);
 
-    struct clpolyobj_s *clPolyobjByPolyobjIndex(uint index);
+    struct clpolyobj_s *clPolyobjByPolyobjIndex(int index);
 
     boolean isValidClPolyobj(int i);
 

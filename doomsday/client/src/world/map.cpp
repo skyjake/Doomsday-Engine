@@ -67,6 +67,12 @@ DENG2_PIMPL(Map)
     /// Boundary points which encompass the entire map.
     AABoxd bounds;
 
+    /// Element LUTs:
+    Vertexes vertexes;
+    Sectors sectors;
+    Lines lines;
+    Polyobjs polyobjs;
+
     /// BSP root element.
     MapElement *bspRoot;
 
@@ -75,6 +81,7 @@ DENG2_PIMPL(Map)
     BspNodes bspNodes;
     BspLeafs bspLeafs;
 
+    /// Blockmaps:
     Blockmap *mobjBlockmap;
     Blockmap *polyobjBlockmap;
     Blockmap *lineBlockmap;
@@ -117,6 +124,14 @@ DENG2_PIMPL(Map)
 
     ~Instance()
     {
+        qDeleteAll(vertexes);
+        qDeleteAll(sectors);
+        qDeleteAll(lines);
+        foreach(Polyobj *polyobj, polyobjs)
+        {
+            polyobj->~Polyobj();
+            M_Free(polyobj);
+        }
         qDeleteAll(segments);
         qDeleteAll(bspNodes);
         qDeleteAll(bspLeafs);
@@ -131,7 +146,7 @@ DENG2_PIMPL(Map)
             Vertex *vertex = &builder.vertex(i);
             builder.take(vertex);
 
-            self._vertexes.append(vertex);
+            vertexes.append(vertex);
         }
     }
 
@@ -174,7 +189,7 @@ DENG2_PIMPL(Map)
 
     void finishLines()
     {
-        foreach(Line *line, self._lines)
+        foreach(Line *line, lines)
         for(int i = 0; i < 2; ++i)
         {
             line->side(i).updateSurfaceNormals();
@@ -184,7 +199,7 @@ DENG2_PIMPL(Map)
 
     void finishSectors()
     {
-        foreach(Sector *sector, self._sectors)
+        foreach(Sector *sector, sectors)
         {
             sector->buildBspLeafs(self);
             sector->buildSides(self);
@@ -233,7 +248,7 @@ DENG2_PIMPL(Map)
     /// @todo Relocate this work to R_SetupMap() -ds
     void finishPlanes()
     {
-        foreach(Sector *sector, self._sectors)
+        foreach(Sector *sector, sectors)
         foreach(Plane *plane, sector->planes())
         {
             plane->updateSoundEmitterOrigin();
@@ -441,7 +456,7 @@ DENG2_PIMPL(Map)
      */
     Polyobj *polyobjBySoundEmitter(ddmobj_base_t const &soundEmitter) const
     {
-        foreach(Polyobj *polyobj, self._polyobjs)
+        foreach(Polyobj *polyobj, polyobjs)
         {
             if(&soundEmitter == &polyobj->soundEmitter())
                 return polyobj;
@@ -458,7 +473,7 @@ DENG2_PIMPL(Map)
      */
     Sector *sectorBySoundEmitter(ddmobj_base_t const &soundEmitter) const
     {
-        foreach(Sector *sector, self._sectors)
+        foreach(Sector *sector, sectors)
         {
             if(&soundEmitter == &sector->soundEmitter())
                 return sector;
@@ -475,7 +490,7 @@ DENG2_PIMPL(Map)
      */
     Plane *planeBySoundEmitter(ddmobj_base_t const &soundEmitter) const
     {
-        foreach(Sector *sector, self._sectors)
+        foreach(Sector *sector, sectors)
         foreach(Plane *plane, sector->planes())
         {
             if(&soundEmitter == &plane->soundEmitter())
@@ -496,7 +511,7 @@ DENG2_PIMPL(Map)
     Surface *surfaceBySoundEmitter(ddmobj_base_t const &soundEmitter) const
     {
         // Perhaps a wall surface?
-        foreach(Line *line, self._lines)
+        foreach(Line *line, lines)
         for(int i = 0; i < 2; ++i)
         {
             Line::Side &side = line->side(i);
@@ -543,15 +558,6 @@ Map::~Map()
     // Client only data:
     // mobjHash/activePlanes/activePolyobjs - free them!
     // End client only data.
-
-    qDeleteAll(_vertexes);
-    qDeleteAll(_sectors);
-    qDeleteAll(_lines);
-    foreach(Polyobj *polyobj, _polyobjs)
-    {
-        polyobj->~Polyobj();
-        M_Free(polyobj);
-    }
 
     EntityDatabase_Delete(entityDatabase);
 
@@ -629,7 +635,7 @@ bool Map::buildBsp()
          * Take ownership of all the built map data elements.
          */
 #ifdef DENG2_QT_4_7_OR_NEWER
-        _vertexes.reserve(_vertexes.count() + nodeBuilder.numVertexes());
+        d->vertexes.reserve(d->vertexes.count() + nodeBuilder.numVertexes());
         d->segments.reserve(nodeBuilder.numSegments());
         d->bspNodes.reserve(nodeBuilder.numNodes());
         d->bspLeafs.reserve(nodeBuilder.numLeafs());
@@ -698,7 +704,7 @@ void Map::finishMapElements()
 void Map::updateBounds()
 {
     bool isFirst = true;
-    foreach(Line *line, _lines)
+    foreach(Line *line, d->lines)
     {
         if(isFirst)
         {
@@ -731,7 +737,7 @@ void Map::buildSurfaceLists()
     d->decoratedSurfaces.clear();
     d->glowingSurfaces.clear();
 
-    foreach(Line *line, _lines)
+    foreach(Line *line, d->lines)
     for(int i = 0; i < 2; ++i)
     {
         Line::Side &side = line->side(i);
@@ -742,7 +748,7 @@ void Map::buildSurfaceLists()
         d->addSurfaceToLists(side.bottom());
     }
 
-    foreach(Sector *sector, _sectors)
+    foreach(Sector *sector, d->sectors)
     {
         // Skip sectors with no lines as their planes will never be drawn.
         if(!sector->sideCount()) continue;
@@ -811,6 +817,26 @@ void Map::setGravity(coord_t newGravity)
     _effectiveGravity = newGravity;
 }
 
+Map::Vertexes const &Map::vertexes() const
+{
+    return d->vertexes;
+}
+
+Map::Lines const &Map::lines() const
+{
+    return d->lines;
+}
+
+Map::Sectors const &Map::sectors() const
+{
+    return d->sectors;
+}
+
+Map::Polyobjs const &Map::polyobjs() const
+{
+    return d->polyobjs;
+}
+
 divline_t const &Map::traceLine() const
 {
     return d->traceLine;
@@ -863,7 +889,7 @@ void Map::initSkyFix()
     d->skyCeilingHeight = DDMINFLOAT;
 
     // Update for sector plane heights and mobjs which intersect the ceiling.
-    foreach(Sector *sector, _sectors)
+    foreach(Sector *sector, d->sectors)
     {
         d->updateMapSkyFixForSector(*sector);
     }
@@ -891,7 +917,7 @@ int Map::toSideIndex(int lineIndex, int backSide) // static
 Line::Side *Map::sideByIndex(int index) const
 {
     if(index < 0) return 0;
-    return &_lines.at(index / 2)->side(index % 2);
+    return &d->lines.at(index / 2)->side(index % 2);
 }
 
 bool Map::identifySoundEmitter(ddmobj_base_t const &emitter, Sector **sector,
@@ -927,7 +953,7 @@ bool Map::identifySoundEmitter(ddmobj_base_t const &emitter, Sector **sector,
 
 Polyobj *Map::polyobjByTag(int tag) const
 {
-    foreach(Polyobj *polyobj, _polyobjs)
+    foreach(Polyobj *polyobj, d->polyobjs)
     {
         if(polyobj->tag == tag)
             return polyobj;
@@ -939,7 +965,7 @@ void Map::initPolyobjs()
 {
     LOG_AS("Map::initPolyobjs");
 
-    foreach(Polyobj *po, _polyobjs)
+    foreach(Polyobj *po, d->polyobjs)
     {
         /// @todo Is this still necessary? -ds
         /// (This data is updated automatically when moving/rotating).
@@ -1453,7 +1479,7 @@ int Map::polyobjLinesBoxIterator(AABoxd const &box,
 int Map::allLinesBoxIterator(AABoxd const &box,
     int (*callback) (Line *, void *), void *parameters) const
 {
-    if(!_polyobjs.isEmpty())
+    if(!d->polyobjs.isEmpty())
     {
         int result = P_PolyobjLinesBoxIterator(&box, callback, parameters);
         if(result) return result;
@@ -1692,7 +1718,7 @@ int Map::pathTraverse(const_pvec2d_t from, const_pvec2d_t to, int flags,
     // Step #1: Collect intercepts.
     if(flags & PT_ADDLINES)
     {
-        if(!_polyobjs.isEmpty())
+        if(!d->polyobjs.isEmpty())
         {
             DENG_ASSERT(d->polyobjBlockmap != 0);
             traverseCellPath(d->traceLine, d->polyobjBlockmap, from, to,
@@ -2338,45 +2364,44 @@ bool Map::endEditing()
     entityDatabase = editable.entityDatabase; // Take ownership.
     editable.entityDatabase = 0;
 
-    DENG2_ASSERT(_vertexes.isEmpty());
+    DENG2_ASSERT(d->vertexes.isEmpty());
 #ifdef DENG2_QT_4_7_OR_NEWER
-    _vertexes.reserve(editable.vertexes.count());
+    d->vertexes.reserve(editable.vertexes.count());
 #endif
     while(!editable.vertexes.isEmpty())
     {
-        _vertexes.append(editable.vertexes.takeFirst());
+        d->vertexes.append(editable.vertexes.takeFirst());
     }
 
     // Collate sectors:
-    DENG2_ASSERT(_sectors.isEmpty());
+    DENG2_ASSERT(d->sectors.isEmpty());
 #ifdef DENG2_QT_4_7_OR_NEWER
-    _sectors.reserve(editable.sectors.count());
+    d->sectors.reserve(editable.sectors.count());
 #endif
     while(!editable.sectors.isEmpty())
     {
-        _sectors.append(editable.sectors.takeFirst());
+        d->sectors.append(editable.sectors.takeFirst());
     }
 
     // Collate lines:
-    DENG2_ASSERT(_lines.isEmpty());
+    DENG2_ASSERT(d->lines.isEmpty());
 #ifdef DENG2_QT_4_7_OR_NEWER
-    _lines.reserve(editable.lines.count());
+    d->lines.reserve(editable.lines.count());
 #endif
     while(!editable.lines.isEmpty())
     {
-        _lines.append(editable.lines.takeFirst());
-        _lines.back();
+        d->lines.append(editable.lines.takeFirst());
     }
 
     // Collate polyobjs:
-    DENG2_ASSERT(_polyobjs.isEmpty());
+    DENG2_ASSERT(d->polyobjs.isEmpty());
 #ifdef DENG2_QT_4_7_OR_NEWER
-    _polyobjs.reserve(editable.polyobjs.count());
+    d->polyobjs.reserve(editable.polyobjs.count());
 #endif
     while(!editable.polyobjs.isEmpty())
     {
-        _polyobjs.append(editable.polyobjs.takeFirst());
-        Polyobj *polyobj = _polyobjs.back();
+        d->polyobjs.append(editable.polyobjs.takeFirst());
+        Polyobj *polyobj = d->polyobjs.back();
 
         // Create a segment for each line of this polyobj.
         foreach(Line *line, polyobj->lines())
