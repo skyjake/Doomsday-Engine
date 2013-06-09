@@ -2274,7 +2274,7 @@ D_CMD(Version)
     LOG_MSG(_E("D") DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_FULLTEXT);
     LOG_MSG("Homepage: "
             _E("\t") _E("i") DOOMSDAY_HOMEURL
-            _E(".") _E(".") "\nProject homepage: "
+            _E(".") _E(".") _E("Ta") "\nProject homepage: "
             _E("\t") _E("i") DENGPROJECT_HOMEURL);
 
     // Print the version info of the current game if loaded.
