@@ -332,7 +332,7 @@ void LineEditWidget::update()
     }
 }
 
-void LineEditWidget::draw()
+void LineEditWidget::drawContent()
 {
     float const opac = visibleOpacity();
 

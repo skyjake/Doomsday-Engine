@@ -428,14 +428,10 @@ void LabelWidget::update()
     d->update();
 }
 
-void LabelWidget::draw()
+void LabelWidget::drawContent()
 {
-    float const opac = visibleOpacity();
-    if(opac > 0)
-    {
-        d->uColor = Vector4f(1, 1, 1, opac);
-        d->draw();
-    }
+    d->uColor = Vector4f(1, 1, 1, visibleOpacity());
+    d->draw();
 }
 
 void LabelWidget::contentLayout(LabelWidget::ContentLayout &layout)

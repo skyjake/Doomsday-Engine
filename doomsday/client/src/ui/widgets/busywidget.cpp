@@ -69,7 +69,7 @@ void BusyWidget::update()
     BusyMode_Loop();
 }
 
-void BusyWidget::draw()
+void BusyWidget::drawContent()
 {
     DENG_ASSERT(BusyMode_Active());
     BusyVisual_Render();

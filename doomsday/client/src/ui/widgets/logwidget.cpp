@@ -918,7 +918,7 @@ void LogWidget::update()
     GuiWidget::update();
 }
 
-void LogWidget::draw()
+void LogWidget::drawContent()
 {
     d->sink.setWidth(d->contentWidth());
     d->draw();

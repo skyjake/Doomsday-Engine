@@ -273,7 +273,7 @@ void TaskBarWidget::viewResized()
     d->updateProjection();
 }
 
-void TaskBarWidget::draw()
+void TaskBarWidget::drawContent()
 {
     d->updateGeometry();
     //d->drawable.draw();

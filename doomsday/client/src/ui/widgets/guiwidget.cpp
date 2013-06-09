@@ -200,16 +200,16 @@ void GuiWidget::update()
     }
 }
 
-void GuiWidget::drawIfVisible()
+void GuiWidget::draw()
 {
-    if(!isHidden() && d->inited)
+    if(d->inited && !isHidden() && visibleOpacity() > 0)
     {
         if(clipped())
         {
             GLState::push().setScissor(rule().recti());
         }
 
-        draw();
+        drawContent();
 
         if(clipped())
         {
@@ -266,6 +266,9 @@ void GuiWidget::glInit()
 {}
 
 void GuiWidget::glDeinit()
+{}
+
+void GuiWidget::drawContent()
 {}
 
 void GuiWidget::requestGeometry(bool yes)

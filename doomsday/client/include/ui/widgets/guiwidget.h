@@ -149,7 +149,7 @@ public:
     float opacity() const;
 
     /**
-     * Determines the widget's opacity factored into the ancestor's opacities.
+     * Determines the widget's opacity, factoring in all ancestor opacities.
      */
     float visibleOpacity() const;
 
@@ -157,7 +157,7 @@ public:
     void initialize();
     void deinitialize();
     void update();
-    void drawIfVisible();
+    void draw() /*final*/;
 
     /**
      * Determines if the widget occupies on-screen position @a pos.
@@ -198,12 +198,22 @@ protected:
     virtual void glDeinit();
 
     /**
+     * Called by GuiWidget when it is time to draw the widget's content. A
+     * clipping scissor is automatically set before this is called. Derived
+     * classes should override this instead of the draw() method.
+     *
+     * This is not called if the widget's visible opacity is zero or the widget
+     * is hidden.
+     */
+    virtual void drawContent();
+
+    /**
      * Requests the widget to refresh its geometry, if it has any static
      * geometry. Normally this does not need to be called. It is provided
      * mostly as a way for subclasses to ensure that geometry is up to date
      * when they need it.
      *
-     * @param yes
+     * @param yes  @c true to request, @c false to cancel the request.
      */
     void requestGeometry(bool yes = true);
 

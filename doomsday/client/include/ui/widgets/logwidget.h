@@ -90,7 +90,7 @@ public:
     // Events.
     void viewResized();
     void update();
-    void draw();
+    void drawContent();
     bool handleEvent(de::Event const &event);
 
 public slots:
