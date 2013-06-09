@@ -22,6 +22,7 @@
 #include <de/Widget>
 #include <de/RuleRectangle>
 #include <de/GLBuffer>
+#include <QObject>
 
 #include "ui/style.h"
 
@@ -51,7 +52,7 @@ class GuiRootWidget;
  *   definition identifier (e.g., "editor.hint"). These style elements are then
  *   conveniently accessible using methods of GuiWidget.
  *
- * - Opacity properity. Opacities respect the hierarchical organization of
+ * - Opacity property. Opacities respect the hierarchical organization of
  *   widgets: GuiWidget::visibleOpacity() returns the opacity of a particular
  *   widget where all the parent widgets' opacities are factored in.
  *
@@ -63,9 +64,11 @@ class GuiRootWidget;
  * - Logic for handling more complicated interactions such as a mouse pointer
  *   click (press then release inside or outside).
  *
+ * QObject is a base class for the signals and slots capabilities.
+ *
  * @ingroup gui
  */
-class GuiWidget : public de::Widget
+class GuiWidget : public QObject, public de::Widget
 {
 public:
     /**

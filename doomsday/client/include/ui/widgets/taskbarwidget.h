@@ -30,7 +30,7 @@
  *
  * @ingroup gui
  */
-class TaskBarWidget : public QObject, public GuiWidget
+class TaskBarWidget : public GuiWidget
 {
     Q_OBJECT
 

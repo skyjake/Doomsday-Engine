@@ -144,7 +144,7 @@ float GuiWidget::opacity() const
 float GuiWidget::visibleOpacity() const
 {
     float opacity = d->opacity;
-    for(Widget *i = parent(); i != 0; i = i->parent())
+    for(Widget *i = Widget::parent(); i != 0; i = i->parent())
     {
         GuiWidget *w = dynamic_cast<GuiWidget *>(i);
         if(w)

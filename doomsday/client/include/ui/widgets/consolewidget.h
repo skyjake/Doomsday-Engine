@@ -34,7 +34,7 @@
  *
  * @ingroup gui
  */
-class ConsoleWidget : public QObject, public GuiWidget
+class ConsoleWidget : public GuiWidget
 {
     Q_OBJECT
 

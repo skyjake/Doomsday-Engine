@@ -30,7 +30,7 @@
  *
  * @ingroup gui
  */
-class LogWidget : public QObject, public GuiWidget
+class LogWidget : public GuiWidget
 {
     Q_OBJECT
 
