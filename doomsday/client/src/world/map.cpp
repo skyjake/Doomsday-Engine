@@ -75,6 +75,11 @@ DENG2_PIMPL(Map)
     BspNodes bspNodes;
     BspLeafs bspLeafs;
 
+    Blockmap *mobjBlockmap;
+    Blockmap *polyobjBlockmap;
+    Blockmap *lineBlockmap;
+    Blockmap *bspLeafBlockmap;
+
     struct generators_s *generators;
 
     PlaneSet trackedPlanes;
@@ -98,6 +103,10 @@ DENG2_PIMPL(Map)
         : Base            (i),
           editingEnabled  (true),
           bspRoot         (0),
+          mobjBlockmap    (0),
+          polyobjBlockmap (0),
+          lineBlockmap    (0),
+          bspLeafBlockmap (0),
           generators      (0),
           skyFloorHeight  (DDMAXFLOAT),
           skyCeilingHeight(DDMINFLOAT)
@@ -229,6 +238,110 @@ DENG2_PIMPL(Map)
         {
             plane->updateSoundEmitterOrigin();
         }
+    }
+
+    /**
+     * Construct an initial (empty) Line Blockmap for the map.
+     *
+     * @param min  Minimal coordinates for the map.
+     * @param max  Maximal coordinates for the map.
+     */
+    void initLineBlockmap(const_pvec2d_t min_, const_pvec2d_t max_)
+    {
+#define BLOCKMAP_MARGIN      8 // size guardband around map
+#define CELL_SIZE            MAPBLOCKUNITS
+
+        DENG_ASSERT(min_ && max_ && lineBlockmap == 0);
+
+        // Setup the blockmap area to enclose the whole map, plus a margin
+        // (margin is needed for a map that fits entirely inside one blockmap cell).
+        vec2d_t min; V2d_Set(min, min_[VX] - BLOCKMAP_MARGIN,
+                                  min_[VY] - BLOCKMAP_MARGIN);
+        vec2d_t max; V2d_Set(max, max_[VX] + BLOCKMAP_MARGIN,
+                                  max_[VY] + BLOCKMAP_MARGIN);
+
+        lineBlockmap = Blockmap_New(min, max, CELL_SIZE, CELL_SIZE);
+
+#undef CELL_SIZE
+#undef BLOCKMAP_MARGIN
+    }
+
+    /**
+     * Construct an initial (empty) Mobj Blockmap for the map.
+     *
+     * @param min  Minimal coordinates for the map.
+     * @param max  Maximal coordinates for the map.
+     */
+    void initMobjBlockmap(const_pvec2d_t min_, const_pvec2d_t max_)
+    {
+#define BLOCKMAP_MARGIN      8 // size guardband around map
+#define CELL_SIZE            MAPBLOCKUNITS
+
+        DENG_ASSERT(min_ && max_ && mobjBlockmap == 0);
+
+        // Setup the blockmap area to enclose the whole map, plus a margin
+        // (margin is needed for a map that fits entirely inside one blockmap cell).
+        vec2d_t min; V2d_Set(min, min_[VX] - BLOCKMAP_MARGIN,
+                                  min_[VY] - BLOCKMAP_MARGIN);
+        vec2d_t max; V2d_Set(max, max_[VX] + BLOCKMAP_MARGIN,
+                                  max_[VY] + BLOCKMAP_MARGIN);
+
+        mobjBlockmap = Blockmap_New(min, max, CELL_SIZE, CELL_SIZE);
+
+#undef CELL_SIZE
+#undef BLOCKMAP_MARGIN
+    }
+
+    /**
+     * Construct an initial (empty) Polyobj Blockmap for the map.
+     *
+     * @param min  Minimal coordinates for the map.
+     * @param max  Maximal coordinates for the map.
+     */
+    void initPolyobjBlockmap(const_pvec2d_t min_, const_pvec2d_t max_)
+    {
+#define BLOCKMAP_MARGIN      8 // size guardband around map
+#define CELL_SIZE            MAPBLOCKUNITS
+
+        DENG_ASSERT(min_ && max_ && polyobjBlockmap == 0);
+
+        // Setup the blockmap area to enclose the whole map, plus a margin
+        // (margin is needed for a map that fits entirely inside one blockmap cell).
+        vec2d_t min; V2d_Set(min, min_[VX] - BLOCKMAP_MARGIN,
+                                  min_[VY] - BLOCKMAP_MARGIN);
+        vec2d_t max; V2d_Set(max, max_[VX] + BLOCKMAP_MARGIN,
+                                  max_[VY] + BLOCKMAP_MARGIN);
+
+        polyobjBlockmap = Blockmap_New(min, max, CELL_SIZE, CELL_SIZE);
+
+#undef CELL_SIZE
+#undef BLOCKMAP_MARGIN
+    }
+
+    /**
+     * Construct an initial (empty) BspLeaf Blockmap for the map.
+     *
+     * @param min  Minimal coordinates for the map.
+     * @param max  Maximal coordinates for the map.
+     */
+    void initBspLeafBlockmap(const_pvec2d_t min_, const_pvec2d_t max_)
+    {
+#define BLOCKMAP_MARGIN      8 // size guardband around map
+#define CELL_SIZE            MAPBLOCKUNITS
+
+        DENG_ASSERT(min_ && max_);
+
+        // Setup the blockmap area to enclose the whole map, plus a margin
+        // (margin is needed for a map that fits entirely inside one blockmap cell).
+        vec2d_t min; V2d_Set(min, min_[VX] - BLOCKMAP_MARGIN,
+                                  min_[VY] - BLOCKMAP_MARGIN);
+        vec2d_t max; V2d_Set(max, max_[VX] + BLOCKMAP_MARGIN,
+                                  max_[VY] + BLOCKMAP_MARGIN);
+
+        bspLeafBlockmap = Blockmap_New(min, max, CELL_SIZE, CELL_SIZE);
+
+#undef CELL_SIZE
+#undef BLOCKMAP_MARGIN
     }
 
 #ifdef __CLIENT__
@@ -414,10 +527,6 @@ Map::Map() : d(new Instance(this))
     zap(clActivePlanes);
     zap(clActivePolyobjs);
     entityDatabase = 0;
-    mobjBlockmap = 0;
-    polyobjBlockmap = 0;
-    lineBlockmap = 0;
-    bspLeafBlockmap = 0;
     lineLinks = 0;
     _globalGravity = 0;
     _effectiveGravity = 0;
@@ -876,100 +985,40 @@ void Map::initNodePiles()
     LOG_INFO(String("Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 }
 
-void Map::initLineBlockmap(const_pvec2d_t min_, const_pvec2d_t max_)
+Blockmap *Map::mobjBlockmap() const
 {
-#define BLOCKMAP_MARGIN      8 // size guardband around map
-#define CELL_SIZE            MAPBLOCKUNITS
-
-    DENG_ASSERT(min_ && max_ && lineBlockmap == 0);
-
-    // Setup the blockmap area to enclose the whole map, plus a margin
-    // (margin is needed for a map that fits entirely inside one blockmap cell).
-    vec2d_t min; V2d_Set(min, min_[VX] - BLOCKMAP_MARGIN,
-                              min_[VY] - BLOCKMAP_MARGIN);
-    vec2d_t max; V2d_Set(max, max_[VX] + BLOCKMAP_MARGIN,
-                              max_[VY] + BLOCKMAP_MARGIN);
-
-    lineBlockmap = Blockmap_New(min, max, CELL_SIZE, CELL_SIZE);
-
-#undef CELL_SIZE
-#undef BLOCKMAP_MARGIN
+    return d->mobjBlockmap;
 }
 
-void Map::initMobjBlockmap(const_pvec2d_t min_, const_pvec2d_t max_)
+Blockmap *Map::polyobjBlockmap() const
 {
-#define BLOCKMAP_MARGIN      8 // size guardband around map
-#define CELL_SIZE            MAPBLOCKUNITS
-
-    DENG_ASSERT(min_ && max_ && mobjBlockmap == 0);
-
-    // Setup the blockmap area to enclose the whole map, plus a margin
-    // (margin is needed for a map that fits entirely inside one blockmap cell).
-    vec2d_t min; V2d_Set(min, min_[VX] - BLOCKMAP_MARGIN,
-                              min_[VY] - BLOCKMAP_MARGIN);
-    vec2d_t max; V2d_Set(max, max_[VX] + BLOCKMAP_MARGIN,
-                              max_[VY] + BLOCKMAP_MARGIN);
-
-    mobjBlockmap = Blockmap_New(min, max, CELL_SIZE, CELL_SIZE);
-
-#undef CELL_SIZE
-#undef BLOCKMAP_MARGIN
+    return d->polyobjBlockmap;
 }
 
-void Map::initPolyobjBlockmap(const_pvec2d_t min_, const_pvec2d_t max_)
+Blockmap *Map::lineBlockmap() const
 {
-#define BLOCKMAP_MARGIN      8 // size guardband around map
-#define CELL_SIZE            MAPBLOCKUNITS
-
-    DENG_ASSERT(min_ && max_ && polyobjBlockmap == 0);
-
-    // Setup the blockmap area to enclose the whole map, plus a margin
-    // (margin is needed for a map that fits entirely inside one blockmap cell).
-    vec2d_t min; V2d_Set(min, min_[VX] - BLOCKMAP_MARGIN,
-                              min_[VY] - BLOCKMAP_MARGIN);
-    vec2d_t max; V2d_Set(max, max_[VX] + BLOCKMAP_MARGIN,
-                              max_[VY] + BLOCKMAP_MARGIN);
-
-    polyobjBlockmap = Blockmap_New(min, max, CELL_SIZE, CELL_SIZE);
-
-#undef CELL_SIZE
-#undef BLOCKMAP_MARGIN
+    return d->lineBlockmap;
 }
 
-void Map::initBspLeafBlockmap(const_pvec2d_t min_, const_pvec2d_t max_)
+Blockmap *Map::bspLeafBlockmap() const
 {
-#define BLOCKMAP_MARGIN      8 // size guardband around map
-#define CELL_SIZE            MAPBLOCKUNITS
-
-    DENG_ASSERT(min_ && max_);
-
-    // Setup the blockmap area to enclose the whole map, plus a margin
-    // (margin is needed for a map that fits entirely inside one blockmap cell).
-    vec2d_t min; V2d_Set(min, min_[VX] - BLOCKMAP_MARGIN,
-                              min_[VY] - BLOCKMAP_MARGIN);
-    vec2d_t max; V2d_Set(max, max_[VX] + BLOCKMAP_MARGIN,
-                              max_[VY] + BLOCKMAP_MARGIN);
-
-    bspLeafBlockmap = Blockmap_New(min, max, CELL_SIZE, CELL_SIZE);
-
-#undef CELL_SIZE
-#undef BLOCKMAP_MARGIN
+    return d->bspLeafBlockmap;
 }
 
 void Map::linkMobj(mobj_t &mo)
 {
-    DENG_ASSERT(mobjBlockmap != 0);
+    DENG_ASSERT(d->mobjBlockmap != 0);
     BlockmapCell cell;
-    Blockmap_Cell(mobjBlockmap, cell, mo.origin);
-    Blockmap_CreateCellAndLinkObject(mobjBlockmap, cell, &mo);
+    Blockmap_Cell(d->mobjBlockmap, cell, mo.origin);
+    Blockmap_CreateCellAndLinkObject(d->mobjBlockmap, cell, &mo);
 }
 
 bool Map::unlinkMobj(mobj_t &mo)
 {
-    DENG_ASSERT(mobjBlockmap != 0);
+    DENG_ASSERT(d->mobjBlockmap != 0);
     BlockmapCell cell;
-    Blockmap_Cell(mobjBlockmap, cell, mo.origin);
-    return Blockmap_UnlinkObjectInCell(mobjBlockmap, cell, &mo);
+    Blockmap_Cell(d->mobjBlockmap, cell, mo.origin);
+    return Blockmap_UnlinkObjectInCell(d->mobjBlockmap, cell, &mo);
 }
 
 struct bmapmoiterparams_t
@@ -1024,25 +1073,25 @@ static int iterateCellBlockMobjs(Blockmap &mobjBlockmap, BlockmapCellBlock const
 int Map::mobjsBoxIterator(AABoxd const &box,
     int (*callback) (mobj_t *, void *), void *parameters) const
 {
-    DENG_ASSERT(mobjBlockmap != 0);
+    DENG_ASSERT(d->mobjBlockmap != 0);
     BlockmapCellBlock cellBlock;
-    Blockmap_CellBlock(mobjBlockmap, &cellBlock, &box);
-    return iterateCellBlockMobjs(*mobjBlockmap, &cellBlock, callback, parameters);
+    Blockmap_CellBlock(d->mobjBlockmap, &cellBlock, &box);
+    return iterateCellBlockMobjs(*d->mobjBlockmap, &cellBlock, callback, parameters);
 }
 
 void Map::linkLine(Line &line)
 {
-    DENG_ASSERT(lineBlockmap != 0);
+    DENG_ASSERT(d->lineBlockmap != 0);
 
     // Lines of Polyobjs don't get into the blockmap (presently...).
     if(line.definesPolyobj()) return;
 
-    vec2d_t origin; V2d_Copy(origin, Blockmap_Origin(lineBlockmap));
-    vec2d_t cellSize; V2d_Copy(cellSize, Blockmap_CellSize(lineBlockmap));
+    vec2d_t origin; V2d_Copy(origin, Blockmap_Origin(d->lineBlockmap));
+    vec2d_t cellSize; V2d_Copy(cellSize, Blockmap_CellSize(d->lineBlockmap));
 
     // Determine the block of cells we'll be working within.
     BlockmapCellBlock cellBlock;
-    Blockmap_CellBlock(lineBlockmap, &cellBlock, &line.aaBox());
+    Blockmap_CellBlock(d->lineBlockmap, &cellBlock, &line.aaBox());
 
     vec2d_t cell, from, to;
 
@@ -1052,14 +1101,14 @@ void Map::linkLine(Line &line)
         if(line.slopeType() == ST_VERTICAL ||
            line.slopeType() == ST_HORIZONTAL)
         {
-            Blockmap_CreateCellAndLinkObjectXY(lineBlockmap, x, y, &line);
+            Blockmap_CreateCellAndLinkObjectXY(d->lineBlockmap, x, y, &line);
             continue;
         }
 
         // Calculate cell origin.
-        V2d_Copy(cell, Blockmap_CellSize(lineBlockmap));
+        V2d_Copy(cell, Blockmap_CellSize(d->lineBlockmap));
         cell[VX] *= x; cell[VY] *= y;
-        V2d_Sum(cell, cell, Blockmap_Origin(lineBlockmap));
+        V2d_Sum(cell, cell, Blockmap_Origin(d->lineBlockmap));
 
         // Choose a cell diagonal to test.
         if(line.slopeType() == ST_POSITIVE)
@@ -1078,7 +1127,7 @@ void Map::linkLine(Line &line)
         // Would Line intersect this?
         if((line.pointOnSide(from) < 0) != (line.pointOnSide(to) < 0))
         {
-            Blockmap_CreateCellAndLinkObjectXY(lineBlockmap, x, y, &line);
+            Blockmap_CreateCellAndLinkObjectXY(d->lineBlockmap, x, y, &line);
         }
     }
 }
@@ -1136,7 +1185,7 @@ static int iterateCellBlockLines(Blockmap &lineBlockmap, BlockmapCellBlock const
 
 void Map::linkBspLeaf(BspLeaf &bspLeaf)
 {
-    DENG_ASSERT(bspLeafBlockmap != 0);
+    DENG_ASSERT(d->bspLeafBlockmap != 0);
 
     // Degenerate BspLeafs don't get in.
     if(bspLeaf.isDegenerate()) return;
@@ -1147,12 +1196,12 @@ void Map::linkBspLeaf(BspLeaf &bspLeaf)
     AABoxd aaBox = bspLeaf.face().aaBox();
 
     BlockmapCellBlock cellBlock;
-    Blockmap_CellBlock(bspLeafBlockmap, &cellBlock, &aaBox);
+    Blockmap_CellBlock(d->bspLeafBlockmap, &cellBlock, &aaBox);
 
     for(uint y = cellBlock.minY; y <= cellBlock.maxY; ++y)
     for(uint x = cellBlock.minX; x <= cellBlock.maxX; ++x)
     {
-        Blockmap_CreateCellAndLinkObjectXY(bspLeafBlockmap, x, y, &bspLeaf);
+        Blockmap_CreateCellAndLinkObjectXY(d->bspLeafBlockmap, x, y, &bspLeaf);
     }
 }
 
@@ -1236,37 +1285,37 @@ static int iterateCellBlockBspLeafs(Blockmap &bspLeafBlockmap,
 int Map::bspLeafsBoxIterator(AABoxd const &box, Sector *sector,
     int (*callback) (BspLeaf *, void *), void *parameters) const
 {
-    DENG_ASSERT(bspLeafBlockmap != 0);
+    DENG_ASSERT(d->bspLeafBlockmap != 0);
     static int localValidCount = 0;
 
     // This is only used here.
     localValidCount++;
 
     BlockmapCellBlock cellBlock;
-    Blockmap_CellBlock(bspLeafBlockmap, &cellBlock, &box);
+    Blockmap_CellBlock(d->bspLeafBlockmap, &cellBlock, &box);
 
-    return iterateCellBlockBspLeafs(*bspLeafBlockmap, cellBlock, sector, box,
+    return iterateCellBlockBspLeafs(*d->bspLeafBlockmap, cellBlock, sector, box,
                                     localValidCount, callback, parameters);
 }
 
 void Map::linkPolyobj(Polyobj &polyobj)
 {
     BlockmapCellBlock cellBlock;
-    Blockmap_CellBlock(polyobjBlockmap, &cellBlock, &polyobj.aaBox);
+    Blockmap_CellBlock(d->polyobjBlockmap, &cellBlock, &polyobj.aaBox);
 
     for(uint y = cellBlock.minY; y <= cellBlock.maxY; ++y)
     for(uint x = cellBlock.minX; x <= cellBlock.maxX; ++x)
     {
-        Blockmap_CreateCellAndLinkObjectXY(polyobjBlockmap, x, y, &polyobj);
+        Blockmap_CreateCellAndLinkObjectXY(d->polyobjBlockmap, x, y, &polyobj);
     }
 }
 
 void Map::unlinkPolyobj(Polyobj &polyobj)
 {
-    DENG_ASSERT(polyobjBlockmap != 0);
+    DENG_ASSERT(d->polyobjBlockmap != 0);
     BlockmapCellBlock cellBlock;
-    Blockmap_CellBlock(polyobjBlockmap, &cellBlock, &polyobj.aaBox);
-    Blockmap_UnlinkObjectInCellBlock(polyobjBlockmap, &cellBlock, &polyobj);
+    Blockmap_CellBlock(d->polyobjBlockmap, &cellBlock, &polyobj.aaBox);
+    Blockmap_UnlinkObjectInCellBlock(d->polyobjBlockmap, &cellBlock, &polyobj);
 }
 
 struct bmappoiterparams_t
@@ -1321,10 +1370,10 @@ static int iterateCellBlockPolyobjs(Blockmap &polyobjBlockmap, BlockmapCellBlock
 int Map::polyobjsBoxIterator(AABoxd const &box,
     int (*callback) (struct polyobj_s *, void *), void *parameters) const
 {
-    DENG_ASSERT(polyobjBlockmap != 0);
+    DENG_ASSERT(d->polyobjBlockmap != 0);
     BlockmapCellBlock cellBlock;
-    Blockmap_CellBlock(polyobjBlockmap, &cellBlock, &box);
-    return iterateCellBlockPolyobjs(*polyobjBlockmap, cellBlock, callback, parameters);
+    Blockmap_CellBlock(d->polyobjBlockmap, &cellBlock, &box);
+    return iterateCellBlockPolyobjs(*d->polyobjBlockmap, cellBlock, callback, parameters);
 }
 
 struct poiterparams_t
@@ -1386,19 +1435,19 @@ static int iterateCellBlockPolyobjLines(Blockmap &polyobjBlockmap,
 int Map::linesBoxIterator(AABoxd const &box,
     int (*callback) (Line *, void *), void *parameters) const
 {
-    DENG_ASSERT(polyobjBlockmap != 0);
+    DENG_ASSERT(d->polyobjBlockmap != 0);
     BlockmapCellBlock cellBlock;
-    Blockmap_CellBlock(lineBlockmap, &cellBlock, &box);
-    return iterateCellBlockLines(*lineBlockmap, &cellBlock, callback, parameters);
+    Blockmap_CellBlock(d->lineBlockmap, &cellBlock, &box);
+    return iterateCellBlockLines(*d->lineBlockmap, &cellBlock, callback, parameters);
 }
 
 int Map::polyobjLinesBoxIterator(AABoxd const &box,
     int (*callback) (Line *, void *), void *parameters) const
 {
-    DENG_ASSERT(polyobjBlockmap != 0);
+    DENG_ASSERT(d->polyobjBlockmap != 0);
     BlockmapCellBlock cellBlock;
-    Blockmap_CellBlock(polyobjBlockmap, &cellBlock, &box);
-    return iterateCellBlockPolyobjLines(*polyobjBlockmap, cellBlock, callback, parameters);
+    Blockmap_CellBlock(d->polyobjBlockmap, &cellBlock, &box);
+    return iterateCellBlockPolyobjLines(*d->polyobjBlockmap, cellBlock, callback, parameters);
 }
 
 int Map::allLinesBoxIterator(AABoxd const &box,
@@ -1645,20 +1694,20 @@ int Map::pathTraverse(const_pvec2d_t from, const_pvec2d_t to, int flags,
     {
         if(!_polyobjs.isEmpty())
         {
-            DENG_ASSERT(polyobjBlockmap != 0);
-            traverseCellPath(d->traceLine, polyobjBlockmap, from, to,
-                             collectPolyobjLineIntercepts, (void *)polyobjBlockmap);
+            DENG_ASSERT(d->polyobjBlockmap != 0);
+            traverseCellPath(d->traceLine, d->polyobjBlockmap, from, to,
+                             collectPolyobjLineIntercepts, (void *)d->polyobjBlockmap);
         }
 
-        DENG_ASSERT(lineBlockmap != 0);
-        traverseCellPath(d->traceLine, lineBlockmap, from, to, collectLineIntercepts,
-                         (void *)lineBlockmap);
+        DENG_ASSERT(d->lineBlockmap != 0);
+        traverseCellPath(d->traceLine, d->lineBlockmap, from, to, collectLineIntercepts,
+                         (void *)d->lineBlockmap);
     }
     if(flags & PT_ADDMOBJS)
     {
-        DENG_ASSERT(mobjBlockmap != 0);
-        traverseCellPath(d->traceLine, mobjBlockmap, from, to, collectMobjIntercepts,
-                         (void *)mobjBlockmap);
+        DENG_ASSERT(d->mobjBlockmap != 0);
+        traverseCellPath(d->traceLine, d->mobjBlockmap, from, to, collectMobjIntercepts,
+                         (void *)d->mobjBlockmap);
     }
 
     // Step #2: Process sorted intercepts.
@@ -2361,15 +2410,15 @@ bool Map::endEditing()
     vec2d_t min, max;
     bounds(min, max);
 
-    initLineBlockmap(min, max);
+    d->initLineBlockmap(min, max);
     foreach(Line *line, lines())
     {
         linkLine(*line);
     }
 
     // The mobj and polyobj blockmaps are maintained dynamically.
-    initMobjBlockmap(min, max);
-    initPolyobjBlockmap(min, max);
+    d->initMobjBlockmap(min, max);
+    d->initPolyobjBlockmap(min, max);
 
     /*
      * Build a BSP.
@@ -2389,7 +2438,7 @@ bool Map::endEditing()
     finishMapElements();
 
     // We can now initialize the BSP leaf blockmap.
-    initBspLeafBlockmap(min, max);
+    d->initBspLeafBlockmap(min, max);
     foreach(BspLeaf *bspLeaf, bspLeafs())
     {
         linkBspLeaf(*bspLeaf);

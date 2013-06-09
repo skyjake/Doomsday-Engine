@@ -139,11 +139,6 @@ public:
     EntityDatabase *entityDatabase;
 
 public:
-    struct blockmap_s *mobjBlockmap;
-    struct blockmap_s *polyobjBlockmap;
-    struct blockmap_s *lineBlockmap;
-    struct blockmap_s *bspLeafBlockmap;
-
     nodepile_t mobjNodes, lineNodes; // All kinds of wacky links.
     nodeindex_t *lineLinks; // Indices to roots.
 
@@ -320,6 +315,26 @@ public:
      * point: it cannot exceed the fixed-point 16.16 range (about 65k units).
      */
     BspLeaf *bspLeafAtPoint_FixedPrecision(Vector2d const &point) const;
+
+    /**
+     * Provides access to the mobj blockmap.
+     */
+    struct blockmap_s /*const*/ *mobjBlockmap() const;
+
+    /**
+     * Provides access to the polyobj blockmap.
+     */
+    struct blockmap_s /*const*/ *polyobjBlockmap() const;
+
+    /**
+     * Provides access to the line blockmap.
+     */
+    struct blockmap_s /*const*/ *lineBlockmap() const;
+
+    /**
+     * Provides access to the BSP leaf blockmap.
+     */
+    struct blockmap_s /*const*/ *bspLeafBlockmap() const;
 
     int mobjsBoxIterator(AABoxd const &box,
         int (*callback) (struct mobj_s *, void *), void *parameters = 0) const;
@@ -685,38 +700,6 @@ public: /// @todo Make private:
     void updateBounds();
 
     /**
-     * Construct an initial (empty) Mobj Blockmap for this map.
-     *
-     * @param min  Minimal coordinates for the map.
-     * @param max  Maximal coordinates for the map.
-     */
-    void initMobjBlockmap(const_pvec2d_t min, const_pvec2d_t max);
-
-    /**
-     * Construct an initial (empty) Line Blockmap for this map.
-     *
-     * @param min  Minimal coordinates for the map.
-     * @param max  Maximal coordinates for the map.
-     */
-    void initLineBlockmap(const_pvec2d_t min, const_pvec2d_t max);
-
-    /**
-     * Construct an initial (empty) BspLeaf Blockmap for this map.
-     *
-     * @param min  Minimal coordinates for the map.
-     * @param max  Maximal coordinates for the map.
-     */
-    void initBspLeafBlockmap(const_pvec2d_t min, const_pvec2d_t max);
-
-    /**
-     * Construct an initial (empty) Polyobj Blockmap for this map.
-     *
-     * @param min  Minimal coordinates for the map.
-     * @param max  Maximal coordinates for the map.
-     */
-    void initPolyobjBlockmap(const_pvec2d_t min, const_pvec2d_t max);
-
-    /**
      * Initialize the node piles and link rings. To be called after map load.
      */
     void initNodePiles();
@@ -779,7 +762,7 @@ public: /// @todo Make private:
 
 public:
     /*
-     * Runtime map editiing:
+     * Runtime map editing:
      */
 
     /// @return @c true= a new BSP was built successfully for the map.
