@@ -1,9 +1,6 @@
-/** @file edit_map.cpp Map Editor interface.
+/** @file world/edit_map.cpp Internal runtime map editing interface.
  *
  * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
- * @authors Copyright © 2000-2007 Andrew Apted <ajapted@gmail.com>
- * @authors Copyright © 1998-2000 Colin Reed <cph@moria.org.uk>
- * @authors Copyright © 1998-2000 Lee Killough <killough@rsn.hp.com>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -284,13 +281,6 @@ static bool editMapInited;
 static bool lastBuiltMapResult;
 
 static Map *lastBuiltMap;
-
-int bspFactor = 7;
-
-void MPE_Register()
-{
-    C_VAR_INT("bsp-factor", &bspFactor, CVF_NO_MAX, 0, 0);
-}
 
 /**
  * Material name references specified during map conversion are recorded in
@@ -691,9 +681,11 @@ static void buildVertexLineOwnerRings()
     }
 }
 
-Map *MPE_GetLastBuiltMap()
+Map *MPE_TakeMap()
 {
-    return lastBuiltMap;
+    Map *retMap = lastBuiltMap;
+    lastBuiltMap = 0;
+    return retMap;
 }
 
 bool MPE_GetLastBuiltMapResult()
@@ -714,7 +706,9 @@ boolean MPE_Begin(char const *mapUri)
     editMap.entityDatabase = EntityDatabase_New();
     editMap.clear();
 
-    lastBuiltMap = 0;
+    if(lastBuiltMap)
+        delete lastBuiltMap;
+    lastBuiltMap = new Map;
     lastBuiltMapResult = false; // Failed (default).
 
     editMapInited = true;
@@ -724,6 +718,8 @@ boolean MPE_Begin(char const *mapUri)
 #undef MPE_End
 boolean MPE_End()
 {
+    Map *map = lastBuiltMap;
+
     if(!editMapInited)
         return false;
 
@@ -736,8 +732,6 @@ boolean MPE_End()
      */
     printMissingMaterialsInDict();
     clearMaterialDict();
-
-    Map *map = new Map;
 
     /*
      * Perform cleanup on the loaded map data.
@@ -875,7 +869,6 @@ boolean MPE_End()
     S_DetermineBspLeafsAffectingSectorReverb(map);
 #endif
 
-    lastBuiltMap = map;
     lastBuiltMapResult = true; // Success.
 
     return lastBuiltMapResult;

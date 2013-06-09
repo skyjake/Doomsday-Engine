@@ -45,13 +45,14 @@
 #include "world/r_world.h"
 #include "world/world.h"
 
-#include "edit_map.h" // bspFactor
 #include "render/r_main.h" // validCount
 
 #include "world/map.h"
 
 /// Size of Blockmap blocks in map units. Must be an integer power of two.
 #define MAPBLOCKUNITS               (128)
+
+static int bspSplitFactor = 7; // cvar
 
 namespace de {
 
@@ -440,6 +441,11 @@ Map::~Map()
     // mobjNodes/lineNodes/lineLinks - free them!
 }
 
+void Map::consoleRegister() // static
+{
+    C_VAR_INT("bsp-factor", &bspSplitFactor, CVF_NO_MAX, 0, 0);
+}
+
 MapElement *Map::bspRoot() const
 {
     return d->bspRoot;
@@ -472,10 +478,10 @@ bool Map::buildBsp()
 
     LOG_AS("Map::buildBsp");
     LOG_TRACE("Building BSP for \"%s\" with split cost factor %d...")
-        << _uri << bspFactor;
+        << _uri << bspSplitFactor;
 
     // Instantiate and configure a new BSP builder.
-    BspBuilder nodeBuilder(*this, bspFactor);
+    BspBuilder nodeBuilder(*this, bspSplitFactor);
 
     // Build the BSP.
     bool builtOK = nodeBuilder.buildBsp();

@@ -154,6 +154,11 @@ public:
     ~Map();
 
     /**
+     * To be called to register the cvars and ccmds for this module.
+     */
+    static void consoleRegister();
+
+    /**
      * This ID is the name of the lump tag that marks the beginning of map
      * data, e.g. "MAP03" or "E2M8".
      */

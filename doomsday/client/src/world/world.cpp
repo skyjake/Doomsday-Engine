@@ -237,8 +237,8 @@ DENG2_PIMPL(World)
         if(!MPE_GetLastBuiltMapResult())
             return 0;
 
-        Map *map = MPE_GetLastBuiltMap();
-        DENG_ASSERT(map != 0);
+        // Take ownership of the map.
+        Map *map = MPE_TakeMap();
 
         map->_uri = uri;
 
@@ -478,6 +478,7 @@ World::World() : d(new Instance(this))
 void World::consoleRegister() // static
 {
     //C_VAR_BYTE("map-cache", &mapCache, 0, 0, 1);
+    Map::consoleRegister();
 }
 
 bool World::hasMap() const
