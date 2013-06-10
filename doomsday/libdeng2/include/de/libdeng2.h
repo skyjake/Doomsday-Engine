@@ -174,7 +174,7 @@
  * with an ASCII Escape character.
  */
 #define DENG2_ESC(StringLiteral) "\x1b" StringLiteral
-#define _E(StringLiteral) DENG2_ESC(StringLiteral)
+#define _E(Code) DENG2_ESC(#Code)
 
 /**
  * Macro for defining an opaque type in the C wrapper API.

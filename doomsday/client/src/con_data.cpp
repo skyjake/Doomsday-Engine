@@ -817,7 +817,7 @@ void Con_PrintCVar(cvar_t* var, char const *prefix)
 
     AutoStr* path = CVar_ComposePath(var);
 
-    os << _E("b") << Str_Text(path) << _E(".") << " " << equals << " " << _E(">");
+    os << _E(b) << Str_Text(path) << _E(.) << " " << equals << " " << _E(>);
 
     switch(var->type)
     {
@@ -1441,8 +1441,8 @@ static int aproposPrinter(knownword_t const* word, void* matching)
         de::String str;
         QTextStream os(&str);
 
-        os << _E("l") << wType[word->type]
-           << _E("0") << _E("b") << Str_Text(text) << " " << _E("2") << _E(">");
+        os << _E(l) << wType[word->type]
+           << _E(0) << _E(b) << Str_Text(text) << " " << _E(2) << _E(>);
 
         // Look for a short description.
         de::String tmp;
@@ -1587,10 +1587,10 @@ static int printKnownWordWorker(knownword_t const* word, void* parameters)
             return 0; // Skip overloaded variants.
 
         if((str = DH_GetString(DH_Find(ccmd->name), HST_DESCRIPTION)))
-            LOG_MSG(_E("b") "%s " _E(">") _E("2") "%s")
+            LOG_MSG(_E(b) "%s " _E(>) _E(2) "%s")
                     << ccmd->name << str;
         else
-            LOG_MSG(_E("b") "%s") << ccmd->name;
+            LOG_MSG(_E(b) "%s") << ccmd->name;
         break; }
 
     case WT_CVAR: {
@@ -1604,12 +1604,12 @@ static int printKnownWordWorker(knownword_t const* word, void* parameters)
 
     case WT_CALIAS: {
         calias_t* cal = (calias_t*) word->data;
-        LOG_MSG(_E("b") "%s" _E(".") " == " _E(">") "%s") << cal->name << cal->command;
+        LOG_MSG(_E(b) "%s" _E(.) " == " _E(>) "%s") << cal->name << cal->command;
         break; }
 
     case WT_GAME: {
         de::Game* game = (de::Game*) word->data;
-        LOG_MSG(_E("1") "%s") << Str_Text(game->identityKey());
+        LOG_MSG(_E(1) "%s") << Str_Text(game->identityKey());
         break; }
 
     default:

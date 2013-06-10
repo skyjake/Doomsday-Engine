@@ -257,9 +257,9 @@ D_CMD(ListGames)
     //Con_FPrintf(CPF_YELLOW, "Registered Games:\n");
     //Con_Printf("Key: '!'= Incomplete/Not playable '*'= Loaded\n");
 
-    LOG_MSG(_E("1") "Registered Games:");
+    LOG_MSG(_E(1) "Registered Games:");
     LOG_VERBOSE("Key: %s'!'=Incomplete/Not playable %s'*'=Loaded")
-            << _E(">") _E("D") << _E("B");
+            << _E(>) _E(D) << _E(B);
 
     Con_PrintRuler();
 
@@ -277,12 +277,12 @@ D_CMD(ListGames)
 
         if(!list.isEmpty()) list += "\n";
 
-        list += de::String(_E("0")
-                           _E("Ta") "%1%2 "
-                           _E("Tb") "%3 "
-                           _E("Tc") _E("2") "%4 " _E("i") "(%5)")
-                .arg(game->isCurrent()? _E("B") _E("b") :
-                     !game->allStartupFilesFound()? _E("D") : "")
+        list += de::String(_E(0)
+                           _E(Ta) "%1%2 "
+                           _E(Tb) "%3 "
+                           _E(Tc) _E(2) "%4 " _E(i) "(%5)")
+                .arg(game->isCurrent()? _E(B) _E(b) :
+                     !game->allStartupFilesFound()? _E(D) : "")
                 .arg(game->isCurrent()? "*" : !game->allStartupFilesFound()? "!" : " ")
                 .arg(Str_Text(game->identityKey()))
                 .arg(Str_Text(game->title()))

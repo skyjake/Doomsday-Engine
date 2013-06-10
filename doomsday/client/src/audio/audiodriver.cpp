@@ -415,7 +415,7 @@ static void selectInterfaces(audiodriverid_t defaultDriverId)
 
 void AudioDriver_PrintInterfaces(void)
 {
-    LOG_INFO(_E("b") "Audio configuration" _E("l") " (by decreasing priority):");
+    LOG_INFO(_E(b) "Audio configuration" _E(l) " (by decreasing priority):");
 
     de::String str;
     QTextStream os(&str);
@@ -425,12 +425,12 @@ void AudioDriver_PrintInterfaces(void)
         audiointerface_t* a = &activeInterfaces[i];
         if(a->type == AUDIO_IMUSIC || a->type == AUDIO_ICD)
         {
-            os << _E("Ta") _E("l") "  " << (a->type == AUDIO_IMUSIC? "Music" : "CD") << ": "
-               << _E(".") _E("Tb") << Str_Text(AudioDriver_InterfaceName(a->i.any)) << "\n";
+            os << _E(Ta) _E(l) "  " << (a->type == AUDIO_IMUSIC? "Music" : "CD") << ": "
+               << _E(.) _E(Tb) << Str_Text(AudioDriver_InterfaceName(a->i.any)) << "\n";
         }
         else if(a->type == AUDIO_ISFX)
         {
-            os << _E("Ta") _E("l") << "  SFX: " << _E(".") _E("Tb")
+            os << _E(Ta) _E(l) << "  SFX: " << _E(.) _E(Tb)
                << Str_Text(AudioDriver_InterfaceName(a->i.sfx)) << "\n";
         }
     }
