@@ -109,10 +109,10 @@ DENG2_PIMPL(Map)
     EntityDatabase entityDatabase;
 
     /// Blockmaps:
-    Blockmap *mobjBlockmap;
-    Blockmap *polyobjBlockmap;
-    Blockmap *lineBlockmap;
-    Blockmap *bspLeafBlockmap;
+    QScopedPointer<Blockmap> mobjBlockmap;
+    QScopedPointer<Blockmap> polyobjBlockmap;
+    QScopedPointer<Blockmap> lineBlockmap;
+    QScopedPointer<Blockmap> bspLeafBlockmap;
 
     struct generators_s *generators;
 
@@ -137,10 +137,6 @@ DENG2_PIMPL(Map)
         : Base            (i),
           editingEnabled  (true),
           bspRoot         (0),
-          mobjBlockmap    (0),
-          polyobjBlockmap (0),
-          lineBlockmap    (0),
-          bspLeafBlockmap (0),
           generators      (0),
           skyFloorHeight  (DDMAXFLOAT),
           skyCeilingHeight(DDMINFLOAT)
@@ -409,104 +405,96 @@ DENG2_PIMPL(Map)
     }
 
     /**
-     * Construct an initial (empty) Line Blockmap for the map.
+     * Construct an initial (empty) line blockmap for "this" map.
      *
-     * @param min  Minimal coordinates for the map.
-     * @param max  Maximal coordinates for the map.
+     * @pre Coordinate space @var bounds have already been determined.
      */
-    void initLineBlockmap(const_pvec2d_t min_, const_pvec2d_t max_)
+    void initLineBlockmap()
     {
 #define BLOCKMAP_MARGIN      8 // size guardband around map
 #define CELL_SIZE            MAPBLOCKUNITS
 
-        DENG_ASSERT(min_ && max_ && lineBlockmap == 0);
-
         // Setup the blockmap area to enclose the whole map, plus a margin
         // (margin is needed for a map that fits entirely inside one blockmap cell).
-        vec2d_t min; V2d_Set(min, min_[VX] - BLOCKMAP_MARGIN,
-                                  min_[VY] - BLOCKMAP_MARGIN);
-        vec2d_t max; V2d_Set(max, max_[VX] + BLOCKMAP_MARGIN,
-                                  max_[VY] + BLOCKMAP_MARGIN);
+        Vector2d min(bounds.minX - BLOCKMAP_MARGIN, bounds.minY - BLOCKMAP_MARGIN);
+        Vector2d max(bounds.maxX + BLOCKMAP_MARGIN, bounds.maxY + BLOCKMAP_MARGIN);
+        AABoxd expandedBounds(min.x, min.y, max.x, max.y);
 
-        lineBlockmap = Blockmap_New(min, max, CELL_SIZE, CELL_SIZE);
+        lineBlockmap.reset(new Blockmap(expandedBounds, Vector2ui(CELL_SIZE, CELL_SIZE)));
+
+        LOG_INFO("Line blockmap dimensions:") << lineBlockmap->dimensions().asText();
 
 #undef CELL_SIZE
 #undef BLOCKMAP_MARGIN
     }
 
     /**
-     * Construct an initial (empty) Mobj Blockmap for the map.
+     * Construct an initial (empty) mobj blockmap for "this" map.
      *
-     * @param min  Minimal coordinates for the map.
-     * @param max  Maximal coordinates for the map.
+     * @pre Coordinate space @var bounds have already been determined.
      */
-    void initMobjBlockmap(const_pvec2d_t min_, const_pvec2d_t max_)
+    void initMobjBlockmap()
     {
 #define BLOCKMAP_MARGIN      8 // size guardband around map
 #define CELL_SIZE            MAPBLOCKUNITS
 
-        DENG_ASSERT(min_ && max_ && mobjBlockmap == 0);
-
         // Setup the blockmap area to enclose the whole map, plus a margin
         // (margin is needed for a map that fits entirely inside one blockmap cell).
-        vec2d_t min; V2d_Set(min, min_[VX] - BLOCKMAP_MARGIN,
-                                  min_[VY] - BLOCKMAP_MARGIN);
-        vec2d_t max; V2d_Set(max, max_[VX] + BLOCKMAP_MARGIN,
-                                  max_[VY] + BLOCKMAP_MARGIN);
+        Vector2d min(bounds.minX - BLOCKMAP_MARGIN, bounds.minY - BLOCKMAP_MARGIN);
+        Vector2d max(bounds.maxX + BLOCKMAP_MARGIN, bounds.maxY + BLOCKMAP_MARGIN);
+        AABoxd expandedBounds(min.x, min.y, max.x, max.y);
 
-        mobjBlockmap = Blockmap_New(min, max, CELL_SIZE, CELL_SIZE);
+        mobjBlockmap.reset(new Blockmap(expandedBounds, Vector2ui(CELL_SIZE, CELL_SIZE)));
+
+        LOG_INFO("Mobj blockmap dimensions:") << mobjBlockmap->dimensions().asText();
 
 #undef CELL_SIZE
 #undef BLOCKMAP_MARGIN
     }
 
     /**
-     * Construct an initial (empty) Polyobj Blockmap for the map.
+     * Construct an initial (empty) polyobj blockmap for "this" map.
      *
-     * @param min  Minimal coordinates for the map.
-     * @param max  Maximal coordinates for the map.
+     * @pre Coordinate space @var bounds have already been determined.
      */
-    void initPolyobjBlockmap(const_pvec2d_t min_, const_pvec2d_t max_)
+    void initPolyobjBlockmap()
     {
 #define BLOCKMAP_MARGIN      8 // size guardband around map
 #define CELL_SIZE            MAPBLOCKUNITS
 
-        DENG_ASSERT(min_ && max_ && polyobjBlockmap == 0);
-
         // Setup the blockmap area to enclose the whole map, plus a margin
         // (margin is needed for a map that fits entirely inside one blockmap cell).
-        vec2d_t min; V2d_Set(min, min_[VX] - BLOCKMAP_MARGIN,
-                                  min_[VY] - BLOCKMAP_MARGIN);
-        vec2d_t max; V2d_Set(max, max_[VX] + BLOCKMAP_MARGIN,
-                                  max_[VY] + BLOCKMAP_MARGIN);
+        Vector2d min(bounds.minX - BLOCKMAP_MARGIN, bounds.minY - BLOCKMAP_MARGIN);
+        Vector2d max(bounds.maxX + BLOCKMAP_MARGIN, bounds.maxY + BLOCKMAP_MARGIN);
+        AABoxd expandedBounds(min.x, min.y, max.x, max.y);
 
-        polyobjBlockmap = Blockmap_New(min, max, CELL_SIZE, CELL_SIZE);
+        polyobjBlockmap.reset(new Blockmap(expandedBounds, Vector2ui(CELL_SIZE, CELL_SIZE)));
+
+        LOG_INFO("Polyobj blockmap dimensions:") << polyobjBlockmap->dimensions().asText();
 
 #undef CELL_SIZE
 #undef BLOCKMAP_MARGIN
     }
 
     /**
-     * Construct an initial (empty) BspLeaf Blockmap for the map.
+     * Construct an initial (empty) BSP leaf blockmap for "this" map.
      *
-     * @param min  Minimal coordinates for the map.
-     * @param max  Maximal coordinates for the map.
+     * @pre Coordinate space @var bounds have already been determined.
      */
-    void initBspLeafBlockmap(const_pvec2d_t min_, const_pvec2d_t max_)
+    void initBspLeafBlockmap()
     {
 #define BLOCKMAP_MARGIN      8 // size guardband around map
 #define CELL_SIZE            MAPBLOCKUNITS
 
-        DENG_ASSERT(min_ && max_);
-
         // Setup the blockmap area to enclose the whole map, plus a margin
         // (margin is needed for a map that fits entirely inside one blockmap cell).
-        vec2d_t min; V2d_Set(min, min_[VX] - BLOCKMAP_MARGIN,
-                                  min_[VY] - BLOCKMAP_MARGIN);
-        vec2d_t max; V2d_Set(max, max_[VX] + BLOCKMAP_MARGIN,
-                                  max_[VY] + BLOCKMAP_MARGIN);
+        Vector2d min(bounds.minX - BLOCKMAP_MARGIN, bounds.minY - BLOCKMAP_MARGIN);
+        Vector2d max(bounds.maxX + BLOCKMAP_MARGIN, bounds.maxY + BLOCKMAP_MARGIN);
+        AABoxd expandedBounds(min.x, min.y, max.x, max.y);
 
-        bspLeafBlockmap = Blockmap_New(min, max, CELL_SIZE, CELL_SIZE);
+        bspLeafBlockmap.reset(new Blockmap(expandedBounds, Vector2ui(CELL_SIZE, CELL_SIZE)));
+
+        LOG_INFO("BSP leaf blockmap dimensions:") << bspLeafBlockmap->dimensions().asText();
 
 #undef CELL_SIZE
 #undef BLOCKMAP_MARGIN
@@ -711,7 +699,6 @@ Map::~Map()
     // mobjHash/activePlanes/activePolyobjs - free them!
     // End client only data.
 
-    // mobj/line/polyobj/bspLeaf blockmaps - free them!
     // mobjNodes/lineNodes/lineLinks - free them!
 }
 
@@ -1038,38 +1025,34 @@ void Map::initNodePiles()
 
 Blockmap *Map::mobjBlockmap() const
 {
-    return d->mobjBlockmap;
+    return d->mobjBlockmap.data();
 }
 
 Blockmap *Map::polyobjBlockmap() const
 {
-    return d->polyobjBlockmap;
+    return d->polyobjBlockmap.data();
 }
 
 Blockmap *Map::lineBlockmap() const
 {
-    return d->lineBlockmap;
+    return d->lineBlockmap.data();
 }
 
 Blockmap *Map::bspLeafBlockmap() const
 {
-    return d->bspLeafBlockmap;
+    return d->bspLeafBlockmap.data();
 }
 
 void Map::linkMobj(mobj_t &mo)
 {
-    DENG_ASSERT(d->mobjBlockmap != 0);
-    BlockmapCell cell;
-    Blockmap_Cell(d->mobjBlockmap, cell, mo.origin);
-    Blockmap_CreateCellAndLinkObject(d->mobjBlockmap, cell, &mo);
+    Blockmap::Cell cell = d->mobjBlockmap->toCell(mo.origin);
+    d->mobjBlockmap->link(cell, &mo);
 }
 
 bool Map::unlinkMobj(mobj_t &mo)
 {
-    DENG_ASSERT(d->mobjBlockmap != 0);
-    BlockmapCell cell;
-    Blockmap_Cell(d->mobjBlockmap, cell, mo.origin);
-    return Blockmap_UnlinkObjectInCell(d->mobjBlockmap, cell, &mo);
+    Blockmap::Cell cell = d->mobjBlockmap->toCell(mo.origin);
+    return d->mobjBlockmap->unlink(cell, &mo);
 }
 
 struct bmapmoiterparams_t
@@ -1097,7 +1080,7 @@ static int blockmapCellMobjsIterator(void *object, void *context)
     return false; // Continue iteration.
 }
 
-static int iterateCellMobjs(Blockmap &mobjBlockmap, const_BlockmapCell cell,
+static int iterateCellMobjs(Blockmap &mobjBlockmap, Blockmap::Cell const &cell,
     int (*callback) (mobj_t *, void *), void *context = 0)
 {
     bmapmoiterparams_t args;
@@ -1105,11 +1088,10 @@ static int iterateCellMobjs(Blockmap &mobjBlockmap, const_BlockmapCell cell,
     args.func            = callback;
     args.parms           = context;
 
-    return Blockmap_IterateCellObjects(&mobjBlockmap, cell,
-                                       blockmapCellMobjsIterator, (void *) &args);
+    return mobjBlockmap.iterate(cell, blockmapCellMobjsIterator, (void *) &args);
 }
 
-static int iterateCellBlockMobjs(Blockmap &mobjBlockmap, BlockmapCellBlock const *cellBlock,
+static int iterateCellBlockMobjs(Blockmap &mobjBlockmap, Blockmap::CellBlock const &cellBlock,
     int (*callback) (mobj_t *, void *), void *context = 0)
 {
     bmapmoiterparams_t args;
@@ -1117,68 +1099,59 @@ static int iterateCellBlockMobjs(Blockmap &mobjBlockmap, BlockmapCellBlock const
     args.func            = callback;
     args.parms           = context;
 
-    return Blockmap_IterateCellBlockObjects(&mobjBlockmap, cellBlock,
-                                            blockmapCellMobjsIterator, (void*) &args);
+    return mobjBlockmap.iterate(cellBlock, blockmapCellMobjsIterator, (void *) &args);
 }
 
-int Map::mobjsBoxIterator(AABoxd const &box,
-    int (*callback) (mobj_t *, void *), void *parameters) const
+int Map::mobjsBoxIterator(AABoxd const &box, int (*callback) (mobj_t *, void *),
+                          void *parameters) const
 {
-    DENG_ASSERT(d->mobjBlockmap != 0);
-    BlockmapCellBlock cellBlock;
-    Blockmap_CellBlock(d->mobjBlockmap, &cellBlock, &box);
-    return iterateCellBlockMobjs(*d->mobjBlockmap, &cellBlock, callback, parameters);
+    Blockmap::CellBlock cellBlock = d->mobjBlockmap->toCellBlock(box);
+    return iterateCellBlockMobjs(*d->mobjBlockmap, cellBlock, callback, parameters);
 }
 
 void Map::linkLine(Line &line)
 {
-    DENG_ASSERT(d->lineBlockmap != 0);
-
     // Lines of Polyobjs don't get into the blockmap (presently...).
     if(line.definesPolyobj()) return;
 
-    vec2d_t origin; V2d_Copy(origin, Blockmap_Origin(d->lineBlockmap));
-    vec2d_t cellSize; V2d_Copy(cellSize, Blockmap_CellSize(d->lineBlockmap));
+    Vector2d const &origin = d->lineBlockmap->origin();
+    Vector2d const &cellDimensions = d->lineBlockmap->cellDimensions();
 
     // Determine the block of cells we'll be working within.
-    BlockmapCellBlock cellBlock;
-    Blockmap_CellBlock(d->lineBlockmap, &cellBlock, &line.aaBox());
+    Blockmap::CellBlock cellBlock = d->lineBlockmap->toCellBlock(line.aaBox());
 
-    vec2d_t cell, from, to;
-
-    for(uint y = cellBlock.minY; y <= cellBlock.maxY; ++y)
-    for(uint x = cellBlock.minX; x <= cellBlock.maxX; ++x)
+    Blockmap::Cell cell;
+    for(cell.y = cellBlock.min.y; cell.y <= cellBlock.max.y; ++cell.y)
+    for(cell.x = cellBlock.min.x; cell.x <= cellBlock.max.x; ++cell.x)
     {
         if(line.slopeType() == ST_VERTICAL ||
            line.slopeType() == ST_HORIZONTAL)
         {
-            Blockmap_CreateCellAndLinkObjectXY(d->lineBlockmap, x, y, &line);
+            d->lineBlockmap->link(cell, &line);
             continue;
         }
 
-        // Calculate cell origin.
-        V2d_Copy(cell, Blockmap_CellSize(d->lineBlockmap));
-        cell[VX] *= x; cell[VY] *= y;
-        V2d_Sum(cell, cell, Blockmap_Origin(d->lineBlockmap));
+        Vector2d point = origin + cellDimensions * Vector2d(cell.x, cell.y);
 
         // Choose a cell diagonal to test.
+        Vector2d from, to;
         if(line.slopeType() == ST_POSITIVE)
         {
             // Line slope / vs \ cell diagonal.
-            V2d_Set(from, cell[VX], cell[VY] + cellSize[VY]);
-            V2d_Set(to,   cell[VX] + cellSize[VX], cell[VY]);
+            from = Vector2d(point.x, point.y + cellDimensions.y);
+            to   = Vector2d(point.x + cellDimensions.x, point.y);
         }
         else
         {
             // Line slope \ vs / cell diagonal.
-            V2d_Set(from, cell[VX] + cellSize[VX], cell[VY] + cellSize[VY]);
-            V2d_Set(to,   cell[VX], cell[VY]);
+            from = Vector2d(point.x + cellDimensions.x, point.y + cellDimensions.y);
+            to   = Vector2d(point.x, point.y);
         }
 
         // Would Line intersect this?
         if((line.pointOnSide(from) < 0) != (line.pointOnSide(to) < 0))
         {
-            Blockmap_CreateCellAndLinkObjectXY(d->lineBlockmap, x, y, &line);
+            d->lineBlockmap->link(cell, &line);
         }
     }
 }
@@ -1210,7 +1183,7 @@ static int blockmapCellLinesIterator(void *mapElement, void *context)
     return false; // Continue iteration.
 }
 
-static int iterateCellLines(Blockmap &lineBlockmap, const_BlockmapCell cell,
+static int iterateCellLines(Blockmap &lineBlockmap, Blockmap::Cell const &cell,
     int (*callback) (Line *, void *), void *context = 0)
 {
     bmapiterparams_t parms;
@@ -1218,11 +1191,10 @@ static int iterateCellLines(Blockmap &lineBlockmap, const_BlockmapCell cell,
     parms.callback        = callback;
     parms.parms           = context;
 
-    return Blockmap_IterateCellObjects(&lineBlockmap, cell,
-                                       blockmapCellLinesIterator, (void *)&parms);
+    return lineBlockmap.iterate(cell, blockmapCellLinesIterator, (void *)&parms);
 }
 
-static int iterateCellBlockLines(Blockmap &lineBlockmap, BlockmapCellBlock const *cellBlock,
+static int iterateCellBlockLines(Blockmap &lineBlockmap, Blockmap::CellBlock const &cellBlock,
     int (*callback) (Line *, void *), void *context = 0)
 {
     bmapiterparams_t parms;
@@ -1230,29 +1202,24 @@ static int iterateCellBlockLines(Blockmap &lineBlockmap, BlockmapCellBlock const
     parms.callback        = callback;
     parms.parms           = context;
 
-    return Blockmap_IterateCellBlockObjects(&lineBlockmap, cellBlock,
-                                            blockmapCellLinesIterator, (void *) &parms);
+    return lineBlockmap.iterate(cellBlock, blockmapCellLinesIterator, (void *) &parms);
 }
 
 void Map::linkBspLeaf(BspLeaf &bspLeaf)
 {
-    DENG_ASSERT(d->bspLeafBlockmap != 0);
-
     // Degenerate BspLeafs don't get in.
     if(bspLeaf.isDegenerate()) return;
 
     // BspLeafs without sectors don't get in.
     if(!bspLeaf.hasSector()) return;
 
-    AABoxd aaBox = bspLeaf.face().aaBox();
+    Blockmap::CellBlock cellBlock = d->bspLeafBlockmap->toCellBlock(bspLeaf.face().aaBox());
 
-    BlockmapCellBlock cellBlock;
-    Blockmap_CellBlock(d->bspLeafBlockmap, &cellBlock, &aaBox);
-
-    for(uint y = cellBlock.minY; y <= cellBlock.maxY; ++y)
-    for(uint x = cellBlock.minX; x <= cellBlock.maxX; ++x)
+    Blockmap::Cell cell;
+    for(cell.y = cellBlock.min.y; cell.y <= cellBlock.max.y; ++cell.y)
+    for(cell.x = cellBlock.min.x; cell.x <= cellBlock.max.x; ++cell.x)
     {
-        Blockmap_CreateCellAndLinkObjectXY(d->bspLeafBlockmap, x, y, &bspLeaf);
+        d->bspLeafBlockmap->link(cell, &bspLeaf);
     }
 }
 
@@ -1301,7 +1268,7 @@ static int blockmapCellBspLeafsIterator(void *object, void *context)
 }
 
 /*
-static int iterateCellBspLeafs(Blockmap &bspLeafBlockmap, const_BlockmapCell cell,
+static int iterateCellBspLeafs(Blockmap &bspLeafBlockmap, Blockmap::const_Cell cell,
     Sector *sector, AABoxd const &box, int localValidCount,
     int (*callback) (BspLeaf *, void *), void *context = 0)
 {
@@ -1312,13 +1279,12 @@ static int iterateCellBspLeafs(Blockmap &bspLeafBlockmap, const_BlockmapCell cel
     args.sector          = sector;
     args.box             = &box;
 
-    return Blockmap_IterateCellObjects(bspLeafBlockmap, cell,
-                                       blockmapCellBspLeafsIterator, (void*)&args);
+    return bspLeafBlockmap.iterateCellObjects(cell, blockmapCellBspLeafsIterator, (void*)&args);
 }
 */
 
 static int iterateCellBlockBspLeafs(Blockmap &bspLeafBlockmap,
-    BlockmapCellBlock const &cellBlock, Sector *sector,  AABoxd const &box,
+    Blockmap::CellBlock const &cellBlock, Sector *sector,  AABoxd const &box,
     int localValidCount,
     int (*callback) (BspLeaf *, void *), void *context = 0)
 {
@@ -1329,21 +1295,18 @@ static int iterateCellBlockBspLeafs(Blockmap &bspLeafBlockmap,
     args.sector          = sector;
     args.box             = &box;
 
-    return Blockmap_IterateCellBlockObjects(&bspLeafBlockmap, &cellBlock,
-                                            blockmapCellBspLeafsIterator, (void *) &args);
+    return bspLeafBlockmap.iterate(cellBlock, blockmapCellBspLeafsIterator, (void *) &args);
 }
 
 int Map::bspLeafsBoxIterator(AABoxd const &box, Sector *sector,
     int (*callback) (BspLeaf *, void *), void *parameters) const
 {
-    DENG_ASSERT(d->bspLeafBlockmap != 0);
     static int localValidCount = 0;
 
     // This is only used here.
     localValidCount++;
 
-    BlockmapCellBlock cellBlock;
-    Blockmap_CellBlock(d->bspLeafBlockmap, &cellBlock, &box);
+    Blockmap::CellBlock cellBlock = d->bspLeafBlockmap->toCellBlock(box);
 
     return iterateCellBlockBspLeafs(*d->bspLeafBlockmap, cellBlock, sector, box,
                                     localValidCount, callback, parameters);
@@ -1351,22 +1314,20 @@ int Map::bspLeafsBoxIterator(AABoxd const &box, Sector *sector,
 
 void Map::linkPolyobj(Polyobj &polyobj)
 {
-    BlockmapCellBlock cellBlock;
-    Blockmap_CellBlock(d->polyobjBlockmap, &cellBlock, &polyobj.aaBox);
+    Blockmap::CellBlock cellBlock = d->polyobjBlockmap->toCellBlock(polyobj.aaBox);
 
-    for(uint y = cellBlock.minY; y <= cellBlock.maxY; ++y)
-    for(uint x = cellBlock.minX; x <= cellBlock.maxX; ++x)
+    Blockmap::Cell cell;
+    for(cell.y = cellBlock.min.y; cell.y <= cellBlock.max.y; ++cell.y)
+    for(cell.x = cellBlock.min.x; cell.x <= cellBlock.max.x; ++cell.x)
     {
-        Blockmap_CreateCellAndLinkObjectXY(d->polyobjBlockmap, x, y, &polyobj);
+        d->polyobjBlockmap->link(cell, &polyobj);
     }
 }
 
 void Map::unlinkPolyobj(Polyobj &polyobj)
 {
-    DENG_ASSERT(d->polyobjBlockmap != 0);
-    BlockmapCellBlock cellBlock;
-    Blockmap_CellBlock(d->polyobjBlockmap, &cellBlock, &polyobj.aaBox);
-    Blockmap_UnlinkObjectInCellBlock(d->polyobjBlockmap, &cellBlock, &polyobj);
+    Blockmap::CellBlock cellBlock = d->polyobjBlockmap->toCellBlock(polyobj.aaBox);
+    d->polyobjBlockmap->unlink(cellBlock, &polyobj);
 }
 
 struct bmappoiterparams_t
@@ -1394,7 +1355,7 @@ static int blockmapCellPolyobjsIterator(void *object, void *context)
     return false; // Continue iteration.
 }
 
-static int iterateCellPolyobjs(Blockmap &polyobjBlockmap, const_BlockmapCell cell,
+static int iterateCellPolyobjs(Blockmap &polyobjBlockmap, Blockmap::Cell const &cell,
     int (*callback) (Polyobj *, void *), void *context = 0)
 {
     bmappoiterparams_t args;
@@ -1402,11 +1363,10 @@ static int iterateCellPolyobjs(Blockmap &polyobjBlockmap, const_BlockmapCell cel
     args.func            = callback;
     args.parms           = context;
 
-    return Blockmap_IterateCellObjects(&polyobjBlockmap, cell,
-                                       blockmapCellPolyobjsIterator, (void *)&args);
+    return polyobjBlockmap.iterate(cell, blockmapCellPolyobjsIterator, (void *)&args);
 }
 
-static int iterateCellBlockPolyobjs(Blockmap &polyobjBlockmap, BlockmapCellBlock const &cellBlock,
+static int iterateCellBlockPolyobjs(Blockmap &polyobjBlockmap, Blockmap::CellBlock const &cellBlock,
     int (*callback) (Polyobj *, void *), void *context = 0)
 {
     bmappoiterparams_t args;
@@ -1414,16 +1374,13 @@ static int iterateCellBlockPolyobjs(Blockmap &polyobjBlockmap, BlockmapCellBlock
     args.func            = callback;
     args.parms           = context;
 
-    return Blockmap_IterateCellBlockObjects(&polyobjBlockmap, &cellBlock,
-                                            blockmapCellPolyobjsIterator, (void*) &args);
+    return polyobjBlockmap.iterate(cellBlock, blockmapCellPolyobjsIterator, (void*) &args);
 }
 
 int Map::polyobjsBoxIterator(AABoxd const &box,
     int (*callback) (struct polyobj_s *, void *), void *parameters) const
 {
-    DENG_ASSERT(d->polyobjBlockmap != 0);
-    BlockmapCellBlock cellBlock;
-    Blockmap_CellBlock(d->polyobjBlockmap, &cellBlock, &box);
+    Blockmap::CellBlock cellBlock = d->polyobjBlockmap->toCellBlock(box);
     return iterateCellBlockPolyobjs(*d->polyobjBlockmap, cellBlock, callback, parameters);
 }
 
@@ -1467,7 +1424,7 @@ static int iterateCellPolyobjLinesIterator(Blockmap &polyobjBlockmap, const_Bloc
 */
 
 static int iterateCellBlockPolyobjLines(Blockmap &polyobjBlockmap,
-    BlockmapCellBlock const &cellBlock,
+    Blockmap::CellBlock const &cellBlock,
     int (*callback) (Line *, void *), void *context = 0)
 {
     poiterparams_t poargs;
@@ -1479,25 +1436,20 @@ static int iterateCellBlockPolyobjLines(Blockmap &polyobjBlockmap,
     args.func            = PTR_PolyobjLines;
     args.parms           = &poargs;
 
-    return Blockmap_IterateCellBlockObjects(&polyobjBlockmap, &cellBlock,
-                                            blockmapCellPolyobjsIterator, (void*) &args);
+    return polyobjBlockmap.iterate(cellBlock, blockmapCellPolyobjsIterator, (void*) &args);
 }
 
 int Map::linesBoxIterator(AABoxd const &box,
     int (*callback) (Line *, void *), void *parameters) const
 {
-    DENG_ASSERT(d->polyobjBlockmap != 0);
-    BlockmapCellBlock cellBlock;
-    Blockmap_CellBlock(d->lineBlockmap, &cellBlock, &box);
-    return iterateCellBlockLines(*d->lineBlockmap, &cellBlock, callback, parameters);
+    Blockmap::CellBlock cellBlock = d->lineBlockmap->toCellBlock(box);
+    return iterateCellBlockLines(*d->lineBlockmap, cellBlock, callback, parameters);
 }
 
 int Map::polyobjLinesBoxIterator(AABoxd const &box,
     int (*callback) (Line *, void *), void *parameters) const
 {
-    DENG_ASSERT(d->polyobjBlockmap != 0);
-    BlockmapCellBlock cellBlock;
-    Blockmap_CellBlock(d->polyobjBlockmap, &cellBlock, &box);
+    Blockmap::CellBlock cellBlock = d->polyobjBlockmap->toCellBlock(box);
     return iterateCellBlockPolyobjLines(*d->polyobjBlockmap, cellBlock, callback, parameters);
 }
 
@@ -1512,106 +1464,98 @@ int Map::allLinesBoxIterator(AABoxd const &box,
     return P_LinesBoxIterator(&box, callback, parameters);
 }
 
-static int traverseCellPath2(Blockmap *bmap, uint const fromBlock[2],
-    uint const toBlock[2], const_pvec2d_t from, const_pvec2d_t to,
-    int (*callback) (uint const block[2], void *parameters), void *parameters)
+static int traverseCellPath2(Blockmap &bmap, Blockmap::Cell const &fromCell,
+    Blockmap::Cell const &toCell, Vector2d const &from, Vector2d const &to,
+    int (*callback) (Blockmap::Cell const &cell, void *parameters), void *parameters)
 {
-    DENG2_ASSERT(bmap != 0);
+    Vector2i stepDir;
+    coord_t frac;
+    Vector2d delta, intercept;
 
-    int result = false; // Continue iteration.
-    coord_t intercept[2], delta[2], partial;
-    uint count, block[2];
-    int stepDir[2];
-
-    if(toBlock[VX] > fromBlock[VX])
+    if(toCell.x > fromCell.x)
     {
-        stepDir[VX] = 1;
-        partial = from[VX] / Blockmap_CellWidth(bmap);
-        partial = 1 - (partial - (int) partial);
-        delta[VY] = (to[VY] - from[VY]) / fabs(to[VX] - from[VX]);
+        stepDir.x = 1;
+        frac = from.x / bmap.cellWidth();
+        frac = 1 - (frac - int( frac ));
+        delta.y = (to.y - from.y) / de::abs(to.x - from.x);
     }
-    else if(toBlock[VX] < fromBlock[VX])
+    else if(toCell.x < fromCell.x)
     {
-        stepDir[VX] = -1;
-        partial = from[VX] / Blockmap_CellWidth(bmap);
-        partial = (partial - (int) partial);
-        delta[VY] = (to[VY] - from[VY]) / fabs(to[VX] - from[VX]);
+        stepDir.x = -1;
+        frac = from.x / bmap.cellWidth();
+        frac = (frac - int( frac ));
+        delta.y = (to.y - from.y) / de::abs(to.x - from.x);
     }
     else
     {
-        stepDir[VX] = 0;
-        partial = 1;
-        delta[VY] = 256;
+        stepDir.x = 0;
+        frac = 1;
+        delta.y = 256;
     }
-    intercept[VY] = from[VY] / Blockmap_CellHeight(bmap) + partial * delta[VY];
+    intercept.y = from.y / bmap.cellHeight() + frac * delta.y;
 
-    if(toBlock[VY] > fromBlock[VY])
+    if(toCell.y > fromCell.y)
     {
-        stepDir[VY] = 1;
-        partial = from[VY] / Blockmap_CellHeight(bmap);
-        partial = 1 - (partial - (int) partial);
-        delta[VX] = (to[VX] - from[VX]) / fabs(to[VY] - from[VY]);
+        stepDir.y = 1;
+        frac = from.y / bmap.cellHeight();
+        frac = 1 - (frac - int( frac ));
+        delta.x = (to.x - from.x) / de::abs(to.y - from.y);
     }
-    else if(toBlock[VY] < fromBlock[VY])
+    else if(toCell.y < fromCell.y)
     {
-        stepDir[VY] = -1;
-        partial = from[VY] / Blockmap_CellHeight(bmap);
-        partial = (partial - (int) partial);
-        delta[VX] = (to[VX] - from[VX]) / fabs(to[VY] - from[VY]);
+        stepDir.y = -1;
+        frac = from.y / bmap.cellHeight();
+        frac = frac - int( frac );
+        delta.x = (to.x - from.x) / de::abs(to.y - from.y);
     }
     else
     {
-        stepDir[VY] = 0;
-        partial = 1;
-        delta[VX] = 256;
+        stepDir.y = 0;
+        frac = 1;
+        delta.x = 256;
     }
-    intercept[VX] = from[VX] / Blockmap_CellWidth(bmap) + partial * delta[VX];
+    intercept.x = from.x / bmap.cellWidth() + frac * delta.x;
 
-    //
-    // Step through map blocks.
-    //
-
-    // Count is present to prevent a round off error from skipping the
-    // break and ending up in an infinite loop..
-    block[VX] = fromBlock[VX];
-    block[VY] = fromBlock[VY];
-    for(count = 0; count < 64; ++count)
+    /*
+     * Step through map cells.
+     */
+    Blockmap::Cell cell = fromCell;
+    for(int pass = 0; pass < 64; ++pass) // Prevent a round off error leading us into
+                                         // an infinite loop...
     {
-        result = callback(block, parameters);
+        int result = callback(cell, parameters);
         if(result) return result; // Early out.
 
-        if(block[VX] == toBlock[VX] && block[VY] == toBlock[VY])
+        if(cell.x == toCell.x && cell.y == toCell.y)
             break;
 
         /// @todo Replace incremental translation?
-        if((uint)intercept[VY] == block[VY])
+        if(cell.y == uint( intercept.y ))
         {
-            block[VX] += stepDir[VX];
-            intercept[VY] += delta[VY];
+            cell.x += stepDir.x;
+            intercept.y += delta.y;
         }
-        else if((uint)intercept[VX] == block[VX])
+        else if(cell.x == uint( intercept.x ))
         {
-            block[VY] += stepDir[VY];
-            intercept[VX] += delta[VX];
+            cell.y += stepDir.y;
+            intercept.x += delta.x;
         }
     }
 
     return false; // Continue iteration.
 }
 
-static int traverseCellPath(divline_t &traceLine, Blockmap *bmap,
+static int traverseCellPath(divline_t &traceLine, Blockmap &bmap,
     const_pvec2d_t from_, const_pvec2d_t to_,
-    int (*callback) (uint const block[2], void *parameters), void *parameters = 0)
+    int (*callback) (Blockmap::Cell const &cell, void *parameters), void *parameters = 0)
 {
-    DENG2_ASSERT(bmap != 0);
-
     // Constant terms implicitly defined by DOOM's original version of this
     // algorithm (we must honor these fudge factors for compatibility).
     coord_t const epsilon    = FIX2FLT(FRACUNIT);
     coord_t const unitOffset = FIX2FLT(FRACUNIT);
 
-    vec2d_t min; V2d_Copy(min, Blockmap_Bounds(bmap)->min);
-    vec2d_t max; V2d_Copy(max, Blockmap_Bounds(bmap)->max);
+    vec2d_t min; V2d_Copy(min, bmap.bounds().min);
+    vec2d_t max; V2d_Copy(max, bmap.bounds().max);
 
     // We may need to clip and/or fudge these points.
     vec2d_t from; V2d_Copy(from, from_);
@@ -1637,8 +1581,8 @@ static int traverseCellPath(divline_t &traceLine, Blockmap *bmap,
     // Lines should not be perfectly parallel to a blockmap axis.
     // We honor these so-called fudge factors for compatible behavior
     // with DOOM's algorithm.
-    coord_t dX = (from[VX] - Blockmap_Origin(bmap)[VX]) / Blockmap_CellWidth(bmap);
-    coord_t dY = (from[VY] - Blockmap_Origin(bmap)[VY]) / Blockmap_CellHeight(bmap);
+    coord_t dX = (from[VX] - bmap.origin().x) / bmap.cellWidth();
+    coord_t dY = (from[VY] - bmap.origin().y) / bmap.cellHeight();
     if(INRANGE_OF(dX, 0, epsilon)) from[VX] += unitOffset;
     if(INRANGE_OF(dY, 0, epsilon)) from[VY] += unitOffset;
 
@@ -1682,12 +1626,12 @@ static int traverseCellPath(divline_t &traceLine, Blockmap *bmap,
     }
 
     // Clipping already applied above, so we don't need to check it again...
-    uint fromBlock[2]; Blockmap_Cell(bmap, fromBlock, from);
-    uint toBlock[2];   Blockmap_Cell(bmap, toBlock, to);
+    Blockmap::Cell fromCell = bmap.toCell(from);
+    Blockmap::Cell toCell   = bmap.toCell(to);
 
     V2d_Subtract(from, from, min);
     V2d_Subtract(to, to, min);
-    return traverseCellPath2(bmap, fromBlock, toBlock, from, to, callback, parameters);
+    return traverseCellPath2(bmap, fromCell, toCell, from, to, callback, parameters);
 }
 
 struct iteratepolyobjlines_params_t
@@ -1711,26 +1655,26 @@ static int iteratePolyobjLines(Polyobj *po, void *parameters = 0)
     return false; // Continue iteration.
 }
 
-static int collectPolyobjLineIntercepts(uint const block[2], void *parameters)
+static int collectPolyobjLineIntercepts(Blockmap::Cell const &cell, void *parameters)
 {
     Blockmap *polyobjBlockmap = (Blockmap *)parameters;
     iteratepolyobjlines_params_t iplParams;
     iplParams.callback = PIT_AddLineIntercepts;
     iplParams.parms    = 0;
-    return iterateCellPolyobjs(*polyobjBlockmap, block,
+    return iterateCellPolyobjs(*polyobjBlockmap, cell,
                                iteratePolyobjLines, (void *)&iplParams);
 }
 
-static int collectLineIntercepts(uint const block[2], void *parameters)
+static int collectLineIntercepts(Blockmap::Cell const &cell, void *parameters)
 {
     Blockmap *lineBlockmap = (Blockmap *)parameters;
-    return iterateCellLines(*lineBlockmap, block, PIT_AddLineIntercepts);
+    return iterateCellLines(*lineBlockmap, cell, PIT_AddLineIntercepts);
 }
 
-static int collectMobjIntercepts(uint const block[2], void *parameters)
+static int collectMobjIntercepts(Blockmap::Cell const &cell, void *parameters)
 {
     Blockmap *mobjBlockmap = (Blockmap *)parameters;
-    return iterateCellMobjs(*mobjBlockmap, block, PIT_AddMobjIntercepts);
+    return iterateCellMobjs(*mobjBlockmap, cell, PIT_AddMobjIntercepts);
 }
 
 int Map::pathTraverse(const_pvec2d_t from, const_pvec2d_t to, int flags,
@@ -1745,20 +1689,18 @@ int Map::pathTraverse(const_pvec2d_t from, const_pvec2d_t to, int flags,
     {
         if(!d->polyobjs.isEmpty())
         {
-            DENG_ASSERT(d->polyobjBlockmap != 0);
-            traverseCellPath(d->traceLine, d->polyobjBlockmap, from, to,
-                             collectPolyobjLineIntercepts, (void *)d->polyobjBlockmap);
+            traverseCellPath(d->traceLine, *d->polyobjBlockmap, from, to,
+                             collectPolyobjLineIntercepts,
+                             (void *)d->polyobjBlockmap.data());
         }
 
-        DENG_ASSERT(d->lineBlockmap != 0);
-        traverseCellPath(d->traceLine, d->lineBlockmap, from, to, collectLineIntercepts,
-                         (void *)d->lineBlockmap);
+        traverseCellPath(d->traceLine, *d->lineBlockmap, from, to, collectLineIntercepts,
+                         (void *)d->lineBlockmap.data());
     }
     if(flags & PT_ADDMOBJS)
     {
-        DENG_ASSERT(d->mobjBlockmap != 0);
-        traverseCellPath(d->traceLine, d->mobjBlockmap, from, to, collectMobjIntercepts,
-                         (void *)d->mobjBlockmap);
+        traverseCellPath(d->traceLine, *d->mobjBlockmap, from, to, collectMobjIntercepts,
+                         (void *)d->mobjBlockmap.data());
     }
 
     // Step #2: Process sorted intercepts.
@@ -2455,18 +2397,15 @@ bool Map::endEditing()
     /*
      * Build blockmaps.
      */
-    vec2d_t min, max;
-    bounds(min, max);
-
-    d->initLineBlockmap(min, max);
+    d->initLineBlockmap();
     foreach(Line *line, lines())
     {
         linkLine(*line);
     }
 
     // The mobj and polyobj blockmaps are maintained dynamically.
-    d->initMobjBlockmap(min, max);
-    d->initPolyobjBlockmap(min, max);
+    d->initMobjBlockmap();
+    d->initPolyobjBlockmap();
 
     /*
      * Build a BSP.
@@ -2488,7 +2427,7 @@ bool Map::endEditing()
     d->finishPlanes();
 
     // We can now initialize the BSP leaf blockmap.
-    d->initBspLeafBlockmap(min, max);
+    d->initBspLeafBlockmap();
     foreach(BspLeaf *bspLeaf, bspLeafs())
     {
         linkBspLeaf(*bspLeaf);

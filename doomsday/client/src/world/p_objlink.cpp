@@ -130,11 +130,10 @@ static bool toObjlinkBlockmapCell(objlinkblockmap_t &obm, uint coords[2],
 {
     DENG_ASSERT(coords != 0);
 
-    uint size[2];
-    Gridmap_Size(obm.gridmap, size);
+    Vector2ui const &dimensions = obm.gridmap->dimensions();
 
-    coord_t max[2] = { obm.origin[0] + size[0] * BLOCK_WIDTH,
-                       obm.origin[1] + size[1] * BLOCK_HEIGHT };
+    coord_t max[2] = { obm.origin[0] + dimensions.x * BLOCK_WIDTH,
+                       obm.origin[1] + dimensions.y * BLOCK_HEIGHT };
 
     bool adjusted = false;
     if(x < obm.origin[0])
@@ -144,7 +143,7 @@ static bool toObjlinkBlockmapCell(objlinkblockmap_t &obm, uint coords[2],
     }
     else if(x >= max[0])
     {
-        coords[VX] = size[0]-1;
+        coords[VX] = dimensions.x-1;
         adjusted = true;
     }
     else
@@ -159,7 +158,7 @@ static bool toObjlinkBlockmapCell(objlinkblockmap_t &obm, uint coords[2],
     }
     else if(y >= max[1])
     {
-        coords[VY] = size[1]-1;
+        coords[VY] = dimensions.y-1;
         adjusted = true;
     }
     else
@@ -232,20 +231,19 @@ static objlink_t *allocObjlink()
 
 void R_InitObjlinkBlockmapForMap()
 {
-    // Determine the dimensions of the objlink blockmaps in blocks.
-    coord_t min[2], max[2];
-    App_World().map().bounds(min, max);
+    // Determine the dimensions of the objlink gridmaps in cells.
+    AABoxd const &bounds = App_World().map().bounds();
 
-    uint width  = uint( de::ceil((max[VX] - min[VX]) / coord_t( BLOCK_WIDTH  )) );
-    uint height = uint( de::ceil((max[VY] - min[VY]) / coord_t( BLOCK_HEIGHT )) );
+    Vector2ui dimensions(de::ceil((bounds.maxX - bounds.minX) / coord_t( BLOCK_WIDTH )),
+                         de::ceil((bounds.maxY - bounds.minY) / coord_t( BLOCK_HEIGHT )));
 
-    // Create the blockmaps.
+    // Create the gridmaps.
     for(int i = 0; i < NUM_OBJ_TYPES; ++i)
     {
         objlinkblockmap_t &obm = chooseObjlinkBlockmap(objtype_t( i ));
-        obm.origin[0] = min[VX];
-        obm.origin[1] = min[VY];
-        obm.gridmap = Gridmap_New(width, height, sizeof(objlinkblock_t), PU_MAPSTATIC);
+        obm.origin[0] = bounds.minX;
+        obm.origin[1] = bounds.minY;
+        obm.gridmap = new Gridmap(dimensions, sizeof(objlinkblock_t), PU_MAPSTATIC);
     }
 
     // Initialize obj => BspLeaf contact lists.
@@ -261,8 +259,7 @@ void R_DestroyObjlinkBlockmap()
         objlinkblockmap_t &obm = chooseObjlinkBlockmap(objtype_t( i ));
         if(!obm.gridmap) continue;
 
-        Gridmap_Delete(obm.gridmap);
-        obm.gridmap = 0;
+        delete obm.gridmap; obm.gridmap = 0;
     }
 
     if(bspLeafContacts)
@@ -287,7 +284,7 @@ void R_ClearObjlinkBlockmap(objtype_t type)
 {
     DENG_ASSERT(VALID_OBJTYPE(type));
     // Clear all the contact list heads and spread flags.
-    Gridmap_Iterate(chooseObjlinkBlockmap(type).gridmap, clearObjlinkBlock);
+    chooseObjlinkBlockmap(type).gridmap->iterate(clearObjlinkBlock);
 }
 
 void R_ClearObjlinksForFrame()
@@ -528,10 +525,11 @@ static void spreadContactsForBspLeaf(objlinkblockmap_t &obm, BspLeaf const &bspL
     toObjlinkBlockmapCell(obm, maxBlock, leafAABox.maxX + maxRadius,
                                          leafAABox.maxY + maxRadius);
 
-    for(uint y = minBlock[1]; y <= maxBlock[1]; ++y)
-    for(uint x = minBlock[0]; x <= maxBlock[0]; ++x)
+    Gridmap::Cell cell;
+    for(cell.y = minBlock[1]; cell.y <= maxBlock[1]; ++cell.y)
+    for(cell.x = minBlock[0]; cell.x <= maxBlock[0]; ++cell.x)
     {
-        objlinkblock_t *block = (objlinkblock_t *) Gridmap_CellXY(obm.gridmap, x, y, true/*can allocate a block*/);
+        objlinkblock_t *block = (objlinkblock_t *) obm.gridmap->cellData(cell, true/*can allocate a block*/);
         if(block->doneSpread) continue;
 
         objlink_t *iter = block->head;
@@ -570,10 +568,9 @@ END_PROF( PROF_OBJLINK_SPREAD );
 }
 
 /// @pre  Coordinates held by @a blockXY are within valid range.
-static void linkObjlinkInBlockmap(objlinkblockmap_t &obm, objlink_t &link, uint blockXY[2])
+static void linkObjlinkInBlockmap(objlinkblockmap_t &obm, objlink_t &link, Gridmap::Cell cell)
 {
-    DENG_ASSERT(blockXY != 0);
-    objlinkblock_t *block = (objlinkblock_t *) Gridmap_CellXY(obm.gridmap, blockXY[0], blockXY[1], true/*can allocate a block*/);
+    objlinkblock_t *block = (objlinkblock_t *) obm.gridmap->cellData(cell, true/*can allocate a block*/);
     link.nextInBlock = block->head;
     block->head = &link;
 }

@@ -68,6 +68,7 @@ struct clpolyobj_s;
 
 namespace de {
 
+class Blockmap;
 class EntityDatabase;
 #ifdef __CLIENT__
 class LightGrid;
@@ -102,7 +103,7 @@ public:
     typedef QSet<Plane *>    PlaneSet;
     typedef QSet<Surface *>  SurfaceSet;
 
-public:
+public: /// @todo make private:
     Uri _uri;
     char _oldUniqueId[256];
 
@@ -131,7 +132,6 @@ public:
     struct clpolyobj_s *clActivePolyobjs[CLIENT_MAX_MOVERS];
 #endif
 
-public:
     nodepile_t mobjNodes, lineNodes; // All kinds of wacky links.
     nodeindex_t *lineLinks; // Indices to roots.
 
@@ -308,22 +308,22 @@ public:
     /**
      * Provides access to the mobj blockmap.
      */
-    struct blockmap_s /*const*/ *mobjBlockmap() const;
+    Blockmap /*const*/ *mobjBlockmap() const;
 
     /**
      * Provides access to the polyobj blockmap.
      */
-    struct blockmap_s /*const*/ *polyobjBlockmap() const;
+    Blockmap /*const*/ *polyobjBlockmap() const;
 
     /**
      * Provides access to the line blockmap.
      */
-    struct blockmap_s /*const*/ *lineBlockmap() const;
+    Blockmap /*const*/ *lineBlockmap() const;
 
     /**
      * Provides access to the BSP leaf blockmap.
      */
-    struct blockmap_s /*const*/ *bspLeafBlockmap() const;
+    Blockmap /*const*/ *bspLeafBlockmap() const;
 
     int mobjsBoxIterator(AABoxd const &box,
         int (*callback) (struct mobj_s *, void *), void *parameters = 0) const;

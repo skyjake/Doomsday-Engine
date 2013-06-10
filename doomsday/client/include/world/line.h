@@ -679,10 +679,16 @@ public:
     }
 
     /// @copydoc pointOnSide()
+    inline coord_t pointOnSide(de::Vector2d const &point) const
+    {
+        coord_t pointV1[2] = { point.x, point.y };
+        return pointOnSide(pointV1);
+    }
+
+    /// @copydoc pointOnSide()
     inline coord_t pointOnSide(coord_t x, coord_t y) const
     {
-        coord_t point[2] = { x, y };
-        return pointOnSide(point);
+        return pointOnSide(de::Vector2d(x, y));
     }
 
     /**
