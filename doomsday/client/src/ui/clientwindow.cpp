@@ -105,22 +105,10 @@ DENG2_OBSERVES(Canvas,           FocusChange)
                 .setInput(Rule::Width,  root.viewWidth());
         root.add(taskBar);
 
-        /*
-        Rule const &unit = ClientApp::windowSystem().style().rules().rule("unit");
-
-        console = new ConsoleWidget;
-        console->rule()
-                .setInput(Rule::Bottom, taskBar->rule().top() - unit)
-                .setInput(Rule::Left,   root.viewLeft() + console->shift());
-        root.add(console);
-        */
-
+#if 0
         taskBar->setOpeningAction(new CommandAction("menu open"));
         taskBar->setClosingAction(new CommandAction("menu close"));
-
-        //connect(taskBar, SIGNAL(opened()), console, SLOT(clearLog()));
-        //connect(taskBar, SIGNAL(opened()), console, SLOT(open()));
-        //connect(taskBar, SIGNAL(closed()), console, SLOT(close()));
+#endif
 
         root.setFocus(&taskBar->commandLine());
 
