@@ -339,15 +339,15 @@ DENG2_PIMPL(World)
 
         if(!map) return;
 
-#define COLUMN(A, B) "\n" _E(">") _E("Ta") "  " << A << " " _E("Tb") << B
+#define TABBED(A, B) "\n" _E(Ta) "  " << A << " " _E(Tb) << B
 
-        LOG_INFO(_E("D") "Current map elements:" _E("."))
-                << COLUMN("Vertexes",  map->vertexCount())
-                << COLUMN("Lines",     map->lineCount())
-                << COLUMN("Sectors",   map->sectorCount())
-                << COLUMN("BSP Nodes", map->bspNodeCount())
-                << COLUMN("BSP Leafs", map->bspLeafCount())
-                << COLUMN("Segments",  map->segmentCount());
+        LOG_INFO(_E(D) "Current map elements:" _E(.))
+                << TABBED("Vertexes",  map->vertexCount())
+                << TABBED("Lines",     map->lineCount())
+                << TABBED("Sectors",   map->sectorCount())
+                << TABBED("BSP Nodes", map->bspNodeCount())
+                << TABBED("BSP Leafs", map->bspLeafCount())
+                << TABBED("Segments",  map->segmentCount());
 
         // Call the game's setup routines.
         if(gx.SetupForMapData)
