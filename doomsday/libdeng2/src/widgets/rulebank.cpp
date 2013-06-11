@@ -47,7 +47,17 @@ DENG2_PIMPL(RuleBank)
         ~RuleData() { releaseRef(rule); }
     };
 
-    Instance(Public *i) : Base(i) {}
+    ConstantRule *zero;
+
+    Instance(Public *i) : Base(i)
+    {
+        zero = new ConstantRule(0);
+    }
+
+    ~Instance()
+    {
+        releaseRef(zero);
+    }
 };
 
 RuleBank::RuleBank() : InfoBank(DisableHotStorage), d(new Instance(this))
@@ -62,6 +72,7 @@ void RuleBank::addFromInfo(File const &file)
 
 Rule const &RuleBank::rule(DotPath const &path) const
 {
+    if(path.isEmpty()) return *d->zero;
     return *static_cast<Instance::RuleData &>(data(path)).rule;
 }
 
