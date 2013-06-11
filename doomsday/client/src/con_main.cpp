@@ -1467,8 +1467,9 @@ void Con_Open(int yes)
 #ifdef __CLIENT__
     if(yes)
     {
-        ClientWindow::main().taskBar().open();
-        ClientWindow::main().console().openLog();
+        ClientWindow &win = ClientWindow::main();
+        win.taskBar().open();
+        win.root().setFocus(&win.console().commandLine());
     }
     else
     {
