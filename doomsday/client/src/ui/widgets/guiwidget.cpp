@@ -194,7 +194,10 @@ DENG2_PIMPL(GuiWidget)
         Rectanglei pos = self.rule().recti();
         Vector2ui const viewSize = self.root().viewSize();
         uBlurTex = blur[1];
-        uBlurColor = background.solidFill;
+        uBlurColor = Vector4f((1-background.solidFill.w) + background.solidFill.x * background.solidFill.w,
+                              (1-background.solidFill.w) + background.solidFill.y * background.solidFill.w,
+                              (1-background.solidFill.w) + background.solidFill.z * background.solidFill.w,
+                              1);
         uBlurWindow = Vector4f(pos.left()   / float(viewSize.x),
                                pos.top()    / float(viewSize.y),
                                pos.width()  / float(viewSize.x),

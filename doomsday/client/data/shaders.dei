@@ -1,4 +1,4 @@
-# Doomsday's core set of shaders
+# Doomsday's Core Set of Shaders
 #
 # In each "shader" block, there can be:
 # - path:          path to both the .vsh and .fsh files (omit extension:
@@ -130,7 +130,7 @@ group fx {
                     sum += texture2D(uTex, vec2(vUV.s, vUV.t + 2.0 * uBlurStep.t)) * 0.123;
                     sum += texture2D(uTex, vec2(vUV.s, vUV.t + 3.0 * uBlurStep.t)) * 0.09;
                     sum += texture2D(uTex, vec2(vUV.s, vUV.t + 4.0 * uBlurStep.t)) * 0.05;
-                    gl_FragColor = sum;
+                    gl_FragColor = sum * vColor;
                 }"
         }
     }

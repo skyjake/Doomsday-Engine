@@ -398,9 +398,8 @@ public Font::RichFormat::IStyle
         accentColor    = st.colors().color("log.accent");
         dimAccentColor = st.colors().color("log.dimaccent");
 
-        //self.set(Background(st.colors().colorf("background")));
-
-        self.set(Background(Vector4f(1, 1, 1, 1), Background::Blurred));
+        self.set(Background(st.colors().colorf("background"), Background::Blurred));
+        //self.set(Background(Vector4f(1, 1, 1, 1), Background::Blurred));
     }
 
     Font::RichFormat::IStyle::Color richStyleColor(int index) const
