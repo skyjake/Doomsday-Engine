@@ -275,10 +275,11 @@ String Widget::uniqueName(String const &name) const
     return String("#%1.%2").arg(id().asInt64()).arg(name);
 }
 
-void Widget::notifyTree(void (Widget::*notifyFunc)(),
-                        bool (Widget::*conditionFunc)() const,
-                        void (Widget::*preFunc)(),
-                        void (Widget::*postFunc)())
+Widget::NotifyResult Widget::notifyTree(void (Widget::*notifyFunc)(),
+                                        bool (Widget::*conditionFunc)() const,
+                                        void (Widget::*preFunc)(),
+                                        void (Widget::*postFunc)(),
+                                        Widget *until)
 {
     if(preFunc)
     {
@@ -287,17 +288,28 @@ void Widget::notifyTree(void (Widget::*notifyFunc)(),
 
     DENG2_FOR_EACH(Instance::Children, i, d->children)
     {
+        if(*i == until)
+        {
+            return AbortNotify;
+        }
+
         if(conditionFunc && !((*i)->*conditionFunc)())
             continue; // Skip this one.
 
         ((*i)->*notifyFunc)();
-        (*i)->notifyTree(notifyFunc, conditionFunc, preFunc, postFunc);
+
+        if((*i)->notifyTree(notifyFunc, conditionFunc, preFunc, postFunc, until) == AbortNotify)
+        {
+            return AbortNotify;
+        }
     }
 
     if(postFunc)
     {
         (this->*postFunc)();
     }
+
+    return ContinueNotify;
 }
 
 void Widget::notifyTreeReversed(void (Widget::*notifyFunc)(),
