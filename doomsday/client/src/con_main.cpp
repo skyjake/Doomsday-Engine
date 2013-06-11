@@ -114,6 +114,7 @@ D_CMD(Echo);
 #ifdef __CLIENT__
 D_CMD(Font);
 D_CMD(OpenClose);
+D_CMD(TaskBar);
 #endif
 D_CMD(Help);
 D_CMD(If);
@@ -188,6 +189,7 @@ void Con_Register(void)
     C_CMD_FLAGS("conclose",       "",     OpenClose,    CMDF_NO_DEDICATED);
     C_CMD_FLAGS("conopen",        "",     OpenClose,    CMDF_NO_DEDICATED);
     C_CMD_FLAGS("contoggle",      "",     OpenClose,    CMDF_NO_DEDICATED);
+    C_CMD("taskbar",        "",     TaskBar);
 #endif
     C_CMD("dec",            NULL,   IncDec);
     C_CMD("echo",           "s*",   Echo);
@@ -1465,6 +1467,7 @@ void Con_Open(int yes)
 #ifdef __CLIENT__
     if(yes)
     {
+        ClientWindow::main().taskBar().open();
         ClientWindow::main().console().openLog();
     }
     else
@@ -2628,6 +2631,14 @@ D_CMD(OpenClose)
     {
         Con_Open(!ClientWindow::main().console().isLogOpen());
     }
+    return true;
+}
+
+D_CMD(TaskBar)
+{
+    DENG2_UNUSED3(src, argc, argv);
+
+    ClientWindow::main().taskBar().open();
     return true;
 }
 

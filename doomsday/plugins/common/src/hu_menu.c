@@ -2065,7 +2065,7 @@ void Hu_MenuInitOptionsPage(void)
     ob++;
 
     ob->_type = MN_BUTTON;
-    ob->_shortcut = 'p';
+    ob->_shortcut = 't';
     ob->_pageFontIdx = MENU_FONT1;
     ob->_pageColorIdx = MENU_COLOR1;
     ob->ticker = MNButton_Ticker;
@@ -2076,7 +2076,7 @@ void Hu_MenuInitOptionsPage(void)
     ob->cmdResponder = MNButton_CommandResponder;
     ob->_typedata = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
     { mndata_button_t* btn = (mndata_button_t*)ob->_typedata;
-    btn->text = "Control Panel";
+    btn->text = "Show Taskbar";
     }
     ob++;
 
@@ -6434,7 +6434,7 @@ int Hu_MenuSelectControlPanelLink(mn_object_t* ob, mn_actionid_t action, void* p
 #define NUM_PANEL_NAMES         3
 
     static const char* panelNames[NUM_PANEL_NAMES] = {
-        "panel",
+        "taskbar",
         "panel audio",
         "panel input"
     };
