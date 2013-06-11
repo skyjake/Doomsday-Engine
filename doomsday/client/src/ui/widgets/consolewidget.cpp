@@ -79,12 +79,12 @@ DENG2_PIMPL(ConsoleWidget)
 
     void expandLog(int delta, bool useOffsetAnimation)
     {
-        if(height->scalar().target() == 0)
+        if(height->animation().target() == 0)
         {
             // On the first expansion make sure the margins are taken into account.
             delta += 2 * log->topMargin();
         }
-        height->set(height->scalar().target() + delta, .25f);
+        height->set(height->animation().target() + delta, .25f);
 
         if(useOffsetAnimation)
         {

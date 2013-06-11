@@ -1,4 +1,4 @@
-/** @file scrollareawidget.h
+/** @file scrollareawidget.h  Scrollable area.
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -29,18 +29,47 @@ class ScrollAreaWidget : public GuiWidget
     Q_OBJECT
 
 public:
+    enum Origin {
+        Top,        ///< Scroll position 0 is at the top.
+        Bottom      ///< Scroll position 0 is at the bottom.
+    };
+
+public:
     ScrollAreaWidget(de::String const &name = "");
+
+    void setOrigin(Origin origin);
+    Origin origin() const;
+
+    void setIndicatorUv(de::Rectanglef const &uv);
+    void setIndicatorUv(de::Vector2f const &uvPoint);
 
     void setContentWidth(int width);
     void setContentHeight(int height);
     void setContentSize(de::Vector2i const &size);
 
+    void modifyContentWidth(int delta);
+    void modifyContentHeight(int delta);
+
+    int contentWidth() const;
+    int contentHeight() const;
+
     de::RuleRectangle const &contentRule() const;
 
-    de::Rule const &scrollPositionX() const;
-    de::Rule const &scrollPositionY() const;
+    de::ScalarRule &scrollPositionX() const;
+    de::ScalarRule &scrollPositionY() const;
     de::Rule const &maximumScrollX() const;
     de::Rule const &maximumScrollY() const;
+
+    de::Rectanglei viewport() const;
+    de::Vector2i viewportSize() const;
+
+    /**
+     * Returns the amount of space between the top edge of the widget and the
+     * top edge of the content.
+     */
+    int topMargin() const;
+
+    int rightMargin() const;
 
     /**
      * Returns the current scroll XY position, with 0 being the top/left corner
@@ -48,7 +77,7 @@ public:
      */
     de::Vector2i scrollPosition() const;
 
-    de::Vector2i scrollPageSize() const;
+    virtual de::Vector2i scrollPageSize() const;
 
     /**
      * Returns the maximum scroll position. The scrollMaxChanged() signal
@@ -68,13 +97,21 @@ public:
     void scrollY(int to, de::TimeDelta span = 0);
 
     /**
+     * Determines if the history view is at the bottom, showing the latest entry.
+     */
+    bool isAtBottom() const;
+
+    /**
      * Enables or disables scrolling with Page Up/Down keys.
      *
      * @param enabled  @c true to enable Page Up/Down.
      */
     void enablePageKeys(bool enabled);
 
+    void glMakeScrollIndicatorGeometry(DefaultVertexBuf::Builder &verts);
+
     // Events.
+    void update();
     bool handleEvent(de::Event const &event);
 
 public slots:

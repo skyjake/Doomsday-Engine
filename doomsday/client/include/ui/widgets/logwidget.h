@@ -1,4 +1,4 @@
-/** @file logwidget.h  Widget for output message log.
+/** @file logwidget.h  Scrollable widget for log message history.
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -23,14 +23,14 @@
 #include <de/LogSink>
 #include <de/Animation>
 
-#include "guiwidget.h"
+#include "scrollareawidget.h"
 
 /**
- * Widget for output message log.
+ * Scrollable widget for log message history.
  *
  * @ingroup gui
  */
-class LogWidget : public GuiWidget
+class LogWidget : public ScrollAreaWidget
 {
     Q_OBJECT
 
@@ -48,63 +48,19 @@ public:
      */
     void clear();
 
-    /**
-     * Returns the current scroll position, with 0 being the bottom of the
-     * history (present time) and maximumScroll() being the top of the history
-     * (most distant past).
-     */
-    int scrollPosition() const;
-
-    int scrollPageSize() const;
-
-    /**
-     * Returns the maximum scroll position. The scrollMaxChanged() signal
-     * is emitted whenever the maximum changes.
-     */
-    int maximumScroll() const;
-
-    /**
-     * Returns the amount of space between the top edge of the widget and the
-     * topmost content line.
-     */
-    int topMargin() const;
-
-    /**
-     * Scrolls the view to a specified position. Position 0 means the bottom of
-     * the log entry buffer, while maximumScroll() is the top of the buffer
-     * (the oldest entry).
-     *
-     * @param to  Scroll position.
-     */
-    void scroll(int to);
-
     void setContentYOffset(de::Animation const &anim);
-
-    /**
-     * Enables or disables scrolling with Page Up/Down keys.
-     *
-     * @param enabled  @c true to enable Page Up/Down.
-     */
-    void enablePageKeys(bool enabled);
 
     // Events.
     void viewResized();
-    void update();
     void drawContent();
     bool handleEvent(de::Event const &event);
-
-public slots:
-    /**
-     * Moves the scroll offset of the widget to the bottom of the history.
-     */
-    void scrollToBottom();
 
 protected slots:
     void pruneExcessEntries();
 
 signals:
-    void scrollPositionChanged(int pos);
-    void scrollMaxChanged(int maximum);
+    //void scrollPositionChanged(int pos);
+    //void scrollMaxChanged(int maximum);
     void contentHeightIncreased(int delta);
 
 protected:
