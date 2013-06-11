@@ -30,7 +30,7 @@
  *
  * @ingroup gui
  */
-class TaskBarWidget : public QObject, public GuiWidget
+class TaskBarWidget : public GuiWidget
 {
     Q_OBJECT
 
@@ -48,7 +48,7 @@ public:
 
     // Events.
     void viewResized();
-    void draw();
+    void drawContent();
     bool handleEvent(de::Event const &event);
 
 public slots:

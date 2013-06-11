@@ -52,6 +52,11 @@ void ScalarRule::set(Rule const &target, TimeDelta transition)
     dependsOn(_targetRule);
 }
 
+void ScalarRule::shift(float delta)
+{
+    _animation.shift(delta);
+}
+
 void ScalarRule::update()
 {
     // When using a rule for the target, keep it updated.

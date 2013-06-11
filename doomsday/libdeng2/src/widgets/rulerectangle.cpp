@@ -24,7 +24,9 @@
 
 namespace de {
 
-DENG2_PIMPL_NOREF(RuleRectangle), public DelegateRule::ISource
+DENG2_PIMPL_NOREF(RuleRectangle),
+DENG2_OBSERVES(Clock, TimeChange),
+public DelegateRule::ISource
 {
     // Internal identifiers for the output rules.
     enum OutputIds
@@ -43,7 +45,7 @@ DENG2_PIMPL_NOREF(RuleRectangle), public DelegateRule::ISource
         FIRST_HORIZ_OUTPUT = OutLeft,
         LAST_HORIZ_OUTPUT  = OutWidth,
         FIRST_VERT_OUTPUT  = OutTop,
-        LAST_VERT_OUTPUT   = OutBottom
+        LAST_VERT_OUTPUT   = OutHeight
     };
 
     AnimationVector2 normalizedAnchorPoint;
@@ -316,6 +318,16 @@ DENG2_PIMPL_NOREF(RuleRectangle), public DelegateRule::ISource
             break;
         }
     }
+
+    void timeChanged(Clock const &clock)
+    {
+        invalidateOutputs();
+
+        if(normalizedAnchorPoint.done())
+        {
+            clock.audienceForTimeChange -= this;
+        }
+    }
 };
 
 RuleRectangle::RuleRectangle() : d(new Instance)
@@ -405,17 +417,7 @@ void RuleRectangle::setAnchorPoint(Vector2f const &normalizedPoint, TimeDelta co
     if(transition > 0.0)
     {
         // Animation started, keep an eye on the clock until it ends.
-        Clock::appClock().audienceForTimeChange += this;
-    }
-}
-
-void RuleRectangle::timeChanged(Clock const &clock)
-{
-    d->invalidateOutputs();
-
-    if(d->normalizedAnchorPoint.done())
-    {
-        clock.audienceForTimeChange -= this;
+        Clock::appClock().audienceForTimeChange += d;
     }
 }
 

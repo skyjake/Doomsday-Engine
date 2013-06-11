@@ -114,6 +114,7 @@ D_CMD(Echo);
 #ifdef __CLIENT__
 D_CMD(Font);
 D_CMD(OpenClose);
+D_CMD(TaskBar);
 #endif
 D_CMD(Help);
 D_CMD(If);
@@ -188,6 +189,7 @@ void Con_Register(void)
     C_CMD_FLAGS("conclose",       "",     OpenClose,    CMDF_NO_DEDICATED);
     C_CMD_FLAGS("conopen",        "",     OpenClose,    CMDF_NO_DEDICATED);
     C_CMD_FLAGS("contoggle",      "",     OpenClose,    CMDF_NO_DEDICATED);
+    C_CMD("taskbar",        "",     TaskBar);
 #endif
     C_CMD("dec",            NULL,   IncDec);
     C_CMD("echo",           "s*",   Echo);
@@ -1465,7 +1467,9 @@ void Con_Open(int yes)
 #ifdef __CLIENT__
     if(yes)
     {
-        ClientWindow::main().console().openLog();
+        ClientWindow &win = ClientWindow::main();
+        win.taskBar().open();
+        win.root().setFocus(&win.console().commandLine());
     }
     else
     {
@@ -1882,7 +1886,7 @@ void Con_PrintRuler(void)
     {
     */
 
-    LogBuffer_Msg(_E("R") "\n");
+    LogBuffer_Msg(_E(R) "\n");
 
     //}
 }
@@ -2223,26 +2227,29 @@ D_CMD(Help)
 
     //Con_PrintRuler();
 
-    LOG_MSG(_E("1") DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT " Console");
+    LOG_MSG(_E(1) DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT " Console");
 
-#define COLUMN(A, B) "\n" _E("Ta") _E("b") "  " << A << " " _E(".") _E("Tb") << B
+#define TABBED(A, B) "\n" _E(Ta) _E(b) "  " << A << " " _E(.) _E(Tb) << B
 
 #ifdef __CLIENT__
-    LOG_MSG(_E("D") "Keys:" _E("."))
-            << COLUMN("Esc", "Open/close the taskbar")
-            << COLUMN("Shift-Esc", "Open the console")
-            << COLUMN("F5", "Clear the console message history")
-            << COLUMN("Home", "Jump to beginning of line")
-            << COLUMN("End", "Jump to end of line")
-            << COLUMN("PageUp/Down", "Scroll up/down in the history, or expand the history to full height")
-            << COLUMN("Shift-PgUp/Dn", "Jump to the top/bottom of the history");
+    LOG_MSG(_E(D) "Keys:" _E(.))
+            << TABBED("Esc", "Open/close the taskbar")
+            << TABBED("Shift-Esc", "Open the console")
+            << TABBED("F5", "Clear the console message history")
+            << TABBED("Home", "Jump to beginning of line")
+            << TABBED("End", "Jump to end of line")
+            << TABBED("PgUp/Dn", "Scroll up/down in the history, or expand the history to full height")
+            << TABBED("Shift-PgUp/Dn", "Jump to the top/bottom of the history");
 #endif
-    LOG_MSG(_E("D") "Getting started:");
-    LOG_MSG("  " _E(">") "Enter " _E("b") "help (what)" _E(".") " for information about " _E("l") "(what)");
-    LOG_MSG("  " _E(">") "Enter " _E("b") "listcmds" _E(".") " to list available commands");
-    LOG_MSG("  " _E(">") "Enter " _E("b") "listgames" _E(".") " to list installed games and their status");
-    LOG_MSG("  " _E(">") "Enter " _E("b") "listvars" _E(".") " to list available variables");
+    LOG_MSG(_E(D) "Getting started:");
+    LOG_MSG("  " _E(>) "Enter " _E(b) "help (what)" _E(.) " for information about " _E(l) "(what)");
+    LOG_MSG("  " _E(>) "Enter " _E(b) "listcmds" _E(.) " to list available commands");
+    LOG_MSG("  " _E(>) "Enter " _E(b) "listgames" _E(.) " to list installed games and their status");
+    LOG_MSG("  " _E(>) "Enter " _E(b) "listvars" _E(.) " to list available variables");
     //Con_PrintRuler();
+
+#undef TABBED
+
     return true;
 }
 
@@ -2268,16 +2275,14 @@ D_CMD(Version)
     //Con_Printf("Homepage: %s\n", DOOMSDAY_HOMEURL);
     //Con_Printf("Project homepage: %s\n", DENGPROJECT_HOMEURL);
 
-    LOG_MSG(_E("D") DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_FULLTEXT);
-    LOG_MSG("Homepage: "
-            _E("\t") _E("i") DOOMSDAY_HOMEURL
-            _E(".") _E(".") "\nProject homepage: "
-            _E("\t") _E("i") DENGPROJECT_HOMEURL);
+    LOG_MSG(_E(D) DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_FULLTEXT);
+    LOG_MSG(_E(l) "Homepage: " _E(.) _E(i) DOOMSDAY_HOMEURL _E(.)
+            "\n" _E(l) "Project: " _E(.) _E(i) DENGPROJECT_HOMEURL);
 
     // Print the version info of the current game if loaded.
     if(App_GameLoaded())
     {
-        Con_Printf("Game: %s\n", (char*) gx.GetVariable(DD_PLUGIN_VERSION_LONG));
+        LOG_MSG(_E(l) "Game: " _E(.) "%s") << (char const *) gx.GetVariable(DD_PLUGIN_VERSION_LONG);
     }
     return true;
 }
@@ -2627,6 +2632,14 @@ D_CMD(OpenClose)
     {
         Con_Open(!ClientWindow::main().console().isLogOpen());
     }
+    return true;
+}
+
+D_CMD(TaskBar)
+{
+    DENG2_UNUSED3(src, argc, argv);
+
+    ClientWindow::main().taskBar().open();
     return true;
 }
 

@@ -283,7 +283,7 @@ void GL_SetGamma()
 
 static void printConfiguration()
 {
-    LOG_VERBOSE(_E("b") "Render configuration:");
+    LOG_VERBOSE(_E(b) "Render configuration:");
 
     LOG_VERBOSE("  Multisampling: %b") << GL_state.features.multisample;
     if(GL_state.features.multisample)

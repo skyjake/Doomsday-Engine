@@ -30,7 +30,7 @@
  *
  * @ingroup gui
  */
-class ConsoleCommandWidget : public QObject, public LineEditWidget
+class ConsoleCommandWidget : public LineEditWidget
 {
     Q_OBJECT
 

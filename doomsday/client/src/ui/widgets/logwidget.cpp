@@ -291,7 +291,10 @@ public Font::RichFormat::IStyle
 
                 // Rewrap and update total height.
                 int delta = e->rewrap(_width);
-                d->totalHeight += delta;
+                d->self.modifyContentHeight(delta);
+
+                /// @todo Adjust the scroll position if this entry is below it
+                /// (would cause a visible scroll to occur).
 
                 if(_next < d->visibleRange.end)
                 {
@@ -308,14 +311,8 @@ public Font::RichFormat::IStyle
     enum { CancelAllRewraps = 0xffffffff };
 
     // State.
-    bool pageKeysEnabled;
-    Animation visibleOffset;
-    int totalHeight;
-    int maxScroll;
-    int lastMaxScroll;
     Rangei visibleRange;
-    Animation scrollOpacity;
-    Animation contentOffset;
+    Animation contentOffset; ///< Additional vertical offset to apply when drawing content.
 
     // Style.
     Font const *font;
@@ -324,9 +321,6 @@ public Font::RichFormat::IStyle
     ColorBank::Color dimmedColor;
     ColorBank::Color accentColor;
     ColorBank::Color dimAccentColor;
-    int margin;
-    int topMargin;
-    int scrollBarWidth;
 
     // GL objects.
     VertexBuf *buf;
@@ -349,17 +343,8 @@ public Font::RichFormat::IStyle
           sink(this),
           cacheWidth(0),
           cancelRewrap(0),
-          pageKeysEnabled(true),
-          visibleOffset(0),
-          totalHeight(0),
-          maxScroll(0),
-          lastMaxScroll(0),
           visibleRange(Rangei(-1, -1)),
-          scrollOpacity(0, Animation::EaseBoth),
           font(0),
-          margin(0),
-          topMargin(0),
-          scrollBarWidth(0),
           buf(0),
           entryAtlas(0),
           entryAtlasLayoutChanged(false),
@@ -406,9 +391,6 @@ public Font::RichFormat::IStyle
         Style const &st = self.style();
 
         font           = &self.font();
-        margin         = st.rules().rule("gap").valuei();
-        topMargin      = st.rules().rule("gap").valuei();
-        scrollBarWidth = st.rules().rule("log.scrollbar").valuei();
 
         normalColor    = st.colors().color("log.normal");
         highlightColor = st.colors().color("log.highlight");
@@ -509,9 +491,11 @@ public Font::RichFormat::IStyle
                 GLTexture::maximumSize().min(Atlas::Size(2048, 1024)));
         entryAtlas->audienceForReposition += this;
 
+        // Simple texture for the scroll indicator.
         Image solidWhitePixel = Image::solidColor(Image::Color(255, 255, 255, 255),
                                                   Image::Size(1, 1));
         scrollTex = entryAtlas->alloc(solidWhitePixel);
+        self.setIndicatorUv(entryAtlas->imageRectf(scrollTex).middle());
 
         uTex = entryAtlas;
         uColor = Vector4f(1, 1, 1, 1);
@@ -545,42 +529,23 @@ public Font::RichFormat::IStyle
         if(entryAtlas == &atlas)
         {
             entryAtlasLayoutChanged = true;
+            self.setIndicatorUv(entryAtlas->imageRectf(scrollTex).middle());
         }
     }
 
     duint contentWidth() const
     {
-        return de::max(margin, self.rule().width().valuei() - 2 * margin);
+        return self.viewportSize().x;
     }
 
-    int contentHeight() const
+    int maxVisibleOffset()
     {
-        return int(self.rule().height().valuei()) - 2 * topMargin;
-    }
-
-    int maxVisibleOffset(int visibleHeight)
-    {
-        // Determine total height of all entries.
-        return de::max(0, totalHeight - visibleHeight);
-    }
-
-    void clampVisibleOffset(int visibleHeight)
-    {
-        setVisibleOffset(de::min(int(visibleOffset), maxVisibleOffset(visibleHeight)), 0);
-    }
-
-    void setVisibleOffset(int off, float span)
-    {
-        if(int(visibleOffset) != off)
-        {
-            visibleOffset.setValue(off, span);
-            emit self.scrollPositionChanged(off);
-        }
+        return self.maximumScrollY().valuei();
     }
 
     void fetchNewCachedEntries()
     {
-        int oldHeight = totalHeight;
+        int oldHeight = self.contentHeight();
 
         while(CacheEntry *cached = sink.nextCachedEntry())
         {
@@ -594,20 +559,20 @@ public Font::RichFormat::IStyle
             }
             cache.insert(pos, cached);
 
-            totalHeight += cached->height();
+            self.modifyContentHeight(cached->height());
 
             // Adjust visible offset so it remains fixed in relation to
             // existing entries.
-            if(visibleOffset.target() > 0)
+            if(self.scrollPositionY().animation().target() > 0)
             {
-                visibleOffset.shift(cached->height());
-                emit self.scrollPositionChanged(visibleOffset.target());
+                self.scrollPositionY().shift(cached->height());
+                //emit self.scrollPositionChanged(visibleOffset.target());
             }
         }
 
-        if(totalHeight > oldHeight)
+        if(self.contentHeight() > oldHeight)
         {
-            emit self.contentHeightIncreased(totalHeight - oldHeight);
+            emit self.contentHeightIncreased(self.contentHeight() - oldHeight);
         }
     }
 
@@ -684,7 +649,7 @@ public Font::RichFormat::IStyle
             sink.remove(0, num);
             for(int i = 0; i < num; ++i)
             {
-                totalHeight -= cache[0]->height();
+                self.modifyContentHeight(-cache[0]->height());
                 delete cache.takeFirst();
             }
             // Adjust existing indices to match.
@@ -702,21 +667,9 @@ public Font::RichFormat::IStyle
         uBgMvpMatrix = projMatrix;
     }
 
-    void restartScrollOpacityFade()
-    {
-        if(visibleOffset.target() == 0)
-        {
-            scrollOpacity.setValue(0, .5f);
-        }
-        else
-        {
-            scrollOpacity.setValueFrom(.4f, .025f, 5, 2);
-        }
-    }
-
     void updateGeometry()
     {
-        Vector2i const contentSize(contentWidth(), contentHeight());
+        Vector2i const contentSize = self.viewportSize();
 
         // If the width of the widget changes, text needs to be reflowed with the
         // new width.
@@ -733,15 +686,12 @@ public Font::RichFormat::IStyle
         // oldest ones if limit has been reached.
         //prune();
 
-        clampVisibleOffset(contentSize.y);
-        maxScroll = maxVisibleOffset(contentSize.y);
-
         VertexBuf::Builder verts;
 
         for(int attempt = 0; attempt < 2; ++attempt)
         {
             // Draw in reverse, as much as we need.
-            int yBottom = contentSize.y + visibleOffset;
+            int yBottom = contentSize.y + self.scrollPositionY().valuei();
             visibleRange = Rangei(-1, -1);
             entryAtlasLayoutChanged = false;
 
@@ -776,25 +726,8 @@ public Font::RichFormat::IStyle
             break;
         }
 
-        // Draw the scroll indicator.
-        if(scrollOpacity > 0)
-        {
-            int const indHeight = de::clamp(
-                        margin * 2,
-                        int(float(contentSize.y * contentSize.y) / float(totalHeight)),
-                        contentSize.y / 2);
-            float const indPos = float(visibleOffset) / float(maxScroll);
-            float const avail = contentSize.y - indHeight;
-            for(int i = 0; i < indHeight; ++i)
-            {                
-                verts.makeQuad(Rectanglef(Vector2f(contentSize.x + margin - 2*scrollBarWidth,
-                                                   avail - indPos * avail + indHeight),
-                                          Vector2f(contentSize.x + margin - scrollBarWidth,
-                                                   avail - indPos * avail)),
-                               Vector4f(1, 1, 1, scrollOpacity) * accentColor / 255.f,
-                               entryAtlas->imageRectf(scrollTex).middle());
-            }
-        }
+        // Draw the scroll indicator, too.
+        self.glMakeScrollIndicatorGeometry(verts);
 
         buf->setVertices(gl::TriangleStrip, verts, gl::Dynamic);
     }
@@ -815,22 +748,22 @@ public Font::RichFormat::IStyle
         // Draw the background.
         background.draw();
 
-        if(pos.height() > 2 * duint(topMargin))
+        Rectanglei vp = self.viewport();
+        if(vp.height() > 0)
         {
             GLState &st = GLState::push();
-            st.setScissor(pos.adjusted(Vector2i(0, topMargin), Vector2i(0, -topMargin)));
+            // Leave room for the indicator in the scissor.
+            st.setScissor(vp.adjusted(Vector2i(), Vector2i(self.rightMargin(), 0)));
 
             // First draw the shadow of the text.
-            uMvpMatrix = projMatrix *
-                         Matrix4f::translate(Vector2f(pos.topLeft +
-                                                      Vector2i(margin, topMargin + contentOffset)));
+            uMvpMatrix = projMatrix * Matrix4f::translate(
+                         Vector2f(vp.topLeft + Vector2i(0, contentOffset)));
             uShadowColor = Vector4f(0, 0, 0, 1);
             contents.draw();
 
             // Draw the text itself.
-            uMvpMatrix = projMatrix *
-                         Matrix4f::translate(Vector2f(pos.topLeft +
-                                                      Vector2i(margin, topMargin + contentOffset - 2)));
+            uMvpMatrix = projMatrix * Matrix4f::translate(
+                         Vector2f(vp.topLeft + Vector2i(0, contentOffset - 2)));
             uShadowColor = Vector4f(1, 1, 1, 1);
             contents.draw();
 
@@ -839,18 +772,14 @@ public Font::RichFormat::IStyle
 
         // We don't need to keep all entries ready for drawing immediately.
         releaseExcessComposedEntries();
-
-        // Notify now that we know what the max scroll is.
-        if(lastMaxScroll != maxScroll)
-        {
-            lastMaxScroll = maxScroll;
-            emit self.scrollMaxChanged(maxScroll);
-        }
     }
 };
 
-LogWidget::LogWidget(String const &name) : GuiWidget(name), d(new Instance(this))
+LogWidget::LogWidget(String const &name)
+    : ScrollAreaWidget(name), d(new Instance(this))
 {
+    setOrigin(Bottom);
+
     connect(&d->rewrapPool, SIGNAL(allTasksDone()), this, SLOT(pruneExcessEntries()));
 
     LogBuffer::appBuffer().addSink(d->sink);
@@ -866,46 +795,17 @@ void LogWidget::clear()
     d->clear();
 }
 
-int LogWidget::scrollPosition() const
-{
-    return d->visibleOffset;
-}
-
-int LogWidget::scrollPageSize() const
-{
-    return de::max(1, rule().height().valuei() / 2);
-}
-
-int LogWidget::maximumScroll() const
-{
-    return d->lastMaxScroll;
-}
-
-int LogWidget::topMargin() const
-{
-    return d->topMargin;
-}
-
-void LogWidget::scroll(int to)
-{
-    d->visibleOffset = de::max(0, to);
-}
-
 void LogWidget::setContentYOffset(Animation const &anim)
 {
-    if(d->visibleOffset > 0)
-    {
-        d->contentOffset = 0;
-    }
-    else
+    if(isAtBottom())
     {
         d->contentOffset = anim;
     }
-}
-
-void LogWidget::enablePageKeys(bool enabled)
-{
-    d->pageKeysEnabled = enabled;
+    else
+    {
+        // When not at the bottom, the content is expected to stay fixed in place.
+        d->contentOffset = 0;
+    }
 }
 
 void LogWidget::viewResized()
@@ -913,12 +813,7 @@ void LogWidget::viewResized()
     d->updateProjection();
 }
 
-void LogWidget::update()
-{
-    GuiWidget::update();
-}
-
-void LogWidget::draw()
+void LogWidget::drawContent()
 {
     d->sink.setWidth(d->contentWidth());
     d->draw();
@@ -926,62 +821,7 @@ void LogWidget::draw()
 
 bool LogWidget::handleEvent(Event const &event)
 {
-    if(event.type() == Event::MouseWheel && hitTest(event))
-    {
-        MouseEvent const &mouse = event.as<MouseEvent>();
-        if(mouse.wheelMotion() == MouseEvent::FineAngle)
-        {
-            d->setVisibleOffset(de::clamp(0, int(d->visibleOffset.target()) +
-                                          mouse.wheel().y / 2, d->maxScroll), .05f);
-            d->restartScrollOpacityFade();
-        }
-        return true;
-    }
-
-    if(!event.isKeyDown()) return false;
-
-    KeyEvent const &ev = event.as<KeyEvent>();
-
-    int pageSize = scrollPageSize();
-
-    switch(ev.ddKey())
-    {
-    case DDKEY_PGUP:
-        if(!d->pageKeysEnabled) return false;
-        if(ev.modifiers().testFlag(KeyEvent::Shift))
-        {
-            d->setVisibleOffset(d->maxScroll, .3f);
-        }
-        else
-        {
-            d->setVisibleOffset(int(d->visibleOffset.target()) + pageSize, .3f);
-        }
-        d->restartScrollOpacityFade();
-        return true;
-
-    case DDKEY_PGDN:
-        if(!d->pageKeysEnabled) return false;
-        if(ev.modifiers().testFlag(KeyEvent::Shift))
-        {
-            scrollToBottom();
-        }
-        else
-        {
-            d->setVisibleOffset(de::max(0, int(d->visibleOffset.target()) - pageSize), .3f);
-        }
-        d->restartScrollOpacityFade();
-        return true;
-
-    default:
-        break;
-    }
-
-    return GuiWidget::handleEvent(event);
-}
-
-void LogWidget::scrollToBottom()
-{
-    d->setVisibleOffset(0, .3f);
+    return ScrollAreaWidget::handleEvent(event);
 }
 
 void LogWidget::pruneExcessEntries()

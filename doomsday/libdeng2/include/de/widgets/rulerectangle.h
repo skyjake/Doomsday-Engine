@@ -39,7 +39,7 @@ namespace de {
  *
  * @ingroup widgets
  */
-class DENG2_PUBLIC RuleRectangle : DENG2_OBSERVES(Clock, TimeChange)
+class DENG2_PUBLIC RuleRectangle
 {
 public:
     RuleRectangle();
@@ -99,9 +99,6 @@ public:
      * Values are floored to integers.
      */
     Rectanglei recti() const;
-
-protected:
-    void timeChanged(Clock const &);
 
 private:
     DENG2_PRIVATE(d)

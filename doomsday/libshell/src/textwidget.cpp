@@ -96,7 +96,7 @@ void TextWidget::drawAndShow()
     if(!isHidden())
     {
         draw();
-        notifyTree(&Widget::drawIfVisible);
+        notifyTree(&Widget::draw, &Widget::isVisible);
         targetCanvas().show();
     }
 }

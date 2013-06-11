@@ -89,6 +89,7 @@ public:
     void disable(bool yes = true) { setBehavior(Disabled, yes? SetFlags : UnsetFlags); }
 
     bool isHidden() const;
+    bool isVisible() const;
     inline bool isEnabled() const { return !behavior().testFlag(Disabled); }
     inline bool isDisabled() const { return behavior().testFlag(Disabled); }
 
@@ -147,8 +148,14 @@ public:
 
     // Utilities.
     String uniqueName(String const &name) const;
-    void notifyTree(void (Widget::*notifyFunc)());
-    void notifyTreeReversed(void (Widget::*notifyFunc)());
+    void notifyTree(void (Widget::*notifyFunc)(),
+                    bool (Widget::*conditionFunc)() const = 0,
+                    void (Widget::*preNotifyFunc)() = 0,
+                    void (Widget::*postNotifyFunc)() = 0);
+    void notifyTreeReversed(void (Widget::*notifyFunc)(),
+                            bool (Widget::*conditionFunc)() const = 0,
+                            void (Widget::*preNotifyFunc)() = 0,
+                            void (Widget::*postNotifyFunc)() = 0);
     bool dispatchEvent(Event const &event, bool (Widget::*memberFunc)(Event const &));
 
     // Events.
@@ -158,8 +165,9 @@ public:
     virtual void focusGained();
     virtual void focusLost();
     virtual void update();
-    virtual void drawIfVisible();
     virtual void draw();
+    virtual void preDrawChildren();
+    virtual void postDrawChildren();
     virtual bool handleEvent(Event const &event);
 
 public:

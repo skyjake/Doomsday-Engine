@@ -112,7 +112,7 @@ void LegacyWidget::update()
     //DD_CheckTimeDemo();
 }
 
-void LegacyWidget::draw()
+void LegacyWidget::drawContent()
 {
     bool cannotDraw = (isDisabled() || !GL_IsFullyInited());
 

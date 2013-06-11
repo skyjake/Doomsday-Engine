@@ -79,12 +79,12 @@ DENG2_PIMPL(ConsoleWidget)
 
     void expandLog(int delta, bool useOffsetAnimation)
     {
-        if(height->scalar().target() == 0)
+        if(height->animation().target() == 0)
         {
             // On the first expansion make sure the margins are taken into account.
             delta += 2 * log->topMargin();
         }
-        height->set(height->scalar().target() + delta, .25f);
+        height->set(height->animation().target() + delta, .25f);
 
         if(useOffsetAnimation)
         {
@@ -99,7 +99,7 @@ ConsoleWidget::ConsoleWidget() : GuiWidget("Console"), d(new Instance(this))
     Rule const &unit = style().rules().rule("unit");
 
     d->button = new ButtonWidget;
-    d->button->setText(_E("b") ">");
+    d->button->setText(_E(b) ">");
     // Until we have a menu widget...
     d->button->setAction(new SignalAction(this, SLOT(focusOnCommandLine())));
     add(d->button);

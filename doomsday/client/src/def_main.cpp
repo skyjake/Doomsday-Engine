@@ -734,7 +734,7 @@ static de::String defCountMsg(int count, de::String const &label)
     if(!verbose && !count)
         return ""; // Don't print zeros if not verbose.
 
-    return de::String(_E("Ta") "  %1 " _E("Tb") "%2\n").arg(count).arg(label);
+    return de::String(_E(Ta) "  %1 " _E(Tb) "%2\n").arg(count).arg(label);
 }
 
 /**
@@ -1772,7 +1772,7 @@ void Def_Read()
     }
 
     // Log a summary of the definition database.
-    LOG_MSG(_E("b") "Definitions:");
+    LOG_MSG(_E(b) "Definitions:");
     de::String str;
     QTextStream os(&str);
     os << defCountMsg(defs.count.groups.num, "animation groups");

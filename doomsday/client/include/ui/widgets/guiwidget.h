@@ -22,6 +22,7 @@
 #include <de/Widget>
 #include <de/RuleRectangle>
 #include <de/GLBuffer>
+#include <QObject>
 
 #include "ui/style.h"
 
@@ -51,7 +52,7 @@ class GuiRootWidget;
  *   definition identifier (e.g., "editor.hint"). These style elements are then
  *   conveniently accessible using methods of GuiWidget.
  *
- * - Opacity properity. Opacities respect the hierarchical organization of
+ * - Opacity property. Opacities respect the hierarchical organization of
  *   widgets: GuiWidget::visibleOpacity() returns the opacity of a particular
  *   widget where all the parent widgets' opacities are factored in.
  *
@@ -63,9 +64,11 @@ class GuiRootWidget;
  * - Logic for handling more complicated interactions such as a mouse pointer
  *   click (press then release inside or outside).
  *
+ * QObject is a base class for the signals and slots capabilities.
+ *
  * @ingroup gui
  */
-class GuiWidget : public de::Widget
+class GuiWidget : public QObject, public de::Widget
 {
 public:
     /**
@@ -146,7 +149,7 @@ public:
     float opacity() const;
 
     /**
-     * Determines the widget's opacity factored into the ancestor's opacities.
+     * Determines the widget's opacity, factoring in all ancestor opacities.
      */
     float visibleOpacity() const;
 
@@ -154,7 +157,7 @@ public:
     void initialize();
     void deinitialize();
     void update();
-    void drawIfVisible();
+    void draw() /*final*/;
 
     /**
      * Determines if the widget occupies on-screen position @a pos.
@@ -195,12 +198,22 @@ protected:
     virtual void glDeinit();
 
     /**
+     * Called by GuiWidget when it is time to draw the widget's content. A
+     * clipping scissor is automatically set before this is called. Derived
+     * classes should override this instead of the draw() method.
+     *
+     * This is not called if the widget's visible opacity is zero or the widget
+     * is hidden.
+     */
+    virtual void drawContent();
+
+    /**
      * Requests the widget to refresh its geometry, if it has any static
      * geometry. Normally this does not need to be called. It is provided
      * mostly as a way for subclasses to ensure that geometry is up to date
      * when they need it.
      *
-     * @param yes
+     * @param yes  @c true to request, @c false to cancel the request.
      */
     void requestGeometry(bool yes = true);
 

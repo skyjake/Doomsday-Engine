@@ -89,7 +89,7 @@ bool ConsoleCommandWidget::handleEvent(Event const &event)
         {
             String const entered = d->history.enter();
 
-            LOG_INFO(_E("1") "> ") << entered;
+            LOG_INFO(_E(1) "> ") << entered;
 
             // Execute the command right away.
             Con_Execute(CMDS_CONSOLE, entered.toUtf8(), false, false);

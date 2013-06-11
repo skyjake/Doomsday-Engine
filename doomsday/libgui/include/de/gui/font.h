@@ -59,6 +59,30 @@ public:
      * Use RichFormat::initFromStyledText() to set up a RichFormat for a string
      * of text that contains style information (as escape sequences that start
      * with the Esc ASCII code 0x1b).
+     *
+     * @par Indentation and tab stops
+     *
+     * The escape sequences ">" and "T" can be used to define indentation
+     * points and tab stops for visual alignment of text.
+     *
+     * The indentation mark ">" determines the width at which the following
+     * lines are left-indented. It does not affect the line the mark itself is
+     * on. Newlines (\n) do not reset the indentation. If multiple marks are
+     * used in the same text content, each mark is applied cumulatively on the
+     * previous indentation. Also note that placing an indentation mark at the
+     * beginning of a line or immediately after a new line does nothing (a
+     * width of zero does not increase the indentation).
+     *
+     * Tab stops are used to divide text on a line into smaller segments that
+     * can then be freely moved when drawn. All segments with the same tab stop
+     * number are aligned which the same stops at other lines of the content,
+     * providing there is enough horizontal space available. If tab stop
+     * alignment runs out of space, width of the rightmost segments is shrunk
+     * slightly to fit.
+     *
+     * The escape sequence "Ta" sets the tab stop to zero for the following
+     * text. The default tab stop is zero. "Tb" sets the tab stop to 1, "Tc" to
+     * 2, etc.
      */
     class LIBGUI_PUBLIC RichFormat
     {

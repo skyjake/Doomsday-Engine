@@ -117,7 +117,7 @@ public:
     // Events.
     void viewResized();
     void update();
-    void draw();
+    void drawContent();
 
     struct ContentLayout {
         de::Rectanglef image;

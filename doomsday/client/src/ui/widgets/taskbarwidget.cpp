@@ -176,7 +176,7 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("TaskBar"), d(new Instance(this))
     d->logo->setImage(style().images().image("logo.px128"));
     d->logo->setImageScale(.55f);
     d->logo->setImageFit(FitToHeight | OriginalAspectRatio);
-    d->logo->setText(_E("b") + VersionInfo().base());
+    d->logo->setText(_E(b) + VersionInfo().base());
     d->logo->setWidthPolicy(LabelWidget::Expand);
     d->logo->setTextAlignment(AlignLeft);
     d->logo->rule()
@@ -273,7 +273,7 @@ void TaskBarWidget::viewResized()
     d->updateProjection();
 }
 
-void TaskBarWidget::draw()
+void TaskBarWidget::drawContent()
 {
     d->updateGeometry();
     //d->drawable.draw();
@@ -285,21 +285,22 @@ bool TaskBarWidget::handleEvent(Event const &event)
     {
         KeyEvent const &key = event.as<KeyEvent>();
 
-        // Esc opens and closes the task bar.
+        // Shift-Esc opens and closes the task bar.
         if(key.ddKey() == DDKEY_ESCAPE)
         {
+#if 0
             // Shift-Esc opens the console.
-            if(key.modifiers().testFlag(KeyEvent::Shift))
+            if()
             {
                 root().setFocus(&d->console->commandLine());
                 if(!isOpen()) open(false /* no action */);
                 return true;
             }
-
+#endif
             if(isOpen())
             {
                 // First press of Esc will just dismiss the console.
-                if(d->console->isLogOpen())
+                if(d->console->isLogOpen() && !key.modifiers().testFlag(KeyEvent::Shift))
                 {
                     d->console->commandLine().setText("");
                     d->console->closeLog();
@@ -308,12 +309,21 @@ bool TaskBarWidget::handleEvent(Event const &event)
                 }
                 // Also closes the console log.
                 close();
+                return true;
             }
             else
             {
-                open();
+                if(key.modifiers().testFlag(KeyEvent::Shift) ||
+                   !App_GameLoaded())
+                {
+                    // Automatically focus the command line.
+                    root().setFocus(&d->console->commandLine());
+
+                    open();
+                    return true;
+                }
             }
-            return true;
+            return false;
         }
     }
     return false;

@@ -42,7 +42,7 @@ class Action;
  * It is assumed that the root widget under which text widgets are used is
  * derived from TextRootWidget.
  *
- * QObject is a base class for signals and slots.
+ * QObject is a base class for the signals and slots capabilities.
  */
 class LIBSHELL_PUBLIC TextWidget : public QObject, public Widget
 {

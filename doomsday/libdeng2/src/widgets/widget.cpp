@@ -141,6 +141,11 @@ bool Widget::isHidden() const
     return false;
 }
 
+bool Widget::isVisible() const
+{
+    return !isHidden();
+}
+
 void Widget::show(bool doShow)
 {
     setBehavior(Hidden, doShow? UnsetFlags : SetFlags);
@@ -270,22 +275,55 @@ String Widget::uniqueName(String const &name) const
     return String("#%1.%2").arg(id().asInt64()).arg(name);
 }
 
-void Widget::notifyTree(void (Widget::*notifyFunc)())
+void Widget::notifyTree(void (Widget::*notifyFunc)(),
+                        bool (Widget::*conditionFunc)() const,
+                        void (Widget::*preFunc)(),
+                        void (Widget::*postFunc)())
 {
+    if(preFunc)
+    {
+        (this->*preFunc)();
+    }
+
     DENG2_FOR_EACH(Instance::Children, i, d->children)
     {
+        if(conditionFunc && !((*i)->*conditionFunc)())
+            continue; // Skip this one.
+
         ((*i)->*notifyFunc)();
-        (*i)->notifyTree(notifyFunc);
+        (*i)->notifyTree(notifyFunc, conditionFunc, preFunc, postFunc);
+    }
+
+    if(postFunc)
+    {
+        (this->*postFunc)();
     }
 }
 
-void Widget::notifyTreeReversed(void (Widget::*notifyFunc)())
+void Widget::notifyTreeReversed(void (Widget::*notifyFunc)(),
+                                bool (Widget::*conditionFunc)() const,
+                                void (Widget::*preFunc)(),
+                                void (Widget::*postFunc)())
 {
+    if(preFunc)
+    {
+        (this->*preFunc)();
+    }
+
     for(int i = d->children.size() - 1; i >= 0; --i)
     {
         Widget *w = d->children[i];
-        w->notifyTreeReversed(notifyFunc);
+
+        if(conditionFunc && !(w->*conditionFunc)())
+            continue; // Skip this one.
+
+        w->notifyTreeReversed(notifyFunc, conditionFunc, preFunc, postFunc);
         (w->*notifyFunc)();
+    }
+
+    if(postFunc)
+    {
+        (this->*postFunc)();
     }
 }
 
@@ -354,15 +392,13 @@ void Widget::focusLost()
 void Widget::update()
 {}
 
-void Widget::drawIfVisible()
-{
-    if(!isHidden())
-    {
-        draw();
-    }
-}
-
 void Widget::draw()
+{}
+
+void Widget::preDrawChildren()
+{}
+
+void Widget::postDrawChildren()
 {}
 
 bool Widget::handleEvent(Event const &)
