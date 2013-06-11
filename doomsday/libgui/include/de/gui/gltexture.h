@@ -62,6 +62,10 @@ namespace gl {
  * Similarly a GLTexture reverts back to a 2D texture when setting non-cubeface
  * image content.
  *
+ * Mipmaps can be generated automatically (see GLTexture::generateMipmap() and
+ * GLTexture::setAutoGenMips()). By default, mipmaps are not generated
+ * automatically.
+ *
  * @ingroup gl
  */
 class LIBGUI_PUBLIC GLTexture : public Asset
@@ -109,7 +113,8 @@ public:
     bool isCubeMap() const;
 
     /**
-     * Enables or disables automatic mipmap generation on the texture.
+     * Enables or disables automatic mipmap generation on the texture. By
+     * default, automatic mipmap generation is disabled.
      *
      * @param genMips  @c true to generate mipmaps whenever level 0 changes.
      */
