@@ -321,8 +321,6 @@ public Font::RichFormat::IStyle
     ColorBank::Color dimmedColor;
     ColorBank::Color accentColor;
     ColorBank::Color dimAccentColor;
-    //int margin;
-    //int topMargin;
 
     // GL objects.
     VertexBuf *buf;
@@ -347,8 +345,6 @@ public Font::RichFormat::IStyle
           cancelRewrap(0),
           visibleRange(Rangei(-1, -1)),
           font(0),
-          //margin(0),
-          //topMargin(0),
           buf(0),
           entryAtlas(0),
           entryAtlasLayoutChanged(false),
@@ -542,32 +538,10 @@ public Font::RichFormat::IStyle
         return self.viewportSize().x;
     }
 
-    /*
-    int contentHeight() const
-    {
-        return self.viewportSize().y;
-    }
-    */
-
     int maxVisibleOffset()
     {
         return self.maximumScrollY().valuei();
     }
-
-    /*
-    void clampVisibleOffset(int visibleHeight)
-    {
-        setVisibleOffset(de::min(int(visibleOffset), maxVisibleOffset(visibleHeight)), 0);
-    }
-
-    void setVisibleOffset(int off, float span)
-    {
-        if(int(visibleOffset) != off)
-        {
-            visibleOffset.setValue(off, span);
-            emit self.scrollPositionChanged(off);
-        }
-    }*/
 
     void fetchNewCachedEntries()
     {
@@ -712,9 +686,6 @@ public Font::RichFormat::IStyle
         // oldest ones if limit has been reached.
         //prune();
 
-        //clampVisibleOffset(contentSize.y);
-        //maxScroll = maxVisibleOffset(contentSize.y);
-
         VertexBuf::Builder verts;
 
         for(int attempt = 0; attempt < 2; ++attempt)
@@ -801,14 +772,6 @@ public Font::RichFormat::IStyle
 
         // We don't need to keep all entries ready for drawing immediately.
         releaseExcessComposedEntries();
-
-        /*
-        // Notify now that we know what the max scroll is.
-        if(lastMaxScroll != maxScroll)
-        {
-            lastMaxScroll = maxScroll;
-            emit self.scrollMaxChanged(maxScroll);
-        }*/
     }
 };
 
