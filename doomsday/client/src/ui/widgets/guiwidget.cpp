@@ -82,7 +82,7 @@ DENG2_PIMPL(GuiWidget)
         if(blurInited) return;
 
         // The blurred version of the view is downsampled.
-        blurSize = (self.root().viewSize() / 2).max(Vector2ui(1, 1));
+        blurSize = (self.root().viewSize() / 4).max(Vector2ui(1, 1));
 
         for(int i = 0; i < 2; ++i)
         {
