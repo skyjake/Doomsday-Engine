@@ -89,7 +89,8 @@ DENG2_PIMPL(ConsoleWidget)
         if(useOffsetAnimation)
         {
             // Sync the log content with the height animation.
-            log->setContentYOffset(Animation::range(Animation::EaseIn, delta, 0, .25f));
+            log->setContentYOffset(Animation::range(Animation::EaseIn, delta, 0,
+                                                    height->animation().remainingTime()));
         }
     }
 };
