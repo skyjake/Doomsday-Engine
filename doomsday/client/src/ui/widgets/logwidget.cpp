@@ -398,7 +398,9 @@ public Font::RichFormat::IStyle
         accentColor    = st.colors().color("log.accent");
         dimAccentColor = st.colors().color("log.dimaccent");
 
-        self.set(Background(st.colors().colorf("background")));
+        //self.set(Background(st.colors().colorf("background")));
+
+        self.set(Background(Vector4f(1, 1, 1, 1), Background::Blurred));
     }
 
     Font::RichFormat::IStyle::Color richStyleColor(int index) const
@@ -743,7 +745,7 @@ public Font::RichFormat::IStyle
             bgBuf->setVertices(gl::TriangleStrip, bgVerts, gl::Static);
         }
 
-        updateGeometry();
+        //updateGeometry();
 
         // Draw the background.
         background.draw();
@@ -763,7 +765,7 @@ public Font::RichFormat::IStyle
 
             // Draw the text itself.
             uMvpMatrix = projMatrix * Matrix4f::translate(
-                         Vector2f(vp.topLeft + Vector2i(0, contentOffset - 2)));
+                         Vector2f(vp.topLeft + Vector2i(0, contentOffset - 1)));
             uShadowColor = Vector4f(1, 1, 1, 1);
             contents.draw();
 
@@ -811,6 +813,14 @@ void LogWidget::setContentYOffset(Animation const &anim)
 void LogWidget::viewResized()
 {
     d->updateProjection();
+}
+
+void LogWidget::update()
+{
+    ScrollAreaWidget::update();
+
+    // The log widget's geometry is fully dynamic -- regenerated on every frame.
+    d->updateGeometry();
 }
 
 void LogWidget::drawContent()

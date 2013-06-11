@@ -451,7 +451,7 @@ void GL_Init2DState()
     glDisable(GL_TEXTURE_CUBE_MAP);
 
     // Default, full area viewport.
-    glViewport(0, 0, DENG_WINDOW->width(), DENG_WINDOW->height());
+    //glViewport(0, 0, DENG_WINDOW->width(), DENG_WINDOW->height());
 
     // The projection matrix.
     glMatrixMode(GL_PROJECTION);

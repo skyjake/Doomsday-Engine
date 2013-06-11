@@ -177,3 +177,9 @@ void GuiRootWidget::update()
         RootWidget::update();
     }
 }
+
+void GuiRootWidget::drawUntil(Widget &until)
+{
+    notifyTree(&Widget::draw, &Widget::isVisible,
+               &Widget::preDrawChildren, &Widget::postDrawChildren, &until);
+}

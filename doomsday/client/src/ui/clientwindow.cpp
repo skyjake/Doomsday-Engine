@@ -29,6 +29,7 @@
 #include <de/DisplayMode>
 #include <de/NumberValue>
 #include <QGLFormat>
+#include <de/GLState>
 #include <QCloseEvent>
 
 #include "gl/sys_opengl.h"
@@ -92,6 +93,18 @@ DENG2_OBSERVES(Canvas,           FocusChange)
 
     void setupUI()
     {
+        LabelWidget *bg = new LabelWidget;
+        bg->setImage(ClientApp::windowSystem().style().images().image("window.background"));
+        bg->setImageFit(FitToSize);
+        bg->setSizePolicy(LabelWidget::Filled, LabelWidget::Filled);
+        bg->setMargin("");
+        bg->rule()
+                .setInput(Rule::Left,   root.viewLeft())
+                .setInput(Rule::Top,    root.viewTop())
+                .setInput(Rule::Right,  root.viewRight())
+                .setInput(Rule::Bottom, root.viewBottom());
+        root.add(bg);
+
         LegacyWidget *legacy = new LegacyWidget(LEGACY_WIDGET_NAME);
         legacy->rule()
                 .setLeftTop    (root.viewLeft(),  root.viewTop())
@@ -344,6 +357,8 @@ void ClientWindow::canvasGLResized(Canvas &canvas)
 
     Canvas::Size size = canvas.size();
     LOG_TRACE("Canvas resized to ") << size.asText();
+
+    GLState::top().setViewport(Rectangleui(0, 0, size.x, size.y));
 
     // Tell the widgets.
     d->root.setViewSize(size);

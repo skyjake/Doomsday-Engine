@@ -79,7 +79,8 @@ public:
     struct Background {
         enum Type {
             None,               ///< No background or solid fill.
-            GradientFrame       ///< Use the "gradient frame" from the UI atlas.
+            GradientFrame,      ///< Use the "gradient frame" from the UI atlas.
+            Blurred             ///< Blurs whatever is showing behind the widget.
         };
         de::Vector4f solidFill; ///< Always applied if opacity > 0.
         Type type;
@@ -87,7 +88,8 @@ public:
         float thickness;        ///< Frame border thickenss.
 
         Background() : type(None), thickness(0) {}
-        Background(de::Vector4f const &solid) : solidFill(solid), type(None), thickness(0) {}
+        Background(de::Vector4f const &solid, Type t = None)
+            : solidFill(solid), type(t), thickness(0) {}
         Background(Type t, de::Vector4f const &borderColor, float borderThickness = 0)
             : type(t), color(borderColor), thickness(borderThickness) {}
         Background(de::Vector4f const &solid, Type t,
@@ -120,11 +122,13 @@ public:
 
     void setFont(de::DotPath const &id);
     void setTextColor(de::DotPath const &id);
+    void setMargin(de::DotPath const &id);
     void set(Background const &bg);
 
     de::Font const &font() const;
     de::ColorBank::Color textColor() const;
     de::ColorBank::Colorf textColorf() const;
+    de::Rule const &margin() const;
 
     /**
      * Determines whether the contents of the widget are supposed to be clipped
@@ -156,6 +160,7 @@ public:
     // Events.
     void initialize();
     void deinitialize();
+    void viewResized();
     void update();
     void draw() /*final*/;
 

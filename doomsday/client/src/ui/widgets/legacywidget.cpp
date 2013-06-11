@@ -39,6 +39,8 @@
 #include "gl/sys_opengl.h"
 #include "gl/gl_defer.h"
 
+#include <de/GLState>
+
 /**
  * Maximum number of milliseconds spent uploading textures at the beginning
  * of a frame. Note that non-uploaded textures will appear as pure white
@@ -54,6 +56,83 @@ DENG2_PIMPL(LegacyWidget)
 {
     Instance(Public *i) : Base(i)
     {}
+
+    void draw()
+    {
+        bool cannotDraw = (self.isDisabled() || !GL_IsFullyInited());
+
+        if(renderWireframe || cannotDraw)
+        {
+            // When rendering is wireframe mode, we must clear the screen
+            // before rendering a frame.
+            glClear(GL_COLOR_BUFFER_BIT);
+        }
+
+        if(cannotDraw) return;
+
+        if(drawGame)
+        {
+            if(App_GameLoaded())
+            {
+                // Interpolate the world ready for drawing view(s) of it.
+                if(theMap)
+                {
+                    R_BeginWorldFrame();
+                }
+                R_RenderViewPorts();
+            }
+            else if(titleFinale == 0)
+            {
+                // Title finale is not playing. Lets do it manually.
+                glMatrixMode(GL_PROJECTION);
+                glPushMatrix();
+                glLoadIdentity();
+                glOrtho(0, SCREENWIDTH, SCREENHEIGHT, 0, -1, 1);
+
+                R_RenderBlankView();
+
+                glMatrixMode(GL_PROJECTION);
+                glPopMatrix();
+            }
+
+            if(!(UI_IsActive() && UI_Alpha() >= 1.0))
+            {
+                UI2_Drawer();
+
+                // Draw any full window game graphics.
+                if(App_GameLoaded() && gx.DrawWindow)
+                {
+                    Size2Raw dimensions(DENG_WINDOW->width(), DENG_WINDOW->height());
+                    gx.DrawWindow(&dimensions);
+                }
+            }
+        }
+
+        if(Con_TransitionInProgress())
+            Con_DrawTransition();
+
+        if(drawGame)
+        {
+            // Debug information.
+            Net_Drawer();
+            S_Drawer();
+
+            // Finish up any tasks that must be completed after view(s) have been drawn.
+            R_EndWorldFrame();
+        }
+
+        if(UI_IsActive())
+        {
+            // Draw user interface.
+            UI_Drawer();
+        }
+
+        // Draw console.
+        //Rend_Console();
+
+        // End any open DGL sequence.
+        DGL_End();
+    }
 };
 
 LegacyWidget::LegacyWidget(String const &name)
@@ -112,80 +191,33 @@ void LegacyWidget::update()
 }
 
 void LegacyWidget::drawContent()
-{
-    bool cannotDraw = (isDisabled() || !GL_IsFullyInited());
+{return;
+    if(isDisabled() || !GL_IsFullyInited())
+        return;
 
-    if(renderWireframe || cannotDraw)
-    {
-        // When rendering is wireframe mode, we must clear the screen
-        // before rendering a frame.
-        glClear(GL_COLOR_BUFFER_BIT);
-    }
+    glMatrixMode(GL_TEXTURE);
+    glPushMatrix();
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
 
-    if(cannotDraw) return;
+    glPushAttrib(GL_ALL_ATTRIB_BITS);
+    glPushClientAttrib(GL_CLIENT_ALL_ATTRIB_BITS);
 
-    if(drawGame)
-    {
-        if(App_GameLoaded())
-        {
-            // Interpolate the world ready for drawing view(s) of it.
-            if(theMap)
-            {
-                R_BeginWorldFrame();
-            }
-            R_RenderViewPorts();
-        }
-        else if(titleFinale == 0)
-        {
-            // Title finale is not playing. Lets do it manually.
-            glMatrixMode(GL_PROJECTION);
-            glPushMatrix();
-            glLoadIdentity();
-            glOrtho(0, SCREENWIDTH, SCREENHEIGHT, 0, -1, 1);
+    GL_Init2DState();
 
-            R_RenderBlankView();
+    d->draw();
 
-            glMatrixMode(GL_PROJECTION);
-            glPopMatrix();
-        }
+    glPopClientAttrib();
+    glPopAttrib();
 
-        if(!(UI_IsActive() && UI_Alpha() >= 1.0))
-        {
-            UI2_Drawer();
-
-            // Draw any full window game graphics.
-            if(App_GameLoaded() && gx.DrawWindow)
-            {
-                Size2Raw dimensions(DENG_WINDOW->width(), DENG_WINDOW->height());
-                gx.DrawWindow(&dimensions);
-            }
-        }
-    }
-
-    if(Con_TransitionInProgress())
-        Con_DrawTransition();
-
-    if(drawGame)
-    {
-        // Debug information.
-        Net_Drawer();
-        S_Drawer();
-
-        // Finish up any tasks that must be completed after view(s) have been drawn.
-        R_EndWorldFrame();
-    }
-
-    if(UI_IsActive())
-    {
-        // Draw user interface.
-        UI_Drawer();
-    }
-
-    // Draw console.
-    //Rend_Console();
-
-    // End any open DGL sequence.
-    DGL_End();
+    glMatrixMode(GL_TEXTURE);
+    glPopMatrix();
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
 }
 
 bool LegacyWidget::handleEvent(Event const &event)
