@@ -43,9 +43,17 @@ public:
     /**
      * Read-only access to the scalar animation.
      */
-    Animation const &scalar() const {
+    Animation const &animation() const {
         return _animation;
     }
+
+    /**
+     * Shifts the scalar rule's animation target and current value without
+     * affecting any ongoing animation.
+     *
+     * @param delta  Value delta for the shift.
+     */
+    void shift(float delta);
 
 protected:
     ~ScalarRule();
