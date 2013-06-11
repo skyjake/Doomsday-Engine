@@ -43,7 +43,7 @@ DENG2_PIMPL_NOREF(RuleRectangle), public DelegateRule::ISource
         FIRST_HORIZ_OUTPUT = OutLeft,
         LAST_HORIZ_OUTPUT  = OutWidth,
         FIRST_VERT_OUTPUT  = OutTop,
-        LAST_VERT_OUTPUT   = OutBottom
+        LAST_VERT_OUTPUT   = OutHeight
     };
 
     AnimationVector2 normalizedAnchorPoint;
