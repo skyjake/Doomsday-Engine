@@ -21,6 +21,7 @@
 #include "ui/widgets/labelwidget.h"
 #include "ui/widgets/buttonwidget.h"
 #include "ui/widgets/consolecommandwidget.h"
+#include "ui/widgets/blurwidget.h"
 #include "ui/clientwindow.h"
 #include "ui/commandaction.h"
 
@@ -130,12 +131,15 @@ DENG2_OBSERVES(Games, GameChange)
     }
 };
 
-TaskBarWidget::TaskBarWidget() : GuiWidget("TaskBar"), d(new Instance(this))
+TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
 {
+    BlurWidget *blur = new BlurWidget("taskbar_blur");
+    add(blur);
+
     Rule const &gap = style().rules().rule("gap");
     //Rule const &unit = style().rules().rule("unit");
 
-    Background bg(style().colors().colorf("background"));
+    Background bg(*blur, style().colors().colorf("background"));
 
     /*
     d->consoleButton = new ButtonWidget;
@@ -158,6 +162,8 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("TaskBar"), d(new Instance(this))
     d->console->rule()
             .setInput(Rule::Left, rule().left() + d->console->shift());
     add(d->console);
+
+    d->console->log().set(bg);
 
     // Position the console button and command line in the task bar.
     d->console->button().rule()

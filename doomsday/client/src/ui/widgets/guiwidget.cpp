@@ -18,6 +18,7 @@
 
 #include "ui/widgets/guiwidget.h"
 #include "ui/widgets/guirootwidget.h"
+#include "ui/widgets/blurwidget.h"
 #include "clientapp.h"
 #include <de/garbage.h>
 #include <de/MouseEvent>
@@ -113,7 +114,7 @@ DENG2_PIMPL(GuiWidget)
                              Rectanglef(0, 0, 1, 1)),
                          gl::Static);
 
-        uBlurStep = Vector2f(1.f / blurSize.x, 1.f / blurSize.y);
+        uBlurStep = Vector2f(1.f / float(blurSize.x), 1.f / float(blurSize.y));
 
         self.root().shaders().build(blurring.program(), "fx.blur.horizontal")
                 << uBlurMvpMatrix
@@ -125,12 +126,6 @@ DENG2_PIMPL(GuiWidget)
                 << uBlurMvpMatrix
                 << uBlurTex
                 << uBlurColor << uBlurStep << uBlurWindow;
-
-        // Projection matrix for the blur quad.
-        //uBlurMvpMatrix = Matrix4f::ortho(0, blurSize.x, 0, blurSize.y);
-
-        //blurState.setViewport(Rectangleui::fromSize(blurSize));
-        //blurring.setState(1, blurState);
 
         blurInited = true;
     }
@@ -160,6 +155,14 @@ DENG2_PIMPL(GuiWidget)
 
     void drawBlurredBackground()
     {
+        if(background.type == Background::SharedBlur)
+        {
+            // Use another widget's blur.
+            DENG2_ASSERT(background.blur != 0);
+            background.blur->drawBlurredRect(self.rule().recti(), background.solidFill);
+            return;
+        }
+
         if(background.type != Background::Blurred)
         {
             deinitBlur();
@@ -191,21 +194,10 @@ DENG2_PIMPL(GuiWidget)
 
         // Pass 3: apply the vertical blur filter, drawing the final result
         // into the original target.
-        Rectanglei pos = self.rule().recti();
-        Vector2ui const viewSize = self.root().viewSize();
-        uBlurTex = blur[1];
-        uBlurColor = Vector4f((1-background.solidFill.w) + background.solidFill.x * background.solidFill.w,
-                              (1-background.solidFill.w) + background.solidFill.y * background.solidFill.w,
-                              (1-background.solidFill.w) + background.solidFill.z * background.solidFill.w,
-                              1);
-        uBlurWindow = Vector4f(pos.left()   / float(viewSize.x),
-                               pos.top()    / float(viewSize.y),
-                               pos.width()  / float(viewSize.x),
-                               pos.height() / float(viewSize.y));
-        uBlurMvpMatrix = self.root().projMatrix2D() *
-                Matrix4f::scaleThenTranslate(pos.size(), pos.topLeft);
-        blurring.setProgram("vert");
-        blurring.draw();
+        if(background.solidFill.w > 0)
+        {
+            self.drawBlurredRect(self.rule().recti(), background.solidFill);
+        }
     }
 };
 
@@ -443,6 +435,25 @@ void GuiWidget::glDeinit()
 void GuiWidget::drawContent()
 {}
 
+void GuiWidget::drawBlurredRect(Rectanglei const &rect, Vector4f const &color)
+{
+    Vector2ui const viewSize = root().viewSize();
+
+    d->uBlurTex = d->blur[1];
+    d->uBlurColor = Vector4f((1 - color.w) + color.x * color.w,
+                             (1 - color.w) + color.y * color.w,
+                             (1 - color.w) + color.z * color.w,
+                             1.f);
+    d->uBlurWindow = Vector4f(rect.left()   / float(viewSize.x),
+                              rect.top()    / float(viewSize.y),
+                              rect.width()  / float(viewSize.x),
+                              rect.height() / float(viewSize.y));
+    d->uBlurMvpMatrix = root().projMatrix2D() *
+            Matrix4f::scaleThenTranslate(rect.size(), rect.topLeft);
+    d->blurring.setProgram("vert");
+    d->blurring.draw();
+}
+
 void GuiWidget::requestGeometry(bool yes)
 {
     d->needGeometry = yes;
@@ -455,7 +466,8 @@ bool GuiWidget::geometryRequested() const
 
 void GuiWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
 {
-    if(d->background.type != Background::Blurred)
+    if(d->background.type != Background::Blurred &&
+       d->background.type != Background::SharedBlur)
     {
         // Is there a solid fill?
         if(d->background.solidFill.w > 0)
@@ -475,8 +487,11 @@ void GuiWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
                                 root().atlas().imageRectf(root().gradientFrame()));
         break;
 
+    case Background::Blurred: // blurs drawn separately in GuiWidget::draw()
+    case Background::SharedBlur:
+        break;
+
     case Background::None:
-    case Background::Blurred: // drawn separately in GuiWidget::draw()
         break;
     }
 }
