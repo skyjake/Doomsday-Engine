@@ -147,17 +147,17 @@ DENG2_PIMPL(Map)
 
     ~Instance()
     {
-        qDeleteAll(vertexes);
+        qDeleteAll(bspNodes);
+        qDeleteAll(bspLeafs);
+        qDeleteAll(segments);
         qDeleteAll(sectors);
-        qDeleteAll(lines);
         foreach(Polyobj *polyobj, polyobjs)
         {
             polyobj->~Polyobj();
             M_Free(polyobj);
         }
-        qDeleteAll(segments);
-        qDeleteAll(bspNodes);
-        qDeleteAll(bspLeafs);
+        qDeleteAll(lines);
+        qDeleteAll(vertexes);
     }
 
     /**
