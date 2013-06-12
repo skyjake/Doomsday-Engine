@@ -40,8 +40,8 @@ class DENG2_PUBLIC Animation : public ISerializable
 public:
     enum Style {
         Linear,
-        EaseIn,
         EaseOut,
+        EaseIn,
         EaseBoth,
         Bounce,
         FixedBounce
@@ -51,7 +51,7 @@ public:
     DENG2_ERROR(ClockMissingError);
 
 public:
-    Animation(float value = 0, Style style = EaseIn);    
+    Animation(float value = 0, Style style = EaseOut);
     Animation(Animation const &other);
     Animation &operator = (Animation const &other);
 

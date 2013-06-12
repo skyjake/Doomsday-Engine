@@ -57,13 +57,13 @@ DENG2_PIMPL(ButtonWidget)
         switch(st)
         {
         case Up:
-            scale.setStyle(prev == Down? Animation::Bounce : Animation::EaseIn);
+            scale.setStyle(prev == Down? Animation::Bounce : Animation::EaseOut);
             scale.setValue(1.f, .3f);
             frameOpacity.setValue(.15f, .6f);
             break;
 
         case Hover:
-            //scale.setStyle(Animation::EaseIn);
+            //scale.setStyle(Animation::EaseOut);
             //scale.setValue(1.1f, .15f);
             frameOpacity.setValue(.4f, .15f);
             break;
