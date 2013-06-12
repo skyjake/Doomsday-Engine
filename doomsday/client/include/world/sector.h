@@ -1,4 +1,4 @@
-/** @file world/sector.h World Sector.
+/** @file world/sector.h World map sector.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -31,7 +31,7 @@
 
 #include "MapElement"
 #include "Line"
-#include "Plane"
+#include "Plane" /// @todo remove me
 
 #ifdef __CLIENT__
 #  include "render/lightgrid.h"
@@ -56,12 +56,11 @@ class Map;
 ///@}
 
 /**
- * World sector.
+ * World map sector.
  *
  * @ingroup world
  */
-class Sector : public de::MapElement,
-               DENG2_OBSERVES(Plane, HeightChange)
+class Sector : public de::MapElement
 {
 public:
     /// Required/referenced plane is missing. @ingroup errors
@@ -468,9 +467,6 @@ public:
 protected:
     int property(DmuArgs &args) const;
     int setProperty(DmuArgs const &args);
-
-    // Observes Plane HeightChange.
-    void planeHeightChanged(Plane &plane, coord_t oldHeight);
 
 private:
     DENG2_PRIVATE(d)
