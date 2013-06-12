@@ -91,9 +91,9 @@ static int destroyGenerator(ptcgen_t *gen, void *parameters)
     DENG_UNUSED(parameters);
 
     /// @todo Do not assume generator is from the CURRENT map.
-
-    Generators_Unlink(App_World().map().generators(), gen);
-    App_World().map().thinkerRemove(gen->thinker);
+    Map &map = App_World().map();
+    map.generators().unlink(gen);
+    map.thinkerRemove(gen->thinker);
 
     PtcGen_Delete(gen);
     return false; // Can be used as an iterator, so continue.
@@ -110,34 +110,35 @@ static int findOldestGenerator(ptcgen_t *gen, void *parameters)
     return false; // Continue iteration.
 }
 
-static ptcgenid_t findIdForNewGenerator(Generators *gens)
+/// @todo This logic should be encapsulated by Generators.
+static Generators::ptcgenid_t findIdForNewGenerator(Generators &gens)
 {
-    if(!gens) return 0; // None found.
-
     // Prefer allocating a new generator if we've a spare id.
-    ptcgenid_t id = Generators_NextAvailableId(gens);
-    if(id >= 0) return id+1;
+    Generators::ptcgenid_t id = gens.nextAvailableId();
+    if(id >= 0) return id + 1;
 
     // See if there is an existing generator we can supplant.
     /// @todo Optimize: Generators could maintain an age-sorted list.
-    ptcgen_t *oldest = NULL;
-    Generators_Iterate(gens, findOldestGenerator, (void *)&oldest);
-    if(oldest) return Generators_GeneratorId(gens, oldest) + 1; // 1-based index.
+    ptcgen_t *oldest = 0;
+    gens.iterate(findOldestGenerator, (void *)&oldest);
+    if(oldest) return gens.generatorId(oldest) + 1; // 1-based index.
 
     return 0; // None found.
 }
 
 /**
  * Allocates a new active ptcgen and adds it to the list of active ptcgens.
+ * @todo This logic should be encapsulated by Generators.
  */
 static ptcgen_t *P_NewGenerator()
 {
-    Generators *gens = App_World().map().generators();
-    ptcgenid_t id = findIdForNewGenerator(gens);
+    Map &map = App_World().map();
+    Generators &gens = map.generators();
+    Generators::ptcgenid_t id = findIdForNewGenerator(gens);
     if(id)
     {
         // If there is already a generator with that id - remove it.
-        ptcgen_t *gen = Generators_Generator(gens, id-1);
+        ptcgen_t *gen = gens.generator(id - 1);
         if(gen)
         {
             destroyGenerator(gen, NULL/*no parameters*/);
@@ -148,10 +149,10 @@ static ptcgen_t *P_NewGenerator()
 
         // Link the thinker to the list of (private) thinkers.
         gen->thinker.function = (thinkfunc_t) P_PtcGenThinker;
-        App_World().map().thinkerAdd(gen->thinker, false);
+        map.thinkerAdd(gen->thinker, false);
 
         // Link the generator into this collection.
-        Generators_Link(gens, id-1, gen);
+        gens.link(gen, id - 1);
 
         return gen;
     }
@@ -203,7 +204,7 @@ static int linkGeneratorParticles(ptcgen_t *gen, void *parameters)
         if(gen->ptcs[i].stage < 0 || !gen->ptcs[i].sector) continue;
 
         /// @todo Do not assume sector is from the CURRENT map.
-        Generators_LinkToList(gens, gen, gen->ptcs[i].sector->indexInMap());
+        gens->linkToList(gen, gen->ptcs[i].sector->indexInMap());
     }
     return false; // Continue iteration.
 }
@@ -223,12 +224,12 @@ void P_CreatePtcGenLinks()
 
 BEGIN_PROF(PROF_PTCGEN_LINK);
 
-    Generators *gens = App_World().map().generators();
-    Generators_EmptyLists(gens);
+    Generators &gens = App_World().map().generators();
+    gens.emptyLists();
 
     if(useParticles)
     {
-        Generators_Iterate(gens, linkGeneratorParticles, gens);
+        gens.iterate(linkGeneratorParticles, &gens);
     }
 
 END_PROF(PROF_PTCGEN_LINK);
@@ -349,11 +350,11 @@ static int generatorByPlaneIterator(ptcgen_t *gen, void *parameters)
 static ptcgen_t *generatorByPlane(Plane *plane)
 {
     /// @todo Do not assume plane is from the CURRENT map.
-    Generators *gens = App_World().map().generators();
+    Map &map = App_World().map();
     generatorbyplaneiterator_params_t parm;
     parm.plane = plane;
-    parm.found = NULL;
-    Generators_Iterate(gens, generatorByPlaneIterator, (void *)&parm);
+    parm.found = 0;
+    map.generators().iterate(generatorByPlaneIterator, (void *)&parm);
     return parm.found;
 }
 
@@ -872,9 +873,9 @@ static void P_SpinParticle(ptcgen_t *gen, particle_t *pt)
     static int const yawSigns[4]   = { 1,  1, -1, -1 };
     static int const pitchSigns[4] = { 1, -1,  1, -1 };
 
-    Generators *gens = App_World().map().generators(); /// @todo Do not assume generator is from the CURRENT map.
     ded_ptcstage_t const *stDef = &gen->def->stages[pt->stage];
-    uint const index = pt - &gen->ptcs[Generators_GeneratorId(gens, gen) / 8];
+    Map &map = App_World().map(); /// @todo Do not assume generator is from the CURRENT map.
+    uint const index = pt - &gen->ptcs[map.generators().generatorId(gen) / 8];
 
     int yawSign   =   yawSigns[index % 4];
     int pitchSign = pitchSigns[index % 4];
@@ -1331,8 +1332,7 @@ void P_SpawnMapParticleGens()
     }
 }
 
-#undef P_SpawnDamageParticleGen
-DENG_EXTERN_C void P_SpawnDamageParticleGen(mobj_t *mo, mobj_t *inflictor, int amount)
+void P_SpawnMapDamageParticleGen(mobj_t *mo, mobj_t *inflictor, int amount)
 {
     // Are particles allowed?
     if(isDedicated || !useParticles) return;
@@ -1483,11 +1483,10 @@ void P_UpdateParticleGens()
 {
     if(!App_World().hasMap()) return;
 
-    Generators *gens = App_World().map().generators();
-    if(!gens) return;
-
     // Update existing generators.
-    Generators_Iterate(gens, updateGenerator, NULL/*no parameters*/);
+    Map &map = App_World().map();
+
+    map.generators().iterate(updateGenerator);
 
     // Re-spawn map generators.
     P_SpawnMapParticleGens();

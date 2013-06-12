@@ -596,7 +596,9 @@ void R_Update()
     R_UpdateTranslationTables();
 
     Def_PostInit();
+#ifdef __CLIENT__
     P_UpdateParticleGens(); // Defs might've changed.
+#endif
 
     // Reset the archived map cache (the available maps may have changed).
     App_World().resetMapCache();

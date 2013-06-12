@@ -338,7 +338,6 @@ bool Surface::setMaterial(Material *newMaterial, bool isMissingFix)
                     {
                         map.decoratedSurfaces().insert(this);
                     }
-#endif // __CLIENT__
 
                     if(d->owner.type() == DMU_PLANE)
                     {
@@ -346,6 +345,8 @@ bool Surface::setMaterial(Material *newMaterial, bool isMissingFix)
                         ded_ptcgen_t const *def = Def_GetGenerator(reinterpret_cast<uri_s *>(&uri));
                         P_SpawnPlaneParticleGen(def, d->owner.castTo<Plane>());
                     }
+
+#endif // __CLIENT__
                 }
             }
         }

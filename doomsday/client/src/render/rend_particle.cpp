@@ -41,7 +41,7 @@ using namespace de;
 #define NUM_TEX_NAMES           (MAX_PTC_TEXTURES)
 
 typedef struct {
-    ptcgenid_t ptcGenID; // Generator id.
+    Generators::ptcgenid_t ptcGenID; // Generator id.
     int ptID; // Particle id.
     float distance;
 } porder_t;
@@ -56,15 +56,15 @@ byte devDrawGenerators = false; // Display active generators?
 static size_t numParts;
 static boolean hasPoints, hasLines, hasModels, hasNoBlend, hasBlend;
 static boolean hasPointTexs[NUM_TEX_NAMES];
-static byte visiblePtcGens[GENERATORS_MAX];
+static byte visiblePtcGens[Generators::GENERATORS_MAX];
 
 static size_t orderSize = 0;
-static porder_t* order = NULL;
+static porder_t *order = NULL;
 
 // Currently active Generators collection. Global for performance.
-static Generators* gens;
+static Generators *gens;
 
-void Rend_ParticleRegister(void)
+void Rend_ParticleRegister()
 {
     // Cvars
     C_VAR_BYTE ("rend-particle",                   &useParticles,      0,              0, 1);
@@ -75,23 +75,23 @@ void Rend_ParticleRegister(void)
     C_VAR_BYTE ("rend-dev-generator-show-indices", &devDrawGenerators, CVF_NO_ARCHIVE, 0, 1);
 }
 
-static int markPtcGenVisible(ptcgen_t* gen, void* parameters)
+static int markPtcGenVisible(ptcgen_t *gen, void *parameters)
 {
     DENG_UNUSED(parameters);
 
-    visiblePtcGens[Generators_GeneratorId(gens, gen)] = true;
+    visiblePtcGens[gens->generatorId(gen)] = true;
 
     return false; // Continue iteration.
 }
 
-static boolean isPtcGenVisible(const ptcgen_t* gen)
+static boolean isPtcGenVisible(ptcgen_t const *gen)
 {
-    return visiblePtcGens[Generators_GeneratorId(gens, gen)];
+    return visiblePtcGens[gens->generatorId(gen)];
 }
 
 static float pointDist(fixed_t c[3])
 {
-    const viewdata_t* viewData = R_ViewData(viewPlayer - ddPlayers);
+    viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
     float dist = ((viewData->current.origin[VY] - FIX2FLT(c[VY])) * -viewData->viewSin) -
         ((viewData->current.origin[VX] - FIX2FLT(c[VX])) * viewData->viewCos);
 
@@ -212,27 +212,27 @@ void Rend_ParticleLoadExtraTextures()
     }
 }
 
-void Rend_ParticleReleaseSystemTextures(void)
+void Rend_ParticleReleaseSystemTextures()
 {
     if(novideo) return;
 
-    glDeleteTextures(1, (const GLuint*) &pointTex);
+    glDeleteTextures(1, (GLuint const *) &pointTex);
     pointTex = 0;
 }
 
-void Rend_ParticleReleaseExtraTextures(void)
+void Rend_ParticleReleaseExtraTextures()
 {
     if(novideo) return;
 
-    glDeleteTextures(NUM_TEX_NAMES, (const GLuint*) ptctexname);
-    memset(ptctexname, 0, sizeof(ptctexname));
+    glDeleteTextures(NUM_TEX_NAMES, (GLuint const *) ptctexname);
+    de::zap(ptctexname);
 }
 
-void Rend_ParticleInitForNewFrame(void)
+void Rend_ParticleInitForNewFrame()
 {
     if(!useParticles) return;
     // Clear all visibility flags.
-    memset(visiblePtcGens, 0, GENERATORS_MAX);
+    de::zap(visiblePtcGens);
 }
 
 void Rend_ParticleMarkInSectorVisible(Sector *sector)
@@ -241,12 +241,9 @@ void Rend_ParticleMarkInSectorVisible(Sector *sector)
     if(!App_World().hasMap()) return;
     if(!sector) return;
 
-    /// @todo Do the assume sector is from the CURRENT map.
-    gens = App_World().map().generators();
-    if(!gens) return;
-
-    Generators_IterateList(gens, sector->indexInMap(),
-                           markPtcGenVisible, 0/*no parameters*/);
+    /// @todo Do not assume sector is from the CURRENT map.
+    Map &map = App_World().map();
+    map.generators().iterateList(sector->indexInMap(), markPtcGenVisible);
 }
 
 /**
@@ -330,7 +327,7 @@ static int populateSortBuffer(ptcgen_t* gen, void* parameters)
         // This particle is visible. Add it to the sort buffer.
         slot = &order[(*m)++];
 
-        slot->ptcGenID = Generators_GeneratorId(gens, gen);
+        slot->ptcGenID = gens->generatorId(gen);
         slot->ptID = p;
         slot->distance = dist;
 
@@ -369,16 +366,16 @@ static int populateSortBuffer(ptcgen_t* gen, void* parameters)
 /**
  * @return              @c true if there are particles to render.
  */
-static int listVisibleParticles(void)
+static int listVisibleParticles()
 {
     size_t numVisibleParticles;
 
     hasPoints = hasModels = hasLines = hasBlend = hasNoBlend = false;
-    memset(hasPointTexs, 0, sizeof(hasPointTexs));
+    de::zap(hasPointTexs);
 
     // First count how many particles are in the visible generators.
     numParts = 0;
-    Generators_Iterate(gens, countParticles, &numParts);
+    gens->iterate(countParticles, &numParts);
     if(!numParts)
         return false; // No visible generators.
 
@@ -388,7 +385,7 @@ static int listVisibleParticles(void)
     // Populate the particle sort buffer and determine what type(s) of
     // particle (model/point/line/etc...) we'll need to draw.
     numVisibleParticles = 0;
-    Generators_Iterate(gens, populateSortBuffer, &numVisibleParticles);
+    gens->iterate(populateSortBuffer, &numVisibleParticles);
     if(!numVisibleParticles)
         return false; // No visible particles (all too far?).
 
@@ -581,17 +578,17 @@ static void renderParticles(int rtype, boolean withBlend)
 
     for(; i < numParts; ++i)
     {
-        const porder_t* slot = &order[i];
-        const ptcgen_t* gen;
-        const particle_t* pt;
-        const ptcstage_t* st;
-        const ded_ptcstage_t* dst, *nextDst;
+        porder_t const *slot = &order[i];
+        ptcgen_t const *gen;
+        particle_t const *pt;
+        ptcstage_t const *st;
+        ded_ptcstage_t const *dst, *nextDst;
         float size, color[4], center[3], mark, invMark;
         float dist, maxdist;
         boolean flatOnPlane = false, flatOnWall = false, nearPlane, nearWall;
         short stageType;
 
-        gen = Generators_Generator(gens, slot->ptcGenID);
+        gen = gens->generator(slot->ptcGenID);
         pt = &gen->ptcs[slot->ptID];
 
         st = &gen->stages[pt->stage];
@@ -877,8 +874,7 @@ void Rend_RenderParticles()
     if(!useParticles) return;
     if(!App_World().hasMap()) return;
 
-    gens = App_World().map().generators();
-    if(!gens) return;
+    gens = &App_World().map().generators();
 
     // No visible particles at all?
     if(!listVisibleParticles()) return;
@@ -930,7 +926,7 @@ static int drawGeneratorOrigin(ptcgen_t* gen, void* parameters)
             float scale = dist / (DENG_WINDOW->width() / 2);
             char buf[80];
 
-            sprintf(buf, "%i", Generators_GeneratorId(gens, gen));
+            sprintf(buf, "%i", gens->generatorId(gen));
 
             glMatrixMode(GL_MODELVIEW);
             glPushMatrix();
@@ -963,17 +959,12 @@ void Rend_RenderGenerators()
     if(!devDrawGenerators) return;
     if(!App_World().hasMap()) return;
 
-    gens = App_World().map().generators();
-    if(!gens) return;
-
-    float eye[3];
-    eye[VX] = vOrigin[VX];
-    eye[VY] = vOrigin[VZ];
-    eye[VZ] = vOrigin[VY];
+    gens = &App_World().map().generators();
 
     glDisable(GL_DEPTH_TEST);
 
-    Generators_Iterate(gens, drawGeneratorOrigin, eye);
+    float eye[3] = { vOrigin[VX], vOrigin[VZ], vOrigin[VY] };
+    gens->iterate(drawGeneratorOrigin, eye);
 
     // Restore previous state.
     glEnable(GL_DEPTH_TEST);

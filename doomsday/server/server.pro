@@ -243,7 +243,6 @@ DENG_HEADERS += \
     $$SRC/include/world/bspleaf.h \
     $$SRC/include/world/bspnode.h \
     $$SRC/include/world/entitydatabase.h \
-    $$SRC/include/world/generators.h \
     $$SRC/include/world/line.h \
     $$SRC/include/world/lineowner.h \
     $$SRC/include/world/linesighttest.h \
@@ -253,7 +252,6 @@ DENG_HEADERS += \
     $$SRC/include/world/p_maptypes.h \
     $$SRC/include/world/p_maputil.h \
     $$SRC/include/world/p_object.h \
-    $$SRC/include/world/p_particle.h \
     $$SRC/include/world/p_players.h \
     $$SRC/include/world/p_ticker.h \
     $$SRC/include/world/plane.h \
@@ -417,7 +415,6 @@ SOURCES += \
     $$SRC/src/world/bspnode.cpp \
     $$SRC/src/world/dmuargs.cpp \
     $$SRC/src/world/entitydatabase.cpp \
-    $$SRC/src/world/generators.cpp \
     $$SRC/src/world/line.cpp \
     $$SRC/src/world/linesighttest.cpp \
     $$SRC/src/world/map.cpp \
@@ -426,7 +423,6 @@ SOURCES += \
     $$SRC/src/world/p_intercept.cpp \
     $$SRC/src/world/p_maputil.cpp \
     $$SRC/src/world/p_mobj.cpp \
-    $$SRC/src/world/p_particle.cpp \
     $$SRC/src/world/p_players.cpp \
     $$SRC/src/world/p_think.cpp \
     $$SRC/src/world/p_ticker.cpp \

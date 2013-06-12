@@ -464,10 +464,11 @@ DENG2_PIMPL(World)
         map->initLightGrid();
 
         R_InitRendPolyPools();
-#endif
 
         // Init Particle Generator links.
         P_PtcInitForMap();
+
+#endif
     }
 };
 
@@ -602,7 +603,9 @@ void World::setupMap(int mode)
 #endif
 
         d->map->initPolyobjs();
+#ifdef __CLIENT__
         P_MapSpawnPlaneParticleGens();
+#endif
 
         updateAllMapSectors(*d->map);
         resetAllMapPlaneVisHeights(*d->map);

@@ -38,8 +38,6 @@ class Vertex;
 
 struct thinkerlist_s;
 struct clmoinfo_s;
-struct generators_s;
-struct blockmap_s;
 
 /**
  * The client mobjs are stored into a hash for quickly locating a ClMobj by its identifier.
@@ -71,6 +69,7 @@ namespace de {
 class Blockmap;
 class EntityDatabase;
 #ifdef __CLIENT__
+class Generators;
 class LightGrid;
 #endif
 class Mesh;
@@ -479,15 +478,15 @@ public:
 
     EntityDatabase &entityDatabase() const;
 
+#ifdef __CLIENT__
     /**
      * Retrieve a pointer to the Generators collection for the map. If no collection
      * has yet been constructed a new empty collection will be initialized.
      *
      * @return  Generators collection for the map.
      */
-    struct generators_s *generators();
+    Generators &generators();
 
-#ifdef __CLIENT__
     /// @todo Should be private?
     void initClMobjs();
 

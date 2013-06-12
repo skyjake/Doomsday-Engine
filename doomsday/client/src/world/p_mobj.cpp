@@ -142,13 +142,14 @@ void P_MobjRecycle(mobj_t* mo)
  * 'statenum' must be a valid state (not null!).
  */
 #undef P_MobjSetState
-DENG_EXTERN_C void P_MobjSetState(mobj_t* mobj, int statenum)
+DENG_EXTERN_C void P_MobjSetState(mobj_t *mobj, int statenum)
 {
-    state_t*            st = states + statenum;
-    boolean             spawning = (mobj->state == 0);
-    ded_ptcgen_t*       pg;
+    state_t *st = states + statenum;
+#ifdef __CLIENT__
+    boolean spawning = (mobj->state == 0);
+#endif
 
-#if _DEBUG
+#ifdef DENG_DEBUG
     if(statenum < 0 || statenum >= defs.count.states.num)
         Con_Error("P_MobjSetState: statenum %i out of bounds.\n", statenum);
     /*
@@ -164,8 +165,9 @@ DENG_EXTERN_C void P_MobjSetState(mobj_t* mobj, int statenum)
     mobj->sprite = st->sprite;
     mobj->frame = st->frame;
 
+#ifdef __CLIENT__
     // Check for a ptcgen trigger.
-    for(pg = statePtcGens[statenum]; pg; pg = pg->stateNext)
+    for(ded_ptcgen_t *pg = statePtcGens[statenum]; pg; pg = pg->stateNext)
     {
         if(!(pg->flags & PGF_SPAWN_ONLY) || spawning)
         {
@@ -173,6 +175,7 @@ DENG_EXTERN_C void P_MobjSetState(mobj_t* mobj, int statenum)
             P_SpawnMobjParticleGen(pg, mobj);
         }
     }
+#endif
 
     if(!(mobj->ddFlags & DDMF_REMOTE))
     {

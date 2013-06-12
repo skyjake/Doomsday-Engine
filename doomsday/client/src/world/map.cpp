@@ -114,14 +114,13 @@ DENG2_PIMPL(Map)
     QScopedPointer<Blockmap> lineBlockmap;
     QScopedPointer<Blockmap> bspLeafBlockmap;
 
-    struct generators_s *generators;
-
     PlaneSet trackedPlanes;
     SurfaceSet scrollingSurfaces;
 #ifdef __CLIENT__
     SurfaceSet decoratedSurfaces;
     SurfaceSet glowingSurfaces;
 
+    QScopedPointer<Generators> generators;
     QScopedPointer<LightGrid> lightGrid;
 #endif
 
@@ -137,7 +136,6 @@ DENG2_PIMPL(Map)
         : Base            (i),
           editingEnabled  (true),
           bspRoot         (0),
-          generators      (0),
           skyFloorHeight  (DDMAXFLOAT),
           skyCeilingHeight(DDMINFLOAT)
     {
@@ -987,16 +985,6 @@ void Map::initPolyobjs()
 EntityDatabase &Map::entityDatabase() const
 {
     return d->entityDatabase;
-}
-
-Generators *Map::generators()
-{
-    // Time to initialize a new collection?
-    if(!d->generators)
-    {
-        d->generators = Generators_New(sectorCount());
-    }
-    return d->generators;
 }
 
 void Map::initNodePiles()
@@ -1857,6 +1845,16 @@ void Map::updateSurfacesOnMaterialChange(Material &material)
 }
 
 #ifdef __CLIENT__
+
+Generators &Map::generators()
+{
+    // Time to initialize a new collection?
+    if(d->generators.isNull())
+    {
+        d->generators.reset(new Generators(sectorCount()));
+    }
+    return *d->generators;
+}
 
 /**
  * Given a side section, look at the neighbouring surfaces and pick the

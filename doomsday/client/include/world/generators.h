@@ -1,8 +1,5 @@
 /** @file world/generators.h Generator collection.
  *
- * A collection of ptcgen_t instances and implements all bookkeeping logic
- * pertinent to the management of said instances.
- *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
@@ -24,140 +21,130 @@
 #ifndef DENG_WORLD_GENERATORS_H
 #define DENG_WORLD_GENERATORS_H
 
+#include <de/libdeng2.h>
+
 #include "p_particle.h"
 
-/// Unique identifier associated with each generator in the collection.
-typedef short ptcgenid_t;
-
-/// Maximum number of ptcgen_ts supported by a Generators instance.
-#define GENERATORS_MAX                  512
+namespace de {
 
 /**
- * Generators instance. Created with Generators_New().
+ * A collection of ptcgen_t instances and implements all bookkeeping logic
+ * pertinent to the management of said instances.
+ *
+ * @ingroup world
  */
-typedef struct generators_s Generators;
+class Generators
+{
+public:
+    /// Unique identifier associated with each generator in the collection.
+    typedef short ptcgenid_t;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+    /// Maximum number of ptcgen_ts supported by a Generators instance.
+    static int const GENERATORS_MAX = 512;
 
-/**
- * Constructs a new generators collection. Must be deleted with Generators_Delete().
- *
- * @param listCount  Number of lists the collection must support.
- */
-Generators* Generators_New(uint listCount);
+public:
+    /**
+     * Construct a new generators collection.
+     *
+     * @param listCount  Number of lists the collection must support.
+     */
+    Generators(uint listCount);
 
-/**
- * Destructs the generators collection @a generators.
- * @param generators  Generators instance.
- */
-void Generators_Delete(Generators* generators);
+    /**
+     * Clear all ptcgen_t references in this collection.
+     *
+     * @warning Does nothing about any memory allocated for said instances.
+     */
+    void clear();
 
-/**
- * Clear all ptcgen_t references in this collection.
- *
- * @warning Does nothing about any memory allocated for said instances.
- *
- * @param generators  Generators instance.
- */
-void Generators_Clear(Generators* generators);
+    /**
+     * Retrieve the generator associated with the unique @a generatorId
+     *
+     * @param id  Unique id of the generator to lookup.
+     * @return  Pointer to ptcgen iff found, else @c NULL.
+     */
+    ptcgen_t *generator(ptcgenid_t id) const;
 
-/**
- * Retrieve the generator associated with the unique @a generatorId
- *
- * @param generators   Generators instance.
- * @param generatorId  Unique id of the generator to lookup.
- * @return  Pointer to ptcgen iff found, else @c NULL.
- */
-ptcgen_t* Generators_Generator(Generators* generators, ptcgenid_t generatorId);
+    /**
+     * Lookup the unique id of @a generator in this collection.
+     *
+     * @param generator   Generator to lookup an id for.
+     * @return  The unique id if found else @c -1 iff if @a generator is not linked.
+     */
+    ptcgenid_t generatorId(ptcgen_t const *generator) const;
 
-/**
- * Lookup the unique id of @a generator in this collection.
- *
- * @param generators  Generators instance.
- * @param generator   Generator to lookup an id for.
- * @return  The unique id if found else @c -1 iff if @a generator is not linked.
- */
-ptcgenid_t Generators_GeneratorId(Generators* generators, const ptcgen_t* generator);
+    /**
+     * Retrieve the next available generator id.
+     *
+     * @return  The next available id else @c -1 iff there are no unused ids.
+     */
+    ptcgenid_t nextAvailableId() const;
 
-/**
- * Retrieve the next available generator id.
- *
- * @param generators  Generators instance.
- * @return  The next available id else @c -1 iff there are no unused ids.
- */
-ptcgenid_t Generators_NextAvailableId(Generators* generators);
+    /**
+     * Link a generator into this collection. Ownership does NOT transfer to
+     * the collection.
+     *
+     * @param generator  Generator to link.
+     * @param slot       Logical slot into which the generator will be linked.
+     *
+     * @return  Same as @a generator for caller convenience.
+     */
+    ptcgen_t *link(ptcgen_t *generator, ptcgenid_t slot);
 
-/**
- * Unlink a generator from this collection. Ownership is unaffected.
- *
- * @param generators  Generators instance.
- * @param generator   Generator to be unlinked.
- * @return  Same as @a generator for caller convenience.
- */
-ptcgen_t* Generators_Unlink(Generators* generators, ptcgen_t* generator);
+    /**
+     * Unlink a generator from this collection. Ownership is unaffected.
+     *
+     * @param generator   Generator to be unlinked.
+     * @return  Same as @a generator for caller convenience.
+     */
+    ptcgen_t *unlink(ptcgen_t *generator);
 
-/**
- * Link a generator into this collection. Ownership does NOT transfer to
- * the collection.
- *
- * @param generators  Generators instance.
- * @param slot        Logical slot into which the generator will be linked.
- * @param generator   Generator to link.
- *
- * @return  Same as @a generator for caller convenience.
- */
-ptcgen_t* Generators_Link(Generators* generators, ptcgenid_t slot, ptcgen_t* generator);
+    /**
+     * Empty all generator link lists.
+     *
+     * @param generators  Generators instance.
+     */
+    void emptyLists();
 
-/**
- * Empty all generator link lists.
- *
- * @param generators  Generators instance.
- */
-void Generators_EmptyLists(Generators* generators);
+    /**
+     * Link the a sector with a generator.
+     *
+     * @param generator   Generator to link with the identified list.
+     * @param listIndex  Index of the list to link the generator on.
+     *
+     * @return  Same as @a generator for caller convenience.
+     */
+    ptcgen_t *linkToList(ptcgen_t *generator, uint listIndex);
 
-/**
- * Link the a sector with a generator.
- *
- * @param generators  Generators instance.
- * @param generator   Generator to link with the identified list.
- * @param listIndex  Index of the list to link the generator on.
- *
- * @return  Same as @a generator for caller convenience.
- */
-ptcgen_t* Generators_LinkToList(Generators* generators, ptcgen_t* generator, uint listIndex);
+    /**
+     * Iterate over all generators in the collection making a callback for each.
+     * Iteration ends when all generators have been processed or a callback returns
+     * non-zero.
+     *
+     * @param callback  Callback to make for each iteration.
+     * @param parameters  User data to be passed to the callback.
+     *
+     * @return  @c 0 iff iteration completed wholly.
+     */
+    int iterate(int (*callback) (ptcgen_t *, void *), void *parameters = 0);
 
-/**
- * Iterate over all generators in the collection making a callback for each.
- * Iteration ends when all generators have been processed or a callback returns
- * non-zero.
- *
- * @param generators  Generators instance.
- * @param callback  Callback to make for each iteration.
- * @param parameters  User data to be passed to the callback.
- *
- * @return  @c 0 iff iteration completed wholly.
- */
-int Generators_Iterate(Generators* generators, int (*callback) (ptcgen_t*, void*), void* parameters);
+    /**
+     * Iterate over all generators in the collection which are present on the identified
+     * list making a callback for each. Iteration ends when all targeted generators have
+     * been processed or a callback returns non-zero.
+     *
+     * @param listIndex  Index of the list to traverse.
+     * @param callback  Callback to make for each iteration.
+     * @param parameters  User data to be passed to the callback.
+     *
+     * @return  @c 0 iff iteration completed wholly.
+     */
+    int iterateList(uint listIndex, int (*callback) (ptcgen_t *, void *), void *parameters = 0);
 
-/**
- * Iterate over all generators in the collection which are present on the identified
- * list making a callback for each. Iteration ends when all targeted generators have
- * been processed or a callback returns non-zero.
- *
- * @param generators  Generators instance.
- * @param listIndex  Index of the list to traverse.
- * @param callback  Callback to make for each iteration.
- * @param parameters  User data to be passed to the callback.
- *
- * @return  @c 0 iff iteration completed wholly.
- */
-int Generators_IterateList(Generators* generators, uint listIndex,
-    int (*callback) (ptcgen_t*, void*), void* parameters);
+private:
+    DENG2_PRIVATE(d)
+};
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
+} // namespace de
 
 #endif // DENG_WORLD_GENERATORS_H

@@ -21,200 +21,197 @@
 
 #include <de/memoryzone.h>
 
-#include "de_platform.h"
-#include "de_console.h"
-#include "dd_main.h"
+//#include "de_platform.h"
+//#include "de_console.h"
+//#include "dd_main.h"
+
 #include "world/generators.h"
 
-typedef struct listnode_s {
-    struct listnode_s* next;
-    ptcgen_t* gen;
-} listnode_t;
+namespace de {
 
-struct generators_s {
-    ptcgen_t* activeGens[GENERATORS_MAX];
-
-    listnode_t* linkStore;
-    uint linkStoreCursor;
-    uint linkStoreSize;
-
-    // Array of list heads containing links from linkStore to generators in activeGens.
-    listnode_t** lists;
-    uint listsSize;
+struct ListNode
+{
+    ListNode *next;
+    ptcgen_t *gen;
 };
 
-Generators* Generators_New(uint listCount)
+DENG2_PIMPL(Generators)
 {
-    Generators* gens = (Generators *) Z_Malloc(sizeof(*gens), PU_MAP, 0);
-    if(!gens) Con_Error("Generators_New: Failed on allocation of %lu bytes for new Generators instance.", (unsigned long) sizeof(*gens));
+    ptcgen_t *activeGens[GENERATORS_MAX];
 
-    memset(gens->activeGens, 0, sizeof(gens->activeGens));
+    uint linkStoreSize;
+    ListNode *linkStore;
+    uint linkStoreCursor;
 
-    gens->listsSize = listCount;
-    gens->lists = (listnode_t **) Z_Calloc(sizeof(listnode_t*) * listCount, PU_MAP, 0);
+    uint listsSize;
+    // Array of list heads containing links from linkStore to generators in activeGens.
+    ListNode **lists;
 
-    // We can link 64 generators each into four lists each before running out of links.
-    gens->linkStoreSize = 4 * GENERATORS_MAX;
-    gens->linkStore = (listnode_t *) Z_Malloc(sizeof(listnode_t) * gens->linkStoreSize, PU_MAP, 0);
-    gens->linkStoreCursor = 0;
+    Instance(Public *i, uint listCount)
+        : Base(i),
+          // We can link 64 generators each into four lists each before running out of links.
+          linkStoreSize(4 * GENERATORS_MAX),
+          linkStore((ListNode *) Z_Malloc(sizeof(ListNode) * linkStoreSize, PU_MAP, 0)),
+          linkStoreCursor(0),
+          listsSize(listCount),
+          lists((ListNode **) Z_Calloc(sizeof(ListNode*) * listsSize, PU_MAP, 0))
+    {
+        zap(activeGens);
+    }
 
-    return gens;
+    ~Instance()
+    {
+        Z_Free(lists);
+        Z_Free(linkStore);
+    }
+
+    /**
+     * Returns an unused link from the linkStore.
+     */
+    ListNode *newLink()
+    {
+        if(linkStoreCursor < linkStoreSize)
+            return &linkStore[linkStoreCursor++];
+
+        LOG_AS("Generators::newLink");
+        LOG_WARNING("Exhausted generator link storage.");
+        return 0;
+    }
+};
+
+Generators::Generators(uint listCount)
+    : d(new Instance(this, listCount))
+{}
+
+void Generators::clear()
+{
+    emptyLists();
+    zap(d->activeGens);
 }
 
-void Generators_Delete(Generators* gens)
+ptcgen_t *Generators::generator(ptcgenid_t id) const
 {
-    assert(gens);
-    Z_Free(gens->lists);
-    Z_Free(gens->linkStore);
-    Z_Free(gens);
-}
-
-void Generators_Clear(Generators* gens)
-{
-    assert(gens);
-    Generators_EmptyLists(gens);
-    memset(gens->activeGens, 0, sizeof(gens->activeGens));
-}
-
-ptcgen_t* Generators_Generator(Generators* gens, ptcgenid_t id)
-{
-    assert(gens);
     if(id >= 0 && id < GENERATORS_MAX)
-        return gens->activeGens[id];
-    return NULL; // Not found.
+    {
+        return d->activeGens[id];
+    }
+    return 0; // Not found.
 }
 
-ptcgenid_t Generators_GeneratorId(Generators* gens, const ptcgen_t* gen)
+Generators::ptcgenid_t Generators::generatorId(ptcgen_t const *gen) const
 {
-    assert(gens);
     if(gen)
     {
-        ptcgenid_t i;
-        for(i = 0; i < GENERATORS_MAX; ++i)
+        for(ptcgenid_t i = 0; i < GENERATORS_MAX; ++i)
         {
-            if(gens->activeGens[i] == gen)
+            if(d->activeGens[i] == gen)
                 return i;
         }
     }
     return -1; // Not found.
 }
 
-ptcgenid_t Generators_NextAvailableId(Generators* gens)
+Generators::ptcgenid_t Generators::nextAvailableId() const
 {
-    ptcgenid_t i;
-    assert(gens);
     /// @todo Optimize: Cache this result.
-    for(i = 0; i < GENERATORS_MAX; ++i)
+    for(ptcgenid_t i = 0; i < GENERATORS_MAX; ++i)
     {
-        if(!gens->activeGens[i])
+        if(!d->activeGens[i])
             return i;
     }
     return -1; // None available.
 }
 
-/**
- * Returns an unused link from the linkStore.
- */
-static listnode_t* Generators_NewLink(Generators* gens)
+ptcgen_t *Generators::unlink(ptcgen_t *gen)
 {
-    assert(gens);
-    if(gens->linkStoreCursor < gens->linkStoreSize)
-        return &gens->linkStore[gens->linkStoreCursor++];
-
-    VERBOSE( Con_Message("Generators_NewLink: Exhausted store.") );
-    return NULL;
-}
-
-ptcgen_t* Generators_Unlink(Generators* gens, ptcgen_t* gen)
-{
-    ptcgenid_t i;
-    assert(gens);
-
-    for(i = 0; i < GENERATORS_MAX; ++i)
+    if(gen)
     {
-        if(gens->activeGens[i] == gen)
+        for(ptcgenid_t i = 0; i < GENERATORS_MAX; ++i)
         {
-            gens->activeGens[i] = 0;
-            break;
+            if(d->activeGens[i] == gen)
+            {
+                d->activeGens[i] = 0;
+                break;
+            }
         }
     }
     return gen;
 }
 
-ptcgen_t* Generators_Link(Generators* gens, ptcgenid_t slot, ptcgen_t* gen)
+ptcgen_t *Generators::link(ptcgen_t *gen, ptcgenid_t slot)
 {
-    assert(gens);
-    assert(slot < GENERATORS_MAX);
-    // Sanity check - generator is not already linked.
-    assert(Generators_GeneratorId(gens, gen) < 0);
+    if(gen && slot < GENERATORS_MAX)
+    {
+        // Sanity check - generator is not already linked.
+        DENG_ASSERT(generatorId(gen) < 0);
 
-    gens->activeGens[slot] = gen;
+        d->activeGens[slot] = gen;
+    }
     return gen;
 }
 
-ptcgen_t* Generators_LinkToList(Generators* gens, ptcgen_t* gen, uint listIndex)
+ptcgen_t *Generators::linkToList(ptcgen_t *gen, uint listIndex)
 {
-    listnode_t* link, *it;
-    assert(gens);
+    DENG_ASSERT(listIndex < d->listsSize);
 
     // Sanity check - generator is one from this collection.
-    assert(Generators_GeneratorId(gens, gen) >= 0);
+    DENG_ASSERT(generatorId(gen) >= 0);
 
     // Must check that it isn't already there...
-    assert(listIndex < gens->listsSize);
-    for(it = gens->lists[listIndex]; it; it = it->next)
+    for(ListNode *it = d->lists[listIndex]; it; it = it->next)
     {
-        if(it->gen == gen) return gen; // No, no...
-        /*Con_Error("Generators_LinkToList: Attempted repeat link of generator %p to list %u.", (void*)gen, listIndex);
-        exit(1); // Unreachable.*/
+        if(it->gen == gen)
+        {
+            LOG_AS("Generators::linkToList");
+            LOG_DEBUG("Attempted repeat link of generator %p to list %u.")
+                    << de::dintptr(gen) << listIndex;
+
+            return gen; // No, no...
+        }
     }
 
     // We need a new link.
-    link = Generators_NewLink(gens);
-    if(link)
+    if(ListNode *link = d->newLink())
     {
         link->gen = gen;
-        link->next = gens->lists[listIndex];
-        gens->lists[listIndex] = link;
+        link->next = d->lists[listIndex];
+        d->lists[listIndex] = link;
     }
+
     return gen;
 }
 
-void Generators_EmptyLists(Generators* gens)
+void Generators::emptyLists()
 {
-    assert(gens);
-    if(!gens->lists) return;
+    if(!d->lists) return;
 
-    memset(gens->lists, 0, sizeof(*gens->lists) * gens->listsSize);
-    gens->linkStoreCursor = 0;
+    std::memset(d->lists, 0, sizeof(*d->lists) * d->listsSize);
+    d->linkStoreCursor = 0;
 }
 
-int Generators_Iterate(Generators* gens, int (*callback) (ptcgen_t*, void*), void* parameters)
+int Generators::iterate(int (*callback) (ptcgen_t *, void *), void *parameters)
 {
-    ptcgenid_t i;
-    assert(gens);
-    for(i = 0; i < GENERATORS_MAX; ++i)
+    int result = false; // Continue iteration.
+    for(ptcgenid_t i = 0; i < GENERATORS_MAX; ++i)
     {
-        int result;
-
         // Only consider active generators.
-        if(!gens->activeGens[i]) continue;
+        if(!d->activeGens[i]) continue;
 
-        result = callback(gens->activeGens[i], parameters);
-        if(result) return result;
+        result = callback(d->activeGens[i], parameters);
+        if(result) break;
     }
-    return false; // Continue iteration.
+    return result;
 }
 
-int Generators_IterateList(Generators* gens, uint listIndex,
-    int (*callback) (ptcgen_t*, void*), void* parameters)
+int Generators::iterateList(uint listIndex, int (*callback) (ptcgen_t *, void *), void *parameters)
 {
-    listnode_t* it;
-    assert(gens);
-    for(it = gens->lists[listIndex]; it; it = it->next)
+    int result = false; // Continue iteration.
+    for(ListNode *it = d->lists[listIndex]; it; it = it->next)
     {
-        int result = callback(it->gen, parameters);
-        if(result) return result;
+        result = callback(it->gen, parameters);
+        if(result) break;
     }
-    return false; // Continue iteration.
+    return result;
 }
+
+} // namespace de

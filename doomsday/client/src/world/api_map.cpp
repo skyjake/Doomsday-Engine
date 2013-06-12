@@ -1587,8 +1587,13 @@ DENG_EXTERN_C void P_MobjSetState(mobj_t* mobj, int statenum);
 DENG_EXTERN_C angle_t Mobj_AngleSmoothed(mobj_t* mo);
 DENG_EXTERN_C void Mobj_OriginSmoothed(mobj_t* mo, coord_t origin[3]);
 
-// p_particle.c
-DENG_EXTERN_C void P_SpawnDamageParticleGen(struct mobj_s* mo, struct mobj_s* inflictor, int amount);
+#undef P_SpawnDamageParticleGen
+DENG_EXTERN_C void P_SpawnDamageParticleGen(mobj_t *mo, mobj_t *inflictor, int amount)
+{
+#ifdef __CLIENT__
+    P_SpawnMapDamageParticleGen(mo, inflictor, amount);
+#endif
+}
 
 // p_think.c
 DENG_EXTERN_C struct mobj_s* P_MobjForID(int id);

@@ -170,6 +170,8 @@ void P_SpawnTypeParticleGens(void);
 
 void P_SpawnMapParticleGens(void);
 
+void P_SpawnMapDamageParticleGen(struct mobj_s *mo, struct mobj_s *inflictor, int amount);
+
 /**
  * Creates a new flat-triggered particle generator based on the given
  * definition. The generator is added to the list of active ptcgens.
