@@ -89,13 +89,14 @@ DENG2_PIMPL(ConsoleWidget)
         if(useOffsetAnimation)
         {
             // Sync the log content with the height animation.
-            log->setContentYOffset(Animation::range(Animation::EaseIn, delta, 0,
+            log->setContentYOffset(Animation::range(Animation::EaseOut,
+                                                    log->contentYOffset().value() + delta, 0,
                                                     height->animation().remainingTime()));
         }
     }
 };
 
-ConsoleWidget::ConsoleWidget() : GuiWidget("Console"), d(new Instance(this))
+ConsoleWidget::ConsoleWidget() : GuiWidget("console"), d(new Instance(this))
 {
     Rule const &unit = style().rules().rule("unit");
 

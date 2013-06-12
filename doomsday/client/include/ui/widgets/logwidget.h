@@ -49,6 +49,7 @@ public:
     void clear();
 
     void setContentYOffset(de::Animation const &anim);
+    de::Animation const &contentYOffset() const;
 
     // Events.
     void viewResized();

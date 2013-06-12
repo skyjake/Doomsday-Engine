@@ -809,6 +809,11 @@ void LogWidget::setContentYOffset(Animation const &anim)
     }
 }
 
+Animation const &LogWidget::contentYOffset() const
+{
+    return d->contentOffset;
+}
+
 void LogWidget::viewResized()
 {
     d->updateProjection();
