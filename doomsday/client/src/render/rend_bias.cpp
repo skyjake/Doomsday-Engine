@@ -156,8 +156,9 @@ void SB_DestroySurface(BiasSurface *bsuf)
         }
     }
 
-    Z_Free(bsuf->illum);
-    Z_Free(bsuf);
+    /// Bias surfaces and vertex illum data is block-allocated.
+    //Z_Free(bsuf->illum);
+    //Z_Free(bsuf);
 }
 
 int SB_NewSourceAt(coord_t x, coord_t y, coord_t z, float size, float minLight,
