@@ -22,10 +22,10 @@
 #include <QtAlgorithms>
 
 #include <de/memoryzone.h>
-#include <de/timer.h>
 
 #include <de/Error>
 #include <de/Log>
+#include <de/Time>
 
 #include "de_base.h"
 #include "de_console.h"
@@ -514,6 +514,16 @@ bool World::loadMap(de::Uri const &uri)
         }
     }
 
+    // As the memory zone does not provide the mechanisms to prepare another
+    // map in parallel we must free the current map first.
+    /// @todo The memory zone would still be useful if the purge and tagging
+    /// mechanisms allowed more fine grained control. It is no longer useful
+    /// for allocating memory used elsewhere so it should be repurposed for
+    /// this usage specifically.
+    if(d->map)
+    {
+        delete d->map; d->map = 0;
+    }
     Z_FreeTags(PU_MAP, PU_PURGELEVEL - 1);
 
     d->changeMap(d->loadMap(uri));
