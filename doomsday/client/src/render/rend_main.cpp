@@ -1643,7 +1643,7 @@ static void writeLeafPlane(Plane &plane)
     // Skip planes with a sky-masked material?
     if(!devRendSkyMode)
     {
-        if(surface.hasSkyMaskedMaterial() && plane.type() != Plane::Middle)
+        if(surface.hasSkyMaskedMaterial() && plane.inSectorIndex() > Sector::Ceiling)
             return; // Not handled here (drawn with the mask geometry).
     }
 
@@ -1652,7 +1652,7 @@ static void writeLeafPlane(Plane &plane)
 
     // Add the Y offset to orient the Y flipped material.
     /// @todo fixme: What is this meant to do? -ds
-    if(plane.type() == Plane::Ceiling)
+    if(plane.inSectorIndex() == Sector::Ceiling)
         materialOrigin.y -= face.aaBox().maxY - face.aaBox().minY;
     materialOrigin.y = -materialOrigin.y;
 
@@ -1661,10 +1661,10 @@ static void writeLeafPlane(Plane &plane)
 
     // Set the texture origin, Y is flipped for the ceiling.
     Vector3d texTL(face.aaBox().minX,
-                   face.aaBox().arvec2[plane.type() == Plane::Floor? 1 : 0][VY],
+                   face.aaBox().arvec2[plane.inSectorIndex() == Sector::Floor? 1 : 0][VY],
                    plane.visHeight());
     Vector3d texBR(face.aaBox().maxX,
-                   face.aaBox().arvec2[plane.type() == Plane::Floor? 0 : 1][VY],
+                   face.aaBox().arvec2[plane.inSectorIndex() == Sector::Floor? 0 : 1][VY],
                    plane.visHeight());
 
     rendworldpoly_params_t parm; zap(parm);
@@ -1696,7 +1696,7 @@ static void writeLeafPlane(Plane &plane)
             parm.flags |= RPF_SKYMASK;
         }
     }
-    else if(plane.type() != Plane::Middle)
+    else if(plane.inSectorIndex() > Sector::Ceiling)
     {
         parm.blendMode = BM_NORMAL;
         parm.forceOpaque = true;
@@ -1712,7 +1712,7 @@ static void writeLeafPlane(Plane &plane)
 
     uint numVertices;
     rvertex_t *rvertices;
-    buildLeafPlaneGeometry(*leaf, (plane.type() == Plane::Ceiling)? Anticlockwise : Clockwise,
+    buildLeafPlaneGeometry(*leaf, (plane.inSectorIndex() == Sector::Ceiling)? Anticlockwise : Clockwise,
                            plane.visHeight(),
                            &rvertices, &numVertices);
 
@@ -1742,7 +1742,7 @@ static void writeLeafPlane(Plane &plane)
         if(parm.glowing < 1 && !(!useDynLights && !useWallGlow))
         {
             /// @ref projectLightFlags
-            int plFlags = (PLF_NO_PLANE | (plane.type() == Plane::Floor? PLF_TEX_FLOOR : PLF_TEX_CEILING));
+            int plFlags = (PLF_NO_PLANE | (plane.inSectorIndex() == Sector::Floor? PLF_TEX_FLOOR : PLF_TEX_CEILING));
 
             parm.lightListIdx =
                 LO_ProjectToSurface(plFlags, leaf, 1, *parm.texTL, *parm.texBR,
@@ -1750,7 +1750,7 @@ static void writeLeafPlane(Plane &plane)
         }
 
         // Mobj shadows?
-        if(plane.type() == Plane::Floor && parm.glowing < 1 && Rend_MobjShadowsEnabled())
+        if(plane.inSectorIndex() == Sector::Floor && parm.glowing < 1 && Rend_MobjShadowsEnabled())
         {
             // Glowing planes inversely diminish shadow strength.
             float blendFactor = 1 - parm.glowing;
@@ -1817,7 +1817,7 @@ static void writeLeafSkyMaskStrips(SkyFixEdge::FixType fixType)
     float startMaterialOffset = 0;
 
     // Determine the relative sky plane (for monitoring material changes).
-    int relPlane = fixType == SkyFixEdge::Upper? Plane::Ceiling : Plane::Floor;
+    int relPlane = fixType == SkyFixEdge::Upper? Sector::Ceiling : Sector::Floor;
 
     // Begin generating geometry.
     BspLeaf::Segments const &segments = bspLeaf->clockwiseSegments();
@@ -1931,9 +1931,9 @@ static void writeLeafSkyMaskStrips(SkyFixEdge::FixType fixType)
 static coord_t skyPlaneZ(BspLeaf *bspLeaf, int skyCap)
 {
     DENG_ASSERT(bspLeaf);
-    Plane::Type const plane = (skyCap & SKYCAP_UPPER)? Plane::Ceiling : Plane::Floor;
+    Sector::Type const plane = (skyCap & SKYCAP_UPPER)? Sector::Ceiling : Sector::Floor;
     if(!bspLeaf->hasSector() || !P_IsInVoid(viewPlayer))
-        return App_World().map().skyFix(plane == Plane::Ceiling);
+        return App_World().map().skyFix(plane == Sector::Ceiling);
     return bspLeaf->sector().plane(plane).visHeight();
 }
 
@@ -2198,8 +2198,8 @@ static void markFrontFacingSegments()
 static inline bool canOccludeSectorPairBoundary(Sector const &frontSec,
     Sector const &backSec, bool upward)
 {
-    Plane const &frontPlane = frontSec.plane(upward? Plane::Ceiling : Plane::Floor);
-    Plane const &backPlane  =  backSec.plane(upward? Plane::Ceiling : Plane::Floor);
+    Plane const &frontPlane = frontSec.plane(upward? Sector::Ceiling : Sector::Floor);
+    Plane const &backPlane  =  backSec.plane(upward? Sector::Ceiling : Sector::Floor);
 
     // Do not create an occlusion between two sky-masked planes.
     // Only because the open range does not account for the sky plane height? -ds
@@ -2978,8 +2978,9 @@ static void Rend_DrawSurfaceVectors()
         {
             origin = Vector3d(bspLeaf->face().center(), plane->visHeight());
 
-            if(plane->type() != Plane::Middle && plane->surface().hasSkyMaskedMaterial())
-                origin.z = App_World().map().skyFix(plane->type() == Plane::Ceiling);
+            if(plane->surface().hasSkyMaskedMaterial() &&
+               (plane->inSectorIndex() == Sector::Floor || plane->inSectorIndex() == Sector::Ceiling))
+                origin.z = App_World().map().skyFix(plane->inSectorIndex() == Sector::Ceiling);
 
             drawSurfaceTangentSpaceVectors(&plane->surface(), origin);
         }

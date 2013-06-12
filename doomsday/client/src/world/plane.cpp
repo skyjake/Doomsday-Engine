@@ -70,9 +70,6 @@ DENG2_PIMPL(Plane)
     /// Plane surface.
     Surface surface;
 
-    /// Logical type of the plane. @todo resolve ambiguous meaning -ds
-    Type type;
-
     Instance(Public *i, Sector &sector, coord_t height)
         : Base(i),
           sector(&sector),
@@ -82,11 +79,10 @@ DENG2_PIMPL(Plane)
           visHeight(height),
           visHeightDelta(0),
           speed(0),
-          surface(dynamic_cast<MapElement &>(*i)),
-          type(Floor)
+          surface(dynamic_cast<MapElement &>(*i))
     {
         oldHeight[0] = oldHeight[1] = height;
-        std::memset(&soundEmitter, 0, sizeof(soundEmitter));
+        zap(soundEmitter);
     }
 
     ~Instance()
@@ -172,7 +168,7 @@ DENG2_PIMPL(Plane)
         if(ddMapSetup) return;
 
         // "Middle" planes have no dependent surfaces.
-        if(type == Plane::Middle) return;
+        if(inSectorIndex > Sector::Ceiling) return;
 
         // Mark the decor lights on the sides of this plane as requiring
         // an update.
@@ -332,13 +328,6 @@ void Plane::updateHeightTracking()
 void Plane::setNormal(Vector3f const &newNormal)
 {
     d->surface.setNormal(newNormal); // will normalize
-
-    d->type = (d->surface.normal().z < 0? Ceiling : Floor);
-}
-
-Plane::Type Plane::type() const
-{
-    return d->type;
 }
 
 int Plane::property(DmuArgs &args) const

@@ -366,11 +366,11 @@ void P_SpawnPlaneParticleGen(ded_ptcgen_t const *def, Plane *plane)
     if(!plane->sector().sideCount()) return;
 
     // Plane we spawn relative to may not be this one.
-    Plane::Type relPlane = plane->type();
+    int relPlane = plane->inSectorIndex();
     if(def->flags & PGF_CEILING_SPAWN)
-        relPlane = Plane::Ceiling;
+        relPlane = Sector::Ceiling;
     if(def->flags & PGF_FLOOR_SPAWN)
-        relPlane = Plane::Floor;
+        relPlane = Sector::Floor;
 
     plane = &plane->sector().plane(relPlane);
 
@@ -628,7 +628,7 @@ static void P_NewParticle(ptcgen_t *gen)
         }
         else if(gen->flags & PGF_FLOOR_SPAWN ||
                 (!(gen->flags & (PGF_FLOOR_SPAWN | PGF_CEILING_SPAWN)) &&
-                 plane->type() == Plane::Floor))
+                 plane->inSectorIndex() == Sector::Floor))
         {
             // Spawn on the floor.
             pt->origin[VZ] = FLT2FIX(plane->height()) + radius;

@@ -1294,17 +1294,7 @@ static void drawLinkedEdgeShadows(ShadowLink &link, Sector &sector,
 
     if(!(shadowDark > .0001f)) return;
 
-    if(doPlanes[Plane::Floor])
-    {
-        writeShadowSection(Plane::Floor, *link.side, shadowDark);
-    }
-
-    if(doPlanes[Plane::Ceiling])
-    {
-        writeShadowSection(Plane::Ceiling, *link.side, shadowDark);
-    }
-
-    for(int pln = Plane::Middle; pln < sector.planeCount(); ++pln)
+    for(int pln = 0; pln < sector.planeCount(); ++pln)
     {
         writeShadowSection(pln, *link.side, shadowDark);
     }

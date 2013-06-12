@@ -472,8 +472,8 @@ static void plotSourcesForPlane(Plane &pln)
     Sector &sector = pln.sector();
     AABoxd const &sectorAABox = sector.aaBox();
 
-    Vector3d v1(sectorAABox.minX, pln.type() == Plane::Floor? sectorAABox.maxY : sectorAABox.minY, pln.visHeight());
-    Vector3d v2(sectorAABox.maxX, pln.type() == Plane::Floor? sectorAABox.minY : sectorAABox.maxY, pln.visHeight());
+    Vector3d v1(sectorAABox.minX, pln.inSectorIndex() == Sector::Floor? sectorAABox.maxY : sectorAABox.minY, pln.visHeight());
+    Vector3d v2(sectorAABox.maxX, pln.inSectorIndex() == Sector::Floor? sectorAABox.minY : sectorAABox.maxY, pln.visHeight());
 
     Vector2f offset(-fmod(sectorAABox.minX, 64) - surface.visMaterialOrigin()[0],
                     -fmod(sectorAABox.minY, 64) - surface.visMaterialOrigin()[1]);

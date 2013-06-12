@@ -1938,7 +1938,7 @@ static Material *chooseFixMaterial(Line::Side &side, int section)
     }
 
     // Our second choice is a material from this sector.
-    choice2 = frontSec->planeSurface(section == Line::Side::Bottom? Plane::Floor : Plane::Ceiling).materialPtr();
+    choice2 = frontSec->planeSurface(section == Line::Side::Bottom? Sector::Floor : Sector::Ceiling).materialPtr();
 
     // Prefer a non-animated, non-masked material.
     if(choice1 && !choice1->isAnimated() && !choice1->isSkyMasked())

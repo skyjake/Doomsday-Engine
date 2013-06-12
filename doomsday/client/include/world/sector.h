@@ -76,9 +76,12 @@ public:
     static float const DEFAULT_LIGHT_LEVEL; ///< 1.f
     static de::Vector3f const DEFAULT_LIGHT_COLOR; ///< red=1.f green=1.f, blue=1.f
 
+    typedef QList<BspLeaf *>    BspLeafs;
+    typedef QList<Plane *>      Planes;
     typedef QList<Line::Side *> Sides;
-    typedef QList<Plane *> Planes;
-    typedef QList<BspLeaf *> BspLeafs;
+
+    /// Plane identifiers:
+    enum { Floor, Ceiling };
 
 #ifdef __CLIENT__
     /**
@@ -128,18 +131,18 @@ public:
     /**
      * Returns the floor plane of the sector.
      */
-    inline Plane &floor() { return plane(Plane::Floor); }
+    inline Plane &floor() { return plane(Floor); }
 
     /// @copydoc floor()
-    inline Plane const &floor() const { return plane(Plane::Floor); }
+    inline Plane const &floor() const { return plane(Floor); }
 
     /**
      * Returns the ceiling plane of the sector.
      */
-    inline Plane &ceiling() { return plane(Plane::Ceiling); }
+    inline Plane &ceiling() { return plane(Ceiling); }
 
     /// @copydoc ceiling()
-    inline Plane const &ceiling() const { return plane(Plane::Ceiling); }
+    inline Plane const &ceiling() const { return plane(Ceiling); }
 
     Plane *addPlane(de::Vector3f const &normal, coord_t height);
 

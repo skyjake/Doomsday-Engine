@@ -73,7 +73,7 @@ void R_SetRelativeHeights(Sector const *front, Sector const *back, int planeInde
 #else
             *fz = front->plane(planeIndex).height();
 #endif
-            if(planeIndex != Plane::Floor)
+            if(planeIndex != Sector::Floor)
                 *fz = -(*fz);
         }
         else
@@ -90,7 +90,7 @@ void R_SetRelativeHeights(Sector const *front, Sector const *back, int planeInde
 #else
             *bz = back->plane(planeIndex).height();
 #endif
-            if(planeIndex != Plane::Floor)
+            if(planeIndex != Sector::Floor)
                 *bz = -(*bz);
         }
         else
@@ -102,13 +102,13 @@ void R_SetRelativeHeights(Sector const *front, Sector const *back, int planeInde
     {
         if(back)
         {
-            int otherPlaneIndex = planeIndex == Plane::Floor? Plane::Ceiling : Plane::Floor;
+            int otherPlaneIndex = planeIndex == Sector::Floor? Sector::Ceiling : Sector::Floor;
 #ifdef __CLIENT__
             *bhz = back->plane(otherPlaneIndex).visHeight();
 #else
             *bhz = back->plane(otherPlaneIndex).height();
 #endif
-            if(planeIndex != Plane::Floor)
+            if(planeIndex != Sector::Floor)
                 *bhz = -(*bhz);
         }
         else

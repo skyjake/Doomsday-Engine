@@ -52,14 +52,6 @@ public:
 
     static int const MAX_SMOOTH_MOVE; ///< 64, $smoothplane: Maximum speed for a smoothed plane.
 
-    /// In-Sector plane types: @todo move to Sector
-    enum Type
-    {
-        Floor,
-        Ceiling,
-        Middle
-    };
-
 public:
     /**
      * Construct a new plane.
@@ -195,11 +187,6 @@ public:
      * updated also.
      */
     void setNormal(de::Vector3f const &newNormal);
-
-    /**
-     * Returns the logical type of the plane.
-     */
-    Type type() const;
 
 protected:
     int property(DmuArgs &args) const;

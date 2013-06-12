@@ -511,11 +511,11 @@ int Sector::property(DmuArgs &args) const
         args.setValue(DMT_SECTOR_VALIDCOUNT, &d->validCount, 0);
         break;
     case DMU_FLOOR_PLANE: {
-        Plane *pln = d->planes[Plane::Floor];
+        Plane *pln = d->planes[Floor];
         args.setValue(DMT_SECTOR_FLOORPLANE, &pln, 0);
         break; }
     case DMU_CEILING_PLANE: {
-        Plane* pln = d->planes[Plane::Ceiling];
+        Plane *pln = d->planes[Ceiling];
         args.setValue(DMT_SECTOR_CEILINGPLANE, &pln, 0);
         break; }
     default:
