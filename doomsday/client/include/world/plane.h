@@ -146,6 +146,8 @@ public:
      */
     coord_t speed() const;
 
+#ifdef __CLIENT__
+
     /**
      * Returns the current interpolated visual height of the plane in the map
      * coordinate space.
@@ -182,6 +184,8 @@ public:
      * @see targetHeight()
      */
     void updateHeightTracking();
+
+#endif // __CLIENT__
 
     /**
      * Change the normal of the plane to @a newNormal (which if necessary will

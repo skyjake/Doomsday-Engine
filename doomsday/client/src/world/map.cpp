@@ -114,18 +114,19 @@ DENG2_PIMPL(Map)
     QScopedPointer<Blockmap> lineBlockmap;
     QScopedPointer<Blockmap> bspLeafBlockmap;
 
+#ifdef __CLIENT__
     PlaneSet trackedPlanes;
     SurfaceSet scrollingSurfaces;
-#ifdef __CLIENT__
+
     SurfaceSet decoratedSurfaces;
     SurfaceSet glowingSurfaces;
 
     QScopedPointer<Generators> generators;
     QScopedPointer<LightGrid> lightGrid;
-#endif
 
     coord_t skyFloorHeight;
     coord_t skyCeilingHeight;
+#endif
 
     // Current LOS trace state.
     /// @todo Does not belong here.
@@ -135,9 +136,11 @@ DENG2_PIMPL(Map)
     Instance(Public *i)
         : Base            (i),
           editingEnabled  (true),
-          bspRoot         (0),
-          skyFloorHeight  (DDMAXFLOAT),
+          bspRoot         (0)
+#ifdef __CLIENT__
+          , skyFloorHeight(DDMAXFLOAT),
           skyCeilingHeight(DDMINFLOAT)
+#endif
     {
         zap(traceOpening);
         zap(traceLine);
@@ -515,8 +518,6 @@ DENG2_PIMPL(Map)
         }
     }
 
-#endif // __CLIENT__
-
     void updateMapSkyFixForSector(Sector const &sector)
     {
         if(!sector.sideCount()) return;
@@ -585,6 +586,8 @@ DENG2_PIMPL(Map)
             }
         }
     }
+
+#endif // __CLIENT__
 
     /**
      * Locate a polyobj in the map by sound emitter.
@@ -882,35 +885,6 @@ void Map::setTraceOpening(Line &line)
 int Map::ambientLightLevel() const
 {
     return _ambientLightLevel;
-}
-
-void Map::initSkyFix()
-{
-    Time begunAt;
-
-    LOG_AS("Map::initSkyFix");
-
-    d->skyFloorHeight   = DDMAXFLOAT;
-    d->skyCeilingHeight = DDMINFLOAT;
-
-    // Update for sector plane heights and mobjs which intersect the ceiling.
-    foreach(Sector *sector, d->sectors)
-    {
-        d->updateMapSkyFixForSector(*sector);
-    }
-
-    LOG_INFO(String("Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
-}
-
-coord_t Map::skyFix(bool ceiling) const
-{
-    return ceiling? d->skyCeilingHeight : d->skyFloorHeight;
-}
-
-void Map::setSkyFix(bool ceiling, coord_t newHeight)
-{
-    if(ceiling) d->skyCeilingHeight = newHeight;
-    else        d->skyFloorHeight   = newHeight;
 }
 
 int Map::toSideIndex(int lineIndex, int backSide) // static
@@ -1735,6 +1709,23 @@ BspLeaf *Map::bspLeafAtPoint_FixedPrecision(Vector2d const &point) const
     return bspElement->castTo<BspLeaf>();
 }
 
+void Map::updateSurfacesOnMaterialChange(Material &material)
+{
+    if(ddMapSetup) return;
+
+#ifdef __CLIENT__
+    foreach(Surface *surface, d->decoratedSurfaces)
+    {
+        if(&material == surface->materialPtr())
+        {
+            surface->markAsNeedingDecorationUpdate();
+        }
+    }
+#endif
+}
+
+#ifdef __CLIENT__
+
 void Map::lerpScrollingSurfaces(bool resetNextViewer)
 {
     if(resetNextViewer)
@@ -1829,22 +1820,34 @@ Map::PlaneSet &Map::trackedPlanes()
     return d->trackedPlanes;
 }
 
-void Map::updateSurfacesOnMaterialChange(Material &material)
+void Map::initSkyFix()
 {
-    if(ddMapSetup) return;
+    Time begunAt;
 
-#ifdef __CLIENT__
-    foreach(Surface *surface, d->decoratedSurfaces)
+    LOG_AS("Map::initSkyFix");
+
+    d->skyFloorHeight   = DDMAXFLOAT;
+    d->skyCeilingHeight = DDMINFLOAT;
+
+    // Update for sector plane heights and mobjs which intersect the ceiling.
+    foreach(Sector *sector, d->sectors)
     {
-        if(&material == surface->materialPtr())
-        {
-            surface->markAsNeedingDecorationUpdate();
-        }
+        d->updateMapSkyFixForSector(*sector);
     }
-#endif
+
+    LOG_INFO(String("Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 }
 
-#ifdef __CLIENT__
+coord_t Map::skyFix(bool ceiling) const
+{
+    return ceiling? d->skyCeilingHeight : d->skyFloorHeight;
+}
+
+void Map::setSkyFix(bool ceiling, coord_t newHeight)
+{
+    if(ceiling) d->skyCeilingHeight = newHeight;
+    else        d->skyFloorHeight   = newHeight;
+}
 
 Generators &Map::generators()
 {

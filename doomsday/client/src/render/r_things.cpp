@@ -774,6 +774,8 @@ float R_MovementXYZPitch(float momx, float momy, float momz)
     return R_MovementPitch(mom);
 }
 
+#ifdef __CLIENT__
+
 typedef struct {
     vissprite_t *vis;
     mobj_t const *mo;
@@ -803,8 +805,6 @@ int RIT_VisMobjZ(Sector *sector, void *parameters)
 
     return false; // Continue iteration.
 }
-
-#ifdef __CLIENT__
 
 static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
     float x, float y, float z, float distance, float visOffX, float visOffY, float visOffZ,

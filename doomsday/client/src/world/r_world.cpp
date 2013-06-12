@@ -68,7 +68,11 @@ void R_SetRelativeHeights(Sector const *front, Sector const *back, int planeInde
     {
         if(front)
         {
+#ifdef __CLIENT__
             *fz = front->plane(planeIndex).visHeight();
+#else
+            *fz = front->plane(planeIndex).height();
+#endif
             if(planeIndex != Plane::Floor)
                 *fz = -(*fz);
         }
@@ -81,7 +85,11 @@ void R_SetRelativeHeights(Sector const *front, Sector const *back, int planeInde
     {
         if(back)
         {
+#ifdef __CLIENT__
             *bz = back->plane(planeIndex).visHeight();
+#else
+            *bz = back->plane(planeIndex).height();
+#endif
             if(planeIndex != Plane::Floor)
                 *bz = -(*bz);
         }
@@ -95,7 +103,11 @@ void R_SetRelativeHeights(Sector const *front, Sector const *back, int planeInde
         if(back)
         {
             int otherPlaneIndex = planeIndex == Plane::Floor? Plane::Ceiling : Plane::Floor;
+#ifdef __CLIENT__
             *bhz = back->plane(otherPlaneIndex).visHeight();
+#else
+            *bhz = back->plane(otherPlaneIndex).height();
+#endif
             if(planeIndex != Plane::Floor)
                 *bhz = -(*bhz);
         }
@@ -105,6 +117,8 @@ void R_SetRelativeHeights(Sector const *front, Sector const *back, int planeInde
         }
     }
 }
+
+#ifdef __CLIENT__
 
 void R_SideSectionCoords(Line::Side const &side, int section, bool skyClip,
     coord_t *retBottom, coord_t *retTop, Vector2f *retMaterialOrigin)
@@ -315,6 +329,8 @@ void R_SideSectionCoords(Line::Side const &side, int section, bool skyClip,
     if(retTop)    *retTop    = top;
 }
 
+#endif // __CLIENT__
+
 coord_t R_OpenRange(Line::Side const &side, Sector const *frontSec,
     Sector const *backSec, coord_t *retBottom, coord_t *retTop)
 {
@@ -347,6 +363,8 @@ coord_t R_OpenRange(Line::Side const &side, Sector const *frontSec,
     return top - bottom;
 }
 
+#ifdef __CLIENT__
+
 coord_t R_VisOpenRange(Line::Side const &side, Sector const *frontSec,
     Sector const *backSec, coord_t *retBottom, coord_t *retTop)
 {
@@ -378,8 +396,6 @@ coord_t R_VisOpenRange(Line::Side const &side, Sector const *frontSec,
 
     return top - bottom;
 }
-
-#ifdef __CLIENT__
 
 bool R_SideBackClosed(Line::Side const &side, bool ignoreOpacity)
 {

@@ -181,6 +181,8 @@ public:
      */
     void setSector(Sector *newSector);
 
+#ifdef __CLIENT__
+
     /**
      * Determines whether the BSP leaf has a positive world volume. For this
      * to be true the following criteria must be met:
@@ -194,6 +196,8 @@ public:
      *                          heights instead of the @em sharp heights.
      */
     bool hasWorldVolume(bool useVisualHeights = true) const;
+
+#endif // __CLIENT__
 
     /**
      * Returns @c true iff at least one polyobj is linked to the BSP leaf.

@@ -130,15 +130,16 @@ DENG2_PIMPL(Surface)
             i->materialOriginChanged(self, oldMaterialOrigin, changedComponents);
         }
 
+#ifdef __CLIENT__
         if(!ddMapSetup && self.isAttachedToMap())
         {
-#ifdef __CLIENT__
             /// @todo Replace with a de::Observer-based mechanism.
             self._decorationData.needsUpdate = true;
-#endif
+
             /// @todo Do not assume surface is from the CURRENT map.
             App_World().map().scrollingSurfaces().insert(&self);
         }
+#endif
     }
 
     void notifyMaterialOriginChanged(Vector2f const &oldMaterialOrigin)
@@ -312,11 +313,11 @@ bool Surface::setMaterial(Material *newMaterial, bool isMissingFix)
             d->materialIsMissingFix = false;
         }
 
+#ifdef __CLIENT__
         if(isAttachedToMap())
         {
             if(!ddMapSetup)
             {
-#ifdef __CLIENT__
                 Map &map = App_World().map(); /// @todo Do not assume surface is from the CURRENT map.
 
                 // If this plane's surface is in the decorated list, remove it.
@@ -324,11 +325,9 @@ bool Surface::setMaterial(Material *newMaterial, bool isMissingFix)
 
                 // If this plane's surface is in the glowing list, remove it.
                 map.glowingSurfaces().remove(this);
-#endif // __CLIENT__
 
                 if(newMaterial)
                 {
-#ifdef __CLIENT__
                     if(newMaterial->hasGlow())
                     {
                         map.glowingSurfaces().insert(this);
@@ -346,10 +345,10 @@ bool Surface::setMaterial(Material *newMaterial, bool isMissingFix)
                         P_SpawnPlaneParticleGen(def, d->owner.castTo<Plane>());
                     }
 
-#endif // __CLIENT__
                 }
             }
         }
+#endif // __CLIENT__
 
         d->material = newMaterial;
 

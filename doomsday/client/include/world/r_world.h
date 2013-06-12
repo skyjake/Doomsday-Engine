@@ -1,4 +1,4 @@
-/** @file world/r_world.h World Setup.
+/** @file world/r_world.h World map utilities.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -31,6 +31,8 @@
 void R_SetRelativeHeights(Sector const *front, Sector const *back, int planeIndex,
     coord_t *fz = 0, coord_t *bz = 0, coord_t *bhz = 0);
 
+#ifdef __CLIENT__
+
 /**
  * Determine the map space Z coordinates of a wall section.
  *
@@ -44,6 +46,8 @@ void R_SetRelativeHeights(Sector const *front, Sector const *back, int planeInde
  */
 void R_SideSectionCoords(Line::Side const &side, int section, bool skyClip = true,
     coord_t *bottom = 0, coord_t *top = 0, de::Vector2f *materialOrigin = 0);
+
+#endif // __CLIENT__
 
 /**
  * Find the "sharp" Z coordinate range of the opening between sectors @a frontSec
@@ -72,6 +76,8 @@ inline coord_t R_OpenRange(Line::Side const &side, coord_t *bottom = 0, coord_t 
     return R_OpenRange(side, side.sectorPtr(), side.back().sectorPtr(), bottom, top);
 }
 
+#ifdef __CLIENT__
+
 /**
  * Same as @ref R_OpenRange() but works with the "visual" (i.e., smoothed) plane
  * height coordinates rather than the "sharp" coordinates.
@@ -97,8 +103,6 @@ inline coord_t R_VisOpenRange(Line::Side const &side, coord_t *bottom = 0, coord
 {
     return R_VisOpenRange(side, side.sectorPtr(), side.back().sectorPtr(), bottom, top);
 }
-
-#ifdef __CLIENT__
 
 /**
  * @param side  Line::Side instance.

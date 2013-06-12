@@ -99,8 +99,10 @@ public:
     typedef QList<BspLeaf *> BspLeafs;
     typedef QList<Segment *> Segments;
 
+#ifdef __CLIENT__
     typedef QSet<Plane *>    PlaneSet;
     typedef QSet<Surface *>  SurfaceSet;
+#endif
 
 public: /// @todo make private:
     Uri _uri;
@@ -406,20 +408,6 @@ public:
         return pathTraverse(from, to, flags, callback, parameters);
     }
 
-    coord_t skyFix(bool ceiling) const;
-
-    inline coord_t skyFixFloor() const   { return skyFix(false /*the floor*/); }
-    inline coord_t skyFixCeiling() const { return skyFix(true /*the ceiling*/); }
-
-    void setSkyFix(bool ceiling, coord_t newHeight);
-
-    inline void setSkyFixFloor(coord_t newHeight) {
-        setSkyFix(false /*the floor*/, newHeight);
-    }
-    inline void setSkyFixCeiling(coord_t newHeight) {
-        setSkyFix(true /*the ceiling*/, newHeight);
-    }
-
     /**
      * Link the specified @a bspLeaf in internal data structures for
      * bookkeeping purposes.
@@ -479,6 +467,20 @@ public:
     EntityDatabase &entityDatabase() const;
 
 #ifdef __CLIENT__
+    coord_t skyFix(bool ceiling) const;
+
+    inline coord_t skyFixFloor() const   { return skyFix(false /*the floor*/); }
+    inline coord_t skyFixCeiling() const { return skyFix(true /*the ceiling*/); }
+
+    void setSkyFix(bool ceiling, coord_t newHeight);
+
+    inline void setSkyFixFloor(coord_t newHeight) {
+        setSkyFix(false /*the floor*/, newHeight);
+    }
+    inline void setSkyFixCeiling(coord_t newHeight) {
+        setSkyFix(true /*the ceiling*/, newHeight);
+    }
+
     /**
      * Retrieve a pointer to the Generators collection for the map. If no collection
      * has yet been constructed a new empty collection will be initialized.
@@ -560,8 +562,6 @@ public:
      */
     SurfaceSet /*const*/ &glowingSurfaces();
 
-#endif // __CLIENT__
-
     /**
      * $smoothmatoffset: interpolate the visual offset.
      */
@@ -591,6 +591,8 @@ public:
      * Returns the set of tracked planes for the map.
      */
     PlaneSet /*const*/ &trackedPlanes();
+
+#endif // __CLIENT__
 
     /**
      * Helper function for returning the relevant line side index for @a lineIndex
@@ -692,6 +694,7 @@ public: /// @todo Make private:
      */
     void initPolyobjs();
 
+#ifdef __CLIENT__
     /**
      * Fixing the sky means that for adjacent sky sectors the lower sky
      * ceiling is lifted to match the upper sky. The raising only affects
@@ -699,7 +702,6 @@ public: /// @todo Make private:
      */
     void initSkyFix();
 
-#ifdef __CLIENT__
     void buildSurfaceLists();
 
     /**

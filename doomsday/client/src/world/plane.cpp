@@ -91,6 +91,7 @@ DENG2_PIMPL(Plane)
 
     ~Instance()
     {
+#ifdef __CLIENT__
         Map &map = App_World().map();
 
         // If this plane is currently being watched, remove it.
@@ -100,8 +101,6 @@ DENG2_PIMPL(Plane)
         // If this plane's surface is in the moving list, remove it.
         /// @todo Map should observe Deletion.
         map.scrollingSurfaces().remove(&surface);
-
-#ifdef __CLIENT__
 
         // If this plane's surface is in the glowing list, remove it.
         /// @todo Map should observe Deletion.
@@ -147,6 +146,7 @@ DENG2_PIMPL(Plane)
         // Notify interested parties of the change.
         notifyHeightChanged(oldHeight);
 
+#ifdef __CLIENT__
         /// @todo Map should observe.
         if(!ddMapSetup)
         {
@@ -155,10 +155,9 @@ DENG2_PIMPL(Plane)
                 App_World().map().trackedPlanes().insert(&self);
             }
 
-#ifdef __CLIENT__
             markDependantSurfacesForDecorationUpdate();
-#endif
         }
+#endif
     }
 
 #ifdef __CLIENT__
@@ -278,6 +277,8 @@ coord_t Plane::speed() const
     return d->speed;
 }
 
+#ifdef __CLIENT__
+
 coord_t Plane::visHeight() const
 {
     // $smoothplane
@@ -298,9 +299,7 @@ void Plane::lerpVisHeight()
     // Visible plane height.
     d->visHeight = d->height + d->visHeightDelta;
 
-#ifdef __CLIENT__
     d->markDependantSurfacesForDecorationUpdate();
-#endif
 }
 
 void Plane::resetVisHeight()
@@ -309,9 +308,7 @@ void Plane::resetVisHeight()
     d->visHeightDelta = 0;
     d->visHeight = d->oldHeight[0] = d->oldHeight[1] = d->height;
 
-#ifdef __CLIENT__
     d->markDependantSurfacesForDecorationUpdate();
-#endif
 }
 
 void Plane::updateHeightTracking()
@@ -329,6 +326,8 @@ void Plane::updateHeightTracking()
         }
     }
 }
+
+#endif // __CLIENT__
 
 void Plane::setNormal(Vector3f const &newNormal)
 {

@@ -410,20 +410,15 @@ DENG2_PIMPL(World)
 
         map->_effectiveGravity = map->_globalGravity;
 
-#ifdef __CLIENT__
-        Rend_RadioInitForMap();
-#endif
-
-        map->initSkyFix();
-
         // Init the thinker lists (public and private).
         map->initThinkerLists(0x1 | 0x2);
 
 #ifdef __CLIENT__
-        if(isClient)
-        {
-            map->clMobjReset();
-        }
+        Rend_RadioInitForMap();
+
+        map->initSkyFix();
+
+        map->clMobjReset();
 
         // Tell shadow bias to initialize the bias light sources.
         SB_InitForMap(map->oldUniqueId());
@@ -531,6 +526,7 @@ bool World::loadMap(de::Uri const &uri)
     return d->map != 0;
 }
 
+#ifdef __CLIENT__
 static void resetAllMapPlaneVisHeights(Map &map)
 {
     foreach(Sector *sector, map.sectors())
@@ -539,6 +535,7 @@ static void resetAllMapPlaneVisHeights(Map &map)
         plane->resetVisHeight();
     }
 }
+#endif
 
 static void updateAllMapSectors(Map &map)
 {
@@ -570,12 +567,17 @@ void World::setupMap(int mode)
     case DDSMM_AFTER_LOADING:
         DENG_ASSERT(d->map);
 
+#ifdef __CLIENT__
         // Update everything again. Its possible that after loading we now have
         // more HOMs to fix, etc..
         d->map->initSkyFix();
+#endif
 
         updateAllMapSectors(*d->map);
+
+#ifdef __CLIENT__
         resetAllMapPlaneVisHeights(*d->map);
+#endif
 
         d->map->initPolyobjs();
         DD_ResetTimer();
@@ -597,20 +599,20 @@ void World::setupMap(int mode)
         Sv_InitPools();
 #endif
 
+        d->map->initPolyobjs();
+
 #ifdef __CLIENT__
         // Recalculate the light range mod matrix.
         Rend_UpdateLightModMatrix();
-#endif
 
-        d->map->initPolyobjs();
-#ifdef __CLIENT__
         P_MapSpawnPlaneParticleGens();
 #endif
 
         updateAllMapSectors(*d->map);
-        resetAllMapPlaneVisHeights(*d->map);
 
 #ifdef __CLIENT__
+        resetAllMapPlaneVisHeights(*d->map);
+
         d->map->buildSurfaceLists();
 
         Time begunPrecacheAt;
@@ -659,8 +661,13 @@ void World::setupMap(int mode)
             {
                 if(BspLeaf *bspLeaf = d->map->bspLeafAtPoint(mo->origin))
                 {
+#ifdef __CLIENT__
                     if(mo->origin[VZ] >= bspLeaf->sector().floor().visHeight() &&
                        mo->origin[VZ] < bspLeaf->sector().ceiling().visHeight() - 4)
+#else
+                    if(mo->origin[VZ] >= bspLeaf->sector().floor().height() &&
+                       mo->origin[VZ] < bspLeaf->sector().ceiling().height() - 4)
+#endif
                     {
                         ddpl.inVoid = false;
                     }
