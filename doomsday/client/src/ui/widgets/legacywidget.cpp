@@ -191,10 +191,11 @@ void LegacyWidget::update()
 }
 
 void LegacyWidget::drawContent()
-{return;
+{
     if(isDisabled() || !GL_IsFullyInited())
         return;
 
+#if 0
     glMatrixMode(GL_TEXTURE);
     glPushMatrix();
     glMatrixMode(GL_PROJECTION);
@@ -206,9 +207,11 @@ void LegacyWidget::drawContent()
     glPushClientAttrib(GL_CLIENT_ALL_ATTRIB_BITS);
 
     GL_Init2DState();
+#endif
 
     d->draw();
 
+#if 0
     glPopClientAttrib();
     glPopAttrib();
 
@@ -218,6 +221,7 @@ void LegacyWidget::drawContent()
     glPopMatrix();
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
+#endif
 }
 
 bool LegacyWidget::handleEvent(Event const &event)
