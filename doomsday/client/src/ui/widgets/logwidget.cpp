@@ -605,7 +605,7 @@ public Font::RichFormat::IStyle
 
         // Excess entries before the visible range.
         int excess = visibleRange.start - len;
-        for(int i = 0; i <= excess; ++i)
+        for(int i = 0; i <= excess && i < cache.size(); ++i)
         {
             cache[i]->clear();
         }
