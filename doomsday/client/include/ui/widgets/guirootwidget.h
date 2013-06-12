@@ -66,6 +66,7 @@ public:
 
     // Events.
     void update();
+    void drawUntil(de::Widget &until);
 
 private:
     DENG2_PRIVATE(d)

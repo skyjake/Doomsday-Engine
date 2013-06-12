@@ -25,12 +25,12 @@ namespace de {
 
 static float const DEFAULT_SPRING = 3.f;
 
-static inline float easeIn(TimeDelta t)
+static inline float easeOut(TimeDelta t)
 {
     return t * (2 - t);
 }
 
-static inline float easeOut(TimeDelta t)
+static inline float easeIn(TimeDelta t)
 {
     return t * t;
 }
@@ -40,12 +40,12 @@ static inline float easeBoth(TimeDelta t)
     if(t < .5)
     {
         // First half acceleretes.
-        return easeOut(t * 2.0) / 2.0;
+        return easeIn(t * 2.0) / 2.0;
     }
     else
     {
         // Second half decelerates.
-        return .5 + easeIn((t - .5) * 2.0) / 2.0;
+        return .5 + easeOut((t - .5) * 2.0) / 2.0;
     }
 }
 
@@ -105,11 +105,11 @@ DENG2_PIMPL_NOREF(Animation)
             float const delta = target - value;
             switch(style)
             {
-            case EaseIn:
-                return value + easeIn(t) * delta;
-
             case EaseOut:
                 return value + easeOut(t) * delta;
+
+            case EaseIn:
+                return value + easeIn(t) * delta;
 
             case EaseBoth:
                 return value + easeBoth(t) * delta;
@@ -123,7 +123,7 @@ DENG2_PIMPL_NOREF(Animation)
 
                 if(t < peak)
                 {
-                    return value + easeIn(t/peak) * peakDelta;
+                    return value + easeOut(t/peak) * peakDelta;
                 }
                 else if(t < peak2)
                 {

@@ -27,6 +27,7 @@
 #include "ui/style.h"
 
 class GuiRootWidget;
+class BlurWidget;
 
 /**
  * Base class for graphical widgets.
@@ -79,20 +80,33 @@ public:
     struct Background {
         enum Type {
             None,               ///< No background or solid fill.
-            GradientFrame       ///< Use the "gradient frame" from the UI atlas.
+            GradientFrame,      ///< Use the "gradient frame" from the UI atlas.
+            Blurred,            ///< Blurs whatever is showing behind the widget.
+            SharedBlur          ///< Use the blur background from a BlurWidget.
         };
         de::Vector4f solidFill; ///< Always applied if opacity > 0.
         Type type;
         de::Vector4f color;     ///< Secondary color.
         float thickness;        ///< Frame border thickenss.
+        BlurWidget *blur;
 
-        Background() : type(None), thickness(0) {}
-        Background(de::Vector4f const &solid) : solidFill(solid), type(None), thickness(0) {}
+        Background()
+            : type(None), thickness(0), blur(0) {}
+
+        Background(BlurWidget &blurred, de::Vector4f const &blurColor)
+            : solidFill(blurColor), type(SharedBlur), thickness(0), blur(&blurred) {}
+
+        Background(de::Vector4f const &solid, Type t = None)
+            : solidFill(solid), type(t), thickness(0), blur(0) {}
+
         Background(Type t, de::Vector4f const &borderColor, float borderThickness = 0)
-            : type(t), color(borderColor), thickness(borderThickness) {}
+            : type(t), color(borderColor), thickness(borderThickness), blur(0) {}
+
         Background(de::Vector4f const &solid, Type t,
-                   de::Vector4f const &borderColor, float borderThickness = 0)
-            : solidFill(solid), type(t), color(borderColor), thickness(borderThickness) {}
+                   de::Vector4f const &borderColor,
+                   float borderThickness = 0)
+            : solidFill(solid), type(t), color(borderColor), thickness(borderThickness),
+              blur(0) {}
     };
 
     typedef de::Vertex2TexRgba DefaultVertex;
@@ -120,11 +134,13 @@ public:
 
     void setFont(de::DotPath const &id);
     void setTextColor(de::DotPath const &id);
+    void setMargin(de::DotPath const &id);
     void set(Background const &bg);
 
     de::Font const &font() const;
     de::ColorBank::Color textColor() const;
     de::ColorBank::Colorf textColorf() const;
+    de::Rule const &margin() const;
 
     /**
      * Determines whether the contents of the widget are supposed to be clipped
@@ -156,6 +172,7 @@ public:
     // Events.
     void initialize();
     void deinitialize();
+    void viewResized();
     void update();
     void draw() /*final*/;
 
@@ -206,6 +223,8 @@ protected:
      * is hidden.
      */
     virtual void drawContent();
+
+    void drawBlurredRect(de::Rectanglei const &rect, de::Vector4f const &color);
 
     /**
      * Requests the widget to refresh its geometry, if it has any static

@@ -21,6 +21,7 @@
 #include "ui/widgets/labelwidget.h"
 #include "ui/widgets/buttonwidget.h"
 #include "ui/widgets/consolecommandwidget.h"
+#include "ui/widgets/blurwidget.h"
 #include "ui/clientwindow.h"
 #include "ui/commandaction.h"
 
@@ -130,34 +131,25 @@ DENG2_OBSERVES(Games, GameChange)
     }
 };
 
-TaskBarWidget::TaskBarWidget() : GuiWidget("TaskBar"), d(new Instance(this))
+TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
 {
-    Rule const &gap = style().rules().rule("gap");
-    //Rule const &unit = style().rules().rule("unit");
-
+#if 0
+    // LegacyWidget is presently incompatible with blurring.
+    BlurWidget *blur = new BlurWidget("taskbar_blur");
+    add(blur);
+    Background bg(*blur, style().colors().colorf("background"));
+#else
     Background bg(style().colors().colorf("background"));
+#endif
 
-    /*
-    d->consoleButton = new ButtonWidget;
-    d->consoleButton->setText(DENG2_ESC("b") ">");
-    d->consoleButton->rule()
-            .setInput(Rule::Left,   rule().left())
-            .setInput(Rule::Height, style().fonts().font("default").height() + gap * 2)
-            .setInput(Rule::Width,  d->consoleButton->rule().height());
-    add(d->consoleButton);
-
-    // The task bar has a number of child widgets.
-    d->cmdLine = new ConsoleCommandWidget("commandline");
-    d->cmdLine->rule()
-            .setInput(Rule::Left,   d->consoleButton->rule().right())
-            .setInput(Rule::Bottom, rule().bottom());
-    add(d->cmdLine);
-    */
+    Rule const &gap = style().rules().rule("gap");
 
     d->console = new ConsoleWidget;
     d->console->rule()
             .setInput(Rule::Left, rule().left() + d->console->shift());
     add(d->console);
+
+    //d->console->log().set(bg);
 
     // Position the console button and command line in the task bar.
     d->console->button().rule()
@@ -199,29 +191,6 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("TaskBar"), d(new Instance(this))
     d->console->commandLine().rule().setInput(Rule::Right, d->status->rule().left());
 
     d->updateStatus();
-
-    /*
-    ButtonWidget *console = new ButtonWidget;
-    console->setText("Console");
-    console->setWidthPolicy(LabelWidget::Expand);
-    console->setAction(new CommandAction("contoggle"));
-    console->rule()
-            .setInput(Rule::Height, rule().height())
-            .setInput(Rule::Left,   rule().left())
-            .setInput(Rule::Bottom, rule().bottom());
-    add(console);
-
-    ButtonWidget *panel = new ButtonWidget;
-    panel->setImage(style().images().image("gear"));
-    panel->setWidthPolicy(LabelWidget::Expand);
-    panel->setHeightPolicy(LabelWidget::Filled);
-    panel->setImageFit(FitToHeight | OriginalAspectRatio);
-    panel->setAction(new CommandAction("panel"));
-    panel->rule()
-            .setInput(Rule::Height, rule().height())
-            .setInput(Rule::Left,   console->rule().right())
-            .setInput(Rule::Bottom, rule().bottom());
-    add(panel);*/
 
     // Taskbar height depends on the font size.
     rule().setInput(Rule::Height, style().fonts().font("default").height() + gap * 2);

@@ -31,7 +31,7 @@ namespace de {
 class DENG2_PUBLIC AnimationVector2
 {
 public:
-    AnimationVector2(Animation::Style style = Animation::EaseIn)
+    AnimationVector2(Animation::Style style = Animation::EaseOut)
         : x(0, style), y(0, style) {}
 
     AnimationVector2 &operator = (Vector2f const &vector)
@@ -79,7 +79,7 @@ public:
 class DENG2_PUBLIC AnimationVector3
 {
 public:
-    AnimationVector3(Animation::Style style = Animation::EaseIn)
+    AnimationVector3(Animation::Style style = Animation::EaseOut)
         : x(0, style), y(0, style), z(0, style) {}
 
     AnimationVector3 &operator = (Vector3f const &vector)

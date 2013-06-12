@@ -566,6 +566,7 @@ public Font::RichFormat::IStyle
             if(self.scrollPositionY().animation().target() > 0)
             {
                 self.scrollPositionY().shift(cached->height());
+
                 //emit self.scrollPositionChanged(visibleOffset.target());
             }
         }
@@ -604,7 +605,7 @@ public Font::RichFormat::IStyle
 
         // Excess entries before the visible range.
         int excess = visibleRange.start - len;
-        for(int i = 0; i <= excess; ++i)
+        for(int i = 0; i <= excess && i < cache.size(); ++i)
         {
             cache[i]->clear();
         }
@@ -743,7 +744,7 @@ public Font::RichFormat::IStyle
             bgBuf->setVertices(gl::TriangleStrip, bgVerts, gl::Static);
         }
 
-        updateGeometry();
+        //updateGeometry();
 
         // Draw the background.
         background.draw();
@@ -763,7 +764,7 @@ public Font::RichFormat::IStyle
 
             // Draw the text itself.
             uMvpMatrix = projMatrix * Matrix4f::translate(
-                         Vector2f(vp.topLeft + Vector2i(0, contentOffset - 2)));
+                         Vector2f(vp.topLeft + Vector2i(0, contentOffset - 1)));
             uShadowColor = Vector4f(1, 1, 1, 1);
             contents.draw();
 
@@ -808,9 +809,22 @@ void LogWidget::setContentYOffset(Animation const &anim)
     }
 }
 
+Animation const &LogWidget::contentYOffset() const
+{
+    return d->contentOffset;
+}
+
 void LogWidget::viewResized()
 {
     d->updateProjection();
+}
+
+void LogWidget::update()
+{
+    ScrollAreaWidget::update();
+
+    // The log widget's geometry is fully dynamic -- regenerated on every frame.
+    d->updateGeometry();
 }
 
 void LogWidget::drawContent()

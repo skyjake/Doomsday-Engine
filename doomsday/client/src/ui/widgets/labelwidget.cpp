@@ -91,10 +91,10 @@ public Font::RichFormat::IStyle
 
     void updateStyle()
     {
-        Style const &st = self.style();
+        //Style const &st = self.style();
 
-        margin = st.rules().rule("gap").valuei();
-        gap    = margin / 2;
+        margin = self.margin().valuei();
+        gap = margin / 2;
 
         wraps.setFont(self.font());
         wrapWidth = 0;

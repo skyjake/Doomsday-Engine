@@ -179,7 +179,11 @@ Bank::ISource *GLShaderBank::newSourceFromInfo(String const &id)
     ShaderSource frag;
 
     // Vertex shader definition.
-    if(def.has("path.vertex"))
+    if(def.has("vertex"))
+    {
+        vtx = ShaderSource(def["vertex"], ShaderSource::ShaderSourceText);
+    }
+    else if(def.has("path.vertex"))
     {
         vtx = ShaderSource(d->relativeToPath / def["path.vertex"], ShaderSource::FilePath);
     }
@@ -187,23 +191,19 @@ Bank::ISource *GLShaderBank::newSourceFromInfo(String const &id)
     {
         vtx = ShaderSource(d->relativeToPath / def["path"] + ".vsh", ShaderSource::FilePath);
     }
-    else if(def.has("vertex"))
-    {
-        vtx = ShaderSource(def["vertex"], ShaderSource::ShaderSourceText);
-    }
 
     // Fragment shader definition.
-    if(def.has("path.fragment"))
+    if(def.has("fragment"))
+    {
+        frag = ShaderSource(def["fragment"], ShaderSource::ShaderSourceText);
+    }
+    else if(def.has("path.fragment"))
     {
         frag = ShaderSource(d->relativeToPath / def["path.fragment"], ShaderSource::FilePath);
     }
     else if(def.has("path"))
     {
         frag = ShaderSource(d->relativeToPath / def["path"] + ".fsh", ShaderSource::FilePath);
-    }
-    else if(def.has("fragment"))
-    {
-        frag = ShaderSource(def["fragment"], ShaderSource::ShaderSourceText);
     }
 
     return new Source(*this, vtx, frag);

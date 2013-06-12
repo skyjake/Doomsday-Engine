@@ -148,10 +148,15 @@ public:
 
     // Utilities.
     String uniqueName(String const &name) const;
-    void notifyTree(void (Widget::*notifyFunc)(),
-                    bool (Widget::*conditionFunc)() const = 0,
-                    void (Widget::*preNotifyFunc)() = 0,
-                    void (Widget::*postNotifyFunc)() = 0);
+    enum NotifyResult {
+        AbortNotify,
+        ContinueNotify
+    };
+    NotifyResult notifyTree(void (Widget::*notifyFunc)(),
+                            bool (Widget::*conditionFunc)() const = 0,
+                            void (Widget::*preNotifyFunc)() = 0,
+                            void (Widget::*postNotifyFunc)() = 0,
+                            Widget *until = 0);
     void notifyTreeReversed(void (Widget::*notifyFunc)(),
                             bool (Widget::*conditionFunc)() const = 0,
                             void (Widget::*preNotifyFunc)() = 0,

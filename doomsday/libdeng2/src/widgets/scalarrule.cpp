@@ -55,6 +55,7 @@ void ScalarRule::set(Rule const &target, TimeDelta transition)
 void ScalarRule::shift(float delta)
 {
     _animation.shift(delta);
+    invalidate();
 }
 
 void ScalarRule::update()

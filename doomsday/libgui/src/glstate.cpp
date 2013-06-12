@@ -493,6 +493,7 @@ void GLState::apply() const
 void GLState::considerNativeStateUndefined()
 {
     currentProps.clear();
+    currentTarget = 0;
 }
 
 GLState &GLState::top()

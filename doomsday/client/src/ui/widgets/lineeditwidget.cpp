@@ -163,7 +163,7 @@ DENG2_OBSERVES(Atlas, Reposition)
     {
         updateBackground();
 
-        if(composer.update())     self.requestGeometry();
+        if(composer.update()) self.requestGeometry();
 
         // Do we actually need to update geometry?
         Rectanglei pos;
@@ -321,6 +321,7 @@ void LineEditWidget::focusLost()
 void LineEditWidget::update()
 {
     GuiWidget::update();
+
     d->updateBackground();
 
     // Rewrap content if necessary.

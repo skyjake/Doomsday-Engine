@@ -387,6 +387,9 @@ public:
     static Matrix4 scaleThenTranslate(Type scalar, Vec3 const &translation) {
         return scaleThenTranslate(Vec3(scalar, scalar, scalar), translation);
     }
+    static Matrix4 scaleThenTranslate(Vec2 const &scalar, Vec2 const &translation) {
+        return scaleThenTranslate(scalar, Vec3(translation, 0));
+    }
     static Matrix4 scaleThenTranslate(Vec2 const &scalar, Vec3 const &translation) {
         return scaleThenTranslate(Vec3(scalar, Type(1)), translation);
     }

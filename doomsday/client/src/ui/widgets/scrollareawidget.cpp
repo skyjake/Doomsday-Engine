@@ -93,7 +93,7 @@ DENG2_PIMPL(ScrollAreaWidget), public Lockable
     {
         if(origin == Bottom && self.isAtBottom())
         {
-            scrollOpacity.setValue(0, .5f);
+            scrollOpacity.setValue(0, .7f, .2f);
         }
         else
         {
