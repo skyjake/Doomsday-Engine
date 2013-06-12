@@ -286,8 +286,8 @@ GLProgram &GLProgram::bind(GLUniform const &uniform)
         d->bound.insert(&uniform);
         d->changed.insert(&uniform);
 
-        uniform.audienceForValueChange += d.get();
-        uniform.audienceForDeletion += d.get();
+        uniform.audienceForValueChange += d;
+        uniform.audienceForDeletion += d;
 
         if(uniform.type() == GLUniform::Sampler2D)
         {

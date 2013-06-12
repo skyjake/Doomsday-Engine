@@ -63,6 +63,8 @@ DENG2_PIMPL(Drawable)
         qDeleteAll(programs.values());
         qDeleteAll(states.values());
 
+        defaultProgram.clear();
+
         buffers.clear();
         programs.clear();
         states.clear();
