@@ -398,8 +398,7 @@ public Font::RichFormat::IStyle
         accentColor    = st.colors().color("log.accent");
         dimAccentColor = st.colors().color("log.dimaccent");
 
-        self.set(Background(st.colors().colorf("background"), Background::Blurred));
-        //self.set(Background(Vector4f(1, 1, 1, 1), Background::Blurred));
+        self.set(Background(st.colors().colorf("background")));
     }
 
     Font::RichFormat::IStyle::Color richStyleColor(int index) const
@@ -567,6 +566,7 @@ public Font::RichFormat::IStyle
             if(self.scrollPositionY().animation().target() > 0)
             {
                 self.scrollPositionY().shift(cached->height());
+
                 //emit self.scrollPositionChanged(visibleOffset.target());
             }
         }
