@@ -1643,7 +1643,7 @@ static void writeLeafPlane(Plane &plane)
     // Skip planes with a sky-masked material?
     if(!devRendSkyMode)
     {
-        if(surface.hasSkyMaskedMaterial() && plane.inSectorIndex() > Sector::Ceiling)
+        if(surface.hasSkyMaskedMaterial() && plane.inSectorIndex() <= Sector::Ceiling)
             return; // Not handled here (drawn with the mask geometry).
     }
 
@@ -1696,7 +1696,7 @@ static void writeLeafPlane(Plane &plane)
             parm.flags |= RPF_SKYMASK;
         }
     }
-    else if(plane.inSectorIndex() > Sector::Ceiling)
+    else if(plane.inSectorIndex() <= Sector::Ceiling)
     {
         parm.blendMode = BM_NORMAL;
         parm.forceOpaque = true;
@@ -1931,10 +1931,10 @@ static void writeLeafSkyMaskStrips(SkyFixEdge::FixType fixType)
 static coord_t skyPlaneZ(BspLeaf *bspLeaf, int skyCap)
 {
     DENG_ASSERT(bspLeaf);
-    Sector::Type const plane = (skyCap & SKYCAP_UPPER)? Sector::Ceiling : Sector::Floor;
+    int const relPlane = (skyCap & SKYCAP_UPPER)? Sector::Ceiling : Sector::Floor;
     if(!bspLeaf->hasSector() || !P_IsInVoid(viewPlayer))
-        return App_World().map().skyFix(plane == Sector::Ceiling);
-    return bspLeaf->sector().plane(plane).visHeight();
+        return App_World().map().skyFix(relPlane == Sector::Ceiling);
+    return bspLeaf->sector().plane(relPlane).visHeight();
 }
 
 /// @param skyCap  @ref skyCapFlags.
@@ -2978,8 +2978,7 @@ static void Rend_DrawSurfaceVectors()
         {
             origin = Vector3d(bspLeaf->face().center(), plane->visHeight());
 
-            if(plane->surface().hasSkyMaskedMaterial() &&
-               (plane->inSectorIndex() == Sector::Floor || plane->inSectorIndex() == Sector::Ceiling))
+            if(plane->surface().hasSkyMaskedMaterial() && plane->inSectorIndex() <= Sector::Ceiling)
                 origin.z = App_World().map().skyFix(plane->inSectorIndex() == Sector::Ceiling);
 
             drawSurfaceTangentSpaceVectors(&plane->surface(), origin);
