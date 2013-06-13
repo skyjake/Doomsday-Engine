@@ -82,7 +82,7 @@ public:
     };
 #endif // __CLIENT__
 
-public:
+public: /// @todo make private:
 #ifdef __CLIENT__
     struct DecorationData
     {
@@ -137,9 +137,24 @@ public:
     void setNormal(de::Vector3f const &newNormal);
 
     /**
-     * Returns the @ref surfaceFlags of the surface.
+     * Returns a copy of the current @ref surfaceFlags of the surface.
      */
     int flags() const;
+
+    /**
+     * Change the @ref surfaceFlags of the surface.
+     *
+     * @param flagsToChange  Flags to change the value of.
+     * @param operation      Logical operation to perform on the flags.
+     */
+    void setFlags(int flagsToChange, de::FlagOp operation = de::SetFlags);
+
+    /**
+     * Returns @c true iff the surface is flagged @a flagsToTest.
+     */
+    inline bool isFlagged(int flagsToTest) const {
+        return (flags() & flagsToTest) != 0;
+    }
 
     /**
      * Returns @c true iff a material is bound to the surface.

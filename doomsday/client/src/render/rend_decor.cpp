@@ -349,7 +349,7 @@ static void plotSourcesForSurface(Surface &suf)
     if(useLightDecorations)
     {
         Surface::DecorSource const *sources = (Surface::DecorSource const *)suf._decorationData.sources;
-        for(uint i = 0; i < suf.decorationCount(); ++i)
+        for(int i = 0; i < suf.decorationCount(); ++i)
         {
             newSource(suf, sources[i]);
         }

@@ -282,6 +282,11 @@ int Surface::flags() const
     return d->flags;
 }
 
+void Surface::setFlags(int flagsToChange, FlagOp operation)
+{
+    applyFlagOperation(d->flags, flagsToChange, operation);
+}
+
 bool Surface::setMaterial(Material *newMaterial, bool isMissingFix)
 {
     if(d->material != newMaterial)
