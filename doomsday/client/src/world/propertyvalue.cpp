@@ -22,18 +22,20 @@
 
 #include "world/propertyvalue.h"
 
-PropertyValue* BuildPropertyValue(valuetype_t type, void* valueAdr)
+using namespace de;
+
+PropertyValue *BuildPropertyValue(valuetype_t type, void *valueAdr)
 {
-    DENG2_ASSERT(valueAdr);
+    DENG2_ASSERT(valueAdr != 0);
     switch(type)
     {
-    case DDVT_BYTE:     return new PropertyByteValue (*(   (byte*) valueAdr));
-    case DDVT_SHORT:    return new PropertyInt16Value(*(  (short*) valueAdr));
-    case DDVT_INT:      return new PropertyInt32Value(*(    (int*) valueAdr));
-    case DDVT_FIXED:    return new PropertyFixedValue(*((fixed_t*) valueAdr));
-    case DDVT_ANGLE:    return new PropertyAngleValue(*((angle_t*) valueAdr));
-    case DDVT_FLOAT:    return new PropertyFloatValue(*(  (float*) valueAdr));
+    case DDVT_BYTE:     return new PropertyByteValue (*(   (byte *) valueAdr));
+    case DDVT_SHORT:    return new PropertyInt16Value(*(  (short *) valueAdr));
+    case DDVT_INT:      return new PropertyInt32Value(*(    (int *) valueAdr));
+    case DDVT_FIXED:    return new PropertyFixedValue(*((fixed_t *) valueAdr));
+    case DDVT_ANGLE:    return new PropertyAngleValue(*((angle_t *) valueAdr));
+    case DDVT_FLOAT:    return new PropertyFloatValue(*(  (float *) valueAdr));
     default:
-        throw de::Error("BuildPropertyValue", QString("Unknown/not-supported value type %1").arg(type));
+        throw Error("BuildPropertyValue", QString("Unknown/not-supported value type %1").arg(type));
     }
 }

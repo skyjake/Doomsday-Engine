@@ -1,4 +1,4 @@
-/** @file world/p_object.h World Map Objects.
+/** @file p_object.h World map objects.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>

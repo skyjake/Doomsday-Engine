@@ -1,4 +1,4 @@
-/** @file world/world.h World.
+/** @file world.h World.
  *
  * Ideas for improvement:
  *

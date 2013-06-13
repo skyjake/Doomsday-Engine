@@ -1,4 +1,4 @@
-/** @file world/entitydatabase.h World entity property database.
+/** @file entitydatabase.h World map entity property value database.
  *
  * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
  *

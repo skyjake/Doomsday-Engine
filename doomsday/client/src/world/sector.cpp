@@ -1,4 +1,4 @@
-/** @file sector.h World Map Sector.
+/** @file sector.h World map sector.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>

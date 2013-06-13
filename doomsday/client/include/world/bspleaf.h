@@ -1,4 +1,4 @@
-/** @file world/bspleaf.h World BSP Leaf.
+/** @file bspleaf.h World map BSP leaf.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -72,6 +72,9 @@ public:
     DENG2_ERROR(UnknownGeometryGroupError);
 #endif
 
+    /*
+     * Linked-element lists/sets:
+     */
     typedef QSet<polyobj_s *> Polyobjs;
     typedef QList<Segment *>  Segments;
 
@@ -181,24 +184,6 @@ public:
      */
     void setSector(Sector *newSector);
 
-#ifdef __CLIENT__
-
-    /**
-     * Determines whether the BSP leaf has a positive world volume. For this
-     * to be true the following criteria must be met:
-     *
-     * - The polygon geometry is @em not degenerate (see @ref isDegenerate()).
-     * - A sector is attributed (see @ref hasSector())
-     * - The height of floor is lower than that of the ceiling plane for the
-     *   attributed sector.
-     *
-     * @param useVisualHeights  @c true= use the visual (i.e., smoothed) plane
-     *                          heights instead of the @em sharp heights.
-     */
-    bool hasWorldVolume(bool useVisualHeights = true) const;
-
-#endif // __CLIENT__
-
     /**
      * Returns @c true iff at least one polyobj is linked to the BSP leaf.
      */
@@ -243,6 +228,20 @@ public:
     void setValidCount(int newValidCount);
 
 #ifdef __CLIENT__
+
+    /**
+     * Determines whether the BSP leaf has a positive world volume. For this
+     * to be true the following criteria must be met:
+     *
+     * - The polygon geometry is @em not degenerate (see @ref isDegenerate()).
+     * - A sector is attributed (see @ref hasSector())
+     * - The height of floor is lower than that of the ceiling plane for the
+     *   attributed sector.
+     *
+     * @param useVisualHeights  @c true= use the visual (i.e., smoothed) plane
+     *                          heights instead of the @em sharp heights.
+     */
+    bool hasWorldVolume(bool useVisualHeights = true) const;
 
     /**
      * Returns a pointer to the face geometry half-edge which has been chosen

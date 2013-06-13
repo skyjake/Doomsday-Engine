@@ -1,4 +1,4 @@
-/** @file plane.h World Map Plane.
+/** @file plane.h World map plane.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -17,6 +17,8 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA</small>
  */
+
+#include <QList>
 
 #include <de/Log>
 

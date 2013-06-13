@@ -1,4 +1,4 @@
-/** @file world/p_maputil.h World Map Utility Routines.
+/** @file p_maputil.h World map utility routines.
  *
  * @ingroup world
  *

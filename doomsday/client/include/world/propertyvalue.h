@@ -1,11 +1,11 @@
-/**
- * @file propertyvalue.h
- * Data types for representing property values. @ingroup data
+/** @file propertyvalue.h Data types for representing world map property values.
+ *
+ * @ingroup data
  *
  * Data type class hierarchy with integral RTTI mechanism and basic in-place
  * value/type conversions.
  *
- * @author Copyright &copy; 2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html

@@ -1,4 +1,4 @@
-/** @file world/api_mapedit.cpp Internal runtime map editing interface.
+/** @file api_mapedit.cpp Internal runtime map editing interface.
  *
  * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
  *

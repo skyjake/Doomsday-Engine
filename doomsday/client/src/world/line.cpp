@@ -1,4 +1,4 @@
-/** @file world/line.cpp World Map Line.
+/** @file line.cpp World map line.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -17,8 +17,6 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA</small>
  */
-
-//#include <de/mathutil.h>
 
 #include <de/libdeng2.h>
 #include <de/Vector>

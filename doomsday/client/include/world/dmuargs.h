@@ -1,7 +1,7 @@
-/** @file world/dmuargs.h Doomsday Map Update (API) Arguments.
+/** @file dmuargs.h Doomsday Map Update (DMU) API arguments.
  *
- * @author Copyright © 2006-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @author Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html

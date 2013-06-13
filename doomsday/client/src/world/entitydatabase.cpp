@@ -1,4 +1,4 @@
-/** @file entitydatabase.cpp Database of map entity property values.
+/** @file entitydatabase.cpp World map entity property value database.
  * @ingroup world
  *
  * @authors Copyright &copy; 2007-2013 Daniel Swanson <danij@dengine.net>

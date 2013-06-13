@@ -1,4 +1,4 @@
-/** @file world/vertex.h World map vertex.
+/** @file vertex.h World map vertex.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>

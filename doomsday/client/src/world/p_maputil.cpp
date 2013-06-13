@@ -1,4 +1,4 @@
-/** @file p_maputil.cpp Map Utility Routines
+/** @file p_maputil.cpp World map utility routines.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>

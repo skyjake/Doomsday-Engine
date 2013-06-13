@@ -1,4 +1,4 @@
-/** @file world/p_mobj.cpp  Map Objects.
+/** @file p_mobj.cpp World map objects.
  *
  * Various routines for moving mobjs, collision and Z checking.
  *
@@ -21,7 +21,7 @@
  * 02110-1301 USA</small>
  */
 
-#include <math.h>
+#include <cmath>
 
 #include "de_base.h"
 #include "de_console.h"
@@ -37,7 +37,7 @@
 
 using namespace de;
 
-static mobj_t *unusedMobjs = NULL;
+static mobj_t *unusedMobjs;
 
 /**
  * Called during map loading.
