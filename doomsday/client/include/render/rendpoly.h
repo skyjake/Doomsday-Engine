@@ -174,7 +174,7 @@ rtexcoord_t *R_AllocRendTexCoords(uint num);
  * Doesn't actually free anything. Instead, mark them as unused ready for
  * the next time a batch of rendvertex_t is needed.
  *
- * @param vertices  Ptr to array of rvertex_t to mark unused.
+ * @param rvertices  Ptr to array of rvertex_t to mark unused.
  */
 void R_FreeRendVertices(rvertex_t *rvertices);
 
@@ -182,7 +182,7 @@ void R_FreeRendVertices(rvertex_t *rvertices);
  * Doesn't actually free anything. Instead, mark them as unused ready for
  * the next time a batch of rendvertex_t is needed.
  *
- * @param vertices  Ptr to array of ColorRawf to mark unused.
+ * @param rcolors  Ptr to array of ColorRawf to mark unused.
  */
 void R_FreeRendColors(ColorRawf *rcolors);
 

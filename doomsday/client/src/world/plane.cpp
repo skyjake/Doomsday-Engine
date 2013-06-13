@@ -70,9 +70,6 @@ DENG2_PIMPL(Plane)
     /// Plane surface.
     Surface surface;
 
-    /// Logical type of the plane. @todo resolve ambiguous meaning -ds
-    Type type;
-
     Instance(Public *i, Sector &sector, coord_t height)
         : Base(i),
           sector(&sector),
@@ -82,15 +79,15 @@ DENG2_PIMPL(Plane)
           visHeight(height),
           visHeightDelta(0),
           speed(0),
-          surface(dynamic_cast<MapElement &>(*i)),
-          type(Floor)
+          surface(dynamic_cast<MapElement &>(*i))
     {
         oldHeight[0] = oldHeight[1] = height;
-        std::memset(&soundEmitter, 0, sizeof(soundEmitter));
+        zap(soundEmitter);
     }
 
     ~Instance()
     {
+#ifdef __CLIENT__
         Map &map = App_World().map();
 
         // If this plane is currently being watched, remove it.
@@ -100,8 +97,6 @@ DENG2_PIMPL(Plane)
         // If this plane's surface is in the moving list, remove it.
         /// @todo Map should observe Deletion.
         map.scrollingSurfaces().remove(&surface);
-
-#ifdef __CLIENT__
 
         // If this plane's surface is in the glowing list, remove it.
         /// @todo Map should observe Deletion.
@@ -147,6 +142,7 @@ DENG2_PIMPL(Plane)
         // Notify interested parties of the change.
         notifyHeightChanged(oldHeight);
 
+#ifdef __CLIENT__
         /// @todo Map should observe.
         if(!ddMapSetup)
         {
@@ -155,10 +151,9 @@ DENG2_PIMPL(Plane)
                 App_World().map().trackedPlanes().insert(&self);
             }
 
-#ifdef __CLIENT__
             markDependantSurfacesForDecorationUpdate();
-#endif
         }
+#endif
     }
 
 #ifdef __CLIENT__
@@ -173,7 +168,7 @@ DENG2_PIMPL(Plane)
         if(ddMapSetup) return;
 
         // "Middle" planes have no dependent surfaces.
-        if(type == Plane::Middle) return;
+        if(inSectorIndex > Sector::Ceiling) return;
 
         // Mark the decor lights on the sides of this plane as requiring
         // an update.
@@ -278,6 +273,8 @@ coord_t Plane::speed() const
     return d->speed;
 }
 
+#ifdef __CLIENT__
+
 coord_t Plane::visHeight() const
 {
     // $smoothplane
@@ -298,9 +295,7 @@ void Plane::lerpVisHeight()
     // Visible plane height.
     d->visHeight = d->height + d->visHeightDelta;
 
-#ifdef __CLIENT__
     d->markDependantSurfacesForDecorationUpdate();
-#endif
 }
 
 void Plane::resetVisHeight()
@@ -309,9 +304,7 @@ void Plane::resetVisHeight()
     d->visHeightDelta = 0;
     d->visHeight = d->oldHeight[0] = d->oldHeight[1] = d->height;
 
-#ifdef __CLIENT__
     d->markDependantSurfacesForDecorationUpdate();
-#endif
 }
 
 void Plane::updateHeightTracking()
@@ -330,16 +323,11 @@ void Plane::updateHeightTracking()
     }
 }
 
+#endif // __CLIENT__
+
 void Plane::setNormal(Vector3f const &newNormal)
 {
     d->surface.setNormal(newNormal); // will normalize
-
-    d->type = (d->surface.normal().z < 0? Ceiling : Floor);
-}
-
-Plane::Type Plane::type() const
-{
-    return d->type;
 }
 
 int Plane::property(DmuArgs &args) const

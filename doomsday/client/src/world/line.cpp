@@ -453,9 +453,9 @@ int Line::Side::setProperty(DmuArgs const &args)
         break; }*/
 
     case DMU_FLAGS: {
-        int newFlags = d->flags;
+        int newFlags;
         args.value(DMT_LINESIDE_FLAGS, &newFlags, 0);
-        setFlags(newFlags);
+        setFlags(newFlags, de::ReplaceFlags);
         break; }
 
     default:
@@ -576,9 +576,9 @@ Polyobj &Line::polyobj() const
     throw Line::MissingPolyobjError("Line::polyobj", "No polyobj is attributed");
 }
 
-void Line::setPolyobj(Polyobj *newOwner)
+void Line::setPolyobj(Polyobj *newPolyobj)
 {
-    d->polyobj = newOwner;
+    d->polyobj = newPolyobj;
 }
 
 Line::Side &Line::side(int back)
@@ -791,9 +791,9 @@ int Line::setProperty(DmuArgs const &args)
         args.value(DMT_LINE_VALIDCOUNT, &d->validCount, 0);
         break;
     case DMU_FLAGS: {
-        int newFlags = d->flags;
+        int newFlags;
         args.value(DMT_LINE_FLAGS, &newFlags, 0);
-        setFlags(newFlags);
+        setFlags(newFlags, de::ReplaceFlags);
         break; }
 
     default:

@@ -65,7 +65,7 @@ void R_ClearObjlinksForFrame();
 void R_ObjlinkCreate(struct mobj_s &mobj);
 
 #ifdef __CLIENT__
-/// @copydoc R_ObjlinkCreate
+/// @copydoc R_ObjlinkCreate()
 void R_ObjlinkCreate(struct lumobj_s &lumobj);
 #endif
 
@@ -86,7 +86,7 @@ void R_InitForBspLeaf(BspLeaf &bspLeaf);
  */
 void R_LinkObjToBspLeaf(BspLeaf &bspLeaf, struct mobj_s &mobj);
 #ifdef __CLIENT__
-/// @copydoc R_LinkObjToBspLeaf
+/// @copydoc R_LinkObjToBspLeaf()
 void R_LinkObjToBspLeaf(BspLeaf &bspLeaf, struct lumobj_s &lumobj);
 #endif
 

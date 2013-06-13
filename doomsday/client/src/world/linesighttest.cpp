@@ -238,19 +238,17 @@ DENG2_PIMPL(LineSightTest)
         if(bspLeaf.isDegenerate())
             return false;
 
-        if(Polyobj *po = bspLeaf.firstPolyobj())
+        // Check polyobj lines.
+        foreach(Polyobj *po, bspLeaf.polyobjs())
+        foreach(Line *line, po->lines())
         {
-            // Check polyobj lines.
-            foreach(Line *line, po->lines())
-            {
-                if(line->validCount() == validCount)
-                    continue;
+            if(line->validCount() == validCount)
+                continue;
 
-                line->setValidCount(validCount);
+            line->setValidCount(validCount);
 
-                if(!crossLine(line->front()))
-                    return false; // Stop traversal.
-            }
+            if(!crossLine(line->front()))
+                return false; // Stop traversal.
         }
 
         // Check the line segment geometries.
@@ -280,7 +278,7 @@ DENG2_PIMPL(LineSightTest)
 
         while(bspElement->type() != DMU_BSPLEAF)
         {
-            BspNode const *bspNode = bspElement->castTo<BspNode>();
+            BspNode const *bspNode = bspElement->as<BspNode>();
 
             // Does the ray intersect the partition?
             /// @todo Optionally use the fixed precision version -ds
@@ -302,7 +300,7 @@ DENG2_PIMPL(LineSightTest)
         }
 
         // We've arrived at a leaf.
-        return crossBspLeaf(*bspElement->castTo<BspLeaf>());
+        return crossBspLeaf(*bspElement->as<BspLeaf>());
     }
 };
 

@@ -1,4 +1,4 @@
-/** @file world/line.h World Line.
+/** @file world/line.h World map line.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -40,7 +40,7 @@ class LineOwner;
 class Sector;
 
 /**
- * World line.
+ * World map line.
  *
  * @attention This component has a notably different design and slightly different
  * purpose when compared to a Linedef in the id Tech 1 map format. The definitions
@@ -70,15 +70,15 @@ public:
     /// The given side section identifier is invalid. @ingroup errors
     DENG2_ERROR(InvalidSectionIdError);
 
-    /**
+    /*
      * Observers to be notified when the flags change.
      */
     DENG2_DEFINE_AUDIENCE(FlagsChange, void lineFlagsChanged(Line &line, int oldFlags))
 
-    /// Logical edge identifiers:
+    // Logical edge identifiers:
     enum { From, To };
 
-    /// Logical side identifiers:
+    // Logical side identifiers:
     enum { Front, Back };
 
     /**
@@ -87,7 +87,7 @@ public:
     class Side : public de::MapElement
     {
     public:
-        /// Section identifiers:
+        // Section identifiers:
         enum
         {
             Middle,
@@ -388,6 +388,7 @@ public:
          */
         void setShadowVisCount(int newCount);
 
+    protected:
         int property(DmuArgs &args) const;
         int setProperty(DmuArgs const &args);
 
@@ -712,7 +713,7 @@ public:
      *                   method(s) of Polyobj will also need to be called to
      *                   complete the job of clearing this relationship.)
      */
-    void setPolyobj(Polyobj *newOwner);
+    void setPolyobj(Polyobj *newPolyobj);
 
     /**
      * Returns @c true iff the line resulted in the creation of a BSP window

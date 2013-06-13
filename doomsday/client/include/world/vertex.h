@@ -1,4 +1,4 @@
-/** @file world/vertex.h World Vertex.
+/** @file world/vertex.h World map vertex.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -21,6 +21,8 @@
 #ifndef DENG_WORLD_VERTEX_H
 #define DENG_WORLD_VERTEX_H
 
+#include <de/types.h>
+
 #include <de/Error>
 #include <de/Observers>
 #include <de/Vector>
@@ -31,7 +33,7 @@ class Line;
 class LineOwner;
 
 /**
- * World geometry vertex.
+ * World map geometry vertex.
  *
  * An @em owner in this context is any line whose start or end points are
  * defined as the vertex.
@@ -41,8 +43,8 @@ class LineOwner;
 class Vertex : public de::MapElement
 {
 public:
-    /**
-     * Observers to be notified when the origin changes.
+    /*
+     * Observers to be notified whenever the origin changes.
      */
     DENG2_DEFINE_AUDIENCE(OriginChange,
         void vertexOriginChanged(Vertex &vertex, de::Vector2d const &oldOrigin,
@@ -60,25 +62,25 @@ public: /// @todo Move to the map loader:
     uint _twosOwnerCount;
 
 public:
-    Vertex(de::Vector2d const &origin = de::Vector2d(0, 0));
+    Vertex(de::Vector2d const &origin = de::Vector2d());
 
     /**
-     * Returns the origin (i.e., location) of the vertex in the map coordinate space.
+     * Returns the origin (i.e., position) of the vertex in the map coordinate space.
      */
     de::Vector2d const &origin() const;
 
     /**
-     * Returns the X axis origin (i.e., location) of the vertex in the map coordinate space.
+     * Returns the X axis origin (i.e., position) of the vertex in the map coordinate space.
      */
     inline coord_t x() const { return origin().x; }
 
     /**
-     * Returns the Y axis origin (i.e., location) of the vertex in the map coordinate space.
+     * Returns the Y axis origin (i.e., position) of the vertex in the map coordinate space.
      */
     inline coord_t y() const { return origin().y; }
 
     /**
-     * Change the origin (i.e., location) of the vertex in the map coordinate
+     * Change the origin (i.e., position) of the vertex in the map coordinate
      * space. The OriginChange audience is notified whenever the origin changes.
      *
      * @param newOrigin  New origin in map coordinate space units.
@@ -124,10 +126,6 @@ public:
      */
     inline void setY(coord_t newPosition) { setOriginComponent(1, newPosition); }
 
-protected:
-    int property(DmuArgs &args) const;
-
-public:
     /**
      * Returns the total number of Line owners for the vertex.
      *
@@ -159,6 +157,9 @@ public:
      * @deprecated Will be replaced with half-edge ring iterator/rover. -ds
      */
     LineOwner *firstLineOwner() const;
+
+protected:
+    int property(DmuArgs &args) const;
 
 private:
     DENG2_PRIVATE(d)

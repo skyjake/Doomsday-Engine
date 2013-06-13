@@ -1,4 +1,4 @@
-/** @file data/face.h Mesh Geometry Face.
+/** @file face.h Mesh Geometry Face.
  *
  * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
  *

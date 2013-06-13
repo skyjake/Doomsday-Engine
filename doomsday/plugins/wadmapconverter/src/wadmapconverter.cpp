@@ -166,7 +166,8 @@ static MapFormatId recognizeMapFormat(MapLumpInfos& lumpInfos)
     return mapFormat;
 }
 
-static void loadAndTransferMap(MapFormatId mapFormat, MapLumpInfos& lumpInfos)
+static void loadAndTransferMap(Uri const *uri, MapFormatId mapFormat,
+    MapLumpInfos &lumpInfos)
 {
     DENG2_ASSERT(VALID_MAPFORMATID(mapFormat));
 
@@ -181,7 +182,7 @@ static void loadAndTransferMap(MapFormatId mapFormat, MapLumpInfos& lumpInfos)
     }
 
     // Rebuild the map in Doomsday's native format.
-    MPE_Begin("");
+    MPE_Begin(uri);
     {
         LOG_AS("WadMapConverter");
         map->transfer();
@@ -199,7 +200,7 @@ static void loadAndTransferMap(MapFormatId mapFormat, MapLumpInfos& lumpInfos)
  * Our job is to read in the map data structures then use the Doomsday map
  * editing interface to recreate the map in native format.
  */
-int ConvertMapHook(int hookType, int parm, void* context)
+int ConvertMapHook(int hookType, int parm, void *context)
 {
     MapLumpInfos lumpInfos;
     MapFormatId mapFormat;
@@ -212,7 +213,7 @@ int ConvertMapHook(int hookType, int parm, void* context)
     int ret_val = true; // Assume success.
 
     // Attempt to locate the identified map data marker lump.
-    const Uri* uri = reinterpret_cast<const Uri*>(context);
+    Uri const *uri = reinterpret_cast<Uri const *>(context);
     lumpnum_t markerLump = locateMapMarkerLumpForUri(uri);
     if(0 > markerLump)
     {
@@ -234,7 +235,7 @@ int ConvertMapHook(int hookType, int parm, void* context)
     // Convert this map.
     try
     {
-        loadAndTransferMap(mapFormat, lumpInfos);
+        loadAndTransferMap(uri, mapFormat, lumpInfos);
     }
     catch(Id1Map::LumpBufferError const& er)
     {

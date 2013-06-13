@@ -339,10 +339,19 @@ DENG_EXTERN_C void P_MobjLink(mobj_t *mo, byte flags)
         Sector &sector = player->mo->bspLeaf->sector();
 
         player->inVoid = true;
-        if(P_IsPointInSector(player->mo->origin, sector) &&
-           (player->mo->origin[VZ] <  sector.ceiling().visHeight() + 4 &&
-            player->mo->origin[VZ] >= sector.floor().visHeight()))
-            player->inVoid = false;
+        if(P_IsPointInSector(player->mo->origin, sector))
+        {
+#ifdef __CLIENT__
+            if(player->mo->origin[VZ] <  sector.ceiling().visHeight() + 4 &&
+               player->mo->origin[VZ] >= sector.floor().visHeight())
+#else
+            if(player->mo->origin[VZ] <  sector.ceiling().height() + 4 &&
+               player->mo->origin[VZ] >= sector.floor().height())
+#endif
+            {
+                player->inVoid = false;
+            }
+        }
     }
 }
 

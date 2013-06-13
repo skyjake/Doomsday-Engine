@@ -74,10 +74,10 @@ LineSideRadioData &Rend_RadioDataForLineSide(Line::Side &side)
  * @a distB from @a lineB. The point should also be the nearest point to the
  * origin (in case of parallel lines).
  *
- * @param lineA  Direction vector for the "left" line.
- * @param lineB  Direction vector for the "right" line.
- * @param distA  Distance from @a lineA to offset the corner point.
- * @param distB  Distance from @a lineB to offset the corner point.
+ * @param lineADirection  Direction vector for the "left" line.
+ * @param dist1  Distance from @a lineA to offset the corner point.
+ * @param lineBDirection  Direction vector for the "right" line.
+ * @param dist2  Distance from @a lineB to offset the corner point.
  *
  * Return values:
  * @param point  Coordinates for the corner point are written here. Can be @c 0.

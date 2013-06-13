@@ -124,7 +124,7 @@ DENG2_PIMPL(SkyFixEdge)
         if(!(!backSec || backSec != frontSec)) return false;
 
         // Select the relative planes for the fix type.
-        Plane::Type relPlane = lower? Plane::Floor : Plane::Ceiling;
+        int relPlane = lower? Sector::Floor : Sector::Ceiling;
         Plane const *front   = &frontSec->plane(relPlane);
         Plane const *back    = backSec? &backSec->plane(relPlane) : 0;
 

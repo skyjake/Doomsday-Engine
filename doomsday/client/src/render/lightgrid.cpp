@@ -101,8 +101,8 @@ public:
     /**
      * Construct a new light block.
      *
-     * @param  Primary lighting contributor for the block. Can be @c 0
-     *         (to create a "null-block").
+     * @param sector  Sector which is the primary light contributor for
+     *                the block. Can be @c 0 (to create a "null-block").
      */
     LightBlock(Sector *sector = 0);
 
@@ -163,7 +163,7 @@ DENG2_PIMPL_NOREF(LightBlock)
     /// Color of the light:
     Vector3f color;
 
-    /// Used instead of @var rgb if the lighting in this block has changed
+    /// Used instead of @var color if the lighting in this block has changed
     /// and a full grid update is needed.
     Vector3f oldColor;
 
@@ -387,7 +387,7 @@ DENG2_OBSERVES(Sector, LightLevelChange)
      */
     inline Index toIndex(int x, int y) { return y * dimensions.x + x; }
 
-    /// @copydoc toIndex
+    /// @copydoc toIndex()
     inline Index toIndex(Ref const &gref) { return toIndex(gref.x, gref.y); }
 
     /**
@@ -419,7 +419,7 @@ DENG2_OBSERVES(Sector, LightLevelChange)
      */
     LightBlock &lightBlock(Ref const &gref) { return lightBlock(toIndex(gref)); }
 
-    /// @copydoc lightBlock
+    /// @copydoc lightBlock()
     inline LightBlock &lightBlock(int x, int y) { return lightBlock(Ref(x, y)); }
 
     /**

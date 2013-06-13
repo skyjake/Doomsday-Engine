@@ -1,4 +1,4 @@
-/** @file world/gamemap.cpp World Map.
+/** @file map.cpp World map.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -88,6 +88,12 @@ DENG2_PIMPL(Map)
     /// Editable map element LUTs:
     EditableElements editable;
 
+    /// Universal resource identifier for the map.
+    Uri uri;
+
+    /// Old unique identifier for the map (used with some legacy definitions).
+    char oldUniqueId[256];
+
     /// Boundary points which encompass the entire map.
     AABoxd bounds;
 
@@ -114,31 +120,36 @@ DENG2_PIMPL(Map)
     QScopedPointer<Blockmap> lineBlockmap;
     QScopedPointer<Blockmap> bspLeafBlockmap;
 
+#ifdef __CLIENT__
     PlaneSet trackedPlanes;
     SurfaceSet scrollingSurfaces;
-#ifdef __CLIENT__
+
     SurfaceSet decoratedSurfaces;
     SurfaceSet glowingSurfaces;
 
     QScopedPointer<Generators> generators;
     QScopedPointer<LightGrid> lightGrid;
-#endif
 
     coord_t skyFloorHeight;
     coord_t skyCeilingHeight;
+#endif
 
     // Current LOS trace state.
     /// @todo Does not belong here.
     TraceOpening traceOpening;
     divline_t traceLine;
 
-    Instance(Public *i)
+    Instance(Public *i, Uri const &uri)
         : Base            (i),
           editingEnabled  (true),
-          bspRoot         (0),
-          skyFloorHeight  (DDMAXFLOAT),
+          uri             (uri),
+          bspRoot         (0)
+#ifdef __CLIENT__
+          , skyFloorHeight(DDMAXFLOAT),
           skyCeilingHeight(DDMINFLOAT)
+#endif
     {
+        zap(oldUniqueId);
         zap(traceOpening);
         zap(traceLine);
     }
@@ -192,7 +203,7 @@ DENG2_PIMPL(Map)
 
         LOG_AS("Map::buildBsp");
         LOG_TRACE("Building BSP for \"%s\" with split cost factor %d...")
-            << self._uri << bspSplitFactor;
+            << uri << bspSplitFactor;
 
         // Instantiate and configure a new BSP builder.
         BspBuilder nodeBuilder(self, bspSplitFactor);
@@ -303,7 +314,7 @@ DENG2_PIMPL(Map)
         {
             // Take ownership of the BspLeaf.
             DENG2_ASSERT(tree.userData() != 0);
-            BspLeaf *leaf = tree.userData()->castTo<BspLeaf>();
+            BspLeaf *leaf = tree.userData()->as<BspLeaf>();
             builder.take(leaf);
 
             // Add this BspLeaf to the LUT.
@@ -326,7 +337,7 @@ DENG2_PIMPL(Map)
 
         // Take ownership of this BspNode.
         DENG2_ASSERT(tree.userData() != 0);
-        BspNode *node = tree.userData()->castTo<BspNode>();
+        BspNode *node = tree.userData()->as<BspNode>();
         builder.take(node);
 
         // Add this BspNode to the LUT.
@@ -392,7 +403,6 @@ DENG2_PIMPL(Map)
         }
     }
 
-    /// @todo Relocate this work to R_SetupMap() -ds
     void finishPlanes()
     {
         foreach(Sector *sector, sectors)
@@ -405,7 +415,7 @@ DENG2_PIMPL(Map)
     /**
      * Construct an initial (empty) line blockmap for "this" map.
      *
-     * @pre Coordinate space @var bounds have already been determined.
+     * @pre Coordinate space bounds have already been determined.
      */
     void initLineBlockmap()
     {
@@ -427,9 +437,58 @@ DENG2_PIMPL(Map)
     }
 
     /**
+     * Link the specified @a line in the blockmap.
+     */
+    void linkLine(Line &line)
+    {
+        // Lines of Polyobjs don't get into the blockmap (presently...).
+        if(line.definesPolyobj()) return;
+
+        Vector2d const &origin = lineBlockmap->origin();
+        Vector2d const &cellDimensions = lineBlockmap->cellDimensions();
+
+        // Determine the block of cells we'll be working within.
+        Blockmap::CellBlock cellBlock = lineBlockmap->toCellBlock(line.aaBox());
+
+        Blockmap::Cell cell;
+        for(cell.y = cellBlock.min.y; cell.y <= cellBlock.max.y; ++cell.y)
+        for(cell.x = cellBlock.min.x; cell.x <= cellBlock.max.x; ++cell.x)
+        {
+            if(line.slopeType() == ST_VERTICAL ||
+               line.slopeType() == ST_HORIZONTAL)
+            {
+                lineBlockmap->link(cell, &line);
+                continue;
+            }
+
+            Vector2d point = origin + cellDimensions * Vector2d(cell.x, cell.y);
+
+            // Choose a cell diagonal to test.
+            Vector2d from, to;
+            if(line.slopeType() == ST_POSITIVE)
+            {
+                // Line slope / vs \ cell diagonal.
+                from = Vector2d(point.x, point.y + cellDimensions.y);
+                to   = Vector2d(point.x + cellDimensions.x, point.y);
+            }
+            else
+            {
+                // Line slope \ vs / cell diagonal.
+                from = Vector2d(point.x + cellDimensions.x, point.y + cellDimensions.y);
+                to   = Vector2d(point.x, point.y);
+            }
+
+            // Would Line intersect this?
+            if((line.pointOnSide(from) < 0) != (line.pointOnSide(to) < 0))
+            {
+                lineBlockmap->link(cell, &line);
+            }
+        }
+    }
+    /**
      * Construct an initial (empty) mobj blockmap for "this" map.
      *
-     * @pre Coordinate space @var bounds have already been determined.
+     * @pre Coordinate space bounds have already been determined.
      */
     void initMobjBlockmap()
     {
@@ -453,7 +512,7 @@ DENG2_PIMPL(Map)
     /**
      * Construct an initial (empty) polyobj blockmap for "this" map.
      *
-     * @pre Coordinate space @var bounds have already been determined.
+     * @pre Coordinate space bounds have already been determined.
      */
     void initPolyobjBlockmap()
     {
@@ -477,7 +536,7 @@ DENG2_PIMPL(Map)
     /**
      * Construct an initial (empty) BSP leaf blockmap for "this" map.
      *
-     * @pre Coordinate space @var bounds have already been determined.
+     * @pre Coordinate space bounds have already been determined.
      */
     void initBspLeafBlockmap()
     {
@@ -498,6 +557,27 @@ DENG2_PIMPL(Map)
 #undef BLOCKMAP_MARGIN
     }
 
+    /**
+     * Link the specified @a bspLeaf in the blockmap.
+     */
+    void linkBspLeaf(BspLeaf &bspLeaf)
+    {
+        // Degenerate BspLeafs don't get in.
+        if(bspLeaf.isDegenerate()) return;
+
+        // BspLeafs without sectors don't get in.
+        if(!bspLeaf.hasSector()) return;
+
+        Blockmap::CellBlock cellBlock = bspLeafBlockmap->toCellBlock(bspLeaf.face().aaBox());
+
+        Blockmap::Cell cell;
+        for(cell.y = cellBlock.min.y; cell.y <= cellBlock.max.y; ++cell.y)
+        for(cell.x = cellBlock.min.x; cell.x <= cellBlock.max.x; ++cell.x)
+        {
+            bspLeafBlockmap->link(cell, &bspLeaf);
+        }
+    }
+
 #ifdef __CLIENT__
 
     void addSurfaceToLists(Surface &suf)
@@ -514,8 +594,6 @@ DENG2_PIMPL(Map)
             decoratedSurfaces.insert(&suf);
         }
     }
-
-#endif // __CLIENT__
 
     void updateMapSkyFixForSector(Sector const &sector)
     {
@@ -585,6 +663,8 @@ DENG2_PIMPL(Map)
             }
         }
     }
+
+#endif // __CLIENT__
 
     /**
      * Locate a polyobj in the map by sound emitter.
@@ -674,9 +754,8 @@ DENG2_PIMPL(Map)
     }
 };
 
-Map::Map() : d(new Instance(this))
+Map::Map(Uri const &uri) : d(new Instance(this, uri))
 {
-    zap(_oldUniqueId);
 #ifdef __CLIENT__
     zap(clMobjHash);
     zap(clActivePlanes);
@@ -797,14 +876,19 @@ void Map::initLightGrid()
 
 #endif // __CLIENT__
 
-Uri Map::uri() const
+Uri const &Map::uri() const
 {
-    return _uri;
+    return d->uri;
 }
 
 char const *Map::oldUniqueId() const
 {
-    return _oldUniqueId;
+    return d->oldUniqueId;
+}
+
+void Map::setOldUniqueId(char const *newUniqueId)
+{
+    qstrncpy(d->oldUniqueId, newUniqueId, sizeof(d->oldUniqueId));
 }
 
 AABoxd const &Map::bounds() const
@@ -882,35 +966,6 @@ void Map::setTraceOpening(Line &line)
 int Map::ambientLightLevel() const
 {
     return _ambientLightLevel;
-}
-
-void Map::initSkyFix()
-{
-    Time begunAt;
-
-    LOG_AS("Map::initSkyFix");
-
-    d->skyFloorHeight   = DDMAXFLOAT;
-    d->skyCeilingHeight = DDMINFLOAT;
-
-    // Update for sector plane heights and mobjs which intersect the ceiling.
-    foreach(Sector *sector, d->sectors)
-    {
-        d->updateMapSkyFixForSector(*sector);
-    }
-
-    LOG_INFO(String("Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
-}
-
-coord_t Map::skyFix(bool ceiling) const
-{
-    return ceiling? d->skyCeilingHeight : d->skyFloorHeight;
-}
-
-void Map::setSkyFix(bool ceiling, coord_t newHeight)
-{
-    if(ceiling) d->skyCeilingHeight = newHeight;
-    else        d->skyFloorHeight   = newHeight;
 }
 
 int Map::toSideIndex(int lineIndex, int backSide) // static
@@ -1097,53 +1152,6 @@ int Map::mobjsBoxIterator(AABoxd const &box, int (*callback) (mobj_t *, void *),
     return iterateCellBlockMobjs(*d->mobjBlockmap, cellBlock, callback, parameters);
 }
 
-void Map::linkLine(Line &line)
-{
-    // Lines of Polyobjs don't get into the blockmap (presently...).
-    if(line.definesPolyobj()) return;
-
-    Vector2d const &origin = d->lineBlockmap->origin();
-    Vector2d const &cellDimensions = d->lineBlockmap->cellDimensions();
-
-    // Determine the block of cells we'll be working within.
-    Blockmap::CellBlock cellBlock = d->lineBlockmap->toCellBlock(line.aaBox());
-
-    Blockmap::Cell cell;
-    for(cell.y = cellBlock.min.y; cell.y <= cellBlock.max.y; ++cell.y)
-    for(cell.x = cellBlock.min.x; cell.x <= cellBlock.max.x; ++cell.x)
-    {
-        if(line.slopeType() == ST_VERTICAL ||
-           line.slopeType() == ST_HORIZONTAL)
-        {
-            d->lineBlockmap->link(cell, &line);
-            continue;
-        }
-
-        Vector2d point = origin + cellDimensions * Vector2d(cell.x, cell.y);
-
-        // Choose a cell diagonal to test.
-        Vector2d from, to;
-        if(line.slopeType() == ST_POSITIVE)
-        {
-            // Line slope / vs \ cell diagonal.
-            from = Vector2d(point.x, point.y + cellDimensions.y);
-            to   = Vector2d(point.x + cellDimensions.x, point.y);
-        }
-        else
-        {
-            // Line slope \ vs / cell diagonal.
-            from = Vector2d(point.x + cellDimensions.x, point.y + cellDimensions.y);
-            to   = Vector2d(point.x, point.y);
-        }
-
-        // Would Line intersect this?
-        if((line.pointOnSide(from) < 0) != (line.pointOnSide(to) < 0))
-        {
-            d->lineBlockmap->link(cell, &line);
-        }
-    }
-}
-
 struct bmapiterparams_t
 {
     int localValidCount;
@@ -1191,24 +1199,6 @@ static int iterateCellBlockLines(Blockmap &lineBlockmap, Blockmap::CellBlock con
     parms.parms           = context;
 
     return lineBlockmap.iterate(cellBlock, blockmapCellLinesIterator, (void *) &parms);
-}
-
-void Map::linkBspLeaf(BspLeaf &bspLeaf)
-{
-    // Degenerate BspLeafs don't get in.
-    if(bspLeaf.isDegenerate()) return;
-
-    // BspLeafs without sectors don't get in.
-    if(!bspLeaf.hasSector()) return;
-
-    Blockmap::CellBlock cellBlock = d->bspLeafBlockmap->toCellBlock(bspLeaf.face().aaBox());
-
-    Blockmap::Cell cell;
-    for(cell.y = cellBlock.min.y; cell.y <= cellBlock.max.y; ++cell.y)
-    for(cell.x = cellBlock.min.x; cell.x <= cellBlock.max.x; ++cell.x)
-    {
-        d->bspLeafBlockmap->link(cell, &bspLeaf);
-    }
 }
 
 struct bmapbspleafiterateparams_t
@@ -1700,7 +1690,7 @@ BspLeaf *Map::bspLeafAtPoint(Vector2d const &point) const
     MapElement *bspElement = d->bspRoot;
     while(bspElement->type() != DMU_BSPLEAF)
     {
-        BspNode const *bspNode = bspElement->castTo<BspNode>();
+        BspNode const *bspNode = bspElement->as<BspNode>();
 
         int side = bspNode->partition().pointOnSide(point) < 0;
 
@@ -1709,7 +1699,7 @@ BspLeaf *Map::bspLeafAtPoint(Vector2d const &point) const
     }
 
     // We've arrived at a leaf.
-    return bspElement->castTo<BspLeaf>();
+    return bspElement->as<BspLeaf>();
 }
 
 BspLeaf *Map::bspLeafAtPoint_FixedPrecision(Vector2d const &point) const
@@ -1719,7 +1709,7 @@ BspLeaf *Map::bspLeafAtPoint_FixedPrecision(Vector2d const &point) const
     MapElement *bspElement = d->bspRoot;
     while(bspElement->type() != DMU_BSPLEAF)
     {
-        BspNode const *bspNode = bspElement->castTo<BspNode>();
+        BspNode const *bspNode = bspElement->as<BspNode>();
         Partition const &partition = bspNode->partition();
 
         fixed_t lineOriginX[2]    = { DBL2FIX(partition.origin.x),    DBL2FIX(partition.origin.y) };
@@ -1732,8 +1722,25 @@ BspLeaf *Map::bspLeafAtPoint_FixedPrecision(Vector2d const &point) const
     }
 
     // We've arrived at a leaf.
-    return bspElement->castTo<BspLeaf>();
+    return bspElement->as<BspLeaf>();
 }
+
+void Map::updateSurfacesOnMaterialChange(Material &material)
+{
+    if(ddMapSetup) return;
+
+#ifdef __CLIENT__
+    foreach(Surface *surface, d->decoratedSurfaces)
+    {
+        if(&material == surface->materialPtr())
+        {
+            surface->markAsNeedingDecorationUpdate();
+        }
+    }
+#endif
+}
+
+#ifdef __CLIENT__
 
 void Map::lerpScrollingSurfaces(bool resetNextViewer)
 {
@@ -1829,22 +1836,34 @@ Map::PlaneSet &Map::trackedPlanes()
     return d->trackedPlanes;
 }
 
-void Map::updateSurfacesOnMaterialChange(Material &material)
+void Map::initSkyFix()
 {
-    if(ddMapSetup) return;
+    Time begunAt;
 
-#ifdef __CLIENT__
-    foreach(Surface *surface, d->decoratedSurfaces)
+    LOG_AS("Map::initSkyFix");
+
+    d->skyFloorHeight   = DDMAXFLOAT;
+    d->skyCeilingHeight = DDMINFLOAT;
+
+    // Update for sector plane heights and mobjs which intersect the ceiling.
+    foreach(Sector *sector, d->sectors)
     {
-        if(&material == surface->materialPtr())
-        {
-            surface->markAsNeedingDecorationUpdate();
-        }
+        d->updateMapSkyFixForSector(*sector);
     }
-#endif
+
+    LOG_INFO(String("Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 }
 
-#ifdef __CLIENT__
+coord_t Map::skyFix(bool ceiling) const
+{
+    return ceiling? d->skyCeilingHeight : d->skyFloorHeight;
+}
+
+void Map::setSkyFix(bool ceiling, coord_t newHeight)
+{
+    if(ceiling) d->skyCeilingHeight = newHeight;
+    else        d->skyFloorHeight   = newHeight;
+}
 
 Generators &Map::generators()
 {
@@ -1935,7 +1954,7 @@ static Material *chooseFixMaterial(Line::Side &side, int section)
     }
 
     // Our second choice is a material from this sector.
-    choice2 = frontSec->planeSurface(section == Line::Side::Bottom? Plane::Floor : Plane::Ceiling).materialPtr();
+    choice2 = frontSec->planeSurface(section == Line::Side::Bottom? Sector::Floor : Sector::Ceiling).materialPtr();
 
     // Prefer a non-animated, non-masked material.
     if(choice1 && !choice1->isAnimated() && !choice1->isSkyMasked())
@@ -2314,7 +2333,6 @@ bool Map::endEditing()
     d->editable.pruneVertexes();
 
     /// Ensure lines with only one sector are flagged as blocking.
-    /// @todo Refactor away.
     foreach(Line *line, d->editable.lines)
     {
         if(!line->hasFrontSector() || !line->hasBackSector())
@@ -2398,7 +2416,7 @@ bool Map::endEditing()
     d->initLineBlockmap();
     foreach(Line *line, lines())
     {
-        linkLine(*line);
+        d->linkLine(*line);
     }
 
     // The mobj and polyobj blockmaps are maintained dynamically.
@@ -2428,7 +2446,7 @@ bool Map::endEditing()
     d->initBspLeafBlockmap();
     foreach(BspLeaf *bspLeaf, bspLeafs())
     {
-        linkBspLeaf(*bspLeaf);
+        d->linkBspLeaf(*bspLeaf);
     }
 
 #ifdef __CLIENT__

@@ -1,4 +1,4 @@
-/** @file data/hedge.cpp Mesh Geometry Half-Edge.
+/** @file hedge.cpp Mesh Geometry Half-Edge.
  *
  * @authors Copyright © 2011-2013 Daniel Swanson <danij@dengine.net>
  *

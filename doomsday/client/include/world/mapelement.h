@@ -84,18 +84,16 @@ public:
 
     void setIndexInMap(int newIndex = NoIndex);
 
-    /// @todo Rename to as().
     template <typename Type>
-    inline Type *castTo()
+    inline Type *as()
     {
         Type *t = dynamic_cast<Type *>(this);
         DENG2_ASSERT(t != 0);
         return t;
     }
 
-    /// @todo Rename to as().
     template <typename Type>
-    inline Type const *castTo() const
+    inline Type const *as() const
     {
         Type const *t = dynamic_cast<Type const *>(this);
         DENG_ASSERT(t != 0);

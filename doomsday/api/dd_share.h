@@ -450,12 +450,12 @@ enum {
 ///@}
 
 /**
- * @defgroup sufFlags Surface Flags
+ * @defgroup surfaceFlags Surface Flags
  * @ingroup dmu apiFlags
  * For use with P_Set/Get(DMU_SURFACE, n, DMU_FLAGS).
  */
 
-/// @addtogroup sufFlags
+/// @addtogroup surfaceFlags
 ///@{
 #define DDSUF_MATERIAL_FLIPH    0x00000001 ///< Surface material is flipped horizontally.
 #define DDSUF_MATERIAL_FLIPV    0x00000002 ///< Surface material is flipped vertically.

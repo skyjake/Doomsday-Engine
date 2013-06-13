@@ -61,14 +61,18 @@ DENG2_PIMPL(Surface)
     /// @em Sharp origin of the surface material.
     Vector2f materialOrigin;
 
+#ifdef __CLIENT__
+
     /// Old @em sharp origin of the surface material, for smoothing.
     Vector2f oldMaterialOrigin[2];
 
     /// Smoothed origin of the surface material.
     Vector2f visMaterialOrigin;
 
-    /// Delta between the @sharp and smoothed origin of the surface material.
+    /// Delta between the @em sharp and smoothed origin of the surface material.
     Vector2f visMaterialOriginDelta;
+
+#endif
 
     /// Surface color tint.
     de::Vector3f tintColor;
@@ -95,14 +99,14 @@ DENG2_PIMPL(Surface)
     /// @todo Refactor away -ds
     inline bool isSideMiddle()
     {
-        return owner.type() == DMU_SIDE && &self == &owner.castTo<Line::Side>()->middle();
+        return owner.type() == DMU_SIDE && &self == &owner.as<Line::Side>()->middle();
     }
 
     /// @todo Refactor away -ds
     inline bool isSectorExtraPlane()
     {
         if(owner.type() != DMU_PLANE) return false;
-        Plane const &plane = *owner.castTo<Plane>();
+        Plane const &plane = *owner.as<Plane>();
         return !(plane.isSectorFloor() || plane.isSectorCeiling());
     }
 
@@ -130,15 +134,16 @@ DENG2_PIMPL(Surface)
             i->materialOriginChanged(self, oldMaterialOrigin, changedComponents);
         }
 
+#ifdef __CLIENT__
         if(!ddMapSetup && self.isAttachedToMap())
         {
-#ifdef __CLIENT__
             /// @todo Replace with a de::Observer-based mechanism.
             self._decorationData.needsUpdate = true;
-#endif
+
             /// @todo Do not assume surface is from the CURRENT map.
             App_World().map().scrollingSurfaces().insert(&self);
         }
+#endif
     }
 
     void notifyMaterialOriginChanged(Vector2f const &oldMaterialOrigin)
@@ -232,21 +237,21 @@ de::Vector3f const &Surface::normal() const
     return d->normal;
 }
 
-void Surface::setNormal(Vector3f const &newNormal_)
+void Surface::setNormal(Vector3f const &newNormal)
 {
     // Normalize
-    Vector3f newNormal = newNormal_;
-    dfloat length = newNormal.length();
+    Vector3f newNormalNormalized = newNormal;
+    dfloat length = newNormalNormalized.length();
     if(length)
     {
         for(int i = 0; i < 3; ++i)
-            newNormal[i] /= length;
+            newNormalNormalized[i] /= length;
     }
 
-    if(d->normal != newNormal)
+    if(d->normal != newNormalNormalized)
     {
         Vector3f oldNormal = d->normal;
-        d->normal = newNormal;
+        d->normal = newNormalNormalized;
 
         // We'll need to recalculate the tangents when next referenced.
         d->needUpdateTangents = true;
@@ -285,7 +290,7 @@ bool Surface::isAttachedToMap() const
 {
     if(d->owner.type() == DMU_PLANE)
     {
-        Sector const &sector = d->owner.castTo<Plane>()->sector();
+        Sector const &sector = d->owner.as<Plane>()->sector();
         if(!sector.bspLeafCount())
             return false;
     }
@@ -304,7 +309,7 @@ bool Surface::setMaterial(Material *newMaterial, bool isMissingFix)
                 d->materialIsMissingFix = true;
 
                 // Sides of selfreferencing map lines should never receive fix materials.
-                DENG_ASSERT(!(d->owner.type() == DMU_SIDE && d->owner.castTo<Line::Side>()->line().isSelfReferencing()));
+                DENG_ASSERT(!(d->owner.type() == DMU_SIDE && d->owner.as<Line::Side>()->line().isSelfReferencing()));
             }
         }
         else if(newMaterial && d->materialIsMissingFix)
@@ -312,11 +317,11 @@ bool Surface::setMaterial(Material *newMaterial, bool isMissingFix)
             d->materialIsMissingFix = false;
         }
 
+#ifdef __CLIENT__
         if(isAttachedToMap())
         {
             if(!ddMapSetup)
             {
-#ifdef __CLIENT__
                 Map &map = App_World().map(); /// @todo Do not assume surface is from the CURRENT map.
 
                 // If this plane's surface is in the decorated list, remove it.
@@ -324,11 +329,9 @@ bool Surface::setMaterial(Material *newMaterial, bool isMissingFix)
 
                 // If this plane's surface is in the glowing list, remove it.
                 map.glowingSurfaces().remove(this);
-#endif // __CLIENT__
 
                 if(newMaterial)
                 {
-#ifdef __CLIENT__
                     if(newMaterial->hasGlow())
                     {
                         map.glowingSurfaces().insert(this);
@@ -343,13 +346,13 @@ bool Surface::setMaterial(Material *newMaterial, bool isMissingFix)
                     {
                         de::Uri uri = newMaterial->manifest().composeUri();
                         ded_ptcgen_t const *def = Def_GetGenerator(reinterpret_cast<uri_s *>(&uri));
-                        P_SpawnPlaneParticleGen(def, d->owner.castTo<Plane>());
+                        P_SpawnPlaneParticleGen(def, d->owner.as<Plane>());
                     }
 
-#endif // __CLIENT__
                 }
             }
         }
+#endif // __CLIENT__
 
         d->material = newMaterial;
 
@@ -377,6 +380,7 @@ void Surface::setMaterialOrigin(Vector2f const &newOrigin)
 
         d->materialOrigin = newOrigin;
 
+#ifdef __CLIENT__
         // During map setup we'll apply this immediately to the visual origin also.
         if(ddMapSetup)
         {
@@ -385,6 +389,7 @@ void Surface::setMaterialOrigin(Vector2f const &newOrigin)
 
             d->oldMaterialOrigin[0] = d->oldMaterialOrigin[1] = d->materialOrigin;
         }
+#endif
 
         // Notify interested parties of the change.
         d->notifyMaterialOriginChanged(oldMaterialOrigin);
@@ -399,6 +404,7 @@ void Surface::setMaterialOriginComponent(int component, float newPosition)
 
         d->materialOrigin[component] = newPosition;
 
+#ifdef __CLIENT__
         // During map setup we'll apply this immediately to the visual origin also.
         if(ddMapSetup)
         {
@@ -409,11 +415,14 @@ void Surface::setMaterialOriginComponent(int component, float newPosition)
                 d->oldMaterialOrigin[1][component] =
                     d->materialOrigin[component];
         }
+#endif
 
         // Notify interested parties of the change.
         d->notifyMaterialOriginChanged(oldMaterialOrigin, (1 << component));
     }
 }
+
+#ifdef __CLIENT__
 
 Vector2f const &Surface::visMaterialOrigin() const
 {
@@ -469,6 +478,8 @@ void Surface::updateMaterialOriginTracking()
     }
 }
 
+#endif // __CLIENT__
+
 float Surface::opacity() const
 {
     return d->opacity;
@@ -494,15 +505,15 @@ Vector3f const &Surface::tintColor() const
     return d->tintColor;
 }
 
-void Surface::setTintColor(Vector3f const &newTintColor_)
+void Surface::setTintColor(Vector3f const &newTintColor)
 {
-    Vector3f newTintColor = Vector3f(de::clamp(0.f, newTintColor_.x, 1.f),
-                                     de::clamp(0.f, newTintColor_.y, 1.f),
-                                     de::clamp(0.f, newTintColor_.z, 1.f));
-    if(d->tintColor != newTintColor)
+    Vector3f newColorClamped = Vector3f(de::clamp(0.f, newTintColor.x, 1.f),
+                                        de::clamp(0.f, newTintColor.y, 1.f),
+                                        de::clamp(0.f, newTintColor.z, 1.f));
+    if(d->tintColor != newColorClamped)
     {
         Vector3f oldTintColor = d->tintColor;
-        d->tintColor = newTintColor;
+        d->tintColor = newColorClamped;
 
         // Notify interested parties of the change.
         d->notifyTintColorChanged(oldTintColor);

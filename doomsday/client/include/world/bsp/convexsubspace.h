@@ -101,6 +101,8 @@ public:
      */
     ConvexSubspace(ConvexSubspace const &other);
 
+    ConvexSubspace &operator = (ConvexSubspace const &);
+
     /**
      * Returns the total number of segments in the subspace.
      */

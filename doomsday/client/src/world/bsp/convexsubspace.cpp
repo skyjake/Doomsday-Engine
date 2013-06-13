@@ -184,7 +184,6 @@ struct Continuity
 DENG2_PIMPL_NOREF(ConvexSubspace)
 {
     typedef QSet<LineSegment::Side *> Segments;
-    typedef QList<Continuity> Continuities;
 
     /// The set of line segments.
     Segments segments;
@@ -194,9 +193,6 @@ DENG2_PIMPL_NOREF(ConvexSubspace)
 
     /// Set to @c true when the ordered segment list needs to be rebuilt.
     bool needRebuildOrderedSegments;
-
-    /// Line segment continuity map.
-    Continuities continuities;
 
     /// BSP leaf attributed to the subspace (if any).
     BspLeaf *bspLeaf;
@@ -331,6 +327,12 @@ ConvexSubspace::ConvexSubspace(ConvexSubspace const &other)
     : d(new Instance(*other.d))
 {}
 
+ConvexSubspace &ConvexSubspace::operator = (ConvexSubspace const &other)
+{
+    d.reset(new Instance(*other.d));
+    return *this;
+}
+
 void ConvexSubspace::addSegments(QList<LineSegment::Side *> const &newSegments)
 {
     int sizeBefore = d->segments.size();
@@ -385,9 +387,10 @@ void ConvexSubspace::buildGeometry(BspLeaf &leaf) const
     }
 
     /*
-     * Build the continuity map.
+     * Build the line segment -> sector continuity map.
      */
-    d->continuities.clear();
+    typedef QList<Continuity> Continuities;
+    Continuities continuities;
 
     typedef QHash<Sector *, Continuity *> SectorContinuityMap;
     SectorContinuityMap scMap;
@@ -399,17 +402,17 @@ void ConvexSubspace::buildGeometry(BspLeaf &leaf) const
         SectorContinuityMap::iterator found = scMap.find(frontSector);
         if(found == scMap.end())
         {
-            d->continuities.append(Continuity(frontSector));
-            found = scMap.insert(frontSector, &d->continuities.last());
+            continuities.append(Continuity(frontSector));
+            found = scMap.insert(frontSector, &continuities.last());
         }
 
         Continuity *conty = found.value();
         conty->addOneSegment(oseg);
     }
 
-    for(int i = 0; i < d->continuities.count(); ++i)
+    for(int i = 0; i < continuities.count(); ++i)
     {
-        Continuity &conty = d->continuities[i];
+        Continuity &conty = continuities[i];
 
         conty.evaluate();
 
@@ -496,16 +499,16 @@ void ConvexSubspace::buildGeometry(BspLeaf &leaf) const
     }
 
     // Determine which sector to attribute to the BSP leaf.
-    qSort(d->continuities.begin(), d->continuities.end());
-    leaf.setSector(d->continuities.first().sector);
+    qSort(continuities.begin(), continuities.end());
+    leaf.setSector(continuities.first().sector);
 
 /*#ifdef DENG_DEBUG
     LOG_INFO("\nConvexSubspace %s BSP sector:%i (%i continuities)")
         << d->findCenter().asText()
         << (leaf.hasSector()? leaf.sector().indexInArchive() : -1)
-        << d->continuities.count();
+        << continuities.count();
 
-    foreach(Continuity const &conty, d->continuities)
+    foreach(Continuity const &conty, continuities)
     {
         conty.debugPrint();
     }

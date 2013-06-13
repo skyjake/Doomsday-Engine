@@ -124,6 +124,7 @@ boolean P_IsInVoid(player_t *player)
         {
             Sector &sec = ddpl->mo->bspLeaf->sector();
 
+#ifdef __CLIENT__
             if(sec.ceilingSurface().hasSkyMaskedMaterial())
             {
                 coord_t const skyCeil = App_World().map().skyFixCeiling();
@@ -131,10 +132,14 @@ boolean P_IsInVoid(player_t *player)
                     return true;
             }
             else if(ddpl->mo->origin[VZ] > sec.ceiling().visHeight() - 4)
+#else
+            if(ddpl->mo->origin[VZ] > sec.ceiling().height() - 4)
+#endif
             {
                 return true;
             }
 
+#ifdef __CLIENT__
             if(sec.floorSurface().hasSkyMaskedMaterial())
             {
                 coord_t const skyFloor = App_World().map().skyFixFloor();
@@ -142,6 +147,9 @@ boolean P_IsInVoid(player_t *player)
                     return true;
             }
             else if(ddpl->mo->origin[VZ] < sec.floor().visHeight() + 4)
+#else
+            if(ddpl->mo->origin[VZ] < sec.floor().height() + 4)
+#endif
             {
                 return true;
             }

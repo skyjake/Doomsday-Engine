@@ -117,7 +117,7 @@ void ShadowEdge::prepare(int planeIndex)
 {
     Line::Side &side = d->leftMostSegment->lineSide();
     Plane const &plane = side.sector().plane(planeIndex);
-    int const otherPlaneIndex = planeIndex == Plane::Floor? Plane::Ceiling : Plane::Floor;
+    int const otherPlaneIndex = planeIndex == Sector::Floor? Sector::Ceiling : Sector::Floor;
 
     d->sectorOpenness = 0; // Default is fully closed.
     d->openness = 0; // Default is fully closed.
@@ -132,7 +132,7 @@ void ShadowEdge::prepare(int planeIndex)
        d->leftMostSegment->back().sectorPtr() != 0)
     {
         Surface const &wallEdgeSurface =
-            side.back().hasSector()? side.surface(planeIndex == Plane::Ceiling? Line::Side::Top : Line::Side::Bottom)
+            side.back().hasSector()? side.surface(planeIndex == Sector::Ceiling? Line::Side::Top : Line::Side::Bottom)
                                    : side.middle();
 
         Sector const *frontSec = d->leftMostSegment->sectorPtr();
@@ -201,8 +201,8 @@ void ShadowEdge::prepare(int planeIndex)
             // Its a normal neighbor.
             Sector const *backSec = otherSide->back().sectorPtr();
             if(backSec != d->leftMostSegment->sectorPtr() &&
-               !((plane.type() == Plane::Floor && backSec->ceiling().visHeight() <= plane.visHeight()) ||
-                 (plane.type() == Plane::Ceiling && backSec->floor().height() >= plane.visHeight())))
+               !((plane.inSectorIndex() == Sector::Floor && backSec->ceiling().visHeight() <= plane.visHeight()) ||
+                 (plane.inSectorIndex() == Sector::Ceiling && backSec->floor().height() >= plane.visHeight())))
             {
                 Sector const *frontSec = d->leftMostSegment->sectorPtr();
 

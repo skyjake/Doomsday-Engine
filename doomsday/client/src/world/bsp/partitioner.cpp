@@ -444,7 +444,7 @@ DENG2_PIMPL(Partitioner)
     {
         int const costFactorMultiplier = splitCostFactor;
 
-        /// Determine the relationship between @var seg and the partition plane.
+        /// Determine the relationship between @a seg and the partition plane.
         coord_t fromDist, toDist;
         LineRelationship rel = seg.relationship(plSeg, &fromDist, &toDist);
         switch(rel)
@@ -1550,7 +1550,7 @@ DENG2_PIMPL(Partitioner)
         switch(elm->type())
         {
         case DMU_VERTEX: {
-            Vertex *vtx = elm->castTo<Vertex>();
+            Vertex *vtx = elm->as<Vertex>();
             /// @todo optimize: Poor performance O(n).
             for(uint i = 0; i < vertexes.size(); ++i)
             {

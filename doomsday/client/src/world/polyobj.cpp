@@ -131,9 +131,11 @@ void Polyobj::unlink()
 {
     if(_bspLeaf)
     {
+        _bspLeaf->removeOnePolyobj(*this);
+        _bspLeaf = 0;
+
         /// @todo Do not assume polyobj is from the CURRENT map.
         App_World().map().unlinkPolyobj(*this);
-        _bspLeaf = 0;
     }
 }
 
@@ -155,14 +157,7 @@ void Polyobj::link()
         /// @todo Do not assume polyobj is from the CURRENT map.
         if(BspLeaf *bspLeaf = App_World().map().bspLeafAtPoint(avg))
         {
-            if(bspLeaf->hasPolyobj())
-            {
-                LOG_WARNING("Multiple polyobjs in a single BSP leaf\n"
-                            "  (BSP leaf %i, sector %i). Previous polyobj overridden.")
-                    << bspLeaf->indexInMap()
-                    << bspLeaf->sector().indexInMap();
-            }
-            bspLeaf->setFirstPolyobj(this);
+            bspLeaf->addOnePolyobj(*this);
             _bspLeaf = bspLeaf;
         }
     }
@@ -415,15 +410,15 @@ bool Polyobj::move(Vector2d const &delta)
  * @param about      Origin to rotate @a point relative to.
  * @param fineAngle  Angle to rotate (theta).
  */
-static void rotatePoint2d(Vector2d &point, Vector2d const &origin, uint fineAngle)
+static void rotatePoint2d(Vector2d &point, Vector2d const &about, uint fineAngle)
 {
     coord_t const c = FIX2DBL(fineCosine[fineAngle]);
     coord_t const s = FIX2DBL(finesine[fineAngle]);
 
     Vector2d orig = point;
 
-    point.x = orig.x * c - orig.y * s + origin.x;
-    point.y = orig.y * c + orig.x * s + origin.y;
+    point.x = orig.x * c - orig.y * s + about.x;
+    point.y = orig.y * c + orig.x * s + about.y;
 }
 
 bool Polyobj::rotate(angle_t delta)

@@ -70,19 +70,19 @@ typedef struct listnode_s {
 /**@}*/
 
 typedef struct {
-    int flags; /// @ref lightProjectionListFlags
+    int flags; ///< @ref lightProjectionListFlags
     listnode_t *head;
 } lightprojectionlist_t;
 
 /// Orientation is toward the projectee.
 typedef struct {
-    int flags; /// @ref lightProjectFlags
-    float blendFactor; /// Multiplied with projection alpha.
-    vec3d_t v1; /// Top left vertex of the surface being projected to.
-    vec3d_t v2; /// Bottom right vertex of the surface being projected to.
-    vec3f_t tangent; /// Normalized tangent of the surface being projected to.
-    vec3f_t bitangent; /// Normalized bitangent of the surface being projected to.
-    vec3f_t normal; /// Normalized normal of the surface being projected to.
+    int flags;          ///< @ref lightProjectionFlags
+    float blendFactor;  ///< Multiplied with projection alpha.
+    vec3d_t v1;         ///< Top left vertex of the surface being projected to.
+    vec3d_t v2;         ///< Bottom right vertex of the surface being projected to.
+    vec3f_t tangent;    ///< Normalized tangent of the surface being projected to.
+    vec3f_t bitangent;  ///< Normalized bitangent of the surface being projected to.
+    vec3f_t normal;     ///< Normalized normal of the surface being projected to.
 } lightprojectparams_t;
 
 static void iterateBspLeafLumObjs(BspLeaf &bspLeaf, boolean (*func) (void *, void *),
@@ -470,7 +470,7 @@ static DGLuint chooseOmniLightTexture(lumobj_t *lum, lightprojectparams_t const 
  * contacted a new projection node will constructed and returned.
  *
  * @param lum  Lumobj representing the light being projected.
- * @param paramaters  ProjectLightToSurfaceIterator paramaters.
+ * @param parameters  ProjectLightToSurfaceIterator paramaters.
  *
  * @return  @c 0 = continue iteration.
  */
@@ -989,7 +989,7 @@ static void createGlowLightForSurface(Surface &suf)
     if(suf.owner().type() != DMU_PLANE)
         return;
 
-    Plane *pln = suf.owner().castTo<Plane>();
+    Plane *pln = suf.owner().as<Plane>();
     Sector *sec = &pln->sector();
 
     // Only produce a light for sectors with open space.
@@ -1164,7 +1164,7 @@ boolean LOIT_ClipLumObjBySight(void *data, void *context)
         // We need to figure out if any of the polyobj's segments lies
         // between the viewpoint and the lumobj.
         BspLeaf *bspLeaf = (BspLeaf *) context;
-        Polyobj *po = bspLeaf->firstPolyobj();
+        foreach(Polyobj *po, bspLeaf->polyobjs())
         foreach(Line *line, po->lines())
         {
             Segment *segment = line->front().leftSegment();
@@ -1229,7 +1229,7 @@ void LO_UnlinkMobjLumobjs()
 }
 
 /**
- * @param paramaters  ProjectLightToSurfaceIterator paramaters.
+ * @param parameters  ProjectLightToSurfaceIterator paramaters.
  *
  * @return  @c 0 = continue iteration.
  */

@@ -784,11 +784,13 @@ void R_NewSharpWorld()
         R_CheckViewerLimits(vd->lastSharp, &sharpView);
     }
 
+#ifdef __CLIENT__
     if(App_World().hasMap())
     {
         App_World().map().updateTrackedPlanes();
         App_World().map().updateScrollingSurfaces();
     }
+#endif
 }
 
 void R_CreateMobjLinks()

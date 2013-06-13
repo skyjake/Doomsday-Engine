@@ -26,6 +26,8 @@
 
 #include "BspLeaf"
 #include "Line"
+#include "Plane"
+
 #include "world/map.h"
 #include "world/p_players.h"
 #include "world/p_maptypes.h"
@@ -41,7 +43,8 @@ using namespace de;
 float const Sector::DEFAULT_LIGHT_LEVEL = 1.f;
 Vector3f const Sector::DEFAULT_LIGHT_COLOR = Vector3f(1.f, 1.f, 1.f);
 
-DENG2_PIMPL(Sector)
+DENG2_PIMPL(Sector),
+DENG2_OBSERVES(Plane, HeightChange)
 {
     /// Bounding box for the sector.
     AABoxd aaBox;
@@ -121,6 +124,73 @@ DENG2_PIMPL(Sector)
         }
         notifyLightColorChanged(oldLightColor, changedComponents);
     }
+
+    // Observes Plane HeightChange.
+    void planeHeightChanged(Plane &plane, coord_t oldHeight)
+    {
+        DENG2_UNUSED(oldHeight);
+
+        // We are presently only interested in floor and/or ceiling height changes.
+        if(!(&plane == &self.floor() || &plane == &self.ceiling()))
+            return;
+
+        self.updateSoundEmitterOrigin();
+
+#ifdef __CLIENT__
+        /// @todo Map should observe.
+        App_World().map().updateMissingMaterialsForLinesOfSector(self);
+        S_MarkSectorReverbDirty(&self);
+#endif
+
+        // Check if there are any camera players in this sector. If their
+        // height is now above the ceiling/below the floor they are now in
+        // the void.
+        for(uint i = 0; i < DDMAXPLAYERS; ++i)
+        {
+            player_t *plr = &ddPlayers[i];
+            ddplayer_t *ddpl = &plr->shared;
+
+            if(!ddpl->inGame || !ddpl->mo || !ddpl->mo->bspLeaf)
+                continue;
+
+            if((ddpl->flags & DDPF_CAMERA) && ddpl->mo->bspLeaf->sectorPtr() == &self &&
+               (ddpl->mo->origin[VZ] > self.ceiling().height() - 4 ||
+                ddpl->mo->origin[VZ] < self.floor().height()))
+            {
+                ddpl->inVoid = true;
+            }
+        }
+
+        // Update the sound emitter origins for all dependent wall surfaces.
+        foreach(Line::Side *side, sides)
+        {
+            side->updateAllSoundEmitterOrigins();
+            side->back().updateAllSoundEmitterOrigins();
+        }
+
+#ifdef __CLIENT__
+        // Inform the shadow bias of changed geometry.
+        foreach(BspLeaf *bspLeaf, bspLeafs)
+        {
+            if(bspLeaf->isDegenerate())
+                 continue;
+
+            foreach(Segment *seg, bspLeaf->allSegments())
+            {
+                if(!seg->hasLineSide())
+                    continue;
+
+                for(uint i = 0; i < 3; ++i)
+                {
+                    SB_SurfaceMoved(&seg->biasSurface(i));
+                }
+            }
+
+            SB_SurfaceMoved(&bspLeaf->biasSurface(plane.inSectorIndex()));
+        }
+
+#endif // __CLIENT__
+    }
 };
 
 Sector::Sector(float lightLevel, Vector3f const &lightColor)
@@ -155,16 +225,16 @@ Vector3f const &Sector::lightColor() const
     return d->lightColor;
 }
 
-void Sector::setLightColor(Vector3f const &newLightColor_)
+void Sector::setLightColor(Vector3f const &newLightColor)
 {
-    Vector3f newLightColor = Vector3f(de::clamp(0.f, newLightColor_.x, 1.f),
-                                      de::clamp(0.f, newLightColor_.y, 1.f),
-                                      de::clamp(0.f, newLightColor_.z, 1.f));
+    Vector3f newColorClamped = Vector3f(de::clamp(0.f, newLightColor.x, 1.f),
+                                        de::clamp(0.f, newLightColor.y, 1.f),
+                                        de::clamp(0.f, newLightColor.z, 1.f));
 
-    if(d->lightColor != newLightColor)
+    if(d->lightColor != newColorClamped)
     {
         Vector3f oldLightColor = d->lightColor;
-        d->lightColor = newLightColor;
+        d->lightColor = newColorClamped;
 
         // Notify interested parties of the change.
         d->notifyLightColorChanged(oldLightColor);
@@ -284,7 +354,7 @@ Plane *Sector::addPlane(Vector3f const &normal, coord_t height)
 {
     Plane *plane = new Plane(*this, normal, height);
 
-    plane->audienceForHeightChange += this;
+    plane->audienceForHeightChange += d;
     plane->setInSectorIndex(d->planes.count());
 
     d->planes.append(plane);
@@ -409,70 +479,6 @@ void Sector::updateSoundEmitterOrigin()
     d->soundEmitter.origin[VZ] = (floor().height() + ceiling().height()) / 2;
 }
 
-void Sector::planeHeightChanged(Plane &plane, coord_t oldHeight)
-{
-    // We are presently only interested in floor and/or ceiling height changes.
-    if(!(&plane == &floor() || &plane == &ceiling()))
-        return;
-
-    updateSoundEmitterOrigin();
-#ifdef __CLIENT__
-    /// @todo Map should observe.
-    App_World().map().updateMissingMaterialsForLinesOfSector(*this);
-    S_MarkSectorReverbDirty(this);
-#endif
-
-    // Check if there are any camera players in this sector. If their
-    // height is now above the ceiling/below the floor they are now in
-    // the void.
-    for(uint i = 0; i < DDMAXPLAYERS; ++i)
-    {
-        player_t *plr = &ddPlayers[i];
-        ddplayer_t *ddpl = &plr->shared;
-
-        if(!ddpl->inGame || !ddpl->mo || !ddpl->mo->bspLeaf)
-            continue;
-
-        if((ddpl->flags & DDPF_CAMERA) && ddpl->mo->bspLeaf->sectorPtr() == this &&
-           (ddpl->mo->origin[VZ] > ceiling().height() - 4 || ddpl->mo->origin[VZ] < floor().height()))
-        {
-            ddpl->inVoid = true;
-        }
-    }
-
-    // Update the sound emitter origins for all dependent wall surfaces.
-    foreach(Line::Side *side, d->sides)
-    {
-        side->updateAllSoundEmitterOrigins();
-        side->back().updateAllSoundEmitterOrigins();
-    }
-
-#ifdef __CLIENT__
-    // Inform the shadow bias of changed geometry.
-    foreach(BspLeaf *bspLeaf, d->bspLeafs)
-    {
-        if(bspLeaf->isDegenerate())
-             continue;
-
-        foreach(Segment *seg, bspLeaf->allSegments())
-        {
-            if(!seg->hasLineSide())
-                continue;
-
-            for(uint i = 0; i < 3; ++i)
-            {
-                SB_SurfaceMoved(&seg->biasSurface(i));
-            }
-        }
-
-        SB_SurfaceMoved(&bspLeaf->biasSurface(plane.inSectorIndex()));
-    }
-
-#endif // __CLIENT__
-
-    DENG2_UNUSED(oldHeight);
-}
-
 int Sector::property(DmuArgs &args) const
 {
     switch(args.prop)
@@ -505,11 +511,11 @@ int Sector::property(DmuArgs &args) const
         args.setValue(DMT_SECTOR_VALIDCOUNT, &d->validCount, 0);
         break;
     case DMU_FLOOR_PLANE: {
-        Plane *pln = d->planes[Plane::Floor];
+        Plane *pln = d->planes[Floor];
         args.setValue(DMT_SECTOR_FLOORPLANE, &pln, 0);
         break; }
     case DMU_CEILING_PLANE: {
-        Plane* pln = d->planes[Plane::Ceiling];
+        Plane *pln = d->planes[Ceiling];
         args.setValue(DMT_SECTOR_CEILINGPLANE, &pln, 0);
         break; }
     default:

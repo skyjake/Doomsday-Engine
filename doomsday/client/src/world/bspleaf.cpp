@@ -76,8 +76,8 @@ DENG2_PIMPL(BspLeaf)
     /// Sector attributed to the leaf. @note can be @c 0 (degenerate!).
     Sector *sector;
 
-    /// First Polyobj in the leaf. Can be @c 0 (none).
-    Polyobj *polyobj;
+    /// Set of polyobjs linked to the leaf (not owned).
+    Polyobjs polyobjs;
 
 #ifdef __CLIENT__
 
@@ -103,7 +103,6 @@ DENG2_PIMPL(BspLeaf)
           needUpdateClockwiseSegments(false),
           needUpdateAllSegments(false),
           sector(sector),
-          polyobj(0),
 #ifdef __CLIENT__
           fanBase(0),
           needUpdateFanBase(true),
@@ -149,7 +148,7 @@ DENG2_PIMPL(BspLeaf)
         {
             if(MapElement *elem = hedge->mapElement())
             {
-                clockwiseSegments.append(elem->castTo<Segment>());
+                clockwiseSegments.append(elem->as<Segment>());
             }
         } while((hedge = &hedge->next()) != face.hedge());
 
@@ -208,7 +207,7 @@ DENG2_PIMPL(BspLeaf)
         {
             if(MapElement *elem = hedge->mapElement())
             {
-                allSegments.append(elem->castTo<Segment>());
+                allSegments.append(elem->as<Segment>());
             }
         }
     }
@@ -413,25 +412,21 @@ void BspLeaf::setSector(Sector *newSector)
     d->sector = newSector;
 }
 
-bool BspLeaf::hasWorldVolume(bool useVisualHeights) const
+void BspLeaf::addOnePolyobj(Polyobj const &polyobj)
 {
-    if(isDegenerate()) return false;
-    if(!hasSector()) return false;
-
-    coord_t const floorHeight = useVisualHeights? d->sector->floor().visHeight() : d->sector->floor().height();
-    coord_t const ceilHeight  = useVisualHeights? d->sector->ceiling().visHeight() : d->sector->ceiling().height();
-
-    return (ceilHeight - floorHeight > 0);
+    d->polyobjs.insert(const_cast<Polyobj *>(&polyobj));
 }
 
-Polyobj *BspLeaf::firstPolyobj() const
+bool BspLeaf::removeOnePolyobj(polyobj_s const &polyobj)
 {
-    return d->polyobj;
+    int sizeBefore = d->polyobjs.size();
+    d->polyobjs.remove(const_cast<Polyobj *>(&polyobj));
+    return d->polyobjs.size() != sizeBefore;
 }
 
-void BspLeaf::setFirstPolyobj(Polyobj *newPolyobj)
+BspLeaf::Polyobjs const &BspLeaf::polyobjs() const
 {
-    d->polyobj = newPolyobj;
+    return d->polyobjs;
 }
 
 int BspLeaf::validCount() const
@@ -445,6 +440,17 @@ void BspLeaf::setValidCount(int newValidCount)
 }
 
 #ifdef __CLIENT__
+
+bool BspLeaf::hasWorldVolume(bool useVisualHeights) const
+{
+    if(isDegenerate()) return false;
+    if(!hasSector()) return false;
+
+    coord_t const floorHeight = useVisualHeights? d->sector->floor().visHeight() : d->sector->floor().height();
+    coord_t const ceilHeight  = useVisualHeights? d->sector->ceiling().visHeight() : d->sector->ceiling().height();
+
+    return (ceilHeight - floorHeight > 0);
+}
 
 HEdge *BspLeaf::fanBase() const
 {

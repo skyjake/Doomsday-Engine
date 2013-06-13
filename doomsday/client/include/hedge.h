@@ -1,4 +1,4 @@
-/** @file data/hedge.h Mesh Geometry Half-Edge.
+/** @file hedge.h Mesh Geometry Half-Edge.
  *
  * @authors Copyright © 2011-2013 Daniel Swanson <danij@dengine.net>
  *
@@ -177,7 +177,7 @@ public:
      * Change the HEdge attributed as the next (clockwise) neighbor of "this"
      * half-edge.
      *
-     * @param newprev  Half-edge to attribute as the new previous (anticlockwise)
+     * @param newPrev  Half-edge to attribute as the new previous (anticlockwise)
      *                 neighbor. Ownership is unaffected.
      *
      * @see setNeighbor(), prev()

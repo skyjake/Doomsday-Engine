@@ -22,6 +22,7 @@
 #define DENG_WORLD_BSPLEAF_H
 
 #include <QList>
+#include <QSet>
 
 #include <de/Error>
 #include <de/Vector>
@@ -42,7 +43,7 @@ struct ShadowLink;
 /**
  * Represents a leaf in the map's binary space partition (BSP) tree. Each leaf
  * defines a two dimensioned convex subspace region (which, may be represented
- * by a face (polygon) in the map's half-edge @ref Mesh geometry).
+ * by a face (polygon) in the map's half-edge @ref de::Mesh geometry).
  *
  * On client side a leaf also provides / links to various geometry data assets
  * and properties used to visualize the subspace.
@@ -71,7 +72,8 @@ public:
     DENG2_ERROR(UnknownGeometryGroupError);
 #endif
 
-    typedef QList<Segment *> Segments;
+    typedef QSet<polyobj_s *> Polyobjs;
+    typedef QList<Segment *>  Segments;
 
 public: /// @todo Make private:
 #ifdef __CLIENT__
@@ -176,10 +178,10 @@ public:
      *
      * @param newSector  New sector to be attributed. Ownership is unaffected.
      *                   Can be @c 0 (to clear the attribution).
-     *
-     * @todo Refactor away.
      */
     void setSector(Sector *newSector);
+
+#ifdef __CLIENT__
 
     /**
      * Determines whether the BSP leaf has a positive world volume. For this
@@ -195,23 +197,31 @@ public:
      */
     bool hasWorldVolume(bool useVisualHeights = true) const;
 
+#endif // __CLIENT__
+
     /**
      * Returns @c true iff at least one polyobj is linked to the BSP leaf.
      */
-    inline bool hasPolyobj() { return firstPolyobj() != 0; }
+    inline bool hasPolyobj() { return !polyobjs().isEmpty(); }
 
     /**
-     * Returns a pointer to the first polyobj linked to the BSP leaf; otherwise @c 0.
+     * Add the given @a polyobj to the set of those linked to the BSP leaf.
+     * Ownership is unaffected. If the polyobj is already linked in this set
+     * then nothing will happen.
      */
-    struct polyobj_s *firstPolyobj() const;
+    void addOnePolyobj(struct polyobj_s const &polyobj);
 
     /**
-     * Change the first polyobj linked to the BSP leaf.
+     * Remove the given @a polyobj from the set of those linked to the BSP leaf.
      *
-     * @param newPolyobj  New polyobj to be attributed. Ownership is unaffected.
-     *                    Can be @c 0 (to clear the attribution).
+     * @return  @c true= @a polyobj was linked and subsequently removed.
      */
-    void setFirstPolyobj(struct polyobj_s *newPolyobj);
+    bool removeOnePolyobj(polyobj_s const &polyobj);
+
+    /**
+     * Provides access to the set of polyobjs linked to the BSP leaf.
+     */
+    Polyobjs const &polyobjs() const;
 
     /**
      * Returns the vector described by the offset from the map coordinate space

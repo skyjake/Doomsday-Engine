@@ -1,4 +1,4 @@
-/** @file world/sector.h World Sector.
+/** @file world/sector.h World map sector.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -29,6 +29,8 @@
 #include <de/Observers>
 #include <de/Vector>
 
+#include "dd_share.h" // AudioEnvironmentFactors
+
 #include "MapElement"
 #include "Line"
 #include "Plane"
@@ -39,6 +41,7 @@
 
 class BspLeaf;
 class Surface;
+struct mobj_s;
 
 namespace de {
 class Map;
@@ -56,30 +59,44 @@ class Map;
 ///@}
 
 /**
- * World sector.
+ * World map sector.
  *
  * @ingroup world
  */
-class Sector : public de::MapElement,
-               DENG2_OBSERVES(Plane, HeightChange)
+class Sector : public de::MapElement
 {
 public:
     /// Required/referenced plane is missing. @ingroup errors
     DENG2_ERROR(MissingPlaneError);
 
+    /*
+     * Observers to be notified whenever a light level change occurs.
+     */
     DENG2_DEFINE_AUDIENCE(LightLevelChange,
         void sectorLightLevelChanged(Sector &sector, float oldLightLevel))
 
+    /*
+     * Observers to be notified whenever a light color change occurs.
+     */
     DENG2_DEFINE_AUDIENCE(LightColorChange,
         void sectorLightColorChanged(Sector &sector, de::Vector3f const &oldLightColor,
                                      int changedComponents /*bit-field (0x1=Red, 0x2=Green, 0x4=Blue)*/))
 
+    /*
+     * Property value defaults:
+     */
     static float const DEFAULT_LIGHT_LEVEL; ///< 1.f
     static de::Vector3f const DEFAULT_LIGHT_COLOR; ///< red=1.f green=1.f, blue=1.f
 
+    /*
+     * Linked-element lists:
+     */
+    typedef QList<BspLeaf *>    BspLeafs;
+    typedef QList<Plane *>      Planes;
     typedef QList<Line::Side *> Sides;
-    typedef QList<Plane *> Planes;
-    typedef QList<BspLeaf *> BspLeafs;
+
+    // Plane identifiers:
+    enum { Floor, Ceiling };
 
 #ifdef __CLIENT__
     /**
@@ -129,18 +146,18 @@ public:
     /**
      * Returns the floor plane of the sector.
      */
-    inline Plane &floor() { return plane(Plane::Floor); }
+    inline Plane &floor() { return plane(Floor); }
 
     /// @copydoc floor()
-    inline Plane const &floor() const { return plane(Plane::Floor); }
+    inline Plane const &floor() const { return plane(Floor); }
 
     /**
      * Returns the ceiling plane of the sector.
      */
-    inline Plane &ceiling() { return plane(Plane::Ceiling); }
+    inline Plane &ceiling() { return plane(Ceiling); }
 
     /// @copydoc ceiling()
-    inline Plane const &ceiling() const { return plane(Plane::Ceiling); }
+    inline Plane const &ceiling() const { return plane(Ceiling); }
 
     Plane *addPlane(de::Vector3f const &normal, coord_t height);
 
@@ -468,9 +485,6 @@ public:
 protected:
     int property(DmuArgs &args) const;
     int setProperty(DmuArgs const &args);
-
-    // Observes Plane HeightChange.
-    void planeHeightChanged(Plane &plane, coord_t oldHeight);
 
 private:
     DENG2_PRIVATE(d)

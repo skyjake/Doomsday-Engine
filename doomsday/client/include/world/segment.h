@@ -101,7 +101,7 @@ public:
      * @see hasBspLeaf(), Face::mapElement()
      */
     inline BspLeaf &bspLeaf() const {
-        return *hedge().face().mapElement()->castTo<BspLeaf>();
+        return *hedge().face().mapElement()->as<BspLeaf>();
     }
 
     /**
