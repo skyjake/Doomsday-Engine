@@ -403,7 +403,6 @@ DENG2_PIMPL(Map)
         }
     }
 
-    /// @todo Relocate this work to R_SetupMap() -ds
     void finishPlanes()
     {
         foreach(Sector *sector, sectors)
@@ -2334,7 +2333,6 @@ bool Map::endEditing()
     d->editable.pruneVertexes();
 
     /// Ensure lines with only one sector are flagged as blocking.
-    /// @todo Refactor away.
     foreach(Line *line, d->editable.lines)
     {
         if(!line->hasFrontSector() || !line->hasBackSector())

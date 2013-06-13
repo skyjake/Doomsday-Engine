@@ -178,8 +178,6 @@ public:
      *
      * @param newSector  New sector to be attributed. Ownership is unaffected.
      *                   Can be @c 0 (to clear the attribution).
-     *
-     * @todo Refactor away.
      */
     void setSector(Sector *newSector);
 

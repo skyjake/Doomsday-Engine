@@ -1085,7 +1085,6 @@ static void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
                 coord_t pz = P_GetParticleZ(pt);
                 coord_t fz, cz;
 
-                /// @todo $nplanes
                 if(front->floor().height() > back->floor().height())
                     fz = front->floor().height();
                 else
