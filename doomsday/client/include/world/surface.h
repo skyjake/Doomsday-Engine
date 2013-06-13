@@ -443,10 +443,6 @@ public:
     void markAsNeedingDecorationUpdate();
 #endif // __CLIENT__
 
-    /// @return @c true= is owned by some element of the Map geometry.
-    /// @deprecated Unnecessary; refactor away.
-    bool isAttachedToMap() const;
-
 protected:
     int property(DmuArgs &args) const;
     int setProperty(DmuArgs const &args);

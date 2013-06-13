@@ -131,7 +131,7 @@ DENG2_PIMPL(Surface)
         }
 
 #ifdef __CLIENT__
-        if(!ddMapSetup && self.isAttachedToMap())
+        if(!ddMapSetup)
         {
             /// @todo Replace with a de::Observer-based mechanism.
             self._decorationData.needsUpdate = true;
@@ -282,17 +282,6 @@ int Surface::flags() const
     return d->flags;
 }
 
-bool Surface::isAttachedToMap() const
-{
-    if(d->owner.type() == DMU_PLANE)
-    {
-        Sector const &sector = d->owner.as<Plane>()->sector();
-        if(!sector.bspLeafCount())
-            return false;
-    }
-    return true;
-}
-
 bool Surface::setMaterial(Material *newMaterial, bool isMissingFix)
 {
     if(d->material != newMaterial)
@@ -314,38 +303,35 @@ bool Surface::setMaterial(Material *newMaterial, bool isMissingFix)
         }
 
 #ifdef __CLIENT__
-        if(isAttachedToMap())
+        if(!ddMapSetup)
         {
-            if(!ddMapSetup)
+            Map &map = App_World().map(); /// @todo Do not assume surface is from the CURRENT map.
+
+            // If this plane's surface is in the decorated list, remove it.
+            map.decoratedSurfaces().remove(this);
+
+            // If this plane's surface is in the glowing list, remove it.
+            map.glowingSurfaces().remove(this);
+
+            if(newMaterial)
             {
-                Map &map = App_World().map(); /// @todo Do not assume surface is from the CURRENT map.
-
-                // If this plane's surface is in the decorated list, remove it.
-                map.decoratedSurfaces().remove(this);
-
-                // If this plane's surface is in the glowing list, remove it.
-                map.glowingSurfaces().remove(this);
-
-                if(newMaterial)
+                if(newMaterial->hasGlow())
                 {
-                    if(newMaterial->hasGlow())
-                    {
-                        map.glowingSurfaces().insert(this);
-                    }
-
-                    if(newMaterial->isDecorated())
-                    {
-                        map.decoratedSurfaces().insert(this);
-                    }
-
-                    if(d->owner.type() == DMU_PLANE)
-                    {
-                        de::Uri uri = newMaterial->manifest().composeUri();
-                        ded_ptcgen_t const *def = Def_GetGenerator(reinterpret_cast<uri_s *>(&uri));
-                        P_SpawnPlaneParticleGen(def, d->owner.as<Plane>());
-                    }
-
+                    map.glowingSurfaces().insert(this);
                 }
+
+                if(newMaterial->isDecorated())
+                {
+                    map.decoratedSurfaces().insert(this);
+                }
+
+                if(d->owner.type() == DMU_PLANE)
+                {
+                    de::Uri uri = newMaterial->manifest().composeUri();
+                    ded_ptcgen_t const *def = Def_GetGenerator(reinterpret_cast<uri_s *>(&uri));
+                    P_SpawnPlaneParticleGen(def, d->owner.as<Plane>());
+                }
+
             }
         }
 #endif // __CLIENT__
@@ -353,11 +339,8 @@ bool Surface::setMaterial(Material *newMaterial, bool isMissingFix)
         d->material = newMaterial;
 
 #ifdef __CLIENT__
-        if(isAttachedToMap())
-        {
-            /// @todo Replace with a de::Observer-based mechanism.
-            _decorationData.needsUpdate = true;
-        }
+        /// @todo Replace with a de::Observer-based mechanism.
+        _decorationData.needsUpdate = true;
 #endif
     }
     return true;
@@ -586,7 +569,7 @@ uint Surface::decorationCount() const
 
 void Surface::markAsNeedingDecorationUpdate()
 {
-    if(ddMapSetup || !isAttachedToMap()) return;
+    if(ddMapSetup) return;
 
     _decorationData.needsUpdate = true;
 }
