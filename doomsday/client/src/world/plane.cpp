@@ -37,9 +37,6 @@
 
 using namespace de;
 
-// $smoothplane: Maximum speed for a smoothed plane.
-int const Plane::MAX_SMOOTH_MOVE = 64;
-
 DENG2_PIMPL(Plane)
 {
     /// Sector that owns the plane.

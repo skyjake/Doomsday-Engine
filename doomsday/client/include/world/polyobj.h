@@ -47,6 +47,9 @@ public:
     /// The polyobj is not presently linked in the BSP. @ingroup errors
     DENG2_ERROR(NotLinkedError);
 
+    /*
+     * Linked-element lists:
+     */
     typedef QList<Line *> Lines;
     typedef QList<Vertex *> Vertexes;
 
@@ -56,7 +59,7 @@ public:
     DD_BASE_POLYOBJ_ELEMENTS()
 
 public:
-    polyobj_s(de::Vector2d const &origin = de::Vector2d(0, 0));
+    polyobj_s(de::Vector2d const &origin = de::Vector2d());
 
     /// @note: Does nothing about the user data section.
     ~polyobj_s();

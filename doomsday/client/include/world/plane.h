@@ -49,10 +49,8 @@ public:
      */
     DENG2_DEFINE_AUDIENCE(HeightChange, void planeHeightChanged(Plane &plane, coord_t oldHeight))
 
-    /*
-     * Property value defaults:
-     */
-    static int const MAX_SMOOTH_MOVE; ///< 64, $smoothplane: Maximum speed for a smoothed plane.
+    // Constants:
+    static int const MAX_SMOOTH_MOVE = 64; ///< $smoothplane: Maximum speed for a smoothed plane.
 
 public:
     /**
@@ -62,7 +60,9 @@ public:
      * @param normal  Normal of the plane (will be normalized if necessary).
      * @param height  Height of the plane in map space coordinates.
      */
-    Plane(Sector &sector, de::Vector3f const &normal, coord_t height = 0);
+    Plane(Sector &sector,
+          de::Vector3f const &normal = de::Vector3f(0, 0, 1),
+          coord_t height             = 0);
 
     /**
      * Returns the owning Sector of the plane.

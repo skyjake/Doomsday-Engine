@@ -36,10 +36,6 @@
 
 using namespace de;
 
-float const Surface::DEFAULT_OPACITY = 1.f;
-Vector3f const Surface::DEFAULT_TINT_COLOR = Vector3f(1.f, 1.f, 1.f);
-int const Surface::MAX_SMOOTH_MATERIAL_MOVE = 8;
-
 DENG2_PIMPL(Surface)
 {
     /// Owning map element, either @c DMU_SIDE, or @c DMU_PLANE.

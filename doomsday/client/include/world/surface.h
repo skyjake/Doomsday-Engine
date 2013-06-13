@@ -72,12 +72,8 @@ public:
         void tintColorChanged(Surface &sector, de::Vector3f const &oldTintColor,
                               int changedComponents /*bit-field (0x1=Red, 0x2=Green, 0x4=Blue)*/))
 
-    /*
-     * Property value defaults:
-     */
-    static float const DEFAULT_OPACITY; ///< 1.f
-    static de::Vector3f const DEFAULT_TINT_COLOR; ///< red=1.f, green=1.f, blue=1.f
-    static int const MAX_SMOOTH_MATERIAL_MOVE; ///< 8, $smoothmatoffset: Maximum speed for a smoothed material offset.
+    // Constants:
+    static int const MAX_SMOOTH_MATERIAL_MOVE = 8; ///< Maximum speed for a smoothed material offset.
 
 #ifdef __CLIENT__
     struct DecorSource
@@ -111,8 +107,8 @@ public:
      * @param tintColor  Default tint color.
      */
     Surface(de::MapElement &owner,
-            float opacity                 = DEFAULT_OPACITY,
-            de::Vector3f const &tintColor = DEFAULT_TINT_COLOR);
+            float opacity                 = 1,
+            de::Vector3f const &tintColor = de::Vector3f(1, 1, 1));
 
     /**
      * Returns the owning map element. Either @c DMU_SIDE, or @c DMU_PLANE.

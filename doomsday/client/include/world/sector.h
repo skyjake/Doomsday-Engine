@@ -83,12 +83,6 @@ public:
                                      int changedComponents /*bit-field (0x1=Red, 0x2=Green, 0x4=Blue)*/))
 
     /*
-     * Property value defaults:
-     */
-    static float const DEFAULT_LIGHT_LEVEL; ///< 1.f
-    static de::Vector3f const DEFAULT_LIGHT_COLOR; ///< red=1.f green=1.f, blue=1.f
-
-    /*
      * Linked-element lists:
      */
     typedef QList<BspLeaf *>    BspLeafs;
@@ -132,8 +126,8 @@ public: /// @todo Make private:
     AudioEnvironmentFactors _reverb;
 
 public:
-    Sector(float lightLevel               = DEFAULT_LIGHT_LEVEL,
-           de::Vector3f const &lightColor = DEFAULT_LIGHT_COLOR);
+    Sector(float lightLevel               = 1,
+           de::Vector3f const &lightColor = de::Vector3f(1, 1, 1));
 
     /**
      * Returns the sector plane with the specified @a planeIndex.

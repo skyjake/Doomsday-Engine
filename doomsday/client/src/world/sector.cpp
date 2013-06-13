@@ -40,9 +40,6 @@
 
 using namespace de;
 
-float const Sector::DEFAULT_LIGHT_LEVEL = 1.f;
-Vector3f const Sector::DEFAULT_LIGHT_COLOR = Vector3f(1.f, 1.f, 1.f);
-
 DENG2_PIMPL(Sector),
 DENG2_OBSERVES(Plane, HeightChange)
 {
