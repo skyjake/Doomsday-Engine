@@ -297,7 +297,7 @@ int MPE_LineCreate(int v1, int v2, int frontSectorIdx, int backSectorIdx, int fl
 void MPE_LineAddSide(int lineIdx, int sideId, short flags, ddstring_t const *topMaterialUri,
     float topOffsetX, float topOffsetY, float topRed, float topGreen, float topBlue,
     ddstring_t const *middleMaterialUri, float middleOffsetX, float middleOffsetY, float middleRed,
-    float middleGreen, float middleBlue, float middleAlpha, ddstring_t const *bottomMaterialUri,
+    float middleGreen, float middleBlue, float middleOpacity, ddstring_t const *bottomMaterialUri,
     float bottomOffsetX, float bottomOffsetY, float bottomRed, float bottomGreen,
     float bottomBlue, int archiveIndex)
 {
@@ -316,17 +316,17 @@ void MPE_LineAddSide(int lineIdx, int sideId, short flags, ddstring_t const *top
 
     // Assign the resolved material if found.
     side.top().setMaterial(findMaterialInDict(topMaterialUri));
-    side.top().setMaterialOrigin(topOffsetX, topOffsetY);
-    side.top().setTintColor(topRed, topGreen, topBlue);
+    side.top().setMaterialOrigin(Vector2f(topOffsetX, topOffsetY));
+    side.top().setTintColor(Vector3f(topRed, topGreen, topBlue));
 
     side.middle().setMaterial(findMaterialInDict(middleMaterialUri));
-    side.middle().setMaterialOrigin(middleOffsetX, middleOffsetY);
-    side.middle().setTintColor(middleRed, middleGreen, middleBlue);
-    side.middle().setOpacity(middleAlpha);
+    side.middle().setMaterialOrigin(Vector2f(middleOffsetX, middleOffsetY));
+    side.middle().setTintColor(Vector3f(middleRed, middleGreen, middleBlue));
+    side.middle().setOpacity(middleOpacity);
 
     side.bottom().setMaterial(findMaterialInDict(bottomMaterialUri));
-    side.bottom().setMaterialOrigin(bottomOffsetX, bottomOffsetY);
-    side.bottom().setTintColor(bottomRed, bottomGreen, bottomBlue);
+    side.bottom().setMaterialOrigin(Vector2f(bottomOffsetX, bottomOffsetY));
+    side.bottom().setTintColor(Vector3f(bottomRed, bottomGreen, bottomBlue));
 }
 
 #undef MPE_PlaneCreate
@@ -344,8 +344,8 @@ int MPE_PlaneCreate(int sectorIdx, coord_t height, ddstring_t const *materialUri
     plane->setIndexInArchive(archiveIndex);
 
     plane->surface().setMaterial(findMaterialInDict(materialUri));
-    plane->surface().setTintColor(tintRed, tintGreen, tintBlue);
-    plane->surface().setMaterialOrigin(matOffsetX, matOffsetY);
+    plane->surface().setTintColor(Vector3f(tintRed, tintGreen, tintBlue));
+    plane->surface().setMaterialOrigin(Vector2f(matOffsetX, matOffsetY));
 
     if(!plane->isSectorFloor() && !plane->isSectorCeiling())
     {

@@ -21,8 +21,6 @@
 #ifndef DENG_WORLD_SURFACE_H
 #define DENG_WORLD_SURFACE_H
 
-#include <QSet>
-
 #include <de/Error>
 #include <de/Observers>
 #include <de/Vector>
@@ -32,7 +30,6 @@
 #ifdef __CLIENT__
 #  include "MaterialSnapshot"
 #endif
-#include "world/dmuargs.h"
 
 class BspLeaf;
 
@@ -93,8 +90,8 @@ public:
         bool needsUpdate;
 
         /// Plotted decoration sources [numSources size].
-        struct surfacedecorsource_s *sources;
-        uint numSources;
+        DecorSource *sources;
+        int numSources;
     } _decorationData;
 #endif
 
@@ -138,11 +135,6 @@ public:
      * @param newNormal  New normal vector (will be normalized if needed).
      */
     void setNormal(de::Vector3f const &newNormal);
-
-    /// @copydoc setNormal()
-    inline void setNormal(float x, float y, float z) {
-        setNormal(de::Vector3f(x, y, z));
-    }
 
     /**
      * Returns the @ref surfaceFlags of the surface.
@@ -209,16 +201,6 @@ public:
     void setMaterialOrigin(de::Vector2f const &newOrigin);
 
     /**
-     * @copydoc setMaterialOrigin()
-     *
-     * @param x  New X origin offset in map coordinate space units.
-     * @param y  New Y origin offset in map coordinate space units.
-     */
-    inline void setMaterialOrigin(float x, float y) {
-        return setMaterialOrigin(de::Vector2f(x, y));
-    }
-
-    /**
      * Change the specified @a component of the material origin for the surface.
      * The MaterialOriginChange audience is notified whenever the material origin
      * changes.
@@ -251,45 +233,6 @@ public:
      * @see setMaterialOriginComponent(), setMaterialOriginX()
      */
     inline void setMaterialOriginY(float newPosition) { setMaterialOriginComponent(1, newPosition); }
-
-#ifdef __CLIENT__
-
-    /**
-     * Returns the current interpolated visual material origin of the surface
-     * in the map coordinate space.
-     *
-     * @see setMaterialOrigin()
-     */
-    de::Vector2f const &visMaterialOrigin() const;
-
-    /**
-     * Returns the delta between current material origin and the interpolated
-     * visual origin of the material in the map coordinate space.
-     *
-     * @see setMaterialOrigin(), visMaterialOrigin()
-     */
-    de::Vector2f const &visMaterialOriginDelta() const;
-
-    /**
-     * Interpolate the visible material origin.
-     *
-     * @see visMaterialOrigin()
-     */
-    void lerpVisMaterialOrigin();
-
-    /**
-     * Reset the surface's material origin tracking.
-     *
-     * @see visMaterialOrigin()
-     */
-    void resetVisMaterialOrigin();
-
-    /**
-     * Roll the surface's material origin tracking buffer.
-     */
-    void updateMaterialOriginTracking();
-
-#endif // __CLIENT__
 
     /**
      * Returns the opacity of the surface. The OpacityChange audience is notified
@@ -361,11 +304,6 @@ public:
      */
     void setTintColor(de::Vector3f const &newTintColor);
 
-    /// @copydoc setTintColor
-    inline void setTintColor(float red, float green, float blue) {
-        setTintColor(de::Vector3f(red, green, blue));
-    }
-
     /**
      * Change the strength of the specified @a component of the tint color for the
      * surface. The TintColorChange audience is notified whenever the tint color changes.
@@ -420,6 +358,42 @@ public:
     bool setBlendMode(blendmode_t newBlendMode);
 
 #ifdef __CLIENT__
+
+    /**
+     * Returns the current interpolated visual material origin of the surface
+     * in the map coordinate space.
+     *
+     * @see setMaterialOrigin()
+     */
+    de::Vector2f const &visMaterialOrigin() const;
+
+    /**
+     * Returns the delta between current material origin and the interpolated
+     * visual origin of the material in the map coordinate space.
+     *
+     * @see setMaterialOrigin(), visMaterialOrigin()
+     */
+    de::Vector2f const &visMaterialOriginDelta() const;
+
+    /**
+     * Interpolate the visible material origin.
+     *
+     * @see visMaterialOrigin()
+     */
+    void lerpVisMaterialOrigin();
+
+    /**
+     * Reset the surface's material origin tracking.
+     *
+     * @see visMaterialOrigin()
+     */
+    void resetVisMaterialOrigin();
+
+    /**
+     * Roll the surface's material origin tracking buffer.
+     */
+    void updateMaterialOriginTracking();
+
     /**
      * Create a new projected (light) decoration source for the surface.
      *
@@ -435,12 +409,13 @@ public:
     /**
      * Returns the total number of decoration sources for the surface.
      */
-    uint decorationCount() const;
+    int decorationCount() const;
 
     /**
      * Mark the surface as needing a decoration source update.
      */
     void markAsNeedingDecorationUpdate();
+
 #endif // __CLIENT__
 
 protected:
@@ -450,7 +425,5 @@ protected:
 private:
     DENG2_PRIVATE(d)
 };
-
-struct surfacedecorsource_s;
 
 #endif // DENG_WORLD_SURFACE_H

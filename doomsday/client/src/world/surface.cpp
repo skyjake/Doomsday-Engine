@@ -536,10 +536,10 @@ Surface::DecorSource *Surface::newDecoration()
     if(_decorationData.numSources > 1)
     {
         // Copy the existing decorations.
-        for(uint i = 0; i < _decorationData.numSources - 1; ++i)
+        for(int i = 0; i < _decorationData.numSources - 1; ++i)
         {
             Surface::DecorSource *d = &newSources[i];
-            Surface::DecorSource *s = &((DecorSource *)_decorationData.sources)[i];
+            Surface::DecorSource *s = &_decorationData.sources[i];
 
             std::memcpy(d, s, sizeof(*d));
         }
@@ -548,7 +548,7 @@ Surface::DecorSource *Surface::newDecoration()
     }
 
     Surface::DecorSource *d = &newSources[_decorationData.numSources - 1];
-    _decorationData.sources = (surfacedecorsource_s *)newSources;
+    _decorationData.sources = newSources;
 
     return d;
 }
@@ -562,7 +562,7 @@ void Surface::clearDecorations()
     _decorationData.numSources = 0;
 }
 
-uint Surface::decorationCount() const
+int Surface::decorationCount() const
 {
     return _decorationData.numSources;
 }
@@ -718,35 +718,35 @@ int Surface::setProperty(DmuArgs const &args)
         break;
 
     case DMU_COLOR: {
-        float red, green, blue;
-        args.value(DMT_SURFACE_RGBA, &red,   0);
-        args.value(DMT_SURFACE_RGBA, &green, 1);
-        args.value(DMT_SURFACE_RGBA, &blue,  2);
-        setTintColor(red, green, blue);
+        Vector3f newColor;
+        args.value(DMT_SURFACE_RGBA, &newColor.x, 0);
+        args.value(DMT_SURFACE_RGBA, &newColor.y, 1);
+        args.value(DMT_SURFACE_RGBA, &newColor.z, 2);
+        setTintColor(newColor);
         break; }
 
     case DMU_COLOR_RED: {
-        float r;
-        args.value(DMT_SURFACE_RGBA, &r, 0);
-        setTintRed(r);
+        float newRed;
+        args.value(DMT_SURFACE_RGBA, &newRed, 0);
+        setTintRed(newRed);
         break; }
 
     case DMU_COLOR_GREEN: {
-        float g;
-        args.value(DMT_SURFACE_RGBA, &g, 0);
-        setTintGreen(g);
+        float newGreen;
+        args.value(DMT_SURFACE_RGBA, &newGreen, 0);
+        setTintGreen(newGreen);
         break; }
 
     case DMU_COLOR_BLUE: {
-        float b;
-        args.value(DMT_SURFACE_RGBA, &b, 0);
-        setTintBlue(b);
+        float newBlue;
+        args.value(DMT_SURFACE_RGBA, &newBlue, 0);
+        setTintBlue(newBlue);
         break; }
 
     case DMU_ALPHA: {
-        float a;
-        args.value(DMT_SURFACE_RGBA, &a, 0);
-        setOpacity(a);
+        float newOpacity;
+        args.value(DMT_SURFACE_RGBA, &newOpacity, 0);
+        setOpacity(newOpacity);
         break; }
 
     case DMU_MATERIAL: {
@@ -756,15 +756,15 @@ int Surface::setProperty(DmuArgs const &args)
         break; }
 
     case DMU_OFFSET_X: {
-        float offX;
-        args.value(DMT_SURFACE_OFFSET, &offX, 0);
-        setMaterialOriginX(offX);
+        float newOriginX;
+        args.value(DMT_SURFACE_OFFSET, &newOriginX, 0);
+        setMaterialOriginX(newOriginX);
         break; }
 
     case DMU_OFFSET_Y: {
-        float offY;
-        args.value(DMT_SURFACE_OFFSET, &offY, 0);
-        setMaterialOriginY(offY);
+        float newOriginY;
+        args.value(DMT_SURFACE_OFFSET, &newOriginY, 0);
+        setMaterialOriginY(newOriginY);
         break; }
 
     case DMU_OFFSET_XY: {
