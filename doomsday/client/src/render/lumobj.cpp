@@ -1164,7 +1164,7 @@ boolean LOIT_ClipLumObjBySight(void *data, void *context)
         // We need to figure out if any of the polyobj's segments lies
         // between the viewpoint and the lumobj.
         BspLeaf *bspLeaf = (BspLeaf *) context;
-        Polyobj *po = bspLeaf->firstPolyobj();
+        foreach(Polyobj *po, bspLeaf->polyobjs())
         foreach(Line *line, po->lines())
         {
             Segment *segment = line->front().leftSegment();

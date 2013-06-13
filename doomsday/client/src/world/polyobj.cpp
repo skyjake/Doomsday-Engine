@@ -131,9 +131,11 @@ void Polyobj::unlink()
 {
     if(_bspLeaf)
     {
+        _bspLeaf->removeOnePolyobj(*this);
+        _bspLeaf = 0;
+
         /// @todo Do not assume polyobj is from the CURRENT map.
         App_World().map().unlinkPolyobj(*this);
-        _bspLeaf = 0;
     }
 }
 
@@ -155,14 +157,7 @@ void Polyobj::link()
         /// @todo Do not assume polyobj is from the CURRENT map.
         if(BspLeaf *bspLeaf = App_World().map().bspLeafAtPoint(avg))
         {
-            if(bspLeaf->hasPolyobj())
-            {
-                LOG_WARNING("Multiple polyobjs in a single BSP leaf\n"
-                            "  (BSP leaf %i, sector %i). Previous polyobj overridden.")
-                    << bspLeaf->indexInMap()
-                    << bspLeaf->sector().indexInMap();
-            }
-            bspLeaf->setFirstPolyobj(this);
+            bspLeaf->addOnePolyobj(*this);
             _bspLeaf = bspLeaf;
         }
     }

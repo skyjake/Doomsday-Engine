@@ -76,8 +76,8 @@ DENG2_PIMPL(BspLeaf)
     /// Sector attributed to the leaf. @note can be @c 0 (degenerate!).
     Sector *sector;
 
-    /// First Polyobj in the leaf. Can be @c 0 (none).
-    Polyobj *polyobj;
+    /// Set of polyobjs linked to the leaf (not owned).
+    Polyobjs polyobjs;
 
 #ifdef __CLIENT__
 
@@ -103,7 +103,6 @@ DENG2_PIMPL(BspLeaf)
           needUpdateClockwiseSegments(false),
           needUpdateAllSegments(false),
           sector(sector),
-          polyobj(0),
 #ifdef __CLIENT__
           fanBase(0),
           needUpdateFanBase(true),
@@ -413,14 +412,21 @@ void BspLeaf::setSector(Sector *newSector)
     d->sector = newSector;
 }
 
-Polyobj *BspLeaf::firstPolyobj() const
+void BspLeaf::addOnePolyobj(Polyobj const &polyobj)
 {
-    return d->polyobj;
+    d->polyobjs.insert(const_cast<Polyobj *>(&polyobj));
 }
 
-void BspLeaf::setFirstPolyobj(Polyobj *newPolyobj)
+bool BspLeaf::removeOnePolyobj(polyobj_s const &polyobj)
 {
-    d->polyobj = newPolyobj;
+    int sizeBefore = d->polyobjs.size();
+    d->polyobjs.remove(const_cast<Polyobj *>(&polyobj));
+    return d->polyobjs.size() != sizeBefore;
+}
+
+BspLeaf::Polyobjs const &BspLeaf::polyobjs() const
+{
+    return d->polyobjs;
 }
 
 int BspLeaf::validCount() const

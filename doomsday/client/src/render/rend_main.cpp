@@ -2124,9 +2124,7 @@ static void writeLeafPolyobjs()
     BspLeaf *leaf = currentBspLeaf;
     DENG_ASSERT(!isNullLeaf(leaf));
 
-    Polyobj *po = leaf->firstPolyobj();
-    if(!po) return;
-
+    foreach(Polyobj *po, leaf->polyobjs())
     foreach(Line *line, po->lines())
     {
         Segment *seg = line->front().leftSegment();
@@ -2182,16 +2180,14 @@ static void markFrontFacingSegments()
         seg->setFlags(Segment::FacingFront, dot < 0? UnsetFlags : SetFlags);
     }
 
-    if(Polyobj *po = bspLeaf->firstPolyobj())
+    foreach(Polyobj *po, bspLeaf->polyobjs())
+    foreach(Line *line, po->lines())
     {
-        foreach(Line *line, po->lines())
-        {
-            Segment *seg = line->front().leftSegment();
+        Segment *seg = line->front().leftSegment();
 
-            // Which way is it facing?
-            double dot = viewFacingDot(seg->from().origin(), seg->to().origin());
-            seg->setFlags(Segment::FacingFront, dot < 0? UnsetFlags : SetFlags);
-        }
+        // Which way is it facing?
+        double dot = viewFacingDot(seg->from().origin(), seg->to().origin());
+        seg->setFlags(Segment::FacingFront, dot < 0? UnsetFlags : SetFlags);
     }
 }
 
@@ -2290,12 +2286,10 @@ static void clipFrontFacingSegments()
         clipFrontFacingSegment(*seg);
     }
 
-    if(Polyobj *po = bspLeaf->firstPolyobj())
+    foreach(Polyobj *po, bspLeaf->polyobjs())
+    foreach(Line *line, po->lines())
     {
-        foreach(Line *line, po->lines())
-        {
-            clipFrontFacingSegment(*line->front().leftSegment());
-        }
+        clipFrontFacingSegment(*line->front().leftSegment());
     }
 }
 

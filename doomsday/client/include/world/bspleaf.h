@@ -22,6 +22,7 @@
 #define DENG_WORLD_BSPLEAF_H
 
 #include <QList>
+#include <QSet>
 
 #include <de/Error>
 #include <de/Vector>
@@ -71,7 +72,8 @@ public:
     DENG2_ERROR(UnknownGeometryGroupError);
 #endif
 
-    typedef QList<Segment *> Segments;
+    typedef QSet<polyobj_s *> Polyobjs;
+    typedef QList<Segment *>  Segments;
 
 public: /// @todo Make private:
 #ifdef __CLIENT__
@@ -202,20 +204,26 @@ public:
     /**
      * Returns @c true iff at least one polyobj is linked to the BSP leaf.
      */
-    inline bool hasPolyobj() { return firstPolyobj() != 0; }
+    inline bool hasPolyobj() { return !polyobjs().isEmpty(); }
 
     /**
-     * Returns a pointer to the first polyobj linked to the BSP leaf; otherwise @c 0.
+     * Add the given @a polyobj to the set of those linked to the BSP leaf.
+     * Ownership is unaffected. If the polyobj is already linked in this set
+     * then nothing will happen.
      */
-    struct polyobj_s *firstPolyobj() const;
+    void addOnePolyobj(struct polyobj_s const &polyobj);
 
     /**
-     * Change the first polyobj linked to the BSP leaf.
+     * Remove the given @a polyobj from the set of those linked to the BSP leaf.
      *
-     * @param newPolyobj  New polyobj to be attributed. Ownership is unaffected.
-     *                    Can be @c 0 (to clear the attribution).
+     * @return  @c true= @a polyobj was linked and subsequently removed.
      */
-    void setFirstPolyobj(struct polyobj_s *newPolyobj);
+    bool removeOnePolyobj(polyobj_s const &polyobj);
+
+    /**
+     * Provides access to the set of polyobjs linked to the BSP leaf.
+     */
+    Polyobjs const &polyobjs() const;
 
     /**
      * Returns the vector described by the offset from the map coordinate space
