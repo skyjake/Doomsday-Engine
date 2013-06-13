@@ -23,6 +23,8 @@
 
 #include <QList>
 
+#include <de/types.h>
+
 #include <de/Error>
 #include <de/Observers>
 #include <de/Vector>
@@ -31,6 +33,7 @@
 
 class Sector;
 class Surface;
+struct ddmobj_base_t;
 
 /**
  * World sector plane.
@@ -40,23 +43,26 @@ class Surface;
 class Plane : public de::MapElement
 {
 public:
-    /**
+    /*
      * Observers to be notified when a Plane is about to be deleted.
      */
     DENG2_DEFINE_AUDIENCE(Deletion, void planeBeingDeleted(Plane const &plane))
 
-    /**
+    /*
      * Observers to be notified whenever a @em sharp height change occurs.
      */
     DENG2_DEFINE_AUDIENCE(HeightChange, void planeHeightChanged(Plane &plane, coord_t oldHeight))
 
+    /*
+     * Property value defaults:
+     */
     static int const MAX_SMOOTH_MOVE; ///< 64, $smoothplane: Maximum speed for a smoothed plane.
 
 public:
     /**
      * Construct a new plane.
      *
-     * @param sector  Sector that will own the plane.
+     * @param sector  Sector which will own the plane.
      * @param normal  Normal of the plane (will be normalized if necessary).
      * @param height  Height of the plane in map space coordinates.
      */
@@ -71,13 +77,15 @@ public:
     Sector const &sector() const;
 
     /**
-     * Returns the index of the plane within the owning Sector.
-     *
-     * @todo Refactor away.
+     * Returns the index of the plane within the owning sector.
      */
     int inSectorIndex() const;
 
-    /// @todo Refactor away.
+    /**
+     * Change the index of the plane within the owning sector.
+     *
+     * @param newIndex  New index to attribute the plane.
+     */
     void setInSectorIndex(int newIndex);
 
     /**
