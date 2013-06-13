@@ -2374,7 +2374,7 @@ static void traverseBspAndDrawLeafs(MapElement *bspElement)
     while(bspElement->type() != DMU_BSPLEAF)
     {
         // Descend deeper into the nodes.
-        BspNode const *bspNode = bspElement->castTo<BspNode>();
+        BspNode const *bspNode = bspElement->as<BspNode>();
 
         // Decide which side the view point is on.
         int eyeSide = bspNode->partition().pointOnSide(eyeOrigin) < 0;
@@ -2393,7 +2393,7 @@ static void traverseBspAndDrawLeafs(MapElement *bspElement)
     }
 
     // We've arrived at a leaf.
-    BspLeaf *bspLeaf = bspElement->castTo<BspLeaf>();
+    BspLeaf *bspLeaf = bspElement->as<BspLeaf>();
 
     // Skip null leafs (those with zero volume). Neighbors handle adding the
     // solid clipper segments.

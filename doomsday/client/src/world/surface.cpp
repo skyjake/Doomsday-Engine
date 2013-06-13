@@ -99,14 +99,14 @@ DENG2_PIMPL(Surface)
     /// @todo Refactor away -ds
     inline bool isSideMiddle()
     {
-        return owner.type() == DMU_SIDE && &self == &owner.castTo<Line::Side>()->middle();
+        return owner.type() == DMU_SIDE && &self == &owner.as<Line::Side>()->middle();
     }
 
     /// @todo Refactor away -ds
     inline bool isSectorExtraPlane()
     {
         if(owner.type() != DMU_PLANE) return false;
-        Plane const &plane = *owner.castTo<Plane>();
+        Plane const &plane = *owner.as<Plane>();
         return !(plane.isSectorFloor() || plane.isSectorCeiling());
     }
 
@@ -290,7 +290,7 @@ bool Surface::isAttachedToMap() const
 {
     if(d->owner.type() == DMU_PLANE)
     {
-        Sector const &sector = d->owner.castTo<Plane>()->sector();
+        Sector const &sector = d->owner.as<Plane>()->sector();
         if(!sector.bspLeafCount())
             return false;
     }
@@ -309,7 +309,7 @@ bool Surface::setMaterial(Material *newMaterial, bool isMissingFix)
                 d->materialIsMissingFix = true;
 
                 // Sides of selfreferencing map lines should never receive fix materials.
-                DENG_ASSERT(!(d->owner.type() == DMU_SIDE && d->owner.castTo<Line::Side>()->line().isSelfReferencing()));
+                DENG_ASSERT(!(d->owner.type() == DMU_SIDE && d->owner.as<Line::Side>()->line().isSelfReferencing()));
             }
         }
         else if(newMaterial && d->materialIsMissingFix)
@@ -346,7 +346,7 @@ bool Surface::setMaterial(Material *newMaterial, bool isMissingFix)
                     {
                         de::Uri uri = newMaterial->manifest().composeUri();
                         ded_ptcgen_t const *def = Def_GetGenerator(reinterpret_cast<uri_s *>(&uri));
-                        P_SpawnPlaneParticleGen(def, d->owner.castTo<Plane>());
+                        P_SpawnPlaneParticleGen(def, d->owner.as<Plane>());
                     }
 
                 }

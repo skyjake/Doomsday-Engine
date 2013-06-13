@@ -306,7 +306,7 @@ DENG2_PIMPL(Map)
         {
             // Take ownership of the BspLeaf.
             DENG2_ASSERT(tree.userData() != 0);
-            BspLeaf *leaf = tree.userData()->castTo<BspLeaf>();
+            BspLeaf *leaf = tree.userData()->as<BspLeaf>();
             builder.take(leaf);
 
             // Add this BspLeaf to the LUT.
@@ -329,7 +329,7 @@ DENG2_PIMPL(Map)
 
         // Take ownership of this BspNode.
         DENG2_ASSERT(tree.userData() != 0);
-        BspNode *node = tree.userData()->castTo<BspNode>();
+        BspNode *node = tree.userData()->as<BspNode>();
         builder.take(node);
 
         // Add this BspNode to the LUT.
@@ -1674,7 +1674,7 @@ BspLeaf *Map::bspLeafAtPoint(Vector2d const &point) const
     MapElement *bspElement = d->bspRoot;
     while(bspElement->type() != DMU_BSPLEAF)
     {
-        BspNode const *bspNode = bspElement->castTo<BspNode>();
+        BspNode const *bspNode = bspElement->as<BspNode>();
 
         int side = bspNode->partition().pointOnSide(point) < 0;
 
@@ -1683,7 +1683,7 @@ BspLeaf *Map::bspLeafAtPoint(Vector2d const &point) const
     }
 
     // We've arrived at a leaf.
-    return bspElement->castTo<BspLeaf>();
+    return bspElement->as<BspLeaf>();
 }
 
 BspLeaf *Map::bspLeafAtPoint_FixedPrecision(Vector2d const &point) const
@@ -1693,7 +1693,7 @@ BspLeaf *Map::bspLeafAtPoint_FixedPrecision(Vector2d const &point) const
     MapElement *bspElement = d->bspRoot;
     while(bspElement->type() != DMU_BSPLEAF)
     {
-        BspNode const *bspNode = bspElement->castTo<BspNode>();
+        BspNode const *bspNode = bspElement->as<BspNode>();
         Partition const &partition = bspNode->partition();
 
         fixed_t lineOriginX[2]    = { DBL2FIX(partition.origin.x),    DBL2FIX(partition.origin.y) };
@@ -1706,7 +1706,7 @@ BspLeaf *Map::bspLeafAtPoint_FixedPrecision(Vector2d const &point) const
     }
 
     // We've arrived at a leaf.
-    return bspElement->castTo<BspLeaf>();
+    return bspElement->as<BspLeaf>();
 }
 
 void Map::updateSurfacesOnMaterialChange(Material &material)

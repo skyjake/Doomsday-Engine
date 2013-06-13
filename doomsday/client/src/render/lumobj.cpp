@@ -989,7 +989,7 @@ static void createGlowLightForSurface(Surface &suf)
     if(suf.owner().type() != DMU_PLANE)
         return;
 
-    Plane *pln = suf.owner().castTo<Plane>();
+    Plane *pln = suf.owner().as<Plane>();
     Sector *sec = &pln->sector();
 
     // Only produce a light for sectors with open space.

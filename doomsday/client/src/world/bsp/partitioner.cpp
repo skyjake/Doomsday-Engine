@@ -1550,7 +1550,7 @@ DENG2_PIMPL(Partitioner)
         switch(elm->type())
         {
         case DMU_VERTEX: {
-            Vertex *vtx = elm->castTo<Vertex>();
+            Vertex *vtx = elm->as<Vertex>();
             /// @todo optimize: Poor performance O(n).
             for(uint i = 0; i < vertexes.size(); ++i)
             {

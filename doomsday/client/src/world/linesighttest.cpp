@@ -278,7 +278,7 @@ DENG2_PIMPL(LineSightTest)
 
         while(bspElement->type() != DMU_BSPLEAF)
         {
-            BspNode const *bspNode = bspElement->castTo<BspNode>();
+            BspNode const *bspNode = bspElement->as<BspNode>();
 
             // Does the ray intersect the partition?
             /// @todo Optionally use the fixed precision version -ds
@@ -300,7 +300,7 @@ DENG2_PIMPL(LineSightTest)
         }
 
         // We've arrived at a leaf.
-        return crossBspLeaf(*bspElement->castTo<BspLeaf>());
+        return crossBspLeaf(*bspElement->as<BspLeaf>());
     }
 };
 

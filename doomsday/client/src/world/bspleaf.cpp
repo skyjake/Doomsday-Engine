@@ -148,7 +148,7 @@ DENG2_PIMPL(BspLeaf)
         {
             if(MapElement *elem = hedge->mapElement())
             {
-                clockwiseSegments.append(elem->castTo<Segment>());
+                clockwiseSegments.append(elem->as<Segment>());
             }
         } while((hedge = &hedge->next()) != face.hedge());
 
@@ -207,7 +207,7 @@ DENG2_PIMPL(BspLeaf)
         {
             if(MapElement *elem = hedge->mapElement())
             {
-                allSegments.append(elem->castTo<Segment>());
+                allSegments.append(elem->as<Segment>());
             }
         }
     }

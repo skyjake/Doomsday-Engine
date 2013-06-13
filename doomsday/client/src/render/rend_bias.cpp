@@ -792,13 +792,13 @@ void SB_RendPoly(struct ColorRawf_s *rcolors, BiasSurface *bsuf,
          */
         if(mapElement->type() == DMU_SEGMENT)
         {
-            Segment const *segment = mapElement->castTo<Segment>();
+            Segment const *segment = mapElement->as<Segment>();
 
             updateAffected(bsuf, segment->from().origin(), segment->to().origin(), surfaceNormal);
         }
         else
         {
-            BspLeaf const *bspLeaf = mapElement->castTo<BspLeaf>();
+            BspLeaf const *bspLeaf = mapElement->as<BspLeaf>();
             DENG_ASSERT(!bspLeaf->isDegenerate());
 
             Vector3d point(bspLeaf->face().center(),

@@ -276,7 +276,7 @@ void *P_DummyExtraData(void *dummy)
     if(P_IsDummy(dummy))
     {
         MapElement *elem = IN_ELEM(dummy);
-        return elem->castTo<DummyData>()->extraData;
+        return elem->as<DummyData>()->extraData;
     }
     return 0;
 }
@@ -301,10 +301,10 @@ int P_ToIndex(void const *ptr)
         return elem->indexInMap();
 
     case DMU_PLANE:
-        return elem->castTo<Plane>()->inSectorIndex();
+        return elem->as<Plane>()->inSectorIndex();
 
     case DMU_MATERIAL:
-        return elem->castTo<Material>()->manifest().id(); // 1-based
+        return elem->as<Material>()->manifest().id(); // 1-based
 
     default:
         /// @todo Throw exception.
@@ -391,7 +391,7 @@ int P_Iteratep(void *elPtr, uint prop, void *context, int (*callback) (void *p, 
         switch(prop)
         {
         case DMU_LINE:
-            foreach(Line::Side *side, elem->castTo<Sector>()->sides())
+            foreach(Line::Side *side, elem->as<Sector>()->sides())
             {
                 int result = callback(&side->line(), context);
                 if(result) return result;
@@ -399,7 +399,7 @@ int P_Iteratep(void *elPtr, uint prop, void *context, int (*callback) (void *p, 
             return false; // Continue iteration
 
         case DMU_PLANE:
-            foreach(Plane *plane, elem->castTo<Sector>()->planes())
+            foreach(Plane *plane, elem->as<Sector>()->planes())
             {
                 int result = callback(plane, context);
                 if(result) return result;
@@ -407,7 +407,7 @@ int P_Iteratep(void *elPtr, uint prop, void *context, int (*callback) (void *p, 
             return false; // Continue iteration
 
         case DMU_BSPLEAF:
-            foreach(BspLeaf *bspLeaf, elem->castTo<Sector>()->bspLeafs())
+            foreach(BspLeaf *bspLeaf, elem->as<Sector>()->bspLeafs())
             {
                 int result = callback(bspLeaf, context);
                 if(result) return result;
@@ -422,7 +422,7 @@ int P_Iteratep(void *elPtr, uint prop, void *context, int (*callback) (void *p, 
         switch(prop)
         {
         case DMU_SEGMENT:
-            foreach(Segment *seg, elem->castTo<BspLeaf>()->allSegments())
+            foreach(Segment *seg, elem->as<BspLeaf>()->allSegments())
             {
                 int result = callback(seg, context);
                 if(result) return result;
@@ -583,12 +583,12 @@ static void setProperty(MapElement *elem, DmuArgs &args)
     {
         if(args.modifiers & DMU_FLOOR_OF_SECTOR)
         {
-            elem = elem->castTo<BspLeaf>()->sectorPtr();
+            elem = elem->as<BspLeaf>()->sectorPtr();
             args.type = DMU_SECTOR;
         }
         else if(args.modifiers & DMU_CEILING_OF_SECTOR)
         {
-            elem = elem->castTo<BspLeaf>()->sectorPtr();
+            elem = elem->as<BspLeaf>()->sectorPtr();
             args.type = DMU_SECTOR;
         }
     }
@@ -597,12 +597,12 @@ static void setProperty(MapElement *elem, DmuArgs &args)
     {
         if(args.modifiers & DMU_FLOOR_OF_SECTOR)
         {
-            elem = &elem->castTo<Sector>()->floor();
+            elem = &elem->as<Sector>()->floor();
             args.type = DMU_PLANE;
         }
         else if(args.modifiers & DMU_CEILING_OF_SECTOR)
         {
-            elem = &elem->castTo<Sector>()->ceiling();
+            elem = &elem->as<Sector>()->ceiling();
             args.type = DMU_PLANE;
         }
     }
@@ -611,12 +611,12 @@ static void setProperty(MapElement *elem, DmuArgs &args)
     {
         if(args.modifiers & DMU_FRONT_OF_LINE)
         {
-            elem = &elem->castTo<Line>()->front();
+            elem = &elem->as<Line>()->front();
             args.type = DMU_SIDE;
         }
         else if(args.modifiers & DMU_BACK_OF_LINE)
         {
-            elem = &elem->castTo<Line>()->back();
+            elem = &elem->as<Line>()->back();
             args.type = DMU_SIDE;
         }
     }
@@ -625,17 +625,17 @@ static void setProperty(MapElement *elem, DmuArgs &args)
     {
         if(args.modifiers & DMU_TOP_OF_SIDE)
         {
-            elem = &elem->castTo<Line::Side>()->top();
+            elem = &elem->as<Line::Side>()->top();
             args.type = DMU_SURFACE;
         }
         else if(args.modifiers & DMU_MIDDLE_OF_SIDE)
         {
-            elem = &elem->castTo<Line::Side>()->middle();
+            elem = &elem->as<Line::Side>()->middle();
             args.type = DMU_SURFACE;
         }
         else if(args.modifiers & DMU_BOTTOM_OF_SIDE)
         {
-            elem = &elem->castTo<Line::Side>()->bottom();
+            elem = &elem->as<Line::Side>()->bottom();
             args.type = DMU_SURFACE;
         }
     }
@@ -667,7 +667,7 @@ static void setProperty(MapElement *elem, DmuArgs &args)
         case DMU_ALPHA:
         case DMU_BLENDMODE:
         case DMU_FLAGS:
-            elem = &elem->castTo<Plane>()->surface();
+            elem = &elem->as<Plane>()->surface();
             args.type = DMU_SURFACE;
             break;
 
@@ -689,12 +689,12 @@ static void getProperty(MapElement const *elem, DmuArgs &args)
     {
         if(args.modifiers & DMU_FLOOR_OF_SECTOR)
         {
-            elem = elem->castTo<BspLeaf>()->sectorPtr();
+            elem = elem->as<BspLeaf>()->sectorPtr();
             args.type = elem->type();
         }
         else if(args.modifiers & DMU_CEILING_OF_SECTOR)
         {
-            elem = elem->castTo<BspLeaf>()->sectorPtr();
+            elem = elem->as<BspLeaf>()->sectorPtr();
             args.type = elem->type();
         }
         else
@@ -703,7 +703,7 @@ static void getProperty(MapElement const *elem, DmuArgs &args)
             {
             case DMU_LIGHT_LEVEL:
             case DMT_MOBJS:
-                elem = elem->castTo<BspLeaf>()->sectorPtr();
+                elem = elem->as<BspLeaf>()->sectorPtr();
                 args.type = elem->type();
                 break;
 
@@ -716,12 +716,12 @@ static void getProperty(MapElement const *elem, DmuArgs &args)
     {
         if(args.modifiers & DMU_FLOOR_OF_SECTOR)
         {
-            elem = &elem->castTo<Sector>()->floor();
+            elem = &elem->as<Sector>()->floor();
             args.type = elem->type();
         }
         else if(args.modifiers & DMU_CEILING_OF_SECTOR)
         {
-            elem = &elem->castTo<Sector>()->ceiling();
+            elem = &elem->as<Sector>()->ceiling();
             args.type = elem->type();
         }
     }
@@ -730,12 +730,12 @@ static void getProperty(MapElement const *elem, DmuArgs &args)
     {
         if(args.modifiers & DMU_FRONT_OF_LINE)
         {
-            elem = &elem->castTo<Line>()->front();
+            elem = &elem->as<Line>()->front();
             args.type = elem->type();
         }
         else if(args.modifiers & DMU_BACK_OF_LINE)
         {
-            elem = &elem->castTo<Line>()->back();
+            elem = &elem->as<Line>()->back();
             args.type = elem->type();
         }
     }
@@ -744,17 +744,17 @@ static void getProperty(MapElement const *elem, DmuArgs &args)
     {
         if(args.modifiers & DMU_TOP_OF_SIDE)
         {
-            elem = &elem->castTo<Line::Side>()->top();
+            elem = &elem->as<Line::Side>()->top();
             args.type = elem->type();
         }
         else if(args.modifiers & DMU_MIDDLE_OF_SIDE)
         {
-            elem = &elem->castTo<Line::Side>()->middle();
+            elem = &elem->as<Line::Side>()->middle();
             args.type = elem->type();
         }
         else if(args.modifiers & DMU_BOTTOM_OF_SIDE)
         {
-            elem = &elem->castTo<Line::Side>()->bottom();
+            elem = &elem->as<Line::Side>()->bottom();
             args.type = elem->type();
         }
     }
@@ -786,7 +786,7 @@ static void getProperty(MapElement const *elem, DmuArgs &args)
         case DMU_ALPHA:
         case DMU_BLENDMODE:
         case DMU_FLAGS:
-            elem = &elem->castTo<Plane>()->surface();
+            elem = &elem->as<Plane>()->surface();
             args.type = elem->type();
             break;
 
