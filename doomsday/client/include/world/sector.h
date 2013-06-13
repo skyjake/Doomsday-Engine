@@ -65,6 +65,9 @@ class Map;
  */
 class Sector : public de::MapElement
 {
+    DENG2_NO_COPY  (Sector)
+    DENG2_NO_ASSIGN(Sector)
+
 public:
     /// Required/referenced plane is missing. @ingroup errors
     DENG2_ERROR(MissingPlaneError);

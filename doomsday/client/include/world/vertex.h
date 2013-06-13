@@ -42,6 +42,9 @@ class LineOwner;
  */
 class Vertex : public de::MapElement
 {
+    DENG2_NO_COPY  (Vertex)
+    DENG2_NO_ASSIGN(Vertex)
+
 public:
     /*
      * Observers to be notified whenever the origin changes.

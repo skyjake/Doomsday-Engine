@@ -44,6 +44,9 @@
  */
 class BspNode : public de::MapElement
 {
+    DENG2_NO_COPY  (BspNode)
+    DENG2_NO_ASSIGN(BspNode)
+
 public:
     /// An invalid child element was specified. @ingroup errors
     DENG2_ERROR(InvalidChildError);
@@ -55,10 +58,16 @@ public:
     enum { Right, Left };
 
 public:
+    /**
+     * Construct a new BSP node.
+     *
+     * @param partition  Partition line in the map coordinate space which divides
+     *                   the space into two 'child' subspaces.
+     */
     BspNode(de::Partition const &partition = de::Partition());
 
     /**
-     * Returns the binary space partition at this BSP node.
+     * Returns the space partition line at the node.
      */
     de::Partition const &partition() const;
 
@@ -68,17 +77,17 @@ public:
     bool hasChild(int left) const;
 
     /**
-     * Returns @c true iff a Right child element is configured.
+     * Returns @c true iff a @em right child is configured.
      */
     inline bool hasRight() const { return hasChild(Right); }
 
     /**
-     * Returns @c true iff a Left child element is configured.
+     * Returns @c true iff a @em left child is configured.
      */
     inline bool hasLeft() const { return hasChild(Left); }
 
     /**
-     * Returns the specified child of the BSP node.
+     * Returns the specified child of the node.
      *
      * @param left  If not @c 0 return the Left child; otherwise the Right child.
      *

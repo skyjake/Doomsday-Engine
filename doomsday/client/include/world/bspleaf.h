@@ -57,6 +57,9 @@ struct ShadowLink;
  */
 class BspLeaf : public de::MapElement
 {
+    DENG2_NO_COPY  (BspLeaf)
+    DENG2_NO_ASSIGN(BspLeaf)
+
 public:
     /// An invalid polygon was specified @ingroup errors
     DENG2_ERROR(InvalidPolygonError);

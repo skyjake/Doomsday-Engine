@@ -43,6 +43,9 @@ namespace de {
 
 class World
 {
+    DENG2_NO_COPY  (World)
+    DENG2_NO_ASSIGN(World)
+
 public:
     /// No map is currently loaded. @ingroup errors
     DENG2_ERROR(MapError);

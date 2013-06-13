@@ -60,6 +60,9 @@ class Segment;
  */
 class Line : public de::MapElement
 {
+    DENG2_NO_COPY  (Line)
+    DENG2_NO_ASSIGN(Line)
+
 public:
     /// Required sector attribution is missing. @ingroup errors
     DENG2_ERROR(MissingSectorError);
@@ -86,6 +89,9 @@ public:
      */
     class Side : public de::MapElement
     {
+        DENG2_NO_COPY  (Side)
+        DENG2_NO_ASSIGN(Side)
+
     public:
         // Section identifiers:
         enum

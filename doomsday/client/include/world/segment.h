@@ -43,7 +43,7 @@ class Sector;
  */
 class Segment : public de::MapElement
 {
-    DENG2_NO_COPY(Segment)
+    DENG2_NO_COPY  (Segment)
     DENG2_NO_ASSIGN(Segment)
 
 public:

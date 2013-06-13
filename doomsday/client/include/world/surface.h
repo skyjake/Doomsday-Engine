@@ -40,6 +40,9 @@ class BspLeaf;
  */
 class Surface : public de::MapElement
 {
+    DENG2_NO_COPY  (Surface)
+    DENG2_NO_ASSIGN(Surface)
+
 public:
     /// Required material is missing. @ingroup errors
     DENG2_ERROR(MissingMaterialError);

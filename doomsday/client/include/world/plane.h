@@ -38,6 +38,9 @@ class Surface;
  */
 class Plane : public de::MapElement
 {
+    DENG2_NO_COPY  (Plane)
+    DENG2_NO_ASSIGN(Plane)
+
 public:
     /*
      * Observers to be notified when a Plane is about to be deleted.

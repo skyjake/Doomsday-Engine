@@ -86,6 +86,9 @@ class Mesh;
  */
 class Map
 {
+    DENG2_NO_COPY  (Map)
+    DENG2_NO_ASSIGN(Map)
+
 public:
 #ifdef __CLIENT__
     /// Required light grid is missing. @ingroup errors
