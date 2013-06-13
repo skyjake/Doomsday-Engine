@@ -239,13 +239,11 @@ DENG2_PIMPL(World)
         // Take ownership of the map.
         Map *map = MPE_TakeMap();
 
-        map->_uri = uri;
-
-        // Generate the unique map id.
+        // Generate the old unique map id.
         File1 &markerLump       = App_FileSystem().nameIndex().lump(markerLumpNum);
         String uniqueId         = composeUniqueMapId(markerLump);
         QByteArray uniqueIdUtf8 = uniqueId.toUtf8();
-        qstrncpy(map->_oldUniqueId, uniqueIdUtf8.constData(), sizeof(map->_oldUniqueId));
+        map->setOldUniqueId(uniqueIdUtf8.constData());
 
         // Are we caching this map?
         /*if(mapCache)

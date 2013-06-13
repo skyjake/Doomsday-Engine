@@ -196,18 +196,15 @@ bool MPE_GetLastBuiltMapResult()
 }
 
 #undef MPE_Begin
-boolean MPE_Begin(char const *mapUri)
+boolean MPE_Begin(uri_s const *mapUri)
 {
-    /// @todo Do not ignore; assign to the editable map.
-    DENG_UNUSED(mapUri);
-
     // Already been here?
     if(editMapInited) return true;
 
     if(editMap)
         delete editMap;
 
-    editMap = new Map;
+    editMap = new Map(*reinterpret_cast<de::Uri const *>(mapUri));
     lastBuiltMapResult = false; // Failed (default).
 
     editMapInited = true;

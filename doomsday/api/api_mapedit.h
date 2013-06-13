@@ -66,7 +66,7 @@ DENG_API_TYPEDEF(MPE)
     /**
      * To be called to begin the map building process.
      */
-    boolean         (*Begin)(const char* mapUri);
+    boolean         (*Begin)(Uri const *mapUri);
 
     /**
      * To be called to end the map building process.

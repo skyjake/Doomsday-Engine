@@ -88,6 +88,12 @@ DENG2_PIMPL(Map)
     /// Editable map element LUTs:
     EditableElements editable;
 
+    /// Universal resource identifier for the map.
+    Uri uri;
+
+    /// Old unique identifier for the map (used with some legacy definitions).
+    char oldUniqueId[256];
+
     /// Boundary points which encompass the entire map.
     AABoxd bounds;
 
@@ -133,15 +139,17 @@ DENG2_PIMPL(Map)
     TraceOpening traceOpening;
     divline_t traceLine;
 
-    Instance(Public *i)
+    Instance(Public *i, Uri const &uri)
         : Base            (i),
           editingEnabled  (true),
+          uri             (uri),
           bspRoot         (0)
 #ifdef __CLIENT__
           , skyFloorHeight(DDMAXFLOAT),
           skyCeilingHeight(DDMINFLOAT)
 #endif
     {
+        zap(oldUniqueId);
         zap(traceOpening);
         zap(traceLine);
     }
@@ -195,7 +203,7 @@ DENG2_PIMPL(Map)
 
         LOG_AS("Map::buildBsp");
         LOG_TRACE("Building BSP for \"%s\" with split cost factor %d...")
-            << self._uri << bspSplitFactor;
+            << uri << bspSplitFactor;
 
         // Instantiate and configure a new BSP builder.
         BspBuilder nodeBuilder(self, bspSplitFactor);
@@ -747,9 +755,8 @@ DENG2_PIMPL(Map)
     }
 };
 
-Map::Map() : d(new Instance(this))
+Map::Map(Uri const &uri) : d(new Instance(this, uri))
 {
-    zap(_oldUniqueId);
 #ifdef __CLIENT__
     zap(clMobjHash);
     zap(clActivePlanes);
@@ -870,14 +877,19 @@ void Map::initLightGrid()
 
 #endif // __CLIENT__
 
-Uri Map::uri() const
+Uri const &Map::uri() const
 {
-    return _uri;
+    return d->uri;
 }
 
 char const *Map::oldUniqueId() const
 {
-    return _oldUniqueId;
+    return d->oldUniqueId;
+}
+
+void Map::setOldUniqueId(char const *newUniqueId)
+{
+    qstrncpy(d->oldUniqueId, newUniqueId, sizeof(d->oldUniqueId));
 }
 
 AABoxd const &Map::bounds() const

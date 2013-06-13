@@ -105,9 +105,6 @@ public:
 #endif
 
 public: /// @todo make private:
-    Uri _uri;
-    char _oldUniqueId[256];
-
     struct thinkers_s {
         int idtable[2048]; // 65536 bits telling which IDs are in use.
         ushort iddealer;
@@ -142,7 +139,7 @@ public: /// @todo make private:
     int _ambientLightLevel; // Ambient lightlevel for the current map.
 
 public:
-    Map();
+    Map(Uri const &uri = Uri());
     ~Map();
 
     /**
@@ -154,10 +151,19 @@ public:
      * This ID is the name of the lump tag that marks the beginning of map
      * data, e.g. "MAP03" or "E2M8".
      */
-    Uri uri() const;
+    Uri const &uri() const;
 
-    /// @return  The old 'unique' identifier of the map.
+    /**
+     * Returns the old 'unique' identifier attributed to the map.
+     */
     char const *oldUniqueId() const;
+
+    /**
+     * Change the old 'unique' identifier attributed to the map.
+     *
+     * @param newUniqueId  New identifier to attribute.
+     */
+    void setOldUniqueId(char const *newUniqueId);
 
     /**
      * Returns the minimal and maximal boundary points for the map.
