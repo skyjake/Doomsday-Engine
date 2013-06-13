@@ -1,4 +1,4 @@
-/** @file world/world.cpp World.
+/** @file world.cpp World.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -45,6 +45,7 @@
 #include "render/r_main.h" // R_ResetViewer
 
 #ifdef __CLIENT__
+#  include "client/cl_frame.h"
 #  include "client/cl_player.h"
 
 #  include "render/lumobj.h"
@@ -416,7 +417,8 @@ DENG2_PIMPL(World)
 
         map->initSkyFix();
 
-        map->clMobjReset();
+        Cl_ResetFrame();
+        map->reinitClMobjs();
 
         // Tell shadow bias to initialize the bias light sources.
         SB_InitForMap(map->oldUniqueId());
@@ -698,7 +700,7 @@ void World::setupMap(int mode)
 
 void World::clearMap()
 {
-    d->map = 0;
+    delete d->map; d->map = 0;
 }
 
 void World::resetMapCache()

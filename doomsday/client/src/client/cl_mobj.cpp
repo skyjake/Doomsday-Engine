@@ -338,7 +338,12 @@ void Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj,
 
 void Map::initClMobjs()
 {
-    std::memset(clMobjHash, 0, sizeof(clMobjHash));
+    zap(clMobjHash);
+}
+
+void Map::reinitClMobjs()
+{
+    zap(clMobjHash);
 }
 
 void Map::destroyClMobjs()
@@ -352,15 +357,7 @@ void Map::destroyClMobjs()
             ClMobj_Unlink(mo);
     }
 
-    clMobjReset();
-}
-
-void Map::clMobjReset()
-{
-    Cl_ResetFrame();
-
-    // The PU_MAP memory was freed, so just clear the hash.
-    std::memset(clMobjHash, 0, sizeof(clMobjHash));
+    reinitClMobjs();
 }
 
 void Map::expireClMobjs()

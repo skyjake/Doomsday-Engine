@@ -1,4 +1,4 @@
-/** @file world/map.h World Map.
+/** @file map.h World map.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -37,6 +37,9 @@ class Segment;
 class Vertex;
 
 struct thinkerlist_s;
+
+#ifdef __CLIENT__
+
 struct clmoinfo_s;
 
 /**
@@ -64,6 +67,8 @@ typedef enum {
 struct clplane_s;
 struct clpolyobj_s;
 
+#endif // __CLIENT__
+
 namespace de {
 
 class Blockmap;
@@ -90,6 +95,9 @@ public:
     /// Base error for runtime map editing errors. @ingroup errors
     DENG2_ERROR(EditError);
 
+    /*
+     * Linked-element lists/sets:
+     */
     typedef QList<Vertex *>  Vertexes;
     typedef QList<Line *>    Lines;
     typedef QList<Polyobj *> Polyobjs;
@@ -493,7 +501,7 @@ public:
     /**
      * Reset the client status. To be called when the map changes.
      */
-    void clMobjReset();
+    void reinitClMobjs();
 
     /**
      * Iterate the client mobj hash, exec the callback on each. Abort if callback

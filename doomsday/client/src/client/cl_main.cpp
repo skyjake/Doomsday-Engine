@@ -93,6 +93,7 @@ void Cl_CleanUp()
 
     if(App_World().hasMap())
     {
+        Cl_ResetFrame();
         App_World().map().destroyClMobjs();
     }
 

@@ -1410,8 +1410,10 @@ gameid_t DD_GameIdForKey(char const *identityKey)
 /**
  * Switch to/activate the specified game.
  */
-bool DD_ChangeGame(de::Game& game, bool allowReload = false)
+bool DD_ChangeGame(de::Game &game, bool allowReload = false)
 {
+    LOG_AS("DD_ChangeGame");
+
     bool isReload = false;
 
     // Ignore attempts to re-load the current game?
@@ -1480,8 +1482,8 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
 
         for(uint i = 0; i < DDMAXPLAYERS; ++i)
         {
-            player_t* plr = &ddPlayers[i];
-            ddplayer_t* ddpl = &plr->shared;
+            player_t *plr = &ddPlayers[i];
+            ddplayer_t *ddpl = &plr->shared;
 
             // Mobjs go down with the map.
             ddpl->mo = 0;
@@ -1495,23 +1497,22 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
             ddpl->extraLight = 0;
         }
 
-#ifdef __CLIENT__
-        if(isClient)
+        // If a map was loaded; unload it.
+        if(App_World().hasMap())
         {
-            // If a map was loaded; unload it.
-            if(App_World().hasMap())
+#ifdef __CLIENT__
+            if(isClient)
             {
-                App_World().map().clMobjReset();
+                Cl_ResetFrame();
+                Cl_InitPlayers();
             }
-            // Clear player data, too, since we just lost all clmobjs.
-            Cl_InitPlayers();
-        }
 #endif
+            App_World().clearMap();
+            // Most memory is allocated from the zone.
+            //Z_FreeTags(PU_MAP, PU_PURGELEVEL - 1);
+        }
 
-        // Most memory is allocated from the zone.
-        //Z_FreeTags(PU_MAP, PU_PURGELEVEL - 1);
         Z_FreeTags(PU_GAMESTATIC, PU_PURGELEVEL - 1);
-        App_World().clearMap();
 
         P_ShutdownMapEntityDefs();
 
@@ -1526,8 +1527,8 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
         Con_ClearDatabases();
 
         { // Tell the plugin it is being unloaded.
-            void* unloader = DD_FindEntryPoint(App_Games().current().pluginId(), "DP_Unload");
-            DEBUG_Message(("DD_ChangeGame: Calling DP_Unload (%p)\n", unloader));
+            void *unloader = DD_FindEntryPoint(App_Games().current().pluginId(), "DP_Unload");
+            LOG_DEBUG("Calling DP_Unload (%p)") << de::dintptr(unloader);
             DD_SetActivePluginId(App_Games().current().pluginId());
             if(unloader) ((pluginfunc_t)unloader)();
             DD_SetActivePluginId(0);
