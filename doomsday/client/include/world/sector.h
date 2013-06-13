@@ -29,9 +29,11 @@
 #include <de/Observers>
 #include <de/Vector>
 
+#include "dd_share.h" // AudioEnvironmentFactors
+
 #include "MapElement"
 #include "Line"
-#include "Plane" /// @todo remove me
+#include "Plane"
 
 #ifdef __CLIENT__
 #  include "render/lightgrid.h"
@@ -39,6 +41,8 @@
 
 class BspLeaf;
 class Surface;
+struct mobj_s;
+struct ddmobj_base_t;
 
 namespace de {
 class Map;
@@ -66,21 +70,33 @@ public:
     /// Required/referenced plane is missing. @ingroup errors
     DENG2_ERROR(MissingPlaneError);
 
+    /*
+     * Observers to be notified whenever a light level change occurs.
+     */
     DENG2_DEFINE_AUDIENCE(LightLevelChange,
         void sectorLightLevelChanged(Sector &sector, float oldLightLevel))
 
+    /*
+     * Observers to be notified whenever a light color change occurs.
+     */
     DENG2_DEFINE_AUDIENCE(LightColorChange,
         void sectorLightColorChanged(Sector &sector, de::Vector3f const &oldLightColor,
                                      int changedComponents /*bit-field (0x1=Red, 0x2=Green, 0x4=Blue)*/))
 
+    /*
+     * Property value defaults:
+     */
     static float const DEFAULT_LIGHT_LEVEL; ///< 1.f
     static de::Vector3f const DEFAULT_LIGHT_COLOR; ///< red=1.f green=1.f, blue=1.f
 
+    /*
+     * Linked-element lists:
+     */
     typedef QList<BspLeaf *>    BspLeafs;
     typedef QList<Plane *>      Planes;
     typedef QList<Line::Side *> Sides;
 
-    /// Plane identifiers:
+    // Plane identifiers:
     enum { Floor, Ceiling };
 
 #ifdef __CLIENT__
