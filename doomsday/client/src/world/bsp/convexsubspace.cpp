@@ -74,7 +74,7 @@ struct Continuity
     OrderedSegmentList discordSegs;
 
     Continuity(Sector *sector)
-        : sector(sector), discordSegments(0), coverage(0)
+        : sector(sector), coverage(0), discordSegments(0)
     {}
 
     /**
