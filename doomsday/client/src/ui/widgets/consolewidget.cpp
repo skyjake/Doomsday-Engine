@@ -79,17 +79,21 @@ DENG2_PIMPL(ConsoleWidget)
 
     void expandLog(int delta, bool useOffsetAnimation)
     {
+        Animation::Style style = useOffsetAnimation? Animation::EaseOut : Animation::Linear;
+
         if(height->animation().target() == 0)
         {
             // On the first expansion make sure the margins are taken into account.
             delta += 2 * log->topMargin();
         }
+
+        height->setStyle(style);
         height->set(height->animation().target() + delta, .25f);
 
         if(useOffsetAnimation)
         {
             // Sync the log content with the height animation.
-            log->setContentYOffset(Animation::range(Animation::EaseOut,
+            log->setContentYOffset(Animation::range(style,
                                                     log->contentYOffset().value() + delta, 0,
                                                     height->animation().remainingTime()));
         }
@@ -120,15 +124,6 @@ ConsoleWidget::ConsoleWidget() : GuiWidget("console"), d(new Instance(this))
 
     connect(d->cmdLine, SIGNAL(gotFocus()), this, SLOT(openLog()));
 
-    /*
-    // The command line is attached to the button.
-    d->cmdLine->rule()
-            .setInput(Rule::Left,   d->button->rule().right())
-            .setInput(Rule::Bottom, rule().bottom())
-            .setInput(Rule::Right,  rule().right());
-    add(d->cmdLine);
-    */
-
     // Keep the button at the bottom of the expanding command line.
     //consoleButton->rule().setInput(Rule::Bottom, d->cmdLine->rule().bottom());
 
@@ -150,7 +145,7 @@ ConsoleWidget::ConsoleWidget() : GuiWidget("console"), d(new Instance(this))
     rule()
         .setInput(Rule::Width, OperatorRule::minimum(ClientWindow::main().root().viewWidth(),
                                                      OperatorRule::maximum(*d->width, Const(320))))
-        .setInput(Rule::Height, /*d->cmdLine->rule().height() +*/ *d->height)
+        .setInput(Rule::Height, *d->height)
         .setInput(Rule::Bottom, d->cmdLine->rule().top() - unit);
 
     closeLog();
@@ -218,25 +213,6 @@ void ConsoleWidget::glDeinit()
 
 bool ConsoleWidget::handleEvent(Event const &event)
 {
-    /*
-    if(!d->opened)
-    {
-        // Just check for the opening event.
-        if(event.isKeyDown())
-        {
-            KeyEvent const &key = event.as<KeyEvent>();
-
-            if(key.qtKey() == Qt::Key_Escape &&
-               key.modifiers().testFlag(KeyEvent::Shift))
-            {
-                open();
-                return true;
-            }
-        }
-        return false;
-    }
-    */
-
     // Hovering over the right edge shows the <-> cursor.
     if(event.type() == Event::MousePosition)
     {

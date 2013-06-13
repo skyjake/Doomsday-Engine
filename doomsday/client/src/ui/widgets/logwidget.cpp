@@ -313,6 +313,7 @@ public Font::RichFormat::IStyle
     // State.
     Rangei visibleRange;
     Animation contentOffset; ///< Additional vertical offset to apply when drawing content.
+    int contentOffsetForDrawing; ///< Set when geometry updated.
 
     // Style.
     Font const *font;
@@ -680,13 +681,6 @@ public Font::RichFormat::IStyle
             cacheWidth = contentSize.x;
         }
 
-        // Get new entries.
-        fetchNewCachedEntries();
-
-        // We won't keep an unlimited number of entries in memory; delete the
-        // oldest ones if limit has been reached.
-        //prune();
-
         VertexBuf::Builder verts;
 
         for(int attempt = 0; attempt < 2; ++attempt)
@@ -696,13 +690,15 @@ public Font::RichFormat::IStyle
             visibleRange = Rangei(-1, -1);
             entryAtlasLayoutChanged = false;
 
+            contentOffsetForDrawing = std::ceil(contentOffset.value());
+
             // Find the visible range and update all visible entries.
-            for(int idx = cache.size() - 1; yBottom > -contentOffset && idx >= 0; --idx)
+            for(int idx = cache.size() - 1; yBottom >= -contentOffsetForDrawing && idx >= 0; --idx)
             {
                 CacheEntry *entry = cache[idx];
                 yBottom -= entry->height();
 
-                if(yBottom + contentOffset < contentSize.y)
+                if(yBottom + contentOffsetForDrawing <= contentSize.y)
                 {
                     // Rasterize and allocate if needed.
                     entry->make(verts, yBottom);
@@ -744,8 +740,6 @@ public Font::RichFormat::IStyle
             bgBuf->setVertices(gl::TriangleStrip, bgVerts, gl::Static);
         }
 
-        //updateGeometry();
-
         // Draw the background.
         background.draw();
 
@@ -758,13 +752,13 @@ public Font::RichFormat::IStyle
 
             // First draw the shadow of the text.
             uMvpMatrix = projMatrix * Matrix4f::translate(
-                         Vector2f(vp.topLeft + Vector2i(0, contentOffset)));
+                         Vector2f(vp.topLeft + Vector2i(0, contentOffsetForDrawing)));
             uShadowColor = Vector4f(0, 0, 0, 1);
             contents.draw();
 
             // Draw the text itself.
             uMvpMatrix = projMatrix * Matrix4f::translate(
-                         Vector2f(vp.topLeft + Vector2i(0, contentOffset - 1)));
+                         Vector2f(vp.topLeft + Vector2i(0, contentOffsetForDrawing - 1)));
             uShadowColor = Vector4f(1, 1, 1, 1);
             contents.draw();
 
@@ -822,6 +816,8 @@ void LogWidget::viewResized()
 void LogWidget::update()
 {
     ScrollAreaWidget::update();
+
+    d->fetchNewCachedEntries();
 
     // The log widget's geometry is fully dynamic -- regenerated on every frame.
     d->updateGeometry();
