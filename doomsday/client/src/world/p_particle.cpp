@@ -658,8 +658,12 @@ static void P_NewParticle(ptcgen_t *gen)
 
             bspLeaf = 0;
         }
+
         if(!bspLeaf || bspLeaf->isDegenerate())
-            goto spawn_failed;
+        {
+            pt->stage = -1;
+            return;
+        }
 
         AABoxd const &leafAABox = bspLeaf->face().aaBox();
 
@@ -680,7 +684,6 @@ static void P_NewParticle(ptcgen_t *gen)
 
         if(i == 10) // No good place found?
         {
-          spawn_failed:
             pt->stage = -1; // Damn.
             return;
         }
