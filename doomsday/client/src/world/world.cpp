@@ -165,10 +165,10 @@ DENG2_PIMPL(World)
      */
     CacheRecord *findCacheRecord(Uri const &uri) const
     {
-        Records::iterator found = records.find(uri.resolved());
+        Records::const_iterator found = records.find(uri.resolved());
         if(found != records.end())
         {
-            return &found.value();
+            return const_cast<CacheRecord *>(&found.value());
         }
         return 0; // Not found.
     }
