@@ -32,7 +32,18 @@ namespace de {
 class DENG2_PUBLIC Clock
 {
 public:
+    /**
+     * Notified whenever the time of the clock changes. The audience members
+     * will be notified in unspecified order.
+     */
     DENG2_DEFINE_AUDIENCE(TimeChange, void timeChanged(Clock const &))
+
+    /**
+     * Notified whenever the time of the clock changes. The entire priority
+     * audience is notified before the regular TimeChange audience.
+     */
+    typedef Observers<DENG2_AUDIENCE_INTERFACE(TimeChange)> PriorityTimeChangeAudience;
+    PriorityTimeChangeAudience audienceForPriorityTimeChange;
 
 public:
     Clock();

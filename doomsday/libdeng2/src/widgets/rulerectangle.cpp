@@ -325,7 +325,7 @@ public DelegateRule::ISource
 
         if(normalizedAnchorPoint.done())
         {
-            clock.audienceForTimeChange -= this;
+            clock.audienceForPriorityTimeChange -= this;
         }
     }
 };
@@ -417,7 +417,7 @@ void RuleRectangle::setAnchorPoint(Vector2f const &normalizedPoint, TimeDelta co
     if(transition > 0.0)
     {
         // Animation started, keep an eye on the clock until it ends.
-        Clock::appClock().audienceForTimeChange += d;
+        Clock::appClock().audienceForPriorityTimeChange += d;
     }
 }
 

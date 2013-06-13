@@ -41,6 +41,13 @@ public:
     void set(Rule const &target, TimeDelta transition = 0);
 
     /**
+     * Sets the animation style of the rule.
+     *
+     * @param style  Animation style.
+     */
+    void setStyle(Animation::Style style);
+
+    /**
      * Read-only access to the scalar animation.
      */
     Animation const &animation() const {

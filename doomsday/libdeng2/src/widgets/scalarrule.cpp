@@ -37,7 +37,7 @@ void ScalarRule::set(float target, de::TimeDelta transition)
     independentOf(_targetRule);
     _targetRule = 0;
 
-    _animation.clock().audienceForTimeChange += this;
+    _animation.clock().audienceForPriorityTimeChange += this;
 
     _animation.setValue(target, transition);
     invalidate();
@@ -50,6 +50,11 @@ void ScalarRule::set(Rule const &target, TimeDelta transition)
     // Keep a reference.
     _targetRule = &target;
     dependsOn(_targetRule);
+}
+
+void ScalarRule::setStyle(Animation::Style style)
+{
+    _animation.setStyle(style);
 }
 
 void ScalarRule::shift(float delta)
@@ -75,7 +80,7 @@ void ScalarRule::timeChanged(Clock const &clock)
 
     if(_animation.done())
     {
-        clock.audienceForTimeChange -= this;
+        clock.audienceForPriorityTimeChange -= this;
     }
 }
 

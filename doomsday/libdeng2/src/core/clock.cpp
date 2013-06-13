@@ -36,6 +36,10 @@ void Clock::setTime(Time const &currentTime)
 
     if(changed)
     {
+        DENG2_FOR_EACH_OBSERVER(PriorityTimeChangeAudience, i, audienceForPriorityTimeChange)
+        {
+            i->timeChanged(*this);
+        }
         DENG2_FOR_AUDIENCE(TimeChange, i) i->timeChanged(*this);
     }
 }
