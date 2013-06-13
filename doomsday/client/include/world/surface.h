@@ -198,7 +198,7 @@ public:
      * @param newMaterial   New material to be bound.
      * @param isMissingFix  The new material is a fix for a "missing" material.
      */
-    bool setMaterial(Material *material, bool isMissingFix = false);
+    bool setMaterial(Material *newMaterial, bool isMissingFix = false);
 
     /**
      * Returns the material origin offset for the surface.

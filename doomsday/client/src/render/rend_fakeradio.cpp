@@ -134,7 +134,8 @@ static inline bool isSectorOpen(Sector const *sector)
 /**
  * Set the rendpoly's X offset and texture size.
  *
- * @param length  If negative; implies that the texture is flipped horizontally.
+ * @param lineLength  If negative; implies that the texture is flipped horizontally.
+ * @param segOffset   Offset to the start of the segment.
  */
 static inline float calcTexCoordX(float lineLength, float segOffset)
 {
@@ -145,7 +146,10 @@ static inline float calcTexCoordX(float lineLength, float segOffset)
 /**
  * Set the rendpoly's Y offset and texture size.
  *
- * @param size  If negative; implies that the texture is flipped vertically.
+ * @param z          Z height of the vertex.
+ * @param bottom     Z height of the bottom of the wall section.
+ * @param top        Z height of the top of the wall section.
+ * @param texHeight  If negative; implies that the texture is flipped vertically.
  */
 static inline float calcTexCoordY(float z, float bottom, float top, float texHeight)
 {

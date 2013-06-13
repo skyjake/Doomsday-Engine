@@ -180,7 +180,7 @@ void LO_ClipInBspLeafBySight(int bspLeafIdx);
  * @param y             Y coordinate of the origin (must be within @a bspLeaf).
  * @param radius        Radius of the range around the origin point.
  * @param callback      Callback to make for each object.
- * @param paramaters    Data to pass to the callback.
+ * @param parameters    Data to pass to the callback.
  *
  * @return  @c 0 iff iteration completed wholly.
  */

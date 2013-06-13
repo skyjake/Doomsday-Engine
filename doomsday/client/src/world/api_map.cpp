@@ -1,4 +1,4 @@
-/** @file world/p_dmu.cpp Doomsday Map Update API.
+/** @file api_map.cpp Doomsday Map Update API.
  *
  * @todo Throw a game-terminating exception if an illegal value is given
  * to a public API function.

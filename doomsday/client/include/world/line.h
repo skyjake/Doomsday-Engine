@@ -713,7 +713,7 @@ public:
      *                   method(s) of Polyobj will also need to be called to
      *                   complete the job of clearing this relationship.)
      */
-    void setPolyobj(Polyobj *newOwner);
+    void setPolyobj(Polyobj *newPolyobj);
 
     /**
      * Returns @c true iff the line resulted in the creation of a BSP window

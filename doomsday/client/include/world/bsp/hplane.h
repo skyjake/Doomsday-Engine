@@ -189,8 +189,6 @@ public:
      * drifting away from the hplane). Logically, therefore, this should not
      * be done prior to creating hedges along the partition - instead this
      * should happen afterwards. -ds
-     *
-     * @param intercepts  The list of intercepts to be sorted (in place).
      */
     void sortAndMergeIntercepts();
 

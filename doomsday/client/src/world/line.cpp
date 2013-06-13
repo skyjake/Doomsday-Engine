@@ -576,9 +576,9 @@ Polyobj &Line::polyobj() const
     throw Line::MissingPolyobjError("Line::polyobj", "No polyobj is attributed");
 }
 
-void Line::setPolyobj(Polyobj *newOwner)
+void Line::setPolyobj(Polyobj *newPolyobj)
 {
-    d->polyobj = newOwner;
+    d->polyobj = newPolyobj;
 }
 
 Line::Side &Line::side(int back)

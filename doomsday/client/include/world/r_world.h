@@ -38,6 +38,7 @@ void R_SetRelativeHeights(Sector const *front, Sector const *back, int planeInde
  *
  * @param side            Map line side to determine Z heights for.
  * @param section         Line::Side section to determine coordinates for.
+ * @param skyClip         Perform sky plane clipping to line section.
  *
  * Return values:
  * @param bottom          Z map space coordinate at the bottom of the wall section. Can be @c 0.

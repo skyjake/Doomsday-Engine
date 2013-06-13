@@ -225,16 +225,16 @@ Vector3f const &Sector::lightColor() const
     return d->lightColor;
 }
 
-void Sector::setLightColor(Vector3f const &newLightColor_)
+void Sector::setLightColor(Vector3f const &newLightColor)
 {
-    Vector3f newLightColor = Vector3f(de::clamp(0.f, newLightColor_.x, 1.f),
-                                      de::clamp(0.f, newLightColor_.y, 1.f),
-                                      de::clamp(0.f, newLightColor_.z, 1.f));
+    Vector3f newColorClamped = Vector3f(de::clamp(0.f, newLightColor.x, 1.f),
+                                        de::clamp(0.f, newLightColor.y, 1.f),
+                                        de::clamp(0.f, newLightColor.z, 1.f));
 
-    if(d->lightColor != newLightColor)
+    if(d->lightColor != newColorClamped)
     {
         Vector3f oldLightColor = d->lightColor;
-        d->lightColor = newLightColor;
+        d->lightColor = newColorClamped;
 
         // Notify interested parties of the change.
         d->notifyLightColorChanged(oldLightColor);

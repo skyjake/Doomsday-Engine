@@ -101,8 +101,6 @@ public:
 
     /**
      * Empty all generator link lists.
-     *
-     * @param generators  Generators instance.
      */
     void emptyLists();
 

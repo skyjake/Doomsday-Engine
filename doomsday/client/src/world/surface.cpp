@@ -69,7 +69,7 @@ DENG2_PIMPL(Surface)
     /// Smoothed origin of the surface material.
     Vector2f visMaterialOrigin;
 
-    /// Delta between the @sharp and smoothed origin of the surface material.
+    /// Delta between the @em sharp and smoothed origin of the surface material.
     Vector2f visMaterialOriginDelta;
 
 #endif
@@ -237,21 +237,21 @@ de::Vector3f const &Surface::normal() const
     return d->normal;
 }
 
-void Surface::setNormal(Vector3f const &newNormal_)
+void Surface::setNormal(Vector3f const &newNormal)
 {
     // Normalize
-    Vector3f newNormal = newNormal_;
-    dfloat length = newNormal.length();
+    Vector3f newNormalNormalized = newNormal;
+    dfloat length = newNormalNormalized.length();
     if(length)
     {
         for(int i = 0; i < 3; ++i)
-            newNormal[i] /= length;
+            newNormalNormalized[i] /= length;
     }
 
-    if(d->normal != newNormal)
+    if(d->normal != newNormalNormalized)
     {
         Vector3f oldNormal = d->normal;
-        d->normal = newNormal;
+        d->normal = newNormalNormalized;
 
         // We'll need to recalculate the tangents when next referenced.
         d->needUpdateTangents = true;
@@ -505,15 +505,15 @@ Vector3f const &Surface::tintColor() const
     return d->tintColor;
 }
 
-void Surface::setTintColor(Vector3f const &newTintColor_)
+void Surface::setTintColor(Vector3f const &newTintColor)
 {
-    Vector3f newTintColor = Vector3f(de::clamp(0.f, newTintColor_.x, 1.f),
-                                     de::clamp(0.f, newTintColor_.y, 1.f),
-                                     de::clamp(0.f, newTintColor_.z, 1.f));
-    if(d->tintColor != newTintColor)
+    Vector3f newColorClamped = Vector3f(de::clamp(0.f, newTintColor.x, 1.f),
+                                        de::clamp(0.f, newTintColor.y, 1.f),
+                                        de::clamp(0.f, newTintColor.z, 1.f));
+    if(d->tintColor != newColorClamped)
     {
         Vector3f oldTintColor = d->tintColor;
-        d->tintColor = newTintColor;
+        d->tintColor = newColorClamped;
 
         // Notify interested parties of the change.
         d->notifyTintColorChanged(oldTintColor);

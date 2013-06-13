@@ -444,7 +444,7 @@ DENG2_PIMPL(Partitioner)
     {
         int const costFactorMultiplier = splitCostFactor;
 
-        /// Determine the relationship between @var seg and the partition plane.
+        /// Determine the relationship between @a seg and the partition plane.
         coord_t fromDist, toDist;
         LineRelationship rel = seg.relationship(plSeg, &fromDist, &toDist);
         switch(rel)

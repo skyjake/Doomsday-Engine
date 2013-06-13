@@ -469,15 +469,10 @@ Line *R_FindLineNeighbor(Sector const *sector, Line const *line,
 }
 
 /**
- * @param side          Line side for which to determine covered opening status.
- * @param frontSec      Sector in front of the wall.
- * @param backSec       Sector behind the wall. Can be @c 0.
+ * @param side  Line side for which to determine covered opening status.
  *
- * @return  @c true iff Line::Side @a front has a "middle" Material which completely
- *     covers the open range defined by sectors @a frontSec and @a backSec.
- *
- * @note Anything calling this is likely working at the wrong level (should work with
- * half-edges instead).
+ * @return  @c true iff there is a "middle" material on @a side which
+ * completely covers the open range.
  */
 static bool middleMaterialCoversOpening(Line::Side const &side)
 {

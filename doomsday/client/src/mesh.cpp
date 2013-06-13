@@ -1,4 +1,4 @@
-/** @file data/mesh.cpp Mesh Geometry Data Structure.
+/** @file mesh.cpp Mesh Geometry Data Structure.
  *
  * @authors Copyright © 2008-2013 Daniel Swanson <danij@dengine.net>
  *

@@ -1,4 +1,4 @@
-/** @file world/gamemap.cpp World Map.
+/** @file map.cpp World map.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -408,7 +408,7 @@ DENG2_PIMPL(Map)
     /**
      * Construct an initial (empty) line blockmap for "this" map.
      *
-     * @pre Coordinate space @var bounds have already been determined.
+     * @pre Coordinate space bounds have already been determined.
      */
     void initLineBlockmap()
     {
@@ -432,7 +432,7 @@ DENG2_PIMPL(Map)
     /**
      * Construct an initial (empty) mobj blockmap for "this" map.
      *
-     * @pre Coordinate space @var bounds have already been determined.
+     * @pre Coordinate space bounds have already been determined.
      */
     void initMobjBlockmap()
     {
@@ -456,7 +456,7 @@ DENG2_PIMPL(Map)
     /**
      * Construct an initial (empty) polyobj blockmap for "this" map.
      *
-     * @pre Coordinate space @var bounds have already been determined.
+     * @pre Coordinate space bounds have already been determined.
      */
     void initPolyobjBlockmap()
     {
@@ -480,7 +480,7 @@ DENG2_PIMPL(Map)
     /**
      * Construct an initial (empty) BSP leaf blockmap for "this" map.
      *
-     * @pre Coordinate space @var bounds have already been determined.
+     * @pre Coordinate space bounds have already been determined.
      */
     void initBspLeafBlockmap()
     {

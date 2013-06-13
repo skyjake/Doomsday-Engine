@@ -59,9 +59,15 @@ static coord_t const ANG_EPSILON         = 1.0 / 1024.0;
 class Partitioner
 {
 public:
+    /*
+     * Observers to be notified when an unclosed sector is first found.
+     */
     DENG2_DEFINE_AUDIENCE(UnclosedSectorFound,
         void unclosedSectorFound(Sector &sector, Vector2d const &nearPoint))
 
+    /*
+     * Observers to be notified when a one-way window construct is first found.
+     */
     DENG2_DEFINE_AUDIENCE(OneWayWindowFound,
         void oneWayWindowFound(Line &line, Sector &backFacingSector))
 

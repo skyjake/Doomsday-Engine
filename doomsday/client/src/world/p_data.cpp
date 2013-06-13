@@ -205,8 +205,9 @@ void MapEntityDef_AddProperty(MapEntityDef* def, int propertyId, const char* pro
 /**
  * Look up a mapobj definition.
  *
- * @param identifer     If objName is @c NULL, compare using this unique identifier.
- * @param objName       If not @c NULL, compare using this unique name.
+ * @param identifer   If objName is @c NULL, compare using this unique identifier.
+ * @param entityName  If not @c NULL, compare using this unique name.
+ * @param canCreate   @c true= create a new definition if not found.
  */
 static MapEntityDef *findMapEntityDef(int identifier, char const *entityName,
                                       bool canCreate)

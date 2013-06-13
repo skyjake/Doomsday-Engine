@@ -105,7 +105,7 @@ public:
 
         /**
          * Returns @c true iff the cell is a leaf (i.e., equal to a unit in the
-         * Gridmap coordinate space).
+         * gridmap coordinate space).
          */
         bool isLeaf() const { return size == 1; }
 
@@ -121,7 +121,6 @@ public:
          * for each cell. Iteration ends when all selected cells have been visited
          * or a callback returns a non-zero value.
          *
-         * @param tree          TreeCell to traverse.
          * @param leafOnly      Caller is only interested in leaves.
          * @param callback      Callback function.
          * @param parameters    Passed to the callback.
@@ -173,7 +172,7 @@ public:
     /**
      * Retrieve the user data associated with the identified cell.
      *
-     * @param coords     XY coordinates of the cell whose data to retrieve.
+     * @param cell       Cell coordinates to retrieve user data for.
      * @param canCreate  @c true= allocate new data if not already present
      *                   for the referenced cell.
      *
@@ -188,24 +187,25 @@ public:
     typedef int (*IterateCallback) (void *cellData, void *parameters);
 
     /**
-     * Iterate over all populated cells in the gridmap making a callback for each. Iteration ends
-     * when all cells have been visited or @a callback returns non-zero.
+     * Iterate over all populated cells in the gridmap making a callback for
+     * each. Iteration ends when all cells have been visited, or, a @a callback
+     * returns non-zero.
      *
-     * @param callback       Callback function ptr.
-     * @param parameters     Passed to the callback.
+     * @param callback    Callback function ptr.
+     * @param parameters  Passed to the callback.
      *
      * @return  @c 0 iff iteration completed wholly.
      */
     int iterate(IterateCallback callback, void *parameters = 0);
 
     /**
-     * Iterate over a block of populated cells in the gridmap making a callback for each.
-     * Iteration ends when all selected cells have been visited or @a callback returns non-zero.
+     * Iterate over a block of populated cells in the gridmap making a callback
+     * for each. Iteration ends when all selected cells have been visited, or,
+     * a @a callback returns non-zero.
      *
-     * @param min            Minimal coordinates for the top left cell.
-     * @param max            Maximal coordinates for the bottom right cell.
-     * @param callback       Callback function ptr.
-     * @param parameters     Passed to the callback.
+     * @param block       Block cell coordinates to iterate the user data of.
+     * @param callback    Callback function ptr.
+     * @param parameters  Passed to the callback.
      *
      * @return  @c 0 iff iteration completed wholly.
      */
@@ -214,12 +214,14 @@ public:
     /**
      * Render a visual for this gridmap to assist in debugging (etc...).
      *
-     * This visualizer assumes that the caller has already configured the GL render state
-     * (projection matrices, scale, etc...) as desired prior to calling. This function
-     * guarantees to restore the previous GL state if any changes are made to it.
+     * This visualizer assumes that the caller has already configured the GL
+     * render state (projection matrices, scale, etc...) as desired prior to
+     * calling. This function guarantees to restore the previous GL state if
+     * any changes are made to it.
      *
-     * @note Internally this visual uses fixed unit dimensions [1x1] for cells, therefore
-     *       the caller should scale the appropriate matrix to scale this visual as desired.
+     * @note Internally this visual uses fixed unit dimensions [1x1] for cells,
+     * therefore the caller should scale the appropriate matrix to scale this
+     * visual as desired.
      */
     void drawDebugVisual() const;
 

@@ -44,7 +44,7 @@ class Vertex : public de::MapElement
 {
 public:
     /*
-     * Observers to be notified when the origin changes.
+     * Observers to be notified whenever the origin changes.
      */
     DENG2_DEFINE_AUDIENCE(OriginChange,
         void vertexOriginChanged(Vertex &vertex, de::Vector2d const &oldOrigin,

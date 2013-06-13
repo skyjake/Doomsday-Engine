@@ -43,7 +43,7 @@ struct ShadowLink;
 /**
  * Represents a leaf in the map's binary space partition (BSP) tree. Each leaf
  * defines a two dimensioned convex subspace region (which, may be represented
- * by a face (polygon) in the map's half-edge @ref Mesh geometry).
+ * by a face (polygon) in the map's half-edge @ref de::Mesh geometry).
  *
  * On client side a leaf also provides / links to various geometry data assets
  * and properties used to visualize the subspace.

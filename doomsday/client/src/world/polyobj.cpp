@@ -410,15 +410,15 @@ bool Polyobj::move(Vector2d const &delta)
  * @param about      Origin to rotate @a point relative to.
  * @param fineAngle  Angle to rotate (theta).
  */
-static void rotatePoint2d(Vector2d &point, Vector2d const &origin, uint fineAngle)
+static void rotatePoint2d(Vector2d &point, Vector2d const &about, uint fineAngle)
 {
     coord_t const c = FIX2DBL(fineCosine[fineAngle]);
     coord_t const s = FIX2DBL(finesine[fineAngle]);
 
     Vector2d orig = point;
 
-    point.x = orig.x * c - orig.y * s + origin.x;
-    point.y = orig.y * c + orig.x * s + origin.y;
+    point.x = orig.x * c - orig.y * s + about.x;
+    point.y = orig.y * c + orig.x * s + about.y;
 }
 
 bool Polyobj::rotate(angle_t delta)

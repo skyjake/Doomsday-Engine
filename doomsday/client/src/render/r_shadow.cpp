@@ -195,11 +195,11 @@ typedef struct {
  *
  * @return  @c 0 = continue iteration.
  */
-int RIT_ProjectShadowToSurfaceIterator(void *obj, void *parameters)
+int RIT_ProjectShadowToSurfaceIterator(void *mobj, void *parameters)
 {
-    DENG_ASSERT(obj && parameters);
+    DENG_ASSERT(mobj && parameters);
 
-    mobj_t *mo = (mobj_t *)obj;
+    mobj_t *mo = (mobj_t *)mobj;
     projectshadowonsurfaceiteratorparams_t *p = (projectshadowonsurfaceiteratorparams_t *)parameters;
     shadowprojectparams_t *spParams = &p->spParams;
     coord_t distanceFromViewer = 0, mobjHeight, halfMobjHeight, distanceFromSurface;

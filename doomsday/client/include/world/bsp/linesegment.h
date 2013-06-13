@@ -317,14 +317,14 @@ public:
         void setSector(Sector *newSector);
 
         /**
-         * Returns a direction vector for "this" side of the line segment, from
-         * the From/Start vertex origin to the To/End vertex origin.
+         * Returns a direction vector for "this" side of the line segment,
+         * from the From/Start vertex origin to the To/End vertex origin.
          */
         Vector2d const &direction() const;
 
         /**
-         * Returns the logical @em slopetype for "this" side of the line segment
-         * (which, is determined from the world direction).
+         * Returns the logical @em slopetype for "this" side of the line
+         * segment (which, is determined from the world direction).
          *
          * @see direction()
          * @see M_SlopeType()
@@ -338,48 +338,54 @@ public:
         coord_t length() const;
 
         /**
-         * Returns the world angle of "this" side of the line segment (which, is
-         * derived from the direction vector).
+         * Returns the world angle of "this" side of the line segment (which,
+         * is derived from the direction vector).
          *
          * @see inverseAngle(), direction()
          */
         coord_t angle() const;
 
         /**
-         * Calculates the @em parallel distance from "this" side of the line segment
-         * to the specified @a point in the plane (i.e., in the direction of this
-         * side).
+         * Calculates the @em parallel distance from "this" side of the line
+         * segment to the specified @a point in the plane (i.e., in the
+         * direction of this side).
          *
          * @return  Distance to the point expressed as a fraction/scale factor.
          */
         coord_t distance(Vector2d point) const;
 
         /**
-         * Calculate @em perpendicular distances from one or both of the vertexe(s)
-         * of "this" side of the line segment to the @a other line segment side. For
-         * this operation the @a other line segment is interpreted as an infinite
-         * line. The vertexe(s) of "this" side of the line segment are projected onto
-         * the conceptually infinite line defined by @a other and the length of the
-         * resultant vector(s) are then determined.
+         * Calculate @em perpendicular distances from one or both of the
+         * vertexe(s) of "this" side of the line segment to the @a other line
+         * segment side. For this operation the @a other line segment is
+         * interpreted as an infinite line. The vertexe(s) of "this" side of
+         * the line segment are projected onto the conceptually infinite line
+         * defined by @a other and the length of the resultant vector(s) are
+         * then determined.
          *
-         * @param other     Other line segment side to determine vertex distances to.
+         * @param other  Other line segment side to determine distances to.
          *
          * Return values:
-         * @param fromDist  Perpendicular distance from the "from" vertex. Can be @c 0.
-         * @param toDist    Perpendicular distance from the "to" vertex. Can be @c 0.
+         * @param fromDist  Perpendicular distance from the "from" vertex.
+         *                  Can be @c 0.
+         * @param toDist    Perpendicular distance from the "to" vertex.
+         *                  Can be @c 0.
          */
         void distance(Side const &other, coord_t *fromDist = 0, coord_t *toDist = 0) const;
 
         /**
-         * Determine the logical relationship between "this" line segment side and
-         * the @a other. In doing so the perpendicular distance for the vertexes of
-         * the line segment side are calculated (and optionally returned).
+         * Determine the logical relationship between "this" line segment side
+         * and the @a other. In doing so the perpendicular distance for the
+         * vertexes of the line segment side are calculated (and optionally
+         * returned).
          *
-         * @param other     Other line segment side to determine relationship to.
+         * @param other  Other line segment side to determine relationship to.
          *
          * Return values:
-         * @param fromDist  Perpendicular distance from the "from" vertex. Can be @c 0.
-         * @param toDist    Perpendicular distance from the "to" vertex. Can be @c 0.
+         * @param retFromDist  Perpendicular distance from the "from" vertex.
+         *                     Can be @c 0.
+         * @param retToDist    Perpendicular distance from the "to" vertex.
+         *                     Can be @c 0.
          *
          * @return LineRelationship between the line segments.
          *
@@ -392,8 +398,8 @@ public:
         int boxOnSide(AABoxd const &box) const;
 
         /**
-         * Returns the axis-aligned bounding box of the line segment (derived from
-         * the coordinates of the two vertexes).
+         * Returns the axis-aligned bounding box of the line segment (derived
+         * from the coordinates of the two vertexes).
          */
         inline AABoxd aaBox() const { return line().aaBox(); }
 
