@@ -479,6 +479,10 @@ static void findContacts(objlink_t *link)
         radius = R_VisualRadius(mo);
         bspLeaf = mo->bspLeaf;
         break; }
+
+    case NUM_OBJ_TYPES:
+        DENG_ASSERT(false);
+        break;
     }
 
     // Do the BSP leaf spread. Begin from the obj's own BspLeaf.
