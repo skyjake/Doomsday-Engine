@@ -42,7 +42,6 @@
 class BspLeaf;
 class Surface;
 struct mobj_s;
-struct ddmobj_base_t;
 
 namespace de {
 class Map;

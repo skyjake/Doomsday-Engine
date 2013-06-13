@@ -61,6 +61,8 @@ DENG2_PIMPL(Surface)
     /// @em Sharp origin of the surface material.
     Vector2f materialOrigin;
 
+#ifdef __CLIENT__
+
     /// Old @em sharp origin of the surface material, for smoothing.
     Vector2f oldMaterialOrigin[2];
 
@@ -69,6 +71,8 @@ DENG2_PIMPL(Surface)
 
     /// Delta between the @sharp and smoothed origin of the surface material.
     Vector2f visMaterialOriginDelta;
+
+#endif
 
     /// Surface color tint.
     de::Vector3f tintColor;
@@ -376,6 +380,7 @@ void Surface::setMaterialOrigin(Vector2f const &newOrigin)
 
         d->materialOrigin = newOrigin;
 
+#ifdef __CLIENT__
         // During map setup we'll apply this immediately to the visual origin also.
         if(ddMapSetup)
         {
@@ -384,6 +389,7 @@ void Surface::setMaterialOrigin(Vector2f const &newOrigin)
 
             d->oldMaterialOrigin[0] = d->oldMaterialOrigin[1] = d->materialOrigin;
         }
+#endif
 
         // Notify interested parties of the change.
         d->notifyMaterialOriginChanged(oldMaterialOrigin);
@@ -398,6 +404,7 @@ void Surface::setMaterialOriginComponent(int component, float newPosition)
 
         d->materialOrigin[component] = newPosition;
 
+#ifdef __CLIENT__
         // During map setup we'll apply this immediately to the visual origin also.
         if(ddMapSetup)
         {
@@ -408,11 +415,14 @@ void Surface::setMaterialOriginComponent(int component, float newPosition)
                 d->oldMaterialOrigin[1][component] =
                     d->materialOrigin[component];
         }
+#endif
 
         // Notify interested parties of the change.
         d->notifyMaterialOriginChanged(oldMaterialOrigin, (1 << component));
     }
 }
+
+#ifdef __CLIENT__
 
 Vector2f const &Surface::visMaterialOrigin() const
 {
@@ -467,6 +477,8 @@ void Surface::updateMaterialOriginTracking()
         }
     }
 }
+
+#endif // __CLIENT__
 
 float Surface::opacity() const
 {

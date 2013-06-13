@@ -21,6 +21,8 @@
 #ifndef DENG_WORLD_VERTEX_H
 #define DENG_WORLD_VERTEX_H
 
+#include <de/types.h>
+
 #include <de/Error>
 #include <de/Observers>
 #include <de/Vector>
@@ -41,7 +43,7 @@ class LineOwner;
 class Vertex : public de::MapElement
 {
 public:
-    /**
+    /*
      * Observers to be notified when the origin changes.
      */
     DENG2_DEFINE_AUDIENCE(OriginChange,

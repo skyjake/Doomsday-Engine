@@ -1,4 +1,4 @@
-/** @file world/surface.h World Surface.
+/** @file world/surface.h World map surface.
  *
  * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -37,7 +37,7 @@
 class BspLeaf;
 
 /**
- * World surface.
+ * World map surface.
  *
  * @ingroup world
  */
@@ -47,31 +47,34 @@ public:
     /// Required material is missing. @ingroup errors
     DENG2_ERROR(MissingMaterialError);
 
-    /**
+    /*
      * Observers to be notified when the normal vector changes.
      */
     DENG2_DEFINE_AUDIENCE(NormalChange,
         void normalChanged(Surface &surface, de::Vector3f oldNormal,
                            int changedAxes /*bit-field (0x1=X, 0x2=Y, 0x4=Z)*/))
-    /**
+    /*
      * Observers to be notified when the @em sharp material origin changes.
      */
     DENG2_DEFINE_AUDIENCE(MaterialOriginChange,
         void materialOriginChanged(Surface &surface, de::Vector2f oldMaterialOrigin,
                                    int changedAxes /*bit-field (0x1=X, 0x2=Y)*/))
-    /**
+    /*
      * Observers to be notified when the opacity changes.
      */
     DENG2_DEFINE_AUDIENCE(OpacityChange,
         void opacityChanged(Surface &surface, float oldOpacity))
 
-    /**
+    /*
      * Observers to be notified when the tint color changes.
      */
     DENG2_DEFINE_AUDIENCE(TintColorChange,
         void tintColorChanged(Surface &sector, de::Vector3f const &oldTintColor,
                               int changedComponents /*bit-field (0x1=Red, 0x2=Green, 0x4=Blue)*/))
 
+    /*
+     * Property value defaults:
+     */
     static float const DEFAULT_OPACITY; ///< 1.f
     static de::Vector3f const DEFAULT_TINT_COLOR; ///< red=1.f, green=1.f, blue=1.f
     static int const MAX_SMOOTH_MATERIAL_MOVE; ///< 8, $smoothmatoffset: Maximum speed for a smoothed material offset.
@@ -100,6 +103,13 @@ public:
 #endif
 
 public:
+    /**
+     * Construct a new surface.
+     *
+     * @param owner      Map element which will own the surface.
+     * @param opacity    Default opacity strength (@c 1= fully opaque).
+     * @param tintColor  Default tint color.
+     */
     Surface(de::MapElement &owner,
             float opacity                 = DEFAULT_OPACITY,
             de::Vector3f const &tintColor = DEFAULT_TINT_COLOR);
@@ -246,6 +256,8 @@ public:
      */
     inline void setMaterialOriginY(float newPosition) { setMaterialOriginComponent(1, newPosition); }
 
+#ifdef __CLIENT__
+
     /**
      * Returns the current interpolated visual material origin of the surface
      * in the map coordinate space.
@@ -280,6 +292,8 @@ public:
      * Roll the surface's material origin tracking buffer.
      */
     void updateMaterialOriginTracking();
+
+#endif // __CLIENT__
 
     /**
      * Returns the opacity of the surface. The OpacityChange audience is notified
@@ -437,6 +451,7 @@ public:
     /// @deprecated Unnecessary; refactor away.
     bool isAttachedToMap() const;
 
+protected:
     int property(DmuArgs &args) const;
     int setProperty(DmuArgs const &args);
 

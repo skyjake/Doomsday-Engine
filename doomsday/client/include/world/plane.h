@@ -1,4 +1,4 @@
-/** @file world/plane.h World Plane.
+/** @file world/plane.h World map plane.
  *
  * @author Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @author Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -33,10 +33,9 @@
 
 class Sector;
 class Surface;
-struct ddmobj_base_t;
 
 /**
- * World sector plane.
+ * World map sector plane.
  *
  * @ingroup world
  */
