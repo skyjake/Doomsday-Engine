@@ -409,26 +409,6 @@ public:
     }
 
     /**
-     * Link the specified @a bspLeaf in internal data structures for
-     * bookkeeping purposes.
-     *
-     * @todo Does this really need to be public? -ds
-     *
-     * @param bspLeaf  BspLeaf to be linked.
-     */
-    void linkBspLeaf(BspLeaf &bspLeaf);
-
-    /**
-     * Link the specified @a line in any internal data structures for
-     * bookkeeping purposes.
-     *
-     * @todo Does this really need to be public? -ds
-     *
-     * @param line  Line to be linked.
-     */
-    void linkLine(Line &line);
-
-    /**
      * Link the specified @a mobj in any internal data structures for
      * bookkeeping purposes. Should be called AFTER mobj translation to
      * (re-)insert the mobj.

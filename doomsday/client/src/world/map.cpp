@@ -430,6 +430,55 @@ DENG2_PIMPL(Map)
     }
 
     /**
+     * Link the specified @a line in the blockmap.
+     */
+    void linkLine(Line &line)
+    {
+        // Lines of Polyobjs don't get into the blockmap (presently...).
+        if(line.definesPolyobj()) return;
+
+        Vector2d const &origin = lineBlockmap->origin();
+        Vector2d const &cellDimensions = lineBlockmap->cellDimensions();
+
+        // Determine the block of cells we'll be working within.
+        Blockmap::CellBlock cellBlock = lineBlockmap->toCellBlock(line.aaBox());
+
+        Blockmap::Cell cell;
+        for(cell.y = cellBlock.min.y; cell.y <= cellBlock.max.y; ++cell.y)
+        for(cell.x = cellBlock.min.x; cell.x <= cellBlock.max.x; ++cell.x)
+        {
+            if(line.slopeType() == ST_VERTICAL ||
+               line.slopeType() == ST_HORIZONTAL)
+            {
+                lineBlockmap->link(cell, &line);
+                continue;
+            }
+
+            Vector2d point = origin + cellDimensions * Vector2d(cell.x, cell.y);
+
+            // Choose a cell diagonal to test.
+            Vector2d from, to;
+            if(line.slopeType() == ST_POSITIVE)
+            {
+                // Line slope / vs \ cell diagonal.
+                from = Vector2d(point.x, point.y + cellDimensions.y);
+                to   = Vector2d(point.x + cellDimensions.x, point.y);
+            }
+            else
+            {
+                // Line slope \ vs / cell diagonal.
+                from = Vector2d(point.x + cellDimensions.x, point.y + cellDimensions.y);
+                to   = Vector2d(point.x, point.y);
+            }
+
+            // Would Line intersect this?
+            if((line.pointOnSide(from) < 0) != (line.pointOnSide(to) < 0))
+            {
+                lineBlockmap->link(cell, &line);
+            }
+        }
+    }
+    /**
      * Construct an initial (empty) mobj blockmap for "this" map.
      *
      * @pre Coordinate space bounds have already been determined.
@@ -499,6 +548,27 @@ DENG2_PIMPL(Map)
 
 #undef CELL_SIZE
 #undef BLOCKMAP_MARGIN
+    }
+
+    /**
+     * Link the specified @a bspLeaf in the blockmap.
+     */
+    void linkBspLeaf(BspLeaf &bspLeaf)
+    {
+        // Degenerate BspLeafs don't get in.
+        if(bspLeaf.isDegenerate()) return;
+
+        // BspLeafs without sectors don't get in.
+        if(!bspLeaf.hasSector()) return;
+
+        Blockmap::CellBlock cellBlock = bspLeafBlockmap->toCellBlock(bspLeaf.face().aaBox());
+
+        Blockmap::Cell cell;
+        for(cell.y = cellBlock.min.y; cell.y <= cellBlock.max.y; ++cell.y)
+        for(cell.x = cellBlock.min.x; cell.x <= cellBlock.max.x; ++cell.x)
+        {
+            bspLeafBlockmap->link(cell, &bspLeaf);
+        }
     }
 
 #ifdef __CLIENT__
@@ -1071,53 +1141,6 @@ int Map::mobjsBoxIterator(AABoxd const &box, int (*callback) (mobj_t *, void *),
     return iterateCellBlockMobjs(*d->mobjBlockmap, cellBlock, callback, parameters);
 }
 
-void Map::linkLine(Line &line)
-{
-    // Lines of Polyobjs don't get into the blockmap (presently...).
-    if(line.definesPolyobj()) return;
-
-    Vector2d const &origin = d->lineBlockmap->origin();
-    Vector2d const &cellDimensions = d->lineBlockmap->cellDimensions();
-
-    // Determine the block of cells we'll be working within.
-    Blockmap::CellBlock cellBlock = d->lineBlockmap->toCellBlock(line.aaBox());
-
-    Blockmap::Cell cell;
-    for(cell.y = cellBlock.min.y; cell.y <= cellBlock.max.y; ++cell.y)
-    for(cell.x = cellBlock.min.x; cell.x <= cellBlock.max.x; ++cell.x)
-    {
-        if(line.slopeType() == ST_VERTICAL ||
-           line.slopeType() == ST_HORIZONTAL)
-        {
-            d->lineBlockmap->link(cell, &line);
-            continue;
-        }
-
-        Vector2d point = origin + cellDimensions * Vector2d(cell.x, cell.y);
-
-        // Choose a cell diagonal to test.
-        Vector2d from, to;
-        if(line.slopeType() == ST_POSITIVE)
-        {
-            // Line slope / vs \ cell diagonal.
-            from = Vector2d(point.x, point.y + cellDimensions.y);
-            to   = Vector2d(point.x + cellDimensions.x, point.y);
-        }
-        else
-        {
-            // Line slope \ vs / cell diagonal.
-            from = Vector2d(point.x + cellDimensions.x, point.y + cellDimensions.y);
-            to   = Vector2d(point.x, point.y);
-        }
-
-        // Would Line intersect this?
-        if((line.pointOnSide(from) < 0) != (line.pointOnSide(to) < 0))
-        {
-            d->lineBlockmap->link(cell, &line);
-        }
-    }
-}
-
 struct bmapiterparams_t
 {
     int localValidCount;
@@ -1165,24 +1188,6 @@ static int iterateCellBlockLines(Blockmap &lineBlockmap, Blockmap::CellBlock con
     parms.parms           = context;
 
     return lineBlockmap.iterate(cellBlock, blockmapCellLinesIterator, (void *) &parms);
-}
-
-void Map::linkBspLeaf(BspLeaf &bspLeaf)
-{
-    // Degenerate BspLeafs don't get in.
-    if(bspLeaf.isDegenerate()) return;
-
-    // BspLeafs without sectors don't get in.
-    if(!bspLeaf.hasSector()) return;
-
-    Blockmap::CellBlock cellBlock = d->bspLeafBlockmap->toCellBlock(bspLeaf.face().aaBox());
-
-    Blockmap::Cell cell;
-    for(cell.y = cellBlock.min.y; cell.y <= cellBlock.max.y; ++cell.y)
-    for(cell.x = cellBlock.min.x; cell.x <= cellBlock.max.x; ++cell.x)
-    {
-        d->bspLeafBlockmap->link(cell, &bspLeaf);
-    }
 }
 
 struct bmapbspleafiterateparams_t
@@ -2401,7 +2406,7 @@ bool Map::endEditing()
     d->initLineBlockmap();
     foreach(Line *line, lines())
     {
-        linkLine(*line);
+        d->linkLine(*line);
     }
 
     // The mobj and polyobj blockmaps are maintained dynamically.
@@ -2431,7 +2436,7 @@ bool Map::endEditing()
     d->initBspLeafBlockmap();
     foreach(BspLeaf *bspLeaf, bspLeafs())
     {
-        linkBspLeaf(*bspLeaf);
+        d->linkBspLeaf(*bspLeaf);
     }
 
 #ifdef __CLIENT__
