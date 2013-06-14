@@ -66,6 +66,8 @@ protected:
 
     void update();
 
+    String description() const;
+
 private:
     Operator _operator;
     Rule const *_leftOperand;

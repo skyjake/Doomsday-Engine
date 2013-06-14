@@ -100,6 +100,8 @@ public:
      */
     Rectanglei recti() const;
 
+    String description() const;
+
 private:
     DENG2_PRIVATE(d)
 };

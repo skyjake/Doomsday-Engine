@@ -39,6 +39,11 @@ void ConstantRule::set(float newValue)
     invalidate();
 }
 
+String ConstantRule::description() const
+{
+    return String("Constant(%1)").arg(cachedValue());
+}
+
 void ConstantRule::update()
 {
     setValue(_pendingValue);

@@ -24,7 +24,7 @@
 
 namespace de {
 
-DENG2_PIMPL_NOREF(RuleRectangle),
+DENG2_PIMPL(RuleRectangle),
 DENG2_OBSERVES(Clock, TimeChange),
 public DelegateRule::ISource
 {
@@ -54,7 +54,7 @@ public DelegateRule::ISource
     // The output rules.
     DelegateRule *outputRules[MAX_OUTPUT_RULES];
 
-    Instance()
+    Instance(Public *i) : Base(i)
     {
         zap(inputRules);
 
@@ -187,6 +187,13 @@ public DelegateRule::ISource
             leftDefined = true;
         }
 
+#ifdef _DEBUG
+        if(!leftDefined || !rightDefined)
+        {
+            qDebug() << self.description().toLatin1();
+        }
+#endif
+
         DENG2_ASSERT(leftDefined);
         DENG2_ASSERT(rightDefined);
 
@@ -246,6 +253,12 @@ public DelegateRule::ISource
             topDefined = true;
         }
 
+#ifdef _DEBUG
+        if(!topDefined || !bottomDefined)
+        {
+            qDebug() << self.description().toLatin1();
+        }
+#endif
         DENG2_ASSERT(topDefined);
         DENG2_ASSERT(bottomDefined);
 
@@ -319,6 +332,20 @@ public DelegateRule::ISource
         }
     }
 
+    String delegateDescription(int id) const
+    {
+        static char const *names[MAX_OUTPUT_RULES] = {
+            "Left output",
+            "Right output",
+            "Width output",
+            "Top output",
+            "Bottom output",
+            "Height output"
+        };
+        return String(names[id]) + " of RuleRectangle " +
+               QString("0x%1").arg(dintptr(thisPublic), 0, 16);
+    }
+
     void timeChanged(Clock const &clock)
     {
         invalidateOutputs();
@@ -330,7 +357,7 @@ public DelegateRule::ISource
     }
 };
 
-RuleRectangle::RuleRectangle() : d(new Instance)
+RuleRectangle::RuleRectangle() : d(new Instance(this))
 {}
 
 Rule const &RuleRectangle::left() const
@@ -432,6 +459,33 @@ Rectanglei RuleRectangle::recti() const
     Rectanglef const r = rect();
     return Rectanglei(Vector2i(de::floor(r.topLeft.x),     de::floor(r.topLeft.y)),
                       Vector2i(de::floor(r.bottomRight.x), de::floor(r.bottomRight.y)));
+}
+
+String RuleRectangle::description() const
+{
+    String desc = String("RuleRectangle 0x%1:").arg(dintptr(this), 0, 16);
+
+    for(int i = 0; i < int(Rule::MAX_SEMANTICS); ++i)
+    {
+        desc += String("\n - ") +
+                (i == Rule::Left? "Left" :
+                 i == Rule::Top? "Top" :
+                 i == Rule::Right? "Right" :
+                 i == Rule::Bottom? "Bottom" :
+                 i == Rule::Width? "Width" :
+                 i == Rule::Height? "Height" :
+                 i == Rule::AnchorX? "AnchorX" : "AnchorY") + ": ";
+
+        if(d->inputRules[i])
+        {
+            desc += d->inputRules[i]->description();
+        }
+        else
+        {
+            desc += "(null)";
+        }
+    }
+    return desc;
 }
 
 } // namespace de

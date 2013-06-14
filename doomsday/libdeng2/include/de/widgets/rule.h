@@ -23,6 +23,7 @@
 #include "../libdeng2.h"
 #include "../Counted"
 #include "../Observers"
+#include "../String"
 
 namespace de {
 
@@ -112,6 +113,8 @@ public:
     void independentOf(Rule const &dependency);
 
     void independentOf(Rule const *dependencyOrNull);
+
+    virtual String description() const = 0;
 
 public:
     /**

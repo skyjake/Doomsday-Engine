@@ -101,4 +101,32 @@ void OperatorRule::update()
     setValue(v);
 }
 
+String OperatorRule::description() const
+{
+    static char const *texts[] = {
+        "Equals",
+        "Negate",
+        "Half",
+        "Double",
+        "Sum",
+        "Subtract",
+        "Multiply",
+        "Divide",
+        "Maximum",
+        "Minimum",
+        "Floor"
+    };
+
+    String desc = String("Operator %1 { ").arg(texts[_operator]);
+    if(_leftOperand)
+    {
+        desc += _leftOperand->description();
+    }
+    if(_rightOperand)
+    {
+        desc += ", " + _rightOperand->description();
+    }
+    return desc + " }";
+}
+
 } // namespace de

@@ -61,4 +61,13 @@ void DelegateRule::invalidate()
     }
 }
 
+String DelegateRule::description() const
+{
+    if(_source)
+    {
+        return QString("Delegate(%1)").arg(_source->delegateDescription(_delegateId));
+    }
+    return "Delegate(NULL)";
+}
+
 } // namespace de

@@ -63,6 +63,16 @@ void ScalarRule::shift(float delta)
     invalidate();
 }
 
+String ScalarRule::description() const
+{
+    String desc = "Scalar(" + _animation.asText();
+    if(_targetRule)
+    {
+        desc += "; target: " + _targetRule->description();
+    }
+    return desc + ")";
+}
+
 void ScalarRule::update()
 {
     // When using a rule for the target, keep it updated.

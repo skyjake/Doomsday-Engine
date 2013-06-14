@@ -65,6 +65,8 @@ public:
      */
     void set(float newValue);
 
+    String description() const;
+
 protected:
     void update();
 

@@ -62,6 +62,8 @@ public:
      */
     void shift(float delta);
 
+    String description() const;
+
 protected:
     ~ScalarRule();
     void update();

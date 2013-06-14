@@ -49,6 +49,8 @@ public:
         virtual void delegateUpdate(int id) = 0;
 
         virtual void delegateInvalidation(int id) = 0;
+
+        virtual String delegateDescription(int id) const = 0;
     };
 
 public:
@@ -70,6 +72,8 @@ public:
     void setSource(ISource *source);
 
     void invalidate();
+
+    String description() const;
 
 protected:
     ~DelegateRule(); // Counted
