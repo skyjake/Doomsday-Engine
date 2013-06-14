@@ -47,6 +47,7 @@
 #include "world/p_maputil.h"
 #include "world/p_object.h"
 #include "world/r_world.h"
+#include "world/thinkers.h"
 #include "world/world.h"
 
 #include "render/r_main.h" // validCount
@@ -96,6 +97,9 @@ DENG2_PIMPL(Map)
 
     /// Boundary points which encompass the entire map.
     AABoxd bounds;
+
+    /// Map thinkers.
+    Thinkers thinkers;
 
     /// Element LUTs:
     Vertexes vertexes;
@@ -904,6 +908,11 @@ coord_t Map::gravity() const
 void Map::setGravity(coord_t newGravity)
 {
     _effectiveGravity = newGravity;
+}
+
+Thinkers &Map::thinkers() const
+{
+    return d->thinkers;
 }
 
 Map::Vertexes const &Map::vertexes() const

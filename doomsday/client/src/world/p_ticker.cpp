@@ -24,23 +24,24 @@
 #include "de_misc.h"
 
 #include "world/map.h"
+#include "world/thinkers.h"
+
 #include "render/sky.h"
 
 using namespace de;
 
-int P_MobjTicker(thinker_t* th, void* context)
+int P_MobjTicker(thinker_t *th, void *context)
 {
     DENG_UNUSED(context);
 
 #ifdef __CLIENT__
 
-    uint                i;
-    mobj_t*             mo = (mobj_t*) th;
+    mobj_t *mo = (mobj_t*) th;
 
-    for(i = 0; i < DDMAXPLAYERS; ++i)
+    for(uint i = 0; i < DDMAXPLAYERS; ++i)
     {
-        int                 f;
-        byte*               haloFactor = &mo->haloFactors[i];
+        int f;
+        byte *haloFactor = &mo->haloFactors[i];
 
         // Set the high bit of halofactor if the light is clipped. This will
         // make P_Ticker diminish the factor to zero. Take the first step here
@@ -122,14 +123,14 @@ void P_Ticker(timespan_t elapsed)
     if(!App_World().hasMap()) return;
 
     Map &map = App_World().map();
-    if(!map.thinkerListInited()) return; // Not initialized yet.
+    if(!map.thinkers().isInited()) return; // Not initialized yet.
 
     if(DD_IsSharpTick())
     {
         Sky_Ticker();
 
         // Check all mobjs (always public).
-        map.iterateThinkers(reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
-                            0x1, P_MobjTicker, NULL);
+        map.thinkers().iterate(reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
+                               0x1, P_MobjTicker, NULL);
     }
 }

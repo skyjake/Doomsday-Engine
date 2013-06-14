@@ -36,8 +36,6 @@ class Sector;
 class Segment;
 class Vertex;
 
-struct thinkerlist_s;
-
 #ifdef __CLIENT__
 
 struct clmoinfo_s;
@@ -78,6 +76,7 @@ class Generators;
 class LightGrid;
 #endif
 class Mesh;
+class Thinkers;
 
 /**
  * World map.
@@ -116,24 +115,6 @@ public:
 #endif
 
 public: /// @todo make private:
-    struct thinkers_s {
-        int idtable[2048]; // 65536 bits telling which IDs are in use.
-        ushort iddealer;
-
-        size_t numLists;
-        struct thinkerlist_s **lists;
-        boolean inited;
-
-        thinkers_s()
-            : iddealer(0),
-              numLists(0),
-              lists(0),
-              inited(false)
-        {
-            zap(idtable);
-        }
-    } thinkers;
-
 #ifdef __CLIENT__
     cmhash_t clMobjHash[CLIENT_MOBJ_HASH_SIZE];
 
@@ -182,18 +163,6 @@ public:
     AABoxd const &bounds() const;
 
     /**
-     * @copydoc bounds()
-     *
-     * Return values:
-     * @param min  Coordinates for the minimal point are written here.
-     * @param max  Coordinates for the maximal point are written here.
-     */
-    inline void bounds(coord_t *min, coord_t *max) const {
-        if(min) V2d_Copy(min, bounds().min);
-        if(max) V2d_Copy(max, bounds().max);
-    }
-
-    /**
      * Returns the currently effective gravity multiplier for the map.
      */
     coord_t gravity() const;
@@ -211,27 +180,60 @@ public:
     int ambientLightLevel() const;
 
     /**
+     * Provides access to the thinker lists for the map.
+     */
+    Thinkers /*const*/ &thinkers() const;
+
+    /**
      * Provides a list of all the non-editable vertexes in the map.
      */
     Vertexes const &vertexes() const;
-
-    inline int vertexCount() const { return vertexes().count(); }
 
     /**
      * Provides a list of all the non-editable lines in the map.
      */
     Lines const &lines() const;
 
-    inline int lineCount() const { return lines().count(); }
-
-    inline int sideCount() const { return lines().count() * 2; }
-
     /**
      * Provides a list of all the non-editable sectors in the map.
      */
     Sectors const &sectors() const;
 
-    inline int sectorCount() const { return sectors().count(); }
+    /**
+     * Provides a list of all the non-editable polyobjs in the map.
+     */
+    Polyobjs const &polyobjs() const;
+
+    /**
+     * Provides access to the list of line segments for efficient traversal.
+     */
+    Segments const &segments() const;
+
+    /**
+     * Provides access to the list of BSP nodes for efficient traversal.
+     */
+    BspNodes const &bspNodes() const;
+
+    /**
+     * Provides access to the list of BSP leafs for efficient traversal.
+     */
+    BspLeafs const &bspLeafs() const;
+
+    inline int vertexCount() const  { return vertexes().count(); }
+
+    inline int lineCount() const    { return lines().count(); }
+
+    inline int sideCount() const    { return lines().count() * 2; }
+
+    inline int sectorCount() const  { return sectors().count(); }
+
+    inline int polyobjCount() const { return polyobjs().count(); }
+
+    inline int segmentCount() const { return segments().count(); }
+
+    inline int bspNodeCount() const { return bspNodes().count(); }
+
+    inline int bspLeafCount() const { return bspLeafs().count(); }
 
     /**
      * Given an @a emitter origin, attempt to identify the map element
@@ -249,16 +251,6 @@ public:
         Polyobj **poly, Plane **plane, Surface **surface) const;
 
     /**
-     * Provides a list of all the non-editable polyobjs in the map.
-     */
-    Polyobjs const &polyobjs() const;
-
-    /**
-     * Returns the total number of Polyobjs in the map.
-     */
-    inline int polyobjCount() const { return polyobjs().count(); }
-
-    /**
      * Locate a polyobj in the map by unique in-map tag.
      *
      * @param tag  Tag associated with the polyobj to be located.
@@ -270,36 +262,6 @@ public:
      * Returns the root element for the map's BSP tree.
      */
     MapElement *bspRoot() const;
-
-    /**
-     * Provides access to the list of line segments for efficient traversal.
-     */
-    Segments const &segments() const;
-
-    /**
-     * Returns the total number of line segments in the map.
-     */
-    inline int segmentCount() const { return segments().count(); }
-
-    /**
-     * Provides access to the list of BSP nodes for efficient traversal.
-     */
-    BspNodes const &bspNodes() const;
-
-    /**
-     * Returns the total number of BspNodes in the map.
-     */
-    inline int bspNodeCount() const { return bspNodes().count(); }
-
-    /**
-     * Provides access to the list of BSP leafs for efficient traversal.
-     */
-    BspLeafs const &bspLeafs() const;
-
-    /**
-     * Returns the total number of BspLeafs in the map.
-     */
-    inline int bspLeafCount() const { return bspLeafs().count(); }
 
     /**
      * Determine the BSP leaf on the back side of the BS partition that lies
@@ -534,7 +496,7 @@ public:
 
     struct clplane_s *clPlaneBySectorIndex(int index, clplanetype_t type);
 
-    boolean isValidClPlane(int i);
+    bool isValidClPlane(int i);
 
     /**
      * @note Assumes there is no existing ClPolyobj for Polyobj @a index.
@@ -547,7 +509,7 @@ public:
 
     struct clpolyobj_s *clPolyobjByPolyobjIndex(int index);
 
-    boolean isValidClPolyobj(int i);
+    bool isValidClPolyobj(int i);
 
     /**
      * Returns the set of decorated surfaces for the map.
@@ -613,66 +575,6 @@ public:
      */
     Line::Side *sideByIndex(int index) const;
 
-    /**
-     * Returns @c true iff the thinker lists been initialized.
-     */
-    boolean thinkerListInited() const;
-
-    /**
-     * Init the thinker lists.
-     *
-     * @param flags  @c 0x1 = Init public thinkers.
-     *               @c 0x2 = Init private (engine-internal) thinkers.
-     */
-    void initThinkerLists(byte flags);
-
-    /**
-     * Iterate the list of thinkers making a callback for each.
-     *
-     * @param thinkFunc  If not @c NULL, only make a callback for thinkers
-     *                   whose function matches this.
-     * @param flags      Thinker filter flags.
-     * @param callback   The callback to make. Iteration will continue
-     *                   until a callback returns a non-zero value.
-     * @param context  Passed to the callback function.
-     */
-    int iterateThinkers(thinkfunc_t thinkFunc, byte flags,
-        int (*callback) (thinker_t *th, void *), void *context);
-
-    /**
-     * @param thinker     Thinker to be added.
-     * @param makePublic  @c true = @a thinker will be visible publically
-     *                    via the Doomsday public API thinker interface(s).
-     */
-    void thinkerAdd(thinker_t &thinker, boolean makePublic);
-
-    /**
-     * Deallocation is lazy -- it will not actually be freed until its
-     * thinking turn comes up.
-     */
-    void thinkerRemove(thinker_t &thinker);
-
-    /**
-     * Locates a mobj by it's unique identifier in the map.
-     *
-     * @param id    Unique id of the mobj to lookup.
-     */
-    struct mobj_s *mobjById(int id);
-
-    /// @todo Make private.
-    void clearMobjIds();
-
-    /**
-     * @param id    Thinker id to test.
-     */
-    boolean isUsedMobjId(thid_t id);
-
-    /**
-     * @param id    New thinker id.
-     * @param inUse In-use state of @a id. @c true = the id is in use.
-     */
-    void setMobjId(thid_t id, boolean inUse);
-
 public: /// @todo Make private:
 
     /**
@@ -721,7 +623,13 @@ public: /// @todo Make private:
      * a full update.
      */
     void initLightGrid();
-#endif
+
+    /**
+     * @todo Replace with a de::Observers-based mechanism.
+     */
+    void updateMissingMaterialsForLinesOfSector(Sector const &sec);
+
+#endif // __CLIENT__
 
     /**
      * To be called in response to a Material property changing which may
@@ -730,15 +638,6 @@ public: /// @todo Make private:
      * @todo Replace with a de::Observers-based mechanism.
      */
     void updateSurfacesOnMaterialChange(Material &material);
-
-#ifdef __CLIENT__
-
-    /**
-     * @todo Replace with a de::Observers-based mechanism.
-     */
-    void updateMissingMaterialsForLinesOfSector(Sector const &sec);
-
-#endif // __CLIENT__
 
 public:
     /*
@@ -765,26 +664,26 @@ public:
      */
     Vertexes const &editableVertexes() const;
 
-    inline int editableVertexCount() const { return editableVertexes().count(); }
-
     /**
      * Provides a list of all the editable lines in the map.
      */
     Lines const &editableLines() const;
-
-    inline int editableLineCount() const { return editableLines().count(); }
 
     /**
      * Provides a list of all the editable sectors in the map.
      */
     Sectors const &editableSectors() const;
 
-    inline int editableSectorCount() const { return editableSectors().count(); }
-
     /**
      * Provides a list of all the editable polyobjs in the map.
      */
     Polyobjs const &editablePolyobjs() const;
+
+    inline int editableVertexCount() const  { return editableVertexes().count(); }
+
+    inline int editableLineCount() const    { return editableLines().count(); }
+
+    inline int editableSectorCount() const  { return editableSectors().count(); }
 
     inline int editablePolyobjCount() const { return editablePolyobjs().count(); }
 

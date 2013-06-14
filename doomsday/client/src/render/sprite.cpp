@@ -31,6 +31,7 @@
 #include "MaterialSnapshot"
 #include "MaterialVariantSpec"
 #include "world/map.h"
+#include "world/thinkers.h"
 #include "Texture"
 
 using namespace de;
@@ -148,7 +149,7 @@ void Rend_DrawThinkerIds()
     eye[VY] = vOrigin[VZ];
     eye[VZ] = vOrigin[VY];
 
-    App_World().map().iterateThinkers(NULL, 0x1 | 0x2, drawThinkerId, eye);
+    App_World().map().thinkers().iterate(NULL, 0x1 | 0x2, drawThinkerId, eye);
 
     // Restore previous state.
     glEnable(GL_DEPTH_TEST);

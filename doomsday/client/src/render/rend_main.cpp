@@ -45,6 +45,7 @@
 #include "world/p_objlink.h"
 #include "world/p_players.h"
 #include "world/r_world.h"
+#include "world/thinkers.h"
 
 #include "WallEdge"
 #include "SkyFixEdge"
@@ -2810,8 +2811,8 @@ static void Rend_DrawBoundingBoxes()
 
     if(devMobjBBox)
     {
-        App_World().map().iterateThinkers(reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
-                                          0x1, drawMobjBBox, NULL);
+        App_World().map().thinkers().iterate(reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
+                                             0x1, drawMobjBBox, NULL);
     }
 
     if(devPolyobjBBox)

@@ -262,6 +262,7 @@ DENG_HEADERS += \
     $$SRC/include/world/sector.h \
     $$SRC/include/world/segment.h \
     $$SRC/include/world/surface.h \
+    $$SRC/include/world/thinkers.h \
     $$SRC/include/world/vertex.h \
     $$SRC/include/world/world.h \
 
@@ -424,7 +425,6 @@ SOURCES += \
     $$SRC/src/world/p_maputil.cpp \
     $$SRC/src/world/p_mobj.cpp \
     $$SRC/src/world/p_players.cpp \
-    $$SRC/src/world/p_think.cpp \
     $$SRC/src/world/p_ticker.cpp \
     $$SRC/src/world/plane.cpp \
     $$SRC/src/world/polyobj.cpp \
@@ -434,6 +434,7 @@ SOURCES += \
     $$SRC/src/world/sector.cpp \
     $$SRC/src/world/segment.cpp \
     $$SRC/src/world/surface.cpp \
+    $$SRC/src/world/thinkers.cpp \
     $$SRC/src/world/vertex.cpp \
     $$SRC/src/world/world.cpp
 

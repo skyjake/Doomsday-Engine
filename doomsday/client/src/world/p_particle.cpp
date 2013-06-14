@@ -32,6 +32,7 @@
 #include <de/memoryzone.h>
 
 #include "world/generators.h"
+#include "world/thinkers.h"
 #include "render/r_main.h" // validCount
 #include "resource/models.h"
 #include "api_map.h"
@@ -93,7 +94,7 @@ static int destroyGenerator(ptcgen_t *gen, void *parameters)
     /// @todo Do not assume generator is from the CURRENT map.
     Map &map = App_World().map();
     map.generators().unlink(gen);
-    map.thinkerRemove(gen->thinker);
+    map.thinkers().remove(gen->thinker);
 
     PtcGen_Delete(gen);
     return false; // Can be used as an iterator, so continue.
@@ -149,7 +150,7 @@ static ptcgen_t *P_NewGenerator()
 
         // Link the thinker to the list of (private) thinkers.
         gen->thinker.function = (thinkfunc_t) P_PtcGenThinker;
-        map.thinkerAdd(gen->thinker, false);
+        map.thinkers().add(gen->thinker, false /*not public*/);
 
         // Link the generator into this collection.
         gens.link(gen, id - 1);
@@ -1193,7 +1194,7 @@ void P_PtcGenThinker(ptcgen_t *gen)
     ded_ptcgen_t const *def = gen->def;
 
     // Source has been destroyed?
-    if(!(gen->flags & PGF_UNTRIGGERED) && !App_World().map().isUsedMobjId(gen->srcid))
+    if(!(gen->flags & PGF_UNTRIGGERED) && !App_World().map().thinkers().isUsedMobjId(gen->srcid))
     {
         // Blasted... Spawning new particles becomes impossible.
         gen->source = 0;
@@ -1230,9 +1231,9 @@ void P_PtcGenThinker(ptcgen_t *gen)
                     App_World().map().clMobjIterator(PIT_ClientMobjParticles, gen);
                 }
 #endif
-                App_World().map().iterateThinkers(reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
-                                                  0x1 /*mobjs are public*/,
-                                                  manyNewParticles, gen);
+                App_World().map().thinkers().iterate(reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
+                                                     0x1 /*mobjs are public*/,
+                                                     manyNewParticles, gen);
 
                 // The generator has no real source.
                 gen->source = 0;

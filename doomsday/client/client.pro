@@ -390,6 +390,7 @@ DENG_HEADERS += \
     include/world/sector.h \
     include/world/segment.h \
     include/world/surface.h \
+    include/world/thinkers.h \
     include/world/vertex.h \
     include/world/world.h \
     src/updater/downloaddialog.h \
@@ -673,7 +674,6 @@ SOURCES += \
     src/world/p_objlink.cpp \
     src/world/p_particle.cpp \
     src/world/p_players.cpp \
-    src/world/p_think.cpp \
     src/world/p_ticker.cpp \
     src/world/plane.cpp \
     src/world/polyobj.cpp \
@@ -683,6 +683,7 @@ SOURCES += \
     src/world/sector.cpp \
     src/world/segment.cpp \
     src/world/surface.cpp \
+    src/world/thinkers.cpp \
     src/world/vertex.cpp \
     src/world/world.cpp
 

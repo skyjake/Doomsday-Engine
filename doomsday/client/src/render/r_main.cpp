@@ -37,6 +37,7 @@
 #include "world/p_players.h"
 #include "world/p_objlink.h"
 #include "world/r_world.h"
+#include "world/thinkers.h"
 #include "render/vignette.h"
 #include "api_render.h"
 
@@ -1426,9 +1427,9 @@ void Rend_CacheForMap()
         {
             spritedef_t *sprDef = &sprites[i];
 
-            if(App_World().map().iterateThinkers(reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
-                                                 0x1/* All mobjs are public*/,
-                                                 findSpriteOwner, sprDef))
+            if(App_World().map().thinkers()
+                    .iterate(reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
+                             0x1/* All mobjs are public*/, findSpriteOwner, sprDef))
             {
                 // This sprite is used by some state of at least one mobj.
 
@@ -1452,8 +1453,8 @@ void Rend_CacheForMap()
     if(useModels && precacheSkins)
     {
         // All mobjs are public.
-        App_World().map().iterateThinkers(reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
-                                          0x1, Models_CacheForMobj, NULL);
+        App_World().map().thinkers().iterate(reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
+                                             0x1, Models_CacheForMobj, NULL);
     }
 }
 

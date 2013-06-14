@@ -63,6 +63,8 @@
 #  include "server/sv_pool.h"
 #endif
 
+#include "world/thinkers.h"
+
 #include "world/world.h"
 
 using namespace de;
@@ -410,7 +412,7 @@ DENG2_PIMPL(World)
         map->_effectiveGravity = map->_globalGravity;
 
         // Init the thinker lists (public and private).
-        map->initThinkerLists(0x1 | 0x2);
+        map->thinkers().initLists(0x1 | 0x2);
 
 #ifdef __CLIENT__
         Rend_RadioInitForMap();

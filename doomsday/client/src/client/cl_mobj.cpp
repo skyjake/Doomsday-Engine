@@ -31,6 +31,8 @@
 #include "de_play.h"
 #include "de_audio.h"
 
+#include "world/thinkers.h"
+
 using namespace de;
 
 /// Convert 8.8/10.6 fixed point to 16.16.
@@ -496,11 +498,11 @@ mobj_t *ClMobj_Create(thid_t id)
     mo->ddFlags = DDMF_REMOTE;
 
     ClMobj_LinkInHash(mo, id);
-    App_World().map().setMobjId(id, true); // Mark this ID as used.
+    App_World().map().thinkers().setMobjId(id); // Mark this ID as used.
 
     // Client mobjs are full-fludged game mobjs as well.
     mo->thinker.function = reinterpret_cast<thinkfunc_t>(gx.MobjThinker);
-    App_World().map().thinkerAdd(reinterpret_cast<thinker_t &>(*mo), true);
+    App_World().map().thinkers().add(reinterpret_cast<thinker_t &>(*mo));
 
     return mo;
 }
@@ -520,7 +522,7 @@ void ClMobj_Destroy(mobj_t *mo)
     S_StopSound(0, mo);
 
     // The ID is free once again.
-    App_World().map().setMobjId(mo->thinker.id, false);
+    App_World().map().thinkers().setMobjId(mo->thinker.id, false);
     ClMobj_UnlinkInHash(mo);
     ClMobj_Unlink(mo); // from block/sector
 
