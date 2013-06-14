@@ -95,8 +95,6 @@ public:
      */
     void setMobjId(thid_t id, bool inUse = true);
 
-    void clearMobjIds();
-
 private:
     DENG2_PRIVATE(d)
 };

@@ -25,11 +25,16 @@
 #include <de/memoryzone.h>
 
 #include "de_base.h"
-#include "de_defs.h"
-#include "de_console.h"
-#include "de_network.h"
+#include "world/p_object.h"
 
-#include "world/map.h"
+#ifdef __CLIENT__
+#  include "client/cl_mobj.h"
+#endif
+
+#ifdef __SERVER__
+#  include "def_main.h"
+#  include "server/sv_pool.h"
+#endif
 
 #include "world/thinkers.h"
 
@@ -56,7 +61,7 @@ struct ThinkerList
         sentinel.prev = sentinel.next = &sentinel;
     }
 
-    void reInit()
+    void reinit()
     {
         sentinel.prev = sentinel.next = &sentinel;
     }
@@ -113,7 +118,7 @@ DENG2_PIMPL(Thinkers)
           iddealer(0),
           inited(false)
     {
-        self.clearMobjIds();
+        clearMobjIds();
     }
 
     ~Instance()
@@ -121,7 +126,13 @@ DENG2_PIMPL(Thinkers)
         qDeleteAll(lists);
     }
 
-    thid_t newMobjID()
+    void clearMobjIds()
+    {
+        zap(idtable);
+        idtable[0] |= 1; // ID zero is always "used" (it's not a valid ID).
+    }
+
+    thid_t newMobjId()
     {
         // Increment the ID dealer until a free ID is found.
         /// @todo fixme: What if all IDs are in use? 65535 thinkers!?
@@ -153,12 +164,6 @@ DENG2_PIMPL(Thinkers)
 
 Thinkers::Thinkers() : d(new Instance(this))
 {}
-
-void Thinkers::clearMobjIds()
-{
-    zap(d->idtable);
-    d->idtable[0] |= 1; // ID zero is always "used" (it's not a valid ID).
-}
 
 bool Thinkers::isUsedMobjId(thid_t id)
 {
@@ -215,7 +220,7 @@ void Thinkers::add(thinker_t &th, bool makePublic)
         if(!Cl_IsClientMobj(reinterpret_cast<mobj_t *>(&th)))
 #endif
         {
-            th.id = d->newMobjID();
+            th.id = d->newMobjId();
         }
     }
     else
@@ -269,11 +274,11 @@ void Thinkers::initLists(byte flags)
             if(list->isPublic && !(flags & 0x1)) continue;
             if(!list->isPublic && !(flags & 0x2)) continue;
 
-            list->reInit();
+            list->reinit();
         }
     }
 
-    clearMobjIds();
+    d->clearMobjIds();
     d->inited = true;
 }
 
