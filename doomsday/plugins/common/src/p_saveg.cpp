@@ -5471,7 +5471,7 @@ void SV_LoadGameClient(uint gameId)
     noMonstersParm = hdr->noMonsters;
     respawnMonsters = hdr->respawnMonsters;
     // Do we need to change the map?
-    if(gameMap != hdr->map - 1 || gameEpisode != hdr->episode - 1)
+    if(gameMap != (unsigned) (hdr->map - 1) || gameEpisode != (unsigned) (hdr->episode - 1))
     {
         gameEpisode = hdr->episode - 1;
         gameMap = hdr->map - 1;
