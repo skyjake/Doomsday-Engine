@@ -540,6 +540,32 @@ DENG2_PIMPL(Map)
     }
 
     /**
+     * Unlink the specified @a mobj from any internal data structures for
+     * bookkeeping purposes. Should be called BEFORE mobj translation to
+     * extract the mobj.
+     *
+     * @param mobj  Mobj to be unlinked.
+     */
+    bool unlinkMobjInBlockmap(mobj_t &mo)
+    {
+        Blockmap::Cell cell = mobjBlockmap->toCell(mo.origin);
+        return mobjBlockmap->unlink(cell, &mo);
+    }
+
+    /**
+     * Link the specified @a mobj in any internal data structures for
+     * bookkeeping purposes. Should be called AFTER mobj translation to
+     * (re-)insert the mobj.
+     *
+     * @param mobj  Mobj to be linked (must be currently unlinked).
+     */
+    void linkMobjInBlockmap(mobj_t &mo)
+    {
+        Blockmap::Cell cell = mobjBlockmap->toCell(mo.origin);
+        mobjBlockmap->link(cell, &mo);
+    }
+
+    /**
      * Unlinks the mobj from all the lines it's been linked to. Can be called
      * without checking that the list does indeed contain lines.
      */
@@ -667,6 +693,24 @@ DENG2_PIMPL(Map)
 
 #undef CELL_SIZE
 #undef BLOCKMAP_MARGIN
+    }
+
+    void unlinkPolyobjInBlockmap(Polyobj &polyobj)
+    {
+        Blockmap::CellBlock cellBlock = polyobjBlockmap->toCellBlock(polyobj.aaBox);
+        polyobjBlockmap->unlink(cellBlock, &polyobj);
+    }
+
+    void linkPolyobjInBlockmap(Polyobj &polyobj)
+    {
+        Blockmap::CellBlock cellBlock = polyobjBlockmap->toCellBlock(polyobj.aaBox);
+
+        Blockmap::Cell cell;
+        for(cell.y = cellBlock.min.y; cell.y <= cellBlock.max.y; ++cell.y)
+        for(cell.x = cellBlock.min.x; cell.x <= cellBlock.max.x; ++cell.x)
+        {
+            polyobjBlockmap->link(cell, &polyobj);
+        }
     }
 
     /**
@@ -1226,18 +1270,6 @@ Blockmap const *Map::bspLeafBlockmap() const
     return d->bspLeafBlockmap.data();
 }
 
-void Map::linkMobjInBlockmap(mobj_t &mo)
-{
-    Blockmap::Cell cell = d->mobjBlockmap->toCell(mo.origin);
-    d->mobjBlockmap->link(cell, &mo);
-}
-
-bool Map::unlinkMobjInBlockmap(mobj_t &mo)
-{
-    Blockmap::Cell cell = d->mobjBlockmap->toCell(mo.origin);
-    return d->mobjBlockmap->unlink(cell, &mo);
-}
-
 struct bmapmoiterparams_t
 {
     int localValidCount;
@@ -1570,7 +1602,7 @@ int Map::unlink(mobj_t &mo)
 
     if(Mobj_UnlinkFromSector(&mo))
         links |= DDLINK_SECTOR;
-    if(unlinkMobjInBlockmap(mo))
+    if(d->unlinkMobjInBlockmap(mo))
         links |= DDLINK_BLOCKMAP;
     if(!d->unlinkMobjFromLines(mo))
         links |= DDLINK_NOLINE;
@@ -1605,8 +1637,8 @@ void Map::link(mobj_t &mo, byte flags)
     if(flags & DDLINK_BLOCKMAP)
     {
         // Unlink from the old block, if any.
-        unlinkMobjInBlockmap(mo);
-        linkMobjInBlockmap(mo);
+        d->unlinkMobjInBlockmap(mo);
+        d->linkMobjInBlockmap(mo);
     }
 
     // Link into lines.
@@ -1643,22 +1675,14 @@ void Map::link(mobj_t &mo, byte flags)
     }
 }
 
-void Map::unlinkPolyobjInBlockmap(Polyobj &polyobj)
+void Map::unlink(Polyobj &polyobj)
 {
-    Blockmap::CellBlock cellBlock = d->polyobjBlockmap->toCellBlock(polyobj.aaBox);
-    d->polyobjBlockmap->unlink(cellBlock, &polyobj);
+    d->unlinkPolyobjInBlockmap(polyobj);
 }
 
-void Map::linkPolyobjInBlockmap(Polyobj &polyobj)
+void Map::link(Polyobj &polyobj)
 {
-    Blockmap::CellBlock cellBlock = d->polyobjBlockmap->toCellBlock(polyobj.aaBox);
-
-    Blockmap::Cell cell;
-    for(cell.y = cellBlock.min.y; cell.y <= cellBlock.max.y; ++cell.y)
-    for(cell.x = cellBlock.min.x; cell.x <= cellBlock.max.x; ++cell.x)
-    {
-        d->polyobjBlockmap->link(cell, &polyobj);
-    }
+    d->linkPolyobjInBlockmap(polyobj);
 }
 
 struct bmappoiterparams_t

@@ -232,6 +232,26 @@ public:
     inline int bspLeafCount() const { return bspLeafs().count(); }
 
     /**
+     * Provides access to the mobj blockmap.
+     */
+    Blockmap const *mobjBlockmap() const;
+
+    /**
+     * Provides access to the polyobj blockmap.
+     */
+    Blockmap const *polyobjBlockmap() const;
+
+    /**
+     * Provides access to the line blockmap.
+     */
+    Blockmap const *lineBlockmap() const;
+
+    /**
+     * Provides access to the BSP leaf blockmap.
+     */
+    Blockmap const *bspLeafBlockmap() const;
+
+    /**
      * Given an @a emitter origin, attempt to identify the map element
      * to which it belongs.
      *
@@ -280,26 +300,6 @@ public:
      * point: it cannot exceed the fixed-point 16.16 range (about 65k units).
      */
     BspLeaf *bspLeafAtPoint_FixedPrecision(Vector2d const &point) const;
-
-    /**
-     * Provides access to the mobj blockmap.
-     */
-    Blockmap const *mobjBlockmap() const;
-
-    /**
-     * Provides access to the polyobj blockmap.
-     */
-    Blockmap const *polyobjBlockmap() const;
-
-    /**
-     * Provides access to the line blockmap.
-     */
-    Blockmap const *lineBlockmap() const;
-
-    /**
-     * Provides access to the BSP leaf blockmap.
-     */
-    Blockmap const *bspLeafBlockmap() const;
 
     int mobjsBoxIterator(AABoxd const &box,
         int (*callback) (struct mobj_s *, void *), void *parameters = 0) const;
@@ -431,31 +431,13 @@ public:
     int unlink(struct mobj_s &mobj);
 
     /**
-     * Link the specified @a mobj in any internal data structures for
-     * bookkeeping purposes. Should be called AFTER mobj translation to
-     * (re-)insert the mobj.
-     *
-     * @param mobj  Mobj to be linked (must be currently unlinked).
-     */
-    void linkMobjInBlockmap(struct mobj_s &mobj);
-
-    /**
-     * Unlink the specified @a mobj from any internal data structures for
-     * bookkeeping purposes. Should be called BEFORE mobj translation to
-     * extract the mobj.
-     *
-     * @param mobj  Mobj to be unlinked.
-     */
-    bool unlinkMobjInBlockmap(struct mobj_s &mobj);
-
-    /**
      * Link the specified @a polyobj in any internal data structures for
      * bookkeeping purposes. Should be called AFTER Polyobj rotation and/or
      * translation to (re-)insert the polyobj.
      *
      * @param polyobj  Polyobj to be linked.
      */
-    void linkPolyobjInBlockmap(Polyobj &polyobj);
+    void link(Polyobj &polyobj);
 
     /**
      * Unlink the specified @a polyobj from any internal data structures for
@@ -464,7 +446,7 @@ public:
      *
      * @param polyobj  Polyobj to be unlinked.
      */
-    void unlinkPolyobjInBlockmap(Polyobj &polyobj);
+    void unlink(Polyobj &polyobj);
 
     EntityDatabase &entityDatabase() const;
 
