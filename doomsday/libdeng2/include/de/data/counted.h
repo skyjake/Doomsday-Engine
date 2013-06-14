@@ -141,6 +141,26 @@ inline CountedType *holdRef(CountedType *counted) {
 }
 
 /**
+ * Holds a reference to a Counted object (by reference).
+ * @param counted  Counted object.
+ * @return Same as @a counted (with reference count incremented).
+ */
+template <typename CountedType>
+inline CountedType *holdRef(CountedType &counted) {
+    return counted.template ref<CountedType>();
+}
+
+/**
+ * Holds a reference to a Counted object (by const reference).
+ * @param counted  Counted object.
+ * @return Same as @a counted (with reference count incremented).
+ */
+template <typename CountedType>
+inline CountedType const *holdRef(CountedType const &counted) {
+    return counted.template ref<CountedType>();
+}
+
+/**
  * Releases a reference to a Counted object. Afterwards, the pointer is cleared
  * to NULL.
  *
