@@ -320,7 +320,8 @@ int Blockmap::cellElementCount(Cell const &cell) const
     return 0;
 }
 
-int Blockmap::iterate(Cell const &cell, int (*callback) (void *elem, void *parameters), void *parameters)
+int Blockmap::iterate(Cell const &cell, int (*callback) (void *elem, void *parameters),
+                      void *parameters) const
 {
     if(!callback) return false; // Huh?
     if(CellData *cellData = (CellData *)d->cellData(cell))
@@ -343,7 +344,8 @@ static int cellDataIterateWorker(void *cdPtr, void *parameters)
     return cellData->iterate(p->callback, p->parameters);
 }
 
-int Blockmap::iterate(CellBlock const &cellBlock, int (*callback) (void *elem, void *parameters), void *parameters)
+int Blockmap::iterate(CellBlock const &cellBlock, int (*callback) (void *elem, void *parameters),
+                      void *parameters) const
 {
     if(!callback) return false; // Huh?
     CellDataIterateWorkerParams parm;

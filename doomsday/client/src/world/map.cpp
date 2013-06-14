@@ -1206,22 +1206,22 @@ void Map::initNodePiles()
     LOG_INFO(String("Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 }
 
-Blockmap *Map::mobjBlockmap() const
+Blockmap const *Map::mobjBlockmap() const
 {
     return d->mobjBlockmap.data();
 }
 
-Blockmap *Map::polyobjBlockmap() const
+Blockmap const *Map::polyobjBlockmap() const
 {
     return d->polyobjBlockmap.data();
 }
 
-Blockmap *Map::lineBlockmap() const
+Blockmap const *Map::lineBlockmap() const
 {
     return d->lineBlockmap.data();
 }
 
-Blockmap *Map::bspLeafBlockmap() const
+Blockmap const *Map::bspLeafBlockmap() const
 {
     return d->bspLeafBlockmap.data();
 }

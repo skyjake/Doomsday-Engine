@@ -284,22 +284,22 @@ public:
     /**
      * Provides access to the mobj blockmap.
      */
-    Blockmap /*const*/ *mobjBlockmap() const;
+    Blockmap const *mobjBlockmap() const;
 
     /**
      * Provides access to the polyobj blockmap.
      */
-    Blockmap /*const*/ *polyobjBlockmap() const;
+    Blockmap const *polyobjBlockmap() const;
 
     /**
      * Provides access to the line blockmap.
      */
-    Blockmap /*const*/ *lineBlockmap() const;
+    Blockmap const *lineBlockmap() const;
 
     /**
      * Provides access to the BSP leaf blockmap.
      */
-    Blockmap /*const*/ *bspLeafBlockmap() const;
+    Blockmap const *bspLeafBlockmap() const;
 
     int mobjsBoxIterator(AABoxd const &box,
         int (*callback) (struct mobj_s *, void *), void *parameters = 0) const;
