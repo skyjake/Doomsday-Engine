@@ -66,7 +66,6 @@
 
 #include "api_map.h"
 #include "world/p_players.h"
-#include "world/p_maputil.h"
 #include "world/p_objlink.h"
 #include "world/world.h"
 

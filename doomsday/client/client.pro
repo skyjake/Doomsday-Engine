@@ -376,7 +376,6 @@ DENG_HEADERS += \
     include/world/p_intercept.h \
     include/world/p_mapdata.h \
     include/world/p_maptypes.h \
-    include/world/p_maputil.h \
     include/world/p_object.h \
     include/world/p_objlink.h \
     include/world/p_particle.h \
@@ -669,7 +668,6 @@ SOURCES += \
     src/world/mapelement.cpp \
     src/world/p_data.cpp \
     src/world/p_intercept.cpp \
-    src/world/p_maputil.cpp \
     src/world/p_mobj.cpp \
     src/world/p_objlink.cpp \
     src/world/p_particle.cpp \

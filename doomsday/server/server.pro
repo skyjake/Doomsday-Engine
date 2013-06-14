@@ -250,7 +250,6 @@ DENG_HEADERS += \
     $$SRC/include/world/p_intercept.h \
     $$SRC/include/world/p_mapdata.h \
     $$SRC/include/world/p_maptypes.h \
-    $$SRC/include/world/p_maputil.h \
     $$SRC/include/world/p_object.h \
     $$SRC/include/world/p_players.h \
     $$SRC/include/world/p_ticker.h \
@@ -422,7 +421,6 @@ SOURCES += \
     $$SRC/src/world/mapelement.cpp \
     $$SRC/src/world/p_data.cpp \
     $$SRC/src/world/p_intercept.cpp \
-    $$SRC/src/world/p_maputil.cpp \
     $$SRC/src/world/p_mobj.cpp \
     $$SRC/src/world/p_players.cpp \
     $$SRC/src/world/p_ticker.cpp \

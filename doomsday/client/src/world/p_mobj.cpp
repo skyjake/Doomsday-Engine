@@ -269,6 +269,28 @@ coord_t Mobj_ApproxPointDistance(mobj_t* mo, coord_t const* point)
                                              point[VY] - mo->origin[VY]));
 }
 
+/**
+ * Two links to update:
+ * 1) The link to us from the previous node (sprev, always set) will
+ *    be modified to point to the node following us.
+ * 2) If there is a node following us, set its sprev pointer to point
+ *    to the pointer that points back to it (our sprev, just modified).
+ */
+boolean Mobj_UnlinkFromSector(mobj_t *mo)
+{
+    if(!mo || !IS_SECTOR_LINKED(mo))
+        return false;
+
+    if((*mo->sPrev = mo->sNext))
+        mo->sNext->sPrev = mo->sPrev;
+
+    // Not linked any more.
+    mo->sNext = 0;
+    mo->sPrev = 0;
+
+    return true;
+}
+
 D_CMD(InspectMobj)
 {
     DENG2_UNUSED(src);

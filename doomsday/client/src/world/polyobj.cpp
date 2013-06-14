@@ -135,7 +135,7 @@ void Polyobj::unlink()
         _bspLeaf = 0;
 
         /// @todo Do not assume polyobj is from the CURRENT map.
-        App_World().map().unlinkPolyobj(*this);
+        App_World().map().unlinkPolyobjInBlockmap(*this);
     }
 }
 
@@ -143,7 +143,7 @@ void Polyobj::link()
 {
     if(!_bspLeaf)
     {
-        App_World().map().linkPolyobj(*this);
+        App_World().map().linkPolyobjInBlockmap(*this);
 
         // Find the center point of the polyobj.
         Vector2d avg;

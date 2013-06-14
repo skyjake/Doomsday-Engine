@@ -1,5 +1,8 @@
 /** @file map.cpp World map.
  *
+ * @todo This file has grown far too large. It should be split up through the
+ * introduction of new abstractions / collections.
+ *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
@@ -20,9 +23,11 @@
 
 #include <cmath>
 
+#include <de/aabox.h>
 #include <de/binangle.h>
 #include <de/memory.h>
 #include <de/memoryzone.h>
+#include <de/vector1.h>
 
 #include "de_platform.h"
 #include "de_base.h"
@@ -44,7 +49,6 @@
 #include "world/generators.h"
 #include "world/lineowner.h"
 #include "world/p_intercept.h"
-#include "world/p_maputil.h"
 #include "world/p_object.h"
 #include "world/r_world.h"
 #include "world/thinkers.h"
@@ -56,6 +60,22 @@
 
 /// Size of Blockmap blocks in map units. Must be an integer power of two.
 #define MAPBLOCKUNITS               (128)
+
+// Linkstore is list of pointers gathered when iterating stuff.
+// This is pretty much the only way to avoid *all* potential problems
+// caused by callback routines behaving badly (moving or destroying
+// mobjs). The idea is to get a snapshot of all the objects being
+// iterated before any callbacks are called. The hardcoded limit is
+// a drag, but I'd like to see you iterating 2048 mobjs/lines in one block.
+
+#define MAXLINKED           2048
+#define DO_LINKS(it, end, _Type)   { \
+    for(it = linkStore; it < end; it++) \
+    { \
+        result = callback(reinterpret_cast<_Type>(*it), parameters); \
+        if(result) break; \
+    } \
+}
 
 static int bspSplitFactor = 7; // cvar
 
@@ -511,6 +531,112 @@ DENG2_PIMPL(Map)
 
 #undef CELL_SIZE
 #undef BLOCKMAP_MARGIN
+    }
+
+    /**
+     * Unlinks the mobj from all the lines it's been linked to. Can be called
+     * without checking that the list does indeed contain lines.
+     */
+    bool unlinkMobjFromLines(mobj_t &mo)
+    {
+        // Try unlinking from lines.
+        if(!mo.lineRoot)
+            return false; // A zero index means it's not linked.
+
+        // Unlink from each line.
+        linknode_t *tn = self.mobjNodes.nodes;
+        for(nodeindex_t nix = tn[mo.lineRoot].next; nix != mo.lineRoot;
+            nix = tn[nix].next)
+        {
+            // Data is the linenode index that corresponds this mobj.
+            NP_Unlink((&self.lineNodes), tn[nix].data);
+            // We don't need these nodes any more, mark them as unused.
+            // Dismissing is a macro.
+            NP_Dismiss((&self.lineNodes), tn[nix].data);
+            NP_Dismiss((&self.mobjNodes), nix);
+        }
+
+        // The mobj no longer has a line ring.
+        NP_Dismiss((&self.mobjNodes), mo.lineRoot);
+        mo.lineRoot = 0;
+
+        return true;
+    }
+
+    /**
+     * @note Caller must ensure a mobj is linked only once to any given line.
+     *
+     * @param mo    Mobj to be linked.
+     * @param line  Line to link the mobj to.
+     */
+    void linkMobjToLine(mobj_t *mo, Line *line)
+    {
+        if(!mo || !line) return;
+
+        // Add a node to the mobj's ring.
+        nodeindex_t nodeIndex = NP_New(&self.mobjNodes, line);
+        NP_Link(&self.mobjNodes, nodeIndex, mo->lineRoot);
+
+        // Add a node to the line's ring. Also store the linenode's index
+        // into the mobjring's node, so unlinking is easy.
+        nodeIndex = self.mobjNodes.nodes[nodeIndex].data = NP_New(&self.lineNodes, mo);
+        NP_Link(&self.lineNodes, nodeIndex, self.lineLinks[line->indexInMap()]);
+    }
+
+    struct LineLinkerParams
+    {
+        Map *map;
+        mobj_t *mo;
+        AABoxd box;
+    };
+
+    /**
+     * The given line might cross the mobj. If necessary, link the mobj into
+     * the line's mobj link ring.
+     */
+    static int lineLinkerWorker(Line *ld, void *parameters)
+    {
+        LineLinkerParams *p = reinterpret_cast<LineLinkerParams *>(parameters);
+        DENG_ASSERT(p);
+
+        // Do the bounding boxes intercept?
+        if(p->box.minX >= ld->aaBox().maxX ||
+           p->box.minY >= ld->aaBox().maxY ||
+           p->box.maxX <= ld->aaBox().minX ||
+           p->box.maxY <= ld->aaBox().minY) return false;
+
+        // Line does not cross the mobj's bounding box?
+        if(ld->boxOnSide(p->box)) return false;
+
+        // Lines with only one sector will not be linked to because a mobj can't
+        // legally cross one.
+        if(!ld->hasFrontSector() || !ld->hasBackSector()) return false;
+
+        p->map->d->linkMobjToLine(p->mo, ld);
+        return false;
+    }
+
+    /**
+     * @note Caller must ensure that the mobj is currently unlinked.
+     */
+    void linkMobjToLines(mobj_t &mo)
+    {
+        // Get a new root node.
+        mo.lineRoot = NP_New(&self.mobjNodes, NP_ROOT_NODE);
+
+        // Set up a line iterator for doing the linking.
+        LineLinkerParams parm;
+        parm.map = &self;
+        parm.mo  = &mo;
+
+        vec2d_t point;
+        V2d_Set(point, mo.origin[VX] - mo.radius, mo.origin[VY] - mo.radius);
+        V2d_InitBox(parm.box.arvec2, point);
+        V2d_Set(point, mo.origin[VX] + mo.radius, mo.origin[VY] + mo.radius);
+        V2d_AddToBox(parm.box.arvec2, point);
+
+        validCount++;
+        self.allLinesBoxIterator(parm.box, lineLinkerWorker, &parm);
     }
 
     /**
@@ -1299,7 +1425,226 @@ int Map::bspLeafsBoxIterator(AABoxd const &box, Sector *sector,
                                     localValidCount, callback, parameters);
 }
 
-void Map::linkPolyobj(Polyobj &polyobj)
+int Map::mobjLinesIterator(mobj_t *mo, int (*callback) (Line *, void *),
+                           void *parameters) const
+{
+    void *linkStore[MAXLINKED];
+    void **end = linkStore, **it;
+    int result = false;
+
+    linknode_t *tn = mobjNodes.nodes;
+    if(mo->lineRoot)
+    {
+        nodeindex_t nix;
+        for(nix = tn[mo->lineRoot].next; nix != mo->lineRoot;
+            nix = tn[nix].next)
+            *end++ = tn[nix].ptr;
+
+        DO_LINKS(it, end, Line*);
+    }
+    return result;
+}
+
+int Map::mobjSectorsIterator(mobj_t *mo, int (*callback) (Sector *, void *),
+                             void *parameters) const
+{
+    int result = false;
+    void *linkStore[MAXLINKED];
+    void **end = linkStore, **it;
+
+    nodeindex_t nix;
+    linknode_t *tn = mobjNodes.nodes;
+
+    // Always process the mobj's own sector first.
+    Sector &ownSec = mo->bspLeaf->sector();
+    *end++ = &ownSec;
+    ownSec.setValidCount(validCount);
+
+    // Any good lines around here?
+    if(mo->lineRoot)
+    {
+        for(nix = tn[mo->lineRoot].next; nix != mo->lineRoot;
+            nix = tn[nix].next)
+        {
+            Line *ld = (Line *) tn[nix].ptr;
+
+            // All these lines have sectors on both sides.
+            // First, try the front.
+            Sector &frontSec = ld->frontSector();
+            if(frontSec.validCount() != validCount)
+            {
+                *end++ = &frontSec;
+                frontSec.setValidCount(validCount);
+            }
+
+            // And then the back.
+            if(ld->hasBackSector())
+            {
+                Sector &backSec = ld->backSector();
+                if(backSec.validCount() != validCount)
+                {
+                    *end++ = &backSec;
+                    backSec.setValidCount(validCount);
+                }
+            }
+        }
+    }
+
+    DO_LINKS(it, end, Sector *);
+    return result;
+}
+
+int Map::lineMobjsIterator(Line *line, int (*callback) (mobj_t *, void *),
+                           void *parameters) const
+{
+    void *linkStore[MAXLINKED];
+    void **end = linkStore;
+
+    nodeindex_t root = lineLinks[line->indexInMap()];
+    linknode_t *ln = lineNodes.nodes;
+
+    for(nodeindex_t nix = ln[root].next; nix != root; nix = ln[nix].next)
+    {
+        DENG_ASSERT(end < &linkStore[MAXLINKED]);
+        *end++ = ln[nix].ptr;
+    }
+
+    int result = false;
+    void **it;
+    DO_LINKS(it, end, mobj_t *);
+
+    return result;
+}
+
+int Map::sectorTouchingMobjsIterator(Sector *sector,
+    int (*callback) (mobj_t *, void *), void *parameters) const
+{
+    /// @todo Fixme: Remove fixed limit (use QVarLengthArray if necessary).
+    void *linkStore[MAXLINKED];
+    void **end = linkStore;
+
+    // Collate mobjs that obviously are in the sector.
+    for(mobj_t *mo = sector->firstMobj(); mo; mo = mo->sNext)
+    {
+        if(mo->validCount == validCount) continue;
+        mo->validCount = validCount;
+
+        DENG_ASSERT(end < &linkStore[MAXLINKED]);
+        *end++ = mo;
+    }
+
+    // Collate mobjs linked to the sector's lines.
+    linknode_t const *ln = lineNodes.nodes;
+    foreach(Line::Side *side, sector->sides())
+    {
+        nodeindex_t root = lineLinks[side->line().indexInMap()];
+
+        for(nodeindex_t nix = ln[root].next; nix != root; nix = ln[nix].next)
+        {
+            mobj_t *mo = (mobj_t *) ln[nix].ptr;
+
+            if(mo->validCount == validCount) continue;
+            mo->validCount = validCount;
+
+            DENG_ASSERT(end < &linkStore[MAXLINKED]);
+            *end++ = mo;
+        }
+    }
+
+    // Process all collected mobjs.
+    int result = false;
+    void **it;
+    DO_LINKS(it, end, mobj_t *);
+
+    return result;
+}
+
+int Map::unlink(mobj_t &mo)
+{
+    int links = 0;
+
+    if(Mobj_UnlinkFromSector(&mo))
+        links |= DDLINK_SECTOR;
+    if(unlinkMobjInBlockmap(mo))
+        links |= DDLINK_BLOCKMAP;
+    if(!d->unlinkMobjFromLines(mo))
+        links |= DDLINK_NOLINE;
+
+    return links;
+}
+
+void Map::link(mobj_t &mo, byte flags)
+{
+    // Link into the sector.
+    mo.bspLeaf = bspLeafAtPoint_FixedPrecision(mo.origin);
+
+    if(flags & DDLINK_SECTOR)
+    {
+        // Unlink from the current sector, if any.
+        Sector &sec = mo.bspLeaf->sector();
+
+        if(mo.sPrev)
+            Mobj_UnlinkFromSector(&mo);
+
+        // Link the new mobj to the head of the list.
+        // Prev pointers point to the pointer that points back to us.
+        // (Which practically disallows traversing the list backwards.)
+
+        if((mo.sNext = sec.firstMobj()))
+            mo.sNext->sPrev = &mo.sNext;
+
+        *(mo.sPrev = &sec._mobjList) = &mo;
+    }
+
+    // Link into blockmap?
+    if(flags & DDLINK_BLOCKMAP)
+    {
+        // Unlink from the old block, if any.
+        unlinkMobjInBlockmap(mo);
+        linkMobjInBlockmap(mo);
+    }
+
+    // Link into lines.
+    if(!(flags & DDLINK_NOLINE))
+    {
+        // Unlink from any existing lines.
+        d->unlinkMobjFromLines(mo);
+
+        // Link to all contacted lines.
+        d->linkMobjToLines(mo);
+    }
+
+    // If this is a player - perform additional tests to see if they have
+    // entered or exited the void.
+    if(mo.dPlayer && mo.dPlayer->mo)
+    {
+        ddplayer_t *player = mo.dPlayer;
+        Sector &sector = player->mo->bspLeaf->sector();
+
+        player->inVoid = true;
+        if(sector.pointInside(player->mo->origin))
+        {
+#ifdef __CLIENT__
+            if(player->mo->origin[VZ] <  sector.ceiling().visHeight() + 4 &&
+               player->mo->origin[VZ] >= sector.floor().visHeight())
+#else
+            if(player->mo->origin[VZ] <  sector.ceiling().height() + 4 &&
+               player->mo->origin[VZ] >= sector.floor().height())
+#endif
+            {
+                player->inVoid = false;
+            }
+        }
+    }
+}
+
+void Map::unlinkPolyobjInBlockmap(Polyobj &polyobj)
+{
+    Blockmap::CellBlock cellBlock = d->polyobjBlockmap->toCellBlock(polyobj.aaBox);
+    d->polyobjBlockmap->unlink(cellBlock, &polyobj);
+}
+
+void Map::linkPolyobjInBlockmap(Polyobj &polyobj)
 {
     Blockmap::CellBlock cellBlock = d->polyobjBlockmap->toCellBlock(polyobj.aaBox);
 
@@ -1309,12 +1654,6 @@ void Map::linkPolyobj(Polyobj &polyobj)
     {
         d->polyobjBlockmap->link(cell, &polyobj);
     }
-}
-
-void Map::unlinkPolyobj(Polyobj &polyobj)
-{
-    Blockmap::CellBlock cellBlock = d->polyobjBlockmap->toCellBlock(polyobj.aaBox);
-    d->polyobjBlockmap->unlink(cellBlock, &polyobj);
 }
 
 struct bmappoiterparams_t

@@ -459,7 +459,7 @@ public:
      *
      * @param polyobj  Polyobj to be linked.
      */
-    void linkPolyobj(Polyobj &polyobj);
+    void linkPolyobjInBlockmap(Polyobj &polyobj);
 
     /**
      * Unlink the specified @a polyobj from any internal data structures for
@@ -468,7 +468,7 @@ public:
      *
      * @param polyobj  Polyobj to be unlinked.
      */
-    void unlinkPolyobj(Polyobj &polyobj);
+    void unlinkPolyobjInBlockmap(Polyobj &polyobj);
 
     EntityDatabase &entityDatabase() const;
 

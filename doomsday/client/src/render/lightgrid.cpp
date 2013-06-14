@@ -32,7 +32,6 @@
 #include "BspLeaf"
 #include "Sector"
 #include "world/map.h"
-//#include "world/p_maputil.h" // P_IsPointInBspLeaf
 #include "world/p_players.h" // viewPlayer
 
 #include "render/rend_main.h"
