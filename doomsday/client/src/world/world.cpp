@@ -73,7 +73,7 @@ boolean ddMapSetup;
 timespan_t ddMapTime;
 
 // Should we be caching successfully loaded maps?
-static byte mapCache = true; // cvar
+//static byte mapCache = true; // cvar
 
 static char const *mapCacheDir = "mapcache/";
 

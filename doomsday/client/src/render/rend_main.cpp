@@ -1366,8 +1366,7 @@ static uint projectSurfaceShadows(Surface &surface, float glowStrength,
 static void writeWallSection(Segment &segment, int section,
     bool *retWroteOpaque = 0, coord_t *retBottomZ = 0, coord_t *retTopZ = 0)
 {
-    BspLeaf *bspLeaf = currentBspLeaf;
-    DENG_ASSERT(!isNullLeaf(bspLeaf));
+    DENG_ASSERT(!isNullLeaf(currentBspLeaf));
     DENG_ASSERT(segment.isFlagged(Segment::FacingFront));
     DENG_ASSERT(segment.hasLineSide() && segment.lineSide().hasSections());
 

@@ -455,9 +455,9 @@ static void findContacts(objlink_t *link)
 {
     DENG_ASSERT(link != 0);
 
-    coord_t radius;
-    pvec3d_t origin;
-    BspLeaf *bspLeaf;
+    coord_t radius = 0;
+    pvec3d_t origin = 0;
+    BspLeaf *bspLeaf = 0;
 
     switch(link->type)
     {
@@ -582,7 +582,7 @@ static void linkObjlinkInBlockmap(objlinkblockmap_t &obm, objlink_t &link, Gridm
 void R_LinkObjs()
 {
     uint block[2];
-    pvec3d_t origin;
+    pvec3d_t origin = 0;
 
 BEGIN_PROF( PROF_OBJLINK_LINK );
 
@@ -598,6 +598,10 @@ BEGIN_PROF( PROF_OBJLINK_LINK );
 #endif
         case OT_MOBJ:
             origin = ((mobj_t *)link->obj)->origin; break;
+
+        case NUM_OBJ_TYPES:
+            DENG_ASSERT(false);
+            break;
         }
 
         objlinkblockmap_t &obm = chooseObjlinkBlockmap(link->type);
