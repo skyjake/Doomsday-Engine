@@ -1411,7 +1411,7 @@ gameid_t DD_GameIdForKey(char const *identityKey)
  */
 bool DD_ChangeGame(de::Game &game, bool allowReload = false)
 {
-    LOG_AS("DD_ChangeGame");
+    //LOG_AS("DD_ChangeGame");
 
     bool isReload = false;
 

@@ -123,6 +123,9 @@ DENG2_PIMPL(Thinkers)
 
     ~Instance()
     {
+        /// @todo free all thinkers (note, they are allocated from the Zone
+        /// so there is no memory leak here as this memory will be purged
+        /// automatically when the map is "unloaded").
         qDeleteAll(lists);
     }
 

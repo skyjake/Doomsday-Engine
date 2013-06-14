@@ -197,6 +197,8 @@ DENG2_PIMPL(Map)
         }
         qDeleteAll(lines);
         qDeleteAll(vertexes);
+
+        /// @todo fixme: mobjNodes/lineNodes/lineLinks - free them!
     }
 
     /**
@@ -466,10 +468,7 @@ DENG2_PIMPL(Map)
 #undef BLOCKMAP_MARGIN
     }
 
-    /**
-     * Link the specified @a line in the blockmap.
-     */
-    void linkLine(Line &line)
+    void linkLineInBlockmap(Line &line)
     {
         // Lines of Polyobjs don't get into the blockmap (presently...).
         if(line.definesPolyobj()) return;
@@ -723,10 +722,7 @@ DENG2_PIMPL(Map)
 #undef BLOCKMAP_MARGIN
     }
 
-    /**
-     * Link the specified @a bspLeaf in the blockmap.
-     */
-    void linkBspLeaf(BspLeaf &bspLeaf)
+    void linkBspLeafInBlockmap(BspLeaf &bspLeaf)
     {
         // Degenerate BspLeafs don't get in.
         if(bspLeaf.isDegenerate()) return;
@@ -935,13 +931,9 @@ Map::Map(Uri const &uri) : d(new Instance(this, uri))
 /// @todo fixme: Free all memory we have ownership of.
 Map::~Map()
 {
-    // thinker lists - free them!
-
     // Client only data:
     // mobjHash/activePlanes/activePolyobjs - free them!
     // End client only data.
-
-    // mobjNodes/lineNodes/lineLinks - free them!
 }
 
 void Map::consoleRegister() // static
@@ -2779,7 +2771,7 @@ bool Map::endEditing()
     d->initLineBlockmap();
     foreach(Line *line, lines())
     {
-        d->linkLine(*line);
+        d->linkLineInBlockmap(*line);
     }
 
     // The mobj and polyobj blockmaps are maintained dynamically.
@@ -2809,7 +2801,7 @@ bool Map::endEditing()
     d->initBspLeafBlockmap();
     foreach(BspLeaf *bspLeaf, bspLeafs())
     {
-        d->linkBspLeaf(*bspLeaf);
+        d->linkBspLeafInBlockmap(*bspLeaf);
     }
 
 #ifdef __CLIENT__
