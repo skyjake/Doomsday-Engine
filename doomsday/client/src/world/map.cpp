@@ -32,6 +32,7 @@
 #include "de_platform.h"
 #include "de_base.h"
 #include "de_console.h" // Con_GetInteger
+#include "m_nodepile.h"
 
 #include "BspLeaf"
 #include "BspNode"
@@ -144,6 +145,10 @@ DENG2_PIMPL(Map)
     QScopedPointer<Blockmap> lineBlockmap;
     QScopedPointer<Blockmap> bspLeafBlockmap;
 
+    nodepile_t mobjNodes;
+    nodepile_t lineNodes;
+    nodeindex_t *lineLinks; // Indices to roots.
+
 #ifdef __CLIENT__
     PlaneSet trackedPlanes;
     SurfaceSet scrollingSurfaces;
@@ -167,7 +172,8 @@ DENG2_PIMPL(Map)
         : Base            (i),
           editingEnabled  (true),
           uri             (uri),
-          bspRoot         (0)
+          bspRoot         (0),
+          lineLinks       (0)
 #ifdef __CLIENT__
           , skyFloorHeight(DDMAXFLOAT),
           skyCeilingHeight(DDMINFLOAT)
@@ -544,20 +550,20 @@ DENG2_PIMPL(Map)
             return false; // A zero index means it's not linked.
 
         // Unlink from each line.
-        linknode_t *tn = self.mobjNodes.nodes;
+        linknode_t *tn = mobjNodes.nodes;
         for(nodeindex_t nix = tn[mo.lineRoot].next; nix != mo.lineRoot;
             nix = tn[nix].next)
         {
             // Data is the linenode index that corresponds this mobj.
-            NP_Unlink((&self.lineNodes), tn[nix].data);
+            NP_Unlink((&lineNodes), tn[nix].data);
             // We don't need these nodes any more, mark them as unused.
             // Dismissing is a macro.
-            NP_Dismiss((&self.lineNodes), tn[nix].data);
-            NP_Dismiss((&self.mobjNodes), nix);
+            NP_Dismiss((&lineNodes), tn[nix].data);
+            NP_Dismiss((&mobjNodes), nix);
         }
 
         // The mobj no longer has a line ring.
-        NP_Dismiss((&self.mobjNodes), mo.lineRoot);
+        NP_Dismiss((&mobjNodes), mo.lineRoot);
         mo.lineRoot = 0;
 
         return true;
@@ -574,13 +580,13 @@ DENG2_PIMPL(Map)
         if(!mo || !line) return;
 
         // Add a node to the mobj's ring.
-        nodeindex_t nodeIndex = NP_New(&self.mobjNodes, line);
-        NP_Link(&self.mobjNodes, nodeIndex, mo->lineRoot);
+        nodeindex_t nodeIndex = NP_New(&mobjNodes, line);
+        NP_Link(&mobjNodes, nodeIndex, mo->lineRoot);
 
         // Add a node to the line's ring. Also store the linenode's index
         // into the mobjring's node, so unlinking is easy.
-        nodeIndex = self.mobjNodes.nodes[nodeIndex].data = NP_New(&self.lineNodes, mo);
-        NP_Link(&self.lineNodes, nodeIndex, self.lineLinks[line->indexInMap()]);
+        nodeIndex = mobjNodes.nodes[nodeIndex].data = NP_New(&lineNodes, mo);
+        NP_Link(&lineNodes, nodeIndex, lineLinks[line->indexInMap()]);
     }
 
     struct LineLinkerParams
@@ -622,7 +628,7 @@ DENG2_PIMPL(Map)
     void linkMobjToLines(mobj_t &mo)
     {
         // Get a new root node.
-        mo.lineRoot = NP_New(&self.mobjNodes, NP_ROOT_NODE);
+        mo.lineRoot = NP_New(&mobjNodes, NP_ROOT_NODE);
 
         // Set up a line iterator for doing the linking.
         LineLinkerParams parm;
@@ -891,7 +897,6 @@ Map::Map(Uri const &uri) : d(new Instance(this, uri))
     zap(clActivePlanes);
     zap(clActivePolyobjs);
 #endif
-    lineLinks = 0;
     _globalGravity = 0;
     _effectiveGravity = 0;
     _ambientLightLevel = 0;
@@ -1185,16 +1190,16 @@ void Map::initNodePiles()
     LOG_TRACE("Initializing...");
 
     // Initialize node piles and line rings.
-    NP_Init(&mobjNodes, 256);  // Allocate a small pile.
-    NP_Init(&lineNodes, lineCount() + 1000);
+    NP_Init(&d->mobjNodes, 256);  // Allocate a small pile.
+    NP_Init(&d->lineNodes, lineCount() + 1000);
 
     // Allocate the rings.
-    DENG_ASSERT(lineLinks == 0);
-    lineLinks = (nodeindex_t *) Z_Malloc(sizeof(*lineLinks) * lineCount(), PU_MAPSTATIC, 0);
+    DENG_ASSERT(d->lineLinks == 0);
+    d->lineLinks = (nodeindex_t *) Z_Malloc(sizeof(*d->lineLinks) * lineCount(), PU_MAPSTATIC, 0);
 
     for(int i = 0; i < lineCount(); ++i)
     {
-        lineLinks[i] = NP_New(&lineNodes, NP_ROOT_NODE);
+        d->lineLinks[i] = NP_New(&d->lineNodes, NP_ROOT_NODE);
     }
 
     // How much time did we spend?
@@ -1432,7 +1437,7 @@ int Map::mobjLinesIterator(mobj_t *mo, int (*callback) (Line *, void *),
     void **end = linkStore, **it;
     int result = false;
 
-    linknode_t *tn = mobjNodes.nodes;
+    linknode_t *tn = d->mobjNodes.nodes;
     if(mo->lineRoot)
     {
         nodeindex_t nix;
@@ -1453,7 +1458,7 @@ int Map::mobjSectorsIterator(mobj_t *mo, int (*callback) (Sector *, void *),
     void **end = linkStore, **it;
 
     nodeindex_t nix;
-    linknode_t *tn = mobjNodes.nodes;
+    linknode_t *tn = d->mobjNodes.nodes;
 
     // Always process the mobj's own sector first.
     Sector &ownSec = mo->bspLeaf->sector();
@@ -1500,8 +1505,8 @@ int Map::lineMobjsIterator(Line *line, int (*callback) (mobj_t *, void *),
     void *linkStore[MAXLINKED];
     void **end = linkStore;
 
-    nodeindex_t root = lineLinks[line->indexInMap()];
-    linknode_t *ln = lineNodes.nodes;
+    nodeindex_t root = d->lineLinks[line->indexInMap()];
+    linknode_t *ln = d->lineNodes.nodes;
 
     for(nodeindex_t nix = ln[root].next; nix != root; nix = ln[nix].next)
     {
@@ -1534,10 +1539,10 @@ int Map::sectorTouchingMobjsIterator(Sector *sector,
     }
 
     // Collate mobjs linked to the sector's lines.
-    linknode_t const *ln = lineNodes.nodes;
+    linknode_t const *ln = d->lineNodes.nodes;
     foreach(Line::Side *side, sector->sides())
     {
-        nodeindex_t root = lineLinks[side->line().indexInMap()];
+        nodeindex_t root = d->lineLinks[side->line().indexInMap()];
 
         for(nodeindex_t nix = ln[root].next; nix != root; nix = ln[nix].next)
         {

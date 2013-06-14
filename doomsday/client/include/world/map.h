@@ -24,7 +24,6 @@
 #include <QList>
 #include <QSet>
 
-#include "m_nodepile.h"
 #include "p_particle.h"
 #include "Polyobj"
 
@@ -121,9 +120,6 @@ public: /// @todo make private:
     struct clplane_s *clActivePlanes[CLIENT_MAX_MOVERS];
     struct clpolyobj_s *clActivePolyobjs[CLIENT_MAX_MOVERS];
 #endif
-
-    nodepile_t mobjNodes, lineNodes; // All kinds of wacky links.
-    nodeindex_t *lineLinks; // Indices to roots.
 
     coord_t _globalGravity; // The defined gravity for this map.
     coord_t _effectiveGravity; // The effective gravity for this map.
