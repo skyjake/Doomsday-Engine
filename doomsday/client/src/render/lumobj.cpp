@@ -767,7 +767,7 @@ static void addLuminous(mobj_t *mo)
     // If the mobj's origin is outside the BSP leaf it is linked within, then
     // this means it is outside the playable map (and no light should be emitted).
     /// @todo Optimize: P_MobjLink() should do this and flag the mobj accordingly.
-    if(!P_IsPointInBspLeaf(mo->origin, *mo->bspLeaf)) return;
+    if(!mo->bspLeaf->pointInside(mo->origin)) return;
 
     ded_light_t *def = (mo->state? stateLights[mo->state - states] : NULL);
 

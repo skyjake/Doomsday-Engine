@@ -479,6 +479,18 @@ public:
     /// @todo Refactor away.
     void setValidCount(int newValidCount);
 
+    /**
+     * Determines whether the specified @a point in the map coordinate space
+     * lies within the sector (according to the edges of the BSP leafs)?
+     *
+     * @param point  Map space coordinate to test.
+     *
+     * @return  @c true iff the point lies inside the sector.
+     *
+     * @see BspLeaf::pointInside()
+     */
+    bool pointInside(de::Vector2d const &point) const;
+
 protected:
     int property(DmuArgs &args) const;
     int setProperty(DmuArgs const &args);

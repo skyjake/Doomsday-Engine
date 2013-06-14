@@ -32,7 +32,7 @@
 #include "BspLeaf"
 #include "Sector"
 #include "world/map.h"
-#include "world/p_maputil.h" // P_IsPointInBspLeaf
+//#include "world/p_maputil.h" // P_IsPointInBspLeaf
 #include "world/p_players.h" // viewPlayer
 
 #include "render/rend_main.h"
@@ -549,7 +549,7 @@ DENG2_OBSERVES(Sector, LightLevelChange)
                 samplePoint = origin + off + samplePoints[0];
 
                 BspLeaf *bspLeaf = map.bspLeafAtPoint(samplePoint);
-                if(P_IsPointInBspLeaf(samplePoint, *bspLeaf))
+                if(bspLeaf->pointInside(samplePoint))
                     ssamples[idx] = bspLeaf->sectorPtr();
                 else
                     ssamples[idx] = 0;
@@ -598,7 +598,7 @@ DENG2_OBSERVES(Sector, LightLevelChange)
                         samplePoint = origin + off + samplePoints[n];
 
                         BspLeaf *bspLeaf = map.bspLeafAtPoint(samplePoint);
-                        if(P_IsPointInBspLeaf(samplePoint, *bspLeaf))
+                        if(bspLeaf->pointInside(samplePoint))
                             ssamples[idx] = bspLeaf->sectorPtr();
                         else
                             ssamples[idx] = 0;

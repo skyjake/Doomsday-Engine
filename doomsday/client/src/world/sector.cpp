@@ -476,6 +476,16 @@ void Sector::updateSoundEmitterOrigin()
     d->soundEmitter.origin[VZ] = (floor().height() + ceiling().height()) / 2;
 }
 
+bool Sector::pointInside(Vector2d const &point) const
+{
+    /// @todo Do not assume "this" sector is from the current map.
+    BspLeaf *bspLeaf = App_World().map().bspLeafAtPoint(point);
+    if(bspLeaf->sectorPtr() != this)
+        return false;
+
+    return bspLeaf->pointInside(point);
+}
+
 int Sector::property(DmuArgs &args) const
 {
     switch(args.prop)

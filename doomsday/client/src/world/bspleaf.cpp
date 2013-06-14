@@ -439,6 +439,29 @@ void BspLeaf::setValidCount(int newValidCount)
     d->validCount = newValidCount;
 }
 
+bool BspLeaf::pointInside(Vector2d const &point) const
+{
+    if(isDegenerate())
+        return false; // Obviously not.
+
+    HEdge const *hedge = face().hedge();
+    do
+    {
+        Vertex const &va = hedge->vertex();
+        Vertex const &vb = hedge->next().vertex();
+
+        if(((va.origin().y - point.y) * (vb.origin().x - va.origin().x) -
+            (va.origin().x - point.x) * (vb.origin().y - va.origin().y)) < 0)
+        {
+            // Outside the BSP leaf's edges.
+            return false;
+        }
+
+    } while((hedge = &hedge->next()) != face().hedge());
+
+    return true;
+}
+
 #ifdef __CLIENT__
 
 bool BspLeaf::hasWorldVolume(bool useVisualHeights) const

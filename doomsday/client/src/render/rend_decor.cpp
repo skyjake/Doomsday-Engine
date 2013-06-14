@@ -406,7 +406,7 @@ static uint generateDecorLights(MaterialSnapshot::Decoration const &decor,
             if(containingSector)
             {
                 // The point must be inside the correct sector.
-                if(!P_IsPointInSector(origin, *containingSector))
+                if(!containingSector->pointInside(origin))
                     continue;
             }
 

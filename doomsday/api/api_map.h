@@ -207,6 +207,14 @@ DENG_API_TYPEDEF(Map)
 
     // Sectors
 
+    /**
+     * Increment validCount before using this. 'func' is called for each mobj
+     * that is (even partly) inside the sector. This is not a 3D test, the
+     * mobjs may actually be above or under the sector.
+     *
+     * (Lovely name; actually this is a combination of SectorMobjs and
+     * a bunch of LineMobjs iterations.)
+     */
     int             (*S_TouchingMobjsIterator)(Sector* sector, int (*callback) (struct mobj_s*, void*), void* parameters);
 
     // Map Objects

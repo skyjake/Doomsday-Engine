@@ -1095,13 +1095,13 @@ Blockmap *Map::bspLeafBlockmap() const
     return d->bspLeafBlockmap.data();
 }
 
-void Map::linkMobj(mobj_t &mo)
+void Map::linkMobjInBlockmap(mobj_t &mo)
 {
     Blockmap::Cell cell = d->mobjBlockmap->toCell(mo.origin);
     d->mobjBlockmap->link(cell, &mo);
 }
 
-bool Map::unlinkMobj(mobj_t &mo)
+bool Map::unlinkMobjInBlockmap(mobj_t &mo)
 {
     Blockmap::Cell cell = d->mobjBlockmap->toCell(mo.origin);
     return d->mobjBlockmap->unlink(cell, &mo);

@@ -230,6 +230,18 @@ public:
     /// @todo Refactor away.
     void setValidCount(int newValidCount);
 
+    /**
+     * Determines whether the specified @a point in the map coordinate space
+     * lies within the BSP leaf (according to the edges)?
+     *
+     * @param point  Map space coordinate to test.
+     *
+     * @return  @c true iff the point lies inside the BSP leaf.
+     *
+     * @see http://www.alienryderflex.com/polygon/
+     */
+    bool pointInside(de::Vector2d const &point) const;
+
 #ifdef __CLIENT__
 
     /**

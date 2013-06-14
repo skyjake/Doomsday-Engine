@@ -19,13 +19,18 @@
 
 #include <cmath>
 
-#include "de_base.h"
-#include "de_console.h"
-#include "de_play.h"
-#include "de_misc.h"
+#include <de/aabox.h>
+#include <de/vector1.h>
+
+#include "BspLeaf"
+#include "Line"
+#include "Sector"
+
+#include "world/p_object.h"
+
+#include "render/r_main.h" /// validCount, @todo remove me
 
 #include "world/map.h"
-#include "render/r_main.h" // validCount
 
 using namespace de;
 
@@ -47,86 +52,6 @@ using namespace de;
     } \
 }
 
-#undef P_TraceLOS
-DENG_EXTERN_C divline_t const *P_TraceLOS()
-{
-    static divline_t emptyLOS;
-    if(App_World().hasMap())
-    {
-        return &App_World().map().traceLine();
-    }
-    return &emptyLOS;
-}
-
-#undef P_TraceOpening
-DENG_EXTERN_C TraceOpening const *P_TraceOpening()
-{
-    static TraceOpening zeroOpening;
-    if(App_World().hasMap())
-    {
-        return &App_World().map().traceOpening();
-    }
-    return &zeroOpening;
-}
-
-#undef P_SetTraceOpening
-DENG_EXTERN_C void P_SetTraceOpening(Line *line)
-{
-    if(!line || !App_World().hasMap()) return;
-    /// @todo Do not assume line is from the CURRENT map.
-    App_World().map().setTraceOpening(*line);
-}
-
-#undef P_BspLeafAtPoint_FixedPrecision
-DENG_EXTERN_C BspLeaf *P_BspLeafAtPoint_FixedPrecision(const_pvec2d_t point)
-{
-    if(!App_World().hasMap()) return 0;
-    return App_World().map().bspLeafAtPoint_FixedPrecision(point);
-}
-
-#undef P_BspLeafAtPoint_FixedPrecisionXY
-DENG_EXTERN_C BspLeaf *P_BspLeafAtPoint_FixedPrecisionXY(coord_t x, coord_t y)
-{
-    if(!App_World().hasMap()) return 0;
-    coord_t point[2] = { x, y };
-    return App_World().map().bspLeafAtPoint_FixedPrecision(point);
-}
-
-bool P_IsPointInBspLeaf(Vector2d const &point, BspLeaf const &bspLeaf)
-{
-    if(bspLeaf.isDegenerate())
-        return false; // Obviously not.
-
-    Face const &face = bspLeaf.face();
-
-    HEdge const *hedge = face.hedge();
-    do
-    {
-        Vertex const &va = hedge->vertex();
-        Vertex const &vb = hedge->next().vertex();
-
-        if(((va.origin().y - point.y) * (vb.origin().x - va.origin().x) -
-            (va.origin().x - point.x) * (vb.origin().y - va.origin().y)) < 0)
-        {
-            // Outside the BSP leaf's edges.
-            return false;
-        }
-
-    } while((hedge = &hedge->next()) != face.hedge());
-
-    return true;
-}
-
-bool P_IsPointInSector(Vector2d const &point, Sector const &sector)
-{
-    /// @todo Do not assume @a sector is from the current map.
-    BspLeaf *bspLeaf = App_World().map().bspLeafAtPoint(point);
-    if(bspLeaf->sectorPtr() != &sector)
-        return false;
-
-    return P_IsPointInBspLeaf(point, *bspLeaf);
-}
-
 /**
  * Two links to update:
  * 1) The link to us from the previous node (sprev, always set) will
@@ -134,73 +59,47 @@ bool P_IsPointInSector(Vector2d const &point, Sector const &sector)
  * 2) If there is a node following us, set its sprev pointer to point
  *    to the pointer that points back to it (our sprev, just modified).
  */
-boolean P_UnlinkMobjFromSector(mobj_t* mo)
+static bool unlinkMobjFromSector(mobj_t &mo)
 {
-    if(!IS_SECTOR_LINKED(mo))
+    if(!IS_SECTOR_LINKED(&mo))
         return false;
 
-    if((*mo->sPrev = mo->sNext))
-        mo->sNext->sPrev = mo->sPrev;
+    if((*mo.sPrev = mo.sNext))
+        mo.sNext->sPrev = mo.sPrev;
 
     // Not linked any more.
-    mo->sNext = NULL;
-    mo->sPrev = NULL;
+    mo.sNext = 0;
+    mo.sPrev = 0;
 
     return true;
-}
-
-/**
- * Unlinks a mobj from everything it has been linked to.
- *
- * @param mo            Ptr to the mobj to be unlinked.
- * @return              DDLINK_* flags denoting what the mobj was unlinked
- *                      from (in case we need to re-link).
- */
-#undef P_MobjUnlink
-DENG_EXTERN_C int P_MobjUnlink(mobj_t* mo)
-{
-    int links = 0;
-
-    if(P_UnlinkMobjFromSector(mo))
-        links |= DDLINK_SECTOR;
-    if(P_UnlinkMobjFromBlockmap(mo))
-        links |= DDLINK_BLOCKMAP;
-    if(!P_UnlinkMobjFromLines(mo))
-        links |= DDLINK_NOLINE;
-
-    return links;
 }
 
 /**
  * Unlinks the mobj from all the lines it's been linked to. Can be called
  * without checking that the list does indeed contain lines.
  */
-boolean Map_UnlinkMobjFromLines(Map* map, mobj_t* mo)
+static bool unlinkMobjFromLines(Map &map, mobj_t &mo)
 {
-    linknode_t* tn;
-    nodeindex_t nix;
-    assert(map);
-
     // Try unlinking from lines.
-    if(!mo || !mo->lineRoot)
+    if(!mo.lineRoot)
         return false; // A zero index means it's not linked.
 
     // Unlink from each line.
-    tn = map->mobjNodes.nodes;
-    for(nix = tn[mo->lineRoot].next; nix != mo->lineRoot;
+    linknode_t *tn = map.mobjNodes.nodes;
+    for(nodeindex_t nix = tn[mo.lineRoot].next; nix != mo.lineRoot;
         nix = tn[nix].next)
     {
         // Data is the linenode index that corresponds this mobj.
-        NP_Unlink((&map->lineNodes), tn[nix].data);
+        NP_Unlink((&map.lineNodes), tn[nix].data);
         // We don't need these nodes any more, mark them as unused.
         // Dismissing is a macro.
-        NP_Dismiss((&map->lineNodes), tn[nix].data);
-        NP_Dismiss((&map->mobjNodes), nix);
+        NP_Dismiss((&map.lineNodes), tn[nix].data);
+        NP_Dismiss((&map.mobjNodes), nix);
     }
 
     // The mobj no longer has a line ring.
-    NP_Dismiss((&map->mobjNodes), mo->lineRoot);
-    mo->lineRoot = 0;
+    NP_Dismiss((&map.mobjNodes), mo.lineRoot);
+    mo.lineRoot = 0;
 
     return true;
 }
@@ -212,7 +111,7 @@ boolean Map_UnlinkMobjFromLines(Map* map, mobj_t* mo)
  * @param mo    Mobj to be linked.
  * @param line  Line to link the mobj to.
  */
-void Map_LinkMobjToLine(Map *map, mobj_t *mo, Line *line)
+static void linkMobjToLine(Map *map, mobj_t *mo, Line *line)
 {
     DENG_ASSERT(map);
 
@@ -228,19 +127,20 @@ void Map_LinkMobjToLine(Map *map, mobj_t *mo, Line *line)
     NP_Link(&map->lineNodes, nodeIndex, map->lineLinks[line->indexInMap()]);
 }
 
-typedef struct {
+struct LineLinkerParams
+{
     Map *map;
     mobj_t *mo;
     AABoxd box;
-} linelinker_data_t;
+};
 
 /**
  * The given line might cross the mobj. If necessary, link the mobj into
  * the line's mobj link ring.
  */
-int PIT_LinkToLines(Line *ld, void *parameters)
+static int lineLinkerWorker(Line *ld, void *parameters)
 {
-    linelinker_data_t *p = reinterpret_cast<linelinker_data_t *>(parameters);
+    LineLinkerParams *p = reinterpret_cast<LineLinkerParams *>(parameters);
     DENG_ASSERT(p);
 
     // Do the bounding boxes intercept?
@@ -256,90 +156,97 @@ int PIT_LinkToLines(Line *ld, void *parameters)
     // legally cross one.
     if(!ld->hasFrontSector() || !ld->hasBackSector()) return false;
 
-    Map_LinkMobjToLine(p->map, p->mo, ld);
+    linkMobjToLine(p->map, p->mo, ld);
     return false;
 }
 
 /**
  * @note Caller must ensure that the mobj is currently unlinked.
  */
-void Map_LinkMobjToLines(Map* map, mobj_t* mo)
+static void linkMobjToLines(Map &map, mobj_t &mo)
 {
-    linelinker_data_t p;
-    vec2d_t point;
-    assert(map);
-
     // Get a new root node.
-    mo->lineRoot = NP_New(&map->mobjNodes, NP_ROOT_NODE);
+    mo.lineRoot = NP_New(&map.mobjNodes, NP_ROOT_NODE);
 
     // Set up a line iterator for doing the linking.
-    p.map = map;
-    p.mo = mo;
-    V2d_Set(point, mo->origin[VX] - mo->radius, mo->origin[VY] - mo->radius);
-    V2d_InitBox(p.box.arvec2, point);
-    V2d_Set(point, mo->origin[VX] + mo->radius, mo->origin[VY] + mo->radius);
-    V2d_AddToBox(p.box.arvec2, point);
+    LineLinkerParams parm;
+    parm.map = &map;
+    parm.mo  = &mo;
+
+    vec2d_t point;
+    V2d_Set(point, mo.origin[VX] - mo.radius, mo.origin[VY] - mo.radius);
+    V2d_InitBox(parm.box.arvec2, point);
+    V2d_Set(point, mo.origin[VX] + mo.radius, mo.origin[VY] + mo.radius);
+    V2d_AddToBox(parm.box.arvec2, point);
 
     validCount++;
-    P_AllLinesBoxIterator(&p.box, PIT_LinkToLines, (void*)&p);
+    map.allLinesBoxIterator(parm.box, lineLinkerWorker, &parm);
 }
 
-/**
- * Links a mobj into both a block and a BSP leaf based on it's (x,y).
- * Sets mobj->bspLeaf properly. Calling with flags==0 only updates
- * the BspLeaf pointer. Can be called without unlinking first.
- */
-#undef P_MobjLink
-DENG_EXTERN_C void P_MobjLink(mobj_t *mo, byte flags)
+int Map::unlink(mobj_t &mo)
+{
+    int links = 0;
+
+    if(unlinkMobjFromSector(mo))
+        links |= DDLINK_SECTOR;
+    if(unlinkMobjInBlockmap(mo))
+        links |= DDLINK_BLOCKMAP;
+    if(!unlinkMobjFromLines(*this, mo))
+        links |= DDLINK_NOLINE;
+
+    return links;
+}
+
+void Map::link(mobj_t &mo, byte flags)
 {
     // Link into the sector.
-    mo->bspLeaf = P_BspLeafAtPoint_FixedPrecision(mo->origin);
+    mo.bspLeaf = bspLeafAtPoint_FixedPrecision(mo.origin);
 
     if(flags & DDLINK_SECTOR)
     {
         // Unlink from the current sector, if any.
-        Sector &sec = mo->bspLeaf->sector();
+        Sector &sec = mo.bspLeaf->sector();
 
-        if(mo->sPrev)
-            P_UnlinkMobjFromSector(mo);
+        if(mo.sPrev)
+            unlinkMobjFromSector(mo);
 
         // Link the new mobj to the head of the list.
         // Prev pointers point to the pointer that points back to us.
         // (Which practically disallows traversing the list backwards.)
 
-        if((mo->sNext = sec.firstMobj()))
-            mo->sNext->sPrev = &mo->sNext;
+        if((mo.sNext = sec.firstMobj()))
+            mo.sNext->sPrev = &mo.sNext;
 
-        *(mo->sPrev = &sec._mobjList) = mo;
+        *(mo.sPrev = &sec._mobjList) = &mo;
     }
 
     // Link into blockmap?
     if(flags & DDLINK_BLOCKMAP)
     {
         // Unlink from the old block, if any.
-        P_UnlinkMobjFromBlockmap(mo);
-        P_LinkMobjInBlockmap(mo);
+        unlinkMobjInBlockmap(mo);
+        linkMobjInBlockmap(mo);
     }
 
     // Link into lines.
     if(!(flags & DDLINK_NOLINE))
     {
         // Unlink from any existing lines.
-        P_UnlinkMobjFromLines(mo);
+        unlinkMobjFromLines(*this, mo);
 
         // Link to all contacted lines.
-        P_LinkMobjToLines(mo);
+        linkMobjToLines(*this, mo);
     }
 
     // If this is a player - perform additional tests to see if they have
     // entered or exited the void.
-    if(mo->dPlayer && mo->dPlayer->mo)
+    if(mo.dPlayer && mo.dPlayer->mo)
     {
-        ddplayer_t *player = mo->dPlayer;
+        ddplayer_t *player = mo.dPlayer;
         Sector &sector = player->mo->bspLeaf->sector();
 
         player->inVoid = true;
-        if(P_IsPointInSector(player->mo->origin, sector))
+        if(sector.pointInside(player->mo->origin))
         {
 #ifdef __CLIENT__
             if(player->mo->origin[VZ] <  sector.ceiling().visHeight() + 4 &&
@@ -355,20 +262,14 @@ DENG_EXTERN_C void P_MobjLink(mobj_t *mo, byte flags)
     }
 }
 
-/**
- * The callback function will be called once for each line that crosses
- * trough the object. This means all the lines will be two-sided.
- */
-int Map_MobjLinesIterator(Map *map, mobj_t *mo,
-    int (*callback) (Line *, void *), void* parameters)
+int Map::mobjLinesIterator(mobj_t *mo, int (*callback) (Line *, void *),
+                           void *parameters) const
 {
-    DENG_ASSERT(map);
-
     void *linkStore[MAXLINKED];
     void **end = linkStore, **it;
     int result = false;
 
-    linknode_t *tn = map->mobjNodes.nodes;
+    linknode_t *tn = mobjNodes.nodes;
     if(mo->lineRoot)
     {
         nodeindex_t nix;
@@ -381,23 +282,15 @@ int Map_MobjLinesIterator(Map *map, mobj_t *mo,
     return result;
 }
 
-/**
- * Increment validCount before calling this routine. The callback function
- * will be called once for each sector the mobj is touching (totally or
- * partly inside). This is not a 3D check; the mobj may actually reside
- * above or under the sector.
- */
-int Map_MobjSectorsIterator(Map *map, mobj_t *mo,
-    int (*callback) (Sector *, void *), void *parameters)
+int Map::mobjSectorsIterator(mobj_t *mo, int (*callback) (Sector *, void *),
+                             void *parameters) const
 {
-    DENG_ASSERT(map);
-
     int result = false;
     void *linkStore[MAXLINKED];
     void **end = linkStore, **it;
 
     nodeindex_t nix;
-    linknode_t *tn = map->mobjNodes.nodes;
+    linknode_t *tn = mobjNodes.nodes;
 
     // Always process the mobj's own sector first.
     Sector &ownSec = mo->bspLeaf->sector();
@@ -438,16 +331,14 @@ int Map_MobjSectorsIterator(Map *map, mobj_t *mo,
     return result;
 }
 
-int Map_LineMobjsIterator(Map *map, Line *line,
-    int (*callback) (mobj_t *, void *), void *parameters)
+int Map::lineMobjsIterator(Line *line, int (*callback) (mobj_t *, void *),
+                           void *parameters) const
 {
-    DENG_ASSERT(map);
-
     void *linkStore[MAXLINKED];
     void **end = linkStore;
 
-    nodeindex_t root = map->lineLinks[line->indexInMap()];
-    linknode_t *ln = map->lineNodes.nodes;
+    nodeindex_t root = lineLinks[line->indexInMap()];
+    linknode_t *ln = lineNodes.nodes;
 
     for(nodeindex_t nix = ln[root].next; nix != root; nix = ln[nix].next)
     {
@@ -462,19 +353,9 @@ int Map_LineMobjsIterator(Map *map, Line *line,
     return result;
 }
 
-/**
- * Increment validCount before using this. 'func' is called for each mobj
- * that is (even partly) inside the sector. This is not a 3D test, the
- * mobjs may actually be above or under the sector.
- *
- * (Lovely name; actually this is a combination of SectorMobjs and
- * a bunch of LineMobjs iterations.)
- */
-int Map_SectorTouchingMobjsIterator(Map *map, Sector *sector,
-    int (*callback) (mobj_t *, void *), void *parameters)
+int Map::sectorTouchingMobjsIterator(Sector *sector,
+    int (*callback) (mobj_t *, void *), void *parameters) const
 {
-    DENG_ASSERT(map);
-
     /// @todo Fixme: Remove fixed limit (use QVarLengthArray if necessary).
     void *linkStore[MAXLINKED];
     void **end = linkStore;
@@ -490,10 +371,10 @@ int Map_SectorTouchingMobjsIterator(Map *map, Sector *sector,
     }
 
     // Collate mobjs linked to the sector's lines.
-    linknode_t const *ln = map->lineNodes.nodes;
+    linknode_t const *ln = lineNodes.nodes;
     foreach(Line::Side *side, sector->sides())
     {
-        nodeindex_t root = map->lineLinks[side->line().indexInMap()];
+        nodeindex_t root = lineLinks[side->line().indexInMap()];
 
         for(nodeindex_t nix = ln[root].next; nix != root; nix = ln[nix].next)
         {
@@ -513,246 +394,4 @@ int Map_SectorTouchingMobjsIterator(Map *map, Sector *sector,
     DO_LINKS(it, end, mobj_t *);
 
     return result;
-}
-
-/**
- * Looks for lines in the given block that intercept the given trace to add
- * to the intercepts list.
- * A line is crossed if its endpoints are on opposite sides of the trace.
- *
- * @return  Non-zero if current iteration should stop.
- */
-int PIT_AddLineIntercepts(Line *line, void * /*parameters*/)
-{
-    /// @todo Do not assume line is from the current map.
-    divline_t const &traceLos = App_World().map().traceLine();
-    int s1, s2;
-
-    fixed_t lineFromX[2] = { DBL2FIX(line->fromOrigin().x), DBL2FIX(line->fromOrigin().y) };
-    fixed_t lineToX[2]   = { DBL2FIX(  line->toOrigin().x), DBL2FIX(  line->toOrigin().y) };
-
-    // Is this line crossed?
-    // Avoid precision problems with two routines.
-    if(traceLos.direction[VX] >  FRACUNIT * 16 || traceLos.direction[VY] >  FRACUNIT * 16 ||
-       traceLos.direction[VX] < -FRACUNIT * 16 || traceLos.direction[VY] < -FRACUNIT * 16)
-    {
-        s1 = V2x_PointOnLineSide(lineFromX, traceLos.origin, traceLos.direction);
-        s2 = V2x_PointOnLineSide(lineToX,   traceLos.origin, traceLos.direction);
-    }
-    else
-    {
-        s1 = line->pointOnSide(FIX2FLT(traceLos.origin[VX]), FIX2FLT(traceLos.origin[VY])) < 0;
-        s2 = line->pointOnSide(FIX2FLT(traceLos.origin[VX] + traceLos.direction[VX]),
-                               FIX2FLT(traceLos.origin[VY] + traceLos.direction[VY])) < 0;
-    }
-    if(s1 == s2) return false;
-
-    fixed_t lineDirectionX[2] = { DBL2FIX(line->direction().x), DBL2FIX(line->direction().y) };
-
-    // On the correct side of the trace origin?
-    float distance = FIX2FLT(V2x_Intersection(lineFromX, lineDirectionX,
-                                              traceLos.origin, traceLos.direction));
-    if(!(distance < 0))
-    {
-        P_AddIntercept(ICPT_LINE, distance, line);
-    }
-
-    // Continue iteration.
-    return false;
-}
-
-int PIT_AddMobjIntercepts(mobj_t *mo, void * /*parameters*/)
-{
-    if(mo->dPlayer && (mo->dPlayer->flags & DDPF_CAMERA))
-        return false; // $democam: ssshh, keep going, we're not here...
-
-    // Check a corner to corner crossection for hit.
-    /// @todo Do not assume mobj is from the current map.
-    divline_t const &traceLos = App_World().map().traceLine();
-    vec2d_t from, to;
-    if((traceLos.direction[VX] ^ traceLos.direction[VY]) > 0)
-    {
-        // \ Slope
-        V2d_Set(from, mo->origin[VX] - mo->radius,
-                      mo->origin[VY] + mo->radius);
-        V2d_Set(to,   mo->origin[VX] + mo->radius,
-                      mo->origin[VY] - mo->radius);
-    }
-    else
-    {
-        // / Slope
-        V2d_Set(from, mo->origin[VX] - mo->radius,
-                      mo->origin[VY] - mo->radius);
-        V2d_Set(to,   mo->origin[VX] + mo->radius,
-                      mo->origin[VY] + mo->radius);
-    }
-
-    // Is this line crossed?
-    if(Divline_PointOnSide(&traceLos, from) == Divline_PointOnSide(&traceLos, to))
-        return false;
-
-    // Calculate interception point.
-    divline_t dl;
-    dl.origin[VX] = DBL2FIX(from[VX]);
-    dl.origin[VY] = DBL2FIX(from[VY]);
-    dl.direction[VX] = DBL2FIX(to[VX] - from[VX]);
-    dl.direction[VY] = DBL2FIX(to[VY] - from[VY]);
-    coord_t distance = FIX2FLT(Divline_Intersection(&dl, &traceLos));
-
-    // On the correct side of the trace origin?
-    if(!(distance < 0))
-    {
-        P_AddIntercept(ICPT_MOBJ, distance, mo);
-    }
-
-    // Continue iteration.
-    return false;
-}
-
-void P_LinkMobjInBlockmap(mobj_t *mo)
-{
-    /// @todo Do not assume mobj is from the current map.
-    if(!mo || !App_World().hasMap()) return;
-    App_World().map().linkMobj(*mo);
-}
-
-boolean P_UnlinkMobjFromBlockmap(mobj_t *mo)
-{
-    /// @todo Do not assume mobj is from the current map.
-    if(!mo || !App_World().hasMap()) return false;
-    return App_World().map().unlinkMobj(*mo);
-}
-
-void P_LinkMobjToLines(mobj_t *mo)
-{
-    /// @todo Do not assume mobj is from the current map.
-    if(!App_World().hasMap()) return;
-    Map_LinkMobjToLines(&App_World().map(), mo);
-}
-
-boolean P_UnlinkMobjFromLines(mobj_t *mo)
-{
-    /// @todo Do not assume mobj is from the current map.
-    if(!App_World().hasMap()) return false;
-    return Map_UnlinkMobjFromLines(&App_World().map(), mo);
-}
-
-#undef P_MobjLinesIterator
-DENG_EXTERN_C int P_MobjLinesIterator(mobj_t *mo, int (*callback) (Line *, void *), void *parameters)
-{
-    /// @todo Do not assume mobj is in the current map.
-    if(!App_World().hasMap()) return false; // Continue iteration.
-    return Map_MobjLinesIterator(&App_World().map(), mo, callback, parameters);
-}
-
-#undef P_MobjSectorsIterator
-DENG_EXTERN_C int P_MobjSectorsIterator(mobj_t *mo, int (*callback) (Sector *, void *), void *parameters)
-{
-    /// @todo Do not assume mobj is in the current map.
-    if(!App_World().hasMap()) return false; // Continue iteration.
-    return Map_MobjSectorsIterator(&App_World().map(), mo, callback, parameters);
-}
-
-#undef P_LineMobjsIterator
-DENG_EXTERN_C int P_LineMobjsIterator(Line *line, int (*callback) (mobj_t *, void *), void *parameters)
-{
-    /// @todo Do not assume line is in the current map.
-    if(!App_World().hasMap()) return false; // Continue iteration.
-    return Map_LineMobjsIterator(&App_World().map(), line, callback, parameters);
-}
-
-/**
- * Increment validCount before using this. 'func' is called for each mobj
- * that is (even partly) inside the sector. This is not a 3D test, the
- * mobjs may actually be above or under the sector.
- *
- * (Lovely name; actually this is a combination of SectorMobjs and
- * a bunch of LineMobjs iterations.)
- */
-#undef P_SectorTouchingMobjsIterator
-DENG_EXTERN_C int P_SectorTouchingMobjsIterator(Sector *sector, int (*callback) (mobj_t *, void *), void *parameters)
-{
-    /// @todo Do not assume sector is in the current map.
-    if(!App_World().hasMap()) return false; // Continue iteration.
-    return Map_SectorTouchingMobjsIterator(&App_World().map(), sector, callback, parameters);
-}
-
-#undef P_MobjsBoxIterator
-DENG_EXTERN_C int P_MobjsBoxIterator(AABoxd const *box,
-    int (*callback) (mobj_t *, void *), void *parameters)
-{
-    if(!box || !App_World().hasMap()) return false; // Continue iteration.
-    return App_World().map().mobjsBoxIterator(*box, callback, parameters);
-}
-
-#undef P_PolyobjsBoxIterator
-DENG_EXTERN_C int P_PolyobjsBoxIterator(AABoxd const *box,
-    int (*callback) (struct polyobj_s *, void *), void *parameters)
-{
-    if(!box || !App_World().hasMap()) return false; // Continue iteration.
-    return App_World().map().polyobjsBoxIterator(*box, callback, parameters);
-}
-
-#undef P_LinesBoxIterator
-DENG_EXTERN_C int P_LinesBoxIterator(AABoxd const *box,
-    int (*callback) (Line *, void *), void *parameters)
-{
-    if(!box || !App_World().hasMap()) return false; // Continue iteration.
-    return App_World().map().linesBoxIterator(*box, callback, parameters);
-}
-
-#undef P_PolyobjLinesBoxIterator
-DENG_EXTERN_C int P_PolyobjLinesBoxIterator(AABoxd const *box,
-    int (*callback) (Line *, void *), void *parameters)
-{
-    if(!box || !App_World().hasMap()) return false; // Continue iteration.
-    return App_World().map().polyobjLinesBoxIterator(*box, callback, parameters);
-}
-
-#undef P_BspLeafsBoxIterator
-DENG_EXTERN_C int P_BspLeafsBoxIterator(AABoxd const *box, Sector *sector,
-    int (*callback) (BspLeaf *, void *), void *parameters)
-{
-    if(!box || !App_World().hasMap()) return false; // Continue iteration.
-    return App_World().map().bspLeafsBoxIterator(*box, sector, callback, parameters);
-}
-
-#undef P_AllLinesBoxIterator
-DENG_EXTERN_C int P_AllLinesBoxIterator(AABoxd const *box,
-    int (*callback) (Line *, void *), void *parameters)
-{
-    if(!box || !App_World().hasMap()) return false; // Continue iteration.
-    return App_World().map().allLinesBoxIterator(*box, callback, parameters);
-}
-
-#undef P_PathTraverse2
-DENG_EXTERN_C int P_PathTraverse2(const_pvec2d_t from, const_pvec2d_t to,
-    int flags, traverser_t callback, void *parameters)
-{
-    if(!App_World().hasMap()) return false; // Continue iteration.
-    return App_World().map().pathTraverse(from, to, flags, callback, parameters);
-}
-
-#undef P_PathTraverse
-DENG_EXTERN_C int P_PathTraverse(const_pvec2d_t from, const_pvec2d_t to,
-    int flags, traverser_t callback)
-{
-    if(!App_World().hasMap()) return false; // Continue iteration.
-    return App_World().map().pathTraverse(from, to, flags, callback);
-}
-
-#undef P_PathXYTraverse2
-DENG_EXTERN_C int P_PathXYTraverse2(coord_t fromX, coord_t fromY,
-    coord_t toX, coord_t toY, int flags, traverser_t callback, void* paramaters)
-{
-    if(!App_World().hasMap()) return false; // Continue iteration.
-    return App_World().map().pathTraverse(fromX, fromY, toX, toY, flags, callback, paramaters);
-}
-
-#undef P_PathXYTraverse
-DENG_EXTERN_C int P_PathXYTraverse(coord_t fromX, coord_t fromY, coord_t toX, coord_t toY, int flags,
-    traverser_t callback)
-{
-    if(!App_World().hasMap()) return false; // Continue iteration.
-    return App_World().map().pathTraverse(fromX, fromY, toX, toY, flags, callback);
 }

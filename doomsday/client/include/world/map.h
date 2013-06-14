@@ -338,6 +338,36 @@ public:
         int (*callback) (struct polyobj_s *, void *), void *parameters = 0) const;
 
     /**
+     * The callback function will be called once for each line that crosses
+     * trough the object. This means all the lines will be two-sided.
+     */
+    int mobjLinesIterator(struct mobj_s *mo,
+        int (*callback) (Line *, void *), void *parameters = 0) const;
+
+    /**
+     * Increment validCount before calling this routine. The callback function
+     * will be called once for each sector the mobj is touching (totally or
+     * partly inside). This is not a 3D check; the mobj may actually reside
+     * above or under the sector.
+     */
+    int mobjSectorsIterator(struct mobj_s *mo,
+        int (*callback) (Sector *, void *), void *parameters = 0) const;
+
+    int lineMobjsIterator(Line *line,
+        int (*callback) (struct mobj_s *, void *), void *parameters = 0) const;
+
+    /**
+     * Increment validCount before using this. 'func' is called for each mobj
+     * that is (even partly) inside the sector. This is not a 3D test, the
+     * mobjs may actually be above or under the sector.
+     *
+     * (Lovely name; actually this is a combination of SectorMobjs and
+     * a bunch of LineMobjs iterations.)
+     */
+    int sectorTouchingMobjsIterator(Sector *sector,
+        int (*callback) (struct mobj_s *, void *), void *parameters = 0) const;
+
+    /**
      * Retrieve an immutable copy of the LOS trace line state.
      *
      * @todo Map should not own this data.
@@ -388,13 +418,30 @@ public:
     }
 
     /**
+     * Links a mobj into both a block and a BSP leaf based on it's (x,y).
+     * Sets mobj->bspLeaf properly. Calling with flags==0 only updates
+     * the BspLeaf pointer. Can be called without unlinking first.
+     */
+    void link(struct mobj_s &mobj, byte flags);
+
+    /**
+     * Unlinks a mobj from everything it has been linked to.
+     *
+     * @param mo  Mobj to be unlinked.
+     *
+     * @return  DDLINK_* flags denoting what the mobj was unlinked from
+     * (in case we need to re-link).
+     */
+    int unlink(struct mobj_s &mobj);
+
+    /**
      * Link the specified @a mobj in any internal data structures for
      * bookkeeping purposes. Should be called AFTER mobj translation to
      * (re-)insert the mobj.
      *
-     * @param mobj  Mobj to be linked.
+     * @param mobj  Mobj to be linked (must be currently unlinked).
      */
-    void linkMobj(struct mobj_s &mobj);
+    void linkMobjInBlockmap(struct mobj_s &mobj);
 
     /**
      * Unlink the specified @a mobj from any internal data structures for
@@ -403,7 +450,7 @@ public:
      *
      * @param mobj  Mobj to be unlinked.
      */
-    bool unlinkMobj(struct mobj_s &mobj);
+    bool unlinkMobjInBlockmap(struct mobj_s &mobj);
 
     /**
      * Link the specified @a polyobj in any internal data structures for
