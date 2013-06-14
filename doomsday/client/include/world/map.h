@@ -417,11 +417,13 @@ public:
      * Links a mobj into both a block and a BSP leaf based on it's (x,y).
      * Sets mobj->bspLeaf properly. Calling with flags==0 only updates
      * the BspLeaf pointer. Can be called without unlinking first.
+     * Should be called AFTER mobj translation to (re-)insert the mobj.
      */
     void link(struct mobj_s &mobj, byte flags);
 
     /**
-     * Unlinks a mobj from everything it has been linked to.
+     * Unlinks a mobj from everything it has been linked to. Should be called
+     * BEFORE mobj translation to extract the mobj.
      *
      * @param mo  Mobj to be unlinked.
      *

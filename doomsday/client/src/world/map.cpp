@@ -539,26 +539,12 @@ DENG2_PIMPL(Map)
 #undef BLOCKMAP_MARGIN
     }
 
-    /**
-     * Unlink the specified @a mobj from any internal data structures for
-     * bookkeeping purposes. Should be called BEFORE mobj translation to
-     * extract the mobj.
-     *
-     * @param mobj  Mobj to be unlinked.
-     */
     bool unlinkMobjInBlockmap(mobj_t &mo)
     {
         Blockmap::Cell cell = mobjBlockmap->toCell(mo.origin);
         return mobjBlockmap->unlink(cell, &mo);
     }
 
-    /**
-     * Link the specified @a mobj in any internal data structures for
-     * bookkeeping purposes. Should be called AFTER mobj translation to
-     * (re-)insert the mobj.
-     *
-     * @param mobj  Mobj to be linked (must be currently unlinked).
-     */
     void linkMobjInBlockmap(mobj_t &mo)
     {
         Blockmap::Cell cell = mobjBlockmap->toCell(mo.origin);
