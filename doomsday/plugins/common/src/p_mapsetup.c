@@ -53,7 +53,6 @@ typedef struct {
 } mobjtype_precachedata_t;
 
 static void P_ResetWorldState(void);
-static void P_FinalizeMap(void);
 
 // Our private map data structures
 xsector_t* xsectors;
@@ -136,29 +135,6 @@ xsector_t* P_GetXSector(int index)
 {
     if(index < 0 || index >= numsectors) return 0;
     return &xsectors[index];
-}
-
-void P_SetupForMapData(int type, uint num)
-{
-    switch(type)
-    {
-    case DMU_SECTOR:
-        if(num > 0)
-            xsectors = Z_Calloc(num * sizeof(xsector_t), PU_MAP, 0);
-        else
-            xsectors = NULL;
-        break;
-
-    case DMU_LINE:
-        if(num > 0)
-            xlines = Z_Calloc(num * sizeof(xline_t), PU_MAP, 0);
-        else
-            xlines = NULL;
-        break;
-
-    default:
-        break;
-    }
 }
 
 #if __JDOOM64__
@@ -378,9 +354,11 @@ static void initXLineDefs(void)
 {
     int i;
 
+    xlines = Z_Calloc(numlines * sizeof(xline_t), PU_MAP, 0);
+
     for(i = 0; i < numlines; ++i)
     {
-        xline_t* xl = &xlines[i];
+        xline_t *xl = &xlines[i];
 
         xl->flags = P_GetGMOShort(MO_XLINEDEF, i, MO_FLAGS) & ML_VALID_MASK;
 #if __JHEXEN__
@@ -404,6 +382,8 @@ static void initXLineDefs(void)
 static void initXSectors(void)
 {
     int i;
+
+    xsectors = Z_Calloc(numsectors * sizeof(xsector_t), PU_MAP, 0);
 
     for(i = 0; i < numsectors; ++i)
     {
@@ -717,9 +697,9 @@ static void spawnMapObjects(void)
     P_SpawnPlayers();
 }
 
-void P_SetupMap(Uri* mapUri, uint episode, uint map)
+void P_SetupMap(Uri *mapUri)
 {
-    AutoStr* mapUriStr = mapUri? Uri_Compose(mapUri) : 0;
+    AutoStr *mapUriStr = mapUri? Uri_Compose(mapUri) : 0;
 
     if(!mapUriStr) return;
 
@@ -732,27 +712,29 @@ void P_SetupMap(Uri* mapUri, uint episode, uint map)
     // It begins...
     mapSetup = true;
 
-    // The engine manages polyobjects, so reset the count.
-    DD_SetInteger(DD_POLYOBJ_COUNT, 0);
     P_ResetWorldState();
-
-    // Let the engine know that we are about to start setting up a map.
-    R_SetupMap(DDSMM_INITIALIZE, 0);
 
     // Initialize The Logical Sound Manager.
     S_MapChange();
 
-#if __JHERETIC__ || __JHEXEN__
-    // The pointers in the body queue just became invalid.
-    P_ClearBodyQueue();
-#endif
-
-    if(!P_LoadMap(Str_Text(mapUriStr)))
+    if(!P_MapChange(Str_Text(mapUriStr)))
     {
-        AutoStr* path = Uri_ToString(mapUri);
-        Con_Error("P_SetupMap: Failed loading map \"%s\".\n", Str_Text(path));
+        AutoStr *path = Uri_ToString(mapUri);
+        Con_Error("P_SetupMap: Failed changing/loading map \"%s\".\n", Str_Text(path));
         exit(1); // Unreachable.
     }
+
+    // Make sure the game is paused for the requested period.
+    Pause_MapStarted();
+
+    // It ends.
+    mapSetup = false;
+}
+
+void P_FinalizeMapChange(Uri const *uri)
+{
+    initXLineDefs();
+    initXSectors();
 
     Thinker_Init();
 #if __JHERETIC__
@@ -762,8 +744,6 @@ void P_SetupMap(Uri* mapUri, uint episode, uint map)
     P_InitCorpseQueue();
 #endif
 
-    initXLineDefs();
-    initXSectors();
     loadMapSpots();
 
     spawnMapObjects();
@@ -771,8 +751,8 @@ void P_SetupMap(Uri* mapUri, uint episode, uint map)
 #if __JHEXEN__
     PO_InitForMap();
 
-    // @todo Should be interpreted by the map converter.
-    P_LoadACScripts(W_GetLumpNumForName(Str_Text(Uri_Path(mapUri))) + 11 /*ML_BEHAVIOR*/); // ACS object code
+    /// @todo Should be interpreted by the map converter.
+    P_LoadACScripts(W_GetLumpNumForName(Str_Text(Uri_Path(uri))) + 11 /*ML_BEHAVIOR*/); // ACS object code
 #endif
 
     HU_UpdatePsprites();
@@ -792,7 +772,7 @@ void P_SetupMap(Uri* mapUri, uint episode, uint map)
 
 #if __JHEXEN__
     // Initialize the sky.
-    P_InitSky(map);
+    P_InitSky(gameMap);
 #endif
 
     // Preload resources we'll likely need but which aren't present (usually) in the map.
@@ -852,13 +832,57 @@ void P_SetupMap(Uri* mapUri, uint episode, uint map)
         NetSv_SendTotalCounts(DDSP_ALL_PLAYERS);
     }
 
-    P_FinalizeMap();
+    /*
+     * Do any map finalization including any game-specific stuff.
+     */
 
-    // Make sure the game is paused for the requested period.
-    Pause_MapStarted();
+#if __JDOOM__
+    // Adjust slime lower wall textures (a hack!).
+    // This will hide the ugly green bright line that would otherwise be
+    // visible due to texture repeating and interpolation.
+    if(!(gameModeBits & (GM_DOOM2_HACX|GM_DOOM_CHEX)))
+    {
+        int i, k;
+        Material* mat = P_ToPtr(DMU_MATERIAL, Materials_ResolveUriCString("Textures:NUKE24"));
+        Material* bottomMat, *midMat;
+        float yoff;
+        Side* side;
+        Line* line;
 
-    // It ends.
-    mapSetup = false;
+        for(i = 0; i < numlines; ++i)
+        {
+            line = P_ToPtr(DMU_LINE, i);
+
+            for(k = 0; k < 2; ++k)
+            {
+                side = P_GetPtrp(line, k == 0? DMU_FRONT : DMU_BACK);
+                if(side)
+                {
+                    bottomMat = P_GetPtrp(side, DMU_BOTTOM_MATERIAL);
+                    midMat = P_GetPtrp(side, DMU_MIDDLE_MATERIAL);
+
+                    if(bottomMat == mat && midMat == NULL)
+                    {
+                        yoff = P_GetFloatp(side, DMU_BOTTOM_MATERIAL_OFFSET_Y);
+                        P_SetFloatp(side, DMU_BOTTOM_MATERIAL_OFFSET_Y, yoff + 1.0f);
+                    }
+                }
+            }
+        }
+    }
+
+#elif __JHEXEN__
+    // Initialize lightning & thunder clap effects (if in use).
+    P_InitLightning();
+#endif
+
+    // Do some fine tuning with mobj placement and orientation.
+#if __JHERETIC__ || __JHEXEN__
+    P_MoveThingsOutOfWalls();
+#endif
+#if __JHERETIC__
+    P_TurnGizmosAwayFromDoors();
+#endif
 }
 
 /**
@@ -945,63 +969,11 @@ static void P_ResetWorldState(void)
 #endif
 
     P_DestroyPlayerStarts();
-}
 
-/**
- * Do any map finalization including any game-specific stuff.
- */
-static void P_FinalizeMap(void)
-{
-#if __JDOOM__
-    // Adjust slime lower wall textures (a hack!).
-    // This will hide the ugly green bright line that would otherwise be
-    // visible due to texture repeating and interpolation.
-    if(!(gameModeBits & (GM_DOOM2_HACX|GM_DOOM_CHEX)))
-    {
-        int i, k;
-        Material* mat = P_ToPtr(DMU_MATERIAL, Materials_ResolveUriCString("Textures:NUKE24"));
-        Material* bottomMat, *midMat;
-        float yoff;
-        Side* side;
-        Line* line;
-
-        for(i = 0; i < numlines; ++i)
-        {
-            line = P_ToPtr(DMU_LINE, i);
-
-            for(k = 0; k < 2; ++k)
-            {
-                side = P_GetPtrp(line, k == 0? DMU_FRONT : DMU_BACK);
-                if(side)
-                {
-                    bottomMat = P_GetPtrp(side, DMU_BOTTOM_MATERIAL);
-                    midMat = P_GetPtrp(side, DMU_MIDDLE_MATERIAL);
-
-                    if(bottomMat == mat && midMat == NULL)
-                    {
-                        yoff = P_GetFloatp(side, DMU_BOTTOM_MATERIAL_OFFSET_Y);
-                        P_SetFloatp(side, DMU_BOTTOM_MATERIAL_OFFSET_Y, yoff + 1.0f);
-                    }
-                }
-            }
-        }
-    }
-
-#elif __JHEXEN__
-    // Initialize lightning & thunder clap effects (if in use).
-    P_InitLightning();
-#endif
-
-    // Do some fine tuning with mobj placement and orientation.
 #if __JHERETIC__ || __JHEXEN__
-    P_MoveThingsOutOfWalls();
+    // The pointers in the body queue are now invalid.
+    P_ClearBodyQueue();
 #endif
-#if __JHERETIC__
-    P_TurnGizmosAwayFromDoors();
-#endif
-
-    // Someone may want to do something special now that the map has been fully set up.
-    R_SetupMap(DDSMM_FINALIZE, 0);
 }
 
 const char* P_GetMapNiceName(void)

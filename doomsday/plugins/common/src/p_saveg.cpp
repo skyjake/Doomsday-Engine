@@ -5318,8 +5318,8 @@ static int loadStateWorker(Str const *path, SaveInfo &saveInfo)
         R_UpdateConsoleView(i);
     }
 
-    // Spawn particle generators, fix HOMS etc, etc...
-    R_SetupMap(DDSMM_AFTER_LOADING, 0);
+    // Inform the engine to perform map setup once more.
+    R_SetupMap(0, 0);
 
     return 0; // Success.
 }

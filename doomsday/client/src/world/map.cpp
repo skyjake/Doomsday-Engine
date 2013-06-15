@@ -2407,7 +2407,7 @@ static void addMissingMaterial(Line::Side &side, int section)
     // Look for and apply a suitable replacement if found.
     surface.setMaterial(chooseFixMaterial(side, section), true/* is missing fix */);
 
-    // During map load we log missing materials.
+    // During map setup we log missing materials.
     if(ddMapSetup && verbose)
     {
         String path = surface.hasMaterial()? surface.material().manifest().composeUri().asText() : "<null>";

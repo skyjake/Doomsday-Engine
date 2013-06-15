@@ -1520,13 +1520,21 @@ DENG_EXTERN_C AutoStr *P_MapSourceFile(char const *uriCString)
     return W_LumpSourceFile(lumpNum);
 }
 
-#undef P_LoadMap
-DENG_EXTERN_C boolean P_LoadMap(char const *uriCString)
+#undef P_MapChange
+DENG_EXTERN_C boolean P_MapChange(char const *uriCString)
 {
     if(!uriCString || !uriCString[0])
     {
-        App_FatalError("P_LoadMap: Invalid Uri argument.");
+        App_FatalError("P_MapChange: Invalid Uri argument.");
     }
+
+    // A new map is about to be setup.
+    ddMapSetup = true;
+
+#ifdef __CLIENT__
+    App_Materials().purgeCacheQueue();
+#endif
+
     return App_World().loadMap(de::Uri(uriCString, RC_NULL));
 }
 
@@ -1861,7 +1869,7 @@ DENG_DECLARE_API(Map) =
     P_MapExists,
     P_MapIsCustom,
     P_MapSourceFile,
-    P_LoadMap,
+    P_MapChange,
 
     Line_BoxOnSide,
     Line_BoxOnSide_FixedPrecision,

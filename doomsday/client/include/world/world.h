@@ -72,8 +72,6 @@ public:
 
     bool loadMap(Uri const &uri);
 
-    void setupMap(int mode);
-
     /// @todo Refactor away.
     void clearMap();
 

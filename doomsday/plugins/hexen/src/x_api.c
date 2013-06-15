@@ -214,7 +214,7 @@ game_export_t* GetGameAPI(void)
     gx.mobjSize = sizeof(mobj_t);
     gx.polyobjSize = sizeof(Polyobj);
 
-    gx.SetupForMapData = P_SetupForMapData;
+    gx.FinalizeMapChange = P_FinalizeMapChange;
 
     // These really need better names. Ideas?
     gx.HandleMapDataPropertyValue = P_HandleMapDataPropertyValue;

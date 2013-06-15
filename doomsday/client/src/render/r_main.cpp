@@ -525,6 +525,9 @@ void R_Update()
     App_World().update();
 
 #ifdef __CLIENT__
+    // Recalculate the light range mod matrix.
+    Rend_UpdateLightModMatrix();
+
     // The rendering lists have persistent data that has changed during
     // the re-initialization.
     RL_DeleteLists();

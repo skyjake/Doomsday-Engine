@@ -39,24 +39,18 @@ extern "C" {
 extern boolean mapSetup;
 
 /**
- * Doomsday calls this (before any data is read) for each type of map object
- * at the start of the map load process. This is to allow us (the game) to
- * do any initialization we need. For example if we maintain our own data
- * for lines (the xlines) we'll do all allocation and init here.
- *
- * @param type    (DMU object type) The id of the data type being setup.
- * @param num     The number of elements of "type" Doomsday is creating.
+ * Doomsday calls this once a map change has completed to allow us (the game)
+ * to do any finalization we need (such as spawning thinkers or cataloguing
+ * secret areas).
  */
-void P_SetupForMapData(int type, uint num);
+void P_FinalizeMapChange(Uri const *uri);
 
 /**
  * Load the specified map.
  *
- * @param uri      URI e.g., "E1M1".
- * @param episode  Logical episode number.
- * @param map      Logical map number.
+ * @param uri  URI e.g., "E1M1".
  */
-void P_SetupMap(Uri* uri, uint episode, uint map);
+void P_SetupMap(Uri *uri);
 
 const char* P_GetMapNiceName(void);
 patchid_t P_FindMapTitlePatch(uint episode, uint map);

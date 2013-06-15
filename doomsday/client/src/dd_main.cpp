@@ -2973,8 +2973,35 @@ DENG_EXTERN_C void Net_SendPacket(int to_player, int type, const void* data, siz
 #undef R_SetupMap
 DENG_EXTERN_C void R_SetupMap(int mode, int flags)
 {
-    DENG_UNUSED(flags);
-    App_World().setupMap(mode);
+    DENG2_UNUSED2(mode, flags);
+
+    if(!App_World().hasMap()) return; // Huh?
+
+    // Perform map setup again. Its possible that after loading we now
+    // have more HOMs to fix, etc..
+    Map &map = App_World().map();
+
+#ifdef __CLIENT__
+    map.initSkyFix();
+#endif
+
+    // Update all sectors.
+    /// @todo Refactor away.
+    foreach(Sector *sector, map.sectors())
+    {
+        sector->updateSoundEmitterOrigin();
+#ifdef __CLIENT__
+        map.updateMissingMaterialsForLinesOfSector(*sector);
+        S_MarkSectorReverbDirty(sector);
+#endif
+    }
+
+    // Re-initialize polyobjs.
+    /// @todo Still necessary?
+    map.initPolyobjs();
+
+    // Reset the timer so that it will appear that no time has passed.
+    DD_ResetTimer();
 }
 
 // sys_system.c

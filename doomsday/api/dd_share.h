@@ -483,13 +483,6 @@ typedef struct ddmobj_base_s {
     DD_BASE_DDMOBJ_ELEMENTS()
 } ddmobj_base_t;
 
-/// R_SetupMap() modes. @ingroup world
-enum {
-    DDSMM_AFTER_LOADING,    ///< After loading a savegame...
-    DDSMM_FINALIZE,         ///< After everything else is done.
-    DDSMM_INITIALIZE        ///< Before anything else if done.
-};
-
 /// Sector reverb data indices. @ingroup world
 enum {
     SRD_VOLUME,
