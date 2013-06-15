@@ -2084,10 +2084,12 @@ boolean DD_Init(void)
         DD_StartTitle();
 
         // We'll open the console and print a list of the known games too.
-        Con_Execute(CMDS_DDAY, "conopen", true, false);
+        //Con_Execute(CMDS_DDAY, "conopen", true, false);
         if(!CommandLine_Exists("-noautoselect"))
-            Con_Message("Automatic game selection failed.");
-        Con_Execute(CMDS_DDAY, "listgames", false, false);
+        {
+            LOG_INFO("Automatic game selection failed");
+        }
+        //Con_Execute(CMDS_DDAY, "listgames", false, false);
     }
 
     return true;

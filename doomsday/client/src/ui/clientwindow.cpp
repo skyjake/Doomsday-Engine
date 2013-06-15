@@ -53,7 +53,8 @@ DENG2_PIMPL(ClientWindow),
 DENG2_OBSERVES(KeyEventSource,   KeyEvent),
 DENG2_OBSERVES(MouseEventSource, MouseStateChange),
 DENG2_OBSERVES(MouseEventSource, MouseEvent),
-DENG2_OBSERVES(Canvas,           FocusChange)
+DENG2_OBSERVES(Canvas,           FocusChange),
+DENG2_OBSERVES(Games,            GameChange)
 {
     bool needMainInit;
     bool needRecreateCanvas;
@@ -62,8 +63,10 @@ DENG2_OBSERVES(Canvas,           FocusChange)
 
     /// Root of the nomal UI widgets of this window.
     GuiRootWidget root;
+    LegacyWidget *legacy;
     TaskBarWidget *taskBar;
-    //ConsoleWidget *console;
+    LabelWidget *background;
+    GameSelectionWidget *games;
 
     GuiRootWidget busyRoot;
 
@@ -73,11 +76,16 @@ DENG2_OBSERVES(Canvas,           FocusChange)
           needRecreateCanvas(false),
           mode(Normal),
           root(thisPublic),
-          //console(0),
+          legacy(0),
+          taskBar(0),
+          background(0),
+          games(0),
           busyRoot(thisPublic)
     {
         /// @todo The decision whether to receive input notifications from the
         /// canvas is really a concern for the input drivers.
+
+        App_Games().audienceForGameChange += this;
 
         // Listen to input.
         self.canvas().audienceForKeyEvent += this;
@@ -87,6 +95,8 @@ DENG2_OBSERVES(Canvas,           FocusChange)
 
     ~Instance()
     {
+        App_Games().audienceForGameChange -= this;
+
         self.canvas().audienceForFocusChange -= this;
         self.canvas().audienceForMouseStateChange -= this;
         self.canvas().audienceForKeyEvent -= this;
@@ -95,38 +105,33 @@ DENG2_OBSERVES(Canvas,           FocusChange)
     void setupUI()
     {
         // Background for Ring Zero.
-        LabelWidget *bg = new LabelWidget;
-        bg->setImage(ClientApp::windowSystem().style().images().image("window.background"));
-        bg->setImageFit(ui::FitToSize);
-        bg->setSizePolicy(ui::Filled, ui::Filled);
-        bg->setMargin("");
-        bg->rule()
+        background = new LabelWidget;
+        background->setImage(ClientApp::windowSystem().style().images().image("window.background"));
+        background->setImageFit(ui::FitToSize);
+        background->setSizePolicy(ui::Filled, ui::Filled);
+        background->setMargin("");
+        background->rule()
                 .setInput(Rule::Left,   root.viewLeft())
                 .setInput(Rule::Top,    root.viewTop())
                 .setInput(Rule::Right,  root.viewRight())
                 .setInput(Rule::Bottom, root.viewBottom());
-        root.add(bg);
+        root.add(background);
 
-        LegacyWidget *legacy = new LegacyWidget(LEGACY_WIDGET_NAME);
+        legacy = new LegacyWidget(LEGACY_WIDGET_NAME);
         legacy->rule()
                 .setLeftTop    (root.viewLeft(),  root.viewTop())
                 .setRightBottom(root.viewRight(), root.viewBottom());
         root.add(legacy);
 
         // Game selection.
-        GameSelectionWidget *gameSel = new GameSelectionWidget;
-        gameSel->rule()
-                /*
-                .setInput(Rule::Left,   root.viewLeft())
-                .setInput(Rule::Right,  root.viewRight())
-                .setInput(Rule::Top,    root.viewTop())
-                .setInput(Rule::Bottom, root.viewBottom());*/
+        games = new GameSelectionWidget;
+        games->rule()
                 .setInput(Rule::AnchorX, root.viewLeft() + root.viewWidth() / 2)
                 .setInput(Rule::AnchorY, root.viewTop() + root.viewHeight() / 2)
                 .setInput(Rule::Width,   OperatorRule::minimum(root.viewWidth(), Const(800)))
                 .setInput(Rule::Height,  OperatorRule::minimum(root.viewHeight(), Const(600)))
                 .setAnchorPoint(Vector2f(.5f, .5f));
-        root.add(gameSel);
+        root.add(games);
 
         // Taskbar is over almost everything else.
         taskBar = new TaskBarWidget;
@@ -135,13 +140,6 @@ DENG2_OBSERVES(Canvas,           FocusChange)
                 .setInput(Rule::Bottom, root.viewBottom() + taskBar->shift())
                 .setInput(Rule::Width,  root.viewWidth());
         root.add(taskBar);
-
-#if 0
-        taskBar->setOpeningAction(new CommandAction("menu open"));
-        taskBar->setClosingAction(new CommandAction("menu close"));
-#endif
-
-        root.setFocus(&taskBar->commandLine());
 
         // Initially the widget is disabled. It will be enabled when the window
         // is visible and ready to be drawn.
@@ -153,6 +151,27 @@ DENG2_OBSERVES(Canvas,           FocusChange)
                 .setLeftTop    (busyRoot.viewLeft(),  busyRoot.viewTop())
                 .setRightBottom(busyRoot.viewRight(), busyRoot.viewBottom());
         busyRoot.add(busy);
+    }
+
+    void currentGameChanged(Game &newGame)
+    {
+        if(isNullGame(newGame))
+        {
+            //legacy->hide();
+            background->show();
+            games->show();
+            taskBar->console().enableBlur();
+        }
+        else
+        {
+            //legacy->show();
+            background->hide();
+            games->hide();
+
+            // For the time being, blurring is not compatible with the
+            // legacy OpenGL rendering.
+            taskBar->console().enableBlur(false);
+        }
     }
 
     void setMode(Mode const &newMode)

@@ -53,18 +53,38 @@ DENG2_OBSERVES(App, StartupComplete)
 
     ButtonWidget *addItemForGame(Game &game)
     {
-        CommandAction *loadAction = new CommandAction(String("load ") +
-                                                      Str_Text(game.identityKey()));
+        String const idKey = Str_Text(game.identityKey());
+
+        CommandAction *loadAction = new CommandAction(String("load ") + idKey);
         ButtonWidget *b = self.addItem(
                     String(_E(b) "%1" _E(.)_E(s)_E(C) " %2\n"
                            _E(.)_E(.)_E(l)_E(D) "%3")
                     .arg(Str_Text(game.title()))
                     .arg(Str_Text(game.author()))
-                    .arg(Str_Text(game.identityKey())),
+                    .arg(idKey),
                     loadAction);
 
-        //b->setBehavior(Widget::ContentClipping);
-        b->setAlignment(ui::AlignTopLeft);
+        /// @todo The name of the plugin should be accessible via the plugin loader.
+        String plugName;
+        if(idKey.contains("heretic"))
+        {
+            plugName = "libheretic";
+        }
+        else if(idKey.contains("hexen"))
+        {
+            plugName = "libhexen";
+        }
+        else
+        {
+            plugName = "libdoom";
+        }
+        if(self.style().images().has("logo.game." + plugName))
+        {
+            b->setImage(self.style().images().image("logo.game." + plugName));
+        }
+
+        b->setBehavior(Widget::ContentClipping);
+        b->setAlignment(ui::AlignLeft);
         b->setTextLineAlignment(ui::AlignLeft);
         b->setHeightPolicy(ui::Expand);
         return b;
@@ -82,10 +102,12 @@ DENG2_OBSERVES(App, StartupComplete)
             if(i.key()->allStartupFilesFound())
             {
                 i.value()->setOpacity(1.f, .5f);
+                i.value()->enable();
             }
             else
             {
                 i.value()->setOpacity(.3f, .5f);
+                i.value()->disable();
             }
         }
     }
