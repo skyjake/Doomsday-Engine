@@ -140,9 +140,7 @@ ConsoleWidget::ConsoleWidget() : GuiWidget("console"), d(new Instance(this))
     add(d->log);
 
     // Blur the log background.
-    Background logBg = d->log->background();
-    logBg.type = Background::Blurred;
-    d->log->set(logBg);
+    enableBlur();
 
     connect(d->log, SIGNAL(contentHeightIncreased(int)), this, SLOT(logContentHeightIncreased(int)));
 
@@ -182,6 +180,20 @@ Rule const &ConsoleWidget::shift()
 bool ConsoleWidget::isLogOpen() const
 {
     return d->opened;
+}
+
+void ConsoleWidget::enableBlur(bool yes)
+{
+    Background logBg = d->log->background();
+    if(yes)
+    {
+        logBg.type = Background::Blurred;
+    }
+    else
+    {
+        logBg.type = Background::None;
+    }
+    d->log->set(logBg);
 }
 
 void ConsoleWidget::viewResized()
@@ -263,6 +275,12 @@ bool ConsoleWidget::handleEvent(Event const &event)
         default:
             break;
         }
+    }
+
+    if(event.type() == Event::MouseButton && hitTest(event))
+    {
+        // Prevent clicks from leaking through.
+        return true;
     }
 
     if(event.type() == Event::KeyPress)

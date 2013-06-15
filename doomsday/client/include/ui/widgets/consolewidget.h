@@ -49,6 +49,15 @@ public:
 
     bool isLogOpen() const;
 
+    /**
+     * Enables or disables the console log background blur.
+     *
+     * @todo Blurring is presently forcibly disabled when a game is loaded.
+     *
+     * @param yes  @c true to enable blur, otherwise @c false.
+     */
+    void enableBlur(bool yes = true);
+
     // Events.
     void viewResized();
     void update();
