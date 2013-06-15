@@ -214,10 +214,6 @@ static void rendPlayerView(int player)
     {
         const float* color = plr->plr->filterColor;
         GL_SetFilterColor(color[CR], color[CG], color[CB], color[CA]);
-
-#ifdef _DEBUG
-        Con_Message("FilterColor: %f, %f, %f, %f", color[CR], color[CG], color[CB], color[CA]);
-#endif
     }
 
     // Render the view with possible custom filters.
