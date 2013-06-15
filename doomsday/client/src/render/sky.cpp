@@ -338,7 +338,7 @@ static void setupSkyModels(ded_sky_t *def)
     {
         // Is the model ID set?
         sm->model = Models_Definition(modef->id);
-        if(!sm->model) continue;
+        if(!sm->model || sm->model->sub.empty()) continue;
 
         // There is a model here.
         skyModelsInited = true;

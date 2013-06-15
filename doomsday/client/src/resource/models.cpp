@@ -920,6 +920,8 @@ float Models_ModelForMobj(mobj_t* mo, modeldef_t** modef, modeldef_t** nextmodef
  */
 static void scaleModel(modeldef_t &mf, float destHeight, float offset)
 {
+    if(mf.sub.empty()) return;
+
     submodeldef_t &smf = mf.sub[0];
 
     // No model to scale?

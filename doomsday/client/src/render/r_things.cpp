@@ -1293,7 +1293,7 @@ void R_ProjectSprite(mobj_t *mo)
                                      mo->bspLeaf, mo->ddFlags,
                                      mo->tmap,
                                      viewAlign,
-                                     fullBright && !(mf && (mf->sub[0].flags & MFF_DIM)),
+                                     fullBright && !(mf && !mf->sub.empty() && (mf->sub[0].flags & MFF_DIM)),
                                      false);
     }
 

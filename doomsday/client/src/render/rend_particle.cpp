@@ -428,7 +428,7 @@ static void setupModelParamsForParticle(rendmodelparams_t* params,
 
     Rend_ModelSetFrame(params->mf, frame);
     // Set the correct orientation for the particle.
-    if(params->mf->sub[0].flags & MFF_MOVEMENT_YAW)
+    if(!params->mf->sub.empty() && params->mf->sub[0].flags & MFF_MOVEMENT_YAW)
     {
         params->yaw = R_MovementXYYaw(FIX2FLT(pt->mov[0]), FIX2FLT(pt->mov[1]));
     }
@@ -437,7 +437,7 @@ static void setupModelParamsForParticle(rendmodelparams_t* params,
         params->yaw = pt->yaw / 32768.0f * 180;
     }
 
-    if(params->mf->sub[0].flags & MFF_MOVEMENT_PITCH)
+    if(!params->mf->sub.empty() && params->mf->sub[0].flags & MFF_MOVEMENT_PITCH)
     {
         params->pitch = R_MovementXYZPitch(FIX2FLT(pt->mov[0]), FIX2FLT(pt->mov[1]), FIX2FLT(pt->mov[2]));
     }
