@@ -1,4 +1,4 @@
-/** @file world/blockmap.h World map element blockmap.
+/** @file blockmap.h World map element blockmap.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -122,9 +122,9 @@ public:
 
     bool unlink(CellBlock const &cellBlock, void *elem);
 
-    int iterate(Cell const &cell, int (*callback) (void *elem, void *context), void *context);
+    int iterate(Cell const &cell, int (*callback) (void *elem, void *context), void *context) const;
 
-    int iterate(CellBlock const &cellBlock, int (*callback) (void *elem, void *context), void *context);
+    int iterate(CellBlock const &cellBlock, int (*callback) (void *elem, void *context), void *context) const;
 
     /**
      * Retrieve an immutable pointer to the underlying Gridmap instance

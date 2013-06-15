@@ -378,7 +378,6 @@ DENG_HEADERS += \
     include/world/p_intercept.h \
     include/world/p_mapdata.h \
     include/world/p_maptypes.h \
-    include/world/p_maputil.h \
     include/world/p_object.h \
     include/world/p_objlink.h \
     include/world/p_particle.h \
@@ -392,6 +391,7 @@ DENG_HEADERS += \
     include/world/sector.h \
     include/world/segment.h \
     include/world/surface.h \
+    include/world/thinkers.h \
     include/world/vertex.h \
     include/world/world.h \
     src/updater/downloaddialog.h \
@@ -672,12 +672,10 @@ SOURCES += \
     src/world/mapelement.cpp \
     src/world/p_data.cpp \
     src/world/p_intercept.cpp \
-    src/world/p_maputil.cpp \
     src/world/p_mobj.cpp \
     src/world/p_objlink.cpp \
     src/world/p_particle.cpp \
     src/world/p_players.cpp \
-    src/world/p_think.cpp \
     src/world/p_ticker.cpp \
     src/world/plane.cpp \
     src/world/polyobj.cpp \
@@ -687,6 +685,7 @@ SOURCES += \
     src/world/sector.cpp \
     src/world/segment.cpp \
     src/world/surface.cpp \
+    src/world/thinkers.cpp \
     src/world/vertex.cpp \
     src/world/world.cpp
 

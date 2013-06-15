@@ -1,4 +1,4 @@
-/** @file world/sector.h World map sector.
+/** @file sector.h World map sector.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -65,6 +65,9 @@ class Map;
  */
 class Sector : public de::MapElement
 {
+    DENG2_NO_COPY  (Sector)
+    DENG2_NO_ASSIGN(Sector)
+
 public:
     /// Required/referenced plane is missing. @ingroup errors
     DENG2_ERROR(MissingPlaneError);
@@ -81,12 +84,6 @@ public:
     DENG2_DEFINE_AUDIENCE(LightColorChange,
         void sectorLightColorChanged(Sector &sector, de::Vector3f const &oldLightColor,
                                      int changedComponents /*bit-field (0x1=Red, 0x2=Green, 0x4=Blue)*/))
-
-    /*
-     * Property value defaults:
-     */
-    static float const DEFAULT_LIGHT_LEVEL; ///< 1.f
-    static de::Vector3f const DEFAULT_LIGHT_COLOR; ///< red=1.f green=1.f, blue=1.f
 
     /*
      * Linked-element lists:
@@ -132,8 +129,8 @@ public: /// @todo Make private:
     AudioEnvironmentFactors _reverb;
 
 public:
-    Sector(float lightLevel               = DEFAULT_LIGHT_LEVEL,
-           de::Vector3f const &lightColor = DEFAULT_LIGHT_COLOR);
+    Sector(float lightLevel               = 1,
+           de::Vector3f const &lightColor = de::Vector3f(1, 1, 1));
 
     /**
      * Returns the sector plane with the specified @a planeIndex.
@@ -481,6 +478,18 @@ public:
 
     /// @todo Refactor away.
     void setValidCount(int newValidCount);
+
+    /**
+     * Determines whether the specified @a point in the map coordinate space
+     * lies within the sector (according to the edges of the BSP leafs)?
+     *
+     * @param point  Map space coordinate to test.
+     *
+     * @return  @c true iff the point lies inside the sector.
+     *
+     * @see BspLeaf::pointInside()
+     */
+    bool pointInside(de::Vector2d const &point) const;
 
 protected:
     int property(DmuArgs &args) const;

@@ -35,6 +35,8 @@
 
 #include "world/map.h"
 #include "world/linesighttest.h"
+#include "world/thinkers.h"
+
 #include "MaterialSnapshot"
 #include "MaterialVariantSpec"
 #include "Texture"
@@ -765,7 +767,7 @@ static void addLuminous(mobj_t *mo)
     // If the mobj's origin is outside the BSP leaf it is linked within, then
     // this means it is outside the playable map (and no light should be emitted).
     /// @todo Optimize: P_MobjLink() should do this and flag the mobj accordingly.
-    if(!P_IsPointInBspLeaf(mo->origin, *mo->bspLeaf)) return;
+    if(!mo->bspLeaf->pointInside(mo->origin)) return;
 
     ded_light_t *def = (mo->state? stateLights[mo->state - states] : NULL);
 
@@ -1132,7 +1134,7 @@ static boolean LOIT_ClipLumObj(void *data, void * /*context*/)
 
         luminousClipped[lumIdx] = 1;
 
-        if(LineSightTest(eye, origin, -1, 1, LS_PASSLEFT | LS_PASSOVER | LS_PASSUNDER).trace(*App_World().map().bspRoot()))
+        if(LineSightTest(eye, origin, -1, 1, LS_PASSLEFT | LS_PASSOVER | LS_PASSUNDER).trace(App_World().map().bspRoot()))
         {
             luminousClipped[lumIdx] = 0; // Will have a halo.
         }
@@ -1224,8 +1226,8 @@ void LO_UnlinkMobjLumobjs()
     if(useDynLights) return;
 
     // Mobjs are always public.
-    App_World().map().iterateThinkers(reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
-                                      0x1, LOIT_UnlinkMobjLumobj, NULL);
+    App_World().map().thinkers().iterate(reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
+                                         0x1, LOIT_UnlinkMobjLumobj, NULL);
 }
 
 /**

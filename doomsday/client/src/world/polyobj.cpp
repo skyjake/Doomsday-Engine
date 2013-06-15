@@ -1,4 +1,4 @@
-/** @file world/polyobj.cpp World Map Polyobj.
+/** @file polyobj.h World map polyobj.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -48,15 +48,18 @@ typedef QVector<Vector2d> VertexCoords;
 static void notifyGeometryChanged(Polyobj &po)
 {
 #ifdef __CLIENT__
-    // Shadow bias must be informed when surfaces move/deform.
-    foreach(Line *line, po.lines())
+    if(!ddMapSetup)
     {
-        Segment *segment = line->front().leftSegment();
-        if(!segment) continue;
-
-        for(int i = 0; i < 3; ++i)
+        // Shadow bias must be informed when surfaces move/deform.
+        foreach(Line *line, po.lines())
         {
-            SB_SurfaceMoved(&segment->biasSurface(i));
+            Segment *segment = line->front().leftSegment();
+            if(!segment) continue;
+
+            for(int i = 0; i < 3; ++i)
+            {
+                SB_SurfaceMoved(&segment->biasSurface(i));
+            }
         }
     }
 #else // !__CLIENT__
@@ -135,7 +138,7 @@ void Polyobj::unlink()
         _bspLeaf = 0;
 
         /// @todo Do not assume polyobj is from the CURRENT map.
-        App_World().map().unlinkPolyobj(*this);
+        App_World().map().unlink(*this);
     }
 }
 
@@ -143,7 +146,7 @@ void Polyobj::link()
 {
     if(!_bspLeaf)
     {
-        App_World().map().linkPolyobj(*this);
+        App_World().map().link(*this);
 
         // Find the center point of the polyobj.
         Vector2d avg;
@@ -155,11 +158,8 @@ void Polyobj::link()
 
         // Given the center point determine in which BSP leaf the polyobj resides.
         /// @todo Do not assume polyobj is from the CURRENT map.
-        if(BspLeaf *bspLeaf = App_World().map().bspLeafAtPoint(avg))
-        {
-            bspLeaf->addOnePolyobj(*this);
-            _bspLeaf = bspLeaf;
-        }
+        _bspLeaf = &App_World().map().bspLeafAt(avg);
+        _bspLeaf->addOnePolyobj(*this);
     }
 }
 

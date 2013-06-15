@@ -1,4 +1,4 @@
-/** @file world/mapelement.h Base class for all world map elements.
+/** @file mapelement.h Base class for all world map elements.
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
@@ -101,7 +101,7 @@ public:
     }
 
     /**
-     * @note The Current index indices are retained.
+     * @note The current index indices are retained.
      *
      * @see setIndexInArchive(), setIndexInMap()
      */

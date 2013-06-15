@@ -1,4 +1,4 @@
-/** @file world/blockmap.cpp World map element blockmap.
+/** @file blockmap.cpp World map element blockmap.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -320,7 +320,8 @@ int Blockmap::cellElementCount(Cell const &cell) const
     return 0;
 }
 
-int Blockmap::iterate(Cell const &cell, int (*callback) (void *elem, void *parameters), void *parameters)
+int Blockmap::iterate(Cell const &cell, int (*callback) (void *elem, void *parameters),
+                      void *parameters) const
 {
     if(!callback) return false; // Huh?
     if(CellData *cellData = (CellData *)d->cellData(cell))
@@ -343,7 +344,8 @@ static int cellDataIterateWorker(void *cdPtr, void *parameters)
     return cellData->iterate(p->callback, p->parameters);
 }
 
-int Blockmap::iterate(CellBlock const &cellBlock, int (*callback) (void *elem, void *parameters), void *parameters)
+int Blockmap::iterate(CellBlock const &cellBlock, int (*callback) (void *elem, void *parameters),
+                      void *parameters) const
 {
     if(!callback) return false; // Huh?
     CellDataIterateWorkerParams parm;

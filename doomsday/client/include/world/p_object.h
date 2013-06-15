@@ -1,4 +1,4 @@
-/** @file world/p_object.h World Map Objects.
+/** @file p_object.h World map objects.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
@@ -67,6 +67,8 @@ void P_MobjRecycle(mobj_t *mobj);
 boolean Mobj_SetOrigin(mobj_t *mobj, coord_t x, coord_t y, coord_t z);
 
 coord_t Mobj_ApproxPointDistance(mobj_t *start, coord_t const *point);
+
+boolean Mobj_UnlinkFromSector(mobj_t *mobj);
 
 #ifdef __cplusplus
 } // extern "C"

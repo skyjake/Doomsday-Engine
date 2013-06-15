@@ -1310,7 +1310,7 @@ int G_DoLoadMap(loadmap_params_t* p)
         hasMapInfo = Def_Get(DD_DEF_MAP_INFO, Str_Text(mapUriStr), &mapInfo);
     }}
 
-    P_SetupMap(p->mapUri, p->episode, p->map);
+    P_SetupMap(p->mapUri);
     initFogForMap(hasMapInfo? &mapInfo : 0);
 
 #if __JHEXEN__

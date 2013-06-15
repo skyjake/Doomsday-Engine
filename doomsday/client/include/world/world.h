@@ -1,4 +1,4 @@
-/** @file world/world.h World.
+/** @file world.h World.
  *
  * Ideas for improvement:
  *
@@ -41,8 +41,14 @@
 
 namespace de {
 
+/**
+ * @ingroup world
+ */
 class World
 {
+    DENG2_NO_COPY  (World)
+    DENG2_NO_ASSIGN(World)
+
 public:
     /// No map is currently loaded. @ingroup errors
     DENG2_ERROR(MapError);
@@ -54,30 +60,46 @@ public:
 
 public:
     /**
-     * Constructs a world.
+     * Construct a new world with no "current" map.
      */
     World();
 
     /**
-     * To be called to register the cvars and ccmds for this module.
+     * To be called to register the commands and variables of this module.
      */
     static void consoleRegister();
 
+    /**
+     * Returns @c true iff a map is currently loaded.
+     */
     bool hasMap() const;
 
+    /**
+     * Provides access to the currently loaded map.
+     *
+     * @see hasMap()
+     */
     Map &map() const;
 
-    bool loadMap(Uri const &uri);
-
-    void setupMap(int mode);
-
-    /// @todo Refactor away.
-    void clearMap();
+    /**
+     * @param uri  Universal resource identifier (URI) for the map to change to.
+     *             If an empty URI is specified the current map will be unloaded.
+     *
+     * @return  @c true= the map change completed successfully.
+     */
+    bool changeMap(Uri const &uri);
 
     /**
-     * Reset the map cache removing all existing records.
+     * Unload the currently loaded map (if any).
+     *
+     * @see changeMap()
      */
-    void resetMapCache();
+    inline void unloadMap() { changeMap(Uri()); }
+
+    /**
+     * To be called following an engine reset to update the world state.
+     */
+    void update();
 
 private:
     DENG2_PRIVATE(d)

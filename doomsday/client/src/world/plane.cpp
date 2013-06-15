@@ -1,4 +1,4 @@
-/** @file plane.h World Map Plane.
+/** @file plane.h World map plane.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -18,6 +18,8 @@
  * 02110-1301 USA</small>
  */
 
+#include <QList>
+
 #include <de/Log>
 
 #include "de_base.h"
@@ -34,9 +36,6 @@
 #include "world/plane.h"
 
 using namespace de;
-
-// $smoothplane: Maximum speed for a smoothed plane.
-int const Plane::MAX_SMOOTH_MOVE = 64;
 
 DENG2_PIMPL(Plane)
 {

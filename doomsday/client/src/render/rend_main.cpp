@@ -45,6 +45,7 @@
 #include "world/p_objlink.h"
 #include "world/p_players.h"
 #include "world/r_world.h"
+#include "world/thinkers.h"
 
 #include "WallEdge"
 #include "SkyFixEdge"
@@ -1365,8 +1366,7 @@ static uint projectSurfaceShadows(Surface &surface, float glowStrength,
 static void writeWallSection(Segment &segment, int section,
     bool *retWroteOpaque = 0, coord_t *retBottomZ = 0, coord_t *retTopZ = 0)
 {
-    BspLeaf *bspLeaf = currentBspLeaf;
-    DENG_ASSERT(!isNullLeaf(bspLeaf));
+    DENG_ASSERT(!isNullLeaf(currentBspLeaf));
     DENG_ASSERT(segment.isFlagged(Segment::FacingFront));
     DENG_ASSERT(segment.hasLineSide() && segment.lineSide().hasSections());
 
@@ -2471,7 +2471,7 @@ void Rend_RenderMap()
         currentBspLeaf = 0;
 
         // Draw the world!
-        traverseBspAndDrawLeafs(App_World().map().bspRoot());
+        traverseBspAndDrawLeafs(&App_World().map().bspRoot());
 
         Rend_RenderMobjShadows();
     }
@@ -2810,8 +2810,8 @@ static void Rend_DrawBoundingBoxes()
 
     if(devMobjBBox)
     {
-        App_World().map().iterateThinkers(reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
-                                          0x1, drawMobjBBox, NULL);
+        App_World().map().thinkers().iterate(reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
+                                             0x1, drawMobjBBox, NULL);
     }
 
     if(devPolyobjBBox)

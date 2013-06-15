@@ -30,8 +30,10 @@
 #include "de_network.h"
 #include "de_play.h"
 
-#include "server/sv_pool.h"
 #include "audio/s_main.h"
+#include "world/thinkers.h"
+
+#include "server/sv_pool.h"
 
 using namespace de;
 
@@ -1498,7 +1500,7 @@ coord_t Sv_MobjDistance(const mobj_t* mo, const ownerinfo_t* info, boolean isRea
     coord_t z;
 
     /// @todo Do not assume mobj is from the CURRENT map.
-    if(isReal && !App_World().map().isUsedMobjId(mo->thinker.id))
+    if(isReal && !App_World().map().thinkers().isUsedMobjId(mo->thinker.id))
     {
         // This mobj does not exist any more!
         return DDMAXFLOAT;
@@ -2069,7 +2071,7 @@ void Sv_NewNullDeltas(cregister_t *reg, boolean doUpdate, pool_t **targets)
             next = obj->next;
 
             /// @todo Do not assume mobj is from the CURRENT map.
-            if(!App_World().map().isUsedMobjId(obj->mo.thinker.id))
+            if(!App_World().map().thinkers().isUsedMobjId(obj->mo.thinker.id))
             {
                 // This object no longer exists!
                 Sv_NewDelta(&null, DT_MOBJ, obj->mo.thinker.id);
@@ -2142,8 +2144,8 @@ void Sv_NewMobjDeltas(cregister_t *reg, boolean doUpdate, pool_t **targets)
     parm.doUpdate = doUpdate;
     parm.targets = targets;
 
-    App_World().map().iterateThinkers(reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
-                                      0x1 /*mobjs are public*/, newMobjDelta, &parm);
+    App_World().map().thinkers().iterate(reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
+                                         0x1 /*mobjs are public*/, newMobjDelta, &parm);
 }
 
 /**

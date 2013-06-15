@@ -1,5 +1,4 @@
-/** @file generators.cpp Generators.
- * @ingroup world
+/** @file generators.cpp World map generator collection.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -20,10 +19,6 @@
  */
 
 #include <de/memoryzone.h>
-
-//#include "de_platform.h"
-//#include "de_console.h"
-//#include "dd_main.h"
 
 #include "world/generators.h"
 

@@ -148,7 +148,7 @@ static int rendBspLeaf(BspLeaf *bspLeaf, void * /*parameters*/)
     return false; // Continue iteration.
 }
 
-static int rendCellLines(Blockmap &bmap, Blockmap::Cell const &cell, void *parameters)
+static int rendCellLines(Blockmap const &bmap, Blockmap::Cell const &cell, void *parameters)
 {
     glBegin(GL_LINES);
         bmap.iterate(cell, (int (*)(void*,void*)) rendLine, parameters);
@@ -172,7 +172,7 @@ static int rendCellPolyobjLines(void *object, void *parameters)
     return false; // Continue iteration.
 }
 
-static int rendCellPolyobjs(Blockmap &bmap, Blockmap::Cell const &cell, void *parameters)
+static int rendCellPolyobjs(Blockmap const &bmap, Blockmap::Cell const &cell, void *parameters)
 {
     glBegin(GL_LINES);
         bmap.iterate(cell, (int (*)(void*,void*)) rendCellPolyobjLines, parameters);
@@ -180,7 +180,7 @@ static int rendCellPolyobjs(Blockmap &bmap, Blockmap::Cell const &cell, void *pa
     return false; // Continue iteration.
 }
 
-static int rendCellMobjs(Blockmap &bmap, Blockmap::Cell const &cell, void *parameters)
+static int rendCellMobjs(Blockmap const &bmap, Blockmap::Cell const &cell, void *parameters)
 {
     glBegin(GL_QUADS);
         bmap.iterate(cell, (int (*)(void*,void*)) rendMobj, parameters);
@@ -188,13 +188,13 @@ static int rendCellMobjs(Blockmap &bmap, Blockmap::Cell const &cell, void *param
     return false; // Continue iteration.
 }
 
-static int rendCellBspLeafs(Blockmap &bmap, Blockmap::Cell const &cell, void *parameters)
+static int rendCellBspLeafs(Blockmap const &bmap, Blockmap::Cell const &cell, void *parameters)
 {
     bmap.iterate(cell, (int (*)(void*,void*)) rendBspLeaf, parameters);
     return false; // Continue iteration.
 }
 
-static void rendBlockmapBackground(Blockmap &bmap)
+static void rendBlockmapBackground(Blockmap const &bmap)
 {
     Blockmap::Cell const &bmapDimensions = bmap.dimensions();
 
@@ -266,7 +266,7 @@ static void drawCellInfo(Point2Raw const *_origin, char const *info)
     glDisable(GL_TEXTURE_2D);
 }
 
-static void drawBlockmapInfo(Point2Raw const *_origin, Blockmap *blockmap)
+static void drawBlockmapInfo(Point2Raw const *_origin, Blockmap const *blockmap)
 {
     DENG_ASSERT(blockmap != 0);
 
@@ -314,7 +314,7 @@ static void drawBlockmapInfo(Point2Raw const *_origin, Blockmap *blockmap)
     glDisable(GL_TEXTURE_2D);
 }
 
-static void drawCellInfoBox(Blockmap *blockmap, Point2Raw const *origin,
+static void drawCellInfoBox(Blockmap const *blockmap, Point2Raw const *origin,
     char const *objectTypeName, Blockmap::Cell const &cell)
 {
     uint count = blockmap->cellElementCount(cell);
@@ -329,8 +329,8 @@ static void drawCellInfoBox(Blockmap *blockmap, Point2Raw const *origin,
  * @param followMobj  Mobj to center/focus the visual on. Can be @c NULL.
  * @param cellDrawer  Blockmap cell content drawing callback. Can be @a NULL.
  */
-static void rendBlockmap(Blockmap &bmap, mobj_t *followMobj,
-    int (*cellDrawer) (Blockmap &bmap, Blockmap::Cell const &cell, void *parameters))
+static void rendBlockmap(Blockmap const &bmap, mobj_t *followMobj,
+    int (*cellDrawer) (Blockmap const &bmap, Blockmap::Cell const &cell, void *parameters))
 {
     Blockmap::CellBlock vCellBlock;
     Blockmap::Cell vCell;
@@ -511,10 +511,10 @@ static void rendBlockmap(Blockmap &bmap, mobj_t *followMobj,
 
 void Rend_BlockmapDebug()
 {
-    int (*cellDrawer) (Blockmap &blockmap, Blockmap::Cell const &cell, void *parameters);
+    int (*cellDrawer) (Blockmap const &blockmap, Blockmap::Cell const &cell, void *parameters);
     char const *objectTypeName;
     mobj_t *followMobj = 0;
-    Blockmap *blockmap;
+    Blockmap const *blockmap;
     Point2Raw origin;
     float scale;
 
@@ -526,34 +526,26 @@ void Rend_BlockmapDebug()
     Map &map = App_World().map();
     switch(bmapShowDebug)
     {
-    default: // MobjLinks.
-        if(!map.mobjBlockmap()) return;
-
-        blockmap = map.mobjBlockmap();
+    default: // Mobjs.
+        blockmap = &map.mobjBlockmap();
         cellDrawer = rendCellMobjs;
         objectTypeName = "Mobjs";
         break;
 
     case 2: // Lines.
-        if(!map.lineBlockmap()) return;
-
-        blockmap = map.lineBlockmap();
+        blockmap = &map.lineBlockmap();
         cellDrawer = rendCellLines;
         objectTypeName = "Lines";
         break;
 
-    case 3: // BspLeafs.
-        if(!map.bspLeafBlockmap()) return;
-
-        blockmap = map.bspLeafBlockmap();
+    case 3: // BSP leafs.
+        blockmap = &map.bspLeafBlockmap();
         cellDrawer = rendCellBspLeafs;
         objectTypeName = "BSP Leafs";
         break;
 
-    case 4: // PolyobjLinks.
-        if(!map.polyobjBlockmap()) return;
-
-        blockmap = map.polyobjBlockmap();
+    case 4: // Polyobjs.
+        blockmap = &map.polyobjBlockmap();
         cellDrawer = rendCellPolyobjs;
         objectTypeName = "Polyobjs";
         break;

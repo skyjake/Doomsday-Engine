@@ -1,4 +1,4 @@
-/** @file world/p_intercept.h World Line / Object Interception.
+/** @file p_intercept.h World map line / object interception.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -19,6 +19,8 @@
 
 #ifndef DENG_WORLD_P_INTERCEPT_H
 #define DENG_WORLD_P_INTERCEPT_H
+
+class Line;
 
 struct InterceptNode; // The interceptnode instance (opaque).
 typedef struct InterceptNode InterceptNode;
@@ -44,5 +46,11 @@ InterceptNode *P_AddIntercept(intercepttype_t type, float distance, void *object
  * @return  Zero if the traverser callback returns zero for all processed intercepts.
  */
 int P_TraverseIntercepts(traverser_t callback, void *parameters);
+
+/// @todo Find a better home for the following functions ----------------------
+
+int PIT_AddLineIntercepts(Line *ld, void *parameters);
+
+int PIT_AddMobjIntercepts(struct mobj_s *mobj, void *parameters);
 
 #endif // DENG_WORLD_P_INTERCEPT_H

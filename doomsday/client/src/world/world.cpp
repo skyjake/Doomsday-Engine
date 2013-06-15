@@ -1,4 +1,4 @@
-/** @file world/world.cpp World.
+/** @file world.cpp World.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -45,6 +45,7 @@
 #include "render/r_main.h" // R_ResetViewer
 
 #ifdef __CLIENT__
+#  include "client/cl_frame.h"
 #  include "client/cl_player.h"
 
 #  include "render/lumobj.h"
@@ -62,6 +63,8 @@
 #  include "server/sv_pool.h"
 #endif
 
+#include "world/thinkers.h"
+
 #include "world/world.h"
 
 using namespace de;
@@ -70,7 +73,7 @@ boolean ddMapSetup;
 timespan_t ddMapTime;
 
 // Should we be caching successfully loaded maps?
-static byte mapCache = true; // cvar
+//static byte mapCache = true; // cvar
 
 static char const *mapCacheDir = "mapcache/";
 
@@ -298,6 +301,7 @@ DENG2_PIMPL(World)
      */
     Map *loadMap(Uri const &uri/*, bool forceRetry = false*/)
     {
+        LOG_MSG("Loading map \"%s\"...") << uri;
         LOG_AS("World::loadMap");
 
         // Record this map if we haven't already.
@@ -347,32 +351,6 @@ DENG2_PIMPL(World)
                 << TABBED("BSP Leafs", map->bspLeafCount())
                 << TABBED("Segments",  map->segmentCount());
 
-        // Call the game's setup routines.
-        if(gx.SetupForMapData)
-        {
-            gx.SetupForMapData(DMU_VERTEX,  map->vertexCount());
-            gx.SetupForMapData(DMU_LINE,    map->lineCount());
-            gx.SetupForMapData(DMU_SIDE,    map->sideCount());
-            gx.SetupForMapData(DMU_SECTOR,  map->sectorCount());
-        }
-
-        // Do any initialization/error checking work we need to do.
-        // Must be called before we go any further.
-        P_InitUnusedMobjList();
-
-        // Must be called before any mobjs are spawned.
-        map->initNodePiles();
-
-#ifdef __CLIENT__
-        // Prepare the client-side data.
-        if(isClient)
-        {
-            map->initClMobjs();
-        }
-
-        Rend_DecorInitForMap();
-#endif
-
         // See what mapinfo says about this map.
         Uri mapUri = map->uri();
         ded_mapinfo_t *mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&mapUri));
@@ -409,59 +387,163 @@ DENG2_PIMPL(World)
         map->_effectiveGravity = map->_globalGravity;
 
         // Init the thinker lists (public and private).
-        map->initThinkerLists(0x1 | 0x2);
+        map->thinkers().initLists(0x1 | 0x2);
+
+        // Must be called before we go any further.
+        P_InitUnusedMobjList();
+
+        // Must be called before any mobjs are spawned.
+        map->initNodePiles();
 
 #ifdef __CLIENT__
+        // Prepare the client-side data.
+        if(isClient)
+        {
+            map->initClMobjs();
+        }
+        Cl_ResetFrame();
+        map->reinitClMobjs();
+        Cl_InitPlayers(); // Player data, too.
+
+        // Spawn generators for the map.
+        /// @todo Defer until after finalization.
+        P_PtcInitForMap();
+#endif
+
+        // The game may need to perform it's own finalization now that the
+        // "current" map has changed.
+        if(gx.FinalizeMapChange)
+        {
+            gx.FinalizeMapChange(reinterpret_cast<uri_s const *>(&map->uri()));
+        }
+
+        if(gameTime > 20000000 / TICSPERSEC)
+        {
+            // In very long-running games, gameTime will become so large that
+            // it cannot be accurately converted to 35 Hz integer tics. Thus it
+            // needs to be reset back to zero.
+            gameTime = 0;
+        }
+
+        // Init player values.
+        for(uint i = 0; i < DDMAXPLAYERS; ++i)
+        {
+            player_t *plr = &ddPlayers[i];
+            ddplayer_t &ddpl = ddPlayers[i].shared;
+
+            plr->extraLight = plr->targetExtraLight = 0;
+            plr->extraLightCounter = 0;
+
+            // Determine the "invoid" status.
+            ddpl.inVoid = true;
+
+            if(mobj_t *mo = ddpl.mo)
+            {
+                BspLeaf &bspLeaf = map->bspLeafAt(mo->origin);
+#ifdef __CLIENT__
+                if(mo->origin[VZ] >= bspLeaf.sector().floor().visHeight() &&
+                   mo->origin[VZ] <  bspLeaf.sector().ceiling().visHeight() - 4)
+#else
+                if(mo->origin[VZ] >= bspLeaf.sector().floor().height() &&
+                   mo->origin[VZ] <  bspLeaf.sector().ceiling().height() - 4)
+#endif
+                {
+                    ddpl.inVoid = false;
+                }
+            }
+        }
+
+        /// @todo Refactor away:
+        foreach(Sector *sector, map->sectors())
+        {
+            sector->updateSoundEmitterOrigin();
+#ifdef __CLIENT__
+            map->updateMissingMaterialsForLinesOfSector(*sector);
+            S_MarkSectorReverbDirty(sector);
+#endif
+        }
+
+        map->initPolyobjs();
+        S_SetupForChangedMap();
+
+#ifdef __SERVER__
+        if(isServer)
+        {
+            // Init server data.
+            Sv_InitPools();
+        }
+#endif
+
+#ifdef __CLIENT__
+        map->initLightGrid();
+        map->initSkyFix();
+        map->buildSurfaceLists();
+        P_MapSpawnPlaneParticleGens();
+
+        Time begunPrecacheAt;
+        Rend_CacheForMap();
+        App_Materials().processCacheQueue();
+        LOG_INFO(String("Precaching completed in %1 seconds.").arg(begunPrecacheAt.since(), 0, 'g', 2));
+
+        RL_DeleteLists();
+        R_InitRendPolyPools();
+
+        Rend_UpdateLightModMatrix();
+        Rend_DecorInitForMap();
         Rend_RadioInitForMap();
 
-        map->initSkyFix();
-
-        map->clMobjReset();
+        R_InitObjlinkBlockmapForMap();
+        R_InitShadowProjectionListsForMap(); // Projected mobj shadows.
+        LO_InitForMap(); // Lumobj management.
+        VL_InitForMap(); // Converted vlights (from lumobjs) management.
 
         // Tell shadow bias to initialize the bias light sources.
         SB_InitForMap(map->oldUniqueId());
 
-        // Clear player data, too, since we just lost all clmobjs.
-        Cl_InitPlayers();
-
-        RL_DeleteLists();
-        Rend_UpdateLightModMatrix();
+        // Restart all material animations.
+        App_Materials().restartAllAnimations();
 #endif
 
-        // Invalidate old cmds and init player values.
-        for(uint i = 0; i < DDMAXPLAYERS; ++i)
+        /*
+         * Post-change map setup has now been fully completed.
+         */
+
+        // Run any commands specified in MapInfo.
+        if(mapInfo && mapInfo->execute)
         {
-            player_t *plr = &ddPlayers[i];
-
-            /*
-            if(isServer && plr->shared.inGame)
-                clients[i].runTime = SECONDS_TO_TICKS(gameTime);*/
-
-            plr->extraLight = plr->targetExtraLight = 0;
-            plr->extraLightCounter = 0;
+            Con_Execute(CMDS_SCRIPT, mapInfo->execute, true, false);
         }
+
+        // Run the special map setup command, which the user may alias to do
+        // something useful.
+        String cmd = "init-" + mapUri.resolved();
+        if(Con_IsValidCommand(cmd.toUtf8().constData()))
+        {
+            Con_Executef(CMDS_SCRIPT, false, "%s", cmd.toUtf8().constData());
+        }
+
+        // Reset map time.
+        ddMapTime = 0;
+
+        // Now that the setup is done, let's reset the timer so that it will
+        // appear that no time has passed during the setup.
+        DD_ResetTimer();
 
         // Make sure that the next frame doesn't use a filtered viewer.
         R_ResetViewer();
 
 #ifdef __CLIENT__
-        // Material animations should begin from their first step.
-        App_Materials().restartAllAnimations();
+        // Clear any input events that might have accumulated during setup.
+        DD_ClearEvents();
 
-        R_InitObjlinkBlockmapForMap();
-
-        LO_InitForMap(); // Lumobj management.
-        R_InitShadowProjectionListsForMap(); // Projected mobj shadows.
-        VL_InitForMap(); // Converted vlights (from lumobjs) management.
-
-        map->initLightGrid();
-
-        R_InitRendPolyPools();
-
-        // Init Particle Generator links.
-        P_PtcInitForMap();
-
+        // Inform the timing system to suspend the starting of the clock.
+        firstFrameAfterLoad = true;
 #endif
+
+        Z_PrintStatus();
+
+        // Inform interested parties that the "current" map has changed.
+        notifyMapChange();
     }
 };
 
@@ -489,221 +571,116 @@ Map &World::map() const
     throw MapError("World::map", "No map is currently loaded");
 }
 
-bool World::loadMap(de::Uri const &uri)
+bool World::changeMap(de::Uri const &uri)
 {
-    LOG_MSG("Loading map \"%s\"...") << uri;
-
-    if(isServer)
-    {
-        // Whenever the map changes, remote players must tell us when they're
-        // ready to begin receiving frames.
-        for(uint i = 0; i < DDMAXPLAYERS; ++i)
-        {
-            //player_t *plr = &ddPlayers[i];
-            if(/*!(plr->shared.flags & DDPF_LOCAL) &&*/ clients[i].connected)
-            {
-                LOG_DEBUG("Client %i marked as 'not ready' to receive frames.") << i;
-                clients[i].ready = false;
-            }
-        }
-    }
-
     // As the memory zone does not provide the mechanisms to prepare another
     // map in parallel we must free the current map first.
     /// @todo The memory zone would still be useful if the purge and tagging
     /// mechanisms allowed more fine grained control. It is no longer useful
     /// for allocating memory used elsewhere so it should be repurposed for
     /// this usage specifically.
-    if(d->map)
-    {
-        delete d->map; d->map = 0;
-    }
+    delete d->map; d->map = 0;
     Z_FreeTags(PU_MAP, PU_PURGELEVEL - 1);
 
+    // Are we just unloading the current map?
+    if(uri.isEmpty()) return true;
+
+    // A new map is about to be setup.
+    ddMapSetup = true;
+
     d->changeMap(d->loadMap(uri));
+
+    // We've finished setting up the map.
+    ddMapSetup = false;
+
     return d->map != 0;
 }
 
-#ifdef __CLIENT__
-static void resetAllMapPlaneVisHeights(Map &map)
+void World::update()
 {
-    foreach(Sector *sector, map.sectors())
-    foreach(Plane *plane, sector->planes())
+#ifdef __CLIENT__
+    P_UpdateParticleGens(); // Defs might've changed.
+#endif
+
+    // Reset the archived map cache (the available maps may have changed).
+    d->records.clear();
+
+    for(uint i = 0; i < DDMAXPLAYERS; ++i)
     {
-        plane->resetVisHeight();
+        player_t *plr = &ddPlayers[i];
+        ddplayer_t *ddpl = &plr->shared;
+        // States have changed, the states are unknown.
+        ddpl->pSprites[0].statePtr = ddpl->pSprites[1].statePtr = NULL;
     }
-}
-#endif
 
-static void updateAllMapSectors(Map &map)
-{
-    foreach(Sector *sector, map.sectors())
+    if(d->map)
     {
-        sector->updateSoundEmitterOrigin();
 #ifdef __CLIENT__
-        map.updateMissingMaterialsForLinesOfSector(*sector);
-        S_MarkSectorReverbDirty(sector);
-#endif
-    }
-}
 
-void World::setupMap(int mode)
-{
-    LOG_AS("World::setupMap");
-
-    switch(mode)
-    {
-    case DDSMM_INITIALIZE:
-        // A new map is about to be setup.
-        ddMapSetup = true;
-
-#ifdef __CLIENT__
-        App_Materials().purgeCacheQueue();
-#endif
-        return;
-
-    case DDSMM_AFTER_LOADING:
-        DENG_ASSERT(d->map);
-
-#ifdef __CLIENT__
-        // Update everything again. Its possible that after loading we now have
-        // more HOMs to fix, etc..
-        d->map->initSkyFix();
-#endif
-
-        updateAllMapSectors(*d->map);
-
-#ifdef __CLIENT__
-        resetAllMapPlaneVisHeights(*d->map);
-#endif
-
-        d->map->initPolyobjs();
-        DD_ResetTimer();
-        return;
-
-    case DDSMM_FINALIZE: {
-        DENG_ASSERT(d->map);
-
-        if(gameTime > 20000000 / TICSPERSEC)
+        // Update all world surfaces.
+        foreach(Sector *sector, d->map->sectors())
+        foreach(Plane *plane, sector->planes())
         {
-            // In very long-running games, gameTime will become so large that
-            // it cannot be accurately converted to 35 Hz integer tics. Thus it
-            // needs to be reset back to zero.
-            gameTime = 0;
+            plane->surface().markAsNeedingDecorationUpdate();
         }
 
-#ifdef __SERVER__
-        // Init server data.
-        Sv_InitPools();
-#endif
+        foreach(Line *line, d->map->lines())
+        for(int i = 0; i < 2; ++i)
+        {
+            Line::Side &side = line->side(i);
+            if(!side.hasSections()) continue;
 
-        d->map->initPolyobjs();
+            side.top().markAsNeedingDecorationUpdate();
+            side.middle().markAsNeedingDecorationUpdate();
+            side.bottom().markAsNeedingDecorationUpdate();
+        }
 
-#ifdef __CLIENT__
-        // Recalculate the light range mod matrix.
-        Rend_UpdateLightModMatrix();
-
-        P_MapSpawnPlaneParticleGens();
-#endif
-
-        updateAllMapSectors(*d->map);
-
-#ifdef __CLIENT__
-        resetAllMapPlaneVisHeights(*d->map);
+        /// @todo Is this even necessary?
+        foreach(Polyobj *polyobj, d->map->polyobjs())
+        foreach(Line *line, polyobj->lines())
+        {
+            line->front().middle().markAsNeedingDecorationUpdate();
+        }
 
         d->map->buildSurfaceLists();
 
-        Time begunPrecacheAt;
-        Rend_CacheForMap();
-        App_Materials().processCacheQueue();
-        LOG_INFO(String("Precaching completed in %1 seconds.").arg(begunPrecacheAt.since(), 0, 'g', 2));
-#endif
+#endif // __CLIENT__
 
-        S_SetupForChangedMap();
-
-        // Map setup has been completed.
-
-        // Run any commands specified in MapInfo.
+        // See what mapinfo says about this map.
         Uri mapUri = d->map->uri();
         ded_mapinfo_t *mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&mapUri));
-        if(mapInfo && mapInfo->execute)
+        if(!mapInfo)
         {
-            Con_Execute(CMDS_SCRIPT, mapInfo->execute, true, false);
+            // Use the default def instead.
+            Uri defaultDefUri = de::Uri(RC_NULL, "*");
+            mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&defaultDefUri));
         }
 
-        // Run the special map setup command, which the user may alias to do
-        // something useful.
-        String cmd = "init-" + mapUri.resolved();
-        if(Con_IsValidCommand(cmd.toUtf8().constData()))
+        // Reconfigure the sky
+        ded_sky_t *skyDef = 0;
+        if(mapInfo)
         {
-            Con_Executef(CMDS_SCRIPT, false, "%s", cmd.toUtf8().constData());
+            skyDef = Def_GetSky(mapInfo->skyID);
+            if(!skyDef) skyDef = &mapInfo->sky;
+        }
+#ifdef __CLIENT__
+        Sky_Configure(skyDef);
+#endif
+
+        if(mapInfo)
+        {
+            d->map->_globalGravity     = mapInfo->gravity;
+            d->map->_ambientLightLevel = mapInfo->ambient * 255;
+        }
+        else
+        {
+            // No map info found -- apply defaults.
+            d->map->_globalGravity = 1.0f;
+            d->map->_ambientLightLevel = 0;
         }
 
-#ifdef __CLIENT__
-        // Clear any input events that might have accumulated during setup.
-        DD_ClearEvents();
-#endif
-
-        // Now that the setup is done, let's reset the timer so that it will
-        // appear that no time has passed during the setup.
-        DD_ResetTimer();
-
-        // Determine the invoid status of players.
-        for(int i = 0; i < DDMAXPLAYERS; ++i)
-        {
-            ddplayer_t &ddpl = ddPlayers[i].shared;
-
-            ddpl.inVoid = true;
-
-            if(mobj_t *mo = ddpl.mo)
-            {
-                if(BspLeaf *bspLeaf = d->map->bspLeafAtPoint(mo->origin))
-                {
-#ifdef __CLIENT__
-                    if(mo->origin[VZ] >= bspLeaf->sector().floor().visHeight() &&
-                       mo->origin[VZ] < bspLeaf->sector().ceiling().visHeight() - 4)
-#else
-                    if(mo->origin[VZ] >= bspLeaf->sector().floor().height() &&
-                       mo->origin[VZ] < bspLeaf->sector().ceiling().height() - 4)
-#endif
-                    {
-                        ddpl.inVoid = false;
-                    }
-                }
-            }
-        }
-
-        // Reset map time.
-        ddMapTime = 0;
-
-        // We've finished setting up the map.
-        ddMapSetup = false;
-
-#ifdef __CLIENT__
-        // Inform the timing system to suspend the starting of the clock.
-        firstFrameAfterLoad = true;
-#endif
-
-        Z_PrintStatus();
-
-        // Inform interested parties that the "current" map has changed.
-        d->notifyMapChange();
-
-        return; }
-
-    default:
-        throw Error("World::setupMap", QString("Unknown mode %1").arg(mode));
+        d->map->_effectiveGravity = d->map->_globalGravity;
     }
-}
-
-void World::clearMap()
-{
-    d->map = 0;
-}
-
-void World::resetMapCache()
-{
-    d->records.clear();
 }
 
 } // namespace de

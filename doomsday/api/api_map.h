@@ -174,9 +174,9 @@ DENG_API_TYPEDEF(Map)
      * @param uri  Uri identifying the map to be searched for.
      * @return  @c true: a known and loadable map.
      */
-    boolean         (*Exists)(char const* uri);
+    boolean         (*Exists)(char const *uri);
 
-    boolean         (*IsCustom)(char const* uri);
+    boolean         (*IsCustom)(char const *uri);
 
     /**
      * Retrieve the name of the source file containing the map referenced by @a
@@ -185,15 +185,15 @@ DENG_API_TYPEDEF(Map)
      * @param uri  Uri identifying the map to be searched for.
      * @return  Fully qualified (i.e., absolute) path to the source file.
      */
-    AutoStr*        (*SourceFile)(char const* uri);
+    AutoStr*        (*SourceFile)(char const *uri);
 
     /**
-     * Begin the process of loading a new map.
+     * Change the current map (will be loaded if necessary).
      *
-     * @param uri  Uri identifying the map to be loaded.
-     * @return @c true, if the map was loaded successfully.
+     * @param uri  Uri identifying the map to change to.
+     * @return  @c true= map was changed successfully.
      */
-    boolean         (*Load)(const char* uri);
+    boolean         (*Change)(char const *uri);
 
     // Lines
 
@@ -207,6 +207,14 @@ DENG_API_TYPEDEF(Map)
 
     // Sectors
 
+    /**
+     * Increment validCount before using this. 'func' is called for each mobj
+     * that is (even partly) inside the sector. This is not a 3D test, the
+     * mobjs may actually be above or under the sector.
+     *
+     * (Lovely name; actually this is a combination of SectorMobjs and
+     * a bunch of LineMobjs iterations.)
+     */
     int             (*S_TouchingMobjsIterator)(Sector* sector, int (*callback) (struct mobj_s*, void*), void* parameters);
 
     // Map Objects
@@ -574,7 +582,7 @@ DENG_API_T(Map);
 #define P_MapExists                         _api_Map.Exists
 #define P_MapIsCustom                       _api_Map.IsCustom
 #define P_MapSourceFile                     _api_Map.SourceFile
-#define P_LoadMap                           _api_Map.Load
+#define P_MapChange                         _api_Map.Change
 
 #define Line_BoxOnSide                      _api_Map.LD_BoxOnSide
 #define Line_BoxOnSide_FixedPrecision       _api_Map.LD_BoxOnSide_FixedPrecision

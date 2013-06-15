@@ -1,4 +1,4 @@
-/** @file world/map.h World Map.
+/** @file map.h World map.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -24,7 +24,6 @@
 #include <QList>
 #include <QSet>
 
-#include "m_nodepile.h"
 #include "p_particle.h"
 #include "Polyobj"
 
@@ -36,7 +35,8 @@ class Sector;
 class Segment;
 class Vertex;
 
-struct thinkerlist_s;
+#ifdef __CLIENT__
+
 struct clmoinfo_s;
 
 /**
@@ -64,6 +64,8 @@ typedef enum {
 struct clplane_s;
 struct clpolyobj_s;
 
+#endif // __CLIENT__
+
 namespace de {
 
 class Blockmap;
@@ -73,6 +75,7 @@ class Generators;
 class LightGrid;
 #endif
 class Mesh;
+class Thinkers;
 
 /**
  * World map.
@@ -81,15 +84,30 @@ class Mesh;
  */
 class Map
 {
+    DENG2_NO_COPY  (Map)
+    DENG2_NO_ASSIGN(Map)
+
 public:
+    /// Base error for runtime map editing errors. @ingroup errors
+    DENG2_ERROR(EditError);
+
+    /// Required blockmap is missing. @ingroup errors
+    DENG2_ERROR(MissingBlockmapError);
+
+    /// Required BSP data is missing. @ingroup errors
+    DENG2_ERROR(MissingBspError);
+
+    /// Required thinker lists are missing. @ingroup errors
+    DENG2_ERROR(MissingThinkersError);
+
 #ifdef __CLIENT__
     /// Required light grid is missing. @ingroup errors
     DENG2_ERROR(MissingLightGridError);
 #endif
 
-    /// Base error for runtime map editing errors. @ingroup errors
-    DENG2_ERROR(EditError);
-
+    /*
+     * Linked-element lists/sets:
+     */
     typedef QList<Vertex *>  Vertexes;
     typedef QList<Line *>    Lines;
     typedef QList<Polyobj *> Polyobjs;
@@ -105,24 +123,6 @@ public:
 #endif
 
 public: /// @todo make private:
-    struct thinkers_s {
-        int idtable[2048]; // 65536 bits telling which IDs are in use.
-        ushort iddealer;
-
-        size_t numLists;
-        struct thinkerlist_s **lists;
-        boolean inited;
-
-        thinkers_s()
-            : iddealer(0),
-              numLists(0),
-              lists(0),
-              inited(false)
-        {
-            zap(idtable);
-        }
-    } thinkers;
-
 #ifdef __CLIENT__
     cmhash_t clMobjHash[CLIENT_MOBJ_HASH_SIZE];
 
@@ -130,26 +130,37 @@ public: /// @todo make private:
     struct clpolyobj_s *clActivePolyobjs[CLIENT_MAX_MOVERS];
 #endif
 
-    nodepile_t mobjNodes, lineNodes; // All kinds of wacky links.
-    nodeindex_t *lineLinks; // Indices to roots.
-
     coord_t _globalGravity; // The defined gravity for this map.
     coord_t _effectiveGravity; // The effective gravity for this map.
 
     int _ambientLightLevel; // Ambient lightlevel for the current map.
 
 public:
+    /**
+     * Construct a new map initially configured in an editable state. Whilst
+     * editable new map elements can be added, thereby allowing the map to be
+     * constructed dynamically. When done editing @ref endEditing() should be
+     * called to switch the map into a non-editable (i.e., playable) state.
+     *
+     * @param uri  Universal resource identifier to attribute to the map. For
+     *             example, @code "E1M1" @endcode. Note that the scheme is
+     *             presently ignored (unused).
+     */
     Map(Uri const &uri = Uri());
-    ~Map();
 
     /**
-     * To be called to register the cvars and ccmds for this module.
+     * To be called to register the commands and variables of this module.
      */
     static void consoleRegister();
 
     /**
-     * This ID is the name of the lump tag that marks the beginning of map
-     * data, e.g. "MAP03" or "E2M8".
+     * To be called to initialize the dummy element arrays (which are used with
+     * the DMU API), with a fixed number of @em shared dummies.
+     */
+    static void initDummies();
+
+    /**
+     * Returns the universal resource identifier (URI) attributed to the map.
      */
     Uri const &uri() const;
 
@@ -166,21 +177,11 @@ public:
     void setOldUniqueId(char const *newUniqueId);
 
     /**
-     * Returns the minimal and maximal boundary points for the map.
+     * Returns the points which describe the boundary of the map coordinate
+     * space, which, are defined by the minimal and maximal vertex coordinates
+     * of the non-editable, non-polyobj line geometries).
      */
     AABoxd const &bounds() const;
-
-    /**
-     * @copydoc bounds()
-     *
-     * Return values:
-     * @param min  Coordinates for the minimal point are written here.
-     * @param max  Coordinates for the maximal point are written here.
-     */
-    inline void bounds(coord_t *min, coord_t *max) const {
-        if(min) V2d_Copy(min, bounds().min);
-        if(max) V2d_Copy(max, bounds().max);
-    }
 
     /**
      * Returns the currently effective gravity multiplier for the map.
@@ -190,37 +191,195 @@ public:
     /**
      * Change the effective gravity multiplier for the map.
      *
-     * @param gravity  New gravity multiplier.
+     * @param newGravity  New gravity multiplier.
      */
-    void setGravity(coord_t gravity);
+    void setGravity(coord_t newGravity);
 
     /**
-     * Returns the global ambient light level for the map.
+     * Returns the minimum ambient light level for the whole map.
      */
     int ambientLightLevel() const;
+
+    /**
+     * Provides access to the thinker lists for the map.
+     */
+    Thinkers /*const*/ &thinkers() const;
 
     /**
      * Provides a list of all the non-editable vertexes in the map.
      */
     Vertexes const &vertexes() const;
 
-    inline int vertexCount() const { return vertexes().count(); }
-
     /**
      * Provides a list of all the non-editable lines in the map.
      */
     Lines const &lines() const;
-
-    inline int lineCount() const { return lines().count(); }
-
-    inline int sideCount() const { return lines().count() * 2; }
 
     /**
      * Provides a list of all the non-editable sectors in the map.
      */
     Sectors const &sectors() const;
 
-    inline int sectorCount() const { return sectors().count(); }
+    /**
+     * Provides a list of all the non-editable polyobjs in the map.
+     */
+    Polyobjs const &polyobjs() const;
+
+    /**
+     * Provides access to the list of line segments for efficient traversal.
+     */
+    Segments const &segments() const;
+
+    /**
+     * Provides access to the list of BSP nodes for efficient traversal.
+     */
+    BspNodes const &bspNodes() const;
+
+    /**
+     * Provides access to the list of BSP leafs for efficient traversal.
+     */
+    BspLeafs const &bspLeafs() const;
+
+    inline int vertexCount() const  { return vertexes().count(); }
+
+    inline int lineCount() const    { return lines().count(); }
+
+    inline int sideCount() const    { return lines().count() * 2; }
+
+    inline int sectorCount() const  { return sectors().count(); }
+
+    inline int polyobjCount() const { return polyobjs().count(); }
+
+    inline int segmentCount() const { return segments().count(); }
+
+    inline int bspNodeCount() const { return bspNodes().count(); }
+
+    inline int bspLeafCount() const { return bspLeafs().count(); }
+
+    /**
+     * Helper function which returns the relevant side index given a @a lineIndex
+     * and @a side identifier.
+     *
+     * Indices are produced as follows:
+     * @code
+     *  lineIndex / 2 + (backSide? 1 : 0);
+     * @endcode
+     *
+     * @param lineIndex  Index of the line in the map.
+     * @param side       Side of the line. @c =0 the Line::Front else Line::Back
+     *
+     * @return  Unique index for the identified side.
+     */
+    static int toSideIndex(int lineIndex, int side);
+
+    /**
+     * Locate a Line::Side in the map by it's unique @a index.
+     *
+     * @param index  Unique index attributed to the line side.
+     *
+     * @return  Pointer to the identified Line::Side instance; otherwise @c 0.
+     *
+     * @see toSideIndex()
+     */
+    Line::Side *sideByIndex(int index) const;
+
+    /**
+     * Locate a Polyobj in the map by it's unique in-map tag.
+     *
+     * @param tag  Tag associated with the polyobj to be located.
+     *
+     * @return  Pointer to the identified Polyobj instance; otherwise @c 0.
+     */
+    Polyobj *polyobjByTag(int tag) const;
+
+    /**
+     * Provides access to the entity database.
+     */
+    EntityDatabase &entityDatabase() const;
+
+    /**
+     * Provides access to the mobj blockmap.
+     */
+    Blockmap const &mobjBlockmap() const;
+
+    /**
+     * Provides access to the line blockmap.
+     */
+    Blockmap const &lineBlockmap() const;
+
+    /**
+     * Provides access to the polyobj blockmap.
+     */
+    Blockmap const &polyobjBlockmap() const;
+
+    /**
+     * Provides access to the BSP leaf blockmap.
+     */
+    Blockmap const &bspLeafBlockmap() const;
+
+    /**
+     * Returns the root element for the map's BSP tree.
+     */
+    MapElement &bspRoot() const;
+
+    /**
+     * Determine the BSP leaf on the back side of the BS partition that lies
+     * in front of the specified point within the map's coordinate space.
+     *
+     * @note Always returns a valid BspLeaf although the point may not actually
+     * lay within it (however it is on the same side of the space partition)!
+     *
+     * @param point  Map space coordinates to determine the BSP leaf for.
+     *
+     * @return  BspLeaf instance for that BSP node's leaf.
+     */
+    BspLeaf &bspLeafAt(Vector2d const &point) const;
+
+    /**
+     * @copydoc bspLeafAt()
+     *
+     * The test is carried out using fixed-point math for behavior compatible
+     * with vanilla DOOM. Note that this means there is a maximum size for the
+     * point: it cannot exceed the fixed-point 16.16 range (about 65k units).
+     */
+    BspLeaf &bspLeafAt_FixedPrecision(Vector2d const &point) const;
+
+    /**
+     * Links a mobj into both a block and a BSP leaf based on it's (x,y).
+     * Sets mobj->bspLeaf properly. Calling with flags==0 only updates
+     * the BspLeaf pointer. Can be called without unlinking first.
+     * Should be called AFTER mobj translation to (re-)insert the mobj.
+     */
+    void link(struct mobj_s &mobj, byte flags);
+
+    /**
+     * Link the specified @a polyobj in any internal data structures for
+     * bookkeeping purposes. Should be called AFTER Polyobj rotation and/or
+     * translation to (re-)insert the polyobj.
+     *
+     * @param polyobj  Polyobj to be linked.
+     */
+    void link(Polyobj &polyobj);
+
+    /**
+     * Unlinks a mobj from everything it has been linked to. Should be called
+     * BEFORE mobj translation to extract the mobj.
+     *
+     * @param mo  Mobj to be unlinked.
+     *
+     * @return  DDLINK_* flags denoting what the mobj was unlinked from
+     * (in case we need to re-link).
+     */
+    int unlink(struct mobj_s &mobj);
+
+    /**
+     * Unlink the specified @a polyobj from any internal data structures for
+     * bookkeeping purposes. Should be called BEFORE Polyobj rotation and/or
+     * translation to extract the polyobj.
+     *
+     * @param polyobj  Polyobj to be unlinked.
+     */
+    void unlink(Polyobj &polyobj);
 
     /**
      * Given an @a emitter origin, attempt to identify the map element
@@ -236,101 +395,6 @@ public:
      */
     bool identifySoundEmitter(ddmobj_base_t const &emitter, Sector **sector,
         Polyobj **poly, Plane **plane, Surface **surface) const;
-
-    /**
-     * Provides a list of all the non-editable polyobjs in the map.
-     */
-    Polyobjs const &polyobjs() const;
-
-    /**
-     * Returns the total number of Polyobjs in the map.
-     */
-    inline int polyobjCount() const { return polyobjs().count(); }
-
-    /**
-     * Locate a polyobj in the map by unique in-map tag.
-     *
-     * @param tag  Tag associated with the polyobj to be located.
-     * @return  Pointer to the referenced polyobj instance; otherwise @c 0.
-     */
-    Polyobj *polyobjByTag(int tag) const;
-
-    /**
-     * Returns the root element for the map's BSP tree.
-     */
-    MapElement *bspRoot() const;
-
-    /**
-     * Provides access to the list of line segments for efficient traversal.
-     */
-    Segments const &segments() const;
-
-    /**
-     * Returns the total number of line segments in the map.
-     */
-    inline int segmentCount() const { return segments().count(); }
-
-    /**
-     * Provides access to the list of BSP nodes for efficient traversal.
-     */
-    BspNodes const &bspNodes() const;
-
-    /**
-     * Returns the total number of BspNodes in the map.
-     */
-    inline int bspNodeCount() const { return bspNodes().count(); }
-
-    /**
-     * Provides access to the list of BSP leafs for efficient traversal.
-     */
-    BspLeafs const &bspLeafs() const;
-
-    /**
-     * Returns the total number of BspLeafs in the map.
-     */
-    inline int bspLeafCount() const { return bspLeafs().count(); }
-
-    /**
-     * Determine the BSP leaf on the back side of the BS partition that lies
-     * in front  of the specified point within the map's coordinate space.
-     *
-     * @note Always returns a valid BspLeaf although the point may not actually
-     * lay within it (however it is on the same side of the space partition)!
-     *
-     * @param point  XY coordinates of the point to test.
-     *
-     * @return  BspLeaf instance for that BSP node's leaf.
-     */
-    BspLeaf *bspLeafAtPoint(Vector2d const &point) const;
-
-    /**
-     * @copydoc bspLeafAtPoint()
-     *
-     * The test is carried out using fixed-point math for behavior compatible
-     * with vanilla DOOM. Note that this means there is a maximum size for the
-     * point: it cannot exceed the fixed-point 16.16 range (about 65k units).
-     */
-    BspLeaf *bspLeafAtPoint_FixedPrecision(Vector2d const &point) const;
-
-    /**
-     * Provides access to the mobj blockmap.
-     */
-    Blockmap /*const*/ *mobjBlockmap() const;
-
-    /**
-     * Provides access to the polyobj blockmap.
-     */
-    Blockmap /*const*/ *polyobjBlockmap() const;
-
-    /**
-     * Provides access to the line blockmap.
-     */
-    Blockmap /*const*/ *lineBlockmap() const;
-
-    /**
-     * Provides access to the BSP leaf blockmap.
-     */
-    Blockmap /*const*/ *bspLeafBlockmap() const;
 
     int mobjsBoxIterator(AABoxd const &box,
         int (*callback) (struct mobj_s *, void *), void *parameters = 0) const;
@@ -365,30 +429,34 @@ public:
         int (*callback) (struct polyobj_s *, void *), void *parameters = 0) const;
 
     /**
-     * Retrieve an immutable copy of the LOS trace line state.
-     *
-     * @todo Map should not own this data.
+     * The callback function will be called once for each line that crosses
+     * trough the object. This means all the lines will be two-sided.
      */
-    divline_t const &traceLine() const;
+    int mobjLinesIterator(struct mobj_s *mo,
+        int (*callback) (Line *, void *), void *parameters = 0) const;
 
     /**
-     * Retrieve an immutable copy of the LOS TraceOpening state.
-     *
-     * @todo Map should not own this data.
+     * Increment validCount before calling this routine. The callback function
+     * will be called once for each sector the mobj is touching (totally or
+     * partly inside). This is not a 3D check; the mobj may actually reside
+     * above or under the sector.
      */
-    TraceOpening const &traceOpening() const;
+    int mobjSectorsIterator(struct mobj_s *mo,
+        int (*callback) (Sector *, void *), void *parameters = 0) const;
+
+    int lineMobjsIterator(Line *line,
+        int (*callback) (struct mobj_s *, void *), void *parameters = 0) const;
 
     /**
-     * Update the TraceOpening state for according to the opening defined by the
-     * inner-minimal planes heights which intercept @a line
+     * Increment validCount before using this. 'func' is called for each mobj
+     * that is (even partly) inside the sector. This is not a 3D test, the
+     * mobjs may actually be above or under the sector.
      *
-     * If @a line is not owned by the map this is a no-op.
-     *
-     * @todo Map should not own this data.
-     *
-     * @param line  Map line to configure the opening for.
+     * (Lovely name; actually this is a combination of SectorMobjs and
+     * a bunch of LineMobjs iterations.)
      */
-    void setTraceOpening(Line &line);
+    int sectorTouchingMobjsIterator(Sector *sector,
+        int (*callback) (struct mobj_s *, void *), void *parameters = 0) const;
 
     /**
      * Trace a line between @a from and @a to, making a callback for each
@@ -415,42 +483,30 @@ public:
     }
 
     /**
-     * Link the specified @a mobj in any internal data structures for
-     * bookkeeping purposes. Should be called AFTER mobj translation to
-     * (re-)insert the mobj.
+     * Retrieve an immutable copy of the LOS trace line state.
      *
-     * @param mobj  Mobj to be linked.
+     * @todo Map should not own this data.
      */
-    void linkMobj(struct mobj_s &mobj);
+    divline_t const &traceLine() const;
 
     /**
-     * Unlink the specified @a mobj from any internal data structures for
-     * bookkeeping purposes. Should be called BEFORE mobj translation to
-     * extract the mobj.
+     * Retrieve an immutable copy of the LOS TraceOpening state.
      *
-     * @param mobj  Mobj to be unlinked.
+     * @todo Map should not own this data.
      */
-    bool unlinkMobj(struct mobj_s &mobj);
+    TraceOpening const &traceOpening() const;
 
     /**
-     * Link the specified @a polyobj in any internal data structures for
-     * bookkeeping purposes. Should be called AFTER Polyobj rotation and/or
-     * translation to (re-)insert the polyobj.
+     * Update the TraceOpening state for according to the opening defined by the
+     * inner-minimal planes heights which intercept @a line
      *
-     * @param polyobj  Polyobj to be linked.
-     */
-    void linkPolyobj(Polyobj &polyobj);
-
-    /**
-     * Unlink the specified @a polyobj from any internal data structures for
-     * bookkeeping purposes. Should be called BEFORE Polyobj rotation and/or
-     * translation to extract the polyobj.
+     * If @a line is not owned by the map this is a no-op.
      *
-     * @param polyobj  Polyobj to be unlinked.
+     * @todo Map should not own this data.
+     *
+     * @param line  Map line to configure the opening for.
      */
-    void unlinkPolyobj(Polyobj &polyobj);
-
-    EntityDatabase &entityDatabase() const;
+    void setTraceOpening(Line &line);
 
 #ifdef __CLIENT__
     coord_t skyFix(bool ceiling) const;
@@ -493,7 +549,7 @@ public:
     /**
      * Reset the client status. To be called when the map changes.
      */
-    void clMobjReset();
+    void reinitClMobjs();
 
     /**
      * Iterate the client mobj hash, exec the callback on each. Abort if callback
@@ -523,7 +579,7 @@ public:
 
     struct clplane_s *clPlaneBySectorIndex(int index, clplanetype_t type);
 
-    boolean isValidClPlane(int i);
+    bool isValidClPlane(int i);
 
     /**
      * @note Assumes there is no existing ClPolyobj for Polyobj @a index.
@@ -536,7 +592,7 @@ public:
 
     struct clpolyobj_s *clPolyobjByPolyobjIndex(int index);
 
-    boolean isValidClPolyobj(int i);
+    bool isValidClPolyobj(int i);
 
     /**
      * Returns the set of decorated surfaces for the map.
@@ -578,97 +634,30 @@ public:
      */
     PlaneSet /*const*/ &trackedPlanes();
 
+    /**
+     * Returns @c true iff a LightGrid has been initialized for the map.
+     *
+     * @see lightGrid()
+     */
+    bool hasLightGrid();
+
+    /**
+     * Provides access to the light grid for the map.
+     *
+     * @see hasLightGrid()
+     */
+    LightGrid &lightGrid();
+
+    /**
+     * Initialize the ambient lighting grid (smoothed sector lighting).
+     * If the grid has already been initialized calling this will perform
+     * a full update.
+     */
+    void initLightGrid();
+
 #endif // __CLIENT__
 
-    /**
-     * Helper function for returning the relevant line side index for @a lineIndex
-     * and @a backSide.
-     *
-     * Indices are produced as follows:
-     * @code
-     *  lineIndex / 2 + (backSide? 1 : 0);
-     * @endcode
-     *
-     * @param lineIndex  Index of the Line in the map.
-     * @param backSide   If @c =0 the Line::Front else Line::Back
-     *
-     * @return  Unique index for the line side.
-     */
-    static int toSideIndex(int lineIndex, int backSide);
-
-    /**
-     * Returns a pointer to the Line::Side associated with the specified @a index;
-     * otherwise @c 0.
-     */
-    Line::Side *sideByIndex(int index) const;
-
-    /**
-     * Returns @c true iff the thinker lists been initialized.
-     */
-    boolean thinkerListInited() const;
-
-    /**
-     * Init the thinker lists.
-     *
-     * @param flags  @c 0x1 = Init public thinkers.
-     *               @c 0x2 = Init private (engine-internal) thinkers.
-     */
-    void initThinkerLists(byte flags);
-
-    /**
-     * Iterate the list of thinkers making a callback for each.
-     *
-     * @param thinkFunc  If not @c NULL, only make a callback for thinkers
-     *                   whose function matches this.
-     * @param flags      Thinker filter flags.
-     * @param callback   The callback to make. Iteration will continue
-     *                   until a callback returns a non-zero value.
-     * @param context  Passed to the callback function.
-     */
-    int iterateThinkers(thinkfunc_t thinkFunc, byte flags,
-        int (*callback) (thinker_t *th, void *), void *context);
-
-    /**
-     * @param thinker     Thinker to be added.
-     * @param makePublic  @c true = @a thinker will be visible publically
-     *                    via the Doomsday public API thinker interface(s).
-     */
-    void thinkerAdd(thinker_t &thinker, boolean makePublic);
-
-    /**
-     * Deallocation is lazy -- it will not actually be freed until its
-     * thinking turn comes up.
-     */
-    void thinkerRemove(thinker_t &thinker);
-
-    /**
-     * Locates a mobj by it's unique identifier in the map.
-     *
-     * @param id    Unique id of the mobj to lookup.
-     */
-    struct mobj_s *mobjById(int id);
-
-    /// @todo Make private.
-    void clearMobjIds();
-
-    /**
-     * @param id    Thinker id to test.
-     */
-    boolean isUsedMobjId(thid_t id);
-
-    /**
-     * @param id    New thinker id.
-     * @param inUse In-use state of @a id. @c true = the id is in use.
-     */
-    void setMobjId(thid_t id, boolean inUse);
-
 public: /// @todo Make private:
-
-    /**
-     * Initializes the dummy element arrays used with the DMU API, with a
-     * fixed number of dummies.
-     */
-    static void initDummies();
 
     /**
      * Initialize the node piles and link rings. To be called after map load.
@@ -691,26 +680,11 @@ public: /// @todo Make private:
     void buildSurfaceLists();
 
     /**
-     * Returns @c true iff a LightGrid has been initialized for the map.
-     *
-     * @see lightGrid()
+     * @todo Replace with a de::Observers-based mechanism.
      */
-    bool hasLightGrid();
+    void updateMissingMaterialsForLinesOfSector(Sector const &sec);
 
-    /**
-     * Provides access to the light grid for the map.
-     *
-     * @see hasLightGrid()
-     */
-    LightGrid &lightGrid();
-
-    /**
-     * Initialize the ambient lighting grid (smoothed sector lighting).
-     * If the grid has already been initialized calling this will perform
-     * a full update.
-     */
-    void initLightGrid();
-#endif
+#endif // __CLIENT__
 
     /**
      * To be called in response to a Material property changing which may
@@ -720,33 +694,41 @@ public: /// @todo Make private:
      */
     void updateSurfacesOnMaterialChange(Material &material);
 
-#ifdef __CLIENT__
-
-    /**
-     * @todo Replace with a de::Observers-based mechanism.
-     */
-    void updateMissingMaterialsForLinesOfSector(Sector const &sec);
-
-#endif // __CLIENT__
-
 public:
     /*
      * Runtime map editing:
      */
 
+    /**
+     * Returns @c true iff the map is currently in an editable state.
+     */
+    bool isEditable() const;
+
     /// @return @c true= a new BSP was built successfully for the map.
     bool endEditing();
 
+    /**
+     * @see isEditable()
+     */
     Vertex *createVertex(Vector2d const &origin,
                          int archiveIndex = MapElement::NoIndex);
 
+    /**
+     * @see isEditable()
+     */
     Line *createLine(Vertex &v1, Vertex &v2, int flags = 0,
                      Sector *frontSector = 0, Sector *backSector = 0,
                      int archiveIndex = MapElement::NoIndex);
 
+    /**
+     * @see isEditable()
+     */
     Sector *createSector(float lightLevel, Vector3f const &lightColor,
                          int archiveIndex = MapElement::NoIndex);
 
+    /**
+     * @see isEditable()
+     */
     Polyobj *createPolyobj(Vector2d const &origin);
 
     /**
@@ -754,26 +736,26 @@ public:
      */
     Vertexes const &editableVertexes() const;
 
-    inline int editableVertexCount() const { return editableVertexes().count(); }
-
     /**
      * Provides a list of all the editable lines in the map.
      */
     Lines const &editableLines() const;
-
-    inline int editableLineCount() const { return editableLines().count(); }
 
     /**
      * Provides a list of all the editable sectors in the map.
      */
     Sectors const &editableSectors() const;
 
-    inline int editableSectorCount() const { return editableSectors().count(); }
-
     /**
      * Provides a list of all the editable polyobjs in the map.
      */
     Polyobjs const &editablePolyobjs() const;
+
+    inline int editableVertexCount() const  { return editableVertexes().count(); }
+
+    inline int editableLineCount() const    { return editableLines().count(); }
+
+    inline int editableSectorCount() const  { return editableSectors().count(); }
 
     inline int editablePolyobjCount() const { return editablePolyobjs().count(); }
 

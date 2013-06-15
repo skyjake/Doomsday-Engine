@@ -1,4 +1,4 @@
-/** @file gl_draw.cpp
+/** @file gl_draw.cpp Basic (Generic) Drawing Routines.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
@@ -17,15 +17,11 @@
  * http://www.gnu.org/licenses</small>
  */
 
-/**
- * Basic (Generic) Drawing Routines.
- */
+#include <cstdio>
+#include <cstdlib>
+#include <cmath>
 
-// HEADER FILES ------------------------------------------------------------
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
+#include <de/Vector>
 
 #include "de_base.h"
 #include "de_console.h"
@@ -37,24 +33,10 @@
 #include "gl/sys_opengl.h"
 #include "api_render.h"
 
-// MACROS ------------------------------------------------------------------
+using namespace de;
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-static boolean drawFilter = false;
-static float filterColor[4] = { 0, 0, 0, 0 };
-
-// CODE --------------------------------------------------------------------
+static bool drawFilter = false;
+static Vector4f filterColor;
 
 void GL_DrawRectWithCoords(const RectRaw* rect, Point2Raw coords[4])
 {
@@ -319,24 +301,32 @@ void GL_DrawLine(float x1, float y1, float x2, float y2, float r, float g,
     glEnd();
 }
 
-boolean GL_FilterIsVisible(void)
+boolean GL_FilterIsVisible()
 {
-    return (0 != drawFilter && filterColor[CA] > 0);
+    return (drawFilter && filterColor.w > 0);
 }
 
 #undef GL_SetFilter
 DENG_EXTERN_C void GL_SetFilter(boolean enabled)
 {
-    drawFilter = enabled;
+    drawFilter = CPP_BOOL(enabled);
 }
 
 #undef GL_SetFilterColor
 DENG_EXTERN_C void GL_SetFilterColor(float r, float g, float b, float a)
 {
-    filterColor[CR] = MINMAX_OF(0, r, 1);
-    filterColor[CG] = MINMAX_OF(0, g, 1);
-    filterColor[CB] = MINMAX_OF(0, b, 1);
-    filterColor[CA] = MINMAX_OF(0, a, 1);
+    Vector4f newColorClamped(de::clamp(0.f, r, 1.f),
+                             de::clamp(0.f, g, 1.f),
+                             de::clamp(0.f, b, 1.f),
+                             de::clamp(0.f, a, 1.f));
+
+    if(filterColor != newColorClamped)
+    {
+        filterColor = newColorClamped;
+
+        LOG_AS("GL_SetFilterColor");
+        LOG_DEBUG("Now ") << filterColor.asText();
+    }
 }
 
 /**
@@ -350,7 +340,7 @@ void GL_DrawFilter(void)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    glColor4fv(filterColor);
+    glColor4f(filterColor.x, filterColor.y, filterColor.z, filterColor.w);
     glBegin(GL_QUADS);
         glVertex2f(vd->window.origin.x, vd->window.origin.y);
         glVertex2f(vd->window.origin.x + vd->window.size.width, vd->window.origin.y);

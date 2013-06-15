@@ -1,7 +1,7 @@
-/** @file surface.cpp World Map Surface.
+/** @file surface.cpp World map surface.
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -35,10 +35,6 @@
 #include "world/surface.h"
 
 using namespace de;
-
-float const Surface::DEFAULT_OPACITY = 1.f;
-Vector3f const Surface::DEFAULT_TINT_COLOR = Vector3f(1.f, 1.f, 1.f);
-int const Surface::MAX_SMOOTH_MATERIAL_MOVE = 8;
 
 DENG2_PIMPL(Surface)
 {
@@ -135,7 +131,7 @@ DENG2_PIMPL(Surface)
         }
 
 #ifdef __CLIENT__
-        if(!ddMapSetup && self.isAttachedToMap())
+        if(!ddMapSetup)
         {
             /// @todo Replace with a de::Observer-based mechanism.
             self._decorationData.needsUpdate = true;
@@ -286,15 +282,9 @@ int Surface::flags() const
     return d->flags;
 }
 
-bool Surface::isAttachedToMap() const
+void Surface::setFlags(int flagsToChange, FlagOp operation)
 {
-    if(d->owner.type() == DMU_PLANE)
-    {
-        Sector const &sector = d->owner.as<Plane>()->sector();
-        if(!sector.bspLeafCount())
-            return false;
-    }
-    return true;
+    applyFlagOperation(d->flags, flagsToChange, operation);
 }
 
 bool Surface::setMaterial(Material *newMaterial, bool isMissingFix)
@@ -318,38 +308,35 @@ bool Surface::setMaterial(Material *newMaterial, bool isMissingFix)
         }
 
 #ifdef __CLIENT__
-        if(isAttachedToMap())
+        if(!ddMapSetup)
         {
-            if(!ddMapSetup)
+            Map &map = App_World().map(); /// @todo Do not assume surface is from the CURRENT map.
+
+            // If this plane's surface is in the decorated list, remove it.
+            map.decoratedSurfaces().remove(this);
+
+            // If this plane's surface is in the glowing list, remove it.
+            map.glowingSurfaces().remove(this);
+
+            if(newMaterial)
             {
-                Map &map = App_World().map(); /// @todo Do not assume surface is from the CURRENT map.
-
-                // If this plane's surface is in the decorated list, remove it.
-                map.decoratedSurfaces().remove(this);
-
-                // If this plane's surface is in the glowing list, remove it.
-                map.glowingSurfaces().remove(this);
-
-                if(newMaterial)
+                if(newMaterial->hasGlow())
                 {
-                    if(newMaterial->hasGlow())
-                    {
-                        map.glowingSurfaces().insert(this);
-                    }
-
-                    if(newMaterial->isDecorated())
-                    {
-                        map.decoratedSurfaces().insert(this);
-                    }
-
-                    if(d->owner.type() == DMU_PLANE)
-                    {
-                        de::Uri uri = newMaterial->manifest().composeUri();
-                        ded_ptcgen_t const *def = Def_GetGenerator(reinterpret_cast<uri_s *>(&uri));
-                        P_SpawnPlaneParticleGen(def, d->owner.as<Plane>());
-                    }
-
+                    map.glowingSurfaces().insert(this);
                 }
+
+                if(newMaterial->isDecorated())
+                {
+                    map.decoratedSurfaces().insert(this);
+                }
+
+                if(d->owner.type() == DMU_PLANE)
+                {
+                    de::Uri uri = newMaterial->manifest().composeUri();
+                    ded_ptcgen_t const *def = Def_GetGenerator(reinterpret_cast<uri_s *>(&uri));
+                    P_SpawnPlaneParticleGen(def, d->owner.as<Plane>());
+                }
+
             }
         }
 #endif // __CLIENT__
@@ -357,11 +344,8 @@ bool Surface::setMaterial(Material *newMaterial, bool isMissingFix)
         d->material = newMaterial;
 
 #ifdef __CLIENT__
-        if(isAttachedToMap())
-        {
-            /// @todo Replace with a de::Observer-based mechanism.
-            _decorationData.needsUpdate = true;
-        }
+        /// @todo Replace with a de::Observer-based mechanism.
+        _decorationData.needsUpdate = true;
 #endif
     }
     return true;
@@ -557,10 +541,10 @@ Surface::DecorSource *Surface::newDecoration()
     if(_decorationData.numSources > 1)
     {
         // Copy the existing decorations.
-        for(uint i = 0; i < _decorationData.numSources - 1; ++i)
+        for(int i = 0; i < _decorationData.numSources - 1; ++i)
         {
             Surface::DecorSource *d = &newSources[i];
-            Surface::DecorSource *s = &((DecorSource *)_decorationData.sources)[i];
+            Surface::DecorSource *s = &_decorationData.sources[i];
 
             std::memcpy(d, s, sizeof(*d));
         }
@@ -569,7 +553,7 @@ Surface::DecorSource *Surface::newDecoration()
     }
 
     Surface::DecorSource *d = &newSources[_decorationData.numSources - 1];
-    _decorationData.sources = (surfacedecorsource_s *)newSources;
+    _decorationData.sources = newSources;
 
     return d;
 }
@@ -583,14 +567,14 @@ void Surface::clearDecorations()
     _decorationData.numSources = 0;
 }
 
-uint Surface::decorationCount() const
+int Surface::decorationCount() const
 {
     return _decorationData.numSources;
 }
 
 void Surface::markAsNeedingDecorationUpdate()
 {
-    if(ddMapSetup || !isAttachedToMap()) return;
+    if(ddMapSetup) return;
 
     _decorationData.needsUpdate = true;
 }
@@ -739,35 +723,35 @@ int Surface::setProperty(DmuArgs const &args)
         break;
 
     case DMU_COLOR: {
-        float red, green, blue;
-        args.value(DMT_SURFACE_RGBA, &red,   0);
-        args.value(DMT_SURFACE_RGBA, &green, 1);
-        args.value(DMT_SURFACE_RGBA, &blue,  2);
-        setTintColor(red, green, blue);
+        Vector3f newColor;
+        args.value(DMT_SURFACE_RGBA, &newColor.x, 0);
+        args.value(DMT_SURFACE_RGBA, &newColor.y, 1);
+        args.value(DMT_SURFACE_RGBA, &newColor.z, 2);
+        setTintColor(newColor);
         break; }
 
     case DMU_COLOR_RED: {
-        float r;
-        args.value(DMT_SURFACE_RGBA, &r, 0);
-        setTintRed(r);
+        float newRed;
+        args.value(DMT_SURFACE_RGBA, &newRed, 0);
+        setTintRed(newRed);
         break; }
 
     case DMU_COLOR_GREEN: {
-        float g;
-        args.value(DMT_SURFACE_RGBA, &g, 0);
-        setTintGreen(g);
+        float newGreen;
+        args.value(DMT_SURFACE_RGBA, &newGreen, 0);
+        setTintGreen(newGreen);
         break; }
 
     case DMU_COLOR_BLUE: {
-        float b;
-        args.value(DMT_SURFACE_RGBA, &b, 0);
-        setTintBlue(b);
+        float newBlue;
+        args.value(DMT_SURFACE_RGBA, &newBlue, 0);
+        setTintBlue(newBlue);
         break; }
 
     case DMU_ALPHA: {
-        float a;
-        args.value(DMT_SURFACE_RGBA, &a, 0);
-        setOpacity(a);
+        float newOpacity;
+        args.value(DMT_SURFACE_RGBA, &newOpacity, 0);
+        setOpacity(newOpacity);
         break; }
 
     case DMU_MATERIAL: {
@@ -777,15 +761,15 @@ int Surface::setProperty(DmuArgs const &args)
         break; }
 
     case DMU_OFFSET_X: {
-        float offX;
-        args.value(DMT_SURFACE_OFFSET, &offX, 0);
-        setMaterialOriginX(offX);
+        float newOriginX;
+        args.value(DMT_SURFACE_OFFSET, &newOriginX, 0);
+        setMaterialOriginX(newOriginX);
         break; }
 
     case DMU_OFFSET_Y: {
-        float offY;
-        args.value(DMT_SURFACE_OFFSET, &offY, 0);
-        setMaterialOriginY(offY);
+        float newOriginY;
+        args.value(DMT_SURFACE_OFFSET, &newOriginY, 0);
+        setMaterialOriginY(newOriginY);
         break; }
 
     case DMU_OFFSET_XY: {

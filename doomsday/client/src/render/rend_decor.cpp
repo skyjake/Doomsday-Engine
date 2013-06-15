@@ -349,7 +349,7 @@ static void plotSourcesForSurface(Surface &suf)
     if(useLightDecorations)
     {
         Surface::DecorSource const *sources = (Surface::DecorSource const *)suf._decorationData.sources;
-        for(uint i = 0; i < suf.decorationCount(); ++i)
+        for(int i = 0; i < suf.decorationCount(); ++i)
         {
             newSource(suf, sources[i]);
         }
@@ -406,14 +406,14 @@ static uint generateDecorLights(MaterialSnapshot::Decoration const &decor,
             if(containingSector)
             {
                 // The point must be inside the correct sector.
-                if(!P_IsPointInSector(origin, *containingSector))
+                if(!containingSector->pointInside(origin))
                     continue;
             }
 
             if(Surface::DecorSource *source = suf.newDecoration())
             {
                 source->origin  = origin;
-                source->bspLeaf = App_World().map().bspLeafAtPoint(origin);
+                source->bspLeaf = &App_World().map().bspLeafAt(origin);
                 source->decor   = &decor;
                 decorCount++;
             }

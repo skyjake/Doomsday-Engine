@@ -131,13 +131,13 @@ typedef struct {
     size_t          mobjSize; // sizeof(mobj_t)
     size_t          polyobjSize; // sizeof(Polyobj)
 
-    // Map data setup
+    // Map setup
+
     /**
-     * Called before any data is read (with the number of items to be read) to
-     * allow the game do any initialization it needs (eg create an array of its
-     * own private data structures).
+     * Called once a map change (i.e., P_MapChange()) has completed to allow the
+     * game to do any post change finalization it needs to do at this time.
      */
-    void          (*SetupForMapData) (int type, uint num);
+    void          (*FinalizeMapChange) (Uri const *uri);
 
     /**
      * Called when trying to assign a value read from the map data (to a

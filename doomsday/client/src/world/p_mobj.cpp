@@ -1,4 +1,4 @@
-/** @file world/p_mobj.cpp  Map Objects.
+/** @file p_mobj.cpp World map objects.
  *
  * Various routines for moving mobjs, collision and Z checking.
  *
@@ -21,7 +21,7 @@
  * 02110-1301 USA</small>
  */
 
-#include <math.h>
+#include <cmath>
 
 #include "de_base.h"
 #include "de_console.h"
@@ -34,27 +34,28 @@
 #include "def_main.h"
 #include "render/r_main.h" // validCount, viewport
 #include "render/r_things.h" // useSRVO
+#include "world/thinkers.h"
 
 using namespace de;
 
-static mobj_t *unusedMobjs = NULL;
+static mobj_t *unusedMobjs;
 
 /**
  * Called during map loading.
  */
-void P_InitUnusedMobjList(void)
+void P_InitUnusedMobjList()
 {
     // Any zone memory allocated for the mobjs will have already been purged.
-    unusedMobjs = NULL;
+    unusedMobjs = 0;
 }
 
 /**
  * All mobjs must be allocated through this routine. Part of the public API.
  */
-mobj_t* P_MobjCreate(thinkfunc_t function, coord_t const pos[3], angle_t angle,
+mobj_t *P_MobjCreate(thinkfunc_t function, coord_t const pos[3], angle_t angle,
     coord_t radius, coord_t height, int ddflags)
 {
-    mobj_t* mo;
+    mobj_t *mo;
 
     if(!function)
         Con_Error("P_MobjCreateXYZ: Think function invalid, cannot create mobj.");
@@ -88,7 +89,7 @@ mobj_t* P_MobjCreate(thinkfunc_t function, coord_t const pos[3], angle_t angle,
     mo->thinker.function = function;
     if(mo->thinker.function)
     {
-        App_World().map().thinkerAdd(mo->thinker, true); // Make it public.
+        App_World().map().thinkers().add(mo->thinker);
     }
 
     return mo;
@@ -124,7 +125,7 @@ DENG_EXTERN_C void P_MobjDestroy(mobj_t *mo)
 
     S_StopSound(0, mo);
 
-    App_World().map().thinkerRemove(reinterpret_cast<thinker_t &>(*mo));
+    App_World().map().thinkers().remove(reinterpret_cast<thinker_t &>(*mo));
 }
 
 /**
@@ -268,6 +269,28 @@ coord_t Mobj_ApproxPointDistance(mobj_t* mo, coord_t const* point)
                                              point[VY] - mo->origin[VY]));
 }
 
+/**
+ * Two links to update:
+ * 1) The link to us from the previous node (sprev, always set) will
+ *    be modified to point to the node following us.
+ * 2) If there is a node following us, set its sprev pointer to point
+ *    to the pointer that points back to it (our sprev, just modified).
+ */
+boolean Mobj_UnlinkFromSector(mobj_t *mo)
+{
+    if(!mo || !IS_SECTOR_LINKED(mo))
+        return false;
+
+    if((*mo->sPrev = mo->sNext))
+        mo->sNext->sPrev = mo->sPrev;
+
+    // Not linked any more.
+    mo->sNext = 0;
+    mo->sPrev = 0;
+
+    return true;
+}
+
 D_CMD(InspectMobj)
 {
     DENG2_UNUSED(src);
@@ -289,7 +312,7 @@ D_CMD(InspectMobj)
     id = strtol(argv[1], NULL, 10);
 
     // Find the mobj.
-    mo = App_World().map().mobjById(id);
+    mo = App_World().map().thinkers().mobjById(id);
     if(!mo)
     {
         Con_Printf("Mobj with id %i not found.\n", id);

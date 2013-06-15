@@ -1,4 +1,4 @@
-/** @file world/mapelement.cpp Base class for all map elements.
+/** @file mapelement.cpp Base class for all map elements.
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>

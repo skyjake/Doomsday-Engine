@@ -1,5 +1,8 @@
 /** @file map.cpp World map.
  *
+ * @todo This file has grown far too large. It should be split up through the
+ * introduction of new abstractions / collections.
+ *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
@@ -20,13 +23,16 @@
 
 #include <cmath>
 
+#include <de/aabox.h>
 #include <de/binangle.h>
 #include <de/memory.h>
 #include <de/memoryzone.h>
+#include <de/vector1.h>
 
 #include "de_platform.h"
 #include "de_base.h"
 #include "de_console.h" // Con_GetInteger
+#include "m_nodepile.h"
 
 #include "BspLeaf"
 #include "BspNode"
@@ -44,9 +50,9 @@
 #include "world/generators.h"
 #include "world/lineowner.h"
 #include "world/p_intercept.h"
-#include "world/p_maputil.h"
 #include "world/p_object.h"
 #include "world/r_world.h"
+#include "world/thinkers.h"
 #include "world/world.h"
 
 #include "render/r_main.h" // validCount
@@ -55,6 +61,22 @@
 
 /// Size of Blockmap blocks in map units. Must be an integer power of two.
 #define MAPBLOCKUNITS               (128)
+
+// Linkstore is list of pointers gathered when iterating stuff.
+// This is pretty much the only way to avoid *all* potential problems
+// caused by callback routines behaving badly (moving or destroying
+// mobjs). The idea is to get a snapshot of all the objects being
+// iterated before any callbacks are called. The hardcoded limit is
+// a drag, but I'd like to see you iterating 2048 mobjs/lines in one block.
+
+#define MAXLINKED           2048
+#define DO_LINKS(it, end, _Type)   { \
+    for(it = linkStore; it < end; it++) \
+    { \
+        result = callback(reinterpret_cast<_Type>(*it), parameters); \
+        if(result) break; \
+    } \
+}
 
 static int bspSplitFactor = 7; // cvar
 
@@ -97,6 +119,9 @@ DENG2_PIMPL(Map)
     /// Boundary points which encompass the entire map.
     AABoxd bounds;
 
+    /// Map thinkers.
+    QScopedPointer<Thinkers> thinkers;
+
     /// Element LUTs:
     Vertexes vertexes;
     Sectors sectors;
@@ -119,6 +144,10 @@ DENG2_PIMPL(Map)
     QScopedPointer<Blockmap> polyobjBlockmap;
     QScopedPointer<Blockmap> lineBlockmap;
     QScopedPointer<Blockmap> bspLeafBlockmap;
+
+    nodepile_t mobjNodes;
+    nodepile_t lineNodes;
+    nodeindex_t *lineLinks; // Indices to roots.
 
 #ifdef __CLIENT__
     PlaneSet trackedPlanes;
@@ -143,7 +172,8 @@ DENG2_PIMPL(Map)
         : Base            (i),
           editingEnabled  (true),
           uri             (uri),
-          bspRoot         (0)
+          bspRoot         (0),
+          lineLinks       (0)
 #ifdef __CLIENT__
           , skyFloorHeight(DDMAXFLOAT),
           skyCeilingHeight(DDMINFLOAT)
@@ -156,6 +186,12 @@ DENG2_PIMPL(Map)
 
     ~Instance()
     {
+#ifdef __CLIENT__
+        // The light grid observes changes to sector lighting and so
+        // must be destroyed first.
+        lightGrid.reset();
+#endif
+
         qDeleteAll(bspNodes);
         qDeleteAll(bspLeafs);
         qDeleteAll(segments);
@@ -167,6 +203,12 @@ DENG2_PIMPL(Map)
         }
         qDeleteAll(lines);
         qDeleteAll(vertexes);
+
+        /// @todo fixme: Free all memory we have ownership of.
+        // Client only data:
+        // mobjHash/activePlanes/activePolyobjs
+        // End client only data.
+        // mobjNodes/lineNodes/lineLinks
     }
 
     /**
@@ -177,6 +219,9 @@ DENG2_PIMPL(Map)
         bool isFirst = true;
         foreach(Line *line, lines)
         {
+            // Polyobj lines don't count.
+            if(line->definesPolyobj()) continue;
+
             if(isFirst)
             {
                 // The first line's bounds are used as is.
@@ -436,10 +481,7 @@ DENG2_PIMPL(Map)
 #undef BLOCKMAP_MARGIN
     }
 
-    /**
-     * Link the specified @a line in the blockmap.
-     */
-    void linkLine(Line &line)
+    void linkLineInBlockmap(Line &line)
     {
         // Lines of Polyobjs don't get into the blockmap (presently...).
         if(line.definesPolyobj()) return;
@@ -509,6 +551,124 @@ DENG2_PIMPL(Map)
 #undef BLOCKMAP_MARGIN
     }
 
+    bool unlinkMobjInBlockmap(mobj_t &mo)
+    {
+        Blockmap::Cell cell = mobjBlockmap->toCell(mo.origin);
+        return mobjBlockmap->unlink(cell, &mo);
+    }
+
+    void linkMobjInBlockmap(mobj_t &mo)
+    {
+        Blockmap::Cell cell = mobjBlockmap->toCell(mo.origin);
+        mobjBlockmap->link(cell, &mo);
+    }
+
+    /**
+     * Unlinks the mobj from all the lines it's been linked to. Can be called
+     * without checking that the list does indeed contain lines.
+     */
+    bool unlinkMobjFromLines(mobj_t &mo)
+    {
+        // Try unlinking from lines.
+        if(!mo.lineRoot)
+            return false; // A zero index means it's not linked.
+
+        // Unlink from each line.
+        linknode_t *tn = mobjNodes.nodes;
+        for(nodeindex_t nix = tn[mo.lineRoot].next; nix != mo.lineRoot;
+            nix = tn[nix].next)
+        {
+            // Data is the linenode index that corresponds this mobj.
+            NP_Unlink((&lineNodes), tn[nix].data);
+            // We don't need these nodes any more, mark them as unused.
+            // Dismissing is a macro.
+            NP_Dismiss((&lineNodes), tn[nix].data);
+            NP_Dismiss((&mobjNodes), nix);
+        }
+
+        // The mobj no longer has a line ring.
+        NP_Dismiss((&mobjNodes), mo.lineRoot);
+        mo.lineRoot = 0;
+
+        return true;
+    }
+
+    /**
+     * @note Caller must ensure a mobj is linked only once to any given line.
+     *
+     * @param mo    Mobj to be linked.
+     * @param line  Line to link the mobj to.
+     */
+    void linkMobjToLine(mobj_t *mo, Line *line)
+    {
+        if(!mo || !line) return;
+
+        // Add a node to the mobj's ring.
+        nodeindex_t nodeIndex = NP_New(&mobjNodes, line);
+        NP_Link(&mobjNodes, nodeIndex, mo->lineRoot);
+
+        // Add a node to the line's ring. Also store the linenode's index
+        // into the mobjring's node, so unlinking is easy.
+        nodeIndex = mobjNodes.nodes[nodeIndex].data = NP_New(&lineNodes, mo);
+        NP_Link(&lineNodes, nodeIndex, lineLinks[line->indexInMap()]);
+    }
+
+    struct LineLinkerParams
+    {
+        Map *map;
+        mobj_t *mo;
+        AABoxd box;
+    };
+
+    /**
+     * The given line might cross the mobj. If necessary, link the mobj into
+     * the line's mobj link ring.
+     */
+    static int lineLinkerWorker(Line *ld, void *parameters)
+    {
+        LineLinkerParams *p = reinterpret_cast<LineLinkerParams *>(parameters);
+        DENG_ASSERT(p);
+
+        // Do the bounding boxes intercept?
+        if(p->box.minX >= ld->aaBox().maxX ||
+           p->box.minY >= ld->aaBox().maxY ||
+           p->box.maxX <= ld->aaBox().minX ||
+           p->box.maxY <= ld->aaBox().minY) return false;
+
+        // Line does not cross the mobj's bounding box?
+        if(ld->boxOnSide(p->box)) return false;
+
+        // Lines with only one sector will not be linked to because a mobj can't
+        // legally cross one.
+        if(!ld->hasFrontSector() || !ld->hasBackSector()) return false;
+
+        p->map->d->linkMobjToLine(p->mo, ld);
+        return false;
+    }
+
+    /**
+     * @note Caller must ensure that the mobj is currently unlinked.
+     */
+    void linkMobjToLines(mobj_t &mo)
+    {
+        // Get a new root node.
+        mo.lineRoot = NP_New(&mobjNodes, NP_ROOT_NODE);
+
+        // Set up a line iterator for doing the linking.
+        LineLinkerParams parm;
+        parm.map = &self;
+        parm.mo  = &mo;
+
+        vec2d_t point;
+        V2d_Set(point, mo.origin[VX] - mo.radius, mo.origin[VY] - mo.radius);
+        V2d_InitBox(parm.box.arvec2, point);
+        V2d_Set(point, mo.origin[VX] + mo.radius, mo.origin[VY] + mo.radius);
+        V2d_AddToBox(parm.box.arvec2, point);
+
+        validCount++;
+        self.allLinesBoxIterator(parm.box, lineLinkerWorker, &parm);
+    }
+
     /**
      * Construct an initial (empty) polyobj blockmap for "this" map.
      *
@@ -531,6 +691,24 @@ DENG2_PIMPL(Map)
 
 #undef CELL_SIZE
 #undef BLOCKMAP_MARGIN
+    }
+
+    void unlinkPolyobjInBlockmap(Polyobj &polyobj)
+    {
+        Blockmap::CellBlock cellBlock = polyobjBlockmap->toCellBlock(polyobj.aaBox);
+        polyobjBlockmap->unlink(cellBlock, &polyobj);
+    }
+
+    void linkPolyobjInBlockmap(Polyobj &polyobj)
+    {
+        Blockmap::CellBlock cellBlock = polyobjBlockmap->toCellBlock(polyobj.aaBox);
+
+        Blockmap::Cell cell;
+        for(cell.y = cellBlock.min.y; cell.y <= cellBlock.max.y; ++cell.y)
+        for(cell.x = cellBlock.min.x; cell.x <= cellBlock.max.x; ++cell.x)
+        {
+            polyobjBlockmap->link(cell, &polyobj);
+        }
     }
 
     /**
@@ -557,10 +735,7 @@ DENG2_PIMPL(Map)
 #undef BLOCKMAP_MARGIN
     }
 
-    /**
-     * Link the specified @a bspLeaf in the blockmap.
-     */
-    void linkBspLeaf(BspLeaf &bspLeaf)
+    void linkBspLeafInBlockmap(BspLeaf &bspLeaf)
     {
         // Degenerate BspLeafs don't get in.
         if(bspLeaf.isDegenerate()) return;
@@ -761,22 +936,9 @@ Map::Map(Uri const &uri) : d(new Instance(this, uri))
     zap(clActivePlanes);
     zap(clActivePolyobjs);
 #endif
-    lineLinks = 0;
     _globalGravity = 0;
     _effectiveGravity = 0;
     _ambientLightLevel = 0;
-}
-
-/// @todo fixme: Free all memory we have ownership of.
-Map::~Map()
-{
-    // thinker lists - free them!
-
-    // Client only data:
-    // mobjHash/activePlanes/activePolyobjs - free them!
-    // End client only data.
-
-    // mobjNodes/lineNodes/lineLinks - free them!
 }
 
 void Map::consoleRegister() // static
@@ -784,9 +946,14 @@ void Map::consoleRegister() // static
     C_VAR_INT("bsp-factor", &bspSplitFactor, CVF_NO_MAX, 0, 0);
 }
 
-MapElement *Map::bspRoot() const
+MapElement &Map::bspRoot() const
 {
-    return d->bspRoot;
+    if(d->bspRoot)
+    {
+        return *d->bspRoot;
+    }
+    /// @throw MissingBspError  No BSP data is available.
+    throw MissingBspError("Map::bspRoot", "No BSP data available");
 }
 
 Map::Segments const &Map::segments() const
@@ -904,6 +1071,16 @@ coord_t Map::gravity() const
 void Map::setGravity(coord_t newGravity)
 {
     _effectiveGravity = newGravity;
+}
+
+Thinkers &Map::thinkers() const
+{
+    if(!d->thinkers.isNull())
+    {
+        return *d->thinkers;
+    }
+    /// @throw MissingThinkersError  The thinker lists are not yet initialized.
+    throw MissingThinkersError("Map::thinkers", "Thinkers not initialized");
 }
 
 Map::Vertexes const &Map::vertexes() const
@@ -1050,52 +1227,60 @@ void Map::initNodePiles()
     LOG_TRACE("Initializing...");
 
     // Initialize node piles and line rings.
-    NP_Init(&mobjNodes, 256);  // Allocate a small pile.
-    NP_Init(&lineNodes, lineCount() + 1000);
+    NP_Init(&d->mobjNodes, 256);  // Allocate a small pile.
+    NP_Init(&d->lineNodes, lineCount() + 1000);
 
     // Allocate the rings.
-    DENG_ASSERT(lineLinks == 0);
-    lineLinks = (nodeindex_t *) Z_Malloc(sizeof(*lineLinks) * lineCount(), PU_MAPSTATIC, 0);
+    DENG_ASSERT(d->lineLinks == 0);
+    d->lineLinks = (nodeindex_t *) Z_Malloc(sizeof(*d->lineLinks) * lineCount(), PU_MAPSTATIC, 0);
 
     for(int i = 0; i < lineCount(); ++i)
     {
-        lineLinks[i] = NP_New(&lineNodes, NP_ROOT_NODE);
+        d->lineLinks[i] = NP_New(&d->lineNodes, NP_ROOT_NODE);
     }
 
     // How much time did we spend?
     LOG_INFO(String("Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 }
 
-Blockmap *Map::mobjBlockmap() const
+Blockmap const &Map::mobjBlockmap() const
 {
-    return d->mobjBlockmap.data();
+    if(!d->mobjBlockmap.isNull())
+    {
+        return *d->mobjBlockmap;
+    }
+    /// @throw MissingBlockmapError  The mobj blockmap is not yet initialized.
+    throw MissingBlockmapError("Map::mobjBlockmap", "Mobj blockmap is not initialized");
 }
 
-Blockmap *Map::polyobjBlockmap() const
+Blockmap const &Map::polyobjBlockmap() const
 {
-    return d->polyobjBlockmap.data();
+    if(!d->polyobjBlockmap.isNull())
+    {
+        return *d->polyobjBlockmap;
+    }
+    /// @throw MissingBlockmapError  The polyobj blockmap is not yet initialized.
+    throw MissingBlockmapError("Map::polyobjBlockmap", "Polyobj blockmap is not initialized");
 }
 
-Blockmap *Map::lineBlockmap() const
+Blockmap const &Map::lineBlockmap() const
 {
-    return d->lineBlockmap.data();
+    if(!d->lineBlockmap.isNull())
+    {
+        return *d->lineBlockmap;
+    }
+    /// @throw MissingBlockmapError  The line blockmap is not yet initialized.
+    throw MissingBlockmapError("Map::lineBlockmap", "Line blockmap is not initialized");
 }
 
-Blockmap *Map::bspLeafBlockmap() const
+Blockmap const &Map::bspLeafBlockmap() const
 {
-    return d->bspLeafBlockmap.data();
-}
-
-void Map::linkMobj(mobj_t &mo)
-{
-    Blockmap::Cell cell = d->mobjBlockmap->toCell(mo.origin);
-    d->mobjBlockmap->link(cell, &mo);
-}
-
-bool Map::unlinkMobj(mobj_t &mo)
-{
-    Blockmap::Cell cell = d->mobjBlockmap->toCell(mo.origin);
-    return d->mobjBlockmap->unlink(cell, &mo);
+    if(!d->bspLeafBlockmap.isNull())
+    {
+        return *d->bspLeafBlockmap;
+    }
+    /// @throw MissingBlockmapError  The BSP leaf blockmap is not yet initialized.
+    throw MissingBlockmapError("Map::bspLeafBlockmap", "BSP leaf blockmap is not initialized");
 }
 
 struct bmapmoiterparams_t
@@ -1148,8 +1333,13 @@ static int iterateCellBlockMobjs(Blockmap &mobjBlockmap, Blockmap::CellBlock con
 int Map::mobjsBoxIterator(AABoxd const &box, int (*callback) (mobj_t *, void *),
                           void *parameters) const
 {
-    Blockmap::CellBlock cellBlock = d->mobjBlockmap->toCellBlock(box);
-    return iterateCellBlockMobjs(*d->mobjBlockmap, cellBlock, callback, parameters);
+    if(!d->mobjBlockmap.isNull())
+    {
+        Blockmap::CellBlock cellBlock = d->mobjBlockmap->toCellBlock(box);
+        return iterateCellBlockMobjs(*d->mobjBlockmap, cellBlock, callback, parameters);
+    }
+    /// @throw MissingBlockmapError  The mobj blockmap is not yet initialized.
+    throw MissingBlockmapError("Map::mobjsBoxIterator", "Mobj blockmap is not initialized");
 }
 
 struct bmapiterparams_t
@@ -1261,7 +1451,7 @@ static int iterateCellBspLeafs(Blockmap &bspLeafBlockmap, Blockmap::const_Cell c
 }
 */
 
-static int iterateCellBlockBspLeafs(Blockmap &bspLeafBlockmap,
+static int iterateBlockBspLeafs(Blockmap &bspLeafBlockmap,
     Blockmap::CellBlock const &cellBlock, Sector *sector,  AABoxd const &box,
     int localValidCount,
     int (*callback) (BspLeaf *, void *), void *context = 0)
@@ -1279,33 +1469,241 @@ static int iterateCellBlockBspLeafs(Blockmap &bspLeafBlockmap,
 int Map::bspLeafsBoxIterator(AABoxd const &box, Sector *sector,
     int (*callback) (BspLeaf *, void *), void *parameters) const
 {
-    static int localValidCount = 0;
+    if(!d->bspLeafBlockmap.isNull())
+    {
+        static int localValidCount = 0;
+        // This is only used here.
+        localValidCount++;
 
-    // This is only used here.
-    localValidCount++;
-
-    Blockmap::CellBlock cellBlock = d->bspLeafBlockmap->toCellBlock(box);
-
-    return iterateCellBlockBspLeafs(*d->bspLeafBlockmap, cellBlock, sector, box,
+        Blockmap::CellBlock cellBlock = d->bspLeafBlockmap->toCellBlock(box);
+        return iterateBlockBspLeafs(*d->bspLeafBlockmap, cellBlock, sector, box,
                                     localValidCount, callback, parameters);
+    }
+    /// @throw MissingBlockmapError  The BSP leaf blockmap is not yet initialized.
+    throw MissingBlockmapError("Map::bspLeafsBoxIterator", "BSP leaf blockmap is not initialized");
 }
 
-void Map::linkPolyobj(Polyobj &polyobj)
+int Map::mobjLinesIterator(mobj_t *mo, int (*callback) (Line *, void *),
+                           void *parameters) const
 {
-    Blockmap::CellBlock cellBlock = d->polyobjBlockmap->toCellBlock(polyobj.aaBox);
+    void *linkStore[MAXLINKED];
+    void **end = linkStore, **it;
+    int result = false;
 
-    Blockmap::Cell cell;
-    for(cell.y = cellBlock.min.y; cell.y <= cellBlock.max.y; ++cell.y)
-    for(cell.x = cellBlock.min.x; cell.x <= cellBlock.max.x; ++cell.x)
+    linknode_t *tn = d->mobjNodes.nodes;
+    if(mo->lineRoot)
     {
-        d->polyobjBlockmap->link(cell, &polyobj);
+        nodeindex_t nix;
+        for(nix = tn[mo->lineRoot].next; nix != mo->lineRoot;
+            nix = tn[nix].next)
+            *end++ = tn[nix].ptr;
+
+        DO_LINKS(it, end, Line*);
+    }
+    return result;
+}
+
+int Map::mobjSectorsIterator(mobj_t *mo, int (*callback) (Sector *, void *),
+                             void *parameters) const
+{
+    int result = false;
+    void *linkStore[MAXLINKED];
+    void **end = linkStore, **it;
+
+    nodeindex_t nix;
+    linknode_t *tn = d->mobjNodes.nodes;
+
+    // Always process the mobj's own sector first.
+    Sector &ownSec = mo->bspLeaf->sector();
+    *end++ = &ownSec;
+    ownSec.setValidCount(validCount);
+
+    // Any good lines around here?
+    if(mo->lineRoot)
+    {
+        for(nix = tn[mo->lineRoot].next; nix != mo->lineRoot;
+            nix = tn[nix].next)
+        {
+            Line *ld = (Line *) tn[nix].ptr;
+
+            // All these lines have sectors on both sides.
+            // First, try the front.
+            Sector &frontSec = ld->frontSector();
+            if(frontSec.validCount() != validCount)
+            {
+                *end++ = &frontSec;
+                frontSec.setValidCount(validCount);
+            }
+
+            // And then the back.
+            if(ld->hasBackSector())
+            {
+                Sector &backSec = ld->backSector();
+                if(backSec.validCount() != validCount)
+                {
+                    *end++ = &backSec;
+                    backSec.setValidCount(validCount);
+                }
+            }
+        }
+    }
+
+    DO_LINKS(it, end, Sector *);
+    return result;
+}
+
+int Map::lineMobjsIterator(Line *line, int (*callback) (mobj_t *, void *),
+                           void *parameters) const
+{
+    void *linkStore[MAXLINKED];
+    void **end = linkStore;
+
+    nodeindex_t root = d->lineLinks[line->indexInMap()];
+    linknode_t *ln = d->lineNodes.nodes;
+
+    for(nodeindex_t nix = ln[root].next; nix != root; nix = ln[nix].next)
+    {
+        DENG_ASSERT(end < &linkStore[MAXLINKED]);
+        *end++ = ln[nix].ptr;
+    }
+
+    int result = false;
+    void **it;
+    DO_LINKS(it, end, mobj_t *);
+
+    return result;
+}
+
+int Map::sectorTouchingMobjsIterator(Sector *sector,
+    int (*callback) (mobj_t *, void *), void *parameters) const
+{
+    /// @todo Fixme: Remove fixed limit (use QVarLengthArray if necessary).
+    void *linkStore[MAXLINKED];
+    void **end = linkStore;
+
+    // Collate mobjs that obviously are in the sector.
+    for(mobj_t *mo = sector->firstMobj(); mo; mo = mo->sNext)
+    {
+        if(mo->validCount == validCount) continue;
+        mo->validCount = validCount;
+
+        DENG_ASSERT(end < &linkStore[MAXLINKED]);
+        *end++ = mo;
+    }
+
+    // Collate mobjs linked to the sector's lines.
+    linknode_t const *ln = d->lineNodes.nodes;
+    foreach(Line::Side *side, sector->sides())
+    {
+        nodeindex_t root = d->lineLinks[side->line().indexInMap()];
+
+        for(nodeindex_t nix = ln[root].next; nix != root; nix = ln[nix].next)
+        {
+            mobj_t *mo = (mobj_t *) ln[nix].ptr;
+
+            if(mo->validCount == validCount) continue;
+            mo->validCount = validCount;
+
+            DENG_ASSERT(end < &linkStore[MAXLINKED]);
+            *end++ = mo;
+        }
+    }
+
+    // Process all collected mobjs.
+    int result = false;
+    void **it;
+    DO_LINKS(it, end, mobj_t *);
+
+    return result;
+}
+
+int Map::unlink(mobj_t &mo)
+{
+    int links = 0;
+
+    if(Mobj_UnlinkFromSector(&mo))
+        links |= DDLINK_SECTOR;
+    if(d->unlinkMobjInBlockmap(mo))
+        links |= DDLINK_BLOCKMAP;
+    if(!d->unlinkMobjFromLines(mo))
+        links |= DDLINK_NOLINE;
+
+    return links;
+}
+
+void Map::link(mobj_t &mo, byte flags)
+{
+    // Link into the sector.
+    mo.bspLeaf = &bspLeafAt_FixedPrecision(mo.origin);
+
+    if(flags & DDLINK_SECTOR)
+    {
+        // Unlink from the current sector, if any.
+        Sector &sec = mo.bspLeaf->sector();
+
+        if(mo.sPrev)
+            Mobj_UnlinkFromSector(&mo);
+
+        // Link the new mobj to the head of the list.
+        // Prev pointers point to the pointer that points back to us.
+        // (Which practically disallows traversing the list backwards.)
+
+        if((mo.sNext = sec.firstMobj()))
+            mo.sNext->sPrev = &mo.sNext;
+
+        *(mo.sPrev = &sec._mobjList) = &mo;
+    }
+
+    // Link into blockmap?
+    if(flags & DDLINK_BLOCKMAP)
+    {
+        // Unlink from the old block, if any.
+        d->unlinkMobjInBlockmap(mo);
+        d->linkMobjInBlockmap(mo);
+    }
+
+    // Link into lines.
+    if(!(flags & DDLINK_NOLINE))
+    {
+        // Unlink from any existing lines.
+        d->unlinkMobjFromLines(mo);
+
+        // Link to all contacted lines.
+        d->linkMobjToLines(mo);
+    }
+
+    // If this is a player - perform additional tests to see if they have
+    // entered or exited the void.
+    if(mo.dPlayer && mo.dPlayer->mo)
+    {
+        ddplayer_t *player = mo.dPlayer;
+        Sector &sector = player->mo->bspLeaf->sector();
+
+        player->inVoid = true;
+        if(sector.pointInside(player->mo->origin))
+        {
+#ifdef __CLIENT__
+            if(player->mo->origin[VZ] <  sector.ceiling().visHeight() + 4 &&
+               player->mo->origin[VZ] >= sector.floor().visHeight())
+#else
+            if(player->mo->origin[VZ] <  sector.ceiling().height() + 4 &&
+               player->mo->origin[VZ] >= sector.floor().height())
+#endif
+            {
+                player->inVoid = false;
+            }
+        }
     }
 }
 
-void Map::unlinkPolyobj(Polyobj &polyobj)
+void Map::unlink(Polyobj &polyobj)
 {
-    Blockmap::CellBlock cellBlock = d->polyobjBlockmap->toCellBlock(polyobj.aaBox);
-    d->polyobjBlockmap->unlink(cellBlock, &polyobj);
+    d->unlinkPolyobjInBlockmap(polyobj);
+}
+
+void Map::link(Polyobj &polyobj)
+{
+    d->linkPolyobjInBlockmap(polyobj);
 }
 
 struct bmappoiterparams_t
@@ -1358,8 +1756,13 @@ static int iterateCellBlockPolyobjs(Blockmap &polyobjBlockmap, Blockmap::CellBlo
 int Map::polyobjsBoxIterator(AABoxd const &box,
     int (*callback) (struct polyobj_s *, void *), void *parameters) const
 {
-    Blockmap::CellBlock cellBlock = d->polyobjBlockmap->toCellBlock(box);
-    return iterateCellBlockPolyobjs(*d->polyobjBlockmap, cellBlock, callback, parameters);
+    if(!d->polyobjBlockmap.isNull())
+    {
+        Blockmap::CellBlock cellBlock = d->polyobjBlockmap->toCellBlock(box);
+        return iterateCellBlockPolyobjs(*d->polyobjBlockmap, cellBlock, callback, parameters);
+    }
+    /// @throw MissingBlockmapError  The polyobj blockmap is not yet initialized.
+    throw MissingBlockmapError("Map::polyobjsBoxIterator", "Polyobj blockmap is not initialized");
 }
 
 struct poiterparams_t
@@ -1368,7 +1771,7 @@ struct poiterparams_t
     void *parms;
 };
 
-int PTR_PolyobjLines(Polyobj *po, void* context)
+static int polyobjLineIterator(Polyobj *po, void* context)
 {
     poiterparams_t *args = (poiterparams_t *) context;
     foreach(Line *line, po->lines())
@@ -1401,7 +1804,7 @@ static int iterateCellPolyobjLinesIterator(Blockmap &polyobjBlockmap, const_Bloc
 }
 */
 
-static int iterateCellBlockPolyobjLines(Blockmap &polyobjBlockmap,
+static int iterateBlockPolyobjLines(Blockmap &polyobjBlockmap,
     Blockmap::CellBlock const &cellBlock,
     int (*callback) (Line *, void *), void *context = 0)
 {
@@ -1411,7 +1814,7 @@ static int iterateCellBlockPolyobjLines(Blockmap &polyobjBlockmap,
 
     bmappoiterparams_t args;
     args.localValidCount = validCount;
-    args.func            = PTR_PolyobjLines;
+    args.func            = polyobjLineIterator;
     args.parms           = &poargs;
 
     return polyobjBlockmap.iterate(cellBlock, blockmapCellPolyobjsIterator, (void*) &args);
@@ -1420,26 +1823,36 @@ static int iterateCellBlockPolyobjLines(Blockmap &polyobjBlockmap,
 int Map::linesBoxIterator(AABoxd const &box,
     int (*callback) (Line *, void *), void *parameters) const
 {
-    Blockmap::CellBlock cellBlock = d->lineBlockmap->toCellBlock(box);
-    return iterateCellBlockLines(*d->lineBlockmap, cellBlock, callback, parameters);
+    if(!d->lineBlockmap.isNull())
+    {
+        Blockmap::CellBlock cellBlock = d->lineBlockmap->toCellBlock(box);
+        return iterateCellBlockLines(*d->lineBlockmap, cellBlock, callback, parameters);
+    }
+    /// @throw MissingBlockmapError  The line blockmap is not yet initialized.
+    throw MissingBlockmapError("Map::linesBoxIterator", "Line blockmap is not initialized");
 }
 
 int Map::polyobjLinesBoxIterator(AABoxd const &box,
     int (*callback) (Line *, void *), void *parameters) const
 {
-    Blockmap::CellBlock cellBlock = d->polyobjBlockmap->toCellBlock(box);
-    return iterateCellBlockPolyobjLines(*d->polyobjBlockmap, cellBlock, callback, parameters);
+    if(!d->polyobjBlockmap.isNull())
+    {
+        Blockmap::CellBlock cellBlock = d->polyobjBlockmap->toCellBlock(box);
+        return iterateBlockPolyobjLines(*d->polyobjBlockmap, cellBlock, callback, parameters);
+    }
+    /// @throw MissingBlockmapError  The polyobj blockmap is not yet initialized.
+    throw MissingBlockmapError("Map::polyobjBlockmap", "Polyobj blockmap is not initialized");
 }
 
 int Map::allLinesBoxIterator(AABoxd const &box,
     int (*callback) (Line *, void *), void *parameters) const
 {
-    if(!d->polyobjs.isEmpty())
+    if(polyobjCount())
     {
-        int result = P_PolyobjLinesBoxIterator(&box, callback, parameters);
+        int result = polyobjLinesBoxIterator(box, callback, parameters);
         if(result) return result;
     }
-    return P_LinesBoxIterator(&box, callback, parameters);
+    return linesBoxIterator(box, callback, parameters);
 }
 
 static int traverseCellPath2(Blockmap &bmap, Blockmap::Cell const &fromCell,
@@ -1523,7 +1936,7 @@ static int traverseCellPath2(Blockmap &bmap, Blockmap::Cell const &fromCell,
     return false; // Continue iteration.
 }
 
-static int traverseCellPath(divline_t &traceLine, Blockmap &bmap,
+static int traversePath(divline_t &traceLine, Blockmap &bmap,
     const_pvec2d_t from_, const_pvec2d_t to_,
     int (*callback) (Blockmap::Cell const &cell, void *parameters), void *parameters = 0)
 {
@@ -1667,26 +2080,30 @@ int Map::pathTraverse(const_pvec2d_t from, const_pvec2d_t to, int flags,
     {
         if(!d->polyobjs.isEmpty())
         {
-            traverseCellPath(d->traceLine, *d->polyobjBlockmap, from, to,
-                             collectPolyobjLineIntercepts,
-                             (void *)d->polyobjBlockmap.data());
+            traversePath(d->traceLine, *d->polyobjBlockmap, from, to,
+                         collectPolyobjLineIntercepts,
+                         (void *)d->polyobjBlockmap.data());
         }
 
-        traverseCellPath(d->traceLine, *d->lineBlockmap, from, to, collectLineIntercepts,
-                         (void *)d->lineBlockmap.data());
+        traversePath(d->traceLine, *d->lineBlockmap, from, to, collectLineIntercepts,
+                     (void *)d->lineBlockmap.data());
     }
     if(flags & PT_ADDMOBJS)
     {
-        traverseCellPath(d->traceLine, *d->mobjBlockmap, from, to, collectMobjIntercepts,
-                         (void *)d->mobjBlockmap.data());
+        traversePath(d->traceLine, *d->mobjBlockmap, from, to, collectMobjIntercepts,
+                     (void *)d->mobjBlockmap.data());
     }
 
     // Step #2: Process sorted intercepts.
     return P_TraverseIntercepts(callback, parameters);
 }
 
-BspLeaf *Map::bspLeafAtPoint(Vector2d const &point) const
+BspLeaf &Map::bspLeafAt(Vector2d const &point) const
 {
+    if(!d->bspRoot)
+        /// @throw MissingBspError  No BSP data is available.
+        throw MissingBspError("Map::bspLeafAt", "No BSP data available");
+
     MapElement *bspElement = d->bspRoot;
     while(bspElement->type() != DMU_BSPLEAF)
     {
@@ -1699,11 +2116,15 @@ BspLeaf *Map::bspLeafAtPoint(Vector2d const &point) const
     }
 
     // We've arrived at a leaf.
-    return bspElement->as<BspLeaf>();
+    return *bspElement->as<BspLeaf>();
 }
 
-BspLeaf *Map::bspLeafAtPoint_FixedPrecision(Vector2d const &point) const
+BspLeaf &Map::bspLeafAt_FixedPrecision(Vector2d const &point) const
 {
+    if(!d->bspRoot)
+        /// @throw MissingBspError  No BSP data is available.
+        throw MissingBspError("Map::bspLeafAt_FixedPrecision", "No BSP data available");
+
     fixed_t pointX[2] = { DBL2FIX(point.x), DBL2FIX(point.y) };
 
     MapElement *bspElement = d->bspRoot;
@@ -1722,7 +2143,7 @@ BspLeaf *Map::bspLeafAtPoint_FixedPrecision(Vector2d const &point) const
     }
 
     // We've arrived at a leaf.
-    return bspElement->as<BspLeaf>();
+    return *bspElement->as<BspLeaf>();
 }
 
 void Map::updateSurfacesOnMaterialChange(Material &material)
@@ -1992,7 +2413,7 @@ static void addMissingMaterial(Line::Side &side, int section)
     // Look for and apply a suitable replacement if found.
     surface.setMaterial(chooseFixMaterial(side, section), true/* is missing fix */);
 
-    // During map load we log missing materials.
+    // During map setup we log missing materials.
     if(ddMapSetup && verbose)
     {
         String path = surface.hasMaterial()? surface.material().manifest().composeUri().asText() : "<null>";
@@ -2316,6 +2737,11 @@ void buildVertexLineOwnerRings(EditableElements &editable)
     }
 }
 
+bool Map::isEditable() const
+{
+    return d->editingEnabled;
+}
+
 bool Map::endEditing()
 {
     if(!d->editingEnabled)
@@ -2416,7 +2842,7 @@ bool Map::endEditing()
     d->initLineBlockmap();
     foreach(Line *line, lines())
     {
-        d->linkLine(*line);
+        d->linkLineInBlockmap(*line);
     }
 
     // The mobj and polyobj blockmaps are maintained dynamically.
@@ -2446,12 +2872,15 @@ bool Map::endEditing()
     d->initBspLeafBlockmap();
     foreach(BspLeaf *bspLeaf, bspLeafs())
     {
-        d->linkBspLeaf(*bspLeaf);
+        d->linkBspLeafInBlockmap(*bspLeaf);
     }
 
 #ifdef __CLIENT__
     S_DetermineBspLeafsAffectingSectorReverb(this);
 #endif
+
+    // Prepare the thinker lists.
+    d->thinkers.reset(new Thinkers);
 
     return true;
 }

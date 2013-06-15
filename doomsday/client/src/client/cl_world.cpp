@@ -32,6 +32,7 @@
 #include "api_materialarchive.h"
 
 #include "world/map.h"
+#include "world/thinkers.h"
 #include "client/cl_world.h"
 #include "r_util.h"
 
@@ -179,13 +180,13 @@ int Cl_LocalMobjState(int serverMobjState)
     return xlatMobjState.serverToLocal[serverMobjState];
 }
 
-boolean Map::isValidClPlane(int i)
+bool Map::isValidClPlane(int i)
 {
     if(!clActivePlanes[i]) return false;
     return (clActivePlanes[i]->thinker.function == reinterpret_cast<thinkfunc_t>(Cl_MoverThinker));
 }
 
-boolean Map::isValidClPolyobj(int i)
+bool Map::isValidClPolyobj(int i)
 {
     if(!clActivePolyobjs[i]) return false;
     return (clActivePolyobjs[i]->thinker.function == reinterpret_cast<thinkfunc_t>(Cl_PolyMoverThinker));
@@ -193,8 +194,8 @@ boolean Map::isValidClPolyobj(int i)
 
 void Map::initClMovers()
 {
-    std::memset(clActivePlanes, 0, sizeof(clActivePlanes));
-    std::memset(clActivePolyobjs, 0, sizeof(clActivePolyobjs));
+    zap(clActivePlanes);
+    zap(clActivePolyobjs);
 }
 
 void Map::resetClMovers()
@@ -203,11 +204,11 @@ void Map::resetClMovers()
     {
         if(isValidClPlane(i))
         {
-            thinkerRemove(clActivePlanes[i]->thinker);
+            thinkers().remove(clActivePlanes[i]->thinker);
         }
         if(isValidClPolyobj(i))
         {
-            thinkerRemove(clActivePolyobjs[i]->thinker);
+            thinkers().remove(clActivePolyobjs[i]->thinker);
         }
     }
 }
@@ -269,28 +270,32 @@ int Map::clPolyobjIndex(clpolyobj_t *mover)
 
 void Map::deleteClPlane(clplane_t *mover)
 {
+    LOG_AS("Map::deleteClPlane");
+
     int index = clPlaneIndex(mover);
     if(index < 0)
     {
-        DEBUG_Message(("Map::deleteClPlane: Mover in sector #%i not removed!", mover->sectorIndex));
+        LOG_DEBUG("Mover in sector #%i not removed!") << mover->sectorIndex;
         return;
     }
 
-    DEBUG_Message(("Map::deleteClPlane: Removing mover [%i] (sector: #%i).", index, mover->sectorIndex));
-    thinkerRemove(mover->thinker);
+    LOG_DEBUG("Removing mover [%i] (sector: #%i).") << index << mover->sectorIndex;
+    thinkers().remove(mover->thinker);
 }
 
 void Map::deleteClPolyobj(clpolyobj_t *mover)
 {
+    LOG_AS("Map::deleteClPolyobj");
+
     int index = clPolyobjIndex(mover);
     if(index < 0)
     {
-        DEBUG_Message(("Map::deleteClPolyobj: Mover not removed!"));
+        LOG_DEBUG("Mover not removed!");
         return;
     }
 
-    DEBUG_Message(("Map::deleteClPolyobj: Removing mover [%i].", index));
-    thinkerRemove(mover->thinker);
+    LOG_DEBUG("Removing mover [%i].") << index;
+    thinkers().remove(mover->thinker);
 }
 
 void Cl_MoverThinker(clplane_t *mover)
@@ -424,7 +429,7 @@ clplane_t *Map::newClPlane(int sectorIndex, clplanetype_t type, coord_t dest, fl
         P_SetDouble(DMU_SECTOR, sectorIndex, dmuPlane | DMU_TARGET_HEIGHT, dest);
         P_SetFloat(DMU_SECTOR, sectorIndex, dmuPlane | DMU_SPEED, speed);
 
-        thinkerAdd(mov->thinker, false /*not public*/);
+        thinkers().add(mov->thinker, false /*not public*/);
 
         // Immediate move?
         if(FEQUAL(speed, 0))
@@ -530,7 +535,7 @@ clpolyobj_t *Map::newClPolyobj(int polyobjIndex)
         mover->thinker.function = reinterpret_cast<thinkfunc_t>(Cl_PolyMoverThinker);
         mover->polyobj = polyobjs().at(polyobjIndex);
         mover->number = polyobjIndex;
-        thinkerAdd(mover->thinker, false /*not public*/);
+        thinkers().add(mover->thinker, false /*not public*/);
         return mover;
     }
 

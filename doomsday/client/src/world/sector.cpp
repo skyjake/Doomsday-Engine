@@ -1,4 +1,4 @@
-/** @file sector.h World Map Sector.
+/** @file sector.h World map sector.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -39,9 +39,6 @@
 #include "world/sector.h"
 
 using namespace de;
-
-float const Sector::DEFAULT_LIGHT_LEVEL = 1.f;
-Vector3f const Sector::DEFAULT_LIGHT_COLOR = Vector3f(1.f, 1.f, 1.f);
 
 DENG2_PIMPL(Sector),
 DENG2_OBSERVES(Plane, HeightChange)
@@ -169,24 +166,27 @@ DENG2_OBSERVES(Plane, HeightChange)
         }
 
 #ifdef __CLIENT__
-        // Inform the shadow bias of changed geometry.
-        foreach(BspLeaf *bspLeaf, bspLeafs)
+        if(!ddMapSetup)
         {
-            if(bspLeaf->isDegenerate())
-                 continue;
-
-            foreach(Segment *seg, bspLeaf->allSegments())
+            // Inform the shadow bias of changed geometry.
+            foreach(BspLeaf *bspLeaf, bspLeafs)
             {
-                if(!seg->hasLineSide())
-                    continue;
+                if(bspLeaf->isDegenerate())
+                     continue;
 
-                for(uint i = 0; i < 3; ++i)
+                foreach(Segment *seg, bspLeaf->allSegments())
                 {
-                    SB_SurfaceMoved(&seg->biasSurface(i));
-                }
-            }
+                    if(!seg->hasLineSide())
+                        continue;
 
-            SB_SurfaceMoved(&bspLeaf->biasSurface(plane.inSectorIndex()));
+                    for(uint i = 0; i < 3; ++i)
+                    {
+                        SB_SurfaceMoved(&seg->biasSurface(i));
+                    }
+                }
+
+                SB_SurfaceMoved(&bspLeaf->biasSurface(plane.inSectorIndex()));
+            }
         }
 
 #endif // __CLIENT__
@@ -477,6 +477,13 @@ void Sector::updateSoundEmitterOrigin()
     d->soundEmitter.origin[VX] = (d->aaBox.minX + d->aaBox.maxX) / 2;
     d->soundEmitter.origin[VY] = (d->aaBox.minY + d->aaBox.maxY) / 2;
     d->soundEmitter.origin[VZ] = (floor().height() + ceiling().height()) / 2;
+}
+
+bool Sector::pointInside(Vector2d const &point) const
+{
+    /// @todo Do not assume "this" sector is from the current map.
+    BspLeaf const &bspLeaf = App_World().map().bspLeafAt(point);
+    return bspLeaf.sectorPtr() == this && bspLeaf.pointInside(point);
 }
 
 int Sector::property(DmuArgs &args) const

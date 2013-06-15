@@ -1,4 +1,4 @@
-/** @file bspbuilder.h World Map BSP Builder.
+/** @file bspbuilder.h World map BSP builder.
  *
  * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2000-2007 Andrew Apted <ajapted@gmail.com>

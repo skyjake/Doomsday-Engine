@@ -1,4 +1,4 @@
-/** @file p_objlink.cpp
+/** @file p_objlink.cpp World map object => BSP leaf contact blockmap.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -582,7 +582,7 @@ static void linkObjlinkInBlockmap(objlinkblockmap_t &obm, objlink_t &link, Gridm
 void R_LinkObjs()
 {
     uint block[2];
-    pvec3d_t origin;
+    pvec3d_t origin = 0;
 
 BEGIN_PROF( PROF_OBJLINK_LINK );
 
@@ -598,6 +598,10 @@ BEGIN_PROF( PROF_OBJLINK_LINK );
 #endif
         case OT_MOBJ:
             origin = ((mobj_t *)link->obj)->origin; break;
+
+        case NUM_OBJ_TYPES:
+            DENG_ASSERT(false);
+            break;
         }
 
         objlinkblockmap_t &obm = chooseObjlinkBlockmap(link->type);

@@ -5318,8 +5318,8 @@ static int loadStateWorker(Str const *path, SaveInfo &saveInfo)
         R_UpdateConsoleView(i);
     }
 
-    // Spawn particle generators, fix HOMS etc, etc...
-    R_SetupMap(DDSMM_AFTER_LOADING, 0);
+    // Inform the engine to perform map setup once more.
+    R_SetupMap(0, 0);
 
     return 0; // Success.
 }
@@ -5471,7 +5471,7 @@ void SV_LoadGameClient(uint gameId)
     noMonstersParm = hdr->noMonsters;
     respawnMonsters = hdr->respawnMonsters;
     // Do we need to change the map?
-    if(gameMap != hdr->map - 1 || gameEpisode != hdr->episode - 1)
+    if(gameMap != (unsigned) (hdr->map - 1) || gameEpisode != (unsigned) (hdr->episode - 1))
     {
         gameEpisode = hdr->episode - 1;
         gameMap = hdr->map - 1;

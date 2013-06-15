@@ -1,4 +1,4 @@
-/** @file linesighttest.cpp World Map Line of Sight Testing.
+/** @file linesighttest.cpp World map line of sight testing.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>

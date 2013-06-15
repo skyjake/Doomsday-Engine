@@ -1,7 +1,7 @@
-/** @file world/plane.h World map plane.
+/** @file plane.h World map plane.
  *
- * @author Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @author Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -21,11 +21,8 @@
 #ifndef DENG_WORLD_PLANE_H
 #define DENG_WORLD_PLANE_H
 
-#include <QList>
-
 #include <de/types.h>
 
-#include <de/Error>
 #include <de/Observers>
 #include <de/Vector>
 
@@ -41,6 +38,9 @@ class Surface;
  */
 class Plane : public de::MapElement
 {
+    DENG2_NO_COPY  (Plane)
+    DENG2_NO_ASSIGN(Plane)
+
 public:
     /*
      * Observers to be notified when a Plane is about to be deleted.
@@ -52,10 +52,8 @@ public:
      */
     DENG2_DEFINE_AUDIENCE(HeightChange, void planeHeightChanged(Plane &plane, coord_t oldHeight))
 
-    /*
-     * Property value defaults:
-     */
-    static int const MAX_SMOOTH_MOVE; ///< 64, $smoothplane: Maximum speed for a smoothed plane.
+    // Constants:
+    static int const MAX_SMOOTH_MOVE = 64; ///< $smoothplane: Maximum speed for a smoothed plane.
 
 public:
     /**
@@ -65,7 +63,9 @@ public:
      * @param normal  Normal of the plane (will be normalized if necessary).
      * @param height  Height of the plane in map space coordinates.
      */
-    Plane(Sector &sector, de::Vector3f const &normal, coord_t height = 0);
+    Plane(Sector &sector,
+          de::Vector3f const &normal = de::Vector3f(0, 0, 1),
+          coord_t height             = 0);
 
     /**
      * Returns the owning Sector of the plane.

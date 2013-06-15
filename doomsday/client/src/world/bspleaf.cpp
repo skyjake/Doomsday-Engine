@@ -1,4 +1,4 @@
-/** @file world/bspleaf.cpp World BSP Leaf.
+/** @file bspleaf.cpp World map BSP leaf.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -437,6 +437,29 @@ int BspLeaf::validCount() const
 void BspLeaf::setValidCount(int newValidCount)
 {
     d->validCount = newValidCount;
+}
+
+bool BspLeaf::pointInside(Vector2d const &point) const
+{
+    if(isDegenerate())
+        return false; // Obviously not.
+
+    HEdge const *hedge = face().hedge();
+    do
+    {
+        Vertex const &va = hedge->vertex();
+        Vertex const &vb = hedge->next().vertex();
+
+        if(((va.origin().y - point.y) * (vb.origin().x - va.origin().x) -
+            (va.origin().x - point.x) * (vb.origin().y - va.origin().y)) < 0)
+        {
+            // Outside the BSP leaf's edges.
+            return false;
+        }
+
+    } while((hedge = &hedge->next()) != face().hedge());
+
+    return true;
 }
 
 #ifdef __CLIENT__
