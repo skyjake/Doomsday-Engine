@@ -8,6 +8,12 @@ group logo {
     image px128 { path = "graphics/deng-logo-128.png" }
     image px256 { path = "graphics/deng-logo-256.png" }
     image px512 { path = "graphics/deng-logo-512.png" }    
+    
+    group game {
+        image libdoom { path = "graphics/game-libdoom.png" }
+        image libheretic { path = "graphics/game-libheretic.png" }
+        image libhexen { path = "graphics/game-libhexen.png" }
+    }
 }
 
 image gear { path = "graphics/gear.png" }
