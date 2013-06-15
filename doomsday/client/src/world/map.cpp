@@ -186,6 +186,12 @@ DENG2_PIMPL(Map)
 
     ~Instance()
     {
+#ifdef __CLIENT__
+        // The light grid observes changes to sector lighting and so
+        // must be destroyed first.
+        lightGrid.reset();
+#endif
+
         qDeleteAll(bspNodes);
         qDeleteAll(bspLeafs);
         qDeleteAll(segments);
