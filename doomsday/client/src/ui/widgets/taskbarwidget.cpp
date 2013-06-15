@@ -346,7 +346,8 @@ void TaskBarWidget::close()
         d->opened = false;
 
         // Slide the task bar down.
-        d->vertShift->set(rule().height().valuei() + style().rules().rule("unit").valuei(), .2f);
+        d->vertShift->set(rule().height().valuei() +
+                          style().rules().rule("unit").valuei(), .2f);
         d->logo->setOpacity(0, .2f);
         d->status->setOpacity(0, .2f);
 

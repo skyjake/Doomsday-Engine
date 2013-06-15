@@ -40,7 +40,7 @@ DENG2_PIMPL(ButtonWidget)
     Instance(Public *i)
         : Base(i), state(Up),
           scale(1.f),
-          frameOpacity(.15f, Animation::Linear),
+          frameOpacity(.08f, Animation::Linear),
           animating(false)
     {
         updateBackground();
@@ -59,7 +59,7 @@ DENG2_PIMPL(ButtonWidget)
         case Up:
             scale.setStyle(prev == Down? Animation::Bounce : Animation::EaseOut);
             scale.setValue(1.f, .3f);
-            frameOpacity.setValue(.15f, .6f);
+            frameOpacity.setValue(.08f, .6f);
             break;
 
         case Hover:
