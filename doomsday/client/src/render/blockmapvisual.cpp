@@ -526,34 +526,26 @@ void Rend_BlockmapDebug()
     Map &map = App_World().map();
     switch(bmapShowDebug)
     {
-    default: // MobjLinks.
-        if(!map.mobjBlockmap()) return;
-
-        blockmap = map.mobjBlockmap();
+    default: // Mobjs.
+        blockmap = &map.mobjBlockmap();
         cellDrawer = rendCellMobjs;
         objectTypeName = "Mobjs";
         break;
 
     case 2: // Lines.
-        if(!map.lineBlockmap()) return;
-
-        blockmap = map.lineBlockmap();
+        blockmap = &map.lineBlockmap();
         cellDrawer = rendCellLines;
         objectTypeName = "Lines";
         break;
 
-    case 3: // BspLeafs.
-        if(!map.bspLeafBlockmap()) return;
-
-        blockmap = map.bspLeafBlockmap();
+    case 3: // BSP leafs.
+        blockmap = &map.bspLeafBlockmap();
         cellDrawer = rendCellBspLeafs;
         objectTypeName = "BSP Leafs";
         break;
 
-    case 4: // PolyobjLinks.
-        if(!map.polyobjBlockmap()) return;
-
-        blockmap = map.polyobjBlockmap();
+    case 4: // Polyobjs.
+        blockmap = &map.polyobjBlockmap();
         cellDrawer = rendCellPolyobjs;
         objectTypeName = "Polyobjs";
         break;

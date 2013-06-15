@@ -408,8 +408,6 @@ static void setupModelParamsForParticle(rendmodelparams_t* params,
     params->origin[VZ] = params->gzt = origin[VY];
     params->distance = dist;
 
-    BspLeaf *bspLeaf = App_World().map().bspLeafAtPoint(Vector2d(origin[VX], origin[VY]));
-
     params->extraScale = size; // Extra scaling factor.
     params->mf = &modefs[dst->model];
     params->alwaysInterpolate = true;
@@ -484,11 +482,11 @@ static void setupModelParamsForParticle(rendmodelparams_t* params,
 
         Rend_ApplyTorchLight(params->ambientColor, params->distance);
 
-        lparams.starkLight = false;
-        lparams.origin[VX] = params->origin[VX];
-        lparams.origin[VY] = params->origin[VY];
-        lparams.origin[VZ] = params->origin[VZ];
-        lparams.bspLeaf = bspLeaf;
+        lparams.starkLight   = false;
+        lparams.origin[VX]   = params->origin[VX];
+        lparams.origin[VY]   = params->origin[VY];
+        lparams.origin[VZ]   = params->origin[VZ];
+        lparams.bspLeaf      = &App_World().map().bspLeafAt(Vector2d(origin[VX], origin[VY]));
         lparams.ambientColor = params->ambientColor;
 
         params->vLightListIdx = R_CollectAffectingLights(&lparams);

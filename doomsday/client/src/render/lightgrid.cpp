@@ -547,9 +547,9 @@ DENG2_OBSERVES(Sector, LightLevelChange)
 
                 samplePoint = origin + off + samplePoints[0];
 
-                BspLeaf *bspLeaf = map.bspLeafAtPoint(samplePoint);
-                if(bspLeaf->pointInside(samplePoint))
-                    ssamples[idx] = bspLeaf->sectorPtr();
+                BspLeaf &bspLeaf = map.bspLeafAt(samplePoint);
+                if(bspLeaf.pointInside(samplePoint))
+                    ssamples[idx] = bspLeaf.sectorPtr();
                 else
                     ssamples[idx] = 0;
 
@@ -596,9 +596,9 @@ DENG2_OBSERVES(Sector, LightLevelChange)
                         // We haven't sampled this point yet.
                         samplePoint = origin + off + samplePoints[n];
 
-                        BspLeaf *bspLeaf = map.bspLeafAtPoint(samplePoint);
-                        if(bspLeaf->pointInside(samplePoint))
-                            ssamples[idx] = bspLeaf->sectorPtr();
+                        BspLeaf &bspLeaf = map.bspLeafAt(samplePoint);
+                        if(bspLeaf.pointInside(samplePoint))
+                            ssamples[idx] = bspLeaf.sectorPtr();
                         else
                             ssamples[idx] = 0;
                     }

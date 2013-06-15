@@ -413,7 +413,7 @@ static uint generateDecorLights(MaterialSnapshot::Decoration const &decor,
             if(Surface::DecorSource *source = suf.newDecoration())
             {
                 source->origin  = origin;
-                source->bspLeaf = App_World().map().bspLeafAtPoint(origin);
+                source->bspLeaf = &App_World().map().bspLeafAt(origin);
                 source->decor   = &decor;
                 decorCount++;
             }

@@ -120,7 +120,7 @@ DENG2_PIMPL(Map)
     AABoxd bounds;
 
     /// Map thinkers.
-    Thinkers thinkers;
+    QScopedPointer<Thinkers> thinkers;
 
     /// Element LUTs:
     Vertexes vertexes;
@@ -209,6 +209,9 @@ DENG2_PIMPL(Map)
         bool isFirst = true;
         foreach(Line *line, lines)
         {
+            // Polyobj lines don't count.
+            if(line->definesPolyobj()) continue;
+
             if(isFirst)
             {
                 // The first line's bounds are used as is.
@@ -941,9 +944,14 @@ void Map::consoleRegister() // static
     C_VAR_INT("bsp-factor", &bspSplitFactor, CVF_NO_MAX, 0, 0);
 }
 
-MapElement *Map::bspRoot() const
+MapElement &Map::bspRoot() const
 {
-    return d->bspRoot;
+    if(d->bspRoot)
+    {
+        return *d->bspRoot;
+    }
+    /// @throw MissingBspError  No BSP data is available.
+    throw MissingBspError("Map::bspRoot", "No BSP data available");
 }
 
 Map::Segments const &Map::segments() const
@@ -1065,7 +1073,12 @@ void Map::setGravity(coord_t newGravity)
 
 Thinkers &Map::thinkers() const
 {
-    return d->thinkers;
+    if(!d->thinkers.isNull())
+    {
+        return *d->thinkers;
+    }
+    /// @throw MissingThinkersError  The thinker lists are not yet initialized.
+    throw MissingThinkersError("Map::thinkers", "Thinkers not initialized");
 }
 
 Map::Vertexes const &Map::vertexes() const
@@ -1228,24 +1241,44 @@ void Map::initNodePiles()
     LOG_INFO(String("Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 }
 
-Blockmap const *Map::mobjBlockmap() const
+Blockmap const &Map::mobjBlockmap() const
 {
-    return d->mobjBlockmap.data();
+    if(!d->mobjBlockmap.isNull())
+    {
+        return *d->mobjBlockmap;
+    }
+    /// @throw MissingBlockmapError  The mobj blockmap is not yet initialized.
+    throw MissingBlockmapError("Map::mobjBlockmap", "Mobj blockmap is not initialized");
 }
 
-Blockmap const *Map::polyobjBlockmap() const
+Blockmap const &Map::polyobjBlockmap() const
 {
-    return d->polyobjBlockmap.data();
+    if(!d->polyobjBlockmap.isNull())
+    {
+        return *d->polyobjBlockmap;
+    }
+    /// @throw MissingBlockmapError  The polyobj blockmap is not yet initialized.
+    throw MissingBlockmapError("Map::polyobjBlockmap", "Polyobj blockmap is not initialized");
 }
 
-Blockmap const *Map::lineBlockmap() const
+Blockmap const &Map::lineBlockmap() const
 {
-    return d->lineBlockmap.data();
+    if(!d->lineBlockmap.isNull())
+    {
+        return *d->lineBlockmap;
+    }
+    /// @throw MissingBlockmapError  The line blockmap is not yet initialized.
+    throw MissingBlockmapError("Map::lineBlockmap", "Line blockmap is not initialized");
 }
 
-Blockmap const *Map::bspLeafBlockmap() const
+Blockmap const &Map::bspLeafBlockmap() const
 {
-    return d->bspLeafBlockmap.data();
+    if(!d->bspLeafBlockmap.isNull())
+    {
+        return *d->bspLeafBlockmap;
+    }
+    /// @throw MissingBlockmapError  The BSP leaf blockmap is not yet initialized.
+    throw MissingBlockmapError("Map::bspLeafBlockmap", "BSP leaf blockmap is not initialized");
 }
 
 struct bmapmoiterparams_t
@@ -1298,8 +1331,13 @@ static int iterateCellBlockMobjs(Blockmap &mobjBlockmap, Blockmap::CellBlock con
 int Map::mobjsBoxIterator(AABoxd const &box, int (*callback) (mobj_t *, void *),
                           void *parameters) const
 {
-    Blockmap::CellBlock cellBlock = d->mobjBlockmap->toCellBlock(box);
-    return iterateCellBlockMobjs(*d->mobjBlockmap, cellBlock, callback, parameters);
+    if(!d->mobjBlockmap.isNull())
+    {
+        Blockmap::CellBlock cellBlock = d->mobjBlockmap->toCellBlock(box);
+        return iterateCellBlockMobjs(*d->mobjBlockmap, cellBlock, callback, parameters);
+    }
+    /// @throw MissingBlockmapError  The mobj blockmap is not yet initialized.
+    throw MissingBlockmapError("Map::mobjsBoxIterator", "Mobj blockmap is not initialized");
 }
 
 struct bmapiterparams_t
@@ -1411,7 +1449,7 @@ static int iterateCellBspLeafs(Blockmap &bspLeafBlockmap, Blockmap::const_Cell c
 }
 */
 
-static int iterateCellBlockBspLeafs(Blockmap &bspLeafBlockmap,
+static int iterateBlockBspLeafs(Blockmap &bspLeafBlockmap,
     Blockmap::CellBlock const &cellBlock, Sector *sector,  AABoxd const &box,
     int localValidCount,
     int (*callback) (BspLeaf *, void *), void *context = 0)
@@ -1429,15 +1467,18 @@ static int iterateCellBlockBspLeafs(Blockmap &bspLeafBlockmap,
 int Map::bspLeafsBoxIterator(AABoxd const &box, Sector *sector,
     int (*callback) (BspLeaf *, void *), void *parameters) const
 {
-    static int localValidCount = 0;
+    if(!d->bspLeafBlockmap.isNull())
+    {
+        static int localValidCount = 0;
+        // This is only used here.
+        localValidCount++;
 
-    // This is only used here.
-    localValidCount++;
-
-    Blockmap::CellBlock cellBlock = d->bspLeafBlockmap->toCellBlock(box);
-
-    return iterateCellBlockBspLeafs(*d->bspLeafBlockmap, cellBlock, sector, box,
+        Blockmap::CellBlock cellBlock = d->bspLeafBlockmap->toCellBlock(box);
+        return iterateBlockBspLeafs(*d->bspLeafBlockmap, cellBlock, sector, box,
                                     localValidCount, callback, parameters);
+    }
+    /// @throw MissingBlockmapError  The BSP leaf blockmap is not yet initialized.
+    throw MissingBlockmapError("Map::bspLeafsBoxIterator", "BSP leaf blockmap is not initialized");
 }
 
 int Map::mobjLinesIterator(mobj_t *mo, int (*callback) (Line *, void *),
@@ -1591,7 +1632,7 @@ int Map::unlink(mobj_t &mo)
 void Map::link(mobj_t &mo, byte flags)
 {
     // Link into the sector.
-    mo.bspLeaf = bspLeafAtPoint_FixedPrecision(mo.origin);
+    mo.bspLeaf = &bspLeafAt_FixedPrecision(mo.origin);
 
     if(flags & DDLINK_SECTOR)
     {
@@ -1713,8 +1754,13 @@ static int iterateCellBlockPolyobjs(Blockmap &polyobjBlockmap, Blockmap::CellBlo
 int Map::polyobjsBoxIterator(AABoxd const &box,
     int (*callback) (struct polyobj_s *, void *), void *parameters) const
 {
-    Blockmap::CellBlock cellBlock = d->polyobjBlockmap->toCellBlock(box);
-    return iterateCellBlockPolyobjs(*d->polyobjBlockmap, cellBlock, callback, parameters);
+    if(!d->polyobjBlockmap.isNull())
+    {
+        Blockmap::CellBlock cellBlock = d->polyobjBlockmap->toCellBlock(box);
+        return iterateCellBlockPolyobjs(*d->polyobjBlockmap, cellBlock, callback, parameters);
+    }
+    /// @throw MissingBlockmapError  The polyobj blockmap is not yet initialized.
+    throw MissingBlockmapError("Map::polyobjsBoxIterator", "Polyobj blockmap is not initialized");
 }
 
 struct poiterparams_t
@@ -1723,7 +1769,7 @@ struct poiterparams_t
     void *parms;
 };
 
-int PTR_PolyobjLines(Polyobj *po, void* context)
+static int polyobjLineIterator(Polyobj *po, void* context)
 {
     poiterparams_t *args = (poiterparams_t *) context;
     foreach(Line *line, po->lines())
@@ -1756,7 +1802,7 @@ static int iterateCellPolyobjLinesIterator(Blockmap &polyobjBlockmap, const_Bloc
 }
 */
 
-static int iterateCellBlockPolyobjLines(Blockmap &polyobjBlockmap,
+static int iterateBlockPolyobjLines(Blockmap &polyobjBlockmap,
     Blockmap::CellBlock const &cellBlock,
     int (*callback) (Line *, void *), void *context = 0)
 {
@@ -1766,7 +1812,7 @@ static int iterateCellBlockPolyobjLines(Blockmap &polyobjBlockmap,
 
     bmappoiterparams_t args;
     args.localValidCount = validCount;
-    args.func            = PTR_PolyobjLines;
+    args.func            = polyobjLineIterator;
     args.parms           = &poargs;
 
     return polyobjBlockmap.iterate(cellBlock, blockmapCellPolyobjsIterator, (void*) &args);
@@ -1775,26 +1821,36 @@ static int iterateCellBlockPolyobjLines(Blockmap &polyobjBlockmap,
 int Map::linesBoxIterator(AABoxd const &box,
     int (*callback) (Line *, void *), void *parameters) const
 {
-    Blockmap::CellBlock cellBlock = d->lineBlockmap->toCellBlock(box);
-    return iterateCellBlockLines(*d->lineBlockmap, cellBlock, callback, parameters);
+    if(!d->lineBlockmap.isNull())
+    {
+        Blockmap::CellBlock cellBlock = d->lineBlockmap->toCellBlock(box);
+        return iterateCellBlockLines(*d->lineBlockmap, cellBlock, callback, parameters);
+    }
+    /// @throw MissingBlockmapError  The line blockmap is not yet initialized.
+    throw MissingBlockmapError("Map::linesBoxIterator", "Line blockmap is not initialized");
 }
 
 int Map::polyobjLinesBoxIterator(AABoxd const &box,
     int (*callback) (Line *, void *), void *parameters) const
 {
-    Blockmap::CellBlock cellBlock = d->polyobjBlockmap->toCellBlock(box);
-    return iterateCellBlockPolyobjLines(*d->polyobjBlockmap, cellBlock, callback, parameters);
+    if(!d->polyobjBlockmap.isNull())
+    {
+        Blockmap::CellBlock cellBlock = d->polyobjBlockmap->toCellBlock(box);
+        return iterateBlockPolyobjLines(*d->polyobjBlockmap, cellBlock, callback, parameters);
+    }
+    /// @throw MissingBlockmapError  The polyobj blockmap is not yet initialized.
+    throw MissingBlockmapError("Map::polyobjBlockmap", "Polyobj blockmap is not initialized");
 }
 
 int Map::allLinesBoxIterator(AABoxd const &box,
     int (*callback) (Line *, void *), void *parameters) const
 {
-    if(!d->polyobjs.isEmpty())
+    if(polyobjCount())
     {
-        int result = P_PolyobjLinesBoxIterator(&box, callback, parameters);
+        int result = polyobjLinesBoxIterator(box, callback, parameters);
         if(result) return result;
     }
-    return P_LinesBoxIterator(&box, callback, parameters);
+    return linesBoxIterator(box, callback, parameters);
 }
 
 static int traverseCellPath2(Blockmap &bmap, Blockmap::Cell const &fromCell,
@@ -1878,7 +1934,7 @@ static int traverseCellPath2(Blockmap &bmap, Blockmap::Cell const &fromCell,
     return false; // Continue iteration.
 }
 
-static int traverseCellPath(divline_t &traceLine, Blockmap &bmap,
+static int traversePath(divline_t &traceLine, Blockmap &bmap,
     const_pvec2d_t from_, const_pvec2d_t to_,
     int (*callback) (Blockmap::Cell const &cell, void *parameters), void *parameters = 0)
 {
@@ -2022,26 +2078,30 @@ int Map::pathTraverse(const_pvec2d_t from, const_pvec2d_t to, int flags,
     {
         if(!d->polyobjs.isEmpty())
         {
-            traverseCellPath(d->traceLine, *d->polyobjBlockmap, from, to,
-                             collectPolyobjLineIntercepts,
-                             (void *)d->polyobjBlockmap.data());
+            traversePath(d->traceLine, *d->polyobjBlockmap, from, to,
+                         collectPolyobjLineIntercepts,
+                         (void *)d->polyobjBlockmap.data());
         }
 
-        traverseCellPath(d->traceLine, *d->lineBlockmap, from, to, collectLineIntercepts,
-                         (void *)d->lineBlockmap.data());
+        traversePath(d->traceLine, *d->lineBlockmap, from, to, collectLineIntercepts,
+                     (void *)d->lineBlockmap.data());
     }
     if(flags & PT_ADDMOBJS)
     {
-        traverseCellPath(d->traceLine, *d->mobjBlockmap, from, to, collectMobjIntercepts,
-                         (void *)d->mobjBlockmap.data());
+        traversePath(d->traceLine, *d->mobjBlockmap, from, to, collectMobjIntercepts,
+                     (void *)d->mobjBlockmap.data());
     }
 
     // Step #2: Process sorted intercepts.
     return P_TraverseIntercepts(callback, parameters);
 }
 
-BspLeaf *Map::bspLeafAtPoint(Vector2d const &point) const
+BspLeaf &Map::bspLeafAt(Vector2d const &point) const
 {
+    if(!d->bspRoot)
+        /// @throw MissingBspError  No BSP data is available.
+        throw MissingBspError("Map::bspLeafAt", "No BSP data available");
+
     MapElement *bspElement = d->bspRoot;
     while(bspElement->type() != DMU_BSPLEAF)
     {
@@ -2054,11 +2114,15 @@ BspLeaf *Map::bspLeafAtPoint(Vector2d const &point) const
     }
 
     // We've arrived at a leaf.
-    return bspElement->as<BspLeaf>();
+    return *bspElement->as<BspLeaf>();
 }
 
-BspLeaf *Map::bspLeafAtPoint_FixedPrecision(Vector2d const &point) const
+BspLeaf &Map::bspLeafAt_FixedPrecision(Vector2d const &point) const
 {
+    if(!d->bspRoot)
+        /// @throw MissingBspError  No BSP data is available.
+        throw MissingBspError("Map::bspLeafAt_FixedPrecision", "No BSP data available");
+
     fixed_t pointX[2] = { DBL2FIX(point.x), DBL2FIX(point.y) };
 
     MapElement *bspElement = d->bspRoot;
@@ -2077,7 +2141,7 @@ BspLeaf *Map::bspLeafAtPoint_FixedPrecision(Vector2d const &point) const
     }
 
     // We've arrived at a leaf.
-    return bspElement->as<BspLeaf>();
+    return *bspElement->as<BspLeaf>();
 }
 
 void Map::updateSurfacesOnMaterialChange(Material &material)
@@ -2671,6 +2735,11 @@ void buildVertexLineOwnerRings(EditableElements &editable)
     }
 }
 
+bool Map::isEditable() const
+{
+    return d->editingEnabled;
+}
+
 bool Map::endEditing()
 {
     if(!d->editingEnabled)
@@ -2807,6 +2876,9 @@ bool Map::endEditing()
 #ifdef __CLIENT__
     S_DetermineBspLeafsAffectingSectorReverb(this);
 #endif
+
+    // Prepare the thinker lists.
+    d->thinkers.reset(new Thinkers);
 
     return true;
 }

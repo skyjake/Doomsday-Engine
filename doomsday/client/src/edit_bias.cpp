@@ -698,10 +698,7 @@ static void SBE_DrawLevelGauge(Point2Raw const *origin, int height)
     else
         src = SBE_GetNearest();
 
-    BspLeaf *bspLeaf = App_World().map().bspLeafAtPoint(src->origin);
-    if(!bspLeaf) return;
-
-    Sector &sector = bspLeaf->sector();
+    Sector &sector = App_World().map().bspLeafAt(src->origin).sector();
     if(lastSector != &sector)
     {
         minLevel = maxLevel = sector.lightLevel();

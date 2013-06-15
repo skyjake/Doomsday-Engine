@@ -1134,7 +1134,7 @@ static boolean LOIT_ClipLumObj(void *data, void * /*context*/)
 
         luminousClipped[lumIdx] = 1;
 
-        if(LineSightTest(eye, origin, -1, 1, LS_PASSLEFT | LS_PASSOVER | LS_PASSUNDER).trace(*App_World().map().bspRoot()))
+        if(LineSightTest(eye, origin, -1, 1, LS_PASSLEFT | LS_PASSOVER | LS_PASSUNDER).trace(App_World().map().bspRoot()))
         {
             luminousClipped[lumIdx] = 0; // Will have a halo.
         }

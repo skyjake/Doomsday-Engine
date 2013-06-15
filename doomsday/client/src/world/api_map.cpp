@@ -1564,7 +1564,7 @@ DENG_EXTERN_C int P_MobjUnlink(mobj_t *mo)
 DENG_EXTERN_C BspLeaf *P_BspLeafAtPoint_FixedPrecision(const_pvec2d_t point)
 {
     if(!App_World().hasMap()) return 0;
-    return App_World().map().bspLeafAtPoint_FixedPrecision(point);
+    return &App_World().map().bspLeafAt_FixedPrecision(point);
 }
 
 #undef P_BspLeafAtPoint_FixedPrecisionXY
@@ -1572,7 +1572,7 @@ DENG_EXTERN_C BspLeaf *P_BspLeafAtPoint_FixedPrecisionXY(coord_t x, coord_t y)
 {
     if(!App_World().hasMap()) return 0;
     coord_t point[2] = { x, y };
-    return App_World().map().bspLeafAtPoint_FixedPrecision(point);
+    return &App_World().map().bspLeafAt_FixedPrecision(point);
 }
 
 #undef P_MobjLinesIterator
@@ -1693,7 +1693,7 @@ DENG_EXTERN_C boolean P_CheckLineSight(const_pvec3d_t from, const_pvec3d_t to, c
 {
     if(!App_World().hasMap()) return false; // I guess?
     return LineSightTest(Vector3d(from), Vector3d(to),
-                         dfloat(bottomSlope), dfloat(topSlope), flags).trace(*App_World().map().bspRoot());
+                         dfloat(bottomSlope), dfloat(topSlope), flags).trace(App_World().map().bspRoot());
 }
 
 #undef P_TraceLOS

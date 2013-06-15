@@ -88,13 +88,22 @@ class Map
     DENG2_NO_ASSIGN(Map)
 
 public:
+    /// Base error for runtime map editing errors. @ingroup errors
+    DENG2_ERROR(EditError);
+
+    /// Required blockmap is missing. @ingroup errors
+    DENG2_ERROR(MissingBlockmapError);
+
+    /// Required BSP data is missing. @ingroup errors
+    DENG2_ERROR(MissingBspError);
+
+    /// Required thinker lists are missing. @ingroup errors
+    DENG2_ERROR(MissingThinkersError);
+
 #ifdef __CLIENT__
     /// Required light grid is missing. @ingroup errors
     DENG2_ERROR(MissingLightGridError);
 #endif
-
-    /// Base error for runtime map editing errors. @ingroup errors
-    DENG2_ERROR(EditError);
 
     /*
      * Linked-element lists/sets:
@@ -136,6 +145,12 @@ public:
     static void consoleRegister();
 
     /**
+     * To be called Initializes the dummy element arrays used with the DMU API,
+     * with a fixed number of @em shared dummies.
+     */
+    static void initDummies();
+
+    /**
      * This ID is the name of the lump tag that marks the beginning of map
      * data, e.g. "MAP03" or "E2M8".
      */
@@ -154,7 +169,9 @@ public:
     void setOldUniqueId(char const *newUniqueId);
 
     /**
-     * Returns the minimal and maximal boundary points for the map.
+     * Returns the points which describe the boundary of the map coordinate
+     * space, which, are defined by the minimal and maximal vertex coordinates
+     * of the non-editable, non-polyobj line geometries).
      */
     AABoxd const &bounds() const;
 
@@ -166,12 +183,12 @@ public:
     /**
      * Change the effective gravity multiplier for the map.
      *
-     * @param gravity  New gravity multiplier.
+     * @param newGravity  New gravity multiplier.
      */
-    void setGravity(coord_t gravity);
+    void setGravity(coord_t newGravity);
 
     /**
-     * Returns the global ambient light level for the map.
+     * Returns the minimum ambient light level for the whole map.
      */
     int ambientLightLevel() const;
 
@@ -232,24 +249,125 @@ public:
     inline int bspLeafCount() const { return bspLeafs().count(); }
 
     /**
-     * Provides access to the mobj blockmap.
+     * Helper function for returning the relevant line side index for @a lineIndex
+     * and @a backSide.
+     *
+     * Indices are produced as follows:
+     * @code
+     *  lineIndex / 2 + (backSide? 1 : 0);
+     * @endcode
+     *
+     * @param lineIndex  Index of the Line in the map.
+     * @param backSide   If @c =0 the Line::Front else Line::Back
+     *
+     * @return  Unique index for the line side.
      */
-    Blockmap const *mobjBlockmap() const;
+    static int toSideIndex(int lineIndex, int backSide);
 
     /**
-     * Provides access to the polyobj blockmap.
+     * Returns a pointer to the Line::Side associated with the specified @a index;
+     * otherwise @c 0.
+     *
+     * @see toSideIndex()
      */
-    Blockmap const *polyobjBlockmap() const;
+    Line::Side *sideByIndex(int index) const;
+
+    /**
+     * Locate a polyobj in the map by unique in-map tag.
+     *
+     * @param tag  Tag associated with the polyobj to be located.
+     * @return  Pointer to the referenced polyobj instance; otherwise @c 0.
+     */
+    Polyobj *polyobjByTag(int tag) const;
+
+    /**
+     * Provides access to the entity database.
+     */
+    EntityDatabase &entityDatabase() const;
+
+    /**
+     * Provides access to the mobj blockmap.
+     */
+    Blockmap const &mobjBlockmap() const;
 
     /**
      * Provides access to the line blockmap.
      */
-    Blockmap const *lineBlockmap() const;
+    Blockmap const &lineBlockmap() const;
+
+    /**
+     * Provides access to the polyobj blockmap.
+     */
+    Blockmap const &polyobjBlockmap() const;
 
     /**
      * Provides access to the BSP leaf blockmap.
      */
-    Blockmap const *bspLeafBlockmap() const;
+    Blockmap const &bspLeafBlockmap() const;
+
+    /**
+     * Returns the root element for the map's BSP tree.
+     */
+    MapElement &bspRoot() const;
+
+    /**
+     * Determine the BSP leaf on the back side of the BS partition that lies
+     * in front  of the specified point within the map's coordinate space.
+     *
+     * @note Always returns a valid BspLeaf although the point may not actually
+     * lay within it (however it is on the same side of the space partition)!
+     *
+     * @param point  XY coordinates of the point to test.
+     *
+     * @return  BspLeaf instance for that BSP node's leaf.
+     */
+    BspLeaf &bspLeafAt(Vector2d const &point) const;
+
+    /**
+     * @copydoc bspLeafAt()
+     *
+     * The test is carried out using fixed-point math for behavior compatible
+     * with vanilla DOOM. Note that this means there is a maximum size for the
+     * point: it cannot exceed the fixed-point 16.16 range (about 65k units).
+     */
+    BspLeaf &bspLeafAt_FixedPrecision(Vector2d const &point) const;
+
+    /**
+     * Links a mobj into both a block and a BSP leaf based on it's (x,y).
+     * Sets mobj->bspLeaf properly. Calling with flags==0 only updates
+     * the BspLeaf pointer. Can be called without unlinking first.
+     * Should be called AFTER mobj translation to (re-)insert the mobj.
+     */
+    void link(struct mobj_s &mobj, byte flags);
+
+    /**
+     * Link the specified @a polyobj in any internal data structures for
+     * bookkeeping purposes. Should be called AFTER Polyobj rotation and/or
+     * translation to (re-)insert the polyobj.
+     *
+     * @param polyobj  Polyobj to be linked.
+     */
+    void link(Polyobj &polyobj);
+
+    /**
+     * Unlinks a mobj from everything it has been linked to. Should be called
+     * BEFORE mobj translation to extract the mobj.
+     *
+     * @param mo  Mobj to be unlinked.
+     *
+     * @return  DDLINK_* flags denoting what the mobj was unlinked from
+     * (in case we need to re-link).
+     */
+    int unlink(struct mobj_s &mobj);
+
+    /**
+     * Unlink the specified @a polyobj from any internal data structures for
+     * bookkeeping purposes. Should be called BEFORE Polyobj rotation and/or
+     * translation to extract the polyobj.
+     *
+     * @param polyobj  Polyobj to be unlinked.
+     */
+    void unlink(Polyobj &polyobj);
 
     /**
      * Given an @a emitter origin, attempt to identify the map element
@@ -265,41 +383,6 @@ public:
      */
     bool identifySoundEmitter(ddmobj_base_t const &emitter, Sector **sector,
         Polyobj **poly, Plane **plane, Surface **surface) const;
-
-    /**
-     * Locate a polyobj in the map by unique in-map tag.
-     *
-     * @param tag  Tag associated with the polyobj to be located.
-     * @return  Pointer to the referenced polyobj instance; otherwise @c 0.
-     */
-    Polyobj *polyobjByTag(int tag) const;
-
-    /**
-     * Returns the root element for the map's BSP tree.
-     */
-    MapElement *bspRoot() const;
-
-    /**
-     * Determine the BSP leaf on the back side of the BS partition that lies
-     * in front  of the specified point within the map's coordinate space.
-     *
-     * @note Always returns a valid BspLeaf although the point may not actually
-     * lay within it (however it is on the same side of the space partition)!
-     *
-     * @param point  XY coordinates of the point to test.
-     *
-     * @return  BspLeaf instance for that BSP node's leaf.
-     */
-    BspLeaf *bspLeafAtPoint(Vector2d const &point) const;
-
-    /**
-     * @copydoc bspLeafAtPoint()
-     *
-     * The test is carried out using fixed-point math for behavior compatible
-     * with vanilla DOOM. Note that this means there is a maximum size for the
-     * point: it cannot exceed the fixed-point 16.16 range (about 65k units).
-     */
-    BspLeaf *bspLeafAtPoint_FixedPrecision(Vector2d const &point) const;
 
     int mobjsBoxIterator(AABoxd const &box,
         int (*callback) (struct mobj_s *, void *), void *parameters = 0) const;
@@ -364,32 +447,6 @@ public:
         int (*callback) (struct mobj_s *, void *), void *parameters = 0) const;
 
     /**
-     * Retrieve an immutable copy of the LOS trace line state.
-     *
-     * @todo Map should not own this data.
-     */
-    divline_t const &traceLine() const;
-
-    /**
-     * Retrieve an immutable copy of the LOS TraceOpening state.
-     *
-     * @todo Map should not own this data.
-     */
-    TraceOpening const &traceOpening() const;
-
-    /**
-     * Update the TraceOpening state for according to the opening defined by the
-     * inner-minimal planes heights which intercept @a line
-     *
-     * If @a line is not owned by the map this is a no-op.
-     *
-     * @todo Map should not own this data.
-     *
-     * @param line  Map line to configure the opening for.
-     */
-    void setTraceOpening(Line &line);
-
-    /**
      * Trace a line between @a from and @a to, making a callback for each
      * interceptable object linked within Blockmap cells which cover the path
      * this defines.
@@ -414,43 +471,30 @@ public:
     }
 
     /**
-     * Links a mobj into both a block and a BSP leaf based on it's (x,y).
-     * Sets mobj->bspLeaf properly. Calling with flags==0 only updates
-     * the BspLeaf pointer. Can be called without unlinking first.
-     * Should be called AFTER mobj translation to (re-)insert the mobj.
+     * Retrieve an immutable copy of the LOS trace line state.
+     *
+     * @todo Map should not own this data.
      */
-    void link(struct mobj_s &mobj, byte flags);
+    divline_t const &traceLine() const;
 
     /**
-     * Unlinks a mobj from everything it has been linked to. Should be called
-     * BEFORE mobj translation to extract the mobj.
+     * Retrieve an immutable copy of the LOS TraceOpening state.
      *
-     * @param mo  Mobj to be unlinked.
-     *
-     * @return  DDLINK_* flags denoting what the mobj was unlinked from
-     * (in case we need to re-link).
+     * @todo Map should not own this data.
      */
-    int unlink(struct mobj_s &mobj);
+    TraceOpening const &traceOpening() const;
 
     /**
-     * Link the specified @a polyobj in any internal data structures for
-     * bookkeeping purposes. Should be called AFTER Polyobj rotation and/or
-     * translation to (re-)insert the polyobj.
+     * Update the TraceOpening state for according to the opening defined by the
+     * inner-minimal planes heights which intercept @a line
      *
-     * @param polyobj  Polyobj to be linked.
-     */
-    void link(Polyobj &polyobj);
-
-    /**
-     * Unlink the specified @a polyobj from any internal data structures for
-     * bookkeeping purposes. Should be called BEFORE Polyobj rotation and/or
-     * translation to extract the polyobj.
+     * If @a line is not owned by the map this is a no-op.
      *
-     * @param polyobj  Polyobj to be unlinked.
+     * @todo Map should not own this data.
+     *
+     * @param line  Map line to configure the opening for.
      */
-    void unlink(Polyobj &polyobj);
-
-    EntityDatabase &entityDatabase() const;
+    void setTraceOpening(Line &line);
 
 #ifdef __CLIENT__
     coord_t skyFix(bool ceiling) const;
@@ -578,37 +622,30 @@ public:
      */
     PlaneSet /*const*/ &trackedPlanes();
 
+    /**
+     * Returns @c true iff a LightGrid has been initialized for the map.
+     *
+     * @see lightGrid()
+     */
+    bool hasLightGrid();
+
+    /**
+     * Provides access to the light grid for the map.
+     *
+     * @see hasLightGrid()
+     */
+    LightGrid &lightGrid();
+
+    /**
+     * Initialize the ambient lighting grid (smoothed sector lighting).
+     * If the grid has already been initialized calling this will perform
+     * a full update.
+     */
+    void initLightGrid();
+
 #endif // __CLIENT__
 
-    /**
-     * Helper function for returning the relevant line side index for @a lineIndex
-     * and @a backSide.
-     *
-     * Indices are produced as follows:
-     * @code
-     *  lineIndex / 2 + (backSide? 1 : 0);
-     * @endcode
-     *
-     * @param lineIndex  Index of the Line in the map.
-     * @param backSide   If @c =0 the Line::Front else Line::Back
-     *
-     * @return  Unique index for the line side.
-     */
-    static int toSideIndex(int lineIndex, int backSide);
-
-    /**
-     * Returns a pointer to the Line::Side associated with the specified @a index;
-     * otherwise @c 0.
-     */
-    Line::Side *sideByIndex(int index) const;
-
 public: /// @todo Make private:
-
-    /**
-     * Initializes the dummy element arrays used with the DMU API, with a
-     * fixed number of dummies.
-     */
-    static void initDummies();
 
     /**
      * Initialize the node piles and link rings. To be called after map load.
@@ -631,27 +668,6 @@ public: /// @todo Make private:
     void buildSurfaceLists();
 
     /**
-     * Returns @c true iff a LightGrid has been initialized for the map.
-     *
-     * @see lightGrid()
-     */
-    bool hasLightGrid();
-
-    /**
-     * Provides access to the light grid for the map.
-     *
-     * @see hasLightGrid()
-     */
-    LightGrid &lightGrid();
-
-    /**
-     * Initialize the ambient lighting grid (smoothed sector lighting).
-     * If the grid has already been initialized calling this will perform
-     * a full update.
-     */
-    void initLightGrid();
-
-    /**
      * @todo Replace with a de::Observers-based mechanism.
      */
     void updateMissingMaterialsForLinesOfSector(Sector const &sec);
@@ -671,19 +687,36 @@ public:
      * Runtime map editing:
      */
 
+    /**
+     * Returns @c true iff the map is currently in an editable state.
+     */
+    bool isEditable() const;
+
     /// @return @c true= a new BSP was built successfully for the map.
     bool endEditing();
 
+    /**
+     * @see isEditable()
+     */
     Vertex *createVertex(Vector2d const &origin,
                          int archiveIndex = MapElement::NoIndex);
 
+    /**
+     * @see isEditable()
+     */
     Line *createLine(Vertex &v1, Vertex &v2, int flags = 0,
                      Sector *frontSector = 0, Sector *backSector = 0,
                      int archiveIndex = MapElement::NoIndex);
 
+    /**
+     * @see isEditable()
+     */
     Sector *createSector(float lightLevel, Vector3f const &lightColor,
                          int archiveIndex = MapElement::NoIndex);
 
+    /**
+     * @see isEditable()
+     */
     Polyobj *createPolyobj(Vector2d const &origin);
 
     /**

@@ -2471,7 +2471,7 @@ void Rend_RenderMap()
         currentBspLeaf = 0;
 
         // Draw the world!
-        traverseBspAndDrawLeafs(App_World().map().bspRoot());
+        traverseBspAndDrawLeafs(&App_World().map().bspRoot());
 
         Rend_RenderMobjShadows();
     }

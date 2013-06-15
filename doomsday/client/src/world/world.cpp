@@ -661,18 +661,16 @@ void World::setupMap(int mode)
 
             if(mobj_t *mo = ddpl.mo)
             {
-                if(BspLeaf *bspLeaf = d->map->bspLeafAtPoint(mo->origin))
-                {
+                BspLeaf &bspLeaf = d->map->bspLeafAt(mo->origin);
 #ifdef __CLIENT__
-                    if(mo->origin[VZ] >= bspLeaf->sector().floor().visHeight() &&
-                       mo->origin[VZ] < bspLeaf->sector().ceiling().visHeight() - 4)
+                if(mo->origin[VZ] >= bspLeaf.sector().floor().visHeight() &&
+                   mo->origin[VZ] <  bspLeaf.sector().ceiling().visHeight() - 4)
 #else
-                    if(mo->origin[VZ] >= bspLeaf->sector().floor().height() &&
-                       mo->origin[VZ] < bspLeaf->sector().ceiling().height() - 4)
+                if(mo->origin[VZ] >= bspLeaf.sector().floor().height() &&
+                   mo->origin[VZ] <  bspLeaf.sector().ceiling().height() - 4)
 #endif
-                    {
-                        ddpl.inVoid = false;
-                    }
+                {
+                    ddpl.inVoid = false;
                 }
             }
         }

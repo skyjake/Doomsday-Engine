@@ -677,7 +677,7 @@ BEGIN_PROF( PROF_BIAS_UPDATE );
             float const maxLevel = s->sectorLevel[1];
             float const oldIntensity = s->intensity;
 
-            Sector &sector = map.bspLeafAtPoint(s->origin)->sector();
+            Sector &sector = map.bspLeafAt(s->origin).sector();
 
             // The lower intensities are useless for light emission.
             if(sector.lightLevel() >= maxLevel)
@@ -1039,7 +1039,7 @@ void SB_EvalPoint(float light[4], vertexillum_t *illum,
         Vector3d surfacePoint = point + delta / 100;
 
         if(useSightCheck &&
-           !LineSightTest(s->origin, surfacePoint).trace(*App_World().map().bspRoot()))
+           !LineSightTest(s->origin, surfacePoint).trace(App_World().map().bspRoot()))
         {
             // LOS fail.
             if(casted)

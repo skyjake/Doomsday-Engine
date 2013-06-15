@@ -155,11 +155,8 @@ void Polyobj::link()
 
         // Given the center point determine in which BSP leaf the polyobj resides.
         /// @todo Do not assume polyobj is from the CURRENT map.
-        if(BspLeaf *bspLeaf = App_World().map().bspLeafAtPoint(avg))
-        {
-            bspLeaf->addOnePolyobj(*this);
-            _bspLeaf = bspLeaf;
-        }
+        _bspLeaf = &App_World().map().bspLeafAt(avg);
+        _bspLeaf->addOnePolyobj(*this);
     }
 }
 

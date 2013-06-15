@@ -654,7 +654,7 @@ static void P_NewParticle(ptcgen_t *gen)
             float y = sector->aaBox().minY +
                 RNG_RandFloat() * (sector->aaBox().maxY - sector->aaBox().minY);
 
-            bspLeaf = App_World().map().bspLeafAtPoint(Vector2d(x, y));
+            bspLeaf = &App_World().map().bspLeafAt(Vector2d(x, y));
             if(bspLeaf->sectorPtr() == sector) break;
 
             bspLeaf = 0;
@@ -679,7 +679,7 @@ static void P_NewParticle(ptcgen_t *gen)
             pt->origin[VX] = FLT2FIX(x);
             pt->origin[VY] = FLT2FIX(y);
 
-            if(App_World().map().bspLeafAtPoint(Vector2d(x, y)) == bspLeaf)
+            if(&App_World().map().bspLeafAt(Vector2d(x, y)) == bspLeaf)
                 break; // This is a good place.
         }
 
@@ -711,7 +711,7 @@ static void P_NewParticle(ptcgen_t *gen)
     else
     {
         Vector2d ptOrigin(FIX2FLT(pt->origin[VX]), FIX2FLT(pt->origin[VY]));
-        pt->sector = App_World().map().bspLeafAtPoint(ptOrigin)->sectorPtr();
+        pt->sector = App_World().map().bspLeafAt(ptOrigin).sectorPtr();
     }
 
     // Play a stage sound?
@@ -1181,7 +1181,7 @@ static void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
     if(tmcross)
     {
         Vector2d ptOrigin(FIX2FLT(x), FIX2FLT(y));
-        pt->sector = App_World().map().bspLeafAtPoint(ptOrigin)->sectorPtr();
+        pt->sector = App_World().map().bspLeafAt(ptOrigin).sectorPtr();
     }
 }
 
