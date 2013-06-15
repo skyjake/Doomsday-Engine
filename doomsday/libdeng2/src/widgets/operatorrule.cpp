@@ -106,25 +106,26 @@ String OperatorRule::description() const
     static char const *texts[] = {
         "Equals",
         "Negate",
-        "Half",
-        "Double",
-        "Sum",
-        "Subtract",
-        "Multiply",
-        "Divide",
-        "Maximum",
-        "Minimum",
+        "1/2x",
+        "2x",
+        "+",
+        "-",
+        "*",
+        "/",
+        "Max",
+        "Min",
         "Floor"
     };
 
-    String desc = String("Operator %1 { ").arg(texts[_operator]);
+    String desc = "{";
     if(_leftOperand)
     {
-        desc += _leftOperand->description();
+        desc += " " + _leftOperand->description();
     }
+    desc += String(" %1").arg(texts[_operator]);
     if(_rightOperand)
     {
-        desc += ", " + _rightOperand->description();
+        desc += " " + _rightOperand->description();
     }
     return desc + " }";
 }
