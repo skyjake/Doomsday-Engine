@@ -67,6 +67,11 @@ public:
      */
     DENG2_DEFINE_AUDIENCE(GameChange, void currentGameChanged(Game &newGame))
 
+    /**
+     * Notified when a new game is added.
+     */
+    DENG2_DEFINE_AUDIENCE(Addition, void gameAdded(Game &game))
+
 public:
     Games();
 

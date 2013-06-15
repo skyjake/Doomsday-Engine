@@ -183,6 +183,11 @@ void Games::add(Game &game)
     if(d->games.indexOf(&game) >= 0) return;
 
     d->games.push_back(&game);
+
+    DENG2_FOR_AUDIENCE(Addition, i)
+    {
+        i->gameAdded(game);
+    }
 }
 
 void Games::locateStartupResources(Game &game)
