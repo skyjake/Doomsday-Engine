@@ -49,6 +49,10 @@ public Font::RichFormat::IStyle
     // Style.
     int margin;
     int gap;
+    ColorBank::Color highlightColor;
+    ColorBank::Color dimmedColor;
+    ColorBank::Color accentColor;
+    ColorBank::Color dimAccentColor;
 
     String styledText;
     FontLineWrapping wraps;
@@ -92,10 +96,16 @@ public Font::RichFormat::IStyle
 
     void updateStyle()
     {
-        //Style const &st = self.style();
+        Style const &st = self.style();
 
         margin = self.margin().valuei();
         gap = margin / 2;
+
+        // Colors.
+        highlightColor = st.colors().color("label.highlight");
+        dimmedColor    = st.colors().color("label.dimmed");
+        accentColor    = st.colors().color("label.accent");
+        dimAccentColor = st.colors().color("label.dimaccent");
 
         wraps.setFont(self.font());
         wrapWidth = 0;
@@ -103,9 +113,26 @@ public Font::RichFormat::IStyle
         self.requestGeometry();
     }
 
-    Color richStyleColor(int /*index*/) const
+    Color richStyleColor(int index) const
     {
-        return self.textColor();
+        switch(index)
+        {
+        default:
+        case Font::RichFormat::NormalColor:
+            return self.textColor();
+
+        case Font::RichFormat::HighlightColor:
+            return highlightColor;
+
+        case Font::RichFormat::DimmedColor:
+            return dimmedColor;
+
+        case Font::RichFormat::AccentColor:
+            return accentColor;
+
+        case Font::RichFormat::DimAccentColor:
+            return dimAccentColor;
+        }
     }
 
     void richStyleFormat(int contentStyle, float &sizeFactor, Font::RichFormat::Weight &fontWeight,
@@ -406,6 +433,11 @@ void LabelWidget::setAlignment(Alignment const &align)
 void LabelWidget::setTextAlignment(Alignment const &textAlign)
 {
     d->textAlign = textAlign;
+}
+
+void LabelWidget::setTextLineAlignment(Alignment const &textLineAlign)
+{
+    d->lineAlign = textLineAlign;
 }
 
 void LabelWidget::setImageAlignment(Alignment const &imageAlign)

@@ -6,6 +6,13 @@ color text       { rgb <1.0, 1.0, 1.0> }
 color background { rgb <0.0, 0.0, 0.0, 0.75> }
 color accent     { rgb <1.0, 0.8, 0.4> }
 
+group label {
+    color highlight { rgb <1.0, 1.0, 1.0> }
+    color dimmed    { rgb <0.72, 0.72, 0.68> }
+    color accent    { rgb $= accent.rgb }
+    color dimaccent { rgb <0.85, 0.68, 0.34> }
+}
+
 group editor {
     color cursor { rgb $= gui.colorAlpha(accent.rgb, 0.7) }
     color hint   { rgb $= gui.colorMix(text.rgb, accent.rgb, 0.5) }
