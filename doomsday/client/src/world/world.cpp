@@ -703,9 +703,96 @@ void World::clearMap()
     delete d->map; d->map = 0;
 }
 
-void World::resetMapCache()
+void World::update()
 {
+#ifdef __CLIENT__
+    P_UpdateParticleGens(); // Defs might've changed.
+#endif
+
+    // Reset the archived map cache (the available maps may have changed).
     d->records.clear();
+
+    for(uint i = 0; i < DDMAXPLAYERS; ++i)
+    {
+        player_t *plr = &ddPlayers[i];
+        ddplayer_t *ddpl = &plr->shared;
+        // States have changed, the states are unknown.
+        ddpl->pSprites[0].statePtr = ddpl->pSprites[1].statePtr = NULL;
+    }
+
+    if(d->map)
+    {
+#ifdef __CLIENT__
+
+        // Update all world surfaces.
+        foreach(Sector *sector, d->map->sectors())
+        foreach(Plane *plane, sector->planes())
+        {
+            plane->surface().markAsNeedingDecorationUpdate();
+        }
+
+        foreach(Line *line, d->map->lines())
+        for(int i = 0; i < 2; ++i)
+        {
+            Line::Side &side = line->side(i);
+            if(!side.hasSections()) continue;
+
+            side.top().markAsNeedingDecorationUpdate();
+            side.middle().markAsNeedingDecorationUpdate();
+            side.bottom().markAsNeedingDecorationUpdate();
+        }
+
+        /// @todo Is this even necessary?
+        foreach(Polyobj *polyobj, d->map->polyobjs())
+        foreach(Line *line, polyobj->lines())
+        {
+            line->front().middle().markAsNeedingDecorationUpdate();
+        }
+
+        d->map->buildSurfaceLists();
+
+#endif // __CLIENT__
+
+        // See what mapinfo says about this map.
+        Uri mapUri = d->map->uri();
+        ded_mapinfo_t *mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&mapUri));
+        if(!mapInfo)
+        {
+            // Use the default def instead.
+            Uri defaultDefUri = de::Uri(RC_NULL, "*");
+            mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&defaultDefUri));
+        }
+
+        // Reconfigure the sky
+        ded_sky_t *skyDef = 0;
+        if(mapInfo)
+        {
+            skyDef = Def_GetSky(mapInfo->skyID);
+            if(!skyDef) skyDef = &mapInfo->sky;
+        }
+#ifdef __CLIENT__
+        Sky_Configure(skyDef);
+#endif
+
+        if(mapInfo)
+        {
+            d->map->_globalGravity     = mapInfo->gravity;
+            d->map->_ambientLightLevel = mapInfo->ambient * 255;
+        }
+        else
+        {
+            // No map info found -- apply defaults.
+            d->map->_globalGravity = 1.0f;
+            d->map->_ambientLightLevel = 0;
+        }
+
+        d->map->_effectiveGravity = d->map->_globalGravity;
+
+#ifdef __CLIENT__
+        // Recalculate the light range mod matrix.
+        Rend_UpdateLightModMatrix();
+#endif
+    }
 }
 
 } // namespace de

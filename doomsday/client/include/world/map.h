@@ -136,23 +136,31 @@ public: /// @todo make private:
     int _ambientLightLevel; // Ambient lightlevel for the current map.
 
 public:
+    /**
+     * Construct a new map initially configured in an editable state. Whilst
+     * editable new map elements can be added, thereby allowing the map to be
+     * constructed dynamically. When done editing @ref endEditing() should be
+     * called to switch the map into a non-editable (i.e., playable) state.
+     *
+     * @param uri  Universal resource identifier to attribute to the map. For
+     *             example, @code "E1M1" @endcode. Note that the scheme is
+     *             presently ignored (unused).
+     */
     Map(Uri const &uri = Uri());
-    ~Map();
 
     /**
-     * To be called to register the cvars and ccmds for this module.
+     * To be called to register the commands and variables of this module.
      */
     static void consoleRegister();
 
     /**
-     * To be called Initializes the dummy element arrays used with the DMU API,
-     * with a fixed number of @em shared dummies.
+     * To be called to initialize the dummy element arrays (which are used with
+     * the DMU API), with a fixed number of @em shared dummies.
      */
     static void initDummies();
 
     /**
-     * This ID is the name of the lump tag that marks the beginning of map
-     * data, e.g. "MAP03" or "E2M8".
+     * Returns the universal resource identifier (URI) attributed to the map.
      */
     Uri const &uri() const;
 
@@ -249,34 +257,38 @@ public:
     inline int bspLeafCount() const { return bspLeafs().count(); }
 
     /**
-     * Helper function for returning the relevant line side index for @a lineIndex
-     * and @a backSide.
+     * Helper function which returns the relevant side index given a @a lineIndex
+     * and @a side identifier.
      *
      * Indices are produced as follows:
      * @code
      *  lineIndex / 2 + (backSide? 1 : 0);
      * @endcode
      *
-     * @param lineIndex  Index of the Line in the map.
-     * @param backSide   If @c =0 the Line::Front else Line::Back
+     * @param lineIndex  Index of the line in the map.
+     * @param side       Side of the line. @c =0 the Line::Front else Line::Back
      *
-     * @return  Unique index for the line side.
+     * @return  Unique index for the identified side.
      */
-    static int toSideIndex(int lineIndex, int backSide);
+    static int toSideIndex(int lineIndex, int side);
 
     /**
-     * Returns a pointer to the Line::Side associated with the specified @a index;
-     * otherwise @c 0.
+     * Locate a Line::Side in the map by it's unique @a index.
+     *
+     * @param index  Unique index attributed to the line side.
+     *
+     * @return  Pointer to the identified Line::Side instance; otherwise @c 0.
      *
      * @see toSideIndex()
      */
     Line::Side *sideByIndex(int index) const;
 
     /**
-     * Locate a polyobj in the map by unique in-map tag.
+     * Locate a Polyobj in the map by it's unique in-map tag.
      *
      * @param tag  Tag associated with the polyobj to be located.
-     * @return  Pointer to the referenced polyobj instance; otherwise @c 0.
+     *
+     * @return  Pointer to the identified Polyobj instance; otherwise @c 0.
      */
     Polyobj *polyobjByTag(int tag) const;
 
@@ -312,12 +324,12 @@ public:
 
     /**
      * Determine the BSP leaf on the back side of the BS partition that lies
-     * in front  of the specified point within the map's coordinate space.
+     * in front of the specified point within the map's coordinate space.
      *
      * @note Always returns a valid BspLeaf although the point may not actually
      * lay within it (however it is on the same side of the space partition)!
      *
-     * @param point  XY coordinates of the point to test.
+     * @param point  Map space coordinates to determine the BSP leaf for.
      *
      * @return  BspLeaf instance for that BSP node's leaf.
      */

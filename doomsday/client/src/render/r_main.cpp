@@ -507,82 +507,6 @@ void R_Init()
     frameCount = 0;
 }
 
-static void R_UpdateMap()
-{
-    if(!App_World().hasMap()) return;
-    Map &map = App_World().map();
-
-#ifdef __CLIENT__
-    // Update all world surfaces.
-    foreach(Sector *sector, map.sectors())
-    foreach(Plane *plane, sector->planes())
-    {
-        plane->surface().markAsNeedingDecorationUpdate();
-    }
-
-    foreach(Line *line, map.lines())
-    for(int i = 0; i < 2; ++i)
-    {
-        Line::Side &side = line->side(i);
-        if(!side.hasSections()) continue;
-
-        side.top().markAsNeedingDecorationUpdate();
-        side.middle().markAsNeedingDecorationUpdate();
-        side.bottom().markAsNeedingDecorationUpdate();
-    }
-
-    /// @todo Is this even necessary?
-    foreach(Polyobj *polyobj, map.polyobjs())
-    foreach(Line *line, polyobj->lines())
-    {
-        line->front().middle().markAsNeedingDecorationUpdate();
-    }
-
-    map.buildSurfaceLists();
-
-#endif
-
-    // See what mapinfo says about this map.
-    de::Uri mapUri = map.uri();
-    ded_mapinfo_t *mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&mapUri));
-    if(!mapInfo)
-    {
-        // Use the default def instead.
-        de::Uri defaultDefUri = de::Uri(RC_NULL, "*");
-        mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&defaultDefUri));
-    }
-
-    // Reconfigure the sky
-    ded_sky_t *skyDef = 0;
-    if(mapInfo)
-    {
-        skyDef = Def_GetSky(mapInfo->skyID);
-        if(!skyDef) skyDef = &mapInfo->sky;
-    }
-#ifdef __CLIENT__
-    Sky_Configure(skyDef);
-#endif
-
-    if(mapInfo)
-    {
-        map._globalGravity     = mapInfo->gravity;
-        map._ambientLightLevel = mapInfo->ambient * 255;
-    }
-    else
-    {
-        // No theMap info found, so set some basic stuff.
-        map._globalGravity = 1.0f;
-        map._ambientLightLevel = 0;
-    }
-
-    map._effectiveGravity = map._globalGravity;
-
-#ifdef __CLIENT__
-    // Recalculate the light range mod matrix.
-    Rend_UpdateLightModMatrix();
-#endif
-}
-
 void R_Update()
 {
     // Reset file IDs so previously seen files can be processed again.
@@ -597,33 +521,18 @@ void R_Update()
     R_UpdateTranslationTables();
 
     Def_PostInit();
-#ifdef __CLIENT__
-    P_UpdateParticleGens(); // Defs might've changed.
-#endif
 
-    // Reset the archived map cache (the available maps may have changed).
-    App_World().resetMapCache();
-
-    for(uint i = 0; i < DDMAXPLAYERS; ++i)
-    {
-        player_t *plr = &ddPlayers[i];
-        ddplayer_t *ddpl = &plr->shared;
-        // States have changed, the states are unknown.
-        ddpl->pSprites[0].statePtr = ddpl->pSprites[1].statePtr = NULL;
-    }
-
-    R_UpdateMap();
+    App_World().update();
 
 #ifdef __CLIENT__
     // The rendering lists have persistent data that has changed during
     // the re-initialization.
     RL_DeleteLists();
 
-    // Update the secondary title and the game status.
-    //Rend_ConsoleUpdateTitle();
+    /// @todo fixme: Update the game title and the status.
 #endif
 
-#if _DEBUG
+#ifdef DENG_DEBUG
     Z_CheckHeap();
 #endif
 }

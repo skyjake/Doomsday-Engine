@@ -198,7 +198,11 @@ DENG2_PIMPL(Map)
         qDeleteAll(lines);
         qDeleteAll(vertexes);
 
-        /// @todo fixme: mobjNodes/lineNodes/lineLinks - free them!
+        /// @todo fixme: Free all memory we have ownership of.
+        // Client only data:
+        // mobjHash/activePlanes/activePolyobjs
+        // End client only data.
+        // mobjNodes/lineNodes/lineLinks
     }
 
     /**
@@ -929,14 +933,6 @@ Map::Map(Uri const &uri) : d(new Instance(this, uri))
     _globalGravity = 0;
     _effectiveGravity = 0;
     _ambientLightLevel = 0;
-}
-
-/// @todo fixme: Free all memory we have ownership of.
-Map::~Map()
-{
-    // Client only data:
-    // mobjHash/activePlanes/activePolyobjs - free them!
-    // End client only data.
 }
 
 void Map::consoleRegister() // static

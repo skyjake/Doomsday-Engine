@@ -78,9 +78,9 @@ public:
     void clearMap();
 
     /**
-     * Reset the map cache removing all existing records.
+     * To be called following an engine reset to update the world state.
      */
-    void resetMapCache();
+    void update();
 
 private:
     DENG2_PRIVATE(d)
