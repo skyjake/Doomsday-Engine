@@ -21,6 +21,7 @@
 #include <QList>
 
 using namespace de;
+using namespace ui;
 
 DENG2_PIMPL(GLTextComposer)
 {

@@ -29,6 +29,7 @@
 #include <de/Drawable>
 
 using namespace de;
+using namespace ui;
 
 static TimeDelta const ANIM_SPAN = .5f;
 static duint const ID_BUF_TEXT   = 1;
@@ -245,7 +246,7 @@ void LineEditWidget::setEmptyContentHint(String const &hintText)
         d->hint = new LabelWidget;
         d->hint->setFont("editor.hint");
         d->hint->setTextColor("editor.hint");
-        d->hint->setAlignment(AlignLeft);
+        d->hint->setAlignment(ui::AlignLeft);
         d->hint->setBehavior(Unhittable | ContentClipping);
         d->hint->rule().setRect(rule());
         d->hint->setOpacity(0);

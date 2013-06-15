@@ -26,6 +26,7 @@
 #include <de/ConstantRule>
 
 using namespace de;
+using namespace ui;
 
 DENG2_PIMPL(LabelWidget),
 DENG2_OBSERVES(Atlas, Reposition),

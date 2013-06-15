@@ -21,6 +21,8 @@
 
 #include <QFlags>
 
+namespace ui {
+
 /**
  * Flags for specifying alignment.
  */
@@ -89,5 +91,17 @@ enum ContentFitFlag
 };
 Q_DECLARE_FLAGS(ContentFit, ContentFitFlag)
 Q_DECLARE_OPERATORS_FOR_FLAGS(ContentFit)
+
+/**
+ * Policy for controlling size.
+ */
+enum SizePolicy
+{
+    Fixed,  ///< Size is fixed, content positioned inside.
+    Filled, ///< Size is fixed, content expands to fill entire area.
+    Expand  ///< Size depends on content, expands/contracts to fit.
+};
+
+} // namespace ui
 
 #endif // DENG_CLIENT_ALIGNMENT_H

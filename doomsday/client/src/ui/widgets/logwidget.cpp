@@ -38,6 +38,7 @@
 #include <QPainter>
 
 using namespace de;
+using namespace ui;
 
 DENG2_PIMPL(LogWidget),
 DENG2_OBSERVES(Atlas, Reposition),

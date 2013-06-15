@@ -93,10 +93,11 @@ DENG2_OBSERVES(Canvas,           FocusChange)
 
     void setupUI()
     {
+        // Background for Ring Zero.
         LabelWidget *bg = new LabelWidget;
         bg->setImage(ClientApp::windowSystem().style().images().image("window.background"));
-        bg->setImageFit(FitToSize);
-        bg->setSizePolicy(LabelWidget::Filled, LabelWidget::Filled);
+        bg->setImageFit(ui::FitToSize);
+        bg->setSizePolicy(ui::Filled, ui::Filled);
         bg->setMargin("");
         bg->rule()
                 .setInput(Rule::Left,   root.viewLeft())

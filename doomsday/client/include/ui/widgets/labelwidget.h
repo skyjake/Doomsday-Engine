@@ -76,11 +76,11 @@ public:
      *
      * @param align  Alignment for all content.
      */
-    void setAlignment(Alignment const &align);
+    void setAlignment(ui::Alignment const &align);
 
-    void setTextAlignment(Alignment const &textAlign);
+    void setTextAlignment(ui::Alignment const &textAlign);
 
-    void setTextLineAlignment(Alignment const &textLineAlign);
+    void setTextLineAlignment(ui::Alignment const &textLineAlign);
 
     /**
      * Sets the alignment of the image when there is both an image
@@ -88,17 +88,11 @@ public:
      *
      * @param imageAlign  Alignment for the image.
      */
-    void setImageAlignment(Alignment const &imageAlign);
+    void setImageAlignment(ui::Alignment const &imageAlign);
 
-    void setImageFit(ContentFit const &fit);
+    void setImageFit(ui::ContentFit const &fit);
 
     void setImageScale(float scaleFactor);
-
-    enum SizePolicy {
-        Fixed,  ///< Size is fixed, content positioned inside.
-        Filled, ///< Size is fixed, content expands to fill entire area.
-        Expand  ///< Size depends on content, expands/contracts to fit.
-    };
 
     /**
      * Allows or disallows the label to expand vertically to fit the provided
@@ -106,13 +100,13 @@ public:
      *
      * @param expand  @c true to allow the widget to modify its own height.
      */
-    void setSizePolicy(SizePolicy horizontal, SizePolicy vertical) {
+    void setSizePolicy(ui::SizePolicy horizontal, ui::SizePolicy vertical) {
         setWidthPolicy(horizontal);
         setHeightPolicy(vertical);
     }
 
-    void setWidthPolicy(SizePolicy policy);
-    void setHeightPolicy(SizePolicy policy);
+    void setWidthPolicy(ui::SizePolicy policy);
+    void setHeightPolicy(ui::SizePolicy policy);
 
     // Events.
     void viewResized();

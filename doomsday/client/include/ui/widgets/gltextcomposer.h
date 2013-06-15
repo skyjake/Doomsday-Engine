@@ -68,7 +68,7 @@ public:
 
     void makeVertices(Vertices &triStrip,
                       de::Vector2i const &topLeft,
-                      Alignment const &lineAlign,
+                      ui::Alignment const &lineAlign,
                       de::Vector4f const &color = de::Vector4f(1, 1, 1, 1));
 
     /**
@@ -79,8 +79,8 @@ public:
      */
     void makeVertices(Vertices &triStrip,
                       de::Rectanglei const &rect,
-                      Alignment const &alignInRect,
-                      Alignment const &lineAlign,
+                      ui::Alignment const &alignInRect,
+                      ui::Alignment const &lineAlign,
                       de::Vector4f const &color = de::Vector4f(1, 1, 1, 1));
 
 private:

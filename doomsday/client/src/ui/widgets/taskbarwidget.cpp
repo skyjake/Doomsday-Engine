@@ -34,6 +34,7 @@
 #include "dd_main.h"
 
 using namespace de;
+using namespace ui;
 
 DENG2_PIMPL(TaskBarWidget),
 DENG2_OBSERVES(Games, GameChange)
@@ -169,7 +170,7 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
     d->logo->setImageScale(.55f);
     d->logo->setImageFit(FitToHeight | OriginalAspectRatio);
     d->logo->setText(_E(b) + VersionInfo().base());
-    d->logo->setWidthPolicy(LabelWidget::Expand);
+    d->logo->setWidthPolicy(ui::Expand);
     d->logo->setTextAlignment(AlignLeft);
     d->logo->rule()
             .setInput(Rule::Height, rule().height())
@@ -180,7 +181,7 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
     // Currently loaded game.
     d->status = new LabelWidget;
     d->status->set(bg);
-    d->status->setWidthPolicy(LabelWidget::Expand);
+    d->status->setWidthPolicy(ui::Expand);
     d->status->rule()
             .setInput(Rule::Height, rule().height())
             .setInput(Rule::Bottom, rule().bottom())
