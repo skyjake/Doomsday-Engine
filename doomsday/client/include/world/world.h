@@ -41,6 +41,9 @@
 
 namespace de {
 
+/**
+ * @ingroup world
+ */
 class World
 {
     DENG2_NO_COPY  (World)
@@ -57,23 +60,41 @@ public:
 
 public:
     /**
-     * Constructs a world.
+     * Construct a new world with no "current" map.
      */
     World();
 
     /**
-     * To be called to register the cvars and ccmds for this module.
+     * To be called to register the commands and variables of this module.
      */
     static void consoleRegister();
 
+    /**
+     * Returns @c true iff a map is currently loaded.
+     */
     bool hasMap() const;
 
+    /**
+     * Provides access to the currently loaded map.
+     *
+     * @see hasMap()
+     */
     Map &map() const;
 
-    bool loadMap(Uri const &uri);
+    /**
+     * @param uri  Universal resource identifier (URI) for the map to change to.
+     *             If an empty URI is specified the current map will be unloaded.
+     *
+     * @return  @c true= the map change completed successfully.
+     */
+    bool changeMap(Uri const &uri);
 
-    /// @todo Refactor away.
-    void clearMap();
+    /**
+     * Unload the currently loaded map (if any).
+     *
+     * @see changeMap()
+     */
+    inline void unloadMap() { changeMap(Uri()); }
 
     /**
      * To be called following an engine reset to update the world state.

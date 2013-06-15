@@ -301,6 +301,7 @@ DENG2_PIMPL(World)
      */
     Map *loadMap(Uri const &uri/*, bool forceRetry = false*/)
     {
+        LOG_MSG("Loading map \"%s\"...") << uri;
         LOG_AS("World::loadMap");
 
         // Record this map if we haven't already.
@@ -473,18 +474,11 @@ DENG2_PIMPL(World)
             gameTime = 0;
         }
 
+        map->initPolyobjs();
+
 #ifdef __SERVER__
         // Init server data.
         Sv_InitPools();
-#endif
-
-        map->initPolyobjs();
-
-#ifdef __CLIENT__
-        // Recalculate the light range mod matrix.
-        Rend_UpdateLightModMatrix();
-
-        P_MapSpawnPlaneParticleGens();
 #endif
 
         /// @todo Refactor away:
@@ -498,6 +492,11 @@ DENG2_PIMPL(World)
         }
 
 #ifdef __CLIENT__
+        // Recalculate the light range mod matrix.
+        Rend_UpdateLightModMatrix();
+
+        P_MapSpawnPlaneParticleGens();
+
         map->buildSurfaceLists();
 
         Time begunPrecacheAt;
@@ -558,9 +557,6 @@ DENG2_PIMPL(World)
             }
         }
 
-        // We've finished setting up the map.
-        ddMapSetup = false;
-
         // Reset map time.
         ddMapTime = 0;
 
@@ -600,25 +596,8 @@ Map &World::map() const
     throw MapError("World::map", "No map is currently loaded");
 }
 
-bool World::loadMap(de::Uri const &uri)
+bool World::changeMap(de::Uri const &uri)
 {
-    LOG_MSG("Loading map \"%s\"...") << uri;
-
-    if(isServer)
-    {
-        // Whenever the map changes, remote players must tell us when they're
-        // ready to begin receiving frames.
-        for(uint i = 0; i < DDMAXPLAYERS; ++i)
-        {
-            //player_t *plr = &ddPlayers[i];
-            if(/*!(plr->shared.flags & DDPF_LOCAL) &&*/ clients[i].connected)
-            {
-                LOG_DEBUG("Client %i marked as 'not ready' to receive frames.") << i;
-                clients[i].ready = false;
-            }
-        }
-    }
-
     // As the memory zone does not provide the mechanisms to prepare another
     // map in parallel we must free the current map first.
     /// @todo The memory zone would still be useful if the purge and tagging
@@ -631,13 +610,18 @@ bool World::loadMap(de::Uri const &uri)
     }
     Z_FreeTags(PU_MAP, PU_PURGELEVEL - 1);
 
-    d->changeMap(d->loadMap(uri));
-    return d->map != 0;
-}
+    // Are we just unloading the current map?
+    if(uri.isEmpty()) return true;
 
-void World::clearMap()
-{
-    delete d->map; d->map = 0;
+    // A new map is about to be setup.
+    ddMapSetup = true;
+
+    d->changeMap(d->loadMap(uri));
+
+    // We've finished setting up the map.
+    ddMapSetup = false;
+
+    return d->map != 0;
 }
 
 void World::update()

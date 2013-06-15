@@ -1506,9 +1506,7 @@ bool DD_ChangeGame(de::Game &game, bool allowReload = false)
                 Cl_InitPlayers();
             }
 #endif
-            App_World().clearMap();
-            // Most memory is allocated from the zone.
-            //Z_FreeTags(PU_MAP, PU_PURGELEVEL - 1);
+            App_World().unloadMap();
         }
 
         Z_FreeTags(PU_GAMESTATIC, PU_PURGELEVEL - 1);

@@ -28,7 +28,6 @@
 #include "dd_main.h"
 #include "games.h"
 #include "Game"
-#include "def_main.h"
 #include "network/net_main.h"
 #include "world/map.h"
 #include "world/p_players.h"
@@ -115,24 +114,19 @@ void ShellUser::sendGameState()
                     deathmatch == 1? "Deathmatch"  :
                                      "Deathmatch II");
 
+    // Check the map's information.
     String mapId;
     String mapTitle;
-
-    // Check the map's information from definitions.
-    /// @todo DD_GetVariable() is not an appropriate place to ask for this --
-    /// should be moved to the Map class. (Ditto for the ID query below.)
-    char const *name = reinterpret_cast<char const *>(DD_GetVariable(DD_MAP_NAME));
-    if(name) mapTitle = name;
-
-    // Check the map's information from definitions.
     if(App_World().hasMap())
     {
-        de::Uri mapUri = App_World().map().uri();
-        ded_mapinfo_t *mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&mapUri));
-        if(mapInfo)
-        {
-            mapId = Str_Text(Uri_ToString(mapInfo->uri));
-        }
+        Map &map = App_World().map();
+
+        mapId = map.uri().resolvedRef();
+
+        /// @todo DD_GetVariable() is not an appropriate place to ask for this --
+        /// should be moved to the Map class.
+        char const *name = reinterpret_cast<char const *>(DD_GetVariable(DD_MAP_NAME));
+        if(name) mapTitle = name;
     }
 
     QScopedPointer<RecordPacket> packet(protocol().newGameState(mode, rules, mapId, mapTitle));

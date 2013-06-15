@@ -34,6 +34,8 @@
 #include "Materials"
 #include "api_map.h"
 
+#include "network/net_main.h"
+
 #include "world/dmuargs.h"
 #include "world/entitydatabase.h"
 #include "world/world.h"
@@ -1528,14 +1530,26 @@ DENG_EXTERN_C boolean P_MapChange(char const *uriCString)
         App_FatalError("P_MapChange: Invalid Uri argument.");
     }
 
-    // A new map is about to be setup.
-    ddMapSetup = true;
-
 #ifdef __CLIENT__
     App_Materials().purgeCacheQueue();
 #endif
 
-    return App_World().loadMap(de::Uri(uriCString, RC_NULL));
+    if(isServer)
+    {
+        // Whenever the map changes, remote players must tell us when they're
+        // ready to begin receiving frames.
+        for(uint i = 0; i < DDMAXPLAYERS; ++i)
+        {
+            //player_t *plr = &ddPlayers[i];
+            if(/*!(plr->shared.flags & DDPF_LOCAL) &&*/ clients[i].connected)
+            {
+                LOG_DEBUG("Client %i marked as 'not ready' to receive frames.") << i;
+                clients[i].ready = false;
+            }
+        }
+    }
+
+    return App_World().changeMap(de::Uri(uriCString, RC_NULL));
 }
 
 #undef P_CountMapObjs
