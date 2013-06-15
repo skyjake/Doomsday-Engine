@@ -351,23 +351,6 @@ DENG2_PIMPL(World)
                 << TABBED("BSP Leafs", map->bspLeafCount())
                 << TABBED("Segments",  map->segmentCount());
 
-        // Do any initialization/error checking work we need to do.
-        // Must be called before we go any further.
-        P_InitUnusedMobjList();
-
-        // Must be called before any mobjs are spawned.
-        map->initNodePiles();
-
-#ifdef __CLIENT__
-        // Prepare the client-side data.
-        if(isClient)
-        {
-            map->initClMobjs();
-        }
-
-        Rend_DecorInitForMap();
-#endif
-
         // See what mapinfo says about this map.
         Uri mapUri = map->uri();
         ded_mapinfo_t *mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&mapUri));
@@ -406,57 +389,25 @@ DENG2_PIMPL(World)
         // Init the thinker lists (public and private).
         map->thinkers().initLists(0x1 | 0x2);
 
+        // Must be called before we go any further.
+        P_InitUnusedMobjList();
+
+        // Must be called before any mobjs are spawned.
+        map->initNodePiles();
+
 #ifdef __CLIENT__
-        Rend_RadioInitForMap();
-
-        map->initSkyFix();
-
+        // Prepare the client-side data.
+        if(isClient)
+        {
+            map->initClMobjs();
+        }
         Cl_ResetFrame();
         map->reinitClMobjs();
+        Cl_InitPlayers(); // Player data, too.
 
-        // Tell shadow bias to initialize the bias light sources.
-        SB_InitForMap(map->oldUniqueId());
-
-        // Clear player data, too, since we just lost all clmobjs.
-        Cl_InitPlayers();
-
-        RL_DeleteLists();
-        Rend_UpdateLightModMatrix();
-#endif
-
-        // Invalidate old cmds and init player values.
-        for(uint i = 0; i < DDMAXPLAYERS; ++i)
-        {
-            player_t *plr = &ddPlayers[i];
-
-            /*
-            if(isServer && plr->shared.inGame)
-                clients[i].runTime = SECONDS_TO_TICKS(gameTime);*/
-
-            plr->extraLight = plr->targetExtraLight = 0;
-            plr->extraLightCounter = 0;
-        }
-
-        // Make sure that the next frame doesn't use a filtered viewer.
-        R_ResetViewer();
-
-#ifdef __CLIENT__
-        // Material animations should begin from their first step.
-        App_Materials().restartAllAnimations();
-
-        R_InitObjlinkBlockmapForMap();
-
-        LO_InitForMap(); // Lumobj management.
-        R_InitShadowProjectionListsForMap(); // Projected mobj shadows.
-        VL_InitForMap(); // Converted vlights (from lumobjs) management.
-
-        map->initLightGrid();
-
-        R_InitRendPolyPools();
-
-        // Init Particle Generator links.
+        // Spawn generators for the map.
+        /// @todo Defer until after finalization.
         P_PtcInitForMap();
-
 #endif
 
         // The game may need to perform it's own finalization now that the
@@ -474,12 +425,33 @@ DENG2_PIMPL(World)
             gameTime = 0;
         }
 
-        map->initPolyobjs();
+        // Init player values.
+        for(uint i = 0; i < DDMAXPLAYERS; ++i)
+        {
+            player_t *plr = &ddPlayers[i];
+            ddplayer_t &ddpl = ddPlayers[i].shared;
 
-#ifdef __SERVER__
-        // Init server data.
-        Sv_InitPools();
+            plr->extraLight = plr->targetExtraLight = 0;
+            plr->extraLightCounter = 0;
+
+            // Determine the "invoid" status.
+            ddpl.inVoid = true;
+
+            if(mobj_t *mo = ddpl.mo)
+            {
+                BspLeaf &bspLeaf = map->bspLeafAt(mo->origin);
+#ifdef __CLIENT__
+                if(mo->origin[VZ] >= bspLeaf.sector().floor().visHeight() &&
+                   mo->origin[VZ] <  bspLeaf.sector().ceiling().visHeight() - 4)
+#else
+                if(mo->origin[VZ] >= bspLeaf.sector().floor().height() &&
+                   mo->origin[VZ] <  bspLeaf.sector().ceiling().height() - 4)
 #endif
+                {
+                    ddpl.inVoid = false;
+                }
+            }
+        }
 
         /// @todo Refactor away:
         foreach(Sector *sector, map->sectors())
@@ -491,21 +463,46 @@ DENG2_PIMPL(World)
 #endif
         }
 
+        map->initPolyobjs();
+        S_SetupForChangedMap();
+
+#ifdef __SERVER__
+        if(isServer)
+        {
+            // Init server data.
+            Sv_InitPools();
+        }
+#endif
+
 #ifdef __CLIENT__
-        // Recalculate the light range mod matrix.
-        Rend_UpdateLightModMatrix();
-
-        P_MapSpawnPlaneParticleGens();
-
+        map->initLightGrid();
+        map->initSkyFix();
         map->buildSurfaceLists();
+        P_MapSpawnPlaneParticleGens();
 
         Time begunPrecacheAt;
         Rend_CacheForMap();
         App_Materials().processCacheQueue();
         LOG_INFO(String("Precaching completed in %1 seconds.").arg(begunPrecacheAt.since(), 0, 'g', 2));
-#endif
 
-        S_SetupForChangedMap();
+        RL_DeleteLists();
+        R_InitRendPolyPools();
+
+        Rend_UpdateLightModMatrix();
+        Rend_DecorInitForMap();
+        Rend_RadioInitForMap();
+
+        R_InitObjlinkBlockmapForMap();
+        R_InitShadowProjectionListsForMap(); // Projected mobj shadows.
+        LO_InitForMap(); // Lumobj management.
+        VL_InitForMap(); // Converted vlights (from lumobjs) management.
+
+        // Tell shadow bias to initialize the bias light sources.
+        SB_InitForMap(map->oldUniqueId());
+
+        // Restart all material animations.
+        App_Materials().restartAllAnimations();
+#endif
 
         /*
          * Post-change map setup has now been fully completed.
@@ -525,42 +522,20 @@ DENG2_PIMPL(World)
             Con_Executef(CMDS_SCRIPT, false, "%s", cmd.toUtf8().constData());
         }
 
-#ifdef __CLIENT__
-        // Clear any input events that might have accumulated during setup.
-        DD_ClearEvents();
-#endif
+        // Reset map time.
+        ddMapTime = 0;
 
         // Now that the setup is done, let's reset the timer so that it will
         // appear that no time has passed during the setup.
         DD_ResetTimer();
 
-        // Determine the invoid status of players.
-        for(int i = 0; i < DDMAXPLAYERS; ++i)
-        {
-            ddplayer_t &ddpl = ddPlayers[i].shared;
-
-            ddpl.inVoid = true;
-
-            if(mobj_t *mo = ddpl.mo)
-            {
-                BspLeaf &bspLeaf = map->bspLeafAt(mo->origin);
-#ifdef __CLIENT__
-                if(mo->origin[VZ] >= bspLeaf.sector().floor().visHeight() &&
-                   mo->origin[VZ] <  bspLeaf.sector().ceiling().visHeight() - 4)
-#else
-                if(mo->origin[VZ] >= bspLeaf.sector().floor().height() &&
-                   mo->origin[VZ] <  bspLeaf.sector().ceiling().height() - 4)
-#endif
-                {
-                    ddpl.inVoid = false;
-                }
-            }
-        }
-
-        // Reset map time.
-        ddMapTime = 0;
+        // Make sure that the next frame doesn't use a filtered viewer.
+        R_ResetViewer();
 
 #ifdef __CLIENT__
+        // Clear any input events that might have accumulated during setup.
+        DD_ClearEvents();
+
         // Inform the timing system to suspend the starting of the clock.
         firstFrameAfterLoad = true;
 #endif
@@ -604,10 +579,7 @@ bool World::changeMap(de::Uri const &uri)
     /// mechanisms allowed more fine grained control. It is no longer useful
     /// for allocating memory used elsewhere so it should be repurposed for
     /// this usage specifically.
-    if(d->map)
-    {
-        delete d->map; d->map = 0;
-    }
+    delete d->map; d->map = 0;
     Z_FreeTags(PU_MAP, PU_PURGELEVEL - 1);
 
     // Are we just unloading the current map?
