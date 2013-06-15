@@ -166,24 +166,27 @@ DENG2_OBSERVES(Plane, HeightChange)
         }
 
 #ifdef __CLIENT__
-        // Inform the shadow bias of changed geometry.
-        foreach(BspLeaf *bspLeaf, bspLeafs)
+        if(!ddMapSetup)
         {
-            if(bspLeaf->isDegenerate())
-                 continue;
-
-            foreach(Segment *seg, bspLeaf->allSegments())
+            // Inform the shadow bias of changed geometry.
+            foreach(BspLeaf *bspLeaf, bspLeafs)
             {
-                if(!seg->hasLineSide())
-                    continue;
+                if(bspLeaf->isDegenerate())
+                     continue;
 
-                for(uint i = 0; i < 3; ++i)
+                foreach(Segment *seg, bspLeaf->allSegments())
                 {
-                    SB_SurfaceMoved(&seg->biasSurface(i));
-                }
-            }
+                    if(!seg->hasLineSide())
+                        continue;
 
-            SB_SurfaceMoved(&bspLeaf->biasSurface(plane.inSectorIndex()));
+                    for(uint i = 0; i < 3; ++i)
+                    {
+                        SB_SurfaceMoved(&seg->biasSurface(i));
+                    }
+                }
+
+                SB_SurfaceMoved(&bspLeaf->biasSurface(plane.inSectorIndex()));
+            }
         }
 
 #endif // __CLIENT__
