@@ -38,6 +38,7 @@
 #include "ui/widgets/busywidget.h"
 #include "ui/widgets/taskbarwidget.h"
 #include "ui/widgets/consolewidget.h"
+#include "ui/widgets/gameselectionwidget.h"
 #include "ui/commandaction.h"
 #include "ui/mouse_qt.h"
 
@@ -112,6 +113,22 @@ DENG2_OBSERVES(Canvas,           FocusChange)
                 .setRightBottom(root.viewRight(), root.viewBottom());
         root.add(legacy);
 
+        // Game selection.
+        GameSelectionWidget *gameSel = new GameSelectionWidget;
+        gameSel->rule()
+                /*
+                .setInput(Rule::Left,   root.viewLeft())
+                .setInput(Rule::Right,  root.viewRight())
+                .setInput(Rule::Top,    root.viewTop())
+                .setInput(Rule::Bottom, root.viewBottom());*/
+                .setInput(Rule::AnchorX, root.viewLeft() + root.viewWidth() / 2)
+                .setInput(Rule::AnchorY, root.viewTop() + root.viewHeight() / 2)
+                .setInput(Rule::Width,   OperatorRule::minimum(root.viewWidth(), Const(800)))
+                .setInput(Rule::Height,  OperatorRule::minimum(root.viewHeight(), Const(600)))
+                .setAnchorPoint(Vector2f(.5f, .5f));
+        root.add(gameSel);
+
+        // Taskbar is over almost everything else.
         taskBar = new TaskBarWidget;
         taskBar->rule()
                 .setInput(Rule::Left,   root.viewLeft())

@@ -337,6 +337,7 @@ DENG_HEADERS += \
     include/ui/widgets/buttonwidget.h \ 
     include/ui/widgets/consolecommandwidget.h \
     include/ui/widgets/consolewidget.h \
+    include/ui/widgets/gameselectionwidget.h \
     include/ui/widgets/gltextcomposer.h \
     include/ui/widgets/guirootwidget.h \
     include/ui/widgets/guiwidget.h \
@@ -345,6 +346,7 @@ DENG_HEADERS += \
     include/ui/widgets/legacywidget.h \
     include/ui/widgets/lineeditwidget.h \
     include/ui/widgets/logwidget.h \
+    include/ui/widgets/menuwidget.h \
     include/ui/widgets/scrollareawidget.h \
     include/ui/widgets/styledlogsinkformatter.h \
     include/ui/widgets/taskbarwidget.h \
@@ -626,6 +628,7 @@ SOURCES += \
     src/ui/widgets/buttonwidget.cpp \
     src/ui/widgets/consolecommandwidget.cpp \
     src/ui/widgets/consolewidget.cpp \
+    src/ui/widgets/gameselectionwidget.cpp \
     src/ui/widgets/gltextcomposer.cpp \
     src/ui/widgets/guirootwidget.cpp \
     src/ui/widgets/guiwidget.cpp \
@@ -634,6 +637,7 @@ SOURCES += \
     src/ui/widgets/legacywidget.cpp \
     src/ui/widgets/lineeditwidget.cpp \
     src/ui/widgets/logwidget.cpp \
+    src/ui/widgets/menuwidget.cpp \
     src/ui/widgets/scrollareawidget.cpp \
     src/ui/widgets/styledlogsinkformatter.cpp \
     src/ui/widgets/taskbarwidget.cpp \
