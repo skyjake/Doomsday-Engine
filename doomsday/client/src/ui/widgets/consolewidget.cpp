@@ -139,6 +139,11 @@ ConsoleWidget::ConsoleWidget() : GuiWidget("console"), d(new Instance(this))
             .setInput(Rule::Top,    OperatorRule::maximum(rule().top(), Const(0)));
     add(d->log);
 
+    // Blur the log background.
+    Background logBg = d->log->background();
+    logBg.type = Background::Blurred;
+    d->log->set(logBg);
+
     connect(d->log, SIGNAL(contentHeightIncreased(int)), this, SLOT(logContentHeightIncreased(int)));
 
     // Width of the console is defined by the style.

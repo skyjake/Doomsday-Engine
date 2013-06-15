@@ -451,6 +451,7 @@ void GuiWidget::drawBlurredRect(Rectanglei const &rect, Vector4f const &color)
     d->uBlurMvpMatrix = root().projMatrix2D() *
             Matrix4f::scaleThenTranslate(rect.size(), rect.topLeft);
     d->blurring.setProgram("vert");
+
     d->blurring.draw();
 }
 
