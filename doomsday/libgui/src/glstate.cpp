@@ -369,6 +369,16 @@ GLState &GLState::setScissor(Rectangleui const &scissorRect)
     return *this;
 }
 
+GLState &GLState::setNormalizedScissor(Rectanglef const &normScissorRect)
+{
+    Rectangleui vp = viewport();
+    Rectangleui scis(Vector2ui(normScissorRect.left()   * vp.width(),
+                               normScissorRect.top()    * vp.height()),
+                     Vector2ui(std::ceil(normScissorRect.right()  * vp.width()),
+                               std::ceil(normScissorRect.bottom() * vp.height())));
+    return setScissor(scis);
+}
+
 GLState &GLState::clearScissor()
 {
     d->props.set(Scissor,       false);

@@ -111,6 +111,7 @@ public:
     GLState &setViewport(Rectangleui const &viewportRect);
     GLState &setScissor(Rectanglei const &scissorRect);
     GLState &setScissor(Rectangleui const &scissorRect);
+    GLState &setNormalizedScissor(Rectanglef const &normScissorRect);
     GLState &clearScissor();
 
     gl::Cull cull() const;
