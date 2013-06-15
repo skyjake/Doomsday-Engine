@@ -159,10 +159,22 @@ void ScrollAreaWidget::setContentWidth(int width)
     d->contentRule.setInput(Rule::Width, Const(width));
 }
 
+void ScrollAreaWidget::setContentWidth(Rule const &width)
+{
+    DENG2_GUARD(d);
+    d->contentRule.setInput(Rule::Width, width);
+}
+
 void ScrollAreaWidget::setContentHeight(int height)
 {
     DENG2_GUARD(d);
     d->contentRule.setInput(Rule::Height, Const(height));
+}
+
+void ScrollAreaWidget::setContentHeight(Rule const &height)
+{
+    DENG2_GUARD(d);
+    d->contentRule.setInput(Rule::Height, height);
 }
 
 void ScrollAreaWidget::setContentSize(Vector2i const &size)
@@ -316,7 +328,8 @@ bool ScrollAreaWidget::handleEvent(Event const &event)
         if(mouse.wheelMotion() == MouseEvent::FineAngle)
         {
             d->y->set(de::clamp(0, int(d->y->animation().target()) +
-                                mouse.wheel().y / 2, d->maxY->valuei()), .05f);
+                                mouse.wheel().y / 2 * (d->origin == Top? -1 : 1),
+                                d->maxY->valuei()), .05f);
             d->restartScrollOpacityFade();
         }
         return true;
