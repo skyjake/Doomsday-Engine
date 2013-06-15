@@ -209,6 +209,11 @@ GuiRootWidget &GuiWidget::root()
     return static_cast<GuiRootWidget &>(Widget::root());
 }
 
+GuiRootWidget &GuiWidget::root() const
+{
+    return static_cast<GuiRootWidget &>(Widget::root());
+}
+
 Style const &GuiWidget::style() const
 {
     return ClientApp::windowSystem().style();
@@ -260,6 +265,16 @@ RuleRectangle &GuiWidget::rule()
 RuleRectangle const &GuiWidget::rule() const
 {
     return d->rule;
+}
+
+Rectanglef GuiWidget::normalizedRect() const
+{
+    Rectanglef const rect = rule().rect();
+    GuiRootWidget::Size const &viewSize = root().viewSize();
+    return Rectanglef(Vector2f(float(rect.left())   / float(viewSize.x),
+                               float(rect.top())    / float(viewSize.y)),
+                      Vector2f(float(rect.right())  / float(viewSize.x),
+                               float(rect.bottom()) / float(viewSize.y)));
 }
 
 static void deleteGuiWidget(void *ptr)
@@ -370,7 +385,7 @@ void GuiWidget::draw()
 
         if(clipped())
         {
-            GLState::push().setScissor(rule().recti());
+            GLState::push().setNormalizedScissor(normalizedRect());
         }
 
         drawContent();
@@ -399,6 +414,8 @@ bool GuiWidget::hitTest(Event const &event) const
 
 GuiWidget::MouseClickStatus GuiWidget::handleMouseClick(Event const &event)
 {
+    if(isDisabled()) return MouseClickUnrelated;
+
     if(event.type() == Event::MouseButton)
     {
         MouseEvent const &mouse = event.as<MouseEvent>();

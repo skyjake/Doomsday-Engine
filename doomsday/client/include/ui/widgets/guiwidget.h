@@ -116,6 +116,7 @@ public:
     GuiWidget(de::String const &name = "");
 
     GuiRootWidget &root();
+    GuiRootWidget &root() const;
     Style const &style() const;
 
     /**
@@ -129,6 +130,8 @@ public:
      * the target canvas.
      */
     de::RuleRectangle const &rule() const;
+
+    de::Rectanglef normalizedRect() const;
 
     void deleteLater();
 
