@@ -277,7 +277,7 @@ DENG2_OBSERVES(Games,            GameChange)
             I_ResetAllDevices();
             canvas.trapMouse(false);
         }
-        else if(self.isFullScreen())
+        else if(self.isFullScreen() && !taskBar->isOpen())
         {
             // Trap the mouse again in fullscreen mode.
             canvas.trapMouse();

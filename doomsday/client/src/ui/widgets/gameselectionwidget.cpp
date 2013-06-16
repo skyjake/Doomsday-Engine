@@ -87,6 +87,7 @@ DENG2_OBSERVES(App, StartupComplete)
         b->setAlignment(ui::AlignLeft);
         b->setTextLineAlignment(ui::AlignLeft);
         b->setHeightPolicy(ui::Expand);
+        b->setOpacity(.3f, .5f);
         return b;
     }
 

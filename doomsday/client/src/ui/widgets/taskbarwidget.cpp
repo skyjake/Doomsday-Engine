@@ -364,7 +364,7 @@ void TaskBarWidget::close()
         }
 
         // Retrap the mouse if it was trapped when opening.
-        if(hasRoot())
+        if(hasRoot() && App_GameLoaded())
         {
             Canvas &canvas = root().window().canvas();
             if(d->mouseWasTrappedWhenOpening)
