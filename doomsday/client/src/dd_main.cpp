@@ -1315,15 +1315,14 @@ static void populateGameInfo(GameInfo& info, de::Game& game)
 #undef DD_GameInfo
 boolean DD_GameInfo(GameInfo *info)
 {
+    LOG_AS("DD_GameInfo");
     if(!info)
     {
-#if _DEBUG
-        Con_Message("Warning: DD_GameInfo: Received invalid info (=NULL), ignoring.");
-#endif
+        LOG_WARNING("Received invalid info (=NULL), ignoring.");
         return false;
     }
 
-    std::memset(info, 0, sizeof(*info));
+    zapPtr(info);
 
     if(App_GameLoaded())
     {
@@ -1331,9 +1330,7 @@ boolean DD_GameInfo(GameInfo *info)
         return true;
     }
 
-#if _DEBUG
-    Con_Message("DD_GameInfo: Warning, no game currently loaded - returning false.");
-#endif
+    LOG_WARNING("No game currently loaded, returning false.");
     return false;
 }
 
@@ -1341,11 +1338,14 @@ boolean DD_GameInfo(GameInfo *info)
 void DD_AddGameResource(gameid_t gameId, resourceclassid_t classId, int rflags,
     char const *names, void *params)
 {
-    if(!VALID_RESOURCECLASSID(classId)) Con_Error("DD_AddGameResource: Unknown resource class %i.", (int)classId);
-    if(!names || !names[0]) Con_Error("DD_AddGameResource: Invalid name argument.");
+    if(!VALID_RESOURCECLASSID(classId))
+        Con_Error("DD_AddGameResource: Unknown resource class %i.", (int)classId);
+
+    if(!names || !names[0])
+        Con_Error("DD_AddGameResource: Invalid name argument.");
 
     // Construct and attach the new resource record.
-    de::Game &game = App_Games().byId(gameId);
+    Game &game = App_Games().byId(gameId);
     ResourceManifest *manifest = new ResourceManifest(classId, rflags);
     game.addManifest(*manifest);
 
@@ -1370,27 +1370,25 @@ void DD_AddGameResource(gameid_t gameId, resourceclassid_t classId, int rflags,
 #undef DD_DefineGame
 gameid_t DD_DefineGame(GameDef const *def)
 {
+    LOG_AS("DD_DefineGame");
     if(!def)
     {
-#if _DEBUG
-        Con_Message("Warning: DD_DefineGame: Received invalid GameDef (=NULL), ignoring.");
-#endif
+        LOG_WARNING("Received invalid GameDef (=NULL), ignoring.");
         return 0; // Invalid id.
     }
 
     // Game mode identity keys must be unique. Ensure that is the case.
     try
     {
-        /*de::Game& game =*/ App_Games().byIdentityKey(def->identityKey);
-#if _DEBUG
-        Con_Message("Warning: DD_DefineGame: Failed adding game \"%s\", identity key '%s' already in use, ignoring.", def->defaultTitle, def->identityKey);
-#endif
+        /*Game &game =*/ App_Games().byIdentityKey(def->identityKey);
+        LOG_WARNING("Failed adding game \"%s\", identity key '%s' already in use, ignoring.")
+                << def->defaultTitle << def->identityKey;
         return 0; // Invalid id.
     }
     catch(Games::NotFoundError const &)
     {} // Ignore the error.
 
-    de::Game *game = de::Game::fromDef(*def);
+    Game *game = Game::fromDef(*def);
     if(!game) return 0; // Invalid def.
 
     // Add this game to our records.
@@ -1408,7 +1406,8 @@ gameid_t DD_GameIdForKey(char const *identityKey)
     }
     catch(Games::NotFoundError const &)
     {
-        DEBUG_Message(("Warning: DD_GameIdForKey: Game \"%s\" not defined.\n", identityKey));
+        LOG_AS("DD_GameIdForKey");
+        LOG_WARNING("Game \"%s\" is not defined, returning 0.") << identityKey;
     }
     return 0; // Invalid id.
 }
@@ -1416,7 +1415,7 @@ gameid_t DD_GameIdForKey(char const *identityKey)
 /**
  * Switch to/activate the specified game.
  */
-bool DD_ChangeGame(de::Game &game, bool allowReload = false)
+bool DD_ChangeGame(Game &game, bool allowReload = false)
 {
     //LOG_AS("DD_ChangeGame");
 
@@ -1428,7 +1427,10 @@ bool DD_ChangeGame(de::Game &game, bool allowReload = false)
         if(!allowReload)
         {
             if(App_GameLoaded())
-                Con_Message("%s (%s) - already loaded.", Str_Text(game.title()), Str_Text(game.identityKey()));
+            {
+                LOG_MSG("%s (%s) - already loaded.")
+                        << Str_Text(game.title()) << Str_Text(game.identityKey());
+            }
             return true;
         }
         // We are re-loading.
@@ -1486,35 +1488,8 @@ bool DD_ChangeGame(de::Game &game, bool allowReload = false)
 #endif
         R_ClearAnimGroups();
 
-        for(uint i = 0; i < DDMAXPLAYERS; ++i)
-        {
-            player_t *plr = &ddPlayers[i];
-            ddplayer_t *ddpl = &plr->shared;
-
-            // Mobjs go down with the map.
-            ddpl->mo = 0;
-            // States have changed, the states are unknown.
-            ddpl->pSprites[0].statePtr = ddpl->pSprites[1].statePtr = 0;
-
-            //ddpl->inGame = false;
-            ddpl->flags &= ~DDPF_CAMERA;
-
-            ddpl->fixedColorMap = 0;
-            ddpl->extraLight = 0;
-        }
-
-        // If a map was loaded; unload it.
-        if(App_World().hasMap())
-        {
-#ifdef __CLIENT__
-            if(isClient)
-            {
-                Cl_ResetFrame();
-                Cl_InitPlayers();
-            }
-#endif
-            App_World().unloadMap();
-        }
+        // Reset the world back to it's initial state (unload the map, reset players, etc...).
+        App_World().reset();
 
         Z_FreeTags(PU_GAMESTATIC, PU_PURGELEVEL - 1);
 
@@ -1575,16 +1550,14 @@ bool DD_ChangeGame(de::Game &game, bool allowReload = false)
     /// @todo Material collection should not be destroyed during a reload.
     App_DeleteMaterials();
 
-    VERBOSE(
-        if(!isNullGame(game))
-        {
-            Con_Message("Selecting game '%s'...", Str_Text(game.identityKey()));
-        }
-        else if(!isReload)
-        {
-            Con_Message("Unloaded game.");
-        }
-    )
+    if(!isNullGame(game))
+    {
+        LOG_VERBOSE("Selecting game '%s'...") << Str_Text(game.identityKey());
+    }
+    else if(!isReload)
+    {
+        LOG_VERBOSE("Unloaded game.");
+    }
 
     Library_ReleaseGames();
 
@@ -1599,7 +1572,7 @@ bool DD_ChangeGame(de::Game &game, bool allowReload = false)
         // Re-initialize subsystems needed even when in ringzero.
         if(!DD_ExchangeGamePluginEntryPoints(game.pluginId()))
         {
-            Con_Message("Warning: DD_ChangeGame: Failed exchanging entrypoints with plugin %i, aborting.", (int)game.pluginId());
+            LOG_WARNING("Failed exchanging entrypoints with plugin %i, aborting...") << int(game.pluginId());
             return false;
         }
 
@@ -1630,7 +1603,7 @@ bool DD_ChangeGame(de::Game &game, bool allowReload = false)
          * shutdown immediately; Sys_Shutdown will call back to load the special
          * "null-game" game).
          */
-        const int busyMode = BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0);
+        int const busyMode = BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0);
         ddgamechange_paramaters_t p;
         BusyTask gameChangeTasks[] = {
             // Phase 1: Initialization.
@@ -1652,8 +1625,8 @@ bool DD_ChangeGame(de::Game &game, bool allowReload = false)
         {
             // Tell the plugin it is being loaded.
             /// @todo Must this be done in the main thread?
-            void* loader = DD_FindEntryPoint(App_Games().current().pluginId(), "DP_Load");
-            DEBUG_Message(("DD_ChangeGame: Calling DP_Load (%p)\n", loader));
+            void *loader = DD_FindEntryPoint(App_Games().current().pluginId(), "DP_Load");
+            LOG_DEBUG("Calling DP_Load (%p)") << de::dintptr(loader);
             DD_SetActivePluginId(App_Games().current().pluginId());
             if(loader) ((pluginfunc_t)loader)();
             DD_SetActivePluginId(0);
@@ -1676,7 +1649,7 @@ bool DD_ChangeGame(de::Game &game, bool allowReload = false)
 
         if(App_GameLoaded())
         {
-            de::Game::printBanner(App_Games().current());
+            Game::printBanner(App_Games().current());
         }
         else
         {
@@ -1721,7 +1694,7 @@ World &App_World()
 #endif
 }
 
-boolean DD_IsShuttingDown(void)
+boolean DD_IsShuttingDown()
 {
     return Sys_IsShuttingDown();
 }
@@ -1729,7 +1702,7 @@ boolean DD_IsShuttingDown(void)
 /**
  * Looks for new files to autoload from the auto-load data directory.
  */
-static void DD_AutoLoad(void)
+static void DD_AutoLoad()
 {
     /**
      * Keep loading files if any are found because virtual files may now
@@ -1738,7 +1711,7 @@ static void DD_AutoLoad(void)
     int numNewFiles;
     while((numNewFiles = loadFilesFromDataGameAuto()) > 0)
     {
-        VERBOSE( Con_Message("Autoload round completed with %i new files.", numNewFiles) );
+        LOG_VERBOSE("Autoload round completed with %i new files.") << numNewFiles;
     }
 }
 
@@ -1747,20 +1720,20 @@ static void DD_AutoLoad(void)
  *
  * @todo Logic here could be much more elaborate but is it necessary?
  */
-de::Game* DD_AutoselectGame(void)
+Game *DD_AutoselectGame()
 {
     if(CommandLine_CheckWith("-game", 1))
     {
-        char const* identityKey = CommandLine_Next();
+        char const *identityKey = CommandLine_Next();
         try
         {
-            de::Game& game = App_Games().byIdentityKey(identityKey);
+            Game &game = App_Games().byIdentityKey(identityKey);
             if(game.allStartupFilesFound())
             {
                 return &game;
             }
         }
-        catch(de::Games::NotFoundError const &)
+        catch(Games::NotFoundError const &)
         {} // Ignore the error.
     }
 
@@ -1771,7 +1744,7 @@ de::Game* DD_AutoselectGame(void)
     }
 
     // We don't know what to do.
-    return NULL;
+    return 0;
 }
 
 int DD_EarlyInit()
@@ -1829,7 +1802,7 @@ void DD_FinishInitializationAfterWindowReady()
     }
 
     /// @todo This notification should be done from the app.
-    for(de::App::StartupCompleteAudience::Loop iter(de::App::app().audienceForStartupComplete);
+    for(App::StartupCompleteAudience::Loop iter(App::app().audienceForStartupComplete);
         !iter.done(); ++iter)
     {
         iter->appStartupCompleted();

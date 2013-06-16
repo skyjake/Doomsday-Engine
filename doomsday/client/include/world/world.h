@@ -97,6 +97,14 @@ public:
     inline void unloadMap() { changeMap(Uri()); }
 
     /**
+     * To be called to reset the world back to the initial state. Any currently
+     * loaded map will be unloaded and player states are re-initialized.
+     *
+     * @todo World should observe Games::GameChange.
+     */
+    void reset();
+
+    /**
      * To be called following an engine reset to update the world state.
      */
     void update();

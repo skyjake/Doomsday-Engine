@@ -596,6 +596,37 @@ bool World::changeMap(de::Uri const &uri)
     return d->map != 0;
 }
 
+void World::reset()
+{
+    for(int i = 0; i < DDMAXPLAYERS; ++i)
+    {
+        player_t *plr = &ddPlayers[i];
+        ddplayer_t *ddpl = &plr->shared;
+
+        // Mobjs go down with the map.
+        ddpl->mo = 0;
+        // States have changed, the state pointers are unknown.
+        ddpl->pSprites[0].statePtr = ddpl->pSprites[1].statePtr = 0;
+
+        //ddpl->inGame = false;
+        ddpl->flags &= ~DDPF_CAMERA;
+
+        ddpl->fixedColorMap = 0;
+        ddpl->extraLight = 0;
+    }
+
+#ifdef __CLIENT__
+    if(isClient)
+    {
+        Cl_ResetFrame();
+        Cl_InitPlayers();
+    }
+#endif
+
+    // If a map is currently loaded -- unload it.
+    unloadMap();
+}
+
 void World::update()
 {
 #ifdef __CLIENT__
@@ -605,12 +636,13 @@ void World::update()
     // Reset the archived map cache (the available maps may have changed).
     d->records.clear();
 
-    for(uint i = 0; i < DDMAXPLAYERS; ++i)
+    for(int i = 0; i < DDMAXPLAYERS; ++i)
     {
         player_t *plr = &ddPlayers[i];
         ddplayer_t *ddpl = &plr->shared;
-        // States have changed, the states are unknown.
-        ddpl->pSprites[0].statePtr = ddpl->pSprites[1].statePtr = NULL;
+
+        // States have changed, the state pointers are unknown.
+        ddpl->pSprites[0].statePtr = ddpl->pSprites[1].statePtr = 0;
     }
 
     if(d->map)

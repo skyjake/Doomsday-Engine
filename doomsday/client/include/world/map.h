@@ -216,19 +216,14 @@ public:
     Lines const &lines() const;
 
     /**
-     * Provides a list of all the non-editable sectors in the map.
-     */
-    Sectors const &sectors() const;
-
-    /**
      * Provides a list of all the non-editable polyobjs in the map.
      */
     Polyobjs const &polyobjs() const;
 
     /**
-     * Provides access to the list of line segments for efficient traversal.
+     * Provides a list of all the non-editable sectors in the map.
      */
-    Segments const &segments() const;
+    Sectors const &sectors() const;
 
     /**
      * Provides access to the list of BSP nodes for efficient traversal.
@@ -240,21 +235,26 @@ public:
      */
     BspLeafs const &bspLeafs() const;
 
+    /**
+     * Provides access to the list of line segments for efficient traversal.
+     */
+    Segments const &segments() const;
+
     inline int vertexCount() const  { return vertexes().count(); }
 
     inline int lineCount() const    { return lines().count(); }
 
     inline int sideCount() const    { return lines().count() * 2; }
 
-    inline int sectorCount() const  { return sectors().count(); }
-
     inline int polyobjCount() const { return polyobjs().count(); }
 
-    inline int segmentCount() const { return segments().count(); }
+    inline int sectorCount() const  { return sectors().count(); }
 
     inline int bspNodeCount() const { return bspNodes().count(); }
 
     inline int bspLeafCount() const { return bspLeafs().count(); }
+
+    inline int segmentCount() const { return segments().count(); }
 
     /**
      * Helper function which returns the relevant side index given a @a lineIndex
@@ -723,13 +723,13 @@ public:
     /**
      * @see isEditable()
      */
-    Sector *createSector(float lightLevel, Vector3f const &lightColor,
-                         int archiveIndex = MapElement::NoIndex);
+    Polyobj *createPolyobj(Vector2d const &origin);
 
     /**
      * @see isEditable()
      */
-    Polyobj *createPolyobj(Vector2d const &origin);
+    Sector *createSector(float lightLevel, Vector3f const &lightColor,
+                         int archiveIndex = MapElement::NoIndex);
 
     /**
      * Provides a list of all the editable vertexes in the map.
@@ -742,22 +742,22 @@ public:
     Lines const &editableLines() const;
 
     /**
-     * Provides a list of all the editable sectors in the map.
-     */
-    Sectors const &editableSectors() const;
-
-    /**
      * Provides a list of all the editable polyobjs in the map.
      */
     Polyobjs const &editablePolyobjs() const;
+
+    /**
+     * Provides a list of all the editable sectors in the map.
+     */
+    Sectors const &editableSectors() const;
 
     inline int editableVertexCount() const  { return editableVertexes().count(); }
 
     inline int editableLineCount() const    { return editableLines().count(); }
 
-    inline int editableSectorCount() const  { return editableSectors().count(); }
-
     inline int editablePolyobjCount() const { return editablePolyobjs().count(); }
+
+    inline int editableSectorCount() const  { return editableSectors().count(); }
 
 private:
     DENG2_PRIVATE(d)
