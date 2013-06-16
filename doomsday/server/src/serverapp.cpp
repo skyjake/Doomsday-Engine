@@ -17,16 +17,18 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#include "serverapp.h"
+#include "de_platform.h"
 
 #include <QNetworkProxyFactory>
 #include <QDebug>
 #include <stdlib.h>
+
 #include <de/Log>
 #include <de/Error>
 #include <de/c_wrapper.h>
 #include <de/garbage.h>
-#include "de_platform.h"
+
+#include "serverapp.h"
 #include "dd_main.h"
 #include "dd_loop.h"
 #include "con_main.h"
