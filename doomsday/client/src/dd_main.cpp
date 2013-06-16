@@ -1710,16 +1710,14 @@ bool DD_ChangeGame(de::Game &game, bool allowReload = false)
     return true;
 }
 
-de::World &App_World()
+World &App_World()
 {
 #ifdef __CLIENT__
     return ClientApp::world();
 #endif
 
 #ifdef __SERVER__
-    /// @todo Add a ServerApp class, move this there.
-    static World serverWorld;
-    return serverWorld;
+    return ServerApp::world();
 #endif
 }
 
