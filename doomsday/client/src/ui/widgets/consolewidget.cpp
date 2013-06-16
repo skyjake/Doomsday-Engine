@@ -40,10 +40,16 @@ DENG2_PIMPL(ConsoleWidget)
     ScalarRule *height;
     ScalarRule *width;
 
+    enum GrabEdge {
+        NotGrabbed = 0,
+        RightEdge,
+        TopEdge
+    };
+
     bool opened;
-    bool grabHover;
     int grabWidth;
-    bool grabbed;
+    GrabEdge grabHover;
+    GrabEdge grabbed;
 
     Instance(Public *i)
         : Base(i),
@@ -51,9 +57,9 @@ DENG2_PIMPL(ConsoleWidget)
           cmdLine(0),
           log(0),
           opened(true),
-          grabHover(false),
           grabWidth(0),
-          grabbed(false)
+          grabHover(NotGrabbed),
+          grabbed(NotGrabbed)
     {
         horizShift = new ScalarRule(0);
         width      = new ScalarRule(self.style().rules().rule("console.width").valuei());
@@ -79,6 +85,9 @@ DENG2_PIMPL(ConsoleWidget)
 
     void expandLog(int delta, bool useOffsetAnimation)
     {
+        // Cannot expand if the user is grabbing the top edge.
+        if(grabbed == TopEdge) return;
+
         Animation::Style style = useOffsetAnimation? Animation::EaseOut : Animation::Linear;
 
         if(height->animation().target() == 0)
@@ -98,6 +107,58 @@ DENG2_PIMPL(ConsoleWidget)
                                                     height->animation().remainingTime()));
         }
     }
+
+    bool handleMousePositionEvent(MouseEvent const &mouse)
+    {
+        if(grabbed == RightEdge)
+        {
+            // Adjust width.
+            width->set(mouse.pos().x - self.rule().left().valuei(), .1f);
+            return true;
+        }
+        else if(grabbed == TopEdge)
+        {
+            if(mouse.pos().y < self.rule().bottom().valuei())
+            {
+                height->set(self.rule().bottom().valuei() - mouse.pos().y, .1f);
+                log->enablePageKeys(false);
+            }
+            return true;
+        }
+
+        // Check for grab at the right edge.
+        Rectanglei pos = self.rule().recti();
+        pos.topLeft.x = pos.bottomRight.x - grabWidth;
+        if(pos.contains(mouse.pos()))
+        {
+            if(grabHover != RightEdge)
+            {
+                grabHover = RightEdge;
+                self.root().window().canvas().setCursor(Qt::SizeHorCursor);
+            }
+        }
+        else
+        {
+            // Maybe a grab at the top edge, then.
+            pos = self.rule().recti();
+            pos.bottomRight.y = pos.topLeft.y + grabWidth;
+            if(pos.contains(mouse.pos()))
+            {
+                if(grabHover != TopEdge)
+                {
+                    grabHover = TopEdge;
+                    self.root().window().canvas().setCursor(Qt::SizeVerCursor);
+                }
+            }
+            else if(grabHover != NotGrabbed)
+            {
+                grabHover = NotGrabbed;
+                self.root().window().canvas().setCursor(Qt::ArrowCursor);
+            }
+        }
+
+        return false;
+    }
 };
 
 ConsoleWidget::ConsoleWidget() : GuiWidget("console"), d(new Instance(this))
@@ -106,7 +167,7 @@ ConsoleWidget::ConsoleWidget() : GuiWidget("console"), d(new Instance(this))
 
     d->button = new ButtonWidget;
     d->button->setText(_E(b) ">");
-    // Until we have a menu widget...
+    // Until we have a popup menu widget...
     d->button->setAction(new SignalAction(this, SLOT(focusOnCommandLine())));
     add(d->button);
 
@@ -233,43 +294,24 @@ bool ConsoleWidget::handleEvent(Event const &event)
     // Hovering over the right edge shows the <-> cursor.
     if(event.type() == Event::MousePosition)
     {
-        MouseEvent const &mouse = event.as<MouseEvent>();
-        if(d->grabbed)
+        if(d->handleMousePositionEvent(event.as<MouseEvent>()))
         {
-            // Adjust width.
-            d->width->set(mouse.pos().x - rule().left().valuei(), .1f);
             return true;
-        }
-
-        Rectanglei pos = rule().recti();
-        pos.topLeft.x = pos.bottomRight.x - d->grabWidth;
-        if(pos.contains(mouse.pos()))
-        {
-            if(!d->grabHover)
-            {
-                d->grabHover = true;
-                root().window().canvas().setCursor(Qt::SizeHorCursor);
-            }
-        }
-        else if(d->grabHover)
-        {
-            d->grabHover = false;
-            root().window().canvas().setCursor(Qt::ArrowCursor);
         }
     }
 
-    // Dragging the right edge resizes the widget.
-    if(d->grabHover && event.type() == Event::MouseButton)
+    // Dragging an edge resizes the widget.
+    if(d->grabHover != Instance::NotGrabbed && event.type() == Event::MouseButton)
     {
         switch(handleMouseClick(event))
         {
         case MouseClickStarted:
-            d->grabbed = true;
+            d->grabbed = d->grabHover;
             return true;
 
         case MouseClickAborted:
         case MouseClickFinished:
-            d->grabbed = false;
+            d->grabbed = Instance::NotGrabbed;
             return true;
 
         default:
@@ -286,15 +328,6 @@ bool ConsoleWidget::handleEvent(Event const &event)
     if(event.type() == Event::KeyPress)
     {
         KeyEvent const &key = event.as<KeyEvent>();
-
-        /*
-        if(!d->grabbed && key.qtKey() == Qt::Key_Escape &&
-           key.modifiers().testFlag(KeyEvent::Shift))
-        {
-            close();
-            return true;
-        }
-        */
 
         if(key.qtKey() == Qt::Key_PageUp ||
            key.qtKey() == Qt::Key_PageDown)
