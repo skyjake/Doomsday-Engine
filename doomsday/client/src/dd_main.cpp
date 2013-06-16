@@ -2067,6 +2067,9 @@ boolean DD_Init(void)
         {
             LOG_INFO("Automatic game selection failed");
         }
+        /// @todo Whether or not to list the games depends on whether the app
+        /// has a graphical interface. The graphical client will display the
+        /// GameSelection widget where as the server will not.
         //Con_Execute(CMDS_DDAY, "listgames", false, false);
     }
 
