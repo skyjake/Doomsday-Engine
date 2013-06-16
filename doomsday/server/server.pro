@@ -122,6 +122,7 @@ DENG_HEADERS += \
     include/server_dummies.h \
     include/shelluser.h \
     include/shellusers.h \
+    include/serverapp.h \
     include/serversystem.h \
     include/server/sv_def.h \
     include/server/sv_frame.h \
@@ -311,6 +312,7 @@ SOURCES += \
     src/server_dummies.cpp \
     src/shelluser.cpp \
     src/shellusers.cpp \
+    src/serverapp.cpp \
     src/serversystem.cpp \
     src/server/sv_frame.cpp \
     src/server/sv_infine.cpp \

@@ -1,4 +1,4 @@
-/** @file main_server.cpp Server application entrypoint.
+/** @file main_server.cpp  Server application entrypoint.
  * @ingroup base
  *
  * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -19,94 +19,23 @@
  * 02110-1301 USA</small>
  */
 
-#include <de/TextApp>
-#include <QNetworkProxyFactory>
-#include <QDebug>
-#include <stdlib.h>
-#include <de/Log>
-#include <de/Error>
-#include <de/c_wrapper.h>
-#include <de/garbage.h>
-#include "de_platform.h"
-#include "dd_main.h"
-#include "dd_loop.h"
-#include "con_main.h"
-#include "sys_system.h"
-#include "serversystem.h"
-
-#if WIN32
-#  include "dd_winit.h"
-#elif UNIX
-#  include "dd_uinit.h"
-#endif
-
-static void handleAppTerminate(char const *msg)
-{
-    qFatal("Application terminated due to exception:\n%s\n", msg);
-}
+#include "serverapp.h"
 
 /**
- * Application entry point.
+ * Server application entry point.
  */
 int main(int argc, char** argv)
 {
-    // Application core.
-    de::TextApp textApp(argc, argv);
-    de::App *dengApp = &textApp;
-    novideo = true;
-
-    // Override the system locale (affects number/time formatting).
-    QLocale::setDefault(QLocale("en_US.UTF-8"));
-
-    // Use the host system's proxy configuration.
-    QNetworkProxyFactory::setUseSystemConfiguration(true);
-
-    // Metadata.
-    QCoreApplication::setOrganizationDomain ("dengine.net");
-    QCoreApplication::setOrganizationName   ("Deng Team");
-    QCoreApplication::setApplicationName    ("Doomsday Server");
-    QCoreApplication::setApplicationVersion (DOOMSDAY_VERSION_BASE);
-
-    dengApp->setTerminateFunc(handleAppTerminate);
-
-    ServerSystem serverSystem;
-    dengApp->addSystem(serverSystem);
-
-    // Initialization.
+    ServerApp serverApp(argc, argv);
     try
     {
-        if(!CommandLine_Exists("-stdout"))
-        {
-            // In server mode, stay quiet on the standard outputs.
-            LogBuffer_EnableStandardOutput(false);
-        }
-
-        dengApp->initSubsystems();
-
-        Libdeng_Init();
-
-        // Initialize.
-#if WIN32
-        if(!DD_Win32_Init()) return 1;
-#elif UNIX
-        if(!DD_Unix_Init()) return 1;
-#endif       
-        Plug_LoadAll();
-
-        DD_FinishInitializationAfterWindowReady();
+        serverApp.initialize();
+        return serverApp.execLoop();
     }
     catch(de::Error const &er)
     {
         qFatal("App init failed: %s", er.asText().toLatin1().constData());
+        return -1;
     }
-
-    // Run the main loop.
-    int result = dengApp->execLoop();
-
-    // Cleanup.
-    Sys_Shutdown();
-    DD_Shutdown();
-
-    return result;
 }
 

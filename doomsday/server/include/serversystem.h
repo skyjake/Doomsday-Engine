@@ -40,6 +40,9 @@
  * - Remote users may join the game, becoming players in the game.
  * - Silent remote users that hang around too long will be automatically
  *   terminated if haven't joined the game.
+ *
+ * @todo This is a work in progress, as all remnants of the old network code
+ * have not been removed/revised.
  */
 class ServerSystem : public QObject, public de::System
 {   
@@ -51,8 +54,6 @@ public:
 
 public:
     ServerSystem();
-
-    ~ServerSystem();
 
     /**
      * Start listening for incoming connections.

@@ -17,6 +17,7 @@
  */
 
 #include "serversystem.h"
+#include "serverapp.h"
 #include "shellusers.h"
 #include "remoteuser.h"
 #include "server/sv_def.h"
@@ -47,8 +48,6 @@ static de::duint16 Server_ListenPort()
 {
     return (!nptIPPort ? DEFAULT_TCP_PORT : nptIPPort);
 }
-
-static ServerSystem *serverSys; // Singleton.
 
 DENG2_PIMPL(ServerSystem)
 {
@@ -214,15 +213,7 @@ DENG2_PIMPL(ServerSystem)
 };
 
 ServerSystem::ServerSystem() : d(new Instance(this))
-{
-    serverSys = this;
-}
-
-ServerSystem::~ServerSystem()
-{
-    d.reset();
-    serverSys = 0;
-}
+{}
 
 void ServerSystem::start(duint16 port)
 {
@@ -339,8 +330,7 @@ void ServerSystem::printStatus()
 
 ServerSystem &App_ServerSystem()
 {
-    DENG2_ASSERT(serverSys != 0);
-    return *serverSys;
+    return ServerApp::serverSystem();
 }
 
 //---------------------------------------------------------------------------
@@ -356,7 +346,7 @@ void Server_Register(void)
 
 boolean N_ServerOpen(void)
 {
-    serverSys->start(Server_ListenPort());
+    App_ServerSystem().start(Server_ListenPort());
 
     // The game module may have something that needs doing before we
     // actually begin.
@@ -381,7 +371,7 @@ boolean N_ServerOpen(void)
 
 boolean N_ServerClose(void)
 {
-    if(!serverSys->isListening()) return true;
+    if(!App_ServerSystem().isListening()) return true;
 
     if(masterAware)
     {
@@ -399,11 +389,11 @@ boolean N_ServerClose(void)
     if(gx.NetServerStop)
         gx.NetServerStop(false);
 
-    serverSys->stop();
+    App_ServerSystem().stop();
     return true;
 }
 
 void N_PrintNetworkStatus(void)
 {
-    serverSys->printStatus();
+    App_ServerSystem().printStatus();
 }

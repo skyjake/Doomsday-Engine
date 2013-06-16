@@ -1,8 +1,9 @@
 /** @file dd_main.cpp
  *
  * Engine core.
- *
  * @ingroup core
+ *
+ * @todo Much of this should be refactored and merged into the App classes.
  *
  * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright &copy; 2005-2013 Daniel Swanson <danij@dengine.net>
@@ -34,9 +35,14 @@
 #include <de/App>
 #include <de/NativePath>
 #include <de/binangle.h>
+
 #ifdef __CLIENT__
 #  include "clientapp.h"
 #  include <de/DisplayMode>
+#endif
+
+#ifdef __SERVER__
+#  include "serverapp.h"
 #endif
 
 #include "de_platform.h"
@@ -717,6 +723,9 @@ boolean App_GameLoaded()
 #ifdef __CLIENT__
     if(!ClientApp::haveApp()) return false;
 #endif
+#ifdef __SERVER__
+    if(!ServerApp::haveApp()) return false;
+#endif
     return !isNullGame(App_Games().current());
 }
 
@@ -1286,9 +1295,7 @@ de::Games &App_Games()
 #endif
 
 #ifdef __SERVER__
-    /// @todo Add a ServerApp class, move this there.
-    static Games serverGames;
-    return serverGames;
+    return ServerApp::games();
 #endif
 }
 
