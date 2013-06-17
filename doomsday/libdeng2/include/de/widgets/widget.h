@@ -148,19 +148,28 @@ public:
 
     // Utilities.
     String uniqueName(String const &name) const;
-    enum NotifyResult {
-        AbortNotify,
-        ContinueNotify
+
+    /**
+     * Arguments for notifyTree() and notifyTreeReversed().
+     */
+    struct NotifyArgs {
+        enum Result {
+            Abort,
+            Continue
+        };
+        void (Widget::*notifyFunc)();
+        bool (Widget::*conditionFunc)() const;
+        void (Widget::*preNotifyFunc)();
+        void (Widget::*postNotifyFunc)();
+        Widget *until;
+
+        NotifyArgs(void (Widget::*notify)()) : notifyFunc(notify),
+            conditionFunc(0), preNotifyFunc(0), postNotifyFunc(0),
+            until(0) {}
     };
-    NotifyResult notifyTree(void (Widget::*notifyFunc)(),
-                            bool (Widget::*conditionFunc)() const = 0,
-                            void (Widget::*preNotifyFunc)() = 0,
-                            void (Widget::*postNotifyFunc)() = 0,
-                            Widget *until = 0);
-    void notifyTreeReversed(void (Widget::*notifyFunc)(),
-                            bool (Widget::*conditionFunc)() const = 0,
-                            void (Widget::*preNotifyFunc)() = 0,
-                            void (Widget::*postNotifyFunc)() = 0);
+
+    NotifyArgs::Result notifyTree(NotifyArgs const &args);
+    void notifyTreeReversed(NotifyArgs const &args);
     bool dispatchEvent(Event const &event, bool (Widget::*memberFunc)(Event const &));
 
     // Events.
