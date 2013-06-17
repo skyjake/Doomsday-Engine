@@ -51,7 +51,7 @@ static void handleAppTerminate(char const *msg)
 
 DENG2_PIMPL(ServerApp)
 {
-    ServerSystem serverSystem;
+    QScopedPointer<ServerSystem> serverSystem;
     Games games;
     World world;
 
@@ -65,14 +65,12 @@ DENG2_PIMPL(ServerApp)
     {
         Sys_Shutdown();
         DD_Shutdown();
-
-        serverAppSingleton = 0;
     }
 };
 
 ServerApp::ServerApp(int &argc, char **argv)
     : TextApp(argc, argv), d(new Instance(this))
-{
+{   
     novideo = true;
 
     // Override the system locale (affects number/time formatting).
@@ -89,10 +87,19 @@ ServerApp::ServerApp(int &argc, char **argv)
 
     setTerminateFunc(handleAppTerminate);
 
-    addSystem(d->serverSystem);
+    d->serverSystem.reset(new ServerSystem);
+    addSystem(*d->serverSystem);
 
     // We must presently set the current game manually (the collection is global).
     App_SetCurrentGame(d->games.nullGame());
+}
+
+ServerApp::~ServerApp()
+{
+    d.reset();
+
+    // Now that everything is shut down we can forget about the singleton instance.
+    serverAppSingleton = 0;
 }
 
 void ServerApp::initialize()
@@ -138,7 +145,7 @@ ServerApp &ServerApp::app()
 
 ServerSystem &ServerApp::serverSystem()
 {
-    return app().d->serverSystem;
+    return *app().d->serverSystem;
 }
 
 Games &ServerApp::games()

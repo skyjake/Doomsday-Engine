@@ -32,6 +32,7 @@ class ServerApp : public de::TextApp
 {
 public:
     ServerApp(int &argc, char **argv);
+    ~ServerApp();
 
     /**
      * Sets up all the subsystems of the application. Must be called before the
