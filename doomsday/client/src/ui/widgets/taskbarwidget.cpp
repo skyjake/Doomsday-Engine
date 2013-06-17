@@ -37,7 +37,7 @@ using namespace de;
 using namespace ui;
 
 DENG2_PIMPL(TaskBarWidget),
-DENG2_OBSERVES(Games, GameChange)
+public IGameChangeObserver
 {
     typedef DefaultVertexBuf VertexBuf;
 
@@ -70,12 +70,12 @@ DENG2_OBSERVES(Games, GameChange)
 
         vertShift = new ScalarRule(0);
 
-        App_Games().audienceForGameChange += this;
+        audienceForGameChange += this;
     }
 
     ~Instance()
     {
-        App_Games().audienceForGameChange -= this;
+        audienceForGameChange -= this;
 
         releaseRef(vertShift);
     }

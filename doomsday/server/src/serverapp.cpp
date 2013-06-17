@@ -90,6 +90,9 @@ ServerApp::ServerApp(int &argc, char **argv)
     setTerminateFunc(handleAppTerminate);
 
     addSystem(d->serverSystem);
+
+    // We must presently set the current game manually (the collection is global).
+    App_SetCurrentGame(d->games.nullGame());
 }
 
 void ServerApp::initialize()
