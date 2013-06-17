@@ -10,9 +10,9 @@ group logo {
     image px512 { path = "graphics/deng-logo-512.png" }    
     
     group game {
-        image libdoom { path = "graphics/game-libdoom.png" }
+        image libdoom    { path = "graphics/game-libdoom.png" }
         image libheretic { path = "graphics/game-libheretic.png" }
-        image libhexen { path = "graphics/game-libhexen.png" }
+        image libhexen   { path = "graphics/game-libhexen.png" }
     }
 }
 
