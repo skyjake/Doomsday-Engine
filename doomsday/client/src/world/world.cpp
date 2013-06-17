@@ -351,27 +351,15 @@ DENG2_PIMPL(World)
                 << TABBED("BSP Leafs", map->bspLeafCount())
                 << TABBED("Segments",  map->segmentCount());
 
-        // See what mapinfo says about this map.
-        Uri mapUri = map->uri();
-        ded_mapinfo_t *mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&mapUri));
+        // See what MapInfo says about this map.
+        ded_mapinfo_t *mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s const *>(&map->uri()));
         if(!mapInfo)
         {
+            // Use the default def instead.
             Uri defaultMapUri("*", RC_NULL);
             mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&defaultMapUri));
         }
 
-#ifdef __CLIENT__
-        ded_sky_t *skyDef = 0;
-        if(mapInfo)
-        {
-            skyDef = Def_GetSky(mapInfo->skyID);
-            if(!skyDef)
-                skyDef = &mapInfo->sky;
-        }
-        Sky_Configure(skyDef);
-#endif
-
-        // Setup accordingly.
         if(mapInfo)
         {
             map->_globalGravity = mapInfo->gravity;
@@ -379,12 +367,23 @@ DENG2_PIMPL(World)
         }
         else
         {
-            // No map info found, so set some basic stuff.
+            // No map info found -- apply defaults.
             map->_globalGravity = 1.0f;
             map->_ambientLightLevel = 0;
         }
 
         map->_effectiveGravity = map->_globalGravity;
+
+#ifdef __CLIENT__
+        // Reconfigure the sky.
+        ded_sky_t *skyDef = 0;
+        if(mapInfo)
+        {
+            skyDef = Def_GetSky(mapInfo->skyID);
+            if(!skyDef) skyDef = &mapInfo->sky;
+        }
+        Sky_Configure(skyDef);
+#endif
 
         // Init the thinker lists (public and private).
         map->thinkers().initLists(0x1 | 0x2);
@@ -516,7 +515,7 @@ DENG2_PIMPL(World)
 
         // Run the special map setup command, which the user may alias to do
         // something useful.
-        String cmd = "init-" + mapUri.resolved();
+        String cmd = "init-" + map->uri().resolved();
         if(Con_IsValidCommand(cmd.toUtf8().constData()))
         {
             Con_Executef(CMDS_SCRIPT, false, "%s", cmd.toUtf8().constData());
@@ -645,73 +644,10 @@ void World::update()
         ddpl->pSprites[0].statePtr = ddpl->pSprites[1].statePtr = 0;
     }
 
+    // Update the current map too.
     if(d->map)
     {
-#ifdef __CLIENT__
-
-        // Update all world surfaces.
-        foreach(Sector *sector, d->map->sectors())
-        foreach(Plane *plane, sector->planes())
-        {
-            plane->surface().markAsNeedingDecorationUpdate();
-        }
-
-        foreach(Line *line, d->map->lines())
-        for(int i = 0; i < 2; ++i)
-        {
-            Line::Side &side = line->side(i);
-            if(!side.hasSections()) continue;
-
-            side.top().markAsNeedingDecorationUpdate();
-            side.middle().markAsNeedingDecorationUpdate();
-            side.bottom().markAsNeedingDecorationUpdate();
-        }
-
-        /// @todo Is this even necessary?
-        foreach(Polyobj *polyobj, d->map->polyobjs())
-        foreach(Line *line, polyobj->lines())
-        {
-            line->front().middle().markAsNeedingDecorationUpdate();
-        }
-
-        d->map->buildSurfaceLists();
-
-#endif // __CLIENT__
-
-        // See what mapinfo says about this map.
-        Uri mapUri = d->map->uri();
-        ded_mapinfo_t *mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&mapUri));
-        if(!mapInfo)
-        {
-            // Use the default def instead.
-            Uri defaultDefUri = de::Uri(RC_NULL, "*");
-            mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&defaultDefUri));
-        }
-
-        // Reconfigure the sky
-        ded_sky_t *skyDef = 0;
-        if(mapInfo)
-        {
-            skyDef = Def_GetSky(mapInfo->skyID);
-            if(!skyDef) skyDef = &mapInfo->sky;
-        }
-#ifdef __CLIENT__
-        Sky_Configure(skyDef);
-#endif
-
-        if(mapInfo)
-        {
-            d->map->_globalGravity     = mapInfo->gravity;
-            d->map->_ambientLightLevel = mapInfo->ambient * 255;
-        }
-        else
-        {
-            // No map info found -- apply defaults.
-            d->map->_globalGravity = 1.0f;
-            d->map->_ambientLightLevel = 0;
-        }
-
-        d->map->_effectiveGravity = d->map->_globalGravity;
+        d->map->update();
     }
 }
 

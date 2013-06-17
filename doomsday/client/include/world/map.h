@@ -657,6 +657,11 @@ public:
 
 #endif // __CLIENT__
 
+    /**
+     * To be called following an engine reset to update the map state.
+     */
+    void update();
+
 public: /// @todo Make private:
 
     /**

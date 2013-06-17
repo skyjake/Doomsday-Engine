@@ -32,6 +32,7 @@
 #include "de_platform.h"
 #include "de_base.h"
 #include "de_console.h" // Con_GetInteger
+#include "de_defs.h"
 #include "m_nodepile.h"
 
 #include "BspLeaf"
@@ -56,6 +57,9 @@
 #include "world/world.h"
 
 #include "render/r_main.h" // validCount
+#ifdef __CLIENT__
+#  include "render/sky.h"
+#endif
 
 #include "world/map.h"
 
@@ -2477,6 +2481,77 @@ void Map::updateMissingMaterialsForLinesOfSector(Sector const &sec)
 }
 
 #endif // __CLIENT__
+
+void Map::update()
+{
+#ifdef __CLIENT__
+    // Update all surfaces.
+    foreach(Sector *sector, d->sectors)
+    foreach(Plane *plane, sector->planes())
+    {
+        plane->surface().markAsNeedingDecorationUpdate();
+    }
+
+    foreach(Line *line, d->lines)
+    for(int i = 0; i < 2; ++i)
+    {
+        Line::Side &side = line->side(i);
+        if(!side.hasSections()) continue;
+
+        side.top().markAsNeedingDecorationUpdate();
+        side.middle().markAsNeedingDecorationUpdate();
+        side.bottom().markAsNeedingDecorationUpdate();
+    }
+
+    /// @todo Is this even necessary?
+    foreach(Polyobj *polyobj, d->polyobjs)
+    foreach(Line *line, polyobj->lines())
+    {
+        line->front().middle().markAsNeedingDecorationUpdate();
+    }
+
+    // Rebuild the surface lists.
+    buildSurfaceLists();
+
+#endif // __CLIENT__
+
+    // Reapply values defined in MapInfo (they may have changed).
+    ded_mapinfo_t *mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&d->uri));
+    if(!mapInfo)
+    {
+        // Use the default def instead.
+        Uri defaultDefUri(RC_NULL, "*");
+        mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&defaultDefUri));
+    }
+
+    if(mapInfo)
+    {
+        _globalGravity     = mapInfo->gravity;
+        _ambientLightLevel = mapInfo->ambient * 255;
+    }
+    else
+    {
+        // No map info found -- apply defaults.
+        _globalGravity = 1.0f;
+        _ambientLightLevel = 0;
+    }
+
+    _effectiveGravity = _globalGravity;
+
+#ifdef __CLIENT__
+    // Reconfigure the sky.
+    /// @todo Sky needs breaking up into multiple components. There should be
+    /// a representation on server side and a logical entity which the renderer
+    /// visualizes. We also need multiple concurrent skies for BOOM support.
+    ded_sky_t *skyDef = 0;
+    if(mapInfo)
+    {
+        skyDef = Def_GetSky(mapInfo->skyID);
+        if(!skyDef) skyDef = &mapInfo->sky;
+    }
+    Sky_Configure(skyDef);
+#endif
+}
 
 /// Runtime map editing -----------------------------------------------------
 
