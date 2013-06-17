@@ -80,7 +80,7 @@ static int rendBspLeaf(BspLeaf *bspLeaf, void * /*parameters*/)
         float length, dx, dy, normal[2], unit[2];
         vec2f_t start, end;
 
-        Face const &face = bspLeaf->face();
+        Face const &face = bspLeaf->poly();
 
         HEdge *hedge = face.hedge();
         do

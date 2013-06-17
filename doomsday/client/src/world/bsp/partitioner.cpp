@@ -74,6 +74,9 @@ DENG2_PIMPL(Partitioner)
     /// The map we are building BSP data for (not owned).
     Map const *map;
 
+    /// The mesh from which we'll assign (construct) new geometries.
+    Mesh *mesh;
+
     /// Running totals of constructed BSP map elements.
     int numNodes;
     int numLeafs;
@@ -105,10 +108,11 @@ DENG2_PIMPL(Partitioner)
     /// The "current" binary space half-plane.
     HPlane hplane;
 
-    Instance(Public *i, Map const &map, int splitCostFactor)
+    Instance(Public *i, Map const &map, Mesh &mesh, int splitCostFactor)
       : Base(i),
         splitCostFactor(splitCostFactor),
         map(&map),
+        mesh(&mesh),
         numNodes(0), numLeafs(0), numSegments(0), numVertexes(0),
         rootNode(0)
     {}
@@ -1421,7 +1425,7 @@ DENG2_PIMPL(Partitioner)
             /// @todo Move BSP leaf construction here.
             BspLeaf &bspLeaf = *subspace.bspLeaf();
 
-            subspace.buildGeometry(bspLeaf);
+            subspace.buildGeometry(bspLeaf, *mesh);
 
             // Account the new segments.
             /// @todo Refactor away.
@@ -1449,6 +1453,7 @@ DENG2_PIMPL(Partitioner)
                 HEdge *hedge = &seg->segment().hedge();
                 DENG_ASSERT(!hedge->hasTwin());
 
+                // Allocate the twin from the same mesh.
                 hedge->setTwin(hedge->mesh().newHEdge(seg->back().from()));
                 hedge->twin().setTwin(hedge);
             }
@@ -1642,8 +1647,8 @@ DENG2_PIMPL(Partitioner)
 #endif
 };
 
-Partitioner::Partitioner(Map const &map, int splitCostFactor)
-    : d(new Instance(this, map, splitCostFactor))
+Partitioner::Partitioner(Map const &map, Mesh &mesh, int splitCostFactor)
+    : d(new Instance(this, map, mesh, splitCostFactor))
 {
     d->initForMap();
 }

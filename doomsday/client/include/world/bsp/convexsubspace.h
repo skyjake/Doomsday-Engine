@@ -164,8 +164,9 @@ public:
      * Also, a map sector is chosen and attributed to the BSP leaf.
      *
      * @param bspLeaf  BSP leaf to build geometry for.
+     * @param mesh     Mesh from which to assign geometry.
      */
-    void buildGeometry(BspLeaf &bspLeaf) const;
+    void buildGeometry(BspLeaf &bspLeaf, Mesh &mesh) const;
 
     /**
      * The BspLeaf to which the subspace has been attributed. May return @c 0

@@ -1332,7 +1332,7 @@ void Rend_RadioBspLeafEdges(BspLeaf &bspLeaf)
     // Any need to continue?
     if(shadowDark < .0001f) return;
 
-    Face const &face = bspLeaf.face();
+    Face const &face = bspLeaf.poly();
     Vector3f eyeToSurface(vOrigin[VX] - face.center().x,
                           vOrigin[VZ] - face.center().y);
 

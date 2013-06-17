@@ -350,7 +350,7 @@ static void processSegment(Segment *seg, void *parameters)
         return; // Not eligible for spreading.
     }
 
-    AABoxd const &backLeafAABox = backLeaf.face().aaBox();
+    AABoxd const &backLeafAABox = backLeaf.poly().aaBox();
 
     // Is the leaf on the back side outside the origin's AABB?
     if(backLeafAABox.maxX <= parms->box[BOXLEFT]   ||
@@ -520,7 +520,7 @@ static void spreadContactsForBspLeaf(objlinkblockmap_t &obm, BspLeaf const &bspL
 {
     DENG_ASSERT(!bspLeaf.isDegenerate());
 
-    AABoxd const &leafAABox = bspLeaf.face().aaBox();
+    AABoxd const &leafAABox = bspLeaf.poly().aaBox();
 
     uint minBlock[2];
     toObjlinkBlockmapCell(obm, minBlock, leafAABox.minX - maxRadius,

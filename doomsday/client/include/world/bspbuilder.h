@@ -28,6 +28,8 @@
 
 namespace de {
 
+class Mesh;
+
 /**
  * Map geometry partitioner and BSP tree builder.
  *
@@ -38,20 +40,21 @@ namespace de {
 class BspBuilder
 {
 public:
-    /// Default cost factor attributed to splitting a half-edge.
-    static const int DEFAULT_PARTITION_COST_HEDGESPLIT = 7;
-
-public:
     /**
      * Create and configure a new BSP builder, initializing in preparation
      * for building a BSP for the specified @a map.
      *
-     * @param map  Map to construct a BSP for. The caller must ensure that
-     *             the map remains accessible until the build process has
-     *             completed (ownership is unaffected).
+     * @param map   Map to construct a BSP for. The caller must ensure that
+     *              the map remains accessible until the build process has
+     *              completed (ownership is unaffected).
+     *
+     * @param mesh  Mesh from which to assign new geometries. The caller must
+     *              ensure that the mesh remains accessible until the build
+     *              process has completed (ownership is unaffected).
+     *
      * @param splitCostFactor  Cost factor attributed to splitting a half-edge.
      */
-    BspBuilder(Map const &map, int splitCostFactor = DEFAULT_PARTITION_COST_HEDGESPLIT);
+    BspBuilder(Map const &map, Mesh &mesh, int splitCostFactor = 7);
 
     /**
      * Set the cost factor associated with splitting an existing half-edge.

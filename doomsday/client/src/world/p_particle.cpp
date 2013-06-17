@@ -666,7 +666,7 @@ static void P_NewParticle(ptcgen_t *gen)
             return;
         }
 
-        AABoxd const &leafAABox = bspLeaf->face().aaBox();
+        AABoxd const &leafAABox = bspLeaf->poly().aaBox();
 
         // Try a couple of times to get a good random spot.
         for(i = 0; i < 10; ++i) // Max this many tries before giving up.

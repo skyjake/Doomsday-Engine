@@ -40,11 +40,11 @@ DENG2_PIMPL_NOREF(BspBuilder)
     /// World space partitioner.
     Partitioner partitioner;
 
-    Instance(Map const &map) : partitioner(map) {}
+    Instance(Map const &map, Mesh &mesh) : partitioner(map, mesh) {}
 };
 
-BspBuilder::BspBuilder(Map const &map, int splitCostFactor)
-    : d(new Instance(map))
+BspBuilder::BspBuilder(Map const &map, Mesh &mesh, int splitCostFactor)
+    : d(new Instance(map, mesh))
 {
     d->partitioner.setSplitCostFactor(splitCostFactor);
 }

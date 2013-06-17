@@ -206,6 +206,14 @@ public:
     Thinkers /*const*/ &thinkers() const;
 
     /**
+     * Provides access to the primary @ref Mesh geometry owned by the map.
+     * Note that further meshes may be assigned to individual elements of
+     * the map should their geometries not be representable as a manifold
+     * with the primary mesh (e.g., polyobjs and BSP leaf "extra" meshes).
+     */
+    Mesh const &mesh() const;
+
+    /**
      * Provides a list of all the non-editable vertexes in the map.
      */
     Vertexes const &vertexes() const;

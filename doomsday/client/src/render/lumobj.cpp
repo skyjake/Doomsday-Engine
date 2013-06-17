@@ -113,7 +113,7 @@ static uint *luminousOrder;
 // List of unused and used list nodes, for linking lumobjs with BSP leafs.
 static lumlistnode_t *listNodeFirst, *listNodeCursor;
 
-// List of lumobjs for each BSP leaf;
+// List of lumobjs for each BSP leaf.
 static lumlistnode_t **bspLeafLumObjList;
 
 // Projection list nodes.

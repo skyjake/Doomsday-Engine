@@ -126,6 +126,9 @@ DENG2_PIMPL(Map)
     /// Map thinkers.
     QScopedPointer<Thinkers> thinkers;
 
+    /// Mesh from which we'll assign geometries.
+    Mesh mesh;
+
     /// Element LUTs:
     Vertexes vertexes;
     Sectors sectors;
@@ -255,7 +258,7 @@ DENG2_PIMPL(Map)
             << uri << bspSplitFactor;
 
         // Instantiate and configure a new BSP builder.
-        BspBuilder nodeBuilder(self, bspSplitFactor);
+        BspBuilder nodeBuilder(self, mesh, bspSplitFactor);
 
         // Build the BSP.
         bool builtOK = nodeBuilder.buildBsp();
@@ -747,7 +750,7 @@ DENG2_PIMPL(Map)
         // BspLeafs without sectors don't get in.
         if(!bspLeaf.hasSector()) return;
 
-        Blockmap::CellBlock cellBlock = bspLeafBlockmap->toCellBlock(bspLeaf.face().aaBox());
+        Blockmap::CellBlock cellBlock = bspLeafBlockmap->toCellBlock(bspLeaf.poly().aaBox());
 
         Blockmap::Cell cell;
         for(cell.y = cellBlock.min.y; cell.y <= cellBlock.max.y; ++cell.y)
@@ -950,6 +953,11 @@ void Map::consoleRegister() // static
     C_VAR_INT("bsp-factor", &bspSplitFactor, CVF_NO_MAX, 0, 0);
 }
 
+Mesh const &Map::mesh() const
+{
+    return d->mesh;
+}
+
 MapElement &Map::bspRoot() const
 {
     if(d->bspRoot)
@@ -960,11 +968,6 @@ MapElement &Map::bspRoot() const
     throw MissingBspError("Map::bspRoot", "No BSP data available");
 }
 
-Map::Segments const &Map::segments() const
-{
-    return d->segments;
-}
-
 Map::BspNodes const &Map::bspNodes() const
 {
     return d->bspNodes;
@@ -973,6 +976,11 @@ Map::BspNodes const &Map::bspNodes() const
 Map::BspLeafs const &Map::bspLeafs() const
 {
     return d->bspLeafs;
+}
+
+Map::Segments const &Map::segments() const
+{
+    return d->segments;
 }
 
 #ifdef __CLIENT__
@@ -1420,7 +1428,7 @@ static int blockmapCellBspLeafsIterator(void *object, void *context)
             ok = false;
 
         // Check the bounds.
-        AABoxd const &leafAABox = bspLeaf->face().aaBox();
+        AABoxd const &leafAABox = bspLeaf->poly().aaBox();
 
         if(args->box &&
            (leafAABox.maxX < args->box->minX ||
