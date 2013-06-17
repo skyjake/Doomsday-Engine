@@ -33,7 +33,6 @@
 #include "de_defs.h"
 
 #include "api_materialarchive.h"
-#include "world/r_world.h"
 
 #include <de/ArrayValue>
 #include <de/NumberValue>

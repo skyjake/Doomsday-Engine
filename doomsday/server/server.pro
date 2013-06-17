@@ -244,20 +244,19 @@ DENG_HEADERS += \
     $$SRC/include/world/bspleaf.h \
     $$SRC/include/world/bspnode.h \
     $$SRC/include/world/entitydatabase.h \
+    $$SRC/include/world/entitydef.h \
     $$SRC/include/world/line.h \
     $$SRC/include/world/lineowner.h \
     $$SRC/include/world/linesighttest.h \
     $$SRC/include/world/map.h \
+    $$SRC/include/world/maputil.h \
     $$SRC/include/world/p_intercept.h \
-    $$SRC/include/world/p_mapdata.h \
-    $$SRC/include/world/p_maptypes.h \
     $$SRC/include/world/p_object.h \
     $$SRC/include/world/p_players.h \
     $$SRC/include/world/p_ticker.h \
     $$SRC/include/world/plane.h \
     $$SRC/include/world/polyobj.h \
     $$SRC/include/world/propertyvalue.h \
-    $$SRC/include/world/r_world.h \
     $$SRC/include/world/reject.h \
     $$SRC/include/world/sector.h \
     $$SRC/include/world/segment.h \
@@ -417,11 +416,12 @@ SOURCES += \
     $$SRC/src/world/bspnode.cpp \
     $$SRC/src/world/dmuargs.cpp \
     $$SRC/src/world/entitydatabase.cpp \
+    $$SRC/src/world/entitydef.cpp \
     $$SRC/src/world/line.cpp \
     $$SRC/src/world/linesighttest.cpp \
     $$SRC/src/world/map.cpp \
     $$SRC/src/world/mapelement.cpp \
-    $$SRC/src/world/p_data.cpp \
+    $$SRC/src/world/maputil.cpp \
     $$SRC/src/world/p_intercept.cpp \
     $$SRC/src/world/p_mobj.cpp \
     $$SRC/src/world/p_players.cpp \
@@ -429,7 +429,6 @@ SOURCES += \
     $$SRC/src/world/plane.cpp \
     $$SRC/src/world/polyobj.cpp \
     $$SRC/src/world/propertyvalue.cpp \
-    $$SRC/src/world/r_world.cpp \
     $$SRC/src/world/reject.cpp \
     $$SRC/src/world/sector.cpp \
     $$SRC/src/world/segment.cpp \

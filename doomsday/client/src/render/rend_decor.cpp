@@ -19,6 +19,10 @@
  * 02110-1301 USA</small>
  */
 
+#include <de/vector1.h>
+
+#include <de/math.h>
+
 #include "de_base.h"
 #include "de_console.h"
 #include "de_play.h"
@@ -28,9 +32,7 @@
 #include "m_profiler.h"
 #include "MaterialVariantSpec"
 #include "world/map.h"
-
-#include <de/math.h>
-#include <de/vector1.h>
+#include "world/maputil.h"
 
 #include "render/rend_decor.h"
 

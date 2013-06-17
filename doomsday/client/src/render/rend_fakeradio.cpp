@@ -33,6 +33,7 @@
 #include "MaterialSnapshot"
 #include "MaterialVariantSpec"
 #include "world/map.h"
+#include "world/maputil.h"
 #include "world/lineowner.h"
 #include "WallEdge"
 

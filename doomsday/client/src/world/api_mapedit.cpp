@@ -28,7 +28,6 @@
 #include "Materials"
 
 #include "world/entitydatabase.h"
-#include "world/p_mapdata.h"
 #include "world/map.h"
 
 #include "edit_map.h"

@@ -30,8 +30,8 @@
 #include "Game"
 #include "network/net_main.h"
 #include "world/map.h"
+#include "world/p_object.h"
 #include "world/p_players.h"
-#include "world/p_maptypes.h"
 
 using namespace de;
 

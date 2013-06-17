@@ -29,6 +29,7 @@
 
 #include "gridmap.h"
 #include "world/map.h"
+#include "world/maputil.h"
 #include "MaterialSnapshot"
 
 #include "world/p_objlink.h"

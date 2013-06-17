@@ -32,7 +32,6 @@
 #include "api_audiod.h"
 #include "api_audiod_sfx.h"
 #include "world/map.h"
-#include "world/p_maptypes.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -52,7 +51,7 @@ extern "C" {
 typedef struct sfxchannel_s {
     int             flags;
     sfxbuffer_t*    buffer;
-    mobj_t*         emitter; // Mobj that is emitting the sound.
+    struct mobj_s*  emitter; // Mobj that is emitting the sound.
     coord_t         origin[3]; // Emit from here (synced with emitter).
     float           volume; // Sound volume: 1.0 is max.
     float           frequency; // Frequency adjustment: 1.0 is normal.
@@ -69,7 +68,7 @@ void Sfx_Shutdown(void);
 void Sfx_Reset(void);
 void Sfx_AllowRefresh(boolean allow);
 void Sfx_MapChange(void);
-void Sfx_SetListener(mobj_t* mobj);
+void Sfx_SetListener(struct mobj_s *mobj);
 void Sfx_StartFrame(void);
 void Sfx_EndFrame(void);
 
@@ -96,12 +95,12 @@ void Sfx_RefreshChannels(void);
  *
  * @return              @c true, if a sound is started.
  */
-int Sfx_StartSound(sfxsample_t* sample, float volume, float freq,
-                   mobj_t* emitter, coord_t* fixedpos, int flags);
+int Sfx_StartSound(sfxsample_t *sample, float volume, float freq,
+                   struct mobj_s *emitter, coord_t *fixedpos, int flags);
 
-int             Sfx_StopSound(int id, mobj_t* emitter);
-int             Sfx_StopSoundWithLowerPriority(int id, mobj_t* emitter, ddboolean_t byPriority);
-void            Sfx_StopSoundGroup(int group, mobj_t* emitter);
+int             Sfx_StopSound(int id, struct mobj_s *emitter);
+int             Sfx_StopSoundWithLowerPriority(int id, struct mobj_s *emitter, ddboolean_t byPriority);
+void            Sfx_StopSoundGroup(int group, struct mobj_s *emitter);
 int             Sfx_CountPlaying(int id);
 void            Sfx_UnloadSoundID(int id);
 void            Sfx_UpdateReverb(void);

@@ -50,11 +50,11 @@
 #include "world/entitydatabase.h"
 #include "world/generators.h"
 #include "world/lineowner.h"
+#include "world/maputil.h"
 #include "world/p_intercept.h"
 #include "world/p_object.h"
-#include "world/r_world.h"
 #include "world/thinkers.h"
-#include "world/world.h"
+#include "world/world.h" // ddMapSetup
 
 #include "render/r_main.h" // validCount
 #ifdef __CLIENT__

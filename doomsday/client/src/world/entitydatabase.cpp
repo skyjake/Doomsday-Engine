@@ -22,10 +22,7 @@
 
 #include <de/Log>
 
-#include "de_base.h"
-#include "world/p_mapdata.h"
-#include "world/propertyvalue.h"
-
+#include "de_platform.h"
 #include "world/entitydatabase.h"
 
 // An entity is a set of one or more properties.

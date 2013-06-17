@@ -1,4 +1,4 @@
-/** @file r_world.cpp World map utilities.
+/** @file maputil.cpp World map utilities.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -18,48 +18,21 @@
  * 02110-1301 USA</small>
  */
 
-#include <cmath>
-#include <cstdlib>
-#include <cstring>
-
-#include "de_base.h"
-#include "de_console.h"
-#include "de_system.h"
-#include "de_network.h"
-#include "de_play.h"
-#include "de_render.h"
-#include "de_graphics.h"
-#include "de_audio.h"
-#include "de_misc.h"
-
-#include "world/lineowner.h"
-#include "world/world.h"
 #include "Plane"
+#include "Segment"
+#include "world/lineowner.h"
+#include "world/p_players.h"
 
 #ifdef __CLIENT__
 #  include "MaterialSnapshot"
 #  include "MaterialVariantSpec"
+
+#  include "render/rend_main.h"
 #endif
 
+#include "world/maputil.h"
+
 using namespace de;
-
-#undef R_SetupFog
-DENG_EXTERN_C void R_SetupFog(float start, float end, float density, float *rgb)
-{
-    Con_Execute(CMDS_DDAY, "fog on", true, false);
-    Con_Executef(CMDS_DDAY, true, "fog start %f", start);
-    Con_Executef(CMDS_DDAY, true, "fog end %f", end);
-    Con_Executef(CMDS_DDAY, true, "fog density %f", density);
-    Con_Executef(CMDS_DDAY, true, "fog color %.0f %.0f %.0f",
-                 rgb[0] * 255, rgb[1] * 255, rgb[2] * 255);
-}
-
-#undef R_SetupFogDefaults
-DENG_EXTERN_C void R_SetupFogDefaults()
-{
-    // Go with the defaults.
-    Con_Execute(CMDS_DDAY,"fog off", true, false);
-}
 
 void R_SetRelativeHeights(Sector const *front, Sector const *back, int planeIndex,
     coord_t *fz, coord_t *bz, coord_t *bhz)

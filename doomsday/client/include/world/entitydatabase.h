@@ -24,8 +24,8 @@
 #include <de/Error>
 
 #include "api_mapedit.h" // valuetype_t
+#include "world/entitydef.h"
 #include "world/propertyvalue.h"
-#include "world/p_mapdata.h"
 
 namespace de {
 

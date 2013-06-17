@@ -41,8 +41,6 @@
 #define DENG_NO_API_MACROS_DEFINITIONS
 #include "api_def.h"
 
-#include "world/r_world.h"
-
 // XGClass.h is actually a part of the engine.
 #include "../../../plugins/common/include/xgclass.h"
 

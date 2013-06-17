@@ -1560,7 +1560,7 @@ DENG_EXTERN_C uint P_CountMapObjs(int entityId)
     return entities.entityCount(P_MapEntityDef(entityId));
 }
 
-// p_mapdata.cpp
+// entitydef.cpp
 DENG_EXTERN_C byte P_GetGMOByte(int entityId, int elementIndex, int propertyId);
 DENG_EXTERN_C short P_GetGMOShort(int entityId, int elementIndex, int propertyId);
 DENG_EXTERN_C int P_GetGMOInt(int entityId, int elementIndex, int propertyId);

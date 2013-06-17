@@ -71,6 +71,7 @@
 #include "gl/svg.h"
 
 #include "api_map.h"
+#include "world/entitydef.h"
 #include "world/p_players.h"
 #include "world/p_objlink.h"
 #include "world/world.h"

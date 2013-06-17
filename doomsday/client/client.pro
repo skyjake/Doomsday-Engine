@@ -369,15 +369,15 @@ DENG_HEADERS += \
     include/world/bspnode.h \
     include/world/dmuargs.h \
     include/world/entitydatabase.h \
+    include/world/entitydef.h \
     include/world/generators.h \
     include/world/line.h \
     include/world/lineowner.h \
     include/world/linesighttest.h \
     include/world/map.h \
     include/world/mapelement.h \
+    include/world/maputil.h \
     include/world/p_intercept.h \
-    include/world/p_mapdata.h \
-    include/world/p_maptypes.h \
     include/world/p_object.h \
     include/world/p_objlink.h \
     include/world/p_particle.h \
@@ -386,7 +386,6 @@ DENG_HEADERS += \
     include/world/plane.h \
     include/world/polyobj.h \
     include/world/propertyvalue.h \
-    include/world/r_world.h \
     include/world/reject.h \
     include/world/sector.h \
     include/world/segment.h \
@@ -665,12 +664,13 @@ SOURCES += \
     src/world/bspnode.cpp \
     src/world/dmuargs.cpp \
     src/world/entitydatabase.cpp \
+    src/world/entitydef.cpp \
     src/world/generators.cpp \
     src/world/line.cpp \
     src/world/linesighttest.cpp \
     src/world/map.cpp \
     src/world/mapelement.cpp \
-    src/world/p_data.cpp \
+    src/world/maputil.cpp \
     src/world/p_intercept.cpp \
     src/world/p_mobj.cpp \
     src/world/p_objlink.cpp \
@@ -680,7 +680,6 @@ SOURCES += \
     src/world/plane.cpp \
     src/world/polyobj.cpp \
     src/world/propertyvalue.cpp \
-    src/world/r_world.cpp \
     src/world/reject.cpp \
     src/world/sector.cpp \
     src/world/segment.cpp \

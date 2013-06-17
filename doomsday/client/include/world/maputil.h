@@ -1,4 +1,4 @@
-/** @file r_world.h World map utilities.
+/** @file maputil.h World map utilities.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_WORLD_P_MAPUTIL2_H
-#define DENG_WORLD_P_MAPUTIL2_H
+#ifndef DENG_WORLD_MAPUTIL_H
+#define DENG_WORLD_MAPUTIL_H
 
 #include <de/binangle.h>
 
@@ -127,4 +127,4 @@ Line *R_FindSolidLineNeighbor(Sector const *sector, Line const *line,
 
 #endif // __CLIENT__
 
-#endif // DENG_WORLD_P_MAPUTIL2_H
+#endif // DENG_WORLD_MAPUTIL_H

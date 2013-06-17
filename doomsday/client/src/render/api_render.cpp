@@ -1,4 +1,8 @@
 #define DENG_NO_API_MACROS_RENDER
+
+#include "de_base.h"
+#include "de_console.h"
+
 #include "api_render.h"
 
 // m_misc.c
@@ -36,9 +40,23 @@ DENG_EXTERN_C boolean R_ChooseAlignModeAndScaleFactor(float* scale, int width, i
 DENG_EXTERN_C scalemode_t R_ChooseScaleMode2(int width, int height, int availWidth, int availHeight, scalemode_t overrideMode, float stretchEpsilon);
 DENG_EXTERN_C scalemode_t R_ChooseScaleMode(int width, int height, int availWidth, int availHeight, scalemode_t overrideMode);
 
-// r_world.cpp
-DENG_EXTERN_C void R_SetupFogDefaults(void);
-DENG_EXTERN_C void R_SetupFog(float start, float end, float density, float* rgb);
+#undef R_SetupFog
+DENG_EXTERN_C void R_SetupFog(float start, float end, float density, float *rgb)
+{
+    Con_Execute(CMDS_DDAY, "fog on", true, false);
+    Con_Executef(CMDS_DDAY, true, "fog start %f", start);
+    Con_Executef(CMDS_DDAY, true, "fog end %f", end);
+    Con_Executef(CMDS_DDAY, true, "fog density %f", density);
+    Con_Executef(CMDS_DDAY, true, "fog color %.0f %.0f %.0f",
+                 rgb[0] * 255, rgb[1] * 255, rgb[2] * 255);
+}
+
+#undef R_SetupFogDefaults
+DENG_EXTERN_C void R_SetupFogDefaults()
+{
+    // Go with the defaults.
+    Con_Execute(CMDS_DDAY,"fog off", true, false);
+}
 
 DENG_DECLARE_API(Rend) =
 {

@@ -27,12 +27,12 @@
 #include "BspLeaf"
 #include "Line"
 #include "Plane"
+#include "Segment"
 
 #include "world/map.h"
+#include "world/p_object.h"
 #include "world/p_players.h"
-#include "world/p_maptypes.h"
 #ifdef __CLIENT__
-#  include "world/r_world.h"
 #  include "render/rend_bias.h"
 #endif
 

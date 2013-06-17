@@ -25,7 +25,7 @@
 
 #include "de_base.h"
 
-#include "world/p_maptypes.h"
+#include "world/p_object.h"
 #include "world/map.h"
 #include "Segment"
 

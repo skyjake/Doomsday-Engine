@@ -25,8 +25,8 @@
 #include "Segment"
 
 #include "world/map.h"
+#include "world/maputil.h"
 #include "world/p_players.h"
-#include "world/r_world.h"
 
 #include "render/rend_main.h"
 

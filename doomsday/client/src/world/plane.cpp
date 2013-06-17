@@ -28,8 +28,7 @@
 
 #include "Line"
 #include "world/map.h" /// @todo remove me.
-#include "world/r_world.h" // ddMapSetup
-#include "world/world.h"
+#include "world/world.h" /// ddMapSetup
 
 #include "render/r_main.h" // frameTimePos
 

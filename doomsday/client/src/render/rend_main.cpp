@@ -40,11 +40,13 @@
 #include "MaterialVariantSpec"
 #include "Texture"
 
+#include "BspNode"
 #include "world/map.h"
+#include "world/maputil.h"
 #include "world/lineowner.h"
+#include "world/p_object.h"
 #include "world/p_objlink.h"
 #include "world/p_players.h"
-#include "world/r_world.h"
 #include "world/thinkers.h"
 
 #include "WallEdge"

@@ -22,8 +22,8 @@
 #include "Sector"
 #include "Segment"
 
-#include "world/r_world.h" // R_SideSectionCoords
 #include "world/lineowner.h"
+#include "world/maputil.h"
 
 #include "render/walledge.h"
 

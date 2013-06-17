@@ -1,4 +1,4 @@
-/** @file p_mapdata.h World map entity definitions.
+/** @file entitydef.h World map entity definitions.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -18,8 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_WORLD_P_MAPDATA_H
-#define DENG_WORLD_P_MAPDATA_H
+#ifndef DENG_WORLD_ENTITYDEF_H
+#define DENG_WORLD_ENTITYDEF_H
 
 #include "dd_share.h"
 #include "api_mapedit.h"
@@ -130,4 +130,4 @@ void P_ShutdownMapEntityDefs();
 } // extern "C"
 #endif
 
-#endif // DENG_WORLD_P_MAPDATA_H
+#endif // DENG_WORLD_ENTITYDEF_H

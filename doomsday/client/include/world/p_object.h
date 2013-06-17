@@ -21,8 +21,6 @@
 #ifndef DENG_WORLD_P_OBJECT_H
 #define DENG_WORLD_P_OBJECT_H
 
-#include "p_mapdata.h"
-
 #if defined(__JDOOM__) || defined(__JHERETIC__) || defined(__JHEXEN__)
 #  error Attempted to include internal Doomsday p_object.h from a game
 #endif

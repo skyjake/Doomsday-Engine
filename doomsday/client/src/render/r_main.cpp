@@ -36,7 +36,6 @@
 #include "gl/svg.h"
 #include "world/p_players.h"
 #include "world/p_objlink.h"
-#include "world/r_world.h"
 #include "world/thinkers.h"
 #include "render/vignette.h"
 #include "api_render.h"

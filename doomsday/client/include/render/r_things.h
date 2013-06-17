@@ -20,10 +20,9 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_RENDER_THINGS_H
-#define LIBDENG_RENDER_THINGS_H
+#ifndef DENG_RENDER_THINGS_H
+#define DENG_RENDER_THINGS_H
 
-#include "world/p_maptypes.h"
 #include "resource/r_data.h"
 #include "Materials"
 #include "rend_model.h"
@@ -264,4 +263,4 @@ void R_ShutdownSprites(void);
 } // extern "C"
 #endif
 
-#endif /* LIBDENG_RENDER_THINGS_H */
+#endif /* DENG_RENDER_THINGS_H */

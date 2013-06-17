@@ -32,6 +32,7 @@
 #include "BspLeaf"
 #include "Sector"
 #include "world/map.h"
+#include "world/p_object.h"
 #include "world/p_players.h" // viewPlayer
 
 #include "render/rend_main.h"
