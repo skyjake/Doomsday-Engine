@@ -131,6 +131,9 @@ ClientApp::ClientApp(int &argc, char **argv)
     QCoreApplication::setApplicationVersion (DOOMSDAY_VERSION_BASE);
 
     setTerminateFunc(handleLegacyCoreTerminate);
+
+    // We must presently set the current game manually (the collection is global).
+    App_SetCurrentGame(d->games.nullGame());
 }
 
 void ClientApp::initialize()

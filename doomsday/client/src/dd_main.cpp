@@ -180,7 +180,13 @@ extern GETGAMEAPI GetGameAPI;
 static Materials *materials;
 
 // The app's global Texture collection.
-static Textures* textures;
+static Textures *textures;
+
+/// Notified when the current game changes. @todo Should be owned by App.
+GameChangeAudience audienceForGameChange;
+
+/// Current game. @todo Should be owned by App.
+Game *currentGame;
 
 #ifdef __CLIENT__
 
@@ -869,7 +875,7 @@ static void loadResource(ResourceManifest &manifest)
 }
 
 typedef struct {
-    /// @c true iff caller (i.e., DD_ChangeGame) initiated busy mode.
+    /// @c true iff caller (i.e., App_ChangeGame) initiated busy mode.
     boolean initiatedBusyMode;
 } ddgamechange_paramaters_t;
 
@@ -1292,7 +1298,15 @@ de::Games &App_Games()
 
 Game &App_CurrentGame()
 {
-    return App_Games().current();
+    DENG_ASSERT(currentGame != 0);
+    return *currentGame;
+}
+
+void App_SetCurrentGame(Game const &game)
+{
+    // Ensure the specified game is actually in this collection (NullGame is implicitly).
+    DENG_ASSERT(isNullGame(game) || App_Games().id(game) > 0);
+    currentGame = const_cast<Game *>(&game);
 }
 
 boolean App_GameLoaded()
@@ -1310,6 +1324,7 @@ void DD_DestroyGames()
 {
     destroyPathList(&sessionResourceFileList, &numSessionResourceFileList);
     App_Games().clear();
+    currentGame = &App_Games().nullGame();
 }
 
 static void populateGameInfo(GameInfo& info, de::Game& game)
@@ -1420,12 +1435,9 @@ gameid_t DD_GameIdForKey(char const *identityKey)
     return 0; // Invalid id.
 }
 
-/**
- * Switch to/activate the specified game.
- */
-bool DD_ChangeGame(Game &game, bool allowReload = false)
+bool App_ChangeGame(Game &game, bool allowReload)
 {
-    //LOG_AS("DD_ChangeGame");
+    //LOG_AS("App_ChangeGame");
 
     bool isReload = false;
 
@@ -1522,7 +1534,7 @@ bool DD_ChangeGame(Game &game, bool allowReload = false)
         }
 
         // The current game is now the special "null-game".
-        App_Games().setCurrent(App_Games().nullGame());
+        currentGame = &App_Games().nullGame();
 
         Con_InitDatabases();
         DD_Register();
@@ -1592,7 +1604,7 @@ bool DD_ChangeGame(Game &game, bool allowReload = false)
     }
 
     // This is now the current game.
-    App_Games().setCurrent(game);
+    currentGame = &game;
 
 #ifdef __CLIENT__
     DD_ComposeMainWindowTitle(buf);
@@ -1686,7 +1698,7 @@ bool DD_ChangeGame(Game &game, bool allowReload = false)
     }
 #endif
 
-    App_Games().notifyGameChange();
+    DENG2_FOR_AUDIENCE(GameChange, i) i->currentGameChanged(App_CurrentGame());
 
     return true;
 }
@@ -1939,7 +1951,7 @@ boolean DD_Init(void)
             }
 
             // Begin the game session.
-            DD_ChangeGame(*game);
+            App_ChangeGame(*game);
 
             // We do not want to load these resources again on next game change.
             destroyPathList(&sessionResourceFileList, &numSessionResourceFileList);
@@ -2769,7 +2781,7 @@ D_CMD(Load)
             Con_Message("%s (%s) cannot be loaded.", Str_Text(game.title()), Str_Text(game.identityKey()));
             return true;
         }
-        if(!DD_ChangeGame(game)) return false;
+        if(!App_ChangeGame(game)) return false;
 
         didLoadGame = true;
         ++arg;
@@ -2868,7 +2880,7 @@ D_CMD(Unload)
             Con_Message("There is no game currently loaded.");
             return true;
         }
-        return DD_ChangeGame(App_Games().nullGame());
+        return App_ChangeGame(App_Games().nullGame());
     }
 
     AutoStr *searchPath = AutoStr_NewStd();
@@ -2893,7 +2905,7 @@ D_CMD(Unload)
             Game &game = App_Games().byIdentityKey(Str_Text(searchPath));
             if(App_GameLoaded())
             {
-                return DD_ChangeGame(App_Games().nullGame());
+                return App_ChangeGame(App_Games().nullGame());
             }
 
             Con_Message("%s is not currently loaded.", Str_Text(game.identityKey()));
@@ -2948,7 +2960,7 @@ D_CMD(ReloadGame)
         Con_Message("No game is presently loaded.");
         return true;
     }
-    DD_ChangeGame(App_CurrentGame(), true/* allow reload */);
+    App_ChangeGame(App_CurrentGame(), true/* allow reload */);
     return true;
 }
 

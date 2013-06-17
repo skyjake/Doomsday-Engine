@@ -100,7 +100,7 @@ public:
      * To be called to reset the world back to the initial state. Any currently
      * loaded map will be unloaded and player states are re-initialized.
      *
-     * @todo World should observe Games::GameChange.
+     * @todo World should observe GameChange.
      */
     void reset();
 

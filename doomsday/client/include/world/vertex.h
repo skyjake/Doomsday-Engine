@@ -129,6 +129,7 @@ public:
      */
     inline void setY(coord_t newPosition) { setOriginComponent(1, newPosition); }
 
+public:
     /**
      * Returns the total number of Line owners for the vertex.
      *

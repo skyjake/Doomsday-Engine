@@ -34,19 +34,16 @@ DENG2_PIMPL(Games)
     /// The actual collection.
     Games::All games;
 
-    /// Currently active game (in this collection).
-    Game *currentGame;
-
     /// Special "null-game" object for this collection.
     NullGame *nullGame;
 
-    Instance(Public *i) : Base(i), games(), currentGame(0), nullGame(0)
+    Instance(Public *i) : Base(i), games(), nullGame(0)
     {
         /*
          * One-time creation and initialization of the special "null-game"
          * object (activated once created).
          */
-        currentGame = nullGame = new NullGame;
+        nullGame = new NullGame;
     }
 
     ~Instance()
@@ -61,33 +58,15 @@ DENG2_PIMPL(Games)
 
         qDeleteAll(games);
         games.clear();
-        currentGame = nullGame;
     }
 };
 
 Games::Games() : d(new Instance(this))
 {}
 
-Game &Games::current() const
-{
-    return *d->currentGame;
-}
-
 Game &Games::nullGame() const
 {
     return *d->nullGame;
-}
-
-void Games::setCurrent(Game const &game)
-{
-    // Ensure the specified game is actually in this collection (NullGame is implicitly).
-    DENG_ASSERT(isNullGame(game) || id(game) > 0);
-    d->currentGame = const_cast<Game *>(&game);
-}
-
-void Games::notifyGameChange()
-{
-    DENG2_FOR_AUDIENCE(GameChange, i) i->currentGameChanged(current());
 }
 
 int Games::numPlayable() const
@@ -192,11 +171,11 @@ void Games::add(Game &game)
 
 void Games::locateStartupResources(Game &game)
 {
-    Game *oldCurrrentGame = d->currentGame;
-    if(d->currentGame != &game)
+    Game *oldCurrentGame = &App_CurrentGame();
+    if(oldCurrentGame != &game)
     {
         /// @attention Kludge: Temporarily switch Game.
-        d->currentGame = &game;
+        App_SetCurrentGame(game);
         DD_ExchangeGamePluginEntryPoints(game.pluginId());
 
         // Re-init the filesystem subspace schemes using the search paths of this Game.
@@ -211,11 +190,11 @@ void Games::locateStartupResources(Game &game)
         manifest->locateFile();
     }
 
-    if(d->currentGame != oldCurrrentGame)
+    if(oldCurrentGame != &game)
     {
         // Kludge end - Restore the old Game.
-        d->currentGame = oldCurrrentGame;
-        DD_ExchangeGamePluginEntryPoints(oldCurrrentGame->pluginId());
+        App_SetCurrentGame(*oldCurrentGame);
+        DD_ExchangeGamePluginEntryPoints(oldCurrentGame->pluginId());
 
         // Re-init the filesystem subspace schemes using the search paths of this Game.
         App_FileSystem().resetAllSchemes();
@@ -279,7 +258,7 @@ D_CMD(ListGames)
     DENG2_FOR_EACH_CONST(de::Games::GameList, i, found)
     {
         de::Game *game = i->game;
-        bool isCurrent = (&games.current() == game);
+        bool isCurrent = (&App_CurrentGame() == game);
 
         if(!list.isEmpty()) list += "\n";
 

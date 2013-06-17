@@ -24,9 +24,12 @@
 
 #include <de/Vector>
 
-#include "Line"
-#include "Sector"
-#include "Vertex"
+#include "Line" // Line::Side
+
+class Sector;
+#ifdef __CLIENT__
+class LineOwner;
+#endif
 
 void R_SetRelativeHeights(Sector const *front, Sector const *back, int planeIndex,
     coord_t *fz = 0, coord_t *bz = 0, coord_t *bhz = 0);

@@ -179,19 +179,36 @@ de::ResourceClass& DD_ResourceClassByName(de::String name);
 /// @return  Symbolic name of the material scheme associated with @a textureSchemeName.
 de::String DD_MaterialSchemeNameForTextureScheme(de::String textureSchemeName);
 
+/// @todo The GameChange audience belongs in the App class.
+DENG2_DECLARE_AUDIENCE(GameChange, void currentGameChanged(de::Game &newGame))
+DENG2_EXTERN_AUDIENCE(GameChange)
+
 /// @return  @c true iff there is presently a game loaded.
 boolean App_GameLoaded();
 
-/// @return  The application's global Game collection.
-de::Games &App_Games();
-
-/// @return  The current Game in the application's global collection.
+/// @return  The current game from the application's global collection.
 de::Game &App_CurrentGame();
+
+/**
+ * Switch to/activate the specified game.
+ */
+bool App_ChangeGame(de::Game &game, bool allowReload = false);
+
+/**
+ * Temporarily change the current game. (Which is presently necessary when locating
+ * resource files for said game and during app init.)
+ *
+ * @param newGame  New game to temporarily change to.
+ */
+void App_SetCurrentGame(de::Game const &newGame);
+
+/// @return  The application's global Games (collection).
+de::Games &App_Games();
 
 /// @return  The application's global World.
 de::World &App_World();
 
-/// @return  The application's global Material collection.
+/// @return  The application's global Materials (collection).
 de::Materials &App_Materials();
 
 /**

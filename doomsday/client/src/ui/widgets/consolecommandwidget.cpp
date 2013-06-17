@@ -28,20 +28,20 @@ using namespace de;
 
 DENG2_PIMPL(ConsoleCommandWidget),
 DENG2_OBSERVES(App, StartupComplete),
-DENG2_OBSERVES(Games, GameChange)
+public IGameChangeObserver
 {
     shell::EditorHistory history;
 
     Instance(Public *i) : Base(i), history(i)
     {
         App::app().audienceForStartupComplete += this;
-        App_Games().audienceForGameChange += this;
+        audienceForGameChange += this;
     }
 
     ~Instance()
     {
         App::app().audienceForStartupComplete -= this;
-        App_Games().audienceForGameChange -= this;
+        audienceForGameChange -= this;
     }
 
     void appStartupCompleted()

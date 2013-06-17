@@ -63,11 +63,6 @@ public:
     typedef QList<Game *> All;
 
     /**
-     * Notified when the current game is changed.
-     */
-    DENG2_DEFINE_AUDIENCE(GameChange, void currentGameChanged(Game &newGame))
-
-    /**
      * Notified when a new game is added.
      */
     DENG2_DEFINE_AUDIENCE(Addition, void gameAdded(Game &game))
@@ -80,12 +75,6 @@ public:
 
     /// @return  The special "null" Game instance.
     Game &nullGame() const;
-
-    /// @return  The currently active Game instance.
-    Game &current() const;
-
-    /// Change the currently active game.
-    void setCurrent(Game const &game);
 
     /// @return  Total number of registered games.
     inline int count() const { return all().count(); }
@@ -158,10 +147,6 @@ public:
      * Try to locate all startup resources for @a game.
      */
     void locateStartupResources(Game &game);
-
-    /// @todo This should be an internal private method; the App needs to be
-    /// responsible for changing the current game.
-    void notifyGameChange();
 
 private:
     DENG2_PRIVATE(d)
