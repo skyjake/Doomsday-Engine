@@ -78,14 +78,14 @@ public:
     /// Register the console commands, variables, etc..., of this module.
     static void consoleRegister();
 
-    /// @return  The currently active Game instance.
-    Game &current() const;
-
     /// @return  The special "null" Game instance.
     Game &nullGame() const;
 
+    /// @return  The currently active Game instance.
+    Game &current() const;
+
     /// Change the currently active game.
-    void setCurrent(Game &game);
+    void setCurrent(Game const &game);
 
     /// @return  Total number of registered games.
     inline int count() const { return all().count(); }
@@ -97,7 +97,7 @@ public:
      * @param game  Game instance.
      * @return Unique identifier associated with @a game.
      */
-    gameid_t id(Game &game) const;
+    gameid_t id(Game const &game) const;
 
     /**
      * @return  Game associated with @a identityKey.

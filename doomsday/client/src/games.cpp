@@ -78,11 +78,11 @@ Game &Games::nullGame() const
     return *d->nullGame;
 }
 
-void Games::setCurrent(Game &game)
+void Games::setCurrent(Game const &game)
 {
     // Ensure the specified game is actually in this collection (NullGame is implicitly).
     DENG_ASSERT(isNullGame(game) || id(game) > 0);
-    d->currentGame = &game;
+    d->currentGame = const_cast<Game *>(&game);
 }
 
 void Games::notifyGameChange()
@@ -110,10 +110,10 @@ Game *Games::firstPlayable() const
     return NULL;
 }
 
-gameid_t Games::id(Game &game) const
+gameid_t Games::id(Game const &game) const
 {
     if(&game == d->nullGame) return 0; // Invalid id.
-    int idx = d->games.indexOf(&game);
+    int idx = d->games.indexOf(const_cast<Game *>(&game));
     if(idx < 0)
     {
         /// @throw NotFoundError  The specified @a game is not a member of the collection.
@@ -279,6 +279,7 @@ D_CMD(ListGames)
     DENG2_FOR_EACH_CONST(de::Games::GameList, i, found)
     {
         de::Game *game = i->game;
+        bool isCurrent = (&games.current() == game);
 
         if(!list.isEmpty()) list += "\n";
 
@@ -286,9 +287,9 @@ D_CMD(ListGames)
                            _E(Ta) "%1%2 "
                            _E(Tb) "%3 "
                            _E(Tc) _E(2) "%4 " _E(i) "(%5)")
-                .arg(game->isCurrent()? _E(B) _E(b) :
+                .arg(isCurrent? _E(B) _E(b) :
                      !game->allStartupFilesFound()? _E(D) : "")
-                .arg(game->isCurrent()? "*" : !game->allStartupFilesFound()? "!" : " ")
+                .arg(isCurrent? "*" : !game->allStartupFilesFound()? "!" : " ")
                 .arg(Str_Text(game->identityKey()))
                 .arg(Str_Text(game->title()))
                 .arg(Str_Text(game->author()));

@@ -1,4 +1,4 @@
-/** @file game.h
+/** @file game.h Game mode configuration (metadata, resource files, etc...).
  *
  * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright &copy; 2005-2013 Daniel Swanson <danij@dengine.net>
@@ -18,11 +18,14 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_GAME_H
-#define LIBDENG_GAME_H
+#ifndef DENG_GAME_H
+#define DENG_GAME_H
+
+#include <QMultiMap>
 
 #include "api_plugin.h"
 #include <de/ddstring.h>
+#include <de/Error>
 
 /**
  * @defgroup printGameFlags  Print Game Flags
@@ -37,9 +40,6 @@
 #define PGF_EVERYTHING             (PGF_BANNER|PGF_STATUS|PGF_LIST_STARTUP_RESOURCES|PGF_LIST_OTHER_RESOURCES)
 ///@}
 
-#include <de/Error>
-#include <QMultiMap>
-
 struct manifest_s;
 struct gamedef_s;
 
@@ -47,7 +47,6 @@ namespace de {
 
 class File1;
 class ResourceManifest;
-class Games;
 
 /**
  * Records top-level game configurations registered by the loaded game
@@ -69,17 +68,8 @@ public:
      */
     Game(char const *identityKey, char const *configDir,
          char const *title = "Unnamed", char const *author = "Unknown");
+
     virtual ~Game();
-
-    /**
-     * Returns the owning Games collection.
-     */
-    Games &collection() const;
-
-    /**
-     * Returns @a true if the game is currently active in the owning collection.
-     */
-    bool isCurrent() const;
 
     /// @return  Unique plugin identifier attributed to that which registered this.
     pluginid_t pluginId() const;
@@ -171,8 +161,7 @@ public:
     static void print(Game const &game, int flags);
 
 private:
-    struct Instance;
-    Instance *d;
+    DENG2_PRIVATE(d)
 };
 
 /**
@@ -216,4 +205,4 @@ inline bool isNullGame(Game const &game) {
 
 } // namespace de
 
-#endif /* LIBDENG_GAME_H */
+#endif /* DENG_GAME_H */

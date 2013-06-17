@@ -84,9 +84,6 @@ boolean DD_Init(void);
 /// @return  @c true if shutdown is in progress.
 boolean DD_IsShuttingDown(void);
 
-/// @return  @c true iff there is presently a game loaded.
-boolean App_GameLoaded(void);
-
 void DD_CheckTimeDemo(void);
 void DD_UpdateEngineState(void);
 
@@ -181,6 +178,9 @@ de::ResourceClass& DD_ResourceClassByName(de::String name);
 
 /// @return  Symbolic name of the material scheme associated with @a textureSchemeName.
 de::String DD_MaterialSchemeNameForTextureScheme(de::String textureSchemeName);
+
+/// @return  @c true iff there is presently a game loaded.
+boolean App_GameLoaded();
 
 /// @return  The application's global Game collection.
 de::Games &App_Games();

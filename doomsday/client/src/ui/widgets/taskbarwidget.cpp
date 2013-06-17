@@ -123,7 +123,7 @@ DENG2_OBSERVES(Games, GameChange)
     {
         if(App_GameLoaded())
         {
-            status->setText(Str_Text(App_Games().current().identityKey()));
+            status->setText(Str_Text(App_CurrentGame().identityKey()));
         }
         else
         {

@@ -718,23 +718,6 @@ static void destroyPathList(ddstring_t*** list, size_t* listSize)
     *listSize = 0;
 }
 
-boolean App_GameLoaded()
-{
-#ifdef __CLIENT__
-    if(!ClientApp::haveApp()) return false;
-#endif
-#ifdef __SERVER__
-    if(!ServerApp::haveApp()) return false;
-#endif
-    return !isNullGame(App_Games().current());
-}
-
-void DD_DestroyGames()
-{
-    destroyPathList(&sessionResourceFileList, &numSessionResourceFileList);
-    App_Games().clear();
-}
-
 /**
  * Begin the Doomsday title animation sequence.
  */
@@ -939,10 +922,10 @@ static int DD_LoadGameStartupResourcesWorker(void* parameters)
      */
     Con_Message("Loading game resources%s", verbose >= 1? ":" : "...");
 
-    de::Game::Manifests const& gameManifests = App_Games().current().manifests();
+    Game::Manifests const& gameManifests = App_CurrentGame().manifests();
     int const numPackages = gameManifests.count(RC_PACKAGE);
     int packageIdx = 0;
-    for(de::Game::Manifests::const_iterator i = gameManifests.find(RC_PACKAGE);
+    for(Game::Manifests::const_iterator i = gameManifests.find(RC_PACKAGE);
         i != gameManifests.end() && i.key() == RC_PACKAGE; ++i, ++packageIdx)
     {
         loadResource(**i);
@@ -1193,10 +1176,10 @@ static int DD_ActivateGameWorker(void* parameters)
     // Now that resources have been located we can begin to initialize the game.
     if(App_GameLoaded() && gx.PreInit)
     {
-        DENG_ASSERT(App_Games().current().pluginId() != 0);
+        DENG_ASSERT(App_CurrentGame().pluginId() != 0);
 
-        DD_SetActivePluginId(App_Games().current().pluginId());
-        gx.PreInit(App_Games().id(App_Games().current()));
+        DD_SetActivePluginId(App_CurrentGame().pluginId());
+        gx.PreInit(App_Games().id(App_CurrentGame()));
         DD_SetActivePluginId(0);
     }
 
@@ -1217,7 +1200,7 @@ static int DD_ActivateGameWorker(void* parameters)
     }
     else
     {
-        configFileName = App_Games().current().mainConfig();
+        configFileName = App_CurrentGame().mainConfig();
     }
 
     Con_Message("Parsing primary config \"%s\"...", F_PrettyPath(Str_Text(configFileName)));
@@ -1233,7 +1216,7 @@ static int DD_ActivateGameWorker(void* parameters)
         B_BindGameDefaults();
 
         // Read bindings for this game and merge with the working set.
-        Con_ParseCommands2(Str_Text(App_Games().current().bindingConfig()), CPCF_ALLOW_SAVE_BINDINGS);
+        Con_ParseCommands2(Str_Text(App_CurrentGame().bindingConfig()), CPCF_ALLOW_SAVE_BINDINGS);
     }
 #endif
 
@@ -1274,7 +1257,7 @@ static int DD_ActivateGameWorker(void* parameters)
 
     if(gx.PostInit)
     {
-        DD_SetActivePluginId(App_Games().current().pluginId());
+        DD_SetActivePluginId(App_CurrentGame().pluginId());
         gx.PostInit();
         DD_SetActivePluginId(0);
     }
@@ -1291,17 +1274,41 @@ static int DD_ActivateGameWorker(void* parameters)
 de::Games &App_Games()
 {
 #ifdef __CLIENT__
-    return ClientApp::games();
+    if(ClientApp::haveApp())
+    {
+        return ClientApp::games();
+    }
 #endif
 
 #ifdef __SERVER__
-    return ServerApp::games();
+    if(ServerApp::haveApp())
+    {
+        return ServerApp::games();
+    }
 #endif
+    throw Error("App_Games", "App not yet initialized");
 }
 
-de::Game &App_CurrentGame()
+Game &App_CurrentGame()
 {
     return App_Games().current();
+}
+
+boolean App_GameLoaded()
+{
+#ifdef __CLIENT__
+    if(!ClientApp::haveApp()) return false;
+#endif
+#ifdef __SERVER__
+    if(!ServerApp::haveApp()) return false;
+#endif
+    return !isNullGame(App_CurrentGame());
+}
+
+void DD_DestroyGames()
+{
+    destroyPathList(&sessionResourceFileList, &numSessionResourceFileList);
+    App_Games().clear();
 }
 
 static void populateGameInfo(GameInfo& info, de::Game& game)
@@ -1326,7 +1333,7 @@ boolean DD_GameInfo(GameInfo *info)
 
     if(App_GameLoaded())
     {
-        populateGameInfo(*info, App_Games().current());
+        populateGameInfo(*info, App_CurrentGame());
         return true;
     }
 
@@ -1422,7 +1429,7 @@ bool DD_ChangeGame(Game &game, bool allowReload = false)
     bool isReload = false;
 
     // Ignore attempts to re-load the current game?
-    if(game.isCurrent())
+    if(&App_CurrentGame() == &game)
     {
         if(!allowReload)
         {
@@ -1506,9 +1513,9 @@ bool DD_ChangeGame(Game &game, bool allowReload = false)
         Con_ClearDatabases();
 
         { // Tell the plugin it is being unloaded.
-            void *unloader = DD_FindEntryPoint(App_Games().current().pluginId(), "DP_Unload");
+            void *unloader = DD_FindEntryPoint(App_CurrentGame().pluginId(), "DP_Unload");
             LOG_DEBUG("Calling DP_Unload (%p)") << de::dintptr(unloader);
-            DD_SetActivePluginId(App_Games().current().pluginId());
+            DD_SetActivePluginId(App_CurrentGame().pluginId());
             if(unloader) ((pluginfunc_t)unloader)();
             DD_SetActivePluginId(0);
         }
@@ -1613,7 +1620,7 @@ bool DD_ChangeGame(Game &game, bool allowReload = false)
             { DD_LoadGameStartupResourcesWorker, &p, busyMode, NULL,                200, 0.1f, 0.3f, 0 },
 
             // Phase 3: Loading "addon" resources.
-            { DD_LoadAddonResourcesWorker,       &p, busyMode, "Loading addons...", 200, 0.3f, 0.7f, 0 },
+            { DD_LoadAddonResourcesWorker,       &p, busyMode, "Loading add-ons...", 200, 0.3f, 0.7f, 0 },
 
             // Phase 4: Game activation.
             { DD_ActivateGameWorker,             &p, busyMode, "Starting game...",  200, 0.7f, 1.0f, 0 }
@@ -1625,9 +1632,9 @@ bool DD_ChangeGame(Game &game, bool allowReload = false)
         {
             // Tell the plugin it is being loaded.
             /// @todo Must this be done in the main thread?
-            void *loader = DD_FindEntryPoint(App_Games().current().pluginId(), "DP_Load");
+            void *loader = DD_FindEntryPoint(App_CurrentGame().pluginId(), "DP_Load");
             LOG_DEBUG("Calling DP_Load (%p)") << de::dintptr(loader);
-            DD_SetActivePluginId(App_Games().current().pluginId());
+            DD_SetActivePluginId(App_CurrentGame().pluginId());
             if(loader) ((pluginfunc_t)loader)();
             DD_SetActivePluginId(0);
         }
@@ -1649,7 +1656,7 @@ bool DD_ChangeGame(Game &game, bool allowReload = false)
 
         if(App_GameLoaded())
         {
-            Game::printBanner(App_Games().current());
+            Game::printBanner(App_CurrentGame());
         }
         else
         {
@@ -2825,23 +2832,22 @@ static bool tryUnloadFile(de::Uri const& search)
     {
         de::File1 &file = App_FileSystem().find(search);
         de::Uri foundFileUri = file.composeUri();
-        QByteArray pathUtf8 = NativePath(foundFileUri.asText()).pretty().toUtf8();
+        NativePath nativePath(foundFileUri.asText());
 
         // Do not attempt to unload a resource required by the current game.
-        if(App_Games().current().isRequiredFile(file))
+        if(App_CurrentGame().isRequiredFile(file))
         {
-            Con_Message("\"%s\" is required by the current game.\n"
-                        "Required game files cannot be unloaded in isolation.",
-                        pathUtf8.constData());
+            LOG_MSG("\"%s\" is required by the current game."
+                    " Required game files cannot be unloaded in isolation.")
+                    << nativePath.pretty();
             return false;
         }
 
-        VERBOSE2( Con_Message("Unloading \"%s\"...", pathUtf8.constData()) )
+        LOG_VERBOSE("Unloading \"%s\"...") << nativePath.pretty();
 
         App_FileSystem().deindex(file);
         delete &file;
 
-        VERBOSE2( Con_Message("Done unloading \"%s\".", pathUtf8.constData()) )
         return true;
     }
     catch(FS1::NotFoundError const&)
@@ -2934,14 +2940,14 @@ D_CMD(Reset)
 
 D_CMD(ReloadGame)
 {
-    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
+    DENG2_UNUSED3(src, argc, argv);
 
     if(!App_GameLoaded())
     {
         Con_Message("No game is presently loaded.");
         return true;
     }
-    DD_ChangeGame(App_Games().current(), true/* allow reload */);
+    DD_ChangeGame(App_CurrentGame(), true/* allow reload */);
     return true;
 }
 

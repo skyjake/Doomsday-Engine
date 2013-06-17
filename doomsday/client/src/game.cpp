@@ -1,8 +1,7 @@
-/** @file game.cpp 
- * @ingroup core
+/** @file game.cpp Game mode configuration (metadata, resource files, etc...).
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -98,19 +97,7 @@ Game::Game(char const *identityKey, char const *configDir,
 }
 
 Game::~Game()
-{
-    delete d;
-}
-
-Games &Game::collection() const
-{
-    return App_Games();
-}
-
-bool Game::isCurrent() const
-{
-    return this == &collection().current();
-}
+{}
 
 Game &Game::addManifest(ResourceManifest &manifest)
 {
@@ -247,7 +234,7 @@ void Game::print(Game const &game, int flags)
     if(isNullGame(game))
         flags &= ~PGF_BANNER;
 
-#if _DEBUG
+#ifdef DENG_DEBUG
     Con_Printf("pluginid:%i\n", int(game.pluginId()));
 #endif
 
@@ -276,7 +263,7 @@ void Game::print(Game const &game, int flags)
 
     if(flags & PGF_STATUS)
         Con_Printf("Status: %s\n",
-                              game.isCurrent()? "Loaded" :
+                   &App_CurrentGame() == &game? "Loaded" :
                    game.allStartupFilesFound()? "Complete/Playable" :
                                                 "Incomplete/Not playable");
 }
