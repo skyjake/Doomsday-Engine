@@ -63,8 +63,8 @@ DENG2_PIMPL(Partitioner)
     /// Cost factor attributed to splitting a line segment.
     int splitCostFactor;
 
-    /// The map we are building BSP data for (not owned).
-    Map const *map;
+    /// The set of map lines we are building BSP data for (not owned).
+    LineSet lines;
 
     /// The mesh from which we'll assign (construct) new geometries(not owned).
     Mesh *mesh;
@@ -95,16 +95,17 @@ DENG2_PIMPL(Partitioner)
     /// The "current" binary space half-plane.
     HPlane hplane;
 
-    Instance(Public *i, Map const &map, Mesh &mesh, int splitCostFactor)
+    Instance(Public *i, int splitCostFactor)
       : Base(i),
         splitCostFactor(splitCostFactor),
-        map(&map),
-        mesh(&mesh),
+        mesh(0),
         numNodes(0), numLeafs(0), numSegments(0), numVertexes(0),
         rootNode(0)
     {}
 
-    ~Instance()
+    ~Instance() { clear(); }
+
+    void clear()
     {
         if(rootNode)
         {
@@ -113,10 +114,18 @@ DENG2_PIMPL(Partitioner)
             clearAllBspElements();
 
             // Destroy the internal binary tree.
-            delete rootNode;
+            delete rootNode; rootNode = 0;
         }
 
+        lines.clear();
+        mesh = 0;
         qDeleteAll(lineSegments);
+        convexSubspaces.clear();
+        edgeTipSets.clear();
+        treeNodeMap.clear();
+        hplane.clearIntercepts();
+
+        numNodes = numLeafs = numSegments = numVertexes = 0;
     }
 
     /**
@@ -132,173 +141,6 @@ DENG2_PIMPL(Partitioner)
         return found.value();
     }
 
-    struct testForWindowEffectParams
-    {
-        double frontDist, backDist;
-        Sector *frontOpen, *backOpen;
-        Line *frontLine, *backLine;
-        Line *testLine;
-        Vector2d testLineCenter;
-        bool castHorizontal;
-
-        testForWindowEffectParams()
-            : frontDist(0), backDist(0), frontOpen(0), backOpen(0),
-              frontLine(0), backLine(0), testLine(0), castHorizontal(false)
-        {}
-    };
-
-    static void testForWindowEffect2(Line &line, testForWindowEffectParams &p)
-    {
-        if(&line == p.testLine) return;
-        if(line.isSelfReferencing()) return;
-        //if(line._buildData.overlap || line.length() <= 0) return;
-
-        double dist = 0;
-        Sector *hitSector = 0;
-        bool isFront = false;
-        if(p.castHorizontal)
-        {
-            if(de::abs(line.direction().y) < DIST_EPSILON)
-                return;
-
-            if((line.aaBox().maxY < p.testLineCenter.y - DIST_EPSILON) ||
-               (line.aaBox().minY > p.testLineCenter.y + DIST_EPSILON))
-                return;
-
-            dist = (line.fromOrigin().x +
-                    (p.testLineCenter.y - line.fromOrigin().y) * line.direction().x / line.direction().y)
-                   - p.testLineCenter.x;
-
-            isFront = ((p.testLine->direction().y > 0) != (dist > 0));
-            dist = de::abs(dist);
-
-            // Too close? (overlapping lines?)
-            if(dist < DIST_EPSILON)
-                return;
-
-            bool dir = (p.testLine->direction().y > 0) ^ (line.direction().y > 0);
-            hitSector = line.side(dir ^ !isFront).sectorPtr();
-        }
-        else // Cast vertically.
-        {
-            if(de::abs(line.direction().x) < DIST_EPSILON)
-                return;
-
-            if((line.aaBox().maxX < p.testLineCenter.x - DIST_EPSILON) ||
-               (line.aaBox().minX > p.testLineCenter.x + DIST_EPSILON))
-                return;
-
-            dist = (line.fromOrigin().y +
-                    (p.testLineCenter.x - line.fromOrigin().x) * line.direction().y / line.direction().x)
-                   - p.testLineCenter.y;
-
-            isFront = ((p.testLine->direction().x > 0) == (dist > 0));
-            dist = de::abs(dist);
-
-            bool dir = (p.testLine->direction().x > 0) ^ (line.direction().x > 0);
-            hitSector = line.side(dir ^ !isFront).sectorPtr();
-        }
-
-        // Too close? (overlapping lines?)
-        if(dist < DIST_EPSILON)
-            return;
-
-        if(isFront)
-        {
-            if(dist < p.frontDist)
-            {
-                p.frontDist = dist;
-                p.frontOpen = hitSector;
-                p.frontLine = &line;
-            }
-        }
-        else
-        {
-            if(dist < p.backDist)
-            {
-                p.backDist = dist;
-                p.backOpen = hitSector;
-                p.backLine = &line;
-            }
-        }
-    }
-
-    static int testForWindowEffectWorker(Line *line, void *parms)
-    {
-        testForWindowEffect2(*line, *reinterpret_cast<testForWindowEffectParams *>(parms));
-        return false; // Continue iteration.
-    }
-
-    bool lineMightHaveWindowEffect(Line const &line)
-    {
-        if(line.definesPolyobj()) return false;
-        if(line.hasFrontSector() && line.hasBackSector()) return false;
-        if(!line.hasFrontSector()) return false;
-        //if(line.hasZeroLength() || line._buildData.overlap) return false;
-
-        // Look for window effects by checking for an odd number of one-sided
-        // line owners for a single vertex. Idea courtesy of Graham Jackson.
-        if((line.from()._onesOwnerCount % 2) == 1 &&
-           (line.from()._onesOwnerCount + line.from()._twosOwnerCount) > 1)
-            return true;
-
-        if((line.to()._onesOwnerCount % 2) == 1 &&
-           (line.to()._onesOwnerCount + line.to()._twosOwnerCount) > 1)
-            return true;
-
-        return false;
-    }
-
-    void testForWindowEffect(Line &line)
-    {
-        if(!lineMightHaveWindowEffect(line)) return;
-
-        testForWindowEffectParams p;
-        p.frontDist      = p.backDist = DDMAXFLOAT;
-        p.testLine       = &line;
-        p.testLineCenter = line.center();
-        p.castHorizontal = (de::abs(line.direction().x) < de::abs(line.direction().y)? true : false);
-
-        AABoxd scanRegion = map->bounds();
-        if(p.castHorizontal)
-        {
-            scanRegion.minY = line.aaBox().minY - DIST_EPSILON;
-            scanRegion.maxY = line.aaBox().maxY + DIST_EPSILON;
-        }
-        else
-        {
-            scanRegion.minX = line.aaBox().minX - DIST_EPSILON;
-            scanRegion.maxX = line.aaBox().maxX + DIST_EPSILON;
-        }
-        validCount++;
-        map->linesBoxIterator(scanRegion, testForWindowEffectWorker, &p);
-
-        if(p.backOpen && p.frontOpen && line.frontSectorPtr() == p.backOpen)
-        {
-            notifyOneWayWindowFound(line, *p.frontOpen);
-
-            line._bspWindowSector = p.frontOpen; /// @todo Refactor away.
-        }
-    }
-
-    void initForMap()
-    {
-        // Initialize vertex info for the initial set of vertexes.
-        edgeTipSets.reserve(map->vertexCount());
-        foreach(Vertex *vertex, map->vertexes())
-        {
-            // Count the total number of one and two-sided line owners for each
-            // vertex. (Used in the process of locating window effect lines.)
-            vertex->countLineOwners();
-        }
-
-        // Search for "one-way window" effects.
-        foreach(Line *line, map->lines())
-        {
-            testForWindowEffect(*line);
-        }
-    }
-
     inline void linkSegmentInSuperBlockmap(SuperBlock &block, LineSegment::Side &lineSeg)
     {
         // Associate this line segment with the subblock.
@@ -310,11 +152,8 @@ DENG2_PIMPL(Partitioner)
      */
     void createInitialLineSegments(SuperBlock &blockmap)
     {
-        foreach(Line *line, map->lines())
+        foreach(Line *line, lines)
         {
-            // Polyobj lines are completely ignored.
-            if(line->definesPolyobj()) continue;
-
             LineSegment *seg = 0;
             coord_t angle = 0;
 
@@ -1546,20 +1385,6 @@ DENG2_PIMPL(Partitioner)
     }
 
     /**
-     * Notify interested parties of a "one-way window" in the map.
-     *
-     * @param line    The window line.
-     * @param backFacingSector  Sector that the back of the line is facing.
-     */
-    void notifyOneWayWindowFound(Line &line, Sector &backFacingSector)
-    {
-        DENG2_FOR_PUBLIC_AUDIENCE(OneWayWindowFound, i)
-        {
-            i->oneWayWindowFound(line, backFacingSector);
-        }
-    }
-
-    /**
      * Notify interested parties of an unclosed sector in the map.
      *
      * @param sector    The problem sector.
@@ -1588,11 +1413,8 @@ DENG2_PIMPL(Partitioner)
 #endif
 };
 
-Partitioner::Partitioner(Map const &map, Mesh &mesh, int splitCostFactor)
-    : d(new Instance(this, map, mesh, splitCostFactor))
-{
-    d->initForMap();
-}
+Partitioner::Partitioner(int splitCostFactor) : d(new Instance(this, splitCostFactor))
+{}
 
 void Partitioner::setSplitCostFactor(int newFactor)
 {
@@ -1621,11 +1443,46 @@ static AABox blockmapBounds(AABoxd const &mapBounds)
     return blockBounds;
 }
 
-void Partitioner::build()
+/**
+ * Algorithm (description courtesy of Raphael Quinet):
+ *
+ * 1. Create one Seg for each Side: pick each Line in turn.  If it
+ *    has a "first" Side, then create a normal Seg.  If it has a
+ *    "second" Side, then create a flipped Seg.
+ * 2. Call CreateNodes with the current list of Segs.  The list of Segs is
+ *    the only argument to CreateNodes.
+ * 3. Save the Nodes, Segs and BspLeafs to disk.  Start with the leaves of
+ *    the Nodes tree and continue up to the root (last Node).
+ */
+BspTreeNode *Partitioner::buildBsp(LineSet const &lines, Mesh &mesh)
 {
-    d->rootNode = 0;
+    d->clear();
 
-    SuperBlockmap rootBlock(blockmapBounds(d->map->bounds()));
+    d->lines = lines; // make a copy.
+    d->mesh  = &mesh;
+
+    // Initialize vertex info for the initial set of vertexes.
+    d->edgeTipSets.reserve(d->lines.count() * 2);
+
+    // Determine the bounds of the line geometry.
+    AABoxd bounds;
+    bool isFirst = true;
+    foreach(Line *line, d->lines)
+    {
+        if(isFirst)
+        {
+            // The first line's bounds are used as is.
+            V2d_CopyBox(bounds.arvec2, line->aaBox().arvec2);
+            isFirst = false;
+        }
+        else
+        {
+            // Expand the bounding box.
+            V2d_UniteBox(bounds.arvec2, line->aaBox().arvec2);
+        }
+    }
+
+    SuperBlockmap rootBlock(blockmapBounds(bounds));
 
     d->createInitialLineSegments(rootBlock);
 
@@ -1661,6 +1518,8 @@ void Partitioner::build()
 
         seg.mapSide().setRightSegment(right->segmentPtr());
     }
+
+    return d->rootNode;
 }
 
 BspTreeNode *Partitioner::root() const
@@ -1688,7 +1547,7 @@ int Partitioner::numVertexes()
     return d->numVertexes;
 }
 
-void Partitioner::release(MapElement *mapElement)
+void Partitioner::take(MapElement *mapElement)
 {
     if(!d->release(mapElement))
     {

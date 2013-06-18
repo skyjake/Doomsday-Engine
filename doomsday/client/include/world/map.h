@@ -24,6 +24,8 @@
 #include <QList>
 #include <QSet>
 
+#include <de/Observers>
+
 #include "Mesh"
 #include "p_particle.h"
 #include "Polyobj"
@@ -104,6 +106,18 @@ public:
     /// Required light grid is missing. @ingroup errors
     DENG2_ERROR(MissingLightGridError);
 #endif
+
+    /*
+     * Observers to be notified when a one-way window construct is first found.
+     */
+    DENG2_DEFINE_AUDIENCE(OneWayWindowFound,
+        void oneWayWindowFound(Line &line, Sector &backFacingSector))
+
+    /*
+     * Observers to be notified when an unclosed sector is first found.
+     */
+    DENG2_DEFINE_AUDIENCE(UnclosedSectorFound,
+        void unclosedSectorFound(Sector &sector, Vector2d const &nearPoint))
 
     /*
      * Linked-element lists/sets:

@@ -29,14 +29,11 @@
 
 #include "world/bsp/bsptreenode.h" /// @todo remove me
 
-class BspLeaf;
 class Line;
 class Sector;
-class Segment;
 
 namespace de {
 
-class Map;
 class Mesh;
 
 namespace bsp {
@@ -51,7 +48,7 @@ static coord_t const DIST_EPSILON        = 1.0 / 128.0;
 static coord_t const ANG_EPSILON         = 1.0 / 1024.0;
 
 /**
- * BSP space partitioner.
+ * World map binary space partitioner (BSP).
  *
  * Originally based on glBSP 2.24 (in turn, based on BSP 2.3).
  * @see http://sourceforge.net/projects/glbsp/
@@ -62,19 +59,20 @@ class Partitioner
 {
 public:
     /*
-     * Observers to be notified when an unclosed sector is first found.
+     * Observers to be notified when an unclosed sector is found.
      */
     DENG2_DEFINE_AUDIENCE(UnclosedSectorFound,
         void unclosedSectorFound(Sector &sector, Vector2d const &nearPoint))
 
-    /*
-     * Observers to be notified when a one-way window construct is first found.
-     */
-    DENG2_DEFINE_AUDIENCE(OneWayWindowFound,
-        void oneWayWindowFound(Line &line, Sector &backFacingSector))
+    typedef QSet<Line *> LineSet;
 
 public:
-    Partitioner(Map const &map, Mesh &mesh, int splitCostFactor = 7);
+    /**
+     * Construct a new binary space partitioner.
+     *
+     * @param splitCostFactor  Cost factor attributed to splitting a half-edge.
+     */
+    Partitioner(int splitCostFactor = 7);
 
     /**
      * Set the cost factor associated with splitting an existing half-edge.
@@ -84,18 +82,21 @@ public:
     void setSplitCostFactor(int newFactor);
 
     /**
-     * Build the BSP for the given map.
+     * Build a new BSP for the given geometry.
      *
-     * High-level description (courtesy of Raphael Quinet):
-     *   1. Create one Seg for each Side: pick each Line in turn.  If it
-     *      has a "first" Side, then create a normal Seg.  If it has a
-     *      "second" Side, then create a flipped Seg.
-     *   2. Call CreateNodes with the current list of Segs.  The list of Segs is
-     *      the only argument to CreateNodes.
-     *   3. Save the Nodes, Segs and BspLeafs to disk.  Start with the leaves of
-     *      the Nodes tree and continue up to the root (last Node).
+     * @param lines  Set of lines to construct a BSP for. A copy of the set is
+     *               made however the caller must ensure that line data remains
+     *               accessible until the build process has completed (ownership
+     *               is unaffected).
+     *
+     * @param mesh   Mesh from which to assign new geometries. The caller must
+     *               ensure that the mesh remains accessible until the build
+     *               process has completed (ownership is unaffected).
+     *
+     * @return  Root tree node of the resultant BSP otherwise @c 0 if no usable
+     *          tree data was produced.
      */
-    void build();
+    BspTreeNode *buildBsp(LineSet const &lines, Mesh &mesh);
 
     /**
      * Retrieve a pointer to the root BinaryTree node for the constructed BSP.
@@ -146,7 +147,7 @@ public:
      *
      * @param mapElement  Map data element to relinquish ownership of.
      */
-    void release(MapElement *mapElement);
+    void take(MapElement *mapElement);
 
 private:
     DENG2_PRIVATE(d)

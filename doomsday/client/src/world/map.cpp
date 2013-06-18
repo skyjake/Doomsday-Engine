@@ -44,7 +44,7 @@
 #include "Segment"
 #include "Vertex"
 
-#include "BspBuilder"
+#include "world/bsp/partitioner.h"
 
 #include "world/blockmap.h"
 #include "world/entitydatabase.h"
@@ -103,7 +103,8 @@ struct EditableElements
     void clearAll();
 };
 
-DENG2_PIMPL(Map)
+DENG2_PIMPL(Map),
+DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
 {
     /// @c true= editing is currently enabled.
     bool editingEnabled;
@@ -238,9 +239,236 @@ DENG2_PIMPL(Map)
         }
     }
 
+    // Observes bsp::Partitioner UnclosedSectorFound.
+    void unclosedSectorFound(Sector &sector, Vector2d const &nearPoint)
+    {
+        // Notify interested parties that an unclosed sector was found.
+        DENG2_FOR_PUBLIC_AUDIENCE(UnclosedSectorFound, i)
+        {
+            i->unclosedSectorFound(sector, nearPoint);
+        }
+    }
+
+    /**
+     * Notify interested parties of a "one-way window" in the map.
+     *
+     * @param line    The window line.
+     * @param backFacingSector  Sector that the back of the line is facing.
+     */
+    void notifyOneWayWindowFound(Line &line, Sector &backFacingSector)
+    {
+        DENG2_FOR_PUBLIC_AUDIENCE(OneWayWindowFound, i)
+        {
+            i->oneWayWindowFound(line, backFacingSector);
+        }
+    }
+
+    struct testForWindowEffectParams
+    {
+        double frontDist, backDist;
+        Sector *frontOpen, *backOpen;
+        Line *frontLine, *backLine;
+        Line *testLine;
+        Vector2d testLineCenter;
+        bool castHorizontal;
+
+        testForWindowEffectParams()
+            : frontDist(0), backDist(0), frontOpen(0), backOpen(0),
+              frontLine(0), backLine(0), testLine(0), castHorizontal(false)
+        {}
+    };
+
+    static void testForWindowEffect2(Line &line, testForWindowEffectParams &p)
+    {
+        if(&line == p.testLine) return;
+        if(line.isSelfReferencing()) return;
+        if(line.hasZeroLength()) return;
+
+        double dist = 0;
+        Sector *hitSector = 0;
+        bool isFront = false;
+        if(p.castHorizontal)
+        {
+            if(de::abs(line.direction().y) < bsp::DIST_EPSILON)
+                return;
+
+            if((line.aaBox().maxY < p.testLineCenter.y - bsp::DIST_EPSILON) ||
+               (line.aaBox().minY > p.testLineCenter.y + bsp::DIST_EPSILON))
+                return;
+
+            dist = (line.fromOrigin().x +
+                    (p.testLineCenter.y - line.fromOrigin().y) * line.direction().x / line.direction().y)
+                   - p.testLineCenter.x;
+
+            isFront = ((p.testLine->direction().y > 0) != (dist > 0));
+            dist = de::abs(dist);
+
+            // Too close? (overlapping lines?)
+            if(dist < bsp::DIST_EPSILON)
+                return;
+
+            bool dir = (p.testLine->direction().y > 0) ^ (line.direction().y > 0);
+            hitSector = line.side(dir ^ !isFront).sectorPtr();
+        }
+        else // Cast vertically.
+        {
+            if(de::abs(line.direction().x) < bsp::DIST_EPSILON)
+                return;
+
+            if((line.aaBox().maxX < p.testLineCenter.x - bsp::DIST_EPSILON) ||
+               (line.aaBox().minX > p.testLineCenter.x + bsp::DIST_EPSILON))
+                return;
+
+            dist = (line.fromOrigin().y +
+                    (p.testLineCenter.x - line.fromOrigin().x) * line.direction().y / line.direction().x)
+                   - p.testLineCenter.y;
+
+            isFront = ((p.testLine->direction().x > 0) == (dist > 0));
+            dist = de::abs(dist);
+
+            bool dir = (p.testLine->direction().x > 0) ^ (line.direction().x > 0);
+            hitSector = line.side(dir ^ !isFront).sectorPtr();
+        }
+
+        // Too close? (overlapping lines?)
+        if(dist < bsp::DIST_EPSILON)
+            return;
+
+        if(isFront)
+        {
+            if(dist < p.frontDist)
+            {
+                p.frontDist = dist;
+                p.frontOpen = hitSector;
+                p.frontLine = &line;
+            }
+        }
+        else
+        {
+            if(dist < p.backDist)
+            {
+                p.backDist = dist;
+                p.backOpen = hitSector;
+                p.backLine = &line;
+            }
+        }
+    }
+
+    static int testForWindowEffectWorker(Line *line, void *parms)
+    {
+        testForWindowEffect2(*line, *reinterpret_cast<testForWindowEffectParams *>(parms));
+        return false; // Continue iteration.
+    }
+
+    bool lineMightHaveWindowEffect(Line const &line)
+    {
+        if(line.definesPolyobj()) return false;
+        if(line.hasFrontSector() && line.hasBackSector()) return false;
+        if(!line.hasFrontSector()) return false;
+        if(line.hasZeroLength()) return false;
+
+        // Look for window effects by checking for an odd number of one-sided
+        // line owners for a single vertex. Idea courtesy of Graham Jackson.
+        if((line.from()._onesOwnerCount % 2) == 1 &&
+           (line.from()._onesOwnerCount + line.from()._twosOwnerCount) > 1)
+            return true;
+
+        if((line.to()._onesOwnerCount % 2) == 1 &&
+           (line.to()._onesOwnerCount + line.to()._twosOwnerCount) > 1)
+            return true;
+
+        return false;
+    }
+
+    void findOneWayWindows()
+    {
+        foreach(Vertex *vertex, mesh.vertexes())
+        {
+            // Count the total number of one and two-sided line owners for each
+            // vertex. (Used in the process of locating window effect lines.)
+            vertex->countLineOwners();
+        }
+
+        // Search for "one-way window" effects.
+        foreach(Line *line, lines)
+        {
+            if(!lineMightHaveWindowEffect(*line))
+                continue;
+
+            testForWindowEffectParams p;
+            p.frontDist      = p.backDist = DDMAXFLOAT;
+            p.testLine       = line;
+            p.testLineCenter = line->center();
+            p.castHorizontal = (de::abs(line->direction().x) < de::abs(line->direction().y)? true : false);
+
+            AABoxd scanRegion = bounds;
+            if(p.castHorizontal)
+            {
+                scanRegion.minY = line->aaBox().minY - bsp::DIST_EPSILON;
+                scanRegion.maxY = line->aaBox().maxY + bsp::DIST_EPSILON;
+            }
+            else
+            {
+                scanRegion.minX = line->aaBox().minX - bsp::DIST_EPSILON;
+                scanRegion.maxX = line->aaBox().maxX + bsp::DIST_EPSILON;
+            }
+            validCount++;
+            self.linesBoxIterator(scanRegion, testForWindowEffectWorker, &p);
+
+            if(p.backOpen && p.frontOpen && line->frontSectorPtr() == p.backOpen)
+            {
+                notifyOneWayWindowFound(*line, *p.frontOpen);
+
+                line->_bspWindowSector = p.frontOpen; /// @todo Refactor away.
+            }
+        }
+    }
+
+    void collateBspElements(bsp::Partitioner &partitioner, BspTreeNode &tree)
+    {
+        if(tree.isLeaf())
+        {
+            // Take ownership of the BspLeaf.
+            DENG2_ASSERT(tree.userData() != 0);
+            BspLeaf *leaf = tree.userData()->as<BspLeaf>();
+            partitioner.take(leaf);
+
+            // Add this BspLeaf to the LUT.
+            leaf->setIndexInMap(bspLeafs.count());
+            bspLeafs.append(leaf);
+
+            foreach(Segment *seg, leaf->allSegments())
+            {
+                // Take ownership of the Segment.
+                partitioner.take(seg);
+
+                // Add this segment to the LUT.
+                seg->setIndexInMap(segments.count());
+                segments.append(seg);
+            }
+
+            return;
+        }
+        // Else; a node.
+
+        // Take ownership of this BspNode.
+        DENG2_ASSERT(tree.userData() != 0);
+        BspNode *node = tree.userData()->as<BspNode>();
+        partitioner.take(node);
+
+        // Add this BspNode to the LUT.
+        node->setIndexInMap(bspNodes.count());
+        bspNodes.append(node);
+    }
+
+    /**
+     * Build a BSP tree for the map.
+     *
+     * @pre Map line bounds have been determined and a line blockmap constructed.
+     */
     bool buildBsp()
     {
-        /// @todo Test @em ALL preconditions!
+        DENG2_ASSERT(bspRoot == 0);
         DENG2_ASSERT(segments.isEmpty());
         DENG2_ASSERT(bspLeafs.isEmpty());
         DENG2_ASSERT(bspNodes.isEmpty());
@@ -252,34 +480,39 @@ DENG2_PIMPL(Map)
         LOG_TRACE("Building BSP for \"%s\" with split cost factor %d...")
             << uri << bspSplitFactor;
 
+        // First we'll scan for so-called "one-way window" constructs and mark
+        // them so that the space partitioner can treat them specially.
+        findOneWayWindows();
+
+        // Remember the current next vertex ordinal as we'll need to index any
+        // new vertexes produced during the build process.
         int nextVertexOrd = mesh.vertexCount();
 
-        // Instantiate and configure a new BSP builder.
-        BspBuilder nodeBuilder(self, mesh, bspSplitFactor);
+        // Determine the set of lines for which we will build a BSP.
+        QSet<Line *> linesToBuildBspFor = QSet<Line *>::fromList(lines);
 
-        // Build the BSP.
-        bool builtOK = nodeBuilder.buildBsp();
-        if(builtOK)
+        // Polyobj lines should be excluded.
+        foreach(Polyobj *po, polyobjs)
+        foreach(Line *line, po->lines())
         {
-            BspTreeNode &treeRoot = *nodeBuilder.root();
+            linesToBuildBspFor.remove(line);
+        }
 
-            // Determine the max depth of the two main branches.
-            dint32 rightBranchDpeth, leftBranchDepth;
-            if(!treeRoot.isLeaf())
-            {
-                rightBranchDpeth = dint32( treeRoot.right().height() );
-                leftBranchDepth  = dint32(  treeRoot.left().height() );
-            }
-            else
-            {
-                rightBranchDpeth = leftBranchDepth = 0;
-            }
+        try
+        {
+            // Configure a space partitioner.
+            bsp::Partitioner partitioner(bspSplitFactor);
+            partitioner.audienceForUnclosedSectorFound += this;
+
+            // Build a new BSP!
+            BspTreeNode *rootNode = partitioner.buildBsp(linesToBuildBspFor, mesh);
 
             LOG_INFO("Built %d Nodes, %d Leafs, %d Segments and %d Vertexes."
                      "\nTree balance is %d:%d.")
-                    << nodeBuilder.numNodes() << nodeBuilder.numLeafs()
-                    << nodeBuilder.numSegments() << nodeBuilder.numVertexes()
-                    << rightBranchDpeth << leftBranchDepth;
+                    << partitioner.numNodes()    << partitioner.numLeafs()
+                    << partitioner.numSegments() << partitioner.numVertexes()
+                    << (rootNode->isLeaf()? 0 : rootNode->right().height())
+                    << (rootNode->isLeaf()? 0 : rootNode->left().height());
 
             // Attribute an index to any new vertexes.
             for(int i = nextVertexOrd; i < mesh.vertexCount(); ++i)
@@ -291,14 +524,13 @@ DENG2_PIMPL(Map)
             /*
              * Take ownership of all the built map data elements.
              */
-#ifdef DENG2_QT_4_7_OR_NEWER
-            segments.reserve(nodeBuilder.numSegments());
-            bspNodes.reserve(nodeBuilder.numNodes());
-            bspLeafs.reserve(nodeBuilder.numLeafs());
-#endif
-
-            BspTreeNode *rootNode = nodeBuilder.root();
             bspRoot = rootNode->userData(); // We'll formally take ownership shortly...
+
+#ifdef DENG2_QT_4_7_OR_NEWER
+            segments.reserve(partitioner.numSegments());
+            bspNodes.reserve(partitioner.numNodes());
+            bspLeafs.reserve(partitioner.numLeafs());
+#endif
 
             // Iterative pre-order traversal of the BspBuilder's map element tree.
             BspTreeNode *cur = rootNode;
@@ -311,7 +543,7 @@ DENG2_PIMPL(Map)
                     {
                         // Acquire ownership of and collate all map data elements at
                         // this node of the tree.
-                        collateBspElements(nodeBuilder, *cur);
+                        collateBspElements(partitioner, *cur);
                     }
 
                     if(prev == cur->parentPtr())
@@ -342,48 +574,15 @@ DENG2_PIMPL(Map)
                 }
             }
         }
+        catch(Error const &er)
+        {
+            LOG_WARNING("%s.") << er.asText();
+        }
 
         // How much time did we spend?
         LOG_INFO(String("Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 
-        return builtOK;
-    }
-
-    void collateBspElements(BspBuilder &builder, BspTreeNode &tree)
-    {
-        if(tree.isLeaf())
-        {
-            // Take ownership of the BspLeaf.
-            DENG2_ASSERT(tree.userData() != 0);
-            BspLeaf *leaf = tree.userData()->as<BspLeaf>();
-            builder.take(leaf);
-
-            // Add this BspLeaf to the LUT.
-            leaf->setIndexInMap(bspLeafs.count());
-            bspLeafs.append(leaf);
-
-            foreach(Segment *seg, leaf->allSegments())
-            {
-                // Take ownership of the Segment.
-                builder.take(seg);
-
-                // Add this segment to the LUT.
-                seg->setIndexInMap(segments.count());
-                segments.append(seg);
-            }
-
-            return;
-        }
-        // Else; a node.
-
-        // Take ownership of this BspNode.
-        DENG2_ASSERT(tree.userData() != 0);
-        BspNode *node = tree.userData()->as<BspNode>();
-        builder.take(node);
-
-        // Add this BspNode to the LUT.
-        node->setIndexInMap(bspNodes.count());
-        bspNodes.append(node);
+        return bspRoot != 0;
     }
 
     void finishLines()

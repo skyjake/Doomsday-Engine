@@ -111,7 +111,6 @@ DENG_API_HEADERS = \
 
 # Convenience headers.
 DENG_HEADERS += \
-    $$SRC/include/BspBuilder \
     $$SRC/include/EntityDatabase \
     $$SRC/include/Game \
     $$SRC/include/Games \
@@ -240,7 +239,6 @@ DENG_HEADERS += \
     $$SRC/include/world/bsp/partitioncost.h \
     $$SRC/include/world/bsp/partitioner.h \
     $$SRC/include/world/bsp/superblockmap.h \
-    $$SRC/include/world/bspbuilder.h \
     $$SRC/include/world/bspleaf.h \
     $$SRC/include/world/bspnode.h \
     $$SRC/include/world/entitydatabase.h \
@@ -411,7 +409,6 @@ SOURCES += \
     $$SRC/src/world/bsp/linesegment.cpp \
     $$SRC/src/world/bsp/partitioner.cpp \
     $$SRC/src/world/bsp/superblockmap.cpp \
-    $$SRC/src/world/bspbuilder.cpp \
     $$SRC/src/world/bspleaf.cpp \
     $$SRC/src/world/bspnode.cpp \
     $$SRC/src/world/dmuargs.cpp \

@@ -18,6 +18,9 @@
  * 02110-1301 USA</small>
  */
 
+#include <map>
+#include <utility>
+
 #include <QMap>
 #include <QtAlgorithms>
 
@@ -68,6 +71,91 @@
 #include "world/world.h"
 
 using namespace de;
+
+/**
+ * Observes the progress of a map conversion and records any issues/problems that
+ * are encountered in the process. When asked, compiles a human-readable report
+ * intended to assist mod authors in debugging their maps.
+ *
+ * @todo Consolidate with the missing material reporting done elsewhere -ds
+ */
+class MapConversionReporter :
+DENG2_OBSERVES(Map, UnclosedSectorFound),
+DENG2_OBSERVES(Map, OneWayWindowFound)
+{
+    /// Record "unclosed sectors".
+    /// Sector => world point relatively near to the problem area.
+    typedef std::map<Sector *,  Vector2d> UnclosedSectorMap;
+
+    /// Record "one-way window lines".
+    /// Line => Sector the back side faces.
+    typedef std::map<Line *,  Sector *> OneWayWindowMap;
+
+    /// Maximum number of warnings to output (of each type) about any problems
+    /// encountered during the build process.
+    static int const maxWarningsPerType = 10;
+
+public:
+    MapConversionReporter() {}
+
+    inline int unclosedSectorCount() const { return (int)_unclosedSectors.size(); }
+    inline int oneWayWindowCount() const { return (int)_oneWayWindows.size(); }
+
+    void writeLog()
+    {
+        if(int numToLog = maxWarnings(unclosedSectorCount()))
+        {
+            UnclosedSectorMap::const_iterator it = _unclosedSectors.begin();
+            for(int i = 0; i < numToLog; ++i, ++it)
+            {
+                LOG_WARNING("Sector #%d is unclosed near %s.")
+                    << it->first->indexInMap() << it->second.asText();
+            }
+
+            if(numToLog < unclosedSectorCount())
+                LOG_INFO("(%d more like this)") << (unclosedSectorCount() - numToLog);
+        }
+
+        if(int numToLog = maxWarnings(oneWayWindowCount()))
+        {
+            OneWayWindowMap::const_iterator it = _oneWayWindows.begin();
+            for(int i = 0; i < numToLog; ++i, ++it)
+            {
+                LOG_VERBOSE("Line #%d seems to be a One-Way Window (back faces sector #%d).")
+                    << it->first->indexInMap() << it->second->indexInMap();
+            }
+
+            if(numToLog < oneWayWindowCount())
+                LOG_INFO("(%d more like this)") << (oneWayWindowCount() - numToLog);
+        }
+    }
+
+protected:
+    // Observes Partitioner UnclosedSectorFound.
+    void unclosedSectorFound(Sector &sector, Vector2d const &nearPoint)
+    {
+        _unclosedSectors.insert(std::make_pair(&sector, nearPoint));
+    }
+
+    // Observes Partitioner OneWayWindowFound.
+    void oneWayWindowFound(Line &line, Sector &backFacingSector)
+    {
+        _oneWayWindows.insert(std::make_pair(&line, &backFacingSector));
+    }
+
+private:
+    static inline int maxWarnings(int issueCount)
+    {
+#ifdef DENG_DEBUG
+        return issueCount; // No limit.
+#else
+        return de::min(issueCount, maxWarningsPerType);
+#endif
+    }
+
+    UnclosedSectorMap _unclosedSectors;
+    OneWayWindowMap   _oneWayWindows;
+};
 
 boolean ddMapSetup;
 timespan_t ddMapTime;
@@ -227,6 +315,11 @@ DENG2_PIMPL(World)
         if(markerLumpNum < 0)
             return 0;
 
+        /*MapConversionReporter reporter;
+        map->audienceForOneWayWindowFound   += reporter;
+        map->audienceForUnclosedSectorFound += reporter;
+        */
+
         // Ask each converter in turn whether the map format is recognizable
         // and if so to interpret and transfer it to us via the runtime map
         // editing interface.
@@ -239,14 +332,16 @@ DENG2_PIMPL(World)
         if(!MPE_GetLastBuiltMapResult())
             return 0;
 
+        //reporter.writeLog();
+
         // Take ownership of the map.
-        Map *map = MPE_TakeMap();
+        Map *newMap = MPE_TakeMap();
 
         // Generate the old unique map id.
         File1 &markerLump       = App_FileSystem().nameIndex().lump(markerLumpNum);
         String uniqueId         = composeUniqueMapId(markerLump);
         QByteArray uniqueIdUtf8 = uniqueId.toUtf8();
-        map->setOldUniqueId(uniqueIdUtf8.constData());
+        newMap->setOldUniqueId(uniqueIdUtf8.constData());
 
         // Are we caching this map?
         /*if(mapCache)
@@ -255,10 +350,10 @@ DENG2_PIMPL(World)
             F_MakePath(rec.cachePath.toUtf8().constData());
 
             // Cache the map!
-            DAM_MapWrite(map, rec.cachePath);
+            DAM_MapWrite(newMap, rec.cachePath);
         }*/
 
-        return map;
+        return newMap;
     }
 
 #if 0
