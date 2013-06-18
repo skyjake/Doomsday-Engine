@@ -88,7 +88,6 @@ namespace de {
 
 struct EditableElements
 {
-    Map::Vertexes vertexes;
     Map::Lines lines;
     Map::Sectors sectors;
     Map::Polyobjs polyobjs;
@@ -102,8 +101,6 @@ struct EditableElements
     }
 
     void clearAll();
-
-    void pruneVertexes();
 };
 
 DENG2_PIMPL(Map)
@@ -130,7 +127,6 @@ DENG2_PIMPL(Map)
     Mesh mesh;
 
     /// Element LUTs:
-    Vertexes vertexes;
     Sectors sectors;
     Lines lines;
     Polyobjs polyobjs;
@@ -209,7 +205,6 @@ DENG2_PIMPL(Map)
             M_Free(polyobj);
         }
         qDeleteAll(lines);
-        qDeleteAll(vertexes);
 
         /// @todo fixme: Free all memory we have ownership of.
         // Client only data:
@@ -257,6 +252,8 @@ DENG2_PIMPL(Map)
         LOG_TRACE("Building BSP for \"%s\" with split cost factor %d...")
             << uri << bspSplitFactor;
 
+        int nextVertexOrd = mesh.vertexCount();
+
         // Instantiate and configure a new BSP builder.
         BspBuilder nodeBuilder(self, mesh, bspSplitFactor);
 
@@ -284,16 +281,21 @@ DENG2_PIMPL(Map)
                     << nodeBuilder.numSegments() << nodeBuilder.numVertexes()
                     << rightBranchDpeth << leftBranchDepth;
 
+            // Attribute an index to any new vertexes.
+            for(int i = nextVertexOrd; i < mesh.vertexCount(); ++i)
+            {
+                Vertex *vtx = mesh.vertexes().at(i);
+                vtx->setIndexInMap(i);
+            }
+
             /*
              * Take ownership of all the built map data elements.
              */
 #ifdef DENG2_QT_4_7_OR_NEWER
-            vertexes.reserve(vertexes.count() + nodeBuilder.numVertexes());
             segments.reserve(nodeBuilder.numSegments());
             bspNodes.reserve(nodeBuilder.numNodes());
             bspLeafs.reserve(nodeBuilder.numLeafs());
 #endif
-            collateVertexes(nodeBuilder);
 
             BspTreeNode *rootNode = nodeBuilder.root();
             bspRoot = rootNode->userData(); // We'll formally take ownership shortly...
@@ -345,19 +347,6 @@ DENG2_PIMPL(Map)
         LOG_INFO(String("Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 
         return builtOK;
-    }
-
-    void collateVertexes(BspBuilder &builder)
-    {
-        int bspVertexCount = builder.numVertexes();
-        for(int i = 0; i < bspVertexCount; ++i)
-        {
-            // Take ownership of this Vertex.
-            Vertex *vertex = &builder.vertex(i);
-            builder.take(vertex);
-
-            vertexes.append(vertex);
-        }
     }
 
     void collateBspElements(BspBuilder &builder, BspTreeNode &tree)
@@ -1097,7 +1086,7 @@ Thinkers &Map::thinkers() const
 
 Map::Vertexes const &Map::vertexes() const
 {
-    return d->vertexes;
+    return d->mesh.vertexes();
 }
 
 Map::Lines const &Map::lines() const
@@ -2748,7 +2737,7 @@ static bool vertexHasValidLineOwnerRing(Vertex &v)
  * the lines which the vertex belongs to sorted by angle, (the rings are
  * arranged in clockwise order, east = 0).
  */
-void buildVertexLineOwnerRings(EditableElements &editable)
+void buildVertexLineOwnerRings(Map::Vertexes const &vertexes, Map::Lines &editableLines)
 {
     LOG_AS("buildVertexLineOwnerRings");
 
@@ -2756,10 +2745,10 @@ void buildVertexLineOwnerRings(EditableElements &editable)
      * Step 1: Find and link up all line owners.
      */
     // We know how many vertex line owners we need (numLines * 2).
-    LineOwner *lineOwners = (LineOwner *) Z_Malloc(sizeof(LineOwner) * editable.lines.count() * 2, PU_MAPSTATIC, 0);
+    LineOwner *lineOwners = (LineOwner *) Z_Malloc(sizeof(LineOwner) * editableLines.count() * 2, PU_MAPSTATIC, 0);
     LineOwner *allocator = lineOwners;
 
-    foreach(Line *line, editable.lines)
+    foreach(Line *line, editableLines)
     for(uint p = 0; p < 2; ++p)
     {
         setVertexLineOwner(&line->vertex(p), line, &allocator);
@@ -2768,7 +2757,7 @@ void buildVertexLineOwnerRings(EditableElements &editable)
     /*
      * Step 2: Sort line owners of each vertex and finalize the rings.
      */
-    foreach(Vertex *v, editable.vertexes)
+    foreach(Vertex *v, vertexes)
     {
         if(!v->_numLineOwners) continue;
 
@@ -2825,21 +2814,159 @@ bool Map::isEditable() const
     return d->editingEnabled;
 }
 
+struct VertexInfo
+{
+    /// Vertex for this info.
+    Vertex *vertex;
+
+    /// Determined equivalent vertex.
+    Vertex *equiv;
+
+    /// Line -> Vertex reference count.
+    uint refCount;
+
+    VertexInfo() : vertex(0), equiv(0), refCount(0)
+    {}
+
+    /// @todo Math here is not correct (rounding directionality). -ds
+    int compareVertexOrigins(VertexInfo const &other) const
+    {
+        DENG_ASSERT(vertex != 0 && other.vertex != 0);
+
+        if(this == &other) return 0;
+        if(vertex == other.vertex) return 0;
+
+        // Order is firstly X axis major.
+        if(int(vertex->origin().x) != int(other.vertex->origin().x))
+            return int(vertex->origin().x) - int(other.vertex->origin().x);
+
+        // Order is secondly Y axis major.
+        return int(vertex->origin().y) - int(other.vertex->origin().y);
+    }
+
+    bool operator < (VertexInfo const &other) const {
+        return compareVertexOrigins(other) < 0;
+    }
+};
+
+void pruneVertexes(Mesh &mesh, Map::Lines const &lines)
+{
+    /*
+     * Step 1 - Find equivalent vertexes:
+     */
+
+    // Populate the vertex info.
+    QVector<VertexInfo> vertexInfo(mesh.vertexCount());
+    int ord = 0;
+    foreach(Vertex *vertex, mesh.vertexes())
+        vertexInfo[ord++].vertex = vertex;
+
+    {
+        // Sort a copy to place near vertexes adjacently.
+        QVector<VertexInfo> sortedInfo(vertexInfo);
+        qSort(sortedInfo.begin(), sortedInfo.end());
+
+        // Locate equivalent vertexes in the sorted info.
+        for(int i = 0; i < sortedInfo.count() - 1; ++i)
+        {
+            VertexInfo &a = sortedInfo[i];
+            VertexInfo &b = sortedInfo[i + 1];
+
+            // Are these equivalent?
+            /// @todo fixme: What about polyobjs? They need unique vertexes! -ds
+            if(a.compareVertexOrigins(b) == 0)
+            {
+                b.equiv = (a.equiv? a.equiv : a.vertex);
+            }
+        }
+    }
+
+    /*
+     * Step 2 - Replace line references to equivalent vertexes:
+     */
+
+    // Count line -> vertex references.
+    foreach(Line *line, lines)
+    {
+        vertexInfo[line->from().indexInMap()].refCount++;
+        vertexInfo[  line->to().indexInMap()].refCount++;
+    }
+
+    // Perform the replacement.
+    foreach(Line *line, lines)
+    {
+        while(vertexInfo[line->from().indexInMap()].equiv)
+        {
+            VertexInfo &info = vertexInfo[line->from().indexInMap()];
+
+            info.refCount--;
+            line->replaceFrom(*info.equiv);
+
+            vertexInfo[line->from().indexInMap()].refCount++;
+        }
+
+        while(vertexInfo[line->to().indexInMap()].equiv)
+        {
+            VertexInfo &info = vertexInfo[line->to().indexInMap()];
+
+            info.refCount--;
+            line->replaceTo(*info.equiv);
+
+            vertexInfo[line->to().indexInMap()].refCount++;
+        }
+    }
+
+    /*
+     * Step 3 - Prune vertexes:
+     */
+    int prunedCount = 0, numUnused = 0;
+    foreach(VertexInfo const &info, vertexInfo)
+    {
+        Vertex *vertex = info.vertex;
+
+        if(info.refCount)
+            continue;
+
+        mesh.removeVertex(*vertex);
+
+        prunedCount += 1;
+        if(!info.equiv) numUnused += 1;
+    }
+
+    if(prunedCount)
+    {
+        // Re-index with a contiguous range of indices.
+        int ord = 0;
+        foreach(Vertex *vertex, mesh.vertexes())
+            vertex->setIndexInMap(ord++);
+
+        /// Update lines. @todo Line should handle this itself.
+        foreach(Line *line, lines)
+        {
+            line->updateSlopeType();
+            line->updateAABox();
+        }
+
+        LOG_INFO("Pruned %d vertexes (%d equivalents, %d unused).")
+            << prunedCount << (prunedCount - numUnused) << numUnused;
+    }
+}
+
 bool Map::endEditing()
 {
     if(!d->editingEnabled)
         return true; // Huh?
 
     LOG_DEBUG("New elements: %d Vertexes, %d Lines and %d Sectors.")
-        << d->editable.vertexes.count()
+        << d->mesh.vertexCount()
         << d->editable.lines.count()
         << d->editable.sectors.count();
 
     /*
-     * Perform cleanup on the loaded map data.
+     * Perform cleanup on the new map elements.
      */
 
-    d->editable.pruneVertexes();
+    pruneVertexes(d->mesh, d->editable.lines);
 
     /// Ensure lines with only one sector are flagged as blocking.
     foreach(Line *line, d->editable.lines)
@@ -2848,40 +2975,27 @@ bool Map::endEditing()
             line->setFlags(DDLF_BLOCKING);
     }
 
-    buildVertexLineOwnerRings(d->editable);
+    buildVertexLineOwnerRings(d->mesh.vertexes(), d->editable.lines);
 
     /*
      * Move the editable elements to the "static" element lists.
      */
-
-    DENG2_ASSERT(d->vertexes.isEmpty());
-#ifdef DENG2_QT_4_7_OR_NEWER
-    d->vertexes.reserve(d->editable.vertexes.count());
-#endif
-    while(!d->editable.vertexes.isEmpty())
-    {
-        d->vertexes.append(d->editable.vertexes.takeFirst());
-    }
 
     // Collate sectors:
     DENG2_ASSERT(d->sectors.isEmpty());
 #ifdef DENG2_QT_4_7_OR_NEWER
     d->sectors.reserve(d->editable.sectors.count());
 #endif
-    while(!d->editable.sectors.isEmpty())
-    {
-        d->sectors.append(d->editable.sectors.takeFirst());
-    }
+    d->sectors.append(d->editable.sectors);
+    d->editable.sectors.clear();
 
     // Collate lines:
     DENG2_ASSERT(d->lines.isEmpty());
 #ifdef DENG2_QT_4_7_OR_NEWER
     d->lines.reserve(d->editable.lines.count());
 #endif
-    while(!d->editable.lines.isEmpty())
-    {
-        d->lines.append(d->editable.lines.takeFirst());
-    }
+    d->lines.append(d->editable.lines);
+    d->editable.lines.clear();
 
     // Collate polyobjs:
     DENG2_ASSERT(d->polyobjs.isEmpty());
@@ -2974,13 +3088,12 @@ Vertex *Map::createVertex(Vector2d const &origin, int archiveIndex)
         /// @throw EditError  Attempted when not editing.
         throw EditError("Map::createVertex", "Editing is not enabled");
 
-    Vertex *vtx = new Vertex(origin);
-    d->editable.vertexes.append(vtx);
+    Vertex *vtx = d->mesh.newVertex(origin);
 
     vtx->setIndexInArchive(archiveIndex);
 
     /// @todo Don't do this here.
-    vtx->setIndexInMap(d->editable.vertexes.count() - 1);
+    vtx->setIndexInMap(d->mesh.vertexCount() - 1);
 
     return vtx;
 }
@@ -3039,14 +3152,6 @@ Polyobj *Map::createPolyobj(Vector2d const &origin)
     return po;
 }
 
-Map::Vertexes const &Map::editableVertexes() const
-{
-    if(!d->editingEnabled)
-        /// @throw EditError  Attempted when not editing.
-        throw EditError("Map::editableVertexes", "Editing is not enabled");
-    return d->editable.vertexes;
-}
-
 Map::Lines const &Map::editableLines() const
 {
     if(!d->editingEnabled)
@@ -3073,9 +3178,6 @@ Map::Polyobjs const &Map::editablePolyobjs() const
 
 void EditableElements::clearAll()
 {
-    qDeleteAll(vertexes);
-    vertexes.clear();
-
     qDeleteAll(lines);
     lines.clear();
 
@@ -3088,145 +3190,6 @@ void EditableElements::clearAll()
         M_Free(po);
     }
     polyobjs.clear();
-}
-
-struct VertexInfo
-{
-    /// Vertex for this info.
-    Vertex *vertex;
-
-    /// Determined equivalent vertex.
-    Vertex *equiv;
-
-    /// Line -> Vertex reference count.
-    uint refCount;
-
-    VertexInfo()
-        : vertex(0), equiv(0), refCount(0)
-    {}
-
-    /// @todo Math here is not correct (rounding directionality). -ds
-    int compareVertexOrigins(VertexInfo const &other) const
-    {
-        DENG_ASSERT(vertex != 0 && other.vertex != 0);
-
-        if(this == &other) return 0;
-        if(vertex == other.vertex) return 0;
-
-        // Order is firstly X axis major.
-        if(int(vertex->origin().x) != int(other.vertex->origin().x))
-            return int(vertex->origin().x) - int(other.vertex->origin().x);
-
-        // Order is secondly Y axis major.
-        return int(vertex->origin().y) - int(other.vertex->origin().y);
-    }
-
-    bool operator < (VertexInfo const &other) const {
-        return compareVertexOrigins(other) < 0;
-    }
-};
-
-void EditableElements::pruneVertexes()
-{
-    /*
-     * Step 1 - Find equivalent vertexes:
-     */
-
-    // Populate the vertex info.
-    QVector<VertexInfo> vertexInfo(vertexes.count());
-    for(int i = 0; i < vertexes.count(); ++i)
-        vertexInfo[i].vertex = vertexes[i];
-
-    {
-        // Sort a copy to place near vertexes adjacently.
-        QVector<VertexInfo> sortedInfo(vertexInfo);
-        qSort(sortedInfo.begin(), sortedInfo.end());
-
-        // Locate equivalent vertexes in the sorted info.
-        for(int i = 0; i < sortedInfo.count() - 1; ++i)
-        {
-            VertexInfo &a = sortedInfo[i];
-            VertexInfo &b = sortedInfo[i + 1];
-
-            // Are these equivalent?
-            /// @todo fixme: What about polyobjs? They need unique vertexes! -ds
-            if(a.compareVertexOrigins(b) == 0)
-            {
-                b.equiv = (a.equiv? a.equiv : a.vertex);
-            }
-        }
-    }
-
-    /*
-     * Step 2 - Replace line references to equivalent vertexes:
-     */
-
-    // Count line -> vertex references.
-    foreach(Line *line, lines)
-    {
-        vertexInfo[line->from().indexInMap()].refCount++;
-        vertexInfo[  line->to().indexInMap()].refCount++;
-    }
-
-    // Perform the replacement.
-    foreach(Line *line, lines)
-    {
-        while(vertexInfo[line->from().indexInMap()].equiv)
-        {
-            VertexInfo &info = vertexInfo[line->from().indexInMap()];
-
-            info.refCount--;
-            line->replaceFrom(*info.equiv);
-
-            vertexInfo[line->from().indexInMap()].refCount++;
-        }
-
-        while(vertexInfo[line->to().indexInMap()].equiv)
-        {
-            VertexInfo &info = vertexInfo[line->to().indexInMap()];
-
-            info.refCount--;
-            line->replaceTo(*info.equiv);
-
-            vertexInfo[line->to().indexInMap()].refCount++;
-        }
-    }
-
-    /*
-     * Step 3 - Prune vertexes:
-     */
-    uint prunedCount = 0, numUnused = 0;
-    foreach(VertexInfo const &info, vertexInfo)
-    {
-        Vertex *vertex = info.vertex;
-
-        if(info.refCount)
-            continue;
-
-        vertexes.removeOne(vertex);
-        delete vertex;
-
-        prunedCount += 1;
-        if(!info.equiv) numUnused += 1;
-    }
-
-    if(prunedCount)
-    {
-        // Re-index with a contiguous range of indices.
-        uint idx = 0;
-        foreach(Vertex *vertex, vertexes)
-            vertex->setIndexInMap(idx++);
-
-        /// Update lines. @todo Line should handle this itself.
-        foreach(Line *line, lines)
-        {
-            line->updateSlopeType();
-            line->updateAABox();
-        }
-
-        LOG_INFO("Pruned %d vertexes (%d equivalents, %d unused).")
-            << prunedCount << (prunedCount - numUnused) << numUnused;
-    }
 }
 
 } // namespace de

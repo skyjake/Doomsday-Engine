@@ -20,7 +20,9 @@
 #ifndef DENG_DATA_MESH_H
 #define DENG_DATA_MESH_H
 
-#include <QSet>
+#include <QList>
+
+#include <de/Vector>
 
 #include "MapElement"
 
@@ -42,9 +44,9 @@ class HEdge;
 class Mesh
 {
 public:
-    //typedef QSet<Vertex *> Vertexes;
-    typedef QSet<Face *> Faces;
-    typedef QSet<HEdge *> HEdges;
+    typedef QList<Vertex *> Vertexes;
+    typedef QList<Face *> Faces;
+    typedef QList<HEdge *> HEdges;
 
     /**
      * Base class for all elements of a mesh.
@@ -89,9 +91,14 @@ public:
     Mesh();
 
     /**
+     * Clear the mesh destroying all geometry elements.
+     */
+    void clear();
+
+    /**
      * Construct a new vertex.
      */
-    //Vertex *newVertex();
+    Vertex *newVertex(Vector2d const &origin = de::Vector2d());
 
     /**
      * Construct a new half-edge.
@@ -104,9 +111,27 @@ public:
     Face *newFace();
 
     /**
+     * Remove the specified @a vertex from the mesh, destroying the vertex.
+     * If @a vertex is not owned by the mesh then nothing will happen.
+     */
+    void removeVertex(Vertex &vertex);
+
+    /**
+     * Remove the specified @a hedge from the mesh, destroying the half-edge.
+     * If @a hedge is not owned by the mesh then nothing will happen.
+     */
+    void removeHEdge(HEdge &hedge);
+
+    /**
+     * Remove the specified @a face from the mesh, destroying the face.
+     * If @a face is not owned by the mesh then nothing will happen.
+     */
+    void removeFace(Face &face);
+
+    /**
      * Returns the total number of vertexes in the mesh.
      */
-    //inline int vertexCount() const { return vertexes().count(); }
+    inline int vertexCount() const { return vertexes().count(); }
 
     /**
      * Returns the total number of faces in the mesh.
@@ -121,7 +146,7 @@ public:
     /**
      * Returns @c true iff there are no vertexes in the mesh.
      */
-    //inline bool vertexesIsEmpty() const { return vertexes().isEmpty(); }
+    inline bool vertexesIsEmpty() const { return vertexes().isEmpty(); }
 
     /**
      * Returns @c true iff there are no faces in the mesh.
@@ -136,7 +161,7 @@ public:
     /**
      * Provides access to the set of all vertexes in the mesh.
      */
-    //Vertexes const &vertexes() const;
+    Vertexes const &vertexes() const;
 
     /**
      * Provides access to the set of all faces in the mesh.
@@ -147,13 +172,6 @@ public:
      * Provides access to the set of all half-edges in the mesh.
      */
     HEdges const &hedges() const;
-
-    /**
-     * Returns a pointer to the first Face in the mesh.
-     *
-     * @todo Refactor away.
-     */
-    Face *firstFace() const;
 
 private:
     DENG2_PRIVATE(d)

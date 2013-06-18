@@ -24,6 +24,7 @@
 #include <QList>
 #include <QSet>
 
+#include "Mesh"
 #include "p_particle.h"
 #include "Polyobj"
 
@@ -74,7 +75,6 @@ class EntityDatabase;
 class Generators;
 class LightGrid;
 #endif
-class Mesh;
 class Thinkers;
 
 /**
@@ -108,7 +108,7 @@ public:
     /*
      * Linked-element lists/sets:
      */
-    typedef QList<Vertex *>  Vertexes;
+    typedef Mesh::Vertexes   Vertexes;
     typedef QList<Line *>    Lines;
     typedef QList<Polyobj *> Polyobjs;
     typedef QList<Sector *>  Sectors;
@@ -745,11 +745,6 @@ public:
                          int archiveIndex = MapElement::NoIndex);
 
     /**
-     * Provides a list of all the editable vertexes in the map.
-     */
-    Vertexes const &editableVertexes() const;
-
-    /**
      * Provides a list of all the editable lines in the map.
      */
     Lines const &editableLines() const;
@@ -763,8 +758,6 @@ public:
      * Provides a list of all the editable sectors in the map.
      */
     Sectors const &editableSectors() const;
-
-    inline int editableVertexCount() const  { return editableVertexes().count(); }
 
     inline int editableLineCount() const    { return editableLines().count(); }
 

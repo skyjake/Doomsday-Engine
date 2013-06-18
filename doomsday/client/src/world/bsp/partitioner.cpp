@@ -23,7 +23,6 @@
  */
 
 #include <cmath>
-#include <vector>
 #include <algorithm>
 
 #include <QList>
@@ -55,9 +54,7 @@
 using namespace de;
 using namespace de::bsp;
 
-typedef std::vector<Vertex *> Vertexes;
-
-typedef QList<EdgeTips> EdgeTipSets;
+typedef QHash<Vertex *, EdgeTips> EdgeTipSets;
 typedef QList<LineSegment *> LineSegments;
 typedef QList<ConvexSubspace> ConvexSubspaces;
 
@@ -90,12 +87,7 @@ DENG2_PIMPL(Partitioner)
     ConvexSubspaces convexSubspaces;
 
     /// A set of EdgeTips for each unique line segment vertex.
-    /// @note May be larger than @var numVertexes (deallocation is lazy).
     EdgeTipSets edgeTipSets;
-
-    /// Additional vertexes produced when splitting line segments.
-    /// @note May be larger than @var numVertexes (deallocation is lazy).
-    Vertexes vertexes;
 
     /// Root node of the internal binary tree used to guide the partitioning
     /// process and around which the built BSP map elements are constructed.
@@ -119,8 +111,6 @@ DENG2_PIMPL(Partitioner)
 
     ~Instance()
     {
-        clearAllEdgeTips();
-
         if(rootNode)
         {
             // If ownership of the all built BSP map elements has been claimed
@@ -137,22 +127,14 @@ DENG2_PIMPL(Partitioner)
     /**
      * Returns the associated EdgeTips set for the given @a vertex.
      */
-    inline EdgeTips &edgeTips(Vertex const &vertex) {
-        int idx = vertex.indexInMap();
-        DENG_ASSERT(idx >= 0 && idx < edgeTipSets.count());
-        return edgeTipSets[idx];
-    }
-
-    inline void clearEdgeTipsByVertex(Vertex const &vertex) {
-        edgeTips(vertex).clear();
-    }
-
-    void clearAllEdgeTips()
+    EdgeTips &edgeTips(Vertex const &vertex)
     {
-        DENG2_FOR_EACH(EdgeTipSets, setIt, edgeTipSets)
+        EdgeTipSets::iterator found = edgeTipSets.find(const_cast<Vertex *>(&vertex));
+        if(found == edgeTipSets.end())
         {
-            setIt->clear();
+            found = edgeTipSets.insert(const_cast<Vertex *>(&vertex), EdgeTips());
         }
+        return found.value();
     }
 
     struct testForWindowEffectParams
@@ -307,17 +289,12 @@ DENG2_PIMPL(Partitioner)
     void initForMap()
     {
         // Initialize vertex info for the initial set of vertexes.
-#ifdef DENG2_QT_4_7_OR_NEWER
         edgeTipSets.reserve(map->vertexCount());
-#endif
         foreach(Vertex *vertex, map->vertexes())
         {
             // Count the total number of one and two-sided line owners for each
             // vertex. (Used in the process of locating window effect lines.)
             vertex->countLineOwners();
-
-            // Add a new EdgeTips set for this vertex.
-            edgeTipSets.append(EdgeTips());
         }
 
         // Search for "one-way window" effects.
@@ -1495,16 +1472,6 @@ DENG2_PIMPL(Partitioner)
 
     void clearAllBspElements()
     {
-        DENG2_FOR_EACH(Vertexes, it, vertexes)
-        {
-            Vertex *vtx = *it;
-            // Has ownership of this vertex been claimed?
-            if(!vtx) continue;
-
-            clearEdgeTipsByVertex(*vtx);
-            delete vtx;
-        }
-
         foreach(BspTreeNode *node, treeNodeMap)
         {
             clearBspElement(*node);
@@ -1536,16 +1503,10 @@ DENG2_PIMPL(Partitioner)
      */
     Vertex *newVertex(Vector2d const &origin)
     {
-        Vertex *vtx = new Vertex(origin);
-
-        /// @todo We do not have authorization to specify this index. -ds
-        /// (This job should be done post BSP build.)
-        vtx->setIndexInMap(map->vertexCount() + uint(vertexes.size()));
-        vertexes.push_back(vtx);
+        Vertex *vtx = mesh->newVertex(origin);
 
         // There is now one more Vertex.
         numVertexes += 1;
-        edgeTipSets.append(EdgeTips());
 
         return vtx;
     }
@@ -1554,21 +1515,6 @@ DENG2_PIMPL(Partitioner)
     {
         switch(elm->type())
         {
-        case DMU_VERTEX: {
-            Vertex *vtx = elm->as<Vertex>();
-            /// @todo optimize: Poor performance O(n).
-            for(uint i = 0; i < vertexes.size(); ++i)
-            {
-                if(vertexes[i] == vtx)
-                {
-                    vertexes[i] = 0;
-                    // There is now one fewer Vertex.
-                    numVertexes -= 1;
-                    return true;
-                }
-            }
-            break; }
-
         case DMU_SEGMENT:
             /// @todo fixme: Implement a mechanic for tracking Segment ownership.
             return true;
@@ -1745,13 +1691,6 @@ int Partitioner::numSegments()
 int Partitioner::numVertexes()
 {
     return d->numVertexes;
-}
-
-Vertex &Partitioner::vertex(int idx)
-{
-    DENG2_ASSERT(idx >= 0 && (unsigned)idx < d->vertexes.size());
-    DENG2_ASSERT(d->vertexes[idx]);
-    return *d->vertexes[idx];
 }
 
 void Partitioner::release(MapElement *mapElement)

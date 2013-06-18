@@ -186,11 +186,6 @@ int BspBuilder::numVertexes()
     return d->partitioner.numVertexes();
 }
 
-Vertex &BspBuilder::vertex(int idx)
-{
-    return d->partitioner.vertex(idx);
-}
-
 void BspBuilder::take(MapElement *mapElement)
 {
     d->partitioner.release(mapElement);

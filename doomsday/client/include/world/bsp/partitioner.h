@@ -141,13 +141,6 @@ public:
     int numVertexes();
 
     /**
-     * Retrieve the vertex with specified @a index. If the index is not valid
-     * this will result in fatal error. The caller should ensure the index is
-     * within valid range using numVertexes()
-     */
-    Vertex &vertex(int index);
-
-    /**
      * Relinquish ownership of the specified map data element to the caller.
      *
      * @param mapElement  Map data element to relinquish ownership of.

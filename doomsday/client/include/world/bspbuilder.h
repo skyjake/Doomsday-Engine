@@ -114,13 +114,6 @@ public:
     int numVertexes();
 
     /**
-     * Retrieve the vertex with specified @a index. If the index is not valid
-     * this will result in fatal error. The caller should ensure the index is
-     * within valid range using Partitioner::numVertexes()
-     */
-    Vertex &vertex(int idx);
-
-    /**
      * Release ownership of the specified object.
      *
      * @param mapElement  Map data object to relinquish ownership of.

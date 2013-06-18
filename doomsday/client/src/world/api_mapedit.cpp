@@ -257,7 +257,7 @@ boolean MPE_VertexCreatev(size_t num, coord_t *values, int *archiveIndices, int 
     for(size_t n = 0; n < num; ++n)
     {
         Vertex *vertex = editMap->createVertex(Vector2d(values[n * 2], values[n * 2 + 1]),
-                                              archiveIndices[n]);
+                                               archiveIndices[n]);
         if(retIndices)
         {
             retIndices[n] = vertex->indexInMap();
@@ -275,14 +275,14 @@ int MPE_LineCreate(int v1, int v2, int frontSectorIdx, int backSectorIdx, int fl
 
     if(frontSectorIdx >= editMap->editableSectorCount()) return -1;
     if(backSectorIdx  >= editMap->editableSectorCount()) return -1;
-    if(v1 < 0 || v1 >= editMap->editableVertexCount()) return -1;
-    if(v2 < 0 || v2 >= editMap->editableVertexCount()) return -1;
+    if(v1 < 0 || v1 >= editMap->vertexCount()) return -1;
+    if(v2 < 0 || v2 >= editMap->vertexCount()) return -1;
     if(v1 == v2) return -1;
 
     // Next, check the length is not zero.
     /// @todo fixme: We need to allow these... -ds
-    Vertex *vtx1 = editMap->editableVertexes().at(v1);
-    Vertex *vtx2 = editMap->editableVertexes().at(v2);
+    Vertex *vtx1 = editMap->vertexes().at(v1);
+    Vertex *vtx2 = editMap->vertexes().at(v2);
     if(de::abs(Vector2d(vtx1->origin() - vtx2->origin()).length()) <= 0.0001) return -1;
 
     Sector *frontSector = (frontSectorIdx >= 0? editMap->editableSectors().at(frontSectorIdx) : 0);

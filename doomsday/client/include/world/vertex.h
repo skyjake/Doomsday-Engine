@@ -28,6 +28,7 @@
 #include <de/Vector>
 
 #include "MapElement"
+#include "Mesh"
 
 class Line;
 class LineOwner;
@@ -40,7 +41,7 @@ class LineOwner;
  *
  * @ingroup world
  */
-class Vertex : public de::MapElement
+class Vertex : public de::MapElement, public de::Mesh::Element
 {
     DENG2_NO_COPY  (Vertex)
     DENG2_NO_ASSIGN(Vertex)
@@ -65,7 +66,7 @@ public: /// @todo Move to the map loader:
     uint _twosOwnerCount;
 
 public:
-    Vertex(de::Vector2d const &origin = de::Vector2d());
+    Vertex(de::Mesh &mesh, de::Vector2d const &origin = de::Vector2d());
 
     /**
      * Returns the origin (i.e., position) of the vertex in the map coordinate space.
