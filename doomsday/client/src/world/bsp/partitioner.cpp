@@ -1,11 +1,11 @@
-/** @file world/bsp/partitioner.cpp Binary Space Partitioner.
+/** @file partitioner.cpp World map binary space partitioner.
  *
- * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
- * @authors Copyright &copy; 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
- * @authors Copyright &copy; 2000-2007 Andrew Apted <ajapted@gmail.com>
- * @authors Copyright &copy; 1998-2000 Colin Reed <cph@moria.org.uk>
- * @authors Copyright &copy; 1998-2000 Lee Killough <killough@rsn.hp.com>
- * @authors Copyright &copy; 1997-1998 Raphael.Quinet <raphael.quinet@eed.ericsson.se>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
+ * @authors Copyright © 2000-2007 Andrew Apted <ajapted@gmail.com>
+ * @authors Copyright © 1998-2000 Colin Reed <cph@moria.org.uk>
+ * @authors Copyright © 1998-2000 Lee Killough <killough@rsn.hp.com>
+ * @authors Copyright © 1997-1998 Raphael.Quinet <raphael.quinet@eed.ericsson.se>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -22,22 +22,20 @@
  * 02110-1301 USA</small>
  */
 
-#include <cmath>
 #include <algorithm>
 
 #include <QList>
 #include <QHash>
 #include <QtAlgorithms>
 
-#include <de/Error>
 #include <de/Log>
 
 #include "world/map.h"
 #include "BspLeaf"
 #include "BspNode"
-#include "Segment"
 #include "Line"
 #include "Sector"
+#include "Segment"
 #include "Vertex"
 
 #include "render/r_main.h" /// validCount @todo Remove me
@@ -51,17 +49,14 @@
 
 #include "world/bsp/partitioner.h"
 
-using namespace de;
-using namespace de::bsp;
+namespace de {
 
-typedef QHash<Vertex *, EdgeTips> EdgeTipSets;
-typedef QList<LineSegment *> LineSegments;
-typedef QList<ConvexSubspace> ConvexSubspaces;
+using namespace bsp;
 
-typedef QHash<MapElement *, BspTreeNode *> BuiltBspElementMap;
-
-/// Used when collecting line segments to build a leaf. @todo Refactor away.
-typedef QList<LineSegment::Side *> LineSegmentList;
+typedef QHash<MapElement *, BspTreeNode *> BspElementMap;
+typedef QList<ConvexSubspace>              ConvexSubspaces;
+typedef QHash<Vertex *, EdgeTips>          EdgeTipSetMap;
+typedef QList<LineSegment *>               LineSegments;
 
 DENG2_PIMPL(Partitioner)
 {
@@ -71,7 +66,7 @@ DENG2_PIMPL(Partitioner)
     /// The map we are building BSP data for (not owned).
     Map const *map;
 
-    /// The mesh from which we'll assign (construct) new geometries.
+    /// The mesh from which we'll assign (construct) new geometries(not owned).
     Mesh *mesh;
 
     /// Running totals of constructed BSP map elements.
@@ -87,7 +82,7 @@ DENG2_PIMPL(Partitioner)
     ConvexSubspaces convexSubspaces;
 
     /// A set of EdgeTips for each unique line segment vertex.
-    EdgeTipSets edgeTipSets;
+    EdgeTipSetMap edgeTipSets;
 
     /// Root node of the internal binary tree used to guide the partitioning
     /// process and around which the built BSP map elements are constructed.
@@ -95,7 +90,7 @@ DENG2_PIMPL(Partitioner)
 
     /// Mapping table which relates built BSP map elements to their counterpart
     /// in the internal tree.
-    BuiltBspElementMap treeNodeMap;
+    BspElementMap treeNodeMap;
 
     /// The "current" binary space half-plane.
     HPlane hplane;
@@ -129,7 +124,7 @@ DENG2_PIMPL(Partitioner)
      */
     EdgeTips &edgeTips(Vertex const &vertex)
     {
-        EdgeTipSets::iterator found = edgeTipSets.find(const_cast<Vertex *>(&vertex));
+        EdgeTipSetMap::iterator found = edgeTipSets.find(const_cast<Vertex *>(&vertex));
         if(found == edgeTipSets.end())
         {
             found = edgeTipSets.insert(const_cast<Vertex *>(&vertex), EdgeTips());
@@ -311,7 +306,7 @@ DENG2_PIMPL(Partitioner)
     }
 
     /**
-     * Create all initial line segments and add them to specified SuperBlockmap.
+     * Create all initial line segments and add them to @a blockmap.
      */
     void createInitialLineSegments(SuperBlock &blockmap)
     {
@@ -1310,7 +1305,7 @@ DENG2_PIMPL(Partitioner)
         else
         {
             // No partition required/possible -- already convex (or degenerate).
-            LineSegmentList segments = bmap.collateAllSegments();
+            SuperBlock::Segments segments = bmap.collateAllSegments();
             bmap.clear(); // Should be empty.
 
             convexSubspaces.append(ConvexSubspace());
@@ -1465,7 +1460,7 @@ DENG2_PIMPL(Partitioner)
         delete elm;
         tree.setUserData(0);
 
-        BuiltBspElementMap::iterator found = treeNodeMap.find(elm);
+        BspElementMap::iterator found = treeNodeMap.find(elm);
         DENG2_ASSERT(found != treeNodeMap.end());
         treeNodeMap.erase(found);
     }
@@ -1485,7 +1480,7 @@ DENG2_PIMPL(Partitioner)
         int const elemType = ob->type();
         if(elemType == DMU_BSPLEAF || elemType == DMU_BSPNODE)
         {
-            BuiltBspElementMap::const_iterator found = treeNodeMap.find(ob);
+            BspElementMap::const_iterator found = treeNodeMap.find(ob);
             if(found == treeNodeMap.end()) return 0;
             return found.value();
         }
@@ -1524,7 +1519,7 @@ DENG2_PIMPL(Partitioner)
             BspTreeNode *treeNode = treeNodeForBspElement(elm);
             if(treeNode)
             {
-                BuiltBspElementMap::iterator found = treeNodeMap.find(elm);
+                BspElementMap::iterator found = treeNodeMap.find(elm);
                 DENG2_ASSERT(found != treeNodeMap.end());
                 treeNodeMap.erase(found);
 
@@ -1702,3 +1697,5 @@ void Partitioner::release(MapElement *mapElement)
             << DMU_Str(mapElement->type()) << de::dintptr(mapElement);
     }
 }
+
+} // namespace de

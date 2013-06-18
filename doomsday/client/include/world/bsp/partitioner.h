@@ -1,4 +1,4 @@
-/** @file world/bsp/partitioner.h World Binary Space Partitioner.
+/** @file partitioner.h World map binary space partitioner.
  *
  * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2000-2007 Andrew Apted <ajapted@gmail.com>
@@ -23,15 +23,16 @@
 #ifndef DENG_WORLD_BSP_PARTITIONER_H
 #define DENG_WORLD_BSP_PARTITIONER_H
 
+#include <de/Error>
 #include <de/Observers>
 #include <de/Vector>
 
 #include "world/bsp/bsptreenode.h" /// @todo remove me
 
 class BspLeaf;
-class Segment;
 class Line;
 class Sector;
+class Segment;
 
 namespace de {
 
