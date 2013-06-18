@@ -182,6 +182,11 @@ static Material *findMaterialInDict(ddstring_t const *materialUriStr)
     return material;
 }
 
+Map *MPE_Map()
+{
+    return editMapInited? editMap : 0;
+}
+
 Map *MPE_TakeMap()
 {
     Map *retMap = editMap;

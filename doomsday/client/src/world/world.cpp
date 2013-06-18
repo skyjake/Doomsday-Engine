@@ -315,10 +315,14 @@ DENG2_PIMPL(World)
         if(markerLumpNum < 0)
             return 0;
 
-        /*MapConversionReporter reporter;
-        map->audienceForOneWayWindowFound   += reporter;
-        map->audienceForUnclosedSectorFound += reporter;
-        */
+        // Initiate the conversion process.
+        MPE_Begin(reinterpret_cast<uri_s const *>(&uri));
+        Map *newMap = MPE_Map();
+
+        // Configure a reporter to observe the conversion process.
+        MapConversionReporter reporter;
+        newMap->audienceForOneWayWindowFound   += reporter;
+        newMap->audienceForUnclosedSectorFound += reporter;
 
         // Ask each converter in turn whether the map format is recognizable
         // and if so to interpret and transfer it to us via the runtime map
@@ -328,14 +332,15 @@ DENG2_PIMPL(World)
 
         // A converter signalled success.
 
+        // Output a human-readable log of any issues encountered in the process.
+        reporter.writeLog();
+
         // Were we able to produce a valid map from the data it provided?
         if(!MPE_GetLastBuiltMapResult())
             return 0;
 
-        //reporter.writeLog();
-
         // Take ownership of the map.
-        Map *newMap = MPE_TakeMap();
+        /*newMap =*/ MPE_TakeMap();
 
         // Generate the old unique map id.
         File1 &markerLump       = App_FileSystem().nameIndex().lump(markerLumpNum);

@@ -21,8 +21,21 @@
 
 #include "world/map.h"
 
-bool MPE_GetLastBuiltMapResult();
+/**
+ * Provides access to the current map being built with the runtime map editing
+ * interface. If no map is currently being built then @c 0 is returned. Ownership
+ * of the map is @em NOT given to the caller.
+ *
+ * @see MPE_TakeMap()
+ */
+de::Map *MPE_Map();
 
+/**
+ * Take ownership of the last map built with the runtime map editing interface.
+ * May return @c 0 if no such map exists.
+ */
 de::Map *MPE_TakeMap();
+
+bool MPE_GetLastBuiltMapResult();
 
 #endif // DENG_WORLD_EDITMAP_H
