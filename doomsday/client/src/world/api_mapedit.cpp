@@ -337,7 +337,7 @@ int MPE_PlaneCreate(int sectorIdx, coord_t height, ddstring_t const *materialUri
         plane->surface().setOpacity(opacity);
     }
 
-    return plane->inSectorIndex();
+    return plane->indexInSector();
 }
 
 #undef MPE_SectorCreate

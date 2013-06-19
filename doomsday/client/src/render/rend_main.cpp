@@ -1645,7 +1645,7 @@ static void writeLeafPlane(Plane &plane)
     // Skip planes with a sky-masked material?
     if(!devRendSkyMode)
     {
-        if(surface.hasSkyMaskedMaterial() && plane.inSectorIndex() <= Sector::Ceiling)
+        if(surface.hasSkyMaskedMaterial() && plane.indexInSector() <= Sector::Ceiling)
             return; // Not handled here (drawn with the mask geometry).
     }
 
@@ -1654,7 +1654,7 @@ static void writeLeafPlane(Plane &plane)
 
     // Add the Y offset to orient the Y flipped material.
     /// @todo fixme: What is this meant to do? -ds
-    if(plane.inSectorIndex() == Sector::Ceiling)
+    if(plane.indexInSector() == Sector::Ceiling)
         materialOrigin.y -= face.aaBox().maxY - face.aaBox().minY;
     materialOrigin.y = -materialOrigin.y;
 
@@ -1663,10 +1663,10 @@ static void writeLeafPlane(Plane &plane)
 
     // Set the texture origin, Y is flipped for the ceiling.
     Vector3d texTL(face.aaBox().minX,
-                   face.aaBox().arvec2[plane.inSectorIndex() == Sector::Floor? 1 : 0][VY],
+                   face.aaBox().arvec2[plane.indexInSector() == Sector::Floor? 1 : 0][VY],
                    plane.visHeight());
     Vector3d texBR(face.aaBox().maxX,
-                   face.aaBox().arvec2[plane.inSectorIndex() == Sector::Floor? 0 : 1][VY],
+                   face.aaBox().arvec2[plane.indexInSector() == Sector::Floor? 0 : 1][VY],
                    plane.visHeight());
 
     rendworldpoly_params_t parm; zap(parm);
@@ -1674,8 +1674,8 @@ static void writeLeafPlane(Plane &plane)
     parm.flags               = RPF_DEFAULT;
     parm.isWall              = false;
     parm.mapElement          = leaf;
-    parm.elmIdx              = plane.inSectorIndex();
-    parm.bsuf                = &leaf->biasSurface(plane.inSectorIndex());
+    parm.elmIdx              = plane.indexInSector();
+    parm.bsuf                = &leaf->biasSurface(plane.indexInSector());
     parm.normal              = &surface.normal();
     parm.texTL               = &texTL;
     parm.texBR               = &texBR;
@@ -1698,7 +1698,7 @@ static void writeLeafPlane(Plane &plane)
             parm.flags |= RPF_SKYMASK;
         }
     }
-    else if(plane.inSectorIndex() <= Sector::Ceiling)
+    else if(plane.indexInSector() <= Sector::Ceiling)
     {
         parm.blendMode = BM_NORMAL;
         parm.forceOpaque = true;
@@ -1714,7 +1714,7 @@ static void writeLeafPlane(Plane &plane)
 
     uint numVertices;
     rvertex_t *rvertices;
-    buildLeafPlaneGeometry(*leaf, (plane.inSectorIndex() == Sector::Ceiling)? Anticlockwise : Clockwise,
+    buildLeafPlaneGeometry(*leaf, (plane.indexInSector() == Sector::Ceiling)? Anticlockwise : Clockwise,
                            plane.visHeight(),
                            &rvertices, &numVertices);
 
@@ -1744,7 +1744,7 @@ static void writeLeafPlane(Plane &plane)
         if(parm.glowing < 1 && !(!useDynLights && !useWallGlow))
         {
             /// @ref projectLightFlags
-            int plFlags = (PLF_NO_PLANE | (plane.inSectorIndex() == Sector::Floor? PLF_TEX_FLOOR : PLF_TEX_CEILING));
+            int plFlags = (PLF_NO_PLANE | (plane.indexInSector() == Sector::Floor? PLF_TEX_FLOOR : PLF_TEX_CEILING));
 
             parm.lightListIdx =
                 LO_ProjectToSurface(plFlags, leaf, 1, *parm.texTL, *parm.texBR,
@@ -1752,7 +1752,7 @@ static void writeLeafPlane(Plane &plane)
         }
 
         // Mobj shadows?
-        if(plane.inSectorIndex() == Sector::Floor && parm.glowing < 1 && Rend_MobjShadowsEnabled())
+        if(plane.indexInSector() == Sector::Floor && parm.glowing < 1 && Rend_MobjShadowsEnabled())
         {
             // Glowing planes inversely diminish shadow strength.
             float blendFactor = 1 - parm.glowing;
@@ -2974,8 +2974,8 @@ static void Rend_DrawSurfaceVectors()
         {
             origin = Vector3d(bspLeaf->poly().center(), plane->visHeight());
 
-            if(plane->surface().hasSkyMaskedMaterial() && plane->inSectorIndex() <= Sector::Ceiling)
-                origin.z = App_World().map().skyFix(plane->inSectorIndex() == Sector::Ceiling);
+            if(plane->surface().hasSkyMaskedMaterial() && plane->indexInSector() <= Sector::Ceiling)
+                origin.z = App_World().map().skyFix(plane->indexInSector() == Sector::Ceiling);
 
             drawSurfaceTangentSpaceVectors(&plane->surface(), origin);
         }

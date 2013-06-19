@@ -308,7 +308,7 @@ int P_ToIndex(void const *ptr)
         return elem->indexInMap();
 
     case DMU_PLANE:
-        return elem->as<Plane>()->inSectorIndex();
+        return elem->as<Plane>()->indexInSector();
 
     case DMU_MATERIAL:
         return elem->as<Material>()->manifest().id(); // 1-based
