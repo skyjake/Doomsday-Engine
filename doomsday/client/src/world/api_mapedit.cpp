@@ -36,9 +36,7 @@
 using namespace de;
 
 static Map *editMap;
-
 static bool editMapInited;
-static bool lastBuiltMapResult;
 
 /**
  * Material name references specified during map conversion are recorded in
@@ -191,12 +189,8 @@ Map *MPE_TakeMap()
 {
     Map *retMap = editMap;
     editMap = 0;
+    editMapInited = false;
     return retMap;
-}
-
-bool MPE_GetLastBuiltMapResult()
-{
-    return lastBuiltMapResult;
 }
 
 #undef MPE_Begin
@@ -209,9 +203,8 @@ boolean MPE_Begin(uri_s const *mapUri)
         delete editMap;
 
     editMap = new Map(*reinterpret_cast<de::Uri const *>(mapUri));
-    lastBuiltMapResult = false; // Failed (default).
-
     editMapInited = true;
+
     return true;
 }
 
@@ -228,21 +221,9 @@ boolean MPE_End()
     printMissingMaterialsInDict();
     clearMaterialDict();
 
-    if(editMap->endEditing())
-    {
-        editMapInited = false;
-
-        lastBuiltMapResult = true; // Success.
-    }
-    else
-    {
-        // Darn, clean up...
-        delete editMap; editMap = 0;
-
-        lastBuiltMapResult = false; // Failed :$
-    }
-
-    return lastBuiltMapResult;
+    // Note the map is left in an editable state in case the caller decides
+    // they aren't finished after all...
+    return true;
 }
 
 #undef MPE_VertexCreate

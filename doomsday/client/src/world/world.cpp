@@ -332,15 +332,21 @@ DENG2_PIMPL(World)
 
         // A converter signalled success.
 
+        // End the conversion process (if not already).
+        MPE_End();
+
         // Output a human-readable log of any issues encountered in the process.
         reporter.writeLog();
 
-        // Were we able to produce a valid map from the data it provided?
-        if(!MPE_GetLastBuiltMapResult())
-            return 0;
-
         // Take ownership of the map.
-        /*newMap =*/ MPE_TakeMap();
+        newMap = MPE_TakeMap();
+
+        if(!newMap->endEditing())
+        {
+            // Darn, not usable? Clean up...
+            delete newMap;
+            return 0;
+        }
 
         // Generate the old unique map id.
         File1 &markerLump       = App_FileSystem().nameIndex().lump(markerLumpNum);

@@ -36,6 +36,4 @@ de::Map *MPE_Map();
  */
 de::Map *MPE_TakeMap();
 
-bool MPE_GetLastBuiltMapResult();
-
 #endif // DENG_WORLD_EDITMAP_H
