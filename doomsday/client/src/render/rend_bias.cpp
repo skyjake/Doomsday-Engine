@@ -252,29 +252,20 @@ void SB_Clear()
     numSources = 0;
 }
 
-void SB_InitForMap(char const *uniqueID)
+/**
+ * Load light sources for the @a map from definitions.
+ */
+static void loadSources(Map const &map)
 {
-    Time begunAt;
-
-    LOG_AS("SB_InitForMap");
-
-    Map &map = App_World().map();
-
     // Start with no sources whatsoever.
     numSources = 0;
-
-    if(biasSurfaceBlockSet)
-        ZBlockSet_Delete(biasSurfaceBlockSet);
-
-    biasSurfaceBlockSet = ZBlockSet_New(sizeof(BiasSurface), 512, PU_APPSTATIC);
-    surfaces = NULL;
 
     // Check all the loaded Light definitions for any matches.
     for(int i = 0; i < defs.count.lights.num; ++i)
     {
         ded_light_t *def = &defs.lights[i];
 
-        if(def->state[0] || stricmp(uniqueID, def->uniqueMapID))
+        if(def->state[0] || stricmp(map.oldUniqueId(), def->uniqueMapID))
             continue;
 
         if(SB_NewSourceAt(def->offset[VX], def->offset[VY], def->offset[VZ],
@@ -282,9 +273,20 @@ void SB_InitForMap(char const *uniqueID)
                           def->lightLevel[1], def->color) == -1)
             break;
     }
+}
 
-    // Create biassurfaces for all current worldmap surfaces.
-    uint numVertIllums = 0;
+/**
+ * Assign a bias surface for each surface in @a map.
+ */
+static void prepareSurfaces(Map &map)
+{
+    if(biasSurfaceBlockSet)
+        ZBlockSet_Delete(biasSurfaceBlockSet);
+
+    biasSurfaceBlockSet = ZBlockSet_New(sizeof(BiasSurface), 512, PU_APPSTATIC);
+    surfaces = 0;
+
+    size_t numVertIllums = 0;
 
     // First, determine the total number of vertexillum_ts we need.
     foreach(Segment *segment, map.segments())
@@ -310,7 +312,7 @@ void SB_InitForMap(char const *uniqueID)
 
     // Allocate and initialize the vertexillum_ts.
     vertexillum_t *illums = (vertexillum_t *) Z_Calloc(sizeof(*illums) * numVertIllums, PU_MAP, 0);
-    for(uint i = 0; i < numVertIllums; ++i)
+    for(size_t i = 0; i < numVertIllums; ++i)
     {
         SB_InitVertexIllum(&illums[i]);
     }
@@ -367,6 +369,18 @@ void SB_InitForMap(char const *uniqueID)
             segment->setBiasSurface(i, bsuf);
         }
     }
+}
+
+void SB_InitForMap()
+{
+    Time begunAt;
+
+    LOG_AS("SB_InitForMap");
+
+    Map &map = App_World().map();
+
+    loadSources(map);
+    prepareSurfaces(map);
 
     LOG_INFO(String("Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 }

@@ -25,6 +25,8 @@
 #include <de/vector1.h> /// @todo Remove me
 #include <de/Vector>
 
+#include "world/map.h"
+
 struct rendpoly_s;
 struct rvertex_s;
 struct ColorRawf_s;
@@ -94,13 +96,16 @@ DENG_EXTERN_C int numSources;
 /**
  * Register console variables for Shadow Bias.
  */
-void SB_Register(void);
+void SB_Register();
 
 /**
- * Initializes the bias lights according to the loaded Light
- * definitions.
+ * Initializes bias lighting for the "current" map. New light sources are
+ * initialized from the loaded Light definitions. Map surfaces are prepared
+ * for tracking rays.
+ *
+ * Must be called before rendering a map frame with bias lighting enabled.
  */
-void SB_InitForMap(char const *uniqueId);
+void SB_InitForMap();
 
 void SB_InitVertexIllum(vertexillum_t *villum);
 
@@ -115,9 +120,9 @@ void SB_SurfaceMoved(BiasSurface *bsuf);
  * frame.  Changed lights cause the tracker bits to the set for all
  * hedges and planes.
  */
-void SB_BeginFrame(void);
+void SB_BeginFrame();
 
-void SB_EndFrame(void);
+void SB_EndFrame();
 
 /**
  * Surface can be a either a wall or a plane (ceiling or a floor).
@@ -169,7 +174,7 @@ void SB_Delete(int which);
 /**
  * Removes ALL bias light sources on the map.
  */
-void SB_Clear(void);
+void SB_Clear();
 
 /**
  * @return  Ptr to the bias light source for the given id.

@@ -2662,7 +2662,7 @@ void Map::update()
     if(!mapInfo)
     {
         // Use the default def instead.
-        Uri defaultDefUri(RC_NULL, "*");
+        Uri defaultDefUri(Path("*"));
         mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&defaultDefUri));
     }
 

@@ -457,7 +457,7 @@ DENG2_PIMPL(World)
         if(!mapInfo)
         {
             // Use the default def instead.
-            Uri defaultMapUri("*", RC_NULL);
+            Uri defaultMapUri(Path("*"));
             mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&defaultMapUri));
         }
 
@@ -539,13 +539,14 @@ DENG2_PIMPL(World)
 
             if(mobj_t *mo = ddpl.mo)
             {
-                BspLeaf &bspLeaf = map->bspLeafAt(mo->origin);
+                Sector &sector = map->bspLeafAt(mo->origin).sector();
+
 #ifdef __CLIENT__
-                if(mo->origin[VZ] >= bspLeaf.sector().floor().visHeight() &&
-                   mo->origin[VZ] <  bspLeaf.sector().ceiling().visHeight() - 4)
+                if(mo->origin[VZ] >= sector.floor().visHeight() &&
+                   mo->origin[VZ] <  sector.ceiling().visHeight() - 4)
 #else
-                if(mo->origin[VZ] >= bspLeaf.sector().floor().height() &&
-                   mo->origin[VZ] <  bspLeaf.sector().ceiling().height() - 4)
+                if(mo->origin[VZ] >= sector.floor().height() &&
+                   mo->origin[VZ] <  sector.ceiling().height() - 4)
 #endif
                 {
                     ddpl.inVoid = false;
@@ -595,10 +596,8 @@ DENG2_PIMPL(World)
         R_InitObjlinkBlockmapForMap();
         R_InitShadowProjectionListsForMap(); // Projected mobj shadows.
         LO_InitForMap(); // Lumobj management.
-        VL_InitForMap(); // Converted vlights (from lumobjs) management.
-
-        // Tell shadow bias to initialize the bias light sources.
-        SB_InitForMap(map->oldUniqueId());
+        VL_InitForMap(); // Converted vlights (from lumobjs).
+        SB_InitForMap(); // Shadow bias sources and surfaces.
 
         // Restart all material animations.
         App_Materials().restartAllAnimations();
