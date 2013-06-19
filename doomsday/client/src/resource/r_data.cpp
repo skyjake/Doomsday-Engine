@@ -712,7 +712,7 @@ void R_InitCompositeTextures()
 
     DENG_ASSERT(texs.isEmpty());
 
-    LOG_INFO(String("R_InitCompositeTextures: Done in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
+    LOG_INFO(String("R_InitCompositeTextures: Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 }
 
 void R_InitFlatTextures()
@@ -786,7 +786,7 @@ void R_InitFlatTextures()
     /// @todo Defer until necessary (manifest texture is first referenced).
     deriveAllTexturesInScheme("Flats");
 
-    LOG_INFO(String("R_InitFlatTetxures: Done in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
+    LOG_INFO(String("R_InitFlatTetxures: Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 }
 
 /// Returns @c true iff @a name is a well-formed sprite name.

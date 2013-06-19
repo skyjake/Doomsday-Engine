@@ -176,7 +176,7 @@ bool LoadBlockmap(MapLumpInfo* lumpInfo)
     map->blockMap = blockmap;
 
     // How much time did we spend?
-    LOG_INFO("  Done in %.2f seconds.") << ((Timer_RealMilliseconds() - startTime) / 1000.0f);
+    LOG_INFO("  Completed in %.2f seconds.") << ((Timer_RealMilliseconds() - startTime) / 1000.0f);
 
     return true;
 

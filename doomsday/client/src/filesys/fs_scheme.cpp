@@ -365,7 +365,7 @@ void FS1::Scheme::rebuild()
 
     d->nameHashIsDirty = false;
 
-    // LOG_INFO("Done in %.2f seconds.") << (Timer_RealMilliseconds() - startTime) / 1000.0f;
+    // LOG_INFO("Completed in %.2f seconds.") << (Timer_RealMilliseconds() - startTime) / 1000.0f;
 
 /*#if _DEBUG
     PathTree::debugPrint(d->directory);

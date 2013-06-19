@@ -107,7 +107,7 @@ void Sys_Init(void)
     VERBOSE( Con_Message("Initializing Network subsystem...") )
     N_Init();
 
-    VERBOSE2( Con_Message("Sys_Init: Done in %.2f seconds.", (Timer_RealMilliseconds() - startTime) / 1000.0f) );
+    VERBOSE2( Con_Message("Sys_Init: Completed in %.2f seconds.", (Timer_RealMilliseconds() - startTime) / 1000.0f) );
 }
 
 boolean Sys_IsShuttingDown(void)

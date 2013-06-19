@@ -1402,7 +1402,7 @@ void Models_Init(void)
         me->selectNext = closest;
     }
 
-    LOG_INFO("Models_Init: Done in %.2f seconds.") << (Timer_RealMilliseconds() - usedTime) / 1000.0f;
+    LOG_INFO("Models_Init: Completed in %.2f seconds.") << (Timer_RealMilliseconds() - usedTime) / 1000.0f;
 }
 
 void Models_Shutdown(void)

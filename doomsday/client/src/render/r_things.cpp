@@ -254,7 +254,7 @@ static void buildSprites()
         buildSprite(iter.next());
     }
 
-    LOG_INFO(String("buildSprites: Done in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
+    LOG_INFO(String("buildSprites: Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 }
 
 /**
@@ -406,7 +406,7 @@ void R_InitSprites()
     BlockSet_Delete(spriteRecordFrameBlockSet); spriteRecordFrameBlockSet = 0;
     numSpriteRecords = 0;
 
-    LOG_INFO(String("R_InitSprites: Done in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
+    LOG_INFO(String("R_InitSprites: Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 }
 
 void R_ShutdownSprites()

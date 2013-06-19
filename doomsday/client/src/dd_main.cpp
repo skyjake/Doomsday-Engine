@@ -2013,7 +2013,7 @@ boolean DD_Init(void)
             Con_Message("  Processing \"%s\"...", F_PrettyPath(arg));
             Con_ParseCommands(arg);
         }
-        VERBOSE( Con_Message("  Done in %.2f seconds.", (Timer_RealMilliseconds() - startTime) / 1000.0f) );
+        VERBOSE( Con_Message("  Completed in %.2f seconds.", (Timer_RealMilliseconds() - startTime) / 1000.0f) );
     }
 
     // A console command on the command line?
@@ -2146,7 +2146,7 @@ static int DD_StartupWorker(void* /*parm*/)
             Con_Message("  Processing \"%s\"...", F_PrettyPath(arg));
             Con_ParseCommands(arg);
         }
-        VERBOSE( Con_Message("  Done in %.2f seconds.", (Timer_RealMilliseconds() - startTime) / 1000.0f) );
+        VERBOSE( Con_Message("  Completed in %.2f seconds.", (Timer_RealMilliseconds() - startTime) / 1000.0f) );
     }
 
     /*
