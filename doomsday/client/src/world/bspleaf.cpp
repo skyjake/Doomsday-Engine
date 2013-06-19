@@ -123,7 +123,7 @@ DENG2_PIMPL(BspLeaf)
         {
             for(int i = 0; i < sector->planeCount(); ++i)
             {
-                SB_DestroySurface(biasSurfaces[i]);
+                SB_DestroySurface(*biasSurfaces[i]);
             }
             Z_Free(biasSurfaces);
         }
@@ -521,7 +521,7 @@ void BspLeaf::setBiasSurface(int groupId, BiasSurface *biasSurface)
     }
     else if(d->biasSurfaces[groupId])
     {
-        SB_DestroySurface(d->biasSurfaces[groupId]);
+        SB_DestroySurface(*d->biasSurfaces[groupId]);
     }
 
     d->biasSurfaces[groupId] = biasSurface;

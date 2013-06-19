@@ -34,32 +34,36 @@
 
 using namespace de;
 
+static float const biasIgnoreLimit = .005f;
+
 BEGIN_PROF_TIMERS()
   PROF_BIAS_UPDATE
 END_PROF_TIMERS()
 
-typedef struct affection_s {
+struct Affection
+{
     float intensities[MAX_BIAS_AFFECTED];
     int numFound;
     biasaffection_t *affected;
-} affection_t;
+};
 
 void SB_EvalPoint(float light[4], vertexillum_t *illum, biasaffection_t *affectedSources,
     Vector3d const &point, Vector3f const &normal);
 
-int useBias;
-int numSources;
+int useBias; //cvar
+
+static int useSightCheck = true; //cvar
+static float biasMin = .85f; //cvar
+static float biasMax = 1.f; //cvar
+static int doUpdateAffected = true; //cvar
+static int lightSpeed = 130; //cvar
+
 uint currentTimeSB;
 
+int numSources;
 static source_t sources[MAX_BIAS_LIGHTS];
 static int numSourceDelta;
 
-static int useSightCheck = true;
-static float biasMin = .85f;
-static float biasMax = 1.f;
-static int doUpdateAffected = true;
-static float biasIgnoreLimit = .005f;
-static int lightSpeed = 130;
 static uint lastChangeOnFrame;
 
 /**
@@ -88,77 +92,52 @@ void SB_Register()
     C_VAR_INT("rend-dev-bias-sight", &useSightCheck, CVF_NO_ARCHIVE, 0, 1);
 
     C_VAR_INT("rend-dev-bias-affected", &doUpdateAffected, CVF_NO_ARCHIVE, 0, 1);
-
-/*    C_VAR_INT("rend-dev-bias-solo", &editSelector, CVF_NO_ARCHIVE, -1, 255);*/
-}
-
-static inline BiasSurface *allocBiasSurface()
-{
-    if(biasSurfaceBlockSet)
-    {
-        // Use the block allocator.
-        BiasSurface *bsuf = (BiasSurface *) ZBlockSet_Allocate(biasSurfaceBlockSet);
-        std::memset(bsuf, 0, sizeof(*bsuf));
-        return bsuf;
-    }
-
-    return (BiasSurface *) M_Calloc(sizeof(BiasSurface));
-}
-
-static inline void freeBiasSurface(BiasSurface *bsuf)
-{
-    if(biasSurfaceBlockSet)
-    {
-        // Ignore, it'll be free'd along with the block allocator.
-        return;
-    }
-
-    M_Free(bsuf);
 }
 
 BiasSurface *SB_CreateSurface()
 {
-    BiasSurface *bsuf = allocBiasSurface();
+    DENG_ASSERT(biasSurfaceBlockSet != 0);
 
-    // Link it in to the global list.
+    BiasSurface *bsuf = (BiasSurface *) ZBlockSet_Allocate(biasSurfaceBlockSet);
+    zapPtr(bsuf);
+
+    // Link it in the global list.
     bsuf->next = surfaces;
     surfaces = bsuf;
 
     return bsuf;
 }
 
-void SB_DestroySurface(BiasSurface *bsuf)
+void SB_DestroySurface(BiasSurface &bsuf)
 {
-    if(!bsuf) return;
-
     // Unlink this surface from the global list.
+    /// @todo Optimize: This O(n) algorithm is entirely inadequate given the scale
+    /// of "modern" maps which can often require upward of 150k surfaces.
     if(surfaces)
     {
-        if(bsuf == surfaces)
+        if(&bsuf == surfaces)
         {
             surfaces = surfaces->next;
         }
-        else if(surfaces->next)
+        else
         {
-            BiasSurface *p = surfaces->next, *last = surfaces;
-
-            do
+            BiasSurface *last = surfaces;
+            BiasSurface *p = last;
+            while((p = p->next))
             {
-                if(p == bsuf)
+                if(p == &bsuf)
                 {
                     last->next = p->next;
                     break;
                 }
-
                 last = p;
-                p = p->next;
-            } while(p);
+            }
         }
     }
 
     /// Bias surfaces and vertex illum data is block-allocated.
-    //Z_Free(bsuf->illum);
-    //Z_Free(bsuf);
+    //Z_Free(bsuf.illum);
+    //Z_Free(&bsuf);
 }
 
 int SB_NewSourceAt(coord_t x, coord_t y, coord_t z, float size, float minLight,
@@ -314,7 +293,7 @@ static void prepareSurfaces(Map &map)
     vertexillum_t *illums = (vertexillum_t *) Z_Calloc(sizeof(*illums) * numVertIllums, PU_MAP, 0);
     for(size_t i = 0; i < numVertIllums; ++i)
     {
-        SB_InitVertexIllum(&illums[i]);
+        SB_VertexIllumInit(illums[i]);
     }
 
     // Allocate bias surfaces and attach vertexillum_ts.
@@ -409,7 +388,7 @@ void SB_SetColor(float *dest, float *src)
     }
 }
 
-static void SB_AddAffected(affection_t *aff, uint sourceIdx, float intensity)
+static void SB_AddAffected(Affection *aff, uint sourceIdx, float intensity)
 {
     DENG_ASSERT(aff);
 
@@ -435,33 +414,29 @@ static void SB_AddAffected(affection_t *aff, uint sourceIdx, float intensity)
     }
 }
 
-void SB_InitVertexIllum(vertexillum_t *villum)
+void SB_VertexIllumInit(vertexillum_t &illum)
 {
-    DENG_ASSERT(villum);
-
-    villum->flags |= VIF_STILL_UNSEEN;
+    illum.flags |= VIF_STILL_UNSEEN;
 
     for(int i = 0; i < MAX_BIAS_AFFECTED; ++i)
-        villum->casted[i].source = -1;
-}
-
-void SB_SurfaceInit(BiasSurface *bsuf)
-{
-    DENG_ASSERT(bsuf);
-
-    for(uint i = 0; i < bsuf->size; ++i)
     {
-        SB_InitVertexIllum(&bsuf->illum[i]);
+        illum.casted[i].source = -1;
     }
 }
 
-void SB_SurfaceMoved(BiasSurface *bsuf)
+void SB_SurfaceInit(BiasSurface &bsuf)
 {
-    DENG_ASSERT(bsuf);
-
-    for(int i = 0; i < MAX_BIAS_AFFECTED && bsuf->affected[i].source >= 0; ++i)
+    for(uint i = 0; i < bsuf.size; ++i)
     {
-        sources[bsuf->affected[i].source].flags |= BLF_CHANGED;
+        SB_VertexIllumInit(bsuf.illum[i]);
+    }
+}
+
+void SB_SurfaceMoved(BiasSurface &bsuf)
+{
+    for(int i = 0; i < MAX_BIAS_AFFECTED && bsuf.affected[i].source >= 0; ++i)
+    {
+        sources[bsuf.affected[i].source].flags |= BLF_CHANGED;
     }
 }
 
@@ -487,7 +462,7 @@ static void updateAffected(BiasSurface *bsuf, Vector2d const &from,
 
     bsuf->updated = lastChangeOnFrame;
 
-    affection_t aff;
+    Affection aff;
     aff.affected = bsuf->affected;
     aff.numFound = 0;
     std::memset(aff.affected, -1, sizeof(bsuf->affected));
@@ -541,7 +516,7 @@ static void updateAffected2(BiasSurface *bsuf, struct rvertex_s const *rvertices
 
     bsuf->updated = lastChangeOnFrame;
 
-    affection_t aff;
+    Affection aff;
     aff.affected = bsuf->affected;
     aff.numFound = 0;
     std::memset(aff.affected, -1, sizeof(bsuf->affected)); // array of MAX_BIAS_AFFECTED

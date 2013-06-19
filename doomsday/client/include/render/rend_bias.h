@@ -45,8 +45,8 @@ typedef struct vilight_s {
 #define VIF_STILL_UNSEEN    0x2 ///< The color of the vertex is still unknown.
 
 typedef struct vertexillum_s {
-    float color[3]; // Current color of the vertex.
-    float dest[3]; // Destination color of the vertex.
+    float color[3]; // Current light at the vertex.
+    float dest[3]; // Destination light at the vertex (interpolated to).
     uint updatetime; // When the value was calculated.
     short flags;
     vilight_t casted[MAX_BIAS_AFFECTED];
@@ -107,13 +107,15 @@ void SB_Register();
  */
 void SB_InitForMap();
 
-void SB_InitVertexIllum(vertexillum_t *villum);
+void SB_VertexIllumInit(vertexillum_t &illum);
 
-BiasSurface *SB_CreateSurface(void);
+BiasSurface *SB_CreateSurface();
 
-void SB_DestroySurface(BiasSurface *bsuf);
+void SB_DestroySurface(BiasSurface &bsuf);
 
-void SB_SurfaceMoved(BiasSurface *bsuf);
+//void SB_SurfaceInit(BiasSurface &bsuf);
+
+void SB_SurfaceMoved(BiasSurface &bsuf);
 
 /**
  * Do initial processing that needs to be done before rendering a

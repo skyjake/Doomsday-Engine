@@ -181,11 +181,11 @@ DENG2_OBSERVES(Plane, HeightChange)
 
                     for(uint i = 0; i < 3; ++i)
                     {
-                        SB_SurfaceMoved(&seg->biasSurface(i));
+                        SB_SurfaceMoved(seg->biasSurface(i));
                     }
                 }
 
-                SB_SurfaceMoved(&bspLeaf->biasSurface(plane.inSectorIndex()));
+                SB_SurfaceMoved(bspLeaf->biasSurface(plane.inSectorIndex()));
             }
         }
 
