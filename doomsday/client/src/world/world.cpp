@@ -98,8 +98,8 @@ DENG2_OBSERVES(Map, OneWayWindowFound)
 public:
     MapConversionReporter() {}
 
-    inline int unclosedSectorCount() const { return (int)_unclosedSectors.size(); }
-    inline int oneWayWindowCount() const { return (int)_oneWayWindows.size(); }
+    inline int unclosedSectorCount() const { return int( _unclosedSectors.size() ); }
+    inline int oneWayWindowCount() const   { return int( _oneWayWindows.size() ); }
 
     void writeLog()
     {
@@ -109,7 +109,7 @@ public:
             for(int i = 0; i < numToLog; ++i, ++it)
             {
                 LOG_WARNING("Sector #%d is unclosed near %s.")
-                    << it->first->indexInMap() << it->second.asText();
+                    << it->first->indexInArchive() << it->second.asText();
             }
 
             if(numToLog < unclosedSectorCount())
@@ -122,7 +122,7 @@ public:
             for(int i = 0; i < numToLog; ++i, ++it)
             {
                 LOG_VERBOSE("Line #%d seems to be a One-Way Window (back faces sector #%d).")
-                    << it->first->indexInMap() << it->second->indexInMap();
+                    << it->first->indexInArchive() << it->second->indexInArchive();
             }
 
             if(numToLog < oneWayWindowCount())
