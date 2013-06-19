@@ -694,7 +694,7 @@ bool World::changeMap(de::Uri const &uri)
     Map *newMap = d->loadMap(uri);
 
     // The map may still be in an editable state -- switch to playable.
-    if(newMap->isEditable())
+    if(newMap && newMap->isEditable())
     {
         // Configure a reporter to observe the process.
         /// @todo Make the reporter available during the format conversion.
@@ -707,6 +707,10 @@ bool World::changeMap(de::Uri const &uri)
 
         // Output a human-readable log of any issues encountered in the process.
         reporter.writeLog();
+
+        // We are no longer interested in reports about this map.
+        newMap->audienceForOneWayWindowFound   -= reporter;
+        newMap->audienceForUnclosedSectorFound -= reporter;
 
         if(!mapIsPlayable)
         {
