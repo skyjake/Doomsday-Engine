@@ -29,6 +29,8 @@
 #include <de/memoryzone.h>
 #include <de/vector1.h>
 
+#include <de/Rectangle>
+
 #include "de_platform.h"
 #include "de_base.h"
 #include "de_console.h" // Con_GetInteger
@@ -585,73 +587,6 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
         return bspRoot != 0;
     }
 
-    void finishLines()
-    {
-        foreach(Line *line, lines)
-        for(int i = 0; i < 2; ++i)
-        {
-            line->side(i).updateSurfaceNormals();
-            line->side(i).updateAllSoundEmitterOrigins();
-        }
-    }
-
-    void finishSectors()
-    {
-        foreach(Sector *sector, sectors)
-        {
-            sector->buildBspLeafs(self);
-            sector->buildSides(self);
-            sector->updateAABox();
-            sector->updateRoughArea();
-
-            /*
-             * Chain sound emitters (ddmobj_base_t) owned by all Surfaces in the
-             * sector-> These chains are used for efficiently traversing all of the
-             * sound emitters in a sector (e.g., when stopping all sounds emitted
-             * in the sector).
-             */
-            ddmobj_base_t &emitter = sector->soundEmitter();
-
-            // Clear the head of the emitter chain.
-            emitter.thinker.next = emitter.thinker.prev = 0;
-
-            // Link plane surface emitters:
-            foreach(Plane *plane, sector->planes())
-            {
-                sector->linkSoundEmitter(plane->soundEmitter());
-            }
-
-            // Link wall surface emitters:
-            foreach(Line::Side *side, sector->sides())
-            {
-                if(side->hasSections())
-                {
-                    sector->linkSoundEmitter(side->middleSoundEmitter());
-                    sector->linkSoundEmitter(side->bottomSoundEmitter());
-                    sector->linkSoundEmitter(side->topSoundEmitter());
-                }
-                if(side->line().isSelfReferencing() && side->back().hasSections())
-                {
-                    Line::Side &back = side->back();
-                    sector->linkSoundEmitter(back.middleSoundEmitter());
-                    sector->linkSoundEmitter(back.bottomSoundEmitter());
-                    sector->linkSoundEmitter(back.topSoundEmitter());
-                }
-            }
-
-            sector->updateSoundEmitterOrigin();
-        }
-    }
-
-    void finishPlanes()
-    {
-        foreach(Sector *sector, sectors)
-        foreach(Plane *plane, sector->planes())
-        {
-            plane->updateSoundEmitterOrigin();
-        }
-    }
-
     /**
      * Construct an initial (empty) line blockmap for "this" map.
      *
@@ -671,6 +606,12 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
         lineBlockmap.reset(new Blockmap(expandedBounds, Vector2ui(CELL_SIZE, CELL_SIZE)));
 
         LOG_INFO("Line blockmap dimensions:") << lineBlockmap->dimensions().asText();
+
+        // Populate the blockmap.
+        foreach(Line *line, lines)
+        {
+            linkLineInBlockmap(*line);
+        }
 
 #undef CELL_SIZE
 #undef BLOCKMAP_MARGIN
@@ -925,6 +866,12 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
         bspLeafBlockmap.reset(new Blockmap(expandedBounds, Vector2ui(CELL_SIZE, CELL_SIZE)));
 
         LOG_INFO("BSP leaf blockmap dimensions:") << bspLeafBlockmap->dimensions().asText();
+
+        // Populate the blockmap.
+        foreach(BspLeaf *bspLeaf, bspLeafs)
+        {
+            linkBspLeafInBlockmap(*bspLeaf);
+        }
 
 #undef CELL_SIZE
 #undef BLOCKMAP_MARGIN
@@ -3156,18 +3103,18 @@ bool Map::endEditing()
     if(!d->editingEnabled)
         return true; // Huh?
 
-    LOG_DEBUG("New elements: %d Vertexes, %d Lines and %d Sectors.")
-        << d->mesh.vertexCount()
-        << d->editable.lines.count()
-        << d->editable.sectors.count();
+    d->editingEnabled = false;
+
+    LOG_DEBUG("New elements: %d Vertexes, %d Lines, %d Polyobjs and %d Sectors.")
+        << d->mesh.vertexCount()        << d->editable.lines.count()
+        << d->editable.polyobjs.count() << d->editable.sectors.count();
 
     /*
      * Perform cleanup on the new map elements.
      */
-
     pruneVertexes(d->mesh, d->editable.lines);
 
-    /// Ensure lines with only one sector are flagged as blocking.
+    // Ensure lines with only one sector are flagged as blocking.
     foreach(Line *line, d->editable.lines)
     {
         if(!line->hasFrontSector() || !line->hasBackSector())
@@ -3226,50 +3173,84 @@ bool Map::endEditing()
         polyobj->updateOriginalVertexCoords();
     }
 
+    // Determine the map bounds.
     d->updateBounds();
-    AABoxd const &mapBounds = bounds();
-    LOG_INFO("Bounds min:%s max:%s.")
-        << Vector2d(mapBounds.min).asText()
-        << Vector2d(mapBounds.max).asText();
+    LOG_INFO("Line geometry bounds:") << Rectangled(d->bounds.min, d->bounds.max).asText();
 
-    /*
-     * Build blockmaps.
-     */
+    // Build a line blockmap.
     d->initLineBlockmap();
-    foreach(Line *line, lines())
-    {
-        d->linkLineInBlockmap(*line);
-    }
+
+    // Build a BSP.
+    if(!d->buildBsp())
+        return false;
 
     // The mobj and polyobj blockmaps are maintained dynamically.
     d->initMobjBlockmap();
     d->initPolyobjBlockmap();
 
-    /*
-     * Build a BSP.
-     */
-    bool builtOK = d->buildBsp();
-
-    // Destroy the rest of editable map, we are finished with it.
-    d->editable.clearAll();
-
-    d->editingEnabled = false;
-
-    if(!builtOK)
+    // Finish lines.
+    foreach(Line *line, d->lines)
+    for(int i = 0; i < 2; ++i)
     {
-        return false;
+        line->side(i).updateSurfaceNormals();
+        line->side(i).updateAllSoundEmitterOrigins();
     }
 
-    d->finishLines();
-    d->finishSectors();
-    d->finishPlanes();
+    // Finish sectors.
+    foreach(Sector *sector, d->sectors)
+    {
+        sector->buildBspLeafs(*this);
+        sector->buildSides(*this);
+        sector->updateAABox();
+        sector->updateRoughArea();
+
+        /*
+         * Chain sound emitters (ddmobj_base_t) owned by all Surfaces in the
+         * sector-> These chains are used for efficiently traversing all of the
+         * sound emitters in a sector (e.g., when stopping all sounds emitted
+         * in the sector).
+         */
+        ddmobj_base_t &emitter = sector->soundEmitter();
+
+        // Clear the head of the emitter chain.
+        emitter.thinker.next = emitter.thinker.prev = 0;
+
+        // Link plane surface emitters:
+        foreach(Plane *plane, sector->planes())
+        {
+            sector->linkSoundEmitter(plane->soundEmitter());
+        }
+
+        // Link wall surface emitters:
+        foreach(Line::Side *side, sector->sides())
+        {
+            if(side->hasSections())
+            {
+                sector->linkSoundEmitter(side->middleSoundEmitter());
+                sector->linkSoundEmitter(side->bottomSoundEmitter());
+                sector->linkSoundEmitter(side->topSoundEmitter());
+            }
+            if(side->line().isSelfReferencing() && side->back().hasSections())
+            {
+                Line::Side &back = side->back();
+                sector->linkSoundEmitter(back.middleSoundEmitter());
+                sector->linkSoundEmitter(back.bottomSoundEmitter());
+                sector->linkSoundEmitter(back.topSoundEmitter());
+            }
+        }
+
+        sector->updateSoundEmitterOrigin();
+    }
+
+    // Finish planes.
+    foreach(Sector *sector, d->sectors)
+    foreach(Plane *plane, sector->planes())
+    {
+        plane->updateSoundEmitterOrigin();
+    }
 
     // We can now initialize the BSP leaf blockmap.
     d->initBspLeafBlockmap();
-    foreach(BspLeaf *bspLeaf, bspLeafs())
-    {
-        d->linkBspLeafInBlockmap(*bspLeaf);
-    }
 
 #ifdef __CLIENT__
     S_DetermineBspLeafsAffectingSectorReverb(this);

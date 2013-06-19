@@ -338,7 +338,7 @@ DENG2_PIMPL(World)
         // Output a human-readable log of any issues encountered in the process.
         reporter.writeLog();
 
-        // Take ownership of the map.
+        // Take ownership of the map and attempt to switch to a playable state.
         newMap = MPE_TakeMap();
 
         if(!newMap->endEditing())
@@ -444,18 +444,24 @@ DENG2_PIMPL(World)
     {
         // This is now the current map (if any).
         map = newMap;
-
         if(!map) return;
 
-#define TABBED(A, B) "\n" _E(Ta) "  " << A << " " _E(Tb) << B
+#define TABBED(count, label) String(_E(Ta) "  %1 " _E(Tb) "%2\n").arg(count).arg(label)
 
-        LOG_INFO(_E(D) "Current map elements:" _E(.))
-                << TABBED("Vertexes",  map->vertexCount())
-                << TABBED("Lines",     map->lineCount())
-                << TABBED("Sectors",   map->sectorCount())
-                << TABBED("BSP Nodes", map->bspNodeCount())
-                << TABBED("BSP Leafs", map->bspLeafCount())
-                << TABBED("Segments",  map->segmentCount());
+        LOG_MSG(_E(b) "Current map elements:");
+        String str;
+        QTextStream os(&str);
+        os << TABBED(map->vertexCount(),  "Vertexes");
+        os << TABBED(map->lineCount(),    "Lines");
+        os << TABBED(map->polyobjCount(), "Polyobjs");
+        os << TABBED(map->sectorCount(),  "Sectors");
+        os << TABBED(map->bspNodeCount(), "BSP Nodes");
+        os << TABBED(map->bspLeafCount(), "BSP Leafs");
+        os << TABBED(map->segmentCount(), "Segments");
+
+        LOG_INFO("%s") << str.rightStrip();
+
+#undef TABBED
 
         // See what MapInfo says about this map.
         ded_mapinfo_t *mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s const *>(&map->uri()));

@@ -171,6 +171,7 @@ public:
 typedef Rectangle<Vector2i,  Vector2ui> Rectanglei;
 typedef Rectangle<Vector2ui, Vector2ui> Rectangleui;
 typedef Rectangle<Vector2f,  Vector2f>  Rectanglef;
+typedef Rectangle<Vector2d,  Vector2d>  Rectangled;
 
 } // namespace de
 

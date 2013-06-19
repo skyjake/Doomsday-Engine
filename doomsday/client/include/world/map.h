@@ -731,7 +731,12 @@ public:
      */
     bool isEditable() const;
 
-    /// @return @c true= a new BSP was built successfully for the map.
+    /**
+     * Switch the map from editable to non-editable (i.e., playable) state,
+     * incorporating any new map elements, (re)building the BSP, etc...
+     *
+     * @return  @c true= mode switch was completed successfully.
+     */
     bool endEditing();
 
     /**
