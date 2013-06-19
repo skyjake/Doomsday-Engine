@@ -327,11 +327,6 @@ DENG2_PIMPL(World)
         QByteArray uniqueIdUtf8 = uniqueId.toUtf8();
         newMap->setOldUniqueId(uniqueIdUtf8.constData());
 
-        // Configure a reporter to observe the conversion process.
-        MapConversionReporter reporter;
-        newMap->audienceForOneWayWindowFound   += reporter;
-        newMap->audienceForUnclosedSectorFound += reporter;
-
         // Ask each converter in turn whether the map format is recognizable
         // and if so to interpret and transfer it to us via the runtime map
         // editing interface.
@@ -342,9 +337,6 @@ DENG2_PIMPL(World)
 
         // End the conversion process (if not already).
         MPE_End();
-
-        // Output a human-readable log of any issues encountered in the process.
-        reporter.writeLog();
 
         // Take ownership of the map.
         return MPE_TakeMap();
@@ -422,19 +414,14 @@ DENG2_PIMPL(World)
     /**
      * Replace the current map with @a map.
      */
-    void changeMap(Map *newMap)
+    void makeCurrent(Map *newMap)
     {
         // This is now the current map (if any).
         map = newMap;
         if(!map) return;
 
-        // The map may still be in an editable state -- switch to playable.
-        if(!map->endEditing())
-        {
-            // Darn, not usable? Clean up...
-            delete map; map = 0;
-            return;
-        }
+        // We cannot make an editable map current.
+        DENG_ASSERT(!map->isEditable());
 
         // Should we cache this map?
         /*CacheRecord &rec = createCacheRecord(map->uri());
@@ -703,7 +690,33 @@ bool World::changeMap(de::Uri const &uri)
     // A new map is about to be setup.
     ddMapSetup = true;
 
-    d->changeMap(d->loadMap(uri));
+    // Load in the new map.
+    Map *newMap = d->loadMap(uri);
+
+    // The map may still be in an editable state -- switch to playable.
+    if(newMap->isEditable())
+    {
+        // Configure a reporter to observe the process.
+        /// @todo Make the reporter available during the format conversion.
+        MapConversionReporter reporter;
+        newMap->audienceForOneWayWindowFound   += reporter;
+        newMap->audienceForUnclosedSectorFound += reporter;
+
+        // Attempt the switch.
+        bool mapIsPlayable = newMap->endEditing();
+
+        // Output a human-readable log of any issues encountered in the process.
+        reporter.writeLog();
+
+        if(!mapIsPlayable)
+        {
+            // Darn, clean up...
+            delete newMap; newMap = 0;
+        }
+    }
+
+    // This is now the current map.
+    d->makeCurrent(newMap);
 
     // We've finished setting up the map.
     ddMapSetup = false;
