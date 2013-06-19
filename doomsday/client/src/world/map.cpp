@@ -478,7 +478,6 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
         // It begins...
         Time begunAt;
 
-        LOG_AS("Map::buildBsp");
         LOG_TRACE("Building BSP for \"%s\" with split cost factor %d...")
             << uri << bspSplitFactor;
 
@@ -509,7 +508,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
             // Build a new BSP!
             BspTreeNode *rootNode = partitioner.buildBsp(linesToBuildBspFor, mesh);
 
-            LOG_INFO("Built %d Nodes, %d Leafs, %d Segments and %d Vertexes."
+            LOG_INFO("BSP built: %d Nodes, %d Leafs, %d Segments and %d Vertexes."
                      "\nTree balance is %d:%d.")
                     << partitioner.numNodes()    << partitioner.numLeafs()
                     << partitioner.numSegments() << partitioner.numVertexes()
@@ -582,7 +581,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
         }
 
         // How much time did we spend?
-        LOG_INFO(String("Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
+        LOG_INFO(String("BSP built in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 
         return bspRoot != 0;
     }
@@ -3105,6 +3104,8 @@ bool Map::endEditing()
 
     d->editingEnabled = false;
 
+    LOG_AS("Map");
+    LOG_VERBOSE("Editing ended.");
     LOG_DEBUG("New elements: %d Vertexes, %d Lines, %d Polyobjs and %d Sectors.")
         << d->mesh.vertexCount()        << d->editable.lines.count()
         << d->editable.polyobjs.count() << d->editable.sectors.count();
@@ -3175,7 +3176,7 @@ bool Map::endEditing()
 
     // Determine the map bounds.
     d->updateBounds();
-    LOG_INFO("Line geometry bounds:") << Rectangled(d->bounds.min, d->bounds.max).asText();
+    LOG_INFO("Geometry bounds:") << Rectangled(d->bounds.min, d->bounds.max).asText();
 
     // Build a line blockmap.
     d->initLineBlockmap();

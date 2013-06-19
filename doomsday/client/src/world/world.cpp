@@ -297,6 +297,8 @@ DENG2_PIMPL(World)
 
     /**
      * Attempt JIT conversion of the map data with the help of a plugin.
+     * Note that the map is left in an editable state in case the caller
+     * wishes to perform any further changes.
      *
      * @return  Pointer to the converted Map; otherwise @c 0.
      */
@@ -319,6 +321,12 @@ DENG2_PIMPL(World)
         MPE_Begin(reinterpret_cast<uri_s const *>(&uri));
         Map *newMap = MPE_Map();
 
+        // Generate and attribute the old unique map id.
+        File1 &markerLump       = App_FileSystem().nameIndex().lump(markerLumpNum);
+        String uniqueId         = composeUniqueMapId(markerLump);
+        QByteArray uniqueIdUtf8 = uniqueId.toUtf8();
+        newMap->setOldUniqueId(uniqueIdUtf8.constData());
+
         // Configure a reporter to observe the conversion process.
         MapConversionReporter reporter;
         newMap->audienceForOneWayWindowFound   += reporter;
@@ -338,33 +346,8 @@ DENG2_PIMPL(World)
         // Output a human-readable log of any issues encountered in the process.
         reporter.writeLog();
 
-        // Take ownership of the map and attempt to switch to a playable state.
-        newMap = MPE_TakeMap();
-
-        if(!newMap->endEditing())
-        {
-            // Darn, not usable? Clean up...
-            delete newMap;
-            return 0;
-        }
-
-        // Generate the old unique map id.
-        File1 &markerLump       = App_FileSystem().nameIndex().lump(markerLumpNum);
-        String uniqueId         = composeUniqueMapId(markerLump);
-        QByteArray uniqueIdUtf8 = uniqueId.toUtf8();
-        newMap->setOldUniqueId(uniqueIdUtf8.constData());
-
-        // Are we caching this map?
-        /*if(mapCache)
-        {
-            // Ensure the destination directory exists.
-            F_MakePath(rec.cachePath.toUtf8().constData());
-
-            // Cache the map!
-            DAM_MapWrite(newMap, rec.cachePath);
-        }*/
-
-        return newMap;
+        // Take ownership of the map.
+        return MPE_TakeMap();
     }
 
 #if 0
@@ -407,7 +390,6 @@ DENG2_PIMPL(World)
      */
     Map *loadMap(Uri const &uri/*, bool forceRetry = false*/)
     {
-        LOG_MSG("Loading map \"%s\"...") << uri;
         LOG_AS("World::loadMap");
 
         // Record this map if we haven't already.
@@ -446,6 +428,26 @@ DENG2_PIMPL(World)
         map = newMap;
         if(!map) return;
 
+        // The map may still be in an editable state -- switch to playable.
+        if(!map->endEditing())
+        {
+            // Darn, not usable? Clean up...
+            delete map; map = 0;
+            return;
+        }
+
+        // Should we cache this map?
+        /*CacheRecord &rec = createCacheRecord(map->uri());
+        if(mapCache && !rec.dataAvailable)
+        {
+            // Ensure the destination directory exists.
+            F_MakePath(rec.cachePath.toUtf8().constData());
+
+            // Cache the map!
+            DAM_MapWrite(map, rec.cachePath);
+        }*/
+
+        // Print summary information about this map.
 #define TABBED(count, label) String(_E(Ta) "  %1 " _E(Tb) "%2\n").arg(count).arg(label)
 
         LOG_MSG(_E(b) "Current map elements:");
@@ -695,6 +697,8 @@ bool World::changeMap(de::Uri const &uri)
 
     // Are we just unloading the current map?
     if(uri.isEmpty()) return true;
+
+    LOG_MSG("Loading map \"%s\"...") << uri;
 
     // A new map is about to be setup.
     ddMapSetup = true;
