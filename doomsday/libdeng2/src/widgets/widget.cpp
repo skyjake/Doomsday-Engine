@@ -110,10 +110,14 @@ DotPath Widget::path() const
     String result;
     while(w)
     {
+        if(!result.isEmpty()) result = "." + result;
         if(!w->d->name.isEmpty())
         {
-            if(!result.isEmpty()) result = "." + result;
             result = w->d->name + result;
+        }
+        else
+        {
+            result = QString("0x%1").arg(dintptr(w), 0, 16) + result;
         }
         w = w->parent();
     }
