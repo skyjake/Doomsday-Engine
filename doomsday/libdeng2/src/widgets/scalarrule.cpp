@@ -32,20 +32,20 @@ ScalarRule::~ScalarRule()
     independentOf(_targetRule);
 }
 
-void ScalarRule::set(float target, de::TimeDelta transition)
+void ScalarRule::set(float target, TimeDelta transition, TimeDelta delay)
 {
     independentOf(_targetRule);
     _targetRule = 0;
 
     _animation.clock().audienceForPriorityTimeChange += this;
 
-    _animation.setValue(target, transition);
+    _animation.setValue(target, transition, delay);
     invalidate();
 }
 
-void ScalarRule::set(Rule const &target, TimeDelta transition)
+void ScalarRule::set(Rule const &target, TimeDelta transition, TimeDelta delay)
 {
-    set(target.value(), transition);
+    set(target.value(), transition, delay);
 
     // Keep a reference.
     _targetRule = &target;
@@ -55,6 +55,11 @@ void ScalarRule::set(Rule const &target, TimeDelta transition)
 void ScalarRule::setStyle(Animation::Style style)
 {
     _animation.setStyle(style);
+}
+
+void ScalarRule::setStyle(Animation::Style style, float bounceSpring)
+{
+    _animation.setStyle(style, bounceSpring);
 }
 
 void ScalarRule::shift(float delta)
