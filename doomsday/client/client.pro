@@ -347,6 +347,8 @@ DENG_HEADERS += \
     include/ui/widgets/lineeditwidget.h \
     include/ui/widgets/logwidget.h \
     include/ui/widgets/menuwidget.h \
+    include/ui/widgets/popupmenuwidget.h \
+    include/ui/widgets/popupwidget.h \
     include/ui/widgets/scrollareawidget.h \
     include/ui/widgets/styledlogsinkformatter.h \
     include/ui/widgets/taskbarwidget.h \
@@ -637,6 +639,8 @@ SOURCES += \
     src/ui/widgets/lineeditwidget.cpp \
     src/ui/widgets/logwidget.cpp \
     src/ui/widgets/menuwidget.cpp \
+    src/ui/widgets/popupmenuwidget.cpp \
+    src/ui/widgets/popupwidget.cpp \
     src/ui/widgets/scrollareawidget.cpp \
     src/ui/widgets/styledlogsinkformatter.cpp \
     src/ui/widgets/taskbarwidget.cpp \
