@@ -78,14 +78,14 @@ public:
     /**
      * Returns the index of the plane within the owning sector.
      */
-    int inSectorIndex() const;
+    int indexInSector() const;
 
     /**
      * Change the index of the plane within the owning sector.
      *
      * @param newIndex  New index to attribute the plane.
      */
-    void setInSectorIndex(int newIndex);
+    void setIndexInSector(int newIndex);
 
     /**
      * Returns @c true iff this is the floor plane of the owning sector.

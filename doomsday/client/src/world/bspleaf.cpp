@@ -51,8 +51,8 @@ DENG2_PIMPL(BspLeaf)
 {
     typedef QSet<Mesh *> Meshes;
 
-    /// Convex polygon geometry assigned to the BSP leaf (owned).
-    QScopedPointer<Mesh> polygon;
+    /// Convex polygon geometry attributed to the BSP leaf if any (not owned).
+    Face *poly;
 
     /// Additional meshes assigned to the BSP leaf (owned).
     Meshes extraMeshes;
@@ -100,6 +100,7 @@ DENG2_PIMPL(BspLeaf)
 
     Instance(Public *i, Sector *sector = 0)
         : Base(i),
+          poly(0),
           needUpdateClockwiseSegments(false),
           needUpdateAllSegments(false),
           sector(sector),
@@ -122,7 +123,7 @@ DENG2_PIMPL(BspLeaf)
         {
             for(int i = 0; i < sector->planeCount(); ++i)
             {
-                SB_DestroySurface(biasSurfaces[i]);
+                SB_DestroySurface(*biasSurfaces[i]);
             }
             Z_Free(biasSurfaces);
         }
@@ -135,45 +136,43 @@ DENG2_PIMPL(BspLeaf)
 
         clockwiseSegments.clear();
 
-        if(polygon.isNull())
-            return;
+        if(!poly) return;
 
-        Face const &face = self.face();
 #ifdef DENG2_QT_4_7_OR_NEWER
-        clockwiseSegments.reserve(face.hedgeCount());
+        clockwiseSegments.reserve(poly->hedgeCount());
 #endif
 
-        HEdge *hedge = face.hedge();
+        HEdge *hedge = poly->hedge();
         do
         {
             if(MapElement *elem = hedge->mapElement())
             {
                 clockwiseSegments.append(elem->as<Segment>());
             }
-        } while((hedge = &hedge->next()) != face.hedge());
+        } while((hedge = &hedge->next()) != poly->hedge());
 
 #ifdef DENG_DEBUG
         // See if we received a partial geometry...
         {
             int discontinuities = 0;
-            HEdge *hedge = face.hedge();
+            HEdge *hedge = poly->hedge();
             do
             {
                 if(hedge->next().origin() != hedge->twin().origin())
                 {
                     discontinuities++;
                 }
-            } while((hedge = &hedge->next()) != face.hedge());
+            } while((hedge = &hedge->next()) != poly->hedge());
 
             if(discontinuities)
             {
                 LOG_WARNING("Face geometry for BSP leaf [%p] at %s in sector %i "
                             "is not contiguous (%i gaps/overlaps).\n%s")
                     << de::dintptr(&self)
-                    << face.center().asText()
+                    << poly->center().asText()
                     << sector->indexInArchive()
                     << discontinuities
-                    << face.description();
+                    << poly->description();
             }
         }
 #endif
@@ -236,12 +235,11 @@ DENG2_PIMPL(BspLeaf)
     {
 #define MIN_TRIANGLE_EPSILON  (0.1) ///< Area
 
-        Face const &face = self.face();
-        HEdge *firstNode = face.hedge();
+        HEdge *firstNode = poly->hedge();
 
         fanBase = firstNode;
 
-        if(face.hedgeCount() > 3)
+        if(poly->hedgeCount() > 3)
         {
             // Splines with higher vertex counts demand checking.
             Vertex const *base, *a, *b;
@@ -302,44 +300,45 @@ BspLeaf::BspLeaf(Sector *sector)
 #endif
 }
 
-bool BspLeaf::hasFace() const
+bool BspLeaf::hasPoly() const
 {
-    return !d->polygon.isNull();
+    return d->poly != 0;
 }
 
-Face const &BspLeaf::face() const
+Face const &BspLeaf::poly() const
 {
-    if(!d->polygon.isNull())
+    if(d->poly)
     {
-        return *d->polygon->firstFace();
+        return *d->poly;
     }
-    /// @throw MissingFaceError Attempted with no face assigned.
-    throw MissingFaceError("BspLeaf::face", "No face is assigned");
+    /// @throw MissingPolyError Attempted with no polygon assigned.
+    throw MissingPolyError("BspLeaf::poly", "No polygon is assigned");
 }
 
-void BspLeaf::assignPoly(Mesh *newPoly)
+void BspLeaf::setPoly(Face *newPoly)
 {
-    if(newPoly && !newPoly->firstFace()->isConvex())
+    if(d->poly == newPoly) return;
+
+    if(newPoly && !newPoly->isConvex())
     {
-        /// @throw InvalidPolygonError Attempted to assign a non-convex polygon.
-        throw InvalidPolygonError("BspLeaf::assignPoly", "Non-convex polygons cannot be assigned");
+        /// @throw InvalidPolyError Attempted to attribute a non-convex polygon.
+        throw InvalidPolyError("BspLeaf::setPoly", "Non-convex polygons cannot be assigned");
     }
 
-    // Assign the new polygon (if any).
-    d->polygon.reset(newPoly);
+    d->poly = newPoly;
+
+    // We'll need to update segment lists.
+    d->needUpdateClockwiseSegments = true;
+    d->needUpdateAllSegments = true;
 
     if(newPoly)
     {
         // Attribute the new face geometry to "this" BSP leaf.
-        newPoly->firstFace()->setMapElement(this);
-
-        // We'll need to update segment lists.
-        d->needUpdateClockwiseSegments = true;
-        d->needUpdateAllSegments = true;
+        newPoly->setMapElement(this);
 
         // Update the world grid offset.
-        d->worldGridOffset = Vector2d(fmod(newPoly->firstFace()->aaBox().minX, 64),
-                                      fmod(newPoly->firstFace()->aaBox().maxY, 64));
+        d->worldGridOffset = Vector2d(fmod(newPoly->aaBox().minX, 64),
+                                      fmod(newPoly->aaBox().maxY, 64));
     }
     else
     {
@@ -444,7 +443,7 @@ bool BspLeaf::pointInside(Vector2d const &point) const
     if(isDegenerate())
         return false; // Obviously not.
 
-    HEdge const *hedge = face().hedge();
+    HEdge const *hedge = poly().hedge();
     do
     {
         Vertex const &va = hedge->vertex();
@@ -457,7 +456,7 @@ bool BspLeaf::pointInside(Vector2d const &point) const
             return false;
         }
 
-    } while((hedge = &hedge->next()) != face().hedge());
+    } while((hedge = &hedge->next()) != poly().hedge());
 
     return true;
 }
@@ -485,8 +484,8 @@ HEdge *BspLeaf::fanBase() const
 int BspLeaf::numFanVertices() const
 {
     // Are we to use one of the half-edge vertexes as the fan base?
-    if(!hasFace()) return 0;
-    return face().hedgeCount() + (fanBase()? 0 : 2);
+    if(!d->poly) return 0;
+    return d->poly->hedgeCount() + (fanBase()? 0 : 2);
 }
 
 BiasSurface &BspLeaf::biasSurface(int groupId)
@@ -522,7 +521,7 @@ void BspLeaf::setBiasSurface(int groupId, BiasSurface *biasSurface)
     }
     else if(d->biasSurfaces[groupId])
     {
-        SB_DestroySurface(d->biasSurfaces[groupId]);
+        SB_DestroySurface(*d->biasSurfaces[groupId]);
     }
 
     d->biasSurfaces[groupId] = biasSurface;

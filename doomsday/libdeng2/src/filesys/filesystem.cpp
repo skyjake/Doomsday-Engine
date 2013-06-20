@@ -57,7 +57,7 @@ void FileSystem::refresh()
     Time startedAt;
     d->root.populate();
 
-    LOG_DEBUG("Done in %.2f seconds.") << startedAt.since();
+    LOG_DEBUG("Completed in %.2f seconds.") << startedAt.since();
 
     printIndex();
 }

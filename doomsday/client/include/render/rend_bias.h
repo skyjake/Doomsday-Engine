@@ -25,6 +25,8 @@
 #include <de/vector1.h> /// @todo Remove me
 #include <de/Vector>
 
+#include "world/map.h"
+
 struct rendpoly_s;
 struct rvertex_s;
 struct ColorRawf_s;
@@ -43,8 +45,8 @@ typedef struct vilight_s {
 #define VIF_STILL_UNSEEN    0x2 ///< The color of the vertex is still unknown.
 
 typedef struct vertexillum_s {
-    float color[3]; // Current color of the vertex.
-    float dest[3]; // Destination color of the vertex.
+    float color[3]; // Current light at the vertex.
+    float dest[3]; // Destination light at the vertex (interpolated to).
     uint updatetime; // When the value was calculated.
     short flags;
     vilight_t casted[MAX_BIAS_AFFECTED];
@@ -94,30 +96,35 @@ DENG_EXTERN_C int numSources;
 /**
  * Register console variables for Shadow Bias.
  */
-void SB_Register(void);
+void SB_Register();
 
 /**
- * Initializes the bias lights according to the loaded Light
- * definitions.
+ * Initializes bias lighting for the "current" map. New light sources are
+ * initialized from the loaded Light definitions. Map surfaces are prepared
+ * for tracking rays.
+ *
+ * Must be called before rendering a map frame with bias lighting enabled.
  */
-void SB_InitForMap(char const *uniqueId);
+void SB_InitForMap();
 
-void SB_InitVertexIllum(vertexillum_t *villum);
+void SB_VertexIllumInit(vertexillum_t &illum);
 
-BiasSurface *SB_CreateSurface(void);
+BiasSurface *SB_CreateSurface();
 
-void SB_DestroySurface(BiasSurface *bsuf);
+void SB_DestroySurface(BiasSurface &bsuf);
 
-void SB_SurfaceMoved(BiasSurface *bsuf);
+//void SB_SurfaceInit(BiasSurface &bsuf);
+
+void SB_SurfaceMoved(BiasSurface &bsuf);
 
 /**
  * Do initial processing that needs to be done before rendering a
  * frame.  Changed lights cause the tracker bits to the set for all
  * hedges and planes.
  */
-void SB_BeginFrame(void);
+void SB_BeginFrame();
 
-void SB_EndFrame(void);
+void SB_EndFrame();
 
 /**
  * Surface can be a either a wall or a plane (ceiling or a floor).
@@ -169,7 +176,7 @@ void SB_Delete(int which);
 /**
  * Removes ALL bias light sources on the map.
  */
-void SB_Clear(void);
+void SB_Clear();
 
 /**
  * @return  Ptr to the bias light source for the given id.

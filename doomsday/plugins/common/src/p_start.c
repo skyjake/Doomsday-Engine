@@ -156,10 +156,6 @@ void P_SetPlayerRespawnClass(int plrNum, playerclass_t pc)
     assert(pc == PCLASS_PLAYER);
 #endif
     playerRespawnAsClass[plrNum] = pc;
-
-#ifdef _DEBUG
-    Con_Message("SetPlayerRespawnClass: plrNum=%i class=%i", plrNum, pc);
-#endif
 }
 
 playerclass_t P_ClassForPlayerWhenRespawning(int plrNum, boolean clear)
@@ -168,10 +164,6 @@ playerclass_t P_ClassForPlayerWhenRespawning(int plrNum, boolean clear)
     playerclass_t pClass = cfg.playerClass[plrNum];
 #else
     playerclass_t pClass = PCLASS_PLAYER;
-#endif
-
-#ifdef _DEBUG
-    Con_Message("ClassForPlayerWhenRespawning: plrNum=%i reqclass=%i", plrNum, playerRespawnAsClass[plrNum]);
 #endif
 
     if(playerRespawnAsClass[plrNum] != -1)
@@ -183,9 +175,6 @@ playerclass_t P_ClassForPlayerWhenRespawning(int plrNum, boolean clear)
             playerRespawnAsClass[plrNum] = -1;
         }
     }
-#ifdef _DEBUG
-    Con_Message("ClassForPlayerWhenRespawning: plrNum=%i actualclass=%i", plrNum, pClass);
-#endif
 
     return pClass;
 }

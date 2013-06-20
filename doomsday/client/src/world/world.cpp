@@ -18,6 +18,9 @@
  * 02110-1301 USA</small>
  */
 
+#include <map>
+#include <utility>
+
 #include <QMap>
 #include <QtAlgorithms>
 
@@ -68,6 +71,91 @@
 #include "world/world.h"
 
 using namespace de;
+
+/**
+ * Observes the progress of a map conversion and records any issues/problems that
+ * are encountered in the process. When asked, compiles a human-readable report
+ * intended to assist mod authors in debugging their maps.
+ *
+ * @todo Consolidate with the missing material reporting done elsewhere -ds
+ */
+class MapConversionReporter :
+DENG2_OBSERVES(Map, UnclosedSectorFound),
+DENG2_OBSERVES(Map, OneWayWindowFound)
+{
+    /// Record "unclosed sectors".
+    /// Sector => world point relatively near to the problem area.
+    typedef std::map<Sector *,  Vector2d> UnclosedSectorMap;
+
+    /// Record "one-way window lines".
+    /// Line => Sector the back side faces.
+    typedef std::map<Line *,  Sector *> OneWayWindowMap;
+
+    /// Maximum number of warnings to output (of each type) about any problems
+    /// encountered during the build process.
+    static int const maxWarningsPerType = 10;
+
+public:
+    MapConversionReporter() {}
+
+    inline int unclosedSectorCount() const { return int( _unclosedSectors.size() ); }
+    inline int oneWayWindowCount() const   { return int( _oneWayWindows.size() ); }
+
+    void writeLog()
+    {
+        if(int numToLog = maxWarnings(unclosedSectorCount()))
+        {
+            UnclosedSectorMap::const_iterator it = _unclosedSectors.begin();
+            for(int i = 0; i < numToLog; ++i, ++it)
+            {
+                LOG_WARNING("Sector #%d is unclosed near %s.")
+                    << it->first->indexInArchive() << it->second.asText();
+            }
+
+            if(numToLog < unclosedSectorCount())
+                LOG_INFO("(%d more like this)") << (unclosedSectorCount() - numToLog);
+        }
+
+        if(int numToLog = maxWarnings(oneWayWindowCount()))
+        {
+            OneWayWindowMap::const_iterator it = _oneWayWindows.begin();
+            for(int i = 0; i < numToLog; ++i, ++it)
+            {
+                LOG_VERBOSE("Line #%d seems to be a One-Way Window (back faces sector #%d).")
+                    << it->first->indexInArchive() << it->second->indexInArchive();
+            }
+
+            if(numToLog < oneWayWindowCount())
+                LOG_INFO("(%d more like this)") << (oneWayWindowCount() - numToLog);
+        }
+    }
+
+protected:
+    // Observes Partitioner UnclosedSectorFound.
+    void unclosedSectorFound(Sector &sector, Vector2d const &nearPoint)
+    {
+        _unclosedSectors.insert(std::make_pair(&sector, nearPoint));
+    }
+
+    // Observes Partitioner OneWayWindowFound.
+    void oneWayWindowFound(Line &line, Sector &backFacingSector)
+    {
+        _oneWayWindows.insert(std::make_pair(&line, &backFacingSector));
+    }
+
+private:
+    static inline int maxWarnings(int issueCount)
+    {
+#ifdef DENG_DEBUG
+        return issueCount; // No limit.
+#else
+        return de::min(issueCount, maxWarningsPerType);
+#endif
+    }
+
+    UnclosedSectorMap _unclosedSectors;
+    OneWayWindowMap   _oneWayWindows;
+};
 
 boolean ddMapSetup;
 timespan_t ddMapTime;
@@ -209,6 +297,8 @@ DENG2_PIMPL(World)
 
     /**
      * Attempt JIT conversion of the map data with the help of a plugin.
+     * Note that the map is left in an editable state in case the caller
+     * wishes to perform any further changes.
      *
      * @return  Pointer to the converted Map; otherwise @c 0.
      */
@@ -227,6 +317,16 @@ DENG2_PIMPL(World)
         if(markerLumpNum < 0)
             return 0;
 
+        // Initiate the conversion process.
+        MPE_Begin(reinterpret_cast<uri_s const *>(&uri));
+        Map *newMap = MPE_Map();
+
+        // Generate and attribute the old unique map id.
+        File1 &markerLump       = App_FileSystem().nameIndex().lump(markerLumpNum);
+        String uniqueId         = composeUniqueMapId(markerLump);
+        QByteArray uniqueIdUtf8 = uniqueId.toUtf8();
+        newMap->setOldUniqueId(uniqueIdUtf8.constData());
+
         // Ask each converter in turn whether the map format is recognizable
         // and if so to interpret and transfer it to us via the runtime map
         // editing interface.
@@ -235,30 +335,11 @@ DENG2_PIMPL(World)
 
         // A converter signalled success.
 
-        // Were we able to produce a valid map from the data it provided?
-        if(!MPE_GetLastBuiltMapResult())
-            return 0;
+        // End the conversion process (if not already).
+        MPE_End();
 
         // Take ownership of the map.
-        Map *map = MPE_TakeMap();
-
-        // Generate the old unique map id.
-        File1 &markerLump       = App_FileSystem().nameIndex().lump(markerLumpNum);
-        String uniqueId         = composeUniqueMapId(markerLump);
-        QByteArray uniqueIdUtf8 = uniqueId.toUtf8();
-        map->setOldUniqueId(uniqueIdUtf8.constData());
-
-        // Are we caching this map?
-        /*if(mapCache)
-        {
-            // Ensure the destination directory exists.
-            F_MakePath(rec.cachePath.toUtf8().constData());
-
-            // Cache the map!
-            DAM_MapWrite(map, rec.cachePath);
-        }*/
-
-        return map;
+        return MPE_TakeMap();
     }
 
 #if 0
@@ -301,7 +382,6 @@ DENG2_PIMPL(World)
      */
     Map *loadMap(Uri const &uri/*, bool forceRetry = false*/)
     {
-        LOG_MSG("Loading map \"%s\"...") << uri;
         LOG_AS("World::loadMap");
 
         // Record this map if we haven't already.
@@ -334,29 +414,50 @@ DENG2_PIMPL(World)
     /**
      * Replace the current map with @a map.
      */
-    void changeMap(Map *newMap)
+    void makeCurrent(Map *newMap)
     {
         // This is now the current map (if any).
         map = newMap;
-
         if(!map) return;
 
-#define TABBED(A, B) "\n" _E(Ta) "  " << A << " " _E(Tb) << B
+        // We cannot make an editable map current.
+        DENG_ASSERT(!map->isEditable());
 
-        LOG_INFO(_E(D) "Current map elements:" _E(.))
-                << TABBED("Vertexes",  map->vertexCount())
-                << TABBED("Lines",     map->lineCount())
-                << TABBED("Sectors",   map->sectorCount())
-                << TABBED("BSP Nodes", map->bspNodeCount())
-                << TABBED("BSP Leafs", map->bspLeafCount())
-                << TABBED("Segments",  map->segmentCount());
+        // Should we cache this map?
+        /*CacheRecord &rec = createCacheRecord(map->uri());
+        if(mapCache && !rec.dataAvailable)
+        {
+            // Ensure the destination directory exists.
+            F_MakePath(rec.cachePath.toUtf8().constData());
+
+            // Cache the map!
+            DAM_MapWrite(map, rec.cachePath);
+        }*/
+
+        // Print summary information about this map.
+#define TABBED(count, label) String(_E(Ta) "  %1 " _E(Tb) "%2\n").arg(count).arg(label)
+
+        LOG_MSG(_E(b) "Current map elements:");
+        String str;
+        QTextStream os(&str);
+        os << TABBED(map->vertexCount(),  "Vertexes");
+        os << TABBED(map->lineCount(),    "Lines");
+        os << TABBED(map->polyobjCount(), "Polyobjs");
+        os << TABBED(map->sectorCount(),  "Sectors");
+        os << TABBED(map->bspNodeCount(), "BSP Nodes");
+        os << TABBED(map->bspLeafCount(), "BSP Leafs");
+        os << TABBED(map->segmentCount(), "Segments");
+
+        LOG_INFO("%s") << str.rightStrip();
+
+#undef TABBED
 
         // See what MapInfo says about this map.
         ded_mapinfo_t *mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s const *>(&map->uri()));
         if(!mapInfo)
         {
             // Use the default def instead.
-            Uri defaultMapUri("*", RC_NULL);
+            Uri defaultMapUri(Path("*"));
             mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&defaultMapUri));
         }
 
@@ -438,13 +539,14 @@ DENG2_PIMPL(World)
 
             if(mobj_t *mo = ddpl.mo)
             {
-                BspLeaf &bspLeaf = map->bspLeafAt(mo->origin);
+                Sector &sector = map->bspLeafAt(mo->origin).sector();
+
 #ifdef __CLIENT__
-                if(mo->origin[VZ] >= bspLeaf.sector().floor().visHeight() &&
-                   mo->origin[VZ] <  bspLeaf.sector().ceiling().visHeight() - 4)
+                if(mo->origin[VZ] >= sector.floor().visHeight() &&
+                   mo->origin[VZ] <  sector.ceiling().visHeight() - 4)
 #else
-                if(mo->origin[VZ] >= bspLeaf.sector().floor().height() &&
-                   mo->origin[VZ] <  bspLeaf.sector().ceiling().height() - 4)
+                if(mo->origin[VZ] >= sector.floor().height() &&
+                   mo->origin[VZ] <  sector.ceiling().height() - 4)
 #endif
                 {
                     ddpl.inVoid = false;
@@ -494,10 +596,8 @@ DENG2_PIMPL(World)
         R_InitObjlinkBlockmapForMap();
         R_InitShadowProjectionListsForMap(); // Projected mobj shadows.
         LO_InitForMap(); // Lumobj management.
-        VL_InitForMap(); // Converted vlights (from lumobjs) management.
-
-        // Tell shadow bias to initialize the bias light sources.
-        SB_InitForMap(map->oldUniqueId());
+        VL_InitForMap(); // Converted vlights (from lumobjs).
+        SB_InitForMap(); // Shadow bias sources and surfaces.
 
         // Restart all material animations.
         App_Materials().restartAllAnimations();
@@ -584,10 +684,42 @@ bool World::changeMap(de::Uri const &uri)
     // Are we just unloading the current map?
     if(uri.isEmpty()) return true;
 
+    LOG_MSG("Loading map \"%s\"...") << uri;
+
     // A new map is about to be setup.
     ddMapSetup = true;
 
-    d->changeMap(d->loadMap(uri));
+    // Load in the new map.
+    Map *newMap = d->loadMap(uri);
+
+    // The map may still be in an editable state -- switch to playable.
+    if(newMap && newMap->isEditable())
+    {
+        // Configure a reporter to observe the process.
+        /// @todo Make the reporter available during the format conversion.
+        MapConversionReporter reporter;
+        newMap->audienceForOneWayWindowFound   += reporter;
+        newMap->audienceForUnclosedSectorFound += reporter;
+
+        // Attempt the switch.
+        bool mapIsPlayable = newMap->endEditing();
+
+        // Output a human-readable log of any issues encountered in the process.
+        reporter.writeLog();
+
+        // We are no longer interested in reports about this map.
+        newMap->audienceForOneWayWindowFound   -= reporter;
+        newMap->audienceForUnclosedSectorFound -= reporter;
+
+        if(!mapIsPlayable)
+        {
+            // Darn, clean up...
+            delete newMap; newMap = 0;
+        }
+    }
+
+    // This is now the current map.
+    d->makeCurrent(newMap);
 
     // We've finished setting up the map.
     ddMapSetup = false;

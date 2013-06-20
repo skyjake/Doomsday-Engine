@@ -142,7 +142,7 @@ DENG2_OBSERVES(Plane, HeightChange)
         // Check if there are any camera players in this sector. If their
         // height is now above the ceiling/below the floor they are now in
         // the void.
-        for(uint i = 0; i < DDMAXPLAYERS; ++i)
+        for(int i = 0; i < DDMAXPLAYERS; ++i)
         {
             player_t *plr = &ddPlayers[i];
             ddplayer_t *ddpl = &plr->shared;
@@ -179,13 +179,13 @@ DENG2_OBSERVES(Plane, HeightChange)
                     if(!seg->hasLineSide())
                         continue;
 
-                    for(uint i = 0; i < 3; ++i)
+                    for(int i = 0; i < 3; ++i)
                     {
-                        SB_SurfaceMoved(&seg->biasSurface(i));
+                        SB_SurfaceMoved(seg->biasSurface(i));
                     }
                 }
 
-                SB_SurfaceMoved(&bspLeaf->biasSurface(plane.inSectorIndex()));
+                SB_SurfaceMoved(bspLeaf->biasSurface(plane.indexInSector()));
             }
         }
 
@@ -322,7 +322,7 @@ void Sector::buildSides(Map const &map)
     d->sides.clear();
 
 #ifdef DENG2_QT_4_7_OR_NEWER
-    uint count = 0;
+    int count = 0;
     foreach(Line *line, map.lines())
     {
         if(line->frontSectorPtr() == this ||
@@ -330,7 +330,7 @@ void Sector::buildSides(Map const &map)
             ++count;
     }
 
-    if(0 == count) return;
+    if(!count) return;
 
     d->sides.reserve(count);
 #endif
@@ -355,7 +355,7 @@ Plane *Sector::addPlane(Vector3f const &normal, coord_t height)
     Plane *plane = new Plane(*this, normal, height);
 
     plane->audienceForHeightChange += d;
-    plane->setInSectorIndex(d->planes.count());
+    plane->setIndexInSector(d->planes.count());
 
     d->planes.append(plane);
 
@@ -387,14 +387,14 @@ void Sector::buildBspLeafs(Map const &map)
     d->bspLeafs.clear();
 
 #ifdef DENG2_QT_4_7_OR_NEWER
-    uint count = 0;
+    int count = 0;
     foreach(BspLeaf *bspLeaf, map.bspLeafs())
     {
         if(bspLeaf->sectorPtr() == this)
             ++count;
     }
 
-    if(0 == count) return;
+    if(!count) return;
 
     d->bspLeafs.reserve(count);
 #endif
@@ -433,7 +433,7 @@ void Sector::updateAABox()
     {
         if(leaf->isDegenerate()) continue;
 
-        AABoxd const &leafAABox = leaf->face().aaBox();
+        AABoxd const &leafAABox = leaf->poly().aaBox();
 
         if(!isFirst)
         {
@@ -455,7 +455,7 @@ void Sector::updateRoughArea()
     {
         if(leaf->isDegenerate()) continue;
 
-        AABoxd const &leafAABox = leaf->face().aaBox();
+        AABoxd const &leafAABox = leaf->poly().aaBox();
 
         d->roughArea += (leafAABox.maxX - leafAABox.minX) *
                         (leafAABox.maxY - leafAABox.minY);

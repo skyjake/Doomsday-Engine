@@ -367,7 +367,7 @@ void P_SpawnPlaneParticleGen(ded_ptcgen_t const *def, Plane *plane)
     if(!plane->sector().sideCount()) return;
 
     // Plane we spawn relative to may not be this one.
-    int relPlane = plane->inSectorIndex();
+    int relPlane = plane->indexInSector();
     if(def->flags & PGF_CEILING_SPAWN)
         relPlane = Sector::Ceiling;
     if(def->flags & PGF_FLOOR_SPAWN)
@@ -629,7 +629,7 @@ static void P_NewParticle(ptcgen_t *gen)
         }
         else if(gen->flags & PGF_FLOOR_SPAWN ||
                 (!(gen->flags & (PGF_FLOOR_SPAWN | PGF_CEILING_SPAWN)) &&
-                 plane->inSectorIndex() == Sector::Floor))
+                 plane->indexInSector() == Sector::Floor))
         {
             // Spawn on the floor.
             pt->origin[VZ] = FLT2FIX(plane->height()) + radius;
@@ -666,7 +666,7 @@ static void P_NewParticle(ptcgen_t *gen)
             return;
         }
 
-        AABoxd const &leafAABox = bspLeaf->face().aaBox();
+        AABoxd const &leafAABox = bspLeaf->poly().aaBox();
 
         // Try a couple of times to get a good random spot.
         for(i = 0; i < 10; ++i) // Max this many tries before giving up.

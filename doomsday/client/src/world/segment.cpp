@@ -80,11 +80,11 @@ DENG2_PIMPL(Segment)
     ~Instance()
     {
 #ifdef __CLIENT__
-        for(uint i = 0; i < 3; ++i)
+        for(int i = 0; i < 3; ++i)
         {
             if(bsuf[i])
             {
-                SB_DestroySurface(bsuf[i]);
+                SB_DestroySurface(*bsuf[i]);
             }
         }
 #endif

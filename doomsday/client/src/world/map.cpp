@@ -29,6 +29,8 @@
 #include <de/memoryzone.h>
 #include <de/vector1.h>
 
+#include <de/Rectangle>
+
 #include "de_platform.h"
 #include "de_base.h"
 #include "de_console.h" // Con_GetInteger
@@ -44,7 +46,7 @@
 #include "Segment"
 #include "Vertex"
 
-#include "BspBuilder"
+#include "world/bsp/partitioner.h"
 
 #include "world/blockmap.h"
 #include "world/entitydatabase.h"
@@ -88,7 +90,6 @@ namespace de {
 
 struct EditableElements
 {
-    Map::Vertexes vertexes;
     Map::Lines lines;
     Map::Sectors sectors;
     Map::Polyobjs polyobjs;
@@ -102,11 +103,10 @@ struct EditableElements
     }
 
     void clearAll();
-
-    void pruneVertexes();
 };
 
-DENG2_PIMPL(Map)
+DENG2_PIMPL(Map),
+DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
 {
     /// @c true= editing is currently enabled.
     bool editingEnabled;
@@ -126,8 +126,10 @@ DENG2_PIMPL(Map)
     /// Map thinkers.
     QScopedPointer<Thinkers> thinkers;
 
+    /// Mesh from which we'll assign geometries.
+    Mesh mesh;
+
     /// Element LUTs:
-    Vertexes vertexes;
     Sectors sectors;
     Lines lines;
     Polyobjs polyobjs;
@@ -206,7 +208,6 @@ DENG2_PIMPL(Map)
             M_Free(polyobj);
         }
         qDeleteAll(lines);
-        qDeleteAll(vertexes);
 
         /// @todo fixme: Free all memory we have ownership of.
         // Client only data:
@@ -240,9 +241,236 @@ DENG2_PIMPL(Map)
         }
     }
 
+    // Observes bsp::Partitioner UnclosedSectorFound.
+    void unclosedSectorFound(Sector &sector, Vector2d const &nearPoint)
+    {
+        // Notify interested parties that an unclosed sector was found.
+        DENG2_FOR_PUBLIC_AUDIENCE(UnclosedSectorFound, i)
+        {
+            i->unclosedSectorFound(sector, nearPoint);
+        }
+    }
+
+    /**
+     * Notify interested parties of a "one-way window" in the map.
+     *
+     * @param line    The window line.
+     * @param backFacingSector  Sector that the back of the line is facing.
+     */
+    void notifyOneWayWindowFound(Line &line, Sector &backFacingSector)
+    {
+        DENG2_FOR_PUBLIC_AUDIENCE(OneWayWindowFound, i)
+        {
+            i->oneWayWindowFound(line, backFacingSector);
+        }
+    }
+
+    struct testForWindowEffectParams
+    {
+        double frontDist, backDist;
+        Sector *frontOpen, *backOpen;
+        Line *frontLine, *backLine;
+        Line *testLine;
+        Vector2d testLineCenter;
+        bool castHorizontal;
+
+        testForWindowEffectParams()
+            : frontDist(0), backDist(0), frontOpen(0), backOpen(0),
+              frontLine(0), backLine(0), testLine(0), castHorizontal(false)
+        {}
+    };
+
+    static void testForWindowEffect2(Line &line, testForWindowEffectParams &p)
+    {
+        if(&line == p.testLine) return;
+        if(line.isSelfReferencing()) return;
+        if(line.hasZeroLength()) return;
+
+        double dist = 0;
+        Sector *hitSector = 0;
+        bool isFront = false;
+        if(p.castHorizontal)
+        {
+            if(de::abs(line.direction().y) < bsp::DIST_EPSILON)
+                return;
+
+            if((line.aaBox().maxY < p.testLineCenter.y - bsp::DIST_EPSILON) ||
+               (line.aaBox().minY > p.testLineCenter.y + bsp::DIST_EPSILON))
+                return;
+
+            dist = (line.fromOrigin().x +
+                    (p.testLineCenter.y - line.fromOrigin().y) * line.direction().x / line.direction().y)
+                   - p.testLineCenter.x;
+
+            isFront = ((p.testLine->direction().y > 0) != (dist > 0));
+            dist = de::abs(dist);
+
+            // Too close? (overlapping lines?)
+            if(dist < bsp::DIST_EPSILON)
+                return;
+
+            bool dir = (p.testLine->direction().y > 0) ^ (line.direction().y > 0);
+            hitSector = line.side(dir ^ !isFront).sectorPtr();
+        }
+        else // Cast vertically.
+        {
+            if(de::abs(line.direction().x) < bsp::DIST_EPSILON)
+                return;
+
+            if((line.aaBox().maxX < p.testLineCenter.x - bsp::DIST_EPSILON) ||
+               (line.aaBox().minX > p.testLineCenter.x + bsp::DIST_EPSILON))
+                return;
+
+            dist = (line.fromOrigin().y +
+                    (p.testLineCenter.x - line.fromOrigin().x) * line.direction().y / line.direction().x)
+                   - p.testLineCenter.y;
+
+            isFront = ((p.testLine->direction().x > 0) == (dist > 0));
+            dist = de::abs(dist);
+
+            bool dir = (p.testLine->direction().x > 0) ^ (line.direction().x > 0);
+            hitSector = line.side(dir ^ !isFront).sectorPtr();
+        }
+
+        // Too close? (overlapping lines?)
+        if(dist < bsp::DIST_EPSILON)
+            return;
+
+        if(isFront)
+        {
+            if(dist < p.frontDist)
+            {
+                p.frontDist = dist;
+                p.frontOpen = hitSector;
+                p.frontLine = &line;
+            }
+        }
+        else
+        {
+            if(dist < p.backDist)
+            {
+                p.backDist = dist;
+                p.backOpen = hitSector;
+                p.backLine = &line;
+            }
+        }
+    }
+
+    static int testForWindowEffectWorker(Line *line, void *parms)
+    {
+        testForWindowEffect2(*line, *reinterpret_cast<testForWindowEffectParams *>(parms));
+        return false; // Continue iteration.
+    }
+
+    bool lineMightHaveWindowEffect(Line const &line)
+    {
+        if(line.definesPolyobj()) return false;
+        if(line.hasFrontSector() && line.hasBackSector()) return false;
+        if(!line.hasFrontSector()) return false;
+        if(line.hasZeroLength()) return false;
+
+        // Look for window effects by checking for an odd number of one-sided
+        // line owners for a single vertex. Idea courtesy of Graham Jackson.
+        if((line.from()._onesOwnerCount % 2) == 1 &&
+           (line.from()._onesOwnerCount + line.from()._twosOwnerCount) > 1)
+            return true;
+
+        if((line.to()._onesOwnerCount % 2) == 1 &&
+           (line.to()._onesOwnerCount + line.to()._twosOwnerCount) > 1)
+            return true;
+
+        return false;
+    }
+
+    void findOneWayWindows()
+    {
+        foreach(Vertex *vertex, mesh.vertexes())
+        {
+            // Count the total number of one and two-sided line owners for each
+            // vertex. (Used in the process of locating window effect lines.)
+            vertex->countLineOwners();
+        }
+
+        // Search for "one-way window" effects.
+        foreach(Line *line, lines)
+        {
+            if(!lineMightHaveWindowEffect(*line))
+                continue;
+
+            testForWindowEffectParams p;
+            p.frontDist      = p.backDist = DDMAXFLOAT;
+            p.testLine       = line;
+            p.testLineCenter = line->center();
+            p.castHorizontal = (de::abs(line->direction().x) < de::abs(line->direction().y)? true : false);
+
+            AABoxd scanRegion = bounds;
+            if(p.castHorizontal)
+            {
+                scanRegion.minY = line->aaBox().minY - bsp::DIST_EPSILON;
+                scanRegion.maxY = line->aaBox().maxY + bsp::DIST_EPSILON;
+            }
+            else
+            {
+                scanRegion.minX = line->aaBox().minX - bsp::DIST_EPSILON;
+                scanRegion.maxX = line->aaBox().maxX + bsp::DIST_EPSILON;
+            }
+            validCount++;
+            self.linesBoxIterator(scanRegion, testForWindowEffectWorker, &p);
+
+            if(p.backOpen && p.frontOpen && line->frontSectorPtr() == p.backOpen)
+            {
+                notifyOneWayWindowFound(*line, *p.frontOpen);
+
+                line->_bspWindowSector = p.frontOpen; /// @todo Refactor away.
+            }
+        }
+    }
+
+    void collateBspElements(bsp::Partitioner &partitioner, BspTreeNode &tree)
+    {
+        if(tree.isLeaf())
+        {
+            // Take ownership of the BspLeaf.
+            DENG2_ASSERT(tree.userData() != 0);
+            BspLeaf *leaf = tree.userData()->as<BspLeaf>();
+            partitioner.take(leaf);
+
+            // Add this BspLeaf to the LUT.
+            leaf->setIndexInMap(bspLeafs.count());
+            bspLeafs.append(leaf);
+
+            foreach(Segment *seg, leaf->allSegments())
+            {
+                // Take ownership of the Segment.
+                partitioner.take(seg);
+
+                // Add this segment to the LUT.
+                seg->setIndexInMap(segments.count());
+                segments.append(seg);
+            }
+
+            return;
+        }
+        // Else; a node.
+
+        // Take ownership of this BspNode.
+        DENG2_ASSERT(tree.userData() != 0);
+        BspNode *node = tree.userData()->as<BspNode>();
+        partitioner.take(node);
+
+        // Add this BspNode to the LUT.
+        node->setIndexInMap(bspNodes.count());
+        bspNodes.append(node);
+    }
+
+    /**
+     * Build a BSP tree for the map.
+     *
+     * @pre Map line bounds have been determined and a line blockmap constructed.
+     */
     bool buildBsp()
     {
-        /// @todo Test @em ALL preconditions!
+        DENG2_ASSERT(bspRoot == 0);
         DENG2_ASSERT(segments.isEmpty());
         DENG2_ASSERT(bspLeafs.isEmpty());
         DENG2_ASSERT(bspNodes.isEmpty());
@@ -250,50 +478,60 @@ DENG2_PIMPL(Map)
         // It begins...
         Time begunAt;
 
-        LOG_AS("Map::buildBsp");
         LOG_TRACE("Building BSP for \"%s\" with split cost factor %d...")
             << uri << bspSplitFactor;
 
-        // Instantiate and configure a new BSP builder.
-        BspBuilder nodeBuilder(self, bspSplitFactor);
+        // First we'll scan for so-called "one-way window" constructs and mark
+        // them so that the space partitioner can treat them specially.
+        findOneWayWindows();
 
-        // Build the BSP.
-        bool builtOK = nodeBuilder.buildBsp();
-        if(builtOK)
+        // Remember the current next vertex ordinal as we'll need to index any
+        // new vertexes produced during the build process.
+        int nextVertexOrd = mesh.vertexCount();
+
+        // Determine the set of lines for which we will build a BSP.
+        QSet<Line *> linesToBuildBspFor = QSet<Line *>::fromList(lines);
+
+        // Polyobj lines should be excluded.
+        foreach(Polyobj *po, polyobjs)
+        foreach(Line *line, po->lines())
         {
-            BspTreeNode &treeRoot = *nodeBuilder.root();
+            linesToBuildBspFor.remove(line);
+        }
 
-            // Determine the max depth of the two main branches.
-            dint32 rightBranchDpeth, leftBranchDepth;
-            if(!treeRoot.isLeaf())
-            {
-                rightBranchDpeth = dint32( treeRoot.right().height() );
-                leftBranchDepth  = dint32(  treeRoot.left().height() );
-            }
-            else
-            {
-                rightBranchDpeth = leftBranchDepth = 0;
-            }
+        try
+        {
+            // Configure a space partitioner.
+            bsp::Partitioner partitioner(bspSplitFactor);
+            partitioner.audienceForUnclosedSectorFound += this;
 
-            LOG_INFO("Built %d Nodes, %d Leafs, %d Segments and %d Vertexes."
+            // Build a new BSP!
+            BspTreeNode *rootNode = partitioner.buildBsp(linesToBuildBspFor, mesh);
+
+            LOG_INFO("BSP built: %d Nodes, %d Leafs, %d Segments and %d Vertexes."
                      "\nTree balance is %d:%d.")
-                    << nodeBuilder.numNodes() << nodeBuilder.numLeafs()
-                    << nodeBuilder.numSegments() << nodeBuilder.numVertexes()
-                    << rightBranchDpeth << leftBranchDepth;
+                    << partitioner.numNodes()    << partitioner.numLeafs()
+                    << partitioner.numSegments() << partitioner.numVertexes()
+                    << (rootNode->isLeaf()? 0 : rootNode->right().height())
+                    << (rootNode->isLeaf()? 0 : rootNode->left().height());
+
+            // Attribute an index to any new vertexes.
+            for(int i = nextVertexOrd; i < mesh.vertexCount(); ++i)
+            {
+                Vertex *vtx = mesh.vertexes().at(i);
+                vtx->setIndexInMap(i);
+            }
 
             /*
              * Take ownership of all the built map data elements.
              */
-#ifdef DENG2_QT_4_7_OR_NEWER
-            vertexes.reserve(vertexes.count() + nodeBuilder.numVertexes());
-            segments.reserve(nodeBuilder.numSegments());
-            bspNodes.reserve(nodeBuilder.numNodes());
-            bspLeafs.reserve(nodeBuilder.numLeafs());
-#endif
-            collateVertexes(nodeBuilder);
-
-            BspTreeNode *rootNode = nodeBuilder.root();
             bspRoot = rootNode->userData(); // We'll formally take ownership shortly...
+
+#ifdef DENG2_QT_4_7_OR_NEWER
+            segments.reserve(partitioner.numSegments());
+            bspNodes.reserve(partitioner.numNodes());
+            bspLeafs.reserve(partitioner.numLeafs());
+#endif
 
             // Iterative pre-order traversal of the BspBuilder's map element tree.
             BspTreeNode *cur = rootNode;
@@ -306,7 +544,7 @@ DENG2_PIMPL(Map)
                     {
                         // Acquire ownership of and collate all map data elements at
                         // this node of the tree.
-                        collateBspElements(nodeBuilder, *cur);
+                        collateBspElements(partitioner, *cur);
                     }
 
                     if(prev == cur->parentPtr())
@@ -337,128 +575,15 @@ DENG2_PIMPL(Map)
                 }
             }
         }
+        catch(Error const &er)
+        {
+            LOG_WARNING("%s.") << er.asText();
+        }
 
         // How much time did we spend?
-        LOG_INFO(String("Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
+        LOG_INFO(String("BSP built in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 
-        return builtOK;
-    }
-
-    void collateVertexes(BspBuilder &builder)
-    {
-        int bspVertexCount = builder.numVertexes();
-        for(int i = 0; i < bspVertexCount; ++i)
-        {
-            // Take ownership of this Vertex.
-            Vertex *vertex = &builder.vertex(i);
-            builder.take(vertex);
-
-            vertexes.append(vertex);
-        }
-    }
-
-    void collateBspElements(BspBuilder &builder, BspTreeNode &tree)
-    {
-        if(tree.isLeaf())
-        {
-            // Take ownership of the BspLeaf.
-            DENG2_ASSERT(tree.userData() != 0);
-            BspLeaf *leaf = tree.userData()->as<BspLeaf>();
-            builder.take(leaf);
-
-            // Add this BspLeaf to the LUT.
-            leaf->setIndexInMap(bspLeafs.count());
-            bspLeafs.append(leaf);
-
-            foreach(Segment *seg, leaf->allSegments())
-            {
-                // Take ownership of the Segment.
-                builder.take(seg);
-
-                // Add this segment to the LUT.
-                seg->setIndexInMap(segments.count());
-                segments.append(seg);
-            }
-
-            return;
-        }
-        // Else; a node.
-
-        // Take ownership of this BspNode.
-        DENG2_ASSERT(tree.userData() != 0);
-        BspNode *node = tree.userData()->as<BspNode>();
-        builder.take(node);
-
-        // Add this BspNode to the LUT.
-        node->setIndexInMap(bspNodes.count());
-        bspNodes.append(node);
-    }
-
-    void finishLines()
-    {
-        foreach(Line *line, lines)
-        for(int i = 0; i < 2; ++i)
-        {
-            line->side(i).updateSurfaceNormals();
-            line->side(i).updateAllSoundEmitterOrigins();
-        }
-    }
-
-    void finishSectors()
-    {
-        foreach(Sector *sector, sectors)
-        {
-            sector->buildBspLeafs(self);
-            sector->buildSides(self);
-            sector->updateAABox();
-            sector->updateRoughArea();
-
-            /*
-             * Chain sound emitters (ddmobj_base_t) owned by all Surfaces in the
-             * sector-> These chains are used for efficiently traversing all of the
-             * sound emitters in a sector (e.g., when stopping all sounds emitted
-             * in the sector).
-             */
-            ddmobj_base_t &emitter = sector->soundEmitter();
-
-            // Clear the head of the emitter chain.
-            emitter.thinker.next = emitter.thinker.prev = 0;
-
-            // Link plane surface emitters:
-            foreach(Plane *plane, sector->planes())
-            {
-                sector->linkSoundEmitter(plane->soundEmitter());
-            }
-
-            // Link wall surface emitters:
-            foreach(Line::Side *side, sector->sides())
-            {
-                if(side->hasSections())
-                {
-                    sector->linkSoundEmitter(side->middleSoundEmitter());
-                    sector->linkSoundEmitter(side->bottomSoundEmitter());
-                    sector->linkSoundEmitter(side->topSoundEmitter());
-                }
-                if(side->line().isSelfReferencing() && side->back().hasSections())
-                {
-                    Line::Side &back = side->back();
-                    sector->linkSoundEmitter(back.middleSoundEmitter());
-                    sector->linkSoundEmitter(back.bottomSoundEmitter());
-                    sector->linkSoundEmitter(back.topSoundEmitter());
-                }
-            }
-
-            sector->updateSoundEmitterOrigin();
-        }
-    }
-
-    void finishPlanes()
-    {
-        foreach(Sector *sector, sectors)
-        foreach(Plane *plane, sector->planes())
-        {
-            plane->updateSoundEmitterOrigin();
-        }
+        return bspRoot != 0;
     }
 
     /**
@@ -480,6 +605,12 @@ DENG2_PIMPL(Map)
         lineBlockmap.reset(new Blockmap(expandedBounds, Vector2ui(CELL_SIZE, CELL_SIZE)));
 
         LOG_INFO("Line blockmap dimensions:") << lineBlockmap->dimensions().asText();
+
+        // Populate the blockmap.
+        foreach(Line *line, lines)
+        {
+            linkLineInBlockmap(*line);
+        }
 
 #undef CELL_SIZE
 #undef BLOCKMAP_MARGIN
@@ -735,6 +866,12 @@ DENG2_PIMPL(Map)
 
         LOG_INFO("BSP leaf blockmap dimensions:") << bspLeafBlockmap->dimensions().asText();
 
+        // Populate the blockmap.
+        foreach(BspLeaf *bspLeaf, bspLeafs)
+        {
+            linkBspLeafInBlockmap(*bspLeaf);
+        }
+
 #undef CELL_SIZE
 #undef BLOCKMAP_MARGIN
     }
@@ -747,7 +884,7 @@ DENG2_PIMPL(Map)
         // BspLeafs without sectors don't get in.
         if(!bspLeaf.hasSector()) return;
 
-        Blockmap::CellBlock cellBlock = bspLeafBlockmap->toCellBlock(bspLeaf.face().aaBox());
+        Blockmap::CellBlock cellBlock = bspLeafBlockmap->toCellBlock(bspLeaf.poly().aaBox());
 
         Blockmap::Cell cell;
         for(cell.y = cellBlock.min.y; cell.y <= cellBlock.max.y; ++cell.y)
@@ -950,6 +1087,11 @@ void Map::consoleRegister() // static
     C_VAR_INT("bsp-factor", &bspSplitFactor, CVF_NO_MAX, 0, 0);
 }
 
+Mesh const &Map::mesh() const
+{
+    return d->mesh;
+}
+
 MapElement &Map::bspRoot() const
 {
     if(d->bspRoot)
@@ -960,11 +1102,6 @@ MapElement &Map::bspRoot() const
     throw MissingBspError("Map::bspRoot", "No BSP data available");
 }
 
-Map::Segments const &Map::segments() const
-{
-    return d->segments;
-}
-
 Map::BspNodes const &Map::bspNodes() const
 {
     return d->bspNodes;
@@ -973,6 +1110,11 @@ Map::BspNodes const &Map::bspNodes() const
 Map::BspLeafs const &Map::bspLeafs() const
 {
     return d->bspLeafs;
+}
+
+Map::Segments const &Map::segments() const
+{
+    return d->segments;
 }
 
 #ifdef __CLIENT__
@@ -1089,7 +1231,7 @@ Thinkers &Map::thinkers() const
 
 Map::Vertexes const &Map::vertexes() const
 {
-    return d->vertexes;
+    return d->mesh.vertexes();
 }
 
 Map::Lines const &Map::lines() const
@@ -1420,7 +1562,7 @@ static int blockmapCellBspLeafsIterator(void *object, void *context)
             ok = false;
 
         // Check the bounds.
-        AABoxd const &leafAABox = bspLeaf->face().aaBox();
+        AABoxd const &leafAABox = bspLeaf->poly().aaBox();
 
         if(args->box &&
            (leafAABox.maxX < args->box->minX ||
@@ -2520,7 +2662,7 @@ void Map::update()
     if(!mapInfo)
     {
         // Use the default def instead.
-        Uri defaultDefUri(RC_NULL, "*");
+        Uri defaultDefUri(Path("*"));
         mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&defaultDefUri));
     }
 
@@ -2740,7 +2882,7 @@ static bool vertexHasValidLineOwnerRing(Vertex &v)
  * the lines which the vertex belongs to sorted by angle, (the rings are
  * arranged in clockwise order, east = 0).
  */
-void buildVertexLineOwnerRings(EditableElements &editable)
+void buildVertexLineOwnerRings(Map::Vertexes const &vertexes, Map::Lines &editableLines)
 {
     LOG_AS("buildVertexLineOwnerRings");
 
@@ -2748,10 +2890,10 @@ void buildVertexLineOwnerRings(EditableElements &editable)
      * Step 1: Find and link up all line owners.
      */
     // We know how many vertex line owners we need (numLines * 2).
-    LineOwner *lineOwners = (LineOwner *) Z_Malloc(sizeof(LineOwner) * editable.lines.count() * 2, PU_MAPSTATIC, 0);
+    LineOwner *lineOwners = (LineOwner *) Z_Malloc(sizeof(LineOwner) * editableLines.count() * 2, PU_MAPSTATIC, 0);
     LineOwner *allocator = lineOwners;
 
-    foreach(Line *line, editable.lines)
+    foreach(Line *line, editableLines)
     for(uint p = 0; p < 2; ++p)
     {
         setVertexLineOwner(&line->vertex(p), line, &allocator);
@@ -2760,7 +2902,7 @@ void buildVertexLineOwnerRings(EditableElements &editable)
     /*
      * Step 2: Sort line owners of each vertex and finalize the rings.
      */
-    foreach(Vertex *v, editable.vertexes)
+    foreach(Vertex *v, vertexes)
     {
         if(!v->_numLineOwners) continue;
 
@@ -2817,271 +2959,6 @@ bool Map::isEditable() const
     return d->editingEnabled;
 }
 
-bool Map::endEditing()
-{
-    if(!d->editingEnabled)
-        return true; // Huh?
-
-    LOG_DEBUG("New elements: %d Vertexes, %d Lines and %d Sectors.")
-        << d->editable.vertexes.count()
-        << d->editable.lines.count()
-        << d->editable.sectors.count();
-
-    /*
-     * Perform cleanup on the loaded map data.
-     */
-
-    d->editable.pruneVertexes();
-
-    /// Ensure lines with only one sector are flagged as blocking.
-    foreach(Line *line, d->editable.lines)
-    {
-        if(!line->hasFrontSector() || !line->hasBackSector())
-            line->setFlags(DDLF_BLOCKING);
-    }
-
-    buildVertexLineOwnerRings(d->editable);
-
-    /*
-     * Move the editable elements to the "static" element lists.
-     */
-
-    DENG2_ASSERT(d->vertexes.isEmpty());
-#ifdef DENG2_QT_4_7_OR_NEWER
-    d->vertexes.reserve(d->editable.vertexes.count());
-#endif
-    while(!d->editable.vertexes.isEmpty())
-    {
-        d->vertexes.append(d->editable.vertexes.takeFirst());
-    }
-
-    // Collate sectors:
-    DENG2_ASSERT(d->sectors.isEmpty());
-#ifdef DENG2_QT_4_7_OR_NEWER
-    d->sectors.reserve(d->editable.sectors.count());
-#endif
-    while(!d->editable.sectors.isEmpty())
-    {
-        d->sectors.append(d->editable.sectors.takeFirst());
-    }
-
-    // Collate lines:
-    DENG2_ASSERT(d->lines.isEmpty());
-#ifdef DENG2_QT_4_7_OR_NEWER
-    d->lines.reserve(d->editable.lines.count());
-#endif
-    while(!d->editable.lines.isEmpty())
-    {
-        d->lines.append(d->editable.lines.takeFirst());
-    }
-
-    // Collate polyobjs:
-    DENG2_ASSERT(d->polyobjs.isEmpty());
-#ifdef DENG2_QT_4_7_OR_NEWER
-    d->polyobjs.reserve(d->editable.polyobjs.count());
-#endif
-    while(!d->editable.polyobjs.isEmpty())
-    {
-        d->polyobjs.append(d->editable.polyobjs.takeFirst());
-        Polyobj *polyobj = d->polyobjs.back();
-
-        // Create a segment for each line of this polyobj.
-        foreach(Line *line, polyobj->lines())
-        {
-            HEdge *hedge = polyobj->mesh().newHEdge(line->from());
-
-            hedge->setTwin(polyobj->mesh().newHEdge(line->to()));
-            hedge->twin().setTwin(hedge);
-
-            // Polyobj has ownership of the line segments.
-            Segment *segment = new Segment(&line->front(), hedge);
-            segment->setLength(line->length());
-
-            line->front().setLeftSegment(segment);
-            line->front().setRightSegment(segment);
-        }
-
-        polyobj->buildUniqueVertexes();
-        polyobj->updateOriginalVertexCoords();
-    }
-
-    d->updateBounds();
-    AABoxd const &mapBounds = bounds();
-    LOG_INFO("Bounds min:%s max:%s.")
-        << Vector2d(mapBounds.min).asText()
-        << Vector2d(mapBounds.max).asText();
-
-    /*
-     * Build blockmaps.
-     */
-    d->initLineBlockmap();
-    foreach(Line *line, lines())
-    {
-        d->linkLineInBlockmap(*line);
-    }
-
-    // The mobj and polyobj blockmaps are maintained dynamically.
-    d->initMobjBlockmap();
-    d->initPolyobjBlockmap();
-
-    /*
-     * Build a BSP.
-     */
-    bool builtOK = d->buildBsp();
-
-    // Destroy the rest of editable map, we are finished with it.
-    d->editable.clearAll();
-
-    d->editingEnabled = false;
-
-    if(!builtOK)
-    {
-        return false;
-    }
-
-    d->finishLines();
-    d->finishSectors();
-    d->finishPlanes();
-
-    // We can now initialize the BSP leaf blockmap.
-    d->initBspLeafBlockmap();
-    foreach(BspLeaf *bspLeaf, bspLeafs())
-    {
-        d->linkBspLeafInBlockmap(*bspLeaf);
-    }
-
-#ifdef __CLIENT__
-    S_DetermineBspLeafsAffectingSectorReverb(this);
-#endif
-
-    // Prepare the thinker lists.
-    d->thinkers.reset(new Thinkers);
-
-    return true;
-}
-
-Vertex *Map::createVertex(Vector2d const &origin, int archiveIndex)
-{
-    if(!d->editingEnabled)
-        /// @throw EditError  Attempted when not editing.
-        throw EditError("Map::createVertex", "Editing is not enabled");
-
-    Vertex *vtx = new Vertex(origin);
-    d->editable.vertexes.append(vtx);
-
-    vtx->setIndexInArchive(archiveIndex);
-
-    /// @todo Don't do this here.
-    vtx->setIndexInMap(d->editable.vertexes.count() - 1);
-
-    return vtx;
-}
-
-Line *Map::createLine(Vertex &v1, Vertex &v2, int flags, Sector *frontSector,
-    Sector *backSector, int archiveIndex)
-{
-    if(!d->editingEnabled)
-        /// @throw EditError  Attempted when not editing.
-        throw EditError("Map::createLine", "Editing is not enabled");
-
-    Line *line = new Line(v1, v2, flags, frontSector, backSector);
-    d->editable.lines.append(line);
-
-    line->setIndexInArchive(archiveIndex);
-
-    /// @todo Don't do this here.
-    line->setIndexInMap(d->editable.lines.count() - 1);
-    line->front().setIndexInMap(Map::toSideIndex(line->indexInMap(), Line::Front));
-    line->back().setIndexInMap(Map::toSideIndex(line->indexInMap(), Line::Back));
-
-    return line;
-}
-
-Sector *Map::createSector(float lightLevel, Vector3f const &lightColor,
-    int archiveIndex)
-{
-    if(!d->editingEnabled)
-        /// @throw EditError  Attempted when not editing.
-        throw EditError("Map::createSector", "Editing is not enabled");
-
-    Sector *sector = new Sector(lightLevel, lightColor);
-    d->editable.sectors.append(sector);
-
-    sector->setIndexInArchive(archiveIndex);
-
-    /// @todo Don't do this here.
-    sector->setIndexInMap(d->editable.sectors.count() - 1);
-
-    return sector;
-}
-
-Polyobj *Map::createPolyobj(Vector2d const &origin)
-{
-    if(!d->editingEnabled)
-        /// @throw EditError  Attempted when not editing.
-        throw EditError("Map::createPolyobj", "Editing is not enabled");
-
-    void *region = M_Calloc(POLYOBJ_SIZE);
-    Polyobj *po = new (region) Polyobj(origin);
-    d->editable.polyobjs.append(po);
-
-    /// @todo Don't do this here.
-    po->setIndexInMap(d->editable.polyobjs.count() - 1);
-
-    return po;
-}
-
-Map::Vertexes const &Map::editableVertexes() const
-{
-    if(!d->editingEnabled)
-        /// @throw EditError  Attempted when not editing.
-        throw EditError("Map::editableVertexes", "Editing is not enabled");
-    return d->editable.vertexes;
-}
-
-Map::Lines const &Map::editableLines() const
-{
-    if(!d->editingEnabled)
-        /// @throw EditError  Attempted when not editing.
-        throw EditError("Map::editableLines", "Editing is not enabled");
-    return d->editable.lines;
-}
-
-Map::Sectors const &Map::editableSectors() const
-{
-    if(!d->editingEnabled)
-        /// @throw EditError  Attempted when not editing.
-        throw EditError("Map::editableSectors", "Editing is not enabled");
-    return d->editable.sectors;
-}
-
-Map::Polyobjs const &Map::editablePolyobjs() const
-{
-    if(!d->editingEnabled)
-        /// @throw EditError  Attempted when not editing.
-        throw EditError("Map::editablePolyobjs", "Editing is not enabled");
-    return d->editable.polyobjs;
-}
-
-void EditableElements::clearAll()
-{
-    qDeleteAll(vertexes);
-    vertexes.clear();
-
-    qDeleteAll(lines);
-    lines.clear();
-
-    qDeleteAll(sectors);
-    sectors.clear();
-
-    foreach(Polyobj *po, polyobjs)
-    {
-        po->~Polyobj();
-        M_Free(po);
-    }
-    polyobjs.clear();
-}
-
 struct VertexInfo
 {
     /// Vertex for this info.
@@ -3093,8 +2970,7 @@ struct VertexInfo
     /// Line -> Vertex reference count.
     uint refCount;
 
-    VertexInfo()
-        : vertex(0), equiv(0), refCount(0)
+    VertexInfo() : vertex(0), equiv(0), refCount(0)
     {}
 
     /// @todo Math here is not correct (rounding directionality). -ds
@@ -3118,16 +2994,17 @@ struct VertexInfo
     }
 };
 
-void EditableElements::pruneVertexes()
+void pruneVertexes(Mesh &mesh, Map::Lines const &lines)
 {
     /*
      * Step 1 - Find equivalent vertexes:
      */
 
     // Populate the vertex info.
-    QVector<VertexInfo> vertexInfo(vertexes.count());
-    for(int i = 0; i < vertexes.count(); ++i)
-        vertexInfo[i].vertex = vertexes[i];
+    QVector<VertexInfo> vertexInfo(mesh.vertexCount());
+    int ord = 0;
+    foreach(Vertex *vertex, mesh.vertexes())
+        vertexInfo[ord++].vertex = vertex;
 
     {
         // Sort a copy to place near vertexes adjacently.
@@ -3187,7 +3064,7 @@ void EditableElements::pruneVertexes()
     /*
      * Step 3 - Prune vertexes:
      */
-    uint prunedCount = 0, numUnused = 0;
+    int prunedCount = 0, numUnused = 0;
     foreach(VertexInfo const &info, vertexInfo)
     {
         Vertex *vertex = info.vertex;
@@ -3195,8 +3072,7 @@ void EditableElements::pruneVertexes()
         if(info.refCount)
             continue;
 
-        vertexes.removeOne(vertex);
-        delete vertex;
+        mesh.removeVertex(*vertex);
 
         prunedCount += 1;
         if(!info.equiv) numUnused += 1;
@@ -3205,9 +3081,9 @@ void EditableElements::pruneVertexes()
     if(prunedCount)
     {
         // Re-index with a contiguous range of indices.
-        uint idx = 0;
-        foreach(Vertex *vertex, vertexes)
-            vertex->setIndexInMap(idx++);
+        int ord = 0;
+        foreach(Vertex *vertex, mesh.vertexes())
+            vertex->setIndexInMap(ord++);
 
         /// Update lines. @todo Line should handle this itself.
         foreach(Line *line, lines)
@@ -3219,6 +3095,282 @@ void EditableElements::pruneVertexes()
         LOG_INFO("Pruned %d vertexes (%d equivalents, %d unused).")
             << prunedCount << (prunedCount - numUnused) << numUnused;
     }
+}
+
+bool Map::endEditing()
+{
+    if(!d->editingEnabled)
+        return true; // Huh?
+
+    d->editingEnabled = false;
+
+    LOG_AS("Map");
+    LOG_VERBOSE("Editing ended.");
+    LOG_DEBUG("New elements: %d Vertexes, %d Lines, %d Polyobjs and %d Sectors.")
+        << d->mesh.vertexCount()        << d->editable.lines.count()
+        << d->editable.polyobjs.count() << d->editable.sectors.count();
+
+    /*
+     * Perform cleanup on the new map elements.
+     */
+    pruneVertexes(d->mesh, d->editable.lines);
+
+    // Ensure lines with only one sector are flagged as blocking.
+    foreach(Line *line, d->editable.lines)
+    {
+        if(!line->hasFrontSector() || !line->hasBackSector())
+            line->setFlags(DDLF_BLOCKING);
+    }
+
+    buildVertexLineOwnerRings(d->mesh.vertexes(), d->editable.lines);
+
+    /*
+     * Move the editable elements to the "static" element lists.
+     */
+
+    // Collate sectors:
+    DENG2_ASSERT(d->sectors.isEmpty());
+#ifdef DENG2_QT_4_7_OR_NEWER
+    d->sectors.reserve(d->editable.sectors.count());
+#endif
+    d->sectors.append(d->editable.sectors);
+    d->editable.sectors.clear();
+
+    // Collate lines:
+    DENG2_ASSERT(d->lines.isEmpty());
+#ifdef DENG2_QT_4_7_OR_NEWER
+    d->lines.reserve(d->editable.lines.count());
+#endif
+    d->lines.append(d->editable.lines);
+    d->editable.lines.clear();
+
+    // Collate polyobjs:
+    DENG2_ASSERT(d->polyobjs.isEmpty());
+#ifdef DENG2_QT_4_7_OR_NEWER
+    d->polyobjs.reserve(d->editable.polyobjs.count());
+#endif
+    while(!d->editable.polyobjs.isEmpty())
+    {
+        d->polyobjs.append(d->editable.polyobjs.takeFirst());
+        Polyobj *polyobj = d->polyobjs.back();
+
+        // Create a segment for each line of this polyobj.
+        foreach(Line *line, polyobj->lines())
+        {
+            HEdge *hedge = polyobj->mesh().newHEdge(line->from());
+
+            hedge->setTwin(polyobj->mesh().newHEdge(line->to()));
+            hedge->twin().setTwin(hedge);
+
+            // Polyobj has ownership of the line segments.
+            Segment *segment = new Segment(&line->front(), hedge);
+            segment->setLength(line->length());
+
+            line->front().setLeftSegment(segment);
+            line->front().setRightSegment(segment);
+        }
+
+        polyobj->buildUniqueVertexes();
+        polyobj->updateOriginalVertexCoords();
+    }
+
+    // Determine the map bounds.
+    d->updateBounds();
+    LOG_INFO("Geometry bounds:") << Rectangled(d->bounds.min, d->bounds.max).asText();
+
+    // Build a line blockmap.
+    d->initLineBlockmap();
+
+    // Build a BSP.
+    if(!d->buildBsp())
+        return false;
+
+    // The mobj and polyobj blockmaps are maintained dynamically.
+    d->initMobjBlockmap();
+    d->initPolyobjBlockmap();
+
+    // Finish lines.
+    foreach(Line *line, d->lines)
+    for(int i = 0; i < 2; ++i)
+    {
+        line->side(i).updateSurfaceNormals();
+        line->side(i).updateAllSoundEmitterOrigins();
+    }
+
+    // Finish sectors.
+    foreach(Sector *sector, d->sectors)
+    {
+        sector->buildBspLeafs(*this);
+        sector->buildSides(*this);
+        sector->updateAABox();
+        sector->updateRoughArea();
+
+        /*
+         * Chain sound emitters (ddmobj_base_t) owned by all Surfaces in the
+         * sector-> These chains are used for efficiently traversing all of the
+         * sound emitters in a sector (e.g., when stopping all sounds emitted
+         * in the sector).
+         */
+        ddmobj_base_t &emitter = sector->soundEmitter();
+
+        // Clear the head of the emitter chain.
+        emitter.thinker.next = emitter.thinker.prev = 0;
+
+        // Link plane surface emitters:
+        foreach(Plane *plane, sector->planes())
+        {
+            sector->linkSoundEmitter(plane->soundEmitter());
+        }
+
+        // Link wall surface emitters:
+        foreach(Line::Side *side, sector->sides())
+        {
+            if(side->hasSections())
+            {
+                sector->linkSoundEmitter(side->middleSoundEmitter());
+                sector->linkSoundEmitter(side->bottomSoundEmitter());
+                sector->linkSoundEmitter(side->topSoundEmitter());
+            }
+            if(side->line().isSelfReferencing() && side->back().hasSections())
+            {
+                Line::Side &back = side->back();
+                sector->linkSoundEmitter(back.middleSoundEmitter());
+                sector->linkSoundEmitter(back.bottomSoundEmitter());
+                sector->linkSoundEmitter(back.topSoundEmitter());
+            }
+        }
+
+        sector->updateSoundEmitterOrigin();
+    }
+
+    // Finish planes.
+    foreach(Sector *sector, d->sectors)
+    foreach(Plane *plane, sector->planes())
+    {
+        plane->updateSoundEmitterOrigin();
+    }
+
+    // We can now initialize the BSP leaf blockmap.
+    d->initBspLeafBlockmap();
+
+#ifdef __CLIENT__
+    S_DetermineBspLeafsAffectingSectorReverb(this);
+#endif
+
+    // Prepare the thinker lists.
+    d->thinkers.reset(new Thinkers);
+
+    return true;
+}
+
+Vertex *Map::createVertex(Vector2d const &origin, int archiveIndex)
+{
+    if(!d->editingEnabled)
+        /// @throw EditError  Attempted when not editing.
+        throw EditError("Map::createVertex", "Editing is not enabled");
+
+    Vertex *vtx = d->mesh.newVertex(origin);
+
+    vtx->setIndexInArchive(archiveIndex);
+
+    /// @todo Don't do this here.
+    vtx->setIndexInMap(d->mesh.vertexCount() - 1);
+
+    return vtx;
+}
+
+Line *Map::createLine(Vertex &v1, Vertex &v2, int flags, Sector *frontSector,
+    Sector *backSector, int archiveIndex)
+{
+    if(!d->editingEnabled)
+        /// @throw EditError  Attempted when not editing.
+        throw EditError("Map::createLine", "Editing is not enabled");
+
+    Line *line = new Line(v1, v2, flags, frontSector, backSector);
+    d->editable.lines.append(line);
+
+    line->setIndexInArchive(archiveIndex);
+
+    /// @todo Don't do this here.
+    line->setIndexInMap(d->editable.lines.count() - 1);
+    line->front().setIndexInMap(Map::toSideIndex(line->indexInMap(), Line::Front));
+    line->back().setIndexInMap(Map::toSideIndex(line->indexInMap(), Line::Back));
+
+    return line;
+}
+
+Sector *Map::createSector(float lightLevel, Vector3f const &lightColor,
+    int archiveIndex)
+{
+    if(!d->editingEnabled)
+        /// @throw EditError  Attempted when not editing.
+        throw EditError("Map::createSector", "Editing is not enabled");
+
+    Sector *sector = new Sector(lightLevel, lightColor);
+    d->editable.sectors.append(sector);
+
+    sector->setIndexInArchive(archiveIndex);
+
+    /// @todo Don't do this here.
+    sector->setIndexInMap(d->editable.sectors.count() - 1);
+
+    return sector;
+}
+
+Polyobj *Map::createPolyobj(Vector2d const &origin)
+{
+    if(!d->editingEnabled)
+        /// @throw EditError  Attempted when not editing.
+        throw EditError("Map::createPolyobj", "Editing is not enabled");
+
+    void *region = M_Calloc(POLYOBJ_SIZE);
+    Polyobj *po = new (region) Polyobj(origin);
+    d->editable.polyobjs.append(po);
+
+    /// @todo Don't do this here.
+    po->setIndexInMap(d->editable.polyobjs.count() - 1);
+
+    return po;
+}
+
+Map::Lines const &Map::editableLines() const
+{
+    if(!d->editingEnabled)
+        /// @throw EditError  Attempted when not editing.
+        throw EditError("Map::editableLines", "Editing is not enabled");
+    return d->editable.lines;
+}
+
+Map::Sectors const &Map::editableSectors() const
+{
+    if(!d->editingEnabled)
+        /// @throw EditError  Attempted when not editing.
+        throw EditError("Map::editableSectors", "Editing is not enabled");
+    return d->editable.sectors;
+}
+
+Map::Polyobjs const &Map::editablePolyobjs() const
+{
+    if(!d->editingEnabled)
+        /// @throw EditError  Attempted when not editing.
+        throw EditError("Map::editablePolyobjs", "Editing is not enabled");
+    return d->editable.polyobjs;
+}
+
+void EditableElements::clearAll()
+{
+    qDeleteAll(lines);
+    lines.clear();
+
+    qDeleteAll(sectors);
+    sectors.clear();
+
+    foreach(Polyobj *po, polyobjs)
+    {
+        po->~Polyobj();
+        M_Free(po);
+    }
+    polyobjs.clear();
 }
 
 } // namespace de

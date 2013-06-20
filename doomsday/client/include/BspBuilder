@@ -1,2 +1,0 @@
-#include "world/bspbuilder.h"
-#include "world/bsp/bsptreenode.h"

@@ -123,6 +123,8 @@ public:
 
     EdgeTips() : _tips(0) {}
 
+    ~EdgeTips() { clear(); }
+
     bool isEmpty() const { return _tips.empty(); }
 
     /// Clear all tips in the set.

@@ -24,6 +24,9 @@
 #include <QList>
 #include <QSet>
 
+#include <de/Observers>
+
+#include "Mesh"
 #include "p_particle.h"
 #include "Polyobj"
 
@@ -74,7 +77,6 @@ class EntityDatabase;
 class Generators;
 class LightGrid;
 #endif
-class Mesh;
 class Thinkers;
 
 /**
@@ -106,9 +108,21 @@ public:
 #endif
 
     /*
+     * Observers to be notified when a one-way window construct is first found.
+     */
+    DENG2_DEFINE_AUDIENCE(OneWayWindowFound,
+        void oneWayWindowFound(Line &line, Sector &backFacingSector))
+
+    /*
+     * Observers to be notified when an unclosed sector is first found.
+     */
+    DENG2_DEFINE_AUDIENCE(UnclosedSectorFound,
+        void unclosedSectorFound(Sector &sector, Vector2d const &nearPoint))
+
+    /*
      * Linked-element lists/sets:
      */
-    typedef QList<Vertex *>  Vertexes;
+    typedef Mesh::Vertexes   Vertexes;
     typedef QList<Line *>    Lines;
     typedef QList<Polyobj *> Polyobjs;
     typedef QList<Sector *>  Sectors;
@@ -204,6 +218,14 @@ public:
      * Provides access to the thinker lists for the map.
      */
     Thinkers /*const*/ &thinkers() const;
+
+    /**
+     * Provides access to the primary @ref Mesh geometry owned by the map.
+     * Note that further meshes may be assigned to individual elements of
+     * the map should their geometries not be representable as a manifold
+     * with the primary mesh (e.g., polyobjs and BSP leaf "extra" meshes).
+     */
+    Mesh const &mesh() const;
 
     /**
      * Provides a list of all the non-editable vertexes in the map.
@@ -709,7 +731,12 @@ public:
      */
     bool isEditable() const;
 
-    /// @return @c true= a new BSP was built successfully for the map.
+    /**
+     * Switch the map from editable to non-editable (i.e., playable) state,
+     * incorporating any new map elements, (re)building the BSP, etc...
+     *
+     * @return  @c true= mode switch was completed successfully.
+     */
     bool endEditing();
 
     /**
@@ -737,11 +764,6 @@ public:
                          int archiveIndex = MapElement::NoIndex);
 
     /**
-     * Provides a list of all the editable vertexes in the map.
-     */
-    Vertexes const &editableVertexes() const;
-
-    /**
      * Provides a list of all the editable lines in the map.
      */
     Lines const &editableLines() const;
@@ -755,8 +777,6 @@ public:
      * Provides a list of all the editable sectors in the map.
      */
     Sectors const &editableSectors() const;
-
-    inline int editableVertexCount() const  { return editableVertexes().count(); }
 
     inline int editableLineCount() const    { return editableLines().count(); }
 

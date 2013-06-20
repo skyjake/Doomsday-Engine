@@ -61,19 +61,18 @@ struct DummyData
     virtual ~DummyData() {} // polymorphic
 };
 
-class DummyVertex  : public Vertex,  public DummyData {};
-class DummySector  : public Sector,  public DummyData {};
+class DummySector : public Sector, public DummyData {};
 
 class DummyLine : public Line, public DummyData
 {
 public:
-    DummyLine(DummyVertex &v1, DummyVertex &v2) : Line(v1, v2) {}
+    DummyLine(Vertex &v1, Vertex &v2) : Line(v1, v2) {}
 };
 
 typedef QSet<MapElement *> Dummies;
 
 static Dummies dummies;
-static DummyVertex dummyVertex; // The one dummy vertex.
+static Mesh dummyMesh;
 
 #undef DMU_Str
 char const *DMU_Str(uint prop)
@@ -193,6 +192,7 @@ void Map::initDummies() // static
     // TODO: free existing/old dummies here?
 
     dummies.clear();
+    dummyMesh.clear();
 }
 
 /**
@@ -227,6 +227,11 @@ void *P_AllocDummy(int type, void *extraData)
         return ds; }*/
 
     case DMU_LINE: {
+        // Time to allocate the dummy vertex?
+        if(dummyMesh.vertexesIsEmpty())
+            dummyMesh.newVertex();
+        Vertex &dummyVertex = *dummyMesh.vertexes().first();
+
         DummyLine *dl = new DummyLine(dummyVertex, dummyVertex);
         dummies.insert(dl);
         dl->extraData = extraData;
@@ -303,7 +308,7 @@ int P_ToIndex(void const *ptr)
         return elem->indexInMap();
 
     case DMU_PLANE:
-        return elem->as<Plane>()->inSectorIndex();
+        return elem->as<Plane>()->indexInSector();
 
     case DMU_MATERIAL:
         return elem->as<Material>()->manifest().id(); // 1-based

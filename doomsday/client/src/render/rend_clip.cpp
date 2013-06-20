@@ -966,7 +966,7 @@ int C_CheckBspLeaf(BspLeaf &leaf)
     if(devNoCulling) return true;
 
     // Do we need to resize the angle list buffer?
-    Face const &face = leaf.face();
+    Face const &face = leaf.poly();
 
     if(face.hedgeCount() > anglistSize)
     {

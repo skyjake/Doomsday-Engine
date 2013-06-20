@@ -39,8 +39,7 @@ DENG2_PIMPL_NOREF(Mesh::Element)
     {}
 };
 
-Mesh::Element::Element(Mesh &mesh)
-    : d(new Instance(mesh))
+Mesh::Element::Element(Mesh &mesh) : d(new Instance(mesh))
 {}
 
 Mesh &Mesh::Element::mesh() const
@@ -61,7 +60,7 @@ void Mesh::Element::setMapElement(MapElement const *newMapElement)
 DENG2_PIMPL(Mesh)
 {
     /// All vertexes in the mesh.
-    //Vertexes vertexes;
+    Vertexes vertexes;
 
     /// All half-edges in the mesh.
     HEdges hedges;
@@ -69,47 +68,80 @@ DENG2_PIMPL(Mesh)
     /// All faces in the mesh.
     Faces faces;
 
-    Instance(Public *i)
-        : Base(i)
+    Instance(Public *i) : Base(i)
     {}
 
     ~Instance()
     {
-        //qDeleteAll(vertexes);
-        qDeleteAll(faces);
-        qDeleteAll(hedges);
+        self.clear();
     }
 };
 
-Mesh::Mesh()
-    : d(new Instance(this))
+Mesh::Mesh() : d(new Instance(this))
 {}
 
-/*Vertex *Mesh::newVertex()
+void Mesh::clear()
 {
-    Vertex *vtx = new Vertex();
-    d->vertexes.insert(vtx);
+    qDeleteAll(d->vertexes); d->vertexes.clear();
+    qDeleteAll(d->hedges); d->hedges.clear();
+    qDeleteAll(d->faces); d->faces.clear();
+}
+
+Vertex *Mesh::newVertex(Vector2d const &origin)
+{
+    Vertex *vtx = new Vertex(*this, origin);
+    d->vertexes.append(vtx);
     return vtx;
-}*/
+}
 
 HEdge *Mesh::newHEdge(Vertex &vertex)
 {
     HEdge *hedge = new HEdge(*this, vertex);
-    d->hedges.insert(hedge);
+    d->hedges.append(hedge);
     return hedge;
 }
 
 Face *Mesh::newFace()
 {
     Face *face = new Face(*this);
-    d->faces.insert(face);
+    d->faces.append(face);
     return face;
 }
 
-/*Mesh::Vertexes const &Mesh::vertexes() const
+void Mesh::removeVertex(Vertex &vertex)
+{
+    int sizeBefore = d->vertexes.size();
+    d->vertexes.removeOne(&vertex);
+    if(sizeBefore != d->vertexes.size())
+    {
+        delete &vertex;
+    }
+}
+
+void Mesh::removeHEdge(HEdge &hedge)
+{
+    int sizeBefore = d->hedges.size();
+    d->hedges.removeOne(&hedge);
+    if(sizeBefore != d->hedges.size())
+    {
+        delete &hedge;
+    }
+}
+
+void Mesh::removeFace(Face &face)
+{
+    int sizeBefore = d->faces.size();
+    d->faces.removeOne(&face);
+    if(sizeBefore != d->faces.size())
+    {
+        delete &face;
+    }
+}
+
+Mesh::Vertexes const &Mesh::vertexes() const
 {
     return d->vertexes;
-}*/
+}
 
 Mesh::Faces const &Mesh::faces() const
 {
@@ -119,11 +151,6 @@ Mesh::Faces const &Mesh::faces() const
 Mesh::HEdges const &Mesh::hedges() const
 {
     return d->hedges;
-}
-
-Face *Mesh::firstFace() const
-{
-    return *d->faces.begin();
 }
 
 } // namespace de

@@ -45,7 +45,7 @@ DENG2_PIMPL(Plane)
     ddmobj_base_t soundEmitter;
 
     /// Index of the plane in the owning sector.
-    int inSectorIndex;
+    int indexInSector;
 
     /// Current @em sharp height relative to @c 0 on the map up axis (positive is up).
     coord_t height;
@@ -71,7 +71,7 @@ DENG2_PIMPL(Plane)
     Instance(Public *i, Sector &sector, coord_t height)
         : Base(i),
           sector(&sector),
-          inSectorIndex(-1),
+          indexInSector(-1),
           height(height),
           targetHeight(height),
           visHeight(height),
@@ -166,7 +166,7 @@ DENG2_PIMPL(Plane)
         if(ddMapSetup) return;
 
         // "Middle" planes have no dependent surfaces.
-        if(inSectorIndex > Sector::Ceiling) return;
+        if(indexInSector > Sector::Ceiling) return;
 
         // Mark the decor lights on the sides of this plane as requiring
         // an update.
@@ -207,14 +207,14 @@ Sector const &Plane::sector() const
     return *d->sector;
 }
 
-int Plane::inSectorIndex() const
+int Plane::indexInSector() const
 {
-    return d->inSectorIndex;
+    return d->indexInSector;
 }
 
-void Plane::setInSectorIndex(int newIndex)
+void Plane::setIndexInSector(int newIndex)
 {
-    d->inSectorIndex = newIndex;
+    d->indexInSector = newIndex;
 }
 
 bool Plane::isSectorFloor() const

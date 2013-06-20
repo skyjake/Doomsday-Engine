@@ -201,8 +201,8 @@ void ShadowEdge::prepare(int planeIndex)
             // Its a normal neighbor.
             Sector const *backSec = otherSide->back().sectorPtr();
             if(backSec != d->leftMostSegment->sectorPtr() &&
-               !((plane.inSectorIndex() == Sector::Floor && backSec->ceiling().visHeight() <= plane.visHeight()) ||
-                 (plane.inSectorIndex() == Sector::Ceiling && backSec->floor().height() >= plane.visHeight())))
+               !((plane.indexInSector() == Sector::Floor && backSec->ceiling().visHeight() <= plane.visHeight()) ||
+                 (plane.indexInSector() == Sector::Ceiling && backSec->floor().height() >= plane.visHeight())))
             {
                 Sector const *frontSec = d->leftMostSegment->sectorPtr();
 

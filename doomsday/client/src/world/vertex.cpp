@@ -58,8 +58,9 @@ DENG2_PIMPL(Vertex)
     }
 };
 
-Vertex::Vertex(Vector2d const &origin)
+Vertex::Vertex(Mesh &mesh, Vector2d const &origin)
     : MapElement(DMU_VERTEX),
+      Mesh::Element(mesh),
       _lineOwners(0),
       _numLineOwners(0),
       _onesOwnerCount(0),

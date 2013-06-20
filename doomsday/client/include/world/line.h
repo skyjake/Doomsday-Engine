@@ -612,6 +612,11 @@ public:
     coord_t length() const;
 
     /**
+     * Returns @c true iff the line has a length equivalent to zero.
+     */
+    inline bool hasZeroLength() const { return de::abs(length()) < 1.0 / 128.0; }
+
+    /**
      * Returns the axis-aligned bounding box which encompases both vertex
      * origin points, in map coordinate space units.
      */
