@@ -20,6 +20,7 @@
 #define DENG_CLIENT_BUTTONWIDGET_H
 
 #include <de/Action>
+#include <de/Observers>
 
 #include "labelwidget.h"
 
@@ -31,6 +32,20 @@
 class ButtonWidget : public LabelWidget
 {
 public:
+    enum State {
+        Up,
+        Hover,
+        Down
+    };
+
+    /**
+     * Notified when the state of the button changes.
+     */
+    DENG2_DEFINE_AUDIENCE(StateChange, void buttonStateChanged(ButtonWidget &button, State state))
+
+    DENG2_DEFINE_AUDIENCE(Triggered, void buttonActionTriggered(ButtonWidget &button))
+
+public:
     ButtonWidget(de::String const &name = "");
 
     /**
@@ -40,6 +55,8 @@ public:
      * @param action  Action instance. Widget takes ownership.
      */
     void setAction(de::Action *action);
+
+    State state() const;
 
     // Events.
     void update();

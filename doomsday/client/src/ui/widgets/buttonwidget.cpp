@@ -24,13 +24,9 @@
 
 using namespace de;
 
-DENG2_PIMPL(ButtonWidget)
+DENG2_PIMPL(ButtonWidget),
+DENG2_OBSERVES(Action, Triggered)
 {
-    enum State {
-        Up,
-        Hover,
-        Down
-    };
     State state;
     QScopedPointer<Action> action;
     Animation scale;
@@ -43,7 +39,7 @@ DENG2_PIMPL(ButtonWidget)
           frameOpacity(.08f, Animation::Linear),
           animating(false)
     {
-        updateBackground();
+        setDefaultBackground();
     }
 
     void setState(State st)
@@ -73,6 +69,11 @@ DENG2_PIMPL(ButtonWidget)
             frameOpacity.setValue(0);
             break;
         }
+
+        DENG2_FOR_PUBLIC_AUDIENCE(StateChange, i)
+        {
+            i->buttonStateChanged(self, state);
+        }
     }
 
     void updateHover(Vector2i const &pos)
@@ -89,10 +90,21 @@ DENG2_PIMPL(ButtonWidget)
         }
     }
 
-    void updateBackground()
+    void setDefaultBackground()
     {
         self.set(Background(self.style().colors().colorf("background"),
                             Background::GradientFrame, Vector4f(1, 1, 1, frameOpacity), 6));
+    }
+
+    void updateBackground()
+    {
+        Background bg = self.background();
+        if(bg.type == Background::GradientFrame)
+        {
+            bg.solidFill = self.style().colors().colorf("background");
+            bg.color = Vector4f(1, 1, 1, frameOpacity);
+            self.set(bg);
+        }
     }
 
     void updateAnimation()
@@ -107,6 +119,14 @@ DENG2_PIMPL(ButtonWidget)
             }
         }
     }
+
+    void actionTriggered(Action &)
+    {
+        DENG2_FOR_PUBLIC_AUDIENCE(Triggered, i)
+        {
+            i->buttonActionTriggered(self);
+        }
+    }
 };
 
 ButtonWidget::ButtonWidget(String const &name) : LabelWidget(name), d(new Instance(this))
@@ -114,7 +134,22 @@ ButtonWidget::ButtonWidget(String const &name) : LabelWidget(name), d(new Instan
 
 void ButtonWidget::setAction(Action *action)
 {
+    if(!d->action.isNull())
+    {
+        d->action->audienceForTriggered -= d;
+    }
+
     d->action.reset(action);
+
+    if(action)
+    {
+        action->audienceForTriggered += d;
+    }
+}
+
+ButtonWidget::State ButtonWidget::state() const
+{
+    return d->state;
 }
 
 bool ButtonWidget::handleEvent(Event const &event)
@@ -132,11 +167,11 @@ bool ButtonWidget::handleEvent(Event const &event)
             switch(handleMouseClick(event))
             {
             case MouseClickStarted:
-                d->setState(Instance::Down);
+                d->setState(Down);
                 return true;
 
             case MouseClickFinished:
-                d->setState(Instance::Up);
+                d->setState(Up);
                 if(!d->action.isNull() && hitTest(mouse.pos()))
                 {
                     d->action->trigger();
@@ -144,7 +179,7 @@ bool ButtonWidget::handleEvent(Event const &event)
                 return true;
 
             case MouseClickAborted:
-                d->setState(Instance::Up);
+                d->setState(Up);
                 return true;
 
             default:
@@ -157,12 +192,17 @@ bool ButtonWidget::handleEvent(Event const &event)
 
 void ButtonWidget::updateModelViewProjection(GLUniform &uMvp)
 {
-    Rectanglef const &pos = rule().rect();
+    uMvp = root().projMatrix2D();
 
-    // Apply a scale animation to indicate button response.
-    uMvp = root().projMatrix2D() *
-            Matrix4f::scaleThenTranslate(d->scale, pos.middle()) *
-            Matrix4f::translate(-pos.middle());
+    if(!fequal(d->scale, 1.f))
+    {
+        Rectanglef const &pos = rule().rect();
+
+        // Apply a scale animation to indicate button response.
+        uMvp = uMvp.toMatrix4f() *
+                Matrix4f::scaleThenTranslate(d->scale, pos.middle()) *
+                Matrix4f::translate(-pos.middle());
+    }
 }
 
 void ButtonWidget::update()
