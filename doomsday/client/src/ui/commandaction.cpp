@@ -28,5 +28,7 @@ CommandAction::CommandAction(String const &cmd, int commandSource)
 
 void CommandAction::trigger()
 {
+    Action::trigger();
+
     Con_Execute(_source, _command.toUtf8(), false /*silent*/, false /*net*/);
 }
