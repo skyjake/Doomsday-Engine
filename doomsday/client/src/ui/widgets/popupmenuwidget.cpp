@@ -121,7 +121,9 @@ void PopupMenuWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
     if(d->hover)
     {
         verts.makeQuad(d->highlightRect(),
-                       style().colors().colorf("inverted.background"),
+                       d->hover->state() == ButtonWidget::Hover?
+                           style().colors().colorf("inverted.background") :
+                           style().colors().colorf("accent"),
                        root().atlas().imageRectf(root().solidWhitePixel()).middle());
     }
 }
