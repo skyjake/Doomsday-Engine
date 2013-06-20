@@ -69,11 +69,17 @@ DENG2_PIMPL(MenuWidget)
             pos.x = ordinal % cols->valuei();
             pos.y = ordinal / cols->valuei();
         }
-        else
+        else if(rows->valuei() > 0)
         {
             DENG2_ASSERT(rowPolicy != Expand);
             pos.x = ordinal % rows->valuei();
             pos.y = ordinal / rows->valuei();
+        }
+        else
+        {
+            DENG2_ASSERT(cols->valuei() > 0);
+            pos.x = ordinal % cols->valuei();
+            pos.y = ordinal / cols->valuei();
         }
         return pos;
     }
@@ -216,6 +222,8 @@ void MenuWidget::setGridSize(int columns, ui::SizePolicy columnPolicy,
 
     d->colPolicy = columnPolicy;
     d->rowPolicy = rowPolicy;
+
+    d->needLayout = true;
 }
 
 ButtonWidget *MenuWidget::addItem(String const &styledText, Action *action)
@@ -250,6 +258,8 @@ int MenuWidget::count() const
 
 void MenuWidget::updateLayout()
 {
+    if(!d->needLayout) return;
+
     Rule const *baseVert = holdRef(&contentRule().top());
 
     Vector2i gridSize = d->countGrid();
@@ -271,9 +281,16 @@ void MenuWidget::updateLayout()
                         .setInput(Rule::Left, previous? previous->rule().right() : *baseHoriz)
                         .setInput(Rule::Width, *d->colWidth);
             }            
-            else if(d->colPolicy == Fixed)
+            else //if(d->colPolicy == Fixed)
             {
-                widget->rule().setInput(Rule::Left, contentRule().left() + *d->colWidth * Const(col));
+                if(col > 0)
+                {
+                    widget->rule().setInput(Rule::Left, contentRule().left() + *d->colWidth * Const(col));
+                }
+                else
+                {
+                    widget->rule().setInput(Rule::Left, contentRule().left());
+                }
             }
 
             if(d->rowPolicy == Filled)
@@ -318,7 +335,9 @@ void MenuWidget::updateLayout()
     }
     else
     {
-        setContentWidth(*d->totalWidth());
+        Rule const *width = d->totalWidth();
+        setContentWidth(*width);
+        rule().setInput(Rule::Width, *width + *d->margin * 2);
     }
 
     if(d->rowPolicy != Expand)
@@ -338,10 +357,16 @@ void MenuWidget::updateLayout()
     d->needLayout = false;
 }
 
+Rule const *MenuWidget::newColumnWidthRule(int column) const
+{
+    if(d->colPolicy != Filled)
+    {
+        return holdRef(d->fullColumnWidth(column));
+    }
+    return holdRef(d->colWidth);
+}
+
 void MenuWidget::update()
 {
-    if(d->needLayout)
-    {
-        updateLayout();
-    }
+    updateLayout();
 }
