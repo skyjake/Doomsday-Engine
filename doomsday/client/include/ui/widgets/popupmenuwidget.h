@@ -36,6 +36,7 @@ public:
 
 protected:
     void glMakeGeometry(DefaultVertexBuf::Builder &verts);
+    void preparePopupForOpening();
 
 private:
     DENG2_PRIVATE(d)

@@ -339,11 +339,12 @@ void PopupWidget::open()
     d->realParent->remove(*this);
     d->realParent->root().add(this);
 
+    show();
+
+    preparePopupForOpening();
+
     d->openingRule->setStyle(Animation::Bounce, 6);
     d->openingRule->set(d->content->rule().height(), OPENING_ANIM_SPAN);
-
-    d->updateLayout();
-    show();
 
     d->opened = true;
 
@@ -402,4 +403,9 @@ void PopupWidget::glInit()
 void PopupWidget::glDeinit()
 {
     d->glDeinit();
+}
+
+void PopupWidget::preparePopupForOpening()
+{
+    d->updateLayout();
 }

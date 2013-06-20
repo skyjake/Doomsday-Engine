@@ -106,11 +106,6 @@ ButtonWidget *PopupMenuWidget::addItem(String const &styledText, Action *action)
     b->audienceForStateChange += d;
     b->audienceForTriggered += d;
 
-    // Redo the layout.
-    menu().updateLayout();
-    menu().rule().setInput(Rule::Width,
-                           *refless(menu().newColumnWidthRule(0)) + 2 * margin());
-
     return b;
 }
 
@@ -126,4 +121,14 @@ void PopupMenuWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
                            style().colors().colorf("accent"),
                        root().atlas().imageRectf(root().solidWhitePixel()).middle());
     }
+}
+
+void PopupMenuWidget::preparePopupForOpening()
+{
+    PopupWidget::preparePopupForOpening();
+
+    // Redo the layout.
+    menu().rule().setInput(Rule::Width,
+                           *refless(menu().newColumnWidthRule(0)) + 2 * margin());
+    menu().updateLayout();
 }

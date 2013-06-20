@@ -91,6 +91,8 @@ protected:
     void drawContent();
     void glMakeGeometry(DefaultVertexBuf::Builder &verts);
 
+    virtual void preparePopupForOpening();
+
 private:
     DENG2_PRIVATE(d)
 };
