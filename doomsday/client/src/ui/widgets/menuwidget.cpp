@@ -84,6 +84,22 @@ DENG2_PIMPL(MenuWidget)
         return pos;
     }
 
+    bool isVisibleItem(Widget const *child) const
+    {
+        GuiWidget const *widget = dynamic_cast<GuiWidget const *>(child);
+        return widget && widget->isVisible();
+    }
+
+    int countVisible() const
+    {
+        int num = 0;
+        foreach(Widget *i, self.Widget::children())
+        {
+            if(isVisibleItem(i)) ++num;
+        }
+        return num;
+    }
+
     Vector2i countGrid() const
     {
         Vector2i size;
@@ -91,8 +107,7 @@ DENG2_PIMPL(MenuWidget)
 
         foreach(Widget *i, self.Widget::children())
         {
-            GuiWidget *widget = dynamic_cast<GuiWidget *>(i);
-            if(widget)
+            if(isVisibleItem(i))
             {
                 size = size.max(ordinalToGridPos(ord++) + Vector2i(1, 1));
             }
@@ -106,12 +121,11 @@ DENG2_PIMPL(MenuWidget)
         int ord = 0;
         foreach(Widget *i, self.Widget::children())
         {
-            GuiWidget *widget = dynamic_cast<GuiWidget *>(i);
-            if(widget)
+            if(isVisibleItem(i))
             {
                 if(ordinalToGridPos(ord) == Vector2i(col, row))
                 {
-                    return widget;
+                    return static_cast<GuiWidget *>(i);
                 }
                 ord++;
             }
@@ -138,6 +152,7 @@ DENG2_PIMPL(MenuWidget)
                 releaseRef(old);
             }
         }
+        if(!total) return new ConstantRule(0);
         return refless(total);
     }
 
@@ -162,6 +177,7 @@ DENG2_PIMPL(MenuWidget)
                 releaseRef(old);
             }
         }
+        if(!total) return new ConstantRule(0);
         return refless(total);
     }
 
@@ -183,7 +199,7 @@ DENG2_PIMPL(MenuWidget)
                 releaseRef(old);
             }
         }
-        //qDebug() << "totalWidth:\n" << total->description();
+        if(!total) return new ConstantRule(0);
         return refless(total);
     }
 
@@ -205,7 +221,7 @@ DENG2_PIMPL(MenuWidget)
                 releaseRef(old);
             }
         }
-        //qDebug() << "totalHeight:\n" << total->description();
+        if(!total) return new ConstantRule(0);
         return refless(total);
     }
 };
@@ -253,12 +269,12 @@ void MenuWidget::removeItem(GuiWidget *child)
 
 int MenuWidget::count() const
 {
-    return Widget::children().size();
+    return d->countVisible();
 }
 
 void MenuWidget::updateLayout()
 {
-    if(!d->needLayout) return;
+    //qDebug() << path().toString() << "Menu has" << d->countVisible() << "visible items";
 
     Rule const *baseVert = holdRef(&contentRule().top());
 
@@ -368,5 +384,12 @@ Rule const *MenuWidget::newColumnWidthRule(int column) const
 
 void MenuWidget::update()
 {
-    updateLayout();
+    if(isHidden()) return;
+
+    ScrollAreaWidget::update();
+
+    if(d->needLayout)
+    {
+        updateLayout();
+    }
 }

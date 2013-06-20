@@ -64,7 +64,8 @@ public:
     void removeItem(GuiWidget *child);
 
     /**
-     * Returns the number of items in the menu.
+     * Returns the number of visible items in the menu. Hidden items are not
+     * included in this count.
      */
     int count() const;
 
