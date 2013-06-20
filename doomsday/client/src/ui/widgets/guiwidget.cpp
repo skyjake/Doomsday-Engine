@@ -29,6 +29,9 @@
 using namespace de;
 
 DENG2_PIMPL(GuiWidget)
+#ifdef DENG2_DEBUG
+, DENG2_OBSERVES(Widget, ParentChange)
+#endif
 {
     RuleRectangle rule;
     Rectanglei savedPos;
@@ -70,13 +73,25 @@ DENG2_PIMPL(GuiWidget)
           uBlurTex("uTex", GLUniform::Sampler2D),
           uBlurStep("uBlurStep", GLUniform::Vec2),
           uBlurWindow("uWindow", GLUniform::Vec4)
-    {}
+    {
+#ifdef DENG2_DEBUG
+        self.audienceForParentChange += this;
+        rule.setDebugName(self.path());
+#endif
+    }
 
     ~Instance()
-    {
+    {        
         // Deinitialize now if it hasn't been done already.
         self.deinitialize();
     }
+
+#ifdef DENG2_DEBUG
+    void widgetParentChanged(Widget &, Widget *, Widget *)
+    {
+        rule.setDebugName(self.path());
+    }
+#endif
 
     void initBlur()
     {
@@ -202,7 +217,9 @@ DENG2_PIMPL(GuiWidget)
 };
 
 GuiWidget::GuiWidget(String const &name) : Widget(name), d(new Instance(this))
-{}
+{
+    d->rule.setDebugName(name);
+}
 
 GuiRootWidget &GuiWidget::root()
 {
@@ -404,6 +421,22 @@ bool GuiWidget::hitTest(Vector2i const &pos) const
         // Can never be hit by anything.
         return false;
     }
+
+    Widget const *w = Widget::parent();
+    while(w)
+    {
+        GuiWidget const *gui = dynamic_cast<GuiWidget const *>(w);
+        if(gui)
+        {
+            if(gui->behavior().testFlag(ChildHitClipping) && !gui->hitTest(pos))
+            {
+                // Must hit clipped parent widgets as well.
+                return false;
+            }
+        }
+        w = w->Widget::parent();
+    }
+
     return rule().recti().contains(pos);
 }
 
@@ -442,6 +475,30 @@ GuiWidget::MouseClickStatus GuiWidget::handleMouseClick(Event const &event)
     }
     return MouseClickUnrelated;
 }
+
+void GuiWidget::addedChildWidget(Widget &widget)
+{
+    GuiWidget *gw = dynamic_cast<GuiWidget *>(&widget);
+    if(gw)
+    {
+        addedChildWidget(*gw);
+    }
+}
+
+void GuiWidget::removedChildWidget(Widget &widget)
+{
+    GuiWidget *gw = dynamic_cast<GuiWidget *>(&widget);
+    if(gw)
+    {
+        removedChildWidget(*gw);
+    }
+}
+
+void GuiWidget::addedChildWidget(GuiWidget &widget)
+{}
+
+void GuiWidget::removedChildWidget(GuiWidget &widget)
+{}
 
 void GuiWidget::glInit()
 {}
