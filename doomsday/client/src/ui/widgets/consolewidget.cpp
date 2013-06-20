@@ -180,7 +180,7 @@ ConsoleWidget::ConsoleWidget() : GuiWidget("console"), d(new Instance(this))
     */
 
     d->cmdLine = new ConsoleCommandWidget("commandline");
-    d->cmdLine->setEmptyContentHint("Enter commands here");
+    d->cmdLine->setEmptyContentHint("Enter commands here" /*  " _E(r)_E(l)_E(t) "SHIFT-ESC" */);
     add(d->cmdLine);
 
     connect(d->cmdLine, SIGNAL(gotFocus()), this, SLOT(openLog()));

@@ -48,6 +48,8 @@ public IGameChangeObserver
     ButtonWidget *logo;
     LabelWidget *status;
     PopupMenuWidget *mainMenu;
+    ButtonWidget *panelItem;
+    ButtonWidget *unloadItem;
     ScalarRule *vertShift;
 
     QScopedPointer<Action> openAction;
@@ -118,9 +120,21 @@ public IGameChangeObserver
         uMvpMatrix = self.root().projMatrix2D();
     }
 
-    void currentGameChanged(Game &)
+    void currentGameChanged(Game &newGame)
     {
         updateStatus();
+
+        if(!isNullGame(newGame))
+        {
+            panelItem->show();
+            unloadItem->show();
+        }
+        else
+        {
+            panelItem->hide();
+            unloadItem->hide();
+        }
+        mainMenu->menu().updateLayout(); // Include/exclude shown/hidden menu items.
     }
 
     void updateStatus()
@@ -204,10 +218,13 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
     d->mainMenu = new PopupMenuWidget("de-menu");
     d->mainMenu->setAnchor(d->logo->rule().left() + d->logo->rule().width() / 2,
                            d->logo->rule().top());
-    d->mainMenu->addItem(_E(b) "Open Control Panel", new CommandAction("panel"));
-    d->mainMenu->addItem("Unload Game", new CommandAction("unload"));
+    d->panelItem  = d->mainMenu->addItem(_E(b) "Open Control Panel", new CommandAction("panel"));
+    d->unloadItem = d->mainMenu->addItem("Unload Game", new CommandAction("unload"));
     d->mainMenu->addItem("Quit Doomsday", new CommandAction("quit"));
     add(d->mainMenu);
+
+    d->panelItem->hide();
+    d->unloadItem->hide();
 
     d->logo->setAction(new SignalAction(this, SLOT(openMainMenu())));
 }
