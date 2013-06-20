@@ -458,7 +458,11 @@ void LabelWidget::setImageScale(float scaleFactor)
 void LabelWidget::update()
 {
     GuiWidget::update();
-    d->update();
+
+    if(!isHidden())
+    {
+        d->update();
+    }
 }
 
 void LabelWidget::drawContent()

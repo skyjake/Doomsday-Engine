@@ -21,9 +21,11 @@
 #include "ui/widgets/labelwidget.h"
 #include "ui/widgets/buttonwidget.h"
 #include "ui/widgets/consolecommandwidget.h"
+#include "ui/widgets/popupmenuwidget.h"
 #include "ui/widgets/blurwidget.h"
 #include "ui/clientwindow.h"
 #include "ui/commandaction.h"
+#include "ui/signalaction.h"
 
 #include <de/KeyEvent>
 #include <de/Drawable>
@@ -45,6 +47,7 @@ public IGameChangeObserver
     ConsoleWidget *console;
     ButtonWidget *logo;
     LabelWidget *status;
+    PopupMenuWidget *mainMenu;
     ScalarRule *vertShift;
 
     QScopedPointer<Action> openAction;
@@ -61,6 +64,7 @@ public IGameChangeObserver
         : Base(i),
           opened(true),
           status(0),
+          mainMenu(0),
           mouseWasTrappedWhenOpening(false),
           uMvpMatrix("uMvpMatrix", GLUniform::Mat4),
           uColor    ("uColor",     GLUniform::Vec4)
@@ -165,7 +169,7 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
 
     // DE logo.
     d->logo = new ButtonWidget;
-    d->logo->setAction(new CommandAction("panel"));
+    //d->logo->setAction(new CommandAction("panel"));
     d->logo->setImage(style().images().image("logo.px128"));
     d->logo->setImageScale(.55f);
     d->logo->setImageFit(FitToHeight | OriginalAspectRatio);
@@ -195,6 +199,17 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
 
     // Taskbar height depends on the font size.
     rule().setInput(Rule::Height, style().fonts().font("default").height() + gap * 2);
+
+    // The main DE menu.
+    d->mainMenu = new PopupMenuWidget("de-menu");
+    d->mainMenu->setAnchor(d->logo->rule().left() + d->logo->rule().width() / 2,
+                           d->logo->rule().top());
+    d->mainMenu->addItem(_E(b) "Open Control Panel", new CommandAction("panel"));
+    d->mainMenu->addItem("Unload Game", new CommandAction("unload"));
+    d->mainMenu->addItem("Quit Doomsday", new CommandAction("quit"));
+    add(d->mainMenu);
+
+    d->logo->setAction(new SignalAction(this, SLOT(openMainMenu())));
 }
 
 ConsoleWidget &TaskBarWidget::console()
@@ -205,6 +220,11 @@ ConsoleWidget &TaskBarWidget::console()
 ConsoleCommandWidget &TaskBarWidget::commandLine()
 {
     return d->console->commandLine();
+}
+
+ButtonWidget &TaskBarWidget::logoButton()
+{
+    return *d->logo;
 }
 
 bool TaskBarWidget::isOpen() const
@@ -373,4 +393,9 @@ void TaskBarWidget::close()
             }
         }
     }
+}
+
+void TaskBarWidget::openMainMenu()
+{
+    d->mainMenu->open();
 }

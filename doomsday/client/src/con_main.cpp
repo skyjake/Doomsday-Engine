@@ -2233,8 +2233,7 @@ D_CMD(Help)
 
 #ifdef __CLIENT__
     LOG_MSG(_E(D) "Keys:" _E(.))
-            << TABBED("Esc", "Open/close the taskbar")
-            << TABBED("Shift-Esc", "Open the console")
+            << TABBED("Shift-Esc", "Open the taskbar and console")
             << TABBED("F5", "Clear the console message history")
             << TABBED("Home", "Jump to beginning of line")
             << TABBED("End", "Jump to end of line")
