@@ -21,6 +21,7 @@
 
 #include "ui/widgets/scrollareawidget.h"
 
+#include <de/GLState>
 #include <de/KeyEvent>
 #include <de/MouseEvent>
 #include <de/Lockable>
@@ -59,6 +60,8 @@ DENG2_PIMPL(ScrollAreaWidget), public Lockable
           margin(0),
           vertMargin(0)
     {
+        contentRule.setDebugName("ScrollArea-contentRule");
+
         updateStyle();
 
         x = new ScalarRule(0);
@@ -105,6 +108,8 @@ DENG2_PIMPL(ScrollAreaWidget), public Lockable
 ScrollAreaWidget::ScrollAreaWidget(String const &name)
     : GuiWidget(name), d(new Instance(this))
 {
+    setBehavior(ChildHitClipping);
+
     // Link the content rule into the widget's rectangle.
     d->contentRule.setInput(Rule::Left, rule().left() + *d->margin -
                             OperatorRule::minimum(*d->x, *d->maxX));
@@ -447,4 +452,14 @@ void ScrollAreaWidget::update()
     {
         d->y->set(d->maxY->value());
     }
+}
+
+void ScrollAreaWidget::preDrawChildren()
+{
+    GLState::push().setNormalizedScissor(normalizedRect());
+}
+
+void ScrollAreaWidget::postDrawChildren()
+{
+    GLState::pop();
 }
