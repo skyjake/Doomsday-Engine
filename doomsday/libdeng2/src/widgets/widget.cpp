@@ -104,6 +104,22 @@ void Widget::setName(String const &name)
     }
 }
 
+DotPath Widget::path() const
+{
+    Widget const *w = this;
+    String result;
+    while(w)
+    {
+        if(!w->d->name.isEmpty())
+        {
+            if(!result.isEmpty()) result = "." + result;
+            result = w->d->name + result;
+        }
+        w = w->parent();
+    }
+    return result;
+}
+
 bool Widget::hasRoot() const
 {
     Widget const *w = this;
@@ -224,6 +240,14 @@ Widget &Widget::add(Widget *child)
     {
         d->index.insert(child->name(), child);
     }
+
+    // Notify.
+    addedChildWidget(*child);
+    DENG2_FOR_EACH_OBSERVER(ParentChangeAudience, i, child->audienceForParentChange)
+    {
+        i->widgetParentChanged(*child, 0, this);
+    }
+
     return *child;
 }
 
@@ -237,6 +261,14 @@ Widget *Widget::remove(Widget &child)
     {
         d->index.remove(child.name());
     }
+
+    // Notify.
+    removedChildWidget(child);
+    DENG2_FOR_EACH_OBSERVER(ParentChangeAudience, i, child.audienceForParentChange)
+    {
+        i->widgetParentChanged(child, this, 0);
+    }
+
     return &child;
 }
 
@@ -422,5 +454,11 @@ void Widget::setFocusCycle(WidgetList const &order)
         b->setFocusPrev(a->name());
     }
 }
+
+void Widget::addedChildWidget(Widget &)
+{}
+
+void Widget::removedChildWidget(Widget &)
+{}
 
 } // namespace de
