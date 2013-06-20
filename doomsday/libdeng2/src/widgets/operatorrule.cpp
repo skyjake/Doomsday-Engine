@@ -68,6 +68,7 @@ void OperatorRule::update()
 
     case Double:
         v = leftValue * 2;
+        break;
 
     case Sum:
         v = leftValue + rightValue;

@@ -61,6 +61,14 @@ public:
         return *refless(new OperatorRule(Minimum, left, right));
     }
 
+    static OperatorRule &floor(Rule const &unary) {
+        return *refless(new OperatorRule(Floor, unary));
+    }
+
+    static OperatorRule &clamped(Rule const &value, Rule const &low, Rule const &high) {
+        return OperatorRule::minimum(OperatorRule::maximum(value, low), high);
+    }
+
 protected:
     ~OperatorRule();
 
@@ -102,6 +110,24 @@ inline OperatorRule &operator - (Rule const &left, Rule const &right) {
     return *refless(new OperatorRule(OperatorRule::Subtract, left, right));
 }
 
+inline OperatorRule &operator * (int left, Rule const &right) {
+    if(left == 2) {
+        return *refless(new OperatorRule(OperatorRule::Double, right));
+    }
+    return *refless(new OperatorRule(OperatorRule::Multiply, Const(left), right));
+}
+
+inline OperatorRule &operator * (Rule const &left, int right) {
+    if(right == 2) {
+        return *refless(new OperatorRule(OperatorRule::Double, left));
+    }
+    return *refless(new OperatorRule(OperatorRule::Multiply, left, Constf(right)));
+}
+
+inline OperatorRule &operator * (float left, Rule const &right) {
+    return *refless(new OperatorRule(OperatorRule::Multiply, Constf(left), right));
+}
+
 inline OperatorRule &operator * (Rule const &left, float right) {
     return *refless(new OperatorRule(OperatorRule::Multiply, left, Constf(right)));
 }
@@ -111,9 +137,10 @@ inline OperatorRule &operator * (Rule const &left, Rule const &right) {
 }
 
 inline OperatorRule &operator / (Rule const &left, int right) {
-    return *refless(new OperatorRule(OperatorRule::Floor,
-                                     *refless(new OperatorRule(OperatorRule::Divide,
-                                                               left, Const(right)))));
+    if(right == 2) {
+        return OperatorRule::floor(*refless(new OperatorRule(OperatorRule::Half, left)));
+    }
+    return OperatorRule::floor(*refless(new OperatorRule(OperatorRule::Divide, left, Const(right))));
 }
 
 inline OperatorRule &operator / (Rule const &left, float right) {
