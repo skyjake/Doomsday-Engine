@@ -27,6 +27,8 @@
 #include "ui/commandaction.h"
 #include "ui/signalaction.h"
 
+#include "ui/ui_main.h"
+
 #include <de/KeyEvent>
 #include <de/Drawable>
 #include <de/GLBuffer>
@@ -318,7 +320,7 @@ bool TaskBarWidget::handleEvent(Event const &event)
                 close();
                 return true;
             }
-            else
+            else if(!UI_IsActive()) /// @todo Play nice with legacy engine UI (which is deprecated).
             {
                 if(key.modifiers().testFlag(KeyEvent::Shift) ||
                    !App_GameLoaded())
