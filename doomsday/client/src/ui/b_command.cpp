@@ -358,7 +358,9 @@ static void B_SubstituteInCommand(char const *command, ddevent_t const *event,
     }
 }
 
-de::Action *EventBinding_ActionForEvent(evbinding_t *eb, ddevent_t const *event, struct bcontext_s *eventClass)
+de::Action *EventBinding_ActionForEvent(evbinding_t *eb, ddevent_t const *event,
+                                        struct bcontext_s *eventClass,
+                                        bool respectHigherAssociatedContexts)
 {
     int         i;
     inputdev_t* dev = 0;
@@ -380,10 +382,15 @@ de::Action *EventBinding_ActionForEvent(evbinding_t *eb, ddevent_t const *event,
     switch(event->type)
     {
     case E_TOGGLE:
+        qDebug() << "eb->id" << eb->id << "event.id" << event->toggle.id;
         if(eb->id != event->toggle.id)
             return 0;
-        if(eventClass && dev->keys[eb->id].assoc.bContext != eventClass)
-            return 0; // Shadowed by a more important active class.
+
+        if(respectHigherAssociatedContexts)
+        {
+            if(eventClass && dev->keys[eb->id].assoc.bContext != eventClass)
+                return 0; // Shadowed by a more important active class.
+        }
 
         // We're checking it, so clear the triggered flag.
         dev->keys[eb->id].assoc.flags &= ~IDAF_TRIGGERED;

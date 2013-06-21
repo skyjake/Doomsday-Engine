@@ -533,16 +533,14 @@ boolean B_DeleteBinding(bcontext_t* bc, int bid)
     return false;
 }
 
-de::Action *BindContext_ActionForEvent(bcontext_t *bc, ddevent_t const *event)
+de::Action *BindContext_ActionForEvent(bcontext_t *bc, ddevent_t const *event,
+                                       bool respectHigherAssociatedContexts)
 {
-    if(!(bc->flags & BCF_ACTIVE))
-        return 0;
-
     // See if the command bindings will have it.
     for(evbinding_t *eb = bc->commandBinds.next; eb != &bc->commandBinds; eb = eb->next)
     {
         de::Action *act = 0;
-        if((act = EventBinding_ActionForEvent(eb, event, bc)) != 0)
+        if((act = EventBinding_ActionForEvent(eb, event, bc, respectHigherAssociatedContexts)) != 0)
         {
             return act;
         }
@@ -561,7 +559,7 @@ de::Action *B_ActionForEvent(ddevent_t const *event)
         if(!(bc->flags & BCF_ACTIVE))
             continue;
 
-        de::Action *act = BindContext_ActionForEvent(bc, event);
+        de::Action *act = BindContext_ActionForEvent(bc, event, true);
         if(act)
         {
             return act;
