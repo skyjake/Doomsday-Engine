@@ -306,8 +306,10 @@ void B_BindDefaults(void)
     // Engine's highest priority context: opening control panel, opening the console.
     B_BindCommand("global:key-f11-down + key-alt-down", "releasemouse");
     B_BindCommand("global:key-f11-down", "togglefullscreen");
+    B_BindCommand("global:key-tilde-down + key-shift-up", "taskbar");
 
     // Console bindings (when open).
+    B_BindCommand("console:key-tilde-down + key-shift-up", "taskbar"); // without this, key would be entered into command line
 
     // Bias editor.
 }

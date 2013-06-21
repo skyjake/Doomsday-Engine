@@ -322,6 +322,7 @@ bool TaskBarWidget::handleEvent(Event const &event)
             }
             else if(!UI_IsActive()) /// @todo Play nice with legacy engine UI (which is deprecated).
             {
+                // Task bar is closed, so let's open it.
                 if(key.modifiers().testFlag(KeyEvent::Shift) ||
                    !App_GameLoaded())
                 {
