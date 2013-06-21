@@ -66,6 +66,7 @@ public:
 
     // Events.
     void update();
+    void draw();
     void drawUntil(de::Widget &until);
 
 private:
