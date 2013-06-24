@@ -694,7 +694,7 @@ size_t Zip::readLump(int lumpIdx, uint8_t* buffer, size_t startOffset,
     if(tryCache)
     {
         uint8_t const* data = d->lumpCache? d->lumpCache->data(lumpIdx) : 0;
-        LOG_DEBUG("Cache %s on #%i") << (data? "hit" : "miss") << lumpIdx;
+        LOG_TRACE("Cache %s on #%i") << (data? "hit" : "miss") << lumpIdx;
         if(data)
         {
             size_t readBytes = MIN_OF(file.size(), length);
