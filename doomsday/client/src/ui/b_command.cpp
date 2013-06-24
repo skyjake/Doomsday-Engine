@@ -382,7 +382,6 @@ de::Action *EventBinding_ActionForEvent(evbinding_t *eb, ddevent_t const *event,
     switch(event->type)
     {
     case E_TOGGLE:
-        qDebug() << "eb->id" << eb->id << "event.id" << event->toggle.id;
         if(eb->id != event->toggle.id)
             return 0;
 
