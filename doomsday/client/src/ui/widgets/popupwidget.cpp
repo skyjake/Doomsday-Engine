@@ -322,6 +322,10 @@ bool PopupWidget::handleEvent(Event const &event)
        event.type() == Event::KeyRepeat ||
        event.type() == Event::KeyRelease)
     {
+        if(event.isKeyDown() && event.as<KeyEvent>().ddKey() == DDKEY_ESCAPE)
+        {
+            close();
+        }
         return true;
     }
 
