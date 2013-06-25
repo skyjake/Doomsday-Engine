@@ -479,7 +479,6 @@ D_CMD(BLEditor)
 #include "world/p_players.h"
 #include "BspLeaf"
 
-#include "render/rend_bias.h" // MAX_BIAS_SOURCES, remove me (Map should provide)
 #include "render/rend_font.h"
 
 static void drawBoxBackground(Vector2i const &origin_, Vector2i const &size_, ui_color_t *color)
@@ -685,8 +684,8 @@ void SBE_DrawGui()
     // Overall stats: numSources / MAX (left)
     String text = String("%1 / %2 (%3 free)")
                     .arg(map.biasSourceCount())
-                    .arg(MAX_BIAS_SOURCES)
-                    .arg(MAX_BIAS_SOURCES - map.biasSourceCount());
+                    .arg(Map::MAX_BIAS_SOURCES)
+                    .arg(Map::MAX_BIAS_SOURCES - map.biasSourceCount());
 
     FR_SetFont(fontFixed);
     FR_LoadDefaultAttrib();

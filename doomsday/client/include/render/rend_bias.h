@@ -24,7 +24,7 @@
 
 #include <de/Vector>
 
-#define MAX_BIAS_SOURCES    (8 * 32) // Hard limit due to change tracking.
+#include "world/map.h"
 
 // Vertex illumination flags.
 #define VIF_LERP            0x1 ///< Interpolation is in progress.
@@ -72,7 +72,7 @@ void lerpIllumination(VertexIllum &illum, uint currentTime, int lightSpeed,
 class BiasTracker
 {
 public:
-    static int const MAX_TRACKED = (MAX_BIAS_SOURCES / 8);
+    static int const MAX_TRACKED = (de::Map::MAX_BIAS_SOURCES / 8);
 
 public:
     BiasTracker() { de::zap(_changes); }

@@ -138,6 +138,13 @@ public:
         void unclosedSectorFound(Sector &sector, Vector2d const &nearPoint))
 
     /*
+     * Constants:
+     */
+#ifdef __CLIENT__
+    static int const MAX_BIAS_SOURCES = 8 * 32; // Hard limit due to change tracking.
+#endif
+
+    /*
      * Linked-element lists/sets:
      */
     typedef Mesh::Vertexes   Vertexes;
