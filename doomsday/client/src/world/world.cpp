@@ -56,7 +56,6 @@
 
 #  include "render/lumobj.h"
 #  include "render/r_shadow.h"
-#  include "render/rend_bias.h"
 #  include "render/rend_decor.h"
 #  include "render/rend_fakeradio.h"
 #  include "render/rend_list.h"

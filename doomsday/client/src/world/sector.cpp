@@ -32,9 +32,6 @@
 #include "world/map.h"
 #include "world/p_object.h"
 #include "world/p_players.h"
-#ifdef __CLIENT__
-#  include "render/rend_bias.h"
-#endif
 
 #include "world/sector.h"
 

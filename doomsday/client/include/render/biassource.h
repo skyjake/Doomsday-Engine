@@ -28,7 +28,7 @@
 
 #include "Grabbable"
 
-class BiasTracker; // render/rend_bias.h
+class BiasTracker;
 class BspLeaf;
 struct ded_light_s; // def_data.h
 

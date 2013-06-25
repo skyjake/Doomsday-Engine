@@ -111,6 +111,7 @@ DENG_API_HEADERS = \
 DENG_HEADERS += \
     include/BiasSource \
     include/BiasSurface \
+    include/BiasTracker \
     include/BspLeaf \
     include/BspNode \
     include/EntityDatabase \
@@ -251,6 +252,7 @@ DENG_HEADERS += \
     include/r_util.h \
     include/render/biassource.h \
     include/render/biassurface.h \
+    include/render/biastracker.h \
     include/render/blockmapvisual.h \
     include/render/huecirclevisual.h \
     include/render/lightgrid.h \
@@ -260,7 +262,6 @@ DENG_HEADERS += \
     include/render/r_main.h \
     include/render/r_shadow.h \
     include/render/r_things.h \
-    include/render/rend_bias.h \
     include/render/rend_clip.h \
     include/render/rend_decor.h \
     include/render/rend_dynlight.h \
@@ -551,6 +552,7 @@ SOURCES += \
     src/render/api_render.cpp \
     src/render/biassource.cpp \
     src/render/biassurface.cpp \
+    src/render/biastracker.cpp \
     src/render/blockmapvisual.cpp \
     src/render/huecirclevisual.cpp \
     src/render/lightgrid.cpp \
@@ -560,7 +562,6 @@ SOURCES += \
     src/render/r_main.cpp \
     src/render/r_shadow.cpp \
     src/render/r_things.cpp \
-    src/render/rend_bias.cpp \
     src/render/rend_clip.cpp \
     src/render/rend_decor.cpp \
     src/render/rend_dynlight.cpp \

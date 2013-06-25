@@ -27,7 +27,7 @@
 #include "BspLeaf"
 #include "Segment"
 
-#include "render/rend_bias.h" // BiasTracker
+#include "BiasTracker"
 
 #include "render/biassurface.h"
 

@@ -1,4 +1,4 @@
-/** @file rend_bias.cpp Shadow Bias lighting model.
+/** @file biastracker.h Shadow Bias change tracking buffer.
  *
  * @authors Copyright © 2005-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
@@ -17,7 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "render/rend_bias.h"
+#include "render/biastracker.h"
 
 using namespace de;
 

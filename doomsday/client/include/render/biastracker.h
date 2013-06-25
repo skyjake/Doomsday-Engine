@@ -1,6 +1,4 @@
-/** @file rend_bias.h Shadow Bias lighting model.
- *
- * Calculating macro-scale lighting on the fly.
+/** @file biastracker.h Shadow Bias change tracking buffer.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -19,11 +17,14 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_RENDER_SHADOWBIAS
-#define DENG_RENDER_SHADOWBIAS
+#ifndef DENG_RENDER_SHADOWBIAS_TRACKER_H
+#define DENG_RENDER_SHADOWBIAS_TRACKER_H
 
 #include "world/map.h"
 
+/**
+ * Change tracking buffer for the Shadow Bias lighting model.
+ */
 class BiasTracker
 {
 public:
@@ -56,4 +57,4 @@ private:
     uint _changes[MAX_TRACKED];
 };
 
-#endif // DENG_RENDER_SHADOWBIAS
+#endif // DENG_RENDER_SHADOWBIAS_TRACKER_H

@@ -41,7 +41,6 @@
 #endif
 
 #ifdef __CLIENT__
-#  include "render/rend_bias.h"
 //#  include "render/rend_console.h"
 #  include "render/rend_main.h"
 #  include "render/lightgrid.h"

@@ -39,7 +39,6 @@
 #include "render/rend_shadow.h"
 #include "render/rend_fakeradio.h"
 #include "render/rend_font.h"
-#include "render/rend_bias.h"
 #include "render/rend_decor.h"
 #include "render/rend_dynlight.h"
 #include "render/rendpoly.h"

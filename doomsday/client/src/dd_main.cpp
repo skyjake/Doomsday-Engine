@@ -79,7 +79,6 @@
 #include "ui/p_control.h"
 
 #ifdef __CLIENT__
-#  include "render/rend_bias.h"
 #  include "render/vlight.h"
 #  include "ui/widgets/taskbarwidget.h"
 #endif

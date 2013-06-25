@@ -61,8 +61,8 @@
 
 #include "render/r_main.h" // validCount
 #ifdef __CLIENT__
+#  include "BiasTracker"
 #  include "render/lumobj.h"
-#  include "render/rend_bias.h"
 #  include "render/rend_decor.h"
 #  include "render/rend_main.h"
 #  include "render/sky.h"
@@ -1179,7 +1179,6 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
         // Check which sources have changed and update the tracker bits for
         // any affected surfaces.
         BiasTracker allChanges;
-        zap(allChanges);
 
         for(int i = 0; i < bias.sources.count(); ++i)
         {

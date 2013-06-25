@@ -24,7 +24,7 @@
 
 #include "MapElement"
 
-class BiasTracker; // render/rend_bias.h
+class BiasTracker;
 
 /**
  * Stores surface data for the Shadow Bias lighting model (e.g., per-vertex

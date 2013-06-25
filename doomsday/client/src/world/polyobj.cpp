@@ -31,10 +31,6 @@
 
 #include "render/r_main.h" // validCount
 
-#ifdef __CLIENT__
-#  include "render/rend_bias.h"
-#endif
-
 #include "world/polyobj.h"
 
 using namespace de;
