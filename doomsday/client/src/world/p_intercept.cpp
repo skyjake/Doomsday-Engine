@@ -21,6 +21,8 @@
 #include "de_console.h"
 #include "de_play.h"
 
+#include "world/map.h"
+
 #define MININTERCEPTS       128
 
 struct InterceptNode

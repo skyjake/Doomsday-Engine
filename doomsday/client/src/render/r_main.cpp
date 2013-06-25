@@ -33,6 +33,9 @@
 #include "de_misc.h"
 #include "de_ui.h"
 
+#ifdef __CLIENT__
+#  include "edit_bias.h"
+#endif
 #include "gl/svg.h"
 #include "world/p_players.h"
 #include "world/p_objlink.h"
@@ -706,34 +709,6 @@ void R_NewSharpWorld()
 #endif
 }
 
-void R_CreateMobjLinks()
-{
-#ifdef __CLIENT__
-#ifdef DD_PROFILE
-    static int p;
-
-    if(++p > 40)
-    {
-        p = 0;
-        PRINT_PROF( PROF_MOBJ_INIT_ADD );
-    }
-#endif
-
-    if(!App_World().hasMap()) return;
-
-BEGIN_PROF( PROF_MOBJ_INIT_ADD );
-
-    foreach(Sector *sector, App_World().map().sectors())
-    for(mobj_t *iter = sector->firstMobj(); iter; iter = iter->sNext)
-    {
-        R_ObjlinkCreate(*iter); // For spreading purposes.
-    }
-
-END_PROF( PROF_MOBJ_INIT_ADD );
-
-#endif
-}
-
 void R_UpdateViewer(int consoleNum)
 {
     DENG_ASSERT(consoleNum >= 0 && consoleNum < DDMAXPLAYERS);
@@ -991,7 +966,7 @@ DENG_EXTERN_C void R_RenderPlayerView(int num)
 
     if(App_World().hasMap())
     {
-        Rend_RenderMap();
+        Rend_RenderMap(App_World().map());
     }
 
     // Orthogonal projection to the view window.
@@ -1282,8 +1257,8 @@ void Rend_CacheForMap()
             spritedef_t *sprDef = &sprites[i];
 
             if(App_World().map().thinkers()
-                    .iterate(reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
-                             0x1/* All mobjs are public*/, findSpriteOwner, sprDef))
+                   .iterate(reinterpret_cast<thinkfunc_t>(gx.MobjThinker), 0x1/*mobjs are public*/,
+                            findSpriteOwner, sprDef))
             {
                 // This sprite is used by some state of at least one mobj.
 
@@ -1307,8 +1282,9 @@ void Rend_CacheForMap()
     if(useModels && precacheSkins)
     {
         // All mobjs are public.
-        App_World().map().thinkers().iterate(reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
-                                             0x1, Models_CacheForMobj, NULL);
+        App_World().map().thinkers()
+            .iterate(reinterpret_cast<thinkfunc_t>(gx.MobjThinker), 0x1,
+                     Models_CacheForMobj);
     }
 }
 

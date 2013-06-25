@@ -23,16 +23,15 @@
 #include <QSet>
 #include <QtAlgorithms>
 
-#include <de/memoryzone.h>
-
 #include <de/Log>
 
+#include "dd_main.h" // App_World()
 #include "Polyobj"
 #include "Sector"
 #include "Segment"
 
 #ifdef __CLIENT__
-#  include "render/rend_bias.h"
+#  include "BiasSurface"
 #endif
 
 #include "world/bspleaf.h"
@@ -90,8 +89,8 @@ DENG2_PIMPL(BspLeaf)
     /// Frame number of last R_AddSprites.
     int addSpriteCount;
 
-    /// Sector::planeCount() size.
-    BiasSurface **biasSurfaces;
+    /// Shadow Bias data for the BSP leaf.
+    BiasSurfaces biasSurfaces;
 
 #endif // __CLIENT__
 
@@ -108,7 +107,6 @@ DENG2_PIMPL(BspLeaf)
           fanBase(0),
           needUpdateFanBase(true),
           addSpriteCount(0),
-          biasSurfaces(0),
 #endif
           validCount(0)
     {}
@@ -116,18 +114,9 @@ DENG2_PIMPL(BspLeaf)
     ~Instance()
     {
         qDeleteAll(extraMeshes);
-
 #ifdef __CLIENT__
-        // Destroy the biassurfaces for each plane.
-        if(biasSurfaces)
-        {
-            for(int i = 0; i < sector->planeCount(); ++i)
-            {
-                SB_DestroySurface(*biasSurfaces[i]);
-            }
-            Z_Free(biasSurfaces);
-        }
-#endif // __CLIENT__
+        qDeleteAll(biasSurfaces);
+#endif
     }
 
     void updateClockwiseSegments()
@@ -488,43 +477,43 @@ int BspLeaf::numFanVertices() const
     return d->poly->hedgeCount() + (fanBase()? 0 : 2);
 }
 
-BiasSurface &BspLeaf::biasSurface(int groupId)
+BiasSurface &BspLeaf::biasSurface(int group)
 {
-    DENG2_ASSERT(d->sector != 0);
-    if(groupId >= 0 && groupId < d->sector->planeCount())
+    BiasSurfaces::iterator found = d->biasSurfaces.find(group);
+    if(found != d->biasSurfaces.end())
     {
-        DENG2_ASSERT(d->biasSurfaces != 0 && d->biasSurfaces[groupId] != 0);
-        return *d->biasSurfaces[groupId];
+        return **found;
     }
-    /// @throw InvalidGeometryGroupError Attempted with an invalid geometry group id.
-    throw UnknownGeometryGroupError("BspLeaf::biasSurface", QString("Invalid group id %1").arg(groupId));
+    /// @throw InvalidGeometryGroupError Attempted with an invalid geometry group.
+    throw UnknownGeometryGroupError("BspLeaf::biasSurface", QString("Invalid group %1").arg(group));
 }
 
-void BspLeaf::setBiasSurface(int groupId, BiasSurface *biasSurface)
+void BspLeaf::setBiasSurface(int group, BiasSurface *newBiasSurface)
 {
-    LOG_AS("BspLeaf::setBiasSurface");
-
-    if(isDegenerate())
-        LOG_TRACE("Adding a BiasSurface to a degenerate BSP leaf??");
-
     if(!d->sector)
         /// @throw MissingSectorError Attempted with no sector attributed.
         throw MissingSectorError("BspLeaf::setBiasSurface", "No sector is attributed");
 
-    if(groupId < 0 || groupId >= d->sector->planeCount())
-        /// @throw InvalidGeometryGroupError Attempted with an invalid geometry group id.
-        throw UnknownGeometryGroupError("BspLeaf::setBiasSurface", QString("Invalid group id %1").arg(groupId));
+    // Sanity check.
+    DENG_ASSERT(group >= 0 && group < d->sector->planeCount());
 
-    if(!d->biasSurfaces)
+    if(d->biasSurfaces.contains(group))
     {
-        d->biasSurfaces = (BiasSurface **) Z_Calloc(d->sector->planeCount() * sizeof(BiasSurface *), PU_MAP, 0);
-    }
-    else if(d->biasSurfaces[groupId])
-    {
-        SB_DestroySurface(*d->biasSurfaces[groupId]);
+        delete d->biasSurfaces.take(group);
     }
 
-    d->biasSurfaces[groupId] = biasSurface;
+    if(newBiasSurface)
+    {
+        if(isDegenerate())
+            LOG_TRACE("Adding a BiasSurface to a degenerate BSP leaf??");
+
+        d->biasSurfaces.insert(group, newBiasSurface);
+    }
+}
+
+BspLeaf::BiasSurfaces const &BspLeaf::biasSurfaces() const
+{
+    return d->biasSurfaces;
 }
 
 ShadowLink *BspLeaf::firstShadowLink() const

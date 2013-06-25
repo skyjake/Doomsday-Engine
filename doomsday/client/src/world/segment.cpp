@@ -18,15 +18,19 @@
  * 02110-1301 USA</small>
  */
 
+#include <QMap>
+#include <QtAlgorithms>
+
 #include <de/binangle.h>
 
+#include "dd_main.h" // App_World()
 #include "BspLeaf"
 #include "HEdge"
 #include "Line"
 #include "Sector"
 
 #ifdef __CLIENT__
-#  include "render/rend_bias.h"
+#  include "BiasSurface"
 #endif
 
 #include "world/segment.h"
@@ -58,8 +62,7 @@ DENG2_PIMPL(Segment)
     coord_t length;
 
 #ifdef __CLIENT__
-    /// For each section of a Line::Side.
-    BiasSurface *bsuf[3];
+    BiasSurfaces biasSurfaces;
 #endif
 
     Instance(Public *i)
@@ -71,22 +74,12 @@ DENG2_PIMPL(Segment)
           hedge(0),
           angle(0),
           length(0)
-    {
-#ifdef __CLIENT__
-        zap(bsuf);
-#endif
-    }
+    {}
 
     ~Instance()
     {
 #ifdef __CLIENT__
-        for(int i = 0; i < 3; ++i)
-        {
-            if(bsuf[i])
-            {
-                SB_DestroySurface(*bsuf[i]);
-            }
-        }
+        qDeleteAll(biasSurfaces);
 #endif
     }
 };
@@ -196,30 +189,36 @@ void Segment::setFlags(Flags flagsToChange, FlagOp operation)
 
 #ifdef __CLIENT__
 
-BiasSurface &Segment::biasSurface(int groupId)
+BiasSurface &Segment::biasSurface(int group)
 {
-    if(groupId >= 0 && groupId <= int(Line::Side::Top))
+    BiasSurfaces::iterator found = d->biasSurfaces.find(group);
+    if(found != d->biasSurfaces.end())
     {
-        DENG2_ASSERT(d->bsuf[groupId] != 0);
-        return *d->bsuf[groupId];
+        return **found;
     }
-    /// @throw InvalidGeometryGroupError Attempted with an invalid geometry group id.
-    throw UnknownGeometryGroupError("Segment::biasSurface", QString("Invalid group id %1").arg(groupId));
+    /// @throw InvalidGeometryGroupError Attempted with an invalid geometry group.
+    throw UnknownGeometryGroupError("Segment::biasSurface", QString("Invalid group %1").arg(group));
 }
 
-void Segment::setBiasSurface(int groupId, BiasSurface *biasSurface)
+void Segment::setBiasSurface(int group, BiasSurface *newBiasSurface)
 {
-    if(groupId >= 0 && groupId <= int(Line::Side::Top))
+    // Sanity check.
+    DENG_ASSERT(group >= 0 && group < 3);
+
+    if(d->biasSurfaces.contains(group))
     {
-        if(d->bsuf[groupId])
-        {
-            delete d->bsuf[groupId];
-        }
-        d->bsuf[groupId] = biasSurface;
-        return;
+        delete d->biasSurfaces.take(group);
     }
-    /// @throw InvalidGeometryGroupError Attempted with an invalid geometry group id.
-    throw UnknownGeometryGroupError("Segment::setBiasSurface", QString("Invalid group id %1").arg(groupId));
+
+    if(newBiasSurface)
+    {
+        d->biasSurfaces.insert(group, newBiasSurface);
+    }
+}
+
+Segment::BiasSurfaces const &Segment::biasSurfaces() const
+{
+    return d->biasSurfaces;
 }
 
 #endif // __CLIENT__

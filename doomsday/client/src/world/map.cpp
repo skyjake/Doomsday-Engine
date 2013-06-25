@@ -170,6 +170,22 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
     QScopedPointer<Generators> generators;
     QScopedPointer<LightGrid> lightGrid;
 
+    /// Shadow Bias  data for the map.
+    struct Bias
+    {
+        /// Time in milliseconds of the "current" frame.
+        uint currentTime;
+
+        /// Frame number of the last update.
+        uint lastChangeOnFrame;
+
+        /// The set of light sources.
+        BiasSources sources;
+
+        Bias() : currentTime(0), lastChangeOnFrame(0)
+        {}
+    } bias;
+
     coord_t skyFloorHeight;
     coord_t skyCeilingHeight;
 #endif
@@ -197,7 +213,11 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
 
     ~Instance()
     {
+        DENG2_FOR_PUBLIC_AUDIENCE(Deletion, i) i->mapBeingDeleted(self);
+
 #ifdef __CLIENT__
+        self.removeAllBiasSources();
+
         // The light grid observes changes to sector lighting and so
         // must be destroyed first.
         lightGrid.reset();
@@ -899,94 +919,6 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
         }
     }
 
-#ifdef __CLIENT__
-
-    void addSurfaceToLists(Surface &suf)
-    {
-        if(!suf.hasMaterial()) return;
-
-        if(suf.material().hasGlow())
-        {
-            glowingSurfaces.insert(&suf);
-        }
-
-        if(suf.material().isDecorated())
-        {
-            decoratedSurfaces.insert(&suf);
-        }
-    }
-
-    void updateMapSkyFixForSector(Sector const &sector)
-    {
-        if(!sector.sideCount()) return;
-
-        bool const skyFloor = sector.floorSurface().hasSkyMaskedMaterial();
-        bool const skyCeil  = sector.ceilingSurface().hasSkyMaskedMaterial();
-
-        if(!skyFloor && !skyCeil) return;
-
-        if(skyCeil)
-        {
-            // Adjust for the plane height.
-            if(sector.ceiling().visHeight() > self.skyFixCeiling())
-            {
-                // Must raise the skyfix ceiling.
-                self.setSkyFixCeiling(sector.ceiling().visHeight());
-            }
-
-            // Check that all the mobjs in the sector fit in.
-            for(mobj_t *mo = sector.firstMobj(); mo; mo = mo->sNext)
-            {
-                coord_t extent = mo->origin[VZ] + mo->height;
-
-                if(extent > self.skyFixCeiling())
-                {
-                    // Must raise the skyfix ceiling.
-                    self.setSkyFixCeiling(extent);
-                }
-            }
-        }
-
-        if(skyFloor)
-        {
-            // Adjust for the plane height.
-            if(sector.floor().visHeight() < self.skyFixFloor())
-            {
-                // Must lower the skyfix floor.
-                self.setSkyFixFloor(sector.floor().visHeight());
-            }
-        }
-
-        // Update for middle materials on lines which intersect the
-        // floor and/or ceiling on the front (i.e., sector) side.
-        foreach(Line::Side *side, sector.sides())
-        {
-            if(!side->hasSections()) continue;
-            if(!side->middle().hasMaterial()) continue;
-
-            // There must be a sector on both sides.
-            if(!side->hasSector() || !side->back().hasSector()) continue;
-
-            coord_t bottomZ, topZ;
-            Vector2f materialOrigin;
-            R_SideSectionCoords(*side, Line::Side::Middle, 0,
-                                &bottomZ, &topZ, &materialOrigin);
-            if(skyCeil && topZ + materialOrigin.y > self.skyFixCeiling())
-            {
-                // Must raise the skyfix ceiling.
-                self.setSkyFixCeiling(topZ + materialOrigin.y);
-            }
-
-            if(skyFloor && bottomZ + materialOrigin.y < self.skyFixFloor())
-            {
-                // Must lower the skyfix floor.
-                self.setSkyFixFloor(bottomZ + materialOrigin.y);
-            }
-        }
-    }
-
-#endif // __CLIENT__
-
     /**
      * Locate a polyobj in the map by sound emitter.
      *
@@ -1073,6 +1005,230 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
 
         return 0; // Not found.
     }
+
+#ifdef __CLIENT__
+
+    void updateMapSkyFixForSector(Sector const &sector)
+    {
+        if(!sector.sideCount()) return;
+
+        bool const skyFloor = sector.floorSurface().hasSkyMaskedMaterial();
+        bool const skyCeil  = sector.ceilingSurface().hasSkyMaskedMaterial();
+
+        if(!skyFloor && !skyCeil) return;
+
+        if(skyCeil)
+        {
+            // Adjust for the plane height.
+            if(sector.ceiling().visHeight() > self.skyFixCeiling())
+            {
+                // Must raise the skyfix ceiling.
+                self.setSkyFixCeiling(sector.ceiling().visHeight());
+            }
+
+            // Check that all the mobjs in the sector fit in.
+            for(mobj_t *mo = sector.firstMobj(); mo; mo = mo->sNext)
+            {
+                coord_t extent = mo->origin[VZ] + mo->height;
+
+                if(extent > self.skyFixCeiling())
+                {
+                    // Must raise the skyfix ceiling.
+                    self.setSkyFixCeiling(extent);
+                }
+            }
+        }
+
+        if(skyFloor)
+        {
+            // Adjust for the plane height.
+            if(sector.floor().visHeight() < self.skyFixFloor())
+            {
+                // Must lower the skyfix floor.
+                self.setSkyFixFloor(sector.floor().visHeight());
+            }
+        }
+
+        // Update for middle materials on lines which intersect the
+        // floor and/or ceiling on the front (i.e., sector) side.
+        foreach(Line::Side *side, sector.sides())
+        {
+            if(!side->hasSections()) continue;
+            if(!side->middle().hasMaterial()) continue;
+
+            // There must be a sector on both sides.
+            if(!side->hasSector() || !side->back().hasSector()) continue;
+
+            coord_t bottomZ, topZ;
+            Vector2f materialOrigin;
+            R_SideSectionCoords(*side, Line::Side::Middle, 0,
+                                &bottomZ, &topZ, &materialOrigin);
+            if(skyCeil && topZ + materialOrigin.y > self.skyFixCeiling())
+            {
+                // Must raise the skyfix ceiling.
+                self.setSkyFixCeiling(topZ + materialOrigin.y);
+            }
+
+            if(skyFloor && bottomZ + materialOrigin.y < self.skyFixFloor())
+            {
+                // Must lower the skyfix floor.
+                self.setSkyFixFloor(bottomZ + materialOrigin.y);
+            }
+        }
+    }
+
+    void addSurfaceToLists(Surface &suf)
+    {
+        if(!suf.hasMaterial()) return;
+
+        if(suf.material().hasGlow())
+        {
+            glowingSurfaces.insert(&suf);
+        }
+
+        if(suf.material().isDecorated())
+        {
+            decoratedSurfaces.insert(&suf);
+        }
+    }
+
+    /**
+     * $smoothplane: interpolate the visual offset of planes.
+     */
+    void lerpTrackedPlanes(bool resetNextViewer)
+    {
+        if(resetNextViewer)
+        {
+            // Reset the plane height trackers.
+            foreach(Plane *plane, trackedPlanes)
+            {
+                plane->resetVisHeight();
+            }
+
+            // Tracked movement is now all done.
+            trackedPlanes.clear();
+        }
+        // While the game is paused there is no need to calculate any
+        // visual plane offsets $smoothplane.
+        else //if(!clientPaused)
+        {
+            // Set the visible offsets.
+            QMutableSetIterator<Plane *> iter(trackedPlanes);
+            while(iter.hasNext())
+            {
+                Plane *plane = iter.next();
+
+                plane->lerpVisHeight();
+
+                // Has this plane reached its destination?
+                if(de::fequal(plane->visHeight(), plane->height()))
+                {
+                    iter.remove();
+                }
+            }
+        }
+    }
+
+    /**
+     * $smoothmatoffset: interpolate the visual offset of surfaces.
+     */
+    void lerpScrollingSurfaces(bool resetNextViewer)
+    {
+        if(resetNextViewer)
+        {
+            // Reset the surface material origin trackers.
+            foreach(Surface *surface, scrollingSurfaces)
+            {
+                surface->resetVisMaterialOrigin();
+            }
+
+            // Tracked movement is now all done.
+            scrollingSurfaces.clear();
+        }
+        // While the game is paused there is no need to calculate any
+        // visual material origin offsets $smoothmaterialorigin.
+        else //if(!clientPaused)
+        {
+            // Set the visible origins.
+            QMutableSetIterator<Surface *> iter(scrollingSurfaces);
+            while(iter.hasNext())
+            {
+                Surface *surface = iter.next();
+
+                surface->lerpVisMaterialOrigin();
+
+                // Has this material reached its destination?
+                if(surface->visMaterialOrigin() == surface->materialOrigin())
+                {
+                    iter.remove();
+                }
+            }
+        }
+    }
+
+    /**
+     * Perform preprocessing which must be done before rendering a frame.
+     */
+    void biasBeginFrame()
+    {
+        if(!useBias) return;
+
+        // The time that applies on this frame.
+        bias.currentTime = Timer_RealMilliseconds();
+
+        // Check which sources have changed and update the tracker bits for
+        // any affected surfaces.
+        BiasTracker allChanges;
+        zap(allChanges);
+
+        for(int i = 0; i < bias.sources.count(); ++i)
+        {
+            BiasSource *bsrc = bias.sources.at(i);
+
+            if(bsrc->trackChanges(allChanges, i, bias.currentTime))
+            {
+                // Recalculate which sources affect which surfaces.
+                bias.lastChangeOnFrame = frameCount;
+            }
+        }
+
+        /*
+         * Apply changes to all surfaces:
+         */
+        foreach(Segment *segment, segments)
+        foreach(BiasSurface *biasSurface, segment->biasSurfaces())
+        {
+            biasSurface->updateAffection(allChanges);
+        }
+        foreach(Polyobj *polyobj, polyobjs)
+        foreach(Line *line, polyobj->lines())
+        {
+            Segment *segment = line->front().leftSegment();
+            foreach(BiasSurface *biasSurface, segment->biasSurfaces())
+            {
+                biasSurface->updateAffection(allChanges);
+            }
+        }
+        foreach(BspLeaf *bspLeaf, bspLeafs)
+        foreach(BiasSurface *biasSurface, bspLeaf->biasSurfaces())
+        {
+            biasSurface->updateAffection(allChanges);
+        }
+    }
+
+    /**
+     * Create new objlinks for mobjs (contact spreading).
+     */
+    void createMobjLinks()
+    {
+        foreach(Sector *sector, sectors)
+        for(mobj_t *iter = sector->firstMobj(); iter; iter = iter->sNext)
+        {
+            R_ObjlinkCreate(*iter); // For spreading purposes.
+        }
+    }
+
+#endif // __CLIENT__
 };
 
 Map::Map(Uri const &uri) : d(new Instance(this, uri))
@@ -1190,6 +1346,100 @@ void Map::initLightGrid()
     }
     // Perform a full update right away.
     d->lightGrid->update();
+}
+
+void Map::initBias()
+{
+    Time begunAt;
+
+    LOG_AS("Map::initBias");
+
+    // Start with no sources whatsoever.
+    d->bias.sources.clear();
+
+    // Load light sources from Light definitions.
+    for(int i = 0; i < defs.count.lights.num; ++i)
+    {
+        ded_light_t *def = defs.lights + i;
+
+        if(def->state[0]) continue;
+        if(qstricmp(d->oldUniqueId, def->uniqueMapID)) continue;
+
+        // Already at maximum capacity?
+        if(biasSourceCount() == MAX_BIAS_SOURCES)
+            break;
+
+        addBiasSource(BiasSource::fromDef(*def));
+    }
+
+    /*
+     * Assign a bias surface for each surface.
+     */
+    /*size_t numVertIllums = 0;
+
+    // First, determine the total number of vertexillum_ts we need.
+    foreach(Segment *segment, d->segments)
+    {
+        if(segment->hasLineSide())
+            numVertIllums++;
+    }
+
+    numVertIllums *= 3 * 4;
+
+    foreach(Sector *sector, d->sectors)
+    foreach(BspLeaf *bspLeaf, sector->bspLeafs())
+    {
+        if(bspLeaf->isDegenerate()) continue;
+
+        numVertIllums += bspLeaf->numFanVertices() * sector->planeCount();
+    }
+
+    foreach(Polyobj *polyobj, d->polyobjs)
+    {
+        numVertIllums += polyobj->lineCount() * 3 * 4;
+    }
+
+    // Allocate and initialize the vertexillum_ts.
+    VertexIllum *illums = (VertexIllum *) Z_Calloc(sizeof(*illums) * numVertIllums, PU_MAP, 0);
+    */
+
+    // Allocate bias surfaces.
+    foreach(Segment *segment, d->segments)
+    {
+        if(!segment->hasLineSide()) continue;
+
+        for(int i = 0; i < 3; ++i)
+        {
+            BiasSurface *bsuf = new BiasSurface(*segment, i, 4);
+            segment->setBiasSurface(i, bsuf);
+        }
+    }
+
+    foreach(BspLeaf *bspLeaf, d->bspLeafs)
+    {
+        if(!bspLeaf->hasSector()) continue;
+        if(bspLeaf->isDegenerate()) continue;
+
+        for(int i = 0; i < bspLeaf->sector().planeCount(); ++i)
+        {
+            BiasSurface *bsuf = new BiasSurface(*bspLeaf, i, bspLeaf->numFanVertices());
+            bspLeaf->setBiasSurface(i, bsuf);
+        }
+    }
+
+    foreach(Polyobj *polyobj, d->polyobjs)
+    foreach(Line *line, polyobj->lines())
+    {
+        Segment *segment = line->front().leftSegment();
+
+        for(int i = 0; i < 3; ++i)
+        {
+            BiasSurface *bsuf = new BiasSurface(*segment, i, 4);
+            segment->setBiasSurface(i, bsuf);
+        }
+    }
+
+    LOG_INFO(String("Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 }
 
 #endif // __CLIENT__
@@ -2314,40 +2564,6 @@ void Map::updateSurfacesOnMaterialChange(Material &material)
 
 #ifdef __CLIENT__
 
-void Map::lerpScrollingSurfaces(bool resetNextViewer)
-{
-    if(resetNextViewer)
-    {
-        // Reset the surface material origin trackers.
-        foreach(Surface *surface, d->scrollingSurfaces)
-        {
-            surface->resetVisMaterialOrigin();
-        }
-
-        // Tracked movement is now all done.
-        d->scrollingSurfaces.clear();
-    }
-    // While the game is paused there is no need to calculate any
-    // visual material origin offsets $smoothmaterialorigin.
-    else //if(!clientPaused)
-    {
-        // Set the visible origins.
-        QMutableSetIterator<Surface *> iter(d->scrollingSurfaces);
-        while(iter.hasNext())
-        {
-            Surface *surface = iter.next();
-
-            surface->lerpVisMaterialOrigin();
-
-            // Has this material reached its destination?
-            if(surface->visMaterialOrigin() == surface->materialOrigin())
-            {
-                iter.remove();
-            }
-        }
-    }
-}
-
 void Map::updateScrollingSurfaces()
 {
     foreach(Surface *surface, d->scrollingSurfaces)
@@ -2359,40 +2575,6 @@ void Map::updateScrollingSurfaces()
 Map::SurfaceSet &Map::scrollingSurfaces()
 {
     return d->scrollingSurfaces;
-}
-
-void Map::lerpTrackedPlanes(bool resetNextViewer)
-{
-    if(resetNextViewer)
-    {
-        // Reset the plane height trackers.
-        foreach(Plane *plane, d->trackedPlanes)
-        {
-            plane->resetVisHeight();
-        }
-
-        // Tracked movement is now all done.
-        d->trackedPlanes.clear();
-    }
-    // While the game is paused there is no need to calculate any
-    // visual plane offsets $smoothplane.
-    else //if(!clientPaused)
-    {
-        // Set the visible offsets.
-        QMutableSetIterator<Plane *> iter(d->trackedPlanes);
-        while(iter.hasNext())
-        {
-            Plane *plane = iter.next();
-
-            plane->lerpVisHeight();
-
-            // Has this plane reached its destination?
-            if(de::fequal(plane->visHeight(), plane->height()))
-            {
-                iter.remove();
-            }
-        }
-    }
 }
 
 void Map::updateTrackedPlanes()
@@ -2445,6 +2627,80 @@ Generators &Map::generators()
         d->generators.reset(new Generators(sectorCount()));
     }
     return *d->generators;
+}
+
+BiasSource &Map::addBiasSource(BiasSource const &biasSource)
+{
+    if(biasSourceCount() < MAX_BIAS_SOURCES)
+    {
+        d->bias.sources.append(new BiasSource(biasSource));
+        return *d->bias.sources.last();
+    }
+    /// @throw FullError  Attempt to add a new bias source when already at capcity.
+    throw FullError("Map::addBiasSource", QString("Already at maximum capacity (%1)").arg(MAX_BIAS_SOURCES));
+}
+
+void Map::removeBiasSource(int which)
+{
+    if(which >= 0 && which < biasSourceCount())
+    {
+        delete d->bias.sources.takeAt(which);
+    }
+}
+
+void Map::removeAllBiasSources()
+{
+    qDeleteAll(d->bias.sources);
+    d->bias.sources.clear();
+}
+
+Map::BiasSources const &Map::biasSources() const
+{
+    return d->bias.sources;
+}
+
+BiasSource *Map::biasSource(int index) const
+{
+   if(index >= 0 && index < biasSourceCount())
+   {
+       return biasSources().at(index);
+   }
+   return 0;
+}
+
+/**
+ * @todo Implement a blockmap for these?
+ * @todo Cache this result (MRU?).
+ */
+BiasSource *Map::biasSourceNear(Vector3d const &point) const
+{
+    BiasSource *nearest = 0;
+    coord_t minDist = 0;
+    foreach(BiasSource *src, d->bias.sources)
+    {
+        coord_t dist = (src->origin() - point).length();
+        if(!nearest || dist < minDist)
+        {
+            minDist = dist;
+            nearest = src;
+        }
+    }
+    return nearest;
+}
+
+int Map::toIndex(BiasSource const &source) const
+{
+    return d->bias.sources.indexOf(const_cast<BiasSource *>(&source));
+}
+
+uint Map::biasCurrentTime() const
+{
+    return d->bias.currentTime;
+}
+
+uint Map::biasLastChangeOnFrame() const
+{
+    return d->bias.lastChangeOnFrame;
 }
 
 /**

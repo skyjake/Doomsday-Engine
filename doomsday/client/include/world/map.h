@@ -32,6 +32,8 @@
 
 #ifdef __CLIENT__
 #  include "world/world.h"
+
+#  include "BiasSource"
 #endif
 
 class BspLeaf;
@@ -43,6 +45,7 @@ class Segment;
 class Vertex;
 
 #ifdef __CLIENT__
+class BiasSurface;
 
 struct clmoinfo_s;
 
@@ -112,6 +115,9 @@ public:
 #ifdef __CLIENT__
     /// Required light grid is missing. @ingroup errors
     DENG2_ERROR(MissingLightGridError);
+
+    /// Attempted to add a new element when already full. @ingroup errors
+    DENG2_ERROR(FullError);
 #endif
 
     /*
@@ -146,6 +152,8 @@ public:
 #ifdef __CLIENT__
     typedef QSet<Plane *>    PlaneSet;
     typedef QSet<Surface *>  SurfaceSet;
+
+    typedef QList<BiasSource *> BiasSources;
 #endif
 
 public: /// @todo make private:
@@ -184,6 +192,11 @@ public:
      * the DMU API), with a fixed number of @em shared dummies.
      */
     static void initDummies();
+
+    /**
+     * To be called following an engine reset to update the map state.
+     */
+    void update();
 
     /**
      * Returns the universal resource identifier (URI) attributed to the map.
@@ -565,6 +578,71 @@ public:
      */
     Generators &generators();
 
+    /**
+     * Attempt to add a new bias light source to the map (a copy is made).
+     *
+     * @note At most @ref MAX_BIAS_SOURCES are supported for technical reasons.
+     *
+     * @return  Reference to the newly added bias source.
+     *
+     * @see biasSourceCount()
+     * @throws FullError  Once capacity is reached.
+     */
+    BiasSource &addBiasSource(BiasSource const &biasSource = BiasSource());
+
+    /**
+     * Removes the specified bias light source from the map.
+     *
+     * @see removeAllBiasSources()
+     */
+    void removeBiasSource(int which);
+
+    /**
+     * Remove all bias sources from the map.
+     *
+     * @see removeBiasSource()
+     */
+    void removeAllBiasSources();
+
+    /**
+     * Provides a list of all the bias sources in the map.
+     */
+    BiasSources const &biasSources() const;
+
+    /**
+     * Returns the total number of bias sources in the map.
+     */
+    inline int biasSourceCount() const { return biasSources().count(); }
+
+    /**
+     * Returns the time in milliseconds when the current render frame began. Used
+     * for interpolation purposes.
+     */
+    uint biasCurrentTime() const;
+
+    /**
+     * Returns the frameCount of the current render frame. Used for tracking changes
+     * to bias sources/surfaces.
+     */
+    uint biasLastChangeOnFrame() const;
+
+    /**
+     * Lookup a bias source in the map by it's unique @a index.
+     */
+    BiasSource *biasSource(int index) const;
+
+    /**
+     * Finds the bias source nearest to the specified map space @a point.
+     *
+     * @note This result is not cached. May return @c 0 if no bias sources exist.
+     */
+    BiasSource *biasSourceNear(de::Vector3d const &point) const;
+
+    /**
+     * Lookup the unique index for the given bias @a source.
+     */
+    int toIndex(BiasSource const &source) const;
+
     /// @todo Should be private?
     void initClMobjs();
 
@@ -639,11 +717,6 @@ public:
     SurfaceSet /*const*/ &glowingSurfaces();
 
     /**
-     * $smoothmatoffset: interpolate the visual offset.
-     */
-    void lerpScrollingSurfaces(bool resetNextViewer = false);
-
-    /**
      * $smoothmatoffset: Roll the surface material offset tracker buffers.
      */
     void updateScrollingSurfaces();
@@ -652,11 +725,6 @@ public:
      * Returns the set of scrolling surfaces for the map.
      */
     SurfaceSet /*const*/ &scrollingSurfaces();
-
-    /**
-     * $smoothplane: interpolate the visual offset.
-     */
-    void lerpTrackedPlanes(bool resetNextViewer = false);
 
     /**
      * $smoothplane: Roll the height tracker buffers.
@@ -707,6 +775,14 @@ public: /// @todo Make private:
      */
     void initPolyobjs();
 
+    /**
+     * To be called in response to a Material property changing which may
+     * require updating any map surfaces which are presently using it.
+     *
+     * @todo Replace with a de::Observers-based mechanism.
+     */
+    void updateSurfacesOnMaterialChange(Material &material);
+
 #ifdef __CLIENT__
     /**
      * Fixing the sky means that for adjacent sky sectors the lower sky
@@ -718,19 +794,20 @@ public: /// @todo Make private:
     void buildSurfaceLists();
 
     /**
+     * Initializes bias lighting for the map. New light sources are initialized
+     * from the loaded Light definitions. Map surfaces are prepared for tracking
+     * rays.
+     *
+     * Must be called before rendering a frame with bias lighting enabled.
+     */
+    void initBias();
+
+    /**
      * @todo Replace with a de::Observers-based mechanism.
      */
     void updateMissingMaterialsForLinesOfSector(Sector const &sec);
 
 #endif // __CLIENT__
-
-    /**
-     * To be called in response to a Material property changing which may
-     * require updating any map surfaces which are presently using it.
-     *
-     * @todo Replace with a de::Observers-based mechanism.
-     */
-    void updateSurfacesOnMaterialChange(Material &material);
 
 public:
     /*

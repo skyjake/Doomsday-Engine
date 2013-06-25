@@ -26,9 +26,8 @@
 
 #include "r_util.h" // R_NameForBlendMode
 
-//#include "api_map.h"
 #include "audio/s_environ.h"
-#include "world/world.h" // theMap - Remove me
+#include "world/map.h"
 
 #include "resource/r_data.h" // R_FindTextureByResourceUri
 

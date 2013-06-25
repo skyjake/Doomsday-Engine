@@ -31,7 +31,7 @@
 #include "Vertex"
 
 #ifdef __CLIENT__
-struct BiasSurface;
+#  include "BiasSurface"
 #endif
 
 class Sector;
@@ -58,6 +58,10 @@ public:
     /// The referenced geometry group does not exist. @ingroup errors
     DENG2_ERROR(UnknownGeometryGroupError);
 
+    /*
+     * Linked-element lists/sets:
+     */
+    typedef QMap<int, BiasSurface *> BiasSurfaces;
 #endif
 
     enum Flag
@@ -247,12 +251,17 @@ public:
     /**
      * Assign a new bias surface to the specified geometry @a group.
      *
-     * @param group        Geometry group identifier for the surface.
-     * @param biasSurface  New BiasSurface for the identified @a group. Any
-     *                     existing bias surface will be replaced (destroyed).
-     *                     Ownership is given to the segment.
+     * @param group           Geometry group identifier for the surface.
+     * @param newBiasSurface  New BiasSurface for the identified @a group. Any
+     *                        existing bias surface will be replaced (destroyed).
+     *                        Ownership is given to the segment.
      */
-    void setBiasSurface(int group, BiasSurface *biasSurface);
+    void setBiasSurface(int group, BiasSurface *newBiasSurface);
+
+    /**
+     * Provides access to the bias surfaces for the segment, for efficent traversal.
+     */
+    BiasSurfaces const &biasSurfaces() const;
 
 #endif // __CLIENT__
 

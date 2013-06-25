@@ -618,7 +618,7 @@ DENG2_PIMPL(World)
         R_InitShadowProjectionListsForMap(); // Projected mobj shadows.
         LO_InitForMap(); // Lumobj management.
         VL_InitForMap(); // Converted vlights (from lumobjs).
-        SB_InitForMap(); // Shadow bias sources and surfaces.
+        map->initBias(); // Shadow bias sources and surfaces.
 
         // Restart all material animations.
         App_Materials().restartAllAnimations();
