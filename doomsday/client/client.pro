@@ -118,6 +118,8 @@ DENG_HEADERS += \
     include/Grabbable \
     include/Hand \
     include/HEdge \
+    include/HueCircle \
+    include/HueCircleVisual \
     include/IHPlane \
     include/Line \
     include/Mesh \
@@ -246,6 +248,7 @@ DENG_HEADERS += \
     include/partition.h \
     include/r_util.h \
     include/render/blockmapvisual.h \
+    include/render/huecirclevisual.h \
     include/render/lightgrid.h \
     include/render/lumobj.h \
     include/render/materialcontext.h \
@@ -373,6 +376,7 @@ DENG_HEADERS += \
     include/world/generators.h \
     include/world/grabbable.h \
     include/world/hand.h \
+    include/world/huecircle.h \
     include/world/line.h \
     include/world/lineowner.h \
     include/world/linesighttest.h \
@@ -540,6 +544,7 @@ SOURCES += \
     src/r_util.cpp \
     src/render/api_render.cpp \
     src/render/blockmapvisual.cpp \
+    src/render/huecirclevisual.cpp \
     src/render/lightgrid.cpp \
     src/render/lumobj.cpp \
     src/render/r_draw.cpp \
@@ -669,6 +674,7 @@ SOURCES += \
     src/world/generators.cpp \
     src/world/grabbable.cpp \
     src/world/hand.cpp \
+    src/world/huecircle.cpp \
     src/world/line.cpp \
     src/world/linesighttest.cpp \
     src/world/map.cpp \
