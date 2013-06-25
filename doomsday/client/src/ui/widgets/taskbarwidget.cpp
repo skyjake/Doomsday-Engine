@@ -392,6 +392,7 @@ void TaskBarWidget::close()
         d->status->setOpacity(0, .2f);
 
         d->console->closeLog();
+        d->mainMenu->close();
 
         // Clear focus now; callbacks/signal handlers may set the focus elsewhere.
         if(hasRoot()) root().setFocus(0);
