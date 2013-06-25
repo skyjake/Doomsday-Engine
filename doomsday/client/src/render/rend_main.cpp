@@ -23,9 +23,9 @@
 #include <cstdlib>
 #include <cmath>
 
-#include <de/libdeng2.h>
-
 #include <QtAlgorithms>
+
+#include <de/libdeng2.h>
 
 #include "de_base.h"
 #include "de_console.h"
@@ -41,6 +41,7 @@
 #include "Texture"
 
 #include "BspNode"
+#include "Hand"
 #include "world/map.h"
 #include "world/maputil.h"
 #include "world/lineowner.h"
@@ -49,8 +50,9 @@
 #include "world/p_players.h"
 #include "world/thinkers.h"
 
-#include "WallEdge"
+#include "HueCircleVisual"
 #include "SkyFixEdge"
+#include "WallEdge"
 #include "TriangleStripBuilder"
 #include "render/blockmapvisual.h"
 #include "render/sprite.h"
@@ -77,10 +79,14 @@ using namespace de;
 #define SOF_SIDE                0x04
 ///@}
 
+static void drawBiasEditingVisuals(Map &map);
+
 void Rend_DrawBBox(Vector3d const &pos, coord_t w, coord_t l, coord_t h, float a,
     float const color[3], float alpha, float br, bool alignToBase = true);
 
 void Rend_DrawArrow(Vector3d const &pos, float a, float s, float const color3f[3], float alpha);
+
+int useBias; // Shadow Bias enabled? cvar
 
 boolean usingFog = false; // Is the fog in use?
 float fogColor[4];
@@ -161,10 +167,10 @@ byte devSoundOrigins = 0; ///< cvar @c 1= Draw sound origin debug display.
 byte devSurfaceVectors = 0;
 byte devNoTexFix = 0;
 
-static void Rend_DrawBoundingBoxes();
-static void Rend_DrawSoundOrigins();
-static void Rend_DrawSurfaceVectors();
-static void Rend_DrawVertexIndices();
+static void Rend_DrawBoundingBoxes(Map &map);
+static void Rend_DrawSoundOrigins(Map &map);
+static void Rend_DrawSurfaceVectors(Map &map);
+static void Rend_DrawVertexIndices(Map &map);
 
 static uint buildLeafPlaneGeometry(BspLeaf const &leaf, ClockDirection direction,
     coord_t height, rvertex_t **verts, uint *vertsSize);
@@ -185,6 +191,7 @@ static void markLightGridForFullUpdate()
 
 void Rend_Register()
 {
+    C_VAR_INT   ("rend-bias",                       &useBias,                       0, 0, 1);
     C_VAR_FLOAT ("rend-camera-fov",                 &fieldOfView,                   0, 1, 179);
 
     C_VAR_FLOAT ("rend-glow",                       &glowFactor,                    0, 0, 2);
@@ -232,7 +239,7 @@ void Rend_Register()
     RL_Register();
     LO_Register();
     Rend_DecorRegister();
-    SB_Register();
+    BiasSurface::consoleRegister();
     LightGrid::consoleRegister();
     Sky_Register();
     Rend_ModelRegister();
@@ -742,8 +749,6 @@ struct rendworldpoly_params_t
     bool            forceOpaque;
 
 // For bias:
-    MapElement     *mapElement;
-    int             elmIdx;
     BiasSurface    *bsuf;
 
 // Wall only:
@@ -908,8 +913,8 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
             if(useBias && p.bsuf)
             {
                 // Do BIAS lighting for this poly.
-                SB_RendPoly(rcolors, p.bsuf, rvertices, numVertices, *p.normal,
-                            currentSectorLightLevel, p.mapElement, p.elmIdx);
+                p.bsuf->lightPoly(rcolors, rvertices, numVertices, *p.normal,
+                                  currentSectorLightLevel);
 
                 if(p.glowing > 0)
                 {
@@ -1427,8 +1432,6 @@ static void writeWallSection(Segment &segment, int section,
         parm.flags               = RPF_DEFAULT | (skyMasked? RPF_SKYMASK : 0);
         parm.forceOpaque         = wallSpec.flags.testFlag(WallSpec::ForceOpaque);
         parm.alpha               = parm.forceOpaque? 1 : opacity;
-        parm.mapElement          = &segment;
-        parm.elmIdx              = wallSpec.section;
         parm.bsuf                = &segment.biasSurface(wallSpec.section);
         parm.normal              = &surface.normal();
         parm.texTL               = &texQuad[0];
@@ -1673,8 +1676,6 @@ static void writeLeafPlane(Plane &plane)
 
     parm.flags               = RPF_DEFAULT;
     parm.isWall              = false;
-    parm.mapElement          = leaf;
-    parm.elmIdx              = plane.indexInSector();
     parm.bsuf                = &leaf->biasSurface(plane.indexInSector());
     parm.normal              = &surface.normal();
     parm.texTL               = &texTL;
@@ -1935,7 +1936,10 @@ static coord_t skyPlaneZ(BspLeaf *bspLeaf, int skyCap)
     DENG_ASSERT(bspLeaf);
     int const relPlane = (skyCap & SKYCAP_UPPER)? Sector::Ceiling : Sector::Floor;
     if(!bspLeaf->hasSector() || !P_IsInVoid(viewPlayer))
+    {
+        /// @todo Don't assume the current map.
         return App_World().map().skyFix(relPlane == Sector::Ceiling);
+    }
     return bspLeaf->sector().plane(relPlane).visHeight();
 }
 
@@ -2415,10 +2419,8 @@ static void traverseBspAndDrawLeafs(MapElement *bspElement)
     firstBspLeaf = false;
 }
 
-void Rend_RenderMap()
+void Rend_RenderMap(Map &map)
 {
-    DENG_ASSERT(App_World().hasMap());
-
     // Set to true if dynlights are inited for this frame.
     loInited = false;
 
@@ -2473,24 +2475,244 @@ void Rend_RenderMap()
         currentBspLeaf = 0;
 
         // Draw the world!
-        traverseBspAndDrawLeafs(&App_World().map().bspRoot());
+        traverseBspAndDrawLeafs(&map.bspRoot());
 
         Rend_RenderMobjShadows();
     }
     RL_RenderAllLists();
 
     // Draw various debugging displays:
-    Rend_DrawSurfaceVectors();
-    LO_DrawLumobjs(); // Lumobjs.
-    Rend_DrawBoundingBoxes(); // Mobj bounding boxes.
-    Rend_DrawVertexIndices();
-    Rend_DrawSoundOrigins();
+    Rend_DrawSurfaceVectors(map);
+    LO_DrawLumobjs();             // Lumobjs.
+    Rend_DrawBoundingBoxes(map);  // Mobj bounding boxes.
+    Rend_DrawVertexIndices(map);
+    Rend_DrawSoundOrigins(map);
     Rend_RenderGenerators();
 
-    // Draw the Source Bias Editor's draw that identifies the current light.
-    SBE_DrawCursor();
+    if(!freezeRLs)
+    {
+        drawBiasEditingVisuals(map);
+    }
 
     GL_SetMultisample(false);
+}
+
+/*
+ * Visuals for Shadow Bias editing:
+ */
+
+static String labelForSource(BiasSource *s)
+{
+    if(!s || !editShowIndices) return String();
+    /// @todo Don't assume the current map.
+    return String::number(App_World().map().toIndex(*s));
+}
+
+static void drawStar(Vector3d const &origin, float size, Vector4f const &color)
+{
+    float const black[4] = { 0, 0, 0, 0 };
+
+    glBegin(GL_LINES);
+        glColor4fv(black);
+        glVertex3f(origin.x - size, origin.z, origin.y);
+        glColor4f(color.x, color.y, color.z, color.w);
+        glVertex3f(origin.x, origin.z, origin.y);
+        glVertex3f(origin.x, origin.z, origin.y);
+        glColor4fv(black);
+        glVertex3f(origin.x + size, origin.z, origin.y);
+
+        glVertex3f(origin.x, origin.z - size, origin.y);
+        glColor4f(color.x, color.y, color.z, color.w);
+        glVertex3f(origin.x, origin.z, origin.y);
+        glVertex3f(origin.x, origin.z, origin.y);
+        glColor4fv(black);
+        glVertex3f(origin.x, origin.z + size, origin.y);
+
+        glVertex3f(origin.x, origin.z, origin.y - size);
+        glColor4f(color.x, color.y, color.z, color.w);
+        glVertex3f(origin.x, origin.z, origin.y);
+        glVertex3f(origin.x, origin.z, origin.y);
+        glColor4fv(black);
+        glVertex3f(origin.x, origin.z, origin.y + size);
+    glEnd();
+}
+
+static void drawLabel(Vector3d const &origin, String const &label)
+{
+    if(label.isEmpty()) return;
+
+    Vector3d eye(vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
+    coord_t distToEye = (eye - origin).length();
+    coord_t scale = distToEye / (DENG_WINDOW->width() / 2);
+
+    glDisable(GL_DEPTH_TEST);
+    glEnable(GL_TEXTURE_2D);
+
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glTranslatef(origin.x, origin.z, origin.y);
+    glRotatef(-vang + 180, 0, 1, 0);
+    glRotatef(vpitch, 1, 0, 0);
+    glScalef(-scale, -scale, 1);
+
+    // Show the index number of the source.
+    FR_SetFont(fontFixed);
+    FR_LoadDefaultAttrib();
+    FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
+    FR_SetShadowStrength(UI_SHADOW_STRENGTH);
+
+    Point2Raw const viewOffset(2, 2);
+    UI_TextOutEx(label.toUtf8().constData(), &viewOffset, UI_Color(UIC_TITLE), 1 - distToEye / 2000);
+
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+
+    glEnable(GL_DEPTH_TEST);
+    glDisable(GL_TEXTURE_2D);
+}
+
+static void drawSource(BiasSource *s)
+{
+    if(!s) return;
+
+    Vector3d eye(vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
+    coord_t distToEye = (s->origin() - eye).length();
+
+    drawStar(s->origin(), 25 + s->intensity() / 20,
+             Vector4f(s->color(), 1.0f / de::max(float((distToEye - 100) / 1000), 1.f)));
+    drawLabel(s->origin(), labelForSource(s));
+}
+
+static void drawLock(Vector3d const &origin, double unit, double t)
+{
+    glColor4f(1, 1, 1, 1);
+
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+
+    glTranslatef(origin.x, origin.z, origin.y);
+
+    glRotatef(t / 2,  0, 0, 1);
+    glRotatef(t,      1, 0, 0);
+    glRotatef(t * 15, 0, 1, 0);
+
+    glBegin(GL_LINES);
+        glVertex3f(-unit, 0, -unit);
+        glVertex3f(+unit, 0, -unit);
+
+        glVertex3f(+unit, 0, -unit);
+        glVertex3f(+unit, 0, +unit);
+
+        glVertex3f(+unit, 0, +unit);
+        glVertex3f(-unit, 0, +unit);
+
+        glVertex3f(-unit, 0, +unit);
+        glVertex3f(-unit, 0, -unit);
+    glEnd();
+
+    glPopMatrix();
+}
+
+static void drawBiasEditingVisuals(Map &map)
+{
+    if(!SBE_Active() || editHidden)
+        return;
+
+    if(!map.biasSourceCount())
+        return;
+
+    double const t = Timer_RealMilliseconds() / 100.0f;
+    Vector3d eye(vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
+
+    if(HueCircle *hueCircle = SBE_HueCircle())
+    {
+        viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
+
+        glDisable(GL_DEPTH_TEST);
+        glDisable(GL_CULL_FACE);
+
+        glMatrixMode(GL_MODELVIEW);
+        glPushMatrix();
+
+        glTranslatef(vOrigin[VX], vOrigin[VY], vOrigin[VZ]);
+        glScalef(1, 1.0f/1.2f, 1);
+        glTranslatef(-vOrigin[VX], -vOrigin[VY], -vOrigin[VZ]);
+
+        HueCircleVisual::draw(*hueCircle, vOrigin, viewData->frontVec);
+
+        glMatrixMode(GL_MODELVIEW);
+        glPopMatrix();
+
+        glEnable(GL_DEPTH_TEST);
+        glEnable(GL_CULL_FACE);
+    }
+
+    coord_t handDistance;
+    Hand &hand = App_World().hand(&handDistance);
+
+    // Grabbed sources blink yellow.
+    Vector4f grabbedColor;
+    if(!editBlink || map.biasCurrentTime() & 0x80)
+        grabbedColor = Vector4f(1, 1, .8f, .5f);
+    else
+        grabbedColor = Vector4f(.7f, .7f, .5f, .4f);
+
+    BiasSource *nearSource = map.biasSourceNear(hand.origin());
+    DENG_ASSERT(nearSource != 0);
+
+    if((hand.origin() - nearSource->origin()).length() > 2 * handDistance)
+    {
+        // Show where it is.
+        glDisable(GL_DEPTH_TEST);
+    }
+
+    // The nearest cursor phases blue.
+    drawStar(nearSource->origin(), 10000,
+             nearSource->isGrabbed()? grabbedColor :
+             Vector4f(.0f + sin(t) * .2f,
+                      .2f + sin(t) * .15f,
+                      .9f + sin(t) * .3f,
+                      .8f - sin(t) * .2f));
+    glDisable(GL_DEPTH_TEST);
+    drawLabel(nearSource->origin(), labelForSource(nearSource));
+    if(nearSource->isLocked())
+        drawLock(nearSource->origin(), 2 + (nearSource->origin() - eye).length() / 100, t);
+
+    foreach(Grabbable *grabbable, hand.grabbed())
+    {
+        if(de::internal::cannotCastGrabbableTo<BiasSource>(grabbable)) continue;
+        BiasSource *s = &grabbable->as<BiasSource>();
+
+        if(s == nearSource)
+            continue;
+
+        drawStar(s->origin(), 10000, grabbedColor);
+        drawLabel(s->origin(), labelForSource(s));
+
+        if(s->isLocked())
+            drawLock(s->origin(), 2 + (s->origin() - eye).length() / 100, t);
+    }
+
+    /*BiasSource *s = hand.nearestBiasSource();
+    if(s && !hand.hasGrabbed(*s))
+    {
+        glDisable(GL_DEPTH_TEST);
+        drawLabel(s->origin(), labelForSource(s));
+    }*/
+
+    // Show all sources?
+    if(editShowAll)
+    {
+        foreach(BiasSource *source, map.biasSources())
+        {
+            if(source == nearSource) continue;
+            if(source->isGrabbed()) continue;
+
+            drawSource(source);
+        }
+    }
+
+    glEnable(GL_DEPTH_TEST);
 }
 
 void Rend_UpdateLightModMatrix()
@@ -2782,7 +3004,7 @@ static int drawMobjBBox(thinker_t *th, void * /*context*/)
  * Depth test is disabled to show all mobjs that are being rendered, regardless
  * if they are actually vissible (hidden by previously drawn map geometry).
  */
-static void Rend_DrawBoundingBoxes()
+static void Rend_DrawBoundingBoxes(Map &map)
 {
     //static float const red[3]   = { 1, 0.2f, 0.2f}; // non-solid objects
     static float const green[3]  = { 0.2f, 1, 0.2f}; // solid objects
@@ -2812,13 +3034,13 @@ static void Rend_DrawBoundingBoxes()
 
     if(devMobjBBox)
     {
-        App_World().map().thinkers().iterate(reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
-                                             0x1, drawMobjBBox, NULL);
+        map.thinkers().iterate(reinterpret_cast<thinkfunc_t>(gx.MobjThinker), 0x1,
+                               drawMobjBBox);
     }
 
     if(devPolyobjBBox)
     {
-        foreach(Polyobj const *polyobj, App_World().map().polyobjs())
+        foreach(Polyobj const *polyobj, map.polyobjs())
         {
             Sector const &sec = polyobj->sector();
             coord_t width  = (polyobj->aaBox.maxX - polyobj->aaBox.minX)/2;
@@ -2890,15 +3112,14 @@ static void drawSurfaceTangentSpaceVectors(Surface *suf, Vector3d const &origin)
 /**
  * Draw the surface tangent space vectors, primarily for debug.
  */
-static void Rend_DrawSurfaceVectors()
+static void Rend_DrawSurfaceVectors(Map &map)
 {
     if(!devSurfaceVectors) return;
-    if(!App_World().hasMap()) return;
 
     glDisable(GL_CULL_FACE);
 
     Vector3d origin;
-    foreach(BspLeaf *bspLeaf, App_World().map().bspLeafs())
+    foreach(BspLeaf *bspLeaf, map.bspLeafs())
     foreach(Segment *segment, bspLeaf->allSegments())
     {
         if(!bspLeaf->hasSector())
@@ -2964,7 +3185,7 @@ static void Rend_DrawSurfaceVectors()
         }
     }
 
-    foreach(BspLeaf *bspLeaf, App_World().map().bspLeafs())
+    foreach(BspLeaf *bspLeaf, map.bspLeafs())
     {
         if(bspLeaf->isDegenerate()) continue;
         if(!bspLeaf->hasSector()) continue;
@@ -2975,13 +3196,13 @@ static void Rend_DrawSurfaceVectors()
             origin = Vector3d(bspLeaf->poly().center(), plane->visHeight());
 
             if(plane->surface().hasSkyMaskedMaterial() && plane->indexInSector() <= Sector::Ceiling)
-                origin.z = App_World().map().skyFix(plane->indexInSector() == Sector::Ceiling);
+                origin.z = map.skyFix(plane->indexInSector() == Sector::Ceiling);
 
             drawSurfaceTangentSpaceVectors(&plane->surface(), origin);
         }
     }
 
-    foreach(Polyobj *polyobj, App_World().map().polyobjs())
+    foreach(Polyobj *polyobj, map.polyobjs())
     {
         Sector const &sector = polyobj->sector();
         float zPos = sector.floor().height() + (sector.ceiling().height() - sector.floor().height())/2;
@@ -3028,10 +3249,9 @@ static void drawSoundOrigin(Vector3d const &origin, char const *label, Vector3d 
 /**
  * Debugging aid for visualizing sound origins.
  */
-static void Rend_DrawSoundOrigins()
+static void Rend_DrawSoundOrigins(Map &map)
 {
     if(!devSoundOrigins) return;
-    if(!App_World().hasMap()) return;
 
     glDisable(GL_DEPTH_TEST);
     glEnable(GL_TEXTURE_2D);
@@ -3040,7 +3260,7 @@ static void Rend_DrawSoundOrigins()
 
     if(devSoundOrigins & SOF_SIDE)
     {
-        foreach(Line *line, App_World().map().lines())
+        foreach(Line *line, map.lines())
         for(int i = 0; i < 2; ++i)
         {
             Line::Side &side = line->side(i);
@@ -3061,7 +3281,7 @@ static void Rend_DrawSoundOrigins()
 
     if(devSoundOrigins & (SOF_SECTOR|SOF_PLANE))
     {
-        foreach(Sector *sec, App_World().map().sectors())
+        foreach(Sector *sec, map.sectors())
         {
             char buf[80];
 
@@ -3242,12 +3462,11 @@ static int drawPolyObjVertexes(Polyobj *po, void * /*context*/)
 /**
  * Draw the various vertex debug aids.
  */
-static void Rend_DrawVertexIndices()
+static void Rend_DrawVertexIndices(Map &map)
 {
     float oldLineWidth = -1;
 
     if(!devVertexBars && !devVertexIndices) return;
-    if(!App_World().hasMap()) return;
 
     glDisable(GL_DEPTH_TEST);
 
@@ -3257,7 +3476,7 @@ static void Rend_DrawVertexIndices()
         oldLineWidth = DGL_GetFloat(DGL_LINE_WIDTH);
         DGL_SetFloat(DGL_LINE_WIDTH, 2);
 
-        foreach(Vertex *vertex, App_World().map().vertexes())
+        foreach(Vertex *vertex, map.vertexes())
         {
             // Not a line vertex?
             LineOwner const *own = vertex->firstLineOwner();
@@ -3287,7 +3506,7 @@ static void Rend_DrawVertexIndices()
     glEnable(GL_POINT_SMOOTH);
     DGL_SetFloat(DGL_POINT_SIZE, 6);
 
-    foreach(Vertex *vertex, App_World().map().vertexes())
+    foreach(Vertex *vertex, map.vertexes())
     {
         // Not a line vertex?
         LineOwner const *own = vertex->firstLineOwner();
@@ -3316,7 +3535,7 @@ static void Rend_DrawVertexIndices()
         eye[VY] = vOrigin[VZ];
         eye[VZ] = vOrigin[VY];
 
-        foreach(Vertex *vertex, App_World().map().vertexes())
+        foreach(Vertex *vertex, map.vertexes())
         {
             coord_t pos[3], dist;
 

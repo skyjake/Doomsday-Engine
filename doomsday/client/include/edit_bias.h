@@ -1,9 +1,7 @@
-/**
- * @file edit_bias.h
- * Bias light source editor. @ingroup base
+/** @file edit_bias.h Shadow Bias editor UI.
  *
- * @authors Copyright &copy; 2006-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -15,38 +13,45 @@
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA</small>
+ * General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG_BIAS_EDITOR
-#define LIBDENG_BIAS_EDITOR
+#ifndef DENG_CLIENT_SHADOWBIAS_EDITOR
+#define DENG_CLIENT_SHADOWBIAS_EDITOR
 
-#include "edit_bias.h"
+#ifdef __CLIENT__
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <de/libdeng1.h>
+
+class HueCircle;
+
+DENG_EXTERN_C int editHidden;      ///< cvar Is the GUI currently hidden?
+DENG_EXTERN_C int editBlink;       ///< cvar Blinking the nearest source (unless grabbed)?
+DENG_EXTERN_C int editShowAll;     ///< cvar Show all sources?
+DENG_EXTERN_C int editShowIndices; ///< cvar Show source indicies?
 
 /**
- * Register all console commands and variables for this module.
+ * To be called to register the commands and variables of this module.
  */
-void SBE_Register(void);
-
-void SBE_EndFrame(void);
-
-void SBE_DrawCursor(void);
-
-void SBE_DrawHUD(void);
+void SBE_Register();
 
 /**
- * @return  @c true iff the console player is currently using the HueCircle.
+ * Returns @c true if the Shadow Bias editor is currently active.
  */
-boolean SBE_UsingHueCircle(void);
+bool SBE_Active();
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
+/**
+ * Draw the GUI widgets of the Shadow Bias editor.
+ */
+void SBE_DrawGui();
 
-#endif // LIBDENG_BIAS_EDITOR
+/**
+ * Returns a pointer to the currently active HueCircle for the console player;
+ * otherwise @c 0 if no hue circle is active.
+ */
+HueCircle *SBE_HueCircle();
+
+#endif // __CLIENT__
+
+#endif // DENG_CLIENT_SHADOWBIAS_EDITOR
