@@ -6,6 +6,11 @@ color text       { rgb <1.0, 1.0, 1.0> }
 color background { rgb <0.0, 0.0, 0.0, 0.75> }
 color accent     { rgb <1.0, 0.8, 0.4> }
 
+group inverted {
+    color text       { rgb <0.0, 0.0, 0.0> }
+    color background { rgb <1.0, 1.0, 1.0, 0.75> }
+}
+
 group label {
     color highlight { rgb <1.0, 1.0, 1.0> }
     color dimmed    { rgb <0.72, 0.72, 0.68> }

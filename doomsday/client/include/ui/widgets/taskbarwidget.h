@@ -24,6 +24,7 @@
 
 #include "guiwidget.h"
 #include "consolewidget.h"
+#include "buttonwidget.h"
 
 /**
  * Task bar that acts as the primary UI element of the client's UI.
@@ -39,6 +40,7 @@ public:
 
     ConsoleWidget &console();
     ConsoleCommandWidget &commandLine();
+    ButtonWidget &logoButton();
 
     bool isOpen() const;
     de::Rule const &shift();
@@ -54,6 +56,7 @@ public:
 public slots:
     void open(bool doAction = true);
     void close();
+    void openMainMenu();
 
 signals:
     void opened();

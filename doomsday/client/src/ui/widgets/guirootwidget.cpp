@@ -23,6 +23,7 @@
 #include <de/AtlasTexture>
 #include <de/GLTexture>
 #include <de/GLUniform>
+#include <de/GLTarget>
 
 #include <QImage>
 #include <QPainter>
@@ -37,12 +38,14 @@ DENG2_PIMPL(GuiRootWidget)
     Id solidWhiteTex;
     Id roundCorners;
     Id gradientFrame;
+    bool noFramesDrawnYet;
 
     Instance(Public *i, ClientWindow *win)
         : Base(i),
           window(win),
           atlas(0),
-          uTexAtlas("uTex", GLUniform::Sampler2D)
+          uTexAtlas("uTex", GLUniform::Sampler2D),
+          noFramesDrawnYet(true)
     {}
 
     ~Instance()
@@ -50,7 +53,7 @@ DENG2_PIMPL(GuiRootWidget)
         // Tell all widgets to release their resource allocations. The base
         // class destructor will destroy all widgets, but this class governs
         // shared GL resources, so we'll ask the widgets to do this now.
-        self.notifyTree(&Widget::deinitialize);
+        self.notifyTree(NotifyArgs(&Widget::deinitialize));
     }
 
     void initAtlas()
@@ -178,8 +181,26 @@ void GuiRootWidget::update()
     }
 }
 
+void GuiRootWidget::draw()
+{
+    if(d->noFramesDrawnYet)
+    {
+        // Widgets may not yet be ready on the first frame; make sure
+        // we don't show garbage.
+        window().canvas().renderTarget().clear(GLTarget::Color);
+
+        d->noFramesDrawnYet = false;
+    }
+
+    RootWidget::draw();
+}
+
 void GuiRootWidget::drawUntil(Widget &until)
 {
-    notifyTree(&Widget::draw, &Widget::isVisible,
-               &Widget::preDrawChildren, &Widget::postDrawChildren, &until);
+    NotifyArgs args(&Widget::draw);
+    args.conditionFunc  = &Widget::isVisible;
+    args.preNotifyFunc  = &Widget::preDrawChildren;
+    args.postNotifyFunc = &Widget::postDrawChildren;
+    args.until          = &until;
+    notifyTree(args);
 }

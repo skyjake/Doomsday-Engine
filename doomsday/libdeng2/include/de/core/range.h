@@ -39,6 +39,11 @@ struct Range
     explicit Range(Type const &a = 0, Type const &b = 0) : start(a), end(b) {}
     inline Type size() const { return end - start; }
     inline bool contains(Type const &i) const { return i >= start && i < end; }
+    inline Type clamp(Type const &i) const {
+        if(i < start) return start;
+        if(i > end) return end;
+        return i;
+    }
     inline Range &operator |= (Type const &value) {
         start = de::min(start, value);
         end   = de::max(end,   value);

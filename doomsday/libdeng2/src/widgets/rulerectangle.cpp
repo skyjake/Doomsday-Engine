@@ -28,6 +28,8 @@ DENG2_PIMPL(RuleRectangle),
 DENG2_OBSERVES(Clock, TimeChange),
 public DelegateRule::ISource
 {
+    String debugName;
+
     // Internal identifiers for the output rules.
     enum OutputIds
     {
@@ -63,6 +65,8 @@ public DelegateRule::ISource
         {
             outputRules[i] = new DelegateRule(*this, i);
         }
+
+        debugName = QString("0x%1").arg(dintptr(thisPublic), 0, 16);
     }
 
     ~Instance()
@@ -461,9 +465,14 @@ Rectanglei RuleRectangle::recti() const
                       Vector2i(de::floor(r.bottomRight.x), de::floor(r.bottomRight.y)));
 }
 
+void RuleRectangle::setDebugName(String const &name)
+{
+    d->debugName = name;
+}
+
 String RuleRectangle::description() const
 {
-    String desc = String("RuleRectangle 0x%1:").arg(dintptr(this), 0, 16);
+    String desc = QString("RuleRectangle '%1'").arg(d->debugName);
 
     for(int i = 0; i < int(Rule::MAX_SEMANTICS); ++i)
     {

@@ -44,8 +44,8 @@ public:
     void setIndicatorUv(de::Vector2f const &uvPoint);
 
     void setContentWidth(int width);
-    void setContentHeight(int height);
     void setContentWidth(de::Rule const &width);
+    void setContentHeight(int height);
     void setContentHeight(de::Rule const &height);
     void setContentSize(de::Vector2i const &size);
 
@@ -114,6 +114,8 @@ public:
 
     // Events.
     void update();
+    void preDrawChildren();
+    void postDrawChildren();
     bool handleEvent(de::Event const &event);
 
 public slots:

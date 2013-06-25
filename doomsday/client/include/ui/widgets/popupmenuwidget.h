@@ -1,4 +1,4 @@
-/** @file commandaction.cpp  Action that executes a console command.
+/** @file popupmenuwidget.h
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -13,22 +13,33 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details. You should have received a copy of the GNU
  * General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small>
+ * http://www.gnu.org/licenses</small> 
  */
 
-#include "de_platform.h"
-#include "ui/commandaction.h"
-#include "con_main.h"
+#ifndef DENG_CLIENT_POPUPMENUWIDGET_H
+#define DENG_CLIENT_POPUPMENUWIDGET_H
 
-using namespace de;
+#include "popupwidget.h"
+#include "menuwidget.h"
 
-CommandAction::CommandAction(String const &cmd, int commandSource)
-    : _command(cmd), _source(commandSource)
-{}
-
-void CommandAction::trigger()
+/**
+ * Popup widget that contains a menu.
+ */
+class PopupMenuWidget : public PopupWidget
 {
-    Action::trigger();
+public:
+    PopupMenuWidget(de::String const &name = "");
 
-    Con_Execute(_source, _command.toUtf8(), false /*silent*/, false /*net*/);
-}
+    MenuWidget &menu() const;
+
+    ButtonWidget *addItem(de::String const &styledText, de::Action *action = 0);
+
+protected:
+    void glMakeGeometry(DefaultVertexBuf::Builder &verts);
+    void preparePopupForOpening();
+
+private:
+    DENG2_PRIVATE(d)
+};
+
+#endif // DENG_CLIENT_POPUPMENUWIDGET_H

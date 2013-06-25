@@ -200,6 +200,12 @@ public:
     MouseClickStatus handleMouseClick(de::Event const &event);
 
 protected:
+    virtual void addedChildWidget(Widget &widget) /*final*/;
+    virtual void removedChildWidget(Widget &widget) /*final*/;
+
+    virtual void addedChildWidget(GuiWidget &widget);
+    virtual void removedChildWidget(GuiWidget &widget);
+
     /**
      * Called by GuiWidget::update() the first time an update is being carried
      * out. Native GL is guaranteed to be available at this time, so the widget

@@ -69,13 +69,35 @@ DENG2_PIMPL(MenuWidget)
             pos.x = ordinal % cols->valuei();
             pos.y = ordinal / cols->valuei();
         }
-        else
+        else if(rows->valuei() > 0)
         {
             DENG2_ASSERT(rowPolicy != Expand);
             pos.x = ordinal % rows->valuei();
             pos.y = ordinal / rows->valuei();
         }
+        else
+        {
+            DENG2_ASSERT(cols->valuei() > 0);
+            pos.x = ordinal % cols->valuei();
+            pos.y = ordinal / cols->valuei();
+        }
         return pos;
+    }
+
+    bool isVisibleItem(Widget const *child) const
+    {
+        GuiWidget const *widget = dynamic_cast<GuiWidget const *>(child);
+        return widget && widget->isVisible();
+    }
+
+    int countVisible() const
+    {
+        int num = 0;
+        foreach(Widget *i, self.Widget::children())
+        {
+            if(isVisibleItem(i)) ++num;
+        }
+        return num;
     }
 
     Vector2i countGrid() const
@@ -85,8 +107,7 @@ DENG2_PIMPL(MenuWidget)
 
         foreach(Widget *i, self.Widget::children())
         {
-            GuiWidget *widget = dynamic_cast<GuiWidget *>(i);
-            if(widget)
+            if(isVisibleItem(i))
             {
                 size = size.max(ordinalToGridPos(ord++) + Vector2i(1, 1));
             }
@@ -100,12 +121,11 @@ DENG2_PIMPL(MenuWidget)
         int ord = 0;
         foreach(Widget *i, self.Widget::children())
         {
-            GuiWidget *widget = dynamic_cast<GuiWidget *>(i);
-            if(widget)
+            if(isVisibleItem(i))
             {
                 if(ordinalToGridPos(ord) == Vector2i(col, row))
                 {
-                    return widget;
+                    return static_cast<GuiWidget *>(i);
                 }
                 ord++;
             }
@@ -132,6 +152,7 @@ DENG2_PIMPL(MenuWidget)
                 releaseRef(old);
             }
         }
+        if(!total) return new ConstantRule(0);
         return refless(total);
     }
 
@@ -156,6 +177,7 @@ DENG2_PIMPL(MenuWidget)
                 releaseRef(old);
             }
         }
+        if(!total) return new ConstantRule(0);
         return refless(total);
     }
 
@@ -177,7 +199,7 @@ DENG2_PIMPL(MenuWidget)
                 releaseRef(old);
             }
         }
-        //qDebug() << "totalWidth:\n" << total->description();
+        if(!total) return new ConstantRule(0);
         return refless(total);
     }
 
@@ -199,7 +221,7 @@ DENG2_PIMPL(MenuWidget)
                 releaseRef(old);
             }
         }
-        //qDebug() << "totalHeight:\n" << total->description();
+        if(!total) return new ConstantRule(0);
         return refless(total);
     }
 };
@@ -216,6 +238,8 @@ void MenuWidget::setGridSize(int columns, ui::SizePolicy columnPolicy,
 
     d->colPolicy = columnPolicy;
     d->rowPolicy = rowPolicy;
+
+    d->needLayout = true;
 }
 
 ButtonWidget *MenuWidget::addItem(String const &styledText, Action *action)
@@ -245,11 +269,13 @@ void MenuWidget::removeItem(GuiWidget *child)
 
 int MenuWidget::count() const
 {
-    return Widget::children().size();
+    return d->countVisible();
 }
 
 void MenuWidget::updateLayout()
 {
+    //qDebug() << path().toString() << "Menu has" << d->countVisible() << "visible items";
+
     Rule const *baseVert = holdRef(&contentRule().top());
 
     Vector2i gridSize = d->countGrid();
@@ -271,9 +297,16 @@ void MenuWidget::updateLayout()
                         .setInput(Rule::Left, previous? previous->rule().right() : *baseHoriz)
                         .setInput(Rule::Width, *d->colWidth);
             }            
-            else if(d->colPolicy == Fixed)
+            else //if(d->colPolicy == Fixed)
             {
-                widget->rule().setInput(Rule::Left, contentRule().left() + *d->colWidth * Const(col));
+                if(col > 0)
+                {
+                    widget->rule().setInput(Rule::Left, contentRule().left() + *d->colWidth * Const(col));
+                }
+                else
+                {
+                    widget->rule().setInput(Rule::Left, contentRule().left());
+                }
             }
 
             if(d->rowPolicy == Filled)
@@ -318,7 +351,9 @@ void MenuWidget::updateLayout()
     }
     else
     {
-        setContentWidth(*d->totalWidth());
+        Rule const *width = d->totalWidth();
+        setContentWidth(*width);
+        rule().setInput(Rule::Width, *width + *d->margin * 2);
     }
 
     if(d->rowPolicy != Expand)
@@ -338,8 +373,21 @@ void MenuWidget::updateLayout()
     d->needLayout = false;
 }
 
+Rule const *MenuWidget::newColumnWidthRule(int column) const
+{
+    if(d->colPolicy != Filled)
+    {
+        return holdRef(d->fullColumnWidth(column));
+    }
+    return holdRef(d->colWidth);
+}
+
 void MenuWidget::update()
 {
+    if(isHidden()) return;
+
+    ScrollAreaWidget::update();
+
     if(d->needLayout)
     {
         updateLayout();

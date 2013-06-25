@@ -92,10 +92,11 @@ de::Action *B_ActionForEvent(ddevent_t const *event);
  *
  * @param bc     Binding context to look in.
  * @param event  Event to match against.
+ * @param respectHigherAssociatedContexts  Bindings shadowed by higher active contexts.
  *
  * @return Action instance (caller gets ownership), or @c NULL if not found.
  */
-de::Action *BindContext_ActionForEvent(bcontext_t *bc, ddevent_t const *event);
+de::Action *BindContext_ActionForEvent(bcontext_t *bc, ddevent_t const *event, bool respectHigherAssociatedContexts);
 
 boolean         B_FindMatchingBinding(bcontext_t* bc, evbinding_t* match1, dbinding_t* match2,
                                       evbinding_t** evResult, dbinding_t** dResult);

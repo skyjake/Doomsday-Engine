@@ -117,6 +117,9 @@ public:
     bool contains(Corner const &point) const {
         return point >= topLeft && point <= bottomRight;
     }
+    bool contains(RectangleType const &other) const {
+        return contains(other.topLeft) && contains(other.bottomRight);
+    }
     bool operator == (RectangleType const &other) const {
         return topLeft == other.topLeft && bottomRight == other.bottomRight;
     }
@@ -131,6 +134,15 @@ public:
         topLeft     = topLeft.min(other.topLeft);
         bottomRight = bottomRight.max(other.bottomRight);
         return *this;
+    }
+    RectangleType operator & (RectangleType const &other) const {
+        if(other.topLeft.x >= bottomRight.x ||
+           other.topLeft.y >= bottomRight.y ||
+           other.bottomRight.x <= topLeft.x ||
+           other.bottomRight.y <= topLeft.y) return RectangleType(); // disconnected
+
+        return RectangleType(topLeft.max(other.topLeft),
+                             bottomRight.min(other.bottomRight));
     }
     String asText() const {
         return "[" + topLeft.asText() + "->" + bottomRight.asText() +

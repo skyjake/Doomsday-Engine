@@ -25,8 +25,9 @@
 /**
  * Menu with an N-by-M grid of items (child widgets).
  *
- * One of the dimensions of the grid can be configured to be Unlimited, but
- * then the children must manage their size on that axis by themselves.
+ * One of the dimensions of the grid can be configured to use ui::Expand
+ * policy, but then the child widgets must manage their size on that axis by
+ * themselves.
  */
 class MenuWidget : public ScrollAreaWidget
 {
@@ -63,7 +64,8 @@ public:
     void removeItem(GuiWidget *child);
 
     /**
-     * Returns the number of items in the menu.
+     * Returns the number of visible items in the menu. Hidden items are not
+     * included in this count.
      */
     int count() const;
 
@@ -72,6 +74,16 @@ public:
      * be called if children are manually added or removed from the menu.
      */
     void updateLayout();
+
+    /**
+     * Constructs a rule for the width of a column, based on the widths of the
+     * items in the column.
+     *
+     * @param column  Column index.
+     *
+     * @return Width rule with a reference count of one (given to the caller).
+     */
+    de::Rule const *newColumnWidthRule(int column) const;
 
     // Events.
     void update();

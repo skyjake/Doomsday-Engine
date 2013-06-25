@@ -100,7 +100,7 @@ DENG2_OBSERVES(Map, OneWayWindowFound)
 
     /// Maximum number of warnings to output (of each type) about any problems
     /// encountered during the build process.
-    static int const maxWarningsPerType = 10;
+    static int const maxWarningsPerType;
 
 public:
     MapConversionReporter() {}
@@ -163,6 +163,8 @@ private:
     UnclosedSectorMap _unclosedSectors;
     OneWayWindowMap   _oneWayWindows;
 };
+
+int const MapConversionReporter::maxWarningsPerType = 10;
 
 boolean ddMapSetup;
 timespan_t ddMapTime;

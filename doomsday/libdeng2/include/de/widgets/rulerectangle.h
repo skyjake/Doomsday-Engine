@@ -100,6 +100,8 @@ public:
      */
     Rectanglei recti() const;
 
+    void setDebugName(String const &name);
+
     String description() const;
 
 private:

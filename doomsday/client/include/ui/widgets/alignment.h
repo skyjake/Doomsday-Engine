@@ -24,6 +24,26 @@
 namespace ui {
 
 /**
+ * Basic directions.
+ */
+enum Direction
+{
+    Left,
+    Up,
+    Right,
+    Down
+};
+
+inline Direction opposite(Direction dir) {
+    switch(dir) {
+    case Left:  return Right;
+    case Right: return Left;
+    case Up:    return Down;
+    case Down:  return Up;
+    }
+}
+
+/**
  * Flags for specifying alignment.
  */
 enum AlignmentFlag

@@ -48,11 +48,12 @@ bool WidgetActions::tryEvent(Event const &event, String const &context)
         return tryEvent(&ddev);
     }
 
-    // Check a specific binding context for an action.
+    // Check a specific binding context for an action (regardless of its
+    // activation status).
     bcontext_t *bc = B_ContextByName(context.toLatin1());
     if(bc)
     {
-        std::auto_ptr<Action> act(BindContext_ActionForEvent(bc, &ddev));
+        std::auto_ptr<Action> act(BindContext_ActionForEvent(bc, &ddev, false));
         if(act.get())
         {
             act->trigger();

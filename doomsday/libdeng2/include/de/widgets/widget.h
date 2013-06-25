@@ -24,6 +24,8 @@
 #include "../String"
 #include "../Event"
 #include "../Id"
+#include "../Observers"
+#include "../DotPath"
 
 #include <QList>
 
@@ -59,14 +61,22 @@ public:
         /// Widget cannot be hit by a pointer device.
         Unhittable = 0x8,
 
-        /// Widget's content will not extend beyoud its boundaries.
+        /// Widget's content will not extend visually beyoud its boundaries.
         ContentClipping = 0x10,
+
+        /// Children cannot be hit outside this widget's boundaries.
+        ChildHitClipping = 0x20,
 
         DefaultBehavior = 0
     };
     Q_DECLARE_FLAGS(Behaviors, Behavior)
 
     typedef WidgetList Children;
+
+    /**
+     * Notified when the widget's parent changes.
+     */
+    DENG2_DEFINE_AUDIENCE(ParentChange, void widgetParentChanged(Widget &child, Widget *oldParent, Widget *newParent))
 
 public:
     Widget(String const &name = "");
@@ -79,6 +89,13 @@ public:
 
     String name() const;
     void setName(String const &name);
+
+    /**
+     * Forms the dotted path of the widget. Assumes that the names of this
+     * widget and its parents use dots to indicate hierarchy.
+     */
+    DotPath path() const;
+
     bool hasRoot() const;
     RootWidget &root() const;
     bool hasFocus() const;
@@ -148,19 +165,28 @@ public:
 
     // Utilities.
     String uniqueName(String const &name) const;
-    enum NotifyResult {
-        AbortNotify,
-        ContinueNotify
+
+    /**
+     * Arguments for notifyTree() and notifyTreeReversed().
+     */
+    struct NotifyArgs {
+        enum Result {
+            Abort,
+            Continue
+        };
+        void (Widget::*notifyFunc)();
+        bool (Widget::*conditionFunc)() const;
+        void (Widget::*preNotifyFunc)();
+        void (Widget::*postNotifyFunc)();
+        Widget *until;
+
+        NotifyArgs(void (Widget::*notify)()) : notifyFunc(notify),
+            conditionFunc(0), preNotifyFunc(0), postNotifyFunc(0),
+            until(0) {}
     };
-    NotifyResult notifyTree(void (Widget::*notifyFunc)(),
-                            bool (Widget::*conditionFunc)() const = 0,
-                            void (Widget::*preNotifyFunc)() = 0,
-                            void (Widget::*postNotifyFunc)() = 0,
-                            Widget *until = 0);
-    void notifyTreeReversed(void (Widget::*notifyFunc)(),
-                            bool (Widget::*conditionFunc)() const = 0,
-                            void (Widget::*preNotifyFunc)() = 0,
-                            void (Widget::*postNotifyFunc)() = 0);
+
+    NotifyArgs::Result notifyTree(NotifyArgs const &args);
+    void notifyTreeReversed(NotifyArgs const &args);
     bool dispatchEvent(Event const &event, bool (Widget::*memberFunc)(Event const &));
 
     // Events.
@@ -177,6 +203,10 @@ public:
 
 public:
     static void setFocusCycle(WidgetList const &order);
+
+protected:
+    virtual void addedChildWidget(Widget &widget);
+    virtual void removedChildWidget(Widget &widget);
 
 private:
     DENG2_PRIVATE(d)

@@ -359,13 +359,23 @@ GLState &GLState::setScissor(Rectanglei const &scissorRect)
     return setScissor(scissorRect.toRectangleui());
 }
 
-GLState &GLState::setScissor(Rectangleui const &scissorRect)
+GLState &GLState::setScissor(Rectangleui const &newScissorRect)
 {
+    Rectangleui cumulative;
+    if(scissor())
+    {
+        cumulative = scissorRect() & newScissorRect;
+    }
+    else
+    {
+        cumulative = newScissorRect;
+    }
+
     d->props.set(Scissor,       true);
-    d->props.set(ScissorX,      scissorRect.left());
-    d->props.set(ScissorY,      scissorRect.top());
-    d->props.set(ScissorWidth,  scissorRect.width());
-    d->props.set(ScissorHeight, scissorRect.height());
+    d->props.set(ScissorX,      cumulative.left());
+    d->props.set(ScissorY,      cumulative.top());
+    d->props.set(ScissorWidth,  cumulative.width());
+    d->props.set(ScissorHeight, cumulative.height());
     return *this;
 }
 

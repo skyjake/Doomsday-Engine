@@ -180,7 +180,7 @@ ConsoleWidget::ConsoleWidget() : GuiWidget("console"), d(new Instance(this))
     */
 
     d->cmdLine = new ConsoleCommandWidget("commandline");
-    d->cmdLine->setEmptyContentHint("Enter commands here");
+    d->cmdLine->setEmptyContentHint("Enter commands here" /*  " _E(r)_E(l)_E(t) "SHIFT-ESC" */);
     add(d->cmdLine);
 
     connect(d->cmdLine, SIGNAL(gotFocus()), this, SLOT(openLog()));
@@ -188,8 +188,8 @@ ConsoleWidget::ConsoleWidget() : GuiWidget("console"), d(new Instance(this))
     // Keep the button at the bottom of the expanding command line.
     //consoleButton->rule().setInput(Rule::Bottom, d->cmdLine->rule().bottom());
 
-    d->button->setOpacity(.5f);
-    d->cmdLine->setOpacity(.5f);
+    d->button->setOpacity(.75f);
+    d->cmdLine->setOpacity(.75f);
 
     // The Log is attached to the top of the command line.
     d->log = new LogWidget("log");
@@ -387,8 +387,8 @@ void ConsoleWidget::setFullyOpaque()
 
 void ConsoleWidget::setTranslucent()
 {
-    d->button->setOpacity(.5f, .25f);
-    d->cmdLine->setOpacity(.5f, .25f);
+    d->button->setOpacity(.75f, .25f);
+    d->cmdLine->setOpacity(.75f, .25f);
 }
 
 void ConsoleWidget::focusOnCommandLine()

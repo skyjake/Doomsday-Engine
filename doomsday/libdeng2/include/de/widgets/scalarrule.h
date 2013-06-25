@@ -36,9 +36,9 @@ class DENG2_PUBLIC ScalarRule : public Rule, DENG2_OBSERVES(Clock, TimeChange)
 public:
     explicit ScalarRule(float initialValue);
 
-    void set(float target, TimeDelta transition = 0);
+    void set(float target, TimeDelta transition = 0, TimeDelta delay = 0);
 
-    void set(Rule const &target, TimeDelta transition = 0);
+    void set(Rule const &target, TimeDelta transition = 0, TimeDelta delay = 0);
 
     /**
      * Sets the animation style of the rule.
@@ -46,6 +46,8 @@ public:
      * @param style  Animation style.
      */
     void setStyle(Animation::Style style);
+
+    void setStyle(Animation::Style style, float bounceSpring);
 
     /**
      * Read-only access to the scalar animation.

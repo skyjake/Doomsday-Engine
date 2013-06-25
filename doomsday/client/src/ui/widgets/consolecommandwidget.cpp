@@ -19,6 +19,7 @@
 #include "ui/widgets/consolecommandwidget.h"
 #include "con_main.h"
 #include "dd_main.h"
+#include "clientapp.h"
 
 #include <de/shell/EditorHistory>
 #include <de/KeyEvent>
@@ -80,6 +81,16 @@ void ConsoleCommandWidget::focusLost()
 
 bool ConsoleCommandWidget::handleEvent(Event const &event)
 {
+    if(hasFocus())
+    {
+        // Console bindings override normal event handling.
+        if(ClientApp::widgetActions().tryEvent(event, "console"))
+        {
+            // Eaten by bindings.
+            return true;
+        }
+    }
+
     if(hasFocus() && event.isKeyDown())
     {
         KeyEvent const &key = event.as<KeyEvent>();

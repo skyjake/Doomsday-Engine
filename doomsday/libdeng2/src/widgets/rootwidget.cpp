@@ -120,7 +120,11 @@ void RootWidget::update()
 
 void RootWidget::draw()
 {   
-    notifyTree(&Widget::draw, &Widget::isVisible, &Widget::preDrawChildren, &Widget::postDrawChildren);
+    NotifyArgs args(&Widget::draw);
+    args.conditionFunc  = &Widget::isVisible;
+    args.preNotifyFunc  = &Widget::preDrawChildren;
+    args.postNotifyFunc = &Widget::postDrawChildren;
+    notifyTree(args);
 
     Rule::markRulesValid(); // All done for this frame.
 }

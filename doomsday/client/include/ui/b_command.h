@@ -61,9 +61,11 @@ void         B_EventBindingToString(const evbinding_t* eb, ddstring_t* str);
  * @param eventClass  The event has been bound in this binding class. If the
  *                    bound state is associated with a higher-priority active
  *                    class, the binding cannot be executed.
+ * @param respectHigherAssociatedContexts  Bindings are shadowed by higher active contexts.
  *
  * @return  Action to be triggered, or @c NULL. Caller gets ownership.
  */
-de::Action *EventBinding_ActionForEvent(evbinding_t *eb, ddevent_t const *event, struct bcontext_s *eventClass);
+de::Action *EventBinding_ActionForEvent(evbinding_t *eb, ddevent_t const *event,
+                                        struct bcontext_s *eventClass, bool respectHigherAssociatedContexts);
 
 #endif // __DOOMSDAY_BIND_COMMAND_H__

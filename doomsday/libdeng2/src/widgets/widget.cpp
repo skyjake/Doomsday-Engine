@@ -104,6 +104,26 @@ void Widget::setName(String const &name)
     }
 }
 
+DotPath Widget::path() const
+{
+    Widget const *w = this;
+    String result;
+    while(w)
+    {
+        if(!result.isEmpty()) result = "." + result;
+        if(!w->d->name.isEmpty())
+        {
+            result = w->d->name + result;
+        }
+        else
+        {
+            result = QString("0x%1").arg(dintptr(w), 0, 16) + result;
+        }
+        w = w->parent();
+    }
+    return result;
+}
+
 bool Widget::hasRoot() const
 {
     Widget const *w = this;
@@ -224,6 +244,14 @@ Widget &Widget::add(Widget *child)
     {
         d->index.insert(child->name(), child);
     }
+
+    // Notify.
+    addedChildWidget(*child);
+    DENG2_FOR_EACH_OBSERVER(ParentChangeAudience, i, child->audienceForParentChange)
+    {
+        i->widgetParentChanged(*child, 0, this);
+    }
+
     return *child;
 }
 
@@ -237,6 +265,14 @@ Widget *Widget::remove(Widget &child)
     {
         d->index.remove(child.name());
     }
+
+    // Notify.
+    removedChildWidget(child);
+    DENG2_FOR_EACH_OBSERVER(ParentChangeAudience, i, child.audienceForParentChange)
+    {
+        i->widgetParentChanged(child, this, 0);
+    }
+
     return &child;
 }
 
@@ -275,67 +311,60 @@ String Widget::uniqueName(String const &name) const
     return String("#%1.%2").arg(id().asInt64()).arg(name);
 }
 
-Widget::NotifyResult Widget::notifyTree(void (Widget::*notifyFunc)(),
-                                        bool (Widget::*conditionFunc)() const,
-                                        void (Widget::*preFunc)(),
-                                        void (Widget::*postFunc)(),
-                                        Widget *until)
+Widget::NotifyArgs::Result Widget::notifyTree(NotifyArgs const &args)
 {
-    if(preFunc)
+    if(args.preNotifyFunc)
     {
-        (this->*preFunc)();
+        (this->*args.preNotifyFunc)();
     }
 
     DENG2_FOR_EACH(Instance::Children, i, d->children)
     {
-        if(*i == until)
+        if(*i == args.until)
         {
-            return AbortNotify;
+            return NotifyArgs::Abort;
         }
 
-        if(conditionFunc && !((*i)->*conditionFunc)())
+        if(args.conditionFunc && !((*i)->*args.conditionFunc)())
             continue; // Skip this one.
 
-        ((*i)->*notifyFunc)();
+        ((*i)->*args.notifyFunc)();
 
-        if((*i)->notifyTree(notifyFunc, conditionFunc, preFunc, postFunc, until) == AbortNotify)
+        if((*i)->notifyTree(args) == NotifyArgs::Abort)
         {
-            return AbortNotify;
+            return NotifyArgs::Abort;
         }
     }
 
-    if(postFunc)
+    if(args.postNotifyFunc)
     {
-        (this->*postFunc)();
+        (this->*args.postNotifyFunc)();
     }
 
-    return ContinueNotify;
+    return NotifyArgs::Continue;
 }
 
-void Widget::notifyTreeReversed(void (Widget::*notifyFunc)(),
-                                bool (Widget::*conditionFunc)() const,
-                                void (Widget::*preFunc)(),
-                                void (Widget::*postFunc)())
+void Widget::notifyTreeReversed(NotifyArgs const &args)
 {
-    if(preFunc)
+    if(args.preNotifyFunc)
     {
-        (this->*preFunc)();
+        (this->*args.preNotifyFunc)();
     }
 
     for(int i = d->children.size() - 1; i >= 0; --i)
     {
         Widget *w = d->children[i];
 
-        if(conditionFunc && !(w->*conditionFunc)())
+        if(args.conditionFunc && !(w->*args.conditionFunc)())
             continue; // Skip this one.
 
-        w->notifyTreeReversed(notifyFunc, conditionFunc, preFunc, postFunc);
-        (w->*notifyFunc)();
+        w->notifyTreeReversed(args);
+        (w->*args.notifyFunc)();
     }
 
-    if(postFunc)
+    if(args.postNotifyFunc)
     {
-        (this->*postFunc)();
+        (this->*args.postNotifyFunc)();
     }
 }
 
@@ -344,23 +373,22 @@ bool Widget::dispatchEvent(Event const &event, bool (Widget::*memberFunc)(Event 
     // Hidden widgets do not get events.
     if(isHidden()) return false;
 
+    // Routing has priority.
+    if(d->routing.contains(event.type()))
+    {
+        return d->routing[event.type()]->dispatchEvent(event, memberFunc);
+    }
+
     bool const thisHasFocus = (hasRoot() && root().focus() == this);
 
     if(d->behavior.testFlag(HandleEventsOnlyWhenFocused) && !thisHasFocus)
     {
         return false;
     }
-
     if(thisHasFocus)
     {
         // The focused widget is offered events before dispatching to the tree.
         return false;
-    }
-
-    // Routing has priority.
-    if(d->routing.contains(event.type()))
-    {
-        return d->routing[event.type()]->dispatchEvent(event, memberFunc);
     }
 
     // Tree is traversed in reverse order.
@@ -430,5 +458,11 @@ void Widget::setFocusCycle(WidgetList const &order)
         b->setFocusPrev(a->name());
     }
 }
+
+void Widget::addedChildWidget(Widget &)
+{}
+
+void Widget::removedChildWidget(Widget &)
+{}
 
 } // namespace de
