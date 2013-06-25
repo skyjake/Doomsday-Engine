@@ -189,7 +189,18 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
     d->logo->setImage(style().images().image("logo.px128"));
     d->logo->setImageScale(.55f);
     d->logo->setImageFit(FitToHeight | OriginalAspectRatio);
-    d->logo->setText(_E(b) + VersionInfo().base());
+
+    VersionInfo currentVersion;
+    if(String(DOOMSDAY_RELEASE_TYPE) == "Stable")
+    {
+        d->logo->setText(_E(b) + currentVersion.base());
+    }
+    else
+    {
+        d->logo->setText(_E(b) + currentVersion.base() + " " +
+                         _E(l) + String("#%1").arg(currentVersion.build));
+    }
+
     d->logo->setWidthPolicy(ui::Expand);
     d->logo->setTextAlignment(AlignLeft);
     d->logo->rule()
@@ -221,7 +232,8 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
     d->mainMenu->setAnchor(d->logo->rule().left() + d->logo->rule().width() / 2,
                            d->logo->rule().top());
     d->panelItem  = d->mainMenu->addItem(_E(b) "Open Control Panel", new CommandAction("panel"));
-    d->unloadItem = d->mainMenu->addItem("Unload Game", new CommandAction("unload"));
+    d->mainMenu->addItem("Check for updates...", new CommandAction("updateandnotify"));
+    d->unloadItem = d->mainMenu->addItem("Unload game", new CommandAction("unload"));
     d->mainMenu->addItem("Quit Doomsday", new CommandAction("quit"));
     add(d->mainMenu);
 

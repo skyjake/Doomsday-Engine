@@ -29,7 +29,7 @@
 using namespace de;
 
 static TimeDelta const OPENING_ANIM_SPAN = 0.5;
-static TimeDelta const CLOSING_ANIM_SPAN = 0.5;
+static TimeDelta const CLOSING_ANIM_SPAN = 0.4;
 
 DENG2_PIMPL(PopupWidget)
 {
