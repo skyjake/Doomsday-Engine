@@ -67,6 +67,8 @@ public:
         /// Children cannot be hit outside this widget's boundaries.
         ChildHitClipping = 0x20,
 
+        DisableEventDispatchToChildren = 0x40,
+
         DefaultBehavior = 0
     };
     Q_DECLARE_FLAGS(Behaviors, Behavior)
@@ -117,6 +119,13 @@ public:
      * @param operation  Operation to perform on the flags.
      */
     void setBehavior(Behaviors behavior, FlagOp operation = SetFlags);
+
+    /**
+     * Clears one or more behavior flags.
+     *
+     * @param behavior   Flags to unset.
+     */
+    void unsetBehavior(Behaviors behavior);
 
     Behaviors behavior() const;
 

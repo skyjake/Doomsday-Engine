@@ -171,14 +171,6 @@ ConsoleWidget::ConsoleWidget() : GuiWidget("console"), d(new Instance(this))
     d->button->setAction(new SignalAction(this, SLOT(focusOnCommandLine())));
     add(d->button);
 
-    /*
-    d->button->rule()
-            .setInput(Rule::Left,   rule().left())
-            .setInput(Rule::Height, style().fonts().font("default").height() + gap * 2)
-            .setInput(Rule::Width,  d->button->rule().height());
-    add(consoleButton);
-    */
-
     d->cmdLine = new ConsoleCommandWidget("commandline");
     d->cmdLine->setEmptyContentHint("Enter commands here" /*  " _E(r)_E(l)_E(t) "SHIFT-ESC" */);
     add(d->cmdLine);

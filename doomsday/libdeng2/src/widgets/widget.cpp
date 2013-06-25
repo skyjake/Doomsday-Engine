@@ -176,6 +176,11 @@ void Widget::setBehavior(Behaviors behavior, FlagOp operation)
     applyFlagOperation(d->behavior, behavior, operation);
 }
 
+void Widget::unsetBehavior(Behaviors behavior)
+{
+    applyFlagOperation(d->behavior, behavior, UnsetFlags);
+}
+
 Widget::Behaviors Widget::behavior() const
 {
     return d->behavior;
@@ -391,12 +396,16 @@ bool Widget::dispatchEvent(Event const &event, bool (Widget::*memberFunc)(Event 
         return false;
     }
 
-    // Tree is traversed in reverse order.
-    for(int i = d->children.size() - 1; i >= 0; --i)
+    if(!d->behavior.testFlag(DisableEventDispatchToChildren))
     {
-        Widget *w = d->children[i];
-        bool eaten = w->dispatchEvent(event, memberFunc);
-        if(eaten) return true;
+        // Tree is traversed in reverse order so that the visibly topmost
+        // widgets get events first.
+        for(int i = d->children.size() - 1; i >= 0; --i)
+        {
+            Widget *w = d->children[i];
+            bool eaten = w->dispatchEvent(event, memberFunc);
+            if(eaten) return true;
+        }
     }
 
     if((this->*memberFunc)(event))

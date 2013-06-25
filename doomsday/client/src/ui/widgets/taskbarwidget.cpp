@@ -357,6 +357,8 @@ void TaskBarWidget::open(bool doAction)
     {
         d->opened = true;
 
+        unsetBehavior(DisableEventDispatchToChildren);
+
         d->console->clearLog();
 
         d->vertShift->set(0, .2f);
@@ -396,6 +398,8 @@ void TaskBarWidget::close()
     if(d->opened)
     {
         d->opened = false;
+
+        setBehavior(DisableEventDispatchToChildren);
 
         // Slide the task bar down.
         d->vertShift->set(rule().height().valuei() +
