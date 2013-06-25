@@ -22,52 +22,7 @@
 #ifndef DENG_RENDER_SHADOWBIAS
 #define DENG_RENDER_SHADOWBIAS
 
-#include <de/Vector>
-
 #include "world/map.h"
-
-// Vertex illumination flags.
-#define VIF_LERP            0x1 ///< Interpolation is in progress.
-#define VIF_STILL_UNSEEN    0x2 ///< The color of the vertex is still unknown.
-
-/**
- * POD structure used with Shadow Bias to store per-vertex illumination data.
- */
-struct VertexIllum
-{
-    /// Maximum number of sources which can contribute light to the vertex.
-    static int const MAX_AFFECTED = 6;
-
-    de::Vector3f color; ///< Current light intensity at the vertex.
-    de::Vector3f dest;  ///< Destination light intensity at the vertex (interpolated to).
-    uint updateTime;    ///< When the value was calculated.
-    short flags;
-
-    /**
-     * Light contribution from affecting sources.
-     */
-    struct Contribution
-    {
-        short source;       ///< Index of the source.
-        de::Vector3f color; ///< The contributed light intensity.
-    } casted[MAX_AFFECTED];
-
-    VertexIllum()
-        : updateTime(0),
-          flags(VIF_STILL_UNSEEN)
-    {
-        for(int i = 0; i < MAX_AFFECTED; ++i)
-        {
-            casted[i].source = -1;
-        }
-    }
-};
-
-/**
- * Interpolate between current and destination.
- */
-void lerpIllumination(VertexIllum &illum, uint currentTime, int lightSpeed,
-                      de::Vector3f &result);
 
 class BiasTracker
 {

@@ -21,34 +21,6 @@
 
 using namespace de;
 
-/**
- * Interpolate between current and destination.
- */
-void lerpIllumination(VertexIllum &illum, uint currentTime, int lightSpeed,
-                      Vector3f &result)
-{
-    if(!(illum.flags & VIF_LERP))
-    {
-        // We're done with the interpolation, just use the destination color.
-        result = illum.color;
-        return;
-    }
-
-    float inter = (currentTime - illum.updateTime) / float( lightSpeed );
-
-    if(inter > 1)
-    {
-        illum.flags &= ~VIF_LERP;
-        illum.color = illum.dest;
-
-        result = illum.color;
-    }
-    else
-    {
-        result = illum.color + (illum.dest - illum.color) * inter;
-    }
-}
-
 void BiasTracker::mark(uint index)
 {
     // Assume 32-bit uint.

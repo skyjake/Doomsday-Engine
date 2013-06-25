@@ -36,7 +36,8 @@ using namespace de;
 /// Ignore light intensities below this threshold when accumulating sources.
 static float const MIN_INTENSITY = .005f;
 
-static int const MAX_AFFECTED = VertexIllum::MAX_AFFECTED;
+/// Maximum number of sources which can contribute light to a vertex.
+static int const MAX_AFFECTED = 6;
 
 static float lightMin        = .85f; //cvar
 static float lightMax        = 1.f;  //cvar
@@ -80,6 +81,75 @@ struct Affection
     }
 };
 
+/**
+ * Per-vertex illumination data.
+ */
+struct VertexIllum
+{
+    /// State flags:
+    enum Flag
+    {
+        /// Interpolation is in progress.
+        Interpolating = 0x1,
+
+        /// Vertex is still unseen (color is unknown).
+        StillUnseen   = 0x2
+    };
+    Q_DECLARE_FLAGS(Flags, Flag)
+
+    /**
+     * Light contribution from affecting sources.
+     */
+    struct Contribution
+    {
+        short source;       ///< Index of the source.
+        de::Vector3f color; ///< The contributed light intensity.
+    };
+
+    Vector3f color;  /// Current light color at the vertex.
+    Vector3f dest;   /// Destination light color at the vertex (interpolated to).
+    uint updateTime; /// When the value was calculated.
+    Flags flags;
+    Contribution casted[MAX_AFFECTED];
+
+    VertexIllum() : updateTime(0), flags(StillUnseen)
+    {
+        for(int i = 0; i < MAX_AFFECTED; ++i)
+        {
+            casted[i].source = -1;
+        }
+    }
+
+    /**
+     * Interpolate between current and destination.
+     */
+    void lerp(uint currentTime, int lightSpeed, Vector3f &result)
+    {
+        if(!flags.testFlag(Interpolating))
+        {
+            // No interpolation necessary -- use the current color.
+            result = color;
+            return;
+        }
+
+        float inter = (currentTime - updateTime) / float( lightSpeed );
+
+        if(inter > 1)
+        {
+            flags &= ~Interpolating;
+            color = dest;
+
+            result = color;
+        }
+        else
+        {
+            result = color + (dest - color) * inter;
+        }
+    }
+};
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(VertexIllum::Flags)
+
 static float biasDot(Vector3d const &sourceOrigin, Vector3d const &surfacePoint,
                      Vector3f const &surfaceNormal)
 {
@@ -108,17 +178,17 @@ static Vector3f *getCasted(VertexIllum *illum, int sourceIndex,
 {
     DENG_ASSERT(illum && affectedSources);
 
-    for(int i = 0; i < VertexIllum::MAX_AFFECTED; ++i)
+    for(int i = 0; i < MAX_AFFECTED; ++i)
     {
         if(illum->casted[i].source == sourceIndex)
             return &illum->casted[i].color;
     }
 
     // Choose an array element not used by the affectedSources.
-    for(int i = 0; i < VertexIllum::MAX_AFFECTED; ++i)
+    for(int i = 0; i < MAX_AFFECTED; ++i)
     {
         bool inUse = false;
-        for(int k = 0; k < VertexIllum::MAX_AFFECTED; ++k)
+        for(int k = 0; k < MAX_AFFECTED; ++k)
         {
             if(affectedSources[k].sourceIdx < 0)
                 break;
@@ -298,14 +368,14 @@ DENG2_PIMPL_NOREF(BiasSurface)
             BiasSource *source;
             BiasAffection *affection;
             bool changed;
-        } affecting[VertexIllum::MAX_AFFECTED + 1], *aff;
+        } affecting[MAX_AFFECTED + 1], *aff;
 
         // Vertices that are rendered for the first time need to be fully
         // evaluated.
-        if(vi.flags & VIF_STILL_UNSEEN)
+        if(vi.flags & VertexIllum::StillUnseen)
         {
             illuminationChanged = true;
-            vi.flags &= ~VIF_STILL_UNSEEN;
+            vi.flags &= ~VertexIllum::StillUnseen;
         }
 
         // Determine if any of the affecting lights have changed since
@@ -313,7 +383,7 @@ DENG2_PIMPL_NOREF(BiasSurface)
         aff = affecting;
         if(map.biasSourceCount() > 0)
         {
-            for(int i = 0; affectedSources[i].sourceIdx >= 0 && i < VertexIllum::MAX_AFFECTED; ++i)
+            for(int i = 0; affectedSources[i].sourceIdx >= 0 && i < MAX_AFFECTED; ++i)
             {
                 int idx = affectedSources[i].sourceIdx;
 
@@ -351,7 +421,7 @@ DENG2_PIMPL_NOREF(BiasSurface)
         if(!illuminationChanged)
         {
             // Reuse the previous value.
-            lerpIllumination(vi, map.biasCurrentTime(), lightSpeed, light);
+            vi.lerp(map.biasCurrentTime(), lightSpeed, light);
 
             // Add ambient lighting.
             addLight(light, ambientLight(map, point));
@@ -430,10 +500,10 @@ DENG2_PIMPL_NOREF(BiasSurface)
            !(vi.dest.z < newColor.z + COLOR_CHANGE_THRESHOLD &&
              vi.dest.z > newColor.z - COLOR_CHANGE_THRESHOLD))
         {
-            if(vi.flags & VIF_LERP)
+            if(vi.flags & VertexIllum::Interpolating)
             {
                 // Must not lose the half-way interpolation.
-                Vector3f mid; lerpIllumination(vi, map.biasCurrentTime(), lightSpeed, mid);
+                Vector3f mid; vi.lerp(map.biasCurrentTime(), lightSpeed, mid);
 
                 // This is current color at this very moment.
                 vi.color = mid;
@@ -441,11 +511,11 @@ DENG2_PIMPL_NOREF(BiasSurface)
 
             // This is what we will be interpolating to.
             vi.dest       = newColor;
-            vi.flags     |= VIF_LERP;
+            vi.flags     |= VertexIllum::Interpolating;
             vi.updateTime = latestSourceUpdate;
         }
 
-        lerpIllumination(vi, map.biasCurrentTime(), lightSpeed, light);
+        vi.lerp(map.biasCurrentTime(), lightSpeed, light);
 
         // Add ambient lighting.
         addLight(light, ambientLight(map, point));
@@ -502,7 +572,7 @@ void BiasSurface::updateAffection(BiasTracker &changes)
     // Mark the illumination unseen to force an update.
     for(int i = 0; i < d->illums.size(); ++i)
     {
-        d->illums[i].flags |= VIF_STILL_UNSEEN;
+        d->illums[i].flags |= VertexIllum::StillUnseen;
     }
 }
 
