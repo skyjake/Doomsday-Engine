@@ -109,6 +109,7 @@ DENG_API_HEADERS = \
 
 # Convenience headers.
 DENG_HEADERS += \
+    include/BiasSource \
     include/BspLeaf \
     include/BspNode \
     include/EntityDatabase \
@@ -247,6 +248,7 @@ DENG_HEADERS += \
     include/network/ui_mpi.h \
     include/partition.h \
     include/r_util.h \
+    include/render/biassource.h \
     include/render/blockmapvisual.h \
     include/render/huecirclevisual.h \
     include/render/lightgrid.h \
@@ -543,6 +545,7 @@ SOURCES += \
     src/network/ui_mpi.cpp \
     src/r_util.cpp \
     src/render/api_render.cpp \
+    src/render/biassource.cpp \
     src/render/blockmapvisual.cpp \
     src/render/huecirclevisual.cpp \
     src/render/lightgrid.cpp \
