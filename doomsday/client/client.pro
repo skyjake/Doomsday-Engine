@@ -115,6 +115,8 @@ DENG_HEADERS += \
     include/Face \
     include/Game \
     include/Games \
+    include/Grabbable \
+    include/Hand \
     include/HEdge \
     include/IHPlane \
     include/Line \
@@ -369,6 +371,8 @@ DENG_HEADERS += \
     include/world/entitydatabase.h \
     include/world/entitydef.h \
     include/world/generators.h \
+    include/world/grabbable.h \
+    include/world/hand.h \
     include/world/line.h \
     include/world/lineowner.h \
     include/world/linesighttest.h \
@@ -663,6 +667,8 @@ SOURCES += \
     src/world/entitydatabase.cpp \
     src/world/entitydef.cpp \
     src/world/generators.cpp \
+    src/world/grabbable.cpp \
+    src/world/hand.cpp \
     src/world/line.cpp \
     src/world/linesighttest.cpp \
     src/world/map.cpp \
