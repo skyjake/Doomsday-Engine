@@ -29,7 +29,9 @@
 #include "dd_main.h"
 #include "dd_loop.h"
 #include "sys_system.h"
-#include "edit_bias.h"
+#ifdef __CLIENT__
+#  include "edit_bias.h"
+#endif
 #include "world/map.h"
 #include "network/net_main.h"
 #include "render/r_main.h"
@@ -75,11 +77,9 @@ DENG2_PIMPL(LegacyWidget)
         {
             if(App_GameLoaded())
             {
-                // Interpolate the world ready for drawing view(s) of it.
-                if(App_World().hasMap())
-                {
-                    R_BeginWorldFrame();
-                }
+                // Notify the world that a new render frame has begun.
+                App_World().beginFrame(CPP_BOOL(R_NextViewer()));
+
                 R_RenderViewPorts();
             }
             else if(titleFinale == 0)
@@ -114,8 +114,8 @@ DENG2_PIMPL(LegacyWidget)
 
         if(drawGame)
         {
-            // Shadow Bias Editor HUD (if it is active).
-            SBE_DrawHUD();
+            // Draw the widgets of the Shadow Bias Editor (if active).
+            SBE_DrawGui();
 
             /*
              * Draw debug information.
@@ -127,8 +127,8 @@ DENG2_PIMPL(LegacyWidget)
             Net_Drawer();
             S_Drawer();
 
-            // Finish up any tasks that must be completed after view(s) have been drawn.
-            R_EndWorldFrame();
+            // Notify the world that we've finished rendering the frame.
+            App_World().endFrame();
         }
 
         if(UI_IsActive())

@@ -37,9 +37,13 @@
 
 #include "uri.hh"
 
-#include "world/map.h"
+#ifdef __CLIENT__
+class Hand;
+#endif
 
 namespace de {
+
+class Map;
 
 /**
  * @ingroup world
@@ -54,9 +58,21 @@ public:
     DENG2_ERROR(MapError);
 
     /**
-     * Audience that will be notified when the "current" map changes.
+     * Notified when the "current" map changes.
      */
-    DENG2_DEFINE_AUDIENCE(MapChange, void currentMapChanged())
+    DENG2_DEFINE_AUDIENCE(MapChange, void worldMapChanged(World &world))
+
+#ifdef __CLIENT__
+    /**
+     * Notified when the "current" frame begins.
+     */
+    DENG2_DEFINE_AUDIENCE(FrameBegin, void worldFrameBegins(World &world, bool resetNextViewer))
+
+    /**
+     * Notified when the "current" frame ends.
+     */
+    DENG2_DEFINE_AUDIENCE(FrameEnd, void worldFrameEnds(World &world))
+#endif
 
 public:
     /**
@@ -68,6 +84,19 @@ public:
      * To be called to register the commands and variables of this module.
      */
     static void consoleRegister();
+
+    /**
+     * To be called to reset the world back to the initial state. Any currently
+     * loaded map will be unloaded and player states are re-initialized.
+     *
+     * @todo World should observe GameChange.
+     */
+    void reset();
+
+    /**
+     * To be called following an engine reset to update the world state.
+     */
+    void update();
 
     /**
      * Returns @c true iff a map is currently loaded.
@@ -96,18 +125,29 @@ public:
      */
     inline void unloadMap() { changeMap(Uri()); }
 
+#ifdef __CLIENT__
     /**
-     * To be called to reset the world back to the initial state. Any currently
-     * loaded map will be unloaded and player states are re-initialized.
-     *
-     * @todo World should observe GameChange.
+     * To be called at the beginning of a render frame, so that we can prepare for
+     * drawing view(s) of the current map.
      */
-    void reset();
+    void beginFrame(bool resetNextViewer = false);
 
     /**
-     * To be called following an engine reset to update the world state.
+     * To be called at the end of a render frame, so that we can finish up any tasks
+     * that must be completed after view(s) have been drawn.
      */
-    void update();
+    void endFrame();
+
+    /**
+     * Returns the hand of the "user" in the world. Used for manipulating elements
+     * for the purposes of runtime map editing.
+     *
+     * @param distance  The current distance of the hand from the viewer will be
+     *                  written here if not @c 0.
+     */
+    Hand &hand(coord_t *distance = 0) const;
+
+#endif // __CLIENT__
 
 private:
     DENG2_PRIVATE(d)

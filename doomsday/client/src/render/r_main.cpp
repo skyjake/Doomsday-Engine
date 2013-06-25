@@ -49,10 +49,6 @@ float devCameraMovementStartTime = 0; // sysTime
 float devCameraMovementStartTimeRealSecs = 0;
 #endif
 
-BEGIN_PROF_TIMERS()
-  PROF_MOBJ_INIT_ADD
-END_PROF_TIMERS()
-
 D_CMD(ViewGrid);
 
 int validCount = 1; // Increment every time a check is made.
@@ -75,7 +71,7 @@ byte texGammaLut[256];
 
 fontid_t fontFixed, fontVariable[FONTSTYLE_COUNT];
 
-static boolean resetNextViewer = true;
+static int resetNextViewer = true;
 
 static viewdata_t viewDataOfConsole[DDMAXPLAYERS]; // Indexed by console number.
 
@@ -565,6 +561,11 @@ void R_ResetViewer()
     resetNextViewer = 1;
 }
 
+int R_NextViewer()
+{
+    return resetNextViewer;
+}
+
 void R_InterpolateViewer(viewer_t *start, viewer_t *end, float pos, viewer_t *out)
 {
     float inv = 1 - pos;
@@ -730,64 +731,6 @@ BEGIN_PROF( PROF_MOBJ_INIT_ADD );
 
 END_PROF( PROF_MOBJ_INIT_ADD );
 
-#endif
-}
-
-void R_BeginWorldFrame()
-{
-#ifdef __CLIENT__
-
-    // Clear all flags that can be cleared before each frame.
-    foreach(Sector *sector, App_World().map().sectors())
-    {
-        sector->_frameFlags &= ~SIF_FRAME_CLEAR;
-    }
-
-    App_World().map().lerpTrackedPlanes(resetNextViewer);
-    App_World().map().lerpScrollingSurfaces(resetNextViewer);
-
-    if(!freezeRLs)
-    {
-        // Initialize and/or update the LightGrid.
-        App_World().map().initLightGrid();
-
-        SB_BeginFrame();
-        LO_BeginWorldFrame();
-        R_ClearObjlinksForFrame(); // Zeroes the links.
-
-        // Clear the objlinks.
-        R_InitForNewFrame();
-
-        // Generate surface decorations for the frame.
-        Rend_DecorBeginFrame();
-
-        // Spawn omnilights for decorations.
-        Rend_DecorAddLuminous();
-
-        // Spawn omnilights for mobjs.
-        LO_AddLuminousMobjs();
-
-        // Create objlinks for mobjs.
-        R_CreateMobjLinks();
-
-        // Link all active particle generators into the world.
-        P_CreatePtcGenLinks();
-
-        // Link objs to all contacted surfaces.
-        R_LinkObjs();
-    }
-
-#endif
-}
-
-void R_EndWorldFrame()
-{
-#ifdef __CLIENT__
-    if(!freezeRLs)
-    {
-        // Wrap up with Source, Bias lights.
-        SB_EndFrame();
-    }
 #endif
 }
 

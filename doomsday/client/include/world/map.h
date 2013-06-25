@@ -30,6 +30,10 @@
 #include "p_particle.h"
 #include "Polyobj"
 
+#ifdef __CLIENT__
+#  include "world/world.h"
+#endif
+
 class BspLeaf;
 class BspNode;
 class Line;
@@ -85,6 +89,9 @@ class Thinkers;
  * @ingroup world
  */
 class Map
+#ifdef __CLIENT__
+: DENG2_OBSERVES(World, FrameBegin)
+#endif
 {
     DENG2_NO_COPY  (Map)
     DENG2_NO_ASSIGN(Map)
@@ -108,13 +115,18 @@ public:
 #endif
 
     /*
-     * Observers to be notified when a one-way window construct is first found.
+     * Notified when the map is about to be deleted.
+     */
+    DENG2_DEFINE_AUDIENCE(Deletion, void mapBeingDeleted(Map const &map))
+
+    /*
+     * Notified when a one-way window construct is first found.
      */
     DENG2_DEFINE_AUDIENCE(OneWayWindowFound,
         void oneWayWindowFound(Line &line, Sector &backFacingSector))
 
     /*
-     * Observers to be notified when an unclosed sector is first found.
+     * Notified when an unclosed sector is first found.
      */
     DENG2_DEFINE_AUDIENCE(UnclosedSectorFound,
         void unclosedSectorFound(Sector &sector, Vector2d const &nearPoint))
@@ -677,12 +689,11 @@ public:
      */
     void initLightGrid();
 
-#endif // __CLIENT__
+protected:
+    /// Observes World FrameBegin
+    void worldFrameBegins(World &world, bool resetNextViewer);
 
-    /**
-     * To be called following an engine reset to update the map state.
-     */
-    void update();
+#endif // __CLIENT__
 
 public: /// @todo Make private:
 

@@ -29,7 +29,7 @@
  * All remote shell users.
  */
 class ShellUsers : public QObject,
-    DENG2_OBSERVES(de::World, MapChange)
+DENG2_OBSERVES(de::World, MapChange)
 {
     Q_OBJECT
 
@@ -49,7 +49,8 @@ public:
 
     int count() const;
 
-    void currentMapChanged();
+    /// Observes World MapChange.
+    void worldMapChanged(de::World &world);
 
 public slots:
     void sendPlayerInfoToAll();

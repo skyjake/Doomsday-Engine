@@ -55,11 +55,16 @@
 #include "world/maputil.h"
 #include "world/p_intercept.h"
 #include "world/p_object.h"
+#include "world/p_objlink.h"
 #include "world/thinkers.h"
 #include "world/world.h" // ddMapSetup
 
 #include "render/r_main.h" // validCount
 #ifdef __CLIENT__
+#  include "render/lumobj.h"
+#  include "render/rend_bias.h"
+#  include "render/rend_decor.h"
+#  include "render/rend_main.h"
 #  include "render/sky.h"
 #endif
 
@@ -2694,6 +2699,56 @@ void Map::update()
     Sky_Configure(skyDef);
 #endif
 }
+
+#ifdef __CLIENT__
+void Map::worldFrameBegins(World &world, bool resetNextViewer)
+{
+    DENG2_ASSERT(&world.map() == this); // Sanity check.
+
+    // Clear all flags that can be cleared before each frame.
+    foreach(Sector *sector, d->sectors)
+    {
+        sector->_frameFlags &= ~SIF_FRAME_CLEAR;
+    }
+
+    // Interpolate the map ready for drawing view(s) of it.
+    d->lerpTrackedPlanes(resetNextViewer);
+    d->lerpScrollingSurfaces(resetNextViewer);
+
+    if(!freezeRLs)
+    {
+        // Initialize and/or update the LightGrid.
+        initLightGrid();
+
+        d->biasBeginFrame();
+
+        LO_BeginWorldFrame();
+        R_ClearObjlinksForFrame(); // Zeroes the links.
+
+        // Clear the objlinks.
+        R_InitForNewFrame();
+
+        // Generate surface decorations for the frame.
+        Rend_DecorBeginFrame();
+
+        // Spawn omnilights for decorations.
+        Rend_DecorAddLuminous();
+
+        // Spawn omnilights for mobjs.
+        LO_AddLuminousMobjs();
+
+        // Create objlinks for mobjs.
+        d->createMobjLinks();
+
+        // Link all active particle generators into the world.
+        P_CreatePtcGenLinks();
+
+        // Link objs to all contacted surfaces.
+        R_LinkObjs();
+    }
+}
+
+#endif // __CLIENT__
 
 /// Runtime map editing -----------------------------------------------------
 

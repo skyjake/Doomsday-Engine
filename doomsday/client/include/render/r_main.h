@@ -106,16 +106,6 @@ void R_Shutdown(void);
 void R_Ticker(timespan_t time);
 
 /**
- * Prepare for rendering view(s) of the world.
- */
-void R_BeginWorldFrame(void);
-
-/**
- * Wrap up after drawing view(s) of the world.
- */
-void R_EndWorldFrame(void);
-
-/**
  * Render all view ports in the viewport grid.
  */
 void R_RenderViewPorts(void);
@@ -143,6 +133,8 @@ viewdata_t const *R_ViewData(int consoleNum);
 void R_UpdateViewer(int consoleNum);
 
 void R_ResetViewer(void);
+
+int R_NextViewer(void);
 
 /**
  * Update the sharp world data by rotating the stored values of plane

@@ -50,6 +50,9 @@
 #ifdef __CLIENT__
 #  include "client/cl_frame.h"
 #  include "client/cl_player.h"
+#  include "edit_bias.h"
+#  include "Hand"
+#  include "HueCircle"
 
 #  include "render/lumobj.h"
 #  include "render/r_shadow.h"
@@ -71,6 +74,10 @@
 #include "world/world.h"
 
 using namespace de;
+
+#ifdef __CLIENT__
+static float handDistance = 300; //cvar
+#endif
 
 /**
  * Observes the progress of a map conversion and records any issues/problems that
@@ -211,11 +218,16 @@ DENG2_PIMPL(World)
 
     typedef QMap<String, CacheRecord> Records;
 
+    /// Map cache records.
+    Records records;
+
     /// Current map.
     Map *map;
 
-    /// Map cache records.
-    Records records;
+#ifdef __CLIENT__
+    /// Hand for runtime map manipulation/editing.
+    QScopedPointer<Hand> hand;
+#endif
 
     Instance(Public *i) : Base(i), map(0)
     {}
@@ -224,7 +236,7 @@ DENG2_PIMPL(World)
     {
         DENG2_FOR_PUBLIC_AUDIENCE(MapChange, i)
         {
-            i->currentMapChanged();
+            i->worldMapChanged(self);
         }
     }
 
@@ -433,6 +445,15 @@ DENG2_PIMPL(World)
             // Cache the map!
             DAM_MapWrite(map, rec.cachePath);
         }*/
+
+#ifdef __CLIENT__
+        // Connect the map to world audiences:
+        /// @todo The map should instead be notified when it is made current
+        /// so that it may perform the connection itself. Such notification
+        /// would also afford the map the opportunity to prepare various data
+        /// which is only needed when made current (e.g., caches for render).
+        self.audienceForFrameBegin += map;
+#endif
 
         // Print summary information about this map.
 #define TABBED(count, label) String(_E(Ta) "  %1 " _E(Tb) "%2\n").arg(count).arg(label)
@@ -644,6 +665,18 @@ DENG2_PIMPL(World)
         // Inform interested parties that the "current" map has changed.
         notifyMapChange();
     }
+
+#ifdef __CLIENT__
+    void updateHandOrigin()
+    {
+        DENG2_ASSERT(hand != 0 && map != 0);
+
+        viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
+        hand->setOrigin(Vector3d(viewData->current.origin[VX] + viewData->frontVec[VX] * handDistance,
+                                 viewData->current.origin[VY] + viewData->frontVec[VZ] * handDistance,
+                                 viewData->current.origin[VZ] + viewData->frontVec[VY] * handDistance));
+    }
+#endif
 };
 
 World::World() : d(new Instance(this))
@@ -651,7 +684,10 @@ World::World() : d(new Instance(this))
 
 void World::consoleRegister() // static
 {
-    //C_VAR_BYTE("map-cache", &mapCache, 0, 0, 1);
+    //C_VAR_BYTE ("map-cache", &mapCache, 0, 0, 1);
+#ifdef __CLIENT__
+    C_VAR_FLOAT("edit-bias-grab-distance", &handDistance, 0, 10, 1000);
+#endif
     Map::consoleRegister();
 }
 
@@ -672,6 +708,15 @@ Map &World::map() const
 
 bool World::changeMap(de::Uri const &uri)
 {
+#ifdef __CLIENT__
+    if(d->map)
+    {
+        // Remove the current map from our audiences.
+        /// @todo Map should handle this.
+        audienceForFrameBegin -= d->map;
+    }
+#endif
+
     // As the memory zone does not provide the mechanisms to prepare another
     // map in parallel we must free the current map first.
     /// @todo The memory zone would still be useful if the purge and tagging
@@ -782,5 +827,51 @@ void World::update()
         d->map->update();
     }
 }
+
+#ifdef __CLIENT__
+Hand &World::hand(coord_t *distance) const
+{
+    // Time to create the hand?
+    if(d->hand.isNull())
+    {
+        d->hand.reset(new Hand());
+        const_cast<World *>(this)->audienceForFrameEnd += *d->hand;
+        if(d->map)
+        {
+            d->updateHandOrigin();
+        }
+    }
+    if(distance)
+    {
+        *distance = handDistance;
+    }
+    return *d->hand;
+}
+
+void World::beginFrame(bool resetNextViewer)
+{
+    // Notify interested parties that a new frame has begun.
+    DENG2_FOR_AUDIENCE(FrameBegin, i) i->worldFrameBegins(*this, resetNextViewer);
+}
+
+void World::endFrame()
+{
+    if(d->map && !d->hand.isNull())
+    {
+        d->updateHandOrigin();
+
+        // If the HueCircle is active update the current edit color.
+        if(HueCircle *hueCircle = SBE_HueCircle())
+        {
+            viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
+            d->hand->setEditColor(hueCircle->colorAt(viewData->frontVec));
+        }
+    }
+
+    // Notify interested parties that the current frame has ended.
+    DENG2_FOR_AUDIENCE(FrameEnd, i) i->worldFrameEnds(*this);
+}
+
+#endif // __CLIENT__
 
 } // namespace de

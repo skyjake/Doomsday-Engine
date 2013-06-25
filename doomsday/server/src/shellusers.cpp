@@ -21,6 +21,8 @@
 #include "dd_main.h"
 #include <QTimer>
 
+using namespace de;
+
 static int const PLAYER_INFO_INTERVAL = 2500; // ms
 
 DENG2_PIMPL_NOREF(ShellUsers)
@@ -76,8 +78,10 @@ int ShellUsers::count() const
     return d->users.size();
 }
 
-void ShellUsers::currentMapChanged()
+void ShellUsers::worldMapChanged(World &world)
 {
+    DENG2_UNUSED(world);
+
     foreach(ShellUser *user, d->users)
     {
         user->sendGameState();
