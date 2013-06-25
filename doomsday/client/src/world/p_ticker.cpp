@@ -130,7 +130,7 @@ void P_Ticker(timespan_t elapsed)
         Sky_Ticker();
 
         // Check all mobjs (always public).
-        map.thinkers().iterate(reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
-                               0x1, P_MobjTicker, NULL);
+        map.thinkers().iterate(reinterpret_cast<thinkfunc_t>(gx.MobjThinker), 0x1,
+                               P_MobjTicker);
     }
 }

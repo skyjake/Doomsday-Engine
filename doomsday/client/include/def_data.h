@@ -139,7 +139,7 @@ typedef struct {
     ded_anystring_t execute; // Console command.
 } ded_state_t;
 
-typedef struct {
+typedef struct ded_light_s {
     ded_stateid_t   state;
     char            uniqueMapID[64];
     float           offset[3]; /* Origin offset in world coords

@@ -21,6 +21,8 @@
 #include <cmath>
 #include <cctype>
 
+#include <de/vector1.h>
+
 #include "de_platform.h"
 #include "de_base.h"
 #include "de_console.h"

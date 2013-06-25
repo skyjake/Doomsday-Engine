@@ -1231,9 +1231,9 @@ void P_PtcGenThinker(ptcgen_t *gen)
                     App_World().map().clMobjIterator(PIT_ClientMobjParticles, gen);
                 }
 #endif
-                App_World().map().thinkers().iterate(reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
-                                                     0x1 /*mobjs are public*/,
-                                                     manyNewParticles, gen);
+                App_World().map().thinkers()
+                    .iterate(reinterpret_cast<thinkfunc_t>(gx.MobjThinker), 0x1 /*mobjs are public*/,
+                             manyNewParticles, gen);
 
                 // The generator has no real source.
                 gen->source = 0;

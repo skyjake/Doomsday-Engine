@@ -85,6 +85,8 @@ DENG2_PIMPL(Plane)
 
     ~Instance()
     {
+        DENG2_FOR_PUBLIC_AUDIENCE(Deletion, i) i->planeBeingDeleted(self);
+
 #ifdef __CLIENT__
         Map &map = App_World().map();
 
@@ -105,8 +107,6 @@ DENG2_PIMPL(Plane)
         map.decoratedSurfaces().remove(&surface);
 
 #endif // __CLIENT__
-
-        DENG2_FOR_PUBLIC_AUDIENCE(Deletion, i) i->planeBeingDeleted(self);
     }
 
     void notifyHeightChanged(coord_t oldHeight)

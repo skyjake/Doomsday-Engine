@@ -28,12 +28,14 @@
 #  error "render/rend_main.h requires C++"
 #endif
 
-//#include <math.h>
-
 #include "dd_types.h"
 
 #include "MaterialVariantSpec"
 #include "WallEdge"
+
+namespace de {
+class Map;
+}
 
 #define GLOW_HEIGHT_MAX                     (1024.f) /// Absolute maximum
 
@@ -63,6 +65,8 @@ DENG_EXTERN_C float extraLightDelta;
 DENG_EXTERN_C int devRendSkyMode;
 DENG_EXTERN_C int gameDrawHUD;
 
+DENG_EXTERN_C int useBias;
+
 DENG_EXTERN_C int useDynLights;
 DENG_EXTERN_C float dynlightFactor, dynlightFogBright;
 
@@ -87,7 +91,7 @@ void Rend_Register();
 void Rend_Init();
 void Rend_Shutdown();
 void Rend_Reset();
-void Rend_RenderMap();
+void Rend_RenderMap(de::Map &map);
 
 /**
  * @param useAngles  @c true= Apply viewer angle rotation.

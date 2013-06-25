@@ -75,7 +75,7 @@ public:
      * @param context  Passed to the callback function.
      */
     int iterate(thinkfunc_t thinkFunc, byte flags,
-                int (*callback) (thinker_t *th, void *), void *context);
+                int (*callback) (thinker_t *th, void *), void *context = 0);
 
     /**
      * Locates a mobj by it's unique identifier in the map.

@@ -1226,8 +1226,9 @@ void LO_UnlinkMobjLumobjs()
     if(useDynLights) return;
 
     // Mobjs are always public.
-    App_World().map().thinkers().iterate(reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
-                                         0x1, LOIT_UnlinkMobjLumobj, NULL);
+    App_World().map().thinkers()
+        .iterate(reinterpret_cast<thinkfunc_t>(gx.MobjThinker), 0x1,
+                 LOIT_UnlinkMobjLumobj);
 }
 
 /**

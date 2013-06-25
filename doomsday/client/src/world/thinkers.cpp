@@ -25,6 +25,7 @@
 #include <de/memoryzone.h>
 
 #include "de_base.h"
+#include "world/map.h"
 #include "world/p_object.h"
 
 #ifdef __CLIENT__
@@ -407,7 +408,7 @@ void Thinker_Init()
 void Thinker_Run()
 {
     if(!App_World().hasMap()) return;
-    App_World().map().thinkers().iterate(NULL, 0x1 | 0x2, runThinker, NULL);
+    App_World().map().thinkers().iterate(NULL, 0x1 | 0x2, runThinker);
 }
 
 #undef Thinker_Add
