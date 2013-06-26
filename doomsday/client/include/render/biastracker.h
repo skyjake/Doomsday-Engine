@@ -31,7 +31,14 @@ public:
     static int const MAX_TRACKED = (de::Map::MAX_BIAS_SOURCES / 8);
 
 public:
-    BiasTracker() { de::zap(_changes); }
+    BiasTracker();
+
+    BiasTracker &operator = (BiasTracker const &other);
+
+    /**
+     * Clear the tracker reseting all bits to zero.
+     */
+    void clear();
 
     /**
      * Sets/clears a bit in the tracker for the given index.
@@ -49,9 +56,9 @@ public:
     void apply(BiasTracker const &src);
 
     /**
-     * Clears changes of src.
+     * Remove changes of src.
      */
-    void clear(BiasTracker const &src);
+    void remove(BiasTracker const &src);
 
 private:
     uint _changes[MAX_TRACKED];

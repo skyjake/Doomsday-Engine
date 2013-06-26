@@ -28,6 +28,7 @@
 #include "Segment"
 
 #include "BiasTracker"
+#include "render/rendpoly.h"
 
 #include "render/biassurface.h"
 
@@ -47,38 +48,7 @@ static int devUseSightCheck  = true; //cvar
 
 struct BiasAffection
 {
-    int sourceIdx; /// Light source index.
-};
-
-struct Affection
-{
-    float intensities[MAX_AFFECTED];
-    int numFound;
-    BiasAffection *affected;
-
-    void addAffected(int sourceIdx, float intensity)
-    {
-        if(numFound < MAX_AFFECTED)
-        {
-            affected[numFound].sourceIdx = sourceIdx;
-            intensities[numFound] = intensity;
-            numFound++;
-        }
-        else
-        {
-            // Drop the weakest.
-            int weakest = 0;
-
-            for(int i = 1; i < MAX_AFFECTED; ++i)
-            {
-                if(intensities[i] < intensities[weakest])
-                    weakest = i;
-            }
-
-            affected[weakest].sourceIdx = sourceIdx;
-            intensities[weakest] = intensity;
-        }
-    }
+    int sourceIndex;
 };
 
 /**
@@ -102,13 +72,13 @@ struct VertexIllum
      */
     struct Contribution
     {
-        short source;       ///< Index of the source.
-        de::Vector3f color; ///< The contributed light intensity.
+        int sourceIndex; ///< Index of the source.
+        Vector3f color;  ///< The contributed light intensity.
     };
 
-    Vector3f color;  /// Current light color at the vertex.
-    Vector3f dest;   /// Destination light color at the vertex (interpolated to).
-    uint updateTime; /// When the value was calculated.
+    Vector3f color;  ///< Current light color at the vertex.
+    Vector3f dest;   ///< Destination light color at the vertex (interpolated to).
+    uint updateTime; ///< When the value was calculated.
     Flags flags;
     Contribution casted[MAX_AFFECTED];
 
@@ -116,14 +86,14 @@ struct VertexIllum
     {
         for(int i = 0; i < MAX_AFFECTED; ++i)
         {
-            casted[i].source = -1;
+            casted[i].sourceIndex = -1;
         }
     }
 
     /**
      * Interpolate between current and destination.
      */
-    void lerp(uint currentTime, int lightSpeed, Vector3f &result)
+    void lerp(Vector3f &result, uint currentTime, int lightSpeed)
     {
         if(!flags.testFlag(Interpolating))
         {
@@ -146,80 +116,68 @@ struct VertexIllum
             result = color + (dest - color) * inter;
         }
     }
+
+    /**
+     * @return Light contribution by the specified source.
+     */
+    Vector3f &contribution(int sourceIndex, BiasAffection *const affectedSources)
+    {
+        // Do we already have a contribution for this source?
+        for(int i = 0; i < MAX_AFFECTED; ++i)
+        {
+            if(casted[i].sourceIndex == sourceIndex)
+                return casted[i].color;
+        }
+
+        // Choose an element not in use by the affectedSources.
+        for(int i = 0; i < MAX_AFFECTED; ++i)
+        {
+            bool inUse = false;
+            for(int k = 0; k < MAX_AFFECTED; ++k)
+            {
+                if(affectedSources[k].sourceIndex < 0)
+                    break;
+
+                if(affectedSources[k].sourceIndex == casted[i].sourceIndex)
+                {
+                    inUse = true;
+                    break;
+                }
+            }
+
+            if(!inUse)
+            {
+                // This will do nicely.
+                casted[i].sourceIndex = sourceIndex;
+                casted[i].color       = Vector3f();
+
+                return casted[i].color;
+            }
+        }
+
+        // Now how'd that happen?
+        throw Error("VertexIllum::casted", QString("No light emitted by source #%1").arg(sourceIndex));
+    }
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(VertexIllum::Flags)
 
-static float biasDot(Vector3d const &sourceOrigin, Vector3d const &surfacePoint,
-                     Vector3f const &surfaceNormal)
+static inline float biasDot(Vector3d const &sourceOrigin, Vector3d const &surfacePoint,
+                            Vector3f const &surfaceNormal)
 {
-    Vector3d delta = (sourceOrigin - surfacePoint).normalize();
-    return delta.dot(surfaceNormal);
+    return (sourceOrigin - surfacePoint).normalize().dot(surfaceNormal);
 }
 
-static void addLight(Vector3f &dest, Vector3f const &color, float howMuch = 1.0f)
+static inline void addLight(Vector3f &dest, Vector3f const &color, float howMuch = 1.0f)
 {
-    for(int i = 0; i < 3; ++i)
-    {
-        float newval = dest[i] + (color[i] * howMuch);
-
-        if(newval > 1)
-            newval = 1;
-
-        dest[i] = newval;
-    }
-}
-
-/**
- * @return Light contributed by the specified source.
- */
-static Vector3f *getCasted(VertexIllum *illum, int sourceIndex,
-    BiasAffection *affectedSources)
-{
-    DENG_ASSERT(illum && affectedSources);
-
-    for(int i = 0; i < MAX_AFFECTED; ++i)
-    {
-        if(illum->casted[i].source == sourceIndex)
-            return &illum->casted[i].color;
-    }
-
-    // Choose an array element not used by the affectedSources.
-    for(int i = 0; i < MAX_AFFECTED; ++i)
-    {
-        bool inUse = false;
-        for(int k = 0; k < MAX_AFFECTED; ++k)
-        {
-            if(affectedSources[k].sourceIdx < 0)
-                break;
-
-            if(affectedSources[k].sourceIdx == illum->casted[i].source)
-            {
-                inUse = true;
-                break;
-            }
-        }
-
-        if(!inUse)
-        {
-            illum->casted[i].source = sourceIndex;
-            illum->casted[i].color.x =
-                illum->casted[i].color.y =
-                    illum->casted[i].color.z = 0;
-
-            return &illum->casted[i].color;
-        }
-    }
-
-    // Now how'd that happen?
-    throw Error("getCasted", QString("No light emitted by source #%1").arg(sourceIndex));
+    dest = (dest + color * howMuch).min(Vector3f(1, 1, 1));
 }
 
 static Vector3f ambientLight(Map &map, Vector3d const &point)
 {
     if(map.hasLightGrid())
         return map.lightGrid().evaluate(point);
-    return Vector3f(0, 0, 0);
+    return Vector3f();
 }
 
 /**
@@ -231,6 +189,25 @@ static BiasTracker trackApplied;
 
 DENG2_PIMPL_NOREF(BiasSurface)
 {
+    struct Affection
+    {
+        float intensities[MAX_AFFECTED]; // init unnecessary
+        int numFound;
+
+        Affection() : numFound(0) {}
+
+        int findWeakest() const
+        {
+            int weakest = 0;
+            for(int i = 1; i < MAX_AFFECTED; ++i)
+            {
+                if(intensities[i] < intensities[weakest])
+                    weakest = i;
+            }
+            return weakest;
+        }
+    };
+
     MapElement &owner;
 
     int subElemIndex;
@@ -250,37 +227,64 @@ DENG2_PIMPL_NOREF(BiasSurface)
           lastUpdateOnFrame(0)
     {}
 
-    void updateAffected(Vector2d const &from, Vector2d const &to,
-                        Vector3f const &normal)
+    inline Surface &mapSurface()
     {
+        if(owner.type() == DMU_SEGMENT)
+            return owner.as<Segment>()->lineSide().middle();
+        // Must be a BspLeaf, then.
+        return owner.as<BspLeaf>()->sector().plane(subElemIndex).surface();
+    }
+
+    inline void clearAffected()
+    {
+        std::memset(affected, -1, sizeof(affected));
+    }
+
+    void addAffected(int sourceIndex, float intensity, Affection &aff)
+    {
+        if(aff.numFound < MAX_AFFECTED)
+        {
+            affected[aff.numFound].sourceIndex = sourceIndex;
+            aff.intensities[aff.numFound] = intensity;
+            aff.numFound++;
+        }
+        else
+        {
+            // Drop the weakest.
+            int weakest = aff.findWeakest();
+
+            affected[weakest].sourceIndex = sourceIndex;
+            aff.intensities[weakest] = intensity;
+        }
+    }
+
+    void updateAffected(Vector2d const &from, Vector2d const &to,
+                        Vector3f const &surfaceNormal)
+    {
+        DENG_ASSERT(illums.count() == 4);
+
         Map &map = App_World().map();
 
-        Affection aff;
-        aff.affected = affected;
-        aff.numFound = 0;
-        std::memset(aff.affected, -1, sizeof(affected));
+        clearAffected();
 
-        Vector2f delta;
+        Affection aff;
         foreach(BiasSource *src, map.biasSources())
         {
             if(src->intensity() <= 0)
                 continue;
 
             // Calculate minimum 2D distance to the segment.
+            Vector2f delta;
             float distance = 0;
             for(int k = 0; k < 2; ++k)
             {
-                if(!k)
-                    delta = Vector2f(from - Vector2d(src->origin()));
-                else
-                    delta = Vector2f(to - Vector2d(src->origin()));
-
+                delta = ((!k? from : to) - Vector2d(src->origin()));
                 float len = delta.length();
                 if(k == 0 || len < distance)
                     distance = len;
             }
 
-            if(delta.normalize().dot(normal) >= 0)
+            if(delta.normalize().dot(surfaceNormal) >= 0)
                 continue;
 
             if(distance < 1)
@@ -292,24 +296,20 @@ DENG2_PIMPL_NOREF(BiasSurface)
             if(intensity < MIN_INTENSITY)
                 continue;
 
-            aff.addAffected(map.toIndex(*src), intensity);
+            addAffected(map.toIndex(*src), intensity, aff);
         }
     }
 
-    void updateAffected(struct rvertex_s const *rvertices,
-        size_t numVertices, Vector3d const &point, Vector3f const &normal)
+    void updateAffected(rvertex_t const *verts, int vertCount,
+        Vector3d const &surfacePoint, Vector3f const &surfaceNormal)
     {
-        DENG_ASSERT(rvertices != 0);
-        DENG_UNUSED(numVertices);
+        DENG_ASSERT(illums.count() == vertCount && verts != 0);
 
         Map &map = App_World().map();
 
-        Affection aff;
-        aff.affected = affected;
-        aff.numFound = 0;
-        std::memset(aff.affected, -1, sizeof(affected)); // array of MAX_BIAS_AFFECTED
+        clearAffected();
 
-        Vector2f delta;
+        Affection aff;
         foreach(BiasSource *src, map.biasSources())
         {
             if(src->intensity() <= 0)
@@ -317,13 +317,12 @@ DENG2_PIMPL_NOREF(BiasSurface)
 
             // Calculate minimum 2D distance to the BSP leaf.
             /// @todo This is probably too accurate an estimate.
-            coord_t distance = 0;
-            for(int k = 0; k < illums.size(); ++k)
+            float distance = 0;
+            for(int k = 0; k < illums.count(); ++k)
             {
-                float const *vtxPos = rvertices[k].pos;
-                delta = Vector2d(vtxPos[VX], vtxPos[VY]) - Vector2d(src->origin());
+                Vector2d const vertPos = Vector2d(verts[k].pos[VX], verts[k].pos[VY]);
 
-                float len = delta.length();
+                float len = (vertPos - Vector2d(src->origin())).length();
                 if(k == 0 || len < distance)
                     distance = len;
             }
@@ -331,7 +330,7 @@ DENG2_PIMPL_NOREF(BiasSurface)
                 distance = 1;
 
             // Estimate the effect on this surface.
-            float dot = biasDot(src->origin(), point, normal);
+            float dot = biasDot(src->origin(), surfacePoint, surfaceNormal);
             if(dot <= 0)
                 continue;
 
@@ -341,27 +340,24 @@ DENG2_PIMPL_NOREF(BiasSurface)
             if(intensity < MIN_INTENSITY)
                 continue;
 
-            aff.addAffected(map.toIndex(*src), intensity);
+            addAffected(map.toIndex(*src), intensity, aff);
         }
     }
 
     /**
      * Apply shadow bias to the given map surface @a point (at a vertex).
      *
-     * @todo Only recalculate the changed lights (colors contributed by others
-     * can be stored in @ref BiasSurface::affected).
+     * @todo Only recalculate the changed lights (colors contributed by
+     * others can be stored in the "affected" array.
      */
-    void evalPoint(Vector3f &light, int vertexOrd, Vector3d const &point,
-                   Vector3f const &normal)
+    Vector3f evalLighting(VertexIllum &vi, Vector3d const &mapVertexOrigin,
+                          Vector3f const &mapSurfaceNormal)
     {
 #define COLOR_CHANGE_THRESHOLD  0.1f
 
         Map &map = App_World().map();
 
-        VertexIllum &vi = illums[vertexOrd];
-        BiasAffection *affectedSources = affected;
-
-        bool illuminationChanged = false;
+        bool illumChanged = false;
         uint latestSourceUpdate = 0;
         struct {
             int index;
@@ -370,22 +366,20 @@ DENG2_PIMPL_NOREF(BiasSurface)
             bool changed;
         } affecting[MAX_AFFECTED + 1], *aff;
 
-        // Vertices that are rendered for the first time need to be fully
-        // evaluated.
+        // Lighting must be fully evaluated the first time.
         if(vi.flags & VertexIllum::StillUnseen)
         {
-            illuminationChanged = true;
+            illumChanged = true;
             vi.flags &= ~VertexIllum::StillUnseen;
         }
 
-        // Determine if any of the affecting lights have changed since
-        // last frame.
+        // Determine if any affecting sources have changed since last frame.
         aff = affecting;
         if(map.biasSourceCount() > 0)
         {
-            for(int i = 0; affectedSources[i].sourceIdx >= 0 && i < MAX_AFFECTED; ++i)
+            for(int i = 0; affected[i].sourceIndex >= 0 && i < MAX_AFFECTED; ++i)
             {
-                int idx = affectedSources[i].sourceIdx;
+                int idx = affected[i].sourceIndex;
 
                 // Is this a valid index?
                 if(idx < 0 || idx >= map.biasSourceCount())
@@ -393,15 +387,15 @@ DENG2_PIMPL_NOREF(BiasSurface)
 
                 aff->index = idx;
                 aff->source = map.biasSource(idx);
-                aff->affection = &affectedSources[i];
+                aff->affection = &affected[i];
 
                 if(trackChanged.check(idx))
                 {
                     aff->changed = true;
-                    illuminationChanged = true;
+                    illumChanged = true;
                     trackApplied.mark(idx);
 
-                    // Keep track of the earliest time when an affected source changed.
+                    // Remember the earliest time the affecting source changed.
                     if(latestSourceUpdate < aff->source->lastUpdateTime())
                     {
                         latestSourceUpdate = aff->source->lastUpdateTime();
@@ -418,107 +412,93 @@ DENG2_PIMPL_NOREF(BiasSurface)
         }
         aff->source = 0;
 
-        if(!illuminationChanged)
+        Vector3f color;
+        if(illumChanged)
         {
-            // Reuse the previous value.
-            vi.lerp(map.biasCurrentTime(), lightSpeed, light);
-
-            // Add ambient lighting.
-            addLight(light, ambientLight(map, point));
-
-            return;
-        }
-
-        // Initial color is black.
-        Vector3f newColor;
-
-        // Calculate the contribution from each light.
-        for(aff = affecting; aff->source; aff++)
-        {
-            if(!aff->changed) //SB_TrackerCheck(&trackChanged, aff->index))
+            // Recalculate the contribution for each light.
+            for(aff = affecting; aff->source; aff++)
             {
-                // We can reuse the previously calculated value.  This can
-                // only be done if this particular light source hasn't
-                // changed.
-                continue;
-            }
-
-            BiasSource *s = aff->source;
-
-            Vector3f *casted = getCasted(&vi, aff->index, affectedSources);
-
-            Vector3d delta = s->origin() - point;
-            Vector3d surfacePoint = point + delta / 100;
-
-            if(devUseSightCheck &&
-               !LineSightTest(s->origin(), surfacePoint).trace(map.bspRoot()))
-            {
-                // LOS fail.
-                if(casted)
+                if(!aff->changed) //tracker.check(aff->index))
                 {
+                    // We can reuse the previously calculated value. This can
+                    // only be done if this particular light source hasn't
+                    // changed.
+                    continue;
+                }
+
+                BiasSource *s = aff->source;
+
+                Vector3f &casted = vi.contribution(aff->index, affected);
+                Vector3d delta = s->origin() - mapVertexOrigin;
+
+                if(devUseSightCheck &&
+                   !LineSightTest(s->origin(), mapVertexOrigin + delta / 100).trace(map.bspRoot()))
+                {
+                    // LOS fail.
                     // This affecting source does not contribute any light.
-                    *casted = Vector3f();
+                    casted = Vector3f();
+                    continue;
                 }
-                continue;
-            }
 
-            double distance = delta.length();
-            double dot = delta.normalize().dot(normal);
+                double distance = delta.length();
+                double dot = delta.normalize().dot(mapSurfaceNormal);
 
-            // The surface faces away from the light.
-            if(dot <= 0)
-            {
-                if(casted)
+                // The surface faces away from the light?
+                if(dot <= 0)
                 {
-                    *casted = Vector3f();
+                    casted = Vector3f();
+                    continue;
                 }
 
-                continue;
+                // Apply light casted from this source.
+                float strength = de::clamp(0.f, float( dot * s->intensity() / distance ), 1.f);
+                casted = s->color() * strength;
             }
 
-            // Apply light casted from this source.
-            float strength = de::clamp(0.f, float( dot * s->intensity() / distance ), 1.f);
-            *casted = s->color() * strength;
-        }
-
-        // Combine the casted light from each source.
-        for(aff = affecting; aff->source; aff++)
-        {
-            Vector3f *casted = getCasted(&vi, aff->index, affectedSources);
-
-            for(int i = 0; i < 3; ++i)
+            /*
+             * Accumulate light contributions from each affecting source.
+             */
+            Vector3f newColor; // Initial color is black.
+            Vector3f const saturated(1, 1, 1);
+            for(aff = affecting; aff->source; aff++)
             {
-                newColor[i] = de::clamp(0.f, newColor[i] + (*casted)[i], 1.f);
-            }
-        }
+                newColor += vi.contribution(aff->index, affected);
 
-        // Is there a new destination?
-        if(!(vi.dest.x < newColor.x + COLOR_CHANGE_THRESHOLD &&
-             vi.dest.x > newColor.x - COLOR_CHANGE_THRESHOLD) ||
-           !(vi.dest.y < newColor.y + COLOR_CHANGE_THRESHOLD &&
-             vi.dest.y > newColor.y - COLOR_CHANGE_THRESHOLD) ||
-           !(vi.dest.z < newColor.z + COLOR_CHANGE_THRESHOLD &&
-             vi.dest.z > newColor.z - COLOR_CHANGE_THRESHOLD))
-        {
-            if(vi.flags & VertexIllum::Interpolating)
+                // Stop once fully saturated.
+                if(newColor >= saturated)
+                    break;
+            }
+            // Clamp.
+            newColor = newColor.min(saturated);
+
+            // Is there a new destination?
+            if(!de::fequal(vi.dest.x, newColor.x, COLOR_CHANGE_THRESHOLD) ||
+               !de::fequal(vi.dest.y, newColor.y, COLOR_CHANGE_THRESHOLD) ||
+               !de::fequal(vi.dest.z, newColor.z, COLOR_CHANGE_THRESHOLD))
             {
-                // Must not lose the half-way interpolation.
-                Vector3f mid; vi.lerp(map.biasCurrentTime(), lightSpeed, mid);
+                if(vi.flags & VertexIllum::Interpolating)
+                {
+                    // Must not lose the half-way interpolation.
+                    Vector3f mid; vi.lerp(mid, map.biasCurrentTime(), lightSpeed);
 
-                // This is current color at this very moment.
-                vi.color = mid;
+                    // This is current color at this very moment.
+                    vi.color = mid;
+                }
+
+                // This is what we will be interpolating to.
+                vi.dest       = newColor;
+                vi.flags     |= VertexIllum::Interpolating;
+                vi.updateTime = latestSourceUpdate;
             }
-
-            // This is what we will be interpolating to.
-            vi.dest       = newColor;
-            vi.flags     |= VertexIllum::Interpolating;
-            vi.updateTime = latestSourceUpdate;
         }
 
-        vi.lerp(map.biasCurrentTime(), lightSpeed, light);
+        // Finalize lighting for the vertex (i.e., perform interpolation if needed).
+        vi.lerp(color, map.biasCurrentTime(), lightSpeed);
 
-        // Add ambient lighting.
-        addLight(light, ambientLight(map, point));
+        // Apply the ambient light term.
+        addLight(color, ambientLight(map, mapVertexOrigin));
+
+        return color;
 
 #undef COLOR_CHANGE_THRESHOLD
     }
@@ -542,9 +522,9 @@ void BiasSurface::consoleRegister() // static
 void BiasSurface::updateAfterMove()
 {
     Map &map = App_World().map();
-    for(int i = 0; i < MAX_AFFECTED && d->affected[i].sourceIdx >= 0; ++i)
+    for(int i = 0; i < MAX_AFFECTED && d->affected[i].sourceIndex >= 0; ++i)
     {
-        map.biasSource(d->affected[i].sourceIdx)->forceUpdate();
+        map.biasSource(d->affected[i].sourceIndex)->forceUpdate();
     }
 }
 
@@ -557,10 +537,10 @@ void BiasSurface::updateAffection(BiasTracker &changes)
     bool needApplyChanges = false;
     for(int i = 0; i < MAX_AFFECTED; ++i)
     {
-        if(d->affected[i].sourceIdx < 0)
+        if(d->affected[i].sourceIndex < 0)
             break;
 
-        if(changes.check(d->affected[i].sourceIdx))
+        if(changes.check(d->affected[i].sourceIndex))
         {
             needApplyChanges = true;
             break;
@@ -577,8 +557,7 @@ void BiasSurface::updateAffection(BiasTracker &changes)
 }
 
 void BiasSurface::lightPoly(struct ColorRawf_s *colors,
-    struct rvertex_s const *verts, size_t vertCount,
-    Vector3f const &surfaceNormal, float sectorLightLevel)
+    struct rvertex_s const *verts, int vertCount, float sectorLightLevel)
 {
     // Apply sectorlight bias (distance darkening is not a factor).
     if(sectorLightLevel > lightMin && lightMax > lightMin)
@@ -593,8 +572,10 @@ void BiasSurface::lightPoly(struct ColorRawf_s *colors,
         biasAmount = 0;
     }
 
-    std::memcpy(&trackChanged, &d->tracker, sizeof(trackChanged));
-    std::memset(&trackApplied, 0, sizeof(trackApplied));
+    trackChanged = d->tracker;
+    trackApplied.clear();
+
+    Vector3f const &mapSurfaceNormal = d->mapSurface().normal();
 
     // Have any of the affected lights changed?
     if(devUpdateAffected)
@@ -615,31 +596,29 @@ void BiasSurface::lightPoly(struct ColorRawf_s *colors,
                 Segment const *segment = d->owner.as<Segment>();
 
                 d->updateAffected(segment->from().origin(), segment->to().origin(),
-                                  surfaceNormal);
+                                  mapSurfaceNormal);
             }
             else
             {
                 BspLeaf const *bspLeaf = d->owner.as<BspLeaf>();
+                Plane const &plane = bspLeaf->sector().plane(d->subElemIndex);
 
-                Vector3d surfacePoint(bspLeaf->poly().center(),
-                                      bspLeaf->sector().plane(d->subElemIndex).height());
+                Vector3d surfacePoint(bspLeaf->poly().center(), plane.visHeight());
 
-                d->updateAffected(verts, vertCount, surfacePoint, surfaceNormal);
+                d->updateAffected(verts, vertCount, surfacePoint, mapSurfaceNormal);
             }
         }
     }
 
-    for(uint i = 0; i < vertCount; ++i)
+    int i; rvertex_t const *vtx = verts;
+    for(i = 0; i < vertCount; ++i, vtx++)
     {
-        rvertex_t const &vtx = verts[i];
-        Vector3f light(colors[i].rgba);
-
-        d->evalPoint(light, i, Vector3d(vtx.pos[VX], vtx.pos[VY], vtx.pos[VZ]),
-                     surfaceNormal);
+        Vector3d mapVertexOrigin(vtx->pos[VX], vtx->pos[VY], vtx->pos[VZ]);
+        Vector3f light = d->evalLighting(d->illums[i], mapVertexOrigin, mapSurfaceNormal);
 
         for(int c = 0; c < 3; ++c)
             colors[i].rgba[c] = light[c];
     }
 
-    d->tracker.clear(trackApplied);
+    d->tracker.remove(trackApplied);
 }

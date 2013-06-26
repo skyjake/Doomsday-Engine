@@ -170,7 +170,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
     QScopedPointer<Generators> generators;
     QScopedPointer<LightGrid> lightGrid;
 
-    /// Shadow Bias  data for the map.
+    /// Shadow Bias data for the map.
     struct Bias
     {
         /// Time in milliseconds of the "current" frame.

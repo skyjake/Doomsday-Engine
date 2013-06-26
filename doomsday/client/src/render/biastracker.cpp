@@ -21,6 +21,17 @@
 
 using namespace de;
 
+BiasTracker::BiasTracker()
+{
+    de::zap(_changes);
+}
+
+BiasTracker &BiasTracker::operator =(BiasTracker const &other)
+{
+    std::memcpy(_changes, other._changes, sizeof(_changes));
+    return *this;
+}
+
 void BiasTracker::mark(uint index)
 {
     // Assume 32-bit uint.
@@ -40,6 +51,11 @@ int BiasTracker::check(uint index) const
     return (_changes[index >> 5] & (1 << (index & 0x1f))) != 0;
 }
 
+void BiasTracker::clear()
+{
+    zap(_changes);
+}
+
 void BiasTracker::apply(BiasTracker const &src)
 {
     for(int i = 0; i < MAX_TRACKED; ++i)
@@ -48,7 +64,7 @@ void BiasTracker::apply(BiasTracker const &src)
     }
 }
 
-void BiasTracker::clear(BiasTracker const &src)
+void BiasTracker::remove(BiasTracker const &src)
 {
     for(int i = 0; i < MAX_TRACKED; ++i)
     {

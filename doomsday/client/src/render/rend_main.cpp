@@ -737,7 +737,6 @@ struct rendworldpoly_params_t
     Vector3d const *texBR;
     Vector2f const *materialOrigin;
     Vector2f const *materialScale;
-    Vector3f const *normal; // Surface normal.
     float           alpha;
     float           surfaceLightLevelDL;
     float           surfaceLightLevelDR;
@@ -747,8 +746,6 @@ struct rendworldpoly_params_t
     uint            shadowListIdx; // List of shadows that affect this poly.
     float           glowing;
     bool            forceOpaque;
-
-// For bias:
     BiasSurface    *bsuf;
 
 // Wall only:
@@ -913,7 +910,7 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
             if(useBias && p.bsuf)
             {
                 // Do BIAS lighting for this poly.
-                p.bsuf->lightPoly(rcolors, rvertices, numVertices, *p.normal,
+                p.bsuf->lightPoly(rcolors, rvertices, int(numVertices),
                                   currentSectorLightLevel);
 
                 if(p.glowing > 0)
@@ -1433,7 +1430,6 @@ static void writeWallSection(Segment &segment, int section,
         parm.forceOpaque         = wallSpec.flags.testFlag(WallSpec::ForceOpaque);
         parm.alpha               = parm.forceOpaque? 1 : opacity;
         parm.bsuf                = &segment.biasSurface(wallSpec.section);
-        parm.normal              = &surface.normal();
         parm.texTL               = &texQuad[0];
         parm.texBR               = &texQuad[1];
 
@@ -1677,7 +1673,6 @@ static void writeLeafPlane(Plane &plane)
     parm.flags               = RPF_DEFAULT;
     parm.isWall              = false;
     parm.bsuf                = &leaf->biasSurface(plane.indexInSector());
-    parm.normal              = &surface.normal();
     parm.texTL               = &texTL;
     parm.texBR               = &texBR;
     parm.surfaceLightLevelDL = parm.surfaceLightLevelDR = 0;

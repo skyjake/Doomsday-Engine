@@ -55,12 +55,10 @@ public:
      * @param colors            Array of colors to be written to.
      * @param verts             Array of vertices to be lit.
      * @param vertCount         Number of vertices (in the array) to be lit.
-     * @param surfaceNormal     Surface normal.
      * @param sectorLightLevel  Sector light level.
      */
     void lightPoly(struct ColorRawf_s *colors, struct rvertex_s const *verts,
-                   size_t vertCount, de::Vector3f const &surfaceNormal,
-                   float sectorLightLevel);
+                   int vertCount, float sectorLightLevel);
 
     void updateAfterMove();
 
