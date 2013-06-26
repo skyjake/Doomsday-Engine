@@ -120,6 +120,18 @@ inline bool fequal(ddouble a, ddouble b) {
     return abs(a - b) < EPSILON;
 }
 
+/// Compare two single-precision floating-point values for equality,
+/// with a user specified precision.
+inline bool fequal(dfloat a, dfloat b, dfloat precision) {
+    return abs(a - b) < abs(precision);
+}
+
+/// Compare two double-precision floating-point values for equality.
+/// with a user specified precision.
+inline bool fequal(ddouble a, ddouble b, ddouble precision) {
+    return abs(a - b) < abs(precision);
+}
+
 template <typename Type>
 inline Type degreeToRadian(Type const &degree) {
     return degree / Type(180) * PI;
