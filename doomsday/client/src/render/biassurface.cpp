@@ -162,12 +162,6 @@ struct VertexIllum
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(VertexIllum::Flags)
 
-static inline float biasDot(Vector3d const &sourceOrigin, Vector3d const &surfacePoint,
-                            Vector3f const &surfaceNormal)
-{
-    return (sourceOrigin - surfacePoint).normalize().dot(surfaceNormal);
-}
-
 static inline void addLight(Vector3f &dest, Vector3f const &color, float howMuch = 1.0f)
 {
     dest = (dest + color * howMuch).min(Vector3f(1, 1, 1));
@@ -270,15 +264,16 @@ DENG2_PIMPL_NOREF(BiasSurface)
         Affection aff;
         foreach(BiasSource *src, map.biasSources())
         {
-            if(src->intensity() <= 0)
+            // Is the source is too weak, ignore it entirely.
+            if(src->intensity() <= MIN_INTENSITY)
                 continue;
 
             // Calculate minimum 2D distance to the segment.
-            Vector2f delta;
+            Vector2d delta;
             float distance = 0;
             for(int k = 0; k < 2; ++k)
             {
-                delta = ((!k? from : to) - Vector2d(src->origin()));
+                delta = (!k? from : to) - Vector2d(src->origin());
                 float len = delta.length();
                 if(k == 0 || len < distance)
                     distance = len;
@@ -287,12 +282,7 @@ DENG2_PIMPL_NOREF(BiasSurface)
             if(delta.normalize().dot(surfaceNormal) >= 0)
                 continue;
 
-            if(distance < 1)
-                distance = 1;
-
-            float intensity = src->intensity() / distance;
-
-            // Is the source is too weak, ignore it entirely.
+            float intensity = src->intensity() / de::max(distance, 1.f);
             if(intensity < MIN_INTENSITY)
                 continue;
 
@@ -312,11 +302,13 @@ DENG2_PIMPL_NOREF(BiasSurface)
         Affection aff;
         foreach(BiasSource *src, map.biasSources())
         {
-            if(src->intensity() <= 0)
+            // Is the source is too weak, ignore it entirely.
+            if(src->intensity() <= MIN_INTENSITY)
                 continue;
 
             // Calculate minimum 2D distance to the BSP leaf.
             /// @todo This is probably too accurate an estimate.
+            Vector3d delta(surfacePoint - src->origin());
             float distance = 0;
             for(int k = 0; k < illums.count(); ++k)
             {
@@ -326,17 +318,11 @@ DENG2_PIMPL_NOREF(BiasSurface)
                 if(k == 0 || len < distance)
                     distance = len;
             }
-            if(distance < 1)
-                distance = 1;
 
-            // Estimate the effect on this surface.
-            float dot = biasDot(src->origin(), surfacePoint, surfaceNormal);
-            if(dot <= 0)
+            if(delta.normalize().dot(surfaceNormal) >= 0)
                 continue;
 
-            float intensity = src->intensity() / distance;
-
-            // Is the source is too weak, ignore it entirely.
+            float intensity = src->intensity() / de::max(distance, 1.f);
             if(intensity < MIN_INTENSITY)
                 continue;
 
