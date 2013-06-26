@@ -93,7 +93,7 @@ struct VertexIllum
     /**
      * Interpolate between current and destination.
      */
-    void lerp(Vector3f &result, uint currentTime, int lightSpeed)
+    void lerp(Vector3f &result, uint currentTime)
     {
         if(!flags.testFlag(Interpolating))
         {
@@ -181,7 +181,7 @@ static Vector3f ambientLight(Map &map, Vector3d const &point)
 }
 
 /**
- * evalPoint uses these, so they must be set before it is called.
+ * evalLighting uses these -- they must be set before it is called.
  */
 static float biasAmount;
 static BiasTracker trackChanged;
@@ -345,7 +345,7 @@ DENG2_PIMPL_NOREF(BiasSurface)
     }
 
     /**
-     * Apply shadow bias to the given map surface @a point (at a vertex).
+     * Perform lighting calculations for the specified @a mapVertexOrigin.
      *
      * @todo Only recalculate the changed lights (colors contributed by
      * others can be stored in the "affected" array.
@@ -356,6 +356,7 @@ DENG2_PIMPL_NOREF(BiasSurface)
 #define COLOR_CHANGE_THRESHOLD  0.1f
 
         Map &map = App_World().map();
+        uint currentTime = map.biasCurrentTime();
 
         bool illumChanged = false;
         uint latestSourceUpdate = 0;
@@ -395,7 +396,7 @@ DENG2_PIMPL_NOREF(BiasSurface)
                     illumChanged = true;
                     trackApplied.mark(idx);
 
-                    // Remember the earliest time the affecting source changed.
+                    // Remember the earliest time an affecting source changed.
                     if(latestSourceUpdate < aff->source->lastUpdateTime())
                     {
                         latestSourceUpdate = aff->source->lastUpdateTime();
@@ -420,8 +421,8 @@ DENG2_PIMPL_NOREF(BiasSurface)
             {
                 if(!aff->changed) //tracker.check(aff->index))
                 {
-                    // We can reuse the previously calculated value. This can
-                    // only be done if this particular light source hasn't
+                    // We can reuse the previously calculated value. This
+                    // can only be done if this particular source hasn't
                     // changed.
                     continue;
                 }
@@ -479,7 +480,7 @@ DENG2_PIMPL_NOREF(BiasSurface)
                 if(vi.flags & VertexIllum::Interpolating)
                 {
                     // Must not lose the half-way interpolation.
-                    Vector3f mid; vi.lerp(mid, map.biasCurrentTime(), lightSpeed);
+                    Vector3f mid; vi.lerp(mid, currentTime);
 
                     // This is current color at this very moment.
                     vi.color = mid;
@@ -492,8 +493,8 @@ DENG2_PIMPL_NOREF(BiasSurface)
             }
         }
 
-        // Finalize lighting for the vertex (i.e., perform interpolation if needed).
-        vi.lerp(color, map.biasCurrentTime(), lightSpeed);
+        // Finalize lighting (i.e., perform interpolation if needed).
+        vi.lerp(color, currentTime);
 
         // Apply the ambient light term.
         addLight(color, ambientLight(map, mapVertexOrigin));
