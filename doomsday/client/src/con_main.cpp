@@ -2306,6 +2306,12 @@ D_CMD(Quit)
         return true; // Never reached.
     }
 
+#ifdef __CLIENT__
+    // Dismiss the taskbar if it happens to be open, we are expecting
+    // the game to handle this from now on.
+    ClientWindow::main().taskBar().close();
+#endif
+
     // Defer this decision to the loaded game.
     return gx.TryShutdown();
 }
