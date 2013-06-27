@@ -820,7 +820,8 @@ void P_PlayerInSpecialSector(player_t* player)
     Sector* sector = P_GetPtrp(player->plr->mo->bspLeaf, DMU_SECTOR);
 
     // Falling, not all the way down yet?
-    if(!FEQUAL(player->plr->mo->origin[VZ], P_GetDoublep(sector, DMU_FLOOR_HEIGHT))) return;
+    if(!FEQUAL(player->plr->mo->origin[VZ], P_GetDoublep(sector, DMU_FLOOR_HEIGHT)))
+        return;
 
     // Has hitten ground.
     switch(P_ToXSector(sector)->special)
@@ -1046,9 +1047,6 @@ void P_InitAmbientSound(void)
     AmbSfxPtr = AmbSndSeqInit;
 }
 
-/**
- * Called by spawnMapThing during (P_setup):P_SetupMap.
- */
 void P_AddAmbientSfx(int sequence)
 {
     if(AmbSfxCount == MAX_AMBIENT_SFX)
@@ -1058,14 +1056,15 @@ void P_AddAmbientSfx(int sequence)
     LevelAmbientSfx[AmbSfxCount++] = AmbientSfx[sequence];
 }
 
-/**
- * Called every tic by (P_tick):P_Ticker.
- */
 void P_AmbientSound(void)
 {
     afxcmd_t cmd;
-    int     sound;
+    int sound;
     boolean done;
+
+    // Ambient sounds are a purely client-side effect.
+    if(!IS_CLIENT)
+        return;
 
     // No ambient sound sequences on current level
     if(!AmbSfxCount)

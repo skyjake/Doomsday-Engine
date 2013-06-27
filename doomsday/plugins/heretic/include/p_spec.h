@@ -56,10 +56,17 @@ void P_SpawnSectorSpecialThinkers(void);
 void P_SpawnLineSpecialThinkers(void);
 void P_SpawnAllSpecialThinkers(void);
 
-void            P_InitAmbientSound(void);
-void            P_AddAmbientSfx(int sequence);
+void P_InitAmbientSound(void);
 
-void            P_AmbientSound(void);
+/**
+ * Called by spawnMapThing during (P_setup):P_SetupMap.
+ */
+void P_AddAmbientSfx(int sequence);
+
+/**
+ * Called every tic by (P_tick):P_Ticker.
+ */
+void P_AmbientSound(void);
 
 boolean         P_ActivateLine(Line* ld, mobj_t* mo, int side,
                                int activationType);
