@@ -1063,7 +1063,7 @@ void P_AmbientSound(void)
     boolean done;
 
     // Ambient sounds are a purely client-side effect.
-    if(!IS_CLIENT)
+    if(IS_NETGAME && !IS_CLIENT)
         return;
 
     // No ambient sound sequences on current level
