@@ -89,17 +89,16 @@ DENG_API_TYPEDEF(MPE)
     /**
      * Create many new vertices in the currently loaded editable map.
      *
-     * @param num           Number of vertexes to be created.
-     * @param values        Array containing the coordinates for all vertexes
-     *                      to be created [v0:X, vo:Y, v1:X, v1:Y, ..]
+     * @param num             Number of vertexes to be created.
+     * @param values          Array containing the coordinates for all vertexes
+     *                        to be created [v0:X, vo:Y, v1:X, v1:Y, ..]
      * @param archiveIndices  Array containing the archive indices for each
-     *                      vertex. Can be @c 0.
-     * @param indices       If not @c 0, the indices of the newly created
-     *                      vertexes will be written back here.
+     *                        vertex. Can be @c 0.
+     * @param indices         If not @c 0, the indices of the newly created
+     *                        vertexes will be written back here.
      * @return  @c =true iff all vertexes were created successfully.
      */
-    boolean         (*VertexCreatev)(size_t num, coord_t *values,
-                                     int *archiveIndices, int *indices);
+    boolean         (*VertexCreatev)(int num, coord_t *values, int *archiveIndices, int *indices);
 
     /**
      * Create a new line in the editable map.
