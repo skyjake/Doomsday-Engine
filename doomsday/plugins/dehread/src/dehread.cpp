@@ -35,7 +35,6 @@ using namespace de;
 static bool processAllPatchLumps; /// @c true= all lumps should be processed.
 
 // This is the original data before it gets replaced by any patches.
-static bool backedUpData;
 ded_sprid_t  origSpriteNames[NUMSPRITES];
 ded_funcid_t origActionNames[NUMSTATES];
 
@@ -126,18 +125,13 @@ static void processPatchFiles()
     }
 }
 
-static void backupData(void)
+static void backupData()
 {
-    // Already been here?
-    if(backedUpData) return;
-
     for(int i = 0; i < NUMSPRITES && i < ded->count.sprites.num; i++)
         qstrncpy(origSpriteNames[i].id, ded->sprites[i].id, DED_SPRITEID_LEN + 1);
 
     for(int i = 0; i < NUMSTATES && i < ded->count.states.num; i++)
         qstrncpy(origActionNames[i], ded->states[i].action, DED_STRINGID_LEN + 1);
-
-    backedUpData = true;
 }
 
 /**
