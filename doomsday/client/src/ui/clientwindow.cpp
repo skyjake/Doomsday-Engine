@@ -176,7 +176,7 @@ public IGameChangeObserver
 
     void setMode(Mode const &newMode)
     {
-        LOG_VERBOSE("Switching to %s mode") << (newMode == Busy? "Busy" : "Normal");
+        LOG_DEBUG("Switching to %s mode") << (newMode == Busy? "Busy" : "Normal");
 
         mode = newMode;
     }
