@@ -84,16 +84,16 @@ DENG2_OBSERVES(Map, UnclosedSectorFound),
 DENG2_OBSERVES(Map, OneWayWindowFound)
 {
     /// Record "unclosed sectors".
-    /// Sector => world point relatively near to the problem area.
-    typedef std::map<Sector *,  Vector2d> UnclosedSectorMap;
+    /// Sector index => world point relatively near to the problem area.
+    typedef std::map<int, Vector2i> UnclosedSectorMap;
 
     /// Record "one-way window lines".
-    /// Line => Sector the back side faces.
-    typedef std::map<Line *,  Sector *> OneWayWindowMap;
+    /// Line index => Sector index the back side faces.
+    typedef std::map<int, int> OneWayWindowMap;
 
     /// Maximum number of warnings to output (of each type) about any problems
     /// encountered during the build process.
-    static int const maxWarningsPerType;
+    static int const maxWarningsPerType = 10;
 
 public:
     MapConversionReporter() {}
@@ -105,28 +105,38 @@ public:
     {
         if(int numToLog = maxWarnings(unclosedSectorCount()))
         {
+            String str;
+
             UnclosedSectorMap::const_iterator it = _unclosedSectors.begin();
             for(int i = 0; i < numToLog; ++i, ++it)
             {
-                LOG_WARNING("Sector #%d is unclosed near %s.")
-                    << it->first->indexInArchive() << it->second.asText();
+                if(i != 0) str += "\n";
+                str += String("Sector #%1 is unclosed near %2.")
+                           .arg(it->first).arg(it->second.asText());
             }
 
             if(numToLog < unclosedSectorCount())
-                LOG_INFO("(%d more like this)") << (unclosedSectorCount() - numToLog);
+                str += String("\n(%1 more like this)").arg(unclosedSectorCount() - numToLog);
+
+            LOG_WARNING("%s") << str;
         }
 
         if(int numToLog = maxWarnings(oneWayWindowCount()))
         {
+            String str;
+
             OneWayWindowMap::const_iterator it = _oneWayWindows.begin();
             for(int i = 0; i < numToLog; ++i, ++it)
             {
-                LOG_VERBOSE("Line #%d seems to be a One-Way Window (back faces sector #%d).")
-                    << it->first->indexInArchive() << it->second->indexInArchive();
+                if(i != 0) str += "\n";
+                str += String("Line #%1 seems to be a One-Way Window (back faces sector #%2).")
+                           .arg(it->first).arg(it->second);
             }
 
             if(numToLog < oneWayWindowCount())
-                LOG_INFO("(%d more like this)") << (oneWayWindowCount() - numToLog);
+                str += String("\n(%1 more like this)").arg(oneWayWindowCount() - numToLog);
+
+            LOG_VERBOSE("%s") << str;
         }
     }
 
@@ -134,13 +144,13 @@ protected:
     // Observes Partitioner UnclosedSectorFound.
     void unclosedSectorFound(Sector &sector, Vector2d const &nearPoint)
     {
-        _unclosedSectors.insert(std::make_pair(&sector, nearPoint));
+        _unclosedSectors.insert(std::make_pair(sector.indexInArchive(), nearPoint.toVector2i()));
     }
 
     // Observes Partitioner OneWayWindowFound.
     void oneWayWindowFound(Line &line, Sector &backFacingSector)
     {
-        _oneWayWindows.insert(std::make_pair(&line, &backFacingSector));
+        _oneWayWindows.insert(std::make_pair(line.indexInArchive(), backFacingSector.indexInArchive()));
     }
 
 private:
@@ -156,8 +166,6 @@ private:
     UnclosedSectorMap _unclosedSectors;
     OneWayWindowMap   _oneWayWindows;
 };
-
-int const MapConversionReporter::maxWarningsPerType = 10;
 
 boolean ddMapSetup;
 timespan_t ddMapTime;
@@ -198,12 +206,22 @@ static String cacheIdForMap(String const &sourcePath)
 
 namespace de {
 
+/**
+ * Data for a map load task.
+ */
+struct MapLoadTaskData
+{
+    Uri uri;
+    QScopedPointer<Map> map;
+    QScopedPointer<MapConversionReporter> reporter;
+};
+
 DENG2_PIMPL(World)
 {
     /**
      * Information about a map in the cache.
      */
-    struct CacheRecord
+    struct MapCacheRecord
     {
         Uri mapUri;                 ///< Unique identifier for the map.
         //String path;                ///< Path to the cached map data.
@@ -211,13 +229,13 @@ DENG2_PIMPL(World)
         //bool lastLoadAttemptFailed;
     };
 
-    typedef QMap<String, CacheRecord> Records;
+    typedef QMap<String, MapCacheRecord> MapRecords;
 
     /// Current map.
     Map *map;
 
     /// Map cache records.
-    Records records;
+    MapRecords records;
 
     Instance(Public *i) : Base(i), map(0)
     {}
@@ -254,34 +272,34 @@ DENG2_PIMPL(World)
      *
      * @param uri  Map identifier.
      *
-     * @return  Pointer to the found CacheRecord; otherwise @c 0.
+     * @return  Pointer to the found MapCacheRecord; otherwise @c 0.
      */
-    CacheRecord *findCacheRecord(Uri const &uri) const
+    MapCacheRecord *findCacheRecord(Uri const &uri) const
     {
-        Records::const_iterator found = records.find(uri.resolved());
+        MapRecords::const_iterator found = records.find(uri.resolved());
         if(found != records.end())
         {
-            return const_cast<CacheRecord *>(&found.value());
+            return const_cast<MapCacheRecord *>(&found.value());
         }
         return 0; // Not found.
     }
 
     /**
-     * Create a new CacheRecord for the map. If an existing record is found it
+     * Create a new MapCacheRecord for the map. If an existing record is found it
      * will be returned instead (becomes a no-op).
      *
      * @param uri  Map identifier.
      *
-     * @return  Possibly newly-created CacheRecord.
+     * @return  Possibly newly-created MapCacheRecord.
      */
-    CacheRecord &createCacheRecord(Uri const &uri)
+    MapCacheRecord &createCacheRecord(Uri const &uri)
     {
         // Do we have an existing record for this?
-        if(CacheRecord *record = findCacheRecord(uri))
+        if(MapCacheRecord *record = findCacheRecord(uri))
             return *record;
 
         // Prepare a new record.
-        CacheRecord rec;
+        MapCacheRecord rec;
         rec.mapUri = uri;
 
         // Compose the cache directory path.
@@ -302,26 +320,34 @@ DENG2_PIMPL(World)
      * Note that the map is left in an editable state in case the caller
      * wishes to perform any further changes.
      *
-     * @return  Pointer to the converted Map; otherwise @c 0.
+     * return @c true if conversion was completed successfully.
      */
-    Map *convertMap(Uri const &uri)
+    bool convertMap(MapLoadTaskData &task)
     {
         // Record this map if we haven't already.
-        /*CacheRecord &record =*/ createCacheRecord(uri);
+        /*MapCacheRecord &record =*/ createCacheRecord(task.uri);
 
         // We require a map converter for this.
         if(!Plug_CheckForHook(HOOK_MAP_CONVERT))
-            return 0;
+            return false;
 
         //LOG_DEBUG("Attempting \"%s\"...") << uri;
 
-        lumpnum_t markerLumpNum = markerLumpNumForPath(uri.path());
+        lumpnum_t markerLumpNum = markerLumpNumForPath(task.uri.path());
         if(markerLumpNum < 0)
-            return 0;
+            return false;
 
         // Initiate the conversion process.
-        MPE_Begin(reinterpret_cast<uri_s const *>(&uri));
+        MPE_Begin(reinterpret_cast<uri_s const *>(&task.uri));
         Map *newMap = MPE_Map();
+
+        // Configure a reporter to observe the conversion process.
+        task.reporter.reset(new MapConversionReporter);
+
+        // Connect the reporter to the relevant audiences.
+        /// @todo MapConversionReporter should handle this.
+        newMap->audienceForOneWayWindowFound   += *task.reporter;
+        newMap->audienceForUnclosedSectorFound += *task.reporter;
 
         // Generate and attribute the old unique map id.
         File1 &markerLump       = App_FileSystem().nameIndex().lump(markerLumpNum);
@@ -332,8 +358,8 @@ DENG2_PIMPL(World)
         // Ask each converter in turn whether the map format is recognizable
         // and if so to interpret and transfer it to us via the runtime map
         // editing interface.
-        if(!DD_CallHooks(HOOK_MAP_CONVERT, 0, (void *) reinterpret_cast<uri_s const *>(&uri)))
-            return 0;
+        if(!DD_CallHooks(HOOK_MAP_CONVERT, 0, (void *) reinterpret_cast<uri_s const *>(&task.uri)))
+            return false;
 
         // A converter signalled success.
 
@@ -341,14 +367,15 @@ DENG2_PIMPL(World)
         MPE_End();
 
         // Take ownership of the map.
-        return MPE_TakeMap();
+        task.map.reset(MPE_TakeMap());
+        return true;
     }
 
 #if 0
     /**
      * Returns @c true iff data for the map is available in the cache.
      */
-    bool isCacheDataAvailable(CacheRecord &rec)
+    bool isCacheDataAvailable(MapCacheRecord &rec)
     {
         if(DAM_MapIsValid(Str_Text(&rec.path), markerLumpNum()))
         {
@@ -362,15 +389,17 @@ DENG2_PIMPL(World)
      *
      * @see isCachedDataAvailable()
      *
-     * @return  Pointer to the loaded Map; otherwise @c 0.
+     * @return @c true if loading completed successfully.
      */
-    Map *loadMapFromCache(Uri const &uri)
+    bool loadMapFromCache(Uri const &uri)
     {
         // Record this map if we haven't already.
-        CacheRecord &rec = createCacheRecord(uri);
+        MapCacheRecord &rec = createCacheRecord(uri);
 
         Map *map = DAM_MapRead(Str_Text(&rec.path));
-        if(!map) return 0;
+        if(!map)
+            /// Failed to load the map specified from the data cache.
+            throw Error("loadMapFromCache", QString("Failed loading map \"%1\" from cache.").arg(uri.asText()));
 
         map->_uri = rec.mapUri;
         return map;
@@ -380,37 +409,31 @@ DENG2_PIMPL(World)
     /**
      * Attempt to load the associated map data.
      *
-     * @return  Pointer to the loaded map; otherwise @c 0.
+     * @return @c true if loading completed successfully.
      */
-    Map *loadMap(Uri const &uri/*, bool forceRetry = false*/)
+    bool loadMap(MapLoadTaskData &task)
     {
         LOG_AS("World::loadMap");
 
         // Record this map if we haven't already.
-        /*CacheRecord &rec =*/ createCacheRecord(uri);
+        /*MapCacheRecord &rec =*/ createCacheRecord(task.uri);
 
-        //if(rec.lastLoadAttemptFailed && !forceRetry)
-        //    return false;
-
-        //rec.lastLoadAttemptFailed = false;
+        /*if(rec.lastLoadAttemptFailed && !forceRetry)
+            return 0;
 
         // Load from cache?
-        /*if(mapCache && rec.dataAvailable)
+        if(mapCache && rec.dataAvailable)
         {
-            if(Map *map = loadMapFromCache(uri))
-                return map;
-
-            rec.lastLoadAttemptFailed = true;
-            return 0;
+            return loadMapFromCache(task);
         }*/
 
         // Try a JIT conversion with the help of a plugin.
-        if(Map *map = convertMap(uri))
-            return map;
+        if(convertMap(task))
+            return true;
 
-        LOG_WARNING("Failed conversion of \"%s\".") << uri;
+        LOG_WARNING("Failed conversion of \"%s\".") << task.uri;
         //rec.lastLoadAttemptFailed = true;
-        return 0;
+        return false;
     }
 
     /**
@@ -426,7 +449,7 @@ DENG2_PIMPL(World)
         DENG_ASSERT(!map->isEditable());
 
         // Should we cache this map?
-        /*CacheRecord &rec = createCacheRecord(map->uri());
+        /*MapCacheRecord &rec = createCacheRecord(map->uri());
         if(mapCache && !rec.dataAvailable)
         {
             // Ensure the destination directory exists.
@@ -691,40 +714,38 @@ bool World::changeMap(de::Uri const &uri)
     // A new map is about to be setup.
     ddMapSetup = true;
 
-    // Load in the new map.
-    Map *newMap = d->loadMap(uri);
-
-    // The map may still be in an editable state -- switch to playable.
-    if(newMap && newMap->isEditable())
+    // Attempt to load in the new map.
+    MapLoadTaskData task; task.uri = uri;
+    if(d->loadMap(task))
     {
-        // Configure a reporter to observe the process.
-        /// @todo Make the reporter available during the format conversion.
-        MapConversionReporter reporter;
-        newMap->audienceForOneWayWindowFound   += reporter;
-        newMap->audienceForUnclosedSectorFound += reporter;
+        // The map may still be in an editable state -- switch to playable.
+        bool mapIsPlayable = task.map->endEditing();
 
-        // Attempt the switch.
-        bool mapIsPlayable = newMap->endEditing();
-
-        // Output a human-readable log of any issues encountered in the process.
-        reporter.writeLog();
-
-        // We are no longer interested in reports about this map.
-        newMap->audienceForOneWayWindowFound   -= reporter;
-        newMap->audienceForUnclosedSectorFound -= reporter;
+        if(!task.reporter.isNull())
+        {
+            // We are no longer interested in reports about this map.
+            task.map->audienceForOneWayWindowFound   -= *task.reporter;
+            task.map->audienceForUnclosedSectorFound -= *task.reporter;
+        }
 
         if(!mapIsPlayable)
         {
-            // Darn, clean up...
-            delete newMap; newMap = 0;
+            // Darn. Discard the useless data.
+            task.map.reset();
         }
     }
 
-    // This is now the current map.
-    d->makeCurrent(newMap);
+    // Take ownership of the map (if any) and make current.
+    d->makeCurrent(task.map.data()? task.map.take() : 0);
 
     // We've finished setting up the map.
     ddMapSetup = false;
+
+    // Output a human-readable log of any issues encountered in the conversion process.
+    if(!task.reporter.isNull())
+    {
+        task.reporter->writeLog();
+    }
 
     return d->map != 0;
 }
