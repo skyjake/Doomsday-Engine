@@ -233,7 +233,7 @@ memblock_t *Z_GetBlock(void *ptr)
             }
         }
     }
-    Con_Error("Z_GetBlock: There is no memory block for %p.\n", ptr);
+    DENG_ASSERT(false); // There is no memory block for this.
     return NULL;
 }
 #endif
