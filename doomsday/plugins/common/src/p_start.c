@@ -439,20 +439,18 @@ void P_DealPlayerStarts(uint entryPoint)
         }
     }
 
-    //if(IS_NETGAME)
+#ifdef _DEBUG
+    Con_Message("Player starting spots:");
+    for(i = 0; i < MAXPLAYERS; ++i)
     {
-        Con_Message("Player starting spots:");
-        for(i = 0; i < MAXPLAYERS; ++i)
-        {
-            player_t *pl = &players[i];
+        player_t *pl = &players[i];
 
-            if(!pl->plr->inGame)
-                continue;
+        if(!pl->plr->inGame)
+            continue;
 
-            Con_Message("- pl%i: color %i, spot %i", i, cfg.playerColor[i],
-                       pl->startSpot);
-        }
+        Con_Message("- pl%i: color %i, spot %i", i, cfg.playerColor[i], pl->startSpot);
     }
+#endif
 }
 
 /**
