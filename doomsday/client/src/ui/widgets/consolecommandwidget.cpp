@@ -115,10 +115,19 @@ bool ConsoleCommandWidget::handleEvent(Event const &event)
         return true;
     }
 
-    if(hasFocus() && event.isKeyDown())
+    if(hasFocus())
     {
-        // Fall back to history navigation.
-        return d->history.handleControlKey(event.as<KeyEvent>().qtKey());
+        // All Tab keys are eaten by a focused console command widget.
+        if(event.isKey() && event.as<KeyEvent>().ddKey() == DDKEY_TAB)
+        {
+            return true;
+        }
+
+        if(event.isKeyDown())
+        {
+            // Fall back to history navigation.
+            return d->history.handleControlKey(event.as<KeyEvent>().qtKey());
+        }
     }
     return false;
 }
