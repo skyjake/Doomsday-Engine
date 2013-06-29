@@ -284,14 +284,10 @@ static void UnreadToken(const char* token)
  * Current pos in the file is at the first ".
  * Does not expand escape sequences, only checks for \".
  *
- * @return              @c true, if successful.
+ * @return  @c true if successful.
  */
-static int ReadStringEx(char* dest, int maxlen, boolean inside,
-                        boolean doubleq)
+static int ReadString(String &dest, bool inside = false, bool doubleq = false)
 {
-    char*               ptr = dest;
-    int                 ch, esc = false, newl = false;
-
     if(!inside)
     {
         ReadToken();
@@ -299,8 +295,10 @@ static int ReadStringEx(char* dest, int maxlen, boolean inside,
             return false;
     }
 
+    bool esc = false, newl = false;
+
     // Start reading the characters.
-    ch = FGetC();
+    int ch = FGetC();
     while(esc || ch != '"') // The string-end-character.
     {
         if(source->atEnd)
@@ -323,82 +321,84 @@ static int ReadStringEx(char* dest, int maxlen, boolean inside,
 
         // An escape character?
         if(!esc && ch == '\\')
+        {
             esc = true;
+        }
         else
         {
             // In case it's something other than \" or \\, just insert
             // the whole sequence as-is.
             if(esc && ch != '"' && ch != '\\')
-                *ptr++ = '\\';
+                dest += '\\';
             esc = false;
         }
         if(ch == '\n')
             newl = true;
 
         // Store the character in the buffer.
-        if(ptr - dest < maxlen && !esc && !newl)
+        if(!esc && !newl)
         {
-            *ptr++ = ch;
+            dest += char(ch);
             if(doubleq && ch == '"')
-                *ptr++ = '"';
+                dest += '"';
         }
 
         // Read the next character, please.
         ch = FGetC();
     }
 
-    // End the string in a null.
-    *ptr = 0;
-
     return true;
 }
 
-static int ReadString(char* dest, int maxlen)
+static int ReadString(char *dest, int maxLen)
 {
-    return ReadStringEx(dest, maxlen, false, false);
+    DENG_ASSERT(dest != 0);
+    String buffer;
+    if(!ReadString(buffer)) return false;
+    qstrncpy(dest, buffer.toUtf8().constData(), maxLen);
+    return true;
 }
 
 /**
  * Read a string of (pretty much) any length.
  */
-static int ReadAnyString(char** dest)
+static int ReadAnyString(char **dest)
 {
-    char buffer[0x20000];
+    String buffer;
 
-    if(!ReadString(buffer, sizeof(buffer)))
+    if(!ReadString(buffer))
         return false;
 
     // Get rid of the old string.
     if(*dest)
         M_Free(*dest);
 
-    // Make sure it doesn't overflow.
-    buffer[sizeof(buffer) - 1] = 0;
-
     // Make a copy.
-    *dest = (char*) M_Malloc(strlen(buffer) + 1);
-    strcpy(*dest, buffer);
+    QByteArray bufferUtf8 = buffer.toUtf8();
+    *dest = (char *) M_Malloc(bufferUtf8.length() + 1);
+    qstrcpy(*dest, bufferUtf8.constData());
 
     return true;
 }
 
-static int ReadUri(uri_s** dest, const char* defaultScheme)
+static int ReadUri(uri_s **dest_, char const *defaultScheme)
 {
-    char* buf = 0;
-    int result;
-    if((result = ReadAnyString(&buf)) != 0)
-    {
-        if(!*dest)
-            *dest = Uri_NewWithPath2(buf, RC_NULL);
-        else
-            Uri_SetUri2(*dest, buf, RC_NULL);
+    String buffer;
 
-        if(defaultScheme && defaultScheme[0] && Str_Length(Uri_Scheme(*dest)) == 0)
-            Uri_SetScheme(*dest, defaultScheme);
+    if(!ReadString(buffer))
+        return false;
 
-        M_Free(buf);
-    }
-    return result;
+    if(!*dest_)
+        *dest_ = reinterpret_cast<uri_s *>(new de::Uri(buffer, RC_NULL));
+    else
+        reinterpret_cast<de::Uri *>(*dest_)->setUri(buffer, RC_NULL);
+
+    de::Uri *dest = reinterpret_cast<de::Uri *>(*dest_);
+
+    if(defaultScheme && defaultScheme[0] && dest->scheme().isEmpty())
+        dest->setScheme(defaultScheme);
+
+    return true;
 }
 
 static int ReadNByteVector(unsigned char* dest, int max)
@@ -465,10 +465,8 @@ static int ReadFloat(float* dest)
     return true;
 }
 
-static int ReadFlags(int* dest, const char* prefix)
+static int ReadFlags(int *dest, char const *prefix)
 {
-    char flag[1024];
-
     // By default, no flags are set.
     *dest = 0;
 
@@ -485,17 +483,18 @@ static int ReadFlags(int* dest, const char* prefix)
     }
 
     UnreadToken(token);
+    String flag;
     if(ISTOKEN("\""))
     {
         // The old format.
-        if(!ReadString(flag, sizeof(flag)))
+        if(!ReadString(flag))
             return false;
 
-        M_Strip(flag, sizeof(flag));
+        flag.strip();
 
-        if(strlen(flag))
+        if(!flag.isEmpty())
         {
-            *dest = Def_EvalFlags(flag);
+            *dest = Def_EvalFlags2(flag.toUtf8().constData());
         }
         else
         {
@@ -510,19 +509,18 @@ static int ReadFlags(int* dest, const char* prefix)
         ReadToken();
         if(prefix)
         {
-            strcpy(flag, prefix);
-            strcat(flag, token);
+            flag = String(prefix) + String(token);
         }
         else
         {
-            strcpy(flag, token);
+            flag = String(token);
         }
 
-        M_Strip(flag, sizeof(flag));
+        flag.strip();
 
-        if(strlen(flag))
+        if(!flag.isEmpty())
         {
-            *dest |= Def_EvalFlags(flag);
+            *dest |= Def_EvalFlags2(flag.toUtf8().constData());
         }
 
         if(!ReadToken())
@@ -538,11 +536,11 @@ static int ReadFlags(int* dest, const char* prefix)
     return true;
 }
 
-static int ReadBlendmode(blendmode_t* dest)
+static int ReadBlendmode(blendmode_t *dest)
 {
     LOG_AS("ReadBlendmode");
 
-    char flag[1024];
+    String flag;
     blendmode_t bm;
 
     ReadToken();
@@ -550,19 +548,18 @@ static int ReadBlendmode(blendmode_t* dest)
     if(ISTOKEN("\""))
     {
         // The old format.
-        if(!ReadString(flag, sizeof(flag))) return false;
+        if(!ReadString(flag)) return false;
 
-        bm = blendmode_t(Def_EvalFlags(flag));
+        bm = blendmode_t(Def_EvalFlags2(flag.toUtf8().constData()));
     }
     else
     {
         // Read the blendmode.
         ReadToken();
 
-        strcpy(flag, "bm_");
-        strcat(flag, token);
+        flag = String("bm_") + String(token);
 
-        bm = blendmode_t(Def_EvalFlags(flag));
+        bm = blendmode_t(Def_EvalFlags2(flag.toUtf8().constData()));
     }
 
     if(bm != BM_NORMAL)
@@ -1782,11 +1779,10 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
         }
 
         if(ISTOKEN("Text"))
-        {   // A new text.
-            ded_text_t*         txt;
-
+        {
+            // A new text.
             idx = DED_AddText(ded, "");
-            txt = &ded->text[idx];
+            ded_text_t *txt = &ded->text[idx];
 
             FINDBEGIN;
             for(;;)
@@ -1795,19 +1791,15 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 RV_STR("ID", txt->id)
                 if(ISLABEL("Text"))
                 {
-                    // Allocate a 'huge' buffer.
-                    char* temp = (char*) M_Malloc(0x10000);
-
-                    if(ReadString(temp, 0xffff))
+                    String buffer;
+                    if(ReadString(buffer))
                     {
-                        size_t len = strlen(temp) + 1;
-
-                        txt->text = (char*) M_Realloc(temp, len);
-                        //memcpy(ded->text[idx].text, temp, len);
+                        QByteArray bufferUtf8 = buffer.toUtf8();
+                        txt->text = (char *) M_Realloc(txt->text, bufferUtf8.length() + 1);
+                        qstrcpy(txt->text, bufferUtf8.constData());
                     }
                     else
                     {
-                        M_Free(temp);
                         SetError("Syntax error in Text value.");
                         retVal = false;
                         goto ded_end_read;
@@ -1934,28 +1926,25 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 if(ISTOKEN("="))
                 {
                     // Define a new string.
-                    char* temp = (char*) M_Malloc(0x1000); // A 'huge' buffer.
+                    String buffer;
 
-                    if(ReadString(temp, 0xffff))
+                    if(ReadString(buffer))
                     {
-                        ded_value_t* val;
-
-                        // Resize the buffer down to actual string length.
-                        temp = (char*) M_Realloc(temp, strlen(temp) + 1);
-
                         // Get a new value entry.
                         idx = DED_AddValue(ded, 0);
-                        val = &ded->values[idx];
-                        val->text = temp;
+                        ded_value_t *val = &ded->values[idx];
+
+                        QByteArray bufferUtf8 = buffer.toUtf8();
+                        val->text = (char *) M_Malloc(bufferUtf8.length() + 1);
+                        qstrcpy(val->text, bufferUtf8.constData());
 
                         // Compose the identifier.
-                        val->id = (char*) M_Malloc(strlen(rootStr) + strlen(label) + 1);
+                        val->id = (char *) M_Malloc(strlen(rootStr) + strlen(label) + 1);
                         strcpy(val->id, rootStr);
                         strcat(val->id, label);
                     }
                     else
                     {
-                        M_Free(temp);
                         SetError("Syntax error in Value string.");
                         retVal = false;
                         goto ded_end_read;
@@ -2229,10 +2218,8 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
 
         if(ISTOKEN("Finale") || ISTOKEN("InFine"))
         {
-            ded_finale_t* fin;
-
             idx = DED_AddFinale(ded);
-            fin = &ded->finales[idx];
+            ded_finale_t *fin = &ded->finales[idx];
 
             FINDBEGIN;
             for(;;)
@@ -2244,30 +2231,26 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 RV_INT("Game", dummyInt)
                 if(ISLABEL("Script"))
                 {
-                    // Allocate an "enormous" 64K buffer.
-                    char* temp = (char*) M_Calloc(0x10000), *ptr;
-
-                    if(fin->script) M_Free(fin->script);
+                    String buffer; buffer.reserve(1600);
 
                     FINDBEGIN;
-                    ptr = temp;
                     ReadToken();
                     while(!ISTOKEN("}") && !source->atEnd)
                     {
-                        if(ptr != temp)
-                            *ptr++ = ' ';
+                        if(!buffer.isEmpty())
+                            buffer += ' ';
 
-                        strcpy(ptr, token);
-                        ptr += strlen(token);
+                        buffer += String(token);
                         if(ISTOKEN("\""))
                         {
-                            ReadStringEx(ptr, 0x10000 - (ptr-temp), true, true);
-                            ptr += strlen(ptr); // Continue from the null.
-                            *ptr++ = '"';
+                            ReadString(buffer, true, true);
+                            buffer += '"';
                         }
                         ReadToken();
                     }
-                    fin->script = (char*) M_Realloc(temp, strlen(temp) + 1);
+                    QByteArray bufferUtf8 = buffer.toUtf8();
+                    fin->script = (char *) M_Realloc(fin->script, bufferUtf8.length() + 1);
+                    qstrcpy(fin->script, bufferUtf8.constData());
                 }
                 else RV_END
                 CHECKSC;
