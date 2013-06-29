@@ -611,8 +611,7 @@ const char* Def_GetFlagTextByPrefixVal(const char* prefix, int val)
     return NULL;
 }
 
-#undef Def_EvalFlags
-int Def_EvalFlags(char *ptr)
+int Def_EvalFlags2(char const *ptr)
 {
     LOG_AS("Def_EvalFlags");
 
@@ -620,9 +619,9 @@ int Def_EvalFlags(char *ptr)
 
     while(*ptr)
     {
-        ptr = M_SkipWhite(ptr);
+        ptr = M_SkipWhite(const_cast<char *>(ptr));
 
-        int flagNameLength = M_FindWhite(ptr) - ptr;
+        int flagNameLength = M_FindWhite(const_cast<char *>(ptr)) - ptr;
         String flagName(ptr, flagNameLength);
         ptr += flagNameLength;
 
@@ -636,6 +635,12 @@ int Def_EvalFlags(char *ptr)
         }
     }
     return value;
+}
+
+#undef Def_EvalFlags
+int Def_EvalFlags(char *ptr)
+{
+    return Def_EvalFlags2(const_cast<char const *>(ptr));
 }
 
 int Def_GetTextNumForName(const char* name)
