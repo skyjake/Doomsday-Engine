@@ -251,7 +251,7 @@ bool LegacyWidget::handleEvent(Event const &event)
        App_GameLoaded())
     {
         MouseEvent const &mouse = event.as<MouseEvent>();
-        if(mouse.state() == MouseEvent::Pressed && hitTest(mouse.pos()))
+        if(mouse.state() == MouseEvent::Released && hitTest(mouse.pos()))
         {
             if(root().focus())
             {
