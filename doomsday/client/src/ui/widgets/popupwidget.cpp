@@ -347,7 +347,7 @@ void PopupWidget::open()
 
     preparePopupForOpening();
 
-    d->openingRule->setStyle(Animation::Bounce, 6);
+    d->openingRule->setStyle(Animation::Bounce, 8);
     d->openingRule->set(d->content->rule().height(), OPENING_ANIM_SPAN);
 
     d->opened = true;
