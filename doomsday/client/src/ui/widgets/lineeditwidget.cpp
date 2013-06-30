@@ -416,4 +416,9 @@ void LineEditWidget::cursorMoved()
 void LineEditWidget::contentChanged()
 {
     d->contentChanged();
+
+    if(hasRoot())
+    {
+        updateLineWraps(WrapUnlessWrappedAlready);
+    }
 }
