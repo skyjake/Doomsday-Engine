@@ -157,10 +157,11 @@ public:
     /**
      * Sets the opacity of the widget. Child widgets' opacity is also affected.
      *
-     * @param opacity  Opacity.
-     * @param span     Animation transition span.
+     * @param opacity     Opacity.
+     * @param span        Animation transition span.
+     * @param startDelay  Starting delay.
      */
-    void setOpacity(float opacity, de::TimeDelta span = 0);
+    void setOpacity(float opacity, de::TimeDelta span = 0, de::TimeDelta startDelay = 0);
 
     /**
      * Determines the widget's current opacity.

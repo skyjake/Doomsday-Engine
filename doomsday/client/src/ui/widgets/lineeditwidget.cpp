@@ -249,7 +249,7 @@ void LineEditWidget::setEmptyContentHint(String const &hintText)
         d->hint->setAlignment(ui::AlignLeft);
         d->hint->setBehavior(Unhittable | ContentClipping);
         d->hint->rule().setRect(rule());
-        d->hint->setOpacity(0);
+        d->hint->setOpacity(1);
         add(d->hint);
     }
     d->hint->setText(hintText);
@@ -312,11 +312,21 @@ void LineEditWidget::viewResized()
 void LineEditWidget::focusGained()
 {
     d->contentChanged();
+
+    if(d->hint)
+    {
+        d->hint->setOpacity(0);
+    }
 }
 
 void LineEditWidget::focusLost()
 {
     d->contentChanged();
+
+    if(d->hint && d->showingHint())
+    {
+        d->hint->setOpacity(1, 1, .5f);
+    }
 }
 
 void LineEditWidget::update()
@@ -327,11 +337,6 @@ void LineEditWidget::update()
 
     // Rewrap content if necessary.
     updateLineWraps(WrapUnlessWrappedAlready);
-
-    if(d->hint)
-    {
-        d->hint->setOpacity(d->showingHint()? 1 : 0);
-    }
 }
 
 void LineEditWidget::drawContent()
