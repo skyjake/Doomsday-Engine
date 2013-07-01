@@ -71,16 +71,14 @@ function includeHTML($page, $pluginName=NULL)
 function fopen_recursive($path, $mode, $chmod=0755)
 {
     $matches = NULL;
-    preg_match('`^(.+)/([a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+)$`i', $path, $matches);
-
-    $directory = $matches[1];
-    $file = $matches[2];
-
-    if(!is_dir($directory))
+    if(preg_match('`^(.+)/([a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+)$`i', $path, $matches))
     {
-        if(!mkdir($directory, $chmod, 1))
+        if(isset($matches[1]) && !is_dir($matches[1]))
         {
-            return false;
+            if(!mkdir($matches[1], $chmod, 1))
+            {
+                return false;
+            }
         }
     }
 

@@ -224,9 +224,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
      */
     private static function mustUpdateCachedBuildLog(&$buildLogUri, &$cacheName)
     {
-        global $FrontController;
-
-        if(!$FrontController->contentCache()->isPresent($cacheName))
+        if(!FrontController::contentCache()->has($cacheName))
             return TRUE;
 
         // Only query the remote server at most once every five minutes for an
@@ -234,7 +232,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         // to determine when it is time to query (we touch the cached copy after
         // each query attempt).
         $cacheInfo = new ContentInfo();
-        $FrontController->contentCache()->getInfo($cacheName, $cacheInfo);
+        FrontController::contentCache()->info($cacheName, $cacheInfo);
         if(time() < strtotime('+5 minutes', $cacheInfo->modifiedTime))
             return FALSE;
 
@@ -269,7 +267,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
                     else
                     {
                         // Touch our cached copy so we can delay checking again.
-                        $FrontController->contentCache()->touch($cacheName);
+                        FrontController::contentCache()->touch($cacheName);
                         return FALSE;
                     }
                 }
@@ -328,8 +326,6 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
      */
     private function constructBuilds(&$builds)
     {
-        global $FrontController;
-
         $buildLogUri = self::XML_FEED_URI;
 
         // Is it time to update our cached copy of the build log?
@@ -347,7 +343,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
                 BuildLogParser::parse($logXml, $builds);
 
                 // Parsed successfully; update the cache with this new file.
-                $FrontController->contentCache()->store($logCacheName, $logXml);
+                FrontController::contentCache()->store($logCacheName, $logXml);
                 return TRUE;
             }
             catch(Exception $e)
@@ -358,7 +354,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
                 trigger_error($msg, E_USER_WARNING);
 
                 // Touch our cached copy so we don't try again too soon.
-                $FrontController->contentCache()->touch($logCacheName);
+                FrontController::contentCache()->touch($logCacheName);
             }
         }
 
@@ -366,7 +362,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         // we don't need to do this too often (cache everything!).
         try
         {
-            $cachedLogXml = $FrontController->contentCache()->retrieve($logCacheName);
+            $cachedLogXml = FrontController::contentCache()->retrieve($logCacheName);
             BuildLogParser::parse($cachedLogXml, $builds);
             return TRUE;
         }
@@ -776,8 +772,6 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
      */
     public function InterpretRequest($request)
     {
-        global $FrontController;
-
         $uri = urldecode($request->url()->path());
         // @kludge skip over the first '/' in the home URL.
         $uri = substr($uri, 1);
@@ -829,13 +823,13 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
                         $args['getpackage'] = $pack;
                     }
 
-                    $FrontController->enqueueAction($this, $args);
+                    FrontController::fc()->enqueueAction($this, $args);
                     return true; // Eat the request.
                 }
             }
 
             // Redirect to the build repository index.
-            $FrontController->enqueueAction($this, array('build' => -1/*dummy value*/));
+            FrontController::fc()->enqueueAction($this, array('build' => -1/*dummy value*/));
             return true; // Eat the request.
         }
 
@@ -851,7 +845,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
             if(!$build instanceof BuildEvent)
                 $buildId = 0; // Show the index.
 
-            $FrontController->enqueueAction($this, array('build' => $buildId));
+            FrontController::fc()->enqueueAction($this, array('build' => $buildId));
             return true; // Eat the request.
         }
 
@@ -993,15 +987,15 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
 
     private function outputPackageRedirect(&$pack)
     {
-        global $FrontController;
+        $fc = &FrontController::fc();
 
         if(!($pack instanceof AbstractPackage))
             throw new Exception('Received invalid Package.');
 
         // Begin the page.
         $pageTitle = 'Downloading...';
-        $FrontController->outputHeader($pageTitle);
-        $FrontController->beginPage($pageTitle);
+        $fc->outputHeader($pageTitle);
+        $fc->beginPage($pageTitle);
 
         // Output the redirect directive.
         if($pack->hasDirectDownloadUri())
@@ -1039,7 +1033,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         // End of page content.
 ?></div><?php
 
-        $FrontController->endPage();
+        $fc->endPage();
     }
 
     /**
@@ -1064,7 +1058,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
 
     private function outputPackageGraph(&$pack)
     {
-        global $FrontController;
+        $fc = &FrontController::fc();
 
         if(!($pack instanceof BasePackage))
             throw new Exception('Received invalid Package.');
@@ -1072,7 +1066,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         $cacheName = $this->composePackageGraphCacheName($pack);
         try
         {
-            if(!$FrontController->contentCache()->isPresent($cacheName))
+            if(!FrontController::contentCache()->has($cacheName))
             {
                 // Generate a graph template for this package.
                 $template = array();
@@ -1080,11 +1074,11 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
                 $json = json_encode_clean($template);
 
                 // Store the graph in the cache.
-                $FrontController->contentCache()->store($cacheName, $json);
+                FrontController::contentCache()->store($cacheName, $json);
             }
 
             $contentInfo = new ContentInfo();
-            if($FrontController->contentCache()->getInfo($cacheName, $contentInfo))
+            if(FrontController::contentCache()->info($cacheName, $contentInfo))
             {
                 header('Pragma: public');
                 header('Cache-Control: public');
@@ -1092,7 +1086,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
                 header('Last-Modified: '. date(DATE_RFC1123, $contentInfo->modifiedTime));
                 header('Expires: '. date(DATE_RFC1123, strtotime('+5 days')));
 
-                $FrontController->contentCache()->import($cacheName);
+                FrontController::contentCache()->import($cacheName);
             }
         }
         catch(Exception $e)
@@ -1586,7 +1580,7 @@ jQuery(document).ready(function() {
      */
     public function execute($args=NULL)
     {
-        global $FrontController;
+        $fc = &FrontController::fc();
 
         // The autobuilder operates in Eastern European Time.
         date_default_timezone_set('EET');
@@ -1608,8 +1602,8 @@ jQuery(document).ready(function() {
         $pageTitle = (($build instanceof BuildEvent)? $build->composeName(true/*add release type*/) : 'Build Repository');
 
         // Output this page.
-        $FrontController->outputHeader($pageTitle);
-        $FrontController->beginPage($pageTitle);
+        $fc->outputHeader($pageTitle);
+        $fc->beginPage($pageTitle);
 
 ?><div id="builds"><?php
 
@@ -1626,6 +1620,6 @@ jQuery(document).ready(function() {
 
 ?></div><?php
 
-        $FrontController->endPage();
+        $fc->endPage();
     }
 }

@@ -103,14 +103,12 @@ class MasterBrowserPlugin extends Plugin implements Actioner, RequestInterpreter
 
     private function mustUpdateServerSummaryHtml()
     {
-        global $FrontController;
-
-        if(!$FrontController->contentCache()->isPresent(self::$serverSummaryCacheName)) return TRUE;
+        if(!FrontController::contentCache()->has(self::$serverSummaryCacheName)) return TRUE;
 
         $this->db = new MasterServer();
 
         $cacheInfo = new ContentInfo();
-        $FrontController->contentCache()->getInfo(self::$serverSummaryCacheName, $cacheInfo);
+        FrontContrller::contentCache()->info(self::$serverSummaryCacheName, $cacheInfo);
         return ($this->db->lastUpdate > $cacheInfo->modifiedTime);
     }
 
@@ -212,8 +210,6 @@ jQuery(document).ready(function() {
      */
     public function InterpretRequest($request)
     {
-        global $FrontController;
-
         $url = urldecode($request->url()->path());
 
         // @kludge skip over the first '/' in the home URL.
@@ -285,7 +281,7 @@ jQuery(document).ready(function() {
                     }
 
                     // Write this to our cache.
-                    $FrontController->contentCache()->store(self::$serverSummaryCacheName, $content);
+                    FrontController::contentCache()->store(self::$serverSummaryCacheName, $content);
                 }
                 catch(Exception $e)
                 {
@@ -293,9 +289,9 @@ jQuery(document).ready(function() {
                 }
             }
 
-            if($FrontController->contentCache()->isPresent(self::$serverSummaryCacheName))
+            if(FrontController::contentCache()->has(self::$serverSummaryCacheName))
             {
-                $FrontController->enqueueAction($this, NULL);
+                FrontController::fc()->enqueueAction($this, NULL);
                 return true; // Eat the request.
             }
         }
@@ -308,10 +304,10 @@ jQuery(document).ready(function() {
      */
     public function execute($args=NULL)
     {
-        global $FrontController;
+        $fc = &FrontController::fc();
 
-        $FrontController->outputHeader($this->title(), 'masterserver');
-        $FrontController->beginPage($this->title(), 'masterserver');
+        $fc->outputHeader($this->title(), 'masterserver');
+        $fc->beginPage($this->title(), 'masterserver');
 
 ?><div id="masterbrowser"><?php
 
@@ -320,7 +316,7 @@ jQuery(document).ready(function() {
 
         try
         {
-            $FrontController->contentCache()->import(self::$serverSummaryCacheName);
+            FrontController::contentCache()->import(self::$serverSummaryCacheName);
 
             $this->outputJavascript();
         }
@@ -334,6 +330,6 @@ jQuery(document).ready(function() {
 
 ?></div><?php
 
-        $FrontController->endPage();
+        $fc->endPage();
     }
 }

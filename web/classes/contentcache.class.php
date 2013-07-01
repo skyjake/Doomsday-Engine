@@ -86,7 +86,7 @@ class ContentCache
      * @param relPath  (String) File name to look up.
      * @return  (Boolean) TRUE iff the content element is available.
      */
-    public function isPresent($relPath)
+    public function has($relPath)
     {
         return (bool) file_exists(FrontController::nativePath($this->_docRoot."/$relPath"));
     }
@@ -122,7 +122,7 @@ class ContentCache
      * @param info  (ContentInfo) Info record to be populated.
      * @return  (Boolean) FALSE if the specified file does not exist.
      */
-    public function getInfo($relPath, &$info)
+    public function info($relPath, &$info)
     {
         if(!$info instanceof ContentInfo) return FALSE;
 

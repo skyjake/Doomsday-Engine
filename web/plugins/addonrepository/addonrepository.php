@@ -62,8 +62,6 @@ class AddonRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
      */
     public function InterpretRequest($request)
     {
-        global $FrontController;
-
         $url = urldecode($request->url()->path());
 
         // @kludge skip over the first '/' in the home URL.
@@ -78,7 +76,7 @@ class AddonRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
 
         if(count($tokens) && !strcasecmp(self::$baseRequestName, $tokens[0]))
         {
-            $FrontController->enqueueAction($this, NULL);
+            FrontController::fc()->enqueueAction($this, NULL);
             return true; // Eat the request.
         }
 
@@ -200,7 +198,7 @@ class AddonRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
      */
     public function execute($args=NULL)
     {
-        global $FrontController;
+        $fc = &FrontController::fc();
 
         // Build the add-ons collection.
         $addonListXml = file_get_contents(FrontController::nativePath("plugins/addonrepository/addons.xml"));
@@ -212,8 +210,8 @@ class AddonRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         uasort($this->addons, array('self', 'packageSorter'));
 
         // Output the page.
-        $FrontController->outputHeader($this->title(), 'addons');
-        $FrontController->beginPage($this->title(), 'addons');
+        $fc->outputHeader($this->title(), 'addons');
+        $fc->beginPage($this->title(), 'addons');
 
 ?><div id="addons"><?php
 
@@ -221,6 +219,6 @@ class AddonRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
 
 ?></div><?php
 
-        $FrontController->endPage();
+        $fc->endPage();
     }
 }
