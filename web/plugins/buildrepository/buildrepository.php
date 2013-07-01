@@ -60,8 +60,8 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
     public static $name = 'buildrepository';
 
     /// Feed URIs:
-    const XML_FEED_URI = 'http://dl.dropbox.com/u/11948701/builds/events.xml';
-    const RSS_FEED_URI = 'http://dl.dropbox.com/u/11948701/builds/events.rss';
+    const XML_FEED_URI = 'http://dl.dropboxusercontent.com/u/11948701/builds/events.xml';
+    const RSS_FEED_URI = 'http://dl.dropboxusercontent.com/u/11948701/builds/events.rss';
 
     /**
      * Plaform (Record):
@@ -1220,7 +1220,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
                 /// @todo Temporary kludge to patch the build log URIs
                 /// while code.iki.fi is offline. Remove me.
                 {
-                    $logUri = str_replace("code.iki.fi", "dl.dropbox.com/u/11948701", $logUri);
+                    $logUri = str_replace("code.iki.fi", "dl.dropboxusercontent.com/u/11948701", $logUri);
                 }
                 ///< Kludge end.
 
