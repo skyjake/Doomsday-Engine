@@ -1479,10 +1479,12 @@ bool App_ChangeGame(Game &game, bool allowReload)
     GL_ResetTextureManager();
     GL_SetFilter(false);
 
-    // Trap the mouse automatically when loading a game in fullscreen.
+    if(!isNullGame(game))
     {
         ClientWindow &mainWin = ClientWindow::main();
         mainWin.taskBar().close();
+
+        // Trap the mouse automatically when loading a game in fullscreen.
         if(mainWin.isFullScreen())
         {
             mainWin.canvas().trapMouse();
