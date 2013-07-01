@@ -568,13 +568,6 @@ class FrontController
         </div>
     </div>
 </div>
-<div id="footer">
-<?php
-
-        $this->outputFooter();
-
-?>
-</div>
 <div id="libicons">
 <?php
 
@@ -583,6 +576,13 @@ class FrontController
 
 ?>
 </div>
+<footer id="footer" role="contentinfo">
+<?php
+
+        $this->outputFooter();
+
+?>
+</footer>
 </body>
 </html>
 <?php
@@ -597,39 +597,35 @@ class FrontController
         header('Content-type: text/html; charset=utf-8');
         header('X-Frame-Options: SAMEORIGIN');
 
-?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+?><!DOCTYPE html>
+<html dir="ltr" lang="en-GB">
 <head>
-    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
-    <link rel="icon" href="http://dl.dropboxusercontent.com/u/11948701/dengine.net/images/favicon.png" type="image/png" />
-    <link rel="shortcut icon" href="http://dl.dropboxusercontent.com/u/11948701/dengine.net/images/favicon.png" type="image/png" />
-    <link rel="alternate" type="application/rss+xml" title="Doomsday Engine RSS News Feed" href="http://dengine.net/forums/rss.php?mode=news" />
-    <meta http-equiv="expires" content="0" />
-    <meta name="resource-type" content="DOCUMENT" />
-    <meta name="distribution" content="GLOBAL" />
+    <title><?=$siteTitle?></title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
     <meta name="author" content="<?=$this->siteAuthor()?>" />
-    <meta name="copyright" content="<?=$this->siteCopyright()?>" />
     <meta name="keywords" content="<?php { $keywords = $this->defaultPageKeywords(); foreach($keywords as $keyword) echo $keyword.','; } ?>" />
     <meta name="description" content="<?=$this->siteDescription()?>" />
-    <meta name="robots" content="INDEX, FOLLOW" />
+    <meta name="robots" content="index, follow" />
     <meta name="revisit-after" content="<?=$this->robotRevisitDays()?> DAYS" />
     <meta name="rating" content="GENERAL" />
     <meta name="generator" content="<?=$this->homeURL()?>" />
-    <title><?=$siteTitle?></title>
+    <link rel="icon" href="http://dl.dropboxusercontent.com/u/11948701/dengine.net/images/favicon.png" type="image/png" />
+    <link rel="shortcut icon" href="http://dl.dropboxusercontent.com/u/11948701/dengine.net/images/favicon.png" type="image/png" />
+    <link rel="alternate" type="application/rss+xml" title="Doomsday Engine RSS News Feed" href="http://dengine.net/forums/rss.php?mode=news" />
 
     <!-- jQuery -->
-    <script type="text/javascript" src="/external/jquery/js/jquery-1.6.2.min.js"></script>
+    <script src="/external/jquery/js/jquery-1.6.2.min.js"></script>
 
     <!-- jCarousel -->
-    <script type="text/javascript" src="/external/jquery.jcarousel/js/jquery.jcarousel.min.js"></script>
-    <link rel="stylesheet" type="text/css" href="/external/jquery.jcarousel/skin.css" />
+    <script src="/external/jquery.jcarousel/js/jquery.jcarousel.min.js"></script>
+    <link rel="stylesheet" media="screen" href="/external/jquery.jcarousel/skin.css" />
 
     <!-- Thickbox 3 -->
-    <script type="text/javascript" src="/external/thickbox/js/thickbox.js"></script>
-    <link rel="stylesheet" type="text/css" href="/external/thickbox/thickbox.css" />
+    <script src="/external/thickbox/js/thickbox.js"></script>
+    <link rel="stylesheet" media="screen" href="/external/thickbox/thickbox.css" />
 
-    <meta http-equiv="content-style-type" content="text/css" />
-    <link rel="stylesheet" href="/style.css" type="text/css" media="all" />
+    <link rel="stylesheet" media="all" href="/style.css" />
 </head>
 <?php
     }
