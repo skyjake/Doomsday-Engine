@@ -274,7 +274,7 @@ function outputCommitLog(&$build)
     $commitsCacheName = 'buildrepository/'.$build->uniqueId().'/commits.html';
     try
     {
-        FrontController::fc()->contentCache()->import($commitsCacheName);
+        FrontController::contentCache()->import($commitsCacheName);
     }
     catch(Exception $e)
     {
@@ -284,7 +284,7 @@ function outputCommitLog(&$build)
         outputCommitLogHTML($build);
         $content = $OutputCache->stop();
 
-        FrontController::fc()->contentCache()->store($commitsCacheName, $content);
+        FrontController::contentCache()->store($commitsCacheName, $content);
 
         print($content);
     }

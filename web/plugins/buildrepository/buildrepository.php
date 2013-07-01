@@ -224,9 +224,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
      */
     private static function mustUpdateCachedBuildLog(&$buildLogUri, &$cacheName)
     {
-        $fc = &FrontController::fc();
-
-        if(!$fc->contentCache()->isPresent($cacheName))
+        if(!FrontController::contentCache()->isPresent($cacheName))
             return TRUE;
 
         // Only query the remote server at most once every five minutes for an
@@ -234,7 +232,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         // to determine when it is time to query (we touch the cached copy after
         // each query attempt).
         $cacheInfo = new ContentInfo();
-        $fc->contentCache()->getInfo($cacheName, $cacheInfo);
+        FrontController::contentCache()->getInfo($cacheName, $cacheInfo);
         if(time() < strtotime('+5 minutes', $cacheInfo->modifiedTime))
             return FALSE;
 
@@ -269,7 +267,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
                     else
                     {
                         // Touch our cached copy so we can delay checking again.
-                        $fc->contentCache()->touch($cacheName);
+                        FrontController::contentCache()->touch($cacheName);
                         return FALSE;
                     }
                 }
@@ -328,8 +326,6 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
      */
     private function constructBuilds(&$builds)
     {
-        $fc = &FrontController::fc();
-
         $buildLogUri = self::XML_FEED_URI;
 
         // Is it time to update our cached copy of the build log?
@@ -347,7 +343,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
                 BuildLogParser::parse($logXml, $builds);
 
                 // Parsed successfully; update the cache with this new file.
-                $fc->contentCache()->store($logCacheName, $logXml);
+                FrontController::contentCache()->store($logCacheName, $logXml);
                 return TRUE;
             }
             catch(Exception $e)
@@ -358,7 +354,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
                 trigger_error($msg, E_USER_WARNING);
 
                 // Touch our cached copy so we don't try again too soon.
-                $fc->contentCache()->touch($logCacheName);
+                FrontController::contentCache()->touch($logCacheName);
             }
         }
 
@@ -366,7 +362,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         // we don't need to do this too often (cache everything!).
         try
         {
-            $cachedLogXml = $fc->contentCache()->retrieve($logCacheName);
+            $cachedLogXml = FrontController::contentCache()->retrieve($logCacheName);
             BuildLogParser::parse($cachedLogXml, $builds);
             return TRUE;
         }
@@ -1070,7 +1066,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         $cacheName = $this->composePackageGraphCacheName($pack);
         try
         {
-            if(!$fc->contentCache()->isPresent($cacheName))
+            if(!FrontController::contentCache()->isPresent($cacheName))
             {
                 // Generate a graph template for this package.
                 $template = array();
@@ -1078,11 +1074,11 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
                 $json = json_encode_clean($template);
 
                 // Store the graph in the cache.
-                $fc->contentCache()->store($cacheName, $json);
+                FrontController::contentCache()->store($cacheName, $json);
             }
 
             $contentInfo = new ContentInfo();
-            if($fc->contentCache()->getInfo($cacheName, $contentInfo))
+            if(FrontController::contentCache()->getInfo($cacheName, $contentInfo))
             {
                 header('Pragma: public');
                 header('Cache-Control: public');
@@ -1090,7 +1086,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
                 header('Last-Modified: '. date(DATE_RFC1123, $contentInfo->modifiedTime));
                 header('Expires: '. date(DATE_RFC1123, strtotime('+5 days')));
 
-                $fc->contentCache()->import($cacheName);
+                FrontController::contentCache()->import($cacheName);
             }
         }
         catch(Exception $e)

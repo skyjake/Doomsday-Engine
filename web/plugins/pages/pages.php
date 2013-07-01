@@ -40,10 +40,10 @@ class PagesPlugin extends Plugin implements Actioner, RequestInterpreter
 
     public function mustUpdateCachedPage(&$pageFile, &$cacheName)
     {
-        if(!FrontController::fc()->contentCache()->isPresent($cacheName)) return TRUE;
+        if(!FrontController::contentCache()->isPresent($cacheName)) return TRUE;
 
         $cacheInfo = new ContentInfo();
-        FrontController::fc()->contentCache()->getInfo($cacheName, $cacheInfo);
+        FrontController::contentCache()->getInfo($cacheName, $cacheInfo);
         return (filemtime($pageFile) > $cacheInfo->modifiedTime);
     }
 
@@ -78,7 +78,7 @@ class PagesPlugin extends Plugin implements Actioner, RequestInterpreter
                     try
                     {
                         $content = file_get_contents($pageFile);
-                        FrontController::fc()->contentCache()->store($cacheName, $content);
+                        FrontController::contentCache()->store($cacheName, $content);
                     }
                     catch(Exception $e)
                     {
@@ -87,7 +87,7 @@ class PagesPlugin extends Plugin implements Actioner, RequestInterpreter
                 }
             }
 
-            if(FrontController::fc()->contentCache()->isPresent($cacheName))
+            if(FrontController::contentCache()->isPresent($cacheName))
             {
                 FrontController::fc()->enqueueAction($this, array('page' => $pageName));
                 return true; // Eat the request.
@@ -123,7 +123,7 @@ class PagesPlugin extends Plugin implements Actioner, RequestInterpreter
 
         try
         {
-            $fc->contentCache()->import($pageFile);
+            FrontController::contentCache()->import($pageFile);
         }
         catch(Exception $e)
         {

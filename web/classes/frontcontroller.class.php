@@ -636,7 +636,7 @@ class FrontController
         }
     }
 
-    public function contentCache()
+    private function &getContentCache()
     {
         if(!is_object($this->_contentCache))
         {
@@ -644,6 +644,11 @@ class FrontController
         }
 
         return $this->_contentCache;
+    }
+
+    public static function &contentCache()
+    {
+        return self::fc()->getContentCache();
     }
 
     public static function absolutePath($path)

@@ -103,14 +103,12 @@ class MasterBrowserPlugin extends Plugin implements Actioner, RequestInterpreter
 
     private function mustUpdateServerSummaryHtml()
     {
-        $fc = &FrontController::fc();
-
-        if(!$fc->contentCache()->isPresent(self::$serverSummaryCacheName)) return TRUE;
+        if(!FrontController::contentCache()->isPresent(self::$serverSummaryCacheName)) return TRUE;
 
         $this->db = new MasterServer();
 
         $cacheInfo = new ContentInfo();
-        $fc->contentCache()->getInfo(self::$serverSummaryCacheName, $cacheInfo);
+        FrontContrller::contentCache()->getInfo(self::$serverSummaryCacheName, $cacheInfo);
         return ($this->db->lastUpdate > $cacheInfo->modifiedTime);
     }
 
@@ -283,7 +281,7 @@ jQuery(document).ready(function() {
                     }
 
                     // Write this to our cache.
-                    FrontController::fc()->contentCache()->store(self::$serverSummaryCacheName, $content);
+                    FrontController::contentCache()->store(self::$serverSummaryCacheName, $content);
                 }
                 catch(Exception $e)
                 {
@@ -291,7 +289,7 @@ jQuery(document).ready(function() {
                 }
             }
 
-            if(FrontController::fc()->contentCache()->isPresent(self::$serverSummaryCacheName))
+            if(FrontController::contentCache()->isPresent(self::$serverSummaryCacheName))
             {
                 FrontController::fc()->enqueueAction($this, NULL);
                 return true; // Eat the request.
@@ -318,7 +316,7 @@ jQuery(document).ready(function() {
 
         try
         {
-            $fc->contentCache()->import(self::$serverSummaryCacheName);
+            FrontController::contentCache()->import(self::$serverSummaryCacheName);
 
             $this->outputJavascript();
         }
