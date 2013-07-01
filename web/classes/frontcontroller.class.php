@@ -651,44 +651,6 @@ class FrontController
         return self::fc()->getContentCache();
     }
 
-    public static function absolutePath($path)
-    {
-        return $_SERVER['DOCUMENT_ROOT'] . self::nativePath('/'.$path);
-    }
-
-    public static function nativePath($path)
-    {
-        $path = str_replace(array('/', '\\'), DIRECTORY_SEPARATOR, $path);
-
-        $result = array();
-        $pathA = explode(DIRECTORY_SEPARATOR, $path);
-        if(!$pathA[0])
-            $result[] = '';
-        foreach($pathA AS $key => $dir)
-        {
-            if($dir == '..')
-            {
-                if(end($result) == '..')
-                {
-                    $result[] = '..';
-                }
-                else if(!array_pop($result))
-                {
-                    $result[] = '..';
-                }
-            }
-            else if($dir && $dir != '.')
-            {
-                $result[] = $dir;
-            }
-        }
-
-        if(!end($pathA))
-            $result[] = '';
-
-        return implode(DIRECTORY_SEPARATOR, $result);
-    }
-
     public static function ErrorHandler($errno, $errmsg, $filename, $linenum, $vars)
     {
         $errortype = array (

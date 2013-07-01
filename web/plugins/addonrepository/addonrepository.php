@@ -201,7 +201,7 @@ class AddonRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         $fc = &FrontController::fc();
 
         // Build the add-ons collection.
-        $addonListXml = file_get_contents(FrontController::nativePath("plugins/addonrepository/addons.xml"));
+        $addonListXml = file_get_contents(nativePath("plugins/addonrepository/addons.xml"));
 
         $this->addons = array();
         AddonsParser::parse($addonListXml, $this->addons);
