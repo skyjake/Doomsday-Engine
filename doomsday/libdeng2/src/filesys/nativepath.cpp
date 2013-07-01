@@ -60,7 +60,7 @@ static QString toNative(QString const &s)
 {
     // This will resolve parent references (".."), multiple separators
     // (hello//world), and self-references (".").
-    return QDir::toNativeSeparators(QDir::cleanPath(s));
+    return Path::normalizeString(QDir::cleanPath(s), DIR_SEPARATOR);
 }
 
 NativePath::NativePath() : Path()
