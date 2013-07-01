@@ -515,7 +515,7 @@ void Sfx_CacheHit(int id)
 static sfxsample_t *cacheSample(int id, sfxinfo_t const *info)
 {
     LOG_AS("Sfx_Cache");
-    LOG_INFO("Caching sample '%s' (#%i)...") << info->id << id;
+    LOG_VERBOSE("Caching sample '%s' (#%i)...") << info->id << id;
 
     int bytesPer = 0, rate = 0, numSamples = 0;
 
