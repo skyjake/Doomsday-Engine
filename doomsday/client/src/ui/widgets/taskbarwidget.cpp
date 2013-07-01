@@ -362,8 +362,7 @@ void TaskBarWidget::open(bool doAction)
         d->console->clearLog();
 
         d->vertShift->set(0, .2f);
-        d->logo->setOpacity(1, .2f);
-        d->status->setOpacity(1, .2f);
+        setOpacity(1, .2f);
 
         emit opened();
 
@@ -404,8 +403,7 @@ void TaskBarWidget::close()
         // Slide the task bar down.
         d->vertShift->set(rule().height().valuei() +
                           style().rules().rule("unit").valuei(), .2f);
-        d->logo->setOpacity(0, .2f);
-        d->status->setOpacity(0, .2f);
+        setOpacity(0, .2f);
 
         d->console->closeLog();
         d->mainMenu->close();
