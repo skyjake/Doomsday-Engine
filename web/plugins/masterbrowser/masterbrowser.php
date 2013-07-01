@@ -103,12 +103,12 @@ class MasterBrowserPlugin extends Plugin implements Actioner, RequestInterpreter
 
     private function mustUpdateServerSummaryHtml()
     {
-        if(!FrontController::contentCache()->isPresent(self::$serverSummaryCacheName)) return TRUE;
+        if(!FrontController::contentCache()->has(self::$serverSummaryCacheName)) return TRUE;
 
         $this->db = new MasterServer();
 
         $cacheInfo = new ContentInfo();
-        FrontContrller::contentCache()->getInfo(self::$serverSummaryCacheName, $cacheInfo);
+        FrontContrller::contentCache()->info(self::$serverSummaryCacheName, $cacheInfo);
         return ($this->db->lastUpdate > $cacheInfo->modifiedTime);
     }
 
@@ -289,7 +289,7 @@ jQuery(document).ready(function() {
                 }
             }
 
-            if(FrontController::contentCache()->isPresent(self::$serverSummaryCacheName))
+            if(FrontController::contentCache()->has(self::$serverSummaryCacheName))
             {
                 FrontController::fc()->enqueueAction($this, NULL);
                 return true; // Eat the request.

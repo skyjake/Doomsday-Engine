@@ -40,10 +40,10 @@ class PagesPlugin extends Plugin implements Actioner, RequestInterpreter
 
     public function mustUpdateCachedPage(&$pageFile, &$cacheName)
     {
-        if(!FrontController::contentCache()->isPresent($cacheName)) return TRUE;
+        if(!FrontController::contentCache()->has($cacheName)) return TRUE;
 
         $cacheInfo = new ContentInfo();
-        FrontController::contentCache()->getInfo($cacheName, $cacheInfo);
+        FrontController::contentCache()->info($cacheName, $cacheInfo);
         return (filemtime($pageFile) > $cacheInfo->modifiedTime);
     }
 
@@ -87,7 +87,7 @@ class PagesPlugin extends Plugin implements Actioner, RequestInterpreter
                 }
             }
 
-            if(FrontController::contentCache()->isPresent($cacheName))
+            if(FrontController::contentCache()->has($cacheName))
             {
                 FrontController::fc()->enqueueAction($this, array('page' => $pageName));
                 return true; // Eat the request.

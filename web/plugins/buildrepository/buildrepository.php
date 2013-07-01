@@ -224,7 +224,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
      */
     private static function mustUpdateCachedBuildLog(&$buildLogUri, &$cacheName)
     {
-        if(!FrontController::contentCache()->isPresent($cacheName))
+        if(!FrontController::contentCache()->has($cacheName))
             return TRUE;
 
         // Only query the remote server at most once every five minutes for an
@@ -232,7 +232,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         // to determine when it is time to query (we touch the cached copy after
         // each query attempt).
         $cacheInfo = new ContentInfo();
-        FrontController::contentCache()->getInfo($cacheName, $cacheInfo);
+        FrontController::contentCache()->info($cacheName, $cacheInfo);
         if(time() < strtotime('+5 minutes', $cacheInfo->modifiedTime))
             return FALSE;
 
@@ -1066,7 +1066,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         $cacheName = $this->composePackageGraphCacheName($pack);
         try
         {
-            if(!FrontController::contentCache()->isPresent($cacheName))
+            if(!FrontController::contentCache()->has($cacheName))
             {
                 // Generate a graph template for this package.
                 $template = array();
@@ -1078,7 +1078,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
             }
 
             $contentInfo = new ContentInfo();
-            if(FrontController::contentCache()->getInfo($cacheName, $contentInfo))
+            if(FrontController::contentCache()->info($cacheName, $contentInfo))
             {
                 header('Pragma: public');
                 header('Cache-Control: public');
