@@ -104,9 +104,11 @@ public IGameChangeObserver
 
     void setupUI()
     {
+        Style &style = ClientApp::windowSystem().style();
+
         // Background for Ring Zero.
         background = new LabelWidget;
-        background->setImage(ClientApp::windowSystem().style().images().image("window.background"));
+        background->setImage(style.images().image("window.background"));
         background->setImageFit(ui::FitToSize);
         background->setSizePolicy(ui::Filled, ui::Filled);
         background->setMargin("");
@@ -129,7 +131,6 @@ public IGameChangeObserver
                 .setInput(Rule::AnchorX, root.viewLeft() + root.viewWidth() / 2)
                 .setInput(Rule::AnchorY, root.viewTop() + root.viewHeight() / 2)
                 .setInput(Rule::Width,   OperatorRule::minimum(root.viewWidth(), Const(800)))
-                .setInput(Rule::Height,  OperatorRule::minimum(root.viewHeight(), Const(600)))
                 .setAnchorPoint(Vector2f(.5f, .5f));
         root.add(games);
 
@@ -140,6 +141,12 @@ public IGameChangeObserver
                 .setInput(Rule::Bottom, root.viewBottom() + taskBar->shift())
                 .setInput(Rule::Width,  root.viewWidth());
         root.add(taskBar);
+
+        // The game selection's height depends on the taskbar.
+        games->rule().setInput(Rule::Height,
+                               OperatorRule::minimum(root.viewHeight(),
+                                                     (taskBar->rule().top() - root.viewHeight() / 2) * 2,
+                                                     Const(600)));
 
         // Initially the widget is disabled. It will be enabled when the window
         // is visible and ready to be drawn.

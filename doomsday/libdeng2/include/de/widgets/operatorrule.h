@@ -61,6 +61,10 @@ public:
         return *refless(new OperatorRule(Minimum, left, right));
     }
 
+    static OperatorRule &minimum(Rule const &a, Rule const &b, Rule const &c) {
+        return minimum(a, minimum(b, c));
+    }
+
     static OperatorRule &floor(Rule const &unary) {
         return *refless(new OperatorRule(Floor, unary));
     }

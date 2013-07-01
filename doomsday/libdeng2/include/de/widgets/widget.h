@@ -67,6 +67,7 @@ public:
         /// Children cannot be hit outside this widget's boundaries.
         ChildHitClipping = 0x20,
 
+        /// No events will be dispatched to the children of the widget.
         DisableEventDispatchToChildren = 0x40,
 
         DefaultBehavior = 0
