@@ -436,8 +436,9 @@ disable-joystick: Disable joystick
 
 verbosity: Verbose messages
 verbosity-none: No
-verbosity-devel: Level 1
-verbosity-extra: Level 2
+verbosity-devel: Level 1 (verbose)
+verbosity-extra: Level 2 (debug)
+verbosity-trace: Level 3 (trace; most verbose)
 
 custom-cmdline: Custom options
 

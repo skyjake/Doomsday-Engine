@@ -266,10 +266,11 @@ disable-win-sys-keys: Poista Windows-järjestelmänäppäimet käytöstä
 disable-mouse: Poista hiiri
 disable-joystick: Poista joystick
 
-verbosity: Verboosit viestit
-verbosity-none: Ei
-verbosity-devel: Taso 1
-verbosity-extra: Taso 2
+verbosity: Lokiviestien suodatus
+verbosity-none: Normaali
+verbosity-devel: Taso 1 (Verbose)
+verbosity-extra: Taso 2 (Debug)
+verbosity-trace: Taso 3 (Trace)
 
 custom-cmdline: Omat valinnat
 
