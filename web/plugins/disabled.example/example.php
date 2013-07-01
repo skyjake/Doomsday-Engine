@@ -71,8 +71,6 @@ class ExamplePlugin extends Plugin implements Actioner, RequestInterpreter
      */
     public function InterpretRequest($request)
     {
-        global $FrontController;
-
         $url = urldecode($request->url()->path());
         // @kludge skip over the first '/' in the home URL.
         $url = substr($url, 1);
@@ -86,7 +84,7 @@ class ExamplePlugin extends Plugin implements Actioner, RequestInterpreter
         if(count($tokens) && !strcasecmp(self::$baseRequestName, $tokens[0]))
         {
             // Our only action will be to display a page to the user.
-            $FrontController->enqueueAction($this, NULL);
+            FrontController::fc()->enqueueAction($this, NULL);
             return true; // Eat the request.
         }
 
@@ -98,13 +96,13 @@ class ExamplePlugin extends Plugin implements Actioner, RequestInterpreter
      */
     public function execute($args=NULL)
     {
-        global $FrontController;
+        $fc = &FrontController::fc();
 
-        $FrontController->outputHeader($this->title());
-        $FrontController->beginPage($this->title());
+        $fc->outputHeader($this->title());
+        $fc->beginPage($this->title());
 
 ?><div id="example_page" style="padding: 1em;background-color: white;"><p>Hello World!</p></div><?php
 
-        $FrontController->endPage();
+        $fc->endPage();
     }
 }

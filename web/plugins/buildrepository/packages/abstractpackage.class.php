@@ -59,8 +59,6 @@ abstract class AbstractPackage extends BasePackage implements iDownloadable
     // Extends implementation in AbstractPackage.
     public function populateGraphTemplate(&$tpl)
     {
-        global $FrontController;
-
         if(!is_array($tpl))
             throw new Exception('Invalid template argument, array expected');
 

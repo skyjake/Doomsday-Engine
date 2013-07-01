@@ -130,9 +130,9 @@ jQuery(document).ready(function()
      */
     public function execute($args=NULL)
     {
-        global $FrontController;
+        $fc = &FrontController::fc();
 
-        $FrontController->outputHeader($this->title());
+        $fc->outputHeader($this->title());
 
         $imgDir = '/images/screenshots';
         $doomImages = array(
@@ -156,7 +156,7 @@ jQuery(document).ready(function()
             array('url' => $imgDir."/hexen/1.jpg", 'caption' => "Title1"));
         $this->generateJavascript($hexenImages, 'hexenCarousel');
 
-        $FrontController->beginPage($this->title());
+        $fc->beginPage($this->title());
 
 ?><div id="screenshots">
 <script type="text/javascript">

@@ -1,26 +1,23 @@
 <?php
-/**
- * @file frontcontroller.class.php
- * Centralized point of entry for HTTP request interpretation.
+/** @file frontcontroller.class.php Centralized point of entry
  *
- * @section License
+ * Also oversees and routes HTTP request interpretation to plugins.
+ *
+ * @authors Copyright Â© 2009-2013 Daniel Swanson <danij@dengine.net>
+ *
+ * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the Free
- * Software Foundation; either version 2 of the License, or (at your option)
- * any later version.
- *
- * This program is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
- * more details.
- *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- *
- * @author Copyright &copy; 2009-2013 Daniel Swanson <danij@dengine.net>
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 // Define the "platform", our expected default configuration.
@@ -39,6 +36,8 @@ require_once(DIR_CLASSES.'/requestinterpreter.interface.php');
 
 class FrontController
 {
+    private static $singleton = NULL;
+
     private $_request;
     private $_plugins;
     private $_actions;
@@ -99,7 +98,7 @@ class FrontController
             $this->_defaultPageKeywords = $config['Keywords'];
     }
 
-    public function __construct($config)
+    private function __construct($config)
     {
         if(!is_array($config))
             throw new Exception('Invalid config, array expected');
@@ -127,6 +126,22 @@ class FrontController
 
         $this->_request = new Request($url, $_POST);
         $this->_actions = new Actions();
+    }
+
+    private function __clone() {}
+
+    /**
+     * Returns the Singleton front controller instance.
+     */
+    public static function &fc()
+    {
+        if(is_null(self::$singleton))
+        {
+            $siteconfig = array();
+            include('./config.inc.php');
+            self::$singleton = new FrontController($siteconfig);
+        }
+        return self::$singleton;
     }
 
     public function &request()
