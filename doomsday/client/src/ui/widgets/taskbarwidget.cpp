@@ -302,6 +302,33 @@ void TaskBarWidget::drawContent()
 
 bool TaskBarWidget::handleEvent(Event const &event)
 {
+    Canvas &canvas = root().window().canvas();
+
+    if(!canvas.isMouseTrapped() && event.type() == Event::MouseButton)
+    {
+        // Clicking outside the taskbar will trap the mouse automatically.
+        MouseEvent const &mouse = event.as<MouseEvent>();
+        if(mouse.state() == MouseEvent::Released && !hitTest(mouse.pos()))
+        {
+            if(root().focus())
+            {
+                // First click will remove UI focus, allowing LegacyWidget
+                // to receive events.
+                root().setFocus(0);
+                return true;
+            }
+
+            if(App_GameLoaded())
+            {
+                // Allow game to use the mouse.
+                canvas.trapMouse();
+            }
+
+            root().window().taskBar().close();
+            return true;
+        }
+    }
+
     if(event.type() == Event::KeyPress)
     {
         KeyEvent const &key = event.as<KeyEvent>();

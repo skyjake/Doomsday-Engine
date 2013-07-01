@@ -245,26 +245,11 @@ bool LegacyWidget::handleEvent(Event const &event)
      * submit as Latin1.
      */
 
-    // Clicking on the game view will trap the mouse automatically.
-    Canvas &canvas = root().window().canvas();
-    if(!canvas.isMouseTrapped() && event.type() == Event::MouseButton &&
-       App_GameLoaded())
+    if(event.type() == Event::MouseButton && !root().window().canvas().isMouseTrapped())
     {
-        MouseEvent const &mouse = event.as<MouseEvent>();
-        if(mouse.state() == MouseEvent::Released && hitTest(mouse.pos()))
-        {
-            if(root().focus())
-            {
-                // First click will remove UI focus, allowing LegacyWidget
-                // to receive events.
-                root().setFocus(0);
-                return true;
-            }
-
-            canvas.trapMouse();
-            root().window().taskBar().close();
-            return true;
-        }
+        // If the mouse is not trapped, we will just eat button clicks which
+        // will prevent them from reaching the legacy input system.
+        return true;
     }
 
     if(event.type() == Event::KeyPress ||
