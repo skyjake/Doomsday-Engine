@@ -11,6 +11,12 @@ QMAKE_CFLAGS_WARN_ON -= -Wall
 QMAKE_CFLAGS_WARN_ON -= -W
 QMAKE_CFLAGS_WARN_ON += -Werror-implicit-function-declaration -fdiagnostics-show-option
 
+deng_debuginfo {
+    # Inclusion of debug info was requested.
+    QMAKE_CFLAGS += -g
+    QMAKE_CXXFLAGS += -g
+}
+
 *-g++*|*-gcc* {
     # Allow //-comments and anonymous structs inside unions.
     QMAKE_CFLAGS += -std=c99 -fms-extensions
