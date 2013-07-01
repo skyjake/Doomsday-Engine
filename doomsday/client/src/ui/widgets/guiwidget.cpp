@@ -428,7 +428,8 @@ bool GuiWidget::hitTest(Vector2i const &pos) const
         GuiWidget const *gui = dynamic_cast<GuiWidget const *>(w);
         if(gui)
         {
-            if(gui->behavior().testFlag(ChildHitClipping) && !gui->hitTest(pos))
+            if(gui->behavior().testFlag(ChildHitClipping) &&
+               !gui->rule().recti().contains(pos))
             {
                 // Must hit clipped parent widgets as well.
                 return false;

@@ -201,9 +201,13 @@ DENG2_PIMPL(PopupWidget)
 
         opened = false;
 
+        self.setBehavior(DisableEventDispatchToChildren);
+
         // Begin the closing animation.
         openingRule->setStyle(Animation::EaseIn);
         openingRule->set(0, CLOSING_ANIM_SPAN, delay);
+
+        self.popupClosing();
 
         emit self.closed();
 
@@ -270,6 +274,11 @@ void PopupWidget::setAnchor(Rule const &x, Rule const &y)
 void PopupWidget::setOpeningDirection(ui::Direction dir)
 {
     d->dir = dir;
+}
+
+bool PopupWidget::isOpen() const
+{
+    return d->opened;
 }
 
 void PopupWidget::viewResized()
@@ -343,6 +352,8 @@ void PopupWidget::open()
     d->realParent->remove(*this);
     d->realParent->root().add(this);
 
+    unsetBehavior(DisableEventDispatchToChildren);
+
     show();
 
     preparePopupForOpening();
@@ -412,4 +423,9 @@ void PopupWidget::glDeinit()
 void PopupWidget::preparePopupForOpening()
 {
     d->updateLayout();
+}
+
+void PopupWidget::popupClosing()
+{
+    // overridden
 }

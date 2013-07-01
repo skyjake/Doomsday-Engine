@@ -132,3 +132,15 @@ void PopupMenuWidget::preparePopupForOpening()
                            *refless(menu().newColumnWidthRule(0)) + 2 * margin());
     menu().updateLayout();
 }
+
+void PopupMenuWidget::popupClosing()
+{
+    PopupWidget::popupClosing();
+
+    if(d->hover)
+    {
+        d->hover->setTextColor("text");
+        d->hover = 0;
+        requestGeometry();
+    }
+}
