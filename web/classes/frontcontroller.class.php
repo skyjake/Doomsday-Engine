@@ -311,21 +311,55 @@ class FrontController
     private function outputNewsFeed()
     {
         require_once(DIR_CLASSES.'/feed.class.php');
+
+        $newsContent = array();
         {
+            $maxItems = 3;
             $feed = new Feed('http://dengine.net/forums/rss.php?mode=news');
-            $this->generateFeedHtml($feed, 3, 'Project News', 'projectnews-label');
+            $n = (int) 0;
+            foreach($feed as $item)
+            {
+                $newsContent[$item->timestamp] = $this->generateFeedItemHtml($item);
+                if(++$n >= $maxItems) break;
+            }
         }
         {
+            $maxItems = 3;
+            $params = array('titleTemplate'=>'{title} complete',
+                            'labelTemplate'=>'Read more about {title}, completed on {timestamp}');
+
             $feed = new Feed('http://dl.dropboxusercontent.com/u/11948701/builds/events.rss');
-            $this->generateFeedHtml($feed, 3, 'Build News', 'projectnews-label',
-                                    array('titleTemplate'=>'{title} complete',
-                                          'labelTemplate'=>'Read more about {title}, completed on {timestamp}'));
+            $n = (int) 0;
+            foreach($feed as $item)
+            {
+                $newsContent[$item->timestamp] = $this->generateFeedItemHtml($item, $params);
+                if(++$n >= $maxItems) break;
+            }
         }
         {
+            $maxItems = 3;
+            $params = array('labelTemplate'=>'Read more about {title}, posted on {timestamp}');
+
             $feed = new Feed('http://dengine.net/forums/rss.php?f=24');
-            $this->generateFeedHtml($feed, 3, 'Developer Blog', 'projectnews-label',
-                                    array('labelTemplate'=>'Read more about {title}, posted on {timestamp}'));
+            $n = (int) 0;
+            foreach($feed as $item)
+            {
+                $newsContent[$item->timestamp] = $this->generateFeedItemHtml($item, $params);
+                if(++$n >= $maxItems) break;
+            }
         }
+
+?><span class="projectnews-label">Latest news</span>
+<ul><?php
+
+        krsort($newsContent, SORT_NUMERIC);
+        foreach($newsContent as &$contentItemHtml)
+        {
+?><li><?php echo $contentItemHtml; ?></li><?php
+        }
+
+?></ul><?php
+
     }
 
     /**

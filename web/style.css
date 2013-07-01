@@ -646,7 +646,7 @@ p.legal a {
     position: relative;
     top: -275px; /* minus (image height - divider height) */
     min-width: 201px;
-    padding-left: .5em;
+    padding-left: 1.3em;
     padding-top: .5em;
     float: left;
     text-align: left;
@@ -660,7 +660,6 @@ p.legal a {
 
 #projectnews ul {
     padding: 0;
-    margin-left: 1.8em;
     margin-top: .4em;
 }
 
