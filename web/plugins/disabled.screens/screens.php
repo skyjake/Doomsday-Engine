@@ -48,8 +48,6 @@ class ScreensPlugin extends Plugin implements Actioner, RequestInterpreter
      */
     public function InterpretRequest($request)
     {
-        global $FrontController;
-
         $url = urldecode($request->url()->path());
 
         // @kludge skip over the first '/' in the home URL.
@@ -64,7 +62,7 @@ class ScreensPlugin extends Plugin implements Actioner, RequestInterpreter
 
         if(count($tokens) && !strcasecmp(self::$baseRequestName, $tokens[0]))
         {
-            $FrontController->enqueueAction($this, NULL);
+            FrontController::fc()->enqueueAction($this, NULL);
             return true; // Eat the request.
         }
 
@@ -170,6 +168,6 @@ tb_pathToImage = "/external/thickbox/loading-thickbox.gif";
 
 ?></div><?php
 
-        $FrontController->endPage();
+        $fc->endPage();
     }
 }

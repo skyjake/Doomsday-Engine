@@ -45,7 +45,7 @@ class ContentCache
            !isset($content) || $content == '')
             return false;
 
-        $file = FrontController::absolutePath($this->_docRoot.'/'.$file);
+        $file = absolutePath($this->_docRoot.'/'.$file);
 
         /*try
         {*/
@@ -88,7 +88,7 @@ class ContentCache
      */
     public function has($relPath)
     {
-        return (bool) file_exists(FrontController::nativePath($this->_docRoot."/$relPath"));
+        return (bool) file_exists(nativePath($this->_docRoot."/$relPath"));
     }
 
     /**
@@ -101,7 +101,7 @@ class ContentCache
      */
     public function retrieve($relPath)
     {
-        $path = FrontController::nativePath($this->_docRoot."/$relPath");
+        $path = nativePath($this->_docRoot."/$relPath");
 
         if(!$path || !file_exists($path))
             throw new Exception(sprintf('file %s not present in content cache.', $relPath));
@@ -126,7 +126,7 @@ class ContentCache
     {
         if(!$info instanceof ContentInfo) return FALSE;
 
-        $path = FrontController::nativePath($this->_docRoot."/$relPath");
+        $path = nativePath($this->_docRoot."/$relPath");
         if(!$path || !file_exists($path)) return FALSE;
 
         $info->modifiedTime = filemtime($path);
@@ -141,7 +141,7 @@ class ContentCache
      */
     public function touch($relPath)
     {
-        $path = FrontController::nativePath($this->_docRoot."/$relPath");
+        $path = nativePath($this->_docRoot."/$relPath");
         if(!$path || !file_exists($path)) return FALSE;
 
         touch($path);
@@ -157,7 +157,7 @@ class ContentCache
      */
     public function import($relPath)
     {
-        $path = FrontController::nativePath($this->_docRoot."/$relPath");
+        $path = nativePath($this->_docRoot."/$relPath");
 
         if(!$path || !file_exists($path))
             throw new Exception(sprintf('file %s not present in content cache.', $relPath));

@@ -27,6 +27,44 @@ require_once(DIR_CLASSES.'/url.class.php');
 
 includeGuard('Utils');
 
+function nativePath($path)
+{
+    $path = str_replace(array('/', '\\'), DIRECTORY_SEPARATOR, $path);
+
+    $result = array();
+    $pathA = explode(DIRECTORY_SEPARATOR, $path);
+    if(!$pathA[0])
+        $result[] = '';
+    foreach($pathA AS $key => $dir)
+    {
+        if($dir == '..')
+        {
+            if(end($result) == '..')
+            {
+                $result[] = '..';
+            }
+            else if(!array_pop($result))
+            {
+                $result[] = '..';
+            }
+        }
+        else if($dir && $dir != '.')
+        {
+            $result[] = $dir;
+        }
+    }
+
+    if(!end($pathA))
+        $result[] = '';
+
+    return implode(DIRECTORY_SEPARATOR, $result);
+}
+
+function absolutePath($path)
+{
+    return $_SERVER['DOCUMENT_ROOT'] . nativePath('/'.$path);
+}
+
 function checkImagePath($path, $formats)
 {
     if(!isset($path) || !isset($formats) || !is_array($formats))
