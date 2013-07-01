@@ -263,51 +263,11 @@ class FrontController
         return $html;
     }
 
-    private function generateFeedHtml(&$feed, $maxItems = 3,
-        $feedTitle = "", $labelSpanClass = "", $params = NULL)
-    {
-        $fullFeedTitle = "$feedTitle via {$feed->format()}";
-        $labelSpanClass = (string)$labelSpanClass;
-        $maxItems = (int)$maxItems;
-
-?><a href="<?php echo preg_replace('/(&)/', '&amp;', $feed->uri()); ?>" class="link-rss" title="<?php echo htmlspecialchars($feedTitle); ?>"><span class="hidden"><?php echo htmlspecialchars($feed->format()); ?></span></a><?php
-
-        if(!empty($labelSpanClass))
-        {
-?>&nbsp;<span class="<?php echo $labelSpanClass; ?>"><?php
-        }
-
-        echo htmlspecialchars($fullFeedTitle);
-
-        if(!empty($labelSpanClass))
-        {
-?></span><?php
-        }
-
-?><ul><?php
-
-        if($feed->count() > 0)
-        {
-            $n = (integer) 0;
-            foreach($feed as $item)
-            {
-                $elementHtml = $this->generateFeedItemHtml($item, $params);
-
-?><li><?php echo $elementHtml; ?></li><?php
-
-                if(++$n >= $maxItems) break;
-            }
-        }
-        else
-        {
-
-?><li class="feed-error">...presently unavailable</li><?php
-
-        }
-
-?></ul><?php
-    }
-
+    /**
+     * Generate an HTML news time line, aggregating content from all feeds.
+     * @attention This mechanism will be replaced entirely in the near future.
+     * Doing this on server side makes no sense at all.
+     */
     private function outputNewsFeed()
     {
         require_once(DIR_CLASSES.'/feed.class.php');
