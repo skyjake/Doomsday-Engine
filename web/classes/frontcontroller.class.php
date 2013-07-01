@@ -225,10 +225,13 @@ class FrontController
      * Feed item HTML generator for formatting the customised output used
      * with feeds on the homepage.
      */
-    static public function generateFeedItemHtml(&$item, $params=NULL)
+    static public function generateFeedItemHtml(&$item, $params = NULL)
     {
+        assert('$item instanceof FeedItem /*$item argument is not a FeedItem */');
+        assert('(is_null($params) || is_array($params)) /*$params argument is not an array */');
+
         $patterns     = array('/{title}/', '/{timestamp}/');
-        $replacements = array($item['title'], date("m/d/y", $item['date_timestamp']));
+        $replacements = array($item->title, date("m/d/y", $item->timestamp));
 
         if(is_array($params) && isset($params['titleTemplate']))
         {
@@ -236,7 +239,7 @@ class FrontController
         }
         else
         {
-            $title = $item['title'];
+            $title = $item->title;
         }
 
         if(is_array($params) && isset($params['labelTemplate']))
@@ -245,14 +248,14 @@ class FrontController
         }
         else
         {
-            $label = $item['title'];
+            $label = $item->title;
         }
 
-        $html = '<a href="'. preg_replace('/(&)/', '&amp;', $item['link'])
+        $html = '<a href="'. preg_replace('/(&)/', '&amp;', $item->link)
                .'" title="'. htmlspecialchars($label)
                        .'">'. htmlspecialchars($title) .'</a>';
 
-        if(time() < strtotime('+2 days', $item['date_timestamp']))
+        if(time() < strtotime('+2 days', $item->timestamp))
         {
             $html .= '<span class="new-label">&nbsp;NEW</span>';
         }
@@ -260,37 +263,69 @@ class FrontController
         return $html;
     }
 
+    private function generateFeedHtml(&$feed, $maxItems = 3,
+        $feedTitle = "", $labelSpanClass = "", $params = NULL)
+    {
+        $fullFeedTitle = "$feedTitle via {$feed->format()}";
+        $labelSpanClass = (string)$labelSpanClass;
+        $maxItems = (int)$maxItems;
+
+?><a href="<?php echo preg_replace('/(&)/', '&amp;', $feed->uri()); ?>" class="link-rss" title="<?php echo htmlspecialchars($feedTitle); ?>"><span class="hidden"><?php echo htmlspecialchars($feed->format()); ?></span></a><?php
+
+        if(!empty($labelSpanClass))
+        {
+?>&nbsp;<span class="<?php echo $labelSpanClass; ?>"><?php
+        }
+
+        echo htmlspecialchars($fullFeedTitle);
+
+        if(!empty($labelSpanClass))
+        {
+?></span><?php
+        }
+
+?><ul><?php
+
+        if($feed->count() > 0)
+        {
+            $n = (integer) 0;
+            foreach($feed as $item)
+            {
+                $elementHtml = $this->generateFeedItemHtml($item, $params);
+
+?><li><?php echo $elementHtml; ?></li><?php
+
+                if(++$n >= $maxItems) break;
+            }
+        }
+        else
+        {
+
+?><li class="feed-error">...presently unavailable</li><?php
+
+        }
+
+?></ul><?php
+    }
+
     private function outputNewsFeed()
     {
         require_once(DIR_CLASSES.'/feed.class.php');
-
-        $feed = new Feed('http://dengine.net/forums/rss.php?mode=news', 3);
-        $feed->setTitle('Project News', 'projectnews-label');
-        $feed->setGenerateElementHTMLCallback('FrontController::generateFeedItemHtml');
-        $feed->generateHTML();
-    }
-
-    private function outputBuildsFeed()
-    {
-        require_once(DIR_CLASSES.'/feed.class.php');
-
-        $feed = new Feed('http://dl.dropboxusercontent.com/u/11948701/builds/events.rss', 3);
-        $feed->setTitle('Build News', 'projectnews-label');
-        $feed->setGenerateElementHTMLCallback('FrontController::generateFeedItemHtml',
-                                              array('titleTemplate'=>'{title} complete',
-                                                    'labelTemplate'=>'Read more about {title}, completed on {timestamp}'));
-        $feed->generateHTML();
-    }
-
-    private function outputDevBlogFeed()
-    {
-        require_once(DIR_CLASSES.'/feed.class.php');
-
-        $feed = new Feed('http://dengine.net/forums/rss.php?f=24', 3);
-        $feed->setTitle('Developer Blog', 'projectnews-label');
-        $feed->setGenerateElementHTMLCallback('FrontController::generateFeedItemHtml',
-                                              array('labelTemplate'=>'Read more about {title}, posted on {timestamp}'));
-        $feed->generateHTML();
+        {
+            $feed = new Feed('http://dengine.net/forums/rss.php?mode=news');
+            $this->generateFeedHtml($feed, 3, 'Project News', 'projectnews-label');
+        }
+        {
+            $feed = new Feed('http://dl.dropboxusercontent.com/u/11948701/builds/events.rss');
+            $this->generateFeedHtml($feed, 3, 'Build News', 'projectnews-label',
+                                    array('titleTemplate'=>'{title} complete',
+                                          'labelTemplate'=>'Read more about {title}, completed on {timestamp}'));
+        }
+        {
+            $feed = new Feed('http://dengine.net/forums/rss.php?f=24');
+            $this->generateFeedHtml($feed, 3, 'Developer Blog', 'projectnews-label',
+                                    array('labelTemplate'=>'Read more about {title}, posted on {timestamp}'));
+        }
     }
 
     /**
@@ -525,10 +560,6 @@ class FrontController
 ?>              <div id="projectnews"><?php
 
         $this->outputNewsFeed();
-
-        $this->outputBuildsFeed();
-
-        $this->outputDevBlogFeed();
 
 ?>              </div><?php
 
