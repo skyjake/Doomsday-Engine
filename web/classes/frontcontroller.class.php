@@ -221,105 +221,192 @@ class FrontController
         }
     }
 
-    /**
-     * Feed item HTML generator for formatting the customised output used
-     * with feeds on the homepage.
-     */
-    static public function generateFeedItemHtml(&$item, $params = NULL)
+    public function interpretRequest()
     {
-        assert('$item instanceof FeedItem /*$item argument is not a FeedItem */');
-        assert('(is_null($params) || is_array($params)) /*$params argument is not an array */');
-
-        $patterns     = array('/{title}/', '/{timestamp}/');
-        $replacements = array($item->title, date("m/d/y", $item->timestamp));
-
-        if(is_array($params) && isset($params['titleTemplate']))
+        // Determine action:
+        try
         {
-            $title = preg_replace($patterns, $replacements, $params['titleTemplate']);
-        }
-        else
-        {
-            $title = $item->title;
-        }
+            // Maybe a plugin?
+            $this->plugins()->interpretRequest($this->_request);
 
-        if(is_array($params) && isset($params['labelTemplate']))
-        {
-            $label = preg_replace($patterns, $replacements, $params['labelTemplate']);
+            foreach($this->_actions as $ActionRecord)
+            {
+                try
+                {
+                    $ActionRecord['actioner']->execute($ActionRecord['args']);
+                }
+                catch(Exception $e)
+                {
+                    throw $e; // Lets simply re-throw and abort for now.
+                }
+            }
         }
-        else
+        catch(Exception $e)
         {
-            $label = $item->title;
+            // We'll show the homepage.
+            $this->enqueueAction($this->findPlugin('home'), NULL);
         }
-
-        $html = '<a href="'. preg_replace('/(&)/', '&amp;', $item->link)
-               .'" title="'. htmlspecialchars($label)
-                       .'">'. htmlspecialchars($title) .'</a>';
-
-        if(time() < strtotime('+2 days', $item->timestamp))
-        {
-            $html .= '<span class="new-label">&nbsp;NEW</span>';
-        }
-
-        return $html;
     }
 
-    /**
-     * Generate an HTML news time line, aggregating content from all feeds.
-     * @attention This mechanism will be replaced entirely in the near future.
-     * Doing this on server side makes no sense at all.
-     */
-    private function outputNewsFeed()
+    private function &getContentCache()
     {
-        require_once(DIR_CLASSES.'/feed.class.php');
-
-        $newsContent = array();
+        if(!is_object($this->_contentCache))
         {
-            $maxItems = 3;
-            $feed = new Feed('http://dengine.net/forums/rss.php?mode=news');
-            $n = (int) 0;
-            foreach($feed as $item)
-            {
-                $newsContent[$item->timestamp] = $this->generateFeedItemHtml($item);
-                if(++$n >= $maxItems) break;
-            }
-        }
-        {
-            $maxItems = 3;
-            $params = array('titleTemplate'=>'{title} complete',
-                            'labelTemplate'=>'Read more about {title}, completed on {timestamp}');
-
-            $feed = new Feed('http://dl.dropboxusercontent.com/u/11948701/builds/events.rss');
-            $n = (int) 0;
-            foreach($feed as $item)
-            {
-                $newsContent[$item->timestamp] = $this->generateFeedItemHtml($item, $params);
-                if(++$n >= $maxItems) break;
-            }
-        }
-        {
-            $maxItems = 3;
-            $params = array('labelTemplate'=>'Read more about {title}, posted on {timestamp}');
-
-            $feed = new Feed('http://dengine.net/forums/rss.php?f=24');
-            $n = (int) 0;
-            foreach($feed as $item)
-            {
-                $newsContent[$item->timestamp] = $this->generateFeedItemHtml($item, $params);
-                if(++$n >= $maxItems) break;
-            }
+            $this->_contentCache = new ContentCache(DIR_CACHE);
         }
 
-?><span class="projectnews-label">Latest news</span>
-<ul><?php
+        return $this->_contentCache;
+    }
 
-        krsort($newsContent, SORT_NUMERIC);
-        foreach($newsContent as &$contentItemHtml)
+    public static function &contentCache()
+    {
+        return self::fc()->getContentCache();
+    }
+
+    public static function ErrorHandler($errno, $errmsg, $filename, $linenum, $vars)
+    {
+        $errortype = array (
+                    E_ERROR              => 'Error',
+                    E_WARNING            => 'Warning',
+                    E_PARSE              => 'Parsing Error',
+                    E_NOTICE             => 'Notice',
+                    E_CORE_ERROR         => 'Core Error',
+                    E_CORE_WARNING       => 'Core Warning',
+                    E_COMPILE_ERROR      => 'Compile Error',
+                    E_COMPILE_WARNING    => 'Compile Warning',
+                    E_USER_ERROR         => 'User Error',
+                    E_USER_WARNING       => 'User Warning',
+                    E_USER_NOTICE        => 'User Notice',
+                    E_STRICT             => 'Runtime Notice'
+                    );
+
+        // Log it?
+        if(ini_get('log_errors'))
         {
-?><li><?php echo $contentItemHtml; ?></li><?php
+            error_log(sprintf("PHP %s:  %s in %s on line %d",
+                              isset($errortype[$errno])? $errortype[$errno] : "$errno", $errmsg, $filename, $linenum));
         }
 
-?></ul><?php
+        // Display it?
+        if(ini_get('display_errors'))
+        {
+            printf("<br />\n<b>%s</b>: %s in <b>%s</b> on line <b>%d</b><br /><br />\n",
+                   $errortype[$errno], $errmsg, $filename, $linenum);
 
+            return true;
+        }
+
+        switch($errno)
+        {
+        case E_NOTICE:
+        case E_USER_NOTICE:
+        case E_USER_WARNING:
+        case E_STRICT:
+            return true;
+
+        default:
+            exit(); // Get out of here!
+        }
+    }
+
+    public function outputHeader($mainHeading='')
+    {
+        $siteTitle = $this->siteTitle();
+        if(strlen($mainHeading) > 0)
+            $siteTitle = "$mainHeading &bull; $siteTitle";
+
+        header('X-Frame-Options: SAMEORIGIN');
+
+?><!DOCTYPE html>
+<html dir="ltr" lang="en-GB">
+<head>
+    <title><?=$siteTitle?></title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="author" content="<?=$this->siteAuthor()?>" />
+    <meta name="keywords" content="<?php { $keywords = $this->defaultPageKeywords(); foreach($keywords as $keyword) echo $keyword.','; } ?>" />
+    <meta name="description" content="<?=$this->siteDescription()?>" />
+    <meta name="robots" content="index, follow" />
+    <meta name="revisit-after" content="<?=$this->robotRevisitDays()?> DAYS" />
+    <meta name="rating" content="GENERAL" />
+    <meta name="generator" content="<?=$this->homeURL()?>" />
+    <link rel="icon" href="http://dl.dropboxusercontent.com/u/11948701/dengine.net/images/favicon.png" type="image/png" />
+    <link rel="shortcut icon" href="http://dl.dropboxusercontent.com/u/11948701/dengine.net/images/favicon.png" type="image/png" />
+    <link rel="alternate" type="application/rss+xml" title="Doomsday Engine RSS News Feed" href="http://dengine.net/forums/rss.php?mode=news" />
+
+    <!-- jQuery -->
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.9.1/jquery-ui.min.js"></script>
+
+    <link rel="stylesheet" media="all" href="/style.css" />
+</head>
+<?php
+    }
+
+    public function beginPage($mainHeading='', $page=null)
+    {
+?>
+<body>
+<div id="mainouter">
+    <div id="main">
+<?php
+
+        $this->outputMainMenu($page);
+
+?>
+        <div id="maininner">
+            <div id="framepanel_bottom" role="main">
+                <div id="pageheading">
+                    <h1><?php
+
+        if(strlen($mainHeading) > 0)
+            echo htmlspecialchars($mainHeading);
+        else
+            echo $this->siteTitle();
+
+?></h1>
+                </div>
+<?php
+    }
+
+    public function endPage()
+    {
+?>
+            </div>
+            <div class="framepanel" id="framepanel_top">
+<?php
+
+        $this->outputTopPanel();
+
+?>              <div id="servers"><?php
+
+        $this->outputMasterStatus();
+
+?>              </div><?php
+
+?>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="libicons">
+<?php
+
+        // Output the lib icons (OpenGL, SDL etc).
+        includeHTML('libraryicons');
+
+?>
+</div>
+<footer id="footer" role="contentinfo">
+<?php
+
+        $this->outputFooter();
+
+?>
+</footer>
+</body>
+</html>
+<?php
     }
 
     /**
@@ -432,28 +519,6 @@ class FrontController
         echo $content;
     }
 
-    private function outputTopPanel()
-    {
-?>
-    <div id="panorama">
-    </div>
-<?php
-    }
-
-    private function outputFooter()
-    {
-?>
-<p class="disclaimer"><a href="mailto:webmaster@dengine.net" title="Contact Webmaster">Webmaster</a> - Site design &copy; <?php echo date('Y'); ?> <a href="mailto:<?php echo $this->siteDesignerEmail(); ?>" title="Contact <?php echo $this->siteDesigner(); ?>"><?php echo $this->siteDesigner(); ?></a> - Built by <a href="mailto:<?php echo $this->siteDesignerEmail(); ?>" title="Contact <?php echo $this->siteDesigner(); ?>"><?php echo $this->siteDesigner(); ?></a> / <a href="mailto:<?php echo $this->siteAuthorEmail(); ?>" title="Contact <?php echo $this->siteAuthor(); ?>"><?php echo $this->siteAuthor(); ?></a></p><?php
-
-        includeHTML('validatoricons');
-
-?><p class="disclaimer">The Doomsday Engine is licensed under the terms of the <a href="http://www.gnu.org/licenses/gpl.html" rel="nofollow">GNU/GPL License ver 2</a>. The Doomsday Engine logo is Copyright &copy; 2005-<?php echo date('Y'); ?>, the deng team.</p>
-<hr />
-<?php
-
-        includeHTML('legal');
-    }
-
     private function buildTabs($tabs, $page=NULL, $normalClassName=NULL, $selectClassName=NULL)
     {
         $result = "";
@@ -500,7 +565,7 @@ class FrontController
         $rightTabs[] = array('page'=>'/masterserver', 'label'=>'Servers', 'tooltip'=>'Doomsday Engine Master Server');
 
 ?>
-        <div id="menuouter"><div id="menu" class="hnav">
+        <div id="menuouter"><nav id="menu" class="hnav">
         <div id="divider"></div>
             <ul><section class="left">
 <?php
@@ -512,209 +577,26 @@ class FrontController
 ?></section>
             </ul>
         <div id="divider2"></div>
-        </div></div>
+        </nav></div>
 <?php
     }
 
-    public function beginPage($mainHeading='', $page=null)
+    private function outputTopPanel()
     {
 ?>
-<body>
-<div id="mainouter">
-    <div id="main">
-<?php
-
-        $this->outputMainMenu($page);
-
-?>
-        <div id="maininner">
-            <div id="framepanel_bottom">
-                <div id="pageheading">
-                    <h1><?php
-
-        if(strlen($mainHeading) > 0)
-            echo htmlspecialchars($mainHeading);
-        else
-            echo $this->siteTitle();
-
-?></h1>
-                </div>
-<?php
-    }
-
-    public function endPage()
-    {
-?>
-            </div>
-            <div class="framepanel" id="framepanel_top">
-<?php
-
-        $this->outputTopPanel();
-
-?>              <div id="projectnews"><?php
-
-        $this->outputNewsFeed();
-
-?>              </div><?php
-
-?>              <div id="servers"><?php
-
-        $this->outputMasterStatus();
-
-?>              </div><?php
-
-?>
-            </div>
-        </div>
+    <div id="panorama">
     </div>
-</div>
-<div id="libicons">
 <?php
+    }
 
-        // Output the lib icons (OpenGL, SDL etc).
-        includeHTML('libraryicons');
-
+    private function outputFooter()
+    {
 ?>
-</div>
-<footer id="footer" role="contentinfo">
+<p class="disclaimer"><a href="mailto:webmaster@dengine.net" title="Contact Webmaster">Webmaster</a> - Site design &copy; <?php echo date('Y'); ?> <a href="mailto:<?php echo $this->siteDesignerEmail(); ?>" title="Contact <?php echo $this->siteDesigner(); ?>"><?php echo $this->siteDesigner(); ?></a> - Built by <a href="mailto:<?php echo $this->siteDesignerEmail(); ?>" title="Contact <?php echo $this->siteDesigner(); ?>"><?php echo $this->siteDesigner(); ?></a> / <a href="mailto:<?php echo $this->siteAuthorEmail(); ?>" title="Contact <?php echo $this->siteAuthor(); ?>"><?php echo $this->siteAuthor(); ?></a></p>
+<p class="disclaimer">The Doomsday Engine is licensed under the terms of the <a href="http://www.gnu.org/licenses/gpl.html" rel="nofollow">GNU/GPL License ver 2</a>. The Doomsday Engine logo is Copyright &copy; 2005-<?php echo date('Y'); ?>, the deng team.</p>
+<hr />
 <?php
 
-        $this->outputFooter();
-
-?>
-</footer>
-</body>
-</html>
-<?php
-    }
-
-    public function outputHeader($mainHeading='')
-    {
-        $siteTitle = $this->siteTitle();
-        if(strlen($mainHeading) > 0)
-            $siteTitle = "$mainHeading &bull; $siteTitle";
-
-        header('Content-type: text/html; charset=utf-8');
-        header('X-Frame-Options: SAMEORIGIN');
-
-?><!DOCTYPE html>
-<html dir="ltr" lang="en-GB">
-<head>
-    <title><?=$siteTitle?></title>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width" />
-    <meta name="author" content="<?=$this->siteAuthor()?>" />
-    <meta name="keywords" content="<?php { $keywords = $this->defaultPageKeywords(); foreach($keywords as $keyword) echo $keyword.','; } ?>" />
-    <meta name="description" content="<?=$this->siteDescription()?>" />
-    <meta name="robots" content="index, follow" />
-    <meta name="revisit-after" content="<?=$this->robotRevisitDays()?> DAYS" />
-    <meta name="rating" content="GENERAL" />
-    <meta name="generator" content="<?=$this->homeURL()?>" />
-    <link rel="icon" href="http://dl.dropboxusercontent.com/u/11948701/dengine.net/images/favicon.png" type="image/png" />
-    <link rel="shortcut icon" href="http://dl.dropboxusercontent.com/u/11948701/dengine.net/images/favicon.png" type="image/png" />
-    <link rel="alternate" type="application/rss+xml" title="Doomsday Engine RSS News Feed" href="http://dengine.net/forums/rss.php?mode=news" />
-
-    <!-- jQuery -->
-    <script src="/external/jquery/js/jquery-1.6.2.min.js"></script>
-
-    <!-- jCarousel -->
-    <script src="/external/jquery.jcarousel/js/jquery.jcarousel.min.js"></script>
-    <link rel="stylesheet" media="screen" href="/external/jquery.jcarousel/skin.css" />
-
-    <!-- Thickbox 3 -->
-    <script src="/external/thickbox/js/thickbox.js"></script>
-    <link rel="stylesheet" media="screen" href="/external/thickbox/thickbox.css" />
-
-    <link rel="stylesheet" media="all" href="/style.css" />
-</head>
-<?php
-    }
-
-    public function interpretRequest()
-    {
-        // Determine action:
-        try
-        {
-            // Maybe a plugin?
-            $this->plugins()->interpretRequest($this->_request);
-
-            foreach($this->_actions as $ActionRecord)
-            {
-                try
-                {
-                    $ActionRecord['actioner']->execute($ActionRecord['args']);
-                }
-                catch(Exception $e)
-                {
-                    throw $e; // Lets simply re-throw and abort for now.
-                }
-            }
-        }
-        catch(Exception $e)
-        {
-            // We'll show the homepage.
-            $this->enqueueAction($this->findPlugin('home'), NULL);
-        }
-    }
-
-    private function &getContentCache()
-    {
-        if(!is_object($this->_contentCache))
-        {
-            $this->_contentCache = new ContentCache(DIR_CACHE);
-        }
-
-        return $this->_contentCache;
-    }
-
-    public static function &contentCache()
-    {
-        return self::fc()->getContentCache();
-    }
-
-    public static function ErrorHandler($errno, $errmsg, $filename, $linenum, $vars)
-    {
-        $errortype = array (
-                    E_ERROR              => 'Error',
-                    E_WARNING            => 'Warning',
-                    E_PARSE              => 'Parsing Error',
-                    E_NOTICE             => 'Notice',
-                    E_CORE_ERROR         => 'Core Error',
-                    E_CORE_WARNING       => 'Core Warning',
-                    E_COMPILE_ERROR      => 'Compile Error',
-                    E_COMPILE_WARNING    => 'Compile Warning',
-                    E_USER_ERROR         => 'User Error',
-                    E_USER_WARNING       => 'User Warning',
-                    E_USER_NOTICE        => 'User Notice',
-                    E_STRICT             => 'Runtime Notice'
-                    );
-
-        // Log it?
-        if(ini_get('log_errors'))
-        {
-            error_log(sprintf("PHP %s:  %s in %s on line %d",
-                              isset($errortype[$errno])? $errortype[$errno] : "$errno", $errmsg, $filename, $linenum));
-        }
-
-        // Display it?
-        if(ini_get('display_errors'))
-        {
-            printf("<br />\n<b>%s</b>: %s in <b>%s</b> on line <b>%d</b><br /><br />\n",
-                   $errortype[$errno], $errmsg, $filename, $linenum);
-
-            return true;
-        }
-
-        switch($errno)
-        {
-        case E_NOTICE:
-        case E_USER_NOTICE:
-        case E_USER_WARNING:
-        case E_STRICT:
-            return true;
-
-        default:
-            exit(); // Get out of here!
-        }
+        includeHTML('legal');
     }
 }
