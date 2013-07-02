@@ -20,8 +20,10 @@
 #include "ui/widgets/guirootwidget.h"
 #include "ui/widgets/buttonwidget.h"
 #include "ui/widgets/consolecommandwidget.h"
+#include "ui/widgets/popupmenuwidget.h"
 #include "ui/widgets/logwidget.h"
 #include "ui/clientwindow.h"
+#include "ui/commandaction.h"
 #include "ui/signalaction.h"
 
 #include <de/ScalarRule>
@@ -35,6 +37,7 @@ DENG2_PIMPL(ConsoleWidget)
 {
     ButtonWidget *button;
     ConsoleCommandWidget *cmdLine;
+    PopupMenuWidget *menu;
     LogWidget *log;
     ScalarRule *horizShift;
     ScalarRule *height;
@@ -55,6 +58,7 @@ DENG2_PIMPL(ConsoleWidget)
         : Base(i),
           button(0),
           cmdLine(0),
+          menu(0),
           log(0),
           opened(true),
           grabWidth(0),
@@ -167,8 +171,7 @@ ConsoleWidget::ConsoleWidget() : GuiWidget("console"), d(new Instance(this))
 
     d->button = new ButtonWidget;
     d->button->setText(_E(b) ">");
-    // Until we have a popup menu widget...
-    d->button->setAction(new SignalAction(this, SLOT(focusOnCommandLine())));
+    d->button->setAction(new SignalAction(this, SLOT(openMenu())));
     add(d->button);
 
     d->cmdLine = new ConsoleCommandWidget("commandline");
@@ -206,6 +209,16 @@ ConsoleWidget::ConsoleWidget() : GuiWidget("console"), d(new Instance(this))
 
     closeLog();
 
+    // Menu for console related functions.
+    d->menu = new PopupMenuWidget;
+    d->menu->setAnchor(d->button->rule().left() + d->button->rule().width() / 2,
+                       d->button->rule().top());
+    d->menu->addItem("Clear log", new CommandAction("clear"));
+    d->menu->addItem("Show full log", new SignalAction(this, SLOT(showFullLog())));
+    d->menu->addItem("Scroll to bottom", new SignalAction(d->log, SLOT(scrollToBottom())));
+    add(d->menu);
+
+    // Signals.
     connect(d->cmdLine, SIGNAL(gotFocus()), this, SLOT(setFullyOpaque()));
     connect(d->cmdLine, SIGNAL(lostFocus()), this, SLOT(setTranslucent()));
 }
@@ -386,4 +399,14 @@ void ConsoleWidget::setTranslucent()
 void ConsoleWidget::focusOnCommandLine()
 {
     root().setFocus(d->cmdLine);
+}
+
+void ConsoleWidget::openMenu()
+{
+    d->menu->open();
+}
+
+void ConsoleWidget::closeMenu()
+{
+    d->menu->close();
 }

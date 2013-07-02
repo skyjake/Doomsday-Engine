@@ -24,6 +24,7 @@
 #include <de/Drawable>
 #include <de/MouseEvent>
 #include <de/ScalarRule>
+#include <de/math.h>
 #include <QTimer>
 
 using namespace de;
@@ -402,7 +403,13 @@ void PopupWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
 
     int marker = d->marker->valuei();
 
-    Vector2i const anchorPos(d->anchorX->valuei(), d->anchorY->valuei());
+    Vector2i anchorPos(d->anchorX->valuei(), d->anchorY->valuei());
+
+    /// @todo Other directions are missing: this is just for the popup that opens upwards.
+
+    // Can't put the anchor too close to the edges.
+    anchorPos.x = clamp(2*marker, anchorPos.x, int(root().viewSize().x) - 2*marker);
+
     v.pos = anchorPos; tri << v;
     v.pos = anchorPos + Vector2i(-marker, -marker); tri << v;
     v.pos = anchorPos + Vector2i(marker, -marker); tri << v;
