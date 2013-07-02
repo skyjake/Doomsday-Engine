@@ -106,6 +106,11 @@ ButtonWidget *PopupMenuWidget::addItem(String const &styledText, Action *action)
     b->audienceForStateChange += d;
     b->audienceForTriggered += d;
 
+    // We want items to be hittable throughtout the width of the menu.
+    b->hitRule()
+            .setInput(Rule::Left,  rule().left())
+            .setInput(Rule::Right, rule().right());
+
     return b;
 }
 

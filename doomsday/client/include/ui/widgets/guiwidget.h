@@ -191,6 +191,15 @@ public:
 
     bool hitTest(de::Event const &event) const;
 
+    /**
+     * Returns the rule rectangle used for hit testing. Defaults to a rectangle
+     * equivalent to GuiWidget::rule(). Modify the hit test rule to allow
+     * widgets to be hittable outside their default boundaries.
+     *
+     * @return Hit test rule.
+     */
+    de::RuleRectangle &hitRule();
+
     enum MouseClickStatus {
         MouseClickUnrelated, ///< Event was not related to mouse clicks.
         MouseClickStarted,

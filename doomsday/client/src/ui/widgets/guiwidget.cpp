@@ -33,7 +33,8 @@ DENG2_PIMPL(GuiWidget)
 , DENG2_OBSERVES(Widget, ParentChange)
 #endif
 {
-    RuleRectangle rule;
+    RuleRectangle rule;     ///< Visual rule, used when drawing.
+    RuleRectangle hitRule;  ///< Used only for hit testing. By default matches the visual rule.
     Rectanglei savedPos;
     bool inited;
     bool needGeometry;
@@ -78,6 +79,9 @@ DENG2_PIMPL(GuiWidget)
         self.audienceForParentChange += this;
         rule.setDebugName(self.path());
 #endif
+
+        // By default use the visual rule as the hit test rule.
+        hitRule.setRect(rule);
     }
 
     ~Instance()
@@ -429,7 +433,7 @@ bool GuiWidget::hitTest(Vector2i const &pos) const
         if(gui)
         {
             if(gui->behavior().testFlag(ChildHitClipping) &&
-               !gui->rule().recti().contains(pos))
+               !gui->d->hitRule.recti().contains(pos))
             {
                 // Must hit clipped parent widgets as well.
                 return false;
@@ -438,12 +442,17 @@ bool GuiWidget::hitTest(Vector2i const &pos) const
         w = w->Widget::parent();
     }
 
-    return rule().recti().contains(pos);
+    return d->hitRule.recti().contains(pos);
 }
 
 bool GuiWidget::hitTest(Event const &event) const
 {
     return event.isMouse() && hitTest(event.as<MouseEvent>().pos());
+}
+
+RuleRectangle &GuiWidget::hitRule()
+{
+    return d->hitRule;
 }
 
 GuiWidget::MouseClickStatus GuiWidget::handleMouseClick(Event const &event)
