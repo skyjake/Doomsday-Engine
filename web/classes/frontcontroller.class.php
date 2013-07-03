@@ -377,12 +377,7 @@ class FrontController
 <?php
 
         $this->outputTopPanel();
-
-?>              <div id="servers"><?php
-
         $this->outputMasterStatus();
-
-?>              </div><?php
 
 ?>
             </div>
@@ -465,10 +460,10 @@ class FrontController
 
     private function outputMasterStatus()
     {
+if(0)
+{
         // Maximum number of servers listed in the summary.
         $limit = 3;
-
-        $content = '';
 
         /**
          * @todo We do NOT need to interface with the master server. We are able
@@ -491,7 +486,7 @@ class FrontController
         $serverCount = count($servers);
 
         // Generate the content.
-        $content .= '<span id="servers-label">'. ($serverCount > 0? 'Most Active Servers':'No Active Servers') .'</span><br />';
+        $content = '<span id="servers-label">'. ($serverCount > 0? 'Most Active Servers':'No Active Servers') .'</span><br />';
         if($serverCount)
         {
             $playerCount = (integer)0;
@@ -515,8 +510,94 @@ class FrontController
         }
 
         $content .= '<br /><span id="servers-timestamp">'. date("d-M-y H:i:s T" /*DATE_RFC850*/, time()). '</span>';
-
         echo $content;
+}
+
+?><script>
+(function (e) {
+    e.fn.interpretMasterServerStatus = function (t) {
+        var n = {
+            serverUri: "http://dengine.net/master.php?xml",
+            maxItems: 3,
+            generateServerSummaryHtml: 0
+        };
+        if (t) {
+            e.extend(n, t);
+        }
+        var r = e(this).attr("id");
+        e.ajax({
+            url: n.serverUri,
+            dataType: 'xml',
+            success: function (t) {
+                e("#" + r).empty();
+                var root = $('masterserver', t);
+                var serverList = root.find('serverlist')[0];
+                var serverCount = serverList.attributes.getNamedItem('size').nodeValue;
+
+                var html = '<span id="servers-label">' + (serverCount > 0? 'Most Active Servers':'No Active Servers') + '</span><br />';
+
+                if(serverCount) {
+                    var idx = 0;
+                    var playerCount = 0;
+
+                    html += '<ul>';
+                    for(var i = 0; i < serverList.childNodes.length; ++i) {
+                        if(serverList.childNodes[i].nodeName != 'server')
+                            continue;
+
+                        var server = $(serverList.childNodes[i]);
+                        if(n.maxItems <= 0 || idx < n.maxItems)
+                        {
+                            html += '<li>' + n.generateServerSummaryHtml(n, server) + '</li>';
+                        }
+
+                        playerCount += Number(server.find('gameinfo>numplayers').text());
+                        idx++;
+                    };
+
+                    html += '</ul>';
+                    html += '<span id="summary"><a href="/masterserver" title="Click here to see the complete server listing">' + serverCount + ' ' + (serverCount == 1? 'server':'servers') + ' in total, ' + playerCount + ' active ' + (playerCount == 1? 'player':'players') + '</a></span>';
+                }
+
+                html += '<br /><span id="servers-timestamp">' + root.find('channel>pubdate').text() + '</span>';
+                e("#" + r).append(html);
+            }
+        })
+    }
+})(jQuery)
+
+$(document).ready(function () {
+    $('#servers').interpretMasterServerStatus({
+        generateServerSummaryHtml: function (n, info) {
+
+            var serverMetadataLabel = 'Address: ' + info.children('ip').text() + ':' + info.children('port').text()
+                                    + ' Open: ' + info.children('open').text();
+
+            // Any required addons?.
+            /*var addonArr = array_filter(explode(';', info['pwads']));
+            if(count(addonArr))
+            {
+                serverMetadataLabel .= 'Add-ons: '. implode(' ', addonArr);
+            }*/
+
+            var gameInfo = $(info.children('gameinfo'));
+            var gameMetadataLabel = 'Map: ' + gameInfo.children('map').text() + ' Setup: ' + gameInfo.children('setupstring').text();
+
+            var playerCountLabel = 'Number of players currently in-game';
+            var playerMaxLabel = 'Maximum number of players';
+
+            var html = '<span class="player-summary"><label title="' + playerCountLabel + '">' + gameInfo.children('numplayers').text() + '</label> / <label title="' + playerMaxLabel + '">' + gameInfo.children('maxplayers').text() + '</label></span> ';
+
+            html += '<label title="' + serverMetadataLabel + '"><span class="name">' + info.find('name').text() + '</span></label> ';
+            html += '<label title="' + gameMetadataLabel + '"><span class="game-mode">' + gameInfo.children('mode').text() + '</span></label>';
+
+            return '<span class="server">' + html + '</span>';
+        }
+    });
+});
+
+</script><div id="servers"></div><?php
+
     }
 
     private function buildTabs($tabs, $page=NULL, $normalClassName=NULL, $selectClassName=NULL)
