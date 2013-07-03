@@ -1099,37 +1099,37 @@ static void setupModel(ded_model_t& def)
             sub->blendMode = subdef->blendMode;
 
             // Submodel-specific flags cancel out model-scope flags!
-            sub->flags = modelScopeFlags ^ subdef->flags;
+            sub->setFlags(modelScopeFlags ^ subdef->flags);
 
             // Flags may override alpha and/or blendmode.
-            if(sub->flags & MFF_BRIGHTSHADOW)
+            if(sub->testFlag(MFF_BRIGHTSHADOW))
             {
                 sub->alpha = byte(256 * .80f);
                 sub->blendMode = BM_ADD;
             }
-            else if(sub->flags & MFF_BRIGHTSHADOW2)
+            else if(sub->testFlag(MFF_BRIGHTSHADOW2))
             {
                 sub->blendMode = BM_ADD;
             }
-            else if(sub->flags & MFF_DARKSHADOW)
+            else if(sub->testFlag(MFF_DARKSHADOW))
             {
                 sub->blendMode = BM_DARK;
             }
-            else if(sub->flags & MFF_SHADOW2)
+            else if(sub->testFlag(MFF_SHADOW2))
             {
                 sub->alpha = byte(256 * .2f);
             }
-            else if(sub->flags & MFF_SHADOW1)
+            else if(sub->testFlag(MFF_SHADOW1))
             {
                 sub->alpha = byte(256 * .62f);
             }
 
             // Extra blendmodes:
-            if(sub->flags & MFF_REVERSE_SUBTRACT)
+            if(sub->testFlag(MFF_REVERSE_SUBTRACT))
             {
                 sub->blendMode = BM_REVERSE_SUBTRACT;
             }
-            else if(sub->flags & MFF_SUBTRACT)
+            else if(sub->testFlag(MFF_SUBTRACT))
             {
                 sub->blendMode = BM_SUBTRACT;
             }
@@ -1189,7 +1189,7 @@ static void setupModel(ded_model_t& def)
             }
 
             // Should we allow texture compression with this model?
-            if(sub->flags & MFF_NO_TEXCOMP)
+            if(sub->testFlag(MFF_NO_TEXCOMP))
             {
                 // All skins of this model will no longer use compression.
                 mdl->allowTexComp = false;
@@ -1206,7 +1206,7 @@ static void setupModel(ded_model_t& def)
     {
         scaleModel(*modef, modef->resize, modef->offset[VY]);
     }
-    else if(modef->state && !modef->sub.empty() && modef->sub[0].flags & MFF_AUTOSCALE)
+    else if(modef->state && modef->testSubFlag(0, MFF_AUTOSCALE))
     {
         int sprNum   = Def_GetSpriteNum(def.sprite.id);
         int sprFrame = def.spriteFrame;

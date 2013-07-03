@@ -80,7 +80,7 @@ struct SubmodelDef
     modelid_t modelId;
     short frame;
     char frameRange;
-    int flags;
+    int _flags;
     short skin;
     char skinRange;
     float offset[3];
@@ -92,7 +92,7 @@ struct SubmodelDef
         : modelId(0),
           frame(0),
           frameRange(0),
-          flags(0),
+          _flags(0),
           skin(0),
           skinRange(0),
           alpha(0),
@@ -100,6 +100,23 @@ struct SubmodelDef
           blendMode(BM_NORMAL)
     {
         de::zap(offset);
+    }
+
+    void setFlags(int newFlags)
+    {
+        _flags = newFlags;
+    }
+
+    /**
+     * Tests if the flags in @a flag are all set for the submodel.
+     *
+     * @param flag  One or more flags.
+     *
+     * @return @c true, if all the flags were set; otherwise @c false.
+     */
+    bool testFlag(int flag) const
+    {
+        return (_flags & flag) == flag;
     }
 };
 
@@ -175,6 +192,12 @@ struct ModelDef
     {
         sub.clear();
         ptcOffset.clear();
+    }
+
+    bool testSubFlag(unsigned int subnum, int flag) const
+    {
+        if(subnum >= sub.size()) return false;
+        return sub[subnum].testFlag(flag);
     }
 };
 

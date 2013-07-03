@@ -797,7 +797,7 @@ static int chooseSkin(modeldef_t *mf, int submodel, int id, int selector, int tm
     int skin = smf->skin;
 
     // Selskin overrides the skin range.
-    if(smf->flags & MFF_SELSKIN)
+    if(smf->testFlag(MFF_SELSKIN))
     {
         skin = chooseSelSkin(mf, submodel, selector);
     }
@@ -808,7 +808,7 @@ static int chooseSkin(modeldef_t *mf, int submodel, int id, int selector, int tm
     {
         // What rule to use for determining the skin?
         int offset;
-        if(smf->flags & MFF_IDSKIN)
+        if(smf->testFlag(MFF_IDSKIN))
         {
             offset = id;
         }
@@ -821,7 +821,7 @@ static int chooseSkin(modeldef_t *mf, int submodel, int id, int selector, int tm
     }
 
     // Need translation?
-    if(smf->flags & MFF_SKINTRANS)
+    if(smf->testFlag(MFF_SKINTRANS))
         skin = tmap;
 
     DENG_ASSERT(mdl);
@@ -897,8 +897,7 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
     // Scale interpos. Intermark becomes zero and endmark becomes one.
     // (Full sub-interpolation!) But only do it for the standard
     // interrange. If a custom one is defined, don't touch interpos.
-    if((mf->interRange[0] == 0 && mf->interRange[1] == 1) ||
-       (smf->flags & MFF_WORLD_TIME_ANIM))
+    if((mf->interRange[0] == 0 && mf->interRange[1] == 1) || smf->testFlag(MFF_WORLD_TIME_ANIM))
     {
         endPos = (mf->interNext ? mf->interNext->interMark : 1);
         inter = (parm->inter - mf->interMark) / (endPos - mf->interMark);
@@ -915,7 +914,7 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
     else
     {
         // Check for possible interpolation.
-        if(frameInter && mfNext && !(smf->flags & MFF_DONT_INTERPOLATE))
+        if(frameInter && mfNext && !smf->testFlag(MFF_DONT_INTERPOLATE))
         {
             if(mfNext->sub[number].modelId == smf->modelId)
             {
@@ -1029,7 +1028,7 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
                         mf->offset[VY];
 
     // Calculate lighting.
-    if((smf->flags & MFF_FULLBRIGHT) && !(smf->flags & MFF_DIM))
+    if(smf->testFlag(MFF_FULLBRIGHT) && !smf->testFlag(MFF_DIM))
     {
         // Submodel-specific lighting override.
         ambient[CR] = ambient[CG] = ambient[CB] = ambient[CA] = 1;
@@ -1118,7 +1117,7 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
                         mf->def->sub[number].shinyReact);
 
         // Shiny color.
-        if(smf->flags & MFF_SHINY_LIT)
+        if(smf->testFlag(MFF_SHINY_LIT))
         {
             for(c = 0; c < 3; ++c)
                 color[c] = ambient[c] * shinyColor[c];
@@ -1158,18 +1157,19 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
     }
 
     // Twosided models won't use backface culling.
-    if(smf->flags & MFF_TWO_SIDED)
+    if(smf->testFlag(MFF_TWO_SIDED))
+    {
         glDisable(GL_CULL_FACE);
-
+    }
     glEnable(GL_TEXTURE_2D);
 
     // Render using multiple passes?
     if(!modelShinyMultitex || shininess <= 0 || alpha < 1 ||
-       blending != BM_NORMAL || !(smf->flags & MFF_SHINY_SPECULAR) ||
+       blending != BM_NORMAL || !smf->testFlag(MFF_SHINY_SPECULAR) ||
        numTexUnits < 2 || !envModAdd)
     {
         // The first pass can be skipped if it won't be visible.
-        if(shininess < 1 || smf->flags & MFF_SHINY_SPECULAR)
+        if(shininess < 1 || smf->testFlag(MFF_SHINY_SPECULAR))
         {
             Mod_SelectTexUnits(1);
             GL_BlendMode(blending);
@@ -1185,7 +1185,7 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
             glDepthFunc(GL_LEQUAL);
 
             // Set blending mode, two choices: reflected and specular.
-            if(smf->flags & MFF_SHINY_SPECULAR)
+            if(smf->testFlag(MFF_SHINY_SPECULAR))
                 GL_BlendMode(BM_ADD);
             else
                 GL_BlendMode(BM_NORMAL);
@@ -1260,8 +1260,10 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
     glPopMatrix();
 
     // Normally culling is always enabled.
-    if(smf->flags & MFF_TWO_SIDED)
+    if(smf->testFlag(MFF_TWO_SIDED))
+    {
         glEnable(GL_CULL_FACE);
+    }
 
     if(zSign < 0)
     {
@@ -1344,7 +1346,7 @@ void Rend_RenderModel(rendmodelparams_t const *parm)
         if(parm->mf->sub[i].modelId)
         {
             bool disableZ = (parm->mf->flags & MFF_DISABLE_Z_WRITE ||
-                             parm->mf->sub[i].flags & MFF_DISABLE_Z_WRITE);
+                             parm->mf->testSubFlag(i, MFF_DISABLE_Z_WRITE));
 
             if(disableZ)
                 glDepthMask(GL_FALSE);

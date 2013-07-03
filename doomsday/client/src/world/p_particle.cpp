@@ -577,7 +577,7 @@ static void P_NewParticle(ptcgen_t *gen)
         pt->origin[VY] += FixedMul(finesine[ang], gen->center[VX]);
 
         // There might be an offset from the model of the mobj.
-        if(mf && !mf->sub.empty() && (mf->sub[0].flags & MFF_PARTICLE_SUB1 || def->subModel >= 0))
+        if(mf && (mf->testSubFlag(0, MFF_PARTICLE_SUB1) || def->subModel >= 0))
         {
             float off[3] = { 0, 0, 0 };
             int subidx;
