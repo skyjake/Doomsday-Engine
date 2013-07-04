@@ -42,6 +42,7 @@ using namespace ui;
 
 DENG2_PIMPL(LogWidget),
 DENG2_OBSERVES(Atlas, Reposition),
+DENG2_OBSERVES(Atlas, OutOfSpace),
 public Font::RichFormat::IStyle
 {
     typedef GLBufferT<Vertex2TexRgba> VertexBuf;
@@ -491,7 +492,9 @@ public Font::RichFormat::IStyle
         entryAtlas = AtlasTexture::newWithRowAllocator(
                 Atlas::BackingStore | Atlas::AllowDefragment,
                 GLTexture::maximumSize().min(Atlas::Size(2048, 1024)));
+
         entryAtlas->audienceForReposition += this;
+        entryAtlas->audienceForOutOfSpace += this;
 
         // Simple texture for the scroll indicator.
         Image solidWhitePixel = Image::solidColor(Image::Color(255, 255, 255, 255),
@@ -532,6 +535,15 @@ public Font::RichFormat::IStyle
         {
             entryAtlasLayoutChanged = true;
             self.setIndicatorUv(entryAtlas->imageRectf(scrollTex).middle());
+        }
+    }
+
+    void atlasOutOfSpace(Atlas &atlas)
+    {
+        if(entryAtlas == &atlas)
+        {
+            entryAtlasLayoutChanged = true;
+            releaseAllComposedEntries();
         }
     }
 
@@ -615,6 +627,17 @@ public Font::RichFormat::IStyle
         // Excess entries after the visible range.
         excess = visibleRange.end + len;
         for(int i = excess; i < cache.size(); ++i)
+        {
+            cache[i]->clear();
+        }
+    }
+
+    /**
+     * Releases all entries currently stored in the entry atlas.
+     */
+    void releaseAllComposedEntries()
+    {
+        for(int i = 0; i < cache.size(); ++i)
         {
             cache[i]->clear();
         }
@@ -711,17 +734,20 @@ public Font::RichFormat::IStyle
                     }
                     visibleRange.start = idx;
                 }
+
+                if(entryAtlasLayoutChanged)
+                {
+                    goto nextAttempt;
+                }
             }
 
-            if(entryAtlasLayoutChanged)
-            {
-                // Oops, the atlas was optimized during the loop and some items'
-                // positions are obsolete.
-                verts.clear();
-                continue;
-            }
-
+            // Successfully completed.
             break;
+
+nextAttempt:
+            // Oops, the atlas was optimized during the loop and some items'
+            // positions are obsolete.
+            verts.clear();
         }
 
         // Draw the scroll indicator, too.
