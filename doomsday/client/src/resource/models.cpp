@@ -920,9 +920,9 @@ float Models_ModelForMobj(mobj_t* mo, modeldef_t** modef, modeldef_t** nextmodef
  */
 static void scaleModel(modeldef_t &mf, float destHeight, float offset)
 {
-    if(mf.sub.empty()) return;
+    if(!mf.subCount()) return;
 
-    submodeldef_t &smf = mf.sub[0];
+    submodeldef_t &smf = mf.subModelDef(0);
 
     // No model to scale?
     if(!smf.modelId) return;
@@ -955,16 +955,18 @@ static void scaleModelToSprite(modeldef_t &mf, int sprite, int frame)
 
 static float calcModelVisualRadius(modeldef_t *def)
 {
-    if(!def || def->sub.empty() || !def->sub[0].modelId) return 0;
+    if(!def || !def->subModelId(0)) return 0;
 
     // Use the first frame bounds.
     float min[3], max[3];
     float maxRadius = 0;
-    for(uint i = 0; i < def->sub.size(); ++i)
+    for(uint i = 0; i < def->subCount(); ++i)
     {
-        if(!def->sub[i].modelId) break;
+        if(!def->subModelId(i)) break;
 
-        Models_ToModel(def->sub[i].modelId)->frame(def->sub[i].frame).getBounds(min, max);
+        SubmodelDef &sub = def->subModelDef(i);
+
+        Models_ToModel(sub.modelId)->frame(sub.frame).getBounds(min, max);
 
         // Half the distance from bottom left to top right.
         float radius = (def->scale[VX] * (max[VX] - min[VX]) +
@@ -1071,9 +1073,9 @@ static void setupModel(ded_model_t& def)
 
     // Submodels.
     modef->clearSubs();
-    for(uint i = 0; i < def.sub.size(); ++i)
+    for(uint i = 0; i < def.subCount(); ++i)
     {
-        ded_submodel_t const *subdef = &def.sub[i];
+        ded_submodel_t const *subdef = &def.sub(i);
         submodeldef_t *sub = modef->addSub();
 
         sub->modelId = 0;
@@ -1246,9 +1248,9 @@ static void setupModel(ded_model_t& def)
 
     // Calculate the particle offset for each submodel.
     float min[3], max[3];
-    for(uint i = 0; i < modef->sub.size(); ++i)
+    for(uint i = 0; i < modef->subCount(); ++i)
     {
-        SubmodelDef *sub = &modef->sub[i];
+        SubmodelDef *sub = &modef->subModelDef(i);
         if(sub->modelId)
         {
             Models_ToModel(sub->modelId)->frame(sub->frame).getBounds(min, max);
@@ -1423,9 +1425,9 @@ void Models_Cache(modeldef_t *modef)
 {
     if(!modef) return;
 
-    for(uint sub = 0; sub < modef->sub.size(); ++sub)
+    for(uint sub = 0; sub < modef->subCount(); ++sub)
     {
-        submodeldef_t &subdef = modef->sub[sub];
+        submodeldef_t &subdef = modef->subModelDef(sub);
         model_t *mdl = Models_ToModel(subdef.modelId);
         if(!mdl) continue;
 

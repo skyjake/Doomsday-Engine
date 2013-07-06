@@ -137,16 +137,16 @@ void Rend_ModelSetFrame(modeldef_t *modef, int frame)
 {
     if(!modef) return;
 
-    for(uint i = 0; i < modef->sub.size(); ++i)
+    for(uint i = 0; i < modef->subCount(); ++i)
     {
-        submodeldef_t *subdef = &modef->sub[i];
+        submodeldef_t &subdef = modef->subModelDef(i);
         model_t *mdl;
-        if(subdef->modelId == NOMODELID) continue;
+        if(subdef.modelId == NOMODELID) continue;
 
         // Modify the modeldef itself: set the current frame.
-        mdl = Models_ToModel(subdef->modelId);
+        mdl = Models_ToModel(subdef.modelId);
         DENG_ASSERT(mdl);
-        subdef->frame = frame % mdl->info.numFrames;
+        subdef.frame = frame % mdl->info.numFrames;
     }
 }
 
@@ -480,15 +480,23 @@ static inline float Mod_Lerp(float start, float end, float pos)
  */
 static model_frame_t *Mod_GetVisibleFrame(modeldef_t *mf, int subnumber, int mobjid)
 {
-    model_t *mdl = Models_ToModel(mf->sub[subnumber].modelId);
-    int index = mf->sub[subnumber].frame;
-
-    if(mf->flags & MFF_IDFRAME)
+    if(subnumber >= int(mf->subCount()))
     {
-        index += mobjid % mf->sub[subnumber].frameRange;
+        throw Error("Mod_GetVisibleFrame",
+                    QString("Model has %1 submodels, but submodel #%2 was requested")
+                    .arg(mf->subCount()).arg(subnumber));
     }
 
+    submodeldef_t const &sub = mf->subModelDef(subnumber);
+
+    model_t *mdl = Models_ToModel(sub.modelId);
     DENG_ASSERT(mdl);
+
+    int index = sub.frame;
+    if(mf->flags & MFF_IDFRAME)
+    {
+        index += mobjid % sub.frameRange;
+    }
     if(index >= mdl->info.numFrames)
     {
         throw Error("Mod_GetVisibleFrame", "Frame index out of bounds.");
@@ -777,38 +785,45 @@ static void Mod_ShinyCoords(int count, dgl_texcoord_t *coords, dgl_vertex_t *nor
 
 static int chooseSelSkin(modeldef_t *mf, int submodel, int selector)
 {
-    int i = (selector >> DDMOBJ_SELECTOR_SHIFT) &
-            mf->def->sub[submodel].selSkinBits[0]; // Selskin mask
-    int c = mf->def->sub[submodel].selSkinBits[1]; // Selskin shift
+    if(mf->def->hasSub(submodel))
+    {
+        int i = (selector >> DDMOBJ_SELECTOR_SHIFT) &
+                mf->def->sub(submodel).selSkinBits[0]; // Selskin mask
+        int c = mf->def->sub(submodel).selSkinBits[1]; // Selskin shift
 
-    if(c > 0) i >>= c;
-    else      i <<= -c;
+        if(c > 0) i >>= c;
+        else      i <<= -c;
 
-    if(i > 7) i = 7; // Maximum number of skins for selskin.
-    if(i < 0) i = 0; // Improbable (impossible?), but doesn't hurt.
+        if(i > 7) i = 7; // Maximum number of skins for selskin.
+        if(i < 0) i = 0; // Improbable (impossible?), but doesn't hurt.
 
-    return mf->def->sub[submodel].selSkins[i];
+        return mf->def->sub(submodel).selSkins[i];
+    }
+    return 0;
 }
 
 static int chooseSkin(modeldef_t *mf, int submodel, int id, int selector, int tmap)
 {
-    submodeldef_t *smf = &mf->sub[submodel];
-    model_t *mdl = Models_ToModel(smf->modelId);
-    int skin = smf->skin;
+    if(submodel >= int(mf->subCount()))
+        return 0;
+
+    submodeldef_t &smf = mf->subModelDef(submodel);
+    model_t *mdl = Models_ToModel(smf.modelId);
+    int skin = smf.skin;
 
     // Selskin overrides the skin range.
-    if(smf->testFlag(MFF_SELSKIN))
+    if(smf.testFlag(MFF_SELSKIN))
     {
         skin = chooseSelSkin(mf, submodel, selector);
     }
 
     // Is there a skin range for this frame?
     // (During model setup skintics and skinrange are set to >0.)
-    if(smf->skinRange > 1)
+    if(smf.skinRange > 1)
     {
         // What rule to use for determining the skin?
         int offset;
-        if(smf->testFlag(MFF_IDSKIN))
+        if(smf.testFlag(MFF_IDSKIN))
         {
             offset = id;
         }
@@ -817,11 +832,11 @@ static int chooseSkin(modeldef_t *mf, int submodel, int id, int selector, int tm
             offset = SECONDS_TO_TICKS(ddMapTime) / mf->skinTics;
         }
 
-        skin += offset % smf->skinRange;
+        skin += offset % smf.skinRange;
     }
 
     // Need translation?
-    if(smf->testFlag(MFF_SKINTRANS))
+    if(smf.testFlag(MFF_SKINTRANS))
         skin = tmap;
 
     DENG_ASSERT(mdl);
@@ -851,7 +866,7 @@ texturevariantspecification_t &Rend_ModelShinyTextureSpec()
 static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
 {
     modeldef_t *mf = parm->mf, *mfNext = parm->nextMF;
-    submodeldef_t *smf = &mf->sub[number];
+    submodeldef_t *smf = &mf->subModelDef(number);
     model_t *mdl = Models_ToModel(smf->modelId);
     model_frame_t *frame = Mod_GetVisibleFrame(mf, number, parm->id);
     model_frame_t *nextFrame = NULL;
@@ -916,7 +931,7 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
         // Check for possible interpolation.
         if(frameInter && mfNext && !smf->testFlag(MFF_DONT_INTERPOLATE))
         {
-            if(mfNext->sub[number].modelId == smf->modelId)
+            if(mfNext->hasSub(number) && mfNext->subModelId(number) == smf->modelId)
             {
                 nextFrame = Mod_GetVisibleFrame(mfNext, number, parm->id);
             }
@@ -1057,24 +1072,28 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
                          -parm->yaw, -parm->pitch);
     }
 
-    shininess = MINMAX_OF(0, mf->def->sub[number].shiny * modelShinyFactor, 1);
-    // Ensure we've prepared the shiny skin.
-    if(shininess > 0)
+    shininess = 0;
+    if(mf->def->hasSub(number))
     {
-        if(Texture *tex = reinterpret_cast<Texture *>(mf->sub[number].shinySkin))
+        shininess = MINMAX_OF(0, mf->def->sub(number).shiny * modelShinyFactor, 1);
+        // Ensure we've prepared the shiny skin.
+        if(shininess > 0)
         {
-            shinyTexture = tex->prepareVariant(Rend_ModelShinyTextureSpec());
-        }
-        else
-        {
-            shininess = 0;
+            if(Texture *tex = reinterpret_cast<Texture *>(mf->subModelDef(number).shinySkin))
+            {
+                shinyTexture = tex->prepareVariant(Rend_ModelShinyTextureSpec());
+            }
+            else
+            {
+                shininess = 0;
+            }
         }
     }
 
     if(shininess > 0)
     {
         // Calculate shiny coordinates.
-        shinyColor = mf->def->sub[number].shinyColor;
+        shinyColor = mf->def->sub(number).shinyColor;
 
         // With psprites, add the view angle/pitch.
         offset = parm->shineYawOffset;
@@ -1114,7 +1133,7 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
 
         Mod_ShinyCoords(numVerts, modelTexCoords, modelNormals, normYaw,
                         normPitch, shinyAng, shinyPnt,
-                        mf->def->sub[number].shinyReact);
+                        mf->def->sub(number).shinyReact);
 
         // Shiny color.
         if(smf->testFlag(MFF_SHINY_LIT))
@@ -1341,9 +1360,9 @@ void Rend_RenderModel(rendmodelparams_t const *parm)
     if(!parm || !parm->mf) return;
 
     // Render all the submodels of this model.
-    for(uint i = 0; i < parm->mf->sub.size(); ++i)
+    for(uint i = 0; i < parm->mf->subCount(); ++i)
     {
-        if(parm->mf->sub[i].modelId)
+        if(parm->mf->subModelId(i))
         {
             bool disableZ = (parm->mf->flags & MFF_DISABLE_Z_WRITE ||
                              parm->mf->testSubFlag(i, MFF_DISABLE_Z_WRITE));
