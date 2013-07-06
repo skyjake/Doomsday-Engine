@@ -388,6 +388,9 @@ static int ReadUri(uri_s **dest_, char const *defaultScheme)
     if(!ReadString(buffer))
         return false;
 
+    // URIs are expected to use forward slashes.
+    buffer = Path::normalizeString(buffer);
+
     if(!*dest_)
         *dest_ = reinterpret_cast<uri_s *>(new de::Uri(buffer, RC_NULL));
     else
