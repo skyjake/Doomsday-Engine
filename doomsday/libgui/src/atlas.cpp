@@ -250,7 +250,7 @@ Id Atlas::alloc(Image const &image)
     }
     else
     {
-        LOG_DEBUG("Atlas is full with %.1f%% usage") << d->usedPercentage()*100;
+        LOG_TRACE("Atlas is full with %.1f%% usage") << d->usedPercentage()*100;
 
         DENG2_FOR_AUDIENCE(OutOfSpace, i)
         {
