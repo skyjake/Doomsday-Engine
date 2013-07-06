@@ -158,7 +158,7 @@ struct ModelDef
 
     /// Submodels.
     typedef std::vector<SubmodelDef> Subs;
-    Subs sub;
+    Subs _sub;
 
     ModelDef(char const *modelDefId = "")
         : state(0),
@@ -183,21 +183,49 @@ struct ModelDef
 
     SubmodelDef *addSub()
     {
-        sub.push_back(SubmodelDef());
+        _sub.push_back(SubmodelDef());
         ptcOffset.push_back(de::Vector3f());
-        return &sub.back();
+        return &_sub.back();
     }
 
     void clearSubs()
     {
-        sub.clear();
+        _sub.clear();
         ptcOffset.clear();
+    }
+
+    uint subCount() const
+    {
+        return _sub.size();
     }
 
     bool testSubFlag(unsigned int subnum, int flag) const
     {
-        if(subnum >= sub.size()) return false;
-        return sub[subnum].testFlag(flag);
+        if(!hasSub(subnum)) return false;
+        return _sub[subnum].testFlag(flag);
+    }
+
+    modelid_t subModelId(unsigned int subnum) const
+    {
+        if(!hasSub(subnum)) return NOMODELID;
+        return _sub[subnum].modelId;
+    }
+
+    SubmodelDef &subModelDef(unsigned int subnum)
+    {
+        DENG_ASSERT(hasSub(subnum));
+        return _sub[subnum];
+    }
+
+    SubmodelDef const &subModelDef(unsigned int subnum) const
+    {
+        DENG_ASSERT(hasSub(subnum));
+        return _sub[subnum];
+    }
+
+    bool hasSub(unsigned int subnum) const
+    {
+        return subnum < _sub.size();
     }
 };
 

@@ -273,7 +273,7 @@ Uri Uri::fromUserInput(char **argv, int argc, bool (*knownScheme) (String name))
             {
                 output.setScheme(rawUri.left(pos));
                 rawUri.remove(0, pos + 1);
-                output.setPath(Path(QString(QByteArray(rawUri.toUtf8()).toPercentEncoding())));
+                output.setPath(Path::normalize(QString(QByteArray(rawUri.toUtf8()).toPercentEncoding())));
             }
             // Just a scheme name?
             else if(knownScheme && knownScheme(rawUri))
@@ -283,7 +283,7 @@ Uri Uri::fromUserInput(char **argv, int argc, bool (*knownScheme) (String name))
             else
             {
                 // Just a path.
-                output.setPath(Path(QString(QByteArray(rawUri.toUtf8()).toPercentEncoding())));
+                output.setPath(Path::normalize(QString(QByteArray(rawUri.toUtf8()).toPercentEncoding())));
             }
             break; }
 
@@ -291,7 +291,7 @@ Uri Uri::fromUserInput(char **argv, int argc, bool (*knownScheme) (String name))
         case 2:
             // Assign the scheme and encode the path.
             output.setScheme(argv[0]);
-            output.setPath(Path(QString(QByteArray(argv[1]).toPercentEncoding())));
+            output.setPath(Path::normalize(QString(QByteArray(argv[1]).toPercentEncoding())));
             break;
 
         default: break;

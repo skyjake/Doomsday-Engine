@@ -1876,13 +1876,13 @@ void Def_PostInit(void)
             sprintf(name, "Particle%02i", st->type - PTC_MODEL);
 
             modeldef_t *modef = Models_Definition(name);
-            if(!modef || modef->sub.empty() || modef->sub[0].modelId == NOMODELID)
+            if(!modef || modef->subModelId(0) == NOMODELID)
             {
                 st->model = -1;
                 continue;
             }
 
-            model_t *mdl = Models_ToModel(modef->sub[0].modelId);
+            model_t *mdl = Models_ToModel(modef->subModelId(0));
             DENG_ASSERT(mdl);
 
             st->model = modef - &modefs[0];

@@ -337,7 +337,7 @@ static void setupSkyModels(ded_sky_t *def)
     {
         // Is the model ID set?
         sm->model = Models_Definition(modef->id);
-        if(!sm->model || sm->model->sub.empty()) continue;
+        if(!sm->model || !sm->model->subCount()) continue;
 
         // There is a model here.
         skyModelsInited = true;
@@ -345,7 +345,7 @@ static void setupSkyModels(ded_sky_t *def)
         sm->def = modef;
         sm->maxTimer = (int) (TICSPERSEC * modef->frameInterval);
         sm->yaw = modef->yaw;
-        sm->frame = sm->model->sub[0].frame;
+        sm->frame = sm->model->subModelDef(0).frame;
     }
 }
 

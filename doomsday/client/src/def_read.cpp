@@ -388,6 +388,9 @@ static int ReadUri(uri_s **dest_, char const *defaultScheme)
     if(!ReadString(buffer))
         return false;
 
+    // URIs are expected to use forward slashes.
+    buffer = Path::normalizeString(buffer);
+
     if(!*dest_)
         *dest_ = reinterpret_cast<uri_s *>(new de::Uri(buffer, RC_NULL));
     else
@@ -1412,16 +1415,16 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 if(bCopyNext)
                 {
                     *mdl = *prevModel;
-                    for(uint i = 0; i < mdl->sub.size(); ++i)
+                    for(uint i = 0; i < mdl->subCount(); ++i)
                     {
-                        if(mdl->sub[i].filename)
-                            mdl->sub[i].filename = Uri_Dup(mdl->sub[i].filename);
+                        if(mdl->sub(i).filename)
+                            mdl->sub(i).filename = Uri_Dup(mdl->sub(i).filename);
 
-                        if(mdl->sub[i].skinFilename)
-                            mdl->sub[i].skinFilename = Uri_Dup(mdl->sub[i].skinFilename);
+                        if(mdl->sub(i).skinFilename)
+                            mdl->sub(i).skinFilename = Uri_Dup(mdl->sub(i).skinFilename);
 
-                        if(mdl->sub[i].shinySkin)
-                            mdl->sub[i].shinySkin = Uri_Dup(mdl->sub[i].shinySkin);
+                        if(mdl->sub(i).shinySkin)
+                            mdl->sub(i).shinySkin = Uri_Dup(mdl->sub(i).shinySkin);
                     }
                 }
             }
@@ -1454,34 +1457,34 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 if(ISLABEL("Md2") || ISLABEL("Sub"))
                 {
                     // Add another submodel.
-                    if(sub >= mdl->sub.size())
+                    if(sub >= mdl->subCount())
                     {
-                        mdl->sub.push_back(ded_submodel_t());
+                        mdl->appendSub();
                     }
-                    DENG_ASSERT(sub < mdl->sub.size());
+                    DENG_ASSERT(sub < mdl->subCount());
 
                     FINDBEGIN;
                     for(;;)
                     {
                         READLABEL;
-                        RV_URI("File", &mdl->sub[sub].filename, "Models")
-                        RV_STR("Frame", mdl->sub[sub].frame)
-                        RV_INT("Frame range", mdl->sub[sub].frameRange)
-                        RV_BLENDMODE("Blending mode", mdl->sub[sub].blendMode)
-                        RV_INT("Skin", mdl->sub[sub].skin)
-                        RV_URI("Skin file", &mdl->sub[sub].skinFilename, "Models")
-                        RV_INT("Skin range", mdl->sub[sub].skinRange)
-                        RV_VEC("Offset XYZ", mdl->sub[sub].offset, 3)
-                        RV_FLAGS("Flags", mdl->sub[sub].flags, "df_")
-                        RV_FLT("Transparent", mdl->sub[sub].alpha)
-                        RV_FLT("Parm", mdl->sub[sub].parm)
-                        RV_BYTE("Selskin mask", mdl->sub[sub].selSkinBits[0])
-                        RV_BYTE("Selskin shift", mdl->sub[sub].selSkinBits[1])
-                        RV_NBVEC("Selskins", mdl->sub[sub].selSkins, 8)
-                        RV_URI("Shiny skin", &mdl->sub[sub].shinySkin, "Models")
-                        RV_FLT("Shiny", mdl->sub[sub].shiny)
-                        RV_VEC("Shiny color", mdl->sub[sub].shinyColor, 3)
-                        RV_FLT("Shiny reaction", mdl->sub[sub].shinyReact)
+                        RV_URI("File", &mdl->sub(sub).filename, "Models")
+                        RV_STR("Frame", mdl->sub(sub).frame)
+                        RV_INT("Frame range", mdl->sub(sub).frameRange)
+                        RV_BLENDMODE("Blending mode", mdl->sub(sub).blendMode)
+                        RV_INT("Skin", mdl->sub(sub).skin)
+                        RV_URI("Skin file", &mdl->sub(sub).skinFilename, "Models")
+                        RV_INT("Skin range", mdl->sub(sub).skinRange)
+                        RV_VEC("Offset XYZ", mdl->sub(sub).offset, 3)
+                        RV_FLAGS("Flags", mdl->sub(sub).flags, "df_")
+                        RV_FLT("Transparent", mdl->sub(sub).alpha)
+                        RV_FLT("Parm", mdl->sub(sub).parm)
+                        RV_BYTE("Selskin mask", mdl->sub(sub).selSkinBits[0])
+                        RV_BYTE("Selskin shift", mdl->sub(sub).selSkinBits[1])
+                        RV_NBVEC("Selskins", mdl->sub(sub).selSkins, 8)
+                        RV_URI("Shiny skin", &mdl->sub(sub).shinySkin, "Models")
+                        RV_FLT("Shiny", mdl->sub(sub).shiny)
+                        RV_VEC("Shiny color", mdl->sub(sub).shinyColor, 3)
+                        RV_FLT("Shiny reaction", mdl->sub(sub).shinyReact)
                         RV_END
                         CHECKSC;
                     }
@@ -1502,28 +1505,28 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 //if(!strcmp(mdl->group, "-"))      strcpy(mdl->group,      prevModel->group);
                 //if(!strcmp(mdl->flags, "-"))      strcpy(mdl->flags,      prevModel->flags);
 
-                for(uint i = 0; i < mdl->sub.size(); ++i)
+                for(uint i = 0; i < mdl->subCount(); ++i)
                 {
-                    if(mdl->sub[i].filename && !Str_CompareIgnoreCase(Uri_Path(mdl->sub[i].filename), "-"))
+                    if(mdl->sub(i).filename && !Str_CompareIgnoreCase(Uri_Path(mdl->sub(i).filename), "-"))
                     {
-                        Uri_Delete(mdl->sub[i].filename);
-                        mdl->sub[i].filename = NULL;
+                        Uri_Delete(mdl->sub(i).filename);
+                        mdl->sub(i).filename = NULL;
                     }
 
-                    if(mdl->sub[i].skinFilename && !Str_CompareIgnoreCase(Uri_Path(mdl->sub[i].skinFilename), "-"))
+                    if(mdl->sub(i).skinFilename && !Str_CompareIgnoreCase(Uri_Path(mdl->sub(i).skinFilename), "-"))
                     {
-                        Uri_Delete(mdl->sub[i].skinFilename);
-                        mdl->sub[i].skinFilename = NULL;
+                        Uri_Delete(mdl->sub(i).skinFilename);
+                        mdl->sub(i).skinFilename = NULL;
                     }
 
-                    if(mdl->sub[i].shinySkin && !Str_CompareIgnoreCase(Uri_Path(mdl->sub[i].shinySkin), "-"))
+                    if(mdl->sub(i).shinySkin && !Str_CompareIgnoreCase(Uri_Path(mdl->sub(i).shinySkin), "-"))
                     {
-                        Uri_Delete(mdl->sub[i].shinySkin);
-                        mdl->sub[i].shinySkin = NULL;
+                        Uri_Delete(mdl->sub(i).shinySkin);
+                        mdl->sub(i).shinySkin = NULL;
                     }
 
-                    if(!strcmp(mdl->sub[i].frame, "-"))
-                        memset(mdl->sub[i].frame, 0, sizeof(ded_string_t));
+                    if(!strcmp(mdl->sub(i).frame, "-"))
+                        memset(mdl->sub(i).frame, 0, sizeof(ded_string_t));
                 }
             }
 
