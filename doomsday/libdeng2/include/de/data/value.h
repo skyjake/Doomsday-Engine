@@ -85,6 +85,20 @@ public:
      */
     virtual Text asText() const = 0;
 
+    template <typename ValueType>
+    ValueType &as() {
+        ValueType *t = dynamic_cast<ValueType *>(this);
+        if(!t) throw ConversionError("Value::as<>", "Illegal type conversion");
+        return *t;
+    }
+
+    template <typename ValueType>
+    ValueType const &as() const {
+        ValueType const *t = dynamic_cast<ValueType const *>(this);
+        if(!t) throw ConversionError("Value::as<>", "Illegal const type conversion");
+        return *t;
+    }
+
     /**
      * Determine the size of the value.  The meaning of this
      * depends on the type of the value.

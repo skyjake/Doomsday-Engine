@@ -23,6 +23,7 @@
 #include "../Process"
 #include "../String"
 #include "../Path"
+#include "../Version"
 
 namespace de {
 
@@ -163,6 +164,12 @@ public:
      * @return  Variable (non-modifiable).
      */
     Variable const &operator [] (String const &name) const;
+
+    /**
+     * Returns the old version, when a new installed version has been detected.
+     * If no upgrade has occurred, returns the current version.
+     */
+    Version upgradedFromVersion() const;
 
 private:
     DENG2_PRIVATE(d)
