@@ -66,6 +66,7 @@ DENG2_PIMPL(App)
 
     FileSystem fs;
     ScriptSystem scriptSys;
+    Record appModule;
 
     /// Archive where persistent data should be stored. Written to /home/persist.pack.
     /// The archive is owned by the file system.
@@ -90,6 +91,10 @@ DENG2_PIMPL(App)
         // Built-in systems.
         systems.append(&fs);
         systems.append(&scriptSys);
+
+        // Native App module.
+        appModule.addArray("audienceForGameChange"); // game change observers
+        scriptSys.addNativeModule("App", appModule);
     }
 
     ~Instance()
