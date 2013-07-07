@@ -32,14 +32,14 @@ using namespace de;
 static Value *Binding_InputSystem_BindEvent(Context &, Function::ArgumentValues const &args)
 {
     // We must have two arguments.
-    if(args.size() != 3) // plus dictionary
+    if(args.size() != 2)
     {
         throw Function::WrongArgumentsError("Binding_InputSystem_BindEvent",
                                             "Expected two arguments");
     }
 
-    String eventDesc = args[1]->asText();
-    String command   = args[2]->asText();
+    String eventDesc = args[0]->asText();
+    String command   = args[1]->asText();
 
     if(B_BindCommand(eventDesc.toLatin1(), command.toLatin1()))
     {
@@ -62,7 +62,8 @@ DENG2_PIMPL(InputSystem)
 
         scriptBindings = new Record;
         scriptBindings->addFunction("bindEvent",
-                refless(new Function("InputSystem_BindEvent"))).setReadOnly();
+                refless(new Function("InputSystem_BindEvent",
+                                     Function::Arguments() << "event" << "command"))).setReadOnly();
 
         App::scriptSystem().addNativeModule("Input", *scriptBindings);
 
