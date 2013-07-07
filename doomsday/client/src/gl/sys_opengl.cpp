@@ -191,8 +191,8 @@ static void printGLUInfo(void)
 #define TABBED(A, B) _E(Ta) "  " A " " _E(Tb) << B << "\n"
 
     os << TABBED("Version:",  (char const *) glGetString(GL_VERSION));
-    os << TABBED("Vendor:",   (char const *) glGetString(GL_VENDOR));
     os << TABBED("Renderer:", (char const *) glGetString(GL_RENDERER));
+    os << TABBED("Vendor:",   (char const *) glGetString(GL_VENDOR));
 
     LOG_MSG("%s") << str.rightStrip();
 
@@ -679,7 +679,7 @@ static void printExtensions(QStringList extensions)
         foreach(QString ext, extensions)
         {
             ext = omitGLPrefix(ext);
-            if(ext.startsWith(prefix))
+            if(ext.startsWith(prefix + "_"))
             {
                 ext.remove(0, prefix.size() + 1);
                 if(!first) os << ", ";

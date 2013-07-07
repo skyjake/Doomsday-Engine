@@ -619,11 +619,16 @@ void DD_ClearSystemTextureSchemes()
 
 Materials &App_Materials()
 {
-    if(!materials)
+    if(!App_HaveMaterials())
     {
         throw Error("App_Materials", "Materials collection not yet initialized");
     }
     return *materials;
+}
+
+bool App_HaveMaterials()
+{
+    return materials != 0;
 }
 
 void DD_CreateMaterialSchemes()

@@ -208,6 +208,8 @@ de::Games &App_Games();
 /// @return  The application's global World.
 de::World &App_World();
 
+bool App_HaveMaterials();
+
 /// @return  The application's global Materials (collection).
 de::Materials &App_Materials();
 

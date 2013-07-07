@@ -39,7 +39,8 @@ public:
 
     /**
      * Sets up all the subsystems of the application. Must be called before the
-     * event loop is started.
+     * event loop is started. At the end of this method, the bootstrap script is
+     * executed.
      */
     void initialize();
 
