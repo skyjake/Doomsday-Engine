@@ -706,6 +706,7 @@ OTHER_FILES += \
 data.files = $$OUT_PWD/../doomsday.pk3
 
 mod.files = \
+    modules/bootstrap.de \
     $$DENG_MODULES_DIR/Config.de \
     $$DENG_MODULES_DIR/gui.de \
     $$DENG_MODULES_DIR/recutil.de

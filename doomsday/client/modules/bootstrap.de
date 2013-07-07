@@ -1,0 +1,33 @@
+# DOOMSDAY CLIENT BOOTSTRAP
+# 
+# This script is executed after the client application has been fully
+# initialized, immediately after subsystems are all ready. No game is
+# loaded at this stage, although all plugins have been enumerated.
+# The window is not yet visible -- no GL operations can be performed.
+# Config has already been loaded from persistent storage.
+
+import Version, App
+
+def bindDefaultConsoleTildeKey(newGame)
+    if newGame != 'null-game'
+        import Input
+        Input.bindEvent("global:key-tilde-down+key-shift-up", "taskbar")
+        Input.bindEvent("console:key-tilde-down+key-shift-up", "taskbar")
+    end
+end
+
+def upgradeMaintenance()
+    if not 'OLD_VERSION' in Version: return
+    
+    # Ensure that the default Tilde binding is present when upgrading
+    # from an older version.
+    if Version.OLD_VERSION[3] < 918 and Version.BUILD >= 918
+        # Register an observer that ensures the binding is present
+        # after a game has been loaded.
+        App.audienceForGameChange += [bindDefaultConsoleTildeKey]
+    end
+end
+
+
+# During launch we will perform any necessary maintenance tasks.
+upgradeMaintenance()

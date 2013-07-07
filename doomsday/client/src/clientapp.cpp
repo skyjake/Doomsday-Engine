@@ -191,6 +191,9 @@ void ClientApp::initialize()
     addSystem(*d->inputSys);
     d->widgetActions.reset(new WidgetActions);
 
+    // Finally, run the bootstrap script.
+    scriptSystem().importModule("bootstrap");
+
     App_Timer(1, continueInitWithEventLoopRunning);
 }
 
