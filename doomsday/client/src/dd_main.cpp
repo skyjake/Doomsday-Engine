@@ -84,6 +84,9 @@
 #  include "ui/widgets/taskbarwidget.h"
 #endif
 
+#include <de/ArrayValue>
+#include <de/DictionaryValue>
+
 extern int renderTextures;
 
 using namespace de;
@@ -184,6 +187,23 @@ static Textures *textures;
 
 /// Notified when the current game changes. @todo Should be owned by App.
 GameChangeAudience audienceForGameChange;
+
+/**
+ * Delegates game change notifications to scripts.
+ */
+class GameChangeScriptAudience : public IGameChangeObserver
+{
+public:
+    void currentGameChanged(Game &newGame)
+    {
+        ArrayValue args;
+        args << DictionaryValue() << TextValue(Str_Text(newGame.identityKey()));
+        App::scriptSystem().nativeModule("App")["audienceForGameChange"]
+                .value<ArrayValue>().callElements(args);
+    }
+};
+
+static GameChangeScriptAudience scriptAudienceForGameChange;
 
 /// Current game. @todo Should be owned by App.
 Game *currentGame;
@@ -1876,6 +1896,8 @@ boolean DD_Init(void)
         return false;
     }
 #endif
+
+    audienceForGameChange += scriptAudienceForGameChange;
 
     // Initialize the subsystems needed prior to entering busy mode for the first time.
     Sys_Init();
