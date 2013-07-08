@@ -38,6 +38,7 @@
 #include "ui/widgets/busywidget.h"
 #include "ui/widgets/taskbarwidget.h"
 #include "ui/widgets/consolewidget.h"
+#include "ui/widgets/notificationwidget.h"
 #include "ui/widgets/gameselectionwidget.h"
 #include "ui/commandaction.h"
 #include "ui/mouse_qt.h"
@@ -65,6 +66,7 @@ public IGameChangeObserver
     GuiRootWidget root;
     LegacyWidget *legacy;
     TaskBarWidget *taskBar;
+    NotificationWidget *notifications;
     LabelWidget *background;
     GameSelectionWidget *games;
 
@@ -78,6 +80,7 @@ public IGameChangeObserver
           root(thisPublic),
           legacy(0),
           taskBar(0),
+          notifications(0),
           background(0),
           games(0),
           busyRoot(thisPublic)
@@ -133,6 +136,13 @@ public IGameChangeObserver
                 .setInput(Rule::Width,   OperatorRule::minimum(root.viewWidth(), Const(800)))
                 .setAnchorPoint(Vector2f(.5f, .5f));
         root.add(games);
+
+        // Common notification area.
+        notifications = new NotificationWidget;
+        notifications->rule()
+                .setInput(Rule::Top,   root.viewTop()   + style.rules().rule("gap"))
+                .setInput(Rule::Right, root.viewRight() - style.rules().rule("gap"));
+        root.add(notifications);
 
         // Taskbar is over almost everything else.
         taskBar = new TaskBarWidget;
