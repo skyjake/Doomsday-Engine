@@ -159,6 +159,12 @@ void Plug_UnloadAll(void)
     }
 }
 
+de::LibraryFile const &Plug_FileForPlugin(pluginid_t id)
+{
+    DENG2_ASSERT(id > 0 && id <= MAX_PLUGS);
+    return Library_File(hInstPlug[id - 1]);
+}
+
 DENG_EXTERN_C int Plug_AddHook(int hookType, hookfunc_t hook)
 {
     int i, type = HOOKMASK(hookType);
