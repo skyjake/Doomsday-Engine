@@ -70,10 +70,10 @@ DENG2_PIMPL(GuiWidget)
           marginId("gap"),
           blurInited(false),
           uBlurMvpMatrix("uMvpMatrix", GLUniform::Mat4),
-          uBlurColor("uColor", GLUniform::Vec4),
-          uBlurTex("uTex", GLUniform::Sampler2D),
-          uBlurStep("uBlurStep", GLUniform::Vec2),
-          uBlurWindow("uWindow", GLUniform::Vec4)
+          uBlurColor    ("uColor",     GLUniform::Vec4),
+          uBlurTex      ("uTex",       GLUniform::Sampler2D),
+          uBlurStep     ("uBlurStep",  GLUniform::Vec2),
+          uBlurWindow   ("uWindow",    GLUniform::Vec4)
     {
 #ifdef DENG2_DEBUG
         self.audienceForParentChange += this;
