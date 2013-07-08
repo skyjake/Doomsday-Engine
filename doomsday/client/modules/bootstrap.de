@@ -17,7 +17,6 @@ end
 def runPluginLoadHooks(newGame)
     if newGame == 'null-game': return    
     try
-        print "running hooks for", App.gamePlugin()
         gameConf = Config.plugin[App.gamePlugin()]
         for func in gameConf.onNextLoad: func()
         # These are single-shot hooks.
