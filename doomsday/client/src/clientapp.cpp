@@ -67,7 +67,7 @@ static void continueInitWithEventLoopRunning()
 
 Value *Binding_App_GamePlugin(Context &, Function::ArgumentValues const &)
 {
-    String name = Plug_FileForPlugin(App_CurrentGame().pluginId())->name().fileNameWithoutExtension();
+    String name = Plug_FileForPlugin(App_CurrentGame().pluginId()).name().fileNameWithoutExtension();
     if(name.startsWith("lib")) name.remove(0, 3);
     return new TextValue(name);
 }
