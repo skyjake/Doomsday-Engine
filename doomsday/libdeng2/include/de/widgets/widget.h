@@ -85,6 +85,18 @@ public:
     Widget(String const &name = "");
     virtual ~Widget();
 
+    template <typename Type>
+    Type &as() {
+        DENG2_ASSERT(dynamic_cast<Type *>(this) != 0);
+        return *static_cast<Type *>(this);
+    }
+
+    template <typename Type>
+    Type const &as() const {
+        DENG2_ASSERT(dynamic_cast<Type const *>(this) != 0);
+        return *static_cast<Type const *>(this);
+    }
+
     /**
      * Returns the automatically generated, unique identifier of the widget.
      */

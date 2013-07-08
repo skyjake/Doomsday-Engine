@@ -160,6 +160,20 @@ inline CountedType const *holdRef(CountedType const &counted) {
     return counted.template ref<CountedType>();
 }
 
+template <typename CountedType1, typename CountedType2>
+inline void changeRef(CountedType1 const *&counted, CountedType2 const *newRef) {
+    CountedType1 const *old = counted;
+    counted = holdRef(newRef);
+    releaseRef(old);
+}
+
+template <typename CountedType1, typename CountedType2>
+inline void changeRef(CountedType1 const *&counted, CountedType2 const &newRef) {
+    CountedType1 const *old = counted;
+    counted = holdRef(newRef);
+    releaseRef(old);
+}
+
 /**
  * Releases a reference to a Counted object. Afterwards, the pointer is cleared
  * to NULL.
