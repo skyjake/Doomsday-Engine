@@ -144,6 +144,17 @@ public:
 protected slots:
     void performQueuedTasks();
 
+    /**
+     * Forms the name of a Config variable for this window. Subclasses are
+     * allowed to use this to store their own properties in the persistent
+     * configuration.
+     *
+     * @param key  Variable name.
+     *
+     * @return Name of a variable in Config.
+     */
+    String configName(String const &key) const;
+
 private:
     DENG2_PRIVATE(d)
 };

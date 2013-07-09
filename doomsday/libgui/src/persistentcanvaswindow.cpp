@@ -861,6 +861,11 @@ void PersistentCanvasWindow::performQueuedTasks()
     d->checkQueue();
 }
 
+String PersistentCanvasWindow::configName(String const &key) const
+{
+    return d->state.configName(key);
+}
+
 PersistentCanvasWindow &PersistentCanvasWindow::main()
 {
     DENG2_ASSERT(haveMain() != 0);
