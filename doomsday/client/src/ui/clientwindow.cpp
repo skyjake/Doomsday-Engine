@@ -321,7 +321,7 @@ public IGameChangeObserver
 
     void updateFpsNotification(float fps)
     {       
-        notifications->showOrHide(fpsCounter, App::config().getb(self.configName("showFps")));
+        notifications->showOrHide(fpsCounter, self.isFPSCounterVisible());
 
         if(!fequal(oldFps, fps))
         {
@@ -369,7 +369,7 @@ NotificationWidget &ClientWindow::notifications()
 
 bool ClientWindow::isFPSCounterVisible() const
 {
-    return d->notifications->isChildShown(*d->fpsCounter);
+    return App::config().getb(configName("showFps"));
 }
 
 void ClientWindow::setMode(Mode const &mode)

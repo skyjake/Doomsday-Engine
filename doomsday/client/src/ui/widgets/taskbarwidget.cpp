@@ -29,6 +29,7 @@
 
 #include "ui/ui_main.h"
 
+#include <de/App>
 #include <de/KeyEvent>
 #include <de/Drawable>
 #include <de/GLBuffer>
@@ -41,6 +42,7 @@ using namespace de;
 using namespace ui;
 
 DENG2_PIMPL(TaskBarWidget),
+DENG2_OBSERVES(Variable, Change),
 public IGameChangeObserver
 {
     typedef DefaultVertexBuf VertexBuf;
@@ -152,6 +154,12 @@ public IGameChangeObserver
         }
     }
 
+    void variableValueChanged(Variable &, Value const &val)
+    {
+        // We are observing the value of the window's showFps variable.
+        updateFpsMenuItem();
+    }
+
     void updateFpsMenuItem()
     {
         fpsItem->setText(ClientWindow::main().isFPSCounterVisible()? "Hide FPS" : "Show FPS");
@@ -246,6 +254,10 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
 
     d->panelItem->hide();
     d->unloadItem->hide();
+    d->updateFpsMenuItem();
+
+    // Observe when the showFps variable changes.
+    App::config()["window.main.showFps"].audienceForChange += d;
 
     d->logo->setAction(new SignalAction(this, SLOT(openMainMenu())));
 }
@@ -299,13 +311,6 @@ void TaskBarWidget::glDeinit()
 void TaskBarWidget::viewResized()
 {
     d->updateProjection();
-}
-
-void TaskBarWidget::update()
-{
-    GuiWidget::update();
-
-    d->updateFpsMenuItem();
 }
 
 void TaskBarWidget::drawContent()
@@ -479,5 +484,5 @@ void TaskBarWidget::openMainMenu()
 
 void TaskBarWidget::toggleFPS()
 {
-    ClientWindow::main().toggleFPSCounter();
+    root().window().toggleFPSCounter();
 }
