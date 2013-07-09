@@ -64,24 +64,41 @@ Variable &Variable::operator = (Value *v)
 
 void Variable::set(Value *v)
 {
+    DENG2_ASSERT(v != 0);
+
     QScopedPointer<Value> val(v);
+    QScopedPointer<Value> oldValue(_value); // old value deleted afterwards
+
     // If the value would change, must check if this is allowed.
     verifyWritable(*v);
     verifyValid(*v);
-    delete _value;
+
     _value = val.take();
     
-    DENG2_FOR_AUDIENCE(Change, i) i->variableValueChanged(*this, *_value);
+    // We'll only determine if actual change occurred if someone is interested.
+    if(!audienceForChange.isEmpty())
+    {
+        bool notify = true;
+        try
+        {
+            // Did it actually change? Let's compare...
+            notify = oldValue.isNull() || oldValue->compare(*v);
+        }
+        catch(Error const &)
+        {
+            // Perhaps the values weren't comparable?
+        }
+
+        if(notify)
+        {
+            DENG2_FOR_AUDIENCE(Change, i) i->variableValueChanged(*this, *_value);
+        }
+    }
 }
 
 void Variable::set(Value const &v)
 {
-    verifyWritable(v);
-    verifyValid(v);
-    delete _value;
-    _value = v.duplicate();
-
-    DENG2_FOR_AUDIENCE(Change, i) i->variableValueChanged(*this, *_value);
+    set(v.duplicate());
 }
 
 Value const &Variable::value() const
