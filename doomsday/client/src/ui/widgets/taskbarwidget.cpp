@@ -51,6 +51,7 @@ public IGameChangeObserver
     LabelWidget *status;
     PopupMenuWidget *mainMenu;
     ButtonWidget *panelItem;
+    ButtonWidget *fpsItem;
     ButtonWidget *unloadItem;
     ScalarRule *vertShift;
 
@@ -150,6 +151,11 @@ public IGameChangeObserver
             status->setText("No game loaded");
         }
     }
+
+    void updateFpsMenuItem()
+    {
+        fpsItem->setText(ClientWindow::main().isFPSCounterVisible()? "Hide FPS" : "Show FPS");
+    }
 };
 
 TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
@@ -231,7 +237,8 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
     d->mainMenu = new PopupMenuWidget("de-menu");
     d->mainMenu->setAnchor(d->logo->rule().left() + d->logo->rule().width() / 2,
                            d->logo->rule().top());
-    d->panelItem  = d->mainMenu->addItem(_E(b) "Open Control Panel", new CommandAction("panel"));
+    d->fpsItem = d->mainMenu->addItem("", new SignalAction(this, SLOT(toggleFPS())));
+    d->panelItem = d->mainMenu->addItem(_E(b) "Open Control Panel", new CommandAction("panel"));
     d->mainMenu->addItem("Check for updates...", new CommandAction("updateandnotify"));
     d->unloadItem = d->mainMenu->addItem("Unload game", new CommandAction("unload"));
     d->mainMenu->addItem("Quit Doomsday", new CommandAction("quit"));
@@ -292,6 +299,13 @@ void TaskBarWidget::glDeinit()
 void TaskBarWidget::viewResized()
 {
     d->updateProjection();
+}
+
+void TaskBarWidget::update()
+{
+    GuiWidget::update();
+
+    d->updateFpsMenuItem();
 }
 
 void TaskBarWidget::drawContent()
@@ -461,4 +475,9 @@ void TaskBarWidget::close()
 void TaskBarWidget::openMainMenu()
 {
     d->mainMenu->open();
+}
+
+void TaskBarWidget::toggleFPS()
+{
+    ClientWindow::main().toggleFPSCounter();
 }

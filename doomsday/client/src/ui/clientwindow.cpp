@@ -72,6 +72,10 @@ public IGameChangeObserver
 
     GuiRootWidget busyRoot;
 
+    // FPS notifications.
+    LabelWidget *fpsCounter;
+    float oldFps;
+
     Instance(Public *i)
         : Base(i),
           needMainInit(true),
@@ -83,7 +87,9 @@ public IGameChangeObserver
           notifications(0),
           background(0),
           games(0),
-          busyRoot(thisPublic)
+          busyRoot(thisPublic),
+          fpsCounter(0),
+          oldFps(0)
     {
         /// @todo The decision whether to receive input notifications from the
         /// canvas is really a concern for the input drivers.
@@ -140,9 +146,14 @@ public IGameChangeObserver
         // Common notification area.
         notifications = new NotificationWidget;
         notifications->rule()
-                .setInput(Rule::Top,   root.viewTop()   + style.rules().rule("gap"))
+                .setInput(Rule::Top,   root.viewTop()   + style.rules().rule("gap") - notifications->shift())
                 .setInput(Rule::Right, root.viewRight() - style.rules().rule("gap"));
         root.add(notifications);
+
+        // FPS counter for the notification area.
+        fpsCounter = new LabelWidget;
+        fpsCounter->setSizePolicy(ui::Expand, ui::Expand);
+        fpsCounter->setAlignment(ui::AlignRight);
 
         // Taskbar is over almost everything else.
         taskBar = new TaskBarWidget;
@@ -307,6 +318,17 @@ public IGameChangeObserver
         ev.focus.inWindow = 1; /// @todo Ask WindowSystem for an identifier number.
         DD_PostEvent(&ev);
     }
+
+    void updateFpsNotification(float fps)
+    {       
+        notifications->showOrHide(fpsCounter, App::config().getb(self.configName("showFps")));
+
+        if(!fequal(oldFps, fps))
+        {
+            fpsCounter->setText(QString("%1 "_E(l)"FPS").arg(fps, 0, 'f', 1));
+            oldFps = fps;
+        }
+    }
 };
 
 ClientWindow::ClientWindow(String const &id)
@@ -338,6 +360,16 @@ TaskBarWidget &ClientWindow::taskBar()
 ConsoleWidget &ClientWindow::console()
 {
     return d->taskBar->console();
+}
+
+NotificationWidget &ClientWindow::notifications()
+{
+    return *d->notifications;
+}
+
+bool ClientWindow::isFPSCounterVisible() const
+{
+    return d->notifications->isChildShown(*d->fpsCounter);
 }
 
 void ClientWindow::setMode(Mode const &mode)
@@ -403,6 +435,7 @@ void ClientWindow::canvasGLDraw(Canvas &canvas)
     ClientApp::app().postFrame(); /// @todo what about multiwindow?
 
     PersistentCanvasWindow::canvasGLDraw(canvas);
+    d->updateFpsNotification(frameRate());
 }
 
 void ClientWindow::canvasGLResized(Canvas &canvas)
@@ -549,3 +582,8 @@ void GL_AssertContextActive()
     DENG_ASSERT(QGLContext::currentContext() != 0);
 }
 #endif
+
+void ClientWindow::toggleFPSCounter()
+{
+    App::config().set(configName("showFps"), !isFPSCounterVisible());
+}

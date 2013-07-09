@@ -50,6 +50,7 @@ public:
 
     // Events.
     void viewResized();
+    void update();
     void drawContent();
     bool handleEvent(de::Event const &event);
 
@@ -57,6 +58,7 @@ public slots:
     void open(bool doAction = true);
     void close();
     void openMainMenu();
+    void toggleFPS();
 
 signals:
     void opened();
