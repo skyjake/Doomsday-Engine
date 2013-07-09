@@ -1090,8 +1090,9 @@ void C_DECL A_FireGoldWandPL2(player_t* player, pspdef_t* psp)
     P_BulletSlope(mo);
     momZ = MOBJINFO[MT_GOLDWANDFX2].speed * bulletSlope;
 
-    P_SpawnMissileAngle(MT_GOLDWANDFX2, mo, mo->angle - (ANG45 / 8), momZ);
-    P_SpawnMissileAngle(MT_GOLDWANDFX2, mo, mo->angle + (ANG45 / 8), momZ);
+    Vanilla_P_SpawnMissileAngle(mo, MT_GOLDWANDFX2, mo->angle - (ANG45 / 8), momZ);
+    Vanilla_P_SpawnMissileAngle(mo, MT_GOLDWANDFX2, mo->angle + (ANG45 / 8), momZ);
+
     angle = mo->angle - (ANG45 / 8);
 
     for(i = 0; i < 5; ++i)
