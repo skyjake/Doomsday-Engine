@@ -261,6 +261,16 @@ mobj_t* P_SpawnMissile(mobjtype_t type, mobj_t* source, mobj_t* dest, boolean ch
  */
 mobj_t* P_SpawnMissileAngle(mobjtype_t type, mobj_t* source, angle_t angle, coord_t momz);
 
+/**
+ * Spawn a missile at given angle.
+ *
+ * @return @c NULL if the missile exploded immediately, otherwise returns
+ * a mobj_t pointer to the missile.
+ *
+ * @note This is adapted directly from vanilla Heretic sources (p_mobj.c:1418).
+ */
+mobj_t *Vanilla_P_SpawnMissileAngle(mobj_t *source, mobjtype_t type, angle_t angle, coord_t momz);
+
 mobj_t* P_SpawnTeleFog(coord_t x, coord_t y, angle_t angle);
 
 const terraintype_t* P_MobjGetFloorTerrainType(mobj_t* mobj);
