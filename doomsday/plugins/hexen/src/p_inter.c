@@ -1744,7 +1744,7 @@ boolean P_MorphMonster(mobj_t* actor)
     if(moType == MT_MINOTAUR)
     {
         master = oldMonster.tracer;
-        if(master->health > 0)
+        if(master && master->health > 0)
         {
             if(!ActiveMinotaur(master->player))
             {
