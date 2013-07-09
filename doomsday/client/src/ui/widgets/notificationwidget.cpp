@@ -21,11 +21,24 @@
 
 #include <de/Drawable>
 #include <de/Matrix>
+#include <de/ScalarRule>
+
+#include <QMap>
+#include <QTimer>
 
 using namespace de;
 
+static TimeDelta const ANIM_SPAN = .5;
+
 DENG2_PIMPL(NotificationWidget)
 {
+    ScalarRule *shift;
+
+    typedef QMap<GuiWidget *, Widget *> OldParents;
+    OldParents oldParents;
+    QTimer dismissTimer;
+    QList<GuiWidget *> pendingDismiss;
+
     // GL objects:
     typedef DefaultVertexBuf VertexBuf;
     Drawable drawable;
@@ -37,7 +50,17 @@ DENG2_PIMPL(NotificationWidget)
           uMvpMatrix("uMvpMatrix", GLUniform::Mat4),
           uColor    ("uColor",     GLUniform::Vec4)
     {
+        dismissTimer.setSingleShot(true);
+        dismissTimer.setInterval(ANIM_SPAN.asMilliSeconds());
+        QObject::connect(&dismissTimer, SIGNAL(timeout()), thisPublic, SLOT(dismiss()));
+
+        shift = new ScalarRule(0);
         updateStyle();
+    }
+
+    ~Instance()
+    {
+        releaseRef(shift);
     }
 
     void updateStyle()
@@ -73,8 +96,7 @@ DENG2_PIMPL(NotificationWidget)
 
     void updateChildLayout()
     {
-        Rule const &outer = self.style().rules().rule("gap");
-        Rule const &inner = self.style().rules().rule("unit");
+        Rule const &gap = self.style().rules().rule("unit");
 
         Rule const *totalWidth = 0;
         Rule const *totalHeight = 0;
@@ -85,15 +107,15 @@ DENG2_PIMPL(NotificationWidget)
             GuiWidget &w = children[i]->as<GuiWidget>();
 
             // The children are laid out simply in a row from right to left.
-            w.rule().setInput(Rule::Top, self.rule().top() + outer);
+            w.rule().setInput(Rule::Top, self.rule().top());
             if(i > 0)
             {
-                w.rule().setInput(Rule::Right, children[i - 1]->as<GuiWidget>().rule().left() - inner);
-                changeRef(totalWidth, *totalWidth + inner + w.rule().width());
+                w.rule().setInput(Rule::Right, children[i - 1]->as<GuiWidget>().rule().left() - gap);
+                changeRef(totalWidth, *totalWidth + gap + w.rule().width());
             }
             else
             {
-                w.rule().setInput(Rule::Right, self.rule().right() - outer);
+                w.rule().setInput(Rule::Right, self.rule().right());
                 totalWidth = holdRef(w.rule().width());
             }
 
@@ -109,11 +131,49 @@ DENG2_PIMPL(NotificationWidget)
 
         // Update the total size of the notification area.
         self.rule()
-                .setInput(Rule::Width,  *totalWidth  + outer * 2)
-                .setInput(Rule::Height, *totalHeight + outer * 2);
+                .setInput(Rule::Width,  *totalWidth)
+                .setInput(Rule::Height, *totalHeight);
 
         releaseRef(totalWidth);
         releaseRef(totalHeight);
+    }
+
+    void show()
+    {
+        //self.setOpacity(1, ANIM_SPAN);
+        shift->set(0, ANIM_SPAN);
+        shift->setStyle(Animation::EaseOut);
+    }
+
+    void hide(TimeDelta const &span = ANIM_SPAN)
+    {
+        //self.setOpacity(0, span);
+        shift->set(self.rule().height() + self.style().rules().rule("gap"), span);
+        shift->setStyle(Animation::EaseIn);
+    }
+
+    void dismissChild(GuiWidget &notif)
+    {
+        notif.hide();
+        self.remove(notif);
+
+        if(oldParents.contains(&notif))
+        {
+            oldParents[&notif]->add(&notif);
+            oldParents.remove(&notif);
+        }
+    }
+
+    void performPendingDismiss()
+    {
+        dismissTimer.stop();
+
+        // The pending children were already asked to be dismissed.
+        foreach(GuiWidget *w, pendingDismiss)
+        {
+            dismissChild(*w);
+        }
+        pendingDismiss.clear();
     }
 };
 
@@ -121,7 +181,74 @@ NotificationWidget::NotificationWidget(String const &name) : d(new Instance(this
 {
     // Initially the widget is empty.
     rule().setSize(Const(0), Const(0));
+    d->shift->set(style().fonts().font("default").height().valuei() +
+                  style().rules().rule("gap").valuei() * 3);
     hide();
+}
+
+Rule const &NotificationWidget::shift()
+{
+    return *d->shift;
+}
+
+void NotificationWidget::showChild(GuiWidget *notif)
+{
+    DENG2_ASSERT(notif != 0);
+
+    if(isChildShown(*notif))
+    {
+        // Already in the notification area.
+        return;
+    }
+
+    // Cancel a pending dismissal.
+    d->performPendingDismiss();
+
+    if(notif->parentWidget())
+    {
+        d->oldParents.insert(notif, notif->parentWidget());
+        /// @todo Should observe if the old parent is destroyed.
+    }
+    add(notif);
+    notif->show();
+    d->show();
+}
+
+void NotificationWidget::hideChild(GuiWidget &notif)
+{
+    if(!isChildShown(notif))
+    {
+        // Already in the notification area.
+        return;
+    }
+
+    if(childCount() > 1)
+    {
+        // Dismiss immediately, the area itself remains open.
+        d->dismissChild(notif);
+    }
+    else
+    {
+        // The last one should be deferred until the notification area
+        // itself is dismissed.
+        d->dismissTimer.start();
+        d->pendingDismiss << &notif;
+        d->hide();
+    }
+}
+
+void NotificationWidget::dismiss()
+{
+    d->performPendingDismiss();
+}
+
+bool NotificationWidget::isChildShown(GuiWidget &notif) const
+{
+    if(d->pendingDismiss.contains(&notif))
+    {
+        return false;
+    }
+    return notif.parentWidget() == this;
 }
 
 void NotificationWidget::viewResized()
@@ -147,3 +274,17 @@ void NotificationWidget::glDeinit()
     d->glDeinit();
 }
 
+void NotificationWidget::addedChildWidget(GuiWidget &)
+{
+    d->updateChildLayout();
+    show();
+}
+
+void NotificationWidget::removedChildWidget(GuiWidget &)
+{
+    d->updateChildLayout();
+    if(!childCount())
+    {
+        hide();
+    }
+}

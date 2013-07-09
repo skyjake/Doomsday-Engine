@@ -35,16 +35,47 @@
  */
 class NotificationWidget : public GuiWidget
 {
+    Q_OBJECT
+
 public:
     NotificationWidget(de::String const &name = "");
+
+    de::Rule const &shift();
+
+    /**
+     * Adds a notification to the notification area. The NotificationWidget
+     * takes ownership of @a notif (the latter is made a child).
+     *
+     * @param notif  Notification widget.
+     */
+    void showChild(GuiWidget *notif);
+
+    /**
+     * Hides a notification. The widget is hidden and gets returned to its
+     * original parent, if there was one.
+     *
+     * @param notif  Notification widget.
+     */
+    void hideChild(GuiWidget &notif);
+
+    void showOrHide(GuiWidget *notif, bool doShow) {
+        if(doShow) showChild(notif); else hideChild(*notif);
+    }
+
+    bool isChildShown(GuiWidget &notif) const;
 
     // Events.
     void viewResized();
     void drawContent();
 
+public slots:
+    void dismiss();
+
 protected:
     void glInit();
     void glDeinit();
+    void addedChildWidget(GuiWidget &widget);
+    void removedChildWidget(GuiWidget &widget);
 
 private:
     DENG2_PRIVATE(d)
