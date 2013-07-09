@@ -117,6 +117,7 @@ public:
 
     GuiRootWidget &root();
     GuiRootWidget &root() const;
+    Widget *parentWidget() const;
     Style const &style() const;
 
     /**
