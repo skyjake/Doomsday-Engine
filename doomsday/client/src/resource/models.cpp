@@ -1251,6 +1251,7 @@ static void setupModel(ded_model_t& def)
     for(uint i = 0; i < modef->subCount(); ++i)
     {
         SubmodelDef *sub = &modef->subModelDef(i);
+        de::Vector3f off;
         if(sub->modelId)
         {
             Models_ToModel(sub->modelId)->frame(sub->frame).getBounds(min, max);
@@ -1258,14 +1259,10 @@ static void setupModel(ded_model_t& def)
             // Apply the various scalings and offsets.
             for(int k = 0; k < 3; ++k)
             {
-                modef->ptcOffset[i][k] =
-                    ((max[k] + min[k]) / 2 + sub->offset[k]) * modef->scale[k] + modef->offset[k];
+                off[k] = ((max[k] + min[k]) / 2 + sub->offset[k]) * modef->scale[k] + modef->offset[k];
             }
         }
-        else
-        {
-            modef->ptcOffset[i] = de::Vector3f();
-        }
+        modef->setParticleOffset(i, off);
     }
 
     // Calculate visual radius for shadows.

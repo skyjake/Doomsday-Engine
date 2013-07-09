@@ -630,10 +630,11 @@ static void renderParticles(int rtype, boolean withBlend)
         {
             // We may need to change the blending mode.
             newMode =
-                (gen->flags & PGF_SUB_BLEND ? BM_SUBTRACT : gen->
-                 flags & PGF_REVSUB_BLEND ? BM_REVERSE_SUBTRACT : gen->
-                 flags & PGF_MUL_BLEND ? BM_MUL : gen->
-                 flags & PGF_INVMUL_BLEND ? BM_INVERSE_MUL : BM_NORMAL);
+                (gen->flags & PGF_SUB_BLEND ?    BM_SUBTRACT :
+                 gen->flags & PGF_REVSUB_BLEND ? BM_REVERSE_SUBTRACT :
+                 gen->flags & PGF_MUL_BLEND ?    BM_MUL :
+                 gen->flags & PGF_INVMUL_BLEND ? BM_INVERSE_MUL :
+                                                 BM_NORMAL);
             if(newMode != mode)
             {
                 glEnd();

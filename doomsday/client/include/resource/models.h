@@ -144,7 +144,7 @@ struct ModelDef
     float scale[3];
 
     typedef std::vector<de::Vector3f> PtcOffsets;
-    PtcOffsets ptcOffset;
+    PtcOffsets _ptcOffset;
 
     float visualRadius;
 
@@ -184,14 +184,14 @@ struct ModelDef
     SubmodelDef *addSub()
     {
         _sub.push_back(SubmodelDef());
-        ptcOffset.push_back(de::Vector3f());
+        _ptcOffset.push_back(de::Vector3f());
         return &_sub.back();
     }
 
     void clearSubs()
     {
         _sub.clear();
-        ptcOffset.clear();
+        _ptcOffset.clear();
     }
 
     uint subCount() const
@@ -226,6 +226,22 @@ struct ModelDef
     bool hasSub(unsigned int subnum) const
     {
         return subnum < _sub.size();
+    }
+
+    de::Vector3f particleOffset(unsigned int subnum) const
+    {
+        if(hasSub(subnum))
+        {
+            DENG_ASSERT(subnum < _ptcOffset.size());
+            return _ptcOffset[subnum];
+        }
+        return de::Vector3f();
+    }
+
+    void setParticleOffset(unsigned int subnum, de::Vector3f const &off)
+    {
+        DENG_ASSERT(hasSub(subnum));
+        _ptcOffset[subnum] = off;
     }
 };
 

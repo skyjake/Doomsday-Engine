@@ -591,24 +591,24 @@ static void P_NewParticle(ptcgen_t *gen)
             // Interpolate the offset.
             if(inter > 0 && nextmf)
             {
-                off[VX] = nextmf->ptcOffset[subidx][VX] - mf->ptcOffset[subidx][VX];
-                off[VY] = nextmf->ptcOffset[subidx][VY] - mf->ptcOffset[subidx][VY];
-                off[VZ] = nextmf->ptcOffset[subidx][VZ] - mf->ptcOffset[subidx][VZ];
+                off[VX] = nextmf->particleOffset(subidx)[VX] - mf->particleOffset(subidx)[VX];
+                off[VY] = nextmf->particleOffset(subidx)[VY] - mf->particleOffset(subidx)[VY];
+                off[VZ] = nextmf->particleOffset(subidx)[VZ] - mf->particleOffset(subidx)[VZ];
 
                 off[VX] *= inter;
                 off[VY] *= inter;
                 off[VZ] *= inter;
             }
 
-            off[VX] += mf->ptcOffset[subidx][VX];
-            off[VY] += mf->ptcOffset[subidx][VY];
-            off[VZ] += mf->ptcOffset[subidx][VZ];
+            off[VX] += mf->particleOffset(subidx)[VX];
+            off[VY] += mf->particleOffset(subidx)[VY];
+            off[VZ] += mf->particleOffset(subidx)[VZ];
 
             // Apply it to the particle coords.
-            pt->origin[VX] += FixedMul(fineCosine[ang], FLT2FIX(off[VX]));
+            pt->origin[VX] += FixedMul(fineCosine[ang],  FLT2FIX(off[VX]));
             pt->origin[VX] += FixedMul(fineCosine[ang2], FLT2FIX(off[VZ]));
-            pt->origin[VY] += FixedMul(finesine[ang], FLT2FIX(off[VX]));
-            pt->origin[VY] += FixedMul(finesine[ang2], FLT2FIX(off[VZ]));
+            pt->origin[VY] += FixedMul(finesine[ang],    FLT2FIX(off[VX]));
+            pt->origin[VY] += FixedMul(finesine[ang2],   FLT2FIX(off[VZ]));
             pt->origin[VZ] += FLT2FIX(off[VY]);
         }
     }
