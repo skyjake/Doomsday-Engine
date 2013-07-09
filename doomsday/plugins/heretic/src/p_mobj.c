@@ -1487,6 +1487,11 @@ mobj_t* P_SpawnMissile(mobjtype_t type, mobj_t* source, mobj_t* dest, boolean ch
 
 mobj_t *Vanilla_P_SpawnMissileAngle(mobj_t *source, mobjtype_t type, angle_t angle, coord_t momZ)
 {
+    /*
+     * NOTE: This function is intended to exactly replicate vanilla Heretic
+     * behavior. Do not modify!
+     */
+
     coord_t pos[3] = { source->origin[VX], source->origin[VY], source->origin[VZ] + 32 };
     mobj_t *mo;
     int spawnFlags = 0;
