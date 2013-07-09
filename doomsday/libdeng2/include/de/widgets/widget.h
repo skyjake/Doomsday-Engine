@@ -183,6 +183,7 @@ public:
     Widget *find(String const &name);
     Widget const *find(String const &name) const;
     Children children() const;
+    dsize childCount() const;
     Widget *parent() const;
 
     // Utilities.

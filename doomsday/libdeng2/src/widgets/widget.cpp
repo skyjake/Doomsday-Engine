@@ -423,6 +423,11 @@ Widget::Children Widget::children() const
     return d->children;
 }
 
+dsize de::Widget::childCount() const
+{
+    return d->children.size();
+}
+
 void Widget::initialize()
 {}
 
