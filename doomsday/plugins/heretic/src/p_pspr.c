@@ -1582,7 +1582,7 @@ void C_DECL A_SkullRodStorm(mobj_t* actor)
     {
         mo->flags |= MF_BRIGHTSHADOW;
         mo->target = actor->target;
-        mo->mom[MX] = 1; // Force collision detection.
+        mo->mom[MX] = .0001; // Force collision detection.
         mo->mom[MZ] = -mo->info->speed;
         mo->special2 = actor->special2; // Transfer player number.
 
