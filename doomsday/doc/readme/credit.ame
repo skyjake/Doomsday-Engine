@@ -17,19 +17,13 @@ implementation and former maintainer of the jDoom Resource Pack.
 high-resolution texture packs, and contributor to the
 @link{dengine.net}{http://dengine.net} website implementation.
 
+@strong{Vermil} regularly provides in-depth feedback and bug reports and is an
+expert in all things related to DOOM-based games.
+
 @strong{Kees Meijs} packaged Doomsday for Debian and hosted an Apt repository
 of Debian packages.
 
-@strong{Abbs} maintained the jDoom model pack and did wonderful work on the
-models and particle effects.
-
-@strong{Anton Rzheshevski} (aka Cheb) created player weapon 3D models and
-other MD2 modifications/enhancements, maintained the jDoom model pack and
-wrote KickStart version 2.
-
-@strong{Greg Fisk} (Slyrr) authored many excellent 3D models for jHeretic.
-
-@strong{Daniel Norton} created detail textures for jDoom.
+@strong{Andrew Apted} wrote @link{glBSP}{http://glbsp.sourceforge.net/}.
 
 @strong{Graham Jackson} helped with the source code, fixed Doom bugs and did a
 lot of testing.
@@ -37,6 +31,12 @@ lot of testing.
 @strong{David Jarvis} did early network testing with jDoom and jHeretic and
 generously contributed essential computer hardware components.
 
-@strong{Andrew Apted} wrote @link{glBSP}{http://glbsp.sourceforge.net/}.
-
 @strong{William Mull} hosted the project's websites for many years.
+
+Finally, the resource pack community, particularly mentioning: @strong{Abbs}
+maintained the jDoom model pack and did wonderful work on the models and
+particle effects; @strong{Anton Rzheshevski} (aka Cheb) created player weapon
+3D models and other MD2 modifications/enhancements, maintained the jDoom model
+pack and wrote KickStart version 2; @strong{Greg Fisk} (Slyrr) authored many
+excellent 3D models for jHeretic; @strong{Daniel Norton} created detail
+textures for jDoom.

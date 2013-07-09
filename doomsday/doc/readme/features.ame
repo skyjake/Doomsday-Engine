@@ -19,15 +19,15 @@ Graphics:
 	@item 3D @wikiterm{sky models} and @wikiterm{skyboxes}
 }
 @item @wikiterm{Particle effects}: point sprite and @wikiterm{3D model particles} 
-@item Game world @wikiterm{movement smoothing} (actors, monsters, missiles, surfaces)
+@item Game world @wikiterm{movement smoothing} (actors, monsters, missiles, surfaces) to remove the original games' limitation of 35 FPS
 @item Smart texture filtering using a modified hq2x algorithm
 @item Internal enhanced BSP builder (originally based on glBSP)
 }
 
-Sound:
+Audio:
 @list/thin{
 @item Uses @link{FMOD Ex}{http://www.fmod.org/} for audio playback (sound effects, music, CD tracks)
-@item Supports SDL_mixer for sound effects and music files
+@item Also supports the open source SDL_mixer for sound effects and music files
 @ifndef{WIN32}{@item FluidSynth for MIDI playback using @wikiterm{SF2} soundfonts}
 @ifdef{WIN32}{@item DirectSound3D, EAX 2.0, Windows Multimedia (for MIDI)}
 @ifdef{MACOSX}{@item QuickTime for music playback}
@@ -38,16 +38,20 @@ Sound:
 @item Runtime @wikiterm{sound effect resamping} to 22/44 KHz with 8/16 bits
 }
 
-Networking:
+Multiplayer:
 @list/thin{
-@item TCP-based client/server @wikilink{networking}{Multiplayer_(Readme)}
 @item Up to @wikiterm{15 player games}
+@item TCP-based client/server @wikilink{networking}{Multiplayer_(Readme)}
+@item Automatical discovery of servers running on the local network
 @item Clients can join games in progress
+@item Standalone tool called @wikilink{Doomsday Shell}{Shell} for hosting games
 }
 
 Other:
 @list/thin{
-@item Runtime @wikiterm{console}
+@item Overlaid @wikiterm{task bar} and @wikiterm{console}
+@item Game can be changed on the fly (for example from Doom to Heretic)
+@item Graphical @wikilink{game selection screen}{Ringzero_GUI}
 @item @wikiterm{Control panel}: engine configuration
 @item Flexible input control @wikiterm{bindings} system
 @item Plain text definition files (@wikiterm{DED}) for game objects and other data
