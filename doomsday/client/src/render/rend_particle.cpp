@@ -230,7 +230,22 @@ void Rend_ParticleReleaseExtraTextures()
 
 void Rend_ParticleInitForNewFrame()
 {
+    // Which set of generators are we using for this frame?
+    if(App_World().hasMap())
+    {
+        /**
+         * @todo If rendering multiple maps per frame, this would have to be
+         * set from the map rendering function. -jk
+         */
+        gens = &App_World().map().generators();
+    }
+    else
+    {
+        gens = 0;
+    }
+
     if(!useParticles) return;
+
     // Clear all visibility flags.
     de::zap(visiblePtcGens);
 }
@@ -872,8 +887,6 @@ void Rend_RenderParticles()
     if(!useParticles) return;
     if(!App_World().hasMap()) return;
 
-    gens = &App_World().map().generators();
-
     // No visible particles at all?
     if(!listVisibleParticles()) return;
 
@@ -956,8 +969,6 @@ void Rend_RenderGenerators()
 {
     if(!devDrawGenerators) return;
     if(!App_World().hasMap()) return;
-
-    gens = &App_World().map().generators();
 
     glDisable(GL_DEPTH_TEST);
 
