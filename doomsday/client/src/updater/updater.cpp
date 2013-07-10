@@ -290,13 +290,12 @@ DENG2_PIMPL(Updater)
 
         VersionInfo currentVersion;
 
-        LOG_VERBOSE("Received latest version information:\n"
-                    " - version: %s (running %s)\n"
-                    " - package: %s\n"
-                    " - change log: %s")
+        LOG_VERBOSE(_E(b) "Received latest version information:\n" _E(.)
+                    " - version: " _E(>) "%s " _E(2) "(installed version is %s)")
                 << latestVersion.asText()
-                << currentVersion.asText()
-                << latestPackageUri << latestLogUri;
+                << currentVersion.asText();
+        LOG_VERBOSE(" - package: " _E(>) _E(i) "%s") << latestPackageUri;
+        LOG_VERBOSE(" - change log: " _E(>) _E(i) "%s") << latestLogUri;
 
         if(availableDlg)
         {
