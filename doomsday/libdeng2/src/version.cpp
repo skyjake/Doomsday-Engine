@@ -31,8 +31,8 @@ Version::Version() : build(Time().asBuildNumber())
     minor = LIBDENG2_MINOR_VERSION;
     patch = LIBDENG2_PATCHLEVEL;
 
-#ifdef DOOMSDAY_BUILD_TEXT
-    build = String(DOOMSDAY_BUILD_TEXT).toInt();
+#ifdef LIBDENG2_BUILD_TEXT
+    build = String(LIBDENG2_BUILD_TEXT).toInt();
 #endif
 
     label = LIBDENG2_RELEASE_LABEL;
