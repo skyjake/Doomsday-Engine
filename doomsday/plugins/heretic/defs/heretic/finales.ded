@@ -87,7 +87,7 @@ Finale
     music "cptd";
     flat FLOOR25;
     wait 0.5;
-    text msg 20 5
+    text msg 45 5
       "with the destruction of the iron\n
       liches and their minions, the last\n
       of the undead are cleared from this\n
@@ -104,6 +104,7 @@ Finale
       this means you may get stuck in a\n
       very unfriendly world, but no one\n
       ever said being a Heretic was easy!";
+    in 0 scale msg 0.825;
     waittext msg;
     wait 7; # The original TEXTWAIT is 250 tics.
     deltext msg;
@@ -122,7 +123,7 @@ Finale
     music "cptd";
     flat FLATHUH1;
     wait 0.5;
-    text msg 20 5
+    text msg 45 5
       "the mighty maulotaurs have proved\n
       to be no match for you, and as\n
       their steaming corpses slide to the\n
@@ -140,6 +141,7 @@ Finale
       gate? the sweep of a crystal dome\n
       overhead where the sky should be is\n
       certainly not a good sign....";
+    in 0 scale msg 0.825;
     waittext msg;
     wait 7; # The original TEXTWAIT is 250 tics.
     deltext msg;
@@ -159,7 +161,7 @@ Finale
     # Start with a blue filter.
     filter 0 0.3 1 1; in 3 filter 0 0 0 0;
     wait 2;
-    text msg 20 5
+    text msg 45 5
       "the death of d'sparil has loosed\n
       the magical bonds holding his\n
       creatures on this plane, their\n
@@ -178,6 +180,7 @@ Finale
       just have been a scream.\n\n
       then again, what about the other\n
       serpent riders?";
+    in 0 scale msg 0.825;
     waittext msg;
     wait 6; # The original TEXTWAIT is 250 tics.
     # Flash to red while we change to the demon.
@@ -202,7 +205,7 @@ Finale
     music "cptd";
     flat FLOOR28;
     wait 0.5;
-    text msg 20 5
+    text msg 45 5
       "you thought you would return to your\n
       own world after d'sparil died, but\n
       his final act banished you to his\n
@@ -224,6 +227,7 @@ Finale
       in the darkest corner of d'sparil's\n
       demesne, his personal bodyguards\n
       await your arrival ...";
+    in 0 scale msg 0.825;
     waittext msg;
     wait 7; # The original TEXTWAIT is 250 tics.
     deltext msg;
@@ -240,7 +244,7 @@ Finale
     music "cptd";
     flat FLOOR08;
     wait 0.5;
-    text msg 20 5
+    text msg 45 5
       "as the final maulotaur bellows his\n
       death-agony, you realize that you\n
       have never come so close to your own\n
@@ -261,6 +265,7 @@ Finale
       that it is not within you to\n
       surrender without a fight. eyes\n
       wide, you go to meet your fate.";
+    in 0 scale msg 0.825;
     waittext msg;
     wait 7; # The original TEXTWAIT is 250 tics.
     deltext msg;
