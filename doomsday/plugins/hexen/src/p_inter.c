@@ -519,20 +519,24 @@ boolean P_GiveArmor(player_t* plr, armortype_t type, int points)
 }
 
 /**
- * @return              @c true, iff the armor was given.
+ * @return @c true, iff the armor was given.
  */
 boolean P_GiveArmor2(player_t* plr, armortype_t type, int amount)
 {
-    int             hits, totalArmor;
+    int hits, totalArmor;
 
     hits = amount * 5 * FRACUNIT;
     totalArmor =
         plr->armorPoints[ARMOR_ARMOR] +
         plr->armorPoints[ARMOR_SHIELD] +
         plr->armorPoints[ARMOR_HELMET] +
-        plr->armorPoints[ARMOR_AMULET] + PCLASS_INFO(plr->class_)->autoArmorSave;
+        plr->armorPoints[ARMOR_AMULET] +
+        PCLASS_INFO(plr->class_)->autoArmorSave;
+
     if(totalArmor >= PCLASS_INFO(plr->class_)->maxArmor * 5 * FRACUNIT)
+    {
         return false;
+    }
 
     plr->armorPoints[type] += hits;
     plr->update |= PSF_ARMOR;
