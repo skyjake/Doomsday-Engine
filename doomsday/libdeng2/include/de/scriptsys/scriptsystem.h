@@ -22,6 +22,7 @@
 #include "../Error"
 #include "../System"
 #include "../Record"
+#include "../File"
 
 namespace de {
 
@@ -48,15 +49,37 @@ public:
      */
     void addNativeModule(String const &name, Record &module);
 
+    Record &nativeModule(String const &name);
+
     /**
      * Imports a script module that is located on the import path.
      *
-     * @param name      Name of the module.
-     * @param fromPath  Absolute path of the script doing the importing.
+     * @param name              Name of the module.
+     * @param importedFromPath  Absolute path of the script doing the importing.
      *
      * @return  The imported module.
      */
-    Record &importModule(String const &name, String const &fromPath = "");
+    Record &importModule(String const &name, String const &importedFromPath = "");
+
+    /**
+     * Looks for the source file of a module.
+     *
+     * @param name       Name of the module to look for.
+     * @param localPath  Which absolute path to use as the local folder (as import path "").
+     *
+     * @return Found source file, or @c NULL.
+     */
+    File const *tryFindModuleSource(String const &name, String const &localPath = "");
+
+    /**
+     * Looks for the source file of a module.
+     *
+     * @param name       Name of the module to look for.
+     * @param localPath  Which absolute path to use as the local folder (as import path "").
+     *
+     * @return
+     */
+    File const &findModuleSource(String const &name, String const &localPath = "");
 
     void timeChanged(Clock const &);
 

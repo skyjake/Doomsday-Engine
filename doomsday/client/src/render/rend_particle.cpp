@@ -230,7 +230,22 @@ void Rend_ParticleReleaseExtraTextures()
 
 void Rend_ParticleInitForNewFrame()
 {
+    // Which set of generators are we using for this frame?
+    if(App_World().hasMap())
+    {
+        /**
+         * @todo If rendering multiple maps per frame, this would have to be
+         * set from the map rendering function. -jk
+         */
+        gens = &App_World().map().generators();
+    }
+    else
+    {
+        gens = 0;
+    }
+
     if(!useParticles) return;
+
     // Clear all visibility flags.
     de::zap(visiblePtcGens);
 }
@@ -426,7 +441,7 @@ static void setupModelParamsForParticle(rendmodelparams_t* params,
 
     Rend_ModelSetFrame(params->mf, frame);
     // Set the correct orientation for the particle.
-    if(!params->mf->sub.empty() && params->mf->sub[0].flags & MFF_MOVEMENT_YAW)
+    if(params->mf->testSubFlag(0, MFF_MOVEMENT_YAW))
     {
         params->yaw = R_MovementXYYaw(FIX2FLT(pt->mov[0]), FIX2FLT(pt->mov[1]));
     }
@@ -435,7 +450,7 @@ static void setupModelParamsForParticle(rendmodelparams_t* params,
         params->yaw = pt->yaw / 32768.0f * 180;
     }
 
-    if(!params->mf->sub.empty() && params->mf->sub[0].flags & MFF_MOVEMENT_PITCH)
+    if(params->mf->testSubFlag(0, MFF_MOVEMENT_PITCH))
     {
         params->pitch = R_MovementXYZPitch(FIX2FLT(pt->mov[0]), FIX2FLT(pt->mov[1]), FIX2FLT(pt->mov[2]));
     }
@@ -615,10 +630,11 @@ static void renderParticles(int rtype, boolean withBlend)
         {
             // We may need to change the blending mode.
             newMode =
-                (gen->flags & PGF_SUB_BLEND ? BM_SUBTRACT : gen->
-                 flags & PGF_REVSUB_BLEND ? BM_REVERSE_SUBTRACT : gen->
-                 flags & PGF_MUL_BLEND ? BM_MUL : gen->
-                 flags & PGF_INVMUL_BLEND ? BM_INVERSE_MUL : BM_NORMAL);
+                (gen->flags & PGF_SUB_BLEND ?    BM_SUBTRACT :
+                 gen->flags & PGF_REVSUB_BLEND ? BM_REVERSE_SUBTRACT :
+                 gen->flags & PGF_MUL_BLEND ?    BM_MUL :
+                 gen->flags & PGF_INVMUL_BLEND ? BM_INVERSE_MUL :
+                                                 BM_NORMAL);
             if(newMode != mode)
             {
                 glEnd();
@@ -872,8 +888,6 @@ void Rend_RenderParticles()
     if(!useParticles) return;
     if(!App_World().hasMap()) return;
 
-    gens = &App_World().map().generators();
-
     // No visible particles at all?
     if(!listVisibleParticles()) return;
 
@@ -956,8 +970,6 @@ void Rend_RenderGenerators()
 {
     if(!devDrawGenerators) return;
     if(!App_World().hasMap()) return;
-
-    gens = &App_World().map().generators();
 
     glDisable(GL_DEPTH_TEST);
 

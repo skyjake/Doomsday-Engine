@@ -80,7 +80,7 @@ struct SubmodelDef
     modelid_t modelId;
     short frame;
     char frameRange;
-    int flags;
+    int _flags;
     short skin;
     char skinRange;
     float offset[3];
@@ -92,7 +92,7 @@ struct SubmodelDef
         : modelId(0),
           frame(0),
           frameRange(0),
-          flags(0),
+          _flags(0),
           skin(0),
           skinRange(0),
           alpha(0),
@@ -100,6 +100,23 @@ struct SubmodelDef
           blendMode(BM_NORMAL)
     {
         de::zap(offset);
+    }
+
+    void setFlags(int newFlags)
+    {
+        _flags = newFlags;
+    }
+
+    /**
+     * Tests if the flags in @a flag are all set for the submodel.
+     *
+     * @param flag  One or more flags.
+     *
+     * @return @c true, if all the flags were set; otherwise @c false.
+     */
+    bool testFlag(int flag) const
+    {
+        return (_flags & flag) == flag;
     }
 };
 
@@ -127,7 +144,7 @@ struct ModelDef
     float scale[3];
 
     typedef std::vector<de::Vector3f> PtcOffsets;
-    PtcOffsets ptcOffset;
+    PtcOffsets _ptcOffset;
 
     float visualRadius;
 
@@ -141,7 +158,7 @@ struct ModelDef
 
     /// Submodels.
     typedef std::vector<SubmodelDef> Subs;
-    Subs sub;
+    Subs _sub;
 
     ModelDef(char const *modelDefId = "")
         : state(0),
@@ -166,15 +183,65 @@ struct ModelDef
 
     SubmodelDef *addSub()
     {
-        sub.push_back(SubmodelDef());
-        ptcOffset.push_back(de::Vector3f());
-        return &sub.back();
+        _sub.push_back(SubmodelDef());
+        _ptcOffset.push_back(de::Vector3f());
+        return &_sub.back();
     }
 
     void clearSubs()
     {
-        sub.clear();
-        ptcOffset.clear();
+        _sub.clear();
+        _ptcOffset.clear();
+    }
+
+    uint subCount() const
+    {
+        return _sub.size();
+    }
+
+    bool testSubFlag(unsigned int subnum, int flag) const
+    {
+        if(!hasSub(subnum)) return false;
+        return _sub[subnum].testFlag(flag);
+    }
+
+    modelid_t subModelId(unsigned int subnum) const
+    {
+        if(!hasSub(subnum)) return NOMODELID;
+        return _sub[subnum].modelId;
+    }
+
+    SubmodelDef &subModelDef(unsigned int subnum)
+    {
+        DENG_ASSERT(hasSub(subnum));
+        return _sub[subnum];
+    }
+
+    SubmodelDef const &subModelDef(unsigned int subnum) const
+    {
+        DENG_ASSERT(hasSub(subnum));
+        return _sub[subnum];
+    }
+
+    bool hasSub(unsigned int subnum) const
+    {
+        return subnum < _sub.size();
+    }
+
+    de::Vector3f particleOffset(unsigned int subnum) const
+    {
+        if(hasSub(subnum))
+        {
+            DENG_ASSERT(subnum < _ptcOffset.size());
+            return _ptcOffset[subnum];
+        }
+        return de::Vector3f();
+    }
+
+    void setParticleOffset(unsigned int subnum, de::Vector3f const &off)
+    {
+        DENG_ASSERT(hasSub(subnum));
+        _ptcOffset[subnum] = off;
     }
 };
 

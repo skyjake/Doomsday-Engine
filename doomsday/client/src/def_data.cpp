@@ -146,9 +146,9 @@ void DED_Clear(ded_t* ded)
     for(uint i = 0; i < ded->models.size(); ++i)
     {
         ded_model_t* mdl = &ded->models[i];
-        for(uint j = 0; j < mdl->sub.size(); ++j)
+        for(uint j = 0; j < mdl->subCount(); ++j)
         {
-            ded_submodel_t* sub = &mdl->sub[j];
+            ded_submodel_t* sub = &mdl->sub(j);
             if(sub->filename)     Uri_Delete(sub->filename);
             if(sub->skinFilename) Uri_Delete(sub->skinFilename);
             if(sub->shinySkin)    Uri_Delete(sub->shinySkin);

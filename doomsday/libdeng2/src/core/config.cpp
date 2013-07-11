@@ -42,10 +42,27 @@ DENG2_PIMPL_NOREF(Config)
     /// The configuration namespace.
     Process config;
 
+    /// Previous installed version (__version__ in the read persistent Config).
+    Version oldVersion;
+
     Instance(Path const &path)
         : configPath(path),
           persistentPath("modules/Config")
     {}
+
+    void setOldVersion(Value const &old)
+    {
+        try
+        {
+            ArrayValue const &vers = old.as<ArrayValue>();
+            oldVersion.major = int(vers.at(0).asNumber());
+            oldVersion.minor = int(vers.at(1).asNumber());
+            oldVersion.patch = int(vers.at(2).asNumber());
+            oldVersion.build = int(vers.at(3).asNumber());
+        }
+        catch(...)
+        {}
+    }
 };
 
 Config::Config(Path const &path) : d(new Instance(path))
@@ -89,6 +106,7 @@ void Config::read()
         
         // If the saved config is from a different version, rerun the script.
         Value const &oldVersion = names()["__version__"].value();
+        d->setOldVersion(oldVersion);
         if(oldVersion.compare(*version))
         {
             // Version mismatch: store the old version in a separate variable.
@@ -160,6 +178,11 @@ Variable &Config::operator [] (String const &name)
 Variable const &Config::operator [] (String const &name) const
 {
     return names()[name];
+}
+
+Version Config::upgradedFromVersion() const
+{
+    return d->oldVersion;
 }
 
 Value &Config::get(String const &name) const

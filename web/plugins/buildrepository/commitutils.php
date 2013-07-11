@@ -68,10 +68,8 @@ function groupBuildCommits(&$build, &$groups)
 
 function make_pretty_hyperlink($matches)
 {
-    global $FrontController;
-
     $uri = new Url(implode('', array_slice($matches, 1)));
-    $homeUri = new Url($FrontController->homeURL());
+    $homeUri = new Url(FrontController::fc()->homeURL());
 
     $isExternal = ($uri->host() !== $homeUri->host());
     if(!$isExternal)
@@ -268,8 +266,6 @@ function outputCommitLogHTML(&$build)
  */
 function outputCommitLog(&$build)
 {
-    global $FrontController;
-
     if(!$build instanceof BuildEvent)
         throw new Exception('Received invalid BuildEvent');
 
@@ -278,7 +274,7 @@ function outputCommitLog(&$build)
     $commitsCacheName = 'buildrepository/'.$build->uniqueId().'/commits.html';
     try
     {
-        $FrontController->contentCache()->import($commitsCacheName);
+        FrontController::contentCache()->import($commitsCacheName);
     }
     catch(Exception $e)
     {
@@ -288,7 +284,7 @@ function outputCommitLog(&$build)
         outputCommitLogHTML($build);
         $content = $OutputCache->stop();
 
-        $FrontController->contentCache()->store($commitsCacheName, $content);
+        FrontController::contentCache()->store($commitsCacheName, $content);
 
         print($content);
     }

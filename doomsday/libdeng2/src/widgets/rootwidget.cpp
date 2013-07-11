@@ -96,10 +96,11 @@ void RootWidget::setViewSize(Size const &size)
 
 void RootWidget::setFocus(Widget *widget)
 {
-    if(d->focus) d->focus->focusLost();
+    Widget *oldFocus = d->focus;
+    d->focus = 0;
+    if(oldFocus) oldFocus->focusLost();
 
     d->focus = widget;
-
     if(d->focus) d->focus->focusGained();
 }
 

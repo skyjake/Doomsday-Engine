@@ -106,6 +106,11 @@ ButtonWidget *PopupMenuWidget::addItem(String const &styledText, Action *action)
     b->audienceForStateChange += d;
     b->audienceForTriggered += d;
 
+    // We want items to be hittable throughtout the width of the menu.
+    b->hitRule()
+            .setInput(Rule::Left,  rule().left())
+            .setInput(Rule::Right, rule().right());
+
     return b;
 }
 
@@ -131,4 +136,16 @@ void PopupMenuWidget::preparePopupForOpening()
     menu().rule().setInput(Rule::Width,
                            *refless(menu().newColumnWidthRule(0)) + 2 * margin());
     menu().updateLayout();
+}
+
+void PopupMenuWidget::popupClosing()
+{
+    PopupWidget::popupClosing();
+
+    if(d->hover)
+    {
+        d->hover->setTextColor("text");
+        d->hover = 0;
+        requestGeometry();
+    }
 }

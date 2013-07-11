@@ -1,59 +1,75 @@
 @section{ Features }
 
-Graphics:
+User interface:
 @list/thin{
-@item OpenGL graphics engine
-@item Colored, @wikiterm{dynamic lights} and @wikiterm{lens flares}
-@item Dynamic @wikiterm{ambient occlusion} (corner shadowing) for all maps
-@item Object shadowing effects
-@item @wikiterm{High-resolution textures}: @wikiterm{PNG}, @wikiterm{JPG}, @wikiterm{TGA}, @wikiterm{PCX}
-@item @wikiterm{Detail textures}
-@item @wikiterm{Smart texture filtering}
-@item Shiny and @wikiterm{glowing surfaces}
-@item @wikiterm{Fog}
-@item 3D models
-@list/thin{
-	@item Quake II's @wikiterm{MD2} format
-	@item Doomsday's own @wikiterm{DMD} with LOD support
-	@item Surface shininess: simple environmental mapping for 3D models
-	@item 3D @wikiterm{sky models} and @wikiterm{skyboxes}
-}
-@item @wikiterm{Particle effects}: point sprite and @wikiterm{3D model particles} 
-@item Game world @wikiterm{movement smoothing} (actors, monsters, missiles, surfaces)
-@item Smart texture filtering using a modified hq2x algorithm
-@item Internal enhanced BSP builder (originally based on glBSP)
+@item Overlaid @wikiterm{task bar}
+@item In-game @wikiterm{command console}
+@item Graphical @wikiterm{control panel}
+@item @wikilink{Game selection screen}{Ringzero_GUI} for runtime @wikiterm{game} changes (e.g., from DOOM to Heretic)
+@item On-the-fly @wikiterm{add-on} resource loading
+@item Flexible input control @wikiterm{bindings} system
+@item Built-in @wikiterm{updater} for easy upgrades
 }
 
-Sound:
+Graphics:
 @list/thin{
-@item Uses @link{FMOD Ex}{http://www.fmod.org/} for audio playback (sound effects, music, CD tracks)
-@item Supports SDL_mixer for sound effects and music files
+@item OpenGL based renderer
+@item Dynamic @wikiterm{ambient occlusion} (corner shadowing) for world surfaces
+@item @wikiterm{Dynamic lights} and @wikiterm{halos} and @wikiterm{lens flares}
+@item Dynamic shadowing effects for world objects
+@item @wikiterm{Particle effects} system
+@item 3D models for world objects (with per-vertex lighting and multiple light sources), @wikiterm{skies}, @wikiterm{skyboxes}, and @wikiterm{particles}
+@item Automatical world surface (light) @wikiterm{decorations}
+@item @wikiterm{Detail texturing}, shine and @wikiterm{glowing} effects for world surfaces
+@item @wikiterm{Fogging} and @wikiterm{vignette} effects
+@item Environmental mapping effects for 3D models and world surfaces
+@item World @wikiterm{movement smoothing} (actors, monsters, missiles, surfaces) to remove the original games' limitation of 35 FPS
+@item @wikiterm{Smart texture filtering} using a modified hq2x algorithm
+}
+
+Resources:
+@list/thin{
+@item Flexible containters: @wikiterm{WAD}, @wikiterm{ZIP}, @wikiterm{native folder}: any resource can be loaded from any container type
+@item @wikiterm{High-resolution textures}: @wikiterm{PNG}, @wikiterm{JPG}, @wikiterm{TGA}, @wikiterm{PCX}
+@item @wikiterm{3D models}: @wikiterm{MD2}, @wikiterm{DMD} with LOD support
+@item External @wikiterm{music files} in MP3 and other formats
+@item Plain text @wikiterm{definitions} that all share the same syntax
+@item Internal BSP builder (originally based on glBSP)
+}
+
+Audio:
+@list/thin{
+@item Plugin based driver architecture
+@item Uses @link{FMOD Ex}{http://www.fmod.org/} for audio playback (sound effects, music, CD audio tracks)
+@item Supports the open source SDL_mixer for sound effects and music files
 @ifndef{WIN32}{@item FluidSynth for MIDI playback using @wikiterm{SF2} soundfonts}
 @ifdef{WIN32}{@item DirectSound3D, EAX 2.0, Windows Multimedia (for MIDI)}
 @ifdef{MACOSX}{@item QuickTime for music playback}
 @ifdef{UNIX}{@item @wikiterm{OpenAL}}
 @item External @wikiterm{music files} in MP3 and other formats
 @item 3D positional sound effects
-@item Environmental @wikiterm{reverb} and echo effects
-@item Runtime @wikiterm{sound effect resamping} to 22/44 KHz with 8/16 bits
+@item Environmental @wikiterm{echo and reverb} effects
+@item Runtime @wikiterm{sound effect resampling} to 22/44 KHz with 8/16 bits
 }
 
-Networking:
+Multiplayer:
 @list/thin{
 @item TCP-based client/server @wikilink{networking}{Multiplayer_(Readme)}
-@item Up to @wikiterm{15 player games}
+@item Automatical discovery of servers running on the local network
+@item Central @wikiterm{master server} for discovery of servers on the internet
+@item Standalone @wikiterm{server} running as a daemon/background process
+@item Standalone @wikilink{Doomsday Shell}{Shell} tool for server management (both local and remote)
+@item Supports up to @wikiterm{15 player games}
 @item Clients can join games in progress
+@item In-game chat and server management (via a shell login)
 }
 
 Other:
 @list/thin{
-@item Runtime @wikiterm{console}
-@item @wikiterm{Control panel}: engine configuration
-@item Flexible input control @wikiterm{bindings} system
-@item Plain text definition files (@wikiterm{DED}) for game objects and other data
-@item Files can be loaded from @wikiterm{WAD} files (see @file{wadtool})
+@item Open source: software developers should visit the @wikilink{Getting Started page}{Getting_started}
+@item @wikilink{Cross platform}{Supported_platforms}
+@item @wikiterm{Plugin} based @wikiterm{extensible architecture}
 @item @wikiterm{Snowberry}: GUI frontend based on game profiles; for managing custom maps, resource packs, add-ons, and starting different game configurations easily (written in Python)
-@item Open source: software developers should visit the @link{SourceForge project page}{http://sourceforge.net/projects/deng/}
 }
 
 @section{ Requirements }

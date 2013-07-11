@@ -56,6 +56,8 @@ public:
      */
     void setOpeningDirection(ui::Direction dir);
 
+    bool isOpen() const;
+
     // Events.
     void viewResized();
     void update();
@@ -92,6 +94,7 @@ protected:
     void glMakeGeometry(DefaultVertexBuf::Builder &verts);
 
     virtual void preparePopupForOpening();
+    virtual void popupClosing();
 
 private:
     DENG2_PRIVATE(d)

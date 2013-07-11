@@ -514,7 +514,7 @@ D_CMD(BindEventToCommand)
 {
     DENG2_UNUSED2(src, argc);
 
-    evbinding_t*        b = B_BindCommand(argv[1], argv[2]);
+    evbinding_t *b = B_BindCommand(argv[1], argv[2]);
 
     if(b)
     {

@@ -50,10 +50,12 @@ def setDefaults(d = None)
     d.window.fsaa = True    # Remove this (should be window-specific).
 
     # Configure the main window.
+    # TODO: The client should have its own config script for setting these
     record d.window.main
-    d.window.main.center = True
-    d.window.main.fsaa   = True
-    d.window.main.vsync  = True
+    d.window.main.showFps = False
+    d.window.main.center  = True
+    d.window.main.fsaa    = True
+    d.window.main.vsync   = True
 
     try
         # The default window parameters depend on the original display mode.
@@ -101,6 +103,20 @@ def setDefaults(d = None)
     d.log.file       = '/home/doomsday.out'
     d.log.level      = d.log.MESSAGE
     d.log.bufferSize = 1000
+    
+    # Game mode related information (one for each game plugin):
+    # TODO: plugins should have their own Config scripts (when libdeng2 loads them)
+    record d.plugin
+    record d.plugin.doom
+    record d.plugin.heretic
+    record d.plugin.hexen
+    record d.plugin.doom64
+    
+    # Single-shot load hooks.
+    d.plugin.doom.onNextLoad    = []
+    d.plugin.heretic.onNextLoad = []
+    d.plugin.hexen.onNextLoad   = []
+    d.plugin.doom64.onNextLoad  = []
 end
 
 def updateWithDefaults()

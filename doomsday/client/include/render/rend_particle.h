@@ -23,10 +23,6 @@
 
 #include "world/p_particle.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 void Rend_ParticleRegister(void);
 
 /**
@@ -67,9 +63,5 @@ void Rend_RenderParticles(void);
  * Debugging aid; Draw all active generators.
  */
 void Rend_RenderGenerators(void);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
 
 #endif // LIBDENG_RENDER_PARTICLE_H

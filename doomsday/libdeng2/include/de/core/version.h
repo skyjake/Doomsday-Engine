@@ -87,6 +87,10 @@ public:
 
     bool operator == (Version const &other) const;
 
+    bool operator != (Version const &other) const {
+        return !(*this == other);
+    }
+
     bool operator > (Version const &other) const;
 
     /**

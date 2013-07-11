@@ -953,7 +953,7 @@ void CP_SetVidMode(ui_object_t* ob)
 
     ob->flags |= UIF_DISABLED;
 
-    if(WindowSystem::haveMain())
+    if(WindowSystem::hasMain())
     {
         int attribs[] = {
             ClientWindow::Fullscreen, panel_fullscreen != 0,

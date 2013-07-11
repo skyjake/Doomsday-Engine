@@ -415,7 +415,7 @@ static void selectInterfaces(audiodriverid_t defaultDriverId)
 
 void AudioDriver_PrintInterfaces(void)
 {
-    LOG_INFO(_E(b) "Audio configuration" _E(l) " (by decreasing priority):");
+    LOG_INFO(_E(b) "Audio configuration" _E(2) " (by decreasing priority):");
 
     de::String str;
     QTextStream os(&str);

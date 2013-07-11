@@ -78,17 +78,7 @@ duint Process::depth() const
 
 void Process::run(Script const &script)
 {
-    if(_state != Stopped)
-    {
-        throw NotStoppedError("Process::run", 
-            "When a new script is started the process must be stopped first");
-    }
-    _state = Running;
-    
-    // Make sure the stack is clear except for the process context.
-    clearStack(1);
-    
-    context().start(script.firstStatement());
+    run(script.firstStatement());
     
     // Set up the automatic variables.
     Record &ns = globals();
@@ -100,6 +90,20 @@ void Process::run(Script const &script)
     {
         ns.add(new Variable("__file__", new TextValue(script.path()), Variable::AllowText));
     }
+}
+
+void Process::run(Statement const *firstStatement)
+{
+    if(_state != Stopped)
+    {
+        throw NotStoppedError("Process::run", "Process must be stopped first");
+    }
+    _state = Running;
+
+    // Make sure the stack is clear except for the process context.
+    clearStack(1);
+
+    context().start(firstStatement);
 }
 
 void Process::suspend(bool suspended)
@@ -321,9 +325,23 @@ void Process::call(Function const &function, ArrayValue const &arguments)
             context().names().add(new Variable(*a, (*b)->duplicate()));
         }
         
-        // Execute the function.
-        context().start(function.compound().firstStatement());
-        execute();
+        // This should never be called if the process is suspended.
+        DENG2_ASSERT(_state != Suspended);
+
+        if(_state == Running)
+        {
+            // Execute the function as part of the currently running process.
+            context().start(function.compound().firstStatement());
+            execute();
+        }
+        else if(_state == Stopped)
+        {
+            // We'll execute just this one function.
+            _state = Running;
+            context().start(function.compound().firstStatement());
+            execute();
+            _state = Stopped;
+        }
     }
 }
 

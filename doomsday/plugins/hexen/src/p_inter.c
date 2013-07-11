@@ -1744,7 +1744,7 @@ boolean P_MorphMonster(mobj_t* actor)
     if(moType == MT_MINOTAUR)
     {
         master = oldMonster.tracer;
-        if(master->health > 0)
+        if(master && master->health > 0)
         {
             if(!ActiveMinotaur(master->player))
             {
@@ -2313,10 +2313,12 @@ int P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source, int damageP
         }
 
         if(source && (source->type == MT_MINOTAUR))
-        {   // Minotaur's kills go to his master.
+        {
+            // Minotaur's kills go to his master.
             master = source->tracer;
+
             // Make sure still alive and not a pointer to fighter head.
-            if(master->player && (master->player->plr->mo == master))
+            if(master && master->player && (master->player->plr->mo == master))
             {
                 source = master;
             }

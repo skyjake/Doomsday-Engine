@@ -154,6 +154,16 @@ public:
     void operator >> (Writer &to) const;
     void operator << (Reader &from);
 
+    /**
+     * Calls all the elements in the array with the given arguments. A
+     * temporary process is used for each call. An exception is thrown if a
+     * non-function element value is encountered.
+     *
+     * @param args  Arguments for the calls. The first element must be a
+     *              DictionaryValue containing any labeled argument values.
+     */
+    void callElements(ArrayValue const &args);
+
 private:
     Elements::iterator indexToIterator(dint index);
     Elements::const_iterator indexToIterator(dint index) const;

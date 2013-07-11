@@ -265,7 +265,7 @@ DENG2_PIMPL(Updater)
 
         if(reply->error() != QNetworkReply::NoError)
         {
-            Con_Message("Network request failed: %s", reply->url().toString().toUtf8().constData());
+            LOG_WARNING("Network request failed: %s") << reply->url().toString();
             return;
         }
 
@@ -290,13 +290,12 @@ DENG2_PIMPL(Updater)
 
         VersionInfo currentVersion;
 
-        LOG_VERBOSE("Received latest version information:\n"
-                    " - version: %s (running %s)\n"
-                    " - package: %s\n"
-                    " - change log: %s")
+        LOG_VERBOSE(_E(b) "Received latest version information:\n" _E(.)
+                    " - version: " _E(>) "%s " _E(2) "(installed version is %s)")
                 << latestVersion.asText()
-                << currentVersion.asText()
-                << latestPackageUri << latestLogUri;
+                << currentVersion.asText();
+        LOG_VERBOSE(" - package: " _E(>) _E(i) "%s") << latestPackageUri;
+        LOG_VERBOSE(" - change log: " _E(>) _E(i) "%s") << latestLogUri;
 
         if(availableDlg)
         {
@@ -308,7 +307,7 @@ DENG2_PIMPL(Updater)
         // Is this newer than what we're running?
         if(latestVersion > currentVersion || alwaysShowNotification)
         {
-            Con_Message("Found an update: %s", latestVersion.asText().toUtf8().constData());
+            LOG_INFO("Found an update: " _E(b)) << latestVersion.asText();
 
             // Automatically switch to windowed mode for convenience.
             bool wasFull = switchToWindowedMode();
@@ -319,8 +318,8 @@ DENG2_PIMPL(Updater)
         }
         else
         {
-            Con_Message("You are running the latest available %s release.",
-                        UpdaterSettings().channel() == UpdaterSettings::Stable? "stable" : "unstable");
+            LOG_INFO("You are running the latest available " _E(b) "%s" _E(.) " release.")
+                    << (UpdaterSettings().channel() == UpdaterSettings::Stable? "stable" : "unstable");
         }
     }
 
@@ -609,10 +608,10 @@ void Updater_PrintLastUpdated(void)
     de::String ago = UpdaterSettings().lastCheckAgo();
     if(ago.isEmpty())
     {
-        Con_Message("Never checked for updates.");
+        LOG_MSG("Never checked for updates.");
     }
     else
     {
-        Con_Message("Latest update check was made %s.", ago.toLatin1().constData());
+        LOG_MSG("Latest update check was made %s") << ago;
     }
 }

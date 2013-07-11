@@ -53,6 +53,7 @@ public:
      */
     int type() const { return _type; }
 
+    bool isKey() const { return _type == KeyPress || _type == KeyRepeat || _type == KeyRelease; }
     bool isKeyDown() const { return _type == KeyPress || _type == KeyRepeat; }
     bool isMouse() const { return _type == MouseButton || _type == MouseMotion ||
                 _type == MousePosition || _type == MouseWheel; }

@@ -229,10 +229,7 @@ float Animation::target() const
 
 void Animation::adjustTarget(float newTarget)
 {
-    if(!fequal(newTarget, d->target))
-    {
-        setValue(newTarget, remainingTime());
-    }
+    d->target = newTarget;
 }
 
 TimeDelta Animation::remainingTime() const

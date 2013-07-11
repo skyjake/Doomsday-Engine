@@ -90,6 +90,11 @@ DENG2_PIMPL(GLTextComposer)
             {
                 return false;
             }
+            if(lines[lineIndex].segs[i].id.isNone())
+            {
+                // This segment has previously failed allocation.
+                return false;
+            }
         }
         return true;
     }
@@ -123,6 +128,7 @@ DENG2_PIMPL(GLTextComposer)
                 lines << Line();
             }
 
+            DENG2_ASSERT(i < lines.size());
             DENG2_ASSERT(lines[i].segs.isEmpty());
 
             Line &line = lines[i];

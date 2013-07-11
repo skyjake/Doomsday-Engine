@@ -415,6 +415,30 @@ public:
     void operator >> (Writer &to) const;
     void operator << (Reader &from);
 
+public:
+    /**
+     * Normalizes slashes in a string so that they are replaced with the given
+     * character (defaults to forward slash).
+     *
+     * @param text          String where to replace separators.
+     * @param replaceWith   New separator character.
+     *
+     * @return String with all slashes replaced with @a replaceWith.
+     */
+    static String normalizeString(String const &text, QChar replaceWith = '/');
+
+    /**
+     * Makes a path where the given input text is first normalized so that
+     * slashes are replaced with the given character (defaults to forward
+     * slash).
+     *
+     * @param text          String where to replace separators.
+     * @param replaceWith   New separator character.
+     *
+     * @return Path with @a replaceWith used in place of slashes.
+     */
+    static Path normalize(String const &text, QChar replaceWith = '/');
+
 private:
     Instance *d;
 };

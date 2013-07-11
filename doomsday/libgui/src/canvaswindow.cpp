@@ -243,7 +243,7 @@ void *CanvasWindow::nativeHandle() const
     return reinterpret_cast<void *>(winId());
 }
 
-bool CanvasWindow::haveMain()
+bool CanvasWindow::hasMain()
 {
     return mainWindow != 0;
 }

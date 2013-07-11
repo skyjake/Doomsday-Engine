@@ -2403,7 +2403,7 @@ D_CMD(ReleaseMouse)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    if(WindowSystem::haveMain())
+    if(WindowSystem::hasMain())
     {
         WindowSystem::main().canvas().trapMouse(false);
         return true;

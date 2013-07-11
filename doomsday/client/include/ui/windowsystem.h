@@ -63,7 +63,7 @@ public:
     /**
      * Returns @c true iff a main window is available.
      */
-    static bool haveMain();
+    static bool hasMain();
 
     /**
      * Returns the main window.
@@ -73,9 +73,9 @@ public:
     /**
      * Returns a pointer to the @em main window.
      *
-     * @see haveMain()
+     * @see hasMain()
      */
-    inline static ClientWindow *mainPtr() { return haveMain()? &main() : 0; }
+    inline static ClientWindow *mainPtr() { return hasMain()? &main() : 0; }
 
     /**
      * Find a window.

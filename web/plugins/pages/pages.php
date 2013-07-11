@@ -40,12 +40,10 @@ class PagesPlugin extends Plugin implements Actioner, RequestInterpreter
 
     public function mustUpdateCachedPage(&$pageFile, &$cacheName)
     {
-        global $FrontController;
-
-        if(!$FrontController->contentCache()->isPresent($cacheName)) return TRUE;
+        if(!FrontController::contentCache()->has($cacheName)) return TRUE;
 
         $cacheInfo = new ContentInfo();
-        $FrontController->contentCache()->getInfo($cacheName, $cacheInfo);
+        FrontController::contentCache()->info($cacheName, $cacheInfo);
         return (filemtime($pageFile) > $cacheInfo->modifiedTime);
     }
 
@@ -54,8 +52,6 @@ class PagesPlugin extends Plugin implements Actioner, RequestInterpreter
      */
     public function InterpretRequest($Request)
     {
-        global $FrontController;
-
         $url = urldecode($Request->url()->path());
 
         // @kludge skip over the first '/' in the home URL.
@@ -82,7 +78,7 @@ class PagesPlugin extends Plugin implements Actioner, RequestInterpreter
                     try
                     {
                         $content = file_get_contents($pageFile);
-                        $FrontController->contentCache()->store($cacheName, $content);
+                        FrontController::contentCache()->store($cacheName, $content);
                     }
                     catch(Exception $e)
                     {
@@ -91,9 +87,9 @@ class PagesPlugin extends Plugin implements Actioner, RequestInterpreter
                 }
             }
 
-            if($FrontController->contentCache()->isPresent($cacheName))
+            if(FrontController::contentCache()->has($cacheName))
             {
-                $FrontController->enqueueAction($this, array('page' => $pageName));
+                FrontController::fc()->enqueueAction($this, array('page' => $pageName));
                 return true; // Eat the request.
             }
         }
@@ -111,7 +107,7 @@ class PagesPlugin extends Plugin implements Actioner, RequestInterpreter
      */
     public function execute($args=NULL)
     {
-        global $FrontController;
+        $fc = &FrontController::fc();
 
         if(!is_array($args) && !array_key_exists('page', $args))
             throw new Exception('Unexpected arguments passed.');
@@ -120,14 +116,14 @@ class PagesPlugin extends Plugin implements Actioner, RequestInterpreter
         $mainHeading = ucwords(mb_ereg_replace('_', ' ', $page));
         $pageFile = 'pages/'.$args['page'].'.html';
 
-        $FrontController->outputHeader($mainHeading);
-        $FrontController->beginPage($mainHeading, $page);
+        $fc->outputHeader($mainHeading);
+        $fc->beginPage($mainHeading, $page);
 
 ?>              <div id="contentbox2"><?php
 
         try
         {
-            $FrontController->contentCache()->import($pageFile);
+            FrontController::contentCache()->import($pageFile);
         }
         catch(Exception $e)
         {
@@ -138,6 +134,6 @@ class PagesPlugin extends Plugin implements Actioner, RequestInterpreter
 
 ?>              </div><?php
 
-        $FrontController->endPage();
+        $fc->endPage();
     }
 }

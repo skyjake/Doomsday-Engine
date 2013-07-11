@@ -98,29 +98,20 @@ void ScriptSystem::addNativeModule(String const &name, Record &module)
     d->addNativeModule(name, module);
 }
 
+Record &ScriptSystem::nativeModule(String const &name)
+{
+    Instance::NativeModules::const_iterator foundNative = d->nativeModules.constFind(name);
+    DENG2_ASSERT(foundNative != d->nativeModules.constEnd());
+    return *foundNative.value();
+}
+
 static int sortFilesByModifiedAt(File const *a, File const *b)
 {
     return de::cmp(a->status().modifiedAt, b->status().modifiedAt);
 }
 
-Record &ScriptSystem::importModule(String const &name, String const &fromPath)
+File const *ScriptSystem::tryFindModuleSource(String const &name, String const &localPath)
 {
-    LOG_AS("ScriptSystem::importModule");
-
-    // There are some special native modules.
-    Instance::NativeModules::const_iterator foundNative = d->nativeModules.constFind(name);
-    if(foundNative != d->nativeModules.constEnd())
-    {
-        return *foundNative.value();
-    }
-
-    // Maybe we already have this module?
-    Instance::Modules::iterator found = d->modules.find(name);
-    if(found != d->modules.end())
-    {
-        return found.value()->names();
-    }
-
     // Fall back on the default if the config hasn't been imported yet.
     std::auto_ptr<ArrayValue> defaultImportPath(new ArrayValue);
     defaultImportPath->add("");
@@ -142,10 +133,10 @@ Record &ScriptSystem::importModule(String const &name, String const &fromPath)
         File *found = 0;
         if(dir.empty())
         {
-            if(!fromPath.empty())
+            if(!localPath.empty())
             {
                 // Try the local folder.
-                p = fromPath.fileNamePath() / name;
+                p = localPath / name;
             }
             else
             {
@@ -173,10 +164,48 @@ Record &ScriptSystem::importModule(String const &name, String const &fromPath)
         }
         if(found)
         {
-            Module *module = new Module(*found);
-            d->modules.insert(name, module);
-            return module->names();
+            return found;
         }
+    }
+
+    return 0;
+}
+
+File const &ScriptSystem::findModuleSource(String const &name, String const &localPath)
+{
+    File const *src = tryFindModuleSource(name, localPath);
+    if(!src)
+    {
+        throw NotFoundError("ScriptSystem::findModuleSource", "Cannot find module '" + name + "'");
+    }
+    return *src;
+}
+
+Record &ScriptSystem::importModule(String const &name, String const &importedFromPath)
+{
+    LOG_AS("ScriptSystem::importModule");
+
+    // There are some special native modules.
+    Instance::NativeModules::const_iterator foundNative = d->nativeModules.constFind(name);
+    if(foundNative != d->nativeModules.constEnd())
+    {
+        return *foundNative.value();
+    }
+
+    // Maybe we already have this module?
+    Instance::Modules::iterator found = d->modules.find(name);
+    if(found != d->modules.end())
+    {
+        return found.value()->names();
+    }
+
+    // Get it from a file, then.
+    File const *src = tryFindModuleSource(name, importedFromPath.fileNamePath());
+    if(src)
+    {
+        Module *module = new Module(*src);
+        d->modules.insert(name, module);
+        return module->names();
     }
 
     throw NotFoundError("ScriptSystem::importModule", "Cannot find module '" + name + "'");

@@ -215,7 +215,7 @@ struct ded_model_t
     float           shadowRadius; // Radius for shadow (0=auto).
 
     typedef std::vector<ded_submodel_t> Submodels;
-    Submodels sub;
+    Submodels _sub;
 
     ded_model_t(char const *spriteId = "")
         : off(0),
@@ -237,6 +237,33 @@ struct ded_model_t
         strcpy(sprite.id, spriteId);
         interRange[1] = 1;
         scale[0] = scale[1] = scale[2] = 1;
+    }
+
+    bool hasSub(unsigned int subnum) const
+    {
+        return subnum < _sub.size();
+    }
+
+    unsigned int subCount() const
+    {
+        return _sub.size();
+    }
+
+    ded_submodel_t &sub(unsigned int subnum)
+    {
+        DENG_ASSERT(hasSub(subnum));
+        return _sub[subnum];
+    }
+
+    ded_submodel_t const &sub(unsigned int subnum) const
+    {
+        DENG_ASSERT(hasSub(subnum));
+        return _sub[subnum];
+    }
+
+    void appendSub()
+    {
+        _sub.push_back(ded_submodel_t());
     }
 };
 

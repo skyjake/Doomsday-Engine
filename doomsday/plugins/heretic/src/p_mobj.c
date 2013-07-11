@@ -1485,6 +1485,55 @@ mobj_t* P_SpawnMissile(mobjtype_t type, mobj_t* source, mobj_t* dest, boolean ch
     return th;
 }
 
+mobj_t *Vanilla_P_SpawnMissileAngle(mobj_t *source, mobjtype_t type, angle_t angle, coord_t momZ)
+{
+    /*
+     * NOTE: This function is intended to exactly replicate vanilla Heretic
+     * behavior. Do not modify!
+     */
+
+    coord_t pos[3] = { source->origin[VX], source->origin[VY], source->origin[VZ] + 32 };
+    mobj_t *mo;
+    int spawnFlags = 0;
+
+    // Determine missile spawn position.
+    switch(type)
+    {
+    case MT_MNTRFX1: // Minotaur swing attack missile
+        pos[VZ] = source->origin[VZ] + 40;
+        break;
+
+    case MT_MNTRFX2: // Minotaur floor fire missile
+        spawnFlags |= MSF_Z_FLOOR;
+        break;
+
+    case MT_SRCRFX1: // Sorcerer Demon fireball
+        pos[VZ] = source->origin[VZ] + 48;
+        break;
+
+    default:
+        break;
+    }
+
+    pos[VZ] -= source->floorClip;
+
+    mo = P_SpawnMobj(type, pos, angle, spawnFlags);
+
+    mo->target = source; // Originator
+    mo->angle = angle;
+    angle >>= ANGLETOFINESHIFT;
+    mo->mom[VX] = mo->info->speed * FIX2FLT(finecosine[angle]);
+    mo->mom[VY] = mo->info->speed * FIX2FLT(finesine[angle]);
+    mo->mom[VZ] = momZ;
+
+    if(mo->info->seeSound)
+    {
+        S_StartSound(mo->info->seeSound, mo);
+    }
+
+    return (P_CheckMissileSpawn(mo)? mo : NULL);
+}
+
 mobj_t* P_SpawnMissileAngle(mobjtype_t type, mobj_t* source, angle_t mangle, coord_t momZ)
 {
     coord_t pos[3];

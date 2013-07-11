@@ -59,6 +59,7 @@
 #include "dd_loop.h"
 
 #include <QDebug>
+#include <QMessageBox>
 
 /**
  * Application entry point.
@@ -73,7 +74,7 @@ int main(int argc, char** argv)
     }
     catch(de::Error const &er)
     {
-        qFatal("App init failed: %s", er.asText().toLatin1().constData());
+        QMessageBox::critical(0, DOOMSDAY_NICENAME, "App init failed:\n" + er.asText());
         return -1;
     }
 }

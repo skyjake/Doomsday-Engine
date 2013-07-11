@@ -83,6 +83,9 @@
 #  include "ui/widgets/taskbarwidget.h"
 #endif
 
+#include <de/ArrayValue>
+#include <de/DictionaryValue>
+
 extern int renderTextures;
 
 using namespace de;
@@ -183,6 +186,23 @@ static Textures *textures;
 
 /// Notified when the current game changes. @todo Should be owned by App.
 GameChangeAudience audienceForGameChange;
+
+/**
+ * Delegates game change notifications to scripts.
+ */
+class GameChangeScriptAudience : public IGameChangeObserver
+{
+public:
+    void currentGameChanged(Game &newGame)
+    {
+        ArrayValue args;
+        args << DictionaryValue() << TextValue(Str_Text(newGame.identityKey()));
+        App::scriptSystem().nativeModule("App")["audienceForGameChange"]
+                .value<ArrayValue>().callElements(args);
+    }
+};
+
+static GameChangeScriptAudience scriptAudienceForGameChange;
 
 /// Current game. @todo Should be owned by App.
 Game *currentGame;
@@ -618,11 +638,16 @@ void DD_ClearSystemTextureSchemes()
 
 Materials &App_Materials()
 {
-    if(!materials)
+    if(!App_HaveMaterials())
     {
         throw Error("App_Materials", "Materials collection not yet initialized");
     }
     return *materials;
+}
+
+bool App_HaveMaterials()
+{
+    return materials != 0;
 }
 
 void DD_CreateMaterialSchemes()
@@ -1478,10 +1503,12 @@ bool App_ChangeGame(Game &game, bool allowReload)
     GL_ResetTextureManager();
     GL_SetFilter(false);
 
-    // Trap the mouse automatically when loading a game in fullscreen.
+    if(!isNullGame(game))
     {
         ClientWindow &mainWin = ClientWindow::main();
         mainWin.taskBar().close();
+
+        // Trap the mouse automatically when loading a game in fullscreen.
         if(mainWin.isFullScreen())
         {
             mainWin.canvas().trapMouse();
@@ -1868,6 +1895,8 @@ boolean DD_Init(void)
         return false;
     }
 #endif
+
+    audienceForGameChange += scriptAudienceForGameChange;
 
     // Initialize the subsystems needed prior to entering busy mode for the first time.
     Sys_Init();

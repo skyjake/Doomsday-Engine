@@ -190,7 +190,9 @@ public:
      */
     Record &globals();
 
-protected:
+protected:   
+    void run(Statement const *firstStatement);
+
     /// Pops contexts off the stack until depth @a downToLevel is reached.
     void clearStack(duint downToLevel = 0);
 
