@@ -180,8 +180,11 @@ void DD_ReadGameHelp(void)
     LOG_AS("DD_ReadGameHelp");
     try
     {
-        de::Uri uri(Path("$(App.DataPath)/$(GamePlugin.Name)/conhelp.txt"));
-        readStrings(App::fileSystem().find(uri.resolved()));
+        if(App_GameLoaded())
+        {
+            de::Uri uri(Path("$(App.DataPath)/$(GamePlugin.Name)/conhelp.txt"));
+            readStrings(App::fileSystem().find(uri.resolved()));
+        }
     }
     catch(Error const &er)
     {
