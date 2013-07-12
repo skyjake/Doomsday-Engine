@@ -128,8 +128,6 @@ boolean firstNetUpdate = true;
 byte    monitorMsgQueue = false;
 byte    netShowLatencies = false;
 byte    netDev = false;
-byte    netDontSleep = false;
-byte    netTicSync = true;
 float   netConnectTime;
 //int     netCoordTime = 17;
 float   netConnectTimeout = 10;
@@ -155,7 +153,7 @@ void Net_Register(void)
 #ifdef _DEBUG
     C_VAR_FLOAT("net-dev-latency", &netSimulatedLatencySeconds, CVF_NO_MAX, 0, 0);
 #endif
-    C_VAR_BYTE("net-nosleep", &netDontSleep, 0, 0, 1);
+    //C_VAR_BYTE("net-nosleep", &netDontSleep, 0, 0, 1);
     C_VAR_CHARPTR("net-master-address", &masterAddress, 0, 0, 0);
     C_VAR_INT("net-master-port", &masterPort, 0, 0, 65535);
     C_VAR_CHARPTR("net-master-path", &masterPath, 0, 0, 0);
@@ -569,10 +567,6 @@ void Net_InitGame(void)
     clients[0].connected = true;
     clients[0].viewConsole = 0;
     clients[0].lastTransmit = -1;
-
-    // Are we timing a demo here?
-    if(CommandLine_Check("-timedemo"))
-        netTicSync = false;
 }
 
 void Net_StopGame(void)

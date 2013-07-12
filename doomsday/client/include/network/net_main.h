@@ -225,7 +225,6 @@ extern int      netGame;
 extern int      realTics, availableTics;
 extern int      isServer, isClient;
 extern boolean  allowNetTraffic; // Should net traffic be allowed?
-extern byte     netDontSleep, netTicSync;
 extern float    netSimulatedLatencySeconds;
 extern client_t clients[DDMAXPLAYERS];
 extern int      gotFrame;
