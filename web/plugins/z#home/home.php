@@ -62,7 +62,97 @@ class HomePlugin extends Plugin implements Actioner, RequestInterpreter
 
         //includeHTML('introduction', 'z#home');
 
-?><script type="text/javascript" >
+?><script>
+(function (e) {
+    e.fn.interpretMasterServerStatus = function (t) {
+        var n = {
+            serverUri: "http://dengine.net/master.php?xml",
+            maxItems: 3,
+            generateServerSummaryHtml: 0
+        };
+        if (t) {
+            e.extend(n, t);
+        }
+        var r = e(this).attr("id");
+        e.ajax({
+            url: n.serverUri,
+            dataType: 'xml',
+            success: function (t) {
+                e("#" + r).empty();
+                var root = $('masterserver', t);
+                var serverList = root.find('serverlist')[0];
+                var serverCount = serverList.attributes.getNamedItem('size').nodeValue;
+
+                var d = new Date(root.find('channel>pubdate').text());
+                var niceDate = $.datepicker.formatDate('MM d, yy', d);
+                var minItems = serverCount < n.maxItems? serverCount : n.maxItems;
+                var html = '<header>'
+                         + '<h1><a href="/masterserver" title="View the complete list in the server browser">'
+                         + (serverCount > 0? ('Most active servers '
+                                              + '<label title="Result limit">' + minItems + '</label>/<label title="Total number of servers">' + serverCount + '</label>')
+                                           : 'No active servers')
+                         + '</a></h1>'
+                         + '<p>' + niceDate + ' @ <label title="Time of the last server announcement">' + d.toLocaleTimeString() + '</label></p></header>';
+
+                if(serverCount) {
+                    var idx = 0;
+                    var playerCount = 0;
+
+                    html += '<ol class="servers">';
+                    for(var i = 0; i < serverList.childNodes.length; ++i) {
+                        if(serverList.childNodes[i].nodeName != 'server')
+                            continue;
+
+                        var server = $(serverList.childNodes[i]);
+                        if(n.maxItems <= 0 || idx < n.maxItems)
+                        {
+                            html += '<li>' + n.generateServerSummaryHtml(n, server) + '</li>';
+                        }
+
+                        playerCount += Number(server.find('gameinfo>numplayers').text());
+                        idx++;
+                    };
+
+                    html += '</ol>';
+                    //html += '<span class="summary"><a href="/masterserver" title="See the full listing in the server browser">' + serverCount + ' ' + (serverCount == 1? 'server':'servers') + ' in total, ' + playerCount + ' active ' + (playerCount == 1? 'player':'players') + '</a></span>';
+                }
+
+                e("#" + r).append(html);
+            }
+        })
+    }
+})(jQuery)
+
+$(document).ready(function () {
+    $('#activeservers').interpretMasterServerStatus({
+        generateServerSummaryHtml: function (n, info) {
+
+            var serverMetadataLabel = 'Address: ' + info.children('ip').text() + ':' + info.children('port').text()
+                                    + ' Open: ' + info.children('open').text();
+
+            // Any required addons?.
+            /*var addonArr = array_filter(explode(';', info['pwads']));
+            if(count(addonArr))
+            {
+                serverMetadataLabel .= 'Add-ons: '. implode(' ', addonArr);
+            }*/
+
+            var gameInfo = $(info.children('gameinfo'));
+            var gameMetadataLabel = 'Map: ' + gameInfo.children('map').text() + ' Setup: ' + gameInfo.children('setupstring').text();
+
+            var playerCountLabel = 'Number of players currently in-game';
+            var playerMaxLabel = 'Maximum number of players';
+
+            var html = '<span class="player-summary"><label title="' + playerCountLabel + '">' + gameInfo.children('numplayers').text() + '</label> / <label title="' + playerMaxLabel + '">' + gameInfo.children('maxplayers').text() + '</label></span> ';
+
+            html += '<label title="' + serverMetadataLabel + '"><span class="name">' + info.find('name').text() + '</span></label> ';
+            html += '<label title="' + gameMetadataLabel + '"><span class="game-mode">' + gameInfo.children('mode').text() + '</span></label>';
+
+            return '<span class="server">' + html + '</span>';
+        }
+    });
+});
+
 (function (e) {
     e.fn.interpretFeed = function (t) {
         var n = {
