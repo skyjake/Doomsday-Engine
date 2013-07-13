@@ -45,27 +45,27 @@ class ServerInfo implements ArrayAccess
     {
         if(is_null(self::$defaults))
         {
-            self:$defaults = array('at'     => '',
-                                   'time'   => (int)0,
-                                   'port'   => (int)0,
-                                   'locked' => false,
-                                   'ver'    => (int)0,
-                                   'map'    => '',
-                                   'game'   => '',
-                                   'name'   => '',
-                                   'info'   => '',
-                                   'nump'   => (int)0,
-                                   'maxp'   => (int)0,
-                                   'open'   => (int)0,
-                                   'mode'   => '',
-                                   'setup'  => '',
-                                   'iwad'   => '',
-                                   'pwads'  => '',
-                                   'wcrc'   => (int)0,
-                                   'plrn'   => '',
-                                   'data0'  => (int)0,
-                                   'data1'  => (int)0,
-                                   'data2'  => (int)0);
+            self::$defaults = array('at'     => '',
+                                    'time'   => (int)0,
+                                    'port'   => (int)0,
+                                    'locked' => false,
+                                    'ver'    => (int)0,
+                                    'map'    => '',
+                                    'game'   => '',
+                                    'name'   => '',
+                                    'info'   => '',
+                                    'nump'   => (int)0,
+                                    'maxp'   => (int)0,
+                                    'open'   => (int)0,
+                                    'mode'   => '',
+                                    'setup'  => '',
+                                    'iwad'   => '',
+                                    'pwads'  => '',
+                                    'wcrc'   => (int)0,
+                                    'plrn'   => '',
+                                    'data0'  => (int)0,
+                                    'data1'  => (int)0,
+                                    'data2'  => (int)0);
         }
 
         // Assign the default values.
@@ -142,6 +142,7 @@ class ServerInfo implements ArrayAccess
             // Unset means to assign the default.
             $offset = (string)$offset;
             $this->values[$offset] = self::$defaults[$offset];
+            return;
         }
         throw new Exception("ServerInfo::offsetUnset - Invalid offset:$offset");
     }
