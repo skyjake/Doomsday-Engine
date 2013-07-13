@@ -314,7 +314,7 @@ void X_PreInit(void)
 
     cfg.inventoryTimer = 5;
     cfg.inventoryWrap = false;
-    cfg.inventoryUseNext = false;
+    cfg.inventoryUseNext = true;
     cfg.inventoryUseImmediate = false;
     cfg.inventorySlotMaxVis = 7;
     cfg.inventorySlotShowEmpty = true;
