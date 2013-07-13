@@ -23,22 +23,23 @@ require_once('classes/masterserver.class.php');
 
 function write_server($info)
 {
-    // We will not write empty infos.
-    if(count($info) <= 10) return;
-
     $ms = new MasterServer(true/*writable*/);
     $ms->insert($info);
 }
 
+/**
+ * @param announcement  Server announcement string. UTF-8 assumed.
+ * @param addr          Remote server address.
+ */
 function update_server($announcement, $addr)
 {
-    $info = array();
-
     mb_regex_encoding('UTF-8');
     mb_internal_encoding('UTF-8');
 
     // First we must determine if the announcement is valid.
     $lines = mb_split("\r\n|\n|\r", $announcement);
+
+    $info = new ServerInfo();
 
     while(list($line_number, $line) = each($lines))
     {
@@ -51,11 +52,10 @@ function update_server($announcement, $addr)
         $label = substr($line, 0, $colon);
         $value = substr($line, $colon + 1, strlen($line) - $colon - 1);
 
-        // Let's make sure we know the label.
-        if(in_array($label, array('port', 'locked', 'ver', 'map', 'game', 'name',
-            'info', 'nump', 'maxp', 'open', 'mode', 'setup', 'iwad', 'pwads',
-            'wcrc', 'plrn', 'data0', 'data1', 'data2'))
-            && strlen($value) < 128)
+        if(strlen($value) >= 128) continue;
+
+        // Ensure the label identifies a known property.
+        if(isset($info[$label]))
         {
             // This will be included in the datafile.
             $info[$label] = $value;
@@ -72,16 +72,27 @@ function update_server($announcement, $addr)
 
 function answer_request()
 {
+    $graph = array();
+
     $ms = new MasterServer();
-    while(list($ident, $info) = each($ms->servers))
+    foreach($ms->servers as $info)
     {
-        while(list($label, $value) = each($info))
-        {
-            if($label != "time") print "$label:$value\n";
-        }
-        // An empty line ends the server.
-        print "\n";
+        $serverGraph = array();
+        $info->populateGraphTemplate($serverGraph);
+
+        $graph[$info->ident()] = $serverGraph;
     }
+
+    $json = json_encode_clean($graph);
+    header('Pragma: public');
+    header('Cache-Control: public');
+    header('Content-Type: application/json');
+    header('Last-Modified: '. date(DATE_RFC1123, time()));
+    header('Expires: '. date(DATE_RFC1123, strtotime('+5 days')));
+    print $json;
+
+    // Thats all folks!
+    exit;
 }
 
 function return_xmllog()
@@ -104,24 +115,33 @@ function return_xmllog()
 
 $query = $HTTP_SERVER_VARS['QUERY_STRING'];
 
-// There are four operating modes:
+// There are five operating modes:
 // 1. Server announcement processing.
-// 2. Answering a request for servers (returns plain text).
-// 3. Retrieve a log of recent events (returns XML file).
-// 4. Web page.
+// 2. Answering a request for servers in plain text .
+// 3. Answering a request for servers with a JSON data graph.
+// 4. Retrieve a log of recent events as an XML file.
+// 5. Web page.
 
-if(isset($GLOBALS['HTTP_RAW_POST_DATA']) && !$query)
+if(isset($GLOBALS['HTTP_RAW_POST_DATA']) && empty($query))
 {
     $announcement = $GLOBALS['HTTP_RAW_POST_DATA'];
     $remote = $HTTP_SERVER_VARS['REMOTE_ADDR'];
 
     update_server($announcement, $remote);
 }
-else if($query == 'list')
+else if($query === 'list')
+{
+    // A server list request. Our response is a plain-text key ':' value list.
+    $ms = new MasterServer();
+    $ms->printServerList();
+
+    exit; // Thats all folks!
+}
+else if($query === 'json')
 {
     answer_request();
 }
-else if($query == 'xml')
+else if($query === 'xml')
 {
     return_xmllog();
 }
