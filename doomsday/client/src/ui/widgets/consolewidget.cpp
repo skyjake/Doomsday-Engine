@@ -337,6 +337,7 @@ bool ConsoleWidget::handleEvent(Event const &event)
         if(key.qtKey() == Qt::Key_PageUp ||
            key.qtKey() == Qt::Key_PageDown)
         {
+            if(!isLogOpen()) openLog();
             showFullLog();
             return true;
         }
@@ -356,6 +357,7 @@ void ConsoleWidget::openLog()
 
     d->opened = true;
     d->horizShift->set(0, .3f);
+    d->log->unsetBehavior(DisableEventDispatch);
 }
 
 void ConsoleWidget::closeLog()
@@ -364,6 +366,7 @@ void ConsoleWidget::closeLog()
 
     d->opened = false;
     d->horizShift->set(-rule().width().valuei() - 1, .3f);
+    d->log->setBehavior(DisableEventDispatch);
 }
 
 void ConsoleWidget::clearLog()

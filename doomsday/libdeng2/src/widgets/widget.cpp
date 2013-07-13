@@ -376,7 +376,7 @@ void Widget::notifyTreeReversed(NotifyArgs const &args)
 bool Widget::dispatchEvent(Event const &event, bool (Widget::*memberFunc)(Event const &))
 {
     // Hidden widgets do not get events.
-    if(isHidden()) return false;
+    if(isHidden() || d->behavior.testFlag(DisableEventDispatch)) return false;
 
     // Routing has priority.
     if(d->routing.contains(event.type()))
