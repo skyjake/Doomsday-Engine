@@ -49,8 +49,6 @@ class FrontController
     private $_siteTitle = 'Website';
     private $_siteAuthor = 'Author';
     private $_siteAuthorEmail = 'N/A';
-    private $_siteDesigner = 'N/A';
-    private $_siteDesignerEmail = 'N/A';
     private $_siteCopyright = 'N/A';
     private $_siteDescription = '';
     private $_siteRobotRevisitDays = 0;
@@ -75,12 +73,6 @@ class FrontController
 
         if(array_key_exists('AuthorEmail', $config))
             $this->_siteAuthorEmail = $config['AuthorEmail'];
-
-        if(array_key_exists('Designer', $config))
-            $this->_siteDesigner = $config['Designer'];
-
-        if(array_key_exists('DesignerEmail', $config))
-            $this->_siteDesignerEmail = $config['DesignerEmail'];
 
         if(array_key_exists('HomeURL', $config))
             $this->_siteHomeURL = $config['HomeURL'];
@@ -172,16 +164,6 @@ class FrontController
     public function siteAuthorEmail()
     {
         return $this->_siteAuthorEmail;
-    }
-
-    public function siteDesigner()
-    {
-        return $this->_siteDesigner;
-    }
-
-    public function siteDesignerEmail()
-    {
-        return $this->_siteDesignerEmail;
     }
 
     public function siteCopyright()
@@ -334,71 +316,58 @@ class FrontController
     <link rel="shortcut icon" href="http://dl.dropboxusercontent.com/u/11948701/dengine.net/images/favicon.png" type="image/png" />
     <link rel="alternate" type="application/rss+xml" title="Doomsday Engine RSS News Feed" href="http://dengine.net/forums/rss.php?mode=news" />
 
-    <!-- jQuery -->
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
     <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.9.1/jquery-ui.min.js"></script>
-
     <link rel="stylesheet" media="all" href="/style.css" />
+    <!--[if lt IE 9]>
+    <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
 </head>
 <?php
     }
 
     public function beginPage($mainHeading='', $page=null)
     {
-?>
-<body>
-<div id="mainouter">
+
+?><body>
     <div id="main">
-<?php
+        <div id="framepanel_bottom" role="main"><?php
 
         $this->outputMainMenu($page);
 
-?>
-        <div id="maininner">
-            <div id="framepanel_bottom" role="main">
-                <div id="pageheading">
-                    <h1><?php
+?><section id="pageheading"><h1><?php
 
         if(strlen($mainHeading) > 0)
             echo htmlspecialchars($mainHeading);
         else
             echo $this->siteTitle();
 
-?></h1>
-                </div>
-<?php
+?></h1><p style="display:none"><?php
+
+        echo $this->siteDescription();
+
+?></p></section><?php
+
     }
 
     public function endPage()
     {
 ?>
             </div>
-            <div class="framepanel" id="framepanel_top">
+            <div id="framepanel_top" class="framepanel">
 <?php
 
         $this->outputTopPanel();
-        $this->outputMasterStatus();
 
 ?>
-            </div>
         </div>
-    </div>
-</div>
-<div id="libicons">
-<?php
-
-        // Output the lib icons (OpenGL, SDL etc).
-        includeHTML('libraryicons');
-
-?>
-</div>
-<footer id="footer" role="contentinfo">
+        <footer role="contentinfo">
 <?php
 
         $this->outputFooter();
 
-?>
-</footer>
+?>        </footer>
+    </div>
 </body>
 </html>
 <?php
@@ -636,14 +605,14 @@ $(document).ready(function () {
     private function outputMainMenu($page=NULL)
     {
         $leftTabs = array();
-        $leftTabs[] = array('page'=>'/engine',  'label'=>'Engine',   'tooltip'=>'About Doomsday Engine');
-        $leftTabs[] = array('page'=>'/games',   'label'=>'Games',    'tooltip'=>'Games playable with Doomsday Engine');
-        $leftTabs[] = array('page'=>'/dew',     'label'=>'Wiki',     'tooltip'=>'Doomsday Engine Wiki');
+        $leftTabs[] = array('page'=>'/engine',  'label'=>'Engine',   'tooltip'=>'About the Doomsday Engine');
+        $leftTabs[] = array('page'=>'/games',   'label'=>'Games',    'tooltip'=>'Games playable with the Doomsday Engine');
+        $leftTabs[] = array('page'=>'/dew',     'label'=>'Wiki',     'tooltip'=>'Doomsday Engine wiki (documentation)');
 
         $rightTabs = array();
-        $rightTabs[] = array('page'=>'/addons',       'label'=>'Add-ons', 'tooltip'=>'Add-ons for games playable with Doomsday Engine');
-        $rightTabs[] = array('page'=>'/forums',       'label'=>'Forums',  'tooltip'=>'Doomsday Engine User Forums');
-        $rightTabs[] = array('page'=>'/masterserver', 'label'=>'Servers', 'tooltip'=>'Doomsday Engine Master Server');
+        $rightTabs[] = array('page'=>'/addons',       'label'=>'Add-ons', 'tooltip'=>'Add-ons for games playable with the Doomsday Engine');
+        $rightTabs[] = array('page'=>'/forums',       'label'=>'Forums',  'tooltip'=>'Doomsday Engine user forums');
+        $rightTabs[] = array('page'=>'/masterserver', 'label'=>'Servers', 'tooltip'=>'Doomsday Engine server browser');
 
 ?>
         <div id="menuouter"><nav id="menu" class="hnav">
@@ -665,7 +634,7 @@ $(document).ready(function () {
     private function outputTopPanel()
     {
 ?>
-    <div id="panorama">
+    <div id="panorama" role="banner">
     </div>
 <?php
     }
@@ -673,7 +642,7 @@ $(document).ready(function () {
     private function outputFooter()
     {
 ?>
-<p class="disclaimer"><a href="mailto:webmaster@dengine.net" title="Contact Webmaster">Webmaster</a> - Site design &copy; <?php echo date('Y'); ?> <a href="mailto:<?php echo $this->siteDesignerEmail(); ?>" title="Contact <?php echo $this->siteDesigner(); ?>"><?php echo $this->siteDesigner(); ?></a> - Built by <a href="mailto:<?php echo $this->siteDesignerEmail(); ?>" title="Contact <?php echo $this->siteDesigner(); ?>"><?php echo $this->siteDesigner(); ?></a> / <a href="mailto:<?php echo $this->siteAuthorEmail(); ?>" title="Contact <?php echo $this->siteAuthor(); ?>"><?php echo $this->siteAuthor(); ?></a></p>
+<p class="disclaimer"><a href="mailto:webmaster@dengine.net" title="Contact Webmaster">Webmaster</a> - Site design &copy; <?php echo date('Y'); ?> Deng Team - Built by <a href="mailto:<?php echo $this->siteAuthorEmail(); ?>" title="Contact <?php echo $this->siteAuthor(); ?>"><?php echo $this->siteAuthor(); ?></a></p>
 <p class="disclaimer">The Doomsday Engine is licensed under the terms of the <a href="http://www.gnu.org/licenses/gpl.html" rel="nofollow">GNU/GPL License ver 2</a>. The Doomsday Engine logo is Copyright &copy; 2005-<?php echo date('Y'); ?>, the deng team.</p>
 <hr />
 <?php

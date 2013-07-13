@@ -119,7 +119,7 @@ class PagesPlugin extends Plugin implements Actioner, RequestInterpreter
         $fc->outputHeader($mainHeading);
         $fc->beginPage($mainHeading, $page);
 
-?>              <div id="contentbox2"><?php
+?>              <div id="contentbox"><?php
 
         try
         {
