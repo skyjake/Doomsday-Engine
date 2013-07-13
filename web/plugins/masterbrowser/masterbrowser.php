@@ -309,7 +309,7 @@ jQuery(document).ready(function() {
         $fc->outputHeader($this->title(), 'masterserver');
         $fc->beginPage($this->title(), 'masterserver');
 
-?><div id="masterbrowser"><?php
+?><div id="contentbox"><div class="masterbrowser block"><?php
 
         // Output a "join us" foreword.
         includeHTML('joinus', self::$name);
@@ -327,6 +327,10 @@ jQuery(document).ready(function() {
 
         // Output footnotes.
         includeHTML('footnotes', self::$name);
+
+?></div><?php
+
+?><div class="block"><section><p>A server admin is not required to publish their server to this central list (located at <em>http://dengine.net/master.php</em>), however it will then only be findable by clients who enter the IP address manually. A server may be published here but remain "closed" (requiring a password to join). Further information about the master server is available <a href="/dew/index.php?title=Master_server" title="Documentation for the master server">here</a>.</p></section></div><?php
 
 ?></div><?php
 
