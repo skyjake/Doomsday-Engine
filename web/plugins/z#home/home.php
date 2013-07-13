@@ -53,7 +53,7 @@ class HomePlugin extends Plugin implements Actioner, RequestInterpreter
     public function execute($args=NULL)
     {
         $fc = &FrontController::fc();
-        $fc->outputHeader($fc->siteDescription());
+        $fc->outputHeader();
         $fc->beginPage($this->title());
 
         includeHTML('latestversion', 'z#home');
