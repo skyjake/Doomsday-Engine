@@ -1,35 +1,107 @@
-<p>The Doomsday Engine is an enhanced DOOM source port for Windows, Mac OS X, and various Unix platforms. It is based on the source code of <a href="http://www.idsoftware.com" title="id Software" class="link-external">id Software's</a> DOOM and <a href="http://www.ravensoft.com/" title="Raven Software" class="link-external">Raven Software's</a> Heretic and Hexen.</p>
-<p>The purpose of the project is to create a modular game engine with which classic 2.5d first person shooters such as <a href="/doom" title="DOOM">DOOM</a>, <a href="/heretic" title="Heretic">Heretic</a> and <a href="/hexen" title="Hexen">Hexen</a> can be played. We aim to retain the same feel as the original games but leverage modern techniques such as 3D graphics and client/server networking. A lot of emphasis is placed on good-looking graphics.</p>
-<p>Our modular design separates game logic from the renderer, audio, network and other such subsystems. This allows the engine to be used with game logic modules (plugins).</p>
-<h2>Features</h2>
+<div class="block">
+<section class="overview">
+<div style="float:right" class="picture"><p><img style="max-width:375px;" src="http://dl.dropboxusercontent.com/u/11948701/attachment/gameselection_500.jpg" />Graphical game selection and <a href="/dew/index.php?title=Task_bar" title="Tell me more about the task bar UI">task bar UI</a></p></div>
+<p>The <dfn>Doomsday Engine</dfn> is a greatly enhanced DOOM <a href="http://en.wikipedia.org/wiki/Source_port" class="link-external" title="Definition of a 'source port' according to Wikipedia">source port</a> available for <a href="/windows" title="Tell me more about Doomsday Engine for Windows">Windows</a>, <a href="/mac_os" title="Tell me more about Doomsday Engine for Mac OS">Mac OS X</a>, <a href="/ubuntu" title="Tell me more about Doomsday Engine for Ubuntu">Ubuntu</a> and most other Unix platforms (<a href="/source" title="Tell me more about the Doomsday Engine source code">source code</a> is provided).</p>
+<p>Doomsday <a href="/games" title="See the full list of games supported by the Doomsday Engine">supports many games</a> including the classic <dfn>first-person shooter</dfn>s <a href="/doom" title="Tell me more about DOOM by id Software">DOOM</a>, <a href="/heretic" title="Tell me more about Heretic by Raven Software">Heretic</a> and <a href="/hexen" title="Tell me more about Hexen by Raven Software">Hexen</a>.</p>
+<p>We aim to retain the original feel of the games yet leverage modern techniques and technologies, including hardware accelerated 3D graphics and client/server networking. A lot of emphasis is placed on good-looking graphics.</p>
+<div class="clear"></div>
+</section>
+</div>
+<div class="block">
+<article>
+<h1>Features</h1>
+<div class="twocolumn collapsible">
+<h2>Graphics</h2>
 <ul>
-<li>Cross-platform. Supported platforms include: Windows, Linux and Mac OS X (10.4 or later)</li>
-<li>Open source. Software developers should visit the <a href="http://sourceforge.net/projects/deng/" class="link-external"> SourceForge project page</a> for more information</li>
-<li>Hardware-accelerated OpenGL graphics engine</li>
-<li>3D positional audio for sound effects (not supported by all audio plugins)</li>
-<li>16-player client/server networking via TCP/IP with Multiplayer menu for game setup</li>
-<li>Graphical Control Panel for configuration, accessed quickly with Shift-Escape</li>
-<li>In-game console for modifying settings and giving commands using a command line interface</li>
-<li>Configurable player controls (bindings) and input manipulators (smoothing, look spring etc...)</li>
-<li>Plain-text definition files for game data such as thing types and states, sound and music information, map configuration and more</li>
+<li>OpenGL based renderer</li>
+<li>Dynamic <a href="/dew/index.php?title=Ambient_occlusion">ambient occlusion</a> (corner shadowing) for world surfaces</li>
+<li><a href="/dew/index.php?title=Dynamic_lights">Dynamic lights</a> with <a href="/dew/index.php?Lens_flares">halos and lens flares</a></li>
+<li>Dynamic shadowing effects for world objects</li>
+<li>Dedicated <a href="/dew/index.php?title=Particle_effects">particle physics effects</a> system</li>
+<li>3D models for world objects (with per-vertex lighting and multiple light sources), <a href="/dew/index.php?title=Sky_models">skies</a>, <a href="/dew/index.php?title=Skyboxes">skyboxes</a> and <a href="/dew/index.php?title=3d_model_particles">particles</a></li>
+<li>Automatical world surface (light) <a href="/dew/index.php?title=Decoration">decorations</a system</li>
+<li><a href="/dew/index.php?title=Detail_textures">Detail texturing</a>, shine and <a href="/dew/index.php?title=Glowing_surfaces">glowing</a> effects for world surfaces</li>
+<li><a href="/dew/index.php?title=Fog">Fogging</a> and <a href="/dew/index.php?title=Vignette">vignette</a> effects</li>
+<li>Environmental mapping effects for 3D models and world surfaces</li>
+<li>World <a href="/dew/index.php?title=Movement_smoothing">movement smoothing</a> (actors, monsters, missiles, surfaces) to remove the original games' limitation of 35 FPS</li>
+<li><a href="/dew/index.php?title=Smart_texture_filtering">Smart texture filtering</a> using a modified <a href="http://www.hiend3d.com/hq2x" class="link-external">hq2x</a> algorithm</li>
 </ul>
-<h3>Renderer</h3>
+<h2>Resources</h2>
 <ul>
-<li>3D models: Quake's MD2 format and Doomsday's DMD format with LOD support</li>
-<li>High-resolution textures (PNG, TGA, PCX) and detail textures</li>
-<li>Map lighting emulates the effects of radiosity for a more natual appearance (FakeRadio: shadows in corners)</li>
-<li>Smooth movement of objects, world structures and the camera. The original games were limited to the maximum framerate of 35 FPS</li>
-<li>Colored, dynamic lighting for world surfaces, 3D models, sprites and particles</li>
-<li>Object shadowing effects</li>
-<li>Particle generators for special effects</li>
-<li>Decoration effects on world surfaces: light sources and particle generators</li>
-<li>Lens flares and glowing objects</li>
-<li>Support for skyboxes and 3D sky models</li>
+<li>Flexible containers: <a href="/dew/index.php?title=Wad">WAD</a>, <a href="/dew/index.php?title=Zip">ZIP</a>, <a href="/dew/index.php?title=Virtual_directory_mapping">native directory</a> (any resource can be loaded from <em>any</em> container type)
+<li><a href="/dew/index.php?title=High-resolution_textures">High-resolution textures</a>: <a href="/dew/index.php?title=png">PNG</a>, <a href="/dew/index.php?title=jpg">JPG</a>, <a href="/dew/index.php?title=tga">TGA</a>, <a href="/dew/index.php?title=pcx">PCX</a></li>
+<li><a href="/dew/index.php?title=3d_models">3D models</a>: <a href="/dew/index.php?title=Md2">MD2</a>, <a href="/dew/index.php?title=Dmd">DMD</a> with LOD support</li>
+<li>External <a href="/dew/index.php?title=Music_files">music files</a> in MP3 and other formats</li>
+<li>Plain text <a href="/dex/index.php?title=Ded">definitions</a> that all share the same syntax</li>
+<li>Internal BSP builder (originally based on <a href="http://glbsp.sourceforge.net/" class="link-external">glBSP</a>)</li>
 </ul>
-<h3>Audio</h3>
+</div>
+<div class="twocolumn collapsible">
+<h2>Audio</h2>
 <ul>
-<li>EAX and A3D environmental sound processing effects</li>
-<li>Upsampling of sound effects</li>
+<li>Plugin based driver architecture: <a href="http://www.fmod.org/" class="link-external">FMOD Ex</a>, <a href="http://msdn.microsoft.com/en-us/library/windows/desktop/ee418868(v=vs.85).aspx" class="link-external">DirectSound</a>, <a href="http://sourceforge.net/apps/trac/fluidsynth/" class="link-external">FluidSynth</a>, <a href="http://connect.creativelabs.com/openal/default.aspx" class="link-external">OpenAL</a>, <a href="http://www.libsdl.org/projects/SDL_mixer/" class="link-external">SDL_mixer</a>, <a href="http://msdn.microsoft.com/en-us/library/windows/desktop/dd743883(v=vs.85).aspx" class="link-external">Windows Multimedia</a></li>
+<li><a href="http://en.wikipedia.org/wiki/Compact_Disc_Digital_Audio" class="link-external">Red Book</a> CD audio playback</li>
+<li><a href="/dew/index.php?title=Midi">MIDI</a> playback with <a href="/dew/index.php?title=Sf2">SF2</a> soundfonts</li>
+<li>3D sound stage for positional effects</li>
+<li>Environmental <a href="/dew/index.php?title=Reverb">echo and reverb</a> effects (EAX 2.0)</li>
+<li>Runtime <a href="/dew/index.php?title=Sound_effect_resampling">sound effect resampling</a> to 22/44 KHz with 8/16 bits</li>
 </ul>
-<h2>History</h2>
-<p>The Doomsday Engine and the associated ports of DOOM, Heretic and Hexen have been under development since May 1999, when the project was started by Jaakko Keränen (<a href="http://twitter.com/skyjake" class="link-external">skyjake</a>). The first version of the engine, called JHexen at the time, was released on November 1st, 1999. Ports of Heretic and Doom followed in early 2000.</p>
+Note: Not all audio features are supported by all audio drivers
+<h2>Networking</h2>
+<ul>
+<li>TCP-based client/server <a href="/dew/index.php?title=Multiplayer_(Readme)">networking</a></li>
+<li>Automatical discovery of servers running on the local network</li>
+<li>Central <a href="/dew/index.php?Master_server">master server</a> for discovery of servers across the world</li>
+<li>Standalone <a href="/dew/index.php?title=Doomsday_server">lightweight server</a> (a daemon process)</li>
+<li>Standalone <a href="/dew/index.php?title=Shell">Doomsday Shell</a> tool for server management (both local and remote)</li>
+</ul>
+<h2>Multiplayer</h2>
+<ul>
+<li>Clients can join games in progress</li>
+<li>In-game chat and server management (shell-login)</li>
+<li>Up to 15 player games</li>
+<li>Player movement prediction/smoothing</li>
+</ul>
+</div>
+<div class="clear"></div>
+<div class="twocolumn collapsible">
+<h2>User Interface</h2>
+<ul>
+<li>Graphical <a href="/dew/index.php?title=Console">command console</a>, <a href="/dew/index.php?title=Control_panel">control panel</a> and <a href="/dew/index.php?title=Task_bar">task bar</a></li>
+<li>Easy to use <a href="/dew/index.php?title=Ringzero_Gui">game selection screen</a> for runtime <a href="/games">game</a> changing (e.g., from DOOM to Heretic)</li>
+<li>On-the-fly <a href="/addons">add-on</a> resource loading</li>
+<li>Flexible input control <a href="/dew/index.php?title=Bindings">bindings</a> system</li>
+<li>Built-in <a href="/dew/index.php?title=Updater">updater</a> for easy upgrades</li>
+</ul>
+</div>
+<div class="twocolumn collapsible">
+<h2>Other</h2>
+<ul>
+<li><a href="/source">Open source</a></li>
+<li>Cross-platform</li>
+<li><a href="/dew/index.php?title=Plugin">Plugin</a> based <a href="/dew/index.php?title=Libdeng2#Doomsday_2_architecture">extensible architecture</a></li>
+<li><a href="/dew/index.php?title=Snowberry">Snowberry</a>: GUI frontend based on game profiles; for managing custom maps, resource packs, add-ons and starting different game configurations easily</li>
+</ul>
+</div>
+<div class="clear"></div>
+</article>
+</div>
+<div id="column1" class="twocolumn collapsible">
+<div class="block">
+<article>
+<h1>Technology</h1>
+<p>Our modular architecture separates game logic from the renderer, audio, network and other subsystems, allowing a common engine to be used with game logic modules (plugins). Originally based on the id Tech 1 engine (by <a href="http://www.idsoftware.com" title="Take me to the id Software homepage" class="link-external">id Software</a>).</p>
+<p>The ultimate goal of the project is the realization of a modular game engine capable of supporting <em>all</em> classic 2.5d first-person shooters.</p>
+</div>
+</article>
+</div>
+<div id="column2" class="twocolumn collapsible">
+<div class="block">
+<article>
+<h1>History</h1>
+<p>The Doomsday Engine and the associated game logic ports of DOOM, Heretic and Hexen have been under development since May 1999, when the project was started by Jaakko Keränen (<a href="http://twitter.com/skyjake" class="link-external">skyjake</a>). The first version of the engine, called <dfn>JHexen</dfn> at the time, was released on November 1st, 1999. Ports of Heretic and DOOM followed in early 2000.</p>
+<p>Marking the tenth anniversary <dfn>Deng Team</dfn> examined the successes (and failures) of the project in a "<a href="/decade_of_doomsday" title="Read the &#39;Decade of Doomsday&#39; article">Decade of Doomsday</a>" retrospective.</p>
+</div>
+</article>
+</div>
+<div class="clear"></div>
