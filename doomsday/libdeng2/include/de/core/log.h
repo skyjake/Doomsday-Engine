@@ -54,16 +54,15 @@
     de::Block __logSectionUtf8 = __logSectionName.toUtf8(); \
     LOG_AS(__logSectionUtf8.constData());
 
-#define LOG_TRACE(str)      de::LogEntryStager(de::LogEntry::TRACE,    str)
-#define LOG_DEBUG(str)      de::LogEntryStager(de::LogEntry::DEBUG,    str)
-#define LOG_VERBOSE(str)    de::LogEntryStager(de::LogEntry::VERBOSE,  str)
-#define LOG_MSG(str)        de::LogEntryStager(de::LogEntry::MESSAGE,  str)
-#define LOG_INFO(str)       de::LogEntryStager(de::LogEntry::INFO,     str)
-#define LOG_WARNING(str)    de::LogEntryStager(de::LogEntry::WARNING,  str)
-#define LOG_ERROR(str)      de::LogEntryStager(de::LogEntry::ERROR,    str)
-#define LOG_CRITICAL(str)   de::LogEntryStager(de::LogEntry::CRITICAL, str)
-
-#define LOG_AT_LEVEL(level, str)   de::LogEntryStager(level, str)
+#define LOG_AT_LEVEL(level, str)    de::LogEntryStager(level, str)
+#define LOG_TRACE(str)              LOG_AT_LEVEL(de::LogEntry::TRACE,    str)
+#define LOG_DEBUG(str)              LOG_AT_LEVEL(de::LogEntry::DEBUG,    str)
+#define LOG_VERBOSE(str)            LOG_AT_LEVEL(de::LogEntry::VERBOSE,  str)
+#define LOG_MSG(str)                LOG_AT_LEVEL(de::LogEntry::MESSAGE,  str)
+#define LOG_INFO(str)               LOG_AT_LEVEL(de::LogEntry::INFO,     str)
+#define LOG_WARNING(str)            LOG_AT_LEVEL(de::LogEntry::WARNING,  str)
+#define LOG_ERROR(str)              LOG_AT_LEVEL(de::LogEntry::ERROR,    str)
+#define LOG_CRITICAL(str)           LOG_AT_LEVEL(de::LogEntry::CRITICAL, str)
 
 #ifdef DENG2_DEBUG
 /**
