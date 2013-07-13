@@ -110,6 +110,8 @@ public Font::RichFormat::IStyle
         wraps.setFont(self.font());
         wrapWidth = 0;
 
+        composer.forceUpdate();
+
         self.requestGeometry();
     }
 
