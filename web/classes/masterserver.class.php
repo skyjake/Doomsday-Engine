@@ -79,10 +79,10 @@ class ServerInfo implements ArrayAccess
         $s = new ServerInfo();
         foreach($props as $key => $value)
         {
+            // Is this a known property?
             if(!isset($s[$key])) continue;
 
-            // Ensure the variable type is not altered (we intend to serialize).
-            settype($value, gettype($s[$key]));
+            // Will ensure the variable type is not altered.
             $s[$key] = $value;
         }
         return $s;
