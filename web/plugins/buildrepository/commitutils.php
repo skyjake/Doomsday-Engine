@@ -167,7 +167,7 @@ function outputCommitJumpList2(&$groups)
         $commitCount = count($group);
         $tagLinkTitle = "Jump to commits tagged '$groupName'";
 
-?><li><span class="commit-count"><?php echo htmlspecialchars($commitCount); ?></span><a href="#<?php echo $groupName; ?>" title="<?php echo htmlspecialchars($tagLinkTitle); ?>"><?php echo htmlspecialchars($groupName); ?></a></li><?php
+?><li><label title="Number of commits with this tag"><span class="commit-count"><?php echo htmlspecialchars($commitCount); ?></span></label><a href="#<?php echo $groupName; ?>" title="<?php echo htmlspecialchars($tagLinkTitle); ?>"><?php echo htmlspecialchars($groupName); ?></a></li><?php
     }
 ?></ol><?php
 }
