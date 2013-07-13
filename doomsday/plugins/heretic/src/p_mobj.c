@@ -1224,10 +1224,8 @@ void P_SpawnBloodSplatter(coord_t x, coord_t y, coord_t z, mobj_t* originator)
     }
 }
 
-#define SMALLSPLASHCLIP 12
-
 /**
- * @return              @c true, if mobj contacted a non-solid floor.
+ * @return @c true, if mobj contacted a non-solid floor.
  */
 boolean P_HitFloor(mobj_t* thing)
 {
@@ -1264,12 +1262,11 @@ boolean P_HitFloor(mobj_t* thing)
     tt = P_MobjGetFloorTerrainType(thing);
     if(tt->flags & TTF_SPAWN_SPLASHES)
     {
-        if((mo = P_SpawnMobjXYZ(MT_SPLASHBASE, thing->origin[VX], thing->origin[VY],
-                               0, thing->angle + ANG180, MSF_Z_FLOOR)))
-            mo->floorClip += SMALLSPLASHCLIP;
+        P_SpawnMobjXYZ(MT_SPLASHBASE, thing->origin[VX], thing->origin[VY],
+                       0, thing->angle + ANG180, MSF_Z_FLOOR);
 
         if((mo = P_SpawnMobjXYZ(MT_SPLASH, thing->origin[VX], thing->origin[VY], 0,
-                               thing->angle, MSF_Z_FLOOR)))
+                                thing->angle, MSF_Z_FLOOR)))
         {
             mo->target = thing;
             mo->mom[MX] = FIX2FLT((P_Random() - P_Random()) << 8);
@@ -1283,12 +1280,11 @@ boolean P_HitFloor(mobj_t* thing)
     }
     else if(tt->flags & TTF_SPAWN_SMOKE)
     {
-        if((mo = P_SpawnMobjXYZ(MT_LAVASPLASH, thing->origin[VX], thing->origin[VY], 0,
-                               thing->angle + ANG180, MSF_Z_FLOOR)))
-            mo->floorClip += SMALLSPLASHCLIP;
+        P_SpawnMobjXYZ(MT_LAVASPLASH, thing->origin[VX], thing->origin[VY], 0,
+                       thing->angle + ANG180, MSF_Z_FLOOR);
 
         if((mo = P_SpawnMobjXYZ(MT_LAVASMOKE, thing->origin[VX], thing->origin[VY], 0,
-                               P_Random() << 24, MSF_Z_FLOOR)))
+                                P_Random() << 24, MSF_Z_FLOOR)))
         {
             mo->mom[MZ] = 1 + FIX2FLT((P_Random() << 7));
 
@@ -1299,12 +1295,11 @@ boolean P_HitFloor(mobj_t* thing)
     }
     else if(tt->flags & TTF_SPAWN_SLUDGE)
     {
-        if((mo = P_SpawnMobjXYZ(MT_SLUDGESPLASH, thing->origin[VX], thing->origin[VY], 0,
-                               thing->angle + ANG180, MSF_Z_FLOOR)))
-            mo->floorClip += SMALLSPLASHCLIP;
+        P_SpawnMobjXYZ(MT_SLUDGESPLASH, thing->origin[VX], thing->origin[VY], 0,
+                       thing->angle + ANG180, MSF_Z_FLOOR);
 
         if((mo = P_SpawnMobjXYZ(MT_SLUDGECHUNK, thing->origin[VX], thing->origin[VY], 0,
-                               P_Random() << 24, MSF_Z_FLOOR)))
+                                P_Random() << 24, MSF_Z_FLOOR)))
         {
             mo->target = thing;
             mo->mom[MX] = FIX2FLT((P_Random() - P_Random()) << 8);
