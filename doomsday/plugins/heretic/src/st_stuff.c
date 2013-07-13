@@ -22,6 +22,13 @@
  * Boston, MA  02110-1301  USA
  */
 
+#if defined(WIN32) && defined(_MSC_VER)
+// Something in here is incompatible with MSVC 2010 optimization.
+// Symptom: automap not visible.
+#  pragma optimize("", off)
+#  pragma warning(disable : 4748)
+#endif
+
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>

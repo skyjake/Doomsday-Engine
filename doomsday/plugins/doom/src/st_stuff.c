@@ -24,7 +24,7 @@
  */
 
 #if defined(WIN32) && defined(_MSC_VER)
-// Something in here is incompatible with MSVC 2012 optimization.
+// Something in here is incompatible with MSVC 2010 optimization.
 // Symptom: automap not visible.
 #  pragma optimize("", off)
 #  pragma warning(disable : 4748)
