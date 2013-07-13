@@ -69,7 +69,7 @@ class ServerInfo implements ArrayAccess
         }
 
         // Assign the default values.
-        $this->values = $defaults;
+        $this->values = self::$defaults;
     }
 
     static public function constructFrom(&$props)
