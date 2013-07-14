@@ -1,13 +1,5 @@
 /*  Deng phpBB 3.0 Forum Style Sheet */
 
-img {
-	border-width: 0;
-}
-
-p.right {
-	text-align: right;
-}
-
 #search-box {
     white-space: nowrap; /* For Opera */
 }
@@ -26,38 +18,15 @@ p.right {
     margin-right: 3px;
 }
 
-#currenttime {
-    float: right;
-}
-
 .whoisonline, .forumpermissions, .statistics {
     font-size: 8pt;
 }
 
-.post {
-	background-repeat: no-repeat;
-	background-position: 100% 0;
-}
-
-.rowbg {
-	margin: 5px 5px 2px 5px;
-}
-
-.ucprowbg {
-	background-color: #e2e2e2;
-}
-
-.fieldsbg {
-	background-color: #eaeaea;
-}
+/* Path node name separator */
+.separator { padding: 0 .25em; }
 
 /* Horizontal lists
 ----------------------------------------*/
-
-.separator {
-    padding: 0 .25em;
-    color: #DDD;
-}
 
 ul.linklist {
     display: block;
@@ -77,10 +46,10 @@ ul.linklist li {
 }
 
 ul.linklist li.rightside, p.rightside {
-	float: right;
-	margin-right: 0;
-	margin-left: 5px;
-	text-align: right;
+    float: right;
+    margin-right: 0;
+    margin-left: 5px;
+    text-align: right;
 }
 
 ul.navlinks {
@@ -91,18 +60,17 @@ ul.navlinks {
     font-size: 12pt;
 }
 
-ul.leftside {
-	/*float: left;/**/
-	margin-left: 0;
-	margin-right: 5px;
-	text-align: left;
+.leftside {
+    margin-left: 0;
+    margin-right: 5px;
+    text-align: left;
 }
 
-ul.rightside {
-	float: right;
-	margin-left: 5px;
-	margin-right: -5px;
-	text-align: right;
+.rightside {
+    float: right;
+    margin-left: 5px;
+    margin-right: -5px;
+    text-align: right;
 }
 
 /* Table styles
@@ -114,18 +82,18 @@ table.table1 {
 }
 
 #ucp-main table.table1 {
-	padding: 2px;
+    padding: 2px;
 }
 
 table.table1 thead th {
-	font-weight: normal;
-	line-height: 1.3em;
-	font-size: 1em;
-	padding: 0 0 4px 3px;
+    font-weight: normal;
+    line-height: 1.3em;
+    font-size: 1em;
+    padding: 0 0 4px 3px;
 }
 
 table.table1 thead th span {
-	padding-left: 7px;
+    padding-left: 7px;
 }
 
 table.table1 tbody th {
@@ -135,7 +103,11 @@ table.table1 tbody th {
 }
 
 /* Specific column styles */
-table.table1 .posts		{ text-align: center !important; width: 7%; }
+table.table1 .posts {
+    text-align: center !important;
+    width: 7%;
+}
+
 table.table1 .joined,
 table.table1 .visited,
 table.table1 .active {
@@ -144,11 +116,31 @@ table.table1 .active {
     white-space:nowrap;
 }
 
-table.table1 .mark		{ text-align: center; width: 7%; }
-table.table1 .info		{ text-align: left; width: 30%; line-height: 130%; }
-table.table1 .info div	{ width: 100%; white-space: nowrap; overflow: hidden; }
-table.table1 .autocol	{ line-height: 2em; white-space: nowrap; }
-table.table1 thead .autocol { padding-left: 1em; }
+table.table1 .mark {
+    text-align: center;
+    width: 7%;
+}
+
+table.table1 .info {
+    text-align: left;
+    width: 30%;
+    line-height: 130%;
+}
+
+table.table1 .info div {
+    width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+table.table1 .autocol {
+    line-height: 2em;
+    white-space: nowrap;
+}
+
+table.table1 thead .autocol {
+    padding-left: 1em;
+}
 
 table.table1 span.rank-img {
     float: right;
@@ -164,18 +156,20 @@ table.info td {
 }
 
 table.info tbody th {
-	padding: 3px;
-	text-align: right;
-	vertical-align: top;
-	color: #000000;
-	font-weight: normal;
+    padding: 3px;
+    text-align: right;
+    vertical-align: top;
+    color: #000;
+    font-weight: normal;
 }
 
 /* Misc layout styles
 ---------------------------------------- */
+
 /* column[1-2] styles are containers for two column layouts 
    Also see tweaks.css */
-.column1 {
+
+/*.column1 {
     float: left;
     clear: left;
     width: 49%;
@@ -185,7 +179,7 @@ table.info tbody th {
     float: right;
     clear: right;
     width: 49%;
-}
+}*/
 
 .columnend {
     clear: both;
@@ -193,37 +187,36 @@ table.info tbody th {
 
 /* General classes for placing floating blocks */
 .left-box {
-	float: left;
-	width: auto;
-	text-align: left;
+    float: left;
+    width: auto;
+    text-align: left;
 }
 
 .right-box {
-	float: right;
-	width: auto;
-	text-align: right;
+    float: right;
+    width: auto;
+    text-align: right;
 }
 
 dl.details {
-	/*font-family: "Lucida Grande", Verdana, Helvetica, Arial, sans-serif;*/
-	font-size: 1.1em;
+    font-size: 1.1em;
 }
 
 dl.details dt {
-	float: left;
-	clear: left;
-	width: 30%;
-	text-align: right;
-	display: block;
+    float: left;
+    clear: left;
+    width: 30%;
+    text-align: right;
+    display: block;
 }
 
 dl.details dd {
-	margin-left: 0;
-	padding-left: 5px;
-	margin-bottom: 5px;
-	color: #828282;
-	float: left;
-	width: 65%;
+    margin-left: 0;
+    padding-left: 5px;
+    margin-bottom: 5px;
+    color: #828282;
+    float: left;
+    width: 65%;
 }
 
 .profile-section .avatar-preview {
@@ -1960,9 +1953,6 @@ html>body table.table1 { width: 100%; }	/* Reset 100% for opera */
 
 /* Form styles */
 html>body dd label input { vertical-align: text-bottom; }	/* Align checkboxes/radio buttons nicely */
-
-/* Misc layout styles */
-* html .column1, * html .column2 { width: 45%; }
 
 /* Nice method for clearing floated blocks without having to insert any extra markup (like spacer above)
    From http://www.positioniseverything.net/easyclearing.html 

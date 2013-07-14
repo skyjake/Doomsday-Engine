@@ -44,11 +44,10 @@ function insert_single(user)
 
 <form method="post" action="{S_MODE_ACTION}" id="search_memberlist">
 <div class="panel">
-    <div class="inner"><span class="corners-top"><span></span></span>
 
     <p>{L_FIND_USERNAME_EXPLAIN}</p>
 
-    <fieldset class="fields1 column1">
+    <fieldset class="fields1 twocolumn">
     <dl>
         <dt><label for="username">{L_USERNAME}:</label></dt>
         <dd><input type="text" name="username" id="username" value="{USERNAME}" class="inputbox" /></dd>
@@ -77,7 +76,7 @@ function insert_single(user)
     </dl>
     </fieldset>
 
-    <fieldset class="fields1 column2">
+    <fieldset class="fields1 twocolumn">
     <dl>
         <dt><label for="joined">{L_JOINED}:</label></dt>
         <dd><select name="joined_select">{S_JOINED_TIME_OPTIONS}</select> <input class="inputbox medium" type="text" name="joined" id="joined" value="{JOINED}" /></dd>
@@ -110,15 +109,12 @@ function insert_single(user)
 
     <div class="clear"></div>
 
-    <hr />
-
     <fieldset class="submit-buttons">
         <input type="reset" value="{L_RESET}" name="reset" class="button2" />&nbsp;
         <input type="submit" name="submit" value="{L_SEARCH}" class="button1" />
         {S_FORM_TOKEN}
     </fieldset>
 
-    <span class="corners-bottom"><span></span></span></div>
 </div>
 
 </form>
