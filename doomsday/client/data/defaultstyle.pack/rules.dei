@@ -11,4 +11,9 @@ group console {
     rule width { constant = 500 }
 }
 
+group gameselection {
+    rule max.width  { constant = 800 }
+    rule max.height { constant = 600 }
+}
+
 rule scrollarea.bar { constant $= UNIT }
