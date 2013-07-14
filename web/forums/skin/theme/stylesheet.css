@@ -1355,13 +1355,6 @@ ul.cplist {
     margin-bottom: 1em;
 }
 
-#cp-main table.table1 thead th {
-    color: #333333;
-    font-weight: bold;
-    border-bottom: 1px solid #333333;
-    padding: 5px;
-}
-
 #cp-main table.table1 tbody th {
     font-style: italic;
     background-color: transparent !important;
@@ -2207,10 +2200,6 @@ a.unsubscribe { background-image: url("{T_THEME_PATH}/images/icon_unsubscribe.gi
 
 ul.cplist {
     border-top-color: #BFC0C1;
-}
-
-#cp-main table.table1 thead th {
-    border-bottom-color: #333;
 }
 
 #cp-main .pm-message {
