@@ -275,11 +275,6 @@ ul.topiclist li.header,
 table.table1 tbody td {
     border-color: #4D4D4D;
     border-style: solid;
-}
-
-table.directory tbody td,
-ul.topiclist li.row,
-table.table1 tbody td {
     border-width: 1px;
 }
 
@@ -776,7 +771,6 @@ div.clear {
 
 #status {
     font-size: 66%;
-    padding: 1.8em 2.2em;
 }
 
 #recentbuilds { float: left; }

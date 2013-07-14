@@ -473,17 +473,11 @@ a.right:hover {
 
 ul.topiclist {
     display: block;
-    list-style-type: none;
     margin: 0;
     padding:0;
-    line-height: 3ex;
     font-family: sans-serif;
     font-size: 8pt;
 }
-
-/*ul.forums {
-    background: #f9f9f9 none repeat-x 0 0;
-}*/
 
 ul.topiclist li {
     display: block;
@@ -495,20 +489,14 @@ ul.topiclist dl {
     position: relative;
 }
 
-ul.topiclist dt {
+ul.topiclist dt, ul.topiclist dd {
     display: block;
     float: left;
-    width: 50%;
-    padding-left: 5px;
-    padding-right: 5px;
-    margin-top: 5px;
-    margin-bottom: 5px;
+    padding: 5px;
 }
 
-ul.topiclist dd {
-    display: block;
-    float: left;
-    padding: 4px 0;
+ul.topiclist dt {
+    width: 50%;
 }
 
 ul.topiclist dfn {
@@ -560,17 +548,17 @@ li.header dt {
 }
 
 li.header dd {
-	margin-left: 1px;
+    margin-left: 1px;
 }
 
 li.header dl.icon {
-	min-height: 0;
+    min-height: 0;
 }
 
 li.header dl.icon dt {
-	/* Tweak for headers alignment when folder icon used */
-	padding-left: 0;
-	padding-right: 45px;
+    /* Tweak for headers alignment when folder icon used */
+    padding-left: 0;
+    padding-right: 45px;
 }
 
 /* Forum list column styles */
@@ -582,34 +570,21 @@ dl.icon {
 
 dl.icon dt {
     padding-left: 45px; /* Space for folder icon */
-    background-repeat: no-repeat;
-    background-position: 5px 95%; /* Position of topic icon */
 }
 
 dd.posts, dd.topics, dd.views {
-    width: 8%;
+    width: 6%;
     text-align: center;
-    line-height: 2.2em;
-    font-size: 1.1em;
 }
 
 dd.lastpost {
     width: 24%;
-    font-size: 1.1em;
 }
 
-dd.redirect {
-    font-size: 1.1em;
-    line-height: 2.5em;
-}
-
-dd.moderation {
-    font-size: 1.1em;
-}
-
-dd.lastpost span, ul.topiclist dd.searchby span, ul.topiclist dd.info span, ul.topiclist dd.time span, dd.redirect span, dd.moderation span {
-	display: block;
-	padding-left: 5px;
+ul.topiclist dd.searchby span, ul.topiclist dd.info span,
+ul.topiclist dd.time span, dd.redirect span, dd.moderation span {
+    display: block;
+    padding-left: 5px;
 }
 
 dd.time {
