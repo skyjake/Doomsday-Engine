@@ -1,45 +1,68 @@
 body {
-    font-family: Georgia, serif; /* Use a serif font for the main content as its easier to read in blocks */
+    background: #282D2B url(panoramarotator) no-repeat fixed;
+    background-position: center 100%;
+    background-size: 200% 200%;
+
+    color: #A7A29C;
+    font-family: Georgia, serif;
     font-size: 100%;
-    margin-top: 0;
-    margin-bottom: 0;
-    margin-left: 1.2em;
-    margin-right: 1.2em;
-    color: #807970;
-    background: #EDEFEF;
-    background: #EDEFEF url(data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiA/Pgo8c3ZnIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgdmlld0JveD0iMCAwIDEgMSIgcHJlc2VydmVBc3BlY3RSYXRpbz0ibm9uZSI+CiAgPGxpbmVhckdyYWRpZW50IGlkPSJncmFkLXVjZ2ctZ2VuZXJhdGVkIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgeDE9IjAlIiB5MT0iMCUiIHgyPSIwJSIgeTI9IjEwMCUiPgogICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iI2JiYmZiYyIgc3RvcC1vcGFjaXR5PSIxIi8+CiAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNlZGVmZWYiIHN0b3Atb3BhY2l0eT0iMSIvPgogIDwvbGluZWFyR3JhZGllbnQ+CiAgPHJlY3QgeD0iMCIgeT0iMCIgd2lkdGg9IjEiIGhlaWdodD0iMSIgZmlsbD0idXJsKCNncmFkLXVjZ2ctZ2VuZXJhdGVkKSIgLz4KPC9zdmc+) repeat-x;
-    background: #EDEFEF -moz-linear-gradient(top, #C7CCC9 0%, #EDEFEF 100%) repeat-x;
-    background: #EDEFEF -webkit-gradient(linear, left top, left bottom, color-stop(0%,#C7CCC9), color-stop(100%,#EDEFEF)) repeat-x;
-    background: #EDEFEF -o-linear-gradient(top, #C7CCC9 0%,#EDEFEF 100%) repeat-x;
-    background: #EDEFEF -ms-linear-gradient(top, #C7CCC9 0%,#EDEFEF 100%) repeat-x;
-    background: #EDEFEF linear-gradient(top, #C7CCC9 0%,#EDEFEF 100%) repeat-x;
-    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#c7ccc9', endColorstr='#edefef',GradientType=0 );
+    line-height: 1.5;
+
+    margin: 1.2em;
 }
 
 @media only screen and (max-width: 767px) {
-body { margin-left: 0px; margin-right: 0px; }
+body {
+    margin: 0px;
+}
 }
 
 h1, h2, h3, h4, h5, h6 {
     font-family: Verdana, Arial, Helvetica, sans-serif;
-    margin-top: .4em;
     margin-bottom: 0;
-    padding:inherit;
+    margin-top: .6em;
+    font-weight: lighter;
+    line-height:1.3;
 }
 
-p {
-    line-height: 160%;
-    padding:inherit;
-    margin:inherit;
+h1, h2, h3, h4, h5, h6,
+h1 a, h2 a, h3 a, h4 a, h5 a, h6 a {
+    color: #F0F0F0;
 }
 
-p.leadparagraph {
-    font-weight: bold;
+label { cursor:help; }
+
+/* ------- begin old forum normalization ------- */
+
+.content br + ul, .content br + ol {
+    margin-top: 0;
 }
+
+.content ul + br, .content ol + br, .content blockquote + br, .content .codebox + br {
+    display: none;
+}
+
+code br, .topiclist br, .post br, .content br {
+    display:inline;
+    margin:0;
+}
+
+.whoisonline p, .statistics p, #options-panel dd {
+    margin: 0;
+}
+
+#postingbox fieldset, fieldset.fields1, fieldset.quick-login {
+    margin: 0;
+    padding: 0;
+}
+
+/* ------- end old forum normalization ------ */
+
+p { margin-bottom: 0; }
 
 a {
     text-decoration: none;
-    color: #495f5f;
+    color: white;
     outline: 0 none;
 }
 
@@ -74,7 +97,7 @@ a[class ="link-definition"] {
 a[class ="link-definition"]:after {
     position:absolute;
     text-decoration: none;
-    color:#5f5fff;
+    color: #BEBEFF;
     font-size: .6em;
     font-family: georgia, serif;
     font-weight: normal;
@@ -87,8 +110,8 @@ a[class ="link-external"] {
 }
 
 a[class ="link-rss"] {
-    padding-left: 13px;
-    background: transparent url(http://dl.dropboxusercontent.com/u/11948701/dengine.net/images/rssicon.png) no-repeat center left;
+    padding-right: 18px;
+    background: transparent url(http://dl.dropboxusercontent.com/u/11948701/dengine.net/images/rssicon.png) no-repeat center right;
     background-size: 13px 12px;
 }
 
@@ -101,35 +124,122 @@ span.hidden {
     width: 50%;
     margin-left: auto;
     margin-right: auto;
-}
-
-.major_issue {
-    background-color:#ff4444; /* red */
-}
-
-.minor_issue {
-    background-color:#ffee00; /* yellow */
-}
-
-.no_issue {
-    background-color:#00ee00; /* green */
+    color: black;
 }
 
 hr {
-    background-color: rgb(210,210,210);
+    background-color: #6D6D6D;
     height: 1px;
     border: none;
-    /*width: 80%;*/
     margin-top: 2em;
     margin-bottom: 2em;
 }
 
+hr.dashed {
+    background: none;
+    border-top: 1px dashed #6D6D6D;
+}
+
+.twocolumn {
+    width: 50%;
+    float: left;
+}
+
+.twocolumn ol {
+    padding:0;
+    margin:0;
+}
+
+@media only screen and (max-width: 767px) {
+.collapsible {width: 100%; float: left; }
+.collapsible:nth-child(n+1) { clear: left; }
+}
+
+.block {
+    padding: 1.2em;
+    margin: 1.2em .6em 0 .6em;
+}
+
+.block article:first-of-type,
+.block section:first-of-type {
+    margin-top: -1.2em;
+}
+
+.block article header {
+    margin-bottom: .8em;
+}
+
+/* metadata */
+.block article header p {
+    font-style: italic;
+    margin-top: 0;
+    margin-bottom: 1.2em;
+}
+
+/* related links bar */
+.block div.links {
+    margin: 0;
+    position: relative;
+    right: -1.3em;
+    float: right;
+    font-size: 8pt;
+}
+
+/*
+ * Colors:
+ */
+
+#menu {
+    background-color: rgba(0, 0, 0, 0.8);
+    /*position: relative;
+    width: 200%;
+    left: -50%;/**/
+}
+
+#menu a:focus { outline-color: white; }
+
+.block {
+    background-color: rgba(0, 0, 0, 0.7);
+    box-shadow: 1px 2px 3px 0px rgba(20, 20, 20, 0.4);
+    box-shadow: 0 0 28px -8px rgb(110, 110, 110);/**/
+}
+
+.rules {
+    background-color: #05362D;
+    color: #9FA79C;
+}
+
+.block a { color: #C59A57; }
+
+.block.nobackground a { color:white; }
+
+.block h1 a, .block h2 a, .block h3 a, .block h4 a, .block h5 a, .block h6 a { color: white; }
+
+.block a:hover { color: #FFCB0F; }
+
+.major_issue { background-color:#ff4444; /* red */ }
+
+.minor_issue { background-color:#ffee00; /* yellow */ }
+
+.no_issue { background-color:#00ee00; /* green */ }
+
+.nobackground {
+    background:none;
+    box-shadow:none;
+}
+
+.rules h1, .rules h2, .rules h3, .rules h4, .rules h5, .rules h6 { color:#FFD9BB; }
+
+img {
+    border: 0;
+    padding: 0;
+    margin: 0;
+}
+
 table.directory {
+    margin-top: 1.2em;
     width: 100%;
-    border-width: .5em;
-    border-spacing: 0em;
-    border-style: hidden;
-    border-collapse: separate;
+    border-collapse: collapse;
     padding: inherit;
 }
 
@@ -138,41 +248,181 @@ table tr th {
     padding-bottom:.5em;
 }
 
-table.directory th {
-    border-width: 1px;
-    padding: .6em;
-    border-style: solid;
-    border-color: lightgrey;
-}
-
-table.directory td {
-    border-width: 1px;
-    padding: .6em;
-    border-style: solid;
-    border-color: lightgrey;
-    font-size: small;
-}
-
 td {
     border: none;
     padding: 0;
     margin: 0;
 }
 
-img {
-    border: 0;
-    padding: 0;
+table.directory th,
+table.directory td {
+    padding: 1.2em;
+}
+
+table.directory th {
+    padding-top: 0;
+}
+
+table.directory td {
+    font-size: small;
+}
+
+table.directory td,
+dl.codebox,
+ul.topiclist dd,
+ul.topiclist li.row,
+ul.topiclist li.header,
+table.table1 tbody td {
+    border-color: #4D4D4D;
+    border-style: solid;
+}
+
+table.directory tbody td,
+ul.topiclist li.row,
+table.table1 tbody td {
+    border-width: 1px;
+}
+
+ul.topiclist dd {
+    border-width: 0;
+    border-left-width: 1px;
     margin: 0;
 }
 
+ul.topiclist li.header {
+    border-width: 0;
+    border-bottom-width: 1px;
+}
+
+ul.topiclist li.row {
+    border-top-width: 0;
+}
+
+ul.topiclist li.row:hover,
+table.directory tbody tr:hover,
+table.table1 tbody tr:hover,
+table.table1 tbody tr.hover {
+    background-color: #0D382C;
+}
+
+table.table1 {
+    border-collapse:collapse;
+}
+
+dl.codebox {
+    font-size: 9pt;
+    border-width: 1px;
+    margin-top: 1em;
+    margin-bottom: 1em;
+}
+
+dl.codebox dt {
+    text-transform: uppercase;
+    border-bottom-width: 1px;
+    font-size: 0.8em;
+    font-weight: bold;
+    display: block;
+    padding: .5em;
+}
+
+dl.codebox dd {
+    margin: 0;
+}
+
+dl.codebox code {
+    /* Also see tweaks.css */
+    display: block;
+    min-height: auto;
+    white-space: normal;
+    padding-top: 5px;
+    font-family: Monaco, "Andale Mono","Courier New", Courier, mono;
+    line-height: 130%;
+    color: #726C6C;
+    padding:1.6em;
+    box-shadow: 7px 9px 18px -14px black inset;
+    border-top: 1px solid #383838;
+    overflow:hidden;
+    resize: vertical;
+}
+
+dl.codebox code:hover {
+    background: white;
+    color: #333;
+    overflow: auto;
+}
+
+.block .postauthor a { color: #C59A57; }
+
+.postauthoravatar { margin-bottom: 1.2em; }
+
+.postauthoravatar p { margin: 0; }
+
+.profile-icons {
+    float: right;
+    width: auto;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    text-align: center;
+    text-transform: uppercase;
+}
+
+.profile-icons li {
+    float: left;
+    margin: 0;
+    padding: 0 .3em;
+    border: 1px solid;
+    border-top: none;
+    border-right: none;
+}
+
+.profile-icons li a {
+    display: block;
+}
+
+.profile-icons li,
+.profile-icons li a {
+    color: #4D4D4D;
+    border-color: #4D4D4D;
+}
+
+.profile-icons .warn-icon a {
+    color: red;
+    font-weight: bolder;
+}
+
+.warn-icon a, .report-icon a, .delete-icon a, .info-icon a { width: 1em; }
+.edit-icon a { width: 2.9em; }
+.quote-icon a { width: 4.1em; }
+
+.postprofile .profile-icons li {
+    border: none;
+}
+
+.postprofile .profile-icons li a {
+    display: none;
+}
+
 fieldset {
-    border: 2px solid #EEE;
+    border: 2px solid #585858;
     -moz-border-radius: 3px;
     -webkit-border-radius: 3px;
     -o-border-radius: 3px;
     -ms-border-radius: 3px;
     -khtml-border-radius: 3px;
     border-radius: 3px;
+    margin: 0;
+    padding: 0;
+}
+
+/* Display options on viewtopic/viewforum pages  */
+fieldset.display-options {
+    text-align: center;
+}
+
+fieldset.display-options label {
+    white-space: nowrap;
+    padding-right: 2px;
 }
 
 dl {
@@ -189,6 +439,13 @@ div {
     border: none;
     margin: 0;
     padding: 0;
+}
+
+ul, ol {
+    list-style-type: circle;
+    margin-bottom:1em;
+    margin-top:1em;
+    padding-left:2.4em;
 }
 
 div.game-sprite {
@@ -241,24 +498,23 @@ ol.jumplist li {
 /*----------------- Picture frame ----------------*/
 
 .picture {
-    padding: .5em;
-    margin: .25em;
-    border: 1px solid rgb(180,180,180);
+    margin: .6em;
+    padding: .6em;
     display: inline-block;
     font-size: small;
-    vertical-align:text-top;
+    vertical-align: text-top;
+    background: #414141;
 }
 
 .picture p {
     padding: 0;
     margin: 0;
-    line-height: normal;
     text-align: center;
 }
 
 .picture img {
     display: block;
-    margin: .5em;
+    margin-bottom: .6em;
     border: 2px solid black;
 }
 
@@ -269,7 +525,7 @@ ol.jumplist li {
     top: 0;
     left: 0;
     width: 100%;
-    min-width: 649px;
+    min-width: 640px;
     z-index: 0;
     overflow: hidden;
 }
@@ -296,29 +552,20 @@ ol.jumplist li {
     float: right;
 }
 
-.collapsible {
+.heading.collapsible {
     cursor: pointer;
 }
 
 /*---------------- Main site frame ----------------*/
 
-#mainouter {
-    max-width: 1280px;
-    height: auto;
-    clear: both;
-    min-width: 649px;
-    margin-top: 52px;
-    margin-bottom: 0px;
-    margin-left: auto;
-    margin-right: auto;
-    z-index: 1;
-    text-align: left;
-}
-
-#maininner {
+#main {
     width: 100%;
     position: relative;
-    overflow: hidden;
+    /*overflow: hidden;/**/
+    max-width: 1100px;
+    min-width: 640px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .framepanel {
@@ -331,19 +578,14 @@ ol.jumplist li {
 #menuouter {
     position:relative;
     z-index: 4;
-    width: 100%;
-    height:0;
 }
 
 #menu {
     font-family: Verdana, Arial, Helvetica, sans-serif;
     font-weight: bold;
-
-    -moz-box-shadow: 0 16px 8px 0 rgb(199, 220, 215) inset;
-    -webkit-box-shadow: 0 16px 8px 0 rgb(199, 220, 215) inset;
-    -o-box-shadow: 0 16px 8px 0 rgb(199, 220, 215) inset;
-    box-shadow: 0 16px 8px 0 rgb(199, 220, 215) inset;
 }
+
+#menu a:focus { outline-offset: 0; }
 
 #menu ul {
     margin: 0;
@@ -353,7 +595,7 @@ ol.jumplist li {
 
 #menu section {
     display: inline-block;
-    min-width: 13em;
+    min-width: 16em;
     text-align: right;
 }
 
@@ -361,103 +603,67 @@ ol.jumplist li {
     position: relative;
     list-style-type: none;
     display: inline;
-    padding: 0;
-    vertical-align:top;
 }
 
 #menu li.logo {
-    background: url(http://dl.dropboxusercontent.com/u/11948701/dengine.net/images/denginelogo.png) no-repeat;
-    background-position: 0 22px;
-    padding: 75px 0;
+    background: url(http://dengine.net/images/deng-logo-sq-114x114-web.png) no-repeat;
+    background-position: 0 21px;
+    padding: 64px 0;
     margin: 0;
 }
 
 #menu li.logo a {
-    padding-top: 83px;
-    padding-bottom: 83px;
-    padding-left: 202px;
+    padding-top: 48px;
+    padding-bottom: 33px;
+    padding-left: 110px;
     outline: 0 none;
 }
 
 #menu a, span.paddle_left_select, span.paddle_right_select {
     position:inherit;
-    font-size: 11pt;
-    text-decoration: none;
-    text-shadow: #A7B6AC 0px -1px 0px;
-    padding-top: 8px;
-    padding-bottom: 8px;
+    padding-top: 19px;
+    padding-bottom: 19px;
     padding-left: .6em;
     padding-right: .6em;
     color: white;
 }
 
-#menu a:hover {
-    text-shadow: rgb(255, 255, 255) 0px 0px 7px;
-    bottom: 1px;
-    padding-bottom: 9px;
-    padding-top: 7px;
+span.paddle_left_select, span.paddle_right_select {
+    border-bottom: 2px solid white;
 }
 
-#menu span.paddle_left_select,
-      span.paddle_right_select,
-      a[class = "paddle_left"]:hover,
-      navigation a[class = "paddle_left"]:visited:hover,
-      a[class = "paddle_right"]:hover,
-      navigation a[class = "paddle_right"]:visited:hover {
-    margin-left: 0px;
-    -moz-box-shadow: 0 5px 10px 5px rgba(0, 0, 0, .2) inset;
-    -webkit-box-shadow: 0 5px 10px 5px rgba(0, 0, 0, .2) inset;
-    -o-box-shadow: 0 5px 10px 5px rgba(0, 0, 0, .2) inset;
-    box-shadow: 0 5px 10px 5px rgba(0, 0, 0, .2) inset;
+#menu a:hover {
+    color: #FFC764;
 }
 
 #divider {
     width: 100%;
-    height: 8px;
+    height: 18px;
     margin: 0;
     padding: 0;
     border: 0;
-
-    -moz-box-shadow: 0 4px 6px 0 rgba(186, 196, 189, 260) inset;
-    -webkit-box-shadow: 0 4px 6px 0 rgba(186, 196, 189, 260) inset;
-    -o-box-shadow: 0 4px 6px 0 rgba(186, 196, 189, 260) inset;
-    box-shadow: 0 4px 6px 0 rgba(186, 196, 189, 260) inset;
 }
 
 #divider2 {
     width: 100%;
-    height: 8px;
-    -moz-box-shadow: 0 -6px 8px -4px rgb(205, 220, 213) inset;
-    -webkit-box-shadow: 0 -6px 8px -4px rgb(205, 220, 213) inset;
-    -o-box-shadow: 0 -6px 8px -4px rgb(205, 220, 213) inset;
-    box-shadow: 0 -6px 8px -4px rgb(205, 220, 213) inset;
+    height: 18px;
 }
 
 /*-------------------- Top Panel -------------------*/
 
 #framepanel_top {
     position: absolute;
-    background: #CDDCD5;
     width: 100%;
-    height: 300px;
-    padding: 0;
-    margin: 0;
+    height: 280px;
 }
 
 #panorama {
     position: relative;
     left:50%;
-    margin-top: 10px;
     margin-left:-650px;
-    top: 0;
-    height: 300px;
+    height: 280px;
     width: 1300px;
     background: #282D2B url(panoramarotator) no-repeat;
-
-    -moz-box-shadow: 0 -20px 10px 0 rgba(250, 250, 250, 1) inset;
-    -webkit-box-shadow: 0 -20px 10px 0 rgba(250, 250, 250, 1) inset;
-    -o-box-shadow: 0 -20px 10px 0 rgba(250, 250, 250, 1) inset;
-    box-shadow: 0 -20px 10px 0 rgba(250, 250, 250, 1) inset;
 }
 
 /*------------------- Bottom Panel -----------------*/
@@ -465,31 +671,23 @@ ol.jumplist li {
 #framepanel_bottom {
     float: right;
     clear: both;
-    margin-top: 300px;
-    margin-left: 0;
-    margin-right: 0;
-    margin-bottom: 0;
+    margin: 0;
+    margin-top: 280px;
     width: 100%;
-    background: #FAFAFA;
     text-align: center;
 }
 
 #pageheading,
 #latestversion {
     position: relative;
-    margin-top: -4.4em;
+    margin-top: -8.2em;
     white-space: nowrap;
-    color: white;
     z-index: 1;
+    color: white;
 }
 
-#pageheading {
-    float: left;
-}
-
-#latestversion {
-    float: right;
-}
+#pageheading { float: left; }
+#latestversion { float: right; }
 
 #pageheading h1,
 #latestversion h1 {
@@ -497,29 +695,26 @@ ol.jumplist li {
     margin-top: 0;
 }
 
-#pageheading h1 {
-    margin-left: .4em;
-}
+#pageheading h1 { margin-left: .4em; }
+#latestversion h1 { margin-right: .4em; }
 
-#latestversion h1 {
-    margin-right: .4em;
-}
-
-#latestversion a {
-    color: white;
-}
-
-#latestversion a:hover {
-    color: #FFCB0F;
-}
+#latestversion a { color: white; }
+#latestversion a:hover { color: #FFCB0F; }
 
 #contentbox, #contentbox2 {
-    padding: .6em;
-    top: -1.3em;
-    position: relative;
-
     text-align: left;
-    line-height: 160%;
+    line-height: 1.65;
+    margin: 1.2em -.6em;
+}
+
+.postbody {
+    float: right;
+    width: 80%;
+}
+
+.search .postbody {
+    float: none;
+    width: auto;
 }
 
 div.clear {
@@ -529,66 +724,22 @@ div.clear {
 
 /*----------------------- Footer ----------------------*/
 
-#footer {
+#main footer {
     width: 100%;
     font-size: xx-small;
-    line-height: 110%;
     font-family: Verdana, Arial, Helvetica, sans-serif;
     text-align: center;
     margin-top: 1em;
     margin-bottom: 1em;
 }
 
-p.disclaimer a {
-    color: rgb(50,140,100);
-}
+#main footer p.disclaimer a { color: #8F8977; }
 
-p.legal {
-    color: rgb(180,180,180);
-}
+#main footer p.legal { color: #999; }
 
-p.legal a {
-    color: rgb(195,195,195);
-    font-weight: bold;
-}
+#main footer p.legal a { color: #8F8977; font-weight: bold; }
 
-/*---------------------- NewsFeed ---------------------*/
-
-.twocolumn {
-    width: 50%;
-    float: left;
-}
-
-.twocolumn ol {
-    padding:0;
-    margin:0;
-}
-
-@media only screen and (max-width: 767px) {
-.twocolumn {width: 100%; float: left; }
-.twocolumn:nth-child(n+1) { clear: left; }
-}
-
-.block {
-    padding: .6em;
-}
-
-.block header {
-    margin-bottom: .6em;
-}
-
-/*-------------------- GameServers -------------------*/
-
-#servers-label {
-    color: white;
-    font-weight: bold;
-}
-
-#servers-timestamp {
-    color: white;
-}
-
-#servers, #search-box {
+#search-box {
     position: relative;
     top: -275px; /* minus (image height - divider height) */
     min-width: 201px;
@@ -602,35 +753,54 @@ p.legal a {
     min-height: 139px;
 }
 
-#servers ul {
-    padding: 0;
-    margin-top: .4em;
-}
-
-#servers ul li {
-    list-style-type: none;
-    min-height: 1.6em;
-}
-
-#servers .name {
-    font-weight: bold;
-}
-
-#servers a, #search-box a {
+#search-box a {
     color: #FFCB0F;
 }
 
-#servers a:hover, #servers a:visited:hover,
 #search-box a:hover, #search-box a:visited:hover {
     color: white;
 }
 
-#servers .player-summary, #servers .game-mode {
+/*----------------- Status ----------------------*/
+
+.new {
     color: white;
+    font-weight: bold;
+    font-size: 106%;
 }
 
-#servers ul li {
+.new:after {
+    content: " - NEW";
+    color: #A7A29C;
+}
+
+#status {
+    font-size: 66%;
+    padding: 1.8em 2.2em;
+}
+
+#recentbuilds { float: left; }
+#activeservers { float: right; }
+
+#status ol {
+    font-size: xx-small;
+    font-family: Verdana, Arial, Helvetica, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+#status ol li {
     list-style-type: none;
+}
+
+#status article header p {
+    margin-top: -.2em;
+    margin-bottom: 1.2em;
+}
+
+#status .servers .name {
+    color: white;
+    font-weight: bold;
 }
 
 /*----------------- Get It Now Panel ---------------*/
@@ -673,22 +843,22 @@ p.legal a {
 }
 
 #downloadbox a.windows_icon {
-    background-image: url(images/windowslogo.gif);
+    background-image: url(images/windowslogo.png);
     background-position: 0 0;
 }
 
 #downloadbox a.macos_icon {
-    background-image: url(images/macosxlogo.gif);
+    background-image: url(images/macosxlogo.png);
     background-position: 0 0;
 }
 
 #downloadbox a.ubuntu_icon {
-    background-image: url(images/ubuntulogo.gif);
+    background-image: url(images/ubuntulogo.png);
     background-position: 0 0;
 }
 
 #downloadbox a.linux_icon {
-    background-image: url(images/linuxlogo.gif);
+    background-image: url(images/linuxlogo.png);
     background-position: 0 0;
 }
 
@@ -740,11 +910,6 @@ p.legal a {
 
 /*-------------------- Addons ---------------------*/
 
-#addons {
-    padding:.5em 1em;
-    text-align:left;
-}
-
 .addons_list {
     vertical-align:top;
     margin:0 3em;
@@ -753,7 +918,7 @@ p.legal a {
 
 .addon_badge {
     position: relative;
-    margin: 1em 2.5em;
+    margin: 0 2.5em;
     display: inline-block;
     text-align: left;
 }
@@ -770,11 +935,6 @@ p.legal a {
     max-height: 48px;
 }
 
-.addon_badge:hover .name, .addon_badge:visited:hover .name {
-    text-decoration: underline;
-    color: #495f5f;
-}
-
 .addon_badge .description {
     display: block;
     color: #807970;
@@ -786,12 +946,12 @@ p.legal a {
     z-index: 1;
 }
 
-.addon_badge div.metadata {
+.addon_badge .metadata {
     font-size: small;
 }
 
-#overview {
-    padding-top:0;
+.addon_badge .games {
+    margin-left: .6em;
 }
 
 #notes, #instructions {
@@ -810,12 +970,6 @@ p.legal a {
 
 /*-------------------- Builds ---------------------*/
 
-/* Panel */
-#builds {
-    padding:.5em 1em;
-    text-align:left;
-}
-
 /* Stream navigation widget */
 #buildsnav {
     font-family: Verdana, Arial, Helvetica, sans-serif;
@@ -827,7 +981,7 @@ p.legal a {
 
 #buildsnav h3 span {
     color:lightgrey;
-    padding:0 1em;
+    padding:0 1.8em;
 }
 
 #buildoverview {
@@ -847,43 +1001,35 @@ p.legal a {
     margin-right:2em;
 }
 
-#buildcommits hr {
+#commitindex hr {
     visibility:hidden;
     margin:0;
 }
 
-#buildcommits ul li {
+#commitindex ul li {
     list-style-type:none;
 }
 
-#buildcommits ul {
-    padding-left:0;
+#commitindex ul {
+    padding-left: 0;
+    margin-bottom: 0;
 }
 
-#buildcommits ol {
-    padding-top: 1em;
-    padding-bottom: 1em;
+#commitindex ol {
+    margin-bottom: 0;
+    margin-top: 0;
 }
 
-#buildcommits ol li {
+#commitindex ol li {
     list-style-type:circle;
 }
 
-#buildcommits ol li.more {
+#commitindex ol li.more {
     list-style-type:disc;
 }
 
-#buildcommits ol.jumplist li {
+#commitindex ol.jumplist li {
     list-style-type:none;
-}
-
-#buildcommits ol.jumplist a {
-    color:#558866;
-}
-
-#buildcommits ol.jumplist a:hover {
-    text-decoration: underline;
-    color: #FFCB0F;
 }
 
 .buildnews_list {
@@ -909,12 +1055,15 @@ p.legal a {
 }
 
 .commit_list .tag {
-    color:#558866;
     font-family:Verdana, Arial, Helvetica, sans-serif;
 }
 
 .commit_list span.tag {
     margin-right:.8em;
+}
+
+.commit_list span.title {
+    color: #F0F0F0;
 }
 
 div.hnav span.commit-count {
@@ -946,6 +1095,7 @@ span.metadata {
 
 .commit_list p.heading {
     display:inline-block;
+    margin: 0;
 }
 
 .tag_list {
@@ -960,10 +1110,8 @@ span.metadata {
     padding: .25em .4em;
     margin-left: 1em;
     margin-right: 0;
-    background-color: #F9FFF9;
-
-    border: 1px solid;
-    border-color: #BBDDBB;
+    color: #469E46;
+    border: 1px solid #486148;
     -moz-border-radius: 3px;
     -webkit-border-radius: 3px;
     -o-border-radius: 3px;
@@ -983,18 +1131,14 @@ span.metadata {
 
 .buildevent table tr th {
     text-align:left;
+    color: white;
 }
 
-.buildevents_outer {
-    float:left;
-    padding-right:.5em;
-}
-
-.buildevents_outer table thead {
+.buildevents table thead {
     text-align:center;
 }
 
-.buildevents_outer table tbody {
+.buildevents table tbody {
     vertical-align:top;
 }
 
@@ -1002,17 +1146,10 @@ span.metadata {
     padding:1.2em 0;
 }
 
-#roadmap_badge {
-    padding-bottom:.5em;
-    font-size:large;
-    font-weight:bold;
-    font-family:Verdana, Arial, Helvetica, sans-serif;
-}
-
 .buildstreamlist {
-    border:2px solid #EEE;
+    /*border:2px solid #EEE;/**/
     display:inline-block;
-    background:white;
+    /*background:white;/**/
 }
 
 .buildstream {
@@ -1034,8 +1171,8 @@ span.metadata {
 }
 
 .buildstream ul li.current {
-    background-color: #F2FBF2;
-    border:1px solid #F2FBF2;
+    /*background-color: #F2FBF2;/**/
+    /*border:1px solid #F2FBF2;/**/
 }
 
 .release-badge {
@@ -1087,7 +1224,7 @@ span.metadata {
 
 .buildevent_badge .startdate {
     position:relative;
-    bottom:-.6em;
+    bottom:-1em;
     display:block;
     margin-bottom:-1.4em;
     white-space:nowrap;
@@ -1220,23 +1357,14 @@ span.metadata {
     border-bottom-right-radius: 10px 2px;
 }
 
-.buildsoverview {
-    margin-top:2.2em;
-}
-
 /*----------------- Master Server ------------------*/
 
-#masterbrowser {
-    padding:.5em 1em;
-    text-align:left;
-}
-
-#masterbrowser #pubDate, #summary {
+.masterbrowser #pubDate, #summary {
     text-align: right;
     padding: 0;
 }
 
-#masterbrowser #serverLegend dd {
+.masterbrowser #serverLegend dd {
     float: left;
     margin-left: .5em;
     margin-right: 2em;
@@ -1276,13 +1404,6 @@ span.port {
 
 .server_badge .wrapper {
     padding: .2em .4em;
-    border: 2px solid #eee;
-    -moz-border-radius: 3px;
-    -webkit-border-radius: 3px;
-    -o-border-radius: 3px;
-    -ms-border-radius: 3px;
-    -khtml-border-radius: 3px;
-    border-radius: 3px;
 }
 
 .server_badge .game-info {
@@ -1364,29 +1485,19 @@ span.port {
 
 /*------------------- Games Page -------------------*/
 
-.games_list ul {
+.games_list {
     margin: 0;
-    border: 0;
     padding: 0;
-}
-
-.games_list li {
-    position: relative;
     list-style-type: none;
 }
 
-.games_list a {
-    color: #495f5f;
-    text-decoration: none;
-}
-
-ul.games_list li a.game_badge {
+.game_badge a {
     background-color: transparent;
     display: block;
     height: 200px
 }
 
-ul.games_list li a.game_badge span {
+.game_badge a span {
     display: block;
     padding-left: 3em;
     padding-top: 140px;
@@ -1454,10 +1565,6 @@ ul.games_list li a.game_badge span {
     white-space:nowrap;
 }
 
-.package_badge a[class = "package_name"]:hover, .package_badge a[class = "package_name"]:visited:hover {
-    color: #495f5f;
-}
-
 .package_badge span.metalink {
     position: absolute;
     margin-left: 8em;
@@ -1466,7 +1573,9 @@ ul.games_list li a.game_badge span {
 }
 
 .todo_iframe {
+    background: white;
     border: 0;
     width: 100%;
-    height: 600px;
+    height: 100em;
+    margin-top:1.2em;
 }
