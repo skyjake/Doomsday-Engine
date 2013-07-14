@@ -139,7 +139,8 @@ public IGameChangeObserver
         games->rule()
                 .setInput(Rule::AnchorX, root.viewLeft() + root.viewWidth() / 2)
                 .setInput(Rule::AnchorY, root.viewTop() + root.viewHeight() / 2)
-                .setInput(Rule::Width,   OperatorRule::minimum(root.viewWidth(), Const(800)))
+                .setInput(Rule::Width,   OperatorRule::minimum(root.viewWidth(),
+                                                               style.rules().rule("gameselection.max.width")))
                 .setAnchorPoint(Vector2f(.5f, .5f));
         root.add(games);
 
@@ -167,7 +168,7 @@ public IGameChangeObserver
         games->rule().setInput(Rule::Height,
                                OperatorRule::minimum(root.viewHeight(),
                                                      (taskBar->rule().top() - root.viewHeight() / 2) * 2,
-                                                     Const(600)));
+                                                     style.rules().rule("gameselection.max.height")));
 
         // Initially the widget is disabled. It will be enabled when the window
         // is visible and ready to be drawn.
