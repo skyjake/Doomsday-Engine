@@ -1556,7 +1556,7 @@ jQuery(document).ready(function() {
 
 ?></section></div><?php
 
-?><div class="buildevents_outer"><table><thead><tr><th></th><th><?php
+?><div class="block buildevents"><table><thead><tr><th></th><th><?php
 
 ?>Version<?php
 
