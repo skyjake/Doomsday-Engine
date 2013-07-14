@@ -301,7 +301,8 @@ $(document).ready(function () {
     });
 });
 </script>
-<aside id="status" role="complementary" class="block">
+<aside role="complementary" class="block">
+<div id="status">
 <div class="twocolumn"><article>
 <header><h1><a href="/builds" title="View the complete index in the build repository">Most recent builds</a></h1>
 <p><script>
@@ -312,7 +313,7 @@ document.write(niceDate);
 </script></p></header><div id="recentbuilds">Contacting build repository...</div></article></div>
 <div class="twocolumn"><article id="activeservers"></article></div>
 <div class="clear"></div>
-</aside>
+</div></aside>
 <div id="column1" class="twocolumn collapsible"></div>
 <div id="column2" class="twocolumn collapsible"></div>
 <div class="clear"></div>
