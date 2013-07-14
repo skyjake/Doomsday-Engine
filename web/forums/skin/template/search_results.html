@@ -11,8 +11,8 @@
     <!-- IF SEARCH_MATCHES -->
         <div class="search-box">
             <!-- IF SEARCH_IN_RESULTS -->
-                <input type="text" name="add_keywords" id="add_keywords" value="{L_SEARCH_IN_RESULTS}" class="inputbox" />
-                <input class="button2" type="submit" name="submit" value="{L_GO}" />
+                <input type="text" name="add_keywords" id="add_keywords" value="{L_SEARCH_IN_RESULTS}" class="inputbox search" value="Search in results..." onclick="if(this.value=='Search in results...')this.value='';" onblur="if(this.value=='')this.value='Search in results...';" />
+                <input value="{L_GO}" type="submit" />
             <!-- ENDIF -->
         </div>
     <!-- ENDIF -->

@@ -41,7 +41,7 @@ ul.linklist li {
     list-style-type: none;
     float: left;
     width: auto;
-    margin-right: 5px;
+    margin-right: .5ex;
     line-height: 2.2em;
 }
 
