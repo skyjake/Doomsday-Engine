@@ -119,9 +119,9 @@
         <ul class="linklist rightside">
             <li><a href="{U_FAQ}" title="{L_FAQ_EXPLAIN}">{L_FAQ}</a></li>
             <!-- IF not S_IS_BOT -->
-                <!-- IF S_DISPLAY_MEMBERLIST --><li>&bull; <a href="{U_MEMBERLIST}" title="{L_MEMBERLIST_EXPLAIN}">{L_MEMBERLIST}</a></li><!-- ENDIF -->
-                <!-- IF not S_USER_LOGGED_IN and S_REGISTER_ENABLED and not (S_SHOW_COPPA or S_REGISTRATION) --><li><a href="{U_REGISTER}">&bull; {L_REGISTER}</a></li><!-- ENDIF -->
-                <!-- IF U_ACP --><li>&bull; <a href="{U_ACP}">{L_ACP}</a></li><!-- ENDIF -->
+                <!-- IF S_DISPLAY_MEMBERLIST --><li><a href="{U_MEMBERLIST}" title="{L_MEMBERLIST_EXPLAIN}">{L_MEMBERLIST}</a></li><!-- ENDIF -->
+                <!-- IF not S_USER_LOGGED_IN and S_REGISTER_ENABLED and not (S_SHOW_COPPA or S_REGISTRATION) --><li><a href="{U_REGISTER}">{L_REGISTER}</a></li><!-- ENDIF -->
+                <!-- IF U_ACP --><li><a href="{U_ACP}">{L_ACP}</a></li><!-- ENDIF -->
             <!-- ENDIF -->
         </ul>
 
@@ -131,15 +131,11 @@
             <li>
                 <a href="{U_PROFILE}" title="{L_PROFILE}" accesskey="e">{L_PROFILE}</a>
                 <!-- IF S_DISPLAY_PM --> (<a href="{U_PRIVATEMSGS}">{PRIVATE_MESSAGE_INFO}</a>)<!-- ENDIF -->
-                <!-- IF S_DISPLAY_SEARCH --> &bull;
-                <a href="{U_SEARCH_SELF}">{L_SEARCH_SELF}</a>
-                <!-- ENDIF -->
-                <!-- IF U_RESTORE_PERMISSIONS --> &bull;
-                <a href="{U_RESTORE_PERMISSIONS}">{L_RESTORE_PERMISSIONS}</a>
-                <!-- ENDIF -->
             </li>
+            <!-- IF S_DISPLAY_SEARCH --><li><a href="{U_SEARCH_SELF}">{L_SEARCH_SELF}</a></li><!-- ENDIF -->
+            <!-- IF U_RESTORE_PERMISSIONS --><li><a href="{U_RESTORE_PERMISSIONS}">{L_RESTORE_PERMISSIONS}</a></li><!-- ENDIF -->
             <!-- ENDIF -->
-            <li>&bull; <a href="{U_LOGIN_LOGOUT}" title="{L_LOGIN_LOGOUT}" accesskey="x">{L_LOGIN_LOGOUT}</a></li>
+            <li><a href="{U_LOGIN_LOGOUT}" title="{L_LOGIN_LOGOUT}" accesskey="x">{L_LOGIN_LOGOUT}</a></li>
         </ul>
         <!-- ENDIF -->
 <!-- IF $SHOW_CURRENT_TIME -->

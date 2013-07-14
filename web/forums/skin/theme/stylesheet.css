@@ -60,6 +60,14 @@ ul.navlinks {
     font-size: 12pt;
 }
 
+.linklist.leftside li:not(:first-of-type):before {
+    content: '\2022\a0';
+}
+
+.linklist.rightside li:not(:last-of-type):after {
+    content: '\a0\2022';
+}
+
 .leftside {
     margin-left: 0;
     margin-right: 5px;
