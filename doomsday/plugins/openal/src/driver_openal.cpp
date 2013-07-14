@@ -271,6 +271,9 @@ void DS_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
             return; // No need to reload.
     }
 
+    // Make sure its not bound right now.
+    alSourcei(SRC(buf), AL_BUFFER, 0);
+
     alBufferData(BUF(buf),
                  sample->bytesPer == 1 ? AL_FORMAT_MONO8 : AL_FORMAT_MONO16,
                  sample->data, sample->size, sample->rate);
