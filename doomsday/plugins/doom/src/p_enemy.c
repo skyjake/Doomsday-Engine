@@ -1530,7 +1530,7 @@ void C_DECL A_BossDeath(mobj_t *mo)
      */
     else if(cfg.anyBossDeath && gameEpisode < 3)
     {
-        if(gamemap != 7)
+        if(gameMap != 7)
             return;
 
         if(gameEpisode != 0 && mo->type == MT_BRUISER)
