@@ -426,7 +426,8 @@ enum ClockDirection {
 enum ProtocolVersion {
     DENG2_PROTOCOL_1_9_10 = 0,
     DENG2_PROTOCOL_1_10_0 = 0,
-    DENG2_PROTOCOL_1_11_0 = 0,
+    DENG2_PROTOCOL_1_11_0_BUILD_926 = 1, // Time serilization changed
+    DENG2_PROTOCOL_1_11_0 = 1,
     DENG2_PROTOCOL_LATEST = DENG2_PROTOCOL_1_11_0
 };
 
