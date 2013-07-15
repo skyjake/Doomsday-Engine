@@ -1523,6 +1523,19 @@ void C_DECL A_BossDeath(mobj_t *mo)
         if(mo->type != MT_FATSO && mo->type != MT_BABY)
             return;
     }
+    /*
+     * DOOM ver 1.9 behavioral change:
+     * Many classic PWADS such as "Doomsday of UAC" (UAC_DEAD.wad) rely on the
+     * old behavior. Episode 4 is exempt by PrBoom's precedent.
+     */
+    else if(cfg.anyBossDeath && gameEpisode < 3)
+    {
+        if(gamemap != 7)
+            return;
+
+        if(gameEpisode != 0 && mo->type == MT_BRUISER)
+            return;
+    }
     else
     {
         switch(gameEpisode)
@@ -1531,21 +1544,8 @@ void C_DECL A_BossDeath(mobj_t *mo)
             if(gameMap != 7)
                 return;
 
-            /*
-             * Ultimate DOOM behavioral change:
-             * This test was added so that the (variable) effects of the
-             * 666 special would only take effect when the last Baron
-             * died and not ANY monster.
-             * Many classic PWADS such as "Doomsday of UAC" (UAC_DEAD.wad)
-             * relied on the old behaviour and cannot be completed.
-             */
-
-            // Added compatibility option.
-            if(!cfg.anyBossDeath)
-            {
-                if(mo->type != MT_BRUISER)
-                    return;
-            }
+            if(mo->type != MT_BRUISER)
+                return;
             break;
 
         case 1:
