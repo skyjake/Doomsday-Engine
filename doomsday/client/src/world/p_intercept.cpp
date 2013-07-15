@@ -31,7 +31,7 @@ struct InterceptNode
 };
 
 // Blockset from which intercepts are allocated.
-static zblockset_t *interceptNodeSet = NULL;
+static zblockset_t *interceptNodeSet;
 // Head of the used intercept list.
 static InterceptNode *interceptFirst;
 
@@ -73,7 +73,16 @@ void P_ClearIntercepts()
     }
 
     // Start reusing intercepts (may point to a sentinel but that is Ok).
-    interceptFirst = head.next;
+    if(!interceptFirst)
+    {
+        interceptFirst = head.next;
+    }
+    else if(head.next != &tail)
+    {
+        InterceptNode *existing = interceptFirst;
+        interceptFirst = head.next;
+        tail.prev->next = existing;
+    }
 
     // Reset the trace.
     head.next = &tail;
@@ -83,8 +92,7 @@ void P_ClearIntercepts()
 
 InterceptNode *P_AddIntercept(intercepttype_t type, float distance, void *object)
 {
-    if(!object)
-        Con_Error("P_AddIntercept: Invalid arguments (object=NULL).");
+    DENG_ASSERT(object != 0);
 
     // First reject vs our sentinels
     if(distance < head.intercept.distance) return NULL;
@@ -117,9 +125,6 @@ InterceptNode *P_AddIntercept(intercepttype_t type, float distance, void *object
     case ICPT_LINE:
         in->d.line = (Line *) object;
         break;
-    default:
-        Con_Error("P_AddIntercept: Invalid type %i.", (int)type);
-        exit(1); // Unreachable.
     }
 
     // Link it in.
@@ -143,13 +148,6 @@ int P_TraverseIntercepts(traverser_t callback, void *parameters)
     return false; // Continue iteration.
 }
 
-/**
- * Looks for lines in the given block that intercept the given trace to add
- * to the intercepts list.
- * A line is crossed if its endpoints are on opposite sides of the trace.
- *
- * @return  Non-zero if current iteration should stop.
- */
 int PIT_AddLineIntercepts(Line *line, void * /*parameters*/)
 {
     /// @todo Do not assume line is from the current map.

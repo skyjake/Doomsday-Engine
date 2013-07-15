@@ -2128,7 +2128,7 @@ static int traversePath(divline_t &traceLine, Blockmap &bmap,
     traceLine.direction[VX] = FLT2FIX(to[VX] - from[VX]);
     traceLine.direction[VY] = FLT2FIX(to[VY] - from[VY]);
 
-    /**
+    /*
      * It is possible that one or both points are outside the blockmap.
      * Clip path so that 'to' is within the AABB of the blockmap (note we
      * would have already abandoned if 'from' lay outside..
