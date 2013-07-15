@@ -900,9 +900,6 @@ static void P_ResetWorldState(void)
 #if __JDOOM__ || __JDOOM64__
     wmInfo.maxFrags = 0;
     wmInfo.parTime = -1;
-
-    // Only used with 666/7 specials
-    bossKilled = false;
 #endif
 
 #if __JDOOM__

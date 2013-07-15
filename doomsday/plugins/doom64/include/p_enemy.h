@@ -32,8 +32,6 @@
 #  error "Using jDoom64 headers without __JDOOM64__"
 #endif
 
-extern boolean bossKilled;
-
 void        P_NoiseAlert(mobj_t *target, mobj_t *emmiter);
 int         P_Massacre(void);
 

@@ -65,8 +65,6 @@
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-boolean bossKilled;
-
 braindata_t brain; // Global state of boss brain.
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -467,7 +465,7 @@ static int massacreMobj(thinker_t* th, void* context)
  */
 int P_Massacre(void)
 {
-    int                 count = 0;
+    int count = 0;
 
     // Only massacre when actually in a map.
     if(G_GameState() == GS_MAP)
@@ -479,39 +477,74 @@ int P_Massacre(void)
 }
 
 typedef struct {
-    mobjtype_t          type;
-    size_t              count;
-} countmobjoftypeparams_t;
+    mobj_t *excludeMobj; // Ignore this mobj.
+    mobjtype_t type; // Type requirement or MT_NONE.
+    int minHealth; // Minimum health requirement or DDMAXINT.
+    int count;
+} countmobjworker_params_t;
 
-static int countMobjOfType(thinker_t* th, void* context)
+static int countMobjWorker(thinker_t *th, void *parms)
 {
-    countmobjoftypeparams_t *params = (countmobjoftypeparams_t*) context;
-    mobj_t*             mo = (mobj_t *) th;
+    mobj_t *mo = (mobj_t *) th;
+    countmobjworker_params_t *p = (countmobjworker_params_t *) parms;
 
-    if(params->type == mo->type && mo->health > 0)
-        params->count++;
+    // Exclussion?
+    if(p->excludeMobj == mo) return false;
 
-    return false; // Continue iteration.
+    // Type requirement?
+    if(p->type != mo->type) return false;
+
+    // Minimum health requirement?
+    if(mo->health < p->minHealth) return false;
+
+    // This mobj passes.
+
+    // Early out?
+    if(p->count < 0) return true;
+
+    // Add this to our running total.
+    ++p->count;
+
+    return false;
 }
 
 /**
- * DOOM II special, map 32. Uses special tag 666.
+ * Determines the number of mobj thinkers in the map which meet the criteria
+ * specified with @a parm.
  */
-void C_DECL A_KeenDie(mobj_t* mo)
+static int countMobjs(countmobjworker_params_t *parm)
 {
-    countmobjoftypeparams_t params;
+    DENG_ASSERT(parm != 0);
+    parm->count = 0;
+    Thinker_Iterate(P_MobjThinker, countMobjWorker, parm);
+    return parm->count;
+}
+
+/**
+ * Determines whether there are no more mobj thinkers in the map which meet the
+ * criteria specified with @a parm.
+ */
+static boolean noMobjRemains(countmobjworker_params_t *parm)
+{
+    DENG_ASSERT(parm != 0);
+    parm->count = -1; // Stop when first is found.
+    return !Thinker_Iterate(P_MobjThinker, countMobjWorker, parm);
+}
+
+void C_DECL A_KeenDie(mobj_t *mo)
+{
+    countmobjworker_params_t parm;
 
     A_Fall(mo);
 
-    // Check if there are no more Keens left in the map.
-    params.type = mo->type;
-    params.count = 0;
-    Thinker_Iterate(P_MobjThinker, countMobjOfType, &params);
+    // Check if there are any more mobjs of the same type left alive.
+    parm.excludeMobj = mo;
+    parm.type        = mo->type;
+    parm.minHealth   = 1;
 
-    if(!params.count)
-    {   // No Keens left alive.
-        Line*               dummyLine = P_AllocDummyLine();
-
+    if(noMobjRemains(&parm))
+    {
+        Line *dummyLine = P_AllocDummyLine();
         P_ToXLine(dummyLine)->tag = 666;
         EV_DoDoor(dummyLine, DT_OPEN);
         P_FreeDummyLine(dummyLine);
@@ -1324,25 +1357,24 @@ void C_DECL A_SkullAttack(mobj_t* actor)
 /**
  * PainElemental Attack: Spawn a lost soul and launch it at the target.
  */
-void C_DECL A_PainShootSkull(mobj_t* actor, angle_t angle)
+void C_DECL A_PainShootSkull(mobj_t *actor, angle_t angle)
 {
     coord_t pos[3];
-    mobj_t* newmobj;
+    mobj_t *newmobj;
     uint an;
     coord_t prestep;
-    Sector* sec;
+    Sector *sec;
 
     if(cfg.maxSkulls)
     {
         // Limit the number of MT_SKULL's we should spawn.
-        countmobjoftypeparams_t params;
+        countmobjworker_params_t parm;
 
-        // Count total number currently on the map.
-        params.type = MT_SKULL;
-        params.count = 0;
-        Thinker_Iterate(P_MobjThinker, countMobjOfType, &params);
+        parm.excludeMobj = 0;
+        parm.type        = MT_SKULL;
+        parm.minHealth   = 1;
 
-        if(params.count > 20)
+        if(countMobjs(&parm) > 20)
             return; // Too many, don't spit another.
     }
 
@@ -1359,7 +1391,7 @@ void C_DECL A_PainShootSkull(mobj_t* actor, angle_t angle)
     // Compat option to prevent spawning lost souls inside walls.
     if(!cfg.allowSkullsInWalls)
     {
-        /**
+        /*
          * Check whether the Lost Soul is being fired through a 1-sided
          * wall or an impassible line, or a "monsters can't cross" line.
          * If it is, then we don't allow the spawn.
@@ -1457,46 +1489,38 @@ void C_DECL A_Scream(mobj_t *actor)
     }
 }
 
-void C_DECL A_XScream(mobj_t* actor)
+void C_DECL A_XScream(mobj_t *actor)
 {
     S_StartSound(SFX_SLOP, actor);
 }
 
-void C_DECL A_Pain(mobj_t* actor)
+void C_DECL A_Pain(mobj_t *actor)
 {
     if(actor->info->painSound)
         S_StartSound(actor->info->painSound, actor);
 }
 
-void C_DECL A_Fall(mobj_t* actor)
+void C_DECL A_Fall(mobj_t *actor)
 {
     // Actor is on ground, it can be walked over.
     actor->flags &= ~MF_SOLID;
 }
 
-void C_DECL A_Explode(mobj_t* mo)
+void C_DECL A_Explode(mobj_t *mo)
 {
     P_RadiusAttack(mo, mo->target, 128, 127);
 }
 
-/**
- * Possibly trigger special effects if on first boss map.
- */
-void C_DECL A_BossDeath(mobj_t* mo)
+void C_DECL A_BossDeath(mobj_t *mo)
 {
-    int                 i;
-    Line*               dummyLine;
-    countmobjoftypeparams_t params;
-
-    // Has the boss already been killed?
-    if(bossKilled)
-        return;
+    int i;
+    countmobjworker_params_t parm;
 
     if(gameModeBits & GM_ANY_DOOM2)
     {
         if(gameMap != 6)
             return;
-        if((mo->type != MT_FATSO) && (mo->type != MT_BABY))
+        if(mo->type != MT_FATSO && mo->type != MT_BABY)
             return;
     }
     else
@@ -1507,7 +1531,7 @@ void C_DECL A_BossDeath(mobj_t* mo)
             if(gameMap != 7)
                 return;
 
-            /**
+            /*
              * Ultimate DOOM behavioral change:
              * This test was added so that the (variable) effects of the
              * 666 special would only take effect when the last Baron
@@ -1518,8 +1542,10 @@ void C_DECL A_BossDeath(mobj_t* mo)
 
             // Added compatibility option.
             if(!cfg.anyBossDeath)
+            {
                 if(mo->type != MT_BRUISER)
                     return;
+            }
             break;
 
         case 1:
@@ -1554,7 +1580,6 @@ void C_DECL A_BossDeath(mobj_t* mo)
 
             default:
                 return;
-                break;
             }
             break;
 
@@ -1563,7 +1588,6 @@ void C_DECL A_BossDeath(mobj_t* mo)
                 return;
             break;
         }
-
     }
 
     // Make sure there is a player alive for victory...
@@ -1577,14 +1601,12 @@ void C_DECL A_BossDeath(mobj_t* mo)
         return; // No one left alive, so do not end game.
 
     // Scan the remaining thinkers to see if all bosses are dead.
-    params.type = mo->type;
-    params.count = 0;
-    Thinker_Iterate(P_MobjThinker, countMobjOfType, &params);
+    parm.excludeMobj = mo;
+    parm.type        = mo->type;
+    parm.minHealth   = 1;
 
-    if(params.count)
-    {   // Other boss not dead.
-        return;
-    }
+    if(!noMobjRemains(&parm))
+        return; // Other boss not dead.
 
     // Victory!
     if(gameModeBits & GM_ANY_DOOM2)
@@ -1593,7 +1615,7 @@ void C_DECL A_BossDeath(mobj_t* mo)
         {
             if(mo->type == MT_FATSO)
             {
-                dummyLine = P_AllocDummyLine();
+                Line *dummyLine = P_AllocDummyLine();
                 P_ToXLine(dummyLine)->tag = 666;
                 EV_DoFloor(dummyLine, FT_LOWERTOLOWEST);
                 P_FreeDummyLine(dummyLine);
@@ -1602,55 +1624,44 @@ void C_DECL A_BossDeath(mobj_t* mo)
 
             if(mo->type == MT_BABY)
             {
-                dummyLine = P_AllocDummyLine();
+                Line *dummyLine = P_AllocDummyLine();
                 P_ToXLine(dummyLine)->tag = 667;
                 EV_DoFloor(dummyLine, FT_RAISETOTEXTURE);
                 P_FreeDummyLine(dummyLine);
-
-                // Only activate once (rare, "DOOM2::MAP07-Dead Simple" bug).
-                bossKilled = true;
                 return;
             }
         }
     }
     else
     {
-        switch(gameEpisode)
+        if(gameEpisode == 0)
         {
-        case 0:
-            dummyLine = P_AllocDummyLine();
+            Line *dummyLine = P_AllocDummyLine();
             P_ToXLine(dummyLine)->tag = 666;
             EV_DoFloor(dummyLine, FT_LOWERTOLOWEST);
             P_FreeDummyLine(dummyLine);
-            bossKilled = true;
             return;
+        }
 
-        case 3:
-            switch(gameMap)
+        if(gameEpisode == 3)
+        {
+            if(gameMap == 5)
             {
-            case 5:
-                dummyLine = P_AllocDummyLine();
+                Line *dummyLine = P_AllocDummyLine();
                 P_ToXLine(dummyLine)->tag = 666;
                 EV_DoDoor(dummyLine, DT_BLAZEOPEN);
                 P_FreeDummyLine(dummyLine);
-                bossKilled = true;
                 return;
+            }
 
-            case 7:
-                dummyLine = P_AllocDummyLine();
+            if(gameMap == 7)
+            {
+                Line *dummyLine = P_AllocDummyLine();
                 P_ToXLine(dummyLine)->tag = 666;
                 EV_DoFloor(dummyLine, FT_LOWERTOLOWEST);
                 P_FreeDummyLine(dummyLine);
-                bossKilled = true;
                 return;
-
-            default:
-                break;
             }
-            break;
-
-        default:
-            break;
         }
     }
 

@@ -811,6 +811,7 @@ div.clear {
 #downloadbox, #socialbookmarkbox {
     text-align: center;
     margin-bottom: 2.4em;
+    overflow: hidden;
 }
 
 #downloadbox div.hnav ul {
