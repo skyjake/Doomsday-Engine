@@ -83,8 +83,6 @@ void C_DECL A_SpawnFly(mobj_t *mo);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-boolean bossKilled;
-
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static mobj_t* corpseHit;
@@ -1901,10 +1899,6 @@ void C_DECL A_CyberDeath(mobj_t* actor)
 
     S_StartSound(actor->info->deathSound | DDSF_NO_ATTENUATION, NULL);
 
-    // Has the boss already been killed?
-    if(bossKilled)
-        return;
-
     if((gameMap != 31) && (gameMap != 32) && (gameMap != 34))
         return;
 
@@ -1994,10 +1988,6 @@ void C_DECL A_BarrelExplode(mobj_t* actor)
     S_StartSound(actor->info->deathSound, actor);
     P_RadiusAttack(actor, actor->target, 128, 127);
 
-    // Has the boss already been killed?
-    if(bossKilled)
-        return;
-
     if(gameMap != 0)
         return;
 
@@ -2039,10 +2029,6 @@ void C_DECL A_BossDeath(mobj_t* mo)
 {
     int                 i;
     countmobjoftypeparams_t params;
-
-    // Has the boss already been killed?
-    if(bossKilled)
-        return;
 
     if(gameMap != 29)
         return;
