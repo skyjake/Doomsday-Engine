@@ -47,11 +47,6 @@
 # define TOLIGHTIDX(c) (!((c) >> 8)? 0 : ((c) - 0x100) + 1)
 #endif
 
-typedef struct {
-    int gameModeBits;
-    mobjtype_t type;
-} mobjtype_precachedata_t;
-
 static void P_ResetWorldState(void);
 
 // Our private map data structures
@@ -731,6 +726,170 @@ void P_SetupMap(Uri *mapUri)
     mapSetup = false;
 }
 
+typedef struct {
+    mobjtype_t type;
+    int gameModeBits;
+} mobjtype_precachedata_t;
+
+static void precacheResources()
+{
+    // Disabled?
+    if(!precache || IS_DEDICATED)
+        return;
+
+    R_PrecachePSprites();
+
+#if __JDOOM__ || __JHERETIC__
+    {
+        static const mobjtype_precachedata_t types[] = {
+#  if __JDOOM__
+            { MT_SKULL,             GM_ANY },
+
+            // Missiles:
+            { MT_BRUISERSHOT,       GM_ANY },
+            { MT_TROOPSHOT,         GM_ANY },
+            { MT_HEADSHOT,          GM_ANY },
+            { MT_ROCKET,            GM_ANY },
+            { MT_PLASMA,            GM_ANY ^ GM_DOOM_SHAREWARE },
+            { MT_BFG,               GM_ANY ^ GM_DOOM_SHAREWARE },
+            { MT_ARACHPLAZ,         GM_DOOM2 },
+            { MT_FATSHOT,           GM_DOOM2 },
+
+            // Potentially dropped weapons:
+            { MT_CLIP,              GM_ANY },
+            { MT_SHOTGUN,           GM_ANY },
+            { MT_CHAINGUN,          GM_ANY },
+
+            // Misc effects:
+            { MT_FIRE,              GM_DOOM2 },
+            { MT_TRACER,            GM_ANY },
+            { MT_SMOKE,             GM_ANY },
+            { MT_FATSHOT,           GM_DOOM2 },
+            { MT_BLOOD,             GM_ANY },
+            { MT_PUFF,              GM_ANY },
+            { MT_TFOG,              GM_ANY }, // Teleport FX.
+            { MT_EXTRABFG,          GM_ANY },
+            { MT_ROCKETPUFF,        GM_ANY },
+#  elif __JHERETIC__
+            { MT_BLOODYSKULL,       GM_ANY },
+            { MT_CHICPLAYER,        GM_ANY },
+            { MT_CHICKEN,           GM_ANY },
+
+            // Player weapon effects:
+            { MT_STAFFPUFF,         GM_ANY },
+            { MT_STAFFPUFF2,        GM_ANY },
+            { MT_BEAKPUFF,          GM_ANY },
+            { MT_GAUNTLETPUFF1,     GM_ANY },
+            { MT_GAUNTLETPUFF2,     GM_ANY },
+            { MT_BLASTERFX1,        GM_ANY },
+            { MT_BLASTERSMOKE,      GM_ANY },
+            { MT_RIPPER,            GM_ANY },
+            { MT_BLASTERPUFF1,      GM_ANY },
+            { MT_BLASTERPUFF2,      GM_ANY },
+            { MT_MACEFX1,           GM_ANY ^ GM_HERETIC_SHAREWARE },
+            { MT_MACEFX2,           GM_ANY ^ GM_HERETIC_SHAREWARE },
+            { MT_MACEFX3,           GM_ANY ^ GM_HERETIC_SHAREWARE },
+            { MT_MACEFX4,           GM_ANY ^ GM_HERETIC_SHAREWARE },
+            { MT_HORNRODFX1,        GM_ANY ^ GM_HERETIC_SHAREWARE },
+            { MT_HORNRODFX2,        GM_ANY ^ GM_HERETIC_SHAREWARE },
+            { MT_RAINPLR3,          GM_ANY ^ GM_HERETIC_SHAREWARE }, // SP color
+            { MT_GOLDWANDFX1,       GM_ANY },
+            { MT_GOLDWANDFX2,       GM_ANY },
+            { MT_GOLDWANDPUFF1,     GM_ANY },
+            { MT_GOLDWANDPUFF2,     GM_ANY },
+            { MT_PHOENIXPUFF,       GM_ANY ^ GM_HERETIC_SHAREWARE },
+            { MT_PHOENIXFX2,        GM_ANY ^ GM_HERETIC_SHAREWARE },
+            { MT_CRBOWFX1,          GM_ANY },
+            { MT_CRBOWFX2,          GM_ANY },
+            { MT_CRBOWFX3,          GM_ANY },
+            { MT_CRBOWFX4,          GM_ANY },
+
+            // Artefacts:
+            { MT_EGGFX,             GM_ANY },
+            { MT_FIREBOMB,          GM_ANY },
+
+            // Enemy effects:
+            { MT_MUMMYSOUL,         GM_ANY },
+            { MT_MUMMYFX1,          GM_ANY },
+            { MT_BEASTBALL,         GM_ANY ^ GM_HERETIC_SHAREWARE },
+            { MT_BURNBALL,          GM_ANY ^ GM_HERETIC_SHAREWARE },
+            { MT_BURNBALLFB,        GM_ANY ^ GM_HERETIC_SHAREWARE },
+            { MT_PUFFY,             GM_ANY ^ GM_HERETIC_SHAREWARE },
+            { MT_SNAKEPRO_A,        GM_ANY ^ GM_HERETIC_SHAREWARE },
+            { MT_SNAKEPRO_B,        GM_ANY ^ GM_HERETIC_SHAREWARE },
+            { MT_HEADFX1,           GM_ANY },
+            { MT_HEADFX2,           GM_ANY },
+            { MT_HEADFX3,           GM_ANY },
+            { MT_WHIRLWIND,         GM_ANY },
+            { MT_WIZFX1,            GM_ANY },
+            { MT_IMPCHUNK1,         GM_ANY },
+            { MT_IMPCHUNK2,         GM_ANY },
+            { MT_IMPBALL,           GM_ANY },
+            { MT_KNIGHTAXE,         GM_ANY },
+            { MT_REDAXE,            GM_ANY },
+            { MT_SRCRFX1,           GM_ANY ^ GM_HERETIC_SHAREWARE },
+            { MT_SORCERER2,         GM_ANY ^ GM_HERETIC_SHAREWARE },
+            { MT_SOR2FX1,           GM_ANY ^ GM_HERETIC_SHAREWARE },
+            { MT_SOR2FXSPARK,       GM_ANY ^ GM_HERETIC_SHAREWARE },
+            { MT_SOR2FX2,           GM_ANY ^ GM_HERETIC_SHAREWARE },
+            { MT_SOR2TELEFADE,      GM_ANY ^ GM_HERETIC_SHAREWARE },
+            { MT_WIZARD,            GM_ANY ^ GM_HERETIC_SHAREWARE }, // In case D’sparil is on a map with no Disciples
+            { MT_MNTRFX1,           GM_ANY ^ GM_HERETIC_SHAREWARE },
+            { MT_MNTRFX2,           GM_ANY ^ GM_HERETIC_SHAREWARE },
+            { MT_MNTRFX3,           GM_ANY ^ GM_HERETIC_SHAREWARE },
+
+            // Potentially dropped ammo:
+            { MT_AMGWNDWIMPY,       GM_ANY },
+            { MT_AMCBOWWIMPY,       GM_ANY },
+            { MT_AMSKRDWIMPY,       GM_ANY ^ GM_HERETIC_SHAREWARE },
+            { MT_AMPHRDWIMPY,       GM_ANY ^ GM_HERETIC_SHAREWARE },
+            { MT_AMBLSRWIMPY,       GM_ANY },
+
+            // Potentially dropped artefacts:
+            { MT_ARTITOMEOFPOWER,   GM_ANY },
+            { MT_ARTIEGG,           GM_ANY },
+            { MT_ARTISUPERHEAL,     GM_ANY ^ GM_HERETIC_SHAREWARE },
+
+            // Misc effects:
+            { MT_POD,               GM_ANY },
+            { MT_PODGOO,            GM_ANY },
+            { MT_SPLASH,            GM_ANY },
+            { MT_SPLASHBASE,        GM_ANY },
+            { MT_LAVASPLASH,        GM_ANY },
+            { MT_LAVASMOKE,         GM_ANY },
+            { MT_SLUDGECHUNK,       GM_ANY },
+            { MT_SLUDGESPLASH,      GM_ANY },
+            { MT_VOLCANOBLAST,      GM_ANY ^ GM_HERETIC_SHAREWARE },
+            { MT_VOLCANOTBLAST,     GM_ANY ^ GM_HERETIC_SHAREWARE },
+            { MT_TELEGLITTER,       GM_ANY },
+            { MT_TELEGLITTER2,      GM_ANY },
+            { MT_TFOG,              GM_ANY },
+            { MT_BLOOD,             GM_ANY },
+            { MT_BLOODSPLATTER,     GM_ANY },
+            { MT_FEATHER,           GM_ANY },
+#  endif
+            { 0, 0 }
+        };
+
+        int i;
+        for(i = 0; types[i].type != 0; ++i)
+        {
+            if(types[i].gameModeBits & gameModeBits)
+            {
+                Rend_CacheForMobjType(types[i].type);
+            }
+        }
+    }
+#endif
+
+#if __JDOOM__
+    if(IS_NETGAME)
+    {
+        Rend_CacheForMobjType(MT_IFOG);
+    }
+#endif
+}
+
 void P_FinalizeMapChange(Uri const *uri)
 {
     initXLineDefs();
@@ -776,55 +935,7 @@ void P_FinalizeMapChange(Uri const *uri)
 #endif
 
     // Preload resources we'll likely need but which aren't present (usually) in the map.
-    if(precache)
-    {
-#if __JDOOM__
-        static const mobjtype_precachedata_t types[] = {
-            { GM_ANY,   MT_SKULL },
-            // Missiles:
-            { GM_ANY,   MT_BRUISERSHOT },
-            { GM_ANY,   MT_TROOPSHOT },
-            { GM_ANY,   MT_HEADSHOT },
-            { GM_ANY,   MT_ROCKET },
-            { GM_ANY^GM_DOOM_SHAREWARE, MT_PLASMA },
-            { GM_ANY^GM_DOOM_SHAREWARE, MT_BFG },
-            { GM_DOOM2, MT_ARACHPLAZ },
-            { GM_DOOM2, MT_FATSHOT },
-            // Potentially dropped weapons:
-            { GM_ANY,   MT_CLIP },
-            { GM_ANY,   MT_SHOTGUN },
-            { GM_ANY,   MT_CHAINGUN },
-            // Misc effects:
-            { GM_DOOM2, MT_FIRE },
-            { GM_ANY,   MT_TRACER },
-            { GM_ANY,   MT_SMOKE },
-            { GM_DOOM2, MT_FATSHOT },
-            { GM_ANY,   MT_BLOOD },
-            { GM_ANY,   MT_PUFF },
-            { GM_ANY,   MT_TFOG }, // Teleport FX.
-            { GM_ANY,   MT_EXTRABFG },
-            { GM_ANY,   MT_ROCKETPUFF },
-            { 0,        0}
-        };
-        uint i;
-#endif
-
-        if(!IS_DEDICATED)
-        {
-            R_PrecachePSprites();
-
-#if __JDOOM__
-            for(i = 0; types[i].type != 0; ++i)
-            {
-                if(types[i].gameModeBits & gameModeBits)
-                    Rend_CacheForMobjType(types[i].type);
-            }
-
-            if(IS_NETGAME)
-                Rend_CacheForMobjType(MT_IFOG);
-#endif
-        }
-    }
+    precacheResources();
 
     if(IS_SERVER)
     {
