@@ -152,7 +152,7 @@ public IGameChangeObserver
         }
         else
         {
-            status->setText("No game loaded");
+            status->setText(tr("No game loaded"));
         }
     }
 
@@ -164,7 +164,7 @@ public IGameChangeObserver
 
     void updateFpsMenuItem()
     {
-        fpsItem->setText(ClientWindow::main().isFPSCounterVisible()? "Hide FPS" : "Show FPS");
+        fpsItem->setText(ClientWindow::main().isFPSCounterVisible()? tr("Hide FPS") : tr("Show FPS"));
     }
 };
 
@@ -250,12 +250,14 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
 
     // Set up items for the DE menu. Some of these are shown/hidden
     // depending on whether a game is loaded.
-    d->panelItem = d->mainMenu->addItem(_E(b) "Open Control Panel", new CommandAction("panel"));
+    d->panelItem = d->mainMenu->addItem(_E(b) + tr("Open Control Panel"), new CommandAction("panel"));
     d->fpsItem = d->mainMenu->addItem("", new SignalAction(this, SLOT(toggleFPS())));
-    d->unloadItem = d->mainMenu->addItem("Unload game", new SignalAction(this, SLOT(confirmUnloadGame())), false);
+    d->unloadItem = d->mainMenu->addItem(tr("Unload Game"), new SignalAction(this, SLOT(confirmUnloadGame())), false);
     d->mainMenu->addSeparator();
-    d->mainMenu->addItem("Check for updates...", new CommandAction("updateandnotify"));
-    d->mainMenu->addItem("Quit Doomsday", new CommandAction("quit"));
+    d->mainMenu->addItem(tr("Check for Updates..."), new CommandAction("updateandnotify"));
+    d->mainMenu->addItem(tr("Updater Settings..."), new CommandAction("updatesettings"));
+    d->mainMenu->addSeparator();
+    d->mainMenu->addItem(tr("Quit Doomsday"), new CommandAction("quit"));
     add(d->mainMenu);
 
     // Confirmation for unloading game.
@@ -263,9 +265,9 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
     d->unloadMenu->setOpeningDirection(ui::Left);
     d->unloadMenu->setAnchor(d->mainMenu->rule().left(),
                              d->unloadItem->rule().top() + d->unloadItem->rule().height() / 2);
-    d->unloadMenu->addSeparator("Really unload the game?");
-    d->unloadMenu->addItem("Unload "_E(b)"(discard progress)", new SignalAction(this, SLOT(unloadGame())));
-    d->unloadMenu->addItem("Cancel", new Action);
+    d->unloadMenu->addSeparator(tr("Really unload the game?"));
+    d->unloadMenu->addItem(tr("Unload") + " "_E(b) + tr("(discard progress)"), new SignalAction(this, SLOT(unloadGame())));
+    d->unloadMenu->addItem(tr("Cancel"), new Action);
     add(d->unloadMenu);
 
     d->panelItem->hide();
