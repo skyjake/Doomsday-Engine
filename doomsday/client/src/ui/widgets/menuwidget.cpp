@@ -254,6 +254,18 @@ ButtonWidget *MenuWidget::addItem(Image const &image, String const &styledText, 
     return b;
 }
 
+GuiWidget *MenuWidget::addSeparator(String const &labelText)
+{
+    LabelWidget *lab = new LabelWidget;
+    lab->setText(labelText);
+    lab->setAlignment(ui::AlignLeft);
+    lab->setTextLineAlignment(ui::AlignLeft);
+    lab->setSizePolicy(ui::Expand, ui::Expand);
+    add(lab);
+    d->needLayout = true;
+    return lab;
+}
+
 void MenuWidget::removeItem(GuiWidget *child)
 {
     d->needLayout = true;

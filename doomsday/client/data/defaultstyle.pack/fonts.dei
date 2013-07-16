@@ -65,3 +65,13 @@ group editor {
         weight: light
     }
 }
+
+group separator {
+    font empty inherits default {
+        size $: gui.scale(__this__.size, 0.5)
+    }
+    font label inherits default {
+        size $: gui.scale(__this__.size, 0.75)
+        weight: bold
+    }
+}

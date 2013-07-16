@@ -61,6 +61,8 @@ public:
 
     ButtonWidget *addItem(de::Image const &image, de::String const &styledText, de::Action *action = 0);
 
+    GuiWidget *addSeparator(de::String const &labelText = "");
+
     void removeItem(GuiWidget *child);
 
     /**

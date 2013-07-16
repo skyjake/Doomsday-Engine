@@ -85,10 +85,6 @@ PopupMenuWidget::PopupMenuWidget(String const &name)
     setContent(new MenuWidget(name.isEmpty()? "" : name + "-content"));
 
     menu().setGridSize(1, ui::Expand, 0, ui::Expand);
-
-    //addItem("First "_E(b)"Menu"_E(.)" Item");
-    //addItem("2nd Menu Item");
-    //addItem("3nd Item");
 }
 
 MenuWidget &PopupMenuWidget::menu() const
@@ -96,15 +92,18 @@ MenuWidget &PopupMenuWidget::menu() const
     return static_cast<MenuWidget &>(content());
 }
 
-ButtonWidget *PopupMenuWidget::addItem(String const &styledText, Action *action)
+ButtonWidget *PopupMenuWidget::addItem(String const &styledText, Action *action, bool dismissOnTriggered)
 {
     ButtonWidget *b = menu().addItem(styledText, action);
     b->setSizePolicy(ui::Expand, ui::Expand);
     b->setMargin("unit");
-    b->set(Background(/*Vector4f(1, 0, 0, .5f)*/));
+    b->set(Background());
 
     b->audienceForStateChange += d;
-    b->audienceForTriggered += d;
+    if(dismissOnTriggered)
+    {
+        b->audienceForTriggered += d;
+    }
 
     // We want items to be hittable throughtout the width of the menu.
     b->hitRule()
@@ -112,6 +111,24 @@ ButtonWidget *PopupMenuWidget::addItem(String const &styledText, Action *action)
             .setInput(Rule::Right, rule().right());
 
     return b;
+}
+
+GuiWidget *PopupMenuWidget::addSeparator(String const &optionalLabel)
+{
+    GuiWidget *sep = menu().addSeparator(optionalLabel);
+    if(optionalLabel.isEmpty())
+    {
+        sep->setMargin("");
+        sep->setFont("separator.empty");
+    }
+    else
+    {
+        sep->setMargin("halfunit");
+        sep->setFont("separator.label");
+    }
+    sep->setTextColor("label.accent");
+    sep->set(Background());
+    return sep;
 }
 
 void PopupMenuWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
