@@ -1202,9 +1202,9 @@ DENG2_PIMPL(Partitioner)
             {
                 // Determine the indice range of the partially overlapping segments.
                 int k = i;
-                while(de::fequal(convexSet[i].fromAngle, convexSet[k + 1].fromAngle) &&
-                      k < numSegments)
-                { k++; }
+                while(de::fequal(convexSet[k + 1].fromAngle, convexSet[i].fromAngle) &&
+                      ++k < numSegments - 1)
+                {}
 
                 // Split each overlapping segment at the point defined by the end
                 // vertex of each of the other overlapping segments.
