@@ -150,9 +150,9 @@ void PopupMenuWidget::preparePopupForOpening()
     PopupWidget::preparePopupForOpening();
 
     // Redo the layout.
+    menu().updateLayout();
     menu().rule().setInput(Rule::Width,
                            *refless(menu().newColumnWidthRule(0)) + 2 * margin());
-    menu().updateLayout();
 }
 
 void PopupMenuWidget::popupClosing()

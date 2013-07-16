@@ -33,10 +33,25 @@ DENG2_OBSERVES(App, StartupComplete)
     typedef QMap<Game *, ButtonWidget *> Buttons;
     Buttons buttons;
 
+    /**
+     * Sorts the game buttons by label text.
+     */
+    struct Sorting : public ISortOrder
+    {
+        int compareMenuItemsForSorting(Widget const &a, Widget const &b) const
+        {
+            ButtonWidget const &x = a.as<ButtonWidget>();
+            ButtonWidget const &y = b.as<ButtonWidget>();
+            return x.text().compareWithoutCase(y.text());
+        }
+    };
+
     Instance(Public *i) : Base(i)
     {
         App_Games().audienceForAddition += this;
         App::app().audienceForStartupComplete += this;
+
+        self.setLayoutSortOrder(new Sorting);
     }
 
     ~Instance()
