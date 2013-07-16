@@ -880,12 +880,16 @@ static void precacheResources()
             }
         }
     }
-#endif
 
-#if __JDOOM__
     if(IS_NETGAME)
     {
+#  if __JDOOM__
         Rend_CacheForMobjType(MT_IFOG);
+#  else // __JHERETIC__
+        Rend_CacheForMobjType(MT_RAINPLR1);
+        Rend_CacheForMobjType(MT_RAINPLR2);
+        Rend_CacheForMobjType(MT_RAINPLR4);
+#  endif
     }
 #endif
 }
