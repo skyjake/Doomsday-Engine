@@ -1894,7 +1894,9 @@ void Con_PrintRuler(void)
 /// @param flags  @ref consolePrintFlags
 static void conPrintf(int flags, const char* format, va_list args)
 {
+#ifdef __SERVER__
     const char* text = 0;
+#endif
 
     if(format && format[0] && args)
     {
@@ -1903,7 +1905,10 @@ static void conPrintf(int flags, const char* format, va_list args)
 
         // Format the message to prbuff.
         dd_vsnprintf(prbuff, PRBUFF_SIZE, format, args);
+
+#ifdef __SERVER__
         text = prbuff;
+#endif
 
         if(consoleDump)
         {
