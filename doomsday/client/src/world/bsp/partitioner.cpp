@@ -1219,8 +1219,20 @@ DENG2_PIMPL(Partitioner)
                         if(de::fequal(b.segment->length(), a.segment->length()))
                             continue;
 
-                        splitLineSegment(*a.segment, b.segment->to().origin(),
-                                         false /*don't update edge tips*/);
+                        // Do not attempt to split at an existing vertex.
+                        /// @todo fixme: For this to happen we *must* be dealing with
+                        /// an invalid mapping construct such as a two-sided line in
+                        /// the void. These cannot be dealt with here as they require
+                        /// a detection algorithm ran prior to splitting overlaps (so
+                        /// that we can skip them here). Presently it is sufficient to
+                        /// simply not split if the would-be split point is equal to
+                        /// either of the segment's existing vertexes.
+                        Vector2d const &point = b.segment->to().origin();
+                        if(point == a.segment->from().origin() ||
+                           point == a.segment->to().origin())
+                            continue;
+
+                        splitLineSegment(*a.segment, point, false /*don't update edge tips*/);
                     }
                 }
 
