@@ -36,7 +36,7 @@ group {
 
     font default {
         family: Liberation Sans
-        size: 14pt
+        size: 13pt
         weight: normal
         style: normal
     }
