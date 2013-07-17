@@ -195,7 +195,8 @@ static void inventoryIndexes(const player_t* plr, const hud_inventory_t* inv,
         return;
 
     if(cfg.inventorySelectMode)
-    {   // Scroll.
+    {
+        // Scroll.
         int                 last;
 
         cursor = maxVisSlots / 2;
@@ -203,7 +204,7 @@ static void inventoryIndexes(const player_t* plr, const hud_inventory_t* inv,
         if(cfg.inventoryWrap)
         {
             first = inv->selected - cursor;
-            if(first < 0)
+            while(first < 0)
                 first += inv->numUsedSlots;
 
             from = 0;
@@ -227,7 +228,8 @@ static void inventoryIndexes(const player_t* plr, const hud_inventory_t* inv,
         }
     }
     else
-    {   // Cursor.
+    {
+        // Cursor.
         cursor = origCursor;
 
         if(inv->numUsedSlots < maxVisSlots)
@@ -253,7 +255,7 @@ static void inventoryIndexes(const player_t* plr, const hud_inventory_t* inv,
         first = inv->selected - origCursor;
         if(cfg.inventoryWrap)
         {
-            if(first < 0)
+            while(first < 0)
                 first += inv->numUsedSlots;
         }
         else
@@ -261,8 +263,7 @@ static void inventoryIndexes(const player_t* plr, const hud_inventory_t* inv,
             if(inv->numUsedSlots < maxVisSlots ||
                first + maxVisSlots > inv->numUsedSlots)
             {
-                int             shift = inv->numUsedSlots -
-                    (first + maxVisSlots);
+                int shift = inv->numUsedSlots - (first + maxVisSlots);
 
                 first += shift;
                 if(first < 0)
@@ -530,53 +531,79 @@ void Hu_InventoryDraw2(int player, int x, int y, float alpha)
 
 static void inventoryMove(hud_inventory_t* inv, int dir, boolean canWrap)
 {
+    // Maximum visible slots for the variable cursor.
+    uint maxVisSlots;
+    if(cfg.inventorySlotMaxVis)
+        maxVisSlots = cfg.inventorySlotMaxVis;
+    else
+        maxVisSlots = NUM_INVENTORYITEM_TYPES - 1;
+
     if(dir == 1)
-    {   // Move right.
-        uint maxVisSlots;
-
-        if(inv->selected == inv->numUsedSlots - 1)
-        {
-            if(canWrap)
-                inv->selected = 0;
-        }
-        else
-            inv->selected++;
-
-        // First the fixed range statusbar cursor.
-        if(inv->fixedCursorPos < NUMVISINVSLOTS - 1 &&
-           !(inv->fixedCursorPos + 1 > inv->numUsedSlots - 1))
-            inv->fixedCursorPos++;
-
-        // Now the variable range full-screen cursor.
-        if(cfg.inventorySlotMaxVis)
-            maxVisSlots = cfg.inventorySlotMaxVis;
-        else
-            maxVisSlots = NUM_INVENTORYITEM_TYPES - 1;
-
-        if(inv->varCursorPos < maxVisSlots - 1 &&
-           !(inv->varCursorPos + 1 > inv->numUsedSlots - 1))
-            inv->varCursorPos++;
-
-        return;
-    }
-
-    // Else, a move left.
-
-    if(inv->selected == 0)
     {
-        if(canWrap)
-            inv->selected = inv->numUsedSlots - 1;
+        // Move right.
+        if(inv->selected < inv->numUsedSlots - 1)
+        {
+            inv->selected++;
+        }
+        else if(canWrap)
+        {
+            inv->selected = 0;
+        }
+
+        // Fixed range statusbar cursor.
+        if(inv->fixedCursorPos < NUMVISINVSLOTS - 1 &&
+           inv->fixedCursorPos < inv->numUsedSlots - 1)
+        {
+            inv->fixedCursorPos++;
+        }
+        else if(canWrap && !cfg.inventoryWrap)
+        {
+            inv->fixedCursorPos = 0;
+        }
+
+        // Variable range full-screen cursor.
+        if(inv->varCursorPos < maxVisSlots - 1 &&
+           inv->varCursorPos < inv->numUsedSlots - 1)
+        {
+            inv->varCursorPos++;
+        }
+        else if(canWrap && !cfg.inventoryWrap)
+        {
+            inv->varCursorPos = 0;
+        }
     }
     else
-        inv->selected--;
+    {
+        // Move left.
+        if(inv->selected == 0)
+        {
+            if(canWrap) inv->selected = inv->numUsedSlots - 1;
+        }
+        else
+        {
+            inv->selected--;
+        }
 
-    // First the fixed range statusbar cursor.
-    if(inv->fixedCursorPos > 0)
-        inv->fixedCursorPos--;
+        // Fixed range statusbar cursor.
+        if(inv->fixedCursorPos > 0)
+        {
+            inv->fixedCursorPos--;
+        }
+        else if(canWrap && !cfg.inventoryWrap)
+        {
+            inv->fixedCursorPos = MIN_OF(NUMVISINVSLOTS, inv->numUsedSlots) - 1;
+        }
 
-    // Now the variable range full-screen cursor.
-    if(inv->varCursorPos > 0)
-        inv->varCursorPos--;
+        // Variable range full-screen cursor.
+        if(inv->varCursorPos > 0)
+        {
+            inv->varCursorPos--;
+        }
+        else if(canWrap && !cfg.inventoryWrap)
+        {
+            inv->varCursorPos = MIN_OF(maxVisSlots, inv->numUsedSlots) - 1;
+        }
+    }
 }
 
 void Hu_InventoryOpen(int player, boolean show)

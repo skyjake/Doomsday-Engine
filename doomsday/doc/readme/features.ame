@@ -83,5 +83,5 @@ Other:
 }
 @ifdef{WIN32}{@item DirectX 8 (or newer)}
 @ifdef{MACOSX}{@item Supported CPU architectures: 64-bit/32-bit Intel (OS X 10.6+), 32-bit Intel/PowerPC (OS X 10.4)}
-@item A display adapter capable of OpenGL 1.4 hardware acceleration
+@item A display adapter capable of OpenGL 2.0 hardware acceleration
 }
