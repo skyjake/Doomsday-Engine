@@ -57,14 +57,15 @@ typedef QHash<MapElement *, BspTreeNode *> BspElementMap;
 typedef QList<ConvexSubspace>              ConvexSubspaces;
 typedef QHash<Vertex *, EdgeTips>          EdgeTipSetMap;
 typedef QList<LineSegment *>               LineSegments;
+typedef QList<Line *>                      Lines;
 
 DENG2_PIMPL(Partitioner)
 {
     /// Cost factor attributed to splitting a line segment.
     int splitCostFactor;
 
-    /// The set of map lines we are building BSP data for (not owned).
-    LineSet lines;
+    /// The index-ordered set of map lines we are building BSP data for (not owned).
+    Lines lines;
 
     /// The mesh from which we'll assign (construct) new geometries(not owned).
     Mesh *mesh;
@@ -120,6 +121,7 @@ DENG2_PIMPL(Partitioner)
         lines.clear();
         mesh = 0;
         qDeleteAll(lineSegments);
+        lineSegments.clear();
         convexSubspaces.clear();
         edgeTipSets.clear();
         treeNodeMap.clear();
@@ -1099,11 +1101,15 @@ DENG2_PIMPL(Partitioner)
             // Reconfigure the half-plane for the next round of partitioning.
             hplane.configure(*partSeg);
 
-            //LOG_TRACE("%s, line segment [%p] %s %s.")
-            //    << hplane.partition().asText()
-            //    << de::dintptr(partSeg)
-            //    << partSeg->from().origin().asText()
-            //    << partSeg->to().origin().asText();
+            /*
+            LOG_TRACE("%s, segment side [%p] %i (segment #%i) %s %s.")
+                << hplane.partition().asText()
+                << de::dintptr(partSeg)
+                << partSeg->lineSideId()
+                << lineSegments.indexOf(&partSeg->line())
+                << partSeg->from().origin().asText()
+                << partSeg->to().origin().asText();
+            */
 
             // Take a copy of the current partition - we'll need this for any
             // BspNode we produce later.
@@ -1455,6 +1461,11 @@ static AABox blockmapBounds(AABoxd const &mapBounds)
     return blockBounds;
 }
 
+bool lineIndexLessThan(Line const *a, Line const *b)
+{
+     return a->indexInMap() < b->indexInMap();
+}
+
 /**
  * Algorithm (description courtesy of Raphael Quinet):
  *
@@ -1470,8 +1481,12 @@ BspTreeNode *Partitioner::buildBsp(LineSet const &lines, Mesh &mesh)
 {
     d->clear();
 
-    d->lines = lines; // make a copy.
-    d->mesh  = &mesh;
+    // Copy the set of lines and sort by index to ensure deterministically
+    // predictable output.
+    d->lines = lines.toList();
+    qSort(d->lines.begin(), d->lines.end(), lineIndexLessThan);
+
+    d->mesh = &mesh;
 
     // Initialize vertex info for the initial set of vertexes.
     d->edgeTipSets.reserve(d->lines.count() * 2);
