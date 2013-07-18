@@ -1490,7 +1490,16 @@ void Hu_DrawMapTitle(float alpha, boolean mapIdInsteadOfAuthor)
     patchId = (mapNum < pMapNamesSize? pMapNames[mapNum] : 0);
     WI_DrawPatchXY3(patchId, Hu_ChoosePatchReplacement2(PRM_ALLOW_TEXT, patchId, lname), 0, 0, ALIGN_TOP, 0, DTF_ONLY_SHADOW);
 
-    y += 14;
+    patchinfo_t patchInfo;
+    if(R_GetPatchInfo(patchId, &patchInfo))
+    {
+        y += patchInfo.geometry.size.height + 2;
+    }
+    else
+    {
+        y += 14;
+    }
+
 #elif __JHERETIC__ || __JHEXEN__
     if(lname)
     {
