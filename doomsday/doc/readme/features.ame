@@ -78,10 +78,10 @@ Other:
 @item At least one WAD file from the original Doom, Heretic, Hexen, or other supported game
 @ifndef{UNIX}{
     @item Minimum OS version: 
-    @ifdef{WIN32}{Windows XP}
-    @ifdef{MACOSX}{Mac OS X 10.4}
+    @ifdef{WIN32}{Windows 7}
+    @ifdef{MACOSX}{Mac OS X 10.6}
 }
 @ifdef{WIN32}{@item DirectX 8 (or newer)}
-@ifdef{MACOSX}{@item Supported CPU architectures: 64-bit/32-bit Intel (OS X 10.6+), 32-bit Intel/PowerPC (OS X 10.4)}
+@ifdef{MACOSX}{@item Supported CPU architectures: 64-bit/32-bit Intel}
 @item A display adapter capable of OpenGL 2.0 hardware acceleration
 }
