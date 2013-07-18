@@ -2192,26 +2192,119 @@ static int iteratePolyobjLines(Polyobj *po, void *parameters = 0)
     return false; // Continue iteration.
 }
 
+/**
+ * Looks for lines in the given block that intercept the given trace to add
+ * to the intercepts list.
+ * A line is crossed if its endpoints are on opposite sides of the trace.
+ *
+ * @return  Non-zero if current iteration should stop.
+ */
+static int interceptLinesWorker(Line *line, void * /*parameters*/)
+{
+    /// @todo Do not assume line is from the current map.
+    divline_t const &traceLos = App_World().map().traceLine();
+    int s1, s2;
+
+    fixed_t lineFromX[2] = { DBL2FIX(line->fromOrigin().x), DBL2FIX(line->fromOrigin().y) };
+    fixed_t lineToX[2]   = { DBL2FIX(  line->toOrigin().x), DBL2FIX(  line->toOrigin().y) };
+
+    // Is this line crossed?
+    // Avoid precision problems with two routines.
+    if(traceLos.direction[VX] >  FRACUNIT * 16 || traceLos.direction[VY] >  FRACUNIT * 16 ||
+       traceLos.direction[VX] < -FRACUNIT * 16 || traceLos.direction[VY] < -FRACUNIT * 16)
+    {
+        s1 = V2x_PointOnLineSide(lineFromX, traceLos.origin, traceLos.direction);
+        s2 = V2x_PointOnLineSide(lineToX,   traceLos.origin, traceLos.direction);
+    }
+    else
+    {
+        s1 = line->pointOnSide(FIX2FLT(traceLos.origin[VX]), FIX2FLT(traceLos.origin[VY])) < 0;
+        s2 = line->pointOnSide(FIX2FLT(traceLos.origin[VX] + traceLos.direction[VX]),
+                               FIX2FLT(traceLos.origin[VY] + traceLos.direction[VY])) < 0;
+    }
+    if(s1 == s2) return false;
+
+    fixed_t lineDirectionX[2] = { DBL2FIX(line->direction().x), DBL2FIX(line->direction().y) };
+
+    // On the correct side of the trace origin?
+    float distance = FIX2FLT(V2x_Intersection(lineFromX, lineDirectionX,
+                                              traceLos.origin, traceLos.direction));
+    if(!(distance < 0))
+    {
+        P_AddIntercept(ICPT_LINE, distance, line);
+    }
+
+    // Continue iteration.
+    return false;
+}
+
 static int collectPolyobjLineIntercepts(Blockmap::Cell const &cell, void *parameters)
 {
     Blockmap *polyobjBlockmap = (Blockmap *)parameters;
     iteratepolyobjlines_params_t iplParams;
-    iplParams.callback = PIT_AddLineIntercepts;
+    iplParams.callback = interceptLinesWorker;
     iplParams.parms    = 0;
-    return iterateCellPolyobjs(*polyobjBlockmap, cell,
-                               iteratePolyobjLines, (void *)&iplParams);
+    return iterateCellPolyobjs(*polyobjBlockmap, cell, iteratePolyobjLines, (void *)&iplParams);
 }
 
 static int collectLineIntercepts(Blockmap::Cell const &cell, void *parameters)
 {
     Blockmap *lineBlockmap = (Blockmap *)parameters;
-    return iterateCellLines(*lineBlockmap, cell, PIT_AddLineIntercepts);
+    return iterateCellLines(*lineBlockmap, cell, interceptLinesWorker);
+}
+
+static int interceptMobjsWorker(mobj_t *mo, void * /*parameters*/)
+{
+    if(mo->dPlayer && (mo->dPlayer->flags & DDPF_CAMERA))
+        return false; // $democam: ssshh, keep going, we're not here...
+
+    // Check a corner to corner crossection for hit.
+    /// @todo Do not assume mobj is from the current map.
+    divline_t const &traceLos = App_World().map().traceLine();
+    vec2d_t from, to;
+    if((traceLos.direction[VX] ^ traceLos.direction[VY]) > 0)
+    {
+        // \ Slope
+        V2d_Set(from, mo->origin[VX] - mo->radius,
+                      mo->origin[VY] + mo->radius);
+        V2d_Set(to,   mo->origin[VX] + mo->radius,
+                      mo->origin[VY] - mo->radius);
+    }
+    else
+    {
+        // / Slope
+        V2d_Set(from, mo->origin[VX] - mo->radius,
+                      mo->origin[VY] - mo->radius);
+        V2d_Set(to,   mo->origin[VX] + mo->radius,
+                      mo->origin[VY] + mo->radius);
+    }
+
+    // Is this line crossed?
+    if(Divline_PointOnSide(&traceLos, from) == Divline_PointOnSide(&traceLos, to))
+        return false;
+
+    // Calculate interception point.
+    divline_t dl;
+    dl.origin[VX] = DBL2FIX(from[VX]);
+    dl.origin[VY] = DBL2FIX(from[VY]);
+    dl.direction[VX] = DBL2FIX(to[VX] - from[VX]);
+    dl.direction[VY] = DBL2FIX(to[VY] - from[VY]);
+    coord_t distance = FIX2FLT(Divline_Intersection(&dl, &traceLos));
+
+    // On the correct side of the trace origin?
+    if(!(distance < 0))
+    {
+        P_AddIntercept(ICPT_MOBJ, distance, mo);
+    }
+
+    // Continue iteration.
+    return false;
 }
 
 static int collectMobjIntercepts(Blockmap::Cell const &cell, void *parameters)
 {
     Blockmap *mobjBlockmap = (Blockmap *)parameters;
-    return iterateCellMobjs(*mobjBlockmap, cell, PIT_AddMobjIntercepts);
+    return iterateCellMobjs(*mobjBlockmap, cell, interceptMobjsWorker);
 }
 
 int Map::pathTraverse(const_pvec2d_t from, const_pvec2d_t to, int flags,

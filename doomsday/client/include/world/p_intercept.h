@@ -47,17 +47,4 @@ InterceptNode *P_AddIntercept(intercepttype_t type, float distance, void *object
  */
 int P_TraverseIntercepts(traverser_t callback, void *parameters);
 
-/// @todo Find a better home for the following functions ----------------------
-
-/**
- * Looks for lines in the given block that intercept the given trace to add
- * to the intercepts list.
- * A line is crossed if its endpoints are on opposite sides of the trace.
- *
- * @return  Non-zero if current iteration should stop.
- */
-int PIT_AddLineIntercepts(Line *ld, void *parameters);
-
-int PIT_AddMobjIntercepts(struct mobj_s *mobj, void *parameters);
-
 #endif // DENG_WORLD_P_INTERCEPT_H
