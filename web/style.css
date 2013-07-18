@@ -1,6 +1,4 @@
 body {
-    position: absolute;
-
     background: #282D2B url(panoramarotator) no-repeat fixed;
     background-position: center 100%;
     background-size: 200% 200%;
@@ -11,6 +9,7 @@ body {
     line-height: 1.5;
 
     margin: 1.2em;
+    margin-top: 1.8em;
 }
 
 @media only screen and (max-width: 767px) {
@@ -269,37 +268,69 @@ table.directory td {
     font-size: small;
 }
 
-table.directory td,
+table.directory tbody tr,
 dl.codebox,
-ul.topiclist dd,
-ul.topiclist li.row,
-ul.topiclist li.header,
+ul.topiclist li,
 table.table1 tbody td {
-    border-color: #4D4D4D;
+    border-color: #333;
     border-style: solid;
-    border-width: 1px;
+    border-width: 2px;
 }
 
 ul.topiclist dd {
-    border-width: 0;
-    border-left-width: 1px;
     margin: 0;
+}
+
+ul.topiclist {
+    list-style-type: none;
+    margin: -6px;
+    padding:0;
+    font-family: sans-serif;
+    font-size: 8pt;
+}
+
+ul.topiclist li {
+    display: block;
+    margin: 6px;
 }
 
 ul.topiclist li.header {
     border-width: 0;
-    border-bottom-width: 1px;
 }
 
-ul.topiclist li.row {
-    border-top-width: 0;
-}
-
-ul.topiclist li.row:hover,
+ul.topiclist li:not(.header):hover,
 table.directory tbody tr:hover,
 table.table1 tbody tr:hover,
 table.table1 tbody tr.hover {
-    background-color: #0D382C;
+    border-color: #535353;
+}
+
+ul.topiclist dl {
+    position: relative;
+}
+
+ul.topiclist dt, ul.topiclist dd {
+    display: block;
+    float: left;
+    padding: 5px;
+}
+
+ul.topiclist dt {
+    width: 48%;
+}
+
+ul.topiclist dfn {
+    /* Labels for post/view counts */
+    display: none;
+}
+
+ul.topiclist li.row dt a.subforum {
+    background-image: none;
+    background-position: 0 50%;
+    background-repeat: no-repeat;
+    position: relative;
+    white-space: nowrap;
+    padding: 0 0 0 12px;
 }
 
 table.table1 {
@@ -327,9 +358,8 @@ dl.codebox dd {
 }
 
 dl.codebox code {
-    /* Also see tweaks.css */
     display: block;
-    min-height: auto;
+    height: 100px;
     white-space: normal;
     padding-top: 5px;
     font-family: Monaco, "Andale Mono","Courier New", Courier, mono;
@@ -563,7 +593,6 @@ ol.jumplist li {
     min-width: 640px;
     margin-left: auto;
     margin-right: auto;
-    top: -.6em;
 }
 
 .framepanel {
@@ -653,6 +682,7 @@ span.paddle_left_select, span.paddle_right_select {
     position: absolute;
     width: 100%;
     height: 280px;
+    top: -10px;
 }
 
 #panorama {
@@ -670,7 +700,7 @@ span.paddle_left_select, span.paddle_right_select {
     float: right;
     clear: both;
     margin: 0;
-    margin-top: 280px;
+    margin-top: 270px;
     width: 100%;
     text-align: center;
 }
@@ -810,12 +840,19 @@ div.clear {
 
 #downloadbox, #socialbookmarkbox {
     text-align: center;
+    margin-top: 2.4em;
     margin-bottom: 2.4em;
     overflow: hidden;
 }
 
 #downloadbox div.hnav ul {
     margin-top: 0;
+    margin-bottom: 0;
+}
+
+.platform_buttons {
+    margin-top: 1.2em;
+    margin-bottom: 1.2em;
 }
 
 #downloadbox div.hnav ul li, div.platform_buttons ul li {
@@ -879,7 +916,7 @@ div.clear {
 }
 
 #socialbookmarkbox .hnav ul {
-    margin-top: .4em;
+    margin-top: 0;
     margin-bottom: 0;
 }
 
@@ -1006,6 +1043,7 @@ div.clear {
 
 #commitindex ul li {
     list-style-type:none;
+    clear:both;
 }
 
 #commitindex ul {
@@ -1097,7 +1135,7 @@ span.metadata {
 }
 
 .tag_list {
-    display:inline;
+    display: inline-block;
     margin: 0;
     padding: 0;
 }

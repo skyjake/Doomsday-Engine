@@ -443,47 +443,6 @@ a.right:hover {
     background-position: 100% 60%;
 }
 
-ul.topiclist {
-    margin: 0;
-    padding:0;
-    font-family: sans-serif;
-    font-size: 8pt;
-}
-
-ul.topiclist li {
-    display: block;
-    list-style-type: none;
-    margin: 0;
-}
-
-ul.topiclist dl {
-    position: relative;
-}
-
-ul.topiclist dt, ul.topiclist dd {
-    display: block;
-    float: left;
-    padding: 5px;
-}
-
-ul.topiclist dt {
-    width: 50%;
-}
-
-ul.topiclist dfn {
-    /* Labels for post/view counts */
-    display: none;
-}
-
-ul.topiclist li.row dt a.subforum {
-    background-image: none;
-    background-position: 0 50%;
-    background-repeat: no-repeat;
-    position: relative;
-    white-space: nowrap;
-    padding: 0 0 0 12px;
-}
-
 dl.imagelist dt {
     float: left;
     margin-right: 1em;
@@ -502,11 +461,6 @@ li.header dt, li.header dd {
 
 li.header dt {
     font-weight: bold;
-}
-
-li.header dd {
-    margin-left: 1px;
-    border: none;
 }
 
 li.header dl.icon {
