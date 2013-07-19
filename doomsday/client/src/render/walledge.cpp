@@ -102,12 +102,13 @@ DENG2_PIMPL(WallEdge), public IHPlane
     Event top;
 
     /// All events along the partition line.
-    Events events;
-
-    /// Set to @c true when the events require sorting.
+    Events *events;
     bool needSortEvents;
 
-    bool isValid;
+    Vector2f materialOrigin;
+
+    Vector3f normal;
+    bool needUpdateNormal;
 
     Instance(Public *i, WallSpec const &spec, Line::Side *mapSide, int edge,
              coord_t sideOffset, LineOwner *mapLineOwner)
@@ -120,26 +121,18 @@ DENG2_PIMPL(WallEdge), public IHPlane
           lo(0), hi(0),
           bottom(*i, 0),
           top(*i, 1),
+          events(0),
           needSortEvents(false),
-          isValid(false)
+          needUpdateNormal(true)
     {
         Vector2f materialOffset;
         R_SideSectionCoords(*mapSide, spec.section, spec.flags.testFlag(WallSpec::SkyClip),
                             &lo, &hi, &materialOffset);
 
-        isValid = (hi > lo);
+        pOrigin    = Vector3d(self.origin(), lo);
+        pDirection = Vector3d(0, 0, hi - lo);
 
-        self.materialOrigin += materialOffset;
-
-#ifdef DENG2_QT_4_7_OR_NEWER
-        events.reserve(2 + 2);
-#endif
-
-        // The first event is the bottom termination event.
-        events.append(&bottom);
-
-        // The last event is the top termination event.
-        events.append(&top);
+        materialOrigin = Vector2f(mapSideOffset, 0) + materialOffset;
     }
 
     ~Instance()
@@ -149,7 +142,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
 
     void verifyValid() const
     {
-        if(!isValid)
+        if(!self.isValid())
         {
             /// @throw InvalidError  Invalid range geometry was specified.
             throw InvalidError("WallEdge::verifyValid", "Range geometry is not valid (top < bottom)");
@@ -158,16 +151,19 @@ DENG2_PIMPL(WallEdge), public IHPlane
 
     EventIndex toEventIndex(double distance)
     {
-        for(EventIndex i = 0; i < events.count(); ++i)
+        DENG_ASSERT(events != 0);
+
+        for(EventIndex i = 0; i < events->count(); ++i)
         {
-            Event *icpt = events[i];
+            Event *icpt = (*events)[i];
             if(de::fequal(icpt->distance(), distance))
                 return i;
         }
         return InvalidIndex;
     }
 
-    inline bool haveEvent(double distance) {
+    inline bool haveEvent(double distance)
+    {
         return toEventIndex(distance) != InvalidIndex;
     }
 
@@ -191,8 +187,10 @@ DENG2_PIMPL(WallEdge), public IHPlane
     // Implements IHPlane
     Event *intercept(double distance)
     {
+        DENG_ASSERT(events != 0);
+
         Event *newEvent = new Event(self, distance);
-        events.append(newEvent);
+        events->append(newEvent);
 
         // We'll need to resort the events.
         needSortEvents = true;
@@ -203,21 +201,28 @@ DENG2_PIMPL(WallEdge), public IHPlane
     // Implements IHPlane
     void sortAndMergeIntercepts()
     {
+        DENG_ASSERT(events != 0);
+
         // Any work to do?
         if(!needSortEvents) return;
 
-        qSort(events.begin(), events.end(), eventSorter);
+        qSort(events->begin(), events->end(), eventSorter);
         needSortEvents = false;
     }
 
     // Implements IHPlane
     void clearIntercepts()
     {
-        while(!events.isEmpty())
+        if(events)
         {
-            Event *event = events.takeLast();
-            if(!(event == &bottom || event == &top))
-                delete event;
+            while(!events->isEmpty())
+            {
+                Event *event = events->takeLast();
+                if(!(event == &bottom || event == &top))
+                    delete event;
+            }
+
+            delete events; events = 0;
         }
 
         // An empty event list is logically sorted.
@@ -227,9 +232,11 @@ DENG2_PIMPL(WallEdge), public IHPlane
     // Implements IHPlane
     Event const &at(EventIndex index) const
     {
+        DENG_ASSERT(events != 0);
+
         if(index >= 0 && index < interceptCount())
         {
-            return *events[index];
+            return *(*events)[index];
         }
         /// @throw UnknownInterceptError The specified intercept index is not valid.
         throw UnknownInterceptError("WallEdge::at", QString("Index '%1' does not map to a known intercept (count: %2)")
@@ -239,14 +246,18 @@ DENG2_PIMPL(WallEdge), public IHPlane
     // Implements IHPlane
     int interceptCount() const
     {
-        return events.count();
+        DENG_ASSERT(events != 0);
+
+        return events->count();
     }
 
 #ifdef DENG_DEBUG
     void printIntercepts() const
     {
+        DENG_ASSERT(events != 0);
+
         EventIndex index = 0;
-        foreach(Event const *icpt, events)
+        foreach(Event const *icpt, *events)
         {
             LOG_DEBUG(" %u: >%1.2f ") << (index++) << icpt->distance();
         }
@@ -259,7 +270,8 @@ DENG2_PIMPL(WallEdge), public IHPlane
     void assertInterceptsInRange(double low, double hi) const
     {
 #ifdef DENG_DEBUG
-        foreach(Event const *icpt, events)
+        DENG_ASSERT(events != 0);
+        foreach(Event const *icpt, *events)
         {
             DENG2_ASSERT(icpt->distance() >= low && icpt->distance() <= hi);
         }
@@ -378,6 +390,40 @@ DENG2_PIMPL(WallEdge), public IHPlane
         } while(!stopScan);
     }
 
+    void prepareEvents()
+    {
+        DENG_ASSERT(self.isValid());
+
+        clearIntercepts();
+
+        events = new Events;
+#ifdef DENG2_QT_4_7_OR_NEWER
+        events->reserve(2 + 2);
+#endif
+
+        // The first event is the bottom termination event.
+        events->append(&bottom);
+
+        // The last event is the top termination event.
+        events->append(&top);
+
+        // Add intecepts for neighbor planes?
+        if(!spec.flags.testFlag(WallSpec::NoEdgeDivisions) && !de::fequal(hi, lo))
+        {
+            configure(Partition(Vector2d(0, hi - lo)));
+
+            // Add intercepts (the "divisions") in ascending distance order.
+            addNeighborIntercepts(lo, hi);
+
+            // Sorting may be required. This shouldn't take too long...
+            // There seldom are more than two or three intercepts.
+            sortAndMergeIntercepts();
+        }
+
+        // Sanity check.
+        assertInterceptsInRange(0, 1);
+    }
+
     /**
      * Find the neighbor surface for the edge which we will use to calculate the
      * "blend" properties (e.g., smoothed edge normal).
@@ -426,30 +472,13 @@ DENG2_PIMPL(WallEdge), public IHPlane
         return &otherSide->middle();
     }
 
-    void prepare()
+    /**
+     * Determine the (possibly smoothed) edge normal.
+     */
+    void updateNormal()
     {
-        if(!isValid) return;
+        needUpdateNormal = false;
 
-        pOrigin = Vector3d(self.origin(), lo);
-        pDirection = Vector3d(0, 0, hi - lo);
-
-        // Add intecepts for neighbor planes?
-        if(!spec.flags.testFlag(WallSpec::NoEdgeDivisions) && !de::fequal(hi, lo))
-        {
-            configure(Partition(Vector2d(0, hi - lo)));
-
-            // Add intercepts (the "divisions") in ascending distance order.
-            addNeighborIntercepts(lo, hi);
-
-            // Sorting may be required. This shouldn't take too long...
-            // There seldom are more than two or three intercepts.
-            sortAndMergeIntercepts();
-        }
-
-        // Sanity check.
-        assertInterceptsInRange(0, 1);
-
-        // Determine the edge normal.
         /// @todo Cache the smoothed normal value somewhere.
         Surface &surface = mapSide->surface(spec.section);
         binangle_t angleDiff;
@@ -458,26 +487,22 @@ DENG2_PIMPL(WallEdge), public IHPlane
         if(blendSurface && shouldSmoothNormals(surface, *blendSurface, angleDiff))
         {
             // Average normals.
-            self.normal = Vector3f(surface.normal() + blendSurface->normal()) / 2;
+            normal = Vector3f(surface.normal() + blendSurface->normal()) / 2;
         }
         else
         {
-            self.normal = surface.normal();
+            normal = surface.normal();
         }
     }
 };
 
 WallEdge::WallEdge(WallSpec const &spec, Segment &segment, int edge)
-    : WorldEdge((edge? segment.to() : segment.from()).origin(),
-                EdgeAttribs(Vector2f(segment.lineSideOffset() + (edge? segment.length() : 0), 0))),
+    : WorldEdge((edge? segment.to() : segment.from()).origin()),
       d(new Instance(this, spec, &segment.lineSide(), edge,
                            segment.lineSideOffset() + (edge? segment.length() : 0),
                            segment.lineSide().line().vertexOwner(edge? segment.to() : segment.from())))
 {
     DENG_ASSERT(segment.hasLineSide() && segment.lineSide().hasSections());
-
-    /// @todo Defer until necessary.
-    d->prepare();
 }
 
 Vector3d const &WallEdge::pOrigin() const
@@ -488,6 +513,20 @@ Vector3d const &WallEdge::pOrigin() const
 Vector3d const &WallEdge::pDirection() const
 {
     return d->pDirection;
+}
+
+Vector2f WallEdge::materialOrigin() const
+{
+    return d->materialOrigin;
+}
+
+Vector3f WallEdge::normal() const
+{
+    if(d->needUpdateNormal)
+    {
+        d->updateNormal();
+    }
+    return d->normal;
 }
 
 WallSpec const &WallEdge::spec() const
@@ -507,7 +546,12 @@ coord_t WallEdge::mapSideOffset() const
 
 int WallEdge::divisionCount() const
 {
-    return d->isValid? d->interceptCount() - 2 : 0;
+    if(!isValid()) return 0;
+    if(!d->events)
+    {
+        d->prepareEvents();
+    }
+    return d->interceptCount() - 2;
 }
 
 WallEdge::EventIndex WallEdge::firstDivision() const
@@ -523,7 +567,11 @@ WallEdge::EventIndex WallEdge::lastDivision() const
 WallEdge::Events const &WallEdge::events() const
 {
     d->verifyValid();
-    return d->events;
+    if(!d->events)
+    {
+        d->prepareEvents();
+    }
+    return *d->events;
 }
 
 WallEdge::Event const &WallEdge::at(EventIndex index) const
@@ -533,15 +581,15 @@ WallEdge::Event const &WallEdge::at(EventIndex index) const
 
 bool WallEdge::isValid() const
 {
-    return d->isValid;
+    return d->hi > d->lo;
 }
 
 WallEdge::Event const &WallEdge::first() const
 {
-    return at(0);
+    return d->bottom;
 }
 
 WallEdge::Event const &WallEdge::last() const
 {
-    return at(d->events.size() - 1);
+    return d->top;
 }

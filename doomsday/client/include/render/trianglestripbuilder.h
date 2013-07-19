@@ -65,28 +65,9 @@ public:
 namespace de {
 
 /**
- * @ingroup world
- */
-struct EdgeAttribs
-{
-    Vector2f materialOrigin;
-    Vector3f normal;
-
-    EdgeAttribs(Vector2f const materialOrigin = Vector2f(),
-                Vector3f const &normal        = Vector3f())
-        : materialOrigin(materialOrigin),
-          normal(normal)
-    {}
-};
-
-} // namespace de
-
-namespace de {
-
-/**
  * @ingroup render
  */
-class AbstractEdge : public EdgeAttribs, public IEdge
+class AbstractEdge : public IEdge
 {
 public:
     typedef int EventIndex;
@@ -103,15 +84,15 @@ public:
     };
 
 public:
-    AbstractEdge(EdgeAttribs const &attribs = EdgeAttribs())
-        : EdgeAttribs(attribs)
-    {}
-
     virtual ~AbstractEdge() {}
 
     virtual Event const &first() const = 0;
 
     virtual Event const &last() const = 0;
+
+    virtual Vector2f materialOrigin() const { return Vector2f(); }
+
+    virtual Vector3f normal() const { return Vector3f(); }
 };
 
 } // namespace de
@@ -135,8 +116,7 @@ public:
     };
 
 public:
-    WorldEdge(Vector2d origin_, EdgeAttribs const &attribs = EdgeAttribs())
-        : AbstractEdge(attribs), _origin(origin_)
+    WorldEdge(Vector2d origin_) : AbstractEdge(), _origin(origin_)
     {}
 
     virtual ~WorldEdge() {}

@@ -1279,15 +1279,15 @@ static float calcLightLevelDelta(Vector3f const &normal)
 static void wallSectionLightLevelDeltas(WallEdge const &leftEdge, WallEdge const &rightEdge,
     float &leftDelta, float &rightDelta)
 {
-    leftDelta = calcLightLevelDelta(leftEdge.normal);
+    leftDelta = calcLightLevelDelta(leftEdge.normal());
 
-    if(leftEdge.normal == rightEdge.normal)
+    if(leftEdge.normal() == rightEdge.normal())
     {
         rightDelta = leftDelta;
     }
     else
     {
-        rightDelta = calcLightLevelDelta(rightEdge.normal);
+        rightDelta = calcLightLevelDelta(rightEdge.normal());
 
         // Linearly interpolate to find the light level delta values for the
         // vertical edges of this wall section.
@@ -1442,7 +1442,8 @@ static void writeWallSection(Segment &segment, int section,
         }
 
         parm.blendMode           = BM_NORMAL;
-        parm.materialOrigin      = &leftEdge.materialOrigin;
+        Vector2f materialOrigin  = leftEdge.materialOrigin();
+        parm.materialOrigin      = &materialOrigin;
         parm.materialScale       = &materialScale;
 
         parm.isWall = true;
