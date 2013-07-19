@@ -78,7 +78,7 @@ Other:
 @item At least one WAD file from the original Doom, Heretic, Hexen, or other supported game
 @ifndef{UNIX}{
     @item Minimum OS version: 
-    @ifdef{WIN32}{Windows 7}
+    @ifdef{WIN32}{Windows Vista}
     @ifdef{MACOSX}{Mac OS X 10.6}
 }
 @ifdef{WIN32}{@item DirectX 8 (or newer)}
