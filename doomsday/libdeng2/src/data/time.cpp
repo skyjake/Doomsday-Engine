@@ -152,14 +152,14 @@ DENG2_PIMPL_NOREF(Time)
 
     bool isLessThan(Instance const &other) const
     {
-        if(flags.testFlag(HighPerformance) && other.flags.testFlag(HighPerformance))
-        {
-            return highPerfElapsed < other.highPerfElapsed;
-        }
         if(flags.testFlag(DateTime) && other.flags.testFlag(DateTime))
         {
             // Full date and time comparison.
             return dateTime < other.dateTime;
+        }
+        if(flags.testFlag(HighPerformance) && other.flags.testFlag(HighPerformance))
+        {
+            return highPerfElapsed < other.highPerfElapsed;
         }
         /**
          * @todo Implement needed conversion to compare DateTime with high
@@ -171,13 +171,13 @@ DENG2_PIMPL_NOREF(Time)
 
     bool isEqualTo(Instance const &other) const
     {
-        if(flags.testFlag(HighPerformance) && other.flags.testFlag(HighPerformance))
-        {
-            return highPerfElapsed == other.highPerfElapsed;
-        }
         if(flags.testFlag(DateTime) && other.flags.testFlag(DateTime))
         {
             return dateTime == other.dateTime;
+        }
+        if(flags.testFlag(HighPerformance) && other.flags.testFlag(HighPerformance))
+        {
+            return highPerfElapsed == other.highPerfElapsed;
         }
         /**
          * @todo Implement needed conversion to compare DateTime with high
@@ -189,25 +189,25 @@ DENG2_PIMPL_NOREF(Time)
 
     void add(Delta const &delta)
     {
-        if(flags.testFlag(HighPerformance))
-        {
-            highPerfElapsed += delta;
-        }
         if(flags.testFlag(DateTime))
         {
             dateTime = dateTime.addMSecs(delta.asMilliSeconds());
+        }
+        if(flags.testFlag(HighPerformance))
+        {
+            highPerfElapsed += delta;
         }
     }
 
     Delta delta(Instance const &earlier) const
     {
-        if(flags.testFlag(HighPerformance) && earlier.flags.testFlag(HighPerformance))
-        {
-            return highPerfElapsed - earlier.highPerfElapsed;
-        }
         if(flags.testFlag(DateTime) && earlier.flags.testFlag(DateTime))
         {
             return earlier.dateTime.msecsTo(dateTime) / 1000.0;
+        }
+        if(flags.testFlag(HighPerformance) && earlier.flags.testFlag(HighPerformance))
+        {
+            return highPerfElapsed - earlier.highPerfElapsed;
         }
         /**
          * @todo Implement needed conversion to compare DateTime with high
