@@ -1,26 +1,23 @@
 <?php
-/**
- * @file frontcontroller.class.php
- * Centralized point of entry for HTTP request interpretation.
+/** @file frontcontroller.class.php Centralized point of entry
  *
- * @section License
+ * Also oversees and routes HTTP request interpretation to plugins.
+ *
+ * @authors Copyright Â© 2009-2013 Daniel Swanson <danij@dengine.net>
+ *
+ * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the Free
- * Software Foundation; either version 2 of the License, or (at your option)
- * any later version.
- *
- * This program is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
- * more details.
- *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- *
- * @author Copyright &copy; 2009-2013 Daniel Swanson <danij@dengine.net>
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 // Define the "platform", our expected default configuration.
@@ -39,6 +36,8 @@ require_once(DIR_CLASSES.'/requestinterpreter.interface.php');
 
 class FrontController
 {
+    private static $singleton = NULL;
+
     private $_request;
     private $_plugins;
     private $_actions;
@@ -99,7 +98,7 @@ class FrontController
             $this->_defaultPageKeywords = $config['Keywords'];
     }
 
-    public function __construct($config)
+    private function __construct($config)
     {
         if(!is_array($config))
             throw new Exception('Invalid config, array expected');
@@ -127,6 +126,22 @@ class FrontController
 
         $this->_request = new Request($url, $_POST);
         $this->_actions = new Actions();
+    }
+
+    private function __clone() {}
+
+    /**
+     * Returns the Singleton front controller instance.
+     */
+    public static function &fc()
+    {
+        if(is_null(self::$singleton))
+        {
+            $siteconfig = array();
+            include('./config.inc.php');
+            self::$singleton = new FrontController($siteconfig);
+        }
+        return self::$singleton;
     }
 
     public function &request()
@@ -206,76 +221,187 @@ class FrontController
         }
     }
 
-    /**
-     * Feed item HTML generator for formatting the customised output used
-     * with feeds on the homepage.
-     */
-    static public function generateFeedItemHtml(&$item, $params=NULL)
+    public function interpretRequest()
     {
-        $patterns     = array('/{title}/', '/{timestamp}/');
-        $replacements = array($item['title'], date("m/d/y", $item['date_timestamp']));
-
-        if(is_array($params) && isset($params['titleTemplate']))
+        // Determine action:
+        try
         {
-            $title = preg_replace($patterns, $replacements, $params['titleTemplate']);
+            // Maybe a plugin?
+            $this->plugins()->interpretRequest($this->_request);
+
+            foreach($this->_actions as $ActionRecord)
+            {
+                try
+                {
+                    $ActionRecord['actioner']->execute($ActionRecord['args']);
+                }
+                catch(Exception $e)
+                {
+                    throw $e; // Lets simply re-throw and abort for now.
+                }
+            }
         }
+        catch(Exception $e)
+        {
+            // We'll show the homepage.
+            $this->enqueueAction($this->findPlugin('home'), NULL);
+        }
+    }
+
+    private function &getContentCache()
+    {
+        if(!is_object($this->_contentCache))
+        {
+            $this->_contentCache = new ContentCache(DIR_CACHE);
+        }
+
+        return $this->_contentCache;
+    }
+
+    public static function &contentCache()
+    {
+        return self::fc()->getContentCache();
+    }
+
+    public static function ErrorHandler($errno, $errmsg, $filename, $linenum, $vars)
+    {
+        $errortype = array (
+                    E_ERROR              => 'Error',
+                    E_WARNING            => 'Warning',
+                    E_PARSE              => 'Parsing Error',
+                    E_NOTICE             => 'Notice',
+                    E_CORE_ERROR         => 'Core Error',
+                    E_CORE_WARNING       => 'Core Warning',
+                    E_COMPILE_ERROR      => 'Compile Error',
+                    E_COMPILE_WARNING    => 'Compile Warning',
+                    E_USER_ERROR         => 'User Error',
+                    E_USER_WARNING       => 'User Warning',
+                    E_USER_NOTICE        => 'User Notice',
+                    E_STRICT             => 'Runtime Notice'
+                    );
+
+        // Log it?
+        if(ini_get('log_errors'))
+        {
+            error_log(sprintf("PHP %s:  %s in %s on line %d",
+                              isset($errortype[$errno])? $errortype[$errno] : "$errno", $errmsg, $filename, $linenum));
+        }
+
+        // Display it?
+        if(ini_get('display_errors'))
+        {
+            printf("<br />\n<b>%s</b>: %s in <b>%s</b> on line <b>%d</b><br /><br />\n",
+                   $errortype[$errno], $errmsg, $filename, $linenum);
+
+            return true;
+        }
+
+        switch($errno)
+        {
+        case E_NOTICE:
+        case E_USER_NOTICE:
+        case E_USER_WARNING:
+        case E_STRICT:
+            return true;
+
+        default:
+            exit(); // Get out of here!
+        }
+    }
+
+    public function outputHeader($mainHeading='')
+    {
+        $siteTitle = $this->siteTitle();
+        if(strlen($mainHeading) > 0)
+            $siteTitle = "$mainHeading &bull; $siteTitle";
+
+        header('X-Frame-Options: SAMEORIGIN');
+
+?><!DOCTYPE html>
+<html dir="ltr" lang="en-GB">
+<head>
+    <title><?=$siteTitle?></title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="author" content="<?=$this->siteAuthor()?>" />
+    <meta name="keywords" content="<?php { $keywords = $this->defaultPageKeywords(); foreach($keywords as $keyword) echo $keyword.','; } ?>" />
+    <meta name="description" content="<?=$this->siteDescription()?>" />
+    <meta name="robots" content="index, follow" />
+    <meta name="revisit-after" content="<?=$this->robotRevisitDays()?> DAYS" />
+    <meta name="rating" content="GENERAL" />
+    <meta name="generator" content="<?=$this->homeURL()?>" />
+    <link rel="icon" href="http://dl.dropboxusercontent.com/u/11948701/dengine.net/images/favicon.png" type="image/png" />
+    <link rel="shortcut icon" href="http://dl.dropboxusercontent.com/u/11948701/dengine.net/images/favicon.png" type="image/png" />
+    <link rel="alternate" type="application/rss+xml" title="Doomsday Engine RSS News Feed" href="http://dengine.net/forums/rss.php?mode=news" />
+
+    <!-- jQuery -->
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.9.1/jquery-ui.min.js"></script>
+
+    <link rel="stylesheet" media="all" href="/style.css" />
+</head>
+<?php
+    }
+
+    public function beginPage($mainHeading='', $page=null)
+    {
+?>
+<body>
+<div id="mainouter">
+    <div id="main">
+<?php
+
+        $this->outputMainMenu($page);
+
+?>
+        <div id="maininner">
+            <div id="framepanel_bottom" role="main">
+                <div id="pageheading">
+                    <h1><?php
+
+        if(strlen($mainHeading) > 0)
+            echo htmlspecialchars($mainHeading);
         else
-        {
-            $title = $item['title'];
-        }
+            echo $this->siteTitle();
 
-        if(is_array($params) && isset($params['labelTemplate']))
-        {
-            $label = preg_replace($patterns, $replacements, $params['labelTemplate']);
-        }
-        else
-        {
-            $label = $item['title'];
-        }
-
-        $html = '<a href="'. preg_replace('/(&)/', '&amp;', $item['link'])
-               .'" title="'. htmlspecialchars($label)
-                       .'">'. htmlspecialchars($title) .'</a>';
-
-        if(time() < strtotime('+2 days', $item['date_timestamp']))
-        {
-            $html .= '<span class="new-label">&nbsp;NEW</span>';
-        }
-
-        return $html;
+?></h1>
+                </div>
+<?php
     }
 
-    private function outputNewsFeed()
+    public function endPage()
     {
-        require_once(DIR_CLASSES.'/feed.class.php');
+?>
+            </div>
+            <div class="framepanel" id="framepanel_top">
+<?php
 
-        $feed = new Feed('http://dengine.net/forums/rss.php?mode=news', 3);
-        $feed->setTitle('Project News', 'projectnews-label');
-        $feed->setGenerateElementHTMLCallback('FrontController::generateFeedItemHtml');
-        $feed->generateHTML();
-    }
+        $this->outputTopPanel();
+        $this->outputMasterStatus();
 
-    private function outputBuildsFeed()
-    {
-        require_once(DIR_CLASSES.'/feed.class.php');
+?>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="libicons">
+<?php
 
-        $feed = new Feed('http://dl.dropbox.com/u/11948701/builds/events.rss', 3);
-        $feed->setTitle('Build News', 'projectnews-label');
-        $feed->setGenerateElementHTMLCallback('FrontController::generateFeedItemHtml',
-                                              array('titleTemplate'=>'{title} complete',
-                                                    'labelTemplate'=>'Read more about {title}, completed on {timestamp}'));
-        $feed->generateHTML();
-    }
+        // Output the lib icons (OpenGL, SDL etc).
+        includeHTML('libraryicons');
 
-    private function outputDevBlogFeed()
-    {
-        require_once(DIR_CLASSES.'/feed.class.php');
+?>
+</div>
+<footer id="footer" role="contentinfo">
+<?php
 
-        $feed = new Feed('http://dengine.net/forums/rss.php?f=24', 3);
-        $feed->setTitle('Developer Blog', 'projectnews-label');
-        $feed->setGenerateElementHTMLCallback('FrontController::generateFeedItemHtml',
-                                              array('labelTemplate'=>'Read more about {title}, posted on {timestamp}'));
-        $feed->generateHTML();
+        $this->outputFooter();
+
+?>
+</footer>
+</body>
+</html>
+<?php
     }
 
     /**
@@ -334,10 +460,10 @@ class FrontController
 
     private function outputMasterStatus()
     {
+if(0)
+{
         // Maximum number of servers listed in the summary.
         $limit = 3;
-
-        $content = '';
 
         /**
          * @todo We do NOT need to interface with the master server. We are able
@@ -360,7 +486,7 @@ class FrontController
         $serverCount = count($servers);
 
         // Generate the content.
-        $content .= '<span id="servers-label">'. ($serverCount > 0? 'Most Active Servers':'No Active Servers') .'</span><br />';
+        $content = '<span id="servers-label">'. ($serverCount > 0? 'Most Active Servers':'No Active Servers') .'</span><br />';
         if($serverCount)
         {
             $playerCount = (integer)0;
@@ -384,30 +510,94 @@ class FrontController
         }
 
         $content .= '<br /><span id="servers-timestamp">'. date("d-M-y H:i:s T" /*DATE_RFC850*/, time()). '</span>';
-
         echo $content;
+}
+
+?><script>
+(function (e) {
+    e.fn.interpretMasterServerStatus = function (t) {
+        var n = {
+            serverUri: "http://dengine.net/master.php?xml",
+            maxItems: 3,
+            generateServerSummaryHtml: 0
+        };
+        if (t) {
+            e.extend(n, t);
+        }
+        var r = e(this).attr("id");
+        e.ajax({
+            url: n.serverUri,
+            dataType: 'xml',
+            success: function (t) {
+                e("#" + r).empty();
+                var root = $('masterserver', t);
+                var serverList = root.find('serverlist')[0];
+                var serverCount = serverList.attributes.getNamedItem('size').nodeValue;
+
+                var html = '<span id="servers-label">' + (serverCount > 0? 'Most Active Servers':'No Active Servers') + '</span><br />';
+
+                if(serverCount) {
+                    var idx = 0;
+                    var playerCount = 0;
+
+                    html += '<ul>';
+                    for(var i = 0; i < serverList.childNodes.length; ++i) {
+                        if(serverList.childNodes[i].nodeName != 'server')
+                            continue;
+
+                        var server = $(serverList.childNodes[i]);
+                        if(n.maxItems <= 0 || idx < n.maxItems)
+                        {
+                            html += '<li>' + n.generateServerSummaryHtml(n, server) + '</li>';
+                        }
+
+                        playerCount += Number(server.find('gameinfo>numplayers').text());
+                        idx++;
+                    };
+
+                    html += '</ul>';
+                    html += '<span id="summary"><a href="/masterserver" title="Click here to see the complete server listing">' + serverCount + ' ' + (serverCount == 1? 'server':'servers') + ' in total, ' + playerCount + ' active ' + (playerCount == 1? 'player':'players') + '</a></span>';
+                }
+
+                html += '<br /><span id="servers-timestamp">' + root.find('channel>pubdate').text() + '</span>';
+                e("#" + r).append(html);
+            }
+        })
     }
+})(jQuery)
 
-    private function outputTopPanel()
-    {
-?>
-    <div id="panorama">
-    </div>
-<?php
-    }
+$(document).ready(function () {
+    $('#servers').interpretMasterServerStatus({
+        generateServerSummaryHtml: function (n, info) {
 
-    private function outputFooter()
-    {
-?>
-<p class="disclaimer"><a href="mailto:webmaster@dengine.net" title="Contact Webmaster">Webmaster</a> - Site design &copy; <?php echo date('Y'); ?> <a href="mailto:<?php echo $this->siteDesignerEmail(); ?>" title="Contact <?php echo $this->siteDesigner(); ?>"><?php echo $this->siteDesigner(); ?></a> - Built by <a href="mailto:<?php echo $this->siteDesignerEmail(); ?>" title="Contact <?php echo $this->siteDesigner(); ?>"><?php echo $this->siteDesigner(); ?></a> / <a href="mailto:<?php echo $this->siteAuthorEmail(); ?>" title="Contact <?php echo $this->siteAuthor(); ?>"><?php echo $this->siteAuthor(); ?></a></p><?php
+            var serverMetadataLabel = 'Address: ' + info.children('ip').text() + ':' + info.children('port').text()
+                                    + ' Open: ' + info.children('open').text();
 
-        includeHTML('validatoricons');
+            // Any required addons?.
+            /*var addonArr = array_filter(explode(';', info['pwads']));
+            if(count(addonArr))
+            {
+                serverMetadataLabel .= 'Add-ons: '. implode(' ', addonArr);
+            }*/
 
-?><p class="disclaimer">The Doomsday Engine is licensed under the terms of the <a href="http://www.gnu.org/licenses/gpl.html" rel="nofollow">GNU/GPL License ver 2</a>. The Doomsday Engine logo is Copyright &copy; 2005-<?php echo date('Y'); ?>, the deng team.</p>
-<hr />
-<?php
+            var gameInfo = $(info.children('gameinfo'));
+            var gameMetadataLabel = 'Map: ' + gameInfo.children('map').text() + ' Setup: ' + gameInfo.children('setupstring').text();
 
-        includeHTML('legal');
+            var playerCountLabel = 'Number of players currently in-game';
+            var playerMaxLabel = 'Maximum number of players';
+
+            var html = '<span class="player-summary"><label title="' + playerCountLabel + '">' + gameInfo.children('numplayers').text() + '</label> / <label title="' + playerMaxLabel + '">' + gameInfo.children('maxplayers').text() + '</label></span> ';
+
+            html += '<label title="' + serverMetadataLabel + '"><span class="name">' + info.find('name').text() + '</span></label> ';
+            html += '<label title="' + gameMetadataLabel + '"><span class="game-mode">' + gameInfo.children('mode').text() + '</span></label>';
+
+            return '<span class="server">' + html + '</span>';
+        }
+    });
+});
+
+</script><div id="servers"></div><?php
+
     }
 
     private function buildTabs($tabs, $page=NULL, $normalClassName=NULL, $selectClassName=NULL)
@@ -456,7 +646,7 @@ class FrontController
         $rightTabs[] = array('page'=>'/masterserver', 'label'=>'Servers', 'tooltip'=>'Doomsday Engine Master Server');
 
 ?>
-        <div id="menuouter"><div id="menu" class="hnav">
+        <div id="menuouter"><nav id="menu" class="hnav">
         <div id="divider"></div>
             <ul><section class="left">
 <?php
@@ -468,250 +658,26 @@ class FrontController
 ?></section>
             </ul>
         <div id="divider2"></div>
-        </div></div>
+        </nav></div>
 <?php
     }
 
-    public function beginPage($mainHeading='', $page=null)
+    private function outputTopPanel()
     {
 ?>
-<body>
-<div id="mainouter">
-    <div id="main">
-<?php
-
-        $this->outputMainMenu($page);
-
-?>
-        <div id="maininner">
-            <div id="framepanel_bottom">
-                <div id="pageheading">
-                    <h1><?php
-
-        if(strlen($mainHeading) > 0)
-            echo htmlspecialchars($mainHeading);
-        else
-            echo $this->siteTitle();
-
-?></h1>
-                </div>
-<?php
-    }
-
-    public function endPage()
-    {
-?>
-            </div>
-            <div class="framepanel" id="framepanel_top">
-<?php
-
-        $this->outputTopPanel();
-
-?>              <div id="projectnews"><?php
-
-        $this->outputNewsFeed();
-
-        $this->outputBuildsFeed();
-
-        $this->outputDevBlogFeed();
-
-?>              </div><?php
-
-?>              <div id="servers"><?php
-
-        $this->outputMasterStatus();
-
-?>              </div><?php
-
-?>
-            </div>
-        </div>
+    <div id="panorama">
     </div>
-</div>
-<div id="footer">
 <?php
+    }
 
-        $this->outputFooter();
-
+    private function outputFooter()
+    {
 ?>
-</div>
-<div id="libicons">
+<p class="disclaimer"><a href="mailto:webmaster@dengine.net" title="Contact Webmaster">Webmaster</a> - Site design &copy; <?php echo date('Y'); ?> <a href="mailto:<?php echo $this->siteDesignerEmail(); ?>" title="Contact <?php echo $this->siteDesigner(); ?>"><?php echo $this->siteDesigner(); ?></a> - Built by <a href="mailto:<?php echo $this->siteDesignerEmail(); ?>" title="Contact <?php echo $this->siteDesigner(); ?>"><?php echo $this->siteDesigner(); ?></a> / <a href="mailto:<?php echo $this->siteAuthorEmail(); ?>" title="Contact <?php echo $this->siteAuthor(); ?>"><?php echo $this->siteAuthor(); ?></a></p>
+<p class="disclaimer">The Doomsday Engine is licensed under the terms of the <a href="http://www.gnu.org/licenses/gpl.html" rel="nofollow">GNU/GPL License ver 2</a>. The Doomsday Engine logo is Copyright &copy; 2005-<?php echo date('Y'); ?>, the deng team.</p>
+<hr />
 <?php
 
-        // Output the lib icons (OpenGL, SDL etc).
-        includeHTML('libraryicons');
-
-?>
-</div>
-</body>
-</html>
-<?php
-    }
-
-    public function outputHeader($mainHeading='')
-    {
-        $siteTitle = $this->siteTitle();
-        if(strlen($mainHeading) > 0)
-            $siteTitle = "$mainHeading &bull; $siteTitle";
-
-        header('Content-type: text/html; charset=utf-8');
-        header('X-Frame-Options: SAMEORIGIN');
-
-?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
-<head>
-    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
-    <link rel="icon" href="http://dl.dropbox.com/u/11948701/dengine.net/images/favicon.png" type="image/png" />
-    <link rel="shortcut icon" href="http://dl.dropbox.com/u/11948701/dengine.net/images/favicon.png" type="image/png" />
-    <link rel="alternate" type="application/rss+xml" title="Doomsday Engine RSS News Feed" href="http://dengine.net/forums/rss.php?mode=news" />
-    <meta http-equiv="expires" content="0" />
-    <meta name="resource-type" content="DOCUMENT" />
-    <meta name="distribution" content="GLOBAL" />
-    <meta name="author" content="<?=$this->siteAuthor()?>" />
-    <meta name="copyright" content="<?=$this->siteCopyright()?>" />
-    <meta name="keywords" content="<?php { $keywords = $this->defaultPageKeywords(); foreach($keywords as $keyword) echo $keyword.','; } ?>" />
-    <meta name="description" content="<?=$this->siteDescription()?>" />
-    <meta name="robots" content="INDEX, FOLLOW" />
-    <meta name="revisit-after" content="<?=$this->robotRevisitDays()?> DAYS" />
-    <meta name="rating" content="GENERAL" />
-    <meta name="generator" content="<?=$this->homeURL()?>" />
-    <title><?=$siteTitle?></title>
-
-    <!-- jQuery -->
-    <script type="text/javascript" src="/external/jquery/js/jquery-1.6.2.min.js"></script>
-
-    <!-- jCarousel -->
-    <script type="text/javascript" src="/external/jquery.jcarousel/js/jquery.jcarousel.min.js"></script>
-    <link rel="stylesheet" type="text/css" href="/external/jquery.jcarousel/skin.css" />
-
-    <!-- Thickbox 3 -->
-    <script type="text/javascript" src="/external/thickbox/js/thickbox.js"></script>
-    <link rel="stylesheet" type="text/css" href="/external/thickbox/thickbox.css" />
-
-    <meta http-equiv="content-style-type" content="text/css" />
-    <link rel="stylesheet" href="/style.css" type="text/css" media="all" />
-</head>
-<?php
-    }
-
-    public function interpretRequest()
-    {
-        // Determine action:
-        try
-        {
-            // Maybe a plugin?
-            $this->plugins()->interpretRequest($this->_request);
-
-            foreach($this->_actions as $ActionRecord)
-            {
-                try
-                {
-                    $ActionRecord['actioner']->execute($ActionRecord['args']);
-                }
-                catch(Exception $e)
-                {
-                    throw $e; // Lets simply re-throw and abort for now.
-                }
-            }
-        }
-        catch(Exception $e)
-        {
-            // We'll show the homepage.
-            $this->enqueueAction($this->findPlugin('home'), NULL);
-        }
-    }
-
-    public function contentCache()
-    {
-        if(!is_object($this->_contentCache))
-        {
-            $this->_contentCache = new ContentCache(DIR_CACHE);
-        }
-
-        return $this->_contentCache;
-    }
-
-    public static function absolutePath($path)
-    {
-        return $_SERVER['DOCUMENT_ROOT'] . self::nativePath('/'.$path);
-    }
-
-    public static function nativePath($path)
-    {
-        $path = str_replace(array('/', '\\'), DIRECTORY_SEPARATOR, $path);
-
-        $result = array();
-        $pathA = explode(DIRECTORY_SEPARATOR, $path);
-        if(!$pathA[0])
-            $result[] = '';
-        foreach($pathA AS $key => $dir)
-        {
-            if($dir == '..')
-            {
-                if(end($result) == '..')
-                {
-                    $result[] = '..';
-                }
-                else if(!array_pop($result))
-                {
-                    $result[] = '..';
-                }
-            }
-            else if($dir && $dir != '.')
-            {
-                $result[] = $dir;
-            }
-        }
-
-        if(!end($pathA))
-            $result[] = '';
-
-        return implode(DIRECTORY_SEPARATOR, $result);
-    }
-
-    public static function ErrorHandler($errno, $errmsg, $filename, $linenum, $vars)
-    {
-        $errortype = array (
-                    E_ERROR              => 'Error',
-                    E_WARNING            => 'Warning',
-                    E_PARSE              => 'Parsing Error',
-                    E_NOTICE             => 'Notice',
-                    E_CORE_ERROR         => 'Core Error',
-                    E_CORE_WARNING       => 'Core Warning',
-                    E_COMPILE_ERROR      => 'Compile Error',
-                    E_COMPILE_WARNING    => 'Compile Warning',
-                    E_USER_ERROR         => 'User Error',
-                    E_USER_WARNING       => 'User Warning',
-                    E_USER_NOTICE        => 'User Notice',
-                    E_STRICT             => 'Runtime Notice'
-                    );
-
-        // Log it?
-        if(ini_get('log_errors'))
-        {
-            error_log(sprintf("PHP %s:  %s in %s on line %d",
-                              isset($errortype[$errno])? $errortype[$errno] : "$errno", $errmsg, $filename, $linenum));
-        }
-
-        // Display it?
-        if(ini_get('display_errors'))
-        {
-            printf("<br />\n<b>%s</b>: %s in <b>%s</b> on line <b>%d</b><br /><br />\n",
-                   $errortype[$errno], $errmsg, $filename, $linenum);
-
-            return true;
-        }
-
-        switch($errno)
-        {
-        case E_NOTICE:
-        case E_USER_NOTICE:
-        case E_USER_WARNING:
-        case E_STRICT:
-            return true;
-
-        default:
-            exit(); // Get out of here!
-        }
+        includeHTML('legal');
     }
 }

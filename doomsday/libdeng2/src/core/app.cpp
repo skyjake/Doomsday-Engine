@@ -66,6 +66,7 @@ DENG2_PIMPL(App)
 
     FileSystem fs;
     ScriptSystem scriptSys;
+    Record appModule;
 
     /// Archive where persistent data should be stored. Written to /home/persist.pack.
     /// The archive is owned by the file system.
@@ -90,6 +91,10 @@ DENG2_PIMPL(App)
         // Built-in systems.
         systems.append(&fs);
         systems.append(&scriptSys);
+
+        // Native App module.
+        appModule.addArray("audienceForGameChange"); // game change observers
+        scriptSys.addNativeModule("App", appModule);
     }
 
     ~Instance()
@@ -350,6 +355,17 @@ void App::initSubsystems(SubsystemInitFlags flags)
 
     d->config->read();
 
+    // Immediately after upgrading, OLD_VERSION is also present in the Version module.
+    Version oldVer = d->config->upgradedFromVersion();
+    if(oldVer != Version())
+    {
+        ArrayValue *old = new ArrayValue;
+        *old << NumberValue(oldVer.major) << NumberValue(oldVer.minor)
+             << NumberValue(oldVer.patch) << NumberValue(oldVer.build);
+        d->scriptSys.nativeModule("Version").addArray("OLD_VERSION", old).setReadOnly();
+    }
+
+    // Set up the log buffer.
     LogBuffer &logBuf = LogBuffer::appBuffer();
 
     // Update the log buffer max entry count: number of items to hold in memory.

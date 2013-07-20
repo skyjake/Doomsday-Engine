@@ -38,6 +38,7 @@
 #include "ui/widgets/busywidget.h"
 #include "ui/widgets/taskbarwidget.h"
 #include "ui/widgets/consolewidget.h"
+#include "ui/widgets/notificationwidget.h"
 #include "ui/widgets/gameselectionwidget.h"
 #include "ui/commandaction.h"
 #include "ui/mouse_qt.h"
@@ -65,10 +66,15 @@ public IGameChangeObserver
     GuiRootWidget root;
     LegacyWidget *legacy;
     TaskBarWidget *taskBar;
+    NotificationWidget *notifications;
     LabelWidget *background;
     GameSelectionWidget *games;
 
     GuiRootWidget busyRoot;
+
+    // FPS notifications.
+    LabelWidget *fpsCounter;
+    float oldFps;
 
     Instance(Public *i)
         : Base(i),
@@ -78,9 +84,12 @@ public IGameChangeObserver
           root(thisPublic),
           legacy(0),
           taskBar(0),
+          notifications(0),
           background(0),
           games(0),
-          busyRoot(thisPublic)
+          busyRoot(thisPublic),
+          fpsCounter(0),
+          oldFps(0)
     {
         /// @todo The decision whether to receive input notifications from the
         /// canvas is really a concern for the input drivers.
@@ -104,9 +113,11 @@ public IGameChangeObserver
 
     void setupUI()
     {
+        Style &style = ClientApp::windowSystem().style();
+
         // Background for Ring Zero.
         background = new LabelWidget;
-        background->setImage(ClientApp::windowSystem().style().images().image("window.background"));
+        background->setImage(style.images().image("window.background"));
         background->setImageFit(ui::FitToSize);
         background->setSizePolicy(ui::Filled, ui::Filled);
         background->setMargin("");
@@ -129,9 +140,20 @@ public IGameChangeObserver
                 .setInput(Rule::AnchorX, root.viewLeft() + root.viewWidth() / 2)
                 .setInput(Rule::AnchorY, root.viewTop() + root.viewHeight() / 2)
                 .setInput(Rule::Width,   OperatorRule::minimum(root.viewWidth(), Const(800)))
-                .setInput(Rule::Height,  OperatorRule::minimum(root.viewHeight(), Const(600)))
                 .setAnchorPoint(Vector2f(.5f, .5f));
         root.add(games);
+
+        // Common notification area.
+        notifications = new NotificationWidget;
+        notifications->rule()
+                .setInput(Rule::Top,   root.viewTop()   + style.rules().rule("gap") - notifications->shift())
+                .setInput(Rule::Right, root.viewRight() - style.rules().rule("gap"));
+        root.add(notifications);
+
+        // FPS counter for the notification area.
+        fpsCounter = new LabelWidget;
+        fpsCounter->setSizePolicy(ui::Expand, ui::Expand);
+        fpsCounter->setAlignment(ui::AlignRight);
 
         // Taskbar is over almost everything else.
         taskBar = new TaskBarWidget;
@@ -140,6 +162,12 @@ public IGameChangeObserver
                 .setInput(Rule::Bottom, root.viewBottom() + taskBar->shift())
                 .setInput(Rule::Width,  root.viewWidth());
         root.add(taskBar);
+
+        // The game selection's height depends on the taskbar.
+        games->rule().setInput(Rule::Height,
+                               OperatorRule::minimum(root.viewHeight(),
+                                                     (taskBar->rule().top() - root.viewHeight() / 2) * 2,
+                                                     Const(600)));
 
         // Initially the widget is disabled. It will be enabled when the window
         // is visible and ready to be drawn.
@@ -176,7 +204,7 @@ public IGameChangeObserver
 
     void setMode(Mode const &newMode)
     {
-        LOG_VERBOSE("Switching to %s mode") << (newMode == Busy? "Busy" : "Normal");
+        LOG_DEBUG("Switching to %s mode") << (newMode == Busy? "Busy" : "Normal");
 
         mode = newMode;
     }
@@ -290,6 +318,17 @@ public IGameChangeObserver
         ev.focus.inWindow = 1; /// @todo Ask WindowSystem for an identifier number.
         DD_PostEvent(&ev);
     }
+
+    void updateFpsNotification(float fps)
+    {       
+        notifications->showOrHide(fpsCounter, self.isFPSCounterVisible());
+
+        if(!fequal(oldFps, fps))
+        {
+            fpsCounter->setText(QString("%1 "_E(l)"FPS").arg(fps, 0, 'f', 1));
+            oldFps = fps;
+        }
+    }
 };
 
 ClientWindow::ClientWindow(String const &id)
@@ -321,6 +360,16 @@ TaskBarWidget &ClientWindow::taskBar()
 ConsoleWidget &ClientWindow::console()
 {
     return d->taskBar->console();
+}
+
+NotificationWidget &ClientWindow::notifications()
+{
+    return *d->notifications;
+}
+
+bool ClientWindow::isFPSCounterVisible() const
+{
+    return App::config().getb(configName("showFps"));
 }
 
 void ClientWindow::setMode(Mode const &mode)
@@ -386,6 +435,7 @@ void ClientWindow::canvasGLDraw(Canvas &canvas)
     ClientApp::app().postFrame(); /// @todo what about multiwindow?
 
     PersistentCanvasWindow::canvasGLDraw(canvas);
+    d->updateFpsNotification(frameRate());
 }
 
 void ClientWindow::canvasGLResized(Canvas &canvas)
@@ -532,3 +582,8 @@ void GL_AssertContextActive()
     DENG_ASSERT(QGLContext::currentContext() != 0);
 }
 #endif
+
+void ClientWindow::toggleFPSCounter()
+{
+    App::config().set(configName("showFps"), !isFPSCounterVisible());
+}

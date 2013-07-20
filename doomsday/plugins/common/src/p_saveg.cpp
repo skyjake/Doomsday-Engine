@@ -2889,8 +2889,10 @@ static int SV_ReadPolyObj()
     angle_t angle = angle_t(SV_ReadLong());
     P_PolyobjRotate(po, angle);
     po->destAngle = angle;
-    P_PolyobjMoveXY(po, FIX2FLT(SV_ReadLong()) - po->origin[VX],
-                        FIX2FLT(SV_ReadLong()) - po->origin[VY]);
+
+    float const origX = FIX2FLT(SV_ReadLong());
+    float const origY = FIX2FLT(SV_ReadLong());
+    P_PolyobjMoveXY(po, origX - po->origin[VX], origY - po->origin[VY]);
 
     /// @todo What about speed? It isn't saved at all?
 
@@ -2935,9 +2937,10 @@ static void readMapElements()
 #if __JHEXEN__
     // Load polyobjects.
     SV_AssertSegment(ASEG_POLYOBJS);
-    DENG_ASSERT(SV_ReadLong() == numpolyobjs);
 
-    for(int i = 0; i < numpolyobjs; ++i)
+    long const writtenPolyobjCount = SV_ReadLong();
+    DENG_ASSERT(writtenPolyobjCount == numpolyobjs);
+    for(int i = 0; i < writtenPolyobjCount; ++i)
         SV_ReadPolyObj();
 #endif
 }

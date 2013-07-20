@@ -1154,18 +1154,18 @@ void R_ProjectSprite(mobj_t *mo)
         floorClip += R_GetBobOffset(mo);
     }
 
-    if(mf && !mf->sub.empty())
+    if(mf)
     {
         // Determine the rotation angles (in degrees).
-        if(mf->sub[0].flags & MFF_ALIGN_YAW)
+        if(mf->testSubFlag(0, MFF_ALIGN_YAW))
         {
             yaw = 90 - thangle / PI * 180;
         }
-        else if(mf->sub[0].flags & MFF_SPIN)
+        else if(mf->testSubFlag(0, MFF_SPIN))
         {
             yaw = modelSpinSpeed * 70 * ddMapTime + MOBJ_TO_ID(mo) % 360;
         }
-        else if(mf->sub[0].flags & MFF_MOVEMENT_YAW)
+        else if(mf->testSubFlag(0, MFF_MOVEMENT_YAW))
         {
             yaw = R_MovementXYYaw(mo->mom[MX], mo->mom[MY]);
         }
@@ -1175,20 +1175,20 @@ void R_ProjectSprite(mobj_t *mo)
         }
 
         // How about a unique offset?
-        if(mf->sub[0].flags & MFF_IDANGLE)
+        if(mf->testSubFlag(0, MFF_IDANGLE))
         {
             // Add an arbitrary offset.
             yaw += MOBJ_TO_ID(mo) % 360;
         }
 
-        if(mf->sub[0].flags & MFF_ALIGN_PITCH)
+        if(mf->testSubFlag(0, MFF_ALIGN_PITCH))
         {
             coord_t delta[2];
             delta[0] = (vis->origin[VZ] + gzt) / 2 - viewData->current.origin[VZ];
             delta[1] = distance;
             pitch = -BANG2DEG(bamsAtan2(delta[0] * 10, delta[1] * 10));
         }
-        else if(mf->sub[0].flags & MFF_MOVEMENT_PITCH)
+        else if(mf->testSubFlag(0, MFF_MOVEMENT_PITCH))
         {
             pitch = R_MovementXYZPitch(mo->mom[MX], mo->mom[MY], mo->mom[MZ]);
         }
@@ -1293,7 +1293,7 @@ void R_ProjectSprite(mobj_t *mo)
                                      mo->bspLeaf, mo->ddFlags,
                                      mo->tmap,
                                      viewAlign,
-                                     fullBright && !(mf && !mf->sub.empty() && (mf->sub[0].flags & MFF_DIM)),
+                                     fullBright && !(mf && mf->testSubFlag(0, MFF_DIM)),
                                      false);
     }
 

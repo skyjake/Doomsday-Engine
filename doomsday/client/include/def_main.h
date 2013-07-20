@@ -110,7 +110,8 @@ ded_detailtexture_t* Def_GetDetailTex(Uri const *uri, /*bool hasExternal,*/ bool
 ded_ptcgen_t*   Def_GetGenerator(Uri const *uri);
 ded_ptcgen_t*   Def_GetDamageGenerator(int mobjType);
 
-int             Def_EvalFlags(char* string);
+int             Def_EvalFlags2(char const *string);
+int             Def_EvalFlags(char *string);
 
 /**
  * @return  @c true= the definition was found.

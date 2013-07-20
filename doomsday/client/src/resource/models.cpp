@@ -920,9 +920,9 @@ float Models_ModelForMobj(mobj_t* mo, modeldef_t** modef, modeldef_t** nextmodef
  */
 static void scaleModel(modeldef_t &mf, float destHeight, float offset)
 {
-    if(mf.sub.empty()) return;
+    if(!mf.subCount()) return;
 
-    submodeldef_t &smf = mf.sub[0];
+    submodeldef_t &smf = mf.subModelDef(0);
 
     // No model to scale?
     if(!smf.modelId) return;
@@ -955,16 +955,18 @@ static void scaleModelToSprite(modeldef_t &mf, int sprite, int frame)
 
 static float calcModelVisualRadius(modeldef_t *def)
 {
-    if(!def || def->sub.empty() || !def->sub[0].modelId) return 0;
+    if(!def || !def->subModelId(0)) return 0;
 
     // Use the first frame bounds.
     float min[3], max[3];
     float maxRadius = 0;
-    for(uint i = 0; i < def->sub.size(); ++i)
+    for(uint i = 0; i < def->subCount(); ++i)
     {
-        if(!def->sub[i].modelId) break;
+        if(!def->subModelId(i)) break;
 
-        Models_ToModel(def->sub[i].modelId)->frame(def->sub[i].frame).getBounds(min, max);
+        SubmodelDef &sub = def->subModelDef(i);
+
+        Models_ToModel(sub.modelId)->frame(sub.frame).getBounds(min, max);
 
         // Half the distance from bottom left to top right.
         float radius = (def->scale[VX] * (max[VX] - min[VX]) +
@@ -1071,9 +1073,9 @@ static void setupModel(ded_model_t& def)
 
     // Submodels.
     modef->clearSubs();
-    for(uint i = 0; i < def.sub.size(); ++i)
+    for(uint i = 0; i < def.subCount(); ++i)
     {
-        ded_submodel_t const *subdef = &def.sub[i];
+        ded_submodel_t const *subdef = &def.sub(i);
         submodeldef_t *sub = modef->addSub();
 
         sub->modelId = 0;
@@ -1099,37 +1101,37 @@ static void setupModel(ded_model_t& def)
             sub->blendMode = subdef->blendMode;
 
             // Submodel-specific flags cancel out model-scope flags!
-            sub->flags = modelScopeFlags ^ subdef->flags;
+            sub->setFlags(modelScopeFlags ^ subdef->flags);
 
             // Flags may override alpha and/or blendmode.
-            if(sub->flags & MFF_BRIGHTSHADOW)
+            if(sub->testFlag(MFF_BRIGHTSHADOW))
             {
                 sub->alpha = byte(256 * .80f);
                 sub->blendMode = BM_ADD;
             }
-            else if(sub->flags & MFF_BRIGHTSHADOW2)
+            else if(sub->testFlag(MFF_BRIGHTSHADOW2))
             {
                 sub->blendMode = BM_ADD;
             }
-            else if(sub->flags & MFF_DARKSHADOW)
+            else if(sub->testFlag(MFF_DARKSHADOW))
             {
                 sub->blendMode = BM_DARK;
             }
-            else if(sub->flags & MFF_SHADOW2)
+            else if(sub->testFlag(MFF_SHADOW2))
             {
                 sub->alpha = byte(256 * .2f);
             }
-            else if(sub->flags & MFF_SHADOW1)
+            else if(sub->testFlag(MFF_SHADOW1))
             {
                 sub->alpha = byte(256 * .62f);
             }
 
             // Extra blendmodes:
-            if(sub->flags & MFF_REVERSE_SUBTRACT)
+            if(sub->testFlag(MFF_REVERSE_SUBTRACT))
             {
                 sub->blendMode = BM_REVERSE_SUBTRACT;
             }
-            else if(sub->flags & MFF_SUBTRACT)
+            else if(sub->testFlag(MFF_SUBTRACT))
             {
                 sub->blendMode = BM_SUBTRACT;
             }
@@ -1189,7 +1191,7 @@ static void setupModel(ded_model_t& def)
             }
 
             // Should we allow texture compression with this model?
-            if(sub->flags & MFF_NO_TEXCOMP)
+            if(sub->testFlag(MFF_NO_TEXCOMP))
             {
                 // All skins of this model will no longer use compression.
                 mdl->allowTexComp = false;
@@ -1206,7 +1208,7 @@ static void setupModel(ded_model_t& def)
     {
         scaleModel(*modef, modef->resize, modef->offset[VY]);
     }
-    else if(modef->state && !modef->sub.empty() && modef->sub[0].flags & MFF_AUTOSCALE)
+    else if(modef->state && modef->testSubFlag(0, MFF_AUTOSCALE))
     {
         int sprNum   = Def_GetSpriteNum(def.sprite.id);
         int sprFrame = def.spriteFrame;
@@ -1246,9 +1248,10 @@ static void setupModel(ded_model_t& def)
 
     // Calculate the particle offset for each submodel.
     float min[3], max[3];
-    for(uint i = 0; i < modef->sub.size(); ++i)
+    for(uint i = 0; i < modef->subCount(); ++i)
     {
-        SubmodelDef *sub = &modef->sub[i];
+        SubmodelDef *sub = &modef->subModelDef(i);
+        de::Vector3f off;
         if(sub->modelId)
         {
             Models_ToModel(sub->modelId)->frame(sub->frame).getBounds(min, max);
@@ -1256,14 +1259,10 @@ static void setupModel(ded_model_t& def)
             // Apply the various scalings and offsets.
             for(int k = 0; k < 3; ++k)
             {
-                modef->ptcOffset[i][k] =
-                    ((max[k] + min[k]) / 2 + sub->offset[k]) * modef->scale[k] + modef->offset[k];
+                off[k] = ((max[k] + min[k]) / 2 + sub->offset[k]) * modef->scale[k] + modef->offset[k];
             }
         }
-        else
-        {
-            modef->ptcOffset[i] = de::Vector3f();
-        }
+        modef->setParticleOffset(i, off);
     }
 
     // Calculate visual radius for shadows.
@@ -1423,9 +1422,9 @@ void Models_Cache(modeldef_t *modef)
 {
     if(!modef) return;
 
-    for(uint sub = 0; sub < modef->sub.size(); ++sub)
+    for(uint sub = 0; sub < modef->subCount(); ++sub)
     {
-        submodeldef_t &subdef = modef->sub[sub];
+        submodeldef_t &subdef = modef->subModelDef(sub);
         model_t *mdl = Models_ToModel(subdef.modelId);
         if(!mdl) continue;
 

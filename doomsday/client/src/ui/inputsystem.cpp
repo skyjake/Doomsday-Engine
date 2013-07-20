@@ -17,17 +17,56 @@
  */
 
 #include "de_platform.h"
+#include "clientapp.h"
 #include "ui/inputsystem.h"
 #include "ui/dd_input.h"
 #include "ui/sys_input.h"
+#include "ui/b_main.h"
 #include "con_main.h"
+
+#include <de/Record>
+#include <de/NumberValue>
 
 using namespace de;
 
+static Value *Binding_InputSystem_BindEvent(Context &, Function::ArgumentValues const &args)
+{
+    // We must have two arguments.
+    if(args.size() != 2)
+    {
+        throw Function::WrongArgumentsError("Binding_InputSystem_BindEvent",
+                                            "Expected two arguments");
+    }
+
+    String eventDesc = args[0]->asText();
+    String command   = args[1]->asText();
+
+    if(B_BindCommand(eventDesc.toLatin1(), command.toLatin1()))
+    {
+        // Success.
+        return new NumberValue(true);
+    }
+
+    // Failed to create the binding...
+    return new NumberValue(false);
+}
+
 DENG2_PIMPL(InputSystem)
 {
+    Record *scriptBindings;
+
     Instance(Public *i) : Base(i)
     {
+        // Initialize script bindings.
+        Function::registerNativeEntryPoint("InputSystem_BindEvent", Binding_InputSystem_BindEvent);
+
+        scriptBindings = new Record;
+        scriptBindings->addFunction("bindEvent",
+                refless(new Function("InputSystem_BindEvent",
+                                     Function::Arguments() << "event" << "command"))).setReadOnly();
+
+        App::scriptSystem().addNativeModule("Input", *scriptBindings);
+
         // Initialize the system.
         DD_InitInput();
 
@@ -44,6 +83,10 @@ DENG2_PIMPL(InputSystem)
         // Shutdown.
         I_ShutdownInputDevices();
         I_Shutdown();
+
+        // Deinit script bindings.
+        delete scriptBindings; // App observes
+        Function::unregisterNativeEntryPoint("InputSystem_BindEvent");
     }
 };
 

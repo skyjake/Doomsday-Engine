@@ -348,9 +348,10 @@ boolean P_GivePower(player_t* player, powertype_t power)
 /**
  * Removes the MF_SPECIAL flag, and initiates the item pickup animation.
  */
-void P_SetDormantItem(mobj_t* mo)
+static void setDormantItem(mobj_t* mo)
 {
     mo->flags &= ~MF_SPECIAL;
+
     if(deathmatch && (mo->type != MT_ARTIINVULNERABILITY) &&
        (mo->type != MT_ARTIINVISIBILITY))
     {
@@ -360,8 +361,6 @@ void P_SetDormantItem(mobj_t* mo)
     {   // Don't respawn.
         P_MobjChangeState(mo, S_DEADARTI1);
     }
-
-    S_StartSound(SFX_ARTIUP, mo);
 }
 
 void C_DECL A_RestoreArtifact(mobj_t* mo)
@@ -598,7 +597,7 @@ static boolean giveItem(player_t* plr, itemtype_t item, int quantity)
 
         P_SetMessage(plr, 0, TXT_INV_HEALTH);
         if(!mapSetup)
-            S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+            S_ConsoleSound(SFX_ARTIUP, NULL, plr - players);
         break;
 
     case IT_ITEM_WINGS:
@@ -607,7 +606,7 @@ static boolean giveItem(player_t* plr, itemtype_t item, int quantity)
 
         P_SetMessage(plr, 0, TXT_INV_FLY);
         if(!mapSetup)
-            S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+            S_ConsoleSound(SFX_ARTIUP, NULL, plr - players);
         break;
 
     case IT_ITEM_INVUL:
@@ -616,7 +615,7 @@ static boolean giveItem(player_t* plr, itemtype_t item, int quantity)
 
         P_SetMessage(plr, 0, TXT_INV_INVULNERABILITY);
         if(!mapSetup)
-            S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+            S_ConsoleSound(SFX_ARTIUP, NULL, plr - players);
         break;
 
     case IT_ITEM_TOMB:
@@ -625,7 +624,7 @@ static boolean giveItem(player_t* plr, itemtype_t item, int quantity)
 
         P_SetMessage(plr, 0, TXT_INV_TOMEOFPOWER);
         if(!mapSetup)
-            S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+            S_ConsoleSound(SFX_ARTIUP, NULL, plr - players);
         break;
 
     case IT_ITEM_INVIS:
@@ -634,7 +633,7 @@ static boolean giveItem(player_t* plr, itemtype_t item, int quantity)
 
         P_SetMessage(plr, 0, TXT_INV_INVISIBILITY);
         if(!mapSetup)
-            S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+            S_ConsoleSound(SFX_ARTIUP, NULL, plr - players);
         break;
 
     case IT_ITEM_EGG:
@@ -643,7 +642,7 @@ static boolean giveItem(player_t* plr, itemtype_t item, int quantity)
 
         P_SetMessage(plr, 0, TXT_INV_EGG);
         if(!mapSetup)
-            S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+            S_ConsoleSound(SFX_ARTIUP, NULL, plr - players);
         break;
 
     case IT_ITEM_HEALTHSUPER:
@@ -652,7 +651,7 @@ static boolean giveItem(player_t* plr, itemtype_t item, int quantity)
 
         P_SetMessage(plr, 0, TXT_INV_SUPERHEALTH);
         if(!mapSetup)
-            S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+            S_ConsoleSound(SFX_ARTIUP, NULL, plr - players);
         break;
 
     case IT_ITEM_TORCH:
@@ -661,7 +660,7 @@ static boolean giveItem(player_t* plr, itemtype_t item, int quantity)
 
         P_SetMessage(plr, 0, TXT_INV_TORCH);
         if(!mapSetup)
-            S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+            S_ConsoleSound(SFX_ARTIUP, NULL, plr - players);
         break;
 
     case IT_ITEM_FIREBOMB:
@@ -670,7 +669,7 @@ static boolean giveItem(player_t* plr, itemtype_t item, int quantity)
 
         P_SetMessage(plr, 0, TXT_INV_FIREBOMB);
         if(!mapSetup)
-            S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+            S_ConsoleSound(SFX_ARTIUP, NULL, plr - players);
         break;
 
     case IT_ITEM_TELEPORT:
@@ -679,7 +678,7 @@ static boolean giveItem(player_t* plr, itemtype_t item, int quantity)
 
         P_SetMessage(plr, 0, TXT_INV_TELEPORT);
         if(!mapSetup)
-            S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+            S_ConsoleSound(SFX_ARTIUP, NULL, plr - players);
         break;
 
     case IT_AMMO_WAND:
@@ -875,7 +874,7 @@ void P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher)
     case IT_ITEM_TORCH:
     case IT_ITEM_FIREBOMB:
     case IT_ITEM_TELEPORT:
-        P_SetDormantItem(special);
+        setDormantItem(special);
         break;
 
     default:

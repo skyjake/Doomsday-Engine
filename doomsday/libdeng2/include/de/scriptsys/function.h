@@ -156,12 +156,6 @@ public:
      *                 is always a dictionary that contains the labeled values.
      *
      * @return Return value from the native function. Always a valid Value.
-     *
-     * @return @c false, if the context should proceed with the non-native
-     *         function call by creating a new execution context and running
-     *         the statements of the function there. @c true, if the
-     *         native call handles everything, including placing the
-     *         return value into the evaluator.
      */
     virtual Value *callNative(Context &context, ArgumentValues const &args) const;
 

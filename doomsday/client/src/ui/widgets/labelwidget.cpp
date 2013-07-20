@@ -410,8 +410,11 @@ LabelWidget::LabelWidget(String const &name) : GuiWidget(name), d(new Instance(t
 
 void LabelWidget::setText(String const &text)
 {
-    d->styledText = text;
-    d->wrapWidth = 0; // force rewrap
+    if(text != d->styledText)
+    {
+        d->styledText = text;
+        d->wrapWidth = 0; // force rewrap
+    }
 }
 
 void LabelWidget::setImage(Image const &image)

@@ -117,6 +117,7 @@ public:
 
     GuiRootWidget &root();
     GuiRootWidget &root() const;
+    Widget *parentWidget() const;
     Style const &style() const;
 
     /**
@@ -157,10 +158,11 @@ public:
     /**
      * Sets the opacity of the widget. Child widgets' opacity is also affected.
      *
-     * @param opacity  Opacity.
-     * @param span     Animation transition span.
+     * @param opacity     Opacity.
+     * @param span        Animation transition span.
+     * @param startDelay  Starting delay.
      */
-    void setOpacity(float opacity, de::TimeDelta span = 0);
+    void setOpacity(float opacity, de::TimeDelta span = 0, de::TimeDelta startDelay = 0);
 
     /**
      * Determines the widget's current opacity.
@@ -189,6 +191,15 @@ public:
     virtual bool hitTest(de::Vector2i const &pos) const;
 
     bool hitTest(de::Event const &event) const;
+
+    /**
+     * Returns the rule rectangle used for hit testing. Defaults to a rectangle
+     * equivalent to GuiWidget::rule(). Modify the hit test rule to allow
+     * widgets to be hittable outside their default boundaries.
+     *
+     * @return Hit test rule.
+     */
+    de::RuleRectangle &hitRule();
 
     enum MouseClickStatus {
         MouseClickUnrelated, ///< Event was not related to mouse clicks.

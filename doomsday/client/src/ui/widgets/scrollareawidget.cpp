@@ -358,7 +358,7 @@ bool ScrollAreaWidget::handleEvent(Event const &event)
             }
             else
             {
-                scrollY(d->y->animation().target() - pageSize, .3f);
+                scrollY(d->y->animation().target() - pageSize/2, .3f);
             }
             return true;
 
@@ -370,7 +370,7 @@ bool ScrollAreaWidget::handleEvent(Event const &event)
             }
             else
             {
-                scrollY(d->y->animation().target() + pageSize, .3f);
+                scrollY(d->y->animation().target() + pageSize/2, .3f);
             }
             return true;
 

@@ -480,6 +480,25 @@ void Path::operator << (Reader &from)
     set(String::fromUtf8(b), sep);
 }
 
+String Path::normalizeString(String const &text, QChar replaceWith)
+{
+    String result = text;
+    if(replaceWith != '/')
+    {
+        result.replace('/', replaceWith);
+    }
+    if(replaceWith != '\\')
+    {
+        result.replace('\\', replaceWith);
+    }
+    return result;
+}
+
+Path Path::normalize(String const &text, QChar replaceWith)
+{
+    return Path(normalizeString(text, replaceWith), replaceWith);
+}
+
 } // namespace de
 
 #ifdef _DEBUG

@@ -65,6 +65,13 @@ static void continueInitWithEventLoopRunning()
     WindowSystem::main().show();
 }
 
+Value *Binding_App_GamePlugin(Context &, Function::ArgumentValues const &)
+{
+    String name = Plug_FileForPlugin(App_CurrentGame().pluginId()).name().fileNameWithoutExtension();
+    if(name.startsWith("lib")) name.remove(0, 3);
+    return new TextValue(name);
+}
+
 DENG2_PIMPL(ClientApp)
 {
     QMenuBar *menuBar;
@@ -96,6 +103,21 @@ DENG2_PIMPL(ClientApp)
         delete inputSys;
         delete menuBar;
         clientAppSingleton = 0;
+
+        deinitScriptBindings();
+    }
+
+    void initScriptBindings()
+    {
+        Function::registerNativeEntryPoint("App_GamePlugin", Binding_App_GamePlugin);
+
+        self.scriptSystem().nativeModule("App")
+                .addFunction("gamePlugin", refless(new Function("App_GamePlugin"))).setReadOnly();
+    }
+
+    void deinitScriptBindings()
+    {
+        Function::unregisterNativeEntryPoint("App_GamePlugin");
     }
 
     /**
@@ -134,6 +156,8 @@ ClientApp::ClientApp(int &argc, char **argv)
 
     // We must presently set the current game manually (the collection is global).
     App_SetCurrentGame(d->games.nullGame());
+
+    d->initScriptBindings();
 }
 
 void ClientApp::initialize()
@@ -190,6 +214,9 @@ void ClientApp::initialize()
     d->inputSys = new InputSystem;
     addSystem(*d->inputSys);
     d->widgetActions.reset(new WidgetActions);
+
+    // Finally, run the bootstrap script.
+    scriptSystem().importModule("bootstrap");
 
     App_Timer(1, continueInitWithEventLoopRunning);
 }

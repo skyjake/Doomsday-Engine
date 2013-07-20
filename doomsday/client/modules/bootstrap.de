@@ -1,0 +1,52 @@
+# DOOMSDAY CLIENT BOOTSTRAP
+# 
+# This script is executed after the client application has been fully
+# initialized, immediately after subsystems are all ready. No game is
+# loaded at this stage, although all plugins have been enumerated.
+# The window is not yet visible -- no GL operations can be performed.
+# Config has already been loaded from persistent storage.
+
+import Version, App, Config
+
+def bindDefaultConsoleTildeKey()
+    import Input
+    Input.bindEvent("global:key-tilde-down+key-shift-up", "taskbar")
+    Input.bindEvent("console:key-tilde-down+key-shift-up", "taskbar")
+end
+
+def runPluginLoadHooks(newGame)
+    if newGame == 'null-game': return    
+    try
+        gameConf = Config.plugin[App.gamePlugin()]
+        for func in gameConf.onNextLoad: func()
+        # These are single-shot hooks.
+        gameConf.onNextLoad = []
+    catch: pass
+end
+
+def upgradeMaintenance()
+    if not 'OLD_VERSION' in Version: return
+    
+    # Ensure that the default Tilde binding is present when upgrading
+    # from an older version.
+    if Version.OLD_VERSION[3] < 920 and Version.BUILD >= 920
+        # Register a single-shot hook that ensures the binding is present
+        # after a game has been loaded the next time. This must be done
+        # per-plugin as the bindings are stored separately for each.
+        # Config is persistent so these will be remembered even after 
+        # shutting down the app.
+        for plug in dictvalues(subrecords(Config.plugin))
+            plug.onNextLoad += [bindDefaultConsoleTildeKey]
+        end
+    end
+end
+
+#
+# BOOT SEQUENCE
+#
+
+# During launch we will perform any necessary maintenance tasks.
+upgradeMaintenance()
+
+# Whenever a game is loaded, we'll run pending hooks.
+App.audienceForGameChange += [runPluginLoadHooks]

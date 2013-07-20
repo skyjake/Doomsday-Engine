@@ -57,6 +57,7 @@ public slots:
     void open(bool doAction = true);
     void close();
     void openMainMenu();
+    void toggleFPS();
 
 signals:
     void opened();

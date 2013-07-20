@@ -711,10 +711,9 @@ static void setupModelParamsForVisPSprite(rendmodelparams_t *params, vispsprite_
     params->ambientColor[CA] = spr->data.model.alpha;
 
     if((levelFullBright || spr->data.model.stateFullBright) &&
-       !(spr->data.model.mf->sub[0].flags & MFF_DIM))
+       !spr->data.model.mf->testSubFlag(0, MFF_DIM))
     {
-        params->ambientColor[CR] = params->ambientColor[CG] =
-            params->ambientColor[CB] = 1;
+        params->ambientColor[CR] = params->ambientColor[CG] = params->ambientColor[CB] = 1;
         params->vLightListIdx = 0;
     }
     else

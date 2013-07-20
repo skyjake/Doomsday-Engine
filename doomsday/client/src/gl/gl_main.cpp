@@ -91,13 +91,13 @@ static viewport_t currentView;
 
 static void videoFSAAChanged()
 {
-    if(novideo || !WindowSystem::haveMain()) return;
+    if(novideo || !WindowSystem::hasMain()) return;
     WindowSystem::main().updateCanvasFormat();
 }
 
 static void videoVsyncChanged()
 {
-    if(novideo || !WindowSystem::haveMain()) return;
+    if(novideo || !WindowSystem::hasMain()) return;
 
 #if defined(WIN32) || defined(MACOSX)
     GL_SetVSync(Con_GetByte("vid-vsync") != 0);

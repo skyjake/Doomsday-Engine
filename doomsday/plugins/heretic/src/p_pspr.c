@@ -1090,8 +1090,9 @@ void C_DECL A_FireGoldWandPL2(player_t* player, pspdef_t* psp)
     P_BulletSlope(mo);
     momZ = MOBJINFO[MT_GOLDWANDFX2].speed * bulletSlope;
 
-    P_SpawnMissileAngle(MT_GOLDWANDFX2, mo, mo->angle - (ANG45 / 8), momZ);
-    P_SpawnMissileAngle(MT_GOLDWANDFX2, mo, mo->angle + (ANG45 / 8), momZ);
+    Vanilla_P_SpawnMissileAngle(mo, MT_GOLDWANDFX2, mo->angle - (ANG45 / 8), momZ);
+    Vanilla_P_SpawnMissileAngle(mo, MT_GOLDWANDFX2, mo->angle + (ANG45 / 8), momZ);
+
     angle = mo->angle - (ANG45 / 8);
 
     for(i = 0; i < 5; ++i)
@@ -1581,7 +1582,7 @@ void C_DECL A_SkullRodStorm(mobj_t* actor)
     {
         mo->flags |= MF_BRIGHTSHADOW;
         mo->target = actor->target;
-        mo->mom[MX] = 1; // Force collision detection.
+        mo->mom[MX] = .0001; // Force collision detection.
         mo->mom[MZ] = -mo->info->speed;
         mo->special2 = actor->special2; // Transfer player number.
 

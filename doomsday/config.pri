@@ -118,6 +118,9 @@ CONFIG(debug, debug|release) {
     DEFINES += NDEBUG
 }
 
+# Debugging options.
+deng_fakememoryzone: DEFINES += LIBDENG_FAKE_MEMORY_ZONE
+
 # Check for Qt 5.
 greaterThan(QT_MAJOR_VERSION, 4): CONFIG += deng_qt5
 

@@ -115,7 +115,7 @@ public:
         return Rectangle<Vector2ui, Vector2ui>(tl, br);
     }
     bool contains(Corner const &point) const {
-        return point >= topLeft && point <= bottomRight;
+        return point >= topLeft && point < bottomRight;
     }
     bool contains(RectangleType const &other) const {
         return contains(other.topLeft) && contains(other.bottomRight);

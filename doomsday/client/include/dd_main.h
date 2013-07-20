@@ -37,6 +37,7 @@
 #include "resource/textures.h"
 #include "filesys/sys_direc.h"
 #include <de/c_wrapper.h>
+#include <de/LibraryFile>
 
 #include <QList>
 #include <QMap>
@@ -97,6 +98,8 @@ void Plug_LoadAll(void);
  * Unloads all plugins.
  */
 void Plug_UnloadAll(void);
+
+de::LibraryFile const &Plug_FileForPlugin(pluginid_t id);
 
 /**
  * Executes all the hooks of the given type. Bit zero of the return value
@@ -207,6 +210,8 @@ de::Games &App_Games();
 
 /// @return  The application's global World.
 de::World &App_World();
+
+bool App_HaveMaterials();
 
 /// @return  The application's global Materials (collection).
 de::Materials &App_Materials();

@@ -1,4 +1,4 @@
-<div id="latestversion"><h1></h1></div>
+<div id="latestversion"></div>
 <script type="text/javascript">
 // We'll take the version info from the latest stable Doomsday for Windows package.
 task = new Array();
@@ -12,11 +12,12 @@ var deferred = $.ajax({
     url: task['request'],
     data: task['data'],
     success: function(json){
-        var element = document.getElementById('latestversion');
-        if(element)
+        var ob = $('#latestversion');
+        if(ob)
         {
-            element = element.firstChild; // Move to the heading.
-            element.textContent = json.version;
+            ob.empty();
+            var html = '<h1><a href="http://sourceforge.net/project/platformdownload.php?group_id=74815" title="Download Doomsday Engine ' + json.version + ' (latest stable) for my platform">' + json.version + '</a></h1>';
+            ob.append(html);
         }
     }
 });

@@ -42,6 +42,7 @@ using namespace ui;
 
 DENG2_PIMPL(LogWidget),
 DENG2_OBSERVES(Atlas, Reposition),
+DENG2_OBSERVES(Atlas, OutOfSpace),
 public Font::RichFormat::IStyle
 {
     typedef GLBufferT<Vertex2TexRgba> VertexBuf;
@@ -73,6 +74,7 @@ public Font::RichFormat::IStyle
 
         ~CacheEntry()
         {
+            DENG2_GUARD(this);
             // Free atlas allocations.
             composer.release();
         }
@@ -329,6 +331,7 @@ public Font::RichFormat::IStyle
     VertexBuf *bgBuf;
     AtlasTexture *entryAtlas;
     bool entryAtlasLayoutChanged;
+    bool entryAtlasFull;
     Drawable contents;
     Drawable background;
     GLUniform uMvpMatrix;
@@ -350,6 +353,7 @@ public Font::RichFormat::IStyle
           buf(0),
           entryAtlas(0),
           entryAtlasLayoutChanged(false),
+          entryAtlasFull(false),
           uMvpMatrix  ("uMvpMatrix", GLUniform::Mat4),
           uTex        ("uTex",       GLUniform::Sampler2D),
           uShadowColor("uColor",     GLUniform::Vec4),
@@ -490,8 +494,10 @@ public Font::RichFormat::IStyle
         // Private atlas for the composed entry text lines.
         entryAtlas = AtlasTexture::newWithRowAllocator(
                 Atlas::BackingStore | Atlas::AllowDefragment,
-                GLTexture::maximumSize().min(Atlas::Size(2048, 1024)));
+                GLTexture::maximumSize().min(Atlas::Size(4096, 2048)));
+
         entryAtlas->audienceForReposition += this;
+        entryAtlas->audienceForOutOfSpace += this;
 
         // Simple texture for the scroll indicator.
         Image solidWhitePixel = Image::solidColor(Image::Color(255, 255, 255, 255),
@@ -532,6 +538,14 @@ public Font::RichFormat::IStyle
         {
             entryAtlasLayoutChanged = true;
             self.setIndicatorUv(entryAtlas->imageRectf(scrollTex).middle());
+        }
+    }
+
+    void atlasOutOfSpace(Atlas &atlas)
+    {
+        if(entryAtlas == &atlas)
+        {
+            entryAtlasFull = true;
         }
     }
 
@@ -621,6 +635,20 @@ public Font::RichFormat::IStyle
     }
 
     /**
+     * Releases all entries currently stored in the entry atlas.
+     */
+    void releaseAllNonVisibleEntries()
+    {
+        for(int i = 0; i < cache.size(); ++i)
+        {
+            if(!visibleRange.contains(i))
+            {
+                cache[i]->clear();
+            }
+        }
+    }
+
+    /**
      * Removes entries from the sink and the cache.
      */
     void prune()
@@ -682,10 +710,19 @@ public Font::RichFormat::IStyle
             cacheWidth = contentSize.x;
         }
 
+        // If the atlas becomes full, we'll retry once.
+        entryAtlasFull = false;
+
         VertexBuf::Builder verts;
 
         for(int attempt = 0; attempt < 2; ++attempt)
         {
+            if(entryAtlasFull)
+            {
+                releaseAllNonVisibleEntries();
+                entryAtlasFull = false;
+            }
+
             // Draw in reverse, as much as we need.
             int yBottom = contentSize.y + self.scrollPositionY().valuei();
             visibleRange = Rangei(-1, -1);
@@ -711,17 +748,20 @@ public Font::RichFormat::IStyle
                     }
                     visibleRange.start = idx;
                 }
+
+                if(entryAtlasLayoutChanged || entryAtlasFull)
+                {
+                    goto nextAttempt;
+                }
             }
 
-            if(entryAtlasLayoutChanged)
-            {
-                // Oops, the atlas was optimized during the loop and some items'
-                // positions are obsolete.
-                verts.clear();
-                continue;
-            }
-
+            // Successfully completed.
             break;
+
+nextAttempt:
+            // Oops, the atlas was optimized during the loop and some items'
+            // positions are obsolete.
+            verts.clear();
         }
 
         // Draw the scroll indicator, too.

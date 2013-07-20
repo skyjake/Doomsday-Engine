@@ -40,6 +40,7 @@
 
 class ConsoleWidget;
 class TaskBarWidget;
+class NotificationWidget;
 
 /**
  * Top-level window that contains a libdeng2 UI widgets. @ingroup gui
@@ -63,6 +64,7 @@ public:
     GuiRootWidget &root();
     TaskBarWidget &taskBar();
     ConsoleWidget &console();
+    NotificationWidget &notifications();
 
     /**
      * Sets the operating mode of the window. In Busy mode, the normal
@@ -104,6 +106,9 @@ public:
 
     void updateCanvasFormat();
 
+    // Notifications.
+    bool isFPSCounterVisible() const;
+
     // Events.
     void closeEvent(QCloseEvent *);
     void canvasGLReady(de::Canvas &);
@@ -112,6 +117,9 @@ public:
     void canvasGLResized(de::Canvas &);
 
     static ClientWindow &main();
+
+public slots:
+    void toggleFPSCounter();
 
 private:
     DENG2_PRIVATE(d)

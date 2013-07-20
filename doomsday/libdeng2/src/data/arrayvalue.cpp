@@ -22,6 +22,8 @@
 #include "de/TextValue"
 #include "de/Writer"
 #include "de/Reader"
+#include "de/FunctionValue"
+#include "de/Process"
 
 #include <algorithm>
 #include <QTextStream>
@@ -320,5 +322,14 @@ void ArrayValue::operator << (Reader &from)
     while(count--)
     {
         add(Value::constructFrom(from));
+    }
+}
+
+void ArrayValue::callElements(ArrayValue const &args)
+{
+    for(duint i = 0; i < size(); ++i)
+    {
+        Function const &func = at(i).as<FunctionValue>().function();
+        Process(func.globals()).call(func, args);
     }
 }

@@ -19,6 +19,8 @@
 
 #define DENG_NO_API_MACROS_MAP_EDIT
 
+#include <de/Error>
+#include <de/Log>
 #include <de/StringPool>
 
 #include "de_platform.h"
@@ -34,6 +36,11 @@
 #include "api_mapedit.h"
 
 using namespace de;
+
+#define ERROR_IF_NOT_INITIALIZED() { \
+if(!editMapInited) \
+    throw Error(QString("%s").arg(__FUNCTION__), "Not active, did you forget to call MPE_Begin()?"); \
+}
 
 static Map *editMap;
 static bool editMapInited;
@@ -60,7 +67,7 @@ static StringPool *materialDict;
  */
 static int printMissingMaterialWorker(StringPool::Id internId, void *parameters)
 {
-    uint *count = (uint *)parameters;
+    int *count = (int *)parameters;
 
     // A valid id?
     if(materialDict->string(internId))
@@ -79,8 +86,7 @@ static int printMissingMaterialWorker(StringPool::Id internId, void *parameters)
                 // Print mode.
                 int const refCount = materialDict->userValue(internId);
                 String const &materialUri = materialDict->string(internId);
-                QByteArray materialUriUtf8 = materialUri.toUtf8();
-                Con_Message(" %4u x \"%s\"", refCount, materialUriUtf8.constData());
+                LOG_MSG(" %4i x \"%s\"") << refCount << materialUri;
             }
         }
     }
@@ -108,11 +114,11 @@ static void printMissingMaterialsInDict()
     if(!materialDict) return;
 
     // Count missing materials.
-    uint numMissing = 0;
+    int numMissing = 0;
     materialDict->iterate(printMissingMaterialWorker, &numMissing);
     if(!numMissing) return;
 
-    Con_Message("  [110] Warning: Found %u unknown %s:", numMissing, numMissing == 1? "material":"materials");
+    LOG_WARNING("Found %i unknown %s:") << numMissing << (numMissing == 1? "material":"materials");
     // List the missing materials.
     materialDict->iterate(printMissingMaterialWorker, 0);
 }
@@ -126,17 +132,17 @@ static void printMissingMaterialsInDict()
  *
  * @return  Pointer to the found material; otherwise @c 0.
  */
-static Material *findMaterialInDict(ddstring_t const *materialUriStr)
+static Material *findMaterialInDict(String const &materialUriStr)
 {
-    if(!materialUriStr || Str_IsEmpty(materialUriStr)) return 0;
+    if(materialUriStr.isEmpty()) return 0;
 
-    // Are we yet to instantiate the dictionary?
+    // Time to create the dictionary?
     if(!materialDict)
     {
         materialDict = new StringPool;
     }
 
-    de::Uri materialUri(Str_Text(materialUriStr), RC_NULL);
+    de::Uri materialUri(materialUriStr, RC_NULL);
 
     // Intern this reference.
     StringPool::Id internId = materialDict->intern(materialUri.compose());
@@ -180,6 +186,12 @@ static Material *findMaterialInDict(ddstring_t const *materialUriStr)
     return material;
 }
 
+static inline Material *findMaterialInDict(ddstring_t const *materialUriStr)
+{
+    if(!materialUriStr) return 0;
+    return findMaterialInDict(Str_Text(materialUriStr));
+}
+
 Map *MPE_Map()
 {
     return editMapInited? editMap : 0;
@@ -187,24 +199,20 @@ Map *MPE_Map()
 
 Map *MPE_TakeMap()
 {
-    Map *retMap = editMap;
-    editMap = 0;
     editMapInited = false;
+    Map *retMap = editMap; editMap = 0;
     return retMap;
 }
 
 #undef MPE_Begin
 boolean MPE_Begin(uri_s const *mapUri)
 {
-    // Already been here?
-    if(editMapInited) return true;
-
-    if(editMap)
+    if(!editMapInited)
+    {
         delete editMap;
-
-    editMap = new Map(*reinterpret_cast<de::Uri const *>(mapUri));
-    editMapInited = true;
-
+        editMap = new Map(*reinterpret_cast<de::Uri const *>(mapUri));
+        editMapInited = true;
+    }
     return true;
 }
 
@@ -229,18 +237,20 @@ boolean MPE_End()
 #undef MPE_VertexCreate
 int MPE_VertexCreate(coord_t x, coord_t y, int archiveIndex)
 {
-    if(!editMapInited) return -1;
+    ERROR_IF_NOT_INITIALIZED();
     return editMap->createVertex(Vector2d(x, y), archiveIndex)->indexInMap();
 }
 
 #undef MPE_VertexCreatev
-boolean MPE_VertexCreatev(size_t num, coord_t *values, int *archiveIndices, int *retIndices)
+boolean MPE_VertexCreatev(int num, coord_t *values, int *archiveIndices, int *retIndices)
 {
-    if(!editMapInited || !num || !values)
+    ERROR_IF_NOT_INITIALIZED();
+
+    if(num <= 0 || !values)
         return false;
 
     // Create many vertexes.
-    for(size_t n = 0; n < num; ++n)
+    for(int n = 0; n < num; ++n)
     {
         Vertex *vertex = editMap->createVertex(Vector2d(values[n * 2], values[n * 2 + 1]),
                                                archiveIndices[n]);
@@ -257,7 +267,7 @@ boolean MPE_VertexCreatev(size_t num, coord_t *values, int *archiveIndices, int 
 int MPE_LineCreate(int v1, int v2, int frontSectorIdx, int backSectorIdx, int flags,
                    int archiveIndex)
 {
-    if(!editMapInited) return -1;
+    ERROR_IF_NOT_INITIALIZED();
 
     if(frontSectorIdx >= editMap->editableSectorCount()) return -1;
     if(backSectorIdx  >= editMap->editableSectorCount()) return -1;
@@ -286,7 +296,7 @@ void MPE_LineAddSide(int lineIdx, int sideId, short flags, ddstring_t const *top
     float bottomOffsetX, float bottomOffsetY, float bottomRed, float bottomGreen,
     float bottomBlue, int archiveIndex)
 {
-    if(!editMapInited) return;
+    ERROR_IF_NOT_INITIALIZED();
 
     if(lineIdx < 0 || lineIdx >= editMap->editableLineCount()) return;
 
@@ -319,7 +329,7 @@ int MPE_PlaneCreate(int sectorIdx, coord_t height, ddstring_t const *materialUri
     float matOffsetX, float matOffsetY, float tintRed, float tintGreen, float tintBlue, float opacity,
     float normalX, float normalY, float normalZ, int archiveIndex)
 {
-    if(!editMapInited) return -1;
+    ERROR_IF_NOT_INITIALIZED();
 
     if(sectorIdx < 0 || sectorIdx >= editMap->editableSectorCount()) return -1;
 
@@ -344,9 +354,9 @@ int MPE_PlaneCreate(int sectorIdx, coord_t height, ddstring_t const *materialUri
 int MPE_SectorCreate(float lightlevel, float red, float green, float blue,
                      int archiveIndex)
 {
-    if(!editMapInited) return -1;
+    ERROR_IF_NOT_INITIALIZED();
     return editMap->createSector(lightlevel, Vector3f(red, green, blue),
-                                archiveIndex)->indexInMap();
+                                 archiveIndex)->indexInMap();
 }
 
 #undef MPE_PolyobjCreate
@@ -355,7 +365,8 @@ int MPE_PolyobjCreate(int *lines, int lineCount, int tag, int sequenceType,
 {
     DENG_UNUSED(archiveIndex); /// @todo Use this!
 
-    if(!editMapInited) return -1;
+    ERROR_IF_NOT_INITIALIZED();
+
     if(lineCount <= 0 || !lines) return -1;
 
     // First check that all the line indices are valid and that they arn't
@@ -390,7 +401,7 @@ boolean MPE_GameObjProperty(char const *entityName, int elementIndex,
 {
     LOG_AS("MPE_GameObjProperty");
 
-    if(!editMapInited) return false;
+    ERROR_IF_NOT_INITIALIZED();
 
     if(!entityName || !propertyName || !valueAdr)
         return false; // Hmm...

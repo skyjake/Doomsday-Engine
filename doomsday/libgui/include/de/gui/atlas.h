@@ -111,6 +111,12 @@ public:
      */
     DENG2_DEFINE_AUDIENCE(Reposition, void atlasContentRepositioned(Atlas &))
 
+    /**
+     * Audience that will be notified when an allocation fails due to the atlas
+     * being so full that there is no room for the new image.
+     */
+    DENG2_DEFINE_AUDIENCE(OutOfSpace, void atlasOutOfSpace(Atlas &))
+
 public:
     /**
      * Constructs a new atlas.

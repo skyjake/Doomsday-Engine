@@ -67,6 +67,9 @@ public:
         /// Children cannot be hit outside this widget's boundaries.
         ChildHitClipping = 0x20,
 
+        /// No events will be dispatched to the children of the widget.
+        DisableEventDispatchToChildren = 0x40,
+
         DefaultBehavior = 0
     };
     Q_DECLARE_FLAGS(Behaviors, Behavior)
@@ -81,6 +84,18 @@ public:
 public:
     Widget(String const &name = "");
     virtual ~Widget();
+
+    template <typename Type>
+    Type &as() {
+        DENG2_ASSERT(dynamic_cast<Type *>(this) != 0);
+        return *static_cast<Type *>(this);
+    }
+
+    template <typename Type>
+    Type const &as() const {
+        DENG2_ASSERT(dynamic_cast<Type const *>(this) != 0);
+        return *static_cast<Type const *>(this);
+    }
 
     /**
      * Returns the automatically generated, unique identifier of the widget.
@@ -117,6 +132,13 @@ public:
      * @param operation  Operation to perform on the flags.
      */
     void setBehavior(Behaviors behavior, FlagOp operation = SetFlags);
+
+    /**
+     * Clears one or more behavior flags.
+     *
+     * @param behavior   Flags to unset.
+     */
+    void unsetBehavior(Behaviors behavior);
 
     Behaviors behavior() const;
 
@@ -161,6 +183,7 @@ public:
     Widget *find(String const &name);
     Widget const *find(String const &name) const;
     Children children() const;
+    dsize childCount() const;
     Widget *parent() const;
 
     // Utilities.

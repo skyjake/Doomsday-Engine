@@ -29,6 +29,7 @@
 
 #include "ui/ui_main.h"
 
+#include <de/App>
 #include <de/KeyEvent>
 #include <de/Drawable>
 #include <de/GLBuffer>
@@ -41,6 +42,7 @@ using namespace de;
 using namespace ui;
 
 DENG2_PIMPL(TaskBarWidget),
+DENG2_OBSERVES(Variable, Change),
 public IGameChangeObserver
 {
     typedef DefaultVertexBuf VertexBuf;
@@ -51,6 +53,7 @@ public IGameChangeObserver
     LabelWidget *status;
     PopupMenuWidget *mainMenu;
     ButtonWidget *panelItem;
+    ButtonWidget *fpsItem;
     ButtonWidget *unloadItem;
     ScalarRule *vertShift;
 
@@ -150,6 +153,17 @@ public IGameChangeObserver
             status->setText("No game loaded");
         }
     }
+
+    void variableValueChanged(Variable &, Value const &val)
+    {
+        // We are observing the value of the window's showFps variable.
+        updateFpsMenuItem();
+    }
+
+    void updateFpsMenuItem()
+    {
+        fpsItem->setText(ClientWindow::main().isFPSCounterVisible()? "Hide FPS" : "Show FPS");
+    }
 };
 
 TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
@@ -231,7 +245,8 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
     d->mainMenu = new PopupMenuWidget("de-menu");
     d->mainMenu->setAnchor(d->logo->rule().left() + d->logo->rule().width() / 2,
                            d->logo->rule().top());
-    d->panelItem  = d->mainMenu->addItem(_E(b) "Open Control Panel", new CommandAction("panel"));
+    d->fpsItem = d->mainMenu->addItem("", new SignalAction(this, SLOT(toggleFPS())));
+    d->panelItem = d->mainMenu->addItem(_E(b) "Open Control Panel", new CommandAction("panel"));
     d->mainMenu->addItem("Check for updates...", new CommandAction("updateandnotify"));
     d->unloadItem = d->mainMenu->addItem("Unload game", new CommandAction("unload"));
     d->mainMenu->addItem("Quit Doomsday", new CommandAction("quit"));
@@ -239,6 +254,10 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
 
     d->panelItem->hide();
     d->unloadItem->hide();
+    d->updateFpsMenuItem();
+
+    // Observe when the showFps variable changes.
+    App::config()["window.main.showFps"].audienceForChange += d;
 
     d->logo->setAction(new SignalAction(this, SLOT(openMainMenu())));
 }
@@ -302,6 +321,33 @@ void TaskBarWidget::drawContent()
 
 bool TaskBarWidget::handleEvent(Event const &event)
 {
+    Canvas &canvas = root().window().canvas();
+
+    if(!canvas.isMouseTrapped() && event.type() == Event::MouseButton)
+    {
+        // Clicking outside the taskbar will trap the mouse automatically.
+        MouseEvent const &mouse = event.as<MouseEvent>();
+        if(mouse.state() == MouseEvent::Released && !hitTest(mouse.pos()))
+        {
+            if(root().focus())
+            {
+                // First click will remove UI focus, allowing LegacyWidget
+                // to receive events.
+                root().setFocus(0);
+                return true;
+            }
+
+            if(App_GameLoaded())
+            {
+                // Allow game to use the mouse.
+                canvas.trapMouse();
+            }
+
+            root().window().taskBar().close();
+            return true;
+        }
+    }
+
     if(event.type() == Event::KeyPress)
     {
         KeyEvent const &key = event.as<KeyEvent>();
@@ -357,11 +403,12 @@ void TaskBarWidget::open(bool doAction)
     {
         d->opened = true;
 
+        unsetBehavior(DisableEventDispatchToChildren);
+
         d->console->clearLog();
 
         d->vertShift->set(0, .2f);
-        d->logo->setOpacity(1, .2f);
-        d->status->setOpacity(1, .2f);
+        setOpacity(1, .2f);
 
         emit opened();
 
@@ -397,13 +444,15 @@ void TaskBarWidget::close()
     {
         d->opened = false;
 
+        setBehavior(DisableEventDispatchToChildren);
+
         // Slide the task bar down.
         d->vertShift->set(rule().height().valuei() +
                           style().rules().rule("unit").valuei(), .2f);
-        d->logo->setOpacity(0, .2f);
-        d->status->setOpacity(0, .2f);
+        setOpacity(0, .2f);
 
         d->console->closeLog();
+        d->console->closeMenu();
         d->mainMenu->close();
 
         // Clear focus now; callbacks/signal handlers may set the focus elsewhere.
@@ -431,4 +480,9 @@ void TaskBarWidget::close()
 void TaskBarWidget::openMainMenu()
 {
     d->mainMenu->open();
+}
+
+void TaskBarWidget::toggleFPS()
+{
+    root().window().toggleFPSCounter();
 }

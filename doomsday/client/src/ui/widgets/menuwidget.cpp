@@ -147,9 +147,7 @@ DENG2_PIMPL(MenuWidget)
             }
             else
             {
-                Rule const *old = total;
-                total = holdRef(OperatorRule::maximum(*total, item->rule().width()));
-                releaseRef(old);
+                changeRef(total, OperatorRule::maximum(*total, item->rule().width()));
             }
         }
         if(!total) return new ConstantRule(0);
@@ -172,9 +170,7 @@ DENG2_PIMPL(MenuWidget)
             }
             else
             {
-                Rule const *old = total;
-                total = holdRef(OperatorRule::maximum(*total, item->rule().height()));
-                releaseRef(old);
+                changeRef(total, OperatorRule::maximum(*total, item->rule().height()));
             }
         }
         if(!total) return new ConstantRule(0);
@@ -194,9 +190,7 @@ DENG2_PIMPL(MenuWidget)
             }
             else
             {
-                Rule const *old = total;
-                total = holdRef(*total + *fullColumnWidth(i));
-                releaseRef(old);
+                changeRef(total, *total + *fullColumnWidth(i));
             }
         }
         if(!total) return new ConstantRule(0);
@@ -216,9 +210,7 @@ DENG2_PIMPL(MenuWidget)
             }
             else
             {
-                Rule const *old = total;
-                total = holdRef(*total + *fullRowHeight(i));
-                releaseRef(old);
+                changeRef(total, *total + *fullRowHeight(i));
             }
         }
         if(!total) return new ConstantRule(0);
@@ -332,9 +324,7 @@ void MenuWidget::updateLayout()
             }
             else
             {
-                Rule const *old = rowBottom;
-                rowBottom = new OperatorRule(OperatorRule::Maximum, widget->rule().bottom(), *old);
-                releaseRef(old);
+                changeRef(rowBottom, OperatorRule::maximum(widget->rule().bottom(), *rowBottom));
             }
 
             previous = widget;

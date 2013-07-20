@@ -71,6 +71,8 @@ public slots:
     void setFullyOpaque();
     void setTranslucent();
     void focusOnCommandLine();
+    void openMenu();
+    void closeMenu();
 
 protected slots:
     void logContentHeightIncreased(int delta);

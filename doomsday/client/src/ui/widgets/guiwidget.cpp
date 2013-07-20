@@ -33,7 +33,8 @@ DENG2_PIMPL(GuiWidget)
 , DENG2_OBSERVES(Widget, ParentChange)
 #endif
 {
-    RuleRectangle rule;
+    RuleRectangle rule;     ///< Visual rule, used when drawing.
+    RuleRectangle hitRule;  ///< Used only for hit testing. By default matches the visual rule.
     Rectanglei savedPos;
     bool inited;
     bool needGeometry;
@@ -69,15 +70,18 @@ DENG2_PIMPL(GuiWidget)
           marginId("gap"),
           blurInited(false),
           uBlurMvpMatrix("uMvpMatrix", GLUniform::Mat4),
-          uBlurColor("uColor", GLUniform::Vec4),
-          uBlurTex("uTex", GLUniform::Sampler2D),
-          uBlurStep("uBlurStep", GLUniform::Vec2),
-          uBlurWindow("uWindow", GLUniform::Vec4)
+          uBlurColor    ("uColor",     GLUniform::Vec4),
+          uBlurTex      ("uTex",       GLUniform::Sampler2D),
+          uBlurStep     ("uBlurStep",  GLUniform::Vec2),
+          uBlurWindow   ("uWindow",    GLUniform::Vec4)
     {
 #ifdef DENG2_DEBUG
         self.audienceForParentChange += this;
         rule.setDebugName(self.path());
 #endif
+
+        // By default use the visual rule as the hit test rule.
+        hitRule.setRect(rule);
     }
 
     ~Instance()
@@ -231,6 +235,11 @@ GuiRootWidget &GuiWidget::root() const
     return static_cast<GuiRootWidget &>(Widget::root());
 }
 
+Widget *GuiWidget::parentWidget() const
+{
+    return Widget::parent();
+}
+
 Style const &GuiWidget::style() const
 {
     return ClientApp::windowSystem().style();
@@ -319,9 +328,9 @@ GuiWidget::Background const &GuiWidget::background() const
     return d->background;
 }
 
-void GuiWidget::setOpacity(float opacity, TimeDelta span)
+void GuiWidget::setOpacity(float opacity, TimeDelta span, TimeDelta startDelay)
 {
-    d->opacity.setValue(opacity, span);
+    d->opacity.setValue(opacity, span, startDelay);
 }
 
 float GuiWidget::opacity() const
@@ -428,7 +437,8 @@ bool GuiWidget::hitTest(Vector2i const &pos) const
         GuiWidget const *gui = dynamic_cast<GuiWidget const *>(w);
         if(gui)
         {
-            if(gui->behavior().testFlag(ChildHitClipping) && !gui->hitTest(pos))
+            if(gui->behavior().testFlag(ChildHitClipping) &&
+               !gui->d->hitRule.recti().contains(pos))
             {
                 // Must hit clipped parent widgets as well.
                 return false;
@@ -437,12 +447,17 @@ bool GuiWidget::hitTest(Vector2i const &pos) const
         w = w->Widget::parent();
     }
 
-    return rule().recti().contains(pos);
+    return d->hitRule.recti().contains(pos);
 }
 
 bool GuiWidget::hitTest(Event const &event) const
 {
     return event.isMouse() && hitTest(event.as<MouseEvent>().pos());
+}
+
+RuleRectangle &GuiWidget::hitRule()
+{
+    return d->hitRule;
 }
 
 GuiWidget::MouseClickStatus GuiWidget::handleMouseClick(Event const &event)

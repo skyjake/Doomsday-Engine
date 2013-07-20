@@ -24,6 +24,7 @@
 #include <de/Drawable>
 #include <de/MouseEvent>
 #include <de/ScalarRule>
+#include <de/math.h>
 #include <QTimer>
 
 using namespace de;
@@ -201,9 +202,13 @@ DENG2_PIMPL(PopupWidget)
 
         opened = false;
 
+        self.setBehavior(DisableEventDispatchToChildren);
+
         // Begin the closing animation.
         openingRule->setStyle(Animation::EaseIn);
         openingRule->set(0, CLOSING_ANIM_SPAN, delay);
+
+        self.popupClosing();
 
         emit self.closed();
 
@@ -270,6 +275,11 @@ void PopupWidget::setAnchor(Rule const &x, Rule const &y)
 void PopupWidget::setOpeningDirection(ui::Direction dir)
 {
     d->dir = dir;
+}
+
+bool PopupWidget::isOpen() const
+{
+    return d->opened;
 }
 
 void PopupWidget::viewResized()
@@ -343,11 +353,13 @@ void PopupWidget::open()
     d->realParent->remove(*this);
     d->realParent->root().add(this);
 
+    unsetBehavior(DisableEventDispatchToChildren);
+
     show();
 
     preparePopupForOpening();
 
-    d->openingRule->setStyle(Animation::Bounce, 6);
+    d->openingRule->setStyle(Animation::Bounce, 8);
     d->openingRule->set(d->content->rule().height(), OPENING_ANIM_SPAN);
 
     d->opened = true;
@@ -391,7 +403,13 @@ void PopupWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
 
     int marker = d->marker->valuei();
 
-    Vector2i const anchorPos(d->anchorX->valuei(), d->anchorY->valuei());
+    Vector2i anchorPos(d->anchorX->valuei(), d->anchorY->valuei());
+
+    /// @todo Other directions are missing: this is just for the popup that opens upwards.
+
+    // Can't put the anchor too close to the edges.
+    anchorPos.x = clamp(2*marker, anchorPos.x, int(root().viewSize().x) - 2*marker);
+
     v.pos = anchorPos; tri << v;
     v.pos = anchorPos + Vector2i(-marker, -marker); tri << v;
     v.pos = anchorPos + Vector2i(marker, -marker); tri << v;
@@ -412,4 +430,9 @@ void PopupWidget::glDeinit()
 void PopupWidget::preparePopupForOpening()
 {
     d->updateLayout();
+}
+
+void PopupWidget::popupClosing()
+{
+    // overridden
 }

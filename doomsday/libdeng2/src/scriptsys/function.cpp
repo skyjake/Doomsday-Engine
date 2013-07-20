@@ -154,6 +154,8 @@ Function::Defaults const &Function::defaults() const
 
 void Function::mapArgumentValues(ArrayValue const &args, ArgumentValues &values) const
 {
+    DENG2_ASSERT(args.size() > 0);
+
     DictionaryValue const *labeledArgs = dynamic_cast<DictionaryValue const *>(
         args.elements().front());
 

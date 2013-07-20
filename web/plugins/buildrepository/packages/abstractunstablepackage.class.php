@@ -49,8 +49,6 @@ abstract class AbstractUnstablePackage extends AbstractPackage
     // Extends implementation in AbstractPackage.
     public function populateGraphTemplate(&$tpl)
     {
-        global $FrontController;
-
         if(!is_array($tpl))
             throw new Exception('Invalid template argument, array expected');
 
