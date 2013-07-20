@@ -67,12 +67,12 @@ void Variable::set(Value *v)
     DENG2_ASSERT(v != 0);
 
     QScopedPointer<Value> val(v);
-    QScopedPointer<Value> oldValue(_value); // old value deleted afterwards
 
     // If the value would change, must check if this is allowed.
     verifyWritable(*v);
     verifyValid(*v);
 
+    QScopedPointer<Value> oldValue(_value); // old value deleted afterwards
     _value = val.take();
     
     // We'll only determine if actual change occurred if someone is interested.

@@ -32,7 +32,10 @@ public:
 
     MenuWidget &menu() const;
 
-    ButtonWidget *addItem(de::String const &styledText, de::Action *action = 0);
+    ButtonWidget *addItem(de::String const &styledText, de::Action *action = 0,
+                          bool dismissOnTriggered = true);
+
+    GuiWidget *addSeparator(de::String const &optionalLabel = "");
 
 protected:
     void glMakeGeometry(DefaultVertexBuf::Builder &verts);

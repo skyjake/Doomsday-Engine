@@ -62,6 +62,11 @@ public:
     bool update();
 
     /**
+     * Forces all the text to be rerasterized.
+     */
+    void forceUpdate();
+
+    /**
      * Releases all the allocations from the atlas.
      */
     void release();

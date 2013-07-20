@@ -51,8 +51,8 @@ public:
         /// Widget is invisible: not drawn. Hidden widgets also receive no events.
         Hidden = 0x1,
 
-        /// Widget is disabled. The meaning of this is Widget-specific. The
-        /// Widget will not be given events.
+        /// Widget is disabled. The meaning of this is Widget-specific. Events
+        /// will still be dispatched to the widget even though it's disabled.
         Disabled = 0x2,
 
         /// Widget will only receive events if it has focus.
@@ -67,8 +67,11 @@ public:
         /// Children cannot be hit outside this widget's boundaries.
         ChildHitClipping = 0x20,
 
+        /// No events will be dispatched to the widget (or its children).
+        DisableEventDispatch = 0x40,
+
         /// No events will be dispatched to the children of the widget.
-        DisableEventDispatchToChildren = 0x40,
+        DisableEventDispatchToChildren = 0x80,
 
         DefaultBehavior = 0
     };

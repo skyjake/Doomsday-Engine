@@ -181,18 +181,11 @@ void P_MapSpawnPlaneParticleGens()
 
     foreach(Sector *sector, App_World().map().sectors())
     {
-        // Only planes of sectors with volume on the world X/Y axis support generators.
-        if(!sector->sideCount()) continue;
+        Plane &floor = sector->floor();
+        P_SpawnPlaneParticleGen(Def_GetGenerator(floor.surface().composeMaterialUri()), &floor);
 
-        for(uint i = 0; i < 2; ++i)
-        {
-            Plane &plane = sector->plane(i);
-            if(!plane.surface().hasMaterial()) continue;
-
-            de::Uri uri = plane.surface().material().manifest().composeUri();
-            ded_ptcgen_t const *def = Def_GetGenerator(reinterpret_cast<uri_s *>(&uri));
-            P_SpawnPlaneParticleGen(def, &plane);
-        }
+        Plane &ceiling = sector->ceiling();
+        P_SpawnPlaneParticleGen(Def_GetGenerator(ceiling.surface().composeMaterialUri()), &ceiling);
     }
 }
 
@@ -316,7 +309,7 @@ void P_SpawnMobjParticleGen(ded_ptcgen_t const *def, mobj_t *source)
     // Size of source sector might determine count.
     if(def->flags & PGF_SCALED_RATE)
     {
-        gen->spawnRateMultiplier = source->bspLeaf->sector().roughArea();
+        gen->spawnRateMultiplier = source->bspLeaf->sector().roughArea() / (128 * 128);
     }
     else
     {
@@ -363,6 +356,7 @@ void P_SpawnPlaneParticleGen(ded_ptcgen_t const *def, Plane *plane)
 {
     if(isDedicated || !useParticles) return;
     if(!def || !plane) return;
+
     // Only planes in sectors with volume on the world X/Y axis can support generators.
     if(!plane->sector().sideCount()) return;
 
@@ -386,7 +380,7 @@ void P_SpawnPlaneParticleGen(ded_ptcgen_t const *def, Plane *plane)
     // Size of source sector might determine count.
     if(def->flags & PGF_PARTS_PER_128)
     {
-        gen->spawnRateMultiplier = plane->sector().roughArea();
+        gen->spawnRateMultiplier = plane->sector().roughArea() / (128 * 128);
     }
     else
     {

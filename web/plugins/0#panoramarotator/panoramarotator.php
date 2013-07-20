@@ -58,8 +58,8 @@ class PanoramaRotatorPlugin extends Plugin implements RequestInterpreter
                     if(!isset($paths))
                         $paths = array();
 
-                    //$paths[] = $imageDir.$file;
-                    $paths[] = 'http://dl.dropboxusercontent.com/u/11948701/dengine.net/images/panoramas/'.$file;
+                    $paths[] = $imageDir.$file;
+                    //$paths[] = 'http://dl.dropboxusercontent.com/u/11948701/dengine.net/images/panoramas/'.$file;
                     $i++;
                 }
             }

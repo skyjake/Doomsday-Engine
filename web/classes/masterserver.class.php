@@ -36,6 +36,141 @@ function get_ident($info)
     return $info['at'] . ":" . $info['port'];
 }
 
+class ServerInfo implements ArrayAccess
+{
+    private static $defaults = NULL;
+    private $values;
+
+    public function __construct()
+    {
+        if(is_null(self::$defaults))
+        {
+            self::$defaults = array('at'     => '',
+                                    'time'   => (int)0,
+                                    'port'   => (int)0,
+                                    'locked' => false,
+                                    'ver'    => (int)0,
+                                    'map'    => '',
+                                    'game'   => '',
+                                    'name'   => '',
+                                    'info'   => '',
+                                    'nump'   => (int)0,
+                                    'maxp'   => (int)0,
+                                    'open'   => (int)0,
+                                    'mode'   => '',
+                                    'setup'  => '',
+                                    'iwad'   => '',
+                                    'pwads'  => '',
+                                    'wcrc'   => (int)0,
+                                    'plrn'   => '',
+                                    'data0'  => (int)0,
+                                    'data1'  => (int)0,
+                                    'data2'  => (int)0);
+        }
+
+        // Assign the default values.
+        $this->values = self::$defaults;
+    }
+
+    static public function constructFrom(&$props)
+    {
+        assert('is_array($props) /*$props is not an array*/');
+
+        $s = new ServerInfo();
+        foreach($props as $key => $value)
+        {
+            // Is this a known property?
+            if(!isset($s[$key])) continue;
+
+            // Will ensure the variable type is not altered.
+            $s[$key] = $value;
+        }
+        return $s;
+    }
+
+    public function ident()
+    {
+        return $this->values['at'] .":". $this->values['port'];
+    }
+
+    public function serialize(&$file)
+    {
+        foreach($this->values as $key => $value)
+        {
+            fwrite($file, $key .' '. urlencode((string)$value) . "\n");
+        }
+    }
+
+    public function populateGraphTemplate(&$tpl)
+    {
+        assert('is_array($tpl) /*$tpl is not an array*/');
+
+        foreach($this->values as $key => $value)
+        {
+            if($key === 'time')
+                continue;
+
+            $tpl[$key] = $value;
+        }
+    }
+
+    /// Implements ArrayAccess
+    public function offsetSet($offset, $newValue)
+    {
+        if($this->offsetExists($offset))
+        {
+            $offset = (string)$offset;
+            // Ensure the variable type is not altered (we intend to serialize).
+            settype($newValue, gettype($this->values[$offset]));
+            $this->values[$offset] = $newValue;
+            return;
+        }
+        throw new Exception("ServerInfo::offsetSet - Invalid offset:$offset");
+    }
+
+    /// Implements ArrayAccess
+    public function offsetExists($offset)
+    {
+        return array_key_exists((string)$offset, $this->values);
+    }
+
+    /// Implements ArrayAccess
+    public function offsetUnset($offset)
+    {
+        if($this->offsetExists($offset))
+        {
+            // Unset means to assign the default.
+            $offset = (string)$offset;
+            $this->values[$offset] = self::$defaults[$offset];
+            return;
+        }
+        throw new Exception("ServerInfo::offsetUnset - Invalid offset:$offset");
+    }
+
+    /// Implements ArrayAccess
+    public function offsetGet($offset)
+    {
+        if($this->offsetExists($offset))
+        {
+            return $this->values[(string)$offset];
+        }
+        throw new Exception("ServerInfo::offsetGet - Invalid offset:$offset");
+    }
+
+    public function __toString()
+    {
+        $str = '';
+        foreach($this->values as $key => $value)
+        {
+            if($key === 'time')
+                continue;
+
+            $str .= "$key:$value\n";
+        }
+        return $str;
+    }
+}
+
 class MasterServer
 {
     /// Version number
@@ -94,16 +229,17 @@ class MasterServer
             if($line == "--")
             {
                 // Expired announcements are ignored.
-                if($now - $info['time'] < $max_age && count($info) >= 3)
+                if($now - $record['time'] < $max_age && count($record) >= 3)
                 {
-                    $this->servers[get_ident($info)] = $info;
+                    $info = ServerInfo::constructFrom($record);
+                    $this->servers[$info->ident()] = $info;
                 }
-                $info = array();
+                $record = array();
             }
             else
             {
                 $parts = explode(" ", $line);
-                $info[$parts[0]] = isset($parts[1])? urldecode($parts[1]) : "";
+                $record[$parts[0]] = isset($parts[1])? urldecode($parts[1]) : "";
             }
         }
     }
@@ -111,32 +247,22 @@ class MasterServer
     private function save()
     {
         rewind($this->file);
-        while(list($ident, $info) = each($this->servers))
+        foreach($this->servers as $info)
         {
-            while(list($label, $value) = each($info))
-            {
-                fwrite($this->file, $label . " " . urlencode($value) . "\n");
-            }
+            $info->serialize($this->file);
             fwrite($this->file, "--\n");
         }
         // Truncate the rest.
         ftruncate($this->file, ftell($this->file));
     }
 
-    function insert($info)
+    public function insert($info)
     {
-        try
-        {
-            $this->servers[get_ident($info)] = $info;
-        }
-        catch(Exception $e)
-        {
-            $errorMsg = 'Unhandled exception "'. $e->getMessage() .'" in '. __CLASS__ .'::'. __METHOD__ .'().';
-            trigger_error($errorMsg);
-        }
+        assert('$info instanceof ServerInfo /*$info is not a ServerInfo*/');
+        $this->servers[$info->ident()] = $info;
     }
 
-    function close()
+    public function close()
     {
         if(!$this->file) return;
 
@@ -149,6 +275,21 @@ class MasterServer
 
         fclose($this->file);
         $this->file = 0;
+    }
+
+    /**
+     * Print the list of active servers to the standard output. Primarily intended
+     * for debug (though also used as the list-servers response digest for Doomsday
+     * clients expecting the old API).
+     */
+    public function printServerList()
+    {
+        foreach($this->servers as $info)
+        {
+            echo $info;
+            // An empty line ends the server.
+            echo "\n";
+        }
     }
 
     /**
@@ -233,7 +374,7 @@ class MasterServer
             "\n</channel>");
 
         fwrite($logFile, "\n<serverlist size=\"". $numServers .'">');
-        while(list($ident, $info) = each($this->servers))
+        foreach($this->servers as $info)
         {
             if($info['pwads'] !== '')
             {

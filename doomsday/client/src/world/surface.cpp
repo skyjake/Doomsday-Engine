@@ -406,6 +406,12 @@ void Surface::setMaterialOriginComponent(int component, float newPosition)
     }
 }
 
+de::Uri Surface::composeMaterialUri() const
+{
+    if(!hasMaterial()) return de::Uri();
+    return material().manifest().composeUri();
+}
+
 #ifdef __CLIENT__
 
 Vector2f const &Surface::visMaterialOrigin() const

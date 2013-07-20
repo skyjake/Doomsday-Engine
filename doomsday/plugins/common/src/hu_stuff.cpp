@@ -1448,34 +1448,27 @@ void Hu_FogEffectSetAlphaTarget(float alpha)
     fogEffectData.targetAlpha = MINMAX_OF(0, alpha, 1);
 }
 
-void Hu_DrawMapTitle(const Point2Raw* offset)
+void Hu_DrawMapTitle(float alpha, boolean mapIdInsteadOfAuthor)
 {
-    const char* lname, *lauthor;
-    float y = 0, alpha = 1;
+    char const *lname = 0, *lauthor = 0;
+    float y = 0; //, alpha = 1;
+
 #if __JDOOM__ || __JDOOM64__
     patchid_t patchId;
     uint mapNum;
 #endif
 
-    if(actualMapTime < 35)
-        alpha = actualMapTime / 35.0f;
-    if(actualMapTime > 5 * 35)
-        alpha = 1 - (actualMapTime - 5 * 35) / 35.0f;
-
     // Get the strings from Doomsday.
     lname = P_GetMapNiceName();
     lauthor = P_GetMapAuthor(cfg.hideIWADAuthor);
-#if __JHEXEN__
-    // Use stardard map name if DED didn't define it.
-    if(!lname)
-        lname = P_GetMapName(gameMap);
-#endif
 
-    if(offset)
+#if __JHEXEN__
+    if(!lname)
     {
-        DGL_MatrixMode(DGL_MODELVIEW);
-        DGL_Translatef(offset->x, offset->y, 0);
+        // Use stardard map name if DED didn't define it.
+        lname = P_GetMapName(gameMap);
     }
+#endif
 
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, alpha);
@@ -1497,7 +1490,16 @@ void Hu_DrawMapTitle(const Point2Raw* offset)
     patchId = (mapNum < pMapNamesSize? pMapNames[mapNum] : 0);
     WI_DrawPatchXY3(patchId, Hu_ChoosePatchReplacement2(PRM_ALLOW_TEXT, patchId, lname), 0, 0, ALIGN_TOP, 0, DTF_ONLY_SHADOW);
 
-    y += 14;
+    patchinfo_t patchInfo;
+    if(R_GetPatchInfo(patchId, &patchInfo))
+    {
+        y += patchInfo.geometry.size.height + 2;
+    }
+    else
+    {
+        y += 14;
+    }
+
 #elif __JHERETIC__ || __JHEXEN__
     if(lname)
     {
@@ -1506,7 +1508,19 @@ void Hu_DrawMapTitle(const Point2Raw* offset)
     }
 #endif
 
-    if(lauthor)
+    if(mapIdInsteadOfAuthor)
+    {
+        Uri *mapUri = G_ComposeMapUri(gameEpisode, gameMap);
+        FR_SetFont(FID(GF_FONTA));
+#if defined(__JHERETIC__) || defined(__JHEXEN__)
+        FR_SetColorAndAlpha(.85f, .85f, .85f, alpha);
+#else
+        FR_SetColorAndAlpha(.6f, .6f, .6f, alpha);
+#endif
+        FR_DrawTextXY3(Str_Text(Uri_ToString(mapUri)), 0, y, ALIGN_TOP, DTF_ONLY_SHADOW);
+        Uri_Delete(mapUri);
+    }
+    else if(lauthor)
     {
         FR_SetFont(FID(GF_FONTA));
         FR_SetColorAndAlpha(.5f, .5f, .5f, alpha);
@@ -1514,24 +1528,15 @@ void Hu_DrawMapTitle(const Point2Raw* offset)
     }
 
     DGL_Disable(DGL_TEXTURE_2D);
-
-    if(offset)
-    {
-        DGL_MatrixMode(DGL_MODELVIEW);
-        DGL_Translatef(-offset->x, -offset->y, 0);
-    }
 }
 
 void Hu_MapTitleDrawer(const RectRaw* portGeometry)
 {
+    if(!cfg.mapTitle || !portGeometry) return;
+
     Point2Raw origin(portGeometry->size.width / 2,
                      6 * portGeometry->size.height / SCREENHEIGHT);
     float scale;
-
-    if(!portGeometry) return;
-
-    // Level information is shown for a few seconds in the beginning of a level.
-    if(!cfg.mapTitle || (actualMapTime > 6 * TICSPERSEC)) return;
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
@@ -1545,10 +1550,35 @@ void Hu_MapTitleDrawer(const RectRaw* portGeometry)
                                     scalemode_t(cfg.menuScaleMode));
     DGL_Scalef(scale, scale * 1.2f/*aspect correct*/, 1);
 
-    // Make the title 3/4 smaller.
-    DGL_Scalef(.75f, .75f, 1);
+    // Level information is shown for a few seconds in the beginning of a level.
+    if(actualMapTime <= 6 * TICSPERSEC)
+    {
+        // Fade the title in and out.
+        float alpha = 1;
+        if(actualMapTime < 35)
+            alpha = actualMapTime / 35.0f;
+        if(actualMapTime > 5 * 35)
+            alpha = 1 - (actualMapTime - 5 * 35) / 35.0f;
 
-    Hu_DrawMapTitle(NULL/*no offset*/);
+        // Make the title 3/4 smaller.
+        DGL_Scalef(.75f, .75f, 1);
+
+        Hu_DrawMapTitle(alpha, false /* show author */);
+    }
+    else if(ST_AutomapIsActive(DISPLAYPLAYER) && (actualMapTime > 6 * TICSPERSEC))
+    {
+        // When the automap is open, the title is displayed together with the
+        // map identifier (URI).
+
+        // Fade the title in.
+        float alpha = 1;
+        if(actualMapTime < 7 * 35)
+            alpha = MINMAX_OF(0, (actualMapTime - 6 * 35) / 35.f, 1);
+
+        DGL_Scalef(.5f, .5f, 1);
+
+        Hu_DrawMapTitle(alpha, true /* show map ID */);
+    }
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();

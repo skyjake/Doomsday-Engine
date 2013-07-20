@@ -346,6 +346,9 @@ desc = Stop any currently playing music.
 [sub]
 desc = Subtract something from a cvar.
 
+[taskbar]
+desc = Open/close the task bar and console command prompt.
+
 [texreset]
 desc = Force a texture reload.
 
@@ -404,53 +407,17 @@ desc = Maximum number of seconds to attempt connecting to a server.
 [client-pos-interval]
 desc = Number of tics between client coord packets.
 
-[con-background-alpha]
-desc = Console background translucency.
-
-[con-background-light]
-desc = Console background light level.
-
-[con-background-material]
-desc = Console background material uri. For example, 'Flats:FLOOR0_1'
-
-[con-background-turn]
-desc = Console background rotation speed. Negative speeds are allowed. 0=Disabled.
-
-[con-background-zoom]
-desc = Zoom factor for the console background.
-
-[con-completion]
-desc = How to complete words when pressing Tab: 0=Show completions, 1=Cycle through them.
-
-[con-dump]
-desc = 1=Dump all console messages to Doomsday.out.
-
-[con-fps]
-desc = 1=Show FPS counter on screen.
-
-[con-key-activate]
-desc = Key to activate the console (DDKEY code; default is tilde, 96).
-
 [con-move-speed]
 desc = Speed of console opening/closing.
 
 [con-show-during-setup]
 desc = 1=Show console when a map is being loaded.
 
-[con-snapback]
-desc = 1=Automatically reset the position of the console history buffer when a new message is printed.
-
-[con-text-shadow]
-desc = 1=Text in the console has a shadow (might be slow with some fonts).
-
 [con-transition-tics]
 desc = Duration of transition effect in tics. 0=Disabled.
 
 [con-transition]
 desc = Transition effect used when leaving busy mode: 0=Crossfade, 1=DOOM (smooth), 2=DOOM
-
-[con-var-silent]
-desc = 1=Don't show the value of a cvar when setting it.
 
 [ctl-info]
 desc = 1=Show player control state debugging information.
@@ -493,12 +460,6 @@ desc = ID of joystick to use (if more than one).
 
 [input-joy]
 desc = 1=Enable joystick input.
-
-[input-key-delay1]
-desc = The number of milliseconds to wait before first key repeat.
-
-[input-key-delay2]
-desc = The number of milliseconds to wait between key repeats.
 
 [input-mouse-filter]
 desc = Filter strength for mouse movement.

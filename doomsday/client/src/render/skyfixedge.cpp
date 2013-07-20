@@ -95,14 +95,18 @@ DENG2_PIMPL(SkyFixEdge)
     Event top;
     bool isValid;
 
-    Instance(Public *i, Segment &segment, FixType fixType, int edge)
+    Vector2f materialOrigin;
+
+    Instance(Public *i, Segment &segment, FixType fixType, int edge,
+             Vector2f const &materialOrigin)
         : Base(i),
           segment(&segment),
           fixType(fixType),
           edge(edge),
           bottom(*i, 0),
           top(*i, 1),
-          isValid(false)
+          isValid(false),
+          materialOrigin(materialOrigin)
     {}
 
     /**
@@ -197,9 +201,8 @@ DENG2_PIMPL(SkyFixEdge)
 };
 
 SkyFixEdge::SkyFixEdge(Segment &segment, FixType fixType, int edge, float materialOffsetS)
-    : WorldEdge((edge? segment.to() : segment.from()).origin(),
-                EdgeAttribs(Vector2f(materialOffsetS, 0))),
-      d(new Instance(this, segment, fixType, edge))
+    : WorldEdge((edge? segment.to() : segment.from()).origin()),
+      d(new Instance(this, segment, fixType, edge, Vector2f(materialOffsetS, 0)))
 {
     /// @todo Defer until necessary.
     d->prepare();
@@ -213,6 +216,11 @@ Vector3d const &SkyFixEdge::pOrigin() const
 Vector3d const &SkyFixEdge::pDirection() const
 {
     return d->pDirection;
+}
+
+Vector2f SkyFixEdge::materialOrigin() const
+{
+    return d->materialOrigin;
 }
 
 bool SkyFixEdge::isValid() const

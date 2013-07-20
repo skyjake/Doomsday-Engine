@@ -106,7 +106,7 @@ void Hu_DrawFogEffect(int effectID, DGLuint tex, float texOffset[2], float texAn
 void HU_ScoreBoardUnHide(int player);
 void HU_DrawScoreBoard(int player);
 
-void Hu_DrawMapTitle(const Point2Raw* offset);
+void Hu_DrawMapTitle(float alpha, boolean mapIdInsteadOfAuthor);
 
 void Draw_BeginZoom(float s, float originX, float originY);
 void Draw_EndZoom(void);

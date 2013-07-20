@@ -28,6 +28,7 @@
 #include "ui/signalaction.h"
 
 #include "ui/ui_main.h"
+#include "con_main.h"
 
 #include <de/App>
 #include <de/KeyEvent>
@@ -52,6 +53,7 @@ public IGameChangeObserver
     ButtonWidget *logo;
     LabelWidget *status;
     PopupMenuWidget *mainMenu;
+    PopupMenuWidget *unloadMenu;
     ButtonWidget *panelItem;
     ButtonWidget *fpsItem;
     ButtonWidget *unloadItem;
@@ -150,7 +152,7 @@ public IGameChangeObserver
         }
         else
         {
-            status->setText("No game loaded");
+            status->setText(tr("No game loaded"));
         }
     }
 
@@ -162,7 +164,7 @@ public IGameChangeObserver
 
     void updateFpsMenuItem()
     {
-        fpsItem->setText(ClientWindow::main().isFPSCounterVisible()? "Hide FPS" : "Show FPS");
+        fpsItem->setText(ClientWindow::main().isFPSCounterVisible()? tr("Hide FPS") : tr("Show FPS"));
     }
 };
 
@@ -241,16 +243,32 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
     // Taskbar height depends on the font size.
     rule().setInput(Rule::Height, style().fonts().font("default").height() + gap * 2);
 
-    // The main DE menu.
+    // The DE menu.
     d->mainMenu = new PopupMenuWidget("de-menu");
     d->mainMenu->setAnchor(d->logo->rule().left() + d->logo->rule().width() / 2,
                            d->logo->rule().top());
+
+    // Set up items for the DE menu. Some of these are shown/hidden
+    // depending on whether a game is loaded.
+    d->panelItem = d->mainMenu->addItem(_E(b) + tr("Open Control Panel"), new CommandAction("panel"));
     d->fpsItem = d->mainMenu->addItem("", new SignalAction(this, SLOT(toggleFPS())));
-    d->panelItem = d->mainMenu->addItem(_E(b) "Open Control Panel", new CommandAction("panel"));
-    d->mainMenu->addItem("Check for updates...", new CommandAction("updateandnotify"));
-    d->unloadItem = d->mainMenu->addItem("Unload game", new CommandAction("unload"));
-    d->mainMenu->addItem("Quit Doomsday", new CommandAction("quit"));
+    d->unloadItem = d->mainMenu->addItem(tr("Unload Game"), new SignalAction(this, SLOT(confirmUnloadGame())), false);
+    d->mainMenu->addSeparator();
+    d->mainMenu->addItem(tr("Check for Updates..."), new CommandAction("updateandnotify"));
+    d->mainMenu->addItem(tr("Updater Settings..."), new CommandAction("updatesettings"));
+    d->mainMenu->addSeparator();
+    d->mainMenu->addItem(tr("Quit Doomsday"), new CommandAction("quit"));
     add(d->mainMenu);
+
+    // Confirmation for unloading game.
+    d->unloadMenu = new PopupMenuWidget("unload-menu");
+    d->unloadMenu->setOpeningDirection(ui::Left);
+    d->unloadMenu->setAnchor(d->mainMenu->rule().left(),
+                             d->unloadItem->rule().top() + d->unloadItem->rule().height() / 2);
+    d->unloadMenu->addSeparator(tr("Really unload the game?"));
+    d->unloadMenu->addItem(tr("Unload") + " "_E(b) + tr("(discard progress)"), new SignalAction(this, SLOT(unloadGame())));
+    d->unloadMenu->addItem(tr("Cancel"), new Action);
+    add(d->unloadMenu);
 
     d->panelItem->hide();
     d->unloadItem->hide();
@@ -485,4 +503,15 @@ void TaskBarWidget::openMainMenu()
 void TaskBarWidget::toggleFPS()
 {
     root().window().toggleFPSCounter();
+}
+
+void TaskBarWidget::confirmUnloadGame()
+{
+    d->unloadMenu->open();
+}
+
+void TaskBarWidget::unloadGame()
+{
+    Con_Execute(CMDS_DDAY, "unload", false, false);
+    d->mainMenu->close();
 }

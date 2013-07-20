@@ -362,8 +362,10 @@ static void loadPatchNames(String lumpName)
     }
     catch(LumpIndex::NotFoundError const &er)
     {
-        // Log but otherwise ignore this error.
-        LOG_WARNING(er.asText() + ", ignoring.");
+        if(App_GameLoaded())
+        {
+            LOG_WARNING(er.asText());
+        }
     }
 }
 

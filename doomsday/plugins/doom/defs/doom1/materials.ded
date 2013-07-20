@@ -149,6 +149,12 @@ Material Mods "textures:FIRELAVA" {
   }
 }
 
+Material Mods "textures:FIRELAV2" {
+  Layer {
+      Stage { Glow = 1.8; Glow Rnd = .8; }
+  }
+}
+
 Material Mods "textures:FIREMAG1" {
   Layer {
       Stage { Glow = 1.8; Glow Rnd = .8; }

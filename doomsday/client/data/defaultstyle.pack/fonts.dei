@@ -36,7 +36,7 @@ group {
 
     font default {
         family: Liberation Sans
-        size: 14pt
+        size: 13pt
         weight: normal
         style: normal
     }
@@ -63,5 +63,15 @@ group editor {
     font hint inherits default {
         style: italic
         weight: light
+    }
+}
+
+group separator {
+    font empty inherits default {
+        size $: gui.scale(__this__.size, 0.5)
+    }
+    font label inherits default {
+        size $: gui.scale(__this__.size, 0.75)
+        weight: bold
     }
 }

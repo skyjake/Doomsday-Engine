@@ -49,8 +49,6 @@ class FrontController
     private $_siteTitle = 'Website';
     private $_siteAuthor = 'Author';
     private $_siteAuthorEmail = 'N/A';
-    private $_siteDesigner = 'N/A';
-    private $_siteDesignerEmail = 'N/A';
     private $_siteCopyright = 'N/A';
     private $_siteDescription = '';
     private $_siteRobotRevisitDays = 0;
@@ -75,12 +73,6 @@ class FrontController
 
         if(array_key_exists('AuthorEmail', $config))
             $this->_siteAuthorEmail = $config['AuthorEmail'];
-
-        if(array_key_exists('Designer', $config))
-            $this->_siteDesigner = $config['Designer'];
-
-        if(array_key_exists('DesignerEmail', $config))
-            $this->_siteDesignerEmail = $config['DesignerEmail'];
 
         if(array_key_exists('HomeURL', $config))
             $this->_siteHomeURL = $config['HomeURL'];
@@ -172,16 +164,6 @@ class FrontController
     public function siteAuthorEmail()
     {
         return $this->_siteAuthorEmail;
-    }
-
-    public function siteDesigner()
-    {
-        return $this->_siteDesigner;
-    }
-
-    public function siteDesignerEmail()
-    {
-        return $this->_siteDesignerEmail;
     }
 
     public function siteCopyright()
@@ -334,270 +316,61 @@ class FrontController
     <link rel="shortcut icon" href="http://dl.dropboxusercontent.com/u/11948701/dengine.net/images/favicon.png" type="image/png" />
     <link rel="alternate" type="application/rss+xml" title="Doomsday Engine RSS News Feed" href="http://dengine.net/forums/rss.php?mode=news" />
 
-    <!-- jQuery -->
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
     <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.9.1/jquery-ui.min.js"></script>
-
     <link rel="stylesheet" media="all" href="/style.css" />
+    <!--[if lt IE 9]>
+    <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
 </head>
 <?php
     }
 
     public function beginPage($mainHeading='', $page=null)
     {
-?>
-<body>
-<div id="mainouter">
+
+?><body>
     <div id="main">
-<?php
+        <div id="framepanel_bottom" role="main"><?php
 
         $this->outputMainMenu($page);
 
-?>
-        <div id="maininner">
-            <div id="framepanel_bottom" role="main">
-                <div id="pageheading">
-                    <h1><?php
+?><section id="pageheading"><h1><?php
 
         if(strlen($mainHeading) > 0)
             echo htmlspecialchars($mainHeading);
         else
             echo $this->siteTitle();
 
-?></h1>
-                </div>
-<?php
+?></h1><p style="display:none"><?php
+
+        echo $this->siteDescription();
+
+?></p></section><?php
+
     }
 
     public function endPage()
     {
 ?>
             </div>
-            <div class="framepanel" id="framepanel_top">
+            <div id="framepanel_top" class="framepanel">
 <?php
 
         $this->outputTopPanel();
-        $this->outputMasterStatus();
 
 ?>
-            </div>
         </div>
-    </div>
-</div>
-<div id="libicons">
-<?php
-
-        // Output the lib icons (OpenGL, SDL etc).
-        includeHTML('libraryicons');
-
-?>
-</div>
-<footer id="footer" role="contentinfo">
+        <footer role="contentinfo">
 <?php
 
         $this->outputFooter();
 
-?>
-</footer>
+?>        </footer>
+    </div>
 </body>
 </html>
 <?php
-    }
-
-    /**
-     * Generate HTML markup for a summary of this server.
-     */
-    private function generateServerSummary(&$info)
-    {
-        if(!is_array($info))
-            throw new Exception('Invalid info argument, array expected.');
-
-        $serverMetadataLabel = 'Address: '. htmlspecialchars($info['at']).':'. htmlspecialchars($info['port'])
-                              .' Open: '. ($info['open']? 'yes':'no');
-                              // Should we include the extra info?
-                              /*.' Info: '. htmlspecialchars($info['info']);*/
-
-        // Any required addons?.
-        $addonArr = array_filter(explode(';', $info['pwads']));
-        if(count($addonArr))
-        {
-            $serverMetadataLabel .= 'Add-ons: '. implode(' ', $addonArr);
-        }
-
-        // Format the game setup label.
-        $setupArr = array_filter(explode(' ', $info['setup']));
-        $gameMetadataLabel = 'Map: '. htmlspecialchars($info['map']) .' Setup: '. htmlspecialchars(implode(' ', $setupArr));
-
-        $playerCountLabel = 'Number of players currently in-game';
-        $playerMaxLabel = 'Maximum number of players';
-
-        // Begin html generation.
-        $html = '<span class="player-summary"><label title="'. htmlspecialchars($playerCountLabel) .'">'. htmlspecialchars($info['nump']) .'</label> / <label title="'. htmlspecialchars($playerMaxLabel) .'">'. htmlspecialchars($info['maxp']) .'</label></span> '
-               .'<label title="'. htmlspecialchars($serverMetadataLabel) .'"><span class="name">'. htmlspecialchars($info['name']) .'</span></label> '
-               .'<label title="'. htmlspecialchars($gameMetadataLabel) .'"><span class="game-mode">'. htmlspecialchars($info['mode']) .'</span></label>';
-
-        // Wrap it in the container used for styling and visual element ordering.
-        return '<span class="server">'. $html .'</span>';
-    }
-
-    public static function serverSorter($b, $a)
-    {
-        // Open servers are grouped together.
-        $diff = (integer)($b['open'] - $a['open']);
-        if($diff) return $diff;
-
-        // Servers with active players get priority
-        $diff = (integer)($b['nump'] - $a['nump']);
-        if($diff) return -($diff);
-
-        // Order by lexicographical difference in the server name.
-        $diff = strcmp($b['mode'], $a['mode']);
-        if($diff) return $diff;
-
-        // Order by lexicographical difference in the server name.
-        return strcmp($b['name'], $a['name']);
-    }
-
-    private function outputMasterStatus()
-    {
-if(0)
-{
-        // Maximum number of servers listed in the summary.
-        $limit = 3;
-
-        /**
-         * @todo We do NOT need to interface with the master server. We are able
-         *       to implement all expected functionality by simply parsing the
-         *       XML feed output.
-         */
-        require_once(DIR_CLASSES.'/masterserver.class.php');
-        $db = new MasterServer();
-
-        // Build the servers collection.
-        $servers = array();
-        while(list($ident, $info) = each($db->servers))
-        {
-            if(!is_array($info)) continue;
-            $servers[] = $info;
-        }
-
-        // Sort the collection.
-        uasort($servers, array('self', 'serverSorter'));
-        $serverCount = count($servers);
-
-        // Generate the content.
-        $content = '<span id="servers-label">'. ($serverCount > 0? 'Most Active Servers':'No Active Servers') .'</span><br />';
-        if($serverCount)
-        {
-            $playerCount = (integer)0;
-            foreach($servers as &$server)
-            {
-                $playerCount += $server['nump'];
-            }
-
-            $content .= '<ul>';
-
-            $n = (integer)0;
-            foreach($servers as &$server)
-            {
-                if($limit !== 0 && $n++ == $limit) break;
-
-                $content .= '<li>'. $this->generateServerSummary($server) .'</li>';
-            }
-
-            $content .= '</ul>';
-            $content .= '<span id="summary"><a href="/masterserver" title="Click here to see the complete server listing">'. ("$serverCount ". ($serverCount === 1? 'server':'servers') ." in total, {$playerCount} active ". ($playerCount === 1? 'player':'players')) .'</a></span>';
-        }
-
-        $content .= '<br /><span id="servers-timestamp">'. date("d-M-y H:i:s T" /*DATE_RFC850*/, time()). '</span>';
-        echo $content;
-}
-
-?><script>
-(function (e) {
-    e.fn.interpretMasterServerStatus = function (t) {
-        var n = {
-            serverUri: "http://dengine.net/master.php?xml",
-            maxItems: 3,
-            generateServerSummaryHtml: 0
-        };
-        if (t) {
-            e.extend(n, t);
-        }
-        var r = e(this).attr("id");
-        e.ajax({
-            url: n.serverUri,
-            dataType: 'xml',
-            success: function (t) {
-                e("#" + r).empty();
-                var root = $('masterserver', t);
-                var serverList = root.find('serverlist')[0];
-                var serverCount = serverList.attributes.getNamedItem('size').nodeValue;
-
-                var html = '<span id="servers-label">' + (serverCount > 0? 'Most Active Servers':'No Active Servers') + '</span><br />';
-
-                if(serverCount) {
-                    var idx = 0;
-                    var playerCount = 0;
-
-                    html += '<ul>';
-                    for(var i = 0; i < serverList.childNodes.length; ++i) {
-                        if(serverList.childNodes[i].nodeName != 'server')
-                            continue;
-
-                        var server = $(serverList.childNodes[i]);
-                        if(n.maxItems <= 0 || idx < n.maxItems)
-                        {
-                            html += '<li>' + n.generateServerSummaryHtml(n, server) + '</li>';
-                        }
-
-                        playerCount += Number(server.find('gameinfo>numplayers').text());
-                        idx++;
-                    };
-
-                    html += '</ul>';
-                    html += '<span id="summary"><a href="/masterserver" title="Click here to see the complete server listing">' + serverCount + ' ' + (serverCount == 1? 'server':'servers') + ' in total, ' + playerCount + ' active ' + (playerCount == 1? 'player':'players') + '</a></span>';
-                }
-
-                html += '<br /><span id="servers-timestamp">' + root.find('channel>pubdate').text() + '</span>';
-                e("#" + r).append(html);
-            }
-        })
-    }
-})(jQuery)
-
-$(document).ready(function () {
-    $('#servers').interpretMasterServerStatus({
-        generateServerSummaryHtml: function (n, info) {
-
-            var serverMetadataLabel = 'Address: ' + info.children('ip').text() + ':' + info.children('port').text()
-                                    + ' Open: ' + info.children('open').text();
-
-            // Any required addons?.
-            /*var addonArr = array_filter(explode(';', info['pwads']));
-            if(count(addonArr))
-            {
-                serverMetadataLabel .= 'Add-ons: '. implode(' ', addonArr);
-            }*/
-
-            var gameInfo = $(info.children('gameinfo'));
-            var gameMetadataLabel = 'Map: ' + gameInfo.children('map').text() + ' Setup: ' + gameInfo.children('setupstring').text();
-
-            var playerCountLabel = 'Number of players currently in-game';
-            var playerMaxLabel = 'Maximum number of players';
-
-            var html = '<span class="player-summary"><label title="' + playerCountLabel + '">' + gameInfo.children('numplayers').text() + '</label> / <label title="' + playerMaxLabel + '">' + gameInfo.children('maxplayers').text() + '</label></span> ';
-
-            html += '<label title="' + serverMetadataLabel + '"><span class="name">' + info.find('name').text() + '</span></label> ';
-            html += '<label title="' + gameMetadataLabel + '"><span class="game-mode">' + gameInfo.children('mode').text() + '</span></label>';
-
-            return '<span class="server">' + html + '</span>';
-        }
-    });
-});
-
-</script><div id="servers"></div><?php
-
     }
 
     private function buildTabs($tabs, $page=NULL, $normalClassName=NULL, $selectClassName=NULL)
@@ -636,14 +409,14 @@ $(document).ready(function () {
     private function outputMainMenu($page=NULL)
     {
         $leftTabs = array();
-        $leftTabs[] = array('page'=>'/engine',  'label'=>'Engine',   'tooltip'=>'About Doomsday Engine');
-        $leftTabs[] = array('page'=>'/games',   'label'=>'Games',    'tooltip'=>'Games playable with Doomsday Engine');
-        $leftTabs[] = array('page'=>'/dew',     'label'=>'Wiki',     'tooltip'=>'Doomsday Engine Wiki');
+        $leftTabs[] = array('page'=>'/engine',  'label'=>'Engine',   'tooltip'=>'About the Doomsday Engine');
+        $leftTabs[] = array('page'=>'/games',   'label'=>'Games',    'tooltip'=>'Games playable with the Doomsday Engine');
+        $leftTabs[] = array('page'=>'/dew',     'label'=>'Wiki',     'tooltip'=>'Doomsday Engine wiki (documentation)');
 
         $rightTabs = array();
-        $rightTabs[] = array('page'=>'/addons',       'label'=>'Add-ons', 'tooltip'=>'Add-ons for games playable with Doomsday Engine');
-        $rightTabs[] = array('page'=>'/forums',       'label'=>'Forums',  'tooltip'=>'Doomsday Engine User Forums');
-        $rightTabs[] = array('page'=>'/masterserver', 'label'=>'Servers', 'tooltip'=>'Doomsday Engine Master Server');
+        $rightTabs[] = array('page'=>'/addons',       'label'=>'Add-ons', 'tooltip'=>'Add-ons for games playable with the Doomsday Engine');
+        $rightTabs[] = array('page'=>'/forums',       'label'=>'Forums',  'tooltip'=>'Doomsday Engine user forums');
+        $rightTabs[] = array('page'=>'/masterserver', 'label'=>'Servers', 'tooltip'=>'Doomsday Engine server browser');
 
 ?>
         <div id="menuouter"><nav id="menu" class="hnav">
@@ -665,7 +438,7 @@ $(document).ready(function () {
     private function outputTopPanel()
     {
 ?>
-    <div id="panorama">
+    <div id="panorama" role="banner">
     </div>
 <?php
     }
@@ -673,8 +446,8 @@ $(document).ready(function () {
     private function outputFooter()
     {
 ?>
-<p class="disclaimer"><a href="mailto:webmaster@dengine.net" title="Contact Webmaster">Webmaster</a> - Site design &copy; <?php echo date('Y'); ?> <a href="mailto:<?php echo $this->siteDesignerEmail(); ?>" title="Contact <?php echo $this->siteDesigner(); ?>"><?php echo $this->siteDesigner(); ?></a> - Built by <a href="mailto:<?php echo $this->siteDesignerEmail(); ?>" title="Contact <?php echo $this->siteDesigner(); ?>"><?php echo $this->siteDesigner(); ?></a> / <a href="mailto:<?php echo $this->siteAuthorEmail(); ?>" title="Contact <?php echo $this->siteAuthor(); ?>"><?php echo $this->siteAuthor(); ?></a></p>
-<p class="disclaimer">The Doomsday Engine is licensed under the terms of the <a href="http://www.gnu.org/licenses/gpl.html" rel="nofollow">GNU/GPL License ver 2</a>. The Doomsday Engine logo is Copyright &copy; 2005-<?php echo date('Y'); ?>, the deng team.</p>
+<p class="disclaimer"><a href="mailto:webmaster@dengine.net" title="Contact Webmaster">Webmaster</a> - Site design &copy; <?php echo date('Y'); ?> Deng Team - Built by <a href="mailto:<?php echo $this->siteAuthorEmail(); ?>" title="Contact <?php echo $this->siteAuthor(); ?>"><?php echo $this->siteAuthor(); ?></a></p>
+<p class="disclaimer">The Doomsday Engine is licensed under the terms of the <a href="http://www.gnu.org/licenses/gpl.html" rel="nofollow">GNU/GPL License ver 2</a>. The Doomsday Engine logo is Copyright &copy; 2005-<?php echo date('Y'); ?>, the Deng Team.</p>
 <hr />
 <?php
 

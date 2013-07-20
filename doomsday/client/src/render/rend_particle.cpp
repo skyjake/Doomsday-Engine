@@ -973,7 +973,7 @@ void Rend_RenderGenerators()
 
     glDisable(GL_DEPTH_TEST);
 
-    float eye[3] = { vOrigin[VX], vOrigin[VZ], vOrigin[VY] };
+    float eye[3] = { float(vOrigin[VX]), float(vOrigin[VZ]), float(vOrigin[VY]) };
     gens->iterate(drawGeneratorOrigin, eye);
 
     // Restore previous state.

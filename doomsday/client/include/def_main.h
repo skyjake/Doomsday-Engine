@@ -107,7 +107,18 @@ ded_light_t*    Def_GetLightDef(int spr, int frame);
 ded_decor_t*    Def_GetDecoration(Uri const *uri, /*bool hasExternal,*/ bool isCustom);
 ded_reflection_t* Def_GetReflection(Uri const *uri, /*bool hasExternal,*/ bool isCustom);
 ded_detailtexture_t* Def_GetDetailTex(Uri const *uri, /*bool hasExternal,*/ bool isCustom);
-ded_ptcgen_t*   Def_GetGenerator(Uri const *uri);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
+ded_ptcgen_t *Def_GetGenerator(Uri const *uri);
+ded_ptcgen_t *Def_GetGenerator(de::Uri const &uri);
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 ded_ptcgen_t*   Def_GetDamageGenerator(int mobjType);
 
 int             Def_EvalFlags2(char const *string);

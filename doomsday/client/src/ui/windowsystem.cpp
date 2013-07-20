@@ -32,7 +32,11 @@ DENG2_PIMPL(WindowSystem)
     Windows windows;
     Style style;
 
-    Instance(Public *i) : Base(i)
+    // Mouse motion.
+    bool mouseMoved;
+    Vector2i latestMousePos;
+
+    Instance(Public *i) : Base(i), mouseMoved(false)
     {
         style.load(App::fileSystem().find("defaultstyle.pack").path());
     }
@@ -40,6 +44,16 @@ DENG2_PIMPL(WindowSystem)
     ~Instance()
     {
         self.closeAll();
+    }
+
+    void dispatchLatestMousePosition()
+    {
+        if(mouseMoved)
+        {
+            mouseMoved = false;
+
+            self.main().root().processEvent(MouseEvent(MouseEvent::Absolute, latestMousePos));
+        }
     }
 };
 
@@ -91,10 +105,33 @@ Style &WindowSystem::style()
 
 bool WindowSystem::processEvent(Event const &event)
 {
+    /*
+     * Mouse motion is filtered as it may be produced needlessly often with
+     * high-frequency mice. Note that this does not affect DirectInput mouse
+     * input at all (however, as DirectInput is polled once per frame, it is
+     * already filtered anyway).
+     */
+
+    if(event.type() == Event::MousePosition)
+    {
+        MouseEvent const &mouse = event.as<MouseEvent>();
+
+        if(mouse.pos() != d->latestMousePos)
+        {
+            // This event will be emitted later, before widget tree update.
+            d->latestMousePos = mouse.pos();
+            d->mouseMoved = true;
+        }
+        return true;
+    }
+
+    // Dispatch the event to the main window's widget tree.
     return main().root().processEvent(event);
 }
 
 void WindowSystem::timeChanged(Clock const &/*clock*/)
 {
+    d->dispatchLatestMousePosition();
+
     main().root().update();
 }

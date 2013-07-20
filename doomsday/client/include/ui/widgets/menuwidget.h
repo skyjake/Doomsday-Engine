@@ -28,9 +28,30 @@
  * One of the dimensions of the grid can be configured to use ui::Expand
  * policy, but then the child widgets must manage their size on that axis by
  * themselves.
+ *
+ * A sort order for the items can be optionally defined using
+ * MenuWidget::ISortOrder. Sorting affects layout only, not the actual order of
+ * the children.
  */
 class MenuWidget : public ScrollAreaWidget
 {
+public:
+    class ISortOrder
+    {
+    public:
+        virtual ~ISortOrder() {}
+
+        /**
+         * Determines the sort order for a pair of menu items.
+         *
+         * @param a  First menu item.
+         * @param b  Second menu item.
+         *
+         * @return -1 if a < b; +1 if a > b; 0 if equal.
+         */
+        virtual int compareMenuItemsForSorting(Widget const &a, Widget const &b) const = 0;
+    };
+
 public:
     MenuWidget(de::String const &name = "");
 
@@ -57,9 +78,18 @@ public:
     void setGridSize(int columns, ui::SizePolicy columnPolicy,
                      int rows, ui::SizePolicy rowPolicy);
 
+    /**
+     * Sets the sort order for item layout.
+     *
+     * @param sorting  Sort order object. MenuWidget takes ownership.
+     */
+    void setLayoutSortOrder(ISortOrder *sorting);
+
     ButtonWidget *addItem(de::String const &styledText, de::Action *action = 0);
 
     ButtonWidget *addItem(de::Image const &image, de::String const &styledText, de::Action *action = 0);
+
+    GuiWidget *addSeparator(de::String const &labelText = "");
 
     void removeItem(GuiWidget *child);
 

@@ -21,6 +21,7 @@
 #define LIBDENG2_TIME_H
 
 #include "../libdeng2.h"
+#include "../math.h"
 #include "../ISerializable"
 
 #include <QDateTime>
@@ -35,6 +36,15 @@ class String;
  * The Time class represents a single time measurement. It represents
  * one absolute point in time (since the epoch).  Instances of Time should be
  * used wherever time needs to be measured, calculated or stored.
+ *
+ * It is important to note that if the time values are used in a performance
+ * sensitive manner (e.g., animations), one should use the values returned by
+ * Time::currentHighPerformanceTime(), which deals with simple deltas using
+ * seconds as the unit since the start of the process. The normal constructors
+ * of Time construct a complete Date/Time pair, meaning it is aware of all the
+ * complicated details of time zones, DST, leap years, etc. Consequently,
+ * operations of the latter kind of Time instances can be significantly slower
+ * when performing often-repeated calculations.
  *
  * @ingroup types
  */
@@ -67,7 +77,13 @@ public:
             return _seconds > d;
         }
 
+        bool operator == (ddouble const &d) const {
+            return fequal(_seconds, d);
+        }
+
         Delta operator + (ddouble const &d) const;
+
+        Delta &operator += (ddouble const &d);
 
         Delta operator - (ddouble const &d) const;
 
@@ -123,7 +139,16 @@ public:
 
     Time(QDateTime const &t);
 
+    /**
+     * Construct a time relative to the shared high performance timer.
+     *
+     * @param delta Elapsed time since the high performance timer was started.
+     */
+    Time(Delta const &highPerformanceDelta);
+
     static Time invalidTime();
+
+    Time &operator = (Time const &other);
 
     bool isValid() const;
 
@@ -226,12 +251,12 @@ public:
     /**
      * Converts the time to a QDateTime.
      */
-    QDateTime &asDateTime() { return _time; }
+    QDateTime &asDateTime();
 
     /**
      * Converts the time to a QDateTime.
      */
-    QDateTime const &asDateTime() const { return _time; }
+    QDateTime const &asDateTime() const;
 
     /**
      * Converts the time into a Date.
@@ -247,10 +272,17 @@ public:
     void operator >> (Writer &to) const;
     void operator << (Reader &from);
 
-private:
-    QDateTime _time;
+public:
+    /**
+     * Returns a Time that represents the current elapsed time from the shared
+     * high performance timer.
+     *
+     * @return
+     */
+    static Time currentHighPerformanceTime();
 
-    friend class Date;
+private:
+    DENG2_PRIVATE(d)
 };
 
 DENG2_PUBLIC QTextStream &operator << (QTextStream &os, Time const &t);

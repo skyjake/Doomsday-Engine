@@ -24,6 +24,8 @@ using namespace ui;
 DENG2_PIMPL(MenuWidget)
 {
     bool needLayout;
+    QScopedPointer<ISortOrder> sorting;
+    WidgetList sortedChildren;
 
     SizePolicy colPolicy;
     SizePolicy rowPolicy;
@@ -105,6 +107,8 @@ DENG2_PIMPL(MenuWidget)
         Vector2i size;
         int ord = 0;
 
+        DENG2_ASSERT(sortedChildren.size() == int(self.childCount()));
+
         foreach(Widget *i, self.Widget::children())
         {
             if(isVisibleItem(i))
@@ -116,10 +120,29 @@ DENG2_PIMPL(MenuWidget)
         return size;
     }
 
+    // Functor for quicksort comparisons.
+    struct Sorter {
+        Instance &d;
+        Sorter(Instance *inst) : d(*inst) {}
+        bool operator () (Widget const *a, Widget const *b) const {
+            DENG2_ASSERT(!d.sorting.isNull());
+            return d.sorting->compareMenuItemsForSorting(*a, *b) < 0;
+        }
+    };
+
+    void prepareSortedChildren()
+    {
+        sortedChildren = self.Widget::children();
+        if(!sorting.isNull())
+        {
+            qSort(sortedChildren.begin(), sortedChildren.end(), Sorter(this));
+        }
+    }
+
     GuiWidget *findItem(int col, int row) const
     {
         int ord = 0;
-        foreach(Widget *i, self.Widget::children())
+        foreach(Widget *i, sortedChildren)
         {
             if(isVisibleItem(i))
             {
@@ -234,6 +257,12 @@ void MenuWidget::setGridSize(int columns, ui::SizePolicy columnPolicy,
     d->needLayout = true;
 }
 
+void MenuWidget::setLayoutSortOrder(ISortOrder *sorting)
+{
+    d->sorting.reset(sorting);
+    d->needLayout = true;
+}
+
 ButtonWidget *MenuWidget::addItem(String const &styledText, Action *action)
 {
     return addItem(Image(), styledText, action);
@@ -254,6 +283,18 @@ ButtonWidget *MenuWidget::addItem(Image const &image, String const &styledText, 
     return b;
 }
 
+GuiWidget *MenuWidget::addSeparator(String const &labelText)
+{
+    LabelWidget *lab = new LabelWidget;
+    lab->setText(labelText);
+    lab->setAlignment(ui::AlignLeft);
+    lab->setTextLineAlignment(ui::AlignLeft);
+    lab->setSizePolicy(ui::Expand, ui::Expand);
+    add(lab);
+    d->needLayout = true;
+    return lab;
+}
+
 void MenuWidget::removeItem(GuiWidget *child)
 {
     d->needLayout = true;
@@ -266,7 +307,8 @@ int MenuWidget::count() const
 
 void MenuWidget::updateLayout()
 {
-    //qDebug() << path().toString() << "Menu has" << d->countVisible() << "visible items";
+    // Sort children again.
+    d->prepareSortedChildren();
 
     Rule const *baseVert = holdRef(&contentRule().top());
 

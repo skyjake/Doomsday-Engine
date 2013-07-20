@@ -8,11 +8,11 @@ win32-g++* {
     error("Sorry, gcc is not supported in the Windows build.")
 }
 
-DEFINES += WIN32 _CRT_SECURE_NO_WARNINGS _USE_MATH_DEFINES
+DEFINES += WIN32 MSVC _CRT_SECURE_NO_WARNINGS _USE_MATH_DEFINES
 
 # Disable warnings about unreferenced formal parameters (C4100).
-QMAKE_CFLAGS += -w14505 -wd4100
-QMAKE_CXXFLAGS += -w14505 -wd4100
+QMAKE_CFLAGS += -w14505 -wd4100 -wd4748
+QMAKE_CXXFLAGS += -w14505 -wd4100 -wd4748
 
 DENG_WIN_PRODUCTS_DIR = $$PWD/../distrib/products
 

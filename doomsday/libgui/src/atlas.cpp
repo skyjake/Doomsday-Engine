@@ -77,11 +77,11 @@ DENG2_PIMPL(Atlas)
     bool mustCommitFull() const
     {
         /*
-         * Simple heuristic: if more than half the pixels are included in the
-         * changed area, simply copy the whole thing rather than doing a
-         * large extra copy.
+         * Simple heuristic: if more than 70% of the pixels are included in the
+         * changed area, simply copy the whole thing rather than doing a large
+         * extra copy.
          */
-        return (needFullCommit || changedPercentage() > .5f);
+        return (needFullCommit || changedPercentage() > .7f);
     }
 
     float changedPercentage() const

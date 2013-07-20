@@ -617,7 +617,7 @@ int P_InventoryUse(int player, inventoryitemtype_t type, int silent)
 # if __JHEXEN__
                 if(lastUsed < IIT_FIRSTPUZZITEM)
 # endif
-                    Hu_InventoryMove(player, -1, false, true);
+                    Hu_InventoryMove(player, -1, true /* allow wrap */, true);
             }
 #endif
             return false;

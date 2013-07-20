@@ -2167,24 +2167,23 @@ void C_DECL A_SummonTarget(mobj_t* mo)
 
 void C_DECL A_BoostArmor(mobj_t* mo)
 {
-    int                 count;
-    armortype_t         type;
-    player_t*           plr;
+    armortype_t type;
+    player_t *plr;
+    int count = 0;
 
-    if(!mo->player)
-        return;
+    if(!mo->player) return;
     plr = mo->player;
 
-    count = 0;
+    // Give 1 point per armor type.
     for(type = 0; type < NUMARMOR; ++type)
     {
-        count += P_PlayerGiveArmorBonus(plr, type, 1 * FRACUNIT); // 1 point per armor type.
+        count += P_GiveArmor2(plr, type, 1);
     }
 
-    if(!count)
-        return;
-
-    didUseItem = true;
+    if(count)
+    {
+        didUseItem = true;
+    }
 }
 
 void C_DECL A_BoostMana(mobj_t* mo)

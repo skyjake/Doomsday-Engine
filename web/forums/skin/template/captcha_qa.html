@@ -1,0 +1,12 @@
+<!-- IF S_TYPE == 1 -->
+<section>
+<!-- ENDIF -->
+
+    <h1>{QA_CONFIRM_QUESTION}</h1>
+    <p>{L_CONFIRM_QUESTION_EXPLAIN}</p>
+    <input type="text" tabindex="{$CAPTCHA_TAB_INDEX}" name="qa_answer" id="answer" size="45"  class="inputbox autowidth" title="{L_ANSWER}" />
+    <input type="hidden" name="qa_confirm_id" id="qa_confirm_id" value="{QA_CONFIRM_ID}" />
+
+<!-- IF S_TYPE == 1 -->
+</section>
+<!-- ENDIF -->

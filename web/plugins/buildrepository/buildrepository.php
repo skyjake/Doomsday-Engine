@@ -399,48 +399,45 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
          * expect to edit this file in order to change these...
          */
 
-        if(0) /// @todo Enable once the 1.9.10-1 (stable) build event drops out the feed.
-        {
-            $pack = PackageFactory::newDistribution(PID_WIN_X86, 'Doomsday', Version::fromString('1.9.10'),
-                                                    'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.9.10/deng-inst-1.9.10-1.exe/download',
-                                                    NULL/*no fallback download uri*/,
-                                                    false/*not an autobuilder packaged*/);
-            $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.9.10-1');
-            $pack->setReleaseDate(strtotime('January 6, 2013'));
-            $packages[] = $pack;
+        $pack = PackageFactory::newDistribution(PID_WIN_X86, 'Doomsday', Version::fromString('1.9.10'),
+                                                'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.9.10/deng-inst-1.9.10-1.exe/download',
+                                                NULL/*no fallback download uri*/,
+                                                false/*not an autobuilder packaged*/);
+        $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.9.10-1');
+        $pack->setReleaseDate(strtotime('January 6, 2013'));
+        $packages[] = $pack;
 
-            $pack = PackageFactory::newDistribution(PID_MAC10_4_X86_PPC, 'Doomsday', Version::fromString('1.9.10'),
-                                                    'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.9.10/deng-inst-1.9.10-1.dmg/download',
-                                                    NULL/*no fallback download uri*/,
-                                                    false/*not an autobuilder packaged*/);
-            $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.9.10-1');
-            $pack->setReleaseDate(strtotime('January 6, 2013'));
-            $packages[] = $pack;
+        $pack = PackageFactory::newDistribution(PID_MAC10_4_X86_PPC, 'Doomsday', Version::fromString('1.9.10'),
+                                                'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.9.10/deng-inst-1.9.10-1.dmg/download',
+                                                NULL/*no fallback download uri*/,
+                                                false/*not an autobuilder packaged*/);
+        $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.9.10-1');
+        $pack->setReleaseDate(strtotime('January 6, 2013'));
+        $packages[] = $pack;
 
-            $pack = PackageFactory::newDistribution(PID_MAC10_6_X86_X86_64, 'Doomsday', Version::fromString('1.9.10'),
-                                                    'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.9.10/deng-inst-1.9.10-1_64bit.dmg/download',
-                                                    NULL/*no fallback download uri*/,
-                                                    false/*not an autobuilder packaged*/);
-            $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.9.10-1');
-            $pack->setReleaseDate(strtotime('January 6, 2013'));
-            $packages[] = $pack;
+        $pack = PackageFactory::newDistribution(PID_MAC10_6_X86_X86_64, 'Doomsday', Version::fromString('1.9.10'),
+                                                'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.9.10/deng-inst-1.9.10-1_64bit.dmg/download',
+                                                NULL/*no fallback download uri*/,
+                                                false/*not an autobuilder packaged*/);
+        $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.9.10-1');
+        $pack->setReleaseDate(strtotime('January 6, 2013'));
+        $packages[] = $pack;
 
-            $pack = PackageFactory::newDistribution(PID_LINUX_X86, 'Doomsday', Version::fromString('1.9.10'),
-                                                    'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.9.10/deng-inst-1.9.10-1_i386.deb/download',
-                                                    NULL/*no fallback download uri*/,
-                                                    false/*not an autobuilder packaged*/);
-            $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.9.10-1');
-            $pack->setReleaseDate(strtotime('January 6, 2013'));
-            $packages[] = $pack;
+        $pack = PackageFactory::newDistribution(PID_LINUX_X86, 'Doomsday', Version::fromString('1.9.10'),
+                                                'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.9.10/deng-inst-1.9.10-1_i386.deb/download',
+                                                NULL/*no fallback download uri*/,
+                                                false/*not an autobuilder packaged*/);
+        $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.9.10-1');
+        $pack->setReleaseDate(strtotime('January 6, 2013'));
+        $packages[] = $pack;
 
-            $pack = PackageFactory::newDistribution(PID_LINUX_X86_64, 'Doomsday', Version::fromString('1.9.10'),
-                                                    'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.9.10/deng-inst-1.9.10-1_amd64.deb/download',
-                                                    NULL/*no fallback download uri*/,
-                                                    false/*not an autobuilder packaged*/);
-            $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.9.10-1');
-            $pack->setReleaseDate(strtotime('January 6, 2013'));
-            $packages[] = $pack;
-        }
+        $pack = PackageFactory::newDistribution(PID_LINUX_X86_64, 'Doomsday', Version::fromString('1.9.10'),
+                                                'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.9.10/deng-inst-1.9.10-1_amd64.deb/download',
+                                                NULL/*no fallback download uri*/,
+                                                false/*not an autobuilder packaged*/);
+        $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.9.10-1');
+        $pack->setReleaseDate(strtotime('January 6, 2013'));
+        $packages[] = $pack;
 
         $pack = PackageFactory::newDistribution(PID_WIN_X86, 'Doomsday', Version::fromString('1.8.6'),
                                                 'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.8.6/deng-inst-1.8.6.exe/download',
@@ -1006,11 +1003,11 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
 ?><meta http-equiv="REFRESH" content="2;url=<?php echo $downloadUri; ?>"><?php
 
         // Generate page content.
-?><div id="builds"><?php
+?><div id="contentbox"><?php
 
-?><p>Redirecting to the download for <em><?php echo htmlspecialchars($pack->composeFullTitle()); ?></em>. Your package should begin to download automatically within a few seconds, if not please use this <a href="<?php echo $downloadUri; ?>" title="<?php echo htmlspecialchars('Download '. $pack->composeFullTitle()); ?>">direct link</a> instead.</p><?php
+?><div class="block"><section class="overview"><p>Redirecting to the download for <em><?php echo htmlspecialchars($pack->composeFullTitle()); ?></em>. Your package should begin to download automatically within a few seconds, if not please use this <a href="<?php echo $downloadUri; ?>" title="<?php echo htmlspecialchars('Download '. $pack->composeFullTitle()); ?>">direct link</a> instead.</p></section></div><?php
 
-?><p>Not what you wanted? Here are some alternatives:</p><?php
+?><div class="block"><article><header><h1>Not what you wanted?</h1><p>Here are some alternatives</p></header><?php
 
         // Alternative packages:
 ?><div class="centered"><?php
@@ -1031,7 +1028,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         includeHTML('alternativepages', self::$name);
 
         // End of page content.
-?></div><?php
+?></article></div></div><?php
 
         $fc->endPage();
     }
@@ -1247,7 +1244,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
 
         if(count($build->commits))
         {
-?><div id="buildcommits"><a name="commitindex"></a><h3><?php echo count($build->commits); ?> Commits</h3>
+?><section><h1><?php echo count($build->commits); ?> Commits</h1></section>
 <script type="text/javascript">
 jQuery(document).ready(function() {
   jQuery(".commit").hide();
@@ -1259,8 +1256,6 @@ jQuery(document).ready(function() {
 </script><?php
 
                 outputCommitLog($build);
-
-?></div><?php
         }
     }
 
@@ -1274,7 +1269,7 @@ jQuery(document).ready(function() {
     {
         if(!$event instanceof BuildEvent) throw new Exception('outputEventDetail: Invalid build argument, BuildEvent expected');
 
-?><div class="buildevent"><?php
+?><div class="block"><div class="buildevent"><?php
 
         // Display an overview of the event.
 ?><div id="buildoverview"><?php
@@ -1286,6 +1281,10 @@ jQuery(document).ready(function() {
 
         // Display a stream navigation widget.
         $this->outputBuildStreamNavigation($event);
+
+?></div></div><?php
+
+?><div id="commitindex" class="block"><?php
 
         // Display the full commit log.
         $this->outputBuildCommitLog($event);
@@ -1537,24 +1536,7 @@ jQuery(document).ready(function() {
      */
     private function outputEventIndex()
     {
-?><div class="buildevents_outer"><table><thead><tr><th></th><th><?php
-
-?>Version<?php
-
-?></th></tr></thead><?php
-
-?><tbody><tr><td><?php
-
-        // Output stream info
-        includeHTML('streaminfo', self::$name);
-
-?></td><td><?php
-
-        $this->includeEventMatrix();
-
-?></td></tr></tbody></table></div><?php
-
-?><div class="buildsoverview"><span id="roadmap_badge"><a href="dew/index.php?title=Roadmap" title="Read the Roadmap at the Wiki">Roadmap</a></span><?php
+?><div class="block"><section class="overview"><?php
 
         // Output an overview of the build system.
         includeHTML('overview', self::$name);
@@ -1572,7 +1554,25 @@ jQuery(document).ready(function() {
                                  TRUE/*unstable filter*/, TRUE/*only downloadables*/,
                                  -1/*no result limit*/, $packageListTitle);
 
-?></div><?php
+?></section></div><?php
+
+?><div class="block buildevents"><table><thead><tr><th></th><th><?php
+
+?>Version<?php
+
+?></th><th><a href="dew/index.php?title=Roadmap" title="Read the Roadmap at the Wiki">Roadmap</a></th></tr></thead><?php
+
+?><tbody><tr><td><?php
+
+        // Output stream info
+        includeHTML('streaminfo', self::$name);
+
+?></td><td><?php
+
+        $this->includeEventMatrix();
+
+?></td></tr></tbody></table></div><?php
+
     }
 
     /**
@@ -1605,7 +1605,7 @@ jQuery(document).ready(function() {
         $fc->outputHeader($pageTitle);
         $fc->beginPage($pageTitle);
 
-?><div id="builds"><?php
+?><div id="contentbox"><?php
 
         if($build instanceof BuildEvent)
         {

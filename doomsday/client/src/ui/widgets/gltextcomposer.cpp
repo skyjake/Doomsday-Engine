@@ -30,12 +30,13 @@ DENG2_PIMPL(GLTextComposer)
     String text;
     FontLineWrapping const *wraps;
     Font::RichFormat format;
-    bool needRaster;
+    bool needRedo;
 
     struct Line {
         struct Segment {
             Id id;
             Rangei range;
+            String text;
             int x;
             int width;
             bool compressed;
@@ -48,7 +49,7 @@ DENG2_PIMPL(GLTextComposer)
     typedef QList<Line> Lines;
     Lines lines;
 
-    Instance(Public *i) : Base(i), font(0), atlas(0), wraps(0), needRaster(false)
+    Instance(Public *i) : Base(i), font(0), atlas(0), wraps(0), needRedo(false)
     {}
 
     ~Instance()
@@ -73,9 +74,17 @@ DENG2_PIMPL(GLTextComposer)
         Line &ln = lines[index];
         for(int i = 0; i < ln.segs.size(); ++i)
         {
-            atlas->release(ln.segs[i].id);
+            if(!ln.segs[i].id.isNone())
+            {
+                atlas->release(ln.segs[i].id);
+            }
         }
         ln.segs.clear();
+    }
+
+    String segmentText(int seg, FontLineWrapping::LineInfo const &info) const
+    {
+        return text.substr(info.segs[seg].range);
     }
 
     bool matchingSegments(int lineIndex, FontLineWrapping::LineInfo const &info) const
@@ -88,6 +97,12 @@ DENG2_PIMPL(GLTextComposer)
         {
             if(info.segs[i].range != lines[lineIndex].segs[i].range)
             {
+                // Range has changed.
+                return false;
+            }
+            if(segmentText(i, info) != lines[lineIndex].segs[i].text)
+            {
+                // Text has changed.
                 return false;
             }
             if(lines[lineIndex].segs[i].id.isNone())
@@ -136,25 +151,25 @@ DENG2_PIMPL(GLTextComposer)
             {
                 Line::Segment seg;
                 seg.range = info.segs[k].range;
-
-                String const part = text.substr(seg.range);
-
-                // The color is white unless a style is defined.
-                Vector4ub fgColor(255, 255, 255, 255);
-
-                if(format.haveStyle())
+                seg.text = segmentText(k, info);
+                if(seg.range.size() > 0)
                 {
-                    fgColor = format.style().richStyleColor(Font::RichFormat::NormalColor);
+                    // The color is white unless a style is defined.
+                    Vector4ub fgColor(255, 255, 255, 255);
+
+                    if(format.haveStyle())
+                    {
+                        fgColor = format.style().richStyleColor(Font::RichFormat::NormalColor);
+                    }
+
+                    // Set up the background color to be transparent with no
+                    // change of color in the alphablended smooth edges.
+                    Vector4ub bgColor = fgColor;
+                    bgColor.w = 0;
+
+                    seg.id = atlas->alloc(font->rasterize(seg.text, format.subRange(seg.range),
+                                                          fgColor, bgColor));
                 }
-
-                // Set up the background color to be transparent with no
-                // change of color in the alphablended smooth edges.
-                Vector4ub bgColor = fgColor;
-                bgColor.w = 0;
-
-                seg.id = atlas->alloc(font->rasterize(part, format.subRange(seg.range),
-                                                      fgColor, bgColor));
-
                 line.segs << seg;
             }
         }
@@ -201,7 +216,6 @@ void GLTextComposer::setStyledText(const String &styledText)
 {
     d->format.clear();
     d->text = d->format.initFromStyledText(styledText);
-    d->needRaster = true;
     setState(false);
 }
 
@@ -209,7 +223,6 @@ void GLTextComposer::setText(String const &text, Font::RichFormat const &format)
 {
     d->text = text;
     d->format = format;
-    d->needRaster = true; // Force a redo of everything.
     setState(false);
 }
 
@@ -219,18 +232,23 @@ bool GLTextComposer::update()
     if(d->font != &d->wraps->font())
     {
         d->font = &d->wraps->font();
-        d->needRaster = true;
+        forceUpdate();
     }
 
-    if(d->needRaster)
+    if(d->needRedo)
     {
         d->releaseLines();
-        d->needRaster = false;
+        d->needRedo = false;
     }
 
     setState(true);
 
     return d->allocLines();
+}
+
+void GLTextComposer::forceUpdate()
+{
+    d->needRedo = true;
 }
 
 void GLTextComposer::makeVertices(Vertices &triStrip,

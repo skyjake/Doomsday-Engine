@@ -57,14 +57,15 @@ typedef QHash<MapElement *, BspTreeNode *> BspElementMap;
 typedef QList<ConvexSubspace>              ConvexSubspaces;
 typedef QHash<Vertex *, EdgeTips>          EdgeTipSetMap;
 typedef QList<LineSegment *>               LineSegments;
+typedef QList<Line *>                      Lines;
 
 DENG2_PIMPL(Partitioner)
 {
     /// Cost factor attributed to splitting a line segment.
     int splitCostFactor;
 
-    /// The set of map lines we are building BSP data for (not owned).
-    LineSet lines;
+    /// The index-ordered set of map lines we are building BSP data for (not owned).
+    Lines lines;
 
     /// The mesh from which we'll assign (construct) new geometries(not owned).
     Mesh *mesh;
@@ -120,6 +121,7 @@ DENG2_PIMPL(Partitioner)
         lines.clear();
         mesh = 0;
         qDeleteAll(lineSegments);
+        lineSegments.clear();
         convexSubspaces.clear();
         edgeTipSets.clear();
         treeNodeMap.clear();
@@ -1099,11 +1101,15 @@ DENG2_PIMPL(Partitioner)
             // Reconfigure the half-plane for the next round of partitioning.
             hplane.configure(*partSeg);
 
-            //LOG_TRACE("%s, line segment [%p] %s %s.")
-            //    << hplane.partition().asText()
-            //    << de::dintptr(partSeg)
-            //    << partSeg->from().origin().asText()
-            //    << partSeg->to().origin().asText();
+            /*
+            LOG_TRACE("%s, segment side [%p] %i (segment #%i) %s %s.")
+                << hplane.partition().asText()
+                << de::dintptr(partSeg)
+                << partSeg->lineSideId()
+                << lineSegments.indexOf(&partSeg->line())
+                << partSeg->from().origin().asText()
+                << partSeg->to().origin().asText();
+            */
 
             // Take a copy of the current partition - we'll need this for any
             // BspNode we produce later.
@@ -1202,9 +1208,9 @@ DENG2_PIMPL(Partitioner)
             {
                 // Determine the indice range of the partially overlapping segments.
                 int k = i;
-                while(de::fequal(convexSet[i].fromAngle, convexSet[k + 1].fromAngle) &&
-                      k < numSegments)
-                { k++; }
+                while(de::fequal(convexSet[k + 1].fromAngle, convexSet[i].fromAngle) &&
+                      ++k < numSegments - 1)
+                {}
 
                 // Split each overlapping segment at the point defined by the end
                 // vertex of each of the other overlapping segments.
@@ -1219,8 +1225,20 @@ DENG2_PIMPL(Partitioner)
                         if(de::fequal(b.segment->length(), a.segment->length()))
                             continue;
 
-                        splitLineSegment(*a.segment, b.segment->to().origin(),
-                                         false /*don't update edge tips*/);
+                        // Do not attempt to split at an existing vertex.
+                        /// @todo fixme: For this to happen we *must* be dealing with
+                        /// an invalid mapping construct such as a two-sided line in
+                        /// the void. These cannot be dealt with here as they require
+                        /// a detection algorithm ran prior to splitting overlaps (so
+                        /// that we can skip them here). Presently it is sufficient to
+                        /// simply not split if the would-be split point is equal to
+                        /// either of the segment's existing vertexes.
+                        Vector2d const &point = b.segment->to().origin();
+                        if(point == a.segment->from().origin() ||
+                           point == a.segment->to().origin())
+                            continue;
+
+                        splitLineSegment(*a.segment, point, false /*don't update edge tips*/);
                     }
                 }
 
@@ -1443,6 +1461,11 @@ static AABox blockmapBounds(AABoxd const &mapBounds)
     return blockBounds;
 }
 
+bool lineIndexLessThan(Line const *a, Line const *b)
+{
+     return a->indexInMap() < b->indexInMap();
+}
+
 /**
  * Algorithm (description courtesy of Raphael Quinet):
  *
@@ -1458,8 +1481,12 @@ BspTreeNode *Partitioner::buildBsp(LineSet const &lines, Mesh &mesh)
 {
     d->clear();
 
-    d->lines = lines; // make a copy.
-    d->mesh  = &mesh;
+    // Copy the set of lines and sort by index to ensure deterministically
+    // predictable output.
+    d->lines = lines.toList();
+    qSort(d->lines.begin(), d->lines.end(), lineIndexLessThan);
+
+    d->mesh = &mesh;
 
     // Initialize vertex info for the initial set of vertexes.
     d->edgeTipSets.reserve(d->lines.count() * 2);

@@ -29,12 +29,10 @@ $siteconfig['VisibleErrors'] = false;
 // Site configuration:
 $siteconfig['HomeAddress'] = 'http://dengine.net';
 $siteconfig['Title'] = 'Doomsday Engine';
-$siteconfig['Author'] = 'David Gardner';
-$siteconfig['AuthorEmail'] = 'eunbolt@gmail.com';
-$siteconfig['Designer'] = 'Daniel Swanson';
-$siteconfig['DesignerEmail'] = 'danij@dengine.net';
+$siteconfig['Author'] = 'Daniel Swanson';
+$siteconfig['AuthorEmail'] = 'danij@dengine.net';
 $siteconfig['Copyright'] = 'Copyright (c) ' . date('Y') .', Deng Team';
-$siteconfig['Description'] = 'Home of the Doomsday Engine, a modern engine for playing classic 2.5d first person shooters DOOM, Heretic and Hexen.';
+$siteconfig['Description'] = 'Home of the Doomsday Engine, a modern engine for playing classic 2.5d first person shooters such as DOOM, Heretic and Hexen.';
 $siteconfig['RobotRevisitDays'] = 3;
 $siteconfig['Keywords'] = array(
     'Doomsday', 'Doomsday Engine', 'Deng',

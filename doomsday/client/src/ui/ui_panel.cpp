@@ -99,10 +99,10 @@ ui_object_t *panel_help_source;
 HelpId panel_help;
 
 cvarbutton_t cvarbuttons[] = {
-    {0, "con-var-silent"},
-    {0, "con-dump"},
-    {0, "con-fps"},
-    {0, "con-text-shadow"},
+    //{0, "con-var-silent"},
+    //{0, "con-dump"},
+    //{0, "con-fps"},
+    //{0, "con-text-shadow"},
     {0, "ui-panel-help"},
     {0, "ui-panel-tips"},
     {0, "input-mouse-filter"},
@@ -152,6 +152,7 @@ cvarbutton_t cvarbuttons[] = {
 uidata_button_t btn_bpp = {&panel_bpp, "32", "16"};
 uidata_button_t btn_fullscreen = {&panel_fullscreen, "Yes", "No"};
 
+#if 0
 uidata_listitem_t lstit_con_completion[] = {
     {"List with values", 0},
     {"Cycle through", 1}
@@ -159,6 +160,7 @@ uidata_listitem_t lstit_con_completion[] = {
 uidata_list_t lst_con_completion = {
     lstit_con_completion, NUMITEMS(lstit_con_completion), (void*) "con-completion"
 };
+#endif
 
 uidata_listitem_t lstit_music_source[] = {
     {"MUS lumps", 0},
@@ -258,16 +260,18 @@ uidata_list_t lst_resolution = {
     //   lstit_resolution, NUMITEMS(lstit_resolution)
 };
 
-uidata_slider_t sld_con_alpha = { 0, 1, 0, .01f, true, (void*) "con-alpha" };
-uidata_slider_t sld_con_light = { 0, 1, 0, .01f, true, (void*) "con-light" };
-uidata_slider_t sld_keywait1 = { 50, 1000, 0, 1, false, (void*) "input-key-delay1" };
-uidata_slider_t sld_keywait2 = { 20, 1000, 0, 1, false, (void*) "input-key-delay2" };
+//uidata_slider_t sld_con_alpha = { 0, 1, 0, .01f, true, (void*) "con-alpha" };
+//uidata_slider_t sld_con_light = { 0, 1, 0, .01f, true, (void*) "con-light" };
+//uidata_slider_t sld_keywait1 = { 50, 1000, 0, 1, false, (void*) "input-key-delay1" };
+//uidata_slider_t sld_keywait2 = { 20, 1000, 0, 1, false, (void*) "input-key-delay2" };
 uidata_slider_t sld_mouse_x_scale = { 0, .01f, 0, .00005f, true, (void*) "input-mouse-x-scale" };
 uidata_slider_t sld_mouse_y_scale = { 0, .01f, 0, .00005f, true, (void*) "input-mouse-y-scale" };
 uidata_slider_t sld_client_pos_interval =
     { 0, 70, 0, 1, false, (void*) "client-pos-interval" };
+#if 0
 uidata_slider_t sld_server_frame_interval =
     { 0, 35, 0, 1, false, (void*) "server-frame-interval" };
+#endif
 uidata_slider_t sld_sound_volume = { 0, 255, 0, 1, false, (void*) "sound-volume" };
 uidata_slider_t sld_music_volume = { 0, 255, 0, 1, false, (void*) "music-volume" };
 uidata_slider_t sld_reverb_volume =
@@ -341,8 +345,10 @@ uidata_slider_t sld_halo_radmin =
     { 1, 80, 0, .01f, true, (void*) "rend-halo-radius-min" };
 uidata_slider_t sld_sprite_lights = { 0, 10, 0, 1, false, (void*) "rend-sprite-lights" };
 
+#if 0
 uidata_edit_t ed_server_password =
     { panel_sv_password, 100, (void*) "server-password" };
+#endif
 uidata_edit_t ed_res_x = { panel_res_x, 40 };
 uidata_edit_t ed_res_y = { panel_res_y, 40 };
 
@@ -429,20 +435,22 @@ ui_object_t ob_panel[] =
     { UI_META,      4,  0,              0, 60 },
     { UI_TEXT,      0,  0,              300, 250, 0, 55,    "Enable joystick", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 250, 70, 55,   "input-joy", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
+#if 0
     { UI_TEXT,      0,  0,              300, 430, 0, 55,    "Key repeat delay (ms)", UIText_Drawer },
     { UI_SLIDER,    0,  0,              680, 430, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_keywait1 },
     { UI_TEXT,      0,  0,              300, 490, 0, 55,    "Key repeat rate (ms)", UIText_Drawer },
     { UI_SLIDER,    0,  0,              680, 490, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_keywait2 },
+#endif
 
     { UI_META,      5 },
     { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Graphics Options", UIText_BrightDrawer },
     { UI_META,      5,  0,              0, -60 },
     { UI_TEXT,      0,  UIF_FADE_AWAY,  300, 130, 0, 55,    "Field Of View angle", UIText_Drawer },
     { UI_SLIDER,    0,  UIF_FADE_AWAY,  680, 130, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_fov },
-    { UI_BUTTON,    0,  UIF_FADE_AWAY,  680, 190, 70, 60,   "90",       UIButton_Drawer, UIButton_Responder, 0, CP_QuickFOV },
-    { UI_BUTTON,    0,  UIF_FADE_AWAY,  755, 190, 70, 60,   "95",       UIButton_Drawer, UIButton_Responder, 0, CP_QuickFOV },
-    { UI_BUTTON,    0,  UIF_FADE_AWAY,  830, 190, 70, 60,   "100",      UIButton_Drawer, UIButton_Responder, 0, CP_QuickFOV },
-    { UI_BUTTON,    0,  UIF_FADE_AWAY,  905, 190, 70, 60,   "110",      UIButton_Drawer, UIButton_Responder, 0, CP_QuickFOV },
+    { UI_BUTTON,    0,  UIF_FADE_AWAY,  680, 190, 70, 60,   "95",       UIButton_Drawer, UIButton_Responder, 0, CP_QuickFOV },
+    { UI_BUTTON,    0,  UIF_FADE_AWAY,  755, 190, 70, 60,   "105",       UIButton_Drawer, UIButton_Responder, 0, CP_QuickFOV },
+    { UI_BUTTON,    0,  UIF_FADE_AWAY,  830, 190, 70, 60,   "115",      UIButton_Drawer, UIButton_Responder, 0, CP_QuickFOV },
+    { UI_BUTTON,    0,  UIF_FADE_AWAY,  905, 190, 70, 60,   "125",      UIButton_Drawer, UIButton_Responder, 0, CP_QuickFOV },
     { UI_TEXT,      0,  0,              300, 255, 0, 55,    "Mirror player weapon models", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 255, 70, 55,   "rend-model-mirror-hud", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
     { UI_META,      5,  0,              0, 60 },
@@ -592,26 +600,35 @@ ui_object_t ob_panel[] =
 
     { UI_META,      11 },
     { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Network Options", UIText_BrightDrawer },
+#if 0
     { UI_TEXT,      0,  0,              300, 70, 0, 55,     "Continuous screen refresh", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 70, 70, 55,    "net-nosleep", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
-    { UI_TEXT,      0,  0,              300, 130, 0, 55,    "Show development info", UIText_Drawer },
-    { UI_BUTTON2,   0,  0,              680, 130, 70, 55,   "net-dev", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
+#endif
+    { UI_TEXT,      0,  0,              300, 70, 0, 55,     "Show development info", UIText_Drawer },
+    { UI_BUTTON2,   0,  0,              680, 70, 70, 55,    "net-dev", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
+#if 0
     { UI_TEXT,      0,  0,              300, 190, 0, 55,    "Server login password", UIText_Drawer },
     { UI_EDIT,      0,  0,              680, 190, 300, 55,  "",         UIEdit_Drawer, UIEdit_Responder, 0, CP_CvarEdit, &ed_server_password },
-    { UI_TEXT,      0,  0,              300, 250, 0, 55,    "Cl-to-sv pos transmit tics", UIText_Drawer },
-    { UI_SLIDER,    0,  0,              680, 250, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_client_pos_interval },
-    { UI_TEXT,      0,  0,              300, 310, 0, 55,    "Frame interval tics", UIText_Drawer },
-    { UI_SLIDER,    0,  0,              680, 310, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_server_frame_interval },
+#endif
+    { UI_TEXT,      0,  0,              300, 130, 0, 55,    "Cl-to-sv pos transmit tics", UIText_Drawer },
+    { UI_SLIDER,    0,  0,              680, 130, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_client_pos_interval },
+#if 0
+    { UI_TEXT,      0,  0,              300, 190, 0, 55,    "Frame interval tics", UIText_Drawer },
+    { UI_SLIDER,    0,  0,              680, 190, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_server_frame_interval },
+#endif
 
     { UI_META,      12 },
     { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Console Options", UIText_BrightDrawer },
+#if 0
     { UI_TEXT,      0,  0,              300, 70, 0, 55,     "Display FPS counter", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 70, 70, 55,    "con-fps",  UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
     { UI_META,      12, 0,              0, 60 },
-    { UI_TEXT,      0,  0,              300, 130, 0, 55,    "Display Control Panel help window", UIText_Drawer },
-    { UI_BUTTON2,   0,  0,              680, 130, 70, 55,   "ui-panel-help", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
-    { UI_TEXT,      0,  0,              300, 190, 0, 55,    "Display help indicators", UIText_Drawer },
-    { UI_BUTTON2,   0,  0,              680, 190, 70, 55,   "ui-panel-tips", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
+#endif
+    { UI_TEXT,      0,  0,              300, 70, 0, 55,     "Display Control Panel help window", UIText_Drawer },
+    { UI_BUTTON2,   0,  0,              680, 70, 70, 55,    "ui-panel-help", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
+    { UI_TEXT,      0,  0,              300, 130, 0, 55,    "Display help indicators", UIText_Drawer },
+    { UI_BUTTON2,   0,  0,              680, 130, 70, 55,   "ui-panel-tips", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
+#if 0
     { UI_META,      12, 0,              0, 180 },
     { UI_TEXT,      0,  0,              300, 130, 0, 55,    "Silent console variables", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 130, 70, 55,   "con-var-silent", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
@@ -628,7 +645,7 @@ ui_object_t ob_panel[] =
     { UI_TEXT,      0,  0,              300, 615, 0, 55,    "Activation key", UIText_Drawer },
     { UI_FOCUSBOX,  0,  0,              680, 615, 70, 55,   "con-key-activate", CP_KeyGrabDrawer, CP_KeyGrabResponder },
     { UI_TEXT,      0,  0,              680, 670, 0, 40,    "Click the box, press a key.", UIText_Drawer },
-
+#endif
     { UI_NONE }
 };
 /* *INDENT-ON* */
@@ -796,6 +813,7 @@ void CP_CvarSlider(ui_object_t *ob)
     }
 }
 
+#if 0
 int CP_KeyGrabResponder(ui_object_t *ob, ddevent_t *ev)
 {
     if(IS_TOGGLE_DOWN(ev) &&
@@ -855,6 +873,7 @@ void CP_KeyGrabDrawer(ui_object_t* ob)
     UI_TextOutEx2(buf, &labelOrigin, UI_Color(UIC_TEXT), alpha, 0, DTF_ONLY_SHADOW);
     glDisable(GL_TEXTURE_2D);
 }
+#endif
 
 void CP_QuickFOV(ui_object_t* ob)
 {

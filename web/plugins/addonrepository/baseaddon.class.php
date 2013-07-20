@@ -236,17 +236,17 @@ class Addon extends BaseAddon
 
             $html .= "<div class=\"icon\">"
                         ."<a href=\"{$downloadUri}\""
-                          ." title=\"Download {$title}\">"
+                          ." title=\"Download &#39;{$title}&#39;\">"
                         ."<img src=\"images/packageicon.png\" alt=\"Package icon\" /></a></div>";
 
             $html .= "<a href=\"{$downloadUri}\""
-                      ." title=\"Download {$title}\">";
+                      ." title=\"Download &#39;{$title}&#39;\">";
         }
         else if($this->hasHomepageUri())
         {
             $title = htmlspecialchars($this->title);
             $homepageUri = htmlspecialchars($this->homepageUri());
-            $homepageUriLabel = htmlspecialchars("Visit {$this->title} homepage");
+            $homepageUriLabel = htmlspecialchars("Visit &#39;{$this->title}&#39; homepage");
 
             $html .= "<a href=\"{$homepageUri}\""
                       ." title=\"{$homepageUriLabel}\">";

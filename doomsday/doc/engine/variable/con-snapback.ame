@@ -1,3 +1,0 @@
-@summary{
-    1=Automatically reset the position of the console history buffer when a new message is printed.
-}

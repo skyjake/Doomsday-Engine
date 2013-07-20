@@ -139,6 +139,7 @@ D_CMD(WarpMap);
 
 void    G_PlayerReborn(int player);
 void    G_DoReborn(int playernum);
+boolean G_StartDebriefing();
 
 typedef struct {
     Uri* mapUri;
@@ -2441,6 +2442,17 @@ void G_DoMapCompleted(void)
 {
     int i;
 
+    // We are about to go to Intermission, however if there is an InFine for
+    // debriefing we should run it now.
+    if(G_StartDebriefing())
+    {
+        // The GA_MAPCOMPLETED action is retaken after the debriefing stops.
+        return;
+    }
+
+    // We have either just returned from a debriefing or there wasn't one.
+    briefDisabled = false;
+
     G_SetGameAction(GA_NONE);
 
     for(i = 0; i < MAXPLAYERS; ++i)
@@ -2576,10 +2588,24 @@ void G_PrepareWIData(void)
 }
 #endif
 
-void G_WorldDone(void)
+/**
+ * Attempts to start the map debriefing InFine.
+ * @return @c true, if InFine started; otherwise @c false.
+ */
+boolean G_StartDebriefing()
 {
     ddfinale_t fin;
 
+    if(G_DebriefingEnabled(gameEpisode, gameMap, &fin) &&
+       G_StartFinale(fin.script, 0, FIMODE_AFTER, 0))
+    {
+        return true;
+    }
+    return false;
+}
+
+void G_WorldDone(void)
+{
 #if __JDOOM__ || __JDOOM64__
     if(secretExit)
         players[CONSOLEPLAYER].didSecret = true;
@@ -2587,15 +2613,6 @@ void G_WorldDone(void)
 
     // Clear the currently playing script, if any.
     FI_StackClear();
-
-    if(G_DebriefingEnabled(gameEpisode, gameMap, &fin) &&
-       G_StartFinale(fin.script, 0, FIMODE_AFTER, 0))
-    {
-        return;
-    }
-
-    // We have either just returned from a debriefing or there wasn't one.
-    briefDisabled = false;
 
     G_SetGameAction(GA_LEAVEMAP);
 }

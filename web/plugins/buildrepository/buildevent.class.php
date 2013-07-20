@@ -246,7 +246,7 @@ class BuildEvent
 
         $html .= "<div class=\"{$cssClass}\">"
                 . ($this->uniqueId > 0? htmlspecialchars($this->uniqueId) : '&nbsp;')
-                ."<span class=\"startdate\">". htmlspecialchars(date('d M Y', $this->startDate)) .'</span></div>';
+                ."<span class=\"startdate\">". htmlspecialchars(date('F j, Y', $this->startDate)) .'</span></div>';
 
         //if($isActive && $this->uniqueId > 0)
         {

@@ -33,12 +33,12 @@ DENG2_PIMPL(ScriptSystem), DENG2_OBSERVES(Record, Deletion)
 {
     /// Built-in special modules. These are constructed by native code and thus not
     /// parsed from any script.
-    typedef QMap<String, Record *> NativeModules;
+    typedef QMap<String, Record *> NativeModules; // not owned
     NativeModules nativeModules;
     Record versionModule; // Version: information about the platform and build
 
     /// Resident modules.
-    typedef QMap<String, Module *> Modules;
+    typedef QMap<String, Module *> Modules; // owned
     Modules modules;
 
     Instance(Public *i) : Base(*i)
@@ -61,6 +61,8 @@ DENG2_PIMPL(ScriptSystem), DENG2_OBSERVES(Record, Deletion)
 
     ~Instance()
     {
+        qDeleteAll(modules.values());
+
         DENG2_FOR_EACH(NativeModules, i, nativeModules)
         {
             i.value()->audienceForDeletion -= this;
@@ -69,7 +71,7 @@ DENG2_PIMPL(ScriptSystem), DENG2_OBSERVES(Record, Deletion)
 
     void addNativeModule(String const &name, Record &module)
     {
-        nativeModules.insert(name, &module);
+        nativeModules.insert(name, &module); // not owned
         module.audienceForDeletion += this;
     }
 
@@ -204,7 +206,7 @@ Record &ScriptSystem::importModule(String const &name, String const &importedFro
     if(src)
     {
         Module *module = new Module(*src);
-        d->modules.insert(name, module);
+        d->modules.insert(name, module); // owned
         return module->names();
     }
 

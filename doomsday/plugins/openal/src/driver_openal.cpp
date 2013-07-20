@@ -146,12 +146,11 @@ int DS_Init(void)
     // Already initialized?
     if(initOk) return true;
 
-    // Open a playback device.
-    /// @todo Shouldn't we use the system default device?
-    device = alcOpenDevice((ALCchar*) "DirectSound3D");
+    // Open the default playback device.
+    device = alcOpenDevice(NULL);
     if(!device)
     {
-        Con_Message("OpenAL init failed (device: DirectSound3D).");
+        Con_Message("OpenAL init failed (default playback device).");
         return false;
     }
 
@@ -214,6 +213,7 @@ sfxbuffer_t* DS_SFX_CreateBuffer(int flags, int bits, int rate)
         return NULL;
     }
 
+    /*
     // Attach the buffer to the source.
     alSourcei(srcName, AL_BUFFER, bufName);
     if(DSOPENAL_ERRCHECK(alGetError()))
@@ -222,6 +222,7 @@ sfxbuffer_t* DS_SFX_CreateBuffer(int flags, int bits, int rate)
         alDeleteBuffers(1, &bufName);
         return NULL;
     }
+    */
 
     if(!(flags & SFXBF_3D))
     {
@@ -270,6 +271,9 @@ void DS_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
             return; // No need to reload.
     }
 
+    // Make sure its not bound right now.
+    alSourcei(SRC(buf), AL_BUFFER, 0);
+
     alBufferData(BUF(buf),
                  sample->bytesPer == 1 ? AL_FORMAT_MONO8 : AL_FORMAT_MONO16,
                  sample->data, sample->size, sample->rate);
@@ -289,6 +293,7 @@ void DS_SFX_Reset(sfxbuffer_t* buf)
     if(!buf) return;
 
     DS_SFX_Stop(buf);
+    alSourcei(SRC(buf), AL_BUFFER, 0);
     buf->sample = NULL;
 }
 

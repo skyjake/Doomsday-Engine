@@ -97,11 +97,11 @@ class AddonRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
 
         if($addon->hasDownloadUri())
         {
-?><a href="<?php echo $addon->downloadUri(); ?>" title="Download <?php echo htmlspecialchars($addonFullTitle); ?>" rel="nofollow"><?php echo htmlspecialchars($addonFullTitle); ?></a><?php
+?><a href="<?php echo $addon->downloadUri(); ?>" title="Download &#39;<?php echo htmlspecialchars($addonFullTitle); ?>&#39;" rel="nofollow"><?php echo htmlspecialchars($addonFullTitle); ?></a><?php
         }
         else if($addon->hasHomepageUri())
         {
-?><a href="<?php echo $addon->homepageUri(); ?>" title="Visit homepage for <?php echo htmlspecialchars($addonFullTitle); ?>" rel="nofollow"><?php echo htmlspecialchars($addonFullTitle); ?></a><?php
+?><a href="<?php echo $addon->homepageUri(); ?>" title="Visit homepage for &#39;<?php echo htmlspecialchars($addonFullTitle); ?>&#39;" rel="nofollow"><?php echo htmlspecialchars($addonFullTitle); ?></a><?php
         }
         else
         {
@@ -130,10 +130,12 @@ class AddonRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
 
         // Output the table.
 ?><table class="directory">
+<thead>
 <tr>
 <th><label title="Package Name">Name</label></th>
 <th><label title="Package Description">Description</label></th>
-<th><label title="Package Notes">Notes</label></th></tr><?php
+<th><label title="Package Notes">Notes</label></th></tr>
+</thead><?php
 
         foreach($this->addons as &$addon)
         {
@@ -149,9 +151,7 @@ class AddonRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
 
     private function outputFeaturedAddons()
     {
-?><h3>Featured</h3><?php
-
-?><div class="addons_list"><?php
+?><div class="block"><div class="addons_list"><?php
 
         foreach($this->addons as &$addon)
         {
@@ -160,32 +160,7 @@ class AddonRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
             echo $addon->genDownloadBadge();
         }
 
-?></div><?php
-    }
-
-    private function generateHTML()
-    {
-        includeHTML('overview', self::$name);
-
-        $this->outputFeaturedAddons();
-
-?><h3>DOOM</h3>
-<p>The following add-ons are for use with <strong>DOOM</strong>, <strong>DOOM2</strong>, <strong>Ultimate DOOM</strong> and <strong>Final DOOM (TNT/Plutonia)</strong>. Some of which may even be used with the shareware version of DOOM (check the <em>Notes</em>).</p>
-<?php
-
-        $this->outputAddonList(self::$doomGameModes);
-
-?><h3>Heretic</h3>
-<p>The following add-ons are for use with <strong>Heretic</strong> and <strong>Heretic: Shadow of the Serpent Riders </strong>. Some of which may even be used with the shareware version of Heretic (check the <em>Notes</em>).</p>
-<?php
-
-        $this->outputAddonList(self::$hereticGameModes);
-
-?><h3>Hexen</h3>
-<p>The following add-ons are for use with <strong>Hexen</strong> and <strong>Hexen:Deathkings of the Dark Citadel</strong>. Some of which may even be used with the shareware version of Hexen (check the <em>Notes</em>).</p>
-<?php
-
-        $this->outputAddonList(self::$hexenGameModes);
+?></div></div><?php
     }
 
     public static function packageSorter($packA, $packB)
@@ -213,10 +188,35 @@ class AddonRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         $fc->outputHeader($this->title(), 'addons');
         $fc->beginPage($this->title(), 'addons');
 
-?><div id="addons"><?php
+?><div id="contentbox" class="addons"><?php
 
-        $this->generateHTML();
+        includeHTML('overview', self::$name);
 
+        $this->outputFeaturedAddons();
+
+?><div class="block"><article><h1>DOOM</h1>
+<p>The following add-ons are for use with <a href="/doom" title="Tell me more about DOOM">DOOM</a> or a variant of it such as <strong>DOOM2</strong> and <strong>Final Doom: The Plutonia Experiment</strong>.</p>
+<?php
+
+        $this->outputAddonList(self::$doomGameModes);
+
+?></article></div><?php
+
+?><div class="block"><article><h1>Heretic</h1>
+<p>The following add-ons are for use with <a href="/heretic" title="Tell me more about Heretic">Heretic</a> and the <strong>Shadow of the Serpent Riders</strong> expansion pack.</p>
+<?php
+
+        $this->outputAddonList(self::$hereticGameModes);
+
+?></article></div><?php
+
+?><div class="block"><article><h1>Hexen</h1>
+<p>The following add-ons are for use with <a href="/hexen" title="Tell me more about Hexen">Hexen</a> and the <strong>Deathkings of the Dark Citadel</strong> expansion pack.</p>
+<?php
+
+        $this->outputAddonList(self::$hexenGameModes);
+
+?></article></div><?php
 ?></div><?php
 
         $fc->endPage();

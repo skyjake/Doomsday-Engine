@@ -29,8 +29,8 @@
 
 using namespace de;
 
-static TimeDelta const OPENING_ANIM_SPAN = 0.5;
-static TimeDelta const CLOSING_ANIM_SPAN = 0.4;
+static TimeDelta const OPENING_ANIM_SPAN = 0.4;
+static TimeDelta const CLOSING_ANIM_SPAN = 0.3;
 
 DENG2_PIMPL(PopupWidget)
 {
@@ -65,7 +65,6 @@ DENG2_PIMPL(PopupWidget)
         openingRule = new ScalarRule(0);
 
         dismissTimer.setSingleShot(true);
-        dismissTimer.setInterval(CLOSING_ANIM_SPAN.asMilliSeconds());
         QObject::connect(&dismissTimer, SIGNAL(timeout()), thisPublic, SLOT(dismiss()));
 
         // Style.
@@ -124,6 +123,20 @@ DENG2_PIMPL(PopupWidget)
 
     void updateLayout()
     {
+        DENG2_ASSERT(content != 0);
+
+        // Widget's size depends on the opening animation.
+        if(dir == ui::Up || dir == ui::Down)
+        {
+            self.rule().setInput(Rule::Width,  content->rule().width())
+                       .setInput(Rule::Height, *openingRule);
+        }
+        else
+        {
+            self.rule().setInput(Rule::Width,  *openingRule)
+                       .setInput(Rule::Height, content->rule().height());
+        }
+
         //Rectanglei const view = Rectanglei::fromSize(self.root().viewSize());
         //Vector2i const pos(anchorX->valuei(), anchorY->valuei());
         //Vector2i const size(self.rule().width().valuei(), self.rule().height().valuei());
@@ -206,13 +219,14 @@ DENG2_PIMPL(PopupWidget)
 
         // Begin the closing animation.
         openingRule->setStyle(Animation::EaseIn);
-        openingRule->set(0, CLOSING_ANIM_SPAN, delay);
+        openingRule->set(0, CLOSING_ANIM_SPAN + delay, delay);
 
         self.popupClosing();
 
         emit self.closed();
 
         dismissTimer.start();
+        dismissTimer.setInterval((CLOSING_ANIM_SPAN + delay).asMilliSeconds());
     }
 };
 
@@ -241,11 +255,6 @@ void PopupWidget::setContent(GuiWidget *content)
 
     d->content = content;
     add(content); // ownership taken
-
-    // The given widget determines the content size of the popup.
-    rule().setInput(Rule::Width,  content->rule().width())
-          .setInput(Rule::Height, *d->openingRule);
-    //d->openingRule->set(content->rule().height());
 
     content->rule()
             .setInput(Rule::Left, rule().left())
@@ -359,8 +368,16 @@ void PopupWidget::open()
 
     preparePopupForOpening();
 
+    // Start the opening animation.
     d->openingRule->setStyle(Animation::Bounce, 8);
-    d->openingRule->set(d->content->rule().height(), OPENING_ANIM_SPAN);
+    if(d->dir == ui::Up || d->dir == ui::Down)
+    {
+        d->openingRule->set(d->content->rule().height(), OPENING_ANIM_SPAN);
+    }
+    else
+    {
+        d->openingRule->set(d->content->rule().width(), OPENING_ANIM_SPAN);
+    }
 
     d->opened = true;
 
@@ -407,12 +424,21 @@ void PopupWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
 
     /// @todo Other directions are missing: this is just for the popup that opens upwards.
 
-    // Can't put the anchor too close to the edges.
-    anchorPos.x = clamp(2*marker, anchorPos.x, int(root().viewSize().x) - 2*marker);
+    if(d->dir == ui::Up)
+    {
+        // Can't put the anchor too close to the edges.
+        anchorPos.x = clamp(2*marker, anchorPos.x, int(root().viewSize().x) - 2*marker);
 
-    v.pos = anchorPos; tri << v;
-    v.pos = anchorPos + Vector2i(-marker, -marker); tri << v;
-    v.pos = anchorPos + Vector2i(marker, -marker); tri << v;
+        v.pos = anchorPos; tri << v;
+        v.pos = anchorPos + Vector2i(-marker, -marker); tri << v;
+        v.pos = anchorPos + Vector2i(marker, -marker); tri << v;
+    }
+    else if(d->dir == ui::Left)
+    {
+        v.pos = anchorPos; tri << v;
+        v.pos = anchorPos + Vector2i(-marker, marker); tri << v;
+        v.pos = anchorPos + Vector2i(-marker, -marker); tri << v;
+    }
 
     verts += tri;
 }

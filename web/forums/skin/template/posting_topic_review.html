@@ -1,0 +1,54 @@
+
+<div class="block nobackground"><section><h1>{L_TOPIC_REVIEW}</h1></section></div>
+
+<div id="topicreview">
+<script type="text/javascript">
+// <![CDATA[
+    bbcodeEnabled = {S_BBCODE_ALLOWED};
+// ]]>
+</script>
+    <!-- BEGIN topic_review_row -->
+    <div class="block">
+    <article id="pr{topic_review_row.POST_ID}" class="post">
+        <!-- IF topic_review_row.S_IGNORE_POST -->
+        <div class="postbody post-ignore">
+                {topic_review_row.L_IGNORE_POST}
+        </div>
+        <!-- ELSE -->
+        <header>
+        <!-- IF topic_review_row.POSTER_QUOTE and topic_review_row.DECODED_MESSAGE -->
+        <ul class="profile-icons">
+            <!-- IF topic_review_row.U_MCP_DETAILS --><li class="post-details"><a href="{topic_review_row.U_MCP_DETAILS}">?</a></li><!-- ENDIF -->
+            <li class="quote-icon"><a href="#postingbox" onclick="addquote({topic_review_row.POST_ID}, '{topic_review_row.POSTER_QUOTE}', '{LA_WROTE}');" title="{L_QUOTE} {topic_review_row.POST_AUTHOR}">{L_QUOTE}</a></li>
+        </ul>
+        <!-- ENDIF -->
+        <h1><span class="postauthor">{topic_review_row.POST_AUTHOR_FULL}</span><a href="#pr{topic_review_row.POST_ID}">{topic_review_row.POST_SUBJECT}</a></h1>
+        <p class="author">{topic_review_row.POST_DATE}</p>
+        </header>
+        <!-- ENDIF -->
+        <div class="postbody">
+            <div class="content">{topic_review_row.MESSAGE}</div>
+
+        <!-- IF topic_review_row.S_HAS_ATTACHMENTS -->
+            <dl class="attachbox">
+                <dt>{L_ATTACHMENTS}</dt>
+                <!-- BEGIN attachment -->
+                    <dd>{topic_review_row.attachment.DISPLAY_ATTACHMENT}</dd>
+                <!-- END attachment -->
+            </dl>
+        <!-- ENDIF -->
+
+        <!-- IF topic_review_row.POSTER_QUOTE and topic_review_row.DECODED_MESSAGE -->
+            <div id="message_{topic_review_row.POST_ID}" style="display: none;">{topic_review_row.DECODED_MESSAGE}</div>
+        <!-- ENDIF -->
+        </div>
+    </article>
+    </div>
+    <!-- END topic_review_row -->
+</div>
+
+<!-- IF S_MCP_REPORT -->
+    <p><a href="#report" class="top2">{L_BACK_TO_TOP}</a></p>
+<!-- ELSE -->
+    <p><a href="#postingbox" class="top2">{L_BACK_TO_TOP}</a></p>
+<!-- ENDIF -->

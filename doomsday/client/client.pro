@@ -716,6 +716,7 @@ SOURCES += \
 }
 
 OTHER_FILES += \
+    modules/bootstrap.de \
     data/cphelp.txt \
     include/template.h.template \
     src/template.c.template \

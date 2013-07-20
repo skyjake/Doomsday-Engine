@@ -42,7 +42,12 @@ extern actionlink_t actionlinks[];
 void C_DECL A_BabyMetal();
 void C_DECL A_BFGsound();
 void C_DECL A_BFGSpray();
+
+/**
+ * Possibly trigger special effects if there are no more bosses.
+ */
 void C_DECL A_BossDeath();
+
 void C_DECL A_BrainAwake();
 void C_DECL A_BrainDie();
 void C_DECL A_BrainExplode();
@@ -76,7 +81,12 @@ void C_DECL A_FireShotgun2();
 void C_DECL A_GunFlash();
 void C_DECL A_HeadAttack();
 void C_DECL A_Hoof();
+
+/**
+ * DOOM II special targeting sectors with tag 666.
+ */
 void C_DECL A_KeenDie();
+
 void C_DECL A_Light0();
 void C_DECL A_Light1();
 void C_DECL A_Light2();

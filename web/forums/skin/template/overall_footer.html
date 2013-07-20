@@ -1,0 +1,45 @@
+    <div id="forum-footer" class="block nobackground">
+        <section>
+            <ul class="linklist">
+                <li class="rightside"><!-- IF U_TEAM --><a href="{U_TEAM}">{L_THE_TEAM}</a> &bull; <!-- ENDIF --><!-- IF not S_IS_BOT --><a href="{U_DELETE_COOKIES}">{L_DELETE_COOKIES}</a> &bull; <!-- ENDIF -->{S_TIMEZONE}</li>
+            </ul>
+        </section>
+        <section class="copyright">Powered by <a href="http://www.phpbb.com/">phpBB</a>&reg; Forum Software &copy; phpBB Group
+            <!-- IF TRANSLATION_INFO --><br />{TRANSLATION_INFO}<!-- ENDIF -->
+            <!-- IF DEBUG_OUTPUT --><br />{DEBUG_OUTPUT}<!-- ENDIF -->
+        </section>
+    </div>
+</div>
+
+<div id="bottom" accesskey="z" style="height:1px">
+    <!-- IF not S_IS_BOT -->{RUN_CRON_TASK}<!-- ENDIF -->
+</div>
+        </div>
+    </div>
+
+<!-- dengine.net window chrome RESUME -->
+    <div class="framepanel" id="framepanel_top">
+    <div id="panorama">
+    </div>
+    <!-- IF S_DISPLAY_SEARCH and not S_IN_SEARCH -->
+        <div id="search-box">
+            <form action="{U_SEARCH}" method="post" id="search">
+            <fieldset>
+                <input name="keywords" id="keywords" type="text" maxlength="128" title="{L_SEARCH_KEYWORDS}" class="inputbox search" value="<!-- IF SEARCH_WORDS-->{SEARCH_WORDS}<!-- ELSE -->{L_SEARCH_MINI}<!-- ENDIF -->" onclick="if(this.value=='{LA_SEARCH_MINI}')this.value='';" onblur="if(this.value=='')this.value='{LA_SEARCH_MINI}';" />
+                <input value="{L_GO}" type="submit" /><br />
+                <a href="{U_SEARCH}" title="{L_SEARCH_ADV_EXPLAIN}">{L_SEARCH_ADV}</a> {S_SEARCH_HIDDEN_FIELDS}
+            </fieldset>
+            </form>
+        </div>
+    <!-- ENDIF -->
+    </div>
+    <footer id="footer" role="contentinfo">
+    <p class="disclaimer"><a href="mailto:webmaster@dengine.net" title="Contact Webmaster">Webmaster</a> - Site design &copy; 2013 <a href="mailto:danij@dengine.net" title="Contact Daniel Swanson">Daniel Swanson</a> - Built by <a href="mailto:danij@dengine.net" title="Contact Daniel Swanson">Daniel Swanson</a> / <a href="mailto:eunbolt@gmail.com" title="Contact David Gardner">David Gardner</a></p>
+    <p class="disclaimer">The Doomsday Engine is licensed under the terms of the <a href="http://www.gnu.org/licenses/gpl.html" rel="nofollow">GNU/GPL License ver 2</a>. The Doomsday Engine logo is Copyright &copy; 2005-2013, the deng team.</p>
+    <hr />
+    <p class="legal">Microsoft &reg;, Windows &reg; and the Windows logo are registered trademarks of <a href="http://www.microsoft.com/" rel="nofollow" title="Microsoft Corporation">Microsoft Corporation</a>. Mac OS X &reg; and the Apple logo are a registered trademark of <a href="http://www.apple.com/" rel="nofollow" title="Apple Inc">Apple Inc</a>. UNIX &reg; is a registered trademark of <a href="http://www.opengroup.org/" rel="nofollow" title="The Open Group">The Open Group</a>. The "Tux" logo was created by <a href="mailto:lewing@isc.tamu.edu" title="Contact Larry Ewing">Larry Ewing</a>. OpenGL &reg; and the OpenGL logo are registered trademarks of <a href="http://www.sgi.com/" rel="nofollow" title="SGI">SGI</a>. The OpenAL logo is a trademark of <a href="http://www.creative.com/" rel="nofollow" title="Creative Labs, Inc">Creative Labs, Inc</a>. The Open Source logo is a trademark of the <a href="http://www.opensource.org/" rel="nofollow" title="Open Source Initiative">Open Source Initiative</a>. All other product names and/or logos are trademarks or registered trademarks of their respective owners. All rights reserved.</p>
+    </footer>
+</div>
+<!-- dengine.net window chrome END -->
+</body>
+</html>
