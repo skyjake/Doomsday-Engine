@@ -695,7 +695,12 @@ int MNBindings_PrivilegedResponder(mn_object_t* obj, event_t* ev)
 #ifndef __64BIT__
         symbol = (const char*) ev->data1;
 #else
-        symbol = (const char*)(((int64_t)ev->data1) | (((int64_t)ev->data2)) << 32);
+        {
+            uint64_t address = (uint32_t) ev->data2;
+            address <<= 32;
+            address |= (uint32_t) ev->data1;
+            symbol = (const char*) address;
+        }
 #endif
 
         if(strncmp(symbol, "echo-", 5))
