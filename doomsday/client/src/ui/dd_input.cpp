@@ -986,8 +986,8 @@ void DD_ConvertEvent(const ddevent_t* ddEvent, event_t* ev)
         ev->type = EV_SYMBOLIC;
 #ifdef __64BIT__
         ASSERT_64BIT(ddEvent->symbolic.name);
-        ev->data1 = (int)(((int64_t) ddEvent->symbolic.name) & 0xffffffff); // low dword
-        ev->data2 = (int)(((int64_t) ddEvent->symbolic.name) >> 32); // high dword
+        ev->data1 = (int)(((uint64_t) ddEvent->symbolic.name) & 0xffffffff); // low dword
+        ev->data2 = (int)(((uint64_t) ddEvent->symbolic.name) >> 32); // high dword
 #else
         ASSERT_NOT_64BIT(ddEvent->symbolic.name);
 
