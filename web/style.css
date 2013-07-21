@@ -378,6 +378,19 @@ dl.codebox code:hover {
     overflow: auto;
 }
 
+.block .newspost.content img {
+    max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
+}
+
+/* Quick "fix" kludge to address link spacing in news posts on the homepage. */
+.block .newspost.content > a {
+    display:inline-block;
+    margin-left: 0.5ex;
+}
+
 .block .postauthor a { color: #C59A57; }
 
 .postauthoravatar { margin-bottom: 1.2em; }
@@ -769,24 +782,11 @@ div.clear {
 
 #search-box {
     position: relative;
-    top: -275px; /* minus (image height - divider height) */
-    min-width: 201px;
-    padding-right: 1.3em;
-    padding-top: .5em;
     float: right;
-    text-align: right;
-    color: #FFCB0F;
+    margin-right: 1.6em;
+    top: -275px; /* minus (image height - divider height) */
     font-size: xx-small;
-    font-family: Verdana, Arial, Helvetica, sans-serif;
-    min-height: 139px;
-}
-
-#search-box a {
-    color: #FFCB0F;
-}
-
-#search-box a:hover, #search-box a:visited:hover {
-    color: white;
+    text-align: right;
 }
 
 /*----------------- Status ----------------------*/
@@ -1506,7 +1506,7 @@ span.port {
 }
 
 .lock-on {
-    background-position-x: 12px;
+    background-position: 12px 0px;
 }
 
 /*------------------ Screens Page ------------------*/
