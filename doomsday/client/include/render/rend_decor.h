@@ -26,17 +26,13 @@ DENG_EXTERN_C byte useLightDecorations;
 DENG_EXTERN_C float decorLightBrightFactor;
 DENG_EXTERN_C float decorLightFadeAngle;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 void Rend_DecorRegister(void);
 
 /**
  * Re-initialize the decoration source tracking (might be called during a map
  * load or othersuch situation).
  */
-void Rend_DecorInitForMap(void);
+void Rend_DecorInitForMap(de::Map &map);
 
 /**
  * Decorations are generated for each frame.
@@ -52,9 +48,5 @@ void Rend_DecorAddLuminous(void);
  * Project all the non-clipped decorations. They become regular vissprites.
  */
 void Rend_DecorProject(void);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
 
 #endif /* LIBDENG_RENDER_DECOR_H */

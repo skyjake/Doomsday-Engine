@@ -2351,13 +2351,13 @@ void Sv_NewSoundDelta(int soundId, mobj_t* emitter, Sector* sourceSector,
     }
     else if(sourceSurface)
     {
-        DENG_ASSERT(sourceSurface->owner().type() == DMU_SIDE);
+        DENG_ASSERT(sourceSurface->parent().type() == DMU_SIDE);
         DENG2_ASSERT(emitter == 0); // surface sound emitter rather than a real mobj
 
         type = DT_SIDE_SOUND;
 
         // Clients need to know which emitter to use.
-        Line::Side *side = sourceSurface->owner().as<Line::Side>();
+        Line::Side *side = sourceSurface->parent().as<Line::Side>();
 
         if(&side->middle() == sourceSurface)
         {

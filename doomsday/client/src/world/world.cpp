@@ -534,7 +534,7 @@ DENG2_PIMPL(World)
 
         // Spawn generators for the map.
         /// @todo Defer until after finalization.
-        P_PtcInitForMap();
+        P_PtcInitForMap(*map);
 #endif
 
         // The game may need to perform it's own finalization now that the
@@ -615,16 +615,16 @@ DENG2_PIMPL(World)
 
         RL_DeleteLists();
         R_InitRendPolyPools();
-
         Rend_UpdateLightModMatrix();
-        Rend_DecorInitForMap();
-        Rend_RadioInitForMap();
 
-        R_InitObjlinkBlockmapForMap();
-        R_InitShadowProjectionListsForMap(); // Projected mobj shadows.
-        LO_InitForMap(); // Lumobj management.
-        VL_InitForMap(); // Converted vlights (from lumobjs).
-        SB_InitForMap(); // Shadow bias sources and surfaces.
+        Rend_DecorInitForMap(*map);
+        Rend_RadioInitForMap(*map);
+
+        R_InitObjlinkBlockmapForMap(*map);
+        R_InitShadowProjectionListsForMap(*map); // Projected mobj shadows.
+        LO_InitForMap(*map); // Lumobj management.
+        VL_InitForMap(*map); // Converted vlights (from lumobjs).
+        SB_InitForMap(*map); // Shadow bias sources and surfaces.
 
         // Restart all material animations.
         App_Materials().restartAllAnimations();

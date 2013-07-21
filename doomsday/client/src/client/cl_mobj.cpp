@@ -68,15 +68,16 @@ static cmhash_t *ClMobj_Hash(thid_t id)
 #ifdef _DEBUG
 void checkMobjHash()
 {
+    Map &map = App_World().map();
     for(int i = 0; i < CLIENT_MOBJ_HASH_SIZE; ++i)
     {
         int count1 = 0, count2 = 0;
         clmoinfo_t *info;
-        for(info = App_World().map().clMobjHash[i].first; info; info = info->next, count1++)
+        for(info = map.clMobjHash[i].first; info; info = info->next, count1++)
         {
             DENG_ASSERT(ClMobj_MobjForInfo(info) != 0);
         }
-        for(info = App_World().map().clMobjHash[i].last; info; info = info->prev, count2++)
+        for(info = map.clMobjHash[i].last; info; info = info->prev, count2++)
         {
             DENG_ASSERT(ClMobj_MobjForInfo(info) != 0);
         }

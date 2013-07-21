@@ -112,11 +112,6 @@ public:
             de::Vector3f const &tintColor = de::Vector3f(1, 1, 1));
 
     /**
-     * Returns the owning map element. Either @c DMU_SIDE, or @c DMU_PLANE.
-     */
-    de::MapElement &owner() const;
-
-    /**
      * Returns the normalized tangent vector for the surface.
      */
     de::Vector3f const &tangent() const;

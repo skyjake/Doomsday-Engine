@@ -18,40 +18,121 @@
  * 02110-1301 USA</small>
  */
 
+#include "world/map.h"
 #include "world/mapelement.h"
 
 using namespace de;
 
+DENG2_PIMPL_NOREF(MapElement)
+{
+    int type;
+    MapElement *parent;
+    Map *map;
+    int indexInMap;
+    int indexInArchive;
+
+    Instance(int type, MapElement *parent)
+        : type(type),
+          parent(parent),
+          map(0),
+          indexInArchive(NoIndex),
+          indexInMap(NoIndex)
+    {}
+};
+
+MapElement::MapElement(int type, MapElement *parent)
+    : d(new Instance(type, parent))
+{}
+
+MapElement::~MapElement()
+{}
+
 int MapElement::type() const
 {
-    return _type;
+    return d->type;
 }
 
-int MapElement::indexInArchive() const
+bool MapElement::hasParent() const
 {
-    return _indexInArchive;
+    return d->parent != 0;
 }
 
-void MapElement::setIndexInArchive(int newIndex)
+MapElement &MapElement::parent() const
 {
-    _indexInArchive = newIndex;
+    if(d->parent)
+    {
+        return *d->parent;
+    }
+    /// @throw MissingParentError  Attempted with no parent element is attributed.
+    throw MissingParentError("MapElement::parent", "No parent map element is attributed");
+}
+
+void MapElement::setParent(MapElement *newParent)
+{
+    if(d->parent != newParent)
+    {
+        d->parent = newParent;
+        return;
+    }
+    /// @throw InvalidParentError  Attempted to attribute *this* element as parent of itself.
+    throw InvalidParentError("MapElement::setParent", "Cannot attribute 'this' map element as a parent of itself");
+}
+
+bool MapElement::hasMap() const
+{
+    // If a parent is configured this property is delegated to the parent.
+    if(d->parent)
+    {
+        return d->parent->hasMap();
+    }
+    return d->map != 0;
+}
+
+Map &MapElement::map() const
+{
+    // If a parent is configured this property is delegated to the parent.
+    if(d->parent)
+    {
+        return d->parent->map();
+    }
+    if(d->map)
+    {
+        return *d->map;
+    }
+    /// @throw MissingMapError  Attempted with no map attributed.
+    throw MissingMapError("MapElement::map", "No map is attributed");
+}
+
+void MapElement::setMap(Map *newMap)
+{
+    // If a parent is configured this property is delegated to the parent.
+    if(!d->parent)
+    {
+        d->map = newMap;
+        return;
+    }
+    /// @throw WritePropertyError  Attempted to change a delegated property.
+    throw WritePropertyError("MapElement::setMap", "The 'map' property has been delegated");
 }
 
 int MapElement::indexInMap() const
 {
-    return _indexInMap;
+    return d->indexInMap;
 }
 
 void MapElement::setIndexInMap(int newIndex)
 {
-    _indexInMap = newIndex;
+    d->indexInMap = newIndex;
 }
 
-MapElement &MapElement::operator = (MapElement const &other)
+int MapElement::indexInArchive() const
 {
-    _type = other._type;
-    // We retain our current indexes.
-    return *this;
+    return d->indexInArchive;
+}
+
+void MapElement::setIndexInArchive(int newIndex)
+{
+    d->indexInArchive = newIndex;
 }
 
 int MapElement::property(DmuArgs &args) const
@@ -59,12 +140,12 @@ int MapElement::property(DmuArgs &args) const
     switch(args.prop)
     {
     case DMU_ARCHIVE_INDEX:
-        args.setValue(DMT_ARCHIVE_INDEX, &_indexInArchive, 0);
+        args.setValue(DMT_ARCHIVE_INDEX, &d->indexInArchive, 0);
         break;
 
     default:
         /// @throw UnknownPropertyError  The requested property is not readable.
-        throw UnknownPropertyError(QString("%1::property").arg(DMU_Str(_type)),
+        throw UnknownPropertyError(QString("%1::property").arg(DMU_Str(d->type)),
                                    QString("'%1' is unknown/not readable").arg(DMU_Str(args.prop)));
     }
 
@@ -74,6 +155,6 @@ int MapElement::property(DmuArgs &args) const
 int MapElement::setProperty(DmuArgs const &args)
 {
     /// @throw WritePropertyError  The requested property is not writable.
-    throw WritePropertyError(QString("%1::setProperty").arg(DMU_Str(_type)),
+    throw WritePropertyError(QString("%1::setProperty").arg(DMU_Str(d->type)),
                              QString("'%1' is unknown/not writable").arg(DMU_Str(args.prop)));
 }

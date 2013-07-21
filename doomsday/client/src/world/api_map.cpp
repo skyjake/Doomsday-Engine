@@ -1583,8 +1583,8 @@ DENG_EXTERN_C void P_MobjLink(mobj_t *mo, byte flags)
 #undef P_MobjUnlink
 DENG_EXTERN_C int P_MobjUnlink(mobj_t *mo)
 {
-    if(!mo || !App_World().hasMap()) return 0;
-    return App_World().map().unlink(*mo);
+    if(!mo || !mo->bspLeaf) return 0;
+    return mo->bspLeaf->map().unlink(*mo);
 }
 
 #undef P_BspLeafAtPoint_FixedPrecision
@@ -1605,33 +1605,29 @@ DENG_EXTERN_C BspLeaf *P_BspLeafAtPoint_FixedPrecisionXY(coord_t x, coord_t y)
 #undef P_MobjLinesIterator
 DENG_EXTERN_C int P_MobjLinesIterator(mobj_t *mo, int (*callback) (Line *, void *), void *parameters)
 {
-    /// @todo Do not assume mobj is in the current map.
-    if(!App_World().hasMap()) return false; // Continue iteration.
-    return App_World().map().mobjLinesIterator(mo, callback, parameters);
+    if(!mo || !mo->bspLeaf) return false; // Continue iteration.
+    return mo->bspLeaf->map().mobjLinesIterator(mo, callback, parameters);
 }
 
 #undef P_MobjSectorsIterator
 DENG_EXTERN_C int P_MobjSectorsIterator(mobj_t *mo, int (*callback) (Sector *, void *), void *parameters)
 {
-    /// @todo Do not assume mobj is in the current map.
-    if(!App_World().hasMap()) return false; // Continue iteration.
-    return App_World().map().mobjSectorsIterator(mo, callback, parameters);
+    if(!mo || !mo->bspLeaf) return false; // Continue iteration.
+    return mo->bspLeaf->map().mobjSectorsIterator(mo, callback, parameters);
 }
 
 #undef P_LineMobjsIterator
 DENG_EXTERN_C int P_LineMobjsIterator(Line *line, int (*callback) (mobj_t *, void *), void *parameters)
 {
-    /// @todo Do not assume line is in the current map.
-    if(!App_World().hasMap()) return false; // Continue iteration.
-    return App_World().map().lineMobjsIterator(line, callback, parameters);
+    if(!line) return false; // Continue iteration.
+    return line->map().lineMobjsIterator(line, callback, parameters);
 }
 
 #undef P_SectorTouchingMobjsIterator
 DENG_EXTERN_C int P_SectorTouchingMobjsIterator(Sector *sector, int (*callback) (mobj_t *, void *), void *parameters)
 {
-    /// @todo Do not assume sector is in the current map.
-    if(!App_World().hasMap()) return false; // Continue iteration.
-    return App_World().map().sectorTouchingMobjsIterator(sector, callback, parameters);
+    if(!sector) return false; // Continue iteration.
+    return sector->map().sectorTouchingMobjsIterator(sector, callback, parameters);
 }
 
 #undef P_MobjsBoxIterator
@@ -1748,9 +1744,8 @@ DENG_EXTERN_C TraceOpening const *P_TraceOpening()
 #undef P_SetTraceOpening
 DENG_EXTERN_C void P_SetTraceOpening(Line *line)
 {
-    if(!line || !App_World().hasMap()) return;
-    /// @todo Do not assume line is from the CURRENT map.
-    App_World().map().setTraceOpening(*line);
+    if(!line) return;
+    line->map().setTraceOpening(*line);
 }
 
 // p_mobj.c

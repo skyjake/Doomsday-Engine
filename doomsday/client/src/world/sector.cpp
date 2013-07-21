@@ -135,7 +135,7 @@ DENG2_OBSERVES(Plane, HeightChange)
 
 #ifdef __CLIENT__
         /// @todo Map should observe.
-        App_World().map().updateMissingMaterialsForLinesOfSector(self);
+        self.map().updateMissingMaterialsForLinesOfSector(self);
         S_MarkSectorReverbDirty(&self);
 #endif
 
@@ -482,7 +482,7 @@ void Sector::updateSoundEmitterOrigin()
 bool Sector::pointInside(Vector2d const &point) const
 {
     /// @todo Do not assume "this" sector is from the current map.
-    BspLeaf const &bspLeaf = App_World().map().bspLeafAt(point);
+    BspLeaf const &bspLeaf = map().bspLeafAt(point);
     return bspLeaf.sectorPtr() == this && bspLeaf.pointInside(point);
 }
 

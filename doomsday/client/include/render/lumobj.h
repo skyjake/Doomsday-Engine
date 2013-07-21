@@ -88,7 +88,7 @@ DENG_EXTERN_C int useMobjAutoLights;
 void LO_Register();
 
 // Setup.
-void LO_InitForMap();
+void LO_InitForMap(de::Map &map);
 
 /// Release all system resources acquired by this module for managing.
 void LO_Clear();

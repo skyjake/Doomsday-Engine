@@ -220,13 +220,11 @@ static int linkShadowLineToBspLeafWorker(BspLeaf *bspLeaf, void *context)
     return false; // Continue iteration.
 }
 
-void Rend_RadioInitForMap()
+void Rend_RadioInitForMap(Map &map)
 {
     Time begunAt;
 
     LOG_AS("Rend_RadioInitForMap");
-
-    Map &map = App_World().map();
 
     lineSideRadioData = reinterpret_cast<LineSideRadioData *>(
         Z_Calloc(sizeof(*lineSideRadioData) * map.sideCount(), PU_MAP, 0));
