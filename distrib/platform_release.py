@@ -132,7 +132,8 @@ def mac_package_snowberry():
     for f in ['/conf/osx-appearance.conf',
               '/conf/osx-components.conf',
               '/conf/osx-doomsday.conf',
-              '/conf/snowberry.conf']:
+              '/conf/snowberry.conf',
+              '/conf/Zcommon-doomsday.conf']:
         shutil.copy(SNOWBERRY_DIR + f, 'build/conf')
 
     for f in (glob.glob(SNOWBERRY_DIR + '/graphics/*.jpg') +
