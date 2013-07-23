@@ -858,6 +858,7 @@ void LogWidget::update()
 {
     ScrollAreaWidget::update();
 
+    d->sink.setWidth(d->contentWidth());
     d->fetchNewCachedEntries();
 
     // The log widget's geometry is fully dynamic -- regenerated on every frame.
@@ -866,7 +867,6 @@ void LogWidget::update()
 
 void LogWidget::drawContent()
 {
-    d->sink.setWidth(d->contentWidth());
     d->draw();
 }
 

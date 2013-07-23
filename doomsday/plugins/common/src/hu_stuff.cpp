@@ -1493,7 +1493,7 @@ void Hu_DrawMapTitle(float alpha, boolean mapIdInsteadOfAuthor)
     patchinfo_t patchInfo;
     if(R_GetPatchInfo(patchId, &patchInfo))
     {
-        y += patchInfo.geometry.size.height + 2;
+        y += MAX_OF(14, patchInfo.geometry.size.height + 2);
     }
     else
     {
