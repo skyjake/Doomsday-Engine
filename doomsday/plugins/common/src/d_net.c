@@ -1,36 +1,22 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file d_net.c Common code related to net games.
  *
- *\author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small>
  */
-
-/**
- * d_net.c : Common code related to net games.
- *
- * Connecting to/from a netgame server.
- * Netgame events (player and world) and netgame commands.
- */
-
-// HEADER FILES ------------------------------------------------------------
 
 #include "common.h"
 #include "g_common.h"
@@ -41,14 +27,6 @@
 #include "fi_lib.h"
 #include "doomsday.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES --------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
 D_CMD(SetColor);
 D_CMD(SetMap);
 #if __JHEXEN__
@@ -56,61 +34,44 @@ D_CMD(SetClass);
 #endif
 D_CMD(LocalMessage);
 
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
 static void D_NetMessageEx(int player, const char* msg, boolean playSound);
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 extern int netSvAllowSendMsg;
 
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
 float netJumpPower = 9;
 
-// Net code related console commands
-ccmdtemplate_t netCCmds[] = {
-    { "setcolor", "i", CCmdSetColor },
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    { "setmap", "ii", CCmdSetMap },
-#else
-    { "setmap", "i", CCmdSetMap },
-#endif
-#if __JHEXEN__
-    { "setclass", "i", CCmdSetClass, CMDF_NO_DEDICATED },
-#endif
-    { "startcycle", "", CCmdMapCycle },
-    { "endcycle", "", CCmdMapCycle },
-    { "message", "s", CCmdLocalMessage },
-    { NULL }
-};
+static Writer *netWriter;
+static Reader *netReader;
 
-// Net code related console variables
-cvartemplate_t netCVars[] = {
-    { "mapcycle", CVF_HIDE | CVF_NO_ARCHIVE, CVT_CHARPTR, &mapCycle },
-    { "server-game-mapcycle", 0, CVT_CHARPTR, &mapCycle },
-    { "server-game-mapcycle-noexit", 0, CVT_BYTE, &mapCycleNoExit, 0, 1 },
-    { "server-game-cheat", 0, CVT_INT, &netSvAllowCheats, 0, 1 },
-    { NULL }
-};
+static void notifyAllowCheatsChange(void)
+{
+    if(IS_NETGAME && IS_NETWORK_SERVER && G_GameState() != GS_STARTUP)
+    {
+        AutoStr *msg = Str_Appendf(AutoStr_NewStd(), "--- CHEATS NOW %s ON THIS SERVER ---",
+                                                     netSvAllowCheats? "ENABLED" : "DISABLED");
+        NetSv_SendMessage(DDSP_ALL_PLAYERS, Str_Text(msg));
+    }
+}
 
-// PRIVATE DATA -------------------------------------------------------------
-
-static Writer* netWriter;
-static Reader* netReader;
-
-// CODE ---------------------------------------------------------------------
-
-/**
- * Register the console commands and variables of the common netcode.
- */
 void D_NetConsoleRegistration(void)
 {
-    int i;
-    for(i = 0; netCCmds[i].name; ++i)
-        Con_AddCommand(netCCmds + i);
-    for(i = 0; netCVars[i].path; ++i)
-        Con_AddVariable(netCVars + i);
+    C_VAR_CHARPTR("mapcycle",                       &mapCycle,          CVF_HIDE | CVF_NO_ARCHIVE, 0, 0);
+    C_VAR_CHARPTR("server-game-mapcycle",           &mapCycle,          0, 0, 0);
+    C_VAR_BYTE   ("server-game-mapcycle-noexit",    &mapCycleNoExit,    0, 0, 1);
+    C_VAR_INT2   ("server-game-cheat",              &netSvAllowCheats,  0, 0, 1, notifyAllowCheatsChange);
+
+    C_CMD        ("setcolor",   "i",    SetColor);
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
+    C_CMD        ("setmap",     "ii",   SetMap);
+#else
+    C_CMD        ("setmap",     "i",    SetMap);
+#endif
+#if __JHEXEN__
+    C_CMD_FLAGS  ("setclass",   "i",    SetClass, CMDF_NO_DEDICATED);
+#endif
+    C_CMD        ("startcycle", "",     MapCycle);
+    C_CMD        ("endcycle",   "",     MapCycle);
+    C_CMD        ("message",    "s",    LocalMessage);
 }
 
 Writer* D_NetWrite(void)
