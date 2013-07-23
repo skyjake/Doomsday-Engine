@@ -1448,15 +1448,59 @@ void Hu_FogEffectSetAlphaTarget(float alpha)
     fogEffectData.targetAlpha = MINMAX_OF(0, alpha, 1);
 }
 
+#if __JDOOM__ || __JDOOM64__
+patchid_t Hu_MapTitlePatchId(void)
+{
+    uint mapNum;
+
+    // Compose the mapnumber used to check the map name patches array.
+#if __JDOOM__
+    if(gameModeBits & (GM_ANY_DOOM2|GM_DOOM_CHEX))
+        mapNum = gameMap;
+    else
+        mapNum = (gameEpisode * 9) + gameMap;
+#else // __JDOOM64__
+    mapNum = gameMap;
+#endif
+
+    return (mapNum < pMapNamesSize? pMapNames[mapNum] : 0);
+}
+
+int Hu_MapTitleFirstLineHeight(void)
+{
+    int y = 0;
+    patchinfo_t patchInfo;
+    if(R_GetPatchInfo(Hu_MapTitlePatchId(), &patchInfo))
+    {
+        y = patchInfo.geometry.size.height + 2;
+    }
+    return MAX_OF(14, y);
+}
+#endif
+
+boolean Hu_IsMapTitleAuthorVisible(void)
+{
+    char const *author = P_GetMapAuthor(cfg.hideIWADAuthor);
+    return author != 0 && (actualMapTime <= 6 * TICSPERSEC);
+}
+
+int Hu_MapTitleHeight(void)
+{
+    int h = (Hu_IsMapTitleAuthorVisible()? 8 : 0);
+
+#if __JDOOM__ || __JDOOM64__
+    return Hu_MapTitleFirstLineHeight() + h;
+#endif
+
+#if __JHERETIC__ || __JHEXEN__
+    return 20 + h;
+#endif
+}
+
 void Hu_DrawMapTitle(float alpha, boolean mapIdInsteadOfAuthor)
 {
     char const *lname = 0, *lauthor = 0;
-    float y = 0; //, alpha = 1;
-
-#if __JDOOM__ || __JDOOM64__
-    patchid_t patchId;
-    uint mapNum;
-#endif
+    float y = 0;
 
     // Get the strings from Doomsday.
     lname = P_GetMapNiceName();
@@ -1478,27 +1522,11 @@ void Hu_DrawMapTitle(float alpha, boolean mapIdInsteadOfAuthor)
     FR_SetColorAndAlpha(defFontRGB[0], defFontRGB[1], defFontRGB[2], alpha);
 
 #if __JDOOM__ || __JDOOM64__
-    // Compose the mapnumber used to check the map name patches array.
-# if __JDOOM__
-    if(gameModeBits & (GM_ANY_DOOM2|GM_DOOM_CHEX))
-        mapNum = gameMap;
-    else
-        mapNum = (gameEpisode * 9) + gameMap;
-# else // __JDOOM64__
-    mapNum = gameMap;
-# endif
-    patchId = (mapNum < pMapNamesSize? pMapNames[mapNum] : 0);
+    patchid_t patchId = Hu_MapTitlePatchId();
     WI_DrawPatchXY3(patchId, Hu_ChoosePatchReplacement2(PRM_ALLOW_TEXT, patchId, lname), 0, 0, ALIGN_TOP, 0, DTF_ONLY_SHADOW);
 
-    patchinfo_t patchInfo;
-    if(R_GetPatchInfo(patchId, &patchInfo))
-    {
-        y += MAX_OF(14, patchInfo.geometry.size.height + 2);
-    }
-    else
-    {
-        y += 14;
-    }
+    // Following line of text placed according to patch height.
+    y += Hu_MapTitleFirstLineHeight();
 
 #elif __JHERETIC__ || __JHEXEN__
     if(lname)
@@ -1528,6 +1556,13 @@ void Hu_DrawMapTitle(float alpha, boolean mapIdInsteadOfAuthor)
     }
 
     DGL_Disable(DGL_TEXTURE_2D);
+}
+
+boolean Hu_IsMapTitleVisible(void)
+{
+    if(!cfg.mapTitle) return false;
+
+    return (actualMapTime < 6 * 35) || ST_AutomapIsActive(DISPLAYPLAYER);
 }
 
 void Hu_MapTitleDrawer(const RectRaw* portGeometry)

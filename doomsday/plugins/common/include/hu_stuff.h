@@ -107,6 +107,13 @@ void HU_ScoreBoardUnHide(int player);
 void HU_DrawScoreBoard(int player);
 
 void Hu_DrawMapTitle(float alpha, boolean mapIdInsteadOfAuthor);
+boolean Hu_IsMapTitleVisible(void);
+
+/**
+ * Determines the height of the map title, including the second line
+ * (author/map ID).
+ */
+int Hu_MapTitleHeight(void);
 
 void Draw_BeginZoom(float s, float originX, float originY);
 void Draw_EndZoom(void);

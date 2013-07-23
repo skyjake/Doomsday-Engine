@@ -285,18 +285,21 @@ void UILog_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     int i, n, pvisMsgCount = MIN_OF(log->_pvisMsgCount, MAX_OF(0, cfg.msgCount));
     int drawnMsgCount, firstPVisMsg, firstMsg, lastMsg;
     float y, yOffset, scrollFactor, col[4];
+    float offsetDueToMapTitle = 0;
     guidata_log_message_t* msg;
     assert(obj->type == GUI_LOG);
 
-    // Do not draw message logs while the map title is being displayed.
-    // Rather a kludge...
-    if(cfg.mapTitle && actualMapTime < 6 * 35) return;
+    if(Hu_IsMapTitleVisible())
+    {
+        offsetDueToMapTitle = Hu_MapTitleHeight();
+    }
 
     if(!pvisMsgCount) return;
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
     if(offset) DGL_Translatef(offset->x, offset->y, 0);
+    DGL_Translatef(0, offsetDueToMapTitle, 0);
     DGL_Scalef(cfg.msgScale, cfg.msgScale, 1);
 
     firstMsg = firstPVisMsg = UILog_FirstPVisMessageIdx(obj);
