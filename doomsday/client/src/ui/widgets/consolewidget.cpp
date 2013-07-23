@@ -88,7 +88,7 @@ DENG2_PIMPL(ConsoleWidget)
     }
 
     void expandLog(int delta, bool useOffsetAnimation)
-    {
+    {       
         // Cannot expand if the user is grabbing the top edge.
         if(grabbed == TopEdge) return;
 
@@ -103,7 +103,7 @@ DENG2_PIMPL(ConsoleWidget)
         height->setStyle(style);
         height->set(height->animation().target() + delta, .25f);
 
-        if(useOffsetAnimation)
+        if(useOffsetAnimation && opened)
         {
             // Sync the log content with the height animation.
             log->setContentYOffset(Animation::range(style,
