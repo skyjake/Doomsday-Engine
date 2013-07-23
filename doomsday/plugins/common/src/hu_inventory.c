@@ -711,10 +711,9 @@ boolean Hu_InventoryMove(int player, int dir, boolean canWrap, boolean silent)
         rebuildInventory(inv);
     }
 
-    if(inv->numOwnedItemTypes > 1)
+    if(inv->numOwnedItemTypes >= 1)
     {
-        P_InventorySetReadyItem(player,
-            P_GetInvItem(inv->selected)->type);
+        P_InventorySetReadyItem(player, P_GetInvItem(inv->slots[inv->selected])->type);
     }
 
     if(!silent)
