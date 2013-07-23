@@ -89,6 +89,9 @@ DENG2_PIMPL(ServerSystem)
 
         // Update the beacon with the new port.
         beacon.start(port);
+
+        App_World().audienceForMapChange += shellUsers;
+
         return true;
     }
 
@@ -104,6 +107,8 @@ DENG2_PIMPL(ServerSystem)
 
     void deinit()
     {
+        App_World().audienceForMapChange -= shellUsers;
+
         beacon.stop();
 
         // Close the listening socket.
