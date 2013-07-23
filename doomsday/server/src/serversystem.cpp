@@ -51,6 +51,8 @@ static de::duint16 Server_ListenPort()
 
 DENG2_PIMPL(ServerSystem)
 {
+    bool inited;
+
     /// Beacon for informing clients that a server is present.
     Beacon beacon;
     Time lastBeaconUpdateAt;
@@ -60,9 +62,11 @@ DENG2_PIMPL(ServerSystem)
     QMap<Id, RemoteUser *> users;
     ShellUsers shellUsers;
 
-    Instance(Public *i) : Base(i),
-        beacon(DEFAULT_UDP_PORT),
-        serverSock(0)
+    Instance(Public *i)
+        : Base(i),
+          inited(false),
+          beacon(DEFAULT_UDP_PORT),
+          serverSock(0)
     {}
 
     ~Instance()
@@ -77,6 +81,8 @@ DENG2_PIMPL(ServerSystem)
 
     bool init(duint16 port)
     {
+        // Note: re-initialization is allowed, so we don't check for inited now.
+
         LOG_INFO("Server listening on TCP port ") << port;
 
         deinit();
@@ -92,6 +98,7 @@ DENG2_PIMPL(ServerSystem)
 
         App_World().audienceForMapChange += shellUsers;
 
+        inited = true;
         return true;
     }
 
@@ -107,7 +114,13 @@ DENG2_PIMPL(ServerSystem)
 
     void deinit()
     {
-        App_World().audienceForMapChange -= shellUsers;
+        if(!inited) return;
+        inited = false;
+
+        if(ServerApp::haveApp())
+        {
+            App_World().audienceForMapChange -= shellUsers;
+        }
 
         beacon.stop();
 
