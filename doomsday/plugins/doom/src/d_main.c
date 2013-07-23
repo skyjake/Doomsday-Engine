@@ -318,6 +318,7 @@ void D_PreInit(void)
     cfg.netGravity = -1;        // use map default
     cfg.plrViewHeight = DEFAULT_PLAYER_VIEWHEIGHT;
     cfg.mapTitle = true;
+    cfg.automapTitleAtBottom = true;
     cfg.hideIWADAuthor = true;
 
     cfg.confirmQuickGameSave = true;

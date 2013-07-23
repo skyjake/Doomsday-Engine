@@ -240,6 +240,7 @@ void H_PreInit(void)
     cfg.netGravity = -1; // Use map default.
     cfg.plrViewHeight = DEFAULT_PLAYER_VIEWHEIGHT;
     cfg.mapTitle = true;
+    cfg.automapTitleAtBottom = true;
     cfg.hideIWADAuthor = true;
     cfg.menuTextColors[0][0] = defFontRGB[0];
     cfg.menuTextColors[0][1] = defFontRGB[1];

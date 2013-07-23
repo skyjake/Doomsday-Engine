@@ -126,6 +126,7 @@ void UIAutomap_Register(void)
         { "map-rotate", 0, CVT_BYTE, &cfg.automapRotate, 0, 1 },
         { "map-zoom-speed", 0, CVT_FLOAT, &cfg.automapZoomSpeed, 0, 1 },
         { "map-open-timer", CVF_NO_MAX, CVT_FLOAT, &cfg.automapOpenSeconds, 0, 0 },
+        { "map-title-position", 0, CVT_BYTE, &cfg.automapTitleAtBottom, 0, 1},
         { "rend-dev-freeze-map", CVF_NO_ARCHIVE, CVT_BYTE, &freezeMapRLs, 0, 1 },
 
         // Aliases for old names:

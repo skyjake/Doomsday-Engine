@@ -114,6 +114,8 @@ typedef struct jdoom64_config_s {
     int             menuTextFlashSpeed;
     float           menuTextGlitter;
 
+    float           statusbarScale;
+
     byte            inludeScaleMode;
     int             inludePatchReplaceMode;
 
@@ -192,6 +194,7 @@ typedef struct jdoom64_config_s {
     float           automapPanSpeed;
     byte            automapPanResetOnOpen;
     float           automapOpenSeconds;
+    byte            automapTitleAtBottom;
 
     int             msgCount;
     float           msgScale;

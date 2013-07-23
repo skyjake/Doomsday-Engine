@@ -189,6 +189,7 @@ typedef struct jheretic_config_s {
     float           automapPanSpeed;
     byte            automapPanResetOnOpen;
     float           automapOpenSeconds;
+    byte            automapTitleAtBottom;
 
     int             msgCount;
     float           msgScale;
