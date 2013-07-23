@@ -409,7 +409,7 @@ void App::initSubsystems(SubsystemInitFlags flags)
     }
 
     // Update the wall clock time.
-    d->clock.setTime(Time());
+    d->clock.setTime(Time::currentHighPerformanceTime());
 
     // Now we can start observing progress of time.
     d->clock.audienceForTimeChange += this;

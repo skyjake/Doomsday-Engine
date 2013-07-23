@@ -912,10 +912,10 @@ void getLightingParams(coord_t x, coord_t y, coord_t z, BspLeaf *bspLeaf,
     {
         collectaffectinglights_params_t lparams;
 
-        if(useBias && App_World().map().hasLightGrid())
+        if(useBias && bspLeaf->map().hasLightGrid())
         {
             // Evaluate the position in the light grid.
-            Vector3f tmp = App_World().map().lightGrid().evaluate(Vector3d(x, y, z));
+            Vector3f tmp = bspLeaf->map().lightGrid().evaluate(Vector3d(x, y, z));
             V3f_Set(ambientColor, tmp.x, tmp.y, tmp.z);
         }
         else
@@ -1388,14 +1388,14 @@ typedef struct {
 
 int RIT_AddSprite(void *ptr, void *parameters)
 {
-    Map &map = App_World().map(); /// @todo Do not assume mobj is from the CURRENT map.
-
     mobj_t *mo = (mobj_t *) ptr;
-    addspriteparams_t *params = (addspriteparams_t *)parameters;
+    addspriteparams_t *p = (addspriteparams_t *)parameters;
+
+    Map &map = p->bspLeaf->map();
 
     if(mo->addFrameCount != frameCount)
     {
-        Sector &sec = params->bspLeaf->sector();
+        Sector &sec = p->bspLeaf->sector();
         R_ProjectSprite(mo);
 
         // Hack: Sprites have a tendency to extend into the ceiling in

@@ -30,6 +30,7 @@
 #ifdef __CLIENT__
 #  include "MaterialSnapshot"
 #endif
+#include "uri.hh"
 
 class BspLeaf;
 
@@ -109,11 +110,6 @@ public:
     Surface(de::MapElement &owner,
             float opacity                 = 1,
             de::Vector3f const &tintColor = de::Vector3f(1, 1, 1));
-
-    /**
-     * Returns the owning map element. Either @c DMU_SIDE, or @c DMU_PLANE.
-     */
-    de::MapElement &owner() const;
 
     /**
      * Returns the normalized tangent vector for the surface.
@@ -251,6 +247,14 @@ public:
      * @see setMaterialOriginComponent(), setMaterialOriginX()
      */
     inline void setMaterialOriginY(float newPosition) { setMaterialOriginComponent(1, newPosition); }
+
+    /**
+     * Compose a URI for the surface's material. If no material is bound then a
+     * default (i.e., empty) URI is returned.
+     *
+     * @see hasMaterial(), MaterialManifest::composeUri()
+     */
+    de::Uri composeMaterialUri() const;
 
     /**
      * Returns the opacity of the surface. The OpacityChange audience is notified

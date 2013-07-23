@@ -252,13 +252,9 @@ void Rend_ParticleInitForNewFrame()
 
 void Rend_ParticleMarkInSectorVisible(Sector *sector)
 {
-    if(!useParticles) return;
-    if(!App_World().hasMap()) return;
-    if(!sector) return;
+    if(!useParticles || !sector) return;
 
-    /// @todo Do not assume sector is from the CURRENT map.
-    Map &map = App_World().map();
-    map.generators().iterateList(sector->indexInMap(), markPtcGenVisible);
+    sector->map().generators().iterateList(sector->indexInMap(), markPtcGenVisible);
 }
 
 /**
@@ -470,9 +466,11 @@ static void setupModelParamsForParticle(rendmodelparams_t* params,
     {
         collectaffectinglights_params_t lparams;
 
-        if(useBias && App_World().map().hasLightGrid())
+        Map &map = pt->sector->map();
+
+        if(useBias && map.hasLightGrid())
         {
-            Vector3f tmp = App_World().map().lightGrid().evaluate(params->origin);
+            Vector3f tmp = map.lightGrid().evaluate(params->origin);
             V3f_Set(params->ambientColor, tmp.x, tmp.y, tmp.z);
         }
         else
@@ -497,11 +495,12 @@ static void setupModelParamsForParticle(rendmodelparams_t* params,
 
         Rend_ApplyTorchLight(params->ambientColor, params->distance);
 
+        zap(lparams);
         lparams.starkLight   = false;
         lparams.origin[VX]   = params->origin[VX];
         lparams.origin[VY]   = params->origin[VY];
         lparams.origin[VZ]   = params->origin[VZ];
-        lparams.bspLeaf      = &App_World().map().bspLeafAt(Vector2d(origin[VX], origin[VY]));
+        lparams.bspLeaf      = &map.bspLeafAt(Vector2d(origin[VX], origin[VY]));
         lparams.ambientColor = params->ambientColor;
 
         params->vLightListIdx = R_CollectAffectingLights(&lparams);
@@ -973,7 +972,7 @@ void Rend_RenderGenerators()
 
     glDisable(GL_DEPTH_TEST);
 
-    float eye[3] = { vOrigin[VX], vOrigin[VZ], vOrigin[VY] };
+    float eye[3] = { float(vOrigin[VX]), float(vOrigin[VZ]), float(vOrigin[VY]) };
     gens->iterate(drawGeneratorOrigin, eye);
 
     // Restore previous state.

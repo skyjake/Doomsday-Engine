@@ -175,8 +175,9 @@ static void projectSource(decorsource_t const &src)
     }
 }
 
-void Rend_DecorInitForMap()
+void Rend_DecorInitForMap(Map &map)
 {
+    DENG_UNUSED(map);
     recycleSources();
 }
 
@@ -328,16 +329,16 @@ static void plotSourcesForSurface(Surface &suf)
     {
         suf.clearDecorations();
 
-        switch(suf.owner().type())
+        switch(suf.parent().type())
         {
         case DMU_SIDE: {
-            Line::Side *side = suf.owner().as<Line::Side>();
+            Line::Side *side = suf.parent().as<Line::Side>();
             plotSourcesForLineSide(*side, &side->middle() == &suf? Line::Side::Middle :
                                           &side->bottom() == &suf? Line::Side::Bottom : Line::Side::Top);
             break; }
 
         case DMU_PLANE: {
-            Plane *plane = suf.owner().as<Plane>();
+            Plane *plane = suf.parent().as<Plane>();
             plotSourcesForPlane(*plane);
             break; }
 
@@ -415,7 +416,7 @@ static uint generateDecorLights(MaterialSnapshot::Decoration const &decor,
             if(Surface::DecorSource *source = suf.newDecoration())
             {
                 source->origin  = origin;
-                source->bspLeaf = &App_World().map().bspLeafAt(origin);
+                source->bspLeaf = &suf.map().bspLeafAt(origin);
                 source->decor   = &decor;
                 decorCount++;
             }
@@ -520,7 +521,8 @@ BEGIN_PROF( PROF_DECOR_BEGIN_FRAME );
 
     recycleSources();
 
-    foreach(Surface *surface, App_World().map().decoratedSurfaces())
+    Map &map = App_World().map();
+    foreach(Surface *surface, map.decoratedSurfaces())
     {
         plotSourcesForSurface(*surface);
     }

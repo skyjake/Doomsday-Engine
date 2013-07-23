@@ -38,9 +38,6 @@ using namespace de;
 
 DENG2_PIMPL(Surface)
 {
-    /// Owning map element, either @c DMU_SIDE, or @c DMU_PLANE.
-    MapElement &owner;
-
     /// Tangent space vectors:
     Vector3f tangent;
     Vector3f bitangent;
@@ -82,9 +79,8 @@ DENG2_PIMPL(Surface)
     /// @ref sufFlags
     int flags;
 
-    Instance(Public *i, MapElement &owner)
+    Instance(Public *i)
         : Base(i),
-          owner(owner),
           needUpdateTangents(false),
           material(0),
           materialIsMissingFix(false),
@@ -95,14 +91,15 @@ DENG2_PIMPL(Surface)
     /// @todo Refactor away -ds
     inline bool isSideMiddle()
     {
-        return owner.type() == DMU_SIDE && &self == &owner.as<Line::Side>()->middle();
+        return self.parent().type() == DMU_SIDE &&
+               &self == &self.parent().as<Line::Side>()->middle();
     }
 
     /// @todo Refactor away -ds
     inline bool isSectorExtraPlane()
     {
-        if(owner.type() != DMU_PLANE) return false;
-        Plane const &plane = *owner.as<Plane>();
+        if(self.parent().type() != DMU_PLANE) return false;
+        Plane const &plane = *self.parent().as<Plane>();
         return !(plane.isSectorFloor() || plane.isSectorCeiling());
     }
 
@@ -136,8 +133,7 @@ DENG2_PIMPL(Surface)
             /// @todo Replace with a de::Observer-based mechanism.
             self._decorationData.needsUpdate = true;
 
-            /// @todo Do not assume surface is from the CURRENT map.
-            App_World().map().scrollingSurfaces().insert(&self);
+            self.map().scrollingSurfaces().insert(&self);
         }
 #endif
     }
@@ -197,7 +193,8 @@ DENG2_PIMPL(Surface)
 };
 
 Surface::Surface(MapElement &owner, float opacity, Vector3f const &tintColor)
-    : MapElement(DMU_SURFACE), d(new Instance(this, owner))
+    : MapElement(DMU_SURFACE, &owner),
+      d(new Instance(this))
 {
 #ifdef __CLIENT__
     _decorationData.needsUpdate = true;
@@ -207,11 +204,6 @@ Surface::Surface(MapElement &owner, float opacity, Vector3f const &tintColor)
 
     d->opacity   = opacity;
     d->tintColor = tintColor;
-}
-
-de::MapElement &Surface::owner() const
-{
-    return d->owner;
 }
 
 de::Vector3f const &Surface::tangent() const
@@ -299,7 +291,7 @@ bool Surface::setMaterial(Material *newMaterial, bool isMissingFix)
                 d->materialIsMissingFix = true;
 
                 // Sides of selfreferencing map lines should never receive fix materials.
-                DENG_ASSERT(!(d->owner.type() == DMU_SIDE && d->owner.as<Line::Side>()->line().isSelfReferencing()));
+                DENG_ASSERT(!(parent().type() == DMU_SIDE && parent().as<Line::Side>()->line().isSelfReferencing()));
             }
         }
         else if(newMaterial && d->materialIsMissingFix)
@@ -310,31 +302,29 @@ bool Surface::setMaterial(Material *newMaterial, bool isMissingFix)
 #ifdef __CLIENT__
         if(!ddMapSetup)
         {
-            Map &map = App_World().map(); /// @todo Do not assume surface is from the CURRENT map.
-
             // If this plane's surface is in the decorated list, remove it.
-            map.decoratedSurfaces().remove(this);
+            map().decoratedSurfaces().remove(this);
 
             // If this plane's surface is in the glowing list, remove it.
-            map.glowingSurfaces().remove(this);
+            map().glowingSurfaces().remove(this);
 
             if(newMaterial)
             {
                 if(newMaterial->hasGlow())
                 {
-                    map.glowingSurfaces().insert(this);
+                    map().glowingSurfaces().insert(this);
                 }
 
                 if(newMaterial->isDecorated())
                 {
-                    map.decoratedSurfaces().insert(this);
+                    map().decoratedSurfaces().insert(this);
                 }
 
-                if(d->owner.type() == DMU_PLANE)
+                if(parent().type() == DMU_PLANE)
                 {
                     de::Uri uri = newMaterial->manifest().composeUri();
                     ded_ptcgen_t const *def = Def_GetGenerator(reinterpret_cast<uri_s *>(&uri));
-                    P_SpawnPlaneParticleGen(def, d->owner.as<Plane>());
+                    P_SpawnPlaneParticleGen(def, parent().as<Plane>());
                 }
 
             }
@@ -404,6 +394,12 @@ void Surface::setMaterialOriginComponent(int component, float newPosition)
         // Notify interested parties of the change.
         d->notifyMaterialOriginChanged(oldMaterialOrigin, (1 << component));
     }
+}
+
+de::Uri Surface::composeMaterialUri() const
+{
+    if(!hasMaterial()) return de::Uri();
+    return material().manifest().composeUri();
 }
 
 #ifdef __CLIENT__

@@ -530,9 +530,9 @@ ded_detailtexture_t *Def_GetDetailTex(uri_s const *uri, /*bool hasExternal,*/ bo
     return 0; // None found.
 }
 
-ded_ptcgen_t* Def_GetGenerator(uri_s const *uri)
+ded_ptcgen_t *Def_GetGenerator(de::Uri const &uri)
 {
-    DENG_ASSERT(uri);
+    if(uri.isEmpty()) return 0;
 
     ded_ptcgen_t *def = defs.ptcGens;
     for(int i = 0; i < defs.count.ptcGens.num; ++i, def++)
@@ -540,7 +540,7 @@ ded_ptcgen_t* Def_GetGenerator(uri_s const *uri)
         if(!def->material) continue;
 
         // Is this suitable?
-        if(Uri_Equality(def->material, uri))
+        if(reinterpret_cast<de::Uri const &>(*def->material) == uri)
             return def;
 
 #if 0 /// @todo $revise-texture-animation
@@ -560,7 +560,14 @@ ded_ptcgen_t* Def_GetGenerator(uri_s const *uri)
         }
 #endif
     }
+
     return 0; // None found.
+}
+
+ded_ptcgen_t *Def_GetGenerator(uri_s const *uri)
+{
+    if(!uri) return 0;
+    return Def_GetGenerator(reinterpret_cast<de::Uri const &>(*uri));
 }
 
 ded_ptcgen_t* Def_GetDamageGenerator(int mobjType)

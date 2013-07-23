@@ -88,7 +88,7 @@ DENG2_PIMPL(ConsoleWidget)
     }
 
     void expandLog(int delta, bool useOffsetAnimation)
-    {
+    {       
         // Cannot expand if the user is grabbing the top edge.
         if(grabbed == TopEdge) return;
 
@@ -103,7 +103,7 @@ DENG2_PIMPL(ConsoleWidget)
         height->setStyle(style);
         height->set(height->animation().target() + delta, .25f);
 
-        if(useOffsetAnimation)
+        if(useOffsetAnimation && opened)
         {
             // Sync the log content with the height animation.
             log->setContentYOffset(Animation::range(style,
@@ -175,7 +175,7 @@ ConsoleWidget::ConsoleWidget() : GuiWidget("console"), d(new Instance(this))
     add(d->button);
 
     d->cmdLine = new ConsoleCommandWidget("commandline");
-    d->cmdLine->setEmptyContentHint("Enter commands here" /*  " _E(r)_E(l)_E(t) "SHIFT-ESC" */);
+    d->cmdLine->setEmptyContentHint(tr("Enter commands here") /*  " _E(r)_E(l)_E(t) "SHIFT-ESC" */);
     add(d->cmdLine);
 
     connect(d->cmdLine, SIGNAL(gotFocus()), this, SLOT(openLog()));
@@ -213,9 +213,9 @@ ConsoleWidget::ConsoleWidget() : GuiWidget("console"), d(new Instance(this))
     d->menu = new PopupMenuWidget;
     d->menu->setAnchor(d->button->rule().left() + d->button->rule().width() / 2,
                        d->button->rule().top());
-    d->menu->addItem("Clear log", new CommandAction("clear"));
-    d->menu->addItem("Show full log", new SignalAction(this, SLOT(showFullLog())));
-    d->menu->addItem("Scroll to bottom", new SignalAction(d->log, SLOT(scrollToBottom())));
+    d->menu->addItem(tr("Clear Log"), new CommandAction("clear"));
+    d->menu->addItem(tr("Show Full Log"), new SignalAction(this, SLOT(showFullLog())));
+    d->menu->addItem(tr("Scroll to Bottom"), new SignalAction(d->log, SLOT(scrollToBottom())));
     add(d->menu);
 
     // Signals.

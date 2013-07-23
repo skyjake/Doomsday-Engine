@@ -436,6 +436,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
             partitioner.take(leaf);
 
             // Add this BspLeaf to the LUT.
+            leaf->setMap(thisPublic);
             leaf->setIndexInMap(bspLeafs.count());
             bspLeafs.append(leaf);
 
@@ -445,6 +446,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
                 partitioner.take(seg);
 
                 // Add this segment to the LUT.
+                seg->setMap(thisPublic);
                 seg->setIndexInMap(segments.count());
                 segments.append(seg);
             }
@@ -459,6 +461,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
         partitioner.take(node);
 
         // Add this BspNode to the LUT.
+        node->setMap(thisPublic);
         node->setIndexInMap(bspNodes.count());
         bspNodes.append(node);
     }
@@ -519,6 +522,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
             for(int i = nextVertexOrd; i < mesh.vertexCount(); ++i)
             {
                 Vertex *vtx = mesh.vertexes().at(i);
+                vtx->setMap(thisPublic);
                 vtx->setIndexInMap(i);
             }
 
@@ -2128,7 +2132,7 @@ static int traversePath(divline_t &traceLine, Blockmap &bmap,
     traceLine.direction[VX] = FLT2FIX(to[VX] - from[VX]);
     traceLine.direction[VY] = FLT2FIX(to[VY] - from[VY]);
 
-    /**
+    /*
      * It is possible that one or both points are outside the blockmap.
      * Clip path so that 'to' is within the AABB of the blockmap (note we
      * would have already abandoned if 'from' lay outside..
@@ -2192,26 +2196,119 @@ static int iteratePolyobjLines(Polyobj *po, void *parameters = 0)
     return false; // Continue iteration.
 }
 
+/**
+ * Looks for lines in the given block that intercept the given trace to add
+ * to the intercepts list.
+ * A line is crossed if its endpoints are on opposite sides of the trace.
+ *
+ * @return  Non-zero if current iteration should stop.
+ */
+static int interceptLinesWorker(Line *line, void * /*parameters*/)
+{
+    divline_t const &traceLos = line->map().traceLine();
+    int s1, s2;
+
+    fixed_t lineFromX[2] = { DBL2FIX(line->fromOrigin().x), DBL2FIX(line->fromOrigin().y) };
+    fixed_t lineToX[2]   = { DBL2FIX(  line->toOrigin().x), DBL2FIX(  line->toOrigin().y) };
+
+    // Is this line crossed?
+    // Avoid precision problems with two routines.
+    if(traceLos.direction[VX] >  FRACUNIT * 16 || traceLos.direction[VY] >  FRACUNIT * 16 ||
+       traceLos.direction[VX] < -FRACUNIT * 16 || traceLos.direction[VY] < -FRACUNIT * 16)
+    {
+        s1 = V2x_PointOnLineSide(lineFromX, traceLos.origin, traceLos.direction);
+        s2 = V2x_PointOnLineSide(lineToX,   traceLos.origin, traceLos.direction);
+    }
+    else
+    {
+        s1 = line->pointOnSide(FIX2FLT(traceLos.origin[VX]), FIX2FLT(traceLos.origin[VY])) < 0;
+        s2 = line->pointOnSide(FIX2FLT(traceLos.origin[VX] + traceLos.direction[VX]),
+                               FIX2FLT(traceLos.origin[VY] + traceLos.direction[VY])) < 0;
+    }
+    if(s1 == s2) return false;
+
+    fixed_t lineDirectionX[2] = { DBL2FIX(line->direction().x), DBL2FIX(line->direction().y) };
+
+    // On the correct side of the trace origin?
+    float distance = FIX2FLT(V2x_Intersection(lineFromX, lineDirectionX,
+                                              traceLos.origin, traceLos.direction));
+    if(!(distance < 0))
+    {
+        P_AddIntercept(ICPT_LINE, distance, line);
+    }
+
+    // Continue iteration.
+    return false;
+}
+
 static int collectPolyobjLineIntercepts(Blockmap::Cell const &cell, void *parameters)
 {
     Blockmap *polyobjBlockmap = (Blockmap *)parameters;
     iteratepolyobjlines_params_t iplParams;
-    iplParams.callback = PIT_AddLineIntercepts;
+    iplParams.callback = interceptLinesWorker;
     iplParams.parms    = 0;
-    return iterateCellPolyobjs(*polyobjBlockmap, cell,
-                               iteratePolyobjLines, (void *)&iplParams);
+    return iterateCellPolyobjs(*polyobjBlockmap, cell, iteratePolyobjLines, (void *)&iplParams);
 }
 
 static int collectLineIntercepts(Blockmap::Cell const &cell, void *parameters)
 {
     Blockmap *lineBlockmap = (Blockmap *)parameters;
-    return iterateCellLines(*lineBlockmap, cell, PIT_AddLineIntercepts);
+    return iterateCellLines(*lineBlockmap, cell, interceptLinesWorker);
+}
+
+static int interceptMobjsWorker(mobj_t *mo, void * /*parameters*/)
+{
+    if(mo->dPlayer && (mo->dPlayer->flags & DDPF_CAMERA))
+        return false; // $democam: ssshh, keep going, we're not here...
+
+    DENG_ASSERT(mo->bspLeaf);
+
+    // Check a corner to corner crossection for hit.
+    divline_t const &traceLos = mo->bspLeaf->map().traceLine();
+    vec2d_t from, to;
+    if((traceLos.direction[VX] ^ traceLos.direction[VY]) > 0)
+    {
+        // \ Slope
+        V2d_Set(from, mo->origin[VX] - mo->radius,
+                      mo->origin[VY] + mo->radius);
+        V2d_Set(to,   mo->origin[VX] + mo->radius,
+                      mo->origin[VY] - mo->radius);
+    }
+    else
+    {
+        // / Slope
+        V2d_Set(from, mo->origin[VX] - mo->radius,
+                      mo->origin[VY] - mo->radius);
+        V2d_Set(to,   mo->origin[VX] + mo->radius,
+                      mo->origin[VY] + mo->radius);
+    }
+
+    // Is this line crossed?
+    if(Divline_PointOnSide(&traceLos, from) == Divline_PointOnSide(&traceLos, to))
+        return false;
+
+    // Calculate interception point.
+    divline_t dl;
+    dl.origin[VX] = DBL2FIX(from[VX]);
+    dl.origin[VY] = DBL2FIX(from[VY]);
+    dl.direction[VX] = DBL2FIX(to[VX] - from[VX]);
+    dl.direction[VY] = DBL2FIX(to[VY] - from[VY]);
+    coord_t distance = FIX2FLT(Divline_Intersection(&dl, &traceLos));
+
+    // On the correct side of the trace origin?
+    if(!(distance < 0))
+    {
+        P_AddIntercept(ICPT_MOBJ, distance, mo);
+    }
+
+    // Continue iteration.
+    return false;
 }
 
 static int collectMobjIntercepts(Blockmap::Cell const &cell, void *parameters)
 {
     Blockmap *mobjBlockmap = (Blockmap *)parameters;
-    return iterateCellMobjs(*mobjBlockmap, cell, PIT_AddMobjIntercepts);
+    return iterateCellMobjs(*mobjBlockmap, cell, interceptMobjsWorker);
 }
 
 int Map::pathTraverse(const_pvec2d_t from, const_pvec2d_t to, int flags,
@@ -3164,6 +3261,8 @@ bool Map::endEditing()
 
             // Polyobj has ownership of the line segments.
             Segment *segment = new Segment(&line->front(), hedge);
+
+            segment->setMap(this);
             segment->setLength(line->length());
 
             line->front().setLeftSegment(segment);
@@ -3271,6 +3370,7 @@ Vertex *Map::createVertex(Vector2d const &origin, int archiveIndex)
 
     Vertex *vtx = d->mesh.newVertex(origin);
 
+    vtx->setMap(this);
     vtx->setIndexInArchive(archiveIndex);
 
     /// @todo Don't do this here.
@@ -3289,6 +3389,7 @@ Line *Map::createLine(Vertex &v1, Vertex &v2, int flags, Sector *frontSector,
     Line *line = new Line(v1, v2, flags, frontSector, backSector);
     d->editable.lines.append(line);
 
+    line->setMap(this);
     line->setIndexInArchive(archiveIndex);
 
     /// @todo Don't do this here.
@@ -3309,6 +3410,7 @@ Sector *Map::createSector(float lightLevel, Vector3f const &lightColor,
     Sector *sector = new Sector(lightLevel, lightColor);
     d->editable.sectors.append(sector);
 
+    sector->setMap(this);
     sector->setIndexInArchive(archiveIndex);
 
     /// @todo Don't do this here.

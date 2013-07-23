@@ -1490,7 +1490,16 @@ void Hu_DrawMapTitle(float alpha, boolean mapIdInsteadOfAuthor)
     patchId = (mapNum < pMapNamesSize? pMapNames[mapNum] : 0);
     WI_DrawPatchXY3(patchId, Hu_ChoosePatchReplacement2(PRM_ALLOW_TEXT, patchId, lname), 0, 0, ALIGN_TOP, 0, DTF_ONLY_SHADOW);
 
-    y += 14;
+    patchinfo_t patchInfo;
+    if(R_GetPatchInfo(patchId, &patchInfo))
+    {
+        y += MAX_OF(14, patchInfo.geometry.size.height + 2);
+    }
+    else
+    {
+        y += 14;
+    }
+
 #elif __JHERETIC__ || __JHEXEN__
     if(lname)
     {
@@ -1523,11 +1532,11 @@ void Hu_DrawMapTitle(float alpha, boolean mapIdInsteadOfAuthor)
 
 void Hu_MapTitleDrawer(const RectRaw* portGeometry)
 {
+    if(!cfg.mapTitle || !portGeometry) return;
+
     Point2Raw origin(portGeometry->size.width / 2,
                      6 * portGeometry->size.height / SCREENHEIGHT);
     float scale;
-
-    if(!portGeometry) return;
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
@@ -1542,7 +1551,7 @@ void Hu_MapTitleDrawer(const RectRaw* portGeometry)
     DGL_Scalef(scale, scale * 1.2f/*aspect correct*/, 1);
 
     // Level information is shown for a few seconds in the beginning of a level.
-    if(cfg.mapTitle && (actualMapTime <= 6 * TICSPERSEC))
+    if(actualMapTime <= 6 * TICSPERSEC)
     {
         // Fade the title in and out.
         float alpha = 1;
@@ -1556,15 +1565,14 @@ void Hu_MapTitleDrawer(const RectRaw* portGeometry)
 
         Hu_DrawMapTitle(alpha, false /* show author */);
     }
-    else if(ST_AutomapIsActive(DISPLAYPLAYER) &&
-            (!cfg.mapTitle || (actualMapTime > 6 * TICSPERSEC)))
+    else if(ST_AutomapIsActive(DISPLAYPLAYER) && (actualMapTime > 6 * TICSPERSEC))
     {
         // When the automap is open, the title is displayed together with the
         // map identifier (URI).
 
         // Fade the title in.
         float alpha = 1;
-        if(cfg.mapTitle && (actualMapTime < 7 * 35))
+        if(actualMapTime < 7 * 35)
             alpha = MINMAX_OF(0, (actualMapTime - 6 * 35) / 35.f, 1);
 
         DGL_Scalef(.5f, .5f, 1);

@@ -178,9 +178,12 @@ static bool firstBspLeaf; // No range checking for the first one.
 
 static void markLightGridForFullUpdate()
 {
-    if(!App_World().hasMap()) return;
-    if(!App_World().map().hasLightGrid()) return;
-    App_World().map().lightGrid().markAllForUpdate();
+    if(App_World().hasMap())
+    {
+        Map &map = App_World().map();
+        if(map.hasLightGrid())
+            map.lightGrid().markAllForUpdate();
+    }
 }
 
 void Rend_Register()
@@ -1279,15 +1282,15 @@ static float calcLightLevelDelta(Vector3f const &normal)
 static void wallSectionLightLevelDeltas(WallEdge const &leftEdge, WallEdge const &rightEdge,
     float &leftDelta, float &rightDelta)
 {
-    leftDelta = calcLightLevelDelta(leftEdge.normal);
+    leftDelta = calcLightLevelDelta(leftEdge.normal());
 
-    if(leftEdge.normal == rightEdge.normal)
+    if(leftEdge.normal() == rightEdge.normal())
     {
         rightDelta = leftDelta;
     }
     else
     {
-        rightDelta = calcLightLevelDelta(rightEdge.normal);
+        rightDelta = calcLightLevelDelta(rightEdge.normal());
 
         // Linearly interpolate to find the light level delta values for the
         // vertical edges of this wall section.
@@ -1442,7 +1445,8 @@ static void writeWallSection(Segment &segment, int section,
         }
 
         parm.blendMode           = BM_NORMAL;
-        parm.materialOrigin      = &leftEdge.materialOrigin;
+        Vector2f materialOrigin  = leftEdge.materialOrigin();
+        parm.materialOrigin      = &materialOrigin;
         parm.materialScale       = &materialScale;
 
         parm.isWall = true;
@@ -1935,7 +1939,7 @@ static coord_t skyPlaneZ(BspLeaf *bspLeaf, int skyCap)
     DENG_ASSERT(bspLeaf);
     int const relPlane = (skyCap & SKYCAP_UPPER)? Sector::Ceiling : Sector::Floor;
     if(!bspLeaf->hasSector() || !P_IsInVoid(viewPlayer))
-        return App_World().map().skyFix(relPlane == Sector::Ceiling);
+        return bspLeaf->map().skyFix(relPlane == Sector::Ceiling);
     return bspLeaf->sector().plane(relPlane).visHeight();
 }
 
@@ -2419,6 +2423,8 @@ void Rend_RenderMap()
 {
     DENG_ASSERT(App_World().hasMap());
 
+    Map &map = App_World().map();
+
     // Set to true if dynlights are inited for this frame.
     loInited = false;
 
@@ -2473,7 +2479,7 @@ void Rend_RenderMap()
         currentBspLeaf = 0;
 
         // Draw the world!
-        traverseBspAndDrawLeafs(&App_World().map().bspRoot());
+        traverseBspAndDrawLeafs(&map.bspRoot());
 
         Rend_RenderMobjShadows();
     }
@@ -2788,6 +2794,8 @@ static void Rend_DrawBoundingBoxes()
     static float const green[3]  = { 0.2f, 1, 0.2f}; // solid objects
     static float const yellow[3] = {0.7f, 0.7f, 0.2f}; // missiles
 
+    Map &map = App_World().map();
+
     if(!devMobjBBox && !devPolyobjBBox) return;
 
 #ifndef _DEBUG
@@ -2812,13 +2820,13 @@ static void Rend_DrawBoundingBoxes()
 
     if(devMobjBBox)
     {
-        App_World().map().thinkers().iterate(reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
-                                             0x1, drawMobjBBox, NULL);
+        map.thinkers().iterate(reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
+                               0x1, drawMobjBBox, NULL);
     }
 
     if(devPolyobjBBox)
     {
-        foreach(Polyobj const *polyobj, App_World().map().polyobjs())
+        foreach(Polyobj const *polyobj, map.polyobjs())
         {
             Sector const &sec = polyobj->sector();
             coord_t width  = (polyobj->aaBox.maxX - polyobj->aaBox.minX)/2;
@@ -2895,10 +2903,12 @@ static void Rend_DrawSurfaceVectors()
     if(!devSurfaceVectors) return;
     if(!App_World().hasMap()) return;
 
+    Map &map = App_World().map();
+
     glDisable(GL_CULL_FACE);
 
     Vector3d origin;
-    foreach(BspLeaf *bspLeaf, App_World().map().bspLeafs())
+    foreach(BspLeaf *bspLeaf, map.bspLeafs())
     foreach(Segment *segment, bspLeaf->allSegments())
     {
         if(!bspLeaf->hasSector())
@@ -2964,7 +2974,7 @@ static void Rend_DrawSurfaceVectors()
         }
     }
 
-    foreach(BspLeaf *bspLeaf, App_World().map().bspLeafs())
+    foreach(BspLeaf *bspLeaf, map.bspLeafs())
     {
         if(bspLeaf->isDegenerate()) continue;
         if(!bspLeaf->hasSector()) continue;
@@ -2975,13 +2985,13 @@ static void Rend_DrawSurfaceVectors()
             origin = Vector3d(bspLeaf->poly().center(), plane->visHeight());
 
             if(plane->surface().hasSkyMaskedMaterial() && plane->indexInSector() <= Sector::Ceiling)
-                origin.z = App_World().map().skyFix(plane->indexInSector() == Sector::Ceiling);
+                origin.z = plane->map().skyFix(plane->indexInSector() == Sector::Ceiling);
 
             drawSurfaceTangentSpaceVectors(&plane->surface(), origin);
         }
     }
 
-    foreach(Polyobj *polyobj, App_World().map().polyobjs())
+    foreach(Polyobj *polyobj, map.polyobjs())
     {
         Sector const &sector = polyobj->sector();
         float zPos = sector.floor().height() + (sector.ceiling().height() - sector.floor().height())/2;
@@ -3033,6 +3043,8 @@ static void Rend_DrawSoundOrigins()
     if(!devSoundOrigins) return;
     if(!App_World().hasMap()) return;
 
+    Map &map = App_World().map();
+
     glDisable(GL_DEPTH_TEST);
     glEnable(GL_TEXTURE_2D);
 
@@ -3040,7 +3052,7 @@ static void Rend_DrawSoundOrigins()
 
     if(devSoundOrigins & SOF_SIDE)
     {
-        foreach(Line *line, App_World().map().lines())
+        foreach(Line *line, map.lines())
         for(int i = 0; i < 2; ++i)
         {
             Line::Side &side = line->side(i);
@@ -3061,7 +3073,7 @@ static void Rend_DrawSoundOrigins()
 
     if(devSoundOrigins & (SOF_SECTOR|SOF_PLANE))
     {
-        foreach(Sector *sec, App_World().map().sectors())
+        foreach(Sector *sec, map.sectors())
         {
             char buf[80];
 
@@ -3249,6 +3261,8 @@ static void Rend_DrawVertexIndices()
     if(!devVertexBars && !devVertexIndices) return;
     if(!App_World().hasMap()) return;
 
+    Map &map = App_World().map();
+
     glDisable(GL_DEPTH_TEST);
 
     if(devVertexBars)
@@ -3257,7 +3271,7 @@ static void Rend_DrawVertexIndices()
         oldLineWidth = DGL_GetFloat(DGL_LINE_WIDTH);
         DGL_SetFloat(DGL_LINE_WIDTH, 2);
 
-        foreach(Vertex *vertex, App_World().map().vertexes())
+        foreach(Vertex *vertex, map.vertexes())
         {
             // Not a line vertex?
             LineOwner const *own = vertex->firstLineOwner();
@@ -3287,7 +3301,7 @@ static void Rend_DrawVertexIndices()
     glEnable(GL_POINT_SMOOTH);
     DGL_SetFloat(DGL_POINT_SIZE, 6);
 
-    foreach(Vertex *vertex, App_World().map().vertexes())
+    foreach(Vertex *vertex, map.vertexes())
     {
         // Not a line vertex?
         LineOwner const *own = vertex->firstLineOwner();
@@ -3316,7 +3330,7 @@ static void Rend_DrawVertexIndices()
         eye[VY] = vOrigin[VZ];
         eye[VZ] = vOrigin[VY];
 
-        foreach(Vertex *vertex, App_World().map().vertexes())
+        foreach(Vertex *vertex, map.vertexes())
         {
             coord_t pos[3], dist;
 

@@ -65,6 +65,8 @@ public:
     Vector3d const &pOrigin() const;
     Vector3d const &pDirection() const;
 
+    Vector2f materialOrigin() const;
+
     /// Implement IEdge.
     bool isValid() const;
 

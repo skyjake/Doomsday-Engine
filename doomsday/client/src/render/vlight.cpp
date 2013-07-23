@@ -19,14 +19,18 @@
  * 02110-1301 USA</small>
  */
 
+#include <de/mathutil.h> // for M_ApproxDistance
+#include <de/memoryzone.h>
+
 #include "de_base.h"
 #include "de_console.h"
 #include "de_render.h"
 
 #include "gl/gl_main.h"
 
-#include <de/mathutil.h> // for M_ApproxDistance
-#include <de/memoryzone.h>
+#include "render/vlight.h"
+
+using namespace de;
 
 struct vlightnode_t
 {
@@ -154,8 +158,9 @@ static void linkVLightNodeToList(vlightnode_t *node, uint listIndex)
     list->head = node;
 }
 
-void VL_InitForMap()
+void VL_InitForMap(Map &map)
 {
+    DENG_UNUSED(map);
     vLightLinkLists = 0;
     numVLightLinkLists = 0;
     vLightLinkListCursor = 0;

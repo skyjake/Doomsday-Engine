@@ -62,111 +62,260 @@ class HomePlugin extends Plugin implements Actioner, RequestInterpreter
 
         //includeHTML('introduction', 'z#home');
 
-?><script type="text/javascript" >
+?><script>
 (function (e) {
-    e.fn.interpretFeed = function (t) {
+    e.fn.interpretMasterServerStatus = function (t) {
         var n = {
-            feedUri: "http://rss.cnn.com/rss/edition.rss",
-            maxItems: 5,
-            maxContentChars: 0,
-            showContent: true,
-            showPubDate: true,
-            generateItemHtml: 0
+            serverUri: "http://dengine.net/master.php?xml",
+            maxItems: 3,
+            generateServerSummaryHtml: 0
         };
         if (t) {
             e.extend(n, t);
         }
         var r = e(this).attr("id");
-        var i;
-        //e("#" + r).empty().append('<div style="padding:3px;"><img src="images/loader.gif" /></div>');
         e.ajax({
-            url: "http://ajax.googleapis.com/ajax/services/feed/load?v=1.0&num=" + n.maxItems + "&output=json&q=" + encodeURIComponent(n.feedUri) + "&hl=en&callback=?",
-            dataType: "json",
+            url: n.serverUri,
+            dataType: 'xml',
             success: function (t) {
-                //e("#" + r).empty();
-                var html = "";
-                e.each(t.responseData.feed.entries, function (e, t) {
-                    html += '<li>' + n.generateItemHtml(n, t) + '</li>';
-                });
-                e("#" + r).append('<ol style="list-style-type: none;">' + html + "</ol>");
+                e("#" + r).empty();
+                var root = $('masterserver', t);
+                var serverList = root.find('serverlist')[0];
+                var serverCount = serverList.attributes.getNamedItem('size').nodeValue;
+
+                var d = new Date(root.find('channel>pubdate').text());
+                var niceDate = $.datepicker.formatDate('MM d, yy', d);
+                var minItems = serverCount < n.maxItems? serverCount : n.maxItems;
+                var html = '<header>'
+                         + '<h1><a href="/masterserver" title="View the complete list in the server browser">'
+                         + (serverCount > 0? ('Most active servers '
+                                              + '<label title="Result limit">' + minItems + '</label>/<label title="Total number of servers">' + serverCount + '</label>')
+                                           : 'No active servers')
+                         + '</a></h1>'
+                         + '<p>' + niceDate + ' @ <label title="Time of the last server announcement">' + d.toLocaleTimeString() + '</label></p></header>';
+
+                if(serverCount) {
+                    var idx = 0;
+                    var playerCount = 0;
+
+                    html += '<ol class="servers">';
+                    for(var i = 0; i < serverList.childNodes.length; ++i) {
+                        if(serverList.childNodes[i].nodeName != 'server')
+                            continue;
+
+                        var server = $(serverList.childNodes[i]);
+                        if(n.maxItems <= 0 || idx < n.maxItems)
+                        {
+                            html += '<li>' + n.generateServerSummaryHtml(n, server) + '</li>';
+                        }
+
+                        playerCount += Number(server.find('gameinfo>numplayers').text());
+                        idx++;
+                    };
+
+                    html += '</ol>';
+                    //html += '<span class="summary"><a href="/masterserver" title="See the full listing in the server browser">' + serverCount + ' ' + (serverCount == 1? 'server':'servers') + ' in total, ' + playerCount + ' active ' + (playerCount == 1? 'player':'players') + '</a></span>';
+                }
+
+                e("#" + r).append(html);
             }
         })
     }
 })(jQuery)
 
 $(document).ready(function () {
-    $('#column1').interpretFeed({
-        feedUri: 'http://dengine.net/forums/rss.php?mode=news',
+    $('#activeservers').interpretMasterServerStatus({
+        generateServerSummaryHtml: function (n, info) {
+
+            var serverMetadataLabel = 'Address: ' + info.children('ip').text() + ':' + info.children('port').text()
+                                    + ' Open: ' + info.children('open').text();
+
+            // Any required addons?.
+            /*var addonArr = array_filter(explode(';', info['pwads']));
+            if(count(addonArr))
+            {
+                serverMetadataLabel .= 'Add-ons: '. implode(' ', addonArr);
+            }*/
+
+            var gameInfo = $(info.children('gameinfo'));
+            var gameMetadataLabel = 'Map: ' + gameInfo.children('map').text() + ' Setup: ' + gameInfo.children('setupstring').text();
+
+            var playerCountLabel = 'Number of players currently in-game';
+            var playerMaxLabel = 'Maximum number of players';
+
+            var html = '<span class="player-summary"><label title="' + playerCountLabel + '">' + gameInfo.children('numplayers').text() + '</label> / <label title="' + playerMaxLabel + '">' + gameInfo.children('maxplayers').text() + '</label></span> ';
+
+            html += '<label title="' + serverMetadataLabel + '"><span class="name">' + info.find('name').text() + '</span></label> ';
+            html += '<label title="' + gameMetadataLabel + '"><span class="game-mode">' + gameInfo.children('mode').text() + '</span></label>';
+
+            return '<span class="server">' + html + '</span>';
+        }
+    });
+});
+
+(function (e) {
+    e.fn.interpretFeed = function (t) {
+        var n = { feedUri:          'http://rss.cnn.com/rss/edition.rss',
+                  dataType:         'xml',
+                  maxItems:         5,
+                  clearOnSuccess:   true,
+                  useGoogleApi:     false,
+                  generateItemHtml: 0
+        };
+        if(t) {
+            e.extend(n, t);
+        }
+        var r = e(this).attr('id');
+
+        if(n.useGoogleApi)
+        {
+            e.ajax({
+                url: 'http://ajax.googleapis.com/ajax/services/feed/load?v=1.0&num=' + n.maxItems + '&output=json&q=' + encodeURIComponent(n.feedUri) + '&hl=en&callback=?',
+                dataType: n.dataType,
+                success: function (t) {
+
+                    if(n.clearOnSuccess)
+                    {
+                        e("#" + r).empty();
+                    }
+
+                    var html = "";
+                    e.each(t.responseData.feed.entries, function (e, t) {
+                        html += n.generateItemHtml(n, t);
+                    });
+                    e("#" + r).append('<ol style="list-style-type: none;">' + html + "</ol>");
+                }
+            });
+        }
+        else
+        {
+            e.ajax({
+                url: n.feedUri,
+                dataType: n.dataType,
+                success: function (t) {
+
+                    if(n.clearOnSuccess)
+                    {
+                        e("#" + r).empty();
+                    }
+
+                    var xml = $(t);
+
+                    var html = "";
+                    xml.find('item').slice(0, n.maxItems).each(function() {
+                        var self = $(this),
+                        item = { title:       self.children('title').text(),
+                                 link:        self.children('link').text(),
+                                 author:      self.children('author').text(),
+                                 pubDate:     self.children('pubDate').text(),
+                                 atomSummary: self.children('atom\\:summary').text(),
+                                 description: self.children('description').text(),
+                                 author:      self.children('author').text()
+                        }
+                        html += n.generateItemHtml(n, item);
+                    });
+
+                    e('#' + r).append('<ol style="list-style-type: none;">' + html + '</ol>');
+                }
+            });
+        }
+    }
+})(jQuery)
+
+$(document).ready(function () {
+    $('#recentbuilds').interpretFeed({
+        feedUri: 'http://dl.dropboxusercontent.com/u/11948701/builds/events.rss',
+        dataType: 'xml',
         maxItems: 3,
-        generateItemHtml: function (n, t) {
-            var html = '<article class="block newspost"><header><h1><a href="' + t.link + '" title="Discuss &#39;' + t.title + '&#39; in the user forum">' + t.title + '</a></h1>';
-            if (n.showPubDate) {
-                var d = new Date(t.publishedDate);
-                var niceDate = $.datepicker.formatDate('MM d, yy', d);
-                html += '<p><time datetime="' + d.toISOString() + '" pubdate>' + niceDate + '</time></p>';
-            }
-            html += '</header>';
-            if (n.showContent) {
-                /*if (n.DescCharacterLimit > 0 && t.content.length > n.DescCharacterLimit) {
-                    html += '<div>' + t.content.substr(0, n.DescCharacterLimit) + "...</div>";
-                }
-                else*/ {
-                    html += t.content;
-                }
-            }
-            html += '</article>';
-            return html;
+        generateItemHtml : function(n, t) {
+            var html = '<a href="' + t.link + '" title="Read more about ' + t.title.toLowerCase() + ' in the repository">' + t.title + ' completed</a>';
+            var d = new Date(t.pubDate);
+            var niceDate = $.datepicker.formatDate('MM d, yy', d);
+            html += ' ' + niceDate;
+            d.setDate(d.getDate() + 2);
+            var isNew = (new Date() < d);
+            return '<li' + (isNew? ' class="new"' : '') + '>' + html + '</li>';
         }
     });
 
     $('#column1').interpretFeed({
         feedUri: 'http://dl.dropboxusercontent.com/u/11948701/builds/events.rss',
+        dataType: 'xml',
         maxItems: 3,
-        showContent: true,
+        clearOnSuccess: false,
         generateItemHtml: function (n, t) {
-            var html = '<article class="block buildevent"><header><h1><a href="' + t.link + '" title="Read more about ' + t.title + ' in the repository">' + t.title + '</a></h1>';
+            var html = '<div class="block"><article class="buildevent"><header><h1><a href="' + t.link + '" title="Read more about ' + t.title + ' in the repository">' + t.title + '</a></h1>';
+
+            var d = new Date(t.pubDate);
+            var niceDate = $.datepicker.formatDate('MM d, yy', d);
+            html += '<p><time datetime="' + d.toISOString() + '" pubdate>' + niceDate + '</time></p>';
+
+            html += '</header>';
+            html += t.atomSummary;
+            html += '</article>';
+            html += '<div class="links"><a href="' + n.feedUri + '" class="link-rss" title="Doomsday Engine build events are reported via RSS">All builds</a></div></div>';
+            return '<li>' + html + '</li>';
+        }
+    });
+
+    $('#column1').interpretFeed({
+        feedUri: 'http://dengine.net/forums/rss.php?mode=news',
+        dataType: 'json',
+        clearOnSuccess: false,
+        useGoogleApi: true,
+        maxItems: 3,
+        generateItemHtml: function (n, t) {
+            var html = '<div class="block"><article class="newspost content"><header><h1><a href="' + t.link + '" title="Discuss &#39;' + t.title + '&#39; in the user forums">' + t.title + '</a></h1>';
+
             var d = new Date(t.publishedDate);
             var niceDate = $.datepicker.formatDate('MM d, yy', d);
-            if (n.showPubDate) {
-                html += '<p><time datetime="' + d.toISOString() + '" pubdate>' + niceDate + '</time></p>';
-            }
+            html += '<p><time datetime="' + d.toISOString() + '" pubdate>' + niceDate + '</time></p>';
+
             html += '</header>';
-            if (n.showContent) {
-                html += 'Build report for ' + t.title.toLowerCase() + ' started on ' + niceDate + '.';
-            }
+            html += t.content;
             html += '</article>';
-            return html;
+            html += '<div class="links"><a href="' + n.feedUri + '" class="link-rss" title="Doomsday Engine news is also available via RSS">All news</a></div></div>';
+            return '<li>' + html + '</li>';
         }
     });
 
     $('#column2').interpretFeed({
         feedUri: 'http://dengine.net/forums/rss.php?f=24',
+        dataType: 'json',
+        clearOnSuccess: false,
+        useGoogleApi: true,
         maxItems: 3,
         generateItemHtml: function (n, t) {
-            var html = '<article class="block blogpost"><header><h1><a href="' + t.link + '" title="Discuss &#39;' + t.title + '&#39; in the user forum">' + t.title + '</a></h1>';
-            if (n.showPubDate) {
-                var d = new Date(t.publishedDate);
-                var niceDate = $.datepicker.formatDate('MM d, yy', d);
-                html += '<p><time datetime="' + d.toISOString() + '" pubdate>' + niceDate + '</time></p>';
-            }
+            var html = '<div class="block"><article class="blogpost content"><header><h1><a href="' + t.link + '" title="Discuss &#39;' + t.title + '&#39; in the user forums">' + t.title + '</a></h1>';
+
+            var d = new Date(t.publishedDate);
+            var niceDate = $.datepicker.formatDate('MM d, yy', d);
+            html += '<p><time datetime="' + d.toISOString() + '" pubdate>' + niceDate + '</time></p>';
+
             html += '</header>';
-            if (n.showContent) {
-                /*if (n.DescCharacterLimit > 0 && t.content.length > n.DescCharacterLimit) {
-                    html += '<div>' + t.content.substr(0, n.DescCharacterLimit) + "...</div>";
-                }
-                else*/ {
-                    html += t.content;
-                }
-            }
+            html += t.content;
             html += '</article>';
-            return html;
+            html += '<div class="links"><a href="' + n.feedUri + '" class="link-rss" title="The Doomsday Engine development blog is also available via RSS">All blogs</a></div></div>';
+            return '<li>' + html + '</li>';
         }
     });
 });
-
 </script>
-<div id="column1" class="twocolumn"></div>
-<div id="column2" class="twocolumn"></div>
+<aside role="complementary" class="block">
+<div id="status">
+<div class="twocolumn"><article>
+<header><h1><a href="/builds" title="View the complete index in the build repository">Most recent builds</a></h1>
+<p><script>
+<!--
+var niceDate = $.datepicker.formatDate('MM d, yy', new Date());
+document.write(niceDate);
+//-->
+</script></p></header><div id="recentbuilds">Contacting build repository...</div></article></div>
+<div class="twocolumn"><article id="activeservers"></article></div>
+<div class="clear"></div>
+</div></aside>
+<div id="column1" class="twocolumn collapsible"></div>
+<div id="column2" class="twocolumn collapsible"></div>
 <div class="clear"></div>
 </div>
 <?php

@@ -350,13 +350,11 @@ static void prepareSurfaces(Map &map)
     }
 }
 
-void SB_InitForMap()
+void SB_InitForMap(Map &map)
 {
     Time begunAt;
 
     LOG_AS("SB_InitForMap");
-
-    Map &map = App_World().map();
 
     loadSources(map);
     prepareSurfaces(map);
@@ -909,10 +907,10 @@ float *SB_GetCasted(vertexillum_t *illum, int sourceIndex,
     return 0;
 }
 
-static Vector3f ambientLight(Vector3d const &point)
+static Vector3f ambientLight(Map &map, Vector3d const &point)
 {
-    if(App_World().map().hasLightGrid())
-        return App_World().map().lightGrid().evaluate(point);
+    if(map.hasLightGrid())
+        return map.lightGrid().evaluate(point);
     return Vector3f(0, 0, 0);
 }
 
@@ -993,13 +991,15 @@ void SB_EvalPoint(float light[4], vertexillum_t *illum,
     }
     aff->source = NULL;
 
+    Map &map = App_World().map();
+
     if(!illuminationChanged && illum != NULL)
     {
         // Reuse the previous value.
         lerpIllumination(illum, light);
 
         // Add ambient lighting.
-        addLight(light, ambientLight(point));
+        addLight(light, ambientLight(map, point));
 
         return;
     }
@@ -1028,7 +1028,7 @@ void SB_EvalPoint(float light[4], vertexillum_t *illum,
         Vector3d surfacePoint = point + delta / 100;
 
         if(useSightCheck &&
-           !LineSightTest(s->origin, surfacePoint).trace(App_World().map().bspRoot()))
+           !LineSightTest(s->origin, surfacePoint).trace(map.bspRoot()))
         {
             // LOS fail.
             if(casted)
@@ -1115,7 +1115,7 @@ void SB_EvalPoint(float light[4], vertexillum_t *illum,
     }
 
     // Add ambient lighting.
-    addLight(light, ambientLight(point));
+    addLight(light, ambientLight(map, point));
 
 #undef COLOR_CHANGE_THRESHOLD
 }

@@ -22,6 +22,7 @@
 #include "de/String"
 #include "de/Writer"
 #include "de/Reader"
+#include "de/HighPerformanceTimer"
 
 #include <QThread>
 #include <QDataStream>
@@ -29,6 +30,7 @@
 namespace de {
 
 static String const ISO_FORMAT = "yyyy-MM-dd hh:mm:ss.zzz";
+static HighPerformanceTimer highPerfTimer;
 
 namespace internal {
 
@@ -95,18 +97,138 @@ TimeDelta TimeDelta::operator + (ddouble const &d) const
     return _seconds + d;
 }
 
+TimeDelta &TimeDelta::operator += (ddouble const &d)
+{
+    _seconds += d;
+    return *this;
+}
+
 TimeDelta TimeDelta::operator - (ddouble const &d) const
 {
     return _seconds - d;
 }
 
-Time::Time() : _time(QDateTime::currentDateTime())
+DENG2_PIMPL_NOREF(Time)
+{
+    enum Flag {
+        DateTime        = 0x1,
+        HighPerformance = 0x2
+    };
+    Q_DECLARE_FLAGS(Flags, Flag)
+
+    Flags flags;
+    QDateTime dateTime;
+    Delta highPerfElapsed;
+
+    Instance()
+        : flags(DateTime | HighPerformance),
+          dateTime(QDateTime::currentDateTime()),
+          highPerfElapsed(highPerfTimer.elapsed())
+    {}
+
+    Instance(QDateTime const &dt) : flags(DateTime), dateTime(dt) {}
+
+    Instance(Delta const &delta) : flags(HighPerformance), highPerfElapsed(delta) {}
+
+    Instance(Instance const &other)
+        : flags(other.flags),
+          dateTime(other.dateTime),
+          highPerfElapsed(other.highPerfElapsed)
+    {}
+
+    bool hasDateTime() const
+    {
+        return flags.testFlag(DateTime);
+    }
+
+    bool isValid() const
+    {
+        if(flags.testFlag(DateTime))
+        {
+            return dateTime.isValid();
+        }
+        return flags.testFlag(HighPerformance);
+    }
+
+    bool isLessThan(Instance const &other) const
+    {
+        if(flags.testFlag(DateTime) && other.flags.testFlag(DateTime))
+        {
+            // Full date and time comparison.
+            return dateTime < other.dateTime;
+        }
+        if(flags.testFlag(HighPerformance) && other.flags.testFlag(HighPerformance))
+        {
+            return highPerfElapsed < other.highPerfElapsed;
+        }
+        /**
+         * @todo Implement needed conversion to compare DateTime with high
+         * performance delta time.
+         */
+        DENG2_ASSERT(false);
+        return false;
+    }
+
+    bool isEqualTo(Instance const &other) const
+    {
+        if(flags.testFlag(DateTime) && other.flags.testFlag(DateTime))
+        {
+            return dateTime == other.dateTime;
+        }
+        if(flags.testFlag(HighPerformance) && other.flags.testFlag(HighPerformance))
+        {
+            return highPerfElapsed == other.highPerfElapsed;
+        }
+        /**
+         * @todo Implement needed conversion to compare DateTime with high
+         * performance delta time.
+         */
+        DENG2_ASSERT(false);
+        return false;
+    }
+
+    void add(Delta const &delta)
+    {
+        if(flags.testFlag(DateTime))
+        {
+            dateTime = dateTime.addMSecs(delta.asMilliSeconds());
+        }
+        if(flags.testFlag(HighPerformance))
+        {
+            highPerfElapsed += delta;
+        }
+    }
+
+    Delta delta(Instance const &earlier) const
+    {
+        if(flags.testFlag(DateTime) && earlier.flags.testFlag(DateTime))
+        {
+            return earlier.dateTime.msecsTo(dateTime) / 1000.0;
+        }
+        if(flags.testFlag(HighPerformance) && earlier.flags.testFlag(HighPerformance))
+        {
+            return highPerfElapsed - earlier.highPerfElapsed;
+        }
+        /**
+         * @todo Implement needed conversion to compare DateTime with high
+         * performance delta time.
+         */
+        DENG2_ASSERT(false);
+        return 0;
+    }
+};
+
+Time::Time() : d(new Instance)
 {}
 
-Time::Time(Time const &other) : ISerializable(), _time(other._time)
+Time::Time(Time const &other) : ISerializable(), d(new Instance(*other.d))
 {}
 
-Time::Time(QDateTime const &t) : ISerializable(), _time(t)
+Time::Time(QDateTime const &t) : ISerializable(), d(new Instance(t))
+{}
+
+Time::Time(TimeDelta const &highPerformanceDelta)
+    : ISerializable(), d(new Instance(highPerformanceDelta))
 {}
 
 Time Time::invalidTime()
@@ -114,23 +236,29 @@ Time Time::invalidTime()
     return Time(QDateTime());
 }
 
+Time &Time::operator = (Time const &other)
+{
+    d.reset(new Instance(*other.d));
+    return *this;
+}
+
 bool Time::isValid() const
 {
-    return _time.isValid();
+    return d->isValid();
 }
 
 bool Time::operator < (Time const &t) const
 {
-    return (_time < t._time);
+    return d->isLessThan(*t.d);
 }
 
 bool Time::operator == (Time const &t) const
 {
-    return (_time == t._time);
+    return d->isEqualTo(*t.d);
 }
 
 Time Time::operator + (Delta const &delta) const
-{
+{    
     Time result = *this;
     result += delta;
     return result;
@@ -138,42 +266,54 @@ Time Time::operator + (Delta const &delta) const
 
 Time &Time::operator += (Delta const &delta)
 {
-    _time = _time.addMSecs(delta.asMilliSeconds());
+    d->add(delta);
     return *this;
 }
 
 TimeDelta Time::operator - (Time const &earlierTime) const
 {
-#ifdef DENG2_QT_4_7_OR_NEWER
-    return earlierTime._time.msecsTo(_time) / 1000.0;
-#else
-    return earlierTime._time.time().msecsTo(_time.time()) / 1000.0;
-#endif
+    return d->delta(*earlierTime.d);
 }
 
 dint Time::asBuildNumber() const
 {
-    return (_time.date().year() - 2011)*365 + _time.date().dayOfYear();
+    if(d->hasDateTime())
+    {
+        return (d->dateTime.date().year() - 2011)*365 + d->dateTime.date().dayOfYear();
+    }
+    return 0;
 }
 
 String Time::asText(Format format) const
 {
-    if(format == ISOFormat)
+    if(!isValid())
     {
-        return _time.toString(ISO_FORMAT);
+        return "(undefined time)";
     }
-    else if(format == ISODateOnly)
+    if(d->hasDateTime())
     {
-        return _time.toString("yyyy-MM-dd");
+        if(format == ISOFormat)
+        {
+            return d->dateTime.toString(ISO_FORMAT);
+        }
+        else if(format == ISODateOnly)
+        {
+            return d->dateTime.toString("yyyy-MM-dd");
+        }
+        else if(format == FriendlyFormat)
+        {
+            return d->dateTime.toString(Qt::TextDate);
+        }
+        else
+        {
+            return QString("#%1 ").arg(asBuildNumber(), -4) + d->dateTime.toString("hh:mm:ss.zzz");
+        }
     }
-    else if(format == FriendlyFormat)
+    if(d->flags.testFlag(Instance::HighPerformance))
     {
-        return _time.toString(Qt::TextDate);
+        return QString("+%1 sec").arg(d->highPerfElapsed, 0, 'f', 3);
     }
-    else
-    {
-        return QString("#%1 ").arg(asBuildNumber(), -4) + _time.toString("hh:mm:ss.zzz");
-    }
+    return "";
 }
 
 Time Time::fromText(String const &text, Time::Format format)
@@ -195,25 +335,93 @@ Time Time::fromText(String const &text, Time::Format format)
     return Time();
 }
 
+QDateTime &de::Time::asDateTime()
+{
+    DENG2_ASSERT(d->hasDateTime());
+    return d->dateTime;
+}
+
+QDateTime const &de::Time::asDateTime() const
+{
+    DENG2_ASSERT(d->hasDateTime());
+    return d->dateTime;
+}
+
 Date Time::asDate() const
 {
+    DENG2_ASSERT(d->hasDateTime());
     return Date(*this);
 }
 
+// Flags for serialization.
+static duint8 const HAS_DATETIME  = 0x01;
+static duint8 const HAS_HIGH_PERF = 0x02;
+
 void Time::operator >> (Writer &to) const
 {
-    Block bytes;
-    QDataStream s(&bytes, QIODevice::WriteOnly);
-    s << _time;
-    to << bytes;
+    duint8 flags = (d->flags & Instance::DateTime?        HAS_DATETIME  : 0) |
+                   (d->flags & Instance::HighPerformance? HAS_HIGH_PERF : 0);
+    to << flags;
+
+    if(d->flags.testFlag(Instance::DateTime))
+    {
+        Block bytes;
+        QDataStream s(&bytes, QIODevice::WriteOnly);
+        s << d->dateTime;
+        to << bytes;
+    }
+
+    if(d->flags.testFlag(Instance::HighPerformance))
+    {
+        to << d->highPerfElapsed;
+    }
 }
 
 void Time::operator << (Reader &from)
 {
-    Block bytes;
-    from >> bytes;
-    QDataStream s(bytes);
-    s >> _time;
+    if(from.version() >= DENG2_PROTOCOL_1_11_0_BUILD_926)
+    {
+        /*
+         * Starting from build 926, Time can optionally contain a
+         * high-performance delta component.
+         */
+
+        duint8 flags;
+        from >> flags;
+
+        d->flags = 0;
+
+        if(flags & HAS_DATETIME)
+        {
+            d->flags |= Instance::DateTime;
+
+            Block bytes;
+            from >> bytes;
+            QDataStream s(bytes);
+            s >> d->dateTime;
+        }
+
+        if(flags & HAS_HIGH_PERF)
+        {
+            d->flags |= Instance::HighPerformance;
+
+            from >> d->highPerfElapsed;
+        }
+    }
+    else
+    {
+        // This serialization only has a QDateTime.
+        Block bytes;
+        from >> bytes;
+        QDataStream s(bytes);
+        s >> d->dateTime;
+        d->flags = Instance::DateTime;
+    }
+}
+
+Time Time::currentHighPerformanceTime()
+{
+    return Time(highPerfTimer.elapsed());
 }
 
 QTextStream &operator << (QTextStream &os, Time const &t)

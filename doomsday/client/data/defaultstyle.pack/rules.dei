@@ -4,11 +4,17 @@ script {
     UNIT = 4.0
 }
 
-rule unit { constant $= UNIT }
-rule gap  { constant $= UNIT * 3 }
+rule unit     { constant $= UNIT }
+rule halfunit { constant $= UNIT / 2 }
+rule gap      { constant $= UNIT * 3 }
 
 group console {
     rule width { constant = 500 }
+}
+
+group gameselection {
+    rule max.width  { constant = 800 }
+    rule max.height { constant = 600 }
 }
 
 rule scrollarea.bar { constant $= UNIT }

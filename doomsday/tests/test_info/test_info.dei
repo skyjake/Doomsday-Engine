@@ -60,7 +60,7 @@ group font {
     preferences < font.default, $" 'font'+'.'+'title' " >
     
     font Default {
-        family $= "'Lucida ' + ''Grande''"
+        family $= 'Lucida ' + "Grande"
         size $: joinArray(['16', 'pt'])
         weight = normal
         style: normal

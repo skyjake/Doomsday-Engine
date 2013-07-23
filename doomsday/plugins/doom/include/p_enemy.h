@@ -47,8 +47,6 @@ typedef struct braindata_s {
 
 DENG_EXTERN_C braindata_t brain;
 
-DENG_EXTERN_C boolean bossKilled;
-
 #ifdef __cplusplus
 extern "C" {
 #endif

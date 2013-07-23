@@ -77,6 +77,7 @@ HEADERS += \
     include/de/Error \
     include/de/Event \
     include/de/FileLogSink \
+    include/de/HighPerformanceTimer \
     include/de/Id \
     include/de/Library \
     include/de/Log \
@@ -108,6 +109,7 @@ HEADERS += \
     include/de/core/debuglogsink.h \
     include/de/core/event.h \
     include/de/core/filelogsink.h \
+    include/de/core/highperformancetimer.h \
     include/de/core/id.h \
     include/de/core/library.h \
     include/de/core/log.h \
@@ -144,6 +146,7 @@ SOURCES += \
     src/core/config.cpp \
     src/core/debuglogsink.cpp \
     src/core/filelogsink.cpp \
+    src/core/highperformancetimer.cpp \
     src/core/id.cpp \
     src/core/library.cpp \
     src/core/log.cpp \

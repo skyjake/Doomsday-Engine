@@ -284,8 +284,10 @@ int RIT_ProjectShadowToSurfaceIterator(void *mobj, void *parameters)
     return false; // Continue iteration.
 }
 
-void R_InitShadowProjectionListsForMap()
+void R_InitShadowProjectionListsForMap(Map &map)
 {
+    DENG_UNUSED(map);
+
     static bool firstTime = true;
     if(firstTime)
     {

@@ -160,7 +160,7 @@ static ptcgen_t *P_NewGenerator()
     return 0; // Creation failed.
 }
 
-void P_PtcInitForMap()
+void P_PtcInitForMap(Map &map)
 {
     Time begunAt;
 
@@ -169,7 +169,7 @@ void P_PtcInitForMap()
     // Spawn all type-triggered particle generators.
     // Let's hope there aren't too many...
     P_SpawnTypeParticleGens();
-    P_SpawnMapParticleGens();
+    P_SpawnMapParticleGens(map);
 
     LOG_INFO(String("Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 }
@@ -181,18 +181,11 @@ void P_MapSpawnPlaneParticleGens()
 
     foreach(Sector *sector, App_World().map().sectors())
     {
-        // Only planes of sectors with volume on the world X/Y axis support generators.
-        if(!sector->sideCount()) continue;
+        Plane &floor = sector->floor();
+        P_SpawnPlaneParticleGen(Def_GetGenerator(floor.surface().composeMaterialUri()), &floor);
 
-        for(uint i = 0; i < 2; ++i)
-        {
-            Plane &plane = sector->plane(i);
-            if(!plane.surface().hasMaterial()) continue;
-
-            de::Uri uri = plane.surface().material().manifest().composeUri();
-            ded_ptcgen_t const *def = Def_GetGenerator(reinterpret_cast<uri_s *>(&uri));
-            P_SpawnPlaneParticleGen(def, &plane);
-        }
+        Plane &ceiling = sector->ceiling();
+        P_SpawnPlaneParticleGen(Def_GetGenerator(ceiling.surface().composeMaterialUri()), &ceiling);
     }
 }
 
@@ -316,7 +309,7 @@ void P_SpawnMobjParticleGen(ded_ptcgen_t const *def, mobj_t *source)
     // Size of source sector might determine count.
     if(def->flags & PGF_SCALED_RATE)
     {
-        gen->spawnRateMultiplier = source->bspLeaf->sector().roughArea();
+        gen->spawnRateMultiplier = source->bspLeaf->sector().roughArea() / (128 * 128);
     }
     else
     {
@@ -350,12 +343,10 @@ static int generatorByPlaneIterator(ptcgen_t *gen, void *parameters)
 
 static ptcgen_t *generatorByPlane(Plane *plane)
 {
-    /// @todo Do not assume plane is from the CURRENT map.
-    Map &map = App_World().map();
     generatorbyplaneiterator_params_t parm;
     parm.plane = plane;
     parm.found = 0;
-    map.generators().iterate(generatorByPlaneIterator, (void *)&parm);
+    plane->map().generators().iterate(generatorByPlaneIterator, (void *)&parm);
     return parm.found;
 }
 
@@ -363,6 +354,7 @@ void P_SpawnPlaneParticleGen(ded_ptcgen_t const *def, Plane *plane)
 {
     if(isDedicated || !useParticles) return;
     if(!def || !plane) return;
+
     // Only planes in sectors with volume on the world X/Y axis can support generators.
     if(!plane->sector().sideCount()) return;
 
@@ -386,7 +378,7 @@ void P_SpawnPlaneParticleGen(ded_ptcgen_t const *def, Plane *plane)
     // Size of source sector might determine count.
     if(def->flags & PGF_PARTS_PER_128)
     {
-        gen->spawnRateMultiplier = plane->sector().roughArea();
+        gen->spawnRateMultiplier = plane->sector().roughArea() / (128 * 128);
     }
     else
     {
@@ -617,6 +609,7 @@ static void P_NewParticle(ptcgen_t *gen)
         fixed_t radius = gen->stages[pt->stage].radius;
         Plane const *plane = gen->plane;
         Sector const *sector = &gen->plane->sector();
+        Map &map = sector->map();
 
         // Choose a random spot inside the sector, on the spawn plane.
         if(gen->flags & PGF_SPACE_SPAWN)
@@ -654,7 +647,7 @@ static void P_NewParticle(ptcgen_t *gen)
             float y = sector->aaBox().minY +
                 RNG_RandFloat() * (sector->aaBox().maxY - sector->aaBox().minY);
 
-            bspLeaf = &App_World().map().bspLeafAt(Vector2d(x, y));
+            bspLeaf = &map.bspLeafAt(Vector2d(x, y));
             if(bspLeaf->sectorPtr() == sector) break;
 
             bspLeaf = 0;
@@ -679,7 +672,7 @@ static void P_NewParticle(ptcgen_t *gen)
             pt->origin[VX] = FLT2FIX(x);
             pt->origin[VY] = FLT2FIX(y);
 
-            if(&App_World().map().bspLeafAt(Vector2d(x, y)) == bspLeaf)
+            if(&map.bspLeafAt(Vector2d(x, y)) == bspLeaf)
                 break; // This is a good place.
         }
 
@@ -1194,6 +1187,7 @@ void P_PtcGenThinker(ptcgen_t *gen)
     ded_ptcgen_t const *def = gen->def;
 
     // Source has been destroyed?
+    /// @todo Do not assume generator is from the CURRENT map.
     if(!(gen->flags & PGF_UNTRIGGERED) && !App_World().map().thinkers().isUsedMobjId(gen->srcid))
     {
         // Blasted... Spawning new particles becomes impossible.
@@ -1303,17 +1297,16 @@ void P_SpawnTypeParticleGens()
     }
 }
 
-void P_SpawnMapParticleGens()
+void P_SpawnMapParticleGens(Map &map)
 {
     if(isDedicated || !useParticles) return;
-    if(!App_World().hasMap()) return;
 
     ded_ptcgen_t* def = defs.ptcGens;
     for(int i = 0; i < defs.count.ptcGens.num; ++i, def++)
     {
         if(!def->map) continue;
 
-        de::Uri mapUri = App_World().map().uri();
+        de::Uri mapUri = map.uri();
         if(!Uri_Equality(def->map, reinterpret_cast<uri_s *>(&mapUri)))
             continue;
 
@@ -1492,5 +1485,5 @@ void P_UpdateParticleGens()
     map.generators().iterate(updateGenerator);
 
     // Re-spawn map generators.
-    P_SpawnMapParticleGens();
+    P_SpawnMapParticleGens(map);
 }

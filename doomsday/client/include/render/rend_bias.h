@@ -105,7 +105,7 @@ void SB_Register();
  *
  * Must be called before rendering a map frame with bias lighting enabled.
  */
-void SB_InitForMap();
+void SB_InitForMap(de::Map &map);
 
 void SB_VertexIllumInit(vertexillum_t &illum);
 

@@ -47,10 +47,4 @@ InterceptNode *P_AddIntercept(intercepttype_t type, float distance, void *object
  */
 int P_TraverseIntercepts(traverser_t callback, void *parameters);
 
-/// @todo Find a better home for the following functions ----------------------
-
-int PIT_AddLineIntercepts(Line *ld, void *parameters);
-
-int PIT_AddMobjIntercepts(struct mobj_s *mobj, void *parameters);
-
 #endif // DENG_WORLD_P_INTERCEPT_H

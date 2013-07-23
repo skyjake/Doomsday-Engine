@@ -330,10 +330,12 @@ static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
     {
         collectaffectinglights_params_t lparams;
 
-        if(useBias && App_World().map().hasLightGrid())
+        Map &map = App_World().map();
+
+        if(useBias && map.hasLightGrid())
         {
             // Evaluate the position in the light grid.
-            Vector3f tmp = App_World().map().lightGrid().evaluate(spr->origin);
+            Vector3f tmp = map.lightGrid().evaluate(spr->origin);
             V3f_Set(params->ambientColor, tmp.x, tmp.y, tmp.z);
         }
         else
@@ -359,6 +361,7 @@ static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
 
         Rend_ApplyTorchLight(params->ambientColor, 0);
 
+        zap(lparams);
         lparams.starkLight = false;
         lparams.origin[VX] = spr->origin[VX];
         lparams.origin[VY] = spr->origin[VY];
@@ -720,9 +723,11 @@ static void setupModelParamsForVisPSprite(rendmodelparams_t *params, vispsprite_
     {
         collectaffectinglights_params_t lparams;
 
-        if(useBias && App_World().map().hasLightGrid())
+        Map &map = App_World().map();
+
+        if(useBias && map.hasLightGrid())
         {
-            Vector3f tmp = App_World().map().lightGrid().evaluate(params->origin);
+            Vector3f tmp = map.lightGrid().evaluate(params->origin);
             V3f_Set(params->ambientColor, tmp.x, tmp.y, tmp.z);
         }
         else
@@ -751,6 +756,7 @@ static void setupModelParamsForVisPSprite(rendmodelparams_t *params, vispsprite_
 
         Rend_ApplyTorchLight(params->ambientColor, params->distance);
 
+        zap(lparams);
         lparams.starkLight = true;
         lparams.origin[VX] = spr->origin[VX];
         lparams.origin[VY] = spr->origin[VY];

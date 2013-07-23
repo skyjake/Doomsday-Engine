@@ -127,7 +127,7 @@ boolean P_IsInVoid(player_t *player)
 #ifdef __CLIENT__
             if(sec.ceilingSurface().hasSkyMaskedMaterial())
             {
-                coord_t const skyCeil = App_World().map().skyFixCeiling();
+                coord_t const skyCeil = sec.map().skyFixCeiling();
                 if(skyCeil < DDMAXFLOAT && ddpl->mo->origin[VZ] > skyCeil - 4)
                     return true;
             }
@@ -142,7 +142,7 @@ boolean P_IsInVoid(player_t *player)
 #ifdef __CLIENT__
             if(sec.floorSurface().hasSkyMaskedMaterial())
             {
-                coord_t const skyFloor = App_World().map().skyFixFloor();
+                coord_t const skyFloor = sec.map().skyFixFloor();
                 if(skyFloor > DDMINFLOAT && ddpl->mo->origin[VZ] < skyFloor + 4)
                     return true;
             }

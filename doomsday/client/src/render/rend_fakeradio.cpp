@@ -1434,6 +1434,8 @@ void Rend_DrawShadowOffsetVerts()
 
     if(!App_World().hasMap()) return;
 
+    Map &map = App_World().map();
+
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
@@ -1444,7 +1446,7 @@ void Rend_DrawShadowOffsetVerts()
                             GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
     glEnable(GL_TEXTURE_2D);
 
-    foreach(Line *line, App_World().map().lines())
+    foreach(Line *line, map.lines())
     for(uint k = 0; k < 2; ++k)
     {
         Vertex &vtx = line->vertex(k);

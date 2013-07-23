@@ -230,10 +230,10 @@ static objlink_t *allocObjlink()
     return link;
 }
 
-void R_InitObjlinkBlockmapForMap()
+void R_InitObjlinkBlockmapForMap(Map &map)
 {
     // Determine the dimensions of the objlink gridmaps in cells.
-    AABoxd const &bounds = App_World().map().bounds();
+    AABoxd const &bounds = map.bounds();
 
     Vector2ui dimensions(de::ceil((bounds.maxX - bounds.minX) / coord_t( BLOCK_WIDTH )),
                          de::ceil((bounds.maxY - bounds.minY) / coord_t( BLOCK_HEIGHT )));
@@ -249,7 +249,7 @@ void R_InitObjlinkBlockmapForMap()
 
     // Initialize obj => BspLeaf contact lists.
     bspLeafContacts = (objcontactlist_t *)
-        Z_Calloc(sizeof *bspLeafContacts * App_World().map().bspLeafCount(),
+        Z_Calloc(sizeof *bspLeafContacts * map.bspLeafCount(),
                  PU_MAPSTATIC, 0);
 }
 

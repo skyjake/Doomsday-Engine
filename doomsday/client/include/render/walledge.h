@@ -84,6 +84,10 @@ public:
     Vector3d const &pOrigin() const;
     Vector3d const &pDirection() const;
 
+    Vector2f materialOrigin() const;
+
+    Vector3f normal() const;
+
     WallSpec const &spec() const;
 
     Line::Side &mapSide() const;
