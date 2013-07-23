@@ -35,8 +35,8 @@ DENG2_PIMPL_NOREF(MapElement)
         : type(type),
           parent(parent),
           map(0),
-          indexInArchive(NoIndex),
-          indexInMap(NoIndex)
+          indexInMap(NoIndex),
+          indexInArchive(NoIndex)
     {}
 };
 

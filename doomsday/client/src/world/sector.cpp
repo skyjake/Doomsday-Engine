@@ -481,7 +481,6 @@ void Sector::updateSoundEmitterOrigin()
 
 bool Sector::pointInside(Vector2d const &point) const
 {
-    /// @todo Do not assume "this" sector is from the current map.
     BspLeaf const &bspLeaf = map().bspLeafAt(point);
     return bspLeaf.sectorPtr() == this && bspLeaf.pointInside(point);
 }
