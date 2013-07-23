@@ -289,7 +289,7 @@ void UILog_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     guidata_log_message_t* msg;
     assert(obj->type == GUI_LOG);
 
-    if(Hu_IsMapTitleVisible())
+    if(Hu_IsMapTitleVisible() && !cfg.automapTitleAtBottom)
     {
         offsetDueToMapTitle = Hu_MapTitleHeight();
     }

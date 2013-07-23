@@ -216,6 +216,7 @@ void X_PreInit(void)
     cfg.netGravity = -1;        // use map default
     cfg.plrViewHeight = DEFAULT_PLAYER_VIEWHEIGHT;
     cfg.mapTitle = true;
+    cfg.automapTitleAtBottom = true;
     cfg.hideIWADAuthor = true;
     cfg.menuPatchReplaceMode = PRM_ALLOW_TEXT;
     cfg.menuScale = .75f;

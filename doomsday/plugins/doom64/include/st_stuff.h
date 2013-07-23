@@ -43,6 +43,8 @@
 extern "C" {
 #endif
 
+#define ST_HEIGHT                   32
+
 // Palette indices.
 // For damage/bonus red-/gold-shifts
 #define STARTREDPALS                (1)
