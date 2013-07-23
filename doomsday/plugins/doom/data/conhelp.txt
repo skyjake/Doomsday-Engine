@@ -461,6 +461,9 @@ desc = Pan speed multiplier in the automap.
 [map-rotate]
 desc = 1=Automap turns with player, up=forward.
 
+[map-title-position]
+desc = Position of the map title when automap is open. 0=Top, 1=Bottom.
+
 [map-wall-b]
 desc = Automap walls, blue component.
 

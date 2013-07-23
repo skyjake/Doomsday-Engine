@@ -1,0 +1,3 @@
+@summary{
+    Position of the map title when automap is open. 0=Top, 1=Bottom.
+}
