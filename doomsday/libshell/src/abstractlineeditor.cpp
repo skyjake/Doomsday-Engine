@@ -224,7 +224,10 @@ DENG2_PIMPL(AbstractLineEditor)
         acceptCompletion();
 
         // If inside a word, jump to its end.
-        while(cursor < last && text[cursor].isLetterOrNumber()) cursor++;
+        while(cursor <= last && text[de::min(last, cursor)].isLetterOrNumber())
+        {
+            cursor++;
+        }
 
         // Jump over any non-word chars.
         while(cursor < last && !text[cursor].isLetterOrNumber()) cursor++;
