@@ -249,7 +249,7 @@ void IN_WaitStop(void)
     if(!--cnt)
     {
         IN_Stop();
-        G_WorldDone();
+        G_IntermissionDone();
     }
 }
 

@@ -268,7 +268,7 @@ static void tickNoState(void)
         if(IS_CLIENT)
             return;
         WI_End();
-        G_WorldDone();
+        G_IntermissionDone();
     }
 }
 

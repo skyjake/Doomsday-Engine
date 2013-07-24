@@ -468,9 +468,7 @@ int Hook_FinaleScriptStop(int hookType, int finaleId, void* parameters)
     {
         if(IS_CLIENT) return true;
 
-        G_SetGameAction(GA_MAPCOMPLETED);
-        // Don't play the debriefing again.
-        briefDisabled = true;
+        G_SetGameAction(GA_ENDDEBRIEFING);
     }
     else if(mode == FIMODE_BEFORE) // A briefing has ended.
     {
