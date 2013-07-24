@@ -210,7 +210,8 @@ typedef enum {
 
 // Power ups.
 typedef enum {
-    PT_INVULNERABILITY,
+    PT_FIRST,
+    PT_INVULNERABILITY = PT_FIRST,
     PT_STRENGTH,
     PT_INVISIBILITY,
     PT_IRONFEET,
