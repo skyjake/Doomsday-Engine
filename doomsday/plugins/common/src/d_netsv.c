@@ -1572,9 +1572,9 @@ void NetSv_LoadGame(unsigned int game_id)
     Net_SendPacket(DDSP_ALL_PLAYERS, GPT_LOAD, Writer_Data(writer), Writer_Size(writer));
 }
 
-void NetSv_SendMessageEx(int plrNum, const char *msg, boolean yellow)
+void NetSv_SendMessageEx(int plrNum, char const *msg, boolean yellow)
 {
-    Writer* writer;
+    Writer *writer;
 
     if(IS_CLIENT || !netSvAllowSendMsg)
         return;
@@ -1584,7 +1584,7 @@ void NetSv_SendMessageEx(int plrNum, const char *msg, boolean yellow)
             return;
 
 #ifdef _DEBUG
-    Con_Message("NetSv_SendMessageEx: Message '%s'", msg);
+    Con_Message("NetSv_SendMessageEx: '%s'", msg);
 #endif
 
     if(plrNum == DDSP_ALL_PLAYERS)
