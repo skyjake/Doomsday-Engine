@@ -1583,7 +1583,8 @@ static bool needToRespectStatusBarHeightWhenAutomapOpen(void)
 static bool needToRespectHudSizeWhenAutomapOpen(void)
 {
 #ifdef __JDOOM__
-    if(cfg.hudShown[HUD_FACE] && !Hu_IsStatusBarVisible(DISPLAYPLAYER)) return true;
+    if(cfg.hudShown[HUD_FACE] && !Hu_IsStatusBarVisible(DISPLAYPLAYER) &&
+       cfg.automapHudDisplay > 0) return true;
 #endif
     return false;
 }
@@ -1607,7 +1608,7 @@ void Hu_MapTitleDrawer(const RectRaw* portGeometry)
             ST_AutomapIsActive(DISPLAYPLAYER) &&
             (actualMapTime > 6 * TICSPERSEC))
     {
-        float y = SCREENHEIGHT - 1.2f * Hu_MapTitleHeight();
+        origin.y = portGeometry->size.height - 1.2f * Hu_MapTitleHeight() * scale;
 
 #if __JHERETIC__ || __JHEXEN__
         if(Hu_InventoryIsOpen(DISPLAYPLAYER) && !Hu_IsStatusBarVisible(DISPLAYPLAYER))
@@ -1616,19 +1617,19 @@ void Hu_MapTitleDrawer(const RectRaw* portGeometry)
             return;
         }
 #endif
-
+        float off = 0; // in vanilla pixels
         if(needToRespectStatusBarHeightWhenAutomapOpen())
         {
             Size2Raw stBarSize;
             R_StatusBarSize(DISPLAYPLAYER, &stBarSize);
-            y -= stBarSize.height;
+            off += stBarSize.height;
         }
         else if(needToRespectHudSizeWhenAutomapOpen())
         {
-            y -= 30 * cfg.hudScale;
+            off += 30 * cfg.hudScale;
         }
 
-        origin.y = portGeometry->size.height * y / float(SCREENHEIGHT);
+        origin.y -= off * portGeometry->size.height / float(SCREENHEIGHT);
     }
 
     DGL_MatrixMode(DGL_MODELVIEW);
