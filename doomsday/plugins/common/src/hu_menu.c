@@ -3091,6 +3091,7 @@ void Hu_MenuInitAutomapOptionsPage(void)
     { mndata_list_t* list = (mndata_list_t*)ob->_typedata;
     mndata_listitem_t* item;
 
+    list->data = "map-huddisplay";
     list->count = 3;
     item = list->items = (mndata_listitem_t*)Z_Calloc(sizeof(mndata_listitem_t) * list->count, PU_GAMESTATIC, 0);
 
