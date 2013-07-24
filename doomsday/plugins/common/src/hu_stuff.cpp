@@ -1571,7 +1571,7 @@ boolean Hu_IsMapTitleVisible(void)
     return (actualMapTime < 6 * 35) || ST_AutomapIsActive(DISPLAYPLAYER);
 }
 
-static bool needToRespectStatusBarHeightWhenAutomapOpen(void)
+static boolean needToRespectStatusBarHeightWhenAutomapOpen(void)
 {
 #ifndef __JDOOM64__
     return Hu_IsStatusBarVisible(DISPLAYPLAYER);
@@ -1580,7 +1580,7 @@ static bool needToRespectStatusBarHeightWhenAutomapOpen(void)
     return false;
 }
 
-static bool needToRespectHudSizeWhenAutomapOpen(void)
+static boolean needToRespectHudSizeWhenAutomapOpen(void)
 {
 #ifdef __JDOOM__
     if(cfg.hudShown[HUD_FACE] && !Hu_IsStatusBarVisible(DISPLAYPLAYER) &&
