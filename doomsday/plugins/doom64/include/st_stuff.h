@@ -43,7 +43,7 @@
 extern "C" {
 #endif
 
-#define ST_HEIGHT                   32
+#define ST_HEIGHT                   0   // there is no status bar
 
 // Palette indices.
 // For damage/bonus red-/gold-shifts
