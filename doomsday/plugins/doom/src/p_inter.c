@@ -31,8 +31,6 @@
 #  pragma optimize("g", off)
 #endif
 
-// HEADER FILES ------------------------------------------------------------
-
 #include "jdoom.h"
 
 #include "am_map.h"
@@ -42,179 +40,175 @@
 #include "p_user.h"
 #include "p_mapsetup.h"
 
-// MACROS ------------------------------------------------------------------
-
 #define BONUSADD            (6)
 
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// A weapon is found with two clip loads, a big item has five clip loads.
-int maxAmmo[NUM_AMMO_TYPES] = {200, 50, 300, 50};
+// Number of rounds per clip for each ammo type.
 int clipAmmo[NUM_AMMO_TYPES] = {10, 4, 20, 1};
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
+// Maximum number of rounds for each ammo type.
+int maxAmmo[NUM_AMMO_TYPES] = {200, 50, 300, 50};
 
-// CODE --------------------------------------------------------------------
-
-/**
- * @param num           Number of clip loads, not the individual count.
- *
- * @return              @c false, if the ammo can't be picked up at all.
- */
-boolean P_GiveAmmo(player_t *player, ammotype_t ammo, int num)
+static boolean giveOneAmmo(player_t *plr, ammotype_t ammoType, int numClips)
 {
-    if(ammo == AT_NOAMMO)
+    int numRounds = 0;
+
+    DENG_ASSERT(plr != 0);
+    DENG_ASSERT((ammoType >= 0 && ammoType < NUM_AMMO_TYPES) || ammoType == AT_NOAMMO);
+
+    // Giving the special 'unlimited ammo' type always succeeds.
+    if(ammoType == AT_NOAMMO)
+        return true;
+
+    // Already fully stocked?
+    if(plr->ammo[ammoType].owned >= plr->ammo[ammoType].max)
         return false;
 
-    if(ammo < 0 || ammo > NUM_AMMO_TYPES)
-        Con_Error("P_GiveAmmo: bad type %i", ammo);
-
-    if(!(player->ammo[ammo].owned < player->ammo[ammo].max))
-        return false;
-
-    if(num)
-        num *= clipAmmo[ammo];
-    else
-        num = clipAmmo[ammo] / 2;
-
-    if(gameSkill == SM_BABY || gameSkill == SM_NIGHTMARE)
+    // Translate number of clips to individual rounds.
+    if(numClips >= 1)
     {
-        // Give double ammo in trainer mode (you'll need it in nightmare!).
-        num *= 2;
+        numRounds = numClips * clipAmmo[ammoType];
+    }
+    else if(numClips == 0)
+    {
+        // Half of one clip.
+        numRounds = clipAmmo[ammoType] / 2;
+    }
+    else
+    {
+        // Fully replenish.
+        numRounds = plr->ammo[ammoType].max;
     }
 
-    // We are about to receive some more ammo. Does the player want to
-    // change weapon automatically?
-    P_MaybeChangeWeapon(player, WT_NOCHANGE, ammo, false);
+    // Give double the number of rounds at easy/nightmare skill levels.
+    if(gameSkill == SM_BABY || gameSkill == SM_NIGHTMARE)
+    {
+        numRounds *= 2;
+    }
 
-    player->ammo[ammo].owned = MIN_OF(player->ammo[ammo].max,
-        player->ammo[ammo].owned + num);
-    player->update |= PSF_AMMO;
+    // Given the new ammo the player may want to change weapon automatically.
+    P_MaybeChangeWeapon(plr, WT_NOCHANGE, ammoType, false /*don't force*/);
+
+    // Restock the player.
+    plr->ammo[ammoType].owned = MIN_OF(plr->ammo[ammoType].max,
+                                       plr->ammo[ammoType].owned + numRounds);
+    plr->update |= PSF_AMMO;
 
     // Maybe unhide the HUD?
-    ST_HUDUnHide(player - players, HUE_ON_PICKUP_AMMO);
+    ST_HUDUnHide(plr - players, HUE_ON_PICKUP_AMMO);
 
     return true;
 }
 
-/**
- * The weapon name may have a MF_DROPPED flag ored in.
- */
-boolean P_GiveWeapon(player_t* player, weapontype_t weapon, boolean dropped,
-                     const char* pickupMessage, int pickupSound)
+boolean P_GiveAmmo(player_t *plr, ammotype_t ammoType, int numClips)
 {
-    int                 numClips;
-    ammotype_t          i;
-    boolean             gaveAmmo = false, gaveWeapon = false;
+    int gaveAmmos = 0;
 
-    if(IS_NETGAME && (deathmatch != 2) && !dropped)
+    if(ammoType == NUM_AMMO_TYPES)
     {
-        // Leave placed weapons forever on net games.
-        if(player->weapons[weapon].owned)
-            return false;
-
-        player->bonusCount += BONUSADD;
-        player->weapons[weapon].owned = true;
-        player->update |= PSF_OWNED_WEAPONS;
-
-        // Give some of each of the ammo types used by this weapon.
-        for(i=0; i < NUM_AMMO_TYPES; ++i)
+        // Give all ammos.
+        int i = 0;
+        for(i = 0; i < NUM_AMMO_TYPES; ++i)
         {
-            if(!weaponInfo[weapon][player->class_].mode[0].ammoType[i])
-                continue; // Weapon does not take this type of ammo.
-
-            if(deathmatch)
-                numClips = 5;
-            else
-                numClips = 2;
-
-            if(P_GiveAmmo(player, i, numClips))
-                gaveAmmo = true; // At least ONE type of ammo was given.
+            gaveAmmos  |= (int)giveOneAmmo(plr, (ammotype_t) i, numClips) << i;
         }
-
-        // Should we change weapon automatically?
-        P_MaybeChangeWeapon(player, weapon, AT_NOAMMO, deathmatch == 1);
-
-        // Maybe unhide the HUD?
-        ST_HUDUnHide(player - players, HUE_ON_PICKUP_WEAPON);
-
-        // Notify the player.
-        S_ConsoleSound(pickupSound, NULL, player - players);
-        if(pickupMessage)
-        {
-            P_SetMessage(player, 0, pickupMessage);
-        }
-        return false;
     }
     else
     {
-        // Give some of each of the ammo types used by this weapon.
-        for(i = 0; i < NUM_AMMO_TYPES; ++i)
-        {
-            if(!weaponInfo[weapon][player->class_].mode[0].ammoType[i])
-                continue;  // Weapon does not take this type of ammo.
-
-            // Give one clip with a dropped weapon, two clips if found.
-            if(dropped)
-                numClips = 1;
-            else
-                numClips = 2;
-
-            if(P_GiveAmmo(player, i, numClips))
-                gaveAmmo = true; // At least ONE type of ammo was given.
-        }
-
-        if(player->weapons[weapon].owned)
-        {
-            gaveWeapon = false;
-        }
-        else
-        {
-            gaveWeapon = true;
-            player->weapons[weapon].owned = true;
-            player->update |= PSF_OWNED_WEAPONS;
-
-            // Should we change weapon automatically?
-            P_MaybeChangeWeapon(player, weapon, AT_NOAMMO, false);
-        }
-
-        // Maybe unhide the HUD?
-        if(gaveWeapon)
-            ST_HUDUnHide(player - players, HUE_ON_PICKUP_WEAPON);
-
-        if(gaveWeapon || gaveAmmo)
-        {
-            // Notify the player.
-            S_ConsoleSound(pickupSound, NULL, player - players);
-            if(pickupMessage)
-            {
-                P_SetMessage(player, 0, pickupMessage);
-            }
-        }
-
-        return (gaveWeapon || gaveAmmo);
+        // Give a single ammo.
+        gaveAmmos  |= (int)giveOneAmmo(plr, ammoType, numClips) << (int)ammoType;
     }
+
+    return gaveAmmos  != 0;
 }
 
-/**
- * @return              @c false, if the body isn't needed at all.
- */
-boolean P_GiveBody(player_t *player, int num)
+static boolean shouldForceWeaponChange(boolean dropped)
+{
+    return IS_NETGAME && deathmatch == 1 && !dropped;
+}
+
+static int numAmmoClipsToGiveWithWeapon(boolean dropped)
+{
+    // Dropped weapons only ever give one clip.
+    if(dropped) return 1;
+
+    // Give extra clips in deathmatch.
+    return (IS_NETGAME && deathmatch == 1)? 5 : 2;
+}
+
+static boolean giveOneWeapon(player_t *plr, weapontype_t weaponType, boolean dropped)
+{
+    int numClips = numAmmoClipsToGiveWithWeapon(dropped);
+    boolean gaveAmmo = false, gaveWeapon = false;
+    ammotype_t i;
+
+    DENG_ASSERT(plr != 0);
+    DENG_ASSERT(weaponType >= WT_FIRST && weaponType < NUM_WEAPON_TYPES);
+
+    // Give some of each of the ammo types used by this weapon.
+    for(i = 0; i < NUM_AMMO_TYPES; ++i)
+    {
+        // Is this ammo type usable?.
+        if(!weaponInfo[weaponType][plr->class_].mode[0].ammoType[i])
+            continue;
+
+        if(P_GiveAmmo(plr, i, numClips))
+        {
+            gaveAmmo = true;
+        }
+    }
+
+    if(!plr->weapons[weaponType].owned)
+    {
+        gaveWeapon = true;
+
+        plr->weapons[weaponType].owned = true;
+        plr->update |= PSF_OWNED_WEAPONS;
+
+        // Animated a pickup bonus flash?
+        if(IS_NETGAME && deathmatch != 2 && !dropped)
+        {
+            plr->bonusCount += BONUSADD;
+        }
+
+        // Given the new weapon the player may want to change automatically.
+        P_MaybeChangeWeapon(plr, weaponType, AT_NOAMMO,
+                            shouldForceWeaponChange(dropped));
+
+        // Maybe unhide the HUD?
+        ST_HUDUnHide(plr - players, HUE_ON_PICKUP_WEAPON);
+    }
+
+    return (gaveWeapon || gaveAmmo);
+}
+
+boolean P_GiveWeapon(player_t *plr, weapontype_t weaponType, boolean dropped)
+{
+    int gaveWeapons = 0;
+
+    if(weaponType == NUM_WEAPON_TYPES)
+    {
+        // Give all weapons.
+        int i = 0;
+        for(i = 0; i < NUM_WEAPON_TYPES; ++i)
+        {
+            gaveWeapons |= (int)giveOneWeapon(plr, (weapontype_t) i, dropped) << i;
+        }
+    }
+    else
+    {
+        // Give a single weapon.
+        gaveWeapons |= (int)giveOneWeapon(plr, weaponType, dropped) << (int)weaponType;
+    }
+
+    return gaveWeapons != 0;
+}
+
+boolean P_GiveHealth(player_t *player, int amount)
 {
     if(player->health >= maxHealth)
         return false;
 
-    player->health += num;
+    player->health += amount;
     if(player->health > maxHealth)
         player->health = maxHealth;
 
@@ -227,9 +221,6 @@ boolean P_GiveBody(player_t *player, int num)
     return true;
 }
 
-/**
- * @return              @c true, iff the armor was given.
- */
 boolean P_GiveArmor(player_t* plr, int type, int points)
 {
     if(plr->armorPoints >= points)
@@ -244,20 +235,47 @@ boolean P_GiveArmor(player_t* plr, int type, int points)
     return true;
 }
 
-void P_GiveKey(player_t* plr, keytype_t card)
+static boolean giveOneKey(player_t *plr, keytype_t keyType)
 {
-    if(plr->keys[card])
-        return;
+    DENG_ASSERT(plr != 0);
+    DENG_ASSERT(keyType >= KT_FIRST && keyType < NUM_KEY_TYPES);
 
+    // Already owned?
+    if(plr->keys[keyType]) return false;
+
+    plr->keys[keyType] = 1;
     plr->bonusCount = BONUSADD;
-    plr->keys[card] = 1;
     plr->update |= PSF_KEYS;
 
     // Maybe unhide the HUD?
     ST_HUDUnHide(plr - players, HUE_ON_PICKUP_KEY);
+
+    return true;
 }
 
-void P_GiveBackpack(player_t* plr)
+boolean P_GiveKey(player_t *plr, keytype_t keyType)
+{
+    int gaveKeys = 0;
+
+    if(keyType == NUM_KEY_TYPES)
+    {
+        // Give all keys.
+        int i = 0;
+        for(i = 0; i < NUM_KEY_TYPES; ++i)
+        {
+            gaveKeys |= (int)giveOneKey(plr, (keytype_t) i) << i;
+        }
+    }
+    else
+    {
+        // Give a single key.
+        gaveKeys |= (int)giveOneKey(plr, keyType) << (int)keyType;
+    }
+
+    return gaveKeys != 0;
+}
+
+void P_GiveBackpack(player_t *plr)
 {
     int i;
 
@@ -280,23 +298,29 @@ void P_GiveBackpack(player_t* plr)
     P_SetMessage(plr, 0, GOTBACKPACK);
 }
 
-boolean P_GivePower(player_t* player, int power)
+boolean P_GivePower(player_t *player, powertype_t powerType)
 {
+    DENG_ASSERT(player != 0);
+    DENG_ASSERT(powerType >= PT_FIRST && powerType < NUM_POWER_TYPES);
+
+    // Powers cannot be given to dead players.
+    if(player->health <= 0) return false;
+
     player->update |= PSF_POWERS;
 
-    switch(power)
+    switch(powerType)
     {
     case PT_INVULNERABILITY:
-        player->powers[power] = INVULNTICS;
+        player->powers[powerType] = INVULNTICS;
         break;
 
     case PT_INVISIBILITY:
-        player->powers[power] = INVISTICS;
+        player->powers[powerType] = INVISTICS;
         player->plr->mo->flags |= MF_SHADOW;
         break;
 
     case PT_FLIGHT:
-        player->powers[power] = 1;
+        player->powers[powerType] = 1;
         player->plr->mo->flags2 |= MF2_FLY;
         player->plr->mo->flags |= MF_NOGRAVITY;
         if(player->plr->mo->origin[VZ] <= player->plr->mo->floorZ)
@@ -307,27 +331,27 @@ boolean P_GivePower(player_t* player, int power)
         break;
 
     case PT_INFRARED:
-        player->powers[power] = INFRATICS;
+        player->powers[powerType] = INFRATICS;
         break;
 
     case PT_IRONFEET:
-        player->powers[power] = IRONTICS;
+        player->powers[powerType] = IRONTICS;
         break;
 
     case PT_STRENGTH:
-        P_GiveBody(player, maxHealth);
-        player->powers[power] = 1;
+        P_GiveHealth(player, maxHealth);
+        player->powers[powerType] = 1;
         break;
 
     default:
-        if(player->powers[power])
+        if(player->powers[powerType])
             return false; // Already got it.
 
-        player->powers[power] = 1;
+        player->powers[powerType] = 1;
         break;
     }
 
-    if(power == PT_ALLMAP)
+    if(powerType == PT_ALLMAP)
         ST_RevealAutomap(player - players, true);
 
     // Maybe unhide the HUD?
@@ -336,13 +360,16 @@ boolean P_GivePower(player_t* player, int power)
     return true;
 }
 
-boolean P_TakePower(player_t* player, int power)
+boolean P_TakePower(player_t *player, powertype_t powerType)
 {
-    mobj_t*             plrmo = player->plr->mo;
+    DENG_ASSERT(player != 0);
+    DENG_ASSERT(powerType >= PT_FIRST && powerType < NUM_POWER_TYPES);
 
     player->update |= PSF_POWERS;
     if(player->powers[PT_FLIGHT])
     {
+        mobj_t *plrmo = player->plr->mo;
+
         if(plrmo->origin[VZ] != plrmo->floorZ && cfg.lookSpring)
         {
             player->centering = true;
@@ -350,18 +377,33 @@ boolean P_TakePower(player_t* player, int power)
 
         plrmo->flags2 &= ~MF2_FLY;
         plrmo->flags &= ~MF_NOGRAVITY;
-        player->powers[power] = 0;
+        player->powers[powerType] = 0;
         return true;
     }
 
-    if(!player->powers[power])
+    if(!player->powers[powerType])
         return false; // Dont got it.
 
-    if(power == PT_ALLMAP)
+    if(powerType == PT_ALLMAP)
         ST_RevealAutomap(player - players, false);
 
-    player->powers[power] = 0;
+    player->powers[powerType] = 0;
     return true;
+}
+
+boolean P_TogglePower(player_t *player, powertype_t powerType)
+{
+    DENG_ASSERT(player != 0);
+    DENG_ASSERT(powerType >= PT_FIRST && powerType < NUM_POWER_TYPES);
+
+    if(!player->powers[powerType])
+    {
+        return P_GivePower(player, powerType);
+    }
+    else
+    {
+        return P_TakePower(player, powerType);
+    }
 }
 
 typedef enum {
@@ -458,13 +500,55 @@ static itemtype_t getItemTypeBySprite(spritetype_e sprite)
 }
 
 /**
- * @param plr           Player being given item.
- * @param item          Type of item being given.
- * @param dropped       @c true = the item was dropped by some entity.
+ * Attempt to pickup the found weapon type.
  *
- * @return              @c true iff the item should be destroyed.
+ * @param plr            Player to attempt the pickup.
+ * @param weaponType     Weapon type to pickup.
+ * @param dropped        @c true= the weapon was dropped by someone.
+ * @param pickupMessage  Message to display if picked up.
+ *
+ * @return  @c true if the player picked up the weapon.
  */
-static boolean giveItem(player_t* plr, itemtype_t item, boolean dropped)
+static boolean pickupWeapon(player_t *plr, weapontype_t weaponType,
+    boolean dropped, char const *pickupMessage)
+{
+    boolean pickedWeapon;
+
+    DENG_ASSERT(plr != 0);
+    DENG_ASSERT(weaponType >= WT_FIRST && weaponType < NUM_WEAPON_TYPES);
+
+    // Depending on the game rules the player should ignore the weapon.
+    if(plr->weapons[weaponType].owned)
+    {
+        // Leave placed weapons forever on net games.
+        if(IS_NETGAME && deathmatch != 2 && !dropped)
+            return false;
+    }
+
+    // Attempt the pickup.
+    pickedWeapon = P_GiveWeapon(plr, weaponType, dropped);
+    if(pickedWeapon)
+    {
+        // Notify the user.
+        P_SetMessage(plr, 0, pickupMessage);
+
+        if(!mapSetup) // Pickup sounds are not played during map setup.
+        {
+            S_ConsoleSound(SFX_WPNUP, NULL, plr - players);
+        }
+    }
+
+    return pickedWeapon;
+}
+
+/**
+ * @param plr      Player being given item.
+ * @param item     Type of item being given.
+ * @param dropped  @c true = the item was dropped by some entity.
+ *
+ * @return  @c true iff the item should be destroyed.
+ */
+static boolean pickupItem(player_t *plr, itemtype_t item, boolean dropped)
 {
     if(!plr)
         return false;
@@ -506,7 +590,7 @@ static boolean giveItem(player_t* plr, itemtype_t item, boolean dropped)
         break;
 
     case IT_HEALTH_PACK:
-        if(!P_GiveBody(plr, 10))
+        if(!P_GiveHealth(plr, 10))
             return false;
         P_SetMessage(plr, 0, GOTSTIM);
         if(!mapSetup)
@@ -519,13 +603,13 @@ static boolean giveItem(player_t* plr, itemtype_t item, boolean dropped)
         /**
          * DOOM bug:
          * The following test was originaly placed AFTER the call to
-         * P_GiveBody thereby making the first outcome impossible as
+         * P_GiveHealth thereby making the first outcome impossible as
          * the medikit gives 25 points of health. This resulted that
          * the GOTMEDINEED "Picked up a medikit that you REALLY need"
          * was never used.
          */
 
-        if(!P_GiveBody(plr, 25)) return false;
+        if(!P_GiveHealth(plr, 25)) return false;
 
         P_SetMessage(plr, 0, GET_TXT((oldHealth < 25)? TXT_GOTMEDINEED : TXT_GOTMEDIKIT));
         if(!mapSetup)
@@ -717,7 +801,7 @@ static boolean giveItem(player_t* plr, itemtype_t item, boolean dropped)
         break;
 
     case IT_AMMO_CLIP:
-        if(!P_GiveAmmo(plr, AT_CLIP, dropped? 0 : 1))
+        if(!P_GiveAmmo(plr, AT_CLIP, dropped? 0 /*half a clip*/ : 1))
             return false;
 
         P_SetMessage(plr, 0, GOTCLIP);
@@ -789,42 +873,28 @@ static boolean giveItem(player_t* plr, itemtype_t item, boolean dropped)
         break;
 
     case IT_WEAPON_BFG:
-        if(!P_GiveWeapon(plr, WT_SEVENTH, dropped, GOTBFG9000, !mapSetup? SFX_WPNUP : 0))
-            return false;
-        break;
+        return pickupWeapon(plr, WT_SEVENTH, dropped, GOTBFG9000);
 
     case IT_WEAPON_CHAINGUN:
-        if(!P_GiveWeapon(plr, WT_FOURTH, dropped, GOTCHAINGUN, !mapSetup? SFX_WPNUP : 0))
-            return false;
-        break;
+        return pickupWeapon(plr, WT_FOURTH, dropped, GOTCHAINGUN);
 
     case IT_WEAPON_CHAINSAW:
-        if(!P_GiveWeapon(plr, WT_EIGHTH, dropped, GOTCHAINSAW, !mapSetup? SFX_WPNUP : 0))
-            return false;
-        break;
+        return pickupWeapon(plr, WT_EIGHTH, dropped, GOTCHAINSAW);
 
     case IT_WEAPON_RLAUNCHER:
-        if(!P_GiveWeapon(plr, WT_FIFTH, dropped, GOTLAUNCHER, !mapSetup? SFX_WPNUP : 0))
-            return false;
-        break;
+        return pickupWeapon(plr, WT_FIFTH, dropped, GOTLAUNCHER);
 
     case IT_WEAPON_PLASMARIFLE:
-        if(!P_GiveWeapon(plr, WT_SIXTH, dropped, GOTPLASMA, !mapSetup? SFX_WPNUP : 0))
-            return false;
-        break;
+        return pickupWeapon(plr, WT_SIXTH, dropped, GOTPLASMA);
 
     case IT_WEAPON_SHOTGUN:
-        if(!P_GiveWeapon(plr, WT_THIRD, dropped, GOTSHOTGUN, !mapSetup? SFX_WPNUP : 0))
-            return false;
-        break;
+        return pickupWeapon(plr, WT_THIRD, dropped, GOTSHOTGUN);
 
     case IT_WEAPON_SSHOTGUN:
-        if(!P_GiveWeapon(plr, WT_NINETH, dropped, GOTSHOTGUN2, !mapSetup? SFX_WPNUP : 0))
-            return false;
-        break;
+        return pickupWeapon(plr, WT_NINETH, dropped, GOTSHOTGUN2);
 
     default:
-        Con_Error("giveItem: Unknown item %i.", (int) item);
+        Con_Error("pickupItem: Unknown item %i.", (int) item);
     }
 
     return true;
@@ -851,7 +921,7 @@ void P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher)
     // Identify by sprite.
     if((item = getItemTypeBySprite(special->sprite)) != IT_NONE)
     {
-        if(!giveItem(player, item, (special->flags & MF_DROPPED)? true : false))
+        if(!pickupItem(player, item, (special->flags & MF_DROPPED)? true : false))
             return; // Don't destroy the item.
     }
     else
