@@ -2480,6 +2480,15 @@ void ST_Drawer(int player)
     drawUIWidgetsForPlayer(players + player);
 }
 
+boolean ST_StatusBarIsActive(int player)
+{
+    DENG_ASSERT(player >= 0 && player < MAXPLAYERS);
+
+    if(!players[player].plr->inGame) return false;
+
+    return hudStates[player].statusbarActive;
+}
+
 void ST_loadGraphics(void)
 {
     char nameBuf[9];

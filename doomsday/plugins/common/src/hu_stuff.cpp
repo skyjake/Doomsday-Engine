@@ -1448,6 +1448,23 @@ void Hu_FogEffectSetAlphaTarget(float alpha)
     fogEffectData.targetAlpha = MINMAX_OF(0, alpha, 1);
 }
 
+boolean Hu_IsStatusBarVisible(int player)
+{
+#ifdef __JDOOM64__
+    DENG_UNUSED(player);
+    return false;
+#else
+    if(!ST_StatusBarIsActive(player)) return false;
+
+    if(ST_AutomapIsActive(player) && cfg.automapHudDisplay == 0)
+    {
+        return false;
+    }
+
+    return true;
+#endif
+}
+
 #if __JDOOM__ || __JDOOM64__
 patchid_t Hu_MapTitlePatchId(void)
 {
@@ -1567,13 +1584,23 @@ void Hu_MapTitleDrawer(const RectRaw* portGeometry)
     Point2Raw origin(portGeometry->size.width / 2,
                      6 * portGeometry->size.height / SCREENHEIGHT);
 
-    // Should the title be positioned above the status bar?
-    if(cfg.automapTitleAtBottom && ST_AutomapIsActive(DISPLAYPLAYER) && (actualMapTime > 6 * TICSPERSEC))
+    // Should the title be positioned in the bottom of the view?
+    if(cfg.automapTitleAtBottom &&
+            ST_AutomapIsActive(DISPLAYPLAYER) &&
+            (actualMapTime > 6 * TICSPERSEC))
     {
-        Size2Raw stBarSize;
-        R_StatusBarSize(DISPLAYPLAYER, &stBarSize);
-        origin.y = portGeometry->size.height *
-                (SCREENHEIGHT - stBarSize.height - 1.2f * Hu_MapTitleHeight()) / float(SCREENHEIGHT);
+        float y = SCREENHEIGHT - 1.2f * Hu_MapTitleHeight();
+
+#ifndef __JDOOM64__
+        if(Hu_IsStatusBarVisible(DISPLAYPLAYER))
+        {
+            Size2Raw stBarSize;
+            R_StatusBarSize(DISPLAYPLAYER, &stBarSize);
+            y -= stBarSize.height;
+        }
+#endif
+
+        origin.y = portGeometry->size.height * y / float(SCREENHEIGHT);
     }
 
     DGL_MatrixMode(DGL_MODELVIEW);
