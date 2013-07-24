@@ -1451,19 +1451,7 @@ void Hu_FogEffectSetAlphaTarget(float alpha)
 #if __JDOOM__ || __JDOOM64__
 patchid_t Hu_MapTitlePatchId(void)
 {
-    uint mapNum;
-
-    // Compose the mapnumber used to check the map name patches array.
-#if __JDOOM__
-    if(gameModeBits & (GM_ANY_DOOM2|GM_DOOM_CHEX))
-        mapNum = gameMap;
-    else
-        mapNum = (gameEpisode * 9) + gameMap;
-#else // __JDOOM64__
-    mapNum = gameMap;
-#endif
-
-    return (mapNum < pMapNamesSize? pMapNames[mapNum] : 0);
+    return P_FindMapTitlePatch(gameEpisode, gameMap);
 }
 
 int Hu_MapTitleFirstLineHeight(void)
@@ -1579,10 +1567,13 @@ void Hu_MapTitleDrawer(const RectRaw* portGeometry)
     Point2Raw origin(portGeometry->size.width / 2,
                      6 * portGeometry->size.height / SCREENHEIGHT);
 
+    // Should the title be positioned above the status bar?
     if(cfg.automapTitleAtBottom && ST_AutomapIsActive(DISPLAYPLAYER) && (actualMapTime > 6 * TICSPERSEC))
     {
+        Size2Raw stBarSize;
+        R_StatusBarSize(DISPLAYPLAYER, &stBarSize);
         origin.y = portGeometry->size.height *
-                (SCREENHEIGHT - 1.2f * (cfg.statusbarScale * ST_HEIGHT + Hu_MapTitleHeight()))/float(SCREENHEIGHT);
+                (SCREENHEIGHT - stBarSize.height - 1.2f * Hu_MapTitleHeight()) / float(SCREENHEIGHT);
     }
 
     DGL_MatrixMode(DGL_MODELVIEW);

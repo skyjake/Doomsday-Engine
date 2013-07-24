@@ -70,6 +70,8 @@ void R_GetGammaMessageStrings(void);
 
 void R_CycleGammaLevel(void);
 
+void R_StatusBarSize(int player, Size2Raw *statusBarSize);
+
 #ifdef __cplusplus
 } // extern "C"
 #endif
