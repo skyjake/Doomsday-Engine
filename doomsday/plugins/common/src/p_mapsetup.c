@@ -833,7 +833,7 @@ static void precacheResources()
             { MT_SOR2FXSPARK,       GM_ANY ^ GM_HERETIC_SHAREWARE },
             { MT_SOR2FX2,           GM_ANY ^ GM_HERETIC_SHAREWARE },
             { MT_SOR2TELEFADE,      GM_ANY ^ GM_HERETIC_SHAREWARE },
-            { MT_WIZARD,            GM_ANY ^ GM_HERETIC_SHAREWARE }, // In case D’sparil is on a map with no Disciples
+            { MT_WIZARD,            GM_ANY ^ GM_HERETIC_SHAREWARE }, // In case D'sparil is on a map with no Disciples
             { MT_MNTRFX1,           GM_ANY ^ GM_HERETIC_SHAREWARE },
             { MT_MNTRFX2,           GM_ANY ^ GM_HERETIC_SHAREWARE },
             { MT_MNTRFX3,           GM_ANY ^ GM_HERETIC_SHAREWARE },
