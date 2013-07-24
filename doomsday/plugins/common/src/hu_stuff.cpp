@@ -35,6 +35,7 @@
 #include "hu_menu.h"
 #include "hu_msg.h"
 #include "hu_stuff.h"
+#include "hu_inventory.h"
 #include "g_common.h"
 #include "p_mapsetup.h"
 #include "p_tick.h"
@@ -1570,6 +1571,23 @@ boolean Hu_IsMapTitleVisible(void)
     return (actualMapTime < 6 * 35) || ST_AutomapIsActive(DISPLAYPLAYER);
 }
 
+static bool needToRespectStatusBarHeightWhenAutomapOpen(void)
+{
+#ifndef __JDOOM64__
+    return Hu_IsStatusBarVisible(DISPLAYPLAYER);
+#endif
+
+    return false;
+}
+
+static bool needToRespectHudSizeWhenAutomapOpen(void)
+{
+#ifdef __JDOOM__
+    if(cfg.hudShown[HUD_FACE] && !Hu_IsStatusBarVisible(DISPLAYPLAYER)) return true;
+#endif
+    return false;
+}
+
 void Hu_MapTitleDrawer(const RectRaw* portGeometry)
 {
     if(!cfg.mapTitle || !portGeometry) return;
@@ -1591,14 +1609,24 @@ void Hu_MapTitleDrawer(const RectRaw* portGeometry)
     {
         float y = SCREENHEIGHT - 1.2f * Hu_MapTitleHeight();
 
-#ifndef __JDOOM64__
-        if(Hu_IsStatusBarVisible(DISPLAYPLAYER))
+#if __JHERETIC__ || __JHEXEN__
+        if(Hu_InventoryIsOpen(DISPLAYPLAYER) && !Hu_IsStatusBarVisible(DISPLAYPLAYER))
+        {
+            // Omit the title altogether while the inventory is open.
+            return;
+        }
+#endif
+
+        if(needToRespectStatusBarHeightWhenAutomapOpen())
         {
             Size2Raw stBarSize;
             R_StatusBarSize(DISPLAYPLAYER, &stBarSize);
             y -= stBarSize.height;
         }
-#endif
+        else if(needToRespectHudSizeWhenAutomapOpen())
+        {
+            y -= 30 * cfg.hudScale;
+        }
 
         origin.y = portGeometry->size.height * y / float(SCREENHEIGHT);
     }
