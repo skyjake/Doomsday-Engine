@@ -96,7 +96,16 @@ public:
 
     EchoMode echoMode() const;
 
-    virtual bool handleControlKey(int qtKey, bool controlMod = true);
+    enum KeyModifier {
+        Unmodified = 0,
+        Shift      = 0x1,
+        Control    = 0x2,
+        Alt        = 0x4,
+        Meta       = 0x8
+    };
+    Q_DECLARE_FLAGS(KeyModifiers, KeyModifier)
+
+    virtual bool handleControlKey(int qtKey, KeyModifiers const &mods = Unmodified);
 
     /**
      * Inserts a fragment of text at the cursor position. The cursor moves
@@ -128,6 +137,8 @@ protected:
 private:
     DENG2_PRIVATE(d)
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(AbstractLineEditor::KeyModifiers)
 
 } // namespace shell
 } // namespace de

@@ -201,6 +201,37 @@ DENG2_PIMPL(AbstractLineEditor)
         }
     }
 
+    void doWordLeft()
+    {
+        acceptCompletion();
+
+        // First jump over any non-word chars.
+        while(cursor > 0 && !text[cursor].isLetterOrNumber()) cursor--;
+
+        // At least move one character.
+        if(cursor > 0) cursor--;
+
+        // We're inside a word, jump to its beginning.
+        while(cursor > 0 && text[cursor - 1].isLetterOrNumber()) cursor--;
+
+        self.cursorMoved();
+    }
+
+    void doWordRight()
+    {
+        int const last = text.size() - 1;
+
+        acceptCompletion();
+
+        // If inside a word, jump to its end.
+        while(cursor < last && text[cursor].isLetterOrNumber()) cursor++;
+
+        // Jump over any non-word chars.
+        while(cursor < last && !text[cursor].isLetterOrNumber()) cursor++;
+
+        self.cursorMoved();
+    }
+
     void doHome()
     {
         acceptCompletion();
@@ -434,8 +465,14 @@ AbstractLineEditor::EchoMode AbstractLineEditor::echoMode() const
     return d->echoMode;
 }
 
-bool AbstractLineEditor::handleControlKey(int qtKey, bool controlMod)
+bool AbstractLineEditor::handleControlKey(int qtKey, KeyModifiers const &mods)
 {
+#ifdef MACOSX
+#  define WORD_JUMP_MODIFIER    Alt
+#else
+#  define WORD_JUMP_MODIFIER    Control
+#endif
+
     switch(qtKey)
     {
     case Qt::Key_Backspace:
@@ -447,11 +484,39 @@ bool AbstractLineEditor::handleControlKey(int qtKey, bool controlMod)
         return true;
 
     case Qt::Key_Left:
-        d->doLeft();
+#ifdef MACOSX
+        if(mods.testFlag(Control))
+        {
+            d->doHome();
+            return true;
+        }
+#endif
+        if(mods.testFlag(WORD_JUMP_MODIFIER))
+        {
+            d->doWordLeft();
+        }
+        else
+        {
+            d->doLeft();
+        }
         return true;
 
     case Qt::Key_Right:
-        d->doRight();
+#ifdef MACOSX
+        if(mods.testFlag(Control))
+        {
+            d->doEnd();
+            return true;
+        }
+#endif
+        if(mods.testFlag(WORD_JUMP_MODIFIER))
+        {
+            d->doWordRight();
+        }
+        else
+        {
+            d->doRight();
+        }
         return true;
 
     case Qt::Key_Home:
@@ -471,7 +536,7 @@ bool AbstractLineEditor::handleControlKey(int qtKey, bool controlMod)
         break;
 
     case Qt::Key_K:
-        if(controlMod)
+        if(mods.testFlag(Control))
         {
             d->killEndOfLine();
             return true;
