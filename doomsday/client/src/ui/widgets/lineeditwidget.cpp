@@ -384,7 +384,7 @@ bool LineEditWidget::handleEvent(Event const &event)
         KeyEvent const &key = event.as<KeyEvent>();
 
         // Control character.
-        if(handleControlKey(key.qtKey(), key.modifiers().testFlag(KeyEvent::Control)))
+        if(handleControlKey(key.qtKey(), modifiersFromKeyEvent(key.modifiers())))
         {
             return true;
         }
@@ -399,6 +399,18 @@ bool LineEditWidget::handleEvent(Event const &event)
     }
 
     return GuiWidget::handleEvent(event);
+}
+
+shell::AbstractLineEditor::KeyModifiers LineEditWidget::modifiersFromKeyEvent(KeyEvent::Modifiers const &keyMods)
+{
+    KeyModifiers mods;
+
+    if(keyMods.testFlag(KeyEvent::Shift))   mods |= Shift;
+    if(keyMods.testFlag(KeyEvent::Control)) mods |= Control;
+    if(keyMods.testFlag(KeyEvent::Alt))     mods |= Alt;
+    if(keyMods.testFlag(KeyEvent::Meta))    mods |= Meta;
+
+    return mods;
 }
 
 int LineEditWidget::maximumWidth() const

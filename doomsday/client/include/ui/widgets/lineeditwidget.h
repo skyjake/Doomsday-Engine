@@ -21,6 +21,7 @@
 
 #include "guiwidget.h"
 #include <de/shell/AbstractLineEditor>
+#include <de/KeyEvent>
 
 /**
  * Widget showing a lineedit text and/or image.
@@ -49,6 +50,9 @@ public:
     void update();
     void drawContent();
     bool handleEvent(de::Event const &event);
+
+public:
+    static KeyModifiers modifiersFromKeyEvent(de::KeyEvent::Modifiers const &keyMods);
 
 protected:
     void glInit();
