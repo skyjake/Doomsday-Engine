@@ -2667,6 +2667,7 @@ void WorldTimer_UpdateGeometry(uiwidget_t* obj)
 #undef ORIGINX
 }
 
+#if 0
 void MapName_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 {
     const float scale = .75f;
@@ -2708,6 +2709,7 @@ void MapName_UpdateGeometry(uiwidget_t* obj)
     FR_TextSize(&textSize, text);
     Rect_SetWidthHeight(obj->geometry, textSize.width * scale, textSize.height * scale);
 }
+#endif
 
 void ST_loadGraphics(void)
 {
@@ -3069,7 +3071,7 @@ typedef struct {
         { GUI_GREENMANAICON, ALIGN_TOPLEFT,   UWG_STATUSBAR,    0,            SBarGreenManaIcon_UpdateGeometry, SBarGreenManaIcon_Drawer, GreenManaIcon_Ticker, &hud->sbarGreenmanaicon },
         { GUI_GREENMANA,    ALIGN_TOPLEFT,    UWG_STATUSBAR,    GF_SMALLIN,   SBarGreenMana_UpdateGeometry, SBarGreenMana_Drawer, GreenMana_Ticker, &hud->sbarGreenmana },
         { GUI_GREENMANAVIAL, ALIGN_TOPLEFT,   UWG_STATUSBAR,    0,            SBarGreenManaVial_UpdateGeometry, SBarGreenManaVial_Drawer, GreenManaVial_Ticker, &hud->sbarGreenmanavial },
-        { GUI_MAPNAME,      ALIGN_TOPLEFT,    UWG_MAPNAME,      GF_FONTA,     MapName_UpdateGeometry, MapName_Drawer },
+        //{ GUI_MAPNAME,      ALIGN_TOPLEFT,    UWG_MAPNAME,      GF_FONTA,     MapName_UpdateGeometry, MapName_Drawer },
         { GUI_BLUEMANAICON, ALIGN_TOPLEFT,    UWG_TOPLEFT,      0,            BlueManaIcon_UpdateGeometry, BlueManaIcon_Drawer, BlueManaIcon_Ticker, &hud->bluemanaicon },
         { GUI_BLUEMANA,     ALIGN_TOPLEFT,    UWG_TOPLEFT,      GF_STATUS,    BlueMana_UpdateGeometry, BlueMana_Drawer, BlueMana_Ticker, &hud->bluemana },
         { GUI_GREENMANAICON, ALIGN_TOPLEFT,   UWG_TOPLEFT2,     0,            GreenManaIcon_UpdateGeometry, GreenManaIcon_Drawer, GreenManaIcon_Ticker, &hud->greenmanaicon },

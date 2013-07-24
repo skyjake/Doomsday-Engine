@@ -2470,6 +2470,7 @@ void Secrets_UpdateGeometry(uiwidget_t* obj)
                                        .5f + textSize.height * cfg.hudCheatCounterScale);
 }
 
+#if 0
 void MapName_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 {
     const float scale = .75f;
@@ -2522,6 +2523,7 @@ void MapName_UpdateGeometry(uiwidget_t* obj)
     Rect_SetWidthHeight(obj->geometry, info.geometry.size.width  * scale,
                                        info.geometry.size.height * scale);
 }
+#endif
 
 static void drawUIWidgetsForPlayer(player_t* plr)
 {
@@ -2983,7 +2985,7 @@ typedef struct {
         { GUI_AMMO,     ALIGN_TOPLEFT,      UWG_STATUSBAR,      GF_INDEX,   MaxAmmo_UpdateGeometry, MaxAmmo_Drawer, MaxAmmo_Ticker, &hud->sbarMaxammos[AT_SHELL] },
         { GUI_AMMO,     ALIGN_TOPLEFT,      UWG_STATUSBAR,      GF_INDEX,   MaxAmmo_UpdateGeometry, MaxAmmo_Drawer, MaxAmmo_Ticker, &hud->sbarMaxammos[AT_CELL] },
         { GUI_AMMO,     ALIGN_TOPLEFT,      UWG_STATUSBAR,      GF_INDEX,   MaxAmmo_UpdateGeometry, MaxAmmo_Drawer, MaxAmmo_Ticker, &hud->sbarMaxammos[AT_MISSILE] },
-        { GUI_MAPNAME,  ALIGN_BOTTOMLEFT,   UWG_MAPNAME,        GF_FONTB,   MapName_UpdateGeometry, MapName_Drawer },
+        //{ GUI_MAPNAME,  ALIGN_BOTTOMLEFT,   UWG_MAPNAME,        GF_FONTB,   MapName_UpdateGeometry, MapName_Drawer },
         { GUI_BOX,      ALIGN_BOTTOMLEFT,   UWG_BOTTOMLEFT2,    0,          HealthIcon_UpdateGeometry, HealthIcon_Drawer },
         { GUI_HEALTH,   ALIGN_BOTTOMLEFT,   UWG_BOTTOMLEFT2,    GF_FONTB,   Health_UpdateGeometry, Health_Drawer, Health_Ticker, &hud->health },
         { GUI_READYAMMOICON, ALIGN_BOTTOMLEFT, UWG_BOTTOMLEFT2, 0,          ReadyAmmoIcon_UpdateGeometry, ReadyAmmoIcon_Drawer, ReadyAmmoIcon_Ticker, &hud->readyammoicon },

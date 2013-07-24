@@ -529,6 +529,7 @@ Draw_EndZoom();
     DGL_PopMatrix();
 }
 
+#if 0
 void MapName_Drawer(uiwidget_t* obj, int x, int y)
 {
     assert(obj && obj->type == GUI_MAPNAME);
@@ -585,6 +586,7 @@ void MapName_UpdateGeometry(uiwidget_t* obj)
     Rect_SetWidthHeight(obj->geometry, info.geometry.size.width  * scale,
                                        info.geometry.size.height * scale);
 }
+#endif
 
 typedef struct {
     guiwidgettype_t type;
