@@ -2177,7 +2177,7 @@ void C_DECL A_BoostArmor(mobj_t* mo)
     // Give 1 point per armor type.
     for(type = 0; type < NUMARMOR; ++type)
     {
-        count += P_GiveArmor2(plr, type, 1);
+        count += P_GiveArmorAlt(plr, type, 1);
     }
 
     if(count)
@@ -2186,24 +2186,24 @@ void C_DECL A_BoostArmor(mobj_t* mo)
     }
 }
 
-void C_DECL A_BoostMana(mobj_t* mo)
+void C_DECL A_BoostMana(mobj_t *mo)
 {
-    player_t*           player;
+    player_t *player;
 
     if(!mo->player)
         return;
     player = mo->player;
 
-    if(!P_GiveMana(player, AT_BLUEMANA, MAX_MANA))
+    if(!P_GiveAmmo(player, AT_BLUEMANA, -1 /*fully replenish*/))
     {
-        if(!P_GiveMana(player, AT_GREENMANA, MAX_MANA))
+        if(!P_GiveAmmo(player, AT_GREENMANA, -1 /*fully replenish*/))
         {
             return;
         }
     }
     else
     {
-        P_GiveMana(player, AT_GREENMANA, MAX_MANA);
+        P_GiveAmmo(player, AT_GREENMANA, -1 /*fully replenish*/);
     }
 
     didUseItem = true;
@@ -2284,7 +2284,7 @@ void C_DECL A_Health(mobj_t* mo)
     if(!mo->player)
         return;
 
-    didUseItem = P_GiveBody(mo->player, 25);
+    didUseItem = P_GiveHealth(mo->player, 25);
 }
 
 void C_DECL A_SuperHealth(mobj_t* mo)
@@ -2292,7 +2292,7 @@ void C_DECL A_SuperHealth(mobj_t* mo)
     if(!mo->player)
         return;
 
-    didUseItem = P_GiveBody(mo->player, 100);
+    didUseItem = P_GiveHealth(mo->player, 100);
 }
 
 void C_DECL A_Invulnerability(mobj_t* mo)

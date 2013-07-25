@@ -155,12 +155,6 @@ int         P_FallingDamage(player_t* plr);
 int         P_PoisonDamage(player_t* plr, mobj_t* source, int damage,
                            boolean playPainSound);
 
-boolean     P_GiveMana(player_t* plr, ammotype_t mana, int count);
-boolean     P_GiveArmor(player_t* plr, armortype_t armortype, int amount);
-boolean     P_GiveBody(player_t* plr, int num);
-boolean     P_GivePower(player_t* plr, powertype_t power);
-boolean     P_MorphPlayer(player_t* plr);
-
 boolean     A_LocalQuake(byte* args, mobj_t* victim);
 void C_DECL A_BridgeRemove(mobj_t* actor);
 boolean     A_RaiseMobj(mobj_t* mo);
