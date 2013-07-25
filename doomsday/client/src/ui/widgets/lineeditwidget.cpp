@@ -383,6 +383,13 @@ bool LineEditWidget::handleEvent(Event const &event)
     {
         KeyEvent const &key = event.as<KeyEvent>();
 
+        if(key.qtKey() == Qt::Key_Control || key.qtKey() == Qt::Key_Alt ||
+           key.qtKey() == Qt::Key_Meta)
+        {
+            // Modifier keys alone will be eaten when focused.
+            return true;
+        }
+
         // Control character.
         if(handleControlKey(key.qtKey(), modifiersFromKeyEvent(key.modifiers())))
         {
