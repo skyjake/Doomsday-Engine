@@ -39,8 +39,6 @@
 extern "C" {
 #endif
 
-extern int debugSound; // debug flag for displaying sound info
-
 extern int gaSaveGameSaveSlot;
 extern int gaLoadGameSaveSlot;
 
