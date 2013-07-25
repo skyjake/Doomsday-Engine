@@ -2230,6 +2230,14 @@ D_CMD(Help)
 #endif
 */
 
+#ifdef MACOSX
+#  define CONTROL_KEY   "\u2318"
+#  define SHIFT_KEY     "\u21e7"
+#else
+#  define CONTROL_KEY   "Ctrl-"
+#  define SHIFT_KEY     "Shift-"
+#endif
+
     //Con_PrintRuler();
 
     LOG_MSG(_E(1) DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT " Console");
@@ -2240,13 +2248,13 @@ D_CMD(Help)
     LOG_MSG(_E(D) "Keys:" _E(.))
             << TABBED("Shift-Esc", "Open the taskbar and console")
             << TABBED("PgUp/Dn", "Scroll up/down in the history, or expand the history to full height")
-            << TABBED("Shift-PgUp/Dn", "Jump to the top/bottom of the history")
+            << TABBED(SHIFT_KEY "PgUp/Dn", "Jump to the top/bottom of the history")
             << TABBED("F5", "Clear the console message history")
             << TABBED("Home", "Move the cursor to the start of the command line")
             << TABBED("End", "Move the cursor to the end of the command line")
             << TABBED("Tab", "Attempt autocompletion of the last word on the input line")
-            << TABBED("Up/Down Arrow", "Move backwards/forwards through the input command history, or up/down one line inside a multi-line command")
-            << TABBED("Ctrl-k", "Clear everything on the line right of the cursor position");
+            << TABBED("\u2191 / \u2193", "Move backwards/forwards through the input command history, or up/down one line inside a multi-line command")
+            << TABBED(CONTROL_KEY "K", "Clear everything on the line right of the cursor position");
 #endif
     LOG_MSG(_E(D) "Getting started:");
     LOG_MSG("  " _E(>) "Enter " _E(b) "help (what)" _E(.) " for information about " _E(l) "(what)");
