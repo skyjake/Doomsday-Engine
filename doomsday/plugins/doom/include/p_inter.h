@@ -26,6 +26,9 @@
 #  error "Using jDoom headers without __JDOOM__"
 #endif
 
+#include "doomdef.h"
+#include "p_player.h"
+
 /**
  * @param player     Player to receive the power.
  * @param powerType  Power type to give.
