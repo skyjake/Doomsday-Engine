@@ -207,25 +207,13 @@ typedef enum {
     AT_NOAMMO // Takes no ammo, used for staff, gauntlets.
 } ammotype_t;
 
-#define AMMO_GWND_WIMPY     10
-#define AMMO_GWND_HEFTY     50
-#define AMMO_CBOW_WIMPY     5
-#define AMMO_CBOW_HEFTY     20
-#define AMMO_BLSR_WIMPY     10
-#define AMMO_BLSR_HEFTY     25
-#define AMMO_SKRD_WIMPY     20
-#define AMMO_SKRD_HEFTY     100
-#define AMMO_PHRD_WIMPY     1
-#define AMMO_PHRD_HEFTY     10
-#define AMMO_MACE_WIMPY     20
-#define AMMO_MACE_HEFTY     100
-
 /**
  * Powers, bestowable upon players only.
  */
 typedef enum {
-    PT_NONE,
-    PT_INVULNERABILITY,
+    PT_NONE, /// @todo Remove me (index from zero).
+    PT_FIRST,
+    PT_INVULNERABILITY = PT_FIRST,
     PT_INVISIBILITY,
     PT_ALLMAP,
     PT_INFRARED,
