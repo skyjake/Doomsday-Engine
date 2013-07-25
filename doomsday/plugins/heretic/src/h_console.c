@@ -186,7 +186,7 @@ ccmdtemplate_t gameCCmds[] = {
     {"viewmode",    NULL,   CCmdSetViewMode},
 
     // Heretic specific
-    {"chicken",     "",     CCmdCheatMorph},
+    {"chicken",     NULL,   CCmdCheatMorph},
     {NULL}
 };
 
