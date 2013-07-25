@@ -93,6 +93,14 @@
 #define USE_MACE_AMMO_1 1
 #define USE_MACE_AMMO_2 5
 
+DENG_EXTERN_C mobjtype_t puffType;
+DENG_EXTERN_C mobj_t* missileMobj;
+DENG_EXTERN_C float turboMul;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Chooses the next spot to place the mace.
  */
@@ -129,21 +137,6 @@ void        P_ExplodeMissile(mobj_t* mo);
 const char*     P_GetMapName(uint episode, uint map);
 const char*     P_GetShortMapName(uint episode, uint map);
 
-extern float turboMul;
-extern int maxAmmo[NUM_AMMO_TYPES];
-extern int clipAmmo[NUM_AMMO_TYPES];
-extern int maxAmmo[NUM_AMMO_TYPES];
-
-void            P_GiveKey(player_t* player, keytype_t key);
-void            P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher);
-int             P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source, int damage, boolean stomping);
-int             P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source, int damage, boolean stomping, boolean skipNetworkCheck);
-boolean         P_GiveAmmo(player_t* player, ammotype_t ammo, int count);
-boolean         P_GiveBody(player_t* player, int num);
-boolean         P_GivePower(player_t* player, powertype_t power);
-boolean         P_MorphPlayer(player_t* player);
-
-void            Draw_BeginZoom(float s, float originX, float originY);
 void            Draw_EndZoom(void);
 
 #define LOOKDIR2DEG(x) ((x) * 85.0/110.0)
