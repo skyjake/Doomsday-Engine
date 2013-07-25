@@ -2239,11 +2239,14 @@ D_CMD(Help)
 #ifdef __CLIENT__
     LOG_MSG(_E(D) "Keys:" _E(.))
             << TABBED("Shift-Esc", "Open the taskbar and console")
-            << TABBED("F5", "Clear the console message history")
-            << TABBED("Home", "Jump to beginning of line")
-            << TABBED("End", "Jump to end of line")
             << TABBED("PgUp/Dn", "Scroll up/down in the history, or expand the history to full height")
-            << TABBED("Shift-PgUp/Dn", "Jump to the top/bottom of the history");
+            << TABBED("Shift-PgUp/Dn", "Jump to the top/bottom of the history")
+            << TABBED("F5", "Clear the console message history")
+            << TABBED("Home", "Move the cursor to the start of the command line")
+            << TABBED("End", "Move the cursor to the end of the command line")
+            << TABBED("Tab", "Attempt autocompletion of the last word on the input line")
+            << TABBED("Up/Down Arrow", "Move backwards/forwards through the input command history, or up/down one line inside a multi-line command")
+            << TABBED("Ctrl-k", "Clear everything on the line right of the cursor position");
 #endif
     LOG_MSG(_E(D) "Getting started:");
     LOG_MSG("  " _E(>) "Enter " _E(b) "help (what)" _E(.) " for information about " _E(l) "(what)");
