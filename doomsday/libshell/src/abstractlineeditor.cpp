@@ -230,7 +230,10 @@ DENG2_PIMPL(AbstractLineEditor)
         }
 
         // Jump over any non-word chars.
-        while(cursor < last && !text[cursor].isLetterOrNumber()) cursor++;
+        while(cursor <= last && !text[de::min(last, cursor)].isLetterOrNumber())
+        {
+            cursor++;
+        }
 
         self.cursorMoved();
     }
