@@ -2016,6 +2016,31 @@ void C_DECL A_MakePod(mobj_t* actor)
     return;
 }
 
+void C_DECL A_RestoreArtifact(mobj_t* mo)
+{
+    mo->flags |= MF_SPECIAL;
+    P_MobjChangeState(mo, P_GetState(mo->type, SN_SPAWN));
+    S_StartSound(SFX_RESPAWN, mo);
+}
+
+void C_DECL A_RestoreSpecialThing1(mobj_t *mo)
+{
+    if(mo->type == MT_WMACE)
+    {
+        // Do random mace placement.
+        P_RepositionMace(mo);
+    }
+
+    mo->flags2 &= ~MF2_DONTDRAW;
+    S_StartSound(SFX_RESPAWN, mo);
+}
+
+void C_DECL A_RestoreSpecialThing2(mobj_t* thing)
+{
+    thing->flags |= MF_SPECIAL;
+    P_MobjChangeState(thing, P_GetState(thing->type, SN_SPAWN));
+}
+
 static int massacreMobj(thinker_t* th, void* context)
 {
     int*                count = (int*) context;

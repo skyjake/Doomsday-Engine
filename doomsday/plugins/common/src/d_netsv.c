@@ -1305,7 +1305,7 @@ void NetSv_SendJumpPower(int target, float power)
     Net_SendPacket(target, GPT_JUMP_POWER, Writer_Data(writer), Writer_Size(writer));
 }
 
-void NetSv_ExecuteCheat(int player, const char* command)
+void NetSv_ExecuteCheat(int player, char const *command)
 {
     // Killing self is always allowed.
     /// @todo fixme: really? Even in deathmatch??
@@ -1322,9 +1322,14 @@ void NetSv_ExecuteCheat(int player, const char* command)
     }
 
     /// @todo Can't we use the multipurpose cheat command here?
-    if(!strnicmp(command, "god",    3) ||
-       !strnicmp(command, "noclip", 6) ||
-       !strnicmp(command, "give",   4))
+    if(!strnicmp(command, "god",    3)
+       || !strnicmp(command, "noclip", 6)
+       || !strnicmp(command, "give",   4)
+#ifdef __JHERETIC__
+       || !strnicmp(command, "kill",   4)
+       || !strnicmp(command, "chicken", 7)
+#endif
+       )
     {
         DD_Executef(false, "%s %i", command, player);
     }
