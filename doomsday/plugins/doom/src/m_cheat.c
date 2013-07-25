@@ -646,7 +646,21 @@ D_CMD(CheatGive)
 
 D_CMD(CheatMassacre)
 {
-    Con_Printf("%i monsters killed.\n", P_Massacre());
+    if(G_GameState() == GS_MAP)
+    {
+        if(IS_CLIENT)
+        {
+            NetCl_CheatRequest("kill");
+        }
+        else if((IS_NETGAME && !netSvAllowCheats) || gameSkill == SM_NIGHTMARE)
+        {
+            return false;
+        }
+        else
+        {
+            Con_Printf("%i monsters killed.\n", P_Massacre());
+        }
+    }
     return true;
 }
 
