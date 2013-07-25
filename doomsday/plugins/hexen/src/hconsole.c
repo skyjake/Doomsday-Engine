@@ -35,7 +35,7 @@ D_CMD(Cheat);
 D_CMD(CheatGod);
 D_CMD(CheatNoClip);
 D_CMD(CheatGive);
-D_CMD(CheatPig);
+D_CMD(CheatMorph);
 D_CMD(CheatMassacre);
 D_CMD(CheatShadowcaster);
 D_CMD(CheatWhere);
@@ -170,11 +170,11 @@ ccmdtemplate_t  gameCCmds[] = {
     {"lockmode",    "i",    CCmdSetViewLock},
     {"viewmode",    NULL,   CCmdSetViewMode},
 
-    // jHexen specific
-    {"pig",         "",     CCmdCheatPig},
-    {"runscript",   "i",    CCmdCheatRunScript},
+    // Hexen specific
+    {"pig",         NULL,   CCmdCheatMorph},
+    {"runscript",   "i*",   CCmdCheatRunScript},
     {"scriptinfo",  NULL,   CCmdScriptInfo},
-    {"class",       "i",    CCmdCheatShadowcaster},
+    {"class",       "i*",   CCmdCheatShadowcaster},
     {NULL}
 };
 

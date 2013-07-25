@@ -1820,10 +1820,10 @@ static int radiusGiveArmor(thinker_t* th, void* context)
                             params->origin[VY] - mo->origin[VY]);
     if(dist <= params->maxDistance)
     {
-        if((P_GiveArmor2(mo->player, ARMOR_ARMOR, 1)) ||
-           (P_GiveArmor2(mo->player, ARMOR_SHIELD, 1)) ||
-           (P_GiveArmor2(mo->player, ARMOR_HELMET, 1)) ||
-           (P_GiveArmor2(mo->player, ARMOR_AMULET, 1)))
+        if((P_GiveArmorAlt(mo->player, ARMOR_ARMOR,  1)) ||
+           (P_GiveArmorAlt(mo->player, ARMOR_SHIELD, 1)) ||
+           (P_GiveArmorAlt(mo->player, ARMOR_HELMET, 1)) ||
+           (P_GiveArmorAlt(mo->player, ARMOR_AMULET, 1)))
         {
             params->effective = true;
             S_StartSound(SFX_MYSTICINCANT, mo);
@@ -1849,7 +1849,7 @@ static int radiusGiveBody(thinker_t* th, void* context)
     {
         int amount = 50 + (P_Random() % 50);
 
-        if(P_GiveBody(mo->player, amount))
+        if(P_GiveHealth(mo->player, amount))
         {
             params->effective = true;
             S_StartSound(SFX_MYSTICINCANT, mo);
@@ -1875,8 +1875,8 @@ static int radiusGiveMana(thinker_t* th, void* context)
     {
         int amount = 50 + (P_Random() % 50);
 
-        if((P_GiveMana(mo->player, AT_BLUEMANA, amount)) ||
-           (P_GiveMana(mo->player, AT_GREENMANA, amount)))
+        if(P_GiveAmmo(mo->player, AT_BLUEMANA, amount) ||
+           P_GiveAmmo(mo->player, AT_GREENMANA, amount))
         {
             params->effective = true;
             S_StartSound(SFX_MYSTICINCANT, mo);

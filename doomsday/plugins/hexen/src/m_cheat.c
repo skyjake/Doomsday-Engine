@@ -1,10 +1,8 @@
-/**
- * @file m_cheat.c
- * Cheats. @ingroup libhexen
+/** @file m_cheat.c Cheat code sequences
  *
- * @author Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @author Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
- * @author Copyright &copy; 1999 Activision
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 1999 Activision
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -22,12 +20,7 @@
  */
 
 #include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <math.h>
-#ifdef UNIX
-# include <errno.h>
-#endif
+#include <errno.h>
 
 #include "jhexen.h"
 
@@ -35,13 +28,10 @@
 #include "g_common.h"
 #include "p_player.h"
 #include "am_map.h"
-#include "hu_menu.h"
 #include "hu_msg.h"
 #include "dmu_lib.h"
 #include "p_user.h"
-#include "p_start.h"
 #include "p_inventory.h"
-#include "hu_inventory.h"
 #include "g_eventsequence.h"
 
 typedef eventsequencehandler_t cheatfunc_t;
@@ -58,342 +48,48 @@ typedef eventsequencehandler_t cheatfunc_t;
 /// Helper macro for registering new cheat event sequence command handlers.
 #define ADDCHEATCMD(name, cmdTemplate) G_AddEventSequenceCommand((name), cmdTemplate)
 
-CHEAT_FUNC(Armor);
 CHEAT_FUNC(Class);
-CHEAT_FUNC(Class2);
-CHEAT_FUNC(GiveKeys);
-CHEAT_FUNC(God);
-CHEAT_FUNC(Health);
 CHEAT_FUNC(IDKFA);
 CHEAT_FUNC(Init);
-CHEAT_FUNC(Inventory);
-CHEAT_FUNC(Massacre);
-CHEAT_FUNC(NoClip);
-CHEAT_FUNC(Pig);
-CHEAT_FUNC(Puzzle);
 CHEAT_FUNC(Quicken);
 CHEAT_FUNC(Quicken2);
 CHEAT_FUNC(Quicken3);
 CHEAT_FUNC(Reveal);
 CHEAT_FUNC(Script);
 CHEAT_FUNC(Script2);
-CHEAT_FUNC(Script3);
-CHEAT_FUNC(Sound);
-CHEAT_FUNC(Version);
 CHEAT_FUNC(Weapons);
-CHEAT_FUNC(Where);
-
-static boolean cheatsEnabled(void)
-{
-    return !IS_NETGAME;
-}
 
 void G_RegisterCheats(void)
 {
-    ADDCHEAT("butcher",             Massacre);
-    ADDCHEAT("casper",              NoClip);
-    ADDCHEAT("clubmed",             Health);
+    ADDCHEATCMD("butcher",          "kill");
+    ADDCHEATCMD("casper",           "noclip %p");
+    ADDCHEATCMD("clubmed",          "give h %p");
     ADDCHEAT("conan",               IDKFA);
-    ADDCHEAT("deliverance",         Pig);
-    ADDCHEAT("indiana",             Inventory);
+    ADDCHEATCMD("deliverance",      "pig %p");
+    ADDCHEATCMD("indiana",          "give i %p");
     ADDCHEAT("init",                Init);
-    ADDCHEAT("locksmith",           GiveKeys);
+    ADDCHEATCMD("locksmith",        "give k %p");
     ADDCHEAT("mapsco",              Reveal);
     ADDCHEAT("martekmartekmartek",  Quicken3);
     ADDCHEAT("martekmartek",        Quicken2);
     ADDCHEAT("martek",              Quicken);
-    ADDCHEAT("mrjones",             Version);
-    ADDCHEAT("nra",                 Weapons);
-    ADDCHEAT("noise",               Sound);
-    ADDCHEAT("puke%1%2",            Script3);
+    ADDCHEATCMD("mrjones",          "playsound PLATFORM_STOP;taskbar;version");
+    ADDCHEATCMD("nra",              "give war %p");
+    ADDCHEATCMD("noise",            "playsound PLATFORM_STOP"); // ignored, play sound
+    ADDCHEATCMD("puke%1%2",         "runscript %1%2 %p");
     ADDCHEAT("puke%1",              Script2);
     ADDCHEAT("puke",                Script);
-    ADDCHEAT("satan",               God);
-    ADDCHEAT("shadowcaster%1",      Class2);
+    ADDCHEATCMD("satan",            "god %p");
+    ADDCHEATCMD("shadowcaster%1",   "class %1 %p");
     ADDCHEAT("shadowcaster",        Class);
-    ADDCHEAT("sherlock",            Puzzle);
+    ADDCHEATCMD("sherlock",         "give p %p");
     ADDCHEATCMD("visit%1%2",        "warp %1%2");
-    ADDCHEAT("where",               Where);
-}
-
-CHEAT_FUNC(God)
-{
-    player_t* plr = &players[player];
-
-    DENG_UNUSED(args);
-    DENG_ASSERT(player >= 0 && player < MAXPLAYERS);
-
-    if(IS_NETGAME) return false;
-    if(gameSkill == SM_NIGHTMARE) return false;
-    // Dead players can't cheat.
-    if(plr->health <= 0) return false;
-
-    plr->cheats ^= CF_GODMODE;
-    plr->update |= PSF_STATE;
-
-    P_SetMessage(plr, LMF_NO_HIDE, ((P_GetPlayerCheats(plr) & CF_GODMODE) ? TXT_CHEATGODON : TXT_CHEATGODOFF));
-    S_LocalSound(SFX_PLATFORM_STOP, NULL);
-    return true;
-}
-
-static void giveArmor(player_t* plr)
-{
-    int i;
-    plr->update |= PSF_ARMOR_POINTS;
-    for(i = 0; i < NUMARMOR; ++i)
-    {
-        plr->armorPoints[i] = PCLASS_INFO(plr->class_)->armorIncrement[i];
-    }
-}
-
-static void giveWeapons(player_t* plr)
-{
-    int i;
-    for(i = 0; i < NUM_WEAPON_TYPES; ++i)
-    {
-        plr->weapons[i].owned = true;
-    }
-    plr->pieces = WPIECE1|WPIECE2|WPIECE3;
-    plr->update |= PSF_OWNED_WEAPONS;
-}
-
-static void giveAmmo(player_t* plr)
-{
-    int i;
-    plr->update |= PSF_AMMO;
-    for(i = 0; i < NUM_AMMO_TYPES; ++i)
-    {
-        plr->ammo[i].owned = MAX_MANA;
-    }
-}
-
-CHEAT_FUNC(GiveKeys)
-{
-    player_t* plr = &players[player];
-
-    DENG_UNUSED(args);
-    DENG_ASSERT(player >= 0 && player < MAXPLAYERS);
-
-    if(IS_NETGAME) return false;
-    if(gameSkill == SM_NIGHTMARE) return false;
-    // Dead players can't cheat.
-    if(plr->health <= 0) return false;
-
-    plr->update |= PSF_KEYS;
-    plr->keys = 2047;
-    P_SetMessage(plr, LMF_NO_HIDE, TXT_CHEATKEYS);
-    S_LocalSound(SFX_PLATFORM_STOP, NULL);
-    return true;
-}
-
-CHEAT_FUNC(GiveArmor)
-{
-    player_t* plr = &players[player];
-    int i;
-
-    DENG_UNUSED(args);
-    DENG_ASSERT(player >= 0 && player < MAXPLAYERS);
-
-    if(IS_NETGAME) return false;
-    if(gameSkill == SM_NIGHTMARE) return false;
-    // Dead players can't cheat.
-    if(plr->health <= 0) return false;
-
-    for(i = (int)ARMOR_FIRST; i < (int)NUMARMOR; ++i)
-    {
-        P_GiveArmor(plr, (armortype_t)i, PCLASS_INFO(plr->class_)->armorIncrement[i]);
-    }
-    S_LocalSound(SFX_PLATFORM_STOP, NULL);
-    return true;
-}
-
-CHEAT_FUNC(Weapons)
-{
-    player_t* plr = &players[player];
-
-    DENG_UNUSED(args);
-    DENG_ASSERT(player >= 0 && player < MAXPLAYERS);
-
-    if(IS_NETGAME) return false;
-    if(gameSkill == SM_NIGHTMARE) return false;
-    // Dead players can't cheat.
-    if(plr->health <= 0) return false;
-
-    giveWeapons(plr);
-    giveAmmo(plr);
-    giveArmor(plr);
-
-    P_SetMessage(plr, LMF_NO_HIDE, TXT_CHEATWEAPONS);
-    S_LocalSound(SFX_PLATFORM_STOP, NULL);
-    return true;
-}
-
-CHEAT_FUNC(NoClip)
-{
-    player_t* plr = &players[player];
-
-    DENG_UNUSED(args);
-    DENG_ASSERT(player >= 0 && player < MAXPLAYERS);
-
-    if(IS_NETGAME) return false;
-    if(gameSkill == SM_NIGHTMARE) return false;
-    // Dead players can't cheat.
-    if(plr->health <= 0) return false;
-
-    plr->cheats ^= CF_NOCLIP;
-    plr->update |= PSF_STATE;
-    P_SetMessage(plr, LMF_NO_HIDE, ((P_GetPlayerCheats(plr) & CF_NOCLIP) ? TXT_CHEATNOCLIPON : TXT_CHEATNOCLIPOFF));
-    S_LocalSound(SFX_PLATFORM_STOP, NULL);
-    return true;
-}
-
-CHEAT_FUNC(Sound)
-{
-    player_t* plr = &players[player];
-
-    DENG_UNUSED(args);
-    DENG_ASSERT(player >= 0 && player < MAXPLAYERS);
-
-    if(IS_NETGAME) return false;
-    if(gameSkill == SM_NIGHTMARE) return false;
-    // Dead players can't cheat.
-    if(plr->health <= 0) return false;
-
-    debugSound = !debugSound;
-    P_SetMessage(plr, LMF_NO_HIDE, debugSound? TXT_CHEATSOUNDON : TXT_CHEATSOUNDOFF);
-    S_LocalSound(SFX_PLATFORM_STOP, NULL);
-    return true;
-}
-
-static void printDebugInfo(int player)
-{
-    player_t* plr = &players[player];
-    char textBuffer[256];
-    BspLeaf* sub;
-    AutoStr* path, *mapPath;
-    Uri* uri, *mapUri;
-
-    if(!plr->plr->mo) return;
-
-    mapUri = G_ComposeMapUri(gameEpisode, gameMap);
-    mapPath = Uri_ToString(mapUri);
-    sprintf(textBuffer, "Map [%s]  x:%g  y:%g  z:%g",
-            Str_Text(mapPath), plr->plr->mo->origin[VX], plr->plr->mo->origin[VY],
-            plr->plr->mo->origin[VZ]);
-    P_SetMessage(plr, LMF_NO_HIDE, textBuffer);
-    Uri_Delete(mapUri);
-
-    // Also print some information to the console.
-    Con_Message("%s", textBuffer);
-    sub = plr->plr->mo->bspLeaf;
-    Con_Message("BspLeaf %i:", P_ToIndex(sub));
-
-    uri = Materials_ComposeUri(P_GetIntp(sub, DMU_FLOOR_MATERIAL));
-    path = Uri_ToString(uri);
-    Con_Message("  FloorZ:%g Material:%s", P_GetDoublep(sub, DMU_FLOOR_HEIGHT), Str_Text(path));
-    Uri_Delete(uri);
-
-    uri = Materials_ComposeUri(P_GetIntp(sub, DMU_CEILING_MATERIAL));
-    path = Uri_ToString(uri);
-    Con_Message("  CeilingZ:%g Material:%s", P_GetDoublep(sub, DMU_CEILING_HEIGHT), Str_Text(path));
-    Uri_Delete(uri);
-
-    Con_Message("Player height:%g Player radius:%g",
-                plr->plr->mo->height, plr->plr->mo->radius);
-}
-
-CHEAT_FUNC(Where)
-{
-    DENG_UNUSED(args);
-
-    if(IS_NETGAME) return false;
-    if(gameSkill == SM_NIGHTMARE) return false;
-    if(!userGame) return false;
-
-    printDebugInfo(player);
-    S_LocalSound(SFX_PLATFORM_STOP, NULL);
-    return true;
-}
-
-CHEAT_FUNC(Health)
-{
-    player_t* plr = &players[player];
-
-    DENG_UNUSED(args);
-    DENG_ASSERT(player >= 0 && player < MAXPLAYERS);
-
-    if(IS_NETGAME) return false;
-    if(gameSkill == SM_NIGHTMARE) return false;
-    // Dead players can't cheat.
-    if(plr->health <= 0) return false;
-
-    plr->update |= PSF_HEALTH;
-    if(plr->morphTics)
-    {
-        plr->health = plr->plr->mo->health = MAXMORPHHEALTH;
-    }
-    else
-    {
-        plr->health = plr->plr->mo->health = maxHealth;
-    }
-    P_SetMessage(plr, LMF_NO_HIDE, TXT_CHEATHEALTH);
-    S_LocalSound(SFX_PLATFORM_STOP, NULL);
-    return true;
-}
-
-CHEAT_FUNC(Inventory)
-{
-    player_t* plr = &players[player];
-    int i, j;
-
-    DENG_UNUSED(args);
-    DENG_ASSERT(player >= 0 && player < MAXPLAYERS);
-
-    //if(IS_NETGAME) return false;
-
-    if(gameSkill == SM_NIGHTMARE) return false;
-    // Dead players can't cheat.
-    if(plr->health <= 0) return false;
-
-    for(i = IIT_NONE + 1; i < IIT_FIRSTPUZZITEM; ++i)
-    {
-        for(j = 0; j < 25; ++j)
-        {
-            P_InventoryGive(player, i, false);
-        }
-    }
-
-    P_SetMessage(plr, LMF_NO_HIDE, TXT_CHEATINVITEMS3);
-    S_LocalSound(SFX_PLATFORM_STOP, NULL);
-    return true;
-}
-
-CHEAT_FUNC(Puzzle)
-{
-    player_t* plr = &players[player];
-    int i;
-
-    DENG_UNUSED(args);
-    DENG_ASSERT(player >= 0 && player < MAXPLAYERS);
-
-    if(IS_NETGAME) return false;
-    if(gameSkill == SM_NIGHTMARE) return false;
-    // Dead players can't cheat.
-    if(plr->health <= 0) return false;
-
-    for(i = IIT_FIRSTPUZZITEM; i < NUM_INVENTORYITEM_TYPES; ++i)
-    {
-        P_InventoryGive(player, i, false);
-    }
-
-    P_SetMessage(plr, LMF_NO_HIDE, TXT_CHEATINVITEMS3);
-    S_LocalSound(SFX_PLATFORM_STOP, NULL);
-    return true;
+    ADDCHEATCMD("where",            "where");
 }
 
 CHEAT_FUNC(Init)
 {
-    player_t* plr = &players[player];
+    player_t *plr = &players[player];
 
     DENG_UNUSED(args);
     DENG_ASSERT(player >= 0 && player < MAXPLAYERS);
@@ -406,65 +102,18 @@ CHEAT_FUNC(Init)
     G_SetGameAction(GA_RESTARTMAP);
     P_SetMessage(plr, LMF_NO_HIDE, TXT_CHEATWARP);
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
-    return true;
-}
 
-CHEAT_FUNC(Pig)
-{
-    player_t* plr = &players[player];
-
-    DENG_UNUSED(args);
-    DENG_ASSERT(player >= 0 && player < MAXPLAYERS);
-
-    if(IS_NETGAME) return false;
-    if(gameSkill == SM_NIGHTMARE) return false;
-    // Dead players can't cheat.
-    if(plr->health <= 0) return false;
-
-    if(plr->morphTics)
-    {
-        P_UndoPlayerMorph(plr);
-    }
-    else
-    {
-        P_MorphPlayer(plr);
-    }
-
-    P_SetMessage(plr, LMF_NO_HIDE, "Squeal!!");
-    S_LocalSound(SFX_PLATFORM_STOP, NULL);
-    return true;
-}
-
-CHEAT_FUNC(Massacre)
-{
-    player_t* plr = &players[player];
-    int count;
-    char buf[80];
-
-    DENG_UNUSED(args);
-    DENG_ASSERT(player >= 0 && player < MAXPLAYERS);
-
-    if(IS_NETGAME) return false;
-    if(gameSkill == SM_NIGHTMARE) return false;
-    // Dead players can't cheat.
-    if(plr->health <= 0) return false;
-
-    count = P_Massacre();
-    sprintf(buf, "%d monsters killed.", count);
-    P_SetMessage(plr, LMF_NO_HIDE, buf);
-    S_LocalSound(SFX_PLATFORM_STOP, NULL);
     return true;
 }
 
 CHEAT_FUNC(IDKFA)
 {
-    player_t* plr = &players[player];
+    player_t *plr = &players[player];
     int i;
 
     DENG_UNUSED(args);
     DENG_ASSERT(player >= 0 && player < MAXPLAYERS);
 
-    if(IS_NETGAME) return false;
     if(gameSkill == SM_NIGHTMARE) return false;
     // Dead players can't cheat.
     if(plr->health <= 0) return false;
@@ -478,51 +127,39 @@ CHEAT_FUNC(IDKFA)
     plr->pendingWeapon = WT_FIRST;
     P_SetMessage(plr, LMF_NO_HIDE, TXT_CHEATIDKFA);
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
+
     return true;
 }
 
 CHEAT_FUNC(Quicken)
 {
-    player_t* plr = &players[player];
-
     DENG_UNUSED(args);
     DENG_ASSERT(player >= 0 && player < MAXPLAYERS);
 
-    if(IS_NETGAME) return false;
-    if(gameSkill == SM_NIGHTMARE) return false;
-    // Dead players can't cheat.
-    if(plr->health <= 0) return false;
-
-    P_SetMessage(plr, LMF_NO_HIDE, "Trying to cheat? That's one...");
+    P_SetMessage(&players[player], LMF_NO_HIDE, "Trying to cheat? That's one...");
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
+
     return true;
 }
 
 CHEAT_FUNC(Quicken2)
 {
-    player_t* plr = &players[player];
-
     DENG_UNUSED(args);
     DENG_ASSERT(player >= 0 && player < MAXPLAYERS);
 
-    if(IS_NETGAME) return false;
-    if(gameSkill == SM_NIGHTMARE) return false;
-    // Dead players can't cheat.
-    if(plr->health <= 0) return false;
-
-    P_SetMessage(plr, LMF_NO_HIDE, "That's two...");
+    P_SetMessage(&players[player], LMF_NO_HIDE, "That's two...");
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
+
     return true;
 }
 
 CHEAT_FUNC(Quicken3)
 {
-    player_t* plr = &players[player];
+    player_t *plr = &players[player];
 
     DENG_UNUSED(args);
     DENG_ASSERT(player >= 0 && player < MAXPLAYERS);
 
-    if(IS_NETGAME) return false;
     if(gameSkill == SM_NIGHTMARE) return false;
     // Dead players can't cheat.
     if(plr->health <= 0) return false;
@@ -530,131 +167,51 @@ CHEAT_FUNC(Quicken3)
     P_DamageMobj(plr->plr->mo, NULL, plr->plr->mo, 10000, false);
     P_SetMessage(plr, LMF_NO_HIDE, "That's three! Time to die.");
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
+
     return true;
 }
 
 CHEAT_FUNC(Class)
 {
-    player_t* plr = &players[player];
-
     DENG_UNUSED(args);
     DENG_ASSERT(player >= 0 && player < MAXPLAYERS);
 
-    if(IS_NETGAME) return false;
-    if(gameSkill == SM_NIGHTMARE) return false;
-    // Dead players can't cheat.
-    if(plr->health <= 0) return false;
-
-    P_SetMessage(plr, LMF_NO_HIDE, "Enter new player class number");
+    P_SetMessage(&players[player], LMF_NO_HIDE, "Enter new player class number");
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
-    return true;
-}
 
-CHEAT_FUNC(Class2)
-{
-    player_t* plr = &players[player];
-
-    DENG_ASSERT(player >= 0 && player < MAXPLAYERS);
-
-    if(IS_NETGAME) return false;
-    if(gameSkill == SM_NIGHTMARE) return false;
-    // Dead players can't cheat.
-    if(plr->health <= 0) return false;
-
-    P_PlayerChangeClass(plr, args[0] - '0');
-    S_LocalSound(SFX_PLATFORM_STOP, NULL);
-    return true;
-}
-
-CHEAT_FUNC(Version)
-{
-    player_t* plr = &players[player];
-
-    DENG_UNUSED(args);
-    DENG_ASSERT(player >= 0 && player < MAXPLAYERS);
-
-    if(IS_NETGAME) return false;
-    if(gameSkill == SM_NIGHTMARE) return false;
-    // Dead players can't cheat.
-    if(plr->health <= 0) return false;
-
-    DD_Execute(false, "version");
-    S_LocalSound(SFX_PLATFORM_STOP, NULL);
     return true;
 }
 
 CHEAT_FUNC(Script)
 {
-    player_t* plr = &players[player];
-
     DENG_UNUSED(args);
     DENG_ASSERT(player >= 0 && player < MAXPLAYERS);
 
-    if(IS_NETGAME) return false;
-    if(gameSkill == SM_NIGHTMARE) return false;
-    // Dead players can't cheat.
-    if(plr->health <= 0) return false;
-
-    P_SetMessage(plr, LMF_NO_HIDE, "Run which script(01-99)?");
+    P_SetMessage(&players[player], LMF_NO_HIDE, "Run which script (01-99)?");
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
+
     return true;
 }
 
 CHEAT_FUNC(Script2)
 {
-    player_t* plr = &players[player];
-
     DENG_UNUSED(args);
     DENG_ASSERT(player >= 0 && player < MAXPLAYERS);
 
-    if(IS_NETGAME) return false;
-    if(gameSkill == SM_NIGHTMARE) return false;
-    // Dead players can't cheat.
-    if(plr->health <= 0) return false;
-
-    P_SetMessage(plr, LMF_NO_HIDE, "Run which script(01-99)?");
+    P_SetMessage(&players[player], LMF_NO_HIDE, "Run which script (01-99)?");
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
-    return true;
-}
 
-CHEAT_FUNC(Script3)
-{
-    player_t* plr = &players[player];
-    int script, tens, ones;
-    byte scriptArgs[3];
-    char textBuffer[40];
-
-    DENG_ASSERT(player >= 0 && player < MAXPLAYERS);
-
-    if(IS_NETGAME) return false;
-    if(gameSkill == SM_NIGHTMARE) return false;
-    // Dead players can't cheat.
-    if(plr->health <= 0) return false;
-
-    tens = args[0] - '0';
-    ones = args[1] - '0';
-    script = tens * 10 + ones;
-    if(script < 1 || script > 99) return false;
-
-    scriptArgs[0] = scriptArgs[1] = scriptArgs[2] = 0;
-
-    if(P_StartACS(script, 0, scriptArgs, plr->plr->mo, NULL, 0))
-    {
-        sprintf(textBuffer, "Running script %.2d", script);
-        P_SetMessage(plr, LMF_NO_HIDE, textBuffer);
-    }
-    S_LocalSound(SFX_PLATFORM_STOP, NULL);
     return true;
 }
 
 CHEAT_FUNC(Reveal)
 {
-    player_t* plr = &players[player];
+    player_t *plr = &players[player];
 
     DENG_UNUSED(args);
     DENG_ASSERT(player >= 0 && player < MAXPLAYERS);
 
-    if(IS_NETGAME) return false;
+    if(IS_NETGAME && deathmatch) return false;
     if(gameSkill == SM_NIGHTMARE) return false;
     // Dead players can't cheat.
     if(plr->health <= 0) return false;
@@ -664,6 +221,7 @@ CHEAT_FUNC(Reveal)
         ST_CycleAutomapCheatLevel(player);
         S_LocalSound(SFX_PLATFORM_STOP, NULL);
     }
+
     return true;
 }
 
@@ -694,11 +252,14 @@ D_CMD(CheatGod)
         {
             NetCl_CheatRequest("god");
         }
+        else if((IS_NETGAME && !netSvAllowCheats) || gameSkill == SM_NIGHTMARE)
+        {
+            return false;
+        }
         else
         {
             int player = CONSOLEPLAYER;
-
-            if(IS_NETGAME && !netSvAllowCheats) return false;
+            player_t *plr;
 
             if(argc == 2)
             {
@@ -706,9 +267,17 @@ D_CMD(CheatGod)
                 if(player < 0 || player >= MAXPLAYERS) return false;
             }
 
-            if(!players[player].plr->inGame) return false;
+            plr = &players[player];
+            if(!plr->plr->inGame) return false;
 
-            CHEAT(God)(player, 0/*no args*/, 0/*no args*/);
+            // Dead players can't cheat.
+            if(plr->health <= 0) return false;
+
+            plr->cheats ^= CF_GODMODE;
+            plr->update |= PSF_STATE;
+
+            P_SetMessage(plr, LMF_NO_HIDE, ((P_GetPlayerCheats(plr) & CF_GODMODE) ? TXT_CHEATGODON : TXT_CHEATGODOFF));
+            S_LocalSound(SFX_PLATFORM_STOP, NULL);
         }
     }
     return true;
@@ -722,11 +291,14 @@ D_CMD(CheatNoClip)
         {
             NetCl_CheatRequest("noclip");
         }
+        else if((IS_NETGAME && !netSvAllowCheats) || gameSkill == SM_NIGHTMARE)
+        {
+            return false;
+        }
         else
         {
             int player = CONSOLEPLAYER;
-
-            if(IS_NETGAME && !netSvAllowCheats) return false;
+            player_t *plr;
 
             if(argc == 2)
             {
@@ -734,16 +306,27 @@ D_CMD(CheatNoClip)
                 if(player < 0 || player >= MAXPLAYERS) return false;
             }
 
-            if(!players[player].plr->inGame) return false;
+            plr = &players[player];
+            if(!plr->plr->inGame) return false;
 
-            CHEAT(NoClip)(player, 0/*no args*/, 0/*no args*/);
+            // Dead players can't cheat.
+            if(plr->health <= 0) return false;
+
+            plr->cheats ^= CF_NOCLIP;
+            plr->update |= PSF_STATE;
+
+            P_SetMessage(plr, LMF_NO_HIDE, ((P_GetPlayerCheats(plr) & CF_NOCLIP) ? TXT_CHEATNOCLIPON : TXT_CHEATNOCLIPOFF));
+            S_LocalSound(SFX_PLATFORM_STOP, NULL);
         }
     }
     return true;
 }
 
-static int suicideResponse(msgresponse_t response, int userValue, void* userPointer)
+static int suicideResponse(msgresponse_t response, int userValue, void *userPointer)
 {
+    DENG_UNUSED(userValue);
+    DENG_UNUSED(userPointer);
+
     if(response == MSG_YES)
     {
         if(IS_NETGAME && IS_CLIENT)
@@ -763,7 +346,7 @@ D_CMD(CheatSuicide)
 {
     if(G_GameState() == GS_MAP)
     {
-        player_t* plr;
+        player_t *plr;
 
         if(IS_NETGAME && !netSvAllowCheats) return false;
 
@@ -802,7 +385,9 @@ D_CMD(CheatReveal)
 {
     int option, i;
 
-    if(!cheatsEnabled()) return false;
+    // Server operator can always reveal.
+    if(IS_NETGAME && !IS_NETWORK_SERVER)
+        return false;
 
     option = atoi(argv[1]);
     if(option < 0 || option > 3) return false;
@@ -825,23 +410,26 @@ D_CMD(CheatReveal)
     return true;
 }
 
+static void giveAllWeaponsAndPieces(player_t *plr)
+{
+    P_GiveWeapon(plr, NUM_WEAPON_TYPES /*all types*/);
+    P_GiveWeaponPiece(plr, WPIECE1);
+    P_GiveWeaponPiece(plr, WPIECE2);
+    P_GiveWeaponPiece(plr, WPIECE3);
+}
+
 D_CMD(CheatGive)
 {
-    int player = CONSOLEPLAYER;
-    size_t i, stuffLen;
-    player_t* plr;
     char buf[100];
+    int player = CONSOLEPLAYER;
+    player_t *plr;
+    size_t i, stuffLen;
 
-    if(IS_CLIENT)
+    if(G_GameState() != GS_MAP)
     {
-        if(argc != 2) return false;
-
-        sprintf(buf, "give %s", argv[1]);
-        NetCl_CheatRequest(buf);
+        Con_Printf("Can only \"give\" when in a game!\n");
         return true;
     }
-
-    if(IS_NETGAME && !netSvAllowCheats) return false;
 
     if(argc != 2 && argc != 3)
     {
@@ -867,15 +455,25 @@ D_CMD(CheatGive)
         if(player < 0 || player >= MAXPLAYERS) return false;
     }
 
-    if(G_GameState() != GS_MAP)
+    if(IS_CLIENT)
     {
-        Con_Printf("Can only \"give\" when in a game!\n");
+        if(argc < 2) return false;
+
+        sprintf(buf, "give %s", argv[1]);
+        NetCl_CheatRequest(buf);
         return true;
     }
 
-    if(!players[player].plr->inGame)
-        return true; // Can't give to a plr who's not playing.
+    if((IS_NETGAME && !netSvAllowCheats) || gameSkill == SM_NIGHTMARE)
+        return false;
+
     plr = &players[player];
+
+    // Can't give to a player who's not in the game.
+    if(!plr->plr->inGame) return false;
+
+    // Can't give to a dead player.
+    if(plr->health <= 0) return false;
 
     strcpy(buf, argv[1]); // Stuff is the 2nd arg.
     strlwr(buf);
@@ -887,7 +485,7 @@ D_CMD(CheatGive)
         case 'a':
             if(i < stuffLen)
             {
-                char* end;
+                char *end;
                 long idx;
                 errno = 0;
                 idx = strtol(&buf[i+1], &end, 0);
@@ -902,32 +500,38 @@ D_CMD(CheatGive)
                     }
 
                     // Give one specific ammo type.
-                    plr->update |= PSF_AMMO;
-                    plr->ammo[idx].owned = MAX_MANA;
+                    P_GiveAmmo(plr, (ammotype_t) idx, -1 /*fully replenish*/);
                     break;
                 }
             }
 
             // Give all ammo.
-            plr->update |= PSF_AMMO;
-            { int j;
-            for(j = 0; j < NUM_AMMO_TYPES; ++j)
-                plr->ammo[j].owned = MAX_MANA;
-            }
+            P_GiveAmmo(plr, NUM_AMMO_TYPES /*all types*/, -1 /*fully replenish*/);
             break;
 
         case 'h':
-            CHEAT(Health)(player, 0/*no args*/, 0/*no args*/);
+            P_GiveHealth(plr, -1 /*maximum amount*/);
+            P_SetMessage(plr, LMF_NO_HIDE, TXT_CHEATHEALTH);
+            S_LocalSound(SFX_PLATFORM_STOP, NULL);
             break;
 
-        case 'i':
-            CHEAT(Inventory)(player, 0/*no args*/, 0/*no args*/);
-            break;
+        case 'i': {
+            int k, m;
+
+            for(k = IIT_NONE + 1; k < IIT_FIRSTPUZZITEM; ++k)
+            for(m = 0; m < 25; ++m)
+            {
+                P_InventoryGive(player, k, false);
+            }
+
+            P_SetMessage(plr, LMF_NO_HIDE, TXT_CHEATINVITEMS3);
+            S_LocalSound(SFX_PLATFORM_STOP, NULL);
+            break; }
 
         case 'k':
             if(i < stuffLen)
             {
-                char* end;
+                char *end;
                 long idx;
                 errno = 0;
                 idx = strtol(&buf[i+1], &end, 0);
@@ -942,24 +546,33 @@ D_CMD(CheatGive)
                     }
 
                     // Give one specific key.
-                    plr->update |= PSF_KEYS;
-                    plr->keys |= (1 << idx);
+                    P_GiveKey(plr, (keytype_t) idx);
                     break;
                 }
             }
 
             // Give all keys.
-            CHEAT(GiveKeys)(player, 0/*no args*/, 0/*no args*/);
+            P_GiveKey(plr, NUM_KEY_TYPES /*all types*/);
+            P_SetMessage(plr, LMF_NO_HIDE, TXT_CHEATKEYS);
+            S_LocalSound(SFX_PLATFORM_STOP, NULL);
             break;
 
-        case 'p':
-            CHEAT(Puzzle)(player, 0/*no args*/, 0/*no args*/);
-            break;
+        case 'p': {
+            int k;
+
+            for(k = IIT_FIRSTPUZZITEM; k < NUM_INVENTORYITEM_TYPES; ++k)
+            {
+                P_InventoryGive(player, i, false);
+            }
+
+            P_SetMessage(plr, LMF_NO_HIDE, TXT_CHEATINVITEMS3);
+            S_LocalSound(SFX_PLATFORM_STOP, NULL);
+            break; }
 
         case 'r':
             if(i < stuffLen)
             {
-                char* end;
+                char *end;
                 long idx;
                 errno = 0;
                 idx = strtol(&buf[i+1], &end, 0);
@@ -974,19 +587,20 @@ D_CMD(CheatGive)
                     }
 
                     // Give one specific armor.
-                    P_GiveArmor(plr, (armortype_t)idx, PCLASS_INFO(plr->class_)->armorIncrement[idx]);
+                    P_GiveArmor(plr, (armortype_t)idx);
                     break;
                 }
             }
 
             // Give all armors.
-            CHEAT(GiveArmor)(player, 0/*no args*/, 0/*no args*/);
+            P_GiveArmor(plr, NUMARMOR /*all types*/);
+            S_LocalSound(SFX_PLATFORM_STOP, NULL);
             break;
 
         case 'w':
             if(i < stuffLen)
             {
-                char* end;
+                char *end;
                 long idx;
                 errno = 0;
                 idx = strtol(&buf[i+1], &end, 0);
@@ -1001,14 +615,13 @@ D_CMD(CheatGive)
                     }
 
                     // Give one specific weapon.
-                    plr->update |= PSF_OWNED_WEAPONS;
-                    plr->weapons[idx].owned = true;
+                    P_GiveWeapon(plr, (weapontype_t)idx);
                     break;
                 }
             }
 
             // Give all weapons.
-            giveWeapons(plr);
+            giveAllWeaponsAndPieces(plr);
             break;
 
         default: // Unrecognized.
@@ -1017,53 +630,209 @@ D_CMD(CheatGive)
         }
     }
 
+    // If the give expression matches that of a vanilla cheat code print the
+    // associated confirmation message to the player's log.
+    /// @todo fixme: Somewhat of kludge...
+    if(!strcmp(buf, "war"))
+    {
+        P_SetMessage(plr, LMF_NO_HIDE, TXT_CHEATWEAPONS);
+        S_LocalSound(SFX_PLATFORM_STOP, NULL);
+    }
+
     return true;
 }
 
 D_CMD(CheatMassacre)
 {
-    CHEAT(Massacre)(CONSOLEPLAYER, 0/*no args*/, 0/*no args*/);
+    if(G_GameState() == GS_MAP)
+    {
+        if(IS_CLIENT)
+        {
+            NetCl_CheatRequest("kill");
+        }
+        else if((IS_NETGAME && !netSvAllowCheats) || gameSkill == SM_NIGHTMARE)
+        {
+            return false;
+        }
+        else
+        {
+            int killCount = P_Massacre();
+            AutoStr *msg = Str_Appendf(AutoStr_NewStd(), "%d monsters killed.", killCount);
+            P_SetMessage(&players[CONSOLEPLAYER], LMF_NO_HIDE, Str_Text(msg));
+            S_LocalSound(SFX_PLATFORM_STOP, NULL);
+        }
+    }
     return true;
 }
 
 D_CMD(CheatWhere)
 {
-    CHEAT(Where)(CONSOLEPLAYER, 0/*no args*/, 0/*no args*/);
+    player_t *plr = &players[CONSOLEPLAYER];
+    char textBuffer[256];
+    BspLeaf *sub;
+    AutoStr *path, *mapPath;
+    Uri *uri, *mapUri;
+
+    if(!plr->plr->mo || !userGame) return true;
+
+    mapUri = G_ComposeMapUri(gameEpisode, gameMap);
+    mapPath = Uri_ToString(mapUri);
+    sprintf(textBuffer, "Map [%s]  x:%g  y:%g  z:%g",
+            Str_Text(mapPath), plr->plr->mo->origin[VX], plr->plr->mo->origin[VY],
+            plr->plr->mo->origin[VZ]);
+    P_SetMessage(plr, LMF_NO_HIDE, textBuffer);
+    Uri_Delete(mapUri);
+
+    // Also print some information to the console.
+    Con_Message("%s", textBuffer);
+    sub = plr->plr->mo->bspLeaf;
+    Con_Message("BspLeaf %i:", P_ToIndex(sub));
+
+    uri = Materials_ComposeUri(P_GetIntp(sub, DMU_FLOOR_MATERIAL));
+    path = Uri_ToString(uri);
+    Con_Message("  FloorZ:%g Material:%s", P_GetDoublep(sub, DMU_FLOOR_HEIGHT), Str_Text(path));
+    Uri_Delete(uri);
+
+    uri = Materials_ComposeUri(P_GetIntp(sub, DMU_CEILING_MATERIAL));
+    path = Uri_ToString(uri);
+    Con_Message("  CeilingZ:%g Material:%s", P_GetDoublep(sub, DMU_CEILING_HEIGHT), Str_Text(path));
+    Uri_Delete(uri);
+
+    Con_Message("Player height:%g Player radius:%g",
+                plr->plr->mo->height, plr->plr->mo->radius);
+
     return true;
 }
 
-D_CMD(CheatPig)
+D_CMD(CheatMorph)
 {
-    if(IS_NETGAME || !userGame) return false;
-    if(gameSkill == SM_NIGHTMARE || players[CONSOLEPLAYER].health <= 0) return false;
+    if(G_GameState() == GS_MAP)
+    {
+        if(IS_CLIENT)
+        {
+            NetCl_CheatRequest("pig");
+        }
+        else if((IS_NETGAME && !netSvAllowCheats) || gameSkill == SM_NIGHTMARE)
+        {
+            return false;
+        }
+        else
+        {
+            int player = CONSOLEPLAYER;
+            player_t *plr;
 
-    CHEAT(Pig)(CONSOLEPLAYER, 0/*no args*/, 0/*no args*/);
+            if(argc == 2)
+            {
+                player = atoi(argv[1]);
+                if(player < 0 || player >= MAXPLAYERS) return false;
+            }
+
+            plr = &players[player];
+            if(!plr->plr->inGame) return false;
+
+            // Dead players can't cheat.
+            if(plr->health <= 0) return false;
+
+            if(plr->morphTics)
+            {
+                P_UndoPlayerMorph(plr);
+            }
+            else
+            {
+                P_MorphPlayer(plr);
+            }
+
+            P_SetMessage(plr, LMF_NO_HIDE, "Squeal!!");
+            S_LocalSound(SFX_PLATFORM_STOP, NULL);
+        }
+    }
     return true;
 }
 
 D_CMD(CheatShadowcaster)
 {
-    EventSequenceArg args[2];
+    if(G_GameState() == GS_MAP)
+    {
+        playerclass_t newClass = (playerclass_t)atoi(argv[1]);
 
-    if(IS_NETGAME || !userGame) return false;
-    if(gameSkill == SM_NIGHTMARE || players[CONSOLEPLAYER].health <= 0) return false;
+        if(IS_CLIENT)
+        {
+            AutoStr *cmd = Str_Appendf(AutoStr_NewStd(), "class %i", (int)newClass);
+            NetCl_CheatRequest(Str_Text(cmd));
+        }
+        else if((IS_NETGAME && !netSvAllowCheats) || gameSkill == SM_NIGHTMARE)
+        {
+            return false;
+        }
+        else
+        {
+            int player = CONSOLEPLAYER;
+            player_t *plr;
 
-    args[0] = atoi(argv[1]) + '0';
-    CHEAT(Class2)(CONSOLEPLAYER, args, 1);
+            if(argc == 3)
+            {
+                player = atoi(argv[2]);
+                if(player < 0 || player >= MAXPLAYERS) return false;
+            }
+
+            plr = &players[player];
+            if(!plr->plr->inGame) return false;
+
+            // Dead players can't cheat.
+            if(plr->health <= 0) return false;
+
+            P_PlayerChangeClass(plr, newClass);
+            S_LocalSound(SFX_PLATFORM_STOP, NULL);
+        }
+    }
     return true;
 }
 
 D_CMD(CheatRunScript)
 {
-    EventSequenceArg args[2];
-    int num;
+    if(G_GameState() == GS_MAP)
+    {
+        int scriptNum = atoi(argv[1]);
 
-    if(IS_NETGAME) return false;
-    if(!userGame) return false;
+        if(IS_CLIENT)
+        {
+            AutoStr *cmd = Str_Appendf(AutoStr_NewStd(), "runscript %i", scriptNum);
+            NetCl_CheatRequest(Str_Text(cmd));
+        }
+        else if((IS_NETGAME && !netSvAllowCheats) || gameSkill == SM_NIGHTMARE)
+        {
+            return false;
+        }
+        else
+        {
+            int player = CONSOLEPLAYER;
+            byte scriptArgs[3];
+            player_t *plr;
 
-    num = atoi(argv[1]);
-    args[0] = num / 10 + '0';
-    args[1] = num % 10 + '0';
-    CHEAT(Script3)(CONSOLEPLAYER, args, 2);
+            if(argc == 3)
+            {
+                player = atoi(argv[2]);
+                if(player < 0 || player >= MAXPLAYERS) return false;
+            }
+
+            plr = &players[player];
+            if(!plr->plr->inGame) return false;
+
+            // Dead players can't cheat.
+            if(plr->health <= 0) return false;
+
+            /// @todo Don't do this here.
+            if(scriptNum < 1 || scriptNum > 99) return false;
+
+            scriptArgs[0] = scriptArgs[1] = scriptArgs[2] = 0;
+            if(P_StartACS(scriptNum, 0, scriptArgs, plr->plr->mo, NULL, 0))
+            {
+                AutoStr *cmd = Str_Appendf(AutoStr_NewStd(), "Running script %i", scriptNum);
+                P_SetMessage(plr, LMF_NO_HIDE, Str_Text(cmd));
+            }
+
+            S_LocalSound(SFX_PLATFORM_STOP, NULL);
+        }
+    }
     return true;
 }

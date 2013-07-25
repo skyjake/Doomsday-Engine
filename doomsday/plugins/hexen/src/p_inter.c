@@ -23,12 +23,6 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * p_inter.c:
- */
-
-// HEADER FILES ------------------------------------------------------------
-
 #include <string.h>
 #include <math.h>
 
@@ -41,11 +35,7 @@
 #include "p_map.h"
 #include "p_user.h"
 
-// MACROS ------------------------------------------------------------------
-
 #define BONUSADD                (6)
-
-// TYPES -------------------------------------------------------------------
 
 typedef enum {
     IT_NONE = -1,
@@ -129,12 +119,6 @@ typedef struct iteminfo_s {
     sfxenum_t           pickupSound;
 } iteminfo_t;
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
 static void setDormantItem(mobj_t* mo);
 
 static boolean pickupHealthVial(player_t* plr);
@@ -204,10 +188,6 @@ static boolean pickupBloodScourge1(player_t* plr);
 static boolean pickupBloodScourge2(player_t* plr);
 static boolean pickupBloodScourge3(player_t* plr);
 
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
 int echoMsg = 1;
 
 int TextKeyMessages[] = {
@@ -223,8 +203,6 @@ int TextKeyMessages[] = {
     TXT_TXT_KEY_SWAMP,
     TXT_TXT_KEY_CASTLE
 };
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // Index using itemtype_t - 1;
 static const iteminfo_t items[] = {
@@ -296,8 +274,6 @@ static const iteminfo_t items[] = {
     { IT_WEAPON_BLOODSCOURGE3, IIF_LEAVE_COOP, pickupBloodScourge3, TXT_TXT_BLOODSCOURGE_PIECE, SFX_PICKUP_WEAPON }
 };
 
-// CODE --------------------------------------------------------------------
-
 void P_HideSpecialThing(mobj_t *thing)
 {
     thing->flags &= ~MF_SPECIAL;
@@ -305,45 +281,53 @@ void P_HideSpecialThing(mobj_t *thing)
     P_MobjChangeState(thing, S_HIDESPECIAL1);
 }
 
-/**
- * @return              @c true, if the player accepted the mana,
- *                      @c false, if it was refused (player has MAX_MANA)
- */
-boolean P_GiveMana(player_t *plr, ammotype_t ammo, int num)
+static boolean giveOneAmmo(player_t *plr, ammotype_t ammoType, int numRounds)
 {
-    int                 prevMana;
+    int oldAmmo;
 
-    if(ammo == AT_NOAMMO)
+    DENG_ASSERT(plr != 0);
+    DENG_ASSERT(ammoType >= AT_FIRST && ammoType < NUM_AMMO_TYPES);
+
+    // Giving the special 'unlimited ammo' type always succeeds.
+    if(ammoType == AT_NOAMMO)
+        return true;
+
+    // Already fully stocked?
+    if(plr->ammo[ammoType].owned >= MAX_MANA)
         return false;
 
-    if(ammo < 0 || ammo > NUM_AMMO_TYPES)
-        Con_Error("P_GiveMana: bad type %i", ammo);
+    oldAmmo = plr->ammo[ammoType].owned;
 
-    if(!(plr->ammo[ammo].owned < MAX_MANA))
+    if(numRounds == 0)
+    {
         return false;
-
-    if(gameSkill == SM_BABY || gameSkill == SM_NIGHTMARE)
-    {   // Extra mana in baby mode and nightmare mode.
-        num += num / 2;
     }
-    prevMana = plr->ammo[ammo].owned;
+    else if(numRounds < 0)
+    {
+        // Fully replenish.
+        numRounds = MAX_MANA;
+    }
 
-    // We are about to receive some more ammo. Does the plr want to
-    // change weapon automatically?
-    P_MaybeChangeWeapon(plr, WT_NOCHANGE, ammo, false);
+    // Give extra rounds at easy/nightmare skill levels.
+    if(gameSkill == SM_BABY || gameSkill == SM_NIGHTMARE)
+    {
+        numRounds += numRounds / 2;
+    }
 
-    if(plr->ammo[ammo].owned + num > MAX_MANA)
-        plr->ammo[ammo].owned = MAX_MANA;
-    else
-        plr->ammo[ammo].owned += num;
+    // Given the new ammo the player may want to change weapon automatically.
+    P_MaybeChangeWeapon(plr, WT_NOCHANGE, ammoType, false);
+
+    // Restock the player.
+    plr->ammo[ammoType].owned = MIN_OF(MAX_MANA,
+                                       plr->ammo[ammoType].owned + numRounds);
     plr->update |= PSF_AMMO;
 
-    //// @todo - DJS: This shouldn't be actioned from here.
+    /// @todo fixme: This shouldn't be actioned from here.
     if(plr->class_ == PCLASS_FIGHTER && plr->readyWeapon == WT_SECOND &&
-       ammo == AT_BLUEMANA && prevMana <= 0)
+       ammoType == AT_BLUEMANA && oldAmmo <= 0)
     {
         P_SetPsprite(plr, ps_weapon, S_FAXEREADY_G);
-    } // < FIXME
+    }
 
     // Maybe unhide the HUD?
     ST_HUDUnHide(plr - players, HUE_ON_PICKUP_AMMO);
@@ -351,109 +335,147 @@ boolean P_GiveMana(player_t *plr, ammotype_t ammo, int num)
     return true;
 }
 
-static boolean giveWeaponWrongClassMana(player_t* plr, playerclass_t weaponClass,
-                                        weapontype_t weaponType)
+boolean P_GiveAmmo(player_t *plr, ammotype_t ammoType, int numRounds)
 {
-    if(IS_NETGAME && !deathmatch)
-    {   // Can't pick up wrong-class weapons in coop netplay.
-        return false;
+    int gaveAmmos = 0;
+
+    if(ammoType == NUM_AMMO_TYPES)
+    {
+        // Give all ammos.
+        int i = 0;
+        for(i = 0; i < NUM_AMMO_TYPES; ++i)
+        {
+            gaveAmmos  |= (int)giveOneAmmo(plr, (ammotype_t) i, numRounds) << i;
+        }
+    }
+    else
+    {
+        // Give a single ammo.
+        gaveAmmos  |= (int)giveOneAmmo(plr, ammoType, numRounds) << (int)ammoType;
     }
 
-    if(!P_GiveMana(plr, (weaponType == WT_SECOND)? AT_BLUEMANA : AT_GREENMANA, 25))
-    {   // Didn't need the mana, so don't pick it up.
-        return false;
-    }
-
-    return true;
+    return gaveAmmos  != 0;
 }
 
-static boolean giveWeaponPieceWrongClassMana(player_t* plr, playerclass_t pieceClass)
+static boolean giveOneWeapon(player_t *plr, weapontype_t weaponType,
+                             playerclass_t matchClass)
 {
-    if(IS_NETGAME && !deathmatch)
-    {   // Can't pick up wrong-class weapons in coop netplay.
-        return false;
-    }
+    ammotype_t ammoType = (weaponType == WT_SECOND)? AT_BLUEMANA : AT_GREENMANA;
+    boolean gaveWeapon = false, gaveAmmo = false;
 
-    if(!P_GiveMana(plr, AT_BLUEMANA, 20) + P_GiveMana(plr, AT_GREENMANA, 20))
-    {   // Didn't need the mana, so don't pick it up.
-        return false;
-    }
-
-    return true;
-}
-
-boolean P_GiveWeapon(player_t* plr, playerclass_t matchClass,
-                     weapontype_t weaponType)
-{
-    boolean             gaveMana = false;
+    DENG_ASSERT(plr != 0);
+    DENG_ASSERT(weaponType >= WT_FIRST && weaponType < NUM_WEAPON_TYPES);
 
     if(plr->class_ != matchClass)
-        return giveWeaponWrongClassMana(plr, matchClass, weaponType);
-
-    plr->update |= PSF_WEAPONS;
+    {
+        return P_GiveAmmo(plr, ammoType, 25);
+    }
 
     // Always attempt to give mana unless this a cooperative game and the
     // player already has this weapon piece.
     if(!(IS_NETGAME && !deathmatch && plr->weapons[weaponType].owned))
-        gaveMana = P_GiveMana(plr, (weaponType == WT_SECOND)? AT_BLUEMANA : AT_GREENMANA, 25);
+    {
+        if(P_GiveAmmo(plr, ammoType, 25))
+        {
+            gaveAmmo = true;
+        }
+    }
 
     if(!plr->weapons[weaponType].owned)
     {
+        gaveWeapon = true;
+
         plr->weapons[weaponType].owned = true;
         plr->update |= PSF_OWNED_WEAPONS;
 
+        // Given the new weapon the player may want to change automatically.
+        P_MaybeChangeWeapon(plr, weaponType, AT_NOAMMO, false /*don't force*/);
+
         // Maybe unhide the HUD?
         ST_HUDUnHide(plr - players, HUE_ON_PICKUP_WEAPON);
-
-        // Should we change weapon automatically?
-        P_MaybeChangeWeapon(plr, weaponType, AT_NOAMMO, false);
-    }
-    else if(!gaveMana)
-    {    // Player didn't need the weapon or any mana.
-        return false;
     }
 
-    return true;
+    return (gaveWeapon || gaveAmmo);
 }
 
-boolean P_GiveWeaponPiece(player_t* plr, playerclass_t matchClass,
-                          int pieceValue)
+boolean P_GiveWeapon2(player_t *plr, weapontype_t weaponType, playerclass_t matchClass)
 {
-    static int          pieceValueTrans[] = {
-        0,                      // 0: never
-        WPIECE1 | WPIECE2 | WPIECE3,    // WPIECE1 (1)
-        WPIECE2 | WPIECE3,      // WPIECE2 (2)
-        0,                      // 3: never
-        WPIECE3                 // WPIECE3 (4)
-    };
-    boolean             gaveMana = false;
+    int gaveWeapons = 0;
+
+    if(weaponType == NUM_WEAPON_TYPES)
+    {
+        // Give all weapons.
+        int i = 0;
+        for(i = 0; i < NUM_WEAPON_TYPES; ++i)
+        {
+            gaveWeapons |= (int)giveOneWeapon(plr, (weapontype_t) i, matchClass) << i;
+        }
+    }
+    else
+    {
+        // Give a single weapon.
+        gaveWeapons |= (int)giveOneWeapon(plr, weaponType, matchClass) << (int)weaponType;
+    }
+
+    return gaveWeapons != 0;
+}
+
+boolean P_GiveWeapon(player_t *plr, weapontype_t weaponType)
+{
+    DENG_ASSERT(plr != 0);
+    return P_GiveWeapon2(plr, weaponType, plr->class_);
+}
+
+boolean P_GiveWeaponPiece2(player_t *plr, int pieceValue, playerclass_t matchClass)
+{
+    boolean gaveAmmo = false;
 
     if(plr->class_ != matchClass)
-        return giveWeaponPieceWrongClassMana(plr, matchClass);
+    {
+        // Can't pick up wrong-class weapons in coop netplay.
+        if(IS_NETGAME && !deathmatch)
+            return false;
+
+        return P_GiveAmmo(plr, AT_BLUEMANA, 20) | P_GiveAmmo(plr, AT_GREENMANA, 20);
+    }
 
     // Always attempt to give mana unless this a cooperative game and the
     // player already has this weapon piece.
     if(!((plr->pieces & pieceValue) && IS_NETGAME && !deathmatch))
     {
-        gaveMana = P_GiveMana(plr, AT_BLUEMANA, 20) ||
-                   P_GiveMana(plr, AT_GREENMANA, 20);
+        gaveAmmo = P_GiveAmmo(plr, AT_BLUEMANA, 20) ||
+                   P_GiveAmmo(plr, AT_GREENMANA, 20);
     }
 
     if(plr->pieces & pieceValue)
-    {   // Already has the piece.
+    {
+        // Already has the piece.
         if(IS_NETGAME && !deathmatch) // Cooperative net-game.
             return false;
+
         // Deathmatch or single player.
-        if(!gaveMana) // Didn't need the mana, so don't pick it up.
+
+        if(!gaveAmmo) // Didn't need the mana, so don't pick it up.
             return false;
     }
 
     // Check if fourth weapon assembled.
     if(IS_NETGAME && !deathmatch) // Cooperative net-game.
+    {
+        static int pieceValueTrans[] = {
+            0,                            // 0: never
+            WPIECE1 | WPIECE2 | WPIECE3,  // WPIECE1 (1)
+            WPIECE2 | WPIECE3,            // WPIECE2 (2)
+            0,                            // 3: never
+            WPIECE3                       // WPIECE3 (4)
+        };
         pieceValue = pieceValueTrans[pieceValue];
+    }
+
     if(!(plr->pieces & pieceValue))
     {
         plr->pieces |= pieceValue;
+
         if(plr->pieces == (WPIECE1 | WPIECE2 | WPIECE3))
         {
             plr->weapons[WT_FOURTH].owned = true;
@@ -471,46 +493,53 @@ boolean P_GiveWeaponPiece(player_t* plr, playerclass_t matchClass,
     return true;
 }
 
-/**
- * @returns             @c false, if the body isn't needed at all.
- */
-boolean P_GiveBody(player_t* plr, int num)
+boolean P_GiveWeaponPiece(player_t *plr, int pieceValue)
 {
-    int                 max;
+    DENG_ASSERT(plr != 0);
+    return P_GiveWeaponPiece2(plr, pieceValue, plr->class_);
+}
 
-    if(plr->morphTics)
-        max = MAXMORPHHEALTH;
-    else
-        max = maxHealth;
+static int maxPlayerHealth(boolean morphed)
+{
+    return morphed? MAXMORPHHEALTH : maxHealth;
+}
 
-    if(plr->health >= max)
-    {
+boolean P_GiveHealth(player_t *player, int amount)
+{
+    int healthLimit = maxPlayerHealth(player->morphTics != 0);
+
+    // Already at capacity?
+    if(player->health >= healthLimit)
         return false;
+
+    if(amount < 0)
+    {
+        // Fully replenish.
+        amount = healthLimit;
     }
 
-    plr->health += num;
-    if(plr->health > max)
-    {
-        plr->health = max;
-    }
-    plr->plr->mo->health = plr->health;
-    plr->update |= PSF_HEALTH;
+    player->health =
+        player->plr->mo->health = MIN_OF(player->health + amount, healthLimit);
+    player->update |= PSF_HEALTH;
 
     // Maybe unhide the HUD?
-    ST_HUDUnHide(plr - players, HUE_ON_PICKUP_HEALTH);
+    ST_HUDUnHide(player - players, HUE_ON_PICKUP_HEALTH);
 
     return true;
 }
 
-/**
- * @return              @c true, iff the armor was given.
- */
-boolean P_GiveArmor(player_t* plr, armortype_t type, int points)
+static boolean giveOneArmor(player_t *plr, armortype_t armorType)
 {
-    if(plr->armorPoints[type] >= points)
+    int points;
+
+    DENG_ASSERT(plr != 0);
+    DENG_ASSERT(armorType >= ARMOR_FIRST && armorType < NUMARMOR);
+
+    points = PCLASS_INFO(plr->class_)->armorIncrement[armorType];
+    if(plr->armorPoints[armorType] >= points)
         return false;
 
-    P_PlayerGiveArmorBonus(plr, type, points - plr->armorPoints[type]);
+    P_PlayerGiveArmorBonus(plr, armorType, points - plr->armorPoints[armorType]);
 
     // Maybe unhide the HUD?
     ST_HUDUnHide(plr - players, HUE_ON_PICKUP_ARMOR);
@@ -518,10 +547,29 @@ boolean P_GiveArmor(player_t* plr, armortype_t type, int points)
     return true;
 }
 
-/**
- * @return @c true, iff the armor was given.
- */
-boolean P_GiveArmor2(player_t* plr, armortype_t type, int amount)
+boolean P_GiveArmor(player_t *plr, armortype_t armorType)
+{
+    int gaveArmors = 0;
+
+    if(armorType == NUMARMOR)
+    {
+        // Give all armors.
+        int i = 0;
+        for(i = 0; i < NUMARMOR; ++i)
+        {
+            gaveArmors |= (int)giveOneArmor(plr, (armortype_t) i) << i;
+        }
+    }
+    else
+    {
+        // Give a single armor.
+        gaveArmors |= (int)giveOneArmor(plr, armorType) << (int)armorType;
+    }
+
+    return gaveArmors != 0;
+}
+
+boolean P_GiveArmorAlt(player_t *plr, armortype_t armorType, int amount)
 {
     int hits, totalArmor;
 
@@ -538,7 +586,7 @@ boolean P_GiveArmor2(player_t* plr, armortype_t type, int amount)
         return false;
     }
 
-    plr->armorPoints[type] += hits;
+    plr->armorPoints[armorType] += hits;
     plr->update |= PSF_ARMOR;
 
     // Maybe unhide the HUD?
@@ -547,15 +595,16 @@ boolean P_GiveArmor2(player_t* plr, armortype_t type, int amount)
     return true;
 }
 
-int P_GiveKey(player_t *plr, keytype_t key)
+static boolean giveOneKey(player_t *plr, keytype_t keyType)
 {
-    if(plr->keys & (1 << key))
-    {
-        return false;
-    }
+    DENG_ASSERT(plr != 0);
+    DENG_ASSERT(keyType >= KT_FIRST && keyType < NUM_KEY_TYPES);
 
+    // Already owned?
+    if(plr->keys & (1 << keyType)) return false;
+
+    plr->keys |= 1 << keyType;
     plr->bonusCount += BONUSADD;
-    plr->keys |= 1 << key;
     plr->update |= PSF_KEYS;
 
     // Maybe unhide the HUD?
@@ -564,12 +613,31 @@ int P_GiveKey(player_t *plr, keytype_t key)
     return true;
 }
 
-/**
- * @return              @c true, if power accepted.
- */
+boolean P_GiveKey(player_t *plr, keytype_t keyType)
+{
+    int gaveKeys = 0;
+
+    if(keyType == NUM_KEY_TYPES)
+    {
+        // Give all keys.
+        int i = 0;
+        for(i = 0; i < NUM_KEY_TYPES; ++i)
+        {
+            gaveKeys |= (int)giveOneKey(plr, (keytype_t) i) << i;
+        }
+    }
+    else
+    {
+        // Give a single key.
+        gaveKeys |= (int)giveOneKey(plr, keyType) << (int)keyType;
+    }
+
+    return gaveKeys != 0;
+}
+
 boolean P_GivePower(player_t *plr, powertype_t power)
 {
-    boolean     retval = false;
+    boolean retval = false;
 
     plr->update |= PSF_POWERS;
 
@@ -643,7 +711,7 @@ boolean P_GivePower(player_t *plr, powertype_t power)
     return retval;
 }
 
-boolean P_GiveItem(player_t* plr, inventoryitemtype_t item)
+boolean P_GiveItem(player_t *plr, inventoryitemtype_t item)
 {
     if(plr)
         return P_InventoryGive(plr - players, item, false);
@@ -654,7 +722,7 @@ boolean P_GiveItem(player_t* plr, inventoryitemtype_t item)
 /**
  * Removes the MF_SPECIAL flag and initiates the item pickup animation.
  */
-static void setDormantItem(mobj_t* mo)
+static void setDormantItem(mobj_t *mo)
 {
     mo->flags &= ~MF_SPECIAL;
     if(deathmatch && !(mo->flags2 & MF2_DROPPED))
@@ -783,354 +851,368 @@ static itemtype_t getItemTypeBySprite(spritetype_e sprite)
     return IT_NONE;
 }
 
-static boolean pickupHealthVial(player_t* plr)
+static boolean pickupHealthVial(player_t *plr)
 {
-    return P_GiveBody(plr, 10);
+    return P_GiveHealth(plr, 10);
 }
 
-static boolean pickupMesh(player_t* plr)
+static boolean pickupMesh(player_t *plr)
 {
-    return P_GiveArmor(plr, ARMOR_ARMOR,
-                       PCLASS_INFO(plr->class_)->armorIncrement[ARMOR_ARMOR]);
+    return P_GiveArmor(plr, ARMOR_ARMOR);
 }
 
-static boolean pickupShield(player_t* plr)
+static boolean pickupShield(player_t *plr)
 {
-    return P_GiveArmor(plr, ARMOR_SHIELD,
-                       PCLASS_INFO(plr->class_)->armorIncrement[ARMOR_SHIELD]);
+    return P_GiveArmor(plr, ARMOR_SHIELD);
 }
 
-static boolean pickupHelmet(player_t* plr)
+static boolean pickupHelmet(player_t *plr)
 {
-    return P_GiveArmor(plr, ARMOR_HELMET,
-                       PCLASS_INFO(plr->class_)->armorIncrement[ARMOR_HELMET]);
+    return P_GiveArmor(plr, ARMOR_HELMET);
 }
 
-static boolean pickupAmulet(player_t* plr)
+static boolean pickupAmulet(player_t *plr)
 {
-    return P_GiveArmor(plr, ARMOR_AMULET,
-                        PCLASS_INFO(plr->class_)->armorIncrement[ARMOR_AMULET]);
+    return P_GiveArmor(plr, ARMOR_AMULET);
 }
 
-static boolean pickupSteelKey(player_t* plr)
+static boolean pickupSteelKey(player_t *plr)
 {
     return P_GiveKey(plr, KT_KEY1);
 }
 
-static boolean pickupCaveKey(player_t* plr)
+static boolean pickupCaveKey(player_t *plr)
 {
     return P_GiveKey(plr, KT_KEY2);
 }
 
-static boolean pickupAxeKey(player_t* plr)
+static boolean pickupAxeKey(player_t *plr)
 {
     return P_GiveKey(plr, KT_KEY3);
 }
 
-static boolean pickupFireKey(player_t* plr)
+static boolean pickupFireKey(player_t *plr)
 {
     return P_GiveKey(plr, KT_KEY4);
 }
 
-static boolean pickupEmeraldKey(player_t* plr)
+static boolean pickupEmeraldKey(player_t *plr)
 {
     return P_GiveKey(plr, KT_KEY5);
 }
 
-static boolean pickupDungeonKey(player_t* plr)
+static boolean pickupDungeonKey(player_t *plr)
 {
     return P_GiveKey(plr, KT_KEY6);
 }
 
-static boolean pickupSilverKey(player_t* plr)
+static boolean pickupSilverKey(player_t *plr)
 {
     return P_GiveKey(plr, KT_KEY7);
 }
 
-static boolean pickupRustedKey(player_t* plr)
+static boolean pickupRustedKey(player_t *plr)
 {
     return P_GiveKey(plr, KT_KEY8);
 }
 
-static boolean pickupHornKey(player_t* plr)
+static boolean pickupHornKey(player_t *plr)
 {
     return P_GiveKey(plr, KT_KEY9);
 }
 
-static boolean pickupSwampKey(player_t* plr)
+static boolean pickupSwampKey(player_t *plr)
 {
     return P_GiveKey(plr, KT_KEYA);
 }
 
-static boolean pickupCastleKey(player_t* plr)
+static boolean pickupCastleKey(player_t *plr)
 {
     return P_GiveKey(plr, KT_KEYB);
 }
 
-static boolean pickupQuartzFlask(player_t* plr)
+static boolean pickupQuartzFlask(player_t *plr)
 {
     return P_GiveItem(plr, IIT_HEALTH);
 }
 
-static boolean pickupWings(player_t* plr)
+static boolean pickupWings(player_t *plr)
 {
     return P_GiveItem(plr, IIT_FLY);
 }
 
-static boolean pickupDefender(player_t* plr)
+static boolean pickupDefender(player_t *plr)
 {
     return P_GiveItem(plr, IIT_INVULNERABILITY);
 }
 
-static boolean pickupServant(player_t* plr)
+static boolean pickupServant(player_t *plr)
 {
     return P_GiveItem(plr, IIT_SUMMON);
 }
 
-static boolean pickupPorkalator(player_t* plr)
+static boolean pickupPorkalator(player_t *plr)
 {
     return P_GiveItem(plr, IIT_EGG);
 }
 
-static boolean pickupMysticUrn(player_t* plr)
+static boolean pickupMysticUrn(player_t *plr)
 {
     return P_GiveItem(plr, IIT_SUPERHEALTH);
 }
 
-static boolean pickupAmbitIncant(player_t* plr)
+static boolean pickupAmbitIncant(player_t *plr)
 {
     return P_GiveItem(plr, IIT_HEALINGRADIUS);
 }
 
-static boolean pickupTorch(player_t* plr)
+static boolean pickupTorch(player_t *plr)
 {
     return P_GiveItem(plr, IIT_TORCH);
 }
 
-static boolean pickupChaosDevice(player_t* plr)
+static boolean pickupChaosDevice(player_t *plr)
 {
     return P_GiveItem(plr, IIT_TELEPORT);
 }
 
-static boolean pickupBanishDevice(player_t* plr)
+static boolean pickupBanishDevice(player_t *plr)
 {
     return P_GiveItem(plr, IIT_TELEPORTOTHER);
 }
 
-static boolean pickupFletchette(player_t* plr)
+static boolean pickupFletchette(player_t *plr)
 {
     return P_GiveItem(plr, IIT_POISONBAG);
 }
 
-static boolean pickupBootsOfSpeed(player_t* plr)
+static boolean pickupBootsOfSpeed(player_t *plr)
 {
     return P_GiveItem(plr, IIT_SPEED);
 }
 
-static boolean pickupKraterOfMight(player_t* plr)
+static boolean pickupKraterOfMight(player_t *plr)
 {
     return P_GiveItem(plr, IIT_BOOSTMANA);
 }
 
-static boolean pickupBracers(player_t* plr)
+static boolean pickupBracers(player_t *plr)
 {
     return P_GiveItem(plr, IIT_BOOSTARMOR);
 }
 
-static boolean pickupRepulsion(player_t* plr)
+static boolean pickupRepulsion(player_t *plr)
 {
     return P_GiveItem(plr, IIT_BLASTRADIUS);
 }
 
-static boolean pickupSkull(player_t* plr)
+static boolean pickupSkull(player_t *plr)
 {
     return P_GiveItem(plr, IIT_PUZZSKULL);
 }
 
-static boolean pickupBigGem(player_t* plr)
+static boolean pickupBigGem(player_t *plr)
 {
     return P_GiveItem(plr, IIT_PUZZGEMBIG);
 }
 
-static boolean pickupRedGem(player_t* plr)
+static boolean pickupRedGem(player_t *plr)
 {
     return P_GiveItem(plr, IIT_PUZZGEMRED);
 }
 
-static boolean pickupGreenGem1(player_t* plr)
+static boolean pickupGreenGem1(player_t *plr)
 {
     return P_GiveItem(plr, IIT_PUZZGEMGREEN1);
 }
 
-static boolean pickupGreenGem2(player_t* plr)
+static boolean pickupGreenGem2(player_t *plr)
 {
     return P_GiveItem(plr, IIT_PUZZGEMGREEN2);
 }
 
-static boolean pickupBlueGem1(player_t* plr)
+static boolean pickupBlueGem1(player_t *plr)
 {
     return P_GiveItem(plr, IIT_PUZZGEMBLUE1);
 }
 
-static boolean pickupBlueGem2(player_t* plr)
+static boolean pickupBlueGem2(player_t *plr)
 {
     return P_GiveItem(plr, IIT_PUZZGEMBLUE2);
 }
 
-static boolean pickupBook1(player_t* plr)
+static boolean pickupBook1(player_t *plr)
 {
     return P_GiveItem(plr, IIT_PUZZBOOK1);
 }
 
-static boolean pickupBook2(player_t* plr)
+static boolean pickupBook2(player_t *plr)
 {
     return P_GiveItem(plr, IIT_PUZZBOOK2);
 }
 
-static boolean pickupSkull2(player_t* plr)
+static boolean pickupSkull2(player_t *plr)
 {
     return P_GiveItem(plr, IIT_PUZZSKULL2);
 }
 
-static boolean pickupFWeapon(player_t* plr)
+static boolean pickupFWeapon(player_t *plr)
 {
     return P_GiveItem(plr, IIT_PUZZFWEAPON);
 }
 
-static boolean pickupCWeapon(player_t* plr)
+static boolean pickupCWeapon(player_t *plr)
 {
     return P_GiveItem(plr, IIT_PUZZCWEAPON);
 }
 
-static boolean pickupMWeapon(player_t* plr)
+static boolean pickupMWeapon(player_t *plr)
 {
     return P_GiveItem(plr, IIT_PUZZMWEAPON);
 }
 
-static boolean pickupGear1(player_t* plr)
+static boolean pickupGear1(player_t *plr)
 {
     return P_GiveItem(plr, IIT_PUZZGEAR1);
 }
 
-static boolean pickupGear2(player_t* plr)
+static boolean pickupGear2(player_t *plr)
 {
     return P_GiveItem(plr, IIT_PUZZGEAR2);
 }
 
-static boolean pickupGear3(player_t* plr)
+static boolean pickupGear3(player_t *plr)
 {
     return P_GiveItem(plr, IIT_PUZZGEAR3);
 }
 
-static boolean pickupGear4(player_t* plr)
+static boolean pickupGear4(player_t *plr)
 {
     return P_GiveItem(plr, IIT_PUZZGEAR4);
 }
 
-static boolean pickupBlueMana(player_t* plr)
+static boolean pickupBlueMana(player_t *plr)
 {
-    return P_GiveMana(plr, AT_BLUEMANA, 15);
+    return P_GiveAmmo(plr, AT_BLUEMANA, 15);
 }
 
-static boolean pickupGreenMana(player_t* plr)
+static boolean pickupGreenMana(player_t *plr)
 {
-    return P_GiveMana(plr, AT_GREENMANA, 15);
+    return P_GiveAmmo(plr, AT_GREENMANA, 15);
 }
 
-static boolean pickupCombinedMana(player_t* plr)
+static boolean pickupCombinedMana(player_t *plr)
 {
-    if(!P_GiveMana(plr, AT_BLUEMANA, 20))
+    if(!P_GiveAmmo(plr, AT_BLUEMANA, 20))
     {
-        if(!P_GiveMana(plr, AT_GREENMANA, 20))
+        if(!P_GiveAmmo(plr, AT_GREENMANA, 20))
             return false;
     }
     else
     {
-        P_GiveMana(plr, AT_GREENMANA, 20);
+        P_GiveAmmo(plr, AT_GREENMANA, 20);
     }
 
     return true;
 }
 
-static boolean pickupFrostShards(player_t* plr)
+static boolean pickupWeapon(player_t *plr, weapontype_t weaponType,
+                            playerclass_t matchClass)
 {
-    return P_GiveWeapon(plr, PCLASS_MAGE, WT_SECOND);
+    DENG_ASSERT(plr != 0);
+    DENG_ASSERT(weaponType >= WT_FIRST && weaponType < NUM_WEAPON_TYPES);
+
+    // Depending on the game rules the player should ignore the weapon.
+    if(plr->class_ != matchClass)
+    {
+        // Leave placed weapons forever on net games.
+        if(IS_NETGAME && !deathmatch)
+            return false;
+    }
+
+    // Attempt the pickup.
+    return P_GiveWeapon2(plr, weaponType, matchClass);
 }
 
-static boolean pickupArcOfDeath(player_t* plr)
+static boolean pickupFrostShards(player_t *plr)
 {
-    return P_GiveWeapon(plr, PCLASS_MAGE, WT_THIRD);
+    return pickupWeapon(plr, WT_SECOND, PCLASS_MAGE);
 }
 
-static boolean pickupAxe(player_t* plr)
+static boolean pickupArcOfDeath(player_t *plr)
 {
-    return P_GiveWeapon(plr, PCLASS_FIGHTER, WT_SECOND);
+    return pickupWeapon(plr, WT_THIRD, PCLASS_MAGE);
 }
 
-static boolean pickupHammer(player_t* plr)
+static boolean pickupAxe(player_t *plr)
 {
-    return P_GiveWeapon(plr, PCLASS_FIGHTER, WT_THIRD);
+    return pickupWeapon(plr, WT_SECOND, PCLASS_FIGHTER);
 }
 
-static boolean pickupSerpentStaff(player_t* plr)
+static boolean pickupHammer(player_t *plr)
 {
-    return P_GiveWeapon(plr, PCLASS_CLERIC, WT_SECOND);
+    return pickupWeapon(plr, WT_THIRD, PCLASS_FIGHTER);
 }
 
-static boolean pickupFireStorm(player_t* plr)
+static boolean pickupSerpentStaff(player_t *plr)
 {
-    return P_GiveWeapon(plr, PCLASS_CLERIC, WT_THIRD);
+    return pickupWeapon(plr, WT_SECOND, PCLASS_CLERIC);
 }
 
-static boolean pickupQuietus1(player_t* plr)
+static boolean pickupFireStorm(player_t *plr)
 {
-    return P_GiveWeaponPiece(plr, PCLASS_FIGHTER, WPIECE1);
+    return pickupWeapon(plr, WT_THIRD, PCLASS_CLERIC);
 }
 
-static boolean pickupQuietus2(player_t* plr)
+static boolean pickupQuietus1(player_t *plr)
 {
-    return P_GiveWeaponPiece(plr, PCLASS_FIGHTER, WPIECE2);
+    return P_GiveWeaponPiece2(plr, WPIECE1, PCLASS_FIGHTER);
 }
 
-static boolean pickupQuietus3(player_t* plr)
+static boolean pickupQuietus2(player_t *plr)
 {
-    return P_GiveWeaponPiece(plr, PCLASS_FIGHTER, WPIECE3);
+    return P_GiveWeaponPiece2(plr, WPIECE2, PCLASS_FIGHTER);
 }
 
-static boolean pickupWraithVerge1(player_t* plr)
+static boolean pickupQuietus3(player_t *plr)
 {
-    return P_GiveWeaponPiece(plr, PCLASS_CLERIC, WPIECE1);
+    return P_GiveWeaponPiece2(plr, WPIECE3, PCLASS_FIGHTER);
 }
 
-static boolean pickupWraithVerge2(player_t* plr)
+static boolean pickupWraithVerge1(player_t *plr)
 {
-    return P_GiveWeaponPiece(plr, PCLASS_CLERIC, WPIECE2);
+    return P_GiveWeaponPiece2(plr, WPIECE1, PCLASS_CLERIC);
 }
 
-static boolean pickupWraithVerge3(player_t* plr)
+static boolean pickupWraithVerge2(player_t *plr)
 {
-    return P_GiveWeaponPiece(plr, PCLASS_CLERIC, WPIECE3);
+    return P_GiveWeaponPiece2(plr, WPIECE2, PCLASS_CLERIC);
 }
 
-static boolean pickupBloodScourge1(player_t* plr)
+static boolean pickupWraithVerge3(player_t *plr)
 {
-    return P_GiveWeaponPiece(plr, PCLASS_MAGE, WPIECE1);
+    return P_GiveWeaponPiece2(plr, WPIECE3, PCLASS_CLERIC);
 }
 
-static boolean pickupBloodScourge2(player_t* plr)
+static boolean pickupBloodScourge1(player_t *plr)
 {
-    return P_GiveWeaponPiece(plr, PCLASS_MAGE, WPIECE2);
+    return P_GiveWeaponPiece2(plr, WPIECE1, PCLASS_MAGE);
 }
 
-static boolean pickupBloodScourge3(player_t* plr)
+static boolean pickupBloodScourge2(player_t *plr)
 {
-    return P_GiveWeaponPiece(plr, PCLASS_MAGE, WPIECE3);
+    return P_GiveWeaponPiece2(plr, WPIECE2, PCLASS_MAGE);
 }
 
-static boolean giveItem(player_t* plr, itemtype_t item)
+static boolean pickupBloodScourge3(player_t *plr)
 {
-    const iteminfo_t*   info = &items[item];
-    int                 oldPieces = plr->pieces;
+    return P_GiveWeaponPiece2(plr, WPIECE3, PCLASS_MAGE);
+}
+
+static boolean giveItem(player_t *plr, itemtype_t item)
+{
+    iteminfo_t const *info = &items[item];
+    int oldPieces = plr->pieces;
 
     if(!plr)
         return false;
