@@ -157,7 +157,7 @@ CHEAT_FUNC(IDKFA)
     }
 
     //plr->pendingWeapon = WT_FIRST;
-    P_MaybeChangeWeapon(plr, WT_FIRST, NOAMMO, true /*force*/);
+    P_MaybeChangeWeapon(plr, WT_FIRST, AT_NOAMMO, true /*force*/);
 
     P_SetMessage(plr, LMF_NO_HIDE, TXT_CHEATIDKFA);
     S_LocalSound(SFX_DORCLS, NULL);
