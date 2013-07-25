@@ -22,6 +22,8 @@
 
 #include "ui/widgets/fontlinewrapping.h"
 
+#include <QMap>
+
 using namespace de;
 using namespace de::shell;
 
@@ -36,9 +38,10 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
         WrappedLine line;
         LineInfo info;
         int width; ///< Total width of the line (in pixels).
+        bool isTabbed;
 
         Line(WrappedLine const &ln = WrappedLine(Rangei()), int lineWidth = 0, int leftIndent = 0)
-            : line(ln), width(lineWidth)
+            : line(ln), width(lineWidth), isTabbed(false)
         {
             info.indent = leftIndent;
         }
@@ -105,7 +108,13 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
         return markWidth;
     }
 
-    void appendLine(Rangei const &range, int width = -1)
+    /**
+     * Constructs a wrapped line. Note that indent and tabStop are modified.
+     * @param range
+     * @param width
+     * @return Caller gets ownership of the Line.
+     */
+    Line *makeLine(Rangei const &range, int width = -1)
     {
         if(width < 0)
         {
@@ -157,10 +166,10 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
             }
         }
 
-        lines << line;
-
         // Check for possible indent for following lines.
         indent += rangeIndentMarkWidth(range);
+
+        return line;
     }
 
     bool isAllSpace(Rangei const &range) const
@@ -181,6 +190,31 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
                 return true;
         }
         return false;
+    }
+
+    bool containsTabs(Rangei const &range) const
+    {
+        Font::RichFormat rich = format.subRange(range);
+        Font::RichFormat::Iterator iter(rich);
+        while(iter.hasNext())
+        {
+            iter.next();
+            if(iter.tabStop() > 0) return true;
+        }
+        return false;
+    }
+
+    QList<int> findTabsInUse(Rangei const &range) const
+    {
+        QList<int> stops;
+        Font::RichFormat rich = format.subRange(range);
+        Font::RichFormat::Iterator iter(rich);
+        while(iter.hasNext())
+        {
+            iter.next();
+            if(iter.tabStop() > 0) stops << iter.tabStop();
+        }
+        return stops;
     }
 
     int findMaxWrapWithStep(int const stepSize, int const begin, int end,
@@ -232,6 +266,104 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
         }
         return false;
     }
+
+    Rangei untilNextNewline(int start) const
+    {
+        int pos = start;
+        while(pos < text.size())
+        {
+            // The newline is omitted from the range.
+            if(text[pos] == '\n') break;
+
+            ++pos;
+        }
+        return Rangei(start, pos);
+    }
+
+    /**
+     * Wraps the range onto one or more lines.
+     *
+     * @param rangeToWrap    Range in the content string.
+     * @param maxWidth       Maximum width of a line.
+     * @param initialIndent
+     * @param initialTabStop
+     *
+     * @return Produced wrapped lines. Caller gets ownership.
+     */
+    Lines wrapRange(Rangei const &rangeToWrap, int maxWidth, int initialIndent = 0, int initialTabStop = 0)
+    {
+        int const MIN_LINE_WIDTH = 120;
+
+        indent    = initialIndent;
+        tabStop   = initialTabStop;
+        int begin = rangeToWrap.start;
+
+        Lines wrappedLines;
+        forever
+        {
+            // How much width is available, taking indentation into account?
+            if(maxWidth - indent < MIN_LINE_WIDTH)
+            {
+                // There is no room for this indent...
+                indent = de::max(0, maxWidth - MIN_LINE_WIDTH);
+            }
+            int availWidth = maxWidth - indent;
+
+            // Range for the remainder of the text.
+            Rangei const range(begin, rangeToWrap.end);
+
+            // Quick check: does the complete remainder fit?
+            if(!containsNewline(range))
+            {
+                int visWidth = rangeAdvanceWidth(range);
+                if(visWidth <= availWidth)
+                {
+                    wrappedLines << makeLine(range, visWidth);
+                    break;
+                }
+            }
+
+            // Newlines always cause a wrap.
+            int wrapPosMax;
+            int end = findMaxWrap(begin, availWidth, wrapPosMax);
+            if(end <= begin) break;
+
+            if(text.at(end) == NEWLINE)
+            {
+                // The newline will be omitted from the wrapped lines.
+                wrappedLines << makeLine(Rangei(begin, end));
+                begin = end + 1;
+            }
+            else
+            {
+                // Rewind to find a good (whitespace) break point.
+                while(!isWrappable(end))
+                {
+                    if(--end == begin)
+                    {
+                        // Ran out of non-space chars, force a break.
+                        end = wrapPosMax;
+                        break;
+                    }
+                }
+
+                DENG2_ASSERT(end > begin);
+
+                // If there is only whitespace remaining on the line,
+                // just use the max wrap -- blank lines are not pretty.
+                if(isAllSpace(Rangei(begin, end)))
+                {
+                    end = wrapPosMax;
+                }
+
+                while(end < text.size() && text.at(end).isSpace()) ++end;
+                wrappedLines << makeLine(Rangei(begin, end));
+                begin = end;
+            }
+        }
+
+        return wrappedLines;
+    }
 };
 
 FontLineWrapping::FontLineWrapping() : d(new Instance)
@@ -277,8 +409,6 @@ void FontLineWrapping::wrapTextToWidth(String const &text, Font::RichFormat cons
 
     clear();
 
-    int const MIN_LINE_WIDTH = 120;
-
     if(maxWidth <= 1 || !d->font) return;
 
     // This is the text that we will be wrapping.
@@ -286,66 +416,55 @@ void FontLineWrapping::wrapTextToWidth(String const &text, Font::RichFormat cons
     d->text     = newText;
     d->format   = format;
 
-    int begin = 0;
-    forever
+    // When tabs are used, we must first determine the maximum width of each
+    // tab stop.
+    if(d->containsTabs(Rangei(0, text.size())))
     {
-        // How much width is available, taking indentation into account?
-        if(maxWidth - d->indent < MIN_LINE_WIDTH)
-        {
-            // There is no room for this indent...
-            d->indent = de::max(0, maxWidth - MIN_LINE_WIDTH);
-        }
-        int availWidth = maxWidth - d->indent;
+        d->indent = 0;
+        d->tabStop = 0;
 
-        // Quick check: does the remainder fit?
-        Rangei const range(begin, text.size());
-        if(!d->containsNewline(range))
+        int pos = 0;
+        while(pos < text.size())
         {
-            int visWidth = d->rangeAdvanceWidth(range);
-            if(visWidth <= availWidth)
+            Rangei const wholeLine = d->untilNextNewline(pos);
+            d->lines << d->makeLine(wholeLine);
+            pos = wholeLine.end + 1;
+            qDebug() << "wrapped tab line:" << wholeLine.asText();
+        }
+
+        // Determine the actual positions of each tab stop according to segment widths.
+        QMap<int, int> stopMaxWidths; // stop => maxWidth
+
+        for(int i = 0; i < d->lines.size(); ++i)
+        {
+            Instance::Line *line = d->lines[i];
+            for(int k = 0; k < line->info.segs.size(); ++k)
             {
-                d->appendLine(range, visWidth);
-                break;
+                LineInfo::Segment const &seg = line->info.segs[k];
+                stopMaxWidths[seg.tabStop] = de::max(stopMaxWidths[seg.tabStop], seg.width);
             }
         }
 
-        // Newlines always cause a wrap.
-        int wrapPosMax;
-        int end = d->findMaxWrap(begin, availWidth, wrapPosMax);
-        if(end <= begin) break;
-
-        if(text.at(end) == NEWLINE)
+        // Now we can wrap the lines that area too long.
+        for(int i = 0; i < d->lines.size(); ++i)
         {
-            // The newline will be omitted from the wrapped lines.
-            d->appendLine(Rangei(begin, end));
-            begin = end + 1;
-        }
-        else
-        {
-            // Rewind to find a good (whitespace) break point.
-            while(!d->isWrappable(end))
+            Instance::Line *line = d->lines[i];
+            int lineWidth = 0;
+            for(int k = 0; k < line->info.segs.size(); ++k)
             {
-                if(--end == begin)
+                lineWidth += stopMaxWidths[line->info.segs[k].tabStop];
+                if(lineWidth > maxWidth)
                 {
-                    // Ran out of non-space chars, force a break.
-                    end = wrapPosMax;
-                    break;
+                    // Wrap the line starting from this segment.
+
                 }
             }
-
-            DENG2_ASSERT(end > begin);
-
-            // If there is only whitespace remaining on the line,
-            // just use the max wrap -- blank lines are not pretty.
-            if(d->isAllSpace(Rangei(begin, end)))
-            {
-                end = wrapPosMax;
-            }
-
-            while(end < text.size() && text.at(end).isSpace()) ++end;
-            d->appendLine(Rangei(begin, end));
-            begin = end;
         }
+    }
+    else
+    {
+        // Doesn't have tabs -- just wrap it without any extra processing.
+        d->lines = d->wrapRange(Rangei(0, text.size()), maxWidth);
     }
 
     if(!d->lines.isEmpty())
@@ -354,7 +473,7 @@ void FontLineWrapping::wrapTextToWidth(String const &text, Font::RichFormat cons
         d->lines.last()->line.isFinal = true;
     }
 
-#if 0
+#if 1
     qDebug() << "Wrapped:" << d->text;
     foreach(Instance::Line const *ln, d->lines)
     {

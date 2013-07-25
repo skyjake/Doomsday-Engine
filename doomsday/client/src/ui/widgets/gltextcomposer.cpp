@@ -302,7 +302,7 @@ void GLTextComposer::makeVertices(Vertices &triStrip,
         }
     }
 
-    // Align each tab stop with other the matching stops on the other lines.
+    // Align each tab stop with other matching stops on the other lines.
     for(int tab = 1; tab <= highestTab; ++tab)
     {
         int maxRight = 0;
