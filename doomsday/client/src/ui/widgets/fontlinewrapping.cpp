@@ -33,15 +33,17 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
 {
     Font const *font;
 
+    /**
+     * A wrapped line of text.
+     */
     struct Line
     {
         WrappedLine line;
         LineInfo info;
         int width; ///< Total width of the line (in pixels).
-        bool isTabbed;
 
         Line(WrappedLine const &ln = WrappedLine(Rangei()), int lineWidth = 0, int leftIndent = 0)
-            : line(ln), width(lineWidth), isTabbed(false)
+            : line(ln), width(lineWidth)
         {
             info.indent = leftIndent;
         }
@@ -109,10 +111,14 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
     }
 
     /**
-     * Constructs a wrapped line. Note that indent and tabStop are modified.
-     * @param range
-     * @param width
-     * @return Caller gets ownership of the Line.
+     * Constructs a wrapped line. Note that indent and tabStop are modified;
+     * this is expected to be called in the right order as lines are being
+     * processed.
+     *
+     * @param range   Range in the content for the line.
+     * @param width   Width of the line in pixel. If -1, will be calculated.
+     *
+     * @return Line instance. Caller gets ownership.
      */
     Line *makeLine(Rangei const &range, int width = -1)
     {
@@ -130,6 +136,7 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
         Font::RichFormat rich = format.subRange(range);
         Font::RichFormat::Iterator iter(rich);
 
+        // Divide the line into segments based on tab stops.
         while(iter.hasNext())
         {
             iter.next();
@@ -159,10 +166,7 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
         {
             for(int i = 0; i < line->info.segs.size(); ++i)
             {
-                line->info.segs[i].width = (
-                            i < line->info.segs.size() - 1?
-                                rangeAdvanceWidth(line->info.segs[i].range) :
-                                rangeVisibleWidth(line->info.segs[i].range));
+                line->info.segs[i].width = rangeAdvanceWidth(line->info.segs[i].range);
             }
         }
 
@@ -202,19 +206,6 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
             if(iter.tabStop() > 0) return true;
         }
         return false;
-    }
-
-    QList<int> findTabsInUse(Rangei const &range) const
-    {
-        QList<int> stops;
-        Font::RichFormat rich = format.subRange(range);
-        Font::RichFormat::Iterator iter(rich);
-        while(iter.hasNext())
-        {
-            iter.next();
-            if(iter.tabStop() > 0) stops << iter.tabStop();
-        }
-        return stops;
     }
 
     int findMaxWrapWithStep(int const stepSize, int const begin, int end,
@@ -283,31 +274,47 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
     /**
      * Wraps the range onto one or more lines.
      *
-     * @param rangeToWrap    Range in the content string.
-     * @param maxWidth       Maximum width of a line.
-     * @param initialIndent
-     * @param initialTabStop
+     * @param rangeToWrap         Range in the content string.
+     * @param maxWidth            Maximum width of a line.
+     * @param subsequentMaxWidth  Maximum width of lines beyond the first one.
+     *                            Note: if larger than zero, the line is considered
+     *                            to contain tabbed segments.
+     * @param initialIndent       Initial value for the indent.
      *
-     * @return Produced wrapped lines. Caller gets ownership.
+     * @return The produced wrapped lines. Caller gets ownership.
      */
-    Lines wrapRange(Rangei const &rangeToWrap, int maxWidth, int initialIndent = 0, int initialTabStop = 0)
+    Lines wrapRange(Rangei const &rangeToWrap, int maxWidth, int subsequentMaxWidth = 0,
+                    int initialIndent = 0)
     {
         int const MIN_LINE_WIDTH = 120;
+        bool const isTabbed = (subsequentMaxWidth > 0);
 
         indent    = initialIndent;
-        tabStop   = initialTabStop;
+        tabStop   = 0;
         int begin = rangeToWrap.start;
 
         Lines wrappedLines;
         forever
         {
+            int mw = maxWidth;
+            if(!wrappedLines.isEmpty() && subsequentMaxWidth > 0) mw = subsequentMaxWidth;
+
             // How much width is available, taking indentation into account?
-            if(maxWidth - indent < MIN_LINE_WIDTH)
+            if(mw - indent < MIN_LINE_WIDTH)
             {
-                // There is no room for this indent...
-                indent = de::max(0, maxWidth - MIN_LINE_WIDTH);
+                if(!isTabbed)
+                {
+                    // Regular non-tabbed line -- there is no room for this indent,
+                    // so reduce it.
+                    indent = de::max(0, mw - MIN_LINE_WIDTH);
+                }
+                else
+                {
+                    // We can't alter indentation with tabs, so just extend the line instead.
+                    mw = MIN_LINE_WIDTH + indent;
+                }
             }
-            int availWidth = maxWidth - indent;
+            int availWidth = mw - indent;
 
             // Range for the remainder of the text.
             Rangei const range(begin, rangeToWrap.end);
@@ -416,8 +423,7 @@ void FontLineWrapping::wrapTextToWidth(String const &text, Font::RichFormat cons
     d->text     = newText;
     d->format   = format;
 
-    // When tabs are used, we must first determine the maximum width of each
-    // tab stop.
+    // When tabs are used, we must first determine the maximum width of each tab stop.
     if(d->containsTabs(Rangei(0, text.size())))
     {
         d->indent = 0;
@@ -429,7 +435,6 @@ void FontLineWrapping::wrapTextToWidth(String const &text, Font::RichFormat cons
             Rangei const wholeLine = d->untilNextNewline(pos);
             d->lines << d->makeLine(wholeLine);
             pos = wholeLine.end + 1;
-            qDebug() << "wrapped tab line:" << wholeLine.asText();
         }
 
         // Determine the actual positions of each tab stop according to segment widths.
@@ -441,7 +446,12 @@ void FontLineWrapping::wrapTextToWidth(String const &text, Font::RichFormat cons
             for(int k = 0; k < line->info.segs.size(); ++k)
             {
                 LineInfo::Segment const &seg = line->info.segs[k];
-                stopMaxWidths[seg.tabStop] = de::max(stopMaxWidths[seg.tabStop], seg.width);
+                int sw = seg.width;
+
+                // Include overall indent into the first segment width.
+                if(!k) sw += line->info.indent;
+
+                stopMaxWidths[seg.tabStop] = de::max(stopMaxWidths[seg.tabStop], sw);
             }
         }
 
@@ -449,15 +459,38 @@ void FontLineWrapping::wrapTextToWidth(String const &text, Font::RichFormat cons
         for(int i = 0; i < d->lines.size(); ++i)
         {
             Instance::Line *line = d->lines[i];
-            int lineWidth = 0;
+            int curLeft = 0;
+            int prevRight = 0;
             for(int k = 0; k < line->info.segs.size(); ++k)
             {
-                lineWidth += stopMaxWidths[line->info.segs[k].tabStop];
-                if(lineWidth > maxWidth)
+                LineInfo::Segment const &seg = line->info.segs[k];
+                int const tab = seg.tabStop;
+                int const stopWidth = stopMaxWidths[tab];
+
+                if(curLeft + stopWidth >= maxWidth)
                 {
                     // Wrap the line starting from this segment.
+                    Instance::Lines wrapped = d->wrapRange(line->line.range,
+                                                           maxWidth - (curLeft - prevRight),
+                                                           maxWidth - curLeft + line->info.indent,
+                                                           line->info.indent);
 
+                    // Replace the original line with these wrapped lines.
+                    delete d->lines.takeAt(i);
+                    foreach(Instance::Line *wl, wrapped)
+                    {
+                        d->lines.insert(i++, wl);
+                    }
+                    --i;
+                    break; // Proceed to next line.
                 }
+
+                // Update the coordinate of the previous segment's right edge.
+                prevRight = curLeft + seg.width;
+                if(!k) prevRight += line->info.indent;
+
+                // Move on to the next segment's left edge.
+                curLeft += stopWidth;
             }
         }
     }
@@ -473,7 +506,7 @@ void FontLineWrapping::wrapTextToWidth(String const &text, Font::RichFormat cons
         d->lines.last()->line.isFinal = true;
     }
 
-#if 1
+#if 0
     qDebug() << "Wrapped:" << d->text;
     foreach(Instance::Line const *ln, d->lines)
     {
@@ -482,7 +515,7 @@ void FontLineWrapping::wrapTextToWidth(String const &text, Font::RichFormat cons
         foreach(LineInfo::Segment const &s, ln->info.segs)
         {
             qDebug() << "- seg" << s.range.asText() << d->text.substr(s.range)
-                     << "tab:" << s.tabStop;
+                     << "tab:" << s.tabStop << "w:" << s.width;
         }
     }
 #endif
