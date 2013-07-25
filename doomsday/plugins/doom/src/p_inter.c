@@ -164,7 +164,7 @@ static boolean giveOneWeapon(player_t *plr, weapontype_t weaponType, boolean dro
         plr->weapons[weaponType].owned = true;
         plr->update |= PSF_OWNED_WEAPONS;
 
-        // Animated a pickup bonus flash?
+        // Animate a pickup bonus flash?
         if(IS_NETGAME && deathmatch != 2 && !dropped)
         {
             plr->bonusCount += BONUSADD;
@@ -365,9 +365,16 @@ boolean P_TakePower(player_t *player, powertype_t powerType)
     DENG_ASSERT(player != 0);
     DENG_ASSERT(powerType >= PT_FIRST && powerType < NUM_POWER_TYPES);
 
-    player->update |= PSF_POWERS;
-    if(player->powers[PT_FLIGHT])
+    if(!player->powers[powerType])
+        return false; // Dont got it.
+
+    switch(powerType)
     {
+    case PT_ALLMAP:
+        ST_RevealAutomap(player - players, false);
+        break;
+
+    case PT_FLIGHT: {
         mobj_t *plrmo = player->plr->mo;
 
         if(plrmo->origin[VZ] != plrmo->floorZ && cfg.lookSpring)
@@ -377,17 +384,14 @@ boolean P_TakePower(player_t *player, powertype_t powerType)
 
         plrmo->flags2 &= ~MF2_FLY;
         plrmo->flags &= ~MF_NOGRAVITY;
-        player->powers[powerType] = 0;
-        return true;
+        break; }
+
+    default: break;
     }
 
-    if(!player->powers[powerType])
-        return false; // Dont got it.
-
-    if(powerType == PT_ALLMAP)
-        ST_RevealAutomap(player - players, false);
-
     player->powers[powerType] = 0;
+    player->update |= PSF_POWERS;
+
     return true;
 }
 

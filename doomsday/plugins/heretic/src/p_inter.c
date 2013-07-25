@@ -149,7 +149,7 @@ static boolean giveOneWeapon(player_t *plr, weapontype_t weaponType)
         plr->weapons[weaponType].owned = true;
         plr->update |= PSF_OWNED_WEAPONS;
 
-        // Animated a pickup bonus flash?
+        // Animate a pickup bonus flash?
         if(IS_NETGAME && !deathmatch)
         {
             plr->bonusCount += BONUSADD;
