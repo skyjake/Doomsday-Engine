@@ -1325,11 +1325,10 @@ void NetSv_ExecuteCheat(int player, char const *command)
     if(!strnicmp(command, "god", 3)
        || !strnicmp(command, "noclip", 6)
        || !strnicmp(command, "give", 4)
-#ifdef __JHERETIC__
        || !strnicmp(command, "kill", 4)
+#ifdef __JHERETIC__
        || !strnicmp(command, "chicken", 7)
 #elif __JHEXEN__
-       || !strnicmp(command, "kill", 4)
        || !strnicmp(command, "class", 5)
        || !strnicmp(command, "pig", 3)
        || !strnicmp(command, "runscript", 9)
