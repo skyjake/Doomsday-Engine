@@ -4767,7 +4767,8 @@ State {
 State {
   ID = "FIREBOMB6";
   Sprite = "XPL1";
-  Frame = 32768;
+  Flags = fullbright;
+  Frame = 0;
   Tics = 4;
   Action = "A_Explode";
   Next state = "FIREBOMB7";
@@ -4776,7 +4777,8 @@ State {
 State {
   ID = "FIREBOMB7";
   Sprite = "XPL1";
-  Frame = 32769;
+  Flags = fullbright;
+  Frame = 1;
   Tics = 4;
   Next state = "FIREBOMB8";
 }
@@ -4784,7 +4786,8 @@ State {
 State {
   ID = "FIREBOMB8";
   Sprite = "XPL1";
-  Frame = 32770;
+  Flags = fullbright;
+  Frame = 2;
   Tics = 4;
   Next state = "FIREBOMB9";
 }
@@ -4792,7 +4795,8 @@ State {
 State {
   ID = "FIREBOMB9";
   Sprite = "XPL1";
-  Frame = 32771;
+  Flags = fullbright;
+  Frame = 3;
   Tics = 4;
   Next state = "FIREBOMB10";
 }
@@ -4800,7 +4804,8 @@ State {
 State {
   ID = "FIREBOMB10";
   Sprite = "XPL1";
-  Frame = 32772;
+  Flags = fullbright | noautolight;
+  Frame = 4;
   Tics = 4;
   Next state = "FIREBOMB11";
 }
@@ -4808,7 +4813,8 @@ State {
 State {
   ID = "FIREBOMB11";
   Sprite = "XPL1";
-  Frame = 32773;
+  Flags = fullbright | noautolight;
+  Frame = 5;
   Tics = 4;
   Next state = "NULL";
 }

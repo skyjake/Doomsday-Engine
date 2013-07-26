@@ -1913,32 +1913,27 @@ void C_DECL A_NoBlocking(mobj_t* actor)
     }
 }
 
-void C_DECL A_Explode(mobj_t* actor)
+void C_DECL A_Explode(mobj_t *actor)
 {
-    int                 damage;
+    int damage = 128;
 
-    damage = 128;
     switch(actor->type)
     {
-    case MT_FIREBOMB:
-        // Time Bombs.
+    case MT_FIREBOMB: // Time Bomb
         actor->origin[VZ] += 32;
         actor->flags &= ~MF_SHADOW;
-        actor->flags |= MF_BRIGHTSHADOW | MF_VIEWALIGN;
+        actor->flags |= /*MF_BRIGHTSHADOW |*/ MF_VIEWALIGN;
         break;
 
-    case MT_MNTRFX2:
-        // Minotaur floor fire
+    case MT_MNTRFX2: // Minotaur floor fire
         damage = 24;
         break;
 
-    case MT_SOR2FX1:
-        // D'Sparil missile
+    case MT_SOR2FX1: // D'Sparil missile
         damage = 80 + (P_Random() & 31);
         break;
 
-    default:
-        break;
+    default: break;
     }
 
     P_RadiusAttack(actor, actor->target, damage, damage - 1);
