@@ -118,9 +118,6 @@ void            P_FireWeapon(player_t* player);
 
 boolean         P_UndoPlayerMorph(player_t* player);
 
-extern mobjtype_t puffType;
-extern mobj_t* missileMobj;
-
 boolean     P_MobjChangeState(mobj_t* mo, statenum_t state);
 boolean     P_SetMobjStateNF(mobj_t* mo, statenum_t state);
 void        P_ThrustMobj(mobj_t* mo, angle_t angle, coord_t move);
@@ -141,5 +138,9 @@ void            Draw_EndZoom(void);
 
 #define LOOKDIR2DEG(x) ((x) * 85.0/110.0)
 #define LOOKDIR2RAD(x) (LOOKDIR2DEG(x)/180*PI)
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif
