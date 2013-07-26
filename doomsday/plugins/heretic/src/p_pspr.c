@@ -1870,10 +1870,10 @@ void P_MovePsprites(player_t *player)
     player->pSprites[ps_flash].pos[VY] = player->pSprites[ps_weapon].pos[VY];
 }
 
-void C_DECL A_FireBomb(mobj_t* mo)
+void C_DECL A_FireBomb(mobj_t *mo)
 {
-    uint            an;
-    mobj_t*         bomb;
+    uint an;
+    mobj_t *bomb;
 
     if(!mo->player)
         return;
@@ -1881,10 +1881,10 @@ void C_DECL A_FireBomb(mobj_t* mo)
     an = mo->angle >> ANGLETOFINESHIFT;
 
     if((bomb = P_SpawnMobjXYZ(MT_FIREBOMB,
-                             mo->origin[VX] + 24 * FIX2FLT(finecosine[an]),
-                             mo->origin[VY] + 24 * FIX2FLT(finesine[an]),
-                             mo->origin[VZ] - mo->floorClip + 15,
-                             mo->angle, 0)))
+                              mo->origin[VX] + 24 * FIX2FLT(finecosine[an]),
+                              mo->origin[VY] + 24 * FIX2FLT(finesine[an]),
+                              mo->origin[VZ] - mo->floorClip,
+                              mo->angle, 0)))
     {
         bomb->target = mo;
     }
