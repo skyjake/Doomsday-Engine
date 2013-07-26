@@ -477,19 +477,19 @@ boolean Sys_GLInitialize(void)
             Con_Message("Sys_GLInitialize: Failed to determine OpenGL version.");
             Con_Message("  OpenGL version: %s", glGetString(GL_VERSION));
         }
-        else if(version < 1.4)
+        else if(version < 2.0)
         {
             if(!CommandLine_Exists("-noglcheck"))
             {
                 Sys_CriticalMessagef("OpenGL implementation is too old!\n"
                                      "  Driver version: %s\n"
-                                     "  The minimum supported version is 1.4",
+                                     "  The minimum supported version is 2.0",
                                      glGetString(GL_VERSION));
                 return false;
             }
             else
             {
-                Con_Message("Warning: Sys_GLInitialize: OpenGL implementation may be too old (1.4+ required).");
+                Con_Message("Warning: Sys_GLInitialize: OpenGL implementation may be too old (2.0+ required).");
                 Con_Message("  OpenGL version: %s", glGetString(GL_VERSION));
             }
         }
