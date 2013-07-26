@@ -2230,9 +2230,15 @@ D_CMD(Help)
 #endif
 */
 
-    /// @todo These belong in libgui ddkey.h.
+    /// @todo These belong in libgui (e.g., ddkey.h).
 #ifdef MACOSX
 #  define CONTROL_KEY   "\u2318"
+#  define SHIFT_KEY     "\u21e7"
+#  define UP_ARROW      "\u2191"
+#  define DOWN_ARROW    "\u2193"
+#  define UP_DOWN_ARROW UP_ARROW " / " DOWN_ARROW
+#elif UNIX
+#  define CONTROL_KEY   "Ctrl-"
 #  define SHIFT_KEY     "\u21e7"
 #  define UP_ARROW      "\u2191"
 #  define DOWN_ARROW    "\u2193"
