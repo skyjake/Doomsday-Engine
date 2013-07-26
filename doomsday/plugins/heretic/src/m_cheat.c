@@ -52,7 +52,6 @@ CHEAT_FUNC(InvItem2);
 CHEAT_FUNC(InvItem3);
 CHEAT_FUNC(IDKFA);
 CHEAT_FUNC(IDDQD);
-CHEAT_FUNC(NoOp); // Play a sound but otherwise ignore.
 CHEAT_FUNC(Reveal);
 
 void G_RegisterCheats(void)
@@ -66,14 +65,14 @@ void G_RegisterCheats(void)
     ADDCHEAT("idkfa",               IDKFA);
     ADDCHEATCMD("kitty",            "noclip %p");
     ADDCHEATCMD("massacre",         "kill");
-    ADDCHEAT("noise",               NoOp);
+    ADDCHEATCMD("noise",            "playsound dorcls"); // ignored, play sound
     ADDCHEATCMD("ponce",            "give h %p");
     ADDCHEATCMD("quicken",          "god %p");
     ADDCHEATCMD("rambo",            "give wpar2 %p");
     ADDCHEAT("ravmap",              Reveal);
     ADDCHEATCMD("shazam",           "give t %p");
     ADDCHEATCMD("skel",             "give k %p");
-    ADDCHEAT("ticker",              NoOp);
+    ADDCHEATCMD("ticker",           "playsound dorcls"); // ignored, play sound
 }
 
 CHEAT_FUNC(InvItem)
@@ -199,15 +198,6 @@ CHEAT_FUNC(Reveal)
     {
         ST_CycleAutomapCheatLevel(player);
     }
-    return true;
-}
-
-CHEAT_FUNC(NoOp)
-{
-    DENG_UNUSED(args);
-    DENG_UNUSED(player);
-
-    S_LocalSound(SFX_DORCLS, NULL);
     return true;
 }
 
@@ -432,7 +422,7 @@ D_CMD(CheatGive)
 
     if(IS_CLIENT)
     {
-        if(argc != 2) return false;
+        if(argc < 2) return false;
 
         sprintf(buf, "give %s", argv[1]);
         NetCl_CheatRequest(buf);

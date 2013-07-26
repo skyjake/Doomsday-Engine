@@ -1322,12 +1322,16 @@ void NetSv_ExecuteCheat(int player, char const *command)
     }
 
     /// @todo Can't we use the multipurpose cheat command here?
-    if(!strnicmp(command, "god",    3)
+    if(!strnicmp(command, "god", 3)
        || !strnicmp(command, "noclip", 6)
-       || !strnicmp(command, "give",   4)
+       || !strnicmp(command, "give", 4)
+       || !strnicmp(command, "kill", 4)
 #ifdef __JHERETIC__
-       || !strnicmp(command, "kill",   4)
        || !strnicmp(command, "chicken", 7)
+#elif __JHEXEN__
+       || !strnicmp(command, "class", 5)
+       || !strnicmp(command, "pig", 3)
+       || !strnicmp(command, "runscript", 9)
 #endif
        )
     {

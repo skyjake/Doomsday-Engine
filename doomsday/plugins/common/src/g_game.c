@@ -186,8 +186,6 @@ static void G_InitNewGame(void);
 
 game_config_t cfg; // The global cfg.
 
-int debugSound; // Debug flag for displaying sound info.
-
 skillmode_t dSkill;
 
 skillmode_t gameSkill;
