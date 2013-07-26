@@ -458,7 +458,6 @@ void Sv_RegisterSide(dt_side_t *reg, int number)
         reg->top.material    = side->top().materialPtr();
         reg->middle.material = side->middle().materialPtr();
         reg->bottom.material = side->bottom().materialPtr();
-        reg->lineFlags       = side->line().flags() & 0xff;
 
         for(int c = 0; c < 3; ++c)
         {
@@ -466,11 +465,13 @@ void Sv_RegisterSide(dt_side_t *reg, int number)
             reg->bottom.rgba[c] = side->bottom().tintColorComponent(c);
             reg->top.rgba[c]    = side->top().tintColorComponent(c);
         }
+
         // Only middle sections support blending.
         reg->middle.rgba[CA]  = side->middle().opacity();
         reg->middle.blendMode = side->middle().blendMode();
     }
 
+    reg->lineFlags = side->line().flags() & 0xff;
     reg->flags = side->flags() & 0xff;
 }
 
@@ -773,17 +774,7 @@ boolean Sv_RegisterCompareSide(cregister_t *reg, uint number,
             if(doUpdate)
                 r->bottom.material = side->bottom().materialPtr();
         }
-    }
 
-    if(r->lineFlags != lineFlags)
-    {
-        df |= SIDF_LINE_FLAGS;
-        if(doUpdate)
-            r->lineFlags = lineFlags;
-    }
-
-    if(side->hasSections())
-    {
         if(r->top.rgba[0] != side->top().tintRed())
         {
             df |= SIDF_TOP_COLOR_RED;
@@ -860,6 +851,13 @@ boolean Sv_RegisterCompareSide(cregister_t *reg, uint number,
             if(doUpdate)
                 r->middle.blendMode = side->middle().blendMode();
         }
+    }
+
+    if(r->lineFlags != lineFlags)
+    {
+        df |= SIDF_LINE_FLAGS;
+        if(doUpdate)
+            r->lineFlags = lineFlags;
     }
 
     if(r->flags != sideFlags)
