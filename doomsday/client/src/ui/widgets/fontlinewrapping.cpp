@@ -238,6 +238,19 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
         return bestEnd;
     }
 
+    /**
+     * Starting at @a begin, find the furthest position that still fits inside
+     * @a availableWidth.
+     *
+     * @param begin           Start position of the text line.
+     * @param availableWidth  Available width in pixels for the line.
+     * @param wrapPosMax      Default breaking position for the line if no
+     *                        earlier suitable positions (e.g., whitespace)
+     *                        is found. However, at least @a begin + 1.
+     *
+     * @return Furthest position that fits in the width. May be equal to @a
+     * begin, if the width is very narrow.
+     */
     int findMaxWrap(int const begin, int const availableWidth, int &wrapPosMax)
     {
         // Crude search.
@@ -429,6 +442,7 @@ void FontLineWrapping::wrapTextToWidth(String const &text, Font::RichFormat cons
         d->indent = 0;
         d->tabStop = 0;
 
+        // Divide the content into lines by newlines.
         int pos = 0;
         while(pos < text.size())
         {
@@ -470,6 +484,15 @@ void FontLineWrapping::wrapTextToWidth(String const &text, Font::RichFormat cons
                 if(curLeft + stopWidth >= maxWidth)
                 {
                     // Wrap the line starting from this segment.
+
+                    // The maximum width of the first line is reduced by the
+                    // added amount of tab space: the difference between the
+                    // left edge of the current segment and the right edge of
+                    // the previous one. The maximum widths of subsequent lines
+                    // is also adjusted, so that the available space depends on
+                    // where the current tab is located (indent is added
+                    // because wrapRange automatically subtracts it).
+
                     Instance::Lines wrapped = d->wrapRange(line->line.range,
                                                            maxWidth - (curLeft - prevRight),
                                                            maxWidth - curLeft + line->info.indent,
