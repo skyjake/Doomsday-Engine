@@ -13,6 +13,13 @@ TITLE = 'Doomsday Codex'
 if sys.argv > 1:
     OUT_DIR = sys.argv[1]
 
+#aliases = {
+#'Chex Quest': ['chex'],
+#'Doom':       ['libdoom'],
+#'Heretic':    ['libheretic'],
+#'Hexen':      ['libhexen']
+#}
+
 class Commit:
     def __init__(self, subject, author, date, link, hash):
         self.subject = subject
@@ -351,15 +358,27 @@ if($style == 'grouped') {
   $style = '';
 }
 $destination = "index.html";
-$best = -1;
+$best = -1.0;
 if(strlen($input) > 0 && strlen($input) < 60) {
   foreach($tags as $tag => $link) {
-    $lev = levenshtein($input, $tag);
+    $lev = (float) levenshtein($input, $tag); // case sensitive
+    if(stripos($tag, $input) !== FALSE || stripos($input, $tag) !== FALSE) {
+        // Found as a case insensitive substring, increase likelihood.
+        $lev = $lev/2.0;
+    }
+    if(stripos($tag, $input) === 0) {
+        // Increase likelihood further if the match is in the beginning.
+        $lev = $lev/2.0;
+    }
+    if(!strcasecmp($tag, $input) == 0) {
+        // Case insensitive direct match, increase likelihood.
+        $lev = $lev/2.0;
+    }
     if($lev == 0) {
       $destination = "tag_$style$link.html";
       break;
     }
-    if($lev < $best || $best < 0) {
+    if($best < 0 || $lev < $best) {
       $destination = "tag_$style$link.html";
       $best = $lev;
     }
