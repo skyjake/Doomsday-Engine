@@ -352,7 +352,7 @@ if($style == 'grouped') {
 }
 $destination = "index.html";
 $best = -1;
-if(strlen($input) > 0) {
+if(strlen($input) > 0 && strlen($input) < 60) {
   foreach($tags as $tag => $link) {
     $lev = levenshtein($input, $tag);
     if($lev == 0) {
