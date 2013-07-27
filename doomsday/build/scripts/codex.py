@@ -343,7 +343,7 @@ print >> out, '<?php'
 
 print >> out, '$tags = array(', string.join(['"%s" => "%s"' % (tag, tag_filename(tag)) for tag in byTag.keys()], ', '), ');'
 print >> out, """
-$input = $_GET["tag"];
+$input = stripslashes(strip_tags($_GET["tag"]));
 $style = $_GET["style"];
 if($style == 'grouped') {
   $style = 'group_';
