@@ -534,11 +534,11 @@ static int projectOmniLightToSurface(lumobj_t *lum, void *parameters)
     return false; // Continue iteration.
 }
 
-void LO_InitForMap()
+void LO_InitForMap(Map &map)
 {
     // First initialize the BSP leaf links (root pointers).
     bspLeafLumObjList = (lumlistnode_t **)
-        Z_Calloc(sizeof(*bspLeafLumObjList) * App_World().map().bspLeafCount(),
+        Z_Calloc(sizeof(*bspLeafLumObjList) * map.bspLeafCount(),
                  PU_MAPSTATIC, 0);
 
     maxLuminous = 0;
@@ -988,10 +988,10 @@ END_PROF( PROF_LUMOBJ_FRAME_SORT );
  */
 static void createGlowLightForSurface(Surface &suf)
 {
-    if(suf.owner().type() != DMU_PLANE)
+    if(suf.parent().type() != DMU_PLANE)
         return;
 
-    Plane *pln = suf.owner().as<Plane>();
+    Plane *pln = suf.parent().as<Plane>();
     Sector *sec = &pln->sector();
 
     // Only produce a light for sectors with open space.

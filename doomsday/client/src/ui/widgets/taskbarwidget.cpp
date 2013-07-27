@@ -159,10 +159,10 @@ public IGameChangeObserver
     void variableValueChanged(Variable &, Value const &val)
     {
         // We are observing the value of the window's showFps variable.
-        updateFpsMenuItem();
+        updateMenuItems();
     }
 
-    void updateFpsMenuItem()
+    void updateMenuItems()
     {
         fpsItem->setText(ClientWindow::main().isFPSCounterVisible()? tr("Hide FPS") : tr("Show FPS"));
     }
@@ -251,6 +251,7 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
     // Set up items for the DE menu. Some of these are shown/hidden
     // depending on whether a game is loaded.
     d->panelItem = d->mainMenu->addItem(_E(b) + tr("Open Control Panel"), new CommandAction("panel"));
+    d->mainMenu->addItem(tr("Toggle Fullscreen"), new CommandAction("togglefullscreen"));
     d->fpsItem = d->mainMenu->addItem("", new SignalAction(this, SLOT(toggleFPS())));
     d->unloadItem = d->mainMenu->addItem(tr("Unload Game"), new SignalAction(this, SLOT(confirmUnloadGame())), false);
     d->mainMenu->addSeparator();
@@ -272,7 +273,7 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
 
     d->panelItem->hide();
     d->unloadItem->hide();
-    d->updateFpsMenuItem();
+    d->updateMenuItems();
 
     // Observe when the showFps variable changes.
     App::config()["window.main.showFps"].audienceForChange += d;

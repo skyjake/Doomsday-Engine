@@ -99,9 +99,6 @@
 DENG_EXTERN_C mobjtype_t puffType;
 DENG_EXTERN_C mobj_t* missileMobj;
 DENG_EXTERN_C float turboMul;
-DENG_EXTERN_C int maxAmmo[NUM_AMMO_TYPES];
-DENG_EXTERN_C int clipAmmo[NUM_AMMO_TYPES];
-DENG_EXTERN_C int maxAmmo[NUM_AMMO_TYPES];
 
 #ifdef __cplusplus
 extern "C" {
@@ -141,15 +138,6 @@ void        P_ExplodeMissile(mobj_t* mo);
 
 const char*     P_GetMapName(uint episode, uint map);
 const char*     P_GetShortMapName(uint episode, uint map);
-
-void            P_GiveKey(player_t* player, keytype_t key);
-void            P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher);
-int             P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source, int damage, boolean stomping);
-int             P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source, int damage, boolean stomping, boolean skipNetworkCheck);
-boolean         P_GiveAmmo(player_t* player, ammotype_t ammo, int count);
-boolean         P_GiveBody(player_t* player, int num);
-boolean         P_GivePower(player_t* player, powertype_t power);
-boolean         P_MorphPlayer(player_t* player);
 
 void            Draw_BeginZoom(float s, float originX, float originY);
 void            Draw_EndZoom(void);

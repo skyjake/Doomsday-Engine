@@ -762,9 +762,14 @@ weapontype_t P_PlayerFindWeapon(player_t* player, boolean prev)
  * Changes the class of the given player. Will not work if the player
  * is currently morphed.
  */
-void P_PlayerChangeClass(player_t* player, playerclass_t newClass)
+void P_PlayerChangeClass(player_t *player, playerclass_t newClass)
 {
     int i;
+
+    DENG_ASSERT(player != 0);
+
+    if(newClass < PCLASS_FIRST || newClass >= NUM_PLAYER_CLASSES)
+        return;
 
     // Don't change if morphed.
     if(player->morphTics) return;

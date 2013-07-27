@@ -1,25 +1,23 @@
-/**\file d_net.h
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file d_net.h Common code related to net games.
  *
- *\author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * Connecting to/from a netgame server. Netgame events (player and world) and
+ * netgame commands.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBCOMMON_NETWORK_DEF_H
@@ -205,7 +203,12 @@ void            D_HandlePacket(int fromplayer, int type, void *data,
                                size_t length);
 void*           D_NetWriteCommands(int numCommands, void* data);
 void*           D_NetReadCommands(size_t pktLength, void* data);
-void            D_NetConsoleRegistration(void);
+
+/**
+ * Register the console commands and variables of the common netcode.
+ */
+void D_NetConsoleRegistration(void);
+
 void            D_NetMessage(int player, const char *msg);
 void            D_NetMessageNoSound(int player, const char *msg);
 

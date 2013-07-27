@@ -39,8 +39,6 @@
 extern "C" {
 #endif
 
-extern int debugSound; // debug flag for displaying sound info
-
 extern int gaSaveGameSaveSlot;
 extern int gaLoadGameSaveSlot;
 
@@ -115,7 +113,7 @@ void            G_DoPlayDemo(void);
 
 void            G_PlayDemo(char* name);
 void            G_TimeDemo(char* name);
-void            G_WorldDone(void);
+void            G_IntermissionDone(void);
 void            G_ScreenShot(void);
 void            G_DoReborn(int playernum);
 void            G_StopDemo(void);

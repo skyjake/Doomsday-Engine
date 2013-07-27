@@ -112,6 +112,13 @@ static void calcStatusBarSize(Size2Raw* size, Size2Rawf* viewScale, int maxWidth
 #endif
 }
 
+void R_StatusBarSize(int player, Size2Raw *statusBarSize)
+{
+    Size2Raw viewSize;
+    R_ViewWindowSize(player, &viewSize);
+    calcStatusBarSize(statusBarSize, &viewScale, viewSize.width);
+}
+
 static void resizeViewWindow(int player, const RectRaw* newGeometry,
     const RectRaw* oldGeometry, boolean interpolate)
 {

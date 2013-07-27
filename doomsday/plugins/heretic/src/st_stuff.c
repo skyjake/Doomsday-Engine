@@ -2295,6 +2295,7 @@ void Secrets_UpdateGeometry(uiwidget_t* obj)
                                        .5f + textSize.height * cfg.hudCheatCounterScale);
 }
 
+#if 0
 void MapName_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 {
     const float scale = .75f;
@@ -2334,6 +2335,7 @@ void MapName_UpdateGeometry(uiwidget_t* obj)
     FR_TextSize(&textSize, text);
     Rect_SetWidthHeight(obj->geometry, textSize.width * scale, textSize.height * scale);
 }
+#endif
 
 static void drawUIWidgetsForPlayer(player_t* plr)
 {
@@ -2476,6 +2478,15 @@ void ST_Drawer(int player)
     hud->statusbarActive = (headupDisplayMode(player) < 2) || (ST_AutomapIsActive(player) && (cfg.automapHudDisplay == 0 || cfg.automapHudDisplay == 2) );
 
     drawUIWidgetsForPlayer(players + player);
+}
+
+boolean ST_StatusBarIsActive(int player)
+{
+    DENG_ASSERT(player >= 0 && player < MAXPLAYERS);
+
+    if(!players[player].plr->inGame) return false;
+
+    return hudStates[player].statusbarActive;
 }
 
 void ST_loadGraphics(void)
@@ -2793,7 +2804,7 @@ typedef struct {
         { GUI_READYAMMOICON, ALIGN_TOPLEFT,   UWG_STATUSBAR,    0,            SBarReadyAmmoIcon_UpdateGeometry, SBarReadyAmmoIcon_Drawer, ReadyAmmoIcon_Ticker, &hud->sbarReadyammoicon },
         { GUI_READYITEM,    ALIGN_TOPLEFT,    UWG_STATUSBAR,    GF_SMALLIN,   SBarReadyItem_UpdateGeometry, SBarReadyItem_Drawer, ReadyItem_Ticker, &hud->sbarReadyitem },
         { GUI_CHAIN,        ALIGN_TOPLEFT,    UWG_STATUSBAR,    0,            SBarChain_UpdateGeometry, SBarChain_Drawer, SBarChain_Ticker, &hud->sbarChain },
-        { GUI_MAPNAME,      ALIGN_TOPLEFT,    UWG_MAPNAME,      GF_FONTA,     MapName_UpdateGeometry, MapName_Drawer },
+        //{ GUI_MAPNAME,      ALIGN_TOPLEFT,    UWG_MAPNAME,      GF_FONTA,     MapName_UpdateGeometry, MapName_Drawer },
         { GUI_READYAMMOICON, ALIGN_TOPLEFT,   UWG_TOPLEFT,      0,            ReadyAmmoIcon_UpdateGeometry, ReadyAmmoIcon_Drawer, ReadyAmmoIcon_Ticker, &hud->readyammoicon },
         { GUI_READYAMMO,    ALIGN_TOPLEFT,    UWG_TOPLEFT,      GF_STATUS,    ReadyAmmo_UpdateGeometry, ReadyAmmo_Drawer, ReadyAmmo_Ticker, &hud->readyammo },
         { GUI_FLIGHT,       ALIGN_TOPLEFT,    UWG_TOPLEFT,      0,            Flight_UpdateGeometry, Flight_Drawer, Flight_Ticker, &hud->flight },

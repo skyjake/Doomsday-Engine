@@ -45,7 +45,7 @@ void R_DestroyObjlinkBlockmap();
 /**
  * Construct the objlink blockmap for the current map.
  */
-void R_InitObjlinkBlockmapForMap();
+void R_InitObjlinkBlockmapForMap(de::Map &map);
 
 /**
  * Initialize the object => BspLeaf contact lists, ready for linking to

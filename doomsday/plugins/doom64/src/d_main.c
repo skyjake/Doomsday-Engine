@@ -237,6 +237,7 @@ void D_PreInit(void)
     cfg.netGravity = -1; // Use map default.
     cfg.plrViewHeight = DEFAULT_PLAYER_VIEWHEIGHT;
     cfg.mapTitle = true;
+    cfg.automapTitleAtBottom = true;
     cfg.hideIWADAuthor = true;
     cfg.menuTextColors[0][CR] = 1;
     cfg.menuTextColors[0][CG] = 0;
@@ -253,6 +254,8 @@ void D_PreInit(void)
     cfg.menuSlam = false;
     cfg.menuShortcutsEnabled = true;
     cfg.menuGameSaveSuggestName = true;
+
+    cfg.statusbarScale = 1;
 
     cfg.confirmQuickGameSave = true;
     cfg.confirmRebornLoad = true;

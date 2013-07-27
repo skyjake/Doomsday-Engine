@@ -240,7 +240,7 @@ DENG2_PIMPL(World)
     typedef QMap<String, MapCacheRecord> MapRecords;
 
     /// Map cache records.
-    Records records;
+    MapRecords records;
 
     /// Current map.
     Map *map;
@@ -249,9 +249,6 @@ DENG2_PIMPL(World)
     /// Hand for runtime map manipulation/editing.
     QScopedPointer<Hand> hand;
 #endif
-
-    /// Map cache records.
-    MapRecords records;
 
     Instance(Public *i) : Base(i), map(0)
     {}
@@ -557,7 +554,7 @@ DENG2_PIMPL(World)
 
         // Spawn generators for the map.
         /// @todo Defer until after finalization.
-        P_PtcInitForMap();
+        P_PtcInitForMap(*map);
 #endif
 
         // The game may need to perform it's own finalization now that the
@@ -638,15 +635,15 @@ DENG2_PIMPL(World)
 
         RL_DeleteLists();
         R_InitRendPolyPools();
-
         Rend_UpdateLightModMatrix();
-        Rend_DecorInitForMap();
-        Rend_RadioInitForMap();
 
-        R_InitObjlinkBlockmapForMap();
-        R_InitShadowProjectionListsForMap(); // Projected mobj shadows.
-        LO_InitForMap(); // Lumobj management.
-        VL_InitForMap(); // Converted vlights (from lumobjs).
+        Rend_DecorInitForMap(*map);
+        Rend_RadioInitForMap(*map);
+
+        R_InitObjlinkBlockmapForMap(*map);
+        R_InitShadowProjectionListsForMap(*map); // Projected mobj shadows.
+        LO_InitForMap(*map); // Lumobj management.
+        VL_InitForMap(*map); // Converted vlights (from lumobjs).
         map->initBias(); // Shadow bias sources and surfaces.
 
         // Restart all material animations.

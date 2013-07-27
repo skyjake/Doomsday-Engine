@@ -137,7 +137,7 @@ DENG2_PIMPL_NOREF(Line::Side)
 };
 
 Line::Side::Side(Line &line, Sector *sector)
-    : MapElement(DMU_SIDE), d(new Instance(line, sector))
+    : MapElement(DMU_SIDE, &line), d(new Instance(line, sector))
 {}
 
 Line &Line::Side::line() const

@@ -416,7 +416,7 @@ DENG2_PIMPL(Material)
     {
         if(App_World().hasMap())
         {
-            /// @todo Replace with a de::Observers-based mechanism.
+            /// @todo Replace with a de::Observers-based mechanism?
             App_World().map().updateSurfacesOnMaterialChange(self);
         }
     }

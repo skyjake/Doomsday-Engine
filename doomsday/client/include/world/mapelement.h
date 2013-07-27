@@ -27,6 +27,8 @@
 
 namespace de {
 
+class Map;
+
 /**
  * Base class for all elements of a map. Provides runtime type information and
  * safe dynamic casting to various derived types.
@@ -41,7 +43,19 @@ namespace de {
  */
 class MapElement
 {
+    DENG2_NO_COPY  (MapElement)
+    DENG2_NO_ASSIGN(MapElement)
+
 public:
+    /// No parent map element is configured. @ingroup errors
+    DENG2_ERROR(MissingParentError);
+
+    /// Attempted to configure an invalid parent element. @ingroup errors
+    DENG2_ERROR(InvalidParentError);
+
+    /// No map is attributed. @ingroup errors
+    DENG2_ERROR(MissingMapError);
+
     /// The referenced property does not exist. @ingroup errors
     DENG2_ERROR(UnknownPropertyError);
 
@@ -52,37 +66,20 @@ public:
     enum { NoIndex = -1 };
 
 public:
-    MapElement(int t = DMU_NONE)
-        : _type(t), _indexInArchive(NoIndex), _indexInMap(NoIndex) {}
+    /**
+     * Construct a new MapElement
+     *
+     * @param type    DMU type identifier.
+     * @param parent  Parent map element (if any).
+     */
+    explicit MapElement(int t = DMU_NONE, MapElement *parent = 0);
 
-    virtual ~MapElement() {}
+    virtual ~MapElement();
 
     /**
      * Returns the DMU_* type of the object.
      */
     int type() const;
-
-    /**
-     * Returns the archive index for the map element. The archive index is
-     * the position of the relevant data or definition in the archived map.
-     * For example, in the case of a DMU_SIDE element that is produced from
-     * an id tech 1 format map, this should be the index of the definition
-     * in the SIDEDEFS data lump.
-     *
-     * @see setIndexInArchive()
-     */
-    int indexInArchive() const;
-
-    /**
-     * Change the "archive index" of the map element to @a newIndex.
-     *
-     * @see indexInArchive()
-     */
-    void setIndexInArchive(int newIndex = NoIndex);
-
-    int indexInMap() const;
-
-    void setIndexInMap(int newIndex = NoIndex);
 
     template <typename Type>
     inline Type *as()
@@ -101,11 +98,88 @@ public:
     }
 
     /**
-     * @note The current index indices are retained.
+     * Returns @c true iff a parent is attributed to the map element.
      *
-     * @see setIndexInArchive(), setIndexInMap()
+     * @see parent(), setParent()
      */
-    MapElement &operator = (MapElement const &other);
+    bool hasParent() const;
+
+    /**
+     * Returns the parent of the map element.
+     *
+     * @see hasParent(), setParent()
+     */
+    MapElement &parent() const;
+
+    /**
+     * Change the parent of the map element.
+     *
+     * @param newParent  New parent to attribute to the map element. Ownership
+     *                   is unaffected. Can be @c 0 (to clear the attribution).
+     *
+     * @see hasParent(), parent()
+     */
+    void setParent(MapElement *newParent);
+
+    /**
+     * Returns @c true iff a map is attributed to the map element. Note that
+     * if the map element has a @em parent that this state is delegated to the
+     * parent map element.
+     *
+     * @see map(), setMap(), hasParent()
+     */
+    bool hasMap() const;
+
+    /**
+     * Returns the map attributed to the map element. Note that if the map
+     * element has a @em parent that this property comes from the parent map
+     * element (delegation).
+     *
+     * @see hasMap(), setMap(), hasParent()
+     */
+    Map &map() const;
+
+    /**
+     * Change the map attributed to the map element. Note that if the map
+     * element has a @em parent that attempting to change the map property of
+     * "this" map element is an error (delegation).
+     *
+     * @param newMap
+     *
+     * @see hasMap(), map()
+     */
+    void setMap(Map *newMap);
+
+    /**
+     * Returns the "in-map" index attributed to the map element.
+     */
+    int indexInMap() const;
+
+    /**
+     * Change the "in-map" index attributed to the map element.
+     *
+     * @param newIndex  New index to attribute to the map element. @c NoIndex
+     *                  clears the attribution (not a valid index).
+     */
+    void setIndexInMap(int newIndex = NoIndex);
+
+    /**
+     * Returns the archive index for the map element. The archive index is the
+     * position of the relevant data or definition in the archived map. For
+     * example, in the case of a DMU_SIDE element that is produced from an id
+     * Tech 1 format map, this should be the index of the definition in the
+     * SIDEDEFS data lump.
+     *
+     * @see setIndexInArchive()
+     */
+    int indexInArchive() const;
+
+    /**
+     * Change the "archive index" of the map element to @a newIndex.
+     *
+     * @see indexInArchive()
+     */
+    void setIndexInArchive(int newIndex = NoIndex);
 
     /**
      * Get a property value, selected by DMU_* name.
@@ -136,9 +210,7 @@ public:
     virtual int setProperty(DmuArgs const &args);
 
 private:
-    int _type;
-    int _indexInArchive;
-    int _indexInMap;
+    DENG2_PRIVATE(d)
 };
 
 } // namespace de

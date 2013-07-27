@@ -227,7 +227,7 @@ ifdef _DEBUG
 Con_Printf("Cl_ReadSoundDelta2(%i): Start snd=%i [%x] vol=%.2f",
            type, sound, flags, volume);
 if(cmo) Con_Printf(", mo=%i\n", cmo->mo.thinker.id);
-else if(sector) Con_Printf(", sector=%i\n", App_World().map().sectorIndex(sector));
+else if(sector) Con_Printf(", sector=%i\n", sector->indexInMap());
 else if(poly) Con_Printf(", poly=%i\n", GET_POLYOBJ_IDX(poly));
 else Con_Printf("\n");
 #endif
@@ -246,7 +246,7 @@ else Con_Printf("\n");
 Con_Printf("Cl_ReadSoundDelta2(%i): Stop sound %i",
            type, sound);
 if(cmo)  Con_Printf(", mo=%i\n", cmo->mo.thinker.id);
-else if(sector) Con_Printf(", sector=%i\n", App_World().map().sectorIndex(sector));
+else if(sector) Con_Printf(", sector=%i\n", sector->indexInMap());
 else if(poly) Con_Printf(", poly=%i\n", GET_POLYOBJ_IDX(poly));
 else Con_Printf("\n");
 #endif

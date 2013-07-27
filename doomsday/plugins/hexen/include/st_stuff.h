@@ -67,6 +67,7 @@ uiwidget_t* ST_UILogForPlayer(int player);
 uiwidget_t* ST_UIAutomapForPlayer(int player);
 
 boolean ST_ChatIsActive(int player);
+boolean ST_StatusBarIsActive(int player);
 
 /**
  * Post a message to the specified player's log.

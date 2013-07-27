@@ -23,12 +23,6 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * p_inter.c: Handling interactions (i.e., collisions).
- */
-
-// HEADER FILES ------------------------------------------------------------
-
 #include <string.h>
 
 #include "jheretic.h"
@@ -43,194 +37,178 @@
 #include "p_user.h"
 #include "p_mapsetup.h"
 
-// MACROS ------------------------------------------------------------------
-
 #define BONUSADD            (6)
 
-// TYPES -------------------------------------------------------------------
+// Maximum number of rounds for each ammo type.
+int maxAmmo[NUM_AMMO_TYPES]      = { 100, 50, 200, 200, 20, 150 };
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+// Numer of rounds to give with a backpack for each ammo type.
+int backpackAmmo[NUM_AMMO_TYPES] = { 10, 5, 10, 20, 1, 0 };
 
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+// Number of rounds to give for each weapon type.
+int getWeaponAmmo[NUM_WEAPON_TYPES] = { 0, 25, 10, 30, 50, 2, 50, 0 };
 
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-int maxAmmo[NUM_AMMO_TYPES] = {
-    100, // gold wand
-    50, // crossbow
-    200, // blaster
-    200, // skull rod
-    20, // phoenix rod
-    150 // mace
-};
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-static int getWeaponAmmo[NUM_WEAPON_TYPES] = {
-    0, // staff
-    25, // gold wand
-    10, // crossbow
-    30, // blaster
-    50, // skull rod
-    2, // phoenix rod
-    50, // mace
-    0 // gauntlets
-};
-
-// CODE --------------------------------------------------------------------
-
-/**
- * Returns true if the player accepted the ammo, false if it was
- * refused (player has maxammo[ammo]).
- */
-boolean P_GiveAmmo(player_t *player, ammotype_t ammo, int num)
+static boolean giveOneAmmo(player_t *plr, ammotype_t ammoType, int numRounds)
 {
-    if(ammo == AT_NOAMMO)
+    DENG_ASSERT(plr != 0);
+    DENG_ASSERT((ammoType >= 0 && ammoType < NUM_AMMO_TYPES) || ammoType == AT_NOAMMO);
+
+    // Giving the special 'unlimited ammo' type always succeeds.
+    if(ammoType == AT_NOAMMO)
+        return true;
+
+    // Already fully stocked?
+    if(plr->ammo[ammoType].owned >= plr->ammo[ammoType].max)
         return false;
 
-    if(ammo < 0 || ammo > NUM_AMMO_TYPES)
-        Con_Error("P_GiveAmmo: bad type %i", ammo);
-
-    if(!(player->ammo[ammo].owned < player->ammo[ammo].max))
+    if(numRounds == 0)
+    {
         return false;
-
-    if(gameSkill == SM_BABY || gameSkill == SM_NIGHTMARE)
-    {   // Extra ammo in baby mode and nightmare mode.
-        num += num / 1;
+    }
+    else if(numRounds < 0)
+    {
+        // Fully replenish.
+        numRounds = plr->ammo[ammoType].max;
     }
 
-    // We are about to receive some more ammo. Does the player want to
-    // change weapon automatically?
-    P_MaybeChangeWeapon(player, WT_NOCHANGE, ammo, false);
+    // Give extra rounds at easy/nightmare skill levels.
+    if(gameSkill == SM_BABY || gameSkill == SM_NIGHTMARE)
+    {
+        numRounds += numRounds / 1;
+    }
 
-    if(player->ammo[ammo].owned + num > player->ammo[ammo].max)
-        player->ammo[ammo].owned = player->ammo[ammo].max;
-    else
-        player->ammo[ammo].owned += num;
-    player->update |= PSF_AMMO;
+    // Given the new ammo the player may want to change weapon automatically.
+    P_MaybeChangeWeapon(plr, WT_NOCHANGE, ammoType, false /*don't force*/);
+
+    // Restock the player.
+    plr->ammo[ammoType].owned = MIN_OF(plr->ammo[ammoType].max,
+                                       plr->ammo[ammoType].owned + numRounds);
+    plr->update |= PSF_AMMO;
 
     // Maybe unhide the HUD?
-    ST_HUDUnHide(player - players, HUE_ON_PICKUP_AMMO);
+    ST_HUDUnHide(plr - players, HUE_ON_PICKUP_AMMO);
 
     return true;
 }
 
-/**
- * @return              @c true, if the weapon or its ammo was accepted.
- */
-boolean P_GiveWeapon(player_t *player, weapontype_t weapon, const char* pickupMessage, int pickupSound)
+boolean P_GiveAmmo(player_t *plr, ammotype_t ammoType, int numRounds)
 {
-    int                 i;
-    int                 lvl = (player->powers[PT_WEAPONLEVEL2]? 1 : 0);
-    boolean             gaveAmmo = false;
-    boolean             gaveWeapon = false;
+    int gaveAmmos = 0;
 
-    if(IS_NETGAME && !deathmatch)
+    if(ammoType == NUM_AMMO_TYPES)
     {
-        // Leave placed weapons forever on net games.
-        if(player->weapons[weapon].owned)
-            return false;
-
-        player->bonusCount += BONUSADD;
-        player->weapons[weapon].owned = true;
-        player->update |= PSF_OWNED_WEAPONS;
-
-        // Give some of each of the ammo types used by this weapon.
+        // Give all ammos.
+        int i = 0;
         for(i = 0; i < NUM_AMMO_TYPES; ++i)
         {
-            if(!weaponInfo[weapon][player->class_].mode[lvl].ammoType[i])
-                continue;   // Weapon does not take this type of ammo.
-
-            if(P_GiveAmmo(player, i, getWeaponAmmo[weapon]))
-                gaveAmmo = true; // At least ONE type of ammo was given.
+            gaveAmmos  |= (int)giveOneAmmo(plr, (ammotype_t) i, numRounds) << i;
         }
-
-        // Should we change weapon automatically?
-        P_MaybeChangeWeapon(player, weapon, AT_NOAMMO, false);
-
-        // Maybe unhide the HUD?
-        ST_HUDUnHide(player - players, HUE_ON_PICKUP_WEAPON);
-
-        // Notify the player.
-        S_ConsoleSound(pickupSound, NULL, player - players);
-        if(pickupMessage)
-        {
-            P_SetMessage(player, 0, pickupMessage);
-        }
-        return false;
     }
     else
     {
-        // Give some of each of the ammo types used by this weapon.
-        for(i = 0; i < NUM_AMMO_TYPES; ++i)
-        {
-            if(!weaponInfo[weapon][player->class_].mode[lvl].ammoType[i])
-                continue;   // Weapon does not take this type of ammo.
-
-            if(P_GiveAmmo(player, i, getWeaponAmmo[weapon]))
-                gaveAmmo = true; // At least ONE type of ammo was given.
-        }
-
-        if(player->weapons[weapon].owned)
-            gaveWeapon = false;
-        else
-        {
-            gaveWeapon = true;
-            player->weapons[weapon].owned = true;
-            player->update |= PSF_OWNED_WEAPONS;
-
-            // Should we change weapon automatically?
-            P_MaybeChangeWeapon(player, weapon, AT_NOAMMO, false);
-        }
-
-        // Maybe unhide the HUD?
-        if(gaveWeapon)
-        {
-            ST_HUDUnHide(player - players, HUE_ON_PICKUP_WEAPON);
-        }
-
-        if(gaveWeapon || gaveAmmo)
-        {
-            // Notify the player.
-            S_ConsoleSound(pickupSound, NULL, player - players);
-            if(pickupMessage)
-            {
-                P_SetMessage(player, 0, pickupMessage);
-            }
-        }
-        return (gaveWeapon || gaveAmmo);
+        // Give a single ammo.
+        gaveAmmos  |= (int)giveOneAmmo(plr, ammoType, numRounds) << (int)ammoType;
     }
+
+    return gaveAmmos  != 0;
 }
 
-/**
- * @return              @c false, if the body isn't needed at all.
- */
-boolean P_GiveBody(player_t *player, int num)
+static boolean giveOneWeapon(player_t *plr, weapontype_t weaponType)
 {
-    int                 max;
+    int lvl = (plr->powers[PT_WEAPONLEVEL2]? 1 : 0);
+    boolean gaveAmmo = false, gaveWeapon = false;
+    weaponinfo_t const *wpnInfo;
+    ammotype_t i;
 
-    if(player->morphTics)
-        max = MAXCHICKENHEALTH;
-    else
-        max = maxHealth;
+    DENG_ASSERT(plr != 0);
+    DENG_ASSERT(weaponType >= WT_FIRST && weaponType < NUM_WEAPON_TYPES);
 
-    if(player->health >= max)
-    {
+    wpnInfo = &weaponInfo[weaponType][plr->class_];
+
+    // Do not give weapons unavailable for the current mode.
+    if(!(wpnInfo->mode[lvl].gameModeBits & gameModeBits))
         return false;
-    }
 
-    player->health += num;
-    if(player->health > max)
+    // Give some of each of the ammo types used by this weapon.
+    for(i = 0; i < NUM_AMMO_TYPES; ++i)
     {
-        player->health = max;
+        // Is this ammo type usable?.
+        if(!wpnInfo->mode[lvl].ammoType[i])
+            continue;
+
+        if(P_GiveAmmo(plr, i, getWeaponAmmo[weaponType]))
+        {
+            gaveAmmo = true;
+        }
     }
 
+    if(!plr->weapons[weaponType].owned)
+    {
+        gaveWeapon = true;
+
+        plr->weapons[weaponType].owned = true;
+        plr->update |= PSF_OWNED_WEAPONS;
+
+        // Animate a pickup bonus flash?
+        if(IS_NETGAME && !deathmatch)
+        {
+            plr->bonusCount += BONUSADD;
+        }
+
+        // Given the new weapon the player may want to change automatically.
+        P_MaybeChangeWeapon(plr, weaponType, AT_NOAMMO, false);
+
+        // Maybe unhide the HUD?
+        ST_HUDUnHide(plr - players, HUE_ON_PICKUP_WEAPON);
+    }
+
+    return (gaveWeapon || gaveAmmo);
+}
+
+boolean P_GiveWeapon(player_t *plr, weapontype_t weaponType)
+{
+    int gaveWeapons = 0;
+
+    if(weaponType == NUM_WEAPON_TYPES)
+    {
+        // Give all weapons.
+        int i = 0;
+        for(i = 0; i < NUM_WEAPON_TYPES; ++i)
+        {
+            gaveWeapons |= (int)giveOneWeapon(plr, (weapontype_t) i) << i;
+        }
+    }
+    else
+    {
+        // Give a single weapon.
+        gaveWeapons |= (int)giveOneWeapon(plr, weaponType) << (int)weaponType;
+    }
+
+    return gaveWeapons != 0;
+}
+
+static int maxPlayerHealth(boolean morphed)
+{
+    return morphed? MAXCHICKENHEALTH : maxHealth;
+}
+
+boolean P_GiveHealth(player_t *player, int amount)
+{
+    int healthLimit = maxPlayerHealth(player->morphTics != 0);
+
+    // Already at capacity?
+    if(player->health >= healthLimit)
+        return false;
+
+    if(amount < 0)
+    {
+        // Fully replenish.
+        amount = healthLimit;
+    }
+
+    player->health =
+        player->plr->mo->health = MIN_OF(player->health + amount, healthLimit);
     player->update |= PSF_HEALTH;
-    player->plr->mo->health = player->health;
 
     // Maybe unhide the HUD?
     ST_HUDUnHide(player - players, HUE_ON_PICKUP_HEALTH);
@@ -238,76 +216,128 @@ boolean P_GiveBody(player_t *player, int num)
     return true;
 }
 
-/**
- * @return              @c true, iff the armor was given.
- */
-boolean P_GiveArmor(player_t* plr, int type, int points)
+boolean P_GiveArmor(player_t *player, int armorType, int armorPoints)
 {
-    if(plr->armorPoints >= points)
+    DENG_ASSERT(player != 0);
+
+    if(player->armorPoints >= armorPoints)
         return false;
 
-    P_PlayerSetArmorType(plr, type);
-    P_PlayerGiveArmorBonus(plr, points - plr->armorPoints);
+    P_PlayerSetArmorType(player, armorType);
+    P_PlayerGiveArmorBonus(player, armorPoints - player->armorPoints);
 
     // Maybe unhide the HUD?
-    ST_HUDUnHide(plr - players, HUE_ON_PICKUP_ARMOR);
+    ST_HUDUnHide(player - players, HUE_ON_PICKUP_ARMOR);
 
     return true;
 }
 
-void P_GiveKey(player_t* player, keytype_t key)
+static boolean giveOneKey(player_t *plr, keytype_t keyType)
 {
-    if(player->keys[key])
-        return;
+    DENG_ASSERT(plr != 0);
+    DENG_ASSERT(keyType >= KT_FIRST && keyType < NUM_KEY_TYPES);
 
-    player->bonusCount = BONUSADD;
-    player->keys[key] = true;
-    player->update |= PSF_KEYS;
+    // Already owned?
+    if(plr->keys[keyType]) return false;
+
+    plr->keys[keyType] = true;
+    plr->bonusCount = BONUSADD;
+    plr->update |= PSF_KEYS;
 
     // Maybe unhide the HUD?
-    ST_HUDUnHide(player - players, HUE_ON_PICKUP_KEY);
+    ST_HUDUnHide(plr - players, HUE_ON_PICKUP_KEY);
+
+    return true;
 }
 
-/**
- * @return              @c true, if power accepted.
- */
-boolean P_GivePower(player_t* player, powertype_t power)
+boolean P_GiveKey(player_t *plr, keytype_t keyType)
 {
-    mobj_t*             plrmo = player->plr->mo;
-    boolean             retval = false;
+    int gaveKeys = 0;
+
+    if(keyType == NUM_KEY_TYPES)
+    {
+        // Give all keys.
+        int i = 0;
+        for(i = 0; i < NUM_KEY_TYPES; ++i)
+        {
+            gaveKeys |= (int)giveOneKey(plr, (keytype_t) i) << i;
+        }
+    }
+    else
+    {
+        // Give a single key.
+        gaveKeys |= (int)giveOneKey(plr, keyType) << (int)keyType;
+    }
+
+    return gaveKeys != 0;
+}
+
+void P_GiveBackpack(player_t *plr)
+{
+    int i;
+
+    if(!plr->backpack)
+    {
+        plr->update |= PSF_MAX_AMMO;
+        for(i = 0; i < NUM_AMMO_TYPES; ++i)
+        {
+            plr->ammo[i].max *= 2;
+        }
+
+        plr->backpack = true;
+    }
+
+    for(i = 0; i < NUM_AMMO_TYPES; ++i)
+    {
+        P_GiveAmmo(plr, i, backpackAmmo[i]);
+    }
+
+    P_SetMessage(plr, 0, TXT_ITEMBAGOFHOLDING);
+}
+
+boolean P_GivePower(player_t *player, powertype_t powerType)
+{
+    boolean retval = false;
+
+    DENG_ASSERT(player != 0);
+    DENG_ASSERT(powerType >= PT_FIRST && powerType < NUM_POWER_TYPES);
 
     player->update |= PSF_POWERS;
-    switch(power)
+    switch(powerType)
     {
     case PT_INVULNERABILITY:
-        if(!(player->powers[power] > BLINKTHRESHOLD))
+        if(!(player->powers[powerType] > BLINKTHRESHOLD))
         {
-            player->powers[power] = INVULNTICS;
+            player->powers[powerType] = INVULNTICS;
             retval = true;
         }
         break;
 
     case PT_WEAPONLEVEL2:
-        if(!(player->powers[power] > BLINKTHRESHOLD))
+        if(!(player->powers[powerType] > BLINKTHRESHOLD))
         {
-            player->powers[power] = WPNLEV2TICS;
+            player->powers[powerType] = WPNLEV2TICS;
             retval = true;
         }
         break;
 
     case PT_INVISIBILITY:
-        if(!(player->powers[power] > BLINKTHRESHOLD))
+        if(!(player->powers[powerType] > BLINKTHRESHOLD))
         {
-            player->powers[power] = INVISTICS;
+            mobj_t *plrmo = player->plr->mo;
+
+            player->powers[powerType] = INVISTICS;
             plrmo->flags |= MF_SHADOW;
             retval = true;
         }
         break;
 
     case PT_FLIGHT:
-        if(!(player->powers[power] > BLINKTHRESHOLD))
+        if(!(player->powers[powerType] > BLINKTHRESHOLD))
         {
-            player->powers[power] = FLIGHTTICS;
+            mobj_t *plrmo = player->plr->mo;
+
+            player->powers[powerType] = FLIGHTTICS;
             plrmo->flags2 |= MF2_FLY;
             plrmo->flags |= MF_NOGRAVITY;
             if(plrmo->origin[VZ] <= plrmo->floorZ)
@@ -320,17 +350,17 @@ boolean P_GivePower(player_t* player, powertype_t power)
         break;
 
     case PT_INFRARED:
-        if(!(player->powers[power] > BLINKTHRESHOLD))
+        if(!(player->powers[powerType] > BLINKTHRESHOLD))
         {
-            player->powers[power] = INFRATICS;
+            player->powers[powerType] = INFRATICS;
             retval = true;
         }
         break;
 
     default:
-        if(!player->powers[power])
+        if(!player->powers[powerType])
         {
-            player->powers[power] = 1;
+            player->powers[powerType] = 1;
             retval = true;
         }
         break;
@@ -338,11 +368,61 @@ boolean P_GivePower(player_t* player, powertype_t power)
 
     if(retval)
     {
-        if(power == PT_ALLMAP)
+        if(powerType == PT_ALLMAP)
             ST_RevealAutomap(player - players, true);
     }
 
     return retval;
+}
+
+boolean P_TakePower(player_t *player, powertype_t powerType)
+{
+    DENG_ASSERT(player != 0);
+    DENG_ASSERT(powerType >= PT_FIRST && powerType < NUM_POWER_TYPES);
+
+    if(!player->powers[powerType])
+        return false; // Dont got it.
+
+    switch(powerType)
+    {
+    case PT_ALLMAP:
+        ST_RevealAutomap(player - players, false);
+        break;
+
+    case PT_FLIGHT: {
+        mobj_t *plrmo = player->plr->mo;
+
+        if(plrmo->origin[VZ] != plrmo->floorZ && cfg.lookSpring)
+        {
+            player->centering = true;
+        }
+
+        plrmo->flags2 &= ~MF2_FLY;
+        plrmo->flags &= ~MF_NOGRAVITY;
+        break; }
+
+    default: break;
+    }
+
+    player->powers[powerType] = 0;
+    player->update |= PSF_POWERS;
+
+    return true;
+}
+
+boolean P_TogglePower(player_t *player, powertype_t powerType)
+{
+    DENG_ASSERT(player != 0);
+    DENG_ASSERT(powerType >= PT_FIRST && powerType < NUM_POWER_TYPES);
+
+    if(!player->powers[powerType])
+    {
+        return P_GivePower(player, powerType);
+    }
+    else
+    {
+        return P_TakePower(player, powerType);
+    }
 }
 
 /**
@@ -361,38 +441,6 @@ static void setDormantItem(mobj_t* mo)
     {   // Don't respawn.
         P_MobjChangeState(mo, S_DEADARTI1);
     }
-}
-
-void C_DECL A_RestoreArtifact(mobj_t* mo)
-{
-    mo->flags |= MF_SPECIAL;
-    P_MobjChangeState(mo, P_GetState(mo->type, SN_SPAWN));
-    S_StartSound(SFX_RESPAWN, mo);
-}
-
-void P_HideSpecialThing(mobj_t* thing)
-{
-    thing->flags &= ~MF_SPECIAL;
-    thing->flags2 |= MF2_DONTDRAW;
-    P_MobjChangeState(thing, S_HIDESPECIAL1);
-}
-
-void C_DECL A_RestoreSpecialThing1(mobj_t *mo)
-{
-    if(mo->type == MT_WMACE)
-    {
-        // Do random mace placement.
-        P_RepositionMace(mo);
-    }
-
-    mo->flags2 &= ~MF2_DONTDRAW;
-    S_StartSound(SFX_RESPAWN, mo);
-}
-
-void C_DECL A_RestoreSpecialThing2(mobj_t* thing)
-{
-    thing->flags |= MF_SPECIAL;
-    P_MobjChangeState(thing, P_GetState(thing->type, SN_SPAWN));
 }
 
 typedef enum {
@@ -438,9 +486,10 @@ typedef enum {
 static itemtype_t getItemTypeBySprite(spritetype_e sprite)
 {
     static const struct item_s {
-        itemtype_t      type;
-        spritetype_e    sprite;
-    } items[] = {
+        itemtype_t type;
+        spritetype_e sprite;
+    } items[] =
+    {
         { IT_HEALTH_POTION, SPR_PTN1 },
         { IT_SHIELD1, SPR_SHLD },
         { IT_SHIELD2, SPR_SHD2 },
@@ -479,16 +528,64 @@ static itemtype_t getItemTypeBySprite(spritetype_e sprite)
         { IT_WEAPON_GAUNTLETS, SPR_WGNT },
         { IT_NONE, 0 },
     };
-    uint                i;
-
+    int i;
     for(i = 0; items[i].type != IT_NONE; ++i)
+    {
         if(items[i].sprite == sprite)
             return items[i].type;
-
+    }
     return IT_NONE;
 }
 
-static boolean giveItem(player_t* plr, itemtype_t item, int quantity)
+/**
+ * Attempt to pickup the found weapon type.
+ *
+ * @param plr            Player to attempt the pickup.
+ * @param weaponType     Weapon type to pickup.
+ * @param pickupMessage  Message to display if picked up.
+ *
+ * @return  @c true if the player picked up the weapon.
+ */
+static boolean pickupWeapon(player_t *plr, weapontype_t weaponType,
+    char const *pickupMessage)
+{
+    boolean pickedWeapon;
+
+    DENG_ASSERT(plr != 0);
+    DENG_ASSERT(weaponType >= WT_FIRST && weaponType < NUM_WEAPON_TYPES);
+
+    // Depending on the game rules the player should ignore the weapon.
+    if(plr->weapons[weaponType].owned)
+    {
+        // Leave placed weapons forever on net games.
+        if(IS_NETGAME && !deathmatch)
+            return false;
+    }
+
+    // Attempt the pickup.
+    pickedWeapon = P_GiveWeapon(plr, weaponType);
+    if(pickedWeapon)
+    {
+        // Notify the user.
+        P_SetMessage(plr, 0, pickupMessage);
+
+        if(!mapSetup) // Pickup sounds are not played during map setup.
+        {
+            S_ConsoleSound(SFX_WPNUP, NULL, plr - players);
+        }
+    }
+
+    return pickedWeapon;
+}
+
+/**
+ * @param plr       Player being given item.
+ * @param item      Type of item being given.
+ * @param quantity  ?
+ *
+ * @return  @c true iff the item should be destroyed.
+ */
+static boolean pickupItem(player_t *plr, itemtype_t item, int quantity)
 {
     if(!plr)
         return false;
@@ -496,7 +593,7 @@ static boolean giveItem(player_t* plr, itemtype_t item, int quantity)
     switch(item)
     {
     case IT_HEALTH_POTION:
-        if(!P_GiveBody(plr, 10))
+        if(!P_GiveHealth(plr, 10))
             return false;
 
         P_SetMessage(plr, 0, TXT_ITEMHEALTH);
@@ -523,22 +620,7 @@ static boolean giveItem(player_t* plr, itemtype_t item, int quantity)
         break;
 
     case IT_BAGOFHOLDING:
-        if(!plr->backpack)
-        {
-            int i;
-            for(i = 0; i < NUM_AMMO_TYPES; ++i)
-            {
-                plr->ammo[i].max *= 2;
-            }
-            plr->backpack = true;
-        }
-
-        P_GiveAmmo(plr, AT_CRYSTAL, AMMO_GWND_WIMPY);
-        P_GiveAmmo(plr, AT_ORB, AMMO_BLSR_WIMPY);
-        P_GiveAmmo(plr, AT_ARROW, AMMO_CBOW_WIMPY);
-        P_GiveAmmo(plr, AT_RUNE, AMMO_SKRD_WIMPY);
-        P_GiveAmmo(plr, AT_FIREORB, AMMO_PHRD_WIMPY);
-        P_SetMessage(plr, 0, TXT_ITEMBAGOFHOLDING);
+        P_GiveBackpack(plr);
         if(!mapSetup)
             S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
@@ -790,34 +872,22 @@ static boolean giveItem(player_t* plr, itemtype_t item, int quantity)
         break;
 
     case IT_WEAPON_MACE:
-        if(!P_GiveWeapon(plr, WT_SEVENTH, TXT_WPNMACE, !mapSetup? SFX_WPNUP : 0))
-            return false;
-        break;
+        return pickupWeapon(plr, WT_SEVENTH, TXT_WPNMACE);
 
     case IT_WEAPON_CROSSBOW:
-        if(!P_GiveWeapon(plr, WT_THIRD, TXT_WPNCROSSBOW, !mapSetup? SFX_WPNUP : 0))
-            return false;
-        break;
+        return pickupWeapon(plr, WT_THIRD, TXT_WPNCROSSBOW);
 
     case IT_WEAPON_BLASTER:
-        if(!P_GiveWeapon(plr, WT_FOURTH, TXT_WPNBLASTER, !mapSetup? SFX_WPNUP : 0))
-            return false;
-        break;
+        return pickupWeapon(plr, WT_FOURTH, TXT_WPNBLASTER);
 
     case IT_WEAPON_SKULLROD:
-        if(!P_GiveWeapon(plr, WT_FIFTH, TXT_WPNSKULLROD, !mapSetup? SFX_WPNUP : 0))
-            return false;
-        break;
+        return pickupWeapon(plr, WT_FIFTH, TXT_WPNSKULLROD);
 
     case IT_WEAPON_PHOENIXROD:
-        if(!P_GiveWeapon(plr, WT_SIXTH, TXT_WPNPHOENIXROD, !mapSetup? SFX_WPNUP : 0))
-            return false;
-        break;
+        return pickupWeapon(plr, WT_SIXTH, TXT_WPNPHOENIXROD);
 
     case IT_WEAPON_GAUNTLETS:
-        if(!P_GiveWeapon(plr, WT_EIGHTH, TXT_WPNGAUNTLETS, !mapSetup? SFX_WPNUP : 0))
-            return false;
-        break;
+        return pickupWeapon(plr, WT_EIGHTH, TXT_WPNGAUNTLETS);
 
     default:
         Con_Error("giveItem: Unknown item %i.", (int) item);
@@ -826,11 +896,14 @@ static boolean giveItem(player_t* plr, itemtype_t item, int quantity)
     return true;
 }
 
-void P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher)
+void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
 {
-    player_t* player;
+    player_t *player;
     coord_t delta;
     itemtype_t item;
+
+    DENG_ASSERT(special != 0);
+    DENG_ASSERT(toucher != 0);
 
     delta = special->origin[VZ] - toucher->origin[VZ];
     if(delta > toucher->height || delta < -32)
@@ -847,7 +920,11 @@ void P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher)
     // Identify by sprite.
     if((item = getItemTypeBySprite(special->sprite)) != IT_NONE)
     {
-        if(!giveItem(player, item, special->health))
+        // In Heretic the number of rounds to give for an ammo type is defined
+        // by the 'health' of the mobj.
+        int quantity = MAX_OF(special->health, 0);
+
+        if(!pickupItem(player, item, quantity))
             return; // Don't destroy the item.
     }
     else
@@ -879,9 +956,15 @@ void P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher)
 
     default:
         if(deathmatch && !(special->flags & MF_DROPPED))
-            P_HideSpecialThing(special);
+        {
+            special->flags &= ~MF_SPECIAL;
+            special->flags2 |= MF2_DONTDRAW;
+            P_MobjChangeState(special, S_HIDESPECIAL1);
+        }
         else
+        {
             P_MobjRemove(special, false);
+        }
 
         if(!mapSetup)
             player->bonusCount += BONUSADD;
@@ -889,9 +972,9 @@ void P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher)
     }
 }
 
-void P_KillMobj(mobj_t* source, mobj_t* target)
+static void killMobj(mobj_t *source, mobj_t *target)
 {
-    statenum_t          state;
+    statenum_t state;
 
     if(!target) // Nothing to kill.
         return;
@@ -968,26 +1051,27 @@ void P_KillMobj(mobj_t* source, mobj_t* target)
 
     if((state = P_GetState(target->type, SN_XDEATH)) != S_NULL &&
        target->health < -(target->info->spawnHealth / 2))
-    {   // Extreme death.
+    {
+        // Extreme death.
         P_MobjChangeState(target, state);
     }
     else
-    {   // Normal death.
+    {
+        // Normal death.
         P_MobjChangeState(target, P_GetState(target->type, SN_DEATH));
     }
 
     target->tics -= P_Random() & 3;
 }
 
-/**
- * @return              @c true, if the player is morphed.
- */
-boolean P_MorphPlayer(player_t* player)
+boolean P_MorphPlayer(player_t *player)
 {
-    mobj_t* pmo, *fog, *chicken;
+    mobj_t *pmo, *fog, *chicken;
     coord_t pos[3];
     angle_t angle;
     int oldFlags2;
+
+    DENG_ASSERT(player != 0);
 
 #ifdef _DEBUG
     Con_Message("P_MorphPlayer: Player %i.", (int)(player - players));
@@ -1044,13 +1128,15 @@ boolean P_MorphPlayer(player_t* player)
     return true;
 }
 
-boolean P_MorphMonster(mobj_t* actor)
+static boolean morphMonster(mobj_t *actor)
 {
-    mobj_t* fog, *chicken, *target;
+    mobj_t *fog, *chicken, *target;
     mobjtype_t moType;
     coord_t pos[3];
     angle_t angle;
     int ghost;
+
+    DENG_ASSERT(actor != 0);
 
     if(actor->player)
         return false;
@@ -1092,11 +1178,13 @@ boolean P_MorphMonster(mobj_t* actor)
     return true;
 }
 
-boolean P_AutoUseChaosDevice(player_t* player)
+static boolean autoUseChaosDevice(player_t *player)
 {
-    int                 plrnum = player - players;
+    int plrnum = player - players;
 
-    //// \todo Do this in the inventory code?
+    DENG_ASSERT(player != 0);
+
+    /// @todo Do this in the inventory code?
     if(P_InventoryCount(plrnum, IIT_TELEPORT))
     {
         P_InventoryUse(plrnum, IIT_TELEPORT, false);
@@ -1108,16 +1196,18 @@ boolean P_AutoUseChaosDevice(player_t* player)
     return false;
 }
 
-void P_AutoUseHealth(player_t* player, int saveHealth)
+static void autoUseHealth(player_t *player, int saveHealth)
 {
-    uint                i, count;
-    int                 plrnum = player - players;
-    int                 normalCount = P_InventoryCount(plrnum, IIT_HEALTH);
-    int                 superCount = P_InventoryCount(plrnum, IIT_SUPERHEALTH);
+    uint i, count;
+    int plrnum = player - players;
+    int normalCount = P_InventoryCount(plrnum, IIT_HEALTH);
+    int superCount = P_InventoryCount(plrnum, IIT_SUPERHEALTH);
+
+    DENG_ASSERT(player != 0);
 
     if(!player->plr->mo) return;
 
-    //// \todo Do this in the inventory code?
+    /// @todo Do this in the inventory code?
     if(gameSkill == SM_BABY && normalCount * 25 >= saveHealth)
     {
         // Use quartz flasks.
@@ -1161,29 +1251,13 @@ void P_AutoUseHealth(player_t* player, int saveHealth)
     player->plr->mo->health = player->health;
 }
 
-int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
-                 int damageP, boolean stomping)
-{
-    return P_DamageMobj2(target, inflictor, source, damageP, stomping, false);
-}
-
-/**
- * Damages both enemies and players.
- *
- * @param inflictor     Mobj that caused the damage creature or missile,
- *                      can be NULL (slime, etc)
- * @param source        Mobj to target after taking damage. Can be @c NULL
- *                      for barrel explosions and other environmental stuff.
- *                      Source and inflictor are the same for melee attacks.
- * @return              Actual amount of damage done.
- */
-int P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source,
+int P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
                   int damageP, boolean stomping, boolean skipNetworkCheck)
 {
-    angle_t             angle;
-    int                 saved, originalHealth;
-    player_t*           player;
-    int                 temp, damage;
+    angle_t angle;
+    int saved, originalHealth;
+    player_t *player;
+    int temp, damage;
 
     if(!target)
         return 0; // Wha?
@@ -1273,7 +1347,7 @@ int P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source,
             }
             else
             {
-                P_MorphMonster(target);
+                morphMonster(target);
             }
             return 0; // Does no actual "damage" but health IS modified.
 
@@ -1349,7 +1423,7 @@ int P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source,
 
                 // Does the player have a Chaos Device he can use to get
                 // him out of trouble?
-                if(P_AutoUseChaosDevice(target->player))
+                if(autoUseChaosDevice(target->player))
                     return originalHealth - target->health; // He's lucky... this time.
             }
 
@@ -1477,8 +1551,9 @@ int P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source,
 
         if(damage >= player->health &&
            ((gameSkill == SM_BABY) || deathmatch) && !player->morphTics)
-        {   // Try to use some inventory health.
-            P_AutoUseHealth(player, damage - player->health + 1);
+        {
+            // Try to use some inventory health.
+            autoUseHealth(player, damage - player->health + 1);
         }
 
         player->health -= damage;
@@ -1505,7 +1580,8 @@ int P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source,
     // Do the damage.
     target->health -= damage;
     if(target->health > 0)
-    {   // Still alive, phew!
+    {
+        // Still alive, phew!
         if((P_Random() < target->info->painChance) &&
            !(target->flags & MF_SKULLFLY))
         {
@@ -1538,7 +1614,8 @@ int P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source,
         }
     }
     else
-    {   // Death.
+    {
+        // Death.
         target->special1 = damage;
         if(target->type == MT_POD && source && source->type != MT_POD)
         {
@@ -1557,10 +1634,16 @@ int P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source,
             }
         }
 
-        P_KillMobj(source, target);
+        killMobj(source, target);
     }
 
     return originalHealth - target->health;
 
 #undef BASETHRESHOLD
+}
+
+int P_DamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source,
+                 int damageP, boolean stomping)
+{
+    return P_DamageMobj2(target, inflictor, source, damageP, stomping, false);
 }

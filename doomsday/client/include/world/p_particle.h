@@ -24,9 +24,10 @@
 #define DENG_WORLD_P_PARTICLE_H
 
 #include "def_data.h"
-#include "sector.h"
-#include "line.h"
-#include "plane.h"
+
+#include "Sector"
+#include "Line"
+#include "Plane"
 
 // Maximum number of particle textures (not instances).
 #define MAX_PTC_TEXTURES        32
@@ -136,11 +137,7 @@ DENG_EXTERN_C byte useParticles;
 DENG_EXTERN_C int maxParticles;
 DENG_EXTERN_C float particleSpawnRate;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-void P_PtcInitForMap(void);
+void P_PtcInitForMap(de::Map &map);
 
 /**
  * Attempt to spawn all flat-triggered particle generators for the current map.
@@ -169,7 +166,7 @@ void P_SpawnMobjParticleGen(struct ded_ptcgen_s const *def, struct mobj_s *sourc
  */
 void P_SpawnTypeParticleGens(void);
 
-void P_SpawnMapParticleGens(void);
+void P_SpawnMapParticleGens(de::Map &map);
 
 void P_SpawnMapDamageParticleGen(struct mobj_s *mo, struct mobj_s *inflictor, int amount);
 
@@ -195,9 +192,5 @@ float P_GetParticleRadius(ded_ptcstage_t const *stageDef, int ptcIndex);
  * A particle may be attached to the floor or ceiling of the sector.
  */
 float P_GetParticleZ(particle_t const *pt);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
 
 #endif // DENG_WORLD_P_PARTICLE_H

@@ -38,9 +38,6 @@ using namespace de;
 
 DENG2_PIMPL(Plane)
 {
-    /// Sector that owns the plane.
-    Sector *sector;
-
     /// Sound emitter.
     ddmobj_base_t soundEmitter;
 
@@ -68,9 +65,8 @@ DENG2_PIMPL(Plane)
     /// Plane surface.
     Surface surface;
 
-    Instance(Public *i, Sector &sector, coord_t height)
+    Instance(Public *i, coord_t height)
         : Base(i),
-          sector(&sector),
           indexInSector(-1),
           height(height),
           targetHeight(height),
@@ -88,7 +84,7 @@ DENG2_PIMPL(Plane)
         DENG2_FOR_PUBLIC_AUDIENCE(Deletion, i) i->planeBeingDeleted(self);
 
 #ifdef __CLIENT__
-        Map &map = App_World().map();
+        Map &map = self.map();
 
         // If this plane is currently being watched, remove it.
         /// @todo Map should observe Deletion.
@@ -144,10 +140,7 @@ DENG2_PIMPL(Plane)
         /// @todo Map should observe.
         if(!ddMapSetup)
         {
-            if(App_World().hasMap())
-            {
-                App_World().map().trackedPlanes().insert(&self);
-            }
+            self.map().trackedPlanes().insert(&self);
 
             markDependantSurfacesForDecorationUpdate();
         }
@@ -170,7 +163,7 @@ DENG2_PIMPL(Plane)
 
         // Mark the decor lights on the sides of this plane as requiring
         // an update.
-        foreach(Line::Side *side, sector->sides())
+        foreach(Line::Side *side, self.sector().sides())
         {
             if(side->hasSections())
             {
@@ -192,19 +185,20 @@ DENG2_PIMPL(Plane)
 };
 
 Plane::Plane(Sector &sector, Vector3f const &normal, coord_t height)
-    : MapElement(DMU_PLANE), d(new Instance(this, sector, height))
+    : MapElement(DMU_PLANE, &sector),
+      d(new Instance(this, height))
 {
     setNormal(normal);
 }
 
 Sector &Plane::sector()
 {
-    return *d->sector;
+    return *this->parent().as<Sector>();
 }
 
 Sector const &Plane::sector() const
 {
-    return *d->sector;
+    return const_cast<Sector const &>(const_cast<Plane *>(this)->sector());
 }
 
 int Plane::indexInSector() const
@@ -251,8 +245,8 @@ void Plane::updateSoundEmitterOrigin()
 {
     LOG_AS("Plane::updateSoundEmitterOrigin");
 
-    d->soundEmitter.origin[VX] = d->sector->soundEmitter().origin[VX];
-    d->soundEmitter.origin[VY] = d->sector->soundEmitter().origin[VY];
+    d->soundEmitter.origin[VX] = sector().soundEmitter().origin[VX];
+    d->soundEmitter.origin[VY] = sector().soundEmitter().origin[VY];
     d->soundEmitter.origin[VZ] = d->height;
 }
 
@@ -335,9 +329,10 @@ int Plane::property(DmuArgs &args) const
     case DMU_EMITTER:
         args.setValue(DMT_PLANE_EMITTER, &d->soundEmitter, 0);
         break;
-    case DMU_SECTOR:
-        args.setValue(DMT_PLANE_SECTOR, &d->sector, 0);
-        break;
+    case DMU_SECTOR: {
+        Sector *secPtr = &const_cast<Plane *>(this)->sector();
+        args.setValue(DMT_PLANE_SECTOR, &secPtr, 0);
+        break; }
     case DMU_HEIGHT:
         args.setValue(DMT_PLANE_HEIGHT, &d->height, 0);
         break;

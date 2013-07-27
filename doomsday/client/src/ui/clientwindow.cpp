@@ -403,6 +403,9 @@ void ClientWindow::canvasGLReady(Canvas &canvas)
     // Now that the Canvas is ready for drawing we can enable the LegacyWidget.
     d->root.find(LEGACY_WIDGET_NAME)->enable();
 
+    // Configure a viewport immediately.
+    glViewport(0, FLIP(0 + canvas.height() - 1), canvas.width(), canvas.height());
+
     LOG_DEBUG("LegacyWidget enabled");
 
     if(d->needMainInit)

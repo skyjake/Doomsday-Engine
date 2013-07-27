@@ -39,7 +39,7 @@ struct shadowprojection_t
  * To be called after map load to initialize this module in preparation for
  * rendering view(s) of the game world.
  */
-void R_InitShadowProjectionListsForMap();
+void R_InitShadowProjectionListsForMap(de::Map &map);
 
 /**
  * To be called when begining a new render frame to perform necessary initialization.

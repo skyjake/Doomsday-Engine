@@ -1305,7 +1305,7 @@ void NetSv_SendJumpPower(int target, float power)
     Net_SendPacket(target, GPT_JUMP_POWER, Writer_Data(writer), Writer_Size(writer));
 }
 
-void NetSv_ExecuteCheat(int player, const char* command)
+void NetSv_ExecuteCheat(int player, char const *command)
 {
     // Killing self is always allowed.
     /// @todo fixme: really? Even in deathmatch??
@@ -1322,9 +1322,18 @@ void NetSv_ExecuteCheat(int player, const char* command)
     }
 
     /// @todo Can't we use the multipurpose cheat command here?
-    if(!strnicmp(command, "god",    3) ||
-       !strnicmp(command, "noclip", 6) ||
-       !strnicmp(command, "give",   4))
+    if(!strnicmp(command, "god", 3)
+       || !strnicmp(command, "noclip", 6)
+       || !strnicmp(command, "give", 4)
+       || !strnicmp(command, "kill", 4)
+#ifdef __JHERETIC__
+       || !strnicmp(command, "chicken", 7)
+#elif __JHEXEN__
+       || !strnicmp(command, "class", 5)
+       || !strnicmp(command, "pig", 3)
+       || !strnicmp(command, "runscript", 9)
+#endif
+       )
     {
         DD_Executef(false, "%s %i", command, player);
     }
@@ -1572,9 +1581,9 @@ void NetSv_LoadGame(unsigned int game_id)
     Net_SendPacket(DDSP_ALL_PLAYERS, GPT_LOAD, Writer_Data(writer), Writer_Size(writer));
 }
 
-void NetSv_SendMessageEx(int plrNum, const char *msg, boolean yellow)
+void NetSv_SendMessageEx(int plrNum, char const *msg, boolean yellow)
 {
-    Writer* writer;
+    Writer *writer;
 
     if(IS_CLIENT || !netSvAllowSendMsg)
         return;
@@ -1584,7 +1593,7 @@ void NetSv_SendMessageEx(int plrNum, const char *msg, boolean yellow)
             return;
 
 #ifdef _DEBUG
-    Con_Message("NetSv_SendMessageEx: Message '%s'", msg);
+    Con_Message("NetSv_SendMessageEx: '%s'", msg);
 #endif
 
     if(plrNum == DDSP_ALL_PLAYERS)

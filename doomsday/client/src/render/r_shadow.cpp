@@ -29,6 +29,8 @@
 #include "de_play.h"
 #include "api_map.h"
 
+#include "world/map.h"
+
 #include "render/r_shadow.h"
 
 using namespace de;
@@ -284,8 +286,10 @@ int RIT_ProjectShadowToSurfaceIterator(void *mobj, void *parameters)
     return false; // Continue iteration.
 }
 
-void R_InitShadowProjectionListsForMap()
+void R_InitShadowProjectionListsForMap(Map &map)
 {
+    DENG_UNUSED(map);
+
     static bool firstTime = true;
     if(firstTime)
     {

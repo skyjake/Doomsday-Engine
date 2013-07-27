@@ -184,9 +184,12 @@ static bool firstBspLeaf; // No range checking for the first one.
 
 static void markLightGridForFullUpdate()
 {
-    if(!App_World().hasMap()) return;
-    if(!App_World().map().hasLightGrid()) return;
-    App_World().map().lightGrid().markAllForUpdate();
+    if(App_World().hasMap())
+    {
+        Map &map = App_World().map();
+        if(map.hasLightGrid())
+            map.lightGrid().markAllForUpdate();
+    }
 }
 
 void Rend_Register()
@@ -1932,10 +1935,8 @@ static coord_t skyPlaneZ(BspLeaf *bspLeaf, int skyCap)
     DENG_ASSERT(bspLeaf);
     int const relPlane = (skyCap & SKYCAP_UPPER)? Sector::Ceiling : Sector::Floor;
     if(!bspLeaf->hasSector() || !P_IsInVoid(viewPlayer))
-    {
-        /// @todo Don't assume the current map.
-        return App_World().map().skyFix(relPlane == Sector::Ceiling);
-    }
+        return bspLeaf->map().skyFix(relPlane == Sector::Ceiling);
+
     return bspLeaf->sector().plane(relPlane).visHeight();
 }
 
@@ -3192,7 +3193,7 @@ static void Rend_DrawSurfaceVectors(Map &map)
             origin = Vector3d(bspLeaf->poly().center(), plane->visHeight());
 
             if(plane->surface().hasSkyMaskedMaterial() && plane->indexInSector() <= Sector::Ceiling)
-                origin.z = map.skyFix(plane->indexInSector() == Sector::Ceiling);
+                origin.z = plane->map().skyFix(plane->indexInSector() == Sector::Ceiling);
 
             drawSurfaceTangentSpaceVectors(&plane->surface(), origin);
         }

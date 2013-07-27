@@ -461,6 +461,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
             partitioner.take(leaf);
 
             // Add this BspLeaf to the LUT.
+            leaf->setMap(thisPublic);
             leaf->setIndexInMap(bspLeafs.count());
             bspLeafs.append(leaf);
 
@@ -470,6 +471,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
                 partitioner.take(seg);
 
                 // Add this segment to the LUT.
+                seg->setMap(thisPublic);
                 seg->setIndexInMap(segments.count());
                 segments.append(seg);
             }
@@ -484,6 +486,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
         partitioner.take(node);
 
         // Add this BspNode to the LUT.
+        node->setMap(thisPublic);
         node->setIndexInMap(bspNodes.count());
         bspNodes.append(node);
     }
@@ -544,6 +547,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
             for(int i = nextVertexOrd; i < mesh.vertexCount(); ++i)
             {
                 Vertex *vtx = mesh.vertexes().at(i);
+                vtx->setMap(thisPublic);
                 vtx->setIndexInMap(i);
             }
 
@@ -2455,8 +2459,7 @@ static int iteratePolyobjLines(Polyobj *po, void *parameters = 0)
  */
 static int interceptLinesWorker(Line *line, void * /*parameters*/)
 {
-    /// @todo Do not assume line is from the current map.
-    divline_t const &traceLos = App_World().map().traceLine();
+    divline_t const &traceLos = line->map().traceLine();
     int s1, s2;
 
     fixed_t lineFromX[2] = { DBL2FIX(line->fromOrigin().x), DBL2FIX(line->fromOrigin().y) };
@@ -2512,9 +2515,10 @@ static int interceptMobjsWorker(mobj_t *mo, void * /*parameters*/)
     if(mo->dPlayer && (mo->dPlayer->flags & DDPF_CAMERA))
         return false; // $democam: ssshh, keep going, we're not here...
 
+    DENG_ASSERT(mo->bspLeaf);
+
     // Check a corner to corner crossection for hit.
-    /// @todo Do not assume mobj is from the current map.
-    divline_t const &traceLos = App_World().map().traceLine();
+    divline_t const &traceLos = mo->bspLeaf->map().traceLine();
     vec2d_t from, to;
     if((traceLos.direction[VX] ^ traceLos.direction[VY]) > 0)
     {
@@ -3567,6 +3571,8 @@ bool Map::endEditing()
 
             // Polyobj has ownership of the line segments.
             Segment *segment = new Segment(&line->front(), hedge);
+
+            segment->setMap(this);
             segment->setLength(line->length());
 
             line->front().setLeftSegment(segment);
@@ -3674,6 +3680,7 @@ Vertex *Map::createVertex(Vector2d const &origin, int archiveIndex)
 
     Vertex *vtx = d->mesh.newVertex(origin);
 
+    vtx->setMap(this);
     vtx->setIndexInArchive(archiveIndex);
 
     /// @todo Don't do this here.
@@ -3692,6 +3699,7 @@ Line *Map::createLine(Vertex &v1, Vertex &v2, int flags, Sector *frontSector,
     Line *line = new Line(v1, v2, flags, frontSector, backSector);
     d->editable.lines.append(line);
 
+    line->setMap(this);
     line->setIndexInArchive(archiveIndex);
 
     /// @todo Don't do this here.
@@ -3712,6 +3720,7 @@ Sector *Map::createSector(float lightLevel, Vector3f const &lightColor,
     Sector *sector = new Sector(lightLevel, lightColor);
     d->editable.sectors.append(sector);
 
+    sector->setMap(this);
     sector->setIndexInArchive(archiveIndex);
 
     /// @todo Don't do this here.

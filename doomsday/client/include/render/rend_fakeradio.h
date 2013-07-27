@@ -100,7 +100,7 @@ void Rend_RadioRegister();
 /**
  * To be called after map load to perform necessary initialization within this module.
  */
-void Rend_RadioInitForMap();
+void Rend_RadioInitForMap(de::Map &map);
 
 /**
  * Returns @c true iff @a line qualifies for (edge) shadow casting.

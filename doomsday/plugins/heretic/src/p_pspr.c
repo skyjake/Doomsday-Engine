@@ -1775,7 +1775,7 @@ void C_DECL A_GauntletAttack(player_t* player, pspdef_t* psp)
 
     if(player->powers[PT_WEAPONLEVEL2])
     {
-        P_GiveBody(player, damage / 2);
+        P_GiveHealth(player, damage / 2);
         S_StartSoundEx(SFX_GNTPOW, player->plr->mo);
     }
     else
@@ -1870,10 +1870,10 @@ void P_MovePsprites(player_t *player)
     player->pSprites[ps_flash].pos[VY] = player->pSprites[ps_weapon].pos[VY];
 }
 
-void C_DECL A_FireBomb(mobj_t* mo)
+void C_DECL A_FireBomb(mobj_t *mo)
 {
-    uint            an;
-    mobj_t*         bomb;
+    uint an;
+    mobj_t *bomb;
 
     if(!mo->player)
         return;
@@ -1881,10 +1881,10 @@ void C_DECL A_FireBomb(mobj_t* mo)
     an = mo->angle >> ANGLETOFINESHIFT;
 
     if((bomb = P_SpawnMobjXYZ(MT_FIREBOMB,
-                             mo->origin[VX] + 24 * FIX2FLT(finecosine[an]),
-                             mo->origin[VY] + 24 * FIX2FLT(finesine[an]),
-                             mo->origin[VZ] - mo->floorClip + 15,
-                             mo->angle, 0)))
+                              mo->origin[VX] + 24 * FIX2FLT(finecosine[an]),
+                              mo->origin[VY] + 24 * FIX2FLT(finesine[an]),
+                              mo->origin[VZ] - mo->floorClip,
+                              mo->angle, 0)))
     {
         bomb->target = mo;
     }
@@ -1986,7 +1986,7 @@ void C_DECL A_Health(mobj_t* mo)
     if(!mo->player)
         return;
 
-    didUseItem = P_GiveBody(mo->player, 25);
+    didUseItem = P_GiveHealth(mo->player, 25);
 }
 
 void C_DECL A_SuperHealth(mobj_t* mo)
@@ -1994,7 +1994,7 @@ void C_DECL A_SuperHealth(mobj_t* mo)
     if(!mo->player)
         return;
 
-    didUseItem = P_GiveBody(mo->player, 100);
+    didUseItem = P_GiveHealth(mo->player, 100);
 }
 
 void C_DECL A_Invisibility(mobj_t* mo)

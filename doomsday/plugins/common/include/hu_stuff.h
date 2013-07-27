@@ -98,6 +98,9 @@ void HU_WakeWidgets(int player);
 void Hu_UnloadData(void);
 
 void Hu_MapTitleDrawer(const RectRaw* portGeometry);
+void Hu_DrawMapTitle(float alpha, boolean mapIdInsteadOfAuthor);
+boolean Hu_IsMapTitleVisible(void);
+boolean Hu_IsStatusBarVisible(int player);
 
 void Hu_FogEffectTicker(timespan_t time);
 void Hu_FogEffectSetAlphaTarget(float alpha);
@@ -106,7 +109,11 @@ void Hu_DrawFogEffect(int effectID, DGLuint tex, float texOffset[2], float texAn
 void HU_ScoreBoardUnHide(int player);
 void HU_DrawScoreBoard(int player);
 
-void Hu_DrawMapTitle(float alpha, boolean mapIdInsteadOfAuthor);
+/**
+ * Determines the height of the map title, including the second line
+ * (author/map ID).
+ */
+int Hu_MapTitleHeight(void);
 
 void Draw_BeginZoom(float s, float originX, float originY);
 void Draw_EndZoom(void);

@@ -24,10 +24,6 @@
 
 class BspLeaf;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /**
  * Vector light.
  * @ingroup render
@@ -48,7 +44,7 @@ boolean R_DrawVLightVector(vlight_t const *light, void *context);
  * Initialize the vlight system in preparation for rendering view(s) of the
  * game world.
  */
-void VL_InitForMap(void);
+void VL_InitForMap(de::Map &map);
 
 /**
  * Moves all used vlight nodes to the list of unused nodes, so they can be
@@ -75,9 +71,5 @@ typedef struct collectaffectinglights_params_s {
 } collectaffectinglights_params_t;
 
 uint R_CollectAffectingLights(collectaffectinglights_params_t const *params);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
 
 #endif /* LIBDENG_RENDER_VLIGHT_H */

@@ -34,7 +34,7 @@ D_CMD(CheatReveal);
 D_CMD(CheatGive);
 D_CMD(CheatMassacre);
 D_CMD(CheatWhere);
-D_CMD(CheatPig);
+D_CMD(CheatMorph);
 D_CMD(CheatLeaveMap);
 D_CMD(CheatSuicide);
 
@@ -186,7 +186,7 @@ ccmdtemplate_t gameCCmds[] = {
     {"viewmode",    NULL,   CCmdSetViewMode},
 
     // Heretic specific
-    {"chicken",     "",     CCmdCheatPig},
+    {"chicken",     NULL,   CCmdCheatMorph},
     {NULL}
 };
 

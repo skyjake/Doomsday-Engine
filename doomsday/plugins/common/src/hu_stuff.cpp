@@ -35,6 +35,7 @@
 #include "hu_menu.h"
 #include "hu_msg.h"
 #include "hu_stuff.h"
+#include "hu_inventory.h"
 #include "g_common.h"
 #include "p_mapsetup.h"
 #include "p_tick.h"
@@ -1448,15 +1449,64 @@ void Hu_FogEffectSetAlphaTarget(float alpha)
     fogEffectData.targetAlpha = MINMAX_OF(0, alpha, 1);
 }
 
+boolean Hu_IsStatusBarVisible(int player)
+{
+#ifdef __JDOOM64__
+    DENG_UNUSED(player);
+    return false;
+#else
+    if(!ST_StatusBarIsActive(player)) return false;
+
+    if(ST_AutomapIsActive(player) && cfg.automapHudDisplay == 0)
+    {
+        return false;
+    }
+
+    return true;
+#endif
+}
+
+#if __JDOOM__ || __JDOOM64__
+patchid_t Hu_MapTitlePatchId(void)
+{
+    return P_FindMapTitlePatch(gameEpisode, gameMap);
+}
+
+int Hu_MapTitleFirstLineHeight(void)
+{
+    int y = 0;
+    patchinfo_t patchInfo;
+    if(R_GetPatchInfo(Hu_MapTitlePatchId(), &patchInfo))
+    {
+        y = patchInfo.geometry.size.height + 2;
+    }
+    return MAX_OF(14, y);
+}
+#endif
+
+boolean Hu_IsMapTitleAuthorVisible(void)
+{
+    char const *author = P_GetMapAuthor(cfg.hideIWADAuthor);
+    return author != 0 && (actualMapTime <= 6 * TICSPERSEC);
+}
+
+int Hu_MapTitleHeight(void)
+{
+    int h = (Hu_IsMapTitleAuthorVisible()? 8 : 0);
+
+#if __JDOOM__ || __JDOOM64__
+    return Hu_MapTitleFirstLineHeight() + h;
+#endif
+
+#if __JHERETIC__ || __JHEXEN__
+    return 20 + h;
+#endif
+}
+
 void Hu_DrawMapTitle(float alpha, boolean mapIdInsteadOfAuthor)
 {
     char const *lname = 0, *lauthor = 0;
-    float y = 0; //, alpha = 1;
-
-#if __JDOOM__ || __JDOOM64__
-    patchid_t patchId;
-    uint mapNum;
-#endif
+    float y = 0;
 
     // Get the strings from Doomsday.
     lname = P_GetMapNiceName();
@@ -1478,27 +1528,11 @@ void Hu_DrawMapTitle(float alpha, boolean mapIdInsteadOfAuthor)
     FR_SetColorAndAlpha(defFontRGB[0], defFontRGB[1], defFontRGB[2], alpha);
 
 #if __JDOOM__ || __JDOOM64__
-    // Compose the mapnumber used to check the map name patches array.
-# if __JDOOM__
-    if(gameModeBits & (GM_ANY_DOOM2|GM_DOOM_CHEX))
-        mapNum = gameMap;
-    else
-        mapNum = (gameEpisode * 9) + gameMap;
-# else // __JDOOM64__
-    mapNum = gameMap;
-# endif
-    patchId = (mapNum < pMapNamesSize? pMapNames[mapNum] : 0);
+    patchid_t patchId = Hu_MapTitlePatchId();
     WI_DrawPatchXY3(patchId, Hu_ChoosePatchReplacement2(PRM_ALLOW_TEXT, patchId, lname), 0, 0, ALIGN_TOP, 0, DTF_ONLY_SHADOW);
 
-    patchinfo_t patchInfo;
-    if(R_GetPatchInfo(patchId, &patchInfo))
-    {
-        y += patchInfo.geometry.size.height + 2;
-    }
-    else
-    {
-        y += 14;
-    }
+    // Following line of text placed according to patch height.
+    y += Hu_MapTitleFirstLineHeight();
 
 #elif __JHERETIC__ || __JHEXEN__
     if(lname)
@@ -1530,13 +1564,73 @@ void Hu_DrawMapTitle(float alpha, boolean mapIdInsteadOfAuthor)
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
+boolean Hu_IsMapTitleVisible(void)
+{
+    if(!cfg.mapTitle) return false;
+
+    return (actualMapTime < 6 * 35) || ST_AutomapIsActive(DISPLAYPLAYER);
+}
+
+static boolean needToRespectStatusBarHeightWhenAutomapOpen(void)
+{
+#ifndef __JDOOM64__
+    return Hu_IsStatusBarVisible(DISPLAYPLAYER);
+#endif
+
+    return false;
+}
+
+static boolean needToRespectHudSizeWhenAutomapOpen(void)
+{
+#ifdef __JDOOM__
+    if(cfg.hudShown[HUD_FACE] && !Hu_IsStatusBarVisible(DISPLAYPLAYER) &&
+       cfg.automapHudDisplay > 0) return true;
+#endif
+    return false;
+}
+
 void Hu_MapTitleDrawer(const RectRaw* portGeometry)
 {
     if(!cfg.mapTitle || !portGeometry) return;
 
+    // Scale according to the viewport size.
+    float scale;
+    R_ChooseAlignModeAndScaleFactor(&scale, SCREENWIDTH, SCREENHEIGHT,
+                                    portGeometry->size.width, portGeometry->size.height,
+                                    scalemode_t(cfg.menuScaleMode));
+
+    // Determine origin of the title.
     Point2Raw origin(portGeometry->size.width / 2,
                      6 * portGeometry->size.height / SCREENHEIGHT);
-    float scale;
+
+    // Should the title be positioned in the bottom of the view?
+    if(cfg.automapTitleAtBottom &&
+            ST_AutomapIsActive(DISPLAYPLAYER) &&
+            (actualMapTime > 6 * TICSPERSEC))
+    {
+        origin.y = portGeometry->size.height - 1.2f * Hu_MapTitleHeight() * scale;
+
+#if __JHERETIC__ || __JHEXEN__
+        if(Hu_InventoryIsOpen(DISPLAYPLAYER) && !Hu_IsStatusBarVisible(DISPLAYPLAYER))
+        {
+            // Omit the title altogether while the inventory is open.
+            return;
+        }
+#endif
+        float off = 0; // in vanilla pixels
+        if(needToRespectStatusBarHeightWhenAutomapOpen())
+        {
+            Size2Raw stBarSize;
+            R_StatusBarSize(DISPLAYPLAYER, &stBarSize);
+            off += stBarSize.height;
+        }
+        else if(needToRespectHudSizeWhenAutomapOpen())
+        {
+            off += 30 * cfg.hudScale;
+        }
+
+        origin.y -= off * portGeometry->size.height / float(SCREENHEIGHT);
+    }
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
@@ -1544,10 +1638,6 @@ void Hu_MapTitleDrawer(const RectRaw* portGeometry)
     // After scaling, the title is centered horizontally on the screen.
     DGL_Translatef(origin.x, origin.y, 0);
 
-    // Scale according to the viewport size.
-    R_ChooseAlignModeAndScaleFactor(&scale, SCREENWIDTH, SCREENHEIGHT,
-                                    portGeometry->size.width, portGeometry->size.height,
-                                    scalemode_t(cfg.menuScaleMode));
     DGL_Scalef(scale, scale * 1.2f/*aspect correct*/, 1);
 
     // Level information is shown for a few seconds in the beginning of a level.

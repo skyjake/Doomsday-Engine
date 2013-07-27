@@ -54,7 +54,7 @@ public:
 
     Vector2i cursorPosition() const;
 
-    bool handleControlKey(int qtKey, bool controlMod = true);
+    bool handleControlKey(int qtKey, KeyModifiers const &mods = Unmodified);
 
     // Events.
     void viewResized();

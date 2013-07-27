@@ -221,6 +221,7 @@ D_CMD(DefaultGameBinds)
         "bindcontrol look key-pgdown-staged",
         "bindevent key-end-down {impulse lookcenter}",
         "bindevent key-slash {impulse jump}",
+        "bindevent key-backslash {impulse jump}",
         "bindevent key-space-down {impulse use}",
 
         "bindevent sym-control-doubleclick-positive-walk {impulse use %p}",
@@ -247,7 +248,8 @@ D_CMD(DefaultGameBinds)
 
 #ifdef __JHEXEN__
         "bindevent key-backspace {impulse panic}",
-        "bindevent key-backslash {impulse health}",
+        "bindevent key-b {impulse panic}",
+        "bindevent key-v {impulse health}",
         "bindevent key-9 {impulse blast}",
         "bindevent key-8 {impulse teleport}",
         "bindevent key-7 {impulse teleportother}",
@@ -258,9 +260,14 @@ D_CMD(DefaultGameBinds)
 #if __JHERETIC__ || __JHEXEN__
         "bindevent key-sqbracketleft {impulse previtem}",
         "bindevent key-sqbracketleft-repeat {impulse previtem}",
+        "bindevent key-z {impulse previtem}",
+        "bindevent key-z-repeat {impulse previtem}",
         "bindevent key-sqbracketright {impulse nextitem}",
         "bindevent key-sqbracketright-repeat {impulse nextitem}",
+        "bindevent key-c {impulse nextitem}",
+        "bindevent key-c-repeat {impulse nextitem}",
         "bindevent key-return {impulse useitem}",
+        "bindevent key-x {impulse useitem}",
 #endif
 
         // Player controls: mouse

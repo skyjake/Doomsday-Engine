@@ -922,8 +922,8 @@ typedef enum {
     GUI_READYITEM,
     GUI_FLIGHT,
 #endif
-    GUI_AUTOMAP,
-    GUI_MAPNAME
+    GUI_AUTOMAP
+    //GUI_MAPNAME
 } guiwidgettype_t;
 
 typedef int uiwidgetid_t;

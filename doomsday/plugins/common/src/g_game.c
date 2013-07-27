@@ -152,6 +152,7 @@ int     G_DoLoadMap(loadmap_params_t* params);
 void    G_DoLoadGame(void);
 void    G_DoPlayDemo(void);
 void    G_DoMapCompleted(void);
+void    G_DoEndDebriefing(void);
 void    G_DoVictory(void);
 void    G_DoLeaveMap(void);
 void    G_DoRestartMap(void);
@@ -184,8 +185,6 @@ static void G_InitNewGame(void);
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 game_config_t cfg; // The global cfg.
-
-int debugSound; // Debug flag for displaying sound info.
 
 skillmode_t dSkill;
 
@@ -1648,6 +1647,10 @@ static void runGameAction(void)
             G_DoMapCompleted();
             break;
 
+        case GA_ENDDEBRIEFING:
+            G_DoEndDebriefing();
+            break;
+
 #if __JHEXEN__
         case GA_SETMAP:
             SV_HxInitBaseSlot();
@@ -2442,17 +2445,6 @@ void G_DoMapCompleted(void)
 {
     int i;
 
-    // We are about to go to Intermission, however if there is an InFine for
-    // debriefing we should run it now.
-    if(G_StartDebriefing())
-    {
-        // The GA_MAPCOMPLETED action is retaken after the debriefing stops.
-        return;
-    }
-
-    // We have either just returned from a debriefing or there wasn't one.
-    briefDisabled = false;
-
     G_SetGameAction(GA_NONE);
 
     for(i = 0; i < MAXPLAYERS; ++i)
@@ -2490,7 +2482,7 @@ void G_DoMapCompleted(void)
     if(Def_Get(DD_DEF_MAP_INFO, Str_Text(mapPath), &minfo) && (minfo.flags & MIF_NO_INTERMISSION))
     {
         Uri_Delete(mapUri);
-        G_WorldDone();
+        G_IntermissionDone();
         return;
     }
     Uri_Delete(mapUri);
@@ -2499,17 +2491,10 @@ void G_DoMapCompleted(void)
 #elif __JHEXEN__
     if(!deathmatch)
     {
-        G_WorldDone();
+        G_IntermissionDone();
         return;
     }
 #endif
-
-    // Has the player completed the game?
-    if(G_IfVictory())
-    {   // Victorious!
-        G_SetGameAction(GA_VICTORY);
-        return;
-    }
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
 # if __JDOOM__
@@ -2604,8 +2589,19 @@ boolean G_StartDebriefing()
     return false;
 }
 
-void G_WorldDone(void)
+void G_IntermissionDone(void)
 {
+    // We have left Intermission, however if there is an InFine for debriefing
+    // we should run it now.
+    if(G_StartDebriefing())
+    {
+        // The GA_ENDDEBRIEFING action is taken after the debriefing stops.
+        return;
+    }
+
+    // We have either just returned from a debriefing or there wasn't one.
+    briefDisabled = false;
+
 #if __JDOOM__ || __JDOOM64__
     if(secretExit)
         players[CONSOLEPLAYER].didSecret = true;
@@ -2614,7 +2610,21 @@ void G_WorldDone(void)
     // Clear the currently playing script, if any.
     FI_StackClear();
 
+    // Has the player completed the game?
+    if(G_IfVictory())
+    {
+        // Victorious!
+        G_SetGameAction(GA_VICTORY);
+        return;
+    }
+
     G_SetGameAction(GA_LEAVEMAP);
+}
+
+void G_DoEndDebriefing(void)
+{
+    briefDisabled = true;
+    G_IntermissionDone();
 }
 
 typedef struct {

@@ -22,7 +22,7 @@
     <div id="panorama">
     </div>
     <!-- IF S_DISPLAY_SEARCH and not S_IN_SEARCH -->
-        <div id="search-box">
+        <div id="search-box" class="block">
             <form action="{U_SEARCH}" method="post" id="search">
             <fieldset>
                 <input name="keywords" id="keywords" type="text" maxlength="128" title="{L_SEARCH_KEYWORDS}" class="inputbox search" value="<!-- IF SEARCH_WORDS-->{SEARCH_WORDS}<!-- ELSE -->{L_SEARCH_MINI}<!-- ENDIF -->" onclick="if(this.value=='{LA_SEARCH_MINI}')this.value='';" onblur="if(this.value=='')this.value='{LA_SEARCH_MINI}';" />
