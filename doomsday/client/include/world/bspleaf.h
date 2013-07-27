@@ -73,19 +73,11 @@ public:
     /// Required sector attribution is missing. @ingroup errors
     DENG2_ERROR(MissingSectorError);
 
-#ifdef __CLIENT__
-    /// The referenced geometry group does not exist. @ingroup errors
-    DENG2_ERROR(UnknownGeometryGroupError);
-#endif
-
     /*
      * Linked-element lists/sets:
      */
     typedef QSet<polyobj_s *>        Polyobjs;
     typedef QList<Segment *>         Segments;
-#ifdef __CLIENT__
-    typedef QMap<int, BiasSurface *> BiasSurfaces;
-#endif
 
 public: /// @todo Make private:
 #ifdef __CLIENT__
@@ -281,26 +273,17 @@ public:
     int numFanVertices() const;
 
     /**
-     * Retrieve the bias surface for specified geometry @a group.
+     * Retrieve the bias surface for specified geometry @a group. If no bias
+     * surface has yet been initialized for the group it will be at this time.
      *
      * @param group  Geometry group identifier for the bias surface.
      */
     BiasSurface &biasSurface(int group);
 
     /**
-     * Assign a new bias surface to the specified geometry @a group.
-     *
-     * @param group           Geometry group identifier for the surface.
-     * @param newBiasSurface  New BiasSurface for the identified @a group. Any
-     *                        existing bias surface will be replaced (destroyed).
-     *                        Ownership is given to the BSP leaf.
+     * @param changes
      */
-    void setBiasSurface(int group, BiasSurface *newBiasSurface);
-
-    /**
-     * Provides access to the bias surfaces for the BSP leaf, for efficent traversal.
-     */
-    BiasSurfaces const &biasSurfaces() const;
+    void updateBiasAffection(BiasTracker &changes);
 
     /**
      * Returns a pointer to the first ShadowLink; otherwise @c 0.

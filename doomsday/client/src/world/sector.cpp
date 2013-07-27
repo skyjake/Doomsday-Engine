@@ -33,6 +33,10 @@
 #include "world/p_object.h"
 #include "world/p_players.h"
 
+#ifdef __CLIENT__
+#  include "render/rend_main.h" // useBias
+#endif
+
 #include "world/sector.h"
 
 using namespace de;
@@ -163,7 +167,7 @@ DENG2_OBSERVES(Plane, HeightChange)
         }
 
 #ifdef __CLIENT__
-        if(!ddMapSetup)
+        if(!ddMapSetup && useBias)
         {
             // Inform the shadow bias of changed geometry.
             foreach(BspLeaf *bspLeaf, bspLeafs)

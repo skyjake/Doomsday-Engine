@@ -1432,7 +1432,7 @@ static void writeWallSection(Segment &segment, int section,
         parm.flags               = RPF_DEFAULT | (skyMasked? RPF_SKYMASK : 0);
         parm.forceOpaque         = wallSpec.flags.testFlag(WallSpec::ForceOpaque);
         parm.alpha               = parm.forceOpaque? 1 : opacity;
-        parm.bsuf                = &segment.biasSurface(wallSpec.section);
+        parm.bsuf                = useBias? &segment.biasSurface(wallSpec.section) : 0;
         parm.texTL               = &texQuad[0];
         parm.texBR               = &texQuad[1];
 
@@ -1676,7 +1676,7 @@ static void writeLeafPlane(Plane &plane)
 
     parm.flags               = RPF_DEFAULT;
     parm.isWall              = false;
-    parm.bsuf                = &leaf->biasSurface(plane.indexInSector());
+    parm.bsuf                = useBias? &leaf->biasSurface(plane.indexInSector()) : 0;
     parm.texTL               = &texTL;
     parm.texBR               = &texBR;
     parm.surfaceLightLevelDL = parm.surfaceLightLevelDR = 0;

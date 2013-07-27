@@ -46,6 +46,10 @@ ddouble triangleArea(Vector2d const &v1, Vector2d const &v2, Vector2d const &v3)
     return (a.x * b.y - b.x * a.y) / 2;
 }
 
+#ifdef __CLIENT__
+typedef QMap<int, BiasSurface *> BiasSurfaces;
+#endif
+
 DENG2_PIMPL(BspLeaf)
 {
     typedef QSet<Mesh *> Meshes;
@@ -479,41 +483,30 @@ int BspLeaf::numFanVertices() const
 
 BiasSurface &BspLeaf::biasSurface(int group)
 {
-    BiasSurfaces::iterator found = d->biasSurfaces.find(group);
-    if(found != d->biasSurfaces.end())
-    {
-        return **found;
-    }
-    /// @throw InvalidGeometryGroupError Attempted with an invalid geometry group.
-    throw UnknownGeometryGroupError("BspLeaf::biasSurface", QString("Invalid group %1").arg(group));
-}
-
-void BspLeaf::setBiasSurface(int group, BiasSurface *newBiasSurface)
-{
     if(!d->sector)
         /// @throw MissingSectorError Attempted with no sector attributed.
         throw MissingSectorError("BspLeaf::setBiasSurface", "No sector is attributed");
 
-    // Sanity check.
-    DENG_ASSERT(group >= 0 && group < d->sector->planeCount());
+    DENG_ASSERT(group >= 0 && group < d->sector->planeCount()); // sanity check
+    DENG_ASSERT(!isDegenerate()); // sanity check
 
-    if(d->biasSurfaces.contains(group))
+    BiasSurfaces::iterator foundAt = d->biasSurfaces.find(group);
+    if(foundAt != d->biasSurfaces.end())
     {
-        delete d->biasSurfaces.take(group);
+        return **foundAt;
     }
 
-    if(newBiasSurface)
-    {
-        if(isDegenerate())
-            LOG_TRACE("Adding a BiasSurface to a degenerate BSP leaf??");
-
-        d->biasSurfaces.insert(group, newBiasSurface);
-    }
+    BiasSurface *bsuf = new BiasSurface(*this, group, numFanVertices());
+    d->biasSurfaces.insert(group, bsuf);
+    return *bsuf;
 }
 
-BspLeaf::BiasSurfaces const &BspLeaf::biasSurfaces() const
+void BspLeaf::updateBiasAffection(BiasTracker &changes)
 {
-    return d->biasSurfaces;
+    foreach(BiasSurface *biasSurface, d->biasSurfaces)
+    {
+        biasSurface->updateAffection(changes);
+    }
 }
 
 ShadowLink *BspLeaf::firstShadowLink() const

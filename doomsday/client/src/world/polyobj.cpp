@@ -29,6 +29,10 @@
 #include "world/map.h"
 #include "Segment"
 
+#ifdef __CLIENT__
+#  include "render/rend_main.h" // useBias
+#endif
+
 #include "render/r_main.h" // validCount
 
 #include "world/polyobj.h"
@@ -44,7 +48,7 @@ typedef QVector<Vector2d> VertexCoords;
 static void notifyGeometryChanged(Polyobj &po)
 {
 #ifdef __CLIENT__
-    if(!ddMapSetup)
+    if(!ddMapSetup && useBias)
     {
         // Shadow bias must be informed when surfaces move/deform.
         foreach(Line *line, po.lines())

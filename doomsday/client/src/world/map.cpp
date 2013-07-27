@@ -1198,24 +1198,18 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
         /*
          * Apply changes to all surfaces:
          */
-        foreach(Segment *segment, segments)
-        foreach(BiasSurface *biasSurface, segment->biasSurfaces())
+        foreach(Segment *seg, segments)
         {
-            biasSurface->updateAffection(allChanges);
+            seg->updateBiasAffection(allChanges);
         }
         foreach(Polyobj *polyobj, polyobjs)
         foreach(Line *line, polyobj->lines())
         {
-            Segment *segment = line->front().leftSegment();
-            foreach(BiasSurface *biasSurface, segment->biasSurfaces())
-            {
-                biasSurface->updateAffection(allChanges);
-            }
+            line->front().leftSegment()->updateBiasAffection(allChanges);
         }
         foreach(BspLeaf *bspLeaf, bspLeafs)
-        foreach(BiasSurface *biasSurface, bspLeaf->biasSurfaces())
         {
-            biasSurface->updateAffection(allChanges);
+            bspLeaf->updateBiasAffection(allChanges);
         }
     }
 
@@ -1405,42 +1399,6 @@ void Map::initBias()
     // Allocate and initialize the vertexillum_ts.
     VertexIllum *illums = (VertexIllum *) Z_Calloc(sizeof(*illums) * numVertIllums, PU_MAP, 0);
     */
-
-    // Allocate bias surfaces.
-    foreach(Segment *segment, d->segments)
-    {
-        if(!segment->hasLineSide()) continue;
-
-        for(int i = 0; i < 3; ++i)
-        {
-            BiasSurface *bsuf = new BiasSurface(*segment, i, 4);
-            segment->setBiasSurface(i, bsuf);
-        }
-    }
-
-    foreach(BspLeaf *bspLeaf, d->bspLeafs)
-    {
-        if(!bspLeaf->hasSector()) continue;
-        if(bspLeaf->isDegenerate()) continue;
-
-        for(int i = 0; i < bspLeaf->sector().planeCount(); ++i)
-        {
-            BiasSurface *bsuf = new BiasSurface(*bspLeaf, i, bspLeaf->numFanVertices());
-            bspLeaf->setBiasSurface(i, bsuf);
-        }
-    }
-
-    foreach(Polyobj *polyobj, d->polyobjs)
-    foreach(Line *line, polyobj->lines())
-    {
-        Segment *segment = line->front().leftSegment();
-
-        for(int i = 0; i < 3; ++i)
-        {
-            BiasSurface *bsuf = new BiasSurface(*segment, i, 4);
-            segment->setBiasSurface(i, bsuf);
-        }
-    }
 
     LOG_INFO(String("Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 }

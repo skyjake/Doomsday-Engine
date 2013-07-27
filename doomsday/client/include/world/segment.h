@@ -53,17 +53,6 @@ public:
     /// Required line attribution is missing. @ingroup errors
     DENG2_ERROR(MissingLineSideError);
 
-#ifdef __CLIENT__
-
-    /// The referenced geometry group does not exist. @ingroup errors
-    DENG2_ERROR(UnknownGeometryGroupError);
-
-    /*
-     * Linked-element lists/sets:
-     */
-    typedef QMap<int, BiasSurface *> BiasSurfaces;
-#endif
-
     enum Flag
     {
         FacingFront = 0x1
@@ -242,26 +231,17 @@ public:
 #ifdef __CLIENT__
 
     /**
-     * Retrieve the bias surface for specified geometry @a group.
+     * Retrieve the bias surface for specified geometry @a group. If no bias
+     * surface has yet been initialized for the group it will be at this time.
      *
      * @param group  Geometry group identifier for the bias surface.
      */
     BiasSurface &biasSurface(int group);
 
     /**
-     * Assign a new bias surface to the specified geometry @a group.
-     *
-     * @param group           Geometry group identifier for the surface.
-     * @param newBiasSurface  New BiasSurface for the identified @a group. Any
-     *                        existing bias surface will be replaced (destroyed).
-     *                        Ownership is given to the segment.
+     * @param allChanges
      */
-    void setBiasSurface(int group, BiasSurface *newBiasSurface);
-
-    /**
-     * Provides access to the bias surfaces for the segment, for efficent traversal.
-     */
-    BiasSurfaces const &biasSurfaces() const;
+    void updateBiasAffection(BiasTracker &changes);
 
 #endif // __CLIENT__
 

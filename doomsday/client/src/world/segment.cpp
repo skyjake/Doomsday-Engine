@@ -37,6 +37,10 @@
 
 using namespace de;
 
+#ifdef __CLIENT__
+typedef QMap<int, BiasSurface *> BiasSurfaces;
+#endif
+
 DENG2_PIMPL(Segment)
 {
     /// Segment on the back side of this (if any). @todo remove me
@@ -191,34 +195,26 @@ void Segment::setFlags(Flags flagsToChange, FlagOp operation)
 
 BiasSurface &Segment::biasSurface(int group)
 {
-    BiasSurfaces::iterator found = d->biasSurfaces.find(group);
-    if(found != d->biasSurfaces.end())
+    DENG_ASSERT(group >= 0 && group < 3); // sanity check
+    DENG_ASSERT(hasLineSide()); // sanity check
+
+    BiasSurfaces::iterator foundAt = d->biasSurfaces.find(group);
+    if(foundAt != d->biasSurfaces.end())
     {
-        return **found;
+        return **foundAt;
     }
-    /// @throw InvalidGeometryGroupError Attempted with an invalid geometry group.
-    throw UnknownGeometryGroupError("Segment::biasSurface", QString("Invalid group %1").arg(group));
+
+    BiasSurface *bsuf = new BiasSurface(*this, group, 4);
+    d->biasSurfaces.insert(group, bsuf);
+    return *bsuf;
 }
 
-void Segment::setBiasSurface(int group, BiasSurface *newBiasSurface)
+void Segment::updateBiasAffection(BiasTracker &changes)
 {
-    // Sanity check.
-    DENG_ASSERT(group >= 0 && group < 3);
-
-    if(d->biasSurfaces.contains(group))
+    foreach(BiasSurface *biasSurface, d->biasSurfaces)
     {
-        delete d->biasSurfaces.take(group);
+        biasSurface->updateAffection(changes);
     }
-
-    if(newBiasSurface)
-    {
-        d->biasSurfaces.insert(group, newBiasSurface);
-    }
-}
-
-Segment::BiasSurfaces const &Segment::biasSurfaces() const
-{
-    return d->biasSurfaces;
 }
 
 #endif // __CLIENT__
