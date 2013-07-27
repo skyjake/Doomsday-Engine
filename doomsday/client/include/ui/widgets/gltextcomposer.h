@@ -76,6 +76,12 @@ public:
                       ui::Alignment const &lineAlign,
                       de::Vector4f const &color = de::Vector4f(1, 1, 1, 1));
 
+    void makeVerticesForRange(de::Rangei const &lineRange,
+                              Vertices &triStrip,
+                              de::Vector2i const &topLeft,
+                              ui::Alignment const &lineAlign,
+                              de::Vector4f const &color = de::Vector4f(1, 1, 1, 1));
+
     /**
      * Generates vertices for all the text lines and concatenates them
      * onto the existing triangle strip in @a triStrip.
@@ -87,6 +93,13 @@ public:
                       ui::Alignment const &alignInRect,
                       ui::Alignment const &lineAlign,
                       de::Vector4f const &color = de::Vector4f(1, 1, 1, 1));
+
+    void makeVerticesForRange(de::Rangei const &lineRange,
+                              Vertices &triStrip,
+                              de::Rectanglei const &rect,
+                              ui::Alignment const &alignInRect,
+                              ui::Alignment const &lineAlign,
+                              de::Vector4f const &color = de::Vector4f(1, 1, 1, 1));
 
 private:
     DENG2_PRIVATE(d)

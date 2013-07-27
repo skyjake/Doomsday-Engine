@@ -259,11 +259,32 @@ void GLTextComposer::makeVertices(Vertices &triStrip,
     makeVertices(triStrip, Rectanglei(topLeft, topLeft), AlignTopLeft, lineAlign, color);
 }
 
+void GLTextComposer::makeVerticesForRange(Rangei const &lineRange,
+                                          Vertices &triStrip,
+                                          Vector2i const &topLeft,
+                                          Alignment const &lineAlign,
+                                          Vector4f const &color)
+{
+    makeVerticesForRange(lineRange, triStrip, Rectanglei(topLeft, topLeft),
+                         AlignTopLeft, lineAlign, color);
+}
+
 void GLTextComposer::makeVertices(Vertices &triStrip,
                                   Rectanglei const &rect,
                                   Alignment const &alignInRect,
                                   Alignment const &lineAlign,
                                   Vector4f const &color)
+{
+    makeVerticesForRange(Rangei(0, d->lines.size()), triStrip,
+                         rect, alignInRect, lineAlign, color);
+}
+
+void GLTextComposer::makeVerticesForRange(Rangei const &lineRange,
+                                          Vertices &triStrip,
+                                          Rectanglei const &rect,
+                                          Alignment const &alignInRect,
+                                          Alignment const &lineAlign,
+                                          Vector4f const &color)
 {
     if(!isReady()) return;
 
@@ -363,37 +384,40 @@ void GLTextComposer::makeVertices(Vertices &triStrip,
 
         Vector2f linePos = p;
 
-        for(int k = 0; k < info.segs.size(); ++k)
+        if(lineRange.contains(i))
         {
-            Instance::Line::Segment const &seg = line.segs[k];
-
-            // Empty lines are skipped.
-            if(seg.id.isNone()) continue;
-
-            Vector2ui size = d->atlas->imageRect(seg.id).size();
-            if(seg.compressed)
+            for(int k = 0; k < info.segs.size(); ++k)
             {
-                size.x = seg.width;
-            }
+                Instance::Line::Segment const &seg = line.segs[k];
 
-            // Line alignment.
-            /// @todo How to center/right-align text that uses tab stops?
-            if(line.segs.size() == 1 && !d->wraps->lineInfo(0).segs[0].tabStop)
-            {
-                if(lineAlign.testFlag(AlignRight))
+                // Empty lines are skipped.
+                if(seg.id.isNone()) continue;
+
+                Vector2ui size = d->atlas->imageRect(seg.id).size();
+                if(seg.compressed)
                 {
-                    linePos.x += int(rect.width()) - int(size.x);
+                    size.x = seg.width;
                 }
-                else if(!lineAlign.testFlag(AlignLeft))
+
+                // Line alignment.
+                /// @todo How to center/right-align text that uses tab stops?
+                if(line.segs.size() == 1 && !d->wraps->lineInfo(0).segs[0].tabStop)
                 {
-                    linePos.x += (int(rect.width()) - int(size.x)) / 2;
+                    if(lineAlign.testFlag(AlignRight))
+                    {
+                        linePos.x += int(rect.width()) - int(size.x);
+                    }
+                    else if(!lineAlign.testFlag(AlignLeft))
+                    {
+                        linePos.x += (int(rect.width()) - int(size.x)) / 2;
+                    }
                 }
+
+                Rectanglef const uv = d->atlas->imageRectf(seg.id);
+
+                triStrip.makeQuad(Rectanglef::fromSize(linePos + Vector2f(seg.x, 0), size),
+                                  color, uv);
             }
-
-            Rectanglef const uv = d->atlas->imageRectf(seg.id);
-
-            triStrip.makeQuad(Rectanglef::fromSize(linePos + Vector2f(seg.x, 0), size),
-                              color, uv);
         }
 
         p.y += d->font->lineSpacing().value();
