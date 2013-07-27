@@ -51,7 +51,7 @@ class Entry:
             self.reverted = True
             subject = subject[8:-1]
         
-        # Remote tags from the subject.
+        # Remove tags from the subject.
         pos = subject.find(': ')
         if pos > 0:
             for tag in subject[:pos].split('|'):
