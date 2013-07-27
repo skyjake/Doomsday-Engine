@@ -344,17 +344,23 @@ print >> out, '<?php'
 print >> out, '$tags = array(', string.join(['"%s" => "%s"' % (tag, tag_filename(tag)) for tag in byTag.keys()], ', '), ');'
 print >> out, """
 $input = $_GET["tag"];
+$style = $_GET["style"];
+if($style == 'grouped') {
+  $style = 'group_';
+} else {
+  $style = '';
+}
 $destination = "index.html";
 $best = -1;
 if(strlen($input) > 0) {
   foreach($tags as $tag => $link) {
     $lev = levenshtein($input, $tag);
     if($lev == 0) {
-      $destination = "tag_$link.html";
+      $destination = "tag_$style$link.html";
       break;
     }
     if($lev < $best || $best < 0) {
-      $destination = "tag_$link.html";
+      $destination = "tag_$style$link.html";
       $best = $lev;
     }
   }
