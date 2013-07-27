@@ -167,13 +167,6 @@ static inline void addLight(Vector3f &dest, Vector3f const &color, float howMuch
     dest = (dest + color * howMuch).min(Vector3f(1, 1, 1));
 }
 
-static Vector3f ambientLight(Map &map, Vector3d const &point)
-{
-    if(map.hasLightGrid())
-        return map.lightGrid().evaluate(point);
-    return Vector3f();
-}
-
 /**
  * evalLighting uses these -- they must be set before it is called.
  */
@@ -257,12 +250,10 @@ DENG2_PIMPL_NOREF(BiasSurface)
     {
         DENG_ASSERT(illums.count() == 4);
 
-        Map &map = App_World().map();
-
         clearAffected();
 
         Affection aff;
-        foreach(BiasSource *src, map.biasSources())
+        foreach(BiasSource *src, owner.map().biasSources())
         {
             // Is the source is too weak, ignore it entirely.
             if(src->intensity() <= MIN_INTENSITY)
@@ -286,7 +277,7 @@ DENG2_PIMPL_NOREF(BiasSurface)
             if(intensity < MIN_INTENSITY)
                 continue;
 
-            addAffected(map.toIndex(*src), intensity, aff);
+            addAffected(owner.map().toIndex(*src), intensity, aff);
         }
     }
 
@@ -295,12 +286,10 @@ DENG2_PIMPL_NOREF(BiasSurface)
     {
         DENG_ASSERT(illums.count() == vertCount && verts != 0);
 
-        Map &map = App_World().map();
-
         clearAffected();
 
         Affection aff;
-        foreach(BiasSource *src, map.biasSources())
+        foreach(BiasSource *src, owner.map().biasSources())
         {
             // Is the source is too weak, ignore it entirely.
             if(src->intensity() <= MIN_INTENSITY)
@@ -326,7 +315,7 @@ DENG2_PIMPL_NOREF(BiasSurface)
             if(intensity < MIN_INTENSITY)
                 continue;
 
-            addAffected(map.toIndex(*src), intensity, aff);
+            addAffected(owner.map().toIndex(*src), intensity, aff);
         }
     }
 
@@ -341,8 +330,7 @@ DENG2_PIMPL_NOREF(BiasSurface)
     {
 #define COLOR_CHANGE_THRESHOLD  0.1f
 
-        Map &map = App_World().map();
-        uint currentTime = map.biasCurrentTime();
+        uint currentTime = owner.map().biasCurrentTime();
 
         bool illumChanged = false;
         uint latestSourceUpdate = 0;
@@ -362,18 +350,18 @@ DENG2_PIMPL_NOREF(BiasSurface)
 
         // Determine if any affecting sources have changed since last frame.
         aff = affecting;
-        if(map.biasSourceCount() > 0)
+        if(owner.map().biasSourceCount() > 0)
         {
             for(int i = 0; affected[i].sourceIndex >= 0 && i < MAX_AFFECTED; ++i)
             {
                 int idx = affected[i].sourceIndex;
 
                 // Is this a valid index?
-                if(idx < 0 || idx >= map.biasSourceCount())
+                if(idx < 0 || idx >= owner.map().biasSourceCount())
                     continue;
 
                 aff->index = idx;
-                aff->source = map.biasSource(idx);
+                aff->source = owner.map().biasSource(idx);
                 aff->affection = &affected[i];
 
                 if(trackChanged.check(idx))
@@ -419,7 +407,7 @@ DENG2_PIMPL_NOREF(BiasSurface)
                 Vector3d delta = s->origin() - mapVertexOrigin;
 
                 if(devUseSightCheck &&
-                   !LineSightTest(s->origin(), mapVertexOrigin + delta / 100).trace(map.bspRoot()))
+                   !LineSightTest(s->origin(), mapVertexOrigin + delta / 100).trace(owner.map().bspRoot()))
                 {
                     // LOS fail.
                     // This affecting source does not contribute any light.
@@ -482,8 +470,11 @@ DENG2_PIMPL_NOREF(BiasSurface)
         // Finalize lighting (i.e., perform interpolation if needed).
         vi.lerp(color, currentTime);
 
-        // Apply the ambient light term.
-        addLight(color, ambientLight(map, mapVertexOrigin));
+        // Apply an ambient light term?
+        if(owner.map().hasLightGrid())
+        {
+            addLight(color, owner.map().lightGrid().evaluate(mapVertexOrigin));
+        }
 
         return color;
 
@@ -508,10 +499,9 @@ void BiasSurface::consoleRegister() // static
 
 void BiasSurface::updateAfterMove()
 {
-    Map &map = App_World().map();
     for(int i = 0; i < MAX_AFFECTED && d->affected[i].sourceIndex >= 0; ++i)
     {
-        map.biasSource(d->affected[i].sourceIndex)->forceUpdate();
+        d->owner.map().biasSource(d->affected[i].sourceIndex)->forceUpdate();
     }
 }
 
@@ -567,14 +557,12 @@ void BiasSurface::lightPoly(struct ColorRawf_s *colors,
     // Have any of the affected lights changed?
     if(devUpdateAffected)
     {
-        Map &map = App_World().map();
-
         // If the data is already up to date, nothing needs to be done.
-        if(d->lastUpdateOnFrame != map.biasLastChangeOnFrame())
+        if(d->lastUpdateOnFrame != d->owner.map().biasLastChangeOnFrame())
         {
-            d->lastUpdateOnFrame = map.biasLastChangeOnFrame();
+            d->lastUpdateOnFrame = d->owner.map().biasLastChangeOnFrame();
 
-            /**
+            /*
              * @todo This could be enhanced so that only the lights on the right
              * side of the surface are taken into consideration.
              */
