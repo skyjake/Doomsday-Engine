@@ -13,12 +13,53 @@ TITLE = 'Doomsday Codex'
 if sys.argv > 1:
     OUT_DIR = sys.argv[1]
 
-#aliases = {
-#'Chex Quest': ['chex'],
-#'Doom':       ['libdoom'],
-#'Heretic':    ['libheretic'],
-#'Hexen':      ['libhexen']
-#}
+relatedTags = [
+    ['Fixed', 'Added', 'Refactor', 'Optimize', 'Revert', 'Cleanup', 'Debug'],
+    ['Windows', 'OS X', 'Linux', 'Unix', 'Debian', 'Ubuntu', 'FreeBSD', 'X11'],
+    ['Windows', 'Windows Installer', 'Windows only', 'Windows Vista'],
+    ['Builder', 'qmake', 'Project', 'Project files', 'CMake', 'Distrib', 'GCC', 'MSVC', 'Clang', 'Git', 
+     'TextMate', 'wikidocs'],
+    ['Test', 'Tests', 'GLSandbox'],
+    ['Docs', 'Documentation', 'Readme', 'Doxygen', 'Amethyst'],
+    ['Homepage', 'Add-on Repository', 'Build Repository', 'CSS', 'RSS', 'DEW', 'Forums'],
+    ['libdeng2', 'Config', 'Log', 'LogBuffer', 'Widgets'],
+    ['libgui', 'DisplayMode', 'GL', 'OpenGL', 'GLBuffer', 'GLShader', 'GLShaderBank', 'GLTexture', 
+     'Atlas', 'GLProgram', 'GLState', 'GLTarget', 'GLUniform', 'Image'],
+    ['libdeng', 'libdeng1', 'Garbage', 'Garbages'],
+    ['libshell', 'Shell', 'AbstractLineEditor'],    
+    ['Client', 'Client UI', 'UI', 'Console', 'Control Panel', 'Default Style', 'GameSelectionWidget', 'Task Bar',
+     'Updater', 'WindowSystem', 'ClientWindow'],
+    ['Server', 'Dedicated Server', 'Dedicated Mode', 'ServerApp', 'ServerInfo', 'ServerSystem'],
+    ['Snowberry', 'Shell', 'Amethyst', 'md2tool'],
+    ['All Games', 'Doom', 'Heretic', 'Hexen', 'Doom64', 'Chex Quest', 'HacX'],
+    ['Plugins', 'Wad Map Converter', 'Deh Reader', 'Audio', 'dsDirectSound', 'OpenAL', 'dpDehRead', 'dsWinMM', 
+     'Dummy Audio', 'Example Plugin', 'exampleplugin', 'FluidSynth', 'FMOD'],
+    ['API', 'DMU', 'DMU API'],
+    ['DED', 'DED Parser', 'Ded Reader', 'Definitions', 'Info', 'ScriptedInfo'],
+    ['Ring Zero', 'GameSelectionWidget'],
+    ['Script', 'scriptsys', 'ScriptSystem', 'ScriptedInfo', 'Record', 'Variable'],
+    ['File System', 'File', 'File1',  'FileHandle', 'FileDirectory', 'FileId', 'Folder', 'Feed', 'FS', 'FS1',
+     'GenericFile', 'AbstractFile'],
+    ['Resources', 'ResourceNamespace'],
+    ['Network', 'Multiplayer', 'Server', 'Protocol'],
+    ['Concurrency', 'Task', 'libdeng2'],
+    ['libcommon', 'Game logic', 'Menu', 'Game Menu', 'Game Save', 'Games', 'Automap'],
+    ['World', 'GameMap', 'Map', 'BSP Builder', 'HEdge', 'BspLeaf', 'BspNode', 'Line', 'LineDef', 
+     'Sector', 'SectionEdge'],
+    ['Finale Interpreter', 'Finales', 'InFine'],
+    ['Input', 'Joystick', 'KeyEvent', 'libgui', 'InputSystem'],
+    ['Audio', 'SFX', 'Music', 'FluidSynth'],
+    ['Widgets', 'Widget', 'RootWidget', 'LabelWidget', 'MenuWidget', 'NotificationWidget', 'GameSelectionWidget',
+     'ScrollAreaWidget']
+]
+
+def find_related_tags(tag):
+    rels = []
+    for group in relatedTags:
+        if tag not in group: continue
+        for t in group:
+            if t != tag and t not in rels: rels.append(t)            
+    return sorted(rels, key=lambda s: s.lower())
 
 class Commit:
     def __init__(self, subject, author, date, link, hash):
@@ -30,7 +71,7 @@ class Commit:
         self.extract_tags()
         
     def add_tag(self, tag):
-        if len(tag) == 0: return
+        if len(tag) <= 1: return
         if tag.lower() not in map(lambda x: x.lower(), self.tags):
             self.tags.append(tag)
         
@@ -73,6 +114,8 @@ class Commit:
             if '_' in tag: continue
             if tag.lower() == 'chex':
                 tag = u'Chex Quest'
+            if tag.lower() == 'hacx':
+                tag = u'HacX'
             if 'common' in tag.lower():
                 tag = u'libcommon'
             if 'doom64' in tag.lower():
@@ -82,15 +125,51 @@ class Commit:
             elif 'heretic' in tag.lower():
                 tag = u'Heretic'
             elif 'hexen' in tag.lower():
-                tag = u'Hexen'
+                tag = u'Hexen'            
+            if tag.lower() == 'add-on repository' or tag.lower() == 'addon repository':
+                tag = u'Add-on Repository'
+            if tag.lower() == 'bsp builder' or tag.lower() == 'bspbuilder':
+                tag = u'BSP Builder'
+            if tag.lower() == 'build repository' or tag.lower() == 'buildrepository':
+                tag = u'Build Repository'
+            if tag.lower() == 'deh reader' or tag.lower() == 'dehreader' or \
+                    tag.lower() == 'deh read' or tag.lower() == 'dehacked reader' or \
+                    tag.lower() == 'dehread':
+                tag = u'Deh Reader'
+            if tag.lower() == 'dpdehread':
+                tag = u'dpDehRead'
+            if tag.lower() == 'gcc':
+                tag = u'GCC'
+            if tag.lower() == 'glsandbox':
+                tag = u'GLSandbox'
+            if tag.lower() == 'dsdirectsound':
+                tag = u'dsDirectSound'
+            if tag.lower() == 'busy mode':
+                tag = u'Busy Mode'
+            if tag.lower() == 'dedicated server':
+                tag = u'Dedicated Server'
+            if tag.lower() == 'cmake':
+                tag = u'CMake'
             if tag.lower().startswith('filesys') or tag.lower().startswith('file sys'):
                 tag = u'File System'
             if tag.lower() == 'clang':
                 tag = u'Clang'
             if 'zone' in tag.lower():
                 tag = u'Memory Zone'
+            if tag.lower() == 'infine':
+                tag = u'InFine'
             if 'all games' in tag.lower():
                 self.add_tag(u'All Games')
+            if tag.lower() == 'lightgrid':
+                tag = u'Light Grid'
+            if tag.lower() == 'render':
+                tag = u'Renderer'
+            if tag.lower() == 'sfx':
+                tag = u'SFX'
+            if tag.lower() == 'taskbarwidth' or tag.lower() == 'taskbar' or tag.lower() == 'taskbarwidget':
+                tag = u'Task Bar'
+            if tag.lower() == 'texture manager':
+                tag = u'Texture Manager'
             if 'refactoring' in tag.lower() or 'refactored' in tag.lower():
                 tag = u'Refactor'
             if 'optimization' in tag.lower() or 'optimize' in tag.lower():
@@ -389,6 +468,14 @@ header("Location: $destination");
 
 print >> out, "?>"
 
+def print_related_tags(out, tag, style=''):
+    rels = find_related_tags(tag)
+    if len(rels) == 0: return
+    print >> out, '<p>Related tags: '
+    print >> out, string.join(['<a href="tag_%s%s.html">%s</a>' % (style, tag_filename(t), t)
+                               for t in rels], ', ')
+    print >> out, '</p>'
+
 #
 # Create pages for each tag.
 #
@@ -400,6 +487,7 @@ for tag in byTag.keys():
     # First a simple date-based list of commits in this tag.
     out = file(os.path.join(OUT_DIR, 'tag_%s.html' % tag_filename(tag)), 'wt')
     print_header(out, tag)
+    print_related_tags(out, tag)
     print >> out, '<p><a href="tag_group_%s.html"><b>View commits by groups</b></a></p>' % tag_filename(tag)
     print >> out, '<div style="margin-left:1em">'
     print_date_sorted_commits(out, byTag[tag], tag)
@@ -425,6 +513,7 @@ for tag in byTag.keys():
     # Then grouped by subgroup size.            
     out = file(os.path.join(OUT_DIR, 'tag_group_%s.html' % tag_filename(tag)), 'wt')
     print_header(out, tag + ' (Grouped)')
+    print_related_tags(out, tag, 'group_')
     print >> out, '<p><a id="top"></a><a href="tag_%s.html"><b>View commits by date</b></a></p>' % tag_filename(tag)
 
     if len(byTag[tag]) > 10:
