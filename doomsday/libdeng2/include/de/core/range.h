@@ -37,6 +37,7 @@ struct Range
     Type end;
 
     explicit Range(Type const &a = 0, Type const &b = 0) : start(a), end(b) {}
+    inline bool isEmpty() const { return end == start; }
     inline Type size() const { return end - start; }
     inline bool contains(Type const &i) const { return i >= start && i < end; }
     inline Type clamp(Type const &i) const {
