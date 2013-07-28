@@ -488,6 +488,18 @@ def print_related_tags(out, tag, style=''):
                                for t in rels], ', ')
     print >> out, '</p>'
 
+def print_authorship(out, tag):
+    authors = {}
+    total = len(byTag[tag])
+    for commit in byTag[tag]:    
+        if commit.author in authors:
+            authors[commit.author] += 1
+        else:
+            authors[commit.author] = 1
+    sortedAuthors = sorted(authors.keys(), key=lambda a: authors[a], reverse=True)    
+    print >> out, '<p>Authorship:', string.join(['%i%% %s' % (100 * authors[a] / total, a) 
+                                                 for a in sortedAuthors], ', ').encode('utf8'), '</p>'
+    
 #
 # Create pages for each tag.
 #
@@ -500,6 +512,7 @@ for tag in byTag.keys():
     out = file(os.path.join(OUT_DIR, 'tag_%s.html' % tag_filename(tag)), 'wt')
     print_header(out, tag)
     print_related_tags(out, tag)
+    print_authorship(out, tag)
     print >> out, '<p><a href="tag_group_%s.html"><b>View commits by groups</b></a></p>' % tag_filename(tag)
     print >> out, '<div style="margin-left:1em">'
     print_date_sorted_commits(out, byTag[tag], tag)
@@ -526,6 +539,7 @@ for tag in byTag.keys():
     out = file(os.path.join(OUT_DIR, 'tag_group_%s.html' % tag_filename(tag)), 'wt')
     print_header(out, tag + ' (Grouped)')
     print_related_tags(out, tag, 'group_')
+    print_authorship(out, tag)
     print >> out, '<p><a id="top"></a><a href="tag_%s.html"><b>View commits by date</b></a></p>' % tag_filename(tag)
 
     if len(byTag[tag]) > 10:
