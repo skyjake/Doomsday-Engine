@@ -31,6 +31,7 @@ DENG2_PIMPL(GLTextComposer)
     FontLineWrapping const *wraps;
     Font::RichFormat format;
     bool needRedo;
+    Rangei visibleLineRange; ///< Only these lines will be updated/drawn.
 
     struct Line {
         struct Segment {
@@ -49,7 +50,9 @@ DENG2_PIMPL(GLTextComposer)
     typedef QList<Line> Lines;
     Lines lines;
 
-    Instance(Public *i) : Base(i), font(0), atlas(0), wraps(0), needRedo(false)
+    Instance(Public *i)
+        : Base(i), font(0), atlas(0), wraps(0), needRedo(false),
+          visibleLineRange(0, 0x7fffffff)
     {}
 
     ~Instance()
@@ -80,6 +83,11 @@ DENG2_PIMPL(GLTextComposer)
             }
         }
         ln.segs.clear();
+    }
+
+    bool isLineVisible(int line) const
+    {
+        return visibleLineRange.contains(line);
     }
 
     String segmentText(int seg, FontLineWrapping::LineInfo const &info) const
@@ -125,7 +133,7 @@ DENG2_PIMPL(GLTextComposer)
             if(i < lines.size())
             {
                 // Is the rasterized copy up to date?
-                if(matchingSegments(i, info))
+                if(!isLineVisible(i) || matchingSegments(i, info))
                 {
                     // This line can be kept as is.
                     continue;
@@ -152,7 +160,7 @@ DENG2_PIMPL(GLTextComposer)
                 Line::Segment seg;
                 seg.range = info.segs[k].range;
                 seg.text = segmentText(k, info);
-                if(seg.range.size() > 0)
+                if(isLineVisible(i) && seg.range.size() > 0)
                 {
                     // The color is white unless a style is defined.
                     Vector4ub fgColor(255, 255, 255, 255);
@@ -226,6 +234,11 @@ void GLTextComposer::setText(String const &text, Font::RichFormat const &format)
     setState(false);
 }
 
+void GLTextComposer::setRange(Rangei const &visibleLineRange)
+{
+    d->visibleLineRange = visibleLineRange;
+}
+
 bool GLTextComposer::update()
 {
     DENG2_ASSERT(d->wraps != 0);
@@ -259,32 +272,11 @@ void GLTextComposer::makeVertices(Vertices &triStrip,
     makeVertices(triStrip, Rectanglei(topLeft, topLeft), AlignTopLeft, lineAlign, color);
 }
 
-void GLTextComposer::makeVerticesForRange(Rangei const &lineRange,
-                                          Vertices &triStrip,
-                                          Vector2i const &topLeft,
-                                          Alignment const &lineAlign,
-                                          Vector4f const &color)
-{
-    makeVerticesForRange(lineRange, triStrip, Rectanglei(topLeft, topLeft),
-                         AlignTopLeft, lineAlign, color);
-}
-
 void GLTextComposer::makeVertices(Vertices &triStrip,
                                   Rectanglei const &rect,
                                   Alignment const &alignInRect,
                                   Alignment const &lineAlign,
                                   Vector4f const &color)
-{
-    makeVerticesForRange(Rangei(0, d->lines.size()), triStrip,
-                         rect, alignInRect, lineAlign, color);
-}
-
-void GLTextComposer::makeVerticesForRange(Rangei const &lineRange,
-                                          Vertices &triStrip,
-                                          Rectanglei const &rect,
-                                          Alignment const &alignInRect,
-                                          Alignment const &lineAlign,
-                                          Vector4f const &color)
 {
     if(!isReady()) return;
 
@@ -380,12 +372,12 @@ void GLTextComposer::makeVerticesForRange(Rangei const &lineRange,
     for(int i = 0; i < d->wraps->height(); ++i)
     {
         Instance::Line const &line = d->lines[i];
-        FontLineWrapping::LineInfo const &info = d->wraps->lineInfo(i);
 
-        Vector2f linePos = p;
-
-        if(lineRange.contains(i))
+        if(d->isLineVisible(i))
         {
+            FontLineWrapping::LineInfo const &info = d->wraps->lineInfo(i);
+            Vector2f linePos = p;
+
             for(int k = 0; k < info.segs.size(); ++k)
             {
                 Instance::Line::Segment const &seg = line.segs[k];
