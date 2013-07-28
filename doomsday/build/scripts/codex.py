@@ -13,54 +13,6 @@ TITLE = 'Doomsday Codex'
 if sys.argv > 1:
     OUT_DIR = sys.argv[1]
 
-relatedTags = [
-    ['Fixed', 'Added', 'Refactor', 'Optimize', 'Revert', 'Cleanup', 'Debug'],
-    ['Windows', 'OS X', 'Linux', 'Unix', 'Debian', 'Ubuntu', 'FreeBSD', 'X11'],
-    ['Windows', 'Windows Installer', 'Windows only', 'Windows Vista'],
-    ['Builder', 'qmake', 'Project', 'Project files', 'CMake', 'Distrib', 'GCC', 'MSVC', 'Clang', 'Git', 
-     'TextMate', 'wikidocs'],
-    ['Test', 'Tests', 'GLSandbox'],
-    ['Docs', 'Documentation', 'Readme', 'Doxygen', 'Amethyst'],
-    ['Homepage', 'Add-on Repository', 'Build Repository', 'CSS', 'RSS', 'DEW', 'Forums'],
-    ['libdeng2', 'Config', 'Log', 'LogBuffer', 'Widgets'],
-    ['libgui', 'DisplayMode', 'GL', 'OpenGL', 'GLBuffer', 'GLShader', 'GLShaderBank', 'GLTexture', 
-     'Atlas', 'GLProgram', 'GLState', 'GLTarget', 'GLUniform', 'Image'],
-    ['libdeng', 'libdeng1', 'Garbage', 'Garbages'],
-    ['libshell', 'Shell', 'AbstractLineEditor'],    
-    ['Client', 'Client UI', 'UI', 'Console', 'Control Panel', 'Default Style', 'GameSelectionWidget', 'Task Bar',
-     'Updater', 'WindowSystem', 'ClientWindow'],
-    ['Server', 'Dedicated Server', 'Dedicated Mode', 'ServerApp', 'ServerInfo', 'ServerSystem'],
-    ['Snowberry', 'Shell', 'Amethyst', 'md2tool'],
-    ['All Games', 'Doom', 'Heretic', 'Hexen', 'Doom64', 'Chex Quest', 'HacX'],
-    ['Plugins', 'Wad Map Converter', 'Deh Reader', 'Audio', 'dsDirectSound', 'OpenAL', 'dpDehRead', 'dsWinMM', 
-     'Dummy Audio', 'Example Plugin', 'exampleplugin', 'FluidSynth', 'FMOD'],
-    ['API', 'DMU', 'DMU API'],
-    ['DED', 'DED Parser', 'Ded Reader', 'Definitions', 'Info', 'ScriptedInfo'],
-    ['Ring Zero', 'GameSelectionWidget'],
-    ['Script', 'scriptsys', 'ScriptSystem', 'ScriptedInfo', 'Record', 'Variable'],
-    ['File System', 'File', 'File1',  'FileHandle', 'FileDirectory', 'FileId', 'Folder', 'Feed', 'FS', 'FS1',
-     'GenericFile', 'AbstractFile'],
-    ['Resources', 'ResourceNamespace'],
-    ['Network', 'Multiplayer', 'Server', 'Protocol'],
-    ['Concurrency', 'Task', 'libdeng2'],
-    ['libcommon', 'Game logic', 'Menu', 'Game Menu', 'Game Save', 'Games', 'Automap'],
-    ['World', 'GameMap', 'Map', 'BSP Builder', 'HEdge', 'BspLeaf', 'BspNode', 'Line', 'LineDef', 
-     'Sector', 'SectionEdge'],
-    ['Finale Interpreter', 'Finales', 'InFine'],
-    ['Input', 'Joystick', 'KeyEvent', 'libgui', 'InputSystem'],
-    ['Audio', 'SFX', 'Music', 'FluidSynth'],
-    ['Widgets', 'Widget', 'RootWidget', 'LabelWidget', 'MenuWidget', 'NotificationWidget', 'GameSelectionWidget',
-     'ScrollAreaWidget']
-]
-
-def find_related_tags(tag):
-    rels = []
-    for group in relatedTags:
-        if tag not in group: continue
-        for t in group:
-            if t != tag and t not in rels: rels.append(t)            
-    return sorted(rels, key=lambda s: s.lower())
-
 class Commit:
     def __init__(self, subject, author, date, link, hash):
         self.subject = subject
@@ -266,6 +218,66 @@ for commit in byHash.values():
                 byTag[tag].append(commit)
         else:
             byTag[tag] = [commit]
+          
+relatedTags = [
+    ['Fixed', 'Added', 'Refactor', 'Optimize', 'Revert', 'Cleanup', 'Debug'],
+    ['Windows', 'OS X', 'Linux', 'Unix', 'Debian', 'Ubuntu', 'FreeBSD', 'X11'],
+    ['Windows', 'Windows *'],
+    ['Builder', 'Builds', 'qmake', 'Project*', 'CMake', 'Distrib', 'GCC', 'MSVC', 'Clang', 'Git', 
+     'TextMate', 'wikidocs'],
+    ['Test*', 'GLSandbox'],
+    ['Docs', 'Documentation', 'Codex', 'Readme', 'Doxygen', 'Amethyst'],
+    ['Homepage', 'Add-on Repository', 'Build Repository', 'CSS', 'RSS', 'DEW', 'Forums'],
+    ['libdeng2', 'Config', 'Log', 'LogBuffer', 'Widgets'],
+    ['libgui', 'DisplayMode', 'GL', 'OpenGL', 'GL*', 'Atlas*', 'Image', '*Bank'],
+    ['libdeng', 'libdeng1', 'Garbage', 'Garbages'],
+    ['libshell', 'Shell', 'AbstractLineEditor', 'Link'],    
+    ['Client', 'Client UI', 'UI', 'Console', 'Control Panel', 'Default Style', 'GameSelectionWidget', 'Task Bar',
+     'Updater', 'WindowSystem', 'Client*'],
+    ['Server', 'Dedicated Server', 'Dedicated Mode', 'Server*'],
+    ['Snowberry', 'Shell', 'Amethyst', 'md2tool'],
+    ['All Games', 'Doom', 'Heretic', 'Hexen', 'Doom64', 'Chex Quest', 'HacX'],
+    ['Plugins', 'Wad Map Converter', 'Deh Reader', 'Audio', 'dsDirectSound', 'OpenAL', 'dpDehRead', 'dsWinMM', 
+     'Dummy Audio', 'Example Plugin', 'exampleplugin', 'FluidSynth', 'FMOD'],
+    ['API', 'DMU', 'DMU API'],
+    ['DED', 'DED Parser', 'Ded Reader', 'Definitions', 'Info', 'ScriptedInfo'],
+    ['Ring Zero', 'GameSelectionWidget'],
+    ['Script*', 'scriptsys', 'Script', 'Record', 'Variable'],
+    ['File System', 'Folder', 'Feed', 'FS', 'FS1', 'File*', '*File'],
+    ['Resource*', 'Material*', 'Texture*', 'Uri'],
+    ['Renderer', 'Model*', 'Light Grid'],
+    ['Network', 'Multiplayer', 'Server', 'Protocol'],
+    ['Concurrency', 'Task', 'libdeng2'],
+    ['libcommon', 'Game logic', 'Menu', 'Game Menu', 'Game Save', 'Games', 'Automap'],
+    ['World', 'GameMap', 'Map', 'BSP Builder', 'HEdge', 'Bsp*', 'Line*', 'Sector', 'SectionEdge', 'Wall*',
+     'Blockmap', 'Polyobj', 'Plane'],
+    ['Finale Interpreter', 'Finales', 'InFine'],
+    ['Input*', 'Bindings', 'Joystick', 'MouseEvent', 'KeyEvent', 'libgui'],
+    ['Audio*', 'SFX', 'Music', 'FluidSynth'],
+    ['Widget*', '*Widget', '*Rule', 'Rule*', 'Animation' ]
+]
+
+def find_related_tags(tag):
+    rels = []
+    for group in relatedTags:
+        # Any wildcards?
+        tags = []
+        for t in group:
+            if '*' not in t:
+                tags.append(t)
+            elif t[0] == '*':
+                for x in byTag.keys():
+                    if x.endswith(t[1:]):
+                        tags.append(x)
+            elif t[-1] == '*':
+                for x in byTag.keys():
+                    if x.startswith(t[:-1]):
+                        tags.append(x)                
+        if tag not in tags: continue
+        for t in tags:
+            if t != tag and t not in rels:
+                rels.append(t)            
+    return sorted(rels, key=lambda s: s.lower())
           
 if not os.path.exists(OUT_DIR): os.mkdir(OUT_DIR)          
 
