@@ -151,13 +151,13 @@ $(document).ready(function () {
             {
                 mapId = 'map ' + mapId.substring(3);
             }
-            else if(mapId.substring(0, 1) == 'E' && mapId.substring(2, 1) == 'M')
+            else if(mapId.substring(0, 1) == 'E' && mapId.substring(2, 3) == 'M')
             {
-                mapId = 'episode ' + mapId.substring(1, 1) + ' map ' + mapId.substring(3, 1);
+                mapId = 'episode ' + mapId.substring(1, 2) + ', map ' + mapId.substring(3, 4);
             }
             else
             {
-                mapid = '\'' + mapId + '\'';
+                mapId = 'map \'' + mapId + '\'';
             }
 
             var gameRules = gameInfo.children('setupstring').text().split(/[ ,]+/);
@@ -176,7 +176,7 @@ $(document).ready(function () {
 
             var gameRuleStr = gameRules.join(', ');
 
-            var gameMetadataLabel = 'Game; ' + gameMode + '. Server configuration; ' + mapId + ' game-rules; ' + gameRuleStr;
+            var gameMetadataLabel = 'Game; ' + gameMode + '. Server configuration; ' + mapId + ', game-rules; ' + gameRuleStr;
 
             var playerCount = gameInfo.children('numplayers').text();
             var playerMax   = gameInfo.children('maxplayers').text();
