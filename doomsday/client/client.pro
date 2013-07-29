@@ -336,6 +336,7 @@ DENG_HEADERS += \
     include/ui/widgets/buttonwidget.h \ 
     include/ui/widgets/consolecommandwidget.h \
     include/ui/widgets/consolewidget.h \
+    include/ui/widgets/documentwidget.h \
     include/ui/widgets/gameselectionwidget.h \
     include/ui/widgets/gltextcomposer.h \
     include/ui/widgets/guirootwidget.h \
@@ -628,6 +629,7 @@ SOURCES += \
     src/ui/widgets/buttonwidget.cpp \
     src/ui/widgets/consolecommandwidget.cpp \
     src/ui/widgets/consolewidget.cpp \
+    src/ui/widgets/documentwidget.cpp \
     src/ui/widgets/gameselectionwidget.cpp \
     src/ui/widgets/gltextcomposer.cpp \
     src/ui/widgets/guirootwidget.cpp \
