@@ -284,7 +284,18 @@ if not os.path.exists(OUT_DIR): os.mkdir(OUT_DIR)
 
 def tag_filename(tag):
     return base64.urlsafe_b64encode(tag)
-                                            
+
+def encoded_text(logText):
+    logText = logText.replace(u'&', u'&amp;')
+    logText = logText.replace(u'ä', u'&auml;')
+    logText = logText.replace(u'ö', u'&ouml;')
+    logText = logText.replace(u'Ä', u'&Auml;')
+    logText = logText.replace(u'Ö', u'&Ouml;')
+    logText = logText.replace(u'<', u'&lt;')
+    logText = logText.replace(u'>', u'&gt;')
+    logText = filter(lambda c: c in string.whitespace or c > ' ', logText)
+    return logText
+                                                
 def print_header(out, pageTitle):
     print >> out, '<!DOCTYPE html>'
     print >> out, '<html>'
@@ -353,7 +364,7 @@ def alpha_index_cell(out, tag):
     else:
         style = ''
     print >> out, '<a href="tag_%s.html"><span style="%s">%s (%i)</span></a><br/>' % (
-        tag_filename(tag), style, tag, count)
+        tag_filename(tag), style, encoded_text(tag), count)
 
 print_table(out, sortedTags, alpha_index_cell, separateByFirstLetter=True,
             letterFunc=lambda t: t[0].lower())
@@ -378,23 +389,12 @@ def size_index_cell(out, tag):
     else:
         style = ''
     print >> out, '<a href="tag_group_%s.html"><span style="%s">%i %s</span></a><br/>' % (
-        tag_filename(tag), style, count, tag)    
+        tag_filename(tag), style, count, encoded_text(tag))    
 
 print_table(out, sorted(byTag.keys(), cmp=tag_size_comp), size_index_cell)
 
 print_footer(out)
 
-def encoded_text(logText):
-    logText = logText.replace(u'&', u'&amp;')
-    logText = logText.replace(u'ä', u'&auml;')
-    logText = logText.replace(u'ö', u'&ouml;')
-    logText = logText.replace(u'Ä', u'&Auml;')
-    logText = logText.replace(u'Ö', u'&Ouml;')
-    logText = logText.replace(u'<', u'&lt;')
-    logText = logText.replace(u'>', u'&gt;')
-    logText = filter(lambda c: c in string.whitespace or c > ' ', logText)
-    return logText
-    
 def print_tags(out, com, tag, linkSuffix=''):
     first = True
     for other in sorted(com.tags, cmp=lambda a, b: cmp(a.lower(), b.lower())):
@@ -552,7 +552,7 @@ for tag in byTag.keys():
     print >> out, '<p><a id="top"></a><a href="tag_%s.html"><b>View commits by date</b></a></p>' % tag_filename(tag)
 
     if len(byTag[tag]) > 10:
-        print >> out, '<p class="skiplist"><b>Jump down to:</b> '
+        print >> out, '<div class="skiplist"><b>Jump down to:</b>'
 
         class SkipTagPrinter:
             def __init__(self):
@@ -565,8 +565,8 @@ for tag in byTag.keys():
                     tag, len(present[tag]))
     
         print_table(out, presentSorted, SkipTagPrinter(), numCols=5, tdStyle='line-height:150%')
-        
-        print >> out, '</p>'
+
+        print >> out, '</div>'
     
     # First the commits without any subgroups.
     print >> out, '<div style="margin-left:1em">'
@@ -575,7 +575,7 @@ for tag in byTag.keys():
 
     color = 0
     for tag2 in presentSorted:
-        print >> out, '<a id="%s"><h2>%s<a href="tag_group_%s.html">%s</a> (%i) <span style="color:#ccc">&mdash; %s</span></h2></a>' % (
+        print >> out, '<h2><a id="%s"></a>%s<a href="tag_group_%s.html">%s</a> (%i) <span style="color:#ccc">&mdash; %s</span></h2>' % (
             tag_filename(tag2), color_box(color), tag_filename(tag2), tag2, len(present[tag2]), tag)
         print >> out, '<div style="margin-left:0.85em; border-left:4px solid %s">' % html_color(color)
         print_date_sorted_commits(out, filter(lambda c: tag2 in c.tags, byTag[tag]), tag, 'group_',
