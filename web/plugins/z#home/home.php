@@ -86,13 +86,16 @@ class HomePlugin extends Plugin implements Actioner, RequestInterpreter
                 var d = new Date(root.find('channel>pubdate').text());
                 var niceDate = $.datepicker.formatDate('MM d, yy', d);
                 var minItems = serverCount < n.maxItems? serverCount : n.maxItems;
+
+                var announceTime = d.toLocaleTimeString();
+
                 var html = '<header>'
                          + '<h1><a href="/masterserver" title="View the complete list in the server browser">'
                          + (serverCount > 0? ('Most active servers '
                                               + '<label title="Result limit">' + minItems + '</label>/<label title="Total number of servers">' + serverCount + '</label>')
                                            : 'No active servers')
                          + '</a></h1>'
-                         + '<p>' + niceDate + ' @ <label title="Time of the last server announcement">' + d.toLocaleTimeString() + '</label></p></header>';
+                         + '<p>' + niceDate + ' @ <label title="' + announceTime + ' (time of the last server announcement)">' + announceTime + '</label></p></header>';
 
                 if(serverCount) {
                     var idx = 0;
@@ -127,8 +130,11 @@ $(document).ready(function () {
     $('#activeservers').interpretMasterServerStatus({
         generateServerSummaryHtml: function (n, info) {
 
-            var serverMetadataLabel = 'Address: ' + info.children('ip').text() + ':' + info.children('port').text()
-                                    + ' Open: ' + info.children('open').text();
+            var name = info.find('name').text();
+            var status = info.children('open').text() == 'yes'? 'open' : 'locked';
+
+            var serverMetadataLabel = 'I.P address ' + info.children('ip').text() + ', port ' + info.children('port').text()
+                                    + ', ' + status;
 
             // Any required addons?.
             /*var addonArr = array_filter(explode(';', info['pwads']));
@@ -138,15 +144,50 @@ $(document).ready(function () {
             }*/
 
             var gameInfo = $(info.children('gameinfo'));
-            var gameMetadataLabel = 'Map: ' + gameInfo.children('map').text() + ' Setup: ' + gameInfo.children('setupstring').text();
+            var gameMode = gameInfo.children('mode').text();
 
-            var playerCountLabel = 'Number of players currently in-game';
-            var playerMaxLabel = 'Maximum number of players';
+            var mapId = gameInfo.children('map').text();
+            if(mapId.substring(0, 3) == 'MAP')
+            {
+                mapId = 'map ' + mapId.substring(3);
+            }
+            else if(mapId.substring(0, 1) == 'E' && mapId.substring(2, 1) == 'M')
+            {
+                mapId = 'episode ' + mapId.substring(1, 1) + ' map ' + mapId.substring(3, 1);
+            }
+            else
+            {
+                mapid = '\'' + mapId + '\'';
+            }
 
-            var html = '<span class="player-summary"><label title="' + playerCountLabel + '">' + gameInfo.children('numplayers').text() + '</label> / <label title="' + playerMaxLabel + '">' + gameInfo.children('maxplayers').text() + '</label></span> ';
+            var gameRules = gameInfo.children('setupstring').text().split(/[ ,]+/);
 
-            html += '<label title="' + serverMetadataLabel + '"><span class="name">' + info.find('name').text() + '</span></label> ';
-            html += '<label title="' + gameMetadataLabel + '"><span class="game-mode">' + gameInfo.children('mode').text() + '</span></label>';
+            for(var i=0; i < gameRules.length; i++)
+            {
+                if(gameRules[i] == 'dm')
+                    gameRules[i] = 'deathmatch';
+                else if(gameRules[i] == 'coop')
+                    gameRules[i] = 'co-operative';
+                else if(gameRules[i] == 'nomonst')
+                    gameRules[i] = 'no monsters';
+                else if(gameRules[i] == 'jump')
+                    gameRules[i] = 'jump enabled';
+            }
+
+            var gameRuleStr = gameRules.join(', ');
+
+            var gameMetadataLabel = 'Game; ' + gameMode + '. Server configuration; ' + mapId + ' game-rules; ' + gameRuleStr;
+
+            var playerCount = gameInfo.children('numplayers').text();
+            var playerMax   = gameInfo.children('maxplayers').text();
+
+            var playerCountLabel = playerCount + ' players currently in-game';
+            var playerMaxLabel = playerMax + ' player limit';
+
+            var html = '<span class="player-summary"><label title="' + playerCountLabel + '">' + playerCount + '</label> / <label title="' + playerMaxLabel + '">' + playerMax + '</label></span> ';
+
+            html += '<span class="name"><label title="Server name \'' + name + '\', ' + serverMetadataLabel + '">' + name + '</label></span> ';
+            html += '<span class="game-mode"><label title="' + gameMetadataLabel + '.">' + gameMode + '</label></span>';
 
             return '<span class="server">' + html + '</span>';
         }
@@ -228,7 +269,7 @@ $(document).ready(function () {
         dataType: 'xml',
         maxItems: 3,
         generateItemHtml : function(n, t) {
-            var html = '<a href="' + t.link + '" title="Read more about ' + t.title.toLowerCase() + ' in the repository">' + t.title + ' completed</a>';
+            var html = '<a href="' + t.link + '" title="' + t.title.toLowerCase() + ' (read more in the repository)">' + t.title + ' completed</a>';
             var d = new Date(t.pubDate);
             var niceDate = $.datepicker.formatDate('MM d, yy', d);
             html += ' ' + niceDate;
@@ -238,7 +279,7 @@ $(document).ready(function () {
         }
     });
 
-    $('#column1').interpretFeed({
+    /*$('#column1').interpretFeed({
         feedUri: 'http://dl.dropboxusercontent.com/u/11948701/builds/events.rss',
         dataType: 'xml',
         maxItems: 3,
@@ -256,16 +297,16 @@ $(document).ready(function () {
             html += '<div class="links"><a href="' + n.feedUri + '" class="link-rss" title="Doomsday Engine build events are reported via RSS">All builds</a></div></div>';
             return '<li>' + html + '</li>';
         }
-    });
+    });*/
 
     $('#column1').interpretFeed({
         feedUri: 'http://dengine.net/forums/rss.php?mode=news',
         dataType: 'json',
         clearOnSuccess: false,
         useGoogleApi: true,
-        maxItems: 3,
+        maxItems: 1,
         generateItemHtml: function (n, t) {
-            var html = '<div class="block"><article class="newspost content"><header><h1><a href="' + t.link + '" title="Discuss &#39;' + t.title + '&#39; in the user forums">' + t.title + '</a></h1>';
+            var html = '<div class="block"><article class="newspost content"><header><h1><a href="' + t.link + '" title="&#39;' + t.title + '&#39; (full article in the user forums)">' + t.title + '</a></h1>';
 
             var d = new Date(t.publishedDate);
             var niceDate = $.datepicker.formatDate('MM d, yy', d);
@@ -274,7 +315,7 @@ $(document).ready(function () {
             html += '</header>';
             html += t.content;
             html += '</article>';
-            html += '<div class="links"><a href="' + n.feedUri + '" class="link-rss" title="Doomsday Engine news is also available via RSS">All news</a></div></div>';
+            html += '<div class="links"><a href="' + n.feedUri + '" class="link-rss" title="Doomsday Engine news via RSS">All news</a></div></div>';
             return '<li>' + html + '</li>';
         }
     });
@@ -284,9 +325,9 @@ $(document).ready(function () {
         dataType: 'json',
         clearOnSuccess: false,
         useGoogleApi: true,
-        maxItems: 3,
+        maxItems: 1,
         generateItemHtml: function (n, t) {
-            var html = '<div class="block"><article class="blogpost content"><header><h1><a href="' + t.link + '" title="Discuss &#39;' + t.title + '&#39; in the user forums">' + t.title + '</a></h1>';
+            var html = '<div class="block"><article class="blogpost content"><header><h1><a href="' + t.link + '" title="&#39;' + t.title + '&#39; (full article in the user forums)">' + t.title + '</a></h1>';
 
             var d = new Date(t.publishedDate);
             var niceDate = $.datepicker.formatDate('MM d, yy', d);
@@ -295,7 +336,7 @@ $(document).ready(function () {
             html += '</header>';
             html += t.content;
             html += '</article>';
-            html += '<div class="links"><a href="' + n.feedUri + '" class="link-rss" title="The Doomsday Engine development blog is also available via RSS">All blogs</a></div></div>';
+            html += '<div class="links"><a href="' + n.feedUri + '" class="link-rss" title="Doomsday Engine development blog via RSS">All blogs</a></div></div>';
             return '<li>' + html + '</li>';
         }
     });
