@@ -748,6 +748,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         {
             $matchTitle = (boolean)(strlen($title) > 0);
 
+            $found = 0;
             foreach($this->packages as &$pack)
             {
                 if($pack->platformId() !== $platformId) continue;
@@ -756,8 +757,11 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
                 if($downloadable != ($pack instanceof iDownloadable && ($pack->hasDirectDownloadUri() || $pack->hasDirectDownloadFallbackUri()))) continue;
 
                 // Found something suitable.
-                return $pack;
+                if(!$found || Version::compare($pack->version(), $found->version()) > 0)
+                    $found = $pack;
             }
+
+            if($found) return $found;
         }
 
         // Nothing suitable.
