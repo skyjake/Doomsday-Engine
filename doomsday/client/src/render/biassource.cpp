@@ -87,6 +87,27 @@ DENG2_PIMPL(BiasSource)
           changed(true)
     {}
 
+    void updateBspLocation()
+    {
+        if(bspLeaf) return;
+        /// @todo Do not assume the current map.
+        bspLeaf = &App_World().map().bspLeafAt(origin);
+
+        bool newInVoidState = !(bspLeaf->pointInside(origin));
+        if(inVoid != newInVoidState)
+        {
+            inVoid = newInVoidState;
+            intensity = inVoid? 0 : primaryIntensity;
+            changed = true;
+        }
+    }
+
+    bool needToObserveSectorLightLevelChanges()
+    {
+        updateBspLocation();
+        return !inVoid && (maxLight > 0 || minLight > 0);
+    }
+
     void notifyOriginChanged()
     {
         DENG2_FOR_PUBLIC_AUDIENCE(OriginChange, i)
@@ -117,14 +138,6 @@ DENG2_PIMPL(BiasSource)
         {
             i->biasSourceColorChanged(self, oldColor, changedComponents);
         }
-    }
-
-    void updateBspLocation()
-    {
-        if(bspLeaf) return;
-        /// @todo Do not assume the current map.
-        bspLeaf = &App_World().map().bspLeafAt(origin);
-        inVoid = !(bspLeaf->pointInside(origin));
     }
 };
 
@@ -171,28 +184,25 @@ BspLeaf &BiasSource::bspLeafAtOrigin() const
     return *d->bspLeaf;
 }
 
-float BiasSource::intensity() const
+void BiasSource::lightLevels(float &minLight, float &maxLight) const
 {
-    return d->primaryIntensity;
+    minLight = d->minLight;
+    maxLight = d->maxLight;
 }
 
-float BiasSource::evaluateIntensity() const
+BiasSource &BiasSource::setLightLevels(float newMinLight, float newMaxLight)
 {
-    d->updateBspLocation();
-    return d->inVoid? 0 : d->intensity;
-}
-
-BiasSource &BiasSource::setIntensity(float newIntensity)
-{
-    if(!de::fequal(d->primaryIntensity, newIntensity))
+    float newMinLightClamped = de::clamp(0.f, newMinLight, 1.f);
+    float newMaxLightClamped = de::clamp(0.f, newMaxLight, 1.f);
+    if(!de::fequal(d->minLight, newMinLightClamped))
     {
-        float oldIntensity = d->primaryIntensity;
-
-        d->primaryIntensity = d->intensity = newIntensity;
-        d->changed = true;
-
-        // Notify interested parties of the change.
-        d->notifyIntensityChanged(oldIntensity);
+        d->minLight = newMinLightClamped;
+        d->changed  = true;
+    }
+    if(!de::fequal(d->maxLight, newMaxLightClamped))
+    {
+        d->maxLight = newMaxLightClamped;
+        d->changed  = true;
     }
     return *this;
 }
@@ -227,62 +237,57 @@ BiasSource &BiasSource::setColor(Vector3f const &newColor)
     return *this;
 }
 
-void BiasSource::lightLevels(float &minLight, float &maxLight) const
+float BiasSource::intensity() const
 {
-    minLight = d->minLight;
-    maxLight = d->maxLight;
+    return d->primaryIntensity;
 }
 
-BiasSource &BiasSource::setLightLevels(float newMinLight, float newMaxLight)
+BiasSource &BiasSource::setIntensity(float newIntensity)
 {
-    float newMinLightClamped = de::clamp(0.f, newMinLight, 1.f);
-    float newMaxLightClamped = de::clamp(0.f, newMaxLight, 1.f);
-    if(!de::fequal(d->minLight, newMinLightClamped))
+    if(!de::fequal(d->primaryIntensity, newIntensity))
     {
-        d->minLight = newMinLightClamped;
-        d->changed  = true;
-    }
-    if(!de::fequal(d->maxLight, newMaxLightClamped))
-    {
-        d->maxLight = newMaxLightClamped;
-        d->changed  = true;
+        float oldIntensity = d->primaryIntensity;
+
+        d->primaryIntensity = newIntensity;
+
+        if(!d->inVoid)
+        {
+            d->intensity = d->primaryIntensity;
+            d->changed = true;
+        }
+
+        // Notify interested parties of the change.
+        d->notifyIntensityChanged(oldIntensity);
     }
     return *this;
 }
 
-uint BiasSource::lastUpdateTime() const
+float BiasSource::evaluateIntensity() const
 {
-    return d->lastUpdateTime;
-}
-
-void BiasSource::forceUpdate()
-{
-    d->changed = true;
+    return d->intensity;
 }
 
 bool BiasSource::trackChanges(BiasTracker &changes, uint indexInTracker, uint currentTime)
 {
-    if(d->maxLight > 0 || d->minLight > 0)
+    if(d->needToObserveSectorLightLevelChanges())
     {
+        /// @todo Should observe Sector::LightLevelChange
+
         float const oldIntensity = intensity();
         float newIntensity = 0;
 
-        if(!d->inVoid)
+        Sector const &sector = d->bspLeaf->sector();
+
+        // Lower intensities are useless for light emission.
+        if(sector.lightLevel() >= d->maxLight)
         {
-            /// @todo Should observe Sector::LightLevelChange
-            Sector const &sector = d->bspLeaf->sector();
+            newIntensity = d->primaryIntensity;
+        }
 
-            // Lower intensities are useless for light emission.
-            if(sector.lightLevel() >= d->maxLight)
-            {
-                newIntensity = d->primaryIntensity;
-            }
-
-            if(sector.lightLevel() >= d->minLight && d->minLight != d->maxLight)
-            {
-                newIntensity = d->primaryIntensity *
-                    (sector.lightLevel() - d->minLight) / (d->maxLight - d->minLight);
-            }
+        if(sector.lightLevel() >= d->minLight && d->minLight != d->maxLight)
+        {
+            newIntensity = d->primaryIntensity *
+                (sector.lightLevel() - d->minLight) / (d->maxLight - d->minLight);
         }
 
         if(newIntensity != oldIntensity)
@@ -300,6 +305,16 @@ bool BiasSource::trackChanges(BiasTracker &changes, uint indexInTracker, uint cu
     changes.mark(indexInTracker);
 
     return true; // Changes were applied.
+}
+
+uint BiasSource::lastUpdateTime() const
+{
+    return d->lastUpdateTime;
+}
+
+void BiasSource::forceUpdate()
+{
+    d->changed = true;
 }
 
 void BiasSource::operator >> (de::Writer &to) const

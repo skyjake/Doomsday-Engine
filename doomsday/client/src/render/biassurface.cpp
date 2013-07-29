@@ -352,7 +352,7 @@ DENG2_PIMPL_NOREF(BiasSurface)
         // Apply an ambient light term?
         if(map.hasLightGrid())
         {
-            color += map.lightGrid().evaluate(surfacePoint)
+            color = (color + map.lightGrid().evaluate(surfacePoint))
                     .min(saturated); // clamp
         }
 
