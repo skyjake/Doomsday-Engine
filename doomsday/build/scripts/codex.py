@@ -292,13 +292,18 @@ def tag_filename(tag):
 def print_header(out, pageTitle):
     print >> out, '<!DOCTYPE html>'
     print >> out, '<html>'
-    print >> out, '<head><title>%s - %s</title>' % (pageTitle, TITLE)
-    print >> out, '<meta http-equiv="Content-Type" content="text/html; charset=utf-8">'
+    print >> out, '<head>'
+    print >> out, '<meta charset="UTF-8">'
+    print >> out, '<title>%s - %s</title>' % (pageTitle, TITLE)
     print >> out, '<style type="text/css">'
     print >> out, 'body, table { font-family: "Helvetica Neue", sans-serif; }'
     print >> out, 'a { color: black; text-decoration: none; }'
     print >> out, 'a:hover { text-decoration: underline; }'
     print >> out, '.skiplist { line-height: 150%; }'
+    print >> out, 'table { width: 100%; }'
+    print >> out, 'table td { vertical-align: top; }'
+    print >> out, 'td.commit-date { width: 100px; padding-left: 1.5ex; }'
+    print >> out, 'td.commit-tags { width: 200px; text-align: right; }'
     print >> out, '</style>'
     print >> out, '</head>'
     print >> out, '<body>'
@@ -312,8 +317,8 @@ def print_footer(out):
 
 def print_table(out, cells, cell_printer, numCols=4, tdStyle='', separateByFirstLetter=False, letterFunc=None):
     colSize = (len(cells) + numCols - 1) / numCols
-    tdElem = '<td valign="top" width="%i%%" style="%s">' % (100/numCols, tdStyle)
-    print >> out, '<table width="100%"><tr>' + tdElem
+    tdElem = '<td style="width: %i%%; %s">' % (100/numCols, tdStyle)
+    print >> out, '<table><tr>' + tdElem
 
     idx = 0
     inCol = 0
@@ -349,7 +354,7 @@ def alpha_index_cell(out, tag):
         style = 'color: #aaa'
     else:
         style = ''
-    print >> out, '<a href="tag_%s.html"><span style="%s">%s (%i)</span></a></br>' % (
+    print >> out, '<a href="tag_%s.html"><span style="%s">%s (%i)</span></a><br/>' % (
         tag_filename(tag), style, tag, count)
 
 print_table(out, sortedTags, alpha_index_cell, separateByFirstLetter=True,
@@ -374,7 +379,7 @@ def size_index_cell(out, tag):
         style = 'color: #aaa'
     else:
         style = ''
-    print >> out, '<a href="tag_group_%s.html"><span style="%s">%i %s</span></a></br>' % (
+    print >> out, '<a href="tag_group_%s.html"><span style="%s">%i %s</span></a><br/>' % (
         tag_filename(tag), style, count, tag)    
 
 print_table(out, sorted(byTag.keys(), cmp=tag_size_comp), size_index_cell)
@@ -401,11 +406,11 @@ def print_tags(out, com, tag, linkSuffix=''):
             print >> out, '<b><a href="tag_%s%s.html">%s</a></b>' % (linkSuffix, tag_filename(other), other)
     
 def print_commit(out, com, tag, linkSuffix=''):
-    print >> out, trElem + '<td valign="top" width="100" style="padding-left:1.5ex;"><a href="%s">' % com.link + com.date[:10] + '</a> '
-    print >> out, '<td valign="top" width="200" align="right">'
+    print >> out, trElem + '<td class="commit-date"><a href="%s">' % com.link + com.date[:10] + '</a> '
+    print >> out, '<td class="commit-tags">'
     print_tags(out, com, tag, linkSuffix)
-    print >> out, '<td valign="top">:'
-    print >> out, ('<td valign="top"><a href="%s">' % com.link + encoded_text(com.subject)[:250] + '</a>').encode('utf8')
+    print >> out, '<td>:'
+    print >> out, ('<td><a href="%s">' % com.link + encoded_text(com.subject)[:250] + '</a>').encode('utf8')
 
 colors = ['#f00', '#0a0', '#00f', 
           '#ed0', '#f80', '#0ce', 
@@ -426,7 +431,7 @@ def print_date_sorted_commits(out, coms, tag, linkSuffix='', colorIdx=None):
               'September', 'October', 'November', 'December']
     curDate = ''
     dateSorted = sorted(coms, key=lambda c: c.date, reverse=True)
-    print >> out, '<table width="100%">'
+    print >> out, '<table>'
     for com in dateSorted:
         # Monthly headers.
         if curDate == '' or curDate != com.date[:7]:
@@ -490,6 +495,9 @@ def print_related_tags(out, tag, style=''):
                                for t in rels], ', ')
     print >> out, '</p>'
 
+def percentage(part, total):
+    return int(round(float(part)/float(total) * 100))
+
 def print_authorship(out, tag):
     authors = {}
     total = len(byTag[tag])
@@ -499,7 +507,7 @@ def print_authorship(out, tag):
         else:
             authors[commit.author] = 1
     sortedAuthors = sorted(authors.keys(), key=lambda a: authors[a], reverse=True)    
-    print >> out, '<p>Authorship:', string.join(['%i%% %s' % (100 * authors[a] / total, a) 
+    print >> out, '<p>Authorship:', string.join(['%i%% %s' % (percentage(authors[a], total), a) 
                                                  for a in sortedAuthors], ', ').encode('utf8'), '</p>'
     
 #
@@ -554,7 +562,7 @@ for tag in byTag.keys():
             def __call__(self, out, tag):
                 print >> out, '<span style="white-space:nowrap;">' + color_box(self.color) 
                 self.color += 1
-                print >> out, '<a href="#%s">%s (%i)</a></span></br>' % (tag_filename(tag),
+                print >> out, '<a href="#%s">%s (%i)</a></span><br/>' % (tag_filename(tag),
                     tag, len(present[tag]))
     
         print_table(out, presentSorted, SkipTagPrinter(), numCols=5, tdStyle='line-height:150%')
