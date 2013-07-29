@@ -24,6 +24,7 @@
 
 #include "MapElement"
 
+class BiasSource;
 class BiasTracker;
 
 /**
@@ -36,33 +37,37 @@ public:
     /**
      * Construct a new surface.
      *
-     * @param owner         Map element which will own the surface (either a
-     *                      BspLeaf or a Segment).
-     * @param subElemIndex  Index for the subelement of @a owner.
      * @param size          Number of vertices.
      */
-    BiasSurface(de::MapElement &owner, int subElemIndex, int size);
+    BiasSurface(int size);
 
     /**
      * To be called to register the commands and variables of this module.
      */
     static void consoleRegister();
 
+    uint lastUpdateOnFrame() const;
+
+    void setLastUpdateOnFrame(uint newLastUpdateFrameNumber);
+
+    void clearAffected();
+
+    void addAffected(float intensity, BiasSource *source);
+
+    void updateAffection(BiasTracker &changes);
+
+    void updateAfterMove();
+
     /**
      * Perform lighting for the supplied geometry. It is assumed that this
      * geometry has the @em same number of vertices as the bias surface.
      *
-     * @param colors            Array of colors to be written to.
-     * @param verts             Array of vertices to be lit.
-     * @param vertCount         Number of vertices (in the array) to be lit.
-     * @param sectorLightLevel  Sector light level.
+     * @param vertCount  Number of vertices to be lit.
+     * @param positions  World coordinates for each vertex.
+     * @param colors     Final lighting values will be written here.
      */
-    void lightPoly(struct ColorRawf_s *colors, struct rvertex_s const *verts,
-                   int vertCount, float sectorLightLevel);
-
-    void updateAfterMove();
-
-    void updateAffection(BiasTracker &changes);
+    void lightPoly(de::Vector3f const &surfaceNormal, int vertCount,
+                   struct rvertex_s const *positions, struct ColorRawf_s *colors);
 
 private:
     DENG2_PRIVATE(d)

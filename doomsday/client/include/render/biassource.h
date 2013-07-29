@@ -103,7 +103,7 @@ public:
     BspLeaf &bspLeafAtOrigin() const;
 
     /**
-     * Returns the light intensity multiplier for the source. The
+     * Returns the "primary" light intensity multiplier for the source. The
      * IntensityChange audience is notified whenever the intensity changes.
      *
      * @see setIntensity()
@@ -121,6 +121,12 @@ public:
      * @see intensity()
      */
     BiasSource &setIntensity(float newIntensity);
+
+    /**
+     * Determine the effective light intensity for the source and factoring in
+     * sector light level multipliers/scale-factors.
+     */
+    float evaluateIntensity() const;
 
     /**
      * Returns the light color strength factors for the source. The ColorChange

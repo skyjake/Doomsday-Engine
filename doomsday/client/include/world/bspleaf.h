@@ -285,6 +285,9 @@ public:
      */
     void updateBiasAffection(BiasTracker &changes);
 
+    void lightPoly(int group, int vertCount, struct rvertex_s const *positions,
+                   struct ColorRawf_s *colors);
+
     /**
      * Returns a pointer to the first ShadowLink; otherwise @c 0.
      */

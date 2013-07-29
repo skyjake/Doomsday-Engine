@@ -78,6 +78,12 @@ public:
     inline Vertex &to() const { return hedge().twin().vertex(); }
 
     /**
+     * Returns the point on the line segment which lies at the exact center of
+     * the two vertexes.
+     */
+    inline de::Vector2d center() const { return (from().origin() + to().origin()) / 2; }
+
+    /**
      * Returns @c true iff a polygon attributed to a BSP leaf is associated
      * with the line segment.
      *
@@ -242,6 +248,9 @@ public:
      * @param allChanges
      */
     void updateBiasAffection(BiasTracker &changes);
+
+    void lightPoly(int group, int vertCount, struct rvertex_s const *positions,
+                   struct ColorRawf_s *colors);
 
 #endif // __CLIENT__
 

@@ -733,7 +733,6 @@ static void flatShinyTexCoords(rtexcoord_t *tc, float const xyz[3])
 
 struct rendworldpoly_params_t
 {
-    bool            isWall;
     int             flags; /// @ref rendpolyFlags
     blendmode_t     blendMode;
     Vector3d const *texTL;
@@ -749,7 +748,8 @@ struct rendworldpoly_params_t
     uint            shadowListIdx; // List of shadows that affect this poly.
     float           glowing;
     bool            forceOpaque;
-    BiasSurface    *bsuf;
+    MapElement     *elem;
+    int             subElemIndex;
 
 // Wall only:
     struct {
@@ -765,8 +765,10 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
 {
     DENG_ASSERT(rvertices != 0);
 
-    uint const realNumVertices = (p.isWall? 3 + p.wall.leftEdge->divisionCount() + 3 + p.wall.rightEdge->divisionCount() : numVertices);
-    bool const mustSubdivide = (p.isWall && (p.wall.leftEdge->divisionCount() || p.wall.rightEdge->divisionCount()));
+    bool const isWall = p.elem->type() == DMU_SEGMENT;
+
+    uint const realNumVertices = (isWall? 3 + p.wall.leftEdge->divisionCount() + 3 + p.wall.rightEdge->divisionCount() : numVertices);
+    bool const mustSubdivide = (isWall && (p.wall.leftEdge->divisionCount() || p.wall.rightEdge->divisionCount()));
 
     bool const skyMaskedMaterial = ((p.flags & RPF_SKYMASK) || (ms.material().isSkyMasked()));
     bool const drawAsVisSprite   = (!p.forceOpaque && !(p.flags & RPF_SKYMASK) && (!ms.isOpaque() || p.alpha < 1 || p.blendMode > 0));
@@ -834,7 +836,7 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
         }
     }
 
-    if(p.isWall)
+    if(isWall)
     {
         // Primary texture coordinates.
         quadTexCoords(primaryCoords, rvertices, p.wall.sectionWidth, *p.texTL);
@@ -910,11 +912,19 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
         else
         {
             // Non-uniform color.
-            if(useBias && p.bsuf)
+            if(useBias)
             {
                 // Do BIAS lighting for this poly.
-                p.bsuf->lightPoly(rcolors, rvertices, int(numVertices),
-                                  currentSectorLightLevel);
+                if(p.elem->type() == DMU_BSPLEAF)
+                {
+                    p.elem->as<BspLeaf>()->
+                        lightPoly(p.subElemIndex, int(numVertices), rvertices, rcolors);
+                }
+                else
+                {
+                    p.elem->as<Segment>()->
+                        lightPoly(p.subElemIndex, int(numVertices), rvertices, rcolors);
+                }
 
                 if(p.glowing > 0)
                 {
@@ -937,7 +947,7 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
                     // Blend sector light+color+surfacecolor
                     Vector3f vColor = (*p.surfaceColor) * currentSectorLightColor;
 
-                    if(p.isWall && llL != llR)
+                    if(isWall && llL != llR)
                     {
                         lightVertex(rcolors[0], rvertices[0], llL, vColor);
                         lightVertex(rcolors[1], rvertices[1], llL, vColor);
@@ -952,7 +962,7 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
                 else
                 {
                     // Use sector light+color only.
-                    if(p.isWall && llL != llR)
+                    if(isWall && llL != llR)
                     {
                         lightVertex(rcolors[0], rvertices[0], llL, currentSectorLightColor);
                         lightVertex(rcolors[1], rvertices[1], llL, currentSectorLightColor);
@@ -966,7 +976,7 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
                 }
 
                 // Bottom color (if different from top)?
-                if(p.isWall && p.wall.surfaceColor2)
+                if(isWall && p.wall.surfaceColor2)
                 {
                     // Blend sector light+color+surfacecolor
                     Vector3f vColor = (*p.wall.surfaceColor2) * currentSectorLightColor;
@@ -1029,7 +1039,7 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
 
     if(drawAsVisSprite)
     {
-        DENG_ASSERT(p.isWall);
+        DENG_ASSERT(isWall);
 
         /**
          * Masked polys (walls) get a special treatment (=> vissprite).
@@ -1061,8 +1071,8 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
         parm.lastIdx         = 0;
         parm.texTL           = p.texTL;
         parm.texBR           = p.texBR;
-        parm.isWall          = p.isWall;
-        if(p.isWall)
+        parm.isWall          = isWall;
+        if(parm.isWall)
         {
             parm.wall.leftEdge  = p.wall.leftEdge;
             parm.wall.rightEdge = p.wall.rightEdge;
@@ -1082,8 +1092,8 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
         parm.realNumVertices = realNumVertices;
         parm.texTL           = p.texTL;
         parm.texBR           = p.texBR;
-        parm.isWall          = p.isWall;
-        if(p.isWall)
+        parm.isWall          = isWall;
+        if(parm.isWall)
         {
             parm.wall.leftEdge  = p.wall.leftEdge;
             parm.wall.rightEdge = p.wall.rightEdge;
@@ -1209,7 +1219,7 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
     }
     else
     {
-        RL_AddPolyWithCoordsModulationReflection(p.isWall? PT_TRIANGLE_STRIP : PT_FAN,
+        RL_AddPolyWithCoordsModulationReflection(isWall? PT_TRIANGLE_STRIP : PT_FAN,
                                                  p.flags | (hasDynlights? RPF_HAS_DYNLIGHTS : 0),
                                                  numVertices, rvertices, rcolors,
                                                  primaryCoords, interCoords,
@@ -1432,7 +1442,8 @@ static void writeWallSection(Segment &segment, int section,
         parm.flags               = RPF_DEFAULT | (skyMasked? RPF_SKYMASK : 0);
         parm.forceOpaque         = wallSpec.flags.testFlag(WallSpec::ForceOpaque);
         parm.alpha               = parm.forceOpaque? 1 : opacity;
-        parm.bsuf                = useBias? &segment.biasSurface(wallSpec.section) : 0;
+        parm.elem                = &segment;
+        parm.subElemIndex        = wallSpec.section;
         parm.texTL               = &texQuad[0];
         parm.texBR               = &texQuad[1];
 
@@ -1448,7 +1459,6 @@ static void writeWallSection(Segment &segment, int section,
         parm.materialOrigin      = &materialOrigin;
         parm.materialScale       = &materialScale;
 
-        parm.isWall = true;
         parm.wall.sectionWidth   = de::abs(Vector2d(rightEdge.origin() - leftEdge.origin()).length());
         parm.wall.leftEdge       = &leftEdge;
         parm.wall.rightEdge      = &rightEdge;
@@ -1675,8 +1685,8 @@ static void writeLeafPlane(Plane &plane)
     rendworldpoly_params_t parm; zap(parm);
 
     parm.flags               = RPF_DEFAULT;
-    parm.isWall              = false;
-    parm.bsuf                = useBias? &leaf->biasSurface(plane.indexInSector()) : 0;
+    parm.elem                = leaf;
+    parm.subElemIndex        = plane.indexInSector();
     parm.texTL               = &texTL;
     parm.texBR               = &texBR;
     parm.surfaceLightLevelDL = parm.surfaceLightLevelDR = 0;
@@ -2575,7 +2585,7 @@ static void drawSource(BiasSource *s)
     Vector3d eye(vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
     coord_t distToEye = (s->origin() - eye).length();
 
-    drawStar(s->origin(), 25 + s->intensity() / 20,
+    drawStar(s->origin(), 25 + s->evaluateIntensity() / 20,
              Vector4f(s->color(), 1.0f / de::max(float((distToEye - 100) / 1000), 1.f)));
     drawLabel(s->origin(), labelForSource(s));
 }

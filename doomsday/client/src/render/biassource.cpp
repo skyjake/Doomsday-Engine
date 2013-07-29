@@ -36,8 +36,9 @@ DENG2_PIMPL(BiasSource)
     /// Origin of the source in the map coordinate space.
     Vector3d origin;
 
-    /// BSP leaf at this origin.
+    /// BSP leaf at the origin.
     BspLeaf *bspLeaf;
+    bool inVoid; ///< Set to @c true if the origin is in the void.
 
     /// Intensity of the emitted light.
     float primaryIntensity;
@@ -62,6 +63,7 @@ DENG2_PIMPL(BiasSource)
         : Base(i),
           origin(origin),
           bspLeaf(0),
+          inVoid(true),
           primaryIntensity(intensity),
           intensity(intensity),
           color(color),
@@ -75,6 +77,7 @@ DENG2_PIMPL(BiasSource)
         : Base(i),
           origin(other.origin),
           bspLeaf(other.bspLeaf),
+          inVoid(other.inVoid),
           primaryIntensity(other.primaryIntensity),
           intensity(other.intensity),
           color(other.color),
@@ -114,6 +117,14 @@ DENG2_PIMPL(BiasSource)
         {
             i->biasSourceColorChanged(self, oldColor, changedComponents);
         }
+    }
+
+    void updateBspLocation()
+    {
+        if(bspLeaf) return;
+        /// @todo Do not assume the current map.
+        bspLeaf = &App_World().map().bspLeafAt(origin);
+        inVoid = !(bspLeaf->pointInside(origin));
     }
 };
 
@@ -156,11 +167,7 @@ void BiasSource::setOrigin(Vector3d const &newOrigin)
 
 BspLeaf &BiasSource::bspLeafAtOrigin() const
 {
-    if(!d->bspLeaf)
-    {
-        /// @todo Do not assume the current map.
-        d->bspLeaf = &App_World().map().bspLeafAt(d->origin);
-    }
+    d->updateBspLocation();
     return *d->bspLeaf;
 }
 
@@ -169,9 +176,15 @@ float BiasSource::intensity() const
     return d->primaryIntensity;
 }
 
+float BiasSource::evaluateIntensity() const
+{
+    d->updateBspLocation();
+    return d->inVoid? 0 : d->intensity;
+}
+
 BiasSource &BiasSource::setIntensity(float newIntensity)
 {
-    if(!de::fequal(d->intensity, newIntensity))
+    if(!de::fequal(d->primaryIntensity, newIntensity))
     {
         float oldIntensity = d->primaryIntensity;
 
@@ -251,29 +264,32 @@ bool BiasSource::trackChanges(BiasTracker &changes, uint indexInTracker, uint cu
 {
     if(d->maxLight > 0 || d->minLight > 0)
     {
-        float const oldIntensity = d->intensity;
+        float const oldIntensity = intensity();
+        float newIntensity = 0;
 
-        /// @todo Should observe Sector::LightLevelChange
-        Sector const &sector = bspLeafAtOrigin().sector();
-
-        // Lower intensities are useless for light emission.
-        if(sector.lightLevel() >= d->maxLight)
+        if(!d->inVoid)
         {
-            d->intensity = d->primaryIntensity;
+            /// @todo Should observe Sector::LightLevelChange
+            Sector const &sector = d->bspLeaf->sector();
+
+            // Lower intensities are useless for light emission.
+            if(sector.lightLevel() >= d->maxLight)
+            {
+                newIntensity = d->primaryIntensity;
+            }
+
+            if(sector.lightLevel() >= d->minLight && d->minLight != d->maxLight)
+            {
+                newIntensity = d->primaryIntensity *
+                    (sector.lightLevel() - d->minLight) / (d->maxLight - d->minLight);
+            }
         }
 
-        if(sector.lightLevel() >= d->minLight && d->minLight != d->maxLight)
+        if(newIntensity != oldIntensity)
         {
-            d->intensity = d->primaryIntensity *
-                (sector.lightLevel() - d->minLight) / (d->maxLight - d->minLight);
-        }
-        else
-        {
-            d->intensity = 0;
-        }
-
-        if(d->intensity != oldIntensity)
+            d->intensity = newIntensity;
             d->changed = true;
+        }
     }
 
     if(!d->changed) return false;

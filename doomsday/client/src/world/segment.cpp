@@ -31,6 +31,7 @@
 
 #ifdef __CLIENT__
 #  include "BiasSurface"
+#  include "world/map.h"
 #endif
 
 #include "world/segment.h"
@@ -86,6 +87,53 @@ DENG2_PIMPL(Segment)
         qDeleteAll(biasSurfaces);
 #endif
     }
+
+#ifdef __CLIENT__
+    /**
+     * @todo This could be enhanced so that only the lights on the right
+     * side of the surface are taken into consideration.
+     */
+    void updateAffected(BiasSurface &bsuf, int group)
+    {
+        DENG_UNUSED(group);
+
+        // If the data is already up to date, nothing needs to be done.
+        uint lastChangeFrame = self.map().biasLastChangeOnFrame();
+        if(bsuf.lastUpdateOnFrame() == lastChangeFrame)
+            return;
+
+        bsuf.setLastUpdateOnFrame(lastChangeFrame);
+
+        bsuf.clearAffected();
+
+        Surface const &surface = lineSide->middle();
+        Vector2d const &from   = self.from().origin();
+        Vector2d const &to     = self.to().origin();
+
+        foreach(BiasSource *source, self.map().biasSources())
+        {
+            // If the source is too weak we will ignore it completely.
+            if(source->intensity() <= 0)
+                continue;
+
+            Vector3d sourceToSurface = (source->origin() - self.center()).normalize();
+
+            // Calculate minimum 2D distance to the segment.
+            coord_t distance = 0;
+            for(int k = 0; k < 2; ++k)
+            {
+                coord_t len = (Vector2d(source->origin()) - (!k? from : to)).length();
+                if(k == 0 || len < distance)
+                    distance = len;
+            }
+
+            if(sourceToSurface.dot(surface.normal()) < 0)
+                continue;
+
+            bsuf.addAffected(source->evaluateIntensity() / de::max(distance, 1.0), source);
+        }
+    }
+#endif
 };
 
 Segment::Segment(Line::Side *lineSide, HEdge *hedge)
@@ -204,7 +252,7 @@ BiasSurface &Segment::biasSurface(int group)
         return **foundAt;
     }
 
-    BiasSurface *bsuf = new BiasSurface(*this, group, 4);
+    BiasSurface *bsuf = new BiasSurface(4);
     d->biasSurfaces.insert(group, bsuf);
     return *bsuf;
 }
@@ -215,6 +263,22 @@ void Segment::updateBiasAffection(BiasTracker &changes)
     {
         biasSurface->updateAffection(changes);
     }
+}
+
+void Segment::lightPoly(int group, int vertCount, rvertex_t const *positions,
+    ColorRawf *colors)
+{
+    DENG_ASSERT(hasLineSide()); // sanity check
+
+    BiasSurface &bsuf = biasSurface(group);
+
+    // Should we update?
+    //if(devUpdateAffected)
+    {
+        d->updateAffected(bsuf, group);
+    }
+
+    bsuf.lightPoly(d->lineSide->middle().normal(), vertCount, positions, colors);
 }
 
 #endif // __CLIENT__

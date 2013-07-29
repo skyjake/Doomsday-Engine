@@ -32,6 +32,7 @@
 
 #ifdef __CLIENT__
 #  include "BiasSurface"
+#  include "world/map.h"
 #endif
 
 #include "world/bspleaf.h"
@@ -281,6 +282,53 @@ DENG2_PIMPL(BspLeaf)
 #undef MIN_TRIANGLE_EPSILON
     }
 
+    /**
+     * @todo This could be enhanced so that only the lights on the right
+     * side of the surface are taken into consideration.
+     */
+    void updateAffected(BiasSurface &bsuf, int group)
+    {
+        // If the data is already up to date, nothing needs to be done.
+        uint lastChangeFrame = self.map().biasLastChangeOnFrame();
+        if(bsuf.lastUpdateOnFrame() == lastChangeFrame)
+            return;
+
+        bsuf.setLastUpdateOnFrame(lastChangeFrame);
+
+        bsuf.clearAffected();
+
+        Plane const &plane     = sector->plane(group);
+        Surface const &surface = plane.surface();
+
+        Vector3d surfacePoint(poly->center(), plane.visHeight());
+
+        foreach(BiasSource *source, self.map().biasSources())
+        {
+            // If the source is too weak we will ignore it completely.
+            if(source->intensity() <= 0)
+                continue;
+
+            Vector3d sourceToSurface = (source->origin() - surfacePoint).normalize();
+            coord_t distance = 0;
+
+            // Calculate minimum 2D distance to the BSP leaf.
+            /// @todo This is probably too accurate an estimate.
+            HEdge *baseNode = poly->hedge();
+            HEdge *node = baseNode;
+            do
+            {
+                coord_t len = (Vector2d(source->origin()) - node->origin()).length();
+                if(node == baseNode || len < distance)
+                    distance = len;
+            } while((node = &node->next()) != baseNode);
+
+            if(sourceToSurface.dot(surface.normal()) < 0)
+                continue;
+
+            bsuf.addAffected(source->evaluateIntensity() / de::max(distance, 1.0), source);
+        }
+    }
+
 #endif // __CLIENT__
 };
 
@@ -496,7 +544,7 @@ BiasSurface &BspLeaf::biasSurface(int group)
         return **foundAt;
     }
 
-    BiasSurface *bsuf = new BiasSurface(*this, group, numFanVertices());
+    BiasSurface *bsuf = new BiasSurface(numFanVertices());
     d->biasSurfaces.insert(group, bsuf);
     return *bsuf;
 }
@@ -507,6 +555,21 @@ void BspLeaf::updateBiasAffection(BiasTracker &changes)
     {
         biasSurface->updateAffection(changes);
     }
+}
+
+void BspLeaf::lightPoly(int group, int vertCount, rvertex_t const *positions,
+    ColorRawf *colors)
+{
+    BiasSurface &bsuf = biasSurface(group);
+
+    // Should we update?
+    //if(devUpdateAffected)
+    {
+        d->updateAffected(bsuf, group);
+    }
+
+    bsuf.lightPoly(d->sector->plane(group).surface().normal(), vertCount,
+                   positions, colors);
 }
 
 ShadowLink *BspLeaf::firstShadowLink() const
