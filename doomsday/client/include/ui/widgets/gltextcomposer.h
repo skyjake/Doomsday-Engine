@@ -52,6 +52,13 @@ public:
     void setText(de::String const &text, de::Font::RichFormat const &format);
 
     /**
+     * Sets the range of visible lines.
+     *
+     * @param visibleLineRage  Visible range of lines.
+     */
+    void setRange(de::Rangei const &visibleLineRange);
+
+    /**
      * Makes sure all the lines are allocated on the atlas. After this all the
      * allocated lines match the ones in the wrapping. This must be called
      * before makeVertices().
