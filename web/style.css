@@ -212,6 +212,8 @@ hr.dashed {
 
 .block a { color: #C59A57; }
 
+.block a[href^="#"] { color: white; }
+
 .block.nobackground a { color:white; }
 
 .block h1 a, .block h2 a, .block h3 a, .block h4 a, .block h5 a, .block h6 a { color: white; }
@@ -519,6 +521,7 @@ ol.jumplist {
     display:inline-block;
     vertical-align:top;
     margin:0;
+    margin-top:1em;
     padding:0 1em;
 }
 
@@ -1041,6 +1044,10 @@ div.clear {
     margin:0;
 }
 
+#commitindex ul > li {
+    padding-bottom: 1em;
+}
+
 #commitindex ul li {
     list-style-type:none;
     clear:both;
@@ -1049,11 +1056,6 @@ div.clear {
 #commitindex ul {
     padding-left: 0;
     margin-bottom: 0;
-}
-
-#commitindex ol {
-    margin-bottom: 0;
-    margin-top: 0;
 }
 
 #commitindex ol li {
@@ -1083,7 +1085,9 @@ div.clear {
     padding-left:.5em;
 }
 
-.commit_list {
+.commit_list ol {
+    margin-bottom: 0;
+    margin-top: 0;
 }
 
 .commit_list p.collapsible:hover {
@@ -1176,10 +1180,6 @@ span.metadata {
 
 .buildevents table tbody {
     vertical-align:top;
-}
-
-.buildstreaminfo {
-    padding:1.2em 0;
 }
 
 .buildstreamlist {
@@ -1332,7 +1332,7 @@ span.metadata {
     padding:1em 0;
     margin:0;
     margin-right:1em;
-    margin-top:.3em;
+    margin-top:-.5em;
 }
 
 #buildEventLegend legend {

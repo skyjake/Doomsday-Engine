@@ -138,7 +138,7 @@ function outputCommitHTML(&$commit)
             if(is_array($value) && isset($value['guessed']) && $value['guessed'] !== 0) continue;
 
             $cleanTag = htmlspecialchars($tag);
-            $tagList .= '<div class="tag"><label title="Tagged \''.$cleanTag.'\'">'.$cleanTag.'</label></div>';
+            $tagList .= '<a href="http://code.iki.fi/codex/find_tag.php?tag='. $tag .'" class="tag" title="Find commits tagged \''.$cleanTag.'\' in the Codex">'.$cleanTag.'</a>';
         }
     }
     $tagList .= '</div>';
@@ -241,7 +241,7 @@ function outputCommitLogHTML(&$build)
 
             if($groupCount > 1)
             {
-?><strong><label title="<?php echo htmlspecialchars("Commits with primary tag '$groupName'"); ?>"><span class="tag"><?php echo htmlspecialchars($groupName); ?></span></label></strong><a name="<?php echo htmlspecialchars($groupName); ?>"></a><a class="jump" href="#commitindex" title="Back to Commits index">index</a><br /><ol><?php
+?><strong><a href="http://code.iki.fi/codex/find_tag.php?tag=<?php echo $groupName; ?>" title="<?php echo htmlspecialchars("Find commits with primary tag '$groupName' in the Codex"); ?>" class="tag"><?php echo htmlspecialchars($groupName); ?></a></strong><a name="<?php echo htmlspecialchars($groupName); ?>"></a><a class="jump" href="#commitindex" title="Back to Commits index">index</a><br /><ol><?php
             }
 
             foreach($group as &$commit)
