@@ -293,6 +293,7 @@ def print_header(out, pageTitle):
     print >> out, '<!DOCTYPE html>'
     print >> out, '<html>'
     print >> out, '<head><title>%s - %s</title>' % (pageTitle, TITLE)
+    print >> out, '<meta http-equiv="Content-Type" content="text/html; charset=utf-8">'
     print >> out, '<style type="text/css">'
     print >> out, 'body, table { font-family: "Helvetica Neue", sans-serif; }'
     print >> out, 'a { color: black; text-decoration: none; }'
