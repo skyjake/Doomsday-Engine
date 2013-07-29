@@ -283,11 +283,7 @@ def find_related_tags(tag):
 if not os.path.exists(OUT_DIR): os.mkdir(OUT_DIR)          
 
 def tag_filename(tag):
-    try:
-        return base64.urlsafe_b64encode(tag)
-    except:
-        print 'FAILED:', tag.encode('utf8')
-        sys.exit(1)
+    return base64.urlsafe_b64encode(tag)
                                             
 def print_header(out, pageTitle):
     print >> out, '<!DOCTYPE html>'
@@ -304,6 +300,8 @@ def print_header(out, pageTitle):
     print >> out, 'table td { vertical-align: top; }'
     print >> out, 'td.commit-date { width: 100px; padding-left: 1.5ex; }'
     print >> out, 'td.commit-tags { width: 200px; text-align: right; }'
+    print >> out, '.footer { text-align: center; font-size: 80%; }'
+    print >> out, '.end-symbol { font-size: 125%; }'
     print >> out, '</style>'
     print >> out, '</head>'
     print >> out, '<body>'
@@ -311,7 +309,7 @@ def print_header(out, pageTitle):
     print >> out, '<h1>%s</h1>' % pageTitle
     
 def print_footer(out):
-    print >> out, '<center><p>&oplus;</p><small><p>This is the <a href="http://dengine.net/">Doomsday Engine</a> <a href="http://github.com/skyjake/Doomsday-Engine/">source code repository</a> commit tag index.</p><p>Last updated: %s</small></center>' % time.asctime()
+    print >> out, '<div class="footer"><p class="end-symbol">&oplus;</p><p>This is the <a href="http://dengine.net/">Doomsday Engine</a> <a href="http://github.com/skyjake/Doomsday-Engine/">source code repository</a> commit tag index.</p><p>Last updated: %s</p></div>' % time.asctime()
     print >> out, '</body>'
     print >> out, '</html>'
 
@@ -403,7 +401,8 @@ def print_tags(out, com, tag, linkSuffix=''):
         if other != tag:
             if not first: print >> out, '| '
             first = False
-            print >> out, '<b><a href="tag_%s%s.html">%s</a></b>' % (linkSuffix, tag_filename(other), other)
+            print >> out, '<b><a href="tag_%s%s.html">%s</a></b>' % (linkSuffix, \
+                    tag_filename(other), encoded_text(other))
     
 def print_commit(out, com, tag, linkSuffix=''):
     print >> out, trElem + '<td class="commit-date"><a href="%s">' % com.link + com.date[:10] + '</a> '
