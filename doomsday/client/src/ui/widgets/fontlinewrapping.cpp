@@ -58,7 +58,7 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
     int indent;                 ///< Current left indentation (in pixels).
     int tabStop;
 
-    Instance() : font(0), indent(0), tabStop(0) {}
+    Instance() : font(0), maxWidth(0), indent(0), tabStop(0) {}
 
     ~Instance()
     {

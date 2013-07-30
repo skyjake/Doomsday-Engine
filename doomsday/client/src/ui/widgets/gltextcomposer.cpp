@@ -220,7 +220,7 @@ void GLTextComposer::setText(String const &text)
     setText(text, Font::RichFormat::fromPlainText(text));
 }
 
-void GLTextComposer::setStyledText(const String &styledText)
+void GLTextComposer::setStyledText(String const &styledText)
 {
     d->format.clear();
     d->text = d->format.initFromStyledText(styledText);
@@ -237,6 +237,11 @@ void GLTextComposer::setText(String const &text, Font::RichFormat const &format)
 void GLTextComposer::setRange(Rangei const &visibleLineRange)
 {
     d->visibleLineRange = visibleLineRange;
+}
+
+Rangei GLTextComposer::range() const
+{
+    return d->visibleLineRange;
 }
 
 bool GLTextComposer::update()

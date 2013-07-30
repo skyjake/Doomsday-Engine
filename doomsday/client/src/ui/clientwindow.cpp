@@ -40,6 +40,7 @@
 #include "ui/widgets/consolewidget.h"
 #include "ui/widgets/notificationwidget.h"
 #include "ui/widgets/gameselectionwidget.h"
+#include "ui/widgets/documentwidget.h"
 #include "ui/commandaction.h"
 #include "ui/mouse_qt.h"
 
@@ -143,6 +144,19 @@ public IGameChangeObserver
                                                                style.rules().rule("gameselection.max.width")))
                 .setAnchorPoint(Vector2f(.5f, .5f));
         root.add(games);
+
+#if 0
+        // testing
+        games->hide();
+        DocumentWidget *doc = new DocumentWidget;
+        doc->setText("Hello World, this is supposed to be long.");
+        doc->set(GuiWidget::Background(Vector4f(0, 0, 1, .5f)));
+        doc->rule()
+                .setInput(Rule::Left,   root.viewLeft() + 50)
+                .setInput(Rule::Top,    root.viewTop() + 50)
+                .setInput(Rule::Height, Const(200));
+        root.add(doc);
+#endif
 
         // Common notification area.
         notifications = new NotificationWidget;

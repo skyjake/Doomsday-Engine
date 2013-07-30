@@ -58,6 +58,8 @@ public:
      */
     void setRange(de::Rangei const &visibleLineRange);
 
+    de::Rangei range() const;
+
     /**
      * Makes sure all the lines are allocated on the atlas. After this all the
      * allocated lines match the ones in the wrapping. This must be called

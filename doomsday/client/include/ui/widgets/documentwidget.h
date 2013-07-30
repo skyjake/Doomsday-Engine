@@ -41,6 +41,13 @@ public:
     DocumentWidget(de::String const &name = "");
 
     /**
+     * Sets the text content of the widget. Style escapes can be used.
+     *
+     * @param styledText  Text content.
+     */
+    void setText(de::String const &styledText);
+
+    /**
      * Sets the policy for managing the widget's width.
      * - ui::Fixed means that the widget's width must be defined externally,
      *   and the width is also used as the content's width.
@@ -70,7 +77,6 @@ public:
 protected:
     void glInit();
     void glDeinit();
-    void glMakeGeometry(DefaultVertexBuf::Builder &verts);
 
 private:
     DENG2_PRIVATE(d)
