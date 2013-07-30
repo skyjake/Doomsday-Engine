@@ -346,7 +346,6 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
             // Newlines always cause a wrap.
             int wrapPosMax;
             int end = findMaxWrap(begin, availWidth, wrapPosMax);
-            if(end <= begin) break;
 
             if(text.at(end) == NEWLINE)
             {
@@ -356,6 +355,8 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
             }
             else
             {
+                if(end <= begin) break;
+
                 // Rewind to find a good (whitespace) break point.
                 while(!isWrappable(end))
                 {
