@@ -42,6 +42,10 @@ public:
     void focusLost();
     bool handleEvent(de::Event const &event);
 
+protected:
+    void autoCompletionBegan();
+    void autoCompletionEnded(bool accepted);
+
 signals:
     void gotFocus();
     void lostFocus();

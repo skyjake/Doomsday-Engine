@@ -26,7 +26,7 @@
 using namespace de;
 
 static int const ID_BACKGROUND = 1; // does not scroll
-static int const ID_TEXT = 2; // scrolls
+static int const ID_TEXT = 2;       // scrolls
 
 DENG2_PIMPL(DocumentWidget),
 DENG2_OBSERVES(Atlas, Reposition)
@@ -65,6 +65,7 @@ DENG2_OBSERVES(Atlas, Reposition)
     {
         wraps.setFont(self.font());
         wraps.clear();
+        composer.forceUpdate();
         self.requestGeometry();
     }
 
@@ -127,6 +128,7 @@ DENG2_OBSERVES(Atlas, Reposition)
             if(wraps.isEmpty() || wraps.maximumWidth() != maxLineWidth)
             {
                 wraps.wrapTextToWidth(text, format, maxLineWidth);
+                qDebug() << text << "wrapped width" << wraps.width();
                 self.setContentWidth(wraps.width());
                 self.setContentHeight(wraps.totalHeightInPixels());
             }
@@ -162,6 +164,8 @@ DENG2_OBSERVES(Atlas, Reposition)
                 VertexBuf::Builder verts;
                 composer.makeVertices(verts, Vector2i(0, 0), ui::AlignLeft);
                 drawable.buffer<VertexBuf>(ID_TEXT).setVertices(gl::TriangleStrip, verts, gl::Static);
+
+                qDebug() << "text vertices" << verts.size();
             }
         }
 
@@ -204,9 +208,12 @@ void DocumentWidget::setText(String const &styledText)
 {
     if(styledText != d->styledText)
     {
+        d->wraps.clear();
+        d->composer.forceUpdate();
+
         d->styledText = styledText;
         d->text = d->format.initFromStyledText(styledText);
-        d->wraps.clear();
+        d->composer.setText(d->text, d->format);
 
         requestGeometry();
     }
