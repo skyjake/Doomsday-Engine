@@ -218,22 +218,23 @@ Q_DECLARE_OPERATORS_FOR_FLAGS(VertexIllum::Flags)
 static uint biasTime;
 static MapElement const *bspRoot;
 static Vector3f const *mapSurfaceNormal;
-static BiasTracker trackChanged;
-static BiasTracker trackApplied;
 
 /// @todo defer allocation of most data -- adopt a 'fly-weight' approach.
 DENG2_PIMPL_NOREF(BiasSurface)
 {
     QVector<VertexIllum> illums; /// @todo use std::vector instead?
 
-    BiasTracker tracker;
-
     Contributors affected;
-    uint activeContributors;
+    byte activeContributors;
+    byte changedContributors;
 
     uint lastUpdateOnFrame;
 
-    Instance(int size) : illums(size), activeContributors(0), lastUpdateOnFrame(0)
+    Instance(int size)
+        : illums(size),
+          activeContributors(0),
+          changedContributors(0),
+          lastUpdateOnFrame(0)
     {
         zap(affected);
     }
@@ -276,20 +277,14 @@ DENG2_PIMPL_NOREF(BiasSurface)
         /*
          * Determine if any affecting sources have changed since last frame.
          */
-        uint changedContributors = 0;
 
         Contributor *ctbr = affected;
         for(int i = 0; i < MAX_AFFECTED; ++i, ctbr++)
         {
             if(!(activeContributors & (1 << i))) continue;
 
-            int sourceIndex = map.toIndex(*ctbr->source);
-            if(!trackChanged.check(sourceIndex))
-                continue;
+            if(!(changedContributors & (1 << i))) continue;
 
-            trackApplied.mark(sourceIndex);
-
-            changedContributors |= 1 << i;
             illumChanged = true;
 
             // Remember the earliest time an affecting source changed.
@@ -413,7 +408,8 @@ void BiasSurface::addAffected(float intensity, BiasSource *source)
     if(!source) return;
 
     // If its too weak we will ignore it entirely.
-    if(intensity < MIN_INTENSITY) return;
+    if(intensity < MIN_INTENSITY)
+        return;
 
     // Do we have a latent contribution, or a spare slot?
     int weakest = -1;
@@ -433,9 +429,10 @@ void BiasSurface::addAffected(float intensity, BiasSource *source)
     if(slot == MAX_AFFECTED)
     {
         // No -- drop the weakest.
-        slot = weakest;
-        if(intensity <= d->affected[weakest].influence) return;
+        if(intensity <= d->affected[weakest].influence)
+            return;
 
+        slot = weakest;
         ctbr = &d->affected[slot];
     }
 
@@ -447,7 +444,6 @@ void BiasSurface::addAffected(float intensity, BiasSource *source)
 void BiasSurface::updateAffection(BiasTracker &changes)
 {
     // Everything that is affected by the changed lights will need an update.
-    d->tracker.apply(changes);
 
     // Determine whether these changes affect us.
     bool needApplyChanges = false;
@@ -460,6 +456,7 @@ void BiasSurface::updateAffection(BiasTracker &changes)
         if(changes.check(App_World().map().toIndex(*ctbr->source)))
         {
             needApplyChanges = true;
+            d->changedContributors |= 1 << i;
             break;
         }
     }
@@ -492,8 +489,6 @@ void BiasSurface::lightPoly(Vector3f const &surfaceNormal, int vertCount,
     bspRoot = &App_World().map().bspRoot();
     biasTime = bspRoot->map().biasCurrentTime();
     mapSurfaceNormal = &surfaceNormal;
-    trackChanged = d->tracker;
-    trackApplied.clear();
 
     int i; rvertex_t const *vtx = positions;
     for(i = 0; i < vertCount; ++i, vtx++)
@@ -505,5 +500,6 @@ void BiasSurface::lightPoly(Vector3f const &surfaceNormal, int vertCount,
             colors[i].rgba[c] = light[c];
     }
 
-    d->tracker.remove(trackApplied);
+    // Any changes to active contributors will have now been applied.
+    d->changedContributors &= ~d->activeContributors;
 }
