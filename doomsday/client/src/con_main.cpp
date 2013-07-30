@@ -2679,6 +2679,10 @@ D_CMD(TaskBar)
         win.taskBar().open();
         win.console().focusOnCommandLine();
     }
+    else if(!win.console().commandLine().hasFocus())
+    {
+        win.console().focusOnCommandLine();
+    }
     else
     {
         win.taskBar().close();
