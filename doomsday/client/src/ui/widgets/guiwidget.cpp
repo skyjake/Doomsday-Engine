@@ -303,6 +303,16 @@ Rectanglef GuiWidget::normalizedRect() const
                                float(rect.bottom()) / float(viewSize.y)));
 }
 
+Rectanglef GuiWidget::normalizedContentRect() const
+{
+    Rectanglef const rect = rule().rect().shrunk(margin().valuei());
+    GuiRootWidget::Size const &viewSize = root().viewSize();
+    return Rectanglef(Vector2f(float(rect.left())   / float(viewSize.x),
+                               float(rect.top())    / float(viewSize.y)),
+                      Vector2f(float(rect.right())  / float(viewSize.x),
+                               float(rect.bottom()) / float(viewSize.y)));
+}
+
 static void deleteGuiWidget(void *ptr)
 {
     delete reinterpret_cast<GuiWidget *>(ptr);
