@@ -187,11 +187,56 @@ DENG2_PIMPL_NOREF(BiasSurface)
     Instance(int size) : illums(size), lastUpdateOnFrame(0)
     {}
 
+    void updateLightContribution(VertexIllum &vi, Vector3d const &surfacePoint,
+                                 Contributor const &ctbr)
+    {
+        BiasSource *source = ctbr.source;
+        Vector3f &casted = vi.contribution(source, affected);
+
+        /// @todo LineSightTest should (optionally) perform this test.
+        Sector *sector = &source->bspLeafAtOrigin().sector();
+        if((!sector->floor().surface().hasSkyMaskedMaterial() &&
+                source->origin().z < sector->floor().visHeight()) ||
+           (!sector->ceiling().surface().hasSkyMaskedMaterial() &&
+                source->origin().z > sector->ceiling().visHeight()))
+        {
+            // This affecting source does not contribute any light.
+            casted = Vector3f();
+            return;
+        }
+
+        Vector3d sourceToSurface = source->origin() - surfacePoint;
+
+        if(devUseSightCheck &&
+           !LineSightTest(source->origin(),
+                          surfacePoint + sourceToSurface / 100).trace(*bspRoot))
+        {
+            // LOS fail.
+            // This affecting source does not contribute any light.
+            casted = Vector3f();
+            return;
+        }
+
+        double distance = sourceToSurface.length();
+        double dot = sourceToSurface.normalize().dot(*mapSurfaceNormal);
+
+        // The surface faces away from the light?
+        if(dot < 0)
+        {
+            casted = Vector3f();
+            return;
+        }
+
+        // Apply light casted from this source.
+        float strength = dot * source->evaluateIntensity() / distance;
+        casted = source->color() * de::clamp(0.f, strength, 1.f);
+    }
+
     /**
-     * Perform lighting calculations for the specified @a mapVertexOrigin.
+     * Perform lighting calculations for a vertex.
      *
-     * @todo Only recalculate the changed lights (colors contributed by
-     * others can be stored in the "affected" array.
+     * @param vi            Illumination data for the vertex to be evaluated.
+     * @param surfacePoint  Position of the vertex in the map coordinate space.
      */
     Vector3f evalLighting(VertexIllum &vi, Vector3d const &surfacePoint)
     {
@@ -222,14 +267,15 @@ DENG2_PIMPL_NOREF(BiasSurface)
             vi.flags &= ~VertexIllum::Unseen;
         }
 
-        // Determine if any affecting sources have changed since last frame.
-        struct {
-            BiasSource *source;
-            bool changed;
-        } affecting[MAX_AFFECTED + 1], *aff = affecting;
+        /*
+         * Determine if any affecting sources have changed since last frame.
+         */
+        uint activeContributors  = 0;
+        uint changedContributors = 0;
 
         //if(map.biasSourceCount() > 0)
         {
+            int n = 0;
             foreach(Contributor const &ctbr, affected)
             {
                 // Is this a valid index?
@@ -239,110 +285,80 @@ DENG2_PIMPL_NOREF(BiasSurface)
                     continue;
                 }*/
 
-                int sourceIndex = map.toIndex(*ctbr.source);
-                aff->source = ctbr.source;
+                BiasSource *source = ctbr.source;
+                int sourceIndex = map.toIndex(*source);
+                activeContributors |= 1 << n;
 
                 if(trackChanged.check(sourceIndex))
                 {
-                    aff->changed = true;
+                    changedContributors |= 1 << n;
                     illumChanged = true;
                     trackApplied.mark(sourceIndex);
 
                     // Remember the earliest time an affecting source changed.
-                    if(latestSourceUpdate < aff->source->lastUpdateTime())
+                    if(latestSourceUpdate < source->lastUpdateTime())
                     {
-                        latestSourceUpdate = aff->source->lastUpdateTime();
+                        latestSourceUpdate = source->lastUpdateTime();
                     }
-                }
-                else
-                {
-                    aff->changed = false;
                 }
 
                 // Move to the next.
-                aff++;
+                n++;
             }
         }
-        aff->source = 0;
 
         if(illumChanged)
         {
-            // Recalculate the contribution for each light.
-            for(aff = affecting; aff->source; aff++)
+            /*
+             * Recalculate the contribution for each light.
+             * We can reuse the previously calculated value for a source if
+             * it hasn't changed.
+             */
+            if(changedContributors)
             {
-                if(!aff->changed)
+                int n = 0;
+                foreach(Contributor const &ctbr, affected)
                 {
-                    // We can reuse the previously calculated value. This
-                    // can only be done if this particular source hasn't
-                    // changed.
-                    continue;
+                    if(changedContributors & (1 << n))
+                    {
+                        updateLightContribution(vi, surfacePoint, ctbr);
+                    }
+                    n++;
                 }
-
-                BiasSource *source = aff->source;
-                Vector3f &casted = vi.contribution(source, affected);
-
-                /// @todo LineSightTest should (optionally) perform this test.
-                Sector *sector = &source->bspLeafAtOrigin().sector();
-                if((!sector->floor().surface().hasSkyMaskedMaterial() &&
-                        source->origin().z < sector->floor().visHeight()) ||
-                   (!sector->ceiling().surface().hasSkyMaskedMaterial() &&
-                        source->origin().z > sector->ceiling().visHeight()))
-                {
-                    // This affecting source does not contribute any light.
-                    casted = Vector3f();
-                    continue;
-                }
-
-                Vector3d sourceToSurface = source->origin() - surfacePoint;
-
-                if(devUseSightCheck &&
-                   !LineSightTest(source->origin(),
-                                  surfacePoint + sourceToSurface / 100).trace(*bspRoot))
-                {
-                    // LOS fail.
-                    // This affecting source does not contribute any light.
-                    casted = Vector3f();
-                    continue;
-                }
-
-                double distance = sourceToSurface.length();
-                double dot = sourceToSurface.normalize().dot(*mapSurfaceNormal);
-
-                // The surface faces away from the light?
-                if(dot < 0)
-                {
-                    casted = Vector3f();
-                    continue;
-                }
-
-                // Apply light casted from this source.
-                float strength = dot * source->evaluateIntensity() / distance;
-                casted = source->color() * de::clamp(0.f, strength, 1.f);
             }
+
+            Vector3f newColor; // Initial color is black.
 
             /*
              * Accumulate light contributions from each affecting source.
              */
-            Vector3f newColor; // Initial color is black.
-            for(aff = affecting; aff->source; aff++)
+            if(activeContributors)
             {
-                newColor += vi.contribution(aff->source, affected);
+                int n = 0;
+                foreach(Contributor const &ctbr, affected)
+                {
+                    if(activeContributors & (1 << n))
+                    {
+                        newColor += vi.contribution(ctbr.source, affected);
 
-                // Stop once fully saturated.
-                if(newColor >= saturated)
-                    break;
+                        // Stop once fully saturated.
+                        if(newColor >= saturated)
+                            break;
+                    }
+                    n++;
+                }
+
+                // Clamp.
+                newColor = newColor.min(saturated);
             }
-            // Clamp.
-            newColor = newColor.min(saturated);
 
             // Is there a new destination?
-            if(!affecting[0].source ||
+            if(!activeContributors ||
                (!de::fequal(vi.dest.x, newColor.x, COLOR_CHANGE_THRESHOLD) ||
                 !de::fequal(vi.dest.y, newColor.y, COLOR_CHANGE_THRESHOLD) ||
                 !de::fequal(vi.dest.z, newColor.z, COLOR_CHANGE_THRESHOLD)))
             {
-                if((vi.flags & VertexIllum::Interpolating) &&
-                   affecting[0].source)
+                if((vi.flags & VertexIllum::Interpolating) && activeContributors)
                 {
                     // Must not lose the half-way interpolation.
                     Vector3f mid; vi.lerp(mid, biasTime);
