@@ -80,6 +80,11 @@ public:
      */
     void release();
 
+    /**
+     * Releases the allocated lines that are outside the current range.
+     */
+    void releaseLinesOutsideRange();
+
     void makeVertices(Vertices &triStrip,
                       de::Vector2i const &topLeft,
                       ui::Alignment const &lineAlign,

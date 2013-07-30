@@ -77,6 +77,7 @@ public:
 protected:
     void glInit();
     void glDeinit();
+    void glMakeGeometry(DefaultVertexBuf::Builder &verts);
 
 private:
     DENG2_PRIVATE(d)

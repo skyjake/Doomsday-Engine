@@ -28,12 +28,14 @@ using namespace de;
 static int const ID_BACKGROUND = 1; // does not scroll
 static int const ID_TEXT = 2; // scrolls
 
-DENG2_PIMPL(DocumentWidget)
+DENG2_PIMPL(DocumentWidget),
+DENG2_OBSERVES(Atlas, Reposition)
 {
     typedef DefaultVertexBuf VertexBuf;
 
     ui::SizePolicy widthPolicy;
     int maxLineWidth;
+    int oldScrollY;
     String styledText;
     String text;
     Font::RichFormat format;
@@ -44,11 +46,13 @@ DENG2_PIMPL(DocumentWidget)
     GLUniform uMvpMatrix;
     GLUniform uScrollMvpMatrix;
     GLUniform uColor;
+    GLState clippedTextState;
 
     Instance(Public *i)
         : Base(i),
           widthPolicy(ui::Expand),
           maxLineWidth(1000),
+          oldScrollY(0),
           uMvpMatrix      ("uMvpMatrix", GLUniform::Mat4),
           uScrollMvpMatrix("uMvpMatrix", GLUniform::Mat4),
           uColor          ("uColor",     GLUniform::Vec4)
@@ -64,8 +68,11 @@ DENG2_PIMPL(DocumentWidget)
 
     void glInit()
     {        
+        self.root().atlas().audienceForReposition += this;
         composer.setAtlas(self.root().atlas());
         composer.setText(text, format);
+
+        self.setIndicatorUv(self.root().atlas().imageRectf(self.root().solidWhitePixel()).middle());
 
         drawable.addBuffer(ID_BACKGROUND, new VertexBuf);
         drawable.addBuffer(ID_TEXT,       new VertexBuf);
@@ -76,26 +83,41 @@ DENG2_PIMPL(DocumentWidget)
         self.root().shaders().build(drawable.addProgram(ID_TEXT), "generic.textured.color_ucolor")
                 << uScrollMvpMatrix << uColor << self.root().uAtlas();
         drawable.setProgram(ID_TEXT, drawable.program(ID_TEXT));
+        drawable.setState(ID_TEXT, clippedTextState);
     }
 
     void glDeinit()
     {
+        self.root().atlas().audienceForReposition -= this;
         composer.release();
         drawable.clear();
     }
 
+    void atlasContentRepositioned(Atlas &atlas)
+    {
+        self.setIndicatorUv(atlas.imageRectf(self.root().solidWhitePixel()).middle());
+        self.requestGeometry();
+    }
+
     void updateGeometry()
     {
-        // TODO: If scroll position has changed, must update text geometry.
-
-        Rectanglei pos;
-        if(!self.hasChangedPlace(pos) && !self.geometryRequested())
+        // If scroll position has changed, must update text geometry.
+        int scrollY = self.scrollPositionY().valuei();
+        if(oldScrollY != scrollY)
         {
-            // No need to change anything.
-            return;
+            oldScrollY = scrollY;
+            self.requestGeometry();
         }
 
-        int margin = self.margin().valuei();
+        Rectanglei pos;
+        if(self.hasChangedPlace(pos))
+        {
+            self.requestGeometry();
+        }
+
+        if(!self.geometryRequested()) return;
+
+        int const margin = self.margin().valuei();
 
         // Make sure the text has been wrapped for the current dimensions.
         if(widthPolicy == ui::Expand)
@@ -120,25 +142,38 @@ DENG2_PIMPL(DocumentWidget)
         // Determine visible range of lines.
         Font const &font = self.font();
         int contentHeight = self.rule().height().valuei() - 2 * margin;
+        int const extraLines = 1;
+        int numVisLines = contentHeight / font.lineSpacing().valuei() + 2 * extraLines;
+        int firstVisLine = scrollY / font.lineSpacing().valuei() - extraLines + 1;
 
-        composer.update();
-
-        VertexBuf::Builder verts;
-        self.glMakeGeometry(verts);
-        drawable.buffer<VertexBuf>(ID_BACKGROUND).setVertices(gl::TriangleStrip, verts, gl::Static);
-
-        // Geometry from the text composer.
-        if(composer.isReady())
+        // Update visible range and release/alloc lines accordingly.
+        Rangei visRange(firstVisLine, firstVisLine + numVisLines);
+        if(visRange != composer.range())
         {
-            verts.clear();
-            composer.makeVertices(verts, Vector2i(0, 0), ui::AlignLeft);
-            drawable.buffer<VertexBuf>(ID_TEXT).setVertices(gl::TriangleStrip, verts, gl::Static);
+            composer.setRange(visRange);
+            composer.releaseLinesOutsideRange();
+            composer.update();
+
+            // Geometry from the text composer.
+            if(composer.isReady())
+            {
+                VertexBuf::Builder verts;
+                composer.makeVertices(verts, Vector2i(0, 0), ui::AlignLeft);
+                drawable.buffer<VertexBuf>(ID_TEXT).setVertices(gl::TriangleStrip, verts, gl::Static);
+            }
         }
 
-        uMvpMatrix = self.root().projMatrix2D();
         uScrollMvpMatrix = self.root().projMatrix2D() *
                 Matrix4f::translate(Vector2f(self.contentRule().left().valuei(),
-                                             self.contentRule().top().valuei()));
+                                             self.contentRule().top().valuei() - scrollY));
+
+        // Background and scroll indicator.
+        VertexBuf::Builder verts;
+        self.glMakeGeometry(verts);
+        drawable.buffer<VertexBuf>(ID_BACKGROUND).setVertices(gl::TriangleStrip, verts,
+                                                              self.isScrolling()? gl::Dynamic : gl::Static);
+
+        uMvpMatrix = self.root().projMatrix2D();
 
         // Geometry is now up to date.
         self.requestGeometry(false);
@@ -149,6 +184,10 @@ DENG2_PIMPL(DocumentWidget)
         updateGeometry();
 
         uColor = Vector4f(1, 1, 1, self.visibleOpacity());
+
+        // Update the scissor for the text.
+        clippedTextState = GLState::top();
+        clippedTextState.setNormalizedScissor(self.normalizedContentRect());
 
         drawable.draw();
     }
@@ -222,4 +261,11 @@ void DocumentWidget::glInit()
 void DocumentWidget::glDeinit()
 {
     d->glDeinit();
+}
+
+void DocumentWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
+{
+    ScrollAreaWidget::glMakeGeometry(verts);
+    glMakeScrollIndicatorGeometry(verts, Vector2f(rule().left().value() + margin().value(),
+                                                  rule().top().value() + margin().value()));
 }

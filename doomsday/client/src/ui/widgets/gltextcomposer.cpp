@@ -72,6 +72,18 @@ DENG2_PIMPL(GLTextComposer)
         lines.clear();
     }
 
+    void releaseOutsideRange()
+    {
+        DENG2_ASSERT(atlas != 0);
+        for(int i = 0; i < lines.size(); ++i)
+        {
+            if(!isLineVisible(i))
+            {
+                releaseLine(i);
+            }
+        }
+    }
+
     void releaseLine(int index)
     {
         Line &ln = lines[index];
@@ -205,6 +217,11 @@ void GLTextComposer::release()
     setState(false);
 }
 
+void GLTextComposer::releaseLinesOutsideRange()
+{
+    d->releaseOutsideRange();
+}
+
 void GLTextComposer::setAtlas(Atlas &atlas)
 {
     d->atlas = &atlas;
@@ -311,6 +328,8 @@ void GLTextComposer::makeVertices(Vertices &triStrip,
 
     for(int i = 0; i < d->lines.size(); ++i)
     {
+        if(!d->isLineVisible(i)) continue;
+
         d->lines[i].segs[0].x = d->wraps->lineInfo(i).indent;
 
         for(int k = 1; k < d->lines[i].segs.size(); ++k)
