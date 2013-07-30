@@ -46,10 +46,10 @@ static int devUseSightCheck  = true; //cvar
 struct Contributor
 {
     BiasSource *source;
+    float influence;
 };
 
-/// Contribution intensity => bias source.
-typedef QMap<float, Contributor> Affection;
+typedef Contributor Contributors[MAX_AFFECTED];
 
 /**
  * Per-vertex illumination data.
@@ -120,7 +120,7 @@ struct VertexIllum
     /**
      * @return Light contribution by the specified source.
      */
-    Vector3f &contribution(BiasSource *source, Affection const &affectedSources)
+    Vector3f &contribution(BiasSource *source, Contributors const &contributors)
     {
         DENG2_ASSERT(source != 0);
 
@@ -138,8 +138,9 @@ struct VertexIllum
 
             if(casted[i].source)
             {
-                foreach(Contributor const &ctbr, affectedSources)
+                for(int k = 0; k < MAX_AFFECTED; ++k)
                 {
+                    Contributor const &ctbr = contributors[k];
                     if(ctbr.source == casted[i].source)
                     {
                         inUse = true;
@@ -161,37 +162,13 @@ struct VertexIllum
         // Now how'd that happen?
         throw Error("VertexIllum::casted", QString("No light emitted by source"));
     }
-};
 
-Q_DECLARE_OPERATORS_FOR_FLAGS(VertexIllum::Flags)
-
-/**
- * evalLighting uses these -- they must be set before it is called.
- */
-static uint biasTime;
-static MapElement const *bspRoot;
-static Vector3f const *mapSurfaceNormal;
-static BiasTracker trackChanged;
-static BiasTracker trackApplied;
-
-DENG2_PIMPL_NOREF(BiasSurface)
-{
-    QVector<VertexIllum> illums; /// @todo use std::vector instead?
-
-    BiasTracker tracker;
-
-    Affection affected;
-
-    uint lastUpdateOnFrame;
-
-    Instance(int size) : illums(size), lastUpdateOnFrame(0)
-    {}
-
-    void updateLightContribution(VertexIllum &vi, Vector3d const &surfacePoint,
-                                 Contributor const &ctbr)
+    void updateContribution(int index, Contributors const &contributors,
+        Vector3d const &surfacePoint, Vector3f const &surfaceNormal,
+        MapElement const &bspRoot)
     {
-        BiasSource *source = ctbr.source;
-        Vector3f &casted = vi.contribution(source, affected);
+        BiasSource *source = contributors[index].source;
+        Vector3f &casted = contribution(source, contributors);
 
         /// @todo LineSightTest should (optionally) perform this test.
         Sector *sector = &source->bspLeafAtOrigin().sector();
@@ -209,7 +186,7 @@ DENG2_PIMPL_NOREF(BiasSurface)
 
         if(devUseSightCheck &&
            !LineSightTest(source->origin(),
-                          surfacePoint + sourceToSurface / 100).trace(*bspRoot))
+                          surfacePoint + sourceToSurface / 100).trace(bspRoot))
         {
             // LOS fail.
             // This affecting source does not contribute any light.
@@ -218,7 +195,7 @@ DENG2_PIMPL_NOREF(BiasSurface)
         }
 
         double distance = sourceToSurface.length();
-        double dot = sourceToSurface.normalize().dot(*mapSurfaceNormal);
+        double dot = sourceToSurface.normalize().dot(surfaceNormal);
 
         // The surface faces away from the light?
         if(dot < 0)
@@ -230,6 +207,35 @@ DENG2_PIMPL_NOREF(BiasSurface)
         // Apply light casted from this source.
         float strength = dot * source->evaluateIntensity() / distance;
         casted = source->color() * de::clamp(0.f, strength, 1.f);
+    }
+};
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(VertexIllum::Flags)
+
+/**
+ * evalLighting uses these -- they must be set before it is called.
+ */
+static uint biasTime;
+static MapElement const *bspRoot;
+static Vector3f const *mapSurfaceNormal;
+static BiasTracker trackChanged;
+static BiasTracker trackApplied;
+
+/// @todo defer allocation of most data -- adopt a 'fly-weight' approach.
+DENG2_PIMPL_NOREF(BiasSurface)
+{
+    QVector<VertexIllum> illums; /// @todo use std::vector instead?
+
+    BiasTracker tracker;
+
+    Contributors affected;
+    uint activeContributors;
+
+    uint lastUpdateOnFrame;
+
+    Instance(int size) : illums(size), activeContributors(0), lastUpdateOnFrame(0)
+    {
+        zap(affected);
     }
 
     /**
@@ -270,40 +276,26 @@ DENG2_PIMPL_NOREF(BiasSurface)
         /*
          * Determine if any affecting sources have changed since last frame.
          */
-        uint activeContributors  = 0;
         uint changedContributors = 0;
 
-        //if(map.biasSourceCount() > 0)
+        Contributor *ctbr = affected;
+        for(int i = 0; i < MAX_AFFECTED; ++i, ctbr++)
         {
-            int n = 0;
-            foreach(Contributor const &ctbr, affected)
+            if(!(activeContributors & (1 << i))) continue;
+
+            int sourceIndex = map.toIndex(*ctbr->source);
+            if(!trackChanged.check(sourceIndex))
+                continue;
+
+            trackApplied.mark(sourceIndex);
+
+            changedContributors |= 1 << i;
+            illumChanged = true;
+
+            // Remember the earliest time an affecting source changed.
+            if(latestSourceUpdate < ctbr->source->lastUpdateTime())
             {
-                // Is this a valid index?
-                /*if(sourceIndex < 0 || sourceIndex >= map.biasSourceCount())
-                {
-                    illumChanged = true;
-                    continue;
-                }*/
-
-                BiasSource *source = ctbr.source;
-                int sourceIndex = map.toIndex(*source);
-                activeContributors |= 1 << n;
-
-                if(trackChanged.check(sourceIndex))
-                {
-                    changedContributors |= 1 << n;
-                    illumChanged = true;
-                    trackApplied.mark(sourceIndex);
-
-                    // Remember the earliest time an affecting source changed.
-                    if(latestSourceUpdate < source->lastUpdateTime())
-                    {
-                        latestSourceUpdate = source->lastUpdateTime();
-                    }
-                }
-
-                // Move to the next.
-                n++;
+                latestSourceUpdate = ctbr->source->lastUpdateTime();
             }
         }
 
@@ -316,14 +308,13 @@ DENG2_PIMPL_NOREF(BiasSurface)
              */
             if(changedContributors)
             {
-                int n = 0;
-                foreach(Contributor const &ctbr, affected)
+                Contributor *ctbr = affected;
+                for(int i = 0; i < MAX_AFFECTED; ++i, ctbr++)
                 {
-                    if(changedContributors & (1 << n))
+                    if(changedContributors & (1 << i))
                     {
-                        updateLightContribution(vi, surfacePoint, ctbr);
+                        vi.updateContribution(i, affected, surfacePoint, *mapSurfaceNormal, *bspRoot);
                     }
-                    n++;
                 }
             }
 
@@ -334,18 +325,17 @@ DENG2_PIMPL_NOREF(BiasSurface)
              */
             if(activeContributors)
             {
-                int n = 0;
-                foreach(Contributor const &ctbr, affected)
+                Contributor *ctbr = affected;
+                for(int i = 0; i < MAX_AFFECTED; ++i, ctbr++)
                 {
-                    if(activeContributors & (1 << n))
+                    if(activeContributors & (1 << i))
                     {
-                        newColor += vi.contribution(ctbr.source, affected);
+                        newColor += vi.contribution(ctbr->source, affected);
 
                         // Stop once fully saturated.
                         if(newColor >= saturated)
                             break;
                     }
-                    n++;
                 }
 
                 // Clamp.
@@ -415,7 +405,7 @@ void BiasSurface::setLastUpdateOnFrame(uint newLastUpdateFrameNumber)
 
 void BiasSurface::clearAffected()
 {
-    d->affected.clear();
+    d->activeContributors = 0;
 }
 
 void BiasSurface::addAffected(float intensity, BiasSource *source)
@@ -425,16 +415,33 @@ void BiasSurface::addAffected(float intensity, BiasSource *source)
     // If its too weak we will ignore it entirely.
     if(intensity < MIN_INTENSITY) return;
 
-    if(d->affected.count() == MAX_AFFECTED)
+    // Do we have a latent contribution, or a spare slot?
+    int weakest = -1;
+    int slot = 0;
+    Contributor *ctbr = d->affected;
+    for(; slot < MAX_AFFECTED; ++slot, ctbr++)
     {
-        // Drop the weakest.
-        Affection::Iterator weakest = d->affected.begin();
-        if(intensity <= weakest.key()) return;
-        d->affected.remove(weakest.key());
+        // Remember the weakest.
+        if(weakest < 0 || ctbr->influence < d->affected[weakest].influence)
+            weakest = slot;
+
+        // A latent contribution?
+        if(ctbr->source == source)
+            break;
     }
 
-    Contributor ctbr = { source };
-    d->affected.insert(intensity, ctbr);
+    if(slot == MAX_AFFECTED)
+    {
+        // No -- drop the weakest.
+        slot = weakest;
+        if(intensity <= d->affected[weakest].influence) return;
+
+        ctbr = &d->affected[slot];
+    }
+
+    ctbr->source = source;
+    ctbr->influence = intensity;
+    d->activeContributors |= 1 << slot;
 }
 
 void BiasSurface::updateAffection(BiasTracker &changes)
@@ -444,9 +451,13 @@ void BiasSurface::updateAffection(BiasTracker &changes)
 
     // Determine whether these changes affect us.
     bool needApplyChanges = false;
-    foreach(Contributor const &ctbr, d->affected)
+    Contributor *ctbr = d->affected;
+    for(int i = 0; i < MAX_AFFECTED; ++i, ctbr++)
     {
-        if(changes.check(App_World().map().toIndex(*ctbr.source)))
+        if(!ctbr->source)
+            continue;
+
+        if(changes.check(App_World().map().toIndex(*ctbr->source)))
         {
             needApplyChanges = true;
             break;
@@ -464,9 +475,13 @@ void BiasSurface::updateAffection(BiasTracker &changes)
 
 void BiasSurface::updateAfterMove()
 {
-    foreach(Contributor const &ctbr, d->affected)
+    Contributor *ctbr = d->affected;
+    for(int i = 0; i < MAX_AFFECTED; ++i, ctbr++)
     {
-        ctbr.source->forceUpdate();
+        if(ctbr->source)
+        {
+            ctbr->source->forceUpdate();
+        }
     }
 }
 
