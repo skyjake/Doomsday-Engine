@@ -43,6 +43,11 @@ public:
      */
     void setEmptyContentHint(de::String const &hintText);
 
+    /**
+     * Determines where the cursor is currently in view coordinates.
+     */
+    de::Rectanglei cursorRect() const;
+
     // Events.
     void viewResized();
     void focusGained();

@@ -182,14 +182,10 @@ DENG2_OBSERVES(Atlas, Reposition)
                 .setVertices(gl::TriangleStrip, verts, gl::Static);
 
         // Cursor.
-        Vector2i const cursorPos = self.lineCursorPos();
-        Vector2f const cp = wraps.charTopLeftInPixels(cursorPos.y, cursorPos.x) +
-                contentRect().topLeft;
+        Rectanglei const caret = self.cursorRect();
 
         verts.clear();
-        verts.makeQuad(Rectanglef(cp + Vector2f(-1, 0),
-                                  cp + Vector2f(1, font->height().value())),
-                       Vector4f(1, 1, 1, 1),
+        verts.makeQuad(caret, Vector4f(1, 1, 1, 1),
                        atlas().imageRectf(self.root().solidWhitePixel()).middle());
 
         drawable.buffer<VertexBuf>(ID_BUF_CURSOR)
@@ -253,6 +249,16 @@ void LineEditWidget::setEmptyContentHint(String const &hintText)
         add(d->hint);
     }
     d->hint->setText(hintText);
+}
+
+Rectanglei LineEditWidget::cursorRect() const
+{
+    Vector2i const cursorPos = lineCursorPos();
+    Vector2i const cp = d->wraps.charTopLeftInPixels(cursorPos.y, cursorPos.x) +
+            d->contentRect().topLeft;
+
+    return Rectanglei(cp + Vector2i(-1, 0),
+                      cp + Vector2i(1, d->font->height().valuei()));
 }
 
 void LineEditWidget::glInit()
