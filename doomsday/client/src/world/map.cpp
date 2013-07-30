@@ -1183,6 +1183,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
         // Check which sources have changed and update the tracker bits for
         // any affected surfaces.
         BiasTracker allChanges;
+        bool needUpdateSurfaces = false;
 
         for(int i = 0; i < bias.sources.count(); ++i)
         {
@@ -1190,14 +1191,18 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
 
             if(bsrc->trackChanges(allChanges, i, bias.currentTime))
             {
-                // Recalculate which sources affect which surfaces.
-                bias.lastChangeOnFrame = frameCount;
+                // We'll need to determine which source => surface affection.
+                needUpdateSurfaces = true;
             }
         }
+
+        if(!needUpdateSurfaces) return;
 
         /*
          * Apply changes to all surfaces:
          */
+        bias.lastChangeOnFrame = frameCount;
+
         foreach(Segment *seg, segments)
         {
             seg->updateBiasAffection(allChanges);

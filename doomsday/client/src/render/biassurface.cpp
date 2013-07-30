@@ -208,6 +208,17 @@ DENG2_PIMPL_NOREF(BiasSurface)
         if(vi.flags & VertexIllum::Unseen)
         {
             illumChanged = true;
+            for(int i = 0; i < MAX_AFFECTED; ++i)
+            {
+                BiasSource *source = vi.casted[i].source;
+                if(!source) continue;
+
+                // Remember the earliest time an affecting source changed.
+                if(latestSourceUpdate < source->lastUpdateTime())
+                {
+                    latestSourceUpdate = source->lastUpdateTime();
+                }
+            }
             vi.flags &= ~VertexIllum::Unseen;
         }
 
@@ -325,11 +336,13 @@ DENG2_PIMPL_NOREF(BiasSurface)
             newColor = newColor.min(saturated);
 
             // Is there a new destination?
-            if(!de::fequal(vi.dest.x, newColor.x, COLOR_CHANGE_THRESHOLD) ||
-               !de::fequal(vi.dest.y, newColor.y, COLOR_CHANGE_THRESHOLD) ||
-               !de::fequal(vi.dest.z, newColor.z, COLOR_CHANGE_THRESHOLD))
+            if(!affecting[0].source ||
+               (!de::fequal(vi.dest.x, newColor.x, COLOR_CHANGE_THRESHOLD) ||
+                !de::fequal(vi.dest.y, newColor.y, COLOR_CHANGE_THRESHOLD) ||
+                !de::fequal(vi.dest.z, newColor.z, COLOR_CHANGE_THRESHOLD)))
             {
-                if(vi.flags & VertexIllum::Interpolating)
+                if((vi.flags & VertexIllum::Interpolating) &&
+                   affecting[0].source)
                 {
                     // Must not lose the half-way interpolation.
                     Vector3f mid; vi.lerp(mid, biasTime);
