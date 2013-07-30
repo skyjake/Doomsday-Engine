@@ -1191,7 +1191,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
 
             if(bsrc->trackChanges(allChanges, i, bias.currentTime))
             {
-                // We'll need to determine which source => surface affection.
+                // We'll need to redetermine source => surface affection.
                 needUpdateSurfaces = true;
             }
         }
