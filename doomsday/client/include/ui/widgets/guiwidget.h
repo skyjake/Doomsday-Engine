@@ -134,6 +134,12 @@ public:
 
     de::Rectanglef normalizedRect() const;
 
+    /**
+     * Normalized content rectangle. Same as normalizedRect() except margins
+     * are applied to all sides.
+     */
+    de::Rectanglef normalizedContentRect() const;
+
     void deleteLater();
 
     void setFont(de::DotPath const &id);

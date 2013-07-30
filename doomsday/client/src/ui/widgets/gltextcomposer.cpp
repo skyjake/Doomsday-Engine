@@ -31,6 +31,7 @@ DENG2_PIMPL(GLTextComposer)
     FontLineWrapping const *wraps;
     Font::RichFormat format;
     bool needRedo;
+    Rangei visibleLineRange; ///< Only these lines will be updated/drawn.
 
     struct Line {
         struct Segment {
@@ -49,7 +50,9 @@ DENG2_PIMPL(GLTextComposer)
     typedef QList<Line> Lines;
     Lines lines;
 
-    Instance(Public *i) : Base(i), font(0), atlas(0), wraps(0), needRedo(false)
+    Instance(Public *i)
+        : Base(i), font(0), atlas(0), wraps(0), needRedo(false),
+          visibleLineRange(0, 0x7fffffff)
     {}
 
     ~Instance()
@@ -69,6 +72,18 @@ DENG2_PIMPL(GLTextComposer)
         lines.clear();
     }
 
+    void releaseOutsideRange()
+    {
+        DENG2_ASSERT(atlas != 0);
+        for(int i = 0; i < lines.size(); ++i)
+        {
+            if(!isLineVisible(i))
+            {
+                releaseLine(i);
+            }
+        }
+    }
+
     void releaseLine(int index)
     {
         Line &ln = lines[index];
@@ -80,6 +95,11 @@ DENG2_PIMPL(GLTextComposer)
             }
         }
         ln.segs.clear();
+    }
+
+    bool isLineVisible(int line) const
+    {
+        return visibleLineRange.contains(line);
     }
 
     String segmentText(int seg, FontLineWrapping::LineInfo const &info) const
@@ -125,7 +145,7 @@ DENG2_PIMPL(GLTextComposer)
             if(i < lines.size())
             {
                 // Is the rasterized copy up to date?
-                if(matchingSegments(i, info))
+                if(!isLineVisible(i) || matchingSegments(i, info))
                 {
                     // This line can be kept as is.
                     continue;
@@ -152,7 +172,7 @@ DENG2_PIMPL(GLTextComposer)
                 Line::Segment seg;
                 seg.range = info.segs[k].range;
                 seg.text = segmentText(k, info);
-                if(seg.range.size() > 0)
+                if(isLineVisible(i) && seg.range.size() > 0)
                 {
                     // The color is white unless a style is defined.
                     Vector4ub fgColor(255, 255, 255, 255);
@@ -197,6 +217,11 @@ void GLTextComposer::release()
     setState(false);
 }
 
+void GLTextComposer::releaseLinesOutsideRange()
+{
+    d->releaseOutsideRange();
+}
+
 void GLTextComposer::setAtlas(Atlas &atlas)
 {
     d->atlas = &atlas;
@@ -212,7 +237,7 @@ void GLTextComposer::setText(String const &text)
     setText(text, Font::RichFormat::fromPlainText(text));
 }
 
-void GLTextComposer::setStyledText(const String &styledText)
+void GLTextComposer::setStyledText(String const &styledText)
 {
     d->format.clear();
     d->text = d->format.initFromStyledText(styledText);
@@ -224,6 +249,16 @@ void GLTextComposer::setText(String const &text, Font::RichFormat const &format)
     d->text = text;
     d->format = format;
     setState(false);
+}
+
+void GLTextComposer::setRange(Rangei const &visibleLineRange)
+{
+    d->visibleLineRange = visibleLineRange;
+}
+
+Rangei GLTextComposer::range() const
+{
+    return d->visibleLineRange;
 }
 
 bool GLTextComposer::update()
@@ -293,6 +328,8 @@ void GLTextComposer::makeVertices(Vertices &triStrip,
 
     for(int i = 0; i < d->lines.size(); ++i)
     {
+        if(!d->isLineVisible(i)) continue;
+
         d->lines[i].segs[0].x = d->wraps->lineInfo(i).indent;
 
         for(int k = 1; k < d->lines[i].segs.size(); ++k)
@@ -359,41 +396,44 @@ void GLTextComposer::makeVertices(Vertices &triStrip,
     for(int i = 0; i < d->wraps->height(); ++i)
     {
         Instance::Line const &line = d->lines[i];
-        FontLineWrapping::LineInfo const &info = d->wraps->lineInfo(i);
 
-        Vector2f linePos = p;
-
-        for(int k = 0; k < info.segs.size(); ++k)
+        if(d->isLineVisible(i))
         {
-            Instance::Line::Segment const &seg = line.segs[k];
+            FontLineWrapping::LineInfo const &info = d->wraps->lineInfo(i);
+            Vector2f linePos = p;
 
-            // Empty lines are skipped.
-            if(seg.id.isNone()) continue;
-
-            Vector2ui size = d->atlas->imageRect(seg.id).size();
-            if(seg.compressed)
+            for(int k = 0; k < info.segs.size(); ++k)
             {
-                size.x = seg.width;
-            }
+                Instance::Line::Segment const &seg = line.segs[k];
 
-            // Line alignment.
-            /// @todo How to center/right-align text that uses tab stops?
-            if(line.segs.size() == 1 && !d->wraps->lineInfo(0).segs[0].tabStop)
-            {
-                if(lineAlign.testFlag(AlignRight))
+                // Empty lines are skipped.
+                if(seg.id.isNone()) continue;
+
+                Vector2ui size = d->atlas->imageRect(seg.id).size();
+                if(seg.compressed)
                 {
-                    linePos.x += int(rect.width()) - int(size.x);
+                    size.x = seg.width;
                 }
-                else if(!lineAlign.testFlag(AlignLeft))
+
+                // Line alignment.
+                /// @todo How to center/right-align text that uses tab stops?
+                if(line.segs.size() == 1 && !d->wraps->lineInfo(0).segs[0].tabStop)
                 {
-                    linePos.x += (int(rect.width()) - int(size.x)) / 2;
+                    if(lineAlign.testFlag(AlignRight))
+                    {
+                        linePos.x += int(rect.width()) - int(size.x);
+                    }
+                    else if(!lineAlign.testFlag(AlignLeft))
+                    {
+                        linePos.x += (int(rect.width()) - int(size.x)) / 2;
+                    }
                 }
+
+                Rectanglef const uv = d->atlas->imageRectf(seg.id);
+
+                triStrip.makeQuad(Rectanglef::fromSize(linePos + Vector2f(seg.x, 0), size),
+                                  color, uv);
             }
-
-            Rectanglef const uv = d->atlas->imageRectf(seg.id);
-
-            triStrip.makeQuad(Rectanglef::fromSize(linePos + Vector2f(seg.x, 0), size),
-                              color, uv);
         }
 
         p.y += d->font->lineSpacing().value();

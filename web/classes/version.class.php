@@ -80,13 +80,13 @@ class Version
             {
                 if($a->patch == $b->patch)
                 {
-                    return $a->revision < $b->revision;
+                    return $a->revision - $b->revision;
                 }
-                return $a->patch < $b->patch;
+                return $a->patch - $b->patch;
             }
-            return $a->minor < $b->minor;
+            return $a->minor - $b->minor;
         }
-        return $a->major < $b->major;
+        return $a->major - $b->major;
     }
 
     /**

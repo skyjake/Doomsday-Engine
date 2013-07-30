@@ -283,6 +283,12 @@ GLState::GLState() : d(new Instance(this))
 GLState::GLState(GLState const &other) : d(new Instance(this, *other.d))
 {}
 
+GLState &GLState::operator = (GLState const &other)
+{
+    d.reset(new Instance(this, *other.d));
+    return *this;
+}
+
 GLState &GLState::setCull(gl::Cull mode)
 {
     d->props.set(CullMode, duint(mode));

@@ -748,6 +748,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         {
             $matchTitle = (boolean)(strlen($title) > 0);
 
+            $found = 0;
             foreach($this->packages as &$pack)
             {
                 if($pack->platformId() !== $platformId) continue;
@@ -756,8 +757,11 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
                 if($downloadable != ($pack instanceof iDownloadable && ($pack->hasDirectDownloadUri() || $pack->hasDirectDownloadFallbackUri()))) continue;
 
                 // Found something suitable.
-                return $pack;
+                if(!$found || Version::compare($pack->version(), $found->version()) > 0)
+                    $found = $pack;
             }
+
+            if($found) return $found;
         }
 
         // Nothing suitable.
@@ -1118,19 +1122,16 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
 
         $releaseTypeLabel = $releaseType['nicename'];
         $releaseTypeLink = 'dew/index.php?title=Automated_build_system#'. $releaseTypeLabel;
-        $releaseTypeLinkTitle = "What does '$releaseTypeLabel' mean?";
 
         $buildNumberLabel = $build->uniqueId();
         $buildNumberLink = 'dew/index.php?title=Build_number#Build_numbers';
-        $buildNumberLinkTitle = "What does 'Build$buildNumberLabel' mean?";
 
 ?><table id="buildeventmetadata">
-<tbody>
-<tr><th colspan="2">Event</th></tr>
-<tr><td>Start date </td><td><?php echo htmlspecialchars(date(/*DATE_RFC850*/ "d-M-Y", $build->startDate())); ?></td></tr>
-<tr><td>Start time </td><td><?php echo htmlspecialchars(date(/*DATE_RFC850*/ "H:i:s T", $build->startDate())); ?></td></tr>
-<tr><td>Release type </td><td><a class="link-definition" href="<?php echo $releaseTypeLink; ?>" title="<?php echo htmlspecialchars($releaseTypeLinkTitle); ?>"><?php echo htmlspecialchars($releaseTypeLabel); ?></a></td></tr>
-<tr><td>Build number </td><td><a class="link-definition" href="<?php echo $buildNumberLink; ?>" title="<?php echo htmlspecialchars($buildNumberLinkTitle); ?>"><?php echo htmlspecialchars(ucfirst($buildNumberLabel)); ?></a></td></tr><?php
+<thead><tr><th colspan="2">Event</th></tr></thead>
+<tbody><tr><td>Start date </td><td><?php echo htmlspecialchars(date(/*DATE_RFC850*/ "d-M-Y", $build->startDate())); ?></td></tr>
+<tr><td>Start time </td><td><?php echo htmlspecialchars(date(/*DATE_RFC850*/ "H:i:s", $build->startDate()/*EEST*/)); ?></td></tr>
+<tr><td>Release type </td><td><a class="link-definition" href="<?php echo $releaseTypeLink; ?>"><?php echo htmlspecialchars($releaseTypeLabel); ?></a></td></tr>
+<tr><td>Build number </td><td><a class="link-definition" href="<?php echo $buildNumberLink; ?>"><?php echo htmlspecialchars(ucfirst($buildNumberLabel)); ?></a></td></tr><?php
 
         $installablesCount = $this->countInstallablePackages($build);
         if($installablesCount > 0)
@@ -1148,7 +1149,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         if(!$build instanceof BuildEvent) return;
 
         // Use a table.
-?><table><tbody><tr><th>OS</th><th>Package</th><th>Logs</th><th>Issues</th></tr><?php
+?><table><thead><tr><th><abbr title="Operating system">OS</abbr></th><th>Package</th><th>Logs</th><th>Issues</th></tr></thead><tbody><?php
 
         $packs = $build->packages;
         uasort($packs, array('self', 'packageSorter'));
@@ -1235,7 +1236,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
             $lastPlatId = $pack->platformId();
         }
 
-?></table><?php
+?></tbody></table><?php
     }
 
     private function outputBuildCommitLog(&$build)
@@ -1556,20 +1557,22 @@ jQuery(document).ready(function() {
 
 ?></section></div><?php
 
-?><div class="block buildevents"><table><thead><tr><th></th><th><?php
+?><div class="block buildevents"><table><thead><tr><th colspan="2"><?php
 
 ?>Version<?php
 
-?></th><th><a href="dew/index.php?title=Roadmap" title="Read the Roadmap at the Wiki">Roadmap</a></th></tr></thead><?php
+?></th></tr></thead><?php
 
 ?><tbody><tr><td><?php
 
+        $this->includeEventMatrix();
+
+?></td><td style="padding-left:.6em"><?php
+
+?><div class="release-badge"><a href="dew/index.php?title=Roadmap" title="Read the Roadmap at the Wiki">Roadmap</a></div><?php
+
         // Output stream info
         includeHTML('streaminfo', self::$name);
-
-?></td><td><?php
-
-        $this->includeEventMatrix();
 
 ?></td></tr></tbody></table></div><?php
 
