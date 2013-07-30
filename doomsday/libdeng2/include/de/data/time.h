@@ -142,7 +142,7 @@ public:
     /**
      * Construct a time relative to the shared high performance timer.
      *
-     * @param delta Elapsed time since the high performance timer was started.
+     * @param highPerformanceDelta Elapsed time since the high performance timer was started.
      */
     Time(Delta const &highPerformanceDelta);
 
