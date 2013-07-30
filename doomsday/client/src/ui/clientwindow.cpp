@@ -152,6 +152,7 @@ public IGameChangeObserver
         QFile file("/Users/jaakko/Projects/deng/doomsday/client/src/ui/widgets/documentwidget.cpp");
         file.open(QFile::ReadOnly);
         doc->setText(QString::fromUtf8(file.readAll()));
+        doc->setFont("monospace");
         //doc->setWidthPolicy(ui::Fixed);
         doc->set(GuiWidget::Background(Vector4f(0, 0, 1, .5f)));
         doc->rule()

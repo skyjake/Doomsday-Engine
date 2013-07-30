@@ -64,6 +64,8 @@ DENG2_OBSERVES(Atlas, Reposition)
     void updateStyle()
     {
         wraps.setFont(self.font());
+        wraps.clear();
+        self.requestGeometry();
     }
 
     void glInit()
@@ -266,6 +268,12 @@ void DocumentWidget::glDeinit()
 void DocumentWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
 {
     ScrollAreaWidget::glMakeGeometry(verts);
+
     glMakeScrollIndicatorGeometry(verts, Vector2f(rule().left().value() + margin().value(),
-                                                  rule().top().value() + margin().value()));
+                                                  rule().top().value()  + margin().value()));
+}
+
+void DocumentWidget::updateStyle()
+{
+    d->updateStyle();
 }
