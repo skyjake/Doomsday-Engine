@@ -800,11 +800,11 @@ cvartype_t Con_GetVariableType(char const* path)
     return var->type;
 }
 
-void Con_PrintCVar(cvar_t* var, char const *prefix)
+de::String Con_VarAsStyledText(cvar_t *var, char const *prefix)
 {
     DENG_ASSERT(inited);
 
-    if(!var) return;
+    if(!var) return "";
 
     char equals = '=';
     if((var->flags & CVF_PROTECTED) || (var->flags & CVF_READ_ONLY))
@@ -833,7 +833,12 @@ void Con_PrintCVar(cvar_t* var, char const *prefix)
         DENG_ASSERT(false);
         break;
     }
-    LOG_MSG("%s") << str;
+    return str;
+}
+
+void Con_PrintCVar(cvar_t* var, char const *prefix)
+{
+    LOG_MSG("%s") << Con_VarAsStyledText(var, prefix);
 }
 
 void Con_AddCommand(ccmdtemplate_t const* ccmd)
@@ -1572,49 +1577,70 @@ D_CMD(HelpWhat)
     return true;
 }
 
-static int printKnownWordWorker(knownword_t const* word, void* parameters)
+de::String Con_CmdAsStyledText(ccmd_t *cmd)
+{
+    char const *str;
+    if((str = DH_GetString(DH_Find(cmd->name), HST_DESCRIPTION)))
+    {
+        return de::String(_E(b)) + cmd->name + " " _E(>) _E(2) + str;
+    }
+    else
+    {
+        return de::String(_E(b)) + cmd->name;
+    }
+}
+
+de::String Con_AliasAsStyledText(calias_t *alias)
+{
+    QString str;
+    QTextStream os(&str);
+
+    os << _E(b) << alias->name << _E(.) " == " _E(>) << alias->command;
+
+    return str;
+}
+
+de::String Con_GameAsStyledText(de::Game *game)
+{
+    return de::String(_E(1)) + Str_Text(game->identityKey()) + _E(.);
+}
+
+static int printKnownWordWorker(knownword_t const *word, void *parameters)
 {
     DENG_ASSERT(word);
-    uint* numPrinted = (uint*)parameters;
+    uint *numPrinted = (uint *) parameters;
 
     switch(word->type)
     {
     case WT_CCMD: {
         ccmd_t *ccmd = (ccmd_t *) word->data;
-        char const *str;
-
         if(ccmd->prevOverload)
+        {
             return 0; // Skip overloaded variants.
-
-        if((str = DH_GetString(DH_Find(ccmd->name), HST_DESCRIPTION)))
-            LOG_MSG(_E(b) "%s " _E(>) _E(2) "%s")
-                    << ccmd->name << str;
-        else
-            LOG_MSG(_E(b) "%s") << ccmd->name;
+        }
+        LOG_MSG("%s") << Con_CmdAsStyledText(ccmd);
         break; }
 
     case WT_CVAR: {
-        cvar_t* cvar = (cvar_t*) word->data;
-
+        cvar_t *cvar = (cvar_t *) word->data;
         if(cvar->flags & CVF_HIDE)
+        {
             return 0; // Skip hidden variables.
-
+        }
         Con_PrintCVar(cvar, "");
         break; }
 
-    case WT_CALIAS: {
-        calias_t* cal = (calias_t*) word->data;
-        LOG_MSG(_E(b) "%s" _E(.) " == " _E(>) "%s") << cal->name << cal->command;
-        break; }
+    case WT_CALIAS:
+        LOG_MSG("%s") << Con_AliasAsStyledText((calias_t *) word->data);
+        break;
 
-    case WT_GAME: {
-        de::Game* game = (de::Game*) word->data;
-        LOG_MSG(_E(1) "%s") << Str_Text(game->identityKey());
-        break; }
+    case WT_GAME:
+        LOG_MSG("%s") << Con_GameAsStyledText((de::Game *) word->data);
+        break;
 
     default:
-        Con_Error("printKnownWordWorker: Invalid word type %i.", (int)word->type);
-        exit(1); // Unreachable.
+        DENG_ASSERT(false);
+        break;
     }
 
     if(numPrinted) ++(*numPrinted);
