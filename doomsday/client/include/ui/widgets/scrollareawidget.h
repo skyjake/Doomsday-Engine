@@ -62,6 +62,8 @@ public:
     de::Rule const &maximumScrollX() const;
     de::Rule const &maximumScrollY() const;
 
+    bool isScrolling() const;
+
     de::Rectanglei viewport() const;
     de::Vector2i viewportSize() const;
 
@@ -110,7 +112,8 @@ public:
      */
     void enablePageKeys(bool enabled);
 
-    void glMakeScrollIndicatorGeometry(DefaultVertexBuf::Builder &verts);
+    void glMakeScrollIndicatorGeometry(DefaultVertexBuf::Builder &verts,
+                                       de::Vector2f const &origin = de::Vector2f(0, 0));
 
     // Events.
     void update();

@@ -46,6 +46,7 @@ DENG2_PIMPL(ScrollAreaWidget), public Lockable
     Animation scrollOpacity;
     int scrollBarWidth;
     Rectanglef indicatorUv;
+    bool indicatorAnimating;
     ColorBank::Colorf accent;
 
     Rule const *margin;
@@ -57,6 +58,7 @@ DENG2_PIMPL(ScrollAreaWidget), public Lockable
           pageKeysEnabled(true),
           scrollOpacity(0),
           scrollBarWidth(0),
+          indicatorAnimating(false),
           margin(0),
           vertMargin(0)
     {
@@ -94,6 +96,7 @@ DENG2_PIMPL(ScrollAreaWidget), public Lockable
 
     void restartScrollOpacityFade()
     {
+        indicatorAnimating = true;
         if(origin == Bottom && self.isAtBottom())
         {
             scrollOpacity.setValue(0, .7f, .2f);
@@ -236,6 +239,11 @@ Rule const &ScrollAreaWidget::maximumScrollX() const
 Rule const &ScrollAreaWidget::maximumScrollY() const
 {
     return *d->maxY;
+}
+
+bool ScrollAreaWidget::isScrolling() const
+{
+    return !d->x->animation().done() || !d->y->animation().done();
 }
 
 Rectanglei ScrollAreaWidget::viewport() const
@@ -416,7 +424,8 @@ void ScrollAreaWidget::scrollToRight(TimeDelta span)
     scrollX(maximumScrollX().valuei(), span);
 }
 
-void ScrollAreaWidget::glMakeScrollIndicatorGeometry(DefaultVertexBuf::Builder &verts)
+void ScrollAreaWidget::glMakeScrollIndicatorGeometry(DefaultVertexBuf::Builder &verts,
+                                                     Vector2f const &origin)
 {
     // Draw the scroll indicator.
     if(d->scrollOpacity <= 0) return;
@@ -428,13 +437,16 @@ void ScrollAreaWidget::glMakeScrollIndicatorGeometry(DefaultVertexBuf::Builder &
                 d->vertMargin->valuei() * 2,
                 int(float(viewSize.y * viewSize.y) / float(d->contentRule.height().value())),
                 viewSize.y / 2);
-    float const indPos = scrollPositionY().value() / maximumScrollY().value();
+
+    float indPos = scrollPositionY().value() / maximumScrollY().value();
+    if(d->origin == Top) indPos = 1 - indPos;
+
     float const avail = viewSize.y - indHeight;
 
-    verts.makeQuad(Rectanglef(Vector2f(viewSize.x + d->margin->value() - 2 * d->scrollBarWidth,
-                                       avail - indPos * avail + indHeight),
-                              Vector2f(viewSize.x + d->margin->value() - d->scrollBarWidth,
-                                       avail - indPos * avail)),
+    verts.makeQuad(Rectanglef(origin + Vector2f(viewSize.x + d->margin->value() - 2 * d->scrollBarWidth,
+                                                avail - indPos * avail + indHeight),
+                              origin + Vector2f(viewSize.x + d->margin->value() - d->scrollBarWidth,
+                                                avail - indPos * avail)),
                    Vector4f(1, 1, 1, d->scrollOpacity) * d->accent,
                    d->indicatorUv);
 }
@@ -442,6 +454,15 @@ void ScrollAreaWidget::glMakeScrollIndicatorGeometry(DefaultVertexBuf::Builder &
 void ScrollAreaWidget::update()
 {
     GuiWidget::update();
+
+    if(d->indicatorAnimating)
+    {
+        requestGeometry();
+    }
+    if(d->scrollOpacity.done())
+    {
+        d->indicatorAnimating = false;
+    }
 
     // Clamp the scroll position.
     if(d->x->value() > d->maxX->value())
