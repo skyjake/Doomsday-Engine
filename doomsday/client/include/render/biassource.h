@@ -41,6 +41,11 @@ class BiasSource : public Grabbable, public de::ISerializable
 {
 public:
     /*
+     * Notified when the bias source is about to be deleted.
+     */
+    DENG2_DEFINE_AUDIENCE(Deletion, void biasSourceBeingDeleted(BiasSource const &biasSource))
+
+    /*
      * Notified when the bias source intensity changes.
      */
     DENG2_DEFINE_AUDIENCE(IntensityChange,
@@ -73,6 +78,8 @@ public:
      * Construct a bias source by duplicating @a other.
      */
     BiasSource(BiasSource const &other);
+
+    ~BiasSource();
 
     /**
      * Construct a bias source initialized from a legacy light definition.

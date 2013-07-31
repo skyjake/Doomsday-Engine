@@ -158,6 +158,11 @@ BiasSource BiasSource::fromDef(ded_light_t const &def) //static
                       def.lightLevel[0], def.lightLevel[1]);
 }
 
+BiasSource::~BiasSource()
+{
+    DENG2_FOR_AUDIENCE(Deletion, i) i->biasSourceBeingDeleted(*this);
+}
+
 Vector3d const &BiasSource::origin() const
 {
     return d->origin;

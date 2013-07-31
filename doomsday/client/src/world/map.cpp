@@ -1374,37 +1374,6 @@ void Map::initBias()
         addBiasSource(BiasSource::fromDef(*def));
     }
 
-    /*
-     * Assign a bias surface for each surface.
-     */
-    /*size_t numVertIllums = 0;
-
-    // First, determine the total number of vertexillum_ts we need.
-    foreach(Segment *segment, d->segments)
-    {
-        if(segment->hasLineSide())
-            numVertIllums++;
-    }
-
-    numVertIllums *= 3 * 4;
-
-    foreach(Sector *sector, d->sectors)
-    foreach(BspLeaf *bspLeaf, sector->bspLeafs())
-    {
-        if(bspLeaf->isDegenerate()) continue;
-
-        numVertIllums += bspLeaf->numFanVertices() * sector->planeCount();
-    }
-
-    foreach(Polyobj *polyobj, d->polyobjs)
-    {
-        numVertIllums += polyobj->lineCount() * 3 * 4;
-    }
-
-    // Allocate and initialize the vertexillum_ts.
-    VertexIllum *illums = (VertexIllum *) Z_Calloc(sizeof(*illums) * numVertIllums, PU_MAP, 0);
-    */
-
     LOG_INFO(String("Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 }
 
