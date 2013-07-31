@@ -1349,11 +1349,17 @@ static int annotateMatchedWordCallback(knownword_t const *match, void *parameter
     switch(match->type)
     {
     case WT_CVAR:
-        found = Con_VarAsStyledText((cvar_t *) match->data, "");
+        if(!(((cvar_t *)match->data)->flags & CVF_HIDE))
+        {
+            found = Con_VarAsStyledText((cvar_t *) match->data, "");
+        }
         break;
 
     case WT_CCMD:
-        found = Con_CmdAsStyledText((ccmd_t *) match->data);
+        if(!((ccmd_t *)match->data)->prevOverload)
+        {
+            found = Con_CmdAsStyledText((ccmd_t *) match->data);
+        }
         break;
 
     case WT_CALIAS:
@@ -1382,7 +1388,8 @@ de::String Con_AnnotatedConsoleTerms(QStringList terms)
     de::String result;
     foreach(QString term, terms)
     {
-        Con_IterateKnownWords(term.toUtf8(), WT_ANY, annotateMatchedWordCallback, &result);
+        Con_IterateKnownWords(KnownWordExactMatch, term.toUtf8(), WT_ANY,
+                              annotateMatchedWordCallback, &result);
     }
     return result;
 }

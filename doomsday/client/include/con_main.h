@@ -323,6 +323,16 @@ void Con_AbnormalShutdown(const char* error);
 int Con_IterateKnownWords(const char* pattern, knownwordtype_t type,
     int (*callback)(const knownword_t* word, void* parameters), void* parameters);
 
+enum KnownWordMatchMode {
+    KnownWordExactMatch, // case insensitive
+    KnownWordStartsWith  // case insensitive
+};
+
+int Con_IterateKnownWords(KnownWordMatchMode matchMode,
+                          const char* pattern, knownwordtype_t type,
+                          int (*callback)(const knownword_t* word, void* parameters),
+                          void* parameters);
+
 /**
  * Collect an array of knownWords which match the given word (at least
  * partially).

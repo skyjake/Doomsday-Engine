@@ -833,6 +833,7 @@ de::String Con_VarAsStyledText(cvar_t *var, char const *prefix)
         DENG_ASSERT(false);
         break;
     }
+    os << _E(<);
     return str;
 }
 
@@ -1309,8 +1310,17 @@ AutoStr *Con_KnownWordToString(knownword_t const *word)
     return textForKnownWord(word);
 }
 
-int Con_IterateKnownWords(char const* pattern, knownwordtype_t type,
-    int (*callback) (knownword_t const* word, void* parameters), void* parameters)
+int Con_IterateKnownWords(char const *pattern, knownwordtype_t type,
+                          int (*callback)(knownword_t const *word, void *parameters),
+                          void *parameters)
+{
+    return Con_IterateKnownWords(KnownWordStartsWith, pattern, type, callback, parameters);
+}
+
+int Con_IterateKnownWords(KnownWordMatchMode matchMode,
+                          char const* pattern, knownwordtype_t type,
+                          int (*callback)(knownword_t const* word, void* parameters),
+                          void* parameters)
 {
     DENG_ASSERT(inited && callback);
 
@@ -1327,11 +1337,17 @@ int Con_IterateKnownWords(char const* pattern, knownwordtype_t type,
 
         if(patternLength)
         {
-            int compareResult;
             AutoStr* textString = textForKnownWord(word);
-            compareResult = strnicmp(Str_Text(textString), pattern, patternLength);
-
-            if(compareResult) continue; // Didn't match.
+            if(matchMode == KnownWordStartsWith)
+            {
+                if(strnicmp(Str_Text(textString), pattern, patternLength))
+                    continue; // Didn't match.
+            }
+            else if(matchMode == KnownWordExactMatch)
+            {
+                if(strcasecmp(Str_Text(textString), pattern))
+                    continue; // Didn't match.
+            }
         }
 
         result = callback(word, parameters);
@@ -1582,11 +1598,11 @@ de::String Con_CmdAsStyledText(ccmd_t *cmd)
     char const *str;
     if((str = DH_GetString(DH_Find(cmd->name), HST_DESCRIPTION)))
     {
-        return de::String(_E(b)) + cmd->name + " " _E(>) _E(2) + str;
+        return de::String(_E(b) "%1 " _E(>) _E(2) "%2" _E(.) _E(<)).arg(cmd->name).arg(str);
     }
     else
     {
-        return de::String(_E(b)) + cmd->name;
+        return de::String(_E(b) "%1" _E(.)).arg(cmd->name);
     }
 }
 
@@ -1595,7 +1611,7 @@ de::String Con_AliasAsStyledText(calias_t *alias)
     QString str;
     QTextStream os(&str);
 
-    os << _E(b) << alias->name << _E(.) " == " _E(>) << alias->command;
+    os << _E(b) << alias->name << _E(.) " == " _E(>) << alias->command << _E(<);
 
     return str;
 }
