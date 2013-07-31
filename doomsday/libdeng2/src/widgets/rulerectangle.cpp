@@ -305,33 +305,45 @@ public DelegateRule::ISource
         switch(id)
         {
         case OutLeft:
-            outputRules[OutRight]->invalidate();
-            outputRules[OutWidth]->invalidate();
+            if(outputRules[OutRight]->isValid())
+                outputRules[OutRight]->invalidate();
+            if(outputRules[OutWidth]->isValid())
+                outputRules[OutWidth]->invalidate();
             break;
 
         case OutRight:
-            outputRules[OutLeft]->invalidate();
-            outputRules[OutWidth]->invalidate();
+            if(outputRules[OutLeft]->isValid())
+                outputRules[OutLeft]->invalidate();
+            if(outputRules[OutWidth]->isValid())
+                outputRules[OutWidth]->invalidate();
             break;
 
         case OutWidth:
-            outputRules[OutLeft]->invalidate();
-            outputRules[OutRight]->invalidate();
+            if(outputRules[OutLeft]->isValid())
+                outputRules[OutLeft]->invalidate();
+            if(outputRules[OutRight]->isValid())
+                outputRules[OutRight]->invalidate();
             break;
 
         case OutTop:
-            outputRules[OutBottom]->invalidate();
-            outputRules[OutHeight]->invalidate();
+            if(outputRules[OutBottom]->isValid())
+                outputRules[OutBottom]->invalidate();
+            if(outputRules[OutHeight]->isValid())
+                outputRules[OutHeight]->invalidate();
             break;
 
         case OutBottom:
-            outputRules[OutTop]->invalidate();
-            outputRules[OutHeight]->invalidate();
+            if(outputRules[OutTop]->isValid())
+                outputRules[OutTop]->invalidate();
+            if(outputRules[OutHeight]->isValid())
+                outputRules[OutHeight]->invalidate();
             break;
 
         case OutHeight:
-            outputRules[OutTop]->invalidate();
-            outputRules[OutBottom]->invalidate();
+            if(outputRules[OutTop]->isValid())
+                outputRules[OutTop]->invalidate();
+            if(outputRules[OutBottom]->isValid())
+                outputRules[OutBottom]->invalidate();
             break;
         }
     }
