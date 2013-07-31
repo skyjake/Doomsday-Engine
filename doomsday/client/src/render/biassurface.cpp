@@ -207,10 +207,10 @@ DENG2_OBSERVES(BiasSource, Deletion)
                 if(!(changedContributions & (1 << i)))
                     continue;
 
-                // Remember the earliest time an affecting source changed.
+                // Determine the earliest time an affecting source changed.
                 if(!ctbr->source && !activeContributors)
                 {
-                    // The source of the contribution was deleted.
+                    // The source of the last(!) contribution was deleted.
                     if(latestSourceUpdate < lastSourceDeletion)
                         latestSourceUpdate = lastSourceDeletion;
                 }
@@ -358,45 +358,58 @@ void BiasSurface::addAffected(float intensity, BiasSource *source)
     if(intensity < MIN_INTENSITY)
         return;
 
-    // Do we have a latent contribution, or a spare slot?
-    int weakest = -1;
-    int slot = 0;
+    int firstUnusedSlot = -1;
+    int slot = -1;
+
+    // Do we have a latent contribution or an unused slot?
     Contributor *ctbr = d->affected;
-    for(; slot < MAX_AFFECTED; ++slot, ctbr++)
+    for(int i = 0; i < MAX_AFFECTED; ++i, ctbr++)
     {
         if(!ctbr->source)
-            continue;
-
-        // A latent contribution?
-        if(ctbr->source == source)
-            break;
-
-        // Remember the weakest.
-        if(weakest < 0 || ctbr->influence < d->affected[weakest].influence)
         {
-            weakest = slot;
+            // Remember the first unused slot.
+            if(firstUnusedSlot == -1)
+                firstUnusedSlot = i;
+        }
+        // A latent contribution?
+        else if(ctbr->source == source)
+        {
+            slot = i;
+            break;
         }
     }
 
-    if(slot == MAX_AFFECTED)
+    if(slot == -1)
     {
-        if(weakest == -1)
+        if(firstUnusedSlot != -1)
         {
-            slot = 0;
+            slot = firstUnusedSlot;
         }
         else
         {
-            // No -- drop the weakest.
+            // Dang, we'll need to drop the weakest.
+            int weakest = -1;
+            Contributor *ctbr = d->affected;
+            for(int i = 0; i < MAX_AFFECTED; ++i, ctbr++)
+            {
+                DENG_ASSERT(ctbr->source != 0);
+                if(i == 0 || ctbr->influence < d->affected[weakest].influence)
+                {
+                    weakest = i;
+                }
+            }
+
             if(intensity <= d->affected[weakest].influence)
                 return;
-            slot = weakest;
-        }
 
-        ctbr = &d->affected[slot];
-        if(ctbr->source)
+            slot = weakest;
             ctbr->source->audienceForDeletion -= d;
-        ctbr->source = 0;
+            ctbr->source = 0;
+        }
     }
+
+    DENG_ASSERT(slot >= 0 && slot < MAX_AFFECTED);
+    ctbr = &d->affected[slot];
 
     // When reactivating latent contributions if the intensity
     // has not changed we don't need to force an update.
