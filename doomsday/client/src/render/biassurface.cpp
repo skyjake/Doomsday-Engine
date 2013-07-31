@@ -38,7 +38,7 @@ using namespace de;
 static float const MIN_INTENSITY = .005f;
 
 /// Maximum number of sources which can contribute light to a vertex.
-static int const MAX_AFFECTED = 6;
+static int const MAX_CONTRIBUTORS = 6;
 
 static int lightSpeed        = 130;  //cvar
 static int devUpdateAffected = true; //cvar
@@ -50,7 +50,7 @@ struct Contributor
     float influence;
 };
 
-typedef Contributor Contributors[MAX_AFFECTED];
+typedef Contributor Contributors[MAX_CONTRIBUTORS];
 
 /**
  * evalLighting uses these -- they must be set before it is called.
@@ -74,10 +74,10 @@ DENG2_OBSERVES(BiasSource, Deletion)
         bool interpolating;  ///< Set to @c true during interpolation.
 
         /**
-         * Light contributions from each source affecting the vertex. The order of
-         * which being the same as that in the affected surface.
+         * Light contributions from each source affecting the vertex. The order
+         * of which being the same as that in the affected surface.
          */
-        Vector3f casted[MAX_AFFECTED];
+        Vector3f casted[MAX_CONTRIBUTORS];
 
         VertexIllum() : updateTime(0), interpolating(false)
         {}
@@ -114,7 +114,7 @@ DENG2_OBSERVES(BiasSource, Deletion)
          */
         Vector3f &contribution(int contributorIndex)
         {
-            DENG_ASSERT(contributorIndex >= 0 && contributorIndex < MAX_AFFECTED);
+            DENG_ASSERT(contributorIndex >= 0 && contributorIndex < MAX_CONTRIBUTORS);
             return casted[contributorIndex];
         }
 
@@ -167,7 +167,7 @@ DENG2_OBSERVES(BiasSource, Deletion)
     };
     QVector<VertexIllum> illums; /// @todo use std::vector instead?
 
-    Contributors affected;
+    Contributors contributors;
     byte activeContributors;
     byte changedContributions;
 
@@ -181,7 +181,7 @@ DENG2_OBSERVES(BiasSource, Deletion)
           lastUpdateOnFrame(0),
           lastSourceDeletion(0)
     {
-        zap(affected);
+        zap(contributors);
     }
 
     /**
@@ -201,8 +201,8 @@ DENG2_OBSERVES(BiasSource, Deletion)
         {
             uint latestSourceUpdate = 0;
 
-            Contributor *ctbr = affected;
-            for(int i = 0; i < MAX_AFFECTED; ++i, ctbr++)
+            Contributor *ctbr = contributors;
+            for(int i = 0; i < MAX_CONTRIBUTORS; ++i, ctbr++)
             {
                 if(!(changedContributions & (1 << i)))
                     continue;
@@ -227,8 +227,8 @@ DENG2_OBSERVES(BiasSource, Deletion)
                  * We can reuse the previously calculated value for a source
                  * if it hasn't changed.
                  */
-                ctbr = affected;
-                for(int i = 0; i < MAX_AFFECTED; ++i, ctbr++)
+                ctbr = contributors;
+                for(int i = 0; i < MAX_CONTRIBUTORS; ++i, ctbr++)
                 {
                     if(activeContributors & changedContributions & (1 << i))
                     {
@@ -244,8 +244,8 @@ DENG2_OBSERVES(BiasSource, Deletion)
             // Do we need to accumulate light contributions?
             if(activeContributors)
             {
-                ctbr = affected;
-                for(int i = 0; i < MAX_AFFECTED; ++i, ctbr++)
+                ctbr = contributors;
+                for(int i = 0; i < MAX_CONTRIBUTORS; ++i, ctbr++)
                 {
                     if(activeContributors & (1 << i))
                     {
@@ -303,8 +303,8 @@ DENG2_OBSERVES(BiasSource, Deletion)
     /// Observes BiasSource Deletion
     void biasSourceBeingDeleted(BiasSource const &source)
     {
-        Contributor *ctbr = affected;
-        for(int i = 0; i < MAX_AFFECTED; ++i, ctbr++)
+        Contributor *ctbr = contributors;
+        for(int i = 0; i < MAX_CONTRIBUTORS; ++i, ctbr++)
         {
             if(ctbr->source == &source)
             {
@@ -362,8 +362,8 @@ void BiasSurface::addAffected(float intensity, BiasSource *source)
     int slot = -1;
 
     // Do we have a latent contribution or an unused slot?
-    Contributor *ctbr = d->affected;
-    for(int i = 0; i < MAX_AFFECTED; ++i, ctbr++)
+    Contributor *ctbr = d->contributors;
+    for(int i = 0; i < MAX_CONTRIBUTORS; ++i, ctbr++)
     {
         if(!ctbr->source)
         {
@@ -389,17 +389,17 @@ void BiasSurface::addAffected(float intensity, BiasSource *source)
         {
             // Dang, we'll need to drop the weakest.
             int weakest = -1;
-            Contributor *ctbr = d->affected;
-            for(int i = 0; i < MAX_AFFECTED; ++i, ctbr++)
+            Contributor *ctbr = d->contributors;
+            for(int i = 0; i < MAX_CONTRIBUTORS; ++i, ctbr++)
             {
                 DENG_ASSERT(ctbr->source != 0);
-                if(i == 0 || ctbr->influence < d->affected[weakest].influence)
+                if(i == 0 || ctbr->influence < d->contributors[weakest].influence)
                 {
                     weakest = i;
                 }
             }
 
-            if(intensity <= d->affected[weakest].influence)
+            if(intensity <= d->contributors[weakest].influence)
                 return;
 
             slot = weakest;
@@ -408,8 +408,8 @@ void BiasSurface::addAffected(float intensity, BiasSource *source)
         }
     }
 
-    DENG_ASSERT(slot >= 0 && slot < MAX_AFFECTED);
-    ctbr = &d->affected[slot];
+    DENG_ASSERT(slot >= 0 && slot < MAX_CONTRIBUTORS);
+    ctbr = &d->contributors[slot];
 
     // When reactivating a latent contribution if the intensity has not
     // changed we don't need to force an update.
@@ -428,16 +428,18 @@ void BiasSurface::addAffected(float intensity, BiasSource *source)
 
 void BiasSurface::updateAffection(BiasTracker &changes)
 {
-    // Everything that is affected by the changed lights will need an update.
-    Contributor *ctbr = d->affected;
-    for(int i = 0; i < MAX_AFFECTED; ++i, ctbr++)
+    // All contributions from changed sources will need to be updated.
+
+    Contributor *ctbr = d->contributors;
+    for(int i = 0; i < MAX_CONTRIBUTORS; ++i, ctbr++)
     {
         if(!ctbr->source)
             continue;
 
-        /// @todo optimize: This O(n) lookup can be avoided if we 1) reference sources
-        /// by unique in-map index, and 2) re-index source references here upon deletion.
-        /// The assumption being that affection changes occur far more frequently.
+        /// @todo optimize: This O(n) lookup can be avoided if we 1) reference
+        /// sources by unique in-map index, and 2) re-index source references
+        /// here upon deletion. The assumption being that affection changes
+        /// occur far more frequently.
         if(changes.check(App_World().map().toIndex(*ctbr->source)))
         {
             d->changedContributions |= 1 << i;
@@ -448,8 +450,8 @@ void BiasSurface::updateAffection(BiasTracker &changes)
 
 void BiasSurface::updateAfterMove()
 {
-    Contributor *ctbr = d->affected;
-    for(int i = 0; i < MAX_AFFECTED; ++i, ctbr++)
+    Contributor *ctbr = d->contributors;
+    for(int i = 0; i < MAX_CONTRIBUTORS; ++i, ctbr++)
     {
         if(ctbr->source)
         {
@@ -479,6 +481,6 @@ void BiasSurface::lightPoly(Vector3f const &surfaceNormal, int vertCount,
             colors[i].rgba[c] = light[c];
     }
 
-    // Any changes to contributors will have now been applied.
+    // Any changes from contributors will have now been applied.
     d->changedContributions = 0;
 }
