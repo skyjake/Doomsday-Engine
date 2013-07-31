@@ -127,8 +127,8 @@ protected:
     virtual void numberOfLinesChanged(int lineCount) = 0;
     virtual void cursorMoved() = 0;
     virtual void contentChanged() = 0;
-    virtual void autoCompletionBegan() = 0;
-    virtual void autoCompletionEnded(bool accepted) = 0;
+    virtual void autoCompletionBegan();
+    virtual void autoCompletionEnded(bool accepted);
 
     enum LineWrapUpdateBehavior {
         RewrapNow,

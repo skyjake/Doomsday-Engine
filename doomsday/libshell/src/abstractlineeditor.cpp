@@ -609,6 +609,12 @@ ILineWrapping &AbstractLineEditor::lineWraps()
     return *d->wraps;
 }
 
+void AbstractLineEditor::autoCompletionBegan()
+{}
+
+void AbstractLineEditor::autoCompletionEnded(bool /*accepted*/)
+{}
+
 void AbstractLineEditor::updateLineWraps(LineWrapUpdateBehavior behavior)
 {
     if(behavior == WrapUnlessWrappedAlready && !d->wraps->isEmpty())
