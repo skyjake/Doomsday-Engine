@@ -172,12 +172,14 @@ DENG2_OBSERVES(BiasSource, Deletion)
     byte changedContributions;
 
     uint lastUpdateOnFrame;
+    uint lastSourceDeletion; // Milliseconds.
 
     Instance(int size)
         : illums(size),
           activeContributors(0),
           changedContributions(0),
-          lastUpdateOnFrame(0)
+          lastUpdateOnFrame(0),
+          lastSourceDeletion(0)
     {
         zap(affected);
     }
@@ -194,25 +196,25 @@ DENG2_OBSERVES(BiasSource, Deletion)
 
         static Vector3f const saturated(1, 1, 1);
 
-        Map &map = bspRoot->map();
-
-        uint latestSourceUpdate = 0;
-
-        /*
-         * Determine if any affecting sources have changed since last frame.
-         */
+        // Do we have any lighting changes to apply?
         if(changedContributions)
         {
+            uint latestSourceUpdate = 0;
+
             Contributor *ctbr = affected;
             for(int i = 0; i < MAX_AFFECTED; ++i, ctbr++)
             {
-                if(!(activeContributors & (1 << i)) ||
-                   !(changedContributions & (1 << i)))
+                if(!(changedContributions & (1 << i)))
                     continue;
 
                 // Remember the earliest time an affecting source changed.
-                DENG_ASSERT(ctbr->source != 0);
-                if(latestSourceUpdate < ctbr->source->lastUpdateTime())
+                if(!ctbr->source && !activeContributors)
+                {
+                    // The source of the contribution was deleted.
+                    if(latestSourceUpdate < lastSourceDeletion)
+                        latestSourceUpdate = lastSourceDeletion;
+                }
+                else if(latestSourceUpdate < ctbr->source->lastUpdateTime())
                 {
                     latestSourceUpdate = ctbr->source->lastUpdateTime();
                 }
@@ -222,8 +224,8 @@ DENG2_OBSERVES(BiasSource, Deletion)
             {
                 /*
                  * Recalculate the contribution for each light.
-                 * We can reuse the previously calculated value for a source if
-                 * it hasn't changed.
+                 * We can reuse the previously calculated value for a source
+                 * if it hasn't changed.
                  */
                 ctbr = affected;
                 for(int i = 0; i < MAX_AFFECTED; ++i, ctbr++)
@@ -236,11 +238,10 @@ DENG2_OBSERVES(BiasSource, Deletion)
                 }
             }
 
-            Vector3f newColor; // Initial color is black.
+            // Determine the new color (initially, black).
+            Vector3f newColor;
 
-            /*
-             * Accumulate light contributions from each affecting source.
-             */
+            // Do we need to accumulate light contributions?
             if(activeContributors)
             {
                 ctbr = affected;
@@ -266,7 +267,7 @@ DENG2_OBSERVES(BiasSource, Deletion)
                 !de::fequal(vi.dest.y, newColor.y, COLOR_CHANGE_THRESHOLD) ||
                 !de::fequal(vi.dest.z, newColor.z, COLOR_CHANGE_THRESHOLD)))
             {
-                if(vi.interpolating && activeContributors)
+                if(vi.interpolating)
                 {
                     // Must not lose the half-way interpolation.
                     Vector3f mid; vi.lerp(mid, biasTime);
@@ -287,6 +288,7 @@ DENG2_OBSERVES(BiasSource, Deletion)
         vi.lerp(color, biasTime);
 
         // Apply an ambient light term?
+        Map &map = bspRoot->map();
         if(map.hasLightGrid())
         {
             color = (color + map.lightGrid().evaluate(surfacePoint))
@@ -309,6 +311,12 @@ DENG2_OBSERVES(BiasSource, Deletion)
                 ctbr->source = 0;
                 activeContributors &= ~(1 << i);
                 changedContributions |= 1 << i;
+
+                // Remember the current time (used for interpolation).
+                /// @todo Do not assume the 'current' map. A better solution
+                /// would represent source deletion in the per-frame change
+                /// notifications.
+                lastSourceDeletion = App_World().map().biasCurrentTime();
                 break;
             }
         }
