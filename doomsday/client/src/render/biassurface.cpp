@@ -208,9 +208,9 @@ DENG2_OBSERVES(BiasSource, Deletion)
                     continue;
 
                 // Determine the earliest time an affecting source changed.
-                if(!ctbr->source && !activeContributors)
+                if(!ctbr->source && !(activeContributors & (1 << i)))
                 {
-                    // The source of the last(!) contribution was deleted.
+                    // The source of the contribution was deleted.
                     if(latestSourceUpdate < lastSourceDeletion)
                         latestSourceUpdate = lastSourceDeletion;
                 }
@@ -411,8 +411,8 @@ void BiasSurface::addAffected(float intensity, BiasSource *source)
     DENG_ASSERT(slot >= 0 && slot < MAX_AFFECTED);
     ctbr = &d->affected[slot];
 
-    // When reactivating latent contributions if the intensity
-    // has not changed we don't need to force an update.
+    // When reactivating a latent contribution if the intensity has not
+    // changed we don't need to force an update.
     if(!(ctbr->source == source && de::fequal(ctbr->influence, intensity)))
         d->changedContributions |= (1 << slot);
 
@@ -435,6 +435,9 @@ void BiasSurface::updateAffection(BiasTracker &changes)
         if(!ctbr->source)
             continue;
 
+        /// @todo optimize: This O(n) lookup can be avoided if we 1) reference sources
+        /// by unique in-map index, and 2) re-index source references here upon deletion.
+        /// The assumption being that affection changes occur far more frequently.
         if(changes.check(App_World().map().toIndex(*ctbr->source)))
         {
             d->changedContributions |= 1 << i;
