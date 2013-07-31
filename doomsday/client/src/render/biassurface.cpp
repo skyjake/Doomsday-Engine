@@ -56,48 +56,28 @@ typedef Contributor Contributors[MAX_AFFECTED];
  */
 struct VertexIllum
 {
-    /// State flags:
-    enum Flag
-    {
-        /// Interpolation is in progress.
-        Interpolating = 0x1,
-
-        /// Vertex is unseen (color is unknown).
-        Unseen = 0x2
-    };
-    Q_DECLARE_FLAGS(Flags, Flag)
+    Vector3f color;      ///< Current light color at the vertex.
+    Vector3f dest;       ///< Destination light color at the vertex (interpolated to).
+    uint updateTime;     ///< When the value was calculated.
+    bool interpolating;  ///< Set to @c true during interpolation.
 
     /**
-     * Light contribution from affecting sources.
+     * Light contributions from each source affecting the vertex. The order of
+     * which being the same as that in the affected surface.
      */
-    struct Contribution
-    {
-        BiasSource *source; ///< The contributing light source.
-        Vector3f color;  ///< The contributed light intensity.
-    };
+    Vector3f casted[MAX_AFFECTED];
 
-    Vector3f color;  ///< Current light color at the vertex.
-    Vector3f dest;   ///< Destination light color at the vertex (interpolated to).
-    uint updateTime; ///< When the value was calculated.
-    Flags flags;
-    Contribution casted[MAX_AFFECTED];
-
-    VertexIllum() : updateTime(0), flags(Unseen)
-    {
-        for(int i = 0; i < MAX_AFFECTED; ++i)
-        {
-            casted[i].source = 0;
-        }
-    }
+    VertexIllum() : updateTime(0), interpolating(false)
+    {}
 
     /**
      * Interpolate between current and destination.
      */
     void lerp(Vector3f &result, uint currentTime)
     {
-        if(!flags.testFlag(Interpolating))
+        if(!interpolating)
         {
-            // No interpolation necessary -- use the current color.
+            // Use the current color.
             result = color;
             return;
         }
@@ -106,7 +86,7 @@ struct VertexIllum
 
         if(inter > 1)
         {
-            flags &= ~Interpolating;
+            interpolating = false;
             color = dest;
 
             result = color;
@@ -118,57 +98,21 @@ struct VertexIllum
     }
 
     /**
-     * @return Light contribution by the specified source.
+     * @return Light contribution by the specified contributor.
      */
-    Vector3f &contribution(BiasSource *source, Contributors const &contributors)
+    Vector3f &contribution(int contributorIndex)
     {
-        DENG2_ASSERT(source != 0);
-
-        // Do we already have a contribution for this source?
-        for(int i = 0; i < MAX_AFFECTED; ++i)
-        {
-            if(casted[i].source == source)
-                return casted[i].color;
-        }
-
-        // Choose an element not in use by the affectedSources.
-        for(int i = 0; i < MAX_AFFECTED; ++i)
-        {
-            bool inUse = false;
-
-            if(casted[i].source)
-            {
-                for(int k = 0; k < MAX_AFFECTED; ++k)
-                {
-                    Contributor const &ctbr = contributors[k];
-                    if(ctbr.source == casted[i].source)
-                    {
-                        inUse = true;
-                        break;
-                    }
-                }
-            }
-
-            if(!inUse)
-            {
-                // This will do nicely.
-                casted[i].source = source;
-                casted[i].color  = Vector3f();
-
-                return casted[i].color;
-            }
-        }
-
-        // Now how'd that happen?
-        throw Error("VertexIllum::casted", QString("No light emitted by source"));
+        DENG_ASSERT(contributorIndex >= 0 && contributorIndex < MAX_AFFECTED);
+        return casted[contributorIndex];
     }
 
-    void updateContribution(int index, Contributors const &contributors,
+    void updateContribution(int contributorIndex, BiasSource *source,
         Vector3d const &surfacePoint, Vector3f const &surfaceNormal,
         MapElement const &bspRoot)
     {
-        BiasSource *source = contributors[index].source;
-        Vector3f &casted = contribution(source, contributors);
+        DENG_ASSERT(source != 0);
+
+        Vector3f &casted = contribution(contributorIndex);
 
         /// @todo LineSightTest should (optionally) perform this test.
         Sector *sector = &source->bspLeafAtOrigin().sector();
@@ -209,8 +153,6 @@ struct VertexIllum
         casted = source->color() * de::clamp(0.f, strength, 1.f);
     }
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(VertexIllum::Flags)
 
 /**
  * evalLighting uses these -- they must be set before it is called.
@@ -254,61 +196,41 @@ DENG2_PIMPL_NOREF(BiasSurface)
         Map &map = bspRoot->map();
 
         uint latestSourceUpdate = 0;
-        bool illumChanged = false;
-
-        // Lighting must be fully evaluated the first time.
-        if(vi.flags & VertexIllum::Unseen)
-        {
-            illumChanged = true;
-            for(int i = 0; i < MAX_AFFECTED; ++i)
-            {
-                BiasSource *source = vi.casted[i].source;
-                if(!source) continue;
-
-                // Remember the earliest time an affecting source changed.
-                if(latestSourceUpdate < source->lastUpdateTime())
-                {
-                    latestSourceUpdate = source->lastUpdateTime();
-                }
-            }
-            vi.flags &= ~VertexIllum::Unseen;
-        }
 
         /*
          * Determine if any affecting sources have changed since last frame.
          */
-
-        Contributor *ctbr = affected;
-        for(int i = 0; i < MAX_AFFECTED; ++i, ctbr++)
+        if(changedContributors)
         {
-            if(!(activeContributors & (1 << i))) continue;
-
-            if(!(changedContributors & (1 << i))) continue;
-
-            illumChanged = true;
-
-            // Remember the earliest time an affecting source changed.
-            if(latestSourceUpdate < ctbr->source->lastUpdateTime())
+            Contributor *ctbr = affected;
+            for(int i = 0; i < MAX_AFFECTED; ++i, ctbr++)
             {
-                latestSourceUpdate = ctbr->source->lastUpdateTime();
+                if(!(activeContributors & (1 << i)) ||
+                   !(changedContributors & (1 << i)))
+                    continue;
+
+                // Remember the earliest time an affecting source changed.
+                DENG_ASSERT(ctbr->source != 0);
+                if(latestSourceUpdate < ctbr->source->lastUpdateTime())
+                {
+                    latestSourceUpdate = ctbr->source->lastUpdateTime();
+                }
             }
-        }
 
-        if(illumChanged)
-        {
-            /*
-             * Recalculate the contribution for each light.
-             * We can reuse the previously calculated value for a source if
-             * it hasn't changed.
-             */
-            if(changedContributors)
+            if(activeContributors & changedContributors)
             {
-                Contributor *ctbr = affected;
+                /*
+                 * Recalculate the contribution for each light.
+                 * We can reuse the previously calculated value for a source if
+                 * it hasn't changed.
+                 */
+                ctbr = affected;
                 for(int i = 0; i < MAX_AFFECTED; ++i, ctbr++)
                 {
-                    if(changedContributors & (1 << i))
+                    if(activeContributors & changedContributors & (1 << i))
                     {
-                        vi.updateContribution(i, affected, surfacePoint, *mapSurfaceNormal, *bspRoot);
+                        vi.updateContribution(i, ctbr->source, surfacePoint,
+                                              *mapSurfaceNormal, *bspRoot);
                     }
                 }
             }
@@ -320,12 +242,12 @@ DENG2_PIMPL_NOREF(BiasSurface)
              */
             if(activeContributors)
             {
-                Contributor *ctbr = affected;
+                ctbr = affected;
                 for(int i = 0; i < MAX_AFFECTED; ++i, ctbr++)
                 {
                     if(activeContributors & (1 << i))
                     {
-                        newColor += vi.contribution(ctbr->source, affected);
+                        newColor += vi.contribution(i);
 
                         // Stop once fully saturated.
                         if(newColor >= saturated)
@@ -343,7 +265,7 @@ DENG2_PIMPL_NOREF(BiasSurface)
                 !de::fequal(vi.dest.y, newColor.y, COLOR_CHANGE_THRESHOLD) ||
                 !de::fequal(vi.dest.z, newColor.z, COLOR_CHANGE_THRESHOLD)))
             {
-                if((vi.flags & VertexIllum::Interpolating) && activeContributors)
+                if(vi.interpolating && activeContributors)
                 {
                     // Must not lose the half-way interpolation.
                     Vector3f mid; vi.lerp(mid, biasTime);
@@ -353,9 +275,9 @@ DENG2_PIMPL_NOREF(BiasSurface)
                 }
 
                 // This is what we will be interpolating to.
-                vi.dest       = newColor;
-                vi.flags     |= VertexIllum::Interpolating;
-                vi.updateTime = latestSourceUpdate;
+                vi.dest          = newColor;
+                vi.interpolating = true;
+                vi.updateTime    = latestSourceUpdate;
             }
         }
 
@@ -434,19 +356,24 @@ void BiasSurface::addAffected(float intensity, BiasSource *source)
 
         slot = weakest;
         ctbr = &d->affected[slot];
+        ctbr->source = 0;
     }
+
+    // When reactivating latent contributions if the intensity
+    // has not changed we don't need to force an update.
+    if(!(ctbr->source == source && de::fequal(ctbr->influence, intensity)))
+        d->changedContributors |= (1 << slot);
 
     ctbr->source = source;
     ctbr->influence = intensity;
+
+    // (Re)activate this contributor.
     d->activeContributors |= 1 << slot;
 }
 
 void BiasSurface::updateAffection(BiasTracker &changes)
 {
     // Everything that is affected by the changed lights will need an update.
-
-    // Determine whether these changes affect us.
-    bool needApplyChanges = false;
     Contributor *ctbr = d->affected;
     for(int i = 0; i < MAX_AFFECTED; ++i, ctbr++)
     {
@@ -455,18 +382,9 @@ void BiasSurface::updateAffection(BiasTracker &changes)
 
         if(changes.check(App_World().map().toIndex(*ctbr->source)))
         {
-            needApplyChanges = true;
             d->changedContributors |= 1 << i;
             break;
         }
-    }
-
-    if(!needApplyChanges) return;
-
-    // Mark the illumination unseen to force an update.
-    for(int i = 0; i < d->illums.size(); ++i)
-    {
-        d->illums[i].flags |= VertexIllum::Unseen;
     }
 }
 
@@ -500,6 +418,6 @@ void BiasSurface::lightPoly(Vector3f const &surfaceNormal, int vertCount,
             colors[i].rgba[c] = light[c];
     }
 
-    // Any changes to active contributors will have now been applied.
-    d->changedContributors &= ~d->activeContributors;
+    // Any changes to contributors will have now been applied.
+    d->changedContributors = 0;
 }
