@@ -45,7 +45,6 @@ public IGameChangeObserver
 
         // Popup for autocompletions.
         completions = new DocumentWidget;
-        completions->setText("Hello World!");
         completions->setMaximumLineWidth(640);
         completions->rule().setInput(Rule::Height,
                                      OperatorRule::minimum(Const(400),
@@ -53,7 +52,7 @@ public IGameChangeObserver
                                                            completions->margin()));
 
         popup = new PopupWidget;
-        //popup->set(Background(self.style().colors().colorf("inverted.background")));
+        popup->set(Background(self.style().colors().colorf("editor.completion.background")));
         popup->setContent(completions);
         self.add(popup);
     }
@@ -95,6 +94,10 @@ void ConsoleCommandWidget::focusGained()
 void ConsoleCommandWidget::focusLost()
 {
     LineEditWidget::focusLost();
+
+    // Get rid of the autocompletion popup.
+    d->popup->close();
+
     emit lostFocus();
 }
 
@@ -157,12 +160,11 @@ bool ConsoleCommandWidget::handleEvent(Event const &event)
 void ConsoleCommandWidget::autoCompletionBegan()
 {
     // Prepare a list of completions.
-    //qDebug() << Con_AnnotatedConsoleTerms(suggestedCompletions());
+    d->completions->setText(Con_AnnotatedConsoleTerms(suggestedCompletions()));
+    d->completions->scrollToTop(0);
 
-    //d->completions->setText(Con_AnnotatedConsoleTerms(suggestedCompletions()));
-
+    // Note: this is a fixed position, so it will not be updated if the view is resized.
     d->popup->setAnchor(Vector2i(cursorRect().middle().x, rule().top().valuei()));
-
     d->popup->open();
 }
 

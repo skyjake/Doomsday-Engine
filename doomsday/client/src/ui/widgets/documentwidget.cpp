@@ -29,15 +29,26 @@ static int const ID_BACKGROUND = 1; // does not scroll
 static int const ID_TEXT = 2;       // scrolls
 
 DENG2_PIMPL(DocumentWidget),
-DENG2_OBSERVES(Atlas, Reposition)
+DENG2_OBSERVES(Atlas, Reposition),
+public Font::RichFormat::IStyle
 {
     typedef DefaultVertexBuf VertexBuf;
 
+    // Style.
+    ColorBank::Color normalColor;
+    ColorBank::Color highlightColor;
+    ColorBank::Color dimmedColor;
+    ColorBank::Color accentColor;
+    ColorBank::Color dimAccentColor;
+
+    // State.
     ui::SizePolicy widthPolicy;
     int maxLineWidth;
     int oldScrollY;
     String styledText;
     String text;
+
+    // GL objects.
     Font::RichFormat format;
     FontLineWrapping wraps;
     GLTextComposer composer;
@@ -53,6 +64,7 @@ DENG2_OBSERVES(Atlas, Reposition)
           widthPolicy(ui::Expand),
           maxLineWidth(1000),
           oldScrollY(0),
+          format(*this),
           uMvpMatrix      ("uMvpMatrix", GLUniform::Mat4),
           uScrollMvpMatrix("uMvpMatrix", GLUniform::Mat4),
           uColor          ("uColor",     GLUniform::Vec4)
@@ -63,10 +75,100 @@ DENG2_OBSERVES(Atlas, Reposition)
 
     void updateStyle()
     {
+        Style const &st = self.style();
+
+        normalColor    = st.colors().color("document.normal");
+        highlightColor = st.colors().color("document.highlight");
+        dimmedColor    = st.colors().color("document.dimmed");
+        accentColor    = st.colors().color("document.accent");
+        dimAccentColor = st.colors().color("document.dimaccent");
+
         wraps.setFont(self.font());
         wraps.clear();
         composer.forceUpdate();
         self.requestGeometry();
+    }
+
+    Font::RichFormat::IStyle::Color richStyleColor(int index) const
+    {
+        switch(index)
+        {
+        default:
+        case Font::RichFormat::NormalColor:
+            return normalColor;
+
+        case Font::RichFormat::HighlightColor:
+            return highlightColor;
+
+        case Font::RichFormat::DimmedColor:
+            return dimmedColor;
+
+        case Font::RichFormat::AccentColor:
+            return accentColor;
+
+        case Font::RichFormat::DimAccentColor:
+            return dimAccentColor;
+        }
+    }
+
+    void richStyleFormat(int contentStyle,
+                         float &sizeFactor,
+                         Font::RichFormat::Weight &fontWeight,
+                         Font::RichFormat::Style &fontStyle,
+                         int &colorIndex) const
+    {
+        switch(contentStyle)
+        {
+        default:
+        case Font::RichFormat::NormalStyle:
+            sizeFactor = 1.f;
+            fontWeight = Font::RichFormat::OriginalWeight;
+            fontStyle  = Font::RichFormat::OriginalStyle;
+            colorIndex = Font::RichFormat::OriginalColor;
+            break;
+
+        case Font::RichFormat::MajorStyle:
+            sizeFactor = 1.f;
+            fontWeight = Font::RichFormat::Bold;
+            fontStyle  = Font::RichFormat::Regular;
+            colorIndex = Font::RichFormat::HighlightColor;
+            break;
+
+        case Font::RichFormat::MinorStyle:
+            sizeFactor = .8f;
+            fontWeight = Font::RichFormat::Normal;
+            fontStyle  = Font::RichFormat::Regular;
+            colorIndex = Font::RichFormat::DimmedColor;
+            break;
+
+        case Font::RichFormat::MetaStyle:
+            sizeFactor = .9f;
+            fontWeight = Font::RichFormat::Light;
+            fontStyle  = Font::RichFormat::Italic;
+            colorIndex = Font::RichFormat::AccentColor;
+            break;
+
+        case Font::RichFormat::MajorMetaStyle:
+            sizeFactor = .9f;
+            fontWeight = Font::RichFormat::Bold;
+            fontStyle  = Font::RichFormat::Italic;
+            colorIndex = Font::RichFormat::AccentColor;
+            break;
+
+        case Font::RichFormat::MinorMetaStyle:
+            sizeFactor = .8f;
+            fontWeight = Font::RichFormat::Light;
+            fontStyle  = Font::RichFormat::Italic;
+            colorIndex = Font::RichFormat::DimAccentColor;
+            break;
+
+        case Font::RichFormat::AuxMetaStyle:
+            sizeFactor = .8f;
+            fontWeight = Font::RichFormat::Light;
+            fontStyle  = Font::RichFormat::OriginalStyle;
+            colorIndex = Font::RichFormat::DimmedColor;
+            break;
+        }
     }
 
     void glInit()
@@ -128,7 +230,6 @@ DENG2_OBSERVES(Atlas, Reposition)
             if(wraps.isEmpty() || wraps.maximumWidth() != maxLineWidth)
             {
                 wraps.wrapTextToWidth(text, format, maxLineWidth);
-                qDebug() << text << "wrapped width" << wraps.width();
                 self.setContentWidth(wraps.width());
                 self.setContentHeight(wraps.totalHeightInPixels());
             }
@@ -145,7 +246,7 @@ DENG2_OBSERVES(Atlas, Reposition)
 
         // Determine visible range of lines.
         Font const &font = self.font();
-        int contentHeight = self.rule().height().valuei() - 2 * margin;
+        int contentHeight = self.contentHeight();
         int const extraLines = 1;
         int numVisLines = contentHeight / font.lineSpacing().valuei() + 2 * extraLines;
         int firstVisLine = scrollY / font.lineSpacing().valuei() - extraLines + 1;
@@ -164,14 +265,12 @@ DENG2_OBSERVES(Atlas, Reposition)
                 VertexBuf::Builder verts;
                 composer.makeVertices(verts, Vector2i(0, 0), ui::AlignLeft);
                 drawable.buffer<VertexBuf>(ID_TEXT).setVertices(gl::TriangleStrip, verts, gl::Static);
-
-                qDebug() << "text vertices" << verts.size();
             }
         }
 
         uScrollMvpMatrix = self.root().projMatrix2D() *
                 Matrix4f::translate(Vector2f(self.contentRule().left().valuei(),
-                                             self.contentRule().top().valuei() - scrollY));
+                                             self.contentRule().top().valuei()));
 
         // Background and scroll indicator.
         VertexBuf::Builder verts;
@@ -180,6 +279,10 @@ DENG2_OBSERVES(Atlas, Reposition)
                                                               self.isScrolling()? gl::Dynamic : gl::Static);
 
         uMvpMatrix = self.root().projMatrix2D();
+
+        DENG2_ASSERT(drawable.buffer(ID_BACKGROUND).isReady());
+        DENG2_ASSERT(drawable.buffer(ID_TEXT).isReady());
+        DENG2_ASSERT(drawable.isReady());
 
         // Geometry is now up to date.
         self.requestGeometry(false);
@@ -209,7 +312,7 @@ void DocumentWidget::setText(String const &styledText)
     if(styledText != d->styledText)
     {
         d->wraps.clear();
-        d->composer.forceUpdate();
+        d->composer.release();
 
         d->styledText = styledText;
         d->text = d->format.initFromStyledText(styledText);
