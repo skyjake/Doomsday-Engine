@@ -44,10 +44,11 @@ struct Font::RichFormat::Instance
         Style style;
         int colorIndex;
         bool markIndent;
+        bool resetIndent;
         int tabStop;
 
         Format() : sizeFactor(1.f), weight(OriginalWeight),
-            style(OriginalStyle), colorIndex(-1), markIndent(false),
+            style(OriginalStyle), colorIndex(-1), markIndent(false), resetIndent(false),
             tabStop(0) {}
     };
 
@@ -80,15 +81,15 @@ struct Font::RichFormat::Instance
     {}
 
     void handlePlainText(Rangei const &range)
-    {
+    {       
         Rangei plainRange(plainPos, plainPos + range.size());
         plainPos += range.size();
 
         // Append a formatted range using the stack's current format.
         ranges << Instance::FormatRange(plainRange, stack.last());
 
-        // Single range properties.
-        stack.last().markIndent = false;
+        // Properties that span a single range only.
+        stack.last().markIndent = stack.last().resetIndent = false;
     }
 
     void handleEscapeSequence(Rangei const &range)
@@ -119,11 +120,19 @@ struct Font::RichFormat::Instance
                 Format form = stack.takeLast();
                 stack.last().tabStop = form.tabStop; // Retain tab stop.
                 stack.last().markIndent = form.markIndent;
+                //stack.last().resetIndent = form.resetIndent;
             }
             break;
 
         case '>':
             stack.last().markIndent = true;
+            break;
+
+        case '<':
+            stack.last().resetIndent = true;
+
+            // Insert an empty range for reseting the indent.
+            handlePlainText(Rangei(0, 0));
             break;
 
         case '\t':
@@ -213,6 +222,9 @@ void Font::RichFormat::clear()
 {
     d->ranges.clear();
     d->tabs.clear();
+    d->stack.clear();
+    d->stack << Instance::Format();
+    d->plainPos = 0;
 }
 
 void Font::RichFormat::setStyle(IStyle const &style)
@@ -241,17 +253,14 @@ Font::RichFormat Font::RichFormat::fromPlainText(String const &plainText)
 
 String Font::RichFormat::initFromStyledText(String const &styledText)
 {
-    d->tabs.clear();
-    d->stack.clear();
-    d->stack << Instance::Format();
-    d->plainPos = 0;
+    clear();
 
     d->esc.audienceForEscapeSequence += d;
     d->esc.audienceForPlainText += d;
 
     d->esc.parse(styledText);
 
-    /*
+#if 0
     qDebug() << "Styled text:" << styledText;
     qDebug() << "plain:" << d->esc.plainText();
     foreach(Instance::FormatRange const &r, d->ranges)
@@ -262,14 +271,15 @@ String Font::RichFormat::initFromStyledText(String const &styledText)
                  << "weight:" << r.format.weight
                  << "style:" << r.format.style
                  << "color:" << r.format.colorIndex
-                 << "tab:" << r.format.tabStop;
+                 << "tab:" << r.format.tabStop
+                 << "indent (m/r):" << r.format.markIndent << r.format.resetIndent;
     }
     qDebug() << "Tabs:" << d->tabs.size();
     foreach(int i, d->tabs)
     {
         qDebug() << i;
     }
-    */
+#endif
 
     return d->esc.plainText();
 }
@@ -283,18 +293,23 @@ Font::RichFormat Font::RichFormat::subRange(Rangei const &range) const
         Rangei &sr = sub.d->ranges[i].range;
 
         sr -= range.start;
-        if(sr.end < 0 || sr.start >= range.size())
+        if(sr.end < 0 ||
+           (!sr.isEmpty() && sr.start >= range.size()) ||
+           (sr.isEmpty() && sr.start > range.size()))
         {
             // This range is outside the subrange.
             sub.d->ranges.removeAt(i--);
             continue;
         }
-        sr.start = de::max(sr.start, 0);
-        sr.end   = de::min(sr.end, range.size());
-        if(!sr.size())
+        if(!sr.isEmpty())
         {
-            sub.d->ranges.removeAt(i--);
-            continue;
+            sr.start = de::max(sr.start, 0);
+            sr.end   = de::min(sr.end, range.size());
+            if(sr.isEmpty())
+            {
+                sub.d->ranges.removeAt(i--);
+                continue;
+            }
         }
     }
 
@@ -382,6 +397,11 @@ Font::RichFormat::IStyle::Color Font::RichFormat::Iterator::color() const
 bool Font::RichFormat::Iterator::markIndent() const
 {
     return format.d->ranges[index].format.markIndent;
+}
+
+bool Font::RichFormat::Iterator::resetIndent() const
+{
+    return format.d->ranges[index].format.resetIndent;
 }
 
 int Font::RichFormat::Iterator::tabStop() const
@@ -512,6 +532,7 @@ Rectanglei Font::measure(String const &textLine, RichFormat const &format) const
     while(iter.hasNext())
     {
         iter.next();
+        if(iter.range().isEmpty()) continue;
 
         QFontMetrics const metrics = d->alteredMetrics(iter);
 
@@ -547,6 +568,7 @@ int Font::advanceWidth(String const &textLine, RichFormat const &format) const
     while(iter.hasNext())
     {
         iter.next();
+        if(iter.range().isEmpty()) continue;
 
         QFontMetrics const metrics = d->alteredMetrics(iter);
         advance += metrics.width(textLine.substr(iter.range()));
@@ -595,6 +617,7 @@ QImage Font::rasterize(String const &textLine,
     while(iter.hasNext())
     {
         iter.next();
+        if(iter.range().isEmpty()) continue;
 
         QFont font = d->font;
 

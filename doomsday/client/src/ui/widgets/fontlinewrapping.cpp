@@ -106,6 +106,10 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
             {
                 markWidth = rangeAdvanceWidth(Rangei(0, iter.range().start) + range.start);
             }
+            if(iter.resetIndent())
+            {
+                markWidth = -indent;
+            }
         }
         return markWidth;
     }
