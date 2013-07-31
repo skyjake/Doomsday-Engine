@@ -209,6 +209,7 @@ public:
             int colorIndex() const;
             IStyle::Color color() const;
             bool markIndent() const;
+            bool resetIndent() const;
             int tabStop() const;
         };
 

@@ -23,8 +23,10 @@
 using namespace de;
 using namespace ui;
 
+static Rangei const MAX_VISIBLE_RANGE(0, 0x7fffffff);
+
 DENG2_PIMPL(GLTextComposer)
-{
+{    
     Font const *font;
     Atlas *atlas;
     String text;
@@ -52,7 +54,7 @@ DENG2_PIMPL(GLTextComposer)
 
     Instance(Public *i)
         : Base(i), font(0), atlas(0), wraps(0), needRedo(false),
-          visibleLineRange(0, 0x7fffffff)
+          visibleLineRange(MAX_VISIBLE_RANGE)
     {}
 
     ~Instance()
@@ -214,6 +216,7 @@ GLTextComposer::GLTextComposer() : d(new Instance(this))
 void GLTextComposer::release()
 {
     d->releaseLines();
+    d->visibleLineRange = MAX_VISIBLE_RANGE;
     setState(false);
 }
 

@@ -1341,6 +1341,59 @@ static int completeWord(int mode)
 }
 #endif // __CLIENT__
 
+static int annotateMatchedWordCallback(knownword_t const *match, void *parameters)
+{
+    de::String *result = reinterpret_cast<de::String *>(parameters);
+    de::String found;
+
+    switch(match->type)
+    {
+    case WT_CVAR:
+        if(!(((cvar_t *)match->data)->flags & CVF_HIDE))
+        {
+            found = Con_VarAsStyledText((cvar_t *) match->data, "");
+        }
+        break;
+
+    case WT_CCMD:
+        if(!((ccmd_t *)match->data)->prevOverload)
+        {
+            found = Con_CmdAsStyledText((ccmd_t *) match->data);
+        }
+        break;
+
+    case WT_CALIAS:
+        found = Con_AliasAsStyledText((calias_t *) match->data);
+        break;
+
+    case WT_GAME:
+        found = Con_GameAsStyledText((Game *) match->data);
+        break;
+
+    default:
+        break;
+    }
+
+    if(!found.isEmpty())
+    {
+        if(!result->isEmpty()) result->append("\n");
+        result->append(found);
+    }
+
+    return false; // don't stop
+}
+
+de::String Con_AnnotatedConsoleTerms(QStringList terms)
+{
+    de::String result;
+    foreach(QString term, terms)
+    {
+        Con_IterateKnownWords(KnownWordExactMatch, term.toUtf8(), WT_ANY,
+                              annotateMatchedWordCallback, &result);
+    }
+    return result;
+}
+
 /**
  * Wrapper for Con_Execute
  * Public method for plugins to execute console commands.

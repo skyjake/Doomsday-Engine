@@ -60,11 +60,9 @@ void EscapeParser::parse(String const &textWithEscapes)
             {
             case '(':
             case '[':
-            case '{':
-            case '<': {
+            case '{': {
                 // Find the matching end.
-                int end = d->original.indexOf(ch == '('? ')' : ch == '['? ']' :
-                                              ch == '{'? '}' : '>', range.end + 1);
+                int end = d->original.indexOf(ch == '('? ')' : ch == '['? ']' : '}', range.end + 1);
                 if(end < 0) end = d->original.size() - 1;
                 escLen = end - range.end + 1;
                 break; }

@@ -72,6 +72,8 @@ public:
 
     bool isSuggestingCompletion() const;
     Rangei completionRange() const;
+    QStringList suggestedCompletions() const;
+    void acceptCompletion();
 
     /**
      * Defines the terms and rules for auto-completion.
@@ -125,6 +127,8 @@ protected:
     virtual void numberOfLinesChanged(int lineCount) = 0;
     virtual void cursorMoved() = 0;
     virtual void contentChanged() = 0;
+    virtual void autoCompletionBegan();
+    virtual void autoCompletionEnded(bool accepted);
 
     enum LineWrapUpdateBehavior {
         RewrapNow,

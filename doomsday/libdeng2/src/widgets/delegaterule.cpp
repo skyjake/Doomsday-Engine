@@ -53,11 +53,11 @@ void DelegateRule::invalidate()
     if(isValid())
     {
         Rule::invalidate();
+    }
 
-        if(_source)
-        {
-            _source->delegateInvalidation(_delegateId);
-        }
+    if(_source)
+    {
+        _source->delegateInvalidation(_delegateId);
     }
 }
 

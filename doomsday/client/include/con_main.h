@@ -29,12 +29,9 @@
 #include "dd_types.h"
 #include "de_system.h"
 #include "ui/dd_input.h"
+#include "Game"
 
 #include <de/shell/Lexicon> // known words
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #define CMDLINE_SIZE 256
 #define MAX_ARGS            256
@@ -326,6 +323,16 @@ void Con_AbnormalShutdown(const char* error);
 int Con_IterateKnownWords(const char* pattern, knownwordtype_t type,
     int (*callback)(const knownword_t* word, void* parameters), void* parameters);
 
+enum KnownWordMatchMode {
+    KnownWordExactMatch, // case insensitive
+    KnownWordStartsWith  // case insensitive
+};
+
+int Con_IterateKnownWords(KnownWordMatchMode matchMode,
+                          const char* pattern, knownwordtype_t type,
+                          int (*callback)(const knownword_t* word, void* parameters),
+                          void* parameters);
+
 /**
  * Collect an array of knownWords which match the given word (at least
  * partially).
@@ -395,6 +402,13 @@ void Con_PrintPathList(const char* pathList); /* delimiter = ';' */
 
 void Con_PrintCVar(cvar_t* cvar, const char* prefix);
 
+de::String Con_VarAsStyledText(cvar_t *var, char const *prefix);
+de::String Con_CmdAsStyledText(ccmd_t *cmd);
+de::String Con_AliasAsStyledText(calias_t *alias);
+de::String Con_GameAsStyledText(de::Game *game);
+
+de::String Con_AnnotatedConsoleTerms(QStringList terms);
+
 /**
  * Outputs the usage information for the given ccmd to the console if the
  * ccmd's usage is validated by Doomsday.
@@ -403,10 +417,6 @@ void Con_PrintCVar(cvar_t* cvar, const char* prefix);
  * @param printInfo  If @c true, print any additional info we have.
  */
 void Con_PrintCCmdUsage(ccmd_t* ccmd, boolean printInfo);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
 
 /**
  * Collects all the known words of the console into a Lexicon.

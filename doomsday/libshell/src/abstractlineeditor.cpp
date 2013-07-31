@@ -21,6 +21,7 @@
 #include <de/ConstantRule>
 
 #include <QList>
+#include <QStringList>
 #include <QScopedPointer>
 
 namespace de {
@@ -48,7 +49,7 @@ DENG2_PIMPL(AbstractLineEditor)
         }
     };
     Completion completion;
-    QList<String> suggestions;
+    QStringList suggestions;
 
     Instance(Public *i, ILineWrapping *lineWraps)
         : Base(i),
@@ -274,15 +275,15 @@ DENG2_PIMPL(AbstractLineEditor)
         return word;
     }
 
-    QList<String> completionsForBase(String base, String &commonPrefix) const
+    QStringList completionsForBase(String base, String &commonPrefix) const
     {
         bool first = true;
-        QList<String> suggestions;
+        QStringList sugs;
         foreach(String term, lexicon.terms())
         {
             if(term.startsWith(base, Qt::CaseInsensitive) && term.size() > base.size())
             {
-                suggestions.append(term);
+                sugs << term;
 
                 // Determine if all the suggestions have a common prefix.
                 if(first)
@@ -297,8 +298,8 @@ DENG2_PIMPL(AbstractLineEditor)
                 }
             }
         }
-        qSort(suggestions);
-        return suggestions;
+        qSort(sugs);
+        return sugs;
     }
 
     bool doCompletion(bool forwardCycle)
@@ -313,6 +314,7 @@ DENG2_PIMPL(AbstractLineEditor)
                 suggestions = completionsForBase(base, commonPrefix);
                 if(!commonPrefix.isEmpty() && commonPrefix != base)
                 {
+                    // Insert the common prefix.
                     completion.ordinal = -1;
                     commonPrefix.remove(0, base.size());
                     completion.pos = cursor;
@@ -320,6 +322,7 @@ DENG2_PIMPL(AbstractLineEditor)
                     text.insert(cursor, commonPrefix);
                     cursor += completion.size;
                     rewrapNow();
+                    self.autoCompletionBegan();
                     return true;
                 }
                 if(!suggestions.isEmpty())
@@ -332,6 +335,7 @@ DENG2_PIMPL(AbstractLineEditor)
                     text.insert(cursor, comp);
                     cursor += completion.size;
                     rewrapNow();
+                    self.autoCompletionBegan();
                     return true;
                 }
             }
@@ -378,17 +382,29 @@ DENG2_PIMPL(AbstractLineEditor)
                                       0, suggestions.size());
     }
 
-    void acceptCompletion()
+    void resetCompletion()
     {
         completion.reset();
+        suggestions.clear();
+    }
+
+    void acceptCompletion()
+    {
+        if(!suggestingCompletion()) return;
+
+        resetCompletion();
+
+        self.autoCompletionEnded(true);
     }
 
     void rejectCompletion()
     {
         text.remove(completion.pos, completion.size);
         cursor = completion.pos;
-        completion.reset();
+        resetCompletion();
         rewrapNow();
+
+        self.autoCompletionEnded(false);
     }
 };
 
@@ -449,6 +465,18 @@ bool AbstractLineEditor::isSuggestingCompletion() const
 Rangei AbstractLineEditor::completionRange() const
 {
     return d->completion.range();
+}
+
+QStringList AbstractLineEditor::suggestedCompletions() const
+{
+    if(!isSuggestingCompletion()) return QStringList();
+
+    return d->suggestions;
+}
+
+void shell::AbstractLineEditor::acceptCompletion()
+{
+    d->acceptCompletion();
 }
 
 void AbstractLineEditor::setLexicon(Lexicon const &lexicon)
@@ -580,6 +608,12 @@ ILineWrapping &AbstractLineEditor::lineWraps()
 {
     return *d->wraps;
 }
+
+void AbstractLineEditor::autoCompletionBegan()
+{}
+
+void AbstractLineEditor::autoCompletionEnded(bool /*accepted*/)
+{}
 
 void AbstractLineEditor::updateLineWraps(LineWrapUpdateBehavior behavior)
 {

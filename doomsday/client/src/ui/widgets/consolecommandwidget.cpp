@@ -17,6 +17,9 @@
  */
 
 #include "ui/widgets/consolecommandwidget.h"
+#include "ui/widgets/documentwidget.h"
+#include "ui/widgets/popupwidget.h"
+#include "ui/style.h"
 #include "con_main.h"
 #include "dd_main.h"
 #include "clientapp.h"
@@ -32,11 +35,26 @@ DENG2_OBSERVES(App, StartupComplete),
 public IGameChangeObserver
 {
     shell::EditorHistory history;
+    DocumentWidget *completions;
+    PopupWidget *popup; ///< Popup for autocompletions.
 
     Instance(Public *i) : Base(i), history(i)
     {
         App::app().audienceForStartupComplete += this;
         audienceForGameChange += this;
+
+        // Popup for autocompletions.
+        completions = new DocumentWidget;
+        completions->setMaximumLineWidth(640);
+        completions->rule().setInput(Rule::Height,
+                                     OperatorRule::minimum(Const(400),
+                                                           completions->contentRule().height() + 2 *
+                                                           completions->margin()));
+
+        popup = new PopupWidget;
+        popup->set(Background(self.style().colors().colorf("editor.completion.background")));
+        popup->setContent(completions);
+        self.add(popup);
     }
 
     ~Instance()
@@ -76,6 +94,10 @@ void ConsoleCommandWidget::focusGained()
 void ConsoleCommandWidget::focusLost()
 {
     LineEditWidget::focusLost();
+
+    // Get rid of the autocompletion popup.
+    d->popup->close();
+
     emit lostFocus();
 }
 
@@ -98,6 +120,9 @@ bool ConsoleCommandWidget::handleEvent(Event const &event)
         // Override the handling of the Enter key.
         if(key.qtKey() == Qt::Key_Return || key.qtKey() == Qt::Key_Enter)
         {
+            // We must make sure that the ongoing autocompletion ends.
+            acceptCompletion();
+
             String const entered = d->history.enter();
 
             LOG_INFO(_E(1) "> ") << entered;
@@ -130,4 +155,20 @@ bool ConsoleCommandWidget::handleEvent(Event const &event)
         }
     }
     return false;
+}
+
+void ConsoleCommandWidget::autoCompletionBegan()
+{
+    // Prepare a list of completions.
+    d->completions->setText(Con_AnnotatedConsoleTerms(suggestedCompletions()));
+    d->completions->scrollToTop(0);
+
+    // Note: this is a fixed position, so it will not be updated if the view is resized.
+    d->popup->setAnchor(Vector2i(cursorRect().middle().x, rule().top().valuei()));
+    d->popup->open();
+}
+
+void ConsoleCommandWidget::autoCompletionEnded(bool /*accepted*/)
+{
+    d->popup->close();
 }

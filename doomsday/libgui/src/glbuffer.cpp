@@ -192,13 +192,16 @@ void GLBuffer::setVertices(Primitive primitive, dsize count, void const *data, d
     d->prim  = primitive;
     d->count = count;
 
-    if(data && dataSize && count)
+    if(data)
     {
         d->alloc();
 
-        glBindBuffer(GL_ARRAY_BUFFER, d->name);
-        glBufferData(GL_ARRAY_BUFFER, dataSize, data, Instance::glUsage(usage));
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        if(dataSize && count)
+        {
+            glBindBuffer(GL_ARRAY_BUFFER, d->name);
+            glBufferData(GL_ARRAY_BUFFER, dataSize, data, Instance::glUsage(usage));
+            glBindBuffer(GL_ARRAY_BUFFER, 0);
+        }
 
         setState(Ready);
     }
