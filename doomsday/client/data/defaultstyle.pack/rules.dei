@@ -7,6 +7,7 @@ script {
 rule unit     { constant $= UNIT }
 rule halfunit { constant $= UNIT / 2 }
 rule gap      { constant $= UNIT * 3 }
+rule glow     { constant $= UNIT * 8 }
 
 group console {
     rule width { constant = 500 }

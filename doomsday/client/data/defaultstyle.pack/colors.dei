@@ -5,10 +5,12 @@ script { import gui }
 color text       { rgb <1.0, 1.0, 1.0> }
 color background { rgb <0.0, 0.0, 0.0, 0.75> }
 color accent     { rgb <1.0, 0.8, 0.4> }
+color glow       { rgb <1.0, 1.0, 1.0, 0.2> }
 
 group inverted {
     color text       { rgb <0.0, 0.0, 0.0> }
     color background { rgb <1.0, 1.0, 1.0, 0.75> }
+    color glow       { rgb <0.0, 0.0, 0.0, 0.2> }
 }
 
 group label {
@@ -19,8 +21,14 @@ group label {
 }
 
 group progress {
-    color light { rgb <1.0, 1.0, 1.0, 0.5> }
-    color dark  { rgb <0.0, 0.0, 0.0, 0.5> }
+    group light {
+        color wheel  { rgb <1.0, 1.0, 1.0, 0.5> }
+        color shadow { rgb <0.0, 0.0, 0.0, 0.54> }
+    }
+    group dark {
+        color wheel  { rgb <0.0, 0.0, 0.0, 0.5> }
+        color shadow { rgb <1.0, 1.0, 1.0, 0.54> }
+    }
 }
 
 group editor {
@@ -29,6 +37,7 @@ group editor {
     
     group completion {
         color background { rgb <1.0, 1.0, 1.0> }
+        color glow       { rgb $= inverted.glow.rgb }
     }
 }
 
