@@ -20,6 +20,7 @@
 #ifndef DENG_RENDER_SHADOWBIAS_SURFACE_H
 #define DENG_RENDER_SHADOWBIAS_SURFACE_H
 
+#include <de/Error>
 #include <de/Vector>
 
 #include "MapElement"
@@ -33,6 +34,10 @@ class BiasTracker;
  */
 class BiasSurface
 {
+public:
+    /// An unknown light contributor was referenced @ingroup errors
+    DENG2_ERROR(UnknownContributorError);
+
 public:
     /**
      * Construct a new surface.
@@ -59,15 +64,29 @@ public:
     void updateAfterMove();
 
     /**
+     * Returns a light source contributor by @a index.
+     */
+    BiasSource &contributor(int index) const;
+
+    /**
+     * Determine the earliest time in milliseconds that an affecting source
+     * was changed/deleted.
+     */
+    uint timeOfLatestContributorUpdate() const;
+
+    /**
      * Perform lighting for the supplied geometry. It is assumed that this
      * geometry has the @em same number of vertices as the bias surface.
      *
-     * @param vertCount  Number of vertices to be lit.
-     * @param positions  World coordinates for each vertex.
-     * @param colors     Final lighting values will be written here.
+     * @param surfaceNormal  Normal of the surface being lit.
+     * @param biasTime       Current time in milliseconds for bias.
+     * @param vertCount      Number of vertices to be lit.
+     * @param positions      World coordinates for each vertex.
+     * @param colors         Final lighting values will be written here.
      */
-    void lightPoly(de::Vector3f const &surfaceNormal, int vertCount,
-                   struct rvertex_s const *positions, struct ColorRawf_s *colors);
+    void lightPoly(de::Vector3f const &surfaceNormal, uint biasTime,
+                   int vertCount, struct rvertex_s const *positions,
+                   struct ColorRawf_s *colors);
 
 private:
     DENG2_PRIVATE(d)

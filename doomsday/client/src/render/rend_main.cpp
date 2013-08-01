@@ -914,7 +914,23 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
             // Non-uniform color.
             if(useBias)
             {
-                // Do BIAS lighting for this poly.
+                // Apply the ambient light term from the grid (if available).
+                Map &map = p.elem->map();
+                if(map.hasLightGrid())
+                {
+                    rvertex_t const *vtx = rvertices;
+                    ColorRawf *color = rcolors;
+                    for(uint i = 0; i < numVertices; ++i, vtx++, color++)
+                    {
+                        Vector3d surfacePoint(vtx->pos[VX], vtx->pos[VY], vtx->pos[VZ]);
+                        Vector3f ambientLight = map.lightGrid().evaluate(surfacePoint);
+
+                        for(int c = 0; c < 3; ++c)
+                            color->rgba[c] = ambientLight[c];
+                    }
+                }
+
+                // Apply shadow bias contributions.
                 if(p.elem->type() == DMU_BSPLEAF)
                 {
                     p.elem->as<BspLeaf>()->

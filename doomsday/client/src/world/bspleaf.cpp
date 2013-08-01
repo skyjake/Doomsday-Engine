@@ -568,8 +568,9 @@ void BspLeaf::lightPoly(int group, int vertCount, rvertex_t const *positions,
         d->updateAffected(bsuf, group);
     }
 
-    bsuf.lightPoly(d->sector->plane(group).surface().normal(), vertCount,
-                   positions, colors);
+    Surface &surface = d->sector->plane(group).surface();
+    bsuf.lightPoly(surface.normal(), map().biasCurrentTime(),
+                   vertCount, positions, colors);
 }
 
 ShadowLink *BspLeaf::firstShadowLink() const

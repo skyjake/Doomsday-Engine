@@ -19,6 +19,7 @@
 
 #include <de/Observers>
 
+#include <QtAlgorithms>
 #include <QVector>
 
 #include "de_base.h"
@@ -44,130 +45,250 @@ static int lightSpeed        = 130;  //cvar
 static int devUpdateAffected = true; //cvar
 static int devUseSightCheck  = true; //cvar
 
+static byte activeContributors;
+static byte changedContributions;
+
+class VertexIllum
+{
+    BiasSurface &surface; ///< The owning surface.
+    Vector3f color;       ///< Current light color.
+    Vector3f dest;        ///< Destination light color (interpolated to).
+    uint updateTime;      ///< When the value was calculated.
+    bool interpolating;   ///< Set to @c true during interpolation.
+
+    /**
+     * Cast lighting contributions from each source that affects the map point.
+     * Order is the same as that in the affected surface.
+     */
+    Vector3f casted[MAX_CONTRIBUTORS];
+
+public:
+    VertexIllum(BiasSurface &surface)
+        : surface(surface),
+          updateTime(0),
+          interpolating(false)
+    {}
+
+    /**
+     * (Re-)Evaluate lighting for this world point.
+     *
+     * @param color          Final color will be written here.
+     * @param point          Point in the map to evaluate. Assumed not to have
+     *                       moved since the last call unless the light source
+     *                       contributions have since been updated.
+     * @param normalAtPoint  Surface normal at @a point. Also assumed not to
+     *                       have changed since the last call.
+     * @param biasTime       Time in milliseconds of the last bias frame update.
+     */
+    void evaluate(Vector3f &color, Vector3d const &point,
+                  Vector3f const &normalAtPoint, uint biasTime)
+    {
+        // Does the surface have any lighting changes to apply?
+        if(changedContributions)
+        {
+            if(activeContributors & changedContributions)
+            {
+                /*
+                 * Recalculate the contribution for each light.
+                 * We can reuse the previously calculated value for a source
+                 * if it hasn't changed.
+                 */
+                for(int i = 0; i < MAX_CONTRIBUTORS; ++i)
+                {
+                    if(activeContributors & changedContributions & (1 << i))
+                    {
+                        updateContribution(i, point, normalAtPoint);
+                    }
+                }
+            }
+
+            applyLightingChanges(activeContributors, biasTime);
+        }
+
+        // Factor in the current color (and perform interpolation if needed).
+        lerp(color, biasTime);
+    }
+
+    /// @copydoc evaluate()
+    void evaluate(ColorRawf &color, Vector3d const &point,
+                  Vector3f const &normalAtPoint, uint biasTime)
+    {
+        Vector3f tmp;
+        evaluate(tmp, point, normalAtPoint, biasTime);
+        for(int c = 0; c < 3; ++c)
+            color.rgba[c] += tmp[c];
+    }
+
+private:
+    /**
+     * Returns a previous light contribution by unique contributor index.
+     */
+    inline Vector3f &contribution(int index)
+    {
+        DENG_ASSERT(index >= 0 && index < MAX_CONTRIBUTORS);
+        return casted[index];
+    }
+
+    /**
+     * Update any changed lighting contributions.
+     *
+     * @param surfacePoint  Position of the vertex in the map coordinate space.
+     */
+    void applyLightingChanges(byte activeContributors, uint biasTime)
+    {
+#define COLOR_CHANGE_THRESHOLD  0.1f // Ignore small variations for perf
+
+        // Determine the new color (initially, black).
+        Vector3f newColor;
+
+        // Do we need to re-accumulate light contributions?
+        if(activeContributors)
+        {
+            /// Maximum accumulated color strength.
+            static Vector3f const saturated(1, 1, 1);
+
+            for(int i = 0; i < MAX_CONTRIBUTORS; ++i)
+            {
+                if(activeContributors & (1 << i))
+                {
+                    newColor += contribution(i);
+
+                    // Stop once fully saturated.
+                    if(newColor >= saturated)
+                        break;
+                }
+            }
+
+            // Clamp.
+            newColor = newColor.min(saturated);
+        }
+
+        // Is there a new destination?
+        if(!activeContributors ||
+           (!de::fequal(dest.x, newColor.x, COLOR_CHANGE_THRESHOLD) ||
+            !de::fequal(dest.y, newColor.y, COLOR_CHANGE_THRESHOLD) ||
+            !de::fequal(dest.z, newColor.z, COLOR_CHANGE_THRESHOLD)))
+        {
+            if(interpolating)
+            {
+                // Must not lose the half-way interpolation.
+                Vector3f mid; lerp(mid, biasTime);
+
+                // This is current color at this very moment.
+                color = mid;
+            }
+
+            // This is what we will be interpolating to.
+            dest          = newColor;
+            interpolating = true;
+            updateTime    = surface.timeOfLatestContributorUpdate();
+        }
+
+#undef COLOR_CHANGE_THRESHOLD
+    }
+
+    /**
+     * Update the lighting contribution for the specified contributor @a index.
+     *
+     * @param index          Unique index of the contributor.
+     * @param point          Point in the map to evaluate.
+     * @param normalAtPoint  Surface normal at @a point.
+     */
+    void updateContribution(int index, Vector3d const &point,
+        Vector3f const &normalAtPoint)
+    {
+        BiasSource const &source = surface.contributor(index);
+
+        Vector3f &casted = contribution(index);
+
+        /// @todo LineSightTest should (optionally) perform this test.
+        Sector *sector = &source.bspLeafAtOrigin().sector();
+        if((!sector->floor().surface().hasSkyMaskedMaterial() &&
+                source.origin().z < sector->floor().visHeight()) ||
+           (!sector->ceiling().surface().hasSkyMaskedMaterial() &&
+                source.origin().z > sector->ceiling().visHeight()))
+        {
+            // This affecting source does not contribute any light.
+            casted = Vector3f();
+            return;
+        }
+
+        Vector3d sourceToSurface = source.origin() - point;
+
+        /// @todo Do not assume the current map.
+        MapElement &bspRoot = App_World().map().bspRoot();
+
+        if(devUseSightCheck &&
+           !LineSightTest(source.origin(),
+                          point + sourceToSurface / 100).trace(bspRoot))
+        {
+            // LOS fail.
+            // This affecting source does not contribute any light.
+            casted = Vector3f();
+            return;
+        }
+
+        double distance = sourceToSurface.length();
+        double dot = sourceToSurface.normalize().dot(normalAtPoint);
+
+        // The surface faces away from the light?
+        if(dot < 0)
+        {
+            casted = Vector3f();
+            return;
+        }
+
+        // Apply light casted from this source.
+        float strength = dot * source.evaluateIntensity() / distance;
+        casted = source.color() * de::clamp(0.f, strength, 1.f);
+    }
+
+    /**
+     * Interpolate between current and destination.
+     */
+    void lerp(Vector3f &result, uint currentTime)
+    {
+        if(!interpolating)
+        {
+            // Use the current color.
+            result = color;
+            return;
+        }
+
+        float inter = (currentTime - updateTime) / float( lightSpeed );
+
+        if(inter > 1)
+        {
+            interpolating = false;
+            color = dest;
+
+            result = color;
+        }
+        else
+        {
+            result = color + (dest - color) * inter;
+        }
+    }
+};
+
 struct Contributor
 {
     BiasSource *source;
     float influence;
 };
 
-typedef Contributor Contributors[MAX_CONTRIBUTORS];
-
 /**
- * evalLighting uses these -- they must be set before it is called.
+ * @todo Defer allocation of most data -- adopt a 'fly-weight' approach.
+ *
+ * @todo Do not observe source deletion. A better solution would represent any
+ * source deletions within the change tracker.
  */
-static uint biasTime;
-static MapElement const *bspRoot;
-static Vector3f const *mapSurfaceNormal;
-
-/// @todo defer allocation of most data -- adopt a 'fly-weight' approach.
 DENG2_PIMPL_NOREF(BiasSurface),
 DENG2_OBSERVES(BiasSource, Deletion)
 {
-    /**
-     * Per-vertex illumination data.
-     */
-    struct VertexIllum
-    {
-        Vector3f color;      ///< Current light color at the vertex.
-        Vector3f dest;       ///< Destination light color at the vertex (interpolated to).
-        uint updateTime;     ///< When the value was calculated.
-        bool interpolating;  ///< Set to @c true during interpolation.
+    QVector<VertexIllum *> illums; /// @todo use an external allocator.
 
-        /**
-         * Light contributions from each source affecting the vertex. The order
-         * of which being the same as that in the affected surface.
-         */
-        Vector3f casted[MAX_CONTRIBUTORS];
-
-        VertexIllum() : updateTime(0), interpolating(false)
-        {}
-
-        /**
-         * Interpolate between current and destination.
-         */
-        void lerp(Vector3f &result, uint currentTime)
-        {
-            if(!interpolating)
-            {
-                // Use the current color.
-                result = color;
-                return;
-            }
-
-            float inter = (currentTime - updateTime) / float( lightSpeed );
-
-            if(inter > 1)
-            {
-                interpolating = false;
-                color = dest;
-
-                result = color;
-            }
-            else
-            {
-                result = color + (dest - color) * inter;
-            }
-        }
-
-        /**
-         * @return Light contribution by the specified contributor.
-         */
-        Vector3f &contribution(int contributorIndex)
-        {
-            DENG_ASSERT(contributorIndex >= 0 && contributorIndex < MAX_CONTRIBUTORS);
-            return casted[contributorIndex];
-        }
-
-        void updateContribution(int contributorIndex, BiasSource *source,
-            Vector3d const &surfacePoint, Vector3f const &surfaceNormal,
-            MapElement const &bspRoot)
-        {
-            DENG_ASSERT(source != 0);
-
-            Vector3f &casted = contribution(contributorIndex);
-
-            /// @todo LineSightTest should (optionally) perform this test.
-            Sector *sector = &source->bspLeafAtOrigin().sector();
-            if((!sector->floor().surface().hasSkyMaskedMaterial() &&
-                    source->origin().z < sector->floor().visHeight()) ||
-               (!sector->ceiling().surface().hasSkyMaskedMaterial() &&
-                    source->origin().z > sector->ceiling().visHeight()))
-            {
-                // This affecting source does not contribute any light.
-                casted = Vector3f();
-                return;
-            }
-
-            Vector3d sourceToSurface = source->origin() - surfacePoint;
-
-            if(devUseSightCheck &&
-               !LineSightTest(source->origin(),
-                              surfacePoint + sourceToSurface / 100).trace(bspRoot))
-            {
-                // LOS fail.
-                // This affecting source does not contribute any light.
-                casted = Vector3f();
-                return;
-            }
-
-            double distance = sourceToSurface.length();
-            double dot = sourceToSurface.normalize().dot(surfaceNormal);
-
-            // The surface faces away from the light?
-            if(dot < 0)
-            {
-                casted = Vector3f();
-                return;
-            }
-
-            // Apply light casted from this source.
-            float strength = dot * source->evaluateIntensity() / distance;
-            casted = source->color() * de::clamp(0.f, strength, 1.f);
-        }
-    };
-    QVector<VertexIllum> illums; /// @todo use std::vector instead?
-
-    Contributors contributors;
+    Contributor contributors[MAX_CONTRIBUTORS];
     byte activeContributors;
     byte changedContributions;
 
@@ -184,120 +305,9 @@ DENG2_OBSERVES(BiasSource, Deletion)
         zap(contributors);
     }
 
-    /**
-     * Perform lighting calculations for a vertex.
-     *
-     * @param vi            Illumination data for the vertex to be evaluated.
-     * @param surfacePoint  Position of the vertex in the map coordinate space.
-     */
-    Vector3f evalLighting(VertexIllum &vi, Vector3d const &surfacePoint)
+    ~Instance()
     {
-#define COLOR_CHANGE_THRESHOLD  0.1f // Ignore small variations for perf
-
-        static Vector3f const saturated(1, 1, 1);
-
-        // Do we have any lighting changes to apply?
-        if(changedContributions)
-        {
-            uint latestSourceUpdate = 0;
-
-            Contributor *ctbr = contributors;
-            for(int i = 0; i < MAX_CONTRIBUTORS; ++i, ctbr++)
-            {
-                if(!(changedContributions & (1 << i)))
-                    continue;
-
-                // Determine the earliest time an affecting source changed.
-                if(!ctbr->source && !(activeContributors & (1 << i)))
-                {
-                    // The source of the contribution was deleted.
-                    if(latestSourceUpdate < lastSourceDeletion)
-                        latestSourceUpdate = lastSourceDeletion;
-                }
-                else if(latestSourceUpdate < ctbr->source->lastUpdateTime())
-                {
-                    latestSourceUpdate = ctbr->source->lastUpdateTime();
-                }
-            }
-
-            if(activeContributors & changedContributions)
-            {
-                /*
-                 * Recalculate the contribution for each light.
-                 * We can reuse the previously calculated value for a source
-                 * if it hasn't changed.
-                 */
-                ctbr = contributors;
-                for(int i = 0; i < MAX_CONTRIBUTORS; ++i, ctbr++)
-                {
-                    if(activeContributors & changedContributions & (1 << i))
-                    {
-                        vi.updateContribution(i, ctbr->source, surfacePoint,
-                                              *mapSurfaceNormal, *bspRoot);
-                    }
-                }
-            }
-
-            // Determine the new color (initially, black).
-            Vector3f newColor;
-
-            // Do we need to accumulate light contributions?
-            if(activeContributors)
-            {
-                ctbr = contributors;
-                for(int i = 0; i < MAX_CONTRIBUTORS; ++i, ctbr++)
-                {
-                    if(activeContributors & (1 << i))
-                    {
-                        newColor += vi.contribution(i);
-
-                        // Stop once fully saturated.
-                        if(newColor >= saturated)
-                            break;
-                    }
-                }
-
-                // Clamp.
-                newColor = newColor.min(saturated);
-            }
-
-            // Is there a new destination?
-            if(!activeContributors ||
-               (!de::fequal(vi.dest.x, newColor.x, COLOR_CHANGE_THRESHOLD) ||
-                !de::fequal(vi.dest.y, newColor.y, COLOR_CHANGE_THRESHOLD) ||
-                !de::fequal(vi.dest.z, newColor.z, COLOR_CHANGE_THRESHOLD)))
-            {
-                if(vi.interpolating)
-                {
-                    // Must not lose the half-way interpolation.
-                    Vector3f mid; vi.lerp(mid, biasTime);
-
-                    // This is current color at this very moment.
-                    vi.color = mid;
-                }
-
-                // This is what we will be interpolating to.
-                vi.dest          = newColor;
-                vi.interpolating = true;
-                vi.updateTime    = latestSourceUpdate;
-            }
-        }
-
-        // Finalize lighting (i.e., perform interpolation if needed).
-        Vector3f color;
-        vi.lerp(color, biasTime);
-
-        // Apply an ambient light term?
-        Map &map = bspRoot->map();
-        if(map.hasLightGrid())
-        {
-            color = (color + map.lightGrid().evaluate(surfacePoint))
-                    .min(saturated); // clamp
-        }
-
-        return color;
-
-#undef COLOR_CHANGE_THRESHOLD
+        qDeleteAll(illums);
     }
 
     /// Observes BiasSource Deletion
@@ -313,9 +323,7 @@ DENG2_OBSERVES(BiasSource, Deletion)
                 changedContributions |= 1 << i;
 
                 // Remember the current time (used for interpolation).
-                /// @todo Do not assume the 'current' map. A better solution
-                /// would represent source deletion in the per-frame change
-                /// notifications.
+                /// @todo Do not assume the 'current' map.
                 lastSourceDeletion = App_World().map().biasCurrentTime();
                 break;
             }
@@ -460,25 +468,72 @@ void BiasSurface::updateAfterMove()
     }
 }
 
-void BiasSurface::lightPoly(Vector3f const &surfaceNormal, int vertCount,
-    rvertex_t const *positions, ColorRawf *colors)
+BiasSource &BiasSurface::contributor(int index) const
+{
+    if(index >= 0 && index < MAX_CONTRIBUTORS &&
+       (d->activeContributors & (1 << index)))
+    {
+        DENG_ASSERT(d->contributors[index].source != 0);
+        return *d->contributors[index].source;
+    }
+    /// @throw UnknownContributorError An invalid contributor index was specified.
+    throw UnknownContributorError("BiasSurface::lightContributor", QString("Index %1 invalid/out of range").arg(index));
+}
+
+uint BiasSurface::timeOfLatestContributorUpdate() const
+{
+    uint latest = 0;
+
+    if(d->changedContributions)
+    {
+        Contributor const *ctbr = d->contributors;
+        for(int i = 0; i < MAX_CONTRIBUTORS; ++i, ctbr++)
+        {
+            if(!(d->changedContributions & (1 << i)))
+                continue;
+
+            if(!ctbr->source && !(d->activeContributors & (1 << i)))
+            {
+                // The source of the contribution was deleted.
+                if(latest < d->lastSourceDeletion)
+                    latest = d->lastSourceDeletion;
+            }
+            else if(latest < ctbr->source->lastUpdateTime())
+            {
+                latest = ctbr->source->lastUpdateTime();
+            }
+        }
+    }
+
+    return latest;
+}
+
+void BiasSurface::lightPoly(Vector3f const &surfaceNormal, uint biasTime,
+    int vertCount, rvertex_t const *positions, ColorRawf *colors)
 {
     DENG_ASSERT(vertCount == d->illums.count()); // sanity check
     DENG_ASSERT(positions != 0 && colors != 0);
 
-    // Configure global arguments for evalLighting(), for perf
-    bspRoot = &App_World().map().bspRoot();
-    biasTime = bspRoot->map().biasCurrentTime();
-    mapSurfaceNormal = &surfaceNormal;
-
-    int i; rvertex_t const *vtx = positions;
-    for(i = 0; i < vertCount; ++i, vtx++)
+    // Time to allocate the illumination data?
+    if(!d->illums[0])
     {
-        Vector3d origin(vtx->pos[VX], vtx->pos[VY], vtx->pos[VZ]);
-        Vector3f light = d->evalLighting(d->illums[i], origin);
+        for(int i = 0; i < d->illums.count(); ++i)
+        {
+            d->illums[i] = new VertexIllum(*this);
+        }
+    }
 
-        for(int c = 0; c < 3; ++c)
-            colors[i].rgba[c] = light[c];
+    // Configure global arguments for BiasVertex::evalLighting(), for perf
+    /// @todo refactor away.
+    activeContributors   = d->activeContributors;
+    changedContributions = d->changedContributions;
+
+    rvertex_t const *vtx = positions;
+    ColorRawf *color     = colors;
+    for(int i = 0; i < vertCount; ++i, vtx++, color++)
+    {
+        Vector3d surfacePoint(vtx->pos[VX], vtx->pos[VY], vtx->pos[VZ]);
+        d->illums[i]->evaluate(*color, surfacePoint, surfaceNormal, biasTime);
     }
 
     // Any changes from contributors will have now been applied.

@@ -278,7 +278,9 @@ void Segment::lightPoly(int group, int vertCount, rvertex_t const *positions,
         d->updateAffected(bsuf, group);
     }
 
-    bsuf.lightPoly(d->lineSide->middle().normal(), vertCount, positions, colors);
+    Surface &surface = d->lineSide->middle();
+    bsuf.lightPoly(surface.normal(), map().biasCurrentTime(),
+                   vertCount, positions, colors);
 }
 
 #endif // __CLIENT__
