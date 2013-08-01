@@ -50,6 +50,8 @@
 #include "world/p_players.h"
 #include "world/thinkers.h"
 
+#include "BiasSurface"
+#include "BiasIllum"
 #include "HueCircleVisual"
 #include "SkyFixEdge"
 #include "WallEdge"
@@ -242,6 +244,7 @@ void Rend_Register()
     RL_Register();
     LO_Register();
     Rend_DecorRegister();
+    BiasIllum::consoleRegister();
     BiasSurface::consoleRegister();
     LightGrid::consoleRegister();
     Sky_Register();

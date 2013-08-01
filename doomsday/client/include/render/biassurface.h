@@ -69,9 +69,12 @@ public:
      * (i.e., when lighting is next evaluated for the point).
      *
      * All contributors are assigned a unique index (when added) that can be
-     * used to reference the contributor later.
+     * used to reference it (and the source) later.
      *
-     * @note At most @ref VertexIllum::MAX_CONTRIBUTORS can contribute lighting.
+     * @note Contributors with intensity less than @ref BiasIllum::MIN_INTENSITY
+     * will be ignored (nothing will happen).
+     *
+     * @note At most @ref BiasIllum::MAX_CONTRIBUTORS can contribute lighting.
      * Once capacity is reached adding a new contributor will result in the
      * weakest contributor (i.e., smallest intensity when added) being dropped
      * and it's index assigned to the 'new' contributor. If the weakest is the

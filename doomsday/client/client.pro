@@ -109,6 +109,7 @@ DENG_API_HEADERS = \
 
 # Convenience headers.
 DENG_HEADERS += \
+    include/BiasIllum \
     include/BiasSource \
     include/BiasSurface \
     include/BiasTracker \
@@ -250,6 +251,7 @@ DENG_HEADERS += \
     include/network/ui_mpi.h \
     include/partition.h \
     include/r_util.h \
+    include/render/biasillum.h \
     include/render/biassource.h \
     include/render/biassurface.h \
     include/render/biastracker.h \
@@ -552,6 +554,7 @@ SOURCES += \
     src/network/ui_mpi.cpp \
     src/r_util.cpp \
     src/render/api_render.cpp \
+    src/render/biasillum.cpp \
     src/render/biassource.cpp \
     src/render/biassurface.cpp \
     src/render/biastracker.cpp \
