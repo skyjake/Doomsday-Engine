@@ -42,6 +42,7 @@ public Font::RichFormat::IStyle
     Alignment imageAlign;
     ContentFit imageFit;
     float imageScale;
+    Vector4f imageColor;
 
     ConstantRule *width;
     ConstantRule *height;
@@ -75,6 +76,7 @@ public Font::RichFormat::IStyle
           imageAlign(AlignCenter),
           imageFit(OriginalAspectRatio | FitToSize),
           imageScale(1),
+          imageColor(1, 1, 1, 1),
           wrapWidth(0),
           needImageUpdate(false),
           imageTex(Id::None),
@@ -460,6 +462,11 @@ void LabelWidget::setImageScale(float scaleFactor)
     d->imageScale = scaleFactor;
 }
 
+void LabelWidget::setImageColor(Vector4f const &imageColor)
+{
+    d->imageColor = imageColor;
+}
+
 void LabelWidget::update()
 {
     GuiWidget::update();
@@ -501,7 +508,7 @@ void LabelWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
 
     if(d->hasImage())
     {
-        verts.makeQuad(layout.image, Vector4f(1, 1, 1, 1), d->atlas().imageRectf(d->imageTex));
+        verts.makeQuad(layout.image, d->imageColor, d->atlas().imageRectf(d->imageTex));
     }
     if(d->hasText())
     {

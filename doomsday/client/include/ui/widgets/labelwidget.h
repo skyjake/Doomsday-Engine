@@ -94,6 +94,8 @@ public:
 
     void setImageScale(float scaleFactor);
 
+    void setImageColor(de::Vector4f const &imageColor);
+
     /**
      * Allows or disallows the label to expand vertically to fit the provided
      * content. By default, labels do not adjust their own size.

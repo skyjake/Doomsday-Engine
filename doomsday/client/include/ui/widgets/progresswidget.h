@@ -21,6 +21,8 @@
 
 #include "labelwidget.h"
 
+#include <de/Range>
+
 /**
  * Progress indicator.
  *
@@ -36,7 +38,37 @@
 class ProgressWidget : public LabelWidget
 {
 public:
+    enum Mode {
+        Ranged,
+        Indefinite
+    };
+
+public:
     ProgressWidget(de::String const &name = "");
+
+    Mode mode() const;
+
+    void setColor(de::DotPath const &styleId);
+
+    /**
+     * Sets the text displayed in the widget. Thread-safe.
+     *
+     * @param text  New text for the progress.
+     */
+    void setText(de::String const &text);
+
+    void setMode(Mode progressMode);
+    void setRange(de::Rangei const &range);
+    void setProgress(int currentProgress, de::TimeDelta const &transitionSpan = 0.5);
+
+    // Events.
+    void update();
+
+protected:
+    void glInit();
+    void glDeinit();
+    void glMakeGeometry(DefaultVertexBuf::Builder &verts);
+    void updateStyle();
 
 private:
     DENG2_PRIVATE(d)
