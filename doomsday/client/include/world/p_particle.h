@@ -29,7 +29,7 @@
 #include "plane.h"
 
 // Maximum number of particle textures (not instances).
-#define MAX_PTC_TEXTURES        32
+#define MAX_PTC_TEXTURES        300
 
 // Maximum number of particle models (not instances).
 #define MAX_PTC_MODELS          100
