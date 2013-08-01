@@ -38,9 +38,6 @@ using namespace de;
 /// Ignore intensities below this threshold when accumulating contributions.
 static float const MIN_INTENSITY = .005f;
 
-/// Maximum number of sources which can contribute light to a vertex.
-static int const MAX_CONTRIBUTORS = 6;
-
 static int lightSpeed        = 130;  //cvar
 static int devUpdateAffected = true; //cvar
 static int devUseSightCheck  = true; //cvar
@@ -48,22 +45,20 @@ static int devUseSightCheck  = true; //cvar
 static byte activeContributors;
 static byte changedContributions;
 
+/**
+ * Stores map point lighting information for the Shadow Bias lighting model.
+ * Used in conjunction with a BiasSurface (for routing change notifications).
+ *
+ * @ingroup render
+ */
 class VertexIllum
 {
-    BiasSurface &surface; ///< The owning surface.
-    Vector3f color;       ///< Current light color.
-    Vector3f dest;        ///< Destination light color (interpolated to).
-    uint updateTime;      ///< When the value was calculated.
-    bool interpolating;   ///< Set to @c true during interpolation.
-
-    /**
-     * Cast lighting contributions from each source that affects the map point.
-     * Order is the same as that in the affected surface.
-     */
-    Vector3f casted[MAX_CONTRIBUTORS];
+public:
+    /// Maximum number of light contributions.
+    static int const MAX_CONTRIBUTORS = 6;
 
 public:
-    VertexIllum(BiasSurface &surface)
+    VertexIllum(BiasSurface *surface)
         : surface(surface),
           updateTime(0),
           interpolating(false)
@@ -88,16 +83,19 @@ public:
         {
             if(activeContributors & changedContributions)
             {
+                /// @todo Do not assume the current map.
+                Map &map = App_World().map();
+
                 /*
                  * Recalculate the contribution for each light.
-                 * We can reuse the previously calculated value for a source
-                 * if it hasn't changed.
+                 * We can reuse the previously calculated value for a source if
+                 * it hasn't changed.
                  */
                 for(int i = 0; i < MAX_CONTRIBUTORS; ++i)
                 {
                     if(activeContributors & changedContributions & (1 << i))
                     {
-                        updateContribution(i, point, normalAtPoint);
+                        updateContribution(i, point, normalAtPoint, map.bspRoot());
                     }
                 }
             }
@@ -110,6 +108,7 @@ public:
     }
 
     /// @copydoc evaluate()
+    /// @todo refactor away
     void evaluate(ColorRawf &color, Vector3d const &point,
                   Vector3f const &normalAtPoint, uint biasTime)
     {
@@ -121,7 +120,7 @@ public:
 
 private:
     /**
-     * Returns a previous light contribution by unique contributor index.
+     * Returns a previous light contribution by unique contributor @a index.
      */
     inline Vector3f &contribution(int index)
     {
@@ -132,7 +131,8 @@ private:
     /**
      * Update any changed lighting contributions.
      *
-     * @param surfacePoint  Position of the vertex in the map coordinate space.
+     * @param activeContributors  Bit field denoting the active contributors.
+     * @param biasTime            Time in milliseconds of the last bias frame update.
      */
     void applyLightingChanges(byte activeContributors, uint biasTime)
     {
@@ -181,23 +181,24 @@ private:
             // This is what we will be interpolating to.
             dest          = newColor;
             interpolating = true;
-            updateTime    = surface.timeOfLatestContributorUpdate();
+            updateTime    = surface->timeOfLatestContributorUpdate();
         }
 
 #undef COLOR_CHANGE_THRESHOLD
     }
 
     /**
-     * Update the lighting contribution for the specified contributor @a index.
+     * Update lighting contribution for the specified contributor @a index.
      *
      * @param index          Unique index of the contributor.
      * @param point          Point in the map to evaluate.
      * @param normalAtPoint  Surface normal at @a point.
+     * @param bspRoot        Root BSP element for the map.
      */
     void updateContribution(int index, Vector3d const &point,
-        Vector3f const &normalAtPoint)
+        Vector3f const &normalAtPoint, MapElement &bspRoot)
     {
-        BiasSource const &source = surface.contributor(index);
+        BiasSource const &source = surface->contributor(index);
 
         Vector3f &casted = contribution(index);
 
@@ -215,12 +216,9 @@ private:
 
         Vector3d sourceToSurface = source.origin() - point;
 
-        /// @todo Do not assume the current map.
-        MapElement &bspRoot = App_World().map().bspRoot();
-
         if(devUseSightCheck &&
-           !LineSightTest(source.origin(),
-                          point + sourceToSurface / 100).trace(bspRoot))
+           !LineSightTest(source.origin(), point + sourceToSurface / 100)
+                        .trace(bspRoot))
         {
             // LOS fail.
             // This affecting source does not contribute any light.
@@ -244,7 +242,10 @@ private:
     }
 
     /**
-     * Interpolate between current and destination.
+     * Interpolate color from current to destination.
+     *
+     * @param result       Interpolated color will be written here.
+     * @param currentTime  Time in milliseconds of the last bias frame update.
      */
     void lerp(Vector3f &result, uint currentTime)
     {
@@ -269,6 +270,18 @@ private:
             result = color + (dest - color) * inter;
         }
     }
+
+    BiasSurface *surface; ///< The "control" surface.
+    Vector3f color;       ///< Current light color.
+    Vector3f dest;        ///< Destination light color (interpolated to).
+    uint updateTime;      ///< When the value was calculated.
+    bool interpolating;   ///< Set to @c true during interpolation.
+
+    /**
+     * Cast lighting contributions from each source that affects the map point.
+     * Order is the same as that in the affected surface.
+     */
+    Vector3f casted[MAX_CONTRIBUTORS];
 };
 
 struct Contributor
@@ -276,6 +289,8 @@ struct Contributor
     BiasSource *source;
     float influence;
 };
+
+#define MAX_CONTRIBUTORS VertexIllum::MAX_CONTRIBUTORS
 
 /**
  * @todo Defer allocation of most data -- adopt a 'fly-weight' approach.
@@ -353,12 +368,12 @@ void BiasSurface::setLastUpdateOnFrame(uint newLastUpdateFrameNumber)
     d->lastUpdateOnFrame = newLastUpdateFrameNumber;
 }
 
-void BiasSurface::clearAffected()
+void BiasSurface::clearContributors()
 {
     d->activeContributors = 0;
 }
 
-void BiasSurface::addAffected(float intensity, BiasSource *source)
+void BiasSurface::addContributor(BiasSource *source, float intensity)
 {
     if(!source) return;
 
@@ -434,40 +449,6 @@ void BiasSurface::addAffected(float intensity, BiasSource *source)
     d->activeContributors |= 1 << slot;
 }
 
-void BiasSurface::updateAffection(BiasTracker &changes)
-{
-    // All contributions from changed sources will need to be updated.
-
-    Contributor *ctbr = d->contributors;
-    for(int i = 0; i < MAX_CONTRIBUTORS; ++i, ctbr++)
-    {
-        if(!ctbr->source)
-            continue;
-
-        /// @todo optimize: This O(n) lookup can be avoided if we 1) reference
-        /// sources by unique in-map index, and 2) re-index source references
-        /// here upon deletion. The assumption being that affection changes
-        /// occur far more frequently.
-        if(changes.check(App_World().map().toIndex(*ctbr->source)))
-        {
-            d->changedContributions |= 1 << i;
-            break;
-        }
-    }
-}
-
-void BiasSurface::updateAfterMove()
-{
-    Contributor *ctbr = d->contributors;
-    for(int i = 0; i < MAX_CONTRIBUTORS; ++i, ctbr++)
-    {
-        if(ctbr->source)
-        {
-            ctbr->source->forceUpdate();
-        }
-    }
-}
-
 BiasSource &BiasSurface::contributor(int index) const
 {
     if(index >= 0 && index < MAX_CONTRIBUTORS &&
@@ -508,6 +489,40 @@ uint BiasSurface::timeOfLatestContributorUpdate() const
     return latest;
 }
 
+void BiasSurface::updateAffection(BiasTracker &changes)
+{
+    // All contributions from changed sources will need to be updated.
+
+    Contributor *ctbr = d->contributors;
+    for(int i = 0; i < MAX_CONTRIBUTORS; ++i, ctbr++)
+    {
+        if(!ctbr->source)
+            continue;
+
+        /// @todo optimize: This O(n) lookup can be avoided if we 1) reference
+        /// sources by unique in-map index, and 2) re-index source references
+        /// here upon deletion. The assumption being that affection changes
+        /// occur far more frequently.
+        if(changes.check(App_World().map().toIndex(*ctbr->source)))
+        {
+            d->changedContributions |= 1 << i;
+            break;
+        }
+    }
+}
+
+void BiasSurface::updateAfterMove()
+{
+    Contributor *ctbr = d->contributors;
+    for(int i = 0; i < MAX_CONTRIBUTORS; ++i, ctbr++)
+    {
+        if(ctbr->source)
+        {
+            ctbr->source->forceUpdate();
+        }
+    }
+}
+
 void BiasSurface::lightPoly(Vector3f const &surfaceNormal, uint biasTime,
     int vertCount, rvertex_t const *positions, ColorRawf *colors)
 {
@@ -519,7 +534,7 @@ void BiasSurface::lightPoly(Vector3f const &surfaceNormal, uint biasTime,
     {
         for(int i = 0; i < d->illums.count(); ++i)
         {
-            d->illums[i] = new VertexIllum(*this);
+            d->illums[i] = new VertexIllum(this);
         }
     }
 

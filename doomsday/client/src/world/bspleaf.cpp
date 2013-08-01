@@ -295,7 +295,7 @@ DENG2_PIMPL(BspLeaf)
 
         bsuf.setLastUpdateOnFrame(lastChangeFrame);
 
-        bsuf.clearAffected();
+        bsuf.clearContributors();
 
         Plane const &plane     = sector->plane(group);
         Surface const &surface = plane.surface();
@@ -325,7 +325,7 @@ DENG2_PIMPL(BspLeaf)
             if(sourceToSurface.dot(surface.normal()) < 0)
                 continue;
 
-            bsuf.addAffected(source->evaluateIntensity() / de::max(distance, 1.0), source);
+            bsuf.addContributor(source, source->evaluateIntensity() / de::max(distance, 1.0));
         }
     }
 

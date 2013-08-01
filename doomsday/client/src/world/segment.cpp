@@ -104,7 +104,7 @@ DENG2_PIMPL(Segment)
 
         bsuf.setLastUpdateOnFrame(lastChangeFrame);
 
-        bsuf.clearAffected();
+        bsuf.clearContributors();
 
         Surface const &surface = lineSide->middle();
         Vector2d const &from   = self.from().origin();
@@ -130,7 +130,7 @@ DENG2_PIMPL(Segment)
             if(sourceToSurface.dot(surface.normal()) < 0)
                 continue;
 
-            bsuf.addAffected(source->evaluateIntensity() / de::max(distance, 1.0), source);
+            bsuf.addContributor(source, source->evaluateIntensity() / de::max(distance, 1.0));
         }
     }
 #endif

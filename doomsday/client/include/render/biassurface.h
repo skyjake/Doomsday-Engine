@@ -29,8 +29,7 @@ class BiasSource;
 class BiasTracker;
 
 /**
- * Stores surface data for the Shadow Bias lighting model (e.g., per-vertex
- * illumination and casted source lighting contributions).
+ * @ingroup render
  */
 class BiasSurface
 {
@@ -42,7 +41,7 @@ public:
     /**
      * Construct a new surface.
      *
-     * @param size          Number of vertices.
+     * @param size  Number of vertices.
      */
     BiasSurface(int size);
 
@@ -55,16 +54,38 @@ public:
 
     void setLastUpdateOnFrame(uint newLastUpdateFrameNumber);
 
-    void clearAffected();
-
-    void addAffected(float intensity, BiasSource *source);
-
-    void updateAffection(BiasTracker &changes);
-
-    void updateAfterMove();
+    /**
+     * Remove all light contributors. Existing contributions are put into a
+     * "latent" state, so that if they are added again the contribution is then
+     * re-activated and no lighting changes will occur (appears seamless).
+     *
+     * @see addContributor()
+     */
+    void clearContributors();
 
     /**
-     * Returns a light source contributor by @a index.
+     * Add a new light contributor. After which lighting changes at the source
+     * will be tracked and routed to map point illuminations when necessary
+     * (i.e., when lighting is next evaluated for the point).
+     *
+     * All contributors are assigned a unique index (when added) that can be
+     * used to reference the contributor later.
+     *
+     * @note At most @ref VertexIllum::MAX_CONTRIBUTORS can contribute lighting.
+     * Once capacity is reached adding a new contributor will result in the
+     * weakest contributor (i.e., smallest intensity when added) being dropped
+     * and it's index assigned to the 'new' contributor. If the weakest is the
+     * new contributor then nothing will happen.
+     *
+     * @param source     Source of the light contribution.
+     * @param intensity  Strength of the contribution from the source.
+     *
+     * @see contributor()
+     */
+    void addContributor(BiasSource *source, float intensity);
+
+    /**
+     * Returns the source of a light contributor by @a index.
      */
     BiasSource &contributor(int index) const;
 
@@ -73,6 +94,10 @@ public:
      * was changed/deleted.
      */
     uint timeOfLatestContributorUpdate() const;
+
+    void updateAffection(BiasTracker &changes);
+
+    void updateAfterMove();
 
     /**
      * Perform lighting for the supplied geometry. It is assumed that this
