@@ -350,6 +350,7 @@ DENG_HEADERS += \
     include/ui/widgets/notificationwidget.h \
     include/ui/widgets/popupmenuwidget.h \
     include/ui/widgets/popupwidget.h \
+    include/ui/widgets/progresswidget.h \
     include/ui/widgets/scrollareawidget.h \
     include/ui/widgets/styledlogsinkformatter.h \
     include/ui/widgets/taskbarwidget.h \
