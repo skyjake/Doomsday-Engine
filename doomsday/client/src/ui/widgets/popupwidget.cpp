@@ -237,7 +237,12 @@ PopupWidget::PopupWidget(String const &name) : d(new Instance(this))
     // Initially the popup is hidden.
     hide();
 
-    set(Background(style().colors().colorf("background")));
+    // Move these to an updateStyle:
+    Style const &st = style();
+    set(Background(st.colors().colorf("background"),
+                   Background::BorderGlow,
+                   st.colors().colorf("glow"),
+                   st.rules().rule("glow").valuei()));
 }
 
 void PopupWidget::setContent(GuiWidget *content)

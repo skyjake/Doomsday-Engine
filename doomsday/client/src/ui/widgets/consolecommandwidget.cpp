@@ -43,6 +43,8 @@ public IGameChangeObserver
         App::app().audienceForStartupComplete += this;
         audienceForGameChange += this;
 
+        Style const &st = self.style();
+
         // Popup for autocompletions.
         completions = new DocumentWidget;
         completions->setMaximumLineWidth(640);
@@ -52,7 +54,10 @@ public IGameChangeObserver
                                                            completions->margin()));
 
         popup = new PopupWidget;
-        popup->set(Background(self.style().colors().colorf("editor.completion.background")));
+        popup->set(Background(st.colors().colorf("editor.completion.background"),
+                              Background::BorderGlow,
+                              st.colors().colorf("editor.completion.glow"),
+                              st.rules().rule("glow").valuei()));
         popup->setContent(completions);
         self.add(popup);
     }
