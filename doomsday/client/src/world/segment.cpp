@@ -257,7 +257,7 @@ BiasSurface &Segment::biasSurface(int group)
     return *bsuf;
 }
 
-void Segment::updateBiasAffection(BiasTracker &changes)
+void Segment::updateBiasAffection(BiasDigest &changes)
 {
     foreach(BiasSurface *biasSurface, d->biasSurfaces)
     {

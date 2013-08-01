@@ -25,7 +25,7 @@
 #include "BspLeaf"
 #include "Sector"
 
-#include "BiasTracker"
+#include "BiasDigest"
 
 #include "render/biassource.h"
 
@@ -272,7 +272,7 @@ float BiasSource::evaluateIntensity() const
     return d->intensity;
 }
 
-bool BiasSource::trackChanges(BiasTracker &changes, uint indexInTracker, uint currentTime)
+bool BiasSource::trackChanges(BiasDigest &changes, uint indexInTracker, uint currentTime)
 {
     if(d->needToObserveSectorLightLevelChanges())
     {
@@ -307,7 +307,7 @@ bool BiasSource::trackChanges(BiasTracker &changes, uint indexInTracker, uint cu
     d->changed = false;
     d->lastUpdateTime = currentTime; // Used for interpolation.
 
-    changes.mark(indexInTracker);
+    changes.markSourceChanged(indexInTracker);
 
     return true; // Changes were applied.
 }

@@ -247,7 +247,7 @@ public:
     /**
      * @param allChanges
      */
-    void updateBiasAffection(BiasTracker &changes);
+    void updateBiasAffection(BiasDigest &changes);
 
     void lightPoly(int group, int vertCount, struct rvertex_s const *positions,
                    struct ColorRawf_s *colors);

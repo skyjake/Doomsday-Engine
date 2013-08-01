@@ -28,7 +28,7 @@
 
 #include "Grabbable"
 
-class BiasTracker;
+class BiasDigest;
 class BspLeaf;
 struct ded_light_s; // def_data.h
 
@@ -202,7 +202,7 @@ public:
      *                        that interpolation can be performed later (by
      *                        the surface(s)).
      */
-    bool trackChanges(BiasTracker &changes, uint indexInTracker, uint currentTime);
+    bool trackChanges(BiasDigest &changes, uint indexInTracker, uint currentTime);
 
     // Implements ISerializable.
     void operator >> (de::Writer &to) const;

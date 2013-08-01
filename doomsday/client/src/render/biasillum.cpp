@@ -24,7 +24,7 @@
 #include "world/linesighttest.h"
 #include "BspLeaf"
 
-#include "render/biassurface.h"
+#include "BiasSurface"
 
 #include "render/biasillum.h"
 
@@ -148,10 +148,10 @@ DENG2_PIMPL_NOREF(BiasIllum)
             return;
         }
 
-        Vector3d sourceToSurface = source.origin() - point;
+        Vector3d sourceToPoint = source.origin() - point;
 
         if(devUseSightCheck &&
-           !LineSightTest(source.origin(), point + sourceToSurface / 100)
+           !LineSightTest(source.origin(), point + sourceToPoint / 100)
                         .trace(bspRoot))
         {
             // LOS fail.
@@ -160,10 +160,10 @@ DENG2_PIMPL_NOREF(BiasIllum)
             return;
         }
 
-        double distance = sourceToSurface.length();
-        double dot = sourceToSurface.normalize().dot(normalAtPoint);
+        double distance = sourceToPoint.length();
+        double dot = sourceToPoint.normalize().dot(normalAtPoint);
 
-        // The surface faces away from the light?
+        // The point faces away from the light?
         if(dot < 0)
         {
             casted = Vector3f();
@@ -225,9 +225,8 @@ void BiasIllum::evaluate(Vector3f &color, Vector3d const &point,
             Map &map = App_World().map();
 
             /*
-             * Recalculate the contribution for each light.
-             * We can reuse the previously calculated value for a source if
-             * it hasn't changed.
+             * Recalculate the contribution for each changed light source.
+             * Continue using the previously calculated value otherwise.
              */
             for(int i = 0; i < MAX_CONTRIBUTORS; ++i)
             {
@@ -238,6 +237,7 @@ void BiasIllum::evaluate(Vector3f &color, Vector3d const &point,
             }
         }
 
+        // Accumulate light contributions and initiate interpolation.
         d->applyLightingChanges(activeContributors, biasTime);
     }
 

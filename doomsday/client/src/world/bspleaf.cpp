@@ -549,7 +549,7 @@ BiasSurface &BspLeaf::biasSurface(int group)
     return *bsuf;
 }
 
-void BspLeaf::updateBiasAffection(BiasTracker &changes)
+void BspLeaf::updateBiasAffection(BiasDigest &changes)
 {
     foreach(BiasSurface *biasSurface, d->biasSurfaces)
     {

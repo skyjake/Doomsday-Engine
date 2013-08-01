@@ -26,7 +26,7 @@
 #include "MapElement"
 
 class BiasSource;
-class BiasTracker;
+class BiasDigest;
 
 /**
  * @ingroup render
@@ -98,7 +98,7 @@ public:
      */
     uint timeOfLatestContributorUpdate() const;
 
-    void updateAffection(BiasTracker &changes);
+    void updateAffection(BiasDigest &changes);
 
     void updateAfterMove();
 

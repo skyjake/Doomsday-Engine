@@ -25,8 +25,11 @@
 #include "de_base.h"
 #include "de_console.h"
 
-#include "BiasTracker"
+#include "world/map.h"
+
 #include "BiasIllum"
+#include "BiasSource"
+#include "BiasDigest"
 
 #include "render/biassurface.h"
 
@@ -236,7 +239,7 @@ uint BiasSurface::timeOfLatestContributorUpdate() const
     return latest;
 }
 
-void BiasSurface::updateAffection(BiasTracker &changes)
+void BiasSurface::updateAffection(BiasDigest &changes)
 {
     // All contributions from changed sources will need to be updated.
 
@@ -250,7 +253,7 @@ void BiasSurface::updateAffection(BiasTracker &changes)
         /// sources by unique in-map index, and 2) re-index source references
         /// here upon deletion. The assumption being that affection changes
         /// occur far more frequently.
-        if(changes.check(App_World().map().toIndex(*ctbr->source)))
+        if(changes.sourceMarkedChanged(App_World().map().toIndex(*ctbr->source)))
         {
             d->changedContributions |= 1 << i;
             break;

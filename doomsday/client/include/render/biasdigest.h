@@ -1,4 +1,4 @@
-/** @file biastracker.h Shadow Bias change tracking buffer.
+/** @file biasdigest.h Shadow Bias change digest.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -17,51 +17,36 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_RENDER_SHADOWBIAS_TRACKER_H
-#define DENG_RENDER_SHADOWBIAS_TRACKER_H
+#ifndef DENG_RENDER_SHADOWBIAS_DIGEST_H
+#define DENG_RENDER_SHADOWBIAS_DIGEST_H
 
-#include "world/map.h"
+#include <de/libdeng2.h>
 
 /**
- * Change tracking buffer for the Shadow Bias lighting model.
+ * Change digest for updating trackers in the Shadow Bias lighting model.
  */
-class BiasTracker
+class BiasDigest
 {
 public:
-    static int const MAX_TRACKED = (de::Map::MAX_BIAS_SOURCES / 8);
-
-public:
-    BiasTracker();
-
-    BiasTracker &operator = (BiasTracker const &other);
+    BiasDigest();
 
     /**
-     * Clear the tracker reseting all bits to zero.
+     * Return the digest to an empty state (clear all changes).
      */
-    void clear();
+    void reset();
 
     /**
-     * Sets/clears a bit in the tracker for the given index.
+     * Mark the identified bias source as having changed.
      */
-    void mark(uint index);
+    void markSourceChanged(uint index);
 
     /**
-     * Checks if the given index bit is set in the tracker.
+     * Returns @c true if the identified bias source is marked as changed.
      */
-    int check(uint index) const;
-
-    /**
-     * Copies changes from src.
-     */
-    void apply(BiasTracker const &src);
-
-    /**
-     * Remove changes of src.
-     */
-    void remove(BiasTracker const &src);
+    bool sourceMarkedChanged(uint index) const;
 
 private:
-    uint _changes[MAX_TRACKED];
+    DENG2_PRIVATE(d)
 };
 
-#endif // DENG_RENDER_SHADOWBIAS_TRACKER_H
+#endif // DENG_RENDER_SHADOWBIAS_DIGEST_H

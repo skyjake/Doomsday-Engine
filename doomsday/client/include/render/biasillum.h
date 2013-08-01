@@ -1,4 +1,4 @@
-/** @file vertexillum.cpp Shadow Bias map point illumination.
+/** @file biasillum.h Shadow Bias map point illumination.
  *
  * @authors Copyright © 2005-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
@@ -50,7 +50,7 @@ public:
     static void consoleRegister();
 
     /**
-     * (Re-)Evaluate lighting for this world point.
+     * (Re-)Evaluate lighting for this map point.
      *
      * @param color          Final color will be written here.
      * @param point          Point in the map to evaluate. Assumed not to have
