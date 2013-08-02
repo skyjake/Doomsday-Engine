@@ -27,9 +27,9 @@
 
 #include "world/map.h"
 
-#include "BiasIllum"
-#include "BiasSource"
+#include "BiasIllum" // BiasIllum::MAX_CONTRIBUTORS
 #include "BiasDigest"
+#include "BiasSource"
 
 #include "render/biastracker.h"
 
@@ -54,8 +54,6 @@ struct Contributor
 DENG2_PIMPL_NOREF(BiasTracker),
 DENG2_OBSERVES(BiasSource, Deletion)
 {
-    QVector<BiasIllum *> illums; /// @todo use an external allocator.
-
     Contributor contributors[MAX_CONTRIBUTORS];
     byte activeContributors;
     byte changedContributions;
@@ -63,9 +61,8 @@ DENG2_OBSERVES(BiasSource, Deletion)
     uint lastUpdateOnFrame;
     uint lastSourceDeletion; // Milliseconds.
 
-    Instance(int size)
-        : illums(size),
-          activeContributors(0),
+    Instance()
+        : activeContributors(0),
           changedContributions(0),
           lastUpdateOnFrame(0),
           lastSourceDeletion(0)
@@ -73,9 +70,13 @@ DENG2_OBSERVES(BiasSource, Deletion)
         zap(contributors);
     }
 
-    ~Instance()
+    Instance(Instance const &other)
+        : activeContributors(other.activeContributors),
+          changedContributions(other.changedContributions),
+          lastUpdateOnFrame(other.lastUpdateOnFrame),
+          lastSourceDeletion(other.lastSourceDeletion)
     {
-        qDeleteAll(illums);
+        std::memcpy(contributors, other.contributors, sizeof(contributors));
     }
 
     /// Observes BiasSource Deletion
@@ -99,8 +100,17 @@ DENG2_OBSERVES(BiasSource, Deletion)
     }
 };
 
-BiasTracker::BiasTracker(int size) : d(new Instance(size))
+BiasTracker::BiasTracker() : d(new Instance())
 {}
+
+BiasTracker::BiasTracker(BiasTracker const &other) : d(new Instance(*other.d))
+{}
+
+BiasTracker &BiasTracker::operator = (BiasTracker const &other)
+{
+    d.reset(new Instance(*other.d));
+    return *this;
+}
 
 void BiasTracker::consoleRegister() // static
 {
@@ -273,30 +283,17 @@ void BiasTracker::updateAllContributors()
     }
 }
 
-void BiasTracker::lightPoly(Vector3f const &surfaceNormal, uint biasTime,
-    int vertCount, rvertex_t const *positions, ColorRawf *colors)
+byte BiasTracker::activeContributors() const
 {
-    DENG_ASSERT(vertCount == d->illums.count()); // sanity check
-    DENG_ASSERT(positions != 0 && colors != 0);
+    return d->activeContributors;
+}
 
-    // Time to allocate the illumination data?
-    if(!d->illums[0])
-    {
-        for(int i = 0; i < d->illums.count(); ++i)
-        {
-            d->illums[i] = new BiasIllum(this);
-        }
-    }
+byte BiasTracker::changedContribution() const
+{
+    return d->changedContributions;
+}
 
-    rvertex_t const *vtx = positions;
-    ColorRawf *color     = colors;
-    for(int i = 0; i < vertCount; ++i, vtx++, color++)
-    {
-        Vector3d surfacePoint(vtx->pos[VX], vtx->pos[VY], vtx->pos[VZ]);
-        d->illums[i]->evaluate(*color, surfacePoint, surfaceNormal, biasTime,
-                               d->activeContributors, d->changedContributions);
-    }
-
-    // Any changes from contributors will have now been applied.
+void BiasTracker::markIllumUpdateCompleted()
+{
     d->changedContributions = 0;
 }

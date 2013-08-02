@@ -98,16 +98,12 @@ public:
      * @param biasTime       Time in milliseconds of the last bias frame update.
      */
     void evaluate(de::Vector3f &color, de::Vector3d const &point,
-                  de::Vector3f const &normalAtPoint, uint biasTime,
-                  /// @todo Refactor away:
-                  byte activeContributors, byte changedContributions);
+                  de::Vector3f const &normalAtPoint, uint biasTime);
 
     /// @copydoc evaluate()
     /// @todo refactor away
     void evaluate(ColorRawf &color, de::Vector3d const &point,
-                  de::Vector3f const &normalAtPoint, uint biasTime,
-                  /// @todo Refactor away:
-                  byte activeContributors, byte changedContributions);
+                  de::Vector3f const &normalAtPoint, uint biasTime);
 
 private:
     DENG2_PRIVATE(d)

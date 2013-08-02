@@ -253,33 +253,37 @@ void BiasIllum::setTracker(BiasTracker *newTracker)
 }
 
 void BiasIllum::evaluate(Vector3f &color, Vector3d const &point,
-    Vector3f const &normalAtPoint, uint biasTime,
-    /// @todo Refactor away:
-    byte activeContributors, byte changedContributions)
+    Vector3f const &normalAtPoint, uint biasTime)
 {
-    // Does the tracker have any lighting changes to apply?
-    if(changedContributions)
+    if(d->tracker)
     {
-        if(activeContributors & changedContributions)
-        {
-            /// @todo Do not assume the current map.
-            Map &map = App_World().map();
+        // Does the tracker have any lighting changes to apply?
+        byte activeContributors   = d->tracker->activeContributors();
+        byte changedContributions = d->tracker->changedContribution();
 
-            /*
-             * Recalculate the contribution for each changed light source.
-             * Continue using the previously calculated value otherwise.
-             */
-            for(int i = 0; i < MAX_CONTRIBUTORS; ++i)
+        if(changedContributions)
+        {
+            if(activeContributors & changedContributions)
             {
-                if(activeContributors & changedContributions & (1 << i))
+                /// @todo Do not assume the current map.
+                Map &map = App_World().map();
+
+                /*
+                 * Recalculate the contribution for each changed light source.
+                 * Continue using the previously calculated value otherwise.
+                 */
+                for(int i = 0; i < MAX_CONTRIBUTORS; ++i)
                 {
-                    d->updateContribution(i, point, normalAtPoint, map.bspRoot());
+                    if(activeContributors & changedContributions & (1 << i))
+                    {
+                        d->updateContribution(i, point, normalAtPoint, map.bspRoot());
+                    }
                 }
             }
-        }
 
-        // Accumulate light contributions and initiate interpolation.
-        d->applyLightingChanges(activeContributors, biasTime);
+            // Accumulate light contributions and initiate interpolation.
+            d->applyLightingChanges(activeContributors, biasTime);
+        }
     }
 
     // Factor in the current color (and perform interpolation if needed).
@@ -287,12 +291,9 @@ void BiasIllum::evaluate(Vector3f &color, Vector3d const &point,
 }
 
 void BiasIllum::evaluate(ColorRawf &color, Vector3d const &point,
-    Vector3f const &normalAtPoint, uint biasTime,
-    /// @todo Refactor away:
-    byte activeContributors, byte changedContributions)
+    Vector3f const &normalAtPoint, uint biasTime)
 {
-    Vector3f tmp; evaluate(tmp, point, normalAtPoint, biasTime,
-                           activeContributors, changedContributions);
+    Vector3f tmp; evaluate(tmp, point, normalAtPoint, biasTime);
 
     for(int c = 0; c < 3; ++c)
         color.rgba[c] += tmp[c];

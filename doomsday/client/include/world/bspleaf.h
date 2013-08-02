@@ -275,9 +275,16 @@ public:
      */
     int numFanVertices() const;
 
-    /// Implements BiasSurface
-    void lightBiasPoly(int group, int vertCount, rvertex_t const *positions,
-                   ColorRawf *colors);
+    /**
+     * Perform bias lighting for the supplied geometry.
+     *
+     * @important It is assumed there are least @ref numFanVertices() elements!
+     *
+     * @param group      Geometry group identifier.
+     * @param positions  World coordinates for each vertex.
+     * @param colors     Final lighting values will be written here.
+     */
+    void lightBiasPoly(int group, rvertex_t const *positions, ColorRawf *colors);
 
     /// Implements BiasSurface
     void updateBiasAfterGeometryMove(int group);

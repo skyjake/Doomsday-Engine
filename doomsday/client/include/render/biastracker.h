@@ -40,10 +40,11 @@ public:
 public:
     /**
      * Construct a new bias illumination tracker.
-     *
-     * @param size  Number of illumination points to track for.
      */
-    BiasTracker(int size);
+    BiasTracker();
+
+    BiasTracker(BiasTracker const &other);
+    BiasTracker &operator = (BiasTracker const &other);
 
     /**
      * To be called to register the commands and variables of this module.
@@ -102,6 +103,12 @@ public:
      */
     void applyChanges(BiasDigest &changes);
 
+public: /// @todo The following API should be replaced -------------------------
+
+    byte activeContributors() const;
+    byte changedContribution() const;
+    void markIllumUpdateCompleted();
+
 public: /// @todo The following logic does not belong at this level ------------
 
     uint lastUpdateOnFrame() const;
@@ -109,20 +116,6 @@ public: /// @todo The following logic does not belong at this level ------------
     void setLastUpdateOnFrame(uint newLastUpdateFrameNumber);
 
     void updateAllContributors();
-
-    /**
-     * Perform lighting for the supplied geometry. It is assumed that this
-     * geometry has the @em same number of vertices as illumination points.
-     *
-     * @param surfaceNormal  Normal of the surface being lit.
-     * @param biasTime       Current time in milliseconds for bias.
-     * @param vertCount      Number of vertices to be lit.
-     * @param positions      World coordinates for each vertex.
-     * @param colors         Final lighting values will be written here.
-     */
-    void lightPoly(de::Vector3f const &surfaceNormal, uint biasTime,
-                   int vertCount, struct rvertex_s const *positions,
-                   struct ColorRawf_s *colors);
 
 private:
     DENG2_PRIVATE(d)

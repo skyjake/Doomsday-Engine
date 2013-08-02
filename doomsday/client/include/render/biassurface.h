@@ -37,12 +37,11 @@ public:
      * how these vertices map to bias illumination points.
      *
      * @param geomGroup  Geometry group identifier.
-     * @param vertCount  Number of vertices to be lit.
      * @param positions  World coordinates for each vertex.
      * @param colors     Final lighting values will be written here.
      */
-    virtual void lightBiasPoly(int geomGroup, int vertCount, rvertex_t const *positions,
-                           ColorRawf *colors) = 0;
+    virtual void lightBiasPoly(int geomGroup, rvertex_t const *positions,
+                               ColorRawf *colors) = 0;
 
     /**
      * Schedule a lighting update to a geometry group following a move of some

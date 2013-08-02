@@ -30,8 +30,10 @@
 #include "Sector"
 
 #ifdef __CLIENT__
-#  include "BiasTracker"
 #  include "world/map.h"
+#  include "BiasIllum"
+#  include "BiasSource"
+#  include "BiasTracker"
 #endif
 
 #include "world/segment.h"
@@ -39,7 +41,19 @@
 using namespace de;
 
 #ifdef __CLIENT__
-typedef QMap<int, BiasTracker *> BiasTrackers;
+/**
+ * Structure containing data for a geometry group.
+ */
+struct GeometryGroup
+{
+    typedef QList<BiasIllum> BiasIllums;
+
+    BiasIllums biasIllums;
+    BiasTracker biasTracker;
+};
+
+/// Geometry group identifier => group data.
+typedef QMap<int, GeometryGroup> GeometryGroups;
 #endif
 
 DENG2_PIMPL(Segment)
@@ -67,7 +81,8 @@ DENG2_PIMPL(Segment)
     coord_t length;
 
 #ifdef __CLIENT__
-    BiasTrackers biasTrackers;
+    /// Bias lighting data for each geometry group (i.e., each Line::Side section).
+    GeometryGroups geomGroups;
 #endif
 
     Instance(Public *i)
@@ -81,36 +96,40 @@ DENG2_PIMPL(Segment)
           length(0)
     {}
 
-    ~Instance()
-    {
-#ifdef __CLIENT__
-        qDeleteAll(biasTrackers);
-#endif
-    }
-
 #ifdef __CLIENT__
     /**
-     * Retrieve the bias tracker for the specified geometry @a group.
+     * Retrieve the geometry data for the unique @a group identifier.
      *
-     * @param group     Geometry group identifier for the bias tracker.
-     * @param canAlloc  @c true= to allocate if no tracker exists.
+     * @param group     Geometry group identifier.
+     * @param canAlloc  @c true= to allocate if no data exists. Note that the
+     *                  number of vertices in the fan geometry must be known
+     *                  at this time.
      */
-    BiasTracker *biasTracker(int group, bool canAlloc = true)
+    GeometryGroup *geometryGroup(int group, bool canAlloc = true)
     {
         DENG_ASSERT(group >= 0 && group < 3); // sanity check
         DENG_ASSERT(self.hasLineSide()); // sanity check
 
-        BiasTrackers::iterator foundAt = biasTrackers.find(group);
-        if(foundAt != biasTrackers.end())
+        GeometryGroups::iterator foundAt = geomGroups.find(group);
+        if(foundAt != geomGroups.end())
         {
-            return *foundAt;
+            return &*foundAt;
         }
 
         if(!canAlloc) return 0;
 
-        BiasTracker *newTracker = new BiasTracker(4);
-        biasTrackers.insert(group, newTracker);
-        return newTracker;
+        // Number of bias illumination points for this geometry. Presently we
+        // define a 1:1 mapping to strip geometry vertices.
+        int const numBiasIllums = 4;
+
+        GeometryGroup &newGeomGroup = *geomGroups.insert(group, GeometryGroup());
+        newGeomGroup.biasIllums.reserve(numBiasIllums);
+        for(int i = 0; i < numBiasIllums; ++i)
+        {
+            newGeomGroup.biasIllums.append(BiasIllum(&newGeomGroup.biasTracker));
+        }
+
+        return &newGeomGroup;
     }
 
     /**
@@ -267,36 +286,48 @@ void Segment::setFlags(Flags flagsToChange, FlagOp operation)
 
 void Segment::updateBiasAfterGeometryMove(int group)
 {
-    if(BiasTracker *biasTracker = d->biasTracker(group, false /*don't allocate*/))
+    if(GeometryGroup *geomGroup = d->geometryGroup(group, false /*don't allocate*/))
     {
-        biasTracker->updateAllContributors();
+        geomGroup->biasTracker.updateAllContributors();
     }
 }
 
 void Segment::applyBiasDigest(BiasDigest &changes)
 {
-    foreach(BiasTracker *biasTracker, d->biasTrackers)
+    for(GeometryGroups::iterator it = d->geomGroups.begin();
+        it != d->geomGroups.end(); ++it)
     {
-        biasTracker->applyChanges(changes);
+        it.value().biasTracker.applyChanges(changes);
     }
 }
 
-void Segment::lightBiasPoly(int group, int vertCount, rvertex_t const *positions,
-    ColorRawf *colors)
+void Segment::lightBiasPoly(int group, rvertex_t const *positions, ColorRawf *colors)
 {
     DENG_ASSERT(hasLineSide()); // sanity check
+    DENG_ASSERT(positions != 0 && colors != 0);
 
-    BiasTracker *tracker = d->biasTracker(group);
+    GeometryGroup *geomGroup = d->geometryGroup(group);
 
     // Should we update?
     //if(devUpdateAffected)
     {
-        d->updateAffected(*tracker, group);
+        d->updateAffected(geomGroup->biasTracker, group);
     }
 
-    Surface &surface = d->lineSide->middle();
-    tracker->lightPoly(surface.normal(), map().biasCurrentTime(),
-                       vertCount, positions, colors);
+    Surface const &surface = d->lineSide->middle();
+    uint biasTime = map().biasCurrentTime();
+
+    rvertex_t const *vtx = positions;
+    ColorRawf *color     = colors;
+    for(int i = 0; i < geomGroup->biasIllums.count(); ++i, vtx++, color++)
+    {
+        BiasIllum *illum = &geomGroup->biasIllums[i];
+        Vector3d surfacePoint(vtx->pos[VX], vtx->pos[VY], vtx->pos[VZ]);
+        illum->evaluate(*color, surfacePoint, surface.normal(), biasTime);
+    }
+
+    // Any changes from contributors will have now been applied.
+    geomGroup->biasTracker.markIllumUpdateCompleted();
 }
 
 #endif // __CLIENT__
