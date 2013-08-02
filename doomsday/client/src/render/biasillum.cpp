@@ -53,6 +53,14 @@ DENG2_PIMPL_NOREF(BiasIllum)
           interpolating(false)
     {}
 
+    Instance(Instance const &other)
+        : tracker(other.tracker),
+          color(other.color),
+          dest(other.dest),
+          updateTime(other.updateTime),
+          interpolating(other.interpolating)
+    {}
+
     /**
      * Returns a previous light contribution by unique contributor @a index.
      */
@@ -71,6 +79,8 @@ DENG2_PIMPL_NOREF(BiasIllum)
     void applyLightingChanges(byte activeContributors, uint biasTime)
     {
 #define COLOR_CHANGE_THRESHOLD  0.1f // Ignore small variations for perf
+
+        DENG_ASSERT(tracker != 0);
 
         // Determine the new color (initially, black).
         Vector3f newColor;
@@ -132,6 +142,8 @@ DENG2_PIMPL_NOREF(BiasIllum)
     void updateContribution(int index, Vector3d const &point,
         Vector3f const &normalAtPoint, MapElement &bspRoot)
     {
+        DENG_ASSERT(tracker != 0);
+
         BiasSource const &source = tracker->contributor(index);
 
         Vector3f &casted = contribution(index);
@@ -210,6 +222,35 @@ float const BiasIllum::MIN_INTENSITY = .005f;
 
 BiasIllum::BiasIllum(BiasTracker *tracker) : d(new Instance(tracker))
 {}
+
+BiasIllum::BiasIllum(BiasIllum const &other) : d(new Instance(*other.d))
+{}
+
+BiasIllum &BiasIllum::operator = (BiasIllum const &other)
+{
+    d.reset(new Instance(*other.d));
+    return *this;
+}
+
+bool BiasIllum::hasTracker() const
+{
+    return d->tracker != 0;
+}
+
+BiasTracker &BiasIllum::tracker() const
+{
+    if(d->tracker != 0)
+    {
+        return *d->tracker;
+    }
+    /// @throw MissingTrackerError  Attempted with no tracker assigned.
+    throw MissingTrackerError("BiasIllum::tracker", "No tracker is assigned");
+}
+
+void BiasIllum::setTracker(BiasTracker *newTracker)
+{
+    d->tracker = newTracker;
+}
 
 void BiasIllum::evaluate(Vector3f &color, Vector3d const &point,
     Vector3f const &normalAtPoint, uint biasTime,

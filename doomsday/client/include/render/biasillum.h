@@ -20,6 +20,7 @@
 #ifndef DENG_RENDER_SHADOWBIAS_ILLUMINATION_H
 #define DENG_RENDER_SHADOWBIAS_ILLUMINATION_H
 
+#include <de/Error>
 #include <de/Vector>
 
 #include "render/rendpoly.h" /// @todo remove me
@@ -35,6 +36,9 @@ class BiasTracker;
 class BiasIllum
 {
 public:
+    /// Required tracker is missing. @ingroup errors
+    DENG2_ERROR(MissingTrackerError);
+
     /// Maximum number of light contributions.
     static int const MAX_CONTRIBUTORS = 6;
 
@@ -42,12 +46,45 @@ public:
     static float const MIN_INTENSITY; // .005f
 
 public:
-    BiasIllum(BiasTracker *surface);
+    /**
+     * Construct a new bias illumination point.
+     *
+     * @param tracker  Tracker to assigned to the new point (if any). Note that
+     *                 @ref assignTracker() can be used later.
+     */
+    explicit BiasIllum(BiasTracker *tracker = 0);
+
+    BiasIllum(BiasIllum const &other);
+    BiasIllum &operator = (BiasIllum const &other);
 
     /**
      * To be called to register the commands and variables of this module.
      */
     static void consoleRegister();
+
+    /**
+     * Returns @c true iff a BiasTracker has been assigned for the illumination.
+     *
+     * @see setTracker()
+     */
+    bool hasTracker() const;
+
+    /**
+     * Provides access to the currently assigned tracker.
+     *
+     * @see hasTracker(), setTracker()
+     */
+    BiasTracker &tracker() const;
+
+    /**
+     * Assign the illumination point to the specified tracker.
+     *
+     * @param newTracker  New illumination tracker to be assigned. Use @c 0 to
+     *                    unassign any current tracker.
+     *
+     * @see hasTracker()
+     */
+    void setTracker(BiasTracker *newTracker);
 
     /**
      * (Re-)Evaluate lighting for this map point.
