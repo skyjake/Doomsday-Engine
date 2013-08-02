@@ -35,7 +35,7 @@ static int devUseSightCheck  = true; //cvar
 
 DENG2_PIMPL_NOREF(BiasIllum)
 {
-    BiasTracker *surface; ///< The "control" surface.
+    BiasTracker *tracker; ///< Controlling tracker.
     Vector3f color;       ///< Current light color.
     Vector3f dest;        ///< Destination light color (interpolated to).
     uint updateTime;      ///< When the value was calculated.
@@ -43,12 +43,12 @@ DENG2_PIMPL_NOREF(BiasIllum)
 
     /**
      * Cast lighting contributions from each source that affects the map point.
-     * Order is the same as that in the affected surface.
+     * Order is the same as that in the tracker.
      */
     Vector3f casted[MAX_CONTRIBUTORS];
 
-    Instance(BiasTracker *surface)
-        : surface(surface),
+    Instance(BiasTracker *tracker)
+        : tracker(tracker),
           updateTime(0),
           interpolating(false)
     {}
@@ -115,7 +115,7 @@ DENG2_PIMPL_NOREF(BiasIllum)
             // This is what we will be interpolating to.
             dest          = newColor;
             interpolating = true;
-            updateTime    = surface->timeOfLatestContributorUpdate();
+            updateTime    = tracker->timeOfLatestContributorUpdate();
         }
 
 #undef COLOR_CHANGE_THRESHOLD
@@ -132,7 +132,7 @@ DENG2_PIMPL_NOREF(BiasIllum)
     void updateContribution(int index, Vector3d const &point,
         Vector3f const &normalAtPoint, MapElement &bspRoot)
     {
-        BiasSource const &source = surface->contributor(index);
+        BiasSource const &source = tracker->contributor(index);
 
         Vector3f &casted = contribution(index);
 
@@ -208,7 +208,7 @@ DENG2_PIMPL_NOREF(BiasIllum)
 
 float const BiasIllum::MIN_INTENSITY = .005f;
 
-BiasIllum::BiasIllum(BiasTracker *surface) : d(new Instance(surface))
+BiasIllum::BiasIllum(BiasTracker *tracker) : d(new Instance(tracker))
 {}
 
 void BiasIllum::evaluate(Vector3f &color, Vector3d const &point,
@@ -216,7 +216,7 @@ void BiasIllum::evaluate(Vector3f &color, Vector3d const &point,
     /// @todo Refactor away:
     byte activeContributors, byte changedContributions)
 {
-    // Does the surface have any lighting changes to apply?
+    // Does the tracker have any lighting changes to apply?
     if(changedContributions)
     {
         if(activeContributors & changedContributions)
