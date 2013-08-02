@@ -112,7 +112,7 @@ DENG_HEADERS += \
     include/BiasDigest \
     include/BiasIllum \
     include/BiasSource \
-    include/BiasSurface \
+    include/BiasTracker \
     include/BspLeaf \
     include/BspNode \
     include/EntityDatabase \
@@ -254,7 +254,7 @@ DENG_HEADERS += \
     include/render/biasdigest.h \
     include/render/biasillum.h \
     include/render/biassource.h \
-    include/render/biassurface.h \
+    include/render/biastracker.h \
     include/render/blockmapvisual.h \
     include/render/huecirclevisual.h \
     include/render/lightgrid.h \
@@ -557,7 +557,7 @@ SOURCES += \
     src/render/biasdigest.cpp \
     src/render/biasillum.cpp \
     src/render/biassource.cpp \
-    src/render/biassurface.cpp \
+    src/render/biastracker.cpp \
     src/render/blockmapvisual.cpp \
     src/render/huecirclevisual.cpp \
     src/render/lightgrid.cpp \

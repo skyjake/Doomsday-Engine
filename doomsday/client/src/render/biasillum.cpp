@@ -24,7 +24,7 @@
 #include "world/linesighttest.h"
 #include "BspLeaf"
 
-#include "BiasSurface"
+#include "BiasTracker"
 
 #include "render/biasillum.h"
 
@@ -35,7 +35,7 @@ static int devUseSightCheck  = true; //cvar
 
 DENG2_PIMPL_NOREF(BiasIllum)
 {
-    BiasSurface *surface; ///< The "control" surface.
+    BiasTracker *surface; ///< The "control" surface.
     Vector3f color;       ///< Current light color.
     Vector3f dest;        ///< Destination light color (interpolated to).
     uint updateTime;      ///< When the value was calculated.
@@ -47,7 +47,7 @@ DENG2_PIMPL_NOREF(BiasIllum)
      */
     Vector3f casted[MAX_CONTRIBUTORS];
 
-    Instance(BiasSurface *surface)
+    Instance(BiasTracker *surface)
         : surface(surface),
           updateTime(0),
           interpolating(false)
@@ -208,7 +208,7 @@ DENG2_PIMPL_NOREF(BiasIllum)
 
 float const BiasIllum::MIN_INTENSITY = .005f;
 
-BiasIllum::BiasIllum(BiasSurface *surface) : d(new Instance(surface))
+BiasIllum::BiasIllum(BiasTracker *surface) : d(new Instance(surface))
 {}
 
 void BiasIllum::evaluate(Vector3f &color, Vector3d const &point,

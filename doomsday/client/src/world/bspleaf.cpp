@@ -31,7 +31,7 @@
 #include "Segment"
 
 #ifdef __CLIENT__
-#  include "BiasSurface"
+#  include "BiasTracker"
 #  include "world/map.h"
 #endif
 
@@ -48,7 +48,7 @@ ddouble triangleArea(Vector2d const &v1, Vector2d const &v2, Vector2d const &v3)
 }
 
 #ifdef __CLIENT__
-typedef QMap<int, BiasSurface *> BiasSurfaces;
+typedef QMap<int, BiasTracker *> BiasTrackers;
 #endif
 
 DENG2_PIMPL(BspLeaf)
@@ -95,7 +95,7 @@ DENG2_PIMPL(BspLeaf)
     int addSpriteCount;
 
     /// Shadow Bias data for the BSP leaf.
-    BiasSurfaces biasSurfaces;
+    BiasTrackers biasTrackers;
 
 #endif // __CLIENT__
 
@@ -120,7 +120,7 @@ DENG2_PIMPL(BspLeaf)
     {
         qDeleteAll(extraMeshes);
 #ifdef __CLIENT__
-        qDeleteAll(biasSurfaces);
+        qDeleteAll(biasTrackers);
 #endif
     }
 
@@ -286,7 +286,7 @@ DENG2_PIMPL(BspLeaf)
      * @todo This could be enhanced so that only the lights on the right
      * side of the surface are taken into consideration.
      */
-    void updateAffected(BiasSurface &bsuf, int group)
+    void updateAffected(BiasTracker &bsuf, int group)
     {
         // If the data is already up to date, nothing needs to be done.
         uint lastChangeFrame = self.map().biasLastChangeOnFrame();
@@ -529,38 +529,38 @@ int BspLeaf::numFanVertices() const
     return d->poly->hedgeCount() + (fanBase()? 0 : 2);
 }
 
-BiasSurface &BspLeaf::biasSurface(int group)
+BiasTracker &BspLeaf::biasTracker(int group)
 {
     if(!d->sector)
         /// @throw MissingSectorError Attempted with no sector attributed.
-        throw MissingSectorError("BspLeaf::setBiasSurface", "No sector is attributed");
+        throw MissingSectorError("BspLeaf::biasTracker", "No sector is attributed");
 
     DENG_ASSERT(group >= 0 && group < d->sector->planeCount()); // sanity check
     DENG_ASSERT(!isDegenerate()); // sanity check
 
-    BiasSurfaces::iterator foundAt = d->biasSurfaces.find(group);
-    if(foundAt != d->biasSurfaces.end())
+    BiasTrackers::iterator foundAt = d->biasTrackers.find(group);
+    if(foundAt != d->biasTrackers.end())
     {
         return **foundAt;
     }
 
-    BiasSurface *bsuf = new BiasSurface(numFanVertices());
-    d->biasSurfaces.insert(group, bsuf);
-    return *bsuf;
+    BiasTracker *newTracker = new BiasTracker(numFanVertices());
+    d->biasTrackers.insert(group, newTracker);
+    return *newTracker;
 }
 
 void BspLeaf::updateBiasAffection(BiasDigest &changes)
 {
-    foreach(BiasSurface *biasSurface, d->biasSurfaces)
+    foreach(BiasTracker *biasTracker, d->biasTrackers)
     {
-        biasSurface->updateAffection(changes);
+        biasTracker->applyChanges(changes);
     }
 }
 
 void BspLeaf::lightPoly(int group, int vertCount, rvertex_t const *positions,
     ColorRawf *colors)
 {
-    BiasSurface &bsuf = biasSurface(group);
+    BiasTracker &bsuf = biasTracker(group);
 
     // Should we update?
     //if(devUpdateAffected)

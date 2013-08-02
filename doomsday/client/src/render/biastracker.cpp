@@ -1,4 +1,4 @@
-/** @file biassurface.cpp Shadow Bias surface.
+/** @file biastracker.cpp Shadow Bias illumination tracker.
  *
  * @authors Copyright © 2005-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
@@ -31,7 +31,7 @@
 #include "BiasSource"
 #include "BiasDigest"
 
-#include "render/biassurface.h"
+#include "render/biastracker.h"
 
 using namespace de;
 
@@ -51,7 +51,7 @@ struct Contributor
  * @todo Do not observe source deletion. A better solution would represent any
  * source deletions within the change tracker.
  */
-DENG2_PIMPL_NOREF(BiasSurface),
+DENG2_PIMPL_NOREF(BiasTracker),
 DENG2_OBSERVES(BiasSource, Deletion)
 {
     QVector<BiasIllum *> illums; /// @todo use an external allocator.
@@ -99,31 +99,31 @@ DENG2_OBSERVES(BiasSource, Deletion)
     }
 };
 
-BiasSurface::BiasSurface(int size) : d(new Instance(size))
+BiasTracker::BiasTracker(int size) : d(new Instance(size))
 {}
 
-void BiasSurface::consoleRegister() // static
+void BiasTracker::consoleRegister() // static
 {
     // Development variables.
     C_VAR_INT("rend-dev-bias-affected", &devUpdateAffected, CVF_NO_ARCHIVE, 0, 1);
 }
 
-uint BiasSurface::lastUpdateOnFrame() const
+uint BiasTracker::lastUpdateOnFrame() const
 {
     return d->lastUpdateOnFrame;
 }
 
-void BiasSurface::setLastUpdateOnFrame(uint newLastUpdateFrameNumber)
+void BiasTracker::setLastUpdateOnFrame(uint newLastUpdateFrameNumber)
 {
     d->lastUpdateOnFrame = newLastUpdateFrameNumber;
 }
 
-void BiasSurface::clearContributors()
+void BiasTracker::clearContributors()
 {
     d->activeContributors = 0;
 }
 
-void BiasSurface::addContributor(BiasSource *source, float intensity)
+void BiasTracker::addContributor(BiasSource *source, float intensity)
 {
     if(!source) return;
 
@@ -199,7 +199,7 @@ void BiasSurface::addContributor(BiasSource *source, float intensity)
     d->activeContributors |= 1 << slot;
 }
 
-BiasSource &BiasSurface::contributor(int index) const
+BiasSource &BiasTracker::contributor(int index) const
 {
     if(index >= 0 && index < MAX_CONTRIBUTORS &&
        (d->activeContributors & (1 << index)))
@@ -208,10 +208,10 @@ BiasSource &BiasSurface::contributor(int index) const
         return *d->contributors[index].source;
     }
     /// @throw UnknownContributorError An invalid contributor index was specified.
-    throw UnknownContributorError("BiasSurface::lightContributor", QString("Index %1 invalid/out of range").arg(index));
+    throw UnknownContributorError("BiasTracker::lightContributor", QString("Index %1 invalid/out of range").arg(index));
 }
 
-uint BiasSurface::timeOfLatestContributorUpdate() const
+uint BiasTracker::timeOfLatestContributorUpdate() const
 {
     uint latest = 0;
 
@@ -239,7 +239,7 @@ uint BiasSurface::timeOfLatestContributorUpdate() const
     return latest;
 }
 
-void BiasSurface::updateAffection(BiasDigest &changes)
+void BiasTracker::applyChanges(BiasDigest &changes)
 {
     // All contributions from changed sources will need to be updated.
 
@@ -261,7 +261,7 @@ void BiasSurface::updateAffection(BiasDigest &changes)
     }
 }
 
-void BiasSurface::updateAfterMove()
+void BiasTracker::updateAfterGeometryMove()
 {
     Contributor *ctbr = d->contributors;
     for(int i = 0; i < MAX_CONTRIBUTORS; ++i, ctbr++)
@@ -273,7 +273,7 @@ void BiasSurface::updateAfterMove()
     }
 }
 
-void BiasSurface::lightPoly(Vector3f const &surfaceNormal, uint biasTime,
+void BiasTracker::lightPoly(Vector3f const &surfaceNormal, uint biasTime,
     int vertCount, rvertex_t const *positions, ColorRawf *colors)
 {
     DENG_ASSERT(vertCount == d->illums.count()); // sanity check

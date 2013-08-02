@@ -182,11 +182,11 @@ DENG2_OBSERVES(Plane, HeightChange)
 
                     for(int i = 0; i < 3; ++i)
                     {
-                        seg->biasSurface(i).updateAfterMove();
+                        seg->biasTracker(i).updateAfterGeometryMove();
                     }
                 }
 
-                bspLeaf->biasSurface(plane.indexInSector()).updateAfterMove();
+                bspLeaf->biasTracker(plane.indexInSector()).updateAfterGeometryMove();
             }
         }
 

@@ -24,11 +24,11 @@
 
 #include "render/rendpoly.h" /// @todo remove me
 
-class BiasSurface;
+class BiasTracker;
 
 /**
  * Stores map point lighting information for the Shadow Bias lighting model.
- * Used in conjunction with a BiasSurface (for routing change notifications).
+ * Used in conjunction with a BiasTracker (for routing change notifications).
  *
  * @ingroup render
  */
@@ -42,7 +42,7 @@ public:
     static float const MIN_INTENSITY; // .005f
 
 public:
-    BiasIllum(BiasSurface *surface);
+    BiasIllum(BiasTracker *surface);
 
     /**
      * To be called to register the commands and variables of this module.

@@ -58,7 +58,7 @@ static void notifyGeometryChanged(Polyobj &po)
 
             for(int i = 0; i < 3; ++i)
             {
-                segment->biasSurface(i).updateAfterMove();
+                segment->biasTracker(i).updateAfterGeometryMove();
             }
         }
     }

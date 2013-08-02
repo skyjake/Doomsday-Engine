@@ -45,7 +45,7 @@ class Segment;
 class Vertex;
 
 #ifdef __CLIENT__
-class BiasSurface;
+class BiasTracker;
 
 struct clmoinfo_s;
 

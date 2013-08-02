@@ -31,7 +31,7 @@
 #include "Vertex"
 
 #ifdef __CLIENT__
-#  include "BiasSurface"
+#  include "BiasTracker"
 #endif
 
 class Sector;
@@ -237,12 +237,12 @@ public:
 #ifdef __CLIENT__
 
     /**
-     * Retrieve the bias surface for specified geometry @a group. If no bias
-     * surface has yet been initialized for the group it will be at this time.
+     * Retrieve the bias tracker for the specified geometry @a group. If no
+     * tracker has yet been initialized for the group it will be at this time.
      *
-     * @param group  Geometry group identifier for the bias surface.
+     * @param group  Geometry group identifier for the bias tracker.
      */
-    BiasSurface &biasSurface(int group);
+    BiasTracker &biasTracker(int group);
 
     /**
      * @param allChanges

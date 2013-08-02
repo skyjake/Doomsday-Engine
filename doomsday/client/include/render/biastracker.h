@@ -1,4 +1,4 @@
-/** @file biassurface.h Shadow Bias surface.
+/** @file biastracker.h Shadow Bias illumination change tracker.
  *
  * @authors Copyright © 2005-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_RENDER_SHADOWBIAS_SURFACE_H
-#define DENG_RENDER_SHADOWBIAS_SURFACE_H
+#ifndef DENG_RENDER_SHADOWBIAS_TRACKER_H
+#define DENG_RENDER_SHADOWBIAS_TRACKER_H
 
 #include <de/Error>
 #include <de/Vector>
@@ -29,9 +29,11 @@ class BiasSource;
 class BiasDigest;
 
 /**
+ * Map point illumination tracker for the Shadow Bias lighting model.
+ *
  * @ingroup render
  */
-class BiasSurface
+class BiasTracker
 {
 public:
     /// An unknown light contributor was referenced @ingroup errors
@@ -39,11 +41,11 @@ public:
 
 public:
     /**
-     * Construct a new surface.
+     * Construct a new bias illumination tracker.
      *
-     * @param size  Number of vertices.
+     * @param size  Number of illumination points to track for.
      */
-    BiasSurface(int size);
+    BiasTracker(int size);
 
     /**
      * To be called to register the commands and variables of this module.
@@ -98,13 +100,19 @@ public:
      */
     uint timeOfLatestContributorUpdate() const;
 
-    void updateAffection(BiasDigest &changes);
+    /**
+     * Interpret the bias change digest and schedule illumination updates as
+     * necessary (deferred until necessary, does not block).
+     *
+     * @param changes  Digest of all changes to apply in the tracker.
+     */
+    void applyChanges(BiasDigest &changes);
 
-    void updateAfterMove();
+    void updateAfterGeometryMove();
 
     /**
      * Perform lighting for the supplied geometry. It is assumed that this
-     * geometry has the @em same number of vertices as the bias surface.
+     * geometry has the @em same number of vertices as illumination points.
      *
      * @param surfaceNormal  Normal of the surface being lit.
      * @param biasTime       Current time in milliseconds for bias.
@@ -120,4 +128,4 @@ private:
     DENG2_PRIVATE(d)
 };
 
-#endif // DENG_RENDER_SHADOWBIAS_SURFACE_H
+#endif // DENG_RENDER_SHADOWBIAS_TRACKER_H

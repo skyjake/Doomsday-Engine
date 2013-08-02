@@ -30,7 +30,7 @@
 #include "Sector"
 
 #ifdef __CLIENT__
-#  include "BiasSurface"
+#  include "BiasTracker"
 #  include "world/map.h"
 #endif
 
@@ -39,7 +39,7 @@
 using namespace de;
 
 #ifdef __CLIENT__
-typedef QMap<int, BiasSurface *> BiasSurfaces;
+typedef QMap<int, BiasTracker *> BiasTrackers;
 #endif
 
 DENG2_PIMPL(Segment)
@@ -67,7 +67,7 @@ DENG2_PIMPL(Segment)
     coord_t length;
 
 #ifdef __CLIENT__
-    BiasSurfaces biasSurfaces;
+    BiasTrackers biasTrackers;
 #endif
 
     Instance(Public *i)
@@ -84,7 +84,7 @@ DENG2_PIMPL(Segment)
     ~Instance()
     {
 #ifdef __CLIENT__
-        qDeleteAll(biasSurfaces);
+        qDeleteAll(biasTrackers);
 #endif
     }
 
@@ -93,7 +93,7 @@ DENG2_PIMPL(Segment)
      * @todo This could be enhanced so that only the lights on the right
      * side of the surface are taken into consideration.
      */
-    void updateAffected(BiasSurface &bsuf, int group)
+    void updateAffected(BiasTracker &bsuf, int group)
     {
         DENG_UNUSED(group);
 
@@ -241,27 +241,27 @@ void Segment::setFlags(Flags flagsToChange, FlagOp operation)
 
 #ifdef __CLIENT__
 
-BiasSurface &Segment::biasSurface(int group)
+BiasTracker &Segment::biasTracker(int group)
 {
     DENG_ASSERT(group >= 0 && group < 3); // sanity check
     DENG_ASSERT(hasLineSide()); // sanity check
 
-    BiasSurfaces::iterator foundAt = d->biasSurfaces.find(group);
-    if(foundAt != d->biasSurfaces.end())
+    BiasTrackers::iterator foundAt = d->biasTrackers.find(group);
+    if(foundAt != d->biasTrackers.end())
     {
         return **foundAt;
     }
 
-    BiasSurface *bsuf = new BiasSurface(4);
-    d->biasSurfaces.insert(group, bsuf);
-    return *bsuf;
+    BiasTracker *newTracker = new BiasTracker(4);
+    d->biasTrackers.insert(group, newTracker);
+    return *newTracker;
 }
 
 void Segment::updateBiasAffection(BiasDigest &changes)
 {
-    foreach(BiasSurface *biasSurface, d->biasSurfaces)
+    foreach(BiasTracker *biasTracker, d->biasTrackers)
     {
-        biasSurface->updateAffection(changes);
+        biasTracker->applyChanges(changes);
     }
 }
 
@@ -270,7 +270,7 @@ void Segment::lightPoly(int group, int vertCount, rvertex_t const *positions,
 {
     DENG_ASSERT(hasLineSide()); // sanity check
 
-    BiasSurface &bsuf = biasSurface(group);
+    BiasTracker &bsuf = biasTracker(group);
 
     // Should we update?
     //if(devUpdateAffected)
