@@ -18,6 +18,7 @@
 
 #include "de_platform.h"
 #include "ui/widgets/busywidget.h"
+#include "ui/widgets/progresswidget.h"
 #include "ui/busyvisual.h"
 #include "busymode.h"
 #include "sys_system.h"
@@ -26,18 +27,33 @@
 #include "ui/clientwindow.h"
 
 #include <de/RootWidget>
+#include <de/GLState>
+#include <de/GLTarget>
 
 using namespace de;
 
 DENG2_PIMPL(BusyWidget)
 {
+    ProgressWidget *progress;
+
     Instance(Public *i) : Base(i)
-    {}
+    {
+        progress = new ProgressWidget;
+        progress->setRange(Rangei(0, 200));
+        progress->setImageScale(.2f);
+        progress->rule().setRect(self.rule());
+        self.add(progress);
+    }
 };
 
 BusyWidget::BusyWidget(String const &name)
     : GuiWidget(name), d(new Instance(this))
 {}
+
+ProgressWidget &BusyWidget::progress()
+{
+    return *d->progress;
+}
 
 void BusyWidget::viewResized()
 {
@@ -71,8 +87,10 @@ void BusyWidget::update()
 
 void BusyWidget::drawContent()
 {
-    DENG_ASSERT(BusyMode_Active());
-    BusyVisual_Render();
+    //DENG_ASSERT(BusyMode_Active());
+    //BusyVisual_Render();
+
+    root().window().canvas().renderTarget().clear(GLTarget::ColorDepth);
 }
 
 bool BusyWidget::handleEvent(Event const &)

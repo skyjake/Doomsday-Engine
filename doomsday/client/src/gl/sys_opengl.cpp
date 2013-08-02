@@ -27,6 +27,7 @@
 #include "gl/sys_opengl.h"
 
 #include <de/libdeng2.h>
+#include <de/GLState>
 #include <QSet>
 #include <QStringList>
 
@@ -604,8 +605,8 @@ void Sys_GLConfigureDefaultState(void)
     // Prefer good quality in texture compression.
     glHint(GL_TEXTURE_COMPRESSION_HINT, GL_NICEST);
 
-    // Clear the buffers.
-    //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    // Configure the default GLState (bottom of the stack).
+    de::GLState::top().setBlendFunc(de::gl::SrcAlpha, de::gl::OneMinusSrcAlpha);
 }
 
 /**

@@ -20,6 +20,7 @@
 #define CLIENT_BUSYWIDGET_H
 
 #include "guiwidget.h"
+#include "progresswidget.h"
 
 /**
  * Widget that takes care of the UI while busy mode is active.
@@ -29,6 +30,9 @@ class BusyWidget : public GuiWidget
 public:
     BusyWidget(de::String const &name = "");
 
+    ProgressWidget &progress();
+
+    // Events.
     void viewResized();
     void update();
     void drawContent();

@@ -38,6 +38,7 @@
 #ifdef __CLIENT__
 #include "clientapp.h"
 #include "ui/windowsystem.h"
+#include "ui/widgets/busywidget.h"
 
 static void BusyMode_Exit(void);
 
@@ -146,6 +147,8 @@ static void beginTask(BusyTask* task)
     // Load any resources needed to visual this task's progress.
     BusyVisual_PrepareResources();
 
+    ClientWindow::main().busy().progress().setText(task->name);
+
     // Start the busy worker thread, which will process the task in the
     // background while we keep the user occupied with nice animations.
     busyThread = Sys_StartThread(busyTask->worker, busyTask->workerData);
@@ -196,12 +199,6 @@ static int runTask(BusyTask* task)
 {
     DENG_ASSERT(task);
 
-    if(novideo)
-    {
-        // Don't bother to start a thread -- non-GUI mode.
-        return task->worker(task->workerData);
-    }
-
 #ifdef __CLIENT__
 
     // Let's get busy!
@@ -221,8 +218,12 @@ static int runTask(BusyTask* task)
     endTask(task);
 
     return result;
-#else
-    return 0;
+
+#else // __SERVER__
+
+    // Don't bother to start a thread -- non-GUI mode.
+    return task->worker(task->workerData);
+
 #endif
 }
 
@@ -238,11 +239,11 @@ static void preBusySetup(int initialMode)
 
     busyWasIgnoringInput = DD_IgnoreInput(true);
 
-    BusyVisual_PrepareFont();
-    BusyVisual_LoadTextures();
+    //BusyVisual_PrepareFont();
+    //BusyVisual_LoadTextures();
 
     // Limit frame rate to 60, no point pushing it any faster while busy.
-    ClientApp::app().loop().setRate(60);
+    ClientApp::app().loop().setRate(60);   
 
     // Switch the window to busy mode UI.
     WindowSystem::main().setMode(ClientWindow::Busy);
@@ -346,11 +347,11 @@ int BusyMode_RunTasks(BusyTask* tasks, int numTasks)
         /**
          * Process the work.
          */
-
+#ifdef __CLIENT__
         // Is the worker updating its progress?
         if(task->maxProgress > 0)
             Con_InitProgress2(task->maxProgress, task->progressStart, task->progressEnd);
-
+#endif
         // Invoke the worker in a new thread.
         /// @todo Kludge: Presently a temporary local task is needed so that we can modify
         ///       the task name and mode flags.

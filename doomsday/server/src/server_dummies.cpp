@@ -68,6 +68,11 @@ void Con_TransitionTicker(timespan_t t)
     DENG_UNUSED(t);
 }
 
+void Con_SetProgress(int progress)
+{
+    DENG_UNUSED(progress);
+}
+
 void GL_Shutdown()
 {}
 

@@ -36,10 +36,10 @@
 #include "render/rend_font.h"
 #include "ui/busyvisual.h"
 
-static fontid_t busyFont = 0;
-static int busyFontHgt; // Height of the font.
+//static fontid_t busyFont = 0;
+//static int busyFontHgt; // Height of the font.
 
-static DGLuint texLoading[2];
+//static DGLuint texLoading[2];
 static DGLuint texScreenshot; // Captured screenshot of the latest frame.
 
 static void releaseScreenshotTexture()
@@ -73,8 +73,10 @@ void BusyVisual_ReleaseTextures()
 {
     if(novideo) return;
 
+    /*
     glDeleteTextures(2, (GLuint const *) texLoading);
     texLoading[0] = texLoading[1] = 0;
+    */
 
     // Don't release yet if doing a transition.
     if(!Con_TransitionInProgress())
@@ -82,7 +84,7 @@ void BusyVisual_ReleaseTextures()
         releaseScreenshotTexture();
     }
 
-    busyFont = 0;
+    //busyFont = 0;
 }
 
 void BusyVisual_PrepareResources(void)
@@ -98,6 +100,7 @@ void BusyVisual_PrepareResources(void)
     }
 }
 
+#if 0
 void BusyVisual_PrepareFont(void)
 {
     if(!novideo)
@@ -160,7 +163,9 @@ void BusyVisual_LoadTextures(void)
         Image_Destroy(&image);
     }
 }
+#endif
 
+#if 0
 /**
  * Draws the captured screenshot as a background, or just clears the screen if no
  * screenshot is available.
@@ -288,141 +293,6 @@ static void drawPositionIndicator(float x, float y, float radius, float pos,
     glDisable(GL_TEXTURE_2D);
 }
 
-#define LINE_COUNT 4
-
-#if 0
-/**
- * @return  Number of new lines since the old ones.
- */
-static int GetBufLines(CBuffer* buffer, cbline_t const **oldLines)
-{
-    cbline_t const* bufLines[LINE_COUNT + 1];
-    const int count = CBuffer_GetLines2(buffer, LINE_COUNT, -LINE_COUNT, bufLines, BLF_OMIT_RULER|BLF_OMIT_EMPTYLINE);
-    int i, k, newCount;
-
-    newCount = 0;
-    for(i = 0; i < count; ++i)
-    {
-        for(k = 0; k < 2 * LINE_COUNT - newCount; ++k)
-        {
-            if(oldLines[k] == bufLines[i])
-            {
-                goto lineIsNotNew;
-            }
-        }
-
-        newCount++;
-        for(k = 0; k < (2 * LINE_COUNT - 1); ++k)
-        {
-            oldLines[k] = oldLines[k+1];
-        }
-        oldLines[2 * LINE_COUNT - 1] = bufLines[i];
-
-lineIsNotNew:;
-    }
-
-    return newCount;
-}
-
-/**
- * Draws a number of console output to the bottom of the screen.
- * @todo: Wow. I had some weird time hacking the smooth scrolling. Cleanup would be
- *         good some day. -jk
- */
-static void drawConsoleOutput(void)
-{
-    CBuffer* buffer;
-    static cbline_t const* visibleBusyLines[2 * LINE_COUNT];
-    static float scroll = 0;
-    static float scrollStartTime = 0;
-    static float scrollEndTime = 0;
-    static double lastNewTime = 0;
-    static double timeSinceLastNew = 0;
-    double nowTime = 0;
-    float y, topY;
-    uint i, newCount;
-
-    buffer = Con_HistoryBuffer();
-    if(!buffer) return;
-
-    newCount = GetBufLines(buffer, visibleBusyLines);
-    nowTime = Timer_RealSeconds();
-    if(newCount > 0)
-    {
-        timeSinceLastNew = nowTime - lastNewTime;
-        lastNewTime = nowTime;
-        if(nowTime < scrollEndTime)
-        {
-            // Abort last scroll.
-            scroll = 0;
-            scrollStartTime = nowTime;
-            scrollEndTime = nowTime;
-        }
-        else
-        {
-            double interval = MIN_OF(timeSinceLastNew/2, 1.3);
-
-            // Begin new scroll.
-            scroll = newCount;
-            scrollStartTime = nowTime;
-            scrollEndTime = nowTime + interval;
-        }
-    }
-
-    DENG_ASSERT_IN_MAIN_THREAD();
-
-    GL_BlendMode(BM_NORMAL);
-
-    // Dark gradient as background.
-    glBegin(GL_QUADS);
-    glColor4ub(0, 0, 0, 0);
-    y = DENG_WINDOW->height() - (LINE_COUNT + 3) * busyFontHgt;
-    glVertex2f(0, y);
-    glVertex2f(DENG_WINDOW->width(), y);
-    glColor4ub(0, 0, 0, 128);
-    glVertex2f(DENG_WINDOW->width(), DENG_WINDOW->height());
-    glVertex2f(0, DENG_WINDOW->height());
-    glEnd();
-
-    glEnable(GL_TEXTURE_2D);
-
-    // The text lines.
-    topY = y = DENG_WINDOW->height() - busyFontHgt * (2 * LINE_COUNT + .5f);
-    if(newCount > 0 ||
-       (nowTime >= scrollStartTime && nowTime < scrollEndTime && scrollEndTime > scrollStartTime))
-    {
-        if(scrollEndTime - scrollStartTime > 0)
-            y += scroll * (scrollEndTime - nowTime) / (scrollEndTime - scrollStartTime) *
-                busyFontHgt;
-    }
-
-    FR_SetFont(busyFont);
-    FR_LoadDefaultAttrib();
-    FR_SetColor(1.f, 1.f, 1.f);
-
-    for(i = 0; i < 2 * LINE_COUNT; ++i, y += busyFontHgt)
-    {
-        const cbline_t* line = visibleBusyLines[i];
-        float alpha = 1;
-
-        if(!line) continue;
-
-        alpha = ((y - topY) / busyFontHgt) - (LINE_COUNT - 1);
-        if(alpha < LINE_COUNT)
-            alpha = MINMAX_OF(0, alpha/2, 1);
-        else
-            alpha = 1 - (alpha - LINE_COUNT);
-
-        FR_SetAlpha(alpha);
-        FR_DrawTextXY3(line->text, DENG_WINDOW->width()/2, y, ALIGN_TOP, DTF_ONLY_SHADOW);
-    }
-
-    glDisable(GL_TEXTURE_2D);
-
-#undef LINE_COUNT
-}
-#endif
-
 void BusyVisual_Render(void)
 {
     BusyTask* task = BusyMode_CurrentTask();
@@ -467,6 +337,7 @@ void BusyVisual_Render(void)
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();
 }
+#endif
 
 /**
  * Transition effect:
