@@ -164,13 +164,17 @@ bool ConsoleCommandWidget::handleEvent(Event const &event)
 
 void ConsoleCommandWidget::autoCompletionBegan()
 {
-    // Prepare a list of completions.
-    d->completions->setText(Con_AnnotatedConsoleTerms(suggestedCompletions()));
-    d->completions->scrollToTop(0);
+    // Prepare a list of annotated completions to show in the popup.
+    QStringList const compls = suggestedCompletions();
+    if(compls.size() > 1)
+    {
+        d->completions->setText(Con_AnnotatedConsoleTerms(compls));
+        d->completions->scrollToTop(0);
 
-    // Note: this is a fixed position, so it will not be updated if the view is resized.
-    d->popup->setAnchor(Vector2i(cursorRect().middle().x, rule().top().valuei()));
-    d->popup->open();
+        // Note: this is a fixed position, so it will not be updated if the view is resized.
+        d->popup->setAnchor(Vector2i(cursorRect().middle().x, rule().top().valuei()));
+        d->popup->open();
+    }
 }
 
 void ConsoleCommandWidget::autoCompletionEnded(bool /*accepted*/)
