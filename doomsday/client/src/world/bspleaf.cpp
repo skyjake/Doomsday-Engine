@@ -283,6 +283,30 @@ DENG2_PIMPL(BspLeaf)
     }
 
     /**
+     * Retrieve the bias tracker for the specified geometry @a group.
+     *
+     * @param group     Geometry group identifier for the bias tracker.
+     * @param canAlloc  @c true= to allocate if no tracker exists.
+     */
+    BiasTracker *biasTracker(int group, bool canAlloc = true)
+    {
+        DENG_ASSERT(sector && !self.isDegenerate()); // sanity check
+        DENG_ASSERT(group >= 0 && group < sector->planeCount()); // sanity check
+
+        BiasTrackers::iterator foundAt = biasTrackers.find(group);
+        if(foundAt != biasTrackers.end())
+        {
+            return *foundAt;
+        }
+
+        if(!canAlloc) return 0;
+
+        BiasTracker *newTracker = new BiasTracker(self.numFanVertices());
+        biasTrackers.insert(group, newTracker);
+        return newTracker;
+    }
+
+    /**
      * @todo This could be enhanced so that only the lights on the right
      * side of the surface are taken into consideration.
      */
@@ -529,24 +553,12 @@ int BspLeaf::numFanVertices() const
     return d->poly->hedgeCount() + (fanBase()? 0 : 2);
 }
 
-BiasTracker &BspLeaf::biasTracker(int group)
+void BspLeaf::updateAfterGeometryMove(int group)
 {
-    if(!d->sector)
-        /// @throw MissingSectorError Attempted with no sector attributed.
-        throw MissingSectorError("BspLeaf::biasTracker", "No sector is attributed");
-
-    DENG_ASSERT(group >= 0 && group < d->sector->planeCount()); // sanity check
-    DENG_ASSERT(!isDegenerate()); // sanity check
-
-    BiasTrackers::iterator foundAt = d->biasTrackers.find(group);
-    if(foundAt != d->biasTrackers.end())
+    if(BiasTracker *biasTracker = d->biasTracker(group, false /*don't allocate*/))
     {
-        return **foundAt;
+        biasTracker->updateAllContributors();
     }
-
-    BiasTracker *newTracker = new BiasTracker(numFanVertices());
-    d->biasTrackers.insert(group, newTracker);
-    return *newTracker;
 }
 
 void BspLeaf::updateBiasAffection(BiasDigest &changes)
@@ -560,17 +572,17 @@ void BspLeaf::updateBiasAffection(BiasDigest &changes)
 void BspLeaf::lightPoly(int group, int vertCount, rvertex_t const *positions,
     ColorRawf *colors)
 {
-    BiasTracker &bsuf = biasTracker(group);
+    BiasTracker *tracker = d->biasTracker(group);
 
     // Should we update?
     //if(devUpdateAffected)
     {
-        d->updateAffected(bsuf, group);
+        d->updateAffected(*tracker, group);
     }
 
     Surface &surface = d->sector->plane(group).surface();
-    bsuf.lightPoly(surface.normal(), map().biasCurrentTime(),
-                   vertCount, positions, colors);
+    tracker->lightPoly(surface.normal(), map().biasCurrentTime(),
+                       vertCount, positions, colors);
 }
 
 ShadowLink *BspLeaf::firstShadowLink() const

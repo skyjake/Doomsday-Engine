@@ -90,6 +90,30 @@ DENG2_PIMPL(Segment)
 
 #ifdef __CLIENT__
     /**
+     * Retrieve the bias tracker for the specified geometry @a group.
+     *
+     * @param group     Geometry group identifier for the bias tracker.
+     * @param canAlloc  @c true= to allocate if no tracker exists.
+     */
+    BiasTracker *biasTracker(int group, bool canAlloc = true)
+    {
+        DENG_ASSERT(group >= 0 && group < 3); // sanity check
+        DENG_ASSERT(self.hasLineSide()); // sanity check
+
+        BiasTrackers::iterator foundAt = biasTrackers.find(group);
+        if(foundAt != biasTrackers.end())
+        {
+            return *foundAt;
+        }
+
+        if(!canAlloc) return 0;
+
+        BiasTracker *newTracker = new BiasTracker(4);
+        biasTrackers.insert(group, newTracker);
+        return newTracker;
+    }
+
+    /**
      * @todo This could be enhanced so that only the lights on the right
      * side of the surface are taken into consideration.
      */
@@ -241,20 +265,12 @@ void Segment::setFlags(Flags flagsToChange, FlagOp operation)
 
 #ifdef __CLIENT__
 
-BiasTracker &Segment::biasTracker(int group)
+void Segment::updateAfterGeometryMove(int group)
 {
-    DENG_ASSERT(group >= 0 && group < 3); // sanity check
-    DENG_ASSERT(hasLineSide()); // sanity check
-
-    BiasTrackers::iterator foundAt = d->biasTrackers.find(group);
-    if(foundAt != d->biasTrackers.end())
+    if(BiasTracker *biasTracker = d->biasTracker(group, false /*don't allocate*/))
     {
-        return **foundAt;
+        biasTracker->updateAllContributors();
     }
-
-    BiasTracker *newTracker = new BiasTracker(4);
-    d->biasTrackers.insert(group, newTracker);
-    return *newTracker;
 }
 
 void Segment::updateBiasAffection(BiasDigest &changes)
@@ -270,17 +286,17 @@ void Segment::lightPoly(int group, int vertCount, rvertex_t const *positions,
 {
     DENG_ASSERT(hasLineSide()); // sanity check
 
-    BiasTracker &bsuf = biasTracker(group);
+    BiasTracker *tracker = d->biasTracker(group);
 
     // Should we update?
     //if(devUpdateAffected)
     {
-        d->updateAffected(bsuf, group);
+        d->updateAffected(*tracker, group);
     }
 
     Surface &surface = d->lineSide->middle();
-    bsuf.lightPoly(surface.normal(), map().biasCurrentTime(),
-                   vertCount, positions, colors);
+    tracker->lightPoly(surface.normal(), map().biasCurrentTime(),
+                       vertCount, positions, colors);
 }
 
 #endif // __CLIENT__

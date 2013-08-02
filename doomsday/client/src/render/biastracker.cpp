@@ -49,7 +49,7 @@ struct Contributor
  * @todo Defer allocation of most data -- adopt a 'fly-weight' approach.
  *
  * @todo Do not observe source deletion. A better solution would represent any
- * source deletions within the change tracker.
+ * source deletions in BiasDigest.
  */
 DENG2_PIMPL_NOREF(BiasTracker),
 DENG2_OBSERVES(BiasSource, Deletion)
@@ -261,7 +261,7 @@ void BiasTracker::applyChanges(BiasDigest &changes)
     }
 }
 
-void BiasTracker::updateAfterGeometryMove()
+void BiasTracker::updateAllContributors()
 {
     Contributor *ctbr = d->contributors;
     for(int i = 0; i < MAX_CONTRIBUTORS; ++i, ctbr++)

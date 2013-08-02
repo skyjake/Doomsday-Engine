@@ -272,13 +272,7 @@ public:
      */
     int numFanVertices() const;
 
-    /**
-     * Retrieve the bias tracker for the specified geometry @a group. If no
-     * tracker has yet been initialized for the group it will be at this time.
-     *
-     * @param group  Geometry group identifier for the bias tracker.
-     */
-    BiasTracker &biasTracker(int group);
+    void updateAfterGeometryMove(int group);
 
     /**
      * @param changes

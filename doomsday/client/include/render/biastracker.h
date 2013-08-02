@@ -52,10 +52,6 @@ public:
      */
     static void consoleRegister();
 
-    uint lastUpdateOnFrame() const;
-
-    void setLastUpdateOnFrame(uint newLastUpdateFrameNumber);
-
     /**
      * Remove all light contributors. Existing contributions are put into a
      * "latent" state, so that if they are added again the contribution is then
@@ -108,7 +104,13 @@ public:
      */
     void applyChanges(BiasDigest &changes);
 
-    void updateAfterGeometryMove();
+public: /// @todo The following logic does not belong at this level ------------
+
+    uint lastUpdateOnFrame() const;
+
+    void setLastUpdateOnFrame(uint newLastUpdateFrameNumber);
+
+    void updateAllContributors();
 
     /**
      * Perform lighting for the supplied geometry. It is assumed that this

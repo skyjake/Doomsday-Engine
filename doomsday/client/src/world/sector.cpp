@@ -180,13 +180,12 @@ DENG2_OBSERVES(Plane, HeightChange)
                     if(!seg->hasLineSide())
                         continue;
 
-                    for(int i = 0; i < 3; ++i)
-                    {
-                        seg->biasTracker(i).updateAfterGeometryMove();
-                    }
+                    seg->updateAfterGeometryMove(Line::Side::Middle);
+                    seg->updateAfterGeometryMove(Line::Side::Bottom);
+                    seg->updateAfterGeometryMove(Line::Side::Top);
                 }
 
-                bspLeaf->biasTracker(plane.indexInSector()).updateAfterGeometryMove();
+                bspLeaf->updateAfterGeometryMove(plane.indexInSector());
             }
         }
 
