@@ -362,6 +362,7 @@ DENG_HEADERS += \
     include/ui/widgets/notificationwidget.h \
     include/ui/widgets/popupmenuwidget.h \
     include/ui/widgets/popupwidget.h \
+    include/ui/widgets/progresswidget.h \
     include/ui/widgets/scrollareawidget.h \
     include/ui/widgets/styledlogsinkformatter.h \
     include/ui/widgets/taskbarwidget.h \
@@ -662,6 +663,7 @@ SOURCES += \
     src/ui/widgets/notificationwidget.cpp \
     src/ui/widgets/popupmenuwidget.cpp \
     src/ui/widgets/popupwidget.cpp \
+    src/ui/widgets/progresswidget.cpp \
     src/ui/widgets/scrollareawidget.cpp \
     src/ui/widgets/styledlogsinkformatter.cpp \
     src/ui/widgets/taskbarwidget.cpp \

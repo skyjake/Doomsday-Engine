@@ -40,7 +40,8 @@
 #include "ui/widgets/consolewidget.h"
 #include "ui/widgets/notificationwidget.h"
 #include "ui/widgets/gameselectionwidget.h"
-#include "ui/widgets/documentwidget.h"
+//#include "ui/widgets/documentwidget.h"
+#include "ui/widgets/progresswidget.h"
 #include "ui/commandaction.h"
 #include "ui/mouse_qt.h"
 
@@ -161,6 +162,20 @@ public IGameChangeObserver
                 .setInput(Rule::Top,    root.viewTop() + 50)
                 .setInput(Rule::Bottom, root.viewBottom() - 50);
         root.add(doc);
+#endif
+
+#if 0
+        games->hide();
+        ProgressWidget *prog = new ProgressWidget;
+        prog->setMode(ProgressWidget::Ranged);
+        prog->setRange(Rangei(0, 100));
+        prog->setProgress(100, 60);
+        prog->rule()
+                .setInput(Rule::Left,   root.viewLeft())
+                .setInput(Rule::Right,  root.viewRight())
+                .setInput(Rule::Top,    root.viewTop())
+                .setInput(Rule::Bottom, root.viewBottom());
+        root.add(prog);
 #endif
 
         // Common notification area.

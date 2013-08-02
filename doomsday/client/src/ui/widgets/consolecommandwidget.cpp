@@ -43,6 +43,8 @@ public IGameChangeObserver
         App::app().audienceForStartupComplete += this;
         audienceForGameChange += this;
 
+        Style const &st = self.style();
+
         // Popup for autocompletions.
         completions = new DocumentWidget;
         completions->setMaximumLineWidth(640);
@@ -52,7 +54,10 @@ public IGameChangeObserver
                                                            completions->margin()));
 
         popup = new PopupWidget;
-        popup->set(Background(self.style().colors().colorf("editor.completion.background")));
+        popup->set(Background(st.colors().colorf("editor.completion.background"),
+                              Background::BorderGlow,
+                              st.colors().colorf("editor.completion.glow"),
+                              st.rules().rule("glow").valuei()));
         popup->setContent(completions);
         self.add(popup);
     }
@@ -159,13 +164,17 @@ bool ConsoleCommandWidget::handleEvent(Event const &event)
 
 void ConsoleCommandWidget::autoCompletionBegan()
 {
-    // Prepare a list of completions.
-    d->completions->setText(Con_AnnotatedConsoleTerms(suggestedCompletions()));
-    d->completions->scrollToTop(0);
+    // Prepare a list of annotated completions to show in the popup.
+    QStringList const compls = suggestedCompletions();
+    if(compls.size() > 1)
+    {
+        d->completions->setText(Con_AnnotatedConsoleTerms(compls));
+        d->completions->scrollToTop(0);
 
-    // Note: this is a fixed position, so it will not be updated if the view is resized.
-    d->popup->setAnchor(Vector2i(cursorRect().middle().x, rule().top().valuei()));
-    d->popup->open();
+        // Note: this is a fixed position, so it will not be updated if the view is resized.
+        d->popup->setAnchor(Vector2i(cursorRect().middle().x, rule().top().valuei()));
+        d->popup->open();
+    }
 }
 
 void ConsoleCommandWidget::autoCompletionEnded(bool /*accepted*/)

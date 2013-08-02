@@ -2,6 +2,7 @@
 
 group window {
     image background { path = "graphics/background.jpg" }
+    image borderglow { path = "graphics/borderglow.png" }
 }
 
 group logo {
@@ -17,3 +18,8 @@ group logo {
 }
 
 image gear { path = "graphics/gear.png" }
+
+group progress {
+    image wheel { path = "graphics/progress-wheel.png" }
+    image gear  { path = "graphics/progress-gear.png" }
+}
