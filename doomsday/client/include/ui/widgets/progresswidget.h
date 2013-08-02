@@ -49,6 +49,7 @@ public:
     Mode mode() const;
 
     void setColor(de::DotPath const &styleId);
+    void setShadowColor(de::DotPath const &styleId);
 
     /**
      * Sets the text displayed in the widget. Thread-safe.

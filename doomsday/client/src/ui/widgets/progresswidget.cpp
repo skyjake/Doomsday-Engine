@@ -32,6 +32,7 @@ DENG2_PIMPL(ProgressWidget), public Lockable
     float angle;
     Id gearTex;
     DotPath colorId;
+    DotPath shadowColorId;
     Time updateAt;
 
     Instance(Public *i)
@@ -39,7 +40,8 @@ DENG2_PIMPL(ProgressWidget), public Lockable
           mode(Indefinite),
           pos(0, Animation::Linear),
           angle(0),
-          colorId("progress.light"),
+          colorId("progress.light.wheel"),
+          shadowColorId("progress.light.shadow"),
           updateAt(Time::invalidTime())
     {
         updateStyle();
@@ -69,9 +71,17 @@ DENG2_PIMPL(ProgressWidget), public Lockable
 
 ProgressWidget::ProgressWidget(String const &name) : d(new Instance(this))
 {
+    setTextGap("progress.textgap");
+    setSizePolicy(ui::Filled, ui::Filled);
+
     // Set up the static progress ring image.
     setImage(style().images().image("progress.wheel"));
-    setImageFit(ui::OriginalSize);
+    setImageFit(ui::FitToHeight | ui::OriginalAspectRatio);
+    setImageScale(.18f);
+
+    setAlignment(ui::AlignCenter, AlignOnlyByImage);
+    setText("Loading Blah Blah...");
+    setTextAlignment(ui::AlignRight);
 }
 
 ProgressWidget::Mode ProgressWidget::mode() const
@@ -83,6 +93,12 @@ ProgressWidget::Mode ProgressWidget::mode() const
 void ProgressWidget::setColor(DotPath const &styleId)
 {
     d->colorId = styleId;
+    d->updateStyle();
+}
+
+void ProgressWidget::setShadowColor(const DotPath &styleId)
+{
+    d->shadowColorId = styleId;
     d->updateStyle();
 }
 
@@ -147,10 +163,20 @@ void ProgressWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
 {
     DENG2_GUARD(d);
 
-    LabelWidget::glMakeGeometry(verts);
-
     ContentLayout layout;
     contentLayout(layout);
+
+    // There is a shadow behind the wheel.
+    float innerShadowRadius = layout.image.width() / 2;
+    float outerShadowRadius = layout.image.width() * 2;
+    verts.makeRing(layout.image.middle(), innerShadowRadius, 0, 30,
+                   style().colors().colorf(d->shadowColorId),
+                   root().atlas().imageRectf(root().borderGlow()).middle());
+    verts.makeRing(layout.image.middle(), outerShadowRadius, innerShadowRadius, 30,
+                   style().colors().colorf(d->shadowColorId),
+                   root().atlas().imageRectf(root().borderGlow()), 0);
+
+    LabelWidget::glMakeGeometry(verts);
 
     // Draw the rotating indicator on the label's image.
     Rectanglef const tc = d->atlas().imageRectf(d->gearTex);
