@@ -937,12 +937,12 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
                 if(p.elem->type() == DMU_BSPLEAF)
                 {
                     p.elem->as<BspLeaf>()->
-                        lightPoly(p.subElemIndex, int(numVertices), rvertices, rcolors);
+                        lightBiasPoly(p.subElemIndex, int(numVertices), rvertices, rcolors);
                 }
                 else
                 {
                     p.elem->as<Segment>()->
-                        lightPoly(p.subElemIndex, int(numVertices), rvertices, rcolors);
+                        lightBiasPoly(p.subElemIndex, int(numVertices), rvertices, rcolors);
                 }
 
                 if(p.glowing > 0)

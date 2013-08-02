@@ -31,7 +31,7 @@
 #include "Vertex"
 
 #ifdef __CLIENT__
-#  include "BiasTracker"
+#  include "BiasSurface"
 #endif
 
 class Sector;
@@ -42,6 +42,9 @@ class Sector;
  * @ingroup world
  */
 class Segment : public de::MapElement
+#ifdef __CLIENT__
+, public BiasSurface
+#endif
 {
     DENG2_NO_COPY  (Segment)
     DENG2_NO_ASSIGN(Segment)
@@ -236,15 +239,15 @@ public:
 
 #ifdef __CLIENT__
 
-    void updateAfterGeometryMove(int group);
+    /// Implements BiasSurface
+    void lightBiasPoly(int group, int vertCount, rvertex_t const *positions,
+                       ColorRawf *colors);
 
-    /**
-     * @param allChanges
-     */
-    void updateBiasAffection(BiasDigest &changes);
+    /// Implements BiasSurface
+    void updateBiasAfterGeometryMove(int group);
 
-    void lightPoly(int group, int vertCount, struct rvertex_s const *positions,
-                   struct ColorRawf_s *colors);
+    /// Implements BiasSurface
+    void applyBiasDigest(BiasDigest &changes);
 
 #endif // __CLIENT__
 

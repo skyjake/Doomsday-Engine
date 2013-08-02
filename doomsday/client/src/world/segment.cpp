@@ -265,7 +265,7 @@ void Segment::setFlags(Flags flagsToChange, FlagOp operation)
 
 #ifdef __CLIENT__
 
-void Segment::updateAfterGeometryMove(int group)
+void Segment::updateBiasAfterGeometryMove(int group)
 {
     if(BiasTracker *biasTracker = d->biasTracker(group, false /*don't allocate*/))
     {
@@ -273,7 +273,7 @@ void Segment::updateAfterGeometryMove(int group)
     }
 }
 
-void Segment::updateBiasAffection(BiasDigest &changes)
+void Segment::applyBiasDigest(BiasDigest &changes)
 {
     foreach(BiasTracker *biasTracker, d->biasTrackers)
     {
@@ -281,7 +281,7 @@ void Segment::updateBiasAffection(BiasDigest &changes)
     }
 }
 
-void Segment::lightPoly(int group, int vertCount, rvertex_t const *positions,
+void Segment::lightBiasPoly(int group, int vertCount, rvertex_t const *positions,
     ColorRawf *colors)
 {
     DENG_ASSERT(hasLineSide()); // sanity check

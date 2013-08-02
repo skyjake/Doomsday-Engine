@@ -553,7 +553,7 @@ int BspLeaf::numFanVertices() const
     return d->poly->hedgeCount() + (fanBase()? 0 : 2);
 }
 
-void BspLeaf::updateAfterGeometryMove(int group)
+void BspLeaf::updateBiasAfterGeometryMove(int group)
 {
     if(BiasTracker *biasTracker = d->biasTracker(group, false /*don't allocate*/))
     {
@@ -561,7 +561,7 @@ void BspLeaf::updateAfterGeometryMove(int group)
     }
 }
 
-void BspLeaf::updateBiasAffection(BiasDigest &changes)
+void BspLeaf::applyBiasDigest(BiasDigest &changes)
 {
     foreach(BiasTracker *biasTracker, d->biasTrackers)
     {
@@ -569,7 +569,7 @@ void BspLeaf::updateBiasAffection(BiasDigest &changes)
     }
 }
 
-void BspLeaf::lightPoly(int group, int vertCount, rvertex_t const *positions,
+void BspLeaf::lightBiasPoly(int group, int vertCount, rvertex_t const *positions,
     ColorRawf *colors)
 {
     BiasTracker *tracker = d->biasTracker(group);

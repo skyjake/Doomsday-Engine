@@ -56,7 +56,7 @@ static void notifyGeometryChanged(Polyobj &po)
             Segment *segment = line->front().leftSegment();
             if(!segment) continue;
 
-            segment->updateAfterGeometryMove(Line::Side::Middle);
+            segment->updateBiasAfterGeometryMove(Line::Side::Middle);
         }
     }
 #else // !__CLIENT__

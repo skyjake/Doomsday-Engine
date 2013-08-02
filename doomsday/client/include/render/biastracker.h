@@ -23,8 +23,6 @@
 #include <de/Error>
 #include <de/Vector>
 
-#include "MapElement"
-
 class BiasSource;
 class BiasDigest;
 

@@ -32,7 +32,7 @@
 #include "Mesh"
 
 #ifdef __CLIENT__
-#  include "BiasTracker"
+#  include "BiasSurface"
 #endif
 
 class Sector;
@@ -59,6 +59,9 @@ struct ShadowLink;
  * @ingroup world
  */
 class BspLeaf : public de::MapElement
+#ifdef __CLIENT__
+, public BiasSurface
+#endif
 {
     DENG2_NO_COPY  (BspLeaf)
     DENG2_NO_ASSIGN(BspLeaf)
@@ -272,15 +275,15 @@ public:
      */
     int numFanVertices() const;
 
-    void updateAfterGeometryMove(int group);
+    /// Implements BiasSurface
+    void lightBiasPoly(int group, int vertCount, rvertex_t const *positions,
+                   ColorRawf *colors);
 
-    /**
-     * @param changes
-     */
-    void updateBiasAffection(BiasDigest &changes);
+    /// Implements BiasSurface
+    void updateBiasAfterGeometryMove(int group);
 
-    void lightPoly(int group, int vertCount, struct rvertex_s const *positions,
-                   struct ColorRawf_s *colors);
+    /// Implements BiasSurface
+    void applyBiasDigest(BiasDigest &changes);
 
     /**
      * Returns a pointer to the first ShadowLink; otherwise @c 0.

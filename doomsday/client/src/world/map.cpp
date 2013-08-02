@@ -1205,16 +1205,16 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
 
         foreach(Segment *seg, segments)
         {
-            seg->updateBiasAffection(allChanges);
+            seg->applyBiasDigest(allChanges);
         }
         foreach(Polyobj *polyobj, polyobjs)
         foreach(Line *line, polyobj->lines())
         {
-            line->front().leftSegment()->updateBiasAffection(allChanges);
+            line->front().leftSegment()->applyBiasDigest(allChanges);
         }
         foreach(BspLeaf *bspLeaf, bspLeafs)
         {
-            bspLeaf->updateBiasAffection(allChanges);
+            bspLeaf->applyBiasDigest(allChanges);
         }
     }
 
