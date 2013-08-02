@@ -71,12 +71,27 @@ public:
     de::String text() const;
 
     /**
+     * Sets the gap between the text and image. Defaults to "label.gap".
+     *
+     * @param styleRuleId  Id of a rule in the style.
+     */
+    void setTextGap(de::DotPath const &styleRuleId);
+
+    enum AlignmentMode {
+        AlignByCombination,
+        AlignOnlyByImage,
+        AlignOnlyByText
+    };
+
+    /**
      * Sets the alignment of the entire contents of the widget inside its
      * rectangle.
      *
-     * @param align  Alignment for all content.
+     * @param align      Alignment for all content.
+     * @param alignMode  Mode of alignment (by combo/text/image).
      */
-    void setAlignment(ui::Alignment const &align);
+    void setAlignment(ui::Alignment const &align,
+                      AlignmentMode alignMode = AlignByCombination);
 
     void setTextAlignment(ui::Alignment const &textAlign);
 
