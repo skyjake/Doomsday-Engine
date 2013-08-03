@@ -60,7 +60,7 @@ public:
 
 public:
     /**
-     * Construct a bias source (locked automatically).
+     * Construct a new bias light source. The Grabbable is locked automatically.
      *
      * @param origin     Origin for the source in the map coordinate space.
      * @param intensity  Light intensity (strength) multiplier.
@@ -75,7 +75,9 @@ public:
                float maxLight             = 0);
 
     /**
-     * Construct a bias source by duplicating @a other.
+     * Construct a new bias light source by duplicating @a other.
+     *
+     * @note The Grabbable state is @em not copied (default state is applied).
      */
     BiasSource(BiasSource const &other);
 
@@ -192,15 +194,17 @@ public:
     void forceUpdate();
 
     /**
-     * Analyze the bias source to determine whether the lighting contribution
-     * to any surfaces require updating.
+     * Analyze the bias source to determine whether any lighting-contributor
+     * trackers must be informed.
      *
-     * @param changes         Tracker in which to populate (mark) any changes.
-     * @param indexInTracker  Index to use when writing to the tracker.
-     * @param currentTime     Current time in milliseconds. Will be used to
-     *                        mark the bias source (if changes are found) so
-     *                        that interpolation can be performed later (by
-     *                        the surface(s)).
+     * @param changes      Digest in which to record changes.
+     * @param digestIndex  Index to use when updating the digest.
+     * @param currentTime  Current time in milliseconds. Will be used to mark
+     *                     the bias source (if changes are found) to facilitate
+     *                     interpolation (performed by BiasIllum when lighting
+     *                     is next sampled for a given map point).
+     *
+     * @see BiasTracker
      */
     bool trackChanges(BiasDigest &changes, uint indexInTracker, uint currentTime);
 
