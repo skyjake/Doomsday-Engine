@@ -326,7 +326,12 @@ void Segment::lightBiasPoly(int group, rvertex_t const *positions, ColorRawf *co
     {
         BiasIllum *illum = &geomGroup->biasIllums[i];
         Vector3d surfacePoint(vtx->pos[VX], vtx->pos[VY], vtx->pos[VZ]);
-        illum->evaluate(*color, surfacePoint, surface.normal(), biasTime);
+
+        Vector3f tmp;
+        illum->evaluate(tmp, surfacePoint, surface.normal(), biasTime);
+
+        for(int c = 0; c < 3; ++c)
+            color->rgba[c] += tmp[c];
     }
 
     // Any changes from contributors will have now been applied.

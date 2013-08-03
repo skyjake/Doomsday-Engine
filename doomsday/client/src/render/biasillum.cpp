@@ -33,6 +33,14 @@ using namespace de;
 static int lightSpeed        = 130;  //cvar
 static int devUseSightCheck  = true; //cvar
 
+void BiasIllum::consoleRegister() // static
+{
+    C_VAR_INT("rend-bias-lightspeed",   &lightSpeed,        0, 0, 5000);
+
+    // Development variables.
+    C_VAR_INT("rend-dev-bias-sight",    &devUseSightCheck,  CVF_NO_ARCHIVE, 0, 1);
+}
+
 DENG2_PIMPL_NOREF(BiasIllum)
 {
     BiasTracker *tracker; ///< Controlling tracker.
@@ -259,7 +267,7 @@ void BiasIllum::evaluate(Vector3f &color, Vector3d const &point,
     {
         // Does the tracker have any lighting changes to apply?
         byte activeContributors   = d->tracker->activeContributors();
-        byte changedContributions = d->tracker->changedContribution();
+        byte changedContributions = d->tracker->changedContributions();
 
         if(changedContributions)
         {
@@ -288,21 +296,4 @@ void BiasIllum::evaluate(Vector3f &color, Vector3d const &point,
 
     // Factor in the current color (and perform interpolation if needed).
     d->lerp(color, biasTime);
-}
-
-void BiasIllum::evaluate(ColorRawf &color, Vector3d const &point,
-    Vector3f const &normalAtPoint, uint biasTime)
-{
-    Vector3f tmp; evaluate(tmp, point, normalAtPoint, biasTime);
-
-    for(int c = 0; c < 3; ++c)
-        color.rgba[c] += tmp[c];
-}
-
-void BiasIllum::consoleRegister() // static
-{
-    C_VAR_INT("rend-bias-lightspeed",   &lightSpeed,        0, 0, 5000);
-
-    // Development variables.
-    C_VAR_INT("rend-dev-bias-sight",    &devUseSightCheck,  CVF_NO_ARCHIVE, 0, 1);
 }

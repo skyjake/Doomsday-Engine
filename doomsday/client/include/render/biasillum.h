@@ -23,8 +23,6 @@
 #include <de/Error>
 #include <de/Vector>
 
-#include "render/rendpoly.h" /// @todo remove me
-
 class BiasTracker;
 
 /**
@@ -98,11 +96,6 @@ public:
      * @param biasTime       Time in milliseconds of the last bias frame update.
      */
     void evaluate(de::Vector3f &color, de::Vector3d const &point,
-                  de::Vector3f const &normalAtPoint, uint biasTime);
-
-    /// @copydoc evaluate()
-    /// @todo refactor away
-    void evaluate(ColorRawf &color, de::Vector3d const &point,
                   de::Vector3f const &normalAtPoint, uint biasTime);
 
 private:

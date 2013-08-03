@@ -110,7 +110,7 @@ public:
 public: /// @todo The following API should be replaced -------------------------
 
     byte activeContributors() const;
-    byte changedContribution() const;
+    byte changedContributions() const;
     void updateAllContributors();
     void markIllumUpdateCompleted();
 

@@ -223,7 +223,7 @@ byte BiasTracker::activeContributors() const
     return d->activeContributors;
 }
 
-byte BiasTracker::changedContribution() const
+byte BiasTracker::changedContributions() const
 {
     return d->changedContributions;
 }
