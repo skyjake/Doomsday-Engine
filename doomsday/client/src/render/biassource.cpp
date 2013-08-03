@@ -272,7 +272,7 @@ float BiasSource::evaluateIntensity() const
     return d->intensity;
 }
 
-bool BiasSource::trackChanges(BiasDigest &changes, uint indexInTracker, uint currentTime)
+bool BiasSource::trackChanges(BiasDigest &changes, uint digestIndex, uint currentTime)
 {
     if(d->needToObserveSectorLightLevelChanges())
     {
@@ -307,7 +307,7 @@ bool BiasSource::trackChanges(BiasDigest &changes, uint indexInTracker, uint cur
     d->changed = false;
     d->lastUpdateTime = currentTime; // Used for interpolation.
 
-    changes.markSourceChanged(indexInTracker);
+    changes.markSourceChanged(digestIndex);
 
     return true; // Changes were applied.
 }

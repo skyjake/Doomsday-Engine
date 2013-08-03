@@ -81,8 +81,11 @@ public:
      * @param intensity  Strength of the contribution from the source.
      *
      * @see contributor()
+     *
+     * @return  Index of the contributor otherwise @c -1 (if rejected). Note
+     * that this index may be subsequently reassigned (see above notes).
      */
-    void addContributor(BiasSource *source, float intensity);
+    int addContributor(BiasSource *source, float intensity);
 
     /**
      * Returns the source of a light contributor by @a index.

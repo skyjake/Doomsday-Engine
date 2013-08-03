@@ -206,7 +206,7 @@ public:
      *
      * @see BiasTracker
      */
-    bool trackChanges(BiasDigest &changes, uint indexInTracker, uint currentTime);
+    bool trackChanges(BiasDigest &changes, uint digestIndex, uint currentTime);
 
     // Implements ISerializable.
     void operator >> (de::Writer &to) const;

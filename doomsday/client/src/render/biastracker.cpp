@@ -102,13 +102,13 @@ void BiasTracker::clearContributors()
     d->activeContributors = 0;
 }
 
-void BiasTracker::addContributor(BiasSource *source, float intensity)
+int BiasTracker::addContributor(BiasSource *source, float intensity)
 {
-    if(!source) return;
+    if(!source) return -1;
 
     // If its too weak we will ignore it entirely.
     if(intensity < BiasIllum::MIN_INTENSITY)
-        return;
+        return -1;
 
     int firstUnusedSlot = -1;
     int slot = -1;
@@ -152,7 +152,7 @@ void BiasTracker::addContributor(BiasSource *source, float intensity)
             }
 
             if(intensity <= d->contributors[weakest].influence)
-                return;
+                return - 1;
 
             slot = weakest;
             ctbr->source->audienceForDeletion -= d;
@@ -176,6 +176,8 @@ void BiasTracker::addContributor(BiasSource *source, float intensity)
 
     // (Re)activate this contributor.
     d->activeContributors |= 1 << slot;
+
+    return slot;
 }
 
 BiasSource &BiasTracker::contributor(int index) const
