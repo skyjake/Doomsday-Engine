@@ -28,264 +28,40 @@
 #include "de_graphics.h"
 #include "de_ui.h"
 
-//#include "cbuffer.h"
-#include "gl/texturecontent.h"
-#include "resource/image.h"
-#include "resource/font.h"
-#include "resource/fonts.h"
-#include "render/rend_font.h"
 #include "ui/busyvisual.h"
 #include "ui/widgets/busywidget.h"
-
-//static fontid_t busyFont = 0;
-//static int busyFontHgt; // Height of the font.
-
-//static DGLuint texLoading[2];
-//static DGLuint texScreenshot; // Captured screenshot of the latest frame.
 
 static void releaseScreenshotTexture()
 {
     ClientWindow::main().busy().releaseTransitionScreenshot();
-
-    //glDeleteTextures(1, (GLuint const *) &texScreenshot);
-    //texScreenshot = 0;
-}
-
-static void acquireScreenshotTexture()
-{
-    ClientWindow::main().busy().grabTransitionScreenshot();
-/*
-    if(texScreenshot)
-    {
-        releaseScreenshotTexture();
-    }
-    texScreenshot = ClientWindow::main().grabAsTexture(ClientWindow::GrabHalfSized);*/
 }
 
 void BusyVisual_ReleaseTextures()
 {
 #ifdef __CLIENT__
-    /*
-    glDeleteTextures(2, (GLuint const *) texLoading);
-    texLoading[0] = texLoading[1] = 0;
-    */
-
     // Don't release yet if doing a transition.
     if(!Con_TransitionInProgress())
     {
         releaseScreenshotTexture();
     }
-
-    //busyFont = 0;
 #endif
 }
 
 void BusyVisual_PrepareResources(void)
 {
+#ifdef __CLIENT__
     BusyTask* task = BusyMode_CurrentTask();
-
-    if(isDedicated || novideo || !task) return;
+    if(!task) return;
 
     if(!(task->mode & BUSYF_STARTUP))
     {
         // Not in startup, so take a copy of the current frame contents.
-        acquireScreenshotTexture();
+        ClientWindow::main().busy().grabTransitionScreenshot();
     }
-}
-
-#if 0
-void BusyVisual_PrepareFont(void)
-{
-    if(!novideo)
-    {
-        /**
-         * @todo At the moment this is called from preBusySetup() so that the font
-         * is present throughout the busy mode during all the individual tasks.
-         * Previously the font was being prepared at the beginning of each task,
-         * but that was resulting in a rendering glitch where the font GL texture
-         * was not being properly drawn on screen during the first ~1 second of
-         * BusyVisual visibility. The exact cause was not determined, but it may be
-         * due to a conflict with the fonts being prepared from both the main
-         * thread and the worker thread, or because the GL deferring mechanism is
-         * interfering somehow.
-         */
-
-        // These must be real files in the base dir because virtual files haven't
-        // been loaded yet when the engine startup is done.
-        static const struct busyfont_s {
-            const char* name;
-            const char* path;
-        } fonts[] = {
-            { "System:normal12", "}data/fonts/normal12.dfn" },
-            { "System:normal18", "}data/fonts/normal18.dfn" }
-        };
-        int fontIdx = !(DENG_WINDOW->width() > 640)? 0 : 1;
-        Uri* uri = Uri_NewWithPath2(fonts[fontIdx].name, RC_NULL);
-        font_t* font = R_CreateFontFromFile(uri, fonts[fontIdx].path);
-        Uri_Delete(uri);
-
-        if(font)
-        {
-            busyFont = Fonts_Id(font);
-            FR_SetFont(busyFont);
-            FR_LoadDefaultAttrib();
-            busyFontHgt = FR_SingleLineHeight("Busy");
-        }
-        else
-        {
-            busyFont = 0;
-            busyFontHgt = 0;
-        }
-    }
-}
-
-void BusyVisual_LoadTextures(void)
-{
-    image_t image;
-    if(novideo) return;
-
-    if(GL_LoadImage(image, "}data/graphics/loading1.png"))
-    {
-        texLoading[0] = GL_NewTextureWithParams(DGL_RGBA, image.size.width, image.size.height, image.pixels, TXCF_NEVER_DEFER);
-        Image_Destroy(&image);
-    }
-
-    if(GL_LoadImage(image, "}data/graphics/loading2.png"))
-    {
-        texLoading[1] = GL_NewTextureWithParams(DGL_RGBA, image.size.width, image.size.height, image.pixels, TXCF_NEVER_DEFER);
-        Image_Destroy(&image);
-    }
-}
 #endif
+}
 
 #if 0
-/**
- * Draws the captured screenshot as a background, or just clears the screen if no
- * screenshot is available.
- */
-static void drawBackground(float x, float y, float width, float height)
-{
-    if(texScreenshot)
-    {
-        DENG_ASSERT_IN_MAIN_THREAD();
-        DENG_ASSERT_GL_CONTEXT_ACTIVE();
-
-        //GL_BindTextureUnmanaged(texScreenshot, GL_LINEAR);
-        glBindTexture(GL_TEXTURE_2D, texScreenshot);
-        glEnable(GL_TEXTURE_2D);
-
-        glColor3ub(255, 255, 255);
-        glBegin(GL_QUADS);
-            glTexCoord2f(0, 0);
-            glVertex2f(x, y);
-            glTexCoord2f(1, 0);
-            glVertex2f(x + width, y);
-            glTexCoord2f(1, 1);
-            glVertex2f(x + width, y + height);
-            glTexCoord2f(0, 1);
-            glVertex2f(x, y + height);
-        glEnd();
-
-        glDisable(GL_TEXTURE_2D);
-    }
-    else
-    {
-        glClear(GL_COLOR_BUFFER_BIT);
-    }
-}
-
-/**
- * @param pos  Position (0...1) indicating how far things have progressed.
- */
-static void drawPositionIndicator(float x, float y, float radius, float pos,
-    const char* taskName)
-{
-    const timespan_t accumulatedBusyTime = BusyMode_ElapsedTime();
-    const float col[4] = {1.f, 1.f, 1.f, .25f};
-    const int backW = (radius * 2);
-    const int backH = (radius * 2);
-    int i, edgeCount;
-
-    pos = MINMAX_OF(0, pos, 1);
-    edgeCount = MAX_OF(1, pos * 30);
-
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
-
-    // Draw a background.
-    GL_BlendMode(BM_NORMAL);
-
-    glBegin(GL_TRIANGLE_FAN);
-        // Center.
-        glColor4ub(0, 0, 0, 140);
-        glVertex2f(x, y);
-        glColor4ub(0, 0, 0, 0);
-        // Vertices along the edge.
-        glVertex2f(x, y - backH);
-        glVertex2f(x + backW*.5f, y - backH*.8f);
-        glVertex2f(x + backW*.8f, y - backH*.5f);
-        glVertex2f(x + backW, y);
-        glVertex2f(x + backW*.8f, y + backH*.5f);
-        glVertex2f(x + backW*.5f, y + backH*.8f);
-        glVertex2f(x, y + backH);
-        glVertex2f(x - backW*.5f, y + backH*.8f);
-        glVertex2f(x - backW*.8f, y + backH*.5f);
-        glVertex2f(x - backW, y);
-        glVertex2f(x - backW*.8f, y - backH*.5f);
-        glVertex2f(x - backW*.5f, y - backH*.8f);
-        glVertex2f(x, y - backH);
-    glEnd();
-
-    // Draw the frame.
-    glEnable(GL_TEXTURE_2D);
-
-    GL_BindTextureUnmanaged(texLoading[0], GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-    LIBDENG_ASSERT_GL_TEXTURE_ISBOUND(texLoading[0]);
-    glColor4fv(col);
-    GL_DrawRectf2(x - radius, y - radius, radius*2, radius*2);
-
-    // Rotate around center.
-    glMatrixMode(GL_TEXTURE);
-    glPushMatrix();
-    glLoadIdentity();
-    glTranslatef(.5f, .5f, 0.f);
-    glRotatef(-accumulatedBusyTime * 20, 0.f, 0.f, 1.f);
-    glTranslatef(-.5f, -.5f, 0.f);
-
-    // Draw a fan.
-    glColor4f(col[0], col[1], col[2], .5f);
-    LIBDENG_ASSERT_GL_TEXTURE_ISBOUND(texLoading[0]);
-    GL_BindTextureUnmanaged(texLoading[1], GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-    LIBDENG_ASSERT_GL_TEXTURE_ISBOUND(texLoading[1]);
-    glBegin(GL_TRIANGLE_FAN);
-    // Center.
-    glTexCoord2f(.5f, .5f);
-    glVertex2f(x, y);
-    // Vertices along the edge.
-    for(i = 0; i <= edgeCount; ++i)
-    {
-        float angle = 2 * de::PI * pos * (i / (float)edgeCount) + de::PI/2;
-        glTexCoord2f(.5f + cos(angle)*.5f, .5f + sin(angle)*.5f);
-        glVertex2f(x + cos(angle)*radius*1.05f, y + sin(angle)*radius*1.05f);
-    }
-    glEnd();
-    LIBDENG_ASSERT_GL_TEXTURE_ISBOUND(texLoading[1]);
-
-    glMatrixMode(GL_TEXTURE);
-    glPopMatrix();
-
-    // Draw the task name.
-    if(taskName)
-    {
-        FR_SetFont(busyFont);
-        FR_LoadDefaultAttrib();
-        FR_SetColorAndAlpha(1.f, 1.f, 1.f, .66f);
-        FR_DrawTextXY3(taskName, x+radius*1.15f, y, ALIGN_LEFT, DTF_ONLY_SHADOW);
-    }
-
-    glDisable(GL_TEXTURE_2D);
-}
-
 void BusyVisual_Render(void)
 {
     BusyTask* task = BusyMode_CurrentTask();
