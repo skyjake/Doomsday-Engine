@@ -147,7 +147,10 @@ static void beginTask(BusyTask* task)
     // Load any resources needed to visual this task's progress.
     BusyVisual_PrepareResources();
 
-    ClientWindow::main().busy().progress().setText(task->name);
+    ProgressWidget &prog = ClientWindow::main().busy().progress();
+    prog.setText(task->name);
+    prog.setMode(task->mode & BUSYF_ACTIVITY? ProgressWidget::Indefinite :
+                                              ProgressWidget::Ranged);
 
     // Start the busy worker thread, which will process the task in the
     // background while we keep the user occupied with nice animations.

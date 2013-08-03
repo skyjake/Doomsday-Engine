@@ -35,44 +35,36 @@
 #include "resource/fonts.h"
 #include "render/rend_font.h"
 #include "ui/busyvisual.h"
+#include "ui/widgets/busywidget.h"
 
 //static fontid_t busyFont = 0;
 //static int busyFontHgt; // Height of the font.
 
 //static DGLuint texLoading[2];
-static DGLuint texScreenshot; // Captured screenshot of the latest frame.
+//static DGLuint texScreenshot; // Captured screenshot of the latest frame.
 
 static void releaseScreenshotTexture()
 {
-    glDeleteTextures(1, (GLuint const *) &texScreenshot);
-    texScreenshot = 0;
+    ClientWindow::main().busy().releaseTransitionScreenshot();
+
+    //glDeleteTextures(1, (GLuint const *) &texScreenshot);
+    //texScreenshot = 0;
 }
 
 static void acquireScreenshotTexture()
 {
-#ifdef _DEBUG
-    timespan_t startTime;
-#endif
-
+    ClientWindow::main().busy().grabTransitionScreenshot();
+/*
     if(texScreenshot)
     {
         releaseScreenshotTexture();
     }
-
-#ifdef _DEBUG
-    startTime = Timer_RealSeconds();
-#endif
-
-    texScreenshot = ClientWindow::main().grabAsTexture(ClientWindow::GrabHalfSized);
-
-    DEBUG_Message(("Busy Mode: Took %.2f seconds acquiring screenshot texture #%i.\n",
-                   Timer_RealSeconds() - startTime, texScreenshot));
+    texScreenshot = ClientWindow::main().grabAsTexture(ClientWindow::GrabHalfSized);*/
 }
 
 void BusyVisual_ReleaseTextures()
 {
-    if(novideo) return;
-
+#ifdef __CLIENT__
     /*
     glDeleteTextures(2, (GLuint const *) texLoading);
     texLoading[0] = texLoading[1] = 0;
@@ -85,6 +77,7 @@ void BusyVisual_ReleaseTextures()
     }
 
     //busyFont = 0;
+#endif
 }
 
 void BusyVisual_PrepareResources(void)
@@ -453,12 +446,17 @@ void Con_DrawTransition(void)
     glLoadIdentity();
     glOrtho(0, SCREENWIDTH, SCREENHEIGHT, 0, -1, 1);
 
+    DENG2_ASSERT(ClientWindow::main().busy().transitionScreenshot() != 0);
+
+    GLuint const texScreenshot = ClientWindow::main().busy().transitionScreenshot()->glName();
+
     GL_BindTextureUnmanaged(texScreenshot, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
     glEnable(GL_TEXTURE_2D);
 
     switch(transition.style)
     {
     case TS_DOOMSMOOTH: {
+
         float topAlpha, s, div, colWidth = 1.f / SCREENWIDTH;
         int x, y, h, i;
 

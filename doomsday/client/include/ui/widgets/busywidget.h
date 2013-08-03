@@ -22,6 +22,8 @@
 #include "guiwidget.h"
 #include "progresswidget.h"
 
+#include <de/GLTexture>
+
 /**
  * Widget that takes care of the UI while busy mode is active.
  */
@@ -32,11 +34,19 @@ public:
 
     ProgressWidget &progress();
 
+    void grabTransitionScreenshot();
+    void releaseTransitionScreenshot();
+    de::GLTexture const *transitionScreenshot() const;
+
     // Events.
     void viewResized();
     void update();
     void drawContent();
     bool handleEvent(de::Event const &event);
+
+protected:
+    void glInit();
+    void glDeinit();
 
 private:
     DENG2_PRIVATE(d)
