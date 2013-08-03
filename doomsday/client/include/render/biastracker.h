@@ -23,8 +23,10 @@
 #include <de/Error>
 #include <de/Vector>
 
-class BiasSource;
+#include "BiasIllum"
+
 class BiasDigest;
+class BiasSource;
 
 /**
  * Map point illumination tracker for the Shadow Bias lighting model.
@@ -37,6 +39,9 @@ public:
     /// An unknown light contributor was referenced @ingroup errors
     DENG2_ERROR(UnknownContributorError);
 
+    /// Maximum number of light contributors.
+    static int const MAX_CONTRIBUTORS = BiasIllum::MAX_CONTRIBUTORS;
+
 public:
     /**
      * Construct a new bias illumination tracker.
@@ -45,11 +50,6 @@ public:
 
     BiasTracker(BiasTracker const &other);
     BiasTracker &operator = (BiasTracker const &other);
-
-    /**
-     * To be called to register the commands and variables of this module.
-     */
-    static void consoleRegister();
 
     /**
      * Remove all light contributors. Existing contributions are put into a
@@ -71,11 +71,11 @@ public:
      * @note Contributors with intensity less than @ref BiasIllum::MIN_INTENSITY
      * will be ignored (nothing will happen).
      *
-     * @note At most @ref BiasIllum::MAX_CONTRIBUTORS can contribute lighting.
-     * Once capacity is reached adding a new contributor will result in the
-     * weakest contributor (i.e., smallest intensity when added) being dropped
-     * and it's index assigned to the 'new' contributor. If the weakest is the
-     * new contributor then nothing will happen.
+     * @note At most @ref MAX_CONTRIBUTORS can contribute lighting. Once this
+     * capacity is reached adding a new contributor will result in the weakest
+     * contributor (i.e., smallest intensity when added) being dropped and it's
+     * index assigned to the 'new' contributor. If the weakest is the new
+     * contributor then nothing will happen.
      *
      * @param source     Source of the light contribution.
      * @param intensity  Strength of the contribution from the source.
@@ -86,18 +86,22 @@ public:
 
     /**
      * Returns the source of a light contributor by @a index.
+     *
+     * @see addContributor()
      */
     BiasSource &contributor(int index) const;
 
     /**
      * Determine the earliest time in milliseconds that an affecting source
      * was changed/deleted.
+     *
+     * @see applyChanges()
      */
     uint timeOfLatestContributorUpdate() const;
 
     /**
      * Interpret the bias change digest and schedule illumination updates as
-     * necessary (deferred until necessary, does not block).
+     * necessary (deferred, does not block).
      *
      * @param changes  Digest of all changes to apply in the tracker.
      */
@@ -107,15 +111,8 @@ public: /// @todo The following API should be replaced -------------------------
 
     byte activeContributors() const;
     byte changedContribution() const;
-    void markIllumUpdateCompleted();
-
-public: /// @todo The following logic does not belong at this level ------------
-
-    uint lastUpdateOnFrame() const;
-
-    void setLastUpdateOnFrame(uint newLastUpdateFrameNumber);
-
     void updateAllContributors();
+    void markIllumUpdateCompleted();
 
 private:
     DENG2_PRIVATE(d)

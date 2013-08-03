@@ -245,7 +245,7 @@ void Rend_Register()
     LO_Register();
     Rend_DecorRegister();
     BiasIllum::consoleRegister();
-    BiasTracker::consoleRegister();
+    BiasSurface::consoleRegister();
     LightGrid::consoleRegister();
     Sky_Register();
     Rend_ModelRegister();
@@ -936,13 +936,11 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
                 // Apply shadow bias contributions.
                 if(p.elem->type() == DMU_BSPLEAF)
                 {
-                    p.elem->as<BspLeaf>()->
-                        lightBiasPoly(p.subElemIndex, int(numVertices), rvertices, rcolors);
+                    p.elem->as<BspLeaf>()->lightBiasPoly(p.subElemIndex, rvertices, rcolors);
                 }
                 else
                 {
-                    p.elem->as<Segment>()->
-                        lightBiasPoly(p.subElemIndex, int(numVertices), rvertices, rcolors);
+                    p.elem->as<Segment>()->lightBiasPoly(p.subElemIndex, rvertices, rcolors);
                 }
 
                 if(p.glowing > 0)

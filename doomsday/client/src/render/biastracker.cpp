@@ -19,15 +19,9 @@
 
 #include <de/Observers>
 
-#include <QtAlgorithms>
-#include <QVector>
-
-#include "de_base.h"
-#include "de_console.h"
+#include "dd_main.h"
 
 #include "world/map.h"
-
-#include "BiasIllum" // BiasIllum::MAX_CONTRIBUTORS
 #include "BiasDigest"
 #include "BiasSource"
 
@@ -35,19 +29,13 @@
 
 using namespace de;
 
-static int devUpdateAffected = true; //cvar
-
 struct Contributor
 {
     BiasSource *source;
     float influence;
 };
 
-#define MAX_CONTRIBUTORS BiasIllum::MAX_CONTRIBUTORS
-
 /**
- * @todo Defer allocation of most data -- adopt a 'fly-weight' approach.
- *
  * @todo Do not observe source deletion. A better solution would represent any
  * source deletions in BiasDigest.
  */
@@ -58,13 +46,11 @@ DENG2_OBSERVES(BiasSource, Deletion)
     byte activeContributors;
     byte changedContributions;
 
-    uint lastUpdateOnFrame;
     uint lastSourceDeletion; // Milliseconds.
 
     Instance()
         : activeContributors(0),
           changedContributions(0),
-          lastUpdateOnFrame(0),
           lastSourceDeletion(0)
     {
         zap(contributors);
@@ -73,7 +59,6 @@ DENG2_OBSERVES(BiasSource, Deletion)
     Instance(Instance const &other)
         : activeContributors(other.activeContributors),
           changedContributions(other.changedContributions),
-          lastUpdateOnFrame(other.lastUpdateOnFrame),
           lastSourceDeletion(other.lastSourceDeletion)
     {
         std::memcpy(contributors, other.contributors, sizeof(contributors));
@@ -110,22 +95,6 @@ BiasTracker &BiasTracker::operator = (BiasTracker const &other)
 {
     d.reset(new Instance(*other.d));
     return *this;
-}
-
-void BiasTracker::consoleRegister() // static
-{
-    // Development variables.
-    C_VAR_INT("rend-dev-bias-affected", &devUpdateAffected, CVF_NO_ARCHIVE, 0, 1);
-}
-
-uint BiasTracker::lastUpdateOnFrame() const
-{
-    return d->lastUpdateOnFrame;
-}
-
-void BiasTracker::setLastUpdateOnFrame(uint newLastUpdateFrameNumber)
-{
-    d->lastUpdateOnFrame = newLastUpdateFrameNumber;
 }
 
 void BiasTracker::clearContributors()
@@ -249,6 +218,28 @@ uint BiasTracker::timeOfLatestContributorUpdate() const
     return latest;
 }
 
+byte BiasTracker::activeContributors() const
+{
+    return d->activeContributors;
+}
+
+byte BiasTracker::changedContribution() const
+{
+    return d->changedContributions;
+}
+
+void BiasTracker::updateAllContributors()
+{
+    Contributor *ctbr = d->contributors;
+    for(int i = 0; i < MAX_CONTRIBUTORS; ++i, ctbr++)
+    {
+        if(ctbr->source)
+        {
+            ctbr->source->forceUpdate();
+        }
+    }
+}
+
 void BiasTracker::applyChanges(BiasDigest &changes)
 {
     // All contributions from changed sources will need to be updated.
@@ -269,28 +260,6 @@ void BiasTracker::applyChanges(BiasDigest &changes)
             break;
         }
     }
-}
-
-void BiasTracker::updateAllContributors()
-{
-    Contributor *ctbr = d->contributors;
-    for(int i = 0; i < MAX_CONTRIBUTORS; ++i, ctbr++)
-    {
-        if(ctbr->source)
-        {
-            ctbr->source->forceUpdate();
-        }
-    }
-}
-
-byte BiasTracker::activeContributors() const
-{
-    return d->activeContributors;
-}
-
-byte BiasTracker::changedContribution() const
-{
-    return d->changedContributions;
 }
 
 void BiasTracker::markIllumUpdateCompleted()

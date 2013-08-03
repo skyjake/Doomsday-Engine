@@ -33,6 +33,11 @@ public:
     virtual ~BiasSurface() {}
 
     /**
+     * To be called to register the commands and variables of this module.
+     */
+    static void consoleRegister();
+
+    /**
      * Perform lighting for the supplied geometry. The derived class wil define
      * how these vertices map to bias illumination points.
      *

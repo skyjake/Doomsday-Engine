@@ -57,6 +57,7 @@ struct GeometryGroup
 {
     typedef QList<BiasIllum> BiasIllums;
 
+    uint biasLastUpdateFrame;
     BiasIllums biasIllums;
     BiasTracker biasTracker;
 };
@@ -332,18 +333,18 @@ DENG2_PIMPL(BspLeaf)
      * @todo This could be enhanced so that only the lights on the right
      * side of the surface are taken into consideration.
      */
-    void updateAffected(BiasTracker &bsuf, int group)
+    void updateBiasContributors(GeometryGroup &geomGroup, int planeIndex)
     {
         // If the data is already up to date, nothing needs to be done.
         uint lastChangeFrame = self.map().biasLastChangeOnFrame();
-        if(bsuf.lastUpdateOnFrame() == lastChangeFrame)
+        if(geomGroup.biasLastUpdateFrame == lastChangeFrame)
             return;
 
-        bsuf.setLastUpdateOnFrame(lastChangeFrame);
+        geomGroup.biasLastUpdateFrame = lastChangeFrame;
 
-        bsuf.clearContributors();
+        geomGroup.biasTracker.clearContributors();
 
-        Plane const &plane     = sector->plane(group);
+        Plane const &plane     = sector->plane(planeIndex);
         Surface const &surface = plane.surface();
 
         Vector3d surfacePoint(poly->center(), plane.visHeight());
@@ -371,7 +372,7 @@ DENG2_PIMPL(BspLeaf)
             if(sourceToSurface.dot(surface.normal()) < 0)
                 continue;
 
-            bsuf.addContributor(source, source->evaluateIntensity() / de::max(distance, 1.0));
+            geomGroup.biasTracker.addContributor(source, source->evaluateIntensity() / de::max(distance, 1.0));
         }
     }
 
@@ -594,17 +595,19 @@ void BspLeaf::applyBiasDigest(BiasDigest &changes)
 
 void BspLeaf::lightBiasPoly(int group, rvertex_t const *positions, ColorRawf *colors)
 {
+    int const planeIndex = group;
+
     DENG_ASSERT(positions != 0 && colors != 0);
 
-    GeometryGroup *geomGroup = d->geometryGroup(group);
+    GeometryGroup *geomGroup = d->geometryGroup(planeIndex);
 
     // Should we update?
-    //if(devUpdateAffected)
+    //if(devUpdateBiasContributors)
     {
-        d->updateAffected(geomGroup->biasTracker, group);
+        d->updateBiasContributors(*geomGroup, planeIndex);
     }
 
-    Surface const &surface = d->sector->plane(group).surface();
+    Surface const &surface = d->sector->plane(planeIndex).surface();
     uint biasTime = map().biasCurrentTime();
 
     rvertex_t const *vtx = positions;

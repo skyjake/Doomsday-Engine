@@ -48,6 +48,7 @@ struct GeometryGroup
 {
     typedef QList<BiasIllum> BiasIllums;
 
+    uint biasLastUpdateFrame;
     BiasIllums biasIllums;
     BiasTracker biasTracker;
 };
@@ -136,18 +137,18 @@ DENG2_PIMPL(Segment)
      * @todo This could be enhanced so that only the lights on the right
      * side of the surface are taken into consideration.
      */
-    void updateAffected(BiasTracker &bsuf, int group)
+    void updateBiasContributors(GeometryGroup &geomGroup, int sectionIndex)
     {
-        DENG_UNUSED(group);
+        DENG_UNUSED(sectionIndex);
 
         // If the data is already up to date, nothing needs to be done.
         uint lastChangeFrame = self.map().biasLastChangeOnFrame();
-        if(bsuf.lastUpdateOnFrame() == lastChangeFrame)
+        if(geomGroup.biasLastUpdateFrame == lastChangeFrame)
             return;
 
-        bsuf.setLastUpdateOnFrame(lastChangeFrame);
+        geomGroup.biasLastUpdateFrame = lastChangeFrame;
 
-        bsuf.clearContributors();
+        geomGroup.biasTracker.clearContributors();
 
         Surface const &surface = lineSide->middle();
         Vector2d const &from   = self.from().origin();
@@ -173,7 +174,7 @@ DENG2_PIMPL(Segment)
             if(sourceToSurface.dot(surface.normal()) < 0)
                 continue;
 
-            bsuf.addContributor(source, source->evaluateIntensity() / de::max(distance, 1.0));
+            geomGroup.biasTracker.addContributor(source, source->evaluateIntensity() / de::max(distance, 1.0));
         }
     }
 #endif
@@ -303,18 +304,20 @@ void Segment::applyBiasDigest(BiasDigest &changes)
 
 void Segment::lightBiasPoly(int group, rvertex_t const *positions, ColorRawf *colors)
 {
+    int const sectionIndex = group;
+
     DENG_ASSERT(hasLineSide()); // sanity check
     DENG_ASSERT(positions != 0 && colors != 0);
 
-    GeometryGroup *geomGroup = d->geometryGroup(group);
+    GeometryGroup *geomGroup = d->geometryGroup(sectionIndex);
 
     // Should we update?
-    //if(devUpdateAffected)
+    //if(devUpdateBiasContributors)
     {
-        d->updateAffected(geomGroup->biasTracker, group);
+        d->updateBiasContributors(*geomGroup, sectionIndex);
     }
 
-    Surface const &surface = d->lineSide->middle();
+    Surface const &surface = d->lineSide->surface(sectionIndex);
     uint biasTime = map().biasCurrentTime();
 
     rvertex_t const *vtx = positions;

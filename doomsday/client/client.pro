@@ -560,6 +560,7 @@ SOURCES += \
     src/render/biasdigest.cpp \
     src/render/biasillum.cpp \
     src/render/biassource.cpp \
+    src/render/biassurface.cpp \
     src/render/biastracker.cpp \
     src/render/blockmapvisual.cpp \
     src/render/huecirclevisual.cpp \

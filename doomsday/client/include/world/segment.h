@@ -250,10 +250,8 @@ public:
      */
     void lightBiasPoly(int group, rvertex_t const *positions, ColorRawf *colors);
 
-    /// Implements BiasSurface
     void updateBiasAfterGeometryMove(int group);
 
-    /// Implements BiasSurface
     void applyBiasDigest(BiasDigest &changes);
 
 #endif // __CLIENT__
