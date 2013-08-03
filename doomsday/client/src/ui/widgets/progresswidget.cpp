@@ -183,18 +183,22 @@ void ProgressWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
     contentLayout(layout);
 
     // There is a shadow behind the wheel.
-    float shadowRadius = layout.image.width() / 2;
-    float ringRadius = layout.image.width() / 4;
-    float ringThick = layout.image.width() / 10;
-    verts.makeRing(layout.image.middle(), shadowRadius + ringRadius, shadowRadius + ringThick, 30,
-                   style().colors().colorf(d->shadowColorId),
-                   root().atlas().imageRectf(root().borderGlow()), 0);
-    verts.makeRing(layout.image.middle(), shadowRadius - ringThick, shadowRadius + ringThick, 30,
-                   style().colors().colorf(d->shadowColorId),
+    float gradientThick = layout.image.width() * 1;
+    float solidThick = layout.image.width() * .5f;
+
+    Vector4f const shadowColor = style().colors().colorf(d->shadowColorId);
+    verts.makeRing(layout.image.middle(),
+                   solidThick, 0, 30,
+                   shadowColor,
                    root().atlas().imageRectf(root().borderGlow()).middle());
-    verts.makeRing(layout.image.middle(), shadowRadius - ringRadius, shadowRadius - ringThick, 30,
-                   style().colors().colorf(d->shadowColorId),
+    verts.makeRing(layout.image.middle(),
+                   gradientThick, solidThick, 30,
+                   shadowColor,
                    root().atlas().imageRectf(root().borderGlow()), 0);
+    /*verts.makeRing(layout.image.middle(),
+                   shadowRadius - gradientThick, shadowRadius - solidThick, 30,
+                   shadowColor,
+                   root().atlas().imageRectf(root().borderGlow()), 0);*/
 
     LabelWidget::glMakeGeometry(verts);
 
