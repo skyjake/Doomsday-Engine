@@ -38,18 +38,18 @@ public:
     /// Required tracker is missing. @ingroup errors
     DENG2_ERROR(MissingTrackerError);
 
-    /// Maximum number of light contributions.
+    /// Maximum number of light contributions/contributors.
     static int const MAX_CONTRIBUTORS = 6;
 
-    /// Minimum intensity for a light contributor.
+    /// Minimum light contribution intensity.
     static float const MIN_INTENSITY; // .005f
 
 public:
     /**
      * Construct a new bias illumination point.
      *
-     * @param tracker  Tracker to assigned to the new point (if any). Note that
-     *                 @ref assignTracker() can be used later.
+     * @param tracker  Lighting-contributor tracker to assign to the new point.
+     *                 Note that @ref assignTracker() can be used later.
      */
     explicit BiasIllum(BiasTracker *tracker = 0);
 
@@ -60,6 +60,25 @@ public:
      * To be called to register the commands and variables of this module.
      */
     static void consoleRegister();
+
+    /**
+     * (Re-)Evaluate lighting for the map point. Any queued changes to lighting
+     * contributions will be applied at this time (note that this is however a
+     * fast operation which does not block).
+     *
+     * @param color          Final color will be written here.
+     * @param point          Point in the map to evaluate. It is assumed this
+     *                       has @em not moved since the last call unless the
+     *                       light source contributors have been redetermined.
+     *                       (Failure to do so will result in briefly visible
+     *                       artefacts/inconsistent lighting at worst.)
+     * @param normalAtPoint  Surface normal at @a point. Also assumed not to
+     *                       have changed since the last call.
+     * @param biasTime       Time in milliseconds of the last bias frame update
+     *                       used for interpolation.
+     */
+    void evaluate(de::Vector3f &color, de::Vector3d const &point,
+                  de::Vector3f const &normalAtPoint, uint biasTime);
 
     /**
      * Returns @c true iff a BiasTracker has been assigned for the illumination.
@@ -80,29 +99,9 @@ public:
      *
      * @param newTracker  New illumination tracker to be assigned. Use @c 0 to
      *                    unassign any current tracker.
-     *
      * @see hasTracker()
      */
     void setTracker(BiasTracker *newTracker);
-
-    /**
-     * (Re-)Evaluate lighting for the map point. Any queued changes to lighting
-     * contributions will be applied at this time (note that this is however a
-     * fast operation which does not block).
-     *
-     * @param color          Final color will be written here.
-     * @param point          Point in the map to evaluate. It is assumed this
-     *                       has @em not moved since the last call unless the
-     *                       light source contributors have been redetermined.
-     *                       (Failure to do so will result in briefly visible
-     *                       artefacts/inconsistent lighting at worst.)
-     * @param normalAtPoint  Surface normal at @a point. Also assumed not to
-     *                       have changed since the last call.
-     * @param biasTime       Time in milliseconds of the last bias frame update
-     *                       used for interpolation.
-     */
-    void evaluate(de::Vector3f &color, de::Vector3d const &point,
-                  de::Vector3f const &normalAtPoint, uint biasTime);
 
 private:
     DENG2_PRIVATE(d)
