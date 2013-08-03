@@ -26,7 +26,8 @@
 class BiasTracker;
 
 /**
- * Stores map point lighting information for the Shadow Bias lighting model.
+ * Map point illumination sampler for the Shadow Bias lighting model.
+ *
  * Used in conjunction with a BiasTracker (for routing change notifications).
  *
  * @ingroup render
@@ -85,15 +86,20 @@ public:
     void setTracker(BiasTracker *newTracker);
 
     /**
-     * (Re-)Evaluate lighting for this map point.
+     * (Re-)Evaluate lighting for the map point. Any queued changes to lighting
+     * contributions will be applied at this time (note that this is however a
+     * fast operation which does not block).
      *
      * @param color          Final color will be written here.
-     * @param point          Point in the map to evaluate. Assumed not to have
-     *                       moved since the last call unless the light source
-     *                       contributions have since been updated.
+     * @param point          Point in the map to evaluate. It is assumed this
+     *                       has @em not moved since the last call unless the
+     *                       light source contributors have been redetermined.
+     *                       (Failure to do so will result in briefly visible
+     *                       artefacts/inconsistent lighting at worst.)
      * @param normalAtPoint  Surface normal at @a point. Also assumed not to
      *                       have changed since the last call.
-     * @param biasTime       Time in milliseconds of the last bias frame update.
+     * @param biasTime       Time in milliseconds of the last bias frame update
+     *                       used for interpolation.
      */
     void evaluate(de::Vector3f &color, de::Vector3d const &point,
                   de::Vector3f const &normalAtPoint, uint biasTime);
