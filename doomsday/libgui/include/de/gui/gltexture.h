@@ -82,6 +82,15 @@ public:
     GLTexture();
 
     /**
+     * Constructs a texture from an existing OpenGL texture object. Ownership
+     * of the texture is transferred to the new GLTexture instance.
+     *
+     * @param existingTexture  Existing texture.
+     * @param size             Size of the texture in texels.
+     */
+    GLTexture(GLuint existingTexture, Size const &size);
+
+    /**
      * Release all image content associated with the texture.
      */
     void clear();
