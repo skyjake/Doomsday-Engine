@@ -7,6 +7,15 @@ script {
 rule unit     { constant $= UNIT }
 rule halfunit { constant $= UNIT / 2 }
 rule gap      { constant $= UNIT * 3 }
+rule glow     { constant $= UNIT * 8 }
+
+group label {
+    rule gap { constant $= gap.constant / 2 }
+}
+
+group progress {
+    rule textgap { constant $= gap.constant }
+}
 
 group console {
     rule width { constant = 500 }

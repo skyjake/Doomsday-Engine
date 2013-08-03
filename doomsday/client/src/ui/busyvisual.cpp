@@ -28,401 +28,40 @@
 #include "de_graphics.h"
 #include "de_ui.h"
 
-//#include "cbuffer.h"
-#include "gl/texturecontent.h"
-#include "resource/image.h"
-#include "resource/font.h"
-#include "resource/fonts.h"
-#include "render/rend_font.h"
 #include "ui/busyvisual.h"
-
-static fontid_t busyFont = 0;
-static int busyFontHgt; // Height of the font.
-
-static DGLuint texLoading[2];
-static DGLuint texScreenshot; // Captured screenshot of the latest frame.
+#include "ui/widgets/busywidget.h"
 
 static void releaseScreenshotTexture()
 {
-    glDeleteTextures(1, (GLuint const *) &texScreenshot);
-    texScreenshot = 0;
-}
-
-static void acquireScreenshotTexture()
-{
-#ifdef _DEBUG
-    timespan_t startTime;
-#endif
-
-    if(texScreenshot)
-    {
-        releaseScreenshotTexture();
-    }
-
-#ifdef _DEBUG
-    startTime = Timer_RealSeconds();
-#endif
-
-    texScreenshot = ClientWindow::main().grabAsTexture(ClientWindow::GrabHalfSized);
-
-    DEBUG_Message(("Busy Mode: Took %.2f seconds acquiring screenshot texture #%i.\n",
-                   Timer_RealSeconds() - startTime, texScreenshot));
+    ClientWindow::main().busy().releaseTransitionScreenshot();
 }
 
 void BusyVisual_ReleaseTextures()
 {
-    if(novideo) return;
-
-    glDeleteTextures(2, (GLuint const *) texLoading);
-    texLoading[0] = texLoading[1] = 0;
-
+#ifdef __CLIENT__
     // Don't release yet if doing a transition.
     if(!Con_TransitionInProgress())
     {
         releaseScreenshotTexture();
     }
-
-    busyFont = 0;
+#endif
 }
 
 void BusyVisual_PrepareResources(void)
 {
+#ifdef __CLIENT__
     BusyTask* task = BusyMode_CurrentTask();
-
-    if(isDedicated || novideo || !task) return;
+    if(!task) return;
 
     if(!(task->mode & BUSYF_STARTUP))
     {
         // Not in startup, so take a copy of the current frame contents.
-        acquireScreenshotTexture();
+        ClientWindow::main().busy().grabTransitionScreenshot();
     }
+#endif
 }
-
-void BusyVisual_PrepareFont(void)
-{
-    if(!novideo)
-    {
-        /**
-         * @todo At the moment this is called from preBusySetup() so that the font
-         * is present throughout the busy mode during all the individual tasks.
-         * Previously the font was being prepared at the beginning of each task,
-         * but that was resulting in a rendering glitch where the font GL texture
-         * was not being properly drawn on screen during the first ~1 second of
-         * BusyVisual visibility. The exact cause was not determined, but it may be
-         * due to a conflict with the fonts being prepared from both the main
-         * thread and the worker thread, or because the GL deferring mechanism is
-         * interfering somehow.
-         */
-
-        // These must be real files in the base dir because virtual files haven't
-        // been loaded yet when the engine startup is done.
-        static const struct busyfont_s {
-            const char* name;
-            const char* path;
-        } fonts[] = {
-            { "System:normal12", "}data/fonts/normal12.dfn" },
-            { "System:normal18", "}data/fonts/normal18.dfn" }
-        };
-        int fontIdx = !(DENG_WINDOW->width() > 640)? 0 : 1;
-        Uri* uri = Uri_NewWithPath2(fonts[fontIdx].name, RC_NULL);
-        font_t* font = R_CreateFontFromFile(uri, fonts[fontIdx].path);
-        Uri_Delete(uri);
-
-        if(font)
-        {
-            busyFont = Fonts_Id(font);
-            FR_SetFont(busyFont);
-            FR_LoadDefaultAttrib();
-            busyFontHgt = FR_SingleLineHeight("Busy");
-        }
-        else
-        {
-            busyFont = 0;
-            busyFontHgt = 0;
-        }
-    }
-}
-
-void BusyVisual_LoadTextures(void)
-{
-    image_t image;
-    if(novideo) return;
-
-    if(GL_LoadImage(image, "}data/graphics/loading1.png"))
-    {
-        texLoading[0] = GL_NewTextureWithParams(DGL_RGBA, image.size.width, image.size.height, image.pixels, TXCF_NEVER_DEFER);
-        Image_Destroy(&image);
-    }
-
-    if(GL_LoadImage(image, "}data/graphics/loading2.png"))
-    {
-        texLoading[1] = GL_NewTextureWithParams(DGL_RGBA, image.size.width, image.size.height, image.pixels, TXCF_NEVER_DEFER);
-        Image_Destroy(&image);
-    }
-}
-
-/**
- * Draws the captured screenshot as a background, or just clears the screen if no
- * screenshot is available.
- */
-static void drawBackground(float x, float y, float width, float height)
-{
-    if(texScreenshot)
-    {
-        DENG_ASSERT_IN_MAIN_THREAD();
-        DENG_ASSERT_GL_CONTEXT_ACTIVE();
-
-        //GL_BindTextureUnmanaged(texScreenshot, GL_LINEAR);
-        glBindTexture(GL_TEXTURE_2D, texScreenshot);
-        glEnable(GL_TEXTURE_2D);
-
-        glColor3ub(255, 255, 255);
-        glBegin(GL_QUADS);
-            glTexCoord2f(0, 0);
-            glVertex2f(x, y);
-            glTexCoord2f(1, 0);
-            glVertex2f(x + width, y);
-            glTexCoord2f(1, 1);
-            glVertex2f(x + width, y + height);
-            glTexCoord2f(0, 1);
-            glVertex2f(x, y + height);
-        glEnd();
-
-        glDisable(GL_TEXTURE_2D);
-    }
-    else
-    {
-        glClear(GL_COLOR_BUFFER_BIT);
-    }
-}
-
-/**
- * @param pos  Position (0...1) indicating how far things have progressed.
- */
-static void drawPositionIndicator(float x, float y, float radius, float pos,
-    const char* taskName)
-{
-    const timespan_t accumulatedBusyTime = BusyMode_ElapsedTime();
-    const float col[4] = {1.f, 1.f, 1.f, .25f};
-    const int backW = (radius * 2);
-    const int backH = (radius * 2);
-    int i, edgeCount;
-
-    pos = MINMAX_OF(0, pos, 1);
-    edgeCount = MAX_OF(1, pos * 30);
-
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
-
-    // Draw a background.
-    GL_BlendMode(BM_NORMAL);
-
-    glBegin(GL_TRIANGLE_FAN);
-        // Center.
-        glColor4ub(0, 0, 0, 140);
-        glVertex2f(x, y);
-        glColor4ub(0, 0, 0, 0);
-        // Vertices along the edge.
-        glVertex2f(x, y - backH);
-        glVertex2f(x + backW*.5f, y - backH*.8f);
-        glVertex2f(x + backW*.8f, y - backH*.5f);
-        glVertex2f(x + backW, y);
-        glVertex2f(x + backW*.8f, y + backH*.5f);
-        glVertex2f(x + backW*.5f, y + backH*.8f);
-        glVertex2f(x, y + backH);
-        glVertex2f(x - backW*.5f, y + backH*.8f);
-        glVertex2f(x - backW*.8f, y + backH*.5f);
-        glVertex2f(x - backW, y);
-        glVertex2f(x - backW*.8f, y - backH*.5f);
-        glVertex2f(x - backW*.5f, y - backH*.8f);
-        glVertex2f(x, y - backH);
-    glEnd();
-
-    // Draw the frame.
-    glEnable(GL_TEXTURE_2D);
-
-    GL_BindTextureUnmanaged(texLoading[0], GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-    LIBDENG_ASSERT_GL_TEXTURE_ISBOUND(texLoading[0]);
-    glColor4fv(col);
-    GL_DrawRectf2(x - radius, y - radius, radius*2, radius*2);
-
-    // Rotate around center.
-    glMatrixMode(GL_TEXTURE);
-    glPushMatrix();
-    glLoadIdentity();
-    glTranslatef(.5f, .5f, 0.f);
-    glRotatef(-accumulatedBusyTime * 20, 0.f, 0.f, 1.f);
-    glTranslatef(-.5f, -.5f, 0.f);
-
-    // Draw a fan.
-    glColor4f(col[0], col[1], col[2], .5f);
-    LIBDENG_ASSERT_GL_TEXTURE_ISBOUND(texLoading[0]);
-    GL_BindTextureUnmanaged(texLoading[1], GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-    LIBDENG_ASSERT_GL_TEXTURE_ISBOUND(texLoading[1]);
-    glBegin(GL_TRIANGLE_FAN);
-    // Center.
-    glTexCoord2f(.5f, .5f);
-    glVertex2f(x, y);
-    // Vertices along the edge.
-    for(i = 0; i <= edgeCount; ++i)
-    {
-        float angle = 2 * de::PI * pos * (i / (float)edgeCount) + de::PI/2;
-        glTexCoord2f(.5f + cos(angle)*.5f, .5f + sin(angle)*.5f);
-        glVertex2f(x + cos(angle)*radius*1.05f, y + sin(angle)*radius*1.05f);
-    }
-    glEnd();
-    LIBDENG_ASSERT_GL_TEXTURE_ISBOUND(texLoading[1]);
-
-    glMatrixMode(GL_TEXTURE);
-    glPopMatrix();
-
-    // Draw the task name.
-    if(taskName)
-    {
-        FR_SetFont(busyFont);
-        FR_LoadDefaultAttrib();
-        FR_SetColorAndAlpha(1.f, 1.f, 1.f, .66f);
-        FR_DrawTextXY3(taskName, x+radius*1.15f, y, ALIGN_LEFT, DTF_ONLY_SHADOW);
-    }
-
-    glDisable(GL_TEXTURE_2D);
-}
-
-#define LINE_COUNT 4
 
 #if 0
-/**
- * @return  Number of new lines since the old ones.
- */
-static int GetBufLines(CBuffer* buffer, cbline_t const **oldLines)
-{
-    cbline_t const* bufLines[LINE_COUNT + 1];
-    const int count = CBuffer_GetLines2(buffer, LINE_COUNT, -LINE_COUNT, bufLines, BLF_OMIT_RULER|BLF_OMIT_EMPTYLINE);
-    int i, k, newCount;
-
-    newCount = 0;
-    for(i = 0; i < count; ++i)
-    {
-        for(k = 0; k < 2 * LINE_COUNT - newCount; ++k)
-        {
-            if(oldLines[k] == bufLines[i])
-            {
-                goto lineIsNotNew;
-            }
-        }
-
-        newCount++;
-        for(k = 0; k < (2 * LINE_COUNT - 1); ++k)
-        {
-            oldLines[k] = oldLines[k+1];
-        }
-        oldLines[2 * LINE_COUNT - 1] = bufLines[i];
-
-lineIsNotNew:;
-    }
-
-    return newCount;
-}
-
-/**
- * Draws a number of console output to the bottom of the screen.
- * @todo: Wow. I had some weird time hacking the smooth scrolling. Cleanup would be
- *         good some day. -jk
- */
-static void drawConsoleOutput(void)
-{
-    CBuffer* buffer;
-    static cbline_t const* visibleBusyLines[2 * LINE_COUNT];
-    static float scroll = 0;
-    static float scrollStartTime = 0;
-    static float scrollEndTime = 0;
-    static double lastNewTime = 0;
-    static double timeSinceLastNew = 0;
-    double nowTime = 0;
-    float y, topY;
-    uint i, newCount;
-
-    buffer = Con_HistoryBuffer();
-    if(!buffer) return;
-
-    newCount = GetBufLines(buffer, visibleBusyLines);
-    nowTime = Timer_RealSeconds();
-    if(newCount > 0)
-    {
-        timeSinceLastNew = nowTime - lastNewTime;
-        lastNewTime = nowTime;
-        if(nowTime < scrollEndTime)
-        {
-            // Abort last scroll.
-            scroll = 0;
-            scrollStartTime = nowTime;
-            scrollEndTime = nowTime;
-        }
-        else
-        {
-            double interval = MIN_OF(timeSinceLastNew/2, 1.3);
-
-            // Begin new scroll.
-            scroll = newCount;
-            scrollStartTime = nowTime;
-            scrollEndTime = nowTime + interval;
-        }
-    }
-
-    DENG_ASSERT_IN_MAIN_THREAD();
-
-    GL_BlendMode(BM_NORMAL);
-
-    // Dark gradient as background.
-    glBegin(GL_QUADS);
-    glColor4ub(0, 0, 0, 0);
-    y = DENG_WINDOW->height() - (LINE_COUNT + 3) * busyFontHgt;
-    glVertex2f(0, y);
-    glVertex2f(DENG_WINDOW->width(), y);
-    glColor4ub(0, 0, 0, 128);
-    glVertex2f(DENG_WINDOW->width(), DENG_WINDOW->height());
-    glVertex2f(0, DENG_WINDOW->height());
-    glEnd();
-
-    glEnable(GL_TEXTURE_2D);
-
-    // The text lines.
-    topY = y = DENG_WINDOW->height() - busyFontHgt * (2 * LINE_COUNT + .5f);
-    if(newCount > 0 ||
-       (nowTime >= scrollStartTime && nowTime < scrollEndTime && scrollEndTime > scrollStartTime))
-    {
-        if(scrollEndTime - scrollStartTime > 0)
-            y += scroll * (scrollEndTime - nowTime) / (scrollEndTime - scrollStartTime) *
-                busyFontHgt;
-    }
-
-    FR_SetFont(busyFont);
-    FR_LoadDefaultAttrib();
-    FR_SetColor(1.f, 1.f, 1.f);
-
-    for(i = 0; i < 2 * LINE_COUNT; ++i, y += busyFontHgt)
-    {
-        const cbline_t* line = visibleBusyLines[i];
-        float alpha = 1;
-
-        if(!line) continue;
-
-        alpha = ((y - topY) / busyFontHgt) - (LINE_COUNT - 1);
-        if(alpha < LINE_COUNT)
-            alpha = MINMAX_OF(0, alpha/2, 1);
-        else
-            alpha = 1 - (alpha - LINE_COUNT);
-
-        FR_SetAlpha(alpha);
-        FR_DrawTextXY3(line->text, DENG_WINDOW->width()/2, y, ALIGN_TOP, DTF_ONLY_SHADOW);
-    }
-
-    glDisable(GL_TEXTURE_2D);
-
-#undef LINE_COUNT
-}
-#endif
-
 void BusyVisual_Render(void)
 {
     BusyTask* task = BusyMode_CurrentTask();
@@ -467,6 +106,7 @@ void BusyVisual_Render(void)
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();
 }
+#endif
 
 /**
  * Transition effect:
@@ -582,12 +222,17 @@ void Con_DrawTransition(void)
     glLoadIdentity();
     glOrtho(0, SCREENWIDTH, SCREENHEIGHT, 0, -1, 1);
 
+    DENG2_ASSERT(ClientWindow::main().busy().transitionScreenshot() != 0);
+
+    GLuint const texScreenshot = ClientWindow::main().busy().transitionScreenshot()->glName();
+
     GL_BindTextureUnmanaged(texScreenshot, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
     glEnable(GL_TEXTURE_2D);
 
     switch(transition.style)
     {
     case TS_DOOMSMOOTH: {
+
         float topAlpha, s, div, colWidth = 1.f / SCREENWIDTH;
         int x, y, h, i;
 

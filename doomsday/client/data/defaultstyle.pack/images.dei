@@ -2,6 +2,7 @@
 
 group window {
     image background { path = "graphics/background.jpg" }
+    image borderglow { path = "graphics/borderglow.png" }
 }
 
 group logo {

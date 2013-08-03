@@ -36,6 +36,7 @@ public Font::RichFormat::IStyle
 
     SizePolicy horizPolicy;
     SizePolicy vertPolicy;
+    AlignmentMode alignMode;
     Alignment align;
     Alignment textAlign;
     Alignment lineAlign;
@@ -49,6 +50,7 @@ public Font::RichFormat::IStyle
 
     // Style.
     int margin;
+    DotPath gapId;
     int gap;
     ColorBank::Color highlightColor;
     ColorBank::Color dimmedColor;
@@ -70,6 +72,7 @@ public Font::RichFormat::IStyle
     Instance(Public *i)
         : Base(i),
           horizPolicy(Fixed), vertPolicy(Fixed),
+          alignMode(AlignByCombination),
           align(AlignCenter),
           textAlign(AlignCenter),
           lineAlign(AlignCenter),
@@ -77,6 +80,7 @@ public Font::RichFormat::IStyle
           imageFit(OriginalAspectRatio | FitToSize),
           imageScale(1),
           imageColor(1, 1, 1, 1),
+          gapId("label.gap"),
           wrapWidth(0),
           needImageUpdate(false),
           imageTex(Id::None),
@@ -101,7 +105,7 @@ public Font::RichFormat::IStyle
         Style const &st = self.style();
 
         margin = self.margin().valuei();
-        gap = margin / 2;
+        gap    = st.rules().rule(gapId).valuei();
 
         // Colors.
         highlightColor = st.colors().color("label.highlight");
@@ -194,6 +198,7 @@ public Font::RichFormat::IStyle
     void contentPlacement(ContentLayout &layout) const
     {
         Rectanglei const contentRect = self.rule().recti().shrunk(margin);
+
         Vector2f const imageSize = image.size() * imageScale;
 
         // Determine the sizes of the elements first.
@@ -204,11 +209,12 @@ public Font::RichFormat::IStyle
         {
             if(textAlign & (AlignLeft | AlignRight))
             {
-                layout.image.setWidth(int(contentRect.width()) - int(layout.text.width()) - gap);
+                layout.image.setWidth(imageScale * (int(contentRect.width()) -
+                                                    int(layout.text.width()) - gap));
             }
             else
             {
-                layout.image.setWidth(contentRect.width());
+                layout.image.setWidth(imageScale * contentRect.width());
                 layout.text.setWidth(contentRect.width());
             }
         }
@@ -216,13 +222,59 @@ public Font::RichFormat::IStyle
         {
             if(textAlign & (AlignTop | AlignBottom))
             {
-                layout.image.setHeight(int(contentRect.height()) - int(layout.text.height()) - gap);
+                layout.image.setHeight(imageScale * (int(contentRect.height()) -
+                                                     int(layout.text.height()) - gap));
             }
             else
             {
-                layout.image.setHeight(contentRect.height());
+                layout.image.setHeight(imageScale * contentRect.height());
                 layout.text.setHeight(contentRect.height());
             }
+        }
+
+        if(hasImage())
+        {
+            // Figure out how much room is left for the image.
+            Rectanglef const rect = layout.image;
+
+            // Fit the image.
+            if(!imageFit.testFlag(FitToWidth))
+            {
+                layout.image.setWidth(image.width());
+            }
+            if(!imageFit.testFlag(FitToHeight))
+            {
+                layout.image.setHeight(image.height());
+            }
+
+            // Should the original aspect ratio be preserved?
+            if(imageFit & OriginalAspectRatio)
+            {
+                if(imageFit & FitToWidth)
+                {
+                    layout.image.setHeight(image.height() * layout.image.width() / image.width());
+                }
+                if(imageFit & FitToHeight)
+                {
+                    layout.image.setWidth(image.width() * layout.image.height() / image.height());
+
+                    if(imageFit.testFlag(FitToWidth))
+                    {
+                        float scale = 1;
+                        if(layout.image.width() > rect.width())
+                        {
+                            scale = float(rect.width()) / float(layout.image.width());
+                        }
+                        else if(layout.image.height() > rect.height())
+                        {
+                            scale = float(rect.height()) / float(layout.image.height());
+                        }
+                        layout.image.setSize(Vector2f(layout.image.size()) * scale);
+                    }
+                }
+            }
+
+            //applyAlignment(imageAlign, layout.image, rect);
         }
 
         // By default the image and the text are centered over each other.
@@ -271,59 +323,17 @@ public Font::RichFormat::IStyle
             }
         }
 
-        // Align the combination within the content.
-        Rectanglef combined = layout.image | layout.text;
+        // Align the final combination within the content.
+        Rectanglef combined =
+                (alignMode == AlignByCombination? (layout.image | layout.text) :
+                 alignMode == AlignOnlyByImage?    layout.image :
+                                                   layout.text);
 
         Vector2f delta = applyAlignment(align, combined.size(), contentRect);
         delta -= combined.topLeft;
 
         layout.image.move(delta);
         layout.text.move(delta.toVector2i());
-
-        if(hasImage())
-        {
-            // Figure out how much room is left for the image.
-            Rectanglef const rect = layout.image;
-
-            // Fit the image.
-            if(!imageFit.testFlag(FitToWidth))
-            {
-                layout.image.setWidth(image.width());
-            }
-            if(!imageFit.testFlag(FitToHeight))
-            {
-                layout.image.setHeight(image.height());
-            }
-
-            // Should the original aspect ratio be preserved?
-            if(imageFit & OriginalAspectRatio)
-            {
-                if(imageFit & FitToWidth)
-                {
-                    layout.image.setHeight(image.height() * layout.image.width() / image.width());
-                }
-                if(imageFit & FitToHeight)
-                {
-                    layout.image.setWidth(image.width() * layout.image.height() / image.height());
-
-                    if(imageFit.testFlag(FitToWidth))
-                    {
-                        float scale = 1;
-                        if(layout.image.width() > rect.width())
-                        {
-                            scale = float(rect.width()) / float(layout.image.width());
-                        }
-                        else if(layout.image.height() > rect.height())
-                        {
-                            scale = float(rect.height()) / float(layout.image.height());
-                        }
-                        layout.image.setSize(Vector2f(layout.image.size()) * scale);
-                    }
-                }
-            }
-
-            applyAlignment(imageAlign, layout.image, rect);
-        }
     }
 
     Vector2ui textSize() const
@@ -432,9 +442,16 @@ String LabelWidget::text() const
     return d->styledText;
 }
 
-void LabelWidget::setAlignment(Alignment const &align)
+void LabelWidget::setTextGap(const DotPath &styleRuleId)
+{
+    d->gapId = styleRuleId;
+    d->updateStyle();
+}
+
+void LabelWidget::setAlignment(Alignment const &align, AlignmentMode mode)
 {
     d->align = align;
+    d->alignMode = mode;
 }
 
 void LabelWidget::setTextAlignment(Alignment const &textAlign)

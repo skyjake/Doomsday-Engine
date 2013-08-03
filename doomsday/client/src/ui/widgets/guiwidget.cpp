@@ -587,6 +587,13 @@ void GuiWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
                                 root().atlas().imageRectf(root().gradientFrame()));
         break;
 
+    case Background::BorderGlow:
+        verts.makeFlexibleFrame(rule().recti().expanded(d->background.thickness),
+                                d->background.thickness,
+                                d->background.color,
+                                root().atlas().imageRectf(root().borderGlow()));
+        break;
+
     case Background::Blurred: // blurs drawn separately in GuiWidget::draw()
     case Background::SharedBlur:
         break;

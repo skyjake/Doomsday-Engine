@@ -76,11 +76,15 @@ public:
      * Properties of the widget's background's apperance.
      * GuiWidget::glMakeGeometry() uses this to construct the background
      * geometry of the widget.
+     *
+     * @todo Refactor: it should be possible to apply any combination of these
+     * in a single widget; use a dynamic array of effects.
      */
     struct Background {
         enum Type {
             None,               ///< No background or solid fill.
             GradientFrame,      ///< Use the "gradient frame" from the UI atlas.
+            BorderGlow,         ///< Border glow with specified color/thickness.
             Blurred,            ///< Blurs whatever is showing behind the widget.
             SharedBlur          ///< Use the blur background from a BlurWidget.
         };

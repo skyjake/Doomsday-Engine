@@ -18,6 +18,8 @@
 
 #include "de_platform.h"
 #include "ui/widgets/busywidget.h"
+#include "ui/widgets/progresswidget.h"
+#include "ui/widgets/guirootwidget.h"
 #include "ui/busyvisual.h"
 #include "busymode.h"
 #include "sys_system.h"
@@ -26,18 +28,60 @@
 #include "ui/clientwindow.h"
 
 #include <de/RootWidget>
+#include <de/Drawable>
+#include <de/GLTexture>
 
 using namespace de;
 
 DENG2_PIMPL(BusyWidget)
 {
-    Instance(Public *i) : Base(i)
-    {}
+    typedef DefaultVertexBuf VertexBuf;
+
+    ProgressWidget *progress;
+    QScopedPointer<GLTexture> transitionTex;
+    Drawable drawable;
+    GLUniform uTex;
+    GLUniform uMvpMatrix;
+
+    Instance(Public *i)
+        : Base(i),
+          uTex("uTex", GLUniform::Sampler2D),
+          uMvpMatrix("uMvpMatrix", GLUniform::Mat4)
+    {
+        progress = new ProgressWidget;
+        progress->setRange(Rangei(0, 200));
+        progress->setImageScale(.2f);
+        progress->rule().setRect(self.rule());
+        self.add(progress);
+    }
+
+    void glInit()
+    {
+        VertexBuf *buf = new VertexBuf;
+
+        VertexBuf::Builder verts;
+        verts.makeQuad(Rectanglef(0, 0, 1, 1), Vector4f(1, 1, 1, 1), Rectanglef(0, 0, 1, 1));
+        buf->setVertices(gl::TriangleStrip, verts, gl::Static);
+
+        drawable.addBuffer(buf);
+        self.root().shaders().build(drawable.program(), "generic.textured.color")
+                << uMvpMatrix << uTex;
+    }
+
+    void glDeinit()
+    {
+        drawable.clear();
+    }
 };
 
 BusyWidget::BusyWidget(String const &name)
     : GuiWidget(name), d(new Instance(this))
 {}
+
+ProgressWidget &BusyWidget::progress()
+{
+    return *d->progress;
+}
 
 void BusyWidget::viewResized()
 {
@@ -71,12 +115,53 @@ void BusyWidget::update()
 
 void BusyWidget::drawContent()
 {
-    DENG_ASSERT(BusyMode_Active());
-    BusyVisual_Render();
+    if(d->transitionTex.isNull())
+    {
+        root().window().canvas().renderTarget().clear(GLTarget::ColorDepth);
+    }
+    else
+    {
+        // Draw the texture.
+        Rectanglei pos = rule().recti();
+        d->uMvpMatrix = root().projMatrix2D() *
+                Matrix4f::scaleThenTranslate(pos.size(), pos.topLeft);
+        d->drawable.draw();
+    }
 }
 
 bool BusyWidget::handleEvent(Event const &)
 {
     // Eat events and ignore them.
     return true;
+}
+
+void BusyWidget::grabTransitionScreenshot()
+{
+    GLTexture::Size size(rule().width().valuei() / 2,
+                         rule().height().valuei() / 2);
+
+    GLuint grabbed = root().window().grabAsTexture(ClientWindow::GrabHalfSized);
+
+    d->transitionTex.reset(new GLTexture(grabbed, size));
+    d->uTex = *d->transitionTex;
+}
+
+void BusyWidget::releaseTransitionScreenshot()
+{
+    d->transitionTex.reset();
+}
+
+GLTexture const *BusyWidget::transitionScreenshot() const
+{
+    return d->transitionTex.data();
+}
+
+void BusyWidget::glInit()
+{
+    d->glInit();
+}
+
+void BusyWidget::glDeinit()
+{
+    d->glDeinit();
 }

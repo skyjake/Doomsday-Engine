@@ -25,20 +25,29 @@
 #include "de_graphics.h"
 #include "de_ui.h"
 
-// Time for the progress to reach the new target (seconds).
-#define PROGRESS_DELTA_TIME     0.5f
+#include "ui/clientwindow.h"
+#include "ui/widgets/busywidget.h"
+#include "ui/widgets/progresswidget.h"
 
+using namespace de;
+
+// Time for the progress to reach the new target (seconds).
+static de::TimeDelta const PROGRESS_DELTA_TIME = 0.5;
+
+/*
 typedef struct tval_s {
     int         value;
     timespan_t  time;
 } tval_t;
 
 static mutex_t progressMutex;
+*/
 
-static int   progressMax;
-static float progressStart, progressEnd;
-static tval_t target, last;
+//static int   progressMax;
+//static float progressStart, progressEnd;
+//static tval_t target, last;
 
+/*
 static void lockProgress(boolean lock)
 {
     if(lock)
@@ -50,32 +59,44 @@ static void lockProgress(boolean lock)
         Sys_Unlock(progressMutex);
     }
 }
+*/
+
+static ProgressWidget &progress()
+{
+    return ClientWindow::main().busy().progress();
+}
 
 void Con_InitProgress2(int maxProgress, float start, float end)
 {
-    progressStart = start;
-    progressEnd = end;
-    memset(&target, 0, sizeof(target));
-    memset(&last, 0, sizeof(last));
+    //progressStart = start;
+    //progressEnd = end;
+    //memset(&target, 0, sizeof(target));
+    //memset(&last, 0, sizeof(last));
 
-    progressMax = maxProgress;
-    if(!progressMutex)
-        progressMutex = Sys_CreateMutex("ConBarProgressMutex");
+    progress().setRange(Rangei(0, maxProgress), Rangef(start, end));
+    progress().setProgress(0, 0);
+
+    //progressMax = maxProgress;
+    /*if(!progressMutex)
+        progressMutex = Sys_CreateMutex("ConBarProgressMutex");*/
 }
 
 void Con_InitProgress(int maxProgress)
 {
-    Con_InitProgress2(maxProgress, 0, 1);
+    Con_InitProgress2(maxProgress, 0.f, 1.f);
 }
 
 void Con_ShutdownProgress(void)
 {
+    /*
     if(progressMutex)
     {
         Sys_DestroyMutex(progressMutex);
     }
+    */
 }
 
+/*
 static int currentProgress(void)
 {
     timespan_t nowTime = Timer_RealSeconds();
@@ -91,21 +112,24 @@ static int currentProgress(void)
         // Interpolate.
         return last.value + (target.value - last.value) * (nowTime - last.time) / span;
     }
-}
+}*/
 
 boolean Con_IsProgressAnimationCompleted(void)
 {
-    boolean done;
+    return !progress().isAnimating();
+
+/*    boolean done;
 
     lockProgress(true);
     done = (Timer_RealSeconds() >= target.time);
     lockProgress(false);
 
-    return done;
+    return done;*/
 }
 
-void Con_SetProgress(int progress)
+void Con_SetProgress(int progressValue)
 {
+    /*
     timespan_t nowTime;
 
     lockProgress(true);
@@ -118,9 +142,13 @@ void Con_SetProgress(int progress)
     target.value = progress;
     target.time = nowTime + (progress < progressMax? PROGRESS_DELTA_TIME : PROGRESS_DELTA_TIME/2);
 
-    lockProgress(false);
+    lockProgress(false);*/
+
+    progress().setProgress(progressValue, progressValue < progress().range().end?
+                               PROGRESS_DELTA_TIME : TimeDelta(PROGRESS_DELTA_TIME / 2));
 }
 
+/*
 float Con_GetProgress(void)
 {
     float prog;
@@ -136,3 +164,4 @@ float Con_GetProgress(void)
     // Scale to the progress range.
     return progressStart + prog * (progressEnd - progressStart);
 }
+*/

@@ -38,6 +38,7 @@ DENG2_PIMPL(GuiRootWidget)
     Id solidWhiteTex;
     Id roundCorners;
     Id gradientFrame;
+    Id borderGlow;
     bool noFramesDrawnYet;
 
     Instance(Public *i, ClientWindow *win)
@@ -102,6 +103,10 @@ DENG2_PIMPL(GuiRootWidget)
                 painter.drawRect(QRect(4, 4, 3, 3));
                 gradientFrame = atlas->alloc(frame);
             }
+
+            // Border glow.
+            borderGlow = atlas->alloc(ClientApp::windowSystem().style().images().
+                                      image("window.borderglow"));
         }
     }
 };
@@ -148,6 +153,12 @@ Id GuiRootWidget::gradientFrame() const
 {
     d->initAtlas();
     return d->gradientFrame;
+}
+
+Id GuiRootWidget::borderGlow() const
+{
+    d->initAtlas();
+    return d->borderGlow;
 }
 
 GLShaderBank &GuiRootWidget::shaders()

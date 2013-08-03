@@ -137,7 +137,6 @@ DENG_HEADERS += \
     $$SRC/include/busymode.h \
     $$SRC/include/cbuffer.h \
     $$SRC/include/color.h \
-    $$SRC/include/con_bar.h \
     $$SRC/include/con_config.h \
     $$SRC/include/con_main.h \
     $$SRC/include/dd_def.h \
@@ -325,7 +324,6 @@ SOURCES += \
     $$SRC/src/busymode.cpp \
     $$SRC/src/cbuffer.cpp \
     $$SRC/src/color.cpp \
-    $$SRC/src/con_bar.cpp \
     $$SRC/src/con_config.cpp \
     $$SRC/src/con_data.cpp \
     $$SRC/src/con_main.cpp \

@@ -54,6 +54,7 @@ public:
     de::Id solidWhitePixel() const;
     de::Id roundCorners() const;
     de::Id gradientFrame() const;
+    de::Id borderGlow() const;
 
     static de::GLShaderBank &shaders();
 

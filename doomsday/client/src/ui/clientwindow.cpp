@@ -71,6 +71,7 @@ public IGameChangeObserver
     NotificationWidget *notifications;
     LabelWidget *background;
     GameSelectionWidget *games;
+    BusyWidget *busy;
 
     GuiRootWidget busyRoot;
 
@@ -167,7 +168,6 @@ public IGameChangeObserver
 #if 0
         games->hide();
         ProgressWidget *prog = new ProgressWidget;
-        prog->setMode(ProgressWidget::Ranged);
         prog->setRange(Rangei(0, 100));
         prog->setProgress(100, 60);
         prog->rule()
@@ -209,7 +209,7 @@ public IGameChangeObserver
         legacy->disable();
 
         // For busy mode we have an entirely different widget tree.
-        BusyWidget *busy = new BusyWidget;
+        busy = new BusyWidget;
         busy->rule()
                 .setLeftTop    (busyRoot.viewLeft(),  busyRoot.viewTop())
                 .setRightBottom(busyRoot.viewRight(), busyRoot.viewBottom());
@@ -400,6 +400,11 @@ ConsoleWidget &ClientWindow::console()
 NotificationWidget &ClientWindow::notifications()
 {
     return *d->notifications;
+}
+
+BusyWidget &ClientWindow::busy()
+{
+    return *d->busy;
 }
 
 bool ClientWindow::isFPSCounterVisible() const

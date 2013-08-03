@@ -61,6 +61,31 @@ struct VertexBuilder
             v.pos = rect.bottomRight;  v.texCoord = uv.bottomRight;  quad << v;
             return *this += quad;
         }
+        Vertices &makeRing(Vector2f const &center, float outerRadius, float innerRadius,
+                           int divisions, Vector4f const &color, Rectanglef const &uv,
+                           float innerTexRadius = -1) {
+            if(innerTexRadius < 0) innerTexRadius = innerRadius / outerRadius;
+            Vertices ring;
+            VertexType v;
+            v.rgba = color;
+            for(int i = 0; i <= divisions; ++i) {
+                float const ang = 2 * PI * i / divisions;
+                Vector2f r(cos(ang), sin(ang));
+                // Outer.
+                v.pos = center + r * outerRadius;
+                v.texCoord = uv.middle() + r * .5f * uv.size();
+                ring << v;
+                // Inner.
+                v.pos = center + r * innerRadius;
+                v.texCoord = uv.middle() + r * (.5f * innerTexRadius) * uv.size();
+                ring << v;
+            }
+            return *this += ring;
+        }
+        Vertices &makeRing(Vector2f const &center, float outerRadius, float innerRadius,
+                           int divisions, Vector4f const &color, Vector2f const &uv) {
+            return makeRing(center, outerRadius, innerRadius, divisions, color, Rectanglef(uv, uv));
+        }
         Vertices &makeFlexibleFrame(Rectanglef const &rect, float cornerThickness,
                                     Vector4f const &color, Rectanglef const &uv) {
             Vector2f const uvOff = uv.size() / 2;

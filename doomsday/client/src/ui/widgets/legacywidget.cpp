@@ -137,9 +137,6 @@ DENG2_PIMPL(LegacyWidget)
             UI_Drawer();
         }
 
-        // Draw console.
-        //Rend_Console();
-
         // End any open DGL sequence.
         DGL_End();
     }

@@ -193,6 +193,13 @@ DENG2_PIMPL(GLTexture)
 GLTexture::GLTexture() : d(new Instance(this))
 {}
 
+GLTexture::GLTexture(GLuint existingTexture, Size const &size) : d(new Instance(this))
+{
+    d->size = size;
+    d->name = existingTexture;
+    d->flags |= ParamsChanged;
+}
+
 void GLTexture::clear()
 {
     d->clear();
