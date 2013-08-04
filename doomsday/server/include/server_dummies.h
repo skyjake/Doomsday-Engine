@@ -38,6 +38,7 @@
 
 DENG_EXTERN_C void Con_TransitionRegister();
 DENG_EXTERN_C void Con_TransitionTicker(timespan_t t);
+DENG_EXTERN_C void Con_SetProgress(int progress);
 
 DENG_EXTERN_C void GL_Shutdown();
 

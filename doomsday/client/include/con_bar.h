@@ -48,7 +48,7 @@ void Con_SetProgress(int progress);
 /**
  * Calculate the progress at the current time.
  */
-float Con_GetProgress(void);
+//float Con_GetProgress(void);
 
 boolean Con_IsProgressAnimationCompleted(void);
 

@@ -47,6 +47,8 @@ public:
     ProgressWidget(de::String const &name = "");
 
     Mode mode() const;
+    de::Rangei range() const;
+    bool isAnimating() const;
 
     void setColor(de::DotPath const &styleId);
     void setShadowColor(de::DotPath const &styleId);
@@ -59,7 +61,16 @@ public:
     void setText(de::String const &text);
 
     void setMode(Mode progressMode);
-    void setRange(de::Rangei const &range);
+
+    /**
+     * Sets the range of values that can be given in setProgress().
+     * Automatically switches the widget to Ranged mode.
+     *
+     * @param range        Range of valid values for setProgress().
+     * @param visualRange  Range to which @a range maps to (within 0...1).
+     */
+    void setRange(de::Rangei const &range, de::Rangef const &visualRange = de::Rangef(0.f, 1.f));
+
     void setProgress(int currentProgress, de::TimeDelta const &transitionSpan = 0.5);
 
     // Events.

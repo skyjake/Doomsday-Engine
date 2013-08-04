@@ -41,6 +41,7 @@
 class ConsoleWidget;
 class TaskBarWidget;
 class NotificationWidget;
+class BusyWidget;
 
 /**
  * Top-level window that contains a libdeng2 UI widgets. @ingroup gui
@@ -65,6 +66,7 @@ public:
     TaskBarWidget &taskBar();
     ConsoleWidget &console();
     NotificationWidget &notifications();
+    BusyWidget &busy();
 
     /**
      * Sets the operating mode of the window. In Busy mode, the normal

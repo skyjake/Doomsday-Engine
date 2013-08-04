@@ -28,6 +28,7 @@ DENG2_PIMPL(ProgressWidget), public Lockable
 {
     Mode mode;
     Rangei range;
+    Rangef visualRange;
     Animation pos;
     float angle;
     Id gearTex;
@@ -38,6 +39,7 @@ DENG2_PIMPL(ProgressWidget), public Lockable
     Instance(Public *i)
         : Base(i),
           mode(Indefinite),
+          visualRange(0, 1),
           pos(0, Animation::Linear),
           angle(0),
           colorId("progress.light.wheel"),
@@ -76,11 +78,11 @@ ProgressWidget::ProgressWidget(String const &name) : d(new Instance(this))
 
     // Set up the static progress ring image.
     setImage(style().images().image("progress.wheel"));
-    setImageFit(ui::FitToHeight | ui::OriginalAspectRatio);
-    setImageScale(.18f);
+    setImageFit(ui::FitToSize | ui::OriginalAspectRatio);
+    setImageScale(.6f);
 
     setAlignment(ui::AlignCenter, AlignOnlyByImage);
-    setText("Loading Blah Blah...");
+    //setText("Loading Blah Blah...");
     setTextAlignment(ui::AlignRight);
 }
 
@@ -88,6 +90,18 @@ ProgressWidget::Mode ProgressWidget::mode() const
 {
     DENG2_GUARD(d);
     return d->mode;
+}
+
+Rangei ProgressWidget::range() const
+{
+    DENG2_GUARD(d);
+    return d->range;
+}
+
+bool ProgressWidget::isAnimating() const
+{
+    DENG2_GUARD(d);
+    return !d->pos.done();
 }
 
 void ProgressWidget::setColor(DotPath const &styleId)
@@ -114,10 +128,12 @@ void ProgressWidget::setMode(ProgressWidget::Mode progressMode)
     d->mode = progressMode;
 }
 
-void ProgressWidget::setRange(Rangei const &range)
+void ProgressWidget::setRange(Rangei const &range, Rangef const &visualRange)
 {
     DENG2_GUARD(d);
     d->range = range;
+    d->visualRange = visualRange;
+    setMode(Ranged);
 }
 
 void ProgressWidget::setProgress(int currentProgress, TimeDelta const &transitionSpan)
@@ -167,24 +183,35 @@ void ProgressWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
     contentLayout(layout);
 
     // There is a shadow behind the wheel.
-    float innerShadowRadius = layout.image.width() / 2;
-    float outerShadowRadius = layout.image.width() * 2;
-    verts.makeRing(layout.image.middle(), innerShadowRadius, 0, 30,
-                   style().colors().colorf(d->shadowColorId),
+    float gradientThick = layout.image.width() * 1;
+    float solidThick = layout.image.width() * .5f;
+
+    Vector4f const shadowColor = style().colors().colorf(d->shadowColorId);
+    verts.makeRing(layout.image.middle(),
+                   solidThick, 0, 30,
+                   shadowColor,
                    root().atlas().imageRectf(root().borderGlow()).middle());
-    verts.makeRing(layout.image.middle(), outerShadowRadius, innerShadowRadius, 30,
-                   style().colors().colorf(d->shadowColorId),
+    verts.makeRing(layout.image.middle(),
+                   gradientThick, solidThick, 30,
+                   shadowColor,
                    root().atlas().imageRectf(root().borderGlow()), 0);
+    /*verts.makeRing(layout.image.middle(),
+                   shadowRadius - gradientThick, shadowRadius - solidThick, 30,
+                   shadowColor,
+                   root().atlas().imageRectf(root().borderGlow()), 0);*/
 
     LabelWidget::glMakeGeometry(verts);
 
     // Draw the rotating indicator on the label's image.
     Rectanglef const tc = d->atlas().imageRectf(d->gearTex);
-    float pos = 1;
+    float pos = 1;    
     if(d->mode != Indefinite)
     {
         pos = de::clamp(0.f, d->pos.value(), 1.f);
-    }
+    }    
+
+    // Map to the visual range.
+    pos = d->visualRange.start + pos * d->visualRange.size();
 
     int const edgeCount = de::max(1, int(pos * 30));
     float const radius = layout.image.width() / 2;

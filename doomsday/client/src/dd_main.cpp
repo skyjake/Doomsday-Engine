@@ -1908,8 +1908,10 @@ boolean DD_Init(void)
     Fonts_Init();
     FR_Init();
 
+#ifdef __CLIENT__
     // Enter busy mode until startup complete.
     Con_InitProgress2(200, 0, .25f); // First half.
+#endif
     BusyMode_RunNewTaskWithName(BUSYF_NO_UPLOADS | BUSYF_STARTUP | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
                                 DD_StartupWorker, 0, "Starting up...");
 
@@ -1919,8 +1921,10 @@ boolean DD_Init(void)
     GL_InitRefresh();
 #endif
 
+#ifdef __CLIENT__
     // Do deferred uploads.
     Con_InitProgress2(200, .25f, .25f); // Stop here for a while.
+#endif
     BusyMode_RunNewTaskWithName(BUSYF_STARTUP | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
                                 DD_DummyWorker, 0, "Buffering...");
 
@@ -1951,7 +1955,9 @@ boolean DD_Init(void)
     }
 
     // Try to locate all required data files for all registered games.
+#ifdef __CLIENT__
     Con_InitProgress2(200, .25f, 1); // Second half.
+#endif
     App_Games().locateAllResources();
 
     // Attempt automatic game selection.
@@ -2355,7 +2361,9 @@ void DD_UpdateEngineState(void)
     p.initiatedBusyMode = !BusyMode_Active();
     if(p.initiatedBusyMode)
     {
+#ifdef __CLIENT__
         Con_InitProgress(200);
+#endif
         BusyMode_RunNewTaskWithName(BUSYF_ACTIVITY | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
                                     DD_UpdateEngineStateWorker, &p, "Updating engine state...");
     }
