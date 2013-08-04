@@ -115,6 +115,42 @@ DENG2_PIMPL(BitField)
 
         return value;
     }
+
+    Ids delta(Instance const &other) const
+    {
+        if(elements.size() != other.elements.size())
+        {
+            throw ComparisonError("BitField::delta",
+                                  "The compared fields have a different number of elements");
+        }
+        if(packed.size() != other.packed.size())
+        {
+            throw ComparisonError("BitField::delta",
+                                  "The compared fields have incompatible element sizes");
+        }
+
+        Ids diffs;
+        for(duint pos = 0; pos < packed.size(); ++pos)
+        {
+            if(packed[pos] == other.packed[pos])
+                continue;
+
+            // The elements on this byte are different; which are they?
+            DENG2_FOR_EACH_CONST(Ids, i, lookup[pos])
+            {
+                Id const &id = *i;
+
+                if(diffs.contains(id))
+                    continue; // Already in the delta.
+
+                if(get(id) != other.get(id))
+                {
+                    diffs.insert(id);
+                }
+            }
+        }
+        return diffs;
+    }
 };
 
 BitField::BitField() : d(new Instance(this))
@@ -239,36 +275,7 @@ bool BitField::operator != (BitField const &other) const
 
 BitField::Ids BitField::delta(BitField const &other) const
 {
-    if(d->elements.size() != other.d->elements.size())
-    {
-        throw ComparisonError("BitField::delta",
-                              "The compared fields have a different number of elements");
-    }
-    if(d->packed.size() != other.d->packed.size())
-    {
-        throw ComparisonError("BitField::delta",
-                              "The compared fields have incompatible element sizes");
-    }
-
-    Ids diffs;
-    for(duint pos = 0; pos < d->packed.size(); ++pos)
-    {
-        if(d->packed[pos] == other.d->packed[pos])
-            continue;
-
-        // The elements on this byte are different; which are they?
-        foreach(Id id, d->lookup[pos])
-        {
-            if(diffs.contains(id))
-                continue; // Already in the delta.
-
-            if(asUInt(id) != other.asUInt(id))
-            {
-                diffs.insert(id);
-            }
-        }
-    }
-    return diffs;
+    return d->delta(*other.d);
 }
 
 void BitField::set(Id id, bool value)
