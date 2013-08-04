@@ -17,6 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
+#include <QScopedPointer>
+
 #include "de_base.h"
 #include "de_console.h"
 
@@ -43,11 +45,14 @@ void BiasIllum::consoleRegister() // static
 
 DENG2_PIMPL_NOREF(BiasIllum)
 {
+    struct InterpolateInfo {
+        Vector3f dest;    ///< Destination light color (interpolated to).
+        uint updateTime;  ///< When the value was calculated.
+    };
+
     BiasTracker *tracker; ///< Controlling tracker.
     Vector3f color;       ///< Current light color.
-    Vector3f dest;        ///< Destination light color (interpolated to).
-    uint updateTime;      ///< When the value was calculated.
-    bool interpolating;   ///< Set to @c true during interpolation.
+    QScopedPointer<InterpolateInfo> lerpInfo;
 
     /**
      * Cast lighting contributions from each source that affects the map point.
@@ -55,19 +60,18 @@ DENG2_PIMPL_NOREF(BiasIllum)
      */
     Vector3f casted[MAX_CONTRIBUTORS];
 
-    Instance(BiasTracker *tracker)
-        : tracker(tracker),
-          updateTime(0),
-          interpolating(false)
+    Instance(BiasTracker *tracker) : tracker(tracker)
     {}
 
-    Instance(Instance const &other)
-        : tracker(other.tracker),
-          color(other.color),
-          dest(other.dest),
-          updateTime(other.updateTime),
-          interpolating(other.interpolating)
-    {}
+    Instance(Instance const &other) : tracker(other.tracker), color(other.color)
+    {
+        if(!other.lerpInfo.isNull())
+        {
+            lerpInfo.reset(new InterpolateInfo());
+            lerpInfo->dest       = other.lerpInfo->dest;
+            lerpInfo->updateTime = other.lerpInfo->updateTime;
+        }
+    }
 
     /**
      * Returns a previous light contribution by unique contributor @a index.
@@ -116,12 +120,14 @@ DENG2_PIMPL_NOREF(BiasIllum)
         }
 
         // Is there a new destination?
+        Vector3f const &currentColor = lerpInfo.isNull()? color : lerpInfo->dest;
+
         if(!activeContributors ||
-           (!de::fequal(dest.x, newColor.x, COLOR_CHANGE_THRESHOLD) ||
-            !de::fequal(dest.y, newColor.y, COLOR_CHANGE_THRESHOLD) ||
-            !de::fequal(dest.z, newColor.z, COLOR_CHANGE_THRESHOLD)))
+           (!de::fequal(currentColor.x, newColor.x, COLOR_CHANGE_THRESHOLD) ||
+            !de::fequal(currentColor.y, newColor.y, COLOR_CHANGE_THRESHOLD) ||
+            !de::fequal(currentColor.z, newColor.z, COLOR_CHANGE_THRESHOLD)))
         {
-            if(interpolating)
+            if(!lerpInfo.isNull())
             {
                 // Must not lose the half-way interpolation.
                 Vector3f mid; lerp(mid, biasTime);
@@ -129,11 +135,14 @@ DENG2_PIMPL_NOREF(BiasIllum)
                 // This is current color at this very moment.
                 color = mid;
             }
+            else
+            {
+                lerpInfo.reset(new InterpolateInfo());
+            }
 
             // This is what we will be interpolating to.
-            dest          = newColor;
-            interpolating = true;
-            updateTime    = tracker->timeOfLatestContributorUpdate();
+            lerpInfo->dest       = newColor;
+            lerpInfo->updateTime = tracker->timeOfLatestContributorUpdate();
         }
 
 #undef COLOR_CHANGE_THRESHOLD
@@ -203,25 +212,25 @@ DENG2_PIMPL_NOREF(BiasIllum)
      */
     void lerp(Vector3f &result, uint currentTime)
     {
-        if(!interpolating)
+        if(lerpInfo.isNull())
         {
-            // Use the current color.
+            // Not interpolating -- use the current color.
             result = color;
             return;
         }
 
-        float inter = (currentTime - updateTime) / float( lightSpeed );
+        float inter = (currentTime - lerpInfo->updateTime) / float( lightSpeed );
 
         if(inter > 1)
         {
-            interpolating = false;
-            color = dest;
+            color = lerpInfo->dest;
+            lerpInfo.reset();
 
             result = color;
         }
         else
         {
-            result = color + (dest - color) * inter;
+            result = color + (lerpInfo->dest - color) * inter;
         }
     }
 };
