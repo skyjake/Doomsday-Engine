@@ -130,7 +130,7 @@ DENG2_PIMPL_NOREF(BiasIllum)
             if(!lerpInfo.isNull())
             {
                 // Must not lose the half-way interpolation.
-                Vector3f mid; lerp(mid, biasTime);
+                Vector3f mid; lerp(mid, biasTime, true /*retain InterpolateInfo*/);
 
                 // This is current color at this very moment.
                 color = mid;
@@ -207,10 +207,11 @@ DENG2_PIMPL_NOREF(BiasIllum)
     /**
      * Interpolate color from current to destination.
      *
-     * @param result       Interpolated color will be written here.
-     * @param currentTime  Time in milliseconds of the last bias frame update.
+     * @param result          Interpolated color will be written here.
+     * @param currentTime     Time in milliseconds of the last bias frame update.
+     * @param retainlerpInfo  @c true= do not free the interpolation info if completed.
      */
-    void lerp(Vector3f &result, uint currentTime)
+    void lerp(Vector3f &result, uint currentTime, bool retainLerpInfo = false)
     {
         if(lerpInfo.isNull())
         {
@@ -224,9 +225,10 @@ DENG2_PIMPL_NOREF(BiasIllum)
         if(inter > 1)
         {
             color = lerpInfo->dest;
-            lerpInfo.reset();
-
             result = color;
+
+            if(!retainLerpInfo)
+                lerpInfo.reset();
         }
         else
         {
