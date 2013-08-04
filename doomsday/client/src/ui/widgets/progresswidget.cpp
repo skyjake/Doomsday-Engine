@@ -35,6 +35,7 @@ DENG2_PIMPL(ProgressWidget), public Lockable
     DotPath colorId;
     DotPath shadowColorId;
     Time updateAt;
+    int framesWhileAnimDone; ///< # of frames drawn while animation was already done.
 
     Instance(Public *i)
         : Base(i),
@@ -44,7 +45,8 @@ DENG2_PIMPL(ProgressWidget), public Lockable
           angle(0),
           colorId("progress.light.wheel"),
           shadowColorId("progress.light.shadow"),
-          updateAt(Time::invalidTime())
+          updateAt(Time::invalidTime()),
+          framesWhileAnimDone(0)
     {
         updateStyle();
     }
@@ -82,7 +84,6 @@ ProgressWidget::ProgressWidget(String const &name) : d(new Instance(this))
     setImageScale(.6f);
 
     setAlignment(ui::AlignCenter, AlignOnlyByImage);
-    //setText("Loading Blah Blah...");
     setTextAlignment(ui::AlignRight);
 }
 
@@ -101,7 +102,7 @@ Rangei ProgressWidget::range() const
 bool ProgressWidget::isAnimating() const
 {
     DENG2_GUARD(d);
-    return !d->pos.done();
+    return d->framesWhileAnimDone < 2;
 }
 
 void ProgressWidget::setColor(DotPath const &styleId)
@@ -140,6 +141,7 @@ void ProgressWidget::setProgress(int currentProgress, TimeDelta const &transitio
 {
     DENG2_GUARD(d);
 
+    d->framesWhileAnimDone = 0;
     d->pos.setValue(float(currentProgress - d->range.start) / float(d->range.size()),
                     transitionSpan);
 }
@@ -201,6 +203,12 @@ void ProgressWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
                    root().atlas().imageRectf(root().borderGlow()), 0);*/
 
     LabelWidget::glMakeGeometry(verts);
+
+    if(d->pos.done())
+    {
+        // Has the animation finished now?
+        ++d->framesWhileAnimDone;
+    }
 
     // Draw the rotating indicator on the label's image.
     Rectanglef const tc = d->atlas().imageRectf(d->gearTex);
