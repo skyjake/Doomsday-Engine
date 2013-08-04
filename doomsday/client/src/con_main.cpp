@@ -1341,33 +1341,43 @@ static int completeWord(int mode)
 }
 #endif // __CLIENT__
 
-static int annotateMatchedWordCallback(knownword_t const *match, void *parameters)
+struct AnnotationWork
 {
-    de::String *result = reinterpret_cast<de::String *>(parameters);
+    QSet<QString> terms;
+    de::String result;
+};
+
+static int annotateMatchedWordCallback(knownword_t const *word, void *parameters)
+{
+    AnnotationWork *work = reinterpret_cast<AnnotationWork *>(parameters);
+    AutoStr *name = Con_KnownWordToString(word);
     de::String found;
 
-    switch(match->type)
+    if(!work->terms.contains(Str_Text(name)))
+        return false; // keep going
+
+    switch(word->type)
     {
     case WT_CVAR:
-        if(!(((cvar_t *)match->data)->flags & CVF_HIDE))
+        if(!(((cvar_t *)word->data)->flags & CVF_HIDE))
         {
-            found = Con_VarAsStyledText((cvar_t *) match->data, "");
+            found = Con_VarAsStyledText((cvar_t *) word->data, "");
         }
         break;
 
     case WT_CCMD:
-        if(!((ccmd_t *)match->data)->prevOverload)
+        if(!((ccmd_t *)word->data)->prevOverload)
         {
-            found = Con_CmdAsStyledText((ccmd_t *) match->data);
+            found = Con_CmdAsStyledText((ccmd_t *) word->data);
         }
         break;
 
     case WT_CALIAS:
-        found = Con_AliasAsStyledText((calias_t *) match->data);
+        found = Con_AliasAsStyledText((calias_t *) word->data);
         break;
 
     case WT_GAME:
-        found = Con_GameAsStyledText((Game *) match->data);
+        found = Con_GameAsStyledText((Game *) word->data);
         break;
 
     default:
@@ -1376,8 +1386,8 @@ static int annotateMatchedWordCallback(knownword_t const *match, void *parameter
 
     if(!found.isEmpty())
     {
-        if(!result->isEmpty()) result->append("\n");
-        result->append(found);
+        if(!work->result.isEmpty()) work->result.append("\n");
+        work->result.append(found);
     }
 
     return false; // don't stop
@@ -1385,13 +1395,13 @@ static int annotateMatchedWordCallback(knownword_t const *match, void *parameter
 
 de::String Con_AnnotatedConsoleTerms(QStringList terms)
 {
-    de::String result;
+    AnnotationWork work;
     foreach(QString term, terms)
     {
-        Con_IterateKnownWords(KnownWordExactMatch, term.toUtf8(), WT_ANY,
-                              annotateMatchedWordCallback, &result);
+        work.terms.insert(term);
     }
-    return result;
+    Con_IterateKnownWords(NULL, WT_ANY, annotateMatchedWordCallback, &work);
+    return work.result;
 }
 
 /**
