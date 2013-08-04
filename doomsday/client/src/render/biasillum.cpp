@@ -179,22 +179,22 @@ DENG2_PIMPL_NOREF(BiasIllum)
 
         Vector3d sourceToPoint = source.origin() - point;
 
-        if(devUseSightCheck &&
-           !LineSightTest(source.origin(), point + sourceToPoint / 100)
-                        .trace(bspRoot))
-        {
-            // LOS fail.
-            // This affecting source does not contribute any light.
-            casted = Vector3f();
-            return;
-        }
-
         double distance = sourceToPoint.length();
         double dot = sourceToPoint.normalize().dot(normalAtPoint);
 
         // The point faces away from the light?
         if(dot < 0)
         {
+            casted = Vector3f();
+            return;
+        }
+
+        if(devUseSightCheck &&
+           !LineSightTest(source.origin(), point + sourceToPoint / 100)
+                        .trace(bspRoot))
+        {
+            // LOS fail.
+            // This affecting source does not contribute any light.
             casted = Vector3f();
             return;
         }
@@ -209,7 +209,7 @@ DENG2_PIMPL_NOREF(BiasIllum)
      *
      * @param result          Interpolated color will be written here.
      * @param currentTime     Time in milliseconds of the last bias frame update.
-     * @param retainlerpInfo  @c true= do not free the interpolation info if completed.
+     * @param retainLerpInfo  @c true= do not free the interpolation info if completed.
      */
     void lerp(Vector3f &result, uint currentTime, bool retainLerpInfo = false)
     {
