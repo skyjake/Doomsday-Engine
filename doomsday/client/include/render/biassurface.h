@@ -63,4 +63,6 @@ public:
     virtual void applyBiasDigest(BiasDigest &changes) = 0;
 };
 
+extern int devUpdateBiasContributors; //cvar
+
 #endif // DENG_RENDER_SHADOWBIAS_SURFACE_H

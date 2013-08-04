@@ -20,7 +20,7 @@
 
 #include "render/biassurface.h"
 
-static int devUpdateBiasContributors = true; //cvar
+int devUpdateBiasContributors = true; //cvar
 
 void BiasSurface::consoleRegister() // static
 {

@@ -602,7 +602,7 @@ void BspLeaf::lightBiasPoly(int group, rvertex_t const *positions, ColorRawf *co
     GeometryGroup *geomGroup = d->geometryGroup(planeIndex);
 
     // Should we update?
-    //if(devUpdateBiasContributors)
+    if(devUpdateBiasContributors)
     {
         d->updateBiasContributors(*geomGroup, planeIndex);
     }

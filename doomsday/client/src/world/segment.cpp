@@ -312,7 +312,7 @@ void Segment::lightBiasPoly(int group, rvertex_t const *positions, ColorRawf *co
     GeometryGroup *geomGroup = d->geometryGroup(sectionIndex);
 
     // Should we update?
-    //if(devUpdateBiasContributors)
+    if(devUpdateBiasContributors)
     {
         d->updateBiasContributors(*geomGroup, sectionIndex);
     }
