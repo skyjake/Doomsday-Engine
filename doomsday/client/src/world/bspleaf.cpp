@@ -50,9 +50,6 @@ ddouble triangleArea(Vector2d const &v1, Vector2d const &v2, Vector2d const &v3)
 }
 
 #ifdef __CLIENT__
-/**
- * Structure containing data for a geometry group.
- */
 struct GeometryGroup
 {
     typedef QList<BiasIllum> BiasIllums;
@@ -295,7 +292,7 @@ DENG2_PIMPL(BspLeaf)
     }
 
     /**
-     * Retrieve the geometry data for the unique @a group identifier.
+     * Retrieve geometry data by it's associated unique @a group identifier.
      *
      * @param group     Geometry group identifier.
      * @param canAlloc  @c true= to allocate if no data exists. Note that the

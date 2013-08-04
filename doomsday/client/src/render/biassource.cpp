@@ -69,7 +69,7 @@ DENG2_PIMPL(BiasSource)
           color(color),
           minLight(minLight),
           maxLight(maxLight),
-          lastUpdateTime(0), // Force an update (vertices are STILL_UNSEEN).
+          lastUpdateTime(0), // Force an update.
           changed(true)
     {}
 
@@ -83,7 +83,7 @@ DENG2_PIMPL(BiasSource)
           color(other.color),
           minLight(other.minLight),
           maxLight(other.maxLight),
-          lastUpdateTime(0), // Force an update (vertices are STILL_UNSEEN).
+          lastUpdateTime(0), // Force an update.
           changed(true)
     {}
 
@@ -172,10 +172,8 @@ void BiasSource::setOrigin(Vector3d const &newOrigin)
 {
     if(d->origin != newOrigin)
     {
-        //qDebug() << "BiasSource" << App_World().map().toIndex(*this) << "new origin" << newOrigin.asText();
-
         d->changed = true;
-        d->origin = newOrigin;
+        d->origin  = newOrigin;
         d->bspLeaf = 0;
 
         // Notify interested parties of the change.
@@ -233,7 +231,7 @@ BiasSource &BiasSource::setColor(Vector3f const &newColor)
     {
         Vector3f oldColor = d->color;
 
-        d->color = newColorAmplified;
+        d->color   = newColorAmplified;
         d->changed = true;
 
         // Notify interested parties of the change.
@@ -258,7 +256,7 @@ BiasSource &BiasSource::setIntensity(float newIntensity)
         if(!d->inVoid)
         {
             d->intensity = d->primaryIntensity;
-            d->changed = true;
+            d->changed   = true;
         }
 
         // Notify interested parties of the change.
@@ -298,7 +296,7 @@ bool BiasSource::trackChanges(BiasDigest &changes, uint digestIndex, uint curren
         if(newIntensity != oldIntensity)
         {
             d->intensity = newIntensity;
-            d->changed = true;
+            d->changed   = true;
         }
     }
 

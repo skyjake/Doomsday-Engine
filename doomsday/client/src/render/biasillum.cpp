@@ -100,7 +100,7 @@ DENG2_PIMPL_NOREF(BiasIllum)
         // Do we need to re-accumulate light contributions?
         if(activeContributors)
         {
-            /// Maximum accumulated color strength.
+            // Maximum accumulated color strength.
             static Vector3f const saturated(1, 1, 1);
 
             for(int i = 0; i < MAX_CONTRIBUTORS; ++i)
@@ -162,7 +162,6 @@ DENG2_PIMPL_NOREF(BiasIllum)
         DENG_ASSERT(tracker != 0);
 
         BiasSource const &source = tracker->contributor(index);
-
         Vector3f &casted = contribution(index);
 
         /// @todo LineSightTest should (optionally) perform this test.
@@ -178,7 +177,6 @@ DENG2_PIMPL_NOREF(BiasIllum)
         }
 
         Vector3d sourceToPoint = source.origin() - point;
-
         double distance = sourceToPoint.length();
         double dot = sourceToPoint.normalize().dot(normalAtPoint);
 

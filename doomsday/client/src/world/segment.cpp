@@ -41,9 +41,6 @@
 using namespace de;
 
 #ifdef __CLIENT__
-/**
- * Structure containing data for a geometry group.
- */
 struct GeometryGroup
 {
     typedef QList<BiasIllum> BiasIllums;
@@ -99,12 +96,10 @@ DENG2_PIMPL(Segment)
 
 #ifdef __CLIENT__
     /**
-     * Retrieve the geometry data for the unique @a group identifier.
+     * Retrieve geometry data by it's associated unique @a group identifier.
      *
      * @param group     Geometry group identifier.
-     * @param canAlloc  @c true= to allocate if no data exists. Note that the
-     *                  number of vertices in the fan geometry must be known
-     *                  at this time.
+     * @param canAlloc  @c true= to allocate if no data exists.
      */
     GeometryGroup *geometryGroup(int group, bool canAlloc = true)
     {
