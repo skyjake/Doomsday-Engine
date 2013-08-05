@@ -106,6 +106,12 @@ public Font::RichFormat::IStyle
         self.add(progress);
     }
 
+    ~Instance()
+    {
+        // Wait until background tasks finish.
+        tasks.waitForDone();
+    }
+
     bool isBeingWrapped() const
     {
         return !tasks.isDone();
