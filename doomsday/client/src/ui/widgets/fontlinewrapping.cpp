@@ -96,7 +96,7 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
 
     int rangeIndentMarkWidth(Rangei const &range) const
     {
-        Font::RichFormat rich = format.subRange(range);
+        Font::RichFormatRef rich = format.subRange(range);
         Font::RichFormat::Iterator iter(rich);
         int markWidth = 0;
         while(iter.hasNext())
@@ -137,7 +137,7 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
         // Determine segments in the line.
         int pos = range.start;
 
-        Font::RichFormat rich = format.subRange(range);
+        Font::RichFormatRef rich = format.subRange(range);
         Font::RichFormat::Iterator iter(rich);
 
         // Divide the line into segments based on tab stops.
@@ -202,7 +202,7 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
 
     bool containsTabs(Rangei const &range) const
     {
-        Font::RichFormat rich = format.subRange(range);
+        Font::RichFormatRef rich = format.subRange(range);
         Font::RichFormat::Iterator iter(rich);
         while(iter.hasNext())
         {

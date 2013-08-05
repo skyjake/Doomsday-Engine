@@ -179,7 +179,7 @@ DENG2_PIMPL(GLTextComposer)
                     // The color is white unless a style is defined.
                     Vector4ub fgColor(255, 255, 255, 255);
 
-                    if(format.haveStyle())
+                    if(format.hasStyle())
                     {
                         fgColor = format.style().richStyleColor(Font::RichFormat::NormalColor);
                     }

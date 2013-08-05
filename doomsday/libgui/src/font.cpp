@@ -30,10 +30,9 @@
 
 namespace de {
 
-struct Font::RichFormat::Instance
-    : public de::IPrivate,
-      DENG2_OBSERVES(EscapeParser, PlainText),
-      DENG2_OBSERVES(EscapeParser, EscapeSequence)
+DENG2_PIMPL_NOREF(Font::RichFormat),
+DENG2_OBSERVES(EscapeParser, PlainText),
+DENG2_OBSERVES(EscapeParser, EscapeSequence)
 {
     IStyle const *style;
 
@@ -232,7 +231,7 @@ void Font::RichFormat::setStyle(IStyle const &style)
     d->style = &style;
 }
 
-bool Font::RichFormat::haveStyle() const
+bool Font::RichFormat::hasStyle() const
 {
     return d->style != 0;
 }
@@ -284,36 +283,9 @@ String Font::RichFormat::initFromStyledText(String const &styledText)
     return d->esc.plainText();
 }
 
-Font::RichFormat Font::RichFormat::subRange(Rangei const &range) const
+Font::RichFormatRef Font::RichFormat::subRange(Rangei const &range) const
 {
-    RichFormat sub(*this);
-
-    for(int i = 0; i < sub.d->ranges.size(); ++i)
-    {
-        Rangei &sr = sub.d->ranges[i].range;
-
-        sr -= range.start;
-        if(sr.end < 0 ||
-           (!sr.isEmpty() && sr.start >= range.size()) ||
-           (sr.isEmpty() && sr.start > range.size()))
-        {
-            // This range is outside the subrange.
-            sub.d->ranges.removeAt(i--);
-            continue;
-        }
-        if(!sr.isEmpty())
-        {
-            sr.start = de::max(sr.start, 0);
-            sr.end   = de::min(sr.end, range.size());
-            if(sr.isEmpty())
-            {
-                sub.d->ranges.removeAt(i--);
-                continue;
-            }
-        }
-    }
-
-    return sub;
+    return RichFormatRef(*this, range);
 }
 
 Font::TabStops const &Font::RichFormat::tabStops() const
@@ -338,20 +310,117 @@ int Font::RichFormat::tabStopXWidth(int stop) const
     return x;
 }
 
-Font::RichFormat::Iterator::Iterator(RichFormat const &f) : format(f), index(-1) {}
+Font::RichFormat::Ref::Ref(Ref const &ref)
+    : _ref(ref.format()), _span(ref._span), _indices(ref._indices)
+{}
+
+Font::RichFormat::Ref::Ref(Ref const &ref, Rangei const &subSpan)
+    : _ref(ref.format()), _span(subSpan + ref._span.start)
+{
+    updateIndices();
+}
+
+Font::RichFormat::Ref::Ref(RichFormat const &richFormat)
+    : _ref(richFormat), _indices(0, richFormat.d->ranges.size())
+{
+    if(!richFormat.d->ranges.isEmpty())
+    {
+        _span = Rangei(0, richFormat.d->ranges.last().range.end);
+    }
+}
+
+Font::RichFormat::Ref::Ref(RichFormat const &richFormat, Rangei const &subSpan)
+    : _ref(richFormat), _span(subSpan)
+{
+    updateIndices();
+}
+
+Font::RichFormat const &Font::RichFormat::Ref::format() const
+{
+    return _ref;
+}
+
+int Font::RichFormat::Ref::rangeCount() const
+{
+    return _indices.size();
+}
+
+Rangei Font::RichFormat::Ref::range(int index) const
+{
+    Rangei r = _ref.d->ranges.at(_indices.start + index).range;
+
+    if(index == 0)
+    {
+        // Clip the beginning.
+        r.start = de::max(r.start, _span.start);
+    }
+    if(index == rangeCount() - 1)
+    {
+        // Clip the end in the last range.
+        r.end = de::min(r.end, _span.end);
+    }
+
+    DENG2_ASSERT(r.start >= _span.start);
+    DENG2_ASSERT(r.end <= _span.end);
+    DENG2_ASSERT(r.start <= r.end);
+
+    // Make sure it's relative to the start of the subspan.
+    return r - _span.start;
+}
+
+Font::RichFormat::Ref Font::RichFormat::Ref::subRef(Rangei const &subSpan) const
+{
+    return Ref(*this, subSpan);
+}
+
+void Font::RichFormat::Ref::updateIndices()
+{
+    _indices = Rangei(0, 0);
+
+    Instance::Ranges const &ranges = format().d->ranges;
+
+    int i = 0;
+    for(; i < ranges.size(); ++i)
+    {
+        Rangei const &r = ranges.at(i).range;
+        if(r.end > _span.start)
+        {
+            _indices.start = i;
+            _indices.end = i + 1;
+            break;
+        }
+    }
+    for(++i; i < ranges.size(); ++i, ++_indices.end)
+    {
+        // Empty ranges are accepted at the end of the span.
+        Rangei const &r = ranges.at(i).range;
+        if(( r.isEmpty() && r.start >  _span.end) ||
+           (!r.isEmpty() && r.start >= _span.end))
+            break;
+    }
+
+    DENG2_ASSERT(_indices.start <= _indices.end);
+}
+
+Font::RichFormat::Iterator::Iterator(Ref const &f) : format(f), index(-1) {}
+
+int Font::RichFormat::Iterator::size() const
+{
+    return format.rangeCount();
+}
 
 bool Font::RichFormat::Iterator::hasNext() const
 {
-    return index + 1 < format.d->ranges.size();
+    return index + 1 < size();
 }
 
 void Font::RichFormat::Iterator::next()
 {
     index++;
-    DENG2_ASSERT(index < format.d->ranges.size());
+    DENG2_ASSERT(index < size());
 }
 
-bool Font::RichFormat::Iterator::isOriginal() const
+bool Font::RichFormat::Iterator::isDefault() const
 {
     return (fequal(sizeFactor(), 1.f)      &&
             weight()     == OriginalWeight &&
@@ -361,34 +430,36 @@ bool Font::RichFormat::Iterator::isOriginal() const
 
 Rangei Font::RichFormat::Iterator::range() const
 {
-    return format.d->ranges[index].range;
+    return format.range(index);
 }
+
+#define REF_RANGE_AT(Idx) format.format().d->ranges.at(format.rangeIndices().start + Idx)
 
 float Font::RichFormat::Iterator::sizeFactor() const
 {
-    return format.d->ranges[index].format.sizeFactor;
+    return REF_RANGE_AT(index).format.sizeFactor;
 }
 
 Font::RichFormat::Weight Font::RichFormat::Iterator::weight() const
 {
-    return format.d->ranges[index].format.weight;
+    return REF_RANGE_AT(index).format.weight;
 }
 
 Font::RichFormat::Style Font::RichFormat::Iterator::style() const
 {
-    return format.d->ranges[index].format.style;
+    return REF_RANGE_AT(index).format.style;
 }
 
 int Font::RichFormat::Iterator::colorIndex() const
 {
-    return format.d->ranges[index].format.colorIndex;
+    return REF_RANGE_AT(index).format.colorIndex;
 }
 
 Font::RichFormat::IStyle::Color Font::RichFormat::Iterator::color() const
 {
-    if(format.d->style)
+    if(format.format().d->style)
     {
-        return format.d->style->richStyleColor(colorIndex());
+        return format.format().d->style->richStyleColor(colorIndex());
     }
     // Fall back to white.
     return Vector4ub(255, 255, 255, 255);
@@ -396,18 +467,20 @@ Font::RichFormat::IStyle::Color Font::RichFormat::Iterator::color() const
 
 bool Font::RichFormat::Iterator::markIndent() const
 {
-    return format.d->ranges[index].format.markIndent;
+    return REF_RANGE_AT(index).format.markIndent;
 }
 
 bool Font::RichFormat::Iterator::resetIndent() const
 {
-    return format.d->ranges[index].format.resetIndent;
+    return REF_RANGE_AT(index).format.resetIndent;
 }
 
 int Font::RichFormat::Iterator::tabStop() const
 {
-    return format.d->ranges[index].format.tabStop;
+    return REF_RANGE_AT(index).format.tabStop;
 }
+
+#undef REF_RANGE_AT
 
 DENG2_PIMPL(Font)
 {
@@ -449,7 +522,7 @@ DENG2_PIMPL(Font)
 
     QFont alteredFont(RichFormat::Iterator const &rich) const
     {
-        if(!rich.isOriginal())
+        if(!rich.isDefault())
         {
             QFont mod = font;
 
@@ -474,34 +547,12 @@ DENG2_PIMPL(Font)
 
     QFontMetrics alteredMetrics(RichFormat::Iterator const &rich) const
     {
-        if(!rich.isOriginal())
+        if(!rich.isDefault())
         {
             return QFontMetrics(alteredFont(rich));
         }
         return *metrics;
     }
-
-    /*
-    int jumpToTabStop(RichFormat::Iterator const &rich, int pos)
-    {
-        if(rich.format.tabStops().isEmpty() || rich.tabStop() == RichFormat::NoTabStop)
-        {
-            return pos;
-        }
-
-        if(rich.tabStop() == RichFormat::NextTabStop)
-        {
-            int stop = 0;
-            forever
-            {
-                int x = rich.format.tabStopXWidth(stop++) * metrics->xHeight();
-                if(x >= pos) return x;
-            }
-        }
-
-        return de::max(pos, rich.format.tabStopXWidth(rich.tabStop()) * metrics->xHeight());
-    }
-    */
 };
 
 Font::Font() : d(new Instance(this))
@@ -523,7 +574,7 @@ Rectanglei Font::measure(String const &textLine) const
     return measure(textLine, RichFormat::fromPlainText(textLine));
 }
 
-Rectanglei Font::measure(String const &textLine, RichFormat const &format) const
+Rectanglei Font::measure(String const &textLine, RichFormatRef const &format) const
 {
     Rectanglei bounds;
     int advance = 0;
@@ -561,7 +612,7 @@ int Font::advanceWidth(String const &textLine) const
     return advanceWidth(textLine, RichFormat::fromPlainText(textLine));
 }
 
-int Font::advanceWidth(String const &textLine, RichFormat const &format) const
+int Font::advanceWidth(String const &textLine, RichFormatRef const &format) const
 {
     int advance = 0;
     RichFormat::Iterator iter(format);
@@ -584,7 +635,7 @@ QImage Font::rasterize(String const &textLine,
 }
 
 QImage Font::rasterize(String const &textLine,
-                       RichFormat const &format,
+                       RichFormatRef const &format,
                        Vector4ub const &foreground,
                        Vector4ub const &background) const
 {
@@ -621,7 +672,7 @@ QImage Font::rasterize(String const &textLine,
 
         QFont font = d->font;
 
-        if(iter.isOriginal())
+        if(iter.isDefault())
         {
             painter.setPen(fgColor);
             painter.setBrush(bgColor);

@@ -138,6 +138,34 @@ public:
                                          Style &fontStyle, int &colorIndex) const = 0;
         };
 
+        /**
+         * Reference to a (portion) of an existing RichFormat instance.
+         */
+        class LIBGUI_PUBLIC Ref
+        {
+        public:
+            Ref(Ref const &ref);
+            Ref(Ref const &ref, Rangei const &subSpan);
+            Ref(RichFormat const &richFormat);
+            Ref(RichFormat const &richFormat, Rangei const &subSpan);
+
+            Ref subRef(Rangei const &subSpan) const;
+
+            /// Returns the original referred RichFormat instance.
+            RichFormat const &format() const;
+
+            int rangeCount() const;
+            Rangei range(int index) const;
+            Rangei rangeIndices() const { return _indices; }
+
+        private:
+            void updateIndices();
+
+            RichFormat const &_ref;
+            Rangei _span;
+            Rangei _indices; ///< Applicable indices in the referred format's ranges list.
+        };
+
     public:
         RichFormat();
         RichFormat(IStyle const &style);
@@ -147,7 +175,7 @@ public:
 
         void clear();
 
-        bool haveStyle() const;
+        bool hasStyle() const;
         void setStyle(IStyle const &style);
         IStyle const &style() const;
 
@@ -179,7 +207,7 @@ public:
          *
          * @return RichFormat with only those ranges covering @a range.
          */
-        RichFormat subRange(Rangei const &range) const;
+        Ref subRange(Rangei const &range) const;
 
         TabStops const &tabStops() const;
 
@@ -193,15 +221,19 @@ public:
          */
         struct LIBGUI_PUBLIC Iterator
         {
-            RichFormat const &format;
+            Ref format;
             int index;
 
         public:
-            Iterator(RichFormat const &f);
+            Iterator(Ref const &ref);
+
+            int size() const;
             bool hasNext() const;
             void next();
 
-            bool isOriginal() const;
+            /// Determines if all the style parameters are the same as the default ones.
+            bool isDefault() const;
+
             Rangei range() const;
             float sizeFactor() const;
             Weight weight() const;
@@ -216,6 +248,8 @@ public:
     private:
         DENG2_PRIVATE(d)
     };
+
+    typedef RichFormat::Ref RichFormatRef;
 
 public:
     Font();
@@ -246,7 +280,7 @@ public:
      *
      * @return Rectangle covered by the text.
      */
-    Rectanglei measure(String const &textLine, RichFormat const &format) const;
+    Rectanglei measure(String const &textLine, RichFormatRef const &format) const;
 
     /**
      * Returns the advance width of a line of text. This may not be the same as
@@ -259,7 +293,7 @@ public:
      */
     int advanceWidth(String const &textLine) const;
 
-    int advanceWidth(String const &textLine, RichFormat const &format) const;
+    int advanceWidth(String const &textLine, RichFormatRef const &format) const;
 
     /**
      * Rasterizes a line of text onto a 32-bit RGBA image.
@@ -275,7 +309,7 @@ public:
                      Vector4ub const &background = Vector4ub(255, 255, 255, 0)) const;
 
     QImage rasterize(String const &textLine,
-                     RichFormat const &format,
+                     RichFormatRef const &format,
                      Vector4ub const &foreground = Vector4ub(255, 255, 255, 255),
                      Vector4ub const &background = Vector4ub(255, 255, 255, 0)) const;
 
