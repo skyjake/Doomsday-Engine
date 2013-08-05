@@ -472,6 +472,7 @@ void TaskBarWidget::close()
 
         d->console->closeLog();
         d->console->closeMenu();
+        d->console->commandLine().dismissContentToHistory();
         d->mainMenu->close();
 
         // Clear focus now; callbacks/signal handlers may set the focus elsewhere.

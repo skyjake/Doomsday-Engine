@@ -42,6 +42,13 @@ public:
     void focusLost();
     bool handleEvent(de::Event const &event);
 
+public slots:
+    /**
+     * Moves the current contents of the command line to the history. The
+     * command line contents are then cleared.
+     */
+    void dismissContentToHistory();
+
 protected:
     void autoCompletionBegan(de::String const &prefix);
     void autoCompletionEnded(bool accepted);
