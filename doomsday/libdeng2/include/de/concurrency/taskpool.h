@@ -30,6 +30,11 @@ class Task;
 /**
  * Pool of concurrent tasks.
  *
+ * The application uses a single, shared pool of background threads regardless
+ * of how many instances of TaskPool are created. One should use a separate
+ * TaskPool instance for each group of concurrent tasks whose state needs to be
+ * observed as a whole.
+ *
  * While TaskPool allows the user to monitor whether all tasks are done and
  * block until that time arrives (TaskPool::waitForDone()), no facilities are
  * provided for interrupting any of the started tasks. If that is required, the
