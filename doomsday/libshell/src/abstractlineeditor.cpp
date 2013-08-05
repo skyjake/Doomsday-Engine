@@ -172,6 +172,19 @@ DENG2_PIMPL(AbstractLineEditor)
         }
     }
 
+    void doWordBackspace()
+    {
+        rejectCompletion();
+
+        if(!text.isEmpty() && cursor > 0)
+        {
+            int to = wordJumpLeft(cursor);
+            text.remove(to, cursor - to);
+            cursor = to;
+            rewrapNow();
+        }
+    }
+
     void doDelete()
     {
         if(text.size() > cursor)
@@ -203,19 +216,26 @@ DENG2_PIMPL(AbstractLineEditor)
         }
     }
 
+    int wordJumpLeft(int pos) const
+    {
+        pos = de::min(pos, text.size() - 1);
+
+        // First jump over any non-word chars.
+        while(pos > 0 && !text[pos].isLetterOrNumber()) pos--;
+
+        // At least move one character.
+        if(pos > 0) pos--;
+
+        // We're inside a word, jump to its beginning.
+        while(pos > 0 && text[pos - 1].isLetterOrNumber()) pos--;
+
+        return pos;
+    }
+
     void doWordLeft()
     {
         acceptCompletion();
-
-        // First jump over any non-word chars.
-        while(cursor > 0 && !text[cursor].isLetterOrNumber()) cursor--;
-
-        // At least move one character.
-        if(cursor > 0) cursor--;
-
-        // We're inside a word, jump to its beginning.
-        while(cursor > 0 && text[cursor - 1].isLetterOrNumber()) cursor--;
-
+        cursor = wordJumpLeft(cursor);
         self.cursorMoved();
     }
 
@@ -538,7 +558,14 @@ bool AbstractLineEditor::handleControlKey(int qtKey, KeyModifiers const &mods)
     switch(qtKey)
     {
     case Qt::Key_Backspace:
-        d->doBackspace();
+        if(mods.testFlag(WORD_JUMP_MODIFIER))
+        {
+            d->doWordBackspace();
+        }
+        else
+        {
+            d->doBackspace();
+        }
         return true;
 
     case Qt::Key_Delete:
