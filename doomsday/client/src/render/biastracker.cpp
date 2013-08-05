@@ -259,7 +259,6 @@ void BiasTracker::applyChanges(BiasDigest &changes)
         if(changes.sourceMarkedChanged(App_World().map().toIndex(*ctbr->source)))
         {
             d->changedContributions |= 1 << i;
-            break;
         }
     }
 }
