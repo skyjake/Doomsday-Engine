@@ -1598,7 +1598,7 @@ de::String Con_CmdAsStyledText(ccmd_t *cmd)
     char const *str;
     if((str = DH_GetString(DH_Find(cmd->name), HST_DESCRIPTION)))
     {
-        return de::String(_E(b) "%1 " _E(>) _E(2) "%2" _E(.) _E(<)).arg(cmd->name).arg(str);
+        return de::String(_E(b) "%1 " _E(.) _E(>) _E(2) "%2" _E(.) _E(<)).arg(cmd->name).arg(str);
     }
     else
     {
