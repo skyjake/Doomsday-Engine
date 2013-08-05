@@ -517,6 +517,8 @@ void LabelWidget::glDeinit()
 
 void LabelWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
 {
+    d->update();
+
     // Background/frame.
     GuiWidget::glMakeGeometry(verts);
 

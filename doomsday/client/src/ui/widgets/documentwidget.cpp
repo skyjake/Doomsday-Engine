@@ -18,10 +18,13 @@
 
 #include "ui/widgets/documentwidget.h"
 #include "ui/widgets/guirootwidget.h"
+#include "ui/widgets/progresswidget.h"
 #include "ui/widgets/gltextcomposer.h"
 
 #include <de/Font>
 #include <de/Drawable>
+#include <de/Task>
+#include <de/TaskPool>
 
 using namespace de;
 
@@ -33,6 +36,27 @@ DENG2_OBSERVES(Atlas, Reposition),
 public Font::RichFormat::IStyle
 {
     typedef DefaultVertexBuf VertexBuf;
+
+    /**
+     * Background task for wrapping text onto lines and figuring out the
+     * formatting/tab stops.
+     */
+    class WrapTask : public Task
+    {
+    public:
+        WrapTask(Instance *inst, int toWidth) : d(inst), _width(toWidth) {}
+        void runTask() {
+            DENG2_GUARD_FOR(d->wraps, G);
+            d->wraps.wrapTextToWidth(d->text, d->format, _width);
+            d->wrapTaskCompleted();
+        }
+    private:
+        Instance *d;
+        int _width;
+    };
+
+    ProgressWidget *progress;
+    TaskPool tasks;
 
     // Style.
     ColorBank::Color normalColor;
@@ -61,6 +85,7 @@ public Font::RichFormat::IStyle
 
     Instance(Public *i)
         : Base(i),
+          progress(0),
           widthPolicy(ui::Expand),
           maxLineWidth(1000),
           oldScrollY(0),
@@ -71,6 +96,19 @@ public Font::RichFormat::IStyle
     {
         updateStyle();
         composer.setWrapping(wraps);
+
+        // Widget to show while lines are being wrapped.
+        progress = new ProgressWidget;
+        progress->setColor("progress.dark.wheel");
+        progress->setShadowColor("progress.dark.shadow");
+        progress->rule().setRect(self.rule());
+        progress->hide();
+        self.add(progress);
+    }
+
+    bool isBeingWrapped() const
+    {
+        return !tasks.isDone();
     }
 
     void updateStyle()
@@ -204,6 +242,18 @@ public Font::RichFormat::IStyle
         self.requestGeometry();
     }
 
+    void beginWrapTask(int toWidth)
+    {
+        tasks.start(new WrapTask(this, toWidth));
+    }
+
+    void wrapTaskCompleted()
+    {
+        // This is executed in the background thread.
+        progress->hide();        
+        self.setContentSize(Vector2i(wraps.width(), wraps.totalHeightInPixels()));
+    }
+
     void updateGeometry()
     {
         // If scroll position has changed, must update text geometry.
@@ -224,54 +274,6 @@ public Font::RichFormat::IStyle
 
         int const margin = self.margin().valuei();
 
-        // Make sure the text has been wrapped for the current dimensions.
-        if(widthPolicy == ui::Expand)
-        {
-            if(wraps.isEmpty() || wraps.maximumWidth() != maxLineWidth)
-            {
-                wraps.wrapTextToWidth(text, format, maxLineWidth);
-                self.setContentWidth(wraps.width());
-                self.setContentHeight(wraps.totalHeightInPixels());
-            }
-        }
-        else
-        {
-            int contentWidth = self.rule().width().valuei() - 2 * margin;
-            if(wraps.isEmpty() || wraps.maximumWidth() != contentWidth)
-            {
-                wraps.wrapTextToWidth(text, format, contentWidth);
-                self.setContentHeight(wraps.totalHeightInPixels());
-            }
-        }
-
-        // Determine visible range of lines.
-        Font const &font = self.font();
-        int contentHeight = self.contentHeight();
-        int const extraLines = 1;
-        int numVisLines = contentHeight / font.lineSpacing().valuei() + 2 * extraLines;
-        int firstVisLine = scrollY / font.lineSpacing().valuei() - extraLines + 1;
-
-        // Update visible range and release/alloc lines accordingly.
-        Rangei visRange(firstVisLine, firstVisLine + numVisLines);
-        if(visRange != composer.range())
-        {
-            composer.setRange(visRange);
-            composer.releaseLinesOutsideRange();
-            composer.update();
-
-            // Geometry from the text composer.
-            if(composer.isReady())
-            {
-                VertexBuf::Builder verts;
-                composer.makeVertices(verts, Vector2i(0, 0), ui::AlignLeft);
-                drawable.buffer<VertexBuf>(ID_TEXT).setVertices(gl::TriangleStrip, verts, gl::Static);
-            }
-        }
-
-        uScrollMvpMatrix = self.root().projMatrix2D() *
-                Matrix4f::translate(Vector2f(self.contentRule().left().valuei(),
-                                             self.contentRule().top().valuei()));
-
         // Background and scroll indicator.
         VertexBuf::Builder verts;
         self.glMakeGeometry(verts);
@@ -280,9 +282,54 @@ public Font::RichFormat::IStyle
 
         uMvpMatrix = self.root().projMatrix2D();
 
-        DENG2_ASSERT(drawable.buffer(ID_BACKGROUND).isReady());
-        DENG2_ASSERT(drawable.buffer(ID_TEXT).isReady());
-        DENG2_ASSERT(drawable.isReady());
+        if(!isBeingWrapped())
+        {
+            int wrapWidth;
+
+            // Make sure the text has been wrapped for the current dimensions.
+            if(widthPolicy == ui::Expand)
+            {
+                wrapWidth = maxLineWidth;
+            }
+            else
+            {
+                wrapWidth = self.rule().width().valuei() - 2 * margin;
+            }
+
+            if(wraps.isEmpty() || wraps.maximumWidth() != wrapWidth)
+            {
+                beginWrapTask(wrapWidth);
+                return;
+            }
+
+            // Determine visible range of lines.
+            Font const &font = self.font();
+            int contentHeight = self.contentHeight();
+            int const extraLines = 1;
+            int numVisLines = contentHeight / font.lineSpacing().valuei() + 2 * extraLines;
+            int firstVisLine = scrollY / font.lineSpacing().valuei() - extraLines + 1;
+
+            // Update visible range and release/alloc lines accordingly.
+            Rangei visRange(firstVisLine, firstVisLine + numVisLines);
+            if(visRange != composer.range())
+            {
+                composer.setRange(visRange);
+                composer.releaseLinesOutsideRange();
+                composer.update();
+
+                // Geometry from the text composer.
+                if(composer.isReady())
+                {
+                    VertexBuf::Builder verts;
+                    composer.makeVertices(verts, Vector2i(0, 0), ui::AlignLeft);
+                    drawable.buffer<VertexBuf>(ID_TEXT).setVertices(gl::TriangleStrip, verts, gl::Static);
+                }
+            }
+
+            uScrollMvpMatrix = self.root().projMatrix2D() *
+                    Matrix4f::translate(Vector2f(self.contentRule().left().valuei(),
+                                                 self.contentRule().top().valuei()));
+        }
 
         // Geometry is now up to date.
         self.requestGeometry(false);
@@ -311,6 +358,15 @@ void DocumentWidget::setText(String const &styledText)
 {
     if(styledText != d->styledText)
     {
+        // The wrapping task is uncancellable.
+        d->tasks.waitForDone();
+
+        // Show the progress indicator until the text is ready for drawing.
+        d->drawable.buffer(ID_TEXT).clear();
+        d->progress->show();
+        int indSize = style().rules().rule("document.progress").valuei();
+        setContentSize(Vector2i(indSize, indSize));
+
         d->wraps.clear();
         d->composer.release();
 

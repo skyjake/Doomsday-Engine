@@ -13,6 +13,10 @@ group label {
     rule gap { constant $= gap.constant / 2 }
 }
 
+group document {
+    rule progress { constant $= UNIT * 30 }
+}
+
 group progress {
     rule textgap { constant $= gap.constant }
 }
