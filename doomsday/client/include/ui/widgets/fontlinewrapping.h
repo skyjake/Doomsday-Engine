@@ -21,6 +21,7 @@
 
 #include <de/String>
 #include <de/Font>
+#include <de/Lockable>
 #include <de/shell/ILineWrapping>
 
 /**
@@ -29,8 +30,13 @@
  * font has been defined.
  *
  * Supports indentation of lines, as marked in the RichFormat.
+ *
+ * @par Thread-Safety
+ *
+ * FontLineWrapping locks itself automatically when any of its methods are
+ * being executed. Instances can be used from multiple threads.
  */
-class FontLineWrapping : public de::shell::ILineWrapping
+class FontLineWrapping : public de::Lockable, public de::shell::ILineWrapping
 {
 public:
     FontLineWrapping();

@@ -212,6 +212,7 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
         return false;
     }
 
+#if 0
     int findMaxWrapWithStep(int const stepSize, int const begin, int end,
                             int const availableWidth,
                             int *wrapPosMax)
@@ -263,9 +264,30 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
         // Accurate search.
         return findMaxWrapWithStep(1, begin, end, availableWidth, &wrapPosMax);
     }
+#else
+
+    int findMaxWrap(int begin, int availableWidth) const
+    {
+        int width = 0;
+        int end = begin;
+        while(end < text.size() && text.at(end) != NEWLINE)
+        {
+            int const charWidth = rangeAdvanceWidth(Rangei(end, end + 1));
+            if(width + charWidth > availableWidth)
+            {
+                // Does not fit any more.
+                break;
+            }
+            width += charWidth;
+            ++end;
+        }
+        return end;
+    }
+#endif
 
     bool isWrappable(int at)
     {
+        if(at >= text.size()) return true;
         if(text.at(at).isSpace()) return true;
         if(at > 0)
         {
@@ -311,7 +333,7 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
         int begin = rangeToWrap.start;
 
         Lines wrappedLines;
-        forever
+        while(begin < rangeToWrap.end)
         {
             int mw = maxWidth;
             if(!wrappedLines.isEmpty() && subsequentMaxWidth > 0) mw = subsequentMaxWidth;
@@ -348,10 +370,15 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
             }
 
             // Newlines always cause a wrap.
+#if 0
             int wrapPosMax;
             int end = findMaxWrap(begin, availWidth, wrapPosMax);
+#else
+            int end = findMaxWrap(begin, availWidth);
+            int wrapPosMax = end;
+#endif
 
-            if(text.at(end) == NEWLINE)
+            if(end < rangeToWrap.end && text.at(end) == NEWLINE)
             {
                 // The newline will be omitted from the wrapped lines.
                 wrappedLines << makeLine(Rangei(begin, end));
@@ -381,7 +408,7 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
                     end = wrapPosMax;
                 }
 
-                while(end < text.size() && text.at(end).isSpace()) ++end;
+                while(end < rangeToWrap.end && text.at(end).isSpace()) ++end;
                 wrappedLines << makeLine(Rangei(begin, end));
                 begin = end;
             }
@@ -396,28 +423,38 @@ FontLineWrapping::FontLineWrapping() : d(new Instance)
 
 void FontLineWrapping::setFont(Font const &font)
 {
+    DENG2_GUARD(this);
+
     d->font = &font;
 }
 
 Font const &FontLineWrapping::font() const
 {
+    DENG2_GUARD(this);
+
     DENG2_ASSERT(d->font != 0);
     return *d->font;
 }
 
 bool FontLineWrapping::isEmpty() const
 {
+    DENG2_GUARD(this);
+
     return d->lines.isEmpty();
 }
 
 void FontLineWrapping::clear()
 {
+    DENG2_GUARD(this);
+
     reset();
     d->text.clear();
 }
 
 void FontLineWrapping::reset()
 {
+    DENG2_GUARD(this);
+
     d->clearLines();
     d->indent = 0;
     d->tabStop = 0;
@@ -430,6 +467,8 @@ void FontLineWrapping::wrapTextToWidth(String const &text, int maxWidth)
 
 void FontLineWrapping::wrapTextToWidth(String const &text, Font::RichFormat const &format, int maxWidth)
 {
+    DENG2_GUARD(this);
+
     String newText = text;
 
     clear();
@@ -551,17 +590,23 @@ void FontLineWrapping::wrapTextToWidth(String const &text, Font::RichFormat cons
 
 String const &FontLineWrapping::text() const
 {
+    DENG2_GUARD(this);
+
     return d->text;
 }
 
 WrappedLine FontLineWrapping::line(int index) const
 {
+    DENG2_GUARD(this);
+
     DENG2_ASSERT(index >= 0 && index < height());
     return d->lines[index]->line;
 }
 
 int FontLineWrapping::width() const
 {
+    DENG2_GUARD(this);
+
     int w = 0;
     for(int i = 0; i < d->lines.size(); ++i)
     {
@@ -572,16 +617,22 @@ int FontLineWrapping::width() const
 
 int FontLineWrapping::height() const
 {
+    DENG2_GUARD(this);
+
     return d->lines.size();
 }
 
 int FontLineWrapping::rangeWidth(Rangei const &range) const
 {
+    DENG2_GUARD(this);
+
     return d->rangeAdvanceWidth(range);
 }
 
 int FontLineWrapping::indexAtWidth(Rangei const &range, int width) const
 {
+    DENG2_GUARD(this);
+
     int prevWidth = 0;
 
     for(int i = range.start; i < range.end; ++i)
@@ -603,6 +654,8 @@ int FontLineWrapping::indexAtWidth(Rangei const &range, int width) const
 
 int FontLineWrapping::totalHeightInPixels() const
 {
+    DENG2_GUARD(this);
+
     if(!d->font) return 0;
 
     int const lines = height();
@@ -623,11 +676,15 @@ int FontLineWrapping::totalHeightInPixels() const
 
 int FontLineWrapping::maximumWidth() const
 {
+    DENG2_GUARD(this);
+
     return d->maxWidth;
 }
 
 Vector2i FontLineWrapping::charTopLeftInPixels(int line, int charIndex)
 {    
+    DENG2_GUARD(this);
+
     if(line >= height()) return Vector2i();
 
     WrappedLine const span = d->lines[line]->line;
