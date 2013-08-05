@@ -162,7 +162,7 @@ bool ConsoleCommandWidget::handleEvent(Event const &event)
     return false;
 }
 
-void ConsoleCommandWidget::autoCompletionBegan()
+void ConsoleCommandWidget::autoCompletionBegan(String const &)
 {
     // Prepare a list of annotated completions to show in the popup.
     QStringList const compls = suggestedCompletions();

@@ -50,12 +50,16 @@ DENG2_PIMPL(AbstractLineEditor)
     };
     Completion completion;
     QStringList suggestions;
+    bool suggesting;
+    bool completionNotified;
 
     Instance(Public *i, ILineWrapping *lineWraps)
         : Base(i),
           cursor(0),
           echoMode(NormalEchoMode),
-          wraps(lineWraps)
+          wraps(lineWraps),
+          suggesting(false),
+          completionNotified(false)
     {
         // Initialize line wrapping.
         completion.reset();
@@ -158,11 +162,8 @@ DENG2_PIMPL(AbstractLineEditor)
 
     void doBackspace()
     {
-        if(suggestingCompletion())
-        {
-            rejectCompletion();
+        if(rejectCompletion())
             return;
-        }
 
         if(!text.isEmpty() && cursor > 0)
         {
@@ -264,15 +265,21 @@ DENG2_PIMPL(AbstractLineEditor)
 
     bool suggestingCompletion() const
     {
-        return completion.size > 0;
+        return suggesting;
+        //return completion.size > 0;
+    }
+
+    String wordBehindPos(int pos) const
+    {
+        String word;
+        int i = pos - 1;
+        while(i >= 0 && lexicon.isWordChar(text[i])) word.prepend(text[i--]);
+        return word;
     }
 
     String wordBehindCursor() const
     {
-        String word;
-        int i = cursor - 1;
-        while(i >= 0 && lexicon.isWordChar(text[i])) word.prepend(text[i--]);
-        return word;
+        return wordBehindPos(cursor);
     }
 
     QStringList completionsForBase(String base, String &commonPrefix) const
@@ -306,6 +313,7 @@ DENG2_PIMPL(AbstractLineEditor)
     {
         if(!suggestingCompletion())
         {
+            completionNotified = false;
             String const base = wordBehindCursor();
             if(!base.isEmpty())
             {
@@ -322,26 +330,37 @@ DENG2_PIMPL(AbstractLineEditor)
                     text.insert(cursor, commonPrefix);
                     cursor += completion.size;
                     rewrapNow();
-                    self.autoCompletionBegan();
+                    suggesting = true;
                     return true;
                 }
                 if(!suggestions.isEmpty())
                 {
-                    completion.ordinal = (forwardCycle? 0 : suggestions.size() - 1);
-                    String comp = suggestions[completion.ordinal];
-                    comp.remove(0, base.size());
+                    completion.ordinal = -1; //(forwardCycle? 0 : suggestions.size() - 1);
+                    /*String comp = suggestions[completion.ordinal];
+                    comp.remove(0, base.size());*/
                     completion.pos = cursor;
-                    completion.size = comp.size();
-                    text.insert(cursor, comp);
-                    cursor += completion.size;
-                    rewrapNow();
-                    self.autoCompletionBegan();
+                    completion.size = 0; //comp.size();
+                    //text.insert(cursor, comp);
+                    //cursor += completion.size;
+                    //rewrapNow();
+                    suggesting = true;
+                    // Notify immediately.
+                    self.autoCompletionBegan(base);
+                    completionNotified = true;
                     return true;
                 }
             }
         }
         else
         {
+            if(!completionNotified)
+            {
+                // Time to notify now.
+                self.autoCompletionBegan(wordBehindPos(completion.pos));
+                completionNotified = true;
+                return true;
+            }
+
             // Replace the current completion with another suggestion.
             cursor = completion.pos;
             String const base = wordBehindCursor();
@@ -371,6 +390,7 @@ DENG2_PIMPL(AbstractLineEditor)
             completion.size = comp.size();
             cursor = completion.pos + completion.size;
             rewrapNow();
+
             return true;
         }
         return false;
@@ -386,6 +406,8 @@ DENG2_PIMPL(AbstractLineEditor)
     {
         completion.reset();
         suggestions.clear();
+        suggesting = false;
+        completionNotified = false;
     }
 
     void acceptCompletion()
@@ -397,14 +419,20 @@ DENG2_PIMPL(AbstractLineEditor)
         self.autoCompletionEnded(true);
     }
 
-    void rejectCompletion()
+    bool rejectCompletion()
     {
+        if(!suggestingCompletion()) return false;
+
+        int oldCursor = cursor;
+
         text.remove(completion.pos, completion.size);
         cursor = completion.pos;
         resetCompletion();
         rewrapNow();
 
         self.autoCompletionEnded(false);
+
+        return cursor != oldCursor; // cursor was moved as part of the rejection
     }
 };
 
@@ -609,7 +637,7 @@ ILineWrapping &AbstractLineEditor::lineWraps()
     return *d->wraps;
 }
 
-void AbstractLineEditor::autoCompletionBegan()
+void AbstractLineEditor::autoCompletionBegan(String const &)
 {}
 
 void AbstractLineEditor::autoCompletionEnded(bool /*accepted*/)

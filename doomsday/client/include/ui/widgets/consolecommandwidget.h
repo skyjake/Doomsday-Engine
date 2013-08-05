@@ -43,7 +43,7 @@ public:
     bool handleEvent(de::Event const &event);
 
 protected:
-    void autoCompletionBegan();
+    void autoCompletionBegan(de::String const &prefix);
     void autoCompletionEnded(bool accepted);
 
 signals:
