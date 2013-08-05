@@ -23,6 +23,15 @@
 
 using namespace de;
 
+enum PropertyFlag
+{
+    Color     = 0x1,
+    Intensity = 0x2
+};
+Q_DECLARE_FLAGS(PropertyFlags, PropertyFlag)
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(PropertyFlags)
+
 DENG2_PIMPL(Hand),
 DENG2_OBSERVES(Grabbable, Deletion),
 DENG2_OBSERVES(Grabbable, OriginChange)
@@ -41,13 +50,15 @@ DENG2_OBSERVES(Grabbable, OriginChange)
     /// Edit properties (applied to the grabbables).
     Vector3f editColor;
     float editIntensity;
+    PropertyFlags applyProps;
 
     Instance(Public *i, Vector3d const &origin)
         : Base(i),
           origin(origin),
           oldOrigin(origin),
           needUpdateGrabOrigin(false),
-          editIntensity(0)
+          editIntensity(0),
+          applyProps(0)
     {}
 
     void notifyGrabbed(Grabbable &grabbed)
@@ -212,11 +223,13 @@ float Hand::editIntensity() const
 void Hand::setEditIntensity(float newIntensity)
 {
     d->editIntensity = newIntensity;
+    d->applyProps |= Intensity;
 }
 
 void Hand::setEditColor(Vector3f const &newColor)
 {
     d->editColor = newColor;
+    d->applyProps |= Color;
 }
 
 Vector3f const &Hand::editColor() const
@@ -254,19 +267,33 @@ void Hand::worldFrameEnds(World &world)
                 }
             }
 
-            /// @todo There should be a generic mechanism for applying the user's
-            /// edits to the grabbables. The editable values are properties of the
-            /// hand (an extension of the user's will) however the hand should not
-            /// be responsible for their application as this requires knowledge of
-            /// their meaning. Instead the hand should provide the values and let
-            /// the grabbable(s) update themselves.
-            if(!internal::cannotCastGrabbableTo<BiasSource>(grabbable))
+            if(!!d->applyProps)
             {
-                grabbable->as<BiasSource>().setIntensity(d->editIntensity)
-                                           .setColor    (d->editColor);
+                /// @todo There should be a generic mechanism for applying the user's
+                /// edits to the grabbables. The editable values are properties of the
+                /// hand (an extension of the user's will) however the hand should not
+                /// be responsible for their application as this requires knowledge of
+                /// their meaning. Instead the hand should provide the values and let
+                /// the grabbable(s) update themselves.
+                if(!internal::cannotCastGrabbableTo<BiasSource>(grabbable))
+                {
+                    BiasSource &biasSource = grabbable->as<BiasSource>();
+
+                    if(d->applyProps & Color)
+                    {
+                        biasSource.setColor(d->editColor);
+                    }
+                    if(d->applyProps & Intensity)
+                    {
+                        biasSource.setIntensity(d->editIntensity);
+                    }
+                }
             }
         }
     }
+
+    // Any property changes will have now been applied to the grabbed elements.
+    d->applyProps = 0;
 
     // Update the hand origin tracking buffer.
     d->oldOrigin = d->origin;
