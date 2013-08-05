@@ -2749,6 +2749,7 @@ D_CMD(TaskBar)
     else
     {
         win.taskBar().close();
+        win.console().commandLine().setText("");
     }
     return true;
 }
