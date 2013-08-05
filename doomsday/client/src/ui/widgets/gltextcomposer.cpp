@@ -331,7 +331,7 @@ void GLTextComposer::makeVertices(Vertices &triStrip,
 
     for(int i = 0; i < d->lines.size(); ++i)
     {
-        if(!d->isLineVisible(i)) continue;
+        if(d->lines[i].segs.isEmpty()) continue;
 
         d->lines[i].segs[0].x = d->wraps->lineInfo(i).indent;
 
@@ -382,6 +382,7 @@ void GLTextComposer::makeVertices(Vertices &triStrip,
     for(int i = 0; i < d->lines.size(); ++i)
     {
         Instance::Line &line = d->lines[i];
+        if(!d->isLineVisible(i) || line.segs.isEmpty()) continue;
 
         if(!d->wraps->lineInfo(i).segs.last().tabStop)
             continue;

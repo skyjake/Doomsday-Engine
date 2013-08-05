@@ -567,11 +567,14 @@ void FontLineWrapping::wrapTextToWidth(String const &text, Font::RichFormat cons
         d->lines = d->wrapRange(Rangei(0, text.size()), maxWidth);
     }
 
-    if(!d->lines.isEmpty())
+    if(d->lines.isEmpty())
     {
-        // Mark the final line.
-        d->lines.last()->line.isFinal = true;
+        // Make sure at least one blank line exists.
+       d->lines << new Instance::Line;
     }
+
+    // Mark the final line.
+    d->lines.last()->line.isFinal = true;
 
 #if 0
     qDebug() << "Wrapped:" << d->text;
