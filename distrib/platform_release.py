@@ -171,7 +171,7 @@ def mac_package_snowberry():
 
 def mac_release():
     """The Mac OS X release procedure."""
-
+    
     # Package Snowberry or acquire the shared package.
     if mac_able_to_package_snowberry():
         # Check Python dependencies.

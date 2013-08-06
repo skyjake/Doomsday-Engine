@@ -318,6 +318,10 @@ def doTask(task):
         msg("UPDATE .DEB CHANGELOG")
         return autobuild('debchanges')
 
+    elif task == 'mac_meta':
+        msg("OS X METADATA UPDATE")
+        return autobuild('mac_meta')
+
     elif task == 'build':
         msg("BUILD RELEASE")
         return autobuild('platform_release')
@@ -378,6 +382,7 @@ def handleCompletedTasks():
         
         elif task == 'tag_build':
             newTask('deb_changes', forClient='ubuntu')
+            newTask('mac_meta', forClient='master')
             newTask('generate_readme', forClient='clikits')
         
         elif task == 'deb_changes':
