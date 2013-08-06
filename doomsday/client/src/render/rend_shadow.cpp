@@ -17,6 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
+#include <de/Vector>
+
 #include "de_base.h"
 #include "de_graphics.h"
 #include "de_play.h"
@@ -33,7 +35,7 @@ using namespace de;
 
 typedef struct {
     rvertex_t vertices[4];
-    ColorRawf colors[4];
+    Vector4f colors[4];
     rtexcoord_t texCoords[4];
 } shadowprim_t;
 
@@ -57,22 +59,22 @@ static void drawShadowPrimitive(coord_t const pos[3], coord_t radius, float alph
     rs->vertices[0].pos[VX] = pos[VX] - radius;
     rs->vertices[0].pos[VY] = pos[VY] + radius;
     rs->vertices[0].pos[VZ] = pos[VZ] + SHADOW_ZOFFSET;
-    rs->colors[0].alpha = alpha;
+    rs->colors[0].w = alpha;
 
     rs->vertices[1].pos[VX] = pos[VX] + radius;
     rs->vertices[1].pos[VY] = pos[VY] + radius;
     rs->vertices[1].pos[VZ] = pos[VZ] + SHADOW_ZOFFSET;
-    rs->colors[0].alpha = alpha;
+    rs->colors[0].w = alpha;
 
     rs->vertices[2].pos[VX] = pos[VX] + radius;
     rs->vertices[2].pos[VY] = pos[VY] - radius;
     rs->vertices[2].pos[VZ] = pos[VZ] + SHADOW_ZOFFSET;
-    rs->colors[2].alpha = alpha;
+    rs->colors[2].w = alpha;
 
     rs->vertices[3].pos[VX] = pos[VX] - radius;
     rs->vertices[3].pos[VY] = pos[VY] - radius;
     rs->vertices[3].pos[VZ] = pos[VZ] + SHADOW_ZOFFSET;
-    rs->colors[3].alpha = alpha;
+    rs->colors[3].w = alpha;
 
     RL_AddPolyWithCoords(PT_FAN, RPF_DEFAULT|RPF_SHADOW, 4,
         rs->vertices, rs->colors, rs->texCoords, NULL);
@@ -162,25 +164,23 @@ static void processMobjShadow(mobj_t *mo)
 
 static void initShadowPrimitive()
 {
-#define SETCOLOR_BLACK(c) ((c).rgba[CR] = (c).rgba[CG] = (c).rgba[CB] = 0)
+    Vector4f black(0, 0, 0, 0);
 
     rs->texCoords[0].st[0] = 0;
     rs->texCoords[0].st[1] = 1;
-    SETCOLOR_BLACK(rs->colors[0]);
+    rs->colors[0]          = black;
 
     rs->texCoords[1].st[0] = 1;
     rs->texCoords[1].st[1] = 1;
-    SETCOLOR_BLACK(rs->colors[1]);
+    rs->colors[1]          = black;
 
     rs->texCoords[2].st[0] = 1;
     rs->texCoords[2].st[1] = 0;
-    SETCOLOR_BLACK(rs->colors[2]);
+    rs->colors[2]          = black;
 
     rs->texCoords[3].st[0] = 0;
     rs->texCoords[3].st[1] = 0;
-    SETCOLOR_BLACK(rs->colors[3]);
-
-#undef SETCOLOR_BLACK
+    rs->colors[3]          = black;
 }
 
 void Rend_RenderMobjShadows()
@@ -219,23 +219,16 @@ void Rend_RenderMobjShadows()
  */
 static void drawShadow(shadowprojection_t const &sp, rendershadowprojectionparams_t &parm)
 {
-    static float const black[3] = { 0, 0, 0 };
-
     // Allocate enough for the divisions too.
     rvertex_t *rvertices = R_AllocRendVertices(parm.realNumVertices);
     rtexcoord_t *rtexcoords = R_AllocRendTexCoords(parm.realNumVertices);
-    ColorRawf *rcolors = R_AllocRendColors(parm.realNumVertices);
+    Vector4f *rcolors = R_AllocRendColors(parm.realNumVertices);
     bool const mustSubdivide = (parm.isWall && (parm.wall.leftEdge->divisionCount() || parm.wall.rightEdge->divisionCount() ));
 
     for(uint i = 0; i < parm.numVertices; ++i)
     {
-        ColorRawf *col = &rcolors[i];
         // Shadows are black.
-        for(uint c = 0; c < 3; ++c)
-            col->rgba[c] = black[c];
-
-        // Blend factor.
-        col->alpha = sp.alpha;
+        rcolors[i] = Vector4f(0, 0, 0, sp.alpha /*Blend factor*/);
     }
 
     if(parm.isWall)
@@ -260,7 +253,7 @@ static void drawShadow(shadowprojection_t const &sp, rendershadowprojectionparam
 
             rvertex_t origVerts[4]; std::memcpy(origVerts, parm.rvertices, sizeof(rvertex_t) * 4);
             rtexcoord_t origTexCoords[4]; std::memcpy(origTexCoords, rtexcoords, sizeof(rtexcoord_t) * 4);
-            ColorRawf origColors[4]; std::memcpy(origColors, rcolors, sizeof(ColorRawf) * 4);
+            Vector4f origColors[4]; std::memcpy(origColors, rcolors, sizeof(Vector4f) * 4);
 
             R_DivVerts(rvertices, origVerts, leftEdge, rightEdge);
             R_DivTexCoords(rtexcoords, origTexCoords, leftEdge, rightEdge);

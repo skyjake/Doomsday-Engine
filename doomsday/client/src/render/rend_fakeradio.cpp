@@ -22,6 +22,8 @@
 
 #include <de/vector1.h>
 
+#include <de/Vector>
+
 #include "de_base.h"
 #include "de_console.h"
 #include "de_render.h"
@@ -111,7 +113,7 @@ void Rend_RadioUpdateForLineSide(Line::Side &side)
 /**
  * Set the vertex colors in the rendpoly.
  */
-static void setRendpolyColor(ColorRawf *rcolors, uint num, float darkness)
+static void setRendpolyColor(Vector4f *rcolors, uint num, float darkness)
 {
     DENG_ASSERT(rcolors != 0);
     darkness = de::clamp(0.f, darkness, 1.f);
@@ -119,10 +121,7 @@ static void setRendpolyColor(ColorRawf *rcolors, uint num, float darkness)
     for(uint i = 0; i < num; ++i)
     {
         // Shadows are black.
-        rcolors[i].rgba[CR] =
-            rcolors[i].rgba[CG] =
-                rcolors[i].rgba[CB] = 0;
-        rcolors[i].rgba[CA] = darkness;
+        rcolors[i] = Vector4f(0, 0, 0, darkness);
     }
 }
 
@@ -1015,7 +1014,7 @@ static void drawWallSectionShadow(rvertex_t const *origVertices,
 
     // Allocate enough for the divisions too.
     rtexcoord_t *rtexcoords = R_AllocRendTexCoords(realNumVertices);
-    ColorRawf *rcolors = R_AllocRendColors(realNumVertices);
+    Vector4f *rcolors = R_AllocRendColors(realNumVertices);
 
     quadTexCoords(rtexcoords, origVertices, wsParms.sectionWidth,
                   leftEdge.top().origin(), rightEdge.bottom().origin(),
@@ -1043,8 +1042,8 @@ static void drawWallSectionShadow(rvertex_t const *origVertices,
             rtexcoord_t origTexCoords[4];
             std::memcpy(origTexCoords, rtexcoords, sizeof(rtexcoord_t) * 4);
 
-            ColorRawf origColors[4];
-            std::memcpy(origColors, rcolors, sizeof(ColorRawf) * 4);
+            Vector4f origColors[4];
+            std::memcpy(origColors, rcolors, sizeof(Vector4f) * 4);
 
             R_DivVerts(rvertices, origVertices, leftEdge, rightEdge);
             R_DivTexCoords(rtexcoords, origTexCoords, leftEdge, rightEdge);
@@ -1203,7 +1202,7 @@ static void writeShadowSection2(ShadowEdge const &leftEdge, ShadowEdge const &ri
     uint const *idx = (isFloor ? floorIndices[winding] : ceilIndices[winding]);
 
     rvertex_t rvertices[4];
-    ColorRawf rcolors[4];
+    Vector4f rcolors[4];
 
     // Left outer corner.
     rvertices[idx[0]].pos[VX] = leftEdge.outer().x;
@@ -1225,29 +1224,25 @@ static void writeShadowSection2(ShadowEdge const &leftEdge, ShadowEdge const &ri
     rvertices[idx[3]].pos[VY] = leftEdge.inner().y;
     rvertices[idx[3]].pos[VZ] = leftEdge.inner().z;
 
-    // Light this polygon.
-    for(uint i = 0; i < 4; ++i)
+    if(renderWireframe)
     {
-        rcolors[idx[i]].rgba[CR] =
-            rcolors[idx[i]].rgba[CG] =
-                rcolors[idx[i]].rgba[CB] = (renderWireframe? 1 : 0);
+        // Draw shadow geometry white to assist visual debugging.
+        static const Vector4f white(1, 1, 1, 1);
+        for(uint i = 0; i < 4; ++i)
+        {
+            rcolors[idx[i]] = white;
+        }
     }
 
-    // Right inner.
-    rcolors[idx[2]].rgba[CA] = 0;
-
-    // Left inner.
-    rcolors[idx[3]].rgba[CA] = 0;
-
     // Left outer.
-    rcolors[idx[0]].rgba[CA] = outerLeftAlpha;
+    rcolors[idx[0]].w = outerLeftAlpha;
     if(leftEdge.openness() < 1)
-        rcolors[idx[0]].rgba[CA] *= 1 - leftEdge.openness();
+        rcolors[idx[0]].w *= 1 - leftEdge.openness();
 
     // Right outer.
-    rcolors[idx[1]].rgba[CA] = outerRightAlpha;
+    rcolors[idx[1]].w = outerRightAlpha;
     if(rightEdge.openness() < 1)
-        rcolors[idx[1]].rgba[CA] *= 1 - rightEdge.openness();
+        rcolors[idx[1]].w *= 1 - rightEdge.openness();
 
     if(rendFakeRadio == 2) return;
 

@@ -158,7 +158,7 @@ rvertex_t *R_AllocRendVertices(uint num);
  *
  * @return  Ptr to array of ColorRawf
  */
-ColorRawf *R_AllocRendColors(uint num);
+de::Vector4f *R_AllocRendColors(uint num);
 
 /**
  * Retrieves a batch of rtexcoord_t.
@@ -184,7 +184,7 @@ void R_FreeRendVertices(rvertex_t *rvertices);
  *
  * @param rcolors  Ptr to array of ColorRawf to mark unused.
  */
-void R_FreeRendColors(ColorRawf *rcolors);
+void R_FreeRendColors(de::Vector4f *rcolors);
 
 /**
  * Doesn't actually free anything. Instead, mark them as unused ready for

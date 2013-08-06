@@ -281,28 +281,26 @@ static listnode_t *newListNode(void)
 static listnode_t *newProjection(DGLuint texture, float const s[2],
     float const t[2], float const color[3], float alpha)
 {
-    DENG_ASSERT(texture != 0 && s && t && color);
+    DENG_ASSERT(texture != 0 && s != 0&& t != 0 && color != 0);
 
     listnode_t *node = newListNode();
     dynlight_t *tp = &node->projection;
 
     tp->texture = texture;
-    tp->s[0] = s[0];
-    tp->s[1] = s[1];
-    tp->t[0] = t[0];
-    tp->t[1] = t[1];
-    tp->color.rgba[CR] = color[CR];
-    tp->color.rgba[CG] = color[CG];
-    tp->color.rgba[CB] = color[CB];
-    tp->color.rgba[CA] = MINMAX_OF(0, alpha, 1);
+    tp->s[0]    = s[0];
+    tp->s[1]    = s[1];
+    tp->t[0]    = t[0];
+    tp->t[1]    = t[1];
+    tp->color   = Vector4f(Vector3f(color), de::clamp(0.f, alpha, 1.f));
 
     return node;
 }
 
 static inline float calcProjectionLuminosity(dynlight_t *tp)
 {
-    DENG_ASSERT(tp);
-    return ColorRawf_AverageColorMulAlpha(&tp->color);
+    DENG_ASSERT(tp != 0);
+    // Average color * alpha.
+    return (tp->color.x + tp->color.y + tp->color.z) / 3 * tp->color.w;
 }
 
 /// @return  Same as @a node for convenience (chaining).

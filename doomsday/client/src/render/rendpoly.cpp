@@ -67,16 +67,12 @@ void R_PrintRendPoolInfo()
 
 void R_InitRendPolyPools()
 {
-    rvertex_t* rvertices;
-    ColorRawf* rcolors;
-    rtexcoord_t* rtexcoords;
-
     numrendpolys = maxrendpolys = 0;
     rendPolys = 0;
 
-    rvertices  = R_AllocRendVertices(24);
-    rcolors    = R_AllocRendColors(24);
-    rtexcoords = R_AllocRendTexCoords(24);
+    rvertex_t *rvertices    = R_AllocRendVertices(24);
+    Vector4f *rcolors       = R_AllocRendColors(24);
+    rtexcoord_t *rtexcoords = R_AllocRendTexCoords(24);
 
     // Mark unused.
     R_FreeRendVertices(rvertices);
@@ -146,7 +142,7 @@ rvertex_t* R_AllocRendVertices(uint num)
     return (rvertex_t*) rendPolys[idx]->data;
 }
 
-ColorRawf* R_AllocRendColors(uint num)
+Vector4f *R_AllocRendColors(uint num)
 {
     uint idx;
     boolean found = false;
@@ -160,7 +156,7 @@ ColorRawf* R_AllocRendColors(uint num)
         {
             // Use this one.
             rendPolys[idx]->inUse = true;
-            return (ColorRawf*) rendPolys[idx]->data;
+            return (Vector4f *) rendPolys[idx]->data;
         }
         else if(rendPolys[idx]->num == 0)
         {
@@ -177,15 +173,15 @@ ColorRawf* R_AllocRendColors(uint num)
         if(++numrendpolys > maxrendpolys)
         {
             uint i, newCount;
-            RPolyData* newPolyData, *ptr;
+            RPolyData *newPolyData, *ptr;
 
             maxrendpolys = (maxrendpolys > 0? maxrendpolys * 2 : 8);
 
-            rendPolys = (RPolyData**) Z_Realloc(rendPolys, sizeof(RPolyData*) * maxrendpolys, PU_MAP);
+            rendPolys = (RPolyData **) Z_Realloc(rendPolys, sizeof(RPolyData *) * maxrendpolys, PU_MAP);
 
             newCount = maxrendpolys - numrendpolys + 1;
 
-            newPolyData = (RPolyData*) Z_Malloc(sizeof(RPolyData) * newCount, PU_MAP, 0);
+            newPolyData = (RPolyData *) Z_Malloc(sizeof(RPolyData) * newCount, PU_MAP, 0);
 
             ptr = newPolyData;
             for(i = numrendpolys-1; i < maxrendpolys; ++i, ptr++)
@@ -203,9 +199,9 @@ ColorRawf* R_AllocRendColors(uint num)
     rendPolys[idx]->inUse = true;
     rendPolys[idx]->type  = RPT_COLOR;
     rendPolys[idx]->num   = num;
-    rendPolys[idx]->data  = Z_Malloc(sizeof(ColorRawf) * num, PU_MAP, 0);
+    rendPolys[idx]->data  = Z_Malloc(sizeof(Vector4f) * num, PU_MAP, 0);
 
-    return (ColorRawf*) rendPolys[idx]->data;
+    return (Vector4f *) rendPolys[idx]->data;
 }
 
 rtexcoord_t* R_AllocRendTexCoords(uint num)
@@ -287,7 +283,7 @@ void R_FreeRendVertices(rvertex_t* rvertices)
     DEBUG_Message(("R_FreeRendPoly: Dangling poly ptr!\n"));
 }
 
-void R_FreeRendColors(ColorRawf* rcolors)
+void R_FreeRendColors(Vector4f *rcolors)
 {
     if(!rcolors) return;
 
@@ -449,13 +445,13 @@ void R_DivTexCoords(rtexcoord_t *dst, rtexcoord_t const *src,
 #undef COPYTEXCOORD
 }
 
-void R_DivVertColors(ColorRawf *dst, ColorRawf const *src,
+void R_DivVertColors(Vector4f *dst, Vector4f const *src,
     WorldEdge const &leftEdge, WorldEdge const &rightEdge)
 {
-#define COPYVCOLOR(d, s)    (d)->rgba[CR] = (s)->rgba[CR]; \
-    (d)->rgba[CG] = (s)->rgba[CG]; \
-    (d)->rgba[CB] = (s)->rgba[CB]; \
-    (d)->rgba[CA] = (s)->rgba[CA];
+#define COPYVCOLOR(d, s)    (d)->x = (s)->x; \
+    (d)->y = (s)->y; \
+    (d)->z = (s)->z; \
+    (d)->w = (s)->w;
 
     int const numR = 3 + rightEdge.divisionCount();
     int const numL = 3 + leftEdge.divisionCount();
@@ -473,7 +469,7 @@ void R_DivVertColors(ColorRawf *dst, ColorRawf const *src,
         double inter = icpt.distance();
         for(int c = 0; c < 4; ++c)
         {
-            dst[numL + 2 + n].rgba[c] = src[2].rgba[c] + (src[3].rgba[c] - src[2].rgba[c]) * inter;
+            dst[numL + 2 + n][c] = src[2][c] + (src[3][c] - src[2][c]) * inter;
         }
     }
 
@@ -488,7 +484,7 @@ void R_DivVertColors(ColorRawf *dst, ColorRawf const *src,
         double inter = icpt.distance();
         for(int c = 0; c < 4; ++c)
         {
-            dst[2 + n].rgba[c] = src[0].rgba[c] + (src[1].rgba[c] - src[0].rgba[c]) * inter;
+            dst[2 + n][c] = src[0][c] + (src[1][c] - src[0][c]) * inter;
         }
     }
 

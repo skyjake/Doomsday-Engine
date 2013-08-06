@@ -222,7 +222,7 @@ int useMultiTexDetails = true;
 // Rendering paramaters for dynamic lights.
 int dynlightBlend = 0;
 
-float torchColor[3] = {1, 1, 1};
+de::Vector3f torchColor(1, 1, 1);
 int torchAdditive = true;
 
 static boolean initedOk = false;
@@ -774,7 +774,7 @@ static void endWrite(rendlist_t *list)
 static void writePrimitive(rendlist_t const *list, uint base,
     rvertex_t const *rvertices, rtexcoord_t const *coords,
     rtexcoord_t const *coords1, rtexcoord_t const *coords2,
-    ColorRawf const *rcolors, uint numElements, rendpolytype_t type)
+    Vector4f const *rcolors, uint numElements, rendpolytype_t type)
 {
     for(uint i = 0; i < numElements; ++i)
     {
@@ -820,15 +820,15 @@ static void writePrimitive(rendlist_t const *list, uint base,
         }
 
         // Color.
-        ColorRawf const *rcolor = &rcolors[i];
+        Vector4f const *rcolor = &rcolors[i];
         dgl_color_t *color = &colors[base + i];
 
         if(rcolors)
         {
-            color->rgba[CR] = (DGLubyte) (255 * MINMAX_OF(0, rcolor->rgba[CR], 1));
-            color->rgba[CG] = (DGLubyte) (255 * MINMAX_OF(0, rcolor->rgba[CG], 1));
-            color->rgba[CB] = (DGLubyte) (255 * MINMAX_OF(0, rcolor->rgba[CB], 1));
-            color->rgba[CA] = (DGLubyte) (255 * MINMAX_OF(0, rcolor->rgba[CA], 1));
+            color->rgba[CR] = (DGLubyte) (255 * de::clamp(0.f, rcolor->x, 1.f));
+            color->rgba[CG] = (DGLubyte) (255 * de::clamp(0.f, rcolor->y, 1.f));
+            color->rgba[CB] = (DGLubyte) (255 * de::clamp(0.f, rcolor->z, 1.f));
+            color->rgba[CA] = (DGLubyte) (255 * de::clamp(0.f, rcolor->w, 1.f));
         }
         else
         {
@@ -842,9 +842,9 @@ static void writePrimitive(rendlist_t const *list, uint base,
  * @pre Caller knows what they are doing. Arguments are not validity checked.
  */
 static void writePoly2(primtype_t type, rendpolytype_t polyType, int flags,
-    uint numElements, rvertex_t const *vertices, ColorRawf const *colors,
+    uint numElements, rvertex_t const *vertices, Vector4f const *colors,
     rtexcoord_t const *primaryCoords, rtexcoord_t const *interCoords,
-    DGLuint modTex, ColorRawf const *modColor, rtexcoord_t const *modCoords)
+    DGLuint modTex, Vector4f const *modColor, rtexcoord_t const *modCoords)
 {
     boolean const isLit = (polyType != PT_LIGHT && (modTex || !!(flags & RPF_HAS_DYNLIGHTS)));
     uint i, base, primSize, numIndices;
@@ -885,36 +885,36 @@ END_PROF( PROF_RL_GET_LIST );
             hdr->flags |= PF_MANY_LIGHTS;
     }
     hdr->modTex = modTex;
-    hdr->modColor[CR] = modColor? modColor->red   : 0;
-    hdr->modColor[CG] = modColor? modColor->green : 0;
-    hdr->modColor[CB] = modColor? modColor->blue  : 0;
+    hdr->modColor[CR] = modColor? modColor->x : 0;
+    hdr->modColor[CG] = modColor? modColor->y : 0;
+    hdr->modColor[CB] = modColor? modColor->z : 0;
     hdr->modColor[CA] = 0;
 
     if(polyType == PT_SHINY && texunits[TU_INTER]->hasTexture())
     {
-        hdr->ptexScale[0] = texunits[TU_INTER]->scale[0];
-        hdr->ptexScale[1] = texunits[TU_INTER]->scale[1];
+        hdr->ptexScale[0]  = texunits[TU_INTER]->scale[0];
+        hdr->ptexScale[1]  = texunits[TU_INTER]->scale[1];
         hdr->ptexOffset[0] = texunits[TU_INTER]->offset[0] * texunits[TU_INTER]->scale[0];
         hdr->ptexOffset[1] = texunits[TU_INTER]->offset[1] * texunits[TU_INTER]->scale[1];
     }
     else if(texunits[TU_PRIMARY]->hasTexture())
     {
-        hdr->ptexScale[0] = texunits[TU_PRIMARY]->scale[0];
-        hdr->ptexScale[1] = texunits[TU_PRIMARY]->scale[1];
+        hdr->ptexScale[0]  = texunits[TU_PRIMARY]->scale[0];
+        hdr->ptexScale[1]  = texunits[TU_PRIMARY]->scale[1];
         hdr->ptexOffset[0] = texunits[TU_PRIMARY]->offset[0] * texunits[TU_PRIMARY]->scale[0];
         hdr->ptexOffset[1] = texunits[TU_PRIMARY]->offset[1] * texunits[TU_PRIMARY]->scale[1];
     }
 
     if(texunits[TU_PRIMARY_DETAIL]->hasTexture())
     {
-        hdr->texScale[0] = texunits[TU_PRIMARY_DETAIL]->scale[0];
-        hdr->texScale[1] = texunits[TU_PRIMARY_DETAIL]->scale[1];
+        hdr->texScale[0]  = texunits[TU_PRIMARY_DETAIL]->scale[0];
+        hdr->texScale[1]  = texunits[TU_PRIMARY_DETAIL]->scale[1];
         hdr->texOffset[0] = texunits[TU_PRIMARY_DETAIL]->offset[0] * texunits[TU_PRIMARY_DETAIL]->scale[0];
         hdr->texOffset[1] = texunits[TU_PRIMARY_DETAIL]->offset[1] * texunits[TU_PRIMARY_DETAIL]->scale[1];
     }
     else
     {
-        hdr->texScale[0] = hdr->texScale[1] = 1.f;
+        hdr->texScale[0]  = hdr->texScale[1]  = 1.f;
         hdr->texOffset[0] = hdr->texOffset[1] = 1.f;
     }
 
@@ -938,9 +938,9 @@ END_PROF( PROF_RL_ADD_POLY );
  * interface with this.
  */
 static void writePoly(primtype_t type, rendpolytype_t polyType, int flags,
-    uint numElements, rvertex_t const *vertices, ColorRawf const *colors,
+    uint numElements, rvertex_t const *vertices, Vector4f const *colors,
     rtexcoord_t const *primaryCoords, rtexcoord_t const *interCoords,
-    DGLuint modTex, ColorRawf const *modColor, rtexcoord_t const *modCoords)
+    DGLuint modTex, Vector4f const *modColor, rtexcoord_t const *modCoords)
 {
     if(numElements < 3) return; // huh?
 
@@ -1123,10 +1123,10 @@ static void prepareTextureUnitMapForShinyPoly()
 }
 
 void RL_AddPolyWithCoordsModulationReflection(primtype_t primType, int flags,
-    uint numElements, rvertex_t const *vertices, ColorRawf const *colors,
+    uint numElements, rvertex_t const *vertices, Vector4f const *colors,
     rtexcoord_t const *primaryCoords, rtexcoord_t const *interCoords,
-    DGLuint modTex, ColorRawf const *modColor, rtexcoord_t const *modCoords,
-    ColorRawf const *reflectionColors, rtexcoord_t const *reflectionCoords,
+    DGLuint modTex, Vector4f const *modColor, rtexcoord_t const *modCoords,
+    Vector4f const *reflectionColors, rtexcoord_t const *reflectionCoords,
     rtexcoord_t const *reflectionMaskCoords)
 {
     prepareTextureUnitMap();
@@ -1143,9 +1143,9 @@ void RL_AddPolyWithCoordsModulationReflection(primtype_t primType, int flags,
 }
 
 void RL_AddPolyWithCoordsModulation(primtype_t primType, int flags, uint numElements,
-    rvertex_t const *vertices, ColorRawf const *colors, rtexcoord_t const *primaryCoords,
+    rvertex_t const *vertices, Vector4f const *colors, rtexcoord_t const *primaryCoords,
     rtexcoord_t const *interCoords,
-    DGLuint modTex, ColorRawf const *modColor, rtexcoord_t const *modCoords)
+    DGLuint modTex, Vector4f const *modColor, rtexcoord_t const *modCoords)
 {
     prepareTextureUnitMap();
     writePoly(primType, choosePolyType(flags), flags, numElements,
@@ -1153,7 +1153,7 @@ void RL_AddPolyWithCoordsModulation(primtype_t primType, int flags, uint numElem
 }
 
 void RL_AddPolyWithCoords(primtype_t primType, int flags, uint numElements,
-    rvertex_t const *vertices, ColorRawf const *colors,
+    rvertex_t const *vertices, Vector4f const *colors,
     rtexcoord_t const *primaryCoords, rtexcoord_t const *interCoords)
 {
     prepareTextureUnitMap();
@@ -1162,8 +1162,8 @@ void RL_AddPolyWithCoords(primtype_t primType, int flags, uint numElements,
 }
 
 void RL_AddPolyWithModulation(primtype_t primType, int flags, uint numElements,
-    rvertex_t const *vertices, ColorRawf const *colors,
-    DGLuint modTex, ColorRawf const *modColor, rtexcoord_t const *modCoords)
+    rvertex_t const *vertices, Vector4f const *colors,
+    DGLuint modTex, Vector4f const *modColor, rtexcoord_t const *modCoords)
 {
     prepareTextureUnitMap();
     writePoly(primType, choosePolyType(flags), flags, numElements,
@@ -1171,7 +1171,7 @@ void RL_AddPolyWithModulation(primtype_t primType, int flags, uint numElements,
 }
 
 void RL_AddPoly(primtype_t primType, int flags, uint numElements, rvertex_t const *vertices,
-    ColorRawf const *colors)
+    Vector4f const *colors)
 {
     prepareTextureUnitMap();
     writePoly(primType, choosePolyType(flags), flags, numElements,

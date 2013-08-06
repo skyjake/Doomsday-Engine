@@ -36,14 +36,12 @@ static void drawDynlight(dynlight_t const &dyn, renderlightprojectionparams_t &p
         // Allocate enough for the divisions too.
         rvertex_t *rvertices = R_AllocRendVertices(parm.realNumVertices);
         rtexcoord_t *rtexcoords = R_AllocRendTexCoords(parm.realNumVertices);
-        ColorRawf *rcolors = R_AllocRendColors(parm.realNumVertices);
+        Vector4f *rcolors = R_AllocRendColors(parm.realNumVertices);
         bool const mustSubdivide = (parm.isWall && (parm.wall.leftEdge->divisionCount() || parm.wall.rightEdge->divisionCount() ));
 
         for(uint i = 0; i < parm.numVertices; ++i)
         {
-            ColorRawf *col = &rcolors[i];
-            for(uint c = 0; c < 4; ++c)
-                col->rgba[c] = dyn.color.rgba[c];
+            rcolors[i] = dyn.color;
         }
 
         if(parm.isWall)
@@ -66,7 +64,7 @@ static void drawDynlight(dynlight_t const &dyn, renderlightprojectionparams_t &p
 
                 rvertex_t origVerts[4]; std::memcpy(origVerts, parm.rvertices, sizeof(rvertex_t) * 4);
                 rtexcoord_t origTexCoords[4]; std::memcpy(origTexCoords, rtexcoords, sizeof(rtexcoord_t) * 4);
-                ColorRawf origColors[4]; std::memcpy(origColors, rcolors, sizeof(ColorRawf) * 4);
+                Vector4f origColors[4]; std::memcpy(origColors, rcolors, sizeof(Vector4f) * 4);
 
                 R_DivVerts(rvertices, origVerts, leftEdge, rightEdge);
                 R_DivTexCoords(rtexcoords, origTexCoords, leftEdge, rightEdge);

@@ -284,7 +284,7 @@ public:
      * @param positions  World coordinates for each vertex.
      * @param colors     Final lighting values will be written here.
      */
-    void lightBiasPoly(int group, rvertex_t const *positions, ColorRawf *colors);
+    void lightBiasPoly(int group, rvertex_t const *positions, de::Vector4f *colors);
 
     void updateBiasAfterGeometryMove(int group);
 

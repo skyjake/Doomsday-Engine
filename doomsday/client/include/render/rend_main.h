@@ -17,16 +17,14 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_RENDER_MAIN_H
-#define DENG_RENDER_MAIN_H
+#ifndef CLIENT_RENDER_MAIN_H
+#define CLIENT_RENDER_MAIN_H
 
 #ifndef __CLIENT__
 #  error "render/rend_main.h only exists in the Client"
 #endif
 
-#ifndef __cplusplus
-#  error "render/rend_main.h requires C++"
-#endif
+#include <de/Vector>
 
 #include "dd_types.h"
 
@@ -105,7 +103,8 @@ void Rend_ModelViewMatrix(bool useAngles = true);
  */
 coord_t Rend_PointDist3D(coord_t const point[3]);
 
-void Rend_ApplyTorchLight(float *color, float distance);
+void Rend_ApplyTorchLight(float *color3, float distance);
+void Rend_ApplyTorchLight(de::Vector4f &color, float distance);
 
 /**
  * Apply range compression delta to @a lightValue.
@@ -173,7 +172,7 @@ void R_DivVerts(rvertex_t *dst, rvertex_t const *src,
 void R_DivTexCoords(rtexcoord_t *dst, rtexcoord_t const *src,
     de::WorldEdge const &leftEdge, de::WorldEdge const &rightEdge);
 
-void R_DivVertColors(ColorRawf *dst, ColorRawf const *src,
+void R_DivVertColors(de::Vector4f *dst, de::Vector4f const *src,
     de::WorldEdge const &leftEdge, de::WorldEdge const &rightEdge);
 
-#endif // DENG_RENDER_MAIN_H
+#endif // CLIENT_RENDER_MAIN_H

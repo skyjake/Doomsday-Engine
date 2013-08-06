@@ -73,7 +73,7 @@ typedef struct lumobj_s {
 typedef struct {
     DGLuint texture;
     float s[2], t[2];
-    ColorRawf color;
+    de::Vector4f color;
 } dynlight_t;
 
 DENG_EXTERN_C boolean loInited;

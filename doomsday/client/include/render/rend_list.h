@@ -1,4 +1,4 @@
-/** @file rend_list.h
+/** @file rend_list.h Rendering Lists.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -17,16 +17,10 @@
  * http://www.gnu.org/licenses</small>
  */
 
-/**
- * Rendering Lists.
- */
+#ifndef CLIENT_RENDER_LIST_H
+#define CLIENT_RENDER_LIST_H
 
-#ifndef DENG_RENDER_LIST_H
-#define DENG_RENDER_LIST_H
-
-#ifdef __SERVER__
-#  error "render" not available in a SERVER build
-#endif
+#include <de/Vector>
 
 #include "render/rendpoly.h"
 
@@ -65,7 +59,7 @@ DENG_EXTERN_C int useMultiTexDetails;
 DENG_EXTERN_C int dynlightBlend;
 
 DENG_EXTERN_C int torchAdditive;
-DENG_EXTERN_C float torchColor[];
+DENG_EXTERN_C de::Vector3f torchColor;
 
 /// Register the console commands, variables, etc..., of this module.
 void RL_Register(void);
@@ -152,10 +146,10 @@ void RL_Rtu_SetTextureUnmanaged(uint idx, DGLuint glName, int wrapS, int wrapT);
  *                vertices of the primitive.
  */
 void RL_AddPolyWithCoordsModulationReflection(primtype_t primType, int flags,
-    uint numElements, const rvertex_t* vertices, const ColorRawf* colors,
+    uint numElements, const rvertex_t* vertices, const de::Vector4f* colors,
     const rtexcoord_t* primaryCoords, const rtexcoord_t* interCoords,
-    DGLuint modTex, const ColorRawf* modColor, const rtexcoord_t* modCoords,
-    const ColorRawf* reflectionColors, const rtexcoord_t* reflectionCoords,
+    DGLuint modTex, const de::Vector4f* modColor, const rtexcoord_t* modCoords,
+    const de::Vector4f* reflectionColors, const rtexcoord_t* reflectionCoords,
     const rtexcoord_t* reflectionMaskCoords);
 
 /**
@@ -166,9 +160,9 @@ void RL_AddPolyWithCoordsModulationReflection(primtype_t primType, int flags,
  *                vertices of the primitive.
  */
 void RL_AddPolyWithCoordsModulation(primtype_t primType, int flags,
-    uint numElements, const rvertex_t* vertices, const ColorRawf* colors,
+    uint numElements, const rvertex_t* vertices, const de::Vector4f* colors,
     const rtexcoord_t* primaryCoords, const rtexcoord_t* interCoords,
-    DGLuint modTex, const ColorRawf* modColor, const rtexcoord_t* modCoords);
+    DGLuint modTex, const de::Vector4f* modColor, const rtexcoord_t* modCoords);
 
 /**
  * @param primType  Type of primitive being written.
@@ -178,7 +172,7 @@ void RL_AddPolyWithCoordsModulation(primtype_t primType, int flags,
  *                vertices of the primitive.
  */
 void RL_AddPolyWithCoords(primtype_t primType, int flags, uint numElements,
-    const rvertex_t* vertices, const ColorRawf* colors,
+    const rvertex_t* vertices, const de::Vector4f* colors,
     const rtexcoord_t* primaryCoords, const rtexcoord_t* interCoords);
 
 /**
@@ -189,8 +183,8 @@ void RL_AddPolyWithCoords(primtype_t primType, int flags, uint numElements,
  *                vertices of the primitive.
  */
 void RL_AddPolyWithModulation(primtype_t primType, int flags, uint numElements,
-    const rvertex_t* vertices, const ColorRawf* colors,
-    DGLuint modTex, const ColorRawf* modColor, const rtexcoord_t* modCoords);
+    const rvertex_t* vertices, const de::Vector4f* colors,
+    DGLuint modTex, const de::Vector4f* modColor, const rtexcoord_t* modCoords);
 
 /**
  * @param primType  Type of primitive being written.
@@ -200,8 +194,8 @@ void RL_AddPolyWithModulation(primtype_t primType, int flags, uint numElements,
  *                vertices of the primitive.
  */
 void RL_AddPoly(primtype_t primType, int flags, uint numElements,
-    const rvertex_t* vertices, const ColorRawf* colors);
+    const rvertex_t* vertices, const de::Vector4f* colors);
 
 void RL_RenderAllLists(void);
 
-#endif // DENG_RENDER_LIST_H
+#endif // CLIENT_RENDER_LIST_H

@@ -338,24 +338,23 @@ static inline double viewFacingDot(Vector2d const &v1, Vector2d const &v2)
     return (v1.y - v2.y) * (v1.x - vOrigin[VX]) + (v2.x - v1.x) * (v1.y - vOrigin[VZ]);
 }
 
-static void Rend_VertexColorsGlow(ColorRawf *colors, uint num, float glow)
+static void Rend_VertexColorsGlow(Vector4f *colors, uint num, float glow)
 {
     for(uint i = 0; i < num; ++i)
     {
-        ColorRawf *c = &colors[i];
-        c->rgba[CR] = c->rgba[CG] = c->rgba[CB] = glow;
+        colors[i].x = colors[i].y = colors[i].z = glow;
     }
 }
 
-static void Rend_VertexColorsAlpha(ColorRawf *colors, uint num, float alpha)
+static void Rend_VertexColorsAlpha(Vector4f *colors, uint num, float alpha)
 {
     for(uint i = 0; i < num; ++i)
     {
-        colors[i].rgba[CA] = alpha;
+        colors[i].w = alpha;
     }
 }
 
-void Rend_ApplyTorchLight(float color[3], float distance)
+void Rend_ApplyTorchLight(Vector4f &color, float distance)
 {
     ddplayer_t *ddpl = &viewPlayer->shared;
 
@@ -375,16 +374,22 @@ void Rend_ApplyTorchLight(float color[3], float distance)
 
         if(torchAdditive)
         {
-            color[CR] += d * torchColor[CR];
-            color[CG] += d * torchColor[CG];
-            color[CB] += d * torchColor[CB];
+            color += torchColor * d;
         }
         else
         {
-            color[CR] += d * ((color[CR] * torchColor[CR]) - color[CR]);
-            color[CG] += d * ((color[CG] * torchColor[CG]) - color[CG]);
-            color[CB] += d * ((color[CB] * torchColor[CB]) - color[CB]);
+            color += ((color * torchColor) - color) * d;
         }
+    }
+}
+
+void Rend_ApplyTorchLight(float *color3, float distance)
+{
+    Vector4f tmp(color3, 0);
+    Rend_ApplyTorchLight(tmp, distance);
+    for(int i = 0; i < 3; ++i)
+    {
+        color3[i] = tmp[i];
     }
 }
 
@@ -482,7 +487,7 @@ Material *Rend_ChooseMapSurfaceMaterial(Surface const &surface)
     return 0;
 }
 
-static void lightVertex(ColorRawf &color, rvertex_t const &vtx, float lightLevel,
+static void lightVertex(Vector4f &color, rvertex_t const &vtx, float lightLevel,
                         Vector3f const &ambientColor)
 {
     float const dist = Rend_PointDist2D(vtx.pos);
@@ -496,11 +501,11 @@ static void lightVertex(ColorRawf &color, rvertex_t const &vtx, float lightLevel
     // Mix with the surface color.
     for(int i = 0; i < 3; ++i)
     {
-        color.rgba[i] = lightVal * ambientColor[i];
+        color[i] = lightVal * ambientColor[i];
     }
 }
 
-static void lightVertices(uint num, ColorRawf *colors, rvertex_t const *verts,
+static void lightVertices(uint num, Vector4f *colors, rvertex_t const *verts,
                           float lightLevel, Vector3f const &ambientColor)
 {
     for(uint i = 0; i < num; ++i)
@@ -509,11 +514,11 @@ static void lightVertices(uint num, ColorRawf *colors, rvertex_t const *verts,
     }
 }
 
-static void torchLightVertices(uint num, ColorRawf *colors, rvertex_t const *verts)
+static void torchLightVertices(uint num, Vector4f *colors, rvertex_t const *verts)
 {
     for(uint i = 0; i < num; ++i)
     {
-        Rend_ApplyTorchLight(colors[i].rgba, Rend_PointDist2D(verts[i].pos));
+        Rend_ApplyTorchLight(colors[i], Rend_PointDist2D(verts[i].pos));
     }
 }
 
@@ -530,7 +535,7 @@ int RIT_FirstDynlightIterator(dynlight_t const *dyn, void *parameters)
  * of sprites. This is necessary because all masked polygons must be
  * rendered back-to-front, or there will be alpha artifacts along edges.
  */
-void Rend_AddMaskedPoly(rvertex_t const *rvertices, ColorRawf const *rcolors,
+void Rend_AddMaskedPoly(rvertex_t const *rvertices, Vector4f const *rcolors,
     coord_t wallLength, MaterialVariant *material, Vector2f const &materialOrigin,
     blendmode_t blendMode, uint lightListIdx, float glow)
 {
@@ -597,13 +602,13 @@ void Rend_AddMaskedPoly(rvertex_t const *rvertices, ColorRawf const *rcolors,
         for(int c = 0; c < 4; ++c)
         {
             /// @todo Do not clamp here.
-            VS_WALL(vis)->vertices[i].color[c] = MINMAX_OF(0, rcolors[i].rgba[c], 1);
+            VS_WALL(vis)->vertices[i].color[c] = de::clamp(0.f, rcolors[i][c], 1.f);
         }
     }
 
     /// @todo Semitransparent masked polys arn't lit atm
     if(glow < 1 && lightListIdx && numTexUnits > 1 && envModAdd &&
-       !(rcolors[0].rgba[CA] < 1))
+       !(rcolors[0].w < 1))
     {
         dynlight_t const *dyn = 0;
 
@@ -620,7 +625,7 @@ void Rend_AddMaskedPoly(rvertex_t const *rvertices, ColorRawf const *rcolors,
         VS_WALL(vis)->modTexCoord[1][1] = dyn->t[1];
         for(int c = 0; c < 4; ++c)
         {
-            VS_WALL(vis)->modColor[c] = dyn->color.rgba[c];
+            VS_WALL(vis)->modColor[c] = dyn->color[c];
         }
     }
     else
@@ -786,17 +791,17 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
     rtexmapunit_t const *shinyRTU         = (useShinySurfaces && !(p.flags & RPF_SKYMASK) && ms.unit(RTU_REFLECTION).hasTexture())? &ms.unit(RTU_REFLECTION) : NULL;
     rtexmapunit_t const *shinyMaskRTU     = (useShinySurfaces && !(p.flags & RPF_SKYMASK) && ms.unit(RTU_REFLECTION).hasTexture() && ms.unit(RTU_REFLECTION_MASK).hasTexture())? &ms.unit(RTU_REFLECTION_MASK) : NULL;
 
-    ColorRawf *rcolors          = !skyMaskedMaterial? R_AllocRendColors(realNumVertices) : 0;
+    Vector4f *rcolors           = !skyMaskedMaterial? R_AllocRendColors(realNumVertices) : 0;
     rtexcoord_t *primaryCoords  = R_AllocRendTexCoords(realNumVertices);
     rtexcoord_t *interCoords    = interRTU? R_AllocRendTexCoords(realNumVertices) : 0;
 
-    ColorRawf *shinyColors      = 0;
+    Vector4f *shinyColors       = 0;
     rtexcoord_t *shinyTexCoords = 0;
     rtexcoord_t *modCoords      = 0;
 
     DGLuint modTex = 0;
     float modTexSt[2][2] = {{ 0, 0 }, { 0, 0 }};
-    ColorRawf modColor;
+    Vector4f modColor;
 
     if(!skyMaskedMaterial)
     {
@@ -825,12 +830,9 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
                 dynlight_t *dyn = 0;
                 LO_IterateProjections(p.lightListIdx, RIT_FirstDynlightIterator, (void *)&dyn);
 
-                modCoords = R_AllocRendTexCoords(realNumVertices);
-
-                modTex = dyn->texture;
-                modColor.red   = dyn->color.red;
-                modColor.green = dyn->color.green;
-                modColor.blue  = dyn->color.blue;
+                modTex         = dyn->texture;
+                modCoords      = R_AllocRendTexCoords(realNumVertices);
+                modColor       = dyn->color;
                 modTexSt[0][0] = dyn->s[0];
                 modTexSt[0][1] = dyn->s[1];
                 modTexSt[1][0] = dyn->t[0];
@@ -922,14 +924,11 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
                 if(map.hasLightGrid())
                 {
                     rvertex_t const *vtx = rvertices;
-                    ColorRawf *color = rcolors;
+                    Vector4f *color = rcolors;
                     for(uint i = 0; i < numVertices; ++i, vtx++, color++)
                     {
                         Vector3d surfacePoint(vtx->pos[VX], vtx->pos[VY], vtx->pos[VZ]);
-                        Vector3f ambientLight = map.lightGrid().evaluate(surfacePoint);
-
-                        for(int c = 0; c < 3; ++c)
-                            color->rgba[c] = ambientLight[c];
+                        *color = map.lightGrid().evaluate(surfacePoint);
                     }
                 }
 
@@ -945,11 +944,12 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
 
                 if(p.glowing > 0)
                 {
+                    static const Vector3f saturated(1, 1, 1);
+                    float glow = p.glowing;
                     for(uint i = 0; i < numVertices; ++i)
                     {
-                        rcolors[i].rgba[CR] = de::clamp(0.f, rcolors[i].rgba[CR] + p.glowing, 1.f);
-                        rcolors[i].rgba[CG] = de::clamp(0.f, rcolors[i].rgba[CG] + p.glowing, 1.f);
-                        rcolors[i].rgba[CB] = de::clamp(0.f, rcolors[i].rgba[CB] + p.glowing, 1.f);
+                        rcolors[i] = (Vector3f(rcolors[i]) + Vector3f(glow, glow, glow))
+                                    .min(saturated); // clamp
                     }
                 }
             }
@@ -1016,11 +1016,9 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
             Vector3f const &minColor = ms.shineMinColor();
             for(uint i = 0; i < numVertices; ++i)
             {
-                ColorRawf &color = shinyColors[i];
-                color.rgba[CR] = de::max(rcolors[i].rgba[CR], minColor.x);
-                color.rgba[CG] = de::max(rcolors[i].rgba[CG], minColor.y);
-                color.rgba[CB] = de::max(rcolors[i].rgba[CB], minColor.z);
-                color.rgba[CA] = shinyRTU->opacity;
+                Vector4f &color = shinyColors[i];
+                color = Vector3f(rcolors[i]).max(minColor);
+                color.w = shinyRTU->opacity;
             }
         }
 
@@ -1038,9 +1036,9 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
         float avgLightlevel = 0;
         for(uint i = 0; i < numVertices; ++i)
         {
-            avgLightlevel += rcolors[i].rgba[CR];
-            avgLightlevel += rcolors[i].rgba[CG];
-            avgLightlevel += rcolors[i].rgba[CB];
+            avgLightlevel += rcolors[i].x;
+            avgLightlevel += rcolors[i].y;
+            avgLightlevel += rcolors[i].z;
         }
         avgLightlevel /= numVertices * 3;
 
@@ -1174,7 +1172,7 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
         rtexcoord_t origTexCoords[4];
         std::memcpy(origTexCoords, primaryCoords, sizeof(origTexCoords));
 
-        ColorRawf origColors[4];
+        Vector4f origColors[4];
         if(rcolors || shinyColors)
         {
             std::memcpy(origColors, rcolors, sizeof(origColors));
@@ -1211,7 +1209,7 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
 
         if(shinyColors)
         {
-            ColorRawf origShinyColors[4];
+            Vector4f origShinyColors[4];
             std::memcpy(origShinyColors, shinyColors, sizeof(origShinyColors));
             R_DivVertColors(shinyColors, origShinyColors, leftEdge, rightEdge);
         }

@@ -19,7 +19,9 @@
 #ifndef DENG_RENDER_SHADOWBIAS_SURFACE_H
 #define DENG_RENDER_SHADOWBIAS_SURFACE_H
 
-#include "render/rendpoly.h"
+#include <de/Vector>
+
+#include "render/rendpoly.h" /// @todo remove me
 
 #include "BiasDigest"
 
@@ -46,7 +48,7 @@ public:
      * @param colors     Final lighting values will be written here.
      */
     virtual void lightBiasPoly(int geomGroup, rvertex_t const *positions,
-                               ColorRawf *colors) = 0;
+                               de::Vector4f *colors) = 0;
 
     /**
      * Schedule a lighting update to a geometry group following a move of some
