@@ -121,28 +121,41 @@ ITextEditor &EditorHistory::editor()
     return *d->editor;
 }
 
+bool EditorHistory::isAtLatest() const
+{
+    return d->historyPos == d->history.size() - 1;
+}
+
+void EditorHistory::goToLatest()
+{
+    d->updateCommandFromEditor();
+    d->historyPos = d->history.size() - 1;
+    d->updateEditor();
+}
+
 String EditorHistory::enter()
 {
     d->updateCommandFromEditor();
 
     String entered = d->command().text;
-
-    // Update the history.
-    if(d->historyPos < d->history.size() - 1)
+    if(!entered.isEmpty())
     {
-        if(d->history.last().text.isEmpty())
+        // Update the history.
+        if(d->historyPos < d->history.size() - 1)
         {
-            // Prune an empty entry in the end of history.
-            d->history.removeLast();
+            if(d->history.last().text.isEmpty())
+            {
+                // Prune an empty entry in the end of history.
+                d->history.removeLast();
+            }
+            // Currently back in the history; duplicate the edited entry.
+            d->history.append(d->command());
         }
-        // Currently back in the history; duplicate the edited entry.
-        d->history.append(d->command());
+        d->history.last().original = entered;
+        d->history.append(Instance::Command());
     }
 
-    d->history.last().original = entered;
-
     // Move on.
-    d->history.append(Instance::Command());
     d->historyPos = d->history.size() - 1;
     d->updateEditor();
     d->restoreTextsToOriginal();

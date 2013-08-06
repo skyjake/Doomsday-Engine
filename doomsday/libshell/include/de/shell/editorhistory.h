@@ -37,6 +37,17 @@ public:
     ITextEditor &editor();
 
     /**
+     * Determines if the history is currently navigated to the latest/newest
+     * entry.
+     */
+    bool isAtLatest() const;
+
+    /**
+     * Navigates to the latest entry in the history.
+     */
+    void goToLatest();
+
+    /**
      * Enters the current editor contents into the history and clears the
      * editor.
      *

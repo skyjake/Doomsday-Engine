@@ -164,6 +164,8 @@ bool ConsoleCommandWidget::handleEvent(Event const &event)
 
 void ConsoleCommandWidget::dismissContentToHistory()
 {
+    d->history.goToLatest();
+
     if(!text().isEmpty())
     {
         d->history.enter();
