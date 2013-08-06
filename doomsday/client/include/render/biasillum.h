@@ -66,7 +66,6 @@ public:
      * contributions will be applied at this time (note that this is however a
      * fast operation which does not block).
      *
-     * @param color          Final color will be written here.
      * @param point          Point in the map to evaluate. It is assumed this
      *                       has @em not moved since the last call unless the
      *                       light source contributors have been redetermined.
@@ -76,9 +75,11 @@ public:
      *                       have changed since the last call.
      * @param biasTime       Time in milliseconds of the last bias frame update
      *                       used for interpolation.
+     *
+     * @return  Current color at this time.
      */
-    void evaluate(de::Vector3f &color, de::Vector3d const &point,
-                  de::Vector3f const &normalAtPoint, uint biasTime);
+    de::Vector3f evaluate(de::Vector3d const &point,
+                          de::Vector3f const &normalAtPoint, uint biasTime);
 
     /**
      * Returns @c true iff a BiasTracker has been assigned for the illumination.

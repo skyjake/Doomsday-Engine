@@ -130,10 +130,8 @@ DENG2_PIMPL_NOREF(BiasIllum)
             if(!lerpInfo.isNull())
             {
                 // Must not lose the half-way interpolation.
-                Vector3f mid; lerp(mid, biasTime, true /*retain InterpolateInfo*/);
-
                 // This is current color at this very moment.
-                color = mid;
+                color = lerp(biasTime, true /*retain InterpolateInfo*/);
             }
             else
             {
@@ -209,13 +207,12 @@ DENG2_PIMPL_NOREF(BiasIllum)
      * @param currentTime     Time in milliseconds of the last bias frame update.
      * @param retainLerpInfo  @c true= do not free the interpolation info if completed.
      */
-    void lerp(Vector3f &result, uint currentTime, bool retainLerpInfo = false)
+    Vector3f lerp(uint currentTime, bool retainLerpInfo = false)
     {
         if(lerpInfo.isNull())
         {
             // Not interpolating -- use the current color.
-            result = color;
-            return;
+            return color;
         }
 
         float inter = (currentTime - lerpInfo->updateTime) / float( lightSpeed );
@@ -223,14 +220,15 @@ DENG2_PIMPL_NOREF(BiasIllum)
         if(inter > 1)
         {
             color = lerpInfo->dest;
-            result = color;
 
             if(!retainLerpInfo)
                 lerpInfo.reset();
+
+            return color;
         }
         else
         {
-            result = color + (lerpInfo->dest - color) * inter;
+            return color + (lerpInfo->dest - color) * inter;
         }
     }
 };
@@ -269,8 +267,8 @@ void BiasIllum::setTracker(BiasTracker *newTracker)
     d->tracker = newTracker;
 }
 
-void BiasIllum::evaluate(Vector3f &color, Vector3d const &point,
-    Vector3f const &normalAtPoint, uint biasTime)
+Vector3f BiasIllum::evaluate(Vector3d const &point, Vector3f const &normalAtPoint,
+                             uint biasTime)
 {
     if(d->tracker)
     {
@@ -304,5 +302,5 @@ void BiasIllum::evaluate(Vector3f &color, Vector3d const &point,
     }
 
     // Factor in the current color (and perform interpolation if needed).
-    d->lerp(color, biasTime);
+    return d->lerp(biasTime);
 }

@@ -611,12 +611,9 @@ void BspLeaf::lightBiasPoly(int group, rvertex_t const *positions, Vector4f *col
     Vector4f *color      = colors;
     for(int i = 0; i < geomGroup->biasIllums.count(); ++i, vtx++, color++)
     {
-        BiasIllum *illum = &geomGroup->biasIllums[i];
         Vector3d surfacePoint(vtx->pos[VX], vtx->pos[VY], vtx->pos[VZ]);
-
-        Vector3f lightColor;
-        illum->evaluate(lightColor, surfacePoint, surface.normal(), biasTime);
-        (*color) += lightColor;
+        *color += geomGroup->biasIllums[i]
+                      .evaluate(surfacePoint, surface.normal(), biasTime);
     }
 
     // Any changes from contributors will have now been applied.
