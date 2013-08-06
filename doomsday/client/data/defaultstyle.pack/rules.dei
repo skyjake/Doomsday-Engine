@@ -7,7 +7,7 @@ script {
 rule unit     { constant $= UNIT }
 rule halfunit { constant $= UNIT / 2 }
 rule gap      { constant $= UNIT * 3 }
-rule glow     { constant $= UNIT * 8 }
+rule glow     { constant $= UNIT * 7 }
 
 group label {
     rule gap { constant $= gap.constant / 2 }
