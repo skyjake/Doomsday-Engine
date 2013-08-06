@@ -17,6 +17,10 @@ group document {
     rule progress { constant $= UNIT * 30 }
 }
 
+group editor {
+    rule completion.height { constant = 400 }
+}
+
 group progress {
     rule textgap { constant $= gap.constant }
 }

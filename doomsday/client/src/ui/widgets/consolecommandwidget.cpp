@@ -60,7 +60,7 @@ public IGameChangeObserver
         // most 400; never extend outside the view, though.
         completions->rule().setInput(Rule::Height,
                 OperatorRule::minimum(
-                    OperatorRule::minimum(Const(400),
+                    OperatorRule::minimum(st.rules().rule("editor.completion.height"),
                                           completions->contentRule().height() +
                                           2 * completions->margin()),
                     self.rule().top() - st.rules().rule("gap")));
