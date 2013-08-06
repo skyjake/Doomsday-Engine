@@ -1,4 +1,4 @@
-/** @file gl_model.h
+/** @file gl_model.h  MD2 and DMD2 3D model formats
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
@@ -17,17 +17,12 @@
  * http://www.gnu.org/licenses</small>
  */
 
-/**
- * 3D Model Constants and Data Structures
- *
- * Supported model formats: MD2 and DMD2.
- */
-
-#ifndef LIBDENG_MODEL_H
-#define LIBDENG_MODEL_H
+#ifndef LIBDENG_GL_MODEL_H
+#define LIBDENG_GL_MODEL_H
 
 #include "dd_types.h"
 #include "resource/r_data.h"
+#include "resource/texture.h"
 
 #define MD2_MAGIC           0x32504449
 #define NUMVERTEXNORMALS    162
@@ -158,7 +153,7 @@ typedef struct {
 
 typedef struct {
     char name[256];
-    struct texture_s* texture;
+    de::Texture *texture;
 } dmd_skin_t;
 
 typedef struct {
@@ -213,4 +208,4 @@ typedef struct model_s {
 #endif
 } model_t;
 
-#endif /* LIBDENG_MODEL_H */
+#endif /* LIBDENG_GL_MODEL_H */

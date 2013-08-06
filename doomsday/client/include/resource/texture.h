@@ -431,6 +431,4 @@ typedef Texture::Variant TextureVariant;
 
 } // namespace de
 
-struct texture_s; // The texture instance (opaque).
-
 #endif // LIBDENG_RESOURCE_TEXTURE_H
