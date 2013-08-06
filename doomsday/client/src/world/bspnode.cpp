@@ -26,7 +26,7 @@
 
 using namespace de;
 
-DENG2_PIMPL(BspNode)
+DENG2_PIMPL_NOREF(BspNode)
 {
     /// Space partition (half-plane).
     Partition partition;
@@ -39,9 +39,8 @@ DENG2_PIMPL(BspNode)
     AABoxd rightAABox;
     AABoxd leftAABox;
 
-    Instance(Public *i, Partition const &partition_)
-        : Base(i),
-          partition(partition_),
+    Instance(Partition const &partition_)
+        : partition(partition_),
           rightChild(0),
           leftChild(0)
     {}
@@ -56,7 +55,7 @@ DENG2_PIMPL(BspNode)
 };
 
 BspNode::BspNode(Partition const &partition_)
-    : MapElement(DMU_BSPNODE), d(new Instance(this, partition_))
+    : MapElement(DMU_BSPNODE), d(new Instance(partition_))
 {
     setRightAABox(0);
     setLeftAABox(0);
