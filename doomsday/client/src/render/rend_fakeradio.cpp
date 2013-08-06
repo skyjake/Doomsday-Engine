@@ -974,29 +974,29 @@ static void setSideShadowParams(rendershadowseg_params_t *p, float shadowSize,
     }
 }
 
-static void quadTexCoords(rtexcoord_t *tc, rvertex_t const *rverts, float wallLength,
+static void quadTexCoords(Vector2f *tc, rvertex_t const *rverts, float wallLength,
     Vector3f const &texTopLeft, Vector3f const &texBottomRight,
     Vector2f const &texOrigin, Vector2f const &texDimensions, bool horizontal)
 {
     if(horizontal)
     {
         // Special horizontal coordinates for wall shadows.
-        tc[0].st[0] = tc[2].st[0] = rverts[0].pos[VX] - texTopLeft.x + texOrigin.y / texDimensions.y;
-        tc[0].st[1] = tc[1].st[1] = rverts[0].pos[VY] - texTopLeft.y + texOrigin.x / texDimensions.x;
+        tc[0].x = tc[2].x = rverts[0].pos[VX] - texTopLeft.x + texOrigin.y / texDimensions.y;
+        tc[0].y = tc[1].y = rverts[0].pos[VY] - texTopLeft.y + texOrigin.x / texDimensions.x;
 
-        tc[1].st[0] = tc[0].st[0] + (rverts[1].pos[VZ] - texBottomRight.z) / texDimensions.y;
-        tc[3].st[0] = tc[0].st[0] + (rverts[3].pos[VZ] - texBottomRight.z) / texDimensions.y;
-        tc[3].st[1] = tc[0].st[1] + wallLength / texDimensions.x;
-        tc[2].st[1] = tc[0].st[1] + wallLength / texDimensions.x;
+        tc[1].x = tc[0].x + (rverts[1].pos[VZ] - texBottomRight.z) / texDimensions.y;
+        tc[3].x = tc[0].x + (rverts[3].pos[VZ] - texBottomRight.z) / texDimensions.y;
+        tc[3].y = tc[0].y + wallLength / texDimensions.x;
+        tc[2].y = tc[0].y + wallLength / texDimensions.x;
         return;
     }
 
-    tc[0].st[0] = tc[1].st[0] = rverts[0].pos[VX] - texTopLeft.x + texOrigin.x / texDimensions.x;
-    tc[3].st[1] = tc[1].st[1] = rverts[0].pos[VY] - texTopLeft.y + texOrigin.y / texDimensions.y;
+    tc[0].x = tc[1].x = rverts[0].pos[VX] - texTopLeft.x + texOrigin.x / texDimensions.x;
+    tc[3].y = tc[1].y = rverts[0].pos[VY] - texTopLeft.y + texOrigin.y / texDimensions.y;
 
-    tc[3].st[0] = tc[2].st[0] = tc[0].st[0] + wallLength / texDimensions.x;
-    tc[2].st[1] = tc[3].st[1] + (rverts[1].pos[VZ] - rverts[0].pos[VZ]) / texDimensions.y;
-    tc[0].st[1] = tc[3].st[1] + (rverts[3].pos[VZ] - rverts[2].pos[VZ]) / texDimensions.y;
+    tc[3].x = tc[2].x = tc[0].x + wallLength / texDimensions.x;
+    tc[2].y = tc[3].y + (rverts[1].pos[VZ] - rverts[0].pos[VZ]) / texDimensions.y;
+    tc[0].y = tc[3].y + (rverts[3].pos[VZ] - rverts[2].pos[VZ]) / texDimensions.y;
 }
 
 static void drawWallSectionShadow(rvertex_t const *origVertices,
@@ -1013,7 +1013,7 @@ static void drawWallSectionShadow(rvertex_t const *origVertices,
         realNumVertices = 4;
 
     // Allocate enough for the divisions too.
-    rtexcoord_t *rtexcoords = R_AllocRendTexCoords(realNumVertices);
+    Vector2f *rtexcoords = R_AllocRendTexCoords(realNumVertices);
     Vector4f *rcolors = R_AllocRendColors(realNumVertices);
 
     quadTexCoords(rtexcoords, origVertices, wsParms.sectionWidth,
@@ -1039,8 +1039,8 @@ static void drawWallSectionShadow(rvertex_t const *origVertices,
 
             rvertex_t *rvertices = R_AllocRendVertices(realNumVertices);
 
-            rtexcoord_t origTexCoords[4];
-            std::memcpy(origTexCoords, rtexcoords, sizeof(rtexcoord_t) * 4);
+            Vector2f origTexCoords[4];
+            std::memcpy(origTexCoords, rtexcoords, sizeof(Vector2f) * 4);
 
             Vector4f origColors[4];
             std::memcpy(origColors, rcolors, sizeof(Vector4f) * 4);

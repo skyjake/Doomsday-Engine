@@ -2595,13 +2595,13 @@ void *DD_GetVariable(int ddvalue)
 
 #ifdef __CLIENT__
     case DD_TORCH_RED:
-        return &torchColor[CR];
+        return &torchColor.x;
 
     case DD_TORCH_GREEN:
-        return &torchColor[CG];
+        return &torchColor.y;
 
     case DD_TORCH_BLUE:
-        return &torchColor[CB];
+        return &torchColor.z;
 
     case DD_TORCH_ADDITIVE:
         return &torchAdditive;
@@ -2687,15 +2687,15 @@ void DD_SetVariable(int ddvalue, void *parm)
 
 #ifdef __CLIENT__
         case DD_TORCH_RED:
-            torchColor[CR] = MINMAX_OF(0, *((float*) parm), 1);
+            torchColor.x = de::clamp(0.f, *((float*) parm), 1.f);
             return;
 
         case DD_TORCH_GREEN:
-            torchColor[CG] = MINMAX_OF(0, *((float*) parm), 1);
+            torchColor.y = de::clamp(0.f, *((float*) parm), 1.f);
             return;
 
         case DD_TORCH_BLUE:
-            torchColor[CB] = MINMAX_OF(0, *((float*) parm), 1);
+            torchColor.z = de::clamp(0.f, *((float*) parm), 1.f);
             return;
 
         case DD_TORCH_ADDITIVE:

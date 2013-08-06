@@ -168,7 +168,7 @@ de::Vector4f *R_AllocRendColors(uint num);
  *
  * @return  Ptr to array of rtexcoord_t
  */
-rtexcoord_t *R_AllocRendTexCoords(uint num);
+de::Vector2f *R_AllocRendTexCoords(uint num);
 
 /**
  * Doesn't actually free anything. Instead, mark them as unused ready for
@@ -192,7 +192,7 @@ void R_FreeRendColors(de::Vector4f *rcolors);
  *
  * @param rtexcoords  Ptr to array of rtexcoord_t to mark unused.
  */
-void R_FreeRendTexCoords(rtexcoord_t *rtexcoords);
+void R_FreeRendTexCoords(de::Vector2f *rtexcoords);
 
 /// Manipulators, for convenience.
 void Rtu_Init(rtexmapunit_t *rtu);

@@ -147,10 +147,10 @@ void RL_Rtu_SetTextureUnmanaged(uint idx, DGLuint glName, int wrapS, int wrapT);
  */
 void RL_AddPolyWithCoordsModulationReflection(primtype_t primType, int flags,
     uint numElements, const rvertex_t* vertices, const de::Vector4f* colors,
-    const rtexcoord_t* primaryCoords, const rtexcoord_t* interCoords,
-    DGLuint modTex, const de::Vector4f* modColor, const rtexcoord_t* modCoords,
-    const de::Vector4f* reflectionColors, const rtexcoord_t* reflectionCoords,
-    const rtexcoord_t* reflectionMaskCoords);
+    const de::Vector2f* primaryCoords, const de::Vector2f* interCoords,
+    DGLuint modTex, const de::Vector4f* modColor, const de::Vector2f* modCoords,
+    const de::Vector4f* reflectionColors, const de::Vector2f* reflectionCoords,
+    const de::Vector2f* reflectionMaskCoords);
 
 /**
  * @param primType  Type of primitive being written.
@@ -161,8 +161,8 @@ void RL_AddPolyWithCoordsModulationReflection(primtype_t primType, int flags,
  */
 void RL_AddPolyWithCoordsModulation(primtype_t primType, int flags,
     uint numElements, const rvertex_t* vertices, const de::Vector4f* colors,
-    const rtexcoord_t* primaryCoords, const rtexcoord_t* interCoords,
-    DGLuint modTex, const de::Vector4f* modColor, const rtexcoord_t* modCoords);
+    const de::Vector2f* primaryCoords, const de::Vector2f* interCoords,
+    DGLuint modTex, const de::Vector4f* modColor, const de::Vector2f* modCoords);
 
 /**
  * @param primType  Type of primitive being written.
@@ -173,7 +173,7 @@ void RL_AddPolyWithCoordsModulation(primtype_t primType, int flags,
  */
 void RL_AddPolyWithCoords(primtype_t primType, int flags, uint numElements,
     const rvertex_t* vertices, const de::Vector4f* colors,
-    const rtexcoord_t* primaryCoords, const rtexcoord_t* interCoords);
+    const de::Vector2f* primaryCoords, const de::Vector2f* interCoords);
 
 /**
  * @param primType  Type of primitive being written.
@@ -184,7 +184,7 @@ void RL_AddPolyWithCoords(primtype_t primType, int flags, uint numElements,
  */
 void RL_AddPolyWithModulation(primtype_t primType, int flags, uint numElements,
     const rvertex_t* vertices, const de::Vector4f* colors,
-    DGLuint modTex, const de::Vector4f* modColor, const rtexcoord_t* modCoords);
+    DGLuint modTex, const de::Vector4f* modColor, const de::Vector2f* modCoords);
 
 /**
  * @param primType  Type of primitive being written.

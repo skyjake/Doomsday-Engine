@@ -634,22 +634,22 @@ void Rend_AddMaskedPoly(rvertex_t const *rvertices, Vector4f const *rcolors,
     }
 }
 
-static void quadTexCoords(rtexcoord_t *tc, rvertex_t const *rverts,
+static void quadTexCoords(Vector2f *tc, rvertex_t const *rverts,
     coord_t wallLength, Vector3d const &topLeft)
 {
-    tc[0].st[0] = tc[1].st[0] = rverts[0].pos[VX] - topLeft.x;
-    tc[3].st[1] = tc[1].st[1] = rverts[0].pos[VY] - topLeft.y;
-    tc[3].st[0] = tc[2].st[0] = tc[0].st[0] + wallLength;
-    tc[2].st[1] = tc[3].st[1] + (rverts[1].pos[VZ] - rverts[0].pos[VZ]);
-    tc[0].st[1] = tc[3].st[1] + (rverts[3].pos[VZ] - rverts[2].pos[VZ]);
+    tc[0].x = tc[1].x = rverts[0].pos[VX] - topLeft.x;
+    tc[3].y = tc[1].y = rverts[0].pos[VY] - topLeft.y;
+    tc[3].x = tc[2].x = tc[0].x + wallLength;
+    tc[2].y = tc[3].y + (rverts[1].pos[VZ] - rverts[0].pos[VZ]);
+    tc[0].y = tc[3].y + (rverts[3].pos[VZ] - rverts[2].pos[VZ]);
 }
 
-static void quadLightCoords(rtexcoord_t *tc, float const s[2], float const t[2])
+static void quadLightCoords(Vector2f *tc, float const s[2], float const t[2])
 {
-    tc[1].st[0] = tc[0].st[0] = s[0];
-    tc[1].st[1] = tc[3].st[1] = t[0];
-    tc[3].st[0] = tc[2].st[0] = s[1];
-    tc[2].st[1] = tc[0].st[1] = t[1];
+    tc[1].x = tc[0].x = s[0];
+    tc[1].y = tc[3].y = t[0];
+    tc[3].x = tc[2].x = s[1];
+    tc[2].y = tc[0].y = t[1];
 }
 
 static float shinyVertical(float dy, float dx)
@@ -657,7 +657,7 @@ static float shinyVertical(float dy, float dx)
     return ((atan(dy/dx) / (PI/2)) + 1) / 2;
 }
 
-static void quadShinyTexCoords(rtexcoord_t *tc, rvertex_t const *topLeft,
+static void quadShinyTexCoords(Vector2f *tc, rvertex_t const *topLeft,
     rvertex_t const *bottomRight, coord_t wallLength)
 {
     vec2f_t surface, normal, projected, s, reflected, view;
@@ -701,19 +701,16 @@ static void quadShinyTexCoords(rtexcoord_t *tc, rvertex_t const *topLeft,
         }
 
         // Horizontal coordinates.
-        tc[ (i == 0 ? 1 : 2) ].st[0] = tc[ (i == 0 ? 0 : 3) ].st[0] =
-            angle + .3f; /*acos(-dot)/PI*/
-
-        tc[ (i == 0 ? 0 : 2) ].st[1] =
-            shinyVertical(vOrigin[VY] - bottomRight->pos[VZ], distance);
+        tc[ (i == 0 ? 1 : 2) ].x =
+            tc[ (i == 0 ? 0 : 3) ].x = angle + .3f; /*acos(-dot)/PI*/
 
         // Vertical coordinates.
-        tc[ (i == 0 ? 1 : 3) ].st[1] =
-            shinyVertical(vOrigin[VY] - topLeft->pos[VZ], distance);
+        tc[ (i == 0 ? 0 : 2) ].y = shinyVertical(vOrigin[VY] - bottomRight->pos[VZ], distance);
+        tc[ (i == 0 ? 1 : 3) ].y = shinyVertical(vOrigin[VY] - topLeft->pos[VZ], distance);
     }
 }
 
-static void flatShinyTexCoords(rtexcoord_t *tc, float const xyz[3])
+static void flatShinyTexCoords(Vector2f *tc, float const xyz[3])
 {
     float distance, offset;
     vec2f_t view, start;
@@ -735,8 +732,8 @@ static void flatShinyTexCoords(rtexcoord_t *tc, float const xyz[3])
     offset = ((start[VY] - xyz[VY]) * sin(.4f)/*viewFrontVec[VX]*/ -
               (start[VX] - xyz[VX]) * cos(.4f)/*viewFrontVec[VZ]*/);
 
-    tc->st[0] = ((shinyVertical(offset, distance) - .5f) * 2) + .5f;
-    tc->st[1] = shinyVertical(vOrigin[VY] - xyz[VZ], distance);
+    tc->x = ((shinyVertical(offset, distance) - .5f) * 2) + .5f;
+    tc->y = shinyVertical(vOrigin[VY] - xyz[VZ], distance);
 }
 
 struct rendworldpoly_params_t
@@ -791,13 +788,13 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
     rtexmapunit_t const *shinyRTU         = (useShinySurfaces && !(p.flags & RPF_SKYMASK) && ms.unit(RTU_REFLECTION).hasTexture())? &ms.unit(RTU_REFLECTION) : NULL;
     rtexmapunit_t const *shinyMaskRTU     = (useShinySurfaces && !(p.flags & RPF_SKYMASK) && ms.unit(RTU_REFLECTION).hasTexture() && ms.unit(RTU_REFLECTION_MASK).hasTexture())? &ms.unit(RTU_REFLECTION_MASK) : NULL;
 
-    Vector4f *rcolors           = !skyMaskedMaterial? R_AllocRendColors(realNumVertices) : 0;
-    rtexcoord_t *primaryCoords  = R_AllocRendTexCoords(realNumVertices);
-    rtexcoord_t *interCoords    = interRTU? R_AllocRendTexCoords(realNumVertices) : 0;
+    Vector4f *rcolors        = !skyMaskedMaterial? R_AllocRendColors(realNumVertices) : 0;
+    Vector2f *primaryCoords  = R_AllocRendTexCoords(realNumVertices);
+    Vector2f *interCoords    = interRTU? R_AllocRendTexCoords(realNumVertices) : 0;
 
-    Vector4f *shinyColors       = 0;
-    rtexcoord_t *shinyTexCoords = 0;
-    rtexcoord_t *modCoords      = 0;
+    Vector4f *shinyColors    = 0;
+    Vector2f *shinyTexCoords = 0;
+    Vector2f *modCoords      = 0;
 
     DGLuint modTex = 0;
     float modTexSt[2][2] = {{ 0, 0 }, { 0, 0 }};
@@ -873,17 +870,13 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
             // Primary texture coordinates.
             if(primaryRTU)
             {
-                rtexcoord_t &tc = primaryCoords[i];
-                tc.st[0] =  xyz[VX];
-                tc.st[1] = -xyz[VY];
+                primaryCoords[i] = Vector2f(xyz[VX], -xyz[VY]);
             }
 
             // Blend primary texture coordinates.
             if(interRTU)
             {
-                rtexcoord_t &tc = interCoords[i];
-                tc.st[0] =  xyz[VX];
-                tc.st[1] = -xyz[VY];
+                interCoords[i] = Vector2f(xyz[VX], -xyz[VY]);
             }
 
             // Shiny texture coordinates.
@@ -895,12 +888,11 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
             // First light texture coordinates.
             if(modTex && RL_IsMTexLights())
             {
-                rtexcoord_t &tc = modCoords[i];
                 float const width  = p.texBR->x - p.texTL->x;
                 float const height = p.texBR->y - p.texTL->y;
 
-                tc.st[0] = ((p.texBR->x - vtx.pos[VX]) / width  * modTexSt[0][0]) + (xyz[VX] / width  * modTexSt[0][1]);
-                tc.st[1] = ((p.texBR->y - vtx.pos[VY]) / height * modTexSt[1][0]) + (xyz[VY] / height * modTexSt[1][1]);
+                modCoords[i] = Vector2f(((p.texBR->x - vtx.pos[VX]) / width  * modTexSt[0][0]) + (xyz[VX] / width  * modTexSt[0][1]),
+                                        ((p.texBR->y - vtx.pos[VY]) / height * modTexSt[1][0]) + (xyz[VY] / height * modTexSt[1][1]));
             }
         }
     }
@@ -1169,7 +1161,7 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
         rvertex_t origVerts[4];
         std::memcpy(origVerts, rvertices, sizeof(origVerts));
 
-        rtexcoord_t origTexCoords[4];
+        Vector2f origTexCoords[4];
         std::memcpy(origTexCoords, primaryCoords, sizeof(origTexCoords));
 
         Vector4f origColors[4];
@@ -1188,21 +1180,21 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
 
         if(interCoords)
         {
-            rtexcoord_t origTexCoords2[4];
+            Vector2f origTexCoords2[4];
             std::memcpy(origTexCoords2, interCoords, sizeof(origTexCoords2));
             R_DivTexCoords(interCoords, origTexCoords2, leftEdge, rightEdge);
         }
 
         if(modCoords)
         {
-            rtexcoord_t origTexCoords5[4];
+            Vector2f origTexCoords5[4];
             std::memcpy(origTexCoords5, modCoords, sizeof(origTexCoords5));
             R_DivTexCoords(modCoords, origTexCoords5, leftEdge, rightEdge);
         }
 
         if(shinyTexCoords)
         {
-            rtexcoord_t origShinyTexCoords[4];
+            Vector2f origShinyTexCoords[4];
             std::memcpy(origShinyTexCoords, shinyTexCoords, sizeof(origShinyTexCoords));
             R_DivTexCoords(shinyTexCoords, origShinyTexCoords, leftEdge, rightEdge);
         }
@@ -1794,7 +1786,7 @@ static void writeLeafPlane(Plane &plane)
 }
 
 static void writeSkyFixStrip(int numElements, rvertex_t const *positions,
-    rtexcoord_t const *texcoords, Material *material)
+    Vector2f const *texcoords, Material *material)
 {
     DENG_ASSERT(positions != 0);
 

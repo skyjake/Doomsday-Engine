@@ -147,7 +147,7 @@ private:
 namespace de {
 
 typedef QVarLengthArray<rvertex_t, 24> PositionBuffer;
-typedef QVarLengthArray<rtexcoord_t, 24> TexCoordBuffer;
+typedef QVarLengthArray<Vector2f, 24> TexCoordBuffer;
 
 /**
  * Abstract triangle strip geometry builder.

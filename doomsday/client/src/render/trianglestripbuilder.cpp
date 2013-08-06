@@ -94,10 +94,8 @@ void TriangleStripBuilder::extend(AbstractEdge &edge)
     {
         double edgeLength = to.origin().z - from.origin().z;
 
-        d->texcoords->append(rtexcoord_s(edge.materialOrigin() +
-                                         Vector2f(0, (d->direction == Anticlockwise? 0 : edgeLength))));
-        d->texcoords->append(rtexcoord_s(edge.materialOrigin() +
-                                         Vector2f(0, (d->direction == Anticlockwise? edgeLength : 0))));
+        d->texcoords->append(edge.materialOrigin() + Vector2f(0, (d->direction == Anticlockwise? 0 : edgeLength)));
+        d->texcoords->append(edge.materialOrigin() + Vector2f(0, (d->direction == Anticlockwise? edgeLength : 0)));
     }
 }
 

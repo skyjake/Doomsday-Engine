@@ -35,7 +35,7 @@ static void drawDynlight(dynlight_t const &dyn, renderlightprojectionparams_t &p
     {
         // Allocate enough for the divisions too.
         rvertex_t *rvertices = R_AllocRendVertices(parm.realNumVertices);
-        rtexcoord_t *rtexcoords = R_AllocRendTexCoords(parm.realNumVertices);
+        Vector2f *rtexcoords = R_AllocRendTexCoords(parm.realNumVertices);
         Vector4f *rcolors = R_AllocRendColors(parm.realNumVertices);
         bool const mustSubdivide = (parm.isWall && (parm.wall.leftEdge->divisionCount() || parm.wall.rightEdge->divisionCount() ));
 
@@ -49,10 +49,10 @@ static void drawDynlight(dynlight_t const &dyn, renderlightprojectionparams_t &p
             WallEdge const &leftEdge = *parm.wall.leftEdge;
             WallEdge const &rightEdge = *parm.wall.rightEdge;
 
-            rtexcoords[1].st[0] = rtexcoords[0].st[0] = dyn.s[0];
-            rtexcoords[1].st[1] = rtexcoords[3].st[1] = dyn.t[0];
-            rtexcoords[3].st[0] = rtexcoords[2].st[0] = dyn.s[1];
-            rtexcoords[2].st[1] = rtexcoords[0].st[1] = dyn.t[1];
+            rtexcoords[1].x = rtexcoords[0].x = dyn.s[0];
+            rtexcoords[1].y = rtexcoords[3].y = dyn.t[0];
+            rtexcoords[3].x = rtexcoords[2].x = dyn.s[1];
+            rtexcoords[2].y = rtexcoords[0].y = dyn.t[1];
 
             if(mustSubdivide)
             {
@@ -63,7 +63,7 @@ static void drawDynlight(dynlight_t const &dyn, renderlightprojectionparams_t &p
                  */
 
                 rvertex_t origVerts[4]; std::memcpy(origVerts, parm.rvertices, sizeof(rvertex_t) * 4);
-                rtexcoord_t origTexCoords[4]; std::memcpy(origTexCoords, rtexcoords, sizeof(rtexcoord_t) * 4);
+                Vector2f origTexCoords[4]; std::memcpy(origTexCoords, rtexcoords, sizeof(Vector2f) * 4);
                 Vector4f origColors[4]; std::memcpy(origColors, rcolors, sizeof(Vector4f) * 4);
 
                 R_DivVerts(rvertices, origVerts, leftEdge, rightEdge);
@@ -83,10 +83,10 @@ static void drawDynlight(dynlight_t const &dyn, renderlightprojectionparams_t &p
 
             for(uint i = 0; i < parm.numVertices; ++i)
             {
-                rtexcoords[i].st[0] = ((parm.texBR->x - parm.rvertices[i].pos[VX]) / width * dyn.s[0]) +
+                rtexcoords[i].x = ((parm.texBR->x - parm.rvertices[i].pos[VX]) / width * dyn.s[0]) +
                     ((parm.rvertices[i].pos[VX] - parm.texTL->x) / width * dyn.s[1]);
 
-                rtexcoords[i].st[1] = ((parm.texBR->y - parm.rvertices[i].pos[VY]) / height * dyn.t[0]) +
+                rtexcoords[i].y = ((parm.texBR->y - parm.rvertices[i].pos[VY]) / height * dyn.t[0]) +
                     ((parm.rvertices[i].pos[VY] - parm.texTL->y) / height * dyn.t[1]);
             }
 

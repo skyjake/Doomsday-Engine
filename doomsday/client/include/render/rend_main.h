@@ -169,7 +169,7 @@ texturevariantspecification_t &Rend_MapSurfaceShinyMaskTextureSpec();
 void R_DivVerts(rvertex_t *dst, rvertex_t const *src,
     de::WorldEdge const &leftEdge, de::WorldEdge const &rightEdge);
 
-void R_DivTexCoords(rtexcoord_t *dst, rtexcoord_t const *src,
+void R_DivTexCoords(de::Vector2f *dst, de::Vector2f const *src,
     de::WorldEdge const &leftEdge, de::WorldEdge const &rightEdge);
 
 void R_DivVertColors(de::Vector4f *dst, de::Vector4f const *src,

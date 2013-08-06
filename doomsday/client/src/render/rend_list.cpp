@@ -772,8 +772,8 @@ static void endWrite(rendlist_t *list)
 }
 
 static void writePrimitive(rendlist_t const *list, uint base,
-    rvertex_t const *rvertices, rtexcoord_t const *coords,
-    rtexcoord_t const *coords1, rtexcoord_t const *coords2,
+    rvertex_t const *rvertices, Vector2f const *coords,
+    Vector2f const *coords1, Vector2f const *coords2,
     Vector4f const *rcolors, uint numElements, rendpolytype_t type)
 {
     for(uint i = 0; i < numElements; ++i)
@@ -792,31 +792,31 @@ static void writePrimitive(rendlist_t const *list, uint base,
         // Primary texture coordinates.
         if(TU(list, TU_PRIMARY)->hasTexture())
         {
-            rtexcoord_t const *rtc = &coords[i];
+            Vector2f const *rtc = &coords[i];
             dgl_texcoord_t *tc = &texCoords[TCA_MAIN][base + i];
 
-            tc->st[0] = rtc->st[0];
-            tc->st[1] = rtc->st[1];
+            tc->st[0] = rtc->x;
+            tc->st[1] = rtc->y;
         }
 
         // Secondary texture coordinates.
         if(TU(list, TU_INTER)->hasTexture())
         {
-            rtexcoord_t const *rtc = &coords1[i];
+            Vector2f const *rtc = &coords1[i];
             dgl_texcoord_t *tc = &texCoords[TCA_BLEND][base + i];
 
-            tc->st[0] = rtc->st[0];
-            tc->st[1] = rtc->st[1];
+            tc->st[0] = rtc->x;
+            tc->st[1] = rtc->y;
         }
 
         // First light texture coordinates.
         if((list->last->flags & PF_IS_LIT) && IS_MTEX_LIGHTS)
         {
-            rtexcoord_t const *rtc = &coords2[i];
+            Vector2f const *rtc = &coords2[i];
             dgl_texcoord_t *tc = &texCoords[TCA_LIGHT][base + i];
 
-            tc->st[0] = rtc->st[0];
-            tc->st[1] = rtc->st[1];
+            tc->st[0] = rtc->x;
+            tc->st[1] = rtc->y;
         }
 
         // Color.
@@ -843,8 +843,8 @@ static void writePrimitive(rendlist_t const *list, uint base,
  */
 static void writePoly2(primtype_t type, rendpolytype_t polyType, int flags,
     uint numElements, rvertex_t const *vertices, Vector4f const *colors,
-    rtexcoord_t const *primaryCoords, rtexcoord_t const *interCoords,
-    DGLuint modTex, Vector4f const *modColor, rtexcoord_t const *modCoords)
+    Vector2f const *primaryCoords, Vector2f const *interCoords,
+    DGLuint modTex, Vector4f const *modColor, Vector2f const *modCoords)
 {
     boolean const isLit = (polyType != PT_LIGHT && (modTex || !!(flags & RPF_HAS_DYNLIGHTS)));
     uint i, base, primSize, numIndices;
@@ -939,8 +939,8 @@ END_PROF( PROF_RL_ADD_POLY );
  */
 static void writePoly(primtype_t type, rendpolytype_t polyType, int flags,
     uint numElements, rvertex_t const *vertices, Vector4f const *colors,
-    rtexcoord_t const *primaryCoords, rtexcoord_t const *interCoords,
-    DGLuint modTex, Vector4f const *modColor, rtexcoord_t const *modCoords)
+    Vector2f const *primaryCoords, Vector2f const *interCoords,
+    DGLuint modTex, Vector4f const *modColor, Vector2f const *modCoords)
 {
     if(numElements < 3) return; // huh?
 
@@ -1124,10 +1124,10 @@ static void prepareTextureUnitMapForShinyPoly()
 
 void RL_AddPolyWithCoordsModulationReflection(primtype_t primType, int flags,
     uint numElements, rvertex_t const *vertices, Vector4f const *colors,
-    rtexcoord_t const *primaryCoords, rtexcoord_t const *interCoords,
-    DGLuint modTex, Vector4f const *modColor, rtexcoord_t const *modCoords,
-    Vector4f const *reflectionColors, rtexcoord_t const *reflectionCoords,
-    rtexcoord_t const *reflectionMaskCoords)
+    Vector2f const *primaryCoords, Vector2f const *interCoords,
+    DGLuint modTex, Vector4f const *modColor, Vector2f const *modCoords,
+    Vector4f const *reflectionColors, Vector2f const *reflectionCoords,
+    Vector2f const *reflectionMaskCoords)
 {
     prepareTextureUnitMap();
     writePoly(primType, choosePolyType(flags), flags, numElements,
@@ -1143,9 +1143,9 @@ void RL_AddPolyWithCoordsModulationReflection(primtype_t primType, int flags,
 }
 
 void RL_AddPolyWithCoordsModulation(primtype_t primType, int flags, uint numElements,
-    rvertex_t const *vertices, Vector4f const *colors, rtexcoord_t const *primaryCoords,
-    rtexcoord_t const *interCoords,
-    DGLuint modTex, Vector4f const *modColor, rtexcoord_t const *modCoords)
+    rvertex_t const *vertices, Vector4f const *colors, Vector2f const *primaryCoords,
+    Vector2f const *interCoords,
+    DGLuint modTex, Vector4f const *modColor, Vector2f const *modCoords)
 {
     prepareTextureUnitMap();
     writePoly(primType, choosePolyType(flags), flags, numElements,
@@ -1154,7 +1154,7 @@ void RL_AddPolyWithCoordsModulation(primtype_t primType, int flags, uint numElem
 
 void RL_AddPolyWithCoords(primtype_t primType, int flags, uint numElements,
     rvertex_t const *vertices, Vector4f const *colors,
-    rtexcoord_t const *primaryCoords, rtexcoord_t const *interCoords)
+    Vector2f const *primaryCoords, Vector2f const *interCoords)
 {
     prepareTextureUnitMap();
     writePoly(primType, choosePolyType(flags), flags, numElements,
@@ -1163,7 +1163,7 @@ void RL_AddPolyWithCoords(primtype_t primType, int flags, uint numElements,
 
 void RL_AddPolyWithModulation(primtype_t primType, int flags, uint numElements,
     rvertex_t const *vertices, Vector4f const *colors,
-    DGLuint modTex, Vector4f const *modColor, rtexcoord_t const *modCoords)
+    DGLuint modTex, Vector4f const *modColor, Vector2f const *modCoords)
 {
     prepareTextureUnitMap();
     writePoly(primType, choosePolyType(flags), flags, numElements,

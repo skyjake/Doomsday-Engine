@@ -70,9 +70,9 @@ void R_InitRendPolyPools()
     numrendpolys = maxrendpolys = 0;
     rendPolys = 0;
 
-    rvertex_t *rvertices    = R_AllocRendVertices(24);
-    Vector4f *rcolors       = R_AllocRendColors(24);
-    rtexcoord_t *rtexcoords = R_AllocRendTexCoords(24);
+    rvertex_t *rvertices = R_AllocRendVertices(24);
+    Vector4f *rcolors    = R_AllocRendColors(24);
+    Vector2f *rtexcoords = R_AllocRendTexCoords(24);
 
     // Mark unused.
     R_FreeRendVertices(rvertices);
@@ -204,7 +204,7 @@ Vector4f *R_AllocRendColors(uint num)
     return (Vector4f *) rendPolys[idx]->data;
 }
 
-rtexcoord_t* R_AllocRendTexCoords(uint num)
+Vector2f *R_AllocRendTexCoords(uint num)
 {
     uint idx;
     boolean found = false;
@@ -218,7 +218,7 @@ rtexcoord_t* R_AllocRendTexCoords(uint num)
         {
             // Use this one.
             rendPolys[idx]->inUse = true;
-            return (rtexcoord_t*) rendPolys[idx]->data;
+            return (Vector2f *) rendPolys[idx]->data;
         }
         else if(rendPolys[idx]->num == 0)
         {
@@ -235,15 +235,15 @@ rtexcoord_t* R_AllocRendTexCoords(uint num)
         if(++numrendpolys > maxrendpolys)
         {
             uint i, newCount;
-            RPolyData* newPolyData, *ptr;
+            RPolyData *newPolyData, *ptr;
 
             maxrendpolys = (maxrendpolys > 0? maxrendpolys * 2 : 8);
 
-            rendPolys = (RPolyData**) Z_Realloc(rendPolys, sizeof(RPolyData*) * maxrendpolys, PU_MAP);
+            rendPolys = (RPolyData **) Z_Realloc(rendPolys, sizeof(RPolyData *) * maxrendpolys, PU_MAP);
 
             newCount = maxrendpolys - numrendpolys + 1;
 
-            newPolyData = (RPolyData*) Z_Malloc(sizeof(RPolyData) * newCount, PU_MAP, 0);
+            newPolyData = (RPolyData *) Z_Malloc(sizeof(RPolyData) * newCount, PU_MAP, 0);
 
             ptr = newPolyData;
             for(i = numrendpolys-1; i < maxrendpolys; ++i, ptr++)
@@ -262,9 +262,9 @@ rtexcoord_t* R_AllocRendTexCoords(uint num)
     rendPolys[idx]->inUse = true;
     rendPolys[idx]->type  = RPT_TEXCOORD;
     rendPolys[idx]->num   = num;
-    rendPolys[idx]->data  = Z_Malloc(sizeof(rtexcoord_t) * num, PU_MAP, 0);
+    rendPolys[idx]->data  = Z_Malloc(sizeof(Vector2f) * num, PU_MAP, 0);
 
-    return (rtexcoord_t*) rendPolys[idx]->data;
+    return (Vector2f *) rendPolys[idx]->data;
 }
 
 void R_FreeRendVertices(rvertex_t* rvertices)
@@ -299,7 +299,7 @@ void R_FreeRendColors(Vector4f *rcolors)
     DEBUG_Message(("R_FreeRendPoly: Dangling poly ptr!\n"));
 }
 
-void R_FreeRendTexCoords(rtexcoord_t *rtexcoords)
+void R_FreeRendTexCoords(Vector2f *rtexcoords)
 {
     if(!rtexcoords) return;
 
@@ -407,86 +407,66 @@ void R_DivVerts(rvertex_t *dst, rvertex_t const *src,
 #undef COPYVERT
 }
 
-void R_DivTexCoords(rtexcoord_t *dst, rtexcoord_t const *src,
+void R_DivTexCoords(Vector2f *dst, Vector2f const *src,
     WorldEdge const &leftEdge, WorldEdge const &rightEdge)
 {
-#define COPYTEXCOORD(d, s)    (d)->st[0] = (s)->st[0]; \
-    (d)->st[1] = (s)->st[1];
-
     int const numR = 3 + rightEdge.divisionCount();
     int const numL = 3 + leftEdge.divisionCount();
 
     if(numR + numL == 6) return; // Nothing to do.
 
     // Right fan:
-    COPYTEXCOORD(&dst[numL + 0], &src[0]);
-    COPYTEXCOORD(&dst[numL + 1], &src[3]);
-    COPYTEXCOORD(&dst[numL + numR-1], &src[2]);
+    dst[numL + 0] = src[0];
+    dst[numL + 1] = src[3];
+    dst[numL + numR-1] = src[2];
 
     for(int n = 0; n < rightEdge.divisionCount(); ++n)
     {
         WorldEdge::Event const &icpt = rightEdge.at(rightEdge.lastDivision() - n);
-        dst[numL + 2 + n].st[0] = src[3].st[0];
-        dst[numL + 2 + n].st[1] = src[2].st[1] + (src[3].st[1] - src[2].st[1]) * icpt.distance();
+        dst[numL + 2 + n].x = src[3].x;
+        dst[numL + 2 + n].y = src[2].y + (src[3].y - src[2].y) * icpt.distance();
     }
 
     // Left fan:
-    COPYTEXCOORD(&dst[0], &src[3]);
-    COPYTEXCOORD(&dst[1], &src[0]);
-    COPYTEXCOORD(&dst[numL - 1], &src[1]);
+    dst[0] = src[3];
+    dst[1] = src[0];
+    dst[numL - 1] = src[1];
 
     for(int n = 0; n < leftEdge.divisionCount(); ++n)
     {
         WorldEdge::Event const &icpt = leftEdge.at(leftEdge.firstDivision() + n);
-        dst[2 + n].st[0] = src[0].st[0];
-        dst[2 + n].st[1] = src[0].st[1] + (src[1].st[1] - src[0].st[1]) * icpt.distance();
+        dst[2 + n].x = src[0].x;
+        dst[2 + n].y = src[0].y + (src[1].y - src[0].y) * icpt.distance();
     }
-
-#undef COPYTEXCOORD
 }
 
 void R_DivVertColors(Vector4f *dst, Vector4f const *src,
     WorldEdge const &leftEdge, WorldEdge const &rightEdge)
 {
-#define COPYVCOLOR(d, s)    (d)->x = (s)->x; \
-    (d)->y = (s)->y; \
-    (d)->z = (s)->z; \
-    (d)->w = (s)->w;
-
     int const numR = 3 + rightEdge.divisionCount();
     int const numL = 3 + leftEdge.divisionCount();
 
     if(numR + numL == 6) return; // Nothing to do.
 
     // Right fan:
-    COPYVCOLOR(&dst[numL + 0], &src[0]);
-    COPYVCOLOR(&dst[numL + 1], &src[3]);
-    COPYVCOLOR(&dst[numL + numR-1], &src[2]);
+    dst[numL + 0] = src[0];
+    dst[numL + 1] = src[3];
+    dst[numL + numR-1] = src[2];
 
     for(int n = 0; n < rightEdge.divisionCount(); ++n)
     {
         WorldEdge::Event const &icpt = rightEdge.at(rightEdge.lastDivision() - n);
-        double inter = icpt.distance();
-        for(int c = 0; c < 4; ++c)
-        {
-            dst[numL + 2 + n][c] = src[2][c] + (src[3][c] - src[2][c]) * inter;
-        }
+        dst[numL + 2 + n] = src[2] + (src[3] - src[2]) * icpt.distance();
     }
 
     // Left fan:
-    COPYVCOLOR(&dst[0], &src[3]);
-    COPYVCOLOR(&dst[1], &src[0]);
-    COPYVCOLOR(&dst[numL - 1], &src[1]);
+    dst[0] = src[3];
+    dst[1] = src[0];
+    dst[numL - 1] = src[1];
 
     for(int n = 0; n < leftEdge.divisionCount(); ++n)
     {
         WorldEdge::Event const &icpt = leftEdge.at(leftEdge.firstDivision() + n);
-        double inter = icpt.distance();
-        for(int c = 0; c < 4; ++c)
-        {
-            dst[2 + n][c] = src[0][c] + (src[1][c] - src[0][c]) * inter;
-        }
+        dst[2 + n] = src[0] + (src[1] - src[0]) * icpt.distance();
     }
-
-#undef COPYVCOLOR
 }
