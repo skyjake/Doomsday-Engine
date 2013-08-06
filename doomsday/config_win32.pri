@@ -14,11 +14,6 @@ DEFINES += WIN32 MSVC _CRT_SECURE_NO_WARNINGS _USE_MATH_DEFINES
 QMAKE_CFLAGS += -w14505 -wd4100 -wd4748
 QMAKE_CXXFLAGS += -w14505 -wd4100 -wd4748
 
-# We do not want global optimizations (-Og set by -O2).
-# See: http://msdn.microsoft.com/en-us/library/8f8h5cxt.aspx
-QMAKE_CFLAGS_RELEASE   ~= s/-O2/-Oi -Ot -Oy -Ob2 -Gs -GF -Gy
-QMAKE_CXXFLAGS_RELEASE ~= s/-O2/-Oi -Ot -Oy -Ob2 -Gs -GF -Gy
-
 DENG_WIN_PRODUCTS_DIR = $$PWD/../distrib/products
 
 # Install locations:
