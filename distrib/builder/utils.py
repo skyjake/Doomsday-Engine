@@ -76,6 +76,8 @@ def sys_id():
             bits = '64bit'
         elif platform.mac_ver()[0][:4] == '10.6':
             bits = '64bit'
+        elif platform.mac_ver()[0][:4] == '10.5':
+            plat = 'macx5'
         
     return "%s-%s" % (plat, bits)
 
