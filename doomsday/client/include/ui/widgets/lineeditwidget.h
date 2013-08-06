@@ -69,6 +69,7 @@ protected:
     void numberOfLinesChanged(int lineCount);
     void cursorMoved();
     void contentChanged();
+    void autoCompletionEnded(bool accepted);
 
 private:
     DENG2_PRIVATE(d)

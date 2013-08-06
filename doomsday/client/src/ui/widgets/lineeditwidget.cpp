@@ -452,3 +452,9 @@ void LineEditWidget::contentChanged()
         updateLineWraps(WrapUnlessWrappedAlready);
     }
 }
+
+void LineEditWidget::autoCompletionEnded(bool)
+{
+    // Make sure the underlining is removed.
+    requestGeometry();
+}

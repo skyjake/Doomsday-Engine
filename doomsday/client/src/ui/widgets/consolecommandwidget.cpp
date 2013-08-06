@@ -187,7 +187,9 @@ void ConsoleCommandWidget::autoCompletionBegan(String const &)
     }
 }
 
-void ConsoleCommandWidget::autoCompletionEnded(bool /*accepted*/)
+void ConsoleCommandWidget::autoCompletionEnded(bool accepted)
 {
+    LineEditWidget::autoCompletionEnded(accepted);
+
     d->popup->close();
 }
