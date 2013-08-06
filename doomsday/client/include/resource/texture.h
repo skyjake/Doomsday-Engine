@@ -422,6 +422,8 @@ private:
     Instance *d;
 };
 
+Q_DECLARE_OPERATORS_FOR_FLAGS(Texture::Flags)
+
 #ifdef __CLIENT__
 // Alias.
 typedef Texture::Variant TextureVariant;
