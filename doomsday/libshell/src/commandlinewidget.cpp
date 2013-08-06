@@ -20,7 +20,9 @@
 #include "de/shell/TextRootWidget"
 #include "de/shell/KeyEvent"
 #include "de/shell/EditorHistory"
+
 #include <de/String>
+#include <QStringList>
 
 namespace de {
 namespace shell {
@@ -59,6 +61,14 @@ bool CommandLineWidget::handleEvent(Event const &event)
 
     // Final fallback: history navigation.
     return d->history.handleControlKey(ev.key());
+}
+
+void CommandLineWidget::autoCompletionBegan(String const &wordBase)
+{
+    LineEditWidget::autoCompletionBegan(wordBase);
+
+    LOG_MSG("Completions for '%s':") << wordBase;
+    LOG_MSG("  %s") << suggestedCompletions().join(", ");
 }
 
 } // namespace shell

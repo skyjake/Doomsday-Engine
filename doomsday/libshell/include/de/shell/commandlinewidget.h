@@ -38,6 +38,9 @@ public:
 signals:
     void commandEntered(de::String command);
 
+protected:
+    void autoCompletionBegan(String const &wordBase);
+
 private:
     DENG2_PRIVATE(d)
 };
