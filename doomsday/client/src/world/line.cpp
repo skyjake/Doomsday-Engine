@@ -53,7 +53,7 @@ struct Section
 
 DENG2_PIMPL_NOREF(Line::Side)
 #ifdef __CLIENT__
-    , DENG2_OBSERVES(Line, FlagsChange)
+, DENG2_OBSERVES(Line, FlagsChange)
 #endif
 {
     struct Sections
@@ -68,9 +68,6 @@ DENG2_PIMPL_NOREF(Line::Side)
 
     /// @ref sdefFlags
     int flags;
-
-    /// Line owner of the side.
-    Line &line;
 
     /// Sections.
     QScopedPointer<Sections> sections;
@@ -87,35 +84,13 @@ DENG2_PIMPL_NOREF(Line::Side)
     /// Framecount of last time shadows were drawn on this side.
     int shadowVisCount;
 
-    Instance(Line &line, Sector *sector)
+    Instance(Sector *sector)
         : flags(0),
-          line(line),
           sector(sector),
           leftSegment(0),
           rightSegment(0),
           shadowVisCount(0)
-    {
-#ifdef __CLIENT__
-        line.audienceForFlagsChange += this;
-#endif
-    }
-
-#ifdef __CLIENT__
-    void lineFlagsChanged(Line &line, int oldFlags)
-    {
-        if(!sections.isNull())
-        {
-            if((line.flags() & DDLF_DONTPEGTOP) != (oldFlags & DDLF_DONTPEGTOP))
-            {
-                sections->top.surface.markAsNeedingDecorationUpdate();
-            }
-            if((line.flags() & DDLF_DONTPEGBOTTOM) != (oldFlags & DDLF_DONTPEGBOTTOM))
-            {
-                sections->bottom.surface.markAsNeedingDecorationUpdate();
-            }
-        }
-    }
-#endif
+    {}
 
     /**
      * Retrieve the Section associated with @a sectionId.
@@ -134,20 +109,43 @@ DENG2_PIMPL_NOREF(Line::Side)
         /// @throw Line::InvalidSectionIdError The given section identifier is not valid.
         throw Line::InvalidSectionIdError("Line::Side::section", QString("Invalid section id %1").arg(sectionId));
     }
+
+#ifdef __CLIENT__
+    /// Observes Line FlagsChange
+    void lineFlagsChanged(Line &line, int oldFlags)
+    {
+        if(!sections.isNull())
+        {
+            if((line.flags() & DDLF_DONTPEGTOP) != (oldFlags & DDLF_DONTPEGTOP))
+            {
+                sections->top.surface.markAsNeedingDecorationUpdate();
+            }
+            if((line.flags() & DDLF_DONTPEGBOTTOM) != (oldFlags & DDLF_DONTPEGBOTTOM))
+            {
+                sections->bottom.surface.markAsNeedingDecorationUpdate();
+            }
+        }
+    }
+#endif
+
 };
 
 Line::Side::Side(Line &line, Sector *sector)
-    : MapElement(DMU_SIDE, &line), d(new Instance(line, sector))
-{}
+    : MapElement(DMU_SIDE, &line), d(new Instance(sector))
+{
+#ifdef __CLIENT__
+    line.audienceForFlagsChange += d;
+#endif
+}
 
 Line &Line::Side::line() const
 {
-    return d->line;
+    return *this->parent().as<Line>();
 }
 
 int Line::Side::sideId() const
 {
-    return &d->line.front() == this? Line::Front : Line::Back;
+    return &line().front() == this? Line::Front : Line::Back;
 }
 
 bool Line::Side::considerOneSided() const
@@ -159,7 +157,7 @@ bool Line::Side::considerOneSided() const
     // Front side of a "one-way window"?
     if(!back().hasSections()) return true;
 
-    if(!d->line.definesPolyobj())
+    if(!line().definesPolyobj())
     {
         // If no segment is linked then the convex subspace on "this" side must
         // have been degenerate (thus no geometry).
@@ -254,7 +252,7 @@ void Line::Side::updateSoundEmitterOrigin(int sectionId)
 
     ddmobj_base_t &emitter = d->sectionById(sectionId).soundEmitter;
 
-    Vector2d lineCenter = d->line.center();
+    Vector2d lineCenter = line().center();
     emitter.origin[VX] = lineCenter.x;
     emitter.origin[VY] = lineCenter.y;
 
@@ -266,7 +264,7 @@ void Line::Side::updateSoundEmitterOrigin(int sectionId)
     switch(sectionId)
     {
     case Middle:
-        if(!back().hasSections() || d->line.isSelfReferencing())
+        if(!back().hasSections() || line().isSelfReferencing())
         {
             emitter.origin[VZ] = (ffloor + fceil) / 2;
         }
@@ -278,7 +276,7 @@ void Line::Side::updateSoundEmitterOrigin(int sectionId)
         break;
 
     case Bottom:
-        if(!back().hasSections() || d->line.isSelfReferencing() ||
+        if(!back().hasSections() || line().isSelfReferencing() ||
            back().sector().floor().height() <= ffloor)
         {
             emitter.origin[VZ] = ffloor;
@@ -290,7 +288,7 @@ void Line::Side::updateSoundEmitterOrigin(int sectionId)
         break;
 
     case Top:
-        if(!back().hasSections() || d->line.isSelfReferencing() ||
+        if(!back().hasSections() || line().isSelfReferencing() ||
            back().sector().ceiling().height() >= fceil)
         {
             emitter.origin[VZ] = fceil;
@@ -316,8 +314,8 @@ void Line::Side::updateSurfaceNormals()
 {
     if(!hasSections()) return;
 
-    Vector3f normal((  to().origin().y - from().origin().y) / d->line.length(),
-                    (from().origin().x -   to().origin().x) / d->line.length(),
+    Vector3f normal((  to().origin().y - from().origin().y) / line().length(),
+                    (from().origin().x -   to().origin().x) / line().length(),
                     0);
 
     // All line side surfaces have the same normals.
@@ -410,8 +408,8 @@ int Line::Side::property(DmuArgs &args) const
         args.setValue(DMT_LINESIDE_SECTOR, &d->sector, 0);
         break;
     case DMU_LINE: {
-        Line *line = &d->line;
-        args.setValue(DMT_LINESIDE_LINE, &line, 0);
+        Line *lineAdr = &line();
+        args.setValue(DMT_LINESIDE_LINE, &lineAdr, 0);
         break; }
     case DMU_FLAGS:
         args.setValue(DMT_LINESIDE_FLAGS, &d->flags, 0);
