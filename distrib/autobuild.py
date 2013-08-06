@@ -45,6 +45,15 @@ def create_build_event():
     update_changes()
     
 
+def mac_meta_update():
+    """Update the OS X installer metadata."""
+    import build_version
+    build_version.find_version(quiet=True)
+
+    # Let's find the previous event of this version.
+    system_command("deng_generate_installer_xml.py " + build_version.DOOMSDAY_VERSION_FULL_PLAIN)
+    
+
 def todays_platform_release():
     """Build today's release for the current platform."""
     print "Building today's build."
@@ -458,6 +467,7 @@ commands = {
     'wiki': generate_wiki,
     'web_init': web_init,
     'web_update': web_update,
+    'mac_meta': mac_meta_update,
     'help': show_help
 }
 
