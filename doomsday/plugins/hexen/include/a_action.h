@@ -29,10 +29,18 @@
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Calculate various LUTs used by the playsim.
  */
 void X_CreateLUTs(void);
 void X_DestroyLUTs(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBHEXEN_A_ACTION_H */

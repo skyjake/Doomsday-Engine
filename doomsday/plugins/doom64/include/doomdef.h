@@ -54,7 +54,7 @@
 #define VERBOSE(code)       { if(verbose >= 1) { code; } }
 #define VERBOSE2(code)      { if(verbose >= 2) { code; } }
 
-extern game_export_t gx;
+DENG_EXTERN_C game_export_t gx;
 
 //
 // Global parameters/defines.
@@ -147,7 +147,7 @@ typedef struct classinfo_s{
     int         failUseSound; // Sound played when a use fails.
 } classinfo_t;
 
-extern classinfo_t classInfo[NUM_PLAYER_CLASSES];
+DENG_EXTERN_C classinfo_t classInfo[NUM_PLAYER_CLASSES];
 
 typedef enum {
     SM_NOITEMS = -1, // skill mode 0

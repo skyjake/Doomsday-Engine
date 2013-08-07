@@ -1,33 +1,27 @@
-/**\file p_start.h
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file p_start.h Common player (re)spawning logic.
  *
- *\author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 1999 Activision
+ * @authors Copyright © 1993-1996 by id Software, Inc.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
-/**
- * Common playsim code relating to the (re)spawn of map objects.
- */
-
-#ifndef LIBCOMMON_PLAYSTART_H
-#define LIBCOMMON_PLAYSTART_H
+#ifndef LIBCOMMON_PLAYSIM_START_H
+#define LIBCOMMON_PLAYSIM_START_H
 
 #include "common.h"
 
@@ -178,13 +172,33 @@ void P_SetPlayerRespawnClass(int plrNum, playerclass_t pc);
  */
 playerclass_t P_ClassForPlayerWhenRespawning(int plrNum, boolean clear);
 
+/**
+ * Given a doomednum, look up the associated mobj type.
+ *
+ * @param doomEdNum     Doom Editor (Thing) Number to look up.
+ * @return              The associated mobj type if found else @c MT_NONE.
+ */
 mobjtype_t P_DoomEdNumToMobjType(int doomEdNum);
+
+/**
+ * Spawns all players, using the method appropriate for current game mode.
+ * Called during map setup.
+ */
 void P_SpawnPlayers(void);
+
 #if __JHERETIC__ || __JHEXEN__
+/**
+ * Only affects torches, which are often placed inside walls in the
+ * original maps. The DOOM engine allowed these kinds of things but a
+ * Z-buffer doesn't. Also turns the torches so they face the nearest line.
+ */
 void P_MoveThingsOutOfWalls(void);
 #endif
 
 #if __JHERETIC__
+/**
+ * @note Fails in some places, but works most of the time.
+ */
 void P_TurnGizmosAwayFromDoors(void);
 #endif
 
@@ -212,16 +226,35 @@ void P_AddBossSpot(mapspotid_t id);
 #endif
 
 void P_CreatePlayerStart(int defaultPlrNum, uint entryPoint, boolean deathmatch, mapspotid_t spot);
+
 void P_DestroyPlayerStarts(void);
+
 uint P_GetNumPlayerStarts(boolean deathmatch);
 
-const playerstart_t* P_GetPlayerStart(uint entryPoint, int pnum, boolean deathmatch);
+/**
+ * @return  The correct start for the player. The start is in the given
+ *          group for specified entry point.
+ */
+playerstart_t const *P_GetPlayerStart(uint entryPoint, int pnum, boolean deathmatch);
+
+/**
+ * Gives all the players in the game a playerstart.
+ * Only needed in co-op games (start spots are random in deathmatch).
+ */
 void P_DealPlayerStarts(uint entryPoint);
 
+/**
+ * Called when a player is spawned into the map. Most of the player
+ * structure stays unchanged between maps.
+ */
 void P_SpawnPlayer(int plrNum, playerclass_t pClass, coord_t x, coord_t y, coord_t z,
     angle_t angle, int spawnFlags, boolean makeCamera, boolean pickupItems);
 
+/**
+ * Spawns a player at one of the random death match spots.
+ */
 void G_DeathMatchSpawnPlayer(int playernum);
+
 void P_RebornPlayerInMultiplayer(int plrNum);
 
 /**
@@ -234,4 +267,4 @@ boolean P_CheckSpot(coord_t x, coord_t y);
 } // extern "C"
 #endif
 
-#endif // LIBCOMMON_PLAYSTART_H
+#endif /* LIBCOMMON_PLAYSIM_START_H */

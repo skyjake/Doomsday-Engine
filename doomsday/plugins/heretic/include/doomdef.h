@@ -126,7 +126,7 @@ typedef struct classinfo_s{
     int         failUseSound; // sound played when a use fails.
 } classinfo_t;
 
-extern classinfo_t classInfo[NUM_PLAYER_CLASSES];
+DENG_EXTERN_C classinfo_t classInfo[NUM_PLAYER_CLASSES];
 
 /**
  * Game state (hi-level).

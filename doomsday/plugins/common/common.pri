@@ -106,7 +106,7 @@ SOURCES += \
     $$common_src/p_saveio.c \
     $$common_src/p_scroll.c \
     $$common_src/p_sound.c \
-    $$common_src/p_start.c \
+    $$common_src/p_start.cpp \
     $$common_src/p_switch.c \
     $$common_src/p_terraintype.c \
     $$common_src/p_tick.c \
