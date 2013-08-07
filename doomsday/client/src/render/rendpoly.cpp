@@ -70,7 +70,7 @@ void R_InitRendPolyPools()
     numrendpolys = maxrendpolys = 0;
     rendPolys = 0;
 
-    rvertex_t *rvertices = R_AllocRendVertices(24);
+    Vector3f *rvertices  = R_AllocRendVertices(24);
     Vector4f *rcolors    = R_AllocRendColors(24);
     Vector2f *rtexcoords = R_AllocRendTexCoords(24);
 
@@ -80,7 +80,7 @@ void R_InitRendPolyPools()
     R_FreeRendTexCoords(rtexcoords);
 }
 
-rvertex_t* R_AllocRendVertices(uint num)
+Vector3f *R_AllocRendVertices(uint num)
 {
     uint idx;
     boolean found = false;
@@ -94,7 +94,7 @@ rvertex_t* R_AllocRendVertices(uint num)
         {
             // Use this one.
             rendPolys[idx]->inUse = true;
-            return (rvertex_t*) rendPolys[idx]->data;
+            return (Vector3f *) rendPolys[idx]->data;
         }
         else if(rendPolys[idx]->num == 0)
         {
@@ -111,15 +111,15 @@ rvertex_t* R_AllocRendVertices(uint num)
         if(++numrendpolys > maxrendpolys)
         {
             uint i, newCount;
-            RPolyData* newPolyData, *ptr;
+            RPolyData *newPolyData, *ptr;
 
             maxrendpolys = (maxrendpolys > 0? maxrendpolys * 2 : 8);
 
-            rendPolys = (RPolyData**) Z_Realloc(rendPolys, sizeof(RPolyData*) * maxrendpolys, PU_MAP);
+            rendPolys = (RPolyData **) Z_Realloc(rendPolys, sizeof(RPolyData *) * maxrendpolys, PU_MAP);
 
             newCount = maxrendpolys - numrendpolys + 1;
 
-            newPolyData = (RPolyData*) Z_Malloc(sizeof(RPolyData) * newCount, PU_MAP, 0);
+            newPolyData = (RPolyData *) Z_Malloc(sizeof(RPolyData) * newCount, PU_MAP, 0);
 
             ptr = newPolyData;
             for(i = numrendpolys-1; i < maxrendpolys; ++i, ptr++)
@@ -137,9 +137,9 @@ rvertex_t* R_AllocRendVertices(uint num)
     rendPolys[idx]->inUse = true;
     rendPolys[idx]->type  = RPT_VERT;
     rendPolys[idx]->num   = num;
-    rendPolys[idx]->data  = Z_Malloc(sizeof(rvertex_t) * num, PU_MAP, 0);
+    rendPolys[idx]->data  = Z_Malloc(sizeof(Vector3f) * num, PU_MAP, 0);
 
-    return (rvertex_t*) rendPolys[idx]->data;
+    return (Vector3f *) rendPolys[idx]->data;
 }
 
 Vector4f *R_AllocRendColors(uint num)
@@ -267,7 +267,7 @@ Vector2f *R_AllocRendTexCoords(uint num)
     return (Vector2f *) rendPolys[idx]->data;
 }
 
-void R_FreeRendVertices(rvertex_t* rvertices)
+void R_FreeRendVertices(Vector3f *rvertices)
 {
     if(!rvertices) return;
 
@@ -368,43 +368,35 @@ void Rtu_TranslateOffset(rtexmapunit_t *rtu, Vector2f const &st)
     rtu->offset[1] += st.y;
 }
 
-void R_DivVerts(rvertex_t *dst, rvertex_t const *src,
+void R_DivVerts(Vector3f *dst, Vector3f const *src,
     WorldEdge const &leftEdge, WorldEdge const &rightEdge)
 {
-#define COPYVERT(d, s)  (d)->pos[VX] = (s)->pos[VX]; \
-    (d)->pos[VY] = (s)->pos[VY]; \
-    (d)->pos[VZ] = (s)->pos[VZ];
-
     int const numR = 3 + rightEdge.divisionCount();
     int const numL = 3 + leftEdge.divisionCount();
 
     if(numR + numL == 6) return; // Nothing to do.
 
     // Right fan:
-    COPYVERT(&dst[numL + 0], &src[0])
-    COPYVERT(&dst[numL + 1], &src[3]);
-    COPYVERT(&dst[numL + numR - 1], &src[2]);
+    dst[numL + 0] = src[0];
+    dst[numL + 1] = src[3];
+    dst[numL + numR - 1] = src[2];
 
     for(int n = 0; n < rightEdge.divisionCount(); ++n)
     {
         WorldEdge::Event const &icpt = rightEdge.at(rightEdge.lastDivision() - n);
-        Vector3d const &origin = icpt.origin();
-        V3f_Set(dst[numL + 2 + n].pos, origin.x, origin.y, origin.z);
+        dst[numL + 2 + n] = icpt.origin();
     }
 
     // Left fan:
-    COPYVERT(&dst[0], &src[3]);
-    COPYVERT(&dst[1], &src[0]);
-    COPYVERT(&dst[numL - 1], &src[1]);
+    dst[0] = src[3];
+    dst[1] = src[0];
+    dst[numL - 1] = src[1];
 
     for(int n = 0; n < leftEdge.divisionCount(); ++n)
     {
         WorldEdge::Event const &icpt = leftEdge.at(leftEdge.firstDivision() + n);
-        Vector3d const &origin = icpt.origin();
-        V3f_Set(dst[2 + n].pos, origin.x, origin.y, origin.z);
+        dst[2 + n] = icpt.origin();
     }
-
-#undef COPYVERT
 }
 
 void R_DivTexCoords(Vector2f *dst, Vector2f const *src,

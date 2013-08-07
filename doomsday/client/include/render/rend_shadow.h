@@ -24,8 +24,6 @@
 
 #include "WallEdge"
 
-#include "render/rendpoly.h" // r_vertex_t
-
 /**
  * This value defines the offset from the shadowed surface applied to
  * shadows rendered with the simple drop-to-highest-floor method.
@@ -46,7 +44,7 @@ void Rend_RenderMobjShadows();
 /// Parameters for Rend_RenderShadowProjections (POD).
 typedef struct {
     uint lastIdx;
-    rvertex_t const *rvertices;
+    de::Vector3f const *rvertices;
     uint numVertices, realNumVertices;
     de::Vector3d const *texTL;
     de::Vector3d const *texBR;

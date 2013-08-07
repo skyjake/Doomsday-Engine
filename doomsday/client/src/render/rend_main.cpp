@@ -175,7 +175,7 @@ static void Rend_DrawSurfaceVectors(Map &map);
 static void Rend_DrawVertexIndices(Map &map);
 
 static uint buildLeafPlaneGeometry(BspLeaf const &leaf, ClockDirection direction,
-    coord_t height, rvertex_t **verts, uint *vertsSize);
+    coord_t height, Vector3f **verts, uint *vertsSize);
 
 // Draw state:
 static Vector2d eyeOrigin; // Viewer origin.
@@ -487,10 +487,10 @@ Material *Rend_ChooseMapSurfaceMaterial(Surface const &surface)
     return 0;
 }
 
-static void lightVertex(Vector4f &color, rvertex_t const &vtx, float lightLevel,
+static void lightVertex(Vector4f &color, Vector3f const &vtx, float lightLevel,
                         Vector3f const &ambientColor)
 {
-    float const dist = Rend_PointDist2D(vtx.pos);
+    float const dist = Rend_PointDist2D(vtx);
     float lightVal = Rend_AttenuateLightLevel(dist, lightLevel);
 
     // Add extra light.
@@ -505,7 +505,7 @@ static void lightVertex(Vector4f &color, rvertex_t const &vtx, float lightLevel,
     }
 }
 
-static void lightVertices(uint num, Vector4f *colors, rvertex_t const *verts,
+static void lightVertices(uint num, Vector4f *colors, Vector3f const *verts,
                           float lightLevel, Vector3f const &ambientColor)
 {
     for(uint i = 0; i < num; ++i)
@@ -514,11 +514,11 @@ static void lightVertices(uint num, Vector4f *colors, rvertex_t const *verts,
     }
 }
 
-static void torchLightVertices(uint num, Vector4f *colors, rvertex_t const *verts)
+static void torchLightVertices(uint num, Vector4f *colors, Vector3f const *verts)
 {
     for(uint i = 0; i < num; ++i)
     {
-        Rend_ApplyTorchLight(colors[i], Rend_PointDist2D(verts[i].pos));
+        Rend_ApplyTorchLight(colors[i], Rend_PointDist2D(verts[i]));
     }
 }
 
@@ -535,16 +535,16 @@ int RIT_FirstDynlightIterator(dynlight_t const *dyn, void *parameters)
  * of sprites. This is necessary because all masked polygons must be
  * rendered back-to-front, or there will be alpha artifacts along edges.
  */
-void Rend_AddMaskedPoly(rvertex_t const *rvertices, Vector4f const *rcolors,
+void Rend_AddMaskedPoly(Vector3f const *rvertices, Vector4f const *rcolors,
     coord_t wallLength, MaterialVariant *material, Vector2f const &materialOrigin,
     blendmode_t blendMode, uint lightListIdx, float glow)
 {
     vissprite_t *vis = R_NewVisSprite();
 
     vis->type = VSPR_MASKED_WALL;
-    vis->origin[VX] = (rvertices[0].pos[VX] + rvertices[3].pos[VX]) / 2;
-    vis->origin[VY] = (rvertices[0].pos[VY] + rvertices[3].pos[VY]) / 2;
-    vis->origin[VZ] = (rvertices[0].pos[VZ] + rvertices[3].pos[VZ]) / 2;
+    vis->origin[VX] = (rvertices[0].x + rvertices[3].x) / 2;
+    vis->origin[VY] = (rvertices[0].y + rvertices[3].y) / 2;
+    vis->origin[VZ] = (rvertices[0].z + rvertices[3].z) / 2;
     vis->distance = Rend_PointDist2D(vis->origin);
 
     VS_WALL(vis)->texOffset[0] = materialOrigin[VX];
@@ -565,7 +565,7 @@ void Rend_AddMaskedPoly(rvertex_t const *rvertices, Vector4f const *rcolors,
         VS_WALL(vis)->texCoord[1][VX] = VS_WALL(vis)->texCoord[0][VX] + wallLength / ms.width();
         VS_WALL(vis)->texCoord[0][VY] = VS_WALL(vis)->texOffset[1] / ms.height();
         VS_WALL(vis)->texCoord[1][VY] = VS_WALL(vis)->texCoord[0][VY] +
-                (rvertices[3].pos[VZ] - rvertices[0].pos[VZ]) / ms.height();
+                (rvertices[3].z - rvertices[0].z) / ms.height();
 
         if(!ms.isOpaque())
         {
@@ -595,9 +595,9 @@ void Rend_AddMaskedPoly(rvertex_t const *rvertices, Vector4f const *rcolors,
 
     for(int i = 0; i < 4; ++i)
     {
-        VS_WALL(vis)->vertices[i].pos[VX] = rvertices[i].pos[VX];
-        VS_WALL(vis)->vertices[i].pos[VY] = rvertices[i].pos[VY];
-        VS_WALL(vis)->vertices[i].pos[VZ] = rvertices[i].pos[VZ];
+        VS_WALL(vis)->vertices[i].pos[VX] = rvertices[i].x;
+        VS_WALL(vis)->vertices[i].pos[VY] = rvertices[i].y;
+        VS_WALL(vis)->vertices[i].pos[VZ] = rvertices[i].z;
 
         for(int c = 0; c < 4; ++c)
         {
@@ -634,14 +634,14 @@ void Rend_AddMaskedPoly(rvertex_t const *rvertices, Vector4f const *rcolors,
     }
 }
 
-static void quadTexCoords(Vector2f *tc, rvertex_t const *rverts,
+static void quadTexCoords(Vector2f *tc, Vector3f const *rverts,
     coord_t wallLength, Vector3d const &topLeft)
 {
-    tc[0].x = tc[1].x = rverts[0].pos[VX] - topLeft.x;
-    tc[3].y = tc[1].y = rverts[0].pos[VY] - topLeft.y;
+    tc[0].x = tc[1].x = rverts[0].x - topLeft.x;
+    tc[3].y = tc[1].y = rverts[0].y - topLeft.y;
     tc[3].x = tc[2].x = tc[0].x + wallLength;
-    tc[2].y = tc[3].y + (rverts[1].pos[VZ] - rverts[0].pos[VZ]);
-    tc[0].y = tc[3].y + (rverts[3].pos[VZ] - rverts[2].pos[VZ]);
+    tc[2].y = tc[3].y + (rverts[1].z - rverts[0].z);
+    tc[0].y = tc[3].y + (rverts[3].z - rverts[2].z);
 }
 
 static void quadLightCoords(Vector2f *tc, float const s[2], float const t[2])
@@ -657,16 +657,16 @@ static float shinyVertical(float dy, float dx)
     return ((atan(dy/dx) / (PI/2)) + 1) / 2;
 }
 
-static void quadShinyTexCoords(Vector2f *tc, rvertex_t const *topLeft,
-    rvertex_t const *bottomRight, coord_t wallLength)
+static void quadShinyTexCoords(Vector2f *tc, Vector3f const *topLeft,
+    Vector3f const *bottomRight, coord_t wallLength)
 {
     vec2f_t surface, normal, projected, s, reflected, view;
     float distance, angle, prevAngle = 0;
     uint i;
 
     // Quad surface vector.
-    V2f_Set(surface, (bottomRight->pos[VX] - topLeft->pos[VX]) / wallLength,
-                     (bottomRight->pos[VY] - topLeft->pos[VY]) / wallLength);
+    V2f_Set(surface, (bottomRight->x - topLeft->x) / wallLength,
+                     (bottomRight->y - topLeft->y) / wallLength);
 
     V2f_Set(normal, surface[VY], -surface[VX]);
 
@@ -674,8 +674,8 @@ static void quadShinyTexCoords(Vector2f *tc, rvertex_t const *topLeft,
     for(i = 0; i < 2; ++i)
     {
         // View vector.
-        V2f_Set(view, vOrigin[VX] - (i == 0? topLeft->pos[VX] : bottomRight->pos[VX]),
-                      vOrigin[VZ] - (i == 0? topLeft->pos[VY] : bottomRight->pos[VY]));
+        V2f_Set(view, vOrigin[VX] - (i == 0? topLeft->x : bottomRight->x),
+                      vOrigin[VZ] - (i == 0? topLeft->y : bottomRight->y));
 
         distance = V2f_Normalize(view);
 
@@ -705,35 +705,31 @@ static void quadShinyTexCoords(Vector2f *tc, rvertex_t const *topLeft,
             tc[ (i == 0 ? 0 : 3) ].x = angle + .3f; /*acos(-dot)/PI*/
 
         // Vertical coordinates.
-        tc[ (i == 0 ? 0 : 2) ].y = shinyVertical(vOrigin[VY] - bottomRight->pos[VZ], distance);
-        tc[ (i == 0 ? 1 : 3) ].y = shinyVertical(vOrigin[VY] - topLeft->pos[VZ], distance);
+        tc[ (i == 0 ? 0 : 2) ].y = shinyVertical(vOrigin[VY] - bottomRight->z, distance);
+        tc[ (i == 0 ? 1 : 3) ].y = shinyVertical(vOrigin[VY] - topLeft->z, distance);
     }
 }
 
-static void flatShinyTexCoords(Vector2f *tc, float const xyz[3])
+static void flatShinyTexCoords(Vector2f *tc, Vector3f const &point)
 {
-    float distance, offset;
-    vec2f_t view, start;
-
-    // View vector.
-    V2f_Set(view, vOrigin[VX] - xyz[VX], vOrigin[VZ] - xyz[VY]);
-
-    distance = V2f_Normalize(view);
-    if(distance < 10)
+    // Determine distance to viewer.
+    float distToEye = Vector2f(vOrigin[VX] - point.x, vOrigin[VZ] - point.y)
+                          .normalize().length();
+    if(distToEye < 10)
     {
         // Too small distances cause an ugly 'crunch' below and above
         // the viewpoint.
-        distance = 10;
+        distToEye = 10;
     }
 
     // Offset from the normal view plane.
-    V2f_Set(start, vOrigin[VX], vOrigin[VZ]);
+    Vector2f start(vOrigin[VX], vOrigin[VZ]);
 
-    offset = ((start[VY] - xyz[VY]) * sin(.4f)/*viewFrontVec[VX]*/ -
-              (start[VX] - xyz[VX]) * cos(.4f)/*viewFrontVec[VZ]*/);
+    float offset = ((start.y - point.y) * sin(.4f)/*viewFrontVec[VX]*/ -
+                    (start.x - point.x) * cos(.4f)/*viewFrontVec[VZ]*/);
 
-    tc->x = ((shinyVertical(offset, distance) - .5f) * 2) + .5f;
-    tc->y = shinyVertical(vOrigin[VY] - xyz[VZ], distance);
+    tc->x = ((shinyVertical(offset, distToEye) - .5f) * 2) + .5f;
+    tc->y = shinyVertical(vOrigin[VY] - point.z, distToEye);
 }
 
 struct rendworldpoly_params_t
@@ -765,10 +761,10 @@ struct rendworldpoly_params_t
     } wall;
 };
 
-static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
+static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
     rendworldpoly_params_t const &p, MaterialSnapshot const &ms)
 {
-    DENG_ASSERT(rvertices != 0);
+    DENG_ASSERT(posCoords != 0);
 
     bool const isWall = p.elem->type() == DMU_SEGMENT;
 
@@ -788,7 +784,7 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
     rtexmapunit_t const *shinyRTU         = (useShinySurfaces && !(p.flags & RPF_SKYMASK) && ms.unit(RTU_REFLECTION).hasTexture())? &ms.unit(RTU_REFLECTION) : NULL;
     rtexmapunit_t const *shinyMaskRTU     = (useShinySurfaces && !(p.flags & RPF_SKYMASK) && ms.unit(RTU_REFLECTION).hasTexture() && ms.unit(RTU_REFLECTION_MASK).hasTexture())? &ms.unit(RTU_REFLECTION_MASK) : NULL;
 
-    Vector4f *rcolors        = !skyMaskedMaterial? R_AllocRendColors(realNumVertices) : 0;
+    Vector4f *colorCoords        = !skyMaskedMaterial? R_AllocRendColors(realNumVertices) : 0;
     Vector2f *primaryCoords  = R_AllocRendTexCoords(realNumVertices);
     Vector2f *interCoords    = interRTU? R_AllocRendTexCoords(realNumVertices) : 0;
 
@@ -841,15 +837,15 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
     if(isWall)
     {
         // Primary texture coordinates.
-        quadTexCoords(primaryCoords, rvertices, p.wall.sectionWidth, *p.texTL);
+        quadTexCoords(primaryCoords, posCoords, p.wall.sectionWidth, *p.texTL);
 
         // Blend texture coordinates.
         if(interRTU && !drawAsVisSprite)
-            quadTexCoords(interCoords, rvertices, p.wall.sectionWidth, *p.texTL);
+            quadTexCoords(interCoords, posCoords, p.wall.sectionWidth, *p.texTL);
 
         // Shiny texture coordinates.
         if(shinyRTU && !drawAsVisSprite)
-            quadShinyTexCoords(shinyTexCoords, &rvertices[1], &rvertices[2], p.wall.sectionWidth);
+            quadShinyTexCoords(shinyTexCoords, &posCoords[1], &posCoords[2], p.wall.sectionWidth);
 
         // First light texture coordinates.
         if(modTex && RL_IsMTexLights())
@@ -859,30 +855,25 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
     {
         for(uint i = 0; i < numVertices; ++i)
         {
-            rvertex_t const &vtx = rvertices[i];
-
-            float const xyz[3] = {
-                vtx.pos[VX] - float(p.texTL->x),
-                vtx.pos[VY] - float(p.texTL->y),
-                vtx.pos[VZ] - float(p.texTL->z)
-            };
+            Vector3f const &vtx = posCoords[i];
+            Vector3f const delta(vtx - Vector3f(*p.texTL));
 
             // Primary texture coordinates.
             if(primaryRTU)
             {
-                primaryCoords[i] = Vector2f(xyz[VX], -xyz[VY]);
+                primaryCoords[i] = Vector2f(delta.x, -delta.y);
             }
 
             // Blend primary texture coordinates.
             if(interRTU)
             {
-                interCoords[i] = Vector2f(xyz[VX], -xyz[VY]);
+                interCoords[i] = Vector2f(delta.x, -delta.y);
             }
 
             // Shiny texture coordinates.
             if(shinyRTU)
             {
-                flatShinyTexCoords(&shinyTexCoords[i], vtx.pos);
+                flatShinyTexCoords(&shinyTexCoords[i], vtx);
             }
 
             // First light texture coordinates.
@@ -891,8 +882,8 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
                 float const width  = p.texBR->x - p.texTL->x;
                 float const height = p.texBR->y - p.texTL->y;
 
-                modCoords[i] = Vector2f(((p.texBR->x - vtx.pos[VX]) / width  * modTexSt[0][0]) + (xyz[VX] / width  * modTexSt[0][1]),
-                                        ((p.texBR->y - vtx.pos[VY]) / height * modTexSt[1][0]) + (xyz[VY] / height * modTexSt[1][1]));
+                modCoords[i] = Vector2f(((p.texBR->x - vtx.x) / width  * modTexSt[0][0]) + (delta.x / width  * modTexSt[0][1]),
+                                        ((p.texBR->y - vtx.y) / height * modTexSt[1][0]) + (delta.y / height * modTexSt[1][1]));
             }
         }
     }
@@ -904,7 +895,7 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
         {
             // Uniform color. Apply to all vertices.
             float glowStrength = currentSectorLightLevel + (levelFullBright? 1 : p.glowing);
-            Rend_VertexColorsGlow(rcolors, numVertices, glowStrength);
+            Rend_VertexColorsGlow(colorCoords, numVertices, glowStrength);
         }
         else
         {
@@ -915,33 +906,33 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
                 Map &map = p.elem->map();
                 if(map.hasLightGrid())
                 {
-                    rvertex_t const *vtx = rvertices;
-                    Vector4f *color = rcolors;
-                    for(uint i = 0; i < numVertices; ++i, vtx++, color++)
+                    Vector3f const *posIt = posCoords;
+                    Vector4f *colorIt = colorCoords;
+                    for(uint i = 0; i < numVertices; ++i, posIt++, colorIt++)
                     {
-                        Vector3d surfacePoint(vtx->pos[VX], vtx->pos[VY], vtx->pos[VZ]);
-                        *color = map.lightGrid().evaluate(surfacePoint);
+                        *colorIt = map.lightGrid().evaluate(*posIt);
                     }
                 }
 
                 // Apply shadow bias contributions.
                 if(p.elem->type() == DMU_BSPLEAF)
                 {
-                    p.elem->as<BspLeaf>()->lightBiasPoly(p.subElemIndex, rvertices, rcolors);
+                    p.elem->as<BspLeaf>()->lightBiasPoly(p.subElemIndex, posCoords, colorCoords);
                 }
                 else
                 {
-                    p.elem->as<Segment>()->lightBiasPoly(p.subElemIndex, rvertices, rcolors);
+                    p.elem->as<Segment>()->lightBiasPoly(p.subElemIndex, posCoords, colorCoords);
                 }
 
                 if(p.glowing > 0)
                 {
                     static const Vector3f saturated(1, 1, 1);
-                    float glow = p.glowing;
-                    for(uint i = 0; i < numVertices; ++i)
+                    float const glow = p.glowing;
+                    Vector4f *colorIt = colorCoords;
+                    for(uint i = 0; i < numVertices; ++i, colorIt++)
                     {
-                        rcolors[i] = (Vector3f(rcolors[i]) + Vector3f(glow, glow, glow))
-                                    .min(saturated); // clamp
+                        *colorIt = (Vector3f(*colorIt) + Vector3f(glow, glow, glow))
+                                   .min(saturated); // clamp
                     }
                 }
             }
@@ -958,14 +949,14 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
 
                     if(isWall && llL != llR)
                     {
-                        lightVertex(rcolors[0], rvertices[0], llL, vColor);
-                        lightVertex(rcolors[1], rvertices[1], llL, vColor);
-                        lightVertex(rcolors[2], rvertices[2], llR, vColor);
-                        lightVertex(rcolors[3], rvertices[3], llR, vColor);
+                        lightVertex(colorCoords[0], posCoords[0], llL, vColor);
+                        lightVertex(colorCoords[1], posCoords[1], llL, vColor);
+                        lightVertex(colorCoords[2], posCoords[2], llR, vColor);
+                        lightVertex(colorCoords[3], posCoords[3], llR, vColor);
                     }
                     else
                     {
-                        lightVertices(numVertices, rcolors, rvertices, llL, vColor);
+                        lightVertices(numVertices, colorCoords, posCoords, llL, vColor);
                     }
                 }
                 else
@@ -973,14 +964,14 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
                     // Use sector light+color only.
                     if(isWall && llL != llR)
                     {
-                        lightVertex(rcolors[0], rvertices[0], llL, currentSectorLightColor);
-                        lightVertex(rcolors[1], rvertices[1], llL, currentSectorLightColor);
-                        lightVertex(rcolors[2], rvertices[2], llR, currentSectorLightColor);
-                        lightVertex(rcolors[3], rvertices[3], llR, currentSectorLightColor);
+                        lightVertex(colorCoords[0], posCoords[0], llL, currentSectorLightColor);
+                        lightVertex(colorCoords[1], posCoords[1], llL, currentSectorLightColor);
+                        lightVertex(colorCoords[2], posCoords[2], llR, currentSectorLightColor);
+                        lightVertex(colorCoords[3], posCoords[3], llR, currentSectorLightColor);
                     }
                     else
                     {
-                        lightVertices(numVertices, rcolors, rvertices, llL, currentSectorLightColor);
+                        lightVertices(numVertices, colorCoords, posCoords, llL, currentSectorLightColor);
                     }
                 }
 
@@ -990,15 +981,15 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
                     // Blend sector light+color+surfacecolor
                     Vector3f vColor = (*p.wall.surfaceColor2) * currentSectorLightColor;
 
-                    lightVertex(rcolors[0], rvertices[0], llL, vColor);
-                    lightVertex(rcolors[2], rvertices[2], llR, vColor);
+                    lightVertex(colorCoords[0], posCoords[0], llL, vColor);
+                    lightVertex(colorCoords[2], posCoords[2], llR, vColor);
                 }
             }
 
             // Apply torch light?
             if(viewPlayer->shared.fixedColorMap)
             {
-                torchLightVertices(numVertices, rcolors, rvertices);
+                torchLightVertices(numVertices, colorCoords, posCoords);
             }
         }
 
@@ -1009,13 +1000,13 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
             for(uint i = 0; i < numVertices; ++i)
             {
                 Vector4f &color = shinyColors[i];
-                color = Vector3f(rcolors[i]).max(minColor);
+                color = Vector3f(colorCoords[i]).max(minColor);
                 color.w = shinyRTU->opacity;
             }
         }
 
         // Apply uniform alpha.
-        Rend_VertexColorsAlpha(rcolors, numVertices, p.alpha);
+        Rend_VertexColorsAlpha(colorCoords, numVertices, p.alpha);
     }
 
     if(useLights || useShadows)
@@ -1028,9 +1019,9 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
         float avgLightlevel = 0;
         for(uint i = 0; i < numVertices; ++i)
         {
-            avgLightlevel += rcolors[i].x;
-            avgLightlevel += rcolors[i].y;
-            avgLightlevel += rcolors[i].z;
+            avgLightlevel += colorCoords[i].x;
+            avgLightlevel += colorCoords[i].y;
+            avgLightlevel += colorCoords[i].z;
         }
         avgLightlevel /= numVertices * 3;
 
@@ -1053,11 +1044,11 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
          * This is needed because all masked polys must be sorted (sprites
          * are masked polys). Otherwise there will be artifacts.
          */
-        Rend_AddMaskedPoly(rvertices, rcolors, p.wall.sectionWidth, &ms.materialVariant(),
+        Rend_AddMaskedPoly(posCoords, colorCoords, p.wall.sectionWidth, &ms.materialVariant(),
                            *p.materialOrigin, p.blendMode, p.lightListIdx, p.glowing);
 
         R_FreeRendTexCoords(primaryCoords);
-        R_FreeRendColors(rcolors);
+        R_FreeRendColors(colorCoords);
         R_FreeRendTexCoords(interCoords);
         R_FreeRendTexCoords(modCoords);
         R_FreeRendTexCoords(shinyTexCoords);
@@ -1072,7 +1063,7 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
         renderlightprojectionparams_t parm;
 
         zap(parm);
-        parm.rvertices       = rvertices;
+        parm.rvertices       = posCoords;
         parm.numVertices     = numVertices;
         parm.realNumVertices = realNumVertices;
         parm.lastIdx         = 0;
@@ -1094,7 +1085,7 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
         rendershadowprojectionparams_t parm;
 
         zap(parm);
-        parm.rvertices       = rvertices;
+        parm.rvertices       = posCoords;
         parm.numVertices     = numVertices;
         parm.realNumVertices = realNumVertices;
         parm.texTL           = p.texTL;
@@ -1158,24 +1149,24 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
          * color.
          */
 
-        rvertex_t origVerts[4];
-        std::memcpy(origVerts, rvertices, sizeof(origVerts));
+        Vector3f origVerts[4];
+        std::memcpy(origVerts, posCoords, sizeof(origVerts));
 
         Vector2f origTexCoords[4];
         std::memcpy(origTexCoords, primaryCoords, sizeof(origTexCoords));
 
         Vector4f origColors[4];
-        if(rcolors || shinyColors)
+        if(colorCoords || shinyColors)
         {
-            std::memcpy(origColors, rcolors, sizeof(origColors));
+            std::memcpy(origColors, colorCoords, sizeof(origColors));
         }
 
-        R_DivVerts(rvertices, origVerts, leftEdge, rightEdge);
+        R_DivVerts(posCoords, origVerts, leftEdge, rightEdge);
         R_DivTexCoords(primaryCoords, origTexCoords, leftEdge, rightEdge);
 
-        if(rcolors)
+        if(colorCoords)
         {
-            R_DivVertColors(rcolors, origColors, leftEdge, rightEdge);
+            R_DivVertColors(colorCoords, origColors, leftEdge, rightEdge);
         }
 
         if(interCoords)
@@ -1208,8 +1199,8 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
 
         RL_AddPolyWithCoordsModulationReflection(PT_FAN, p.flags | (hasDynlights? RPF_HAS_DYNLIGHTS : 0),
                                                  3 + rightEdge.divisionCount(),
-                                                 rvertices + 3 + leftEdge.divisionCount(),
-                                                 rcolors? rcolors + 3 + leftEdge.divisionCount() : 0,
+                                                 posCoords + 3 + leftEdge.divisionCount(),
+                                                 colorCoords? colorCoords + 3 + leftEdge.divisionCount() : 0,
                                                  primaryCoords + 3 + leftEdge.divisionCount(),
                                                  interCoords? interCoords + 3 + leftEdge.divisionCount() : 0,
                                                  modTex, &modColor, modCoords? modCoords + 3 + leftEdge.divisionCount() : 0,
@@ -1219,7 +1210,7 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
 
         RL_AddPolyWithCoordsModulationReflection(PT_FAN, p.flags | (hasDynlights? RPF_HAS_DYNLIGHTS : 0),
                                                  3 + leftEdge.divisionCount(),
-                                                 rvertices, rcolors, primaryCoords, interCoords,
+                                                 posCoords, colorCoords, primaryCoords, interCoords,
                                                  modTex, &modColor, modCoords,
                                                  shinyColors, shinyTexCoords,
                                                  shinyMaskRTU? primaryCoords : 0);
@@ -1228,7 +1219,7 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
     {
         RL_AddPolyWithCoordsModulationReflection(isWall? PT_TRIANGLE_STRIP : PT_FAN,
                                                  p.flags | (hasDynlights? RPF_HAS_DYNLIGHTS : 0),
-                                                 numVertices, rvertices, rcolors,
+                                                 numVertices, posCoords, colorCoords,
                                                  primaryCoords, interCoords,
                                                  modTex, &modColor, modCoords,
                                                  shinyColors, shinyTexCoords, shinyMaskRTU? primaryCoords : 0);
@@ -1238,7 +1229,7 @@ static bool renderWorldPoly(rvertex_t *rvertices, uint numVertices,
     R_FreeRendTexCoords(interCoords);
     R_FreeRendTexCoords(modCoords);
     R_FreeRendTexCoords(shinyTexCoords);
-    R_FreeRendColors(rcolors);
+    R_FreeRendColors(colorCoords);
     R_FreeRendColors(shinyColors);
 
     return (p.forceOpaque || skyMaskedMaterial ||
@@ -1527,34 +1518,27 @@ static void writeWallSection(Segment &segment, int section,
             currentSectorLightLevel = side.sector().lightLevel();
         }
 
-        // Allocate enough vertices for the divisions too.
-        rvertex_t *rvertices;
+        // Allocate position coordinates.
+        Vector3f *posCoords;
         if(leftEdge.divisionCount() || rightEdge.divisionCount())
         {
-            // Use two fans.
-            rvertices = R_AllocRendVertices(3 + leftEdge.divisionCount() +
+            // Two fans plus edge divisions.
+            posCoords = R_AllocRendVertices(3 + leftEdge.divisionCount() +
                                             3 + rightEdge.divisionCount());
         }
         else
         {
-            // Use a quad.
-            rvertices = R_AllocRendVertices(4);
+            // One quad.
+            posCoords = R_AllocRendVertices(4);
         }
 
-        // Vertex coords.
-        rvertex_t &bottomLeft  = rvertices[0];
-        rvertex_t &topLeft     = rvertices[1];
-        rvertex_t &bottomRight = rvertices[2];
-        rvertex_t &topRight    = rvertices[3];
-
-        V3f_Set(bottomLeft.pos,   leftEdge.bottom().origin().x,  leftEdge.bottom().origin().y,  leftEdge.bottom().origin().z);
-        V3f_Set(   topLeft.pos,      leftEdge.top().origin().x,     leftEdge.top().origin().y,     leftEdge.top().origin().z);
-
-        V3f_Set(bottomRight.pos, rightEdge.bottom().origin().x, rightEdge.bottom().origin().y, rightEdge.bottom().origin().z);
-        V3f_Set(   topRight.pos,    rightEdge.top().origin().x,    rightEdge.top().origin().y,    rightEdge.top().origin().z);
+        posCoords[0] =  leftEdge.bottom().origin();
+        posCoords[1] =     leftEdge.top().origin();
+        posCoords[2] = rightEdge.bottom().origin();
+        posCoords[3] =    rightEdge.top().origin();
 
         // Draw this section.
-        wroteOpaque = renderWorldPoly(rvertices, 4, parm, ms);
+        wroteOpaque = renderWorldPoly(posCoords, 4, parm, ms);
         if(wroteOpaque)
         {
             // Render FakeRadio for this section?
@@ -1579,7 +1563,7 @@ static void writeWallSection(Segment &segment, int section,
             currentSectorLightLevel = currentBspLeaf->sector().lightLevel();
         }
 
-        R_FreeRendVertices(rvertices);
+        R_FreeRendVertices(posCoords);
     }
 
     if(retWroteOpaque) *retWroteOpaque = wroteOpaque && !didNearFade;
@@ -1601,7 +1585,7 @@ static void writeWallSection(Segment &segment, int section,
  * @return  Number of built vertices (same as written to @a vertsSize).
  */
 static uint buildLeafPlaneGeometry(BspLeaf const &leaf, ClockDirection direction,
-    coord_t height, rvertex_t **verts, uint *vertsSize)
+    coord_t height, Vector3f **verts, uint *vertsSize)
 {
     DENG_ASSERT(!leaf.isDegenerate());
     DENG_ASSERT(verts != 0);
@@ -1616,7 +1600,7 @@ static uint buildLeafPlaneGeometry(BspLeaf const &leaf, ClockDirection direction
     int n = 0;
     if(!fanBase)
     {
-        V3f_Set((*verts)[n].pos, face.center().x, face.center().y, height);
+        (*verts)[n] = Vector3f(face.center().x, face.center().y, height);
         n++;
     }
 
@@ -1625,14 +1609,14 @@ static uint buildLeafPlaneGeometry(BspLeaf const &leaf, ClockDirection direction
     HEdge *node = baseNode;
     do
     {
-        V3f_Set((*verts)[n].pos, node->origin().x, node->origin().y, height);
+        (*verts)[n] = Vector3f(node->origin().x, node->origin().y, height);
         n++;
     } while((node = &node->neighbor(direction)) != baseNode);
 
     // The last vertex is always equal to the first.
     if(!fanBase)
     {
-        V3f_Set((*verts)[n].pos, face.hedge()->origin().x, face.hedge()->origin().y, height);
+        (*verts)[n] = Vector3f(face.hedge()->origin().x, face.hedge()->origin().y, height);
     }
 
     if(vertsSize) *vertsSize = totalVerts;
@@ -1730,7 +1714,7 @@ static void writeLeafPlane(Plane &plane)
     }
 
     uint numVertices;
-    rvertex_t *rvertices;
+    Vector3f *rvertices;
     buildLeafPlaneGeometry(*leaf, (plane.indexInSector() == Sector::Ceiling)? Anticlockwise : Clockwise,
                            plane.visHeight(),
                            &rvertices, &numVertices);
@@ -1785,7 +1769,7 @@ static void writeLeafPlane(Plane &plane)
     R_FreeRendVertices(rvertices);
 }
 
-static void writeSkyFixStrip(int numElements, rvertex_t const *positions,
+static void writeSkyFixStrip(int numElements, Vector3f const *positions,
     Vector2f const *texcoords, Material *material)
 {
     DENG_ASSERT(positions != 0);
@@ -1967,7 +1951,7 @@ static void writeLeafSkyMaskCap(int skyCap)
     if(devRendSkyMode) return;
     if(!skyCap) return;
 
-    rvertex_t *verts;
+    Vector3f *verts;
     uint numVerts;
     buildLeafPlaneGeometry(*bspLeaf, (skyCap & SKYCAP_UPPER)? Anticlockwise : Clockwise,
                            skyPlaneZ(bspLeaf, skyCap),

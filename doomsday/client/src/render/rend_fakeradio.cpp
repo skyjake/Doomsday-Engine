@@ -974,32 +974,32 @@ static void setSideShadowParams(rendershadowseg_params_t *p, float shadowSize,
     }
 }
 
-static void quadTexCoords(Vector2f *tc, rvertex_t const *rverts, float wallLength,
+static void quadTexCoords(Vector2f *tc, Vector3f const *rverts, float wallLength,
     Vector3f const &texTopLeft, Vector3f const &texBottomRight,
     Vector2f const &texOrigin, Vector2f const &texDimensions, bool horizontal)
 {
     if(horizontal)
     {
         // Special horizontal coordinates for wall shadows.
-        tc[0].x = tc[2].x = rverts[0].pos[VX] - texTopLeft.x + texOrigin.y / texDimensions.y;
-        tc[0].y = tc[1].y = rverts[0].pos[VY] - texTopLeft.y + texOrigin.x / texDimensions.x;
+        tc[0].x = tc[2].x = rverts[0].x - texTopLeft.x + texOrigin.y / texDimensions.y;
+        tc[0].y = tc[1].y = rverts[0].y - texTopLeft.y + texOrigin.x / texDimensions.x;
 
-        tc[1].x = tc[0].x + (rverts[1].pos[VZ] - texBottomRight.z) / texDimensions.y;
-        tc[3].x = tc[0].x + (rverts[3].pos[VZ] - texBottomRight.z) / texDimensions.y;
+        tc[1].x = tc[0].x + (rverts[1].z - texBottomRight.z) / texDimensions.y;
+        tc[3].x = tc[0].x + (rverts[3].z - texBottomRight.z) / texDimensions.y;
         tc[3].y = tc[0].y + wallLength / texDimensions.x;
         tc[2].y = tc[0].y + wallLength / texDimensions.x;
         return;
     }
 
-    tc[0].x = tc[1].x = rverts[0].pos[VX] - texTopLeft.x + texOrigin.x / texDimensions.x;
-    tc[3].y = tc[1].y = rverts[0].pos[VY] - texTopLeft.y + texOrigin.y / texDimensions.y;
+    tc[0].x = tc[1].x = rverts[0].x - texTopLeft.x + texOrigin.x / texDimensions.x;
+    tc[3].y = tc[1].y = rverts[0].y - texTopLeft.y + texOrigin.y / texDimensions.y;
 
     tc[3].x = tc[2].x = tc[0].x + wallLength / texDimensions.x;
-    tc[2].y = tc[3].y + (rverts[1].pos[VZ] - rverts[0].pos[VZ]) / texDimensions.y;
-    tc[0].y = tc[3].y + (rverts[3].pos[VZ] - rverts[2].pos[VZ]) / texDimensions.y;
+    tc[2].y = tc[3].y + (rverts[1].z - rverts[0].z) / texDimensions.y;
+    tc[0].y = tc[3].y + (rverts[3].z - rverts[2].z) / texDimensions.y;
 }
 
-static void drawWallSectionShadow(rvertex_t const *origVertices,
+static void drawWallSectionShadow(Vector3f const *origVertices,
     WallEdge const &leftEdge, WallEdge const &rightEdge,
     rendershadowseg_params_t const &wsParms)
 {
@@ -1037,7 +1037,7 @@ static void drawWallSectionShadow(rvertex_t const *origVertices,
              * color.
              */
 
-            rvertex_t *rvertices = R_AllocRendVertices(realNumVertices);
+            Vector3f *rvertices = R_AllocRendVertices(realNumVertices);
 
             Vector2f origTexCoords[4];
             std::memcpy(origTexCoords, rtexcoords, sizeof(Vector2f) * 4);
@@ -1100,23 +1100,16 @@ void Rend_RadioWallSection(WallEdge const &leftEdge, WallEdge const &rightEdge,
     bool const haveBottomShadower = Rend_RadioPlaneCastsShadow(frontSec->floor());
     bool const haveTopShadower    = Rend_RadioPlaneCastsShadow(frontSec->ceiling());
 
-    rvertex_t rvertices[4];
-    // Bottom Left.
-    V3f_Set(rvertices[0].pos, leftEdge.bottom().origin().x,
-                              leftEdge.bottom().origin().y,
-                              leftEdge.bottom().origin().z);
-    // Top Left.
-    V3f_Set(rvertices[1].pos, leftEdge.top().origin().x,
-                              leftEdge.top().origin().y,
-                              leftEdge.top().origin().z);
-    // Bottom Right.
-    V3f_Set(rvertices[2].pos, rightEdge.bottom().origin().x,
-                              rightEdge.bottom().origin().y,
-                              rightEdge.bottom().origin().z);
-    // Top Right.
-    V3f_Set(rvertices[3].pos, rightEdge.top().origin().x,
-                              rightEdge.top().origin().y,
-                              rightEdge.top().origin().z);
+    Vector3f rvertices[4] = {
+        // Bottom left.
+        Vector3f( leftEdge.bottom().origin().x,  leftEdge.bottom().origin().y,  leftEdge.bottom().origin().z),
+        // Top left.
+        Vector3f(    leftEdge.top().origin().x,     leftEdge.top().origin().y,     leftEdge.top().origin().z),
+        // Bottom right.
+        Vector3f(rightEdge.bottom().origin().x, rightEdge.bottom().origin().y, rightEdge.bottom().origin().z),
+        // Top right.
+        Vector3f(   rightEdge.top().origin().x,    rightEdge.top().origin().y,    rightEdge.top().origin().z)
+    };
 
     // Top Shadow?
     if(haveTopShadower)
@@ -1201,29 +1194,21 @@ static void writeShadowSection2(ShadowEdge const &leftEdge, ShadowEdge const &ri
     uint winding = (rightEdge.length() > leftEdge.length()? 1 : 0);
     uint const *idx = (isFloor ? floorIndices[winding] : ceilIndices[winding]);
 
-    rvertex_t rvertices[4];
+    Vector3f rvertices[4];
+
+    // Left outer.
+    rvertices[idx[0]] = leftEdge.outer();
+
+    // Right outer.
+    rvertices[idx[1]] = rightEdge.outer();
+
+    // Right inner.
+    rvertices[idx[2]] = rightEdge.inner();
+
+    // Left inner.
+    rvertices[idx[3]] = leftEdge.inner();
+
     Vector4f rcolors[4];
-
-    // Left outer corner.
-    rvertices[idx[0]].pos[VX] = leftEdge.outer().x;
-    rvertices[idx[0]].pos[VY] = leftEdge.outer().y;
-    rvertices[idx[0]].pos[VZ] = leftEdge.outer().z;
-
-    // Right outer corner.
-    rvertices[idx[1]].pos[VX] = rightEdge.outer().x;
-    rvertices[idx[1]].pos[VY] = rightEdge.outer().y;
-    rvertices[idx[1]].pos[VZ] = rightEdge.outer().z;
-
-    // Right inner corner.
-    rvertices[idx[2]].pos[VX] = rightEdge.inner().x;
-    rvertices[idx[2]].pos[VY] = rightEdge.inner().y;
-    rvertices[idx[2]].pos[VZ] = rightEdge.inner().z;
-
-    // Left inner corner.
-    rvertices[idx[3]].pos[VX] = leftEdge.inner().x;
-    rvertices[idx[3]].pos[VY] = leftEdge.inner().y;
-    rvertices[idx[3]].pos[VZ] = leftEdge.inner().z;
-
     if(renderWireframe)
     {
         // Draw shadow geometry white to assist visual debugging.

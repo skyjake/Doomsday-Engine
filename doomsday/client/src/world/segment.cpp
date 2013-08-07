@@ -297,13 +297,12 @@ void Segment::applyBiasDigest(BiasDigest &changes)
     }
 }
 
-void Segment::lightBiasPoly(int group, rvertex_t const *positions, Vector4f *colors)
+void Segment::lightBiasPoly(int group, Vector3f const *posCoords, Vector4f *colorCoords)
 {
-    int const sectionIndex = group;
-
     DENG_ASSERT(hasLineSide()); // sanity check
-    DENG_ASSERT(positions != 0 && colors != 0);
+    DENG_ASSERT(posCoords != 0 && colorCoords != 0);
 
+    int const sectionIndex   = group;
     GeometryGroup *geomGroup = d->geometryGroup(sectionIndex);
 
     // Should we update?
@@ -313,15 +312,13 @@ void Segment::lightBiasPoly(int group, rvertex_t const *positions, Vector4f *col
     }
 
     Surface const &surface = d->lineSide->surface(sectionIndex);
-    uint biasTime = map().biasCurrentTime();
+    uint const biasTime = map().biasCurrentTime();
 
-    rvertex_t const *vtx = positions;
-    Vector4f *color      = colors;
-    for(int i = 0; i < geomGroup->biasIllums.count(); ++i, vtx++, color++)
+    Vector3f const *posIt = posCoords;
+    Vector4f *colorIt     = colorCoords;
+    for(int i = 0; i < geomGroup->biasIllums.count(); ++i, posIt++, colorIt++)
     {
-        Vector3d surfacePoint(vtx->pos[VX], vtx->pos[VY], vtx->pos[VZ]);
-        *color += geomGroup->biasIllums[i]
-                      .evaluate(surfacePoint, surface.normal(), biasTime);
+        *colorIt += geomGroup->biasIllums[i].evaluate(*posIt, surface.normal(), biasTime);
     }
 
     // Any changes from contributors will have now been applied.

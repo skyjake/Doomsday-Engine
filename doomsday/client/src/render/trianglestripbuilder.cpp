@@ -87,8 +87,8 @@ void TriangleStripBuilder::extend(AbstractEdge &edge)
 
     d->reserveElements(2);
 
-    d->positions->append(rvertex_t((d->direction == Anticlockwise? to : from).origin()));
-    d->positions->append(rvertex_t((d->direction == Anticlockwise? from : to).origin()));
+    d->positions->append((d->direction == Anticlockwise? to : from).origin());
+    d->positions->append((d->direction == Anticlockwise? from : to).origin());
 
     if(d->buildTexCoords)
     {

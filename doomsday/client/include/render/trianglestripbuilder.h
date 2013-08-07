@@ -25,8 +25,6 @@
 #include <de/libdeng2.h>
 #include <de/Vector>
 
-#include "render/rendpoly.h" /// @todo Remove me
-
 namespace de {
 
 /**
@@ -112,7 +110,7 @@ public:
 
         virtual Vector3d origin() const = 0;
 
-        inline coord_t z() const { return origin().z; }
+        inline double z() const { return origin().z; }
     };
 
 public:
@@ -146,7 +144,7 @@ private:
 
 namespace de {
 
-typedef QVarLengthArray<rvertex_t, 24> PositionBuffer;
+typedef QVarLengthArray<Vector3f, 24> PositionBuffer;
 typedef QVarLengthArray<Vector2f, 24> TexCoordBuffer;
 
 /**
@@ -158,7 +156,7 @@ typedef QVarLengthArray<Vector2f, 24> TexCoordBuffer;
  *
  * @todo Separate the backing store with an external allocator mechanism.
  *       (Geometry should not be owned by the builder.)
- * @todo Support custom vertex types/do not depend on rvertex_t (etc...).
+ * @todo Support custom vertex types.
  *       (Once implemented move this component to libgui.)
  * @todo Support building strips by adding single vertices.
  */

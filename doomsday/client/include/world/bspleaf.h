@@ -280,11 +280,12 @@ public:
      *
      * @important It is assumed there are least @ref numFanVertices() elements!
      *
-     * @param group      Geometry group identifier.
-     * @param positions  World coordinates for each vertex.
-     * @param colors     Final lighting values will be written here.
+     * @param group        Geometry group identifier.
+     * @param posCoords    World coordinates for each vertex.
+     * @param colorCoords  Final lighting values will be written here.
      */
-    void lightBiasPoly(int group, rvertex_t const *positions, de::Vector4f *colors);
+    void lightBiasPoly(int group, de::Vector3f const *posCoords,
+                       de::Vector4f *colorCoords);
 
     void updateBiasAfterGeometryMove(int group);
 

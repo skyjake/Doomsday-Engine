@@ -146,7 +146,7 @@ void RL_Rtu_SetTextureUnmanaged(uint idx, DGLuint glName, int wrapS, int wrapT);
  *                vertices of the primitive.
  */
 void RL_AddPolyWithCoordsModulationReflection(primtype_t primType, int flags,
-    uint numElements, const rvertex_t* vertices, const de::Vector4f* colors,
+    uint numElements, const de::Vector3f* vertices, const de::Vector4f* colors,
     const de::Vector2f* primaryCoords, const de::Vector2f* interCoords,
     DGLuint modTex, const de::Vector4f* modColor, const de::Vector2f* modCoords,
     const de::Vector4f* reflectionColors, const de::Vector2f* reflectionCoords,
@@ -160,7 +160,7 @@ void RL_AddPolyWithCoordsModulationReflection(primtype_t primType, int flags,
  *                vertices of the primitive.
  */
 void RL_AddPolyWithCoordsModulation(primtype_t primType, int flags,
-    uint numElements, const rvertex_t* vertices, const de::Vector4f* colors,
+    uint numElements, const de::Vector3f* vertices, const de::Vector4f* colors,
     const de::Vector2f* primaryCoords, const de::Vector2f* interCoords,
     DGLuint modTex, const de::Vector4f* modColor, const de::Vector2f* modCoords);
 
@@ -172,7 +172,7 @@ void RL_AddPolyWithCoordsModulation(primtype_t primType, int flags,
  *                vertices of the primitive.
  */
 void RL_AddPolyWithCoords(primtype_t primType, int flags, uint numElements,
-    const rvertex_t* vertices, const de::Vector4f* colors,
+    const de::Vector3f* vertices, const de::Vector4f* colors,
     const de::Vector2f* primaryCoords, const de::Vector2f* interCoords);
 
 /**
@@ -183,7 +183,7 @@ void RL_AddPolyWithCoords(primtype_t primType, int flags, uint numElements,
  *                vertices of the primitive.
  */
 void RL_AddPolyWithModulation(primtype_t primType, int flags, uint numElements,
-    const rvertex_t* vertices, const de::Vector4f* colors,
+    const de::Vector3f* vertices, const de::Vector4f* colors,
     DGLuint modTex, const de::Vector4f* modColor, const de::Vector2f* modCoords);
 
 /**
@@ -194,7 +194,7 @@ void RL_AddPolyWithModulation(primtype_t primType, int flags, uint numElements,
  *                vertices of the primitive.
  */
 void RL_AddPoly(primtype_t primType, int flags, uint numElements,
-    const rvertex_t* vertices, const de::Vector4f* colors);
+    const de::Vector3f* vertices, const de::Vector4f* colors);
 
 void RL_RenderAllLists(void);
 

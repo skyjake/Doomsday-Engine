@@ -43,12 +43,12 @@ public:
      * Perform lighting for the supplied geometry. The derived class wil define
      * how these vertices map to bias illumination points.
      *
-     * @param geomGroup  Geometry group identifier.
-     * @param positions  World coordinates for each vertex.
-     * @param colors     Final lighting values will be written here.
+     * @param group        Geometry group identifier.
+     * @param posCoords    World coordinates for each vertex.
+     * @param colorCoords  Final lighting values will be written here.
      */
-    virtual void lightBiasPoly(int geomGroup, rvertex_t const *positions,
-                               de::Vector4f *colors) = 0;
+    virtual void lightBiasPoly(int group, de::Vector3f const *posCoords,
+                               de::Vector4f *colorCoords) = 0;
 
     /**
      * Schedule a lighting update to a geometry group following a move of some

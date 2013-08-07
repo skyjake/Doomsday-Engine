@@ -24,12 +24,10 @@
 
 #include "WallEdge"
 
-#include "render/rendpoly.h" // r_vertex_t
-
 /// Paramaters for Rend_RenderLightProjections (POD).
 typedef struct {
     uint lastIdx;
-    rvertex_t const *rvertices;
+    de::Vector3f const *rvertices;
     uint numVertices, realNumVertices;
     de::Vector3d const *texTL;
     de::Vector3d const *texBR;

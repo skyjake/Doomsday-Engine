@@ -590,12 +590,11 @@ void BspLeaf::applyBiasDigest(BiasDigest &changes)
     }
 }
 
-void BspLeaf::lightBiasPoly(int group, rvertex_t const *positions, Vector4f *colors)
+void BspLeaf::lightBiasPoly(int group, Vector3f const *posCoords, Vector4f *colorCoords)
 {
-    int const planeIndex = group;
+    DENG_ASSERT(posCoords != 0 && colorCoords != 0);
 
-    DENG_ASSERT(positions != 0 && colors != 0);
-
+    int const planeIndex     = group;
     GeometryGroup *geomGroup = d->geometryGroup(planeIndex);
 
     // Should we update?
@@ -605,15 +604,13 @@ void BspLeaf::lightBiasPoly(int group, rvertex_t const *positions, Vector4f *col
     }
 
     Surface const &surface = d->sector->plane(planeIndex).surface();
-    uint biasTime = map().biasCurrentTime();
+    uint const biasTime = map().biasCurrentTime();
 
-    rvertex_t const *vtx = positions;
-    Vector4f *color      = colors;
-    for(int i = 0; i < geomGroup->biasIllums.count(); ++i, vtx++, color++)
+    Vector3f const *posIt = posCoords;
+    Vector4f *colorIt     = colorCoords;
+    for(int i = 0; i < geomGroup->biasIllums.count(); ++i, posIt++, colorIt++)
     {
-        Vector3d surfacePoint(vtx->pos[VX], vtx->pos[VY], vtx->pos[VZ]);
-        *color += geomGroup->biasIllums[i]
-                      .evaluate(surfacePoint, surface.normal(), biasTime);
+        *colorIt += geomGroup->biasIllums[i].evaluate(*posIt, surface.normal(), biasTime);
     }
 
     // Any changes from contributors will have now been applied.

@@ -34,9 +34,9 @@ static void drawDynlight(dynlight_t const &dyn, renderlightprojectionparams_t &p
     if(!(RL_IsMTexLights() && parm.lastIdx == 0))
     {
         // Allocate enough for the divisions too.
-        rvertex_t *rvertices = R_AllocRendVertices(parm.realNumVertices);
+        Vector3f *rvertices  = R_AllocRendVertices(parm.realNumVertices);
         Vector2f *rtexcoords = R_AllocRendTexCoords(parm.realNumVertices);
-        Vector4f *rcolors = R_AllocRendColors(parm.realNumVertices);
+        Vector4f *rcolors    = R_AllocRendColors(parm.realNumVertices);
         bool const mustSubdivide = (parm.isWall && (parm.wall.leftEdge->divisionCount() || parm.wall.rightEdge->divisionCount() ));
 
         for(uint i = 0; i < parm.numVertices; ++i)
@@ -62,7 +62,7 @@ static void drawDynlight(dynlight_t const &dyn, renderlightprojectionparams_t &p
                  * color.
                  */
 
-                rvertex_t origVerts[4]; std::memcpy(origVerts, parm.rvertices, sizeof(rvertex_t) * 4);
+                Vector3f origVerts[4]; std::memcpy(origVerts, parm.rvertices, sizeof(Vector3f) * 4);
                 Vector2f origTexCoords[4]; std::memcpy(origTexCoords, rtexcoords, sizeof(Vector2f) * 4);
                 Vector4f origColors[4]; std::memcpy(origColors, rcolors, sizeof(Vector4f) * 4);
 
@@ -72,7 +72,7 @@ static void drawDynlight(dynlight_t const &dyn, renderlightprojectionparams_t &p
             }
             else
             {
-                std::memcpy(rvertices, parm.rvertices, sizeof(rvertex_t) * parm.numVertices);
+                std::memcpy(rvertices, parm.rvertices, sizeof(Vector3f) * parm.numVertices);
             }
         }
         else
@@ -83,14 +83,14 @@ static void drawDynlight(dynlight_t const &dyn, renderlightprojectionparams_t &p
 
             for(uint i = 0; i < parm.numVertices; ++i)
             {
-                rtexcoords[i].x = ((parm.texBR->x - parm.rvertices[i].pos[VX]) / width * dyn.s[0]) +
-                    ((parm.rvertices[i].pos[VX] - parm.texTL->x) / width * dyn.s[1]);
+                rtexcoords[i].x = ((parm.texBR->x - parm.rvertices[i].x) / width * dyn.s[0]) +
+                    ((parm.rvertices[i].x - parm.texTL->x) / width * dyn.s[1]);
 
-                rtexcoords[i].y = ((parm.texBR->y - parm.rvertices[i].pos[VY]) / height * dyn.t[0]) +
-                    ((parm.rvertices[i].pos[VY] - parm.texTL->y) / height * dyn.t[1]);
+                rtexcoords[i].y = ((parm.texBR->y - parm.rvertices[i].y) / height * dyn.t[0]) +
+                    ((parm.rvertices[i].y - parm.texTL->y) / height * dyn.t[1]);
             }
 
-            std::memcpy(rvertices, parm.rvertices, sizeof(rvertex_t) * parm.numVertices);
+            std::memcpy(rvertices, parm.rvertices, sizeof(Vector3f) * parm.numVertices);
         }
 
         RL_LoadDefaultRtus();

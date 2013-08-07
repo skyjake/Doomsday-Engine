@@ -772,19 +772,19 @@ static void endWrite(rendlist_t *list)
 }
 
 static void writePrimitive(rendlist_t const *list, uint base,
-    rvertex_t const *rvertices, Vector2f const *coords,
+    Vector3f const *rvertices, Vector2f const *coords,
     Vector2f const *coords1, Vector2f const *coords2,
     Vector4f const *rcolors, uint numElements, rendpolytype_t type)
 {
     for(uint i = 0; i < numElements; ++i)
     {
         // Vertex.
-        rvertex_t const *rvtx = &rvertices[i];
+        Vector3f const *rvtx = &rvertices[i];
         dgl_vertex_t *vtx = &vertices[base + i];
 
-        vtx->xyz[0] = rvtx->pos[VX];
-        vtx->xyz[1] = rvtx->pos[VZ];
-        vtx->xyz[2] = rvtx->pos[VY];
+        vtx->xyz[0] = rvtx->x;
+        vtx->xyz[1] = rvtx->z;
+        vtx->xyz[2] = rvtx->y;
 
         // Sky masked polys need nothing more.
         if(type == PT_SKY_MASK) continue;
@@ -842,7 +842,7 @@ static void writePrimitive(rendlist_t const *list, uint base,
  * @pre Caller knows what they are doing. Arguments are not validity checked.
  */
 static void writePoly2(primtype_t type, rendpolytype_t polyType, int flags,
-    uint numElements, rvertex_t const *vertices, Vector4f const *colors,
+    uint numElements, Vector3f const *vertices, Vector4f const *colors,
     Vector2f const *primaryCoords, Vector2f const *interCoords,
     DGLuint modTex, Vector4f const *modColor, Vector2f const *modCoords)
 {
@@ -938,7 +938,7 @@ END_PROF( PROF_RL_ADD_POLY );
  * interface with this.
  */
 static void writePoly(primtype_t type, rendpolytype_t polyType, int flags,
-    uint numElements, rvertex_t const *vertices, Vector4f const *colors,
+    uint numElements, Vector3f const *vertices, Vector4f const *colors,
     Vector2f const *primaryCoords, Vector2f const *interCoords,
     DGLuint modTex, Vector4f const *modColor, Vector2f const *modCoords)
 {
@@ -1123,7 +1123,7 @@ static void prepareTextureUnitMapForShinyPoly()
 }
 
 void RL_AddPolyWithCoordsModulationReflection(primtype_t primType, int flags,
-    uint numElements, rvertex_t const *vertices, Vector4f const *colors,
+    uint numElements, Vector3f const *vertices, Vector4f const *colors,
     Vector2f const *primaryCoords, Vector2f const *interCoords,
     DGLuint modTex, Vector4f const *modColor, Vector2f const *modCoords,
     Vector4f const *reflectionColors, Vector2f const *reflectionCoords,
@@ -1143,7 +1143,7 @@ void RL_AddPolyWithCoordsModulationReflection(primtype_t primType, int flags,
 }
 
 void RL_AddPolyWithCoordsModulation(primtype_t primType, int flags, uint numElements,
-    rvertex_t const *vertices, Vector4f const *colors, Vector2f const *primaryCoords,
+    Vector3f const *vertices, Vector4f const *colors, Vector2f const *primaryCoords,
     Vector2f const *interCoords,
     DGLuint modTex, Vector4f const *modColor, Vector2f const *modCoords)
 {
@@ -1153,7 +1153,7 @@ void RL_AddPolyWithCoordsModulation(primtype_t primType, int flags, uint numElem
 }
 
 void RL_AddPolyWithCoords(primtype_t primType, int flags, uint numElements,
-    rvertex_t const *vertices, Vector4f const *colors,
+    Vector3f const *vertices, Vector4f const *colors,
     Vector2f const *primaryCoords, Vector2f const *interCoords)
 {
     prepareTextureUnitMap();
@@ -1162,7 +1162,7 @@ void RL_AddPolyWithCoords(primtype_t primType, int flags, uint numElements,
 }
 
 void RL_AddPolyWithModulation(primtype_t primType, int flags, uint numElements,
-    rvertex_t const *vertices, Vector4f const *colors,
+    Vector3f const *vertices, Vector4f const *colors,
     DGLuint modTex, Vector4f const *modColor, Vector2f const *modCoords)
 {
     prepareTextureUnitMap();
@@ -1170,7 +1170,7 @@ void RL_AddPolyWithModulation(primtype_t primType, int flags, uint numElements,
               vertices, colors, NULL, NULL, modTex, modColor, modCoords);
 }
 
-void RL_AddPoly(primtype_t primType, int flags, uint numElements, rvertex_t const *vertices,
+void RL_AddPoly(primtype_t primType, int flags, uint numElements, Vector3f const *vertices,
     Vector4f const *colors)
 {
     prepareTextureUnitMap();

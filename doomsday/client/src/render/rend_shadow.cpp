@@ -34,7 +34,7 @@
 using namespace de;
 
 typedef struct {
-    rvertex_t vertices[4];
+    Vector3f vertices[4];
     Vector4f colors[4];
     Vector2f texCoords[4];
 } shadowprim_t;
@@ -48,7 +48,7 @@ bool Rend_MobjShadowsEnabled()
     return (useShadows && !levelFullBright);
 }
 
-static void drawShadowPrimitive(coord_t const pos[3], coord_t radius, float alpha)
+static void drawShadowPrimitive(Vector3f const &pos, coord_t radius, float alpha)
 {
     alpha = de::clamp(0.f, alpha, 1.f);
     if(alpha <= 0) return;
@@ -56,24 +56,16 @@ static void drawShadowPrimitive(coord_t const pos[3], coord_t radius, float alph
     radius = de::min(radius, (coord_t) shadowMaxRadius);
     if(radius <= 0) return;
 
-    rs->vertices[0].pos[VX] = pos[VX] - radius;
-    rs->vertices[0].pos[VY] = pos[VY] + radius;
-    rs->vertices[0].pos[VZ] = pos[VZ] + SHADOW_ZOFFSET;
+    rs->vertices[0] = Vector3f(pos) + Vector3f(-radius,  radius, SHADOW_ZOFFSET);
     rs->colors[0].w = alpha;
 
-    rs->vertices[1].pos[VX] = pos[VX] + radius;
-    rs->vertices[1].pos[VY] = pos[VY] + radius;
-    rs->vertices[1].pos[VZ] = pos[VZ] + SHADOW_ZOFFSET;
+    rs->vertices[1] = Vector3f(pos) + Vector3f( radius,  radius, SHADOW_ZOFFSET);
     rs->colors[0].w = alpha;
 
-    rs->vertices[2].pos[VX] = pos[VX] + radius;
-    rs->vertices[2].pos[VY] = pos[VY] - radius;
-    rs->vertices[2].pos[VZ] = pos[VZ] + SHADOW_ZOFFSET;
+    rs->vertices[2] = Vector3f(pos) + Vector3f( radius, -radius, SHADOW_ZOFFSET);
     rs->colors[2].w = alpha;
 
-    rs->vertices[3].pos[VX] = pos[VX] - radius;
-    rs->vertices[3].pos[VY] = pos[VY] - radius;
-    rs->vertices[3].pos[VZ] = pos[VZ] + SHADOW_ZOFFSET;
+    rs->vertices[3] = Vector3f(pos) + Vector3f(-radius, -radius, SHADOW_ZOFFSET);
     rs->colors[3].w = alpha;
 
     RL_AddPolyWithCoords(PT_FAN, RPF_DEFAULT|RPF_SHADOW, 4,
@@ -159,7 +151,8 @@ static void processMobjShadow(mobj_t *mo)
     if(!(shadowStrength >= SHADOW_SURFACE_LUMINOSITY_ATTRIBUTION_MIN)) return;
 
     mobjOrigin[VZ] = plane->visHeight();
-    drawShadowPrimitive(mobjOrigin, shadowRadius, shadowStrength);
+    drawShadowPrimitive(Vector3f(mobjOrigin[VX], mobjOrigin[VY], mobjOrigin[VZ]),
+                        shadowRadius, shadowStrength);
 }
 
 static void initShadowPrimitive()
@@ -216,9 +209,9 @@ void Rend_RenderMobjShadows()
 static void drawShadow(shadowprojection_t const &sp, rendershadowprojectionparams_t &parm)
 {
     // Allocate enough for the divisions too.
-    rvertex_t *rvertices = R_AllocRendVertices(parm.realNumVertices);
+    Vector3f *rvertices  = R_AllocRendVertices(parm.realNumVertices);
     Vector2f *rtexcoords = R_AllocRendTexCoords(parm.realNumVertices);
-    Vector4f *rcolors = R_AllocRendColors(parm.realNumVertices);
+    Vector4f *rcolors    = R_AllocRendColors(parm.realNumVertices);
     bool const mustSubdivide = (parm.isWall && (parm.wall.leftEdge->divisionCount() || parm.wall.rightEdge->divisionCount() ));
 
     for(uint i = 0; i < parm.numVertices; ++i)
@@ -247,7 +240,7 @@ static void drawShadow(shadowprojection_t const &sp, rendershadowprojectionparam
              * color.
              */
 
-            rvertex_t origVerts[4]; std::memcpy(origVerts, parm.rvertices, sizeof(rvertex_t) * 4);
+            Vector3f origVerts[4]; std::memcpy(origVerts, parm.rvertices, sizeof(Vector3f) * 4);
             Vector2f origTexCoords[4]; std::memcpy(origTexCoords, rtexcoords, sizeof(Vector2f) * 4);
             Vector4f origColors[4]; std::memcpy(origColors, rcolors, sizeof(Vector4f) * 4);
 
@@ -257,7 +250,7 @@ static void drawShadow(shadowprojection_t const &sp, rendershadowprojectionparam
         }
         else
         {
-            std::memcpy(rvertices, parm.rvertices, sizeof(rvertex_t) * parm.numVertices);
+            std::memcpy(rvertices, parm.rvertices, sizeof(Vector3f) * parm.numVertices);
         }
     }
     else
@@ -268,14 +261,14 @@ static void drawShadow(shadowprojection_t const &sp, rendershadowprojectionparam
 
         for(uint i = 0; i < parm.numVertices; ++i)
         {
-            rtexcoords[i].x = ((parm.texBR->x - parm.rvertices[i].pos[VX]) / width * sp.s[0]) +
-                ((parm.rvertices[i].pos[VX] - parm.texTL->x) / width * sp.s[1]);
+            rtexcoords[i].x = ((parm.texBR->x - parm.rvertices[i].x) / width * sp.s[0]) +
+                ((parm.rvertices[i].x - parm.texTL->x) / width * sp.s[1]);
 
-            rtexcoords[i].y = ((parm.texBR->y - parm.rvertices[i].pos[VY]) / height * sp.t[0]) +
-                ((parm.rvertices[i].pos[VY] - parm.texTL->y) / height * sp.t[1]);
+            rtexcoords[i].y = ((parm.texBR->y - parm.rvertices[i].y) / height * sp.t[0]) +
+                ((parm.rvertices[i].y - parm.texTL->y) / height * sp.t[1]);
         }
 
-        std::memcpy(rvertices, parm.rvertices, sizeof(rvertex_t) * parm.numVertices);
+        std::memcpy(rvertices, parm.rvertices, sizeof(Vector3f) * parm.numVertices);
     }
 
     if(mustSubdivide)

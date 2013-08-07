@@ -141,58 +141,49 @@ void R_PrintRendPoolInfo(void);
 void R_InitRendPolyPools(void);
 
 /**
- * Retrieves a batch of rvertex_t.
- * Possibly allocates new if necessary.
+ * Allocate a new contiguous range of position coordinates from the specialized
+ * write-geometry pool
  *
- * @param num  The number of verts required.
- *
- * @return  Ptr to array of rvertex_t
+ * @param num  The number of coordinate sets required.
  */
-rvertex_t *R_AllocRendVertices(uint num);
+de::Vector3f *R_AllocRendVertices(uint num);
 
 /**
- * Retrieves a batch of ColorRawf.
- * Possibly allocates new if necessary.
+ * Allocate a new contiguous range of color coordinates from the specialized
+ * write-geometry pool
  *
- * @param num  The number of verts required.
- *
- * @return  Ptr to array of ColorRawf
+ * @param num  The number of coordinate sets required.
  */
 de::Vector4f *R_AllocRendColors(uint num);
 
 /**
- * Retrieves a batch of rtexcoord_t.
- * Possibly allocates new if necessary.
+ * Allocate a new contiguous range of texture coordinates from the specialized
+ * write-geometry pool
  *
- * @param num  The number required.
- *
- * @return  Ptr to array of rtexcoord_t
+ * @param num  The number of coordinate sets required.
  */
 de::Vector2f *R_AllocRendTexCoords(uint num);
 
 /**
- * Doesn't actually free anything. Instead, mark them as unused ready for
- * the next time a batch of rendvertex_t is needed.
+ * @note Doesn't actually free anything (storage is pooled for reuse).
  *
- * @param rvertices  Ptr to array of rvertex_t to mark unused.
+ * @param posCoords  Position coordinates to mark unused.
  */
-void R_FreeRendVertices(rvertex_t *rvertices);
+void R_FreeRendVertices(de::Vector3f *posCoords);
 
 /**
- * Doesn't actually free anything. Instead, mark them as unused ready for
- * the next time a batch of rendvertex_t is needed.
+ * @note Doesn't actually free anything (storage is pooled for reuse).
  *
- * @param rcolors  Ptr to array of ColorRawf to mark unused.
+ * @param colorCoords  Color coordinates to mark unused.
  */
-void R_FreeRendColors(de::Vector4f *rcolors);
+void R_FreeRendColors(de::Vector4f *colorCoords);
 
 /**
- * Doesn't actually free anything. Instead, mark them as unused ready for
- * the next time a batch of rendvertex_t is needed.
+ * @note Doesn't actually free anything (storage is pooled for reuse).
  *
- * @param rtexcoords  Ptr to array of rtexcoord_t to mark unused.
+ * @param texCoords  Texture coordinates to mark unused.
  */
-void R_FreeRendTexCoords(de::Vector2f *rtexcoords);
+void R_FreeRendTexCoords(de::Vector2f *texCoords);
 
 /// Manipulators, for convenience.
 void Rtu_Init(rtexmapunit_t *rtu);
