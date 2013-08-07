@@ -38,6 +38,7 @@ public:
     bool isConnected() const;
 
     // Qt events.
+    void changeEvent(QEvent *);
     void closeEvent(QCloseEvent *);
 
 signals:

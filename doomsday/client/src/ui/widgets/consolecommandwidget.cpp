@@ -48,10 +48,6 @@ public IGameChangeObserver
         // Popup for autocompletions.
         completions = new DocumentWidget;
         completions->setMaximumLineWidth(640);
-        completions->rule().setInput(Rule::Height,
-                                     OperatorRule::minimum(Const(400),
-                                                           completions->contentRule().height() + 2 *
-                                                           completions->margin()));
 
         popup = new PopupWidget;
         popup->set(Background(st.colors().colorf("editor.completion.background"),
@@ -59,6 +55,16 @@ public IGameChangeObserver
                               st.colors().colorf("editor.completion.glow"),
                               st.rules().rule("glow").valuei()));
         popup->setContent(completions);
+
+        // Height for the content: depends on the document height (plus margins), but at
+        // most 400; never extend outside the view, though.
+        completions->rule().setInput(Rule::Height,
+                OperatorRule::minimum(
+                    OperatorRule::minimum(st.rules().rule("editor.completion.height"),
+                                          completions->contentRule().height() +
+                                          2 * completions->margin()),
+                    self.rule().top() - st.rules().rule("gap")));
+
         self.add(popup);
     }
 
@@ -182,7 +188,8 @@ void ConsoleCommandWidget::autoCompletionBegan(String const &)
         d->completions->scrollToTop(0);
 
         // Note: this is a fixed position, so it will not be updated if the view is resized.
-        d->popup->setAnchor(Vector2i(cursorRect().middle().x, rule().top().valuei()));
+        d->popup->setAnchorX(cursorRect().middle().x);
+        d->popup->setAnchorY(rule().top());
         d->popup->open();
     }
 }

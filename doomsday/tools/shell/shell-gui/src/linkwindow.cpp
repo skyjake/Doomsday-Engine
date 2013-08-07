@@ -95,6 +95,12 @@ DENG2_PIMPL(LinkWindow)
 #endif
     }
 
+    ~Instance()
+    {
+        // Make sure the local sink is removed.
+        LogBuffer::appBuffer().removeSink(console->log().logSink());
+    }
+
     void updateStyle()
     {
         if(self.isConnected())
@@ -289,6 +295,22 @@ void LinkWindow::setTitle(const QString &title)
 bool LinkWindow::isConnected() const
 {
     return d->link && d->link->status() != Link::Disconnected;
+}
+
+void LinkWindow::changeEvent(QEvent *ev)
+{
+    if(ev->type() == QEvent::ActivationChange)
+    {
+        if(isActiveWindow())
+        {
+            // Log local messages here.
+            LogBuffer::appBuffer().addSink(d->console->log().logSink());
+        }
+        else
+        {
+            LogBuffer::appBuffer().removeSink(d->console->log().logSink());
+        }
+    }
 }
 
 void LinkWindow::closeEvent(QCloseEvent *event)

@@ -277,12 +277,31 @@ void PopupWidget::setAnchor(Vector2i const &pos)
     setAnchor(Const(pos.x), Const(pos.y));
 }
 
+void PopupWidget::setAnchorX(int xPos)
+{
+    setAnchorX(Const(xPos));
+}
+
+void PopupWidget::setAnchorY(int yPos)
+{
+    setAnchorY(Const(yPos));
+}
+
 void PopupWidget::setAnchor(Rule const &x, Rule const &y)
 {
-    releaseRef(d->anchorX);
-    releaseRef(d->anchorY);
+    setAnchorX(x);
+    setAnchorY(y);
+}
 
+void PopupWidget::setAnchorX(Rule const &x)
+{
+    releaseRef(d->anchorX);
     d->anchorX = holdRef(x);
+}
+
+void PopupWidget::setAnchorY(Rule const &y)
+{
+    releaseRef(d->anchorY);
     d->anchorY = holdRef(y);
 }
 

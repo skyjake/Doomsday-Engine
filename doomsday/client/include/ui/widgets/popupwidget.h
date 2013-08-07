@@ -46,7 +46,11 @@ public:
     GuiWidget &content() const;
 
     void setAnchor(de::Vector2i const &pos);
+    void setAnchorX(int xPos);
+    void setAnchorY(int yPos);
     void setAnchor(de::Rule const &x, de::Rule const &y);
+    void setAnchorX(de::Rule const &x);
+    void setAnchorY(de::Rule const &y);
 
     /**
      * Sets the preferred opening direction of the popup. If there isn't enough
