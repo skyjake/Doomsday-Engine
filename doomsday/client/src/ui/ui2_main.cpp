@@ -916,48 +916,56 @@ void FIData_PicThink(fi_object_t *obj)
 }
 
 #ifdef __CLIENT__
-static size_t buildGeometry(float const /*dimensions*/[3], boolean flipTextureS,
-    float const rgba[4], float const rgba2[4], rvertex_t **verts,
-    ColorRawf **colors, rtexcoord_t **coords)
+static int buildGeometry(float const /*dimensions*/[3], boolean flipTextureS,
+    Vector4f const &bottomColor, Vector4f const &topColor, Vector3f **posCoords,
+    Vector4f **colorCoords, Vector2f **texCoords)
 {
-    static rvertex_t rvertices[4];
-    static ColorRawf rcolors[4];
-    static rtexcoord_t rcoords[4];
+    static Vector3f posCoordBuf[4];
+    static Vector4f colorCoordBuf[4];
+    static Vector2f texCoordBuf[4];
 
     // 0 - 1
     // | / |  Vertex layout
     // 2 - 3
 
-    V3f_Set(rvertices[0].pos, 0, 0, 0);
-    V3f_Set(rvertices[1].pos, 1, 0, 0);
-    V3f_Set(rvertices[2].pos, 0, 1, 0);
-    V3f_Set(rvertices[3].pos, 1, 1, 0);
+    posCoordBuf[0] = Vector3f(0, 0, 0);
+    posCoordBuf[1] = Vector3f(1, 0, 0);
+    posCoordBuf[2] = Vector3f(0, 1, 0);
+    posCoordBuf[3] = Vector3f(1, 1, 0);
 
-    V2f_Set(rcoords[0].st, (flipTextureS? 1:0), 0);
-    V2f_Set(rcoords[1].st, (flipTextureS? 0:1), 0);
-    V2f_Set(rcoords[2].st, (flipTextureS? 1:0), 1);
-    V2f_Set(rcoords[3].st, (flipTextureS? 0:1), 1);
+    texCoordBuf[0] = Vector2f((flipTextureS? 1:0), 0);
+    texCoordBuf[1] = Vector2f((flipTextureS? 0:1), 0);
+    texCoordBuf[2] = Vector2f((flipTextureS? 1:0), 1);
+    texCoordBuf[3] = Vector2f((flipTextureS? 0:1), 1);
 
-    V4f_Copy(rcolors[0].rgba, rgba);
-    V4f_Copy(rcolors[1].rgba, rgba);
-    V4f_Copy(rcolors[2].rgba, rgba2);
-    V4f_Copy(rcolors[3].rgba, rgba2);
+    colorCoordBuf[0] = bottomColor;
+    colorCoordBuf[1] = bottomColor;
+    colorCoordBuf[2] = topColor;
+    colorCoordBuf[3] = topColor;
 
-    *verts = rvertices;
-    *coords = rcoords;
-    *colors = rcolors;
+    *posCoords   = posCoordBuf;
+    *texCoords   = texCoordBuf;
+    *colorCoords = colorCoordBuf;
+
     return 4;
 }
 
-static void drawGeometry(size_t numVerts, rvertex_t const *verts,
-    ColorRawf const *colors, rtexcoord_t const *coords)
+static void drawGeometry(int numVerts, Vector3f const *posCoords,
+    Vector4f const *colorCoords, Vector2f const *texCoords)
 {
     glBegin(GL_TRIANGLE_STRIP);
-    for(size_t i = 0; i < numVerts; ++i)
+    Vector3f const *posIt   = posCoords;
+    Vector4f const *colorIt = colorCoords;
+    Vector2f const *texIt   = texCoords;
+    for(int i = 0; i < numVerts; ++i, posIt++, colorIt++, texIt++)
     {
-        if(coords) glTexCoord2fv(coords[i].st);
-        if(colors) glColor4fv(colors[i].rgba);
-        glVertex3fv(verts[i].pos);
+        if(texCoords)
+            glTexCoord2f(texIt->x, texIt->y);
+
+        if(colorCoords)
+            glColor4f(colorIt->x, colorIt->y, colorIt->z, colorIt->w);
+
+        glVertex3f(posIt->x, posIt->y, posIt->z);
     }
     glEnd();
 }
@@ -972,10 +980,10 @@ static void drawPicFrame(fidata_pic_t *p, uint frame, float const _origin[3],
     boolean showEdges = true, flipTextureS = false;
     boolean mustPopTextureMatrix = false;
     boolean textureEnabled = false;
-    size_t numVerts;
-    rvertex_t *rvertices;
-    ColorRawf *rcolors;
-    rtexcoord_t *rcoords;
+    int numVerts;
+    Vector3f *posCoords;
+    Vector4f *colorCoords;
+    Vector2f *texCoords;
 
     if(p->numFrames)
     {
@@ -1099,7 +1107,7 @@ static void drawPicFrame(fidata_pic_t *p, uint frame, float const _origin[3],
     offset[VX] *= scale[VX]; offset[VY] *= scale[VY]; offset[VZ] *= scale[VZ];
     V3f_Sum(originOffset, originOffset, offset);
 
-    numVerts = buildGeometry(dimensions, flipTextureS, rgba, rgba2, &rvertices, &rcolors, &rcoords);
+    numVerts = buildGeometry(dimensions, flipTextureS, rgba, rgba2, &posCoords, &colorCoords, &texCoords);
 
     // Setup the transformation.
     glMatrixMode(GL_MODELVIEW);
@@ -1140,7 +1148,7 @@ static void drawPicFrame(fidata_pic_t *p, uint frame, float const _origin[3],
         mustPopTextureMatrix = true;
     }
 
-    drawGeometry(numVerts, rvertices, rcolors, rcoords);
+    drawGeometry(numVerts, posCoords, colorCoords, texCoords);
 
     GL_SetNoTexture();
 

@@ -1572,14 +1572,14 @@ static void writeWallSection(Segment &segment, int section,
 }
 
 /**
- * Prepare the trifan rvertex_t buffer specified according to the edges of this
- * BSP leaf. If a fan base HEdge has been chosen it will be used as the center of
- * the trifan, else the mid point of this leaf will be used instead.
+ * Prepare a trifan geometry according to the edges of this BSP leaf. If a fan
+ * base HEdge has been chosen it will be used as the center of the trifan, else
+ * the mid point of this leaf will be used instead.
  *
- * @param leaf  BspLeaf instance.
+ * @param leaf       BspLeaf instance.
  * @param direction  Vertex winding direction.
- * @param height  Z map space height coordinate to be set for each vertex.
- * @param verts  Built vertices are written here.
+ * @param height     Z map space height coordinate to be set for each vertex.
+ * @param verts      Built vertices are written here.
  * @param vertsSize  Number of built vertices is written here. Can be @c NULL.
  *
  * @return  Number of built vertices (same as written to @a vertsSize).
