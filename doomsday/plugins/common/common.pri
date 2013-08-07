@@ -59,6 +59,7 @@ HEADERS += \
     $$common_inc/p_xg.h \
     $$common_inc/p_xgline.h \
     $$common_inc/p_xgsec.h \
+    $$common_inc/polyobjs.h \
     $$common_inc/r_common.h \
     $$common_inc/saveinfo.h \
     $$common_inc/x_hair.h \
@@ -115,6 +116,7 @@ SOURCES += \
     $$common_src/p_xgline.c \
     $$common_src/p_xgsave.c \
     $$common_src/p_xgsec.c \
+    $$common_src/polyobjs.cpp \
     $$common_src/r_common.c \
     $$common_src/saveinfo.c \
     $$common_src/x_hair.c

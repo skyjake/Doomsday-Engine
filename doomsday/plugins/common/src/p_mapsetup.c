@@ -39,6 +39,7 @@
 #include "p_scroll.h"
 #include "p_start.h"
 #include "p_tick.h"
+#include "polyobjs.h"
 #include "hu_pspr.h"
 #include "hu_stuff.h"
 #include "d_net.h"
@@ -911,9 +912,9 @@ void P_FinalizeMapChange(Uri const *uri)
 
     spawnMapObjects();
 
-#if __JHEXEN__
     PO_InitForMap();
 
+#if __JHEXEN__
     /// @todo Should be interpreted by the map converter.
     P_LoadACScripts(W_GetLumpNumForName(Str_Text(Uri_Path(uri))) + 11 /*ML_BEHAVIOR*/); // ACS object code
 #endif

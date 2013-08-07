@@ -41,15 +41,6 @@
 // 0x100000000 to 0x2000
 #define ANGLETOFINESHIFT        19
 
-// Effective size is 10240.
-extern fixed_t  finesine[5 * FINEANGLES / 4];
-
-// Re-use data, is just PI/2 pahse shift.
-extern fixed_t *finecosine;
-
-// Effective size is 4096.
-extern fixed_t  finetangent[FINEANGLES / 2];
-
 // Binary Angle Measument, BAM.
 #define ANG45                   0x20000000
 #define ANG90                   0x40000000
@@ -60,11 +51,28 @@ extern fixed_t  finetangent[FINEANGLES / 2];
 #define SLOPEBITS               11
 #define DBITS                   (FRACBITS-SLOPEBITS)
 
+// Effective size is 10240.
+DENG_EXTERN_C fixed_t finesine[5 * FINEANGLES / 4];
+
+// Re-use data, is just PI/2 pahse shift.
+DENG_EXTERN_C fixed_t *finecosine;
+
+// Effective size is 4096.
+DENG_EXTERN_C fixed_t finetangent[FINEANGLES / 2];
+
 // Effective size is 2049;
 // The +1 size is to handle the case when x==y without additional checking.
-extern angle_t  tantoangle[SLOPERANGE + 1];
+DENG_EXTERN_C angle_t tantoangle[SLOPERANGE + 1];
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 // Utility function, called by R_PointToAngle.
-int             SlopeDiv(unsigned num, unsigned den);
+int SlopeDiv(unsigned num, unsigned den);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif

@@ -219,13 +219,6 @@ typedef struct mobj_s {
     int             corpseTics;     // $vanish: how long has this been dead?
 } mobj_t;
 
-typedef struct polyobj_s {
-    // Defined in dd_share.h; required polyobj elements.
-    DD_BASE_POLYOBJ_ELEMENTS()
-
-    // Heretic-specific data:
-} Polyobj;
-
 #ifdef __cplusplus
 extern "C" {
 #endif

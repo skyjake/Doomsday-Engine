@@ -36,6 +36,7 @@
 #include "p_mapsetup.h"
 #include "p_mapspec.h"
 #include "p_sound.h"
+#include "polyobjs.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -613,9 +614,9 @@ void P_TagFinished(int tag)
     }
 }
 
-void P_PolyobjFinished(int po)
+void P_ACSPolyobjFinished(int po)
 {
-    int             i;
+    int i;
 
     if(PO_Busy(po) == true)
     {

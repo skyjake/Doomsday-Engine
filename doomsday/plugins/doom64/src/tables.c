@@ -40,28 +40,14 @@
  *   maps tan(angle) to angle fast. Gotta search.
  */
 
-// HEADER FILES ------------------------------------------------------------
-
 #include "jdoom64.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
+#include "tables.h"
 
 // finecosine and finesine use the same array of values.
 fixed_t *finecosine = &finesine[FINEANGLES / 4];
 
-int     finetangent[4096] = {
+int finetangent[4096] = {
     -170910304, -56965752, -34178904, -24413316, -18988036, -15535599,
     -13145455, -11392683,
     -10052327, -8994149, -8137527, -7429880, -6835455, -6329090, -5892567,

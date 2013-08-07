@@ -31,6 +31,7 @@
 
 #include "doomsday.h"
 #include "p_iterlist.h"
+#include "p_terraintype.h"
 
 #define numvertexes             (P_Count(DMU_VERTEX))
 #define numsegs                 (P_Count(DMU_SEGMENT))

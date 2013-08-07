@@ -55,7 +55,6 @@
 #include "../../hexen/include/p_telept.h"
 #include "../../hexen/include/p_things.h"
 #include "../../hexen/include/p_waggle.h"
-#include "../../hexen/include/po_man.h"
 #include "../../hexen/include/r_defs.h"
 #include "../../hexen/include/r_local.h"
 #include "../../hexen/include/s_sequence.h"

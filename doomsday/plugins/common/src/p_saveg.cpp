@@ -52,6 +52,7 @@
 #include "api_materialarchive.h"
 #include "p_savedef.h"
 #include "dmu_archiveindex.h"
+#include "polyobjs.h"
 
 #include "p_saveg.h"
 

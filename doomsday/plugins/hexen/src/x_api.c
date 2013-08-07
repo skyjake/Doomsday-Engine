@@ -42,6 +42,7 @@
 #include "p_mapsetup.h"
 #include "r_common.h"
 #include "p_map.h"
+#include "polyobjs.h"
 
 #define GID(v)          (toGameId(v))
 

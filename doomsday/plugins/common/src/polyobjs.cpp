@@ -1,75 +1,88 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file polyobjs.h Polyobject thinkers and management.
  *
- *\author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1999 Activision
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 1999 Activision
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
-/**
- * po_man.c: Polyobject management.
- */
-
-#include "jhexen.h"
+#include "common.h"
 
 #include "dmu_lib.h"
+#include "p_actor.h"
 #include "p_mapsetup.h"
 #include "p_map.h"
+#include "p_start.h"
 #include "g_common.h"
 
-static int getPolyobjMirror(uint polyNum);
-static void thrustMobj(struct mobj_s* mo, void* linep, void* pop);
+#ifdef __JHEXEN__
+#  include "p_acs.h"
+#endif
 
-Polyobj *P_GetPolyobj(int num)
+#include "polyobjs.h"
+
+static int findMirrorPolyobj(uint poly)
 {
-    // By unique ID?
-    if(num & 0x80000000)
+#ifdef __JHEXEN__
+    for(int i = 0; i < numpolyobjs; ++i)
     {
-        return P_PolyobjByID(num & 0x7fffffff);
+        Polyobj *po = P_GetPolyobj(i | 0x80000000);
+        if(po->tag == poly)
+        {
+            return P_ToXLine(P_PolyobjFirstLine(po))->arg2;
+        }
     }
-
-    // By tag.
-    return P_PolyobjByTag(num);
+#endif
+    return 0;
 }
 
-void PO_StartSequence(Polyobj* po, int seqBase)
+static void notifyPolyobjFinished(int polyNum)
 {
-    SN_StartSequence((mobj_t*) po, seqBase + po->seqType);
+#ifdef __JHEXEN__
+    P_ACSPolyobjFinished(polyNum);
+#endif
 }
 
-void PO_StopSequence(Polyobj* po)
+static void startSoundSequence(Polyobj *poEmitter)
 {
-    SN_StopSequence((mobj_t*) po);
+#ifdef __JHEXEN__
+    SN_StartSequence((mobj_t *)poEmitter, SEQ_DOOR_STONE + poEmitter->seqType);
+#endif
 }
 
-void PO_SetDestination(Polyobj* po, coord_t dist, uint fineAngle, float speed)
+static void stopSoundSequence(Polyobj *poEmitter)
 {
-    assert(fineAngle < FINEANGLES);
+#ifdef __JHEXEN__
+    SN_StopSequence((mobj_t *)poEmitter);
+#endif
+}
+
+static void PO_SetDestination(Polyobj *po, coord_t dist, uint fineAngle, float speed)
+{
+    DENG_ASSERT(po != 0);
+    DENG_ASSERT(fineAngle < FINEANGLES);
     po->dest[VX] = po->origin[VX] + dist * FIX2FLT(finecosine[fineAngle]);
     po->dest[VY] = po->origin[VY] + dist * FIX2FLT(finesine[fineAngle]);
     po->speed    = speed;
 }
 
-void PODoor_UpdateDestination(polydoor_t* pd)
+static void PODoor_UpdateDestination(polydoor_t *pd)
 {
-    Polyobj* po = P_GetPolyobj(pd->polyobj);
+    DENG2_ASSERT(pd != 0);
+    Polyobj *po = P_GetPolyobj(pd->polyobj);
 
     // Only sliding doors need the destination info. (Right? -jk)
     if(pd->type == PODOOR_SLIDE)
@@ -78,13 +91,13 @@ void PODoor_UpdateDestination(polydoor_t* pd)
     }
 }
 
-// ===== Polyobj Event Code =====
-
 void T_RotatePoly(void *polyThinker)
 {
-    polyevent_t* pe = polyThinker;
-    unsigned int absSpeed;
-    Polyobj* po = P_GetPolyobj(pe->polyobj);
+    DENG_ASSERT(polyThinker != 0);
+
+    polyevent_t *pe = (polyevent_t *)polyThinker;
+    uint absSpeed;
+    Polyobj *po = P_GetPolyobj(pe->polyobj);
 
     if(P_PolyobjRotate(po, pe->intSpeed))
     {
@@ -99,10 +112,10 @@ void T_RotatePoly(void *polyThinker)
         if(pe->dist <= 0)
         {
             if(po->specialData == pe)
-                po->specialData = NULL;
+                po->specialData = 0;
 
-            PO_StopSequence(po);
-            P_PolyobjFinished(po->tag);
+            stopSoundSequence(po);
+            notifyPolyobjFinished(po->tag);
             Thinker_Remove(&pe->thinker);
             po->angleSpeed = 0;
         }
@@ -114,15 +127,13 @@ void T_RotatePoly(void *polyThinker)
     }
 }
 
-boolean EV_RotatePoly(Line *line, byte *args, int direction,
-                      boolean overRide)
+boolean EV_RotatePoly(Line *line, byte *args, int direction, boolean overRide)
 {
-    int                 mirror, polyNum;
-    polyevent_t*        pe;
-    Polyobj*            po;
+    DENG_UNUSED(line);
+    DENG_ASSERT(args != 0);
 
-    polyNum = args[0];
-    po = P_GetPolyobj(polyNum);
+    int polyNum = args[0];
+    Polyobj *po = P_GetPolyobj(polyNum);
     if(po)
     {
         if(po->specialData && !overRide)
@@ -135,7 +146,7 @@ boolean EV_RotatePoly(Line *line, byte *args, int direction,
         Con_Error("EV_RotatePoly:  Invalid polyobj num: %d\n", polyNum);
     }
 
-    pe = Z_Calloc(sizeof(*pe), PU_MAP, 0);
+    polyevent_t *pe = (polyevent_t *)Z_Calloc(sizeof(*pe), PU_MAP, 0);
     pe->thinker.function = T_RotatePoly;
     Thinker_Add(&pe->thinker);
 
@@ -164,17 +175,19 @@ boolean EV_RotatePoly(Line *line, byte *args, int direction,
     pe->intSpeed = (args[1] * direction * (ANGLE_90 / 64)) >> 3;
     po->specialData = pe;
     po->angleSpeed = pe->intSpeed;
-    PO_StartSequence(po, SEQ_DOOR_STONE);
+    startSoundSequence(po);
 
-    while((mirror = getPolyobjMirror(polyNum)) != 0)
+    int mirror;
+    while((mirror = findMirrorPolyobj(polyNum)) != 0)
     {
         po = P_GetPolyobj(mirror);
         if(po && po->specialData && !overRide)
-        {   // Mirroring po is already in motion.
+        {
+            // Mirroring po is already in motion.
             break;
         }
 
-        pe = Z_Calloc(sizeof(*pe), PU_MAP, 0);
+        pe = (polyevent_t *)Z_Calloc(sizeof(*pe), PU_MAP, 0);
         pe->thinker.function = T_RotatePoly;
         Thinker_Add(&pe->thinker);
 
@@ -213,14 +226,16 @@ boolean EV_RotatePoly(Line *line, byte *args, int direction,
         }
 
         polyNum = mirror;
-        PO_StartSequence(po, SEQ_DOOR_STONE);
+        startSoundSequence(po);
     }
     return true;
 }
 
 void T_MovePoly(void *polyThinker)
 {
-    polyevent_t *pe = polyThinker;
+    DENG_ASSERT(polyThinker != 0);
+
+    polyevent_t *pe = (polyevent_t *)polyThinker;
     Polyobj *po = P_GetPolyobj(pe->polyobj);
 
     if(P_PolyobjMoveXY(po, pe->speed[MX], pe->speed[MY]))
@@ -233,8 +248,8 @@ void T_MovePoly(void *polyThinker)
             if(po->specialData == pe)
                 po->specialData = NULL;
 
-            PO_StopSequence(po);
-            P_PolyobjFinished(po->tag);
+            stopSoundSequence(po);
+            notifyPolyobjFinished(po->tag);
             Thinker_Remove(&pe->thinker);
             po->speed = 0;
         }
@@ -249,22 +264,20 @@ void T_MovePoly(void *polyThinker)
     }
 }
 
-boolean EV_MovePoly(Line *line, byte *args, boolean timesEight,
-                    boolean override)
+boolean EV_MovePoly(Line *line, byte *args, boolean timesEight, boolean override)
 {
+    DENG_UNUSED(line);
+    DENG_ASSERT(args != 0);
+
     int polyNum = args[0];
     Polyobj *po = P_GetPolyobj(polyNum);
-    polyevent_t *pe;
-    angle_t angle;
-    int mirror;
-
     DENG_ASSERT(po != 0);
 
     // Already moving?
     if(po->specialData && !override)
         return false;
 
-    pe = Z_Calloc(sizeof(*pe), PU_MAP, 0);
+    polyevent_t *pe = (polyevent_t *)Z_Calloc(sizeof(*pe), PU_MAP, 0);
     pe->thinker.function = T_MovePoly;
     Thinker_Add(&pe->thinker);
 
@@ -280,16 +293,17 @@ boolean EV_MovePoly(Line *line, byte *args, boolean timesEight,
     pe->intSpeed = args[1] * (FRACUNIT / 8);
     po->specialData = pe;
 
-    angle = args[2] * (ANGLE_90 / 64);
+    angle_t angle = args[2] * (ANGLE_90 / 64);
 
     pe->fangle = angle >> ANGLETOFINESHIFT;
     pe->speed[MX] = FIX2FLT(FixedMul(pe->intSpeed, finecosine[pe->fangle]));
     pe->speed[MY] = FIX2FLT(FixedMul(pe->intSpeed, finesine[pe->fangle]));
-    PO_StartSequence(po, SEQ_DOOR_STONE);
+    startSoundSequence(po);
 
     PO_SetDestination(po, FIX2FLT(pe->dist), pe->fangle, FIX2FLT(pe->intSpeed));
 
-    while((mirror = getPolyobjMirror(polyNum)) != 0)
+    int mirror;
+    while((mirror = findMirrorPolyobj(polyNum)) != 0)
     {
         po = P_GetPolyobj(mirror);
 
@@ -297,7 +311,7 @@ boolean EV_MovePoly(Line *line, byte *args, boolean timesEight,
         if(po && po->specialData && !override)
             break;
 
-        pe = Z_Calloc(sizeof(*pe), PU_MAP, 0);
+        pe = (polyevent_t *)Z_Calloc(sizeof(*pe), PU_MAP, 0);
         pe->thinker.function = T_MovePoly;
         Thinker_Add(&pe->thinker);
 
@@ -309,15 +323,15 @@ boolean EV_MovePoly(Line *line, byte *args, boolean timesEight,
         }
         else
         {
-            pe->dist = args[3] * FRACUNIT;  // Distance
+            pe->dist = args[3] * FRACUNIT; // Distance
         }
         pe->intSpeed = args[1] * (FRACUNIT / 8);
-        angle = angle + ANGLE_180;    // reverse the angle
+        angle = angle + ANGLE_180; // reverse the angle
         pe->fangle = angle >> ANGLETOFINESHIFT;
         pe->speed[MX] = FIX2FLT(FixedMul(pe->intSpeed, finecosine[pe->fangle]));
         pe->speed[MY] = FIX2FLT(FixedMul(pe->intSpeed, finesine[pe->fangle]));
         polyNum = mirror;
-        PO_StartSequence(po, SEQ_DOOR_STONE);
+        startSoundSequence(po);
 
         PO_SetDestination(po, FIX2FLT(pe->dist), pe->fangle, FIX2FLT(pe->intSpeed));
     }
@@ -326,14 +340,16 @@ boolean EV_MovePoly(Line *line, byte *args, boolean timesEight,
 
 void T_PolyDoor(void *polyDoorThinker)
 {
-    polydoor_t *pd = polyDoorThinker;
+    DENG_ASSERT(polyDoorThinker != 0);
+
+    polydoor_t *pd = (polydoor_t *)polyDoorThinker;
     Polyobj *po = P_GetPolyobj(pd->polyobj);
 
     if(pd->tics)
     {
         if(!--pd->tics)
         {
-            PO_StartSequence(po, SEQ_DOOR_STONE);
+            startSoundSequence(po);
 
             // Movement is about to begin. Update the destination.
             PODoor_UpdateDestination(pd);
@@ -350,7 +366,7 @@ void T_PolyDoor(void *polyDoorThinker)
             pd->dist -= absSpeed;
             if(pd->dist <= 0)
             {
-                PO_StopSequence(po);
+                stopSoundSequence(po);
                 if(!pd->close)
                 {
                     pd->dist = pd->totalDist;
@@ -365,7 +381,7 @@ void T_PolyDoor(void *polyDoorThinker)
                     if(po->specialData == pd)
                         po->specialData = NULL;
 
-                    P_PolyobjFinished(po->tag);
+                    notifyPolyobjFinished(po->tag);
                     Thinker_Remove(&pd->thinker);
                 }
             }
@@ -373,11 +389,13 @@ void T_PolyDoor(void *polyDoorThinker)
         else
         {
             if(po->crush || !pd->close)
-            {   // Continue moving if the po is a crusher, or is opening.
+            {
+                // Continue moving if the po is a crusher, or is opening.
                 return;
             }
             else
-            {   // Open back up.
+            {
+                // Open back up.
                 pd->dist = pd->totalDist - pd->dist;
                 pd->direction = (ANGLE_MAX >> ANGLETOFINESHIFT) - pd->direction;
                 pd->speed[MX] = -pd->speed[MX];
@@ -385,7 +403,7 @@ void T_PolyDoor(void *polyDoorThinker)
                 // Update destination.
                 PODoor_UpdateDestination(pd);
                 pd->close = false;
-                PO_StartSequence(po, SEQ_DOOR_STONE);
+                startSoundSequence(po);
             }
         }
         break;
@@ -395,14 +413,15 @@ void T_PolyDoor(void *polyDoorThinker)
         {
             int absSpeed = abs(pd->intSpeed);
             if(pd->dist == -1)
-            {   // Perpetual polyobj.
+            {
+                // Perpetual polyobj.
                 return;
             }
 
             pd->dist -= absSpeed;
             if(pd->dist <= 0)
             {
-                PO_StopSequence(po);
+                stopSoundSequence(po);
                 if(!pd->close)
                 {
                     pd->dist = pd->totalDist;
@@ -415,7 +434,7 @@ void T_PolyDoor(void *polyDoorThinker)
                     if(po->specialData == pd)
                         po->specialData = NULL;
 
-                    P_PolyobjFinished(po->tag);
+                    notifyPolyobjFinished(po->tag);
                     Thinker_Remove(&pd->thinker);
                 }
             }
@@ -423,15 +442,17 @@ void T_PolyDoor(void *polyDoorThinker)
         else
         {
             if(po->crush || !pd->close)
-            {   // Continue moving if the po is a crusher, or is opening.
+            {
+                // Continue moving if the po is a crusher, or is opening.
                 return;
             }
             else
-            {   // Open back up and rewait.
+            {
+                // Open back up and rewait.
                 pd->dist = pd->totalDist - pd->dist;
                 pd->intSpeed = -pd->intSpeed;
                 pd->close = false;
-                PO_StartSequence(po, SEQ_DOOR_STONE);
+                startSoundSequence(po);
             }
         }
         break;
@@ -441,15 +462,13 @@ void T_PolyDoor(void *polyDoorThinker)
     }
 }
 
-boolean EV_OpenPolyDoor(Line* line, byte* args, podoortype_t type)
+boolean EV_OpenPolyDoor(Line *line, byte *args, podoortype_t type)
 {
-    int                 mirror, polyNum;
-    polydoor_t*         pd;
-    Polyobj*            po;
-    angle_t             angle = 0;
+    DENG_UNUSED(line);
+    DENG_ASSERT(args != 0);
 
-    polyNum = args[0];
-    po = P_GetPolyobj(polyNum);
+    int polyNum = args[0];
+    Polyobj *po = P_GetPolyobj(polyNum);
     if(po)
     {
         if(po->specialData)
@@ -462,9 +481,11 @@ boolean EV_OpenPolyDoor(Line* line, byte* args, podoortype_t type)
         Con_Error("EV_OpenPolyDoor:  Invalid polyobj num: %d\n", polyNum);
     }
 
-    pd = Z_Calloc(sizeof(*pd), PU_MAP, 0);
+    polydoor_t *pd = (polydoor_t *)Z_Calloc(sizeof(*pd), PU_MAP, 0);
     pd->thinker.function = T_PolyDoor;
     Thinker_Add(&pd->thinker);
+
+    angle_t angle = 0;
 
     pd->type = type;
     pd->polyobj = polyNum;
@@ -478,7 +499,7 @@ boolean EV_OpenPolyDoor(Line* line, byte* args, podoortype_t type)
         pd->direction = angle >> ANGLETOFINESHIFT;
         pd->speed[MX] = FIX2FLT(FixedMul(pd->intSpeed, finecosine[pd->direction]));
         pd->speed[MY] = FIX2FLT(FixedMul(pd->intSpeed, finesine[pd->direction]));
-        PO_StartSequence(po, SEQ_DOOR_STONE);
+        startSoundSequence(po);
     }
     else if(type == PODOOR_SWING)
     {
@@ -487,21 +508,23 @@ boolean EV_OpenPolyDoor(Line* line, byte* args, podoortype_t type)
         pd->intSpeed = (args[1] * pd->direction * (ANGLE_90 / 64)) >> 3;
         pd->totalDist = args[2] * (ANGLE_90 / 64);
         pd->dist = pd->totalDist;
-        PO_StartSequence(po, SEQ_DOOR_STONE);
+        startSoundSequence(po);
     }
 
     po->specialData = pd;
     PODoor_UpdateDestination(pd);
 
-    while((mirror = getPolyobjMirror(polyNum)) != 0)
+    int mirror;
+    while((mirror = findMirrorPolyobj(polyNum)) != 0)
     {
         po = P_GetPolyobj(mirror);
         if(po && po->specialData)
-        {   // Mirroring po is already in motion.
+        {
+            // Mirroring po is already in motion.
             break;
         }
 
-        pd = Z_Calloc(sizeof(*pd), PU_MAP, 0);
+        pd = (polydoor_t *)Z_Calloc(sizeof(*pd), PU_MAP, 0);
         pd->thinker.function = T_PolyDoor;
         Thinker_Add(&pd->thinker);
 
@@ -518,7 +541,7 @@ boolean EV_OpenPolyDoor(Line* line, byte* args, podoortype_t type)
             pd->direction = angle >> ANGLETOFINESHIFT;
             pd->speed[MX] = FIX2FLT(FixedMul(pd->intSpeed, finecosine[pd->direction]));
             pd->speed[MY] = FIX2FLT(FixedMul(pd->intSpeed, finesine[pd->direction]));
-            PO_StartSequence(po, SEQ_DOOR_STONE);
+            startSoundSequence(po);
         }
         else if(type == PODOOR_SWING)
         {
@@ -527,32 +550,13 @@ boolean EV_OpenPolyDoor(Line* line, byte* args, podoortype_t type)
             pd->intSpeed = (args[1] * pd->direction * (ANGLE_90 / 64)) >> 3;
             pd->totalDist = args[2] * (ANGLE_90 / 64);
             pd->dist = pd->totalDist;
-            PO_StartSequence(po, SEQ_DOOR_STONE);
+            startSoundSequence(po);
         }
         polyNum = mirror;
         PODoor_UpdateDestination(pd);
     }
 
     return true;
-}
-
-// ===== Higher Level Poly Interface code =====
-
-static int getPolyobjMirror(uint poly)
-{
-    int i;
-
-    for(i = 0; i < numpolyobjs; ++i)
-    {
-        Polyobj *po = P_GetPolyobj(i | 0x80000000);
-
-        if(po->tag == poly)
-        {
-            return P_ToXLine(P_PolyobjFirstLine(po))->arg2;
-        }
-    }
-
-    return 0;
 }
 
 static void thrustMobj(struct mobj_s *mo, void *linep, void *pop)
@@ -606,31 +610,27 @@ static void thrustMobj(struct mobj_s *mo, void *linep, void *pop)
     }
 }
 
-/**
- * Initialize all polyobjects in the current map.
- */
-void PO_InitForMap(void)
+void PO_InitForMap()
 {
-    int i;
+#if !defined(__JHEXEN__)
+    return; // Disabled -- awaiting line argument translation.
+#endif
 
     Con_Message("PO_InitForMap: Initializing polyobjects.");
 
     // thrustMobj will handle polyobj <-> mobj interaction.
     P_SetPolyobjCallback(thrustMobj);
-    for(i = 0; i < numpolyobjs; ++i)
-    {
-        uint j;
-        mapspot_t const *spot;
-        Polyobj *po;
 
-        po = P_GetPolyobj(i | 0x80000000);
+    for(int i = 0; i < numpolyobjs; ++i)
+    {
+        Polyobj *po = P_GetPolyobj(i | 0x80000000);
 
         // Init game-specific properties.
         po->specialData = NULL;
 
         // Find the mapspot associated with this polyobj.
-        j = 0;
-        spot = NULL;
+        uint j = 0;
+        mapspot_t const *spot = 0;
         while(j < numMapSpots && !spot)
         {
             if((mapSpots[j].doomEdNum == PO_SPAWN_DOOMEDNUM ||
@@ -662,9 +662,17 @@ void PO_InitForMap(void)
 boolean PO_Busy(int polyobj)
 {
     Polyobj *po = P_GetPolyobj(polyobj);
+    return (po && po->specialData);
+}
 
-    if(po && po->specialData != NULL)
-        return true;
+Polyobj *P_GetPolyobj(int num)
+{
+    // By unique ID?
+    if(num & 0x80000000)
+    {
+        return P_PolyobjByID(num & 0x7fffffff);
+    }
 
-    return false;
+    // By tag.
+    return P_PolyobjByTag(num);
 }

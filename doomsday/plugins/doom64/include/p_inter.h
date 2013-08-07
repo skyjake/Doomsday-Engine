@@ -35,8 +35,14 @@
 #  error "Using jDoom64 headers without __JDOOM64__"
 #endif
 
-extern int maxAmmo[];
-extern int clipAmmo[];
+#include "jdoom64.h"
+
+DENG_EXTERN_C int maxAmmo[];
+DENG_EXTERN_C int clipAmmo[];
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 boolean         P_GivePower(player_t* plr, int);
 boolean         P_TakePower(player_t* plr, int power);
@@ -49,5 +55,9 @@ boolean         P_GiveArmor(player_t* plr, int type, int points);
 void            P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher);
 int             P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source, int damage, boolean stomping);
 int             P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source, int damage, boolean stomping, boolean skipNetworkCheck);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif

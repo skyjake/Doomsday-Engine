@@ -30,6 +30,10 @@
 DENG_EXTERN_C int maxAmmo[NUM_AMMO_TYPES];
 DENG_EXTERN_C int clipAmmo[NUM_AMMO_TYPES];
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @return  @c true if power accepted.
  */
@@ -129,5 +133,9 @@ boolean P_MorphPlayer(player_t *player);
  */
 int P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source, int damageP, boolean stomping, boolean skipNetworkCheck);
 int P_DamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source, int damageP, boolean stomping/*, boolean skipNetworkCheck = false*/);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif // LIBHERETIC_P_INTER_H

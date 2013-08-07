@@ -57,7 +57,6 @@ HEADERS += \
     include/p_telept.h \
     include/p_things.h \
     include/p_waggle.h \
-    include/po_man.h \
     include/r_defs.h \
     include/r_local.h \
     include/s_sequence.h \
@@ -102,7 +101,6 @@ SOURCES += \
     src/p_telept.c \
     src/p_things.c \
     src/p_waggle.c \
-    src/po_man.c \
     src/sc_man.c \
     src/sn_sonix.c \
     src/st_stuff.c \

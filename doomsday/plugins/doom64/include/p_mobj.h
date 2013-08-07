@@ -305,13 +305,6 @@ typedef struct mobj_s {
     int             spawnFadeTics;
 } mobj_t;
 
-typedef struct polyobj_s {
-    // Defined in dd_share.h; required polyobj elements.
-    DD_BASE_POLYOBJ_ELEMENTS()
-
-    // Doom64-specific data:
-} Polyobj;
-
 #ifdef __cplusplus
 extern "C" {
 #endif

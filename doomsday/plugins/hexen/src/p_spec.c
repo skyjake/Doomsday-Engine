@@ -42,6 +42,7 @@
 #include "p_scroll.h"
 #include "p_switch.h"
 #include "p_user.h"
+#include "polyobjs.h"
 
 #define LIGHTNING_SPECIAL       198
 #define LIGHTNING_SPECIAL2      199
