@@ -856,7 +856,7 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
         for(uint i = 0; i < numVertices; ++i)
         {
             Vector3f const &vtx = posCoords[i];
-            Vector3f const delta(vtx - Vector3f(*p.texTL));
+            Vector3f const delta(vtx - *p.texTL);
 
             // Primary texture coordinates.
             if(primaryRTU)
