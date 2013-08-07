@@ -54,20 +54,22 @@ enum {
 #define SPAC_USE                1 // Player uses line.
 #define SPAC_IMPACT             3 // Projectile hits line.
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 // at game start
-void            P_InitPicAnims(void);
+void P_InitPicAnims(void);
 
 // at map load
 void P_SpawnSectorSpecialThinkers(void);
 void P_SpawnLineSpecialThinkers(void);
 void P_SpawnAllSpecialThinkers(void);
 
-void            P_ThunderSector(void); // jd64
+void P_ThunderSector(void); // jd64
 
-boolean         P_ActivateLine(Line *ld, mobj_t *mo, int side,
-                               int activationType);
+boolean P_ActivateLine(Line *ld, mobj_t *mo, int side, int activationType);
 
-void            P_PlayerInSpecialSector(player_t *player);
+void P_PlayerInSpecialSector(player_t *player);
 
 typedef enum {
     ok,
@@ -80,12 +82,17 @@ typedef enum {
     turbo16 // quickly build by 16
 } stair_e;
 
-int             EV_BuildStairs(Line *line, stair_e type);
+int EV_BuildStairs(Line *line, stair_e type);
 
-result_e    T_MovePlane(Sector* sector, float speed, coord_t dest,
-                        int crush, int floorOrCeiling, int direction);
-int             EV_DoDonut(Line *line);
+result_e T_MovePlane(Sector *sector, float speed, coord_t dest, int crush,
+                     int floorOrCeiling, int direction);
 
-boolean     P_UseSpecialLine2(mobj_t* mo, Line* line, int side);
+int EV_DoDonut(Line *line);
+
+boolean P_UseSpecialLine2(mobj_t *mo, Line *line, int side);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif

@@ -29,18 +29,6 @@
 #ifndef LIBCOMMON_CONTROLS_H
 #define LIBCOMMON_CONTROLS_H
 
-/*
-// Game registered bindContexts
-enum {
-    GBC_CLASS1 = NUM_DDBINDCLASSES,
-    GBC_CLASS2,
-    GBC_CLASS3,
-    GBC_MENUHOTKEY,
-    GBC_CHAT,
-    GBC_MESSAGE
-};
-*/
-
 // Control identifiers.
 enum {
     CTL_SPEED = CTL_FIRST_GAME_CONTROL,
@@ -147,6 +135,10 @@ typedef struct playerbrain_s {
     uint        logRefresh: 1;
 } playerbrain_t;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Register the CVars and CCmds for input/controls.
  */
@@ -159,5 +151,9 @@ void        G_LookAround(int pnum);
 void        G_ControlReset(int pnum);
 float       G_GetLookOffset(int pnum);
 void        G_ResetLookOffset(int pnum);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBCOMMON_CONTROLS_H */

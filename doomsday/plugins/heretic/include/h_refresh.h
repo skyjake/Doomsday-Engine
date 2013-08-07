@@ -31,7 +31,11 @@
 #include "hu_stuff.h"
 #include "p_mobj.h"
 
-extern float quitDarkenOpacity;
+DENG_EXTERN_C float quitDarkenOpacity;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 void H_DrawViewPort(int port, const RectRaw* portGeometry, const RectRaw* windowGeometry, int player, int layer);
 void H_DrawWindow(const Size2Raw* windowSize);
@@ -41,5 +45,9 @@ void P_SetDoomsdayFlags(mobj_t* mo);
 void R_SetAllDoomsdayFlags(void);
 boolean R_ViewFilterColor(float rgba[4], int filter);
 void R_UpdateViewFilter(int player);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* JHERETIC_REFRESH_H */

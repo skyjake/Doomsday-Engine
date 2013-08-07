@@ -28,7 +28,13 @@
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
-extern float quitDarkenOpacity;
+#include "doomsday.h"
+
+DENG_EXTERN_C float quitDarkenOpacity;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 void X_DrawViewPort(int port, const RectRaw* portGeometry, const RectRaw* windowGeometry, int player, int layer);
 void X_DrawWindow(const Size2Raw* windowSize);
@@ -37,5 +43,9 @@ void X_EndFrame(void);
 void R_SetAllDoomsdayFlags(void);
 boolean R_ViewFilterColor(float rgba[4], int filter);
 void R_UpdateViewFilter(int player);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* JHEXEN_REFRESH_H */

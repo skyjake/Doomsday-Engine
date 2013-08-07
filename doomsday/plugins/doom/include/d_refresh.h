@@ -30,7 +30,11 @@
 
 #include "p_mobj.h"
 
-extern float quitDarkenOpacity;
+DENG_EXTERN_C float quitDarkenOpacity;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 void D_DrawViewPort(int port, const RectRaw* portGeometry, const RectRaw* windowGeometry, int player, int layer);
 void D_DrawWindow(const Size2Raw* windowSize);
@@ -43,5 +47,9 @@ void R_SetAllDoomsdayFlags(void);
 
 boolean R_ViewFilterColor(float rgba[4], int filter);
 void R_UpdateViewFilter(int player);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* JDOOM_REFRESH_H */

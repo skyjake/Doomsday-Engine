@@ -1,13 +1,9 @@
-/**
- * @file p_mapsetup.h
- * Common map setup routines.
+/** @file p_mapsetup.cpp Common map setup routines.
  *
- * Management of extended map data objects (e.g., xlines) is done here.
+ * Management of extended map data objects (e.g., xlines).
  *
- * @ingroup libcommon
- *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -24,9 +20,9 @@
  * 02110-1301 USA</small>
  */
 
-#include <math.h>
-#include <ctype.h>  // has isspace
-#include <string.h>
+#include <cmath>
+#include <cctype>  // isspace
+#include <cstring>
 
 #include "common.h"
 
@@ -35,7 +31,6 @@
 #include "g_common.h"
 #include "r_common.h"
 #include "p_actor.h"
-#include "p_mapsetup.h"
 #include "p_scroll.h"
 #include "p_start.h"
 #include "p_tick.h"
@@ -44,6 +39,8 @@
 #include "hu_stuff.h"
 #include "d_net.h"
 
+#include "p_mapsetup.h"
+
 #if __JDOOM64__
 # define TOLIGHTIDX(c) (!((c) >> 8)? 0 : ((c) - 0x100) + 1)
 #endif
@@ -51,20 +48,20 @@
 static void P_ResetWorldState(void);
 
 // Our private map data structures
-xsector_t* xsectors;
-xline_t* xlines;
+xsector_t *xsectors;
+xline_t *xlines;
 
 // If true we are in the process of setting up a map
 boolean mapSetup;
 
-xline_t* P_ToXLine(Line* line)
+xline_t *P_ToXLine(Line *line)
 {
     if(!line) return NULL;
 
     // Is it a dummy?
     if(P_IsDummy(line))
     {
-        return P_DummyExtraData(line);
+        return (xline_t *)P_DummyExtraData(line);
     }
     else
     {
@@ -72,7 +69,7 @@ xline_t* P_ToXLine(Line* line)
     }
 }
 
-xline_t* P_GetXLine(int idx)
+xline_t *P_GetXLine(int idx)
 {
     if(idx < 0 || idx >= numlines) return 0;
     return &xlines[idx];
@@ -80,8 +77,8 @@ xline_t* P_GetXLine(int idx)
 
 void P_SetLineAutomapVisibility(int player, int lineIdx, boolean visible)
 {
-    Line* line = P_ToPtr(DMU_LINE, lineIdx);
-    xline_t* xline;
+    Line *line = (Line *)P_ToPtr(DMU_LINE, lineIdx);
+    xline_t *xline;
     if(!line || P_IsDummy(line)) return;
 
     xline = P_ToXLine(line);
@@ -93,14 +90,14 @@ void P_SetLineAutomapVisibility(int player, int lineIdx, boolean visible)
     xline->mapped[player] = visible;
 }
 
-xsector_t* P_ToXSector(Sector* sector)
+xsector_t *P_ToXSector(Sector *sector)
 {
     if(!sector) return NULL;
 
     // Is it a dummy?
     if(P_IsDummy(sector))
     {
-        return P_DummyExtraData(sector);
+        return (xsector_t *)P_DummyExtraData(sector);
     }
     else
     {
@@ -108,18 +105,16 @@ xsector_t* P_ToXSector(Sector* sector)
     }
 }
 
-xsector_t* P_ToXSectorOfBspLeaf(BspLeaf* bspLeaf)
+xsector_t *P_ToXSectorOfBspLeaf(BspLeaf *bspLeaf)
 {
-    Sector* sec;
+    if(!bspLeaf) return 0;
 
-    if(!bspLeaf) return NULL;
-
-    sec = P_GetPtrp(bspLeaf, DMU_SECTOR);
+    Sector *sec = (Sector *)P_GetPtrp(bspLeaf, DMU_SECTOR);
 
     // Is it a dummy?
     if(P_IsDummy(sec))
     {
-        return P_DummyExtraData(sec);
+        return (xsector_t *) P_DummyExtraData(sec);
     }
     else
     {
@@ -127,7 +122,7 @@ xsector_t* P_ToXSectorOfBspLeaf(BspLeaf* bspLeaf)
     }
 }
 
-xsector_t* P_GetXSector(int index)
+xsector_t *P_GetXSector(int index)
 {
     if(index < 0 || index >= numsectors) return 0;
     return &xsectors[index];
@@ -150,12 +145,12 @@ static void getSurfaceColor(uint idx, float rgba[4])
 }
 
 typedef struct applysurfacecolorparams_s {
-    Sector* frontSec;
+    Sector *frontSec;
     float topColor[4];
     float bottomColor[4];
 } applysurfacecolorparams_t;
 
-int applySurfaceColor(void* obj, void* context)
+int applySurfaceColor(void *obj, void *context)
 {
 #define LDF_NOBLENDTOP          32
 #define LDF_NOBLENDBOTTOM       64
@@ -163,20 +158,17 @@ int applySurfaceColor(void* obj, void* context)
 
 #define LTF_SWAPCOLORS          4
 
-    Line* li = (Line*) obj;
-    applysurfacecolorparams_t* params = (applysurfacecolorparams_t*) context;
+    Line *li = (Line *) obj;
+    applysurfacecolorparams_t *params = (applysurfacecolorparams_t *) context;
     byte dFlags = P_GetGMOByte(MO_XLINEDEF, P_ToIndex(li), MO_DRAWFLAGS);
     byte tFlags = P_GetGMOByte(MO_XLINEDEF, P_ToIndex(li), MO_TEXFLAGS);
 
-    if((dFlags & LDF_BLEND) &&
-       params->frontSec == P_GetPtrp(li, DMU_FRONT_SECTOR))
+    if((dFlags & LDF_BLEND) && params->frontSec == P_GetPtrp(li, DMU_FRONT_SECTOR))
     {
-        Side* side = P_GetPtrp(li, DMU_FRONT);
-
-        if(side)
+        if(Side *side = (Side *)P_GetPtrp(li, DMU_FRONT))
         {
-            float* top    = (tFlags & LTF_SWAPCOLORS)? params->bottomColor : params->topColor;
-            float* bottom = (tFlags & LTF_SWAPCOLORS)? params->topColor : params->bottomColor;
+            float *top    = (tFlags & LTF_SWAPCOLORS)? params->bottomColor : params->topColor;
+            float *bottom = (tFlags & LTF_SWAPCOLORS)? params->topColor : params->bottomColor;
             int flags;
 
             P_SetFloatpv(side, DMU_TOP_COLOR, top);
@@ -192,15 +184,12 @@ int applySurfaceColor(void* obj, void* context)
         }
     }
 
-    if((dFlags & LDF_BLEND) &&
-       params->frontSec == P_GetPtrp(li, DMU_BACK_SECTOR))
+    if((dFlags & LDF_BLEND) && params->frontSec == P_GetPtrp(li, DMU_BACK_SECTOR))
     {
-        Side* side = P_GetPtrp(li, DMU_BACK);
-
-        if(side)
+        if(Side *side = (Side *)P_GetPtrp(li, DMU_BACK))
         {
-            float* top    = /*(tFlags & LTF_SWAPCOLORS)? params->bottomColor :*/ params->topColor;
-            float* bottom = /*(tFlags & LTF_SWAPCOLORS)? params->topColor :*/ params->bottomColor;
+            float *top    = /*(tFlags & LTF_SWAPCOLORS)? params->bottomColor :*/ params->topColor;
+            float *bottom = /*(tFlags & LTF_SWAPCOLORS)? params->topColor :*/ params->bottomColor;
             int flags;
 
             P_SetFloatpv(side, DMU_TOP_COLOR, top);
@@ -253,7 +242,8 @@ static boolean checkMapSpotSpawnFlags(mapspot_t const *spot)
     {
         // Single player.
         if((spot->flags & classFlags[P_ClassForPlayerWhenRespawning(0, false)]) == 0)
-        {   // Not for current class.
+        {
+            // Not for current class.
             return false;
         }
     }
@@ -346,53 +336,48 @@ static boolean checkMapSpotAutoSpawn(mapspot_t const *spot)
     return checkMapSpotSpawnFlags(spot);
 }
 
-static void initXLineDefs(void)
+static void initXLines()
 {
-    int i;
+    xlines = (xline_t *)Z_Calloc(numlines * sizeof(xline_t), PU_MAP, 0);
 
-    xlines = Z_Calloc(numlines * sizeof(xline_t), PU_MAP, 0);
-
-    for(i = 0; i < numlines; ++i)
+    for(int i = 0; i < numlines; ++i)
     {
         xline_t *xl = &xlines[i];
 
-        xl->flags = P_GetGMOShort(MO_XLINEDEF, i, MO_FLAGS) & ML_VALID_MASK;
+        xl->flags   = P_GetGMOShort(MO_XLINEDEF, i, MO_FLAGS) & ML_VALID_MASK;
 #if __JHEXEN__
         xl->special = P_GetGMOByte(MO_XLINEDEF, i, MO_TYPE);
-        xl->arg1 = P_GetGMOByte(MO_XLINEDEF, i, MO_ARG0);
-        xl->arg2 = P_GetGMOByte(MO_XLINEDEF, i, MO_ARG1);
-        xl->arg3 = P_GetGMOByte(MO_XLINEDEF, i, MO_ARG2);
-        xl->arg4 = P_GetGMOByte(MO_XLINEDEF, i, MO_ARG3);
-        xl->arg5 = P_GetGMOByte(MO_XLINEDEF, i, MO_ARG4);
+        xl->arg1    = P_GetGMOByte(MO_XLINEDEF, i, MO_ARG0);
+        xl->arg2    = P_GetGMOByte(MO_XLINEDEF, i, MO_ARG1);
+        xl->arg3    = P_GetGMOByte(MO_XLINEDEF, i, MO_ARG2);
+        xl->arg4    = P_GetGMOByte(MO_XLINEDEF, i, MO_ARG3);
+        xl->arg5    = P_GetGMOByte(MO_XLINEDEF, i, MO_ARG4);
 #else
 # if __JDOOM64__
         xl->special = P_GetGMOByte(MO_XLINEDEF, i, MO_TYPE);
 # else
         xl->special = P_GetGMOShort(MO_XLINEDEF, i, MO_TYPE);
 # endif
-        xl->tag = P_GetGMOShort(MO_XLINEDEF, i, MO_TAG);
+        xl->tag     = P_GetGMOShort(MO_XLINEDEF, i, MO_TAG);
 #endif
     }
 }
 
-static void initXSectors(void)
+static void initXSectors()
 {
-    int i;
+    xsectors = (xsector_t *)Z_Calloc(numsectors * sizeof(xsector_t), PU_MAP, 0);
 
-    xsectors = Z_Calloc(numsectors * sizeof(xsector_t), PU_MAP, 0);
-
-    for(i = 0; i < numsectors; ++i)
+    for(int i = 0; i < numsectors; ++i)
     {
-        xsector_t* xsec = &xsectors[i];
+        xsector_t *xsec = &xsectors[i];
 
         xsec->special = P_GetGMOShort(MO_XSECTOR, i, MO_TYPE);
         xsec->tag     = P_GetGMOShort(MO_XSECTOR, i, MO_TAG);
 
 #if __JDOOM64__
-        {
         applysurfacecolorparams_t params;
         float rgba[4];
-        Sector* sec = P_ToPtr(DMU_SECTOR, i);
+        Sector *sec = (Sector *)P_ToPtr(DMU_SECTOR, i);
 
         getSurfaceColor(TOLIGHTIDX(P_GetGMOShort(MO_XSECTOR, i, MO_FLOORCOLOR)), rgba);
         P_SetFloatpv(sec, DMU_FLOOR_COLOR, rgba);
@@ -406,24 +391,18 @@ static void initXSectors(void)
         getSurfaceColor(TOLIGHTIDX(P_GetGMOShort(MO_XSECTOR, i, MO_WALLBOTTOMCOLOR)), params.bottomColor);
 
         P_Iteratep(sec, DMU_LINE, &params, applySurfaceColor);
-        }
 #endif
     }
 }
 
-static void loadMapSpots(void)
+static void initMapSpots()
 {
-    uint i;
-
     numMapSpots = P_CountMapObjs(MO_THING);
-    if(numMapSpots > 0)
-        mapSpots = Z_Malloc(numMapSpots * sizeof(mapspot_t), PU_MAP, 0);
-    else
-        mapSpots = NULL;
+    mapSpots = (mapspot_t *)Z_Malloc(numMapSpots * sizeof(mapspot_t), PU_MAP, 0);
 
-    for(i = 0; i < numMapSpots; ++i)
+    for(uint i = 0; i < numMapSpots; ++i)
     {
-        mapspot_t* spot = &mapSpots[i];
+        mapspot_t *spot = &mapSpots[i];
 
         spot->origin[VX] = P_GetGMOFloat(MO_THING, i, MO_X);
         spot->origin[VY] = P_GetGMOFloat(MO_THING, i, MO_Y);
@@ -455,10 +434,10 @@ static void loadMapSpots(void)
         // Sound sequence origin?
         if(spot->doomEdNum >= 1400 && spot->doomEdNum < 1410)
         {
-            BspLeaf* bspLeaf = P_BspLeafAtPoint_FixedPrecision(spot->origin);
-            xsector_t* xsector = P_ToXSector(P_GetPtrp(bspLeaf, DMU_SECTOR));
+            BspLeaf *bspLeaf = P_BspLeafAtPoint_FixedPrecision(spot->origin);
+            xsector_t *xsector = P_ToXSector((Sector *)P_GetPtrp(bspLeaf, DMU_SECTOR));
 
-            xsector->seqType = spot->doomEdNum - 1400;
+            xsector->seqType = seqtype_t(spot->doomEdNum - 1400);
             continue;
         }
 #endif
@@ -472,8 +451,7 @@ static void loadMapSpots(void)
         case 1: // Player starts 1 through 4.
         case 2:
         case 3:
-        case 4:
-            {
+        case 4: {
 #if __JHEXEN__
             uint entryPoint = spot->arg1;
 #else
@@ -481,8 +459,7 @@ static void loadMapSpots(void)
 #endif
 
             P_CreatePlayerStart(spot->doomEdNum, entryPoint, false, i);
-            break;
-            }
+            break; }
 
 #if __JHERETIC__
         case 56: // Boss spot.
@@ -517,11 +494,10 @@ static void loadMapSpots(void)
 
     if(deathmatch)
     {
-        int i;
         uint numDMStarts = P_GetNumPlayerStarts(true);
         uint playerCount = 0;
 
-        for(i = 0; i < MAXPLAYERS; ++i)
+        for(int i = 0; i < MAXPLAYERS; ++i)
         {
             if(players[i].plr->inGame)
                 playerCount++;
@@ -535,36 +511,34 @@ static void loadMapSpots(void)
 }
 
 #if __JHERETIC__
-mapspot_t const *P_ChooseRandomMaceSpot(void)
+mapspot_t const *P_ChooseRandomMaceSpot()
 {
-    uint i, numQualifyingSpots;
-    uint chosenQualifyingSpotIdx, qualifyingSpotIdx;
-
-    if(!maceSpots || !maceSpotCount) return 0;
+    if(!maceSpots || !maceSpotCount)
+        return 0;
 
     /*
      * Pass 1: Determine how many spots qualify given the current game rules.
      */
-    numQualifyingSpots = 0;
-    for(i = 0; i < maceSpotCount; ++i)
+    uint numQualifyingSpots = 0;
+    for(uint i = 0; i < maceSpotCount; ++i)
     {
         mapspotid_t mapSpotId = maceSpots[i];
         DENG_ASSERT(mapSpots != 0 && mapSpotId < numMapSpots);
-        {
-            // Does this spot qualify given the current game configuration?
-            mapspot_t const *mapSpot = &mapSpots[mapSpotId];
-            if(checkMapSpotSpawnFlags(mapSpot))
-                numQualifyingSpots += 1;
-        }
+        mapspot_t const *mapSpot = &mapSpots[mapSpotId];
+
+        // Does this spot qualify given the current game configuration?
+        if(checkMapSpotSpawnFlags(mapSpot))
+            numQualifyingSpots += 1;
     }
-    if(!numQualifyingSpots) return 0;
+    if(!numQualifyingSpots)
+        return 0;
 
     /*
      * Pass 2: Choose and locate the chosen spot.
      */
-    chosenQualifyingSpotIdx = P_Random() % numQualifyingSpots;
-    qualifyingSpotIdx = 0;
-    for(i = 0; i < maceSpotCount; ++i)
+    uint chosenQualifyingSpotIdx = P_Random() % numQualifyingSpots;
+    uint qualifyingSpotIdx = 0;
+    for(uint i = 0; i < maceSpotCount; ++i)
     {
         mapspotid_t mapSpotId = maceSpots[i];
         mapspot_t const *mapSpot = &mapSpots[mapSpotId];
@@ -590,14 +564,11 @@ mapspot_t const *P_ChooseRandomMaceSpot(void)
 }
 #endif // __JHERETIC__
 
-static void spawnMapObjects(void)
+static void spawnMapObjects()
 {
-    uint i;
-
-    for(i = 0; i < numMapSpots; ++i)
+    for(uint i = 0; i < numMapSpots; ++i)
     {
         mapspot_t const *spot = &mapSpots[i];
-        mobjtype_t type;
 
         // Not all map spots spawn mobjs on map load.
         if(!checkMapSpotAutoSpawn(spot))
@@ -606,11 +577,9 @@ static void spawnMapObjects(void)
         // A spot that should auto-spawn one (or more) mobjs.
 
         // Find which type to spawn.
-        type = P_DoomEdNumToMobjType(spot->doomEdNum);
+        mobjtype_t type = P_DoomEdNumToMobjType(spot->doomEdNum);
         if(type != MT_NONE)
         {
-            mobj_t *mo;
-
             // Check for things that clients don't spawn on their own.
             if(IS_CLIENT)
             {
@@ -629,7 +598,7 @@ static void spawnMapObjects(void)
                     spot->doomedNum, spot->flags);
 #endif*/
 
-            if((mo = P_SpawnMobj(type, spot->origin, spot->angle, spot->flags)))
+            if(mobj_t *mo = P_SpawnMobj(type, spot->origin, spot->angle, spot->flags))
             {
                 if(mo->tics > 0)
                     mo->tics = 1 + (P_Random() % mo->tics);
@@ -671,8 +640,7 @@ static void spawnMapObjects(void)
         // Sometimes the Firemace doesn't show up if not in deathmatch.
         if(!(!deathmatch && P_Random() < 64))
         {
-            mapspot_t const *spot = P_ChooseRandomMaceSpot();
-            if(spot)
+            if(mapspot_t const *spot = P_ChooseRandomMaceSpot())
             {
 # if _DEBUG
                 Con_Message("spawnMapObjects: Spawning Firemace at (%.2f, %.2f, %.2f).",
@@ -696,7 +664,6 @@ static void spawnMapObjects(void)
 void P_SetupMap(Uri *mapUri)
 {
     AutoStr *mapUriStr = mapUri? Uri_Compose(mapUri) : 0;
-
     if(!mapUriStr) return;
 
     if(IS_DEDICATED)
@@ -869,11 +836,10 @@ static void precacheResources()
             { MT_BLOODSPLATTER,     GM_ANY },
             { MT_FEATHER,           GM_ANY },
 #  endif
-            { 0, 0 }
+            { MT_NONE }
         };
 
-        int i;
-        for(i = 0; types[i].type != 0; ++i)
+        for(int i = 0; types[i].type != MT_NONE; ++i)
         {
             if(types[i].gameModeBits & gameModeBits)
             {
@@ -897,7 +863,7 @@ static void precacheResources()
 
 void P_FinalizeMapChange(Uri const *uri)
 {
-    initXLineDefs();
+    initXLines();
     initXSectors();
 
     Thinker_Init();
@@ -908,10 +874,8 @@ void P_FinalizeMapChange(Uri const *uri)
     P_InitCorpseQueue();
 #endif
 
-    loadMapSpots();
-
+    initMapSpots();
     spawnMapObjects();
-
     PO_InitForMap();
 
 #if __JHEXEN__
@@ -935,7 +899,6 @@ void P_FinalizeMapChange(Uri const *uri)
 #endif
 
 #if __JHEXEN__
-    // Initialize the sky.
     P_InitSky(gameMap);
 #endif
 
@@ -958,30 +921,24 @@ void P_FinalizeMapChange(Uri const *uri)
     // visible due to texture repeating and interpolation.
     if(!(gameModeBits & (GM_DOOM2_HACX|GM_DOOM_CHEX)))
     {
-        int i, k;
-        Material* mat = P_ToPtr(DMU_MATERIAL, Materials_ResolveUriCString("Textures:NUKE24"));
-        Material* bottomMat, *midMat;
-        float yoff;
-        Side* side;
-        Line* line;
+        Material *mat = (Material *)P_ToPtr(DMU_MATERIAL, Materials_ResolveUriCString("Textures:NUKE24"));
 
-        for(i = 0; i < numlines; ++i)
+        for(int i = 0; i < numlines; ++i)
         {
-            line = P_ToPtr(DMU_LINE, i);
+            Line *line = (Line *)P_ToPtr(DMU_LINE, i);
 
-            for(k = 0; k < 2; ++k)
+            for(int k = 0; k < 2; ++k)
             {
-                side = P_GetPtrp(line, k == 0? DMU_FRONT : DMU_BACK);
-                if(side)
-                {
-                    bottomMat = P_GetPtrp(side, DMU_BOTTOM_MATERIAL);
-                    midMat = P_GetPtrp(side, DMU_MIDDLE_MATERIAL);
+                Side *side = (Side *)P_GetPtrp(line, k == 0? DMU_FRONT : DMU_BACK);
+                if(!side) continue;
 
-                    if(bottomMat == mat && midMat == NULL)
-                    {
-                        yoff = P_GetFloatp(side, DMU_BOTTOM_MATERIAL_OFFSET_Y);
-                        P_SetFloatp(side, DMU_BOTTOM_MATERIAL_OFFSET_Y, yoff + 1.0f);
-                    }
+                Material *bottomMat = (Material *)P_GetPtrp(side, DMU_BOTTOM_MATERIAL);
+                Material *midMat    = (Material *)P_GetPtrp(side, DMU_MIDDLE_MATERIAL);
+
+                if(bottomMat == mat && !midMat)
+                {
+                    float yoff = P_GetFloatp(side, DMU_BOTTOM_MATERIAL_OFFSET_Y);
+                    P_SetFloatp(side, DMU_BOTTOM_MATERIAL_OFFSET_Y, yoff + 1.0f);
                 }
             }
         }
@@ -1004,12 +961,11 @@ void P_FinalizeMapChange(Uri const *uri)
 /**
  * Called during map setup when beginning to load a new map.
  */
-static void P_ResetWorldState(void)
+static void P_ResetWorldState()
 {
 #if __JHEXEN__
     static int firstFragReset = 1;
 #endif
-    int i, parm;
 
     nextMap = 0;
 
@@ -1045,17 +1001,17 @@ static void P_ResetWorldState(void)
     timerGame = 0;
     if(deathmatch)
     {
-        parm = CommandLine_Check("-timer");
+        int parm = CommandLine_Check("-timer");
         if(parm && parm < CommandLine_Count() - 1)
         {
             timerGame = atoi(CommandLine_At(parm + 1)) * 35 * 60;
         }
     }
 
-    for(i = 0; i < MAXPLAYERS; ++i)
+    for(int i = 0; i < MAXPLAYERS; ++i)
     {
-        player_t* plr = &players[i];
-        ddplayer_t* ddplr = plr->plr;
+        player_t *plr = &players[i];
+        ddplayer_t *ddplr = plr->plr;
 
         ddplr->mo = NULL;
         plr->killCount = plr->secretCount = plr->itemCount = 0;
@@ -1071,7 +1027,7 @@ static void P_ResetWorldState(void)
             firstFragReset = 0;
         }
 #else
-        memset(plr->frags, 0, sizeof(plr->frags));
+        std::memset(plr->frags, 0, sizeof(plr->frags));
 #endif
 
         G_ResetLookOffset(i);
@@ -1089,13 +1045,11 @@ static void P_ResetWorldState(void)
 #endif
 }
 
-const char* P_GetMapNiceName(void)
+char const *P_GetMapNiceName()
 {
-    const char* lname, *ptr;
-
-    lname = (char*) DD_GetVariable(DD_MAP_NAME);
+    char const *lname = (char *) DD_GetVariable(DD_MAP_NAME);
 #if __JHEXEN__
-    // In jHexen we can look in the MAPINFO for the map name.
+    // In Hexen we can also look in MAPINFO for the map name.
     if(!lname)
         lname = P_GetMapName(gameMap);
 #endif
@@ -1103,9 +1057,8 @@ const char* P_GetMapNiceName(void)
     if(!lname || !lname[0])
         return NULL;
 
-    // Skip the ExMx part.
-    ptr = strchr(lname, ':');
-    if(ptr)
+    // Skip the "ExMx" part, if present.
+    if(char const *ptr = strchr(lname, ':'))
     {
         lname = ptr + 1;
         while(*lname && isspace(*lname))
@@ -1128,73 +1081,61 @@ patchid_t P_FindMapTitlePatch(uint episode, uint map)
     return 0;
 }
 
-const char* P_GetMapAuthor(boolean supressGameAuthor)
+char const *P_GetMapAuthor(boolean supressGameAuthor)
 {
-    const char* author = (const char*) DD_GetVariable(DD_MAP_AUTHOR);
-    boolean mapIsCustom;
-    GameInfo gameInfo;
-    AutoStr* path;
-    Uri* uri;
+    char const *author = (char const *) DD_GetVariable(DD_MAP_AUTHOR);
+    if(!author || !author[0])
+        return 0;
 
-    if(!author || !author[0]) return NULL;
+    // Should we suppress the author?
+    /// @todo Do not do this here.
+    Uri *uri = G_ComposeMapUri(gameEpisode, gameMap);
+    AutoStr *path = Uri_Resolved(uri);
 
-    uri = G_ComposeMapUri(gameEpisode, gameMap);
-    path = Uri_Resolved(uri);
-
-    mapIsCustom = P_MapIsCustom(Str_Text(path));
+    boolean mapIsCustom = P_MapIsCustom(Str_Text(path));
 
     Uri_Delete(uri);
 
+    GameInfo gameInfo;
     DD_GameInfo(&gameInfo);
     if((mapIsCustom || supressGameAuthor) && !stricmp(gameInfo.author, author))
-        return NULL;
+        return 0;
+
     return author;
 }
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-void P_FindSecrets(void)
+void P_FindSecrets()
 {
-    int i;
-
     totalSecret = 0;
 
     // Find secret sectors.
-    for(i = 0; i < numsectors; ++i)
+    for(int i = 0; i < numsectors; ++i)
     {
-        Sector* sec = P_ToPtr(DMU_SECTOR, i);
-        xsector_t* xsec = P_ToXSector(sec);
-
-        if(xsec->special != 9) continue;
-
-        totalSecret++;
+        if(P_ToXSector((Sector *)P_ToPtr(DMU_SECTOR, i))->special == 9)
+            totalSecret++;
     }
 
 #if __JDOOM64__
     // Find secret lines.
-    for(i = 0; i < numlines; ++i)
+    for(int i = 0; i < numlines; ++i)
     {
-        Line* line  = P_ToPtr(DMU_LINE, i);
-        xline_t* xline = P_ToXLine(line);
-
-        if(xline->special != 994) continue;
-
-        totalSecret++;
+        if(P_ToXLine((Line *)P_ToPtr(DMU_LINE, i))->special == 994)
+            totalSecret++;
     }
 #endif
 }
 #endif
 
-void P_SpawnSectorMaterialOriginScrollers(void)
+void P_SpawnSectorMaterialOriginScrollers()
 {
-    int i;
-
     // Clients do not spawn material origin scrollers on their own.
     if(IS_CLIENT) return;
 
-    for(i = 0; i < numsectors; ++i)
+    for(int i = 0; i < numsectors; ++i)
     {
-        Sector* sec     = P_ToPtr(DMU_SECTOR, i);
-        xsector_t* xsec = P_ToXSector(sec);
+        Sector *sec     = (Sector *)P_ToPtr(DMU_SECTOR, i);
+        xsector_t *xsec = P_ToXSector(sec);
 
         if(!xsec->special) continue;
 
@@ -1203,27 +1144,24 @@ void P_SpawnSectorMaterialOriginScrollers(void)
     }
 }
 
-void P_SpawnSideMaterialOriginScrollers(void)
+void P_SpawnSideMaterialOriginScrollers()
 {
-    int i;
-
     // Clients do not spawn material origin scrollers on their own.
     if(IS_CLIENT) return;
 
-    for(i = 0; i < numlines; ++i)
+    for(int i = 0; i < numlines; ++i)
     {
-        Line* line  = P_ToPtr(DMU_LINE, i);
-        xline_t* xline = P_ToXLine(line);
-        Side* frontSide;
+        Line *line     = (Line *)P_ToPtr(DMU_LINE, i);
+        xline_t *xline = P_ToXLine(line);
 
         if(!xline->special) continue;
 
-        frontSide = P_GetPtrp(line, DMU_FRONT);
+        Side *frontSide = (Side *)P_GetPtrp(line, DMU_FRONT);
         P_SpawnSideMaterialOriginScroller(frontSide, xline->special);
     }
 }
 
-void P_SpawnAllMaterialOriginScrollers(void)
+void P_SpawnAllMaterialOriginScrollers()
 {
     P_SpawnSideMaterialOriginScrollers();
     P_SpawnSectorMaterialOriginScrollers();

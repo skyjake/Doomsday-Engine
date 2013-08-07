@@ -34,6 +34,10 @@
 
 #define MO_TELEPORTMAN          14
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void P_InitLava(void);
 
 // at map load
@@ -92,5 +96,9 @@ boolean     EV_ThingDestroy(int tid);
 
 void P_InitSky(uint map);
 void P_AnimateSky(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBHEXEN_P_SPEC_H */

@@ -32,9 +32,17 @@
 #  error "Using jHeretic headers without __JHERETIC__"
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void        P_ClearBodyQueue(void);
 int         P_Massacre(void);
 void        P_NoiseAlert(mobj_t* target, mobj_t* emmiter);
 void        P_DSparilTeleport(mobj_t* actor);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif

@@ -184,6 +184,15 @@ enum {
 #define CMDF_BTN_PAUSE      0x08
 #define CMDF_BTN_SUICIDE    0x10 // Now ignored in ticcmds
 
+// Console commands.
+DENG_EXTERN_C ccmdtemplate_t netCCmds[];
+
+DENG_EXTERN_C float netJumpPower;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 Writer*         D_NetWrite(void);
 Reader*         D_NetRead(const byte* buffer, size_t len);
 void            D_NetClearBuffer(void);
@@ -212,10 +221,9 @@ void D_NetConsoleRegistration(void);
 void            D_NetMessage(int player, const char *msg);
 void            D_NetMessageNoSound(int player, const char *msg);
 
-// Console commands.
-extern ccmdtemplate_t   netCCmds[];
-
-extern float    netJumpPower;
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #include "d_netsv.h"
 #include "d_netcl.h"

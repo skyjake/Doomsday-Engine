@@ -32,6 +32,14 @@
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void P_ClearBodyQueue(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif

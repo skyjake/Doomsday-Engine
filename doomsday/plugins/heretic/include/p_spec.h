@@ -47,6 +47,10 @@
 
 #define MO_TELEPORTMAN          14
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // at game start
 void            P_InitPicAnims(void);
 void            P_InitLava(void);
@@ -94,5 +98,9 @@ result_e        T_MovePlane(Sector* sector, float speed, coord_t dest,
 int             EV_BuildStairs(Line* line, stair_e type);
 
 boolean         P_UseSpecialLine2(mobj_t* mo, Line* line, int side);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif
