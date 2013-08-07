@@ -470,3 +470,110 @@ void P_PurgeDeferredSpawns()
 {
     emptySpawnQueue(true);
 }
+
+#ifdef __JHEXEN__
+
+/// @todo Remove fixed limit.
+#define MAX_TID_COUNT           200
+
+static int TIDList[MAX_TID_COUNT + 1];  // +1 for termination marker
+static mobj_t *TIDMobj[MAX_TID_COUNT];
+
+static int insertThinkerInIdListWorker(thinker_t *th, void *context)
+{
+    mobj_t *mo = (mobj_t *)th;
+    int *count = (int *) context;
+
+    if(mo->tid != 0)
+    {
+        // Add to list.
+        if(*count == MAX_TID_COUNT)
+        {
+            Con_Error("P_CreateTIDList: MAX_TID_COUNT (%d) exceeded.", MAX_TID_COUNT);
+        }
+
+        TIDList[*count] = mo->tid;
+        TIDMobj[(*count)++] = mo;
+    }
+
+    return false; // Continue iteration.
+}
+
+void P_CreateTIDList()
+{
+    int count = 0;
+    Thinker_Iterate(P_MobjThinker, insertThinkerInIdListWorker, &count);
+
+    // Add termination marker
+    TIDList[count] = 0;
+}
+
+void P_MobjInsertIntoTIDList(mobj_t *mo, int tid)
+{
+    DENG_ASSERT(mo != 0);
+
+    int index = -1;
+    int i = 0;
+    for(; TIDList[i] != 0; ++i)
+    {
+        if(TIDList[i] == -1)
+        {
+            // Found empty slot
+            index = i;
+            break;
+        }
+    }
+
+    if(index == -1)
+    {
+        // Append required
+        if(i == MAX_TID_COUNT)
+        {
+            Con_Error("P_MobjInsertIntoTIDList: MAX_TID_COUNT (%d) exceeded.", MAX_TID_COUNT);
+        }
+        index = i;
+        TIDList[index + 1] = 0;
+    }
+
+    mo->tid = tid;
+    TIDList[index] = tid;
+    TIDMobj[index] = mo;
+}
+
+void P_MobjRemoveFromTIDList(mobj_t *mo)
+{
+    if(!mo || !mo->tid)
+        return;
+
+    for(int i = 0; TIDList[i] != 0; ++i)
+    {
+        if(TIDMobj[i] == mo)
+        {
+            TIDList[i] = -1;
+            TIDMobj[i] = 0;
+            mo->tid = 0;
+            return;
+        }
+    }
+
+    mo->tid = 0;
+}
+
+mobj_t *P_FindMobjFromTID(int tid, int *searchPosition)
+{
+    DENG_ASSERT(searchPosition != 0);
+
+    for(int i = *searchPosition + 1; TIDList[i] != 0; ++i)
+    {
+        if(TIDList[i] == tid)
+        {
+            *searchPosition = i;
+            return TIDMobj[i];
+        }
+    }
+
+    *searchPosition = -1;
+    return 0;
+}
+
+#endif // __JHEXEN__

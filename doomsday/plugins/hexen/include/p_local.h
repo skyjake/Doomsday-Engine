@@ -121,14 +121,8 @@ void        P_MobjThinker(void *mo);
 boolean     P_HealRadius(player_t* plr);
 void        P_BlastRadius(player_t* plr);
 
-void        P_CreateTIDList(void);
-
 boolean     P_MobjChangeState(mobj_t* mo, statenum_t state);
 boolean     P_SetMobjStateNF(mobj_t* mo, statenum_t state);
-
-void        P_MobjRemoveFromTIDList(mobj_t* mo);
-void        P_MobjInsertIntoTIDList(mobj_t* mo, int tid);
-mobj_t*     P_FindMobjFromTID(int tid, int* searchPosition);
 
 boolean     P_CheckMissileSpawn(mobj_t* mo);
 coord_t     P_MobjGetFriction(mobj_t* mo);

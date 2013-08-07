@@ -102,6 +102,18 @@ void P_PurgeDeferredSpawns(void);
 void P_DeferSpawnMobj3f(int minTics, mobjtype_t type, coord_t x, coord_t y, coord_t z, angle_t angle, int spawnFlags, void (*callback) (mobj_t *mo, void *context), void *context);
 void P_DeferSpawnMobj3fv(int minTics, mobjtype_t type, coord_t const pos[3], angle_t angle, int spawnFlags, void (*callback) (mobj_t *mo, void *context), void *context);
 
+#ifdef __JHEXEN__
+
+void P_CreateTIDList(void);
+
+void P_MobjRemoveFromTIDList(mobj_t *mo);
+
+void P_MobjInsertIntoTIDList(mobj_t *mo, int tid);
+
+mobj_t *P_FindMobjFromTID(int tid, int *searchPosition);
+
+#endif // __JHEXEN__
+
 #ifdef __cplusplus
 } // extern "C"
 #endif

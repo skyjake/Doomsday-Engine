@@ -45,7 +45,6 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define MAX_TID_COUNT           200
 #define MAX_BOB_OFFSET          8
 
 #define BLAST_RADIUS_DIST       255
@@ -78,9 +77,6 @@ mobjtype_t PuffType;
 mobj_t *MissileMobj;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-static int TIDList[MAX_TID_COUNT + 1];  // +1 for termination marker
-static mobj_t *TIDMobj[MAX_TID_COUNT];
 
 // CODE --------------------------------------------------------------------
 
@@ -1318,105 +1314,6 @@ mobj_t* P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z,
 mobj_t* P_SpawnMobj(mobjtype_t type, coord_t const pos[3], angle_t angle, int spawnFlags)
 {
     return P_SpawnMobjXYZ(type, pos[VX], pos[VY], pos[VZ], angle, spawnFlags);
-}
-
-static int addToTIDList(thinker_t* th, void* context)
-{
-    size_t* count = (size_t*) context;
-    mobj_t* mo = (mobj_t*) th;
-
-    if(mo->tid != 0)
-    {
-        // Add to list.
-        if(*count == MAX_TID_COUNT)
-        {
-            Con_Error("P_CreateTIDList: MAX_TID_COUNT (%d) exceeded.",
-                      MAX_TID_COUNT);
-        }
-
-        TIDList[*count] = mo->tid;
-        TIDMobj[(*count)++] = mo;
-    }
-
-    return false; // Continue iteration.
-}
-
-void P_CreateTIDList(void)
-{
-    size_t              count = 0;
-
-    Thinker_Iterate(P_MobjThinker, addToTIDList, &count);
-
-    // Add termination marker
-    TIDList[count] = 0;
-}
-
-void P_MobjInsertIntoTIDList(mobj_t* mobj, int tid)
-{
-    int                 i, index;
-
-    index = -1;
-    for(i = 0; TIDList[i] != 0; ++i)
-    {
-        if(TIDList[i] == -1)
-        {   // Found empty slot
-            index = i;
-            break;
-        }
-    }
-
-    if(index == -1)
-    {   // Append required
-        if(i == MAX_TID_COUNT)
-        {
-            Con_Error("P_MobjInsertIntoTIDList: MAX_TID_COUNT (%d)"
-                      "exceeded.", MAX_TID_COUNT);
-        }
-        index = i;
-        TIDList[index + 1] = 0;
-    }
-
-    mobj->tid = tid;
-    TIDList[index] = tid;
-    TIDMobj[index] = mobj;
-}
-
-void P_MobjRemoveFromTIDList(mobj_t* mobj)
-{
-    int                 i;
-
-    if(!mobj->tid)
-        return;
-
-    for(i = 0; TIDList[i] != 0; ++i)
-    {
-        if(TIDMobj[i] == mobj)
-        {
-            TIDList[i] = -1;
-            TIDMobj[i] = NULL;
-            mobj->tid = 0;
-            return;
-        }
-    }
-
-    mobj->tid = 0;
-}
-
-mobj_t* P_FindMobjFromTID(int tid, int* searchPosition)
-{
-    int                 i;
-
-    for(i = *searchPosition + 1; TIDList[i] != 0; ++i)
-    {
-        if(TIDList[i] == tid)
-        {
-            *searchPosition = i;
-            return TIDMobj[i];
-        }
-    }
-
-    *searchPosition = -1;
-    return NULL;
 }
 
 void P_SpawnPuff(coord_t x, coord_t y, coord_t z, angle_t angle)
