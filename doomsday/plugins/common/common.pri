@@ -71,7 +71,7 @@ SOURCES += \
     $$common_src/d_net.c \
     $$common_src/d_netcl.c \
     $$common_src/d_netsv.c \
-    $$common_src/dmu_lib.c \
+    $$common_src/dmu_lib.cpp \
     $$common_src/fi_lib.c \
     $$common_src/g_controls.c \
     $$common_src/g_defs.c \

@@ -1,128 +1,105 @@
-/**\file dmu_lib.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file dmu_lib.cpp Helper routines for accessing the DMU API.
  *
- *\author Copyright © 2006-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
-/**
- * Helper routines for accessing the DMU API.
- */
-
-#include <stdio.h>
-#include <string.h>
+#include <cstdio>
+#include <cstring>
 
 #include "common.h"
 #include "dmu_lib.h"
 #include "p_terraintype.h"
 
-typedef struct taglist_s {
-    iterlist_t* list;
-    int tag;
-} taglist_t;
+#include "dmu_lib.h"
 
-static taglist_t* lineTagLists = 0;
-static uint numLineTagLists = 0;
-
-static taglist_t* sectorTagLists = 0;
-static uint numSectorTagLists = 0;
-
-Line* P_AllocDummyLine(void)
+struct TagList
 {
-    xline_t* extra = Z_Calloc(sizeof(xline_t), PU_GAMESTATIC, 0);
-    return P_AllocDummy(DMU_LINE, extra);
+    iterlist_t *list;
+    int tag;
+};
+
+static TagList *lineTagLists;
+static uint numLineTagLists;
+
+static TagList *sectorTagLists;
+static uint numSectorTagLists;
+
+Line *P_AllocDummyLine()
+{
+    xline_t *extra = (xline_t *)Z_Calloc(sizeof(xline_t), PU_GAMESTATIC, 0);
+    return (Line *)P_AllocDummy(DMU_LINE, extra);
 }
 
-void P_FreeDummyLine(Line* line)
+void P_FreeDummyLine(Line *line)
 {
     Z_Free(P_DummyExtraData(line));
     P_FreeDummy(line);
 }
 
-Side* P_AllocDummySide(void)
+Side *P_AllocDummySide()
 {
-    return P_AllocDummy(DMU_SIDE, 0);
+    return (Side *)P_AllocDummy(DMU_SIDE, 0);
 }
 
-void P_FreeDummySide(Side* side)
+void P_FreeDummySide(Side *side)
 {
     P_FreeDummy(side);
 }
 
-void P_CopyLine(Line* dest, Line* src)
+void P_CopyLine(Line *dest, Line *src)
 {
-    Side* sidefrom, *sideto;
-    xline_t* xsrc = P_ToXLine(src);
-    xline_t* xdest = P_ToXLine(dest);
-    int i, sidx;
+    xline_t *xsrc  = P_ToXLine(src);
+    xline_t *xdest = P_ToXLine(dest);
 
     if(src == dest)
         return; // no point copying self
 
     // Copy the built-in properties
-    for(i = 0; i < 2; ++i) // For each side
+    for(int i = 0; i < 2; ++i) // For each side
     {
-        sidx = (i==0? DMU_FRONT : DMU_BACK);
+        int sidx = (i==0? DMU_FRONT : DMU_BACK);
 
-        sidefrom = P_GetPtrp(src, sidx);
-        sideto = P_GetPtrp(dest, sidx);
+        Side *sidefrom = (Side *)P_GetPtrp(src, sidx);
+        Side *sideto = (Side *)P_GetPtrp(dest, sidx);
 
         if(!sidefrom || !sideto)
             continue;
 
-#if 0
-        // P_Copyp is not implemented in Doomsday yet.
-        P_Copyp(DMU_TOP_MATERIAL_OFFSET_XY, sidefrom, sideto);
-        P_Copyp(DMU_TOP_MATERIAL, sidefrom, sideto);
-        P_Copyp(DMU_TOP_COLOR, sidefrom, sideto);
-
-        P_Copyp(DMU_MIDDLE_MATERIAL, sidefrom, sideto);
-        P_Copyp(DMU_MIDDLE_COLOR, sidefrom, sideto);
-        P_Copyp(DMU_MIDDLE_BLENDMODE, sidefrom, sideto);
-
-        P_Copyp(DMU_BOTTOM_MATERIAL, sidefrom, sideto);
-        P_Copyp(DMU_BOTTOM_COLOR, sidefrom, sideto);
-#else
-        {
         float temp[4];
         coord_t itemp[2];
 
-        P_SetPtrp(sideto, DMU_TOP_MATERIAL, P_GetPtrp(sidefrom, DMU_TOP_MATERIAL));
-        P_GetDoublepv(sidefrom, DMU_TOP_MATERIAL_OFFSET_XY, itemp);
-        P_SetDoublepv(sideto, DMU_TOP_MATERIAL_OFFSET_XY, itemp);
-        P_GetFloatpv(sidefrom, DMU_TOP_COLOR, temp);
-        P_SetFloatpv(sideto, DMU_TOP_COLOR, temp);
+        P_SetPtrp    (sideto,   DMU_TOP_MATERIAL,               P_GetPtrp(sidefrom, DMU_TOP_MATERIAL));
+        P_GetDoublepv(sidefrom, DMU_TOP_MATERIAL_OFFSET_XY,     itemp);
+        P_SetDoublepv(sideto,   DMU_TOP_MATERIAL_OFFSET_XY,     itemp);
+        P_GetFloatpv (sidefrom, DMU_TOP_COLOR,                  temp);
+        P_SetFloatpv (sideto,   DMU_TOP_COLOR,                  temp);
 
-        P_SetPtrp(sideto, DMU_MIDDLE_MATERIAL, P_GetPtrp(sidefrom, DMU_MIDDLE_MATERIAL));
-        P_GetDoublepv(sidefrom, DMU_MIDDLE_MATERIAL_OFFSET_XY, itemp);
-        P_SetDoublepv(sideto, DMU_MIDDLE_MATERIAL_OFFSET_XY, itemp);
-        P_SetFloatpv(sideto, DMU_MIDDLE_COLOR, temp);
-        P_SetIntp(sideto, DMU_MIDDLE_BLENDMODE, P_GetIntp(sidefrom, DMU_MIDDLE_BLENDMODE));
+        P_SetPtrp    (sideto,   DMU_MIDDLE_MATERIAL,            P_GetPtrp(sidefrom, DMU_MIDDLE_MATERIAL));
+        P_GetDoublepv(sidefrom, DMU_MIDDLE_MATERIAL_OFFSET_XY,  itemp);
+        P_SetDoublepv(sideto,   DMU_MIDDLE_MATERIAL_OFFSET_XY,  itemp);
+        P_SetFloatpv (sideto,   DMU_MIDDLE_COLOR,               temp);
+        P_SetIntp    (sideto,   DMU_MIDDLE_BLENDMODE,           P_GetIntp(sidefrom, DMU_MIDDLE_BLENDMODE));
 
-        P_SetPtrp(sideto, DMU_BOTTOM_MATERIAL, P_GetPtrp(sidefrom, DMU_BOTTOM_MATERIAL));
-        P_GetDoublepv(sidefrom, DMU_BOTTOM_MATERIAL_OFFSET_XY, itemp);
-        P_SetDoublepv(sideto, DMU_BOTTOM_MATERIAL_OFFSET_XY, itemp);
-        P_GetFloatpv(sidefrom, DMU_BOTTOM_COLOR, temp);
-        P_SetFloatpv(sideto, DMU_BOTTOM_COLOR, temp);
-        }
-#endif
+        P_SetPtrp    (sideto,   DMU_BOTTOM_MATERIAL,            P_GetPtrp(sidefrom, DMU_BOTTOM_MATERIAL));
+        P_GetDoublepv(sidefrom, DMU_BOTTOM_MATERIAL_OFFSET_XY,  itemp);
+        P_SetDoublepv(sideto,   DMU_BOTTOM_MATERIAL_OFFSET_XY,  itemp);
+        P_GetFloatpv (sidefrom, DMU_BOTTOM_COLOR,               temp);
+        P_SetFloatpv (sideto,   DMU_BOTTOM_COLOR,               temp);
     }
 
     // Copy the extended properties too
@@ -130,9 +107,9 @@ void P_CopyLine(Line* dest, Line* src)
     xdest->special = xsrc->special;
     xdest->tag     = xsrc->tag;
     if(xsrc->xg && xdest->xg)
-        memcpy(xdest->xg, xsrc->xg, sizeof(*xdest->xg));
+        std::memcpy(xdest->xg, xsrc->xg, sizeof(*xdest->xg));
     else
-        xdest->xg = NULL;
+        xdest->xg = 0;
 #else
     xdest->special = xsrc->special;
     xdest->arg1 = xsrc->arg1;
@@ -143,61 +120,39 @@ void P_CopyLine(Line* dest, Line* src)
 #endif
 }
 
-void P_CopySector(Sector* dest, Sector* src)
+void P_CopySector(Sector *dest, Sector *src)
 {
-    xsector_t* xsrc = P_ToXSector(src);
-    xsector_t* xdest = P_ToXSector(dest);
+    xsector_t *xsrc = P_ToXSector(src);
+    xsector_t *xdest = P_ToXSector(dest);
 
     if(src == dest)
         return; // no point copying self.
 
     // Copy the built-in properties.
-#if 0
-    // P_Copyp is not implemented in Doomsday yet.
-    P_Copyp(DMU_LIGHT_LEVEL, src, dest);
-    P_Copyp(DMU_COLOR, src, dest);
-
-    P_Copyp(DMU_FLOOR_HEIGHT, src, dest);
-    P_Copyp(DMU_FLOOR_MATERIAL, src, dest);
-    P_Copyp(DMU_FLOOR_COLOR, src, dest);
-    P_Copyp(DMU_FLOOR_MATERIAL_OFFSET_XY, src, dest);
-    P_Copyp(DMU_FLOOR_SPEED, src, dest);
-    P_Copyp(DMU_FLOOR_TARGET_HEIGHT, src, dest);
-
-    P_Copyp(DMU_CEILING_HEIGHT, src, dest);
-    P_Copyp(DMU_CEILING_MATERIAL, src, dest);
-    P_Copyp(DMU_CEILING_COLOR, src, dest);
-    P_Copyp(DMU_CEILING_MATERIAL_OFFSET_XY, src, dest);
-    P_Copyp(DMU_CEILING_SPEED, src, dest);
-    P_Copyp(DMU_CEILING_TARGET_HEIGHT, src, dest);
-#else
-    {
     float ftemp[4];
     coord_t dtemp[2];
 
-    P_SetFloatp(dest, DMU_LIGHT_LEVEL, P_GetFloatp(src, DMU_LIGHT_LEVEL));
-    P_GetFloatpv(src, DMU_COLOR, ftemp);
-    P_SetFloatpv(dest, DMU_COLOR, ftemp);
+    P_SetFloatp  (dest, DMU_LIGHT_LEVEL,                P_GetFloatp(src, DMU_LIGHT_LEVEL));
+    P_GetFloatpv (src,  DMU_COLOR,                      ftemp);
+    P_SetFloatpv (dest, DMU_COLOR,                      ftemp);
 
-    P_SetDoublep(dest, DMU_FLOOR_HEIGHT, P_GetDoublep(src, DMU_FLOOR_HEIGHT));
-    P_SetPtrp(dest, DMU_FLOOR_MATERIAL, P_GetPtrp(src, DMU_FLOOR_MATERIAL));
-    P_GetFloatpv(src, DMU_FLOOR_COLOR, ftemp);
-    P_SetFloatpv(dest, DMU_FLOOR_COLOR, ftemp);
-    P_GetDoublepv(src, DMU_FLOOR_MATERIAL_OFFSET_XY, dtemp);
-    P_SetDoublepv(dest, DMU_FLOOR_MATERIAL_OFFSET_XY, dtemp);
-    P_SetIntp(dest, DMU_FLOOR_SPEED, P_GetIntp(src, DMU_FLOOR_SPEED));
-    P_SetDoublep(dest, DMU_FLOOR_TARGET_HEIGHT, P_GetFloatp(src, DMU_FLOOR_TARGET_HEIGHT));
+    P_SetDoublep (dest, DMU_FLOOR_HEIGHT,               P_GetDoublep(src, DMU_FLOOR_HEIGHT));
+    P_SetPtrp    (dest, DMU_FLOOR_MATERIAL,             P_GetPtrp(src, DMU_FLOOR_MATERIAL));
+    P_GetFloatpv (src,  DMU_FLOOR_COLOR,                ftemp);
+    P_SetFloatpv (dest, DMU_FLOOR_COLOR,                ftemp);
+    P_GetDoublepv(src,  DMU_FLOOR_MATERIAL_OFFSET_XY,   dtemp);
+    P_SetDoublepv(dest, DMU_FLOOR_MATERIAL_OFFSET_XY,   dtemp);
+    P_SetIntp    (dest, DMU_FLOOR_SPEED,                P_GetIntp(src, DMU_FLOOR_SPEED));
+    P_SetDoublep (dest, DMU_FLOOR_TARGET_HEIGHT,        P_GetFloatp(src, DMU_FLOOR_TARGET_HEIGHT));
 
-    P_SetDoublep(dest, DMU_CEILING_HEIGHT, P_GetDoublep(src, DMU_CEILING_HEIGHT));
-    P_SetPtrp(dest, DMU_CEILING_MATERIAL, P_GetPtrp(src, DMU_CEILING_MATERIAL));
-    P_GetFloatpv(src, DMU_CEILING_COLOR, ftemp);
-    P_SetFloatpv(dest, DMU_CEILING_COLOR, ftemp);
-    P_GetDoublepv(src, DMU_CEILING_MATERIAL_OFFSET_XY, dtemp);
+    P_SetDoublep (dest, DMU_CEILING_HEIGHT,             P_GetDoublep(src, DMU_CEILING_HEIGHT));
+    P_SetPtrp    (dest, DMU_CEILING_MATERIAL,           P_GetPtrp(src, DMU_CEILING_MATERIAL));
+    P_GetFloatpv (src,  DMU_CEILING_COLOR,              ftemp);
+    P_SetFloatpv (dest, DMU_CEILING_COLOR,              ftemp);
+    P_GetDoublepv(src,  DMU_CEILING_MATERIAL_OFFSET_XY, dtemp);
     P_SetDoublepv(dest, DMU_CEILING_MATERIAL_OFFSET_XY, dtemp);
-    P_SetIntp(dest, DMU_CEILING_SPEED, P_GetIntp(src, DMU_CEILING_SPEED));
-    P_SetDoublep(dest, DMU_CEILING_TARGET_HEIGHT, P_GetFloatp(src, DMU_CEILING_TARGET_HEIGHT));
-    }
-#endif
+    P_SetIntp    (dest, DMU_CEILING_SPEED,              P_GetIntp(src, DMU_CEILING_SPEED));
+    P_SetDoublep (dest, DMU_CEILING_TARGET_HEIGHT,      P_GetFloatp(src, DMU_CEILING_TARGET_HEIGHT));
 
     // Copy the extended properties too
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
@@ -210,11 +165,11 @@ void P_CopySector(Sector* dest, Sector* src)
     xdest->SP_floororigheight = xsrc->SP_floororigheight;
     xdest->SP_ceilorigheight = xsrc->SP_ceilorigheight;
     xdest->origLight = xsrc->origLight;
-    memcpy(xdest->origRGB, xsrc->origRGB, sizeof(float) * 3);
+    std::memcpy(xdest->origRGB, xsrc->origRGB, sizeof(float) * 3);
     if(xsrc->xg && xdest->xg)
-        memcpy(xdest->xg, xsrc->xg, sizeof(*xdest->xg));
+        std::memcpy(xdest->xg, xsrc->xg, sizeof(*xdest->xg));
     else
-        xdest->xg = NULL;
+        xdest->xg = 0;
 #else
     xdest->special = xsrc->special;
     xdest->soundTraversed = xsrc->soundTraversed;
@@ -223,21 +178,19 @@ void P_CopySector(Sector* dest, Sector* src)
 #endif
 }
 
-void P_BuildLineTagLists(void)
+void P_BuildLineTagLists()
 {
-    int i;
-
     P_DestroyLineTagLists();
 
-    for(i = 0; i < numlines; ++i)
+    for(int i = 0; i < numlines; ++i)
     {
-        Line* line  = P_ToPtr(DMU_LINE, i);
-        xline_t* xline = P_ToXLine(line);
+        Line *line  = (Line *)P_ToPtr(DMU_LINE, i);
+        xline_t *xline = P_ToXLine(line);
 
 #if !__JHEXEN__
         if(xline->tag)
         {
-           iterlist_t* list = P_GetLineIterListForTag(xline->tag, true);
+           iterlist_t *list = P_GetLineIterListForTag(xline->tag, true);
            IterList_PushBack(list, line);
         }
 #else
@@ -247,7 +200,7 @@ void P_BuildLineTagLists(void)
         case 121: ///< Line_SetIdentification.
             if(xline->arg1)
             {
-                iterlist_t* list = P_GetLineIterListForTag((int) xline->arg1, true);
+                iterlist_t *list = P_GetLineIterListForTag((int) xline->arg1, true);
                 IterList_PushBack(list, line);
             }
             xline->special = 0;
@@ -257,54 +210,50 @@ void P_BuildLineTagLists(void)
     }
 }
 
-void P_DestroyLineTagLists(void)
+void P_DestroyLineTagLists()
 {
     if(numLineTagLists == 0)
         return;
 
-    { uint i;
-    for(i = 0; i < numLineTagLists; ++i)
+    for(uint i = 0; i < numLineTagLists; ++i)
     {
         IterList_Clear(lineTagLists[i].list);
         IterList_Delete(lineTagLists[i].list);
-    }}
+    }
 
     free(lineTagLists);
-    lineTagLists = NULL;
+    lineTagLists = 0;
     numLineTagLists = 0;
 }
 
-iterlist_t* P_GetLineIterListForTag(int tag, boolean createNewList)
+iterlist_t *P_GetLineIterListForTag(int tag, boolean createNewList)
 {
-    taglist_t* tagList;
-    uint i;
-
     // Do we have an existing list for this tag?
-    for(i = 0; i < numLineTagLists; ++i)
+    for(uint i = 0; i < numLineTagLists; ++i)
+    {
         if(lineTagLists[i].tag == tag)
             return lineTagLists[i].list;
+    }
 
     if(!createNewList)
-        return NULL;
+        return 0;
 
     // Nope, we need to allocate another.
     numLineTagLists++;
-    lineTagLists = realloc(lineTagLists, sizeof(taglist_t) * numLineTagLists);
-    tagList = &lineTagLists[numLineTagLists - 1];
+    lineTagLists = (TagList *)realloc(lineTagLists, sizeof(TagList) * numLineTagLists);
+    TagList *tagList = &lineTagLists[numLineTagLists - 1];
     tagList->tag = tag;
 
     return (tagList->list = IterList_New());
 }
 
-void P_BuildSectorTagLists(void)
+void P_BuildSectorTagLists()
 {
-    int i;
-
     P_DestroySectorTagLists();
 
-    for(i = 0; i < numsectors; ++i)
+    for(int i = 0; i < numsectors; ++i)
     {
-        Sector *sec = P_ToPtr(DMU_SECTOR, i);
+        Sector *sec = (Sector *)P_ToPtr(DMU_SECTOR, i);
         xsector_t *xsec = P_ToXSector(sec);
 
         if(xsec->tag)
@@ -315,52 +264,50 @@ void P_BuildSectorTagLists(void)
     }
 }
 
-void P_DestroySectorTagLists(void)
+void P_DestroySectorTagLists()
 {
     if(numSectorTagLists == 0)
         return;
 
-    { uint i;
-    for(i = 0; i < numSectorTagLists; ++i)
+    for(uint i = 0; i < numSectorTagLists; ++i)
     {
         IterList_Clear(sectorTagLists[i].list);
         IterList_Delete(sectorTagLists[i].list);
-    }}
+    }
 
     free(sectorTagLists);
-    sectorTagLists = NULL;
+    sectorTagLists = 0;
     numSectorTagLists = 0;
 }
 
-iterlist_t* P_GetSectorIterListForTag(int tag, boolean createNewList)
+iterlist_t *P_GetSectorIterListForTag(int tag, boolean createNewList)
 {
-    taglist_t* tagList;
-    uint i;
-
     // Do we have an existing list for this tag?
-    for(i = 0; i < numSectorTagLists; ++i)
+    for(uint i = 0; i < numSectorTagLists; ++i)
+    {
         if(sectorTagLists[i].tag == tag)
             return sectorTagLists[i].list;
+    }
 
     if(!createNewList)
-        return NULL;
+        return 0;
 
     // Nope, we need to allocate another.
     numSectorTagLists++;
-    sectorTagLists = realloc(sectorTagLists, sizeof(taglist_t) * numSectorTagLists);
-    tagList = &sectorTagLists[numSectorTagLists - 1];
+    sectorTagLists = (TagList *)realloc(sectorTagLists, sizeof(TagList) * numSectorTagLists);
+    TagList *tagList = &sectorTagLists[numSectorTagLists - 1];
     tagList->tag = tag;
 
     return (tagList->list = IterList_New());
 }
 
-void P_BuildAllTagLists(void)
+void P_BuildAllTagLists()
 {
     P_BuildSectorTagLists();
     P_BuildLineTagLists();
 }
 
-void P_DestroyAllTagLists(void)
+void P_DestroyAllTagLists()
 {
     P_DestroyLineTagLists();
     P_DestroySectorTagLists();
@@ -368,29 +315,27 @@ void P_DestroyAllTagLists(void)
 
 Sector *P_GetNextSector(Line *line, Sector *sec)
 {
-    Sector *frontSec;
     if(!sec || !line)
         return 0;
 
     if(!(P_ToXLine(line)->flags & ML_TWOSIDED))
         return 0;
 
-    frontSec = P_GetPtrp(line, DMU_FRONT_SECTOR);
+    Sector *frontSec = (Sector *)P_GetPtrp(line, DMU_FRONT_SECTOR);
     if(frontSec == sec)
-        return P_GetPtrp(line, DMU_BACK_SECTOR);
+        return (Sector *)P_GetPtrp(line, DMU_BACK_SECTOR);
     return frontSec;
 }
 
-int findExtremalLightLevelInAdjacentSectors(void* ptr, void* context)
+int findExtremalLightLevelInAdjacentSectors(void *ptr, void *context)
 {
-    findlightlevelparams_t* params = (findlightlevelparams_t*) context;
-    Sector* other = P_GetNextSector((Line*) ptr, params->baseSec);
-    float lightLevel;
+    findlightlevelparams_t *params = (findlightlevelparams_t *) context;
+    Sector *other = P_GetNextSector((Line *) ptr, params->baseSec);
 
     if(!other)
         return false; // Continue iteration.
 
-    lightLevel = P_GetFloatp(other, DMU_LIGHT_LEVEL);
+    float lightLevel = P_GetFloatp(other, DMU_LIGHT_LEVEL);
     if(params->flags & FELLF_MIN)
     {
         if(lightLevel < params->val)
@@ -411,7 +356,7 @@ int findExtremalLightLevelInAdjacentSectors(void* ptr, void* context)
     return false; // Continue iteration.
 }
 
-Sector* P_FindSectorSurroundingLowestLight(Sector* sec, float* val)
+Sector *P_FindSectorSurroundingLowestLight(Sector *sec, float *val)
 {
     findlightlevelparams_t params;
     params.flags = FELLF_MIN;
@@ -424,10 +369,9 @@ Sector* P_FindSectorSurroundingLowestLight(Sector* sec, float* val)
     return params.foundSec;
 }
 
-Sector* P_FindSectorSurroundingHighestLight(Sector* sec, float* val)
+Sector *P_FindSectorSurroundingHighestLight(Sector *sec, float *val)
 {
     findlightlevelparams_t params;
-
     params.flags = 0;
     params.val = DDMINFLOAT;
     params.baseSec = sec;
@@ -438,17 +382,16 @@ Sector* P_FindSectorSurroundingHighestLight(Sector* sec, float* val)
     return params.foundSec;
 }
 
-int findNextLightLevel(void* ptr, void* context)
+int findNextLightLevel(void* ptr, void *context)
 {
-    findnextlightlevelparams_t *params = (findnextlightlevelparams_t*) context;
-    Line* li = (Line*) ptr;
-    Sector* other = P_GetNextSector(li, params->baseSec);
-    float otherLight;
+    findnextlightlevelparams_t *params = (findnextlightlevelparams_t *) context;
+    Line *li = (Line *) ptr;
 
+    Sector *other = P_GetNextSector(li, params->baseSec);
     if(!other)
         return false; // Continue iteration.
 
-    otherLight = P_GetFloatp(other, DMU_LIGHT_LEVEL);
+    float otherLight = P_GetFloatp(other, DMU_LIGHT_LEVEL);
     if(params->flags & FNLLF_ABOVE)
     {
         if(otherLight < params->val && otherLight > params->baseLight)
@@ -471,7 +414,7 @@ int findNextLightLevel(void* ptr, void* context)
     return false; // Continue iteration.
 }
 
-Sector* P_FindSectorSurroundingNextLowestLight(Sector* sec, float baseLight, float* val)
+Sector *P_FindSectorSurroundingNextLowestLight(Sector *sec, float baseLight, float *val)
 {
     findnextlightlevelparams_t params;
     params.flags = 0;
@@ -485,7 +428,7 @@ Sector* P_FindSectorSurroundingNextLowestLight(Sector* sec, float baseLight, flo
     return params.foundSec;
 }
 
-Sector* P_FindSectorSurroundingNextHighestLight(Sector* sec, float baseLight, float* val)
+Sector *P_FindSectorSurroundingNextHighestLight(Sector *sec, float baseLight, float *val)
 {
     findnextlightlevelparams_t params;
     params.flags = FNLLF_ABOVE;
@@ -499,16 +442,15 @@ Sector* P_FindSectorSurroundingNextHighestLight(Sector* sec, float baseLight, fl
     return params.foundSec;
 }
 
-int findExtremalPlaneHeight(void* ptr, void* context)
+int findExtremalPlaneHeight(void *ptr, void *context)
 {
-    findextremalplaneheightparams_t* params = (findextremalplaneheightparams_t*) context;
-    Sector* other = P_GetNextSector((Line*) ptr, params->baseSec);
-    coord_t height;
+    findextremalplaneheightparams_t *params = (findextremalplaneheightparams_t *) context;
+    Sector *other = P_GetNextSector((Line *) ptr, params->baseSec);
 
     if(!other)
         return false; // Continue iteration.
 
-    height = P_GetDoublep(other, ((params->flags & FEPHF_FLOOR)? DMU_FLOOR_HEIGHT : DMU_CEILING_HEIGHT));
+    coord_t height = P_GetDoublep(other, ((params->flags & FEPHF_FLOOR)? DMU_FLOOR_HEIGHT : DMU_CEILING_HEIGHT));
     if(params->flags & FEPHF_MIN)
     {
         if(height < params->val)
@@ -526,7 +468,7 @@ int findExtremalPlaneHeight(void* ptr, void* context)
     return false; // Continue iteration.
 }
 
-Sector* P_FindSectorSurroundingLowestFloor(Sector* sec, coord_t max, coord_t* val)
+Sector *P_FindSectorSurroundingLowestFloor(Sector *sec, coord_t max, coord_t *val)
 {
     findextremalplaneheightparams_t params;
     params.flags = FEPHF_MIN | FEPHF_FLOOR;
@@ -539,7 +481,7 @@ Sector* P_FindSectorSurroundingLowestFloor(Sector* sec, coord_t max, coord_t* va
     return params.foundSec;
 }
 
-Sector* P_FindSectorSurroundingHighestFloor(Sector* sec, coord_t min, coord_t* val)
+Sector *P_FindSectorSurroundingHighestFloor(Sector *sec, coord_t min, coord_t *val)
 {
     findextremalplaneheightparams_t params;
     params.flags = FEPHF_FLOOR;
@@ -552,7 +494,7 @@ Sector* P_FindSectorSurroundingHighestFloor(Sector* sec, coord_t min, coord_t* v
     return params.foundSec;
 }
 
-Sector* P_FindSectorSurroundingLowestCeiling(Sector* sec, coord_t max, coord_t* val)
+Sector *P_FindSectorSurroundingLowestCeiling(Sector *sec, coord_t max, coord_t *val)
 {
     findextremalplaneheightparams_t params;
     params.flags = FEPHF_MIN;
@@ -565,7 +507,7 @@ Sector* P_FindSectorSurroundingLowestCeiling(Sector* sec, coord_t max, coord_t* 
     return params.foundSec;
 }
 
-Sector* P_FindSectorSurroundingHighestCeiling(Sector* sec, coord_t min, coord_t* val)
+Sector *P_FindSectorSurroundingHighestCeiling(Sector *sec, coord_t min, coord_t *val)
 {
     findextremalplaneheightparams_t params;
     params.flags = 0;
@@ -578,16 +520,15 @@ Sector* P_FindSectorSurroundingHighestCeiling(Sector* sec, coord_t min, coord_t*
     return params.foundSec;
 }
 
-int findNextPlaneHeight(void* ptr, void* context)
+int findNextPlaneHeight(void *ptr, void *context)
 {
-    findnextplaneheightparams_t* params = (findnextplaneheightparams_t*) context;
-    Sector* other = P_GetNextSector((Line*) ptr, params->baseSec);
-    coord_t otherHeight;
+    findnextplaneheightparams_t *params = (findnextplaneheightparams_t *) context;
+    Sector *other = P_GetNextSector((Line *) ptr, params->baseSec);
 
     if(!other)
         return false; // Continue iteration.
 
-    otherHeight = P_GetDoublep(other, ((params->flags & FNPHF_FLOOR)? DMU_FLOOR_HEIGHT : DMU_CEILING_HEIGHT));
+    coord_t otherHeight = P_GetDoublep(other, ((params->flags & FNPHF_FLOOR)? DMU_FLOOR_HEIGHT : DMU_CEILING_HEIGHT));
     if(params->flags & FNPHF_ABOVE)
     {
         if(otherHeight < params->val && otherHeight > params->baseHeight)
@@ -604,10 +545,9 @@ int findNextPlaneHeight(void* ptr, void* context)
     return false; // Continue iteration.
 }
 
-Sector* P_FindSectorSurroundingNextHighestFloor(Sector* sec, coord_t baseHeight, coord_t* val)
+Sector *P_FindSectorSurroundingNextHighestFloor(Sector *sec, coord_t baseHeight, coord_t *val)
 {
     findnextplaneheightparams_t params;
-
     params.flags = FNPHF_FLOOR | FNPHF_ABOVE;
     params.val = DDMAXFLOAT;
     params.baseSec = sec;
@@ -619,7 +559,7 @@ Sector* P_FindSectorSurroundingNextHighestFloor(Sector* sec, coord_t baseHeight,
     return params.foundSec;
 }
 
-Sector* P_FindSectorSurroundingNextHighestCeiling(Sector* sec, coord_t baseHeight, coord_t* val)
+Sector *P_FindSectorSurroundingNextHighestCeiling(Sector *sec, coord_t baseHeight, coord_t *val)
 {
     findnextplaneheightparams_t params;
     params.flags = FNPHF_ABOVE;
@@ -633,7 +573,7 @@ Sector* P_FindSectorSurroundingNextHighestCeiling(Sector* sec, coord_t baseHeigh
     return params.foundSec;
 }
 
-Sector* P_FindSectorSurroundingNextLowestFloor(Sector* sec, coord_t baseHeight, coord_t* val)
+Sector *P_FindSectorSurroundingNextLowestFloor(Sector *sec, coord_t baseHeight, coord_t *val)
 {
     findnextplaneheightparams_t params;
     params.flags = FNPHF_FLOOR;
@@ -647,7 +587,7 @@ Sector* P_FindSectorSurroundingNextLowestFloor(Sector* sec, coord_t baseHeight, 
     return params.foundSec;
 }
 
-Sector* P_FindSectorSurroundingNextLowestCeiling(Sector* sec, coord_t baseHeight, coord_t* val)
+Sector *P_FindSectorSurroundingNextLowestCeiling(Sector *sec, coord_t baseHeight, coord_t *val)
 {
     findnextplaneheightparams_t params;
     params.flags = 0;
@@ -661,38 +601,38 @@ Sector* P_FindSectorSurroundingNextLowestCeiling(Sector* sec, coord_t baseHeight
     return params.foundSec;
 }
 
-float P_SectorLight(Sector* sector)
+float P_SectorLight(Sector *sector)
 {
     return P_GetFloatp(sector, DMU_LIGHT_LEVEL);
 }
 
-void P_SectorSetLight(Sector* sector, float level)
+void P_SectorSetLight(Sector *sector, float level)
 {
     P_SetFloatp(sector, DMU_LIGHT_LEVEL, level);
 }
 
-void P_SectorModifyLight(Sector* sector, float value)
+void P_SectorModifyLight(Sector *sector, float value)
 {
     float level = MINMAX_OF(0.f, P_SectorLight(sector) + value, 1.f);
     P_SectorSetLight(sector, level);
 }
 
-void P_SectorModifyLightx(Sector* sector, fixed_t value)
+void P_SectorModifyLightx(Sector *sector, fixed_t value)
 {
     P_SetFloatp(sector, DMU_LIGHT_LEVEL, P_SectorLight(sector) + FIX2FLT(value) / 255.0f);
 }
 
-const terraintype_t* P_PlaneMaterialTerrainType(Sector* sec, int plane)
+terraintype_t const *P_PlaneMaterialTerrainType(Sector *sec, int plane)
 {
-    return P_TerrainTypeForMaterial(P_GetPtrp(sec, (plane? DMU_CEILING_MATERIAL : DMU_FLOOR_MATERIAL)));
+    return P_TerrainTypeForMaterial((Material *)P_GetPtrp(sec, (plane? DMU_CEILING_MATERIAL : DMU_FLOOR_MATERIAL)));
 }
 
-void P_TranslateSideMaterialOrigin(Side* side, SideSection section, float deltaXY[2])
+void P_TranslateSideMaterialOrigin(Side *side, SideSection section, float deltaXY[2])
 {
     DENG_ASSERT(side);
     DENG_ASSERT(VALID_SIDESECTION(section));
-{
-    const uint dmuSurfaceOriginFlags = DMU_OFFSET_XY | DMU_FLAG_FOR_SIDESECTION(section);
+
+    uint const dmuSurfaceOriginFlags = DMU_OFFSET_XY | DMU_FLAG_FOR_SIDESECTION(section);
     float origin[2];
 
     if(FEQUAL(deltaXY[0], 0) && FEQUAL(deltaXY[1], 0)) return;
@@ -707,9 +647,9 @@ void P_TranslateSideMaterialOrigin(Side* side, SideSection section, float deltaX
         origin[1] += deltaXY[1];
     }
     P_SetFloatpv(side, dmuSurfaceOriginFlags, origin);
-}}
+}
 
-void P_TranslateSideMaterialOriginXY(Side* side, SideSection section,
+void P_TranslateSideMaterialOriginXY(Side *side, SideSection section,
     float deltaX, float deltaY)
 {
     float delta[2];
@@ -718,7 +658,7 @@ void P_TranslateSideMaterialOriginXY(Side* side, SideSection section,
     P_TranslateSideMaterialOrigin(side, section, delta);
 }
 
-void P_TranslatePlaneMaterialOrigin(Plane* plane, float deltaXY[2])
+void P_TranslatePlaneMaterialOrigin(Plane *plane, float deltaXY[2])
 {
     float origin[2];
 
@@ -738,7 +678,7 @@ void P_TranslatePlaneMaterialOrigin(Plane* plane, float deltaXY[2])
     P_SetFloatpv(plane, DMU_OFFSET_XY, origin);
 }
 
-void P_TranslatePlaneMaterialOriginXY(Plane* plane, float deltaX, float deltaY)
+void P_TranslatePlaneMaterialOriginXY(Plane *plane, float deltaX, float deltaY)
 {
     float delta[2];
     delta[0] = deltaX;

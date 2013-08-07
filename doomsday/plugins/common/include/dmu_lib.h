@@ -136,22 +136,33 @@
 #define DMU_CEILING_NORMAL_Z    (DMU_CEILING_OF_SECTOR | DMU_NORMAL_Z)
 #define DMU_CEILING_NORMAL_XYZ  (DMU_CEILING_OF_SECTOR | DMU_NORMAL_XYZ)
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void P_BuildLineTagLists(void);
+
 void P_DestroyLineTagLists(void);
-iterlist_t* P_GetLineIterListForTag(int tag, boolean createNewList);
+
+iterlist_t *P_GetLineIterListForTag(int tag, boolean createNewList);
 
 void P_BuildSectorTagLists(void);
+
 void P_DestroySectorTagLists(void);
-iterlist_t* P_GetSectorIterListForTag(int tag, boolean createNewList);
+
+iterlist_t *P_GetSectorIterListForTag(int tag, boolean createNewList);
 
 void P_BuildAllTagLists(void);
+
 void P_DestroyAllTagLists(void);
 
-Line* P_AllocDummyLine(void);
-void P_FreeDummyLine(Line* line);
+Line *P_AllocDummyLine(void);
 
-Side* P_AllocDummySide(void);
-void P_FreeDummySide(Side* side);
+void P_FreeDummyLine(Line *line);
+
+Side *P_AllocDummySide(void);
+
+void P_FreeDummySide(Side *side);
 
 /**
  * Get the sector on the other side of the line that is NOT the given sector.
@@ -161,83 +172,83 @@ void P_FreeDummySide(Side* side);
  *
  * @return  Ptr to the other sector or @c NULL if the specified line is NOT twosided.
  */
-Sector* P_GetNextSector(Line* line, Sector* sec);
+Sector *P_GetNextSector(Line *line, Sector *sec);
 
 #define FEPHF_MIN           0x1 // Get minium. If not set, get maximum.
 #define FEPHF_FLOOR         0x2 // Get floors. If not set, get ceilings.
 
 typedef struct findextremalplaneheightparams_s {
-    Sector* baseSec;
+    Sector *baseSec;
     byte flags;
     coord_t val;
-    Sector* foundSec;
+    Sector *foundSec;
 } findextremalplaneheightparams_t;
 
 /// Find the sector with the lowest floor height in surrounding sectors.
-Sector* P_FindSectorSurroundingLowestFloor(Sector* sector, coord_t max, coord_t* val);
+Sector *P_FindSectorSurroundingLowestFloor(Sector *sector, coord_t max, coord_t *val);
 
 /// Find the sector with the highest floor height in surrounding sectors.
-Sector* P_FindSectorSurroundingHighestFloor(Sector* sector, coord_t min, coord_t* val);
+Sector *P_FindSectorSurroundingHighestFloor(Sector *sector, coord_t min, coord_t *val);
 
 /// Find lowest ceiling in the surrounding sector.
-Sector* P_FindSectorSurroundingLowestCeiling(Sector* sector, coord_t max, coord_t* val);
+Sector *P_FindSectorSurroundingLowestCeiling(Sector *sector, coord_t max, coord_t *val);
 
 /// Find highest ceiling in the surrounding sectors.
-Sector* P_FindSectorSurroundingHighestCeiling(Sector* sector, coord_t min, coord_t* val);
+Sector *P_FindSectorSurroundingHighestCeiling(Sector *sector, coord_t min, coord_t *val);
 
 #define FNPHF_FLOOR             0x1 // Get floors, if not set get ceilings.
 #define FNPHF_ABOVE             0x2 // Get next above, if not set get next below.
 
 typedef struct findnextplaneheightparams_s {
-    Sector* baseSec;
+    Sector *baseSec;
     coord_t baseHeight;
     byte flags;
     coord_t val;
-    Sector* foundSec;
+    Sector *foundSec;
 } findnextplaneheightparams_t;
 
 /// Find the sector with the next highest floor in surrounding sectors.
-Sector* P_FindSectorSurroundingNextHighestFloor(Sector* sector, coord_t baseHeight, coord_t* val);
+Sector *P_FindSectorSurroundingNextHighestFloor(Sector *sector, coord_t baseHeight, coord_t *val);
 
 /// Find the sector with the next lowest floor in surrounding sectors.
-Sector* P_FindSectorSurroundingNextLowestFloor(Sector* sector, coord_t baseHeight, coord_t* val);
+Sector *P_FindSectorSurroundingNextLowestFloor(Sector *sector, coord_t baseHeight, coord_t *val);
 
 /// Find the sector with the next highest ceiling in surrounding sectors.
-Sector* P_FindSectorSurroundingNextHighestCeiling(Sector* sector, coord_t baseHeight, coord_t* val);
+Sector *P_FindSectorSurroundingNextHighestCeiling(Sector *sector, coord_t baseHeight, coord_t *val);
 
 /// Find the sector with the next lowest ceiling in surrounding sectors.
-Sector* P_FindSectorSurroundingNextLowestCeiling(Sector* sector, coord_t baseHeight, coord_t* val);
+Sector *P_FindSectorSurroundingNextLowestCeiling(Sector *sector, coord_t baseHeight, coord_t *val);
 
 #define FELLF_MIN               0x1 /// Get minimum. If not set, get maximum.
 
 typedef struct findlightlevelparams_s {
-    Sector* baseSec;
+    Sector *baseSec;
     byte flags;
     float val;
-    Sector* foundSec;
+    Sector *foundSec;
 } findlightlevelparams_t;
 
 /// Find the sector with the lowest light level in surrounding sectors.
-Sector* P_FindSectorSurroundingLowestLight(Sector* sector, float* val);
+Sector *P_FindSectorSurroundingLowestLight(Sector *sector, float *val);
 
 /// Find the sector with the highest light level in surrounding sectors.
-Sector* P_FindSectorSurroundingHighestLight(Sector* sector, float* val);
+Sector *P_FindSectorSurroundingHighestLight(Sector *sector, float *val);
 
 #define FNLLF_ABOVE             0x1 /// Get next above, if not set get next below.
 
 typedef struct findnextlightlevelparams_s {
-    Sector* baseSec;
+    Sector *baseSec;
     float baseLight;
     byte flags;
     float val;
-    Sector* foundSec;
+    Sector *foundSec;
 } findnextlightlevelparams_t;
 
 /// Find the sector with the lowest light level in surrounding sectors.
-Sector* P_FindSectorSurroundingNextLowestLight(Sector* sector, float baseLight, float* val);
+Sector *P_FindSectorSurroundingNextLowestLight(Sector *sector, float baseLight, float *val);
 
 /// Find the sector with the next highest light level in surrounding sectors.
-Sector* P_FindSectorSurroundingNextHighestLight(Sector* sector, float baseLight, float* val);
+Sector *P_FindSectorSurroundingNextHighestLight(Sector *sector, float baseLight, float *val);
 
 /**
  * Returns the material type of the specified sector, plane.
@@ -245,29 +256,33 @@ Sector* P_FindSectorSurroundingNextHighestLight(Sector* sector, float baseLight,
  * @param sec  The sector to check.
  * @param plane  The plane id to check.
  */
-const terraintype_t* P_PlaneMaterialTerrainType(Sector* sec, int plane);
+terraintype_t const *P_PlaneMaterialTerrainType(Sector *sec, int plane);
 
 /**
  * Copies all (changeable) properties from one line to another including the
  * extended properties.
  */
-void P_CopyLine(Line* dest, Line* src);
+void P_CopyLine(Line *dest, Line *src);
 
 /**
  * Copies all (changeable) properties from one sector to another including
  * the extended properties.
  */
-void P_CopySector(Sector* dest, Sector* src);
+void P_CopySector(Sector *dest, Sector *src);
 
-float P_SectorLight(Sector* sector);
-void P_SectorSetLight(Sector* sector, float level);
-void P_SectorModifyLight(Sector* sector, float value);
-void P_SectorModifyLightx(Sector* sector, fixed_t value);
+float P_SectorLight(Sector *sector);
+void P_SectorSetLight(Sector *sector, float level);
+void P_SectorModifyLight(Sector *sector, float value);
+void P_SectorModifyLightx(Sector *sector, fixed_t value);
 
-void P_TranslateSideMaterialOrigin(Side* side, SideSection section, float deltaXY[2]);
-void P_TranslateSideMaterialOriginXY(Side* side, SideSection section, float deltaX, float deltaY);
+void P_TranslateSideMaterialOrigin(Side *side, SideSection section, float deltaXY[2]);
+void P_TranslateSideMaterialOriginXY(Side *side, SideSection section, float deltaX, float deltaY);
 
-void P_TranslatePlaneMaterialOrigin(Plane* plane, float deltaXY[2]);
-void P_TranslatePlaneMaterialOriginXY(Plane* plane, float deltaX, float deltaY);
+void P_TranslatePlaneMaterialOrigin(Plane *plane, float deltaXY[2]);
+void P_TranslatePlaneMaterialOriginXY(Plane *plane, float deltaX, float deltaY);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBCOMMON_DMU_LIB_H */

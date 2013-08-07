@@ -1,7 +1,6 @@
-/**
- * @file p_iterlist.h
+/** @file p_iterlist.h
  *
- * @author Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -35,30 +34,38 @@ typedef enum {
 struct iterlist_s;
 typedef struct iterlist_s iterlist_t;
 
-iterlist_t* IterList_New(void);
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-void IterList_Delete(iterlist_t* list);
+iterlist_t *IterList_New(void);
+
+void IterList_Delete(iterlist_t *list);
 
 /**
  * Push a new pointer onto the top of the stack.
  * @param data  User data pointer to be added.
  * @return  Index associated to the newly added object.
  */
-int IterList_PushBack(iterlist_t* list, void* data);
+int IterList_PushBack(iterlist_t *list, void *data);
 
-void* IterList_Pop(iterlist_t* list);
+void* IterList_Pop(iterlist_t *list);
 
-void IterList_Clear(iterlist_t* list);
+void IterList_Clear(iterlist_t *list);
 
-int IterList_Size(iterlist_t* list);
+int IterList_Size(iterlist_t *list);
 
-boolean IterList_Empty(iterlist_t* list);
+boolean IterList_Empty(iterlist_t *list);
 
 /// @return  Current pointer being pointed at.
-void* IterList_MoveIterator(iterlist_t* list);
+void* IterList_MoveIterator(iterlist_t *list);
 
-void IterList_RewindIterator(iterlist_t* list);
+void IterList_RewindIterator(iterlist_t *list);
 
-void IterList_SetIteratorDirection(iterlist_t* list, iterlist_iterator_direction_t direction);
+void IterList_SetIteratorDirection(iterlist_t *list, iterlist_iterator_direction_t direction);
 
-#endif // LIBCOMMON_ITERLIST_H
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
+#endif /* LIBCOMMON_ITERLIST_H */
