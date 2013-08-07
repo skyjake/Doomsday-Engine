@@ -1,9 +1,7 @@
-/**
- * @file p_actor.h
- * Common code relating to mobj management. @ingroup libcommon
+/** @file p_actor.h Common code relating to mobj management.
  *
- * @author Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @author Copyright &copy; 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -36,37 +34,37 @@ extern "C" {
  *                      the current gamemode).
  *                      Generally this should be @c false.
  */
-void P_MobjRemove(mobj_t* mo, boolean noRespawn);
+void P_MobjRemove(mobj_t *mo, boolean noRespawn);
 
 void P_RemoveAllPlayerMobjs(void);
 
 /**
  * Unlinks a mobj from the world so that it can be moved.
  */
-void P_MobjUnsetOrigin(mobj_t* mo);
+void P_MobjUnsetOrigin(mobj_t *mo);
 
 /**
  * To be called after a move, to link the mobj back into the world.
  */
-void P_MobjSetOrigin(mobj_t* mo);
+void P_MobjSetOrigin(mobj_t *mo);
 
 /**
  * The actor has taken a step, set the corresponding short-range visual
  * offset.
  */
-void P_MobjSetSRVO(mobj_t* mo, coord_t stepx, coord_t stepy);
+void P_MobjSetSRVO(mobj_t *mo, coord_t stepx, coord_t stepy);
 
 /**
  * The actor has taken a step, set the corresponding short-range visual
  * offset.
  */
-void P_MobjSetSRVOZ(mobj_t* mo, coord_t stepz);
+void P_MobjSetSRVOZ(mobj_t *mo, coord_t stepz);
 
 /**
  * The thing's timer has run out, which means the thing has completed its
  * step. Or there has been a teleport.
  */
-void P_MobjClearSRVO(mobj_t* mo);
+void P_MobjClearSRVO(mobj_t *mo);
 
 /**
  * Turn visual angle towards real angle. An engine cvar controls whether
@@ -74,15 +72,15 @@ void P_MobjClearSRVO(mobj_t* mo);
  * Real-life analogy: angular momentum (you can't suddenly just take a
  * 90 degree turn in zero time).
  */
-void P_MobjAngleSRVOTicker(mobj_t* mo);
+void P_MobjAngleSRVOTicker(mobj_t *mo);
 
-boolean P_MobjIsCamera(const mobj_t* mo);
+boolean P_MobjIsCamera(mobj_t const *mo);
 
 /**
  * The first three bits of the selector special byte contain a relative
  * health level.
  */
-void P_UpdateHealthBits(mobj_t* mo);
+void P_UpdateHealthBits(mobj_t *mo);
 
 /**
  * Given a mobjtype, lookup the statenum associated to the named state.
@@ -101,10 +99,8 @@ void P_PurgeDeferredSpawns(void);
  * Deferred mobj spawning until at least @a minTics have passed.
  * Spawn behavior is otherwise exactly the same as an immediate spawn.
  */
-void P_DeferSpawnMobj3f(int minTics, mobjtype_t type, coord_t x, coord_t y, coord_t z, angle_t angle,
-    int spawnFlags, void (*callback) (mobj_t* mo, void* context), void* context);
-void P_DeferSpawnMobj3fv(int minTics, mobjtype_t type, coord_t const pos[3], angle_t angle,
-    int spawnFlags, void (*callback) (mobj_t* mo, void* context), void* context);
+void P_DeferSpawnMobj3f(int minTics, mobjtype_t type, coord_t x, coord_t y, coord_t z, angle_t angle, int spawnFlags, void (*callback) (mobj_t *mo, void *context), void *context);
+void P_DeferSpawnMobj3fv(int minTics, mobjtype_t type, coord_t const pos[3], angle_t angle, int spawnFlags, void (*callback) (mobj_t *mo, void *context), void *context);
 
 #ifdef __cplusplus
 } // extern "C"

@@ -32,8 +32,16 @@
 #  error "Using jDoom headers without __JDOOM__"
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 byte        P_Random(void);
 byte        M_Random(void);
 void        M_ResetRandom(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif

@@ -90,7 +90,7 @@ SOURCES += \
     $$common_src/m_ctrl.c \
     $$common_src/mobj.c \
     $$common_src/pause.c \
-    $$common_src/p_actor.c \
+    $$common_src/p_actor.cpp \
     $$common_src/p_ceiling.c \
     $$common_src/p_door.c \
     $$common_src/p_floor.c \

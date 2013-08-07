@@ -208,6 +208,10 @@ typedef struct mobj_s {
     struct mobj_s*  lastEnemy;
 } mobj_t;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 mobj_t* P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z, angle_t angle, int spawnFlags);
 mobj_t* P_SpawnMobj(mobjtype_t type, coord_t const pos[3], angle_t angle, int spawnFlags);
 
@@ -238,5 +242,9 @@ mobj_t* P_SpawnTeleFog(coord_t x, coord_t y, angle_t angle);
 mobj_t* P_SpawnKoraxMissile(mobjtype_t type, coord_t x, coord_t y, coord_t z, mobj_t* source, mobj_t* dest);
 
 void P_ExplodeMissile(mobj_t* mo);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif // LIBHEXEN_P_MOBJ_H

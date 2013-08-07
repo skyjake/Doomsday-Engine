@@ -1,9 +1,7 @@
-/**
- * @file p_actor.c
- * Common code relating to mobj management. @ingroup libcommon
+/** @file p_actor.cpp Common code relating to mobj management.
  *
- * @author Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @author Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -20,15 +18,14 @@
  * 02110-1301 USA</small>
  */
 
-#include <stdio.h>
-#include <string.h>
+#include <cstdio>
+#include <cstring>
 
 #include "common.h"
 #include "p_tick.h"
 #include "p_actor.h"
 
-#define MIN_STEP                ((10 * ANGLE_1) >> 16) ///< Degrees per tic
-#define MAX_STEP                (ANG90 >> 16)
+#include "p_actor.h"
 
 #if __JDOOM64__
 # define RESPAWNTICS            (4 * TICSPERSEC)
@@ -39,7 +36,7 @@
 typedef struct spawnqueuenode_s {
     int startTime;
     int minTics; ///< Minimum number of tics before respawn.
-    void (*callback) (mobj_t* mo, void* context);
+    void (*callback) (mobj_t *mo, void *context);
     void* context;
 
     coord_t pos[3];
@@ -47,12 +44,12 @@ typedef struct spawnqueuenode_s {
     mobjtype_t type;
     int spawnFlags; ///< MSF_* flags
 
-    struct spawnqueuenode_s* next;
+    struct spawnqueuenode_s *next;
 } spawnqueuenode_t;
 
-static spawnqueuenode_t* spawnQueueHead = NULL, *unusedNodes = NULL;
+static spawnqueuenode_t *spawnQueueHead, *unusedNodes;
 
-void P_SpawnTelefog(mobj_t* mo, void* context)
+void P_SpawnTelefog(mobj_t *mo, void *context)
 {
 #if __JDOOM__ || __JDOOM64__
     S_StartSound(SFX_ITMBK, mo);
@@ -70,7 +67,7 @@ void P_SpawnTelefog(mobj_t* mo, void* context)
 # endif
 }
 
-void P_MobjRemove(mobj_t* mo, boolean noRespawn)
+void P_MobjRemove(mobj_t *mo, boolean noRespawn)
 {
     if(mo->ddFlags & DDMF_REMOTE) goto justDoIt;
 
@@ -91,9 +88,9 @@ void P_MobjRemove(mobj_t* mo, boolean noRespawn)
 # endif
            )
         {
-            P_DeferSpawnMobj3fv(RESPAWNTICS, mo->type, mo->spawnSpot.origin,
-                                mo->spawnSpot.angle, mo->spawnSpot.flags,
-                                P_SpawnTelefog, NULL);
+            P_DeferSpawnMobj3fv(RESPAWNTICS, mobjtype_t(mo->type),
+                                mo->spawnSpot.origin, mo->spawnSpot.angle,
+                                mo->spawnSpot.flags, P_SpawnTelefog, NULL);
         }
     }
 #endif
@@ -111,21 +108,22 @@ justDoIt:
     P_MobjDestroy(mo);
 }
 
-void P_RemoveAllPlayerMobjs(void)
+void P_RemoveAllPlayerMobjs()
 {
-    uint i;
-    for(i = 0; i < MAXPLAYERS; ++i)
+    for(uint i = 0; i < MAXPLAYERS; ++i)
     {
-        player_t* plr = players + i;
-        ddplayer_t* ddplr = plr->plr;
+        player_t *plr = players + i;
+        ddplayer_t *ddplr = plr->plr;
         if(!ddplr->inGame) continue;
 
         P_MobjRemove(ddplr->mo, true);
     }
 }
 
-void P_MobjSetOrigin(mobj_t* mo)
+void P_MobjSetOrigin(mobj_t *mo)
 {
+    DENG_ASSERT(mo != 0);
+
     int flags = DDLINK_BLOCKMAP; // Always.
 
     if(!(mo->flags & MF_NOSECTOR))
@@ -134,26 +132,30 @@ void P_MobjSetOrigin(mobj_t* mo)
     P_MobjLink(mo, flags);
 }
 
-void P_MobjUnsetOrigin(mobj_t* mo)
+void P_MobjUnsetOrigin(mobj_t *mo)
 {
     P_MobjUnlink(mo);
 }
 
-void P_MobjSetSRVO(mobj_t* mo, coord_t stepx, coord_t stepy)
+void P_MobjSetSRVO(mobj_t *mo, coord_t stepx, coord_t stepy)
 {
+    DENG_ASSERT(mo != 0);
     mo->srvo[VX] = -stepx;
     mo->srvo[VY] = -stepy;
 }
 
-void P_MobjSetSRVOZ(mobj_t* mo, coord_t stepz)
+void P_MobjSetSRVOZ(mobj_t *mo, coord_t stepz)
 {
+    DENG_ASSERT(mo != 0);
     mo->srvo[VZ] = -stepz;
 }
 
-void P_MobjAngleSRVOTicker(mobj_t* mo)
+void P_MobjAngleSRVOTicker(mobj_t *mo)
 {
-    short target, step, diff;
-    int lstep, hgt;
+#define MIN_STEP (10 * ANGLE_1) >> 16 ///< Degrees per tic
+#define MAX_STEP ANG90 >> 16
+
+    DENG_ASSERT(mo != 0);
 
     // Check requirements.
     if(mo->flags & MF_MISSILE || !(mo->flags & MF_COUNTKILL))
@@ -162,9 +164,10 @@ void P_MobjAngleSRVOTicker(mobj_t* mo)
         return; // This is not for us.
     }
 
-    target = mo->angle >> 16;
-    diff = target - mo->visAngle;
+    short target = mo->angle >> 16;
+    short diff = target - mo->visAngle;
 
+    short step = 0;
     if(mo->turnTime)
     {
         if(mo->tics) step = abs(diff) / mo->tics;
@@ -176,10 +179,10 @@ void P_MobjAngleSRVOTicker(mobj_t* mo)
     {
         // Calculate a good step size.
         // Thing height and diff taken into account.
-        hgt = (int) mo->height;
+        int hgt = (int) mo->height;
         hgt = MINMAX_OF(30, hgt, 60);
 
-        lstep = abs(diff) * 8 / hgt;
+        int lstep = abs(diff) * 8 / hgt;
         lstep = MINMAX_OF(MIN_STEP, lstep, MAX_STEP);
 
         step = lstep;
@@ -192,33 +195,36 @@ void P_MobjAngleSRVOTicker(mobj_t* mo)
         mo->visAngle += step;
     else if(diff < 0)
         mo->visAngle -= step;
+
+#undef MAX_STEP
+#undef MIN_STEP
 }
 
-void P_MobjClearSRVO(mobj_t* mo)
+void P_MobjClearSRVO(mobj_t *mo)
 {
-    memset(mo->srvo, 0, sizeof(mo->srvo));
+    DENG_ASSERT(mo != 0);
+    std::memset(mo->srvo, 0, sizeof(mo->srvo));
 }
 
-boolean P_MobjIsCamera(const mobj_t* mo)
+boolean P_MobjIsCamera(mobj_t const *mo)
 {
     // Client mobjs do not have thinkers and thus cannot be cameras.
     return (mo && mo->thinker.function && mo->player &&
             (mo->player->plr->flags & DDPF_CAMERA));
 }
 
-void P_UpdateHealthBits(mobj_t* mo)
+void P_UpdateHealthBits(mobj_t *mo)
 {
-    int i;
     if(!mo || !mo->info) return;
 
     if(mo->info->spawnHealth > 0)
     {
         mo->selector &= DDMOBJ_SELECTOR_MASK; // Clear high byte.
 
-        i = (mo->health << 3) / mo->info->spawnHealth;
-        i = MINMAX_OF(0, i, 7);
+        int sel = (mo->health << 3) / mo->info->spawnHealth;
+        sel = MINMAX_OF(0, sel, 7);
 
-        mo->selector |= i << DDMOBJ_SELECTOR_SHIFT;
+        mo->selector |= sel << DDMOBJ_SELECTOR_SHIFT;
     }
 }
 
@@ -227,14 +233,14 @@ statenum_t P_GetState(mobjtype_t type, statename_t name)
     if(type < MT_FIRST || type >= Get(DD_NUMMOBJTYPES)) return S_NULL;
     if(name < 0 || name >= STATENAMES_COUNT) return S_NULL;
 
-    return MOBJINFO[type].states[name];
+    return statenum_t(MOBJINFO[type].states[name]);
 }
 
-void P_RipperBlood(mobj_t* actor)
+void P_RipperBlood(mobj_t *actor)
 {
-    mobj_t* mo;
-    coord_t pos[3];
+    DENG_ASSERT(actor != 0);
 
+    coord_t pos[3];
     pos[VX] = actor->origin[VX];
     pos[VY] = actor->origin[VY];
     pos[VZ] = actor->origin[VZ];
@@ -243,7 +249,7 @@ void P_RipperBlood(mobj_t* actor)
     pos[VY] += FIX2FLT((P_Random() - P_Random()) << 12);
     pos[VZ] += FIX2FLT((P_Random() - P_Random()) << 12);
 
-    if((mo = P_SpawnMobj(MT_BLOOD, pos, actor->angle, 0)))
+    if(mobj_t *mo = P_SpawnMobj(MT_BLOOD, pos, actor->angle, 0))
     {
 #if __JHERETIC__
         mo->flags |= MF_NOGRAVITY;
@@ -254,43 +260,45 @@ void P_RipperBlood(mobj_t* actor)
     }
 }
 
-static spawnqueuenode_t* allocateNode(void)
+static spawnqueuenode_t *allocateNode()
 {
 #define SPAWNQUEUENODE_BATCHSIZE 32
 
-    spawnqueuenode_t* n;
+    spawnqueuenode_t *node;
 
     if(unusedNodes)
     {
         // There are existing nodes we can re-use.
-        n = unusedNodes;
+        node = unusedNodes;
         unusedNodes = unusedNodes->next;
-        n->next = NULL;
+        node->next = 0;
     }
     else
     {
         // We need to allocate more.
-        size_t i;
-        spawnqueuenode_t* storage = Z_Malloc(sizeof(*n) * SPAWNQUEUENODE_BATCHSIZE, PU_GAMESTATIC, 0);
+        spawnqueuenode_t *storage = (spawnqueuenode_t *)
+            Z_Malloc(sizeof(*node) * SPAWNQUEUENODE_BATCHSIZE, PU_GAMESTATIC, 0);
 
         // Add all but one to the unused node list.
-        for(i = 0; i < SPAWNQUEUENODE_BATCHSIZE-1; ++i)
+        for(int i = 0; i < SPAWNQUEUENODE_BATCHSIZE-1; ++i)
         {
-            n = storage++;
-            n->next = unusedNodes;
-            unusedNodes = n;
+            node = storage++;
+            node->next = unusedNodes;
+            unusedNodes = node;
         }
 
-        n = storage;
+        node = storage;
     }
 
-    return n;
+    return node;
 
 #undef SPAWNQUEUENODE_BATCHSIZE
 }
 
-static void freeNode(spawnqueuenode_t* node, boolean recycle)
+static void freeNode(spawnqueuenode_t *node, bool recycle)
 {
+    if(!node) return;
+
     // Find this node in the spawn queue and unlink it if found.
     if(spawnQueueHead)
     {
@@ -300,11 +308,10 @@ static void freeNode(spawnqueuenode_t* node, boolean recycle)
         }
         else
         {
-            spawnqueuenode_t* n;
-            for(n = spawnQueueHead; n->next; n = n->next)
+            for(spawnqueuenode_t *other = spawnQueueHead; other->next; other = other->next)
             {
-                if(n->next == node)
-                    n->next = n->next->next;
+                if(other->next == node)
+                    other->next = other->next->next;
             }
         }
     }
@@ -320,108 +327,84 @@ static void freeNode(spawnqueuenode_t* node, boolean recycle)
     Z_Free(node);
 }
 
-static spawnqueuenode_t* dequeueSpawn(void)
+static spawnqueuenode_t *dequeueSpawn()
 {
-    spawnqueuenode_t* n = spawnQueueHead;
+    spawnqueuenode_t *node = spawnQueueHead;
     if(spawnQueueHead)
         spawnQueueHead = spawnQueueHead->next;
-    return n;
+    return node;
 }
 
-static void emptySpawnQueue(boolean recycle)
+static void emptySpawnQueue(bool recycle)
 {
     if(spawnQueueHead)
     {
-        spawnqueuenode_t* n;
-        while((n = dequeueSpawn()))
+        while(spawnqueuenode_t *node = dequeueSpawn())
         {
-            freeNode(n, recycle);
+            freeNode(node, recycle);
         }
     }
-    spawnQueueHead = NULL;
+    spawnQueueHead = 0;
 }
 
 static void enqueueSpawn(int minTics, mobjtype_t type, coord_t x, coord_t y,
     coord_t z, angle_t angle, int spawnFlags,
-    void (*callback) (mobj_t* mo, void* context), void* context)
+    void (*callback) (mobj_t *mo, void *context), void *context)
 {
-    spawnqueuenode_t* n = allocateNode();
+    spawnqueuenode_t *spawn = allocateNode();
 
-    n->type = type;
-    n->pos[VX] = x;
-    n->pos[VY] = y;
-    n->pos[VZ] = z;
-    n->angle = angle;
-    n->spawnFlags = spawnFlags;
+    spawn->type = type;
+    spawn->pos[VX] = x;
+    spawn->pos[VY] = y;
+    spawn->pos[VZ] = z;
+    spawn->angle = angle;
+    spawn->spawnFlags = spawnFlags;
 
-    n->startTime = mapTime;
-    n->minTics = minTics;
+    spawn->startTime = mapTime;
+    spawn->minTics = minTics;
 
-    n->callback = callback;
-    n->context = context;
+    spawn->callback = callback;
+    spawn->context = context;
 
     if(spawnQueueHead)
     {
         // Find the correct insertion point.
         if(spawnQueueHead->next)
         {
-            spawnqueuenode_t* l = spawnQueueHead;
+            spawnqueuenode_t *other = spawnQueueHead;
 
-            while(l->next && l->next->minTics - (mapTime - l->next->startTime) <= minTics)
+            while(other->next && other->next->minTics - (mapTime - other->next->startTime) <= minTics)
             {
-                l = l->next;
+                other = other->next;
             }
 
-            n->next = (l->next? l->next : NULL);
-            l->next = n;
+            spawn->next = (other->next? other->next : 0);
+            other->next = spawn;
         }
         else
         {
             // After or before the head?
             if(spawnQueueHead->minTics - (mapTime - spawnQueueHead->startTime) <= minTics)
             {
-                n->next = NULL;
-                spawnQueueHead->next = n;
+                spawn->next = 0;
+                spawnQueueHead->next = spawn;
             }
             else
             {
-                n->next = spawnQueueHead;
-                spawnQueueHead = n;
+                spawn->next = spawnQueueHead;
+                spawnQueueHead = spawn;
             }
         }
     }
     else
     {
-        n->next = NULL;
-        spawnQueueHead = n;
+        spawn->next = 0;
+        spawnQueueHead = spawn;
     }
-}
-
-static mobj_t* doDeferredSpawn(void)
-{
-    mobj_t* mo = NULL;
-
-    // Anything due to spawn?
-    if(spawnQueueHead &&
-       mapTime - spawnQueueHead->startTime >= spawnQueueHead->minTics)
-    {
-        spawnqueuenode_t* n = dequeueSpawn();
-
-        // Spawn it.
-        if((mo = P_SpawnMobj(n->type, n->pos, n->angle, n->spawnFlags)))
-        {
-            if(n->callback)
-                n->callback(mo, n->context);
-        }
-
-        freeNode(n, true);
-    }
-
-    return mo;
 }
 
 void P_DeferSpawnMobj3f(int minTics, mobjtype_t type, coord_t x, coord_t y, coord_t z,
-    angle_t angle, int spawnFlags,  void (*callback) (mobj_t* mo, void* context),
+    angle_t angle, int spawnFlags,  void (*callback) (mobj_t *mo, void *context),
     void* context)
 {
     if(minTics > 0)
@@ -429,14 +412,11 @@ void P_DeferSpawnMobj3f(int minTics, mobjtype_t type, coord_t x, coord_t y, coor
         enqueueSpawn(minTics, type, x, y, z, angle, spawnFlags, callback,
                      context);
     }
-    else // Spawn immediately.
+    // Spawn immediately.
+    else if(mobj_t *mo = P_SpawnMobjXYZ(type, x, y, z, angle, spawnFlags))
     {
-        mobj_t* mo;
-        if((mo = P_SpawnMobjXYZ(type, x, y, z, angle, spawnFlags)))
-        {
-            if(callback)
-                callback(mo, context);
-        }
+        if(callback)
+            callback(mo, context);
     }
 }
 
@@ -448,25 +428,45 @@ void P_DeferSpawnMobj3fv(int minTics, mobjtype_t type, coord_t const pos[3], ang
         enqueueSpawn(minTics, type, pos[VX], pos[VY], pos[VZ], angle,
                      spawnFlags, callback, context);
     }
-    else // Spawn immediately.
+    // Spawn immediately.
+    else if(mobj_t *mo = P_SpawnMobj(type, pos, angle, spawnFlags))
     {
-        mobj_t* mo;
-        if((mo = P_SpawnMobj(type, pos, angle, spawnFlags)))
-        {
-            if(callback)
-                callback(mo, context);
-        }
+        if(callback)
+            callback(mo, context);
     }
 }
 
-/// @note Called 35 times per second by P_DoTick.
-void P_ProcessDeferredSpawns(void)
+static mobj_t *processOneSpawnTask()
 {
-    while(doDeferredSpawn())
+    mobj_t *mo = 0;
+
+    // Anything due to spawn?
+    if(spawnQueueHead && mapTime - spawnQueueHead->startTime >= spawnQueueHead->minTics)
+    {
+        spawnqueuenode_t *spawn = dequeueSpawn();
+        DENG_ASSERT(spawn != 0);
+
+        // Spawn it.
+        if((mo = P_SpawnMobj(spawn->type, spawn->pos, spawn->angle, spawn->spawnFlags)))
+        {
+            if(spawn->callback)
+                spawn->callback(mo, spawn->context);
+        }
+
+        freeNode(spawn, true);
+    }
+
+    return mo;
+}
+
+/// @note Called 35 times per second by P_DoTick.
+void P_ProcessDeferredSpawns()
+{
+    while(processOneSpawnTask())
     {}
 }
 
-void P_PurgeDeferredSpawns(void)
+void P_PurgeDeferredSpawns()
 {
     emptySpawnQueue(true);
 }

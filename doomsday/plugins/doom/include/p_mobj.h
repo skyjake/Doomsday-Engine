@@ -227,6 +227,10 @@ typedef struct polyobj_s {
     // Doom-specific data:
 } Polyobj;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 mobj_t* P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z, angle_t angle, int spawnFlags);
 mobj_t* P_SpawnMobj(mobjtype_t type, coord_t const pos[3], angle_t angle, int spawnFlags);
 
@@ -242,5 +246,9 @@ mobj_t* P_SpawnTeleFog(coord_t x, coord_t y, angle_t angle);
 const terraintype_t* P_MobjGetFloorTerrainType(mobj_t* mo);
 
 coord_t P_MobjGetFriction(mobj_t* mo);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif

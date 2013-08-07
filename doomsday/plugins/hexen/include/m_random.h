@@ -32,8 +32,16 @@
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 byte        P_Random(void);
 byte        M_Random(void);
 void        M_ResetRandom(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif
