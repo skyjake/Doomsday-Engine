@@ -2213,9 +2213,14 @@ static void occludeLeaf(bool frontFacing)
     if(devNoCulling) return;
     if(P_IsInVoid(viewPlayer)) return;
 
-    foreach(Segment *seg, leaf->clockwiseSegments())
+    HEdge *base = leaf->poly().hedge();
+    HEdge *hedge = base;
+    do
     {
-        DENG_ASSERT(seg->hasBspLeaf() && seg->bspLeaf().hasSector());
+        DENG_ASSERT(hedge->mapElement() != 0);
+
+        Segment *seg = hedge->mapElement()->as<Segment>();
+        DENG_ASSERT(seg->bspLeaf().hasSector()); // sanity check
 
         if(frontFacing != seg->isFlagged(Segment::FacingFront))
             continue;
@@ -2225,19 +2230,19 @@ static void occludeLeaf(bool frontFacing)
             continue;
 
         // Occlusions should only happen where two sectors meet.
-        if(!seg->hasBack() || !seg->back().hasBspLeaf())
+        if(!hedge->hasTwin() || !hedge->twin().hasFace())
             continue;
 
-        BspLeaf &backLeaf = seg->back().bspLeaf();
-        if(backLeaf.isDegenerate() || !backLeaf.hasSector())
+        BspLeaf *backLeaf = hedge->twin().face().mapElement()->as<BspLeaf>();
+        if(backLeaf->isDegenerate() || !backLeaf->hasSector())
             continue;
 
-        Sector const &frontSec = seg->sector();
-        Sector const &backSec  = seg->back().sector();
+        Sector const &frontSec = leaf->sector();
+        Sector const &backSec  = backLeaf->sector();
 
         // Choose start and end vertexes so that it's facing forward.
-        Vertex const &from = frontFacing? seg->from() : seg->to();
-        Vertex const &to   = frontFacing? seg->to()   : seg->from();
+        Vertex const &from = frontFacing? hedge->vertex() : hedge->twin().vertex();
+        Vertex const &to   = frontFacing? hedge->twin().vertex() : hedge->vertex();
 
         coord_t openBottom, openTop;
         R_VisOpenRange(seg->lineSide(), &frontSec, &backSec, &openBottom, &openTop);
@@ -2257,7 +2262,7 @@ static void occludeLeaf(bool frontFacing)
         {
             C_AddViewRelOcclusion(from.origin(), to.origin(), openTop, true);
         }
-    }
+    } while((hedge = &hedge->next()) != base);
 }
 
 /// If @a segment is @em not front facing this is no-op.
