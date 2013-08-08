@@ -1194,17 +1194,6 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
          * Apply changes to all surfaces:
          */
         bias.lastChangeOnFrame = frameCount;
-
-        foreach(BspLeaf *bspLeaf, bspLeafs)
-        foreach(Segment *seg, bspLeaf->allSegments())
-        {
-            seg->applyBiasDigest(allChanges);
-        }
-        foreach(Polyobj *polyobj, polyobjs)
-        foreach(Line *line, polyobj->lines())
-        {
-            line->front().leftSegment()->applyBiasDigest(allChanges);
-        }
         foreach(BspLeaf *bspLeaf, bspLeafs)
         {
             bspLeaf->applyBiasDigest(allChanges);

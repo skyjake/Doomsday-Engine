@@ -289,6 +289,12 @@ public:
 
     void updateBiasAfterGeometryMove(int group);
 
+    /**
+     * Apply bias lighting changes to @em all map element geometries at this
+     * leaf of the BSP.
+     *
+     * @param changes  Digest of lighting changes to be applied.
+     */
     void applyBiasDigest(BiasDigest &changes);
 
     /**

@@ -588,6 +588,17 @@ void BspLeaf::applyBiasDigest(BiasDigest &changes)
     {
         it.value().biasTracker.applyChanges(changes);
     }
+
+    foreach(Segment *seg, allSegments())
+    {
+        seg->applyBiasDigest(changes);
+    }
+
+    foreach(Polyobj *polyobj, d->polyobjs)
+    foreach(Line *line, polyobj->lines())
+    {
+        line->front().leftSegment()->applyBiasDigest(changes);
+    }
 }
 
 void BspLeaf::lightBiasPoly(int group, Vector3f const *posCoords, Vector4f *colorCoords)
