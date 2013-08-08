@@ -2076,13 +2076,14 @@ static bool coveredOpenRange(Segment &segment, coord_t middleBottomZ, coord_t mi
     return false;
 }
 
-static void writeLeafWallSections()
+static void writeWallSectionsForFace(Face const &face)
 {
-    BspLeaf *leaf = currentBspLeaf;
-    DENG_ASSERT(!isNullLeaf(leaf));
-
-    foreach(Segment *seg, leaf->allSegments())
+    HEdge *base = face.hedge();
+    HEdge *hedge = base;
+    do
     {
+        Segment *seg = hedge->mapElement()->as<Segment>();
+
         // We are only interested in front facing line segments.
         if(!seg->isFlagged(Segment::FacingFront))
             continue;
@@ -2108,8 +2109,22 @@ static void writeLeafWallSections()
         if(!P_IsInVoid(viewPlayer) &&
            coveredOpenRange(*seg, middleBottomZ, middleTopZ, wroteOpaqueMiddle))
         {
-            C_AddRangeFromViewRelPoints(seg->from().origin(), seg->to().origin());
+            C_AddRangeFromViewRelPoints(hedge->origin(), hedge->twin().origin());
         }
+    } while((hedge = &hedge->next()) != base);
+}
+
+static void writeLeafWallSections()
+{
+    BspLeaf *leaf = currentBspLeaf;
+    DENG_ASSERT(!isNullLeaf(leaf));
+
+    writeWallSectionsForFace(leaf->poly());
+
+    foreach(Mesh *mesh, leaf->extraMeshes())
+    foreach(Face *face, mesh->faces())
+    {
+        writeWallSectionsForFace(*face);
     }
 }
 
@@ -2278,15 +2293,29 @@ static void occludeLeaf(bool frontFacing)
 }
 
 /// If @a segment is @em not front facing this is no-op.
-static inline void clipFrontFacingSegment(Segment &segment)
+static void clipOneFrontFacingSegment(Segment *seg)
 {
-    if(segment.isFlagged(Segment::FacingFront))
+    if(!seg || !seg->hasLineSide())
+        return;
+
+    if(seg->isFlagged(Segment::FacingFront))
     {
-        if(!C_CheckRangeFromViewRelPoints(segment.from().origin(), segment.to().origin()))
+        if(!C_CheckRangeFromViewRelPoints(seg->from().origin(), seg->to().origin()))
         {
-            segment.setFlags(Segment::FacingFront, UnsetFlags);
+            seg->setFlags(Segment::FacingFront, UnsetFlags);
         }
     }
+}
+
+static void clipFrontFacingFaceEdges(Face const &face)
+{
+    HEdge *base = face.hedge();
+    HEdge *hedge = base;
+    do
+    {
+        DENG_ASSERT(hedge->mapElement() != 0);
+        clipOneFrontFacingSegment(hedge->mapElement()->as<Segment>());
+    } while((hedge = &hedge->next()) != base);
 }
 
 static void clipFrontFacingSegments()
@@ -2294,18 +2323,18 @@ static void clipFrontFacingSegments()
     BspLeaf *bspLeaf = currentBspLeaf;
     DENG_ASSERT(!isNullLeaf(bspLeaf));
 
-    foreach(Segment *seg, bspLeaf->allSegments())
-    {
-        if(!seg->hasLineSide())
-            continue;
+    clipFrontFacingFaceEdges(bspLeaf->poly());
 
-        clipFrontFacingSegment(*seg);
+    foreach(Mesh *mesh, bspLeaf->extraMeshes())
+    foreach(Face *face, mesh->faces())
+    {
+        clipFrontFacingFaceEdges(*face);
     }
 
     foreach(Polyobj *po, bspLeaf->polyobjs())
     foreach(Line *line, po->lines())
     {
-        clipFrontFacingSegment(*line->front().leftSegment());
+        clipOneFrontFacingSegment(line->front().leftSegment());
     }
 }
 
@@ -3097,7 +3126,7 @@ static void drawVector(Vector3f const &vector, float scalar, const float color[3
     glEnd();
 }
 
-static void drawSurfaceTangentSpaceVectors(Surface *suf, Vector3d const &origin)
+static void drawTangentSpaceVectorsForSurface(Surface *suf, Vector3d const &origin)
 {
     int const VISUAL_LENGTH = 20;
 
@@ -3119,6 +3148,79 @@ static void drawSurfaceTangentSpaceVectors(Surface *suf, Vector3d const &origin)
     glPopMatrix();
 }
 
+static void drawTangentSpaceVectorsForSegment(Segment *seg)
+{
+    if(!seg || !seg->hasLineSide() || seg->line().definesPolyobj())
+        return;
+
+    if(!seg->back().hasBspLeaf() || seg->back().bspLeaf().isDegenerate() ||
+       !seg->back().bspLeaf().hasSector())
+    {
+        coord_t const bottom = seg->sector().floor().visHeight();
+        coord_t const top = seg->sector().ceiling().visHeight();
+        Vector2d center = (seg->to().origin() + seg->from().origin()) / 2;
+        Surface *suf = &seg->lineSide().middle();
+
+        Vector3d origin = Vector3d(center, bottom + (top - bottom) / 2);
+        drawTangentSpaceVectorsForSurface(suf, origin);
+    }
+    else
+    {
+        Sector *backSec  = seg->back().sectorPtr();
+        Line::Side &side = seg->lineSide();
+
+        if(side.middle().hasMaterial())
+        {
+            coord_t const bottom = seg->sector().floor().visHeight();
+            coord_t const top = seg->sector().ceiling().visHeight();
+            Vector2d center = (seg->to().origin() + seg->from().origin()) / 2;
+            Surface *suf = &side.middle();
+
+            Vector3d origin = Vector3d(center, bottom + (top - bottom) / 2);
+            drawTangentSpaceVectorsForSurface(suf, origin);
+        }
+
+        if(backSec->ceiling().visHeight() <
+           seg->sector().ceiling().visHeight() &&
+           !(seg->sector().ceilingSurface().hasSkyMaskedMaterial() &&
+             backSec->ceilingSurface().hasSkyMaskedMaterial()))
+        {
+            coord_t const bottom = backSec->ceiling().visHeight();
+            coord_t const top = seg->sector().ceiling().visHeight();
+            Vector2d center = (seg->to().origin() + seg->from().origin()) / 2;
+            Surface *suf = &side.top();
+
+            Vector3d origin = Vector3d(center, bottom + (top - bottom) / 2);
+            drawTangentSpaceVectorsForSurface(suf, origin);
+        }
+
+        if(backSec->floor().visHeight() >
+           seg->sector().floor().visHeight() &&
+           !(seg->sector().floorSurface().hasSkyMaskedMaterial() &&
+             backSec->floorSurface().hasSkyMaskedMaterial()))
+        {
+            coord_t const bottom = seg->sector().floor().visHeight();
+            coord_t const top = backSec->floor().visHeight();
+            Vector2d center = (seg->to().origin() + seg->from().origin()) / 2;
+            Surface *suf = &side.bottom();
+
+            Vector3d origin = Vector3d(center, bottom + (top - bottom) / 2);
+            drawTangentSpaceVectorsForSurface(suf, origin);
+        }
+    }
+}
+
+static void drawTangentSpaceVectorsForFace(Face const &face)
+{
+    HEdge *base = face.hedge();
+    HEdge *hedge = base;
+    do
+    {
+        DENG_ASSERT(hedge->mapElement() != 0);
+        drawTangentSpaceVectorsForSegment(hedge->mapElement()->as<Segment>());
+    } while((hedge = &hedge->next()) != base);
+}
+
 /**
  * Draw the surface tangent space vectors, primarily for debug.
  */
@@ -3130,68 +3232,16 @@ static void Rend_DrawSurfaceVectors(Map &map)
 
     Vector3d origin;
     foreach(BspLeaf *bspLeaf, map.bspLeafs())
-    foreach(Segment *seg, bspLeaf->allSegments())
     {
-        if(!bspLeaf->hasSector())
+        if(!bspLeaf->hasSector() || bspLeaf->isDegenerate())
             continue;
 
-        if(!seg->hasLineSide() || seg->line().definesPolyobj())
-            continue;
+        drawTangentSpaceVectorsForFace(bspLeaf->poly());
 
-        if(!seg->back().hasBspLeaf() || seg->back().bspLeaf().isDegenerate() ||
-           !seg->back().bspLeaf().hasSector())
+        foreach(Mesh *mesh, bspLeaf->extraMeshes())
+        foreach(Face *face, mesh->faces())
         {
-            coord_t const bottom = seg->sector().floor().visHeight();
-            coord_t const top = seg->sector().ceiling().visHeight();
-            Vector2d center = (seg->to().origin() + seg->from().origin()) / 2;
-            Surface *suf = &seg->lineSide().middle();
-
-            origin = Vector3d(center, bottom + (top - bottom) / 2);
-            drawSurfaceTangentSpaceVectors(suf, origin);
-        }
-        else
-        {
-            Sector *backSec  = seg->back().sectorPtr();
-            Line::Side &side = seg->lineSide();
-
-            if(side.middle().hasMaterial())
-            {
-                coord_t const bottom = seg->sector().floor().visHeight();
-                coord_t const top = seg->sector().ceiling().visHeight();
-                Vector2d center = (seg->to().origin() + seg->from().origin()) / 2;
-                Surface *suf = &side.middle();
-
-                origin = Vector3d(center, bottom + (top - bottom) / 2);
-                drawSurfaceTangentSpaceVectors(suf, origin);
-            }
-
-            if(backSec->ceiling().visHeight() <
-               seg->sector().ceiling().visHeight() &&
-               !(seg->sector().ceilingSurface().hasSkyMaskedMaterial() &&
-                 backSec->ceilingSurface().hasSkyMaskedMaterial()))
-            {
-                coord_t const bottom = backSec->ceiling().visHeight();
-                coord_t const top = seg->sector().ceiling().visHeight();
-                Vector2d center = (seg->to().origin() + seg->from().origin()) / 2;
-                Surface *suf = &side.top();
-
-                origin = Vector3d(center, bottom + (top - bottom) / 2);
-                drawSurfaceTangentSpaceVectors(suf, origin);
-            }
-
-            if(backSec->floor().visHeight() >
-               seg->sector().floor().visHeight() &&
-               !(seg->sector().floorSurface().hasSkyMaskedMaterial() &&
-                 backSec->floorSurface().hasSkyMaskedMaterial()))
-            {
-                coord_t const bottom = seg->sector().floor().visHeight();
-                coord_t const top = backSec->floor().visHeight();
-                Vector2d center = (seg->to().origin() + seg->from().origin()) / 2;
-                Surface *suf = &side.bottom();
-
-                origin = Vector3d(center, bottom + (top - bottom) / 2);
-                drawSurfaceTangentSpaceVectors(suf, origin);
-            }
+            drawTangentSpaceVectorsForFace(*face);
         }
     }
 
@@ -3208,7 +3258,7 @@ static void Rend_DrawSurfaceVectors(Map &map)
             if(plane->surface().hasSkyMaskedMaterial() && plane->indexInSector() <= Sector::Ceiling)
                 origin.z = plane->map().skyFix(plane->indexInSector() == Sector::Ceiling);
 
-            drawSurfaceTangentSpaceVectors(&plane->surface(), origin);
+            drawTangentSpaceVectorsForSurface(&plane->surface(), origin);
         }
     }
 
@@ -3220,7 +3270,7 @@ static void Rend_DrawSurfaceVectors(Map &map)
         foreach(Line *line, polyobj->lines())
         {
             origin = Vector3d(line->center(), zPos);
-            drawSurfaceTangentSpaceVectors(&line->front().middle(), origin);
+            drawTangentSpaceVectorsForSurface(&line->front().middle(), origin);
         }
     }
 

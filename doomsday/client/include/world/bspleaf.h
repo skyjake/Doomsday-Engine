@@ -154,7 +154,7 @@ public:
      * Provides a list of all the line segments from the convex face geometry
      * and any @em extra meshes assigned to the BSP leaf.
      *
-     * @see clockwiseSegments(), assignExtraMesh()
+     * @see assignExtraMesh()
      */
     Segments const &allSegments() const;
 
