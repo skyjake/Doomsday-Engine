@@ -48,8 +48,6 @@ def mac_meta_update():
     """Update the OS X installer metadata."""
     import build_version
     build_version.find_version(quiet=True)
-
-    # Let's find the previous event of this version.
     system_command("deng_generate_installer_xml.py " + build_version.DOOMSDAY_VERSION_FULL_PLAIN)
     
 
