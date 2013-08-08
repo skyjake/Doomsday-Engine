@@ -2159,29 +2159,46 @@ static void writeLeafPlanes()
     }
 }
 
+static void markOneFrontFacingSegment(Segment *seg)
+{
+    if(!seg) return;
+    bool facingFront = false;
+    if(seg->hasLineSide())
+    {
+        // Which way is it facing?
+        facingFront = viewFacingDot(seg->from().origin(), seg->to().origin()) >= 0;
+    }
+    seg->setFlags(Segment::FacingFront, facingFront? SetFlags : UnsetFlags);
+}
+
+static void markFaceEdgesFrontFacing(Face const &face)
+{
+    HEdge *base = face.hedge();
+    HEdge *hedge = base;
+    do
+    {
+        DENG_ASSERT(hedge->mapElement() != 0);
+        markOneFrontFacingSegment(hedge->mapElement()->as<Segment>());
+    } while((hedge = &hedge->next()) != base);
+}
+
 static void markFrontFacingSegments()
 {
     BspLeaf *bspLeaf = currentBspLeaf;
     DENG_ASSERT(!isNullLeaf(bspLeaf));
 
-    foreach(Segment *seg, bspLeaf->allSegments())
-    {
-        if(!seg->hasLineSide())
-            continue;
+    markFaceEdgesFrontFacing(bspLeaf->poly());
 
-        // Which way is it facing?
-        double dot = viewFacingDot(seg->from().origin(), seg->to().origin());
-        seg->setFlags(Segment::FacingFront, dot < 0? UnsetFlags : SetFlags);
+    foreach(Mesh *mesh, bspLeaf->extraMeshes())
+    foreach(Face *face, mesh->faces())
+    {
+        markFaceEdgesFrontFacing(*face);
     }
 
     foreach(Polyobj *po, bspLeaf->polyobjs())
     foreach(Line *line, po->lines())
     {
-        Segment *seg = line->front().leftSegment();
-
-        // Which way is it facing?
-        double dot = viewFacingDot(seg->from().origin(), seg->to().origin());
-        seg->setFlags(Segment::FacingFront, dot < 0? UnsetFlags : SetFlags);
+        markOneFrontFacingSegment(line->front().leftSegment());
     }
 }
 
@@ -3113,35 +3130,35 @@ static void Rend_DrawSurfaceVectors(Map &map)
 
     Vector3d origin;
     foreach(BspLeaf *bspLeaf, map.bspLeafs())
-    foreach(Segment *segment, bspLeaf->allSegments())
+    foreach(Segment *seg, bspLeaf->allSegments())
     {
         if(!bspLeaf->hasSector())
             continue;
 
-        if(!segment->hasLineSide() || segment->line().definesPolyobj())
+        if(!seg->hasLineSide() || seg->line().definesPolyobj())
             continue;
 
-        if(!segment->back().hasBspLeaf() || segment->back().bspLeaf().isDegenerate() ||
-           !segment->back().bspLeaf().hasSector())
+        if(!seg->back().hasBspLeaf() || seg->back().bspLeaf().isDegenerate() ||
+           !seg->back().bspLeaf().hasSector())
         {
-            coord_t const bottom = segment->sector().floor().visHeight();
-            coord_t const top = segment->sector().ceiling().visHeight();
-            Vector2d center = (segment->to().origin() + segment->from().origin()) / 2;
-            Surface *suf = &segment->lineSide().middle();
+            coord_t const bottom = seg->sector().floor().visHeight();
+            coord_t const top = seg->sector().ceiling().visHeight();
+            Vector2d center = (seg->to().origin() + seg->from().origin()) / 2;
+            Surface *suf = &seg->lineSide().middle();
 
             origin = Vector3d(center, bottom + (top - bottom) / 2);
             drawSurfaceTangentSpaceVectors(suf, origin);
         }
         else
         {
-            Sector *backSec  = segment->back().sectorPtr();
-            Line::Side &side = segment->lineSide();
+            Sector *backSec  = seg->back().sectorPtr();
+            Line::Side &side = seg->lineSide();
 
             if(side.middle().hasMaterial())
             {
-                coord_t const bottom = segment->sector().floor().visHeight();
-                coord_t const top = segment->sector().ceiling().visHeight();
-                Vector2d center = (segment->to().origin() + segment->from().origin()) / 2;
+                coord_t const bottom = seg->sector().floor().visHeight();
+                coord_t const top = seg->sector().ceiling().visHeight();
+                Vector2d center = (seg->to().origin() + seg->from().origin()) / 2;
                 Surface *suf = &side.middle();
 
                 origin = Vector3d(center, bottom + (top - bottom) / 2);
@@ -3149,13 +3166,13 @@ static void Rend_DrawSurfaceVectors(Map &map)
             }
 
             if(backSec->ceiling().visHeight() <
-               segment->sector().ceiling().visHeight() &&
-               !(segment->sector().ceilingSurface().hasSkyMaskedMaterial() &&
+               seg->sector().ceiling().visHeight() &&
+               !(seg->sector().ceilingSurface().hasSkyMaskedMaterial() &&
                  backSec->ceilingSurface().hasSkyMaskedMaterial()))
             {
                 coord_t const bottom = backSec->ceiling().visHeight();
-                coord_t const top = segment->sector().ceiling().visHeight();
-                Vector2d center = (segment->to().origin() + segment->from().origin()) / 2;
+                coord_t const top = seg->sector().ceiling().visHeight();
+                Vector2d center = (seg->to().origin() + seg->from().origin()) / 2;
                 Surface *suf = &side.top();
 
                 origin = Vector3d(center, bottom + (top - bottom) / 2);
@@ -3163,13 +3180,13 @@ static void Rend_DrawSurfaceVectors(Map &map)
             }
 
             if(backSec->floor().visHeight() >
-               segment->sector().floor().visHeight() &&
-               !(segment->sector().floorSurface().hasSkyMaskedMaterial() &&
+               seg->sector().floor().visHeight() &&
+               !(seg->sector().floorSurface().hasSkyMaskedMaterial() &&
                  backSec->floorSurface().hasSkyMaskedMaterial()))
             {
-                coord_t const bottom = segment->sector().floor().visHeight();
+                coord_t const bottom = seg->sector().floor().visHeight();
                 coord_t const top = backSec->floor().visHeight();
-                Vector2d center = (segment->to().origin() + segment->from().origin()) / 2;
+                Vector2d center = (seg->to().origin() + seg->from().origin()) / 2;
                 Surface *suf = &side.bottom();
 
                 origin = Vector3d(center, bottom + (top - bottom) / 2);

@@ -79,8 +79,9 @@ public:
     /*
      * Linked-element lists/sets:
      */
-    typedef QSet<polyobj_s *>        Polyobjs;
-    typedef QList<Segment *>         Segments;
+    typedef QSet<de::Mesh *>   Meshes;
+    typedef QSet<polyobj_s *>  Polyobjs;
+    typedef QList<Segment *>   Segments;
 
 public: /// @todo Make private:
 #ifdef __CLIENT__
@@ -141,6 +142,13 @@ public:
      *              mesh is given to the BspLeaf.
      */
     void assignExtraMesh(de::Mesh &mesh);
+
+    /**
+     * Provides access to the set of additional mesh geometries for the BSP leaf.
+     *
+     * @see assignExtraMesh()
+     */
+    Meshes const &extraMeshes() const;
 
     /**
      * Provides a list of all the line segments from the convex face geometry

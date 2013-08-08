@@ -65,8 +65,6 @@ typedef QMap<int, GeometryGroup> GeometryGroups;
 
 DENG2_PIMPL(BspLeaf)
 {
-    typedef QSet<Mesh *> Meshes;
-
     /// Convex polygon geometry attributed to the BSP leaf if any (not owned).
     Face *poly;
 
@@ -425,6 +423,11 @@ void BspLeaf::assignExtraMesh(Mesh &newMesh)
         // We'll need to update the all segment list.
         d->needUpdateAllSegments = true;
     }
+}
+
+BspLeaf::Meshes const &BspLeaf::extraMeshes() const
+{
+    return d->extraMeshes;
 }
 
 BspLeaf::Segments const &BspLeaf::allSegments() const
