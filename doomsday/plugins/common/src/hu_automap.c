@@ -580,43 +580,39 @@ static void rendLine2(uiwidget_t* obj, float x1, float y1, float x2, float y2,
     }
 }
 
-static int rendSeg(void *segment_, void* data)
+static void drawMapLine(Line *line, uiwidget_t *uiWidget)
 {
-    assert(segment_ != 0 && data != 0 && ((uiwidget_t *)data)->type == GUI_AUTOMAP);
-    {
-    Segment *segment = (Segment *) segment_;
-    uiwidget_t* obj = (uiwidget_t*)data;
-    guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
-    Sector* frontSector, *backSector;
-    const automapcfg_lineinfo_t* info;
-    player_t* plr = rs.plr;
-    float v1[2], v2[2];
-    Line* line;
-    xline_t* xLine;
+    xline_t *xLine = P_ToXLine(line);
+    guidata_automap_t *am = (guidata_automap_t *)uiWidget->typedata;
+    automapcfg_lineinfo_t const *info;
+    Sector *frontSector;
+    player_t *plr = rs.plr;
 
-    line = P_GetPtrp(segment, DMU_LINE);
-    if(!line) return false;
+    DENG_ASSERT(line != 0);
+    DENG_ASSERT(uiWidget != 0 && uiWidget->type == GUI_AUTOMAP);
 
-    xLine = P_ToXLine(line);
     // Already drawn once?
-    if(xLine->validCount == VALIDCOUNT) return false;
+    if(xLine->validCount == VALIDCOUNT)
+        return;
 
     // Is this line being drawn?
-    if((xLine->flags & ML_DONTDRAW) && !(am->flags & AMF_REND_ALLLINES)) return false;
+    if((xLine->flags & ML_DONTDRAW) && !(am->flags & AMF_REND_ALLLINES))
+        return;
 
     // We only want to draw twosided lines once.
     frontSector = P_GetPtrp(line, DMU_FRONT_SECTOR);
     if(frontSector // $degenleaf
-       && frontSector != P_GetPtrp(line, DMU_FRONT_SECTOR)) return false;
+       && frontSector != P_GetPtrp(line, DMU_FRONT_SECTOR))
+        return;
 
-    info = NULL;
+    info = 0;
     if((am->flags & AMF_REND_ALLLINES) || xLine->mapped[plr - players])
     {
-        backSector = P_GetPtrp(line, DMU_BACK_SECTOR);
+        Sector *backSector = P_GetPtrp(line, DMU_BACK_SECTOR);
 
         // Perhaps this is a specially colored line?
-        info = AM_GetInfoForSpecialLine(UIAutomap_Config(obj), xLine->special, xLine->flags,
-                                        frontSector, backSector, UIAutomap_Flags(obj));
+        info = AM_GetInfoForSpecialLine(UIAutomap_Config(uiWidget), xLine->special, xLine->flags,
+                                        frontSector, backSector, UIAutomap_Flags(uiWidget));
         if(rs.objType != -1 && !info)
         {
             // Perhaps a default colored line?
@@ -626,7 +622,7 @@ static int rendSeg(void *segment_, void* data)
             if(!backSector || !P_GetPtrp(line, DMU_BACK) || (xLine->flags & ML_SECRET))
             {
                 // solid wall (well probably anyway...)
-                info = AM_GetInfoForLine(UIAutomap_Config(obj), AMO_SINGLESIDEDLINE);
+                info = AM_GetInfoForLine(UIAutomap_Config(uiWidget), AMO_SINGLESIDEDLINE);
             }
             else
             {
@@ -634,36 +630,37 @@ static int rendSeg(void *segment_, void* data)
                            P_GetDoublep(frontSector, DMU_FLOOR_HEIGHT)))
                 {
                     // Floor level change.
-                    info = AM_GetInfoForLine(UIAutomap_Config(obj), AMO_FLOORCHANGELINE);
+                    info = AM_GetInfoForLine(UIAutomap_Config(uiWidget), AMO_FLOORCHANGELINE);
                 }
                 else if(!FEQUAL(P_GetDoublep(backSector,  DMU_CEILING_HEIGHT),
                                 P_GetDoublep(frontSector, DMU_CEILING_HEIGHT)))
                 {
                     // Ceiling level change.
-                    info = AM_GetInfoForLine(UIAutomap_Config(obj), AMO_CEILINGCHANGELINE);
+                    info = AM_GetInfoForLine(UIAutomap_Config(uiWidget), AMO_CEILINGCHANGELINE);
                 }
                 else if(am->flags & AMF_REND_ALLLINES)
                 {
-                    info = AM_GetInfoForLine(UIAutomap_Config(obj), AMO_UNSEENLINE);
+                    info = AM_GetInfoForLine(UIAutomap_Config(uiWidget), AMO_UNSEENLINE);
                 }
             }
         }
     }
-    else if(rs.objType != -1 && UIAutomap_Reveal(obj))
+    else if(rs.objType != -1 && UIAutomap_Reveal(uiWidget))
     {
         if(!(xLine->flags & ML_DONTDRAW))
         {
             // An as yet, unseen line.
-            info = AM_GetInfoForLine(UIAutomap_Config(obj), AMO_UNSEENLINE);
+            info = AM_GetInfoForLine(UIAutomap_Config(uiWidget), AMO_UNSEENLINE);
         }
     }
 
     if(info && (rs.objType == -1 || info == &am->mcfg->mapObjectInfo[rs.objType]))
     {
+        float v1[2]; float v2[2];
         P_GetFloatpv(P_GetPtrp(line, DMU_VERTEX0), DMU_XY, v1);
         P_GetFloatpv(P_GetPtrp(line, DMU_VERTEX1), DMU_XY, v2);
 
-        rendLine2((uiwidget_t*)data, v1[VX], v1[VY], v2[VX], v2[VY],
+        rendLine2(uiWidget, v1[VX], v1[VY], v2[VX], v2[VY],
                   info->rgba,
                   (xLine->special && !cfg.automapShowDoors ?
                         GLOW_NONE : info->glow),
@@ -677,14 +674,18 @@ static int rendSeg(void *segment_, void* data)
 
         xLine->validCount = VALIDCOUNT; // Mark as drawn this frame.
     }
-
-    return false; // Continue iteration.
-    }
 }
 
-static int rendBspLeafHEdges(BspLeaf* bspLeaf, void* context)
+static int drawMapLineWorker(void *line, void *uiWidget)
 {
-    return P_Iteratep(bspLeaf, DMU_SEGMENT, context, rendSeg);
+    DENG_ASSERT(line != 0 && uiWidget != 0);
+    drawMapLine((Line *)line, (uiwidget_t *)uiWidget);
+    return false; // Continue iteration.
+}
+
+static int drawMapLinesForBspLeafWorker(BspLeaf *bspLeaf, void *context)
+{
+    return P_Iteratep(bspLeaf, DMU_LINE, context, drawMapLineWorker);
 }
 
 /**
@@ -692,7 +693,7 @@ static int rendBspLeafHEdges(BspLeaf* bspLeaf, void* context)
  *
  * @params objType      Type of map object being drawn.
  */
-static void renderWalls(uiwidget_t* obj, int objType, boolean addToLists)
+static void drawMapLines(uiwidget_t *obj, int objType, boolean addToLists)
 {
     //guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     int i;
@@ -710,19 +711,19 @@ static void renderWalls(uiwidget_t* obj, int objType, boolean addToLists)
     {
         AABoxd aaBox;
         UIAutomap_PVisibleAABounds(obj, &aaBox.minX, &aaBox.maxX, &aaBox.minY, &aaBox.maxY);
-        P_BspLeafsBoxIterator(&aaBox, NULL, rendBspLeafHEdges, obj);
+        P_BspLeafsBoxIterator(&aaBox, NULL, drawMapLinesForBspLeafWorker, obj);
     }
     else
     {   // No. As the map lists are considered static we want them to contain all
         // walls, not just those visible *now* (note rotation).
         for(i = 0; i < numbspleafs; ++i)
         {
-            P_Iteratep(P_ToPtr(DMU_BSPLEAF, i), DMU_SEGMENT, obj, rendSeg);
+            P_Iteratep(P_ToPtr(DMU_BSPLEAF, i), DMU_LINE, obj, drawMapLineWorker);
         }
     }
 }
 
-static void rendLinedef(Line* line, float r, float g, float b, float a,
+static void rendLinedef(Line *line, float r, float g, float b, float a,
     blendmode_t blendMode, boolean drawNormal)
 {
     float length = P_GetFloatp(line, DMU_LENGTH);
@@ -1371,7 +1372,7 @@ static void compileObjectLists(uiwidget_t* obj)
         // Build commands and compile to a display list.
         if(DGL_NewList(0, DGL_COMPILE))
         {
-            renderWalls(obj, i, true);
+            drawMapLines(obj, i, true);
             am->lists[i] = DGL_EndList();
         }
     }
@@ -1542,7 +1543,7 @@ void UIAutomap_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     {
         /// @todo Optimize: Hugely inefficent. Need a new approach.
         DGL_Enable(DGL_TEXTURE_2D);
-        renderWalls(obj, -1, false);
+        drawMapLines(obj, -1, false);
         DGL_Disable(DGL_TEXTURE_2D);
     }
 

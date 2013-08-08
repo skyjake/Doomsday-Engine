@@ -43,10 +43,6 @@ class BspLeaf;
 class Surface;
 struct mobj_s;
 
-namespace de {
-class Map;
-}
-
 /**
  * @defgroup sectorFrameFlags Sector frame flags
  * @ingroup world

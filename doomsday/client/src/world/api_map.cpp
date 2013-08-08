@@ -428,10 +428,13 @@ int P_Iteratep(void *elPtr, uint prop, void *context, int (*callback) (void *p, 
     case DMU_BSPLEAF:
         switch(prop)
         {
-        case DMU_SEGMENT:
+        case DMU_LINE:
             foreach(Segment *seg, elem->as<BspLeaf>()->allSegments())
             {
-                int result = callback(seg, context);
+                if(!seg->hasLineSide())
+                    continue;
+
+                int result = callback(&seg->line(), context);
                 if(result) return result;
             }
             return false; // Continue iteration.

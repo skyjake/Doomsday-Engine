@@ -34,7 +34,6 @@
 #include "p_terraintype.h"
 
 #define numvertexes             (P_Count(DMU_VERTEX))
-#define numsegs                 (P_Count(DMU_SEGMENT))
 #define numsectors              (P_Count(DMU_SECTOR))
 #define numbspleafs             (P_Count(DMU_BSPLEAF))
 #define numbspnodes             (P_Count(DMU_BSPNODE))
