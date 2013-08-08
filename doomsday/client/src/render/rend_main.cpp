@@ -1808,7 +1808,7 @@ static void writeLeafSkyMaskStrips(SkyFixEdge::FixType fixType)
 
     // Configure the strip build state (we'll most likely need to break
     // edge loop into multiple strips).
-    Segment *startNode        = 0;
+    HEdge *startNode          = 0;
     coord_t startZBottom      = 0;
     coord_t startZTop         = 0;
     Material *startMaterial   = 0;
@@ -1818,12 +1818,11 @@ static void writeLeafSkyMaskStrips(SkyFixEdge::FixType fixType)
     int relPlane = fixType == SkyFixEdge::Upper? Sector::Ceiling : Sector::Floor;
 
     // Begin generating geometry.
-    BspLeaf::Segments const &segments = bspLeaf->clockwiseSegments();
-    int const segCount = segments.count();
-    int i = 0;
-    forever
+    HEdge *base = bspLeaf->poly().hedge();
+    HEdge *hedge = base;
+    do
     {
-        Segment &seg = *segments.at(i);
+        Segment &seg = *hedge->mapElement()->as<Segment>();
 
         // Are we monitoring material changes?
         Material *skyMaterial = 0;
@@ -1848,7 +1847,7 @@ static void writeLeafSkyMaskStrips(SkyFixEdge::FixType fixType)
                 stripBuilder << skyEdge;
 
                 // Update the strip build state.
-                startNode     = &seg;
+                startNode     = hedge;
                 startZBottom  = skyEdge.bottom().z();
                 startZTop     = skyEdge.top().z();
                 startMaterial = skyMaterial;
@@ -1873,7 +1872,7 @@ static void writeLeafSkyMaskStrips(SkyFixEdge::FixType fixType)
                 endStrip = true;
             }
             // Must we split the strip here?
-            else if(&seg != startNode &&
+            else if(hedge != startNode &&
                     (!de::fequal(skyEdge.bottom().z(), startZBottom) ||
                      !de::fequal(skyEdge.top().z(), startZTop) ||
                      (splitOnMaterialChange && skyMaterial != startMaterial)))
@@ -1887,7 +1886,7 @@ static void writeLeafSkyMaskStrips(SkyFixEdge::FixType fixType)
                 stripBuilder << skyEdge;
             }
 
-            if(endStrip || de::wrap(i + (direction == Clockwise? 1 : -1), 0, segCount) == 0)
+            if(endStrip || &hedge->neighbor(direction) == startNode)
             {
                 // End the current strip.
                 startNode = 0;
@@ -1909,12 +1908,8 @@ static void writeLeafSkyMaskStrips(SkyFixEdge::FixType fixType)
         // Start a new strip from the current node?
         if(beginNewStrip) continue;
 
-        // On to the next node.
-        i = de::wrap(i + (direction == Clockwise? 1 : -1), 0, segCount);
-
-        // Are we done?
-        if(i == 0) break;
-    }
+        // On to the next node!
+    } while((hedge = &hedge->neighbor(direction)) != startNode);
 }
 
 /**
