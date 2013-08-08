@@ -154,7 +154,6 @@ public:
 
     typedef QList<BspNode *> BspNodes;
     typedef QList<BspLeaf *> BspLeafs;
-    typedef QList<Segment *> Segments;
 
 #ifdef __CLIENT__
     typedef QSet<Plane *>    PlaneSet;
@@ -289,11 +288,6 @@ public:
      */
     BspLeafs const &bspLeafs() const;
 
-    /**
-     * Provides access to the list of line segments for efficient traversal.
-     */
-    Segments const &segments() const;
-
     inline int vertexCount() const  { return vertexes().count(); }
 
     inline int lineCount() const    { return lines().count(); }
@@ -307,8 +301,6 @@ public:
     inline int bspNodeCount() const { return bspNodes().count(); }
 
     inline int bspLeafCount() const { return bspLeafs().count(); }
-
-    inline int segmentCount() const { return segments().count(); }
 
     /**
      * Helper function which returns the relevant side index given a @a lineIndex

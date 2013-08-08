@@ -299,7 +299,6 @@ int P_ToIndex(void const *ptr)
     switch(elem->type())
     {
     case DMU_VERTEX:
-    case DMU_SEGMENT:
     case DMU_LINE:
     case DMU_SIDE:
     case DMU_BSPLEAF:
@@ -327,9 +326,6 @@ void *P_ToPtr(int type, int index)
     {
     case DMU_VERTEX:
         return App_World().map().vertexes().at(index);
-
-    case DMU_SEGMENT:
-        return App_World().map().segments().at(index);
 
     case DMU_LINE:
         return App_World().map().lines().at(index);
@@ -372,7 +368,6 @@ int P_Count(int type)
     switch(type)
     {
     case DMU_VERTEX:    return App_World().hasMap()? App_World().map().vertexCount()  : 0;
-    case DMU_SEGMENT:   return App_World().hasMap()? App_World().map().segmentCount() : 0;
     case DMU_LINE:      return App_World().hasMap()? App_World().map().lineCount()    : 0;
     case DMU_SIDE:      return App_World().hasMap()? App_World().map().sideCount()    : 0;
     case DMU_BSPNODE:   return App_World().hasMap()? App_World().map().bspNodeCount() : 0;
@@ -460,11 +455,6 @@ int P_Callback(int type, int index, void *context, int (*callback)(void *p, void
             return callback(App_World().map().vertexes().at(index), context);
         break;
 
-    case DMU_SEGMENT:
-        if(index >= 0 && index < App_World().map().segmentCount())
-            return callback(App_World().map().segments().at(index), context);
-        break;
-
     case DMU_LINE:
         if(index >= 0 && index < App_World().map().lineCount())
             return callback(App_World().map().lines().at(index), context);
@@ -531,7 +521,6 @@ int P_Callbackp(int type, void *elPtr, void *context, int (*callback)(void *p, v
     switch(type)
     {
     case DMU_VERTEX:
-    case DMU_SEGMENT:
     case DMU_LINE:
     case DMU_SIDE:
     case DMU_BSPNODE:

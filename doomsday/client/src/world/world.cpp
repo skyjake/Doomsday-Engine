@@ -493,7 +493,6 @@ DENG2_PIMPL(World)
         os << TABBED(map->sectorCount(),  "Sectors");
         os << TABBED(map->bspNodeCount(), "BSP Nodes");
         os << TABBED(map->bspLeafCount(), "BSP Leafs");
-        os << TABBED(map->segmentCount(), "Segments");
 
         LOG_INFO("%s") << str.rightStrip();
 

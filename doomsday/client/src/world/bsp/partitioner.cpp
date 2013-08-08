@@ -1367,10 +1367,6 @@ DENG2_PIMPL(Partitioner)
     {
         switch(elm->type())
         {
-        case DMU_SEGMENT:
-            /// @todo fixme: Implement a mechanic for tracking Segment ownership.
-            return true;
-
         case DMU_BSPLEAF:
         case DMU_BSPNODE: {
             BspTreeNode *treeNode = treeNodeForBspElement(elm);

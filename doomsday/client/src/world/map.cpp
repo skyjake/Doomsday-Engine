@@ -143,7 +143,6 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
     MapElement *bspRoot;
 
     /// BSP element LUTs:
-    Segments segments;
     BspNodes bspNodes;
     BspLeafs bspLeafs;
 
@@ -223,9 +222,10 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
         lightGrid.reset();
 #endif
 
+        /// @todo fixme: What about Segments?
+
         qDeleteAll(bspNodes);
         qDeleteAll(bspLeafs);
-        qDeleteAll(segments);
         qDeleteAll(sectors);
         foreach(Polyobj *polyobj, polyobjs)
         {
@@ -467,13 +467,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
 
             foreach(Segment *seg, leaf->allSegments())
             {
-                // Take ownership of the Segment.
-                partitioner.take(seg);
-
-                // Add this segment to the LUT.
                 seg->setMap(thisPublic);
-                seg->setIndexInMap(segments.count());
-                segments.append(seg);
             }
 
             return;
@@ -499,7 +493,6 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
     bool buildBsp()
     {
         DENG2_ASSERT(bspRoot == 0);
-        DENG2_ASSERT(segments.isEmpty());
         DENG2_ASSERT(bspLeafs.isEmpty());
         DENG2_ASSERT(bspNodes.isEmpty());
 
@@ -557,7 +550,6 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
             bspRoot = rootNode->userData(); // We'll formally take ownership shortly...
 
 #ifdef DENG2_QT_4_7_OR_NEWER
-            segments.reserve(partitioner.numSegments());
             bspNodes.reserve(partitioner.numNodes());
             bspLeafs.reserve(partitioner.numLeafs());
 #endif
@@ -1203,7 +1195,8 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
          */
         bias.lastChangeOnFrame = frameCount;
 
-        foreach(Segment *seg, segments)
+        foreach(BspLeaf *bspLeaf, bspLeafs)
+        foreach(Segment *seg, bspLeaf->allSegments())
         {
             seg->applyBiasDigest(allChanges);
         }
@@ -1273,11 +1266,6 @@ Map::BspNodes const &Map::bspNodes() const
 Map::BspLeafs const &Map::bspLeafs() const
 {
     return d->bspLeafs;
-}
-
-Map::Segments const &Map::segments() const
-{
-    return d->segments;
 }
 
 #ifdef __CLIENT__
