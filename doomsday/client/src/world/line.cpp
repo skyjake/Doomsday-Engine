@@ -405,14 +405,14 @@ int Line::Side::property(DmuArgs &args) const
     switch(args.prop)
     {
     case DMU_SECTOR:
-        args.setValue(DMT_LINESIDE_SECTOR, &d->sector, 0);
+        args.setValue(DMT_SIDE_SECTOR, &d->sector, 0);
         break;
     case DMU_LINE: {
         Line *lineAdr = &line();
-        args.setValue(DMT_LINESIDE_LINE, &lineAdr, 0);
+        args.setValue(DMT_SIDE_LINE, &lineAdr, 0);
         break; }
     case DMU_FLAGS:
-        args.setValue(DMT_LINESIDE_FLAGS, &d->flags, 0);
+        args.setValue(DMT_SIDE_FLAGS, &d->flags, 0);
         break;
     default:
         return MapElement::property(args);
@@ -450,7 +450,7 @@ int Line::Side::setProperty(DmuArgs const &args)
 
     case DMU_FLAGS: {
         int newFlags;
-        args.value(DMT_LINESIDE_FLAGS, &newFlags, 0);
+        args.value(DMT_SIDE_FLAGS, &newFlags, 0);
         setFlags(newFlags, de::ReplaceFlags);
         break; }
 
