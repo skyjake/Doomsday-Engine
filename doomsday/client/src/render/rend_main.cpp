@@ -1886,7 +1886,7 @@ static void writeLeafSkyMaskStrips(SkyFixEdge::FixType fixType)
                 stripBuilder << skyEdge;
             }
 
-            if(endStrip || &hedge->neighbor(direction) == startNode)
+            if(endStrip || &hedge->neighbor(direction) == base)
             {
                 // End the current strip.
                 startNode = 0;
@@ -1909,7 +1909,7 @@ static void writeLeafSkyMaskStrips(SkyFixEdge::FixType fixType)
         if(beginNewStrip) continue;
 
         // On to the next node!
-    } while((hedge = &hedge->neighbor(direction)) != startNode);
+    } while((hedge = &hedge->neighbor(direction)) != base);
 }
 
 /**
