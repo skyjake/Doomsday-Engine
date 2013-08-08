@@ -34,22 +34,6 @@
 
 #define DMT_VERTEX_ORIGIN DDVT_DOUBLE
 
-#define DMT_SEGMENT_SIDE DDVT_PTR
-
-#define DMT_SEGMENT_V DDVT_PTR             // [Start, End] of the segment.
-#define DMT_SEGMENT_LINE DDVT_PTR
-#define DMT_SEGMENT_SECTOR DDVT_PTR
-#define DMT_SEGMENT_BSPLEAF DDVT_PTR
-#define DMT_SEGMENT_TWIN DDVT_PTR
-#define DMT_SEGMENT_ANGLE DDVT_ANGLE
-#define DMT_SEGMENT_SIDEID DDVT_BYTE         // 0=front, 1=back
-#define DMT_SEGMENT_LENGTH DDVT_DOUBLE     // Accurate length of the segment (v1 -> v2).
-#define DMT_SEGMENT_OFFSET DDVT_DOUBLE
-#define DMT_SEGMENT_NEXT DDVT_PTR
-#define DMT_SEGMENT_PREV DDVT_PTR
-
-#define DMT_BSPLEAF_HEDGECOUNT DDVT_UINT
-#define DMT_BSPLEAF_HEDGE DDVT_PTR
 #define DMT_BSPLEAF_POLYOBJ DDVT_PTR // NULL, if there is no polyobj.
 #define DMT_BSPLEAF_SECTOR DDVT_PTR
 
@@ -89,9 +73,9 @@
 #define DMT_SECTOR_PLANECOUNT DDVT_UINT
 #define DMT_SECTOR_REVERB DDVT_FLOAT
 
-#define DMT_LINESIDE_SECTOR DDVT_PTR
-#define DMT_LINESIDE_LINE DDVT_PTR
-#define DMT_LINESIDE_FLAGS DDVT_SHORT
+#define DMT_SIDE_SECTOR DDVT_PTR
+#define DMT_SIDE_LINE DDVT_PTR
+#define DMT_SIDE_FLAGS DDVT_SHORT
 
 #define DMT_LINE_SECTOR DDVT_PTR
 #define DMT_LINE_SIDE DDVT_PTR
@@ -135,7 +119,6 @@ struct material_s;
 
 typedef struct bspleaf_s    BspLeaf;
 typedef struct bspnode_s    BspNode;
-typedef struct segment_s    Segment;
 typedef struct line_s       Line;
 typedef struct plane_s      Plane;
 typedef struct sector_s     Sector;
