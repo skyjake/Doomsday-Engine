@@ -73,12 +73,6 @@ DENG2_PIMPL(BspLeaf)
     /// Additional meshes assigned to the BSP leaf (owned).
     Meshes extraMeshes;
 
-    /// Clockwise ordering of the line segments from the primary polygon.
-    Segments clockwiseSegments;
-
-    /// Set to @c true when the clockwise segment list needs updating.
-    bool needUpdateClockwiseSegments;
-
     /// All line segments in the BSP leaf from all polygons.
     Segments allSegments;
 
@@ -117,7 +111,6 @@ DENG2_PIMPL(BspLeaf)
     Instance(Public *i, Sector *sector = 0)
         : Base(i),
           poly(0),
-          needUpdateClockwiseSegments(false),
           needUpdateAllSegments(false),
           sector(sector),
 #ifdef __CLIENT__
@@ -133,26 +126,41 @@ DENG2_PIMPL(BspLeaf)
         qDeleteAll(extraMeshes);
     }
 
-    void updateClockwiseSegments()
+    void updateAllSegments()
     {
-        needUpdateClockwiseSegments = false;
+        needUpdateAllSegments = false;
 
-        clockwiseSegments.clear();
+        allSegments.clear();
 
         if(!poly) return;
 
-#ifdef DENG2_QT_4_7_OR_NEWER
-        clockwiseSegments.reserve(poly->hedgeCount());
-#endif
+        int numSegments = poly->hedgeCount();
+        foreach(Mesh *mesh, extraMeshes)
+        {
+            numSegments += mesh->hedgeCount();
+        }
 
+        // Populate the list.
+#ifdef DENG2_QT_4_7_OR_NEWER
+        allSegments.reserve(numSegments);
+#endif
         HEdge *hedge = poly->hedge();
         do
         {
             if(MapElement *elem = hedge->mapElement())
             {
-                clockwiseSegments.append(elem->as<Segment>());
+                allSegments.append(elem->as<Segment>());
             }
         } while((hedge = &hedge->next()) != poly->hedge());
+
+        foreach(Mesh *mesh, extraMeshes)
+        foreach(HEdge *hedge, mesh->hedges())
+        {
+            if(MapElement *elem = hedge->mapElement())
+            {
+                allSegments.append(elem->as<Segment>());
+            }
+        }
 
 #ifdef DENG_DEBUG
         // See if we received a partial geometry...
@@ -179,39 +187,6 @@ DENG2_PIMPL(BspLeaf)
             }
         }
 #endif
-    }
-
-    void updateAllSegments()
-    {
-        needUpdateAllSegments = false;
-
-        if(needUpdateClockwiseSegments)
-        {
-            updateClockwiseSegments();
-        }
-
-        allSegments.clear();
-
-        int numSegments = clockwiseSegments.count();
-        foreach(Mesh *mesh, extraMeshes)
-        {
-            numSegments += mesh->hedgeCount();
-        }
-#ifdef DENG2_QT_4_7_OR_NEWER
-        allSegments.reserve(numSegments);
-#endif
-
-        // Populate the segment list.
-        allSegments.append(clockwiseSegments);
-
-        foreach(Mesh *mesh, extraMeshes)
-        foreach(HEdge *hedge, mesh->hedges())
-        {
-            if(MapElement *elem = hedge->mapElement())
-            {
-                allSegments.append(elem->as<Segment>());
-            }
-        }
     }
 
 #ifdef __CLIENT__
@@ -413,7 +388,6 @@ void BspLeaf::setPoly(Face *newPoly)
     d->poly = newPoly;
 
     // We'll need to update segment lists.
-    d->needUpdateClockwiseSegments = true;
     d->needUpdateAllSegments = true;
 
     if(newPoly)
@@ -451,15 +425,6 @@ void BspLeaf::assignExtraMesh(Mesh &newMesh)
         // We'll need to update the all segment list.
         d->needUpdateAllSegments = true;
     }
-}
-
-BspLeaf::Segments const &BspLeaf::clockwiseSegments() const
-{
-    if(d->needUpdateClockwiseSegments)
-    {
-        d->updateClockwiseSegments();
-    }
-    return d->clockwiseSegments;
 }
 
 BspLeaf::Segments const &BspLeaf::allSegments() const

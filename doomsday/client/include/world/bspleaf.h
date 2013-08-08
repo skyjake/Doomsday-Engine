@@ -143,14 +143,6 @@ public:
     void assignExtraMesh(de::Mesh &mesh);
 
     /**
-     * Provides a clockwise ordered list of all the line segments which comprise
-     * the convex face geometry (a polygon) assigned to the BSP leaf.
-     *
-     * @see allSegments(), setPoly()
-     */
-    Segments const &clockwiseSegments() const;
-
-    /**
      * Provides a list of all the line segments from the convex face geometry
      * and any @em extra meshes assigned to the BSP leaf.
      *
