@@ -97,7 +97,12 @@ DENG2_PIMPL(LineSightTest)
 #define RTOP                    0x1 ///< Top range.
 #define RBOTTOM                 0x2 ///< Bottom range.
 
-        Line const &line = side.line();
+        Line &line = side.line();
+
+        if(line.validCount() == validCount)
+            return true; // Ignore
+
+        line.setValidCount(validCount);
 
         // Does the ray intercept the line on the X/Y plane?
         // Try a quick bounding-box rejection.
@@ -242,28 +247,35 @@ DENG2_PIMPL(LineSightTest)
         foreach(Polyobj *po, bspLeaf.polyobjs())
         foreach(Line *line, po->lines())
         {
-            if(line->validCount() == validCount)
-                continue;
-
-            line->setValidCount(validCount);
-
             if(!crossLine(line->front()))
                 return false; // Stop traversal.
         }
 
-        // Check the line segment geometries.
-        foreach(Segment const *seg, bspLeaf.allSegments())
+        // Check the BSP leaf line geometries.
+        HEdge *base = bspLeaf.poly().hedge();
+        HEdge *hedge = base;
+        do
         {
-            if(!seg->hasLineSide())
-                continue;
-
-            if(seg->line().validCount() != validCount)
+            DENG_ASSERT(hedge->mapElement() != 0);
+            Segment *seg = hedge->mapElement()->as<Segment>();
+            if(seg->hasLineSide())
             {
-                seg->line().setValidCount(validCount);
-
                 if(!crossLine(seg->lineSide()))
                     return false;
             }
+        } while((hedge = &hedge->next()) != base);
+
+        foreach(Mesh *mesh, bspLeaf.extraMeshes())
+        foreach(Face *face, mesh->faces())
+        {
+            HEdge *base = face->hedge();
+            HEdge *hedge = base;
+            do
+            {
+                DENG_ASSERT(hedge->mapElement() != 0);
+                if(!crossLine(hedge->mapElement()->as<Segment>()->lineSide()))
+                    return false;
+            } while((hedge = &hedge->next()) != base);
         }
 
         return true; // Continue traversal.

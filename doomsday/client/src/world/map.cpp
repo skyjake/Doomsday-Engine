@@ -451,6 +451,18 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
         }
     }
 
+    static void assignMapToSegmentsForFace(Face const &face, Map *map)
+    {
+        HEdge *base = face.hedge();
+        HEdge *hedge = base;
+        do
+        {
+            DENG_ASSERT(hedge->mapElement() != 0);
+            Segment *seg = hedge->mapElement()->as<Segment>();
+            seg->setMap(map);
+        } while((hedge = &hedge->next()) != base);
+    }
+
     void collateBspElements(bsp::Partitioner &partitioner, BspTreeNode &tree)
     {
         if(tree.isLeaf())
@@ -465,9 +477,15 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
             leaf->setIndexInMap(bspLeafs.count());
             bspLeafs.append(leaf);
 
-            foreach(Segment *seg, leaf->allSegments())
+            if(!leaf->isDegenerate())
             {
-                seg->setMap(thisPublic);
+                assignMapToSegmentsForFace(leaf->poly(), thisPublic);
+
+                foreach(Mesh *mesh, leaf->extraMeshes())
+                foreach(Face *face, mesh->faces())
+                {
+                    assignMapToSegmentsForFace(*face, thisPublic);
+                }
             }
 
             return;

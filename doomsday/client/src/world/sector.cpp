@@ -172,19 +172,6 @@ DENG2_OBSERVES(Plane, HeightChange)
             // Inform the shadow bias of changed geometry.
             foreach(BspLeaf *bspLeaf, bspLeafs)
             {
-                if(bspLeaf->isDegenerate())
-                     continue;
-
-                foreach(Segment *seg, bspLeaf->allSegments())
-                {
-                    if(!seg->hasLineSide())
-                        continue;
-
-                    seg->updateBiasAfterGeometryMove(Line::Side::Middle);
-                    seg->updateBiasAfterGeometryMove(Line::Side::Bottom);
-                    seg->updateBiasAfterGeometryMove(Line::Side::Top);
-                }
-
                 bspLeaf->updateBiasAfterGeometryMove(plane.indexInSector());
             }
         }

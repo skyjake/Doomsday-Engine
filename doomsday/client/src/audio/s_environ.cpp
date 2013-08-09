@@ -230,6 +230,32 @@ void S_DetermineBspLeafsAffectingSectorReverb(Map *map)
     LOG_INFO(String("Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 }
 
+static void accumReverbForFaceEdges(Face const &face,
+    float envSpaceAccum[NUM_AUDIO_ENVIRONMENT_CLASSES], float &total)
+{
+    HEdge *base = face.hedge();
+    HEdge *hedge = base;
+    do
+    {
+        DENG_ASSERT(hedge->mapElement() != 0);
+        Segment *seg = hedge->mapElement()->as<Segment>();
+
+        if(!seg->hasLineSide() || !seg->lineSide().hasSections() ||
+           !seg->lineSide().middle().hasMaterial())
+            continue;
+
+        Material &material = seg->lineSide().middle().material();
+        AudioEnvironmentClass env = material.audioEnvironment();
+        if(!(env >= 0 && env < NUM_AUDIO_ENVIRONMENT_CLASSES))
+            env = AEC_WOOD; // Assume it's wood if unknown.
+
+        total += seg->length();
+
+        envSpaceAccum[env] += seg->length();
+
+    } while((hedge = &hedge->next()) != base);
+}
+
 static boolean calcBspLeafReverb(BspLeaf *bspLeaf)
 {
     DENG2_ASSERT(bspLeaf);
@@ -251,22 +277,14 @@ static boolean calcBspLeafReverb(BspLeaf *bspLeaf)
         (bspLeaf->poly().aaBox().maxY - bspLeaf->poly().aaBox().minY);
 
     float total = 0;
+
     // The other reverb properties can be found out by taking a look at the
     // materials of all surfaces in the BSP leaf.
-    foreach(Segment *segment, bspLeaf->allSegments())
+    accumReverbForFaceEdges(bspLeaf->poly(), envSpaceAccum, total);
+    foreach(Mesh *mesh, bspLeaf->extraMeshes())
+    foreach(Face *face, mesh->faces())
     {
-        if(!segment->hasLineSide() || !segment->lineSide().hasSections() ||
-           !segment->lineSide().middle().hasMaterial())
-            continue;
-
-        Material &material = segment->lineSide().middle().material();
-        AudioEnvironmentClass env = material.audioEnvironment();
-        if(!(env >= 0 && env < NUM_AUDIO_ENVIRONMENT_CLASSES))
-            env = AEC_WOOD; // Assume it's wood if unknown.
-
-        total += segment->length();
-
-        envSpaceAccum[env] += segment->length();
+        accumReverbForFaceEdges(*face, envSpaceAccum, total);
     }
 
     if(!total)

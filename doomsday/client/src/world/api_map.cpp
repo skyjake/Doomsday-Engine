@@ -423,16 +423,43 @@ int P_Iteratep(void *elPtr, uint prop, void *context, int (*callback) (void *p, 
     case DMU_BSPLEAF:
         switch(prop)
         {
-        case DMU_LINE:
-            foreach(Segment *seg, elem->as<BspLeaf>()->allSegments())
-            {
-                if(!seg->hasLineSide())
-                    continue;
+        case DMU_LINE: {
+            BspLeaf *bspLeaf = elem->as<BspLeaf>();
 
-                int result = callback(&seg->line(), context);
-                if(result) return result;
+            /// @todo cleanup: BspLeaf could provide a list of Line::Side.
+            if(!bspLeaf->isDegenerate())
+            {
+                HEdge *base = bspLeaf->poly().hedge();
+                HEdge *hedge = base;
+                do
+                {
+                    DENG_ASSERT(hedge->mapElement() != 0);
+                    Segment *seg = hedge->mapElement()->as<Segment>();
+
+                    if(seg->hasLineSide())
+                    {
+                        int result = callback(&seg->line(), context);
+                        if(result) return result;
+                    }
+                } while((hedge = &hedge->next()) != base);
+
+                foreach(Mesh *mesh, bspLeaf->extraMeshes())
+                foreach(Face *face, mesh->faces())
+                {
+                    HEdge *base = face->hedge();
+                    HEdge *hedge = base;
+                    do
+                    {
+                        DENG_ASSERT(hedge->mapElement() != 0);
+                        Segment *seg = hedge->mapElement()->as<Segment>();
+
+                        int result = callback(&seg->line(), context);
+                        if(result) return result;
+
+                    } while((hedge = &hedge->next()) != base);
+                }
             }
-            return false; // Continue iteration.
+            return false; /* Continue iteration */ }
 
         default:
             throw Error("P_Iteratep", QString("Property %1 unknown/not vector").arg(DMU_Str(prop)));
