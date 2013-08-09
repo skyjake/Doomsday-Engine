@@ -706,19 +706,37 @@ public:
     bool isValidClPolyobj(int i);
 
     /**
-     * Returns the set of decorated surfaces for the map.
+     * Link the given @a surface in all material lists and surface sets which
+     * the map maintains to improve performance. Only surfaces attributed to
+     * the map will be linked (alien surfaces are ignored).
+     *
+     * @param surface  The surface to be linked.
      */
-    SurfaceSet /*const*/ &decoratedSurfaces();
+    void linkInMaterialLists(Surface *surface);
 
     /**
-     * Returns the set of glowing surfaces for the map.
+     * Unlink the given @a surface in all material lists and surface sets which
+     * the map maintains to improve performance.
+     *
+     * @note The material currently attributed to the surface does not matter
+     * for unlinking purposes and the surface will be unlinked from all lists
+     * regardless.
+     *
+     * @param surface  The surface to be unlinked.
      */
-    SurfaceSet /*const*/ &glowingSurfaces();
+    void unlinkInMaterialLists(Surface *surface);
 
     /**
-     * $smoothmatoffset: Roll the surface material offset tracker buffers.
+     * Provides a set of all surfaces linked to the material lists for which
+     * decorations are defined.
      */
-    void updateScrollingSurfaces();
+    SurfaceSet const &decoratedSurfaces();
+
+    /**
+     * Provides a set of all surfaces linked to the material lists for which
+     * glow animations are defined.
+     */
+    SurfaceSet const &glowingSurfaces();
 
     /**
      * Returns the set of scrolling surfaces for the map.
@@ -726,14 +744,19 @@ public:
     SurfaceSet /*const*/ &scrollingSurfaces();
 
     /**
-     * $smoothplane: Roll the height tracker buffers.
+     * $smoothmatoffset: Roll the surface material offset tracker buffers.
      */
-    void updateTrackedPlanes();
+    void updateScrollingSurfaces();
 
     /**
      * Returns the set of tracked planes for the map.
      */
     PlaneSet /*const*/ &trackedPlanes();
+
+    /**
+     * $smoothplane: Roll the height tracker buffers.
+     */
+    void updateTrackedPlanes();
 
     /**
      * Returns @c true iff a LightGrid has been initialized for the map.
@@ -790,7 +813,11 @@ public: /// @todo Make private:
      */
     void initSkyFix();
 
-    void buildSurfaceLists();
+    /**
+     * Rebuild the surface material lists. To be called when a full update is
+     * necessary.
+     */
+    void buildMaterialLists();
 
     /**
      * Initializes bias lighting for the map. New light sources are initialized

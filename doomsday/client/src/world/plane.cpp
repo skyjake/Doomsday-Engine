@@ -94,13 +94,7 @@ DENG2_PIMPL(Plane)
         /// @todo Map should observe Deletion.
         map.scrollingSurfaces().remove(&surface);
 
-        // If this plane's surface is in the glowing list, remove it.
-        /// @todo Map should observe Deletion.
-        map.glowingSurfaces().remove(&surface);
-
-        // If this plane's surface is in the decorated list, remove it.
-        /// @todo Map should observe Deletion.
-        map.decoratedSurfaces().remove(&surface);
+        map.unlinkInMaterialLists(&surface);
 
 #endif // __CLIENT__
     }
@@ -129,6 +123,9 @@ DENG2_PIMPL(Plane)
 
 #ifdef __CLIENT__
             // We need the decorations updated.
+            /// @todo optimize: Translation on the world up axis would be a
+            /// trivial operation to perform, which, would not require plotting
+            /// decorations again. This frequent case should be designed for.
             surface.markAsNeedingDecorationUpdate();
 #endif
         }

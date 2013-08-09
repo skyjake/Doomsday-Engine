@@ -1115,21 +1115,6 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
         }
     }
 
-    void addSurfaceToLists(Surface &suf)
-    {
-        if(!suf.hasMaterial()) return;
-
-        if(suf.material().hasGlow())
-        {
-            glowingSurfaces.insert(&suf);
-        }
-
-        if(suf.material().isDecorated())
-        {
-            decoratedSurfaces.insert(&suf);
-        }
-    }
-
     /**
      * $smoothplane: interpolate the visual offset of planes.
      */
@@ -1301,44 +1286,6 @@ Map::BspLeafs const &Map::bspLeafs() const
 
 #ifdef __CLIENT__
 
-Map::SurfaceSet &Map::decoratedSurfaces()
-{
-    return d->decoratedSurfaces;
-}
-
-Map::SurfaceSet &Map::glowingSurfaces()
-{
-    return d->glowingSurfaces;
-}
-
-void Map::buildSurfaceLists()
-{
-    d->decoratedSurfaces.clear();
-    d->glowingSurfaces.clear();
-
-    foreach(Line *line, d->lines)
-    for(int i = 0; i < 2; ++i)
-    {
-        Line::Side &side = line->side(i);
-        if(!side.hasSections()) continue;
-
-        d->addSurfaceToLists(side.middle());
-        d->addSurfaceToLists(side.top());
-        d->addSurfaceToLists(side.bottom());
-    }
-
-    foreach(Sector *sector, d->sectors)
-    {
-        // Skip sectors with no lines as their planes will never be drawn.
-        if(!sector->sideCount()) continue;
-
-        foreach(Plane *plane, sector->planes())
-        {
-            d->addSurfaceToLists(plane->surface());
-        }
-    }
-}
-
 bool Map::hasLightGrid()
 {
     return !d->lightGrid.isNull();
@@ -1396,7 +1343,95 @@ void Map::initBias()
     LOG_INFO(String("Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 }
 
+void Map::unlinkInMaterialLists(Surface *surface)
+{
+    if(!surface) return;
+
+    d->decoratedSurfaces.remove(surface);
+    d->glowingSurfaces.remove(surface);
+}
+
+void Map::linkInMaterialLists(Surface *surface)
+{
+    if(!surface) return;
+
+    // Only surfaces with a material will be linked.
+    if(!surface->hasMaterial()) return;
+
+    // Ignore surfaces not currently attributed to the map.
+    if(&surface->map() != this)
+    {
+        qDebug() << "Ignoring alien surface" << de::dintptr(surface) << "in Map::unlinkInMaterialLists";
+        return;
+    }
+
+    Material &material = surface->material();
+    if(material.hasGlow())
+    {
+        d->glowingSurfaces.insert(surface);
+    }
+    if(material.isDecorated())
+    {
+        d->decoratedSurfaces.insert(surface);
+    }
+}
+
+void Map::buildMaterialLists()
+{
+    d->decoratedSurfaces.clear();
+    d->glowingSurfaces.clear();
+
+    foreach(Line *line, d->lines)
+    for(int i = 0; i < 2; ++i)
+    {
+        Line::Side &side = line->side(i);
+        if(!side.hasSections()) continue;
+
+        linkInMaterialLists(&side.middle());
+        linkInMaterialLists(&side.top());
+        linkInMaterialLists(&side.bottom());
+    }
+
+    foreach(Sector *sector, d->sectors)
+    {
+        // Skip sectors with no lines as their planes will never be drawn.
+        if(!sector->sideCount()) continue;
+
+        foreach(Plane *plane, sector->planes())
+        {
+            linkInMaterialLists(&plane->surface());
+        }
+    }
+}
+
+Map::SurfaceSet const &Map::decoratedSurfaces()
+{
+    return d->decoratedSurfaces;
+}
+
+Map::SurfaceSet const &Map::glowingSurfaces()
+{
+    return d->glowingSurfaces;
+}
 #endif // __CLIENT__
+
+void Map::updateSurfacesOnMaterialChange(Material &material)
+{
+    if(ddMapSetup) return;
+
+#ifdef __CLIENT__
+    if(material.isDecorated())
+    {
+        foreach(Surface *surface, d->decoratedSurfaces)
+        {
+            if(&material == surface->materialPtr())
+            {
+                surface->markAsNeedingDecorationUpdate();
+            }
+        }
+    }
+#endif
+}
 
 Uri const &Map::uri() const
 {
@@ -2594,21 +2629,6 @@ BspLeaf &Map::bspLeafAt_FixedPrecision(Vector2d const &point) const
     return *bspElement->as<BspLeaf>();
 }
 
-void Map::updateSurfacesOnMaterialChange(Material &material)
-{
-    if(ddMapSetup) return;
-
-#ifdef __CLIENT__
-    foreach(Surface *surface, d->decoratedSurfaces)
-    {
-        if(&material == surface->materialPtr())
-        {
-            surface->markAsNeedingDecorationUpdate();
-        }
-    }
-#endif
-}
-
 #ifdef __CLIENT__
 
 void Map::updateScrollingSurfaces()
@@ -2960,8 +2980,8 @@ void Map::update()
         line->front().middle().markAsNeedingDecorationUpdate();
     }
 
-    // Rebuild the surface lists.
-    buildSurfaceLists();
+    // Rebuild the surface material lists.
+    buildMaterialLists();
 
 #endif // __CLIENT__
 

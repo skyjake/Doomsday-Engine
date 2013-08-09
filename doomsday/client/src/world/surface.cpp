@@ -88,20 +88,20 @@ DENG2_PIMPL(Surface)
           flags(0)
     {}
 
-    /// @todo Refactor away -ds
+#ifdef DENG_DEBUG
     inline bool isSideMiddle()
     {
         return self.parent().type() == DMU_SIDE &&
                &self == &self.parent().as<Line::Side>()->middle();
     }
 
-    /// @todo Refactor away -ds
     inline bool isSectorExtraPlane()
     {
         if(self.parent().type() != DMU_PLANE) return false;
         Plane const &plane = *self.parent().as<Plane>();
         return !(plane.isSectorFloor() || plane.isSectorCeiling());
     }
+#endif
 
     void notifyNormalChanged(Vector3f const &oldNormal)
     {
@@ -299,44 +299,30 @@ bool Surface::setMaterial(Material *newMaterial, bool isMissingFix)
             d->materialIsMissingFix = false;
         }
 
+        d->material = newMaterial;
+
 #ifdef __CLIENT__
         if(!ddMapSetup)
         {
-            // If this plane's surface is in the decorated list, remove it.
-            map().decoratedSurfaces().remove(this);
+            map().unlinkInMaterialLists(this);
 
-            // If this plane's surface is in the glowing list, remove it.
-            map().glowingSurfaces().remove(this);
-
-            if(newMaterial)
+            if(d->material)
             {
-                if(newMaterial->hasGlow())
-                {
-                    map().glowingSurfaces().insert(this);
-                }
-
-                if(newMaterial->isDecorated())
-                {
-                    map().decoratedSurfaces().insert(this);
-                }
+                map().linkInMaterialLists(this);
 
                 if(parent().type() == DMU_PLANE)
                 {
-                    de::Uri uri = newMaterial->manifest().composeUri();
+                    de::Uri uri = d->material->manifest().composeUri();
                     ded_ptcgen_t const *def = Def_GetGenerator(reinterpret_cast<uri_s *>(&uri));
                     P_SpawnPlaneParticleGen(def, parent().as<Plane>());
                 }
 
             }
         }
-#endif // __CLIENT__
 
-        d->material = newMaterial;
-
-#ifdef __CLIENT__
         /// @todo Replace with a de::Observer-based mechanism.
         _decorationData.needsUpdate = true;
-#endif
+#endif // __CLIENT__
     }
     return true;
 }

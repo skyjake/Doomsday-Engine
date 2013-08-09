@@ -624,7 +624,7 @@ DENG2_PIMPL(World)
 #ifdef __CLIENT__
         map->initLightGrid();
         map->initSkyFix();
-        map->buildSurfaceLists();
+        map->buildMaterialLists();
         P_MapSpawnPlaneParticleGens();
 
         Time begunPrecacheAt;
