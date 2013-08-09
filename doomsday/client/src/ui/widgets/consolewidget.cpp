@@ -33,6 +33,8 @@
 
 using namespace de;
 
+static TimeDelta const LOG_OPEN_CLOSE_SPAN = 0.2;
+
 DENG2_PIMPL(ConsoleWidget)
 {
     ButtonWidget *button;
@@ -100,8 +102,8 @@ DENG2_PIMPL(ConsoleWidget)
             delta += 2 * log->topMargin();
         }
 
-        height->setStyle(style);
         height->set(height->animation().target() + delta, .25f);
+        height->setStyle(style);
 
         if(useOffsetAnimation && opened)
         {
@@ -356,7 +358,7 @@ void ConsoleWidget::openLog()
     if(d->opened) return;
 
     d->opened = true;
-    d->horizShift->set(0, .3f);
+    d->horizShift->set(0, LOG_OPEN_CLOSE_SPAN);
     d->log->unsetBehavior(DisableEventDispatch);
 }
 
@@ -365,7 +367,7 @@ void ConsoleWidget::closeLog()
     if(!d->opened) return;
 
     d->opened = false;
-    d->horizShift->set(-rule().width().valuei() - 1, .3f);
+    d->horizShift->set(-rule().width().valuei() - 1, LOG_OPEN_CLOSE_SPAN);
     d->log->setBehavior(DisableEventDispatch);
 }
 

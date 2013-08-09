@@ -53,14 +53,14 @@ DENG2_OBSERVES(Action, Triggered)
         switch(st)
         {
         case Up:
-            scale.setStyle(prev == Down? Animation::Bounce : Animation::EaseOut);
             scale.setValue(1.f, .3f);
+            scale.setStyle(prev == Down? Animation::Bounce : Animation::EaseOut);
             frameOpacity.setValue(.08f, .6f);
             break;
 
         case Hover:
-            //scale.setStyle(Animation::EaseOut);
             //scale.setValue(1.1f, .15f);
+            //scale.setStyle(Animation::EaseOut);
             frameOpacity.setValue(.4f, .15f);
             break;
 

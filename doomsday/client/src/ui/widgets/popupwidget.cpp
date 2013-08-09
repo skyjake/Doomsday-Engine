@@ -218,8 +218,8 @@ DENG2_PIMPL(PopupWidget)
         self.setBehavior(DisableEventDispatchToChildren);
 
         // Begin the closing animation.
-        openingRule->setStyle(Animation::EaseIn);
         openingRule->set(0, CLOSING_ANIM_SPAN + delay, delay);
+        openingRule->setStyle(Animation::EaseIn);
 
         self.popupClosing();
 
@@ -393,7 +393,6 @@ void PopupWidget::open()
     preparePopupForOpening();
 
     // Start the opening animation.
-    d->openingRule->setStyle(Animation::Bounce, 8);
     if(d->dir == ui::Up || d->dir == ui::Down)
     {
         d->openingRule->set(d->content->rule().height(), OPENING_ANIM_SPAN);
@@ -402,6 +401,7 @@ void PopupWidget::open()
     {
         d->openingRule->set(d->content->rule().width(), OPENING_ANIM_SPAN);
     }
+    d->openingRule->setStyle(Animation::Bounce, 8);
 
     d->opened = true;
 
