@@ -762,6 +762,7 @@ PersistentCanvasWindow::PersistentCanvasWindow(String const &id)
     try
     {
         restoreFromConfig();
+        d->modifyAccordingToOptions();
     }
     catch(Error const &er)
     {
