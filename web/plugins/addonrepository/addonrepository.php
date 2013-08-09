@@ -133,7 +133,7 @@ class AddonRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
 <thead>
 <tr>
 <th><label title="Package Name">Name</label></th>
-<th><label title="Package Description">Description</label></th>
+<th style="width:50%"><label title="Package Description">Description</label></th>
 <th><label title="Package Notes">Notes</label></th></tr>
 </thead><?php
 
