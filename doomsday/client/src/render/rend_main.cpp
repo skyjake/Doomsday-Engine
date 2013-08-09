@@ -1820,7 +1820,7 @@ static void writeLeafSkyMaskStrips(SkyFixEdge::FixType fixType)
     // Begin generating geometry.
     HEdge *base = bspLeaf->poly().hedge();
     HEdge *hedge = base;
-    do
+    forever
     {
         Segment &seg = *hedge->mapElement()->as<Segment>();
 
@@ -1908,8 +1908,12 @@ static void writeLeafSkyMaskStrips(SkyFixEdge::FixType fixType)
         // Start a new strip from the current node?
         if(beginNewStrip) continue;
 
-        // On to the next node!
-    } while((hedge = &hedge->neighbor(direction)) != base);
+        // On to the next node.
+        hedge = &hedge->neighbor(direction);
+
+        // Are we done?
+        if(hedge == base) break;
+    }
 }
 
 /**
