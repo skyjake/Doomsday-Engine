@@ -288,13 +288,13 @@ void Segment::updateBiasAfterGeometryMove(int group)
     }
 }
 
-void Segment::applyBiasDigest(BiasDigest &changes)
+BiasTracker *Segment::biasTracker(int group)
 {
-    for(GeometryGroups::iterator it = d->geomGroups.begin();
-        it != d->geomGroups.end(); ++it)
+    if(GeometryGroup *geomGroup = d->geometryGroup(group, false /*don't allocate*/))
     {
-        it.value().biasTracker.applyChanges(changes);
+        return &geomGroup->biasTracker;
     }
+    return 0;
 }
 
 void Segment::lightBiasPoly(int group, Vector3f const *posCoords, Vector4f *colorCoords)

@@ -474,8 +474,7 @@ static void updateBiasAfterGeometryMoveToFaceEdges(Face const &face)
 
 void BspLeaf::updateBiasAfterGeometryMove(int group)
 {
-    if(isDegenerate())
-         return;
+    if(isDegenerate()) return;
 
     if(GeometryGroup *geomGroup = d->geometryGroup(group, false /*don't allocate*/))
     {
@@ -491,15 +490,39 @@ void BspLeaf::updateBiasAfterGeometryMove(int group)
     }
 }
 
-static void applyBiasDigestToFaceEdges(Face const &face, BiasDigest &changes)
+BiasTracker *BspLeaf::biasTracker(int group)
+{
+    if(GeometryGroup *geomGroup = d->geometryGroup(group, false /*don't allocate*/))
+    {
+        return &geomGroup->biasTracker;
+    }
+    return 0;
+}
+
+static void applyBiasDigestToSegment(Segment *seg, BiasDigest &changes)
+{
+    if(!seg) return;
+    if(BiasTracker *tracker = seg->biasTracker(Line::Side::Middle))
+    {
+        tracker->applyChanges(changes);
+    }
+    if(BiasTracker *tracker = seg->biasTracker(Line::Side::Bottom))
+    {
+        tracker->applyChanges(changes);
+    }
+    if(BiasTracker *tracker = seg->biasTracker(Line::Side::Top))
+    {
+        tracker->applyChanges(changes);
+    }
+}
+
+static void applyBiasDigestToSegmentsForFace(Face const &face, BiasDigest &changes)
 {
     HEdge *base = face.hedge();
     HEdge *hedge = base;
     do
     {
-        DENG_ASSERT(hedge->mapElement() != 0);
-        Segment *seg = hedge->mapElement()->as<Segment>();
-        seg->applyBiasDigest(changes);
+        applyBiasDigestToSegment(hedge->mapElement()->as<Segment>(), changes);
     } while((hedge = &hedge->next()) != base);
 }
 
@@ -513,18 +536,18 @@ void BspLeaf::applyBiasDigest(BiasDigest &changes)
         it.value().biasTracker.applyChanges(changes);
     }
 
-    applyBiasDigestToFaceEdges(poly(), changes);
+    applyBiasDigestToSegmentsForFace(poly(), changes);
 
     foreach(Mesh *mesh, extraMeshes())
     foreach(Face *face, mesh->faces())
     {
-        applyBiasDigestToFaceEdges(*face, changes);
+        applyBiasDigestToSegmentsForFace(*face, changes);
     }
 
     foreach(Polyobj *polyobj, d->polyobjs)
     foreach(Line *line, polyobj->lines())
     {
-        line->front().leftSegment()->applyBiasDigest(changes);
+        applyBiasDigestToSegment(line->front().leftSegment(), changes);
     }
 }
 

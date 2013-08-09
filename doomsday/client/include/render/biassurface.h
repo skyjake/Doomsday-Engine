@@ -23,7 +23,7 @@
 
 #include "render/rendpoly.h" /// @todo remove me
 
-#include "BiasDigest"
+#include "BiasTracker"
 
 /**
  * Base class for a surface which supports lighting within the Shadow Bias
@@ -31,6 +31,7 @@
  */
 class BiasSurface
 {
+
 public:
     virtual ~BiasSurface() {}
 
@@ -60,9 +61,10 @@ public:
     virtual void updateBiasAfterGeometryMove(int group) {}
 
     /**
-     * @param changes  Digest of bias lighting changes to apply.
+     * Returns the bias change tracker for the specified geometry @a group,
+     * otherwise @c 0 (if the group is unknown).
      */
-    virtual void applyBiasDigest(BiasDigest &changes) = 0;
+    virtual BiasTracker *biasTracker(int group) = 0;
 };
 
 extern int devUpdateBiasContributors; //cvar

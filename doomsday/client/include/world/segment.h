@@ -254,7 +254,7 @@ public:
 
     void updateBiasAfterGeometryMove(int group);
 
-    void applyBiasDigest(BiasDigest &changes);
+    BiasTracker *biasTracker(int group);
 
 #endif // __CLIENT__
 
