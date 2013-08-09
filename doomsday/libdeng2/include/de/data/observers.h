@@ -141,22 +141,22 @@ public:
         Loop(Observers &observers) {
             DENG2_GUARD_READ(observers);
             _observers = observers._members;
-            _next = _observers.begin();
+            _next = _observers.constBegin();
             next();
         }
-        bool done() {
-            return _current == _observers.end();
+        bool done() const {
+            return _current == _observers.constEnd();
         }
         void next() {
             _current = _next;
-            if(_next != _observers.end()) {
+            if(_next != _observers.constEnd()) {
                 ++_next;
             }
         }
-        iterator &get() {
+        const_iterator const &get() const {
             return _current;
         }
-        Type *operator -> () {
+        Type *operator -> () const {
             return *get();
         }
         Loop &operator ++ () {
@@ -165,8 +165,8 @@ public:
         }
     private:
         Members _observers;
-        iterator _current;
-        iterator _next;
+        const_iterator _current;
+        const_iterator _next;
     };
 
     friend class Loop;
