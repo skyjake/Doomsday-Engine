@@ -71,12 +71,6 @@ DENG2_PIMPL(BspLeaf)
     /// Additional meshes assigned to the BSP leaf (owned).
     Meshes extraMeshes;
 
-    /// All line segments in the BSP leaf from all polygons.
-    Segments allSegments;
-
-    /// Set to @c true when the all segment list need updating.
-    bool needUpdateAllSegments;
-
     /// Offset to align the top left of materials in the built geometry to the
     /// map coordinate space grid.
     Vector2d worldGridOffset;
@@ -109,7 +103,6 @@ DENG2_PIMPL(BspLeaf)
     Instance(Public *i, Sector *sector = 0)
         : Base(i),
           poly(0),
-          needUpdateAllSegments(false),
           sector(sector),
 #ifdef __CLIENT__
           fanBase(0),
@@ -122,69 +115,6 @@ DENG2_PIMPL(BspLeaf)
     ~Instance()
     {
         qDeleteAll(extraMeshes);
-    }
-
-    void updateAllSegments()
-    {
-        needUpdateAllSegments = false;
-
-        allSegments.clear();
-
-        if(!poly) return;
-
-        int numSegments = poly->hedgeCount();
-        foreach(Mesh *mesh, extraMeshes)
-        {
-            numSegments += mesh->hedgeCount();
-        }
-
-        // Populate the list.
-#ifdef DENG2_QT_4_7_OR_NEWER
-        allSegments.reserve(numSegments);
-#endif
-        HEdge *hedge = poly->hedge();
-        do
-        {
-            if(MapElement *elem = hedge->mapElement())
-            {
-                allSegments.append(elem->as<Segment>());
-            }
-        } while((hedge = &hedge->next()) != poly->hedge());
-
-        foreach(Mesh *mesh, extraMeshes)
-        foreach(HEdge *hedge, mesh->hedges())
-        {
-            if(MapElement *elem = hedge->mapElement())
-            {
-                allSegments.append(elem->as<Segment>());
-            }
-        }
-
-#ifdef DENG_DEBUG
-        // See if we received a partial geometry...
-        {
-            int discontinuities = 0;
-            HEdge *hedge = poly->hedge();
-            do
-            {
-                if(hedge->next().origin() != hedge->twin().origin())
-                {
-                    discontinuities++;
-                }
-            } while((hedge = &hedge->next()) != poly->hedge());
-
-            if(discontinuities)
-            {
-                LOG_WARNING("Face geometry for BSP leaf [%p] at %s in sector %i "
-                            "is not contiguous (%i gaps/overlaps).\n%s")
-                    << de::dintptr(&self)
-                    << poly->center().asText()
-                    << sector->indexInArchive()
-                    << discontinuities
-                    << poly->description();
-            }
-        }
-#endif
     }
 
 #ifdef __CLIENT__
@@ -385,9 +315,6 @@ void BspLeaf::setPoly(Face *newPoly)
 
     d->poly = newPoly;
 
-    // We'll need to update segment lists.
-    d->needUpdateAllSegments = true;
-
     if(newPoly)
     {
         // Attribute the new face geometry to "this" BSP leaf.
@@ -419,24 +346,12 @@ void BspLeaf::assignExtraMesh(Mesh &newMesh)
         {
             face->setMapElement(this);
         }
-
-        // We'll need to update the all segment list.
-        d->needUpdateAllSegments = true;
     }
 }
 
 BspLeaf::Meshes const &BspLeaf::extraMeshes() const
 {
     return d->extraMeshes;
-}
-
-BspLeaf::Segments const &BspLeaf::allSegments() const
-{
-    if(d->needUpdateAllSegments)
-    {
-        d->updateAllSegments();
-    }
-    return d->allSegments;
 }
 
 Vector2d const &BspLeaf::worldGridOffset() const

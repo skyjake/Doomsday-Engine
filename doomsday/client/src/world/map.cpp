@@ -486,6 +486,30 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
                 {
                     assignMapToSegmentsForFace(*face, thisPublic);
                 }
+
+#ifdef DENG_DEBUG
+                // See if we received a partial geometry...
+                int discontinuities = 0;
+                HEdge *hedge = leaf->poly().hedge();
+                do
+                {
+                    if(hedge->next().origin() != hedge->twin().origin())
+                    {
+                        discontinuities++;
+                    }
+                } while((hedge = &hedge->next()) != leaf->poly().hedge());
+
+                if(discontinuities)
+                {
+                    LOG_WARNING("Face geometry for BSP leaf [%p] at %s in sector %i "
+                                "is not contiguous (%i gaps/overlaps).\n%s")
+                        << de::dintptr(leaf)
+                        << leaf->poly().center().asText()
+                        << leaf->sector().indexInArchive()
+                        << discontinuities
+                        << leaf->poly().description();
+                }
+#endif
             }
 
             return;

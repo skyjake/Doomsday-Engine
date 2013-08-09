@@ -36,7 +36,6 @@
 #endif
 
 class Sector;
-class Segment;
 struct polyobj_s;
 
 #ifdef __CLIENT__
@@ -81,7 +80,6 @@ public:
      */
     typedef QSet<de::Mesh *>   Meshes;
     typedef QSet<polyobj_s *>  Polyobjs;
-    typedef QList<Segment *>   Segments;
 
 public: /// @todo Make private:
 #ifdef __CLIENT__
@@ -149,14 +147,6 @@ public:
      * @see assignExtraMesh()
      */
     Meshes const &extraMeshes() const;
-
-    /**
-     * Provides a list of all the line segments from the convex face geometry
-     * and any @em extra meshes assigned to the BSP leaf.
-     *
-     * @see assignExtraMesh()
-     */
-    Segments const &allSegments() const;
 
     /**
      * Returns @c true iff a sector is attributed to the BSP leaf. The only
