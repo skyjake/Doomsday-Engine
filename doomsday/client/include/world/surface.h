@@ -35,7 +35,8 @@
 class BspLeaf;
 
 /**
- * World map surface.
+ * Models a "boundless" but otherwise geometric map surface. Boundless in the
+ * sense that surface has no edges.
  *
  * @ingroup world
  */
@@ -86,7 +87,10 @@ public:
     };
 #endif // __CLIENT__
 
-public: /// @todo make private:
+public:
+    /// @todo Decorations do not belong at this level. Plotting decorations
+    /// requires knowledge of the geometry (a BiasSurface-like abstraction
+    /// is needed one level up from this).
 #ifdef __CLIENT__
     struct DecorationData
     {
