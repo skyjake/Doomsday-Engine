@@ -19,6 +19,7 @@
 #include "ui/widgets/labelwidget.h"
 #include "ui/widgets/gltextcomposer.h"
 #include "ui/widgets/fontlinewrapping.h"
+#include "ui/widgets/atlasproceduralimage.h"
 #include "ui/widgets/guirootwidget.h"
 
 #include <de/Drawable>
@@ -61,10 +62,8 @@ public Font::RichFormat::IStyle
     FontLineWrapping wraps;
     int wrapWidth;
     GLTextComposer composer;
-    Image image;
-    bool needImageUpdate;
 
-    Id imageTex;
+    QScopedPointer<ProceduralImage> image;
     Drawable drawable;
     GLUniform uMvpMatrix;
     GLUniform uColor;
@@ -82,8 +81,6 @@ public Font::RichFormat::IStyle
           imageColor(1, 1, 1, 1),
           gapId("label.gap"),
           wrapWidth(0),
-          needImageUpdate(false),
-          imageTex(Id::None),
           uMvpMatrix("uMvpMatrix", GLUniform::Mat4),
           uColor    ("uColor",     GLUniform::Vec4)
     {
@@ -177,7 +174,10 @@ public Font::RichFormat::IStyle
     void glDeinit()
     {
         composer.release();
-        atlas().release(imageTex);
+        if(!image.isNull())
+        {
+            image->glDeinit();
+        }
     }
 
     bool hasImage() const
@@ -190,6 +190,11 @@ public Font::RichFormat::IStyle
         return !styledText.isEmpty();
     }
 
+    Vector2f imageSize() const
+    {
+        return image.isNull()? Vector2f() : image->size();
+    }
+
     /**
      * Determines where the label's image and text should be drawn.
      *
@@ -199,10 +204,10 @@ public Font::RichFormat::IStyle
     {
         Rectanglei const contentRect = self.rule().recti().shrunk(margin);
 
-        Vector2f const imageSize = image.size() * imageScale;
+        Vector2f const imgSize = imageSize() * imageScale;
 
         // Determine the sizes of the elements first.
-        layout.image = Rectanglef::fromSize(imageSize);
+        layout.image = Rectanglef::fromSize(imgSize);
         layout.text  = Rectanglei::fromSize(textSize());
 
         if(horizPolicy == Filled)
@@ -240,11 +245,11 @@ public Font::RichFormat::IStyle
             // Fit the image.
             if(!imageFit.testFlag(FitToWidth))
             {
-                layout.image.setWidth(image.width());
+                layout.image.setWidth(imageSize().x);
             }
             if(!imageFit.testFlag(FitToHeight))
             {
-                layout.image.setHeight(image.height());
+                layout.image.setHeight(imageSize().y);
             }
 
             // Should the original aspect ratio be preserved?
@@ -252,11 +257,11 @@ public Font::RichFormat::IStyle
             {
                 if(imageFit & FitToWidth)
                 {
-                    layout.image.setHeight(image.height() * layout.image.width() / image.width());
+                    layout.image.setHeight(imageSize().y * layout.image.width() / imageSize().x);
                 }
                 if(imageFit & FitToHeight)
                 {
-                    layout.image.setWidth(image.width() * layout.image.height() / image.height());
+                    layout.image.setWidth(imageSize().x * layout.image.height() / imageSize().y);
 
                     if(imageFit.testFlag(FitToWidth))
                     {
@@ -273,8 +278,6 @@ public Font::RichFormat::IStyle
                     }
                 }
             }
-
-            //applyAlignment(imageAlign, layout.image, rect);
         }
 
         // By default the image and the text are centered over each other.
@@ -356,7 +359,7 @@ public Font::RichFormat::IStyle
         if(textAlign & (AlignLeft | AlignRight))
         {
             // Image will be placed beside the text.
-            w -= gap + image.width();
+            w -= gap + imageSize().x;
         }
         return w;
     }
@@ -364,11 +367,9 @@ public Font::RichFormat::IStyle
     void update()
     {
         // Update the image on the atlas.
-        if(needImageUpdate)
+        if(!image.isNull())
         {
-            needImageUpdate = false;
-            atlas().release(imageTex);
-            imageTex = atlas().alloc(image);
+            image->update();
         }
 
         // Update the wrapped text.
@@ -433,8 +434,21 @@ void LabelWidget::setText(String const &text)
 
 void LabelWidget::setImage(Image const &image)
 {
-    d->image = image;
-    d->needImageUpdate = true;
+    if(!image.isNull())
+    {
+        AtlasProceduralImage *proc = new AtlasProceduralImage(*this);
+        proc->setImage(image);
+        d->image.reset(proc);
+    }
+    else
+    {
+        d->image.reset();
+    }
+}
+
+void LabelWidget::setImage(ProceduralImage *procImage)
+{
+    d->image.reset(procImage);
 }
 
 String LabelWidget::text() const
@@ -442,7 +456,7 @@ String LabelWidget::text() const
     return d->styledText;
 }
 
-void LabelWidget::setTextGap(const DotPath &styleRuleId)
+void LabelWidget::setTextGap(DotPath const &styleRuleId)
 {
     d->gapId = styleRuleId;
     d->updateStyle();
@@ -527,7 +541,8 @@ void LabelWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
 
     if(d->hasImage())
     {
-        verts.makeQuad(layout.image, d->imageColor, d->atlas().imageRectf(d->imageTex));
+        d->image->setColor(d->imageColor);
+        d->image->glMakeGeometry(verts, layout.image);
     }
     if(d->hasText())
     {

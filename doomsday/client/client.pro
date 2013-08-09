@@ -345,6 +345,7 @@ DENG_HEADERS += \
     include/ui/ui_main.h \
     include/ui/ui_panel.h \
     include/ui/widgets/alignment.h \
+    include/ui/widgets/atlasproceduralimage.h \
     include/ui/widgets/blurwidget.h \
     include/ui/widgets/busywidget.h \
     include/ui/widgets/buttonwidget.h \ 
@@ -364,6 +365,7 @@ DENG_HEADERS += \
     include/ui/widgets/notificationwidget.h \
     include/ui/widgets/popupmenuwidget.h \
     include/ui/widgets/popupwidget.h \
+    include/ui/widgets/proceduralimage.h \
     include/ui/widgets/progresswidget.h \
     include/ui/widgets/scrollareawidget.h \
     include/ui/widgets/styledlogsinkformatter.h \
@@ -666,6 +668,7 @@ SOURCES += \
     src/ui/widgets/notificationwidget.cpp \
     src/ui/widgets/popupmenuwidget.cpp \
     src/ui/widgets/popupwidget.cpp \
+    src/ui/widgets/proceduralimage.cpp \
     src/ui/widgets/progresswidget.cpp \
     src/ui/widgets/scrollareawidget.cpp \
     src/ui/widgets/styledlogsinkformatter.cpp \

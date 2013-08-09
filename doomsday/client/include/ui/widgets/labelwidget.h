@@ -25,6 +25,7 @@
 
 #include "guiwidget.h"
 #include "alignment.h"
+#include "proceduralimage.h"
 
 /**
  * Widget showing a label text and/or image.
@@ -67,6 +68,14 @@ public:
 
     void setText(de::String const &text);
     void setImage(de::Image const &image);
+
+    /**
+     * Sets the image drawn in the label. Procedural images can generate any
+     * geometry on the fly, so the image can be fully animated.
+     *
+     * @param procImage  Procedural image. LabelWidget takes ownership.
+     */
+    void setImage(ProceduralImage *procImage);
 
     de::String text() const;
 
