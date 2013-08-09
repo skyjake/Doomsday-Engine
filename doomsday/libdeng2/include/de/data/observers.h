@@ -21,7 +21,7 @@
 #define LIBDENG2_OBSERVERS_H
 
 #include "../libdeng2.h"
-#include "../ReadWriteLockable"
+#include "../Lockable"
 #include "../Guard"
 
 #include <QSet>
@@ -123,7 +123,7 @@ namespace de {
  * and writing as appropriate.
  */
 template <typename Type>
-class Observers : public ReadWriteLockable
+class Observers : public Lockable
 {
 public:
     typedef QSet<Type *> Members;
@@ -139,7 +139,7 @@ public:
     class Loop {
     public:
         Loop(Observers &observers) {
-            DENG2_GUARD_READ(observers);
+            DENG2_GUARD(observers);
             _observers = observers._members;
             _next = _observers.constBegin();
             next();
@@ -183,14 +183,14 @@ public:
     }
 
     void clear() {
-        DENG2_GUARD_WRITE(this);
+        DENG2_GUARD(this);
         _members.clear();
     }
 
     Observers<Type> &operator = (Observers<Type> const &other) {
         if(this == &other) return *this;
-        DENG2_GUARD_READ(other);
-        DENG2_GUARD_WRITE(this);
+        DENG2_GUARD(other);
+        DENG2_GUARD(this);
         _members = other._members;
         return *this;
     }
@@ -198,7 +198,7 @@ public:
     /// Add an observer into the set. The set does not receive
     /// ownership of the observer instance.
     void add(Type *observer) {
-        DENG2_GUARD_WRITE(this);
+        DENG2_GUARD(this);
         _members.insert(observer);
     }
 
@@ -218,7 +218,7 @@ public:
     }
 
     void remove(Type *observer) {
-        DENG2_GUARD_WRITE(this);
+        DENG2_GUARD(this);
         _members.remove(observer);
     }
 
@@ -238,7 +238,7 @@ public:
     }
 
     size_type size() const {
-        DENG2_GUARD_READ(this);
+        DENG2_GUARD(this);
         return _members.size();
     }
 
