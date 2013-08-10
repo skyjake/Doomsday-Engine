@@ -730,8 +730,12 @@ SOURCES += \
     SOURCES += src/audio/sys_audiod_sdlmixer.cpp
 }
 
+DOOMSDAY_SCRIPTS += \
+    modules/appconfig.de \
+    modules/bootstrap.de
+
 OTHER_FILES += \
-    modules/bootstrap.de \
+    $$DOOMSDAY_SCRIPTS \
     data/cphelp.txt \
     include/template.h.template \
     src/template.c.template \
@@ -743,7 +747,7 @@ OTHER_FILES += \
 data.files = $$OUT_PWD/../doomsday.pk3
 
 mod.files = \
-    modules/bootstrap.de \
+    $$DOOMSDAY_SCRIPTS \
     $$DENG_MODULES_DIR/Config.de \
     $$DENG_MODULES_DIR/gui.de \
     $$DENG_MODULES_DIR/recutil.de
