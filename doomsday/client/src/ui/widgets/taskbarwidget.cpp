@@ -197,7 +197,7 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
     d->logo = new ButtonWidget;
     //d->logo->setAction(new CommandAction("panel"));
     d->logo->setImage(style().images().image("logo.px128"));
-    d->logo->setImageScale(.5f);
+    d->logo->setImageScale(.475f);
     d->logo->setImageFit(FitToHeight | OriginalAspectRatio);
 
     VersionInfo currentVersion;
