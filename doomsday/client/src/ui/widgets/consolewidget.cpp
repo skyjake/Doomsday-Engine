@@ -21,11 +21,13 @@
 #include "ui/widgets/buttonwidget.h"
 #include "ui/widgets/consolecommandwidget.h"
 #include "ui/widgets/popupmenuwidget.h"
+#include "ui/widgets/variabletogglewidget.h"
 #include "ui/widgets/logwidget.h"
 #include "ui/clientwindow.h"
 #include "ui/commandaction.h"
 #include "ui/signalaction.h"
 
+#include <de/App>
 #include <de/ScalarRule>
 #include <de/KeyEvent>
 #include <de/MouseEvent>
@@ -181,6 +183,7 @@ ConsoleWidget::ConsoleWidget() : GuiWidget("console"), d(new Instance(this))
     add(d->cmdLine);
 
     connect(d->cmdLine, SIGNAL(gotFocus()), this, SLOT(openLog()));
+    connect(d->cmdLine, SIGNAL(commandEntered(de::String)), this, SLOT(commandWasEntered(de::String)));
 
     // Keep the button at the bottom of the expanding command line.
     //consoleButton->rule().setInput(Rule::Bottom, d->cmdLine->rule().bottom());
@@ -218,6 +221,9 @@ ConsoleWidget::ConsoleWidget() : GuiWidget("console"), d(new Instance(this))
     d->menu->addItem(tr("Clear Log"), new CommandAction("clear"));
     d->menu->addItem(tr("Show Full Log"), new SignalAction(this, SLOT(showFullLog())));
     d->menu->addItem(tr("Scroll to Bottom"), new SignalAction(d->log, SLOT(scrollToBottom())));
+
+    d->menu->addItem(new VariableToggleWidget(tr("Go to Bottom on Enter"), App::config()["console.snap"]));
+
     add(d->menu);
 
     // Signals.
@@ -380,6 +386,7 @@ void ConsoleWidget::clearLog()
 
 void ConsoleWidget::showFullLog()
 {
+    openLog();
     d->log->enablePageKeys(true);
     d->expandLog(rule().top().valuei(), false);
 }
@@ -414,4 +421,12 @@ void ConsoleWidget::openMenu()
 void ConsoleWidget::closeMenu()
 {
     d->menu->close();
+}
+
+void ConsoleWidget::commandWasEntered(String const &)
+{
+    if(App::config().getb("console.snap") && !d->log->isAtBottom())
+    {
+        d->log->scrollToBottom();
+    }
 }

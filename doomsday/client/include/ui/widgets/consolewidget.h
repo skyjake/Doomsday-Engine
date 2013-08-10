@@ -73,6 +73,7 @@ public slots:
     void focusOnCommandLine();
     void openMenu();
     void closeMenu();
+    void commandWasEntered(de::String const &);
 
 protected slots:
     void logContentHeightIncreased(int delta);
