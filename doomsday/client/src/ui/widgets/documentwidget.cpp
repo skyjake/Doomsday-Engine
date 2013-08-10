@@ -161,7 +161,7 @@ public Font::RichFormat::IStyle
                          Font::RichFormat::Style &fontStyle,
                          int &colorIndex) const
     {
-        return self.style().richFormatStyle(contentStyle, sizeFactor, fontWeight, fontStyle, colorIndex);
+        return self.style().richStyleFormat(contentStyle, sizeFactor, fontWeight, fontStyle, colorIndex);
     }
 
     void glInit()
