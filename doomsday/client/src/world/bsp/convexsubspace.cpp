@@ -451,9 +451,6 @@ void ConvexSubspace::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
                 {
                     lineSeg->back().segment().hedge().setTwin(hedge);
                     hedge->setTwin(&lineSeg->back().segment().hedge());
-
-                    seg->setBack(&lineSeg->back().segment());
-                    seg->back().setBack(seg);
                 }
 
                 // Link the new segment with the line segment.
@@ -550,9 +547,6 @@ void ConvexSubspace::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
             {
                 lineSeg->back().segment().hedge().setTwin(hedge);
                 hedge->setTwin(&lineSeg->back().segment().hedge());
-
-                seg->setBack(&lineSeg->back().segment());
-                seg->back().setBack(seg);
             }
 
             // Link the new segment with the line segment.

@@ -190,17 +190,7 @@ HEdge &Segment::hedge() const
     throw MissingHEdgeError("Segment::hedge", "No half-edge is attributed");
 }
 
-Segment &Segment::back() const
-{
-    DENG_ASSERT(d->back != 0);
-    return *d->back;
-}
-
-void Segment::setBack(Segment *newBack)
-{
-    d->back = newBack;
-}
-
+/*
 Sector &Segment::sector() const
 {
     return bspLeaf().sector();
@@ -210,6 +200,7 @@ Sector *Segment::sectorPtr() const
 {
     return hasBspLeaf()? bspLeaf().sectorPtr() : 0;
 }
+*/
 
 bool Segment::hasLineSide() const
 {

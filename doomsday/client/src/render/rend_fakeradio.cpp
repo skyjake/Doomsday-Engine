@@ -1082,9 +1082,9 @@ void Rend_RadioWallSection(WallEdge const &leftEdge, WallEdge const &rightEdge,
 
     Line::Side &side            = leftEdge.mapSide();
     Segment const *segment      = side.leftSegment();
-    Sector const *frontSec      = segment->sectorPtr();
+    Sector const *frontSec      = segment->hedge().face().mapElement()->as<BspLeaf>()->sectorPtr();
     Sector const *backSec       = (segment->hedge().twin().hasFace() &&
-                                   leftEdge.spec().section != Line::Side::Middle)? segment->back().sectorPtr() : 0;
+                                   leftEdge.spec().section != Line::Side::Middle)? segment->hedge().twin().face().mapElement()->as<BspLeaf>()->sectorPtr() : 0;
 
     coord_t const lineLength    = side.line().length();
     coord_t const sectionOffset = leftEdge.mapSideOffset();
@@ -1240,9 +1240,10 @@ static void writeShadowSection(int planeIndex, Line::Side &side, float shadowDar
     DENG_ASSERT(side.hasSections());
     DENG_ASSERT(!side.line().definesPolyobj());
 
-    if(!side.leftSegment()) return;
-
     if(!(shadowDark > .0001)) return;
+
+    if(!side.leftSegment()) return;
+    HEdge *leftHEdge = &side.leftSegment()->hedge();
 
     Plane const &plane = side.sector().plane(planeIndex);
     Surface const *suf = &plane.surface();
@@ -1257,12 +1258,12 @@ static void writeShadowSection(int planeIndex, Line::Side &side, float shadowDar
     // If the sector containing the shadowing line section is fully closed (i.e., volume
     // is not positive) then skip shadow drawing entirely.
     /// @todo Encapsulate this logic in ShadowEdge -ds
-    if(!side.leftSegment()->hasBspLeaf() ||
-       !side.leftSegment()->bspLeaf().hasWorldVolume())
+    if(!leftHEdge->hasFace() ||
+       !leftHEdge->face().mapElement()->as<BspLeaf>()->hasWorldVolume())
         return;
 
-    ShadowEdge leftEdge(*side.leftSegment(), Line::From);
-    ShadowEdge rightEdge(*side.leftSegment(), Line::To);
+    ShadowEdge leftEdge(*leftHEdge, Line::From);
+    ShadowEdge rightEdge(*leftHEdge, Line::To);
 
     leftEdge.prepare(planeIndex);
     rightEdge.prepare(planeIndex);

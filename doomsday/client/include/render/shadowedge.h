@@ -23,11 +23,11 @@
 
 #include <de/Vector>
 
-#include "Segment"
-
 namespace de {
 
 static coord_t const SHADOWEDGE_OPEN_THRESHOLD = 8; // world units (Z axis)
+
+class HEdge;
 
 /**
  * @ingroup render
@@ -35,7 +35,7 @@ static coord_t const SHADOWEDGE_OPEN_THRESHOLD = 8; // world units (Z axis)
 class ShadowEdge
 {
 public:
-    ShadowEdge(Segment &leftMostSegment, int edge);
+    ShadowEdge(HEdge &leftMostHEdge, int edge);
 
     void prepare(int planeIndex);
 

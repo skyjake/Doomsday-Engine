@@ -34,7 +34,7 @@ namespace de {
 
 DENG2_PIMPL_NOREF(ShadowEdge)
 {
-    Segment *leftMostSegment;
+    HEdge *leftMostHEdge;
     int edge;
 
     Vector3d inner;
@@ -42,16 +42,16 @@ DENG2_PIMPL_NOREF(ShadowEdge)
     float sectorOpenness;
     float openness;
 
-    Instance(Segment &leftMostSegment, int edge)
-        : leftMostSegment(&leftMostSegment),
+    Instance(HEdge &leftMostHEdge, int edge)
+        : leftMostHEdge(&leftMostHEdge),
           edge(edge),
           sectorOpenness(0),
           openness(0)
     {}
 };
 
-ShadowEdge::ShadowEdge(Segment &leftMostSegment, int edge)
-    : d(new Instance(leftMostSegment, edge))
+ShadowEdge::ShadowEdge(HEdge &leftMostHEdge, int edge)
+    : d(new Instance(leftMostHEdge, edge))
 {}
 
 /**
@@ -115,7 +115,7 @@ static bool middleMaterialCoversOpening(Line::Side &side)
 
 void ShadowEdge::prepare(int planeIndex)
 {
-    Line::Side &side = d->leftMostSegment->lineSide();
+    Line::Side &side = d->leftMostHEdge->mapElement()->as<Segment>()->lineSide();
     Plane const &plane = side.sector().plane(planeIndex);
     int const otherPlaneIndex = planeIndex == Sector::Floor? Sector::Ceiling : Sector::Floor;
 
@@ -126,17 +126,15 @@ void ShadowEdge::prepare(int planeIndex)
     // there won't be a shadow at all. Open neighbor sectors cause some changes
     // in the polygon corner vertices (placement, opacity).
 
-    if(d->leftMostSegment->hedge().twin().hasFace() &&
-       d->leftMostSegment->back().hasBspLeaf() &&
-       !d->leftMostSegment->back().bspLeaf().isDegenerate() &&
-       d->leftMostSegment->back().sectorPtr() != 0)
+    if(d->leftMostHEdge->twin().hasFace() &&
+       d->leftMostHEdge->twin().face().mapElement()->as<BspLeaf>()->hasSector())
     {
         Surface const &wallEdgeSurface =
             side.back().hasSector()? side.surface(planeIndex == Sector::Ceiling? Line::Side::Top : Line::Side::Bottom)
                                    : side.middle();
 
-        Sector const *frontSec = d->leftMostSegment->sectorPtr();
-        Sector const *backSec  = d->leftMostSegment->back().sectorPtr();
+        Sector const *frontSec = d->leftMostHEdge->face().mapElement()->as<BspLeaf>()->sectorPtr();
+        Sector const *backSec  = d->leftMostHEdge->twin().face().mapElement()->as<BspLeaf>()->sectorPtr();
 
         coord_t fz = 0, bz = 0, bhz = 0;
         R_SetRelativeHeights(frontSec, backSec, planeIndex, &fz, &bz, &bhz);
@@ -199,13 +197,12 @@ void ShadowEdge::prepare(int planeIndex)
         else if(otherSide->back().hasSector())
         {
             // Its a normal neighbor.
-            Sector const *backSec = otherSide->back().sectorPtr();
-            if(backSec != d->leftMostSegment->sectorPtr() &&
+            Sector const *frontSec = d->leftMostHEdge->face().mapElement()->as<BspLeaf>()->sectorPtr();
+            Sector const *backSec  = otherSide->back().sectorPtr();
+            if(backSec != frontSec &&
                !((plane.indexInSector() == Sector::Floor && backSec->ceiling().visHeight() <= plane.visHeight()) ||
                  (plane.indexInSector() == Sector::Ceiling && backSec->floor().height() >= plane.visHeight())))
             {
-                Sector const *frontSec = d->leftMostSegment->sectorPtr();
-
                 coord_t fz = 0, bz = 0, bhz = 0;
                 R_SetRelativeHeights(frontSec, backSec, planeIndex, &fz, &bz, &bhz);
 

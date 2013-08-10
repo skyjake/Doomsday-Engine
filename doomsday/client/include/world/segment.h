@@ -68,13 +68,6 @@ public:
 
     de::HEdge &hedge() const;
 
-    /**
-     * Returns the segment on the back side of "this".
-     */
-    Segment &back() const;
-
-    void setBack(Segment *newBack);
-
     //inline Vertex &from() const { return hedge().vertex(); }
 
     //inline Vertex &to() const { return hedge().twin().vertex(); }
@@ -111,7 +104,7 @@ public:
      *
      * @see BspLeaf::sector()
      */
-    Sector &sector() const;
+    //Sector &sector() const;
 
     /**
      * Convenience accessor which returns a pointer to the Sector attributed to
@@ -119,7 +112,7 @@ public:
      *
      * @see hasBspLeaf(), BspLeaf::sectorPtr()
      */
-    Sector *sectorPtr() const;
+    //Sector *sectorPtr() const;
 
     /**
      * Returns @c true iff a Line::Side is attributed to the line segment.

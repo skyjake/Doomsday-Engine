@@ -253,7 +253,7 @@ void R_SideSectionCoords(Line::Side const &side, int section, bool skyClip,
                 }
                 else
                 {
-                    Sector &frontSec = segment.sector();
+                    Sector &frontSec = segment.hedge().face().mapElement()->as<BspLeaf>()->sector();
                     openBottom = frontSec.floor().visHeight();
                     openTop    = frontSec.ceiling().visHeight();
                 }

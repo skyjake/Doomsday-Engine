@@ -1828,7 +1828,7 @@ static void writeLeafSkyMaskStrips(SkyFixEdge::FixType fixType)
         Material *skyMaterial = 0;
         if(splitOnMaterialChange)
         {
-            skyMaterial = seg.sector().planeSurface(relPlane).materialPtr();
+            skyMaterial = hedge->face().mapElement()->as<BspLeaf>()->sector().planeSurface(relPlane).materialPtr();
         }
 
         // Add a first (left) edge to the current strip?
@@ -2005,7 +2005,10 @@ static void writeLeafSkyMask(int skyCap = SKYCAP_LOWER|SKYCAP_UPPER)
 static bool coveredOpenRange(Segment &segment, coord_t middleBottomZ, coord_t middleTopZ,
     bool wroteOpaqueMiddle)
 {
-    if(segment.lineSide().considerOneSided())
+    HEdge &hedge = segment.hedge();
+    Line::Side const &front = segment.lineSide();
+
+    if(front.considerOneSided())
     {
         return wroteOpaqueMiddle;
     }
@@ -2013,8 +2016,8 @@ static bool coveredOpenRange(Segment &segment, coord_t middleBottomZ, coord_t mi
     //if(segment.line().isSelfReferencing())
     //   return false; /// @todo Why? -ds
 
-    Sector const &frontSec = segment.sector();
-    Sector const &backSec  = segment.back().sector();
+    Sector const &frontSec = hedge.face().mapElement()->as<BspLeaf>()->sector();
+    Sector const &backSec  = hedge.twin().face().mapElement()->as<BspLeaf>()->sector();
 
     coord_t const ffloor   = frontSec.floor().visHeight();
     coord_t const fceil    = frontSec.ceiling().visHeight();
@@ -2027,7 +2030,7 @@ static bool coveredOpenRange(Segment &segment, coord_t middleBottomZ, coord_t mi
         coord_t xbottom = de::max(bfloor, ffloor);
         coord_t xtop    = de::min(bceil,  fceil);
 
-        Surface const &middle = segment.lineSide().middle();
+        Surface const &middle = front.middle();
         xbottom += middle.visMaterialOrigin().y;
         xtop    += middle.visMaterialOrigin().y;
 
@@ -2037,8 +2040,6 @@ static bool coveredOpenRange(Segment &segment, coord_t middleBottomZ, coord_t mi
 
     if(wroteOpaqueMiddle && middleCoversOpening)
         return true;
-
-    Line::Side const &front = segment.lineSide();
 
     if(   (bceil <= ffloor &&
                (front.top().hasMaterial()    || front.middle().hasMaterial()))
@@ -3157,12 +3158,14 @@ static void drawTangentSpaceVectorsForSegment(Segment *seg)
     if(!seg || !seg->hasLineSide() || seg->line().definesPolyobj())
         return;
 
-    if(!seg->back().hasBspLeaf() || seg->back().bspLeaf().isDegenerate() ||
-       !seg->back().bspLeaf().hasSector())
+    HEdge *hedge = &seg->hedge();
+
+    if(!hedge->twin().hasFace() || !hedge->twin().face().mapElement()->as<BspLeaf>()->hasSector())
     {
-        coord_t const bottom = seg->sector().floor().visHeight();
-        coord_t const top = seg->sector().ceiling().visHeight();
-        Vector2d center = (seg->hedge().twin().origin() + seg->hedge().origin()) / 2;
+        Sector *frontSec = hedge->face().mapElement()->as<BspLeaf>()->sectorPtr();
+        coord_t const bottom = frontSec->floor().visHeight();
+        coord_t const top = frontSec->ceiling().visHeight();
+        Vector2d center = (hedge->twin().origin() + hedge->origin()) / 2;
         Surface *suf = &seg->lineSide().middle();
 
         Vector3d origin = Vector3d(center, bottom + (top - bottom) / 2);
@@ -3170,14 +3173,15 @@ static void drawTangentSpaceVectorsForSegment(Segment *seg)
     }
     else
     {
-        Sector *backSec  = seg->back().sectorPtr();
+        Sector *frontSec = hedge->face().mapElement()->as<BspLeaf>()->sectorPtr();
+        Sector *backSec  = hedge->twin().face().mapElement()->as<BspLeaf>()->sectorPtr();
         Line::Side &side = seg->lineSide();
 
         if(side.middle().hasMaterial())
         {
-            coord_t const bottom = seg->sector().floor().visHeight();
-            coord_t const top = seg->sector().ceiling().visHeight();
-            Vector2d center = (seg->hedge().twin().origin() + seg->hedge().origin()) / 2;
+            coord_t const bottom = frontSec->floor().visHeight();
+            coord_t const top = frontSec->ceiling().visHeight();
+            Vector2d center = (hedge->twin().origin() + hedge->origin()) / 2;
             Surface *suf = &side.middle();
 
             Vector3d origin = Vector3d(center, bottom + (top - bottom) / 2);
@@ -3185,13 +3189,13 @@ static void drawTangentSpaceVectorsForSegment(Segment *seg)
         }
 
         if(backSec->ceiling().visHeight() <
-           seg->sector().ceiling().visHeight() &&
-           !(seg->sector().ceilingSurface().hasSkyMaskedMaterial() &&
+           frontSec->ceiling().visHeight() &&
+           !(frontSec->ceilingSurface().hasSkyMaskedMaterial() &&
              backSec->ceilingSurface().hasSkyMaskedMaterial()))
         {
             coord_t const bottom = backSec->ceiling().visHeight();
-            coord_t const top = seg->sector().ceiling().visHeight();
-            Vector2d center = (seg->hedge().twin().origin() + seg->hedge().origin()) / 2;
+            coord_t const top = frontSec->ceiling().visHeight();
+            Vector2d center = (hedge->twin().origin() + hedge->origin()) / 2;
             Surface *suf = &side.top();
 
             Vector3d origin = Vector3d(center, bottom + (top - bottom) / 2);
@@ -3199,13 +3203,13 @@ static void drawTangentSpaceVectorsForSegment(Segment *seg)
         }
 
         if(backSec->floor().visHeight() >
-           seg->sector().floor().visHeight() &&
-           !(seg->sector().floorSurface().hasSkyMaskedMaterial() &&
+           frontSec->floor().visHeight() &&
+           !(frontSec->floorSurface().hasSkyMaskedMaterial() &&
              backSec->floorSurface().hasSkyMaskedMaterial()))
         {
-            coord_t const bottom = seg->sector().floor().visHeight();
+            coord_t const bottom = frontSec->floor().visHeight();
             coord_t const top = backSec->floor().visHeight();
-            Vector2d center = (seg->hedge().twin().origin() + seg->hedge().origin()) / 2;
+            Vector2d center = (hedge->twin().origin() + hedge->origin()) / 2;
             Surface *suf = &side.bottom();
 
             Vector3d origin = Vector3d(center, bottom + (top - bottom) / 2);
