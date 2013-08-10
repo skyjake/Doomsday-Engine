@@ -120,11 +120,10 @@ DENG2_PIMPL(SkyFixEdge)
 
         bool const lower = fixType == SkyFixEdge::Lower;
 
-        // Partition line segments have no map line sides.
-        Segment *segment = hedge->mapElement()->as<Segment>();
-        if(!segment->hasLineSide()) return false;
+        // Only edges with line segments need fixes.
+        if(!hedge->mapElement()) return false;
 
-        Line::Side const &lineSide = segment->lineSide();
+        Line::Side const &lineSide = hedge->mapElement()->as<Segment>()->lineSide();
         Sector const *frontSec     = hedge->face().mapElement()->as<BspLeaf>()->sectorPtr();
         Sector const *backSec      = hedge->twin().hasFace()? hedge->twin().face().mapElement()->as<BspLeaf>()->sectorPtr() : 0;
 

@@ -1378,10 +1378,10 @@ static void writeWallSection(HEdge &hedge, int section,
     bool *retWroteOpaque = 0, coord_t *retBottomZ = 0, coord_t *retTopZ = 0)
 {
     DENG_ASSERT(!isNullLeaf(currentBspLeaf));
+    DENG_ASSERT(hedge.mapElement() != 0);
 
     Segment &segment  = *hedge.mapElement()->as<Segment>();
-    DENG_ASSERT(segment.isFlagged(Segment::FacingFront));
-    DENG_ASSERT(segment.hasLineSide() && segment.lineSide().hasSections());
+    DENG_ASSERT(segment.isFlagged(Segment::FacingFront) && segment.lineSide().hasSections());
 
     if(retWroteOpaque) *retWroteOpaque = false;
     if(retBottomZ)     *retBottomZ     = 0;
@@ -1835,7 +1835,7 @@ static void writeLeafSkyMaskStrips(SkyFixEdge::FixType fixType)
         }
 
         // Add a first (left) edge to the current strip?
-        if(startNode == 0)
+        if(startNode == 0 && hedge->mapElement())
         {
             startMaterialOffset = hedge->mapElement()->as<Segment>()->lineSideOffset();
 
@@ -1862,32 +1862,39 @@ static void writeLeafSkyMaskStrips(SkyFixEdge::FixType fixType)
         // Add the i'th (right) edge to the current strip?
         if(startNode != 0)
         {
-            startMaterialOffset +=
-                hedge->mapElement()->as<Segment>()->length() * (direction == Anticlockwise? -1 : 1);
-
-            // Prepare the edge geometry
-            SkyFixEdge skyEdge(*hedge, fixType, (direction == Anticlockwise)? Line::From : Line::To,
-                               startMaterialOffset);
-
             // Stop if we've reached a "null" edge.
             bool endStrip = false;
-            if(!(skyEdge.isValid() && skyEdge.bottom().z() < skyEdge.top().z()))
+            if(hedge->mapElement())
             {
-                endStrip = true;
-            }
-            // Must we split the strip here?
-            else if(hedge != startNode &&
-                    (!de::fequal(skyEdge.bottom().z(), startZBottom) ||
-                     !de::fequal(skyEdge.top().z(), startZTop) ||
-                     (splitOnMaterialChange && skyMaterial != startMaterial)))
-            {
-                endStrip = true;
-                beginNewStrip = true; // We'll continue from here.
+                startMaterialOffset += hedge->mapElement()->as<Segment>()->length()
+                                     * (direction == Anticlockwise? -1 : 1);
+
+                // Prepare the edge geometry
+                SkyFixEdge skyEdge(*hedge, fixType, (direction == Anticlockwise)? Line::From : Line::To,
+                                   startMaterialOffset);
+
+                if(!(skyEdge.isValid() && skyEdge.bottom().z() < skyEdge.top().z()))
+                {
+                    endStrip = true;
+                }
+                // Must we split the strip here?
+                else if(hedge != startNode &&
+                        (!de::fequal(skyEdge.bottom().z(), startZBottom) ||
+                         !de::fequal(skyEdge.top().z(), startZTop) ||
+                         (splitOnMaterialChange && skyMaterial != startMaterial)))
+                {
+                    endStrip = true;
+                    beginNewStrip = true; // We'll continue from here.
+                }
+                else
+                {
+                    // Extend the strip geometry.
+                    stripBuilder << skyEdge;
+                }
             }
             else
             {
-                // Extend the strip geometry.
-                stripBuilder << skyEdge;
+                endStrip = true;
             }
 
             if(endStrip || &hedge->neighbor(direction) == base)
@@ -2087,14 +2094,13 @@ static void writeWallSectionsForFace(Face const &face)
     HEdge *hedge = base;
     do
     {
-        Segment *seg = hedge->mapElement()->as<Segment>();
-
-        // We are only interested in front facing line segments.
-        if(!seg->isFlagged(Segment::FacingFront))
+        // Edges without a map line segment implicitly have no surfaces.
+        if(!hedge->mapElement())
             continue;
 
-        // Only line segments with wall sections will be drawn.
-        if(!seg->hasLineSide() || !seg->lineSide().hasSections())
+        // We are only interested in front facing segments with sections.
+        Segment *seg = hedge->mapElement()->as<Segment>();
+        if(!seg->isFlagged(Segment::FacingFront) || !seg->lineSide().hasSections())
             continue;
 
         // Done here because of the logic of doom.exe wrt the automap.
@@ -2142,14 +2148,11 @@ static void writeLeafPolyobjs()
     foreach(Line *line, po->lines())
     {
         HEdge *hedge = line->front().leftHEdge();
+        DENG_ASSERT(hedge->mapElement() != 0); // sanity check
 
-        // We are only interested in front facing line segments.
+        // We are only interested in front facing line segments with sections.
         Segment *seg = hedge->mapElement()->as<Segment>();
-        if(!seg->isFlagged(Segment::FacingFront))
-            continue;
-
-        // Only line segments with wall sections will be drawn.
-        if(!seg->hasLineSide() || !seg->lineSide().hasSections())
+        if(!seg->isFlagged(Segment::FacingFront) || !seg->lineSide().hasSections())
             continue;
 
         // Done here because of the logic of doom.exe wrt the automap.
@@ -2182,15 +2185,10 @@ static void writeLeafPlanes()
 
 static void markOneFrontFacingHEdge(HEdge *hedge)
 {
-    if(!hedge) return;
-    DENG_ASSERT(hedge->mapElement() != 0); // sanity check
+    if(!hedge || !hedge->mapElement()) return;
     Segment *seg = hedge->mapElement()->as<Segment>();
-    bool facingFront = false;
-    if(seg->hasLineSide())
-    {
-        // Which way is it facing?
-        facingFront = viewFacingDot(hedge->origin(), hedge->twin().origin()) >= 0;
-    }
+    // Which way is the line segment facing?
+    bool facingFront = viewFacingDot(hedge->origin(), hedge->twin().origin()) >= 0;
     seg->setFlags(Segment::FacingFront, facingFront? SetFlags : UnsetFlags);
 }
 
@@ -2251,16 +2249,19 @@ static void occludeLeaf(bool frontFacing)
     HEdge *hedge = base;
     do
     {
-        DENG_ASSERT(hedge->mapElement() != 0);
+        // Edges without a line segment can never occlude.
+        if(!hedge->mapElement())
+            continue;
 
         Segment *seg = hedge->mapElement()->as<Segment>();
         DENG_ASSERT(hedge->face().mapElement()->as<BspLeaf>()->hasSector()); // sanity check
 
-        if(frontFacing != seg->isFlagged(Segment::FacingFront))
+        // Edges without line segment surface sections can never occlude.
+        if(!seg->lineSide().hasSections())
             continue;
 
-        // Edges without map line sections can never occlude.
-        if(!seg->hasLineSide() || !seg->lineSide().hasSections())
+        // Only front-facing edges can occlude.
+        if(frontFacing != seg->isFlagged(Segment::FacingFront))
             continue;
 
         // Occlusions should only happen where two sectors meet.
@@ -2302,11 +2303,10 @@ static void occludeLeaf(bool frontFacing)
 /// If @a hedge is @em not front facing this is no-op.
 static void clipOneFrontFacingHEdge(HEdge *hedge)
 {
-    if(!hedge) return;
-    DENG_ASSERT(hedge->mapElement() != 0); // sanity check
-    Segment *seg = hedge->mapElement()->as<Segment>();
-    if(!seg->hasLineSide()) return;
+    if(!hedge || !hedge->mapElement())
+        return;
 
+    Segment *seg = hedge->mapElement()->as<Segment>();
     if(seg->isFlagged(Segment::FacingFront))
     {
         if(!C_CheckRangeFromViewRelPoints(hedge->origin(), hedge->twin().origin()))
@@ -3158,11 +3158,12 @@ static void drawTangentSpaceVectorsForSurface(Surface *suf, Vector3d const &orig
 
 static void drawTangentSpaceVectorsForHEdge(HEdge *hedge)
 {
-    if(!hedge) return;
+    if(!hedge || !hedge->mapElement())
+        return;
 
     Segment *seg = hedge->mapElement()->as<Segment>();
-    if(!seg->hasLineSide() || seg->line().definesPolyobj())
-        return;
+    if(seg->line().definesPolyobj())
+        return; // Handled elsewhere.
 
     if(!hedge->twin().hasFace() || !hedge->twin().face().mapElement()->as<BspLeaf>()->hasSector())
     {

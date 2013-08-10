@@ -389,10 +389,9 @@ static void maybeSpreadOverEdge(HEdge *hedge, contactfinderparams_t *parms)
        backLeafAABox.minY >= parms->box[BOXTOP])
         return;
 
-    Segment *seg = hedge->mapElement()->as<Segment>();
-
-    // Too far from the object?
-    coord_t distance = pointOnHEdgeSide(*hedge, parms->objOrigin) / seg->length();
+    // Too far from the edge?
+    coord_t length   = Vector2d(hedge->twin().origin() - hedge->origin()).length();
+    coord_t distance = pointOnHEdgeSide(*hedge, parms->objOrigin) / length;
     if(de::abs(distance) >= parms->objRadius)
         return;
 
@@ -411,9 +410,11 @@ static void maybeSpreadOverEdge(HEdge *hedge, contactfinderparams_t *parms)
             return;
     }
 
-    // Don't spread if the middle material covers the opening.
-    if(seg->hasLineSide())
+    // Are there line side surfaces which should prevent spreading?
+    if(hedge->mapElement())
     {
+        Segment *seg     = hedge->mapElement()->as<Segment>();
+
         // On which side of the line are we? (distance is from segment to origin).
         Line::Side &side = seg->line().side(seg->lineSide().sideId() ^ (distance < 0));
 

@@ -427,21 +427,19 @@ void ConvexSubspace::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
             foreach(OrderedSegment const *oseg, conty.discordSegs)
             {
                 LineSegment::Side *lineSeg = oseg->segment;
-                Line::Side *mapSide = lineSeg->mapSidePtr();
                 HEdge *hedge = extraMesh->newHEdge(lineSeg->from());
 
-                // Ownership of the segment will be assigned to the space partitioner.
-                Segment *seg = new Segment(*hedge, mapSide);
-
-                // Attribute the half-edge to the segment.
-                hedge->setMapElement(seg);
-
-                if(mapSide)
+                if(Line::Side *mapSide = lineSeg->mapSidePtr())
                 {
-                    seg->setLineSideOffset(Vector2d(mapSide->from().origin() - lineSeg->from().origin()).length());
-                }
+                    Segment *seg = new Segment(*hedge, *mapSide);
 
-                seg->setLength(Vector2d(lineSeg->to().origin() - lineSeg->from().origin()).length());
+                    // Attribute the segment to half-edge.
+                    hedge->setMapElement(seg);
+
+                    seg->setLineSideOffset(Vector2d(mapSide->from().origin() - lineSeg->from().origin()).length());
+
+                    seg->setLength(Vector2d(lineSeg->to().origin() - lineSeg->from().origin()).length());
+                }
 
                 // Link the new half-edge for this line segment to the head of
                 // the list in the new face geometry.
@@ -523,21 +521,19 @@ void ConvexSubspace::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
             if(lineSeg->hasHEdge())
                 continue;
 
-            Line::Side *mapSide = lineSeg->mapSidePtr();
             HEdge *hedge = mesh.newHEdge(lineSeg->from());
 
-            // Ownership of the segment will be assigned to the space partitioner.
-            Segment *seg = new Segment(*hedge, mapSide);
-
-            // Attribute the half-edge to the segment.
-            hedge->setMapElement(seg);
-
-            if(mapSide)
+            if(Line::Side *mapSide = lineSeg->mapSidePtr())
             {
-                seg->setLineSideOffset(Vector2d(mapSide->from().origin() - lineSeg->from().origin()).length());
-            }
+                Segment *seg = new Segment(*hedge, *mapSide);
 
-            seg->setLength(Vector2d(lineSeg->to().origin() - lineSeg->from().origin()).length());
+                // Attribute the segment to the half-edge.
+                hedge->setMapElement(seg);
+
+                seg->setLineSideOffset(Vector2d(mapSide->from().origin() - lineSeg->from().origin()).length());
+
+                seg->setLength(Vector2d(lineSeg->to().origin() - lineSeg->from().origin()).length());
+            }
 
             // Link the new half-edge for this line segment to the head of
             // the list in the new Face geometry.

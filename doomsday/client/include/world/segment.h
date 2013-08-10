@@ -24,7 +24,6 @@
 #include <de/Vector>
 
 #include "MapElement"
-#include "HEdge"
 #include "Line"
 
 #ifdef __CLIENT__
@@ -42,11 +41,8 @@ class Segment : public de::MapElement
     DENG2_NO_COPY  (Segment)
     DENG2_NO_ASSIGN(Segment)
 
-public:
-    /// Required line attribution is missing. @ingroup errors
-    DENG2_ERROR(MissingLineSideError);
-
 #ifdef __CLIENT__
+public:
 
     enum Flag
     {
@@ -57,7 +53,7 @@ public:
 #endif
 
 public:
-    Segment(de::HEdge &hedge, Line::Side *lineSide = 0);
+    Segment(de::HEdge &hedge, Line::Side &lineSide);
 
     //de::HEdge &hedge() const;
 
@@ -110,7 +106,7 @@ public:
     /**
      * Returns @c true iff a Line::Side is attributed to the line segment.
      */
-    bool hasLineSide() const;
+    //bool hasLineSide() const;
 
     /**
      * Returns the Line::Side attributed to the line segment.

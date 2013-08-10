@@ -56,9 +56,6 @@ typedef QMap<int, GeometryGroup> GeometryGroups;
 
 DENG2_PIMPL(Segment)
 {
-    /// Segment on the back side of this (if any). @todo remove me
-    Segment *back;
-
     /// Map Line::Side attributed to the line segment (not owned).
     /// Can be @c 0 (signifying a partition line segment).
     Line::Side *lineSide;
@@ -80,7 +77,6 @@ DENG2_PIMPL(Segment)
 
     Instance(Public *i)
         : Base(i),
-          back(0),
           lineSide(0),
           lineSideOffset(0),
           hedge(0),
@@ -100,7 +96,6 @@ DENG2_PIMPL(Segment)
     GeometryGroup *geometryGroup(int group, bool canAlloc = true)
     {
         DENG_ASSERT(group >= 0 && group < 3); // sanity check
-        DENG_ASSERT(self.hasLineSide()); // sanity check
 
         GeometryGroups::iterator foundAt = geomGroups.find(group);
         if(foundAt != geomGroups.end())
@@ -172,11 +167,11 @@ DENG2_PIMPL(Segment)
 #endif
 };
 
-Segment::Segment(HEdge &hedge, Line::Side *lineSide)
+Segment::Segment(HEdge &hedge, Line::Side &lineSide)
     : MapElement(DMU_SEGMENT),
       d(new Instance(this))
 {
-    d->lineSide = lineSide;
+    d->lineSide = &lineSide;
     d->hedge    = &hedge;
 }
 
@@ -190,21 +185,16 @@ Sector *Segment::sectorPtr() const
 {
     return hasBspLeaf()? bspLeaf().sectorPtr() : 0;
 }
-*/
 
 bool Segment::hasLineSide() const
 {
     return d->lineSide != 0;
 }
+*/
 
 Line::Side &Segment::lineSide() const
 {
-    if(d->lineSide)
-    {
-        return *d->lineSide;
-    }
-    /// @throw MissingLineError Attempted with no line attributed.
-    throw MissingLineSideError("Segment::lineSide", "No line.side is attributed");
+    return *d->lineSide;
 }
 
 coord_t Segment::lineSideOffset() const
@@ -258,7 +248,6 @@ BiasTracker *Segment::biasTracker(int group)
 
 void Segment::lightBiasPoly(int group, Vector3f const *posCoords, Vector4f *colorCoords)
 {
-    DENG_ASSERT(hasLineSide()); // sanity check
     DENG_ASSERT(posCoords != 0 && colorCoords != 0);
 
     int const sectionIndex   = group;

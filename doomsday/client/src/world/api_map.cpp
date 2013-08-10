@@ -437,12 +437,9 @@ int P_Iteratep(void *elPtr, uint prop, void *context, int (*callback) (void *p, 
                 HEdge *hedge = base;
                 do
                 {
-                    DENG_ASSERT(hedge->mapElement() != 0);
-                    Segment *seg = hedge->mapElement()->as<Segment>();
-
-                    if(seg->hasLineSide())
+                    if(hedge->mapElement())
                     {
-                        int result = callback(&seg->line(), context);
+                        int result = callback(&hedge->mapElement()->as<Segment>()->line(), context);
                         if(result) return result;
                     }
                 } while((hedge = &hedge->next()) != base);
@@ -454,7 +451,7 @@ int P_Iteratep(void *elPtr, uint prop, void *context, int (*callback) (void *p, 
                     HEdge *hedge = base;
                     do
                     {
-                        DENG_ASSERT(hedge->mapElement() != 0);
+                        DENG_ASSERT(hedge->mapElement() != 0); // sanity check
                         Segment *seg = hedge->mapElement()->as<Segment>();
 
                         int result = callback(&seg->line(), context);

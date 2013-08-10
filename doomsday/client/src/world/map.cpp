@@ -459,9 +459,10 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
         HEdge *hedge = base;
         do
         {
-            DENG_ASSERT(hedge->mapElement() != 0);
-            Segment *seg = hedge->mapElement()->as<Segment>();
-            seg->setMap(map);
+            if(hedge->mapElement())
+            {
+                hedge->mapElement()->as<Segment>()->setMap(map);
+            }
         } while((hedge = &hedge->next()) != base);
     }
 
@@ -3543,7 +3544,7 @@ bool Map::endEditing()
             hedge->twin().setTwin(hedge);
 
             // Polyobj has ownership of the line segments.
-            Segment *segment = new Segment(*hedge, &line->front());
+            Segment *segment = new Segment(*hedge, line->front());
 
             segment->setMap(this);
             segment->setLength(line->length());

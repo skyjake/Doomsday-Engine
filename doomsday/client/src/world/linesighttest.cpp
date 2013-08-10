@@ -258,11 +258,9 @@ DENG2_PIMPL(LineSightTest)
         HEdge *hedge = base;
         do
         {
-            DENG_ASSERT(hedge->mapElement() != 0);
-            Segment *seg = hedge->mapElement()->as<Segment>();
-            if(seg->hasLineSide())
+            if(hedge->mapElement())
             {
-                if(!crossLine(seg->lineSide()))
+                if(!crossLine(hedge->mapElement()->as<Segment>()->lineSide()))
                     return false;
             }
         } while((hedge = &hedge->next()) != base);
@@ -274,7 +272,7 @@ DENG2_PIMPL(LineSightTest)
             HEdge *hedge = base;
             do
             {
-                DENG_ASSERT(hedge->mapElement() != 0);
+                DENG_ASSERT(hedge->mapElement() != 0); // sanity check
                 if(!crossLine(hedge->mapElement()->as<Segment>()->lineSide()))
                     return false;
             } while((hedge = &hedge->next()) != base);

@@ -242,11 +242,12 @@ static void accumReverbForFaceEdges(Face const &face,
     HEdge *hedge = base;
     do
     {
-        DENG_ASSERT(hedge->mapElement() != 0);
-        Segment *seg = hedge->mapElement()->as<Segment>();
+        // Edges with no map line segment implicitly have no surfaces.
+        if(!hedge->mapElement())
+            continue;
 
-        if(!seg->hasLineSide() || !seg->lineSide().hasSections() ||
-           !seg->lineSide().middle().hasMaterial())
+        Segment *seg = hedge->mapElement()->as<Segment>();
+        if(!seg->lineSide().hasSections() || !seg->lineSide().middle().hasMaterial())
             continue;
 
         Material &material = seg->lineSide().middle().material();
