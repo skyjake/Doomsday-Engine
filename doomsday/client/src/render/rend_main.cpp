@@ -53,8 +53,6 @@
 #include "BspLeaf"
 #include "BspNode"
 
-//#include "BiasTracker"
-//#include "BiasIllum"
 #include "HueCircleVisual"
 #include "SkyFixEdge"
 #include "WallEdge"

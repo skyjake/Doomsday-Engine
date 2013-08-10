@@ -23,7 +23,6 @@
  * 02110-1301 USA</small>
  */
 
-//#include <de/mathutil.h>
 #include <de/vector1.h> /// @todo remove me
 
 #include "m_misc.h" // M_BoxOnLineSide2

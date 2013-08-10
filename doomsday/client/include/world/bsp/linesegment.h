@@ -30,6 +30,7 @@
 #include <de/Vector>
 
 #include "Line"
+#include "Segment" /// @todo Remove me
 #include "Vertex"
 
 /// Rounding threshold within which two points are considered as co-incident.

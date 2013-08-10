@@ -25,11 +25,8 @@
 #include <de/Vector>
 
 #include "MapElement"
-//#include "BspLeaf"
-//#include "Face"
 #include "HEdge"
 #include "Line"
-//#include "Vertex"
 
 #ifdef __CLIENT__
 #  include "BiasSurface"

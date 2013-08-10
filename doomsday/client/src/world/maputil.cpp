@@ -23,7 +23,6 @@
 #include "BspLeaf"
 #include "Plane"
 #include "Sector"
-//#include "Segment"
 #include "world/lineowner.h"
 #include "world/p_players.h"
 

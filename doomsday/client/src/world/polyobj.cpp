@@ -101,11 +101,6 @@ polyobj_s::polyobj_s(de::Vector2d const &origin_)
 
 polyobj_s::~polyobj_s()
 {
-    foreach(Line *line, lines())
-    {
-        delete line->front().leftHEdge();
-    }
-
     delete static_cast<Lines *>(_lines);
     delete static_cast<Vertexes *>(_uniqueVertexes);
     delete static_cast<VertexCoords *>(_originalPts);
