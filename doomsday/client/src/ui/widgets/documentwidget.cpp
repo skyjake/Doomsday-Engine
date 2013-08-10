@@ -112,6 +112,11 @@ public Font::RichFormat::IStyle
         tasks.waitForDone();
     }
 
+    GuiRootWidget &root()
+    {
+        return self.root();
+    }
+
     bool isBeingWrapped() const
     {
         return !tasks.isDone();
@@ -166,34 +171,34 @@ public Font::RichFormat::IStyle
 
     void glInit()
     {        
-        self.root().atlas().audienceForReposition += this;
-        composer.setAtlas(self.root().atlas());
+        root().atlas().audienceForReposition += this;
+        composer.setAtlas(root().atlas());
         composer.setText(text, format);
 
-        self.setIndicatorUv(self.root().atlas().imageRectf(self.root().solidWhitePixel()).middle());
+        self.setIndicatorUv(root().atlas().imageRectf(root().solidWhitePixel()).middle());
 
         drawable.addBuffer(ID_BACKGROUND, new VertexBuf);
         drawable.addBuffer(ID_TEXT,       new VertexBuf);
 
-        self.root().shaders().build(drawable.program(), "generic.textured.color_ucolor")
-                << uMvpMatrix << uColor << self.root().uAtlas();
+        root().shaders().build(drawable.program(), "generic.textured.color_ucolor")
+                << uMvpMatrix << uColor << root().uAtlas();
 
-        self.root().shaders().build(drawable.addProgram(ID_TEXT), "generic.textured.color_ucolor")
-                << uScrollMvpMatrix << uColor << self.root().uAtlas();
+        root().shaders().build(drawable.addProgram(ID_TEXT), "generic.textured.color_ucolor")
+                << uScrollMvpMatrix << uColor << root().uAtlas();
         drawable.setProgram(ID_TEXT, drawable.program(ID_TEXT));
         drawable.setState(ID_TEXT, clippedTextState);
     }
 
     void glDeinit()
     {
-        self.root().atlas().audienceForReposition -= this;
+        root().atlas().audienceForReposition -= this;
         composer.release();
         drawable.clear();
     }
 
     void atlasContentRepositioned(Atlas &atlas)
     {
-        self.setIndicatorUv(atlas.imageRectf(self.root().solidWhitePixel()).middle());
+        self.setIndicatorUv(atlas.imageRectf(root().solidWhitePixel()).middle());
         self.requestGeometry();
     }
 
@@ -235,7 +240,7 @@ public Font::RichFormat::IStyle
         drawable.buffer<VertexBuf>(ID_BACKGROUND).setVertices(gl::TriangleStrip, verts,
                                                               self.isScrolling()? gl::Dynamic : gl::Static);
 
-        uMvpMatrix = self.root().projMatrix2D();
+        uMvpMatrix = root().projMatrix2D();
 
         if(!isBeingWrapped())
         {
@@ -281,7 +286,7 @@ public Font::RichFormat::IStyle
                 }
             }
 
-            uScrollMvpMatrix = self.root().projMatrix2D() *
+            uScrollMvpMatrix = root().projMatrix2D() *
                     Matrix4f::translate(Vector2f(self.contentRule().left().valuei(),
                                                  self.contentRule().top().valuei()));
         }
