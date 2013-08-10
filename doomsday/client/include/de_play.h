@@ -30,7 +30,6 @@
 #include "Line"
 #include "world/linesighttest.h"
 #include "Plane"
-#include "Segment"
 #include "BspNode"
 #include "Sector"
 #include "Polyobj"

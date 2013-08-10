@@ -41,7 +41,6 @@ class BspNode;
 class Line;
 class Plane;
 class Sector;
-class Segment;
 class Vertex;
 
 #ifdef __CLIENT__

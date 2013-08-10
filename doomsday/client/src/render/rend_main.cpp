@@ -52,6 +52,7 @@
 #include "world/thinkers.h"
 #include "BspLeaf"
 #include "BspNode"
+#include "Segment"
 
 #include "HueCircleVisual"
 #include "SkyFixEdge"
@@ -1384,8 +1385,10 @@ static void writeWallSection(Segment &segment, int section,
     if(retBottomZ)     *retBottomZ     = 0;
     if(retTopZ)        *retTopZ        = 0;
 
-    Line::Side &side = segment.lineSide();
-    Surface &surface = side.surface(section);
+    HEdge &hedge      = segment.hedge();
+    Line::Side &side  = segment.lineSide();
+    Surface &surface  = side.surface(section);
+    BiasSurface &bsuf = segment;
 
     // Skip nearly transparent surfaces.
     float opacity = surface.opacity();
@@ -1402,8 +1405,8 @@ static void writeWallSection(Segment &segment, int section,
     // Generate edge geometries.
     WallSpec const wallSpec = WallSpec::fromMapSide(side, section);
 
-    WallEdge leftEdge(wallSpec, segment.hedge(), Line::From);
-    WallEdge rightEdge(wallSpec, segment.hedge(), Line::To);
+    WallEdge leftEdge(wallSpec, hedge, Line::From);
+    WallEdge rightEdge(wallSpec, hedge, Line::To);
 
     // Do the edge geometries describe a valid polygon?
     if(!leftEdge.isValid() || !rightEdge.isValid() ||
@@ -1435,7 +1438,7 @@ static void writeWallSection(Segment &segment, int section,
         parm.flags               = RPF_DEFAULT | (skyMasked? RPF_SKYMASK : 0);
         parm.forceOpaque         = wallSpec.flags.testFlag(WallSpec::ForceOpaque);
         parm.alpha               = parm.forceOpaque? 1 : opacity;
-        parm.bsuf                = &segment;
+        parm.bsuf                = &bsuf;
         parm.geomGroup           = wallSpec.section;
         parm.texTL               = &texQuad[0];
         parm.texBR               = &texQuad[1];
@@ -1823,8 +1826,6 @@ static void writeLeafSkyMaskStrips(SkyFixEdge::FixType fixType)
     HEdge *hedge = base;
     forever
     {
-        Segment &seg = *hedge->mapElement()->as<Segment>();
-
         // Are we monitoring material changes?
         Material *skyMaterial = 0;
         if(splitOnMaterialChange)
@@ -1835,7 +1836,7 @@ static void writeLeafSkyMaskStrips(SkyFixEdge::FixType fixType)
         // Add a first (left) edge to the current strip?
         if(startNode == 0)
         {
-            startMaterialOffset = seg.lineSideOffset();
+            startMaterialOffset = hedge->mapElement()->as<Segment>()->lineSideOffset();
 
             // Prepare the edge geometry
             SkyFixEdge skyEdge(*hedge, fixType, (direction == Anticlockwise)? Line::To : Line::From,
@@ -1860,7 +1861,8 @@ static void writeLeafSkyMaskStrips(SkyFixEdge::FixType fixType)
         // Add the i'th (right) edge to the current strip?
         if(startNode != 0)
         {
-            startMaterialOffset += seg.length() * (direction == Anticlockwise? -1 : 1);
+            startMaterialOffset +=
+                hedge->mapElement()->as<Segment>()->length() * (direction == Anticlockwise? -1 : 1);
 
             // Prepare the edge geometry
             SkyFixEdge skyEdge(*hedge, fixType, (direction == Anticlockwise)? Line::From : Line::To,
@@ -2003,19 +2005,15 @@ static void writeLeafSkyMask(int skyCap = SKYCAP_LOWER|SKYCAP_UPPER)
     }
 }
 
-static bool coveredOpenRange(Segment &segment, coord_t middleBottomZ, coord_t middleTopZ,
+static bool coveredOpenRange(HEdge &hedge, coord_t middleBottomZ, coord_t middleTopZ,
     bool wroteOpaqueMiddle)
 {
-    HEdge &hedge = segment.hedge();
-    Line::Side const &front = segment.lineSide();
+    Line::Side const &front = hedge.mapElement()->as<Segment>()->lineSide();
 
     if(front.considerOneSided())
     {
         return wroteOpaqueMiddle;
     }
-
-    //if(segment.line().isSelfReferencing())
-    //   return false; /// @todo Why? -ds
 
     Sector const &frontSec = hedge.face().mapElement()->as<BspLeaf>()->sector();
     Sector const &backSec  = hedge.twin().face().mapElement()->as<BspLeaf>()->sector();
@@ -2113,7 +2111,7 @@ static void writeWallSectionsForFace(Face const &face)
         // line segment if the open range has been covered (when the viewer
         // is not in the void).
         if(!P_IsInVoid(viewPlayer) &&
-           coveredOpenRange(*seg, middleBottomZ, middleTopZ, wroteOpaqueMiddle))
+           coveredOpenRange(*hedge, middleBottomZ, middleTopZ, wroteOpaqueMiddle))
         {
             C_AddRangeFromViewRelPoints(hedge->origin(), hedge->twin().origin());
         }
@@ -3157,12 +3155,13 @@ static void drawTangentSpaceVectorsForSurface(Surface *suf, Vector3d const &orig
     glPopMatrix();
 }
 
-static void drawTangentSpaceVectorsForSegment(Segment *seg)
+static void drawTangentSpaceVectorsForHEdge(HEdge *hedge)
 {
-    if(!seg || !seg->hasLineSide() || seg->line().definesPolyobj())
-        return;
+    if(!hedge) return;
 
-    HEdge *hedge = &seg->hedge();
+    Segment *seg = hedge->mapElement()->as<Segment>();
+    if(!seg->hasLineSide() || seg->line().definesPolyobj())
+        return;
 
     if(!hedge->twin().hasFace() || !hedge->twin().face().mapElement()->as<BspLeaf>()->hasSector())
     {
@@ -3222,14 +3221,13 @@ static void drawTangentSpaceVectorsForSegment(Segment *seg)
     }
 }
 
-static void drawTangentSpaceVectorsForFace(Face const &face)
+static void drawTangentSpaceVectorsForHEdgesByFace(Face const &face)
 {
     HEdge *base = face.hedge();
     HEdge *hedge = base;
     do
     {
-        DENG_ASSERT(hedge->mapElement() != 0);
-        drawTangentSpaceVectorsForSegment(hedge->mapElement()->as<Segment>());
+        drawTangentSpaceVectorsForHEdge(hedge);
     } while((hedge = &hedge->next()) != base);
 }
 
@@ -3248,12 +3246,12 @@ static void Rend_DrawSurfaceVectors(Map &map)
         if(!bspLeaf->hasSector() || bspLeaf->isDegenerate())
             continue;
 
-        drawTangentSpaceVectorsForFace(bspLeaf->poly());
+        drawTangentSpaceVectorsForHEdgesByFace(bspLeaf->poly());
 
         foreach(Mesh *mesh, bspLeaf->extraMeshes())
         foreach(Face *face, mesh->faces())
         {
-            drawTangentSpaceVectorsForFace(*face);
+            drawTangentSpaceVectorsForHEdgesByFace(*face);
         }
     }
 

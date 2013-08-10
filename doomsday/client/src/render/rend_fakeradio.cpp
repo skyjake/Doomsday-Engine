@@ -161,7 +161,7 @@ static inline float calcTexCoordY(float z, float bottom, float top, float texHei
     return bottom - z;
 }
 
-/// @todo This algorithm should be rewritten to work at Segment level.
+/// @todo This algorithm should be rewritten to work at half-edge level.
 static void scanNeighbor(bool scanTop, Line::Side const &side, edge_t *edge,
                          bool toLeft)
 {

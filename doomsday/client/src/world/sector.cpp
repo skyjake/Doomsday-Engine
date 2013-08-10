@@ -29,7 +29,6 @@
 #include "BspLeaf"
 #include "Line"
 #include "Plane"
-#include "Segment"
 
 #include "world/map.h"
 #include "world/p_object.h"

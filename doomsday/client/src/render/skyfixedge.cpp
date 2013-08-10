@@ -120,13 +120,13 @@ DENG2_PIMPL(SkyFixEdge)
 
         bool const lower = fixType == SkyFixEdge::Lower;
 
-        Segment *segment = hedge->mapElement()->as<Segment>();
-
         // Partition line segments have no map line sides.
+        Segment *segment = hedge->mapElement()->as<Segment>();
         if(!segment->hasLineSide()) return false;
 
-        Sector const *frontSec = hedge->face().mapElement()->as<BspLeaf>()->sectorPtr();
-        Sector const *backSec  = hedge->twin().hasFace()? hedge->twin().face().mapElement()->as<BspLeaf>()->sectorPtr() : 0;
+        Line::Side const &lineSide = segment->lineSide();
+        Sector const *frontSec     = hedge->face().mapElement()->as<BspLeaf>()->sectorPtr();
+        Sector const *backSec      = hedge->twin().hasFace()? hedge->twin().face().mapElement()->as<BspLeaf>()->sectorPtr() : 0;
 
         if(!(!backSec || backSec != frontSec)) return false;
 
@@ -138,7 +138,7 @@ DENG2_PIMPL(SkyFixEdge)
         if(!front->surface().hasSkyMaskedMaterial())
             return false;
 
-        bool const hasClosedBack = R_SideBackClosed(segment->lineSide());
+        bool const hasClosedBack = R_SideBackClosed(lineSide);
 
         if(!devRendSkyMode)
         {
@@ -150,7 +150,7 @@ DENG2_PIMPL(SkyFixEdge)
         {
             int relSection = lower? Line::Side::Bottom : Line::Side::Top;
 
-            if(segment->lineSide().surface(relSection).hasMaterial() ||
+            if(lineSide.surface(relSection).hasMaterial() ||
                !(hasClosedBack || (back && back->surface().hasSkyMaskedMaterial())))
                 return false;
         }
