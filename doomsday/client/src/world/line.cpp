@@ -165,11 +165,10 @@ bool Line::Side::considerOneSided() const
             return true;
 
         Segment &segment = *d->leftSegment;
-        if(!segment.hasBack() || !segment.back().hasBspLeaf())
+        if(!segment.hedge().twin().hasFace())
             return true;
 
-        BspLeaf &backLeaf = segment.back().bspLeaf();
-        if(!backLeaf.hasSector() || backLeaf.isDegenerate())
+        if(!segment.hedge().twin().face().mapElement()->as<BspLeaf>()->hasSector())
             return true;
     }
 

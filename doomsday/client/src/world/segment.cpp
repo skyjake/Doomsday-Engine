@@ -72,9 +72,6 @@ DENG2_PIMPL(Segment)
     /// Half-edge attributed to the line segment (not owned).
     HEdge *hedge;
 
-    /// World angle.
-    angle_t angle;
-
     /// Accurate length of the segment.
     coord_t length;
 
@@ -90,7 +87,6 @@ DENG2_PIMPL(Segment)
           lineSide(0),
           lineSideOffset(0),
           hedge(0),
-          angle(0),
           length(0)
     {}
 
@@ -146,8 +142,9 @@ DENG2_PIMPL(Segment)
         geomGroup.biasTracker.clearContributors();
 
         Surface const &surface = lineSide->middle();
-        Vector2d const &from   = self.from().origin();
-        Vector2d const &to     = self.to().origin();
+        Vector2d const &from   = self.hedge().origin();
+        Vector2d const &to     = self.hedge().twin().origin();
+        Vector2d const center  = (from + to) / 2;
 
         foreach(BiasSource *source, self.map().biasSources())
         {
@@ -155,7 +152,7 @@ DENG2_PIMPL(Segment)
             if(source->intensity() <= 0)
                 continue;
 
-            Vector3d sourceToSurface = (source->origin() - self.center()).normalize();
+            Vector3d sourceToSurface = (source->origin() - center).normalize();
 
             // Calculate minimum 2D distance to the segment.
             coord_t distance = 0;
@@ -191,11 +188,6 @@ HEdge &Segment::hedge() const
     }
     /// @throw MissingHEdgeError Attempted with no half-edge attributed.
     throw MissingHEdgeError("Segment::hedge", "No half-edge is attributed");
-}
-
-bool Segment::hasBack() const
-{
-    return d->back != 0;
 }
 
 Segment &Segment::back() const
@@ -244,16 +236,6 @@ void Segment::setLineSideOffset(coord_t newOffset)
     d->lineSideOffset = newOffset;
 }
 
-angle_t Segment::angle() const
-{
-    return d->angle;
-}
-
-void Segment::setAngle(angle_t newAngle)
-{
-    d->angle = newAngle;
-}
-
 coord_t Segment::length() const
 {
     return d->length;
@@ -262,10 +244,6 @@ coord_t Segment::length() const
 void Segment::setLength(coord_t newLength)
 {
     d->length = newLength;
-
-    /// @todo Is this still necessary?
-    if(d->length == 0)
-        d->length = 0.01f; // Hmm...
 }
 
 Segment::Flags Segment::flags() const
@@ -327,24 +305,13 @@ void Segment::lightBiasPoly(int group, Vector3f const *posCoords, Vector4f *colo
 
 #endif // __CLIENT__
 
-coord_t Segment::pointDistance(const_pvec2d_t point, coord_t *offset) const
-{
-    DENG_ASSERT(point != 0);
-    /// @todo Why are we calculating this every time?
-    Vector2d direction = to().origin() - from().origin();
-
-    coord_t fromOriginV1[2] = { from().origin().x, from().origin().y };
-    coord_t directionV1[2]  = { direction.x, direction.y };
-    return V2d_PointLineDistance(point, fromOriginV1, directionV1, offset);
-}
-
 coord_t Segment::pointOnSide(const_pvec2d_t point) const
 {
     DENG_ASSERT(point != 0);
     /// @todo Why are we calculating this every time?
-    Vector2d direction = to().origin() - from().origin();
+    Vector2d direction = hedge().twin().origin() - hedge().origin();
 
-    coord_t fromOriginV1[2] = { from().origin().x, from().origin().y };
+    coord_t fromOriginV1[2] = { hedge().origin().x, hedge().origin().y };
     coord_t directionV1[2]  = { direction.x, direction.y };
     return V2d_PointOnLineSide(point, fromOriginV1, directionV1);
 }

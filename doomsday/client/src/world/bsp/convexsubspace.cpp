@@ -441,9 +441,6 @@ void ConvexSubspace::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
 
                 seg->setLength(Vector2d(lineSeg->to().origin() - lineSeg->from().origin()).length());
 
-                seg->setAngle(bamsAtan2(int( lineSeg->to().origin().y - lineSeg->from().origin().y ),
-                                        int( lineSeg->to().origin().x - lineSeg->from().origin().x )) << FRACBITS);
-
                 // Link the new half-edge for this line segment to the head of
                 // the list in the new face geometry.
                 hedge->setNext(face->hedge());
@@ -542,9 +539,6 @@ void ConvexSubspace::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
             }
 
             seg->setLength(Vector2d(lineSeg->to().origin() - lineSeg->from().origin()).length());
-
-            seg->setAngle(bamsAtan2(int( lineSeg->to().origin().y - lineSeg->from().origin().y ),
-                                    int( lineSeg->to().origin().x - lineSeg->from().origin().x )) << FRACBITS);
 
             // Link the new half-edge for this line segment to the head of
             // the list in the new Face geometry.

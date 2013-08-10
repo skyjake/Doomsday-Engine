@@ -1401,8 +1401,8 @@ static void writeWallSection(Segment &segment, int section,
     // Generate edge geometries.
     WallSpec const wallSpec = WallSpec::fromMapSide(side, section);
 
-    WallEdge leftEdge(wallSpec, segment, Line::From);
-    WallEdge rightEdge(wallSpec, segment, Line::To);
+    WallEdge leftEdge(wallSpec, segment.hedge(), Line::From);
+    WallEdge rightEdge(wallSpec, segment.hedge(), Line::To);
 
     // Do the edge geometries describe a valid polygon?
     if(!leftEdge.isValid() || !rightEdge.isValid() ||
@@ -1837,7 +1837,7 @@ static void writeLeafSkyMaskStrips(SkyFixEdge::FixType fixType)
             startMaterialOffset = seg.lineSideOffset();
 
             // Prepare the edge geometry
-            SkyFixEdge skyEdge(seg, fixType, (direction == Anticlockwise)? Line::To : Line::From,
+            SkyFixEdge skyEdge(*hedge, fixType, (direction == Anticlockwise)? Line::To : Line::From,
                                startMaterialOffset);
 
             if(skyEdge.isValid() && skyEdge.bottom().z() < skyEdge.top().z())
@@ -1862,7 +1862,7 @@ static void writeLeafSkyMaskStrips(SkyFixEdge::FixType fixType)
             startMaterialOffset += seg.length() * (direction == Anticlockwise? -1 : 1);
 
             // Prepare the edge geometry
-            SkyFixEdge skyEdge(seg, fixType, (direction == Anticlockwise)? Line::From : Line::To,
+            SkyFixEdge skyEdge(*hedge, fixType, (direction == Anticlockwise)? Line::From : Line::To,
                                startMaterialOffset);
 
             // Stop if we've reached a "null" edge.
@@ -2162,7 +2162,7 @@ static void writeLeafPolyobjs()
         // is not in the void).
         if(!P_IsInVoid(viewPlayer) && wroteOpaqueMiddle)
         {
-            C_AddRangeFromViewRelPoints(seg->from().origin(), seg->to().origin());
+            C_AddRangeFromViewRelPoints(seg->hedge().origin(), seg->hedge().twin().origin());
         }
     }
 }
@@ -2185,7 +2185,7 @@ static void markOneFrontFacingSegment(Segment *seg)
     if(seg->hasLineSide())
     {
         // Which way is it facing?
-        facingFront = viewFacingDot(seg->from().origin(), seg->to().origin()) >= 0;
+        facingFront = viewFacingDot(seg->hedge().origin(), seg->hedge().twin().origin()) >= 0;
     }
     seg->setFlags(Segment::FacingFront, facingFront? SetFlags : UnsetFlags);
 }
@@ -2304,7 +2304,7 @@ static void clipOneFrontFacingSegment(Segment *seg)
 
     if(seg->isFlagged(Segment::FacingFront))
     {
-        if(!C_CheckRangeFromViewRelPoints(seg->from().origin(), seg->to().origin()))
+        if(!C_CheckRangeFromViewRelPoints(seg->hedge().origin(), seg->hedge().twin().origin()))
         {
             seg->setFlags(Segment::FacingFront, UnsetFlags);
         }
@@ -3162,7 +3162,7 @@ static void drawTangentSpaceVectorsForSegment(Segment *seg)
     {
         coord_t const bottom = seg->sector().floor().visHeight();
         coord_t const top = seg->sector().ceiling().visHeight();
-        Vector2d center = (seg->to().origin() + seg->from().origin()) / 2;
+        Vector2d center = (seg->hedge().twin().origin() + seg->hedge().origin()) / 2;
         Surface *suf = &seg->lineSide().middle();
 
         Vector3d origin = Vector3d(center, bottom + (top - bottom) / 2);
@@ -3177,7 +3177,7 @@ static void drawTangentSpaceVectorsForSegment(Segment *seg)
         {
             coord_t const bottom = seg->sector().floor().visHeight();
             coord_t const top = seg->sector().ceiling().visHeight();
-            Vector2d center = (seg->to().origin() + seg->from().origin()) / 2;
+            Vector2d center = (seg->hedge().twin().origin() + seg->hedge().origin()) / 2;
             Surface *suf = &side.middle();
 
             Vector3d origin = Vector3d(center, bottom + (top - bottom) / 2);
@@ -3191,7 +3191,7 @@ static void drawTangentSpaceVectorsForSegment(Segment *seg)
         {
             coord_t const bottom = backSec->ceiling().visHeight();
             coord_t const top = seg->sector().ceiling().visHeight();
-            Vector2d center = (seg->to().origin() + seg->from().origin()) / 2;
+            Vector2d center = (seg->hedge().twin().origin() + seg->hedge().origin()) / 2;
             Surface *suf = &side.top();
 
             Vector3d origin = Vector3d(center, bottom + (top - bottom) / 2);
@@ -3205,7 +3205,7 @@ static void drawTangentSpaceVectorsForSegment(Segment *seg)
         {
             coord_t const bottom = seg->sector().floor().visHeight();
             coord_t const top = backSec->floor().visHeight();
-            Vector2d center = (seg->to().origin() + seg->from().origin()) / 2;
+            Vector2d center = (seg->hedge().twin().origin() + seg->hedge().origin()) / 2;
             Surface *suf = &side.bottom();
 
             Vector3d origin = Vector3d(center, bottom + (top - bottom) / 2);

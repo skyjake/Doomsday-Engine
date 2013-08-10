@@ -31,13 +31,14 @@
 #include "TriangleStripBuilder"
 #include "IHPlane"
 
-class Segment;
 class Surface;
 
 /// Maximum number of intercepts in a WallEdge.
 #define WALLEDGE_MAX_INTERCEPTS          64
 
 namespace de {
+
+class HEdge;
 
 /**
  * Helper/utility class intended to simplify the process of generating
@@ -73,9 +74,12 @@ public:
 
 public:
     /**
-     * @param spec  Geometry specification for the wall section. A copy is made.
+     * @param spec   Geometry specification for the wall section. A copy is made.
+     *
+     * @param hedge  Assumed to have a mapped Segment attributed to a Line::Side
+     *               with sections.
      */
-    WallEdge(WallSpec const &spec, Segment &segment, int edge);
+    WallEdge(WallSpec const &spec, HEdge &hedge, int edge);
 
     inline Event const &operator [] (EventIndex index) const {
         return at(index);

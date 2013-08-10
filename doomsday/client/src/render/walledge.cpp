@@ -496,14 +496,12 @@ DENG2_PIMPL(WallEdge), public IHPlane
     }
 };
 
-WallEdge::WallEdge(WallSpec const &spec, Segment &segment, int edge)
-    : WorldEdge((edge? segment.to() : segment.from()).origin()),
-      d(new Instance(this, spec, &segment.lineSide(), edge,
-                           segment.lineSideOffset() + (edge? segment.length() : 0),
-                           segment.lineSide().line().vertexOwner(edge? segment.to() : segment.from())))
-{
-    DENG_ASSERT(segment.hasLineSide() && segment.lineSide().hasSections());
-}
+WallEdge::WallEdge(WallSpec const &spec, HEdge &hedge, int edge)
+    : WorldEdge((edge? hedge.twin() : hedge).origin()),
+      d(new Instance(this, spec, &hedge.mapElement()->as<Segment>()->lineSide(), edge,
+                           hedge.mapElement()->as<Segment>()->lineSideOffset() + (edge? hedge.mapElement()->as<Segment>()->length() : 0),
+                           hedge.mapElement()->as<Segment>()->lineSide().line().vertexOwner(edge? hedge.twin().vertex() : hedge.vertex())))
+{}
 
 Vector3d const &WallEdge::pOrigin() const
 {

@@ -68,8 +68,6 @@ public:
 
     de::HEdge &hedge() const;
 
-    bool hasBack() const;
-
     /**
      * Returns the segment on the back side of "this".
      */
@@ -77,15 +75,15 @@ public:
 
     void setBack(Segment *newBack);
 
-    inline Vertex &from() const { return hedge().vertex(); }
+    //inline Vertex &from() const { return hedge().vertex(); }
 
-    inline Vertex &to() const { return hedge().twin().vertex(); }
+    //inline Vertex &to() const { return hedge().twin().vertex(); }
 
     /**
      * Returns the point on the line segment which lies at the exact center of
      * the two vertexes.
      */
-    inline de::Vector2d center() const { return (from().origin() + to().origin()) / 2; }
+    //inline de::Vector2d center() const { return (from().origin() + to().origin()) / 2; }
 
     /**
      * Returns @c true iff a polygon attributed to a BSP leaf is associated
@@ -156,14 +154,6 @@ public:
     void setLineSideOffset(coord_t newOffset);
 
     /**
-     * Returns the world angle of the line segment.
-     */
-    angle_t angle() const;
-
-    /// @todo Refactor away.
-    void setAngle(angle_t newAngle);
-
-    /**
      * Returns the accurate length of the line segment, from the 'from' vertex to
      * the 'to' vertex in map coordinate space units.
      */
@@ -171,27 +161,6 @@ public:
 
     /// @todo Refactor away.
     void setLength(coord_t newLength);
-
-    /**
-     * Returns the distance from @a point to the nearest point along the Segment
-     * (in the inclussive range 0..1).
-     *
-     * @param point  Point to measure the distance to in the map coordinate space.
-     */
-    coord_t pointDistance(const_pvec2d_t point, coord_t *offset) const;
-
-    /**
-     * Returns the distance from @a point to the nearest point along the Segment
-     * (in the inclussive range 0..1).
-     *
-     * @param x  X axis point to measure the distance to in the map coordinate space.
-     * @param y  Y axis point to measure the distance to in the map coordinate space.
-     */
-    inline coord_t pointDistance(coord_t x, coord_t y, coord_t *offset) const
-    {
-        coord_t point[2] = { x, y };
-        return pointDistance(point, offset);
-    }
 
     /**
      * On which side of the Segment does the specified @a point lie?

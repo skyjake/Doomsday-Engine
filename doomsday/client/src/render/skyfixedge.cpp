@@ -82,7 +82,7 @@ Vector3d SkyFixEdge::Event::origin() const
 
 DENG2_PIMPL(SkyFixEdge)
 {
-    Segment *segment;
+    HEdge *hedge;
     FixType fixType;
     int edge;
 
@@ -97,10 +97,10 @@ DENG2_PIMPL(SkyFixEdge)
 
     Vector2f materialOrigin;
 
-    Instance(Public *i, Segment &segment, FixType fixType, int edge,
+    Instance(Public *i, HEdge &hedge, FixType fixType, int edge,
              Vector2f const &materialOrigin)
         : Base(i),
-          segment(&segment),
+          hedge(&hedge),
           fixType(fixType),
           edge(edge),
           bottom(*i, 0),
@@ -114,16 +114,17 @@ DENG2_PIMPL(SkyFixEdge)
      */
     bool wallSectionNeedsSkyFix() const
     {
-        DENG_ASSERT(segment->hasBspLeaf());
+        DENG_ASSERT(hedge->hasFace() && hedge->mapElement() != 0);
 
         bool const lower = fixType == SkyFixEdge::Lower;
+
+        Segment *segment = hedge->mapElement()->as<Segment>();
 
         // Partition line segments have no map line sides.
         if(!segment->hasLineSide()) return false;
 
-        Sector const *frontSec = segment->sectorPtr();
-        Sector const *backSec  = segment->hasBack() && segment->back().hasBspLeaf() &&
-                                 !segment->back().bspLeaf().isDegenerate()? segment->back().sectorPtr() : 0;
+        Sector const *frontSec = hedge->face().mapElement()->as<BspLeaf>()->sectorPtr();
+        Sector const *backSec  = hedge->twin().hasFace()? hedge->twin().face().mapElement()->as<BspLeaf>()->sectorPtr() : 0;
 
         if(!(!backSec || backSec != frontSec)) return false;
 
@@ -172,9 +173,8 @@ DENG2_PIMPL(SkyFixEdge)
             return;
         }
 
-        Sector const *frontSec = segment->sectorPtr();
-        Sector const *backSec  = segment->hasBack() && segment->back().hasBspLeaf() &&
-                                 !segment->back().bspLeaf().isDegenerate()? segment->back().sectorPtr() : 0;
+        Sector const *frontSec = hedge->face().mapElement()->as<BspLeaf>()->sectorPtr();
+        Sector const *backSec  = hedge->twin().hasFace()? hedge->twin().face().mapElement()->as<BspLeaf>()->sectorPtr() : 0;
         Plane const *ffloor = &frontSec->floor();
         Plane const *fceil  = &frontSec->ceiling();
         Plane const *bceil  = backSec? &backSec->ceiling() : 0;
@@ -200,9 +200,9 @@ DENG2_PIMPL(SkyFixEdge)
     }
 };
 
-SkyFixEdge::SkyFixEdge(Segment &segment, FixType fixType, int edge, float materialOffsetS)
-    : WorldEdge((edge? segment.to() : segment.from()).origin()),
-      d(new Instance(this, segment, fixType, edge, Vector2f(materialOffsetS, 0)))
+SkyFixEdge::SkyFixEdge(HEdge &hedge, FixType fixType, int edge, float materialOffsetS)
+    : WorldEdge((edge? hedge.twin() : hedge).origin()),
+      d(new Instance(this, hedge, fixType, edge, Vector2f(materialOffsetS, 0)))
 {
     /// @todo Defer until necessary.
     d->prepare();

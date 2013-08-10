@@ -126,7 +126,7 @@ void ShadowEdge::prepare(int planeIndex)
     // there won't be a shadow at all. Open neighbor sectors cause some changes
     // in the polygon corner vertices (placement, opacity).
 
-    if(d->leftMostSegment->hasBack() &&
+    if(d->leftMostSegment->hedge().twin().hasFace() &&
        d->leftMostSegment->back().hasBspLeaf() &&
        !d->leftMostSegment->back().bspLeaf().isDegenerate() &&
        d->leftMostSegment->back().sectorPtr() != 0)

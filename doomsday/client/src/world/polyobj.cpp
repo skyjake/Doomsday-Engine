@@ -449,9 +449,6 @@ bool Polyobj::rotate(angle_t delta)
         {
             line->updateAABox();
             line->updateSlopeType();
-
-            // Segment angle must be kept in sync.
-            line->front().leftSegment()->setAngle(BANG_TO_ANGLE(line->angle()));
         }
         updateAABox();
         angle += delta;
@@ -476,9 +473,6 @@ bool Polyobj::rotate(angle_t delta)
             {
                 line->updateAABox();
                 line->updateSlopeType();
-
-                // Segment angle must be kept in sync.
-                line->front().leftSegment()->setAngle(BANG_TO_ANGLE(line->angle()));
             }
             updateAABox();
             angle -= delta;
