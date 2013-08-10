@@ -143,16 +143,7 @@ public Font::RichFormat::IStyle
     void richStyleFormat(int contentStyle, float &sizeFactor, Font::RichFormat::Weight &fontWeight,
                          Font::RichFormat::Style &fontStyle, int &colorIndex) const
     {
-        switch(contentStyle)
-        {
-        default:
-        case Font::RichFormat::NormalStyle:
-            sizeFactor = 1.f;
-            fontWeight = Font::RichFormat::OriginalWeight;
-            fontStyle  = Font::RichFormat::OriginalStyle;
-            colorIndex = Font::RichFormat::OriginalColor;
-            break;
-        }
+        return self.style().richFormatStyle(contentStyle, sizeFactor, fontWeight, fontStyle, colorIndex);
     }
 
     AtlasTexture &atlas()

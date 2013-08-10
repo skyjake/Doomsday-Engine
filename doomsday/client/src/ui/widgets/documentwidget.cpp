@@ -161,58 +161,7 @@ public Font::RichFormat::IStyle
                          Font::RichFormat::Style &fontStyle,
                          int &colorIndex) const
     {
-        switch(contentStyle)
-        {
-        default:
-        case Font::RichFormat::NormalStyle:
-            sizeFactor = 1.f;
-            fontWeight = Font::RichFormat::OriginalWeight;
-            fontStyle  = Font::RichFormat::OriginalStyle;
-            colorIndex = Font::RichFormat::OriginalColor;
-            break;
-
-        case Font::RichFormat::MajorStyle:
-            sizeFactor = 1.f;
-            fontWeight = Font::RichFormat::Bold;
-            fontStyle  = Font::RichFormat::Regular;
-            colorIndex = Font::RichFormat::HighlightColor;
-            break;
-
-        case Font::RichFormat::MinorStyle:
-            sizeFactor = .8f;
-            fontWeight = Font::RichFormat::Normal;
-            fontStyle  = Font::RichFormat::Regular;
-            colorIndex = Font::RichFormat::DimmedColor;
-            break;
-
-        case Font::RichFormat::MetaStyle:
-            sizeFactor = .9f;
-            fontWeight = Font::RichFormat::Light;
-            fontStyle  = Font::RichFormat::Italic;
-            colorIndex = Font::RichFormat::AccentColor;
-            break;
-
-        case Font::RichFormat::MajorMetaStyle:
-            sizeFactor = .9f;
-            fontWeight = Font::RichFormat::Bold;
-            fontStyle  = Font::RichFormat::Italic;
-            colorIndex = Font::RichFormat::AccentColor;
-            break;
-
-        case Font::RichFormat::MinorMetaStyle:
-            sizeFactor = .8f;
-            fontWeight = Font::RichFormat::Light;
-            fontStyle  = Font::RichFormat::Italic;
-            colorIndex = Font::RichFormat::DimAccentColor;
-            break;
-
-        case Font::RichFormat::AuxMetaStyle:
-            sizeFactor = .8f;
-            fontWeight = Font::RichFormat::Light;
-            fontStyle  = Font::RichFormat::OriginalStyle;
-            colorIndex = Font::RichFormat::DimmedColor;
-            break;
-        }
+        return self.style().richFormatStyle(contentStyle, sizeFactor, fontWeight, fontStyle, colorIndex);
     }
 
     void glInit()
