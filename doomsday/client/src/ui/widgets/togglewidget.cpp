@@ -35,7 +35,7 @@ DENG2_OBSERVES(ButtonWidget, Press)
     {
         ToggleProceduralImage(GuiWidget &owner)
             : _owner(owner),
-              _pos(1, Animation::EaseBoth),
+              _pos(0, Animation::EaseBoth),
               _animating(false)
         {
             setSize(style().images().image("toggle.onoff").size());
@@ -46,7 +46,7 @@ DENG2_OBSERVES(ButtonWidget, Press)
 
         void setState(ToggleState st)
         {
-            _pos.setValue(st == Inactive? 1 : 0, SWITCH_ANIM_SPAN);
+            _pos.setValue(st == Active? 1 : 0, SWITCH_ANIM_SPAN);
             _animating = true;
         }
 
@@ -61,25 +61,27 @@ DENG2_OBSERVES(ButtonWidget, Press)
 
         void glMakeGeometry(DefaultVertexBuf::Builder &verts, Rectanglef const &rect)
         {
-            ColorBank::Colorf const &textColor   = style().colors().colorf("text");
+            //ColorBank::Colorf const &textColor   = style().colors().colorf("text");
             ColorBank::Colorf const &accentColor = style().colors().colorf("accent");
 
             // Background.
             ColorBank::Colorf bgColor = style().colors().colorf("background");
             bgColor.w = 1;
-            verts.makeQuad(rect, accentColor * .5f * _pos + bgColor * (1 - _pos),
+            float c = (.3f + .33f * _pos);
+            verts.makeQuad(rect, accentColor * Vector4f(c, c, c, 1),
                            atlas().imageRectf(_owner.root().solidWhitePixel()).middle());
 
             Id onOff = _owner.root().toggleOnOff();
 
-            // The on/off background.
-            verts.makeQuad(rect, accentColor * _pos + textColor * (1 - _pos),
+            // The on/off graphic.
+            verts.makeQuad(rect, accentColor * (5 + _pos) / 6, // * _pos + accentColor * .5f * (1 - _pos),
                            atlas().imageRectf(onOff));
 
             // The flipper.
+            int flipWidth = size().x - size().y + 2;
             Rectanglef flip = Rectanglef::fromSize(rect.topLeft +
-                                                   Vector2f(1 + de::round<int>((1 - _pos) * (size().x - size().y)), 1),
-                                                   Vector2f(size().y, size().y) - Vector2ui(2, 2));
+                                                   Vector2f(1 + de::round<int>((1 - _pos) * (size().x - flipWidth)), 1),
+                                                   Vector2f(flipWidth, size().y) - Vector2ui(2, 2));
             verts.makeQuad(flip, bgColor, atlas().imageRectf(_owner.root().solidWhitePixel()).middle());
         }
 
