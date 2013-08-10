@@ -280,49 +280,52 @@ public Font::RichFormat::IStyle
             }
         }
 
-        // By default the image and the text are centered over each other.
-        layout.image.move((Vector2f(layout.text.size()) - layout.image.size()) / 2);
+        if(hasImage() && hasText())
+        {
+            // By default the image and the text are centered over each other.
+            layout.image.move((Vector2f(layout.text.size()) - layout.image.size()) / 2);
 
-        // Determine the position of the image in relation to the text
-        // (keeping the image at its current position).
-        if(textAlign & AlignLeft)
-        {
-            layout.text.moveLeft(layout.image.left() - layout.text.width() - gap);
-        }
-        if(textAlign & AlignRight)
-        {
-            layout.text.moveLeft(layout.image.right() + gap);
-        }
-        if(textAlign & AlignTop)
-        {
-            layout.text.moveTop(layout.image.top() - layout.text.height() - gap);
-        }
-        if(textAlign & AlignBottom)
-        {
-            layout.text.moveTop(layout.image.bottom() + gap);
-        }
+            // Determine the position of the image in relation to the text
+            // (keeping the image at its current position).
+            if(textAlign & AlignLeft)
+            {
+                layout.text.moveLeft(layout.image.left() - layout.text.width() - gap);
+            }
+            if(textAlign & AlignRight)
+            {
+                layout.text.moveLeft(layout.image.right() + gap);
+            }
+            if(textAlign & AlignTop)
+            {
+                layout.text.moveTop(layout.image.top() - layout.text.height() - gap);
+            }
+            if(textAlign & AlignBottom)
+            {
+                layout.text.moveTop(layout.image.bottom() + gap);
+            }
 
-        // Align the image in relation to the text on the other axis.
-        if(textAlign & (AlignLeft | AlignRight))
-        {
-            if(imageAlign & AlignTop)
+            // Align the image in relation to the text on the other axis.
+            if(textAlign & (AlignLeft | AlignRight))
             {
-                layout.image.moveTop(layout.text.top());
+                if(imageAlign & AlignTop)
+                {
+                    layout.image.moveTop(layout.text.top());
+                }
+                if(imageAlign & AlignBottom)
+                {
+                    layout.image.moveTop(layout.text.bottom() - layout.image.height());
+                }
             }
-            if(imageAlign & AlignBottom)
+            if(textAlign & (AlignTop | AlignBottom))
             {
-                layout.image.moveTop(layout.text.bottom() - layout.image.height());
-            }
-        }
-        if(textAlign & (AlignTop | AlignBottom))
-        {
-            if(imageAlign & AlignLeft)
-            {
-                layout.image.moveLeft(layout.text.left());
-            }
-            if(imageAlign & AlignRight)
-            {
-                layout.image.moveLeft(layout.text.right() - layout.image.width());
+                if(imageAlign & AlignLeft)
+                {
+                    layout.image.moveLeft(layout.text.left());
+                }
+                if(imageAlign & AlignRight)
+                {
+                    layout.image.moveLeft(layout.text.right() - layout.image.width());
+                }
             }
         }
 
