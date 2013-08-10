@@ -65,7 +65,7 @@ DENG2_OBSERVES(Action, Triggered)
             break;
 
         case Down:
-            scale.setValue(.9f);
+            scale.setValue(.95f);
             frameOpacity.setValue(0);
             break;
         }
@@ -172,9 +172,16 @@ bool ButtonWidget::handleEvent(Event const &event)
 
             case MouseClickFinished:
                 d->setState(Up);
-                if(!d->action.isNull() && hitTest(mouse.pos()))
+                d->updateHover(mouse.pos());
+                if(hitTest(mouse.pos()))
                 {
-                    d->action->trigger();
+                    // Notify.
+                    DENG2_FOR_AUDIENCE(Press, i) i->buttonPressed(*this);
+
+                    if(!d->action.isNull())
+                    {
+                        d->action->trigger();
+                    }
                 }
                 return true;
 
