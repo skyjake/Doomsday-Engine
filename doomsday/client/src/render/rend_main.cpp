@@ -1374,10 +1374,12 @@ static uint projectSurfaceShadows(Surface &surface, float glowStrength,
                                      surface.tangent(), surface.bitangent(), surface.normal());
 }
 
-static void writeWallSection(Segment &segment, int section,
+static void writeWallSection(HEdge &hedge, int section,
     bool *retWroteOpaque = 0, coord_t *retBottomZ = 0, coord_t *retTopZ = 0)
 {
     DENG_ASSERT(!isNullLeaf(currentBspLeaf));
+
+    Segment &segment  = *hedge.mapElement()->as<Segment>();
     DENG_ASSERT(segment.isFlagged(Segment::FacingFront));
     DENG_ASSERT(segment.hasLineSide() && segment.lineSide().hasSections());
 
@@ -1385,7 +1387,6 @@ static void writeWallSection(Segment &segment, int section,
     if(retBottomZ)     *retBottomZ     = 0;
     if(retTopZ)        *retTopZ        = 0;
 
-    HEdge &hedge      = segment.hedge();
     Line::Side &side  = segment.lineSide();
     Surface &surface  = side.surface(section);
     BiasSurface &bsuf = segment;
@@ -2102,9 +2103,9 @@ static void writeWallSectionsForFace(Face const &face)
         bool wroteOpaqueMiddle = false;
         coord_t middleBottomZ = 0, middleTopZ = 0;
 
-        writeWallSection(*seg, Line::Side::Bottom);
-        writeWallSection(*seg, Line::Side::Top);
-        writeWallSection(*seg, Line::Side::Middle,
+        writeWallSection(*hedge, Line::Side::Bottom);
+        writeWallSection(*hedge, Line::Side::Top);
+        writeWallSection(*hedge, Line::Side::Middle,
                          &wroteOpaqueMiddle, &middleBottomZ, &middleTopZ);
 
         // We can occlude the angle range defined by the X|Y origins of the
@@ -2156,7 +2157,7 @@ static void writeLeafPolyobjs()
 
         bool wroteOpaqueMiddle = false;
 
-        writeWallSection(*seg, Line::Side::Middle, &wroteOpaqueMiddle);
+        writeWallSection(*hedge, Line::Side::Middle, &wroteOpaqueMiddle);
 
         // We can occlude the angle range defined by the X|Y origins of the
         // line segment if the open range has been covered (when the viewer

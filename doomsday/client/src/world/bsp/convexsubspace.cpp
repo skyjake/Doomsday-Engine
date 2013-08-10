@@ -431,7 +431,7 @@ void ConvexSubspace::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
                 HEdge *hedge = extraMesh->newHEdge(lineSeg->from());
 
                 // Ownership of the segment will be assigned to the space partitioner.
-                Segment *seg = new Segment(mapSide, hedge);
+                Segment *seg = new Segment(*hedge, mapSide);
 
                 // Attribute the half-edge to the segment.
                 hedge->setMapElement(seg);
@@ -449,14 +449,14 @@ void ConvexSubspace::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
                 face->setHEdge(hedge);
 
                 // Is there a half-edge on the back side we need to twin with?
-                if(lineSeg->back().hasSegment())
+                if(lineSeg->back().hasHEdge())
                 {
-                    lineSeg->back().segment().hedge().setTwin(hedge);
-                    hedge->setTwin(&lineSeg->back().segment().hedge());
+                    lineSeg->back().hedge().setTwin(hedge);
+                    hedge->setTwin(lineSeg->back().hedgePtr());
                 }
 
-                // Link the new segment with the line segment.
-                lineSeg->setSegment(seg);
+                // Link the new half-edge with the line segment.
+                lineSeg->setHEdge(hedge);
             }
 
             // Link the half-edges anticlockwise and close the ring.
@@ -520,14 +520,14 @@ void ConvexSubspace::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
         {
             LineSegment::Side *lineSeg = d->orderedSegments[i].segment;
 
-            if(lineSeg->hasSegment())
+            if(lineSeg->hasHEdge())
                 continue;
 
             Line::Side *mapSide = lineSeg->mapSidePtr();
             HEdge *hedge = mesh.newHEdge(lineSeg->from());
 
             // Ownership of the segment will be assigned to the space partitioner.
-            Segment *seg = new Segment(mapSide, hedge);
+            Segment *seg = new Segment(*hedge, mapSide);
 
             // Attribute the half-edge to the segment.
             hedge->setMapElement(seg);
@@ -545,14 +545,14 @@ void ConvexSubspace::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
             face->setHEdge(hedge);
 
             // Is there a half-edge on the back side we need to twin with?
-            if(lineSeg->back().hasSegment())
+            if(lineSeg->back().hasHEdge())
             {
-                lineSeg->back().segment().hedge().setTwin(hedge);
-                hedge->setTwin(&lineSeg->back().segment().hedge());
+                lineSeg->back().hedge().setTwin(hedge);
+                hedge->setTwin(lineSeg->back().hedgePtr());
             }
 
-            // Link the new segment with the line segment.
-            lineSeg->setSegment(seg);
+            // Link the new half-edge with the line segment.
+            lineSeg->setHEdge(hedge);
         }
 
         // Link the half-edges anticlockwise and close the ring.

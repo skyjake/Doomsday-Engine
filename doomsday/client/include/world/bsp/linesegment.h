@@ -29,8 +29,8 @@
 #include <de/Error>
 #include <de/Vector>
 
+#include "HEdge"
 #include "Line"
-#include "Segment" /// @todo Remove me
 #include "Vertex"
 
 /// Rounding threshold within which two points are considered as co-incident.
@@ -99,8 +99,8 @@ public:
         /// Required map line side attribution is missing. @ingroup errors
         DENG2_ERROR(MissingMapSideError);
 
-        /// Required segment is missing. @ingroup errors
-        DENG2_ERROR(MissingSegmentError);
+        /// Required half-edge is missing. @ingroup errors
+        DENG2_ERROR(MissingHEdgeError);
 
     public:
         Side(LineSegment &line);
@@ -405,36 +405,36 @@ public:
         inline AABoxd aaBox() const { return line().aaBox(); }
 
         /**
-         * Returns @c true iff a built segment is linked to "this" side of the line
-         * segment.
+         * Returns @c true iff a built half-edge is linked to "this" side of
+         * the line segment.
          *
-         * @see segment()
+         * @see hedge()
          */
-        bool hasSegment() const;
+        bool hasHEdge() const;
 
         /**
-         * Returns the built segment for "this" side of the line segment.
+         * Returns the built half-edge for "this" side of the line segment.
          *
-         * @see hasSegment()
+         * @see hasHEdge()
          */
-        Segment &segment() const;
+        HEdge &hedge() const;
 
         /**
-         * Returns a pointer to the built segment linked to "this" side of the line
-         * segment. otherwise @c 0.
+         * Returns a pointer to the built half-edge linked to "this" side of
+         * the line segment. otherwise @c 0.
          *
-         * @see hasSegment()
+         * @see hasHEdge()
          */
-        inline Segment *segmentPtr() const { return hasSegment()? &segment() : 0; }
+        inline HEdge *hedgePtr() const { return hasHEdge()? &hedge() : 0; }
 
         /**
-         * Change the built segment linked to "this" side of the line segment.
+         * Change the built half-edge linked to "this" side of the line segment.
          *
-         * @param newSegment  New segment. Can be @c 0.
+         * @param newHEdge New half-edge. Can be @c 0.
          *
-         * @see segment()
+         * @see hedge()
          */
-        void setSegment(Segment *newSegment);
+        void setHEdge(HEdge *newHEdge);
 
         /**
          * Returns a pointer to the ConvexSubspace to which "this" side of the

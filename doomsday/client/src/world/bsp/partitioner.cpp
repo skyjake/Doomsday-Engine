@@ -1260,9 +1260,9 @@ DENG2_PIMPL(Partitioner)
             /// @todo Refactor away.
             foreach(OrderedSegment const &oseg, subspace.segments())
             {
-                if(oseg.segment->hasSegment())
+                if(oseg.segment->hasHEdge())
                 {
-                    // There is now one more Segment.
+                    // There is now one more half-edge.
                     numSegments += 1;
                 }
             }
@@ -1277,9 +1277,9 @@ DENG2_PIMPL(Partitioner)
         {
             LineSegment::Side *seg = oseg.segment;
 
-            if(seg->hasSegment() && !seg->back().hasSegment())
+            if(seg->hasHEdge() && !seg->back().hasHEdge())
             {
-                HEdge *hedge = &seg->segment().hedge();
+                HEdge *hedge = &seg->hedge();
                 DENG_ASSERT(!hedge->hasTwin());
 
                 // Allocate the twin from the same mesh.
@@ -1525,21 +1525,21 @@ BspTreeNode *Partitioner::buildBsp(LineSet const &lines, Mesh &mesh)
         LineSegment::Side &seg = lineSeg->side(i);
 
         if(!seg.hasMapSide()) continue;
-        if(!seg.hasSegment()) continue; // Oh dear...
+        if(!seg.hasHEdge()) continue; // Oh dear...
 
         // Find the left-most segment.
         LineSegment::Side *left = &seg;
-        while(left->hasLeft() && left->left().hasSegment())
+        while(left->hasLeft() && left->left().hasHEdge())
         { left = &left->left(); }
 
-        seg.mapSide().setLeftHEdge(left->hasSegment()? &left->segment().hedge() : 0);
+        seg.mapSide().setLeftHEdge(left->hedgePtr());
 
         // Find the right-most segment.
         LineSegment::Side *right = &seg;
-        while(right->hasRight() && right->right().hasSegment())
+        while(right->hasRight() && right->right().hasHEdge())
         { right = &right->right(); }
 
-        seg.mapSide().setRightHEdge(right->hasSegment()? &right->segment().hedge() : 0);
+        seg.mapSide().setRightHEdge(right->hedgePtr());
     }
 
     return d->rootNode;

@@ -32,6 +32,7 @@
 #include "world/map.h"
 #include "world/maputil.h"
 #include "BspLeaf"
+#include "Segment" /// @todo Remove me
 
 #include "MaterialSnapshot"
 
@@ -333,6 +334,27 @@ static void createObjlink(BspLeaf &bspLeaf, void *object, objtype_t type)
     link->type = type;
 }
 
+/**
+ * On which side of the half-edge does the specified @a point lie?
+ *
+ * @param hedge  Half-edge to test.
+ * @param point  Point to test in the map coordinate space.
+ *
+ * @return @c <0 Point is to the left/back of the segment.
+ *         @c =0 Point lies directly on the segment.
+ *         @c >0 Point is to the right/front of the segment.
+ */
+static coord_t pointOnHEdgeSide(HEdge const &hedge, const_pvec2d_t point)
+{
+    DENG_ASSERT(point != 0);
+    /// @todo Why are we calculating this every time?
+    Vector2d direction = hedge.twin().origin() - hedge.origin();
+
+    coord_t fromOriginV1[2] = { hedge.origin().x, hedge.origin().y };
+    coord_t directionV1[2]  = { direction.x, direction.y };
+    return V2d_PointOnLineSide(point, fromOriginV1, directionV1);
+}
+
 static void maybeSpreadOverEdge(HEdge *hedge, contactfinderparams_t *parms)
 {
     DENG_ASSERT(hedge != 0 && parms != 0);
@@ -370,7 +392,7 @@ static void maybeSpreadOverEdge(HEdge *hedge, contactfinderparams_t *parms)
     Segment *seg = hedge->mapElement()->as<Segment>();
 
     // Too far from the object?
-    coord_t distance = seg->pointOnSide(parms->objOrigin) / seg->length();
+    coord_t distance = pointOnHEdgeSide(*hedge, parms->objOrigin) / seg->length();
     if(de::abs(distance) >= parms->objRadius)
         return;
 

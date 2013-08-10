@@ -33,8 +33,10 @@
 #include "de_resource.h"
 #include "de_system.h"
 
-#include "BspLeaf"
 #include "Face"
+
+#include "BspLeaf"
+#include "Segment"
 
 #include "audio/s_environ.h"
 

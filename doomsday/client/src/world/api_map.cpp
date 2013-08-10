@@ -42,6 +42,7 @@
 #include "world/entitydatabase.h"
 #include "world/world.h"
 #include "BspLeaf"
+#include "Segment"
 
 #ifdef __CLIENT__
 #  include "render/lightgrid.h"

@@ -59,9 +59,6 @@ DENG2_PIMPL(Segment)
     /// Segment on the back side of this (if any). @todo remove me
     Segment *back;
 
-    /// Segment flags.
-    Flags flags;
-
     /// Map Line::Side attributed to the line segment (not owned).
     /// Can be @c 0 (signifying a partition line segment).
     Line::Side *lineSide;
@@ -78,16 +75,19 @@ DENG2_PIMPL(Segment)
 #ifdef __CLIENT__
     /// Bias lighting data for each geometry group (i.e., each Line::Side section).
     GeometryGroups geomGroups;
+    Flags flags;
 #endif
 
     Instance(Public *i)
         : Base(i),
           back(0),
-          flags(0),
           lineSide(0),
           lineSideOffset(0),
           hedge(0),
           length(0)
+#ifdef __CLIENT__
+         ,flags(0)
+#endif
     {}
 
 #ifdef __CLIENT__
@@ -142,8 +142,8 @@ DENG2_PIMPL(Segment)
         geomGroup.biasTracker.clearContributors();
 
         Surface const &surface = lineSide->middle();
-        Vector2d const &from   = self.hedge().origin();
-        Vector2d const &to     = self.hedge().twin().origin();
+        Vector2d const &from   = hedge->origin();
+        Vector2d const &to     = hedge->twin().origin();
         Vector2d const center  = (from + to) / 2;
 
         foreach(BiasSource *source, self.map().biasSources())
@@ -172,22 +172,12 @@ DENG2_PIMPL(Segment)
 #endif
 };
 
-Segment::Segment(Line::Side *lineSide, HEdge *hedge)
+Segment::Segment(HEdge &hedge, Line::Side *lineSide)
     : MapElement(DMU_SEGMENT),
       d(new Instance(this))
 {
     d->lineSide = lineSide;
-    d->hedge    = hedge;
-}
-
-HEdge &Segment::hedge() const
-{
-    if(d->hedge)
-    {
-        return *d->hedge;
-    }
-    /// @throw MissingHEdgeError Attempted with no half-edge attributed.
-    throw MissingHEdgeError("Segment::hedge", "No half-edge is attributed");
+    d->hedge    = &hedge;
 }
 
 /*
@@ -237,6 +227,8 @@ void Segment::setLength(coord_t newLength)
     d->length = newLength;
 }
 
+#ifdef __CLIENT__
+
 Segment::Flags Segment::flags() const
 {
     return d->flags;
@@ -246,8 +238,6 @@ void Segment::setFlags(Flags flagsToChange, FlagOp operation)
 {
     applyFlagOperation(d->flags, flagsToChange, operation);
 }
-
-#ifdef __CLIENT__
 
 void Segment::updateBiasAfterGeometryMove(int group)
 {
@@ -295,14 +285,3 @@ void Segment::lightBiasPoly(int group, Vector3f const *posCoords, Vector4f *colo
 }
 
 #endif // __CLIENT__
-
-coord_t Segment::pointOnSide(const_pvec2d_t point) const
-{
-    DENG_ASSERT(point != 0);
-    /// @todo Why are we calculating this every time?
-    Vector2d direction = hedge().twin().origin() - hedge().origin();
-
-    coord_t fromOriginV1[2] = { hedge().origin().x, hedge().origin().y };
-    coord_t directionV1[2]  = { direction.x, direction.y };
-    return V2d_PointOnLineSide(point, fromOriginV1, directionV1);
-}

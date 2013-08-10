@@ -21,7 +21,6 @@
 #ifndef DENG_WORLD_SEGMENT_H
 #define DENG_WORLD_SEGMENT_H
 
-#include <de/Error>
 #include <de/Vector>
 
 #include "MapElement"
@@ -32,11 +31,7 @@
 #  include "BiasSurface"
 #endif
 
-//class Sector;
-
 /**
- * @todo Consolidate/merge with bsp::LineSegment
- *
  * @ingroup world
  */
 class Segment : public de::MapElement
@@ -48,11 +43,10 @@ class Segment : public de::MapElement
     DENG2_NO_ASSIGN(Segment)
 
 public:
-    /// Required half-edge attribution is missing. @ingroup errors
-    DENG2_ERROR(MissingHEdgeError);
-
     /// Required line attribution is missing. @ingroup errors
     DENG2_ERROR(MissingLineSideError);
+
+#ifdef __CLIENT__
 
     enum Flag
     {
@@ -60,10 +54,12 @@ public:
     };
     Q_DECLARE_FLAGS(Flags, Flag)
 
-public:
-    Segment(Line::Side *lineSide = 0, de::HEdge *hedge = 0);
+#endif
 
-    de::HEdge &hedge() const;
+public:
+    Segment(de::HEdge &hedge, Line::Side *lineSide = 0);
+
+    //de::HEdge &hedge() const;
 
     //inline Vertex &from() const { return hedge().vertex(); }
 
@@ -152,32 +148,7 @@ public:
     /// @todo Refactor away.
     void setLength(coord_t newLength);
 
-    /**
-     * On which side of the Segment does the specified @a point lie?
-     *
-     * @param point  Point to test in the map coordinate space.
-     *
-     * @return @c <0 Point is to the left/back of the segment.
-     *         @c =0 Point lies directly on the segment.
-     *         @c >0 Point is to the right/front of the segment.
-     */
-    coord_t pointOnSide(const_pvec2d_t point) const;
-
-    /**
-     * On which side of the Segment does the specified @a point lie?
-     *
-     * @param x  X axis point to test in the map coordinate space.
-     * @param y  Y axis point to test in the map coordinate space.
-     *
-     * @return @c <0 Point is to the left/back of the segment.
-     *         @c =0 Point lies directly on the segment.
-     *         @c >0 Point is to the right/front of the segment.
-     */
-    inline coord_t pointOnSide(coord_t x, coord_t y) const
-    {
-        coord_t point[2] = { x, y };
-        return pointOnSide(point);
-    }
+#ifdef __CLIENT__
 
     /**
      * Returns the current value of the flags of the line segment.
@@ -196,8 +167,6 @@ public:
      * @param operation      Logical operation to perform on the flags.
      */
     void setFlags(Flags flagsToChange, de::FlagOp operation = de::SetFlags);
-
-#ifdef __CLIENT__
 
     /**
      * Perform bias lighting for the supplied geometry.
@@ -221,6 +190,8 @@ private:
     DENG2_PRIVATE(d)
 };
 
+#ifdef __CLIENT__
 Q_DECLARE_OPERATORS_FOR_FLAGS(Segment::Flags)
+#endif
 
 #endif // DENG_WORLD_SEGMENT_H

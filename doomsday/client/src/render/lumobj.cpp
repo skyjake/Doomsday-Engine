@@ -37,6 +37,7 @@
 #include "world/linesighttest.h"
 #include "world/thinkers.h"
 #include "BspLeaf"
+#include "Segment"
 
 #include "MaterialSnapshot"
 #include "MaterialVariantSpec"
