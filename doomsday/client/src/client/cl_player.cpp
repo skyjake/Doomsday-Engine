@@ -30,6 +30,8 @@
 
 #include "def_main.h"
 
+#include "BspLeaf"
+
 // MACROS ------------------------------------------------------------------
 
 #define TOP_PSPY            (32)

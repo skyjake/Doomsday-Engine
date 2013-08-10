@@ -36,6 +36,7 @@
 
 #include "gl/sys_opengl.h" // TODO: get rid of this
 #include "world/map.h"
+#include "BspLeaf"
 
 #include "def_main.h"
 #ifdef __CLIENT__

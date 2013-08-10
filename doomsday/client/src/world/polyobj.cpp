@@ -27,6 +27,7 @@
 
 #include "world/p_object.h"
 #include "world/map.h"
+#include "BspLeaf"
 #include "Segment"
 
 #ifdef __CLIENT__
@@ -53,10 +54,10 @@ static void notifyGeometryChanged(Polyobj &po)
         // Shadow bias must be informed when surfaces move/deform.
         foreach(Line *line, po.lines())
         {
-            Segment *segment = line->front().leftSegment();
-            if(!segment) continue;
+            HEdge *hedge = line->front().leftHEdge();
+            if(!hedge) continue;
 
-            segment->updateBiasAfterGeometryMove(Line::Side::Middle);
+            hedge->mapElement()->as<Segment>()->updateBiasAfterGeometryMove(Line::Side::Middle);
         }
     }
 #else // !__CLIENT__
@@ -102,7 +103,7 @@ polyobj_s::~polyobj_s()
 {
     foreach(Line *line, lines())
     {
-        delete line->front().leftSegment();
+        delete line->front().leftHEdge();
     }
 
     delete static_cast<Lines *>(_lines);

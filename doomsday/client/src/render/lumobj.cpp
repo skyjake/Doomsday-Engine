@@ -36,6 +36,7 @@
 #include "world/map.h"
 #include "world/linesighttest.h"
 #include "world/thinkers.h"
+#include "BspLeaf"
 
 #include "MaterialSnapshot"
 #include "MaterialVariantSpec"
@@ -1167,13 +1168,13 @@ boolean LOIT_ClipLumObjBySight(void *data, void *context)
         foreach(Polyobj *po, bspLeaf->polyobjs())
         foreach(Line *line, po->lines())
         {
-            Segment *segment = line->front().leftSegment();
+            HEdge *hedge = line->front().leftHEdge();
 
             // Ignore half-edges facing the wrong way.
-            if(segment->isFlagged(Segment::FacingFront))
+            if(hedge->mapElement()->as<Segment>()->isFlagged(Segment::FacingFront))
             {
-                coord_t fromV1[2] = { segment->hedge().origin().x, segment->hedge().origin().y };
-                coord_t toV1[2]   = { segment->hedge().twin().origin().x, segment->hedge().twin().origin().y };
+                coord_t fromV1[2] = { hedge->origin().x, hedge->origin().y };
+                coord_t toV1[2]   = { hedge->twin().origin().x, hedge->twin().origin().y };
                 if(V2d_Intercept2(lum->origin, eye, fromV1, toV1, 0, 0, 0))
                 {
                     luminousClipped[lumIdx] = 1;

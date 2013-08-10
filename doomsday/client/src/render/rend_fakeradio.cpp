@@ -34,11 +34,15 @@
 #include "gl/sys_opengl.h"
 #include "MaterialSnapshot"
 #include "MaterialVariantSpec"
+
+#include "Face"
+
 #include "world/map.h"
 #include "world/maputil.h"
 #include "world/lineowner.h"
-#include "WallEdge"
+#include "BspLeaf"
 
+#include "WallEdge"
 #include "render/rendpoly.h"
 #include "render/shadowedge.h"
 
@@ -1081,10 +1085,10 @@ void Rend_RadioWallSection(WallEdge const &leftEdge, WallEdge const &rightEdge,
     if(shadowSize <= 0) return;
 
     Line::Side &side            = leftEdge.mapSide();
-    Segment const *segment      = side.leftSegment();
-    Sector const *frontSec      = segment->hedge().face().mapElement()->as<BspLeaf>()->sectorPtr();
-    Sector const *backSec       = (segment->hedge().twin().hasFace() &&
-                                   leftEdge.spec().section != Line::Side::Middle)? segment->hedge().twin().face().mapElement()->as<BspLeaf>()->sectorPtr() : 0;
+    HEdge const *hedge          = side.leftHEdge();
+    Sector const *frontSec      = hedge->face().mapElement()->as<BspLeaf>()->sectorPtr();
+    Sector const *backSec       =
+        (hedge->twin().hasFace() && leftEdge.spec().section != Line::Side::Middle)? hedge->twin().face().mapElement()->as<BspLeaf>()->sectorPtr() : 0;
 
     coord_t const lineLength    = side.line().length();
     coord_t const sectionOffset = leftEdge.mapSideOffset();
@@ -1242,9 +1246,9 @@ static void writeShadowSection(int planeIndex, Line::Side &side, float shadowDar
 
     if(!(shadowDark > .0001)) return;
 
-    if(!side.leftSegment()) return;
-    HEdge *leftHEdge = &side.leftSegment()->hedge();
+    if(!side.leftHEdge()) return;
 
+    HEdge *leftHEdge   = side.leftHEdge();
     Plane const &plane = side.sector().plane(planeIndex);
     Surface const *suf = &plane.surface();
 

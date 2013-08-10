@@ -30,10 +30,12 @@
 #include "de_play.h"
 #include "de_ui.h"
 
+#include "Face"
 #include "HEdge"
 
 #include "world/blockmap.h"
 #include "world/map.h"
+#include "BspLeaf"
 
 #include "render/blockmapvisual.h"
 

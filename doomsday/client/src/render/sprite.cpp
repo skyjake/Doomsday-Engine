@@ -30,9 +30,11 @@
 
 #include "MaterialSnapshot"
 #include "MaterialVariantSpec"
+#include "Texture"
+
 #include "world/map.h"
 #include "world/thinkers.h"
-#include "Texture"
+#include "BspLeaf"
 
 using namespace de;
 

@@ -24,6 +24,8 @@
 
 #include "dd_main.h"
 
+#include "Face"
+
 #include "BspLeaf"
 #include "Line"
 #include "Plane"

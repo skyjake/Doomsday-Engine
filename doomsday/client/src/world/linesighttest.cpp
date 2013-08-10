@@ -23,12 +23,14 @@
 #include <de/aabox.h>
 #include <de/fixedpoint.h>
 
+#include "Face"
+
 #include "BspLeaf"
 #include "BspNode"
-#include "Segment"
 #include "Line"
 #include "Polyobj"
 #include "Sector"
+#include "Segment"
 
 #include "render/r_main.h" /// For validCount, @todo Remove me.
 

@@ -22,14 +22,18 @@
 #include <cstdlib>
 #include <assert.h>
 
-#include "de_base.h"
-#include "de_console.h"
-#include "de_render.h"
-
 #include <de/binangle.h>
 #include <de/vector1.h>
 
 #include <de/Log>
+
+#include "de_base.h"
+#include "de_console.h"
+#include "de_render.h"
+
+#include "Face"
+
+#include "BspLeaf"
 
 #include "render/rend_clip.h"
 

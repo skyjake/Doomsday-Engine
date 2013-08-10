@@ -25,17 +25,17 @@
 #include <de/Vector>
 
 #include "MapElement"
-#include "BspLeaf"
-#include "Face"
+//#include "BspLeaf"
+//#include "Face"
 #include "HEdge"
 #include "Line"
-#include "Vertex"
+//#include "Vertex"
 
 #ifdef __CLIENT__
 #  include "BiasSurface"
 #endif
 
-class Sector;
+//class Sector;
 
 /**
  * @todo Consolidate/merge with bsp::LineSegment
@@ -84,9 +84,9 @@ public:
      *
      * @see HEdge::hasFace(), Face::mapElement()
      */
-    inline bool hasBspLeaf() const {
-        return hedge().hasFace() && hedge().face().mapElement() != 0;
-    }
+    //inline bool hasBspLeaf() const {
+    //    return hedge().hasFace() && hedge().face().mapElement() != 0;
+    //}
 
     /**
      * Convenience accessor which returns the BspLeaf attributed to the polygon
@@ -94,9 +94,9 @@ public:
      *
      * @see hasBspLeaf(), Face::mapElement()
      */
-    inline BspLeaf &bspLeaf() const {
-        return *hedge().face().mapElement()->as<BspLeaf>();
-    }
+    //inline BspLeaf &bspLeaf() const {
+    //    return *hedge().face().mapElement()->as<BspLeaf>();
+    //}
 
     /**
      * Convenience accessor which returns the Sector attributed to the BspLeaf

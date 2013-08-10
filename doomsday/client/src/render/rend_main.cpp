@@ -40,7 +40,8 @@
 #include "MaterialVariantSpec"
 #include "Texture"
 
-#include "BspNode"
+#include "Face"
+
 #include "Hand"
 #include "world/map.h"
 #include "world/maputil.h"
@@ -49,9 +50,11 @@
 #include "world/p_objlink.h"
 #include "world/p_players.h"
 #include "world/thinkers.h"
+#include "BspLeaf"
+#include "BspNode"
 
-#include "BiasTracker"
-#include "BiasIllum"
+//#include "BiasTracker"
+//#include "BiasIllum"
 #include "HueCircleVisual"
 #include "SkyFixEdge"
 #include "WallEdge"
@@ -2141,9 +2144,10 @@ static void writeLeafPolyobjs()
     foreach(Polyobj *po, leaf->polyobjs())
     foreach(Line *line, po->lines())
     {
-        Segment *seg = line->front().leftSegment();
+        HEdge *hedge = line->front().leftHEdge();
 
         // We are only interested in front facing line segments.
+        Segment *seg = hedge->mapElement()->as<Segment>();
         if(!seg->isFlagged(Segment::FacingFront))
             continue;
 
@@ -2163,7 +2167,7 @@ static void writeLeafPolyobjs()
         // is not in the void).
         if(!P_IsInVoid(viewPlayer) && wroteOpaqueMiddle)
         {
-            C_AddRangeFromViewRelPoints(seg->hedge().origin(), seg->hedge().twin().origin());
+            C_AddRangeFromViewRelPoints(hedge->origin(), hedge->twin().origin());
         }
     }
 }
@@ -2179,46 +2183,47 @@ static void writeLeafPlanes()
     }
 }
 
-static void markOneFrontFacingSegment(Segment *seg)
+static void markOneFrontFacingHEdge(HEdge *hedge)
 {
-    if(!seg) return;
+    if(!hedge) return;
+    DENG_ASSERT(hedge->mapElement() != 0); // sanity check
+    Segment *seg = hedge->mapElement()->as<Segment>();
     bool facingFront = false;
     if(seg->hasLineSide())
     {
         // Which way is it facing?
-        facingFront = viewFacingDot(seg->hedge().origin(), seg->hedge().twin().origin()) >= 0;
+        facingFront = viewFacingDot(hedge->origin(), hedge->twin().origin()) >= 0;
     }
     seg->setFlags(Segment::FacingFront, facingFront? SetFlags : UnsetFlags);
 }
 
-static void markFaceEdgesFrontFacing(Face const &face)
+static void markHEdgesFrontFacingByFace(Face const &face)
 {
     HEdge *base = face.hedge();
     HEdge *hedge = base;
     do
     {
-        DENG_ASSERT(hedge->mapElement() != 0);
-        markOneFrontFacingSegment(hedge->mapElement()->as<Segment>());
+        markOneFrontFacingHEdge(hedge);
     } while((hedge = &hedge->next()) != base);
 }
 
-static void markFrontFacingSegments()
+static void markFrontFacingHEdges()
 {
     BspLeaf *bspLeaf = currentBspLeaf;
     DENG_ASSERT(!isNullLeaf(bspLeaf));
 
-    markFaceEdgesFrontFacing(bspLeaf->poly());
+    markHEdgesFrontFacingByFace(bspLeaf->poly());
 
     foreach(Mesh *mesh, bspLeaf->extraMeshes())
     foreach(Face *face, mesh->faces())
     {
-        markFaceEdgesFrontFacing(*face);
+        markHEdgesFrontFacingByFace(*face);
     }
 
     foreach(Polyobj *po, bspLeaf->polyobjs())
     foreach(Line *line, po->lines())
     {
-        markOneFrontFacingSegment(line->front().leftSegment());
+        markOneFrontFacingHEdge(line->front().leftHEdge());
     }
 }
 
@@ -2252,7 +2257,7 @@ static void occludeLeaf(bool frontFacing)
         DENG_ASSERT(hedge->mapElement() != 0);
 
         Segment *seg = hedge->mapElement()->as<Segment>();
-        DENG_ASSERT(seg->bspLeaf().hasSector()); // sanity check
+        DENG_ASSERT(hedge->face().mapElement()->as<BspLeaf>()->hasSector()); // sanity check
 
         if(frontFacing != seg->isFlagged(Segment::FacingFront))
             continue;
@@ -2297,29 +2302,30 @@ static void occludeLeaf(bool frontFacing)
     } while((hedge = &hedge->next()) != base);
 }
 
-/// If @a segment is @em not front facing this is no-op.
-static void clipOneFrontFacingSegment(Segment *seg)
+/// If @a hedge is @em not front facing this is no-op.
+static void clipOneFrontFacingHEdge(HEdge *hedge)
 {
-    if(!seg || !seg->hasLineSide())
-        return;
+    if(!hedge) return;
+    DENG_ASSERT(hedge->mapElement() != 0); // sanity check
+    Segment *seg = hedge->mapElement()->as<Segment>();
+    if(!seg->hasLineSide()) return;
 
     if(seg->isFlagged(Segment::FacingFront))
     {
-        if(!C_CheckRangeFromViewRelPoints(seg->hedge().origin(), seg->hedge().twin().origin()))
+        if(!C_CheckRangeFromViewRelPoints(hedge->origin(), hedge->twin().origin()))
         {
             seg->setFlags(Segment::FacingFront, UnsetFlags);
         }
     }
 }
 
-static void clipFrontFacingFaceEdges(Face const &face)
+static void clipFrontFacingHEdgesByFace(Face const &face)
 {
     HEdge *base = face.hedge();
     HEdge *hedge = base;
     do
     {
-        DENG_ASSERT(hedge->mapElement() != 0);
-        clipOneFrontFacingSegment(hedge->mapElement()->as<Segment>());
+        clipOneFrontFacingHEdge(hedge);
     } while((hedge = &hedge->next()) != base);
 }
 
@@ -2328,18 +2334,18 @@ static void clipFrontFacingSegments()
     BspLeaf *bspLeaf = currentBspLeaf;
     DENG_ASSERT(!isNullLeaf(bspLeaf));
 
-    clipFrontFacingFaceEdges(bspLeaf->poly());
+    clipFrontFacingHEdgesByFace(bspLeaf->poly());
 
     foreach(Mesh *mesh, bspLeaf->extraMeshes())
     foreach(Face *face, mesh->faces())
     {
-        clipFrontFacingFaceEdges(*face);
+        clipFrontFacingHEdgesByFace(*face);
     }
 
     foreach(Polyobj *po, bspLeaf->polyobjs())
     foreach(Line *line, po->lines())
     {
-        clipOneFrontFacingSegment(line->front().leftSegment());
+        clipOneFrontFacingHEdge(line->front().leftHEdge());
     }
 }
 
@@ -2354,7 +2360,7 @@ static void drawCurrentLeaf()
     // Mark the sector visible for this frame.
     leaf->sector()._frameFlags |= SIF_VISIBLE;
 
-    markFrontFacingSegments();
+    markFrontFacingHEdges();
     R_InitForBspLeaf(*leaf);
     Rend_RadioBspLeafEdges(*leaf);
 

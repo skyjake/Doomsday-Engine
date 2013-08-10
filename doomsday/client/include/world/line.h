@@ -30,6 +30,8 @@
 #include <de/Observers>
 #include <de/Vector>
 
+#include "HEdge"
+
 #include "MapElement"
 #include "Polyobj"
 #include "Surface"
@@ -37,7 +39,6 @@
 
 class LineOwner;
 class Sector;
-class Segment;
 
 /**
  * World map line.
@@ -327,32 +328,32 @@ public:
         inline Sector *sectorPtr() const { return hasSector()? &sector() : 0; }
 
         /**
-         * Returns a pointer the left-most segment for the side; otherwise @c 0.
+         * Returns a pointer the left-most half-edge for the side; otherwise @c 0.
          */
-        Segment *leftSegment() const;
+        de::HEdge *leftHEdge() const;
 
         /**
-         * Change the left-most segment for the side.
+         * Change the left-most half-ege for the side.
          *
-         * @param newSegment   New segment to set as the left-most. Can be @c 0.
+         * @param newHEdge  New half-edge to set as the left-most. Can be @c 0.
          *
          * @todo Refactor away. Only needed presently because of Polyobj.
          */
-        void setLeftSegment(Segment *newSegment);
+        void setLeftHEdge(de::HEdge *newHEdge);
 
         /**
-         * Returns a pointer to the right-most segment for the side; otherwise @c 0.
+         * Returns a pointer to the right-most half-edge for the side; otherwise @c 0.
          */
-        Segment *rightSegment() const;
+        de::HEdge *rightHEdge() const;
 
         /**
-         * Change the right-most segment for the side.
+         * Change the right-most half-edge for the side.
          *
-         * @param newSegment  New segment to set as the right-most. Can be @c 0.
+         * @param newHEdge  New half-edge to set as the right-most. Can be @c 0.
          *
          * @todo Refactor away. Only needed presently because of Polyobj.
          */
-        void setRightSegment(Segment *newSegment);
+        void setRightHEdge(de::HEdge *newHEdge);
 
         /**
          * Update the tangent space normals of the side's surfaces according to the

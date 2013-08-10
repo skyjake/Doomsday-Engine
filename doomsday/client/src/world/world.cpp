@@ -38,6 +38,7 @@
 
 #include "Materials"
 
+#include "BspLeaf"
 #include "Plane"
 #include "Sector"
 

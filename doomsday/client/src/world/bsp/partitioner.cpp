@@ -1532,14 +1532,14 @@ BspTreeNode *Partitioner::buildBsp(LineSet const &lines, Mesh &mesh)
         while(left->hasLeft() && left->left().hasSegment())
         { left = &left->left(); }
 
-        seg.mapSide().setLeftSegment(left->segmentPtr());
+        seg.mapSide().setLeftHEdge(left->hasSegment()? &left->segment().hedge() : 0);
 
         // Find the right-most segment.
         LineSegment::Side *right = &seg;
         while(right->hasRight() && right->right().hasSegment())
         { right = &right->right(); }
 
-        seg.mapSide().setRightSegment(right->segmentPtr());
+        seg.mapSide().setRightHEdge(right->hasSegment()? &right->segment().hedge() : 0);
     }
 
     return d->rootNode;

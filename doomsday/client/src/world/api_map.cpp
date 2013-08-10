@@ -36,9 +36,12 @@
 
 #include "network/net_main.h"
 
+#include "Face"
+
 #include "world/dmuargs.h"
 #include "world/entitydatabase.h"
 #include "world/world.h"
+#include "BspLeaf"
 
 #ifdef __CLIENT__
 #  include "render/lightgrid.h"

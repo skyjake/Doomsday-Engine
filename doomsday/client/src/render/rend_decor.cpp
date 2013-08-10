@@ -30,9 +30,12 @@
 
 #include "def_main.h"
 #include "m_profiler.h"
+
 #include "MaterialVariantSpec"
+
 #include "world/map.h"
 #include "world/maputil.h"
+#include "BspLeaf"
 
 #include "render/rend_decor.h"
 

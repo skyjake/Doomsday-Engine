@@ -37,6 +37,8 @@
 #include "de_defs.h"
 #include "m_nodepile.h"
 
+#include "Face"
+
 #include "BspLeaf"
 #include "BspNode"
 #include "Line"
@@ -3546,8 +3548,8 @@ bool Map::endEditing()
             segment->setMap(this);
             segment->setLength(line->length());
 
-            line->front().setLeftSegment(segment);
-            line->front().setRightSegment(segment);
+            line->front().setLeftHEdge(hedge);
+            line->front().setRightHEdge(hedge);
         }
 
         polyobj->buildUniqueVertexes();

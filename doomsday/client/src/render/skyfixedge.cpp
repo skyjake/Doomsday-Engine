@@ -19,6 +19,8 @@
 
 #include "dd_main.h"
 
+#include "Face"
+
 #include "BspLeaf"
 #include "Plane"
 #include "Sector"

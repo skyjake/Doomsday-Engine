@@ -26,6 +26,8 @@
 #include "world/lineowner.h"
 #include "world/maputil.h"
 
+#include "Face"
+
 #include "render/rend_main.h"
 
 #include "render/shadowedge.h"

@@ -31,8 +31,12 @@
 #include <de/fixedpoint.h>
 #include <de/memoryzone.h>
 
+#include "Face"
+
 #include "world/generators.h"
 #include "world/thinkers.h"
+#include "BspLeaf"
+
 #include "render/r_main.h" // validCount
 #include "resource/models.h"
 #include "api_map.h"

@@ -23,6 +23,8 @@
 #include "de_play.h"
 #include "de_network.h"
 
+#include "BspLeaf"
+
 #include "world/map.h"
 
 using namespace de;

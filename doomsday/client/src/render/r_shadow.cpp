@@ -30,6 +30,7 @@
 #include "api_map.h"
 
 #include "world/map.h"
+#include "BspLeaf"
 
 #include "render/r_shadow.h"
 

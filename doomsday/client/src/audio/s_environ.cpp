@@ -33,6 +33,9 @@
 #include "de_resource.h"
 #include "de_system.h"
 
+#include "BspLeaf"
+#include "Face"
+
 #include "audio/s_environ.h"
 
 using namespace de;

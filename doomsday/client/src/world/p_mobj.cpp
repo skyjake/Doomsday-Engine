@@ -34,7 +34,9 @@
 #include "def_main.h"
 #include "render/r_main.h" // validCount, viewport
 #include "render/r_things.h" // useSRVO
+
 #include "world/thinkers.h"
+#include "BspLeaf"
 
 using namespace de;
 

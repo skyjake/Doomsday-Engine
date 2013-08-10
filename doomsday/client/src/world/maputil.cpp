@@ -18,9 +18,12 @@
  * 02110-1301 USA</small>
  */
 
+#include "Face"
+
+#include "BspLeaf"
 #include "Plane"
 #include "Sector"
-#include "Segment"
+//#include "Segment"
 #include "world/lineowner.h"
 #include "world/p_players.h"
 
@@ -243,8 +246,6 @@ void R_SideSectionCoords(Line::Side const &side, int section, bool skyClip,
                 bool const clipTop    = !(fceil->surface().hasSkyMaskedMaterial()  && bceil->surface().hasSkyMaskedMaterial());
 #endif
 
-                Segment &segment = *side.leftSegment();
-
                 coord_t openBottom, openTop;
                 if(!side.line().isSelfReferencing())
                 {
@@ -253,7 +254,7 @@ void R_SideSectionCoords(Line::Side const &side, int section, bool skyClip,
                 }
                 else
                 {
-                    Sector &frontSec = segment.hedge().face().mapElement()->as<BspLeaf>()->sector();
+                    Sector &frontSec = side.leftHEdge()->face().mapElement()->as<BspLeaf>()->sector();
                     openBottom = frontSec.floor().visHeight();
                     openTop    = frontSec.ceiling().visHeight();
                 }

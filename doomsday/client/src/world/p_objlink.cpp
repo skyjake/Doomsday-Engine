@@ -27,10 +27,15 @@
 #include "de_play.h"
 #include "de_defs.h"
 
-#include "gridmap.h"
+#include "Face"
+
 #include "world/map.h"
 #include "world/maputil.h"
+#include "BspLeaf"
+
 #include "MaterialSnapshot"
+
+#include "gridmap.h"
 
 #include "world/p_objlink.h"
 

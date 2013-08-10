@@ -30,6 +30,7 @@
 
 #include "world/lineowner.h"
 #include "world/map.h"
+#include "BspLeaf"
 #include "Vertex"
 
 #include "render/rend_fakeradio.h"

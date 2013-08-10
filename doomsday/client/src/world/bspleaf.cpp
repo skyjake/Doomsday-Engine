@@ -26,6 +26,9 @@
 #include <de/Log>
 
 #include "dd_main.h" // App_World()
+
+#include "Face"
+
 #include "Polyobj"
 #include "Sector"
 #include "Segment"
@@ -499,9 +502,10 @@ BiasTracker *BspLeaf::biasTracker(int group)
     return 0;
 }
 
-static void applyBiasDigestToSegment(Segment *seg, BiasDigest &changes)
+static void applyBiasDigestToHEdge(HEdge *hedge, BiasDigest &changes)
 {
-    if(!seg) return;
+    if(!hedge) return;
+    Segment *seg = hedge->mapElement()->as<Segment>();
     if(BiasTracker *tracker = seg->biasTracker(Line::Side::Middle))
     {
         tracker->applyChanges(changes);
@@ -516,13 +520,13 @@ static void applyBiasDigestToSegment(Segment *seg, BiasDigest &changes)
     }
 }
 
-static void applyBiasDigestToSegmentsForFace(Face const &face, BiasDigest &changes)
+static void applyBiasDigestToFaceHEdges(Face const &face, BiasDigest &changes)
 {
     HEdge *base = face.hedge();
     HEdge *hedge = base;
     do
     {
-        applyBiasDigestToSegment(hedge->mapElement()->as<Segment>(), changes);
+        applyBiasDigestToHEdge(hedge, changes);
     } while((hedge = &hedge->next()) != base);
 }
 
@@ -536,18 +540,18 @@ void BspLeaf::applyBiasDigest(BiasDigest &changes)
         it.value().biasTracker.applyChanges(changes);
     }
 
-    applyBiasDigestToSegmentsForFace(poly(), changes);
+    applyBiasDigestToFaceHEdges(poly(), changes);
 
     foreach(Mesh *mesh, extraMeshes())
     foreach(Face *face, mesh->faces())
     {
-        applyBiasDigestToSegmentsForFace(*face, changes);
+        applyBiasDigestToFaceHEdges(*face, changes);
     }
 
     foreach(Polyobj *polyobj, d->polyobjs)
     foreach(Line *line, polyobj->lines())
     {
-        applyBiasDigestToSegment(line->front().leftSegment(), changes);
+        applyBiasDigestToHEdge(line->front().leftHEdge(), changes);
     }
 }
 

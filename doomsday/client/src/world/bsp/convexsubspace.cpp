@@ -24,10 +24,12 @@
 #include <de/binangle.h>
 #include <de/mathutil.h>
 
-#include "BspLeaf"
+#include "Face"
 #include "HEdge"
-#include "Line"
 #include "Mesh"
+
+#include "BspLeaf"
+#include "Line"
 #include "Sector"
 #include "Segment"
 #include "world/bsp/linesegment.h"
