@@ -53,7 +53,7 @@ public:
 #endif
 
 public:
-    Segment(de::HEdge &hedge, Line::Side &lineSide);
+    Segment(Line::Side &lineSide, de::HEdge &hedge);
 
     //de::HEdge &hedge() const;
 

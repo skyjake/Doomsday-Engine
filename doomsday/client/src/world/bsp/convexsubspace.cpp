@@ -431,7 +431,7 @@ void ConvexSubspace::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
 
                 if(Line::Side *mapSide = lineSeg->mapSidePtr())
                 {
-                    Segment *seg = new Segment(*hedge, *mapSide);
+                    Segment *seg = new Segment(*mapSide, *hedge);
 
                     // Attribute the segment to half-edge.
                     hedge->setMapElement(seg);
@@ -525,7 +525,7 @@ void ConvexSubspace::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
 
             if(Line::Side *mapSide = lineSeg->mapSidePtr())
             {
-                Segment *seg = new Segment(*hedge, *mapSide);
+                Segment *seg = new Segment(*mapSide, *hedge);
 
                 // Attribute the segment to the half-edge.
                 hedge->setMapElement(seg);

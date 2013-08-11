@@ -453,19 +453,6 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
         }
     }
 
-    static void assignMapToSegmentsForFace(Face const &face, Map *map)
-    {
-        HEdge *base = face.hedge();
-        HEdge *hedge = base;
-        do
-        {
-            if(hedge->mapElement())
-            {
-                hedge->mapElement()->as<Segment>()->setMap(map);
-            }
-        } while((hedge = &hedge->next()) != base);
-    }
-
     void collateBspElements(bsp::Partitioner &partitioner, BspTreeNode &tree)
     {
         if(tree.isLeaf())
@@ -480,17 +467,9 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
             leaf->setIndexInMap(bspLeafs.count());
             bspLeafs.append(leaf);
 
+#ifdef DENG_DEBUG
             if(!leaf->isDegenerate())
             {
-                assignMapToSegmentsForFace(leaf->poly(), thisPublic);
-
-                foreach(Mesh *mesh, leaf->extraMeshes())
-                foreach(Face *face, mesh->faces())
-                {
-                    assignMapToSegmentsForFace(*face, thisPublic);
-                }
-
-#ifdef DENG_DEBUG
                 // See if we received a partial geometry...
                 int discontinuities = 0;
                 HEdge *hedge = leaf->poly().hedge();
@@ -512,8 +491,8 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
                         << discontinuities
                         << leaf->poly().description();
                 }
-#endif
             }
+#endif
 
             return;
         }
@@ -3544,9 +3523,8 @@ bool Map::endEditing()
             hedge->twin().setTwin(hedge);
 
             // Polyobj has ownership of the line segments.
-            Segment *segment = new Segment(*hedge, line->front());
+            Segment *segment = new Segment(line->front(), *hedge);
 
-            segment->setMap(this);
             segment->setLength(line->length());
 
             line->front().setLeftHEdge(hedge);

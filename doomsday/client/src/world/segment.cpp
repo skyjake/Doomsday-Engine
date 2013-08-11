@@ -56,10 +56,6 @@ typedef QMap<int, GeometryGroup> GeometryGroups;
 
 DENG2_PIMPL(Segment)
 {
-    /// Map Line::Side attributed to the line segment (not owned).
-    /// Can be @c 0 (signifying a partition line segment).
-    Line::Side *lineSide;
-
     /// Distance along the attributed map line at which the half-edge vertex occurs.
     coord_t lineSideOffset;
 
@@ -75,11 +71,10 @@ DENG2_PIMPL(Segment)
     Flags flags;
 #endif
 
-    Instance(Public *i)
+    Instance(Public *i, HEdge *hedge)
         : Base(i),
-          lineSide(0),
           lineSideOffset(0),
-          hedge(0),
+          hedge(hedge),
           length(0)
 #ifdef __CLIENT__
          ,flags(0)
@@ -136,7 +131,7 @@ DENG2_PIMPL(Segment)
 
         geomGroup.biasTracker.clearContributors();
 
-        Surface const &surface = lineSide->middle();
+        Surface const &surface = self.lineSide().middle();
         Vector2d const &from   = hedge->origin();
         Vector2d const &to     = hedge->twin().origin();
         Vector2d const center  = (from + to) / 2;
@@ -167,13 +162,10 @@ DENG2_PIMPL(Segment)
 #endif
 };
 
-Segment::Segment(HEdge &hedge, Line::Side &lineSide)
-    : MapElement(DMU_SEGMENT),
-      d(new Instance(this))
-{
-    d->lineSide = &lineSide;
-    d->hedge    = &hedge;
-}
+Segment::Segment(Line::Side &lineSide, HEdge &hedge)
+    : MapElement(DMU_SEGMENT, &lineSide),
+      d(new Instance(this, &hedge))
+{}
 
 /*
 Sector &Segment::sector() const
@@ -194,7 +186,7 @@ bool Segment::hasLineSide() const
 
 Line::Side &Segment::lineSide() const
 {
-    return *d->lineSide;
+    return *this->parent().as<Line::Side>();
 }
 
 coord_t Segment::lineSideOffset() const
@@ -259,7 +251,7 @@ void Segment::lightBiasPoly(int group, Vector3f const *posCoords, Vector4f *colo
         d->updateBiasContributors(*geomGroup, sectionIndex);
     }
 
-    Surface const &surface = d->lineSide->surface(sectionIndex);
+    Surface const &surface = lineSide().surface(sectionIndex);
     uint const biasTime = map().biasCurrentTime();
 
     Vector3f const *posIt = posCoords;
