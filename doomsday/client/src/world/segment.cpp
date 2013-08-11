@@ -19,15 +19,9 @@
  */
 
 #include <QMap>
-#include <QtAlgorithms>
 
-#include <de/binangle.h>
-
-#include "dd_main.h" // App_World()
-#include "BspLeaf"
 #include "HEdge"
 #include "Line"
-#include "Sector"
 
 #ifdef __CLIENT__
 #  include "world/map.h"
@@ -56,16 +50,16 @@ typedef QMap<int, GeometryGroup> GeometryGroups;
 
 DENG2_PIMPL(Segment)
 {
-    /// Distance along the attributed map line at which the half-edge vertex occurs.
-    coord_t lineSideOffset;
-
     /// Half-edge attributed to the line segment (not owned).
     HEdge *hedge;
+
+#ifdef __CLIENT__
+    /// Distance along the attributed map line at which the half-edge vertex occurs.
+    coord_t lineSideOffset;
 
     /// Accurate length of the segment.
     coord_t length;
 
-#ifdef __CLIENT__
     /// Bias lighting data for each geometry group (i.e., each Line::Side section).
     GeometryGroups geomGroups;
     Flags flags;
@@ -73,11 +67,11 @@ DENG2_PIMPL(Segment)
 
     Instance(Public *i, HEdge *hedge)
         : Base(i),
-          lineSideOffset(0),
-          hedge(hedge),
-          length(0)
+          hedge(hedge)
 #ifdef __CLIENT__
-         ,flags(0)
+         ,lineSideOffset(0),
+          length(0),
+          flags(0)
 #endif
     {}
 
@@ -189,6 +183,8 @@ Line::Side &Segment::lineSide() const
     return *this->parent().as<Line::Side>();
 }
 
+#ifdef __CLIENT__
+
 coord_t Segment::lineSideOffset() const
 {
     return d->lineSideOffset;
@@ -208,8 +204,6 @@ void Segment::setLength(coord_t newLength)
 {
     d->length = newLength;
 }
-
-#ifdef __CLIENT__
 
 Segment::Flags Segment::flags() const
 {

@@ -436,9 +436,11 @@ void ConvexSubspace::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
                     // Attribute the segment to half-edge.
                     hedge->setMapElement(seg);
 
+#ifdef __CLIENT__
                     seg->setLineSideOffset(Vector2d(mapSide->from().origin() - lineSeg->from().origin()).length());
 
                     seg->setLength(Vector2d(lineSeg->to().origin() - lineSeg->from().origin()).length());
+#endif
                 }
 
                 // Link the new half-edge for this line segment to the head of
@@ -530,9 +532,11 @@ void ConvexSubspace::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
                 // Attribute the segment to the half-edge.
                 hedge->setMapElement(seg);
 
+#ifdef __CLIENT__
                 seg->setLineSideOffset(Vector2d(mapSide->from().origin() - lineSeg->from().origin()).length());
 
                 seg->setLength(Vector2d(lineSeg->to().origin() - lineSeg->from().origin()).length());
+#endif
             }
 
             // Link the new half-edge for this line segment to the head of

@@ -3523,9 +3523,11 @@ bool Map::endEditing()
             hedge->twin().setTwin(hedge);
 
             // Polyobj has ownership of the line segments.
-            Segment *segment = new Segment(line->front(), *hedge);
+            new Segment(line->front(), *hedge);
 
-            segment->setLength(line->length());
+#ifdef __CLIENT__
+            hedge->mapElement()->as<Segment>()->setLength(line->length());
+#endif
 
             line->front().setLeftHEdge(hedge);
             line->front().setRightHEdge(hedge);

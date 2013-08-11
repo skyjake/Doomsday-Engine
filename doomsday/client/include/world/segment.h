@@ -123,6 +123,8 @@ public:
      */
     inline Line &line() const { return lineSide().line(); }
 
+#ifdef __CLIENT__
+
     /**
      * Returns the distance along the attributed map line at which the from vertex
      * vertex occurs. If the segment is not attributed to a map line then @c 0 is
@@ -143,8 +145,6 @@ public:
 
     /// @todo Refactor away.
     void setLength(coord_t newLength);
-
-#ifdef __CLIENT__
 
     /**
      * Returns the current value of the flags of the line segment.
