@@ -50,7 +50,7 @@ bool Token::equals(QChar const *str) const
 
 bool Token::beginsWith(QChar const *str) const
 {
-    int length = qchar_strlen(str);
+    int length = int(qchar_strlen(str));
     if(length > size())
     {
         // No way.
@@ -173,7 +173,7 @@ void TokenBuffer::endToken()
     }
 }
 
-duint TokenBuffer::size() const
+dsize TokenBuffer::size() const
 {
     return _tokens.size();
 }

@@ -102,7 +102,7 @@ public:
     AssetGroup();
     virtual ~AssetGroup();
 
-    int size() const;
+    dint size() const;
 
     inline bool isEmpty() const { return !size(); }
 

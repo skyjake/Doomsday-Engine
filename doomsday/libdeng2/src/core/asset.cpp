@@ -100,9 +100,9 @@ AssetGroup::~AssetGroup()
     clear();
 }
 
-int AssetGroup::size() const
+dint AssetGroup::size() const
 {
-    return d->deps.size();
+    return dint(d->deps.size());
 }
 
 void AssetGroup::clear()

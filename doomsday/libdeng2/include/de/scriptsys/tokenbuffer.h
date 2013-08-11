@@ -187,7 +187,7 @@ public:
     void endToken();
 
     /// Returns the number of tokens in the buffer.
-    duint size() const;
+    dsize size() const;
 
     bool empty() const { return !size(); }
 

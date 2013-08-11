@@ -92,7 +92,7 @@ public:
     State state() const { return _state; }
 
     /// Determines the current depth of the call stack.
-    duint depth() const;
+    dsize depth() const;
 
     /**
      * Resets the process to an empty state. All existing content in the

@@ -46,7 +46,7 @@ public:
 
     /// Determines the size of the compound.
     /// @return Number of statements in the compound.
-    duint size() const {
+    dsize size() const {
         return _statements.size();
     }
 
