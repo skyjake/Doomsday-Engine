@@ -220,13 +220,13 @@ void Line::Side::Segment::updateBiasAfterGeometryMove(int group)
     }
 }
 
-BiasTracker *Line::Side::Segment::biasTracker(int group)
+void Line::Side::Segment::applyBiasDigest(BiasDigest &changes)
 {
-    if(GeometryGroup *geomGroup = d->geometryGroup(group, false /*don't allocate*/))
+    for(GeometryGroups::iterator it = d->geomGroups.begin();
+        it != d->geomGroups.end(); ++it)
     {
-        return &geomGroup->biasTracker;
+        it.value().biasTracker.applyChanges(changes);
     }
-    return 0;
 }
 
 void Line::Side::Segment::lightBiasPoly(int group, Vector3f const *posCoords,

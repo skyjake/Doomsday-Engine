@@ -59,12 +59,6 @@ public:
      * @param group  Geometry group identifier.
      */
     virtual void updateBiasAfterGeometryMove(int group) {}
-
-    /**
-     * Returns the bias change tracker for the specified geometry @a group,
-     * otherwise @c 0 (if the group is unknown).
-     */
-    virtual BiasTracker *biasTracker(int group) = 0;
 };
 
 extern int devUpdateBiasContributors; //cvar

@@ -492,40 +492,16 @@ void BspLeaf::updateBiasAfterGeometryMove(int group)
     }
 }
 
-BiasTracker *BspLeaf::biasTracker(int group)
-{
-    if(GeometryGroup *geomGroup = d->geometryGroup(group, false /*don't allocate*/))
-    {
-        return &geomGroup->biasTracker;
-    }
-    return 0;
-}
-
-static void applyBiasDigestToHEdge(HEdge *hedge, BiasDigest &changes)
-{
-    if(!hedge) return;
-    Line::Side::Segment *seg = hedge->mapElement()->as<Line::Side::Segment>();
-    if(BiasTracker *tracker = seg->biasTracker(Line::Side::Middle))
-    {
-        tracker->applyChanges(changes);
-    }
-    if(BiasTracker *tracker = seg->biasTracker(Line::Side::Bottom))
-    {
-        tracker->applyChanges(changes);
-    }
-    if(BiasTracker *tracker = seg->biasTracker(Line::Side::Top))
-    {
-        tracker->applyChanges(changes);
-    }
-}
-
-static void applyBiasDigestToFaceHEdges(Face const &face, BiasDigest &changes)
+static void applyBiasDigestToSegmentsByFace(Face const &face, BiasDigest &changes)
 {
     HEdge *base = face.hedge();
     HEdge *hedge = base;
     do
     {
-        applyBiasDigestToHEdge(hedge, changes);
+        if(hedge->mapElement())
+        {
+            hedge->mapElement()->as<Line::Side::Segment>()->applyBiasDigest(changes);
+        }
     } while((hedge = &hedge->next()) != base);
 }
 
@@ -539,18 +515,18 @@ void BspLeaf::applyBiasDigest(BiasDigest &changes)
         it.value().biasTracker.applyChanges(changes);
     }
 
-    applyBiasDigestToFaceHEdges(poly(), changes);
+    applyBiasDigestToSegmentsByFace(poly(), changes);
 
     foreach(Mesh *mesh, extraMeshes())
     foreach(Face *face, mesh->faces())
     {
-        applyBiasDigestToFaceHEdges(*face, changes);
+        applyBiasDigestToSegmentsByFace(*face, changes);
     }
 
     foreach(Polyobj *polyobj, d->polyobjs)
     foreach(Line *line, polyobj->lines())
     {
-        applyBiasDigestToHEdge(line->front().leftHEdge(), changes);
+        line->front().leftHEdge()->mapElement()->as<Line::Side::Segment>()->applyBiasDigest(changes);
     }
 }
 

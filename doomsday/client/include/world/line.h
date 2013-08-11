@@ -195,7 +195,13 @@ public:
 
             void updateBiasAfterGeometryMove(int group);
 
-            BiasTracker *biasTracker(int group);
+            /**
+             * Apply bias lighting changes to @em all map element geometries
+             * for the segment.
+             *
+             * @param changes  Digest of lighting changes to be applied.
+             */
+            void applyBiasDigest(BiasDigest &changes);
 
 #endif // __CLIENT__
 

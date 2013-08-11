@@ -279,8 +279,6 @@ public:
 
     void updateBiasAfterGeometryMove(int group);
 
-    BiasTracker *biasTracker(int group);
-
     /**
      * Apply bias lighting changes to @em all map element geometries at this
      * leaf of the BSP.
