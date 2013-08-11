@@ -45,7 +45,6 @@
 #include "Plane"
 #include "Polyobj"
 #include "Sector"
-#include "Segment"
 #include "Vertex"
 
 #include "world/bsp/partitioner.h"
@@ -3522,11 +3521,9 @@ bool Map::endEditing()
             hedge->setTwin(polyobj->mesh().newHEdge(line->to()));
             hedge->twin().setTwin(hedge);
 
-            // Polyobj has ownership of the line segments.
-            new Segment(line->front(), *hedge);
-
+            hedge->setMapElement(new Line::Side::Segment(line->front(), *hedge));
 #ifdef __CLIENT__
-            hedge->mapElement()->as<Segment>()->setLength(line->length());
+            hedge->mapElement()->as<Line::Side::Segment>()->setLength(line->length());
 #endif
 
             line->front().setLeftHEdge(hedge);

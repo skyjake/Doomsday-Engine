@@ -36,7 +36,6 @@
 #include "Face"
 
 #include "BspLeaf"
-#include "Segment"
 
 #include "audio/s_environ.h"
 
@@ -246,7 +245,7 @@ static void accumReverbForFaceEdges(Face const &face,
         if(!hedge->mapElement())
             continue;
 
-        Segment *seg = hedge->mapElement()->as<Segment>();
+        Line::Side::Segment *seg = hedge->mapElement()->as<Line::Side::Segment>();
         if(!seg->lineSide().hasSections() || !seg->lineSide().middle().hasMaterial())
             continue;
 

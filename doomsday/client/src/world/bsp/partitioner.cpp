@@ -35,7 +35,6 @@
 #include "BspNode"
 #include "Line"
 #include "Sector"
-#include "Segment"
 #include "Vertex"
 
 #include "render/r_main.h" /// validCount @todo Remove me

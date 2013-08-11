@@ -24,7 +24,6 @@
 #include "BspLeaf"
 #include "Plane"
 #include "Sector"
-#include "Segment"
 
 #include "world/map.h"
 #include "world/maputil.h"
@@ -123,7 +122,7 @@ DENG2_PIMPL(SkyFixEdge)
         // Only edges with line segments need fixes.
         if(!hedge->mapElement()) return false;
 
-        Line::Side const &lineSide = hedge->mapElement()->as<Segment>()->lineSide();
+        Line::Side const &lineSide = hedge->mapElement()->as<Line::Side::Segment>()->lineSide();
         Sector const *frontSec     = hedge->face().mapElement()->as<BspLeaf>()->sectorPtr();
         Sector const *backSec      = hedge->twin().hasFace()? hedge->twin().face().mapElement()->as<BspLeaf>()->sectorPtr() : 0;
 

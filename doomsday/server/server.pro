@@ -256,7 +256,6 @@ DENG_HEADERS += \
     $$SRC/include/world/propertyvalue.h \
     $$SRC/include/world/reject.h \
     $$SRC/include/world/sector.h \
-    $$SRC/include/world/segment.h \
     $$SRC/include/world/surface.h \
     $$SRC/include/world/thinkers.h \
     $$SRC/include/world/vertex.h \
@@ -426,7 +425,6 @@ SOURCES += \
     $$SRC/src/world/propertyvalue.cpp \
     $$SRC/src/world/reject.cpp \
     $$SRC/src/world/sector.cpp \
-    $$SRC/src/world/segment.cpp \
     $$SRC/src/world/surface.cpp \
     $$SRC/src/world/thinkers.cpp \
     $$SRC/src/world/vertex.cpp \

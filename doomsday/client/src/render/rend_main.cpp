@@ -52,7 +52,6 @@
 #include "world/thinkers.h"
 #include "BspLeaf"
 #include "BspNode"
-#include "Segment"
 
 #include "HueCircleVisual"
 #include "SkyFixEdge"
@@ -1380,8 +1379,8 @@ static void writeWallSection(HEdge &hedge, int section,
     DENG_ASSERT(!isNullLeaf(currentBspLeaf));
     DENG_ASSERT(hedge.mapElement() != 0);
 
-    Segment &segment  = *hedge.mapElement()->as<Segment>();
-    DENG_ASSERT(segment.isFlagged(Segment::FacingFront) && segment.lineSide().hasSections());
+    Line::Side::Segment &segment = *hedge.mapElement()->as<Line::Side::Segment>();
+    DENG_ASSERT(segment.isFrontFacing() && segment.lineSide().hasSections());
 
     if(retWroteOpaque) *retWroteOpaque = false;
     if(retBottomZ)     *retBottomZ     = 0;
@@ -1837,7 +1836,7 @@ static void writeLeafSkyMaskStrips(SkyFixEdge::FixType fixType)
         // Add a first (left) edge to the current strip?
         if(startNode == 0 && hedge->mapElement())
         {
-            startMaterialOffset = hedge->mapElement()->as<Segment>()->lineSideOffset();
+            startMaterialOffset = hedge->mapElement()->as<Line::Side::Segment>()->lineSideOffset();
 
             // Prepare the edge geometry
             SkyFixEdge skyEdge(*hedge, fixType, (direction == Anticlockwise)? Line::To : Line::From,
@@ -1866,7 +1865,7 @@ static void writeLeafSkyMaskStrips(SkyFixEdge::FixType fixType)
             bool endStrip = false;
             if(hedge->mapElement())
             {
-                startMaterialOffset += hedge->mapElement()->as<Segment>()->length()
+                startMaterialOffset += hedge->mapElement()->as<Line::Side::Segment>()->length()
                                      * (direction == Anticlockwise? -1 : 1);
 
                 // Prepare the edge geometry
@@ -2016,7 +2015,7 @@ static void writeLeafSkyMask(int skyCap = SKYCAP_LOWER|SKYCAP_UPPER)
 static bool coveredOpenRange(HEdge &hedge, coord_t middleBottomZ, coord_t middleTopZ,
     bool wroteOpaqueMiddle)
 {
-    Line::Side const &front = hedge.mapElement()->as<Segment>()->lineSide();
+    Line::Side const &front = hedge.mapElement()->as<Line::Side::Segment>()->lineSide();
 
     if(front.considerOneSided())
     {
@@ -2099,8 +2098,8 @@ static void writeWallSectionsForFace(Face const &face)
             continue;
 
         // We are only interested in front facing segments with sections.
-        Segment *seg = hedge->mapElement()->as<Segment>();
-        if(!seg->isFlagged(Segment::FacingFront) || !seg->lineSide().hasSections())
+        Line::Side::Segment *seg = hedge->mapElement()->as<Line::Side::Segment>();
+        if(!seg->isFrontFacing() || !seg->lineSide().hasSections())
             continue;
 
         // Done here because of the logic of doom.exe wrt the automap.
@@ -2151,8 +2150,8 @@ static void writeLeafPolyobjs()
         DENG_ASSERT(hedge->mapElement() != 0); // sanity check
 
         // We are only interested in front facing line segments with sections.
-        Segment *seg = hedge->mapElement()->as<Segment>();
-        if(!seg->isFlagged(Segment::FacingFront) || !seg->lineSide().hasSections())
+        Line::Side::Segment *seg = hedge->mapElement()->as<Line::Side::Segment>();
+        if(!seg->isFrontFacing() || !seg->lineSide().hasSections())
             continue;
 
         // Done here because of the logic of doom.exe wrt the automap.
@@ -2186,10 +2185,9 @@ static void writeLeafPlanes()
 static void markOneFrontFacingHEdge(HEdge *hedge)
 {
     if(!hedge || !hedge->mapElement()) return;
-    Segment *seg = hedge->mapElement()->as<Segment>();
+    Line::Side::Segment *seg = hedge->mapElement()->as<Line::Side::Segment>();
     // Which way is the line segment facing?
-    bool facingFront = viewFacingDot(hedge->origin(), hedge->twin().origin()) >= 0;
-    seg->setFlags(Segment::FacingFront, facingFront? SetFlags : UnsetFlags);
+    seg->setFrontFacing(viewFacingDot(hedge->origin(), hedge->twin().origin()) >= 0);
 }
 
 static void markHEdgesFrontFacingByFace(Face const &face)
@@ -2253,7 +2251,7 @@ static void occludeLeaf(bool frontFacing)
         if(!hedge->mapElement())
             continue;
 
-        Segment *seg = hedge->mapElement()->as<Segment>();
+        Line::Side::Segment *seg = hedge->mapElement()->as<Line::Side::Segment>();
         DENG_ASSERT(hedge->face().mapElement()->as<BspLeaf>()->hasSector()); // sanity check
 
         // Edges without line segment surface sections can never occlude.
@@ -2261,7 +2259,7 @@ static void occludeLeaf(bool frontFacing)
             continue;
 
         // Only front-facing edges can occlude.
-        if(frontFacing != seg->isFlagged(Segment::FacingFront))
+        if(frontFacing != seg->isFrontFacing())
             continue;
 
         // Occlusions should only happen where two sectors meet.
@@ -2306,12 +2304,12 @@ static void clipOneFrontFacingHEdge(HEdge *hedge)
     if(!hedge || !hedge->mapElement())
         return;
 
-    Segment *seg = hedge->mapElement()->as<Segment>();
-    if(seg->isFlagged(Segment::FacingFront))
+    Line::Side::Segment *seg = hedge->mapElement()->as<Line::Side::Segment>();
+    if(seg->isFrontFacing())
     {
         if(!C_CheckRangeFromViewRelPoints(hedge->origin(), hedge->twin().origin()))
         {
-            seg->setFlags(Segment::FacingFront, UnsetFlags);
+            seg->setFrontFacing(false);
         }
     }
 }
@@ -3161,7 +3159,7 @@ static void drawTangentSpaceVectorsForHEdge(HEdge *hedge)
     if(!hedge || !hedge->mapElement())
         return;
 
-    Segment *seg = hedge->mapElement()->as<Segment>();
+    Line::Side::Segment *seg = hedge->mapElement()->as<Line::Side::Segment>();
     if(seg->line().definesPolyobj())
         return; // Handled elsewhere.
 

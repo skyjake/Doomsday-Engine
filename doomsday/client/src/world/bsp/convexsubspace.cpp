@@ -31,7 +31,6 @@
 #include "BspLeaf"
 #include "Line"
 #include "Sector"
-#include "Segment"
 #include "world/bsp/linesegment.h"
 
 #include "render/r_main.h" /// validCount @todo Remove me
@@ -431,7 +430,7 @@ void ConvexSubspace::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
 
                 if(Line::Side *mapSide = lineSeg->mapSidePtr())
                 {
-                    Segment *seg = new Segment(*mapSide, *hedge);
+                    Line::Side::Segment *seg = new Line::Side::Segment(*mapSide, *hedge);
 
                     // Attribute the segment to half-edge.
                     hedge->setMapElement(seg);
@@ -527,7 +526,7 @@ void ConvexSubspace::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
 
             if(Line::Side *mapSide = lineSeg->mapSidePtr())
             {
-                Segment *seg = new Segment(*mapSide, *hedge);
+                Line::Side::Segment *seg = new Line::Side::Segment(*mapSide, *hedge);
 
                 // Attribute the segment to the half-edge.
                 hedge->setMapElement(seg);

@@ -29,7 +29,6 @@
 
 #include <de/Observers>
 
-#include "Segment" /// @todo remove me
 #include "world/bsp/convexsubspace.h"
 #include "world/bsp/superblockmap.h"
 

@@ -133,7 +133,6 @@ DENG_HEADERS += \
     include/WallEdge \
     include/WallSpec \
     include/Sector \
-    include/Segment \
     include/Surface \
     include/Vertex
 
@@ -410,7 +409,6 @@ DENG_HEADERS += \
     include/world/propertyvalue.h \
     include/world/reject.h \
     include/world/sector.h \
-    include/world/segment.h \
     include/world/surface.h \
     include/world/thinkers.h \
     include/world/vertex.h \
@@ -717,7 +715,6 @@ SOURCES += \
     src/world/propertyvalue.cpp \
     src/world/reject.cpp \
     src/world/sector.cpp \
-    src/world/segment.cpp \
     src/world/surface.cpp \
     src/world/thinkers.cpp \
     src/world/vertex.cpp \

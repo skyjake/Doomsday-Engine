@@ -28,7 +28,6 @@
 #include "world/p_object.h"
 #include "world/map.h"
 #include "BspLeaf"
-#include "Segment"
 
 #ifdef __CLIENT__
 #  include "render/rend_main.h" // useBias
@@ -57,7 +56,8 @@ static void notifyGeometryChanged(Polyobj &po)
             HEdge *hedge = line->front().leftHEdge();
             if(!hedge) continue;
 
-            hedge->mapElement()->as<Segment>()->updateBiasAfterGeometryMove(Line::Side::Middle);
+            hedge->mapElement()->as<Line::Side::Segment>()->
+                    updateBiasAfterGeometryMove(Line::Side::Middle);
         }
     }
 #else // !__CLIENT__

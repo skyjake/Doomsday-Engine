@@ -42,7 +42,6 @@
 #include "world/entitydatabase.h"
 #include "world/world.h"
 #include "BspLeaf"
-#include "Segment"
 
 #ifdef __CLIENT__
 #  include "render/lightgrid.h"
@@ -439,7 +438,8 @@ int P_Iteratep(void *elPtr, uint prop, void *context, int (*callback) (void *p, 
                 {
                     if(hedge->mapElement())
                     {
-                        int result = callback(&hedge->mapElement()->as<Segment>()->line(), context);
+                        int result = callback(&hedge->mapElement()->
+                                              as<Line::Side::Segment>()->line(), context);
                         if(result) return result;
                     }
                 } while((hedge = &hedge->next()) != base);
@@ -452,9 +452,9 @@ int P_Iteratep(void *elPtr, uint prop, void *context, int (*callback) (void *p, 
                     do
                     {
                         DENG_ASSERT(hedge->mapElement() != 0); // sanity check
-                        Segment *seg = hedge->mapElement()->as<Segment>();
 
-                        int result = callback(&seg->line(), context);
+                        int result = callback(&hedge->mapElement()->
+                                              as<Line::Side::Segment>()->line(), context);
                         if(result) return result;
 
                     } while((hedge = &hedge->next()) != base);

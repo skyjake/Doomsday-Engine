@@ -32,7 +32,6 @@
 #include "world/map.h"
 #include "world/maputil.h"
 #include "BspLeaf"
-#include "Segment" /// @todo Remove me
 
 #include "MaterialSnapshot"
 
@@ -413,7 +412,7 @@ static void maybeSpreadOverEdge(HEdge *hedge, contactfinderparams_t *parms)
     // Are there line side surfaces which should prevent spreading?
     if(hedge->mapElement())
     {
-        Segment *seg     = hedge->mapElement()->as<Segment>();
+        Line::Side::Segment *seg = hedge->mapElement()->as<Line::Side::Segment>();
 
         // On which side of the line are we? (distance is from segment to origin).
         Line::Side &side = seg->line().side(seg->lineSide().sideId() ^ (distance < 0));

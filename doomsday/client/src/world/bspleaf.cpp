@@ -31,7 +31,6 @@
 
 #include "Polyobj"
 #include "Sector"
-#include "Segment"
 
 #ifdef __CLIENT__
 #  include "world/map.h"
@@ -466,7 +465,7 @@ static void updateBiasAfterGeometryMoveToFaceEdges(Face const &face)
     do
     {
         DENG_ASSERT(hedge->mapElement() != 0);
-        Segment *seg = hedge->mapElement()->as<Segment>();
+        Line::Side::Segment *seg = hedge->mapElement()->as<Line::Side::Segment>();
 
         seg->updateBiasAfterGeometryMove(Line::Side::Middle);
         seg->updateBiasAfterGeometryMove(Line::Side::Bottom);
@@ -505,7 +504,7 @@ BiasTracker *BspLeaf::biasTracker(int group)
 static void applyBiasDigestToHEdge(HEdge *hedge, BiasDigest &changes)
 {
     if(!hedge) return;
-    Segment *seg = hedge->mapElement()->as<Segment>();
+    Line::Side::Segment *seg = hedge->mapElement()->as<Line::Side::Segment>();
     if(BiasTracker *tracker = seg->biasTracker(Line::Side::Middle))
     {
         tracker->applyChanges(changes);

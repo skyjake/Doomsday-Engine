@@ -30,7 +30,6 @@
 #include "Line"
 #include "Polyobj"
 #include "Sector"
-#include "Segment"
 
 #include "render/r_main.h" /// For validCount, @todo Remove me.
 
@@ -260,7 +259,7 @@ DENG2_PIMPL(LineSightTest)
         {
             if(hedge->mapElement())
             {
-                if(!crossLine(hedge->mapElement()->as<Segment>()->lineSide()))
+                if(!crossLine(hedge->mapElement()->as<Line::Side::Segment>()->lineSide()))
                     return false;
             }
         } while((hedge = &hedge->next()) != base);
@@ -273,7 +272,7 @@ DENG2_PIMPL(LineSightTest)
             do
             {
                 DENG_ASSERT(hedge->mapElement() != 0); // sanity check
-                if(!crossLine(hedge->mapElement()->as<Segment>()->lineSide()))
+                if(!crossLine(hedge->mapElement()->as<Line::Side::Segment>()->lineSide()))
                     return false;
             } while((hedge = &hedge->next()) != base);
         }

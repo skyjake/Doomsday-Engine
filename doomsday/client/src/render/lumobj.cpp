@@ -37,7 +37,6 @@
 #include "world/linesighttest.h"
 #include "world/thinkers.h"
 #include "BspLeaf"
-#include "Segment"
 
 #include "MaterialSnapshot"
 #include "MaterialVariantSpec"
@@ -1172,7 +1171,7 @@ boolean LOIT_ClipLumObjBySight(void *data, void *context)
             HEdge *hedge = line->front().leftHEdge();
 
             // Ignore half-edges facing the wrong way.
-            if(hedge->mapElement()->as<Segment>()->isFlagged(Segment::FacingFront))
+            if(hedge->mapElement()->as<Line::Side::Segment>()->isFrontFacing())
             {
                 coord_t fromV1[2] = { hedge->origin().x, hedge->origin().y };
                 coord_t toV1[2]   = { hedge->twin().origin().x, hedge->twin().origin().y };

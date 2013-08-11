@@ -37,6 +37,10 @@
 #include "Surface"
 #include "Vertex"
 
+#ifdef __CLIENT__
+#  include "BiasSurface"
+#endif
+
 class LineOwner;
 class Sector;
 
@@ -114,6 +118,90 @@ public:
             AllSectionFlags = MiddleFlag | BottomFlag | TopFlag
         };
         Q_DECLARE_FLAGS(SectionFlags, SectionFlag)
+
+        /**
+         * Side geometry segment on the XY plane.
+         */
+        class Segment : public de::MapElement
+#ifdef __CLIENT__
+          , public BiasSurface
+#endif
+        {
+            DENG2_NO_COPY  (Segment)
+            DENG2_NO_ASSIGN(Segment)
+
+        public:
+            /**
+             * Construct a new line side segment.
+             */
+            Segment(Line::Side &lineSide, de::HEdge &hedge);
+
+            /**
+             * Returns the line side owner of the segment.
+             */
+            Line::Side &lineSide() const;
+
+            /**
+             * Convenient accessor method for returning the line of the owning
+             * line side.
+             *
+             * @see lineSide()
+             */
+            inline Line &line() const { return lineSide().line(); }
+
+#ifdef __CLIENT__
+
+            /**
+             * Returns the distance along the attributed map line at which the
+             * from vertex vertex occurs.
+             *
+             * @see lineSide()
+             */
+            coord_t lineSideOffset() const;
+
+            /// @todo Refactor away.
+            void setLineSideOffset(coord_t newOffset);
+
+            /**
+             * Returns the accurate length of the segment, from the 'from'
+             * vertex to the 'to' vertex in map coordinate space units.
+             */
+            coord_t length() const;
+
+            /// @todo Refactor away.
+            void setLength(coord_t newLength);
+
+            /**
+             * Returns @c true iff the segment is marked as "front facing".
+             */
+            bool isFrontFacing() const;
+
+            /**
+             * Mark the current segment as "front facing".
+             */
+            void setFrontFacing(bool yes = true);
+
+            /**
+             * Perform bias lighting for the supplied geometry.
+             *
+             * @important It is assumed there are least @em four elements!
+             *
+             * @param group        Geometry group identifier.
+             * @param posCoords    World coordinates for each vertex.
+             * @param colorCoords  Final lighting values will be written here.
+             */
+            void lightBiasPoly(int group, de::Vector3f const *posCoords,
+                               de::Vector4f *colorCoords);
+
+            void updateBiasAfterGeometryMove(int group);
+
+            BiasTracker *biasTracker(int group);
+
+#endif // __CLIENT__
+
+        private:
+            DENG2_PRIVATE(d)
+        };
 
     public:
         Side(Line &line, Sector *sector = 0);

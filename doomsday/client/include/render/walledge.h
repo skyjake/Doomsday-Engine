@@ -76,8 +76,7 @@ public:
     /**
      * @param spec   Geometry specification for the wall section. A copy is made.
      *
-     * @param hedge  Assumed to have a mapped Segment attributed to a Line::Side
-     *               with sections.
+     * @param hedge  Assumed to have a mapped Line::Side::Segment with sections.
      */
     WallEdge(WallSpec const &spec, HEdge &hedge, int edge);
 

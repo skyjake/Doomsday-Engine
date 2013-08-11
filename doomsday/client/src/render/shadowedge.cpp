@@ -21,7 +21,6 @@
 #include "BspLeaf"
 #include "Plane"
 #include "Sector"
-#include "Segment"
 
 #include "world/lineowner.h"
 #include "world/maputil.h"
@@ -117,7 +116,7 @@ static bool middleMaterialCoversOpening(Line::Side &side)
 
 void ShadowEdge::prepare(int planeIndex)
 {
-    Line::Side &side = d->leftMostHEdge->mapElement()->as<Segment>()->lineSide();
+    Line::Side &side = d->leftMostHEdge->mapElement()->as<Line::Side::Segment>()->lineSide();
     Plane const &plane = side.sector().plane(planeIndex);
     int const otherPlaneIndex = planeIndex == Sector::Floor? Sector::Ceiling : Sector::Floor;
 
