@@ -48,7 +48,7 @@ struct GeometryGroup
 typedef QMap<int, GeometryGroup> GeometryGroups;
 #endif
 
-DENG2_PIMPL(Segment)
+DENG2_PIMPL_NOREF(Segment)
 {
     /// Half-edge attributed to the line segment (not owned).
     HEdge *hedge;
@@ -65,9 +65,8 @@ DENG2_PIMPL(Segment)
     Flags flags;
 #endif
 
-    Instance(Public *i, HEdge *hedge)
-        : Base(i),
-          hedge(hedge)
+    Instance(HEdge *hedge)
+        : hedge(hedge)
 #ifdef __CLIENT__
          ,lineSideOffset(0),
           length(0),
@@ -112,12 +111,13 @@ DENG2_PIMPL(Segment)
      * @todo This could be enhanced so that only the lights on the right
      * side of the surface are taken into consideration.
      */
-    void updateBiasContributors(GeometryGroup &geomGroup, int sectionIndex)
+    void updateBiasContributors(Line::Side const &lineSide,
+        GeometryGroup &geomGroup, int sectionIndex)
     {
         DENG_UNUSED(sectionIndex);
 
         // If the data is already up to date, nothing needs to be done.
-        uint lastChangeFrame = self.map().biasLastChangeOnFrame();
+        uint lastChangeFrame = lineSide.map().biasLastChangeOnFrame();
         if(geomGroup.biasLastUpdateFrame == lastChangeFrame)
             return;
 
@@ -125,12 +125,12 @@ DENG2_PIMPL(Segment)
 
         geomGroup.biasTracker.clearContributors();
 
-        Surface const &surface = self.lineSide().middle();
+        Surface const &surface = lineSide.middle();
         Vector2d const &from   = hedge->origin();
         Vector2d const &to     = hedge->twin().origin();
         Vector2d const center  = (from + to) / 2;
 
-        foreach(BiasSource *source, self.map().biasSources())
+        foreach(BiasSource *source, lineSide.map().biasSources())
         {
             // If the source is too weak we will ignore it completely.
             if(source->intensity() <= 0)
@@ -158,7 +158,7 @@ DENG2_PIMPL(Segment)
 
 Segment::Segment(Line::Side &lineSide, HEdge &hedge)
     : MapElement(DMU_SEGMENT, &lineSide),
-      d(new Instance(this, &hedge))
+      d(new Instance(&hedge))
 {}
 
 /*
@@ -236,16 +236,17 @@ void Segment::lightBiasPoly(int group, Vector3f const *posCoords, Vector4f *colo
 {
     DENG_ASSERT(posCoords != 0 && colorCoords != 0);
 
+    Line::Side const &side   = lineSide();
     int const sectionIndex   = group;
     GeometryGroup *geomGroup = d->geometryGroup(sectionIndex);
 
     // Should we update?
     if(devUpdateBiasContributors)
     {
-        d->updateBiasContributors(*geomGroup, sectionIndex);
+        d->updateBiasContributors(side, *geomGroup, sectionIndex);
     }
 
-    Surface const &surface = lineSide().surface(sectionIndex);
+    Surface const &surface = side.surface(sectionIndex);
     uint const biasTime = map().biasCurrentTime();
 
     Vector3f const *posIt = posCoords;
