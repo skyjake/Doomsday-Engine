@@ -128,6 +128,7 @@ greaterThan(QT_MAJOR_VERSION, 4): CONFIG += deng_qt5
 contains(QMAKE_HOST.arch, x86_64) {
     echo(64-bit architecture detected.)
     DEFINES += HOST_IS_64BIT
+    win32: CONFIG += win64
 }
 
 isStableRelease(): DEFINES += DENG_STABLE
