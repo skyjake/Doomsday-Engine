@@ -64,24 +64,27 @@ DENG2_OBSERVES(ButtonWidget, Press)
             //ColorBank::Colorf const &textColor   = style().colors().colorf("text");
             ColorBank::Colorf const &accentColor = style().colors().colorf("accent");
 
+            // Clamp the position to non-fractional coordinates.
+            Rectanglei const recti(rect.topLeft.toVector2i(), rect.bottomRight.toVector2i());
+
             // Background.
             ColorBank::Colorf bgColor = style().colors().colorf("background");
             bgColor.w = 1;
             float c = (.3f + .33f * _pos);
-            verts.makeQuad(rect, accentColor * Vector4f(c, c, c, 1),
+            verts.makeQuad(recti, accentColor * Vector4f(c, c, c, 1),
                            atlas().imageRectf(_owner.root().solidWhitePixel()).middle());
 
             Id onOff = _owner.root().toggleOnOff();
 
             // The on/off graphic.
-            verts.makeQuad(rect, accentColor * (5 + _pos) / 6, // * _pos + accentColor * .5f * (1 - _pos),
+            verts.makeQuad(recti, accentColor * (5 + _pos) / 6, // * _pos + accentColor * .5f * (1 - _pos),
                            atlas().imageRectf(onOff));
 
             // The flipper.
             int flipWidth = size().x - size().y + 2;
-            Rectanglef flip = Rectanglef::fromSize(rect.topLeft +
-                                                   Vector2f(1 + de::round<int>((1 - _pos) * (size().x - flipWidth)), 1),
-                                                   Vector2f(flipWidth, size().y) - Vector2ui(2, 2));
+            Rectanglei flip = Rectanglei::fromSize(recti.topLeft +
+                                                   Vector2i(1 + de::round<int>((1 - _pos) * (size().x - flipWidth)), 1),
+                                                   Vector2ui(flipWidth, size().y) - Vector2ui(2, 2));
             verts.makeQuad(flip, bgColor, atlas().imageRectf(_owner.root().solidWhitePixel()).middle());
         }
 
