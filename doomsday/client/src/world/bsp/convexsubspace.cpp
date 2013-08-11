@@ -21,9 +21,6 @@
 #include <QSet>
 #include <QtAlgorithms>
 
-#include <de/binangle.h>
-#include <de/mathutil.h>
-
 #include "Face"
 #include "HEdge"
 #include "Mesh"

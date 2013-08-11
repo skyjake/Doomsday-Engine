@@ -21,10 +21,6 @@
 
 #include <de/Vector>
 
-#include "render/rendpoly.h" /// @todo remove me
-
-#include "BiasTracker"
-
 /**
  * Base class for a surface which supports lighting within the Shadow Bias
  * lighting model.

@@ -34,6 +34,7 @@
 
 #ifdef __CLIENT__
 #  include "world/map.h"
+#  include "BiasDigest"
 #  include "BiasIllum"
 #  include "BiasSource"
 #  include "BiasTracker"
@@ -458,19 +459,20 @@ int BspLeaf::numFanVertices() const
     return d->poly->hedgeCount() + (fanBase()? 0 : 2);
 }
 
-static void updateBiasAfterGeometryMoveToFaceEdges(Face const &face)
+static void updateBiasForSegmentsAfterGeometryMove(Face const &face)
 {
     HEdge *base = face.hedge();
     HEdge *hedge = base;
     do
     {
-        DENG_ASSERT(hedge->mapElement() != 0);
-        Line::Side::Segment *seg = hedge->mapElement()->as<Line::Side::Segment>();
+        if(hedge->mapElement())
+        {
+            Line::Side::Segment *seg = hedge->mapElement()->as<Line::Side::Segment>();
 
-        seg->updateBiasAfterGeometryMove(Line::Side::Middle);
-        seg->updateBiasAfterGeometryMove(Line::Side::Bottom);
-        seg->updateBiasAfterGeometryMove(Line::Side::Top);
-
+            seg->updateBiasAfterGeometryMove(Line::Side::Middle);
+            seg->updateBiasAfterGeometryMove(Line::Side::Bottom);
+            seg->updateBiasAfterGeometryMove(Line::Side::Top);
+        }
     } while((hedge = &hedge->next()) != base);
 }
 
@@ -483,16 +485,16 @@ void BspLeaf::updateBiasAfterGeometryMove(int group)
         geomGroup->biasTracker.updateAllContributors();
     }
 
-    updateBiasAfterGeometryMoveToFaceEdges(poly());
+    updateBiasForSegmentsAfterGeometryMove(poly());
 
     foreach(Mesh *mesh, extraMeshes())
     foreach(Face *face, mesh->faces())
     {
-        updateBiasAfterGeometryMoveToFaceEdges(*face);
+        updateBiasForSegmentsAfterGeometryMove(*face);
     }
 }
 
-static void applyBiasDigestToSegmentsByFace(Face const &face, BiasDigest &changes)
+static void applyBiasDigestToSegments(Face const &face, BiasDigest &changes)
 {
     HEdge *base = face.hedge();
     HEdge *hedge = base;
@@ -515,12 +517,12 @@ void BspLeaf::applyBiasDigest(BiasDigest &changes)
         it.value().biasTracker.applyChanges(changes);
     }
 
-    applyBiasDigestToSegmentsByFace(poly(), changes);
+    applyBiasDigestToSegments(poly(), changes);
 
     foreach(Mesh *mesh, extraMeshes())
     foreach(Face *face, mesh->faces())
     {
-        applyBiasDigestToSegmentsByFace(*face, changes);
+        applyBiasDigestToSegments(*face, changes);
     }
 
     foreach(Polyobj *polyobj, d->polyobjs)

@@ -21,7 +21,6 @@
 #ifndef DENG_WORLD_BSPLEAF_H
 #define DENG_WORLD_BSPLEAF_H
 
-#include <QList>
 #include <QSet>
 
 #include <de/Error>
@@ -39,6 +38,7 @@ class Sector;
 struct polyobj_s;
 
 #ifdef __CLIENT__
+class BiasDigest;
 struct ShadowLink;
 #endif
 

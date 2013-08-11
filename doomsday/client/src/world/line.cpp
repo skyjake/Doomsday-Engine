@@ -34,6 +34,7 @@
 
 #ifdef __CLIENT__
 #  include "world/map.h"
+#  include "BiasDigest"
 #  include "BiasIllum"
 #  include "BiasSource"
 #  include "BiasTracker"

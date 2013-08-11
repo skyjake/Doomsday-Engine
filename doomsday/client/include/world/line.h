@@ -44,6 +44,10 @@
 class LineOwner;
 class Sector;
 
+#ifdef __CLIENT__
+class BiasDigest;
+#endif
+
 /**
  * World map line.
  *
