@@ -468,7 +468,7 @@ macx {
         $$DENG_MAC_INCLUDE_DIR/MusicPlayer.h
 
     OBJECTIVE_SOURCES += \
-        src/macx/MusicPlayer.m
+        src/macx/MusicPlayer.mm
 
     INCLUDEPATH += $$DENG_MAC_INCLUDE_DIR
 }

@@ -37,6 +37,7 @@ public:
 
 public:
     ProceduralImage(Size const &size = Size());
+    virtual ~ProceduralImage();
 
     Size size() const;
     Color color() const;

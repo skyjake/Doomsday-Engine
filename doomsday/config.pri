@@ -122,7 +122,9 @@ CONFIG(debug, debug|release) {
 deng_fakememoryzone: DEFINES += LIBDENG_FAKE_MEMORY_ZONE
 
 # Check for Qt 5.
-greaterThan(QT_MAJOR_VERSION, 4): CONFIG += deng_qt5
+greaterThan(QT_MAJOR_VERSION, 4) {
+    CONFIG += deng_qt5 c++11
+}
 
 # Check for a 64-bit compiler.
 contains(QMAKE_HOST.arch, x86_64) {

@@ -261,7 +261,7 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
     d->unloadMenu->setAnchor(d->mainMenu->rule().left(),
                              d->unloadItem->rule().top() + d->unloadItem->rule().height() / 2);
     d->unloadMenu->addSeparator(tr("Really unload the game?"));
-    d->unloadMenu->addItem(tr("Unload") + " "_E(b) + tr("(discard progress)"), new SignalAction(this, SLOT(unloadGame())));
+    d->unloadMenu->addItem(tr("Unload") + " " _E(b) + tr("(discard progress)"), new SignalAction(this, SLOT(unloadGame())));
     d->unloadMenu->addItem(tr("Cancel"), new Action);
     add(d->unloadMenu);
 
