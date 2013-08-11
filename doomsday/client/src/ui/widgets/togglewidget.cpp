@@ -61,7 +61,6 @@ DENG2_OBSERVES(ButtonWidget, Press)
 
         void glMakeGeometry(DefaultVertexBuf::Builder &verts, Rectanglef const &rect)
         {
-            //ColorBank::Colorf const &textColor   = style().colors().colorf("text");
             ColorBank::Colorf const &accentColor = style().colors().colorf("accent");
 
             // Clamp the position to non-fractional coordinates.
@@ -77,8 +76,7 @@ DENG2_OBSERVES(ButtonWidget, Press)
             Id onOff = _owner.root().toggleOnOff();
 
             // The on/off graphic.
-            verts.makeQuad(recti, accentColor * (5 + _pos) / 6, // * _pos + accentColor * .5f * (1 - _pos),
-                           atlas().imageRectf(onOff));
+            verts.makeQuad(recti, accentColor * (5 + _pos) / 6, atlas().imageRectf(onOff));
 
             // The flipper.
             int flipWidth = size().x - size().y + 2;
