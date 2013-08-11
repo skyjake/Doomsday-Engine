@@ -65,6 +65,7 @@ public:
         if(_atlas)
         {
             _atlas->release(_id);
+            _atlas = 0;
         }
     }
 
