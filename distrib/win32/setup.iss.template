@@ -126,6 +126,7 @@ Source: "doc\LICENSE"; DestDir: "{app}\doc"; Components: Engine
 Source: "doc\readme.txt"; DestDir: "{app}\doc"; Components: Engine
 
 ; Resources
+Source: "modules\appconfig.de"; DestDir: "{app}\modules"; Components: Engine
 Source: "modules\bootstrap.de"; DestDir: "{app}\modules"; Components: Engine
 Source: "modules\Config.de"; DestDir: "{app}\modules"; Components: Engine
 Source: "modules\gui.de"; DestDir: "{app}\modules"; Components: Engine

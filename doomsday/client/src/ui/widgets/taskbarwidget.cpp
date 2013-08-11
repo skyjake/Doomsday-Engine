@@ -22,6 +22,7 @@
 #include "ui/widgets/buttonwidget.h"
 #include "ui/widgets/consolecommandwidget.h"
 #include "ui/widgets/popupmenuwidget.h"
+#include "ui/widgets/variabletogglewidget.h"
 #include "ui/widgets/blurwidget.h"
 #include "ui/clientwindow.h"
 #include "ui/commandaction.h"
@@ -42,8 +43,9 @@
 using namespace de;
 using namespace ui;
 
+static TimeDelta OPEN_CLOSE_SPAN = 0.2;
+
 DENG2_PIMPL(TaskBarWidget),
-DENG2_OBSERVES(Variable, Change),
 public IGameChangeObserver
 {
     typedef DefaultVertexBuf VertexBuf;
@@ -55,7 +57,6 @@ public IGameChangeObserver
     PopupMenuWidget *mainMenu;
     PopupMenuWidget *unloadMenu;
     ButtonWidget *panelItem;
-    ButtonWidget *fpsItem;
     ButtonWidget *unloadItem;
     ScalarRule *vertShift;
 
@@ -156,15 +157,8 @@ public IGameChangeObserver
         }
     }
 
-    void variableValueChanged(Variable &, Value const &val)
-    {
-        // We are observing the value of the window's showFps variable.
-        updateMenuItems();
-    }
-
     void updateMenuItems()
     {
-        fpsItem->setText(ClientWindow::main().isFPSCounterVisible()? tr("Hide FPS") : tr("Show FPS"));
     }
 };
 
@@ -203,7 +197,7 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
     d->logo = new ButtonWidget;
     //d->logo->setAction(new CommandAction("panel"));
     d->logo->setImage(style().images().image("logo.px128"));
-    d->logo->setImageScale(.5f);
+    d->logo->setImageScale(.475f);
     d->logo->setImageFit(FitToHeight | OriginalAspectRatio);
 
     VersionInfo currentVersion;
@@ -252,7 +246,7 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
     // depending on whether a game is loaded.
     d->panelItem = d->mainMenu->addItem(_E(b) + tr("Open Control Panel"), new CommandAction("panel"));
     d->mainMenu->addItem(tr("Toggle Fullscreen"), new CommandAction("togglefullscreen"));
-    d->fpsItem = d->mainMenu->addItem("", new SignalAction(this, SLOT(toggleFPS())));
+    d->mainMenu->addItem(new VariableToggleWidget(tr("Show FPS"), App::config()["window.main.showFps"]));
     d->unloadItem = d->mainMenu->addItem(tr("Unload Game"), new SignalAction(this, SLOT(confirmUnloadGame())), false);
     d->mainMenu->addSeparator();
     d->mainMenu->addItem(tr("Check for Updates..."), new CommandAction("updateandnotify"));
@@ -274,9 +268,6 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
     d->panelItem->hide();
     d->unloadItem->hide();
     d->updateMenuItems();
-
-    // Observe when the showFps variable changes.
-    App::config()["window.main.showFps"].audienceForChange += d;
 
     d->logo->setAction(new SignalAction(this, SLOT(openMainMenu())));
 }
@@ -426,8 +417,8 @@ void TaskBarWidget::open(bool doAction)
 
         d->console->clearLog();
 
-        d->vertShift->set(0, .2f);
-        setOpacity(1, .2f);
+        d->vertShift->set(0, OPEN_CLOSE_SPAN);
+        setOpacity(1, OPEN_CLOSE_SPAN);
 
         emit opened();
 
@@ -467,8 +458,8 @@ void TaskBarWidget::close()
 
         // Slide the task bar down.
         d->vertShift->set(rule().height().valuei() +
-                          style().rules().rule("unit").valuei(), .2f);
-        setOpacity(0, .2f);
+                          style().rules().rule("unit").valuei(), OPEN_CLOSE_SPAN);
+        setOpacity(0, OPEN_CLOSE_SPAN);
 
         d->console->closeLog();
         d->console->closeMenu();
@@ -500,11 +491,6 @@ void TaskBarWidget::close()
 void TaskBarWidget::openMainMenu()
 {
     d->mainMenu->open();
-}
-
-void TaskBarWidget::toggleFPS()
-{
-    root().window().toggleFPSCounter();
 }
 
 void TaskBarWidget::confirmUnloadGame()

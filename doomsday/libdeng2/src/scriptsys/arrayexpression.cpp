@@ -68,7 +68,7 @@ Value *ArrayExpression::evaluate(Evaluator &evaluator) const
 {
     // Collect the right number of results into the array.
     ArrayValue *value = new ArrayValue;
-    for(dint count = _arguments.size(); count > 0; --count)
+    for(dsize count = _arguments.size(); count > 0; --count)
     {
         value->add(evaluator.popResult());
     }

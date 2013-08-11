@@ -120,7 +120,7 @@ void Config::read()
             LOG_MSG("") << d->persistentPath << " matches version " << version->asText();
         }
 
-        // Also check the timestamp of written config vs. they config script.
+        // Also check the timestamp of written config vs. the config script.
         // If script is newer, it should be rerun.
         if(scriptFile.status().modifiedAt > persist.entryStatus(d->persistentPath).modifiedAt)
         {

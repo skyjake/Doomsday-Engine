@@ -141,6 +141,8 @@ bool ConsoleCommandWidget::handleEvent(Event const &event)
             // Execute the command right away.
             Con_Execute(CMDS_CONSOLE, entered.toUtf8(), false, false);
 
+            emit commandEntered(entered);
+
             return true;
         }
     }

@@ -71,7 +71,7 @@ void Process::clearStack(duint downToLevel)
     }
 }
 
-duint Process::depth() const
+dsize Process::depth() const
 {
     return _stack.size();
 }

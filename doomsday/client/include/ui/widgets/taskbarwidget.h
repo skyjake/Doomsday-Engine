@@ -57,7 +57,6 @@ public slots:
     void open(bool doAction = true);
     void close();
     void openMainMenu();
-    void toggleFPS();
     void confirmUnloadGame();
     void unloadGame();
 

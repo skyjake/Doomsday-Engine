@@ -811,7 +811,7 @@ dint Bank::allItems(Names &names) const
     {
         names.insert(*i);
     }
-    return names.size();
+    return dint(names.size());
 }
 
 PathTree const &Bank::index() const

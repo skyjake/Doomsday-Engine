@@ -200,7 +200,7 @@ int FileSystem::findAll(String const &path, FoundFiles &found) const
             found.push_back(file);
         }
     }
-    return found.size();
+    return int(found.size());
 }
 
 File &FileSystem::find(String const &path) const

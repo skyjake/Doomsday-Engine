@@ -69,7 +69,7 @@ void BinaryTree_Delete(BinaryTree *tree)
 int BinaryTree_Height(BinaryTree *tree)
 {
     SELF(tree);
-    return self->height();
+    return int(self->height());
 }
 
 int BinaryTree_IsLeaf(BinaryTree *tree)

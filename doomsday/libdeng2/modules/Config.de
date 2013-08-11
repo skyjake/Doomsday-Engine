@@ -41,52 +41,6 @@ def setDefaults(d = None)
 
     d.importPath = ['', '/modules']
 
-    # The default audio and video subsystems.
-    d.video = 'opengl'
-    d.audio = 'fmod'
-
-    # Window manager defaults.
-    record d.window
-    d.window.fsaa = True    # Remove this (should be window-specific).
-
-    # Configure the main window.
-    # TODO: The client should have its own config script for setting these
-    record d.window.main
-    d.window.main.showFps = False
-    d.window.main.center  = True
-    d.window.main.fsaa    = True
-    d.window.main.vsync   = True
-
-    try
-        # The default window parameters depend on the original display mode.
-        import DisplayMode
-        mode = DisplayMode.originalMode()
-
-        # By default the fullscreen resolution is the desktop resolution.
-        d.window.main.fullSize = [mode['width'], mode['height']]
-        
-        # In windowed mode mode, leave some space on the sides so that
-        # the first switch to windowed mode does not place the window in an
-        # inconvenient location. The reduction is done proportionally.
-        offx = mode['width'] * 0.15
-        offy = mode['height'] * 0.15
-        d.window.main.rect = [offx, offy, 
-                              mode['width'] - 2*offx,
-                              mode['height'] - 2*offy]
-        d.window.main.colorDepth = mode['depth']
-    catch NotFoundError
-        # DisplayMode isn't available on the server.
-    end
-
-    import Version
-    if Version.OS == 'windows' or Version.OS == 'macx'
-        d.window.main.fullscreen = True
-        d.window.main.maximize   = False
-    else
-        d.window.main.fullscreen = False
-        d.window.main.maximize   = True
-    end
-
     # Log parameters.
     record d.log
 
@@ -103,6 +57,12 @@ def setDefaults(d = None)
     d.log.file       = '/home/doomsday.out'
     d.log.level      = d.log.MESSAGE
     d.log.bufferSize = 1000
+
+    try
+        # Get the application's default configuration, if we can.
+        import appconfig
+        appconfig.setDefaults(d)
+    catch: pass
     
     # Game mode related information (one for each game plugin):
     # TODO: plugins should have their own Config scripts (when libdeng2 loads them)

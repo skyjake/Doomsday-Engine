@@ -242,7 +242,7 @@ DENG2_PIMPL_NOREF(StringPool)
             }
 
             // Expand the idMap.
-            idx = idMap.size();
+            idx = InternalId(idMap.size());
             idMap.push_back(str); // O(1) (amortized)
         }
         str->setId(idx);

@@ -35,7 +35,7 @@ AssignStatement::AssignStatement(Expression *target, Indices const &indices, Exp
     : _indexCount(0)
 {
     _args.add(value);
-    _indexCount = indices.size();
+    _indexCount = dint(indices.size());
     for(Indices::const_reverse_iterator i = indices.rbegin(); i != indices.rend(); ++i)
     {
         _args.add(*i);
