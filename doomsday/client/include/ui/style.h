@@ -47,8 +47,8 @@ public:
     // Partial implementation for Font::RichFormat::IStyle.
     void richStyleFormat(int contentStyle,
                          float &sizeFactor,
-                         Font::RichFormat::Weight &fontWeight,
-                         Font::RichFormat::Style &fontStyle,
+                         de::Font::RichFormat::Weight &fontWeight,
+                         de::Font::RichFormat::Style &fontStyle,
                          int &colorIndex) const;
 
 private:
