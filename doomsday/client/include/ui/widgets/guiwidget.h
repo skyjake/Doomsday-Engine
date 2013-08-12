@@ -220,6 +220,18 @@ public:
 
     MouseClickStatus handleMouseClick(de::Event const &event);
 
+    /**
+     * Requests the widget to refresh its geometry, if it has any static
+     * geometry. Normally this does not need to be called. It is provided
+     * mostly as a way for subclasses to ensure that geometry is up to date
+     * when they need it.
+     *
+     * @param yes  @c true to request, @c false to cancel the request.
+     */
+    void requestGeometry(bool yes = true);
+
+    bool geometryRequested() const;
+
 protected:
     virtual void addedChildWidget(Widget &widget) /*final*/;
     virtual void removedChildWidget(Widget &widget) /*final*/;
@@ -255,18 +267,6 @@ protected:
     virtual void drawContent();
 
     void drawBlurredRect(de::Rectanglei const &rect, de::Vector4f const &color);
-
-    /**
-     * Requests the widget to refresh its geometry, if it has any static
-     * geometry. Normally this does not need to be called. It is provided
-     * mostly as a way for subclasses to ensure that geometry is up to date
-     * when they need it.
-     *
-     * @param yes  @c true to request, @c false to cancel the request.
-     */
-    void requestGeometry(bool yes = true);
-
-    bool geometryRequested() const;
 
     /**
      * Extensible mechanism for derived widgets to build their geometry. The

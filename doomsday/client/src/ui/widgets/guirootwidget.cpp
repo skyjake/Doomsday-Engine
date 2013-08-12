@@ -39,6 +39,7 @@ DENG2_PIMPL(GuiRootWidget)
     Id roundCorners;
     Id gradientFrame;
     Id borderGlow;
+    Id toggleOnOff;
     bool noFramesDrawnYet;
 
     Instance(Public *i, ClientWindow *win)
@@ -61,6 +62,8 @@ DENG2_PIMPL(GuiRootWidget)
     {
         if(atlas.isNull())
         {
+            Style const &st = ClientApp::windowSystem().style();
+
             atlas.reset(AtlasTexture::newWithRowAllocator(
                             Atlas::BackingStore | Atlas::AllowDefragment,
                             GLTexture::maximumSize().min(GLTexture::Size(4096, 4096))));
@@ -105,8 +108,10 @@ DENG2_PIMPL(GuiRootWidget)
             }
 
             // Border glow.
-            borderGlow = atlas->alloc(ClientApp::windowSystem().style().images().
-                                      image("window.borderglow"));
+            borderGlow = atlas->alloc(st.images().image("window.borderglow"));
+
+            // On/Off toggle.
+            toggleOnOff = atlas->alloc(st.images().image("toggle.onoff"));
         }
     }
 };
@@ -159,6 +164,12 @@ Id GuiRootWidget::borderGlow() const
 {
     d->initAtlas();
     return d->borderGlow;
+}
+
+Id GuiRootWidget::toggleOnOff() const
+{
+    d->initAtlas();
+    return d->toggleOnOff;
 }
 
 GLShaderBank &GuiRootWidget::shaders()

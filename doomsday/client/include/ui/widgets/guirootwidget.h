@@ -55,6 +55,7 @@ public:
     de::Id roundCorners() const;
     de::Id gradientFrame() const;
     de::Id borderGlow() const;
+    de::Id toggleOnOff() const;
 
     static de::GLShaderBank &shaders();
 

@@ -415,6 +415,18 @@ void ZipArchive::readFromSource(Entry const &e, Path const &, IBlock &uncompress
         stream.next_out = const_cast<IByteArray::Byte *>(uncompressedData.data());
         stream.avail_out = entry.size;
 
+        /*
+         * Set up a raw inflate with a window of -15 bits.
+         *
+         * From zlib documentation:
+         *
+         * "windowBits can also be –8..–15 for raw inflate. In this case,
+         * -windowBits determines the window size. inflate() will then process
+         * raw deflate data, not looking for a zlib or gzip header, not
+         * generating a check value, and not looking for any check values for
+         * comparison at the end of the stream. This is for use with other
+         * formats that use the deflate compressed data format such as 'zip'."
+         */
         if(inflateInit2(&stream, -MAX_WBITS) != Z_OK)
         {
             /// @throw InflateError Problem with zlib: inflateInit2 failed.
@@ -511,6 +523,14 @@ void ZipArchive::operator >> (Writer &to) const
             stream.next_out = const_cast<IByteArray::Byte *>(archived.data());
             stream.avail_out = archived.size();
 
+            /*
+             * The deflation is done in raw mode. From zlib documentation:
+             *
+             * "windowBits can also be –8..–15 for raw deflate. In this case,
+             * -windowBits determines the window size. deflate() will then
+             * generate raw deflate data with no zlib header or trailer, and
+             * will not compute an adler32 check value."
+             */
             if(deflateInit2(&stream, Z_DEFAULT_COMPRESSION, Z_DEFLATED,
                             -MAX_WBITS, 8, Z_DEFAULT_STRATEGY) != Z_OK)
             {
@@ -598,7 +618,7 @@ void ZipArchive::ZipEntry::update()
 {
     if(data)
     {
-        size = data->size();
+        size  = data->size();
         crc32 = ::crc32(0L, data->data(), data->size());
     }
 }

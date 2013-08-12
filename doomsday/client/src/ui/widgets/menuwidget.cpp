@@ -263,6 +263,15 @@ void MenuWidget::setLayoutSortOrder(ISortOrder *sorting)
     d->needLayout = true;
 }
 
+GuiWidget *MenuWidget::addItem(GuiWidget *anyWidget)
+{
+    if(!anyWidget) return 0;
+
+    add(anyWidget);
+    d->needLayout = true;
+    return anyWidget;
+}
+
 ButtonWidget *MenuWidget::addItem(String const &styledText, Action *action)
 {
     return addItem(Image(), styledText, action);
@@ -277,8 +286,7 @@ ButtonWidget *MenuWidget::addItem(Image const &image, String const &styledText, 
     b->setTextAlignment(ui::AlignRight);
     b->setAction(action);
 
-    add(b);
-    d->needLayout = true;
+    addItem(b);
 
     return b;
 }
@@ -290,8 +298,7 @@ GuiWidget *MenuWidget::addSeparator(String const &labelText)
     lab->setAlignment(ui::AlignLeft);
     lab->setTextLineAlignment(ui::AlignLeft);
     lab->setSizePolicy(ui::Expand, ui::Expand);
-    add(lab);
-    d->needLayout = true;
+    addItem(lab);
     return lab;
 }
 

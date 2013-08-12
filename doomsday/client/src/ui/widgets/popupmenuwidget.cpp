@@ -105,12 +105,37 @@ ButtonWidget *PopupMenuWidget::addItem(String const &styledText, Action *action,
         b->audienceForTriggered += d;
     }
 
-    // We want items to be hittable throughtout the width of the menu.
+    // We want items to be hittable throughout the width of the menu.
     b->hitRule()
             .setInput(Rule::Left,  rule().left())
             .setInput(Rule::Right, rule().right());
 
     return b;
+}
+
+LabelWidget *PopupMenuWidget::addItem(LabelWidget *anyLabelBasedWidget)
+{
+    LabelWidget *w = anyLabelBasedWidget;
+    if(!w) return w;
+
+    menu().addItem(w);
+
+    ButtonWidget *button = dynamic_cast<ButtonWidget *>(w);
+    if(button)
+    {
+        button->audienceForStateChange += d;
+    }
+
+    w->setSizePolicy(ui::Expand, ui::Expand);
+    w->setMargin("unit");
+    w->set(Background());
+
+    // We want items to be hittable throughout the width of the menu.
+    w->hitRule()
+            .setInput(Rule::Left,  rule().left())
+            .setInput(Rule::Right, rule().right());
+
+    return w;
 }
 
 GuiWidget *PopupMenuWidget::addSeparator(String const &optionalLabel)

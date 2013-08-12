@@ -122,7 +122,7 @@ dint Archive::listFiles(Archive::Names &names, Path const &folder) const
         names.insert(iter.next().name());
     }
 
-    return names.size();
+    return dint(names.size());
 }
 
 dint Archive::listFolders(Archive::Names &names, Path const &folder) const
@@ -140,7 +140,7 @@ dint Archive::listFolders(Archive::Names &names, Path const &folder) const
         names.insert(iter.next().name());
     }
 
-    return names.size();
+    return dint(names.size());
 }
 
 File::Status Archive::entryStatus(Path const &path) const

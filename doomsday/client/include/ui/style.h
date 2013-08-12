@@ -44,6 +44,13 @@ public:
     de::ColorBank const &colors() const;
     de::ImageBank const &images() const;
 
+    // Partial implementation for Font::RichFormat::IStyle.
+    void richStyleFormat(int contentStyle,
+                         float &sizeFactor,
+                         de::Font::RichFormat::Weight &fontWeight,
+                         de::Font::RichFormat::Style &fontStyle,
+                         int &colorIndex) const;
+
 private:
     DENG2_PRIVATE(d)
 };

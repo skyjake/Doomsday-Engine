@@ -18,7 +18,7 @@ deng_qtautoselect:!deng_nativesdk {
         # 4.8+, assume Lion and 64-bit Intel.
         CONFIG += deng_macx7_64bit
     }
-    else:contains(QT_VERSION, ^5\\.[0-1]\\..*) {
+    else:contains(QT_VERSION, ^5\\.[0-2]\\..*) {
         # 5.0+, assume Mountain Lion and 64-bit Intel.
         CONFIG += deng_macx8_64bit
     }
@@ -70,12 +70,12 @@ else {
 }
 
 # Adjust Qt paths as needed.
-!deng_macx8_64bit {
-	qtbase = $$(QTDIR)
-	isEmpty(qtbase):!isEmpty(QMAKE_MAC_SDK) {
-	    QMAKE_INCDIR_QT = $${QMAKE_MAC_SDK}$$QMAKE_INCDIR_QT
-	    QMAKE_LIBDIR_QT = $${QMAKE_MAC_SDK}$$QMAKE_LIBDIR_QT
-	}
+!deng_macx8_64bit:!deng_qt5 {
+    qtbase = $$(QTDIR)
+    isEmpty(qtbase):!isEmpty(QMAKE_MAC_SDK) {
+        QMAKE_INCDIR_QT = $${QMAKE_MAC_SDK}$$QMAKE_INCDIR_QT
+        QMAKE_LIBDIR_QT = $${QMAKE_MAC_SDK}$$QMAKE_LIBDIR_QT
+    }
 }
 
 # What's our arch?

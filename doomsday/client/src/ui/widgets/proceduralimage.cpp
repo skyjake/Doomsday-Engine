@@ -23,6 +23,9 @@ using namespace de;
 ProceduralImage::ProceduralImage(Size const &size) : _size(size), _color(1, 1, 1, 1)
 {}
 
+ProceduralImage::~ProceduralImage()
+{}
+
 ProceduralImage::Size ProceduralImage::size() const
 {
     return _size;

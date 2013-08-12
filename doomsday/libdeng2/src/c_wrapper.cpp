@@ -216,7 +216,7 @@ int Info_FindValue(Info *info, char const *path, char *buffer, size_t bufSize)
     QString value = static_cast<de::Info::KeyElement const *>(element)->value();
     if(buffer)
     {
-        qstrncpy(buffer, value.toUtf8().constData(), bufSize);
+        qstrncpy(buffer, value.toUtf8().constData(), uint(bufSize));
         return true;
     }
     else
@@ -236,7 +236,7 @@ int UnixInfo_GetConfigValue(char const *configFile, char const *key, char *dest,
         de::NativePath foundValue;
         if(info.path(key, foundValue))
         {
-            qstrncpy(dest, foundValue.toString().toUtf8().constData(), destLen);
+            qstrncpy(dest, foundValue.toString().toUtf8().constData(), uint(destLen));
             return true;
         }
     }
@@ -245,7 +245,7 @@ int UnixInfo_GetConfigValue(char const *configFile, char const *key, char *dest,
         de::String foundValue;
         if(info.defaults(key, foundValue))
         {
-            qstrncpy(dest, foundValue.toUtf8().constData(), destLen);
+            qstrncpy(dest, foundValue.toUtf8().constData(), uint(destLen));
             return true;
         }
     }

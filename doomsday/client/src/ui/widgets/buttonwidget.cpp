@@ -53,19 +53,19 @@ DENG2_OBSERVES(Action, Triggered)
         switch(st)
         {
         case Up:
-            scale.setStyle(prev == Down? Animation::Bounce : Animation::EaseOut);
             scale.setValue(1.f, .3f);
+            scale.setStyle(prev == Down? Animation::Bounce : Animation::EaseOut);
             frameOpacity.setValue(.08f, .6f);
             break;
 
         case Hover:
-            //scale.setStyle(Animation::EaseOut);
             //scale.setValue(1.1f, .15f);
+            //scale.setStyle(Animation::EaseOut);
             frameOpacity.setValue(.4f, .15f);
             break;
 
         case Down:
-            scale.setValue(.9f);
+            scale.setValue(.95f);
             frameOpacity.setValue(0);
             break;
         }
@@ -172,9 +172,16 @@ bool ButtonWidget::handleEvent(Event const &event)
 
             case MouseClickFinished:
                 d->setState(Up);
-                if(!d->action.isNull() && hitTest(mouse.pos()))
+                d->updateHover(mouse.pos());
+                if(hitTest(mouse.pos()))
                 {
-                    d->action->trigger();
+                    // Notify.
+                    DENG2_FOR_AUDIENCE(Press, i) i->buttonPressed(*this);
+
+                    if(!d->action.isNull())
+                    {
+                        d->action->trigger();
+                    }
                 }
                 return true;
 

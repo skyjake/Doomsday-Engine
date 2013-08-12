@@ -85,6 +85,8 @@ public:
      */
     void setLayoutSortOrder(ISortOrder *sorting);
 
+    GuiWidget *addItem(GuiWidget *anyWidget);
+
     ButtonWidget *addItem(de::String const &styledText, de::Action *action = 0);
 
     ButtonWidget *addItem(de::Image const &image, de::String const &styledText, de::Action *action = 0);

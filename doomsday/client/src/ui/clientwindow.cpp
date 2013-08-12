@@ -360,7 +360,7 @@ public IGameChangeObserver
 
         if(!fequal(oldFps, fps))
         {
-            fpsCounter->setText(QString("%1 "_E(l) + tr("FPS")).arg(fps, 0, 'f', 1));
+            fpsCounter->setText(QString("%1 " _E(l) + tr("FPS")).arg(fps, 0, 'f', 1));
             oldFps = fps;
         }
     }

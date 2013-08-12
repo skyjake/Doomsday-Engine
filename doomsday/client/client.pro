@@ -369,6 +369,8 @@ DENG_HEADERS += \
     include/ui/widgets/scrollareawidget.h \
     include/ui/widgets/styledlogsinkformatter.h \
     include/ui/widgets/taskbarwidget.h \
+    include/ui/widgets/togglewidget.h \
+    include/ui/widgets/variabletogglewidget.h \
     include/ui/widgets/widgetactions.h \
     include/ui/windowsystem.h \
     include/ui/zonedebug.h \
@@ -464,7 +466,7 @@ macx {
         $$DENG_MAC_INCLUDE_DIR/MusicPlayer.h
 
     OBJECTIVE_SOURCES += \
-        src/macx/MusicPlayer.m
+        src/macx/MusicPlayer.mm
 
     INCLUDEPATH += $$DENG_MAC_INCLUDE_DIR
 }
@@ -671,6 +673,8 @@ SOURCES += \
     src/ui/widgets/scrollareawidget.cpp \
     src/ui/widgets/styledlogsinkformatter.cpp \
     src/ui/widgets/taskbarwidget.cpp \
+    src/ui/widgets/togglewidget.cpp \
+    src/ui/widgets/variabletogglewidget.cpp \
     src/ui/widgets/widgetactions.cpp \
     src/ui/windowsystem.cpp \
     src/ui/zonedebug.cpp \
@@ -725,8 +729,12 @@ SOURCES += \
     SOURCES += src/audio/sys_audiod_sdlmixer.cpp
 }
 
+DOOMSDAY_SCRIPTS += \
+    modules/appconfig.de \
+    modules/bootstrap.de
+
 OTHER_FILES += \
-    modules/bootstrap.de \
+    $$DOOMSDAY_SCRIPTS \
     data/cphelp.txt \
     include/template.h.template \
     src/template.c.template \
@@ -738,7 +746,7 @@ OTHER_FILES += \
 data.files = $$OUT_PWD/../doomsday.pk3
 
 mod.files = \
-    modules/bootstrap.de \
+    $$DOOMSDAY_SCRIPTS \
     $$DENG_MODULES_DIR/Config.de \
     $$DENG_MODULES_DIR/gui.de \
     $$DENG_MODULES_DIR/recutil.de
