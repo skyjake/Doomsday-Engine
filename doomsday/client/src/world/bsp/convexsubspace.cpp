@@ -427,15 +427,13 @@ void ConvexSubspace::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
 
                 if(Line::Side *mapSide = lineSeg->mapSidePtr())
                 {
-                    Line::Side::Segment *seg = new Line::Side::Segment(*mapSide, *hedge);
-
-                    // Attribute the segment to half-edge.
-                    hedge->setMapElement(seg);
-
+                    Line::Side::Segment *seg = mapSide->addSegment(*hedge);
 #ifdef __CLIENT__
+                    /// @todo Line::Side::newSegment() should encapsulate:
                     seg->setLineSideOffset(Vector2d(mapSide->from().origin() - lineSeg->from().origin()).length());
-
                     seg->setLength(Vector2d(lineSeg->to().origin() - lineSeg->from().origin()).length());
+#else
+                    DENG_UNUSED(seg);
 #endif
                 }
 
@@ -523,15 +521,13 @@ void ConvexSubspace::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
 
             if(Line::Side *mapSide = lineSeg->mapSidePtr())
             {
-                Line::Side::Segment *seg = new Line::Side::Segment(*mapSide, *hedge);
-
-                // Attribute the segment to the half-edge.
-                hedge->setMapElement(seg);
-
+                Line::Side::Segment *seg = mapSide->addSegment(*hedge);
 #ifdef __CLIENT__
+                /// @todo Line::Side::newSegment() should encapsulate:
                 seg->setLineSideOffset(Vector2d(mapSide->from().origin() - lineSeg->from().origin()).length());
-
                 seg->setLength(Vector2d(lineSeg->to().origin() - lineSeg->from().origin()).length());
+#else
+                DENG_UNUSED(seg);
 #endif
             }
 

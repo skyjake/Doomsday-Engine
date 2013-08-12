@@ -53,10 +53,12 @@
 #include "BspLeaf"
 #include "BspNode"
 
-#include "HueCircleVisual"
+#include "BiasIllum"
+#include "BiasSurface"
 #include "SkyFixEdge"
 #include "WallEdge"
 #include "TriangleStripBuilder"
+#include "HueCircleVisual"
 #include "render/blockmapvisual.h"
 #include "render/sprite.h"
 

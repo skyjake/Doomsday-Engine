@@ -1514,33 +1514,6 @@ BspTreeNode *Partitioner::buildBsp(LineSet const &lines, Mesh &mesh)
     d->splitOverlappingLineSegments();
     d->buildLeafGeometries();
 
-    // Find the half-edges at the edge of each map line side.
-    /// @todo Optimize: Performing a search for both sides of the same map
-    /// line should be unnecessary provided we produced a complete tree with
-    /// no degenerate leaf geometries...
-    foreach(LineSegment *lineSeg, d->lineSegments)
-    for(int i = 0; i < 2; ++i)
-    {
-        LineSegment::Side &seg = lineSeg->side(i);
-
-        if(!seg.hasMapSide()) continue;
-        if(!seg.hasHEdge()) continue; // Oh dear...
-
-        // Find the left-most segment.
-        LineSegment::Side *left = &seg;
-        while(left->hasLeft() && left->left().hasHEdge())
-        { left = &left->left(); }
-
-        seg.mapSide().setLeftHEdge(left->hedgePtr());
-
-        // Find the right-most segment.
-        LineSegment::Side *right = &seg;
-        while(right->hasRight() && right->right().hasHEdge())
-        { right = &right->right(); }
-
-        seg.mapSide().setRightHEdge(right->hedgePtr());
-    }
-
     return d->rootNode;
 }
 

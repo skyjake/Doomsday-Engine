@@ -3521,13 +3521,12 @@ bool Map::endEditing()
             hedge->setTwin(polyobj->mesh().newHEdge(line->to()));
             hedge->twin().setTwin(hedge);
 
-            hedge->setMapElement(new Line::Side::Segment(line->front(), *hedge));
+            Line::Side::Segment *seg = line->front().addSegment(*hedge);
 #ifdef __CLIENT__
-            hedge->mapElement()->as<Line::Side::Segment>()->setLength(line->length());
+            seg->setLength(line->length());
+#else
+            DENG_UNUSED(seg);
 #endif
-
-            line->front().setLeftHEdge(hedge);
-            line->front().setRightHEdge(hedge);
         }
 
         polyobj->buildUniqueVertexes();

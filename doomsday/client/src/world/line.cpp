@@ -19,9 +19,7 @@
  */
 
 #include <QMap>
-
-#include <de/libdeng2.h>
-#include <de/Vector>
+#include <QtAlgorithms>
 
 #include "m_misc.h"
 
@@ -181,6 +179,12 @@ Line::Side &Line::Side::Segment::lineSide() const
     return *this->parent().as<Line::Side>();
 }
 
+HEdge &Line::Side::Segment::hedge() const
+{
+    DENG_ASSERT(d->hedge != 0);
+    return *d->hedge;
+}
+
 #ifdef __CLIENT__
 
 coord_t Line::Side::Segment::lineSideOffset() const
@@ -299,11 +303,9 @@ DENG2_PIMPL_NOREF(Line::Side)
     /// Attributed sector (not owned).
     Sector *sector;
 
-    /// Left-most half-egde on this side of the owning line (not owned).
-    HEdge *leftHEdge;
-
-    /// Right-most half-edge on this side of the owning line (not owned).
-    HEdge *rightHEdge;
+    /// The sorted list of segments on this side.
+    Line::Side::Segments segments;
+    bool needSortSegments; ///< set to @c true when the list needs sorting.
 
     /// Framecount of last time shadows were drawn on this side.
     int shadowVisCount;
@@ -311,10 +313,14 @@ DENG2_PIMPL_NOREF(Line::Side)
     Instance(Sector *sector)
         : flags(0),
           sector(sector),
-          leftHEdge(0),
-          rightHEdge(0),
+          needSortSegments(false),
           shadowVisCount(0)
     {}
+
+    ~Instance()
+    {
+        qDeleteAll(segments);
+    }
 
     /**
      * Retrieve the Section associated with @a sectionId.
@@ -334,6 +340,22 @@ DENG2_PIMPL_NOREF(Line::Side)
         throw Line::InvalidSectionIdError("Line::Side::section", QString("Invalid section id %1").arg(sectionId));
     }
 
+    void sortSegments(Vector2d lineSideOrigin)
+    {
+        needSortSegments = false;
+
+        if(segments.count() < 2)
+            return;
+
+        // We'll use a QMap for sorting the segments.
+        QMap<coord_t, Segment *> sortedSegs;
+        foreach(Segment *seg, segments)
+        {
+            sortedSegs.insert((seg->hedge().origin() - lineSideOrigin).length(), seg);
+        }
+        segments = sortedSegs.values();
+    }
+
 #ifdef __CLIENT__
     /// Observes Line FlagsChange
     void lineFlagsChanged(Line &line, int oldFlags)
@@ -351,7 +373,6 @@ DENG2_PIMPL_NOREF(Line::Side)
         }
     }
 #endif
-
 };
 
 Line::Side::Side(Line &line, Sector *sector)
@@ -385,13 +406,12 @@ bool Line::Side::considerOneSided() const
     {
         // If no segment is linked then the convex subspace on "this" side must
         // have been degenerate (thus no geometry).
-        if(!d->leftHEdge)
+        HEdge *hedge = leftHEdge();
+
+        if(!hedge || !hedge->twin().hasFace())
             return true;
 
-        if(!d->leftHEdge->twin().hasFace())
-            return true;
-
-        if(!d->leftHEdge->twin().face().mapElement()->as<BspLeaf>()->hasSector())
+        if(!hedge->twin().face().mapElement()->as<BspLeaf>()->hasSector())
             return true;
     }
 
@@ -446,24 +466,59 @@ ddmobj_base_t const &Line::Side::soundEmitter(int sectionId) const
     return const_cast<ddmobj_base_t const &>(const_cast<Side *>(this)->soundEmitter(sectionId));
 }
 
-HEdge *Line::Side::leftHEdge() const
+void Line::Side::clearSegments()
 {
-    return d->leftHEdge;
+    d->segments.clear();
+    d->needSortSegments = false; // An empty list is sorted.
 }
 
-void Line::Side::setLeftHEdge(HEdge *newHEdge)
+Line::Side::Segment *Line::Side::addSegment(de::HEdge &hedge)
 {
-    d->leftHEdge = newHEdge;
+    // Have we an exiting segment for this half-edge?
+    foreach(Segment *seg, d->segments)
+    {
+        if(&seg->hedge() == &hedge)
+            return seg;
+    }
+
+    // No, insert a new one.
+    Segment *newSeg = new Segment(*this, hedge);
+    d->segments.append(newSeg);
+    d->needSortSegments = true; // We'll need to (re)sort.
+
+    // Attribute the segment to half-edge.
+    hedge.setMapElement(newSeg);
+
+    return newSeg;
+}
+
+Line::Side::Segments const &Line::Side::segments() const
+{
+    if(d->needSortSegments)
+    {
+        d->sortSegments(from().origin());
+    }
+    return d->segments;
+}
+
+HEdge *Line::Side::leftHEdge() const
+{
+    if(d->segments.isEmpty()) return 0;
+    if(d->needSortSegments)
+    {
+        d->sortSegments(from().origin());
+    }
+    return &d->segments.first()->hedge();
 }
 
 HEdge *Line::Side::rightHEdge() const
 {
-    return d->rightHEdge;
-}
-
-void Line::Side::setRightHEdge(HEdge *newHEdge)
-{
-    d->rightHEdge = newHEdge;
+    if(d->segments.isEmpty()) return 0;
+    if(d->needSortSegments)
+    {
+        d->sortSegments(from().origin());
+    }
+    return &d->segments.last()->hedge();
 }
 
 void Line::Side::updateSoundEmitterOrigin(int sectionId)

@@ -21,10 +21,11 @@
 #ifndef DENG_WORLD_LINE_H
 #define DENG_WORLD_LINE_H
 
+#include <QFlags>
+#include <QList>
+
 #include <de/binangle.h>
 #include <de/vector1.h> /// @todo remove me
-
-#include <QFlags>
 
 #include <de/Error>
 #include <de/Observers>
@@ -153,6 +154,11 @@ public:
              */
             inline Line &line() const { return lineSide().line(); }
 
+            /**
+             * Returns the half-edge for the segment.
+             */
+            de::HEdge &hedge() const;
+
 #ifdef __CLIENT__
 
             /**
@@ -212,6 +218,8 @@ public:
         private:
             DENG2_PRIVATE(d)
         };
+
+        typedef QList<Segment *> Segments;
 
     public:
         Side(Line &line, Sector *sector = 0);
@@ -426,32 +434,43 @@ public:
         inline Sector *sectorPtr() const { return hasSector()? &sector() : 0; }
 
         /**
-         * Returns a pointer the left-most half-edge for the side; otherwise @c 0.
+         * Clears (destroys) all segments for the side.
+         */
+        void clearSegments();
+
+        /**
+         * Create a Segment for the specified half-edge. If an existing Segment
+         * is present for the half-edge it will be returned instead (nothing will
+         * happen).
+         *
+         * It is assumed that the half-edge is collinear with and represents a
+         * subsection of the line geometry. It is also assumed that the half-edge
+         * faces the same direction as this side. It is the caller's responsibility
+         * to ensure these two requirements are met otherwise the segment list
+         * will be ordered illogically.
+         *
+         * @param hedge  Half-edge to create a new Segment for.
+         *
+         * @return  Pointer to the (possibly newly constructed) Segment.
+         */
+        Segment *addSegment(de::HEdge &hedge);
+
+        /**
+         * Provides access to the sorted segment list for the side.
+         */
+        Segments const &segments() const;
+
+        /**
+         * Convenient method of returning the half-edge of the left-most segment
+         * on this side of the line; otherwise @c 0 (no segments exist).
          */
         de::HEdge *leftHEdge() const;
 
         /**
-         * Change the left-most half-ege for the side.
-         *
-         * @param newHEdge  New half-edge to set as the left-most. Can be @c 0.
-         *
-         * @todo Refactor away. Only needed presently because of Polyobj.
-         */
-        void setLeftHEdge(de::HEdge *newHEdge);
-
-        /**
-         * Returns a pointer to the right-most half-edge for the side; otherwise @c 0.
+         * Convenient method of returning the half-edge of the right-most segment
+         * on this side of the line; otherwise @c 0 (no segments exist).
          */
         de::HEdge *rightHEdge() const;
-
-        /**
-         * Change the right-most half-edge for the side.
-         *
-         * @param newHEdge  New half-edge to set as the right-most. Can be @c 0.
-         *
-         * @todo Refactor away. Only needed presently because of Polyobj.
-         */
-        void setRightHEdge(de::HEdge *newHEdge);
 
         /**
          * Update the tangent space normals of the side's surfaces according to the
