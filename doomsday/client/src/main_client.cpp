@@ -74,6 +74,7 @@ int main(int argc, char** argv)
     }
     catch(de::Error const &er)
     {
+        qWarning() << "App init failed:\n" << er.asText();
         QMessageBox::critical(0, DOOMSDAY_NICENAME, "App init failed:\n" + er.asText());
         return -1;
     }
