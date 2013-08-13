@@ -167,6 +167,7 @@ static void scanNeighbor(bool scanTop, Line::Side const &side, edge_t *edge,
 {
     int const SEP = 10;
 
+    ClockDirection const direction = toLeft? Clockwise : Anticlockwise;
     Line *iter;
     binangle_t diff = 0;
     coord_t lengthDelta = 0, gap = 0;
@@ -175,7 +176,6 @@ static void scanNeighbor(bool scanTop, Line::Side const &side, edge_t *edge,
     int scanSecSide = side.sideId();
     Sector const *startSector = side.sectorPtr();
     Sector const *scanSector;
-    bool clockwise = toLeft;
     bool stopScan = false;
     bool closed;
 
@@ -188,8 +188,8 @@ static void scanNeighbor(bool scanTop, Line::Side const &side, edge_t *edge,
     do
     {
         // Select the next line.
-        diff = (clockwise? own->angle() : own->prev().angle());
-        iter = &own->_link[(int)clockwise]->line();
+        diff = (direction == Clockwise? own->angle() : own->prev().angle());
+        iter = &own->navigate(direction).line();
 
         scanSecSide = (iter->hasFrontSector() && iter->frontSectorPtr() == startSector)? Line::Back : Line::Front;
 
@@ -197,9 +197,9 @@ static void scanNeighbor(bool scanTop, Line::Side const &side, edge_t *edge,
         while((!iter->hasFrontSector() && !iter->hasBackSector()) || // $degenleaf
               iter->isSelfReferencing())
         {
-            own = own->_link[(int)clockwise];
-            diff += (clockwise? own->angle() : own->prev().angle());
-            iter = &own->_link[(int)clockwise]->line();
+            own = &own->navigate(direction);
+            diff += (direction == Clockwise? own->angle() : own->prev().angle());
+            iter = &own->navigate(direction).line();
 
             scanSecSide = (iter->frontSectorPtr() == startSector);
         }
@@ -335,9 +335,9 @@ static void scanNeighbor(bool scanTop, Line::Side const &side, edge_t *edge,
         if(!stopScan)
         {
             // Around the corner.
-            if(own->_link[(int)clockwise] == iter->v2Owner())
+            if(&own->navigate(direction) == iter->v2Owner())
                 own = iter->v1Owner();
-            else if(own->_link[(int)clockwise] == iter->v1Owner())
+            else if(&own->navigate(direction) == iter->v1Owner())
                 own = iter->v2Owner();
 
             // Skip into the back neighbor sector of the iter line if
@@ -359,7 +359,7 @@ static void scanNeighbor(bool scanTop, Line::Side const &side, edge_t *edge,
                 if(backNeighbor && backNeighbor != iter)
                 {
                     // Into the back neighbor sector.
-                    own = own->_link[(int)clockwise];
+                    own = &own->navigate(direction);
                     startSector = scanSector;
                 }
             }
