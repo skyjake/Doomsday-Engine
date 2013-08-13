@@ -61,6 +61,8 @@ DENG2_OBSERVES(ButtonWidget, Press)
 
         void glMakeGeometry(DefaultVertexBuf::Builder &verts, Rectanglef const &rect)
         {
+            float p = _pos;
+
             ColorBank::Colorf const &accentColor = style().colors().colorf("accent");
 
             // Clamp the position to non-fractional coordinates.
@@ -69,19 +71,19 @@ DENG2_OBSERVES(ButtonWidget, Press)
             // Background.
             ColorBank::Colorf bgColor = style().colors().colorf("background");
             bgColor.w = 1;
-            float c = (.3f + .33f * _pos);
+            float c = (.3f + .33f * p);
             verts.makeQuad(recti, accentColor * Vector4f(c, c, c, 1),
                            atlas().imageRectf(_owner.root().solidWhitePixel()).middle());
 
             Id onOff = _owner.root().toggleOnOff();
 
             // The on/off graphic.
-            verts.makeQuad(recti, accentColor * (5 + _pos) / 6, atlas().imageRectf(onOff));
+            verts.makeQuad(recti, accentColor * (5 + p) / 6, atlas().imageRectf(onOff));
 
             // The flipper.
             int flipWidth = size().x - size().y + 2;
             Rectanglei flip = Rectanglei::fromSize(recti.topLeft +
-                                                   Vector2i(1 + de::round<int>((1 - _pos) * (size().x - flipWidth)), 1),
+                                                   Vector2i(1 + de::round<int>(p * (size().x - flipWidth)), 1),
                                                    Vector2ui(flipWidth, size().y) - Vector2ui(2, 2));
             verts.makeQuad(flip, bgColor, atlas().imageRectf(_owner.root().solidWhitePixel()).middle());
         }
