@@ -699,31 +699,19 @@ int Line::Side::property(DmuArgs &args) const
 
 int Line::Side::setProperty(DmuArgs const &args)
 {
-    /**
-     * @todo fixme: Changing the sector references via the DMU API has been
-     * disabled. In order to effect such changes at run time we need to separate
-     * the two different purposes of sector referencing at this level.
-     *
-     * A) The playsim uses this for stuff like line specials, to determine
-     * which map elements are involved when building stairs or opening doors.
-     *
-     * B) The engine uses this for geometry construction and more.
-     *
-     * At best this will result in strange glitches but more than likely a
-     * fatal error (or worse) would happen should anyone try to use this...
-     */
-
     switch(args.prop)
     {
-    /*case DMU_SECTOR: {
-        Sector *newSector = sectorPtr();
-        args.value(DMT_LINESIDE_SECTOR, &d->sector, 0);
-        break; } */
-
-    /*case DMU_LINE: { // Never changeable - throw exception?
-        Line *line = &_line;
-        args.value(DMT_LINESIDE_LINE, &line, 0);
-        break; }*/
+    case DMU_SECTOR: {
+        if(P_IsDummy(&line()))
+        {
+            args.value(DMT_SIDE_SECTOR, &d->sector, 0);
+        }
+        else
+        {
+            /// @throw WritePropertyError Sector is not writable for non-dummy sides.
+            throw WritePropertyError("Line::Side::setProperty", QString("Property %1 is only writable for dummy Line::Sides").arg(DMU_Str(args.prop)));
+        }
+        break; }
 
     case DMU_FLAGS: {
         int newFlags;
@@ -1040,26 +1028,8 @@ int Line::property(DmuArgs &args) const
 
 int Line::setProperty(DmuArgs const &args)
 {
-    /**
-     * @todo fixme: Changing the side references via the DMU API has been
-     * disabled. At best this will result in strange glitches but more than
-     * likely a fatal error (or worse) would happen should anyone try to use
-     * this...
-     */
-
     switch(args.prop)
     {
-    /*case DMU_FRONT: {
-        SideDef *newFrontSideDef = frontSideDefPtr();
-        args.value(DMT_LINE_SIDE, &newFrontSideDef, 0);
-        d->front._sideDef = newFrontSideDef;
-        break; }
-    case DMU_BACK: {
-        SideDef *newBackSideDef = backSideDefPtr();
-        args.value(DMT_LINE_SIDE, &newBackSideDef, 0);
-        d->back._sideDef = newBackSideDef;
-        break; }*/
-
     case DMU_VALID_COUNT:
         args.value(DMT_LINE_VALIDCOUNT, &d->validCount, 0);
         break;
