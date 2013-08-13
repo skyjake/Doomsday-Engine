@@ -9,6 +9,9 @@ TEMPLATE = subdirs
 # Let's print the build configuration during this qmake invocation.
 CONFIG += deng_verbosebuildconfig
 
+# Always update versions.pri.
+system(cd "$$PWD/.." && python configure.py)
+
 include(../config.pri)
 
 # We are not building any binaries here; disable stripping.
@@ -99,3 +102,5 @@ deng_aptstable {
     repo.files += ../../distrib/linux/doomsday-builds-stable.list
     repo.path += /etc/apt/sources.list.d
 }
+
+OTHER_FILES += ../configure.py

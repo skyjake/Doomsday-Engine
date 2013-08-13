@@ -73,12 +73,10 @@ def find_version(quiet = False):
 
     if not quiet: print DOOMSDAY_VERSION_FULL + " (%s)" % releaseType
 
-        
-# Invoked from qmake? Returns "version_base buildnum releasetype win32_version_with_buildnum"
-if __name__ == '__main__':
+
+def version_summary(headerName):
     import sys
     import build_number
-    headerName = sys.argv[1]
     buildNum = build_number.todays_build()
 
     # Get the Doomsday version. We can use some of this information.
@@ -87,5 +85,10 @@ if __name__ == '__main__':
     major, minor, revision, name, reltype = parse_header_for_version(headerName)
     if not reltype: reltype = DOOMSDAY_RELEASE_TYPE
     
-    print "%s.%s.%s %s %s %s,%s,%s,%s" % (major, minor, revision, buildNum, reltype,
-                                          major, minor, revision, buildNum)
+    return "%s.%s.%s %s %s %s,%s,%s,%s" % (major, minor, revision, buildNum, reltype,
+                                           major, minor, revision, buildNum)
+
+        
+# Invoked from qmake? Returns "version_base buildnum releasetype win32_version_with_buildnum"
+if __name__ == '__main__':
+    print version_summary(sys.argv[1])
