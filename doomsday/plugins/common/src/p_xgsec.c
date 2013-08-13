@@ -2616,15 +2616,14 @@ void XS_UpdateLight(Sector* sec)
     }
 }
 
-void XS_DoChain(Sector* sec, int ch, int activating, void* act_thing)
+void XS_DoChain(Sector *sec, int ch, int activating, void *act_thing)
 {
-    xgsector_t* xg;
-    sectortype_t* info;
+    xgsector_t *xg;
+    sectortype_t *info;
     float flevtime = TIC2FLT(mapTime);
-    Line* dummyLine;
-    xline_t* xdummyLine;
-    linetype_t* ltype;
-    Side* dummySideDef;
+    Line *dummyLine;
+    xline_t *xdummyLine;
+    linetype_t *ltype;
 
     xg = P_ToXSector(sec)->xg;
     info = &xg->info;
@@ -2650,11 +2649,8 @@ void XS_DoChain(Sector* sec, int ch, int activating, void* act_thing)
     dummyLine = P_AllocDummyLine();
     xdummyLine = P_ToXLine(dummyLine);
     xdummyLine->xg = Z_Calloc(sizeof(xgline_t), PU_MAP, 0);
-    dummySideDef = P_AllocDummySide();
 
-    P_SetPtrp(dummyLine, DMU_FRONT, dummySideDef);
     P_SetPtrp(dummyLine, DMU_FRONT_SECTOR, sec);
-    P_SetPtrp(dummySideDef, DMU_LINE, dummyLine);
 
     xdummyLine->special = (ch == XSCE_FUNCTION ? activating : info->chain[ch]);
 
@@ -2708,7 +2704,6 @@ void XS_DoChain(Sector* sec, int ch, int activating, void* act_thing)
     // We're done, free the dummies.
     Z_Free(xdummyLine->xg);
     P_FreeDummyLine(dummyLine);
-    P_FreeDummySide(dummySideDef);
 }
 
 static boolean checkChainRequirements(Sector* sec, mobj_t* mo, int ch,

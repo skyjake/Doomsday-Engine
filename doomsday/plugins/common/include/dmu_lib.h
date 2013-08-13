@@ -159,10 +159,6 @@ Line *P_AllocDummyLine(void);
 
 void P_FreeDummyLine(Line *line);
 
-Side *P_AllocDummySide(void);
-
-void P_FreeDummySide(Side *side);
-
 /**
  * Get the sector on the other side of the line that is NOT the given sector.
  *

@@ -2523,23 +2523,14 @@ int XL_HitLine(Line *line, int sidenum, mobj_t *thing)
 
 void XL_DoChain(Line *line, int chain, boolean activating, mobj_t *actThing)
 {
-    Side *dummyFrontSideDef, *dummyBackSideDef = NULL;
-    Line *dummyLineDef;
-    xline_t *xdummyLineDef;
+    // We'll use a dummy for the chain.
+    Line *dummyLineDef     = P_AllocDummyLine();
+    xline_t *xdummyLineDef = P_ToXLine(dummyLineDef);
 
-    // We'll use dummies for the chain.
-    dummyLineDef = P_AllocDummyLine();
-    xdummyLineDef = P_ToXLine(dummyLineDef);
     xdummyLineDef->xg = Z_Calloc(sizeof(xgline_t), PU_MAP, 0);
-    dummyFrontSideDef = P_AllocDummySide();
-    P_SetPtrp(dummyLineDef, DMU_FRONT, dummyFrontSideDef);
-    P_SetPtrp(dummyFrontSideDef, DMU_LINE, dummyLineDef);
     P_SetPtrp(dummyLineDef, DMU_FRONT_SECTOR, P_GetPtrp(line, DMU_FRONT_SECTOR));
     if(0 != P_GetPtrp(line, DMU_BACK))
     {
-        dummyBackSideDef = P_AllocDummySide();
-        P_SetPtrp(dummyLineDef, DMU_BACK, dummyBackSideDef);
-        P_SetPtrp(dummyBackSideDef, DMU_LINE, dummyLineDef);
         P_SetPtrp(dummyLineDef, DMU_BACK_SECTOR, P_GetPtrp(line, DMU_BACK_SECTOR));
     }
 
@@ -2556,9 +2547,6 @@ void XL_DoChain(Line *line, int chain, boolean activating, mobj_t *actThing)
 
     Z_Free(xdummyLineDef->xg);
     P_FreeDummyLine(dummyLineDef);
-    P_FreeDummySide(dummyFrontSideDef);
-    if(dummyBackSideDef)
-        P_FreeDummySide(dummyBackSideDef);
 }
 
 /**

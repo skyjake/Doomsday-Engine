@@ -51,16 +51,6 @@ void P_FreeDummyLine(Line *line)
     P_FreeDummy(line);
 }
 
-Side *P_AllocDummySide()
-{
-    return (Side *)P_AllocDummy(DMU_SIDE, 0);
-}
-
-void P_FreeDummySide(Side *side)
-{
-    P_FreeDummy(side);
-}
-
 void P_CopyLine(Line *dest, Line *src)
 {
     xline_t *xsrc  = P_ToXLine(src);
