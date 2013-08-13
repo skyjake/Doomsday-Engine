@@ -1,4 +1,5 @@
 BUILD.*
+versions.pri
 Makefile
 Doomsday.tmproj
 mybuild

@@ -49,6 +49,9 @@ DENG_MODULES_DIR      = $$PWD/libdeng2/modules
 
 # Versions -------------------------------------------------------------------
 
+# Parse versions from the header files.
+!exists(versions.pri): system(python configure.py)
+
 include(versions.pri)
 
 # Macros ---------------------------------------------------------------------
