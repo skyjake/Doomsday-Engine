@@ -459,21 +459,15 @@ int BspLeaf::numFanVertices() const
     return d->poly->hedgeCount() + (fanBase()? 0 : 2);
 }
 
-static void updateBiasForSegmentsAfterGeometryMove(Face const &face)
+static void updateBiasForWallSectionsAfterGeometryMove(HEdge *hedge)
 {
-    HEdge *base = face.hedge();
-    HEdge *hedge = base;
-    do
-    {
-        if(hedge->mapElement())
-        {
-            Line::Side::Segment *seg = hedge->mapElement()->as<Line::Side::Segment>();
+    if(!hedge || !hedge->mapElement())
+        return;
 
-            seg->updateBiasAfterGeometryMove(Line::Side::Middle);
-            seg->updateBiasAfterGeometryMove(Line::Side::Bottom);
-            seg->updateBiasAfterGeometryMove(Line::Side::Top);
-        }
-    } while((hedge = &hedge->next()) != base);
+    Line::Side::Segment *seg = hedge->mapElement()->as<Line::Side::Segment>();
+    seg->updateBiasAfterGeometryMove(Line::Side::Middle);
+    seg->updateBiasAfterGeometryMove(Line::Side::Bottom);
+    seg->updateBiasAfterGeometryMove(Line::Side::Top);
 }
 
 void BspLeaf::updateBiasAfterGeometryMove(int group)
@@ -485,26 +479,25 @@ void BspLeaf::updateBiasAfterGeometryMove(int group)
         geomGroup->biasTracker.updateAllContributors();
     }
 
-    updateBiasForSegmentsAfterGeometryMove(poly());
-
-    foreach(Mesh *mesh, extraMeshes())
-    foreach(Face *face, mesh->faces())
-    {
-        updateBiasForSegmentsAfterGeometryMove(*face);
-    }
-}
-
-static void applyBiasDigestToSegments(Face const &face, BiasDigest &changes)
-{
-    HEdge *base = face.hedge();
+    HEdge *base = poly().hedge();
     HEdge *hedge = base;
     do
     {
-        if(hedge->mapElement())
-        {
-            hedge->mapElement()->as<Line::Side::Segment>()->applyBiasDigest(changes);
-        }
+        updateBiasForWallSectionsAfterGeometryMove(hedge);
     } while((hedge = &hedge->next()) != base);
+
+    foreach(Mesh *mesh, extraMeshes())
+    foreach(HEdge *hedge, mesh->hedges())
+    {
+        updateBiasForWallSectionsAfterGeometryMove(hedge);
+    }
+}
+
+static void applyBiasDigestToWallSections(HEdge *hedge, BiasDigest &changes)
+{
+    if(!hedge || !hedge->mapElement())
+        return;
+    hedge->mapElement()->as<Line::Side::Segment>()->applyBiasDigest(changes);
 }
 
 void BspLeaf::applyBiasDigest(BiasDigest &changes)
@@ -517,18 +510,23 @@ void BspLeaf::applyBiasDigest(BiasDigest &changes)
         it.value().biasTracker.applyChanges(changes);
     }
 
-    applyBiasDigestToSegments(poly(), changes);
+    HEdge *base = poly().hedge();
+    HEdge *hedge = base;
+    do
+    {
+        applyBiasDigestToWallSections(hedge, changes);
+    } while((hedge = &hedge->next()) != base);
 
     foreach(Mesh *mesh, extraMeshes())
-    foreach(Face *face, mesh->faces())
+    foreach(HEdge *hedge, mesh->hedges())
     {
-        applyBiasDigestToSegments(*face, changes);
+        applyBiasDigestToWallSections(hedge, changes);
     }
 
     foreach(Polyobj *polyobj, d->polyobjs)
-    foreach(Line *line, polyobj->lines())
+    foreach(HEdge *hedge, polyobj->mesh().hedges())
     {
-        line->front().leftHEdge()->mapElement()->as<Line::Side::Segment>()->applyBiasDigest(changes);
+        applyBiasDigestToWallSections(hedge, changes);
     }
 }
 

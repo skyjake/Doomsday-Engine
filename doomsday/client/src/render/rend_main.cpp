@@ -2089,41 +2089,36 @@ static bool coveredOpenRange(HEdge &hedge, coord_t middleBottomZ, coord_t middle
     return false;
 }
 
-static void writeWallSectionsForFace(Face const &face)
+static void writeAllWallSections(HEdge *hedge)
 {
-    HEdge *base = face.hedge();
-    HEdge *hedge = base;
-    do
+    // Edges without a map line segment implicitly have no surfaces.
+    if(!hedge || !hedge->mapElement())
+        return;
+
+    // We are only interested in front facing segments with sections.
+    Line::Side::Segment *seg = hedge->mapElement()->as<Line::Side::Segment>();
+    if(!seg->isFrontFacing() || !seg->lineSide().hasSections())
+        return;
+
+    // Done here because of the logic of doom.exe wrt the automap.
+    reportWallSectionDrawn(seg->line());
+
+    bool wroteOpaqueMiddle = false;
+    coord_t middleBottomZ = 0, middleTopZ = 0;
+
+    writeWallSection(*hedge, Line::Side::Bottom);
+    writeWallSection(*hedge, Line::Side::Top);
+    writeWallSection(*hedge, Line::Side::Middle,
+                     &wroteOpaqueMiddle, &middleBottomZ, &middleTopZ);
+
+    // We can occlude the angle range defined by the X|Y origins of the
+    // line segment if the open range has been covered (when the viewer
+    // is not in the void).
+    if(!P_IsInVoid(viewPlayer) &&
+       coveredOpenRange(*hedge, middleBottomZ, middleTopZ, wroteOpaqueMiddle))
     {
-        // Edges without a map line segment implicitly have no surfaces.
-        if(!hedge->mapElement())
-            continue;
-
-        // We are only interested in front facing segments with sections.
-        Line::Side::Segment *seg = hedge->mapElement()->as<Line::Side::Segment>();
-        if(!seg->isFrontFacing() || !seg->lineSide().hasSections())
-            continue;
-
-        // Done here because of the logic of doom.exe wrt the automap.
-        reportWallSectionDrawn(seg->line());
-
-        bool wroteOpaqueMiddle = false;
-        coord_t middleBottomZ = 0, middleTopZ = 0;
-
-        writeWallSection(*hedge, Line::Side::Bottom);
-        writeWallSection(*hedge, Line::Side::Top);
-        writeWallSection(*hedge, Line::Side::Middle,
-                         &wroteOpaqueMiddle, &middleBottomZ, &middleTopZ);
-
-        // We can occlude the angle range defined by the X|Y origins of the
-        // line segment if the open range has been covered (when the viewer
-        // is not in the void).
-        if(!P_IsInVoid(viewPlayer) &&
-           coveredOpenRange(*hedge, middleBottomZ, middleTopZ, wroteOpaqueMiddle))
-        {
-            C_AddRangeFromViewRelPoints(hedge->origin(), hedge->twin().origin());
-        }
-    } while((hedge = &hedge->next()) != base);
+        C_AddRangeFromViewRelPoints(hedge->origin(), hedge->twin().origin());
+    }
 }
 
 static void writeLeafWallSections()
@@ -2131,12 +2126,17 @@ static void writeLeafWallSections()
     BspLeaf *leaf = currentBspLeaf;
     DENG_ASSERT(!isNullLeaf(leaf));
 
-    writeWallSectionsForFace(leaf->poly());
+    HEdge *base = leaf->poly().hedge();
+    HEdge *hedge = base;
+    do
+    {
+        writeAllWallSections(hedge);
+    } while((hedge = &hedge->next()) != base);
 
     foreach(Mesh *mesh, leaf->extraMeshes())
-    foreach(Face *face, mesh->faces())
+    foreach(HEdge *hedge, mesh->hedges())
     {
-        writeWallSectionsForFace(*face);
+        writeAllWallSections(hedge);
     }
 }
 
@@ -2146,11 +2146,8 @@ static void writeLeafPolyobjs()
     DENG_ASSERT(!isNullLeaf(leaf));
 
     foreach(Polyobj *po, leaf->polyobjs())
-    foreach(Line *line, po->lines())
+    foreach(HEdge *hedge, po->mesh().hedges())
     {
-        HEdge *hedge = line->front().leftHEdge();
-        DENG_ASSERT(hedge->mapElement() != 0); // sanity check
-
         // We are only interested in front facing line segments with sections.
         Line::Side::Segment *seg = hedge->mapElement()->as<Line::Side::Segment>();
         if(!seg->isFrontFacing() || !seg->lineSide().hasSections())
@@ -2184,7 +2181,7 @@ static void writeLeafPlanes()
     }
 }
 
-static void markOneFrontFacingHEdge(HEdge *hedge)
+static void markFrontFacingWallSections(HEdge *hedge)
 {
     if(!hedge || !hedge->mapElement()) return;
     Line::Side::Segment *seg = hedge->mapElement()->as<Line::Side::Segment>();
@@ -2192,33 +2189,28 @@ static void markOneFrontFacingHEdge(HEdge *hedge)
     seg->setFrontFacing(viewFacingDot(hedge->origin(), hedge->twin().origin()) >= 0);
 }
 
-static void markHEdgesFrontFacingByFace(Face const &face)
-{
-    HEdge *base = face.hedge();
-    HEdge *hedge = base;
-    do
-    {
-        markOneFrontFacingHEdge(hedge);
-    } while((hedge = &hedge->next()) != base);
-}
-
 static void markFrontFacingHEdges()
 {
     BspLeaf *bspLeaf = currentBspLeaf;
     DENG_ASSERT(!isNullLeaf(bspLeaf));
 
-    markHEdgesFrontFacingByFace(bspLeaf->poly());
+    HEdge *base = bspLeaf->poly().hedge();
+    HEdge *hedge = base;
+    do
+    {
+        markFrontFacingWallSections(hedge);
+    } while((hedge = &hedge->next()) != base);
 
     foreach(Mesh *mesh, bspLeaf->extraMeshes())
-    foreach(Face *face, mesh->faces())
+    foreach(HEdge *hedge, mesh->hedges())
     {
-        markHEdgesFrontFacingByFace(*face);
+        markFrontFacingWallSections(hedge);
     }
 
     foreach(Polyobj *po, bspLeaf->polyobjs())
-    foreach(Line *line, po->lines())
+    foreach(HEdge *hedge, po->mesh().hedges())
     {
-        markOneFrontFacingHEdge(line->front().leftHEdge());
+        markFrontFacingWallSections(hedge);
     }
 }
 
@@ -2300,8 +2292,8 @@ static void occludeLeaf(bool frontFacing)
     } while((hedge = &hedge->next()) != base);
 }
 
-/// If @a hedge is @em not front facing this is no-op.
-static void clipOneFrontFacingHEdge(HEdge *hedge)
+/// If not front facing this is no-op.
+static void clipFrontFacingWallSections(HEdge *hedge)
 {
     if(!hedge || !hedge->mapElement())
         return;
@@ -2316,33 +2308,28 @@ static void clipOneFrontFacingHEdge(HEdge *hedge)
     }
 }
 
-static void clipFrontFacingHEdgesByFace(Face const &face)
-{
-    HEdge *base = face.hedge();
-    HEdge *hedge = base;
-    do
-    {
-        clipOneFrontFacingHEdge(hedge);
-    } while((hedge = &hedge->next()) != base);
-}
-
 static void clipFrontFacingSegments()
 {
     BspLeaf *bspLeaf = currentBspLeaf;
     DENG_ASSERT(!isNullLeaf(bspLeaf));
 
-    clipFrontFacingHEdgesByFace(bspLeaf->poly());
+    HEdge *base = bspLeaf->poly().hedge();
+    HEdge *hedge = base;
+    do
+    {
+        clipFrontFacingWallSections(hedge);
+    } while((hedge = &hedge->next()) != base);
 
     foreach(Mesh *mesh, bspLeaf->extraMeshes())
-    foreach(Face *face, mesh->faces())
+    foreach(HEdge *hedge, mesh->hedges())
     {
-        clipFrontFacingHEdgesByFace(*face);
+        clipFrontFacingWallSections(hedge);
     }
 
     foreach(Polyobj *po, bspLeaf->polyobjs())
-    foreach(Line *line, po->lines())
+    foreach(HEdge *hedge, po->mesh().hedges())
     {
-        clipOneFrontFacingHEdge(line->front().leftHEdge());
+        clipFrontFacingWallSections(hedge);
     }
 }
 
@@ -3156,14 +3143,12 @@ static void drawTangentSpaceVectorsForSurface(Surface *suf, Vector3d const &orig
     glPopMatrix();
 }
 
-static void drawTangentSpaceVectorsForHEdge(HEdge *hedge)
+static void drawTangentSpaceVectorsForWallSections(HEdge *hedge)
 {
     if(!hedge || !hedge->mapElement())
         return;
 
     Line::Side::Segment *seg = hedge->mapElement()->as<Line::Side::Segment>();
-    if(seg->line().definesPolyobj())
-        return; // Handled elsewhere.
 
     if(!hedge->twin().hasFace() || !hedge->twin().face().mapElement()->as<BspLeaf>()->hasSector())
     {
@@ -3223,16 +3208,6 @@ static void drawTangentSpaceVectorsForHEdge(HEdge *hedge)
     }
 }
 
-static void drawTangentSpaceVectorsForHEdgesByFace(Face const &face)
-{
-    HEdge *base = face.hedge();
-    HEdge *hedge = base;
-    do
-    {
-        drawTangentSpaceVectorsForHEdge(hedge);
-    } while((hedge = &hedge->next()) != base);
-}
-
 /**
  * Draw the surface tangent space vectors, primarily for debug.
  */
@@ -3248,22 +3223,26 @@ static void Rend_DrawSurfaceVectors(Map &map)
         if(!bspLeaf->hasSector() || bspLeaf->isDegenerate())
             continue;
 
-        drawTangentSpaceVectorsForHEdgesByFace(bspLeaf->poly());
+        HEdge *base = bspLeaf->poly().hedge();
+        HEdge *hedge = base;
+        do
+        {
+            drawTangentSpaceVectorsForWallSections(hedge);
+        } while((hedge = &hedge->next()) != base);
 
         foreach(Mesh *mesh, bspLeaf->extraMeshes())
-        foreach(Face *face, mesh->faces())
+        foreach(HEdge *hedge, mesh->hedges())
         {
-            drawTangentSpaceVectorsForHEdgesByFace(*face);
+            drawTangentSpaceVectorsForWallSections(hedge);
         }
-    }
 
-    foreach(BspLeaf *bspLeaf, map.bspLeafs())
-    {
-        if(bspLeaf->isDegenerate()) continue;
-        if(!bspLeaf->hasSector()) continue;
-        Sector &sector = bspLeaf->sector();
+        foreach(Polyobj *polyobj, bspLeaf->polyobjs())
+        foreach(HEdge *hedge, polyobj->mesh().hedges())
+        {
+            drawTangentSpaceVectorsForWallSections(hedge);
+        }
 
-        foreach(Plane *plane, sector.planes())
+        foreach(Plane *plane, bspLeaf->sector().planes())
         {
             origin = Vector3d(bspLeaf->poly().center(), plane->visHeight());
 
@@ -3271,18 +3250,6 @@ static void Rend_DrawSurfaceVectors(Map &map)
                 origin.z = plane->map().skyFix(plane->indexInSector() == Sector::Ceiling);
 
             drawTangentSpaceVectorsForSurface(&plane->surface(), origin);
-        }
-    }
-
-    foreach(Polyobj *polyobj, map.polyobjs())
-    {
-        Sector const &sector = polyobj->sector();
-        float zPos = sector.floor().height() + (sector.ceiling().height() - sector.floor().height())/2;
-
-        foreach(Line *line, polyobj->lines())
-        {
-            origin = Vector3d(line->center(), zPos);
-            drawTangentSpaceVectorsForSurface(&line->front().middle(), origin);
         }
     }
 

@@ -1166,10 +1166,8 @@ boolean LOIT_ClipLumObjBySight(void *data, void *context)
         // between the viewpoint and the lumobj.
         BspLeaf *bspLeaf = (BspLeaf *) context;
         foreach(Polyobj *po, bspLeaf->polyobjs())
-        foreach(Line *line, po->lines())
+        foreach(HEdge *hedge, po->mesh().hedges())
         {
-            HEdge *hedge = line->front().leftHEdge();
-
             // Ignore half-edges facing the wrong way.
             if(hedge->mapElement()->as<Line::Side::Segment>()->isFrontFacing())
             {

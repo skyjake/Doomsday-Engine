@@ -234,31 +234,25 @@ void S_DetermineBspLeafsAffectingSectorReverb(Map *map)
     LOG_INFO(String("Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 }
 
-static void accumReverbForFaceEdges(Face const &face,
+static void accumReverbForWallSections(HEdge const *hedge,
     float envSpaceAccum[NUM_AUDIO_ENVIRONMENT_CLASSES], float &total)
 {
-    HEdge *base = face.hedge();
-    HEdge *hedge = base;
-    do
-    {
-        // Edges with no map line segment implicitly have no surfaces.
-        if(!hedge->mapElement())
-            continue;
+    // Edges with no map line segment implicitly have no surfaces.
+    if(!hedge || !hedge->mapElement())
+        return;
 
-        Line::Side::Segment *seg = hedge->mapElement()->as<Line::Side::Segment>();
-        if(!seg->lineSide().hasSections() || !seg->lineSide().middle().hasMaterial())
-            continue;
+    Line::Side::Segment *seg = hedge->mapElement()->as<Line::Side::Segment>();
+    if(!seg->lineSide().hasSections() || !seg->lineSide().middle().hasMaterial())
+        return;
 
-        Material &material = seg->lineSide().middle().material();
-        AudioEnvironmentClass env = material.audioEnvironment();
-        if(!(env >= 0 && env < NUM_AUDIO_ENVIRONMENT_CLASSES))
-            env = AEC_WOOD; // Assume it's wood if unknown.
+    Material &material = seg->lineSide().middle().material();
+    AudioEnvironmentClass env = material.audioEnvironment();
+    if(!(env >= 0 && env < NUM_AUDIO_ENVIRONMENT_CLASSES))
+        env = AEC_WOOD; // Assume it's wood if unknown.
 
-        total += seg->length();
+    total += seg->length();
 
-        envSpaceAccum[env] += seg->length();
-
-    } while((hedge = &hedge->next()) != base);
+    envSpaceAccum[env] += seg->length();
 }
 
 static boolean calcBspLeafReverb(BspLeaf *bspLeaf)
@@ -285,11 +279,17 @@ static boolean calcBspLeafReverb(BspLeaf *bspLeaf)
 
     // The other reverb properties can be found out by taking a look at the
     // materials of all surfaces in the BSP leaf.
-    accumReverbForFaceEdges(bspLeaf->poly(), envSpaceAccum, total);
-    foreach(Mesh *mesh, bspLeaf->extraMeshes())
-    foreach(Face *face, mesh->faces())
+    HEdge *base = bspLeaf->poly().hedge();
+    HEdge *hedge = base;
+    do
     {
-        accumReverbForFaceEdges(*face, envSpaceAccum, total);
+        accumReverbForWallSections(hedge, envSpaceAccum, total);
+    } while((hedge = &hedge->next()) != base);
+
+    foreach(Mesh *mesh, bspLeaf->extraMeshes())
+    foreach(HEdge *hedge, mesh->hedges())
+    {
+        accumReverbForWallSections(hedge, envSpaceAccum, total);
     }
 
     if(!total)

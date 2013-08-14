@@ -580,13 +580,6 @@ void ConvexSubspace::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
         // Assign the mesh to the BSP leaf (takes ownership).
         leaf.setPoly(face);
     }
-
-    if(!leaf.hasSector())
-    {
-        LOG_WARNING("BspLeaf %p is degenerate/orphan (%d half-edges).")
-            << de::dintptr(&leaf)
-            << (leaf.hasPoly()? leaf.poly().hedgeCount() : 0);
-    }
 }
 
 int ConvexSubspace::segmentCount() const

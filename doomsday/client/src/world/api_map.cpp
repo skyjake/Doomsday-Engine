@@ -223,12 +223,6 @@ void *P_AllocDummy(int type, void *extraData)
 {
     switch(type)
     {
-    /*case DMU_SIDE: {
-        DummySide *ds = new DummySide;
-        dummies.insert(ds);
-        ds->extraData = extraData;
-        return ds; }*/
-
     case DMU_LINE: {
         // Time to allocate the dummy vertex?
         if(dummyMesh.vertexesIsEmpty())
@@ -445,19 +439,13 @@ int P_Iteratep(void *elPtr, uint prop, void *context, int (*callback) (void *p, 
                 } while((hedge = &hedge->next()) != base);
 
                 foreach(Mesh *mesh, bspLeaf->extraMeshes())
-                foreach(Face *face, mesh->faces())
+                foreach(HEdge *hedge, mesh->hedges())
                 {
-                    HEdge *base = face->hedge();
-                    HEdge *hedge = base;
-                    do
-                    {
-                        DENG_ASSERT(hedge->mapElement() != 0); // sanity check
+                    DENG_ASSERT(hedge->mapElement() != 0); // sanity check
 
-                        int result = callback(&hedge->mapElement()->
-                                              as<Line::Side::Segment>()->line(), context);
-                        if(result) return result;
-
-                    } while((hedge = &hedge->next()) != base);
+                    int result = callback(&hedge->mapElement()->
+                                          as<Line::Side::Segment>()->line(), context);
+                    if(result) return result;
                 }
             }
             return false; /* Continue iteration */ }
