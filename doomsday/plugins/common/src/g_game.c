@@ -186,8 +186,9 @@ static void G_InitNewGame(void);
 
 game_config_t cfg; // The global cfg.
 
-skillmode_t dSkill;
+skillmode_t dSkill; // Default.
 
+boolean gameInProgress;
 skillmode_t gameSkill;
 uint gameEpisode;
 uint gameMap;
@@ -211,7 +212,6 @@ boolean respawnMonsters;
 #endif
 boolean monsterInfight;
 
-boolean userGame = false; // Ok to save / end game.
 boolean deathmatch; // Only if started as net death.
 player_t players[MAXPLAYERS];
 
@@ -1131,7 +1131,7 @@ void G_StartTitle(void)
     ddfinale_t fin;
 
     G_StopDemo();
-    userGame = false;
+    gameInProgress = false;
 
     // The title script must always be defined.
     if(!Def_Get(DD_DEF_FINALE, "title", &fin))
@@ -1242,7 +1242,7 @@ void G_EndGame(void)
 {
     if(G_QuitInProgress()) return;
 
-    if(!userGame)
+    if(!gameInProgress)
     {
         Hu_MsgStart(MSG_ANYKEY, ENDNOGAME, NULL, 0, NULL);
         return;
@@ -3094,7 +3094,7 @@ void G_NewGame(skillmode_t skill, uint episode, uint map, uint mapEntryPoint)
 #endif
     }
 
-    userGame = true; // Will be set false if a demo.
+    gameInProgress = true;
 
     // Unpause the current game.
     Pause_End();
@@ -4089,7 +4089,7 @@ D_CMD(WarpMap)
 
 #if __JHEXEN__
     // Hexen does not allow warping to the current map.
-    if(userGame && map == gameMap)
+    if(gameInProgress && map == gameMap)
     {
         P_SetMessage(players + CONSOLEPLAYER, LMF_NO_HIDE, "Cannot warp to the current map.");
         return false;
@@ -4113,7 +4113,7 @@ D_CMD(WarpMap)
 
     // So be it.
 #if __JHEXEN__
-    if(userGame)
+    if(gameInProgress)
     {
         nextMap = map;
         nextMapEntryPoint = 0;

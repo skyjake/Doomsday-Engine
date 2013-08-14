@@ -47,6 +47,7 @@ extern int gaLoadGameSlot;
 
 extern player_t players[MAXPLAYERS];
 
+extern boolean gameInProgress;
 extern skillmode_t gameSkill;
 extern uint gameEpisode;
 extern uint gameMap;
@@ -57,7 +58,6 @@ extern boolean secretExit;
 extern int totalKills, totalItems, totalSecret;
 extern boolean deathmatch;
 extern boolean respawnMonsters;
-extern boolean userGame;
 extern boolean paused;
 extern boolean precache;
 extern boolean customPal;

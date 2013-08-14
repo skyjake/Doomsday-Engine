@@ -44,6 +44,7 @@ extern int gaLoadGameSaveSlot;
 
 extern player_t players[MAXPLAYERS];
 
+extern boolean gameInProgress;
 extern uint gameEpisode;
 extern uint gameMap;
 extern uint gameMapEntryPoint;
@@ -52,7 +53,6 @@ extern skillmode_t gameSkill;
 extern boolean deathmatch;
 extern boolean paused;
 extern boolean precache;
-extern boolean userGame;
 extern boolean customPal;
 
 extern skillmode_t dSkill;
