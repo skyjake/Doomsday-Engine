@@ -84,7 +84,7 @@ classinfo_t classInfo[NUM_PLAYER_CLASSES] = {
         S_PLAY_ATK1,
         S_PLAY_ATK2,
         20,
-        0x3C,
+        0x32,
         {0x19, 0x32},
         {0x18, 0x28},
         2048,
@@ -103,7 +103,7 @@ classinfo_t classInfo[NUM_PLAYER_CLASSES] = {
         S_PLAY_ATK1,
         S_PLAY_ATK2,
         20,
-        0x3C,
+        0x32,
         {0x19, 0x32},
         {0x18, 0x28},
         2048,
@@ -119,7 +119,7 @@ classinfo_t classInfo[NUM_PLAYER_CLASSES] = {
         S_CHICPLAY_ATK1,
         S_CHICPLAY_ATK1,
         20,
-        0x3C,
+        0x32,
         {0x19, 0x32},
         {0x18, 0x28},
         2500,
@@ -488,7 +488,7 @@ void P_MovePlayer(player_t *player)
         static const coord_t cameraSpeed[2] = { FIX2FLT(0x19), FIX2FLT(0x54) };
         int moveMul = 2048;
 
-        // Cameramen have a 3D thrusters!
+        // Cameramen have 3D thrusters!
         P_Thrust3D(player, plrmo->angle, dp->lookDir,
                    brain->forwardMove * cameraSpeed[speed] * moveMul,
                    brain->sideMove    * cameraSpeed[speed] * moveMul);
@@ -497,23 +497,16 @@ void P_MovePlayer(player_t *player)
     {
         // 'Move while in air' hack (server doesn't know about this!!).
         // Movement while in air traditionally disabled.
-        coord_t maxMove = FIX2FLT(pClassInfo->maxMove);
-        int movemul = (onground || (plrmo->flags2 & MF2_FLY))? pClassInfo->moveMul :
-                (cfg.airborneMovement? cfg.airborneMovement * 64 : 0);
+        int const movemul = (onground || (plrmo->flags2 & MF2_FLY))? pClassInfo->moveMul
+                                                                   : (cfg.airborneMovement? cfg.airborneMovement * 64 : 0);
 
         if(!brain->lunge)
         {
-            forwardMove = FIX2FLT(pClassInfo->forwardMove[speed]) * turboMul * MIN_OF(brain->forwardMove, 1);
-            sideMove    = FIX2FLT(pClassInfo->sideMove[speed])    * turboMul * MIN_OF(brain->sideMove, 1);
+            coord_t const maxMove = FIX2FLT(pClassInfo->maxMove) * turboMul;
 
-#if __JHEXEN__
-            if(player->powers[PT_SPEED] && !player->morphTics)
-            {
-                // Adjust for a player with the speed power.
-                forwardMove = (3 * forwardMove) / 2;
-                sideMove = (3 * sideMove) / 2;
-            }
-#endif
+            forwardMove = FIX2FLT(pClassInfo->forwardMove[speed]) * turboMul * MINMAX_OF(-1.f, brain->forwardMove, 1.f);
+            sideMove    = FIX2FLT(pClassInfo->sideMove[speed])    * turboMul * MINMAX_OF(-1.f, brain->sideMove,    1.f);
+
             // Players can opt to reduce their maximum possible movement speed.
             if((int) cfg.playerMoveSpeed != 1)
             {
@@ -525,12 +518,23 @@ void P_MovePlayer(player_t *player)
 
             // Make sure it's within valid bounds.
             forwardMove = MINMAX_OF(-maxMove, forwardMove, maxMove);
-            sideMove    = MINMAX_OF(-maxMove, sideMove,    maxMove);
+            sideMove    = MINMAX_OF(-maxMove,    sideMove, maxMove);
+
+#if __JHEXEN__
+            // The speed power gives an extra boost .
+            if(player->powers[PT_SPEED] && !player->morphTics)
+            {
+                forwardMove = (3 * forwardMove) / 2;
+                sideMove    = (3 * sideMove) / 2;
+            }
+#endif
         }
         else
-        {   // Do the lunge.
+        {
             /**
-             * \note Normal valid range clamp not used with lunge as with
+             * Do the "lunge" move.
+             *
+             * @note Normal valid range clamp not used with lunge as with
              * it; the amount of forward velocity is not sufficent to
              * prevent the player from easily backing out while lunging.
              */
@@ -1657,8 +1661,9 @@ void P_PlayerThinkLookYaw(player_t* player)
 
     // Check for extra speed.
     P_GetControlState(playerNum, CTL_SPEED, &vel, NULL);
-    if((!FEQUAL(vel, 0)) ^ (cfg.alwaysRun != 0))
-    {   // Hurry, good man!
+    if(!FEQUAL(vel, 0) ^ (cfg.alwaysRun != 0))
+    {
+        // Hurry, good man!
         turnSpeedPerTic = pClassInfo->turnSpeed[1];
     }
 
