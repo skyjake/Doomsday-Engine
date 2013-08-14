@@ -1,4 +1,4 @@
-/** @file alignment.h  Alignment flags.
+/** @file uidefs.h  Common ui namespace definitions.
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef DENG_CLIENT_ALIGNMENT_H
-#define DENG_CLIENT_ALIGNMENT_H
+#ifndef DENG_CLIENT_UI_DEFS_H
+#define DENG_CLIENT_UI_DEFS_H
 
 #include <QFlags>
 
@@ -124,4 +124,4 @@ enum SizePolicy
 
 } // namespace ui
 
-#endif // DENG_CLIENT_ALIGNMENT_H
+#endif // DENG_CLIENT_UI_DEFS_H

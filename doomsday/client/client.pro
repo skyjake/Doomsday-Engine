@@ -340,14 +340,15 @@ DENG_HEADERS += \
     include/ui/style.h \
     include/ui/signalaction.h \
     include/ui/sys_input.h \
-    include/ui/ui2_main.h \
     include/ui/ui_main.h \
     include/ui/ui_panel.h \
-    include/ui/widgets/alignment.h \
+    include/ui/ui2_main.h \
+    include/ui/uidefs.h \
     include/ui/widgets/atlasproceduralimage.h \
     include/ui/widgets/blurwidget.h \
     include/ui/widgets/busywidget.h \
-    include/ui/widgets/buttonwidget.h \ 
+    include/ui/widgets/buttonwidget.h \
+    include/ui/widgets/choicewidget.h \
     include/ui/widgets/consolecommandwidget.h \
     include/ui/widgets/consolewidget.h \
     include/ui/widgets/documentwidget.h \
@@ -652,6 +653,7 @@ SOURCES += \
     src/ui/widgets/blurwidget.cpp \
     src/ui/widgets/busywidget.cpp \
     src/ui/widgets/buttonwidget.cpp \
+    src/ui/widgets/choicewidget.cpp \
     src/ui/widgets/consolecommandwidget.cpp \
     src/ui/widgets/consolewidget.cpp \
     src/ui/widgets/documentwidget.cpp \
