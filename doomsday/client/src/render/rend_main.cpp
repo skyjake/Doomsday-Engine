@@ -2157,7 +2157,7 @@ static void writeLeafPlanes()
     }
 }
 
-static void markFrontFacingWallSections(HEdge *hedge)
+static void markFrontFacingWalls(HEdge *hedge)
 {
     if(!hedge || !hedge->mapElement()) return;
     Line::Side::Segment *seg = hedge->mapElement()->as<Line::Side::Segment>();
@@ -2165,7 +2165,7 @@ static void markFrontFacingWallSections(HEdge *hedge)
     seg->setFrontFacing(viewFacingDot(hedge->origin(), hedge->twin().origin()) >= 0);
 }
 
-static void markFrontFacingHEdges()
+static void markLeafFrontFacingWalls()
 {
     BspLeaf *bspLeaf = currentBspLeaf;
     DENG_ASSERT(!isNullLeaf(bspLeaf));
@@ -2174,19 +2174,19 @@ static void markFrontFacingHEdges()
     HEdge *hedge = base;
     do
     {
-        markFrontFacingWallSections(hedge);
+        markFrontFacingWalls(hedge);
     } while((hedge = &hedge->next()) != base);
 
     foreach(Mesh *mesh, bspLeaf->extraMeshes())
     foreach(HEdge *hedge, mesh->hedges())
     {
-        markFrontFacingWallSections(hedge);
+        markFrontFacingWalls(hedge);
     }
 
     foreach(Polyobj *po, bspLeaf->polyobjs())
     foreach(HEdge *hedge, po->mesh().hedges())
     {
-        markFrontFacingWallSections(hedge);
+        markFrontFacingWalls(hedge);
     }
 }
 
@@ -2269,7 +2269,7 @@ static void occludeLeaf(bool frontFacing)
 }
 
 /// If not front facing this is no-op.
-static void clipFrontFacingWallSections(HEdge *hedge)
+static void clipFrontFacingWalls(HEdge *hedge)
 {
     if(!hedge || !hedge->mapElement())
         return;
@@ -2284,7 +2284,7 @@ static void clipFrontFacingWallSections(HEdge *hedge)
     }
 }
 
-static void clipFrontFacingSegments()
+static void clipLeafFrontFacingWalls()
 {
     BspLeaf *bspLeaf = currentBspLeaf;
     DENG_ASSERT(!isNullLeaf(bspLeaf));
@@ -2293,19 +2293,19 @@ static void clipFrontFacingSegments()
     HEdge *hedge = base;
     do
     {
-        clipFrontFacingWallSections(hedge);
+        clipFrontFacingWalls(hedge);
     } while((hedge = &hedge->next()) != base);
 
     foreach(Mesh *mesh, bspLeaf->extraMeshes())
     foreach(HEdge *hedge, mesh->hedges())
     {
-        clipFrontFacingWallSections(hedge);
+        clipFrontFacingWalls(hedge);
     }
 
     foreach(Polyobj *po, bspLeaf->polyobjs())
     foreach(HEdge *hedge, po->mesh().hedges())
     {
-        clipFrontFacingWallSections(hedge);
+        clipFrontFacingWalls(hedge);
     }
 }
 
@@ -2320,7 +2320,7 @@ static void drawCurrentLeaf()
     // Mark the sector visible for this frame.
     leaf->sector()._frameFlags |= SIF_VISIBLE;
 
-    markFrontFacingHEdges();
+    markLeafFrontFacingWalls();
     R_InitForBspLeaf(*leaf);
     Rend_RadioBspLeafEdges(*leaf);
 
@@ -2334,7 +2334,7 @@ static void drawCurrentLeaf()
     LO_ClipInBspLeaf(leaf->indexInMap());
     occludeLeaf(true /* front facing */);
 
-    clipFrontFacingSegments();
+    clipLeafFrontFacingWalls();
 
     if(leaf->hasPolyobj())
     {
