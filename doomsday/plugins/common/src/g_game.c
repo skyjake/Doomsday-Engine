@@ -2312,7 +2312,7 @@ static void G_ApplyGameRules(skillmode_t skill)
 
 #if __JDOOM__ || __JHERETIC__
     // Is respawning enabled at all in nightmare skill?
-    if(skill == SM_NIGHTMARE)
+    if(gameSkill == SM_NIGHTMARE)
         respawnMonsters = cfg.respawnMonstersNightmare;
 #endif
 
@@ -3050,9 +3050,9 @@ void G_DoSaveGame(void)
 
 void G_DeferredNewGame(skillmode_t skill, uint episode, uint map, uint mapEntryPoint)
 {
-    dSkill = skill;
-    dEpisode = episode;
-    dMap = map;
+    dSkill         = skill;
+    dEpisode       = episode;
+    dMap           = map;
     dMapEntryPoint = mapEntryPoint;
 
     G_SetGameAction(GA_NEWGAME);
@@ -3105,7 +3105,6 @@ void G_NewGame(skillmode_t skill, uint episode, uint map, uint mapEntryPoint)
     // Make sure that the episode and map numbers are good.
     G_ValidateMap(&episode, &map);
 
-    gameSkill           = skill;
     gameEpisode         = episode;
     gameMap             = map;
     gameMapEntryPoint   = mapEntryPoint;

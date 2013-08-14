@@ -5136,6 +5136,8 @@ static int SV_LoadState(Str const *path, SaveInfo *saveInfo)
 
     gameEpisode     = hdr->episode - 1;
     gameMap         = hdr->map - 1;
+
+    // Apply the game rules:
 #if __JHEXEN__
     gameSkill       = skillmode_t( hdr->skill );
 #else
