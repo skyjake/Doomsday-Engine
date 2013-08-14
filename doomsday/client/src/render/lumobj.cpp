@@ -1168,6 +1168,10 @@ boolean LOIT_ClipLumObjBySight(void *data, void *context)
         foreach(Polyobj *po, bspLeaf->polyobjs())
         foreach(HEdge *hedge, po->mesh().hedges())
         {
+            // Is this on the back of a one-sided line?
+            if(!hedge->mapElement())
+                continue;
+
             // Ignore half-edges facing the wrong way.
             if(hedge->mapElement()->as<Line::Side::Segment>()->isFrontFacing())
             {
