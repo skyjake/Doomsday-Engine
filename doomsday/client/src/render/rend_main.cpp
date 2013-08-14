@@ -2138,35 +2138,11 @@ static void writeLeafWallSections()
     {
         writeAllWallSections(hedge);
     }
-}
-
-static void writeLeafPolyobjs()
-{
-    BspLeaf *leaf = currentBspLeaf;
-    DENG_ASSERT(!isNullLeaf(leaf));
 
     foreach(Polyobj *po, leaf->polyobjs())
     foreach(HEdge *hedge, po->mesh().hedges())
     {
-        // We are only interested in front facing line segments with sections.
-        Line::Side::Segment *seg = hedge->mapElement()->as<Line::Side::Segment>();
-        if(!seg->isFrontFacing() || !seg->lineSide().hasSections())
-            continue;
-
-        // Done here because of the logic of doom.exe wrt the automap.
-        reportWallSectionDrawn(seg->line());
-
-        bool wroteOpaqueMiddle = false;
-
-        writeWallSection(*hedge, Line::Side::Middle, &wroteOpaqueMiddle);
-
-        // We can occlude the angle range defined by the X|Y origins of the
-        // line segment if the open range has been covered (when the viewer
-        // is not in the void).
-        if(!P_IsInVoid(viewPlayer) && wroteOpaqueMiddle)
-        {
-            C_AddRangeFromViewRelPoints(hedge->origin(), hedge->twin().origin());
-        }
+        writeAllWallSections(hedge);
     }
 }
 
@@ -2382,7 +2358,6 @@ static void drawCurrentLeaf()
 
     writeLeafSkyMask();
     writeLeafWallSections();
-    writeLeafPolyobjs();
     writeLeafPlanes();
 }
 
