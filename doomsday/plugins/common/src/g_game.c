@@ -4014,10 +4014,15 @@ D_CMD(ListMaps)
  *
  * warp (ep) (map): same as warp (map) but force new session if episode differs.
  *
+ * @note In a networked game we must presently force a new game session when a
+ * map change outside the normal progression occurs to allow session-level state
+ * changes to take effect. In single player this behavior is not necessary.
+ *
  * @note "setmap" is an alias of "warp"
  */
 D_CMD(WarpMap)
 {
+    boolean const forceNewGameSession = IS_NETGAME != 0;
     uint epsd, map, i;
 
     // Only server operators can warp maps in network games.
@@ -4073,7 +4078,7 @@ D_CMD(WarpMap)
 
 #if __JHEXEN__
     // Hexen does not allow warping to the current map.
-    if(gameInProgress && map == gameMap)
+    if(!forceNewGameSession && gameInProgress && map == gameMap)
     {
         P_SetMessage(players + CONSOLEPLAYER, LMF_NO_HIDE, "Cannot warp to the current map.");
         return false;
@@ -4096,12 +4101,12 @@ D_CMD(WarpMap)
     Hu_MenuCommand(MCMD_CLOSEFAST);
 
     // So be it.
-    if(gameInProgress)
+    briefDisabled = true;
+    if(!forceNewGameSession && gameInProgress)
     {
 #if __JHEXEN__
         nextMap = map;
         nextMapEntryPoint = 0;
-        briefDisabled = true;
         G_SetGameAction(GA_LEAVEMAP);
 #else
         G_DeferredNewGame(gameSkill, epsd, map, 0/*default*/);
@@ -4109,7 +4114,6 @@ D_CMD(WarpMap)
     }
     else
     {
-        briefDisabled = true;
         G_DeferredNewGame(IS_SERVER? cfg.netSkill : dSkill, epsd, map, 0/*default*/);
     }
 
@@ -4133,4 +4137,6 @@ D_CMD(WarpMap)
     }
 
     return true;
+
+#undef FORCE_NEW_GAME_SESSION
 }
