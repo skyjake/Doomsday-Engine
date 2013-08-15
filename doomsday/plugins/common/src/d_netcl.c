@@ -76,6 +76,11 @@ void NetCl_UpdateGameState(Reader* msg)
     gsRespawn = (configFlags & 0x8? true : false);
     gsJumping = (configFlags & 0x10? true : false);
     gsSkill = Reader_ReadByte(msg);
+
+    // Interpret skill modes outside the normal range as "spawn no things".
+    if(gsSkill < SM_BABY || gsSkill >= NUM_SKILL_MODES)
+        gsSkill = SM_NOTHINGS;
+
     gsGravity = Reader_ReadFloat(msg);
 
     VERBOSE(

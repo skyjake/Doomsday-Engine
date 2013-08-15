@@ -622,7 +622,7 @@ void C_DECL A_Chase(mobj_t* actor)
     // Check for missile attack.
     if((state = P_GetState(actor->type, SN_MISSILE)) != S_NULL)
     {
-        if(!(gameSkill < SM_NIGHTMARE && actor->moveCount))
+        if(!(gameSkill != SM_NIGHTMARE && actor->moveCount))
         {
             if(P_CheckMissileRange(actor))
             {
@@ -3982,7 +3982,7 @@ void C_DECL A_FastChase(mobj_t* mo)
     // Check for missile attack.
     if((state = P_GetState(mo->type, SN_MISSILE)) != S_NULL)
     {
-        if(gameSkill < SM_NIGHTMARE && mo->moveCount)
+        if(gameSkill != SM_NIGHTMARE && mo->moveCount)
             goto nomissile;
         if(!P_CheckMissileRange(mo))
             goto nomissile;

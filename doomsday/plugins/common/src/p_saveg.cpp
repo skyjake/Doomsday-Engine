@@ -5139,10 +5139,10 @@ static int SV_LoadState(Str const *path, SaveInfo *saveInfo)
 
     // Apply the game rules:
 #if __JHEXEN__
-    gameSkill       = skillmode_t( hdr->skill );
+    gameSkill       = hdr->skill;
 #else
-    gameSkill       = skillmode_t( hdr->skill & 0x7f);
-    fastParm        = (hdr->skill & 0x80) != 0;
+    gameSkill       = hdr->skill;
+    fastParm        = hdr->fast;
 #endif
     deathmatch      = hdr->deathmatch;
     noMonstersParm  = hdr->noMonsters;

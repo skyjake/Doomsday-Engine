@@ -152,7 +152,7 @@ typedef struct classinfo_s{
 DENG_EXTERN_C classinfo_t classInfo[NUM_PLAYER_CLASSES];
 
 typedef enum {
-    SM_NOITEMS = -1, // skill mode 0
+    SM_NOTHINGS = -1,
     SM_BABY = 0,
     SM_EASY,
     SM_MEDIUM,

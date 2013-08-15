@@ -806,6 +806,7 @@ void NetSv_SendGameState(int flags, int to)
 #endif
             | (cfg.jumpEnabled? 0x10 : 0));
 
+        // Note that SM_NOTHINGS will result in a value of '7'.
         Writer_WriteByte(writer, gameSkill & 0x7);
         Writer_WriteFloat(writer, (float)P_GetGravity());
 
