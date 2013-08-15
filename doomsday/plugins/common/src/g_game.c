@@ -4117,8 +4117,9 @@ D_CMD(WarpMap)
         G_DeferredNewGame(IS_SERVER? cfg.netSkill : dSkill, epsd, map, 0/*default*/);
     }
 
-    // If the command src was "us" the game library then it was probably in response to
-    // the local player entering a cheat event sequence, so set the "CHANGING MAP" message.
+    // If the command source was "us" the game library then it was probably in
+    // response to the local player entering a cheat event sequence, so set the
+    // "CHANGING MAP" message.
     // Somewhat of a kludge...
     if(src == CMDS_GAME && !(IS_NETGAME && IS_SERVER))
     {
@@ -4137,6 +4138,4 @@ D_CMD(WarpMap)
     }
 
     return true;
-
-#undef FORCE_NEW_GAME_SESSION
 }
