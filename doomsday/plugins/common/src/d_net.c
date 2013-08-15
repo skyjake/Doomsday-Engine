@@ -177,6 +177,9 @@ int D_NetServerClose(int before)
         P_ResetPlayerRespawnClasses();
 
         // Restore normal game state.
+        /// @todo fixme: "normal" is defined by the game rules config which may
+        /// be changed from the command line (e.g., -fast, -nomonsters).
+        /// In order to "restore normal" this logic is insufficient.
         deathmatch = false;
         noMonstersParm = false;
 #if __JHEXEN__
