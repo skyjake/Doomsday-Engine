@@ -1550,7 +1550,7 @@ int P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
         }
 
         if(damage >= player->health &&
-           ((gameSkill == SM_BABY) || deathmatch) && !player->morphTics)
+           (gameSkill == SM_BABY || deathmatch) && !player->morphTics)
         {
             // Try to use some inventory health.
             autoUseHealth(player, damage - player->health + 1);

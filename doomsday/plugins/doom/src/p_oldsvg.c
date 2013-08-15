@@ -929,7 +929,12 @@ static void SaveInfo_Read_Dm_v19(SaveInfo* info, Reader* reader)
     //assert(!strncmp(vcheck, "version ", 8)); // Ensure save state format has been recognised by now.
     hdr->version = atoi(&vcheck[8]);
 
-    hdr->skill = Reader_ReadByte(reader);
+    hdr->skill = (skillmode_t) Reader_ReadByte(reader);
+
+    // Interpret skill levels outside the normal range as "spawn no things".
+    if(hdr->skill < SM_BABY || hdr->skill >= NUM_SKILL_MODES)
+        hdr->skill = SM_NOTHINGS;
+
     hdr->episode = Reader_ReadByte(reader)-1;
     hdr->map = Reader_ReadByte(reader)-1;
     for(i = 0; i < 4; ++i)

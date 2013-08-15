@@ -116,7 +116,7 @@ void SaveInfo_Configure(SaveInfo *info)
     hdr->randomClasses = randomClassParm;
 #else
     hdr->skill      = gameSkill;
-    if(fastParm) hdr->skill |= 0x80; // Set high byte.
+    hdr->fast       = fastParm;
 #endif
     hdr->deathmatch = deathmatch;
     hdr->noMonsters = noMonstersParm;
@@ -158,10 +158,13 @@ void SaveInfo_Write(SaveInfo *info, Writer *writer)
     Writer_WriteInt32(writer, hdr->gameMode);
     Str_Write(&info->name, writer);
 
-    Writer_WriteByte(writer, hdr->skill);
+    Writer_WriteByte(writer, hdr->skill & 0x7f);
     Writer_WriteByte(writer, hdr->episode);
     Writer_WriteByte(writer, hdr->map);
     Writer_WriteByte(writer, hdr->deathmatch);
+#if !__JHEXEN__
+    Writer_WriteByte(writer, hdr->fast);
+#endif
     Writer_WriteByte(writer, hdr->noMonsters);
 #if __JHEXEN__
     Writer_WriteByte(writer, hdr->randomClasses);
@@ -245,10 +248,45 @@ void SaveInfo_Read(SaveInfo *info, Reader *reader)
 #undef OLD_NAME_LENGTH
     }
 
-    hdr->skill          = Reader_ReadByte(reader);
+#if !__JHEXEN__
+    if(hdr->version < 13)
+    {
+        // In DOOM the high bit of the skill mode byte is also used for the
+        // "fast" game rule boolean. There is more confusion in that SM_NOTHINGS
+        // will result in 0xff and thus always set the fast bit.
+        //
+        // Here we decipher this assuming that if the skill mode is invalid then
+        // by default this means "spawn no things" and if so then the "fast" game
+        // rule is meaningless so it is forced off.
+        byte skillModePlusFastBit = Reader_ReadByte(reader);
+        hdr->skill = (skillmode_t) (skillModePlusFastBit & 0x7f);
+        if(hdr->skill < SM_BABY || hdr->skill >= NUM_SKILL_MODES)
+        {
+            hdr->skill = SM_NOTHINGS;
+            hdr->fast  = 0;
+        }
+        else
+        {
+            hdr->fast  = (skillModePlusFastBit & 0x80) != 0;
+        }
+    }
+    else
+#endif
+    {
+        hdr->skill = Reader_ReadByte(reader) & 0x7f;
+
+        // Interpret skill levels outside the normal range as "spawn no things".
+        if(hdr->skill < SM_BABY || hdr->skill >= NUM_SKILL_MODES)
+            hdr->skill = SM_NOTHINGS;
+    }
+
     hdr->episode        = Reader_ReadByte(reader);
     hdr->map            = Reader_ReadByte(reader);
     hdr->deathmatch     = Reader_ReadByte(reader);
+#if !__JHEXEN__
+    if(hdr->version >= 13)
+        hdr->fast       = Reader_ReadByte(reader);
+#endif
     hdr->noMonsters     = Reader_ReadByte(reader);
 #if __JHEXEN__
     hdr->randomClasses  = Reader_ReadByte(reader);
@@ -301,7 +339,12 @@ void SaveInfo_Read_Hx_v9(SaveInfo *info, Reader *reader)
 
     hdr->episode        = 1;
     hdr->map            = Reader_ReadByte(reader);
-    hdr->skill          = Reader_ReadByte(reader);
+    hdr->skill          = (skillmode_t) (Reader_ReadByte(reader) & 0x7f);
+
+    // Interpret skill modes outside the normal range as "spawn no things".
+    if(hdr->skill < SM_BABY || hdr->skill >= NUM_SKILL_MODES)
+        hdr->skill = SM_NOTHINGS;
+
     hdr->deathmatch     = Reader_ReadByte(reader);
     hdr->noMonsters     = Reader_ReadByte(reader);
     hdr->randomClasses  = Reader_ReadByte(reader);

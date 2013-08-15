@@ -2291,8 +2291,8 @@ static void G_ApplyGameRuleFastMissiles(boolean fast)
 
 static void G_ApplyGameRules(skillmode_t skill)
 {
-    if(skill < SM_BABY)
-        skill = SM_BABY;
+    if(skill < SM_NOTHINGS)
+        skill = SM_NOTHINGS;
     if(skill > NUM_SKILL_MODES - 1)
         skill = NUM_SKILL_MODES - 1;
     gameSkill = skill;

@@ -133,7 +133,8 @@ typedef enum {
  * Difficulty/skill settings/filters.
  */
 typedef enum {
-    SM_BABY,
+    SM_NOTHINGS = -1,
+    SM_BABY = 0,
     SM_EASY,
     SM_MEDIUM,
     SM_HARD,

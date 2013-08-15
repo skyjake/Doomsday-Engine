@@ -368,7 +368,7 @@ void D_PostInit(void)
     monsterInfight = GetDefInt("AI|Infight", 0);
 
     // Get skill / episode / map from parms.
-    gameSkill = startSkill = SM_NOITEMS;
+    gameSkill = startSkill = SM_MEDIUM;
     startEpisode = 0;
     startMap = 0;
     autoStart = false;
@@ -443,7 +443,7 @@ void D_PostInit(void)
     if(autoStart)
     {
         Con_Message("Warp to Episode %d, Map %d, Skill %d", startEpisode+1,
-                    startMap+1, startSkill + 1);
+                    startMap+1, startSkill);
     }
 
     // Validate episode and map.
