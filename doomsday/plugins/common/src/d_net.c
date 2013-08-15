@@ -28,7 +28,6 @@
 #include "doomsday.h"
 
 D_CMD(SetColor);
-D_CMD(SetMap);
 #if __JHEXEN__
 D_CMD(SetClass);
 #endif
@@ -61,11 +60,6 @@ void D_NetConsoleRegistration(void)
     C_VAR_INT2   ("server-game-cheat",              &netSvAllowCheats,  0, 0, 1, notifyAllowCheatsChange);
 
     C_CMD        ("setcolor",   "i",    SetColor);
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    C_CMD        ("setmap",     "ii",   SetMap);
-#else
-    C_CMD        ("setmap",     "i",    SetMap);
-#endif
 #if __JHEXEN__
     C_CMD_FLAGS  ("setclass",   "i",    SetClass, CMDF_NO_DEDICATED);
 #endif
@@ -773,73 +767,6 @@ D_CMD(SetClass)
     return true;
 }
 #endif
-
-/**
- * Console command to change the current map.
- */
-D_CMD(SetMap)
-{
-    uint ep, map;
-
-    // Only the server can change the map.
-    if(!IS_SERVER)
-        return false;
-
-#if __JDOOM__ || __JHERETIC__
-    if(argc != 3)
-    {
-        Con_Printf("Usage: %s (episode) (map)\n", argv[0]);
-        return true;
-    }
-#else
-    if(argc != 2)
-    {
-        Con_Printf("Usage: %s (map)\n", argv[0]);
-        return true;
-    }
-#endif
-
-    // Parse arguments.
-#if __JDOOM__ || __JHERETIC__
-    ep = atoi(argv[1]);
-    if(ep != 0) ep -= 1;
-#else
-    ep = 0;
-#endif
-
-#if __JDOOM__ || __JHERETIC__
-    map = atoi(argv[2]); if(map != 0) map -= 1;
-#else
-    map = atoi(argv[1]); if(map != 0) map -= 1;
-#endif
-#if __JHEXEN__
-    map = P_TranslateMapIfExists(map);
-    if(map == P_INVALID_LOGICAL_MAP)
-    {
-        Con_Message("Map not found.");
-        return false;
-    }
-#endif
-
-    // Update game mode.
-    deathmatch      = cfg.netDeathmatch;
-    noMonstersParm  = cfg.netNoMonsters;
-#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-    respawnMonsters = cfg.netRespawn;
-#endif
-#if __JHEXEN__
-    randomClassParm = cfg.netRandomClass;
-#endif
-    cfg.jumpEnabled = cfg.netJumping;
-
-    // Use the configured network skill level for the new map.
-#if __JHEXEN__
-    G_DeferredSetMap(cfg.netSkill, ep, map, 0/*default*/);
-#else
-    G_DeferredNewGame(cfg.netSkill, ep, map, 0/*default*/);
-#endif
-    return true;
-}
 
 /**
  * Post a local game message.
