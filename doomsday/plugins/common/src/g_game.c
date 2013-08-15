@@ -1228,17 +1228,23 @@ void G_EndGame(void)
 
     if(!gameInProgress)
     {
-        Hu_MsgStart(MSG_ANYKEY, ENDNOGAME, NULL, 0, NULL);
+        if(IS_NETGAME && IS_SERVER)
+        {
+            Con_Message("%s", ENDNOGAME);
+        }
+        else
+        {
+            Hu_MsgStart(MSG_ANYKEY, ENDNOGAME, NULL, 0, NULL);
+        }
         return;
     }
 
-    /*
-    if(IS_NETGAME)
+    if(IS_NETGAME && IS_SERVER)
     {
-        Hu_MsgStart(MSG_ANYKEY, NETEND, NULL, 0, NULL);
+        // Just do it, no questions asked.
+        G_StartTitle();
         return;
     }
-    */
 
     Hu_MsgStart(MSG_YESNO, IS_CLIENT? GET_TXT(TXT_DISCONNECT) : ENDGAME, G_EndGameResponse, 0, NULL);
 }
