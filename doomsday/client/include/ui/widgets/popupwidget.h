@@ -32,6 +32,9 @@ class PopupWidget : public GuiWidget
     Q_OBJECT
 
 public:
+    DENG2_DEFINE_AUDIENCE(Close, void popupBeingClosed(PopupWidget &))
+
+public:
     PopupWidget(de::String const &name = "");
 
     /**

@@ -21,11 +21,11 @@
 namespace de {
 namespace shell {
 
-Action::Action(String const &label) : _event(KeyEvent("")), _label(label)
+Action::Action(String const &label) : _event(KeyEvent("")), _label(label), _target(0), _slot(0)
 {}
 
 Action::Action(String const &label, QObject *target, char const *slot)
-    : _event(KeyEvent("")), _label(label)
+    : _event(KeyEvent("")), _label(label), _target(target), _slot(slot)
 {
     if(target && slot)
     {
@@ -34,7 +34,7 @@ Action::Action(String const &label, QObject *target, char const *slot)
 }
 
 Action::Action(String const &label, KeyEvent const &event, QObject *target, char const *slot)
-    : _event(event), _label(label)
+    : _event(event), _label(label), _target(target), _slot(slot)
 {
     if(target && slot)
     {
@@ -43,7 +43,7 @@ Action::Action(String const &label, KeyEvent const &event, QObject *target, char
 }
 
 Action::Action(KeyEvent const &event, QObject *target, char const *slot)
-    : _event(event)
+    : _event(event), _target(target), _slot(slot)
 {
     if(target && slot)
     {
@@ -78,6 +78,11 @@ void Action::trigger()
 {
     de::Action::trigger();
     emit triggered();
+}
+
+Action *Action::duplicate() const
+{
+    return new Action(_label, _event, _target, _slot);
 }
 
 } // namespace shell

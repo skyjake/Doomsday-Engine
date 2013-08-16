@@ -70,6 +70,8 @@ Widget::~Widget()
         root().setFocus(0);
     }
 
+    audienceForParentChange.clear();
+
     // Remove from parent automatically.
     if(d->parent)
     {

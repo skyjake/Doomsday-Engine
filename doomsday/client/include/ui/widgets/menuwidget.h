@@ -39,25 +39,6 @@
 class MenuWidget : public ScrollAreaWidget
 {
 public:
-#if 0
-    class ISortOrder
-    {
-    public:
-        virtual ~ISortOrder() {}
-
-        /**
-         * Determines the sort order for a pair of menu items.
-         *
-         * @param a  First menu item.
-         * @param b  Second menu item.
-         *
-         * @return -1 if a < b; +1 if a > b; 0 if equal.
-         */
-        virtual int compareMenuItemsForSorting(Widget const &a, Widget const &b) const = 0;
-    };
-#endif
-
-public:
     MenuWidget(de::String const &name = "");
 
     /**
@@ -83,30 +64,19 @@ public:
     void setGridSize(int columns, ui::SizePolicy columnPolicy,
                      int rows, ui::SizePolicy rowPolicy);
 
-    /**
-     * Sets the sort order for item layout.
-     *
-     * @param sorting  Sort order object. MenuWidget takes ownership.
-     */
-    //void setLayoutSortOrder(ISortOrder *sorting);
-
     ui::Context &items();
 
     ui::Context const &items() const;
 
+    /**
+     * Sets the data context of the menu to some existing context. The context
+     * must remain in existence until the MenuWidget is deleted.
+     *
+     * @param items  Ownership not taken.
+     */
+    void setItems(ui::Context const &items);
+
     ContextWidgetOrganizer const &organizer() const;
-
-    /*
-    GuiWidget *addItem(GuiWidget *anyWidget);
-
-    ButtonWidget *addItem(de::String const &styledText, de::Action *action = 0);
-
-    ButtonWidget *addItem(de::Image const &image, de::String const &styledText, de::Action *action = 0);
-
-    GuiWidget *addSeparator(de::String const &labelText = "");
-
-    void removeItem(GuiWidget *child);
-    */
 
     /**
      * Returns the number of visible items in the menu. Hidden items are not

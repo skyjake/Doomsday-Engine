@@ -32,30 +32,17 @@ DENG2_OBSERVES(Games, Addition),
 DENG2_OBSERVES(App, StartupComplete),
 DENG2_OBSERVES(ContextWidgetOrganizer, WidgetCreation)
 {
-    typedef QMap<Game *, ButtonWidget *> Buttons;
-    Buttons buttons;
-
-#if 0
-    /**
-     * Sorts the game buttons by label text.
-     */
-    struct Sorting : public ISortOrder
-    {
-        int compareMenuItemsForSorting(Widget const &a, Widget const &b) const
-        {
-            ButtonWidget const &x = a.as<ButtonWidget>();
-            ButtonWidget const &y = b.as<ButtonWidget>();
-            return x.text().compareWithoutCase(y.text());
-        }
+    struct GameItem : public ui::ActionItem {
+        GameItem(Game const &gameRef, de::String const &label, de::Action *action)
+            : ui::ActionItem(label, action), game(gameRef) {}
+        Game const &game;
     };
-#endif
 
     Instance(Public *i) : Base(i)
     {
         App_Games().audienceForAddition += this;
         App::app().audienceForStartupComplete += this;
 
-        //self.setLayoutSortOrder(new Sorting);
         self.organizer().audienceForWidgetCreation += this;
     }
 
@@ -81,7 +68,7 @@ DENG2_OBSERVES(ContextWidgetOrganizer, WidgetCreation)
                 .arg(Str_Text(game.author()))
                 .arg(idKey);
 
-        ui::ActionItem *item = new ui::ActionItem(label, loadAction);
+        GameItem *item = new GameItem(game, label, loadAction);
 
         /// @todo The name of the plugin should be accessible via the plugin loader.
         String plugName;
@@ -123,17 +110,22 @@ DENG2_OBSERVES(ContextWidgetOrganizer, WidgetCreation)
 
     void updateGameAvailability()
     {
-        DENG2_FOR_EACH(Buttons, i, buttons)
+        for(uint i = 0; i < self.items().size(); ++i)
         {
-            if(i.key()->allStartupFilesFound())
+            GameItem const &item = self.items().at(i).as<GameItem>();
+
+            GuiWidget *w = self.organizer().itemWidget(item);
+            DENG2_ASSERT(w != 0);
+
+            if(item.game.allStartupFilesFound())
             {
-                i.value()->setOpacity(1.f, .5f);
-                i.value()->enable();
+                w->setOpacity(1.f, .5f);
+                w->enable();
             }
             else
             {
-                i.value()->setOpacity(.3f, .5f);
-                i.value()->disable();
+                w->setOpacity(.3f, .5f);
+                w->disable();
             }
         }
 

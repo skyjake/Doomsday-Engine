@@ -34,7 +34,7 @@ DENG2_OBSERVES(ui::Context, OrderChange),
 DENG2_OBSERVES(ui::Item,    Change     )
 {
     GuiWidget *container;
-    ui::Context *context;
+    ui::Context const *context;
     IWidgetFactory *factory;
 
     typedef QMap<ui::Item const *, GuiWidget *> Mapping;
@@ -48,7 +48,15 @@ DENG2_OBSERVES(ui::Item,    Change     )
           factory(&defaultWidgetFactory)
     {}
 
-    void set(ui::Context *ctx)
+    ~Instance()
+    {
+        DENG2_FOR_EACH_CONST(Mapping, i, mapping)
+        {
+            i.value()->audienceForDeletion -= this;
+        }
+    }
+
+    void set(ui::Context const *ctx)
     {
         if(context)
         {
@@ -72,12 +80,12 @@ DENG2_OBSERVES(ui::Item,    Change     )
         }
     }
 
-    void addWidgetForItem(ui::Context::Pos pos, bool alwaysAppend = false)
+    void additemWidget(ui::Context::Pos pos, bool alwaysAppend = false)
     {
         DENG2_ASSERT(factory != 0);
 
         ui::Item const &item = context->at(pos);
-        GuiWidget *w = factory->makeWidgetForItem(item, container);
+        GuiWidget *w = factory->makeitemWidget(item, container);
         if(!w) return; // Unpresentable.
 
         // Others may alter the widget in some way.
@@ -87,6 +95,7 @@ DENG2_OBSERVES(ui::Item,    Change     )
         }
 
         // Update the widget immediately.
+        mapping.insert(&item, w);
         itemChanged(item);
 
         if(alwaysAppend || pos == context->size() - 1)
@@ -99,9 +108,7 @@ DENG2_OBSERVES(ui::Item,    Change     )
             container->insertBefore(w, *mapping[&context->at(pos + 1)]);
         }
 
-        mapping.insert(&item, w);
-
-        // Observe:
+        // Observe.
         w->audienceForDeletion += this; // in case it's manually deleted
         item.audienceForChange += this;
     }
@@ -113,7 +120,7 @@ DENG2_OBSERVES(ui::Item,    Change     )
 
         for(ui::Context::Pos i = 0; i < context->size(); ++i)
         {
-            addWidgetForItem(i, true /*always append*/);
+            additemWidget(i, true /*always append*/);
         }
     }
 
@@ -136,8 +143,10 @@ DENG2_OBSERVES(ui::Item,    Change     )
 
     void widgetBeingDeleted(Widget &widget)
     {
-        // Note: this should not occur normally, as the widgets created by the
-        // Organizer are not manually deleted.
+        /*
+         * Note: this should not occur normally, as the widgets created by the
+         * Organizer are not usually manually deleted.
+         */
         MutableMappingIterator iter(mapping);
         while(iter.hasNext())
         {
@@ -152,7 +161,7 @@ DENG2_OBSERVES(ui::Item,    Change     )
 
     void contextItemAdded(ui::Context::Pos pos, ui::Item const &)
     {
-        addWidgetForItem(pos);
+        additemWidget(pos);
     }
 
     void contextItemBeingRemoved(ui::Context::Pos, ui::Item const &item)
@@ -183,7 +192,7 @@ DENG2_OBSERVES(ui::Item,    Change     )
         DENG2_ASSERT(mapping.contains(&item));
 
         GuiWidget &w = *mapping[&item];
-        factory->updateWidgetForItem(w, item);
+        factory->updateitemWidget(w, item);
 
         // Notify.
         DENG2_FOR_PUBLIC_AUDIENCE(WidgetUpdate, i)
@@ -204,7 +213,7 @@ ContextWidgetOrganizer::ContextWidgetOrganizer(GuiWidget &container)
     : d(new Instance(this, &container))
 {}
 
-void ContextWidgetOrganizer::setContext(ui::Context &context)
+void ContextWidgetOrganizer::setContext(ui::Context const &context)
 {
     d->set(&context);
 }
@@ -214,7 +223,7 @@ void ContextWidgetOrganizer::unsetContext()
     d->set(0);
 }
 
-ui::Context &ContextWidgetOrganizer::context() const
+ui::Context const &ContextWidgetOrganizer::context() const
 {
     DENG2_ASSERT(d->context != 0);
     return *d->context;
@@ -231,12 +240,12 @@ ContextWidgetOrganizer::IWidgetFactory &ContextWidgetOrganizer::widgetFactory() 
     return *d->factory;
 }
 
-GuiWidget *ContextWidgetOrganizer::widgetForItem(ui::Item const &item) const
+GuiWidget *ContextWidgetOrganizer::itemWidget(ui::Item const &item) const
 {
     return d->find(item);
 }
 
-GuiWidget *DefaultWidgetFactory::makeWidgetForItem(ui::Item const &item, GuiWidget const *)
+GuiWidget *DefaultWidgetFactory::makeitemWidget(ui::Item const &item, GuiWidget const *)
 {
     // The default implementation uses simple labels.
     LabelWidget *w = new LabelWidget;
@@ -244,7 +253,7 @@ GuiWidget *DefaultWidgetFactory::makeWidgetForItem(ui::Item const &item, GuiWidg
     return w;
 }
 
-void DefaultWidgetFactory::updateWidgetForItem(GuiWidget &, ui::Item const &)
+void DefaultWidgetFactory::updateitemWidget(GuiWidget &, ui::Item const &)
 {
     // nothing to do
 }

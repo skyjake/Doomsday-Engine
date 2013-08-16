@@ -137,62 +137,24 @@ DENG2_PIMPL(PopupWidget)
                        .setInput(Rule::Height, content->rule().height());
         }
 
-        //Rectanglei const view = Rectanglei::fromSize(self.root().viewSize());
-        //Vector2i const pos(anchorX->valuei(), anchorY->valuei());
-        //Vector2i const size(self.rule().width().valuei(), self.rule().height().valuei());
-
         // Let's first try the requested direction.
-        if(dir == ui::Up)
+        switch(dir)
         {
-            //if(pos.y - marker->valuei() >= size.y)
-            {
-                layoutAbove();
-            }
-            /*
-            else
-            {
-                layoutBelow();
-            }*/
-            return;
-        }
+        case ui::Up:
+            layoutAbove();
+            break;
 
-        if(dir == ui::Down)
-        {
-            //if(int(view.height()) - pos.y - marker->valuei() >= size.y)
-            {
-                layoutBelow();
-            }
-            /*else
-            {
-                layoutAbove();
-            }*/
-            return;
-        }
+        case ui::Down:
+            layoutBelow();
+            break;
 
-        if(dir == ui::Left)
-        {
-            //if(pos.x - marker->valuei() >= size.x)
-            {
-                layoutLeft();
-            }
-            /*else
-            {
-                layoutRight();
-            }*/
-            return;
-        }
+        case ui::Left:
+            layoutLeft();
+            break;
 
-        if(dir == ui::Right)
-        {
-            //if(int(view.width()) - pos.x - marker->valuei() >= size.x)
-            {
-                layoutRight();
-            }
-            /*else
-            {
-                layoutLeft();
-            }*/
-            return;
+        case ui::Right:
+            layoutRight();
+            break;
         }
     }
 
@@ -222,6 +184,11 @@ DENG2_PIMPL(PopupWidget)
         openingRule->setStyle(Animation::EaseIn);
 
         self.popupClosing();
+
+        DENG2_FOR_PUBLIC_AUDIENCE(Close, i)
+        {
+            i->popupBeingClosed(self);
+        }
 
         emit self.closed();
 

@@ -50,7 +50,7 @@ String Item::label() const
 
 String Item::sortKey() const
 {
-    return "";
+    return _label;
 }
 
 void Item::notifyChange()

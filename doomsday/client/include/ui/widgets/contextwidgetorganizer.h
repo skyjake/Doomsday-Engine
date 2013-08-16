@@ -54,12 +54,12 @@ public:
          * appropriately.
          *
          * After construction, the widget is automatically updated with
-         * updateWidgetForItem().
+         * updateitemWidget().
          *
          * @param item    Item that has the content.
          * @param parent  Future parent of the widget, if any (can be @c NULL).
          */
-        virtual GuiWidget *makeWidgetForItem(ui::Item const &item, GuiWidget const *parent) = 0;
+        virtual GuiWidget *makeitemWidget(ui::Item const &item, GuiWidget const *parent) = 0;
 
         /**
          * Called whenever the item's content changes and this should be reflected
@@ -68,7 +68,7 @@ public:
          * @param widget  Widget that represents the item.
          * @param item    Item that has the content.
          */
-        virtual void updateWidgetForItem(GuiWidget &widget, ui::Item const &item) = 0;
+        virtual void updateitemWidget(GuiWidget &widget, ui::Item const &item) = 0;
     };
 
     /**
@@ -108,13 +108,13 @@ public:
      *
      * @param context  Context with items.
      */
-    void setContext(ui::Context &context);
+    void setContext(ui::Context const &context);
 
     void unsetContext();
 
-    ui::Context &context() const;
+    ui::Context const &context() const;
 
-    GuiWidget *widgetForItem(ui::Item const &item) const;
+    GuiWidget *itemWidget(ui::Item const &item) const;
 
 private:
     DENG2_PRIVATE(d)
@@ -127,8 +127,8 @@ private:
 class DefaultWidgetFactory : public ContextWidgetOrganizer::IWidgetFactory
 {
 public:
-    GuiWidget *makeWidgetForItem(ui::Item const &item, GuiWidget const *parent);
-    void updateWidgetForItem(GuiWidget &widget, ui::Item const &item);
+    GuiWidget *makeitemWidget(ui::Item const &item, GuiWidget const *parent);
+    void updateitemWidget(GuiWidget &widget, ui::Item const &item);
 };
 
 #endif // DENG_CLIENT_CONTEXTWIDGETORGANIZER_H

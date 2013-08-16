@@ -34,10 +34,7 @@ DENG2_OBSERVES(ContextWidgetOrganizer, WidgetUpdate)
     Rectanglei hoverHighlightRect;
 
     Instance(Public *i) : Base(i), hover(0)
-    {
-        self.menu().organizer().audienceForWidgetCreation += this;
-        self.menu().organizer().audienceForWidgetUpdate += this;
-    }
+    {}
 
     void widgetCreatedForItem(GuiWidget &widget, ui::Item const &item)
     {
@@ -146,78 +143,15 @@ PopupMenuWidget::PopupMenuWidget(String const &name)
     setContent(new MenuWidget(name.isEmpty()? "" : name + "-content"));
 
     menu().setGridSize(1, ui::Expand, 0, ui::Expand);
+
+    menu().organizer().audienceForWidgetCreation += d;
+    menu().organizer().audienceForWidgetUpdate += d;
 }
 
 MenuWidget &PopupMenuWidget::menu() const
 {
     return static_cast<MenuWidget &>(content());
 }
-
-#if 0
-ButtonWidget *PopupMenuWidget::addItem(String const &styledText, Action *action, bool dismissOnTriggered)
-{
-    ButtonWidget *b = menu().addItem(styledText, action);
-    b->setSizePolicy(ui::Expand, ui::Expand);
-    b->setMargin("unit");
-    b->set(Background());
-
-    b->audienceForStateChange += d;
-    if(dismissOnTriggered)
-    {
-        b->audienceForTriggered += d;
-    }
-
-    // We want items to be hittable throughout the width of the menu.
-    b->hitRule()
-            .setInput(Rule::Left,  rule().left())
-            .setInput(Rule::Right, rule().right());
-
-    return b;
-}
-
-LabelWidget *PopupMenuWidget::addItem(LabelWidget *anyLabelBasedWidget)
-{
-    LabelWidget *w = anyLabelBasedWidget;
-    if(!w) return w;
-
-    menu().addItem(w);
-
-    ButtonWidget *button = dynamic_cast<ButtonWidget *>(w);
-    if(button)
-    {
-        button->audienceForStateChange += d;
-    }
-
-    w->setSizePolicy(ui::Expand, ui::Expand);
-    w->setMargin("unit");
-    w->set(Background());
-
-    // We want items to be hittable throughout the width of the menu.
-    w->hitRule()
-            .setInput(Rule::Left,  rule().left())
-            .setInput(Rule::Right, rule().right());
-
-    return w;
-}
-
-GuiWidget *PopupMenuWidget::addSeparator(String const &optionalLabel)
-{
-    GuiWidget *sep = menu().addSeparator(optionalLabel);
-    if(optionalLabel.isEmpty())
-    {
-        sep->setMargin("");
-        sep->setFont("separator.empty");
-    }
-    else
-    {
-        sep->setMargin("halfunit");
-        sep->setFont("separator.label");
-    }
-    sep->setTextColor("label.accent");
-    sep->set(Background());
-    return sep;
-}
-#endif
 
 void PopupMenuWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
 {
