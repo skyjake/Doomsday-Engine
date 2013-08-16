@@ -235,6 +235,11 @@ GuiRootWidget &GuiWidget::root() const
     return static_cast<GuiRootWidget &>(Widget::root());
 }
 
+Widget::Children GuiWidget::childWidgets() const
+{
+    return Widget::children();
+}
+
 Widget *GuiWidget::parentWidget() const
 {
     return Widget::parent();

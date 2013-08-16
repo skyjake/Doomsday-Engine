@@ -121,6 +121,7 @@ public:
 
     GuiRootWidget &root();
     GuiRootWidget &root() const;
+    Widget::Children childWidgets() const;
     Widget *parentWidget() const;
     Style const &style() const;
 
