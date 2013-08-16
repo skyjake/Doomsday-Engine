@@ -22,7 +22,7 @@
 #include "ui/widgets/buttonwidget.h"
 #include "ui/widgets/consolecommandwidget.h"
 #include "ui/widgets/popupmenuwidget.h"
-#include "ui/widgets/variabletogglewidget.h"
+#include "ui/widgets/variabletoggleitem.h"
 #include "ui/widgets/blurwidget.h"
 #include "ui/clientwindow.h"
 #include "ui/commandaction.h"
@@ -44,6 +44,8 @@ using namespace de;
 using namespace ui;
 
 static TimeDelta OPEN_CLOSE_SPAN = 0.2;
+static uint POS_PANEL = 0;
+static uint POS_UNLOAD = 3;
 
 DENG2_PIMPL(TaskBarWidget),
 public IGameChangeObserver
@@ -56,8 +58,6 @@ public IGameChangeObserver
     LabelWidget *status;
     PopupMenuWidget *mainMenu;
     PopupMenuWidget *unloadMenu;
-    ButtonWidget *panelItem;
-    ButtonWidget *unloadItem;
     ScalarRule *vertShift;
 
     QScopedPointer<Action> openAction;
@@ -128,20 +128,18 @@ public IGameChangeObserver
         uMvpMatrix = self.root().projMatrix2D();
     }
 
+    GuiWidget &itemWidget(uint pos) const
+    {
+        return *mainMenu->menu().organizer().widgetForItem(mainMenu->menu().items().at(pos));
+    }
+
     void currentGameChanged(Game &newGame)
     {
         updateStatus();
 
-        if(!isNullGame(newGame))
-        {
-            panelItem->show();
-            unloadItem->show();
-        }
-        else
-        {
-            panelItem->hide();
-            unloadItem->hide();
-        }
+        itemWidget(POS_PANEL).show(!isNullGame(newGame));
+        itemWidget(POS_UNLOAD).show(!isNullGame(newGame));
+
         mainMenu->menu().updateLayout(); // Include/exclude shown/hidden menu items.
     }
 
@@ -155,10 +153,6 @@ public IGameChangeObserver
         {
             status->setText(tr("No game loaded"));
         }
-    }
-
-    void updateMenuItems()
-    {
     }
 };
 
@@ -242,32 +236,40 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
     d->mainMenu->setAnchor(d->logo->rule().left() + d->logo->rule().width() / 2,
                            d->logo->rule().top());
 
-    // Set up items for the DE menu. Some of these are shown/hidden
-    // depending on whether a game is loaded.
-    d->panelItem = d->mainMenu->addItem(_E(b) + tr("Open Control Panel"), new CommandAction("panel"));
-    d->mainMenu->addItem(tr("Toggle Fullscreen"), new CommandAction("togglefullscreen"));
-    d->mainMenu->addItem(new VariableToggleWidget(tr("Show FPS"), App::config()["window.main.showFps"]));
-    d->unloadItem = d->mainMenu->addItem(tr("Unload Game"), new SignalAction(this, SLOT(confirmUnloadGame())), false);
-    d->mainMenu->addSeparator();
-    d->mainMenu->addItem(tr("Check for Updates..."), new CommandAction("updateandnotify"));
-    d->mainMenu->addItem(tr("Updater Settings..."), new CommandAction("updatesettings"));
-    d->mainMenu->addSeparator();
-    d->mainMenu->addItem(tr("Quit Doomsday"), new CommandAction("quit"));
+    /**
+     * Set up items for the DE menu. Some of these are shown/hidden
+     * depending on whether a game is loaded.
+     */
+    d->mainMenu->menu().items()
+            << new ui::ActionItem(_E(b) + tr("Open Control Panel"), new CommandAction("panel"))
+            << new ui::ActionItem(tr("Toggle Fullscreen"), new CommandAction("togglefullscreen"))
+            << new ui::VariableToggleItem(tr("Show FPS"), App::config()["window.main.showFps"])
+            << new ui::ActionItem(ui::Item::SubmenuAction, tr("Unload Game"),
+                                  new SignalAction(this, SLOT(confirmUnloadGame())))
+            << new ui::Item(ui::Item::Separator)
+            << new ui::ActionItem(tr("Check for Updates..."), new CommandAction("updateandnotify"))
+            << new ui::ActionItem(tr("Updater Settings..."), new CommandAction("updatesettings"))
+            << new ui::Item(ui::Item::Separator)
+            << new ui::ActionItem(tr("Quit Doomsday"), new CommandAction("quit"));
+
     add(d->mainMenu);
 
     // Confirmation for unloading game.
     d->unloadMenu = new PopupMenuWidget("unload-menu");
     d->unloadMenu->setOpeningDirection(ui::Left);
     d->unloadMenu->setAnchor(d->mainMenu->rule().left(),
-                             d->unloadItem->rule().top() + d->unloadItem->rule().height() / 2);
-    d->unloadMenu->addSeparator(tr("Really unload the game?"));
-    d->unloadMenu->addItem(tr("Unload") + " " _E(b) + tr("(discard progress)"), new SignalAction(this, SLOT(unloadGame())));
-    d->unloadMenu->addItem(tr("Cancel"), new Action);
+                             d->itemWidget(POS_UNLOAD).rule().top() +
+                             d->itemWidget(POS_UNLOAD).rule().height() / 2);
+
+    d->unloadMenu->menu().items()
+            << new ui::Item(ui::Item::Separator, tr("Really unload the game?"))
+            << new ui::ActionItem(tr("Unload") + " " _E(b) + tr("(discard progress)"), new SignalAction(this, SLOT(unloadGame())))
+            << new ui::ActionItem(tr("Cancel"));
+
     add(d->unloadMenu);
 
-    d->panelItem->hide();
-    d->unloadItem->hide();
-    d->updateMenuItems();
+    d->itemWidget(POS_PANEL).hide();
+    d->itemWidget(POS_UNLOAD).hide();
 
     d->logo->setAction(new SignalAction(this, SLOT(openMainMenu())));
 }

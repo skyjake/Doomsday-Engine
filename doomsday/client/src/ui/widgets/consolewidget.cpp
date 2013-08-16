@@ -21,7 +21,7 @@
 #include "ui/widgets/buttonwidget.h"
 #include "ui/widgets/consolecommandwidget.h"
 #include "ui/widgets/popupmenuwidget.h"
-#include "ui/widgets/variabletogglewidget.h"
+#include "ui/widgets/variabletoggleitem.h"
 #include "ui/widgets/logwidget.h"
 #include "ui/clientwindow.h"
 #include "ui/commandaction.h"
@@ -218,11 +218,12 @@ ConsoleWidget::ConsoleWidget() : GuiWidget("console"), d(new Instance(this))
     d->menu = new PopupMenuWidget;
     d->menu->setAnchor(d->button->rule().left() + d->button->rule().width() / 2,
                        d->button->rule().top());
-    d->menu->addItem(tr("Clear Log"), new CommandAction("clear"));
-    d->menu->addItem(tr("Show Full Log"), new SignalAction(this, SLOT(showFullLog())));
-    d->menu->addItem(tr("Scroll to Bottom"), new SignalAction(d->log, SLOT(scrollToBottom())));
 
-    d->menu->addItem(new VariableToggleWidget(tr("Go to Bottom on Enter"), App::config()["console.snap"]));
+    d->menu->menu().items()
+            << new ui::ActionItem(tr("Clear Log"), new CommandAction("clear"))
+            << new ui::ActionItem(tr("Show Full Log"), new SignalAction(this, SLOT(showFullLog())))
+            << new ui::ActionItem(tr("Scroll to Bottom"), new SignalAction(d->log, SLOT(scrollToBottom())))
+            << new ui::VariableToggleItem(tr("Go to Bottom on Enter"), App::config()["console.snap"]);
 
     add(d->menu);
 
