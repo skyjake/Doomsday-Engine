@@ -176,11 +176,6 @@ public:
     void setSector(Sector *newSector);
 
     /**
-     * Returns @c true iff at least one polyobj is linked to the BSP leaf.
-     */
-    inline bool hasPolyobj() { return !polyobjs().isEmpty(); }
-
-    /**
      * Add the given @a polyobj to the set of those linked to the BSP leaf.
      * Ownership is unaffected. If the polyobj is already linked in this set
      * then nothing will happen.
@@ -200,23 +195,18 @@ public:
     Polyobjs const &polyobjs() const;
 
     /**
+     * Convenient method of returning the total number of polyobjs linked to the
+     * BSP leaf.
+     */
+    inline int polyobjCount() { return polyobjs().count(); }
+
+    /**
      * Returns the vector described by the offset from the map coordinate space
      * origin to the top most, left most point of the geometry of the BSP leaf.
      *
      * @see aaBox()
      */
     de::Vector2d const &worldGridOffset() const;
-
-    /**
-     * Returns the @em validCount of the BSP leaf. Used by some legacy iteration
-     * algorithms for marking leafs as processed/visited.
-     *
-     * @todo Refactor away.
-     */
-    int validCount() const;
-
-    /// @todo Refactor away.
-    void setValidCount(int newValidCount);
 
     /**
      * Determines whether the specified @a point in the map coordinate space
@@ -229,6 +219,17 @@ public:
      * @see http://www.alienryderflex.com/polygon/
      */
     bool pointInside(de::Vector2d const &point) const;
+
+    /**
+     * Returns the @em validCount of the BSP leaf. Used by some legacy iteration
+     * algorithms for marking leafs as processed/visited.
+     *
+     * @todo Refactor away.
+     */
+    int validCount() const;
+
+    /// @todo Refactor away.
+    void setValidCount(int newValidCount);
 
 #ifdef __CLIENT__
 

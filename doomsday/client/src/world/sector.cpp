@@ -386,10 +386,10 @@ Sector::LightGridData &Sector::lightGridData()
 }
 
 /**
- * Determine the BSP leafs which contribute to each sector's environmental
- * audio characteristics (reverb). Given that BSP leafs do not change shape
- * (on the XY plane, that is), they do not move and are not created/destroyed
- * once the map has been loaded; this step can be pre-processed.
+ * Determine the BSP leafs which contribute to the sector's environmental audio
+ * characteristics. Given that BSP leafs do not change shape (on the XY plane,
+ * that is), they do not move and are not created/destroyed once the map has been
+ * loaded; this step can be pre-processed.
  */
 void Sector::initReverb()
 {

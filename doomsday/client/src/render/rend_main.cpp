@@ -2336,7 +2336,7 @@ static void drawCurrentLeaf()
 
     clipLeafFrontFacingWalls();
 
-    if(leaf->hasPolyobj())
+    if(leaf->polyobjCount())
     {
         // Polyobjs don't obstruct - clip lights with another algorithm.
         LO_ClipInBspLeafBySight(leaf->indexInMap());

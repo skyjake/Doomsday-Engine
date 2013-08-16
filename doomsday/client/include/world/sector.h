@@ -69,7 +69,6 @@ public:
     DENG2_DEFINE_AUDIENCE(LightColorChange,
         void sectorLightColorChanged(Sector &sector, de::Vector3f const &oldLightColor,
                                      int changedComponents /*bit-field (0x1=Red, 0x2=Green, 0x4=Blue)*/))
-
     /*
      * Linked-element lists:
      */
