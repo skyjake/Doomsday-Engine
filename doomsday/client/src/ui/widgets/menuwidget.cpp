@@ -202,7 +202,7 @@ public ContextWidgetOrganizer::IWidgetFactory
     /*
      * Menu items are represented as buttons and labels.
      */
-    GuiWidget *makeitemWidget(Item const &item, GuiWidget const *parent)
+    GuiWidget *makeItemWidget(Item const &item, GuiWidget const *parent)
     {
         if(item.semantic() == Item::Action || item.semantic() == Item::Submenu)
         {
@@ -236,7 +236,7 @@ public ContextWidgetOrganizer::IWidgetFactory
         return 0;
     }
 
-    void updateitemWidget(GuiWidget &widget, Item const &item)
+    void updateItemWidget(GuiWidget &widget, Item const &item)
     {
         if(item.semantic() == Item::Action)
         {

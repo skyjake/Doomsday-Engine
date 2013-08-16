@@ -54,12 +54,12 @@ public:
          * appropriately.
          *
          * After construction, the widget is automatically updated with
-         * updateitemWidget().
+         * updateItemWidget().
          *
          * @param item    Item that has the content.
          * @param parent  Future parent of the widget, if any (can be @c NULL).
          */
-        virtual GuiWidget *makeitemWidget(ui::Item const &item, GuiWidget const *parent) = 0;
+        virtual GuiWidget *makeItemWidget(ui::Item const &item, GuiWidget const *parent) = 0;
 
         /**
          * Called whenever the item's content changes and this should be reflected
@@ -68,7 +68,7 @@ public:
          * @param widget  Widget that represents the item.
          * @param item    Item that has the content.
          */
-        virtual void updateitemWidget(GuiWidget &widget, ui::Item const &item) = 0;
+        virtual void updateItemWidget(GuiWidget &widget, ui::Item const &item) = 0;
     };
 
     /**
@@ -129,8 +129,8 @@ private:
 class DefaultWidgetFactory : public ContextWidgetOrganizer::IWidgetFactory
 {
 public:
-    GuiWidget *makeitemWidget(ui::Item const &item, GuiWidget const *parent);
-    void updateitemWidget(GuiWidget &widget, ui::Item const &item);
+    GuiWidget *makeItemWidget(ui::Item const &item, GuiWidget const *parent);
+    void updateItemWidget(GuiWidget &widget, ui::Item const &item);
 };
 
 #endif // DENG_CLIENT_CONTEXTWIDGETORGANIZER_H

@@ -85,7 +85,7 @@ DENG2_OBSERVES(ui::Item,    Change     )
         DENG2_ASSERT(factory != 0);
 
         ui::Item const &item = context->at(pos);
-        GuiWidget *w = factory->makeitemWidget(item, container);
+        GuiWidget *w = factory->makeItemWidget(item, container);
         if(!w) return; // Unpresentable.
 
         // Others may alter the widget in some way.
@@ -192,7 +192,7 @@ DENG2_OBSERVES(ui::Item,    Change     )
         DENG2_ASSERT(mapping.contains(&item));
 
         GuiWidget &w = *mapping[&item];
-        factory->updateitemWidget(w, item);
+        factory->updateItemWidget(w, item);
 
         // Notify.
         DENG2_FOR_PUBLIC_AUDIENCE(WidgetUpdate, i)
@@ -250,7 +250,7 @@ GuiWidget *ContextWidgetOrganizer::itemWidget(ui::Item const &item) const
     return d->find(item);
 }
 
-GuiWidget *DefaultWidgetFactory::makeitemWidget(ui::Item const &item, GuiWidget const *)
+GuiWidget *DefaultWidgetFactory::makeItemWidget(ui::Item const &item, GuiWidget const *)
 {
     // The default implementation uses simple labels.
     LabelWidget *w = new LabelWidget;
@@ -258,7 +258,7 @@ GuiWidget *DefaultWidgetFactory::makeitemWidget(ui::Item const &item, GuiWidget 
     return w;
 }
 
-void DefaultWidgetFactory::updateitemWidget(GuiWidget &, ui::Item const &)
+void DefaultWidgetFactory::updateItemWidget(GuiWidget &, ui::Item const &)
 {
     // nothing to do
 }
