@@ -565,7 +565,7 @@ void Sfx_ListenerUpdate()
             // It may be necessary to recalculate the reverb properties.
             S_UpdateReverbForSector(listenerSector);
 
-            AudioEnvironmentFactors const &envFactors = listenerSector->audioEnvironmentFactors();
+            AudioEnvironmentFactors const &envFactors = listenerSector->reverb();
 
             for(int i = 0; i < NUM_REVERB_DATA; ++i)
             {

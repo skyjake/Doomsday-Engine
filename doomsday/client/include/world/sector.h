@@ -22,7 +22,6 @@
 #define DENG_WORLD_SECTOR_H
 
 #include <QList>
-#include <QSet>
 
 #include <de/aabox.h>
 
@@ -77,9 +76,6 @@ public:
     typedef QList<BspLeaf *>    BspLeafs;
     typedef QList<Plane *>      Planes;
     typedef QList<Line::Side *> Sides;
-#ifdef __CLIENT__
-    typedef QSet<BspLeaf *>     ReverbBspLeafs;
-#endif
 
     // Plane identifiers:
     enum { Floor, Ceiling };
@@ -106,11 +102,6 @@ public:
 public: /// @todo Make private:
     /// Head of the linked list of mobjs "in" the sector (not owned).
     struct mobj_s *_mobjList;
-
-#ifdef __CLIENT__
-    /// Final environmental audio characteristics.
-    AudioEnvironmentFactors _reverb;
-#endif
 
 public:
     Sector(float lightLevel               = 1,
@@ -436,24 +427,24 @@ public:
     LightGridData &lightGridData();
 
     /**
-     * Update the set of BSP leafs which contribute to the environmental audio
+     * Perform initialization for environmental audio (reverb). Duties include
+     * determining the set of BSP leafs which will contribute to the final audio
      * characteristics (reverb) of the sector. To be called when initializing
      * the map after load.
      *
      * The BspLeaf Blockmap for the owning map must be prepared before calling.
      */
-    void findReverbBspLeafs();
+    void initReverb();
 
     /**
-     * Provides access to the set of BSP leafs which contribute to the environmental
-     * audio characteristics (reverb) of the sector, for efficient traversal.
+     * Recalculate environmental audio (reverb) for the sector.
      */
-    ReverbBspLeafs const &reverbBspLeafs() const;
+    void updateReverb();
 
     /**
-     * Returns the final environmental audio characteristics of the sector.
+     * Returns the final environmental audio characteristics (reverb) of the sector.
      */
-    AudioEnvironmentFactors const &audioEnvironmentFactors() const;
+    AudioEnvironmentFactors const &reverb() const;
 
     /**
      * Returns a rough approximation of the total combined area of the geometry

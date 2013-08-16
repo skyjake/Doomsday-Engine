@@ -55,15 +55,13 @@ struct AudioEnvironment
  *
  * Call S_UpdateReverbForSector() to do the actual calculation.
  *
- * @pre BspLeaf attributors must have been determined first.
- *
  * @param sec  Sector to calculate reverb properties of.
  */
 void S_MarkSectorReverbDirty(Sector *sec);
 
 /**
  * Recalculates reverb properties for a sector. One must first mark the sector
- * eligible for update using S_MarkSectorReverbDirty() or this function will do
+ * as needing an update using S_MarkSectorReverbDirty() or this function will do
  * nothing.
  *
  * @param sec  Sector in which to update reverb properties.
