@@ -39,7 +39,6 @@ struct polyobj_s;
 
 #ifdef __CLIENT__
 class BiasDigest;
-struct ShadowLink;
 #endif
 
 /**
@@ -80,11 +79,12 @@ public:
      */
     typedef QSet<de::Mesh *>   Meshes;
     typedef QSet<polyobj_s *>  Polyobjs;
+#ifdef __CLIENT__
+    typedef QSet<Line::Side *> ShadowLines;
+#endif
 
 public: /// @todo Make private:
 #ifdef __CLIENT__
-
-    ShadowLink *_shadows;
 
     uint _reverb[NUM_REVERB_DATA];
 
@@ -288,9 +288,23 @@ public:
     void applyBiasDigest(BiasDigest &changes);
 
     /**
-     * Returns a pointer to the first ShadowLink; otherwise @c 0.
+     * Clear the list of fake radio shadow line sides for the BSP leaf.
      */
-    ShadowLink *firstShadowLink() const;
+    void clearShadowLines();
+
+    /**
+     * Add the specified line @a side to the set of fake radio shadow lines for
+     * the BSP leaf. If the line is already present in this set then nothing
+     * will happen.
+     *
+     * @param side  Map line side to add to the set.
+     */
+    void addShadowLine(Line::Side &side);
+
+    /**
+     * Provides access to the set of fake radio shadow lines for the BSP leaf.
+     */
+    ShadowLines const &shadowLines() const;
 
     /**
      * Returns the frame number of the last time mobj sprite projection was

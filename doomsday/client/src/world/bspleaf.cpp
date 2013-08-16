@@ -18,17 +18,13 @@
  * 02110-1301 USA</small>
  */
 
-#include <cmath> // fmod
-
+#include <QMap>
 #include <QSet>
 #include <QtAlgorithms>
 
 #include <de/Log>
 
-#include "dd_main.h" // App_World()
-
 #include "Face"
-
 #include "Polyobj"
 #include "Sector"
 
@@ -97,6 +93,9 @@ DENG2_PIMPL(BspLeaf)
 
     /// Bias lighting data for each geometry group (i.e., each plane).
     GeometryGroups geomGroups;
+
+    /// Set of fake radio shadow lines.
+    ShadowLines shadowLines;
 
 #endif // __CLIENT__
 
@@ -286,7 +285,6 @@ BspLeaf::BspLeaf(Sector *sector)
     : MapElement(DMU_BSPLEAF), d(new Instance(this, sector))
 {
 #ifdef __CLIENT__
-    _shadows = 0;
     zap(_reverb);
 #endif
 }
@@ -557,9 +555,19 @@ void BspLeaf::lightBiasPoly(int group, Vector3f const *posCoords, Vector4f *colo
     geomGroup->biasTracker.markIllumUpdateCompleted();
 }
 
-ShadowLink *BspLeaf::firstShadowLink() const
+void BspLeaf::clearShadowLines()
 {
-    return _shadows;
+    d->shadowLines.clear();
+}
+
+void BspLeaf::addShadowLine(Line::Side &side)
+{
+    d->shadowLines.insert(&side);
+}
+
+BspLeaf::ShadowLines const &BspLeaf::shadowLines() const
+{
+    return d->shadowLines;
 }
 
 int BspLeaf::addSpriteCount() const

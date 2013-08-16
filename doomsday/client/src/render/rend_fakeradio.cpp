@@ -1277,22 +1277,6 @@ static void writeShadowSection(int planeIndex, Line::Side &side, float shadowDar
     writeShadowSection2(leftEdge, rightEdge, suf->normal()[VZ] > 0, shadowDark);
 }
 
-static void drawLinkedEdgeShadows(ShadowLink &link, Sector &sector,
-    byte const *doPlanes, float shadowDark)
-{
-    DENG_ASSERT(doPlanes != 0);
-
-    if(!(shadowDark > .0001f)) return;
-
-    for(int pln = 0; pln < sector.planeCount(); ++pln)
-    {
-        writeShadowSection(pln, *link.side, shadowDark);
-    }
-
-    // Mark it rendered for this frame.
-    link.side->setShadowVisCount(frameCount);
-}
-
 /**
  * @attention Do not use the global radio state in here, as @a bspLeaf can be
  * part of any sector, not the one chosen for wall rendering.
@@ -1353,13 +1337,20 @@ void Rend_RadioBspLeafEdges(BspLeaf &bspLeaf)
 
     // We need to check all the shadow lines linked to this BspLeaf for
     // the purpose of fakeradio shadowing.
-    for(ShadowLink *link = bspLeaf.firstShadowLink(); link != NULL; link = link->next)
+    foreach(Line::Side *side, bspLeaf.shadowLines())
     {
         // Already rendered during the current frame? We only want to
         // render each shadow once per frame.
-        if(link->side->shadowVisCount() == frameCount) continue;
+        if(side->shadowVisCount() == frameCount)
+            continue;
 
-        drawLinkedEdgeShadows(*link, sector, doPlanes, shadowDark);
+        for(int pln = 0; pln < sector.planeCount(); ++pln)
+        {
+            writeShadowSection(pln, *side, shadowDark);
+        }
+
+        // Mark it rendered for this frame.
+        side->setShadowVisCount(frameCount);
     }
 }
 

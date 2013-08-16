@@ -18,7 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#include <de/memoryzone.h>
+//#include <de/memoryzone.h>
 #include <de/vector1.h> /// @todo remove me
 #include <de/Vector>
 
@@ -38,7 +38,6 @@
 using namespace de;
 
 static LineSideRadioData *lineSideRadioData;
-static zblockset_t *shadowLinksBlockSet;
 
 bool Rend_RadioLineCastsShadow(Line const &line)
 {
@@ -192,32 +191,9 @@ void Rend_RadioUpdateVertexShadowOffsets(Vertex &vtx)
     } while(own != base);
 }
 
-/**
- * Link @a line to @a bspLeaf for the purposes of shadowing.
- */
-static void linkShadowLineToBspLeaf(Line::Side &side, BspLeaf &bspLeaf)
-{
-#ifdef DENG_DEBUG
-    // Check the links for dupes!
-    for(ShadowLink *i = bspLeaf.firstShadowLink(); i; i = i->next)
-    {
-        if(i->side == &side)
-            throw Error("R_LinkShadow", "Already here!!");
-    }
-#endif
-
-    // We'll need to allocate a new link.
-    ShadowLink *link = (ShadowLink *) ZBlockSet_Allocate(shadowLinksBlockSet);
-
-    link->side = &side;
-    // The links are stored into a linked list.
-    link->next = bspLeaf._shadows;
-    bspLeaf._shadows = link;
-}
-
 static int linkShadowLineToBspLeafWorker(BspLeaf *bspLeaf, void *context)
 {
-    linkShadowLineToBspLeaf(*static_cast<Line::Side *>(context), *bspLeaf);
+    bspLeaf->addShadowLine(*static_cast<Line::Side *>(context));
     return false; // Continue iteration.
 }
 
@@ -247,7 +223,6 @@ void Rend_RadioInitForMap(Map &map)
      *    shadow edges cross one of the BSP leaf's edges (not parallel),
      *    link the line to the BspLeaf.
      */
-    shadowLinksBlockSet = ZBlockSet_New(sizeof(ShadowLink), 1024, PU_MAP);
 
     AABoxd bounds;
 
