@@ -21,14 +21,9 @@
  * 02110-1301 USA</small>
  */
 
-#include <set>
-
 #include "de_base.h"
 #include "de_audio.h"
-#include "de_play.h"
-#include "de_resource.h"
 
-#include "BspLeaf"
 #include "Sector"
 
 #include "audio/s_environ.h"
@@ -42,9 +37,6 @@ static AudioEnvironment envInfo[1 + NUM_AUDIO_ENVIRONMENTS] = {
     {"Wood",      80,      50,     200},
     {"Cloth",     5,       5,      255}
 };
-
-typedef std::set<Sector *> ReverbUpdateRequested;
-ReverbUpdateRequested reverbUpdateRequested;
 
 char const *S_AudioEnvironmentName(AudioEnvironmentId id)
 {
@@ -82,26 +74,4 @@ AudioEnvironmentId S_AudioEnvironmentId(uri_s const *uri)
         }
     }
     return AE_NONE;
-}
-
-void S_ResetReverb()
-{
-    reverbUpdateRequested.clear();
-}
-
-void S_UpdateReverbForSector(Sector *sec)
-{
-    if(reverbUpdateRequested.empty()) return;
-
-    // If update has been requested for this sector, calculate it now.
-    if(reverbUpdateRequested.find(sec) != reverbUpdateRequested.end())
-    {
-        sec->updateReverb();
-        reverbUpdateRequested.erase(sec);
-    }
-}
-
-void S_MarkSectorReverbDirty(Sector* sec)
-{
-    reverbUpdateRequested.insert(sec);
 }

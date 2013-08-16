@@ -50,25 +50,25 @@ public:
     DENG2_ERROR(MissingMaterialError);
 
     /*
-     * Observers to be notified when the normal vector changes.
-     */
-    DENG2_DEFINE_AUDIENCE(NormalChange,
-        void normalChanged(Surface &surface, de::Vector3f oldNormal,
-                           int changedAxes /*bit-field (0x1=X, 0x2=Y, 0x4=Z)*/))
-    /*
-     * Observers to be notified when the @em sharp material origin changes.
+     * Notified when the @em sharp material origin changes.
      */
     DENG2_DEFINE_AUDIENCE(MaterialOriginChange,
         void materialOriginChanged(Surface &surface, de::Vector2f oldMaterialOrigin,
                                    int changedAxes /*bit-field (0x1=X, 0x2=Y)*/))
     /*
-     * Observers to be notified when the opacity changes.
+     * Notified when the normal vector changes.
+     */
+    DENG2_DEFINE_AUDIENCE(NormalChange,
+        void normalChanged(Surface &surface, de::Vector3f oldNormal,
+                           int changedAxes /*bit-field (0x1=X, 0x2=Y, 0x4=Z)*/))
+    /*
+     * Notified when the opacity changes.
      */
     DENG2_DEFINE_AUDIENCE(OpacityChange,
         void opacityChanged(Surface &surface, float oldOpacity))
 
     /*
-     * Observers to be notified when the tint color changes.
+     * Notified when the tint color changes.
      */
     DENG2_DEFINE_AUDIENCE(TintColorChange,
         void tintColorChanged(Surface &sector, de::Vector3f const &oldTintColor,

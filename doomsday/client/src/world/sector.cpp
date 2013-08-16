@@ -84,6 +84,7 @@ DENG2_OBSERVES(Plane, HeightChange)
 
     /// Final environmental audio characteristics.
     AudioEnvironmentFactors reverb;
+    bool needReverbUpdate; ///< @true= marked for update.
 
     bool visible; ///< @c true= marked as visible for the current frame.
 #endif
@@ -98,7 +99,8 @@ DENG2_OBSERVES(Plane, HeightChange)
           lightColor(lightColor),
           validCount(0)
 #ifdef __CLIENT__
-         ,visible(false)
+         ,needReverbUpdate(true),
+          visible(false)
 #endif
     {
         zap(soundEmitter);
@@ -157,6 +159,87 @@ DENG2_OBSERVES(Plane, HeightChange)
         static_cast<Instance *>(context)->addReverbBspLeaf(bspLeaf);
         return false; // Continue iteration.
     }
+
+    /**
+     * Recalculate environmental audio (reverb) for the sector.
+     */
+    void updateReverb()
+    {
+        needReverbUpdate = false;
+
+        // Sectors with no referencing lines need no reverb.
+        if(!self.sideCount())
+            return;
+
+        uint spaceVolume = int((self.ceiling().height() - self.floor().height()) * self.roughArea());
+
+        reverb[SRD_SPACE] = reverb[SRD_VOLUME] =
+            reverb[SRD_DECAY] = reverb[SRD_DAMPING] = 0;
+
+        foreach(BspLeaf *bspLeaf, reverbBspLeafs)
+        {
+            if(bspLeaf->updateReverb())
+            {
+                BspLeaf::AudioEnvironmentFactors const &leafReverb = bspLeaf->reverb();
+
+                reverb[SRD_SPACE]   += leafReverb[SRD_SPACE];
+
+                reverb[SRD_VOLUME]  += leafReverb[SRD_VOLUME]  / 255.0f * leafReverb[SRD_SPACE];
+                reverb[SRD_DECAY]   += leafReverb[SRD_DECAY]   / 255.0f * leafReverb[SRD_SPACE];
+                reverb[SRD_DAMPING] += leafReverb[SRD_DAMPING] / 255.0f * leafReverb[SRD_SPACE];
+            }
+        }
+
+        float spaceScatter;
+        if(reverb[SRD_SPACE])
+        {
+            spaceScatter = spaceVolume / reverb[SRD_SPACE];
+            // These three are weighted by the space.
+            reverb[SRD_VOLUME]  /= reverb[SRD_SPACE];
+            reverb[SRD_DECAY]   /= reverb[SRD_SPACE];
+            reverb[SRD_DAMPING] /= reverb[SRD_SPACE];
+        }
+        else
+        {
+            spaceScatter = 0;
+            reverb[SRD_VOLUME]  = .2f;
+            reverb[SRD_DECAY]   = .4f;
+            reverb[SRD_DAMPING] = 1;
+        }
+
+        // If the space is scattered, the reverb effect lessens.
+        reverb[SRD_SPACE] /= (spaceScatter > .8 ? 10 : spaceScatter > .6 ? 4 : 1);
+
+        // Normalize the reverb space [0..1]
+        //   0= very small
+        // .99= very large
+        // 1.0= only for open areas (special case).
+        reverb[SRD_SPACE] /= 120e6;
+        if(reverb[SRD_SPACE] > .99)
+            reverb[SRD_SPACE] = .99f;
+
+        if(self.ceilingSurface().hasSkyMaskedMaterial() ||
+           self.floorSurface().hasSkyMaskedMaterial())
+        {
+            // An "open" sector.
+            // It can still be small, in which case; reverb is diminished a bit.
+            if(reverb[SRD_SPACE] > .5)
+                reverb[SRD_VOLUME] = 1; // Full volume.
+            else
+                reverb[SRD_VOLUME] = .5f; // Small, but still open.
+
+            reverb[SRD_SPACE] = 1;
+        }
+        else
+        {
+            // A "closed" sector.
+            // Large spaces have automatically a bit more audible reverb.
+            reverb[SRD_VOLUME] += reverb[SRD_SPACE] / 4;
+        }
+
+        if(reverb[SRD_VOLUME] > 1)
+            reverb[SRD_VOLUME] = 1;
+    }
 #endif
 
     // Observes Plane HeightChange.
@@ -173,7 +256,11 @@ DENG2_OBSERVES(Plane, HeightChange)
 #ifdef __CLIENT__
         /// @todo Map should observe.
         self.map().updateMissingMaterialsForLinesOfSector(self);
-        S_MarkSectorReverbDirty(&self);
+#endif
+
+#ifdef __CLIENT__
+        // We'll need to recalculate environmental audio characteristics.
+        needReverbUpdate = true;
 #endif
 
         // Check if there are any camera players in this sector. If their
@@ -308,7 +395,7 @@ void Sector::initReverb()
 {
     d->reverbBspLeafs.clear();
 
-    // Sectors which no referencing line need no reverb.
+    // Sectors with no referencing lines need no reverb.
     if(!sideCount()) return;
 
     AABoxd affectionBounds = aaBox();
@@ -325,85 +412,23 @@ void Sector::initReverb()
     // Link all non-degenerate BspLeafs whose axis-aligned bounding box intersects
     // with the affection bounds to the reverb set.
     map().bspLeafsBoxIterator(affectionBounds, 0, Instance::addReverbBspLeafWorker, d);
+
+    // We still need to update the final characteristics.
+    d->needReverbUpdate = true;
 }
 
-void Sector::updateReverb()
+void Sector::markReverbDirty(bool yes)
 {
-    // Sectors which no referencing line need no reverb.
-    if(!sideCount())
-        return;
-
-    uint spaceVolume = int((ceiling().height() - floor().height()) * roughArea());
-
-    d->reverb[SRD_SPACE] = d->reverb[SRD_VOLUME] =
-        d->reverb[SRD_DECAY] = d->reverb[SRD_DAMPING] = 0;
-
-    foreach(BspLeaf *bspLeaf, d->reverbBspLeafs)
-    {
-        if(bspLeaf->updateReverb())
-        {
-            BspLeaf::AudioEnvironmentFactors const &leafReverb = bspLeaf->reverb();
-
-            d->reverb[SRD_SPACE]   += leafReverb[SRD_SPACE];
-
-            d->reverb[SRD_VOLUME]  += leafReverb[SRD_VOLUME]  / 255.0f * leafReverb[SRD_SPACE];
-            d->reverb[SRD_DECAY]   += leafReverb[SRD_DECAY]   / 255.0f * leafReverb[SRD_SPACE];
-            d->reverb[SRD_DAMPING] += leafReverb[SRD_DAMPING] / 255.0f * leafReverb[SRD_SPACE];
-        }
-    }
-
-    float spaceScatter;
-    if(d->reverb[SRD_SPACE])
-    {
-        spaceScatter = spaceVolume / d->reverb[SRD_SPACE];
-        // These three are weighted by the space.
-        d->reverb[SRD_VOLUME]  /= d->reverb[SRD_SPACE];
-        d->reverb[SRD_DECAY]   /= d->reverb[SRD_SPACE];
-        d->reverb[SRD_DAMPING] /= d->reverb[SRD_SPACE];
-    }
-    else
-    {
-        spaceScatter = 0;
-        d->reverb[SRD_VOLUME]  = .2f;
-        d->reverb[SRD_DECAY]   = .4f;
-        d->reverb[SRD_DAMPING] = 1;
-    }
-
-    // If the space is scattered, the reverb effect lessens.
-    d->reverb[SRD_SPACE] /= (spaceScatter > .8 ? 10 : spaceScatter > .6 ? 4 : 1);
-
-    // Normalize the reverb space [0..1]
-    //   0= very small
-    // .99= very large
-    // 1.0= only for open areas (special case).
-    d->reverb[SRD_SPACE] /= 120e6;
-    if(d->reverb[SRD_SPACE] > .99)
-        d->reverb[SRD_SPACE] = .99f;
-
-    if(ceilingSurface().hasSkyMaskedMaterial() || floorSurface().hasSkyMaskedMaterial())
-    {
-        // An "open" sector.
-        // It can still be small, in which case; reverb is diminished a bit.
-        if(d->reverb[SRD_SPACE] > .5)
-            d->reverb[SRD_VOLUME] = 1; // Full volume.
-        else
-            d->reverb[SRD_VOLUME] = .5f; // Small, but still open.
-
-        d->reverb[SRD_SPACE] = 1;
-    }
-    else
-    {
-        // A "closed" sector.
-        // Large spaces have automatically a bit more audible reverb.
-        d->reverb[SRD_VOLUME] += d->reverb[SRD_SPACE] / 4;
-    }
-
-    if(d->reverb[SRD_VOLUME] > 1)
-        d->reverb[SRD_VOLUME] = 1;
+    d->needReverbUpdate = yes;
 }
 
 AudioEnvironmentFactors const &Sector::reverb() const
 {
+    // Perform any scheduled update now.
+    if(d->needReverbUpdate)
+    {
+        d->updateReverb();
+    }
     return d->reverb;
 }
 

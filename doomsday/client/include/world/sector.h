@@ -429,20 +429,26 @@ public:
     /**
      * Perform initialization for environmental audio (reverb). Duties include
      * determining the set of BSP leafs which will contribute to the final audio
-     * characteristics (reverb) of the sector. To be called when initializing
-     * the map after load.
+     * characteristics of the sector. To be called when initializing the map after
+     * loading.
      *
      * The BspLeaf Blockmap for the owning map must be prepared before calling.
      */
     void initReverb();
 
     /**
-     * Recalculate environmental audio (reverb) for the sector.
+     * Request re-calculation of the environmental audio (reverb) characteristics
+     * for the sector (update is deferred until next accessed).
+     *
+     * Should be called whenever any of the properties governing reverb properties
+     * have changed (i.e., wall/plane material changes).
      */
-    void updateReverb();
+    void markReverbDirty(bool yes = true);
 
     /**
-     * Returns the final environmental audio characteristics (reverb) of the sector.
+     * Provides access to the final environmental audio characteristics (reverb)
+     * of the sector. Note that if a reverb update is scheduled it will be done
+     * at this time (@ref markReverbDirty()).
      */
     AudioEnvironmentFactors const &reverb() const;
 

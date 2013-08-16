@@ -24,8 +24,6 @@
 
 #include "api_uri.h"
 
-class Sector;
-
 enum AudioEnvironmentId
 {
     AE_NONE = -1,
@@ -47,31 +45,6 @@ struct AudioEnvironment
     int decayMul;
     int dampingMul;
 };
-
-/**
- * Requests re-calculation of the reverb properties of the given sector. Should
- * be called whenever any of the properties governing reverb properties have
- * changed (i.e., wall/plane material or plane height changes).
- *
- * Call S_UpdateReverbForSector() to do the actual calculation.
- *
- * @param sec  Sector to calculate reverb properties of.
- */
-void S_MarkSectorReverbDirty(Sector *sec);
-
-/**
- * Recalculates reverb properties for a sector. One must first mark the sector
- * as needing an update using S_MarkSectorReverbDirty() or this function will do
- * nothing.
- *
- * @param sec  Sector in which to update reverb properties.
- */
-void S_UpdateReverbForSector(Sector *sec);
-
-/**
- * Must be called when the map changes.
- */
-void S_ResetReverb();
 
 /**
  * Lookup the symbolic name of the identified audio environment.

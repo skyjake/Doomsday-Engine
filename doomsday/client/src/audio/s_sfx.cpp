@@ -562,9 +562,7 @@ void Sfx_ListenerUpdate()
         {
             listenerSector = listener->bspLeaf->sectorPtr();
 
-            // It may be necessary to recalculate the reverb properties.
-            S_UpdateReverbForSector(listenerSector);
-
+            // It may be necessary to recalculate the reverb properties...
             AudioEnvironmentFactors const &envFactors = listenerSector->reverb();
 
             for(int i = 0; i < NUM_REVERB_DATA; ++i)
