@@ -789,19 +789,6 @@ public:
     void setFlags(Flags flagsToChange, de::FlagOp operation = de::SetFlags);
 
     /**
-     * Returns the environment audio class for the material.
-     */
-    audioenvironmentclass_e audioEnvironment() const;
-
-    /**
-     * Change the material's environment audio class.
-     * @param newEnvironment  New environment to apply.
-     *
-     * @todo If attached to a map Surface update accordingly!
-     */
-    void setAudioEnvironment(audioenvironmentclass_e newEnvironment);
-
-    /**
      * Add a new layer to the end of the material's layer stack. Ownership of the
      * layer is @em not transferred to the caller.
      *
@@ -876,6 +863,17 @@ public:
     ShineLayer const &shineLayer() const;
 
 #ifdef __CLIENT__
+    /**
+     * Returns the identifier of the audio environment for the material.
+     */
+    AudioEnvironmentId audioEnvironment() const;
+
+    /**
+     * Change the audio environment for the material.
+     *
+     * @param newEnvironment  New audio environment to apply.
+     */
+    void setAudioEnvironment(AudioEnvironmentId newEnvironment);
 
     /**
      * Returns the number of material (light) decorations.

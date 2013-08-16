@@ -288,6 +288,11 @@ public:
     void applyBiasDigest(BiasDigest &changes);
 
     /**
+     * Recalculate the environmental audio characteristics for the BSP leaf.
+     */
+    bool updateReverb();
+
+    /**
      * Clear the list of fake radio shadow line sides for the BSP leaf.
      */
     void clearShadowLines();

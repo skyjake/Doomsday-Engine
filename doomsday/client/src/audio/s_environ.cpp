@@ -21,34 +21,22 @@
  * 02110-1301 USA</small>
  */
 
-#include <cctype>
-#include <cstring>
 #include <set>
-
-#include <de/Log>
 
 #include "de_base.h"
 #include "de_audio.h"
 #include "de_play.h"
 #include "de_resource.h"
-#include "de_system.h"
-
-#include "Face"
 
 #include "BspLeaf"
+#include "Sector"
 
 #include "audio/s_environ.h"
 
 using namespace de;
 
-typedef struct {
-    char const name[9]; ///< Environment type name.
-    int volumeMul;
-    int decayMul;
-    int dampingMul;
-} audioenvinfo_t;
-
-static audioenvinfo_t envInfo[NUM_AUDIO_ENVIRONMENT_CLASSES] = {
+static AudioEnvironment envInfo[1 + NUM_AUDIO_ENVIRONMENTS] = {
+    {"",          0,       0,      0},
     {"Metal",     255,     255,    25},
     {"Rock",      200,     160,    100},
     {"Wood",      80,      50,     200},
@@ -58,14 +46,19 @@ static audioenvinfo_t envInfo[NUM_AUDIO_ENVIRONMENT_CLASSES] = {
 typedef std::set<Sector *> ReverbUpdateRequested;
 ReverbUpdateRequested reverbUpdateRequested;
 
-char const *S_AudioEnvironmentName(AudioEnvironmentClass env)
+char const *S_AudioEnvironmentName(AudioEnvironmentId id)
 {
-    if(VALID_AUDIO_ENVIRONMENT_CLASS(env))
-        return envInfo[env - AEC_FIRST].name;
-    return "";
+    DENG_ASSERT(id >= AE_NONE && id < NUM_AUDIO_ENVIRONMENTS);
+    return envInfo[1 + int(id)].name;
 }
 
-AudioEnvironmentClass S_AudioEnvironmentForMaterial(uri_s const *uri)
+AudioEnvironment const &S_AudioEnvironment(AudioEnvironmentId id)
+{
+    DENG_ASSERT(id >= AE_NONE && id < NUM_AUDIO_ENVIRONMENTS);
+    return envInfo[1 + int(id)];
+}
+
+AudioEnvironmentId S_AudioEnvironmentId(uri_s const *uri)
 {
     if(uri)
     {
@@ -77,122 +70,18 @@ AudioEnvironmentClass S_AudioEnvironmentForMaterial(uri_s const *uri)
                 uri_s *ref = env->materials[k];
                 if(!ref || !Uri_Equality(ref, uri)) continue;
 
-                // See if we recognise the material name.
-                for(int l = 0; l < NUM_AUDIO_ENVIRONMENT_CLASSES; ++l)
+                // Is this a known environment?
+                for(int m = 0; m < NUM_AUDIO_ENVIRONMENTS; ++m)
                 {
-                    if(!stricmp(env->id, envInfo[l].name))
-                        return AudioEnvironmentClass(AEC_FIRST + l);
+                    AudioEnvironment const &envInfo = S_AudioEnvironment(AudioEnvironmentId(m));
+                    if(!stricmp(env->id, envInfo.name))
+                        return AudioEnvironmentId(m);
                 }
-                return AEC_UNKNOWN;
+                return AE_NONE;
             }
         }
     }
-    return AEC_UNKNOWN;
-}
-
-static void accumReverbForWallSections(HEdge const *hedge,
-    float envSpaceAccum[NUM_AUDIO_ENVIRONMENT_CLASSES], float &total)
-{
-    // Edges with no map line segment implicitly have no surfaces.
-    if(!hedge || !hedge->mapElement())
-        return;
-
-    Line::Side::Segment *seg = hedge->mapElement()->as<Line::Side::Segment>();
-    if(!seg->lineSide().hasSections() || !seg->lineSide().middle().hasMaterial())
-        return;
-
-    Material &material = seg->lineSide().middle().material();
-    AudioEnvironmentClass env = material.audioEnvironment();
-    if(!(env >= 0 && env < NUM_AUDIO_ENVIRONMENT_CLASSES))
-        env = AEC_WOOD; // Assume it's wood if unknown.
-
-    total += seg->length();
-
-    envSpaceAccum[env] += seg->length();
-}
-
-static boolean calcBspLeafReverb(BspLeaf *bspLeaf)
-{
-    DENG2_ASSERT(bspLeaf);
-
-    if(!bspLeaf->hasSector() || bspLeaf->isDegenerate() || isDedicated)
-    {
-        bspLeaf->_reverb[SRD_SPACE] = bspLeaf->_reverb[SRD_VOLUME] =
-            bspLeaf->_reverb[SRD_DECAY] = bspLeaf->_reverb[SRD_DAMPING] = 0;
-        return false;
-    }
-
-    float envSpaceAccum[NUM_AUDIO_ENVIRONMENT_CLASSES];
-    std::memset(&envSpaceAccum, 0, sizeof(envSpaceAccum));
-
-    // Space is the rough volume of the BSP leaf (bounding box).
-    bspLeaf->_reverb[SRD_SPACE] =
-        (int) (bspLeaf->sector().ceiling().height() - bspLeaf->sector().floor().height()) *
-        (bspLeaf->poly().aaBox().maxX - bspLeaf->poly().aaBox().minX) *
-        (bspLeaf->poly().aaBox().maxY - bspLeaf->poly().aaBox().minY);
-
-    float total = 0;
-
-    // The other reverb properties can be found out by taking a look at the
-    // materials of all surfaces in the BSP leaf.
-    HEdge *base = bspLeaf->poly().hedge();
-    HEdge *hedge = base;
-    do
-    {
-        accumReverbForWallSections(hedge, envSpaceAccum, total);
-    } while((hedge = &hedge->next()) != base);
-
-    foreach(Mesh *mesh, bspLeaf->extraMeshes())
-    foreach(HEdge *hedge, mesh->hedges())
-    {
-        accumReverbForWallSections(hedge, envSpaceAccum, total);
-    }
-
-    if(!total)
-    {
-        // Huh?
-        bspLeaf->_reverb[SRD_VOLUME] = bspLeaf->_reverb[SRD_DECAY] =
-            bspLeaf->_reverb[SRD_DAMPING] = 0;
-        return false;
-    }
-
-    // Average the results.
-    uint i, v;
-    for(i = 0; i < NUM_AUDIO_ENVIRONMENT_CLASSES; ++i)
-    {
-        envSpaceAccum[i] /= total;
-    }
-
-    // Volume.
-    for(i = 0, v = 0; i < NUM_AUDIO_ENVIRONMENT_CLASSES; ++i)
-    {
-        v += envSpaceAccum[i] * envInfo[i].volumeMul;
-    }
-    if(v > 255) v = 255;
-    bspLeaf->_reverb[SRD_VOLUME] = v;
-
-    // Decay time.
-    for(i = 0, v = 0; i < NUM_AUDIO_ENVIRONMENT_CLASSES; ++i)
-    {
-        v += envSpaceAccum[i] * envInfo[i].decayMul;
-    }
-    if(v > 255) v = 255;
-    bspLeaf->_reverb[SRD_DECAY] = v;
-
-    // High frequency damping.
-    for(i = 0, v = 0; i < NUM_AUDIO_ENVIRONMENT_CLASSES; ++i)
-    {
-        v += envSpaceAccum[i] * envInfo[i].dampingMul;
-    }
-    if(v > 255) v = 255;
-    bspLeaf->_reverb[SRD_DAMPING] = v;
-
-    /* DEBUG_Message(("bspLeaf %04i: vol:%3i sp:%3i dec:%3i dam:%3i\n",
-                      bspLeaf->indexInMap(), bspLeaf->reverb[SRD_VOLUME],
-                      bspLeaf->reverb[SRD_SPACE], bspLeaf->reverb[SRD_DECAY],
-                      bspLeaf->reverb[SRD_DAMPING])); */
-
-    return true;
+    return AE_NONE;
 }
 
 static void calculateSectorReverb(Sector *sec)
@@ -206,7 +95,7 @@ static void calculateSectorReverb(Sector *sec)
 
     foreach(BspLeaf *bspLeaf, sec->reverbBspLeafs())
     {
-        if(calcBspLeafReverb(bspLeaf))
+        if(bspLeaf->updateReverb())
         {
             sec->_reverb[SRD_SPACE]   += bspLeaf->_reverb[SRD_SPACE];
 

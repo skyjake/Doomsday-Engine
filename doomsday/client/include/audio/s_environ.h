@@ -1,4 +1,4 @@
-/** @file s_environ.h Sound environment.
+/** @file s_environ.h Audio environment management.
  * @ingroup audio
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -24,24 +24,29 @@
 
 #include "api_uri.h"
 
-namespace de {
-class Map;
-}
-
 class Sector;
 
-typedef enum audioenvironmentclass_e {
-    AEC_UNKNOWN = -1,
-    AEC_FIRST = 0,
-    AEC_METAL = AEC_FIRST,
-    AEC_ROCK,
-    AEC_WOOD,
-    AEC_CLOTH,
-    NUM_AUDIO_ENVIRONMENT_CLASSES
-} AudioEnvironmentClass;
+enum AudioEnvironmentId
+{
+    AE_NONE = -1,
+    AE_FIRST = 0,
+    AE_METAL = AE_FIRST,
+    AE_ROCK,
+    AE_WOOD,
+    AE_CLOTH,
+    NUM_AUDIO_ENVIRONMENTS
+};
 
-#define VALID_AUDIO_ENVIRONMENT_CLASS(val) (\
-    (int)(val) >= AEC_FIRST && (int)(val) < NUM_AUDIO_ENVIRONMENT_CLASSES)
+/**
+ * Defines the properties of an audio environment.
+ */
+struct AudioEnvironment
+{
+    char const name[9]; ///< Environment type name.
+    int volumeMul;
+    int decayMul;
+    int dampingMul;
+};
 
 /**
  * Requests re-calculation of the reverb properties of the given sector. Should
@@ -68,16 +73,22 @@ void S_UpdateReverbForSector(Sector *sec);
 /**
  * Must be called when the map changes.
  */
-void S_ResetReverb(void);
+void S_ResetReverb();
 
 /**
- * @return  Environment class name for identifier @a mclass.
+ * Lookup the symbolic name of the identified audio environment.
  */
-char const *S_AudioEnvironmentName(AudioEnvironmentClass environment);
+char const *S_AudioEnvironmentName(AudioEnvironmentId id);
 
 /**
- * @return  Environment class associated with material @a uri else @c AEC_UNKNOWN.
+ * Lookup the identified audio environment.
  */
-AudioEnvironmentClass S_AudioEnvironmentForMaterial(Uri const *uri);
+AudioEnvironment const &S_AudioEnvironment(AudioEnvironmentId id);
+
+/**
+ * Lookup the audio environment associated with material @a uri. If no environment
+ * is defined then @c AE_NONE is returned.
+ */
+AudioEnvironmentId S_AudioEnvironmentId(Uri const *uri);
 
 #endif // DENG_SOUND_ENVIRON

@@ -212,7 +212,6 @@ Sector::Sector(float lightLevel, Vector3f const &lightColor)
 {
     _mobjList = 0;
 #ifdef __CLIENT__
-    _frameFlags = 0;
     zap(_reverb);
 #endif
 }

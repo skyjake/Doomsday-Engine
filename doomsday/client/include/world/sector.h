@@ -108,9 +108,6 @@ public: /// @todo Make private:
     struct mobj_s *_mobjList;
 
 #ifdef __CLIENT__
-    /// @ref sectorFrameFlags
-    int _frameFlags;
-
     /// Final environmental audio characteristics.
     AudioEnvironmentFactors _reverb;
 #endif

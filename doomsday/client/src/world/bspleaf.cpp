@@ -553,6 +553,97 @@ void BspLeaf::lightBiasPoly(int group, Vector3f const *posCoords, Vector4f *colo
     geomGroup->biasTracker.markIllumUpdateCompleted();
 }
 
+static void accumReverbForWallSections(HEdge const *hedge,
+    float envSpaceAccum[NUM_AUDIO_ENVIRONMENTS], float &total)
+{
+    // Edges with no map line segment implicitly have no surfaces.
+    if(!hedge || !hedge->mapElement())
+        return;
+
+    Line::Side::Segment *seg = hedge->mapElement()->as<Line::Side::Segment>();
+    if(!seg->lineSide().hasSections() || !seg->lineSide().middle().hasMaterial())
+        return;
+
+    Material &material = seg->lineSide().middle().material();
+    AudioEnvironmentId env = material.audioEnvironment();
+    if(!(env >= 0 && env < NUM_AUDIO_ENVIRONMENTS))
+        env = AE_WOOD; // Assume it's wood if unknown.
+
+    total += seg->length();
+
+    envSpaceAccum[env] += seg->length();
+}
+
+bool BspLeaf::updateReverb()
+{
+    if(!d->sector || !d->poly)
+    {
+        _reverb[SRD_SPACE] = _reverb[SRD_VOLUME] =
+            _reverb[SRD_DECAY] = _reverb[SRD_DAMPING] = 0;
+        return false;
+    }
+
+    float envSpaceAccum[NUM_AUDIO_ENVIRONMENTS];
+    std::memset(&envSpaceAccum, 0, sizeof(envSpaceAccum));
+
+    // Space is the rough volume of the BSP leaf (bounding box).
+    AABoxd const &aaBox = d->poly->aaBox();
+    _reverb[SRD_SPACE] =
+        int(d->sector->ceiling().height() - d->sector->floor().height()) *
+        (aaBox.maxX - aaBox.minX) *
+        (aaBox.maxY - aaBox.minY);
+
+    float total = 0;
+
+    // The other reverb properties can be found out by taking a look at the
+    // materials of all surfaces in the BSP leaf.
+    HEdge *base = d->poly->hedge();
+    HEdge *hedge = base;
+    do
+    {
+        accumReverbForWallSections(hedge, envSpaceAccum, total);
+    } while((hedge = &hedge->next()) != base);
+
+    foreach(Mesh *mesh, d->extraMeshes)
+    foreach(HEdge *hedge, mesh->hedges())
+    {
+        accumReverbForWallSections(hedge, envSpaceAccum, total);
+    }
+
+    if(!total)
+    {
+        // Huh?
+        _reverb[SRD_VOLUME] = _reverb[SRD_DECAY] = _reverb[SRD_DAMPING] = 0;
+        return false;
+    }
+
+    // Average the results.
+    for(int i = AE_FIRST; i < NUM_AUDIO_ENVIRONMENTS; ++i)
+    {
+        envSpaceAccum[i] /= total;
+    }
+
+    // Accumulate and clamp the final characteristics
+    int accum[NUM_REVERB_DATA]; zap(accum);
+    for(int i = int(AE_FIRST); i < NUM_AUDIO_ENVIRONMENTS; ++i)
+    {
+        AudioEnvironment const &envInfo = S_AudioEnvironment(AudioEnvironmentId(i));
+        // Volume.
+        accum[SRD_VOLUME]  += envSpaceAccum[i] * envInfo.volumeMul;
+
+        // Decay time.
+        accum[SRD_DECAY]   += envSpaceAccum[i] * envInfo.decayMul;
+
+        // High frequency damping.
+        accum[SRD_DAMPING] += envSpaceAccum[i] * envInfo.dampingMul;
+    }
+    _reverb[SRD_VOLUME]  = de::min(accum[SRD_VOLUME],  255);
+    _reverb[SRD_DECAY]   = de::min(accum[SRD_DECAY],   255);
+    _reverb[SRD_DAMPING] = de::min(accum[SRD_DAMPING], 255);
+
+    return true;
+}
+
 void BspLeaf::clearShadowLines()
 {
     d->shadowLines.clear();
