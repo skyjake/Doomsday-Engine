@@ -187,4 +187,6 @@ void PopupMenuWidget::popupClosing()
         d->hover = 0;
         requestGeometry();
     }
+
+    menu().dismissPopups();
 }

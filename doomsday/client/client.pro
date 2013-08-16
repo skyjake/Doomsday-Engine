@@ -373,6 +373,7 @@ DENG_HEADERS += \
     include/ui/widgets/proceduralimage.h \
     include/ui/widgets/progresswidget.h \
     include/ui/widgets/scrollareawidget.h \
+    include/ui/widgets/submenuitem.h \
     include/ui/widgets/styledlogsinkformatter.h \
     include/ui/widgets/taskbarwidget.h \
     include/ui/widgets/togglewidget.h \

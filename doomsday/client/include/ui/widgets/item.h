@@ -46,7 +46,7 @@ public:
     enum Semantic {
         Label,
         Action,
-        SubmenuAction,
+        Submenu,
         Separator,
         Toggle
     };

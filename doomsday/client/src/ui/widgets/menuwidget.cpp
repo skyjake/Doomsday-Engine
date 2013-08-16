@@ -17,6 +17,7 @@
  */
 
 #include "ui/widgets/menuwidget.h"
+#include "ui/widgets/popupmenuwidget.h"
 #include "ui/widgets/contextwidgetorganizer.h"
 #include "ui/widgets/listcontext.h"
 #include "ui/widgets/actionitem.h"
@@ -27,14 +28,94 @@ using namespace de;
 using namespace ui;
 
 DENG2_PIMPL(MenuWidget),
-DENG2_OBSERVES(Context, Addition),
-DENG2_OBSERVES(Context, Removal),
-DENG2_OBSERVES(Context, OrderChange),
+DENG2_OBSERVES(Context, Addition),    // for layout update
+DENG2_OBSERVES(Context, Removal),     // for layout update
+DENG2_OBSERVES(Context, OrderChange), // for layout update
+DENG2_OBSERVES(PopupWidget, Close),
 public ContextWidgetOrganizer::IWidgetFactory
 {
+    /**
+     * Action owned by the button that represents a SubmenuItem.
+     */
+    struct SubmenuAction : public de::Action,
+            DENG2_OBSERVES(Widget, Deletion)
+    {
+        SubmenuAction(Instance *inst, ui::SubmenuItem const &parentItem)
+            : d(inst), _submenu(parentItem)
+        {
+            _widget = new PopupMenuWidget;
+            _widget->audienceForDeletion += this;
+
+            // Use the items from the submenu.
+            _widget->menu().setItems(parentItem.items());
+
+            // Popups need a parent; hidden items are ignored by the menu.
+            d->self.add(_widget);
+        }
+
+        ~SubmenuAction()
+        {
+            if(_widget)
+            {
+                delete _widget;
+            }
+        }
+
+        void widgetBeingDeleted(Widget &)
+        {
+            _widget = 0;
+        }
+
+        void trigger()
+        {
+            Action::trigger();
+
+            DENG2_ASSERT(_widget != 0);
+
+            GuiWidget *parent = d->organizer.itemWidget(_submenu);
+            DENG2_ASSERT(parent != 0);
+
+            // Update the anchor of the submenu.
+            ui::Direction const dir = _submenu.openingDirection();
+            if(dir == ui::Left || dir == ui::Right)
+            {
+                _widget->setAnchorY(parent->hitRule().top() + parent->hitRule().height() / 2);
+
+                _widget->setAnchorX(dir == ui::Left? parent->hitRule().left() :
+                                                     parent->hitRule().right());
+            }
+            else if(dir == ui::Up || dir == ui::Down)
+            {
+                _widget->setAnchorX(parent->hitRule().left() + parent->hitRule().width() / 2);
+
+                _widget->setAnchorY(dir == ui::Up? parent->hitRule().top() :
+                                                   parent->hitRule().bottom());
+            }
+            _widget->setOpeningDirection(dir);
+
+            d->openPopups.insert(_widget);
+            _widget->audienceForClose += d;
+
+            _widget->open();
+        }
+
+        SubmenuAction *duplicate() const
+        {
+            DENG2_ASSERT(false); // not needed
+            return 0;
+        }
+
+    private:
+        Instance *d;
+        ui::SubmenuItem const &_submenu;
+        PopupMenuWidget *_widget;
+    };
+
     bool needLayout;
-    ListContext items;
+    ListContext defaultItems;
+    Context const *items;
     ContextWidgetOrganizer organizer;
+    QSet<PopupWidget *> openPopups;
 
     SizePolicy colPolicy;
     SizePolicy rowPolicy;
@@ -46,11 +127,12 @@ public ContextWidgetOrganizer::IWidgetFactory
     ConstantRule *rows;
 
     OperatorRule *colWidth;
-    OperatorRule *rowHeight;
+    OperatorRule *rowHeight;       
 
     Instance(Public *i)
         : Base(i),
           needLayout(false),
+          items(0),
           organizer(self),
           colPolicy(Fixed),
           rowPolicy(Fixed)
@@ -64,12 +146,11 @@ public ContextWidgetOrganizer::IWidgetFactory
         colWidth  = holdRef((self.rule().width() - *margin * 2) / *cols);
         rowHeight = holdRef((self.rule().height() - *margin * 2) / *rows);
 
-        items.audienceForAddition += this;
-        items.audienceForRemoval += this;
-        items.audienceForOrderChange += this;
-
+        // We will create widgets ourselves.
         organizer.setWidgetFactory(*this);
-        organizer.setContext(items);
+
+        // The default context is empty.        
+        setContext(&defaultItems);
     }
 
     ~Instance()
@@ -78,6 +159,26 @@ public ContextWidgetOrganizer::IWidgetFactory
         releaseRef(rows);
         releaseRef(colWidth);
         releaseRef(rowHeight);
+    }
+
+    void setContext(Context const *ctx)
+    {
+        if(items)
+        {
+            // Get rid of the old context.
+            items->audienceForAddition -= this;
+            items->audienceForRemoval -= this;
+            items->audienceForOrderChange -= this;
+            organizer.unsetContext();
+        }
+
+        items = ctx;
+
+        // Take new context into use.
+        items->audienceForAddition += this;
+        items->audienceForRemoval += this;
+        items->audienceForOrderChange += this;
+        organizer.setContext(*items); // recreates widgets
     }
 
     void contextItemAdded(Context::Pos id, Item const &)
@@ -101,13 +202,18 @@ public ContextWidgetOrganizer::IWidgetFactory
     /*
      * Menu items are represented as buttons and labels.
      */
-    GuiWidget *makeWidgetForItem(Item const &item, GuiWidget const *parent)
+    GuiWidget *makeitemWidget(Item const &item, GuiWidget const *parent)
     {
-        if(item.semantic() == Item::Action || item.semantic() == Item::SubmenuAction)
+        if(item.semantic() == Item::Action || item.semantic() == Item::Submenu)
         {
             // Normal clickable button.
             ButtonWidget *b = new ButtonWidget;
             b->setTextAlignment(ui::AlignRight);
+
+            if(item.semantic() == Item::Submenu)
+            {
+                b->setAction(new SubmenuAction(this, item.as<SubmenuItem>()));
+            }
             return b;
         }
         else if(item.semantic() == Item::Separator)
@@ -130,10 +236,9 @@ public ContextWidgetOrganizer::IWidgetFactory
         return 0;
     }
 
-    void updateWidgetForItem(GuiWidget &widget, Item const &item)
+    void updateitemWidget(GuiWidget &widget, Item const &item)
     {
-        if(item.semantic() == Item::Action ||
-           item.semantic() == Item::SubmenuAction)
+        if(item.semantic() == Item::Action)
         {
             ButtonWidget &b = widget.as<ButtonWidget>();
             ActionItem const &act = item.as<ActionItem>();
@@ -142,10 +247,17 @@ public ContextWidgetOrganizer::IWidgetFactory
             b.setText(act.label());
             b.setAction(act.action()->duplicate());
         }
-        else if(item.semantic() == Item::Separator)
+        else
         {
+            // Other kinds of items are represented as labels or
+            // label-derived widgets.
             widget.as<LabelWidget>().setText(item.label());
         }
+    }
+
+    void popupBeingClosed(PopupWidget &popup)
+    {
+        openPopups.remove(&popup);
     }
 
     Vector2i ordinalToGridPos(int ordinal) const
@@ -192,8 +304,6 @@ public ContextWidgetOrganizer::IWidgetFactory
         Vector2i size;
         int ord = 0;
 
-        //DENG2_ASSERT(sortedChildren.size() == int(self.childCount()));
-
         foreach(Widget *i, self.childWidgets())
         {
             if(isVisibleItem(i))
@@ -204,33 +314,6 @@ public ContextWidgetOrganizer::IWidgetFactory
 
         return size;
     }
-
-    /*
-    // Functor for quicksort comparisons.
-    struct Sorter {
-        Instance &d;
-        Sorter(Instance *inst) : d(*inst) {}
-        bool operator () (Widget const *a, Widget const *b) const {
-            DENG2_ASSERT(!d.sorting.isNull());
-            return d.sorting->compareMenuItemsForSorting(*a, *b) < 0;
-        }
-    };
-    */
-
-#if 0
-    void prepareSortedChildren()
-    {
-        items.sort(ListContext::Ascending);
-
-        /*
-        sortedChildren = self.Widget::children();
-        if(!sorting.isNull())
-        {
-            qSort(sortedChildren.begin(), sortedChildren.end(), Sorter(this));
-        }
-        */
-    }
-#endif
 
     GuiWidget *findItem(int col, int row) const
     {
@@ -352,69 +435,18 @@ void MenuWidget::setGridSize(int columns, ui::SizePolicy columnPolicy,
 
 Context &MenuWidget::items()
 {
-    return d->items;
+    return *const_cast<Context *>(d->items);
 }
 
 Context const &MenuWidget::items() const
 {
-    return d->items;
+    return *d->items;
 }
 
-/*
-void MenuWidget::setLayoutSortOrder(ISortOrder *sorting)
+void MenuWidget::setItems(Context const &items)
 {
-    d->sorting.reset(sorting);
-    d->needLayout = true;
+    d->setContext(&items);
 }
-*/
-
-/*
-GuiWidget *MenuWidget::addItem(GuiWidget *anyWidget)
-{
-    if(!anyWidget) return 0;
-
-    add(anyWidget);
-    d->needLayout = true;
-    return anyWidget;
-}
-*/
-
-#if 0
-ButtonWidget *MenuWidget::addItem(String const &styledText, Action *action)
-{
-    return addItem(Image(), styledText, action);
-}
-
-ButtonWidget *MenuWidget::addItem(Image const &image, String const &styledText, Action *action)
-{    
-    ButtonWidget *b = new ButtonWidget;
-
-    b->setImage(image);
-    b->setText(styledText);
-    b->setTextAlignment(ui::AlignRight);
-    b->setAction(action);
-
-    addItem(b);
-
-    return b;
-}
-
-GuiWidget *MenuWidget::addSeparator(String const &labelText)
-{
-    LabelWidget *lab = new LabelWidget;
-    lab->setText(labelText);
-    lab->setAlignment(ui::AlignLeft);
-    lab->setTextLineAlignment(ui::AlignLeft);
-    lab->setSizePolicy(ui::Expand, ui::Expand);
-    addItem(lab);
-    return lab;
-}
-
-void MenuWidget::removeItem(GuiWidget *child)
-{
-    d->needLayout = true;
-}
-#endif
 
 int MenuWidget::count() const
 {
@@ -423,9 +455,6 @@ int MenuWidget::count() const
 
 void MenuWidget::updateLayout()
 {
-    // Sort children again.
-    //d->prepareSortedChildren();
-
     Rule const *baseVert = holdRef(&contentRule().top());
 
     Vector2i gridSize = d->countGrid();
@@ -544,5 +573,13 @@ void MenuWidget::update()
     if(d->needLayout)
     {
         updateLayout();
+    }
+}
+
+void MenuWidget::dismissPopups()
+{
+    foreach(PopupWidget *pop, d->openPopups)
+    {
+        pop->close();
     }
 }

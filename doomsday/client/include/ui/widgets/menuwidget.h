@@ -24,6 +24,8 @@
 #include "context.h"
 #include "contextwidgetorganizer.h"
 #include "actionitem.h"
+#include "submenuitem.h"
+#include "variabletoggleitem.h"
 
 /**
  * Menu with an N-by-M grid of items (child widgets).
@@ -102,6 +104,9 @@ public:
 
     // Events.
     void update();
+
+public slots:
+    void dismissPopups();
 
 private:
     DENG2_PRIVATE(d)

@@ -22,7 +22,6 @@
 #include "ui/widgets/buttonwidget.h"
 #include "ui/widgets/consolecommandwidget.h"
 #include "ui/widgets/popupmenuwidget.h"
-#include "ui/widgets/variabletoggleitem.h"
 #include "ui/widgets/blurwidget.h"
 #include "ui/clientwindow.h"
 #include "ui/commandaction.h"
@@ -57,7 +56,7 @@ public IGameChangeObserver
     ButtonWidget *logo;
     LabelWidget *status;
     PopupMenuWidget *mainMenu;
-    PopupMenuWidget *unloadMenu;
+    //PopupMenuWidget *unloadMenu;
     ScalarRule *vertShift;
 
     QScopedPointer<Action> openAction;
@@ -130,7 +129,7 @@ public IGameChangeObserver
 
     GuiWidget &itemWidget(uint pos) const
     {
-        return *mainMenu->menu().organizer().widgetForItem(mainMenu->menu().items().at(pos));
+        return *mainMenu->menu().organizer().itemWidget(mainMenu->menu().items().at(pos));
     }
 
     void currentGameChanged(Game &newGame)
@@ -236,6 +235,13 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
     d->mainMenu->setAnchor(d->logo->rule().left() + d->logo->rule().width() / 2,
                            d->logo->rule().top());
 
+    // Game unloading confirmation submenu.
+    ui::SubmenuItem *unloadMenu = new ui::SubmenuItem(tr("Unload Game"), ui::Left);
+    unloadMenu->items()
+            << new ui::Item(ui::Item::Separator, tr("Really unload the game?"))
+            << new ui::ActionItem(tr("Unload") + " " _E(b) + tr("(discard progress)"), new SignalAction(this, SLOT(unloadGame())))
+            << new ui::ActionItem(tr("Cancel"), new SignalAction(d->mainMenu, SLOT(dismissPopups())));
+
     /**
      * Set up items for the DE menu. Some of these are shown/hidden
      * depending on whether a game is loaded.
@@ -244,8 +250,7 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
             << new ui::ActionItem(_E(b) + tr("Open Control Panel"), new CommandAction("panel"))
             << new ui::ActionItem(tr("Toggle Fullscreen"), new CommandAction("togglefullscreen"))
             << new ui::VariableToggleItem(tr("Show FPS"), App::config()["window.main.showFps"])
-            << new ui::ActionItem(ui::Item::SubmenuAction, tr("Unload Game"),
-                                  new SignalAction(this, SLOT(confirmUnloadGame())))
+            << unloadMenu
             << new ui::Item(ui::Item::Separator)
             << new ui::ActionItem(tr("Check for Updates..."), new CommandAction("updateandnotify"))
             << new ui::ActionItem(tr("Updater Settings..."), new CommandAction("updatesettings"))
@@ -255,6 +260,7 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
     add(d->mainMenu);
 
     // Confirmation for unloading game.
+    /*
     d->unloadMenu = new PopupMenuWidget("unload-menu");
     d->unloadMenu->setOpeningDirection(ui::Left);
     d->unloadMenu->setAnchor(d->mainMenu->rule().left(),
@@ -267,6 +273,8 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
             << new ui::ActionItem(tr("Cancel"));
 
     add(d->unloadMenu);
+    */
+
 
     d->itemWidget(POS_PANEL).hide();
     d->itemWidget(POS_UNLOAD).hide();
@@ -495,10 +503,12 @@ void TaskBarWidget::openMainMenu()
     d->mainMenu->open();
 }
 
+/*
 void TaskBarWidget::confirmUnloadGame()
 {
     d->unloadMenu->open();
 }
+*/
 
 void TaskBarWidget::unloadGame()
 {
