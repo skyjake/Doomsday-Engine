@@ -83,12 +83,10 @@ public:
     typedef QSet<Line::Side *> ShadowLines;
 #endif
 
-public: /// @todo Make private:
 #ifdef __CLIENT__
-
-    uint _reverb[NUM_REVERB_DATA];
-
-#endif // __CLIENT__
+    // Final audio environment characteristics.
+    typedef uint AudioEnvironmentFactors[NUM_REVERB_DATA];
+#endif
 
 public:
     /**
@@ -288,9 +286,15 @@ public:
     void applyBiasDigest(BiasDigest &changes);
 
     /**
-     * Recalculate the environmental audio characteristics for the BSP leaf.
+     * Recalculate the environmental audio characteristics (reverb) of the BSP leaf.
      */
     bool updateReverb();
+
+    /**
+     * Provides access to the final environmental audio characteristics (reverb)
+     * of the BSP leaf, for efficient accumulation.
+     */
+    AudioEnvironmentFactors const &reverb() const;
 
     /**
      * Clear the list of fake radio shadow line sides for the BSP leaf.

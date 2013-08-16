@@ -816,7 +816,7 @@ String Material::synopsis() const
 {
     String str = String("Drawable:%1").arg(isDrawable()? "yes" : "no");
 #ifdef __CLIENT__
-    str += String(" EnvClass:\"%2\" Decorated:%1")
+    str += String(" EnvClass:\"%1\" Decorated:%2")
             .arg(audioEnvironment() == AE_NONE? "N/A" : S_AudioEnvironmentName(audioEnvironment()))
             .arg(isDecorated()? "yes" : "no");
 #endif

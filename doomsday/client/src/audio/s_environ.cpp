@@ -97,11 +97,13 @@ static void calculateSectorReverb(Sector *sec)
     {
         if(bspLeaf->updateReverb())
         {
-            sec->_reverb[SRD_SPACE]   += bspLeaf->_reverb[SRD_SPACE];
+            BspLeaf::AudioEnvironmentFactors const &leafReverb = bspLeaf->reverb();
 
-            sec->_reverb[SRD_VOLUME]  += bspLeaf->_reverb[SRD_VOLUME]  / 255.0f * bspLeaf->_reverb[SRD_SPACE];
-            sec->_reverb[SRD_DECAY]   += bspLeaf->_reverb[SRD_DECAY]   / 255.0f * bspLeaf->_reverb[SRD_SPACE];
-            sec->_reverb[SRD_DAMPING] += bspLeaf->_reverb[SRD_DAMPING] / 255.0f * bspLeaf->_reverb[SRD_SPACE];
+            sec->_reverb[SRD_SPACE]   += leafReverb[SRD_SPACE];
+
+            sec->_reverb[SRD_VOLUME]  += leafReverb[SRD_VOLUME]  / 255.0f * leafReverb[SRD_SPACE];
+            sec->_reverb[SRD_DECAY]   += leafReverb[SRD_DECAY]   / 255.0f * leafReverb[SRD_SPACE];
+            sec->_reverb[SRD_DAMPING] += leafReverb[SRD_DAMPING] / 255.0f * leafReverb[SRD_SPACE];
         }
     }
 

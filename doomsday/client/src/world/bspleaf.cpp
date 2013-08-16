@@ -95,6 +95,9 @@ DENG2_PIMPL(BspLeaf)
     /// Set of fake radio shadow lines.
     ShadowLines shadowLines;
 
+    /// Final audio environment characteristics.
+    AudioEnvironmentFactors reverb;
+
 #endif // __CLIENT__
 
     /// Used by legacy algorithms to prevent repeated processing.
@@ -110,7 +113,11 @@ DENG2_PIMPL(BspLeaf)
           addSpriteCount(0),
 #endif
           validCount(0)
-    {}
+    {
+#ifdef __CLIENT__
+        zap(reverb);
+#endif
+    }
 
     ~Instance()
     {
@@ -281,11 +288,7 @@ DENG2_PIMPL(BspLeaf)
 
 BspLeaf::BspLeaf(Sector *sector)
     : MapElement(DMU_BSPLEAF), d(new Instance(this, sector))
-{
-#ifdef __CLIENT__
-    zap(_reverb);
-#endif
-}
+{}
 
 bool BspLeaf::hasPoly() const
 {
@@ -578,8 +581,8 @@ bool BspLeaf::updateReverb()
 {
     if(!d->sector || !d->poly)
     {
-        _reverb[SRD_SPACE] = _reverb[SRD_VOLUME] =
-            _reverb[SRD_DECAY] = _reverb[SRD_DAMPING] = 0;
+        d->reverb[SRD_SPACE] = d->reverb[SRD_VOLUME] =
+            d->reverb[SRD_DECAY] = d->reverb[SRD_DAMPING] = 0;
         return false;
     }
 
@@ -588,7 +591,7 @@ bool BspLeaf::updateReverb()
 
     // Space is the rough volume of the BSP leaf (bounding box).
     AABoxd const &aaBox = d->poly->aaBox();
-    _reverb[SRD_SPACE] =
+    d->reverb[SRD_SPACE] =
         int(d->sector->ceiling().height() - d->sector->floor().height()) *
         (aaBox.maxX - aaBox.minX) *
         (aaBox.maxY - aaBox.minY);
@@ -613,7 +616,7 @@ bool BspLeaf::updateReverb()
     if(!total)
     {
         // Huh?
-        _reverb[SRD_VOLUME] = _reverb[SRD_DECAY] = _reverb[SRD_DAMPING] = 0;
+        d->reverb[SRD_VOLUME] = d->reverb[SRD_DECAY] = d->reverb[SRD_DAMPING] = 0;
         return false;
     }
 
@@ -625,7 +628,7 @@ bool BspLeaf::updateReverb()
 
     // Accumulate and clamp the final characteristics
     int accum[NUM_REVERB_DATA]; zap(accum);
-    for(int i = int(AE_FIRST); i < NUM_AUDIO_ENVIRONMENTS; ++i)
+    for(int i = AE_FIRST; i < NUM_AUDIO_ENVIRONMENTS; ++i)
     {
         AudioEnvironment const &envInfo = S_AudioEnvironment(AudioEnvironmentId(i));
         // Volume.
@@ -637,11 +640,16 @@ bool BspLeaf::updateReverb()
         // High frequency damping.
         accum[SRD_DAMPING] += envSpaceAccum[i] * envInfo.dampingMul;
     }
-    _reverb[SRD_VOLUME]  = de::min(accum[SRD_VOLUME],  255);
-    _reverb[SRD_DECAY]   = de::min(accum[SRD_DECAY],   255);
-    _reverb[SRD_DAMPING] = de::min(accum[SRD_DAMPING], 255);
+    d->reverb[SRD_VOLUME]  = de::min(accum[SRD_VOLUME],  255);
+    d->reverb[SRD_DECAY]   = de::min(accum[SRD_DECAY],   255);
+    d->reverb[SRD_DAMPING] = de::min(accum[SRD_DAMPING], 255);
 
     return true;
+}
+
+BspLeaf::AudioEnvironmentFactors const &BspLeaf::reverb() const
+{
+    return d->reverb;
 }
 
 void BspLeaf::clearShadowLines()
