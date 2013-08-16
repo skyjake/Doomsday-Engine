@@ -115,13 +115,13 @@ public:
 #endif
 
 public: /// @todo Make private:
-    /// @ref sectorFrameFlags
-    int _frameFlags;
-
     /// Head of the linked list of mobjs "in" the sector (not owned).
     struct mobj_s *_mobjList;
 
 #ifdef __CLIENT__
+    /// @ref sectorFrameFlags
+    int _frameFlags;
+
     /// Final environmental audio characteristics.
     AudioEnvironmentFactors _reverb;
 #endif
@@ -248,6 +248,18 @@ public:
     void buildBspLeafs(de::Map const &map);
 
     /**
+     * Determines whether the specified @a point in the map coordinate space
+     * lies within the sector (according to the edges of the BSP leafs).
+     *
+     * @param point  Map space coordinate to test.
+     *
+     * @return  @c true iff the point lies inside the sector.
+     *
+     * @see BspLeaf::pointInside()
+     */
+    bool pointInside(de::Vector2d const &point) const;
+
+    /**
      * Returns the axis-aligned bounding box which encompases the geometry of
      * all BSP leafs attributed to the sector (map units squared). Note that if
      * no BSP leafs reference the sector the bounding box will be invalid (has
@@ -264,23 +276,6 @@ public:
      * @see buildBspLeafs()
      */
     void updateAABox();
-
-    /**
-     * Returns a rough approximation of the total combined area of the geometry
-     * for all BSP leafs attributed to the sector (map units squared).
-     *
-     * @see updateRoughArea()
-     */
-    coord_t roughArea() const;
-
-    /**
-     * Update the sector's rough area approximation.
-     *
-     * @pre BSP leaf list must have be initialized.
-     *
-     * @see buildBspLeafs(), roughArea()
-     */
-    void updateRoughArea();
 
     /**
      * Returns the primary sound emitter for the sector. Other emitters in the
@@ -436,6 +431,17 @@ public:
      */
     struct mobj_s *firstMobj() const;
 
+    /**
+     * Returns the @em validCount of the sector. Used by some legacy iteration
+     * algorithms for marking sectors as processed/visited.
+     *
+     * @todo Refactor away.
+     */
+    int validCount() const;
+
+    /// @todo Refactor away.
+    void setValidCount(int newValidCount);
+
 #ifdef __CLIENT__
     /**
      * Returns the LightGrid data values (for smoothed ambient lighting) for
@@ -463,35 +469,29 @@ public:
      */
     AudioEnvironmentFactors const &audioEnvironmentFactors() const;
 
-#endif // __CLIENT__
+    /**
+     * Returns a rough approximation of the total combined area of the geometry
+     * for all BSP leafs attributed to the sector (map units squared).
+     *
+     * @see updateRoughArea()
+     */
+    coord_t roughArea() const;
+
+    /**
+     * Update the sector's rough area approximation.
+     *
+     * @pre BSP leaf list must have be initialized.
+     *
+     * @see buildBspLeafs(), roughArea()
+     */
+    void updateRoughArea();
 
     /**
      * Returns the @ref sectorFrameFlags for the sector.
      */
     int frameFlags() const;
 
-    /**
-     * Returns the @em validCount of the sector. Used by some legacy iteration
-     * algorithms for marking sectors as processed/visited.
-     *
-     * @todo Refactor away.
-     */
-    int validCount() const;
-
-    /// @todo Refactor away.
-    void setValidCount(int newValidCount);
-
-    /**
-     * Determines whether the specified @a point in the map coordinate space
-     * lies within the sector (according to the edges of the BSP leafs)?
-     *
-     * @param point  Map space coordinate to test.
-     *
-     * @return  @c true iff the point lies inside the sector.
-     *
-     * @see BspLeaf::pointInside()
-     */
-    bool pointInside(de::Vector2d const &point) const;
+#endif // __CLIENT__
 
 protected:
     int property(DmuArgs &args) const;

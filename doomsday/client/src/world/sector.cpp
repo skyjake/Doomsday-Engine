@@ -205,9 +205,9 @@ DENG2_OBSERVES(Plane, HeightChange)
 Sector::Sector(float lightLevel, Vector3f const &lightColor)
     : MapElement(DMU_SECTOR), d(new Instance(this, lightLevel, lightColor))
 {
-    _frameFlags = 0;
     _mobjList = 0;
 #ifdef __CLIENT__
+    _frameFlags = 0;
     zap(_reverb);
 #endif
 }
@@ -321,12 +321,32 @@ AudioEnvironmentFactors const &Sector::audioEnvironmentFactors() const
     return _reverb;
 }
 
-#endif // __CLIENT__
+coord_t Sector::roughArea() const
+{
+    return d->roughArea;
+}
+
+void Sector::updateRoughArea()
+{
+    d->roughArea = 0;
+
+    foreach(BspLeaf *leaf, d->bspLeafs)
+    {
+        if(leaf->isDegenerate()) continue;
+
+        AABoxd const &leafAABox = leaf->poly().aaBox();
+
+        d->roughArea += (leafAABox.maxX - leafAABox.minX) *
+                        (leafAABox.maxY - leafAABox.minY);
+    }
+}
 
 int Sector::frameFlags() const
 {
     return _frameFlags;
 }
+
+#endif // __CLIENT__
 
 int Sector::validCount() const
 {
@@ -455,11 +475,6 @@ AABoxd const &Sector::aaBox() const
     return d->aaBox;
 }
 
-coord_t Sector::roughArea() const
-{
-    return d->roughArea;
-}
-
 void Sector::updateAABox()
 {
     d->aaBox.clear();
@@ -480,21 +495,6 @@ void Sector::updateAABox()
             V2d_CopyBox(d->aaBox.arvec2, leafAABox.arvec2);
             isFirst = false;
         }
-    }
-}
-
-void Sector::updateRoughArea()
-{
-    d->roughArea = 0;
-
-    foreach(BspLeaf *leaf, d->bspLeafs)
-    {
-        if(leaf->isDegenerate()) continue;
-
-        AABoxd const &leafAABox = leaf->poly().aaBox();
-
-        d->roughArea += (leafAABox.maxX - leafAABox.minX) *
-                        (leafAABox.maxY - leafAABox.minY);
     }
 }
 
