@@ -200,10 +200,8 @@ public:
      * EV_BuildStairs. That same order is used here, for compatibility.
      *
      * Order: Original @em line index, ascending.
-     *
-     * @param map  Map to collate sides from. @todo Refactor away.
      */
-    void buildSides(de::Map const &map);
+    void buildSides();
 
     /**
      * Provides access to the list of BSP leafs which reference the sector, for
@@ -214,14 +212,12 @@ public:
     /**
      * Returns the total number of BSP leafs which reference the sector.
      */
-    inline uint bspLeafCount() const { return uint(bspLeafs().count()); }
+    inline int bspLeafCount() const { return bspLeafs().count(); }
 
     /**
      * (Re)Build the BSP leaf list for the sector.
-     *
-     * @param map  Map to collate BSP leafs from. @todo Refactor away.
      */
-    void buildBspLeafs(de::Map const &map);
+    void buildBspLeafs();
 
     /**
      * Determines whether the specified @a point in the map coordinate space

@@ -494,13 +494,13 @@ Sector::Sides const &Sector::sides() const
     return d->sides;
 }
 
-void Sector::buildSides(Map const &map)
+void Sector::buildSides()
 {
     d->sides.clear();
 
 #ifdef DENG2_QT_4_7_OR_NEWER
     int count = 0;
-    foreach(Line *line, map.lines())
+    foreach(Line *line, map().lines())
     {
         if(line->frontSectorPtr() == this ||
            line->backSectorPtr()  == this)
@@ -512,7 +512,7 @@ void Sector::buildSides(Map const &map)
     d->sides.reserve(count);
 #endif
 
-    foreach(Line *line, map.lines())
+    foreach(Line *line, map().lines())
     {
         if(line->frontSectorPtr() == this)
         {
@@ -559,13 +559,13 @@ Sector::BspLeafs const &Sector::bspLeafs() const
     return d->bspLeafs;
 }
 
-void Sector::buildBspLeafs(Map const &map)
+void Sector::buildBspLeafs()
 {
     d->bspLeafs.clear();
 
 #ifdef DENG2_QT_4_7_OR_NEWER
     int count = 0;
-    foreach(BspLeaf *bspLeaf, map.bspLeafs())
+    foreach(BspLeaf *bspLeaf, map().bspLeafs())
     {
         if(bspLeaf->sectorPtr() == this)
             ++count;
@@ -576,7 +576,7 @@ void Sector::buildBspLeafs(Map const &map)
     d->bspLeafs.reserve(count);
 #endif
 
-    foreach(BspLeaf *bspLeaf, map.bspLeafs())
+    foreach(BspLeaf *bspLeaf, map().bspLeafs())
     {
         if(bspLeaf->sectorPtr() == this)
         {
