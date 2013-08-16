@@ -24,7 +24,8 @@
 #include <de/GLUniform>
 
 #include "guiwidget.h"
-#include "alignment.h"
+#include "../uidefs.h"
+#include "context.h"
 #include "proceduralimage.h"
 
 /**

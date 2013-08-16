@@ -20,7 +20,7 @@
 #define DENG_CLIENT_POPUPWIDGET_H
 
 #include "scrollareawidget.h"
-#include "alignment.h"
+#include "../uidefs.h"
 
 /**
  * Popup anchored to a specified point.
