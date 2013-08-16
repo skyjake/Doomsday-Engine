@@ -2318,7 +2318,7 @@ static void drawCurrentLeaf()
     DENG_ASSERT(!isNullLeaf(leaf));
 
     // Mark the sector visible for this frame.
-    leaf->sector()._frameFlags |= SIF_VISIBLE;
+    leaf->sector().markVisible();
 
     markLeafFrontFacingWalls();
     R_InitForBspLeaf(*leaf);
@@ -2984,7 +2984,7 @@ static int drawMobjBBox(thinker_t *th, void * /*context*/)
     if(mo == ddPlayers[consolePlayer].shared.mo)
         return false; // Continue iteration.
     // Is it vissible?
-    if(!(mo->bspLeaf && mo->bspLeaf->sector().frameFlags() & SIF_VISIBLE))
+    if(!mo->bspLeaf || !mo->bspLeaf->sector().isVisible())
         return false; // Continue iteration.
 
     Vector3d eye(vOrigin[VX], vOrigin[VZ], vOrigin[VY]);

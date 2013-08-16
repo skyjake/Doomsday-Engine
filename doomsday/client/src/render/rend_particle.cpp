@@ -304,39 +304,33 @@ static int countParticles(ptcgen_t* gen, void* parameters)
     return false; // Continue iteration.
 }
 
-static int populateSortBuffer(ptcgen_t* gen, void* parameters)
+static int populateSortBuffer(ptcgen_t *gen, void *parameters)
 {
-    size_t* m = (size_t*) parameters;
-    const ded_ptcgen_t* def;
-    particle_t* pt;
-    int p;
+    size_t *sortIndex = (size_t *) parameters;
 
     if(!isPtcGenVisible(gen))
         return false; // Continue iteration.
 
-    def = gen->def;
-    for(p = 0, pt = gen->ptcs; p < gen->count; ++p, pt++)
+    ded_ptcgen_t const *def = gen->def;
+    particle_t *pt          = gen->ptcs;
+    for(int p = 0; p < gen->count; ++p, pt++)
     {
-        int stagetype;
-        float dist;
-        porder_t* slot;
-
         if(pt->stage < 0 || !pt->sector)
             continue;
 
         // Is the particle's sector visible?
-        if(!(pt->sector->frameFlags() & SIF_VISIBLE))
+        if(!pt->sector->isVisible())
             continue; // No; this particle can't be seen.
 
         // Don't allow zero distance.
-        dist = MAX_OF(pointDist(pt->origin), 1);
+        float dist = de::max(pointDist(pt->origin), 1.f);
         if(def->maxDist != 0 && dist > def->maxDist)
             continue; // Too far.
         if(dist < (float) particleNearLimit)
             continue; // Too near.
 
         // This particle is visible. Add it to the sort buffer.
-        slot = &order[(*m)++];
+        porder_t *slot = &order[(*sortIndex)++];
 
         slot->ptcGenID = gens->generatorId(gen);
         slot->ptID = p;
@@ -344,7 +338,7 @@ static int populateSortBuffer(ptcgen_t* gen, void* parameters)
 
         // Determine what type of particle this is, as this will affect how
         // we go order our render passes and manipulate the render state.
-        stagetype = gen->stages[pt->stage].type;
+        int stagetype = gen->stages[pt->stage].type;
         if(stagetype == PTC_POINT)
         {
             hasPoints = true;

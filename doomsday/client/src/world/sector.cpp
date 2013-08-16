@@ -76,6 +76,8 @@ DENG2_OBSERVES(Plane, HeightChange)
     /// Set of BSP leafs which contribute to the environmental audio (reverb)
     /// characteristics.
     ReverbBspLeafs reverbBspLeafs;
+
+    bool visible; ///< @c true= marked as visible for the current frame.
 #endif
 
     /// if == validCount, already checked.
@@ -87,6 +89,9 @@ DENG2_OBSERVES(Plane, HeightChange)
           lightLevel(lightLevel),
           lightColor(lightColor),
           validCount(0)
+#ifdef __CLIENT__
+         ,visible(false)
+#endif
     {
         zap(soundEmitter);
 #ifdef __CLIENT__
@@ -341,9 +346,14 @@ void Sector::updateRoughArea()
     }
 }
 
-int Sector::frameFlags() const
+bool Sector::isVisible() const
 {
-    return _frameFlags;
+    return d->visible;
+}
+
+void Sector::markVisible(bool yes)
+{
+    d->visible = yes;
 }
 
 #endif // __CLIENT__

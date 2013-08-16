@@ -3016,10 +3016,10 @@ void Map::worldFrameBegins(World &world, bool resetNextViewer)
 {
     DENG2_ASSERT(&world.map() == this); // Sanity check.
 
-    // Clear all flags that can be cleared before each frame.
+    /// @todo optimize: Use a de::BitField instead.
     foreach(Sector *sector, d->sectors)
     {
-        sector->_frameFlags &= ~SIF_FRAME_CLEAR;
+        sector->markVisible(false);
     }
 
     // Interpolate the map ready for drawing view(s) of it.

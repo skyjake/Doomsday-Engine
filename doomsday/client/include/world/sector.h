@@ -45,17 +45,6 @@ class Surface;
 struct mobj_s;
 
 /**
- * @defgroup sectorFrameFlags Sector frame flags
- * @ingroup world
- */
-///@{
-#define SIF_VISIBLE             0x1 ///< Sector is visible on this frame.
-
-// Flags to clear before each frame.
-#define SIF_FRAME_CLEAR         SIF_VISIBLE
-///@}
-
-/**
  * World map sector.
  *
  * @ingroup world
@@ -487,9 +476,16 @@ public:
     void updateRoughArea();
 
     /**
-     * Returns the @ref sectorFrameFlags for the sector.
+     * Returns @c true iff the sector is marked as visible for the current frame.
+     * @see markVisible()
      */
-    int frameFlags() const;
+    bool isVisible() const;
+
+    /**
+     * Mark the sector as visible for the current frame.
+     * @see isVisible()
+     */
+    void markVisible(bool yes = true);
 
 #endif // __CLIENT__
 
