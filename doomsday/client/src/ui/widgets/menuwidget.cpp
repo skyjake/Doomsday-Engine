@@ -17,15 +17,24 @@
  */
 
 #include "ui/widgets/menuwidget.h"
+#include "ui/widgets/contextwidgetorganizer.h"
+#include "ui/widgets/listcontext.h"
+#include "ui/widgets/actionitem.h"
+#include "ui/widgets/variabletoggleitem.h"
+#include "ui/widgets/variabletogglewidget.h"
 
 using namespace de;
 using namespace ui;
 
-DENG2_PIMPL(MenuWidget)
+DENG2_PIMPL(MenuWidget),
+DENG2_OBSERVES(Context, Addition),
+DENG2_OBSERVES(Context, Removal),
+DENG2_OBSERVES(Context, OrderChange),
+public ContextWidgetOrganizer::IWidgetFactory
 {
     bool needLayout;
-    QScopedPointer<ISortOrder> sorting;
-    WidgetList sortedChildren;
+    ListContext items;
+    ContextWidgetOrganizer organizer;
 
     SizePolicy colPolicy;
     SizePolicy rowPolicy;
@@ -42,6 +51,7 @@ DENG2_PIMPL(MenuWidget)
     Instance(Public *i)
         : Base(i),
           needLayout(false),
+          organizer(self),
           colPolicy(Fixed),
           rowPolicy(Fixed)
     {
@@ -53,6 +63,13 @@ DENG2_PIMPL(MenuWidget)
 
         colWidth  = holdRef((self.rule().width() - *margin * 2) / *cols);
         rowHeight = holdRef((self.rule().height() - *margin * 2) / *rows);
+
+        items.audienceForAddition += this;
+        items.audienceForRemoval += this;
+        items.audienceForOrderChange += this;
+
+        organizer.setWidgetFactory(*this);
+        organizer.setContext(items);
     }
 
     ~Instance()
@@ -61,6 +78,74 @@ DENG2_PIMPL(MenuWidget)
         releaseRef(rows);
         releaseRef(colWidth);
         releaseRef(rowHeight);
+    }
+
+    void contextItemAdded(Context::Pos id, Item const &)
+    {
+        // Make sure we determine the layout for the new item.
+        needLayout = true;
+    }
+
+    void contextItemBeingRemoved(Context::Pos id, Item const &item)
+    {
+        // Make sure we determine the layout after this item is gone.
+        needLayout = true;
+    }
+
+    void contextItemOrderChanged()
+    {
+        // Make sure we determine the layout for the new order.
+        needLayout = true;
+    }
+
+    /*
+     * Menu items are represented as buttons and labels.
+     */
+    GuiWidget *makeWidgetForItem(Item const &item, GuiWidget const *parent)
+    {
+        if(item.semantic() == Item::Action || item.semantic() == Item::SubmenuAction)
+        {
+            // Normal clickable button.
+            ButtonWidget *b = new ButtonWidget;
+            b->setTextAlignment(ui::AlignRight);
+            return b;
+        }
+        else if(item.semantic() == Item::Separator)
+        {
+            LabelWidget *lab = new LabelWidget;
+            lab->setAlignment(ui::AlignLeft);
+            lab->setTextLineAlignment(ui::AlignLeft);
+            lab->setSizePolicy(ui::Expand, ui::Expand);
+            return lab;
+        }
+        else if(item.semantic() == Item::Toggle)
+        {
+            // We know how to present variable toggles.
+            VariableToggleItem const *varTog = dynamic_cast<VariableToggleItem const *>(&item);
+            if(varTog)
+            {
+                return new VariableToggleWidget(varTog->variable());
+            }
+        }
+        return 0;
+    }
+
+    void updateWidgetForItem(GuiWidget &widget, Item const &item)
+    {
+        if(item.semantic() == Item::Action ||
+           item.semantic() == Item::SubmenuAction)
+        {
+            ButtonWidget &b = widget.as<ButtonWidget>();
+            ActionItem const &act = item.as<ActionItem>();
+
+            b.setImage(act.image());
+            b.setText(act.label());
+            b.setAction(act.action()->duplicate());
+        }
+        else if(item.semantic() == Item::Separator)
+        {
+            widget.as<LabelWidget>().setText(item.label());
+        }
     }
 
     Vector2i ordinalToGridPos(int ordinal) const
@@ -95,7 +180,7 @@ DENG2_PIMPL(MenuWidget)
     int countVisible() const
     {
         int num = 0;
-        foreach(Widget *i, self.Widget::children())
+        foreach(Widget *i, self.childWidgets())
         {
             if(isVisibleItem(i)) ++num;
         }
@@ -107,9 +192,9 @@ DENG2_PIMPL(MenuWidget)
         Vector2i size;
         int ord = 0;
 
-        DENG2_ASSERT(sortedChildren.size() == int(self.childCount()));
+        //DENG2_ASSERT(sortedChildren.size() == int(self.childCount()));
 
-        foreach(Widget *i, self.Widget::children())
+        foreach(Widget *i, self.childWidgets())
         {
             if(isVisibleItem(i))
             {
@@ -120,6 +205,7 @@ DENG2_PIMPL(MenuWidget)
         return size;
     }
 
+    /*
     // Functor for quicksort comparisons.
     struct Sorter {
         Instance &d;
@@ -129,20 +215,27 @@ DENG2_PIMPL(MenuWidget)
             return d.sorting->compareMenuItemsForSorting(*a, *b) < 0;
         }
     };
+    */
 
+#if 0
     void prepareSortedChildren()
     {
+        items.sort(ListContext::Ascending);
+
+        /*
         sortedChildren = self.Widget::children();
         if(!sorting.isNull())
         {
             qSort(sortedChildren.begin(), sortedChildren.end(), Sorter(this));
         }
+        */
     }
+#endif
 
     GuiWidget *findItem(int col, int row) const
     {
         int ord = 0;
-        foreach(Widget *i, sortedChildren)
+        foreach(Widget *i, self.childWidgets())
         {
             if(isVisibleItem(i))
             {
@@ -257,12 +350,25 @@ void MenuWidget::setGridSize(int columns, ui::SizePolicy columnPolicy,
     d->needLayout = true;
 }
 
+Context &MenuWidget::items()
+{
+    return d->items;
+}
+
+Context const &MenuWidget::items() const
+{
+    return d->items;
+}
+
+/*
 void MenuWidget::setLayoutSortOrder(ISortOrder *sorting)
 {
     d->sorting.reset(sorting);
     d->needLayout = true;
 }
+*/
 
+/*
 GuiWidget *MenuWidget::addItem(GuiWidget *anyWidget)
 {
     if(!anyWidget) return 0;
@@ -271,7 +377,9 @@ GuiWidget *MenuWidget::addItem(GuiWidget *anyWidget)
     d->needLayout = true;
     return anyWidget;
 }
+*/
 
+#if 0
 ButtonWidget *MenuWidget::addItem(String const &styledText, Action *action)
 {
     return addItem(Image(), styledText, action);
@@ -306,6 +414,7 @@ void MenuWidget::removeItem(GuiWidget *child)
 {
     d->needLayout = true;
 }
+#endif
 
 int MenuWidget::count() const
 {
@@ -315,7 +424,7 @@ int MenuWidget::count() const
 void MenuWidget::updateLayout()
 {
     // Sort children again.
-    d->prepareSortedChildren();
+    //d->prepareSortedChildren();
 
     Rule const *baseVert = holdRef(&contentRule().top());
 
@@ -419,6 +528,11 @@ Rule const *MenuWidget::newColumnWidthRule(int column) const
         return holdRef(d->fullColumnWidth(column));
     }
     return holdRef(d->colWidth);
+}
+
+ContextWidgetOrganizer const &MenuWidget::organizer() const
+{
+    return d->organizer;
 }
 
 void MenuWidget::update()

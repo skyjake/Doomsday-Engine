@@ -17,6 +17,7 @@
  */
 
 #include "ui/widgets/gameselectionwidget.h"
+#include "ui/widgets/actionitem.h"
 #include "ui/commandaction.h"
 #include "clientapp.h"
 #include "games.h"
@@ -28,11 +29,13 @@ using namespace de;
 
 DENG2_PIMPL(GameSelectionWidget),
 DENG2_OBSERVES(Games, Addition),
-DENG2_OBSERVES(App, StartupComplete)
+DENG2_OBSERVES(App, StartupComplete),
+DENG2_OBSERVES(ContextWidgetOrganizer, WidgetCreation)
 {
     typedef QMap<Game *, ButtonWidget *> Buttons;
     Buttons buttons;
 
+#if 0
     /**
      * Sorts the game buttons by label text.
      */
@@ -45,13 +48,15 @@ DENG2_OBSERVES(App, StartupComplete)
             return x.text().compareWithoutCase(y.text());
         }
     };
+#endif
 
     Instance(Public *i) : Base(i)
     {
         App_Games().audienceForAddition += this;
         App::app().audienceForStartupComplete += this;
 
-        self.setLayoutSortOrder(new Sorting);
+        //self.setLayoutSortOrder(new Sorting);
+        self.organizer().audienceForWidgetCreation += this;
     }
 
     ~Instance()
@@ -62,22 +67,21 @@ DENG2_OBSERVES(App, StartupComplete)
 
     void gameAdded(Game &game)
     {
-        ButtonWidget *b = addItemForGame(game);
-        buttons.insert(&game, b);
+        self.items().append(makeItemForGame(game));
     }
 
-    ButtonWidget *addItemForGame(Game &game)
+    ui::Item *makeItemForGame(Game &game)
     {
         String const idKey = Str_Text(game.identityKey());
 
         CommandAction *loadAction = new CommandAction(String("load ") + idKey);
-        ButtonWidget *b = self.addItem(
-                    String(_E(b) "%1" _E(.)_E(s)_E(C) " %2\n"
+        String label = String(_E(b) "%1" _E(.)_E(s)_E(C) " %2\n"
                            _E(.)_E(.)_E(l)_E(D) "%3")
-                    .arg(Str_Text(game.title()))
-                    .arg(Str_Text(game.author()))
-                    .arg(idKey),
-                    loadAction);
+                .arg(Str_Text(game.title()))
+                .arg(Str_Text(game.author()))
+                .arg(idKey);
+
+        ui::ActionItem *item = new ui::ActionItem(label, loadAction);
 
         /// @todo The name of the plugin should be accessible via the plugin loader.
         String plugName;
@@ -95,15 +99,21 @@ DENG2_OBSERVES(App, StartupComplete)
         }
         if(self.style().images().has("logo.game." + plugName))
         {
-            b->setImage(self.style().images().image("logo.game." + plugName));
+            item->setImage(self.style().images().image("logo.game." + plugName));
         }
 
-        b->setBehavior(Widget::ContentClipping);
-        b->setAlignment(ui::AlignLeft);
-        b->setTextLineAlignment(ui::AlignLeft);
-        b->setHeightPolicy(ui::Expand);
-        b->setOpacity(.3f, .5f);
-        return b;
+        return item;
+    }
+
+    void widgetCreatedForItem(GuiWidget &widget, ui::Item const &item)
+    {
+        ButtonWidget &b = widget.as<ButtonWidget>();
+
+        b.setBehavior(Widget::ContentClipping);
+        b.setAlignment(ui::AlignLeft);
+        b.setTextLineAlignment(ui::AlignLeft);
+        b.setHeightPolicy(ui::Expand);
+        b.setOpacity(.3f, .5f);
     }
 
     void appStartupCompleted()
@@ -126,6 +136,8 @@ DENG2_OBSERVES(App, StartupComplete)
                 i.value()->disable();
             }
         }
+
+        self.items().sort();
     }
 };
 

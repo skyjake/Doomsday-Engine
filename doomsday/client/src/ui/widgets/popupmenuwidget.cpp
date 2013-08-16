@@ -19,18 +19,79 @@
 #include "ui/widgets/popupmenuwidget.h"
 #include "ui/widgets/guirootwidget.h"
 #include "ui/widgets/menuwidget.h"
+#include "ui/widgets/contextwidgetorganizer.h"
+#include "ui/widgets/item.h"
 
 using namespace de;
 
 DENG2_PIMPL(PopupMenuWidget),
 DENG2_OBSERVES(ButtonWidget, StateChange),
-DENG2_OBSERVES(ButtonWidget, Triggered)
+DENG2_OBSERVES(ButtonWidget, Triggered),
+DENG2_OBSERVES(ContextWidgetOrganizer, WidgetCreation),
+DENG2_OBSERVES(ContextWidgetOrganizer, WidgetUpdate)
 {
     ButtonWidget *hover;
     Rectanglei hoverHighlightRect;
 
     Instance(Public *i) : Base(i), hover(0)
-    {}
+    {
+        self.menu().organizer().audienceForWidgetCreation += this;
+        self.menu().organizer().audienceForWidgetUpdate += this;
+    }
+
+    void widgetCreatedForItem(GuiWidget &widget, ui::Item const &item)
+    {
+        // Popup menu items' background is provided by the popup.
+        widget.set(Background());
+
+        if(item.semantic() == ui::Item::Separator)
+        {
+            LabelWidget &lab = widget.as<LabelWidget>();
+            lab.setTextColor("label.accent");
+            return;
+        }
+
+        // We want items to be hittable throughout the width of the menu.
+        widget.hitRule()
+                .setInput(Rule::Left,  self.rule().left())
+                .setInput(Rule::Right, self.rule().right());
+
+        // Customize buttons for use in the popup. We will observe the button
+        // state for highlighting and possibly close the popup when an action
+        // gets triggered.
+        ButtonWidget *b = dynamic_cast<ButtonWidget *>(&widget);
+        if(b)
+        {
+            b->setSizePolicy(ui::Expand, ui::Expand);
+            b->setMargin("unit");
+
+            b->audienceForStateChange += this;
+
+            // Triggered actions close the menu.
+            if(item.semantic() == ui::Item::Action)
+            {
+                b->audienceForTriggered += this;
+            }
+        }
+    }
+
+    void widgetUpdatedForItem(GuiWidget &widget, ui::Item const &item)
+    {
+        if(item.semantic() == ui::Item::Separator)
+        {
+            // The label of a separator may change.
+            if(item.label().isEmpty())
+            {
+                widget.setMargin("");
+                widget.setFont("separator.empty");
+            }
+            else
+            {
+                widget.setMargin("halfunit");
+                widget.setFont("separator.label");
+            }
+        }
+    }
 
     void buttonStateChanged(ButtonWidget &button, ButtonWidget::State state)
     {
@@ -92,6 +153,7 @@ MenuWidget &PopupMenuWidget::menu() const
     return static_cast<MenuWidget &>(content());
 }
 
+#if 0
 ButtonWidget *PopupMenuWidget::addItem(String const &styledText, Action *action, bool dismissOnTriggered)
 {
     ButtonWidget *b = menu().addItem(styledText, action);
@@ -155,6 +217,7 @@ GuiWidget *PopupMenuWidget::addSeparator(String const &optionalLabel)
     sep->set(Background());
     return sep;
 }
+#endif
 
 void PopupMenuWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
 {

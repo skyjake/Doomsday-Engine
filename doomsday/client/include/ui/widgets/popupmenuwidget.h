@@ -32,11 +32,13 @@ public:
 
     MenuWidget &menu() const;
 
+    /*
     ButtonWidget *addItem(de::String const &styledText, de::Action *action = 0,
                           bool dismissOnTriggered = true);
     LabelWidget *addItem(LabelWidget *anyLabelBasedWidget);
+    */
 
-    GuiWidget *addSeparator(de::String const &optionalLabel = "");
+    //GuiWidget *addSeparator(de::String const &optionalLabel = "");
 
 protected:
     void glMakeGeometry(DefaultVertexBuf::Builder &verts);

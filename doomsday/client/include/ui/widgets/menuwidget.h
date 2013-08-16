@@ -21,6 +21,9 @@
 
 #include "scrollareawidget.h"
 #include "buttonwidget.h"
+#include "context.h"
+#include "contextwidgetorganizer.h"
+#include "actionitem.h"
 
 /**
  * Menu with an N-by-M grid of items (child widgets).
@@ -36,6 +39,7 @@
 class MenuWidget : public ScrollAreaWidget
 {
 public:
+#if 0
     class ISortOrder
     {
     public:
@@ -51,6 +55,7 @@ public:
          */
         virtual int compareMenuItemsForSorting(Widget const &a, Widget const &b) const = 0;
     };
+#endif
 
 public:
     MenuWidget(de::String const &name = "");
@@ -83,8 +88,15 @@ public:
      *
      * @param sorting  Sort order object. MenuWidget takes ownership.
      */
-    void setLayoutSortOrder(ISortOrder *sorting);
+    //void setLayoutSortOrder(ISortOrder *sorting);
 
+    ui::Context &items();
+
+    ui::Context const &items() const;
+
+    ContextWidgetOrganizer const &organizer() const;
+
+    /*
     GuiWidget *addItem(GuiWidget *anyWidget);
 
     ButtonWidget *addItem(de::String const &styledText, de::Action *action = 0);
@@ -94,6 +106,7 @@ public:
     GuiWidget *addSeparator(de::String const &labelText = "");
 
     void removeItem(GuiWidget *child);
+    */
 
     /**
      * Returns the number of visible items in the menu. Hidden items are not
