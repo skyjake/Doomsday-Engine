@@ -80,6 +80,11 @@ public:
     typedef WidgetList Children;
 
     /**
+     * Notified when the widget is about to be deleted.
+     */
+    DENG2_DEFINE_AUDIENCE(Deletion, void widgetBeingDeleted(Widget &widget))
+
+    /**
      * Notified when the widget's parent changes.
      */
     DENG2_DEFINE_AUDIENCE(ParentChange, void widgetParentChanged(Widget &child, Widget *oldParent, Widget *newParent))
@@ -182,9 +187,11 @@ public:
     // Tree organization.
     void clear();
     Widget &add(Widget *child);
+    Widget &insertBefore(Widget *child, Widget const &otherChild);
     Widget *remove(Widget &child);
     Widget *find(String const &name);
     Widget const *find(String const &name) const;
+    void moveChildBefore(Widget *child, Widget const &otherChild);
     Children children() const;
     dsize childCount() const;
     Widget *parent() const;

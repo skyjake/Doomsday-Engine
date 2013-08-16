@@ -75,6 +75,9 @@ Widget::~Widget()
     {
         d->parent->remove(*this);
     }
+
+    // Notify everyone else.
+    DENG2_FOR_AUDIENCE(Deletion, i) i->widgetBeingDeleted(*this);
 }
 
 Id Widget::id() const
@@ -260,6 +263,15 @@ Widget &Widget::add(Widget *child)
     return *child;
 }
 
+Widget &Widget::insertBefore(Widget *child, Widget const &otherChild)
+{    
+    DENG2_ASSERT(child != &otherChild);
+
+    add(child);
+    moveChildBefore(child, otherChild);
+    return *child;
+}
+
 Widget *Widget::remove(Widget &child)
 {
     DENG2_ASSERT(child.d->parent == this);
@@ -304,6 +316,35 @@ Widget *Widget::find(String const &name)
 Widget const *Widget::find(String const &name) const
 {
     return const_cast<Widget *>(this)->find(name);
+}
+
+void Widget::moveChildBefore(Widget *child, Widget const &otherChild)
+{
+    if(child == &otherChild) return; // invalid
+
+    int from = -1;
+    int to = -1;
+
+    // Note: O(n)
+    for(int i = 0; i < d->children.size() && (from < 0 || to < 0); ++i)
+    {
+        if(d->children[i] == child)
+        {
+            from = i;
+        }
+        if(d->children[i] == &otherChild)
+        {
+            to = i;
+        }
+    }
+
+    DENG2_ASSERT(from != -1);
+    DENG2_ASSERT(to != -1);
+
+    d->children.removeAt(from);
+    if(to > from) to--;
+
+    d->children.insert(to, child);
 }
 
 Widget *Widget::parent() const
