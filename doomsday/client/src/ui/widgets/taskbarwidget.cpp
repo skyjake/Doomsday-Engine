@@ -56,7 +56,6 @@ public IGameChangeObserver
     ButtonWidget *logo;
     LabelWidget *status;
     PopupMenuWidget *mainMenu;
-    //PopupMenuWidget *unloadMenu;
     ScalarRule *vertShift;
 
     QScopedPointer<Action> openAction;
@@ -129,7 +128,7 @@ public IGameChangeObserver
 
     GuiWidget &itemWidget(uint pos) const
     {
-        return *mainMenu->menu().organizer().itemWidget(mainMenu->menu().items().at(pos));
+        return *mainMenu->menu().organizer().itemWidget(pos);
     }
 
     void currentGameChanged(Game &newGame)
@@ -242,7 +241,7 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
             << new ui::ActionItem(tr("Unload") + " " _E(b) + tr("(discard progress)"), new SignalAction(this, SLOT(unloadGame())))
             << new ui::ActionItem(tr("Cancel"), new SignalAction(d->mainMenu, SLOT(dismissPopups())));
 
-    /**
+    /*
      * Set up items for the DE menu. Some of these are shown/hidden
      * depending on whether a game is loaded.
      */
@@ -258,23 +257,6 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
             << new ui::ActionItem(tr("Quit Doomsday"), new CommandAction("quit"));
 
     add(d->mainMenu);
-
-    // Confirmation for unloading game.
-    /*
-    d->unloadMenu = new PopupMenuWidget("unload-menu");
-    d->unloadMenu->setOpeningDirection(ui::Left);
-    d->unloadMenu->setAnchor(d->mainMenu->rule().left(),
-                             d->itemWidget(POS_UNLOAD).rule().top() +
-                             d->itemWidget(POS_UNLOAD).rule().height() / 2);
-
-    d->unloadMenu->menu().items()
-            << new ui::Item(ui::Item::Separator, tr("Really unload the game?"))
-            << new ui::ActionItem(tr("Unload") + " " _E(b) + tr("(discard progress)"), new SignalAction(this, SLOT(unloadGame())))
-            << new ui::ActionItem(tr("Cancel"));
-
-    add(d->unloadMenu);
-    */
-
 
     d->itemWidget(POS_PANEL).hide();
     d->itemWidget(POS_UNLOAD).hide();
@@ -336,7 +318,6 @@ void TaskBarWidget::viewResized()
 void TaskBarWidget::drawContent()
 {
     d->updateGeometry();
-    //d->drawable.draw();
 }
 
 bool TaskBarWidget::handleEvent(Event const &event)
@@ -375,15 +356,6 @@ bool TaskBarWidget::handleEvent(Event const &event)
         // Shift-Esc opens and closes the task bar.
         if(key.ddKey() == DDKEY_ESCAPE)
         {
-#if 0
-            // Shift-Esc opens the console.
-            if()
-            {
-                root().setFocus(&d->console->commandLine());
-                if(!isOpen()) open(false /* no action */);
-                return true;
-            }
-#endif
             if(isOpen())
             {
                 // First press of Esc will just dismiss the console.
@@ -502,13 +474,6 @@ void TaskBarWidget::openMainMenu()
 {
     d->mainMenu->open();
 }
-
-/*
-void TaskBarWidget::confirmUnloadGame()
-{
-    d->unloadMenu->open();
-}
-*/
 
 void TaskBarWidget::unloadGame()
 {

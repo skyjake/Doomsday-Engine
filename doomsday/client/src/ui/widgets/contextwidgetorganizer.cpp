@@ -229,6 +229,11 @@ ui::Context const &ContextWidgetOrganizer::context() const
     return *d->context;
 }
 
+GuiWidget *ContextWidgetOrganizer::itemWidget(ui::Context::Pos pos) const
+{
+    return itemWidget(context().at(pos));
+}
+
 void ContextWidgetOrganizer::setWidgetFactory(IWidgetFactory &factory)
 {
     d->factory = &factory;

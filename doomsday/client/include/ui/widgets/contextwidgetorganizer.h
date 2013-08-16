@@ -114,6 +114,8 @@ public:
 
     ui::Context const &context() const;
 
+    GuiWidget *itemWidget(ui::Context::Pos pos) const;
+
     GuiWidget *itemWidget(ui::Item const &item) const;
 
 private:
