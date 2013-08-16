@@ -41,17 +41,6 @@
 
 using namespace de;
 
-// Used for vertex sector owners, side line owners and reverb BSP leafs.
-typedef struct ownernode_s {
-    void *data;
-    struct ownernode_s *next;
-} ownernode_t;
-
-typedef struct {
-    ownernode_t *head;
-    int count;
-} ownerlist_t;
-
 typedef struct {
     char const name[9]; ///< Environment type name.
     int volumeMul;
@@ -66,12 +55,10 @@ static audioenvinfo_t envInfo[NUM_AUDIO_ENVIRONMENT_CLASSES] = {
     {"Cloth",     5,       5,      255}
 };
 
-static ownernode_t* unusedNodeList;
-
 typedef std::set<Sector *> ReverbUpdateRequested;
 ReverbUpdateRequested reverbUpdateRequested;
 
-const char* S_AudioEnvironmentName(AudioEnvironmentClass env)
+char const *S_AudioEnvironmentName(AudioEnvironmentClass env)
 {
     if(VALID_AUDIO_ENVIRONMENT_CLASS(env))
         return envInfo[env - AEC_FIRST].name;
@@ -82,7 +69,7 @@ AudioEnvironmentClass S_AudioEnvironmentForMaterial(uri_s const *uri)
 {
     if(uri)
     {
-        ded_tenviron_t* env = defs.textureEnv;
+        ded_tenviron_t *env = defs.textureEnv;
         for(int i = 0; i < defs.count.textureEnv.num; ++i, env++)
         {
             for(int k = 0; k < env->count.num; ++k)
@@ -101,137 +88,6 @@ AudioEnvironmentClass S_AudioEnvironmentForMaterial(uri_s const *uri)
         }
     }
     return AEC_UNKNOWN;
-}
-
-// Free any nodes left in the unused list.
-static void clearUnusedNodes()
-{
-    while(unusedNodeList)
-    {
-        ownernode_t* next = unusedNodeList->next;
-        M_Free(unusedNodeList);
-        unusedNodeList = next;
-    }
-}
-
-static ownernode_t* newOwnerNode(void)
-{
-    ownernode_t* node;
-
-    if(unusedNodeList)
-    {
-        // An existing node is available for re-use.
-        node = unusedNodeList;
-        unusedNodeList = unusedNodeList->next;
-
-        node->next = NULL;
-        node->data = NULL;
-    }
-    else
-    {
-        // Need to allocate another.
-        node = (ownernode_t*) M_Malloc(sizeof(ownernode_t));
-    }
-
-    return node;
-}
-
-static void setBspLeafSectorOwner(ownerlist_t *ownerList, BspLeaf *bspLeaf)
-{
-    DENG2_ASSERT(ownerList);
-    if(!bspLeaf) return;
-
-    // Add a new owner.
-    // NOTE: No need to check for duplicates.
-    ownerList->count++;
-
-    ownernode_t* node = newOwnerNode();
-    node->data = bspLeaf;
-    node->next = ownerList->head;
-    ownerList->head = node;
-}
-
-static void findBspLeafsAffectingSector(Map *map, Sector *sec)
-{
-    if(!sec || !sec->sideCount()) return;
-
-    ownerlist_t bspLeafOwnerList;
-    std::memset(&bspLeafOwnerList, 0, sizeof(bspLeafOwnerList));
-
-    AABoxd affectionBounds = sec->aaBox();
-    affectionBounds.minX -= 128;
-    affectionBounds.minY -= 128;
-    affectionBounds.maxX += 128;
-    affectionBounds.maxY += 128;
-
-    // LOG_DEBUG("sector %u: min[x:%f, y:%f]  max[x:%f, y:%f]")
-    //    << map->sectorIndex(sec)
-    //    << aaBox.minX << aaBox.minY << aaBox.maxX << aaBox.maxY;
-
-    foreach(BspLeaf *bspLeaf, map->bspLeafs())
-    {
-        // Degenerate BspLeafs never contribute.
-        if(bspLeaf->isDegenerate()) continue;
-
-        // Is this BSP leaf close enough?
-        if(bspLeaf->sectorPtr() == sec || // leaf is IN this sector
-           (bspLeaf->poly().center().x > affectionBounds.minX &&
-            bspLeaf->poly().center().y > affectionBounds.minY &&
-            bspLeaf->poly().center().x < affectionBounds.maxX &&
-            bspLeaf->poly().center().y < affectionBounds.maxY))
-        {
-            // It will contribute to the reverb settings of this sector.
-            setBspLeafSectorOwner(&bspLeafOwnerList, bspLeaf);
-        }
-    }
-
-    sec->_reverbBspLeafs.clear();
-
-    if(!bspLeafOwnerList.count) return;
-
-    // Build the final list.
-#ifdef DENG2_QT_4_7_OR_NEWER
-    sec->_reverbBspLeafs.reserve(bspLeafOwnerList.count);
-#endif
-
-    ownernode_t *node = bspLeafOwnerList.head;
-    for(int i = 0; i < bspLeafOwnerList.count; ++i)
-    {
-        ownernode_t *next = node->next;
-
-        sec->_reverbBspLeafs.append(static_cast<BspLeaf *>(node->data));
-
-        if(i < map->sectorCount() - 1)
-        {
-            // Move this node to the unused list for re-use.
-            node->next = unusedNodeList;
-            unusedNodeList = node;
-        }
-        else
-        {
-            // No further use for the node.
-            M_Free(node);
-        }
-
-        node = next;
-    }
-}
-
-void S_DetermineBspLeafsAffectingSectorReverb(Map *map)
-{
-    Time begunAt;
-
-    LOG_AS("S_DetermineBspLeafsAffectingSectorReverb");
-
-    /// @todo optimize: Make use of the BSP leaf blockmap.
-    foreach(Sector *sector, map->sectors())
-    {
-        findBspLeafsAffectingSector(map, sector);
-    }
-
-    clearUnusedNodes();
-
-    LOG_INFO(String("Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 }
 
 static void accumReverbForWallSections(HEdge const *hedge,

@@ -72,6 +72,10 @@ DENG2_OBSERVES(Plane, HeightChange)
 #ifdef __CLIENT__
     /// LightGrid data values.
     LightGridData lightGridData;
+
+    /// Set of BSP leafs which contribute to the environmental audio (reverb)
+    /// characteristics.
+    ReverbBspLeafs reverbBspLeafs;
 #endif
 
     /// if == validCount, already checked.
@@ -123,6 +127,23 @@ DENG2_OBSERVES(Plane, HeightChange)
         }
         notifyLightColorChanged(oldLightColor, changedComponents);
     }
+
+#ifdef __CLIENT__
+    void addReverbBspLeaf(BspLeaf *bspLeaf)
+    {
+        // Degenerate leafs never contribute.
+        if(!bspLeaf || !bspLeaf->isDegenerate())
+            return;
+
+        reverbBspLeafs.insert(bspLeaf);
+    }
+
+    static int addReverbBspLeafWorker(BspLeaf *bspLeaf, void *context)
+    {
+        static_cast<Instance *>(context)->addReverbBspLeaf(bspLeaf);
+        return false; // Continue iteration.
+    }
+#endif
 
     // Observes Plane HeightChange.
     void planeHeightChanged(Plane &plane, coord_t oldHeight)
@@ -186,7 +207,9 @@ Sector::Sector(float lightLevel, Vector3f const &lightColor)
 {
     _frameFlags = 0;
     _mobjList = 0;
+#ifdef __CLIENT__
     zap(_reverb);
+#endif
 }
 
 float Sector::lightLevel() const
@@ -258,17 +281,47 @@ ddmobj_base_t const &Sector::soundEmitter() const
     return const_cast<ddmobj_base_t const &>(const_cast<Sector &>(*this).soundEmitter());
 }
 
+#ifdef __CLIENT__
+
+Sector::LightGridData &Sector::lightGridData()
+{
+    return d->lightGridData;
+}
+
+void Sector::findReverbBspLeafs()
+{
+    d->reverbBspLeafs.clear();
+
+    // Sectors which no referencing line need no reverb.
+    if(!sideCount()) return;
+
+    AABoxd affectionBounds = aaBox();
+    affectionBounds.minX -= 128;
+    affectionBounds.minY -= 128;
+    affectionBounds.maxX += 128;
+    affectionBounds.maxY += 128;
+
+    // LOG_DEBUG("Finding reverb BSP leafs for sector %u (min:%s  max:%s)")
+    //    << map().sectorIndex(this)
+    //    << Vector2d(affectionBounds.min).asText()
+    //    << Vector2d(affectionBounds.max).asText();
+
+    // Link all non-degenerate BspLeafs whose axis-aligned bounding box intersects
+    // with the affection bounds to the reverb set.
+    map().bspLeafsBoxIterator(affectionBounds, 0, Instance::addReverbBspLeafWorker, d);
+}
+
+Sector::ReverbBspLeafs const &Sector::reverbBspLeafs() const
+{
+    return d->reverbBspLeafs;
+}
+
 AudioEnvironmentFactors const &Sector::audioEnvironmentFactors() const
 {
     return _reverb;
 }
 
-#ifdef __CLIENT__
-Sector::LightGridData &Sector::lightGridData()
-{
-    return d->lightGridData;
-}
-#endif
+#endif // __CLIENT__
 
 int Sector::frameFlags() const
 {
@@ -395,11 +448,6 @@ void Sector::buildBspLeafs(Map const &map)
             d->bspLeafs.append(bspLeaf);
         }
     }
-}
-
-Sector::BspLeafs const &Sector::reverbBspLeafs() const
-{
-    return _reverbBspLeafs;
 }
 
 AABoxd const &Sector::aaBox() const

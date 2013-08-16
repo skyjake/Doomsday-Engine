@@ -22,6 +22,7 @@
 #define DENG_WORLD_SECTOR_H
 
 #include <QList>
+#include <QSet>
 
 #include <de/aabox.h>
 
@@ -69,13 +70,13 @@ public:
     DENG2_ERROR(MissingPlaneError);
 
     /*
-     * Observers to be notified whenever a light level change occurs.
+     * Notified whenever a light level change occurs.
      */
     DENG2_DEFINE_AUDIENCE(LightLevelChange,
         void sectorLightLevelChanged(Sector &sector, float oldLightLevel))
 
     /*
-     * Observers to be notified whenever a light color change occurs.
+     * Notified whenever a light color change occurs.
      */
     DENG2_DEFINE_AUDIENCE(LightColorChange,
         void sectorLightColorChanged(Sector &sector, de::Vector3f const &oldLightColor,
@@ -87,6 +88,9 @@ public:
     typedef QList<BspLeaf *>    BspLeafs;
     typedef QList<Plane *>      Planes;
     typedef QList<Line::Side *> Sides;
+#ifdef __CLIENT__
+    typedef QSet<BspLeaf *>     ReverbBspLeafs;
+#endif
 
     // Plane identifiers:
     enum { Floor, Ceiling };
@@ -117,12 +121,10 @@ public: /// @todo Make private:
     /// Head of the linked list of mobjs "in" the sector (not owned).
     struct mobj_s *_mobjList;
 
-    /// List of BSP leafs which contribute to the environmental audio
-    /// characteristics of the sector (not owned).
-    BspLeafs _reverbBspLeafs;
-
+#ifdef __CLIENT__
     /// Final environmental audio characteristics.
     AudioEnvironmentFactors _reverb;
+#endif
 
 public:
     Sector(float lightLevel               = 1,
@@ -244,18 +246,6 @@ public:
      * @param map  Map to collate BSP leafs from. @todo Refactor away.
      */
     void buildBspLeafs(de::Map const &map);
-
-    /**
-     * Provides access to the list of BSP leafs which contribute to the environmental
-     * audio characteristics of the sector, for efficient traversal.
-     */
-    BspLeafs const &reverbBspLeafs() const;
-
-    /**
-     * Returns the total number of BSP leafs which contribute to the environmental
-     * audio characteristics of the sector.
-     */
-    inline uint reverbBspLeafCount() const { return uint(reverbBspLeafs().count()); }
 
     /**
      * Returns the axis-aligned bounding box which encompases the geometry of
@@ -446,18 +436,34 @@ public:
      */
     struct mobj_s *firstMobj() const;
 
-    /**
-     * Returns the final environmental audio characteristics of the sector.
-     */
-    AudioEnvironmentFactors const &audioEnvironmentFactors() const;
-
 #ifdef __CLIENT__
     /**
      * Returns the LightGrid data values (for smoothed ambient lighting) for
      * the sector.
      */
     LightGridData &lightGridData();
-#endif
+
+    /**
+     * Update the set of BSP leafs which contribute to the environmental audio
+     * characteristics (reverb) of the sector. To be called when initializing
+     * the map after load.
+     *
+     * The BspLeaf Blockmap for the owning map must be prepared before calling.
+     */
+    void findReverbBspLeafs();
+
+    /**
+     * Provides access to the set of BSP leafs which contribute to the environmental
+     * audio characteristics (reverb) of the sector, for efficient traversal.
+     */
+    ReverbBspLeafs const &reverbBspLeafs() const;
+
+    /**
+     * Returns the final environmental audio characteristics of the sector.
+     */
+    AudioEnvironmentFactors const &audioEnvironmentFactors() const;
+
+#endif // __CLIENT__
 
     /**
      * Returns the @ref sectorFrameFlags for the sector.

@@ -57,14 +57,6 @@ typedef enum audioenvironmentclass_e {
 void S_MarkSectorReverbDirty(Sector *sec);
 
 /**
- * Called during map init to determine which BSP leafs affect the reverb
- * properties of each sector. Given that BSP leafs do not change shape (in
- * two dimensions at least), they do not move and are not created/destroyed
- * once the map has been loaded; this step can be pre-processed.
- */
-void S_DetermineBspLeafsAffectingSectorReverb(de::Map *map);
-
-/**
  * Recalculates reverb properties for a sector. One must first mark the sector
  * eligible for update using S_MarkSectorReverbDirty() or this function will do
  * nothing.

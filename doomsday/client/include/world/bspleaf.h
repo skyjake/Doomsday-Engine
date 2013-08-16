@@ -28,15 +28,15 @@
 
 #include "MapElement"
 #include "Line"
+#include "Sector"
+
 #include "Mesh"
 
 #ifdef __CLIENT__
 #  include "BiasSurface"
 #endif
 
-class Sector;
 struct polyobj_s;
-
 #ifdef __CLIENT__
 class BiasDigest;
 #endif
@@ -101,7 +101,7 @@ public:
      * Returns @c true iff the BSP leaf is "degenerate", which is to say there
      * is no convex Polygon assigned to it.
      *
-     * Equivalent to @code !hasFace() @endcode
+     * Equivalent to @code !hasPoly() @endcode
      */
     inline bool isDegenerate() const { return !hasPoly(); }
 

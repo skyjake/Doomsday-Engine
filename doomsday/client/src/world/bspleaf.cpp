@@ -19,14 +19,12 @@
  */
 
 #include <QMap>
-#include <QSet>
 #include <QtAlgorithms>
 
 #include <de/Log>
 
 #include "Face"
 #include "Polyobj"
-#include "Sector"
 
 #ifdef __CLIENT__
 #  include "world/map.h"
