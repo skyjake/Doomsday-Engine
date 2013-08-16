@@ -20,7 +20,8 @@
 
 using namespace de;
 
-SignalAction::SignalAction(QObject *target, char const *slot) : Action()
+SignalAction::SignalAction(QObject *target, char const *slot)
+    : Action(), _target(target), _slot(slot)
 {
     connect(this, SIGNAL(triggered()), target, slot);
 }
@@ -29,4 +30,9 @@ void SignalAction::trigger()
 {
     Action::trigger();
     emit triggered();
+}
+
+SignalAction *SignalAction::duplicate() const
+{
+    return new SignalAction(_target, _slot);
 }

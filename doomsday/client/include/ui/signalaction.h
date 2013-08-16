@@ -30,9 +30,14 @@ public:
     SignalAction(QObject *target, char const *slot);
 
     void trigger();
+    SignalAction *duplicate() const;
 
 signals:
     void triggered();
+
+private:
+    QObject *_target;
+    char const *_slot;
 };
 
 #endif // DENG_CLIENT_SIGNALACTION_H
