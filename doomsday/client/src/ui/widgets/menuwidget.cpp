@@ -254,9 +254,9 @@ public ContextWidgetOrganizer::IWidgetFactory
         }
         else if(rows->valuei() > 0)
         {
-            DENG2_ASSERT(rowPolicy != Expand);
-            pos.x = ordinal % rows->valuei();
-            pos.y = ordinal / rows->valuei();
+            //DENG2_ASSERT(rowPolicy != Expand);
+            pos.x = ordinal / rows->valuei();
+            pos.y = ordinal % rows->valuei();
         }
         else
         {
@@ -464,7 +464,15 @@ void MenuWidget::updateLayout()
             {
                 if(col > 0)
                 {
-                    widget->rule().setInput(Rule::Left, contentRule().left() + *d->colWidth * Const(col));
+                    if(d->cols->valuei() > 0)
+                    {
+                        widget->rule().setInput(Rule::Left, contentRule().left() + *d->colWidth * Const(col));
+                    }
+                    else
+                    {
+                        DENG2_ASSERT(previous != 0);
+                        widget->rule().setInput(Rule::Left, previous->rule().right());
+                    }
                 }
                 else
                 {

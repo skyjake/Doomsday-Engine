@@ -40,6 +40,8 @@
  */
 class MenuWidget : public ScrollAreaWidget
 {
+    Q_OBJECT
+
 public:
     MenuWidget(de::String const &name = "");
 
@@ -55,8 +57,8 @@ public:
      *
      * If one of the dimensions is set to ui::Expand policy, the menu's size in
      * that dimension is determined by the summed up size of the children, and
-     * the specified number of columns/rows is ignored for that dimension. Only
-     * one of the dimensions can be set to Expand.
+     * the specified number of columns/rows is ignored for that dimension. Both
+     * dimensions cannot be set to zero columns/rows.
      *
      * @param columns       Number of columns in the grid.
      * @param columnPolicy  Policy for sizing columns.
