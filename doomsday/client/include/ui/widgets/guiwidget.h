@@ -86,6 +86,7 @@ public:
             GradientFrame,      ///< Use the "gradient frame" from the UI atlas.
             BorderGlow,         ///< Border glow with specified color/thickness.
             Blurred,            ///< Blurs whatever is showing behind the widget.
+            BlurredWithBorderGlow,
             SharedBlur          ///< Use the blur background from a BlurWidget.
         };
         de::Vector4f solidFill; ///< Always applied if opacity > 0.
