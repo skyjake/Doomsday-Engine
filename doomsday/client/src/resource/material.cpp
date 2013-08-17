@@ -359,10 +359,10 @@ DENG2_PIMPL(Material)
          flags(0),
          detailLayer(0),
          shineLayer(0),
-         valid(true)
 #ifdef __CLIENT__
-        ,audioEnvironment(AE_NONE)
+         audioEnvironment(AE_NONE),
 #endif
+         valid(true)
     {}
 
     ~Instance()
