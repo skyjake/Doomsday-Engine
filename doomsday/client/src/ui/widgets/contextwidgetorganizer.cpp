@@ -250,15 +250,12 @@ GuiWidget *ContextWidgetOrganizer::itemWidget(ui::Item const &item) const
     return d->find(item);
 }
 
-GuiWidget *DefaultWidgetFactory::makeItemWidget(ui::Item const &item, GuiWidget const *)
+GuiWidget *DefaultWidgetFactory::makeItemWidget(ui::Item const &, GuiWidget const *)
 {
-    // The default implementation uses simple labels.
-    LabelWidget *w = new LabelWidget;
-    w->setText(item.label());
-    return w;
+    return new LabelWidget;
 }
 
-void DefaultWidgetFactory::updateItemWidget(GuiWidget &, ui::Item const &)
+void DefaultWidgetFactory::updateItemWidget(GuiWidget &widget, ui::Item const &item)
 {
-    // nothing to do
+    widget.as<LabelWidget>().setText(item.label());
 }
