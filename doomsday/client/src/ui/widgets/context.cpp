@@ -23,3 +23,5 @@
 
 using namespace de;
 using namespace ui;
+
+dsize const Context::InvalidPos = dsize(-1);

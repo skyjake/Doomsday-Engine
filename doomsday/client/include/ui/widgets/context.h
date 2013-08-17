@@ -44,6 +44,8 @@ class Context
 public:
     typedef de::dsize Pos;
 
+    static de::dsize const InvalidPos;
+
     /**
      * Notified when a new item is added to the context.
      */
@@ -80,6 +82,15 @@ public:
     virtual Item *take(Pos pos) = 0;
 
     virtual Item const &at(Pos pos) const = 0;
+
+    /**
+     * Finds the position of a specific item.
+     *
+     * @param item  Item to find.
+     *
+     * @return The items' position, or Context::InvalidPos if not found.
+     */
+    virtual Pos find(Item const &item) const = 0;
 
     enum SortMethod {
         Ascending,
