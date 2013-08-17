@@ -18,17 +18,11 @@
  * 02110-1301 USA</small>
  */
 
-#include <QList>
-
 #include <de/Log>
 
-#include "de_base.h"
-
-#include "audio/s_environ.h"
-
-#include "Line"
-#include "world/map.h" /// @todo remove me.
+#include "world/map.h"
 #include "world/world.h" /// ddMapSetup
+#include "Surface"
 
 #include "render/r_main.h" // frameTimePos
 
@@ -86,14 +80,13 @@ DENG2_PIMPL(Plane)
 #ifdef __CLIENT__
         Map &map = self.map();
 
-        // If this plane is currently being watched, remove it.
-        /// @todo Map should observe Deletion.
+        // If this plane is currently being watched - remove it.
         map.trackedPlanes().remove(&self);
 
-        // If this plane's surface is in the moving list, remove it.
-        /// @todo Map should observe Deletion.
+        // If this plane's surface is in the moving list - remove it.
         map.scrollingSurfaces().remove(&surface);
 
+        // If this plane's surface is linked any material list(s) - remove it.
         map.unlinkInMaterialLists(&surface);
 
 #endif // __CLIENT__
@@ -134,9 +127,9 @@ DENG2_PIMPL(Plane)
         notifyHeightChanged(oldHeight);
 
 #ifdef __CLIENT__
-        /// @todo Map should observe.
         if(!ddMapSetup)
         {
+            // Add ourself to tracked plane list (for movement interpolation).
             self.map().trackedPlanes().insert(&self);
 
             markDependantSurfacesForDecorationUpdate();
@@ -158,8 +151,7 @@ DENG2_PIMPL(Plane)
         // "Middle" planes have no dependent surfaces.
         if(indexInSector > Sector::Ceiling) return;
 
-        // Mark the decor lights on the sides of this plane as requiring
-        // an update.
+        // Mark the decor lights on the sides of this plane as requiring an update.
         foreach(Line::Side *side, self.sector().sides())
         {
             if(side->hasSections())
@@ -182,8 +174,7 @@ DENG2_PIMPL(Plane)
 };
 
 Plane::Plane(Sector &sector, Vector3f const &normal, coord_t height)
-    : MapElement(DMU_PLANE, &sector),
-      d(new Instance(this, height))
+    : MapElement(DMU_PLANE, &sector), d(new Instance(this, height))
 {
     setNormal(normal);
 }
@@ -226,6 +217,11 @@ Surface &Plane::surface()
 Surface const &Plane::surface() const
 {
     return d->surface;
+}
+
+void Plane::setNormal(Vector3f const &newNormal)
+{
+    d->surface.setNormal(newNormal); // will normalize
 }
 
 ddmobj_base_t &Plane::soundEmitter()
@@ -313,11 +309,6 @@ void Plane::updateHeightTracking()
 }
 
 #endif // __CLIENT__
-
-void Plane::setNormal(Vector3f const &newNormal)
-{
-    d->surface.setNormal(newNormal); // will normalize
-}
 
 int Plane::property(DmuArgs &args) const
 {

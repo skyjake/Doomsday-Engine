@@ -21,10 +21,10 @@
 #ifndef DENG_WORLD_PLANE_H
 #define DENG_WORLD_PLANE_H
 
-#include <de/types.h>
-
 #include <de/Observers>
 #include <de/Vector>
+
+#include "dd_share.h" // ddmobj_base_t
 
 #include "MapElement"
 
@@ -43,12 +43,12 @@ class Plane : public de::MapElement
 
 public:
     /*
-     * Observers to be notified when a Plane is about to be deleted.
+     * Notified when a Plane is about to be deleted.
      */
     DENG2_DEFINE_AUDIENCE(Deletion, void planeBeingDeleted(Plane const &plane))
 
     /*
-     * Observers to be notified whenever a @em sharp height change occurs.
+     * Notified whenever a @em sharp height change occurs.
      */
     DENG2_DEFINE_AUDIENCE(HeightChange, void planeHeightChanged(Plane &plane, coord_t oldHeight))
 
@@ -104,6 +104,15 @@ public:
 
     /// @copydoc surface()
     Surface const &surface() const;
+
+    /**
+     * Change the normal of the plane to @a newNormal (which if necessary will
+     * be normalized before being assigned to the plane).
+     *
+     * @post The plane's tangent vectors and logical plane type will have been
+     * updated also.
+     */
+    void setNormal(de::Vector3f const &newNormal);
 
     /**
      * Returns the sound emitter for the plane.
@@ -185,15 +194,6 @@ public:
     void updateHeightTracking();
 
 #endif // __CLIENT__
-
-    /**
-     * Change the normal of the plane to @a newNormal (which if necessary will
-     * be normalized before being assigned to the plane).
-     *
-     * @post The plane's tangent vectors and logical plane type will have been
-     * updated also.
-     */
-    void setNormal(de::Vector3f const &newNormal);
 
 protected:
     int property(DmuArgs &args) const;
