@@ -74,6 +74,9 @@ DENG2_OBSERVES(Plane, HeightChange)
     /// Ambient light color in the sector.
     de::Vector3f lightColor;
 
+    /// if == validCount, already checked.
+    int validCount;
+
 #ifdef __CLIENT__
     /// LightGrid data values.
     LightGridData lightGridData;
@@ -88,9 +91,6 @@ DENG2_OBSERVES(Plane, HeightChange)
 
     bool visible; ///< @c true= marked as visible for the current frame.
 #endif
-
-    /// if == validCount, already checked.
-    int validCount;
 
     Instance(Public *i, float lightLevel, Vector3f const &lightColor)
         : Base(i),
