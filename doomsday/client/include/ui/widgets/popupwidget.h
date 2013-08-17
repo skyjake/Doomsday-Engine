@@ -48,6 +48,8 @@ public:
 
     GuiWidget &content() const;
 
+    void setAnchorAndOpeningDirection(de::RuleRectangle const &rule, ui::Direction dir);
+
     void setAnchor(de::Vector2i const &pos);
     void setAnchorX(int xPos);
     void setAnchorY(int yPos);

@@ -239,6 +239,22 @@ GuiWidget &PopupWidget::content() const
     return *d->content;
 }
 
+void PopupWidget::setAnchorAndOpeningDirection(RuleRectangle const &rule, ui::Direction dir)
+{
+    if(dir == ui::Left || dir == ui::Right)
+    {
+        setAnchorY(rule.top() + rule.height() / 2);
+        setAnchorX(dir == ui::Left? rule.left() : rule.right());
+    }
+    else if(dir == ui::Up || dir == ui::Down)
+    {
+        setAnchorX(rule.left() + rule.width() / 2);
+        setAnchorY(dir == ui::Up? rule.top() : rule.bottom());
+    }
+
+    setOpeningDirection(dir);
+}
+
 void PopupWidget::setAnchor(Vector2i const &pos)
 {
     setAnchor(Const(pos.x), Const(pos.y));

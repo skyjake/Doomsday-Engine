@@ -37,9 +37,9 @@ public ContextWidgetOrganizer::IWidgetFactory
     /**
      * Action owned by the button that represents a SubmenuItem.
      */
-    struct SubmenuAction : public de::Action,
-            DENG2_OBSERVES(Widget, Deletion)
+    class SubmenuAction : public de::Action, DENG2_OBSERVES(Widget, Deletion)
     {
+    public:
         SubmenuAction(Instance *inst, ui::SubmenuItem const &parentItem)
             : d(inst), _submenu(parentItem)
         {
@@ -75,23 +75,7 @@ public ContextWidgetOrganizer::IWidgetFactory
             GuiWidget *parent = d->organizer.itemWidget(_submenu);
             DENG2_ASSERT(parent != 0);
 
-            // Update the anchor of the submenu.
-            ui::Direction const dir = _submenu.openingDirection();
-            if(dir == ui::Left || dir == ui::Right)
-            {
-                _widget->setAnchorY(parent->hitRule().top() + parent->hitRule().height() / 2);
-
-                _widget->setAnchorX(dir == ui::Left? parent->hitRule().left() :
-                                                     parent->hitRule().right());
-            }
-            else if(dir == ui::Up || dir == ui::Down)
-            {
-                _widget->setAnchorX(parent->hitRule().left() + parent->hitRule().width() / 2);
-
-                _widget->setAnchorY(dir == ui::Up? parent->hitRule().top() :
-                                                   parent->hitRule().bottom());
-            }
-            _widget->setOpeningDirection(dir);
+            _widget->setAnchorAndOpeningDirection(parent->hitRule(), _submenu.openingDirection());
 
             d->openPopups.insert(_widget);
             _widget->audienceForClose += d;
