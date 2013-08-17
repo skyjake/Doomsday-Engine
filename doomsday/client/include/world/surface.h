@@ -22,6 +22,7 @@
 #define DENG_WORLD_SURFACE_H
 
 #include <de/Error>
+#include <de/Matrix>
 #include <de/Observers>
 #include <de/Vector>
 
@@ -36,7 +37,7 @@ class BspLeaf;
 
 /**
  * Models a "boundless" but otherwise geometric map surface. Boundless in the
- * sense that surface has no edges.
+ * sense that a surface has no edges.
  *
  * @ingroup world
  */
@@ -116,19 +117,25 @@ public:
             de::Vector3f const &tintColor = de::Vector3f(1, 1, 1));
 
     /**
-     * Returns the normalized tangent vector for the surface.
+     * Returns the tangent space matrix for the surface.
+     * (col0: tangent, col1: bitangent, col2: normal)
      */
-    de::Vector3f const &tangent() const;
+    de::Matrix3f const &tangentMatrix() const;
 
     /**
-     * Returns the normalized bitangent vector for the surface.
+     * Returns a copy of the normalized tangent vector for the surface.
      */
-    de::Vector3f const &bitangent() const;
+    de::Vector3f tangent() const;
 
     /**
-     * Returns the normalized normal vector for the surface.
+     * Returns a copy of the normalized bitangent vector for the surface.
      */
-    de::Vector3f const &normal() const;
+    de::Vector3f bitangent() const;
+
+    /**
+     * Returns a copy of the normalized normal vector for the surface.
+     */
+    de::Vector3f normal() const;
 
     /**
      * Change the tangent space normal vector for the surface. If changed,

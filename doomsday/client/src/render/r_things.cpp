@@ -1065,7 +1065,7 @@ void R_ProjectSprite(mobj_t *mo)
     if(sprFrame->rotate && !mf)
     {
         // Choose a different rotation according to the relative angle to the viewer.
-        angle_t ang = R_ViewPointXYToAngle(mo->origin[VX], mo->origin[VY]);
+        angle_t ang = R_ViewPointToAngle(mo->origin[VX], mo->origin[VY]);
         uint rot = (ang - mo->angle + (unsigned) (ANG45 / 2) * 9) >> 29;
         mat = sprFrame->mats[rot];
         matFlipS = (boolean) sprFrame->flip[rot];
@@ -1308,7 +1308,7 @@ void R_ProjectSprite(mobj_t *mo)
         Material *mat;
         if(sprFrame->rotate)
         {
-            mat = sprFrame->mats[(R_ViewPointXYToAngle(moPos[VX], moPos[VY]) - mo->angle + (unsigned) (ANG45 / 2) * 9) >> 29];
+            mat = sprFrame->mats[(R_ViewPointToAngle(moPos[VX], moPos[VY]) - mo->angle + (unsigned) (ANG45 / 2) * 9) >> 29];
         }
         else
         {

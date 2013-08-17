@@ -96,15 +96,15 @@ public:
     explicit BspLeaf(Sector *sector = 0);
 
     /**
-     * Returns @c true iff the BSP leaf is "degenerate", which is to say there
-     * is no convex Polygon assigned to it.
+     * Returns @c true iff the BSP leaf is "degenerate", which is to say that
+     * no convex face geometry is attributed.
      *
      * Equivalent to @code !hasPoly() @endcode
      */
     inline bool isDegenerate() const { return !hasPoly(); }
 
     /**
-     * Determines whether a convex face geometry (a polygon) is assigned.
+     * Determines whether a convex face geometry (a polygon) is attributed.
      *
      * @see poly(), setPoly()
      */
@@ -122,7 +122,7 @@ public:
      * geometry is accepted it is first conformance tested to ensure that it
      * represents a valid, simple convex polygon.
      *
-     * @param polygon  New polygon to attributed to the BSP leaf. Ownership is
+     * @param polygon  New polygon to attribute to the BSP leaf. Ownership is
      *                 unaffected. Can be @c 0 (to clear the attribution).
      *
      * @see hasPoly(), poly()
@@ -131,8 +131,8 @@ public:
 
     /**
      * Assign an additional mesh geometry to the BSP leaf. Such @em extra
-     * meshes are used to represent geometry which would otherwise result in a
-     * non-manifold mesh if incorporated in the primary mesh for the map.
+     * meshes are used to represent geometry which would otherwise result in
+     * a non-manifold mesh if incorporated in the primary mesh for the map.
      *
      * @param mesh  New mesh to be assigned to the BSP leaf. Ownership of the
      *              mesh is given to the BspLeaf.
@@ -140,7 +140,7 @@ public:
     void assignExtraMesh(de::Mesh &mesh);
 
     /**
-     * Provides access to the set of additional mesh geometries for the BSP leaf.
+     * Provides access to the set of 'extra' mesh geometries for the BSP leaf.
      *
      * @see assignExtraMesh()
      */
@@ -210,7 +210,7 @@ public:
 
     /**
      * Determines whether the specified @a point in the map coordinate space
-     * lies within the BSP leaf (according to the edges)?
+     * lies within the BSP leaf (according to the edges).
      *
      * @param point  Map space coordinate to test.
      *

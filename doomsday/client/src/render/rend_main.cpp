@@ -1339,8 +1339,7 @@ static uint projectSurfaceLights(Surface &surface, float glowStrength,
     if(!useDynLights && !useWallGlow) return 0;
 
     return LO_ProjectToSurface(0 | (sortProjections? PLF_SORT_LUMINOSITY_DESC : 0), leaf,
-                               1, topLeft, bottomRight,
-                               surface.tangent(), surface.bitangent(), surface.normal());
+                               1, topLeft, bottomRight, surface.tangentMatrix());
 }
 
 /**
@@ -1372,7 +1371,7 @@ static uint projectSurfaceShadows(Surface &surface, float glowStrength,
     float const shadowStrength = 1 - glowStrength;
 
     return R_ProjectShadowsToSurface(leaf, shadowStrength, topLeft, bottomRight,
-                                     surface.tangent(), surface.bitangent(), surface.normal());
+                                     surface.tangentMatrix());
 }
 
 static void writeWallSection(HEdge &hedge, int section,
@@ -1750,7 +1749,7 @@ static void writeLeafPlane(Plane &plane)
 
             parm.lightListIdx =
                 LO_ProjectToSurface(plFlags, leaf, 1, *parm.texTL, *parm.texBR,
-                                    surface.tangent(), surface.bitangent(), surface.normal());
+                                    surface.tangentMatrix());
         }
 
         // Mobj shadows?
@@ -1761,7 +1760,7 @@ static void writeLeafPlane(Plane &plane)
 
             parm.shadowListIdx =
                 R_ProjectShadowsToSurface(leaf, blendFactor, *parm.texTL, *parm.texBR,
-                                          surface.tangent(), surface.bitangent(), surface.normal());
+                                          surface.tangentMatrix());
         }
     }
 
