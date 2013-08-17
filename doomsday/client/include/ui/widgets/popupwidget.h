@@ -67,6 +67,14 @@ public:
 
     bool isOpen() const;
 
+    /**
+     * Tells the popup to delete itself after being dismissed. The default is that
+     * the popup does not get deleted.
+     *
+     * @param deleteAfterDismiss  @c true to delete after dismissal.
+     */
+    void setDeleteAfterDismissed(bool deleteAfterDismiss);
+
     // Events.
     void viewResized();
     void update();
@@ -104,6 +112,7 @@ protected:
 
     virtual void preparePopupForOpening();
     virtual void popupClosing();
+    virtual void popupDismissed();
 
 private:
     DENG2_PRIVATE(d)

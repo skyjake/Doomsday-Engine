@@ -37,6 +37,7 @@ DENG2_PIMPL(PopupWidget)
     typedef DefaultVertexBuf VertexBuf;
 
     bool opened;
+    bool deleteAfterDismiss;
     Widget *realParent;
     GuiWidget *content;
     ScalarRule *openingRule;
@@ -55,6 +56,7 @@ DENG2_PIMPL(PopupWidget)
     Instance(Public *i)
         : Base(i),
           opened(false),
+          deleteAfterDismiss(false),
           realParent(0),
           content(0),
           anchorX(0),
@@ -90,35 +92,9 @@ DENG2_PIMPL(PopupWidget)
         drawable.clear();
     }
 
-    void layoutAbove()
+    bool isVerticalAnimation() const
     {
-        self.rule()
-                .setInput(Rule::Bottom, *anchorY - *marker)
-                .setInput(Rule::Left, OperatorRule::clamped(
-                              *anchorX - self.rule().width() / 2,
-                              self.margin(),
-                              self.root().viewWidth() - self.rule().width() - self.margin()));
-    }
-
-    void layoutBelow()
-    {
-        self.rule()
-                .setInput(Rule::Top,  *anchorY + *marker)
-                .setInput(Rule::Left, *anchorX - self.rule().width() / 2);
-    }
-
-    void layoutLeft()
-    {
-        self.rule()
-                .setInput(Rule::Right, *anchorX - *marker)
-                .setInput(Rule::Top,   *anchorY - self.rule().height() / 2);
-    }
-
-    void layoutRight()
-    {
-        self.rule()
-                .setInput(Rule::Left, *anchorX + *marker)
-                .setInput(Rule::Top,  *anchorY - self.rule().height() / 2);
+        return dir == ui::Up || dir == ui::Down || dir == ui::NoDirection;
     }
 
     void updateLayout()
@@ -126,7 +102,7 @@ DENG2_PIMPL(PopupWidget)
         DENG2_ASSERT(content != 0);
 
         // Widget's size depends on the opening animation.
-        if(dir == ui::Up || dir == ui::Down)
+        if(isVerticalAnimation())
         {
             self.rule().setInput(Rule::Width,  content->rule().width())
                        .setInput(Rule::Height, *openingRule);
@@ -137,23 +113,46 @@ DENG2_PIMPL(PopupWidget)
                        .setInput(Rule::Height, content->rule().height());
         }
 
+        self.rule()
+                .clearInput(Rule::AnchorX)
+                .clearInput(Rule::AnchorY);
+
         // Let's first try the requested direction.
+        /// @todo Edge clamping for directions other than Up.
         switch(dir)
         {
         case ui::Up:
-            layoutAbove();
+            self.rule()
+                    .setInput(Rule::Bottom, *anchorY - *marker)
+                    .setInput(Rule::Left, OperatorRule::clamped(
+                                  *anchorX - self.rule().width() / 2,
+                                  self.margin(),
+                                  self.root().viewWidth() - self.rule().width() - self.margin()));
             break;
 
         case ui::Down:
-            layoutBelow();
+            self.rule()
+                    .setInput(Rule::Top,  *anchorY + *marker)
+                    .setInput(Rule::Left, *anchorX - self.rule().width() / 2);
             break;
 
         case ui::Left:
-            layoutLeft();
+            self.rule()
+                    .setInput(Rule::Right, *anchorX - *marker)
+                    .setInput(Rule::Top,   *anchorY - self.rule().height() / 2);
             break;
 
         case ui::Right:
-            layoutRight();
+            self.rule()
+                    .setInput(Rule::Left, *anchorX + *marker)
+                    .setInput(Rule::Top,  *anchorY - self.rule().height() / 2);
+            break;
+
+        case ui::NoDirection:
+            self.rule()
+                    .setInput(Rule::AnchorX, *anchorX)
+                    .setInput(Rule::AnchorY, *anchorY)
+                    .setAnchorPoint(Vector2f(.5f, .5f));
             break;
         }
     }
@@ -241,7 +240,13 @@ GuiWidget &PopupWidget::content() const
 
 void PopupWidget::setAnchorAndOpeningDirection(RuleRectangle const &rule, ui::Direction dir)
 {
-    if(dir == ui::Left || dir == ui::Right)
+    if(dir == ui::NoDirection)
+    {
+        // Anchored to the middle by default.
+        setAnchor(rule.left() + rule.width() / 2,
+                  rule.top() + rule.height() / 2);
+    }
+    else if(dir == ui::Left || dir == ui::Right)
     {
         setAnchorY(rule.top() + rule.height() / 2);
         setAnchorX(dir == ui::Left? rule.left() : rule.right());
@@ -296,6 +301,11 @@ void PopupWidget::setOpeningDirection(ui::Direction dir)
 bool PopupWidget::isOpen() const
 {
     return d->opened;
+}
+
+void PopupWidget::setDeleteAfterDismissed(bool deleteAfterDismiss)
+{
+    d->deleteAfterDismiss = deleteAfterDismiss;
 }
 
 void PopupWidget::viewResized()
@@ -376,7 +386,7 @@ void PopupWidget::open()
     preparePopupForOpening();
 
     // Start the opening animation.
-    if(d->dir == ui::Up || d->dir == ui::Down)
+    if(d->isVerticalAnimation())
     {
         d->openingRule->set(d->content->rule().height(), OPENING_ANIM_SPAN);
     }
@@ -407,6 +417,13 @@ void PopupWidget::dismiss()
     // Move back to the original parent widget.
     root().remove(*this);
     d->realParent->add(this);
+
+    popupDismissed();
+
+    if(d->deleteAfterDismiss)
+    {
+        deleteLater();
+    }   
 }
 
 void PopupWidget::drawContent()
@@ -468,4 +485,9 @@ void PopupWidget::preparePopupForOpening()
 void PopupWidget::popupClosing()
 {
     // overridden
+}
+
+void PopupWidget::popupDismissed()
+{
+    // nothing to do
 }
