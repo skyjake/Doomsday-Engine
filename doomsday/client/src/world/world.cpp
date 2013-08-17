@@ -607,7 +607,7 @@ DENG2_PIMPL(World)
             sector->updateSoundEmitterOrigin();
 #ifdef __CLIENT__
             map->updateMissingMaterialsForLinesOfSector(*sector);
-            S_MarkSectorReverbDirty(sector);
+            sector->markReverbDirty();
 #endif
         }
 

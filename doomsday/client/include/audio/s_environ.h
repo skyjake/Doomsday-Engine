@@ -1,4 +1,4 @@
-/** @file s_environ.h Sound environment.
+/** @file s_environ.h Audio environment management.
  * @ingroup audio
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -24,68 +24,42 @@
 
 #include "api_uri.h"
 
-namespace de {
-class Map;
-}
-
-class Sector;
-
-typedef enum audioenvironmentclass_e {
-    AEC_UNKNOWN = -1,
-    AEC_FIRST = 0,
-    AEC_METAL = AEC_FIRST,
-    AEC_ROCK,
-    AEC_WOOD,
-    AEC_CLOTH,
-    NUM_AUDIO_ENVIRONMENT_CLASSES
-} AudioEnvironmentClass;
-
-#define VALID_AUDIO_ENVIRONMENT_CLASS(val) (\
-    (int)(val) >= AEC_FIRST && (int)(val) < NUM_AUDIO_ENVIRONMENT_CLASSES)
+enum AudioEnvironmentId
+{
+    AE_NONE = -1,
+    AE_FIRST = 0,
+    AE_METAL = AE_FIRST,
+    AE_ROCK,
+    AE_WOOD,
+    AE_CLOTH,
+    NUM_AUDIO_ENVIRONMENTS
+};
 
 /**
- * Requests re-calculation of the reverb properties of the given sector. Should
- * be called whenever any of the properties governing reverb properties have
- * changed (i.e., wall/plane material or plane height changes).
- *
- * Call S_UpdateReverbForSector() to do the actual calculation.
- *
- * @pre BspLeaf attributors must have been determined first.
- *
- * @param sec  Sector to calculate reverb properties of.
+ * Defines the properties of an audio environment.
  */
-void S_MarkSectorReverbDirty(Sector *sec);
+struct AudioEnvironment
+{
+    char const name[9]; ///< Environment type name.
+    int volumeMul;
+    int decayMul;
+    int dampingMul;
+};
 
 /**
- * Called during map init to determine which BSP leafs affect the reverb
- * properties of each sector. Given that BSP leafs do not change shape (in
- * two dimensions at least), they do not move and are not created/destroyed
- * once the map has been loaded; this step can be pre-processed.
+ * Lookup the symbolic name of the identified audio environment.
  */
-void S_DetermineBspLeafsAffectingSectorReverb(de::Map *map);
+char const *S_AudioEnvironmentName(AudioEnvironmentId id);
 
 /**
- * Recalculates reverb properties for a sector. One must first mark the sector
- * eligible for update using S_MarkSectorReverbDirty() or this function will do
- * nothing.
- *
- * @param sec  Sector in which to update reverb properties.
+ * Lookup the identified audio environment.
  */
-void S_UpdateReverbForSector(Sector *sec);
+AudioEnvironment const &S_AudioEnvironment(AudioEnvironmentId id);
 
 /**
- * Must be called when the map changes.
+ * Lookup the audio environment associated with material @a uri. If no environment
+ * is defined then @c AE_NONE is returned.
  */
-void S_ResetReverb(void);
-
-/**
- * @return  Environment class name for identifier @a mclass.
- */
-char const *S_AudioEnvironmentName(AudioEnvironmentClass environment);
-
-/**
- * @return  Environment class associated with material @a uri else @c AEC_UNKNOWN.
- */
-AudioEnvironmentClass S_AudioEnvironmentForMaterial(Uri const *uri);
+AudioEnvironmentId S_AudioEnvironmentId(Uri const *uri);
 
 #endif // DENG_SOUND_ENVIRON

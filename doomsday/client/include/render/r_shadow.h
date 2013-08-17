@@ -20,6 +20,7 @@
 #ifndef DENG_RENDER_SHADOW_H
 #define DENG_RENDER_SHADOW_H
 
+#include <de/Matrix>
 #include <de/Vector>
 
 struct mobj_s;
@@ -56,19 +57,17 @@ float R_ShadowAttenuationFactor(coord_t distance);
  * the BSP leaf specified. This is due to an optimization within the mobj
  * management which separates them according to their position in the BSP.
  *
- * @param bspLeaf BspLeaf within which the quad wholly resides.
- * @param blendFactor  Multiplied with projection alpha.
- * @param topLeft  Top left coordinates of the surface being projected to.
- * @param bottomRight  Bottom right coordinates of the surface being projected to.
- * @param tangent  Normalized tangent of the surface being projected to.
- * @param bitangent  Normalized bitangent of the surface being projected to.
- * @param normal  Normalized normal of the surface being projected to.
+ * @param bspLeaf        BspLeaf within which the quad wholly resides.
+ * @param blendFactor    Multiplied with projection alpha.
+ * @param topLeft        Top left coordinates of the surface being projected to.
+ * @param bottomRight    Bottom right coordinates of the surface being projected to.
+ * @param tangentMatrix  Normalized tangent space matrix of the surface being projected to.
  *
  * @return  Projection list identifier if surface is lit else @c 0.
  */
 uint R_ProjectShadowsToSurface(BspLeaf *bspLeaf, float blendFactor,
     de::Vector3d const &topLeft, de::Vector3d const &bottomRight,
-    de::Vector3f const &tangent, de::Vector3f const &bitangent, de::Vector3f const &normal);
+    de::Matrix3f const &tangentMatrix);
 
 /**
  * Iterate over projections in the identified shadow-projection list, making

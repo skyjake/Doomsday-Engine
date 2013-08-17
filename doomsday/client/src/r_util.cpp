@@ -21,52 +21,62 @@
  * Refresh Utility Routines.
  */
 
-#include <math.h>
+#include <cmath>
 
 #include "de_base.h"
 #include "de_console.h"
 #include "de_play.h"
 #include "de_misc.h"
 
-#include "render/r_main.h"
+#include "render/r_main.h" // viewdata_t
 
-angle_t R_ViewPointXYToAngle(coord_t x, coord_t y)
+#include "r_util.h"
+
+using namespace de;
+
+angle_t R_ViewPointToAngle(coord_t x, coord_t y)
 {
-    const viewdata_t* viewData = R_ViewData(viewPlayer - ddPlayers);
+    viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
     x -= viewData->current.origin[VX];
     y -= viewData->current.origin[VY];
     return M_PointXYToAngle(x, y);
 }
 
-coord_t R_ViewPointXYDistance(coord_t x, coord_t y)
+coord_t R_ViewPointDistance(coord_t x, coord_t y)
 {
-    const viewdata_t* viewData = R_ViewData(viewPlayer - ddPlayers);
+    viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
     coord_t point[2] = { x, y };
     return M_PointDistance(viewData->current.origin, point);
+}
+
+Vector3d R_ClosestPointOnPlane(Vector3f const &planeNormal_,
+    Vector3d const &planePoint_, Vector3d const &origin_)
+{
+    vec3f_t planeNormal; V3f_Set(planeNormal, planeNormal_.x, planeNormal_.y, planeNormal_.z);
+    vec3d_t planePoint; V3d_Set(planePoint, planePoint_.x, planePoint_.y, planePoint_.z);
+    vec3d_t origin; V3d_Set(origin, origin_.x, origin_.y, origin_.z);
+    vec3d_t point; V3d_ClosestPointOnPlanef(point, planeNormal, planePoint, origin);
+    return point;
 }
 
 void R_ProjectViewRelativeLine2D(coord_t const center[2], boolean alignToViewPlane,
     coord_t width, coord_t offset, coord_t start[2], coord_t end[2])
 {
-    const viewdata_t* viewData = R_ViewData(viewPlayer - ddPlayers);
+    viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
     float sinrv, cosrv;
 
     if(alignToViewPlane)
     {
         // Should be fully aligned to view plane.
         sinrv = -viewData->viewCos;
-        cosrv = viewData->viewSin;
+        cosrv =  viewData->viewSin;
     }
     else
     {
-        coord_t trX, trY;
-        float thangle;
-
         // Transform the origin point.
-        trX = center[VX] - viewData->current.origin[VX];
-        trY = center[VY] - viewData->current.origin[VY];
-
-        thangle = BANG2RAD(bamsAtan2(trY * 10, trX * 10)) - float(de::PI) / 2;
+        coord_t trX   = center[VX] - viewData->current.origin[VX];
+        coord_t trY   = center[VY] - viewData->current.origin[VY];
+        float thangle = BANG2RAD(bamsAtan2(trY * 10, trX * 10)) - float(de::PI) / 2;
         sinrv = sin(thangle);
         cosrv = cos(thangle);
     }
@@ -97,42 +107,32 @@ void R_AmplifyColor(de::Vector3f &rgb)
     }
 }
 
-void R_ScaleAmbientRGB(float *out, const float *in, float mul)
+void R_ScaleAmbientRGB(float *out, float const *in, float mul)
 {
-    int                 i;
-    float               val;
-
-    if(mul < 0)
-        mul = 0;
-    else if(mul > 1)
-        mul = 1;
-
-    for(i = 0; i < 3; ++i)
+    mul = de::clamp(0.f, mul, 1.f);
+    for(int i = 0; i < 3; ++i)
     {
-        val = in[i] * mul;
-
+        float val = in[i] * mul;
         if(out[i] < val)
             out[i] = val;
     }
 }
 
-bool R_GenerateTexCoords(pvec2f_t s, pvec2f_t t, const_pvec3d_t point,
-    float xScale, float yScale, const_pvec3d_t v1, const_pvec3d_t v2,
-    const_pvec3f_t tangent, const_pvec3f_t bitangent)
+bool R_GenerateTexCoords(Vector2f &s, Vector2f &t, Vector3d const &point,
+    float xScale, float yScale, Vector3d const &v1, Vector3d const &v2,
+    Matrix3f const &tangentMatrix)
 {
-    vec3d_t vToPoint;
-
-    V3d_Subtract(vToPoint, v1, point);
-    s[0] = V3d_DotProductf(vToPoint, tangent)   * xScale + .5f;
-    t[0] = V3d_DotProductf(vToPoint, bitangent) * yScale + .5f;
+    Vector3d const v1ToPoint = v1 - point;
+    s[0] = v1ToPoint.dot(tangentMatrix.column(0)/*tangent*/) * xScale + .5f;
+    t[0] = v1ToPoint.dot(tangentMatrix.column(1)/*bitangent*/) * yScale + .5f;
 
     // Is the origin point visible?
     if(s[0] >= 1 || t[0] >= 1)
         return false; // Right on the X axis or below on the Y axis.
 
-    V3d_Subtract(vToPoint, v2, point);
-    s[1] = V3d_DotProductf(vToPoint, tangent)   * xScale + .5f;
-    t[1] = V3d_DotProductf(vToPoint, bitangent) * yScale + .5f;
+    Vector3d const v2ToPoint = v2 - point;
+    s[1] = v2ToPoint.dot(tangentMatrix.column(0)) * xScale + .5f;
+    t[1] = v2ToPoint.dot(tangentMatrix.column(1)) * yScale + .5f;
 
     // Is the end point visible?
     if(s[1] <= 0 || t[1] <= 0)
@@ -161,7 +161,7 @@ char const *R_NameForBlendMode(blendmode_t mode)
 }
 
 #undef R_ChooseAlignModeAndScaleFactor
-DENG_EXTERN_C boolean R_ChooseAlignModeAndScaleFactor(float* scale, int width, int height,
+DENG_EXTERN_C boolean R_ChooseAlignModeAndScaleFactor(float *scale, int width, int height,
     int availWidth, int availHeight, scalemode_t scaleMode)
 {
     if(SCALEMODE_STRETCH == scaleMode)
@@ -172,8 +172,8 @@ DENG_EXTERN_C boolean R_ChooseAlignModeAndScaleFactor(float* scale, int width, i
     }
     else
     {
-        const float availRatio = (float)availWidth / availHeight;
-        const float origRatio  = (float)width  / height;
+        float const availRatio = (float)availWidth / availHeight;
+        float const origRatio  = (float)width  / height;
         float sWidth, sHeight; // Scaled dimensions.
 
         if(availWidth >= availHeight)
@@ -206,8 +206,8 @@ DENG_EXTERN_C boolean R_ChooseAlignModeAndScaleFactor(float* scale, int width, i
 DENG_EXTERN_C scalemode_t R_ChooseScaleMode2(int width, int height, int availWidth, int availHeight,
     scalemode_t overrideMode, float stretchEpsilon)
 {
-    const float availRatio = (float)availWidth / availHeight;
-    const float origRatio  = (float)width / height;
+    float const availRatio = (float)availWidth / availHeight;
+    float const origRatio  = (float)width / height;
 
     // Considered identical?
     if(INRANGE_OF(availRatio, origRatio, .001f))

@@ -193,7 +193,7 @@ void Rend_RenderMobjShadows()
     {
         // We are only interested in those mobjs within sectors marked as
         // 'visible' for the current render frame (viewer dependent).
-        if(!(sector->frameFlags() & SIF_VISIBLE)) continue;
+        if(!sector->isVisible()) continue;
 
         // Process all mobjs linked to this sector:
         for(mobj_t *mo = sector->firstMobj(); mo; mo = mo->sNext)

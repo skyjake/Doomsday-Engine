@@ -51,10 +51,11 @@ static void notifyGeometryChanged(Polyobj &po)
     if(!ddMapSetup && useBias)
     {
         // Shadow bias must be informed when surfaces move/deform.
-        foreach(Line *line, po.lines())
+        foreach(HEdge *hedge, po.mesh().hedges())
         {
-            HEdge *hedge = line->front().leftHEdge();
-            if(!hedge) continue;
+            // Is this on the back of a one-sided line?
+            if(!hedge->mapElement())
+                continue;
 
             hedge->mapElement()->as<Line::Side::Segment>()->
                     updateBiasAfterGeometryMove(Line::Side::Middle);

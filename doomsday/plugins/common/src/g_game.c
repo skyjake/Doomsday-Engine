@@ -75,15 +75,11 @@
 #endif
 #include "d_net.h"
 
-// MACROS ------------------------------------------------------------------
-
 #define BODYQUEUESIZE       (32)
 
 #define UNNAMEDMAP          "Unnamed"
 #define NOTAMAPNAME         "N/A"
 #define READONLYCVAR        CVF_READ_ONLY|CVF_NO_MAX|CVF_NO_MIN|CVF_NO_ARCHIVE
-
-// TYPES -------------------------------------------------------------------
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
 struct missileinfo_s {
@@ -119,10 +115,6 @@ MonsterMissileInfo[] =
     {-1, {-1, -1}}                  // Terminator
 };
 #endif
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 D_CMD(CycleTextureGamma);
 D_CMD(DeleteGameSave);
@@ -176,18 +168,13 @@ void R_LoadVectorGraphics(void);
 
 int Hook_DemoStop(int hookType, int val, void* parameters);
 
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
 static void G_InitNewGame(void);
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 game_config_t cfg; // The global cfg.
 
-skillmode_t dSkill;
+skillmode_t dSkill; // Default.
 
+boolean gameInProgress;
 skillmode_t gameSkill;
 uint gameEpisode;
 uint gameMap;
@@ -211,7 +198,6 @@ boolean respawnMonsters;
 #endif
 boolean monsterInfight;
 
-boolean userGame = false; // Ok to save / end game.
 boolean deathmatch; // Only if started as net death.
 player_t players[MAXPLAYERS];
 
@@ -430,16 +416,12 @@ ccmdtemplate_t gameCmds[] = {
     { NULL }
 };
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
 static uint dEpisode;
 static uint dMap;
 static uint dMapEntryPoint;
 
 static gameaction_t gameAction;
 static boolean quitInProgress;
-
-// CODE --------------------------------------------------------------------
 
 void G_Register(void)
 {
@@ -452,12 +434,14 @@ void G_Register(void)
         Con_AddCommand(gameCmds + i);
 
     C_CMD("warp", "i", WarpMap);
+    C_CMD("setmap", "i", WarpMap); // alias
 #if __JDOOM__ || __JHERETIC__
 # if __JDOOM__
     if(!(gameModeBits & GM_ANY_DOOM2))
 # endif
     {
         C_CMD("warp", "ii", WarpMap);
+        C_CMD("setmap", "ii", WarpMap); // alias
     }
 #endif
 }
@@ -1131,7 +1115,7 @@ void G_StartTitle(void)
     ddfinale_t fin;
 
     G_StopDemo();
-    userGame = false;
+    gameInProgress = false;
 
     // The title script must always be defined.
     if(!Def_Get(DD_DEF_FINALE, "title", &fin))
@@ -1242,19 +1226,25 @@ void G_EndGame(void)
 {
     if(G_QuitInProgress()) return;
 
-    if(!userGame)
+    if(!gameInProgress)
     {
-        Hu_MsgStart(MSG_ANYKEY, ENDNOGAME, NULL, 0, NULL);
+        if(IS_NETGAME && IS_SERVER)
+        {
+            Con_Message("%s", ENDNOGAME);
+        }
+        else
+        {
+            Hu_MsgStart(MSG_ANYKEY, ENDNOGAME, NULL, 0, NULL);
+        }
         return;
     }
 
-    /*
-    if(IS_NETGAME)
+    if(IS_NETGAME && IS_SERVER)
     {
-        Hu_MsgStart(MSG_ANYKEY, NETEND, NULL, 0, NULL);
+        // Just do it, no questions asked.
+        G_StartTitle();
         return;
     }
-    */
 
     Hu_MsgStart(MSG_YESNO, IS_CLIENT? GET_TXT(TXT_DISCONNECT) : ENDGAME, G_EndGameResponse, 0, NULL);
 }
@@ -1650,14 +1640,6 @@ static void runGameAction(void)
         case GA_ENDDEBRIEFING:
             G_DoEndDebriefing();
             break;
-
-#if __JHEXEN__
-        case GA_SETMAP:
-            SV_HxInitBaseSlot();
-            G_NewGame(dSkill, dEpisode, dMap, dMapEntryPoint);
-            G_SetGameAction(GA_NONE);
-            break;
-#endif
 
         case GA_VICTORY:
             G_SetGameAction(GA_NONE);
@@ -2291,8 +2273,8 @@ static void G_ApplyGameRuleFastMissiles(boolean fast)
 
 static void G_ApplyGameRules(skillmode_t skill)
 {
-    if(skill < SM_BABY)
-        skill = SM_BABY;
+    if(skill < SM_NOTHINGS)
+        skill = SM_NOTHINGS;
     if(skill > NUM_SKILL_MODES - 1)
         skill = NUM_SKILL_MODES - 1;
     gameSkill = skill;
@@ -2312,7 +2294,7 @@ static void G_ApplyGameRules(skillmode_t skill)
 
 #if __JDOOM__ || __JHERETIC__
     // Is respawning enabled at all in nightmare skill?
-    if(skill == SM_NIGHTMARE)
+    if(gameSkill == SM_NIGHTMARE)
         respawnMonsters = cfg.respawnMonstersNightmare;
 #endif
 
@@ -2850,18 +2832,6 @@ void G_DoRestartMap(void)
 #endif
 }
 
-#if __JHEXEN__
-void G_DeferredSetMap(skillmode_t skill, uint episode, uint map, uint mapEntryPoint)
-{
-    dSkill = skill;
-    dEpisode = episode;
-    dMap = map;
-    dMapEntryPoint = mapEntryPoint;
-
-    G_SetGameAction(GA_SETMAP);
-}
-#endif
-
 boolean G_IsLoadGamePossible(void)
 {
     return !(IS_CLIENT && !Get(DD_PLAYBACK));
@@ -3050,9 +3020,9 @@ void G_DoSaveGame(void)
 
 void G_DeferredNewGame(skillmode_t skill, uint episode, uint map, uint mapEntryPoint)
 {
-    dSkill = skill;
-    dEpisode = episode;
-    dMap = map;
+    dSkill         = skill;
+    dEpisode       = episode;
+    dMap           = map;
     dMapEntryPoint = mapEntryPoint;
 
     G_SetGameAction(GA_NEWGAME);
@@ -3094,7 +3064,7 @@ void G_NewGame(skillmode_t skill, uint episode, uint map, uint mapEntryPoint)
 #endif
     }
 
-    userGame = true; // Will be set false if a demo.
+    gameInProgress = true;
 
     // Unpause the current game.
     Pause_End();
@@ -3105,7 +3075,6 @@ void G_NewGame(skillmode_t skill, uint episode, uint map, uint mapEntryPoint)
     // Make sure that the episode and map numbers are good.
     G_ValidateMap(&episode, &map);
 
-    gameSkill           = skill;
     gameEpisode         = episode;
     gameMap             = map;
     gameMapEntryPoint   = mapEntryPoint;
@@ -4033,13 +4002,33 @@ D_CMD(ListMaps)
     return true;
 }
 
+/**
+ * Warp behavior is as follows:
+ *
+ * warp (map):      if a game session is in progress
+ *                      continue the session and change map
+ *                      if Hexen and the targt map is in another hub
+ *                          force a new session.
+ *                  else
+ *                      begin a new game session and warp to the specified map.
+ *
+ * warp (ep) (map): same as warp (map) but force new session if episode differs.
+ *
+ * @note In a networked game we must presently force a new game session when a
+ * map change outside the normal progression occurs to allow session-level state
+ * changes to take effect. In single player this behavior is not necessary.
+ *
+ * @note "setmap" is an alias of "warp"
+ */
 D_CMD(WarpMap)
 {
+    boolean const forceNewGameSession = IS_NETGAME != 0;
     uint epsd, map, i;
 
     // Only server operators can warp maps in network games.
     /// @todo Implement vote or similar mechanics.
-    if(IS_NETGAME && !IS_NETWORK_SERVER) return false;
+    if(IS_NETGAME && !IS_NETWORK_SERVER)
+        return false;
 
 #if __JDOOM__ || __JDOOM64__ || __JHEXEN__
 # if __JDOOM__
@@ -4081,15 +4070,15 @@ D_CMD(WarpMap)
 #endif
     if(!G_ValidateMap(&epsd, &map))
     {
-        const char* fmtString = argc == 3? "Unknown map \"%s, %s\"." : "Unknown map \"%s%s\".";
-        AutoStr* msg = Str_Appendf(AutoStr_NewStd(), fmtString, argv[1], argc == 3? argv[2] : "");
+        char const *fmtString = argc == 3? "Unknown map \"%s, %s\"." : "Unknown map \"%s%s\".";
+        AutoStr *msg = Str_Appendf(AutoStr_NewStd(), fmtString, argv[1], argc == 3? argv[2] : "");
         P_SetMessage(players + CONSOLEPLAYER, LMF_NO_HIDE, Str_Text(msg));
         return false;
     }
 
 #if __JHEXEN__
     // Hexen does not allow warping to the current map.
-    if(userGame && map == gameMap)
+    if(!forceNewGameSession && gameInProgress && map == gameMap)
     {
         P_SetMessage(players + CONSOLEPLAYER, LMF_NO_HIDE, "Cannot warp to the current map.");
         return false;
@@ -4100,8 +4089,8 @@ D_CMD(WarpMap)
     /// @todo Still necessary here?
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        player_t* plr = players + i;
-        ddplayer_t* ddplr = plr->plr;
+        player_t *plr = players + i;
+        ddplayer_t *ddplr = plr->plr;
         if(!ddplr->inGame) continue;
 
         ST_AutomapOpen(i, false, true);
@@ -4112,40 +4101,41 @@ D_CMD(WarpMap)
     Hu_MenuCommand(MCMD_CLOSEFAST);
 
     // So be it.
-#if __JHEXEN__
-    if(userGame)
+    briefDisabled = true;
+    if(!forceNewGameSession && gameInProgress)
     {
+#if __JHEXEN__
         nextMap = map;
         nextMapEntryPoint = 0;
-        briefDisabled = true;
         G_SetGameAction(GA_LEAVEMAP);
+#else
+        G_DeferredNewGame(gameSkill, epsd, map, 0/*default*/);
+#endif
     }
     else
     {
-        G_DeferredNewGame(dSkill, epsd, map, 0/*default*/);
+        G_DeferredNewGame(IS_SERVER? cfg.netSkill : dSkill, epsd, map, 0/*default*/);
     }
-#else
-    briefDisabled = true;
-    G_DeferredNewGame(gameSkill, epsd, map, 0/*default*/);
-#endif
 
-    // If the command src was "us" the game library then it was probably in response to
-    // the local player entering a cheat event sequence, so set the "CHANGING MAP" message.
+    // If the command source was "us" the game library then it was probably in
+    // response to the local player entering a cheat event sequence, so set the
+    // "CHANGING MAP" message.
     // Somewhat of a kludge...
     if(src == CMDS_GAME && !(IS_NETGAME && IS_SERVER))
     {
 #if __JHEXEN__
-        const char* msg = TXT_CHEATWARP;
+        char const *msg = TXT_CHEATWARP;
         int soundId     = SFX_PLATFORM_STOP;
 #elif __JHERETIC__
-        const char* msg = TXT_CHEATWARP;
+        char const *msg = TXT_CHEATWARP;
         int soundId     = SFX_DORCLS;
 #else //__JDOOM__ || __JDOOM64__
-        const char* msg = STSTR_CLEV;
+        char const *msg = STSTR_CLEV;
         int soundId     = SFX_NONE;
 #endif
         P_SetMessage(players + CONSOLEPLAYER, LMF_NO_HIDE, msg);
         S_LocalSound(soundId, NULL);
     }
+
     return true;
 }

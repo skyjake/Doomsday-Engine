@@ -81,11 +81,10 @@ typedef struct {
 typedef struct {
     int flags;          ///< @ref lightProjectionFlags
     float blendFactor;  ///< Multiplied with projection alpha.
-    vec3d_t v1;         ///< Top left vertex of the surface being projected to.
-    vec3d_t v2;         ///< Bottom right vertex of the surface being projected to.
-    vec3f_t tangent;    ///< Normalized tangent of the surface being projected to.
-    vec3f_t bitangent;  ///< Normalized bitangent of the surface being projected to.
-    vec3f_t normal;     ///< Normalized normal of the surface being projected to.
+    Vector3d v1; ///< Top left vertex of the surface being projected to.
+    Vector3d v2; ///< Bottom right vertex of the surface being projected to.
+    /// Normalized tangent space matrix of the surface being projected to.
+    Matrix3f tangentMatrix;
 } lightprojectparams_t;
 
 static void iterateBspLeafLumObjs(BspLeaf &bspLeaf, boolean (*func) (void *, void *),
@@ -255,7 +254,7 @@ static lightprojectionlist_t *getProjectionList(uint *listIdx, int flags)
     return projectionLists + ((*listIdx) - 1); // 1-based index.
 }
 
-static listnode_t *newListNode(void)
+static listnode_t *newListNode()
 {
     listnode_t *node;
 
@@ -279,20 +278,20 @@ static listnode_t *newListNode(void)
     return node;
 }
 
-static listnode_t *newProjection(DGLuint texture, float const s[2],
-    float const t[2], float const color[3], float alpha)
+static listnode_t *newProjection(DGLuint texture, Vector2f const &s,
+    Vector2f const &t, Vector3f const &color, float alpha)
 {
-    DENG_ASSERT(texture != 0 && s != 0&& t != 0 && color != 0);
+    DENG_ASSERT(texture != 0);
 
     listnode_t *node = newListNode();
-    dynlight_t *tp = &node->projection;
 
-    tp->texture = texture;
-    tp->s[0]    = s[0];
-    tp->s[1]    = s[1];
-    tp->t[0]    = t[0];
-    tp->t[1]    = t[1];
-    tp->color   = Vector4f(Vector3f(color), de::clamp(0.f, alpha, 1.f));
+    dynlight_t &tp = node->projection;
+    tp.texture = texture;
+    tp.s[0]    = s[0];
+    tp.s[1]    = s[1];
+    tp.t[0]    = t[0];
+    tp.t[1]    = t[1];
+    tp.color   = Vector4f(color, de::clamp(0.f, alpha, 1.f));
 
     return node;
 }
@@ -352,7 +351,7 @@ static listnode_t *linkProjectionToList(listnode_t *node, lightprojectionlist_t 
  * @param alpha     Alpha attributed to the new projection.
  */
 static inline void newLightProjection(uint *listIdx, int flags, DGLuint texture,
-    float const s[2], float const t[2], float const colorRGB[3], float alpha)
+    Vector2f const &s, Vector2f const &t, float const colorRGB[3], float alpha)
 {
     linkProjectionToList(newProjection(texture, s, t, colorRGB, alpha),
                          getProjectionList(listIdx, flags));
@@ -447,21 +446,20 @@ static int projectPlaneLightToSurface(lumobj_t const *lum, void *parameters)
     return 0; // Continue iteration.
 }
 
-static inline bool genTexCoords(pvec2f_t s, pvec2f_t t,
-    const_pvec3d_t point, float scale, const_pvec3d_t v1, const_pvec3d_t v2,
-    const_pvec3f_t tangent, const_pvec3f_t bitangent)
+static inline bool genTexCoords(Vector2f &s, Vector2f &t,
+    Vector3d const &point, float scale, Vector3d const &v1, Vector3d const &v2,
+    Matrix3f const &tangentMatrix)
 {
     // Counteract aspect correction slightly (not too round mind).
-    return R_GenerateTexCoords(s, t, point, scale, scale * 1.08f, v1, v2,
-                               tangent, bitangent);
+    return R_GenerateTexCoords(s, t, point, scale, scale * 1.08f, v1, v2, tangentMatrix);
 }
 
-static DGLuint chooseOmniLightTexture(lumobj_t *lum, lightprojectparams_t const *spParams)
+static DGLuint chooseOmniLightTexture(lumobj_t *lum, lightprojectparams_t const &spParams)
 {
-    DENG_ASSERT(lum && lum->type == LT_OMNI && spParams);
-    if(spParams->flags & PLF_TEX_CEILING)
+    DENG_ASSERT(lum != 0 && lum->type == LT_OMNI);
+    if(spParams.flags & PLF_TEX_CEILING)
         return LUM_OMNI(lum)->ceilTex;
-    if(spParams->flags & PLF_TEX_FLOOR)
+    if(spParams.flags & PLF_TEX_FLOOR)
         return LUM_OMNI(lum)->floorTex;
     return LUM_OMNI(lum)->tex;
 }
@@ -480,29 +478,34 @@ static int projectOmniLightToSurface(lumobj_t *lum, void *parameters)
     DENG_ASSERT(lum != 0 && parameters != 0);
 
     projectlighttosurfaceiteratorparams_t *p = (projectlighttosurfaceiteratorparams_t *)parameters;
-    lightprojectparams_t *spParams = &p->spParams;
+    lightprojectparams_t const &spParams = p->spParams;
 
     // Early test of the external blend factor for quick rejection.
-    if(spParams->blendFactor < OMNILIGHT_SURFACE_LUMINOSITY_ATTRIBUTION_MIN) return false; // Continue iteration.
+    if(spParams.blendFactor < OMNILIGHT_SURFACE_LUMINOSITY_ATTRIBUTION_MIN)
+        return false;
 
     // No lightmap texture?
     DGLuint tex = chooseOmniLightTexture(lum, spParams);
-    if(!tex) return false; // Continue iteration.
+    if(!tex) return false;
 
     // Has this already been occluded?
     uint lumIdx = LO_ToIndex(lum);
-    if(LO_IsHidden(lumIdx, viewPlayer - ddPlayers)) return false; // Continue iteration.
+    if(LO_IsHidden(lumIdx, viewPlayer - ddPlayers))
+        return false;
 
-    vec3d_t lumCenter; V3d_Set(lumCenter, lum->origin[VX], lum->origin[VY], lum->origin[VZ] + LUM_OMNI(lum)->zOff);
-    vec3d_t vToLum; V3d_Subtract(vToLum, spParams->v1, lumCenter);
+    Vector3d lumCenter(lum->origin); lumCenter.z += LUM_OMNI(lum)->zOff;
 
     // On the right side?
-    if(V3d_DotProductf(vToLum, spParams->normal) > 0.f) return false; // Continue iteration.
+    Vector3d vToLum = spParams.v1 - lumCenter;
+    if(vToLum.dot(spParams.tangentMatrix.column(2)) > 0.f)
+        return false;
 
     // Calculate 3D distance between surface and lumobj.
-    vec3d_t point; V3d_ClosestPointOnPlanef(point, spParams->normal, spParams->v1, lumCenter);
-    coord_t dist = V3d_Distance(point, lumCenter);
-    if(dist <= 0 || dist > LUM_OMNI(lum)->radius) return false; // Continue iteration.
+    Vector3d point = R_ClosestPointOnPlane(spParams.tangentMatrix.column(2)/*normal*/,
+                                           spParams.v1, lumCenter);
+    coord_t dist = (lumCenter - point).length();
+    if(dist <= 0 || dist > LUM_OMNI(lum)->radius)
+        return false;
 
     // Calculate the final surface light attribution factor.
     float luma = 1.5f - 1.5f * dist / LUM_OMNI(lum)->radius;
@@ -515,22 +518,22 @@ static int projectOmniLightToSurface(lumobj_t *lum, void *parameters)
     }
 
     // Would this light be seen?
-    if(luma * spParams->blendFactor < OMNILIGHT_SURFACE_LUMINOSITY_ATTRIBUTION_MIN) return false; // Continue iteration.
+    if(luma * spParams.blendFactor < OMNILIGHT_SURFACE_LUMINOSITY_ATTRIBUTION_MIN)
+        return false;
 
     // Project this light.
-    float scale = 1.0f / ((2.f * LUM_OMNI(lum)->radius) - dist);
-    vec2f_t s, t;
-    if(!genTexCoords(s, t, point, scale, spParams->v1, spParams->v2,
-                     spParams->tangent, spParams->bitangent))
-        return false; // Continue iteration.
+    Vector2f s, t;
+    if(!genTexCoords(s, t, point, 1.0f / ((2.f * LUM_OMNI(lum)->radius) - dist),
+                     spParams.v1, spParams.v2, spParams.tangentMatrix))
+        return false;
 
     float color[3]; calcLightColor(color, LUM_OMNI(lum)->color, luma);
 
     // Attach to the projection list.
-    newLightProjection(&p->listIdx, ((spParams->flags & PLF_SORT_LUMINOSITY_DESC)? SPLF_SORT_LUMINOUS_DESC : 0),
-                       tex, s, t, color, 1 * spParams->blendFactor);
+    newLightProjection(&p->listIdx, ((spParams.flags & PLF_SORT_LUMINOSITY_DESC)? SPLF_SORT_LUMINOUS_DESC : 0),
+                       tex, s, t, color, 1 * spParams.blendFactor);
 
-    return false; // Continue iteration.
+    return false;
 }
 
 void LO_InitForMap(Map &map)
@@ -1166,9 +1169,11 @@ boolean LOIT_ClipLumObjBySight(void *data, void *context)
         // between the viewpoint and the lumobj.
         BspLeaf *bspLeaf = (BspLeaf *) context;
         foreach(Polyobj *po, bspLeaf->polyobjs())
-        foreach(Line *line, po->lines())
+        foreach(HEdge *hedge, po->mesh().hedges())
         {
-            HEdge *hedge = line->front().leftHEdge();
+            // Is this on the back of a one-sided line?
+            if(!hedge->mapElement())
+                continue;
 
             // Ignore half-edges facing the wrong way.
             if(hedge->mapElement()->as<Line::Side::Segment>()->isFrontFacing())
@@ -1250,23 +1255,16 @@ int RIT_ProjectLightToSurfaceIterator(void *obj, void *paramaters)
 }
 
 uint LO_ProjectToSurface(int flags, BspLeaf *bspLeaf, float blendFactor,
-    Vector3d const &topLeft, Vector3d const &bottomRight,
-    Vector3f const &tangent, Vector3f const &bitangent, Vector3f const &normal)
+    Vector3d const &topLeft, Vector3d const &bottomRight, Matrix3f const &tangentMatrix)
 {
     DENG_ASSERT(bspLeaf != 0);
 
-    projectlighttosurfaceiteratorparams_t parm;
-
-    parm.listIdx               = 0;
-    parm.spParams.blendFactor  = blendFactor;
-    parm.spParams.flags        = flags;
-
-    V3d_Set(parm.spParams.v1,     topLeft.x,     topLeft.y,     topLeft.z);
-    V3d_Set(parm.spParams.v2, bottomRight.x, bottomRight.y, bottomRight.z);
-
-    V3f_Set(parm.spParams.tangent,     tangent.x,   tangent.y,   tangent.z);
-    V3f_Set(parm.spParams.bitangent, bitangent.x, bitangent.y, bitangent.z);
-    V3f_Set(parm.spParams.normal,       normal.x,    normal.y,    normal.z);
+    projectlighttosurfaceiteratorparams_t parm; zap(parm);
+    parm.spParams.blendFactor   = blendFactor;
+    parm.spParams.flags         = flags;
+    parm.spParams.v1            = topLeft;
+    parm.spParams.v2            = bottomRight;
+    parm.spParams.tangentMatrix = tangentMatrix;
 
     R_IterateBspLeafContacts(*bspLeaf, OT_LUMOBJ, RIT_ProjectLightToSurfaceIterator, (void *)&parm);
 

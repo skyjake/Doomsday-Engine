@@ -265,16 +265,11 @@ DENG2_PIMPL(LineSightTest)
         } while((hedge = &hedge->next()) != base);
 
         foreach(Mesh *mesh, bspLeaf.extraMeshes())
-        foreach(Face *face, mesh->faces())
+        foreach(HEdge *hedge, mesh->hedges())
         {
-            HEdge *base = face->hedge();
-            HEdge *hedge = base;
-            do
-            {
-                DENG_ASSERT(hedge->mapElement() != 0); // sanity check
-                if(!crossLine(hedge->mapElement()->as<Line::Side::Segment>()->lineSide()))
-                    return false;
-            } while((hedge = &hedge->next()) != base);
+            DENG_ASSERT(hedge->mapElement() != 0); // sanity check
+            if(!crossLine(hedge->mapElement()->as<Line::Side::Segment>()->lineSide()))
+                return false;
         }
 
         return true; // Continue traversal.

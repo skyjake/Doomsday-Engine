@@ -75,14 +75,6 @@ boolean G_QuitInProgress(void);
 void G_NewGame(skillmode_t skill, uint episode, uint map, uint mapEntryPoint);
 void G_DeferredNewGame(skillmode_t skill, uint episode, uint map, uint mapEntryPoint);
 
-#if __JHEXEN__
-/**
- * Same as @ref G_DeferredNewGame() except a GA_SETMAP action is queued
- * instead of GA_NEWGAME.
- */
-void G_DeferredSetMap(skillmode_t skill, uint episode, uint map, uint mapEntryPoint);
-#endif
-
 /**
  * Signal that play on the current map may now begin.
  */

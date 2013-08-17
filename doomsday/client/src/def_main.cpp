@@ -1390,7 +1390,9 @@ static void interpretMaterialDef(ded_material_t const &def)
 
         material.setFlags(translateMaterialDefFlags(def.flags));
         material.setDimensions(Vector2i(def.width, def.height));
-        material.setAudioEnvironment(S_AudioEnvironmentForMaterial(def.uri));
+#ifdef __CLIENT__
+        material.setAudioEnvironment(S_AudioEnvironmentId(def.uri));
+#endif
 
         rebuildMaterialLayers(material, def);
 #ifdef __CLIENT__

@@ -28,18 +28,17 @@
 
 #include "MapElement"
 #include "Line"
+#include "Sector"
+
 #include "Mesh"
 
 #ifdef __CLIENT__
 #  include "BiasSurface"
 #endif
 
-class Sector;
 struct polyobj_s;
-
 #ifdef __CLIENT__
 class BiasDigest;
-struct ShadowLink;
 #endif
 
 /**
@@ -80,15 +79,14 @@ public:
      */
     typedef QSet<de::Mesh *>   Meshes;
     typedef QSet<polyobj_s *>  Polyobjs;
-
-public: /// @todo Make private:
 #ifdef __CLIENT__
+    typedef QSet<Line::Side *> ShadowLines;
+#endif
 
-    ShadowLink *_shadows;
-
-    uint _reverb[NUM_REVERB_DATA];
-
-#endif // __CLIENT__
+#ifdef __CLIENT__
+    // Final audio environment characteristics.
+    typedef uint AudioEnvironmentFactors[NUM_REVERB_DATA];
+#endif
 
 public:
     /**
@@ -98,15 +96,15 @@ public:
     explicit BspLeaf(Sector *sector = 0);
 
     /**
-     * Returns @c true iff the BSP leaf is "degenerate", which is to say there
-     * is no convex Polygon assigned to it.
+     * Returns @c true iff the BSP leaf is "degenerate", which is to say that
+     * no convex face geometry is attributed.
      *
-     * Equivalent to @code !hasFace() @endcode
+     * Equivalent to @code !hasPoly() @endcode
      */
     inline bool isDegenerate() const { return !hasPoly(); }
 
     /**
-     * Determines whether a convex face geometry (a polygon) is assigned.
+     * Determines whether a convex face geometry (a polygon) is attributed.
      *
      * @see poly(), setPoly()
      */
@@ -124,7 +122,7 @@ public:
      * geometry is accepted it is first conformance tested to ensure that it
      * represents a valid, simple convex polygon.
      *
-     * @param polygon  New polygon to attributed to the BSP leaf. Ownership is
+     * @param polygon  New polygon to attribute to the BSP leaf. Ownership is
      *                 unaffected. Can be @c 0 (to clear the attribution).
      *
      * @see hasPoly(), poly()
@@ -133,8 +131,8 @@ public:
 
     /**
      * Assign an additional mesh geometry to the BSP leaf. Such @em extra
-     * meshes are used to represent geometry which would otherwise result in a
-     * non-manifold mesh if incorporated in the primary mesh for the map.
+     * meshes are used to represent geometry which would otherwise result in
+     * a non-manifold mesh if incorporated in the primary mesh for the map.
      *
      * @param mesh  New mesh to be assigned to the BSP leaf. Ownership of the
      *              mesh is given to the BspLeaf.
@@ -142,7 +140,7 @@ public:
     void assignExtraMesh(de::Mesh &mesh);
 
     /**
-     * Provides access to the set of additional mesh geometries for the BSP leaf.
+     * Provides access to the set of 'extra' mesh geometries for the BSP leaf.
      *
      * @see assignExtraMesh()
      */
@@ -178,11 +176,6 @@ public:
     void setSector(Sector *newSector);
 
     /**
-     * Returns @c true iff at least one polyobj is linked to the BSP leaf.
-     */
-    inline bool hasPolyobj() { return !polyobjs().isEmpty(); }
-
-    /**
      * Add the given @a polyobj to the set of those linked to the BSP leaf.
      * Ownership is unaffected. If the polyobj is already linked in this set
      * then nothing will happen.
@@ -202,12 +195,30 @@ public:
     Polyobjs const &polyobjs() const;
 
     /**
+     * Convenient method of returning the total number of polyobjs linked to the
+     * BSP leaf.
+     */
+    inline int polyobjCount() { return polyobjs().count(); }
+
+    /**
      * Returns the vector described by the offset from the map coordinate space
      * origin to the top most, left most point of the geometry of the BSP leaf.
      *
      * @see aaBox()
      */
     de::Vector2d const &worldGridOffset() const;
+
+    /**
+     * Determines whether the specified @a point in the map coordinate space
+     * lies within the BSP leaf (according to the edges).
+     *
+     * @param point  Map space coordinate to test.
+     *
+     * @return  @c true iff the point lies inside the BSP leaf.
+     *
+     * @see http://www.alienryderflex.com/polygon/
+     */
+    bool pointInside(de::Vector2d const &point) const;
 
     /**
      * Returns the @em validCount of the BSP leaf. Used by some legacy iteration
@@ -219,18 +230,6 @@ public:
 
     /// @todo Refactor away.
     void setValidCount(int newValidCount);
-
-    /**
-     * Determines whether the specified @a point in the map coordinate space
-     * lies within the BSP leaf (according to the edges)?
-     *
-     * @param point  Map space coordinate to test.
-     *
-     * @return  @c true iff the point lies inside the BSP leaf.
-     *
-     * @see http://www.alienryderflex.com/polygon/
-     */
-    bool pointInside(de::Vector2d const &point) const;
 
 #ifdef __CLIENT__
 
@@ -288,9 +287,34 @@ public:
     void applyBiasDigest(BiasDigest &changes);
 
     /**
-     * Returns a pointer to the first ShadowLink; otherwise @c 0.
+     * Recalculate the environmental audio characteristics (reverb) of the BSP leaf.
      */
-    ShadowLink *firstShadowLink() const;
+    bool updateReverb();
+
+    /**
+     * Provides access to the final environmental audio characteristics (reverb)
+     * of the BSP leaf, for efficient accumulation.
+     */
+    AudioEnvironmentFactors const &reverb() const;
+
+    /**
+     * Clear the list of fake radio shadow line sides for the BSP leaf.
+     */
+    void clearShadowLines();
+
+    /**
+     * Add the specified line @a side to the set of fake radio shadow lines for
+     * the BSP leaf. If the line is already present in this set then nothing
+     * will happen.
+     *
+     * @param side  Map line side to add to the set.
+     */
+    void addShadowLine(Line::Side &side);
+
+    /**
+     * Provides access to the set of fake radio shadow lines for the BSP leaf.
+     */
+    ShadowLines const &shadowLines() const;
 
     /**
      * Returns the frame number of the last time mobj sprite projection was

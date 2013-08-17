@@ -18,19 +18,13 @@
  * 02110-1301 USA</small>
  */
 
-#include <cmath> // fmod
-
-#include <QSet>
+#include <QMap>
 #include <QtAlgorithms>
 
 #include <de/Log>
 
-#include "dd_main.h" // App_World()
-
 #include "Face"
-
 #include "Polyobj"
-#include "Sector"
 
 #ifdef __CLIENT__
 #  include "world/map.h"
@@ -98,6 +92,12 @@ DENG2_PIMPL(BspLeaf)
     /// Bias lighting data for each geometry group (i.e., each plane).
     GeometryGroups geomGroups;
 
+    /// Set of fake radio shadow lines.
+    ShadowLines shadowLines;
+
+    /// Final audio environment characteristics.
+    AudioEnvironmentFactors reverb;
+
 #endif // __CLIENT__
 
     /// Used by legacy algorithms to prevent repeated processing.
@@ -113,7 +113,11 @@ DENG2_PIMPL(BspLeaf)
           addSpriteCount(0),
 #endif
           validCount(0)
-    {}
+    {
+#ifdef __CLIENT__
+        zap(reverb);
+#endif
+    }
 
     ~Instance()
     {
@@ -284,12 +288,7 @@ DENG2_PIMPL(BspLeaf)
 
 BspLeaf::BspLeaf(Sector *sector)
     : MapElement(DMU_BSPLEAF), d(new Instance(this, sector))
-{
-#ifdef __CLIENT__
-    _shadows = 0;
-    zap(_reverb);
-#endif
-}
+{}
 
 bool BspLeaf::hasPoly() const
 {
@@ -459,21 +458,15 @@ int BspLeaf::numFanVertices() const
     return d->poly->hedgeCount() + (fanBase()? 0 : 2);
 }
 
-static void updateBiasForSegmentsAfterGeometryMove(Face const &face)
+static void updateBiasForWallSectionsAfterGeometryMove(HEdge *hedge)
 {
-    HEdge *base = face.hedge();
-    HEdge *hedge = base;
-    do
-    {
-        if(hedge->mapElement())
-        {
-            Line::Side::Segment *seg = hedge->mapElement()->as<Line::Side::Segment>();
+    if(!hedge || !hedge->mapElement())
+        return;
 
-            seg->updateBiasAfterGeometryMove(Line::Side::Middle);
-            seg->updateBiasAfterGeometryMove(Line::Side::Bottom);
-            seg->updateBiasAfterGeometryMove(Line::Side::Top);
-        }
-    } while((hedge = &hedge->next()) != base);
+    Line::Side::Segment *seg = hedge->mapElement()->as<Line::Side::Segment>();
+    seg->updateBiasAfterGeometryMove(Line::Side::Middle);
+    seg->updateBiasAfterGeometryMove(Line::Side::Bottom);
+    seg->updateBiasAfterGeometryMove(Line::Side::Top);
 }
 
 void BspLeaf::updateBiasAfterGeometryMove(int group)
@@ -485,26 +478,25 @@ void BspLeaf::updateBiasAfterGeometryMove(int group)
         geomGroup->biasTracker.updateAllContributors();
     }
 
-    updateBiasForSegmentsAfterGeometryMove(poly());
-
-    foreach(Mesh *mesh, extraMeshes())
-    foreach(Face *face, mesh->faces())
-    {
-        updateBiasForSegmentsAfterGeometryMove(*face);
-    }
-}
-
-static void applyBiasDigestToSegments(Face const &face, BiasDigest &changes)
-{
-    HEdge *base = face.hedge();
+    HEdge *base = poly().hedge();
     HEdge *hedge = base;
     do
     {
-        if(hedge->mapElement())
-        {
-            hedge->mapElement()->as<Line::Side::Segment>()->applyBiasDigest(changes);
-        }
+        updateBiasForWallSectionsAfterGeometryMove(hedge);
     } while((hedge = &hedge->next()) != base);
+
+    foreach(Mesh *mesh, extraMeshes())
+    foreach(HEdge *hedge, mesh->hedges())
+    {
+        updateBiasForWallSectionsAfterGeometryMove(hedge);
+    }
+}
+
+static void applyBiasDigestToWallSections(HEdge *hedge, BiasDigest &changes)
+{
+    if(!hedge || !hedge->mapElement())
+        return;
+    hedge->mapElement()->as<Line::Side::Segment>()->applyBiasDigest(changes);
 }
 
 void BspLeaf::applyBiasDigest(BiasDigest &changes)
@@ -517,18 +509,23 @@ void BspLeaf::applyBiasDigest(BiasDigest &changes)
         it.value().biasTracker.applyChanges(changes);
     }
 
-    applyBiasDigestToSegments(poly(), changes);
+    HEdge *base = poly().hedge();
+    HEdge *hedge = base;
+    do
+    {
+        applyBiasDigestToWallSections(hedge, changes);
+    } while((hedge = &hedge->next()) != base);
 
     foreach(Mesh *mesh, extraMeshes())
-    foreach(Face *face, mesh->faces())
+    foreach(HEdge *hedge, mesh->hedges())
     {
-        applyBiasDigestToSegments(*face, changes);
+        applyBiasDigestToWallSections(hedge, changes);
     }
 
     foreach(Polyobj *polyobj, d->polyobjs)
-    foreach(Line *line, polyobj->lines())
+    foreach(HEdge *hedge, polyobj->mesh().hedges())
     {
-        line->front().leftHEdge()->mapElement()->as<Line::Side::Segment>()->applyBiasDigest(changes);
+        applyBiasDigestToWallSections(hedge, changes);
     }
 }
 
@@ -559,9 +556,115 @@ void BspLeaf::lightBiasPoly(int group, Vector3f const *posCoords, Vector4f *colo
     geomGroup->biasTracker.markIllumUpdateCompleted();
 }
 
-ShadowLink *BspLeaf::firstShadowLink() const
+static void accumReverbForWallSections(HEdge const *hedge,
+    float envSpaceAccum[NUM_AUDIO_ENVIRONMENTS], float &total)
 {
-    return _shadows;
+    // Edges with no map line segment implicitly have no surfaces.
+    if(!hedge || !hedge->mapElement())
+        return;
+
+    Line::Side::Segment *seg = hedge->mapElement()->as<Line::Side::Segment>();
+    if(!seg->lineSide().hasSections() || !seg->lineSide().middle().hasMaterial())
+        return;
+
+    Material &material = seg->lineSide().middle().material();
+    AudioEnvironmentId env = material.audioEnvironment();
+    if(!(env >= 0 && env < NUM_AUDIO_ENVIRONMENTS))
+        env = AE_WOOD; // Assume it's wood if unknown.
+
+    total += seg->length();
+
+    envSpaceAccum[env] += seg->length();
+}
+
+bool BspLeaf::updateReverb()
+{
+    if(!d->sector || !d->poly)
+    {
+        d->reverb[SRD_SPACE] = d->reverb[SRD_VOLUME] =
+            d->reverb[SRD_DECAY] = d->reverb[SRD_DAMPING] = 0;
+        return false;
+    }
+
+    float envSpaceAccum[NUM_AUDIO_ENVIRONMENTS];
+    std::memset(&envSpaceAccum, 0, sizeof(envSpaceAccum));
+
+    // Space is the rough volume of the BSP leaf (bounding box).
+    AABoxd const &aaBox = d->poly->aaBox();
+    d->reverb[SRD_SPACE] =
+        int(d->sector->ceiling().height() - d->sector->floor().height()) *
+        (aaBox.maxX - aaBox.minX) *
+        (aaBox.maxY - aaBox.minY);
+
+    float total = 0;
+
+    // The other reverb properties can be found out by taking a look at the
+    // materials of all surfaces in the BSP leaf.
+    HEdge *base = d->poly->hedge();
+    HEdge *hedge = base;
+    do
+    {
+        accumReverbForWallSections(hedge, envSpaceAccum, total);
+    } while((hedge = &hedge->next()) != base);
+
+    foreach(Mesh *mesh, d->extraMeshes)
+    foreach(HEdge *hedge, mesh->hedges())
+    {
+        accumReverbForWallSections(hedge, envSpaceAccum, total);
+    }
+
+    if(!total)
+    {
+        // Huh?
+        d->reverb[SRD_VOLUME] = d->reverb[SRD_DECAY] = d->reverb[SRD_DAMPING] = 0;
+        return false;
+    }
+
+    // Average the results.
+    for(int i = AE_FIRST; i < NUM_AUDIO_ENVIRONMENTS; ++i)
+    {
+        envSpaceAccum[i] /= total;
+    }
+
+    // Accumulate and clamp the final characteristics
+    int accum[NUM_REVERB_DATA]; zap(accum);
+    for(int i = AE_FIRST; i < NUM_AUDIO_ENVIRONMENTS; ++i)
+    {
+        AudioEnvironment const &envInfo = S_AudioEnvironment(AudioEnvironmentId(i));
+        // Volume.
+        accum[SRD_VOLUME]  += envSpaceAccum[i] * envInfo.volumeMul;
+
+        // Decay time.
+        accum[SRD_DECAY]   += envSpaceAccum[i] * envInfo.decayMul;
+
+        // High frequency damping.
+        accum[SRD_DAMPING] += envSpaceAccum[i] * envInfo.dampingMul;
+    }
+    d->reverb[SRD_VOLUME]  = de::min(accum[SRD_VOLUME],  255);
+    d->reverb[SRD_DECAY]   = de::min(accum[SRD_DECAY],   255);
+    d->reverb[SRD_DAMPING] = de::min(accum[SRD_DAMPING], 255);
+
+    return true;
+}
+
+BspLeaf::AudioEnvironmentFactors const &BspLeaf::reverb() const
+{
+    return d->reverb;
+}
+
+void BspLeaf::clearShadowLines()
+{
+    d->shadowLines.clear();
+}
+
+void BspLeaf::addShadowLine(Line::Side &side)
+{
+    d->shadowLines.insert(&side);
+}
+
+BspLeaf::ShadowLines const &BspLeaf::shadowLines() const
+{
+    return d->shadowLines;
 }
 
 int BspLeaf::addSpriteCount() const

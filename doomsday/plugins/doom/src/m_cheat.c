@@ -672,7 +672,8 @@ D_CMD(CheatWhere)
     AutoStr *path, *mapPath;
     Uri *uri, *mapUri;
 
-    if(!plr->plr->mo || !userGame) return true;
+    if(G_GameState() != GS_MAP || !plr->plr->mo)
+        return true;
 
     mapUri = G_ComposeMapUri(gameEpisode, gameMap);
     mapPath = Uri_ToString(mapUri);

@@ -18,6 +18,7 @@
  * 02110-1301 USA</small>
  */
 
+#include <QSet>
 #include <QtAlgorithms>
 
 #include <de/Log>
@@ -41,6 +42,10 @@
 #include "world/sector.h"
 
 using namespace de;
+
+#ifdef __CLIENT__
+typedef QSet<BspLeaf *> ReverbBspLeafs;
+#endif
 
 DENG2_PIMPL(Sector),
 DENG2_OBSERVES(Plane, HeightChange)
@@ -72,6 +77,16 @@ DENG2_OBSERVES(Plane, HeightChange)
 #ifdef __CLIENT__
     /// LightGrid data values.
     LightGridData lightGridData;
+
+    /// Set of BSP leafs which contribute to the environmental audio (reverb)
+    /// characteristics.
+    ReverbBspLeafs reverbBspLeafs;
+
+    /// Final environmental audio characteristics.
+    AudioEnvironmentFactors reverb;
+    bool needReverbUpdate; ///< @true= marked for update.
+
+    bool visible; ///< @c true= marked as visible for the current frame.
 #endif
 
     /// if == validCount, already checked.
@@ -83,10 +98,15 @@ DENG2_OBSERVES(Plane, HeightChange)
           lightLevel(lightLevel),
           lightColor(lightColor),
           validCount(0)
+#ifdef __CLIENT__
+         ,needReverbUpdate(true),
+          visible(false)
+#endif
     {
         zap(soundEmitter);
 #ifdef __CLIENT__
         zap(lightGridData);
+        zap(reverb);
 #endif
     }
 
@@ -124,6 +144,104 @@ DENG2_OBSERVES(Plane, HeightChange)
         notifyLightColorChanged(oldLightColor, changedComponents);
     }
 
+#ifdef __CLIENT__
+    void addReverbBspLeaf(BspLeaf *bspLeaf)
+    {
+        // Degenerate leafs never contribute.
+        if(!bspLeaf || !bspLeaf->isDegenerate())
+            return;
+
+        reverbBspLeafs.insert(bspLeaf);
+    }
+
+    static int addReverbBspLeafWorker(BspLeaf *bspLeaf, void *context)
+    {
+        static_cast<Instance *>(context)->addReverbBspLeaf(bspLeaf);
+        return false; // Continue iteration.
+    }
+
+    /**
+     * Recalculate environmental audio (reverb) for the sector.
+     */
+    void updateReverb()
+    {
+        needReverbUpdate = false;
+
+        // Sectors with no referencing lines need no reverb.
+        if(!self.sideCount())
+            return;
+
+        uint spaceVolume = int((self.ceiling().height() - self.floor().height()) * self.roughArea());
+
+        reverb[SRD_SPACE] = reverb[SRD_VOLUME] =
+            reverb[SRD_DECAY] = reverb[SRD_DAMPING] = 0;
+
+        foreach(BspLeaf *bspLeaf, reverbBspLeafs)
+        {
+            if(bspLeaf->updateReverb())
+            {
+                BspLeaf::AudioEnvironmentFactors const &leafReverb = bspLeaf->reverb();
+
+                reverb[SRD_SPACE]   += leafReverb[SRD_SPACE];
+
+                reverb[SRD_VOLUME]  += leafReverb[SRD_VOLUME]  / 255.0f * leafReverb[SRD_SPACE];
+                reverb[SRD_DECAY]   += leafReverb[SRD_DECAY]   / 255.0f * leafReverb[SRD_SPACE];
+                reverb[SRD_DAMPING] += leafReverb[SRD_DAMPING] / 255.0f * leafReverb[SRD_SPACE];
+            }
+        }
+
+        float spaceScatter;
+        if(reverb[SRD_SPACE])
+        {
+            spaceScatter = spaceVolume / reverb[SRD_SPACE];
+            // These three are weighted by the space.
+            reverb[SRD_VOLUME]  /= reverb[SRD_SPACE];
+            reverb[SRD_DECAY]   /= reverb[SRD_SPACE];
+            reverb[SRD_DAMPING] /= reverb[SRD_SPACE];
+        }
+        else
+        {
+            spaceScatter = 0;
+            reverb[SRD_VOLUME]  = .2f;
+            reverb[SRD_DECAY]   = .4f;
+            reverb[SRD_DAMPING] = 1;
+        }
+
+        // If the space is scattered, the reverb effect lessens.
+        reverb[SRD_SPACE] /= (spaceScatter > .8 ? 10 : spaceScatter > .6 ? 4 : 1);
+
+        // Normalize the reverb space [0..1]
+        //   0= very small
+        // .99= very large
+        // 1.0= only for open areas (special case).
+        reverb[SRD_SPACE] /= 120e6;
+        if(reverb[SRD_SPACE] > .99)
+            reverb[SRD_SPACE] = .99f;
+
+        if(self.ceilingSurface().hasSkyMaskedMaterial() ||
+           self.floorSurface().hasSkyMaskedMaterial())
+        {
+            // An "open" sector.
+            // It can still be small, in which case; reverb is diminished a bit.
+            if(reverb[SRD_SPACE] > .5)
+                reverb[SRD_VOLUME] = 1; // Full volume.
+            else
+                reverb[SRD_VOLUME] = .5f; // Small, but still open.
+
+            reverb[SRD_SPACE] = 1;
+        }
+        else
+        {
+            // A "closed" sector.
+            // Large spaces have automatically a bit more audible reverb.
+            reverb[SRD_VOLUME] += reverb[SRD_SPACE] / 4;
+        }
+
+        if(reverb[SRD_VOLUME] > 1)
+            reverb[SRD_VOLUME] = 1;
+    }
+#endif
+
     // Observes Plane HeightChange.
     void planeHeightChanged(Plane &plane, coord_t oldHeight)
     {
@@ -138,7 +256,11 @@ DENG2_OBSERVES(Plane, HeightChange)
 #ifdef __CLIENT__
         /// @todo Map should observe.
         self.map().updateMissingMaterialsForLinesOfSector(self);
-        S_MarkSectorReverbDirty(&self);
+#endif
+
+#ifdef __CLIENT__
+        // We'll need to recalculate environmental audio characteristics.
+        needReverbUpdate = true;
 #endif
 
         // Check if there are any camera players in this sector. If their
@@ -184,9 +306,7 @@ DENG2_OBSERVES(Plane, HeightChange)
 Sector::Sector(float lightLevel, Vector3f const &lightColor)
     : MapElement(DMU_SECTOR), d(new Instance(this, lightLevel, lightColor))
 {
-    _frameFlags = 0;
     _mobjList = 0;
-    zap(_reverb);
 }
 
 float Sector::lightLevel() const
@@ -258,22 +378,91 @@ ddmobj_base_t const &Sector::soundEmitter() const
     return const_cast<ddmobj_base_t const &>(const_cast<Sector &>(*this).soundEmitter());
 }
 
-AudioEnvironmentFactors const &Sector::audioEnvironmentFactors() const
-{
-    return _reverb;
-}
-
 #ifdef __CLIENT__
+
 Sector::LightGridData &Sector::lightGridData()
 {
     return d->lightGridData;
 }
-#endif
 
-int Sector::frameFlags() const
+/**
+ * Determine the BSP leafs which contribute to the sector's environmental audio
+ * characteristics. Given that BSP leafs do not change shape (on the XY plane,
+ * that is), they do not move and are not created/destroyed once the map has been
+ * loaded; this step can be pre-processed.
+ */
+void Sector::initReverb()
 {
-    return _frameFlags;
+    d->reverbBspLeafs.clear();
+
+    // Sectors with no referencing lines need no reverb.
+    if(!sideCount()) return;
+
+    AABoxd affectionBounds = aaBox();
+    affectionBounds.minX -= 128;
+    affectionBounds.minY -= 128;
+    affectionBounds.maxX += 128;
+    affectionBounds.maxY += 128;
+
+    // LOG_DEBUG("Finding reverb BSP leafs for sector %u (min:%s  max:%s)")
+    //    << map().sectorIndex(this)
+    //    << Vector2d(affectionBounds.min).asText()
+    //    << Vector2d(affectionBounds.max).asText();
+
+    // Link all non-degenerate BspLeafs whose axis-aligned bounding box intersects
+    // with the affection bounds to the reverb set.
+    map().bspLeafsBoxIterator(affectionBounds, 0, Instance::addReverbBspLeafWorker, d);
+
+    // We still need to update the final characteristics.
+    d->needReverbUpdate = true;
 }
+
+void Sector::markReverbDirty(bool yes)
+{
+    d->needReverbUpdate = yes;
+}
+
+AudioEnvironmentFactors const &Sector::reverb() const
+{
+    // Perform any scheduled update now.
+    if(d->needReverbUpdate)
+    {
+        d->updateReverb();
+    }
+    return d->reverb;
+}
+
+coord_t Sector::roughArea() const
+{
+    return d->roughArea;
+}
+
+void Sector::updateRoughArea()
+{
+    d->roughArea = 0;
+
+    foreach(BspLeaf *leaf, d->bspLeafs)
+    {
+        if(leaf->isDegenerate()) continue;
+
+        AABoxd const &leafAABox = leaf->poly().aaBox();
+
+        d->roughArea += (leafAABox.maxX - leafAABox.minX) *
+                        (leafAABox.maxY - leafAABox.minY);
+    }
+}
+
+bool Sector::isVisible() const
+{
+    return d->visible;
+}
+
+void Sector::markVisible(bool yes)
+{
+    d->visible = yes;
+}
+
+#endif // __CLIENT__
 
 int Sector::validCount() const
 {
@@ -305,13 +494,13 @@ Sector::Sides const &Sector::sides() const
     return d->sides;
 }
 
-void Sector::buildSides(Map const &map)
+void Sector::buildSides()
 {
     d->sides.clear();
 
 #ifdef DENG2_QT_4_7_OR_NEWER
     int count = 0;
-    foreach(Line *line, map.lines())
+    foreach(Line *line, map().lines())
     {
         if(line->frontSectorPtr() == this ||
            line->backSectorPtr()  == this)
@@ -323,7 +512,7 @@ void Sector::buildSides(Map const &map)
     d->sides.reserve(count);
 #endif
 
-    foreach(Line *line, map.lines())
+    foreach(Line *line, map().lines())
     {
         if(line->frontSectorPtr() == this)
         {
@@ -370,13 +559,13 @@ Sector::BspLeafs const &Sector::bspLeafs() const
     return d->bspLeafs;
 }
 
-void Sector::buildBspLeafs(Map const &map)
+void Sector::buildBspLeafs()
 {
     d->bspLeafs.clear();
 
 #ifdef DENG2_QT_4_7_OR_NEWER
     int count = 0;
-    foreach(BspLeaf *bspLeaf, map.bspLeafs())
+    foreach(BspLeaf *bspLeaf, map().bspLeafs())
     {
         if(bspLeaf->sectorPtr() == this)
             ++count;
@@ -387,7 +576,7 @@ void Sector::buildBspLeafs(Map const &map)
     d->bspLeafs.reserve(count);
 #endif
 
-    foreach(BspLeaf *bspLeaf, map.bspLeafs())
+    foreach(BspLeaf *bspLeaf, map().bspLeafs())
     {
         if(bspLeaf->sectorPtr() == this)
         {
@@ -397,19 +586,9 @@ void Sector::buildBspLeafs(Map const &map)
     }
 }
 
-Sector::BspLeafs const &Sector::reverbBspLeafs() const
-{
-    return _reverbBspLeafs;
-}
-
 AABoxd const &Sector::aaBox() const
 {
     return d->aaBox;
-}
-
-coord_t Sector::roughArea() const
-{
-    return d->roughArea;
 }
 
 void Sector::updateAABox()
@@ -432,21 +611,6 @@ void Sector::updateAABox()
             V2d_CopyBox(d->aaBox.arvec2, leafAABox.arvec2);
             isFirst = false;
         }
-    }
-}
-
-void Sector::updateRoughArea()
-{
-    d->roughArea = 0;
-
-    foreach(BspLeaf *leaf, d->bspLeafs)
-    {
-        if(leaf->isDegenerate()) continue;
-
-        AABoxd const &leafAABox = leaf->poly().aaBox();
-
-        d->roughArea += (leafAABox.maxX - leafAABox.minX) *
-                        (leafAABox.maxY - leafAABox.minY);
     }
 }
 

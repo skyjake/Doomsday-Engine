@@ -22,8 +22,7 @@
 #ifndef DENG_RENDER_LUMINOUS_H
 #define DENG_RENDER_LUMINOUS_H
 
-#include <de/vector1.h>
-
+#include <de/Matrix>
 #include <de/Vector>
 
 #include "api_gl.h"
@@ -207,22 +206,18 @@ int LO_LumobjsRadiusIterator(BspLeaf *bspLeaf, coord_t x, coord_t y, coord_t rad
  * the BSP leaf specified. This is due to an optimization within the lumobj
  * management which separates them according to their position in the BSP.
  *
- * @param flags         @ref projectLightFlags
- * @param bspLeaf       BspLeaf within which the quad wholly resides.
- * @param blendFactor   Multiplied with projection alpha.
- * @param topLeft       Top left coordinates of the surface being projected to.
- * @param bottomRight   Bottom right coordinates of the surface being projected to.
- * @param topLeft       Top left coordinates of the surface being projected to.
- * @param bottomRight   Bottom right coordinates of the surface being projected to.
- * @param tangent       Normalized tangent of the surface being projected to.
- * @param bitangent     Normalized bitangent of the surface being projected to.
- * @param normal        Normalized normal of the surface being projected to.
+ * @param flags          @ref projectLightFlags
+ * @param bspLeaf        BspLeaf within which the quad wholly resides.
+ * @param blendFactor    Multiplied with projection alpha.
+ * @param topLeft        Top left coordinates of the surface being projected to.
+ * @param bottomRight    Bottom right coordinates of the surface being projected to.
+ * @param tangentMatrix  Normalized tangent space matrix of the surface being projected to.
  *
  * @return  Projection list identifier if surface is lit else @c 0.
  */
 uint LO_ProjectToSurface(int flags, BspLeaf *bspLeaf, float blendFactor,
     de::Vector3d const &topLeft, de::Vector3d const &bottomRight,
-    de::Vector3f const &tangent, de::Vector3f const &bitangent, de::Vector3f const &normal);
+    de::Matrix3f const &tangentMatrix);
 
 /**
  * Iterate over projections in the identified surface-projection list, making

@@ -328,9 +328,6 @@ DENG2_PIMPL(Material)
     Material::Variants variants;
 #endif
 
-    /// Environment audio class.
-    AudioEnvironmentClass envClass;
-
     /// World dimensions in map coordinate space units.
     Vector2i dimensions;
 
@@ -343,6 +340,9 @@ DENG2_PIMPL(Material)
     Material::ShineLayer *shineLayer;
 
 #ifdef __CLIENT__
+    /// Audio environment.
+    AudioEnvironmentId audioEnvironment;
+
     /// Decorations (will be projected into the map relative to a surface).
     Material::Decorations decorations;
 #endif
@@ -356,11 +356,13 @@ DENG2_PIMPL(Material)
 #ifdef __CLIENT__
          animationsAreDirty(true),
 #endif
-         envClass(AEC_UNKNOWN),
          flags(0),
          detailLayer(0),
          shineLayer(0),
          valid(true)
+#ifdef __CLIENT__
+        ,audioEnvironment(AE_NONE)
+#endif
     {}
 
     ~Instance()
@@ -550,17 +552,6 @@ bool Material::hasGlow() const
     return false;
 }
 
-AudioEnvironmentClass Material::audioEnvironment() const
-{
-    if(isDrawable()) return d->envClass;
-    return AEC_UNKNOWN;
-}
-
-void Material::setAudioEnvironment(AudioEnvironmentClass envClass)
-{
-    d->envClass = envClass;
-}
-
 void Material::clearLayers()
 {
     d->maybeCancelTextureDimensionsChangeNotification();
@@ -679,6 +670,17 @@ void Material::textureBeingDeleted(de::Texture const &texture)
 }
 
 #ifdef __CLIENT__
+
+AudioEnvironmentId Material::audioEnvironment() const
+{
+    if(isDrawable()) return d->audioEnvironment;
+    return AE_NONE;
+}
+
+void Material::setAudioEnvironment(AudioEnvironmentId audioEnvironment)
+{
+    d->audioEnvironment = audioEnvironment;
+}
 
 void Material::addDecoration(Material::Decoration &decor)
 {
@@ -812,11 +814,11 @@ String Material::description() const
 
 String Material::synopsis() const
 {
-    String str = String("Drawable:%1 EnvClass:\"%2\"")
-                   .arg(isDrawable()? "yes" : "no")
-                   .arg(audioEnvironment() == AEC_UNKNOWN? "N/A" : S_AudioEnvironmentName(audioEnvironment()));
+    String str = String("Drawable:%1").arg(isDrawable()? "yes" : "no");
 #ifdef __CLIENT__
-    str += String(" Decorated:%1").arg(isDecorated()? "yes" : "no");
+    str += String(" EnvClass:\"%1\" Decorated:%2")
+            .arg(audioEnvironment() == AE_NONE? "N/A" : S_AudioEnvironmentName(audioEnvironment()))
+            .arg(isDecorated()? "yes" : "no");
 #endif
     str += String("\nDetailed:%1 Glowing:%2 Shiny:%3 SkyMasked:%4")
                .arg(isDetailed()     ? "yes" : "no")

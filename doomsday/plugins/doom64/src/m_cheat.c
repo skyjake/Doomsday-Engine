@@ -181,14 +181,14 @@ boolean Cht_PowerUpFunc(player_t* plr, cheatseq_t* cheat)
     return false;
 }
 
-void printDebugInfo(player_t* plr)
+void printDebugInfo(player_t *plr)
 {
     char textBuffer[256];
-    BspLeaf* sub;
-    AutoStr* path, *mapPath;
-    Uri* uri, *mapUri;
+    BspLeaf *sub;
+    AutoStr *path, *mapPath;
+    Uri *uri, *mapUri;
 
-    if(!plr->plr->mo || !userGame)
+    if(G_GameState() != GS_MAP || !plr->plr->mo)
         return;
 
     mapUri = G_ComposeMapUri(gameEpisode, gameMap);

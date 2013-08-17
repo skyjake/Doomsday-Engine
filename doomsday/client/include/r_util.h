@@ -22,7 +22,7 @@
 
 #include "api_gl.h"
 
-#include <de/vector1.h>
+#include <de/Matrix>
 #include <de/Vector>
 
 /**
@@ -33,7 +33,7 @@
  *
  * @return  Angle between the test point and view x,y.
  */
-angle_t R_ViewPointXYToAngle(coord_t x, coord_t y);
+angle_t R_ViewPointToAngle(coord_t x, coord_t y);
 
 /**
  * Determine distance to the specified point relative to the viewer.
@@ -43,7 +43,10 @@ angle_t R_ViewPointXYToAngle(coord_t x, coord_t y);
  *
  * @return  Distance from the viewer to the test point.
  */
-coord_t R_ViewPointXYDistance(coord_t x, coord_t y);
+coord_t R_ViewPointDistance(coord_t x, coord_t y);
+
+de::Vector3d R_ClosestPointOnPlane(de::Vector3f const &planeNormal,
+    de::Vector3d const &planePoint, de::Vector3d const &origin);
 
 void R_ProjectViewRelativeLine2D(coord_t const center[2], boolean alignToViewPlane,
     coord_t width, coord_t offset, coord_t start[2], coord_t end[2]);
@@ -58,21 +61,20 @@ void R_ScaleAmbientRGB(float *out, float const *in, float mul);
 /**
  * Generate texcoords on the surface centered on point.
  *
- * @param s  Texture s coords written back here.
- * @param t  Texture t coords written back here.
- * @param point  Point on surface around which texture is centered.
- * @param xScale  Scale multiplier on the horizontal axis.
- * @param yScale  Scale multiplier on the vertical axis.
- * @param v1  Top left vertex of the surface being projected on.
- * @param v2  Bottom right vertex of the surface being projected on.
- * @param tangent  Tangent vector of the surface being projected on.
- * @param bitangent  Bitangent vector of the surface being projected on.
+ * @param s              Texture s coords written back here.
+ * @param t              Texture t coords written back here.
+ * @param point          Point on surface around which texture is centered.
+ * @param xScale         Scale multiplier on the horizontal axis.
+ * @param yScale         Scale multiplier on the vertical axis.
+ * @param v1             Top left vertex of the surface being projected on.
+ * @param v2             Bottom right vertex of the surface being projected on.
+ * @param tangentMatrix  Normalized tangent space matrix for the surface being projected to.
  *
  * @return  @c true if the generated coords are within bounds.
  */
-bool R_GenerateTexCoords(pvec2f_t s, pvec2f_t t, const_pvec3d_t point,
-    float xScale, float yScale, const_pvec3d_t v1, const_pvec3d_t v2,
-    const_pvec3f_t tangent, const_pvec3f_t bitangent);
+bool R_GenerateTexCoords(de::Vector2f &s, de::Vector2f &t, de::Vector3d const &point,
+    float xScale, float yScale, de::Vector3d const &v1, de::Vector3d const &v2,
+    de::Matrix3f const &tangentMatrix);
 
 char const *R_NameForBlendMode(blendmode_t mode);
 

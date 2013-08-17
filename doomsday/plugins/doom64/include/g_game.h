@@ -48,6 +48,7 @@ extern int gaLoadGameSaveSlot;
 extern player_t players[MAXPLAYERS];
 extern uint nextMap;
 
+extern boolean gameInProgress;
 extern skillmode_t gameSkill;
 extern uint gameEpisode;
 extern uint gameMap;
@@ -58,7 +59,6 @@ extern boolean secretExit;
 extern int totalKills, totalItems, totalSecret;
 extern boolean respawnMonsters;
 extern wbstartstruct_t wmInfo;
-extern boolean userGame;
 extern int mapStartTic;
 extern int bodyQueueSlot;
 extern boolean deathmatch;

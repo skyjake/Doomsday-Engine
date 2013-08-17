@@ -43,16 +43,6 @@
 #include "render/rendpoly.h" // r_vertex_t
 
 /**
- * Used to link a line side to a BSP leaf for the purposes of FakeRadio shadowing.
- * @ingroup render
- */
-struct ShadowLink
-{
-    ShadowLink *next;
-    Line::Side *side;
-};
-
-/**
  * FakeRadio shadow data.
  * @ingroup render
  */

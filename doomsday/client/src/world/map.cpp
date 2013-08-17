@@ -466,6 +466,13 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
             leaf->setIndexInMap(bspLeafs.count());
             bspLeafs.append(leaf);
 
+            if(!leaf->hasSector())
+            {
+                LOG_WARNING("BSP leaf %p is degenerate/orphan (%d half-edges).")
+                    << de::dintptr(leaf)
+                    << (leaf->hasPoly()? leaf->poly().hedgeCount() : 0);
+            }
+
 #ifdef DENG_DEBUG
             if(!leaf->isDegenerate())
             {
@@ -3009,10 +3016,10 @@ void Map::worldFrameBegins(World &world, bool resetNextViewer)
 {
     DENG2_ASSERT(&world.map() == this); // Sanity check.
 
-    // Clear all flags that can be cleared before each frame.
+    /// @todo optimize: Use a de::BitField instead.
     foreach(Sector *sector, d->sectors)
     {
-        sector->_frameFlags &= ~SIF_FRAME_CLEAR;
+        sector->markVisible(false);
     }
 
     // Interpolate the map ready for drawing view(s) of it.
@@ -3559,10 +3566,13 @@ bool Map::endEditing()
     // Finish sectors.
     foreach(Sector *sector, d->sectors)
     {
-        sector->buildBspLeafs(*this);
-        sector->buildSides(*this);
+        sector->buildBspLeafs();
+        sector->buildSides();
         sector->updateAABox();
+
+#ifdef __CLIENT__
         sector->updateRoughArea();
+#endif
 
         /*
          * Chain sound emitters (ddmobj_base_t) owned by all Surfaces in the
@@ -3613,7 +3623,11 @@ bool Map::endEditing()
     d->initBspLeafBlockmap();
 
 #ifdef __CLIENT__
-    S_DetermineBspLeafsAffectingSectorReverb(this);
+    // Perform pre-processing for environmental audio.
+    foreach(Sector *sector, d->sectors)
+    {
+        sector->initReverb();
+    }
 #endif
 
     // Prepare the thinker lists.

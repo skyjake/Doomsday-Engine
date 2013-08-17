@@ -236,23 +236,25 @@ void NetSv_CycleToMapNum(uint map)
 
     sprintf(tmp, "%02u", map);
 #if __JDOOM64__
-    sprintf(cmd, "setmap 1 %u", map);
+    sprintf(cmd, "warp %u", map);
 #elif __JDOOM__
     if(gameModeBits & GM_ANY_DOOM2)
-        sprintf(cmd, "setmap 1 %u", map);
+        sprintf(cmd, "warp %u", map);
     else
-        sprintf(cmd, "setmap %c %c", tmp[0], tmp[1]);
+        sprintf(cmd, "warp %c %c", tmp[0], tmp[1]);
 #elif __JHERETIC__
-    sprintf(cmd, "setmap %c %c", tmp[0], tmp[1]);
-#elif __JHEXEN__ || __JSTRIFE__
-    sprintf(cmd, "setmap %u", map);
+    sprintf(cmd, "warp %c %c", tmp[0], tmp[1]);
+#elif __JHEXEN__
+    sprintf(cmd, "warp %u", map);
 #endif
 
     DD_Execute(false, cmd);
 
     // In a couple of seconds, send everyone the rules of this map.
     for(i = 0; i < MAXPLAYERS; ++i)
+    {
         cycleRulesCounter[i] = 3 * TICSPERSEC;
+    }
 
     cycleMode = CYCLE_IDLE;
     cycleCounter = 0;
@@ -470,21 +472,20 @@ void NetSv_TellCycleRulesToPlayer(int destPlr)
 
 void NetSv_MapCycleTicker(void)
 {
-    int         map, i, f;
-    maprule_t   rules;
-    char        msg[100];
-
     if(!cyclingMaps) return;
 
     // Check rules broadcasting.
+    { int i;
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        if(!cycleRulesCounter[i] || !players[i].plr->inGame) continue;
+        if(!cycleRulesCounter[i] || !players[i].plr->inGame)
+            continue;
+
         if(--cycleRulesCounter[i] == 0)
         {
             NetSv_TellCycleRulesToPlayer(i);
         }
-    }
+    }}
 
     cycleCounter--;
 
@@ -494,14 +495,14 @@ void NetSv_MapCycleTicker(void)
         // Check if the current map should end.
         if(cycleCounter <= 0)
         {
-            // Test every ten seconds.
+            maprule_t rules;
+
+            // Test again in ten seconds time.
             cycleCounter = 10 * TICSPERSEC;
 
-            map = NetSv_ScanCycle(cycleIndex, &rules);
-            if(map < 0)
+            if(NetSv_ScanCycle(cycleIndex, &rules) < 0)
             {
-                map = NetSv_ScanCycle(cycleIndex = 0, &rules);
-                if(map < 0)
+                if(NetSv_ScanCycle(cycleIndex = 0, &rules) < 0)
                 {
                     // Hmm?! Abort cycling.
                     Con_Message("NetSv_CheckCycling: All of a sudden MapCycle is invalid!");
@@ -520,15 +521,19 @@ void NetSv_MapCycleTicker(void)
 
             if(rules.usefrags)
             {
+                int i, frags;
                 for(i = 0; i < MAXPLAYERS; i++)
                 {
                     if(!players[i].plr->inGame)
                         continue;
-                    if((f = NetSv_GetFrags(i)) >= rules.frags)
+
+                    frags = NetSv_GetFrags(i);
+                    if(frags >= rules.frags)
                     {
-                        sprintf(msg, "--- %s REACHES %i FRAGS ---", Net_GetPlayerName(i), f);
+                        char msg[100]; sprintf(msg, "--- %s REACHES %i FRAGS ---", Net_GetPlayerName(i), frags);
                         NetSv_SendMessage(DDSP_ALL_PLAYERS, msg);
                         S_StartSound(SOUND_VICTORY, NULL);
+
                         cycleMode = CYCLE_COUNTDOWN;
                         cycleCounter = 15 * TICSPERSEC; // No msg for 15 secs.
                         break;
@@ -544,9 +549,7 @@ void NetSv_MapCycleTicker(void)
            cycleCounter == 10 * TICSPERSEC ||
            cycleCounter == 5 * TICSPERSEC)
         {
-            sprintf(msg, "--- WARPING IN %i SECONDS ---",
-                    cycleCounter / TICSPERSEC);
-
+            char msg[100]; sprintf(msg, "--- WARPING IN %i SECONDS ---", cycleCounter / TICSPERSEC);
             NetSv_SendMessage(DDSP_ALL_PLAYERS, msg);
             // Also, a warning sound.
             S_StartSound(SOUND_COUNTDOWN, NULL);
@@ -554,7 +557,7 @@ void NetSv_MapCycleTicker(void)
         else if(cycleCounter <= 0)
         {
             // Next map, please!
-            map = NetSv_ScanCycle(++cycleIndex, NULL);
+            int map = NetSv_ScanCycle(++cycleIndex, NULL);
             if(map < 0)
             {
                 // Must be past the end?
@@ -806,6 +809,7 @@ void NetSv_SendGameState(int flags, int to)
 #endif
             | (cfg.jumpEnabled? 0x10 : 0));
 
+        // Note that SM_NOTHINGS will result in a value of '7'.
         Writer_WriteByte(writer, gameSkill & 0x7);
         Writer_WriteFloat(writer, (float)P_GetGravity());
 

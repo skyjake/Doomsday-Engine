@@ -32,7 +32,10 @@ typedef struct saveheader_s {
     int magic;
     int version;
     gamemode_t gameMode;
-    byte skill;
+    skillmode_t skill;
+#if !__JHEXEN__
+    byte fast;
+#endif
     byte episode;
     byte map;
     byte deathmatch;

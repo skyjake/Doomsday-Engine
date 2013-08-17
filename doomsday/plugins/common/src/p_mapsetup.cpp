@@ -232,6 +232,10 @@ static boolean checkMapSpotSpawnFlags(mapspot_t const *spot)
     if(IS_NETGAME && !deathmatch && (spot->flags & MSF_NOTCOOP))
         return false;
 
+    // The special "spawn no things" skill mode means nothing is spawned.
+    if(gameSkill == SM_NOTHINGS)
+        return false;
+
     // Check for appropriate skill level.
     if(!(spot->skillModes & (1 << gameSkill)))
         return false;

@@ -692,7 +692,7 @@ void C_DECL A_Chase(mobj_t* actor)
     // Check for missile attack.
     if((state = P_GetState(actor->type, SN_MISSILE)) != S_NULL)
     {
-        if(!(gameSkill < SM_NIGHTMARE && !fastParm && actor->moveCount))
+        if(!(gameSkill != SM_NIGHTMARE && !fastParm && actor->moveCount))
         {
             if(checkMissileRange(actor))
             {

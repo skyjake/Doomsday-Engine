@@ -3028,7 +3028,7 @@ DENG_EXTERN_C void R_SetupMap(int mode, int flags)
         sector->updateSoundEmitterOrigin();
 #ifdef __CLIENT__
         map.updateMissingMaterialsForLinesOfSector(*sector);
-        S_MarkSectorReverbDirty(sector);
+        sector->markReverbDirty();
 #endif
     }
 

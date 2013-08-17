@@ -44,17 +44,6 @@ class Surface;
 struct mobj_s;
 
 /**
- * @defgroup sectorFrameFlags Sector frame flags
- * @ingroup world
- */
-///@{
-#define SIF_VISIBLE             0x1 ///< Sector is visible on this frame.
-
-// Flags to clear before each frame.
-#define SIF_FRAME_CLEAR         SIF_VISIBLE
-///@}
-
-/**
  * World map sector.
  *
  * @ingroup world
@@ -69,18 +58,17 @@ public:
     DENG2_ERROR(MissingPlaneError);
 
     /*
-     * Observers to be notified whenever a light level change occurs.
+     * Notified whenever a light level change occurs.
      */
     DENG2_DEFINE_AUDIENCE(LightLevelChange,
         void sectorLightLevelChanged(Sector &sector, float oldLightLevel))
 
     /*
-     * Observers to be notified whenever a light color change occurs.
+     * Notified whenever a light color change occurs.
      */
     DENG2_DEFINE_AUDIENCE(LightColorChange,
         void sectorLightColorChanged(Sector &sector, de::Vector3f const &oldLightColor,
                                      int changedComponents /*bit-field (0x1=Red, 0x2=Green, 0x4=Blue)*/))
-
     /*
      * Linked-element lists:
      */
@@ -111,18 +99,8 @@ public:
 #endif
 
 public: /// @todo Make private:
-    /// @ref sectorFrameFlags
-    int _frameFlags;
-
     /// Head of the linked list of mobjs "in" the sector (not owned).
     struct mobj_s *_mobjList;
-
-    /// List of BSP leafs which contribute to the environmental audio
-    /// characteristics of the sector (not owned).
-    BspLeafs _reverbBspLeafs;
-
-    /// Final environmental audio characteristics.
-    AudioEnvironmentFactors _reverb;
 
 public:
     Sector(float lightLevel               = 1,
@@ -222,10 +200,8 @@ public:
      * EV_BuildStairs. That same order is used here, for compatibility.
      *
      * Order: Original @em line index, ascending.
-     *
-     * @param map  Map to collate sides from. @todo Refactor away.
      */
-    void buildSides(de::Map const &map);
+    void buildSides();
 
     /**
      * Provides access to the list of BSP leafs which reference the sector, for
@@ -236,26 +212,24 @@ public:
     /**
      * Returns the total number of BSP leafs which reference the sector.
      */
-    inline uint bspLeafCount() const { return uint(bspLeafs().count()); }
+    inline int bspLeafCount() const { return bspLeafs().count(); }
 
     /**
      * (Re)Build the BSP leaf list for the sector.
+     */
+    void buildBspLeafs();
+
+    /**
+     * Determines whether the specified @a point in the map coordinate space
+     * lies within the sector (according to the edges of the BSP leafs).
      *
-     * @param map  Map to collate BSP leafs from. @todo Refactor away.
+     * @param point  Map space coordinate to test.
+     *
+     * @return  @c true iff the point lies inside the sector.
+     *
+     * @see BspLeaf::pointInside()
      */
-    void buildBspLeafs(de::Map const &map);
-
-    /**
-     * Provides access to the list of BSP leafs which contribute to the environmental
-     * audio characteristics of the sector, for efficient traversal.
-     */
-    BspLeafs const &reverbBspLeafs() const;
-
-    /**
-     * Returns the total number of BSP leafs which contribute to the environmental
-     * audio characteristics of the sector.
-     */
-    inline uint reverbBspLeafCount() const { return uint(reverbBspLeafs().count()); }
+    bool pointInside(de::Vector2d const &point) const;
 
     /**
      * Returns the axis-aligned bounding box which encompases the geometry of
@@ -274,23 +248,6 @@ public:
      * @see buildBspLeafs()
      */
     void updateAABox();
-
-    /**
-     * Returns a rough approximation of the total combined area of the geometry
-     * for all BSP leafs attributed to the sector (map units squared).
-     *
-     * @see updateRoughArea()
-     */
-    coord_t roughArea() const;
-
-    /**
-     * Update the sector's rough area approximation.
-     *
-     * @pre BSP leaf list must have be initialized.
-     *
-     * @see buildBspLeafs(), roughArea()
-     */
-    void updateRoughArea();
 
     /**
      * Returns the primary sound emitter for the sector. Other emitters in the
@@ -447,24 +404,6 @@ public:
     struct mobj_s *firstMobj() const;
 
     /**
-     * Returns the final environmental audio characteristics of the sector.
-     */
-    AudioEnvironmentFactors const &audioEnvironmentFactors() const;
-
-#ifdef __CLIENT__
-    /**
-     * Returns the LightGrid data values (for smoothed ambient lighting) for
-     * the sector.
-     */
-    LightGridData &lightGridData();
-#endif
-
-    /**
-     * Returns the @ref sectorFrameFlags for the sector.
-     */
-    int frameFlags() const;
-
-    /**
      * Returns the @em validCount of the sector. Used by some legacy iteration
      * algorithms for marking sectors as processed/visited.
      *
@@ -475,17 +414,69 @@ public:
     /// @todo Refactor away.
     void setValidCount(int newValidCount);
 
+#ifdef __CLIENT__
     /**
-     * Determines whether the specified @a point in the map coordinate space
-     * lies within the sector (according to the edges of the BSP leafs)?
-     *
-     * @param point  Map space coordinate to test.
-     *
-     * @return  @c true iff the point lies inside the sector.
-     *
-     * @see BspLeaf::pointInside()
+     * Returns the LightGrid data values (for smoothed ambient lighting) for
+     * the sector.
      */
-    bool pointInside(de::Vector2d const &point) const;
+    LightGridData &lightGridData();
+
+    /**
+     * Perform initialization for environmental audio (reverb). Duties include
+     * determining the set of BSP leafs which will contribute to the final audio
+     * characteristics of the sector. To be called when initializing the map after
+     * loading.
+     *
+     * The BspLeaf Blockmap for the owning map must be prepared before calling.
+     */
+    void initReverb();
+
+    /**
+     * Request re-calculation of the environmental audio (reverb) characteristics
+     * for the sector (update is deferred until next accessed).
+     *
+     * Should be called whenever any of the properties governing reverb properties
+     * have changed (i.e., wall/plane material changes).
+     */
+    void markReverbDirty(bool yes = true);
+
+    /**
+     * Provides access to the final environmental audio characteristics (reverb)
+     * of the sector. Note that if a reverb update is scheduled it will be done
+     * at this time (@ref markReverbDirty()).
+     */
+    AudioEnvironmentFactors const &reverb() const;
+
+    /**
+     * Returns a rough approximation of the total combined area of the geometry
+     * for all BSP leafs attributed to the sector (map units squared).
+     *
+     * @see updateRoughArea()
+     */
+    coord_t roughArea() const;
+
+    /**
+     * Update the sector's rough area approximation.
+     *
+     * @pre BSP leaf list must have be initialized.
+     *
+     * @see buildBspLeafs(), roughArea()
+     */
+    void updateRoughArea();
+
+    /**
+     * Returns @c true iff the sector is marked as visible for the current frame.
+     * @see markVisible()
+     */
+    bool isVisible() const;
+
+    /**
+     * Mark the sector as visible for the current frame.
+     * @see isVisible()
+     */
+    void markVisible(bool yes = true);
+
+#endif // __CLIENT__
 
 protected:
     int property(DmuArgs &args) const;

@@ -21,68 +21,40 @@
  * 02110-1301 USA</small>
  */
 
-#include <cctype>
-#include <cstring>
-#include <set>
-
-#include <de/Log>
-
 #include "de_base.h"
 #include "de_audio.h"
-#include "de_play.h"
-#include "de_resource.h"
-#include "de_system.h"
 
-#include "Face"
-
-#include "BspLeaf"
+#include "Sector"
 
 #include "audio/s_environ.h"
 
 using namespace de;
 
-// Used for vertex sector owners, side line owners and reverb BSP leafs.
-typedef struct ownernode_s {
-    void *data;
-    struct ownernode_s *next;
-} ownernode_t;
-
-typedef struct {
-    ownernode_t *head;
-    int count;
-} ownerlist_t;
-
-typedef struct {
-    char const name[9]; ///< Environment type name.
-    int volumeMul;
-    int decayMul;
-    int dampingMul;
-} audioenvinfo_t;
-
-static audioenvinfo_t envInfo[NUM_AUDIO_ENVIRONMENT_CLASSES] = {
+static AudioEnvironment envInfo[1 + NUM_AUDIO_ENVIRONMENTS] = {
+    {"",          0,       0,      0},
     {"Metal",     255,     255,    25},
     {"Rock",      200,     160,    100},
     {"Wood",      80,      50,     200},
     {"Cloth",     5,       5,      255}
 };
 
-static ownernode_t* unusedNodeList;
-
-typedef std::set<Sector *> ReverbUpdateRequested;
-ReverbUpdateRequested reverbUpdateRequested;
-
-const char* S_AudioEnvironmentName(AudioEnvironmentClass env)
+char const *S_AudioEnvironmentName(AudioEnvironmentId id)
 {
-    if(VALID_AUDIO_ENVIRONMENT_CLASS(env))
-        return envInfo[env - AEC_FIRST].name;
-    return "";
+    DENG_ASSERT(id >= AE_NONE && id < NUM_AUDIO_ENVIRONMENTS);
+    return envInfo[1 + int(id)].name;
 }
 
-AudioEnvironmentClass S_AudioEnvironmentForMaterial(uri_s const *uri)
+AudioEnvironment const &S_AudioEnvironment(AudioEnvironmentId id)
+{
+    DENG_ASSERT(id >= AE_NONE && id < NUM_AUDIO_ENVIRONMENTS);
+    return envInfo[1 + int(id)];
+}
+
+AudioEnvironmentId S_AudioEnvironmentId(uri_s const *uri)
 {
     if(uri)
     {
-        ded_tenviron_t* env = defs.textureEnv;
+        ded_tenviron_t *env = defs.textureEnv;
         for(int i = 0; i < defs.count.textureEnv.num; ++i, env++)
         {
             for(int k = 0; k < env->count.num; ++k)
@@ -90,344 +62,16 @@ AudioEnvironmentClass S_AudioEnvironmentForMaterial(uri_s const *uri)
                 uri_s *ref = env->materials[k];
                 if(!ref || !Uri_Equality(ref, uri)) continue;
 
-                // See if we recognise the material name.
-                for(int l = 0; l < NUM_AUDIO_ENVIRONMENT_CLASSES; ++l)
+                // Is this a known environment?
+                for(int m = 0; m < NUM_AUDIO_ENVIRONMENTS; ++m)
                 {
-                    if(!stricmp(env->id, envInfo[l].name))
-                        return AudioEnvironmentClass(AEC_FIRST + l);
+                    AudioEnvironment const &envInfo = S_AudioEnvironment(AudioEnvironmentId(m));
+                    if(!stricmp(env->id, envInfo.name))
+                        return AudioEnvironmentId(m);
                 }
-                return AEC_UNKNOWN;
+                return AE_NONE;
             }
         }
     }
-    return AEC_UNKNOWN;
-}
-
-// Free any nodes left in the unused list.
-static void clearUnusedNodes()
-{
-    while(unusedNodeList)
-    {
-        ownernode_t* next = unusedNodeList->next;
-        M_Free(unusedNodeList);
-        unusedNodeList = next;
-    }
-}
-
-static ownernode_t* newOwnerNode(void)
-{
-    ownernode_t* node;
-
-    if(unusedNodeList)
-    {
-        // An existing node is available for re-use.
-        node = unusedNodeList;
-        unusedNodeList = unusedNodeList->next;
-
-        node->next = NULL;
-        node->data = NULL;
-    }
-    else
-    {
-        // Need to allocate another.
-        node = (ownernode_t*) M_Malloc(sizeof(ownernode_t));
-    }
-
-    return node;
-}
-
-static void setBspLeafSectorOwner(ownerlist_t *ownerList, BspLeaf *bspLeaf)
-{
-    DENG2_ASSERT(ownerList);
-    if(!bspLeaf) return;
-
-    // Add a new owner.
-    // NOTE: No need to check for duplicates.
-    ownerList->count++;
-
-    ownernode_t* node = newOwnerNode();
-    node->data = bspLeaf;
-    node->next = ownerList->head;
-    ownerList->head = node;
-}
-
-static void findBspLeafsAffectingSector(Map *map, Sector *sec)
-{
-    if(!sec || !sec->sideCount()) return;
-
-    ownerlist_t bspLeafOwnerList;
-    std::memset(&bspLeafOwnerList, 0, sizeof(bspLeafOwnerList));
-
-    AABoxd affectionBounds = sec->aaBox();
-    affectionBounds.minX -= 128;
-    affectionBounds.minY -= 128;
-    affectionBounds.maxX += 128;
-    affectionBounds.maxY += 128;
-
-    // LOG_DEBUG("sector %u: min[x:%f, y:%f]  max[x:%f, y:%f]")
-    //    << map->sectorIndex(sec)
-    //    << aaBox.minX << aaBox.minY << aaBox.maxX << aaBox.maxY;
-
-    foreach(BspLeaf *bspLeaf, map->bspLeafs())
-    {
-        // Degenerate BspLeafs never contribute.
-        if(bspLeaf->isDegenerate()) continue;
-
-        // Is this BSP leaf close enough?
-        if(bspLeaf->sectorPtr() == sec || // leaf is IN this sector
-           (bspLeaf->poly().center().x > affectionBounds.minX &&
-            bspLeaf->poly().center().y > affectionBounds.minY &&
-            bspLeaf->poly().center().x < affectionBounds.maxX &&
-            bspLeaf->poly().center().y < affectionBounds.maxY))
-        {
-            // It will contribute to the reverb settings of this sector.
-            setBspLeafSectorOwner(&bspLeafOwnerList, bspLeaf);
-        }
-    }
-
-    sec->_reverbBspLeafs.clear();
-
-    if(!bspLeafOwnerList.count) return;
-
-    // Build the final list.
-#ifdef DENG2_QT_4_7_OR_NEWER
-    sec->_reverbBspLeafs.reserve(bspLeafOwnerList.count);
-#endif
-
-    ownernode_t *node = bspLeafOwnerList.head;
-    for(int i = 0; i < bspLeafOwnerList.count; ++i)
-    {
-        ownernode_t *next = node->next;
-
-        sec->_reverbBspLeafs.append(static_cast<BspLeaf *>(node->data));
-
-        if(i < map->sectorCount() - 1)
-        {
-            // Move this node to the unused list for re-use.
-            node->next = unusedNodeList;
-            unusedNodeList = node;
-        }
-        else
-        {
-            // No further use for the node.
-            M_Free(node);
-        }
-
-        node = next;
-    }
-}
-
-void S_DetermineBspLeafsAffectingSectorReverb(Map *map)
-{
-    Time begunAt;
-
-    LOG_AS("S_DetermineBspLeafsAffectingSectorReverb");
-
-    /// @todo optimize: Make use of the BSP leaf blockmap.
-    foreach(Sector *sector, map->sectors())
-    {
-        findBspLeafsAffectingSector(map, sector);
-    }
-
-    clearUnusedNodes();
-
-    LOG_INFO(String("Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
-}
-
-static void accumReverbForFaceEdges(Face const &face,
-    float envSpaceAccum[NUM_AUDIO_ENVIRONMENT_CLASSES], float &total)
-{
-    HEdge *base = face.hedge();
-    HEdge *hedge = base;
-    do
-    {
-        // Edges with no map line segment implicitly have no surfaces.
-        if(!hedge->mapElement())
-            continue;
-
-        Line::Side::Segment *seg = hedge->mapElement()->as<Line::Side::Segment>();
-        if(!seg->lineSide().hasSections() || !seg->lineSide().middle().hasMaterial())
-            continue;
-
-        Material &material = seg->lineSide().middle().material();
-        AudioEnvironmentClass env = material.audioEnvironment();
-        if(!(env >= 0 && env < NUM_AUDIO_ENVIRONMENT_CLASSES))
-            env = AEC_WOOD; // Assume it's wood if unknown.
-
-        total += seg->length();
-
-        envSpaceAccum[env] += seg->length();
-
-    } while((hedge = &hedge->next()) != base);
-}
-
-static boolean calcBspLeafReverb(BspLeaf *bspLeaf)
-{
-    DENG2_ASSERT(bspLeaf);
-
-    if(!bspLeaf->hasSector() || bspLeaf->isDegenerate() || isDedicated)
-    {
-        bspLeaf->_reverb[SRD_SPACE] = bspLeaf->_reverb[SRD_VOLUME] =
-            bspLeaf->_reverb[SRD_DECAY] = bspLeaf->_reverb[SRD_DAMPING] = 0;
-        return false;
-    }
-
-    float envSpaceAccum[NUM_AUDIO_ENVIRONMENT_CLASSES];
-    std::memset(&envSpaceAccum, 0, sizeof(envSpaceAccum));
-
-    // Space is the rough volume of the BSP leaf (bounding box).
-    bspLeaf->_reverb[SRD_SPACE] =
-        (int) (bspLeaf->sector().ceiling().height() - bspLeaf->sector().floor().height()) *
-        (bspLeaf->poly().aaBox().maxX - bspLeaf->poly().aaBox().minX) *
-        (bspLeaf->poly().aaBox().maxY - bspLeaf->poly().aaBox().minY);
-
-    float total = 0;
-
-    // The other reverb properties can be found out by taking a look at the
-    // materials of all surfaces in the BSP leaf.
-    accumReverbForFaceEdges(bspLeaf->poly(), envSpaceAccum, total);
-    foreach(Mesh *mesh, bspLeaf->extraMeshes())
-    foreach(Face *face, mesh->faces())
-    {
-        accumReverbForFaceEdges(*face, envSpaceAccum, total);
-    }
-
-    if(!total)
-    {
-        // Huh?
-        bspLeaf->_reverb[SRD_VOLUME] = bspLeaf->_reverb[SRD_DECAY] =
-            bspLeaf->_reverb[SRD_DAMPING] = 0;
-        return false;
-    }
-
-    // Average the results.
-    uint i, v;
-    for(i = 0; i < NUM_AUDIO_ENVIRONMENT_CLASSES; ++i)
-    {
-        envSpaceAccum[i] /= total;
-    }
-
-    // Volume.
-    for(i = 0, v = 0; i < NUM_AUDIO_ENVIRONMENT_CLASSES; ++i)
-    {
-        v += envSpaceAccum[i] * envInfo[i].volumeMul;
-    }
-    if(v > 255) v = 255;
-    bspLeaf->_reverb[SRD_VOLUME] = v;
-
-    // Decay time.
-    for(i = 0, v = 0; i < NUM_AUDIO_ENVIRONMENT_CLASSES; ++i)
-    {
-        v += envSpaceAccum[i] * envInfo[i].decayMul;
-    }
-    if(v > 255) v = 255;
-    bspLeaf->_reverb[SRD_DECAY] = v;
-
-    // High frequency damping.
-    for(i = 0, v = 0; i < NUM_AUDIO_ENVIRONMENT_CLASSES; ++i)
-    {
-        v += envSpaceAccum[i] * envInfo[i].dampingMul;
-    }
-    if(v > 255) v = 255;
-    bspLeaf->_reverb[SRD_DAMPING] = v;
-
-    /* DEBUG_Message(("bspLeaf %04i: vol:%3i sp:%3i dec:%3i dam:%3i\n",
-                      bspLeaf->indexInMap(), bspLeaf->reverb[SRD_VOLUME],
-                      bspLeaf->reverb[SRD_SPACE], bspLeaf->reverb[SRD_DECAY],
-                      bspLeaf->reverb[SRD_DAMPING])); */
-
-    return true;
-}
-
-static void calculateSectorReverb(Sector *sec)
-{
-    if(!sec || !sec->sideCount()) return;
-
-    uint spaceVolume = int((sec->ceiling().height() - sec->floor().height()) * sec->roughArea());
-
-    sec->_reverb[SRD_SPACE] = sec->_reverb[SRD_VOLUME] =
-        sec->_reverb[SRD_DECAY] = sec->_reverb[SRD_DAMPING] = 0;
-
-    foreach(BspLeaf *bspLeaf, sec->reverbBspLeafs())
-    {
-        if(calcBspLeafReverb(bspLeaf))
-        {
-            sec->_reverb[SRD_SPACE]   += bspLeaf->_reverb[SRD_SPACE];
-
-            sec->_reverb[SRD_VOLUME]  += bspLeaf->_reverb[SRD_VOLUME]  / 255.0f * bspLeaf->_reverb[SRD_SPACE];
-            sec->_reverb[SRD_DECAY]   += bspLeaf->_reverb[SRD_DECAY]   / 255.0f * bspLeaf->_reverb[SRD_SPACE];
-            sec->_reverb[SRD_DAMPING] += bspLeaf->_reverb[SRD_DAMPING] / 255.0f * bspLeaf->_reverb[SRD_SPACE];
-        }
-    }
-
-    float spaceScatter;
-    if(sec->_reverb[SRD_SPACE])
-    {
-        spaceScatter = spaceVolume / sec->_reverb[SRD_SPACE];
-        // These three are weighted by the space.
-        sec->_reverb[SRD_VOLUME]  /= sec->_reverb[SRD_SPACE];
-        sec->_reverb[SRD_DECAY]   /= sec->_reverb[SRD_SPACE];
-        sec->_reverb[SRD_DAMPING] /= sec->_reverb[SRD_SPACE];
-    }
-    else
-    {
-        spaceScatter = 0;
-        sec->_reverb[SRD_VOLUME]  = .2f;
-        sec->_reverb[SRD_DECAY]   = .4f;
-        sec->_reverb[SRD_DAMPING] = 1;
-    }
-
-    // If the space is scattered, the reverb effect lessens.
-    sec->_reverb[SRD_SPACE] /= (spaceScatter > .8 ? 10 : spaceScatter > .6 ? 4 : 1);
-
-    // Normalize the reverb space [0..1]
-    //   0= very small
-    // .99= very large
-    // 1.0= only for open areas (special case).
-    sec->_reverb[SRD_SPACE] /= 120e6;
-    if(sec->_reverb[SRD_SPACE] > .99)
-        sec->_reverb[SRD_SPACE] = .99f;
-
-    if(sec->ceilingSurface().hasSkyMaskedMaterial() || sec->floorSurface().hasSkyMaskedMaterial())
-    {
-        // An "open" sector.
-        // It can still be small, in which case; reverb is diminished a bit.
-        if(sec->_reverb[SRD_SPACE] > .5)
-            sec->_reverb[SRD_VOLUME] = 1; // Full volume.
-        else
-            sec->_reverb[SRD_VOLUME] = .5f; // Small, but still open.
-
-        sec->_reverb[SRD_SPACE] = 1;
-    }
-    else
-    {
-        // A "closed" sector.
-        // Large spaces have automatically a bit more audible reverb.
-        sec->_reverb[SRD_VOLUME] += sec->_reverb[SRD_SPACE] / 4;
-    }
-
-    if(sec->_reverb[SRD_VOLUME] > 1)
-        sec->_reverb[SRD_VOLUME] = 1;
-}
-
-void S_ResetReverb()
-{
-    reverbUpdateRequested.clear();
-}
-
-void S_UpdateReverbForSector(Sector *sec)
-{
-    if(reverbUpdateRequested.empty()) return;
-
-    // If update has been requested for this sector, calculate it now.
-    if(reverbUpdateRequested.find(sec) != reverbUpdateRequested.end())
-    {
-        calculateSectorReverb(sec);
-        reverbUpdateRequested.erase(sec);
-    }
-}
-
-void S_MarkSectorReverbDirty(Sector* sec)
-{
-    reverbUpdateRequested.insert(sec);
+    return AE_NONE;
 }

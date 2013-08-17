@@ -1655,7 +1655,7 @@ static int CmdGameType(void)
 
 static int CmdGameSkill(void)
 {
-    Push(gameSkill);
+    Push((int)gameSkill);
     return SCRIPT_CONTINUE;
 }
 
