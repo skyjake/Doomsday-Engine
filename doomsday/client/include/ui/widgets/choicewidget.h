@@ -20,17 +20,53 @@
 #define DENG_CLIENT_CHOICEWIDGET_H
 
 #include "buttonwidget.h"
+#include "popupmenuwidget.h"
+#include "actionitem.h"
 
 /**
  * Widget for choosing an item from a set of alternatives.
+ *
+ * The items of the widget should be ChoiceItem instances, or at least derived
+ * from ActionItem/ChoiceItem.
+ *
+ * The default opening direction for the popup is to the right.
  */
 class ChoiceWidget : public ButtonWidget
 {
+    Q_OBJECT
+
+public:
+    /**
+     * The items of the widget are expected to be instanced of
+     * ChoiceWidget::Item or derived from it (or at least ui::ActionItem).
+     */
+    class Item : public ui::ActionItem
+    {
+    public:
+        Item(de::String const &label, de::Image const &image = de::Image())
+            : ui::ActionItem(image, label) {}
+    };
+
 public:
     ChoiceWidget(de::String const &name = "");
+
+    ui::Context &items();
+
+    PopupMenuWidget &popup();
+
+    void setSelected(ui::Context::Pos pos);
+
+    ui::Context::Pos selected() const;
+
+    ui::Item const &selectedItem() const;
+
+signals:
+    void selectionChanged(unsigned int pos);
 
 private:
     DENG2_PRIVATE(d)
 };
+
+typedef ChoiceWidget::Item ChoiceItem;
 
 #endif // DENG_CLIENT_CHOICEWIDGET_H

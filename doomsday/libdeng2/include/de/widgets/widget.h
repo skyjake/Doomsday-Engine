@@ -94,6 +94,11 @@ public:
     virtual ~Widget();
 
     template <typename Type>
+    bool is() const {
+        return dynamic_cast<Type const *>(this) != 0;
+    }
+
+    template <typename Type>
     Type &as() {
         DENG2_ASSERT(dynamic_cast<Type *>(this) != 0);
         return *static_cast<Type *>(this);
