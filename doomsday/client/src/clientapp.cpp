@@ -21,6 +21,7 @@
 #include <QMenuBar>
 #include <QAction>
 #include <QNetworkProxyFactory>
+#include <QDesktopServices>
 #include <QDebug>
 #include <stdlib.h>
 
@@ -298,4 +299,16 @@ Games &ClientApp::games()
 World &ClientApp::world()
 {
     return app().d->world;
+}
+
+void ClientApp::openHomepageInBrowser()
+{
+    // Get out of fullscreen mode.
+    int windowed[] = {
+        ClientWindow::Fullscreen, false,
+        ClientWindow::End
+    };
+    ClientWindow::main().changeAttributes(windowed);
+
+    QDesktopServices::openUrl(QUrl(DOOMSDAY_HOMEURL));
 }

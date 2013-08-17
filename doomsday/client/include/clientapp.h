@@ -34,6 +34,8 @@
  */
 class ClientApp : public de::GuiApp
 {
+    Q_OBJECT
+
 public:
     ClientApp(int &argc, char **argv);
 
@@ -57,6 +59,9 @@ public:
     static de::GLShaderBank &glShaderBank();
     static de::Games &games();
     static de::World &world();
+
+public slots:
+    void openHomepageInBrowser();
 
 private:
     DENG2_PRIVATE(d)
