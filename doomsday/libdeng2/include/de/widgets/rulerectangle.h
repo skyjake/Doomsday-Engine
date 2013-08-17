@@ -37,6 +37,9 @@ namespace de {
  * output rules for the sides can be used normally in other rules. Horizontal
  * and vertical axes are handled independently.
  *
+ * Note that RuleRectangle uses a "fluent API" for the input rule set/clear
+ * methods.
+ *
  * @ingroup widgets
  */
 class DENG2_PUBLIC RuleRectangle
@@ -65,7 +68,7 @@ public:
     RuleRectangle &setRect(RuleRectangle const &rect);
     RuleRectangle &setSize(Rule const &width, Rule const &height);
 
-    void clearInput(Rule::Semantic inputRule);
+    RuleRectangle &clearInput(Rule::Semantic inputRule);
 
     /**
      * Returns an input rule.

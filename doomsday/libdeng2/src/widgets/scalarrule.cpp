@@ -30,6 +30,7 @@ ScalarRule::ScalarRule(float initialValue)
 ScalarRule::~ScalarRule()
 {
     independentOf(_targetRule);
+    _animation.clock().audienceForPriorityTimeChange -= this;
 }
 
 void ScalarRule::set(float target, TimeDelta transition, TimeDelta delay)
