@@ -3570,10 +3570,6 @@ bool Map::endEditing()
         sector->buildSides();
         sector->updateAABox();
 
-#ifdef __CLIENT__
-        sector->updateRoughArea();
-#endif
-
         /*
          * Chain sound emitters (ddmobj_base_t) owned by all Surfaces in the
          * sector-> These chains are used for efficiently traversing all of the

@@ -50,9 +50,6 @@ DENG2_OBSERVES(Plane, HeightChange)
     /// Bounding box for the sector.
     AABoxd aaBox;
 
-    /// Rough approximation of sector area (map units squared).
-    coord_t roughArea;
-
     /// Primary sound emitter. Others are linked to this, forming a chain.
     ddmobj_base_t soundEmitter;
 
@@ -75,6 +72,10 @@ DENG2_OBSERVES(Plane, HeightChange)
     int validCount;
 
 #ifdef __CLIENT__
+    /// Rough approximation of sector area (map units squared).
+    coord_t roughArea;
+    bool needRoughAreaUpdate; /// @c true= marked for update.
+
     /// LightGrid data values.
     LightGridData lightGridData;
 
@@ -91,12 +92,13 @@ DENG2_OBSERVES(Plane, HeightChange)
 
     Instance(Public *i, float lightLevel, Vector3f const &lightColor)
         : Base(i),
-          roughArea(0),
           lightLevel(lightLevel),
           lightColor(lightColor),
           validCount(0)
 #ifdef __CLIENT__
-         ,needReverbUpdate(true),
+         ,roughArea(0),
+          needRoughAreaUpdate(false), // Sectors with no BSP leafs have zero area.
+          needReverbUpdate(true),
           visible(false)
 #endif
     {
@@ -141,6 +143,22 @@ DENG2_OBSERVES(Plane, HeightChange)
     }
 
 #ifdef __CLIENT__
+    void updateRoughArea()
+    {
+        needRoughAreaUpdate = false;
+
+        roughArea = 0;
+        foreach(BspLeaf *leaf, bspLeafs)
+        {
+            if(leaf->isDegenerate()) continue;
+
+            AABoxd const &leafAABox = leaf->poly().aaBox();
+
+            roughArea += (leafAABox.maxX - leafAABox.minX) *
+                         (leafAABox.maxY - leafAABox.minY);
+        }
+    }
+
     void addReverbBspLeaf(BspLeaf *bspLeaf)
     {
         // Degenerate leafs never contribute.
@@ -493,6 +511,11 @@ void Sector::buildBspLeafs()
             d->bspLeafs.append(bspLeaf);
         }
     }
+
+#ifdef __CLIENT__
+    // We'll need to update the rough area calculation.
+    d->needRoughAreaUpdate = true;
+#endif
 }
 
 AABoxd const &Sector::aaBox() const
@@ -602,22 +625,12 @@ AudioEnvironmentFactors const &Sector::reverb() const
 
 coord_t Sector::roughArea() const
 {
-    return d->roughArea;
-}
-
-void Sector::updateRoughArea()
-{
-    d->roughArea = 0;
-
-    foreach(BspLeaf *leaf, d->bspLeafs)
+    // Perform any scheduled update now.
+    if(d->needRoughAreaUpdate)
     {
-        if(leaf->isDegenerate()) continue;
-
-        AABoxd const &leafAABox = leaf->poly().aaBox();
-
-        d->roughArea += (leafAABox.maxX - leafAABox.minX) *
-                        (leafAABox.maxY - leafAABox.minY);
+        d->updateRoughArea();
     }
+    return d->roughArea;
 }
 
 bool Sector::isVisible() const

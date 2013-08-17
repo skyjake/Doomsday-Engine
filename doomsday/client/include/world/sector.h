@@ -456,19 +456,8 @@ public:
     /**
      * Returns a rough approximation of the total combined area of the geometry
      * for all BSP leafs attributed to the sector (map units squared).
-     *
-     * @see updateRoughArea()
      */
     coord_t roughArea() const;
-
-    /**
-     * Update the sector's rough area approximation.
-     *
-     * @pre BSP leaf list must have be initialized.
-     *
-     * @see buildBspLeafs(), roughArea()
-     */
-    void updateRoughArea();
 
     /**
      * Returns @c true iff the sector is marked as visible for the current frame.
