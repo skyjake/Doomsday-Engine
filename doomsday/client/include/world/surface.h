@@ -117,7 +117,7 @@ public:
             de::Vector3f const &tintColor = de::Vector3f(1, 1, 1));
 
     /**
-     * Returns the tangent space matrix for the surface.
+     * Returns the normalized tangent space matrix for the surface.
      * (col0: tangent, col1: bitangent, col2: normal)
      */
     de::Matrix3f const &tangentMatrix() const;
@@ -125,17 +125,17 @@ public:
     /**
      * Returns a copy of the normalized tangent vector for the surface.
      */
-    de::Vector3f tangent() const;
+    inline de::Vector3f tangent() const { return tangentMatrix().column(0); }
 
     /**
      * Returns a copy of the normalized bitangent vector for the surface.
      */
-    de::Vector3f bitangent() const;
+    inline de::Vector3f bitangent() const { return tangentMatrix().column(1); }
 
     /**
      * Returns a copy of the normalized normal vector for the surface.
      */
-    de::Vector3f normal() const;
+    inline de::Vector3f normal() const { return tangentMatrix().column(2); }
 
     /**
      * Change the tangent space normal vector for the surface. If changed,
@@ -388,7 +388,7 @@ public:
      *
      * @param newBlendMode  New blendmode.
      */
-    bool setBlendMode(blendmode_t newBlendMode);
+    void setBlendMode(blendmode_t newBlendMode);
 
 #ifdef __CLIENT__
 

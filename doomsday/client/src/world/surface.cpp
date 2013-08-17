@@ -23,8 +23,6 @@
 #include <de/Log>
 
 #include "de_defs.h" // Def_GetGenerator
-#include "dd_main.h"
-
 #include "Materials"
 
 #include "world/map.h"
@@ -157,8 +155,7 @@ DENG2_PIMPL(Surface)
         }
     }
 
-    void notifyTintColorChanged(Vector3f const &oldTintColor,
-                                int changedComponents)
+    void notifyTintColorChanged(Vector3f const &oldTintColor, int changedComponents)
     {
         DENG2_FOR_PUBLIC_AUDIENCE(TintColorChange, i)
         {
@@ -193,8 +190,7 @@ DENG2_PIMPL(Surface)
 };
 
 Surface::Surface(MapElement &owner, float opacity, Vector3f const &tintColor)
-    : MapElement(DMU_SURFACE, &owner),
-      d(new Instance(this))
+    : MapElement(DMU_SURFACE, &owner), d(new Instance(this))
 {
 #ifdef __CLIENT__
     _decorationData.needsUpdate = true;
@@ -216,21 +212,6 @@ Matrix3f const &Surface::tangentMatrix() const
     return d->tangentMatrix;
 }
 
-Vector3f Surface::tangent() const
-{
-    return tangentMatrix().column(0);
-}
-
-Vector3f Surface::bitangent() const
-{
-    return tangentMatrix().column(1);
-}
-
-Vector3f Surface::normal() const
-{
-    return tangentMatrix().column(2);
-}
-
 void Surface::setNormal(Vector3f const &newNormal)
 {
     Vector3f oldNormal = normal();
@@ -247,6 +228,16 @@ void Surface::setNormal(Vector3f const &newNormal)
         // Notify interested parties of the change.
         d->notifyNormalChanged(oldNormal);
     }
+}
+
+int Surface::flags() const
+{
+    return d->flags;
+}
+
+void Surface::setFlags(int flagsToChange, FlagOp operation)
+{
+    applyFlagOperation(d->flags, flagsToChange, operation);
 }
 
 bool Surface::hasMaterial() const
@@ -267,16 +258,6 @@ Material &Surface::material() const
     }
     /// @throw MissingMaterialError Attempted with no material bound.
     throw MissingMaterialError("Surface::material", "No material is bound");
-}
-
-int Surface::flags() const
-{
-    return d->flags;
-}
-
-void Surface::setFlags(int flagsToChange, FlagOp operation)
-{
-    applyFlagOperation(d->flags, flagsToChange, operation);
 }
 
 bool Surface::setMaterial(Material *newMaterial, bool isMissingFix)
@@ -403,7 +384,6 @@ Vector2f const &Surface::visMaterialOriginDelta() const
 void Surface::lerpVisMaterialOrigin()
 {
     // $smoothmaterialorigin
-
     d->visMaterialOriginDelta = d->oldMaterialOrigin[0] * (1 - frameTimePos)
         + d->materialOrigin * frameTimePos - d->materialOrigin;
 
@@ -453,7 +433,7 @@ float Surface::opacity() const
 
 void Surface::setOpacity(float newOpacity)
 {
-    DENG_ASSERT(d->isSideMiddle() || d->isSectorExtraPlane());
+    DENG_ASSERT(d->isSideMiddle() || d->isSectorExtraPlane()); // sanity check
 
     newOpacity = de::clamp(0.f, newOpacity, 1.f);
     if(!de::fequal(d->opacity, newOpacity))
@@ -505,13 +485,12 @@ blendmode_t Surface::blendMode() const
     return d->blendMode;
 }
 
-bool Surface::setBlendMode(blendmode_t newBlendMode)
+void Surface::setBlendMode(blendmode_t newBlendMode)
 {
     if(d->blendMode != newBlendMode)
     {
         d->blendMode = newBlendMode;
     }
-    return true;
 }
 
 #ifdef __CLIENT__
