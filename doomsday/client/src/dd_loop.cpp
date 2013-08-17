@@ -236,11 +236,11 @@ static void baseTicker(timespan_t time)
 /**
  * Advance time counters.
  */
-static void advanceTime(timespan_t time)
+static void advanceTime(timespan_t delta)
 {
     int oldGameTic = 0;
 
-    sysTime += time;
+    sysTime += delta;
 
     if(!stopTime || netGame)
     {
@@ -248,8 +248,8 @@ static void advanceTime(timespan_t time)
 
         // The difference between gametic and demotic is that demotic
         // is not altered at any point. Gametic changes at handshakes.
-        gameTime += time;
-        demoTime += time;
+        gameTime += delta;
+        demoTime += delta;
 
         if(DD_IsSharpTick())
         {
@@ -266,14 +266,8 @@ static void advanceTime(timespan_t time)
             }
         }
 
-        // Leveltic is reset to zero at every map change.
-        // The map time only advances when the game is not paused.
-#ifdef __CLIENT__
-        if(!clientPaused)
-#endif
-        {
-            ddMapTime += time;
-        }
+        // World time always advances unless a local game is paused on client-side.
+        App_World().advanceTime(delta);
     }
 }
 

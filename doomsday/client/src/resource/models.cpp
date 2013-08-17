@@ -22,6 +22,7 @@
  */
 
 #include <QDir>
+
 #include <de/App>
 #include <de/ByteOrder>
 #include <de/NativePath>
@@ -800,7 +801,7 @@ float Models_ModelForMobj(mobj_t* mo, modeldef_t** modef, modeldef_t** nextmodef
             offset = M_CycleIntoRange(MOBJ_TO_ID(mo), duration);
         }
 
-        interp = M_CycleIntoRange(ddMapTime / duration + offset, 1);
+        interp = M_CycleIntoRange(App_World().time() / duration + offset, 1);
         worldTime = true;
     }
     else

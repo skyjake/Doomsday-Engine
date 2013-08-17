@@ -49,6 +49,7 @@
 #include "render/r_main.h" // R_ResetViewer
 
 #ifdef __CLIENT__
+#  include "client/cl_def.h"
 #  include "client/cl_frame.h"
 #  include "client/cl_player.h"
 #  include "edit_bias.h"
@@ -177,7 +178,6 @@ private:
 int const MapConversionReporter::maxWarningsPerType = 10;
 
 boolean ddMapSetup;
-timespan_t ddMapTime;
 
 // Should we be caching successfully loaded maps?
 //static byte mapCache = true; // cvar
@@ -246,12 +246,15 @@ DENG2_PIMPL(World)
     /// Current map.
     Map *map;
 
+    /// World-wide time.
+    timespan_t time;
+
 #ifdef __CLIENT__
     /// Hand for runtime map manipulation/editing.
     QScopedPointer<Hand> hand;
 #endif
 
-    Instance(Public *i) : Base(i), map(0)
+    Instance(Public *i) : Base(i), map(0), time(0)
     {}
 
     void notifyMapChange()
@@ -668,8 +671,8 @@ DENG2_PIMPL(World)
             Con_Executef(CMDS_SCRIPT, false, "%s", cmd.toUtf8().constData());
         }
 
-        // Reset map time.
-        ddMapTime = 0;
+        // Reset world time.
+        time = 0;
 
         // Now that the setup is done, let's reset the timer so that it will
         // appear that no time has passed during the setup.
@@ -850,6 +853,19 @@ void World::update()
     {
         d->map->update();
     }
+}
+
+void World::advanceTime(timespan_t delta)
+{
+#ifdef __CLIENT__
+    if(clientPaused) return;
+#endif
+    d->time += delta;
+}
+
+timespan_t const World::time() const
+{
+    return d->time;
 }
 
 #ifdef __CLIENT__

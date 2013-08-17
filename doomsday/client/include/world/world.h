@@ -125,6 +125,18 @@ public:
      */
     inline void unloadMap() { changeMap(Uri()); }
 
+    /**
+     * Advance time in the world.
+     *
+     * @param delta  Time delta to apply.
+     */
+    void advanceTime(timespan_t delta);
+
+    /**
+     * Returns the current world time.
+     */
+    timespan_t const time() const;
+
 #ifdef __CLIENT__
     /**
      * To be called at the beginning of a render frame, so that we can prepare for
@@ -156,6 +168,5 @@ private:
 } // namespace de
 
 DENG_EXTERN_C boolean ddMapSetup;
-DENG_EXTERN_C timespan_t ddMapTime;
 
 #endif // DENG_WORLD_H

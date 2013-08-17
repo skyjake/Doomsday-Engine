@@ -1315,7 +1315,7 @@ void P_SpawnMapParticleGens(Map &map)
             continue;
 
         // Are we still spawning using this generator?
-        if(def->spawnAge > 0 && ddMapTime > def->spawnAge) continue;
+        if(def->spawnAge > 0 && App_World().time() > def->spawnAge) continue;
 
         ptcgen_t *gen = P_NewGenerator();
         if(!gen) return; // No more generators.

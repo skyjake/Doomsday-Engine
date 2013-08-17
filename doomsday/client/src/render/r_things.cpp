@@ -1164,7 +1164,7 @@ void R_ProjectSprite(mobj_t *mo)
         }
         else if(mf->testSubFlag(0, MFF_SPIN))
         {
-            yaw = modelSpinSpeed * 70 * ddMapTime + MOBJ_TO_ID(mo) % 360;
+            yaw = modelSpinSpeed * 70 * App_World().time() + MOBJ_TO_ID(mo) % 360;
         }
         else if(mf->testSubFlag(0, MFF_MOVEMENT_YAW))
         {
@@ -1501,7 +1501,7 @@ coord_t R_GetBobOffset(mobj_t* mo)
 {
     if(mo->ddFlags & DDMF_BOB)
     {
-        return (sin(MOBJ_TO_ID(mo) + ddMapTime / 1.8286 * 2 * PI) * 8);
+        return (sin(MOBJ_TO_ID(mo) + App_World().time() / 1.8286 * 2 * PI) * 8);
     }
     return 0;
 }

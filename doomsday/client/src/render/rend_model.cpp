@@ -829,7 +829,7 @@ static int chooseSkin(modeldef_t *mf, int submodel, int id, int selector, int tm
         }
         else
         {
-            offset = SECONDS_TO_TICKS(ddMapTime) / mf->skinTics;
+            offset = SECONDS_TO_TICKS(App_World().time()) / mf->skinTics;
         }
 
         skin += offset % smf.skinRange;
