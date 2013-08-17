@@ -103,6 +103,12 @@ public: /// @todo Make private:
     struct mobj_s *_mobjList;
 
 public:
+    /**
+     * Construct a new sector.
+     *
+     * @param lightLevel  Ambient light level.
+     * @param lightColor  Ambient light color.
+     */
     Sector(float lightLevel               = 1,
            de::Vector3f const &lightColor = de::Vector3f(1, 1, 1));
 
@@ -187,7 +193,7 @@ public:
     /**
      * Returns the total number of line sides which reference the sector.
      */
-    inline uint sideCount() const { return uint(sides().count()); }
+    inline int sideCount() const { return sides().count(); }
 
     /**
      * (Re)Build the side list for the sector.

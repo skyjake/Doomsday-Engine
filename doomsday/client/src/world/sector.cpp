@@ -23,10 +23,7 @@
 
 #include <de/Log>
 
-#include "dd_main.h"
-
 #include "Face"
-
 #include "BspLeaf"
 #include "Line"
 #include "Plane"
@@ -72,7 +69,7 @@ DENG2_OBSERVES(Plane, HeightChange)
     float lightLevel;
 
     /// Ambient light color in the sector.
-    de::Vector3f lightColor;
+    Vector3f lightColor;
 
     /// if == validCount, already checked.
     int validCount;
@@ -123,8 +120,7 @@ DENG2_OBSERVES(Plane, HeightChange)
         }
     }
 
-    void notifyLightColorChanged(Vector3f const &oldLightColor,
-                                 int changedComponents)
+    void notifyLightColorChanged(Vector3f const &oldLightColor, int changedComponents)
     {
         DENG2_FOR_PUBLIC_AUDIENCE(LightColorChange, i)
         {
@@ -168,7 +164,7 @@ DENG2_OBSERVES(Plane, HeightChange)
         needReverbUpdate = false;
 
         // Sectors with no referencing lines need no reverb.
-        if(!self.sideCount())
+        if(sides.isEmpty())
             return;
 
         uint spaceVolume = int((self.ceiling().height() - self.floor().height()) * self.roughArea());
@@ -251,10 +247,16 @@ DENG2_OBSERVES(Plane, HeightChange)
         if(!(&plane == &self.floor() || &plane == &self.ceiling()))
             return;
 
+        // Update the sound emitter origins for all dependent surfaces.
         self.updateSoundEmitterOrigin();
+        foreach(Line::Side *side, sides)
+        {
+            side->updateAllSoundEmitterOrigins();
+            side->back().updateAllSoundEmitterOrigins();
+        }
 
 #ifdef __CLIENT__
-        /// @todo Map should observe.
+        /// @todo Sector should implement this logic.
         self.map().updateMissingMaterialsForLinesOfSector(self);
 #endif
 
@@ -263,9 +265,8 @@ DENG2_OBSERVES(Plane, HeightChange)
         needReverbUpdate = true;
 #endif
 
-        // Check if there are any camera players in this sector. If their
-        // height is now above the ceiling/below the floor they are now in
-        // the void.
+        // Check if there are any camera players in this sector. If their height
+        // is now above the ceiling/below the floor they are now in the void.
         for(int i = 0; i < DDMAXPLAYERS; ++i)
         {
             player_t *plr = &ddPlayers[i];
@@ -282,17 +283,10 @@ DENG2_OBSERVES(Plane, HeightChange)
             }
         }
 
-        // Update the sound emitter origins for all dependent wall surfaces.
-        foreach(Line::Side *side, sides)
-        {
-            side->updateAllSoundEmitterOrigins();
-            side->back().updateAllSoundEmitterOrigins();
-        }
-
 #ifdef __CLIENT__
         if(!ddMapSetup && useBias)
         {
-            // Inform the shadow bias of changed geometry.
+            // Inform bias surfaces of changed geometry.
             foreach(BspLeaf *bspLeaf, bspLeafs)
             {
                 bspLeaf->updateBiasAfterGeometryMove(plane.indexInSector());
@@ -378,92 +372,6 @@ ddmobj_base_t const &Sector::soundEmitter() const
     return const_cast<ddmobj_base_t const &>(const_cast<Sector &>(*this).soundEmitter());
 }
 
-#ifdef __CLIENT__
-
-Sector::LightGridData &Sector::lightGridData()
-{
-    return d->lightGridData;
-}
-
-/**
- * Determine the BSP leafs which contribute to the sector's environmental audio
- * characteristics. Given that BSP leafs do not change shape (on the XY plane,
- * that is), they do not move and are not created/destroyed once the map has been
- * loaded; this step can be pre-processed.
- */
-void Sector::initReverb()
-{
-    d->reverbBspLeafs.clear();
-
-    // Sectors with no referencing lines need no reverb.
-    if(!sideCount()) return;
-
-    AABoxd affectionBounds = aaBox();
-    affectionBounds.minX -= 128;
-    affectionBounds.minY -= 128;
-    affectionBounds.maxX += 128;
-    affectionBounds.maxY += 128;
-
-    // LOG_DEBUG("Finding reverb BSP leafs for sector %u (min:%s  max:%s)")
-    //    << map().sectorIndex(this)
-    //    << Vector2d(affectionBounds.min).asText()
-    //    << Vector2d(affectionBounds.max).asText();
-
-    // Link all non-degenerate BspLeafs whose axis-aligned bounding box intersects
-    // with the affection bounds to the reverb set.
-    map().bspLeafsBoxIterator(affectionBounds, 0, Instance::addReverbBspLeafWorker, d);
-
-    // We still need to update the final characteristics.
-    d->needReverbUpdate = true;
-}
-
-void Sector::markReverbDirty(bool yes)
-{
-    d->needReverbUpdate = yes;
-}
-
-AudioEnvironmentFactors const &Sector::reverb() const
-{
-    // Perform any scheduled update now.
-    if(d->needReverbUpdate)
-    {
-        d->updateReverb();
-    }
-    return d->reverb;
-}
-
-coord_t Sector::roughArea() const
-{
-    return d->roughArea;
-}
-
-void Sector::updateRoughArea()
-{
-    d->roughArea = 0;
-
-    foreach(BspLeaf *leaf, d->bspLeafs)
-    {
-        if(leaf->isDegenerate()) continue;
-
-        AABoxd const &leafAABox = leaf->poly().aaBox();
-
-        d->roughArea += (leafAABox.maxX - leafAABox.minX) *
-                        (leafAABox.maxY - leafAABox.minY);
-    }
-}
-
-bool Sector::isVisible() const
-{
-    return d->visible;
-}
-
-void Sector::markVisible(bool yes)
-{
-    d->visible = yes;
-}
-
-#endif // __CLIENT__
-
 int Sector::validCount() const
 {
     return d->validCount;
@@ -502,8 +410,7 @@ void Sector::buildSides()
     int count = 0;
     foreach(Line *line, map().lines())
     {
-        if(line->frontSectorPtr() == this ||
-           line->backSectorPtr()  == this)
+        if(line->frontSectorPtr() == this || line->backSectorPtr()  == this)
             ++count;
     }
 
@@ -531,6 +438,8 @@ Plane *Sector::addPlane(Vector3f const &normal, coord_t height)
 {
     Plane *plane = new Plane(*this, normal, height);
 
+    // We ant notification of height changes so that we can relay and/or update
+    // other components (e.g., BSP leafs) accordingly.
     plane->audienceForHeightChange += d;
     plane->setIndexInSector(d->planes.count());
 
@@ -636,6 +545,92 @@ bool Sector::pointInside(Vector2d const &point) const
     BspLeaf const &bspLeaf = map().bspLeafAt(point);
     return bspLeaf.sectorPtr() == this && bspLeaf.pointInside(point);
 }
+
+#ifdef __CLIENT__
+
+Sector::LightGridData &Sector::lightGridData()
+{
+    return d->lightGridData;
+}
+
+/**
+ * Determine the BSP leafs which contribute to the sector's environmental audio
+ * characteristics. Given that BSP leafs do not change shape (on the XY plane,
+ * that is), they do not move and are not created/destroyed once the map has been
+ * loaded; this step can be pre-processed.
+ */
+void Sector::initReverb()
+{
+    d->reverbBspLeafs.clear();
+
+    // Sectors with no referencing lines need no reverb.
+    if(!sideCount()) return;
+
+    AABoxd affectionBounds = aaBox();
+    affectionBounds.minX -= 128;
+    affectionBounds.minY -= 128;
+    affectionBounds.maxX += 128;
+    affectionBounds.maxY += 128;
+
+    // LOG_DEBUG("Finding reverb BSP leafs for sector %u (min:%s  max:%s)")
+    //    << map().sectorIndex(this)
+    //    << Vector2d(affectionBounds.min).asText()
+    //    << Vector2d(affectionBounds.max).asText();
+
+    // Link all non-degenerate BspLeafs whose axis-aligned bounding box intersects
+    // with the affection bounds to the reverb set.
+    map().bspLeafsBoxIterator(affectionBounds, 0, Instance::addReverbBspLeafWorker, d);
+
+    // We still need to update the final characteristics.
+    d->needReverbUpdate = true;
+}
+
+void Sector::markReverbDirty(bool yes)
+{
+    d->needReverbUpdate = yes;
+}
+
+AudioEnvironmentFactors const &Sector::reverb() const
+{
+    // Perform any scheduled update now.
+    if(d->needReverbUpdate)
+    {
+        d->updateReverb();
+    }
+    return d->reverb;
+}
+
+coord_t Sector::roughArea() const
+{
+    return d->roughArea;
+}
+
+void Sector::updateRoughArea()
+{
+    d->roughArea = 0;
+
+    foreach(BspLeaf *leaf, d->bspLeafs)
+    {
+        if(leaf->isDegenerate()) continue;
+
+        AABoxd const &leafAABox = leaf->poly().aaBox();
+
+        d->roughArea += (leafAABox.maxX - leafAABox.minX) *
+                        (leafAABox.maxY - leafAABox.minY);
+    }
+}
+
+bool Sector::isVisible() const
+{
+    return d->visible;
+}
+
+void Sector::markVisible(bool yes)
+{
+    d->visible = yes;
+}
+
+#endif // __CLIENT__
 
 int Sector::property(DmuArgs &args) const
 {
