@@ -604,15 +604,14 @@ DENG2_PIMPL(World)
             }
         }
 
+#ifdef __CLIENT__
         /// @todo Refactor away:
         foreach(Sector *sector, map->sectors())
         {
-            sector->updateSoundEmitterOrigin();
-#ifdef __CLIENT__
             map->updateMissingMaterialsForLinesOfSector(*sector);
             sector->markReverbDirty();
-#endif
         }
+#endif
 
         map->initPolyobjs();
         S_SetupForChangedMap();

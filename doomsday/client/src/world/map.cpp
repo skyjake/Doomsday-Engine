@@ -3603,8 +3603,6 @@ bool Map::endEditing()
                 sector->linkSoundEmitter(back.topSoundEmitter());
             }
         }
-
-        sector->updateSoundEmitterOrigin();
     }
 
     // Finish planes.

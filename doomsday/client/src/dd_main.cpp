@@ -3021,16 +3021,15 @@ DENG_EXTERN_C void R_SetupMap(int mode, int flags)
     map.initSkyFix();
 #endif
 
+#ifdef __CLIENT__
     // Update all sectors.
     /// @todo Refactor away.
     foreach(Sector *sector, map.sectors())
     {
-        sector->updateSoundEmitterOrigin();
-#ifdef __CLIENT__
         map.updateMissingMaterialsForLinesOfSector(*sector);
         sector->markReverbDirty();
-#endif
     }
+#endif
 
     // Re-initialize polyobjs.
     /// @todo Still necessary?

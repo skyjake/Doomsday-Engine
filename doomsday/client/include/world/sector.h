@@ -256,14 +256,6 @@ public:
     ddmobj_base_t const &soundEmitter() const;
 
     /**
-     * Update the sound emitter origin of the sector according to the point
-     * defined by the center of the sector's axis-aligned bounding box (which
-     * must be initialized before calling) and the mid point on the map up
-     * axis between floor and ceiling planes.
-     */
-    void updateSoundEmitterOrigin();
-
-    /**
      * @param newEmitter  Mobj base to link to the sector. Caller must ensure
      *                    that the object is not linked multiple times into
      *                    the chain.

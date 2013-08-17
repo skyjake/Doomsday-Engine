@@ -153,22 +153,34 @@ DENG2_OBSERVES(Plane, HeightChange)
         needAABoxUpdate = false;
 
         aaBox.clear();
-        bool isFirst = false;
+        bool haveGeometry = false;
         foreach(BspLeaf *leaf, bspLeafs)
         {
             if(leaf->isDegenerate()) continue;
 
             AABoxd const &leafAABox = leaf->poly().aaBox();
 
-            if(!isFirst)
+            if(haveGeometry)
             {
                 V2d_UniteBox(aaBox.arvec2, leafAABox.arvec2);
             }
             else
             {
                 V2d_CopyBox(aaBox.arvec2, leafAABox.arvec2);
-                isFirst = false;
+                haveGeometry = true;
             }
+        }
+
+        // The XY origin of our sound emitter can now be updated as the
+        // center point of the sector geometry is now known.
+        if(haveGeometry)
+        {
+            soundEmitter.origin[VX] = (aaBox.minX + aaBox.maxX) / 2;
+            soundEmitter.origin[VY] = (aaBox.minY + aaBox.maxY) / 2;
+        }
+        else
+        {
+            soundEmitter.origin[VX] = soundEmitter.origin[VY] = 0;
         }
     }
 
@@ -295,23 +307,15 @@ DENG2_OBSERVES(Plane, HeightChange)
         if(!(&plane == &self.floor() || &plane == &self.ceiling()))
             return;
 
+        // Update the z-height origin of our sound emitter right away.
+        soundEmitter.origin[VZ] = (self.floor().height() + self.ceiling().height()) / 2;
+
         // Update the sound emitter origins for all dependent surfaces.
-        self.updateSoundEmitterOrigin();
         foreach(Line::Side *side, sides)
         {
             side->updateAllSoundEmitterOrigins();
             side->back().updateAllSoundEmitterOrigins();
         }
-
-#ifdef __CLIENT__
-        /// @todo Sector should implement this logic.
-        self.map().updateMissingMaterialsForLinesOfSector(self);
-#endif
-
-#ifdef __CLIENT__
-        // We'll need to recalculate environmental audio characteristics.
-        needReverbUpdate = true;
-#endif
 
         // Check if there are any camera players in this sector. If their height
         // is now above the ceiling/below the floor they are now in the void.
@@ -332,6 +336,12 @@ DENG2_OBSERVES(Plane, HeightChange)
         }
 
 #ifdef __CLIENT__
+        /// @todo Sector should implement this logic.
+        self.map().updateMissingMaterialsForLinesOfSector(self);
+
+        // We'll need to recalculate environmental audio characteristics.
+        needReverbUpdate = true;
+
         if(!ddMapSetup && useBias)
         {
             // Inform bias surfaces of changed geometry.
@@ -412,6 +422,12 @@ struct mobj_s *Sector::firstMobj() const
 
 ddmobj_base_t &Sector::soundEmitter()
 {
+    // The origin is determined by the axis-aligned bounding box, so perform
+    // any scheduled update now.
+    if(d->needAABoxUpdate)
+    {
+        d->updateAABox();
+    }
     return d->soundEmitter;
 }
 
@@ -486,12 +502,20 @@ Plane *Sector::addPlane(Vector3f const &normal, coord_t height)
 {
     Plane *plane = new Plane(*this, normal, height);
 
-    // We ant notification of height changes so that we can relay and/or update
+    // We want notification of height changes so that we can relay and/or update
     // other components (e.g., BSP leafs) accordingly.
     plane->audienceForHeightChange += d;
     plane->setIndexInSector(d->planes.count());
 
     d->planes.append(plane);
+
+    // Once both floor and ceiling are known we can determine the z-height origin
+    // of our sound emitter.
+    /// @todo fixme: Assume planes are defined in order.
+    if(planeCount() == 2)
+    {
+        d->soundEmitter.origin[VZ] = (floor().height() + ceiling().height()) / 2;
+    }
 
     return plane;
 }
@@ -570,13 +594,6 @@ void Sector::linkSoundEmitter(ddmobj_base_t &newEmitter)
     d->soundEmitter.thinker.next = &newEmitter.thinker;
 }
 
-void Sector::updateSoundEmitterOrigin()
-{
-    d->soundEmitter.origin[VX] = (d->aaBox.minX + d->aaBox.maxX) / 2;
-    d->soundEmitter.origin[VY] = (d->aaBox.minY + d->aaBox.maxY) / 2;
-    d->soundEmitter.origin[VZ] = (floor().height() + ceiling().height()) / 2;
-}
-
 bool Sector::pointInside(Vector2d const &point) const
 {
     BspLeaf const &bspLeaf = map().bspLeafAt(point);
@@ -600,7 +617,7 @@ void Sector::initReverb()
 {
     d->reverbBspLeafs.clear();
 
-    // Sectors with no referencing lines need no reverb.
+    // A sector with no referencing line needs no reverb.
     if(!sideCount()) return;
 
     AABoxd affectionBounds = aaBox();
