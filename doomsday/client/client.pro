@@ -356,6 +356,7 @@ DENG_HEADERS += \
     include/ui/widgets/contextwidgetorganizer.h \
     include/ui/widgets/documentwidget.h \
     include/ui/widgets/gameselectionwidget.h \
+    include/ui/widgets/dialogwidget.h \
     include/ui/widgets/gltextcomposer.h \
     include/ui/widgets/guirootwidget.h \
     include/ui/widgets/guiwidget.h \
@@ -667,6 +668,7 @@ SOURCES += \
     src/ui/widgets/contextwidgetorganizer.cpp \
     src/ui/widgets/documentwidget.cpp \
     src/ui/widgets/gameselectionwidget.cpp \
+    src/ui/widgets/dialogwidget.cpp \
     src/ui/widgets/gltextcomposer.cpp \
     src/ui/widgets/guirootwidget.cpp \
     src/ui/widgets/guiwidget.cpp \
