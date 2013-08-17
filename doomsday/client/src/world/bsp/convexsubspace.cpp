@@ -416,26 +416,31 @@ void ConvexSubspace::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
 
         if(!conty.discordSegs.isEmpty())
         {
-            // Construct a new mesh and set of half-edges.
-            Mesh *extraMesh = new Mesh;
-            Face *face = extraMesh->newFace();
+            Mesh *extraMesh = 0;
+            Face *face = 0;
 
             foreach(OrderedSegment const *oseg, conty.discordSegs)
             {
                 LineSegment::Side *lineSeg = oseg->segment;
-                HEdge *hedge = extraMesh->newHEdge(lineSeg->from());
+                Line::Side *mapSide = lineSeg->mapSidePtr();
+                if(!mapSide) continue;
 
-                if(Line::Side *mapSide = lineSeg->mapSidePtr())
+                if(!extraMesh)
                 {
-                    Line::Side::Segment *seg = mapSide->addSegment(*hedge);
-#ifdef __CLIENT__
-                    /// @todo Line::Side::newSegment() should encapsulate:
-                    seg->setLineSideOffset(Vector2d(mapSide->from().origin() - lineSeg->from().origin()).length());
-                    seg->setLength(Vector2d(lineSeg->to().origin() - lineSeg->from().origin()).length());
-#else
-                    DENG_UNUSED(seg);
-#endif
+                    // Construct a new mesh and set of half-edges.
+                    extraMesh = new Mesh;
+                    face = extraMesh->newFace();
                 }
+
+                HEdge *hedge = extraMesh->newHEdge(lineSeg->from());
+                Line::Side::Segment *seg = mapSide->addSegment(*hedge);
+#ifdef __CLIENT__
+                /// @todo Line::Side::newSegment() should encapsulate:
+                seg->setLineSideOffset(Vector2d(mapSide->from().origin() - lineSeg->from().origin()).length());
+                seg->setLength(Vector2d(lineSeg->to().origin() - lineSeg->from().origin()).length());
+#else
+                DENG_UNUSED(seg);
+#endif
 
                 // Link the new half-edge for this line segment to the head of
                 // the list in the new face geometry.
@@ -453,38 +458,41 @@ void ConvexSubspace::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
                 lineSeg->setHEdge(hedge);
             }
 
-            // Link the half-edges anticlockwise and close the ring.
-            HEdge *hedge = face->hedge();
-            forever
+            if(extraMesh)
             {
-                // There is now one more half-edge in this face.
+                // Link the half-edges anticlockwise and close the ring.
+                HEdge *hedge = face->hedge();
+                forever
+                {
+                    // There is now one more half-edge in this face.
+                    /// @todo Face should encapsulate.
+                    face->_hedgeCount += 1;
+
+                    // Attribute the half-edge to the Face.
+                    hedge->setFace(face);
+
+                    if(hedge->hasNext())
+                    {
+                        // Link anticlockwise.
+                        hedge->next().setPrev(hedge);
+                        hedge = &hedge->next();
+                    }
+                    else
+                    {
+                        // Circular link.
+                        hedge->setNext(face->hedge());
+                        hedge->next().setPrev(hedge);
+                        break;
+                    }
+                }
+
                 /// @todo Face should encapsulate.
-                face->_hedgeCount += 1;
+                face->updateAABox();
+                face->updateCenter();
 
-                // Attribute the half-edge to the Face.
-                hedge->setFace(face);
-
-                if(hedge->hasNext())
-                {
-                    // Link anticlockwise.
-                    hedge->next().setPrev(hedge);
-                    hedge = &hedge->next();
-                }
-                else
-                {
-                    // Circular link.
-                    hedge->setNext(face->hedge());
-                    hedge->next().setPrev(hedge);
-                    break;
-                }
+                // Assign the mesh to the BSP leaf (takes ownership).
+                leaf.assignExtraMesh(*extraMesh);
             }
-
-            /// @todo Face should encapsulate.
-            face->updateAABox();
-            face->updateCenter();
-
-            // Assign the mesh to the BSP leaf (takes ownership).
-            leaf.assignExtraMesh(*extraMesh);
         }
     }
 
