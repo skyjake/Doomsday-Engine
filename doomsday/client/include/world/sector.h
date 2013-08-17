@@ -246,16 +246,6 @@ public:
     AABoxd const &aaBox() const;
 
     /**
-     * Update the sector's map space axis-aligned bounding box to encompass
-     * the geometry of all BSP leafs attributed to the sector.
-     *
-     * @pre BSP leaf list must have be initialized.
-     *
-     * @see buildBspLeafs()
-     */
-    void updateAABox();
-
-    /**
      * Returns the primary sound emitter for the sector. Other emitters in the
      * sector are linked to this, forming a chain which can be traversed using
      * the 'next' pointer of the emitter's thinker_t.

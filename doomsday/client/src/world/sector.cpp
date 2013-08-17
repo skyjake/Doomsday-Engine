@@ -49,6 +49,7 @@ DENG2_OBSERVES(Plane, HeightChange)
 {
     /// Bounding box for the sector.
     AABoxd aaBox;
+    bool needAABoxUpdate; ///< @c true= marked for update.
 
     /// Primary sound emitter. Others are linked to this, forming a chain.
     ddmobj_base_t soundEmitter;
@@ -92,6 +93,7 @@ DENG2_OBSERVES(Plane, HeightChange)
 
     Instance(Public *i, float lightLevel, Vector3f const &lightColor)
         : Base(i),
+          needAABoxUpdate(false), // Sectors with no BSP leafs have no geometry.
           lightLevel(lightLevel),
           lightColor(lightColor),
           validCount(0)
@@ -140,6 +142,34 @@ DENG2_OBSERVES(Plane, HeightChange)
                 changedComponents |= (1 << i);
         }
         notifyLightColorChanged(oldLightColor, changedComponents);
+    }
+
+    /**
+     * Update the axis-aligned bounding box in the map coordinate space to
+     * encompass the geometry of all BSP leafs attributed to the sector.
+     */
+    void updateAABox()
+    {
+        needAABoxUpdate = false;
+
+        aaBox.clear();
+        bool isFirst = false;
+        foreach(BspLeaf *leaf, bspLeafs)
+        {
+            if(leaf->isDegenerate()) continue;
+
+            AABoxd const &leafAABox = leaf->poly().aaBox();
+
+            if(!isFirst)
+            {
+                V2d_UniteBox(aaBox.arvec2, leafAABox.arvec2);
+            }
+            else
+            {
+                V2d_CopyBox(aaBox.arvec2, leafAABox.arvec2);
+                isFirst = false;
+            }
+        }
     }
 
 #ifdef __CLIENT__
@@ -512,38 +542,22 @@ void Sector::buildBspLeafs()
         }
     }
 
+    // We'll need to recalculate the axis-aligned bounding box.
+    d->needAABoxUpdate = true;
 #ifdef __CLIENT__
-    // We'll need to update the rough area calculation.
+    // ...and the rough area approximation.
     d->needRoughAreaUpdate = true;
 #endif
 }
 
 AABoxd const &Sector::aaBox() const
 {
-    return d->aaBox;
-}
-
-void Sector::updateAABox()
-{
-    d->aaBox.clear();
-
-    bool isFirst = false;
-    foreach(BspLeaf *leaf, d->bspLeafs)
+    // Perform any scheduled update now.
+    if(d->needAABoxUpdate)
     {
-        if(leaf->isDegenerate()) continue;
-
-        AABoxd const &leafAABox = leaf->poly().aaBox();
-
-        if(!isFirst)
-        {
-            V2d_UniteBox(d->aaBox.arvec2, leafAABox.arvec2);
-        }
-        else
-        {
-            V2d_CopyBox(d->aaBox.arvec2, leafAABox.arvec2);
-            isFirst = false;
-        }
+        d->updateAABox();
     }
+    return d->aaBox;
 }
 
 void Sector::linkSoundEmitter(ddmobj_base_t &newEmitter)

@@ -3568,7 +3568,6 @@ bool Map::endEditing()
     {
         sector->buildBspLeafs();
         sector->buildSides();
-        sector->updateAABox();
 
         /*
          * Chain sound emitters (ddmobj_base_t) owned by all Surfaces in the
