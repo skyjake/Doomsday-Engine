@@ -58,6 +58,7 @@ public slots:
     void close();
     void openMainMenu();
     void unloadGame();
+    void showAbout();
 
 signals:
     void opened();

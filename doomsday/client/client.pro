@@ -344,6 +344,7 @@ DENG_HEADERS += \
     include/ui/ui_panel.h \
     include/ui/ui2_main.h \
     include/ui/uidefs.h \
+    include/ui/widgets/aboutdialog.h \
     include/ui/widgets/actionitem.h \
     include/ui/widgets/atlasproceduralimage.h \
     include/ui/widgets/blurwidget.h \
@@ -658,6 +659,7 @@ SOURCES += \
     src/ui/ui2_main.cpp \
     src/ui/ui_main.cpp \
     src/ui/ui_panel.cpp \
+    src/ui/widgets/aboutdialog.cpp \
     src/ui/widgets/blurwidget.cpp \
     src/ui/widgets/busywidget.cpp \
     src/ui/widgets/buttonwidget.cpp \
