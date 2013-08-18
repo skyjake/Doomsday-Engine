@@ -41,10 +41,7 @@ void IndirectRule::setSource(Rule const &rule)
 
 void IndirectRule::update()
 {
-    if(_source)
-    {
-        setValue(_source->value());
-    }
+    setValue(_source? _source->value() : 0);
 }
 
 Rule const &IndirectRule::source() const
@@ -55,7 +52,14 @@ Rule const &IndirectRule::source() const
 
 String IndirectRule::description() const
 {
-    return String("Indirect => ") + source().description();
+    if(_source)
+    {
+        return String("Indirect => ") + source().description();
+    }
+    else
+    {
+        return String("Indirect => NULL");
+    }
 }
 
 } // namespace de
