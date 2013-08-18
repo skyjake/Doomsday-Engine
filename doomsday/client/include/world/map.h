@@ -827,11 +827,6 @@ public: /// @todo Make private:
      */
     void initBias();
 
-    /**
-     * @todo Replace with a de::Observers-based mechanism.
-     */
-    void updateMissingMaterialsForLinesOfSector(Sector const &sec);
-
 #endif // __CLIENT__
 
 public:

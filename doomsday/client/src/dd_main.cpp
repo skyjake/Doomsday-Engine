@@ -3026,7 +3026,7 @@ DENG_EXTERN_C void R_SetupMap(int mode, int flags)
     /// @todo Refactor away.
     foreach(Sector *sector, map.sectors())
     {
-        map.updateMissingMaterialsForLinesOfSector(*sector);
+        sector->fixMissingMaterialsForSides();
         sector->markReverbDirty();
     }
 #endif

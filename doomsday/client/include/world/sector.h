@@ -513,6 +513,11 @@ public:
      */
     void markVisible(bool yes = true);
 
+    /**
+     * Perform missing material fixes again for all line sides in the sector.
+     */
+    void fixMissingMaterialsForSides();
+
 #endif // __CLIENT__
 
 protected:

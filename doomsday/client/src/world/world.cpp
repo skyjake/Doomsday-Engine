@@ -609,7 +609,7 @@ DENG2_PIMPL(World)
         /// @todo Refactor away:
         foreach(Sector *sector, map->sectors())
         {
-            map->updateMissingMaterialsForLinesOfSector(*sector);
+            sector->fixMissingMaterialsForSides();
             sector->markReverbDirty();
         }
 #endif
