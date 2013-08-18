@@ -462,7 +462,6 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
             partitioner.take(leaf);
 
             // Add this BspLeaf to the LUT.
-            leaf->setMap(thisPublic);
             leaf->setIndexInMap(bspLeafs.count());
             bspLeafs.append(leaf);
 
@@ -471,6 +470,9 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
                 LOG_WARNING("BSP leaf %p is degenerate/orphan (%d half-edges).")
                     << de::dintptr(leaf)
                     << (leaf->hasPoly()? leaf->poly().hedgeCount() : 0);
+
+                // Attribute this leaf directly to the map.
+                leaf->setMap(thisPublic);
             }
 
 #ifdef DENG_DEBUG

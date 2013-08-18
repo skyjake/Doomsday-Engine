@@ -72,9 +72,6 @@ DENG2_PIMPL(BspLeaf)
     /// map coordinate space grid.
     Vector2d worldGridOffset;
 
-    /// Sector attributed to the leaf. @note can be @c 0 (degenerate!).
-    Sector *sector;
-
     /// Set of polyobjs linked to the leaf (not owned).
     Polyobjs polyobjs;
 
@@ -103,10 +100,9 @@ DENG2_PIMPL(BspLeaf)
     /// Used by legacy algorithms to prevent repeated processing.
     int validCount;
 
-    Instance(Public *i, Sector *sector = 0)
+    Instance(Public *i)
         : Base(i),
           poly(0),
-          sector(sector),
 #ifdef __CLIENT__
           fanBase(0),
           needUpdateFanBase(true),
@@ -211,8 +207,8 @@ DENG2_PIMPL(BspLeaf)
      */
     GeometryGroup *geometryGroup(int group, bool canAlloc = true)
     {
-        DENG_ASSERT(sector && !self.isDegenerate()); // sanity check
-        DENG_ASSERT(group >= 0 && group < sector->planeCount()); // sanity check
+        DENG_ASSERT(self.hasSector() && !self.isDegenerate()); // sanity check
+        DENG_ASSERT(group >= 0 && group < self.sector().planeCount()); // sanity check
 
         GeometryGroups::iterator foundAt = geomGroups.find(group);
         if(foundAt != geomGroups.end())
@@ -251,7 +247,7 @@ DENG2_PIMPL(BspLeaf)
 
         geomGroup.biasTracker.clearContributors();
 
-        Plane const &plane     = sector->plane(planeIndex);
+        Plane const &plane     = self.sector().plane(planeIndex);
         Surface const &surface = plane.surface();
 
         Vector3d surfacePoint(poly->center(), plane.visHeight());
@@ -287,7 +283,7 @@ DENG2_PIMPL(BspLeaf)
 };
 
 BspLeaf::BspLeaf(Sector *sector)
-    : MapElement(DMU_BSPLEAF), d(new Instance(this, sector))
+    : MapElement(DMU_BSPLEAF, sector), d(new Instance(this))
 {}
 
 bool BspLeaf::hasPoly() const
@@ -363,22 +359,17 @@ Vector2d const &BspLeaf::worldGridOffset() const
 
 bool BspLeaf::hasSector() const
 {
-    return d->sector != 0;
+    return hasParent();
 }
 
 Sector &BspLeaf::sector() const
 {
-    if(d->sector)
+    if(hasParent())
     {
-        return *d->sector;
+        return *parent().as<Sector>();
     }
     /// @throw MissingSectorError Attempted with no sector attributed.
-    throw MissingSectorError("BspLeaf::sector", "No sector is attributed");
-}
-
-void BspLeaf::setSector(Sector *newSector)
-{
-    d->sector = newSector;
+    throw MissingSectorError("BspLeaf::sector", "No parent sector is attributed");
 }
 
 void BspLeaf::addOnePolyobj(Polyobj const &polyobj)
@@ -438,8 +429,8 @@ bool BspLeaf::hasWorldVolume(bool useVisualHeights) const
     if(isDegenerate()) return false;
     if(!hasSector()) return false;
 
-    coord_t const floorHeight = useVisualHeights? d->sector->floor().visHeight() : d->sector->floor().height();
-    coord_t const ceilHeight  = useVisualHeights? d->sector->ceiling().visHeight() : d->sector->ceiling().height();
+    coord_t const floorHeight = useVisualHeights? sector().floor().visHeight() : sector().floor().height();
+    coord_t const ceilHeight  = useVisualHeights? sector().ceiling().visHeight() : sector().ceiling().height();
 
     return (ceilHeight - floorHeight > 0);
 }
@@ -542,7 +533,7 @@ void BspLeaf::lightBiasPoly(int group, Vector3f const *posCoords, Vector4f *colo
         d->updateBiasContributors(*geomGroup, planeIndex);
     }
 
-    Surface const &surface = d->sector->plane(planeIndex).surface();
+    Surface const &surface = sector().plane(planeIndex).surface();
     uint const biasTime = map().biasCurrentTime();
 
     Vector3f const *posIt = posCoords;
@@ -579,7 +570,7 @@ static void accumReverbForWallSections(HEdge const *hedge,
 
 bool BspLeaf::updateReverb()
 {
-    if(!d->sector || !d->poly)
+    if(!hasSector() || !d->poly)
     {
         d->reverb[SRD_SPACE] = d->reverb[SRD_VOLUME] =
             d->reverb[SRD_DECAY] = d->reverb[SRD_DAMPING] = 0;
@@ -592,7 +583,7 @@ bool BspLeaf::updateReverb()
     // Space is the rough volume of the BSP leaf (bounding box).
     AABoxd const &aaBox = d->poly->aaBox();
     d->reverb[SRD_SPACE] =
-        int(d->sector->ceiling().height() - d->sector->floor().height()) *
+        int(sector().ceiling().height() - sector().floor().height()) *
         (aaBox.maxX - aaBox.minX) *
         (aaBox.maxY - aaBox.minY);
 
@@ -684,9 +675,10 @@ int BspLeaf::property(DmuArgs &args) const
 {
     switch(args.prop)
     {
-    case DMU_SECTOR:
-        args.setValue(DMT_BSPLEAF_SECTOR, &d->sector, 0);
-        break;
+    case DMU_SECTOR: {
+        Sector *sectorAdr = sectorPtr();
+        args.setValue(DMT_BSPLEAF_SECTOR, &sectorAdr, 0);
+        break; }
     default:
         return MapElement::property(args);
     }

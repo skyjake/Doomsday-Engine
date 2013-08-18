@@ -168,14 +168,6 @@ public:
     inline Sector *sectorPtr() const { return hasSector()? &sector() : 0; }
 
     /**
-     * Change the sector attributed to the BSP leaf.
-     *
-     * @param newSector  New sector to be attributed. Ownership is unaffected.
-     *                   Can be @c 0 (to clear the attribution).
-     */
-    void setSector(Sector *newSector);
-
-    /**
      * Add the given @a polyobj to the set of those linked to the BSP leaf.
      * Ownership is unaffected. If the polyobj is already linked in this set
      * then nothing will happen.
