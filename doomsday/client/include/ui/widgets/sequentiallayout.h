@@ -24,6 +24,10 @@
 
 /**
  * Widget layout for a sequence of widgets.
+ *
+ * Layouts are utilities that modify the placement of widgets. The layout
+ * instance itself does not need to remain in memory -- widget rules are
+ * modified immediately as the widgets are added to the layout.
  */
 class SequentialLayout
 {
@@ -31,6 +35,8 @@ public:
     SequentialLayout(de::Rule const &startX,
                      de::Rule const &startY,
                      ui::Direction direction = ui::Down);
+
+    void clear();
 
     /**
      * Sets the direction of the layout. The direction can only be changed

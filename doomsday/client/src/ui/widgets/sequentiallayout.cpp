@@ -24,6 +24,8 @@ DENG2_PIMPL(SequentialLayout)
 {
     WidgetList widgets;
     ui::Direction dir;
+    Rule const *initialX;
+    Rule const *initialY;
     Rule const *posX;
     Rule const *posY;
     Rule const *fixedWidth;
@@ -34,6 +36,8 @@ DENG2_PIMPL(SequentialLayout)
     Instance(Public *i, Rule const &x, Rule const &y, ui::Direction direc)
         : Base(i),
           dir(direc),
+          initialX(holdRef(x)),
+          initialY(holdRef(y)),
           posX(holdRef(x)),
           posY(holdRef(y)),
           fixedWidth(0),
@@ -44,12 +48,23 @@ DENG2_PIMPL(SequentialLayout)
 
     ~Instance()
     {
+        releaseRef(initialX);
+        releaseRef(initialY);
         releaseRef(posX);
         releaseRef(posY);
         releaseRef(fixedWidth);
         releaseRef(fixedHeight);
         releaseRef(totalWidth);
         releaseRef(totalHeight);
+    }
+
+    void clear()
+    {
+        widgets.clear();
+        changeRef(posX, *initialX);
+        changeRef(posY, *initialY);
+        changeRef(totalWidth,  *refless(new ConstantRule(0)));
+        changeRef(totalHeight, *refless(new ConstantRule(0)));
     }
 
     void advancePos(Rule const &amount)
@@ -153,6 +168,11 @@ DENG2_PIMPL(SequentialLayout)
 SequentialLayout::SequentialLayout(Rule const &startX, Rule const &startY, ui::Direction direction)
     : d(new Instance(this, startX, startY, direction))
 {}
+
+void SequentialLayout::clear()
+{
+    d->clear();
+}
 
 void SequentialLayout::setDirection(ui::Direction direction)
 {
