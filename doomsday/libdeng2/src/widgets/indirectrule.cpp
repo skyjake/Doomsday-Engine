@@ -1,4 +1,4 @@
-/** @file context.cpp  UI data context.
+/** @file indirectule.cpp  Indirect rule.
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,12 +16,50 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#include "ui/widgets/context.h"
-#include "ui/widgets/labelwidget.h"
+#include "de/IndirectRule"
 
-#include <QtAlgorithms>
+namespace de {
 
-using namespace de;
-using namespace ui;
+IndirectRule::IndirectRule() : _source(0)
+{}
 
-dsize const Context::InvalidPos = dsize(-1);
+IndirectRule::~IndirectRule()
+{
+    independentOf(_source);
+}
+
+void IndirectRule::setSource(Rule const &rule)
+{
+    if(_source)
+    {
+        independentOf(_source);
+    }
+    dependsOn(_source = &rule);
+
+    invalidate();
+}
+
+void IndirectRule::update()
+{
+    setValue(_source? _source->value() : 0);
+}
+
+Rule const &IndirectRule::source() const
+{
+    DENG2_ASSERT(_source != 0);
+    return *_source;
+}
+
+String IndirectRule::description() const
+{
+    if(_source)
+    {
+        return String("Indirect => ") + source().description();
+    }
+    else
+    {
+        return String("Indirect => NULL");
+    }
+}
+
+} // namespace de

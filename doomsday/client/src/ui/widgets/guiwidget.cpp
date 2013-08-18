@@ -182,7 +182,8 @@ DENG2_PIMPL(GuiWidget)
             return;
         }
 
-        if(background.type != Background::Blurred)
+        if(background.type != Background::Blurred &&
+           background.type != Background::BlurredWithBorderGlow)
         {
             deinitBlur();
             return;
@@ -572,6 +573,7 @@ bool GuiWidget::geometryRequested() const
 void GuiWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
 {
     if(d->background.type != Background::Blurred &&
+       d->background.type != Background::BlurredWithBorderGlow &&
        d->background.type != Background::SharedBlur)
     {
         // Is there a solid fill?
@@ -593,6 +595,7 @@ void GuiWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
         break;
 
     case Background::BorderGlow:
+    case Background::BlurredWithBorderGlow:
         verts.makeFlexibleFrame(rule().recti().expanded(d->background.thickness),
                                 d->background.thickness,
                                 d->background.color,

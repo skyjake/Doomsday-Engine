@@ -25,6 +25,10 @@ group progress {
     rule textgap { constant $= gap.constant }
 }
 
+group about {
+    rule width { constant = 320 }
+}
+
 group console {
     rule width { constant = 500 }
 }

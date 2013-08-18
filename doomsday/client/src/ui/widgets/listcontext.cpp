@@ -40,6 +40,15 @@ Item const &ListContext::at(Pos pos) const
     return *_items.at(pos);
 }
 
+Context::Pos ListContext::find(Item const &item) const
+{
+    for(Pos i = 0; i < size(); ++i)
+    {
+        if(&at(i) == &item) return i;
+    }
+    return InvalidPos;
+}
+
 void ListContext::clear()
 {
     while(!isEmpty())

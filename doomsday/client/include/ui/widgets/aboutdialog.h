@@ -1,4 +1,4 @@
-/** @file context.cpp  UI data context.
+/** @file aboutdialog.h Information about the Doomsday Client.
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,12 +16,18 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#include "ui/widgets/context.h"
-#include "ui/widgets/labelwidget.h"
+#ifndef DENG_CLIENT_ABOUTDIALOG_H
+#define DENG_CLIENT_ABOUTDIALOG_H
 
-#include <QtAlgorithms>
+#include "dialogwidget.h"
 
-using namespace de;
-using namespace ui;
+/**
+ * Dialog that shows information about the client.
+ */
+class AboutDialog : public DialogWidget
+{
+public:
+    AboutDialog();
+};
 
-dsize const Context::InvalidPos = dsize(-1);
+#endif // DENG_CLIENT_ABOUTDIALOG_H

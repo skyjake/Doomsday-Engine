@@ -442,9 +442,10 @@ RuleRectangle &RuleRectangle::setSize(Rule const &width, Rule const &height)
     return *this;
 }
 
-void RuleRectangle::clearInput(Rule::Semantic inputRule)
+RuleRectangle &RuleRectangle::clearInput(Rule::Semantic inputRule)
 {
     d->clearInputRule(inputRule);
+    return *this;
 }
 
 Rule const &RuleRectangle::inputRule(Rule::Semantic inputRule)

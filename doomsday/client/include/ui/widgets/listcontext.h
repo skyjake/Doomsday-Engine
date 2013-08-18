@@ -37,6 +37,7 @@ public:
 
     de::dsize size() const;
     Item const &at(Pos pos) const;
+    Pos find(Item const &item) const;
 
     void clear();
     Context &insert(Pos pos, Item *item);

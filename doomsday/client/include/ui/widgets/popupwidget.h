@@ -48,6 +48,8 @@ public:
 
     GuiWidget &content() const;
 
+    void setAnchorAndOpeningDirection(de::RuleRectangle const &rule, ui::Direction dir);
+
     void setAnchor(de::Vector2i const &pos);
     void setAnchorX(int xPos);
     void setAnchorY(int yPos);
@@ -63,7 +65,17 @@ public:
      */
     void setOpeningDirection(ui::Direction dir);
 
+    ui::Direction openingDirection() const;
+
     bool isOpen() const;
+
+    /**
+     * Tells the popup to delete itself after being dismissed. The default is that
+     * the popup does not get deleted.
+     *
+     * @param deleteAfterDismiss  @c true to delete after dismissal.
+     */
+    void setDeleteAfterDismissed(bool deleteAfterDismiss);
 
     // Events.
     void viewResized();
@@ -102,6 +114,7 @@ protected:
 
     virtual void preparePopupForOpening();
     virtual void popupClosing();
+    virtual void popupDismissed();
 
 private:
     DENG2_PRIVATE(d)

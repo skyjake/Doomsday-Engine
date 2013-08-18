@@ -4,6 +4,7 @@ HEADERS += \
     include/de/AnimationVector \
     include/de/DelegateRule \
     include/de/ConstantRule \
+    include/de/IndirectRule \
     include/de/OperatorRule \
     include/de/RuleBank \
     include/de/RuleRectangle \
@@ -17,6 +18,7 @@ HEADERS += \
     include/de/widgets/animationvector.h \
     include/de/widgets/constantrule.h \
     include/de/widgets/delegaterule.h \
+    include/de/widgets/indirectrule.h \
     include/de/widgets/operatorrule.h \
     include/de/widgets/rulerectangle.h \
     include/de/widgets/rootwidget.h \
@@ -31,6 +33,7 @@ SOURCES += \
     src/widgets/animation.cpp \
     src/widgets/constantrule.cpp \
     src/widgets/delegaterule.cpp \
+    src/widgets/indirectrule.cpp \
     src/widgets/operatorrule.cpp \
     src/widgets/rulerectangle.cpp \
     src/widgets/rootwidget.cpp \

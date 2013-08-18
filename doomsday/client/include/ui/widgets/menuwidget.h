@@ -26,6 +26,7 @@
 #include "actionitem.h"
 #include "submenuitem.h"
 #include "variabletoggleitem.h"
+#include "gridlayout.h"
 
 /**
  * Menu with an N-by-M grid of items (child widgets).
@@ -40,6 +41,8 @@
  */
 class MenuWidget : public ScrollAreaWidget
 {
+    Q_OBJECT
+
 public:
     MenuWidget(de::String const &name = "");
 
@@ -55,8 +58,8 @@ public:
      *
      * If one of the dimensions is set to ui::Expand policy, the menu's size in
      * that dimension is determined by the summed up size of the children, and
-     * the specified number of columns/rows is ignored for that dimension. Only
-     * one of the dimensions can be set to Expand.
+     * the specified number of columns/rows is ignored for that dimension. Both
+     * dimensions cannot be set to zero columns/rows.
      *
      * @param columns       Number of columns in the grid.
      * @param columnPolicy  Policy for sizing columns.
@@ -93,14 +96,9 @@ public:
     void updateLayout();
 
     /**
-     * Constructs a rule for the width of a column, based on the widths of the
-     * items in the column.
-     *
-     * @param column  Column index.
-     *
-     * @return Width rule with a reference count of one (given to the caller).
+     * Provides read-only access to the layout metrics.
      */
-    de::Rule const *newColumnWidthRule(int column) const;
+    GridLayout const &layout() const;
 
     // Events.
     void update();

@@ -344,6 +344,7 @@ DENG_HEADERS += \
     include/ui/ui_panel.h \
     include/ui/ui2_main.h \
     include/ui/uidefs.h \
+    include/ui/widgets/aboutdialog.h \
     include/ui/widgets/actionitem.h \
     include/ui/widgets/atlasproceduralimage.h \
     include/ui/widgets/blurwidget.h \
@@ -356,7 +357,9 @@ DENG_HEADERS += \
     include/ui/widgets/contextwidgetorganizer.h \
     include/ui/widgets/documentwidget.h \
     include/ui/widgets/gameselectionwidget.h \
+    include/ui/widgets/dialogwidget.h \
     include/ui/widgets/gltextcomposer.h \
+    include/ui/widgets/gridlayout.h \
     include/ui/widgets/guirootwidget.h \
     include/ui/widgets/guiwidget.h \
     include/ui/widgets/fontlinewrapping.h \
@@ -373,6 +376,7 @@ DENG_HEADERS += \
     include/ui/widgets/proceduralimage.h \
     include/ui/widgets/progresswidget.h \
     include/ui/widgets/scrollareawidget.h \
+    include/ui/widgets/sequentiallayout.h \
     include/ui/widgets/submenuitem.h \
     include/ui/widgets/styledlogsinkformatter.h \
     include/ui/widgets/taskbarwidget.h \
@@ -657,6 +661,7 @@ SOURCES += \
     src/ui/ui2_main.cpp \
     src/ui/ui_main.cpp \
     src/ui/ui_panel.cpp \
+    src/ui/widgets/aboutdialog.cpp \
     src/ui/widgets/blurwidget.cpp \
     src/ui/widgets/busywidget.cpp \
     src/ui/widgets/buttonwidget.cpp \
@@ -667,7 +672,9 @@ SOURCES += \
     src/ui/widgets/contextwidgetorganizer.cpp \
     src/ui/widgets/documentwidget.cpp \
     src/ui/widgets/gameselectionwidget.cpp \
+    src/ui/widgets/dialogwidget.cpp \
     src/ui/widgets/gltextcomposer.cpp \
+    src/ui/widgets/gridlayout.cpp \
     src/ui/widgets/guirootwidget.cpp \
     src/ui/widgets/guiwidget.cpp \
     src/ui/widgets/fontlinewrapping.cpp \
@@ -684,6 +691,7 @@ SOURCES += \
     src/ui/widgets/proceduralimage.cpp \
     src/ui/widgets/progresswidget.cpp \
     src/ui/widgets/scrollareawidget.cpp \
+    src/ui/widgets/sequentiallayout.cpp \
     src/ui/widgets/styledlogsinkformatter.cpp \
     src/ui/widgets/taskbarwidget.cpp \
     src/ui/widgets/togglewidget.cpp \

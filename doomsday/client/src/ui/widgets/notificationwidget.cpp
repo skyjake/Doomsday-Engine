@@ -18,6 +18,7 @@
 
 #include "ui/widgets/notificationwidget.h"
 #include "ui/widgets/guirootwidget.h"
+#include "ui/widgets/sequentiallayout.h"
 
 #include <de/Drawable>
 #include <de/Matrix>
@@ -98,44 +99,26 @@ DENG2_PIMPL(NotificationWidget)
     {
         Rule const &gap = self.style().rules().rule("unit");
 
-        Rule const *totalWidth = 0;
-        Rule const *totalHeight = 0;
+        // The children are laid out simply in a row from right to left.
+        SequentialLayout layout(self.rule().right(), self.rule().top(), ui::Left);
 
-        WidgetList const children = self.Widget::children();
-        for(int i = 0; i < children.size(); ++i)
+        bool first = true;
+        foreach(Widget *child, self.childWidgets())
         {
-            GuiWidget &w = children[i]->as<GuiWidget>();
-
-            // The children are laid out simply in a row from right to left.
-            w.rule().setInput(Rule::Top, self.rule().top());
-            if(i > 0)
+            GuiWidget &w = child->as<GuiWidget>();
+            if(first)
             {
-                w.rule().setInput(Rule::Right, children[i - 1]->as<GuiWidget>().rule().left() - gap);
-                changeRef(totalWidth, *totalWidth + gap + w.rule().width());
+                layout << w;
+                first = false;
             }
             else
             {
-                w.rule().setInput(Rule::Right, self.rule().right());
-                totalWidth = holdRef(w.rule().width());
-            }
-
-            if(!totalHeight)
-            {
-                totalHeight = holdRef(w.rule().height());
-            }
-            else
-            {
-                changeRef(totalHeight, OperatorRule::maximum(*totalHeight, w.rule().height()));
+                layout.append(w, gap);
             }
         }
 
         // Update the total size of the notification area.
-        self.rule()
-                .setInput(Rule::Width,  *totalWidth)
-                .setInput(Rule::Height, *totalHeight);
-
-        releaseRef(totalWidth);
-        releaseRef(totalHeight);
+        self.rule().setSize(layout.width(), layout.height());
     }
 
     void show()

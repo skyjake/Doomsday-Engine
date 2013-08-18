@@ -57,6 +57,11 @@ public:
         return *refless(new OperatorRule(Maximum, left, right));
     }
 
+    static Rule const &maximum(Rule const &left, Rule const *right) {
+        if(right) return *refless(new OperatorRule(Maximum, left, *right));
+        return left;
+    }
+
     static OperatorRule &minimum(Rule const &left, Rule const &right) {
         return *refless(new OperatorRule(Minimum, left, right));
     }
@@ -153,6 +158,12 @@ inline OperatorRule &operator / (Rule const &left, float right) {
 
 inline OperatorRule &operator / (Rule const &left, Rule const &right) {
     return *refless(new OperatorRule(OperatorRule::Divide, left, right));
+}
+
+template <typename RuleType1, typename RuleType2>
+inline void sumInto(RuleType1 const *&sum, RuleType2 const &value) {
+    if(!sum) { sum = holdRef(value); }
+    else { changeRef(sum, *sum + value); }
 }
 
 } // namespace de

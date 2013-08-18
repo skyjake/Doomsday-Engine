@@ -31,16 +31,26 @@ enum Direction
     Left,
     Up,
     Right,
-    Down
+    Down,
+    NoDirection
 };
 
 inline Direction opposite(Direction dir) {
     switch(dir) {
-    case Left:  return Right;
-    case Right: return Left;
-    case Up:    return Down;
-    case Down:  return Up;
+    case Left:        return Right;
+    case Right:       return Left;
+    case Up:          return Down;
+    case Down:        return Up;
+    case NoDirection: return NoDirection;
     }
+}
+
+inline bool isHorizontal(Direction dir) {
+    return dir == ui::Left || dir == ui::Right;
+}
+
+inline bool isVertical(Direction dir) {
+    return dir == ui::Up || dir == ui::Down;
 }
 
 /**

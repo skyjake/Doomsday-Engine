@@ -37,13 +37,13 @@ OperatorRule::OperatorRule(Operator op, Rule const &left, Rule const &right)
     DENG2_ASSERT(_rightOperand != 0);
 
     dependsOn(_leftOperand);
-    dependsOn(_rightOperand);
+    if(_rightOperand != _leftOperand) dependsOn(_rightOperand);
 }
 
 OperatorRule::~OperatorRule()
 {
     independentOf(_leftOperand);
-    independentOf(_rightOperand);
+    if(_rightOperand != _leftOperand) independentOf(_rightOperand);
 }
 
 void OperatorRule::update()

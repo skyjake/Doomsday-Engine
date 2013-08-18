@@ -32,6 +32,7 @@ DENG2_OBSERVES(Games, Addition),
 DENG2_OBSERVES(App, StartupComplete),
 DENG2_OBSERVES(ContextWidgetOrganizer, WidgetCreation)
 {
+    /// ActionItem with a Game member.
     struct GameItem : public ui::ActionItem {
         GameItem(Game const &gameRef, de::String const &label, de::Action *action)
             : ui::ActionItem(label, action), game(gameRef) {}

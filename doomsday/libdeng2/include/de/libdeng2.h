@@ -226,6 +226,24 @@
 #define DENG2_NO_COPY(ClassName) \
     private: ClassName(ClassName const &);
 
+#define DENG2_IS_AS_METHODS() \
+    template <typename T_> \
+    bool is() const { return dynamic_cast<T_ const *>(this) != 0; } \
+    template <typename T_> \
+    T_ &as() { \
+        DENG2_ASSERT(is<T_>()); \
+        return *static_cast<T_ *>(this); \
+    } \
+    template <typename T_> \
+    T_ const &as() const { \
+        DENG2_ASSERT(is<T_>()); \
+        return *static_cast<T_ const *>(this); \
+    } \
+    template <typename T_> \
+    T_ *maybeAs() { return dynamic_cast<T_ *>(this); } \
+    template <typename T_> \
+    T_ const *maybeAs() const { return dynamic_cast<T_ const *>(this); } \
+
 /**
  * Macro for starting the definition of a private implementation struct. The
  * struct holds a reference to the public instance, which must be specified in

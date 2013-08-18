@@ -23,6 +23,7 @@
 #include "ui/widgets/consolecommandwidget.h"
 #include "ui/widgets/popupmenuwidget.h"
 #include "ui/widgets/blurwidget.h"
+#include "ui/widgets/aboutdialog.h"
 #include "ui/clientwindow.h"
 #include "ui/commandaction.h"
 #include "ui/signalaction.h"
@@ -239,7 +240,7 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
     unloadMenu->items()
             << new ui::Item(ui::Item::Separator, tr("Really unload the game?"))
             << new ui::ActionItem(tr("Unload") + " " _E(b) + tr("(discard progress)"), new SignalAction(this, SLOT(unloadGame())))
-            << new ui::ActionItem(tr("Cancel"), new SignalAction(d->mainMenu, SLOT(dismissPopups())));
+            << new ui::ActionItem(tr("Cancel"), new SignalAction(&d->mainMenu->menu(), SLOT(dismissPopups())));
 
     /*
      * Set up items for the DE menu. Some of these are shown/hidden
@@ -253,6 +254,8 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
             << new ui::Item(ui::Item::Separator)
             << new ui::ActionItem(tr("Check for Updates..."), new CommandAction("updateandnotify"))
             << new ui::ActionItem(tr("Updater Settings..."), new CommandAction("updatesettings"))
+            << new ui::Item(ui::Item::Separator)
+            << new ui::ActionItem(tr("About Doomsday..."), new SignalAction(this, SLOT(showAbout())))
             << new ui::Item(ui::Item::Separator)
             << new ui::ActionItem(tr("Quit Doomsday"), new CommandAction("quit"));
 
@@ -479,4 +482,11 @@ void TaskBarWidget::unloadGame()
 {
     Con_Execute(CMDS_DDAY, "unload", false, false);
     d->mainMenu->close();
+}
+
+void TaskBarWidget::showAbout()
+{
+    AboutDialog *about = new AboutDialog;
+    about->setDeleteAfterDismissed(true);
+    about->exec(root());
 }
