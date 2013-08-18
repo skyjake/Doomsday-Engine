@@ -20,6 +20,7 @@
 #include "../Rule"
 #include "../ConstantRule"
 #include "../DelegateRule"
-#include "../ScalarRule"
+#include "../IndirectRule"
 #include "../OperatorRule"
+#include "../ScalarRule"
 #include "../RuleRectangle"
