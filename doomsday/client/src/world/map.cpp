@@ -21,17 +21,10 @@
  * 02110-1301 USA</small>
  */
 
-#include <cmath>
-
 #include <de/aabox.h>
-#include <de/binangle.h>
-#include <de/memory.h>
-#include <de/memoryzone.h>
-#include <de/vector1.h>
 
 #include <de/Rectangle>
 
-#include "de_platform.h"
 #include "de_base.h"
 #include "de_console.h" // Con_GetInteger
 #include "de_defs.h"
@@ -42,7 +35,6 @@
 #include "BspLeaf"
 #include "BspNode"
 #include "Line"
-#include "Plane"
 #include "Polyobj"
 #include "Sector"
 #include "Vertex"
@@ -202,7 +194,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
           bspRoot         (0),
           lineLinks       (0)
 #ifdef __CLIENT__
-          , skyFloorHeight(DDMAXFLOAT),
+         ,skyFloorHeight  (DDMAXFLOAT),
           skyCeilingHeight(DDMINFLOAT)
 #endif
     {
@@ -222,8 +214,6 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
         // must be destroyed first.
         lightGrid.reset();
 #endif
-
-        /// @todo fixme: What about Segments?
 
         qDeleteAll(bspNodes);
         qDeleteAll(bspLeafs);
@@ -247,22 +237,22 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
      */
     void updateBounds()
     {
-        bool isFirst = true;
+        bool haveGeometry = false;
         foreach(Line *line, lines)
         {
             // Polyobj lines don't count.
             if(line->definesPolyobj()) continue;
 
-            if(isFirst)
-            {
-                // The first line's bounds are used as is.
-                V2d_CopyBox(bounds.arvec2, line->aaBox().arvec2);
-                isFirst = false;
-            }
-            else
+            if(haveGeometry)
             {
                 // Expand the bounding box.
                 V2d_UniteBox(bounds.arvec2, line->aaBox().arvec2);
+            }
+            else
+            {
+                // The first line's bounds are used as is.
+                V2d_CopyBox(bounds.arvec2, line->aaBox().arvec2);
+                haveGeometry = true;
             }
         }
     }
@@ -280,7 +270,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
     /**
      * Notify interested parties of a "one-way window" in the map.
      *
-     * @param line    The window line.
+     * @param line              The window line.
      * @param backFacingSector  Sector that the back of the line is facing.
      */
     void notifyOneWayWindowFound(Line &line, Sector &backFacingSector)
@@ -518,7 +508,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
     }
 
     /**
-     * Build a BSP tree for the map.
+     * Build a new BSP tree.
      *
      * @pre Map line bounds have been determined and a line blockmap constructed.
      */
@@ -558,7 +548,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
             bsp::Partitioner partitioner(bspSplitFactor);
             partitioner.audienceForUnclosedSectorFound += this;
 
-            // Build a new BSP!
+            // Build a BSP!
             BspTreeNode *rootNode = partitioner.buildBsp(linesToBuildBspFor, mesh);
 
             LOG_INFO("BSP built: %d Nodes, %d Leafs, %d Segments and %d Vertexes."
@@ -586,7 +576,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
             bspLeafs.reserve(partitioner.numLeafs());
 #endif
 
-            // Iterative pre-order traversal of the BspBuilder's map element tree.
+            // Iterative pre-order traversal of the map element tree.
             BspTreeNode *cur = rootNode;
             BspTreeNode *prev = 0;
             while(cur)
@@ -595,8 +585,8 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
                 {
                     if(cur->userData())
                     {
-                        // Acquire ownership of and collate all map data elements at
-                        // this node of the tree.
+                        // Acquire ownership of and collate all map data elements
+                        // at this node of the tree.
                         collateBspElements(partitioner, *cur);
                     }
 
@@ -640,13 +630,13 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
     }
 
     /**
-     * Construct an initial (empty) line blockmap for "this" map.
+     * Construct an initial (empty) line blockmap.
      *
      * @pre Coordinate space bounds have already been determined.
      */
     void initLineBlockmap()
     {
-#define BLOCKMAP_MARGIN      8 // size guardband around map
+#define BLOCKMAP_MARGIN      8 // size guardband
 #define CELL_SIZE            MAPBLOCKUNITS
 
         // Setup the blockmap area to enclose the whole map, plus a margin
@@ -715,14 +705,15 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
             }
         }
     }
+
     /**
-     * Construct an initial (empty) mobj blockmap for "this" map.
+     * Construct an initial (empty) mobj blockmap.
      *
      * @pre Coordinate space bounds have already been determined.
      */
     void initMobjBlockmap()
     {
-#define BLOCKMAP_MARGIN      8 // size guardband around map
+#define BLOCKMAP_MARGIN      8 // size guardband
 #define CELL_SIZE            MAPBLOCKUNITS
 
         // Setup the blockmap area to enclose the whole map, plus a margin
@@ -815,7 +806,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
     static int lineLinkerWorker(Line *ld, void *parameters)
     {
         LineLinkerParams *p = reinterpret_cast<LineLinkerParams *>(parameters);
-        DENG_ASSERT(p);
+        DENG_ASSERT(p != 0);
 
         // Do the bounding boxes intercept?
         if(p->box.minX >= ld->aaBox().maxX ||
@@ -835,7 +826,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
     }
 
     /**
-     * @note Caller must ensure that the mobj is currently unlinked.
+     * @note Caller must ensure that the mobj is @em not linked.
      */
     void linkMobjToLines(mobj_t &mo)
     {
@@ -858,13 +849,13 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
     }
 
     /**
-     * Construct an initial (empty) polyobj blockmap for "this" map.
+     * Construct an initial (empty) polyobj blockmap.
      *
      * @pre Coordinate space bounds have already been determined.
      */
     void initPolyobjBlockmap()
     {
-#define BLOCKMAP_MARGIN      8 // size guardband around map
+#define BLOCKMAP_MARGIN      8 // size guardband
 #define CELL_SIZE            MAPBLOCKUNITS
 
         // Setup the blockmap area to enclose the whole map, plus a margin
@@ -900,13 +891,13 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
     }
 
     /**
-     * Construct an initial (empty) BSP leaf blockmap for "this" map.
+     * Construct an initial (empty) BSP leaf blockmap.
      *
      * @pre Coordinate space bounds have already been determined.
      */
     void initBspLeafBlockmap()
     {
-#define BLOCKMAP_MARGIN      8 // size guardband around map
+#define BLOCKMAP_MARGIN      8 // size guardband
 #define CELL_SIZE            MAPBLOCKUNITS
 
         // Setup the blockmap area to enclose the whole map, plus a margin
@@ -948,7 +939,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
     }
 
     /**
-     * Locate a polyobj in the map by sound emitter.
+     * Locate a polyobj by sound emitter.
      *
      * @param soundEmitter  ddmobj_base_t to search for.
      *
@@ -965,7 +956,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
     }
 
     /**
-     * Locate a sector in the map by sound emitter.
+     * Locate a sector by sound emitter.
      *
      * @param soundEmitter  ddmobj_base_t to search for.
      *
@@ -982,7 +973,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
     }
 
     /**
-     * Locate a sector plane in the map by sound emitter.
+     * Locate a sector plane by sound emitter.
      *
      * @param soundEmitter  ddmobj_base_t to search for.
      *
@@ -1002,7 +993,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
     }
 
     /**
-     * Locate a surface in the map by sound emitter.
+     * Locate a surface by sound emitter.
      *
      * @param soundEmitter  ddmobj_base_t to search for.
      *
@@ -1189,8 +1180,8 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
         // The time that applies on this frame.
         bias.currentTime = Timer_RealMilliseconds();
 
-        // Check which sources have changed and update the tracker bits for
-        // any affected surfaces.
+        // Check which sources have changed and update the trackers for any
+        // affected surfaces.
         BiasDigest allChanges;
         bool needUpdateSurfaces = false;
 
@@ -1218,14 +1209,14 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
     }
 
     /**
-     * Create new objlinks for mobjs (contact spreading).
+     * Create new objlinks for mobj => BSP leaf contact spreading.
      */
     void createMobjLinks()
     {
         foreach(Sector *sector, sectors)
         for(mobj_t *iter = sector->firstMobj(); iter; iter = iter->sNext)
         {
-            R_ObjlinkCreate(*iter); // For spreading purposes.
+            R_ObjlinkCreate(*iter);
         }
     }
 
@@ -1797,7 +1788,6 @@ static int blockmapCellBspLeafsIterator(void *object, void *context)
 
         // Check the bounds.
         AABoxd const &leafAABox = bspLeaf->poly().aaBox();
-
         if(args->box &&
            (leafAABox.maxX < args->box->minX ||
             leafAABox.minX > args->box->maxX ||
@@ -2037,18 +2027,14 @@ void Map::link(mobj_t &mo, byte flags)
     // Link into blockmap?
     if(flags & DDLINK_BLOCKMAP)
     {
-        // Unlink from the old block, if any.
         d->unlinkMobjInBlockmap(mo);
         d->linkMobjInBlockmap(mo);
     }
 
-    // Link into lines.
+    // Link into lines?
     if(!(flags & DDLINK_NOLINE))
     {
-        // Unlink from any existing lines.
         d->unlinkMobjFromLines(mo);
-
-        // Link to all contacted lines.
         d->linkMobjToLines(mo);
     }
 
@@ -3342,7 +3328,7 @@ bool Map::endEditing()
         d->polyobjs.append(d->editable.polyobjs.takeFirst());
         Polyobj *polyobj = d->polyobjs.back();
 
-        // Create a segment for each line of this polyobj.
+        // Create half-edge geometry and line segments for each line.
         foreach(Line *line, polyobj->lines())
         {
             HEdge *hedge = polyobj->mesh().newHEdge(line->from());
