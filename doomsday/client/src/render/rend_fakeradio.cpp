@@ -1346,7 +1346,10 @@ void Rend_RadioBspLeafEdges(BspLeaf &bspLeaf)
 
         for(int pln = 0; pln < sector.planeCount(); ++pln)
         {
-            writeShadowSection(pln, *side, shadowDark);
+            if(doPlanes[pln])
+            {
+                writeShadowSection(pln, *side, shadowDark);
+            }
         }
 
         // Mark it rendered for this frame.

@@ -76,8 +76,9 @@ void R_ObjlinkCreate(struct lumobj_s &lumobj);
 void R_LinkObjs();
 
 /**
- * Spread object => BspLeaf links for the given @a BspLeaf. Note that
- * all object types will be spread at this time.
+ * Spread object => BspLeaf links for the given @a BspLeaf. Note that all object
+ * types will be spread at this time. It is assumed that the BSP leaf is @em not
+ * degenerate.
  */
 void R_InitForBspLeaf(BspLeaf &bspLeaf);
 

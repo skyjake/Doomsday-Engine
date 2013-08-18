@@ -361,17 +361,11 @@ static void maybeSpreadOverEdge(HEdge *hedge, contactfinderparams_t *parms)
 
     BspLeaf *leaf = hedge->face().mapElement()->as<BspLeaf>();
 
-    DENG_ASSERT(!leaf->isDegenerate());
-
     // There must be a back BSP leaf to spread to.
     if(!hedge->hasTwin() || !hedge->twin().hasFace()) return;
 
     DENG_ASSERT(hedge->twin().face().mapElement() != 0);
-
     BspLeaf *backLeaf = hedge->twin().face().mapElement()->as<BspLeaf>();
-
-    // Never spread to degenerate BspLeafs.
-    if(backLeaf->isDegenerate()) return;
 
     // Which way does the spread go?
     if(!(leaf->validCount() == validCount && backLeaf->validCount() != validCount))
@@ -550,8 +544,6 @@ static void findContacts(objlink_t *link)
 static void spreadContactsForBspLeaf(objlinkblockmap_t &obm, BspLeaf const &bspLeaf,
     float maxRadius)
 {
-    DENG_ASSERT(!bspLeaf.isDegenerate());
-
     AABoxd const &leafAABox = bspLeaf.poly().aaBox();
 
     uint minBlock[2];
@@ -591,7 +583,7 @@ static inline float maxRadius(objtype_t type)
 
 void R_InitForBspLeaf(BspLeaf &bspLeaf)
 {
-    if(bspLeaf.isDegenerate()) return;
+    DENG_ASSERT(!bspLeaf.isDegenerate());
 
 BEGIN_PROF( PROF_OBJLINK_SPREAD );
 

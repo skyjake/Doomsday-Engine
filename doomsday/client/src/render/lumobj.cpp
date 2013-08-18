@@ -1145,12 +1145,9 @@ static boolean LOIT_ClipLumObj(void *data, void * /*context*/)
     return true; // Continue iteration.
 }
 
-void LO_ClipInBspLeaf(int bspLeafIdx)
+void LO_ClipInBspLeaf(BspLeaf &leaf)
 {
-    BspLeaf &leaf = *App_World().map().bspLeafs().at(bspLeafIdx);
-
-    if(leaf.isDegenerate()) return;
-
+    DENG2_ASSERT(!leaf.isDegenerate());
     iterateBspLeafLumObjs(leaf, LOIT_ClipLumObj);
 }
 
@@ -1192,12 +1189,9 @@ boolean LOIT_ClipLumObjBySight(void *data, void *context)
     return true; // Continue iteration.
 }
 
-void LO_ClipInBspLeafBySight(int bspLeafIdx)
+void LO_ClipInBspLeafBySight(BspLeaf &leaf)
 {
-    BspLeaf &leaf = *App_World().map().bspLeafs().at(bspLeafIdx);
-
-    if(leaf.isDegenerate()) return;
-
+    DENG_ASSERT(!leaf.isDegenerate());
     iterateBspLeafLumObjs(leaf, LOIT_ClipLumObjBySight, &leaf);
 }
 

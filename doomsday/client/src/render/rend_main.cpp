@@ -2236,7 +2236,7 @@ static void occludeLeaf(bool frontFacing)
             continue;
 
         BspLeaf *backLeaf = hedge->twin().face().mapElement()->as<BspLeaf>();
-        if(backLeaf->isDegenerate() || !backLeaf->hasSector())
+        if(!backLeaf->hasSector())
             continue;
 
         Sector const &frontSec = leaf->sector();
@@ -2330,7 +2330,7 @@ static void drawCurrentLeaf()
      */
 
     occludeLeaf(false /* back facing */);
-    LO_ClipInBspLeaf(leaf->indexInMap());
+    LO_ClipInBspLeaf(*leaf);
     occludeLeaf(true /* front facing */);
 
     clipLeafFrontFacingWalls();
@@ -2338,7 +2338,7 @@ static void drawCurrentLeaf()
     if(leaf->polyobjCount())
     {
         // Polyobjs don't obstruct - clip lights with another algorithm.
-        LO_ClipInBspLeafBySight(leaf->indexInMap());
+        LO_ClipInBspLeafBySight(*leaf);
     }
 
     // Mark particle generators in the sector visible.
@@ -2415,7 +2415,7 @@ static void traverseBspAndDrawLeafs(MapElement *bspElement)
         return;
 
     // Is this leaf visible?
-    if(!firstBspLeaf && !C_CheckBspLeaf(*bspLeaf))
+    if(!firstBspLeaf && !C_IsPolyVisible(bspLeaf->poly()))
         return;
 
     // This is now the current leaf.

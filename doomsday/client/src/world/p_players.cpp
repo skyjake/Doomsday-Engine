@@ -122,7 +122,10 @@ boolean P_IsInVoid(player_t *player)
     {
         if(ddpl->inVoid) return true;
 
-        if(ddpl->mo && ddpl->mo->bspLeaf)
+        if(!ddpl->mo->bspLeaf || !ddpl->mo->bspLeaf->hasSector())
+            return true;
+
+        if(ddpl->mo)
         {
             Sector &sec = ddpl->mo->bspLeaf->sector();
 

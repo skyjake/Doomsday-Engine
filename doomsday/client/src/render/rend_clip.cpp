@@ -20,9 +20,7 @@
  */
 
 #include <cstdlib>
-#include <assert.h>
 
-#include <de/binangle.h>
 #include <de/vector1.h>
 
 #include <de/Log>
@@ -30,10 +28,6 @@
 #include "de_base.h"
 #include "de_console.h"
 #include "de_render.h"
-
-#include "Face"
-
-#include "BspLeaf"
 
 #include "render/rend_clip.h"
 
@@ -963,16 +957,16 @@ int C_IsAngleVisible(binangle_t bang)
     return true;
 }
 
-int C_CheckBspLeaf(BspLeaf &leaf)
+int C_IsPolyVisible(Face const &poly)
 {
-    if(leaf.isDegenerate()) return false;
+    if(!poly.hedgeCount())
+        return false;
 
-    if(devNoCulling) return true;
+    if(devNoCulling)
+        return true;
 
     // Do we need to resize the angle list buffer?
-    Face const &face = leaf.poly();
-
-    if(face.hedgeCount() > anglistSize)
+    if(poly.hedgeCount() > anglistSize)
     {
         anglistSize *= 2;
         if(!anglistSize)
@@ -982,17 +976,17 @@ int C_CheckBspLeaf(BspLeaf &leaf)
 
     // Find angles to all corners.
     int n = 0;
-    HEdge const *hedge = face.hedge();
+    HEdge const *hedge = poly.hedge();
     do
     {
         // Shift for more accuracy.
         anglist[n++] = bamsAtan2(int( (hedge->origin().y - vOrigin[VZ]) * 100 ),
                                  int( (hedge->origin().x - vOrigin[VX]) * 100 ));
 
-    } while((hedge = &hedge->next()) != face.hedge());
+    } while((hedge = &hedge->next()) != poly.hedge());
 
     // Check each of the ranges defined by the edges.
-    for(int i = 0; i < face.hedgeCount() - 1; ++i)
+    for(int i = 0; i < poly.hedgeCount() - 1; ++i)
     {
         // The last edge won't be checked. This is because the edges
         // define a closed, convex polygon and the last edge's range is

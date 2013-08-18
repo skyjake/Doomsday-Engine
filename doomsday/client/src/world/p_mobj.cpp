@@ -350,7 +350,7 @@ D_CMD(InspectMobj)
                mo->origin[0], mo->origin[1], mo->origin[2],
                mo->mom[0], mo->mom[1], mo->mom[2]);
     Con_Printf("FloorZ:%f CeilingZ:%f\n", mo->floorZ, mo->ceilingZ);
-    if(mo->bspLeaf)
+    if(mo->bspLeaf && mo->bspLeaf->hasSector())
     {
         Sector &sector = mo->bspLeaf->sector();
         Con_Printf("Sector:%i (FloorZ:%f CeilingZ:%f)\n", P_ToIndex(&sector),

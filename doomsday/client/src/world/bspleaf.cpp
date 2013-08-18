@@ -659,6 +659,7 @@ void BspLeaf::clearShadowLines()
 
 void BspLeaf::addShadowLine(Line::Side &side)
 {
+    if(isDegenerate()) return;
     d->shadowLines.insert(&side);
 }
 

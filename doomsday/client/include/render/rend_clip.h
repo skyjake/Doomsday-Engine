@@ -35,7 +35,7 @@
 
 #include <de/Vector>
 
-class BspLeaf;
+#include "Face"
 
 DENG_EXTERN_C int devNoCulling;
 
@@ -63,9 +63,12 @@ int C_IsPointVisible(coord_t x, coord_t y, coord_t height);
 int C_IsAngleVisible(binangle_t bang);
 
 /**
- * @return  Non-zero if @a bspLeaf might be visible, else @c 0.
+ * The only requirement is that the half-edges of the polygon form a contiguous
+ * (and closed) loop.
+ *
+ * @return  Non-zero if some point of @a poly might be visible, else @c 0.
  */
-int C_CheckBspLeaf(BspLeaf &bspLeaf);
+int C_IsPolyVisible(de::Face const &poly);
 
 /**
  * Add a segment relative to the current viewpoint.

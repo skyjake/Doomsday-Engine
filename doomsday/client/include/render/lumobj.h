@@ -156,18 +156,18 @@ texturevariantspecification_t &Rend_LightmapTextureSpec();
 /**
  * Clip lumobj, omni lights in the given BspLeaf.
  *
- * @param bspLeafIdx    BspLeaf index in which lights will be clipped.
+ * @param bspLeaf  BspLeaf in which lights will be clipped.
  */
-void LO_ClipInBspLeaf(int bspLeafIdx);
+void LO_ClipInBspLeaf(BspLeaf &bspLeaf);
 
 /**
  * In the situation where a BSP leaf contains both lumobjs and a polyobj,
  * the lumobjs must be clipped more carefully. Here we check if the line of
  * sight intersects any of the polyobj hedges that face the camera.
  *
- * @param bspLeafIdx    BspLeaf index in which lumobjs will be clipped.
+ * @param bspLeaf  BspLeaf in which lumobjs will be clipped.
  */
-void LO_ClipInBspLeafBySight(int bspLeafIdx);
+void LO_ClipInBspLeafBySight(BspLeaf &bspLeaf);
 
 /**
  * Iterate over all luminous objects within the specified origin range, making
