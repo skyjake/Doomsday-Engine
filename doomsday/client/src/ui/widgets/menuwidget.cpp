@@ -21,8 +21,8 @@
 #include "ui/widgets/contextwidgetorganizer.h"
 #include "ui/widgets/listcontext.h"
 #include "ui/widgets/actionitem.h"
-#include "ui/widgets/variabletoggleitem.h"
 #include "ui/widgets/variabletogglewidget.h"
+#include "ui/widgets/gridlayout.h"
 
 using namespace de;
 using namespace ui;
@@ -96,6 +96,7 @@ public ContextWidgetOrganizer::IWidgetFactory
     };
 
     bool needLayout;
+    GridLayout layout;
     ListContext defaultItems;
     Context const *items;
     ContextWidgetOrganizer organizer;
@@ -104,14 +105,16 @@ public ContextWidgetOrganizer::IWidgetFactory
     SizePolicy colPolicy;
     SizePolicy rowPolicy;
 
-    Rule const *margin;
+    //Rule const *margin;
     //Rule const *padding;
 
+    /*
     ConstantRule *cols;
     ConstantRule *rows;
 
     OperatorRule *colWidth;
-    OperatorRule *rowHeight;       
+    OperatorRule *rowHeight;
+    */
 
     Instance(Public *i)
         : Base(i),
@@ -121,14 +124,14 @@ public ContextWidgetOrganizer::IWidgetFactory
           colPolicy(Fixed),
           rowPolicy(Fixed)
     {
-        cols = new ConstantRule(1);
-        rows = new ConstantRule(1);
+        //cols = new ConstantRule(1);
+        //rows = new ConstantRule(1);
 
-        margin = &self.style().rules().rule("gap");
+        //margin = &self.style().rules().rule("gap");
         //padding = &self.style().rules().rule("unit");
 
-        colWidth  = holdRef((self.rule().width() - *margin * 2) / *cols);
-        rowHeight = holdRef((self.rule().height() - *margin * 2) / *rows);
+        //colWidth  = holdRef((self.rule().width() - *margin * 2) / *cols);
+        //rowHeight = holdRef((self.rule().height() - *margin * 2) / *rows);
 
         // We will create widgets ourselves.
         organizer.setWidgetFactory(*this);
@@ -139,10 +142,12 @@ public ContextWidgetOrganizer::IWidgetFactory
 
     ~Instance()
     {
+        /*
         releaseRef(cols);
         releaseRef(rows);
         releaseRef(colWidth);
         releaseRef(rowHeight);
+        */
     }
 
     void setContext(Context const *ctx)
@@ -247,6 +252,7 @@ public ContextWidgetOrganizer::IWidgetFactory
         openPopups.remove(&popup);
     }
 
+    /*
     Vector2i ordinalToGridPos(int ordinal) const
     {
         Vector2i pos;
@@ -269,11 +275,15 @@ public ContextWidgetOrganizer::IWidgetFactory
         }
         return pos;
     }
+    */
 
     bool isVisibleItem(Widget const *child) const
     {
-        GuiWidget const *widget = dynamic_cast<GuiWidget const *>(child);
-        return widget && widget->isVisible();
+        if(GuiWidget const *widget = child->maybeAs<GuiWidget>())
+        {
+            return widget->isVisible();
+        }
+        return false;
     }
 
     int countVisible() const
@@ -286,6 +296,7 @@ public ContextWidgetOrganizer::IWidgetFactory
         return num;
     }
 
+    /*
     Vector2i countGrid() const
     {
         Vector2i size;
@@ -301,7 +312,9 @@ public ContextWidgetOrganizer::IWidgetFactory
 
         return size;
     }
+    */
 
+    /*
     GuiWidget *findItem(int col, int row) const
     {
         int ord = 0;
@@ -402,6 +415,20 @@ public ContextWidgetOrganizer::IWidgetFactory
         if(!total) return new ConstantRule(0);
         return refless(total);
     }
+    */
+
+    void relayout()
+    {
+        layout.clear();
+
+        foreach(Widget *child, self.childWidgets())
+        {
+            GuiWidget *w = child->maybeAs<GuiWidget>();
+            if(!isVisibleItem(w)) continue;
+
+            layout << *w;
+        }
+    }
 };
 
 MenuWidget::MenuWidget(String const &name)
@@ -411,11 +438,24 @@ MenuWidget::MenuWidget(String const &name)
 void MenuWidget::setGridSize(int columns, ui::SizePolicy columnPolicy,
                              int rows, ui::SizePolicy rowPolicy)
 {
-    d->cols->set(columns);
-    d->rows->set(rows);
+    d->layout.clear();
+    d->layout.setGridSize(columns, rows);
+    d->layout.setLeftTop(contentRule().left(), contentRule().top());
 
     d->colPolicy = columnPolicy;
     d->rowPolicy = rowPolicy;
+
+    if(d->colPolicy == ui::Filled)
+    {
+        DENG2_ASSERT(columns > 0);
+        d->layout.setOverrideWidth((rule().width() - margin() * 2) / float(columns));
+    }
+
+    if(d->rowPolicy == ui::Filled)
+    {
+        DENG2_ASSERT(rows > 0);
+        d->layout.setOverrideHeight((rule().height() - margin() * 2) / float(rows));
+    }
 
     d->needLayout = true;
 }
@@ -442,10 +482,12 @@ int MenuWidget::count() const
 
 void MenuWidget::updateLayout()
 {
-    Rule const *baseVert = holdRef(&contentRule().top());
+    d->relayout();
 
-    Vector2i gridSize = d->countGrid();
+    //Rule const *baseVert = holdRef(&contentRule().top());
 
+    //Vector2i gridSize = d->countGrid();
+/*
     for(int row = 0; row < gridSize.y; ++row)
     {
         Rule const *baseHoriz = &contentRule().left();
@@ -541,10 +583,29 @@ void MenuWidget::updateLayout()
 
     // Hold kept references.
     releaseRef(baseVert);
+*/
+
+    setContentSize(d->layout.width(), d->layout.height());
+
+    if(d->colPolicy == Expand)
+    {
+        rule().setInput(Rule::Width, d->layout.width() + margin() * 2);
+    }
+    if(d->rowPolicy == Expand)
+    {
+        rule().setInput(Rule::Height, d->layout.height() + margin() * 2);
+        qDebug() << "grid height:" << d->layout.height().description();
+    }
 
     d->needLayout = false;
 }
 
+GridLayout const &MenuWidget::layout() const
+{
+    return d->layout;
+}
+
+/*
 Rule const *MenuWidget::newColumnWidthRule(int column) const
 {
     if(d->colPolicy != Filled)
@@ -553,6 +614,7 @@ Rule const *MenuWidget::newColumnWidthRule(int column) const
     }
     return holdRef(d->colWidth);
 }
+*/
 
 ContextWidgetOrganizer const &MenuWidget::organizer() const
 {
@@ -563,12 +625,12 @@ void MenuWidget::update()
 {
     if(isHidden()) return;
 
-    ScrollAreaWidget::update();
-
     if(d->needLayout)
     {
         updateLayout();
     }
+
+    ScrollAreaWidget::update();
 }
 
 void MenuWidget::dismissPopups()
