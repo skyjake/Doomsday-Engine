@@ -115,12 +115,16 @@ public:
          */
         inline int bspLeafCount() const { return bspLeafs().count(); }
 
+        /**
+         * Returns the axis-aligned bounding box of the cluster.
+         */
+        AABoxd const &aaBox() const;
+
         friend class Sector;
 
     private:
-        Cluster(Sector &sector);
-        Sector &_parent;
         BspLeafs _bspLeafs;
+        QScopedPointer<AABoxd> _aaBox;
     };
 
 #ifdef __CLIENT__

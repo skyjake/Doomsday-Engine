@@ -209,7 +209,7 @@ void Rend_Register()
 
     C_VAR_INT2  ("rend-light",                      &useDynLights,                  0, 0, 1, LO_UnlinkMobjLumobjs);
     C_VAR_INT2  ("rend-light-ambient",              &ambientLight,                  0, 0, 255, Rend_UpdateLightModMatrix);
-    C_VAR_FLOAT ("rend-light-attenuation",          &rendLightDistanceAttenuation, CVF_NO_MAX, 0, 0);
+    C_VAR_FLOAT ("rend-light-attenuation",          &rendLightDistanceAttenuation,  CVF_NO_MAX, 0, 0);
     C_VAR_FLOAT ("rend-light-bright",               &dynlightFactor,                0, 0, 1);
     C_VAR_FLOAT2("rend-light-compression",          &lightRangeCompression,         0, -1, 1, Rend_UpdateLightModMatrix);
     C_VAR_FLOAT ("rend-light-fog-bright",           &dynlightFogBright,             0, 0, 1);
@@ -3191,9 +3191,6 @@ static void Rend_DrawSurfaceVectors(Map &map)
     Vector3d origin;
     foreach(BspLeaf *bspLeaf, map.bspLeafs())
     {
-        if(!bspLeaf->hasSector() || bspLeaf->isDegenerate())
-            continue;
-
         HEdge *base = bspLeaf->poly().hedge();
         HEdge *hedge = base;
         do

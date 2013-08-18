@@ -43,21 +43,14 @@
 
 using namespace de;
 
-#ifdef __CLIENT__
-typedef QSet<BspLeaf *> ReverbBspLeafs;
-#endif
-
-Sector::Cluster::Cluster(Sector &parent) : _parent(parent)
-{}
-
 Sector &Sector::Cluster::sector() const
 {
-    return _parent;
+    return *_bspLeafs.first()->parent().as<Sector>();
 }
 
 Plane &Sector::Cluster::plane(int planeIndex) const
 {
-    return _parent.plane(planeIndex);
+    return sector().plane(planeIndex);
 }
 
 Plane &Sector::Cluster::visPlane(int planeIndex) const
@@ -66,15 +59,32 @@ Plane &Sector::Cluster::visPlane(int planeIndex) const
     return plane(planeIndex);
 }
 
+AABoxd const &Sector::Cluster::aaBox() const
+{
+    // If an bounding box is assigned - use it.
+    if(!_aaBox.isNull())
+    {
+        return *_aaBox;
+    }
+    // Otherwise it means the cluser is comprised of a single BSP leaf, so we
+    // can use the bounding box of the leaf's geometry directly.
+    DENG_ASSERT(_bspLeafs.count() == 1); // sanity check
+    return _bspLeafs.first()->poly().aaBox();
+}
+
 Sector::Cluster::BspLeafs const &Sector::Cluster::bspLeafs() const
 {
     return _bspLeafs;
 }
 
+#ifdef __CLIENT__
+typedef QSet<BspLeaf *> ReverbBspLeafs;
+#endif
+
 DENG2_PIMPL(Sector),
 DENG2_OBSERVES(Plane, HeightChange)
 {
-    /// Bounding box for the sector.
+    /// Bounding box for the whole sector (all clusters).
     AABoxd aaBox;
     bool needAABoxUpdate; ///< @c true= marked for update.
 
@@ -173,8 +183,8 @@ DENG2_OBSERVES(Plane, HeightChange)
     }
 
     /**
-     * Update the axis-aligned bounding box in the map coordinate space to
-     * encompass the geometry of all BSP leafs attributed to the sector.
+     * Update the axis-aligned bounding box in the map coordinate space
+     * to encompass the geometry of all BSP leaf clusters of the sector.
      */
     void updateAABox()
     {
@@ -183,19 +193,14 @@ DENG2_OBSERVES(Plane, HeightChange)
         aaBox.clear();
         bool haveGeometry = false;
         foreach(Cluster *cluster, clusters)
-        foreach(BspLeaf *leaf, cluster->bspLeafs())
         {
-            if(leaf->isDegenerate()) continue;
-
-            AABoxd const &leafAABox = leaf->poly().aaBox();
-
             if(haveGeometry)
             {
-                V2d_UniteBox(aaBox.arvec2, leafAABox.arvec2);
+                V2d_UniteBox(aaBox.arvec2, cluster->aaBox().arvec2);
             }
             else
             {
-                V2d_CopyBox(aaBox.arvec2, leafAABox.arvec2);
+                aaBox = cluster->aaBox();
                 haveGeometry = true;
             }
         }
@@ -220,12 +225,8 @@ DENG2_OBSERVES(Plane, HeightChange)
 
         roughArea = 0;
         foreach(Cluster *cluster, clusters)
-        foreach(BspLeaf *leaf, cluster->bspLeafs())
         {
-            if(leaf->isDegenerate()) continue;
-
-            AABoxd const &leafAABox = leaf->poly().aaBox();
-
+            AABoxd const &leafAABox = cluster->aaBox();
             roughArea += (leafAABox.maxX - leafAABox.minX) *
                          (leafAABox.maxY - leafAABox.minY);
         }
@@ -590,10 +591,14 @@ void Sector::buildClusters()
         if(bspLeaf->parent().as<Sector>() != this)
             continue;
 
+        // Degenerate BSP leafs are excluded (no geometry).
+        if(bspLeaf->isDegenerate())
+            continue;
+
         // Time to construct The One cluster?
         if(d->clusters.isEmpty())
         {
-            d->clusters.append(new Cluster(*this));
+            d->clusters.append(new Cluster);
         }
         Cluster *cluster = d->clusters.first();
 
@@ -602,6 +607,32 @@ void Sector::buildClusters()
 
         // Attribute the BSP leaf to the cluster.
         bspLeaf->setCluster(cluster);
+    }
+
+    // Clustering complete.
+
+    // Determine the bounds of each cluster.
+    /// @todo Defer until necessary.
+    foreach(Cluster *cluster, d->clusters)
+    {
+        // If the cluster is comprised of a single BSP leaf we can use the
+        // bounding box of it's geometry directly.
+        if(cluster->_bspLeafs.count() == 1)
+            continue;
+
+        // Unite the geometry bounding boxes of BSP leafs in the cluster.
+        foreach(BspLeaf *leaf, cluster->_bspLeafs)
+        {
+            AABoxd const &leafAABox = leaf->poly().aaBox();
+            if(!cluster->_aaBox.isNull())
+            {
+                V2d_UniteBox((*cluster->_aaBox).arvec2, leafAABox.arvec2);
+            }
+            else
+            {
+                cluster->_aaBox.reset(new AABoxd(leafAABox));
+            }
+        }
     }
 }
 
