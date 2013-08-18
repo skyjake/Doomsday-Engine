@@ -65,14 +65,14 @@ class BspLeaf : public de::MapElement
     DENG2_NO_ASSIGN(BspLeaf)
 
 public:
+    /// Required sector cluster attribution is missing. @ingroup errors
+    DENG2_ERROR(MissingClusterError);
+
     /// An invalid polygon was specified @ingroup errors
     DENG2_ERROR(InvalidPolyError);
 
     /// Required polygon geometry is missing. @ingroup errors
     DENG2_ERROR(MissingPolyError);
-
-    /// Required sector attribution is missing. @ingroup errors
-    DENG2_ERROR(MissingSectorError);
 
     /*
      * Linked-element lists/sets:
@@ -147,25 +147,48 @@ public:
     Meshes const &extraMeshes() const;
 
     /**
-     * Returns @c true iff a sector is attributed to the BSP leaf. The only
-     * time a leaf might not be attributed to a sector is if the map geometry
+     * Returns @c true iff a sector cluster is attributed to the BSP leaf. The
+     * only time a leaf might not be attributed to a sector is if the map geometry
      * was @em orphaned by the partitioning algorithm (a bug).
      */
-    bool hasSector() const;
+    bool hasCluster() const;
+
+    /// @copydoc hasCluster()
+    inline bool hasSector() const { return hasCluster(); }
 
     /**
-     * Returns the sector attributed to the BSP leaf.
+     * Returns the sector cluster attributed to the BSP leaf.
      *
-     * @see hasSector()
+     * @see hasCluster()
      */
-    Sector &sector() const;
+    Sector::Cluster &cluster() const;
 
     /**
-     * Returns a pointer to the sector attributed to the BSP leaf; otherwise @c 0.
+     * Convenient method of returning the sector of the cluster attributed to
+     * the BSP leaf.
      *
-     * @see hasSector()
+     * @see hasSector(), cluster()
+     */
+    inline Sector &sector() const { return cluster().sector(); }
+
+    /**
+     * Convenient method returning a pointer to the sector of the cluster
+     * attributed to the BSP leaf. If not attributed then @c 0 is returned.
+     *
+     * @see hasSector(), sector()
      */
     inline Sector *sectorPtr() const { return hasSector()? &sector() : 0; }
+
+    /**
+     * Change the sector cluster attributed to the BSP leaf.
+     *
+     * @param newCluster New sector cluster to attribute to the BSP leaf.
+     *                   Ownership is unaffected. Can be @c 0 (to clear the
+     *                   attribution).
+     *
+     * @see hasCluster(), cluster()
+     */
+    void setCluster(Sector::Cluster *newCluster);
 
     /**
      * Returns the identified @em physical plane of the parent sector. Naturally

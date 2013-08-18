@@ -62,6 +62,9 @@ typedef QMap<int, GeometryGroup> GeometryGroups;
 
 DENG2_PIMPL(BspLeaf)
 {
+    /// Attributed sector cluster if any (not owned).
+    Sector::Cluster *cluster;
+
     /// Convex polygon geometry attributed to the BSP leaf if any (not owned).
     Face *poly;
 
@@ -102,6 +105,7 @@ DENG2_PIMPL(BspLeaf)
 
     Instance(Public *i)
         : Base(i),
+          cluster(0),
           poly(0),
 #ifdef __CLIENT__
           fanBase(0),
@@ -207,8 +211,8 @@ DENG2_PIMPL(BspLeaf)
      */
     GeometryGroup *geometryGroup(int group, bool canAlloc = true)
     {
-        DENG_ASSERT(self.hasSector() && !self.isDegenerate()); // sanity check
-        DENG_ASSERT(group >= 0 && group < self.sector().planeCount()); // sanity check
+        DENG_ASSERT(cluster != 0 && !self.isDegenerate()); // sanity check
+        DENG_ASSERT(group >= 0 && group < cluster->sector().planeCount()); // sanity check
 
         GeometryGroups::iterator foundAt = geomGroups.find(group);
         if(foundAt != geomGroups.end())
@@ -247,7 +251,7 @@ DENG2_PIMPL(BspLeaf)
 
         geomGroup.biasTracker.clearContributors();
 
-        Plane const &plane     = self.sector().plane(planeIndex);
+        Plane const &plane     = cluster->sector().plane(planeIndex);
         Surface const &surface = plane.surface();
 
         Vector3d surfacePoint(poly->center(), plane.visHeight());
@@ -357,29 +361,34 @@ Vector2d const &BspLeaf::worldGridOffset() const
     return d->worldGridOffset;
 }
 
-bool BspLeaf::hasSector() const
+bool BspLeaf::hasCluster() const
 {
-    return hasParent();
+    return d->cluster != 0;
 }
 
-Sector &BspLeaf::sector() const
+Sector::Cluster &BspLeaf::cluster() const
 {
-    if(hasParent())
+    if(d->cluster)
     {
-        return *parent().as<Sector>();
+        return *d->cluster;
     }
-    /// @throw MissingSectorError Attempted with no sector attributed.
-    throw MissingSectorError("BspLeaf::sector", "No parent sector is attributed");
+    /// @throw MissingClusterError Attempted with no sector cluster attributed.
+    throw MissingClusterError("BspLeaf::cluster", "No sector cluster is attributed");
+}
+
+void BspLeaf::setCluster(Sector::Cluster *newCluster)
+{
+    d->cluster = newCluster;
 }
 
 Plane &BspLeaf::plane(int planeIndex) const
 {
-    return sector().plane(planeIndex);
+    return cluster().sector().plane(planeIndex);
 }
 
 Plane &BspLeaf::visPlane(int planeIndex) const
 {
-    // Presently the visual planes are always those from the attributed sector.
+    // Presently the visual planes are always those from the attributed sector cluster.
     return plane(planeIndex);
 }
 
@@ -438,7 +447,7 @@ bool BspLeaf::pointInside(Vector2d const &point) const
 bool BspLeaf::hasWorldVolume(bool useVisualHeights) const
 {
     if(isDegenerate()) return false;
-    if(!hasSector()) return false;
+    if(!hasCluster()) return false;
 
     coord_t const floorHeight = useVisualHeights? visFloorHeight() : floor().height();
     coord_t const ceilHeight  = useVisualHeights? visCeilingHeight() : ceiling().height();
@@ -581,7 +590,7 @@ static void accumReverbForWallSections(HEdge const *hedge,
 
 bool BspLeaf::updateReverb()
 {
-    if(!hasSector() || !d->poly)
+    if(!hasCluster() || !d->poly)
     {
         d->reverb[SRD_SPACE] = d->reverb[SRD_VOLUME] =
             d->reverb[SRD_DECAY] = d->reverb[SRD_DAMPING] = 0;

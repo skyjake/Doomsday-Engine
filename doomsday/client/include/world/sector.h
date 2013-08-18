@@ -72,7 +72,7 @@ public:
 
     /**
      * Adjacent BSP leafs in the sector (i.e., those which share one or more
-     * common edge) are grouped into "clusters". A cluster is never empty and
+     * common edge) are grouped into a "cluster". Clusters are never empty and
      * will always contain at least one BSP leaf.
      *
      * Call Sector::buildClusters to rebuild the cluster set for the sector.

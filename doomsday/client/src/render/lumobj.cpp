@@ -1034,8 +1034,8 @@ static void createGlowLightForSurface(Surface &suf)
         if(bspLeaf == lum->bspLeaf)
             continue;
 
-         linkLumObjToSSec(lum, bspLeaf);
-         R_LinkObjToBspLeaf(*bspLeaf, *lum);
+        linkLumObjToSSec(lum, bspLeaf);
+        R_LinkObjToBspLeaf(*bspLeaf, *lum);
     }
 }
 

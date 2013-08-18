@@ -568,11 +568,11 @@ void Sector::buildClusters()
     d->needRoughAreaUpdate = true;
 #endif
 
-    /// @todo Separate the BSP leafs into adjacent clusters. For now we'll simply
-    /// link them all into one cluster(!)
+    /// @todo Separate the BSP leafs into edge-adjacency clusters. For now we'll
+    /// simply link them all into one cluster(!)
     foreach(BspLeaf *bspLeaf, map().bspLeafs())
     {
-        if(bspLeaf->sectorPtr() != this)
+        if(bspLeaf->parent().as<Sector>() != this)
             continue;
 
         // Time to construct The One cluster?
@@ -584,6 +584,9 @@ void Sector::buildClusters()
 
         // Ownership of the BSP leaf is not given to the cluster.
         cluster->_bspLeafs.append(bspLeaf);
+
+        // Attribute the BSP leaf to the cluster.
+        bspLeaf->setCluster(cluster);
     }
 }
 

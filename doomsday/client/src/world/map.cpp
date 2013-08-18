@@ -465,7 +465,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
             leaf->setIndexInMap(bspLeafs.count());
             bspLeafs.append(leaf);
 
-            if(!leaf->hasSector())
+            if(!leaf->hasParent())
             {
                 LOG_WARNING("BSP leaf %p is degenerate/orphan (%d half-edges).")
                     << de::dintptr(leaf)
