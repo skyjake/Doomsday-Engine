@@ -199,7 +199,7 @@ public:
      *
      * @param planeIndex  Index of the plane to return.
      */
-    Plane &plane(int planeIndex) const;
+    inline Plane &plane(int planeIndex) const { return cluster().plane(planeIndex); }
 
     /**
      * Returns the sector plane which defines the physical floor of the BSP leaf.
@@ -222,7 +222,7 @@ public:
      *
      * @param planeIndex  Index of the plane to return.
      */
-    Plane &visPlane(int planeIndex) const;
+    inline Plane &visPlane(int planeIndex) const { return cluster().visPlane(planeIndex); }
 
     /**
      * Returns the sector plane which defines the @em visual floor of the BSP leaf.

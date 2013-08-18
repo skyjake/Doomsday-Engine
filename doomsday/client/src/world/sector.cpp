@@ -52,6 +52,17 @@ Sector &Sector::Cluster::sector() const
     return _parent;
 }
 
+Plane &Sector::Cluster::plane(int planeIndex) const
+{
+    return _parent.plane(planeIndex);
+}
+
+Plane &Sector::Cluster::visPlane(int planeIndex) const
+{
+    // Presently the visual planes are always those from the attributed sector.
+    return plane(planeIndex);
+}
+
 Sector::Cluster::BspLeafs const &Sector::Cluster::bspLeafs() const
 {
     return _bspLeafs;

@@ -88,6 +88,23 @@ public:
         Sector &sector() const;
 
         /**
+         * Returns the identified @em physical plane of the parent sector. Note
+         * that this is not the same as the "visual" plane which may well be
+         * defined by another sector.
+         *
+         * @param planeIndex  Index of the plane to return.
+         */
+        Plane &plane(int planeIndex) const;
+
+        /**
+         * Returns the identified @em visual sector plane for the cluster (which
+         * may or may not be the same as the physical plane).
+         *
+         * @param planeIndex  Index of the plane to return.
+         */
+        Plane &visPlane(int planeIndex) const;
+
+        /**
          * Provides access to the list of all BSP leafs in the cluster, for
          * efficient traversal.
          */

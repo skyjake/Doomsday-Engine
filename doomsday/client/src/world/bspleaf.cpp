@@ -251,7 +251,7 @@ DENG2_PIMPL(BspLeaf)
 
         geomGroup.biasTracker.clearContributors();
 
-        Plane const &plane     = cluster->sector().plane(planeIndex);
+        Plane const &plane     = cluster->plane(planeIndex);
         Surface const &surface = plane.surface();
 
         Vector3d surfacePoint(poly->center(), plane.visHeight());
@@ -379,17 +379,6 @@ Sector::Cluster &BspLeaf::cluster() const
 void BspLeaf::setCluster(Sector::Cluster *newCluster)
 {
     d->cluster = newCluster;
-}
-
-Plane &BspLeaf::plane(int planeIndex) const
-{
-    return cluster().sector().plane(planeIndex);
-}
-
-Plane &BspLeaf::visPlane(int planeIndex) const
-{
-    // Presently the visual planes are always those from the attributed sector cluster.
-    return plane(planeIndex);
 }
 
 void BspLeaf::addOnePolyobj(Polyobj const &polyobj)
