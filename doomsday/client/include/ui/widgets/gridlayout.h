@@ -24,6 +24,10 @@
 
 /**
  * Widget layout for a grid of widgets.
+ *
+ * Layouts are utilities that modify the placement of widgets. The layout
+ * instance itself does not need to remain in memory -- widget rules are
+ * modified immediately as the widgets are added to the layout.
  */
 class GridLayout
 {
@@ -34,9 +38,13 @@ public:
     };
 
 public:
-    GridLayout(de::Rule const &startX, de::Rule const &startY,
-               Mode mode = ColumnFirst);
+    GridLayout(Mode mode = ColumnFirst);
 
+    GridLayout(de::Rule const &left, de::Rule const &top, Mode mode = ColumnFirst);
+
+    void clear();
+
+    void setLeftTop(de::Rule const &left, de::Rule const &top);
     void setGridSize(int numCols, int numRows);
 
     void setOverrideWidth(de::Rule const &width);
