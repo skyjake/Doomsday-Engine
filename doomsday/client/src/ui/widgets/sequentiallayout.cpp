@@ -83,16 +83,18 @@ DENG2_PIMPL(SequentialLayout)
 
     void append(GuiWidget *widget, Rule const *spaceBefore)
     {
+        if(spaceBefore)
+        {
+            advancePos(*spaceBefore);
+        }
+
+        if(!widget) return;
+
         widgets << widget;
 
         // Override the widget's size as requested.
         if(fixedWidth)  widget->rule().setInput(Rule::Width,  *fixedWidth);
         if(fixedHeight) widget->rule().setInput(Rule::Height, *fixedHeight);
-
-        if(spaceBefore)
-        {
-            advancePos(*spaceBefore);
-        }
 
         RuleRectangle &rule = widget->rule();
 

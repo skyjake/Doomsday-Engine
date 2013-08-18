@@ -85,8 +85,7 @@ AboutDialog::AboutDialog() : DialogWidget("about")
             .setAnchorPoint(Vector2f(.5f, 0));
 
     // Total size of the dialog's content.
-    area().setContentWidth(layout.width());
-    area().setContentHeight(layout.height() + homepage->rule().height());
+    area().setContentSize(layout.width(), layout.height() + homepage->rule().height());
 
     buttons().items()
             << new DialogButtonItem(DialogWidget::Accept | DialogWidget::Default, tr("Close"));

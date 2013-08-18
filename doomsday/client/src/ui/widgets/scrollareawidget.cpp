@@ -185,6 +185,13 @@ void ScrollAreaWidget::setContentHeight(Rule const &height)
     d->contentRule.setInput(Rule::Height, height);
 }
 
+void ScrollAreaWidget::setContentSize(Rule const &width, Rule const &height)
+{
+    DENG2_GUARD(d);
+    setContentWidth(width);
+    setContentHeight(height);
+}
+
 void ScrollAreaWidget::setContentSize(Vector2i const &size)
 {
     DENG2_GUARD(d);
