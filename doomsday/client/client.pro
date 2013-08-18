@@ -375,6 +375,7 @@ DENG_HEADERS += \
     include/ui/widgets/proceduralimage.h \
     include/ui/widgets/progresswidget.h \
     include/ui/widgets/scrollareawidget.h \
+    include/ui/widgets/sequentiallayout.h \
     include/ui/widgets/submenuitem.h \
     include/ui/widgets/styledlogsinkformatter.h \
     include/ui/widgets/taskbarwidget.h \
@@ -688,6 +689,7 @@ SOURCES += \
     src/ui/widgets/proceduralimage.cpp \
     src/ui/widgets/progresswidget.cpp \
     src/ui/widgets/scrollareawidget.cpp \
+    src/ui/widgets/sequentiallayout.cpp \
     src/ui/widgets/styledlogsinkformatter.cpp \
     src/ui/widgets/taskbarwidget.cpp \
     src/ui/widgets/togglewidget.cpp \
