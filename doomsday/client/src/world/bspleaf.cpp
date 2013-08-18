@@ -440,8 +440,8 @@ bool BspLeaf::hasWorldVolume(bool useVisualHeights) const
     if(isDegenerate()) return false;
     if(!hasSector()) return false;
 
-    coord_t const floorHeight = useVisualHeights? visFloor().visHeight() : floor().height();
-    coord_t const ceilHeight  = useVisualHeights? visCeiling().visHeight() : ceiling().height();
+    coord_t const floorHeight = useVisualHeights? visFloorHeight() : floor().height();
+    coord_t const ceilHeight  = useVisualHeights? visCeilingHeight() : ceiling().height();
 
     return (ceilHeight - floorHeight > 0);
 }

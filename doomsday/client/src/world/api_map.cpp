@@ -386,11 +386,12 @@ int P_Iteratep(void *elPtr, uint prop, void *context, int (*callback) (void *p, 
 
     switch(elem->type())
     {
-    case DMU_SECTOR:
+    case DMU_SECTOR: {
+        Sector *sector = elem->as<Sector>();
         switch(prop)
         {
         case DMU_LINE:
-            foreach(Line::Side *side, elem->as<Sector>()->sides())
+            foreach(Line::Side *side, sector->sides())
             {
                 int result = callback(&side->line(), context);
                 if(result) return result;
@@ -398,7 +399,7 @@ int P_Iteratep(void *elPtr, uint prop, void *context, int (*callback) (void *p, 
             return false; // Continue iteration
 
         case DMU_PLANE:
-            foreach(Plane *plane, elem->as<Sector>()->planes())
+            foreach(Plane *plane, sector->planes())
             {
                 int result = callback(plane, context);
                 if(result) return result;
@@ -406,7 +407,8 @@ int P_Iteratep(void *elPtr, uint prop, void *context, int (*callback) (void *p, 
             return false; // Continue iteration
 
         case DMU_BSPLEAF:
-            foreach(BspLeaf *bspLeaf, elem->as<Sector>()->bspLeafs())
+            foreach(Sector::Cluster *cluster, sector->clusters())
+            foreach(BspLeaf *bspLeaf, cluster->bspLeafs())
             {
                 int result = callback(bspLeaf, context);
                 if(result) return result;
@@ -415,7 +417,7 @@ int P_Iteratep(void *elPtr, uint prop, void *context, int (*callback) (void *p, 
 
         default:
             throw Error("P_Iteratep", QString("Property %1 unknown/not vector").arg(DMU_Str(prop)));
-        }
+        }}
 
     case DMU_BSPLEAF:
         switch(prop)

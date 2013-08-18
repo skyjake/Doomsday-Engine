@@ -69,15 +69,42 @@ public:
     DENG2_DEFINE_AUDIENCE(LightColorChange,
         void sectorLightColorChanged(Sector &sector, de::Vector3f const &oldLightColor,
                                      int changedComponents /*bit-field (0x1=Red, 0x2=Green, 0x4=Blue)*/))
-    /*
-     * Linked-element lists:
-     */
-    typedef QList<BspLeaf *>    BspLeafs;
-    typedef QList<Plane *>      Planes;
-    typedef QList<Line::Side *> Sides;
 
-    // Plane identifiers:
-    enum { Floor, Ceiling };
+    /**
+     * Adjacent BSP leafs in the sector (i.e., those which share one or more
+     * common edge) are grouped into "clusters". A cluster is never empty and
+     * will always contain at least one BSP leaf.
+     *
+     * Call Sector::buildClusters to rebuild the cluster set for the sector.
+     */
+    class Cluster
+    {
+    public:
+        typedef QList<BspLeaf *> BspLeafs;
+
+        /**
+         * Returns the parent sector of the BSP leaf cluster.
+         */
+        Sector &sector() const;
+
+        /**
+         * Provides access to the list of all BSP leafs in the cluster, for
+         * efficient traversal.
+         */
+        BspLeafs const &bspLeafs() const;
+
+        /**
+         * Returns the total number of BSP leafs in the cluster.
+         */
+        inline int bspLeafCount() const { return bspLeafs().count(); }
+
+        friend class Sector;
+
+    private:
+        Cluster(Sector &sector);
+        Sector &_parent;
+        BspLeafs _bspLeafs;
+    };
 
 #ifdef __CLIENT__
     /**
@@ -97,6 +124,16 @@ public:
         de::LightGrid::Index *blocks;
     };
 #endif
+
+    /*
+     * Linked-element lists:
+     */
+    typedef QList<Cluster *>    Clusters;
+    typedef QList<Plane *>      Planes;
+    typedef QList<Line::Side *> Sides;
+
+    // Plane identifiers:
+    enum { Floor, Ceiling };
 
 public: /// @todo Make private:
     /// Head of the linked list of mobjs "in" the sector (not owned).
@@ -210,20 +247,26 @@ public:
     void buildSides();
 
     /**
-     * Provides access to the list of BSP leafs which reference the sector, for
+     * Provides access to the list of BSP leaf clusters for the sector, for
      * efficient traversal.
      */
-    BspLeafs const &bspLeafs() const;
+    Clusters const &clusters() const;
 
     /**
-     * Returns the total number of BSP leafs which reference the sector.
+     * Returns the total number of BSP leaf clusters for the sector.
      */
-    inline int bspLeafCount() const { return bspLeafs().count(); }
+    inline int clusterCount() const { return clusters().count(); }
 
     /**
-     * (Re)Build the BSP leaf list for the sector.
+     * Convenient method of determning whether the sector is a parent of one or
+     * BSP leaf (i.e., at least one cluster is defined).
      */
-    void buildBspLeafs();
+    inline bool hasBspLeafs() const { return clusterCount() != 0; }
+
+    /**
+     * (Re)Build BSP leaf clusters for the sector.
+     */
+    void buildClusters();
 
     /**
      * Determines whether the specified @a point in the map coordinate space

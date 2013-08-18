@@ -44,6 +44,19 @@ using namespace de;
 typedef QSet<BspLeaf *> ReverbBspLeafs;
 #endif
 
+Sector::Cluster::Cluster(Sector &parent) : _parent(parent)
+{}
+
+Sector &Sector::Cluster::sector() const
+{
+    return _parent;
+}
+
+Sector::Cluster::BspLeafs const &Sector::Cluster::bspLeafs() const
+{
+    return _bspLeafs;
+}
+
 DENG2_PIMPL(Sector),
 DENG2_OBSERVES(Plane, HeightChange)
 {
@@ -60,8 +73,8 @@ DENG2_OBSERVES(Plane, HeightChange)
     /// List of line sides which reference the sector (not owned).
     Sides sides;
 
-    /// List of BSP leafs which reference the sector (not owned).
-    BspLeafs bspLeafs;
+    /// List of BSP leaf clusters which reference the sector (owned).
+    Clusters clusters;
 
     /// Ambient light level in the sector.
     float lightLevel;
@@ -113,6 +126,7 @@ DENG2_OBSERVES(Plane, HeightChange)
 
     ~Instance()
     {
+        qDeleteAll(clusters);
         qDeleteAll(planes);
     }
 
@@ -154,7 +168,8 @@ DENG2_OBSERVES(Plane, HeightChange)
 
         aaBox.clear();
         bool haveGeometry = false;
-        foreach(BspLeaf *leaf, bspLeafs)
+        foreach(Cluster *cluster, clusters)
+        foreach(BspLeaf *leaf, cluster->bspLeafs())
         {
             if(leaf->isDegenerate()) continue;
 
@@ -190,7 +205,8 @@ DENG2_OBSERVES(Plane, HeightChange)
         needRoughAreaUpdate = false;
 
         roughArea = 0;
-        foreach(BspLeaf *leaf, bspLeafs)
+        foreach(Cluster *cluster, clusters)
+        foreach(BspLeaf *leaf, cluster->bspLeafs())
         {
             if(leaf->isDegenerate()) continue;
 
@@ -345,7 +361,8 @@ DENG2_OBSERVES(Plane, HeightChange)
         if(!ddMapSetup && useBias)
         {
             // Inform bias surfaces of changed geometry.
-            foreach(BspLeaf *bspLeaf, bspLeafs)
+            foreach(Cluster *cluster, clusters)
+            foreach(BspLeaf *bspLeaf, cluster->bspLeafs())
             {
                 bspLeaf->updateBiasAfterGeometryMove(plane.indexInSector());
             }
@@ -535,36 +552,14 @@ bool Sector::hasSkyMaskedPlane() const
     return false;
 }
 
-Sector::BspLeafs const &Sector::bspLeafs() const
+Sector::Clusters const &Sector::clusters() const
 {
-    return d->bspLeafs;
+    return d->clusters;
 }
 
-void Sector::buildBspLeafs()
+void Sector::buildClusters()
 {
-    d->bspLeafs.clear();
-
-#ifdef DENG2_QT_4_7_OR_NEWER
-    int count = 0;
-    foreach(BspLeaf *bspLeaf, map().bspLeafs())
-    {
-        if(bspLeaf->sectorPtr() == this)
-            ++count;
-    }
-
-    if(!count) return;
-
-    d->bspLeafs.reserve(count);
-#endif
-
-    foreach(BspLeaf *bspLeaf, map().bspLeafs())
-    {
-        if(bspLeaf->sectorPtr() == this)
-        {
-            // Ownership of the BSP leaf is not given to the sector.
-            d->bspLeafs.append(bspLeaf);
-        }
-    }
+    d->clusters.clear();
 
     // We'll need to recalculate the axis-aligned bounding box.
     d->needAABoxUpdate = true;
@@ -572,6 +567,24 @@ void Sector::buildBspLeafs()
     // ...and the rough area approximation.
     d->needRoughAreaUpdate = true;
 #endif
+
+    /// @todo Separate the BSP leafs into adjacent clusters. For now we'll simply
+    /// link them all into one cluster(!)
+    foreach(BspLeaf *bspLeaf, map().bspLeafs())
+    {
+        if(bspLeaf->sectorPtr() != this)
+            continue;
+
+        // Time to construct The One cluster?
+        if(d->clusters.isEmpty())
+        {
+            d->clusters.append(new Cluster(*this));
+        }
+        Cluster *cluster = d->clusters.first();
+
+        // Ownership of the BSP leaf is not given to the cluster.
+        cluster->_bspLeafs.append(bspLeaf);
+    }
 }
 
 AABoxd const &Sector::aaBox() const

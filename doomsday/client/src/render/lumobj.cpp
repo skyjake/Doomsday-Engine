@@ -23,8 +23,6 @@
 #include <cmath>
 #include <cstring> // memset
 
-#include <QListIterator>
-
 #include "de_base.h"
 #include "de_console.h"
 #include "de_render.h"
@@ -998,7 +996,7 @@ static void createGlowLightForSurface(Surface &suf)
 
     // Only produce a light for sectors with open space.
     /// @todo Do not add surfaces from sectors with zero BSP leafs to the glowing list.
-    if(!sec->bspLeafCount() || sec->floor().visHeight() >= sec->ceiling().visHeight())
+    if(!sec->hasBspLeafs() || sec->floor().visHeight() >= sec->ceiling().visHeight())
         return;
 
     MaterialSnapshot const &ms = suf.material().prepare(Rend_MapSurfaceMaterialSpec());
@@ -1015,7 +1013,7 @@ static void createGlowLightForSurface(Surface &suf)
     if(!avgColorAmplified) throw Error("createGlowLightForSurface", QString("Texture \"%1\" has no AverageColorAmplifiedAnalysis").arg(ms.texture(MTU_PRIMARY).generalCase().manifest().composeUri()));
 
     // @note Plane lights do not spread so simply link to all BspLeafs of this sector.
-    lumobj_t *lum = createLuminous(LT_PLANE, sec->bspLeafs().at(0));
+    lumobj_t *lum = createLuminous(LT_PLANE, sec->clusters().first()->bspLeafs().at(0));
 
     V3d_Copy(lum->origin, pln->soundEmitter().origin);
     lum->origin[VZ] = pln->visHeight(); // Sound emitter origins are not smoothed.
@@ -1027,13 +1025,17 @@ static void createGlowLightForSurface(Surface &suf)
     lum->maxDistance = 0;
     lum->decorSource = 0;
 
-    QListIterator<BspLeaf *> bspLeafIt(sec->bspLeafs());
-    R_LinkObjToBspLeaf(*bspLeafIt.next(), *lum);
-    while(bspLeafIt.hasNext())
+    R_LinkObjToBspLeaf(*lum->bspLeaf, *lum);
+
+    foreach(Sector::Cluster *cluster, sec->clusters())
+    foreach(BspLeaf *bspLeaf, cluster->bspLeafs())
     {
-        BspLeaf *bspLeaf = bspLeafIt.next();
-        linkLumObjToSSec(lum, bspLeaf);
-        R_LinkObjToBspLeaf(*bspLeaf, *lum);
+        // Don't link the lumobj to the same BSP leaf twice.
+        if(bspLeaf == lum->bspLeaf)
+            continue;
+
+         linkLumObjToSSec(lum, bspLeaf);
+         R_LinkObjToBspLeaf(*bspLeaf, *lum);
     }
 }
 

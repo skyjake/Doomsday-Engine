@@ -3568,7 +3568,7 @@ bool Map::endEditing()
     // Finish sectors.
     foreach(Sector *sector, d->sectors)
     {
-        sector->buildBspLeafs();
+        sector->buildClusters();
         sector->buildSides();
 
         /*
