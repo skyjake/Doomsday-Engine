@@ -81,19 +81,7 @@ public:
      */
     virtual de::String sortKey() const;
 
-    template <typename Type>
-    Type &as() {
-        Type *p = dynamic_cast<Type *>(this);
-        DENG2_ASSERT(p != 0);
-        return *p;
-    }
-
-    template <typename Type>
-    Type const &as() const {
-        Type const *p = dynamic_cast<Type const *>(this);
-        DENG2_ASSERT(p != 0);
-        return *p;
-    }
+    DENG2_IS_AS_METHODS()
 
 protected:
     /**

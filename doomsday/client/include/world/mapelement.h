@@ -81,6 +81,7 @@ public:
      */
     int type() const;
 
+    /// @todo Should use DENG2_IS_AS_METHODS() to avoid cost of dynamic_cast.
     template <typename Type>
     inline Type *as()
     {
