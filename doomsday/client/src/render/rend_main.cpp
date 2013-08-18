@@ -1831,7 +1831,7 @@ static void writeLeafSkyMaskStrips(SkyFixEdge::FixType fixType)
         Material *skyMaterial = 0;
         if(splitOnMaterialChange)
         {
-            skyMaterial = hedge->face().mapElement()->as<BspLeaf>()->sector().planeSurface(relPlane).materialPtr();
+            skyMaterial = hedge->face().mapElement()->as<BspLeaf>()->visPlane(relPlane).surface().materialPtr();
         }
 
         // Add a first (left) edge to the current strip?
@@ -1943,7 +1943,7 @@ static coord_t skyPlaneZ(BspLeaf *bspLeaf, int skyCap)
     if(!bspLeaf->hasSector() || !P_IsInVoid(viewPlayer))
         return bspLeaf->map().skyFix(relPlane == Sector::Ceiling);
 
-    return bspLeaf->sector().plane(relPlane).visHeight();
+    return bspLeaf->visPlane(relPlane).visHeight();
 }
 
 /// @param skyCap  @ref skyCapFlags.
@@ -1973,13 +1973,10 @@ static void writeLeafSkyMask(int skyCap = SKYCAP_LOWER|SKYCAP_UPPER)
     DENG_ASSERT(!isNullLeaf(bspLeaf));
 
     // Any work to do?
-    if(!bspLeaf->sector().hasSkyMaskedPlane())
-        return;
-
     // Sky caps are only necessary in sectors with sky-masked planes.
-    if((skyCap & SKYCAP_LOWER) && !bspLeaf->sector().floorSurface().hasSkyMaskedMaterial())
+    if((skyCap & SKYCAP_LOWER) && !bspLeaf->visFloor().surface().hasSkyMaskedMaterial())
         skyCap &= ~SKYCAP_LOWER;
-    if((skyCap & SKYCAP_UPPER) && !bspLeaf->sector().ceilingSurface().hasSkyMaskedMaterial())
+    if((skyCap & SKYCAP_UPPER) && !bspLeaf->visCeiling().surface().hasSkyMaskedMaterial())
         skyCap &= ~SKYCAP_UPPER;
 
     if(!skyCap) return;
@@ -2023,13 +2020,13 @@ static bool coveredOpenRange(HEdge &hedge, coord_t middleBottomZ, coord_t middle
         return wroteOpaqueMiddle;
     }
 
-    Sector const &frontSec = hedge.face().mapElement()->as<BspLeaf>()->sector();
-    Sector const &backSec  = hedge.twin().face().mapElement()->as<BspLeaf>()->sector();
+    BspLeaf const *leaf     = hedge.face().mapElement()->as<BspLeaf>();
+    BspLeaf const *backLeaf = hedge.twin().face().mapElement()->as<BspLeaf>();
 
-    coord_t const ffloor   = frontSec.floor().visHeight();
-    coord_t const fceil    = frontSec.ceiling().visHeight();
-    coord_t const bfloor   = backSec.floor().visHeight();
-    coord_t const bceil    = backSec.ceiling().visHeight();
+    coord_t const ffloor   = leaf->visFloorHeight();
+    coord_t const fceil    = leaf->visCeilingHeight();
+    coord_t const bfloor   = backLeaf->visFloorHeight();
+    coord_t const bceil    = backLeaf->visCeilingHeight();
 
     bool middleCoversOpening = false;
     if(wroteOpaqueMiddle)
@@ -2053,10 +2050,10 @@ static bool coveredOpenRange(HEdge &hedge, coord_t middleBottomZ, coord_t middle
        || (bfloor >= fceil &&
                (front.bottom().hasMaterial() || front.middle().hasMaterial())))
     {
-        Surface const &ffloorSurface = frontSec.floor().surface();
-        Surface const &fceilSurface  = frontSec.ceiling().surface();
-        Surface const &bfloorSurface = backSec.floor().surface();
-        Surface const &bceilSurface  = backSec.ceiling().surface();
+        Surface const &ffloorSurface = leaf->visFloor().surface();
+        Surface const &fceilSurface  = leaf->visCeiling().surface();
+        Surface const &bfloorSurface = backLeaf->visFloor().surface();
+        Surface const &bceilSurface  = backLeaf->visCeiling().surface();
 
         // A closed gap?
         if(de::fequal(fceil, bfloor))
@@ -2150,9 +2147,9 @@ static void writeLeafPlanes()
     BspLeaf *leaf = currentBspLeaf;
     DENG_ASSERT(!isNullLeaf(leaf));
 
-    foreach(Plane *plane, leaf->sector().planes())
+    for(int i = 0; i < leaf->sector().planeCount(); ++i)
     {
-        writeLeafPlane(*plane);
+        writeLeafPlane(leaf->visPlane(i));
     }
 }
 
@@ -2250,16 +2247,16 @@ static void occludeLeaf(bool frontFacing)
         R_VisOpenRange(seg->lineSide(), &frontSec, &backSec, &openBottom, &openTop);
 
         // Does the floor create an occlusion?
-        if(((openBottom > frontSec.floor().visHeight() && vOrigin[VY] <= openBottom)
-            || (openBottom >  backSec.floor().visHeight() && vOrigin[VY] >= openBottom))
+        if(((openBottom > leaf->visFloorHeight() && vOrigin[VY] <= openBottom)
+            || (openBottom >  backLeaf->visFloorHeight() && vOrigin[VY] >= openBottom))
            && canOccludeSectorPairBoundary(frontSec, backSec, false))
         {
             C_AddViewRelOcclusion(from.origin(), to.origin(), openBottom, false);
         }
 
         // Does the ceiling create an occlusion?
-        if(((openTop < frontSec.ceiling().visHeight() && vOrigin[VY] >= openTop)
-            || (openTop <  backSec.ceiling().visHeight() && vOrigin[VY] <= openTop))
+        if(((openTop < leaf->visCeilingHeight() && vOrigin[VY] >= openTop)
+            || (openTop <  backLeaf->visCeilingHeight() && vOrigin[VY] <= openTop))
            && canOccludeSectorPairBoundary(frontSec, backSec, true))
         {
             C_AddViewRelOcclusion(from.origin(), to.origin(), openTop, true);

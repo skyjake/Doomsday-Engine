@@ -253,9 +253,9 @@ void R_SideSectionCoords(Line::Side const &side, int section, bool skyClip,
                 }
                 else
                 {
-                    Sector &frontSec = side.leftHEdge()->face().mapElement()->as<BspLeaf>()->sector();
-                    openBottom = frontSec.floor().visHeight();
-                    openTop    = frontSec.ceiling().visHeight();
+                    BspLeaf *bspLeaf = side.leftHEdge()->face().mapElement()->as<BspLeaf>();
+                    openBottom = bspLeaf->visFloorHeight();
+                    openTop    = bspLeaf->visCeilingHeight();
                 }
 
                 int const matHeight      = surface->material().height();

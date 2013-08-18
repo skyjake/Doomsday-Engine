@@ -806,7 +806,7 @@ static void addLuminous(mobj_t *mo)
     float center = -tex.origin().y - mo->floorClip - R_GetBobOffset(mo) - yOffset;
 
     // Will the sprite be allowed to go inside the floor?
-    float mul = mo->origin[VZ] + -tex.origin().y - (float) ms.height() - mo->bspLeaf->sector().floor().height();
+    float mul = mo->origin[VZ] + -tex.origin().y - (float) ms.height() - mo->bspLeaf->visFloor().height();
     if(!(mo->ddFlags & DDMF_NOFITBOTTOM) && mul < 0)
     {
         // Must adjust.

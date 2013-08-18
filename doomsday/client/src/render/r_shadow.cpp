@@ -375,7 +375,7 @@ Plane *R_FindShadowPlane(mobj_t *mo)
     DENG_ASSERT(mo);
     if(mo->bspLeaf)
     {
-        Plane *plane = &mo->bspLeaf->sector().floor();
+        Plane *plane = &mo->bspLeaf->visFloor();
         P_MobjSectorsIterator(mo, RIT_FindShadowPlaneIterator, (void *)&plane);
     }
     return 0;

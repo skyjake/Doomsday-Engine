@@ -1320,9 +1320,9 @@ void Rend_RadioBspLeafEdges(BspLeaf &bspLeaf)
 
     // See if any of this BspLeaf's planes will get shadows.
     bool workToDo = false;
-    for(int pln = 0; pln < sector.planeCount(); ++pln)
+    for(int pln = 0; pln < bspLeaf.sector().planeCount(); ++pln)
     {
-        Plane const &plane = sector.plane(pln);
+        Plane const &plane = bspLeaf.visPlane(pln);
 
         eyeToSurface.z = vOrigin[VY] - plane.visHeight();
 

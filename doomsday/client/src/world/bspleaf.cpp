@@ -372,6 +372,17 @@ Sector &BspLeaf::sector() const
     throw MissingSectorError("BspLeaf::sector", "No parent sector is attributed");
 }
 
+Plane &BspLeaf::plane(int planeIndex) const
+{
+    return sector().plane(planeIndex);
+}
+
+Plane &BspLeaf::visPlane(int planeIndex) const
+{
+    // Presently the visual planes are always those from the attributed sector.
+    return plane(planeIndex);
+}
+
 void BspLeaf::addOnePolyobj(Polyobj const &polyobj)
 {
     d->polyobjs.insert(const_cast<Polyobj *>(&polyobj));
@@ -429,8 +440,8 @@ bool BspLeaf::hasWorldVolume(bool useVisualHeights) const
     if(isDegenerate()) return false;
     if(!hasSector()) return false;
 
-    coord_t const floorHeight = useVisualHeights? sector().floor().visHeight() : sector().floor().height();
-    coord_t const ceilHeight  = useVisualHeights? sector().ceiling().visHeight() : sector().ceiling().height();
+    coord_t const floorHeight = useVisualHeights? visFloor().visHeight() : floor().height();
+    coord_t const ceilHeight  = useVisualHeights? visCeiling().visHeight() : ceiling().height();
 
     return (ceilHeight - floorHeight > 0);
 }
@@ -533,7 +544,7 @@ void BspLeaf::lightBiasPoly(int group, Vector3f const *posCoords, Vector4f *colo
         d->updateBiasContributors(*geomGroup, planeIndex);
     }
 
-    Surface const &surface = sector().plane(planeIndex).surface();
+    Surface const &surface = visPlane(planeIndex).surface();
     uint const biasTime = map().biasCurrentTime();
 
     Vector3f const *posIt = posCoords;
@@ -583,7 +594,7 @@ bool BspLeaf::updateReverb()
     // Space is the rough volume of the BSP leaf (bounding box).
     AABoxd const &aaBox = d->poly->aaBox();
     d->reverb[SRD_SPACE] =
-        int(sector().ceiling().height() - sector().floor().height()) *
+        int(ceiling().height() - floor().height()) *
         (aaBox.maxX - aaBox.minX) *
         (aaBox.maxY - aaBox.minY);
 

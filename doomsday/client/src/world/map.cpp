@@ -495,7 +495,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
                                 "is not contiguous (%i gaps/overlaps).\n%s")
                         << de::dintptr(leaf)
                         << leaf->poly().center().asText()
-                        << leaf->sector().indexInArchive()
+                        << (leaf->hasSector()? leaf->sector().indexInArchive() : -1)
                         << discontinuities
                         << leaf->poly().description();
                 }

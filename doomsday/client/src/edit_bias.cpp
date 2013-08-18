@@ -584,17 +584,20 @@ static void drawLightGauge(Vector2i const &origin, int height = 255)
     else
         src = map.biasSourceNear(hand.origin());
 
-    Sector &sector = src->bspLeafAtOrigin().sector();
-    if(lastSector != &sector)
+    if(Sector *sector = src->bspLeafAtOrigin().sectorPtr())
     {
-        minLevel = maxLevel = sector.lightLevel();
-        lastSector = &sector;
+        if(lastSector != sector)
+        {
+            minLevel = maxLevel = sector->lightLevel();
+            lastSector = sector;
+        }
     }
 
-    if(sector.lightLevel() < minLevel)
-        minLevel = sector.lightLevel();
-    if(sector.lightLevel() > maxLevel)
-        maxLevel = sector.lightLevel();
+    float const lightLevel = lastSector->lightLevel();
+    if(lightLevel < minLevel)
+        minLevel = lightLevel;
+    if(lightLevel > maxLevel)
+        maxLevel = lightLevel;
 
     FR_SetFont(fontFixed);
     FR_LoadDefaultAttrib();
@@ -609,7 +612,7 @@ static void drawLightGauge(Vector2i const &origin, int height = 255)
     glVertex2f(origin.x + off, origin.y);
     glVertex2f(origin.x + off, origin.y + height);
     // Normal light level.
-    int secY = origin.y + height * (1.0f - sector.lightLevel());
+    int secY = origin.y + height * (1.0f - lightLevel);
     glVertex2f(origin.x + off - 4, secY);
     glVertex2f(origin.x + off, secY);
     if(maxLevel != minLevel)
@@ -645,7 +648,7 @@ static void drawLightGauge(Vector2i const &origin, int height = 255)
     glEnable(GL_TEXTURE_2D);
 
     // The number values.
-    drawText(String::number(int(255.0f * sector.lightLevel())),
+    drawText(String::number(int(255.0f * lightLevel)),
              Vector2i(origin.x, secY), UI_Color(UIC_TITLE), .7f, 0, DTF_ONLY_SHADOW);
 
     if(maxLevel != minLevel)

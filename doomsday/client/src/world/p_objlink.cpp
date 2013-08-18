@@ -391,15 +391,12 @@ static void maybeSpreadOverEdge(HEdge *hedge, contactfinderparams_t *parms)
     // Do not spread if the sector on the back side is closed with no height.
     if(backLeaf->hasSector())
     {
-        Sector const &frontSec = leaf->sector();
-        Sector const &backSec  = backLeaf->sector();
-
-        if(backSec.ceiling().height() <= backSec.floor().height())
+        if(backLeaf->visCeiling().height() <= backLeaf->visFloor().height())
             return;
 
         if(leaf->hasSector() &&
-           (backSec.ceiling().height() <= frontSec.floor().height() ||
-            backSec.floor().height() >= frontSec.ceiling().height()))
+           (backLeaf->visCeiling().height() <= leaf->visFloor().height() ||
+            backLeaf->visFloor().height() >= leaf->visCeiling().height()))
             return;
     }
 

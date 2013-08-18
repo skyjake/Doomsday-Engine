@@ -704,8 +704,8 @@ void R_ProjectPlayerSprites()
             spr->data.model.flags = 0;
             // 32 is the raised weapon height.
             spr->data.model.gzt = viewData->current.origin[VZ];
-            spr->data.model.secFloor = ddpl->mo->bspLeaf->sector().floor().visHeight();
-            spr->data.model.secCeil  = ddpl->mo->bspLeaf->sector().ceiling().visHeight();
+            spr->data.model.secFloor = ddpl->mo->bspLeaf->visFloorHeight();
+            spr->data.model.secCeil  = ddpl->mo->bspLeaf->visCeilingHeight();
             spr->data.model.pClass = 0;
             spr->data.model.floorClip = 0;
 
@@ -1002,16 +1002,16 @@ void R_ProjectSprite(mobj_t *mo)
     viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
     coord_t moPos[3];
 
-    if(!mo) return;
+    if(!mo || !mo->bspLeaf) return;
 
     // Never make a vissprite when DDMF_DONTDRAW is set or when when the mobj
     // is in an invalid state.
-    if((mo->ddFlags & DDMF_DONTDRAW) || !mo->state || mo->state == states) return;
+    if((mo->ddFlags & DDMF_DONTDRAW) || !mo->state || mo->state == states)
+        return;
 
-    Sector &moSec       = mo->bspLeaf->sector();
-    coord_t secFloor    = moSec.floor().visHeight();
-    coord_t secCeil     = moSec.ceiling().visHeight();
-    boolean floorAdjust = (fabs(moSec.floor().visHeight() - moSec.floor().height()) < 8);
+    coord_t secFloor    = mo->bspLeaf->visFloorHeight();
+    coord_t secCeil     = mo->bspLeaf->visCeilingHeight();
+    boolean floorAdjust = (fabs(mo->bspLeaf->visFloorHeight() - mo->bspLeaf->floor().height()) < 8);
 
     // Never make a vissprite when the mobj's origin sector is of zero height.
     if(secFloor >= secCeil) return;
@@ -1396,7 +1396,6 @@ int RIT_AddSprite(void *ptr, void *parameters)
 
     if(mo->addFrameCount != frameCount)
     {
-        Sector &sec = p->bspLeaf->sector();
         R_ProjectSprite(mo);
 
         // Hack: Sprites have a tendency to extend into the ceiling in
@@ -1404,11 +1403,11 @@ int RIT_AddSprite(void *ptr, void *parameters)
         // that no sprites get clipped by the sky.
         // Only check
         Material *material = R_GetMaterialForSprite(mo->sprite, mo->frame);
-        if(material && sec.ceilingSurface().hasSkyMaskedMaterial())
+        if(material && p->bspLeaf->visCeiling().surface().hasSkyMaskedMaterial())
         {
             if(!(mo->dPlayer && mo->dPlayer->flags & DDPF_CAMERA) && // Cameramen don't exist!
-               mo->origin[VZ] <= sec.ceiling().height() &&
-               mo->origin[VZ] >= sec.floor().height())
+               mo->origin[VZ] <= p->bspLeaf->visCeiling().height() &&
+               mo->origin[VZ] >= p->bspLeaf->visFloor().height())
             {
                 coord_t visibleTop = mo->origin[VZ] + material->height();
                 if(visibleTop > map.skyFixCeiling())

@@ -168,6 +168,70 @@ public:
     inline Sector *sectorPtr() const { return hasSector()? &sector() : 0; }
 
     /**
+     * Returns the identified @em physical plane of the parent sector. Naturally
+     * a sector must be attributed for this. Note that this is not the same as
+     * the "visual" plane which may well be defined by another sector.
+     *
+     * @see hasSector()
+     *
+     * @param planeIndex  Index of the plane to return.
+     */
+    Plane &plane(int planeIndex) const;
+
+    /**
+     * Returns the sector plane which defines the physical floor of the BSP leaf.
+     * @see plane(), visFloor()
+     */
+    inline Plane &floor() const { return plane(Sector::Floor); }
+
+    /**
+     * Returns the sector plane which defines the physical ceiling of the BSP leaf.
+     * @see plane(), visCeiling()
+     */
+    inline Plane &ceiling() const { return plane(Sector::Ceiling); }
+
+    /**
+     * Returns the identified @em visual sector plane for the BSP leaf (which may
+     * or may not be the same as the physical plane). Note that a sector must be
+     * attributed to "this" BSP leaf.
+     *
+     * @see hasSector()
+     *
+     * @param planeIndex  Index of the plane to return.
+     */
+    Plane &visPlane(int planeIndex) const;
+
+    /**
+     * Returns the sector plane which defines the @em visual floor of the BSP leaf.
+     * @see hasSector(), floor()
+     */
+    inline Plane &visFloor() const { return visPlane(Sector::Floor); }
+
+    /**
+     * Returns the sector plane which defines the @em visual ceiling of the BSP leaf.
+     * @see hasSector(), ceiling()
+     */
+    inline Plane &visCeiling() const { return visPlane(Sector::Ceiling); }
+
+#ifdef __CLIENT__
+
+    /**
+     * Convenient method of accessing the visual (i.e., smoothed) height of the
+     * @em visual floor plane.
+     * @see visFloor()
+     */
+    inline coord_t visFloorHeight() const   { return visFloor().visHeight(); }
+
+    /**
+     * Convenient method of accessing the visual (i.e., smoothed) height of the
+     * @em visual ceiling plane.
+     * @see visCeiling()
+     */
+    inline coord_t visCeilingHeight() const { return visCeiling().visHeight(); }
+
+#endif // __CLIENT__
+
+    /**
      * Add the given @a polyobj to the set of those linked to the BSP leaf.
      * Ownership is unaffected. If the polyobj is already linked in this set
      * then nothing will happen.

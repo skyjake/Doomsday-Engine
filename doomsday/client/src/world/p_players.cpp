@@ -122,42 +122,41 @@ boolean P_IsInVoid(player_t *player)
     {
         if(ddpl->inVoid) return true;
 
-        if(!ddpl->mo->bspLeaf || !ddpl->mo->bspLeaf->hasSector())
+        if(!ddpl->mo || !ddpl->mo->bspLeaf)
             return true;
 
-        if(ddpl->mo)
+        BspLeaf *bspLeaf = ddpl->mo->bspLeaf;
+        if(!bspLeaf->hasSector())
+            return true;
+
+#ifdef __CLIENT__
+        if(bspLeaf->ceiling().surface().hasSkyMaskedMaterial())
         {
-            Sector &sec = ddpl->mo->bspLeaf->sector();
+            coord_t const skyCeil = bspLeaf->map().skyFixCeiling();
+            if(skyCeil < DDMAXFLOAT && ddpl->mo->origin[VZ] > skyCeil - 4)
+                return true;
+        }
+        else if(ddpl->mo->origin[VZ] > bspLeaf->ceiling().visHeight() - 4)
+#else
+        if(ddpl->mo->origin[VZ] > bspLeaf->ceiling().height() - 4)
+#endif
+        {
+            return true;
+        }
 
 #ifdef __CLIENT__
-            if(sec.ceilingSurface().hasSkyMaskedMaterial())
-            {
-                coord_t const skyCeil = sec.map().skyFixCeiling();
-                if(skyCeil < DDMAXFLOAT && ddpl->mo->origin[VZ] > skyCeil - 4)
-                    return true;
-            }
-            else if(ddpl->mo->origin[VZ] > sec.ceiling().visHeight() - 4)
-#else
-            if(ddpl->mo->origin[VZ] > sec.ceiling().height() - 4)
-#endif
-            {
+        if(bspLeaf->floor().surface().hasSkyMaskedMaterial())
+        {
+            coord_t const skyFloor = bspLeaf->map().skyFixFloor();
+            if(skyFloor > DDMINFLOAT && ddpl->mo->origin[VZ] < skyFloor + 4)
                 return true;
-            }
-
-#ifdef __CLIENT__
-            if(sec.floorSurface().hasSkyMaskedMaterial())
-            {
-                coord_t const skyFloor = sec.map().skyFixFloor();
-                if(skyFloor > DDMINFLOAT && ddpl->mo->origin[VZ] < skyFloor + 4)
-                    return true;
-            }
-            else if(ddpl->mo->origin[VZ] < sec.floor().visHeight() + 4)
+        }
+        else if(ddpl->mo->origin[VZ] < bspLeaf->floor().visHeight() + 4)
 #else
-            if(ddpl->mo->origin[VZ] < sec.floor().height() + 4)
+        if(ddpl->mo->origin[VZ] < bspLeaf->floor().height() + 4)
 #endif
-            {
-                return true;
-            }
+        {
+            return true;
         }
     }
 
