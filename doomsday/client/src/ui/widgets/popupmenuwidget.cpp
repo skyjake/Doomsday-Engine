@@ -169,12 +169,13 @@ void PopupMenuWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
 
 void PopupMenuWidget::preparePopupForOpening()
 {
-    PopupWidget::preparePopupForOpening();
-
     // Redo the layout.
     menu().updateLayout();
-    menu().rule().setInput(Rule::Width,
-                           *refless(menu().newColumnWidthRule(0)) + 2 * margin());
+
+    PopupWidget::preparePopupForOpening();
+
+    //menu().rule().setInput(Rule::Width, menu().layout().width() + 2 * margin());
+    //menu().rule().setInput(Rule::Height, menu().layout().height() + 2 * margin());
 }
 
 void PopupMenuWidget::popupClosing()
