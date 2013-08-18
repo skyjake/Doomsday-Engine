@@ -3191,6 +3191,9 @@ static void Rend_DrawSurfaceVectors(Map &map)
     Vector3d origin;
     foreach(BspLeaf *bspLeaf, map.bspLeafs())
     {
+        if(!bspLeaf->hasSector() || bspLeaf->isDegenerate())
+            continue;
+
         HEdge *base = bspLeaf->poly().hedge();
         HEdge *hedge = base;
         do

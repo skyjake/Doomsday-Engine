@@ -61,12 +61,12 @@ Plane &Sector::Cluster::visPlane(int planeIndex) const
 
 AABoxd const &Sector::Cluster::aaBox() const
 {
-    // If an bounding box is assigned - use it.
+    // If a bounding box is assigned - use it.
     if(!_aaBox.isNull())
     {
         return *_aaBox;
     }
-    // Otherwise it means the cluser is comprised of a single BSP leaf, so we
+    // Otherwise it means the cluster is comprised of a single BSP leaf, so we
     // can use the bounding box of the leaf's geometry directly.
     DENG_ASSERT(_bspLeafs.count() == 1); // sanity check
     return _bspLeafs.first()->poly().aaBox();
@@ -226,9 +226,9 @@ DENG2_OBSERVES(Plane, HeightChange)
         roughArea = 0;
         foreach(Cluster *cluster, clusters)
         {
-            AABoxd const &leafAABox = cluster->aaBox();
-            roughArea += (leafAABox.maxX - leafAABox.minX) *
-                         (leafAABox.maxY - leafAABox.minY);
+            AABoxd const &clusterAABox = cluster->aaBox();
+            roughArea += (clusterAABox.maxX - clusterAABox.minX) *
+                         (clusterAABox.maxY - clusterAABox.minY);
         }
     }
 
