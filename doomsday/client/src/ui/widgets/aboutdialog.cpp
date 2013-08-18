@@ -18,6 +18,7 @@
 
 #include "ui/widgets/aboutdialog.h"
 #include "ui/widgets/labelwidget.h"
+#include "ui/widgets/sequentiallayout.h"
 #include "ui/signalaction.h"
 #include "ui/style.h"
 #include "ui/signalaction.h"
@@ -32,8 +33,9 @@ using namespace de;
 
 AboutDialog::AboutDialog() : DialogWidget("about")
 {
-    Rule const &width = style().rules().rule("about.width");
-
+    /*
+     * Construct the widgets.
+     */
     LabelWidget *logo = new LabelWidget;
     logo->setImage(style().images().image("logo.px256"));
     logo->setSizePolicy(ui::Fixed, ui::Expand);
@@ -70,26 +72,21 @@ AboutDialog::AboutDialog() : DialogWidget("about")
     area().add(info);
     area().add(homepage);
 
-    // Position inside the content.
+    // Layout.
     RuleRectangle const &cont = area().contentRule();
-    logo->rule()
-            .setLeftTop(cont.left(), cont.top())
-            .setInput(Rule::Width, width);
-    title->rule()
-            .setLeftTop(cont.left(), logo->rule().bottom())
-            .setInput(Rule::Width, width);
-    info->rule()
-            .setLeftTop(cont.left(), title->rule().bottom())
-            .setInput(Rule::Width, width);
+    SequentialLayout layout(cont.left(), cont.top());
+    layout.setOverrideWidth(style().rules().rule("about.width"));
+    layout << *logo << *title << *info;
+
+    // Center the button.
     homepage->rule()
-            .setInput(Rule::AnchorX, cont.left() + width / 2)
+            .setInput(Rule::AnchorX, cont.left() + layout.width() / 2)
             .setInput(Rule::Top, info->rule().bottom())
             .setAnchorPoint(Vector2f(.5f, 0));
 
     // Total size of the dialog's content.
-    area().setContentWidth(width);
-    area().setContentHeight(logo->rule().height() + title->rule().height() +
-                            info->rule().height() + homepage->rule().height());
+    area().setContentWidth(layout.width());
+    area().setContentHeight(layout.height() + homepage->rule().height());
 
     buttons().items()
             << new DialogButtonItem(DialogWidget::Accept | DialogWidget::Default, tr("Close"));
