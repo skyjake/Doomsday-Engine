@@ -94,7 +94,7 @@ DENG2_PIMPL(PopupWidget)
 
     bool isVerticalAnimation() const
     {
-        return dir == ui::Up || dir == ui::Down || dir == ui::NoDirection;
+        return isVertical(dir) || dir == ui::NoDirection;
     }
 
     void updateLayout()
@@ -296,6 +296,11 @@ void PopupWidget::setAnchorY(Rule const &y)
 void PopupWidget::setOpeningDirection(ui::Direction dir)
 {
     d->dir = dir;
+}
+
+ui::Direction PopupWidget::openingDirection() const
+{
+    return d->dir;
 }
 
 bool PopupWidget::isOpen() const

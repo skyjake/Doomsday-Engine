@@ -229,7 +229,10 @@ public ContextWidgetOrganizer::IWidgetFactory
 
             b.setImage(act.image());
             b.setText(act.label());
-            b.setAction(act.action()->duplicate());
+            if(act.action())
+            {
+                b.setAction(act.action()->duplicate());
+            }
         }
         else
         {

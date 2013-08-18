@@ -18,14 +18,17 @@
 
 #include "ui/widgets/dialogwidget.h"
 #include "ui/widgets/guirootwidget.h"
+#include "ui/signalaction.h"
 #include "dd_main.h"
 
+#include <de/KeyEvent>
 #include <QEventLoop>
 
 using namespace de;
 
 DENG2_PIMPL(DialogWidget),
-DENG2_OBSERVES(ContextWidgetOrganizer, WidgetCreation)
+DENG2_OBSERVES(ContextWidgetOrganizer, WidgetCreation),
+DENG2_OBSERVES(ContextWidgetOrganizer, WidgetUpdate)
 {
     Modality modality;
     ScrollAreaWidget *area;
@@ -34,10 +37,13 @@ DENG2_OBSERVES(ContextWidgetOrganizer, WidgetCreation)
 
     Instance(Public *i) : Base(i), modality(Modal)
     {
+        GuiWidget *container = new GuiWidget("container");
+
         area    = new ScrollAreaWidget("area");
         buttons = new MenuWidget("buttons");
 
         buttons->organizer().audienceForWidgetCreation += this;
+        buttons->organizer().audienceForWidgetUpdate += this;
 
         // The menu maintains its own width and height based on children.
         // Set up one row with variable number of columns.
@@ -47,7 +53,8 @@ DENG2_OBSERVES(ContextWidgetOrganizer, WidgetCreation)
                 .setInput(Rule::Left, self.rule().left())
                 .setInput(Rule::Top, self.rule().top())
                 .setInput(Rule::Width, area->contentRule().width() + area->margin() * 2)
-                .setInput(Rule::Height, area->contentRule().height() + area->margin() * 2);
+                .setInput(Rule::Height, container->rule().height() - buttons->rule().height() +
+                          area->margin());
 
         // Buttons below the area.
         buttons->rule()
@@ -55,24 +62,102 @@ DENG2_OBSERVES(ContextWidgetOrganizer, WidgetCreation)
                 .setInput(Rule::Right, self.rule().right());
 
         // A blank container widget acts as the popup content parent.
-        GuiWidget *container = new GuiWidget("container");
-        container->rule()
-                .setInput(Rule::Width, OperatorRule::maximum(area->rule().width(), buttons->rule().width()))
-                .setInput(Rule::Height, area->rule().height() + buttons->rule().height() -
-                                        area->margin());
+        container->rule().setInput(Rule::Width, OperatorRule::maximum(area->rule().width(),
+                                                                      buttons->rule().width()));
         container->add(area);
         container->add(buttons);
         self.setContent(container);
     }
 
-    void widgetCreatedForItem(GuiWidget &widget, ui::Item const &)
+    void updateContentHeight()
+    {
+        // The container's height is limited by the height of the view. Normally
+        // the dialog tries to show the full height of the content area.
+
+        DENG2_ASSERT(self.hasRoot());
+        self.content().rule().setInput(Rule::Height,
+                                       OperatorRule::minimum(self.root().viewHeight(),
+                                                             area->contentRule().height() +
+                                                             area->margin() +
+                                                             buttons->rule().height()));
+    }
+
+    void widgetCreatedForItem(GuiWidget &widget, ui::Item const &item)
     {
         // Make sure all label-based widgets in the button area
         // manage their own size.
-        if(widget.is<LabelWidget>())
+        if(LabelWidget *lab = widget.maybeAs<LabelWidget>())
         {
-            widget.as<LabelWidget>().setSizePolicy(ui::Expand, ui::Expand);
+            lab->setSizePolicy(ui::Expand, ui::Expand);
         }
+
+        // Apply dialog button specific roles.
+        if(ButtonItem const *i = item.maybeAs<ButtonItem>())
+        {
+            ButtonWidget &but = widget.as<ButtonWidget>();
+
+            if(i->role().testFlag(Accept))
+            {
+                but.setAction(new SignalAction(thisPublic, SLOT(accept())));
+            }
+            else if(i->role().testFlag(Reject))
+            {
+                but.setAction(new SignalAction(thisPublic, SLOT(reject())));
+            }
+        }
+    }
+
+    void widgetUpdatedForItem(GuiWidget &widget, ui::Item const &item)
+    {
+        if(ButtonItem const *i = item.maybeAs<ButtonItem>())
+        {
+            ButtonWidget &but = widget.as<ButtonWidget>();
+
+            // Set default label?
+            if(item.label().isEmpty())
+            {
+                if(i->role().testFlag(Accept))
+                {
+                    but.setText(tr("OK"));
+                }
+                else if(i->role().testFlag(Reject))
+                {
+                    but.setText(tr("Cancel"));
+                }
+                else if(i->role().testFlag(Yes))
+                {
+                    but.setText(tr("Yes"));
+                }
+                else if(i->role().testFlag(No))
+                {
+                    but.setText(tr("No"));
+                }
+            }
+
+            if(i->role().testFlag(Default))
+            {
+                but.setText(_E(b) + but.text());
+            }
+        }
+    }
+
+    ui::ActionItem const *findDefaultAction() const
+    {
+        for(ui::Context::Pos i = 0; i < buttons->items().size(); ++i)
+        {
+            ButtonItem const *act = buttons->items().at(i).maybeAs<ButtonItem>();
+            if(act->role().testFlag(Default) &&
+               buttons->organizer().itemWidget(i)->isEnabled())
+            {
+                return act;
+            }
+        }
+        return 0;
+    }
+
+    ButtonWidget const &buttonWidget(ui::Item const &item) const
+    {
+        return buttons->organizer().itemWidget(item)->as<ButtonWidget>();
     }
 };
 
@@ -100,7 +185,7 @@ DialogWidget::Modality DialogWidget::modality() const
     return d->modality;
 }
 
-ScrollAreaWidget &DialogWidget::content()
+ScrollAreaWidget &DialogWidget::area()
 {
     return *d->area;
 }
@@ -127,6 +212,29 @@ int DialogWidget::exec(GuiRootWidget &root)
 
 bool DialogWidget::handleEvent(Event const &event)
 {
+    if(event.isKeyDown())
+    {
+        KeyEvent const &key = event.as<KeyEvent>();
+        if(key.ddKey() == DDKEY_ENTER ||
+           key.ddKey() == DDKEY_RETURN ||
+           key.ddKey() == ' ')
+        {
+            ui::ActionItem const *defaultAction = d->findDefaultAction();
+            ButtonWidget const &but = d->buttonWidget(*defaultAction);
+            if(but.action())
+            {
+                but.action()->trigger();
+            }
+            return true;
+        }
+        if(key.ddKey() == DDKEY_ESCAPE)
+        {
+            // Esc always cancels a dialog.
+            reject();
+            return true;
+        }
+    }
+
     if(d->modality == Modal)
     {
         // The event should already have been handled by the children.
@@ -154,6 +262,25 @@ void DialogWidget::reject(int result)
     }
 }
 
+void DialogWidget::prepare()
+{
+    if(openingDirection() == ui::NoDirection)
+    {
+        // Center the dialog.
+        setAnchor(root().viewWidth() / 2, root().viewHeight() / 2);
+    }
+
+    d->updateContentHeight();
+
+    // Make sure the newly added widget knows the view size.
+    viewResized();
+    notifyTree(&Widget::viewResized);
+
+    d->buttons->updateLayout();
+
+    open();
+}
+
 void DialogWidget::preparePopupForOpening()
 {
     PopupWidget::preparePopupForOpening();
@@ -162,20 +289,15 @@ void DialogWidget::preparePopupForOpening()
     d->buttons->updateLayout();
 }
 
-void DialogWidget::prepare()
-{
-    // Center the dialog.
-    setAnchor(root().viewWidth() / 2, root().viewHeight() / 2);
-    d->buttons->updateLayout();
-
-    // Make sure the newly added widget knows the view size.
-    viewResized();
-    notifyTree(&Widget::viewResized);
-
-    open();
-}
-
 void DialogWidget::finish(int)
 {
     close();
 }
+
+DialogWidget::ButtonItem::ButtonItem(RoleFlags flags, String const &label)
+    : ui::ActionItem(label, 0), _role(flags)
+{}
+
+DialogWidget::ButtonItem::ButtonItem(RoleFlags flags, String const &label, de::Action *action)
+    : ui::ActionItem(label, action), _role(flags)
+{}

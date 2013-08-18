@@ -67,6 +67,8 @@ public:
      */
     void setAction(de::Action *action);
 
+    de::Action *action() const;
+
     State state() const;
 
     // Events.

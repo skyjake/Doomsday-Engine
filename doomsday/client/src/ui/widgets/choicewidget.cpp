@@ -63,11 +63,11 @@ DENG2_OBSERVES(ContextWidgetOrganizer, WidgetCreation)
 
     void widgetCreatedForItem(GuiWidget &widget, ui::Item const &item)
     {
-        if(widget.is<ButtonWidget>())
+        if(ButtonWidget *but = widget.maybeAs<ButtonWidget>())
         {
             // Make sure the created buttons have an action that updates the
             // selected item.
-            widget.as<ButtonWidget>().setAction(new SelectAction(this, item));
+            but->setAction(new SelectAction(this, item));
         }
     }
 

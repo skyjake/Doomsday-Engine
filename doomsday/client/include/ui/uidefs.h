@@ -45,6 +45,14 @@ inline Direction opposite(Direction dir) {
     }
 }
 
+inline bool isHorizontal(Direction dir) {
+    return dir == ui::Left || dir == ui::Right;
+}
+
+inline bool isVertical(Direction dir) {
+    return dir == ui::Up || dir == ui::Down;
+}
+
 /**
  * Flags for specifying alignment.
  */

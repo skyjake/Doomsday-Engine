@@ -65,6 +65,8 @@ public:
      */
     void setOpeningDirection(ui::Direction dir);
 
+    ui::Direction openingDirection() const;
+
     bool isOpen() const;
 
     /**

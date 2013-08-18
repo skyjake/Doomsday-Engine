@@ -50,6 +50,40 @@ public:
         Nonmodal
     };
 
+    enum RoleFlag {
+        None    = 0,
+        Default = 0x1, ///< Pressing Space or Enter will activate this.
+        Accept  = 0x2,
+        Reject  = 0x4,
+        Yes     = 0x8,
+        No      = 0x10,
+        Action  = 0x20
+    };
+    Q_DECLARE_FLAGS(RoleFlags, RoleFlag)
+
+    class ButtonItem : public ui::ActionItem
+    {
+    public:
+        /**
+         * Button with the role's default label and action.
+         * @param flags  Role flags for the button.
+         * @param label  Label for the button. If empty, the default label will be used.
+         */
+        ButtonItem(RoleFlags flags, de::String const &label = "");
+
+        /**
+         * Button with custom action.
+         * @param flags  Role flags for the button.
+         * @param label  Label for the button. If empty, the default label will be used.
+         */
+        ButtonItem(RoleFlags flags, de::String const &label, de::Action *action);
+
+        RoleFlags role() const { return _role; }
+
+    private:
+        RoleFlags _role;
+    };
+
 public:
     DialogWidget(de::String const &name = "");
 
@@ -57,7 +91,7 @@ public:
 
     Modality modality() const;
 
-    ScrollAreaWidget &content();
+    ScrollAreaWidget &area();
 
     MenuWidget &buttons();
 
@@ -104,5 +138,9 @@ protected:
 private:
     DENG2_PRIVATE(d)
 };
+
+typedef DialogWidget::ButtonItem DialogButtonItem;
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(DialogWidget::RoleFlags)
 
 #endif // DENG_CLIENT_DIALOGWIDGET_H

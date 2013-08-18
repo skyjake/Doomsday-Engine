@@ -65,13 +65,13 @@ AboutDialog::AboutDialog() : DialogWidget("about")
     homepage->setSizePolicy(ui::Expand, ui::Expand);
     homepage->setAction(new SignalAction(&ClientApp::app(), SLOT(openHomepageInBrowser())));
 
-    content().add(logo);
-    content().add(title);
-    content().add(info);
-    content().add(homepage);
+    area().add(logo);
+    area().add(title);
+    area().add(info);
+    area().add(homepage);
 
     // Position inside the content.
-    RuleRectangle const &cont = content().contentRule();
+    RuleRectangle const &cont = area().contentRule();
     logo->rule()
             .setLeftTop(cont.left(), cont.top())
             .setInput(Rule::Width, width);
@@ -87,11 +87,10 @@ AboutDialog::AboutDialog() : DialogWidget("about")
             .setAnchorPoint(Vector2f(.5f, 0));
 
     // Total size of the dialog's content.
-    content().setContentWidth(width);
-    content().setContentHeight(logo->rule().height() + title->rule().height() +
-                               info->rule().height() + homepage->rule().height());
+    area().setContentWidth(width);
+    area().setContentHeight(logo->rule().height() + title->rule().height() +
+                            info->rule().height() + homepage->rule().height());
 
-    // Just an OK button.
     buttons().items()
-            << new ui::ActionItem(tr("Close"), new SignalAction(this, SLOT(accept())));
+            << new DialogButtonItem(DialogWidget::Accept | DialogWidget::Default, tr("Close"));
 }
