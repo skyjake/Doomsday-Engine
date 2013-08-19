@@ -51,7 +51,7 @@ AboutDialog::AboutDialog() : DialogWidget("about")
     de::Version ver2;
 
     LabelWidget *info = new LabelWidget;
-    String txt = String(_E(D)_E(b) "%1" _E(.) " #%2 %3\n" _E(.)_E(l) "%4-bit %5%6\n\n%7")
+    String txt = String(_E(D)_E(b) "%3 %1" _E(.) " #%2\n" _E(.)_E(l) "%4-bit %5%6\n\n" _E(.) "%7")
             .arg(version.base())
             .arg(ver2.build)
             .arg(DOOMSDAY_RELEASE_TYPE)

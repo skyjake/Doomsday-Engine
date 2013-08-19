@@ -215,6 +215,7 @@ bool DialogWidget::handleEvent(Event const &event)
     if(event.isKeyDown())
     {
         KeyEvent const &key = event.as<KeyEvent>();
+
         if(key.ddKey() == DDKEY_ENTER ||
            key.ddKey() == DDKEY_RETURN ||
            key.ddKey() == ' ')
@@ -227,6 +228,7 @@ bool DialogWidget::handleEvent(Event const &event)
             }
             return true;
         }
+
         if(key.ddKey() == DDKEY_ESCAPE)
         {
             // Esc always cancels a dialog.
