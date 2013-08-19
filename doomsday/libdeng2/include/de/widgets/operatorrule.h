@@ -160,8 +160,8 @@ inline OperatorRule &operator / (Rule const &left, Rule const &right) {
     return *refless(new OperatorRule(OperatorRule::Divide, left, right));
 }
 
-template <typename RuleType1, typename RuleType2>
-inline void sumInto(RuleType1 const *&sum, RuleType2 const &value) {
+template <typename RuleType>
+inline void sumInto(RuleType const *&sum, Rule const &value) {
     if(!sum) { sum = holdRef(value); }
     else { changeRef(sum, *sum + value); }
 }
