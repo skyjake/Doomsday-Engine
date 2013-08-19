@@ -181,16 +181,22 @@ DENG2_PIMPL(GridLayout)
     Rule const &columnBaseX(int col) const // refless
     {
         Rule const *base = holdRef(initialX);
-        if(col > 0 && colPad) changeRef(base, *base + *colPad * col);
-        sumInto(base, *cols.at(col)->accum);
+        if(col > 0)
+        {
+            if(colPad) changeRef(base, *base + *colPad * col);
+            sumInto(base, *cols.at(col)->accum);
+        }
         return *refless(base);
     }
 
     Rule const &rowBaseY(int row) const // refless
     {
         Rule const *base = holdRef(initialY);
-        if(row > 0 && rowPad) changeRef(base, *base + *rowPad * row);
-        sumInto(base, *rows.at(row)->accum);
+        if(row > 0)
+        {
+            if(rowPad) changeRef(base, *base + *rowPad * row);
+            sumInto(base, *rows.at(row)->accum);
+        }
         return *refless(base);
     }
 
@@ -352,6 +358,9 @@ DENG2_PIMPL(GridLayout)
             DENG2_ASSERT(rows.at(i));
             sumInto(totalHeight, *rows.at(i)->final);
         }
+
+        if(!totalWidth)  totalWidth  = new ConstantRule(0);
+        if(!totalHeight) totalHeight = new ConstantRule(0);
 
         needTotalUpdate = false;
     }
