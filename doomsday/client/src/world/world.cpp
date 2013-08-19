@@ -859,7 +859,7 @@ Hand &World::hand(coord_t *distance) const
     if(d->hand.isNull())
     {
         d->hand.reset(new Hand());
-        const_cast<World *>(this)->audienceForFrameEnd += *d->hand;
+        audienceForFrameEnd += *d->hand;
         if(d->map)
         {
             d->updateHandOrigin();

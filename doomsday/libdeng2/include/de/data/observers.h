@@ -217,6 +217,11 @@ public:
         return *this;
     }
 
+    Observers<Type> const &operator += (Type &observer) const {
+        const_cast<Observers<Type> *>(this)->add(&observer);
+        return *this;
+    }
+
     void remove(Type *observer) {
         DENG2_GUARD(this);
         _members.remove(observer);
