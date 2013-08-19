@@ -320,11 +320,14 @@ public:
     ddmobj_base_t const &soundEmitter() const;
 
     /**
-     * @param newEmitter  Mobj base to link to the sector. Caller must ensure
-     *                    that the object is not linked multiple times into
-     *                    the chain.
+     * (Re)Build the sound emitter chains for the sector. These chains are used
+     * for efficiently traversing all sound emitters in the sector (e.g., when
+     * stopping all sounds emitted in the sector). To be called during map load
+     * once planes and sides have been initialized.
+     *
+     * @see addPlane(), buildSides()
      */
-    void linkSoundEmitter(ddmobj_base_t &newEmitter);
+    void chainSoundEmitters();
 
     /**
      * Returns the ambient light level in the sector. The LightLevelChange

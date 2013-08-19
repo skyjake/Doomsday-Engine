@@ -684,14 +684,46 @@ AABoxd const &Sector::aaBox() const
     return d->aaBox;
 }
 
-void Sector::linkSoundEmitter(ddmobj_base_t &newEmitter)
+static void linkSoundEmitter(ddmobj_base_t &root, ddmobj_base_t &newEmitter)
 {
-    // The sector's base is always head of the chain, so link the other after it.
-    newEmitter.thinker.prev = &d->soundEmitter.thinker;
-    newEmitter.thinker.next = d->soundEmitter.thinker.next;
+    // The sector's base is always root of the chain, so link the other after it.
+    newEmitter.thinker.prev = &root.thinker;
+    newEmitter.thinker.next = root.thinker.next;
     if(newEmitter.thinker.next)
         newEmitter.thinker.next->prev = &newEmitter.thinker;
-    d->soundEmitter.thinker.next = &newEmitter.thinker;
+    root.thinker.next = &newEmitter.thinker;
+}
+
+void Sector::chainSoundEmitters()
+{
+    ddmobj_base_t &root = d->soundEmitter;
+
+    // Clear the root of the emitter chain.
+    root.thinker.next = root.thinker.prev = 0;
+
+    // Link plane surface emitters:
+    foreach(Plane *plane, d->planes)
+    {
+        linkSoundEmitter(root, plane->soundEmitter());
+    }
+
+    // Link wall surface emitters:
+    foreach(Line::Side *side, d->sides)
+    {
+        if(side->hasSections())
+        {
+            linkSoundEmitter(root, side->middleSoundEmitter());
+            linkSoundEmitter(root, side->bottomSoundEmitter());
+            linkSoundEmitter(root, side->topSoundEmitter());
+        }
+        if(side->line().isSelfReferencing() && side->back().hasSections())
+        {
+            Line::Side &back = side->back();
+            linkSoundEmitter(root, back.middleSoundEmitter());
+            linkSoundEmitter(root, back.bottomSoundEmitter());
+            linkSoundEmitter(root, back.topSoundEmitter());
+        }
+    }
 }
 
 bool Sector::pointInside(Vector2d const &point) const

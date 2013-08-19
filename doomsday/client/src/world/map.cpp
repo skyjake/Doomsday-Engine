@@ -3376,41 +3376,7 @@ bool Map::endEditing()
     {
         sector->buildClusters();
         sector->buildSides();
-
-        /*
-         * Chain sound emitters (ddmobj_base_t) owned by all Surfaces in the
-         * sector-> These chains are used for efficiently traversing all of the
-         * sound emitters in a sector (e.g., when stopping all sounds emitted
-         * in the sector).
-         */
-        ddmobj_base_t &emitter = sector->soundEmitter();
-
-        // Clear the head of the emitter chain.
-        emitter.thinker.next = emitter.thinker.prev = 0;
-
-        // Link plane surface emitters:
-        foreach(Plane *plane, sector->planes())
-        {
-            sector->linkSoundEmitter(plane->soundEmitter());
-        }
-
-        // Link wall surface emitters:
-        foreach(Line::Side *side, sector->sides())
-        {
-            if(side->hasSections())
-            {
-                sector->linkSoundEmitter(side->middleSoundEmitter());
-                sector->linkSoundEmitter(side->bottomSoundEmitter());
-                sector->linkSoundEmitter(side->topSoundEmitter());
-            }
-            if(side->line().isSelfReferencing() && side->back().hasSections())
-            {
-                Line::Side &back = side->back();
-                sector->linkSoundEmitter(back.middleSoundEmitter());
-                sector->linkSoundEmitter(back.bottomSoundEmitter());
-                sector->linkSoundEmitter(back.topSoundEmitter());
-            }
-        }
+        sector->chainSoundEmitters();
     }
 
     // Finish planes.
