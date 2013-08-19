@@ -88,25 +88,15 @@ DENG2_OBSERVES(Plane, HeightChange)
     AABoxd aaBox;
     bool needAABoxUpdate; ///< @c true= marked for update.
 
-    /// Primary sound emitter. Others are linked to this, forming a chain.
-    ddmobj_base_t soundEmitter;
+    ddmobj_base_t soundEmitter; ///< Head of the sound emitte chain.
 
-    /// List of planes (owned).
-    Planes planes;
+    Planes planes; ///< All owned planes.
+    Sides sides; ///< All referencing line sides (not owned).
+    Clusters clusters; ///< All owned BSP leaf clusters.
 
-    /// List of line sides which reference the sector (not owned).
-    Sides sides;
+    float lightLevel; ///< Ambient light level.
+    Vector3f lightColor; ///< Ambient light color.
 
-    /// List of BSP leaf clusters which reference the sector (owned).
-    Clusters clusters;
-
-    /// Ambient light level in the sector.
-    float lightLevel;
-
-    /// Ambient light color in the sector.
-    Vector3f lightColor;
-
-    /// if == validCount, already checked.
     int validCount;
 
 #ifdef __CLIENT__
@@ -114,29 +104,28 @@ DENG2_OBSERVES(Plane, HeightChange)
     coord_t roughArea;
     bool needRoughAreaUpdate; /// @c true= marked for update.
 
-    /// LightGrid data values.
+    /// Ambient lighting data for the bias lighting model.
     LightGridData lightGridData;
 
-    /// Set of BSP leafs which contribute to the environmental audio (reverb)
-    /// characteristics.
+    /// All BSP leafs which effect environmental audio characteristics.
     ReverbBspLeafs reverbBspLeafs;
 
     /// Final environmental audio characteristics.
     AudioEnvironmentFactors reverb;
-    bool needReverbUpdate; ///< @true= marked for update.
+    bool needReverbUpdate; ///< @c true= marked for update.
 
     bool visible; ///< @c true= marked as visible for the current frame.
 #endif
 
     Instance(Public *i, float lightLevel, Vector3f const &lightColor)
         : Base(i),
-          needAABoxUpdate(false), // Sectors with no BSP leafs have no geometry.
+          needAABoxUpdate(false), // No BSP leafs thus no geometry.
           lightLevel(lightLevel),
           lightColor(lightColor),
           validCount(0)
 #ifdef __CLIENT__
          ,roughArea(0),
-          needRoughAreaUpdate(false), // Sectors with no BSP leafs have zero area.
+          needRoughAreaUpdate(false), // No BSP leafs thus zero area.
           needReverbUpdate(true),
           visible(false)
 #endif
