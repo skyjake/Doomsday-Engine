@@ -562,6 +562,28 @@ Sector::Clusters const &Sector::clusters() const
     return d->clusters;
 }
 
+static HEdge *findSharedEdge(Sector::Cluster const &a, Sector::Cluster const &b)
+{
+    // Comparing internal edges of the cluster could be avoided by recording the
+    // boundary representation (B-rep) of the cluster. However, it remains to be
+    // seen whether this is actually worthwhile (wrt update perf).
+    foreach(BspLeaf *leaf, a.bspLeafs())
+    {
+        HEdge *baseHEdge = leaf->poly().hedge();
+        HEdge *hedge = baseHEdge;
+        do
+        {
+            if(hedge->twin().hasFace())
+            if(BspLeaf *otherLeaf = hedge->twin().face().mapElement()->as<BspLeaf>())
+            {
+                if(otherLeaf->hasCluster() && &otherLeaf->cluster() == &b)
+                    return hedge;
+            }
+        } while((hedge = &hedge->next()) != baseHEdge);
+    }
+    return 0; // None.
+}
+
 void Sector::buildClusters()
 {
     d->clusters.clear();
@@ -573,8 +595,11 @@ void Sector::buildClusters()
     d->needRoughAreaUpdate = true;
 #endif
 
-    /// @todo Separate the BSP leafs into edge-adjacency clusters. For now we'll
-    /// simply link them all into one cluster(!)
+    /*
+     * Separate the BSP leafs into edge-adjacency clusters. We'll do this by
+     * starting with a cluster per BSP leaf and then keep merging until no more
+     * shared edges are found.
+     */
     foreach(BspLeaf *bspLeaf, map().bspLeafs())
     {
         if(bspLeaf->parent().as<Sector>() != this)
@@ -584,18 +609,42 @@ void Sector::buildClusters()
         if(bspLeaf->isDegenerate())
             continue;
 
-        // Time to construct The One cluster?
-        if(d->clusters.isEmpty())
-        {
-            d->clusters.append(new Cluster);
-        }
-        Cluster *cluster = d->clusters.first();
+        Cluster *cluster = new Cluster;
+        d->clusters.append(cluster);
 
         // Ownership of the BSP leaf is not given to the cluster.
         cluster->_bspLeafs.append(bspLeaf);
 
         // Attribute the BSP leaf to the cluster.
         bspLeaf->setCluster(cluster);
+    }
+
+    if(d->clusters.isEmpty()) return;
+
+    // Merge clusters whose BSP leafs share a common edge.
+    forever
+    {
+        bool didMerge = false;
+        for(int i = 0; i < d->clusters.count() - 1; ++i)
+        {
+            if(findSharedEdge(*d->clusters[i], *d->clusters[i+1]))
+            {
+                // Merge n+1 into n.
+                foreach(BspLeaf *bspLeaf, d->clusters[i+1]->_bspLeafs)
+                {
+                    bspLeaf->setCluster(d->clusters[i]);
+                }
+                d->clusters[i]->_bspLeafs.append(d->clusters[i+1]->_bspLeafs);
+                d->clusters.removeAt(i+1);
+
+                // Compare the next pair.
+                i -= 1;
+
+                // We'll need to repeat in any case.
+                didMerge = true;
+            }
+        }
+        if(!didMerge) break;
     }
 
     // Clustering complete.
