@@ -176,7 +176,18 @@ public:
 
     // Tree organization.
     void clear();
+
+    /**
+     * Adds a child widget. It becomes the last child, meaning it is drawn on
+     * top of other children but will get events first.
+     *
+     * @param child  Child widget.
+     *
+     * @return Reference to the added child widget. (Note that this is @em not
+     * a "fluent API".)
+     */
     Widget &add(Widget *child);
+
     Widget &insertBefore(Widget *child, Widget const &otherChild);
     Widget *remove(Widget &child);
     Widget *find(String const &name);
