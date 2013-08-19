@@ -33,10 +33,13 @@ ConstantRule::ConstantRule(float constantValue)
 
 void ConstantRule::set(float newValue)
 {
-    _pendingValue = newValue;
+    if(!fequal(_pendingValue, newValue))
+    {
+        _pendingValue = newValue;
 
-    // Dependent values will need updating.
-    invalidate();
+        // Dependent values will need updating.
+        invalidate();
+    }
 }
 
 String ConstantRule::description() const
