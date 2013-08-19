@@ -863,7 +863,7 @@ void World::advanceTime(timespan_t delta)
     d->time += delta;
 }
 
-timespan_t const World::time() const
+timespan_t World::time() const
 {
     return d->time;
 }

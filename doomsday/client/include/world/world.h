@@ -135,7 +135,7 @@ public:
     /**
      * Returns the current world time.
      */
-    timespan_t const time() const;
+    timespan_t time() const;
 
 #ifdef __CLIENT__
     /**
