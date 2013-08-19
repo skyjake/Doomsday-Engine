@@ -105,17 +105,6 @@ public ContextWidgetOrganizer::IWidgetFactory
     SizePolicy colPolicy;
     SizePolicy rowPolicy;
 
-    //Rule const *margin;
-    //Rule const *padding;
-
-    /*
-    ConstantRule *cols;
-    ConstantRule *rows;
-
-    OperatorRule *colWidth;
-    OperatorRule *rowHeight;
-    */
-
     Instance(Public *i)
         : Base(i),
           needLayout(false),
@@ -124,30 +113,11 @@ public ContextWidgetOrganizer::IWidgetFactory
           colPolicy(Fixed),
           rowPolicy(Fixed)
     {
-        //cols = new ConstantRule(1);
-        //rows = new ConstantRule(1);
-
-        //margin = &self.style().rules().rule("gap");
-        //padding = &self.style().rules().rule("unit");
-
-        //colWidth  = holdRef((self.rule().width() - *margin * 2) / *cols);
-        //rowHeight = holdRef((self.rule().height() - *margin * 2) / *rows);
-
         // We will create widgets ourselves.
         organizer.setWidgetFactory(*this);
 
         // The default context is empty.        
         setContext(&defaultItems);
-    }
-
-    ~Instance()
-    {
-        /*
-        releaseRef(cols);
-        releaseRef(rows);
-        releaseRef(colWidth);
-        releaseRef(rowHeight);
-        */
     }
 
     void setContext(Context const *ctx)
@@ -252,31 +222,6 @@ public ContextWidgetOrganizer::IWidgetFactory
         openPopups.remove(&popup);
     }
 
-    /*
-    Vector2i ordinalToGridPos(int ordinal) const
-    {
-        Vector2i pos;
-        if(colPolicy != Expand)
-        {
-            pos.x = ordinal % cols->valuei();
-            pos.y = ordinal / cols->valuei();
-        }
-        else if(rows->valuei() > 0)
-        {
-            //DENG2_ASSERT(rowPolicy != Expand);
-            pos.x = ordinal / rows->valuei();
-            pos.y = ordinal % rows->valuei();
-        }
-        else
-        {
-            DENG2_ASSERT(cols->valuei() > 0);
-            pos.x = ordinal % cols->valuei();
-            pos.y = ordinal / cols->valuei();
-        }
-        return pos;
-    }
-    */
-
     bool isVisibleItem(Widget const *child) const
     {
         if(GuiWidget const *widget = child->maybeAs<GuiWidget>())
@@ -295,127 +240,6 @@ public ContextWidgetOrganizer::IWidgetFactory
         }
         return num;
     }
-
-    /*
-    Vector2i countGrid() const
-    {
-        Vector2i size;
-        int ord = 0;
-
-        foreach(Widget *i, self.childWidgets())
-        {
-            if(isVisibleItem(i))
-            {
-                size = size.max(ordinalToGridPos(ord++) + Vector2i(1, 1));
-            }
-        }
-
-        return size;
-    }
-    */
-
-    /*
-    GuiWidget *findItem(int col, int row) const
-    {
-        int ord = 0;
-        foreach(Widget *i, self.childWidgets())
-        {
-            if(isVisibleItem(i))
-            {
-                if(ordinalToGridPos(ord) == Vector2i(col, row))
-                {
-                    return static_cast<GuiWidget *>(i);
-                }
-                ord++;
-            }
-        }
-        return 0;
-    }
-
-    Rule const *fullColumnWidth(int col) const
-    {
-        Vector2i const size = countGrid();
-        Rule const *total = 0;
-
-        for(int i = 0; i < size.y; ++i)
-        {
-            GuiWidget *item = findItem(col, i);
-            if(!total)
-            {
-                total = holdRef(item->rule().width());
-            }
-            else
-            {
-                changeRef(total, OperatorRule::maximum(*total, item->rule().width()));
-            }
-        }
-        if(!total) return new ConstantRule(0);
-        return refless(total);
-    }
-
-    Rule const *fullRowHeight(int row) const
-    {
-        Vector2i const size = countGrid();
-        Rule const *total = 0;
-
-        for(int i = 0; i < size.x; ++i)
-        {
-            GuiWidget *item = findItem(i, row);
-            if(!item) continue;
-
-            if(!total)
-            {
-                total = holdRef(item->rule().height());
-            }
-            else
-            {
-                changeRef(total, OperatorRule::maximum(*total, item->rule().height()));
-            }
-        }
-        if(!total) return new ConstantRule(0);
-        return refless(total);
-    }
-
-    Rule const *totalWidth() const
-    {
-        Vector2i const size = countGrid();
-        Rule const *total = 0;
-
-        for(int i = 0; i < size.x; ++i)
-        {
-            if(!total)
-            {
-                total = holdRef(fullColumnWidth(i));
-            }
-            else
-            {
-                changeRef(total, *total + *fullColumnWidth(i));
-            }
-        }
-        if(!total) return new ConstantRule(0);
-        return refless(total);
-    }
-
-    Rule const *totalHeight() const
-    {
-        Vector2i const size = countGrid();
-        Rule const *total = 0;
-
-        for(int i = 0; i < size.y; ++i)
-        {
-            if(!total)
-            {
-                total = holdRef(fullRowHeight(i));
-            }
-            else
-            {
-                changeRef(total, *total + *fullRowHeight(i));
-            }
-        }
-        if(!total) return new ConstantRule(0);
-        return refless(total);
-    }
-    */
 
     void relayout()
     {
@@ -484,109 +308,9 @@ void MenuWidget::updateLayout()
 {
     d->relayout();
 
-    //Rule const *baseVert = holdRef(&contentRule().top());
-
-    //Vector2i gridSize = d->countGrid();
-/*
-    for(int row = 0; row < gridSize.y; ++row)
-    {
-        Rule const *baseHoriz = &contentRule().left();
-        GuiWidget *previous = 0;
-        Rule const *rowBottom = 0;
-
-        for(int col = 0; col < gridSize.x; ++col)
-        {
-            GuiWidget *widget = d->findItem(col, row);
-            if(!widget) continue;
-
-            if(d->colPolicy == Filled)
-            {
-                widget->rule()
-                        .setInput(Rule::Left, previous? previous->rule().right() : *baseHoriz)
-                        .setInput(Rule::Width, *d->colWidth);
-            }            
-            else //if(d->colPolicy == Fixed)
-            {
-                if(col > 0)
-                {
-                    if(d->cols->valuei() > 0)
-                    {
-                        widget->rule().setInput(Rule::Left, contentRule().left() + *d->colWidth * Const(col));
-                    }
-                    else
-                    {
-                        DENG2_ASSERT(previous != 0);
-                        widget->rule().setInput(Rule::Left, previous->rule().right());
-                    }
-                }
-                else
-                {
-                    widget->rule().setInput(Rule::Left, contentRule().left());
-                }
-            }
-
-            if(d->rowPolicy == Filled)
-            {
-                // The top/left corner is determined by the grid.
-                widget->rule()
-                        .setInput(Rule::Top, *baseVert)
-                        .setInput(Rule::Height, *d->rowHeight);
-            }
-            else if(d->rowPolicy == Expand)
-            {
-                widget->rule().setInput(Rule::Top, *baseVert);
-            }
-            else if(d->rowPolicy == Fixed)
-            {
-                widget->rule().setInput(Rule::Top, contentRule().top() + *d->rowHeight * Const(row));
-            }
-
-            // Form operator rule for maximum bottom coordinate.
-            if(!rowBottom)
-            {
-                rowBottom = holdRef(widget->rule().bottom());
-            }
-            else
-            {
-                changeRef(rowBottom, OperatorRule::maximum(widget->rule().bottom(), *rowBottom));
-            }
-
-            previous = widget;
-        }
-
-        releaseRef(baseVert);
-        baseVert = rowBottom;
-    }
-
-    // Determine the width and height of the scrollable content area.
-    if(d->colPolicy != Expand)
-    {
-        setContentWidth(*d->colWidth * Const(gridSize.x));
-    }
-    else
-    {
-        Rule const *width = d->totalWidth();
-        setContentWidth(*width);
-        rule().setInput(Rule::Width, *width + *d->margin * 2);
-    }
-
-    if(d->rowPolicy != Expand)
-    {
-        setContentHeight(*d->rowHeight * Const(gridSize.y));
-    }
-    else
-    {
-        Rule const *height = d->totalHeight();
-        setContentHeight(*height);
-        rule().setInput(Rule::Height, *height + *d->margin * 2);
-    }
-
-    // Hold kept references.
-    releaseRef(baseVert);
-*/
-
     setContentSize(d->layout.width(), d->layout.height());
 
+    // Expanding policy causes the size of the menu widget to change.
     if(d->colPolicy == Expand)
     {
         rule().setInput(Rule::Width, d->layout.width() + margin() * 2);
@@ -594,7 +318,6 @@ void MenuWidget::updateLayout()
     if(d->rowPolicy == Expand)
     {
         rule().setInput(Rule::Height, d->layout.height() + margin() * 2);
-        qDebug() << "grid height:" << d->layout.height().description();
     }
 
     d->needLayout = false;
@@ -604,17 +327,6 @@ GridLayout const &MenuWidget::layout() const
 {
     return d->layout;
 }
-
-/*
-Rule const *MenuWidget::newColumnWidthRule(int column) const
-{
-    if(d->colPolicy != Filled)
-    {
-        return holdRef(d->fullColumnWidth(column));
-    }
-    return holdRef(d->colWidth);
-}
-*/
 
 ContextWidgetOrganizer const &MenuWidget::organizer() const
 {
