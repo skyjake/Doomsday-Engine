@@ -267,7 +267,10 @@ DENG2_PIMPL(LineSightTest)
         foreach(Mesh *mesh, bspLeaf.extraMeshes())
         foreach(HEdge *hedge, mesh->hedges())
         {
-            DENG_ASSERT(hedge->mapElement() != 0); // sanity check
+            // Is this on the back of a one-sided line?
+            if(!hedge->mapElement())
+                continue;
+
             if(!crossLine(hedge->mapElement()->as<Line::Side::Segment>()->lineSide()))
                 return false;
         }

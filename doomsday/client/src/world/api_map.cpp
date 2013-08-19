@@ -443,7 +443,9 @@ int P_Iteratep(void *elPtr, uint prop, void *context, int (*callback) (void *p, 
                 foreach(Mesh *mesh, bspLeaf->extraMeshes())
                 foreach(HEdge *hedge, mesh->hedges())
                 {
-                    DENG_ASSERT(hedge->mapElement() != 0); // sanity check
+                    // Is this on the back of a one-sided line?
+                    if(!hedge->mapElement())
+                        continue;
 
                     int result = callback(&hedge->mapElement()->
                                           as<Line::Side::Segment>()->line(), context);
