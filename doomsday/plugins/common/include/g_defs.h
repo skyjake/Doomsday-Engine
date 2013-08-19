@@ -25,8 +25,12 @@
 extern "C" {
 #endif
 
-int GetDefInt(char *def, int *returnVal);
-void GetDefState(char *def, int *returnVal);
+/**
+ * @return  The default for a value (retrieved from Doomsday).
+ */
+int GetDefInt(char const *def, int *returnVal);
+
+void GetDefState(char const *def, int *returnVal);
 
 #ifdef __cplusplus
 } // extern "C"

@@ -49,7 +49,7 @@ typedef struct spawnqueuenode_s {
 
 static spawnqueuenode_t *spawnQueueHead, *unusedNodes;
 
-void P_SpawnTelefog(mobj_t *mo, void *context)
+void P_SpawnTelefog(mobj_t *mo, void * /*context*/)
 {
 #if __JDOOM__ || __JDOOM64__
     S_StartSound(SFX_ITMBK, mo);
@@ -69,6 +69,10 @@ void P_SpawnTelefog(mobj_t *mo, void *context)
 
 void P_MobjRemove(mobj_t *mo, boolean noRespawn)
 {
+#if !defined(__JDOOM__) && !defined(__JDOOM64__)
+    DENG_UNUSED(noRespawn);
+#endif
+
     if(mo->ddFlags & DDMF_REMOTE) goto justDoIt;
 
 #if __JDOOM__ || __JDOOM64__

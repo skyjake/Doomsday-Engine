@@ -36,7 +36,7 @@
 
 static int findMirrorPolyobj(uint poly)
 {
-#ifdef __JHEXEN__
+#if __JHEXEN__
     for(int i = 0; i < numpolyobjs; ++i)
     {
         Polyobj *po = P_GetPolyobj(i | 0x80000000);
@@ -45,28 +45,36 @@ static int findMirrorPolyobj(uint poly)
             return P_ToXLine(P_PolyobjFirstLine(po))->arg2;
         }
     }
+#else
+    DENG_UNUSED(poly);
 #endif
     return 0;
 }
 
 static void notifyPolyobjFinished(int polyNum)
 {
-#ifdef __JHEXEN__
+#if __JHEXEN__
     P_ACSPolyobjFinished(polyNum);
+#else
+    DENG_UNUSED(polyNum);
 #endif
 }
 
 static void startSoundSequence(Polyobj *poEmitter)
 {
-#ifdef __JHEXEN__
+#if __JHEXEN__
     SN_StartSequence((mobj_t *)poEmitter, SEQ_DOOR_STONE + poEmitter->seqType);
+#else
+    DENG_UNUSED(poEmitter);
 #endif
 }
 
 static void stopSoundSequence(Polyobj *poEmitter)
 {
-#ifdef __JHEXEN__
+#if __JHEXEN__
     SN_StopSequence((mobj_t *)poEmitter);
+#else
+    DENG_UNUSED(poEmitter);
 #endif
 }
 
@@ -104,7 +112,8 @@ void T_RotatePoly(void *polyThinker)
         absSpeed = abs(pe->intSpeed);
 
         if(pe->dist == -1)
-        {   // perpetual polyobj.
+        {
+            // perpetual polyobj.
             return;
         }
 

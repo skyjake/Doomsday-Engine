@@ -249,8 +249,6 @@ typedef struct jheretic_config_s {
 
 extern game_config_t cfg;      // in g_game.c
 
-int             GetDefInt(char *def, int *returned_value);
-
 #ifdef __cplusplus
 } // extern "C"
 #endif

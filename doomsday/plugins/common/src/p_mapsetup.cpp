@@ -840,7 +840,7 @@ static void precacheResources()
             { MT_BLOODSPLATTER,     GM_ANY },
             { MT_FEATHER,           GM_ANY },
 #  endif
-            { MT_NONE }
+            { MT_NONE, 0 }
         };
 
         for(int i = 0; types[i].type != MT_NONE; ++i)
@@ -867,6 +867,10 @@ static void precacheResources()
 
 void P_FinalizeMapChange(Uri const *uri)
 {
+#if !__JHEXEN__
+    DENG_UNUSED(uri);
+#endif
+
     initXLines();
     initXSectors();
 
