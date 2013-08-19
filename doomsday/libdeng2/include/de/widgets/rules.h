@@ -19,7 +19,6 @@
 
 #include "../Rule"
 #include "../ConstantRule"
-#include "../DelegateRule"
 #include "../IndirectRule"
 #include "../OperatorRule"
 #include "../ScalarRule"

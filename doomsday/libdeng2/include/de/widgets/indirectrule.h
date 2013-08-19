@@ -45,6 +45,8 @@ public:
      */
     void setSource(Rule const &rule);
 
+    void unsetSource();
+
     void update();
 
     Rule const &source() const;

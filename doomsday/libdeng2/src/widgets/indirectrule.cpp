@@ -25,22 +25,27 @@ IndirectRule::IndirectRule() : _source(0)
 
 IndirectRule::~IndirectRule()
 {
-    independentOf(_source);
+    unsetSource();
 }
 
 void IndirectRule::setSource(Rule const &rule)
 {
-    if(_source)
-    {
-        independentOf(_source);
-    }
+    unsetSource();
     dependsOn(_source = &rule);
 
     invalidate();
 }
 
+void IndirectRule::unsetSource()
+{
+    independentOf(_source);
+    _source = 0;
+}
+
 void IndirectRule::update()
 {
+    DENG2_ASSERT(_source != 0);
+
     setValue(_source? _source->value() : 0);
 }
 

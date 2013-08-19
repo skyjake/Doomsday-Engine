@@ -18,20 +18,17 @@
  */
 
 #include "de/RuleRectangle"
-#include "de/DelegateRule"
 #include "de/App"
 #include "de/math.h"
 
 namespace de {
 
-DENG2_PIMPL(RuleRectangle),
-DENG2_OBSERVES(Clock, TimeChange),
-public DelegateRule::ISource
+DENG2_PIMPL(RuleRectangle)
 {
     String debugName;
 
     // Internal identifiers for the output rules.
-    enum OutputIds
+    enum OutputId
     {
         OutLeft,
         OutRight,
@@ -41,29 +38,27 @@ public DelegateRule::ISource
         OutBottom,
         OutHeight,
 
-        MAX_OUTPUT_RULES,
-
-        // Ranges:
-        FIRST_HORIZ_OUTPUT = OutLeft,
-        LAST_HORIZ_OUTPUT  = OutWidth,
-        FIRST_VERT_OUTPUT  = OutTop,
-        LAST_VERT_OUTPUT   = OutHeight
+        MAX_OUTPUT_RULES
     };
 
-    AnimationVector2 normalizedAnchorPoint;
+    ScalarRule *normalizedAnchorX;
+    ScalarRule *normalizedAnchorY;
     Rule const *inputRules[Rule::MAX_SEMANTICS];
 
     // The output rules.
-    DelegateRule *outputRules[MAX_OUTPUT_RULES];
+    IndirectRule *outputRules[MAX_OUTPUT_RULES];
 
     Instance(Public *i) : Base(i)
     {
+        normalizedAnchorX = new ScalarRule(0);
+        normalizedAnchorY = new ScalarRule(0);
+
         zap(inputRules);
 
         // Create the output rules.
         for(int i = 0; i < int(MAX_OUTPUT_RULES); ++i)
         {
-            outputRules[i] = new DelegateRule(*this, i);
+            outputRules[i] = new IndirectRule;
         }
 
         debugName = QString("0x%1").arg(dintptr(thisPublic), 0, 16);
@@ -71,13 +66,16 @@ public DelegateRule::ISource
 
     ~Instance()
     {
+        releaseRef(normalizedAnchorX);
+        releaseRef(normalizedAnchorY);
+
         for(int i = 0; i < int(Rule::MAX_SEMANTICS); ++i)
         {
-            connectInputToOutputs(Rule::Semantic(i), false);
+            releaseRef(inputRules[i]);
         }
         for(int i = 0; i < int(MAX_OUTPUT_RULES); ++i)
         {
-            outputRules[i]->setSource(0);
+            outputRules[i]->unsetSource();
             releaseRef(outputRules[i]);
         }
     }
@@ -90,285 +88,122 @@ public DelegateRule::ISource
         return inputRules[rule];
     }
 
-    void invalidateOutputs()
+    inline Rule const &anchorPos(Rule::Semantic anchorInput)
     {
-        for(int i = 0; i < int(MAX_OUTPUT_RULES); ++i)
+        if(anchorInput == Rule::AnchorX)
         {
-            outputRules[i]->invalidate();
+            return *normalizedAnchorX;
+        }
+        else
+        {
+            DENG2_ASSERT(anchorInput == Rule::AnchorY);
+            return *normalizedAnchorY;
         }
     }
 
-    void connectInputToOutputs(Rule::Semantic inputRule, bool doConnect)
+    inline static bool isHorizontalInput(Rule::Semantic inputRule)
     {
-        Rule const *&input = ruleRef(inputRule);
-        if(!input) return;
+        return inputRule == Rule::Left  ||
+               inputRule == Rule::Right ||
+               inputRule == Rule::Width ||
+               inputRule == Rule::AnchorX;
+    }
 
-        bool isHoriz = (inputRule == Rule::Left  || inputRule == Rule::Right ||
-                        inputRule == Rule::Width || inputRule == Rule::AnchorX);
-
-        int const start = (isHoriz? FIRST_HORIZ_OUTPUT : FIRST_VERT_OUTPUT);
-        int const end   = (isHoriz? LAST_HORIZ_OUTPUT  : LAST_VERT_OUTPUT );
-
-        for(int i = start; i <= end; ++i)
-        {
-            if(doConnect)
-            {
-                outputRules[i]->dependsOn(input);
-                outputRules[i]->invalidate();
-            }
-            else
-            {
-                outputRules[i]->independentOf(input);
-            }
-        }
+    inline static bool isVerticalInput(Rule::Semantic inputRule)
+    {
+        return !isHorizontalInput(inputRule);
     }
 
     void setInputRule(Rule::Semantic inputRule, Rule const &rule)
     {
-        // Disconnect the old input rule from relevant outputs.
-        connectInputToOutputs(inputRule, false);
+        releaseRef(inputRules[inputRule]);
+        inputRules[inputRule] = holdRef(rule);
 
-        ruleRef(inputRule) = &rule;
-
-        // Connect to relevant outputs.
-        connectInputToOutputs(inputRule, true);
+        updateForChangedInput(inputRule);
     }
 
     void clearInputRule(Rule::Semantic inputRule)
     {
-        connectInputToOutputs(inputRule, false);
-        ruleRef(inputRule) = 0;
+        releaseRef(inputRules[inputRule]);
+
+        updateForChangedInput(inputRule);
     }
 
-    void updateWidth()
+    void updateForChangedInput(Rule::Semantic input)
     {
-        if(inputRules[Rule::Width])
+        if(isHorizontalInput(input))
         {
-            outputRules[OutWidth]->set(inputRules[Rule::Width]->value());
+            updateDimension(Rule::Left, Rule::Right, Rule::Width, Rule::AnchorX,
+                            OutLeft, OutRight, OutWidth);
         }
         else
         {
-            // Need to calculate width using edges.
-            updateHorizontal();
+            updateDimension(Rule::Top, Rule::Bottom, Rule::Height, Rule::AnchorY,
+                            OutTop, OutBottom, OutHeight);
         }
     }
 
-    void updateHorizontal()
+    void updateDimension(Rule::Semantic minInput, Rule::Semantic maxInput,
+                         Rule::Semantic deltaInput, Rule::Semantic anchorInput,
+                         OutputId minOutput, OutputId maxOutput, OutputId deltaOutput)
     {
         // Both edges must be defined, otherwise the rectangle's position is ambiguous.
-        bool leftDefined   = false;
-        bool rightDefined  = false;
+        bool minDefined   = false;
+        bool maxDefined   = false;
+        bool deltaDefined = false;
 
-        Rectanglef r;
+        // Forget the previous output rules.
+        outputRules[minOutput]->unsetSource();
+        outputRules[maxOutput]->unsetSource();
+        outputRules[deltaOutput]->unsetSource();
 
-        if(inputRules[Rule::AnchorX] && inputRules[Rule::Width])
+        if(inputRules[deltaInput])
         {
-            r.topLeft.x = inputRules[Rule::AnchorX]->value() -
-                    normalizedAnchorPoint.x * inputRules[Rule::Width]->value();
-            r.setWidth(inputRules[Rule::Width]->value());
-            leftDefined = rightDefined = true;
+            outputRules[deltaOutput]->setSource(*inputRules[deltaInput]);
+
+            deltaDefined = true;
         }
 
-        if(inputRules[Rule::Left])
+        if(inputRules[minInput])
         {
-            r.topLeft.x = inputRules[Rule::Left]->value();
-            leftDefined = true;
-        }
-        if(inputRules[Rule::Right])
-        {
-            r.bottomRight.x = inputRules[Rule::Right]->value();
-            rightDefined = true;
+            outputRules[minOutput]->setSource(*inputRules[minInput]);
+
+            minDefined = true;
         }
 
-        if(inputRules[Rule::Width] && leftDefined && !rightDefined)
+        if(inputRules[maxInput])
         {
-            r.setWidth(inputRules[Rule::Width]->value());
-            rightDefined = true;
-        }
-        if(inputRules[Rule::Width] && !leftDefined && rightDefined)
-        {
-            r.topLeft.x = r.bottomRight.x - inputRules[Rule::Width]->value();
-            leftDefined = true;
+            outputRules[maxOutput]->setSource(*inputRules[maxInput]);
+
+            maxDefined = true;
         }
 
-#ifdef _DEBUG
-        if(!leftDefined || !rightDefined)
+        if(inputRules[anchorInput] && deltaDefined)
         {
-            qDebug() << self.description().toLatin1();
-        }
-#endif
+            outputRules[minOutput]->setSource(*inputRules[anchorInput] -
+                    anchorPos(anchorInput) * *outputRules[deltaOutput]);
 
-        DENG2_ASSERT(leftDefined);
-        DENG2_ASSERT(rightDefined);
-
-        outputRules[OutLeft]->set(r.topLeft.x);
-        outputRules[OutRight]->set(r.bottomRight.x);
-        outputRules[OutWidth]->set(r.width());
-    }
-
-    void updateHeight()
-    {
-        if(inputRules[Rule::Height])
-        {
-            outputRules[OutHeight]->set(inputRules[Rule::Height]->value());
-        }
-        else
-        {
-            // Need to calculate width using edges.
-            updateVertical();
-        }
-    }
-
-    void updateVertical()
-    {
-        // Both edges must be defined, otherwise the rectangle's position is ambiguous.
-        bool topDefined    = false;
-        bool bottomDefined = false;
-
-        Rectanglef r;
-
-        if(inputRules[Rule::AnchorY] && inputRules[Rule::Height])
-        {
-            r.topLeft.y = inputRules[Rule::AnchorY]->value() -
-                    normalizedAnchorPoint.y * inputRules[Rule::Height]->value();
-            r.setHeight(inputRules[Rule::Height]->value());
-            topDefined = bottomDefined = true;
+            minDefined = true;
         }
 
-        if(inputRules[Rule::Top])
+        // Calculate missing information from the defined outputs.
+        if(deltaDefined && minDefined && !maxDefined)
         {
-            r.topLeft.y = inputRules[Rule::Top]->value();
-            topDefined = true;
+            outputRules[maxOutput]->setSource(*outputRules[minOutput] + *outputRules[deltaOutput]);
+
+            maxDefined = true;
         }
-        if(inputRules[Rule::Bottom])
+        if(deltaDefined && !minDefined && maxDefined)
         {
-            r.bottomRight.y = inputRules[Rule::Bottom]->value();
-            bottomDefined = true;
+            outputRules[minOutput]->setSource(*outputRules[maxOutput] - *outputRules[deltaOutput]);
+
+            minDefined = true;
         }
-
-        if(inputRules[Rule::Height] && topDefined && !bottomDefined)
+        if(!deltaDefined && minDefined && maxDefined)
         {
-            r.setHeight(inputRules[Rule::Height]->value());
-            bottomDefined = true;
-        }
-        if(inputRules[Rule::Height] && !topDefined && bottomDefined)
-        {
-            r.topLeft.y = r.bottomRight.y - inputRules[Rule::Height]->value();
-            topDefined = true;
-        }
+            outputRules[deltaOutput]->setSource(*outputRules[maxOutput] - *outputRules[minOutput]);
 
-#ifdef _DEBUG
-        if(!topDefined || !bottomDefined)
-        {
-            qDebug() << self.description().toLatin1();
-        }
-#endif
-        DENG2_ASSERT(topDefined);
-        DENG2_ASSERT(bottomDefined);
-
-        // Update the derived output rules.
-        outputRules[OutTop]->set(r.topLeft.y);
-        outputRules[OutBottom]->set(r.bottomRight.y);
-        outputRules[OutHeight]->set(r.height());
-    }
-
-    // Implements DelegateRule::ISource.
-    void delegateUpdate(int id)
-    {
-        switch(id)
-        {
-        case OutLeft:
-        case OutRight:
-            updateHorizontal();
-            break;
-
-        case OutWidth:
-            updateWidth();
-            break;
-
-        case OutTop:
-        case OutBottom:
-            updateVertical();
-            break;
-
-        case OutHeight:
-            updateHeight();
-            break;
-        }
-    }
-
-    void delegateInvalidation(int id)
-    {
-        // Due to the intrinsic relationships between the outputs (as edges of
-        // a rectangle), invalidation of one may cause others to become
-        // invalid, too.
-        switch(id)
-        {
-        case OutLeft:
-            if(outputRules[OutRight]->isValid())
-                outputRules[OutRight]->invalidate();
-            if(outputRules[OutWidth]->isValid())
-                outputRules[OutWidth]->invalidate();
-            break;
-
-        case OutRight:
-            if(outputRules[OutLeft]->isValid())
-                outputRules[OutLeft]->invalidate();
-            if(outputRules[OutWidth]->isValid())
-                outputRules[OutWidth]->invalidate();
-            break;
-
-        case OutWidth:
-            if(outputRules[OutLeft]->isValid())
-                outputRules[OutLeft]->invalidate();
-            if(outputRules[OutRight]->isValid())
-                outputRules[OutRight]->invalidate();
-            break;
-
-        case OutTop:
-            if(outputRules[OutBottom]->isValid())
-                outputRules[OutBottom]->invalidate();
-            if(outputRules[OutHeight]->isValid())
-                outputRules[OutHeight]->invalidate();
-            break;
-
-        case OutBottom:
-            if(outputRules[OutTop]->isValid())
-                outputRules[OutTop]->invalidate();
-            if(outputRules[OutHeight]->isValid())
-                outputRules[OutHeight]->invalidate();
-            break;
-
-        case OutHeight:
-            if(outputRules[OutTop]->isValid())
-                outputRules[OutTop]->invalidate();
-            if(outputRules[OutBottom]->isValid())
-                outputRules[OutBottom]->invalidate();
-            break;
-        }
-    }
-
-    String delegateDescription(int id) const
-    {
-        static char const *names[MAX_OUTPUT_RULES] = {
-            "Left output",
-            "Right output",
-            "Width output",
-            "Top output",
-            "Bottom output",
-            "Height output"
-        };
-        return String(names[id]) + " of RuleRectangle " +
-               QString("0x%1").arg(dintptr(thisPublic), 0, 16);
-    }
-
-    void timeChanged(Clock const &clock)
-    {
-        invalidateOutputs();
-
-        if(normalizedAnchorPoint.done())
-        {
-            clock.audienceForPriorityTimeChange -= this;
+            deltaDefined = true;
         }
     }
 };
@@ -455,14 +290,8 @@ Rule const &RuleRectangle::inputRule(Rule::Semantic inputRule)
 
 void RuleRectangle::setAnchorPoint(Vector2f const &normalizedPoint, TimeDelta const &transition)
 {
-    d->normalizedAnchorPoint.setValue(normalizedPoint, transition);
-    d->invalidateOutputs();
-
-    if(transition > 0.0)
-    {
-        // Animation started, keep an eye on the clock until it ends.
-        Clock::appClock().audienceForPriorityTimeChange += d;
-    }
+    d->normalizedAnchorX->set(normalizedPoint.x, transition);
+    d->normalizedAnchorY->set(normalizedPoint.y, transition);
 }
 
 Rectanglef RuleRectangle::rect() const
