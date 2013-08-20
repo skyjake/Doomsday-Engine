@@ -25,6 +25,10 @@ group progress {
     rule textgap { constant $= gap.constant }
 }
 
+group dialog {
+    rule gap { constant $= UNIT * 2 }
+}
+
 group about {
     rule width { constant = 320 }
 }

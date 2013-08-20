@@ -35,6 +35,10 @@ class GuiRootWidget;
  * by DialogWidget::content() and positioned in relation to its content rule.
  * When the dialog is set up, one must define the size of the content scroll
  * area (width and height rules).
+ *
+ * Note that when a widget is added to the content area, the dialog
+ * automatically applies certain common style parameters (margins, backgrounds,
+ * etc.).
  */
 class DialogWidget : public PopupWidget
 {

@@ -18,6 +18,7 @@
 
 #include "ui/widgets/dialogwidget.h"
 #include "ui/widgets/guirootwidget.h"
+#include "ui/widgets/togglewidget.h"
 #include "ui/signalaction.h"
 #include "dd_main.h"
 
@@ -26,9 +27,45 @@
 
 using namespace de;
 
+static bool dialogButtonOrder(ui::Item const &a, ui::Item const &b)
+{
+    DialogButtonItem const &left  = a.as<DialogButtonItem>();
+    DialogButtonItem const &right = b.as<DialogButtonItem>();
+
+#ifdef MACOSX
+    // Default buttons go to the end on OS X.
+    if(!left.role().testFlag(DialogWidget::Default) && right.role().testFlag(DialogWidget::Default))
+    {
+        return true;
+    }
+    if(left.role().testFlag(DialogWidget::Default) && !right.role().testFlag(DialogWidget::Default))
+    {
+        return false;
+    }
+
+    bool const actionsFirst = true; // OS X actions before other buttons.
+#else
+    bool const actionsFirst = false; // Actions after the regular buttons.
+#endif
+
+    // Action buttons appear before/after other buttons.
+    if(left.role().testFlag(DialogWidget::Action) && !right.role().testFlag(DialogWidget::Action))
+    {
+        return actionsFirst;
+    }
+    if(!left.role().testFlag(DialogWidget::Action) && right.role().testFlag(DialogWidget::Action))
+    {
+        return !actionsFirst;
+    }
+
+    // Order unchanged.
+    return false;
+}
+
 DENG2_PIMPL(DialogWidget),
 DENG2_OBSERVES(ContextWidgetOrganizer, WidgetCreation),
-DENG2_OBSERVES(ContextWidgetOrganizer, WidgetUpdate)
+DENG2_OBSERVES(ContextWidgetOrganizer, WidgetUpdate),
+DENG2_OBSERVES(Widget, ChildAddition) // for styling the contents
 {
     Modality modality;
     ScrollAreaWidget *area;
@@ -39,9 +76,10 @@ DENG2_OBSERVES(ContextWidgetOrganizer, WidgetUpdate)
     {
         GuiWidget *container = new GuiWidget("container");
 
-        area    = new ScrollAreaWidget("area");
-        buttons = new MenuWidget("buttons");
+        area = new ScrollAreaWidget("area");
+        area->audienceForChildAddition += this;
 
+        buttons = new MenuWidget("buttons");
         buttons->organizer().audienceForWidgetCreation += this;
         buttons->organizer().audienceForWidgetUpdate += this;
 
@@ -138,6 +176,29 @@ DENG2_OBSERVES(ContextWidgetOrganizer, WidgetUpdate)
             {
                 but.setText(_E(b) + but.text());
             }
+        }
+    }
+
+    /**
+     * Applies the default dialog style for child widgets added to
+     * the content area.
+     */
+    void widgetChildAdded(Widget &areaChild)
+    {
+        GuiWidget &w = areaChild.as<GuiWidget>();
+
+        w.setMargin("dialog.gap");
+
+        // All label-based widgets should expand on their own.
+        if(LabelWidget *lab = w.maybeAs<LabelWidget>())
+        {
+            lab->setSizePolicy(ui::Expand, ui::Expand);
+        }
+
+        // Toggles should have no background.
+        if(ToggleWidget *tog = w.maybeAs<ToggleWidget>())
+        {
+            tog->set(Background());
         }
     }
 
@@ -278,6 +339,7 @@ void DialogWidget::prepare()
     viewResized();
     notifyTree(&Widget::viewResized);
 
+    d->buttons->items().sort(dialogButtonOrder);
     d->buttons->updateLayout();
 
     open();

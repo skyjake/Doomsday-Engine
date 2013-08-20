@@ -64,7 +64,7 @@ AboutDialog::AboutDialog() : DialogWidget("about")
 
     ButtonWidget *homepage = new ButtonWidget;
     homepage->setText(tr("Go to Homepage"));
-    homepage->setSizePolicy(ui::Expand, ui::Expand);
+    //homepage->setSizePolicy(ui::Expand, ui::Expand);
     homepage->setAction(new SignalAction(&ClientApp::app(), SLOT(openHomepageInBrowser())));
 
     area().add(logo);
