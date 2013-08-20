@@ -280,13 +280,6 @@ Widget &Widget::insertBefore(Widget *child, Widget const &otherChild)
 Widget *Widget::remove(Widget &child)
 {
     DENG2_ASSERT(child.d->parent == this);
-
-    // Notify.
-    DENG2_FOR_AUDIENCE(ChildRemoval, i)
-    {
-        i->widgetChildBeingRemoved(child);
-    }
-
     child.d->parent = 0;
 
     d->children.removeOne(&child);
@@ -296,6 +289,10 @@ Widget *Widget::remove(Widget &child)
     }
 
     // Notify.
+    DENG2_FOR_AUDIENCE(ChildRemoval, i)
+    {
+        i->widgetChildRemoved(child);
+    }
     DENG2_FOR_EACH_OBSERVER(ParentChangeAudience, i, child.audienceForParentChange)
     {
         i->widgetParentChanged(child, this, 0);

@@ -95,9 +95,9 @@ public:
     DENG2_DEFINE_AUDIENCE(ChildAddition, void widgetChildAdded(Widget &child))
 
     /**
-     * Notified when a child is about to be removed from the widget.
+     * Notified after a child has been removed from the widget.
      */
-    DENG2_DEFINE_AUDIENCE(ChildRemoval, void widgetChildBeingRemoved(Widget &child))
+    DENG2_DEFINE_AUDIENCE(ChildRemoval, void widgetChildRemoved(Widget &child))
 
 public:
     Widget(String const &name = "");

@@ -170,7 +170,7 @@ DENG2_OBSERVES(Widget, ChildRemoval)
         self.show();
     }
 
-    void widgetChildBeingRemoved(Widget &)
+    void widgetChildRemoved(Widget &)
     {
         updateChildLayout();
         if(!self.childCount())
