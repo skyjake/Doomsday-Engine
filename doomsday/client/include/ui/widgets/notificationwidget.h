@@ -74,8 +74,6 @@ public slots:
 protected:
     void glInit();
     void glDeinit();
-    void addedChildWidget(GuiWidget &widget);
-    void removedChildWidget(GuiWidget &widget);
 
 private:
     DENG2_PRIVATE(d)

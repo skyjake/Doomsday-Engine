@@ -254,7 +254,8 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
             << unloadMenu
             << new ui::Item(ui::Item::Separator)
             << new ui::ActionItem(tr("Check for Updates..."), new CommandAction("updateandnotify"))
-            << new ui::ActionItem(tr("Updater Settings..."), new CommandAction("updatesettings"))
+            << new ui::ActionItem(ui::Item::ShownAsButton, tr("Updater Settings"),
+                                  new SignalAction(this, SLOT(showUpdaterSettings())))
             << new ui::Item(ui::Item::Separator)
             << new ui::ActionItem(tr("About Doomsday..."), new SignalAction(this, SLOT(showAbout())))
             << new ui::Item(ui::Item::Separator)

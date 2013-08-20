@@ -80,7 +80,7 @@ DENG2_OBSERVES(ui::Item,    Change     )
         }
     }
 
-    void additemWidget(ui::Context::Pos pos, bool alwaysAppend = false)
+    void addItemWidget(ui::Context::Pos pos, bool alwaysAppend = false)
     {
         DENG2_ASSERT(factory != 0);
 
@@ -120,7 +120,7 @@ DENG2_OBSERVES(ui::Item,    Change     )
 
         for(ui::Context::Pos i = 0; i < context->size(); ++i)
         {
-            additemWidget(i, true /*always append*/);
+            addItemWidget(i, true /*always append*/);
         }
     }
 
@@ -161,7 +161,7 @@ DENG2_OBSERVES(ui::Item,    Change     )
 
     void contextItemAdded(ui::Context::Pos pos, ui::Item const &)
     {
-        additemWidget(pos);
+        addItemWidget(pos);
     }
 
     void contextItemBeingRemoved(ui::Context::Pos, ui::Item const &item)

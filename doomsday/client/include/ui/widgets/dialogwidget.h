@@ -61,6 +61,12 @@ public:
     };
     Q_DECLARE_FLAGS(RoleFlags, RoleFlag)
 
+    /**
+     * All buttons in a dialog must be ButtonItem instances or instances of
+     * derived classes.
+     *
+     * The DialogButtonItem typedef is provided for convenience.
+     */
     class ButtonItem : public ui::ActionItem
     {
     public:

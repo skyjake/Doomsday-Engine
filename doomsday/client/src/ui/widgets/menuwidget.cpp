@@ -163,19 +163,19 @@ public ContextWidgetOrganizer::IWidgetFactory
      */
     GuiWidget *makeItemWidget(Item const &item, GuiWidget const *parent)
     {
-        if(item.semantic() == Item::Action || item.semantic() == Item::Submenu)
+        if(item.semantics().testFlag(Item::ShownAsButton))
         {
             // Normal clickable button.
             ButtonWidget *b = new ButtonWidget;
             b->setTextAlignment(ui::AlignRight);
 
-            if(item.semantic() == Item::Submenu)
+            if(item.is<SubmenuItem>())
             {
                 b->setAction(new SubmenuAction(this, item.as<SubmenuItem>()));
             }
             return b;
         }
-        else if(item.semantic() == Item::Separator)
+        else if(item.semantics().testFlag(Item::Separator))
         {
             LabelWidget *lab = new LabelWidget;
             lab->setAlignment(ui::AlignLeft);
@@ -183,7 +183,7 @@ public ContextWidgetOrganizer::IWidgetFactory
             lab->setSizePolicy(ui::Expand, ui::Expand);
             return lab;
         }
-        else if(item.semantic() == Item::Toggle)
+        else if(item.semantics().testFlag(Item::ShownAsToggle))
         {
             // We know how to present variable toggles.
             VariableToggleItem const *varTog = dynamic_cast<VariableToggleItem const *>(&item);
@@ -197,16 +197,17 @@ public ContextWidgetOrganizer::IWidgetFactory
 
     void updateItemWidget(GuiWidget &widget, Item const &item)
     {
-        if(item.semantic() == Item::Action)
+        if(ActionItem const *act = item.maybeAs<ActionItem>())
         {
-            ButtonWidget &b = widget.as<ButtonWidget>();
-            ActionItem const &act = item.as<ActionItem>();
-
-            b.setImage(act.image());
-            b.setText(act.label());
-            if(act.action())
+            if(item.semantics().testFlag(Item::ShownAsButton))
             {
-                b.setAction(act.action()->duplicate());
+                ButtonWidget &b = widget.as<ButtonWidget>();
+                b.setImage(act->image());
+                b.setText(act->label());
+                if(act->action())
+                {
+                    b.setAction(act->action()->duplicate());
+                }
             }
         }
         else

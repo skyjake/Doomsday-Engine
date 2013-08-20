@@ -32,7 +32,7 @@ class VariableToggleItem : public Item
 {
 public:
     VariableToggleItem(de::String const &label, de::Variable &variable)
-        : Item(Toggle, label), _var(variable) {}
+        : Item(ShownAsToggle, label), _var(variable) {}
 
     de::Variable &variable() const { return _var; }
 

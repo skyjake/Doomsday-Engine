@@ -32,7 +32,7 @@ class SubmenuItem : public Item
 {
 public:
     SubmenuItem(de::String const &label, ui::Direction openingDirection)
-        : Item(Submenu, label), _dir(openingDirection) {}
+        : Item(ShownAsButton, label), _dir(openingDirection) {}
 
     Context &items() { return _items; }
     Context const &items() const { return _items; }

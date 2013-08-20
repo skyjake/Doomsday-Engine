@@ -33,13 +33,13 @@ class ActionItem : public Item
 {
 public:
     ActionItem(de::String const &label = "", de::Action *action = 0)
-        : Item(Action, label), _action(action) {}
+        : Item(ShownAsButton | ActivationClosesPopup, label), _action(action) {}
 
-    ActionItem(Semantic semantic, de::String const &label = "", de::Action *action = 0)
-        : Item(semantic, label), _action(action) {}
+    ActionItem(Semantics semantics, de::String const &label = "", de::Action *action = 0)
+        : Item(semantics, label), _action(action) {}
 
     ActionItem(de::Image const &img, de::String const &label = "", de::Action *action = 0)
-        : Item(Action, label), _action(action), _image(img) {}
+        : Item(ShownAsButton | ActivationClosesPopup, label), _action(action), _image(img) {}
 
     de::Action *action() const { return _action.data(); } // ownership kept
     de::Image const &image() const { return _image; }

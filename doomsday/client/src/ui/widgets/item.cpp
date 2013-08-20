@@ -21,20 +21,20 @@
 using namespace de;
 using namespace ui;
 
-Item::Item(Semantic semantic)
-    : _semantic(semantic), _context(0)
+Item::Item(Semantics semantics)
+    : _semantics(semantics), _context(0)
 {}
 
-Item::Item(Semantic semantic, String const &label)
-    : _semantic(semantic), _context(0), _label(label)
+Item::Item(Semantics semantics, String const &label)
+    : _semantics(semantics), _context(0), _label(label)
 {}
 
 Item::~Item()
 {}
 
-Item::Semantic Item::semantic() const
+Item::Semantics Item::semantics() const
 {
-    return _semantic;
+    return _semantics;
 }
 
 void Item::setLabel(String const &label)

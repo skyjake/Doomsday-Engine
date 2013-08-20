@@ -19,6 +19,7 @@
 #include "ui/widgets/listcontext.h"
 
 #include <QtAlgorithms>
+#include <algorithm>
 
 using namespace de;
 using namespace ui;
@@ -45,6 +46,15 @@ Context::Pos ListContext::find(Item const &item) const
     for(Pos i = 0; i < size(); ++i)
     {
         if(&at(i) == &item) return i;
+    }
+    return InvalidPos;
+}
+
+Context::Pos ListContext::findData(QVariant const &data) const
+{
+    for(Pos i = 0; i < size(); ++i)
+    {
+        if(at(i).data() == data) return i;
     }
     return InvalidPos;
 }
@@ -90,23 +100,17 @@ Item *ListContext::take(Context::Pos pos)
 }
 
 struct ListItemSorter {
-    Context::SortMethod method;
+    Context::LessThanFunc lessThan;
 
-    ListItemSorter(Context::SortMethod sortMethod) : method(sortMethod) {}
-
+    ListItemSorter(Context::LessThanFunc func) : lessThan(func) {}
     bool operator () (Item const *a, Item const *b) const {
-        int cmp = a->sortKey().compareWithoutCase(b->sortKey());
-        switch(method) {
-        case Context::Ascending:  return cmp < 0;
-        case Context::Descending: return cmp > 0;
-        }
-        return false;
+        return lessThan(*a, *b);
     }
 };
 
-void ListContext::sort(SortMethod method)
+void ListContext::sort(LessThanFunc lessThan)
 {
-    qSort(_items.begin(), _items.end(), ListItemSorter(method));
+    qSort(_items.begin(), _items.end(), ListItemSorter(lessThan));
 
     // Notify.
     DENG2_FOR_AUDIENCE(OrderChange, i)
@@ -114,3 +118,15 @@ void ListContext::sort(SortMethod method)
         i->contextItemOrderChanged();
     }
 }
+
+void ListContext::stableSort(LessThanFunc lessThan)
+{
+    qStableSort(_items.begin(), _items.end(), ListItemSorter(lessThan));
+
+    // Notify.
+    DENG2_FOR_AUDIENCE(OrderChange, i)
+    {
+        i->contextItemOrderChanged();
+    }
+}
+

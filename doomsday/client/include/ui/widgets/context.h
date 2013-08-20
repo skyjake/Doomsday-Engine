@@ -92,12 +92,27 @@ public:
      */
     virtual Pos find(Item const &item) const = 0;
 
+    /**
+     * Finds the position of an item with a specific data.
+     *
+     * @param data  Data to find.
+     *
+     * @return The items' position, or Context::InvalidPos if not found.
+     */
+    virtual Pos findData(QVariant const &data) const = 0;
+
     enum SortMethod {
         Ascending,
         Descending
     };
 
-    virtual void sort(SortMethod method = Ascending) = 0;
+    virtual void sort(SortMethod method = Ascending);
+
+    typedef bool (*LessThanFunc)(Item const &, Item const &);
+
+    virtual void sort(LessThanFunc func) = 0;
+
+    virtual void stableSort(LessThanFunc func) = 0;
 
     /**
      * Returns the total number of items in the context.

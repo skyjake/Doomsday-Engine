@@ -45,6 +45,12 @@ public:
     public:
         Item(de::String const &label, de::Image const &image = de::Image())
             : ui::ActionItem(image, label) {}
+
+        Item(de::String const &label, QVariant const &userData, de::Image const &image = de::Image())
+            : ui::ActionItem(image, label)
+        {
+            setData(userData);
+        }
     };
 
 public:

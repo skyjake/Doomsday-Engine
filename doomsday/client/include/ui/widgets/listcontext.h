@@ -38,12 +38,14 @@ public:
     de::dsize size() const;
     Item const &at(Pos pos) const;
     Pos find(Item const &item) const;
+    Pos findData(QVariant const &data) const;
 
     void clear();
     Context &insert(Pos pos, Item *item);
     void remove(Pos pos);
     Item *take(Pos pos);
-    void sort(SortMethod method);
+    void sort(LessThanFunc lessThan);
+    void stableSort(LessThanFunc lessThan);
 
 private:
     typedef QList<Item *> Items;

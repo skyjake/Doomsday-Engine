@@ -41,7 +41,7 @@ DENG2_OBSERVES(ContextWidgetOrganizer, WidgetUpdate)
         // Popup menu items' background is provided by the popup.
         widget.set(Background());
 
-        if(item.semantic() == ui::Item::Separator)
+        if(item.semantics().testFlag(ui::Item::Separator))
         {
             LabelWidget &lab = widget.as<LabelWidget>();
             lab.setTextColor("label.accent");
@@ -56,8 +56,7 @@ DENG2_OBSERVES(ContextWidgetOrganizer, WidgetUpdate)
         // Customize buttons for use in the popup. We will observe the button
         // state for highlighting and possibly close the popup when an action
         // gets triggered.
-        ButtonWidget *b = dynamic_cast<ButtonWidget *>(&widget);
-        if(b)
+        if(ButtonWidget *b = widget.maybeAs<ButtonWidget>())
         {
             b->setSizePolicy(ui::Expand, ui::Expand);
             b->setMargin("unit");
@@ -65,7 +64,7 @@ DENG2_OBSERVES(ContextWidgetOrganizer, WidgetUpdate)
             b->audienceForStateChange += this;
 
             // Triggered actions close the menu.
-            if(item.semantic() == ui::Item::Action)
+            if(item.semantics().testFlag(ui::Item::ActivationClosesPopup))
             {
                 b->audienceForTriggered += this;
             }
@@ -74,7 +73,7 @@ DENG2_OBSERVES(ContextWidgetOrganizer, WidgetUpdate)
 
     void widgetUpdatedForItem(GuiWidget &widget, ui::Item const &item)
     {
-        if(item.semantic() == ui::Item::Separator)
+        if(item.semantics().testFlag(ui::Item::Separator))
         {
             // The label of a separator may change.
             if(item.label().isEmpty())

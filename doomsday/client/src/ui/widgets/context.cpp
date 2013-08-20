@@ -18,6 +18,7 @@
 
 #include "ui/widgets/context.h"
 #include "ui/widgets/labelwidget.h"
+#include "ui/widgets/item.h"
 
 #include <QtAlgorithms>
 
@@ -25,3 +26,27 @@ using namespace de;
 using namespace ui;
 
 dsize const Context::InvalidPos = dsize(-1);
+
+static bool itemLessThan(Item const &a, Item const &b)
+{
+    return a.sortKey().compareWithoutCase(b.sortKey()) < 0;
+}
+
+static bool itemGreaterThan(Item const &a, Item const &b)
+{
+    return a.sortKey().compareWithoutCase(b.sortKey()) > 0;
+}
+
+void Context::sort(SortMethod method)
+{
+    switch(method)
+    {
+    case Ascending:
+        sort(itemLessThan);
+        break;
+
+    case Descending:
+        sort(itemGreaterThan);
+        break;
+    }
+}

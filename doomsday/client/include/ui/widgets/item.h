@@ -22,6 +22,8 @@
 #include <de/Observers>
 #include <de/String>
 
+#include <QVariant>
+
 namespace ui {
 
 class Context;
@@ -40,27 +42,37 @@ class Item
 {
 public:
     /**
-     * Informs what kind of data the item is representing. This acts as a hint
-     * for the containing widget so it can adjust its behavior accordingly.
+     * Determines the item's behavior and look'n'feel. This acts as a hint for
+     * the containing widget (and the responsible organizer) so it can adjust
+     * its behavior accordingly.
      */
-    enum Semantic {
-        Label,
-        Action,
-        Submenu,
-        Separator,
-        Toggle
+    enum SemanticFlag {
+        ShownAsLabel          = 0x1,
+        ShownAsButton         = 0x2,
+        ShownAsToggle         = 0x4,
+
+        ActivationClosesPopup = 0x100,
+        Separator             = 0x200,
+
+        DefaultSemantics      = ShownAsLabel
+
+        //Action, ///< Closes popup menu.
+        //Submenu,
+        //Separator,
+        //Toggle
     };
+    Q_DECLARE_FLAGS(Semantics, SemanticFlag)
 
     DENG2_DEFINE_AUDIENCE(Change, void itemChanged(Item const &item))
 
 public:
-    Item(Semantic semantic = Label);
+    Item(Semantics semantics = DefaultSemantics);
 
-    Item(Semantic semantic, de::String const &label);
+    Item(Semantics semantics, de::String const &label);
 
     virtual ~Item();
 
-    Semantic semantic() const;
+    Semantics semantics() const;
 
     void setLabel(de::String const &label);
 
@@ -81,6 +93,10 @@ public:
      */
     virtual de::String sortKey() const;
 
+    void setData(QVariant const &d) { _data = d; }
+
+    QVariant const &data() const { return _data; }
+
     DENG2_IS_AS_METHODS()
 
 protected:
@@ -90,12 +106,15 @@ protected:
     void notifyChange();
 
 private:
-    Semantic _semantic;
+    Semantics _semantics;
     Context *_context;
     de::String _label;
+    QVariant _data;
 
     friend class Context;
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(Item::Semantics)
 
 } // namespace ui
 
