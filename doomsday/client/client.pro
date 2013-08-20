@@ -432,8 +432,7 @@ DENG_HEADERS += \
     include/world/world.h \
     src/updater/downloaddialog.h \
     src/updater/processcheckdialog.h \
-    src/updater/updateavailabledialog.h \
-    src/updater/updaterdialog.h
+    src/updater/updateavailabledialog.h
 
 INCLUDEPATH += \
     $$DENG_INCLUDE_DIR \
