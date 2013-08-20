@@ -203,7 +203,7 @@ PopupWidget::PopupWidget(String const &name) : d(new Instance(this))
     // Initially the popup is hidden.
     hide();
 
-    // Move these to an updateStyle:
+    /// @todo Move these to an updateStyle.
     Style const &st = style();
     set(Background(st.colors().colorf("background"),
                    Background::BorderGlow,

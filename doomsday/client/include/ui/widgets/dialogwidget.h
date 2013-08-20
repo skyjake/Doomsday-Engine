@@ -117,6 +117,7 @@ public:
     int exec(GuiRootWidget &root);
 
     // Events.
+    void update();
     bool handleEvent(de::Event const &event);
 
 public slots:

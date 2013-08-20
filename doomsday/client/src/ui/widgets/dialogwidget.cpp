@@ -23,9 +23,12 @@
 #include "dd_main.h"
 
 #include <de/KeyEvent>
+#include <de/MouseEvent>
 #include <QEventLoop>
 
 using namespace de;
+
+static TimeDelta const FLASH_ANIM_SPAN = 0.75;
 
 static bool dialogButtonOrder(ui::Item const &a, ui::Item const &b)
 {
@@ -71,9 +74,18 @@ DENG2_OBSERVES(Widget, ChildAddition) // for styling the contents
     ScrollAreaWidget *area;
     MenuWidget *buttons;
     QEventLoop subloop;
+    Animation glow;
+    float normalGlow;
+    bool animatingGlow;
 
-    Instance(Public *i) : Base(i), modality(Modal)
+    Instance(Public *i) : Base(i), modality(Modal), animatingGlow(false)
     {
+        // Initialize the border glow.
+        normalGlow = self.style().colors().colorf("glow").w;
+        glow.setValue(normalGlow);
+        glow.setStyle(Animation::EaseIn);
+
+        // Set up widget structure.
         GuiWidget *container = new GuiWidget("container");
 
         area = new ScrollAreaWidget("area");
@@ -220,6 +232,24 @@ DENG2_OBSERVES(Widget, ChildAddition) // for styling the contents
     {
         return buttons->organizer().itemWidget(item)->as<ButtonWidget>();
     }
+
+    void startBorderFlash()
+    {
+        animatingGlow = true;
+        glow.setValueFrom(1, normalGlow, FLASH_ANIM_SPAN);
+        Background bg = self.background();
+        bg.color.w = glow;
+        self.set(bg);
+    }
+
+    void updateBorderFlash()
+    {
+        Background bg = self.background();
+        bg.color.w = glow;
+        self.set(bg);
+
+        if(glow.done()) animatingGlow = false;
+    }
 };
 
 DialogWidget::DialogWidget(String const &name)
@@ -271,6 +301,16 @@ int DialogWidget::exec(GuiRootWidget &root)
     return result;
 }
 
+void DialogWidget::update()
+{
+    PopupWidget::update();
+
+    if(d->animatingGlow)
+    {
+        d->updateBorderFlash();
+    }
+}
+
 bool DialogWidget::handleEvent(Event const &event)
 {
     if(event.isKeyDown())
@@ -301,6 +341,11 @@ bool DialogWidget::handleEvent(Event const &event)
     if(d->modality == Modal)
     {
         // The event should already have been handled by the children.
+        if(event.isKeyDown() ||
+           (event.type() == Event::MouseButton && !hitTest(event.as<MouseEvent>().pos())))
+        {
+            d->startBorderFlash();
+        }
         return true;
     }
 

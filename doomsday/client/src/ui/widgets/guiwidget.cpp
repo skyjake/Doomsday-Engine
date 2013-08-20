@@ -363,6 +363,7 @@ void GuiWidget::deleteLater()
 void GuiWidget::set(Background const &bg)
 {
     d->background = bg;
+    requestGeometry();
 }
 
 bool GuiWidget::clipped() const
