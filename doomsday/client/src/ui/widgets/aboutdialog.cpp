@@ -23,7 +23,7 @@
 #include "ui/style.h"
 #include "ui/signalaction.h"
 #include "clientapp.h"
-#include "../../updater/versioninfo.h"
+#include "versioninfo.h"
 
 #include "dd_def.h"
 

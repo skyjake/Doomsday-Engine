@@ -19,7 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#include "updatersettings.h"
+#include "updater/updatersettings.h"
 #include "versioninfo.h"
 #include <QDateTime>
 #include <QDesktopServices>

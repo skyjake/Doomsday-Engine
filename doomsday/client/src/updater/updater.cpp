@@ -55,8 +55,8 @@
 #include "downloaddialog.h"
 #include "processcheckdialog.h"
 #include "updateavailabledialog.h"
-#include "updatersettings.h"
-#include "updatersettingsdialog.h"
+#include "updater/updatersettings.h"
+#include "updater/updatersettingsdialog.h"
 #include "versioninfo.h"
 #include <de/App>
 #include <de/Time>

@@ -21,8 +21,8 @@
 
 #include "de_platform.h"
 #include "updateavailabledialog.h"
-#include "updatersettings.h"
-#include "updatersettingsdialog.h"
+#include "updater/updatersettings.h"
+#include "updater/updatersettingsdialog.h"
 #include "versioninfo.h"
 #include <de/GuiApp>
 #include <de/Log>

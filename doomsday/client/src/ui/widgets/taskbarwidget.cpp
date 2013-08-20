@@ -24,6 +24,7 @@
 #include "ui/widgets/popupmenuwidget.h"
 #include "ui/widgets/blurwidget.h"
 #include "ui/widgets/aboutdialog.h"
+#include "updater/updatersettingsdialog.h"
 #include "ui/clientwindow.h"
 #include "ui/commandaction.h"
 #include "ui/signalaction.h"

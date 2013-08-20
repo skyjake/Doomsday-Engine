@@ -387,7 +387,10 @@ DENG_HEADERS += \
     include/ui/windowsystem.h \
     include/ui/zonedebug.h \
     include/updater.h \
+    include/updater/updatersettings.h \
+    include/updater/updatersettingsdialog.h \
     include/uri.hh \
+    include/versioninfo.h \
     include/world/blockmap.h \
     include/world/bsp/bsptreenode.h \
     include/world/bsp/convexsubspace.h \
@@ -430,10 +433,7 @@ DENG_HEADERS += \
     src/updater/downloaddialog.h \
     src/updater/processcheckdialog.h \
     src/updater/updateavailabledialog.h \
-    src/updater/updaterdialog.h \
-    src/updater/updatersettings.h \
-    src/updater/updatersettingsdialog.h \
-    src/updater/versioninfo.h
+    src/updater/updaterdialog.h
 
 INCLUDEPATH += \
     $$DENG_INCLUDE_DIR \

@@ -22,7 +22,7 @@
 #include <QFile>
 #include "de_platform.h"
 #include "downloaddialog.h"
-#include "updatersettings.h"
+#include "updater/updatersettings.h"
 #include "ui/clientwindow.h"
 #include "dd_version.h"
 #include <QNetworkAccessManager>

@@ -20,8 +20,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_UPDATERSETTINGS_H
-#define LIBDENG_UPDATERSETTINGS_H
+#ifndef DENG_CLIENT_UPDATERSETTINGS_H
+#define DENG_CLIENT_UPDATERSETTINGS_H
 
 #include <de/Time>
 #include <de/String>
@@ -85,4 +85,4 @@ public:
     static de::NativePath defaultDownloadPath();
 };
 
-#endif // LIBDENG_UPDATERSETTINGS_H
+#endif // DENG_CLIENT_UPDATERSETTINGS_H
