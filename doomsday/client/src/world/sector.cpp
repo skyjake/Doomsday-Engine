@@ -61,15 +61,32 @@ Plane &Sector::Cluster::visPlane(int planeIndex) const
 
 AABoxd const &Sector::Cluster::aaBox() const
 {
-    // If a bounding box is assigned - use it.
-    if(!_aaBox.isNull())
+    // If the cluster is comprised of a single BSP leaf we can use the bounding
+    // box of the leaf's geometry directly.
+    if(_bspLeafs.count() == 1)
     {
-        return *_aaBox;
+        return _bspLeafs.first()->poly().aaBox();
     }
-    // Otherwise it means the cluster is comprised of a single BSP leaf, so we
-    // can use the bounding box of the leaf's geometry directly.
-    DENG_ASSERT(_bspLeafs.count() == 1); // sanity check
-    return _bspLeafs.first()->poly().aaBox();
+
+    // Time to determine bounds?
+    if(_aaBox.isNull())
+    {
+        // Unite the geometry bounding boxes of all BSP leafs in the cluster.
+        foreach(BspLeaf *leaf, _bspLeafs)
+        {
+            AABoxd const &leafAABox = leaf->poly().aaBox();
+            if(!_aaBox.isNull())
+            {
+                V2d_UniteBox((*_aaBox).arvec2, leafAABox.arvec2);
+            }
+            else
+            {
+                const_cast<Sector::Cluster *>(this)->_aaBox.reset(new AABoxd(leafAABox));
+            }
+        }
+    }
+
+    return *_aaBox;
 }
 
 Sector::Cluster::BspLeafs const &Sector::Cluster::bspLeafs() const
@@ -646,32 +663,7 @@ void Sector::buildClusters()
         }
         if(!didMerge) break;
     }
-
     // Clustering complete.
-
-    // Determine the bounds of each cluster.
-    /// @todo Defer until necessary.
-    foreach(Cluster *cluster, d->clusters)
-    {
-        // If the cluster is comprised of a single BSP leaf we can use the
-        // bounding box of it's geometry directly.
-        if(cluster->_bspLeafs.count() == 1)
-            continue;
-
-        // Unite the geometry bounding boxes of BSP leafs in the cluster.
-        foreach(BspLeaf *leaf, cluster->_bspLeafs)
-        {
-            AABoxd const &leafAABox = leaf->poly().aaBox();
-            if(!cluster->_aaBox.isNull())
-            {
-                V2d_UniteBox((*cluster->_aaBox).arvec2, leafAABox.arvec2);
-            }
-            else
-            {
-                cluster->_aaBox.reset(new AABoxd(leafAABox));
-            }
-        }
-    }
 }
 
 AABoxd const &Sector::aaBox() const
