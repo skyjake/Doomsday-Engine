@@ -346,40 +346,40 @@ public:
          *
          * @see Section::soundEmitter()
          */
-        ddmobj_base_t &soundEmitter(int sectionId);
+        SoundEmitter &soundEmitter(int sectionId);
 
         /// @copydoc soundEmitter()
-        ddmobj_base_t const &soundEmitter(int sectionId) const;
+        SoundEmitter const &soundEmitter(int sectionId) const;
 
         /**
          * Returns the middle sound emitter of the side.
          *
          * @see Section::soundEmitter()
          */
-        inline ddmobj_base_t &middleSoundEmitter() { return soundEmitter(Middle); }
+        inline SoundEmitter &middleSoundEmitter() { return soundEmitter(Middle); }
 
         /// @copydoc middleSoundEmitter()
-        inline ddmobj_base_t const &middleSoundEmitter() const { return soundEmitter(Middle); }
+        inline SoundEmitter const &middleSoundEmitter() const { return soundEmitter(Middle); }
 
         /**
          * Returns the bottom sound emitter (tee-hee) for the side.
          *
          * @see Section::soundEmitter()
          */
-        inline ddmobj_base_t &bottomSoundEmitter() { return soundEmitter(Bottom); }
+        inline SoundEmitter &bottomSoundEmitter() { return soundEmitter(Bottom); }
 
         /// @copydoc bottomSoundEmitter()
-        inline ddmobj_base_t const &bottomSoundEmitter() const { return soundEmitter(Bottom); }
+        inline SoundEmitter const &bottomSoundEmitter() const { return soundEmitter(Bottom); }
 
         /**
          * Returns the top sound emitter for the side.
          *
          * @see Section::soundEmitter()
          */
-        inline ddmobj_base_t &topSoundEmitter() { return soundEmitter(Top); }
+        inline SoundEmitter &topSoundEmitter() { return soundEmitter(Top); }
 
         /// @copydoc topSoundEmitter()
-        inline ddmobj_base_t const &topSoundEmitter() const { return soundEmitter(Top); }
+        inline SoundEmitter const &topSoundEmitter() const { return soundEmitter(Top); }
 
         /**
          * Update the sound emitter origin of the specified surface section. This

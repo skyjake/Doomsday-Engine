@@ -271,7 +271,7 @@ void Line::Side::Segment::lightBiasPoly(int group, Vector3f const *posCoords,
 struct Section
 {
     Surface surface;
-    ddmobj_base_t soundEmitter;
+    SoundEmitter soundEmitter;
 
     Section(Line::Side &side) : surface(dynamic_cast<MapElement &>(side))
     {
@@ -456,14 +456,14 @@ Surface const &Line::Side::surface(int sectionId) const
     return const_cast<Surface const &>(const_cast<Side *>(this)->surface(sectionId));
 }
 
-ddmobj_base_t &Line::Side::soundEmitter(int sectionId)
+SoundEmitter &Line::Side::soundEmitter(int sectionId)
 {
     return d->sectionById(sectionId).soundEmitter;
 }
 
-ddmobj_base_t const &Line::Side::soundEmitter(int sectionId) const
+SoundEmitter const &Line::Side::soundEmitter(int sectionId) const
 {
-    return const_cast<ddmobj_base_t const &>(const_cast<Side *>(this)->soundEmitter(sectionId));
+    return const_cast<SoundEmitter const &>(const_cast<Side *>(this)->soundEmitter(sectionId));
 }
 
 void Line::Side::clearSegments()
@@ -527,7 +527,7 @@ void Line::Side::updateSoundEmitterOrigin(int sectionId)
 
     if(!hasSections()) return;
 
-    ddmobj_base_t &emitter = d->sectionById(sectionId).soundEmitter;
+    SoundEmitter &emitter = d->sectionById(sectionId).soundEmitter;
 
     Vector2d lineCenter = line().center();
     emitter.origin[VX] = lineCenter.x;

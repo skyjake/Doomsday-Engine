@@ -33,7 +33,7 @@ using namespace de;
 DENG2_PIMPL(Plane)
 {
     /// Sound emitter.
-    ddmobj_base_t soundEmitter;
+    SoundEmitter soundEmitter;
 
     /// Index of the plane in the owning sector.
     int indexInSector;
@@ -224,14 +224,14 @@ void Plane::setNormal(Vector3f const &newNormal)
     d->surface.setNormal(newNormal); // will normalize
 }
 
-ddmobj_base_t &Plane::soundEmitter()
+SoundEmitter &Plane::soundEmitter()
 {
     return d->soundEmitter;
 }
 
-ddmobj_base_t const &Plane::soundEmitter() const
+SoundEmitter const &Plane::soundEmitter() const
 {
-    return const_cast<ddmobj_base_t const &>(const_cast<Plane &>(*this).soundEmitter());
+    return const_cast<SoundEmitter const &>(const_cast<Plane &>(*this).soundEmitter());
 }
 
 void Plane::updateSoundEmitterOrigin()

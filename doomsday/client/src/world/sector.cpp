@@ -105,14 +105,14 @@ DENG2_OBSERVES(Plane, HeightChange)
     AABoxd aaBox;
     bool needAABoxUpdate; ///< @c true= marked for update.
 
-    ddmobj_base_t soundEmitter; ///< Head of the sound emitte chain.
+    SoundEmitter emitter; ///< Head of the sound emitter chain.
 
-    Planes planes; ///< All owned planes.
-    Sides sides; ///< All referencing line sides (not owned).
-    Clusters clusters; ///< All owned BSP leaf clusters.
+    Planes planes;        ///< All owned planes.
+    Sides sides;          ///< All referencing line sides (not owned).
+    Clusters clusters;    ///< All owned BSP leaf clusters.
 
-    float lightLevel; ///< Ambient light level.
-    Vector3f lightColor; ///< Ambient light color.
+    float lightLevel;     ///< Ambient light level.
+    Vector3f lightColor;  ///< Ambient light color.
 
     int validCount;
 
@@ -147,7 +147,7 @@ DENG2_OBSERVES(Plane, HeightChange)
           visible(false)
 #endif
     {
-        zap(soundEmitter);
+        zap(emitter);
 #ifdef __CLIENT__
         zap(lightGridData);
         zap(reverb);
@@ -189,8 +189,8 @@ DENG2_OBSERVES(Plane, HeightChange)
     }
 
     /**
-     * Update the axis-aligned bounding box in the map coordinate space
-     * to encompass the geometry of all BSP leaf clusters of the sector.
+     * Update the axis-aligned bounding box in the map coordinate space to
+     * encompass the geometry of all BSP leaf clusters of the sector.
      */
     void updateAABox()
     {
@@ -211,16 +211,16 @@ DENG2_OBSERVES(Plane, HeightChange)
             }
         }
 
-        // The XY origin of our sound emitter can now be updated as the
-        // center point of the sector geometry is now known.
+        // The XY origin of our sound emitter can now be updated as the center
+        // point of the sector geometry is now known.
         if(haveGeometry)
         {
-            soundEmitter.origin[VX] = (aaBox.minX + aaBox.maxX) / 2;
-            soundEmitter.origin[VY] = (aaBox.minY + aaBox.maxY) / 2;
+            emitter.origin[VX] = (aaBox.minX + aaBox.maxX) / 2;
+            emitter.origin[VY] = (aaBox.minY + aaBox.maxY) / 2;
         }
         else
         {
-            soundEmitter.origin[VX] = soundEmitter.origin[VY] = 0;
+            emitter.origin[VX] = emitter.origin[VY] = 0;
         }
     }
 
@@ -345,7 +345,7 @@ DENG2_OBSERVES(Plane, HeightChange)
             return;
 
         // Update the z-height origin of our sound emitter right away.
-        soundEmitter.origin[VZ] = (self.floor().height() + self.ceiling().height()) / 2;
+        emitter.origin[VZ] = (self.floor().height() + self.ceiling().height()) / 2;
 
         // Update the sound emitter origins for all dependent surfaces.
         foreach(Line::Side *side, sides)
@@ -459,7 +459,7 @@ struct mobj_s *Sector::firstMobj() const
     return _mobjList;
 }
 
-ddmobj_base_t &Sector::soundEmitter()
+SoundEmitter &Sector::soundEmitter()
 {
     // The origin is determined by the axis-aligned bounding box, so perform
     // any scheduled update now.
@@ -467,12 +467,12 @@ ddmobj_base_t &Sector::soundEmitter()
     {
         d->updateAABox();
     }
-    return d->soundEmitter;
+    return d->emitter;
 }
 
-ddmobj_base_t const &Sector::soundEmitter() const
+SoundEmitter const &Sector::soundEmitter() const
 {
-    return const_cast<ddmobj_base_t const &>(const_cast<Sector &>(*this).soundEmitter());
+    return const_cast<SoundEmitter const &>(const_cast<Sector &>(*this).soundEmitter());
 }
 
 int Sector::validCount() const
@@ -553,7 +553,7 @@ Plane *Sector::addPlane(Vector3f const &normal, coord_t height)
     /// @todo fixme: Assume planes are defined in order.
     if(planeCount() == 2)
     {
-        d->soundEmitter.origin[VZ] = (floor().height() + ceiling().height()) / 2;
+        d->emitter.origin[VZ] = (floor().height() + ceiling().height()) / 2;
     }
 
     return plane;
@@ -676,7 +676,7 @@ AABoxd const &Sector::aaBox() const
     return d->aaBox;
 }
 
-static void linkSoundEmitter(ddmobj_base_t &root, ddmobj_base_t &newEmitter)
+static void linkSoundEmitter(SoundEmitter &root, SoundEmitter &newEmitter)
 {
     // The sector's base is always root of the chain, so link the other after it.
     newEmitter.thinker.prev = &root.thinker;
@@ -688,7 +688,7 @@ static void linkSoundEmitter(ddmobj_base_t &root, ddmobj_base_t &newEmitter)
 
 void Sector::chainSoundEmitters()
 {
-    ddmobj_base_t &root = d->soundEmitter;
+    SoundEmitter &root = d->emitter;
 
     // Clear the root of the emitter chain.
     root.thinker.next = root.thinker.prev = 0;
@@ -1002,8 +1002,8 @@ int Sector::property(DmuArgs &args) const
         args.setValue(DMT_SECTOR_RGB, &d->lightColor.z, 0);
         break;
     case DMU_EMITTER: {
-        ddmobj_base_t const *soundEmitterAdr = &d->soundEmitter;
-        args.setValue(DMT_SECTOR_EMITTER, &soundEmitterAdr, 0);
+        SoundEmitter const *emitterAdr = &d->emitter;
+        args.setValue(DMT_SECTOR_EMITTER, &emitterAdr, 0);
         break; }
     case DMT_MOBJS:
         args.setValue(DMT_SECTOR_MOBJLIST, &_mobjList, 0);

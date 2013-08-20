@@ -24,7 +24,7 @@
 #include <de/Observers>
 #include <de/Vector>
 
-#include "dd_share.h" // ddmobj_base_t
+#include "dd_share.h" // SoundEmitter
 
 #include "MapElement"
 
@@ -117,10 +117,10 @@ public:
     /**
      * Returns the sound emitter for the plane.
      */
-    ddmobj_base_t &soundEmitter();
+    SoundEmitter &soundEmitter();
 
     /// @copydoc soundEmitter()
-    ddmobj_base_t const &soundEmitter() const;
+    SoundEmitter const &soundEmitter() const;
 
     /**
      * Update the sound emitter origin according to the point defined by the center

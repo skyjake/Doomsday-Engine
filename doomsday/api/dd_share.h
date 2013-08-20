@@ -483,6 +483,9 @@ typedef struct ddmobj_base_s {
     DD_BASE_DDMOBJ_ELEMENTS()
 } ddmobj_base_t;
 
+/// A base mobj instance is used as a "sound emitter".
+typedef ddmobj_base_t SoundEmitter;
+
 /// Sector reverb data indices. @ingroup world
 enum {
     SRD_VOLUME,

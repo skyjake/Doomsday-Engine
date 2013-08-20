@@ -1536,7 +1536,7 @@ coord_t Sv_SideDistance(int index, int deltaFlags, ownerinfo_t const *info)
 {
     Line::Side const *side = App_World().map().sideByIndex(index);
 
-    ddmobj_base_t const &emitter = (deltaFlags & SNDDF_SIDE_MIDDLE? side->middleSoundEmitter()
+    SoundEmitter const &emitter = (deltaFlags & SNDDF_SIDE_MIDDLE? side->middleSoundEmitter()
                                      : deltaFlags & SNDDF_SIDE_TOP? side->topSoundEmitter()
                                                                   : side->bottomSoundEmitter());
 

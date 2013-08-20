@@ -188,14 +188,14 @@ Sector *Polyobj::sectorPtr() const
     return hasBspLeaf()? bspLeaf().sectorPtr() : 0;
 }
 
-ddmobj_base_t &Polyobj::soundEmitter()
+SoundEmitter &Polyobj::soundEmitter()
 {
-    return *reinterpret_cast<ddmobj_base_t *>(this);
+    return *reinterpret_cast<SoundEmitter *>(this);
 }
 
-ddmobj_base_t const &Polyobj::soundEmitter() const
+SoundEmitter const &Polyobj::soundEmitter() const
 {
-    return const_cast<ddmobj_base_t const &>(const_cast<Polyobj &>(*this).soundEmitter());
+    return const_cast<SoundEmitter const &>(const_cast<Polyobj &>(*this).soundEmitter());
 }
 
 Polyobj::Lines const &Polyobj::lines() const

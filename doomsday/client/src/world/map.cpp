@@ -941,11 +941,11 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
     /**
      * Locate a polyobj by sound emitter.
      *
-     * @param soundEmitter  ddmobj_base_t to search for.
+     * @param soundEmitter  SoundEmitter to search for.
      *
      * @return  Pointer to the referenced Polyobj instance; otherwise @c 0.
      */
-    Polyobj *polyobjBySoundEmitter(ddmobj_base_t const &soundEmitter) const
+    Polyobj *polyobjBySoundEmitter(SoundEmitter const &soundEmitter) const
     {
         foreach(Polyobj *polyobj, polyobjs)
         {
@@ -958,11 +958,11 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
     /**
      * Locate a sector by sound emitter.
      *
-     * @param soundEmitter  ddmobj_base_t to search for.
+     * @param soundEmitter  SoundEmitter to search for.
      *
      * @return  Pointer to the referenced Sector instance; otherwise @c 0.
      */
-    Sector *sectorBySoundEmitter(ddmobj_base_t const &soundEmitter) const
+    Sector *sectorBySoundEmitter(SoundEmitter const &soundEmitter) const
     {
         foreach(Sector *sector, sectors)
         {
@@ -975,11 +975,11 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
     /**
      * Locate a sector plane by sound emitter.
      *
-     * @param soundEmitter  ddmobj_base_t to search for.
+     * @param soundEmitter  SoundEmitter to search for.
      *
      * @return  Pointer to the referenced Plane instance; otherwise @c 0.
      */
-    Plane *planeBySoundEmitter(ddmobj_base_t const &soundEmitter) const
+    Plane *planeBySoundEmitter(SoundEmitter const &soundEmitter) const
     {
         foreach(Sector *sector, sectors)
         foreach(Plane *plane, sector->planes())
@@ -995,11 +995,11 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
     /**
      * Locate a surface by sound emitter.
      *
-     * @param soundEmitter  ddmobj_base_t to search for.
+     * @param soundEmitter  SoundEmitter to search for.
      *
      * @return  Pointer to the referenced Surface instance; otherwise @c 0.
      */
-    Surface *surfaceBySoundEmitter(ddmobj_base_t const &soundEmitter) const
+    Surface *surfaceBySoundEmitter(SoundEmitter const &soundEmitter) const
     {
         // Perhaps a wall surface?
         foreach(Line *line, lines)
@@ -1528,7 +1528,7 @@ Line::Side *Map::sideByIndex(int index) const
     return &d->lines.at(index / 2)->side(index % 2);
 }
 
-bool Map::identifySoundEmitter(ddmobj_base_t const &emitter, Sector **sector,
+bool Map::identifySoundEmitter(SoundEmitter const &emitter, Sector **sector,
     Polyobj **poly, Plane **plane, Surface **surface) const
 {
     *sector  = 0;

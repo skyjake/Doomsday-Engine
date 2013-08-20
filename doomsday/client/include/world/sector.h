@@ -314,10 +314,10 @@ public:
      * sector are linked to this, forming a chain which can be traversed using
      * the 'next' pointer of the emitter's thinker_t.
      */
-    ddmobj_base_t &soundEmitter();
+    SoundEmitter &soundEmitter();
 
     /// @copydoc soundEmitter()
-    ddmobj_base_t const &soundEmitter() const;
+    SoundEmitter const &soundEmitter() const;
 
     /**
      * (Re)Build the sound emitter chains for the sector. These chains are used
