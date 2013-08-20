@@ -66,6 +66,9 @@ public:
 
     ui::Item const &selectedItem() const;
 
+public slots:
+    void openPopup();
+
 signals:
     void selectionChanged(unsigned int pos);
 

@@ -18,6 +18,7 @@
 
 #include "ui/widgets/choicewidget.h"
 #include "ui/widgets/popupmenuwidget.h"
+#include "ui/signalaction.h"
 
 using namespace de;
 using namespace ui;
@@ -27,6 +28,10 @@ DENG2_OBSERVES(Context, Addition),
 DENG2_OBSERVES(Context, Removal),
 DENG2_OBSERVES(ContextWidgetOrganizer, WidgetCreation)
 {   
+    /**
+     * Items in the choice's popup uses this as action to change the selected
+     * item.
+     */
     struct SelectAction : public de::Action
     {
         Instance *d;
@@ -39,6 +44,8 @@ DENG2_OBSERVES(ContextWidgetOrganizer, WidgetCreation)
             Action::trigger();
             d->selected = d->items().find(selItem);
             d->updateButtonWithSelection();
+            d->updateItemHighlight();
+            d->choices->dismiss();
         }
 
         Action *duplicate() const
@@ -51,14 +58,27 @@ DENG2_OBSERVES(ContextWidgetOrganizer, WidgetCreation)
     PopupMenuWidget *choices;
     Context::Pos selected; ///< One item is always selected.
 
-    Instance(Public *i) : Base(i), selected(0)
+    Instance(Public *i) : Base(i), selected(Context::InvalidPos)
     {
+        self.setFont("choice.selected");
+
         choices = new PopupMenuWidget;
         choices->setAnchorAndOpeningDirection(self.hitRule(), ui::Right);
+        choices->menu().items().audienceForAddition += this;
+        choices->menu().items().audienceForRemoval += this;
         choices->menu().organizer().audienceForWidgetCreation += this;
         self.add(choices);
 
+        self.setAction(new SignalAction(thisPublic, SLOT(openPopup())));
+
         updateButtonWithSelection();
+
+        updateStyle();
+    }
+
+    void updateStyle()
+    {
+        // todo
     }
 
     void widgetCreatedForItem(GuiWidget &widget, ui::Item const &item)
@@ -89,6 +109,7 @@ DENG2_OBSERVES(ContextWidgetOrganizer, WidgetCreation)
             selected = 0;
 
             updateButtonWithSelection();
+            return;
         }
 
         if(id <= selected)
@@ -111,8 +132,21 @@ DENG2_OBSERVES(ContextWidgetOrganizer, WidgetCreation)
         }
     }
 
+    void updateItemHighlight()
+    {
+        // Highlight the currently selected item.
+        for(Context::Pos i = 0; i < items().size(); ++i)
+        {
+            if(GuiWidget *w = choices->menu().organizer().itemWidget(i))
+            {
+                w->setFont(i == selected? "choice.selected" : "default");
+            }
+        }
+    }
+
     void updateButtonWithSelection()
     {
+        // Update the main button.
         if(isValidSelection())
         {
             ui::Item const &item = items().at(selected);
@@ -149,6 +183,7 @@ void ChoiceWidget::setSelected(Context::Pos pos)
     {
         d->selected = pos;
         d->updateButtonWithSelection();
+        d->updateItemHighlight();
     }
 }
 
@@ -161,6 +196,12 @@ Item const &ChoiceWidget::selectedItem() const
 {
     DENG2_ASSERT(d->isValidSelection());
     return d->items().at(d->selected);
+}
+
+void ChoiceWidget::openPopup()
+{
+    d->updateItemHighlight();
+    d->choices->open();
 }
 
 ui::Context &ChoiceWidget::items()

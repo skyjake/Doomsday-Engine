@@ -468,6 +468,18 @@ void PopupWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
         v.pos = anchorPos + Vector2i(-marker, marker); tri << v;
         v.pos = anchorPos + Vector2i(-marker, -marker); tri << v;
     }
+    else if(d->dir == ui::Right)
+    {
+        v.pos = anchorPos; tri << v;
+        v.pos = anchorPos + Vector2i(marker, -marker); tri << v;
+        v.pos = anchorPos + Vector2i(marker, marker); tri << v;
+    }
+    else
+    {
+        v.pos = anchorPos; tri << v;
+        v.pos = anchorPos + Vector2i(marker, marker); tri << v;
+        v.pos = anchorPos + Vector2i(-marker, marker); tri << v;
+    }
 
     verts += tri;
 }
