@@ -1078,6 +1078,7 @@ void R_ProjectSprite(mobj_t *mo)
     matFlipT = false;
 
     MaterialSnapshot const &ms = mat->prepare(Rend_SpriteMaterialSpec(mo->tclass, mo->tmap));
+    if(!ms.hasTexture(MTU_PRIMARY)) return;
 
     // An invalid sprite texture?
     Texture &tex = ms.texture(MTU_PRIMARY).generalCase();
