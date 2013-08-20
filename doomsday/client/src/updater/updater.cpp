@@ -132,7 +132,7 @@ DENG2_PIMPL(Updater)
     DownloadDialog* download;
     bool alwaysShowNotification;
     UpdateAvailableDialog* availableDlg;
-    UpdaterSettingsDialog* settingsDlg;
+    //UpdaterSettingsDialog* settingsDlg;
     bool backToFullscreen;
     bool savingSuggested;
 
@@ -146,7 +146,7 @@ DENG2_PIMPL(Updater)
           network(0),
           download(0),
           availableDlg(0),
-          settingsDlg(0),
+          //settingsDlg(0),
           backToFullscreen(false),
           savingSuggested(false)
     {
@@ -172,7 +172,7 @@ DENG2_PIMPL(Updater)
 
     ~Instance()
     {
-        if(settingsDlg) delete settingsDlg;
+        //if(settingsDlg) delete settingsDlg;
 
         // Delete the ongoing download.
         if(download) delete download;
@@ -240,6 +240,7 @@ DENG2_PIMPL(Updater)
 
     void showSettingsNonModal()
     {
+        /*
         if(!settingsDlg)
         {
             settingsDlg = new UpdaterSettingsDialog(&ClientWindow::main());
@@ -250,6 +251,7 @@ DENG2_PIMPL(Updater)
             settingsDlg->fetch();
         }
         settingsDlg->open();
+        */
     }
 
     void queryLatestVersion(bool notifyAlways)

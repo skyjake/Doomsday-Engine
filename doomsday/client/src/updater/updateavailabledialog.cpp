@@ -256,6 +256,7 @@ void UpdateAvailableDialog::showWhatsNew()
 
 void UpdateAvailableDialog::editSettings()
 {
+    /*
     UpdaterSettingsDialog st(this);
     if(st.exec())
     {
@@ -265,7 +266,7 @@ void UpdateAvailableDialog::editSettings()
 
         // Rerun the check.
         emit checkAgain();
-    }
+    }*/
 }
 
 void UpdateAvailableDialog::recenterDialog()

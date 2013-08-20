@@ -1,4 +1,4 @@
-/** @file updatersettingsdialog.cpp Dialog for configuring automatic updates. 
+/** @file updatersettingsdialog.cpp Dialog for configuring automatic updates.
  * @ingroup updater
  *
  * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -19,19 +19,14 @@
  * 02110-1301 USA</small>
  */
 
-#include "updatersettingsdialog.h"
-#include "updatersettings.h"
-#include <QDesktopServices>
-#include <QVBoxLayout>
-#include <QFormLayout>
-#include <QLabel>
-#include <QPushButton>
-#include <QCheckBox>
-#include <QComboBox>
-#include <QDialogButtonBox>
-#include <QFileDialog>
+#include "updater/updatersettingsdialog.h"
+#include "updater/updatersettings.h"
+#include "ui/widgets/labelwidget.h"
+#include "ui/widgets/choicewidget.h"
+#include "ui/widgets/variabletogglewidget.h"
+#include "ui/widgets/gridlayout.h"
 #include <de/Log>
-#include <QDebug>
+#include <QDesktopServices>
 
 using namespace de;
 
@@ -49,70 +44,79 @@ static QString defaultLocationName()
     return name;
 }
 
-DENG2_PIMPL(UpdaterSettingsDialog)
+DENG2_PIMPL(UpdaterSettingsDialog),
+DENG2_OBSERVES(ToggleWidget, Toggle)
 {
-    QCheckBox* autoCheck;
-    QComboBox* freqList;
-    QLabel* lastChecked;
-    QComboBox* channelList;
-    QComboBox* pathList;
-    QCheckBox* deleteAfter;
+    ToggleWidget *autoCheck;
+    ChoiceWidget *freqs;
+    LabelWidget *lastChecked;
+    ChoiceWidget *channels;
+    ChoiceWidget *paths;
+    ToggleWidget *deleteAfter;
 
-    Instance(Public &i) : Base(i)
+    Instance(Public *i) : Base(i)
     {
-        // As a modal dialog it is implicitly clear that this belongs to
-        // Doomsday, so we don't need to have the name in the window title.
-        self.setWindowTitle(tr("Updater Settings"));
+        ScrollAreaWidget &area = self.area();
 
-        QVBoxLayout* mainLayout = new QVBoxLayout;
-        self.setLayout(mainLayout);
+        // Create the widgets.
+        area.add(autoCheck   = new ToggleWidget);
+        area.add(freqs       = new ChoiceWidget);
+        area.add(lastChecked = new LabelWidget);
+        area.add(channels    = new ChoiceWidget);
+        area.add(paths       = new ChoiceWidget);
+        area.add(deleteAfter = new ToggleWidget);
 
-        QFormLayout* form = new QFormLayout;
-        mainLayout->addLayout(form);
+        LabelWidget *releaseLabel = new LabelWidget;
+        area.add(releaseLabel);
 
-        freqList = new QComboBox;
-        freqList->addItem(tr("At startup"), UpdaterSettings::AtStartup);
-        freqList->addItem(tr("Daily"),      UpdaterSettings::Daily);
-        freqList->addItem(tr("Biweekly"),   UpdaterSettings::Biweekly);
-        freqList->addItem(tr("Weekly"),     UpdaterSettings::Weekly);
-        freqList->addItem(tr("Monthly"),    UpdaterSettings::Monthly);
+        LabelWidget *pathLabel = new LabelWidget;
+        area.add(pathLabel);
 
-        autoCheck = new QCheckBox(tr("&Check for updates:"));
-        form->addRow(autoCheck, freqList);
-        QLayoutItem* item = form->itemAt(0, QFormLayout::LabelRole);
-        item->setAlignment(Qt::AlignVCenter);
+        autoCheck->setText(tr("Check for updates:"));
 
-        lastChecked = new QLabel;
-        form->addRow(new QWidget, lastChecked);
+        freqs->items()
+                << new ChoiceItem(tr("At startup"), UpdaterSettings::AtStartup)
+                << new ChoiceItem(tr("Daily"),      UpdaterSettings::Daily)
+                << new ChoiceItem(tr("Biweekly"),   UpdaterSettings::Biweekly)
+                << new ChoiceItem(tr("Weekly"),     UpdaterSettings::Weekly)
+                << new ChoiceItem(tr("Monthly"),    UpdaterSettings::Monthly);
 
-        channelList = new QComboBox;
-        channelList->addItem(tr("Stable"), UpdaterSettings::Stable);
-        channelList->addItem(tr("Unstable/Candidate"), UpdaterSettings::Unstable);
-        form->addRow(tr("&Release type:"), channelList);
+        lastChecked->setMargin(ui::Up, "");
 
-        pathList = new QComboBox;
-        pathList->addItem(defaultLocationName(),
-                          UpdaterSettings::defaultDownloadPath().toString());
-        pathList->addItem(tr("Select folder..."), "");
-        form->addRow(tr("&Download location:"), pathList);
+        releaseLabel->setText("Release type:");
 
-        deleteAfter = new QCheckBox(tr("D&elete file after install"));
-        form->addRow(new QWidget, deleteAfter);
+        channels->items()
+                << new ChoiceItem(tr("Stable"),             UpdaterSettings::Stable)
+                << new ChoiceItem(tr("Unstable/Candidate"), UpdaterSettings::Unstable);
 
-        QDialogButtonBox* bbox = new QDialogButtonBox;
-        mainLayout->addWidget(bbox);
+        pathLabel->setText(tr("Download location:"));
 
-        // Buttons.
-        QPushButton* ok = bbox->addButton(QDialogButtonBox::Ok);
-        QPushButton* cancel = bbox->addButton(QDialogButtonBox::Cancel);
+        paths->items()
+                << new ChoiceItem(defaultLocationName(),
+                                  UpdaterSettings::defaultDownloadPath().toString());
+
+        deleteAfter->setText(tr("Delete file after install"));
 
         fetch();
 
-        // Connections.
-        QObject::connect(autoCheck, SIGNAL(toggled(bool)), &self, SLOT(autoCheckToggled(bool)));
-        QObject::connect(pathList, SIGNAL(activated(int)), &self, SLOT(pathActivated(int)));
-        QObject::connect(ok, SIGNAL(clicked()), &self, SLOT(accept()));
-        QObject::connect(cancel, SIGNAL(clicked()), &self, SLOT(reject()));
+        autoCheck->audienceForToggle += this;
+
+        // Place the widgets into a grid.
+        GridLayout layout(area.contentRule().left(), area.contentRule().top());
+        layout.setGridSize(2, 0);
+        layout.setColumnAlignment(0, ui::AlignRight); // Labels aligned to the right.
+
+        layout << *autoCheck    << *freqs
+               << Const(0)      << *lastChecked
+               << *releaseLabel << *channels
+               << *pathLabel    << *paths
+               << Const(0)      << *deleteAfter;
+
+        area.setContentSize(layout.width(), layout.height());
+
+        self.buttons().items()
+                << new DialogButtonItem(DialogWidget::Default | DialogWidget::Accept)
+                << new DialogButtonItem(DialogWidget::Reject);
     }
 
     void fetch()
@@ -122,42 +126,52 @@ DENG2_PIMPL(UpdaterSettingsDialog)
         String ago = st.lastCheckAgo();
         if(!ago.isEmpty())
         {
-            lastChecked->setText(tr("<small>Last checked %1.</small>")
-                                 .arg(st.lastCheckAgo()));
+            lastChecked->setText(_E(D)_E(t) + tr("Last checked %1.").arg(st.lastCheckAgo()));
         }
         else
         {
-            lastChecked->setText(tr("<small>Never checked.</small>"));
+            lastChecked->setText(_E(D)_E(t) + tr("Never checked."));
         }
 
-        autoCheck->setChecked(!st.onlyCheckManually());
-        freqList->setEnabled(!st.onlyCheckManually());
-        freqList->setCurrentIndex(freqList->findData(st.frequency()));
-        channelList->setCurrentIndex(channelList->findData(st.channel()));
+        autoCheck->setActive(!st.onlyCheckManually());
+        freqs->enable(!st.onlyCheckManually());
+        freqs->setSelected(freqs->items().findData(st.frequency()));
+        channels->setSelected(channels->items().findData(st.channel()));
         setDownloadPath(st.downloadPath());
-        deleteAfter->setChecked(st.deleteAfterUpdate());
+        deleteAfter->setActive(st.deleteAfterUpdate());
+    }
+
+    void toggleStateChanged(ToggleWidget &toggle)
+    {
+        if(&toggle == autoCheck)
+        {
+            freqs->enable(autoCheck->isActive());
+        }
     }
 
     void apply()
     {
         UpdaterSettings st;
-        st.setOnlyCheckManually(!autoCheck->isChecked());
-        int sel = freqList->currentIndex();
-        if(sel >= 0)
+
+        st.setOnlyCheckManually(autoCheck->isInactive());
+        ui::Context::Pos sel = freqs->selected();
+        if(sel != ui::Context::InvalidPos)
         {
-            st.setFrequency(UpdaterSettings::Frequency(freqList->itemData(sel).toInt()));
+            st.setFrequency(UpdaterSettings::Frequency(freqs->items().at(sel).data().toInt()));
         }
-        sel = channelList->currentIndex();
-        if(sel >= 0)
+        sel = channels->selected();
+        if(sel != ui::Context::InvalidPos)
         {
-            st.setChannel(UpdaterSettings::Channel(channelList->itemData(sel).toInt()));
+            st.setChannel(UpdaterSettings::Channel(channels->items().at(sel).data().toInt()));
         }
-        st.setDownloadPath(pathList->itemData(pathList->currentIndex()).toString());
-        st.setDeleteAfterUpdate(deleteAfter->isChecked());
+        //st.setDownloadPath(pathList->itemData(pathList->currentIndex()).toString());
+        st.setDeleteAfterUpdate(deleteAfter->isActive());
     }
 
-    void setDownloadPath(const QString& dir)
+    void setDownloadPath(QString const &/*dir*/)
     {
+        paths->setSelected(0);
+        /*
         if(dir != UpdaterSettings::defaultDownloadPath())
         {
             // Remove extra items.
@@ -171,35 +185,25 @@ DENG2_PIMPL(UpdaterSettingsDialog)
         else
         {
             pathList->setCurrentIndex(pathList->findData(dir));
-        }
+        }*/
     }
 };
 
-UpdaterSettingsDialog::UpdaterSettingsDialog(QWidget *parent)
-    : UpdaterDialog(parent), d(new Instance(*this))
+UpdaterSettingsDialog::UpdaterSettingsDialog(String const &name)
+    : DialogWidget(name), d(new Instance(this))
 {}
 
-void UpdaterSettingsDialog::fetch()
+void UpdaterSettingsDialog::finish(int result)
 {
-    d->fetch();
+    if(result)
+    {
+        d->apply();
+    }
+
+    DialogWidget::finish(result);
 }
 
-void UpdaterSettingsDialog::accept()
-{
-    d->apply();
-    QDialog::accept();
-}
-
-void UpdaterSettingsDialog::reject()
-{
-    QDialog::reject();
-}
-
-void UpdaterSettingsDialog::autoCheckToggled(bool set)
-{
-    d->freqList->setEnabled(set);
-}
-
+/*
 void UpdaterSettingsDialog::pathActivated(int index)
 {
     QString path = d->pathList->itemData(index).toString();
@@ -216,3 +220,4 @@ void UpdaterSettingsDialog::pathActivated(int index)
         }
     }
 }
+*/

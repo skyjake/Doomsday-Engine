@@ -59,6 +59,7 @@ public slots:
     void openMainMenu();
     void unloadGame();
     void showAbout();
+    void showUpdaterSettings();
 
 signals:
     void opened();

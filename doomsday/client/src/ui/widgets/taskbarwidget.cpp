@@ -38,7 +38,7 @@
 #include <de/GLBuffer>
 #include <de/ScalarRule>
 
-#include "../../updater/versioninfo.h"
+#include "versioninfo.h"
 #include "dd_main.h"
 
 using namespace de;
@@ -47,6 +47,7 @@ using namespace ui;
 static TimeDelta OPEN_CLOSE_SPAN = 0.2;
 static uint POS_PANEL = 0;
 static uint POS_UNLOAD = 3;
+static uint POS_UPDATER_SETTINGS = 6;
 
 DENG2_PIMPL(TaskBarWidget),
 public IGameChangeObserver
@@ -491,4 +492,17 @@ void TaskBarWidget::showAbout()
     AboutDialog *about = new AboutDialog;
     about->setDeleteAfterDismissed(true);
     about->exec(root());
+}
+
+void TaskBarWidget::showUpdaterSettings()
+{
+    UpdaterSettingsDialog *dlg = new UpdaterSettingsDialog;
+    dlg->setDeleteAfterDismissed(true);
+    if(d->mainMenu->isOpen())
+    {
+        dlg->setAnchorAndOpeningDirection(d->mainMenu->menu().organizer().
+                                          itemWidget(POS_UPDATER_SETTINGS)->hitRule(),
+                                          ui::Left);
+    }
+    dlg->exec(root());
 }
