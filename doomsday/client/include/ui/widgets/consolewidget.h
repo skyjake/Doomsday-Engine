@@ -69,7 +69,7 @@ public slots:
     void clearLog();
     void showFullLog();
     void setFullyOpaque();
-    void setTranslucent();
+    void commandLineFocusLost();
     void focusOnCommandLine();
     void openMenu();
     void closeMenu();

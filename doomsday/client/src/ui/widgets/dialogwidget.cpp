@@ -291,6 +291,7 @@ int DialogWidget::exec(GuiRootWidget &root)
     // The widget is added to the root temporarily (as top child).
     DENG2_ASSERT(!hasRoot());
     root.add(this);
+    root.setFocus(0);
 
     prepare();
 

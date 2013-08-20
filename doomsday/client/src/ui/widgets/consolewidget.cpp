@@ -229,7 +229,7 @@ ConsoleWidget::ConsoleWidget() : GuiWidget("console"), d(new Instance(this))
 
     // Signals.
     connect(d->cmdLine, SIGNAL(gotFocus()), this, SLOT(setFullyOpaque()));
-    connect(d->cmdLine, SIGNAL(lostFocus()), this, SLOT(setTranslucent()));
+    connect(d->cmdLine, SIGNAL(lostFocus()), this, SLOT(commandLineFocusLost()));
 }
 
 ButtonWidget &ConsoleWidget::button()
@@ -403,10 +403,11 @@ void ConsoleWidget::setFullyOpaque()
     d->cmdLine->setOpacity(1, .25f);
 }
 
-void ConsoleWidget::setTranslucent()
+void ConsoleWidget::commandLineFocusLost()
 {
     d->button->setOpacity(.75f, .25f);
     d->cmdLine->setOpacity(.75f, .25f);
+    closeLog();
 }
 
 void ConsoleWidget::focusOnCommandLine()
