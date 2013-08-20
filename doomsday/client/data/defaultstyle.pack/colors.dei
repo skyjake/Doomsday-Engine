@@ -20,6 +20,10 @@ group label {
     color dimaccent { rgb <0.85, 0.68, 0.34> }
 }
 
+group choice {
+    color popup { rgb $= gui.colorAlpha(background.rgb, 1.0) }
+}
+
 group progress {
     group light {
         color wheel  { rgb <1.0, 1.0, 1.0, 0.5> }

@@ -72,13 +72,15 @@ DENG2_OBSERVES(ContextWidgetOrganizer, WidgetCreation)
         self.setAction(new SignalAction(thisPublic, SLOT(openPopup())));
 
         updateButtonWithSelection();
-
         updateStyle();
     }
 
     void updateStyle()
     {
-        // todo
+        // Popup background color.
+        Background bg = choices->background();
+        bg.solidFill = self.style().colors().colorf("choice.popup");
+        choices->set(bg);
     }
 
     void widgetCreatedForItem(GuiWidget &widget, ui::Item const &item)
