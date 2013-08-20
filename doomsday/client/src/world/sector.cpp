@@ -43,6 +43,66 @@
 
 using namespace de;
 
+/**
+ * Locate the first half-edge in the cluster which defines a boundary edge. The
+ * found edge will @em always have a BSP leaf mapped to it's face. The returned
+ * half-edge is on "this" side of the edge (i.e., in this cluster).
+ */
+HEdge &Sector::Cluster::findBoundaryEdge() const
+{
+    foreach(BspLeaf *leaf, _bspLeafs)
+    {
+        HEdge *base = leaf->poly().hedge();
+        HEdge *hedge = base;
+        do
+        {
+            if(hedge->twin().hasFace())
+            {
+                BspLeaf *leaf = hedge->twin().face().mapElement()->as<BspLeaf>();
+                if(leaf->hasCluster() && &leaf->cluster() != this)
+                {
+                    return *hedge;
+                }
+            }
+        } while((hedge = &hedge->next()) != base);
+    }
+    // Should be impossible.
+    throw Error("Sector::Cluster::findBoundaryEdge", "Failed to locate the boundary!?");
+}
+
+void Sector::Cluster::remapVisPlanes()
+{
+    // By default both planes are mapped to the parent sector.
+    _mappedVisFloor   = this;
+    _mappedVisCeiling = this;
+
+    bool permaLink = true;
+    foreach(BspLeaf *leaf, _bspLeafs)
+    {
+        HEdge *base = leaf->poly().hedge();
+        HEdge *hedge = base;
+        do
+        {
+            if(hedge->mapElement())
+            if(Line::Side::Segment *seg = hedge->mapElement()->as<Line::Side::Segment>())
+            {
+                Line::Side &lineSide = seg->lineSide();
+                if(!lineSide.line().isSelfReferencing())
+                {
+                    permaLink = false;
+                }
+            }
+        } while((hedge = &hedge->next()) != base);
+    }
+
+    if(permaLink)
+    {
+        Cluster *exteriorCluster = &findBoundaryEdge().twin().face().mapElement()->as<BspLeaf>()->cluster();
+        _mappedVisFloor   = exteriorCluster;
+        _mappedVisCeiling = exteriorCluster;
+    }
+}
+
 Sector &Sector::Cluster::sector() const
 {
     return *_bspLeafs.first()->parent().as<Sector>();
@@ -50,13 +110,29 @@ Sector &Sector::Cluster::sector() const
 
 Plane &Sector::Cluster::plane(int planeIndex) const
 {
+    // Physical planes are never mapped.
     return sector().plane(planeIndex);
 }
 
 Plane &Sector::Cluster::visPlane(int planeIndex) const
 {
-    // Presently the visual planes are always those from the attributed sector.
-    return plane(planeIndex);
+    if(planeIndex >= Floor && planeIndex <= Ceiling)
+    {
+        // Time to remap the planes?
+        if(!_mappedVisFloor)
+        {
+            const_cast<Sector::Cluster *>(this)->remapVisPlanes();
+        }
+
+        /// @todo Cache this result.
+        Cluster *mappedCluster = (planeIndex == Ceiling? _mappedVisCeiling : _mappedVisFloor);
+        if(mappedCluster != this)
+        {
+            return mappedCluster->visPlane(planeIndex);
+        }
+    }
+    // Not mapped.
+    return sector().plane(planeIndex);
 }
 
 AABoxd const &Sector::Cluster::aaBox() const
@@ -627,6 +703,7 @@ void Sector::buildClusters()
             continue;
 
         Cluster *cluster = new Cluster;
+        cluster->_mappedVisFloor = cluster->_mappedVisCeiling = 0;
         d->clusters.append(cluster);
 
         // Ownership of the BSP leaf is not given to the cluster.

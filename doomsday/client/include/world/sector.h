@@ -123,8 +123,13 @@ public:
         friend class Sector;
 
     private:
+        de::HEdge &findBoundaryEdge() const;
+        void remapVisPlanes();
+
         BspLeafs _bspLeafs;
         QScopedPointer<AABoxd> _aaBox;
+        Cluster *_mappedVisFloor;
+        Cluster *_mappedVisCeiling;
     };
 
 #ifdef __CLIENT__
