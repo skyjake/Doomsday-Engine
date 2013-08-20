@@ -30,22 +30,8 @@
  */
 class UpdaterSettingsDialog : public DialogWidget
 {
-    Q_OBJECT
-
 public:
     UpdaterSettingsDialog(de::String const &name = "updatersettings");
-
-    //void fetch();    
-
-signals:
-
-public slots:
-    /*
-    void accept();
-    void reject();
-    void autoCheckToggled(bool);
-    void pathActivated(int index);
-    */
 
 protected:
     void finish(int result);

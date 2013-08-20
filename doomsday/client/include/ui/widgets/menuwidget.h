@@ -38,6 +38,10 @@
  * A sort order for the items can be optionally defined using
  * MenuWidget::ISortOrder. Sorting affects layout only, not the actual order of
  * the children.
+ *
+ * MenuWidget uses a ContextWidgetOrganizer to create widgets based on the
+ * provided menu items. The organizer can be queried to find widgets matching
+ * specific items.
  */
 class MenuWidget : public ScrollAreaWidget
 {

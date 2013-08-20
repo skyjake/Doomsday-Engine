@@ -83,7 +83,7 @@ DENG2_OBSERVES(Widget, ChildAddition) // for styling the contents
         // Initialize the border glow.
         normalGlow = self.style().colors().colorf("glow").w;
         glow.setValue(normalGlow);
-        glow.setStyle(Animation::EaseIn);
+        glow.setStyle(Animation::Linear);
 
         // Set up widget structure.
         GuiWidget *container = new GuiWidget("container");

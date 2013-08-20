@@ -51,6 +51,7 @@
 #include "ui/nativeui.h"
 #include "ui/windowsystem.h"
 #include "ui/clientwindow.h"
+#include "ui/widgets/taskbarwidget.h"
 #include "updater.h"
 #include "downloaddialog.h"
 #include "processcheckdialog.h"
@@ -578,6 +579,7 @@ void Updater_CheckNow(boolean notify)
     updater->checkNow(notify);
 }
 
+/*
 static void showSettingsDialog(void)
 {
     if(updater)
@@ -585,11 +587,15 @@ static void showSettingsDialog(void)
         updater->showSettings();
     }
 }
+*/
 
 void Updater_ShowSettings(void)
 {
-    if(novideo || !updater) return;
+    if(!updater) return;
 
+    ClientWindow::main().taskBar().showUpdaterSettings();
+
+    /*
     // Automatically switch to windowed mode for convenience.
     int delay = 0;
     if(switchToWindowedMode())
@@ -603,6 +609,7 @@ void Updater_ShowSettings(void)
         delay = 500;
     }
     App_Timer(delay, showSettingsDialog);
+    */
 }
 
 void Updater_PrintLastUpdated(void)
