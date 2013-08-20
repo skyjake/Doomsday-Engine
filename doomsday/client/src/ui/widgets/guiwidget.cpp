@@ -45,7 +45,10 @@ DENG2_PIMPL(GuiWidget)
     // Style.
     DotPath fontId;
     DotPath textColorId;
-    DotPath marginId;
+    DotPath marginLeftId;
+    DotPath marginTopId;
+    DotPath marginRightId;
+    DotPath marginBottomId;
 
     // Background blurring.
     bool blurInited;
@@ -67,7 +70,10 @@ DENG2_PIMPL(GuiWidget)
           opacity(1.f, Animation::Linear),
           fontId("default"),
           textColorId("text"),
-          marginId("gap"),
+          marginLeftId("gap"),
+          marginTopId("gap"),
+          marginRightId("gap"),
+          marginBottomId("gap"),
           blurInited(false),
           uBlurMvpMatrix("uMvpMatrix", GLUniform::Mat4),
           uBlurColor    ("uColor",     GLUniform::Vec4),
@@ -272,9 +278,13 @@ ColorBank::Colorf GuiWidget::textColorf() const
     return style().colors().colorf(d->textColorId);
 }
 
-Rule const &GuiWidget::margin() const
+Rule const &GuiWidget::margin(ui::Direction dir) const
 {
-    return style().rules().rule(d->marginId);
+    return style().rules().rule(
+                dir == ui::Left?  d->marginLeftId  :
+                dir == ui::Up?    d->marginTopId   :
+                dir == ui::Right? d->marginRightId :
+                                  d->marginBottomId);
 }
 
 void GuiWidget::setTextColor(DotPath const &id)
@@ -285,8 +295,29 @@ void GuiWidget::setTextColor(DotPath const &id)
 
 void GuiWidget::setMargin(DotPath const &id)
 {
-    d->marginId = id;
+    setMargins(id, id, id, id);
+}
+
+void GuiWidget::setMargin(ui::Direction dir, DotPath const &id)
+{
+    switch(dir)
+    {
+    case ui::Left:  d->marginLeftId   = id; break;
+    case ui::Up:    d->marginTopId    = id; break;
+    case ui::Right: d->marginRightId  = id; break;
+    case ui::Down:  d->marginBottomId = id; break;
+    default: return;
+    }
     d->styleChanged = true;
+}
+
+void GuiWidget::setMargins(DotPath const &leftId, DotPath const &topId, DotPath const &rightId, DotPath const &bottomId)
+{
+    d->marginLeftId   = leftId;
+    d->marginTopId    = topId;
+    d->marginRightId  = rightId;
+    d->marginBottomId = bottomId;
+    d->styleChanged   = true;
 }
 
 RuleRectangle &GuiWidget::rule()
@@ -365,6 +396,10 @@ float GuiWidget::visibleOpacity() const
             opacity *= w->d->opacity;
         }
     }
+
+    // Disabled widgets are automatically made translucent.
+    if(isDisabled()) opacity *= .3f;
+
     return opacity;
 }
 

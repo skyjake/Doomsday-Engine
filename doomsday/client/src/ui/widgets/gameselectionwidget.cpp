@@ -101,7 +101,7 @@ DENG2_OBSERVES(ContextWidgetOrganizer, WidgetCreation)
         b.setAlignment(ui::AlignLeft);
         b.setTextLineAlignment(ui::AlignLeft);
         b.setHeightPolicy(ui::Expand);
-        b.setOpacity(.3f, .5f);
+        b.disable();
     }
 
     void appStartupCompleted()
@@ -118,16 +118,7 @@ DENG2_OBSERVES(ContextWidgetOrganizer, WidgetCreation)
             GuiWidget *w = self.organizer().itemWidget(item);
             DENG2_ASSERT(w != 0);
 
-            if(item.game.allStartupFilesFound())
-            {
-                w->setOpacity(1.f, .5f);
-                w->enable();
-            }
-            else
-            {
-                w->setOpacity(.3f, .5f);
-                w->disable();
-            }
+            w->enable(item.game.allStartupFilesFound());
         }
 
         self.items().sort();

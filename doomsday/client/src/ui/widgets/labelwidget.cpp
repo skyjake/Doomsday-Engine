@@ -50,7 +50,8 @@ public Font::RichFormat::IStyle
     ConstantRule *height;
 
     // Style.
-    int margin;
+    Vector2i tlMargin;
+    Vector2i brMargin;
     DotPath gapId;
     int gap;
     ColorBank::Color highlightColor;
@@ -101,8 +102,12 @@ public Font::RichFormat::IStyle
     {
         Style const &st = self.style();
 
-        margin = self.margin().valuei();
-        gap    = st.rules().rule(gapId).valuei();
+        tlMargin  = Vector2i(self.margin(ui::Left).valuei(),
+                             self.margin(ui::Up).valuei());
+        brMargin  = Vector2i(self.margin(ui::Right).valuei(),
+                             self.margin(ui::Down).valuei());
+
+        gap = st.rules().rule(gapId).valuei();
 
         // Colors.
         highlightColor = st.colors().color("label.highlight");
@@ -193,7 +198,7 @@ public Font::RichFormat::IStyle
      */
     void contentPlacement(ContentLayout &layout) const
     {
-        Rectanglei const contentRect = self.rule().recti().shrunk(margin);
+        Rectanglei const contentRect = self.rule().recti().adjusted(tlMargin, -brMargin);
 
         Vector2f const imgSize = imageSize() * imageScale;
 
@@ -344,11 +349,11 @@ public Font::RichFormat::IStyle
         if(horizPolicy == Expand)
         {
             // Expansion can occur to full view width.
-            w = self.root().viewSize().x - 2 * margin;
+            w = self.root().viewSize().x - (tlMargin.x + brMargin.x);
         }
         else
         {
-            w = self.rule().width().valuei() - 2 * margin;
+            w = self.rule().width().valuei() - (tlMargin.x + brMargin.x);
         }
         if(textAlign & (AlignLeft | AlignRight))
         {
@@ -383,8 +388,8 @@ public Font::RichFormat::IStyle
             ContentLayout layout;
             contentPlacement(layout);
             Rectanglef combined = layout.image | layout.text;
-            width->set(combined.width() + 2 * margin);
-            height->set(combined.height() + 2 * margin);
+            width->set(combined.width() + tlMargin.x + brMargin.x);
+            height->set(combined.height() + tlMargin.y + brMargin.y);
         }
     }
 
