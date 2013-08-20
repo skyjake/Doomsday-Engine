@@ -31,7 +31,9 @@ using namespace de;
 
 static TimeDelta const ANIM_SPAN = .5;
 
-DENG2_PIMPL(NotificationWidget)
+DENG2_PIMPL(NotificationWidget),
+DENG2_OBSERVES(Widget, ChildAddition),
+DENG2_OBSERVES(Widget, ChildRemoval)
 {
     ScalarRule *shift;
 
@@ -51,6 +53,9 @@ DENG2_PIMPL(NotificationWidget)
           uMvpMatrix("uMvpMatrix", GLUniform::Mat4),
           uColor    ("uColor",     GLUniform::Vec4)
     {
+        self.audienceForChildAddition += this;
+        self.audienceForChildRemoval += this;
+
         dismissTimer.setSingleShot(true);
         dismissTimer.setInterval(ANIM_SPAN.asMilliSeconds());
         QObject::connect(&dismissTimer, SIGNAL(timeout()), thisPublic, SLOT(dismiss()));
@@ -158,6 +163,21 @@ DENG2_PIMPL(NotificationWidget)
         }
         pendingDismiss.clear();
     }
+
+    void widgetChildAdded(Widget &)
+    {
+        updateChildLayout();
+        self.show();
+    }
+
+    void widgetChildBeingRemoved(Widget &)
+    {
+        updateChildLayout();
+        if(!self.childCount())
+        {
+            self.hide();
+        }
+    }
 };
 
 NotificationWidget::NotificationWidget(String const &name) : d(new Instance(this))
@@ -255,19 +275,4 @@ void NotificationWidget::glInit()
 void NotificationWidget::glDeinit()
 {
     d->glDeinit();
-}
-
-void NotificationWidget::addedChildWidget(GuiWidget &)
-{
-    d->updateChildLayout();
-    show();
-}
-
-void NotificationWidget::removedChildWidget(GuiWidget &)
-{
-    d->updateChildLayout();
-    if(!childCount())
-    {
-        hide();
-    }
 }

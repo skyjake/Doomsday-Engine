@@ -507,30 +507,6 @@ GuiWidget::MouseClickStatus GuiWidget::handleMouseClick(Event const &event)
     return MouseClickUnrelated;
 }
 
-void GuiWidget::addedChildWidget(Widget &widget)
-{
-    GuiWidget *gw = dynamic_cast<GuiWidget *>(&widget);
-    if(gw)
-    {
-        addedChildWidget(*gw);
-    }
-}
-
-void GuiWidget::removedChildWidget(Widget &widget)
-{
-    GuiWidget *gw = dynamic_cast<GuiWidget *>(&widget);
-    if(gw)
-    {
-        removedChildWidget(*gw);
-    }
-}
-
-void GuiWidget::addedChildWidget(GuiWidget &widget)
-{}
-
-void GuiWidget::removedChildWidget(GuiWidget &widget)
-{}
-
 void GuiWidget::glInit()
 {}
 

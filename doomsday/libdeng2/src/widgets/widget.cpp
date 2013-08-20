@@ -256,7 +256,10 @@ Widget &Widget::add(Widget *child)
     }
 
     // Notify.
-    addedChildWidget(*child);
+    DENG2_FOR_AUDIENCE(ChildAddition, i)
+    {
+        i->widgetChildAdded(*child);
+    }
     DENG2_FOR_EACH_OBSERVER(ParentChangeAudience, i, child->audienceForParentChange)
     {
         i->widgetParentChanged(*child, 0, this);
@@ -277,6 +280,13 @@ Widget &Widget::insertBefore(Widget *child, Widget const &otherChild)
 Widget *Widget::remove(Widget &child)
 {
     DENG2_ASSERT(child.d->parent == this);
+
+    // Notify.
+    DENG2_FOR_AUDIENCE(ChildRemoval, i)
+    {
+        i->widgetChildBeingRemoved(child);
+    }
+
     child.d->parent = 0;
 
     d->children.removeOne(&child);
@@ -286,7 +296,6 @@ Widget *Widget::remove(Widget &child)
     }
 
     // Notify.
-    removedChildWidget(child);
     DENG2_FOR_EACH_OBSERVER(ParentChangeAudience, i, child.audienceForParentChange)
     {
         i->widgetParentChanged(child, this, 0);
@@ -515,11 +524,5 @@ void Widget::setFocusCycle(WidgetList const &order)
         b->setFocusPrev(a->name());
     }
 }
-
-void Widget::addedChildWidget(Widget &)
-{}
-
-void Widget::removedChildWidget(Widget &)
-{}
 
 } // namespace de

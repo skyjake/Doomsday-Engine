@@ -89,6 +89,16 @@ public:
      */
     DENG2_DEFINE_AUDIENCE(ParentChange, void widgetParentChanged(Widget &child, Widget *oldParent, Widget *newParent))
 
+    /**
+     * Notified when a child is added to the widget.
+     */
+    DENG2_DEFINE_AUDIENCE(ChildAddition, void widgetChildAdded(Widget &child))
+
+    /**
+     * Notified when a child is about to be removed from the widget.
+     */
+    DENG2_DEFINE_AUDIENCE(ChildRemoval, void widgetChildBeingRemoved(Widget &child))
+
 public:
     Widget(String const &name = "");
     virtual ~Widget();
@@ -237,10 +247,6 @@ public:
 
 public:
     static void setFocusCycle(WidgetList const &order);
-
-protected:
-    virtual void addedChildWidget(Widget &widget);
-    virtual void removedChildWidget(Widget &widget);
 
 private:
     DENG2_PRIVATE(d)
