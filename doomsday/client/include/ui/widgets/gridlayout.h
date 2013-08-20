@@ -46,6 +46,7 @@ public:
 
     void setLeftTop(de::Rule const &left, de::Rule const &top);
     void setGridSize(int numCols, int numRows);
+    void setColumnAlignment(int column, ui::Alignment cellAlign);
 
     void setOverrideWidth(de::Rule const &width);
     void setOverrideHeight(de::Rule const &height);
@@ -53,6 +54,7 @@ public:
     void setRowPadding(de::Rule const &gap);
 
     GridLayout &operator << (GuiWidget &widget) { return append(widget); }
+    GridLayout &operator << (de::Rule const &empty) { return append(empty); }
 
     GridLayout &append(GuiWidget &widget);
     GridLayout &append(de::Rule const &empty);

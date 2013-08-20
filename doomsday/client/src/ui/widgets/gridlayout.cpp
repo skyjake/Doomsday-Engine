@@ -38,11 +38,13 @@ DENG2_PIMPL(GridLayout)
     Rule const *rowPad;
 
     struct Metric {
-        Rule const *current;
-        IndirectRule *final;
-        Rule const *accum;
+        Rule const *current;    ///< Current size of column/row (replaced many times).
+        IndirectRule *final;    ///< Final size of column/row (for others to use).
+        Rule const *accum;      ///< Sum of sizes of previous columns/rows (for others to use).
+        ui::Alignment cellAlign;///< Cell alignment affecting the entire column/row.
 
-        Metric() : current(0), final(new IndirectRule), accum(0) {}
+        Metric() : current(0), final(new IndirectRule), accum(0), cellAlign(ui::AlignLeft)
+        {}
 
         ~Metric()
         {
@@ -178,7 +180,7 @@ DENG2_PIMPL(GridLayout)
         metric.final->setSource(*metric.current);
     }
 
-    Rule const &columnBaseX(int col) const // refless
+    Rule const &columnLeftX(int col) const // refless
     {
         Rule const *base = holdRef(initialX);
         if(col > 0)
@@ -189,7 +191,16 @@ DENG2_PIMPL(GridLayout)
         return *refless(base);
     }
 
-    Rule const &rowBaseY(int row) const // refless
+    Rule const &columnRightX(int col) const // refless
+    {
+        if(col < cols.size() - 1)
+        {
+            return columnLeftX(col + 1);
+        }
+        return columnLeftX(col) + *cols.last()->final;
+    }
+
+    Rule const &rowTopY(int row) const // refless
     {
         Rule const *base = holdRef(initialY);
         if(row > 0)
@@ -231,7 +242,7 @@ DENG2_PIMPL(GridLayout)
         {
             ++cell.x;
 
-            if(maxCols > 0 && current->size() == maxCols)
+            if(maxCols > 0 && cell.x == maxCols)
             {
                 cell.x = 0;
                 cell.y++;
@@ -246,7 +257,7 @@ DENG2_PIMPL(GridLayout)
         {
             ++cell.y;
 
-            if(maxRows > 0 && current->size() == maxRows)
+            if(maxRows > 0 && cell.y == maxRows)
             {
                 cell.y = 0;
                 cell.x++;
@@ -305,15 +316,27 @@ DENG2_PIMPL(GridLayout)
             if(widget) updateMaximum(cols, cell.x, widget->rule().width());
         }
 
-        // Cells in variable-width columns/rows must be positioned according to
-        // the final column/row base widths.
-        if(mode == ColumnFirst && !fixedCellWidth)
+        if(widget)
         {
-            widget->rule().setInput(Rule::Left, columnBaseX(cell.x));
-        }
-        else if(mode == RowFirst && !fixedCellHeight)
-        {
-            widget->rule().setInput(Rule::Top, rowBaseY(cell.y));
+            // Cells in variable-width columns/rows must be positioned according to
+            // the final column/row base widths.
+            if(mode == ColumnFirst && !fixedCellWidth)
+            {
+                if(cols.at(cell.x)->cellAlign & ui::AlignRight)
+                {
+                    widget->rule()
+                            .clearInput(Rule::Left)
+                            .setInput(Rule::Right, columnRightX(cell.x));
+                }
+                else
+                {
+                    widget->rule().setInput(Rule::Left, columnLeftX(cell.x));
+                }
+            }
+            else if(mode == RowFirst && !fixedCellHeight)
+            {
+                widget->rule().setInput(Rule::Top, rowTopY(cell.y));
+            }
         }
 
         end();
@@ -397,6 +420,12 @@ void GridLayout::setGridSize(int numCols, int numRows)
     DENG2_ASSERT(isEmpty());
 
     d->setup(numCols, numRows);
+}
+
+void GridLayout::setColumnAlignment(int column, ui::Alignment cellAlign)
+{
+    DENG2_ASSERT(column >= 0 && column < d->cols.size());
+    d->cols[column]->cellAlign = cellAlign;
 }
 
 void GridLayout::setOverrideWidth(Rule const &width)
