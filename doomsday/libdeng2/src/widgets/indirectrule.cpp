@@ -44,7 +44,7 @@ void IndirectRule::unsetSource()
 
 void IndirectRule::update()
 {
-    DENG2_ASSERT(_source != 0);
+    //DENG2_ASSERT(_source != 0);
 
     setValue(_source? _source->value() : 0);
 }
@@ -63,7 +63,7 @@ String IndirectRule::description() const
     }
     else
     {
-        return String("Indirect => NULL");
+        return String("Indirect => (null)");
     }
 }
 
