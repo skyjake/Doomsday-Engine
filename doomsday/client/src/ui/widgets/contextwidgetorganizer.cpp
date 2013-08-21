@@ -171,6 +171,7 @@ DENG2_OBSERVES(ui::Item,    Change     )
         {
             found.key()->audienceForChange -= this;
             deleteWidget(found.value());
+            mapping.remove(found.key());
         }
     }
 
