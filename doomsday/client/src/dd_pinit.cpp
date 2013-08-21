@@ -139,9 +139,6 @@ void DD_ConsoleInit(void)
 
 void DD_ShutdownAll(void)
 {
-#ifdef __CLIENT__
-    Updater_Shutdown();
-#endif
     FI_Shutdown();
     UI_Shutdown();
     Con_Shutdown();

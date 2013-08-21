@@ -29,72 +29,83 @@
 
 #include "dd_types.h"
 
-#ifdef __cplusplus
-
 #include <de/libdeng2.h>
 #include <de/App>
 #include <QObject>
 #include <QNetworkReply>
 
+class ProgressWidget;
+
 /**
  * Automatic updater. Communicates with dengine.net and coordinates the
  * download and reinstall procedure.
  */
-class Updater : public QObject, DENG2_OBSERVES(de::App, StartupComplete)
+class Updater : public QObject
 {
     Q_OBJECT
 
 public:
-    explicit Updater(QObject* parent = 0);
+    enum CheckMode
+    {
+        AlwaysShowResult,
+        OnlyShowResultIfUpdateAvailable
+    };
 
-    void setBackToFullscreen(bool yes);
+public:
+    /**
+     * Initializes the automatic updater. If it is time to check for an update,
+     * queries the latest version from http://dengine.net/ and determines the
+     * need to update.
+     */
+    Updater();
 
-    void appStartupCompleted();
+    void setupUI();
+
+    ProgressWidget &progress();
 
 public slots:
-    void gotReply(QNetworkReply*);
+    void gotReply(QNetworkReply *);
     void downloadCompleted(int result);
     void settingsDialogClosed(int result);
 
     void recheck();
+
+    /**
+     * Shows the Updater Settings dialog.
+     */
     void showSettings();
 
     /**
-     * Checks for available updates.
+     * Tells the updater to check for updates now. This is called when a manual
+     * check is requested.
      *
      * @param notify  Show the update notification dialog even though
      *                the current version is up to date.
      */
-    void checkNow(bool notify = true);
+    void checkNow(CheckMode mode = AlwaysShowResult);
 
     void checkNowShowingProgress();
+
+    /**
+     * Print in the console when the latest update check was made.
+     */
+    void printLastUpdated();
 
 private:
     DENG2_PRIVATE(d)
 };
 
 /**
- * @return Returns the singleton Updater instance.
- */
-Updater* Updater_Instance();
-
-#endif // __cplusplus
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/**
  * Initializes the automatic updater. If it is time to check for an update,
  * queries the latest version from http://dengine.net/ and determines the need
  * to update.
  */
-void Updater_Init(void);
+//void Updater_Init(void);
 
 /**
  * Shuts down the automatic updater. Must be called at engine shutdown.
  */
-void Updater_Shutdown(void);
+//void Updater_Shutdown(void);
 
 /**
  * Tells the updater to check for updates now. This is called when a manual
@@ -102,20 +113,10 @@ void Updater_Shutdown(void);
  *
  * @param notify  Show the notification dialog even when up to date.
  */
-void Updater_CheckNow(boolean notify);
+//void Updater_CheckNow(boolean notify);
 
-/**
- * Shows the Updater Settings dialog.
- */
-void Updater_ShowSettings(void);
+//void Updater_ShowSettings(void);
 
-/**
- * Print in the console when the latest update check was made.
- */
-void Updater_PrintLastUpdated(void);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
+//void Updater_PrintLastUpdated(void);
 
 #endif // LIBDENG_UPDATER_H

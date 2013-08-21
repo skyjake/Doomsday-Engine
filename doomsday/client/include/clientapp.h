@@ -26,6 +26,7 @@
 #include "ui/inputsystem.h"
 #include "ui/windowsystem.h"
 #include "ui/widgets/widgetactions.h"
+#include "updater.h"
 #include "Games"
 #include "world/world.h"
 
@@ -52,6 +53,7 @@ public:
 public:
     static bool haveApp();
     static ClientApp &app();
+    static Updater &updater();
     static ServerLink &serverLink();
     static InputSystem &inputSystem();
     static WindowSystem &windowSystem();
@@ -62,6 +64,7 @@ public:
 
 public slots:
     void openHomepageInBrowser();
+    void openInBrowser(QUrl url);
 
 private:
     DENG2_PRIVATE(d)

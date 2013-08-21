@@ -25,17 +25,20 @@
 #include "updater/updatersettings.h"
 #include "ui/clientwindow.h"
 #include "dd_version.h"
-#include <QNetworkAccessManager>
-#include <QNetworkReply>
+
+/*
 #include <QDialogButtonBox>
 #include <QVBoxLayout>
 #include <QPushButton>
 #include <QLabel>
 #include <QProgressBar>
+*/
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
 #include <QDir>
 #include <QUrl>
+
 #include <de/Log>
-#include <QDebug>
 
 #ifdef WIN32
 #  undef open
@@ -47,10 +50,10 @@ DENG2_PIMPL(DownloadDialog)
 {
     QNetworkAccessManager* network;
     bool downloading;
-    QPushButton* install;
-    QProgressBar* bar;
-    QLabel* hostText;
-    QLabel* progText;
+    //QPushButton* install;
+    //QProgressBar* bar;
+    //QLabel* hostText;
+    //QLabel* progText;
     QUrl uri;
     QUrl uri2;
     de::String savedFilePath;
@@ -61,6 +64,7 @@ DENG2_PIMPL(DownloadDialog)
     Instance(Public *d, de::String downloadUri, de::String fallbackUri)
         : Base(d), downloading(false), uri(downloadUri), uri2(fallbackUri), fileReady(false), reply(0)
     {
+        /*
         QVBoxLayout* mainLayout = new QVBoxLayout;
         self.setLayout(mainLayout);
 
@@ -77,8 +81,9 @@ DENG2_PIMPL(DownloadDialog)
         QObject::connect(cancel, SIGNAL(clicked()), thisPublic, SLOT(reject()));
 
         hostText = new QLabel;
+        */
         updateLocation(uri);
-        mainLayout->addWidget(hostText);
+        /*mainLayout->addWidget(hostText);
         mainLayout->addWidget(bar);
 
         progText = new QLabel;
@@ -86,7 +91,7 @@ DENG2_PIMPL(DownloadDialog)
         setProgressText(tr("Connecting..."));
         mainLayout->addWidget(progText);
 
-        mainLayout->addWidget(bbox);
+        mainLayout->addWidget(bbox);*/
 
         network = new QNetworkAccessManager(thisPublic);
         QObject::connect(network, SIGNAL(finished(QNetworkReply*)), thisPublic, SLOT(finished(QNetworkReply*)));
@@ -96,7 +101,7 @@ DENG2_PIMPL(DownloadDialog)
 
     void updateLocation(const QUrl& url)
     {
-        hostText->setText(tr("Downloading update from <b>%1</b>...").arg(url.host()));
+        //hostText->setText(tr("Downloading update from <b>%1</b>...").arg(url.host()));
     }
 
     void startDownload()
@@ -120,18 +125,19 @@ DENG2_PIMPL(DownloadDialog)
 
     void setProgressText(de::String text)
     {
-        progText->setText("<small>" + text + "</small>");
-        self.resize(self.sizeHint());
+        //progText->setText("<small>" + text + "</small>");
     }
 };
 
-DownloadDialog::DownloadDialog(de::String downloadUri, de::String fallbackUri, QWidget *parent)
-    : UpdaterDialog(parent), d(new Instance(this, downloadUri, fallbackUri))
+DownloadDialog::DownloadDialog(de::String downloadUri, de::String fallbackUri)
+    : DialogWidget("download"), d(new Instance(this, downloadUri, fallbackUri))
 {
+    /*
 #ifndef MACOSX
     setWindowTitle(DOOMSDAY_NICENAME" Update");
     setWindowIcon(ClientWindow::main().windowIcon());
 #endif
+    */
 }
 
 DownloadDialog::~DownloadDialog()
@@ -231,11 +237,13 @@ void DownloadDialog::finished(QNetworkReply* reply)
         emit downloadFailed(d->uri.toString());
     }
 
-    raise();
-    activateWindow();
+    //raise();
+    //activateWindow();
     d->fileReady = true;
+    /*
     d->setProgressText(tr("Ready to install"));
     d->install->setEnabled(true);
+    */
 
     LOG_DEBUG("Request finished.");
 }
@@ -246,10 +254,12 @@ void DownloadDialog::progress(qint64 received, qint64 total)
 
     if(d->downloading && total > 0)
     {
+        /*
         d->bar->setValue(received * 100 / total);
         const double MB = 1.0e6; // MiB would be 2^20
         d->setProgressText(tr("Received %1 MB out of total %2 MB")
                            .arg(received/MB, 0, 'f', 1).arg(total/MB, 0, 'f', 1));
+                           */
     }
 }
 
@@ -284,8 +294,10 @@ void Updater_RaiseCompletedDownloadDialog(void)
 {
     if(downloadInProgress && downloadInProgress->isReadyToInstall())
     {
+        /*
         downloadInProgress->show();
         downloadInProgress->raise();
         downloadInProgress->activateWindow();
+        */
     }
 }

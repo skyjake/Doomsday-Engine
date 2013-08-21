@@ -64,6 +64,8 @@ static void continueInitWithEventLoopRunning()
     // Show the main window. This causes initialization to finish (in busy mode)
     // as the canvas is visible and ready for initialization.
     WindowSystem::main().show();
+
+    ClientApp::app().updater().setupUI();
 }
 
 Value *Binding_App_GamePlugin(Context &, Function::ArgumentValues const &)
@@ -75,9 +77,10 @@ Value *Binding_App_GamePlugin(Context &, Function::ArgumentValues const &)
 
 DENG2_PIMPL(ClientApp)
 {
+    QScopedPointer<Updater> updater;
     QMenuBar *menuBar;
     InputSystem *inputSys;
-    std::auto_ptr<WidgetActions> widgetActions;
+    QScopedPointer<WidgetActions> widgetActions;
     WindowSystem *winSys;
     ServerLink *svLink;
     GLShaderBank shaderBank;
@@ -128,8 +131,8 @@ DENG2_PIMPL(ClientApp)
     {
 #ifdef MACOSX
         menuBar = new QMenuBar;
-        QMenu* gameMenu = menuBar->addMenu("&Game");
-        QAction* checkForUpdates = gameMenu->addAction("Check For &Updates...", Updater_Instance(),
+        QMenu *gameMenu = menuBar->addMenu("&Game");
+        QAction *checkForUpdates = gameMenu->addAction("Check For &Updates...", updater.data(),
                                                        SLOT(checkNowShowingProgress()));
         checkForUpdates->setMenuRole(QAction::ApplicationSpecificRole);
 #endif
@@ -173,11 +176,6 @@ void ClientApp::initialize()
 
     initSubsystems();
 
-    // Check for updates automatically.
-    Updater_Init();
-
-    d->setupAppMenu();
-
     // Initialize.
 #if WIN32
     if(!DD_Win32_Init())
@@ -203,6 +201,10 @@ void ClientApp::initialize()
     // Create the window system.
     d->winSys = new WindowSystem;
     addSystem(*d->winSys);
+
+    // Check for updates automatically.
+    d->updater.reset(new Updater);
+    d->setupAppMenu();
 
     Plug_LoadAll();
 
@@ -260,6 +262,12 @@ ClientApp &ClientApp::app()
     return *clientAppSingleton;
 }
 
+Updater &ClientApp::updater()
+{
+    DENG2_ASSERT(!app().d->updater.isNull());
+    return *app().d->updater;
+}
+
 ServerLink &ClientApp::serverLink()
 {
     ClientApp &a = ClientApp::app();
@@ -283,7 +291,7 @@ WindowSystem &ClientApp::windowSystem()
 
 WidgetActions &ClientApp::widgetActions()
 {
-    return *app().d->widgetActions.get();
+    return *app().d->widgetActions;
 }
 
 GLShaderBank &ClientApp::glShaderBank()
@@ -303,6 +311,11 @@ World &ClientApp::world()
 
 void ClientApp::openHomepageInBrowser()
 {
+    openInBrowser(QUrl(DOOMSDAY_HOMEURL));
+}
+
+void ClientApp::openInBrowser(QUrl url)
+{
     // Get out of fullscreen mode.
     int windowed[] = {
         ClientWindow::Fullscreen, false,
@@ -310,5 +323,5 @@ void ClientApp::openHomepageInBrowser()
     };
     ClientWindow::main().changeAttributes(windowed);
 
-    QDesktopServices::openUrl(QUrl(DOOMSDAY_HOMEURL));
+    QDesktopServices::openUrl(url);
 }
