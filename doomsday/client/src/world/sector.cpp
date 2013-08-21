@@ -98,8 +98,14 @@ void Sector::Cluster::remapVisPlanes()
     if(permaLink)
     {
         Cluster *exteriorCluster = &findBoundaryEdge().twin().face().mapElement()->as<BspLeaf>()->cluster();
-        _mappedVisFloor   = exteriorCluster;
-        _mappedVisCeiling = exteriorCluster;
+
+        // Ensure we don't produce a cyclic dependency...
+        Sector *finalSector = &exteriorCluster->visPlane(Floor).sector();
+        if(finalSector != &sector())
+        {
+            _mappedVisFloor   = exteriorCluster;
+            _mappedVisCeiling = exteriorCluster;
+        }
     }
 }
 

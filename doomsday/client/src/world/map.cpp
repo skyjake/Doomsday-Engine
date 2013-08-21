@@ -2008,6 +2008,9 @@ void Map::link(mobj_t &mo, byte flags)
 
     if(flags & DDLINK_SECTOR)
     {
+        /// @todo fixme: Never link to a degenerate BSP leaf!
+        DENG_ASSERT(mo.bspLeaf->hasSector());
+
         // Unlink from the current sector, if any.
         Sector &sec = mo.bspLeaf->sector();
 
