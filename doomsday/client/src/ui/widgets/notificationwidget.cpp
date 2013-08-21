@@ -71,7 +71,8 @@ DENG2_OBSERVES(Widget, ChildRemoval)
 
     void updateStyle()
     {
-        self.set(Background(self.style().colors().colorf("background")));
+        //self.
+        //self.set(Background(self.style().colors().colorf("background")));
     }
 
     void glInit()
@@ -111,15 +112,13 @@ DENG2_OBSERVES(Widget, ChildRemoval)
         foreach(Widget *child, self.childWidgets())
         {
             GuiWidget &w = child->as<GuiWidget>();
-            if(first)
+            if(!first)
             {
-                layout << w;
-                first = false;
+                layout << gap;
             }
-            else
-            {
-                layout.append(w, gap);
-            }
+            first = false;
+
+            layout << w;
         }
 
         // Update the total size of the notification area.
@@ -164,8 +163,11 @@ DENG2_OBSERVES(Widget, ChildRemoval)
         pendingDismiss.clear();
     }
 
-    void widgetChildAdded(Widget &)
+    void widgetChildAdded(Widget &child)
     {
+        // Set a background for all notifications.
+        child.as<GuiWidget>().set(Background(self.style().colors().colorf("background")));
+
         updateChildLayout();
         self.show();
     }

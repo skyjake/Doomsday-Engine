@@ -440,6 +440,8 @@ void PopupWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
 {
     GuiWidget::glMakeGeometry(verts);
 
+    if(d->dir == ui::NoDirection) return;
+
     // Anchor triangle.
     DefaultVertexBuf::Builder tri;
     DefaultVertexBuf::Type v;
@@ -450,8 +452,6 @@ void PopupWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
     int marker = d->marker->valuei();
 
     Vector2i anchorPos(d->anchorX->valuei(), d->anchorY->valuei());
-
-    /// @todo Other directions are missing: this is just for the popup that opens upwards.
 
     if(d->dir == ui::Up)
     {

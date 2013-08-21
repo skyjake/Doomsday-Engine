@@ -19,6 +19,7 @@
 #include "ui/widgets/dialogwidget.h"
 #include "ui/widgets/guirootwidget.h"
 #include "ui/widgets/togglewidget.h"
+#include "ui/widgets/choicewidget.h"
 #include "ui/signalaction.h"
 #include "dd_main.h"
 
@@ -288,6 +289,9 @@ MenuWidget &DialogWidget::buttons()
 
 int DialogWidget::exec(GuiRootWidget &root)
 {
+    /// @todo Non-modal dialogs shouldn't be run with a subloop.
+    DENG2_ASSERT(modality() == Modal);
+
     // The widget is added to the root temporarily (as top child).
     DENG2_ASSERT(!hasRoot());
     root.add(this);
@@ -343,7 +347,9 @@ bool DialogWidget::handleEvent(Event const &event)
     {
         // The event should already have been handled by the children.
         if(event.isKeyDown() ||
-           (event.type() == Event::MouseButton && !hitTest(event.as<MouseEvent>().pos())))
+           (event.type() == Event::MouseButton &&
+            event.as<MouseEvent>().state() == MouseEvent::Pressed &&
+            !hitTest(event.as<MouseEvent>().pos())))
         {
             d->startBorderFlash();
         }
