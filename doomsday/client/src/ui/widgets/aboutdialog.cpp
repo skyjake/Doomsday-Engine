@@ -75,7 +75,7 @@ AboutDialog::AboutDialog() : DialogWidget("about")
     // Layout.
     RuleRectangle const &cont = area().contentRule();
     SequentialLayout layout(cont.left(), cont.top());
-    layout.setOverrideWidth(style().rules().rule("about.width"));
+    layout.setOverrideWidth(style().rules().rule("dialog.about.width"));
     layout << *logo << *title << *info;
 
     // Center the button.
