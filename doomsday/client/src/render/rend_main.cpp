@@ -2020,6 +2020,14 @@ static bool coveredOpenRange(HEdge &hedge, coord_t middleBottomZ, coord_t middle
         return wroteOpaqueMiddle;
     }
 
+    /// @todo fixme: This additional test should not be necessary. For the obove
+    /// test to fail and this to pass means that the geometry produced by the BSP
+    /// builder is not correct (see: eternall.wad MAP10; note mapping errors).
+    if(!hedge.twin().hasFace())
+    {
+        return wroteOpaqueMiddle;
+    }
+
     BspLeaf const *leaf     = hedge.face().mapElement()->as<BspLeaf>();
     BspLeaf const *backLeaf = hedge.twin().face().mapElement()->as<BspLeaf>();
 
