@@ -258,13 +258,18 @@ DialogWidget::DialogWidget(String const &name)
 {
     setOpeningDirection(ui::NoDirection);
 
+    Background bg = background();
     if(!App_GameLoaded()) // blurring is not yet compatible with game rendering
     {
-        Background bg = background();
+        /// @todo Should use the Style for this.
         bg.type = Background::BlurredWithBorderGlow;
         bg.solidFill = Vector4f(0, 0, 0, .65f);
-        set(bg);
     }
+    else
+    {
+        bg.solidFill = style().colors().colorf("dialog.background");
+    }
+    set(bg);
 }
 
 void DialogWidget::setModality(DialogWidget::Modality modality)
