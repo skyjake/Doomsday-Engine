@@ -43,6 +43,7 @@ public Font::RichFormat::IStyle
     Alignment lineAlign;
     Alignment imageAlign;
     ContentFit imageFit;
+    Vector2f overrideImageSize;
     float imageScale;
     Vector4f imageColor;
 
@@ -188,6 +189,10 @@ public Font::RichFormat::IStyle
 
     Vector2f imageSize() const
     {
+        if(overrideImageSize.x > 0 && overrideImageSize.y > 0)
+        {
+            return overrideImageSize;
+        }
         return image.isNull()? Vector2f() : image->size();
     }
 
@@ -485,6 +490,11 @@ void LabelWidget::setImageAlignment(Alignment const &imageAlign)
 void LabelWidget::setImageFit(ContentFit const &fit)
 {
     d->imageFit = fit;
+}
+
+void LabelWidget::setOverrideImageSize(Vector2f const &size)
+{
+    d->overrideImageSize = size;
 }
 
 void LabelWidget::setImageScale(float scaleFactor)

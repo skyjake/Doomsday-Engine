@@ -117,6 +117,12 @@ public:
 
     void setImageFit(ui::ContentFit const &fit);
 
+    /**
+     * The image's actual size will be overridden by this size.
+     * @param size  Image size.
+     */
+    void setOverrideImageSize(de::Vector2f const &size);
+
     void setImageScale(float scaleFactor);
 
     void setImageColor(de::Vector4f const &imageColor);
