@@ -370,6 +370,7 @@ DENG_HEADERS += \
     include/ui/widgets/listcontext.h \
     include/ui/widgets/logwidget.h \
     include/ui/widgets/menuwidget.h \
+    include/ui/widgets/messagedialog.h \
     include/ui/widgets/notificationwidget.h \
     include/ui/widgets/popupmenuwidget.h \
     include/ui/widgets/popupwidget.h \
@@ -387,6 +388,9 @@ DENG_HEADERS += \
     include/ui/windowsystem.h \
     include/ui/zonedebug.h \
     include/updater.h \
+    include/updater/downloaddialog.h \
+    include/updater/processcheckdialog.h \
+    include/updater/updateavailabledialog.h \
     include/updater/updatersettings.h \
     include/updater/updatersettingsdialog.h \
     include/uri.hh \
@@ -429,10 +433,7 @@ DENG_HEADERS += \
     include/world/surface.h \
     include/world/thinkers.h \
     include/world/vertex.h \
-    include/world/world.h \
-    src/updater/downloaddialog.h \
-    src/updater/processcheckdialog.h \
-    src/updater/updateavailabledialog.h
+    include/world/world.h
 
 INCLUDEPATH += \
     $$DENG_INCLUDE_DIR \
@@ -684,6 +685,7 @@ SOURCES += \
     src/ui/widgets/listcontext.cpp \
     src/ui/widgets/logwidget.cpp \
     src/ui/widgets/menuwidget.cpp \
+    src/ui/widgets/messagedialog.cpp \
     src/ui/widgets/notificationwidget.cpp \
     src/ui/widgets/popupmenuwidget.cpp \
     src/ui/widgets/popupwidget.cpp \
@@ -702,7 +704,6 @@ SOURCES += \
     src/updater/processcheckdialog.cpp \
     src/updater/updateavailabledialog.cpp \
     src/updater/updater.cpp \
-    src/updater/updaterdialog.cpp \
     src/updater/updatersettings.cpp \
     src/updater/updatersettingsdialog.cpp \
     src/uri.cpp \
