@@ -32,18 +32,10 @@
 #include <de/Log>
 #include <QUrl>
 #include <QDesktopServices>
-/*
-#include <QDesktopWidget>
-#include <QVBoxLayout>
-#include <QDialogButtonBox>
-#include <QCheckBox>
-#include <QPushButton>
-#include <QStackedLayout>
-#include <QFont>
-#include <QLabel>
-*/
 
 using namespace de;
+
+static TimeDelta const SHOW_ANIM_SPAN = 0.3;
 
 DENG2_PIMPL(UpdateAvailableDialog),
 DENG2_OBSERVES(ToggleWidget, Toggle)
@@ -51,14 +43,6 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
     ProgressWidget *checking;
     ToggleWidget *autoCheck;
     ButtonWidget *settings;
-    //QStackedLayout* stack;
-    //QWidget* checkPage;
-    //QWidget* resultPage;
-    //bool emptyResultPage;
-    //QVBoxLayout* resultLayout;
-    //QLabel* checking;
-    //QLabel* info;
-    //QCheckBox* neverCheck;
     VersionInfo latestVersion;
     String changeLog;
 
@@ -75,96 +59,73 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
     void initForChecking(void)
     {
         init();
-
-        checking->setOpacity(1);
-        self.area().setOpacity(0);
-
-        //updateResult(VersionInfo());
-
-        //stack->addWidget(checkPage);
-        //stack->addWidget(resultPage);
+        showProgress(true, 0);
     }
 
     void initForResult(VersionInfo const &latest)
     {
         init();
-        updateResult(latest);
+        updateResult(latest, 0);
+    }
 
-        //stack->addWidget(resultPage);
-        //stack->addWidget(checkPage);
+    void showProgress(bool show, TimeDelta span)
+    {
+        checking->setOpacity(show? 1 : 0, span);
+        self.area().setOpacity(show? 0 : 1, span);
+
+        if(show)
+        {
+            // Set up a cancel button.
+            self.buttons().items().clear();
+            self.buttons().items() << new DialogButtonItem(DialogWidget::Reject);
+        }
     }
 
     void init()
     {
-        ScrollAreaWidget &area = self.area();
-
         checking = new ProgressWidget;
         checking->setText(tr("Checking for Updates..."));
         checking->setAlignment(ui::AlignCenter, LabelWidget::AlignByCombination);
-        checking->setOpacity(0);
 
         // The checking indicator is overlaid on the normal content.
-        checking->rule().setRect(area.rule());
+        checking->rule().setRect(self.rule());
         self.add(checking);
 
-        /*
-#ifndef MACOSX
-        self.setWindowTitle(tr(DOOMSDAY_NICENAME" %1").arg(VersionInfo().asText()));
-#endif
+        settings = new ButtonWidget;
+        self.add(settings);
 
-        emptyResultPage = true;
-        stack = new QStackedLayout(&self);
-        checkPage = new QWidget(&self);
-        resultPage = new QWidget(&self);
+        /// @todo The dialog buttons should support a opposite-aligned button.
+        settings->setSizePolicy(ui::Filled, ui::Filled);
+        settings->setImage(self.style().images().image("gear"));
+        settings->rule()
+                .setInput(Rule::Left,   self.area().contentRule().left())
+                .setInput(Rule::Bottom, self.buttons().contentRule().bottom())
+                .setInput(Rule::Height, self.buttons().contentRule().height())
+                .setInput(Rule::Width,  settings->rule().height());
+        settings->setAction(new SignalAction(thisPublic, SLOT(editSettings())));
 
-#ifdef MACOSX
-        // Adjust spacing around all stacked widgets.
-        self.setContentsMargins(9, 9, 9, 9);
-#endif
+        autoCheck = new ToggleWidget;
+        self.area().add(autoCheck);
+        autoCheck->setAlignment(ui::AlignLeft);
+        autoCheck->setText(tr("Check for updates automatically"));
+        autoCheck->audienceForToggle += this;
 
-        // Create the Check page.
-        QVBoxLayout* checkLayout = new QVBoxLayout;
-        checkPage->setLayout(checkLayout);
-
-        checking = new QLabel(tr("Checking for available updates..."));
-        checkLayout->addWidget(checking, 1, Qt::AlignCenter);
-
-        QPushButton* stop = new QPushButton(tr("Cancel"));
-        QObject::connect(stop, SIGNAL(clicked()), &self, SLOT(reject()));
-        checkLayout->addWidget(stop, 0, Qt::AlignHCenter);
-        stop->setAutoDefault(false);
-        stop->setDefault(false);
-
-        self.setLayout(stack);*/
+        // Include the toggle in the layout.
+        self.updateLayout();
     }
 
-    void updateResult(VersionInfo const &latest)
+    void updateResult(VersionInfo const &latest, TimeDelta showSpan)
     {
+        showProgress(false, showSpan);
+
         latestVersion = latest;
 
-        /*
-        // Get rid of the existing page.
-        if(!emptyResultPage)
-        {
-            stack->removeWidget(resultPage);
-            delete resultPage;
-            resultPage = new QWidget(&self);
-            stack->addWidget(resultPage);
-        }
-        emptyResultPage = false;
-
-        resultLayout = new QVBoxLayout;
-        resultPage->setLayout(resultLayout);
-
-        info = new QLabel;
-        info->setTextFormat(Qt::RichText);
-*/
         VersionInfo currentVersion;
 
         String channel     = (UpdaterSettings().channel() == UpdaterSettings::Stable? "stable" : "unstable");
         String builtInType = (String(DOOMSDAY_RELEASE_TYPE) == "Stable"? "stable" : "unstable");
-        bool askUpgrade        = false;
-        bool askDowngrade      = false;
+        bool askUpgrade    = false;
+        bool askDowngrade  = false;
 
         if(latestVersion > currentVersion)
         {
@@ -193,90 +154,35 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
                                    .arg(_E(b) + channel + _E(.)));
         }
 
-        autoCheck = new ToggleWidget;
-        autoCheck->setAlignment(ui::AlignLeft);
-        autoCheck->setText(tr("Check for updates automatically"));
         autoCheck->setInactive(UpdaterSettings().onlyCheckManually());
-        autoCheck->audienceForToggle += this;
-        self.area().add(autoCheck);
-        /*
-        neverCheck = new QCheckBox(tr("N&ever check for updates automatically"));
-        neverCheck->setChecked(UpdaterSettings().onlyCheckManually());
-        QObject::connect(neverCheck, SIGNAL(toggled(bool)), &self, SLOT(neverCheckToggled(bool)));
 
-        QDialogButtonBox* bbox = new QDialogButtonBox;
-*/
+        self.buttons().items().clear();
+
         if(askDowngrade)
         {
             self.buttons().items()
                     << new DialogButtonItem(DialogWidget::Accept, tr("Downgrade to Older"))
                     << new DialogButtonItem(DialogWidget::Reject | DialogWidget::Default, tr("Close"));
-            /*
-            QPushButton* yes = bbox->addButton(tr("Downgrade to &Older"), QDialogButtonBox::YesRole);
-            QPushButton* no = bbox->addButton(tr("&Close"), QDialogButtonBox::RejectRole);
-            QObject::connect(yes, SIGNAL(clicked()), &self, SLOT(accept()));
-            QObject::connect(no, SIGNAL(clicked()), &self, SLOT(reject()));
-            no->setDefault(true);
-            */
         }
         else if(askUpgrade)
         {
             self.buttons().items()
                     << new DialogButtonItem(DialogWidget::Accept | DialogWidget::Default, tr("Upgrade"))
                     << new DialogButtonItem(DialogWidget::Reject, tr("Not Now"));
-            /*
-            QPushButton* yes = bbox->addButton(tr("&Upgrade"), QDialogButtonBox::YesRole);
-            QPushButton* no = bbox->addButton(tr("&Not Now"), QDialogButtonBox::NoRole);
-            QObject::connect(yes, SIGNAL(clicked()), &self, SLOT(accept()));
-            QObject::connect(no, SIGNAL(clicked()), &self, SLOT(reject()));
-            yes->setDefault(true);*/
         }
         else
         {
             self.buttons().items()
                     << new DialogButtonItem(DialogWidget::Accept, tr("Reinstall"))
                     << new DialogButtonItem(DialogWidget::Reject | DialogWidget::Default, tr("Close"));
-            /*
-            QPushButton* reinst = bbox->addButton(tr("&Reinstall"), QDialogButtonBox::YesRole);
-            QPushButton* ok = bbox->addButton(tr("&Close"), QDialogButtonBox::RejectRole);
-            QObject::connect(reinst, SIGNAL(clicked()), &self, SLOT(accept()));
-            QObject::connect(ok, SIGNAL(clicked()), &self, SLOT(reject()));
-            reinst->setAutoDefault(false);
-            ok->setDefault(true);*/
         }
-
-        /// @todo The dialog buttons should support a opposite-aligned button.
-        settings = new ButtonWidget;
-        settings->setSizePolicy(ui::Filled, ui::Filled);
-        settings->setImage(self.style().images().image("gear"));
-        settings->rule()
-                .setInput(Rule::Left,   self.area().contentRule().left())
-                .setInput(Rule::Bottom, self.buttons().contentRule().bottom())
-                .setInput(Rule::Height, self.buttons().contentRule().height())
-                .setInput(Rule::Width,  settings->rule().height());
-        self.add(settings);
-        settings->setAction(new SignalAction(thisPublic, SLOT(editSettings())));
-
-        /*
-        QPushButton* cfg = bbox->addButton(tr("&Settings..."), QDialogButtonBox::ActionRole);
-        QObject::connect(cfg, SIGNAL(clicked()), &self, SLOT(editSettings()));
-        cfg->setAutoDefault(false);*/
 
         if(askUpgrade)
         {
-            /*
-            QPushButton* whatsNew = bbox->addButton(tr("&What's New?"), QDialogButtonBox::HelpRole);
-            QObject::connect(whatsNew, SIGNAL(clicked()), &self, SLOT(showWhatsNew()));
-            whatsNew->setAutoDefault(false);
-            */
+            self.buttons().items()
+                    << new DialogButtonItem(DialogWidget::Action, tr("What's New?"),
+                                            new SignalAction(thisPublic, SLOT(showWhatsNew())));
         }
-
-        //resultLayout->addWidget(info);
-        //resultLayout->addWidget(neverCheck);
-        //resultLayout->addWidget(bbox);
-
-        // Include the toggle in the layout.
-        self.updateLayout();
     }
 
     void toggleStateChanged(ToggleWidget &)
@@ -296,14 +202,12 @@ UpdateAvailableDialog::UpdateAvailableDialog(VersionInfo const &latestVersion, S
     : MessageDialog("updateavailable"), d(new Instance(this, latestVersion))
 {
     d->changeLog = changeLogUri;
-
-    //connect(DENG2_GUI_APP, SIGNAL(displayModeChanged()), this, SLOT(recenterDialog()));
 }
 
 void UpdateAvailableDialog::showResult(VersionInfo const &latestVersion, String changeLogUri)
 {
     d->changeLog = changeLogUri;
-    d->updateResult(latestVersion);
+    d->updateResult(latestVersion, SHOW_ANIM_SPAN);
 }
 
 void UpdateAvailableDialog::showWhatsNew()
@@ -319,17 +223,7 @@ void UpdateAvailableDialog::editSettings()
     if(st->exec(root()))
     {
         d->autoCheck->setInactive(UpdaterSettings().onlyCheckManually());
+        d->showProgress(true, SHOW_ANIM_SPAN);
         emit checkAgain();
     }
-    /*
-    UpdaterSettingsDialog st(this);
-    if(st.exec())
-    {
-        d->neverCheck->setChecked(UpdaterSettings().onlyCheckManually());
-
-        d->stack->setCurrentWidget(d->checkPage);
-
-        // Rerun the check.
-        emit checkAgain();
-    }*/
 }

@@ -153,7 +153,7 @@ DENG2_OBSERVES(App, StartupComplete)
     DownloadDialog *download;
     UpdaterStatusWidget *status;
     bool alwaysShowNotification;
-    //UpdateAvailableDialog *availableDlg;
+    UpdateAvailableDialog *availableDlg; ///< If currently open (not owned).
     //UpdaterSettingsDialog* settingsDlg;
     //bool backToFullscreen;
     bool savingSuggested;
@@ -168,7 +168,7 @@ DENG2_OBSERVES(App, StartupComplete)
           network(0),
           download(0),
           status(0),
-          //availableDlg(0),
+          availableDlg(0),
           //settingsDlg(0),
           //backToFullscreen(false),
           savingSuggested(false)
@@ -348,25 +348,28 @@ DENG2_OBSERVES(App, StartupComplete)
         LOG_VERBOSE(" - package: " _E(>) _E(i) "%s") << latestPackageUri;
         LOG_VERBOSE(" - change log: " _E(>) _E(i) "%s") << latestLogUri;
 
-        /*
         if(availableDlg)
         {
             // This was a recheck.
             availableDlg->showResult(latestVersion, latestLogUri);
             return;
         }
-        */
 
         // Is this newer than what we're running?
         if(latestVersion > currentVersion || alwaysShowNotification)
         {
             LOG_INFO("Found an update: " _E(b)) << latestVersion.asText();
 
-            UpdateAvailableDialog *dlg = new UpdateAvailableDialog(latestVersion, latestLogUri);
-            dlg->setDeleteAfterDismissed(true);
-            dlg->exec(ClientWindow::main().root());
-            //availableDlg = &dlg;
-            //execAvailableDialog(wasFull);
+            availableDlg = new UpdateAvailableDialog(latestVersion, latestLogUri);
+            execAvailableDialog();
+            /*
+            {
+                LOG_MSG("Download and install.");
+                //download = new DownloadDialog(latestPackageUri, latestPackageUri2);
+                //QObject::connect(download, SIGNAL(finished(int)), thisPublic, SLOT(downloadCompleted(int)));
+                //download->show();
+            }
+            availableDlg = 0;*/
         }
         else
         {
@@ -375,27 +378,24 @@ DENG2_OBSERVES(App, StartupComplete)
         }
     }
 
-#if 0
-    void execAvailableDialog(bool wasFull)
+    void execAvailableDialog()
     {
+        DENG2_ASSERT(availableDlg != 0);
+
+        availableDlg->setDeleteAfterDismissed(true);
         QObject::connect(availableDlg, SIGNAL(checkAgain()), thisPublic, SLOT(recheck()));
 
-        if(availableDlg->exec())
+        if(availableDlg->exec(ClientWindow::main().root()))
         {
-            availableDlg = 0;
+            //availableDlg = 0;
 
             LOG_MSG("Download and install.");
-            download = new DownloadDialog(latestPackageUri, latestPackageUri2);
-            QObject::connect(download, SIGNAL(finished(int)), thisPublic, SLOT(downloadCompleted(int)));
-            download->show();
+            //download = new DownloadDialog(latestPackageUri, latestPackageUri2);
+            //QObject::connect(download, SIGNAL(finished(int)), thisPublic, SLOT(downloadCompleted(int)));
+            //download->show();
         }
-        else
-        {
-            availableDlg = 0;
-            switchBackToFullscreen(wasFull);
-        }
+        availableDlg = 0;
     }
-#endif
 
     /**
      * Starts the installation process using the provided distribution package.
@@ -563,17 +563,6 @@ void Updater::downloadCompleted(int result)
     */
 }
 
-void Updater::settingsDialogClosed(int /*result*/)
-{
-    /*
-    if(d->backToFullscreen)
-    {
-        d->backToFullscreen = false;
-        switchBackToFullscreen(true);
-    }
-    */
-}
-
 void Updater::recheck()
 {
     d->queryLatestVersion(d->alwaysShowNotification);
@@ -599,16 +588,9 @@ void Updater::checkNowShowingProgress()
     // Not if there is an ongoing download.
     if(d->download) return;
 
-    /*
-
-    d->availableDlg = new UpdateAvailableDialog(&ClientWindow::main());
+    d->availableDlg = new UpdateAvailableDialog;
     d->queryLatestVersion(true);
-
-    d->execAvailableDialog(false);
-
-    delete d->availableDlg;
-    d->availableDlg = 0;
-    */
+    d->execAvailableDialog();
 }
 
 /*

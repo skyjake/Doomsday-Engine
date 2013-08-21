@@ -18,7 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#include "processcheckdialog.h"
+#include "updater/processcheckdialog.h"
 #include <QMessageBox>
 #include <QProcess>
 #include <QDebug>

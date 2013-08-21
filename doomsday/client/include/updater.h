@@ -66,7 +66,6 @@ public:
 public slots:
     void gotReply(QNetworkReply *);
     void downloadCompleted(int result);
-    void settingsDialogClosed(int result);
 
     void recheck();
 

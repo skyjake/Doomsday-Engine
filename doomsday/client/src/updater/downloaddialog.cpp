@@ -21,7 +21,7 @@
 
 #include <QFile>
 #include "de_platform.h"
-#include "downloaddialog.h"
+#include "updater/downloaddialog.h"
 #include "updater/updatersettings.h"
 #include "ui/clientwindow.h"
 #include "dd_version.h"
