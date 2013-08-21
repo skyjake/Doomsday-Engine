@@ -87,7 +87,9 @@ void Sector::Cluster::remapVisPlanes()
             if(Line::Side::Segment *seg = hedge->mapElement()->as<Line::Side::Segment>())
             {
                 Line::Side &lineSide = seg->lineSide();
-                if(!lineSide.line().isSelfReferencing())
+                if(!lineSide.line().isSelfReferencing()
+                   // Self-referencing lines in the void have no back geometry.
+                   || !hedge->twin().hasFace())
                 {
                     permaLink = false;
                 }
