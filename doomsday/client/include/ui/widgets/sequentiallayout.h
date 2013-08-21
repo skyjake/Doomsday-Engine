@@ -65,6 +65,7 @@ public:
     void setOverrideHeight(de::Rule const &height);
 
     SequentialLayout &operator << (GuiWidget &widget) { return append(widget); }
+    SequentialLayout &operator << (de::Rule const &emptySpace) { return append(emptySpace); }
 
     SequentialLayout &append(GuiWidget &widget);
     SequentialLayout &append(GuiWidget &widget, de::Rule const &spaceBefore);
