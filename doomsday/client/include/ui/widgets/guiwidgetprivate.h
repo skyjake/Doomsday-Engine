@@ -10,9 +10,6 @@
  * as the base class for private implementations if GL resources are being
  * used (i.e., glInit() and glDeinit() are being called).
  *
- * The destructor of classes derived from GuiWidgetPrivate must make the
- * following call: <pre>self.deserialize()</pre>
- *
  * Use DENG_GUI_PIMPL() instead of the DENG2_PIMPL() macro.
  */
 template <typename PublicType>
@@ -36,18 +33,18 @@ public:
          *
          * @see GuiWidget::destroy()
          */
-        DENG2_ASSERT(!self.isInitialized());
+        DENG2_ASSERT(!Base::self.isInitialized());
     }
 
     bool hasRoot() const
     {
-        return self.hasRoot();
+        return Base::self.hasRoot();
     }
 
     GuiRootWidget &root() const
     {
         DENG2_ASSERT(hasRoot());
-        return self.root();
+        return Base::self.root();
     }
 
     de::AtlasTexture &atlas() const

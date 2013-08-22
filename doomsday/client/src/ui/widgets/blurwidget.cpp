@@ -24,8 +24,3 @@ BlurWidget::BlurWidget(String const &name) : GuiWidget(name)
 {
     set(Background(Vector4f(1, 1, 1, 0), Background::Blurred));
 }
-
-BlurWidget::~BlurWidget()
-{
-    deinitialize();
-}
