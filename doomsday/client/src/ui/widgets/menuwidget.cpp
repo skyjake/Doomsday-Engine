@@ -146,7 +146,7 @@ public ContextWidgetOrganizer::IWidgetFactory
         needLayout = true;
     }
 
-    void contextItemBeingRemoved(Context::Pos id, Item const &item)
+    void contextItemRemoved(Context::Pos id, Item &)
     {
         // Make sure we determine the layout after this item is gone.
         needLayout = true;

@@ -59,12 +59,13 @@ Context::Pos ListContext::findData(QVariant const &data) const
     return InvalidPos;
 }
 
-void ListContext::clear()
+Context &ListContext::clear()
 {
     while(!isEmpty())
     {
         remove(size() - 1);
     }
+    return *this;
 }
 
 Context &ListContext::insert(Pos pos, Item *item)
@@ -90,13 +91,15 @@ Item *ListContext::take(Context::Pos pos)
 {
     DENG2_ASSERT(pos < size());
 
+    Item *taken = _items.takeAt(pos);
+
     // Notify.
     DENG2_FOR_AUDIENCE(Removal, i)
     {
-        i->contextItemBeingRemoved(pos, at(pos));
+        i->contextItemRemoved(pos, *taken);
     }
 
-    return _items.takeAt(pos);
+    return taken;
 }
 
 struct ListItemSorter {

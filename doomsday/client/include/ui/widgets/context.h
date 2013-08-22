@@ -52,16 +52,17 @@ public:
     DENG2_DEFINE_AUDIENCE(Addition, void contextItemAdded(Pos id, Item const &item))
 
     /**
-     * Notified when an item is removed from the context.
+     * Notified when an item has been removed from the context. When this is
+     * called @a item is no longer in the context and can be modified at will.
      */
-    DENG2_DEFINE_AUDIENCE(Removal, void contextItemBeingRemoved(Pos id, Item const &item))
+    DENG2_DEFINE_AUDIENCE(Removal, void contextItemRemoved(Pos oldId, Item &item))
 
     DENG2_DEFINE_AUDIENCE(OrderChange, void contextItemOrderChanged())
 
 public:
     virtual ~Context() {}
 
-    virtual void clear() = 0;
+    virtual Context &clear() = 0;
 
     inline bool isEmpty() const { return !size(); }
 
@@ -74,6 +75,8 @@ public:
      *
      * @param pos   Position of the item.
      * @param item  Item to insert. Context gets ownership.
+     *
+     * @return Reference to this Context.
      */
     virtual Context &insert(Pos pos, Item *item) = 0;
 

@@ -121,7 +121,7 @@ DENG2_OBSERVES(ContextWidgetOrganizer, WidgetCreation)
         }
     }
 
-    void contextItemBeingRemoved(Context::Pos id, ui::Item const &)
+    void contextItemRemoved(Context::Pos id, ui::Item &)
     {
         if(id <= selected && selected > 0)
         {

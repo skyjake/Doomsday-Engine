@@ -40,7 +40,7 @@ public:
     Pos find(Item const &item) const;
     Pos findData(QVariant const &data) const;
 
-    void clear();
+    Context &clear();
     Context &insert(Pos pos, Item *item);
     void remove(Pos pos);
     Item *take(Pos pos);

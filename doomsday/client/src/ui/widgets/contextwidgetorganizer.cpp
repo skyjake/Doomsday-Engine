@@ -164,7 +164,7 @@ DENG2_OBSERVES(ui::Item,    Change     )
         addItemWidget(pos);
     }
 
-    void contextItemBeingRemoved(ui::Context::Pos, ui::Item const &item)
+    void contextItemRemoved(ui::Context::Pos, ui::Item &item)
     {
         Mapping::const_iterator found = mapping.constFind(&item);
         if(found != mapping.constEnd())
@@ -184,6 +184,7 @@ DENG2_OBSERVES(ui::Item,    Change     )
         }
         for(ui::Context::Pos i = 0; i < context->size(); ++i)
         {
+            DENG2_ASSERT(mapping.contains(&context->at(i)));
             container->add(mapping[&context->at(i)]);
         }
     }
