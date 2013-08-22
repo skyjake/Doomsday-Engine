@@ -56,11 +56,6 @@ DENG_GUI_PIMPL(BusyWidget)
         self.add(progress);
     }
 
-    ~Instance()
-    {
-        self.deinitialize();
-    }
-
     void glInit()
     {
         VertexBuf *buf = new VertexBuf;

@@ -120,11 +120,6 @@ public ContextWidgetOrganizer::IWidgetFactory
         setContext(&defaultItems);
     }
 
-    ~Instance()
-    {
-        self.deinitialize();
-    }
-
     void setContext(Context const *ctx)
     {
         if(items)

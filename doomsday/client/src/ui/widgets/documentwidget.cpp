@@ -109,8 +109,6 @@ public Font::RichFormat::IStyle
     {
         // Wait until background tasks finish.
         tasks.waitForDone();
-
-        self.deinitialize();
     }
 
     bool isBeingWrapped() const

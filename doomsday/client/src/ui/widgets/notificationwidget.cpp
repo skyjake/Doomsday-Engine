@@ -66,7 +66,6 @@ DENG2_OBSERVES(Widget, ChildRemoval)
     ~Instance()
     {
         releaseRef(shift);
-        self.deinitialize();
     }
 
     void updateStyle()

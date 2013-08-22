@@ -371,7 +371,6 @@ public Font::RichFormat::IStyle
     ~Instance()
     {
         LogBuffer::appBuffer().removeSink(sink);
-        self.deinitialize();
     }
 
     void clear()

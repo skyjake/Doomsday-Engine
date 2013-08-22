@@ -90,8 +90,6 @@ public IGameChangeObserver
     {
         audienceForGameChange -= this;
         releaseRef(vertShift);
-
-        self.deinitialize();
     }
 
     void glInit()

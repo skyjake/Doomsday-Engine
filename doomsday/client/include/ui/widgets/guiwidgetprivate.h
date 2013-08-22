@@ -33,6 +33,8 @@ public:
          * called before the private class instance is destroyed. At least
          * classes that have GuiWidget as the immediate parent class need to
          * call deinitialize() in their destructors.
+         *
+         * @see GuiWidget::destroy()
          */
         DENG2_ASSERT(!self.isInitialized());
     }

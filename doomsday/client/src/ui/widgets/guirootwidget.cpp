@@ -55,7 +55,7 @@ DENG2_PIMPL(GuiRootWidget)
         // Tell all widgets to release their resource allocations. The base
         // class destructor will destroy all widgets, but this class governs
         // shared GL resources, so we'll ask the widgets to do this now.
-        self.notifyTree(NotifyArgs(&Widget::deinitialize));
+        self.notifyTree(&Widget::deinitialize);
     }
 
     void initAtlas()

@@ -75,11 +75,6 @@ DENG2_OBSERVES(ContextWidgetOrganizer, WidgetCreation)
         updateStyle();
     }
 
-    ~Instance()
-    {
-        self.deinitialize();
-    }
-
     void updateStyle()
     {
         // Popup background color.

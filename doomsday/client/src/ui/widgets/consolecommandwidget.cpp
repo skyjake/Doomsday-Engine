@@ -70,7 +70,6 @@ public IGameChangeObserver
 
     ~Instance()
     {
-        self.deinitialize();
         App::app().audienceForStartupComplete -= this;
         audienceForGameChange -= this;
     }

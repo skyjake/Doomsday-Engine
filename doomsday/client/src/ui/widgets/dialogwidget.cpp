@@ -134,11 +134,6 @@ DENG2_OBSERVES(ui::Context, Removal)
         self.setContent(container);
     }
 
-    ~Instance()
-    {
-        self.deinitialize();
-    }
-
     void updateContentHeight()
     {
         // The container's height is limited by the height of the view. Normally

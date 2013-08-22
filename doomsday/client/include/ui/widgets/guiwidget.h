@@ -69,9 +69,8 @@ class BlurWidget;
  *
  * QObject is a base class for the signals and slots capabilities.
  *
- * @note The destructor of a derived class is required to first call
- * GuiWidget::deinitialize(). This will ensure all the GL resources of the
- * involved widget classes are released as appropriate.
+ * @note Always use GuiWidget::destroy() to delete any GUI widget. It will
+ * ensure that the widget is properly deinitialized before destruction.
  *
  * @ingroup gui
  */
@@ -125,6 +124,13 @@ public:
 
 public:
     GuiWidget(de::String const &name = "");
+
+    /**
+     * Deletes a widget. The widget is first deinitialized.
+     *
+     * @param widget  Widget to destroy.
+     */
+    static void destroy(GuiWidget *widget);
 
     GuiRootWidget &root();
     GuiRootWidget &root() const;

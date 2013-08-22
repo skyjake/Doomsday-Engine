@@ -94,7 +94,6 @@ public Font::RichFormat::IStyle
 
     ~Instance()
     {
-        self.deinitialize();
         releaseRef(width);
         releaseRef(height);
     }

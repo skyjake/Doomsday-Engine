@@ -82,7 +82,6 @@ DENG2_PIMPL(ScrollAreaWidget), public Lockable
         releaseRef(y);
         releaseRef(maxX);
         releaseRef(maxY);
-        self.deinitialize();
     }
 
     void updateStyle()

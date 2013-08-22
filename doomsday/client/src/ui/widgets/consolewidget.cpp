@@ -81,7 +81,6 @@ DENG2_PIMPL(ConsoleWidget)
         releaseRef(horizShift);
         releaseRef(width);
         releaseRef(height);
-        self.deinitialize();
     }
 
     void expandLog(int delta, bool useOffsetAnimation)

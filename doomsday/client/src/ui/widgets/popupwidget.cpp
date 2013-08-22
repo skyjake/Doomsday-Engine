@@ -75,8 +75,6 @@ DENG_GUI_PIMPL(PopupWidget)
 
     ~Instance()
     {
-        self.deinitialize();
-
         releaseRef(openingRule);
         releaseRef(anchorX);
         releaseRef(anchorY);

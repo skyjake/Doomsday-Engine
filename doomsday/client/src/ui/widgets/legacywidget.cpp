@@ -59,11 +59,6 @@ DENG2_PIMPL(LegacyWidget)
 {
     Instance(Public *i) : Base(i) {}
 
-    ~Instance()
-    {
-        self.deinitialize();
-    }
-
     void draw()
     {
         bool cannotDraw = (self.isDisabled() || !GL_IsFullyInited());

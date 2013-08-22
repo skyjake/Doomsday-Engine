@@ -53,11 +53,6 @@ DENG_GUI_PIMPL(ProgressWidget), public Lockable
         updateStyle();
     }
 
-    ~Instance()
-    {
-        self.deinitialize();
-    }
-
     void updateStyle()
     {
         self.setImageColor(self.style().colors().colorf(colorId) * Vector4f(1, 1, 1, .5f));

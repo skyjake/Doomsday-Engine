@@ -130,7 +130,7 @@ DENG2_OBSERVES(ui::Item,    Change     )
     void deleteWidget(GuiWidget *w)
     {
         w->audienceForDeletion -= this;
-        delete w;
+        GuiWidget::destroy(w);
     }
 
     void clearWidgets()

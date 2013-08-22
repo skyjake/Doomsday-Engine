@@ -78,7 +78,6 @@ DENG2_OBSERVES(Atlas, Reposition)
 
     ~Instance()
     {
-        self.deinitialize();
         releaseRef(height);
     }
 

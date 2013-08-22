@@ -92,8 +92,9 @@ DENG2_PIMPL(GuiWidget)
 
     ~Instance()
     {        
-        // Get rid of all child widgets.
-        self.clearTree();
+        // The base class will delete all children, but we need to deinitialize
+        // them first.
+        self.notifyTree(&Widget::deinitialize);
 
         deinitBlur();
 
@@ -102,7 +103,10 @@ DENG2_PIMPL(GuiWidget)
          * are not leaked. Derived classes are responsible for deinitializing
          * first before beginning destruction.
          */
+#ifdef DENG2_DEBUG
+        if(inited) qDebug() << "GuiWidget" << &self << self.name() << "is still inited!";
         DENG2_ASSERT(!inited);
+#endif
     }
 
 #ifdef DENG2_DEBUG
@@ -241,6 +245,12 @@ GuiWidget::GuiWidget(String const &name) : Widget(name), d(new Instance(this))
     d->rule.setDebugName(name);
 }
 
+void GuiWidget::destroy(GuiWidget *widget)
+{
+    widget->deinitialize();
+    delete widget;
+}
+
 GuiRootWidget &GuiWidget::root()
 {
     return static_cast<GuiRootWidget &>(Widget::root());
@@ -361,7 +371,7 @@ Rectanglef GuiWidget::normalizedContentRect() const
 
 static void deleteGuiWidget(void *ptr)
 {
-    delete reinterpret_cast<GuiWidget *>(ptr);
+    GuiWidget::destroy(reinterpret_cast<GuiWidget *>(ptr));
 }
 
 void GuiWidget::deleteLater()

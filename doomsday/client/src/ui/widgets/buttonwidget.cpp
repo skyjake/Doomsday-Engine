@@ -42,11 +42,6 @@ DENG2_OBSERVES(Action, Triggered)
         setDefaultBackground();
     }
 
-    ~Instance()
-    {
-        self.deinitialize();
-    }
-
     void setState(State st)
     {
         if(state == st) return;
