@@ -83,7 +83,7 @@ public ContextWidgetOrganizer::IWidgetFactory
             _widget->open();
         }
 
-        SubmenuAction *duplicate() const
+        Action *duplicate() const
         {
             DENG2_ASSERT(false); // not needed
             return 0;
@@ -118,6 +118,11 @@ public ContextWidgetOrganizer::IWidgetFactory
 
         // The default context is empty.        
         setContext(&defaultItems);
+    }
+
+    ~Instance()
+    {
+        self.deinitialize();
     }
 
     void setContext(Context const *ctx)

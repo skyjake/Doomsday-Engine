@@ -30,7 +30,7 @@
 
 using namespace de;
 
-DENG2_PIMPL(ConsoleCommandWidget),
+DENG_GUI_PIMPL(ConsoleCommandWidget),
 DENG2_OBSERVES(App, StartupComplete),
 public IGameChangeObserver
 {
@@ -70,6 +70,7 @@ public IGameChangeObserver
 
     ~Instance()
     {
+        self.deinitialize();
         App::app().audienceForStartupComplete -= this;
         audienceForGameChange -= this;
     }

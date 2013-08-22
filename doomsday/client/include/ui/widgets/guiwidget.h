@@ -26,6 +26,7 @@
 
 #include "../uidefs.h"
 #include "ui/style.h"
+#include "guiwidgetprivate.h"
 
 class GuiRootWidget;
 class BlurWidget;
@@ -67,6 +68,10 @@ class BlurWidget;
  *   click (press then release inside or outside).
  *
  * QObject is a base class for the signals and slots capabilities.
+ *
+ * @note The destructor of a derived class is required to first call
+ * GuiWidget::deinitialize(). This will ensure all the GL resources of the
+ * involved widget classes are released as appropriate.
  *
  * @ingroup gui
  */
@@ -241,6 +246,8 @@ public:
 
     bool geometryRequested() const;
 
+    bool isInitialized() const;
+
 protected:
     /**
      * Called by GuiWidget::update() the first time an update is being carried
@@ -252,10 +259,11 @@ protected:
     virtual void glInit();
 
     /**
-     * Called by GuiWidget before the widget is destroyed. This is the
-     * appropriate place for the widget to release its GL resources. If one
-     * waits until the widget's destructor to do so, it may already have lost
-     * access to some required information (such as the root widget).
+     * Called from deinitialize(). Deinitialization must occur before the
+     * widget is destroyed. This is the appropriate place for the widget to
+     * release its GL resources. If one waits until the widget's destructor to
+     * do so, it may already have lost access to some required information
+     * (such as the root widget, or derived classes' private instances).
      */
     virtual void glDeinit();
 

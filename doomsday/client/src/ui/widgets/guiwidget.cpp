@@ -92,8 +92,17 @@ DENG2_PIMPL(GuiWidget)
 
     ~Instance()
     {        
-        // Deinitialize now if it hasn't been done already.
-        self.deinitialize();
+        // Get rid of all child widgets.
+        self.clearTree();
+
+        deinitBlur();
+
+        /*
+         * Deinitialization must occur before destruction so that GL resources
+         * are not leaked. Derived classes are responsible for deinitializing
+         * first before beginning destruction.
+         */
+        DENG2_ASSERT(!inited);
     }
 
 #ifdef DENG2_DEBUG
@@ -580,6 +589,11 @@ void GuiWidget::requestGeometry(bool yes)
 bool GuiWidget::geometryRequested() const
 {
     return d->needGeometry;
+}
+
+bool GuiWidget::isInitialized() const
+{
+    return d->inited;
 }
 
 void GuiWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)

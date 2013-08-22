@@ -22,7 +22,6 @@
  */
 
 #include "ui/widgets/logwidget.h"
-#include "ui/widgets/guirootwidget.h"
 #include "ui/widgets/fontlinewrapping.h"
 #include "ui/widgets/gltextcomposer.h"
 #include "ui/widgets/styledlogsinkformatter.h"
@@ -45,7 +44,7 @@
 using namespace de;
 using namespace ui;
 
-DENG2_PIMPL(LogWidget),
+DENG_GUI_PIMPL(LogWidget),
 DENG2_OBSERVES(Atlas, Reposition),
 DENG2_OBSERVES(Atlas, OutOfSpace),
 public Font::RichFormat::IStyle
@@ -372,6 +371,7 @@ public Font::RichFormat::IStyle
     ~Instance()
     {
         LogBuffer::appBuffer().removeSink(sink);
+        self.deinitialize();
     }
 
     void clear()
@@ -463,13 +463,13 @@ public Font::RichFormat::IStyle
         uColor = Vector4f(1, 1, 1, 1);
 
         background.addBuffer(bgBuf = new VertexBuf);
-        self.root().shaders().build(background.program(), "generic.textured.color")
+        shaders().build(background.program(), "generic.textured.color")
                 << uBgMvpMatrix
-                << self.root().uAtlas();
+                << uAtlas();
 
         // Vertex buffer for the log entries.
         contents.addBuffer(buf = new VertexBuf);
-        self.root().shaders().build(contents.program(), "generic.textured.color_ucolor")
+        shaders().build(contents.program(), "generic.textured.color_ucolor")
                 << uMvpMatrix
                 << uShadowColor
                 << uTex;
@@ -647,7 +647,7 @@ public Font::RichFormat::IStyle
 
     void updateProjection()
     {
-        projMatrix = self.root().projMatrix2D();
+        projMatrix = root().projMatrix2D();
 
         uBgMvpMatrix = projMatrix;
     }

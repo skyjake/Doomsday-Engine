@@ -24,7 +24,7 @@
 
 using namespace de;
 
-DENG2_PIMPL(ButtonWidget),
+DENG_GUI_PIMPL(ButtonWidget),
 DENG2_OBSERVES(Action, Triggered)
 {
     State state;
@@ -40,6 +40,11 @@ DENG2_OBSERVES(Action, Triggered)
           animating(false)
     {
         setDefaultBackground();
+    }
+
+    ~Instance()
+    {
+        self.deinitialize();
     }
 
     void setState(State st)

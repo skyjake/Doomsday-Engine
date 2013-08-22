@@ -81,14 +81,7 @@ DENG2_PIMPL(ConsoleWidget)
         releaseRef(horizShift);
         releaseRef(width);
         releaseRef(height);
-    }
-
-    void glInit()
-    {
-    }
-
-    void glDeinit()
-    {
+        self.deinitialize();
     }
 
     void expandLog(int delta, bool useOffsetAnimation)
@@ -290,17 +283,6 @@ void ConsoleWidget::update()
         // can enable PageUp/Dn keys for the log.
         d->log->enablePageKeys(true);
     }
-}
-
-void ConsoleWidget::glInit()
-{
-    LOG_AS("ConsoleWidget");
-    d->glInit();
-}
-
-void ConsoleWidget::glDeinit()
-{
-    d->glDeinit();
 }
 
 bool ConsoleWidget::handleEvent(Event const &event)

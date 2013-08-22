@@ -17,7 +17,6 @@
  */
 
 #include "ui/widgets/documentwidget.h"
-#include "ui/widgets/guirootwidget.h"
 #include "ui/widgets/progresswidget.h"
 #include "ui/widgets/gltextcomposer.h"
 
@@ -31,7 +30,7 @@ using namespace de;
 static int const ID_BACKGROUND = 1; // does not scroll
 static int const ID_TEXT = 2;       // scrolls
 
-DENG2_PIMPL(DocumentWidget),
+DENG_GUI_PIMPL(DocumentWidget),
 DENG2_OBSERVES(Atlas, Reposition),
 public Font::RichFormat::IStyle
 {
@@ -110,11 +109,8 @@ public Font::RichFormat::IStyle
     {
         // Wait until background tasks finish.
         tasks.waitForDone();
-    }
 
-    GuiRootWidget &root()
-    {
-        return self.root();
+        self.deinitialize();
     }
 
     bool isBeingWrapped() const
@@ -171,27 +167,27 @@ public Font::RichFormat::IStyle
 
     void glInit()
     {        
-        root().atlas().audienceForReposition += this;
-        composer.setAtlas(root().atlas());
+        atlas().audienceForReposition += this;
+        composer.setAtlas(atlas());
         composer.setText(text, format);
 
-        self.setIndicatorUv(root().atlas().imageRectf(root().solidWhitePixel()).middle());
+        self.setIndicatorUv(atlas().imageRectf(root().solidWhitePixel()).middle());
 
         drawable.addBuffer(ID_BACKGROUND, new VertexBuf);
         drawable.addBuffer(ID_TEXT,       new VertexBuf);
 
-        root().shaders().build(drawable.program(), "generic.textured.color_ucolor")
-                << uMvpMatrix << uColor << root().uAtlas();
+        shaders().build(drawable.program(), "generic.textured.color_ucolor")
+                << uMvpMatrix << uColor << uAtlas();
 
-        root().shaders().build(drawable.addProgram(ID_TEXT), "generic.textured.color_ucolor")
-                << uScrollMvpMatrix << uColor << root().uAtlas();
+        shaders().build(drawable.addProgram(ID_TEXT), "generic.textured.color_ucolor")
+                << uScrollMvpMatrix << uColor << uAtlas();
         drawable.setProgram(ID_TEXT, drawable.program(ID_TEXT));
         drawable.setState(ID_TEXT, clippedTextState);
     }
 
     void glDeinit()
     {
-        root().atlas().audienceForReposition -= this;
+        atlas().audienceForReposition -= this;
         composer.release();
         drawable.clear();
     }

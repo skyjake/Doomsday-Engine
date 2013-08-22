@@ -31,6 +31,15 @@ using namespace de;
 
 static TimeDelta const FLASH_ANIM_SPAN = 0.75;
 
+/**
+ * Compares dialog button items to determine the order in which they
+ * should appear in the UI.
+ *
+ * @param a  Dialog button item.
+ * @param b  Dialog button item.
+ *
+ * @return @c true, if a < b.
+ */
 static bool dialogButtonOrder(ui::Item const &a, ui::Item const &b)
 {
     DialogButtonItem const &left  = a.as<DialogButtonItem>();
@@ -66,7 +75,7 @@ static bool dialogButtonOrder(ui::Item const &a, ui::Item const &b)
     return false;
 }
 
-DENG2_PIMPL(DialogWidget),
+DENG_GUI_PIMPL(DialogWidget),
 DENG2_OBSERVES(ContextWidgetOrganizer, WidgetCreation),
 DENG2_OBSERVES(ContextWidgetOrganizer, WidgetUpdate),
 DENG2_OBSERVES(Widget, ChildAddition), // for styling the contents
@@ -125,14 +134,18 @@ DENG2_OBSERVES(ui::Context, Removal)
         self.setContent(container);
     }
 
+    ~Instance()
+    {
+        self.deinitialize();
+    }
+
     void updateContentHeight()
     {
         // The container's height is limited by the height of the view. Normally
         // the dialog tries to show the full height of the content area.
 
-        DENG2_ASSERT(self.hasRoot());
         self.content().rule().setInput(Rule::Height,
-                                       OperatorRule::minimum(self.root().viewHeight(),
+                                       OperatorRule::minimum(root().viewHeight(),
                                                              area->contentRule().height() +
                                                              area->margin() +
                                                              buttons->rule().height()));
@@ -151,7 +164,7 @@ DENG2_OBSERVES(ui::Context, Removal)
     void updateButtonLayout()
     {
         buttons->items().sort(dialogButtonOrder);
-        buttons->updateLayout();
+        //buttons->updateLayout();
 
         needButtonUpdate = false;
     }

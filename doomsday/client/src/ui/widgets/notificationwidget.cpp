@@ -17,7 +17,6 @@
  */
 
 #include "ui/widgets/notificationwidget.h"
-#include "ui/widgets/guirootwidget.h"
 #include "ui/widgets/sequentiallayout.h"
 
 #include <de/Drawable>
@@ -31,7 +30,7 @@ using namespace de;
 
 static TimeDelta const ANIM_SPAN = .5;
 
-DENG2_PIMPL(NotificationWidget),
+DENG_GUI_PIMPL(NotificationWidget),
 DENG2_OBSERVES(Widget, ChildAddition),
 DENG2_OBSERVES(Widget, ChildRemoval)
 {
@@ -67,6 +66,7 @@ DENG2_OBSERVES(Widget, ChildRemoval)
     ~Instance()
     {
         releaseRef(shift);
+        self.deinitialize();
     }
 
     void updateStyle()
@@ -79,7 +79,7 @@ DENG2_OBSERVES(Widget, ChildRemoval)
     {
         drawable.addBuffer(new VertexBuf);
 
-        self.root().shaders().build(drawable.program(), "generic.color_ucolor")
+        shaders().build(drawable.program(), "generic.color_ucolor")
                 << uMvpMatrix << uColor;
     }
 

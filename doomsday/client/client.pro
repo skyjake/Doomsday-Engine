@@ -441,7 +441,8 @@ INCLUDEPATH += \
 
 HEADERS += \
     $$DENG_API_HEADERS \
-    $$DENG_HEADERS
+    $$DENG_HEADERS \
+    include/ui/widgets/guiwidgetprivate.h
 
 # Platform-specific sources.
 win32 {

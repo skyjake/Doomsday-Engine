@@ -20,7 +20,6 @@
 #include "ui/widgets/gltextcomposer.h"
 #include "ui/widgets/fontlinewrapping.h"
 #include "ui/widgets/atlasproceduralimage.h"
-#include "ui/widgets/guirootwidget.h"
 
 #include <de/Drawable>
 #include <de/AtlasTexture>
@@ -29,7 +28,7 @@
 using namespace de;
 using namespace ui;
 
-DENG2_PIMPL(LabelWidget),
+DENG_GUI_PIMPL(LabelWidget),
 DENG2_OBSERVES(Atlas, Reposition),
 public Font::RichFormat::IStyle
 {
@@ -95,6 +94,7 @@ public Font::RichFormat::IStyle
 
     ~Instance()
     {
+        self.deinitialize();
         releaseRef(width);
         releaseRef(height);
     }
@@ -152,17 +152,11 @@ public Font::RichFormat::IStyle
         return self.style().richStyleFormat(contentStyle, sizeFactor, fontWeight, fontStyle, colorIndex);
     }
 
-    AtlasTexture &atlas()
-    {
-        DENG2_ASSERT(self.hasRoot());
-        return self.root().atlas();
-    }
-
     void glInit()
     {
         drawable.addBuffer(new VertexBuf);
-        self.root().shaders().build(drawable.program(), "generic.textured.color_ucolor")
-                << uMvpMatrix << uColor << self.root().uAtlas();
+        shaders().build(drawable.program(), "generic.textured.color_ucolor")
+                << uMvpMatrix << uColor << uAtlas();
 
         composer.setAtlas(atlas());
         composer.setWrapping(wraps);
@@ -362,7 +356,7 @@ public Font::RichFormat::IStyle
         if(horizPolicy == Expand)
         {
             // Expansion can occur to full view width.
-            w = self.root().viewSize().x - (tlMargin.x + brMargin.x);
+            w = root().viewSize().x - (tlMargin.x + brMargin.x);
         }
         else
         {

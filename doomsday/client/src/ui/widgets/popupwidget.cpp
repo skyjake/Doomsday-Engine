@@ -32,7 +32,7 @@ using namespace de;
 static TimeDelta const OPENING_ANIM_SPAN = 0.4;
 static TimeDelta const CLOSING_ANIM_SPAN = 0.3;
 
-DENG2_PIMPL(PopupWidget)
+DENG_GUI_PIMPL(PopupWidget)
 {
     typedef DefaultVertexBuf VertexBuf;
 
@@ -75,6 +75,8 @@ DENG2_PIMPL(PopupWidget)
 
     ~Instance()
     {
+        self.deinitialize();
+
         releaseRef(openingRule);
         releaseRef(anchorX);
         releaseRef(anchorY);
@@ -83,8 +85,8 @@ DENG2_PIMPL(PopupWidget)
     void glInit()
     {
         drawable.addBuffer(new VertexBuf);
-        self.root().shaders().build(drawable.program(), "generic.textured.color")
-                << uMvpMatrix << self.root().uAtlas();
+        shaders().build(drawable.program(), "generic.textured.color")
+                << uMvpMatrix << uAtlas();
     }
 
     void glDeinit()

@@ -24,7 +24,7 @@
 
 using namespace de;
 
-DENG2_PIMPL(ProgressWidget), public Lockable
+DENG_GUI_PIMPL(ProgressWidget), public Lockable
 {
     Mode mode;
     Rangei range;
@@ -53,6 +53,11 @@ DENG2_PIMPL(ProgressWidget), public Lockable
         updateStyle();
     }
 
+    ~Instance()
+    {
+        self.deinitialize();
+    }
+
     void updateStyle()
     {
         self.setImageColor(self.style().colors().colorf(colorId) * Vector4f(1, 1, 1, .5f));
@@ -67,11 +72,6 @@ DENG2_PIMPL(ProgressWidget), public Lockable
     {
         atlas().release(gearTex);
         gearTex = Id::None;
-    }
-
-    AtlasTexture &atlas()
-    {
-        return self.root().atlas();
     }
 };
 

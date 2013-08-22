@@ -50,7 +50,7 @@ static uint POS_PANEL = 0;
 static uint POS_UNLOAD = 3;
 static uint POS_UPDATER_SETTINGS = 6;
 
-DENG2_PIMPL(TaskBarWidget),
+DENG_GUI_PIMPL(TaskBarWidget),
 public IGameChangeObserver
 {
     typedef DefaultVertexBuf VertexBuf;
@@ -89,15 +89,16 @@ public IGameChangeObserver
     ~Instance()
     {
         audienceForGameChange -= this;
-
         releaseRef(vertShift);
+
+        self.deinitialize();
     }
 
     void glInit()
     {
         drawable.addBuffer(new VertexBuf);
 
-        self.root().shaders().build(drawable.program(), "generic.color_ucolor")
+        shaders().build(drawable.program(), "generic.color_ucolor")
                 << uMvpMatrix
                 << uColor;
 
@@ -124,7 +125,7 @@ public IGameChangeObserver
 
     void updateProjection()
     {
-        uMvpMatrix = self.root().projMatrix2D();
+        uMvpMatrix = root().projMatrix2D();
     }
 
     GuiWidget &itemWidget(uint pos) const

@@ -23,7 +23,7 @@
 using namespace de;
 using namespace ui;
 
-DENG2_PIMPL(ChoiceWidget),
+DENG_GUI_PIMPL(ChoiceWidget),
 DENG2_OBSERVES(Context, Addition),
 DENG2_OBSERVES(Context, Removal),
 DENG2_OBSERVES(ContextWidgetOrganizer, WidgetCreation)
@@ -73,6 +73,11 @@ DENG2_OBSERVES(ContextWidgetOrganizer, WidgetCreation)
 
         updateButtonWithSelection();
         updateStyle();
+    }
+
+    ~Instance()
+    {
+        self.deinitialize();
     }
 
     void updateStyle()

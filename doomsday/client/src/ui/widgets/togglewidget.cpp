@@ -31,6 +31,7 @@ static TimeDelta const SWITCH_ANIM_SPAN = 0.3;
 DENG2_PIMPL(ToggleWidget),
 DENG2_OBSERVES(ButtonWidget, Press)
 {
+    /// Draws the animated I/O toggle indicator.
     struct ToggleProceduralImage : public ProceduralImage
     {
         ToggleProceduralImage(GuiWidget &owner)
@@ -96,14 +97,14 @@ DENG2_OBSERVES(ButtonWidget, Press)
     };
 
     ToggleState state;
-    ToggleProceduralImage *procImage;
+    ToggleProceduralImage *procImage; // not owned
 
     Instance(Public *i)
         : Base(i),
           state(Inactive),
           procImage(new ToggleProceduralImage(self))
     {
-        self.setImage(procImage);
+        self.setImage(procImage); // base class owns it
 
         self.audienceForPress += this;
     }

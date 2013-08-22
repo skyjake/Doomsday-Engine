@@ -33,8 +33,7 @@ DENG2_OBSERVES(ContextWidgetOrganizer, WidgetUpdate)
     ButtonWidget *hover;
     Rectanglei hoverHighlightRect;
 
-    Instance(Public *i) : Base(i), hover(0)
-    {}
+    Instance(Public *i) : Base(i), hover(0) {}
 
     void widgetCreatedForItem(GuiWidget &widget, ui::Item const &item)
     {

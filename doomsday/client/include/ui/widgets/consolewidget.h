@@ -78,10 +78,6 @@ public slots:
 protected slots:
     void logContentHeightIncreased(int delta);
 
-protected:
-    void glInit();
-    void glDeinit();
-
 private:
     DENG2_PRIVATE(d)
 };
