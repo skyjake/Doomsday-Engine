@@ -513,6 +513,7 @@ void Updater::downloadCompleted(int)
         d->savingSuggested = true;
 
         MessageDialog *msg = new MessageDialog;
+        msg->setDeleteAfterDismissed(true);
         msg->title().setText(tr("Save Game?"));
         msg->message().setText(tr(_E(b) "Installing the update will discard unsaved progress in the game.\n\n"
                                   _E(.) "Doomsday will be shut down before the installation can start. "
