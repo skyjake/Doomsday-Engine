@@ -48,14 +48,17 @@ public:
     de::String downloadedFilePath() const;
 
     bool isReadyToInstall() const;
+    bool isFailed() const;
 
 signals:
+    void downloadProgress(int percentage);
     void downloadFailed(QString uri);
 
 public slots:
     void replyMetaDataChanged();
     void progress(qint64 received, qint64 total);
-    void finished(QNetworkReply*);
+    void finished(QNetworkReply *);
+    void cancel();
 
 private:
     DENG2_PRIVATE(d)

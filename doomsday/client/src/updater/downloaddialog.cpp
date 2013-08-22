@@ -23,7 +23,10 @@
 #include "de_platform.h"
 #include "updater/downloaddialog.h"
 #include "updater/updatersettings.h"
+#include "ui/widgets/progresswidget.h"
+#include "ui/widgets/taskbarwidget.h"
 #include "ui/clientwindow.h"
+#include "ui/signalaction.h"
 #include "dd_version.h"
 
 /*
@@ -44,25 +47,41 @@
 #  undef open
 #endif
 
+using namespace de;
+
 static DownloadDialog* downloadInProgress;
 
 DENG2_PIMPL(DownloadDialog)
 {
+    enum State {
+        Connecting,
+        MaybeRedirected,
+        Downloading,
+        Finished,
+        Error
+    };
+    State state;
+
     QNetworkAccessManager* network;
-    bool downloading;
+    ProgressWidget *progress;
     //QPushButton* install;
     //QProgressBar* bar;
     //QLabel* hostText;
     //QLabel* progText;
     QUrl uri;
     QUrl uri2;
-    de::String savedFilePath;
-    bool fileReady;
-    QNetworkReply* reply;
-    de::String redirected;
+    String savedFilePath;
+    //bool fileReady;
+    QNetworkReply *reply;
+    String redirected;
+    dint64 receivedBytes;
+    dint64 totalBytes;
+    String location;
+    String errorMessage;
 
-    Instance(Public *d, de::String downloadUri, de::String fallbackUri)
-        : Base(d), downloading(false), uri(downloadUri), uri2(fallbackUri), fileReady(false), reply(0)
+    Instance(Public *d, String downloadUri, String fallbackUri)
+        : Base(d), state(Connecting), uri(downloadUri), uri2(fallbackUri), reply(0),
+          receivedBytes(0), totalBytes(0)
     {
         /*
         QVBoxLayout* mainLayout = new QVBoxLayout;
@@ -82,34 +101,63 @@ DENG2_PIMPL(DownloadDialog)
 
         hostText = new QLabel;
         */
+        ScrollAreaWidget &area = self.area();
+
+        progress = new ProgressWidget;
+        area.add(progress);
+        progress->setImageScale(.4f);
+        progress->setAlignment(ui::AlignLeft);
+        progress->setSizePolicy(ui::Fixed, ui::Expand);
+        progress->setRange(Rangei(0, 100));
+        progress->rule()
+                .setLeftTop(area.contentRule().left(), area.contentRule().top())
+                .setInput(Rule::Width, self.style().rules().rule("dialog.download.width"));
+
+        area.setContentSize(progress->rule().width(), progress->rule().height());
+
+        self.buttons().items() << new DialogButtonItem(DialogWidget::Reject,
+                                                       tr("Cancel Download"),
+                                                       new SignalAction(thisPublic, SLOT(cancel())));
+
         updateLocation(uri);
+
         /*mainLayout->addWidget(hostText);
         mainLayout->addWidget(bar);
 
         progText = new QLabel;
         progText->setWordWrap(true);
-        setProgressText(tr("Connecting..."));
         mainLayout->addWidget(progText);
 
         mainLayout->addWidget(bbox);*/
 
+        //statusText = tr("Connecting...");
+
+        updateProgress();
+
         network = new QNetworkAccessManager(thisPublic);
-        QObject::connect(network, SIGNAL(finished(QNetworkReply*)), thisPublic, SLOT(finished(QNetworkReply*)));
+        QObject::connect(network, SIGNAL(finished(QNetworkReply *)), thisPublic, SLOT(finished(QNetworkReply *)));
 
         startDownload();
     }
 
-    void updateLocation(const QUrl& url)
+    ~Instance()
     {
-        //hostText->setText(tr("Downloading update from <b>%1</b>...").arg(url.host()));
+        qDebug() << "DownloadDialog being destroyed";
+    }
+
+    void updateLocation(QUrl const &url)
+    {
+        location = url.host();
+        updateProgress();
     }
 
     void startDownload()
     {
-        downloading = true;
+        state = Connecting;
+        //downloading = true;
         redirected.clear();
 
-        de::String path = uri.path();
+        String path = uri.path();
         QDir::current().mkpath(UpdaterSettings().downloadPath()); // may not exist
         savedFilePath = UpdaterSettings().downloadPath() / path.fileName();
 
@@ -119,17 +167,47 @@ DENG2_PIMPL(DownloadDialog)
 
         LOG_INFO("Downloading %s, saving as: %s") << uri.toString() << savedFilePath;
 
-        // Global state flag.
+        // Global state "flag".
         downloadInProgress = thisPublic;
     }
 
-    void setProgressText(de::String text)
+    void updateProgress()
     {
-        //progText->setText("<small>" + text + "</small>");
+        String fn = savedFilePath.fileName();
+        String msg;
+
+        switch(state)
+        {
+        default:
+            msg = String(tr("Connecting to %1")).arg(_E(b) + location + _E(.));
+            break;
+
+        case Downloading: {
+            const double MB = 1.0e6; // MiB would be 2^20
+            msg = String(tr("Downloading %1 (%2 MB) from %3"))
+                    .arg(_E(b) + fn + _E(.)).arg(totalBytes / MB, 0, 'f', 1).arg(location);
+            break; }
+
+        case Finished:
+            msg = String(tr("Ready to install\n%1")).arg(_E(b) + fn + _E(.));
+            break;
+
+        case Error:
+            msg = String(tr("Failed to download:\n%1")).arg(_E(b) + errorMessage);
+            break;
+        }
+
+        progress->setText(msg);
+
+        /*
+        const double MB = 1.0e6; // MiB would be 2^20
+        d->setProgressText(tr("Received %1 MB out of total %2 MB")
+                           .arg(received/MB, 0, 'f', 1).arg(total/MB, 0, 'f', 1));
+        */
     }
 };
 
-DownloadDialog::DownloadDialog(de::String downloadUri, de::String fallbackUri)
+DownloadDialog::DownloadDialog(String downloadUri, String fallbackUri)
     : DialogWidget("download"), d(new Instance(this, downloadUri, fallbackUri))
 {
     /*
@@ -145,18 +223,23 @@ DownloadDialog::~DownloadDialog()
     downloadInProgress = 0;
 }
 
-de::String DownloadDialog::downloadedFilePath() const
+String DownloadDialog::downloadedFilePath() const
 {
-    if(!d->fileReady) return "";
+    if(!isReadyToInstall()) return "";
     return d->savedFilePath;
 }
 
 bool DownloadDialog::isReadyToInstall() const
 {
-    return d->fileReady;
+    return d->state == Instance::Finished;
 }
 
-void DownloadDialog::finished(QNetworkReply* reply)
+bool DownloadDialog::isFailed() const
+{
+    return d->state == Instance::Error;
+}
+
+void DownloadDialog::finished(QNetworkReply *reply)
 {
     LOG_AS("Download");
 
@@ -166,7 +249,10 @@ void DownloadDialog::finished(QNetworkReply* reply)
     if(reply->error() != QNetworkReply::NoError)
     {
         LOG_WARNING("Failure: ") << reply->errorString();
-        d->setProgressText(reply->errorString());
+
+        d->state = Instance::Error;
+        d->errorMessage = reply->errorString();
+        d->updateProgress();
         downloadInProgress = 0;
         return;
     }
@@ -182,7 +268,7 @@ void DownloadDialog::finished(QNetworkReply* reply)
         return;
     }
 
-    if(!d->downloading)
+    if(d->state == Instance::MaybeRedirected)
     {
         // This does not look like a binary file... Let's see if we can parse the page.
         QString html = QString::fromUtf8(reply->readAll());
@@ -237,9 +323,19 @@ void DownloadDialog::finished(QNetworkReply* reply)
         emit downloadFailed(d->uri.toString());
     }
 
+    // Make sure the finished download is noticed by the user.
+    open();
+
     //raise();
     //activateWindow();
-    d->fileReady = true;
+    //d->fileReady = true;
+
+    buttons().items().clear()
+            << new DialogButtonItem(DialogWidget::Accept | DialogWidget::Default, tr("Install"));
+
+    d->state = Instance::Finished;
+    d->updateProgress();
+
     /*
     d->setProgressText(tr("Ready to install"));
     d->install->setEnabled(true);
@@ -248,14 +344,35 @@ void DownloadDialog::finished(QNetworkReply* reply)
     LOG_DEBUG("Request finished.");
 }
 
+void DownloadDialog::cancel()
+{
+    LOG_INFO("Download cancelled via user request");
+
+    //d->state = Instance::Error;
+    //d->errorMessage = "Cancelled";
+    //d->updateProgress();
+    d->reply->abort();
+
+    buttons().items().clear()
+            << new DialogButtonItem(DialogWidget::Reject, tr("Close"));
+}
+
 void DownloadDialog::progress(qint64 received, qint64 total)
 {
     LOG_AS("Download");
 
-    if(d->downloading && total > 0)
+    if(d->state == Instance::Downloading && total > 0)
     {
+        d->totalBytes = total;
+        d->receivedBytes = received;
+        d->updateProgress();
+
+        dint64 percent = received * 100 / total;
+        d->progress->setProgress(percent);
+
+        emit downloadProgress(percent);
+
         /*
-        d->bar->setValue(received * 100 / total);
         const double MB = 1.0e6; // MiB would be 2^20
         d->setProgressText(tr("Received %1 MB out of total %2 MB")
                            .arg(received/MB, 0, 'f', 1).arg(total/MB, 0, 'f', 1));
@@ -267,8 +384,8 @@ void DownloadDialog::replyMetaDataChanged()
 {
     LOG_AS("Download");
 
-    de::String contentType = d->reply->header(QNetworkRequest::ContentTypeHeader).toString();
-    de::String redirection = d->reply->attribute(QNetworkRequest::RedirectionTargetAttribute).toString();
+    String contentType = d->reply->header(QNetworkRequest::ContentTypeHeader).toString();
+    String redirection = d->reply->attribute(QNetworkRequest::RedirectionTargetAttribute).toString();
 
     if(!redirection.isEmpty())
     {
@@ -277,11 +394,13 @@ void DownloadDialog::replyMetaDataChanged()
     else if(contentType.startsWith("text/html"))
     {
         // Looks like a redirection page.
-        d->downloading = false;
+        //d->downloading = false;
+        d->state = Instance::MaybeRedirected;
     }
     else
     {
         LOG_DEBUG("Receiving content of type '%s'.") << contentType;
+        d->state = Instance::Downloading;
     }
 }
 
@@ -294,10 +413,7 @@ void Updater_RaiseCompletedDownloadDialog(void)
 {
     if(downloadInProgress && downloadInProgress->isReadyToInstall())
     {
-        /*
-        downloadInProgress->show();
-        downloadInProgress->raise();
-        downloadInProgress->activateWindow();
-        */
+        ClientWindow::main().taskBar().open();
+        downloadInProgress->open();
     }
 }

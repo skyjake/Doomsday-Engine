@@ -65,7 +65,9 @@ public:
 
 public slots:
     void gotReply(QNetworkReply *);
+    void downloadProgressed(int percentage);
     void downloadCompleted(int result);
+    void downloadFailed(QString);
 
     void recheck();
 
@@ -73,6 +75,8 @@ public slots:
      * Shows the Updater Settings dialog.
      */
     void showSettings();
+
+    void showCurrentDownload();
 
     /**
      * Tells the updater to check for updates now. This is called when a manual
@@ -89,6 +93,9 @@ public slots:
      * Print in the console when the latest update check was made.
      */
     void printLastUpdated();
+
+protected slots:
+    void downloadDialogClosed();
 
 private:
     DENG2_PRIVATE(d)

@@ -47,7 +47,9 @@
 #include "dd_types.h"
 #include "dd_main.h"
 #include "con_main.h"
+#include "clientapp.h"
 #include "ui/nativeui.h"
+#include "ui/signalaction.h"
 #include "ui/windowsystem.h"
 #include "ui/clientwindow.h"
 #include "ui/widgets/taskbarwidget.h"
@@ -141,9 +143,18 @@ public:
     {
         useMiniStyle();
         setSizePolicy(ui::Expand, ui::Expand);
+
+        // The notification has a hidden button that can be clicked.
+        _clickable = new ButtonWidget;
+        _clickable->setOpacity(0);
+        _clickable->rule().setRect(rule());
+        _clickable->setAction(new SignalAction(&ClientApp::app().updater(),
+                                               SLOT(showCurrentDownload())));
+        add(_clickable);
     }
 
 private:
+    ButtonWidget *_clickable;
 };
 
 DENG2_PIMPL(Updater),
@@ -203,7 +214,7 @@ DENG2_OBSERVES(App, StartupComplete)
 
     void setupUI()
     {
-        status = new UpdaterStatusWidget;
+        status = new UpdaterStatusWidget;        
     }
 
     QString composeCheckUri()
@@ -300,6 +311,7 @@ DENG2_OBSERVES(App, StartupComplete)
 
     void queryLatestVersion(bool notifyAlways)
     {
+        status->setMode(ProgressWidget::Indefinite);
         showNotification(true);
 
         UpdaterSettings().setLastCheckTime(de::Time());
@@ -389,10 +401,21 @@ DENG2_OBSERVES(App, StartupComplete)
         {
             //availableDlg = 0;
 
+            // The notification provides access to the download dialog.
+            showNotification(true);
+            status->setMode(ProgressWidget::Indefinite);
+
             LOG_MSG("Download and install.");
-            //download = new DownloadDialog(latestPackageUri, latestPackageUri2);
-            //QObject::connect(download, SIGNAL(finished(int)), thisPublic, SLOT(downloadCompleted(int)));
-            //download->show();
+
+            download = new DownloadDialog(latestPackageUri, latestPackageUri2);
+            download->setAnchorAndOpeningDirection(status->rule(), ui::Down);
+            QObject::connect(download, SIGNAL(closed()), thisPublic, SLOT(downloadDialogClosed()));
+            QObject::connect(download, SIGNAL(downloadProgress(int)),thisPublic, SLOT(downloadProgressed(int)));
+            QObject::connect(download, SIGNAL(downloadFailed(QString)), thisPublic, SLOT(downloadFailed(QString)));
+            QObject::connect(download, SIGNAL(accepted(int)), thisPublic, SLOT(downloadCompleted(int)));
+
+            ClientWindow::main().root().add(download);
+            download->open();
         }
         availableDlg = 0;
     }
@@ -526,41 +549,58 @@ void Updater::gotReply(QNetworkReply *reply)
     d->handleReply(reply);
 }
 
-void Updater::downloadCompleted(int result)
+void Updater::downloadProgressed(int percentage)
 {
-    /*
-    if(result == DownloadDialog::Accepted)
+    d->status->setRange(Rangei(0, 100));
+    d->status->setProgress(percentage);
+}
+
+void Updater::downloadCompleted(int)
+{
+    // Autosave the game.
+    // Well, we can't do that yet so just remind the user about saving.
+    if(App_GameLoaded() && !d->savingSuggested && gx.GetInteger(DD_GAME_RECOMMENDS_SAVING))
     {
-        // Autosave the game.
-        // Well, we can't do that yet so just remind the user about saving.
-        if(!d->savingSuggested && gx.GetInteger(DD_GAME_RECOMMENDS_SAVING))
+        d->savingSuggested = true;
+
+        MessageDialog *msg = new MessageDialog;
+        msg->title().setText(tr("Save Game?"));
+        msg->message().setText(tr(_E(b) "Installing the update will discard unsaved progress in the game.\n\n"
+                                  _E(.) "Doomsday will be shut down before the installation can start. "
+                                  "The game is not saved automatically, so you will have to "
+                                  "save the game before installing the update."));
+        msg->buttons().items()
+                << new DialogButtonItem(DialogWidget::Accept | DialogWidget::Default, tr("I'll Save First"))
+                << new DialogButtonItem(DialogWidget::Reject, tr("Discard Progress & Install"));
+        /*
+        const char* buttons[] = { "I'll Save First", "Discard Progress && Install", NULL };
+        if(Sys_MessageBoxWithButtons(MBT_INFORMATION, DOOMSDAY_NICENAME,
+                                     "Installing the update will discard unsaved progress in the game.",
+                                     "Doomsday will be shut down before the installation can start. "
+                                     "The game is not saved automatically, so you will have to "
+                                     "save the game before installing the update.",
+                                     buttons) == 0)*/
+        if(msg->exec(ClientWindow::main().root()))
         {
-            d->savingSuggested = true;
-
-            const char* buttons[] = { "I'll Save First", "Discard Progress && Install", NULL };
-            if(Sys_MessageBoxWithButtons(MBT_INFORMATION, DOOMSDAY_NICENAME,
-                                         "Installing the update will discard unsaved progress in the game.",
-                                         "Doomsday will be shut down before the installation can start. "
-                                         "The game is not saved automatically, so you will have to "
-                                         "save the game before installing the update.",
-                                         buttons) == 0)
-            {
-                Con_Execute(CMDS_DDAY, "savegame", false, false);
-                return;
-            }
+            Con_Execute(CMDS_DDAY, "savegame", false, false);
+            return;
         }
-
-        // Check the signature of the downloaded file.
-
-        // Everything is ready to begin the installation!
-        d->startInstall(d->download->downloadedFilePath());
     }
+
+    /// @todo Check the signature of the downloaded file.
+
+    // Everything is ready to begin the installation!
+    d->startInstall(d->download->downloadedFilePath());
 
     // The download dialog can be dismissed now.
     d->download->deleteLater();
     d->download = 0;
     d->savingSuggested = false;
-    */
+}
+
+void Updater::downloadFailed(QString message)
+{
+    LOG_INFO("Update cancelled: ") << message;
 }
 
 void Updater::recheck()
@@ -575,10 +615,22 @@ void Updater::showSettings()
     ClientWindow::main().taskBar().showUpdaterSettings();
 }
 
+void Updater::showCurrentDownload()
+{
+    if(d->download)
+    {
+        d->download->open();
+    }
+}
+
 void Updater::checkNow(CheckMode mode)
 {
     // Not if there is an ongoing download.
-    if(d->download) return;
+    if(d->download)
+    {
+        d->download->open();
+        return;
+    }
 
     d->queryLatestVersion(mode == AlwaysShowResult);
 }
@@ -659,5 +711,18 @@ void Updater::printLastUpdated(void)
     else
     {
         LOG_MSG("Latest update check was made %s") << ago;
+    }
+}
+
+void Updater::downloadDialogClosed()
+{
+    if(!d->download || d->download->isFailed())
+    {
+        if(d->download)
+        {
+            d->download->setDeleteAfterDismissed(true);
+            d->download = 0;
+        }
+        d->showNotification(false);
     }
 }
