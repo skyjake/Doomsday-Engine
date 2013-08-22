@@ -16,7 +16,7 @@ script {
 }
 
 font default condition "Version.OS == 'windows'" {
-    family: Segoe UI
+    family: Arial
     size: 12pt
     weight: normal
     style: normal
