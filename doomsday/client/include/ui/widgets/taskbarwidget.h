@@ -45,16 +45,14 @@ public:
     bool isOpen() const;
     de::Rule const &shift();
 
-    void setOpeningAction(de::Action *action);
-    void setClosingAction(de::Action *action);
-
     // Events.
     void viewResized();
     void drawContent();
     bool handleEvent(de::Event const &event);
 
 public slots:
-    void open(bool doAction = true);
+    void open();
+    void openAndPauseGame();
     void close();
     void openMainMenu();
     void unloadGame();

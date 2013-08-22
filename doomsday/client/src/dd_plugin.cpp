@@ -312,7 +312,7 @@ DENG_EXTERN_C void Plug_Notify(int notification, void* param)
         // re-show the dialog now that the user has saved the game as
         // prompted.
         DEBUG_Message(("Plug_Notify: Game saved.\n"));
-        Updater_RaiseCompletedDownloadDialog();
+        DownloadDialog::showCompletedDownload();
         break;
     }
 #else

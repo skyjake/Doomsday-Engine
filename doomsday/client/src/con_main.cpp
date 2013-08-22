@@ -2383,9 +2383,11 @@ D_CMD(Quit)
     DENG2_UNUSED2(src, argc);
 
 #ifdef __CLIENT__
-    if(Updater_IsDownloadInProgress())
+    if(DownloadDialog::isDownloadInProgress())
     {
         Con_Message("Cannot quit while downloading update.");
+        ClientWindow::main().taskBar().openAndPauseGame();
+        DownloadDialog::currentDownload().open();
         return false;
     }
 #endif

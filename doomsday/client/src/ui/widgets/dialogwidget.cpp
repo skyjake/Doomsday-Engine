@@ -361,11 +361,13 @@ bool DialogWidget::handleEvent(Event const &event)
            key.ddKey() == DDKEY_RETURN ||
            key.ddKey() == ' ')
         {
-            ui::ActionItem const *defaultAction = d->findDefaultAction();
-            ButtonWidget const &but = d->buttonWidget(*defaultAction);
-            if(but.action())
+            if(ui::ActionItem const *defaultAction = d->findDefaultAction())
             {
-                but.action()->trigger();
+                ButtonWidget const &but = d->buttonWidget(*defaultAction);
+                if(but.action())
+                {
+                    but.action()->trigger();
+                }
             }
             return true;
         }

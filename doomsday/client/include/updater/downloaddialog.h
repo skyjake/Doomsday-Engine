@@ -50,6 +50,11 @@ public:
     bool isReadyToInstall() const;
     bool isFailed() const;
 
+public:
+    static bool isDownloadInProgress();
+    static DownloadDialog &currentDownload();
+    static void showCompletedDownload();
+
 signals:
     void downloadProgress(int percentage);
     void downloadFailed(QString uri);
@@ -63,8 +68,5 @@ public slots:
 private:
     DENG2_PRIVATE(d)
 };
-
-int  Updater_IsDownloadInProgress(void);
-void Updater_RaiseCompletedDownloadDialog(void);
 
 #endif // DENG_CLIENT_DOWNLOADDIALOG_H

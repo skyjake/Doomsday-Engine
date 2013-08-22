@@ -28,6 +28,7 @@
 #include "ui/clientwindow.h"
 #include "ui/commandaction.h"
 #include "ui/signalaction.h"
+#include "client/cl_def.h" // clientPaused
 
 #include "ui/ui_main.h"
 #include "con_main.h"
@@ -60,9 +61,6 @@ public IGameChangeObserver
     LabelWidget *status;
     PopupMenuWidget *mainMenu;
     ScalarRule *vertShift;
-
-    QScopedPointer<Action> openAction;
-    QScopedPointer<Action> closeAction;
     bool mouseWasTrappedWhenOpening;
 
     // GL objects:
@@ -295,16 +293,6 @@ Rule const &TaskBarWidget::shift()
     return *d->vertShift;
 }
 
-void TaskBarWidget::setOpeningAction(Action *action)
-{
-    d->openAction.reset(action);
-}
-
-void TaskBarWidget::setClosingAction(Action *action)
-{
-    d->closeAction.reset(action);
-}
-
 void TaskBarWidget::glInit()
 {
     LOG_AS("TaskBarWidget");
@@ -395,7 +383,7 @@ bool TaskBarWidget::handleEvent(Event const &event)
     return false;
 }
 
-void TaskBarWidget::open(bool doAction)
+void TaskBarWidget::open()
 {
     if(!d->opened)
     {
@@ -409,14 +397,6 @@ void TaskBarWidget::open(bool doAction)
         setOpacity(1, OPEN_CLOSE_SPAN);
 
         emit opened();
-
-        if(doAction)
-        {
-            if(!d->openAction.isNull())
-            {
-                d->openAction->trigger();
-            }
-        }
 
         // Untrap the mouse if it is trapped.
         if(hasRoot())
@@ -434,6 +414,15 @@ void TaskBarWidget::open(bool doAction)
             }
         }
     }
+}
+
+void TaskBarWidget::openAndPauseGame()
+{
+    if(App_GameLoaded() && !clientPaused)
+    {
+        Con_Execute(CMDS_DDAY, "pause", true, false);
+    }
+    open();
 }
 
 void TaskBarWidget::close()
@@ -458,11 +447,6 @@ void TaskBarWidget::close()
         if(hasRoot()) root().setFocus(0);
 
         emit closed();
-
-        if(!d->closeAction.isNull())
-        {
-            d->closeAction->trigger();
-        }
 
         // Retrap the mouse if it was trapped when opening.
         if(hasRoot() && App_GameLoaded())

@@ -110,29 +110,6 @@ static void runInstallerCommand(void)
     installerCommand = 0;
 }
 
-/*
-static bool switchToWindowedMode()
-{
-    ClientWindow &mainWindow = WindowSystem::main();
-    bool wasFull = mainWindow.isFullScreen();
-    if(wasFull)
-    {
-        int attribs[] = { ClientWindow::Fullscreen, false, ClientWindow::End };
-        mainWindow.changeAttributes(attribs);
-    }
-    return wasFull;
-}
-
-static void switchBackToFullscreen(bool wasFull)
-{
-    if(wasFull)
-    {
-        int attribs[] = { ClientWindow::Fullscreen, true, ClientWindow::End };
-        ClientWindow::main().changeAttributes(attribs);
-    }
-}
-*/
-
 /**
  * Notification widget about the status of the Updater.
  */
@@ -146,7 +123,7 @@ public:
 
         // The notification has a hidden button that can be clicked.
         _clickable = new ButtonWidget;
-        _clickable->setOpacity(0);
+        _clickable->setOpacity(0); // not drawn
         _clickable->rule().setRect(rule());
         _clickable->setAction(new SignalAction(&ClientApp::app().updater(),
                                                SLOT(showCurrentDownload())));
@@ -165,8 +142,6 @@ DENG2_OBSERVES(App, StartupComplete)
     UpdaterStatusWidget *status;
     bool alwaysShowNotification;
     UpdateAvailableDialog *availableDlg; ///< If currently open (not owned).
-    //UpdaterSettingsDialog* settingsDlg;
-    //bool backToFullscreen;
     bool savingSuggested;
 
     VersionInfo latestVersion;
@@ -180,8 +155,6 @@ DENG2_OBSERVES(App, StartupComplete)
           download(0),
           status(0),
           availableDlg(0),
-          //settingsDlg(0),
-          //backToFullscreen(false),
           savingSuggested(false)
     {
         network = new QNetworkAccessManager(thisPublic);
@@ -277,22 +250,6 @@ DENG2_OBSERVES(App, StartupComplete)
         return false;
     }
 
-    /*
-    void showSettingsNonModal()
-    {
-        if(!settingsDlg)
-        {
-            settingsDlg = new UpdaterSettingsDialog(&ClientWindow::main());
-            QObject::connect(settingsDlg, SIGNAL(finished(int)), thisPublic, SLOT(settingsDialogClosed(int)));
-        }
-        else
-        {
-            settingsDlg->fetch();
-        }
-        settingsDlg->open();
-    }
-    */
-
     void appStartupCompleted()
     {
         LOG_AS("Updater")
@@ -374,14 +331,6 @@ DENG2_OBSERVES(App, StartupComplete)
 
             availableDlg = new UpdateAvailableDialog(latestVersion, latestLogUri);
             execAvailableDialog();
-            /*
-            {
-                LOG_MSG("Download and install.");
-                //download = new DownloadDialog(latestPackageUri, latestPackageUri2);
-                //QObject::connect(download, SIGNAL(finished(int)), thisPublic, SLOT(downloadCompleted(int)));
-                //download->show();
-            }
-            availableDlg = 0;*/
         }
         else
         {
@@ -572,14 +521,7 @@ void Updater::downloadCompleted(int)
         msg->buttons().items()
                 << new DialogButtonItem(DialogWidget::Accept | DialogWidget::Default, tr("I'll Save First"))
                 << new DialogButtonItem(DialogWidget::Reject, tr("Discard Progress & Install"));
-        /*
-        const char* buttons[] = { "I'll Save First", "Discard Progress && Install", NULL };
-        if(Sys_MessageBoxWithButtons(MBT_INFORMATION, DOOMSDAY_NICENAME,
-                                     "Installing the update will discard unsaved progress in the game.",
-                                     "Doomsday will be shut down before the installation can start. "
-                                     "The game is not saved automatically, so you will have to "
-                                     "save the game before installing the update.",
-                                     buttons) == 0)*/
+
         if(msg->exec(ClientWindow::main().root()))
         {
             Con_Execute(CMDS_DDAY, "savegame", false, false);
@@ -644,62 +586,6 @@ void Updater::checkNowShowingProgress()
     d->queryLatestVersion(true);
     d->execAvailableDialog();
 }
-
-/*
-void Updater_Init(void)
-{
-    UpdaterSettings::initialize();
-
-    updater = new Updater;
-}
-
-void Updater_Shutdown(void)
-{
-    delete updater;
-}
-
-Updater* Updater_Instance(void)
-{
-    return updater;
-}
-
-void Updater_CheckNow(boolean notify)
-{
-    if(novideo || !updater) return;
-
-    updater->checkNow(notify);
-}
-*/
-/*
-static void showSettingsDialog(void)
-{
-    if(updater)
-    {
-        updater->showSettings();
-    }
-}
-*/
-
-/*
-void Updater_ShowSettings(void)
-{
-    ClientWindow::main().taskBar().showUpdaterSettings();
-
-    // Automatically switch to windowed mode for convenience.
-    int delay = 0;
-    if(switchToWindowedMode())
-    {
-        updater->setBackToFullscreen(true);
-
-        // The mode switch takes a while and may include deferred window resizing,
-        // so let's wait a while before opening the dialog to make sure everything
-        // has settled.
-        /// @todo Improve the mode changes so that this is not needed.
-        delay = 500;
-    }
-    App_Timer(delay, showSettingsDialog);
-}
-    */
 
 void Updater::printLastUpdated(void)
 {
