@@ -43,40 +43,14 @@
 
 using namespace de;
 
-/**
- * Locate the first half-edge in the cluster which defines a boundary edge. The
- * found edge will @em always have a BSP leaf mapped to it's face. The returned
- * half-edge is on "this" side of the edge (i.e., in this cluster).
- */
-HEdge &Sector::Cluster::findBoundaryEdge() const
-{
-    foreach(BspLeaf *leaf, _bspLeafs)
-    {
-        HEdge *base = leaf->poly().hedge();
-        HEdge *hedge = base;
-        do
-        {
-            if(hedge->twin().hasFace())
-            {
-                BspLeaf *leaf = hedge->twin().face().mapElement()->as<BspLeaf>();
-                if(leaf->hasCluster() && &leaf->cluster() != this)
-                {
-                    return *hedge;
-                }
-            }
-        } while((hedge = &hedge->next()) != base);
-    }
-    // Should be impossible.
-    throw Error("Sector::Cluster::findBoundaryEdge", "Failed to locate the boundary!?");
-}
-
 void Sector::Cluster::remapVisPlanes()
 {
     // By default both planes are mapped to the parent sector.
     _mappedVisFloor   = this;
     _mappedVisCeiling = this;
 
-    bool permaLink = true;
+    // Should we permanently link this cluster to another?
+    Cluster *exteriorCluster = 0;
     foreach(BspLeaf *leaf, _bspLeafs)
     {
         HEdge *base = leaf->poly().hedge();
@@ -84,23 +58,35 @@ void Sector::Cluster::remapVisPlanes()
         do
         {
             if(hedge->mapElement())
-            if(Line::Side::Segment *seg = hedge->mapElement()->as<Line::Side::Segment>())
             {
-                Line::Side &lineSide = seg->lineSide();
-                if(!lineSide.line().isSelfReferencing()
-                   // Self-referencing lines in the void have no back geometry.
-                   || !hedge->twin().hasFace())
+                if(hedge->mapElement()->as<Line::Side::Segment>()->line().isSelfReferencing())
                 {
-                    permaLink = false;
+                    if(!exteriorCluster && hedge->twin().hasFace())
+                    {
+                        BspLeaf *otherLeaf = hedge->twin().face().mapElement()->as<BspLeaf>();
+                        if(otherLeaf->hasCluster())
+                        {
+                            Cluster *otherCluster = &otherLeaf->cluster();
+                            if(otherCluster != this)
+                            {
+                                if(!_allSelfRefBoundary && otherCluster->_allSelfRefBoundary)
+                                    return;
+
+                                // Remember the exterior cluster.
+                                exteriorCluster = otherCluster;
+                            }
+                        }
+                    }
                 }
+                // Abort if any map line lacks a back geometry.
+                if(!hedge->twin().hasFace())
+                    return;
             }
         } while((hedge = &hedge->next()) != base);
     }
 
-    if(permaLink)
+    if(exteriorCluster)
     {
-        Cluster *exteriorCluster = &findBoundaryEdge().twin().face().mapElement()->as<BspLeaf>()->cluster();
-
         // Ensure we don't produce a cyclic dependency...
         Sector *finalSector = &exteriorCluster->visPlane(Floor).sector();
         if(finalSector != &sector())
@@ -711,6 +697,7 @@ void Sector::buildClusters()
             continue;
 
         Cluster *cluster = new Cluster;
+        cluster->_allSelfRefBoundary = false;
         cluster->_mappedVisFloor = cluster->_mappedVisCeiling = 0;
         d->clusters.append(cluster);
 
@@ -749,6 +736,34 @@ void Sector::buildClusters()
         if(!didMerge) break;
     }
     // Clustering complete.
+
+    // Classify clusters.
+    foreach(Cluster *cluster, d->clusters)
+    {
+        cluster->_allSelfRefBoundary = true;
+        foreach(BspLeaf *bspLeaf, cluster->_bspLeafs)
+        {
+            HEdge *base = bspLeaf->poly().hedge();
+            HEdge *hedge = base;
+            do
+            {
+                if(hedge->twin().hasFace())
+                {
+                    BspLeaf *backLeaf = hedge->twin().face().mapElement()->as<BspLeaf>();
+                    if(hedge->mapElement() && backLeaf->hasCluster() && &backLeaf->cluster() != cluster)
+                    {
+                        if(!hedge->mapElement()->as<Line::Side::Segment>()->line().isSelfReferencing())
+                        {
+                            cluster->_allSelfRefBoundary = false;
+                            goto nextCluster;
+                        }
+                    }
+                }
+            } while((hedge = &hedge->next()) != base);
+        }
+
+nextCluster:;
+    }
 }
 
 AABoxd const &Sector::aaBox() const

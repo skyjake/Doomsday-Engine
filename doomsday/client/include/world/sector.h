@@ -127,6 +127,7 @@ public:
         void remapVisPlanes();
 
         BspLeafs _bspLeafs;
+        bool _allSelfRefBoundary;
         QScopedPointer<AABoxd> _aaBox;
         Cluster *_mappedVisFloor;
         Cluster *_mappedVisCeiling;
