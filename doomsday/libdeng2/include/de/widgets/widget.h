@@ -185,7 +185,7 @@ public:
     bool isEventRouted(int type, Widget *to) const;
 
     // Tree organization.
-    void clear();
+    void clearTree();
 
     /**
      * Adds a child widget. It becomes the last child, meaning it is drawn on

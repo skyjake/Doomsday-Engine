@@ -236,7 +236,7 @@ bool Widget::isEventRouted(int type, Widget *to) const
     return d->routing.contains(type) && d->routing[type] == to;
 }
 
-void Widget::clear()
+void Widget::clearTree()
 {
     d->clear();
 }
