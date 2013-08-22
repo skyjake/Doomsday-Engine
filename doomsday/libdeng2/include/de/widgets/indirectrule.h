@@ -32,7 +32,7 @@ namespace de {
  * notified of changes in the source of the indirect rule, without having to
  * change anything in the existing rule relationships.
  */
-class IndirectRule : public Rule
+class DENG2_PUBLIC IndirectRule : public Rule
 {
 public:
     IndirectRule();
