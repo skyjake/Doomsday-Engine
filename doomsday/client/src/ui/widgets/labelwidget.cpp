@@ -348,9 +348,17 @@ public Font::RichFormat::IStyle
         return Vector2ui(wraps.width(), wraps.totalHeightInPixels());
     }
 
+    /**
+     * Determines the maximum amount of width available for text, taking into
+     * account the given constraints for the possible image of the label.
+     */
     int availableTextWidth() const
     {
         int w = 0;
+        int h = 0;
+
+        // The theorical upper limit is the entire view (when expanding) or
+        // the given widget width.
         if(horizPolicy == Expand)
         {
             // Expansion can occur to full view width.
@@ -360,10 +368,30 @@ public Font::RichFormat::IStyle
         {
             w = self.rule().width().valuei() - (tlMargin.x + brMargin.x);
         }
-        if(textAlign & (AlignLeft | AlignRight))
+        if(vertPolicy != Expand)
         {
-            // Image will be placed beside the text.
-            w -= gap + imageSize().x;
+            h = self.rule().height().valuei() - (tlMargin.y + brMargin.y);
+        }
+
+        if(hasImage())
+        {
+            if(textAlign & (AlignLeft | AlignRight))
+            {
+                // Image will be placed beside the text.
+                Vector2f imgSize = imageSize() * imageScale;
+
+                if(vertPolicy != Expand)
+                {
+                    if(imageFit & FitToHeight && imgSize.y > h)
+                    {
+                        float factor = float(h) / imgSize.y;
+                        imgSize.y *= factor;
+                        if(imageFit & OriginalAspectRatio) imgSize.x *= factor;
+                    }
+                }
+
+                w -= gap + imgSize.x;
+            }
         }
         return w;
     }
@@ -393,7 +421,7 @@ public Font::RichFormat::IStyle
             ContentLayout layout;
             contentPlacement(layout);
             Rectanglef combined = layout.image | layout.text;
-            width->set(combined.width() + tlMargin.x + brMargin.x);
+            width->set (combined.width()  + tlMargin.x + brMargin.x);
             height->set(combined.height() + tlMargin.y + brMargin.y);
         }
     }

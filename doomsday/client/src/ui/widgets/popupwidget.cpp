@@ -133,7 +133,10 @@ DENG2_PIMPL(PopupWidget)
         case ui::Down:
             self.rule()
                     .setInput(Rule::Top,  *anchorY + *marker)
-                    .setInput(Rule::Left, *anchorX - self.rule().width() / 2);
+                    .setInput(Rule::Left, OperatorRule::clamped(
+                                  *anchorX - self.rule().width() / 2,
+                                  self.margin(),
+                                  self.root().viewWidth() - self.rule().width() - self.margin()));
             break;
 
         case ui::Left:

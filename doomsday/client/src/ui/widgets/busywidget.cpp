@@ -49,6 +49,7 @@ DENG2_PIMPL(BusyWidget)
           uMvpMatrix("uMvpMatrix", GLUniform::Mat4)
     {
         progress = new ProgressWidget;
+        progress->setAlignment(ui::AlignCenter, LabelWidget::AlignOnlyByImage);
         progress->setRange(Rangei(0, 200));
         progress->setImageScale(.2f);
         progress->rule().setRect(self.rule());

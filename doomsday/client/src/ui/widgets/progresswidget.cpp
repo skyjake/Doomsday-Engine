@@ -85,8 +85,8 @@ ProgressWidget::ProgressWidget(String const &name) : d(new Instance(this))
     setImageFit(ui::FitToSize | ui::OriginalAspectRatio);
     setImageScale(.6f);
 
-    setAlignment(ui::AlignCenter, AlignOnlyByImage);
     setTextAlignment(ui::AlignRight);
+    setTextLineAlignment(ui::AlignLeft);
 }
 
 void ProgressWidget::useMiniStyle()

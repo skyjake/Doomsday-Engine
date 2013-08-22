@@ -85,7 +85,6 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
     {
         checking = new ProgressWidget;
         checking->setText(tr("Checking for Updates..."));
-        checking->setAlignment(ui::AlignCenter, LabelWidget::AlignByCombination);
 
         // The checking indicator is overlaid on the normal content.
         checking->rule().setRect(self.rule());
