@@ -51,7 +51,7 @@ public:
      */
     enum Modality {
         Modal,
-        Nonmodal
+        NonModal
     };
 
     enum RoleFlag {
@@ -97,8 +97,6 @@ public:
 public:
     DialogWidget(de::String const &name = "");
 
-    void setModality(Modality modality);
-
     Modality modality() const;
 
     ScrollAreaWidget &area();
@@ -115,6 +113,12 @@ public:
      * @return Result code.
      */
     int exec(GuiRootWidget &root);
+
+    /**
+     * Opens the dialog as non-modal. The dialog must already be added to the
+     * widget tree. Use accept() or reject() to close the dialog.
+     */
+    void open();
 
     // Events.
     void update();

@@ -69,17 +69,20 @@ static bool dialogButtonOrder(ui::Item const &a, ui::Item const &b)
 DENG2_PIMPL(DialogWidget),
 DENG2_OBSERVES(ContextWidgetOrganizer, WidgetCreation),
 DENG2_OBSERVES(ContextWidgetOrganizer, WidgetUpdate),
-DENG2_OBSERVES(Widget, ChildAddition) // for styling the contents
+DENG2_OBSERVES(Widget, ChildAddition), // for styling the contents
+DENG2_OBSERVES(ui::Context, Addition),
+DENG2_OBSERVES(ui::Context, Removal)
 {
     Modality modality;
     ScrollAreaWidget *area;
     MenuWidget *buttons;
     QEventLoop subloop;
     Animation glow;
+    bool needButtonUpdate;
     float normalGlow;
     bool animatingGlow;
 
-    Instance(Public *i) : Base(i), modality(Modal), animatingGlow(false)
+    Instance(Public *i) : Base(i), modality(Modal), needButtonUpdate(false), animatingGlow(false)
     {
         // Initialize the border glow.
         normalGlow = self.style().colors().colorf("glow").w;
@@ -93,6 +96,8 @@ DENG2_OBSERVES(Widget, ChildAddition) // for styling the contents
         area->audienceForChildAddition += this;
 
         buttons = new MenuWidget("buttons");
+        buttons->items().audienceForAddition += this;
+        buttons->items().audienceForRemoval += this;
         buttons->organizer().audienceForWidgetCreation += this;
         buttons->organizer().audienceForWidgetUpdate += this;
 
@@ -131,6 +136,24 @@ DENG2_OBSERVES(Widget, ChildAddition) // for styling the contents
                                                              area->contentRule().height() +
                                                              area->margin() +
                                                              buttons->rule().height()));
+    }
+
+    void contextItemAdded(ui::Context::Pos, ui::Item const &)
+    {
+        needButtonUpdate = true;
+    }
+
+    void contextItemRemoved(ui::Context::Pos, ui::Item &)
+    {
+        needButtonUpdate = true;
+    }
+
+    void updateButtonLayout()
+    {
+        buttons->items().sort(dialogButtonOrder);
+        buttons->updateLayout();
+
+        needButtonUpdate = false;
     }
 
     void widgetCreatedForItem(GuiWidget &widget, ui::Item const &item)
@@ -272,11 +295,6 @@ DialogWidget::DialogWidget(String const &name)
     set(bg);
 }
 
-void DialogWidget::setModality(DialogWidget::Modality modality)
-{
-    d->modality = modality;
-}
-
 DialogWidget::Modality DialogWidget::modality() const
 {
     return d->modality;
@@ -294,8 +312,7 @@ MenuWidget &DialogWidget::buttons()
 
 int DialogWidget::exec(GuiRootWidget &root)
 {
-    /// @todo Non-modal dialogs shouldn't be run with a subloop.
-    DENG2_ASSERT(modality() == Modal);
+    d->modality = Modal;
 
     // The widget is added to the root temporarily (as top child).
     DENG2_ASSERT(!hasRoot());
@@ -311,9 +328,22 @@ int DialogWidget::exec(GuiRootWidget &root)
     return result;
 }
 
+void DialogWidget::open()
+{
+    d->modality = NonModal;
+
+    DENG2_ASSERT(hasRoot());
+    prepare();
+}
+
 void DialogWidget::update()
 {
     PopupWidget::update();
+
+    if(d->needButtonUpdate)
+    {
+        d->updateButtonLayout();
+    }
 
     if(d->animatingGlow)
     {
@@ -360,6 +390,15 @@ bool DialogWidget::handleEvent(Event const &event)
         }
         return true;
     }
+    else
+    {
+        if(event.type() == Event::MouseButton &&
+           hitTest(event.as<MouseEvent>().pos()))
+        {
+            // Non-modal dialogs eat mouse clicks inside the dialog.
+            return true;
+        }
+    }
 
     return PopupWidget::handleEvent(event);
 }
@@ -368,8 +407,14 @@ void DialogWidget::accept(int result)
 {
     if(d->subloop.isRunning())
     {
+        DENG2_ASSERT(d->modality == Modal);
         d->subloop.exit(result);
         emit accepted(result);
+    }
+    else if(d->modality == NonModal)
+    {
+        emit accepted(result);
+        finish(result);
     }
 }
 
@@ -377,8 +422,14 @@ void DialogWidget::reject(int result)
 {
     if(d->subloop.isRunning())
     {
+        DENG2_ASSERT(d->modality == Modal);
         d->subloop.exit(result);
         emit rejected(result);
+    }
+    else if(d->modality == NonModal)
+    {
+        emit rejected(result);
+        finish(result);
     }
 }
 
@@ -396,10 +447,9 @@ void DialogWidget::prepare()
     viewResized();
     notifyTree(&Widget::viewResized);
 
-    d->buttons->items().sort(dialogButtonOrder);
-    d->buttons->updateLayout();
+    //d->updateButtonLayout();
 
-    open();
+    PopupWidget::open();
 }
 
 void DialogWidget::preparePopupForOpening()

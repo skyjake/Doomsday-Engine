@@ -76,8 +76,8 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
         if(show)
         {
             // Set up a cancel button.
-            self.buttons().items().clear();
-            self.buttons().items() << new DialogButtonItem(DialogWidget::Reject);
+            self.buttons().items().clear()
+                    << new DialogButtonItem(DialogWidget::Reject);
         }
     }
 
