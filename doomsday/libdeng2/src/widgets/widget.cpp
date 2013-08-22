@@ -51,12 +51,11 @@ DENG2_PIMPL(Widget)
 
     void clear()
     {
-        qDebug() << "clearing children of" << &self << name;
         while(!children.isEmpty())
         {
             children.first()->d->parent = 0;
             Widget *w = children.takeFirst();
-            qDebug() << "deleting" << w << w->name();
+            //qDebug() << "deleting" << w << w->name();
             delete w;
         }
         index.clear();
