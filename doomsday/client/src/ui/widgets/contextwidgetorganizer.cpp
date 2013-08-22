@@ -86,9 +86,6 @@ DENG2_OBSERVES(ui::Item,    Change     )
 
         ui::Item const &item = context->at(pos);
         GuiWidget *w = factory->makeItemWidget(item, container);
-
-        w->setName(item.label());
-
         if(!w) return; // Unpresentable.
 
         // Others may alter the widget in some way.
