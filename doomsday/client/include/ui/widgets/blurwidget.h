@@ -30,7 +30,6 @@ class BlurWidget : public GuiWidget
 {
 public:
     BlurWidget(de::String const &name = "");
-    ~BlurWidget();
 };
 
 #endif // DENG_CLIENT_BLURWIDGET_H
