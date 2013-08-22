@@ -329,6 +329,9 @@ DENG2_OBSERVES(App, StartupComplete)
         {
             LOG_INFO("Found an update: " _E(b)) << latestVersion.asText();
 
+            // Modal dialogs will interrupt gameplay.
+            ClientWindow::main().taskBar().openAndPauseGame();
+
             availableDlg = new UpdateAvailableDialog(latestVersion, latestLogUri);
             execAvailableDialog();
         }
