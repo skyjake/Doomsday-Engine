@@ -4,7 +4,16 @@
 # - weight: normal bold light
 # - style: normal italic
 
-script { import Version, gui }
+script { 
+    import Version, gui
+    
+    # Load some custom fonts.
+    #import App, Path
+    #fontDir = Path.fileNamePath(__file__) / "fonts/customfont"
+    #App.loadFont(fontDir / "FontName-Bold.ttf")
+    #App.loadFont(fontDir / "FontName-Regular.ttf")
+    #App.loadFont(fontDir / "FontName-Light.ttf") 
+}
 
 font default condition "Version.OS == 'windows'" {
     family: Segoe UI

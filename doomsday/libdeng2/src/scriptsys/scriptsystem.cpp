@@ -29,6 +29,18 @@
 
 namespace de {
 
+Value *Binding_Path_FileNamePath(Context &, Function::ArgumentValues const &args)
+{
+    // We must have one argument.
+    if(args.size() != 1)
+    {
+        throw Function::WrongArgumentsError("Binding_Path_FileNamePath",
+                                            "Expected one argument");
+    }
+
+    return new TextValue(args.at(0)->asText().fileNamePath());
+}
+
 DENG2_PIMPL(ScriptSystem), DENG2_OBSERVES(Record, Deletion)
 {
     /// Built-in special modules. These are constructed by native code and thus not
@@ -36,6 +48,7 @@ DENG2_PIMPL(ScriptSystem), DENG2_OBSERVES(Record, Deletion)
     typedef QMap<String, Record *> NativeModules; // not owned
     NativeModules nativeModules;
     Record versionModule; // Version: information about the platform and build
+    Record pathModule;    // Path: path manipulation routines (based on native classes Path, NativePath, String)
 
     /// Resident modules.
     typedef QMap<String, Module *> Modules; // owned
@@ -44,19 +57,30 @@ DENG2_PIMPL(ScriptSystem), DENG2_OBSERVES(Record, Deletion)
     Instance(Public *i) : Base(*i)
     {
         // Setup the Version module.
-        Version ver;
-        Record &mod = versionModule;
-        ArrayValue *num = new ArrayValue;
-        *num << NumberValue(ver.major) << NumberValue(ver.minor)
-             << NumberValue(ver.patch) << NumberValue(ver.build);
-        mod.addArray  ("VERSION",  num                       ).setReadOnly();
-        mod.addText   ("TEXT",     ver.asText()              ).setReadOnly();
-        mod.addNumber ("BUILD",    ver.build                 ).setReadOnly();
-        mod.addText   ("OS",       Version::operatingSystem()).setReadOnly();
-        mod.addNumber ("CPU_BITS", Version::cpuBits()        ).setReadOnly();
-        mod.addBoolean("DEBUG",    Version::isDebugBuild()   ).setReadOnly();
+        {
+            Version ver;
+            Record &mod = versionModule;
+            ArrayValue *num = new ArrayValue;
+            *num << NumberValue(ver.major) << NumberValue(ver.minor)
+                 << NumberValue(ver.patch) << NumberValue(ver.build);
+            mod.addArray  ("VERSION",  num                       ).setReadOnly();
+            mod.addText   ("TEXT",     ver.asText()              ).setReadOnly();
+            mod.addNumber ("BUILD",    ver.build                 ).setReadOnly();
+            mod.addText   ("OS",       Version::operatingSystem()).setReadOnly();
+            mod.addNumber ("CPU_BITS", Version::cpuBits()        ).setReadOnly();
+            mod.addBoolean("DEBUG",    Version::isDebugBuild()   ).setReadOnly();
 
-        addNativeModule("Version", mod);
+            addNativeModule("Version", mod);
+        }
+
+        // Setup the Path module.
+        {
+            Function::registerNativeEntryPoint("Path_FileNamePath", Binding_Path_FileNamePath);
+
+            Record &mod = pathModule;
+            mod.addFunction("fileNamePath", refless(new Function("Path_FileNamePath", Function::Arguments() << "path"))).setReadOnly();
+            addNativeModule("Path", mod);
+        }
     }
 
     ~Instance()
@@ -67,6 +91,8 @@ DENG2_PIMPL(ScriptSystem), DENG2_OBSERVES(Record, Deletion)
         {
             i.value()->audienceForDeletion -= this;
         }
+
+        Function::unregisterNativeEntryPoint("Path_FileNamePath");
     }
 
     void addNativeModule(String const &name, Record &module)
