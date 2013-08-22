@@ -40,7 +40,7 @@ namespace de {
  * of the project. Also note that unlike libdeng1, there is only ever three
  * components in the version (or four, counting the build number).
  */
-class Version
+class DENG2_PUBLIC Version
 {
 public:
     int major;

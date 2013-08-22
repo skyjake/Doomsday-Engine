@@ -21,12 +21,15 @@
 #include <QMenuBar>
 #include <QAction>
 #include <QNetworkProxyFactory>
+#include <QDesktopServices>
+#include <QFontDatabase>
 #include <QDebug>
 #include <stdlib.h>
 
 #include <de/Log>
 #include <de/DisplayMode>
 #include <de/Error>
+#include <de/ByteArrayFile>
 #include <de/c_wrapper.h>
 #include <de/garbage.h>
 
@@ -63,6 +66,8 @@ static void continueInitWithEventLoopRunning()
     // Show the main window. This causes initialization to finish (in busy mode)
     // as the canvas is visible and ready for initialization.
     WindowSystem::main().show();
+
+    ClientApp::app().updater().setupUI();
 }
 
 Value *Binding_App_GamePlugin(Context &, Function::ArgumentValues const &)
@@ -72,11 +77,47 @@ Value *Binding_App_GamePlugin(Context &, Function::ArgumentValues const &)
     return new TextValue(name);
 }
 
+Value *Binding_App_LoadFont(Context &, Function::ArgumentValues const &args)
+{
+    LOG_AS("ClientApp");
+
+    // We must have one argument.
+    if(args.size() != 1)
+    {
+        throw Function::WrongArgumentsError("Binding_App_LoadFont",
+                                            "Expected one argument");
+    }
+
+    try
+    {
+        // Try to load the specific font.
+        Block data(App::fileSystem().root().locate<File const>(args.at(0)->asText()));
+        int id;
+        id = QFontDatabase::addApplicationFontFromData(data);
+        if(id < 0)
+        {
+            LOG_WARNING("Failed to load font:");
+        }
+        else
+        {
+            LOG_VERBOSE("Loaded font: %s") << args.at(0)->asText();
+            //qDebug() << args.at(0)->asText();
+            //qDebug() << "Families:" << QFontDatabase::applicationFontFamilies(id);
+        }
+    }
+    catch(Error const &er)
+    {
+        LOG_WARNING("Failed to load font:\n") << er.asText();
+    }
+    return 0;
+}
+
 DENG2_PIMPL(ClientApp)
 {
+    QScopedPointer<Updater> updater;
     QMenuBar *menuBar;
     InputSystem *inputSys;
-    std::auto_ptr<WidgetActions> widgetActions;
+    QScopedPointer<WidgetActions> widgetActions;
     WindowSystem *winSys;
     ServerLink *svLink;
     GLShaderBank shaderBank;
@@ -110,14 +151,17 @@ DENG2_PIMPL(ClientApp)
     void initScriptBindings()
     {
         Function::registerNativeEntryPoint("App_GamePlugin", Binding_App_GamePlugin);
+        Function::registerNativeEntryPoint("App_LoadFont", Binding_App_LoadFont);
 
-        self.scriptSystem().nativeModule("App")
-                .addFunction("gamePlugin", refless(new Function("App_GamePlugin"))).setReadOnly();
+        Record &appModule = self.scriptSystem().nativeModule("App");
+        appModule.addFunction("gamePlugin", refless(new Function("App_GamePlugin"))).setReadOnly();
+        appModule.addFunction("loadFont",   refless(new Function("App_LoadFont", Function::Arguments() << "fileName"))).setReadOnly();
     }
 
     void deinitScriptBindings()
     {
         Function::unregisterNativeEntryPoint("App_GamePlugin");
+        Function::unregisterNativeEntryPoint("App_LoadFont");
     }
 
     /**
@@ -127,8 +171,8 @@ DENG2_PIMPL(ClientApp)
     {
 #ifdef MACOSX
         menuBar = new QMenuBar;
-        QMenu* gameMenu = menuBar->addMenu("&Game");
-        QAction* checkForUpdates = gameMenu->addAction("Check For &Updates...", Updater_Instance(),
+        QMenu *gameMenu = menuBar->addMenu("&Game");
+        QAction *checkForUpdates = gameMenu->addAction("Check For &Updates...", updater.data(),
                                                        SLOT(checkNowShowingProgress()));
         checkForUpdates->setMenuRole(QAction::ApplicationSpecificRole);
 #endif
@@ -172,11 +216,6 @@ void ClientApp::initialize()
 
     initSubsystems();
 
-    // Check for updates automatically.
-    Updater_Init();
-
-    d->setupAppMenu();
-
     // Initialize.
 #if WIN32
     if(!DD_Win32_Init())
@@ -202,6 +241,10 @@ void ClientApp::initialize()
     // Create the window system.
     d->winSys = new WindowSystem;
     addSystem(*d->winSys);
+
+    // Check for updates automatically.
+    d->updater.reset(new Updater);
+    d->setupAppMenu();
 
     Plug_LoadAll();
 
@@ -259,6 +302,12 @@ ClientApp &ClientApp::app()
     return *clientAppSingleton;
 }
 
+Updater &ClientApp::updater()
+{
+    DENG2_ASSERT(!app().d->updater.isNull());
+    return *app().d->updater;
+}
+
 ServerLink &ClientApp::serverLink()
 {
     ClientApp &a = ClientApp::app();
@@ -282,7 +331,7 @@ WindowSystem &ClientApp::windowSystem()
 
 WidgetActions &ClientApp::widgetActions()
 {
-    return *app().d->widgetActions.get();
+    return *app().d->widgetActions;
 }
 
 GLShaderBank &ClientApp::glShaderBank()
@@ -298,4 +347,21 @@ Games &ClientApp::games()
 World &ClientApp::world()
 {
     return app().d->world;
+}
+
+void ClientApp::openHomepageInBrowser()
+{
+    openInBrowser(QUrl(DOOMSDAY_HOMEURL));
+}
+
+void ClientApp::openInBrowser(QUrl url)
+{
+    // Get out of fullscreen mode.
+    int windowed[] = {
+        ClientWindow::Fullscreen, false,
+        ClientWindow::End
+    };
+    ClientWindow::main().changeAttributes(windowed);
+
+    QDesktopServices::openUrl(url);
 }

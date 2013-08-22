@@ -20,7 +20,6 @@
 #include "ui/widgets/gltextcomposer.h"
 #include "ui/widgets/fontlinewrapping.h"
 #include "ui/widgets/atlasproceduralimage.h"
-#include "ui/widgets/guirootwidget.h"
 
 #include <de/Drawable>
 #include <de/AtlasTexture>
@@ -29,7 +28,7 @@
 using namespace de;
 using namespace ui;
 
-DENG2_PIMPL(LabelWidget),
+DENG_GUI_PIMPL(LabelWidget),
 DENG2_OBSERVES(Atlas, Reposition),
 public Font::RichFormat::IStyle
 {
@@ -43,6 +42,7 @@ public Font::RichFormat::IStyle
     Alignment lineAlign;
     Alignment imageAlign;
     ContentFit imageFit;
+    Vector2f overrideImageSize;
     float imageScale;
     Vector4f imageColor;
 
@@ -50,7 +50,8 @@ public Font::RichFormat::IStyle
     ConstantRule *height;
 
     // Style.
-    int margin;
+    Vector2i tlMargin;
+    Vector2i brMargin;
     DotPath gapId;
     int gap;
     ColorBank::Color highlightColor;
@@ -101,8 +102,12 @@ public Font::RichFormat::IStyle
     {
         Style const &st = self.style();
 
-        margin = self.margin().valuei();
-        gap    = st.rules().rule(gapId).valuei();
+        tlMargin  = Vector2i(self.margin(ui::Left).valuei(),
+                             self.margin(ui::Up).valuei());
+        brMargin  = Vector2i(self.margin(ui::Right).valuei(),
+                             self.margin(ui::Down).valuei());
+
+        gap = st.rules().rule(gapId).valuei();
 
         // Colors.
         highlightColor = st.colors().color("label.highlight");
@@ -146,17 +151,11 @@ public Font::RichFormat::IStyle
         return self.style().richStyleFormat(contentStyle, sizeFactor, fontWeight, fontStyle, colorIndex);
     }
 
-    AtlasTexture &atlas()
-    {
-        DENG2_ASSERT(self.hasRoot());
-        return self.root().atlas();
-    }
-
     void glInit()
     {
         drawable.addBuffer(new VertexBuf);
-        self.root().shaders().build(drawable.program(), "generic.textured.color_ucolor")
-                << uMvpMatrix << uColor << self.root().uAtlas();
+        shaders().build(drawable.program(), "generic.textured.color_ucolor")
+                << uMvpMatrix << uColor << uAtlas();
 
         composer.setAtlas(atlas());
         composer.setWrapping(wraps);
@@ -183,6 +182,10 @@ public Font::RichFormat::IStyle
 
     Vector2f imageSize() const
     {
+        if(overrideImageSize.x > 0 && overrideImageSize.y > 0)
+        {
+            return overrideImageSize;
+        }
         return image.isNull()? Vector2f() : image->size();
     }
 
@@ -193,7 +196,7 @@ public Font::RichFormat::IStyle
      */
     void contentPlacement(ContentLayout &layout) const
     {
-        Rectanglei const contentRect = self.rule().recti().shrunk(margin);
+        Rectanglei const contentRect = self.rule().recti().adjusted(tlMargin, -brMargin);
 
         Vector2f const imgSize = imageSize() * imageScale;
 
@@ -338,22 +341,50 @@ public Font::RichFormat::IStyle
         return Vector2ui(wraps.width(), wraps.totalHeightInPixels());
     }
 
+    /**
+     * Determines the maximum amount of width available for text, taking into
+     * account the given constraints for the possible image of the label.
+     */
     int availableTextWidth() const
     {
         int w = 0;
+        int h = 0;
+
+        // The theorical upper limit is the entire view (when expanding) or
+        // the given widget width.
         if(horizPolicy == Expand)
         {
             // Expansion can occur to full view width.
-            w = self.root().viewSize().x - 2 * margin;
+            w = root().viewSize().x - (tlMargin.x + brMargin.x);
         }
         else
         {
-            w = self.rule().width().valuei() - 2 * margin;
+            w = self.rule().width().valuei() - (tlMargin.x + brMargin.x);
         }
-        if(textAlign & (AlignLeft | AlignRight))
+        if(vertPolicy != Expand)
         {
-            // Image will be placed beside the text.
-            w -= gap + imageSize().x;
+            h = self.rule().height().valuei() - (tlMargin.y + brMargin.y);
+        }
+
+        if(hasImage())
+        {
+            if(textAlign & (AlignLeft | AlignRight))
+            {
+                // Image will be placed beside the text.
+                Vector2f imgSize = imageSize() * imageScale;
+
+                if(vertPolicy != Expand)
+                {
+                    if(imageFit & FitToHeight && imgSize.y > h)
+                    {
+                        float factor = float(h) / imgSize.y;
+                        imgSize.y *= factor;
+                        if(imageFit & OriginalAspectRatio) imgSize.x *= factor;
+                    }
+                }
+
+                w -= gap + imgSize.x;
+            }
         }
         return w;
     }
@@ -383,8 +414,8 @@ public Font::RichFormat::IStyle
             ContentLayout layout;
             contentPlacement(layout);
             Rectanglef combined = layout.image | layout.text;
-            width->set(combined.width() + 2 * margin);
-            height->set(combined.height() + 2 * margin);
+            width->set (combined.width()  + tlMargin.x + brMargin.x);
+            height->set(combined.height() + tlMargin.y + brMargin.y);
         }
     }
 
@@ -480,6 +511,11 @@ void LabelWidget::setImageAlignment(Alignment const &imageAlign)
 void LabelWidget::setImageFit(ContentFit const &fit)
 {
     d->imageFit = fit;
+}
+
+void LabelWidget::setOverrideImageSize(Vector2f const &size)
+{
+    d->overrideImageSize = size;
 }
 
 void LabelWidget::setImageScale(float scaleFactor)

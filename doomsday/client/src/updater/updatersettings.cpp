@@ -19,7 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#include "updatersettings.h"
+#include "updater/updatersettings.h"
 #include "versioninfo.h"
 #include <QDateTime>
 #include <QDesktopServices>
@@ -199,19 +199,29 @@ de::String UpdaterSettings::lastCheckAgo() const
     if(delta < 60.0)
     {
         t = delta.asMilliSeconds() / 1000;
-        return de::String("%1 second%2 ago").arg(t).arg(t != 1? "s" : "");
+        return de::String(QObject::tr("%1 %2 ago")).arg(t).
+                          arg(t != 1? QObject::tr("seconds") : QObject::tr("second"));
     }
 
     t = delta.asMinutes();
     if(t <= 60)
     {
-        return de::String("%1 minute%2 ago").arg(t).arg(t != 1? "s" : "");
+        return de::String(QObject::tr("%1 %2 ago")).arg(t).
+                arg(t != 1? QObject::tr("minutes") : QObject::tr("minute"));
     }
 
     t = delta.asHours();
     if(t <= 24)
     {
-        return de::String("%1 hour%2 ago").arg(t).arg(t != 1? "s" : "");
+        return de::String(QObject::tr("%1 %2 ago")).arg(t).
+                arg(t != 1? QObject::tr("hours") : QObject::tr("hour"));
+    }
+
+    t = delta.asDays();
+    if(t <= 7)
+    {
+        return de::String(QObject::tr("%1 %2 ago")).arg(t).
+                arg(t != 1? QObject::tr("days") : QObject::tr("day"));
     }
 
     return de::String("on " + when.asText(de::Time::FriendlyFormat));

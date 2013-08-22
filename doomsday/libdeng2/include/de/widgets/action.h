@@ -45,6 +45,13 @@ public:
      * implementation of the method.
      */
     virtual void trigger();
+
+    /**
+     * Returns a duplicate copy of the action.
+     *
+     * @return Duplicated action. Caller gets ownership.
+     */
+    virtual Action *duplicate() const = 0;
 };
 
 } // namespace de

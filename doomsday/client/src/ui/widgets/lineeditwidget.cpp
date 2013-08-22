@@ -35,7 +35,7 @@ static TimeDelta const ANIM_SPAN = .5f;
 static duint const ID_BUF_TEXT   = 1;
 static duint const ID_BUF_CURSOR = 2;
 
-DENG2_PIMPL(LineEditWidget),
+DENG_GUI_PIMPL(LineEditWidget),
 DENG2_OBSERVES(Atlas, Reposition)
 {
     typedef GLBufferT<Vertex2TexRgba> VertexBuf;
@@ -109,7 +109,7 @@ DENG2_OBSERVES(Atlas, Reposition)
 
     void updateProjection()
     {
-        uMvpMatrix = self.root().projMatrix2D();
+        uMvpMatrix = root().projMatrix2D();
     }
 
     void updateBackground()
@@ -125,11 +125,6 @@ DENG2_OBSERVES(Atlas, Reposition)
         self.set(bg);
     }
 
-    AtlasTexture &atlas()
-    {
-        return self.root().atlas();
-    }
-
     void glInit()
     {
         composer.setAtlas(atlas());
@@ -138,12 +133,12 @@ DENG2_OBSERVES(Atlas, Reposition)
         drawable.addBuffer(ID_BUF_TEXT, new VertexBuf);
         drawable.addBufferWithNewProgram(ID_BUF_CURSOR, new VertexBuf, "cursor");
 
-        self.root().shaders().build(drawable.program(), "generic.textured.color_ucolor")
+        shaders().build(drawable.program(), "generic.textured.color_ucolor")
                 << uMvpMatrix
                 << uColor
-                << self.root().uAtlas();
+                << uAtlas();
 
-        self.root().shaders().build(drawable.program("cursor"), "generic.color_ucolor")
+        shaders().build(drawable.program("cursor"), "generic.color_ucolor")
                 << uMvpMatrix
                 << uCursorColor;
 

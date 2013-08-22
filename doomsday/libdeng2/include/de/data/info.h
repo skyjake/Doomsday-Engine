@@ -94,19 +94,7 @@ public:
         bool isBlock() const { return _type == Block; }
         String const &name() const { return _name; }
 
-        template <typename T>
-        T &as() {
-            T *t = dynamic_cast<T *>(this);
-            DENG2_ASSERT(t != 0);
-            return *t;
-        }
-
-        template <typename T>
-        T const &as() const {
-            T const *t = dynamic_cast<T const *>(this);
-            DENG2_ASSERT(t != 0);
-            return *t;
-        }
+        DENG2_IS_AS_METHODS()
 
         void setName(String const &name) { _name = name.toLower(); }
 

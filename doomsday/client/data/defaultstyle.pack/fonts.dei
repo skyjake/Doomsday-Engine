@@ -4,10 +4,19 @@
 # - weight: normal bold light
 # - style: normal italic
 
-script { import Version, gui }
+script { 
+    import Version, gui
+    
+    # Load some custom fonts.
+    #import App, Path
+    #fontDir = Path.fileNamePath(__file__) / "fonts/customfont"
+    #App.loadFont(fontDir / "FontName-Bold.ttf")
+    #App.loadFont(fontDir / "FontName-Regular.ttf")
+    #App.loadFont(fontDir / "FontName-Light.ttf") 
+}
 
 font default condition "Version.OS == 'windows'" {
-    family: Segoe UI
+    family: Arial
     size: 12pt
     weight: normal
     style: normal
@@ -50,12 +59,15 @@ group {
 }
 
 font title inherits default {
-    size $: gui.scale(__this__.size, 1.5)
-    weight: bold
+    condition: Version.OS == 'macx'
+    size $: gui.scale(__this__.size, 1.75)
+    weight: light
 }
 
-group log {
-    font normal inherits default {}
+font title inherits default {
+    condition: Version.OS != 'macx'
+    size $: gui.scale(__this__.size, 1.4)
+    weight: bold
 }
 
 group editor {
@@ -74,4 +86,14 @@ group separator {
         size $: gui.scale(__this__.size, 0.75)
         weight: bold
     }
+}
+
+group choice {
+    font selected inherits default {
+        weight: bold
+    }
+}
+
+group log {
+    font normal inherits default {}
 }

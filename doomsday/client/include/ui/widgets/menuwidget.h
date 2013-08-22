@@ -21,6 +21,12 @@
 
 #include "scrollareawidget.h"
 #include "buttonwidget.h"
+#include "context.h"
+#include "contextwidgetorganizer.h"
+#include "actionitem.h"
+#include "submenuitem.h"
+#include "variabletoggleitem.h"
+#include "gridlayout.h"
 
 /**
  * Menu with an N-by-M grid of items (child widgets).
@@ -32,25 +38,14 @@
  * A sort order for the items can be optionally defined using
  * MenuWidget::ISortOrder. Sorting affects layout only, not the actual order of
  * the children.
+ *
+ * MenuWidget uses a ContextWidgetOrganizer to create widgets based on the
+ * provided menu items. The organizer can be queried to find widgets matching
+ * specific items.
  */
 class MenuWidget : public ScrollAreaWidget
 {
-public:
-    class ISortOrder
-    {
-    public:
-        virtual ~ISortOrder() {}
-
-        /**
-         * Determines the sort order for a pair of menu items.
-         *
-         * @param a  First menu item.
-         * @param b  Second menu item.
-         *
-         * @return -1 if a < b; +1 if a > b; 0 if equal.
-         */
-        virtual int compareMenuItemsForSorting(Widget const &a, Widget const &b) const = 0;
-    };
+    Q_OBJECT
 
 public:
     MenuWidget(de::String const &name = "");
@@ -67,8 +62,8 @@ public:
      *
      * If one of the dimensions is set to ui::Expand policy, the menu's size in
      * that dimension is determined by the summed up size of the children, and
-     * the specified number of columns/rows is ignored for that dimension. Only
-     * one of the dimensions can be set to Expand.
+     * the specified number of columns/rows is ignored for that dimension. Both
+     * dimensions cannot be set to zero columns/rows.
      *
      * @param columns       Number of columns in the grid.
      * @param columnPolicy  Policy for sizing columns.
@@ -78,22 +73,19 @@ public:
     void setGridSize(int columns, ui::SizePolicy columnPolicy,
                      int rows, ui::SizePolicy rowPolicy);
 
+    ui::Context &items();
+
+    ui::Context const &items() const;
+
     /**
-     * Sets the sort order for item layout.
+     * Sets the data context of the menu to some existing context. The context
+     * must remain in existence until the MenuWidget is deleted.
      *
-     * @param sorting  Sort order object. MenuWidget takes ownership.
+     * @param items  Ownership not taken.
      */
-    void setLayoutSortOrder(ISortOrder *sorting);
+    void setItems(ui::Context const &items);
 
-    GuiWidget *addItem(GuiWidget *anyWidget);
-
-    ButtonWidget *addItem(de::String const &styledText, de::Action *action = 0);
-
-    ButtonWidget *addItem(de::Image const &image, de::String const &styledText, de::Action *action = 0);
-
-    GuiWidget *addSeparator(de::String const &labelText = "");
-
-    void removeItem(GuiWidget *child);
+    ContextWidgetOrganizer const &organizer() const;
 
     /**
      * Returns the number of visible items in the menu. Hidden items are not
@@ -108,17 +100,15 @@ public:
     void updateLayout();
 
     /**
-     * Constructs a rule for the width of a column, based on the widths of the
-     * items in the column.
-     *
-     * @param column  Column index.
-     *
-     * @return Width rule with a reference count of one (given to the caller).
+     * Provides read-only access to the layout metrics.
      */
-    de::Rule const *newColumnWidthRule(int column) const;
+    GridLayout const &layout() const;
 
     // Events.
     void update();
+
+public slots:
+    void dismissPopups();
 
 private:
     DENG2_PRIVATE(d)

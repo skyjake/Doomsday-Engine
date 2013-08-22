@@ -45,7 +45,10 @@ DENG2_PIMPL(GuiWidget)
     // Style.
     DotPath fontId;
     DotPath textColorId;
-    DotPath marginId;
+    DotPath marginLeftId;
+    DotPath marginTopId;
+    DotPath marginRightId;
+    DotPath marginBottomId;
 
     // Background blurring.
     bool blurInited;
@@ -67,7 +70,10 @@ DENG2_PIMPL(GuiWidget)
           opacity(1.f, Animation::Linear),
           fontId("default"),
           textColorId("text"),
-          marginId("gap"),
+          marginLeftId("gap"),
+          marginTopId("gap"),
+          marginRightId("gap"),
+          marginBottomId("gap"),
           blurInited(false),
           uBlurMvpMatrix("uMvpMatrix", GLUniform::Mat4),
           uBlurColor    ("uColor",     GLUniform::Vec4),
@@ -86,8 +92,21 @@ DENG2_PIMPL(GuiWidget)
 
     ~Instance()
     {        
-        // Deinitialize now if it hasn't been done already.
-        self.deinitialize();
+        // The base class will delete all children, but we need to deinitialize
+        // them first.
+        self.notifyTree(&Widget::deinitialize);
+
+        deinitBlur();
+
+        /*
+         * Deinitialization must occur before destruction so that GL resources
+         * are not leaked. Derived classes are responsible for deinitializing
+         * first before beginning destruction.
+         */
+#ifdef DENG2_DEBUG
+        if(inited) qDebug() << "GuiWidget" << &self << self.name() << "is still inited!";
+        DENG2_ASSERT(!inited);
+#endif
     }
 
 #ifdef DENG2_DEBUG
@@ -182,7 +201,8 @@ DENG2_PIMPL(GuiWidget)
             return;
         }
 
-        if(background.type != Background::Blurred)
+        if(background.type != Background::Blurred &&
+           background.type != Background::BlurredWithBorderGlow)
         {
             deinitBlur();
             return;
@@ -225,6 +245,12 @@ GuiWidget::GuiWidget(String const &name) : Widget(name), d(new Instance(this))
     d->rule.setDebugName(name);
 }
 
+void GuiWidget::destroy(GuiWidget *widget)
+{
+    widget->deinitialize();
+    delete widget;
+}
+
 GuiRootWidget &GuiWidget::root()
 {
     return static_cast<GuiRootWidget &>(Widget::root());
@@ -233,6 +259,11 @@ GuiRootWidget &GuiWidget::root()
 GuiRootWidget &GuiWidget::root() const
 {
     return static_cast<GuiRootWidget &>(Widget::root());
+}
+
+Widget::Children GuiWidget::childWidgets() const
+{
+    return Widget::children();
 }
 
 Widget *GuiWidget::parentWidget() const
@@ -266,9 +297,13 @@ ColorBank::Colorf GuiWidget::textColorf() const
     return style().colors().colorf(d->textColorId);
 }
 
-Rule const &GuiWidget::margin() const
+Rule const &GuiWidget::margin(ui::Direction dir) const
 {
-    return style().rules().rule(d->marginId);
+    return style().rules().rule(
+                dir == ui::Left?  d->marginLeftId  :
+                dir == ui::Up?    d->marginTopId   :
+                dir == ui::Right? d->marginRightId :
+                                  d->marginBottomId);
 }
 
 void GuiWidget::setTextColor(DotPath const &id)
@@ -279,8 +314,29 @@ void GuiWidget::setTextColor(DotPath const &id)
 
 void GuiWidget::setMargin(DotPath const &id)
 {
-    d->marginId = id;
+    setMargins(id, id, id, id);
+}
+
+void GuiWidget::setMargin(ui::Direction dir, DotPath const &id)
+{
+    switch(dir)
+    {
+    case ui::Left:  d->marginLeftId   = id; break;
+    case ui::Up:    d->marginTopId    = id; break;
+    case ui::Right: d->marginRightId  = id; break;
+    case ui::Down:  d->marginBottomId = id; break;
+    default: return;
+    }
     d->styleChanged = true;
+}
+
+void GuiWidget::setMargins(DotPath const &leftId, DotPath const &topId, DotPath const &rightId, DotPath const &bottomId)
+{
+    d->marginLeftId   = leftId;
+    d->marginTopId    = topId;
+    d->marginRightId  = rightId;
+    d->marginBottomId = bottomId;
+    d->styleChanged   = true;
 }
 
 RuleRectangle &GuiWidget::rule()
@@ -315,7 +371,7 @@ Rectanglef GuiWidget::normalizedContentRect() const
 
 static void deleteGuiWidget(void *ptr)
 {
-    delete reinterpret_cast<GuiWidget *>(ptr);
+    GuiWidget::destroy(reinterpret_cast<GuiWidget *>(ptr));
 }
 
 void GuiWidget::deleteLater()
@@ -326,6 +382,7 @@ void GuiWidget::deleteLater()
 void GuiWidget::set(Background const &bg)
 {
     d->background = bg;
+    requestGeometry();
 }
 
 bool GuiWidget::clipped() const
@@ -359,6 +416,10 @@ float GuiWidget::visibleOpacity() const
             opacity *= w->d->opacity;
         }
     }
+
+    // Disabled widgets are automatically made translucent.
+    if(isDisabled()) opacity *= .3f;
+
     return opacity;
 }
 
@@ -501,30 +562,6 @@ GuiWidget::MouseClickStatus GuiWidget::handleMouseClick(Event const &event)
     return MouseClickUnrelated;
 }
 
-void GuiWidget::addedChildWidget(Widget &widget)
-{
-    GuiWidget *gw = dynamic_cast<GuiWidget *>(&widget);
-    if(gw)
-    {
-        addedChildWidget(*gw);
-    }
-}
-
-void GuiWidget::removedChildWidget(Widget &widget)
-{
-    GuiWidget *gw = dynamic_cast<GuiWidget *>(&widget);
-    if(gw)
-    {
-        removedChildWidget(*gw);
-    }
-}
-
-void GuiWidget::addedChildWidget(GuiWidget &widget)
-{}
-
-void GuiWidget::removedChildWidget(GuiWidget &widget)
-{}
-
 void GuiWidget::glInit()
 {}
 
@@ -564,9 +601,15 @@ bool GuiWidget::geometryRequested() const
     return d->needGeometry;
 }
 
+bool GuiWidget::isInitialized() const
+{
+    return d->inited;
+}
+
 void GuiWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
 {
     if(d->background.type != Background::Blurred &&
+       d->background.type != Background::BlurredWithBorderGlow &&
        d->background.type != Background::SharedBlur)
     {
         // Is there a solid fill?
@@ -588,6 +631,7 @@ void GuiWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
         break;
 
     case Background::BorderGlow:
+    case Background::BlurredWithBorderGlow:
         verts.makeFlexibleFrame(rule().recti().expanded(d->background.thickness),
                                 d->background.thickness,
                                 d->background.color,

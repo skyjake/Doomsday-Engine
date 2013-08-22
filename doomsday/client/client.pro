@@ -340,42 +340,61 @@ DENG_HEADERS += \
     include/ui/style.h \
     include/ui/signalaction.h \
     include/ui/sys_input.h \
-    include/ui/ui2_main.h \
     include/ui/ui_main.h \
     include/ui/ui_panel.h \
-    include/ui/widgets/alignment.h \
+    include/ui/ui2_main.h \
+    include/ui/uidefs.h \
+    include/ui/widgets/aboutdialog.h \
+    include/ui/widgets/actionitem.h \
     include/ui/widgets/atlasproceduralimage.h \
     include/ui/widgets/blurwidget.h \
     include/ui/widgets/busywidget.h \
-    include/ui/widgets/buttonwidget.h \ 
+    include/ui/widgets/buttonwidget.h \
+    include/ui/widgets/choicewidget.h \
     include/ui/widgets/consolecommandwidget.h \
     include/ui/widgets/consolewidget.h \
+    include/ui/widgets/context.h \
+    include/ui/widgets/contextwidgetorganizer.h \
     include/ui/widgets/documentwidget.h \
     include/ui/widgets/gameselectionwidget.h \
+    include/ui/widgets/dialogwidget.h \
     include/ui/widgets/gltextcomposer.h \
+    include/ui/widgets/gridlayout.h \
     include/ui/widgets/guirootwidget.h \
     include/ui/widgets/guiwidget.h \
     include/ui/widgets/fontlinewrapping.h \
+    include/ui/widgets/item.h \
     include/ui/widgets/labelwidget.h \
     include/ui/widgets/legacywidget.h \
     include/ui/widgets/lineeditwidget.h \
+    include/ui/widgets/listcontext.h \
     include/ui/widgets/logwidget.h \
     include/ui/widgets/menuwidget.h \
+    include/ui/widgets/messagedialog.h \
     include/ui/widgets/notificationwidget.h \
     include/ui/widgets/popupmenuwidget.h \
     include/ui/widgets/popupwidget.h \
     include/ui/widgets/proceduralimage.h \
     include/ui/widgets/progresswidget.h \
     include/ui/widgets/scrollareawidget.h \
+    include/ui/widgets/sequentiallayout.h \
+    include/ui/widgets/submenuitem.h \
     include/ui/widgets/styledlogsinkformatter.h \
     include/ui/widgets/taskbarwidget.h \
     include/ui/widgets/togglewidget.h \
+    include/ui/widgets/variabletoggleitem.h \
     include/ui/widgets/variabletogglewidget.h \
     include/ui/widgets/widgetactions.h \
     include/ui/windowsystem.h \
     include/ui/zonedebug.h \
     include/updater.h \
+    include/updater/downloaddialog.h \
+    include/updater/processcheckdialog.h \
+    include/updater/updateavailabledialog.h \
+    include/updater/updatersettings.h \
+    include/updater/updatersettingsdialog.h \
     include/uri.hh \
+    include/versioninfo.h \
     include/world/blockmap.h \
     include/world/bsp/bsptreenode.h \
     include/world/bsp/convexsubspace.h \
@@ -414,14 +433,7 @@ DENG_HEADERS += \
     include/world/surface.h \
     include/world/thinkers.h \
     include/world/vertex.h \
-    include/world/world.h \
-    src/updater/downloaddialog.h \
-    src/updater/processcheckdialog.h \
-    src/updater/updateavailabledialog.h \
-    src/updater/updaterdialog.h \
-    src/updater/updatersettings.h \
-    src/updater/updatersettingsdialog.h \
-    src/updater/versioninfo.h
+    include/world/world.h
 
 INCLUDEPATH += \
     $$DENG_INCLUDE_DIR \
@@ -429,7 +441,8 @@ INCLUDEPATH += \
 
 HEADERS += \
     $$DENG_API_HEADERS \
-    $$DENG_HEADERS
+    $$DENG_HEADERS \
+    include/ui/widgets/guiwidgetprivate.h
 
 # Platform-specific sources.
 win32 {
@@ -649,28 +662,38 @@ SOURCES += \
     src/ui/ui2_main.cpp \
     src/ui/ui_main.cpp \
     src/ui/ui_panel.cpp \
+    src/ui/widgets/aboutdialog.cpp \
     src/ui/widgets/blurwidget.cpp \
     src/ui/widgets/busywidget.cpp \
     src/ui/widgets/buttonwidget.cpp \
+    src/ui/widgets/choicewidget.cpp \
     src/ui/widgets/consolecommandwidget.cpp \
     src/ui/widgets/consolewidget.cpp \
+    src/ui/widgets/context.cpp \
+    src/ui/widgets/contextwidgetorganizer.cpp \
     src/ui/widgets/documentwidget.cpp \
     src/ui/widgets/gameselectionwidget.cpp \
+    src/ui/widgets/dialogwidget.cpp \
     src/ui/widgets/gltextcomposer.cpp \
+    src/ui/widgets/gridlayout.cpp \
     src/ui/widgets/guirootwidget.cpp \
     src/ui/widgets/guiwidget.cpp \
     src/ui/widgets/fontlinewrapping.cpp \
+    src/ui/widgets/item.cpp \
     src/ui/widgets/labelwidget.cpp \
     src/ui/widgets/legacywidget.cpp \
     src/ui/widgets/lineeditwidget.cpp \
+    src/ui/widgets/listcontext.cpp \
     src/ui/widgets/logwidget.cpp \
     src/ui/widgets/menuwidget.cpp \
+    src/ui/widgets/messagedialog.cpp \
     src/ui/widgets/notificationwidget.cpp \
     src/ui/widgets/popupmenuwidget.cpp \
     src/ui/widgets/popupwidget.cpp \
     src/ui/widgets/proceduralimage.cpp \
     src/ui/widgets/progresswidget.cpp \
     src/ui/widgets/scrollareawidget.cpp \
+    src/ui/widgets/sequentiallayout.cpp \
     src/ui/widgets/styledlogsinkformatter.cpp \
     src/ui/widgets/taskbarwidget.cpp \
     src/ui/widgets/togglewidget.cpp \
@@ -682,7 +705,6 @@ SOURCES += \
     src/updater/processcheckdialog.cpp \
     src/updater/updateavailabledialog.cpp \
     src/updater/updater.cpp \
-    src/updater/updaterdialog.cpp \
     src/updater/updatersettings.cpp \
     src/updater/updatersettingsdialog.cpp \
     src/uri.cpp \

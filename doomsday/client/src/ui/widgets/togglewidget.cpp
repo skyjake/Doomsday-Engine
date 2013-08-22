@@ -31,6 +31,7 @@ static TimeDelta const SWITCH_ANIM_SPAN = 0.3;
 DENG2_PIMPL(ToggleWidget),
 DENG2_OBSERVES(ButtonWidget, Press)
 {
+    /// Draws the animated I/O toggle indicator.
     struct ToggleProceduralImage : public ProceduralImage
     {
         ToggleProceduralImage(GuiWidget &owner)
@@ -64,6 +65,7 @@ DENG2_OBSERVES(ButtonWidget, Press)
             float p = _pos;
 
             ColorBank::Colorf const &accentColor = style().colors().colorf("accent");
+            ColorBank::Colorf const &textColor   = style().colors().colorf("text");
 
             // Clamp the position to non-fractional coordinates.
             Rectanglei const recti(rect.topLeft.toVector2i(), rect.bottomRight.toVector2i());
@@ -72,13 +74,13 @@ DENG2_OBSERVES(ButtonWidget, Press)
             ColorBank::Colorf bgColor = style().colors().colorf("background");
             bgColor.w = 1;
             float c = (.3f + .33f * p);
-            verts.makeQuad(recti, accentColor * Vector4f(c, c, c, 1),
+            verts.makeQuad(recti, (accentColor * p + textColor * (1-p)) * Vector4f(c, c, c, 1),
                            atlas().imageRectf(_owner.root().solidWhitePixel()).middle());
 
             Id onOff = _owner.root().toggleOnOff();
 
             // The on/off graphic.
-            verts.makeQuad(recti, accentColor * (5 + p) / 6, atlas().imageRectf(onOff));
+            verts.makeQuad(recti, accentColor * p + textColor * (1-p) * .8f, atlas().imageRectf(onOff));
 
             // The flipper.
             int flipWidth = size().x - size().y + 2;
@@ -95,14 +97,14 @@ DENG2_OBSERVES(ButtonWidget, Press)
     };
 
     ToggleState state;
-    ToggleProceduralImage *procImage;
+    ToggleProceduralImage *procImage; // not owned
 
     Instance(Public *i)
         : Base(i),
           state(Inactive),
           procImage(new ToggleProceduralImage(self))
     {
-        self.setImage(procImage);
+        self.setImage(procImage); // base class owns it
 
         self.audienceForPress += this;
     }

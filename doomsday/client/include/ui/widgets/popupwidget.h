@@ -20,7 +20,7 @@
 #define DENG_CLIENT_POPUPWIDGET_H
 
 #include "scrollareawidget.h"
-#include "alignment.h"
+#include "../uidefs.h"
 
 /**
  * Popup anchored to a specified point.
@@ -30,6 +30,9 @@
 class PopupWidget : public GuiWidget
 {
     Q_OBJECT
+
+public:
+    DENG2_DEFINE_AUDIENCE(Close, void popupBeingClosed(PopupWidget &))
 
 public:
     PopupWidget(de::String const &name = "");
@@ -44,6 +47,8 @@ public:
     void setContent(GuiWidget *content);
 
     GuiWidget &content() const;
+
+    void setAnchorAndOpeningDirection(de::RuleRectangle const &rule, ui::Direction dir);
 
     void setAnchor(de::Vector2i const &pos);
     void setAnchorX(int xPos);
@@ -60,7 +65,17 @@ public:
      */
     void setOpeningDirection(ui::Direction dir);
 
+    ui::Direction openingDirection() const;
+
     bool isOpen() const;
+
+    /**
+     * Tells the popup to delete itself after being dismissed. The default is that
+     * the popup does not get deleted.
+     *
+     * @param deleteAfterDismiss  @c true to delete after dismissal.
+     */
+    void setDeleteAfterDismissed(bool deleteAfterDismiss);
 
     // Events.
     void viewResized();
@@ -99,6 +114,7 @@ protected:
 
     virtual void preparePopupForOpening();
     virtual void popupClosing();
+    virtual void popupDismissed();
 
 private:
     DENG2_PRIVATE(d)

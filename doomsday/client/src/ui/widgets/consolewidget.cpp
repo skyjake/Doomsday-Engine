@@ -21,7 +21,7 @@
 #include "ui/widgets/buttonwidget.h"
 #include "ui/widgets/consolecommandwidget.h"
 #include "ui/widgets/popupmenuwidget.h"
-#include "ui/widgets/variabletogglewidget.h"
+#include "ui/widgets/variabletoggleitem.h"
 #include "ui/widgets/logwidget.h"
 #include "ui/clientwindow.h"
 #include "ui/commandaction.h"
@@ -81,14 +81,6 @@ DENG2_PIMPL(ConsoleWidget)
         releaseRef(horizShift);
         releaseRef(width);
         releaseRef(height);
-    }
-
-    void glInit()
-    {
-    }
-
-    void glDeinit()
-    {
     }
 
     void expandLog(int delta, bool useOffsetAnimation)
@@ -218,17 +210,18 @@ ConsoleWidget::ConsoleWidget() : GuiWidget("console"), d(new Instance(this))
     d->menu = new PopupMenuWidget;
     d->menu->setAnchor(d->button->rule().left() + d->button->rule().width() / 2,
                        d->button->rule().top());
-    d->menu->addItem(tr("Clear Log"), new CommandAction("clear"));
-    d->menu->addItem(tr("Show Full Log"), new SignalAction(this, SLOT(showFullLog())));
-    d->menu->addItem(tr("Scroll to Bottom"), new SignalAction(d->log, SLOT(scrollToBottom())));
 
-    d->menu->addItem(new VariableToggleWidget(tr("Go to Bottom on Enter"), App::config()["console.snap"]));
+    d->menu->menu().items()
+            << new ui::ActionItem(tr("Clear Log"), new CommandAction("clear"))
+            << new ui::ActionItem(tr("Show Full Log"), new SignalAction(this, SLOT(showFullLog())))
+            << new ui::ActionItem(tr("Scroll to Bottom"), new SignalAction(d->log, SLOT(scrollToBottom())))
+            << new ui::VariableToggleItem(tr("Go to Bottom on Enter"), App::config()["console.snap"]);
 
     add(d->menu);
 
     // Signals.
     connect(d->cmdLine, SIGNAL(gotFocus()), this, SLOT(setFullyOpaque()));
-    connect(d->cmdLine, SIGNAL(lostFocus()), this, SLOT(setTranslucent()));
+    connect(d->cmdLine, SIGNAL(lostFocus()), this, SLOT(commandLineFocusLost()));
 }
 
 ButtonWidget &ConsoleWidget::button()
@@ -289,17 +282,6 @@ void ConsoleWidget::update()
         // can enable PageUp/Dn keys for the log.
         d->log->enablePageKeys(true);
     }
-}
-
-void ConsoleWidget::glInit()
-{
-    LOG_AS("ConsoleWidget");
-    d->glInit();
-}
-
-void ConsoleWidget::glDeinit()
-{
-    d->glDeinit();
 }
 
 bool ConsoleWidget::handleEvent(Event const &event)
@@ -402,10 +384,11 @@ void ConsoleWidget::setFullyOpaque()
     d->cmdLine->setOpacity(1, .25f);
 }
 
-void ConsoleWidget::setTranslucent()
+void ConsoleWidget::commandLineFocusLost()
 {
     d->button->setOpacity(.75f, .25f);
     d->cmdLine->setOpacity(.75f, .25f);
+    closeLog();
 }
 
 void ConsoleWidget::focusOnCommandLine()

@@ -1,4 +1,4 @@
-/** @file alignment.h  Alignment flags.
+/** @file uidefs.h  Common ui namespace definitions.
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef DENG_CLIENT_ALIGNMENT_H
-#define DENG_CLIENT_ALIGNMENT_H
+#ifndef DENG_CLIENT_UI_DEFS_H
+#define DENG_CLIENT_UI_DEFS_H
 
 #include <QFlags>
 
@@ -31,16 +31,26 @@ enum Direction
     Left,
     Up,
     Right,
-    Down
+    Down,
+    NoDirection
 };
 
 inline Direction opposite(Direction dir) {
     switch(dir) {
-    case Left:  return Right;
-    case Right: return Left;
-    case Up:    return Down;
-    case Down:  return Up;
+    case Left:        return Right;
+    case Right:       return Left;
+    case Up:          return Down;
+    case Down:        return Up;
+    case NoDirection: return NoDirection;
     }
+}
+
+inline bool isHorizontal(Direction dir) {
+    return dir == ui::Left || dir == ui::Right;
+}
+
+inline bool isVertical(Direction dir) {
+    return dir == ui::Up || dir == ui::Down;
 }
 
 /**
@@ -124,4 +134,4 @@ enum SizePolicy
 
 } // namespace ui
 
-#endif // DENG_CLIENT_ALIGNMENT_H
+#endif // DENG_CLIENT_UI_DEFS_H

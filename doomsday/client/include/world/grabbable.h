@@ -77,17 +77,7 @@ public:
 
     virtual ~Grabbable();
 
-    template <typename Type>
-    Type &as() {
-        DENG2_ASSERT(dynamic_cast<Type *>(this) != 0);
-        return *static_cast<Type *>(this);
-    }
-
-    template <typename Type>
-    Type const &as() const {
-        DENG2_ASSERT(dynamic_cast<Type const *>(this) != 0);
-        return *static_cast<Type const *>(this);
-    }
+    DENG2_IS_AS_METHODS()
 
     /**
      * Returns @c true iff the grabbable is currently grabbed.

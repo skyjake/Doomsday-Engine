@@ -24,7 +24,7 @@
 #include <de/Atlas>
 #include <de/GLBuffer>
 
-#include "alignment.h"
+#include "../uidefs.h"
 #include "fontlinewrapping.h"
 
 /**

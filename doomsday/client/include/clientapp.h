@@ -26,6 +26,7 @@
 #include "ui/inputsystem.h"
 #include "ui/windowsystem.h"
 #include "ui/widgets/widgetactions.h"
+#include "updater.h"
 #include "Games"
 #include "world/world.h"
 
@@ -34,6 +35,8 @@
  */
 class ClientApp : public de::GuiApp
 {
+    Q_OBJECT
+
 public:
     ClientApp(int &argc, char **argv);
 
@@ -50,6 +53,7 @@ public:
 public:
     static bool haveApp();
     static ClientApp &app();
+    static Updater &updater();
     static ServerLink &serverLink();
     static InputSystem &inputSystem();
     static WindowSystem &windowSystem();
@@ -57,6 +61,10 @@ public:
     static de::GLShaderBank &glShaderBank();
     static de::Games &games();
     static de::World &world();
+
+public slots:
+    void openHomepageInBrowser();
+    void openInBrowser(QUrl url);
 
 private:
     DENG2_PRIVATE(d)

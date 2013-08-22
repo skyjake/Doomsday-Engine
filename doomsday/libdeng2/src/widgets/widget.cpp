@@ -54,7 +54,9 @@ DENG2_PIMPL(Widget)
         while(!children.isEmpty())
         {
             children.first()->d->parent = 0;
-            delete children.takeFirst();
+            Widget *w = children.takeFirst();
+            //qDebug() << "deleting" << w << w->name();
+            delete w;
         }
         index.clear();
     }
@@ -70,11 +72,16 @@ Widget::~Widget()
         root().setFocus(0);
     }
 
+    audienceForParentChange.clear();
+
     // Remove from parent automatically.
     if(d->parent)
     {
         d->parent->remove(*this);
     }
+
+    // Notify everyone else.
+    DENG2_FOR_AUDIENCE(Deletion, i) i->widgetBeingDeleted(*this);
 }
 
 Id Widget::id() const
@@ -231,7 +238,7 @@ bool Widget::isEventRouted(int type, Widget *to) const
     return d->routing.contains(type) && d->routing[type] == to;
 }
 
-void Widget::clear()
+void Widget::clearTree()
 {
     d->clear();
 }
@@ -251,12 +258,24 @@ Widget &Widget::add(Widget *child)
     }
 
     // Notify.
-    addedChildWidget(*child);
+    DENG2_FOR_AUDIENCE(ChildAddition, i)
+    {
+        i->widgetChildAdded(*child);
+    }
     DENG2_FOR_EACH_OBSERVER(ParentChangeAudience, i, child->audienceForParentChange)
     {
         i->widgetParentChanged(*child, 0, this);
     }
 
+    return *child;
+}
+
+Widget &Widget::insertBefore(Widget *child, Widget const &otherChild)
+{    
+    DENG2_ASSERT(child != &otherChild);
+
+    add(child);
+    moveChildBefore(child, otherChild);
     return *child;
 }
 
@@ -272,7 +291,10 @@ Widget *Widget::remove(Widget &child)
     }
 
     // Notify.
-    removedChildWidget(child);
+    DENG2_FOR_AUDIENCE(ChildRemoval, i)
+    {
+        i->widgetChildRemoved(child);
+    }
     DENG2_FOR_EACH_OBSERVER(ParentChangeAudience, i, child.audienceForParentChange)
     {
         i->widgetParentChanged(child, this, 0);
@@ -304,6 +326,35 @@ Widget *Widget::find(String const &name)
 Widget const *Widget::find(String const &name) const
 {
     return const_cast<Widget *>(this)->find(name);
+}
+
+void Widget::moveChildBefore(Widget *child, Widget const &otherChild)
+{
+    if(child == &otherChild) return; // invalid
+
+    int from = -1;
+    int to = -1;
+
+    // Note: O(n)
+    for(int i = 0; i < d->children.size() && (from < 0 || to < 0); ++i)
+    {
+        if(d->children[i] == child)
+        {
+            from = i;
+        }
+        if(d->children[i] == &otherChild)
+        {
+            to = i;
+        }
+    }
+
+    DENG2_ASSERT(from != -1);
+    DENG2_ASSERT(to != -1);
+
+    d->children.removeAt(from);
+    if(to > from) to--;
+
+    d->children.insert(to, child);
 }
 
 Widget *Widget::parent() const
@@ -472,11 +523,5 @@ void Widget::setFocusCycle(WidgetList const &order)
         b->setFocusPrev(a->name());
     }
 }
-
-void Widget::addedChildWidget(Widget &)
-{}
-
-void Widget::removedChildWidget(Widget &)
-{}
 
 } // namespace de

@@ -20,13 +20,10 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_DOWNLOADDIALOG_H
-#define LIBDENG_DOWNLOADDIALOG_H
+#ifndef DENG_CLIENT_DOWNLOADDIALOG_H
+#define DENG_CLIENT_DOWNLOADDIALOG_H
 
-#ifdef __cplusplus
-
-#include "updaterdialog.h"
-#include <de/String>
+#include "ui/widgets/dialogwidget.h"
 
 class QNetworkReply;
 
@@ -34,12 +31,12 @@ class QNetworkReply;
  * Dialog for downloading an update in the background and then starting
  * the (re)installation process.
  */
-class DownloadDialog : public UpdaterDialog
+class DownloadDialog : public DialogWidget
 {
     Q_OBJECT
 
 public:
-    explicit DownloadDialog(de::String downloadUri, de::String fallbackUri, QWidget *parent = 0);
+    DownloadDialog(de::String downloadUri, de::String fallbackUri);
     ~DownloadDialog();
 
     /**
@@ -51,32 +48,25 @@ public:
     de::String downloadedFilePath() const;
 
     bool isReadyToInstall() const;
+    bool isFailed() const;
+
+public:
+    static bool isDownloadInProgress();
+    static DownloadDialog &currentDownload();
+    static void showCompletedDownload();
 
 signals:
+    void downloadProgress(int percentage);
     void downloadFailed(QString uri);
 
 public slots:
     void replyMetaDataChanged();
     void progress(qint64 received, qint64 total);
-    void finished(QNetworkReply*);
+    void finished(QNetworkReply *);
+    void cancel();
 
 private:
     DENG2_PRIVATE(d)
 };
 
-#endif // __cplusplus
-
-// C API
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-int Updater_IsDownloadInProgress(void);
-
-void Updater_RaiseCompletedDownloadDialog(void);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
-#endif // LIBDENG_DOWNLOADDIALOG_H
+#endif // DENG_CLIENT_DOWNLOADDIALOG_H

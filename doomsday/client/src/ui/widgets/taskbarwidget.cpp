@@ -22,11 +22,13 @@
 #include "ui/widgets/buttonwidget.h"
 #include "ui/widgets/consolecommandwidget.h"
 #include "ui/widgets/popupmenuwidget.h"
-#include "ui/widgets/variabletogglewidget.h"
 #include "ui/widgets/blurwidget.h"
+#include "ui/widgets/aboutdialog.h"
+#include "updater/updatersettingsdialog.h"
 #include "ui/clientwindow.h"
 #include "ui/commandaction.h"
 #include "ui/signalaction.h"
+#include "client/cl_def.h" // clientPaused
 
 #include "ui/ui_main.h"
 #include "con_main.h"
@@ -37,15 +39,18 @@
 #include <de/GLBuffer>
 #include <de/ScalarRule>
 
-#include "../../updater/versioninfo.h"
+#include "versioninfo.h"
 #include "dd_main.h"
 
 using namespace de;
 using namespace ui;
 
 static TimeDelta OPEN_CLOSE_SPAN = 0.2;
+static uint POS_PANEL = 0;
+static uint POS_UNLOAD = 3;
+static uint POS_UPDATER_SETTINGS = 6;
 
-DENG2_PIMPL(TaskBarWidget),
+DENG_GUI_PIMPL(TaskBarWidget),
 public IGameChangeObserver
 {
     typedef DefaultVertexBuf VertexBuf;
@@ -55,13 +60,7 @@ public IGameChangeObserver
     ButtonWidget *logo;
     LabelWidget *status;
     PopupMenuWidget *mainMenu;
-    PopupMenuWidget *unloadMenu;
-    ButtonWidget *panelItem;
-    ButtonWidget *unloadItem;
     ScalarRule *vertShift;
-
-    QScopedPointer<Action> openAction;
-    QScopedPointer<Action> closeAction;
     bool mouseWasTrappedWhenOpening;
 
     // GL objects:
@@ -90,7 +89,6 @@ public IGameChangeObserver
     ~Instance()
     {
         audienceForGameChange -= this;
-
         releaseRef(vertShift);
     }
 
@@ -98,7 +96,7 @@ public IGameChangeObserver
     {
         drawable.addBuffer(new VertexBuf);
 
-        self.root().shaders().build(drawable.program(), "generic.color_ucolor")
+        shaders().build(drawable.program(), "generic.color_ucolor")
                 << uMvpMatrix
                 << uColor;
 
@@ -125,23 +123,21 @@ public IGameChangeObserver
 
     void updateProjection()
     {
-        uMvpMatrix = self.root().projMatrix2D();
+        uMvpMatrix = root().projMatrix2D();
+    }
+
+    GuiWidget &itemWidget(uint pos) const
+    {
+        return *mainMenu->menu().organizer().itemWidget(pos);
     }
 
     void currentGameChanged(Game &newGame)
     {
         updateStatus();
 
-        if(!isNullGame(newGame))
-        {
-            panelItem->show();
-            unloadItem->show();
-        }
-        else
-        {
-            panelItem->hide();
-            unloadItem->hide();
-        }
+        itemWidget(POS_PANEL).show(!isNullGame(newGame));
+        itemWidget(POS_UNLOAD).show(!isNullGame(newGame));
+
         mainMenu->menu().updateLayout(); // Include/exclude shown/hidden menu items.
     }
 
@@ -155,10 +151,6 @@ public IGameChangeObserver
         {
             status->setText(tr("No game loaded"));
         }
-    }
-
-    void updateMenuItems()
-    {
     }
 };
 
@@ -242,32 +234,35 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
     d->mainMenu->setAnchor(d->logo->rule().left() + d->logo->rule().width() / 2,
                            d->logo->rule().top());
 
-    // Set up items for the DE menu. Some of these are shown/hidden
-    // depending on whether a game is loaded.
-    d->panelItem = d->mainMenu->addItem(_E(b) + tr("Open Control Panel"), new CommandAction("panel"));
-    d->mainMenu->addItem(tr("Toggle Fullscreen"), new CommandAction("togglefullscreen"));
-    d->mainMenu->addItem(new VariableToggleWidget(tr("Show FPS"), App::config()["window.main.showFps"]));
-    d->unloadItem = d->mainMenu->addItem(tr("Unload Game"), new SignalAction(this, SLOT(confirmUnloadGame())), false);
-    d->mainMenu->addSeparator();
-    d->mainMenu->addItem(tr("Check for Updates..."), new CommandAction("updateandnotify"));
-    d->mainMenu->addItem(tr("Updater Settings..."), new CommandAction("updatesettings"));
-    d->mainMenu->addSeparator();
-    d->mainMenu->addItem(tr("Quit Doomsday"), new CommandAction("quit"));
+    // Game unloading confirmation submenu.
+    ui::SubmenuItem *unloadMenu = new ui::SubmenuItem(tr("Unload Game"), ui::Left);
+    unloadMenu->items()
+            << new ui::Item(ui::Item::Separator, tr("Really unload the game?"))
+            << new ui::ActionItem(tr("Unload") + " " _E(b) + tr("(discard progress)"), new SignalAction(this, SLOT(unloadGame())))
+            << new ui::ActionItem(tr("Cancel"), new SignalAction(&d->mainMenu->menu(), SLOT(dismissPopups())));
+
+    /*
+     * Set up items for the DE menu. Some of these are shown/hidden
+     * depending on whether a game is loaded.
+     */
+    d->mainMenu->menu().items()
+            << new ui::ActionItem(_E(b) + tr("Open Control Panel"), new CommandAction("panel"))
+            << new ui::ActionItem(tr("Toggle Fullscreen"), new CommandAction("togglefullscreen"))
+            << new ui::VariableToggleItem(tr("Show FPS"), App::config()["window.main.showFps"])
+            << unloadMenu
+            << new ui::Item(ui::Item::Separator)
+            << new ui::ActionItem(tr("Check for Updates..."), new CommandAction("updateandnotify"))
+            << new ui::ActionItem(ui::Item::ShownAsButton, tr("Updater Settings"),
+                                  new SignalAction(this, SLOT(showUpdaterSettings())))
+            << new ui::Item(ui::Item::Separator)
+            << new ui::ActionItem(tr("About Doomsday..."), new SignalAction(this, SLOT(showAbout())))
+            << new ui::Item(ui::Item::Separator)
+            << new ui::ActionItem(tr("Quit Doomsday"), new CommandAction("quit"));
+
     add(d->mainMenu);
 
-    // Confirmation for unloading game.
-    d->unloadMenu = new PopupMenuWidget("unload-menu");
-    d->unloadMenu->setOpeningDirection(ui::Left);
-    d->unloadMenu->setAnchor(d->mainMenu->rule().left(),
-                             d->unloadItem->rule().top() + d->unloadItem->rule().height() / 2);
-    d->unloadMenu->addSeparator(tr("Really unload the game?"));
-    d->unloadMenu->addItem(tr("Unload") + " " _E(b) + tr("(discard progress)"), new SignalAction(this, SLOT(unloadGame())));
-    d->unloadMenu->addItem(tr("Cancel"), new Action);
-    add(d->unloadMenu);
-
-    d->panelItem->hide();
-    d->unloadItem->hide();
-    d->updateMenuItems();
+    d->itemWidget(POS_PANEL).hide();
+    d->itemWidget(POS_UNLOAD).hide();
 
     d->logo->setAction(new SignalAction(this, SLOT(openMainMenu())));
 }
@@ -297,16 +292,6 @@ Rule const &TaskBarWidget::shift()
     return *d->vertShift;
 }
 
-void TaskBarWidget::setOpeningAction(Action *action)
-{
-    d->openAction.reset(action);
-}
-
-void TaskBarWidget::setClosingAction(Action *action)
-{
-    d->closeAction.reset(action);
-}
-
 void TaskBarWidget::glInit()
 {
     LOG_AS("TaskBarWidget");
@@ -326,7 +311,6 @@ void TaskBarWidget::viewResized()
 void TaskBarWidget::drawContent()
 {
     d->updateGeometry();
-    //d->drawable.draw();
 }
 
 bool TaskBarWidget::handleEvent(Event const &event)
@@ -365,15 +349,6 @@ bool TaskBarWidget::handleEvent(Event const &event)
         // Shift-Esc opens and closes the task bar.
         if(key.ddKey() == DDKEY_ESCAPE)
         {
-#if 0
-            // Shift-Esc opens the console.
-            if()
-            {
-                root().setFocus(&d->console->commandLine());
-                if(!isOpen()) open(false /* no action */);
-                return true;
-            }
-#endif
             if(isOpen())
             {
                 // First press of Esc will just dismiss the console.
@@ -407,7 +382,7 @@ bool TaskBarWidget::handleEvent(Event const &event)
     return false;
 }
 
-void TaskBarWidget::open(bool doAction)
+void TaskBarWidget::open()
 {
     if(!d->opened)
     {
@@ -421,14 +396,6 @@ void TaskBarWidget::open(bool doAction)
         setOpacity(1, OPEN_CLOSE_SPAN);
 
         emit opened();
-
-        if(doAction)
-        {
-            if(!d->openAction.isNull())
-            {
-                d->openAction->trigger();
-            }
-        }
 
         // Untrap the mouse if it is trapped.
         if(hasRoot())
@@ -446,6 +413,15 @@ void TaskBarWidget::open(bool doAction)
             }
         }
     }
+}
+
+void TaskBarWidget::openAndPauseGame()
+{
+    if(App_GameLoaded() && !clientPaused)
+    {
+        Con_Execute(CMDS_DDAY, "pause", true, false);
+    }
+    open();
 }
 
 void TaskBarWidget::close()
@@ -471,11 +447,6 @@ void TaskBarWidget::close()
 
         emit closed();
 
-        if(!d->closeAction.isNull())
-        {
-            d->closeAction->trigger();
-        }
-
         // Retrap the mouse if it was trapped when opening.
         if(hasRoot() && App_GameLoaded())
         {
@@ -493,13 +464,28 @@ void TaskBarWidget::openMainMenu()
     d->mainMenu->open();
 }
 
-void TaskBarWidget::confirmUnloadGame()
-{
-    d->unloadMenu->open();
-}
-
 void TaskBarWidget::unloadGame()
 {
     Con_Execute(CMDS_DDAY, "unload", false, false);
     d->mainMenu->close();
+}
+
+void TaskBarWidget::showAbout()
+{
+    AboutDialog *about = new AboutDialog;
+    about->setDeleteAfterDismissed(true);
+    about->exec(root());
+}
+
+void TaskBarWidget::showUpdaterSettings()
+{
+    UpdaterSettingsDialog *dlg = new UpdaterSettingsDialog;
+    dlg->setDeleteAfterDismissed(true);
+    if(d->mainMenu->isOpen())
+    {
+        dlg->setAnchorAndOpeningDirection(d->mainMenu->menu().organizer().
+                                          itemWidget(POS_UPDATER_SETTINGS)->hitRule(),
+                                          ui::Left);
+    }
+    dlg->exec(root());
 }

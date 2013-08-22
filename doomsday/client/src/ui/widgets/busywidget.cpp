@@ -33,7 +33,7 @@
 
 using namespace de;
 
-DENG2_PIMPL(BusyWidget)
+DENG_GUI_PIMPL(BusyWidget)
 {
     typedef DefaultVertexBuf VertexBuf;
 
@@ -49,6 +49,7 @@ DENG2_PIMPL(BusyWidget)
           uMvpMatrix("uMvpMatrix", GLUniform::Mat4)
     {
         progress = new ProgressWidget;
+        progress->setAlignment(ui::AlignCenter, LabelWidget::AlignOnlyByImage);
         progress->setRange(Rangei(0, 200));
         progress->setImageScale(.2f);
         progress->rule().setRect(self.rule());
@@ -64,7 +65,7 @@ DENG2_PIMPL(BusyWidget)
         buf->setVertices(gl::TriangleStrip, verts, gl::Static);
 
         drawable.addBuffer(buf);
-        self.root().shaders().build(drawable.program(), "generic.textured.color")
+        shaders().build(drawable.program(), "generic.textured.color")
                 << uMvpMatrix << uTex;
     }
 

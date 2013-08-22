@@ -34,6 +34,7 @@ public:
     CommandAction(de::String const &cmd, int commandSource = CMDS_DDAY);
 
     void trigger();
+    CommandAction *duplicate() const;
 
 private:
     de::String _command;

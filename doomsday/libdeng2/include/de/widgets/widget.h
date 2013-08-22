@@ -80,25 +80,30 @@ public:
     typedef WidgetList Children;
 
     /**
+     * Notified when the widget is about to be deleted.
+     */
+    DENG2_DEFINE_AUDIENCE(Deletion, void widgetBeingDeleted(Widget &widget))
+
+    /**
      * Notified when the widget's parent changes.
      */
     DENG2_DEFINE_AUDIENCE(ParentChange, void widgetParentChanged(Widget &child, Widget *oldParent, Widget *newParent))
+
+    /**
+     * Notified when a child is added to the widget.
+     */
+    DENG2_DEFINE_AUDIENCE(ChildAddition, void widgetChildAdded(Widget &child))
+
+    /**
+     * Notified after a child has been removed from the widget.
+     */
+    DENG2_DEFINE_AUDIENCE(ChildRemoval, void widgetChildRemoved(Widget &child))
 
 public:
     Widget(String const &name = "");
     virtual ~Widget();
 
-    template <typename Type>
-    Type &as() {
-        DENG2_ASSERT(dynamic_cast<Type *>(this) != 0);
-        return *static_cast<Type *>(this);
-    }
-
-    template <typename Type>
-    Type const &as() const {
-        DENG2_ASSERT(dynamic_cast<Type const *>(this) != 0);
-        return *static_cast<Type const *>(this);
-    }
+    DENG2_IS_AS_METHODS()
 
     /**
      * Returns the automatically generated, unique identifier of the widget.
@@ -180,11 +185,24 @@ public:
     bool isEventRouted(int type, Widget *to) const;
 
     // Tree organization.
-    void clear();
+    void clearTree();
+
+    /**
+     * Adds a child widget. It becomes the last child, meaning it is drawn on
+     * top of other children but will get events first.
+     *
+     * @param child  Child widget.
+     *
+     * @return Reference to the added child widget. (Note that this is @em not
+     * a "fluent API".)
+     */
     Widget &add(Widget *child);
+
+    Widget &insertBefore(Widget *child, Widget const &otherChild);
     Widget *remove(Widget &child);
     Widget *find(String const &name);
     Widget const *find(String const &name) const;
+    void moveChildBefore(Widget *child, Widget const &otherChild);
     Children children() const;
     dsize childCount() const;
     Widget *parent() const;
@@ -229,10 +247,6 @@ public:
 
 public:
     static void setFocusCycle(WidgetList const &order);
-
-protected:
-    virtual void addedChildWidget(Widget &widget);
-    virtual void removedChildWidget(Widget &widget);
 
 private:
     DENG2_PRIVATE(d)

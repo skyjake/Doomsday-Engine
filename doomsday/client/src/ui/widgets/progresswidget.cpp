@@ -24,7 +24,7 @@
 
 using namespace de;
 
-DENG2_PIMPL(ProgressWidget), public Lockable
+DENG_GUI_PIMPL(ProgressWidget), public Lockable
 {
     Mode mode;
     Rangei range;
@@ -34,6 +34,7 @@ DENG2_PIMPL(ProgressWidget), public Lockable
     Id gearTex;
     DotPath colorId;
     DotPath shadowColorId;
+    DotPath gearId;
     Time updateAt;
     int framesWhileAnimDone; ///< # of frames drawn while animation was already done.
 
@@ -45,6 +46,7 @@ DENG2_PIMPL(ProgressWidget), public Lockable
           angle(0),
           colorId("progress.light.wheel"),
           shadowColorId("progress.light.shadow"),
+          gearId("progress.gear"),
           updateAt(Time::invalidTime()),
           framesWhileAnimDone(0)
     {
@@ -58,18 +60,13 @@ DENG2_PIMPL(ProgressWidget), public Lockable
 
     void glInit()
     {
-        gearTex = atlas().alloc(self.style().images().image("progress.gear"));
+        gearTex = atlas().alloc(self.style().images().image(gearId));
     }
 
     void glDeinit()
     {
         atlas().release(gearTex);
         gearTex = Id::None;
-    }
-
-    AtlasTexture &atlas()
-    {
-        return self.root().atlas();
     }
 };
 
@@ -83,8 +80,22 @@ ProgressWidget::ProgressWidget(String const &name) : d(new Instance(this))
     setImageFit(ui::FitToSize | ui::OriginalAspectRatio);
     setImageScale(.6f);
 
-    setAlignment(ui::AlignCenter, AlignOnlyByImage);
     setTextAlignment(ui::AlignRight);
+    setTextLineAlignment(ui::AlignLeft);
+}
+
+void ProgressWidget::useMiniStyle()
+{
+    /// @todo Make this look better.
+
+    d->gearId = "gear"; // Mini gear icon.
+    d->colorId = "text";
+    setImageScale(1);
+    setAlignment(ui::AlignCenter, LabelWidget::AlignByCombination);
+
+    // Resize to the height of the default font.
+    float hgt = style().fonts().font("default").height().value();
+    setOverrideImageSize(Vector2f(hgt, hgt));
 }
 
 ProgressWidget::Mode ProgressWidget::mode() const

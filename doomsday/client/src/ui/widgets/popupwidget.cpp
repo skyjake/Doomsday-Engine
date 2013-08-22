@@ -32,11 +32,12 @@ using namespace de;
 static TimeDelta const OPENING_ANIM_SPAN = 0.4;
 static TimeDelta const CLOSING_ANIM_SPAN = 0.3;
 
-DENG2_PIMPL(PopupWidget)
+DENG_GUI_PIMPL(PopupWidget)
 {
     typedef DefaultVertexBuf VertexBuf;
 
     bool opened;
+    bool deleteAfterDismiss;
     Widget *realParent;
     GuiWidget *content;
     ScalarRule *openingRule;
@@ -55,6 +56,7 @@ DENG2_PIMPL(PopupWidget)
     Instance(Public *i)
         : Base(i),
           opened(false),
+          deleteAfterDismiss(false),
           realParent(0),
           content(0),
           anchorX(0),
@@ -81,8 +83,8 @@ DENG2_PIMPL(PopupWidget)
     void glInit()
     {
         drawable.addBuffer(new VertexBuf);
-        self.root().shaders().build(drawable.program(), "generic.textured.color")
-                << uMvpMatrix << self.root().uAtlas();
+        shaders().build(drawable.program(), "generic.textured.color")
+                << uMvpMatrix << uAtlas();
     }
 
     void glDeinit()
@@ -90,35 +92,9 @@ DENG2_PIMPL(PopupWidget)
         drawable.clear();
     }
 
-    void layoutAbove()
+    bool isVerticalAnimation() const
     {
-        self.rule()
-                .setInput(Rule::Bottom, *anchorY - *marker)
-                .setInput(Rule::Left, OperatorRule::clamped(
-                              *anchorX - self.rule().width() / 2,
-                              self.margin(),
-                              self.root().viewWidth() - self.rule().width() - self.margin()));
-    }
-
-    void layoutBelow()
-    {
-        self.rule()
-                .setInput(Rule::Top,  *anchorY + *marker)
-                .setInput(Rule::Left, *anchorX - self.rule().width() / 2);
-    }
-
-    void layoutLeft()
-    {
-        self.rule()
-                .setInput(Rule::Right, *anchorX - *marker)
-                .setInput(Rule::Top,   *anchorY - self.rule().height() / 2);
-    }
-
-    void layoutRight()
-    {
-        self.rule()
-                .setInput(Rule::Left, *anchorX + *marker)
-                .setInput(Rule::Top,  *anchorY - self.rule().height() / 2);
+        return isVertical(dir) || dir == ui::NoDirection;
     }
 
     void updateLayout()
@@ -126,7 +102,7 @@ DENG2_PIMPL(PopupWidget)
         DENG2_ASSERT(content != 0);
 
         // Widget's size depends on the opening animation.
-        if(dir == ui::Up || dir == ui::Down)
+        if(isVerticalAnimation())
         {
             self.rule().setInput(Rule::Width,  content->rule().width())
                        .setInput(Rule::Height, *openingRule);
@@ -137,62 +113,50 @@ DENG2_PIMPL(PopupWidget)
                        .setInput(Rule::Height, content->rule().height());
         }
 
-        //Rectanglei const view = Rectanglei::fromSize(self.root().viewSize());
-        //Vector2i const pos(anchorX->valuei(), anchorY->valuei());
-        //Vector2i const size(self.rule().width().valuei(), self.rule().height().valuei());
+        self.rule()
+                .clearInput(Rule::AnchorX)
+                .clearInput(Rule::AnchorY);
 
         // Let's first try the requested direction.
-        if(dir == ui::Up)
+        /// @todo Edge clamping for directions other than Up.
+        switch(dir)
         {
-            //if(pos.y - marker->valuei() >= size.y)
-            {
-                layoutAbove();
-            }
-            /*
-            else
-            {
-                layoutBelow();
-            }*/
-            return;
-        }
+        case ui::Up:
+            self.rule()
+                    .setInput(Rule::Bottom, *anchorY - *marker)
+                    .setInput(Rule::Left, OperatorRule::clamped(
+                                  *anchorX - self.rule().width() / 2,
+                                  self.margin(),
+                                  self.root().viewWidth() - self.rule().width() - self.margin()));
+            break;
 
-        if(dir == ui::Down)
-        {
-            //if(int(view.height()) - pos.y - marker->valuei() >= size.y)
-            {
-                layoutBelow();
-            }
-            /*else
-            {
-                layoutAbove();
-            }*/
-            return;
-        }
+        case ui::Down:
+            self.rule()
+                    .setInput(Rule::Top,  *anchorY + *marker)
+                    .setInput(Rule::Left, OperatorRule::clamped(
+                                  *anchorX - self.rule().width() / 2,
+                                  self.margin(),
+                                  self.root().viewWidth() - self.rule().width() - self.margin()));
+            break;
 
-        if(dir == ui::Left)
-        {
-            //if(pos.x - marker->valuei() >= size.x)
-            {
-                layoutLeft();
-            }
-            /*else
-            {
-                layoutRight();
-            }*/
-            return;
-        }
+        case ui::Left:
+            self.rule()
+                    .setInput(Rule::Right, *anchorX - *marker)
+                    .setInput(Rule::Top,   *anchorY - self.rule().height() / 2);
+            break;
 
-        if(dir == ui::Right)
-        {
-            //if(int(view.width()) - pos.x - marker->valuei() >= size.x)
-            {
-                layoutRight();
-            }
-            /*else
-            {
-                layoutLeft();
-            }*/
-            return;
+        case ui::Right:
+            self.rule()
+                    .setInput(Rule::Left, *anchorX + *marker)
+                    .setInput(Rule::Top,  *anchorY - self.rule().height() / 2);
+            break;
+
+        case ui::NoDirection:
+            self.rule()
+                    .setInput(Rule::AnchorX, *anchorX)
+                    .setInput(Rule::AnchorY, *anchorY)
+                    .setAnchorPoint(Vector2f(.5f, .5f));
+            break;
         }
     }
 
@@ -223,6 +187,11 @@ DENG2_PIMPL(PopupWidget)
 
         self.popupClosing();
 
+        DENG2_FOR_PUBLIC_AUDIENCE(Close, i)
+        {
+            i->popupBeingClosed(self);
+        }
+
         emit self.closed();
 
         dismissTimer.start();
@@ -237,7 +206,7 @@ PopupWidget::PopupWidget(String const &name) : d(new Instance(this))
     // Initially the popup is hidden.
     hide();
 
-    // Move these to an updateStyle:
+    /// @todo Move these to an updateStyle.
     Style const &st = style();
     set(Background(st.colors().colorf("background"),
                    Background::BorderGlow,
@@ -270,6 +239,28 @@ GuiWidget &PopupWidget::content() const
 {
     DENG2_ASSERT(d->content != 0);
     return *d->content;
+}
+
+void PopupWidget::setAnchorAndOpeningDirection(RuleRectangle const &rule, ui::Direction dir)
+{
+    if(dir == ui::NoDirection)
+    {
+        // Anchored to the middle by default.
+        setAnchor(rule.left() + rule.width() / 2,
+                  rule.top() + rule.height() / 2);
+    }
+    else if(dir == ui::Left || dir == ui::Right)
+    {
+        setAnchorY(rule.top() + rule.height() / 2);
+        setAnchorX(dir == ui::Left? rule.left() : rule.right());
+    }
+    else if(dir == ui::Up || dir == ui::Down)
+    {
+        setAnchorX(rule.left() + rule.width() / 2);
+        setAnchorY(dir == ui::Up? rule.top() : rule.bottom());
+    }
+
+    setOpeningDirection(dir);
 }
 
 void PopupWidget::setAnchor(Vector2i const &pos)
@@ -310,9 +301,19 @@ void PopupWidget::setOpeningDirection(ui::Direction dir)
     d->dir = dir;
 }
 
+ui::Direction PopupWidget::openingDirection() const
+{
+    return d->dir;
+}
+
 bool PopupWidget::isOpen() const
 {
     return d->opened;
+}
+
+void PopupWidget::setDeleteAfterDismissed(bool deleteAfterDismiss)
+{
+    d->deleteAfterDismiss = deleteAfterDismiss;
 }
 
 void PopupWidget::viewResized()
@@ -393,7 +394,7 @@ void PopupWidget::open()
     preparePopupForOpening();
 
     // Start the opening animation.
-    if(d->dir == ui::Up || d->dir == ui::Down)
+    if(d->isVerticalAnimation())
     {
         d->openingRule->set(d->content->rule().height(), OPENING_ANIM_SPAN);
     }
@@ -424,6 +425,13 @@ void PopupWidget::dismiss()
     // Move back to the original parent widget.
     root().remove(*this);
     d->realParent->add(this);
+
+    popupDismissed();
+
+    if(d->deleteAfterDismiss)
+    {
+        deleteLater();
+    }   
 }
 
 void PopupWidget::drawContent()
@@ -435,6 +443,8 @@ void PopupWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
 {
     GuiWidget::glMakeGeometry(verts);
 
+    if(d->dir == ui::NoDirection) return;
+
     // Anchor triangle.
     DefaultVertexBuf::Builder tri;
     DefaultVertexBuf::Type v;
@@ -445,8 +455,6 @@ void PopupWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
     int marker = d->marker->valuei();
 
     Vector2i anchorPos(d->anchorX->valuei(), d->anchorY->valuei());
-
-    /// @todo Other directions are missing: this is just for the popup that opens upwards.
 
     if(d->dir == ui::Up)
     {
@@ -462,6 +470,18 @@ void PopupWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
         v.pos = anchorPos; tri << v;
         v.pos = anchorPos + Vector2i(-marker, marker); tri << v;
         v.pos = anchorPos + Vector2i(-marker, -marker); tri << v;
+    }
+    else if(d->dir == ui::Right)
+    {
+        v.pos = anchorPos; tri << v;
+        v.pos = anchorPos + Vector2i(marker, -marker); tri << v;
+        v.pos = anchorPos + Vector2i(marker, marker); tri << v;
+    }
+    else
+    {
+        v.pos = anchorPos; tri << v;
+        v.pos = anchorPos + Vector2i(marker, marker); tri << v;
+        v.pos = anchorPos + Vector2i(-marker, marker); tri << v;
     }
 
     verts += tri;
@@ -485,4 +505,9 @@ void PopupWidget::preparePopupForOpening()
 void PopupWidget::popupClosing()
 {
     // overridden
+}
+
+void PopupWidget::popupDismissed()
+{
+    // nothing to do
 }

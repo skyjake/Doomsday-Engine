@@ -78,4 +78,9 @@ int main(int argc, char** argv)
         QMessageBox::critical(0, DOOMSDAY_NICENAME, "App init failed:\n" + er.asText());
         return -1;
     }
+
+#ifdef DENG2_DEBUG
+    // Check that all reference-counted objects have been deleted.
+    DENG2_ASSERT(de::Counted::totalCount == 0);
+#endif
 }

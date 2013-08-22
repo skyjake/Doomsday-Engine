@@ -17,227 +17,242 @@
  */
 
 #include "ui/widgets/menuwidget.h"
+#include "ui/widgets/popupmenuwidget.h"
+#include "ui/widgets/contextwidgetorganizer.h"
+#include "ui/widgets/listcontext.h"
+#include "ui/widgets/actionitem.h"
+#include "ui/widgets/variabletogglewidget.h"
+#include "ui/widgets/gridlayout.h"
 
 using namespace de;
 using namespace ui;
 
-DENG2_PIMPL(MenuWidget)
+DENG2_PIMPL(MenuWidget),
+DENG2_OBSERVES(Context, Addition),    // for layout update
+DENG2_OBSERVES(Context, Removal),     // for layout update
+DENG2_OBSERVES(Context, OrderChange), // for layout update
+DENG2_OBSERVES(PopupWidget, Close),
+public ContextWidgetOrganizer::IWidgetFactory
 {
+    /**
+     * Action owned by the button that represents a SubmenuItem.
+     */
+    class SubmenuAction : public de::Action, DENG2_OBSERVES(Widget, Deletion)
+    {
+    public:
+        SubmenuAction(Instance *inst, ui::SubmenuItem const &parentItem)
+            : d(inst), _submenu(parentItem)
+        {
+            _widget = new PopupMenuWidget;
+            _widget->audienceForDeletion += this;
+
+            // Use the items from the submenu.
+            _widget->menu().setItems(parentItem.items());
+
+            // Popups need a parent; hidden items are ignored by the menu.
+            d->self.add(_widget);
+        }
+
+        ~SubmenuAction()
+        {
+            if(_widget)
+            {
+                delete _widget;
+            }
+        }
+
+        void widgetBeingDeleted(Widget &)
+        {
+            _widget = 0;
+        }
+
+        void trigger()
+        {
+            Action::trigger();
+
+            DENG2_ASSERT(_widget != 0);
+
+            GuiWidget *parent = d->organizer.itemWidget(_submenu);
+            DENG2_ASSERT(parent != 0);
+
+            _widget->setAnchorAndOpeningDirection(parent->hitRule(), _submenu.openingDirection());
+
+            d->openPopups.insert(_widget);
+            _widget->audienceForClose += d;
+
+            _widget->open();
+        }
+
+        Action *duplicate() const
+        {
+            DENG2_ASSERT(false); // not needed
+            return 0;
+        }
+
+    private:
+        Instance *d;
+        ui::SubmenuItem const &_submenu;
+        PopupMenuWidget *_widget;
+    };
+
     bool needLayout;
-    QScopedPointer<ISortOrder> sorting;
-    WidgetList sortedChildren;
+    GridLayout layout;
+    ListContext defaultItems;
+    Context const *items;
+    ContextWidgetOrganizer organizer;
+    QSet<PopupWidget *> openPopups;
 
     SizePolicy colPolicy;
     SizePolicy rowPolicy;
 
-    Rule const *margin;
-    //Rule const *padding;
-
-    ConstantRule *cols;
-    ConstantRule *rows;
-
-    OperatorRule *colWidth;
-    OperatorRule *rowHeight;
-
     Instance(Public *i)
         : Base(i),
           needLayout(false),
+          items(0),
+          organizer(self),
           colPolicy(Fixed),
           rowPolicy(Fixed)
     {
-        cols = new ConstantRule(1);
-        rows = new ConstantRule(1);
+        // We will create widgets ourselves.
+        organizer.setWidgetFactory(*this);
 
-        margin = &self.style().rules().rule("gap");
-        //padding = &self.style().rules().rule("unit");
-
-        colWidth  = holdRef((self.rule().width() - *margin * 2) / *cols);
-        rowHeight = holdRef((self.rule().height() - *margin * 2) / *rows);
+        // The default context is empty.        
+        setContext(&defaultItems);
     }
 
-    ~Instance()
+    void setContext(Context const *ctx)
     {
-        releaseRef(cols);
-        releaseRef(rows);
-        releaseRef(colWidth);
-        releaseRef(rowHeight);
-    }
-
-    Vector2i ordinalToGridPos(int ordinal) const
-    {
-        Vector2i pos;
-        if(colPolicy != Expand)
+        if(items)
         {
-            pos.x = ordinal % cols->valuei();
-            pos.y = ordinal / cols->valuei();
+            // Get rid of the old context.
+            items->audienceForAddition -= this;
+            items->audienceForRemoval -= this;
+            items->audienceForOrderChange -= this;
+            organizer.unsetContext();
         }
-        else if(rows->valuei() > 0)
+
+        items = ctx;
+
+        // Take new context into use.
+        items->audienceForAddition += this;
+        items->audienceForRemoval += this;
+        items->audienceForOrderChange += this;
+        organizer.setContext(*items); // recreates widgets
+    }
+
+    void contextItemAdded(Context::Pos id, Item const &)
+    {
+        // Make sure we determine the layout for the new item.
+        needLayout = true;
+    }
+
+    void contextItemRemoved(Context::Pos id, Item &)
+    {
+        // Make sure we determine the layout after this item is gone.
+        needLayout = true;
+    }
+
+    void contextItemOrderChanged()
+    {
+        // Make sure we determine the layout for the new order.
+        needLayout = true;
+    }
+
+    /*
+     * Menu items are represented as buttons and labels.
+     */
+    GuiWidget *makeItemWidget(Item const &item, GuiWidget const *parent)
+    {
+        if(item.semantics().testFlag(Item::ShownAsButton))
         {
-            DENG2_ASSERT(rowPolicy != Expand);
-            pos.x = ordinal % rows->valuei();
-            pos.y = ordinal / rows->valuei();
+            // Normal clickable button.
+            ButtonWidget *b = new ButtonWidget;
+            b->setTextAlignment(ui::AlignRight);
+
+            if(item.is<SubmenuItem>())
+            {
+                b->setAction(new SubmenuAction(this, item.as<SubmenuItem>()));
+            }
+            return b;
+        }
+        else if(item.semantics().testFlag(Item::Separator))
+        {
+            LabelWidget *lab = new LabelWidget;
+            lab->setAlignment(ui::AlignLeft);
+            lab->setTextLineAlignment(ui::AlignLeft);
+            lab->setSizePolicy(ui::Expand, ui::Expand);
+            return lab;
+        }
+        else if(item.semantics().testFlag(Item::ShownAsToggle))
+        {
+            // We know how to present variable toggles.
+            VariableToggleItem const *varTog = dynamic_cast<VariableToggleItem const *>(&item);
+            if(varTog)
+            {
+                return new VariableToggleWidget(varTog->variable());
+            }
+        }
+        return 0;
+    }
+
+    void updateItemWidget(GuiWidget &widget, Item const &item)
+    {
+        if(ActionItem const *act = item.maybeAs<ActionItem>())
+        {
+            if(item.semantics().testFlag(Item::ShownAsButton))
+            {
+                ButtonWidget &b = widget.as<ButtonWidget>();
+                b.setImage(act->image());
+                b.setText(act->label());
+                if(act->action())
+                {
+                    b.setAction(act->action()->duplicate());
+                }
+            }
         }
         else
         {
-            DENG2_ASSERT(cols->valuei() > 0);
-            pos.x = ordinal % cols->valuei();
-            pos.y = ordinal / cols->valuei();
+            // Other kinds of items are represented as labels or
+            // label-derived widgets.
+            widget.as<LabelWidget>().setText(item.label());
         }
-        return pos;
+    }
+
+    void popupBeingClosed(PopupWidget &popup)
+    {
+        openPopups.remove(&popup);
     }
 
     bool isVisibleItem(Widget const *child) const
     {
-        GuiWidget const *widget = dynamic_cast<GuiWidget const *>(child);
-        return widget && widget->isVisible();
+        if(GuiWidget const *widget = child->maybeAs<GuiWidget>())
+        {
+            return widget->isVisible();
+        }
+        return false;
     }
 
     int countVisible() const
     {
         int num = 0;
-        foreach(Widget *i, self.Widget::children())
+        foreach(Widget *i, self.childWidgets())
         {
             if(isVisibleItem(i)) ++num;
         }
         return num;
     }
 
-    Vector2i countGrid() const
+    void relayout()
     {
-        Vector2i size;
-        int ord = 0;
+        layout.clear();
 
-        DENG2_ASSERT(sortedChildren.size() == int(self.childCount()));
-
-        foreach(Widget *i, self.Widget::children())
+        foreach(Widget *child, self.childWidgets())
         {
-            if(isVisibleItem(i))
-            {
-                size = size.max(ordinalToGridPos(ord++) + Vector2i(1, 1));
-            }
+            GuiWidget *w = child->maybeAs<GuiWidget>();
+            if(!isVisibleItem(w)) continue;
+
+            layout << *w;
         }
-
-        return size;
-    }
-
-    // Functor for quicksort comparisons.
-    struct Sorter {
-        Instance &d;
-        Sorter(Instance *inst) : d(*inst) {}
-        bool operator () (Widget const *a, Widget const *b) const {
-            DENG2_ASSERT(!d.sorting.isNull());
-            return d.sorting->compareMenuItemsForSorting(*a, *b) < 0;
-        }
-    };
-
-    void prepareSortedChildren()
-    {
-        sortedChildren = self.Widget::children();
-        if(!sorting.isNull())
-        {
-            qSort(sortedChildren.begin(), sortedChildren.end(), Sorter(this));
-        }
-    }
-
-    GuiWidget *findItem(int col, int row) const
-    {
-        int ord = 0;
-        foreach(Widget *i, sortedChildren)
-        {
-            if(isVisibleItem(i))
-            {
-                if(ordinalToGridPos(ord) == Vector2i(col, row))
-                {
-                    return static_cast<GuiWidget *>(i);
-                }
-                ord++;
-            }
-        }
-        return 0;
-    }
-
-    Rule const *fullColumnWidth(int col) const
-    {
-        Vector2i const size = countGrid();
-        Rule const *total = 0;
-
-        for(int i = 0; i < size.y; ++i)
-        {
-            GuiWidget *item = findItem(col, i);
-            if(!total)
-            {
-                total = holdRef(item->rule().width());
-            }
-            else
-            {
-                changeRef(total, OperatorRule::maximum(*total, item->rule().width()));
-            }
-        }
-        if(!total) return new ConstantRule(0);
-        return refless(total);
-    }
-
-    Rule const *fullRowHeight(int row) const
-    {
-        Vector2i const size = countGrid();
-        Rule const *total = 0;
-
-        for(int i = 0; i < size.x; ++i)
-        {
-            GuiWidget *item = findItem(i, row);
-            if(!item) continue;
-
-            if(!total)
-            {
-                total = holdRef(item->rule().height());
-            }
-            else
-            {
-                changeRef(total, OperatorRule::maximum(*total, item->rule().height()));
-            }
-        }
-        if(!total) return new ConstantRule(0);
-        return refless(total);
-    }
-
-    Rule const *totalWidth() const
-    {
-        Vector2i const size = countGrid();
-        Rule const *total = 0;
-
-        for(int i = 0; i < size.x; ++i)
-        {
-            if(!total)
-            {
-                total = holdRef(fullColumnWidth(i));
-            }
-            else
-            {
-                changeRef(total, *total + *fullColumnWidth(i));
-            }
-        }
-        if(!total) return new ConstantRule(0);
-        return refless(total);
-    }
-
-    Rule const *totalHeight() const
-    {
-        Vector2i const size = countGrid();
-        Rule const *total = 0;
-
-        for(int i = 0; i < size.y; ++i)
-        {
-            if(!total)
-            {
-                total = holdRef(fullRowHeight(i));
-            }
-            else
-            {
-                changeRef(total, *total + *fullRowHeight(i));
-            }
-        }
-        if(!total) return new ConstantRule(0);
-        return refless(total);
     }
 };
 
@@ -248,63 +263,41 @@ MenuWidget::MenuWidget(String const &name)
 void MenuWidget::setGridSize(int columns, ui::SizePolicy columnPolicy,
                              int rows, ui::SizePolicy rowPolicy)
 {
-    d->cols->set(columns);
-    d->rows->set(rows);
+    d->layout.clear();
+    d->layout.setGridSize(columns, rows);
+    d->layout.setLeftTop(contentRule().left(), contentRule().top());
 
     d->colPolicy = columnPolicy;
     d->rowPolicy = rowPolicy;
 
+    if(d->colPolicy == ui::Filled)
+    {
+        DENG2_ASSERT(columns > 0);
+        d->layout.setOverrideWidth((rule().width() - margin() * 2) / float(columns));
+    }
+
+    if(d->rowPolicy == ui::Filled)
+    {
+        DENG2_ASSERT(rows > 0);
+        d->layout.setOverrideHeight((rule().height() - margin() * 2) / float(rows));
+    }
+
     d->needLayout = true;
 }
 
-void MenuWidget::setLayoutSortOrder(ISortOrder *sorting)
+Context &MenuWidget::items()
 {
-    d->sorting.reset(sorting);
-    d->needLayout = true;
+    return *const_cast<Context *>(d->items);
 }
 
-GuiWidget *MenuWidget::addItem(GuiWidget *anyWidget)
+Context const &MenuWidget::items() const
 {
-    if(!anyWidget) return 0;
-
-    add(anyWidget);
-    d->needLayout = true;
-    return anyWidget;
+    return *d->items;
 }
 
-ButtonWidget *MenuWidget::addItem(String const &styledText, Action *action)
+void MenuWidget::setItems(Context const &items)
 {
-    return addItem(Image(), styledText, action);
-}
-
-ButtonWidget *MenuWidget::addItem(Image const &image, String const &styledText, Action *action)
-{    
-    ButtonWidget *b = new ButtonWidget;
-
-    b->setImage(image);
-    b->setText(styledText);
-    b->setTextAlignment(ui::AlignRight);
-    b->setAction(action);
-
-    addItem(b);
-
-    return b;
-}
-
-GuiWidget *MenuWidget::addSeparator(String const &labelText)
-{
-    LabelWidget *lab = new LabelWidget;
-    lab->setText(labelText);
-    lab->setAlignment(ui::AlignLeft);
-    lab->setTextLineAlignment(ui::AlignLeft);
-    lab->setSizePolicy(ui::Expand, ui::Expand);
-    addItem(lab);
-    return lab;
-}
-
-void MenuWidget::removeItem(GuiWidget *child)
-{
-    d->needLayout = true;
+    d->setContext(&items);
 }
 
 int MenuWidget::count() const
@@ -314,121 +307,49 @@ int MenuWidget::count() const
 
 void MenuWidget::updateLayout()
 {
-    // Sort children again.
-    d->prepareSortedChildren();
+    d->relayout();
 
-    Rule const *baseVert = holdRef(&contentRule().top());
+    setContentSize(d->layout.width(), d->layout.height());
 
-    Vector2i gridSize = d->countGrid();
-
-    for(int row = 0; row < gridSize.y; ++row)
+    // Expanding policy causes the size of the menu widget to change.
+    if(d->colPolicy == Expand)
     {
-        Rule const *baseHoriz = &contentRule().left();
-        GuiWidget *previous = 0;
-        Rule const *rowBottom = 0;
-
-        for(int col = 0; col < gridSize.x; ++col)
-        {
-            GuiWidget *widget = d->findItem(col, row);
-            if(!widget) continue;
-
-            if(d->colPolicy == Filled)
-            {
-                widget->rule()
-                        .setInput(Rule::Left, previous? previous->rule().right() : *baseHoriz)
-                        .setInput(Rule::Width, *d->colWidth);
-            }            
-            else //if(d->colPolicy == Fixed)
-            {
-                if(col > 0)
-                {
-                    widget->rule().setInput(Rule::Left, contentRule().left() + *d->colWidth * Const(col));
-                }
-                else
-                {
-                    widget->rule().setInput(Rule::Left, contentRule().left());
-                }
-            }
-
-            if(d->rowPolicy == Filled)
-            {
-                // The top/left corner is determined by the grid.
-                widget->rule()
-                        .setInput(Rule::Top, *baseVert)
-                        .setInput(Rule::Height, *d->rowHeight);
-            }
-            else if(d->rowPolicy == Expand)
-            {
-                widget->rule().setInput(Rule::Top, *baseVert);
-            }
-            else if(d->rowPolicy == Fixed)
-            {
-                widget->rule().setInput(Rule::Top, contentRule().top() + *d->rowHeight * Const(row));
-            }
-
-            // Form operator rule for maximum bottom coordinate.
-            if(!rowBottom)
-            {
-                rowBottom = holdRef(widget->rule().bottom());
-            }
-            else
-            {
-                changeRef(rowBottom, OperatorRule::maximum(widget->rule().bottom(), *rowBottom));
-            }
-
-            previous = widget;
-        }
-
-        releaseRef(baseVert);
-        baseVert = rowBottom;
+        rule().setInput(Rule::Width, d->layout.width() + margin() * 2);
     }
-
-    // Determine the width and height of the scrollable content area.
-    if(d->colPolicy != Expand)
+    if(d->rowPolicy == Expand)
     {
-        setContentWidth(*d->colWidth * Const(gridSize.x));
+        rule().setInput(Rule::Height, d->layout.height() + margin() * 2);
     }
-    else
-    {
-        Rule const *width = d->totalWidth();
-        setContentWidth(*width);
-        rule().setInput(Rule::Width, *width + *d->margin * 2);
-    }
-
-    if(d->rowPolicy != Expand)
-    {
-        setContentHeight(*d->rowHeight * Const(gridSize.y));
-    }
-    else
-    {
-        Rule const *height = d->totalHeight();
-        setContentHeight(*height);
-        rule().setInput(Rule::Height, *height + *d->margin * 2);
-    }
-
-    // Hold kept references.
-    releaseRef(baseVert);
 
     d->needLayout = false;
 }
 
-Rule const *MenuWidget::newColumnWidthRule(int column) const
+GridLayout const &MenuWidget::layout() const
 {
-    if(d->colPolicy != Filled)
-    {
-        return holdRef(d->fullColumnWidth(column));
-    }
-    return holdRef(d->colWidth);
+    return d->layout;
+}
+
+ContextWidgetOrganizer const &MenuWidget::organizer() const
+{
+    return d->organizer;
 }
 
 void MenuWidget::update()
 {
     if(isHidden()) return;
 
-    ScrollAreaWidget::update();
-
     if(d->needLayout)
     {
         updateLayout();
+    }
+
+    ScrollAreaWidget::update();
+}
+
+void MenuWidget::dismissPopups()
+{
+    foreach(PopupWidget *pop, d->openPopups)
+    {
+        pop->close();
     }
 }

@@ -57,8 +57,7 @@ using namespace de;
 
 DENG2_PIMPL(LegacyWidget)
 {
-    Instance(Public *i) : Base(i)
-    {}
+    Instance(Public *i) : Base(i) {}
 
     void draw()
     {

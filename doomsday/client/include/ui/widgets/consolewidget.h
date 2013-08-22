@@ -69,7 +69,7 @@ public slots:
     void clearLog();
     void showFullLog();
     void setFullyOpaque();
-    void setTranslucent();
+    void commandLineFocusLost();
     void focusOnCommandLine();
     void openMenu();
     void closeMenu();
@@ -77,10 +77,6 @@ public slots:
 
 protected slots:
     void logContentHeightIncreased(int delta);
-
-protected:
-    void glInit();
-    void glDeinit();
 
 private:
     DENG2_PRIVATE(d)

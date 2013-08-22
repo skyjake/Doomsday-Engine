@@ -214,7 +214,7 @@ D_CMD(CheckForUpdates)
     DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
 
     Con_Message("Checking for available updates...");
-    Updater_CheckNow(false/* don't notify */);
+    ClientApp::updater().checkNow(Updater::OnlyShowResultIfUpdateAvailable);
     return true;
 }
 
@@ -222,9 +222,8 @@ D_CMD(CheckForUpdatesAndNotify)
 {
     DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
 
-    /// @todo Combine into the same command with CheckForUpdates?
     Con_Message("Checking for available updates...");
-    Updater_CheckNow(true/* do notify */);
+    ClientApp::updater().checkNow(Updater::AlwaysShowResult);
     return true;
 }
 
@@ -232,7 +231,7 @@ D_CMD(LastUpdated)
 {
     DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
 
-    Updater_PrintLastUpdated();
+    ClientApp::updater().printLastUpdated();
     return true;
 }
 
@@ -240,7 +239,7 @@ D_CMD(ShowUpdateSettings)
 {
     DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
 
-    Updater_ShowSettings();
+    ClientApp::updater().showSettings();
     return true;
 }
 

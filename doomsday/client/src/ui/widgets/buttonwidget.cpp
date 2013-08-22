@@ -24,7 +24,7 @@
 
 using namespace de;
 
-DENG2_PIMPL(ButtonWidget),
+DENG_GUI_PIMPL(ButtonWidget),
 DENG2_OBSERVES(Action, Triggered)
 {
     State state;
@@ -145,6 +145,11 @@ void ButtonWidget::setAction(Action *action)
     {
         action->audienceForTriggered += d;
     }
+}
+
+Action *ButtonWidget::action() const
+{
+    return d->action.data();
 }
 
 ButtonWidget::State ButtonWidget::state() const

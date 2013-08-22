@@ -17,7 +17,7 @@
  */
 
 #include "ui/widgets/notificationwidget.h"
-#include "ui/widgets/guirootwidget.h"
+#include "ui/widgets/sequentiallayout.h"
 
 #include <de/Drawable>
 #include <de/Matrix>
@@ -30,7 +30,9 @@ using namespace de;
 
 static TimeDelta const ANIM_SPAN = .5;
 
-DENG2_PIMPL(NotificationWidget)
+DENG_GUI_PIMPL(NotificationWidget),
+DENG2_OBSERVES(Widget, ChildAddition),
+DENG2_OBSERVES(Widget, ChildRemoval)
 {
     ScalarRule *shift;
 
@@ -50,6 +52,9 @@ DENG2_PIMPL(NotificationWidget)
           uMvpMatrix("uMvpMatrix", GLUniform::Mat4),
           uColor    ("uColor",     GLUniform::Vec4)
     {
+        self.audienceForChildAddition += this;
+        self.audienceForChildRemoval += this;
+
         dismissTimer.setSingleShot(true);
         dismissTimer.setInterval(ANIM_SPAN.asMilliSeconds());
         QObject::connect(&dismissTimer, SIGNAL(timeout()), thisPublic, SLOT(dismiss()));
@@ -65,14 +70,15 @@ DENG2_PIMPL(NotificationWidget)
 
     void updateStyle()
     {
-        self.set(Background(self.style().colors().colorf("background")));
+        //self.
+        //self.set(Background(self.style().colors().colorf("background")));
     }
 
     void glInit()
     {
         drawable.addBuffer(new VertexBuf);
 
-        self.root().shaders().build(drawable.program(), "generic.color_ucolor")
+        shaders().build(drawable.program(), "generic.color_ucolor")
                 << uMvpMatrix << uColor;
     }
 
@@ -98,44 +104,24 @@ DENG2_PIMPL(NotificationWidget)
     {
         Rule const &gap = self.style().rules().rule("unit");
 
-        Rule const *totalWidth = 0;
-        Rule const *totalHeight = 0;
+        // The children are laid out simply in a row from right to left.
+        SequentialLayout layout(self.rule().right(), self.rule().top(), ui::Left);
 
-        WidgetList const children = self.Widget::children();
-        for(int i = 0; i < children.size(); ++i)
+        bool first = true;
+        foreach(Widget *child, self.childWidgets())
         {
-            GuiWidget &w = children[i]->as<GuiWidget>();
+            GuiWidget &w = child->as<GuiWidget>();
+            if(!first)
+            {
+                layout << gap;
+            }
+            first = false;
 
-            // The children are laid out simply in a row from right to left.
-            w.rule().setInput(Rule::Top, self.rule().top());
-            if(i > 0)
-            {
-                w.rule().setInput(Rule::Right, children[i - 1]->as<GuiWidget>().rule().left() - gap);
-                changeRef(totalWidth, *totalWidth + gap + w.rule().width());
-            }
-            else
-            {
-                w.rule().setInput(Rule::Right, self.rule().right());
-                totalWidth = holdRef(w.rule().width());
-            }
-
-            if(!totalHeight)
-            {
-                totalHeight = holdRef(w.rule().height());
-            }
-            else
-            {
-                changeRef(totalHeight, OperatorRule::maximum(*totalHeight, w.rule().height()));
-            }
+            layout << w;
         }
 
         // Update the total size of the notification area.
-        self.rule()
-                .setInput(Rule::Width,  *totalWidth)
-                .setInput(Rule::Height, *totalHeight);
-
-        releaseRef(totalWidth);
-        releaseRef(totalHeight);
+        self.rule().setSize(layout.width(), layout.height());
     }
 
     void show()
@@ -174,6 +160,24 @@ DENG2_PIMPL(NotificationWidget)
             dismissChild(*w);
         }
         pendingDismiss.clear();
+    }
+
+    void widgetChildAdded(Widget &child)
+    {
+        // Set a background for all notifications.
+        child.as<GuiWidget>().set(Background(self.style().colors().colorf("background")));
+
+        updateChildLayout();
+        self.show();
+    }
+
+    void widgetChildRemoved(Widget &)
+    {
+        updateChildLayout();
+        if(!self.childCount())
+        {
+            self.hide();
+        }
     }
 };
 
@@ -272,19 +276,4 @@ void NotificationWidget::glInit()
 void NotificationWidget::glDeinit()
 {
     d->glDeinit();
-}
-
-void NotificationWidget::addedChildWidget(GuiWidget &)
-{
-    d->updateChildLayout();
-    show();
-}
-
-void NotificationWidget::removedChildWidget(GuiWidget &)
-{
-    d->updateChildLayout();
-    if(!childCount())
-    {
-        hide();
-    }
 }

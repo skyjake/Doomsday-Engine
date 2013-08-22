@@ -20,7 +20,7 @@
 #define DENG_CLIENT_DOCUMENTWIDGET_H
 
 #include "scrollareawidget.h"
-#include "alignment.h"
+#include "../uidefs.h"
 
 /**
  * Widget for displaying large amounts of text.

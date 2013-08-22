@@ -1,8 +1,9 @@
 /**
- * @file updaterdialog.h
- * Common base class for the updater dialogs. @ingroup updater
+ * @file updateavailabledialog.h
+ * Dialog for notifying the user about available updates. @ingroup updater
  *
  * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -19,20 +20,33 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_UPDATERDIALOG_H
-#define LIBDENG_UPDATERDIALOG_H
+#ifndef DENG_CLIENT_UPDATEAVAILABLEDIALOG_H
+#define DENG_CLIENT_UPDATEAVAILABLEDIALOG_H
 
-#include <QDialog>
+#include "ui/widgets/messagedialog.h"
+#include "versioninfo.h"
 
-/**
- * Base class for all the updater dialogs.
- */
-class UpdaterDialog : public QDialog
+class UpdateAvailableDialog : public MessageDialog
 {
     Q_OBJECT
 
 public:
-    explicit UpdaterDialog(QWidget *parent = 0);
+    /// The dialog is initialized with the "Checking" page visible.
+    UpdateAvailableDialog();
+
+    /// The dialog is initialized with the result page visible.
+    UpdateAvailableDialog(VersionInfo const& latestVersion, de::String changeLogUri);
+
+public slots:
+    void showResult(VersionInfo const &latestVersion, de::String changeLogUri);
+    void showWhatsNew();
+    void editSettings();
+
+signals:
+    void checkAgain();
+
+private:
+    DENG2_PRIVATE(d)
 };
 
-#endif // UPDATERDIALOG_H
+#endif // LIBDENG_UPDATEAVAILABLEDIALOG_H

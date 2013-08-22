@@ -1,7 +1,6 @@
-/** @file updaterdialog.cpp Common base class for the updater dialogs. 
- * @ingroup updater
+/** @file aboutdialog.h Information about the Doomsday Client.
  *
- * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -13,15 +12,22 @@
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA</small>
+ * General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small> 
  */
 
-#include "updaterdialog.h"
+#ifndef DENG_CLIENT_ABOUTDIALOG_H
+#define DENG_CLIENT_ABOUTDIALOG_H
 
-UpdaterDialog::UpdaterDialog(QWidget *parent) : QDialog(parent)
+#include "dialogwidget.h"
+
+/**
+ * Dialog that shows information about the client.
+ */
+class AboutDialog : public DialogWidget
 {
-    // This will remove the "?" context help button in Windows.
-    setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
-}
+public:
+    AboutDialog();
+};
+
+#endif // DENG_CLIENT_ABOUTDIALOG_H

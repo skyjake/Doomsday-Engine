@@ -24,7 +24,8 @@
 #include <de/GLUniform>
 
 #include "guiwidget.h"
-#include "alignment.h"
+#include "../uidefs.h"
+#include "context.h"
 #include "proceduralimage.h"
 
 /**
@@ -115,6 +116,12 @@ public:
     void setImageAlignment(ui::Alignment const &imageAlign);
 
     void setImageFit(ui::ContentFit const &fit);
+
+    /**
+     * The image's actual size will be overridden by this size.
+     * @param size  Image size.
+     */
+    void setOverrideImageSize(de::Vector2f const &size);
 
     void setImageScale(float scaleFactor);
 

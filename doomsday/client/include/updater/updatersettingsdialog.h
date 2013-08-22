@@ -20,31 +20,24 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_UPDATERSETTINGSDIALOG_H
-#define LIBDENG_UPDATERSETTINGSDIALOG_H
+#ifndef DENG_CLIENT_UPDATERSETTINGSDIALOG_H
+#define DENG_CLIENT_UPDATERSETTINGSDIALOG_H
 
-#include <de/libdeng2.h>
-#include "updaterdialog.h"
+#include "ui/widgets/dialogwidget.h"
 
-class UpdaterSettingsDialog : public UpdaterDialog
+/**
+ * Dialog for configuring the settings of the automatic updater.
+ */
+class UpdaterSettingsDialog : public DialogWidget
 {
-    Q_OBJECT
-
 public:
-    explicit UpdaterSettingsDialog(QWidget *parent = 0);
+    UpdaterSettingsDialog(de::String const &name = "updatersettings");
 
-    void fetch();
-
-signals:
-
-public slots:
-    void accept();
-    void reject();
-    void autoCheckToggled(bool);
-    void pathActivated(int index);
+protected:
+    void finish(int result);
 
 private:
     DENG2_PRIVATE(d)
 };
 
-#endif // LIBDENG_UPDATERSETTINGSDIALOG_H
+#endif // DENG_CLIENT_UPDATERSETTINGSDIALOG_H

@@ -59,12 +59,16 @@ public:
 
     void trigger();
 
+    Action *duplicate() const;
+
 signals:
     void triggered();
 
 private:
     KeyEvent _event;
     String _label;
+    QObject *_target;
+    char const *_slot;
 };
 
 } // namespace shell

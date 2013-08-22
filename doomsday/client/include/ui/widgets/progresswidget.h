@@ -46,6 +46,8 @@ public:
 public:
     ProgressWidget(de::String const &name = "");
 
+    void useMiniStyle();
+
     Mode mode() const;
     de::Rangei range() const;
     bool isAnimating() const;

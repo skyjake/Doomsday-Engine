@@ -24,7 +24,9 @@
 #include <de/GLBuffer>
 #include <QObject>
 
+#include "../uidefs.h"
 #include "ui/style.h"
+#include "guiwidgetprivate.h"
 
 class GuiRootWidget;
 class BlurWidget;
@@ -67,6 +69,9 @@ class BlurWidget;
  *
  * QObject is a base class for the signals and slots capabilities.
  *
+ * @note Always use GuiWidget::destroy() to delete any GUI widget. It will
+ * ensure that the widget is properly deinitialized before destruction.
+ *
  * @ingroup gui
  */
 class GuiWidget : public QObject, public de::Widget
@@ -86,6 +91,7 @@ public:
             GradientFrame,      ///< Use the "gradient frame" from the UI atlas.
             BorderGlow,         ///< Border glow with specified color/thickness.
             Blurred,            ///< Blurs whatever is showing behind the widget.
+            BlurredWithBorderGlow,
             SharedBlur          ///< Use the blur background from a BlurWidget.
         };
         de::Vector4f solidFill; ///< Always applied if opacity > 0.
@@ -119,8 +125,16 @@ public:
 public:
     GuiWidget(de::String const &name = "");
 
+    /**
+     * Deletes a widget. The widget is first deinitialized.
+     *
+     * @param widget  Widget to destroy.
+     */
+    static void destroy(GuiWidget *widget);
+
     GuiRootWidget &root();
     GuiRootWidget &root() const;
+    Widget::Children childWidgets() const;
     Widget *parentWidget() const;
     Style const &style() const;
 
@@ -149,12 +163,18 @@ public:
     void setFont(de::DotPath const &id);
     void setTextColor(de::DotPath const &id);
     void setMargin(de::DotPath const &id);
+    void setMargin(ui::Direction dir, de::DotPath const &id);
+    void setMargins(de::DotPath const &leftId,
+                    de::DotPath const &topId,
+                    de::DotPath const &rightId,
+                    de::DotPath const &bottomId);
     void set(Background const &bg);
 
     de::Font const &font() const;
     de::ColorBank::Color textColor() const;
     de::ColorBank::Colorf textColorf() const;
-    de::Rule const &margin() const;
+
+    de::Rule const &margin(ui::Direction dir = ui::Left) const;
 
     /**
      * Determines whether the contents of the widget are supposed to be clipped
@@ -232,13 +252,9 @@ public:
 
     bool geometryRequested() const;
 
+    bool isInitialized() const;
+
 protected:
-    virtual void addedChildWidget(Widget &widget) /*final*/;
-    virtual void removedChildWidget(Widget &widget) /*final*/;
-
-    virtual void addedChildWidget(GuiWidget &widget);
-    virtual void removedChildWidget(GuiWidget &widget);
-
     /**
      * Called by GuiWidget::update() the first time an update is being carried
      * out. Native GL is guaranteed to be available at this time, so the widget
@@ -249,10 +265,11 @@ protected:
     virtual void glInit();
 
     /**
-     * Called by GuiWidget before the widget is destroyed. This is the
-     * appropriate place for the widget to release its GL resources. If one
-     * waits until the widget's destructor to do so, it may already have lost
-     * access to some required information (such as the root widget).
+     * Called from deinitialize(). Deinitialization must occur before the
+     * widget is destroyed. This is the appropriate place for the widget to
+     * release its GL resources. If one waits until the widget's destructor to
+     * do so, it may already have lost access to some required information
+     * (such as the root widget, or derived classes' private instances).
      */
     virtual void glDeinit();
 
