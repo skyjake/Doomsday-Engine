@@ -59,7 +59,7 @@ DENG2_PIMPL(DownloadDialog)
     ProgressWidget *progress;
     QUrl uri;
     QUrl uri2;
-    String savedFilePath;
+    NativePath savedFilePath;
     QNetworkReply *reply;
     String redirected;
     dint64 receivedBytes;
