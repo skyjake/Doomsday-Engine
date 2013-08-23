@@ -169,8 +169,8 @@ DGLuint dlBBox;
  */
 
 byte devMobjVLights;    ///< @c 1= Draw mobj vertex lighting vector.
-int devMobjBBox;        ///< @c 1 = Draw mobj bounding boxes.
-int devPolyobjBBox;     ///< @c 1 = Draw polyobj bounding boxes.
+int devMobjBBox;        ///< @c 1= Draw mobj bounding boxes.
+int devPolyobjBBox;     ///< @c 1= Draw polyobj bounding boxes.
 
 byte devVertexIndices;  ///< @c 1= Draw world vertex indices.
 byte devVertexBars;     ///< @c 1= Draw world vertex position bars.

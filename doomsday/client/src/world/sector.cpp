@@ -711,23 +711,28 @@ void Sector::buildClusters()
     if(d->clusters.isEmpty()) return;
 
     // Merge clusters whose BSP leafs share a common edge.
-    forever
+    while(d->clusters.count() > 1)
     {
         bool didMerge = false;
-        for(int i = 0; i < d->clusters.count() - 1; ++i)
+        for(int i = 0; i < d->clusters.count(); ++i)
+        for(int k = 0; k < d->clusters.count(); ++k)
         {
-            if(findSharedEdge(*d->clusters[i], *d->clusters[i+1]))
+            if(i == k)
+                continue;
+
+            if(findSharedEdge(*d->clusters[i], *d->clusters[k]))
             {
-                // Merge n+1 into n.
-                foreach(BspLeaf *bspLeaf, d->clusters[i+1]->_bspLeafs)
+                // Merge k into i.
+                foreach(BspLeaf *bspLeaf, d->clusters[k]->_bspLeafs)
                 {
                     bspLeaf->setCluster(d->clusters[i]);
                 }
-                d->clusters[i]->_bspLeafs.append(d->clusters[i+1]->_bspLeafs);
-                d->clusters.removeAt(i+1);
+                d->clusters[i]->_bspLeafs.append(d->clusters[k]->_bspLeafs);
+                d->clusters.removeAt(k);
 
                 // Compare the next pair.
-                i -= 1;
+                if(i >= k) i -= 1;
+                k -= 1;
 
                 // We'll need to repeat in any case.
                 didMerge = true;
