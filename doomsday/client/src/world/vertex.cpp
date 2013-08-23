@@ -22,6 +22,7 @@
 
 #include "Line"
 #include "world/lineowner.h" /// @todo remove me
+#include "Sector"
 
 #include "world/vertex.h"
 
@@ -98,6 +99,43 @@ void Vertex::setOriginComponent(int component, coord_t newPosition)
         d->notifyOriginChanged(oldOrigin, (1 << component));
     }
 }
+
+#ifdef __CLIENT__
+
+void Vertex::planeVisHeightMinMax(coord_t *min, coord_t *max) const
+{
+    if(!min && !max)
+        return;
+
+    LineOwner const *base = firstLineOwner();
+    LineOwner const *own  = base;
+    do
+    {
+        Line *li = &own->line();
+
+        if(li->hasFrontSector())
+        {
+            if(min && li->frontSector().floor().visHeight() < *min)
+                *min = li->frontSector().floor().visHeight();
+
+            if(max && li->frontSector().ceiling().visHeight() > *max)
+                *max = li->frontSector().ceiling().visHeight();
+        }
+
+        if(li->hasBackSector())
+        {
+            if(min && li->backSector().floor().visHeight() < *min)
+                *min = li->backSector().floor().visHeight();
+
+            if(max && li->backSector().ceiling().visHeight() > *max)
+                *max = li->backSector().ceiling().visHeight();
+        }
+
+        own = &own->next();
+    } while(own != base);
+}
+
+#endif // __CLIENT__
 
 int Vertex::property(DmuArgs &args) const
 {

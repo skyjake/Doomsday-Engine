@@ -130,6 +130,21 @@ public:
      */
     inline void setY(coord_t newPosition) { setOriginComponent(1, newPosition); }
 
+#ifdef __CLIENT__
+
+    /**
+     * Find the relative next minmal and/or maximal visual height(s) of all sector
+     * planes which "interface" at this vertex on the XY plane.
+     *
+     * @param min  Current minimal height to use as a base (will be overwritten).
+     *             Use DDMAXFLOAT if the base is unknown. Can be @c 0.
+     * @param min  Current maximal height to use as a base (will be overwritten).
+     *             Use DDMINFLOAT if the base is unknown. Can be @c 0.
+     */
+    void planeVisHeightMinMax(coord_t *min, coord_t *max = 0) const;
+
+#endif // __CLIENT__
+
 public:
     /**
      * Returns the total number of Line owners for the vertex.

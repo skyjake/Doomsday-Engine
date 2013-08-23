@@ -175,7 +175,7 @@ byte devNoTexFix = 0;
 static void Rend_DrawBoundingBoxes(Map &map);
 static void Rend_DrawSoundOrigins(Map &map);
 static void Rend_DrawSurfaceVectors(Map &map);
-static void Rend_DrawVertexIndices(Map &map);
+static void drawMapVertexes(Map &map);
 
 static uint buildLeafPlaneGeometry(BspLeaf const &leaf, ClockDirection direction,
     coord_t height, Vector3f **verts, uint *vertsSize);
@@ -2498,7 +2498,7 @@ void Rend_RenderMap(Map &map)
     Rend_DrawSurfaceVectors(map);
     LO_DrawLumobjs();             // Lumobjs.
     Rend_DrawBoundingBoxes(map);  // Mobj bounding boxes.
-    Rend_DrawVertexIndices(map);
+    drawMapVertexes(map);
     Rend_DrawSoundOrigins(map);
     Rend_RenderGenerators();
 
@@ -3328,39 +3328,6 @@ static void Rend_DrawSoundOrigins(Map &map)
     glEnable(GL_DEPTH_TEST);
 }
 
-static void getVertexPlaneMinMax(Vertex const *vtx, coord_t *min, coord_t *max = 0)
-{
-    DENG_ASSERT(vtx != 0);
-    DENG_ASSERT(min != 0);
-
-    LineOwner const *base = vtx->firstLineOwner();
-    LineOwner const *own  = base;
-    do
-    {
-        Line *li = &own->line();
-
-        if(li->hasFrontSector())
-        {
-            if(min && li->frontSector().floor().visHeight() < *min)
-                *min = li->frontSector().floor().visHeight();
-
-            if(max && li->frontSector().ceiling().visHeight() > *max)
-                *max = li->frontSector().ceiling().visHeight();
-        }
-
-        if(li->hasBackSector())
-        {
-            if(min && li->backSector().floor().visHeight() < *min)
-                *min = li->backSector().floor().visHeight();
-
-            if(max && li->backSector().ceiling().visHeight() > *max)
-                *max = li->backSector().ceiling().visHeight();
-        }
-
-        own = &own->next();
-    } while(own != base);
-}
-
 static void drawVertexPoint(const Vertex* vtx, coord_t z, float alpha)
 {
     glBegin(GL_POINTS);
@@ -3457,7 +3424,7 @@ static int drawPolyObjVertexes(Polyobj *po, void * /*context*/)
 /**
  * Draw the various vertex debug aids.
  */
-static void Rend_DrawVertexIndices(Map &map)
+static void drawMapVertexes(Map &map)
 {
     float oldLineWidth = -1;
 
@@ -3488,7 +3455,7 @@ static void Rend_DrawVertexIndices(Map &map)
             {
                 coord_t bottom = DDMAXFLOAT;
                 coord_t top    = DDMINFLOAT;
-                getVertexPlaneMinMax(vertex, &bottom, &top);
+                vertex->planeVisHeightMinMax(&bottom, &top);
 
                 drawVertexBar(vertex, bottom, top, alpha);
             }
@@ -3520,7 +3487,7 @@ static void Rend_DrawVertexIndices(Map &map)
             if(dist < MAX_VERTEX_POINT_DIST)
             {
                 coord_t bottom = DDMAXFLOAT;
-                getVertexPlaneMinMax(vertex, &bottom);
+                vertex->planeVisHeightMinMax(&bottom);
 
                 drawVertexPoint(vertex, bottom, (1 - dist / MAX_VERTEX_POINT_DIST) * 2);
             }
@@ -3542,7 +3509,7 @@ static void Rend_DrawVertexIndices(Map &map)
             if(own->line().definesPolyobj()) continue;
 
             Vector3d origin(vertex->origin(), DDMAXFLOAT);
-            getVertexPlaneMinMax(vertex, &origin.z);
+            vertex->planeVisHeightMinMax(&origin.z);
 
             ddouble distToEye = (eye - origin).length();
             if(distToEye < MAX_VERTEX_POINT_DIST)
