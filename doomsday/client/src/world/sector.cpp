@@ -59,14 +59,14 @@ void Sector::Cluster::remapVisPlanes()
         {
             if(hedge->mapElement())
             {
-                if(hedge->mapElement()->as<Line::Side::Segment>()->line().isSelfReferencing())
+                if(hedge->mapElement()->as<Line::Side::Segment>().line().isSelfReferencing())
                 {
                     if(!exteriorCluster && hedge->twin().hasFace())
                     {
-                        BspLeaf *otherLeaf = hedge->twin().face().mapElement()->as<BspLeaf>();
-                        if(otherLeaf->hasCluster())
+                        BspLeaf &otherLeaf = hedge->twin().face().mapElement()->as<BspLeaf>();
+                        if(otherLeaf.hasCluster())
                         {
-                            Cluster *otherCluster = &otherLeaf->cluster();
+                            Cluster *otherCluster = &otherLeaf.cluster();
                             if(otherCluster != this)
                             {
                                 if(!_allSelfRefBoundary && otherCluster->_allSelfRefBoundary)
@@ -99,7 +99,7 @@ void Sector::Cluster::remapVisPlanes()
 
 Sector &Sector::Cluster::sector() const
 {
-    return *_bspLeafs.first()->parent().as<Sector>();
+    return _bspLeafs.first()->parent().as<Sector>();
 }
 
 Plane &Sector::Cluster::plane(int planeIndex) const
@@ -661,9 +661,9 @@ static HEdge *findSharedEdge(Sector::Cluster const &a, Sector::Cluster const &b)
         do
         {
             if(hedge->twin().hasFace())
-            if(BspLeaf *otherLeaf = hedge->twin().face().mapElement()->as<BspLeaf>())
             {
-                if(otherLeaf->hasCluster() && &otherLeaf->cluster() == &b)
+                BspLeaf &otherLeaf = hedge->twin().face().mapElement()->as<BspLeaf>();
+                if(otherLeaf.hasCluster() && &otherLeaf.cluster() == &b)
                     return hedge;
             }
         } while((hedge = &hedge->next()) != baseHEdge);
@@ -689,7 +689,7 @@ void Sector::buildClusters()
      */
     foreach(BspLeaf *bspLeaf, map().bspLeafs())
     {
-        if(bspLeaf->parent().as<Sector>() != this)
+        if(&bspLeaf->parent().as<Sector>() != this)
             continue;
 
         // Degenerate BSP leafs are excluded (no geometry).
@@ -754,10 +754,10 @@ void Sector::buildClusters()
             {
                 if(hedge->twin().hasFace())
                 {
-                    BspLeaf *backLeaf = hedge->twin().face().mapElement()->as<BspLeaf>();
-                    if(hedge->mapElement() && backLeaf->hasCluster() && &backLeaf->cluster() != cluster)
+                    BspLeaf &backLeaf = hedge->twin().face().mapElement()->as<BspLeaf>();
+                    if(hedge->mapElement() && backLeaf.hasCluster() && &backLeaf.cluster() != cluster)
                     {
-                        if(!hedge->mapElement()->as<Line::Side::Segment>()->line().isSelfReferencing())
+                        if(!hedge->mapElement()->as<Line::Side::Segment>().line().isSelfReferencing())
                         {
                             cluster->_allSelfRefBoundary = false;
                             goto nextCluster;

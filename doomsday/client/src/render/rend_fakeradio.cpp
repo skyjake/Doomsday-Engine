@@ -1086,9 +1086,9 @@ void Rend_RadioWallSection(WallEdge const &leftEdge, WallEdge const &rightEdge,
 
     Line::Side &side            = leftEdge.mapSide();
     HEdge const *hedge          = side.leftHEdge();
-    Sector const *frontSec      = hedge->face().mapElement()->as<BspLeaf>()->sectorPtr();
+    Sector const *frontSec      = hedge->face().mapElement()->as<BspLeaf>().sectorPtr();
     Sector const *backSec       =
-        (hedge->twin().hasFace() && leftEdge.spec().section != Line::Side::Middle)? hedge->twin().face().mapElement()->as<BspLeaf>()->sectorPtr() : 0;
+        (hedge->twin().hasFace() && leftEdge.spec().section != Line::Side::Middle)? hedge->twin().face().mapElement()->as<BspLeaf>().sectorPtr() : 0;
 
     coord_t const lineLength    = side.line().length();
     coord_t const sectionOffset = leftEdge.mapSideOffset();
@@ -1263,7 +1263,7 @@ static void writeShadowSection(int planeIndex, Line::Side &side, float shadowDar
     // is not positive) then skip shadow drawing entirely.
     /// @todo Encapsulate this logic in ShadowEdge -ds
     if(!leftHEdge->hasFace() ||
-       !leftHEdge->face().mapElement()->as<BspLeaf>()->hasWorldVolume())
+       !leftHEdge->face().mapElement()->as<BspLeaf>().hasWorldVolume())
         return;
 
     ShadowEdge leftEdge(*leftHEdge, Line::From);

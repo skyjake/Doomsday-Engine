@@ -991,8 +991,8 @@ static void createGlowLightForSurface(Surface &suf)
     if(suf.parent().type() != DMU_PLANE)
         return;
 
-    Plane *pln = suf.parent().as<Plane>();
-    Sector *sec = &pln->sector();
+    Plane &pln = suf.parent().as<Plane>();
+    Sector *sec = &pln.sector();
 
     // Only produce a light for sectors with open space.
     /// @todo Do not add surfaces from sectors with zero BSP leafs to the glowing list.
@@ -1015,8 +1015,8 @@ static void createGlowLightForSurface(Surface &suf)
     // @note Plane lights do not spread so simply link to all BspLeafs of this sector.
     lumobj_t *lum = createLuminous(LT_PLANE, sec->clusters().first()->bspLeafs().at(0));
 
-    V3d_Copy(lum->origin, pln->soundEmitter().origin);
-    lum->origin[VZ] = pln->visHeight(); // Sound emitter origins are not smoothed.
+    V3d_Copy(lum->origin, pln.soundEmitter().origin);
+    lum->origin[VZ] = pln.visHeight(); // Sound emitter origins are not smoothed.
 
     V3f_Set(LUM_PLANE(lum)->normal, suf.normal().x, suf.normal().y, suf.normal().z);
     V3f_Copy(LUM_PLANE(lum)->color, avgColorAmplified->color.rgb);
@@ -1175,7 +1175,7 @@ boolean LOIT_ClipLumObjBySight(void *data, void *context)
                 continue;
 
             // Ignore half-edges facing the wrong way.
-            if(hedge->mapElement()->as<Line::Side::Segment>()->isFrontFacing())
+            if(hedge->mapElement()->as<Line::Side::Segment>().isFrontFacing())
             {
                 coord_t fromV1[2] = { hedge->origin().x, hedge->origin().y };
                 coord_t toV1[2]   = { hedge->twin().origin().x, hedge->twin().origin().y };

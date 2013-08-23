@@ -463,10 +463,10 @@ static void updateBiasForWallSectionsAfterGeometryMove(HEdge *hedge)
     if(!hedge || !hedge->mapElement())
         return;
 
-    Line::Side::Segment *seg = hedge->mapElement()->as<Line::Side::Segment>();
-    seg->updateBiasAfterGeometryMove(Line::Side::Middle);
-    seg->updateBiasAfterGeometryMove(Line::Side::Bottom);
-    seg->updateBiasAfterGeometryMove(Line::Side::Top);
+    Line::Side::Segment &seg = hedge->mapElement()->as<Line::Side::Segment>();
+    seg.updateBiasAfterGeometryMove(Line::Side::Middle);
+    seg.updateBiasAfterGeometryMove(Line::Side::Bottom);
+    seg.updateBiasAfterGeometryMove(Line::Side::Top);
 }
 
 void BspLeaf::updateBiasAfterGeometryMove(int group)
@@ -496,7 +496,7 @@ static void applyBiasDigestToWallSections(HEdge *hedge, BiasDigest &changes)
 {
     if(!hedge || !hedge->mapElement())
         return;
-    hedge->mapElement()->as<Line::Side::Segment>()->applyBiasDigest(changes);
+    hedge->mapElement()->as<Line::Side::Segment>().applyBiasDigest(changes);
 }
 
 void BspLeaf::applyBiasDigest(BiasDigest &changes)
@@ -563,18 +563,18 @@ static void accumReverbForWallSections(HEdge const *hedge,
     if(!hedge || !hedge->mapElement())
         return;
 
-    Line::Side::Segment *seg = hedge->mapElement()->as<Line::Side::Segment>();
-    if(!seg->lineSide().hasSections() || !seg->lineSide().middle().hasMaterial())
+    Line::Side::Segment &seg = hedge->mapElement()->as<Line::Side::Segment>();
+    if(!seg.lineSide().hasSections() || !seg.lineSide().middle().hasMaterial())
         return;
 
-    Material &material = seg->lineSide().middle().material();
+    Material &material = seg.lineSide().middle().material();
     AudioEnvironmentId env = material.audioEnvironment();
     if(!(env >= 0 && env < NUM_AUDIO_ENVIRONMENTS))
         env = AE_WOOD; // Assume it's wood if unknown.
 
-    total += seg->length();
+    total += seg.length();
 
-    envSpaceAccum[env] += seg->length();
+    envSpaceAccum[env] += seg.length();
 }
 
 bool BspLeaf::updateReverb()

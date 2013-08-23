@@ -280,7 +280,7 @@ void *P_DummyExtraData(void *dummy)
     if(P_IsDummy(dummy))
     {
         MapElement *elem = IN_ELEM(dummy);
-        return elem->as<DummyData>()->extraData;
+        return elem->as<DummyData>().extraData;
     }
     return 0;
 }
@@ -304,10 +304,10 @@ int P_ToIndex(void const *ptr)
         return elem->indexInMap();
 
     case DMU_PLANE:
-        return elem->as<Plane>()->indexInSector();
+        return elem->as<Plane>().indexInSector();
 
     case DMU_MATERIAL:
-        return elem->as<Material>()->manifest().id(); // 1-based
+        return elem->as<Material>().manifest().id(); // 1-based
 
     default:
         /// @todo Throw exception.
@@ -387,11 +387,11 @@ int P_Iteratep(void *elPtr, uint prop, void *context, int (*callback) (void *p, 
     switch(elem->type())
     {
     case DMU_SECTOR: {
-        Sector *sector = elem->as<Sector>();
+        Sector &sector = elem->as<Sector>();
         switch(prop)
         {
         case DMU_LINE:
-            foreach(Line::Side *side, sector->sides())
+            foreach(Line::Side *side, sector.sides())
             {
                 int result = callback(&side->line(), context);
                 if(result) return result;
@@ -399,7 +399,7 @@ int P_Iteratep(void *elPtr, uint prop, void *context, int (*callback) (void *p, 
             return false; // Continue iteration
 
         case DMU_PLANE:
-            foreach(Plane *plane, sector->planes())
+            foreach(Plane *plane, sector.planes())
             {
                 int result = callback(plane, context);
                 if(result) return result;
@@ -407,7 +407,7 @@ int P_Iteratep(void *elPtr, uint prop, void *context, int (*callback) (void *p, 
             return false; // Continue iteration
 
         case DMU_BSPLEAF:
-            foreach(Sector::Cluster *cluster, sector->clusters())
+            foreach(Sector::Cluster *cluster, sector.clusters())
             foreach(BspLeaf *bspLeaf, cluster->bspLeafs())
             {
                 int result = callback(bspLeaf, context);
@@ -423,24 +423,24 @@ int P_Iteratep(void *elPtr, uint prop, void *context, int (*callback) (void *p, 
         switch(prop)
         {
         case DMU_LINE: {
-            BspLeaf *bspLeaf = elem->as<BspLeaf>();
+            BspLeaf &bspLeaf = elem->as<BspLeaf>();
 
             /// @todo cleanup: BspLeaf could provide a list of Line::Side.
-            if(!bspLeaf->isDegenerate())
+            if(!bspLeaf.isDegenerate())
             {
-                HEdge *base = bspLeaf->poly().hedge();
+                HEdge *base = bspLeaf.poly().hedge();
                 HEdge *hedge = base;
                 do
                 {
                     if(hedge->mapElement())
                     {
                         int result = callback(&hedge->mapElement()->
-                                              as<Line::Side::Segment>()->line(), context);
+                                              as<Line::Side::Segment>().line(), context);
                         if(result) return result;
                     }
                 } while((hedge = &hedge->next()) != base);
 
-                foreach(Mesh *mesh, bspLeaf->extraMeshes())
+                foreach(Mesh *mesh, bspLeaf.extraMeshes())
                 foreach(HEdge *hedge, mesh->hedges())
                 {
                     // Is this on the back of a one-sided line?
@@ -448,7 +448,7 @@ int P_Iteratep(void *elPtr, uint prop, void *context, int (*callback) (void *p, 
                         continue;
 
                     int result = callback(&hedge->mapElement()->
-                                          as<Line::Side::Segment>()->line(), context);
+                                          as<Line::Side::Segment>().line(), context);
                     if(result) return result;
                 }
             }
@@ -602,12 +602,12 @@ static void setProperty(MapElement *elem, DmuArgs &args)
     {
         if(args.modifiers & DMU_FLOOR_OF_SECTOR)
         {
-            elem = elem->as<BspLeaf>()->sectorPtr();
+            elem = elem->as<BspLeaf>().sectorPtr();
             args.type = DMU_SECTOR;
         }
         else if(args.modifiers & DMU_CEILING_OF_SECTOR)
         {
-            elem = elem->as<BspLeaf>()->sectorPtr();
+            elem = elem->as<BspLeaf>().sectorPtr();
             args.type = DMU_SECTOR;
         }
     }
@@ -616,12 +616,12 @@ static void setProperty(MapElement *elem, DmuArgs &args)
     {
         if(args.modifiers & DMU_FLOOR_OF_SECTOR)
         {
-            elem = &elem->as<Sector>()->floor();
+            elem = &elem->as<Sector>().floor();
             args.type = DMU_PLANE;
         }
         else if(args.modifiers & DMU_CEILING_OF_SECTOR)
         {
-            elem = &elem->as<Sector>()->ceiling();
+            elem = &elem->as<Sector>().ceiling();
             args.type = DMU_PLANE;
         }
     }
@@ -630,12 +630,12 @@ static void setProperty(MapElement *elem, DmuArgs &args)
     {
         if(args.modifiers & DMU_FRONT_OF_LINE)
         {
-            elem = &elem->as<Line>()->front();
+            elem = &elem->as<Line>().front();
             args.type = DMU_SIDE;
         }
         else if(args.modifiers & DMU_BACK_OF_LINE)
         {
-            elem = &elem->as<Line>()->back();
+            elem = &elem->as<Line>().back();
             args.type = DMU_SIDE;
         }
     }
@@ -644,17 +644,17 @@ static void setProperty(MapElement *elem, DmuArgs &args)
     {
         if(args.modifiers & DMU_TOP_OF_SIDE)
         {
-            elem = &elem->as<Line::Side>()->top();
+            elem = &elem->as<Line::Side>().top();
             args.type = DMU_SURFACE;
         }
         else if(args.modifiers & DMU_MIDDLE_OF_SIDE)
         {
-            elem = &elem->as<Line::Side>()->middle();
+            elem = &elem->as<Line::Side>().middle();
             args.type = DMU_SURFACE;
         }
         else if(args.modifiers & DMU_BOTTOM_OF_SIDE)
         {
-            elem = &elem->as<Line::Side>()->bottom();
+            elem = &elem->as<Line::Side>().bottom();
             args.type = DMU_SURFACE;
         }
     }
@@ -686,7 +686,7 @@ static void setProperty(MapElement *elem, DmuArgs &args)
         case DMU_ALPHA:
         case DMU_BLENDMODE:
         case DMU_FLAGS:
-            elem = &elem->as<Plane>()->surface();
+            elem = &elem->as<Plane>().surface();
             args.type = DMU_SURFACE;
             break;
 
@@ -708,12 +708,12 @@ static void getProperty(MapElement const *elem, DmuArgs &args)
     {
         if(args.modifiers & DMU_FLOOR_OF_SECTOR)
         {
-            elem = elem->as<BspLeaf>()->sectorPtr();
+            elem = elem->as<BspLeaf>().sectorPtr();
             args.type = elem->type();
         }
         else if(args.modifiers & DMU_CEILING_OF_SECTOR)
         {
-            elem = elem->as<BspLeaf>()->sectorPtr();
+            elem = elem->as<BspLeaf>().sectorPtr();
             args.type = elem->type();
         }
         else
@@ -722,7 +722,7 @@ static void getProperty(MapElement const *elem, DmuArgs &args)
             {
             case DMU_LIGHT_LEVEL:
             case DMT_MOBJS:
-                elem = elem->as<BspLeaf>()->sectorPtr();
+                elem = elem->as<BspLeaf>().sectorPtr();
                 args.type = elem->type();
                 break;
 
@@ -735,12 +735,12 @@ static void getProperty(MapElement const *elem, DmuArgs &args)
     {
         if(args.modifiers & DMU_FLOOR_OF_SECTOR)
         {
-            elem = &elem->as<Sector>()->floor();
+            elem = &elem->as<Sector>().floor();
             args.type = elem->type();
         }
         else if(args.modifiers & DMU_CEILING_OF_SECTOR)
         {
-            elem = &elem->as<Sector>()->ceiling();
+            elem = &elem->as<Sector>().ceiling();
             args.type = elem->type();
         }
     }
@@ -749,12 +749,12 @@ static void getProperty(MapElement const *elem, DmuArgs &args)
     {
         if(args.modifiers & DMU_FRONT_OF_LINE)
         {
-            elem = &elem->as<Line>()->front();
+            elem = &elem->as<Line>().front();
             args.type = elem->type();
         }
         else if(args.modifiers & DMU_BACK_OF_LINE)
         {
-            elem = &elem->as<Line>()->back();
+            elem = &elem->as<Line>().back();
             args.type = elem->type();
         }
     }
@@ -763,17 +763,17 @@ static void getProperty(MapElement const *elem, DmuArgs &args)
     {
         if(args.modifiers & DMU_TOP_OF_SIDE)
         {
-            elem = &elem->as<Line::Side>()->top();
+            elem = &elem->as<Line::Side>().top();
             args.type = elem->type();
         }
         else if(args.modifiers & DMU_MIDDLE_OF_SIDE)
         {
-            elem = &elem->as<Line::Side>()->middle();
+            elem = &elem->as<Line::Side>().middle();
             args.type = elem->type();
         }
         else if(args.modifiers & DMU_BOTTOM_OF_SIDE)
         {
-            elem = &elem->as<Line::Side>()->bottom();
+            elem = &elem->as<Line::Side>().bottom();
             args.type = elem->type();
         }
     }
@@ -805,7 +805,7 @@ static void getProperty(MapElement const *elem, DmuArgs &args)
         case DMU_ALPHA:
         case DMU_BLENDMODE:
         case DMU_FLAGS:
-            elem = &elem->as<Plane>()->surface();
+            elem = &elem->as<Plane>().surface();
             args.type = elem->type();
             break;
 

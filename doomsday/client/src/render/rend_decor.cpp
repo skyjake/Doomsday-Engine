@@ -335,15 +335,14 @@ static void plotSourcesForSurface(Surface &suf)
         switch(suf.parent().type())
         {
         case DMU_SIDE: {
-            Line::Side *side = suf.parent().as<Line::Side>();
-            plotSourcesForLineSide(*side, &side->middle() == &suf? Line::Side::Middle :
-                                          &side->bottom() == &suf? Line::Side::Bottom : Line::Side::Top);
+            Line::Side &side = suf.parent().as<Line::Side>();
+            plotSourcesForLineSide(side, &side.middle() == &suf? Line::Side::Middle :
+                                         &side.bottom() == &suf? Line::Side::Bottom : Line::Side::Top);
             break; }
 
-        case DMU_PLANE: {
-            Plane *plane = suf.parent().as<Plane>();
-            plotSourcesForPlane(*plane);
-            break; }
+        case DMU_PLANE:
+            plotSourcesForPlane(suf.parent().as<Plane>());
+            break;
 
         default:
             DENG2_ASSERT(0); // Invalid type.

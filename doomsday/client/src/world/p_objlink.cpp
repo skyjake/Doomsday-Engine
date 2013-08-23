@@ -359,21 +359,21 @@ static void maybeSpreadOverEdge(HEdge *hedge, contactfinderparams_t *parms)
     DENG_ASSERT(hedge != 0 && parms != 0);
     DENG_ASSERT(hedge->face().mapElement() != 0);
 
-    BspLeaf *leaf = hedge->face().mapElement()->as<BspLeaf>();
+    BspLeaf &leaf = hedge->face().mapElement()->as<BspLeaf>();
 
     // There must be a back BSP leaf to spread to.
     if(!hedge->hasTwin() || !hedge->twin().hasFace()) return;
 
     DENG_ASSERT(hedge->twin().face().mapElement() != 0);
-    BspLeaf *backLeaf = hedge->twin().face().mapElement()->as<BspLeaf>();
+    BspLeaf &backLeaf = hedge->twin().face().mapElement()->as<BspLeaf>();
 
     // Which way does the spread go?
-    if(!(leaf->validCount() == validCount && backLeaf->validCount() != validCount))
+    if(!(leaf.validCount() == validCount && backLeaf.validCount() != validCount))
     {
         return; // Not eligible for spreading.
     }
 
-    AABoxd const &backLeafAABox = backLeaf->poly().aaBox();
+    AABoxd const &backLeafAABox = backLeaf.poly().aaBox();
 
     // Is the leaf on the back side outside the origin's AABB?
     if(backLeafAABox.maxX <= parms->box[BOXLEFT]   ||
@@ -389,27 +389,27 @@ static void maybeSpreadOverEdge(HEdge *hedge, contactfinderparams_t *parms)
         return;
 
     // Do not spread if the sector on the back side is closed with no height.
-    if(backLeaf->hasSector())
+    if(backLeaf.hasSector())
     {
-        if(backLeaf->visCeiling().height() <= backLeaf->visFloor().height())
+        if(backLeaf.visCeiling().height() <= backLeaf.visFloor().height())
             return;
 
-        if(leaf->hasSector() &&
-           (backLeaf->visCeiling().height() <= leaf->visFloor().height() ||
-            backLeaf->visFloor().height() >= leaf->visCeiling().height()))
+        if(leaf.hasSector() &&
+           (backLeaf.visCeiling().height() <= leaf.visFloor().height() ||
+            backLeaf.visFloor().height() >= leaf.visCeiling().height()))
             return;
     }
 
     // Are there line side surfaces which should prevent spreading?
     if(hedge->mapElement())
     {
-        Line::Side::Segment *seg = hedge->mapElement()->as<Line::Side::Segment>();
+        Line::Side::Segment &seg = hedge->mapElement()->as<Line::Side::Segment>();
 
         // On which side of the line are we? (distance is from segment to origin).
-        Line::Side &side = seg->line().side(seg->lineSide().sideId() ^ (distance < 0));
+        Line::Side &side = seg.line().side(seg.lineSide().sideId() ^ (distance < 0));
 
-        Sector *frontSec = side.isFront()? leaf->sectorPtr() : backLeaf->sectorPtr();
-        Sector *backSec  = side.isFront()? backLeaf->sectorPtr() : leaf->sectorPtr();
+        Sector *frontSec = side.isFront()? leaf.sectorPtr() : backLeaf.sectorPtr();
+        Sector *backSec  = side.isFront()? backLeaf.sectorPtr() : leaf.sectorPtr();
 
         // One-way window?
         if(backSec && !side.back().hasSections())
@@ -440,12 +440,12 @@ static void maybeSpreadOverEdge(HEdge *hedge, contactfinderparams_t *parms)
     }
 
     // During next step, obj will continue spreading from there.
-    backLeaf->setValidCount(validCount);
+    backLeaf.setValidCount(validCount);
 
     // Link up a new contact with the back BSP leaf.
-    linkObjToBspLeaf(*backLeaf, parms->obj, parms->objType);
+    linkObjToBspLeaf(backLeaf, parms->obj, parms->objType);
 
-    spreadInBspLeaf(backLeaf, parms);
+    spreadInBspLeaf(&backLeaf, parms);
 }
 
 /**

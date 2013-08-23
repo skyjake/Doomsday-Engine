@@ -57,7 +57,7 @@ static void notifyGeometryChanged(Polyobj &po)
             if(!hedge->mapElement())
                 continue;
 
-            hedge->mapElement()->as<Line::Side::Segment>()->
+            hedge->mapElement()->as<Line::Side::Segment>().
                     updateBiasAfterGeometryMove(Line::Side::Middle);
         }
     }

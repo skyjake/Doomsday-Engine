@@ -497,9 +497,9 @@ DENG2_PIMPL(WallEdge), public IHPlane
 
 WallEdge::WallEdge(WallSpec const &spec, HEdge &hedge, int edge)
     : WorldEdge((edge? hedge.twin() : hedge).origin()),
-      d(new Instance(this, spec, &hedge.mapElement()->as<Line::Side::Segment>()->lineSide(), edge,
-                           hedge.mapElement()->as<Line::Side::Segment>()->lineSideOffset() + (edge? hedge.mapElement()->as<Line::Side::Segment>()->length() : 0),
-                           hedge.mapElement()->as<Line::Side::Segment>()->lineSide().line().vertexOwner(edge? hedge.twin().vertex() : hedge.vertex())))
+      d(new Instance(this, spec, &hedge.mapElement()->as<Line::Side::Segment>().lineSide(), edge,
+                           hedge.mapElement()->as<Line::Side::Segment>().lineSideOffset() + (edge? hedge.mapElement()->as<Line::Side::Segment>().length() : 0),
+                           hedge.mapElement()->as<Line::Side::Segment>().lineSide().line().vertexOwner(edge? hedge.twin().vertex() : hedge.vertex())))
 {}
 
 Vector3d const &WallEdge::pOrigin() const

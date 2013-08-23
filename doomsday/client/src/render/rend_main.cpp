@@ -1391,7 +1391,7 @@ static void writeWallSection(HEdge &hedge, int section,
     DENG_ASSERT(!isNullLeaf(currentBspLeaf));
     DENG_ASSERT(hedge.mapElement() != 0);
 
-    Line::Side::Segment &segment = *hedge.mapElement()->as<Line::Side::Segment>();
+    Line::Side::Segment &segment = hedge.mapElement()->as<Line::Side::Segment>();
     DENG_ASSERT(segment.isFrontFacing() && segment.lineSide().hasSections());
 
     if(retWroteOpaque) *retWroteOpaque = false;
@@ -1842,13 +1842,13 @@ static void writeLeafSkyMaskStrips(SkyFixEdge::FixType fixType)
         Material *skyMaterial = 0;
         if(splitOnMaterialChange)
         {
-            skyMaterial = hedge->face().mapElement()->as<BspLeaf>()->visPlane(relPlane).surface().materialPtr();
+            skyMaterial = hedge->face().mapElement()->as<BspLeaf>().visPlane(relPlane).surface().materialPtr();
         }
 
         // Add a first (left) edge to the current strip?
         if(startNode == 0 && hedge->mapElement())
         {
-            startMaterialOffset = hedge->mapElement()->as<Line::Side::Segment>()->lineSideOffset();
+            startMaterialOffset = hedge->mapElement()->as<Line::Side::Segment>().lineSideOffset();
 
             // Prepare the edge geometry
             SkyFixEdge skyEdge(*hedge, fixType, (direction == Anticlockwise)? Line::To : Line::From,
@@ -1877,7 +1877,7 @@ static void writeLeafSkyMaskStrips(SkyFixEdge::FixType fixType)
             bool endStrip = false;
             if(hedge->mapElement())
             {
-                startMaterialOffset += hedge->mapElement()->as<Line::Side::Segment>()->length()
+                startMaterialOffset += hedge->mapElement()->as<Line::Side::Segment>().length()
                                      * (direction == Anticlockwise? -1 : 1);
 
                 // Prepare the edge geometry
@@ -2024,7 +2024,7 @@ static void writeLeafSkyMask(int skyCap = SKYCAP_LOWER|SKYCAP_UPPER)
 static bool coveredOpenRange(HEdge &hedge, coord_t middleBottomZ, coord_t middleTopZ,
     bool wroteOpaqueMiddle)
 {
-    Line::Side const &front = hedge.mapElement()->as<Line::Side::Segment>()->lineSide();
+    Line::Side const &front = hedge.mapElement()->as<Line::Side::Segment>().lineSide();
 
     if(front.considerOneSided())
     {
@@ -2039,13 +2039,13 @@ static bool coveredOpenRange(HEdge &hedge, coord_t middleBottomZ, coord_t middle
         return wroteOpaqueMiddle;
     }
 
-    BspLeaf const *leaf     = hedge.face().mapElement()->as<BspLeaf>();
-    BspLeaf const *backLeaf = hedge.twin().face().mapElement()->as<BspLeaf>();
+    BspLeaf const &leaf     = hedge.face().mapElement()->as<BspLeaf>();
+    BspLeaf const &backLeaf = hedge.twin().face().mapElement()->as<BspLeaf>();
 
-    coord_t const ffloor   = leaf->visFloorHeight();
-    coord_t const fceil    = leaf->visCeilingHeight();
-    coord_t const bfloor   = backLeaf->visFloorHeight();
-    coord_t const bceil    = backLeaf->visCeilingHeight();
+    coord_t const ffloor   = leaf.visFloorHeight();
+    coord_t const fceil    = leaf.visCeilingHeight();
+    coord_t const bfloor   = backLeaf.visFloorHeight();
+    coord_t const bceil    = backLeaf.visCeilingHeight();
 
     bool middleCoversOpening = false;
     if(wroteOpaqueMiddle)
@@ -2069,10 +2069,10 @@ static bool coveredOpenRange(HEdge &hedge, coord_t middleBottomZ, coord_t middle
        || (bfloor >= fceil &&
                (front.bottom().hasMaterial() || front.middle().hasMaterial())))
     {
-        Surface const &ffloorSurface = leaf->visFloor().surface();
-        Surface const &fceilSurface  = leaf->visCeiling().surface();
-        Surface const &bfloorSurface = backLeaf->visFloor().surface();
-        Surface const &bceilSurface  = backLeaf->visCeiling().surface();
+        Surface const &ffloorSurface = leaf.visFloor().surface();
+        Surface const &fceilSurface  = leaf.visCeiling().surface();
+        Surface const &bfloorSurface = backLeaf.visFloor().surface();
+        Surface const &bceilSurface  = backLeaf.visCeiling().surface();
 
         // A closed gap?
         if(de::fequal(fceil, bfloor))
@@ -2111,12 +2111,12 @@ static void writeAllWallSections(HEdge *hedge)
         return;
 
     // We are only interested in front facing segments with sections.
-    Line::Side::Segment *seg = hedge->mapElement()->as<Line::Side::Segment>();
-    if(!seg->isFrontFacing() || !seg->lineSide().hasSections())
+    Line::Side::Segment &seg = hedge->mapElement()->as<Line::Side::Segment>();
+    if(!seg.isFrontFacing() || !seg.lineSide().hasSections())
         return;
 
     // Done here because of the logic of doom.exe wrt the automap.
-    reportWallSectionDrawn(seg->line());
+    reportWallSectionDrawn(seg.line());
 
     bool wroteOpaqueMiddle = false;
     coord_t middleBottomZ = 0, middleTopZ = 0;
@@ -2175,9 +2175,9 @@ static void writeLeafPlanes()
 static void markFrontFacingWalls(HEdge *hedge)
 {
     if(!hedge || !hedge->mapElement()) return;
-    Line::Side::Segment *seg = hedge->mapElement()->as<Line::Side::Segment>();
+    Line::Side::Segment &seg = hedge->mapElement()->as<Line::Side::Segment>();
     // Which way is the line segment facing?
-    seg->setFrontFacing(viewFacingDot(hedge->origin(), hedge->twin().origin()) >= 0);
+    seg.setFrontFacing(viewFacingDot(hedge->origin(), hedge->twin().origin()) >= 0);
 }
 
 static void markLeafFrontFacingWalls()
@@ -2236,38 +2236,38 @@ static void occludeLeaf(bool frontFacing)
         if(!hedge->mapElement())
             continue;
 
-        Line::Side::Segment *seg = hedge->mapElement()->as<Line::Side::Segment>();
-        DENG_ASSERT(hedge->face().mapElement()->as<BspLeaf>()->hasSector()); // sanity check
+        Line::Side::Segment &seg = hedge->mapElement()->as<Line::Side::Segment>();
+        DENG_ASSERT(hedge->face().mapElement()->as<BspLeaf>().hasSector()); // sanity check
 
         // Edges without line segment surface sections can never occlude.
-        if(!seg->lineSide().hasSections())
+        if(!seg.lineSide().hasSections())
             continue;
 
         // Only front-facing edges can occlude.
-        if(frontFacing != seg->isFrontFacing())
+        if(frontFacing != seg.isFrontFacing())
             continue;
 
         // Occlusions should only happen where two sectors meet.
         if(!hedge->hasTwin() || !hedge->twin().hasFace())
             continue;
 
-        BspLeaf *backLeaf = hedge->twin().face().mapElement()->as<BspLeaf>();
-        if(!backLeaf->hasSector())
+        BspLeaf &backLeaf = hedge->twin().face().mapElement()->as<BspLeaf>();
+        if(!backLeaf.hasSector())
             continue;
 
         Sector const &frontSec = leaf->sector();
-        Sector const &backSec  = backLeaf->sector();
+        Sector const &backSec  = backLeaf.sector();
 
         // Choose start and end vertexes so that it's facing forward.
         Vertex const &from = frontFacing? hedge->vertex() : hedge->twin().vertex();
         Vertex const &to   = frontFacing? hedge->twin().vertex() : hedge->vertex();
 
         coord_t openBottom, openTop;
-        R_VisOpenRange(seg->lineSide(), &frontSec, &backSec, &openBottom, &openTop);
+        R_VisOpenRange(seg.lineSide(), &frontSec, &backSec, &openBottom, &openTop);
 
         // Does the floor create an occlusion?
         if(((openBottom > leaf->visFloorHeight() && vOrigin[VY] <= openBottom)
-            || (openBottom >  backLeaf->visFloorHeight() && vOrigin[VY] >= openBottom))
+            || (openBottom >  backLeaf.visFloorHeight() && vOrigin[VY] >= openBottom))
            && canOccludeSectorPairBoundary(frontSec, backSec, false))
         {
             C_AddViewRelOcclusion(from.origin(), to.origin(), openBottom, false);
@@ -2275,7 +2275,7 @@ static void occludeLeaf(bool frontFacing)
 
         // Does the ceiling create an occlusion?
         if(((openTop < leaf->visCeilingHeight() && vOrigin[VY] >= openTop)
-            || (openTop <  backLeaf->visCeilingHeight() && vOrigin[VY] <= openTop))
+            || (openTop <  backLeaf.visCeilingHeight() && vOrigin[VY] <= openTop))
            && canOccludeSectorPairBoundary(frontSec, backSec, true))
         {
             C_AddViewRelOcclusion(from.origin(), to.origin(), openTop, true);
@@ -2289,12 +2289,12 @@ static void clipFrontFacingWalls(HEdge *hedge)
     if(!hedge || !hedge->mapElement())
         return;
 
-    Line::Side::Segment *seg = hedge->mapElement()->as<Line::Side::Segment>();
-    if(seg->isFrontFacing())
+    Line::Side::Segment &seg = hedge->mapElement()->as<Line::Side::Segment>();
+    if(seg.isFrontFacing())
     {
         if(!C_CheckRangeFromViewRelPoints(hedge->origin(), hedge->twin().origin()))
         {
-            seg->setFrontFacing(false);
+            seg.setFrontFacing(false);
         }
     }
 }
@@ -2404,13 +2404,13 @@ static void traverseBspAndDrawLeafs(MapElement *bspElement)
     while(bspElement->type() != DMU_BSPLEAF)
     {
         // Descend deeper into the nodes.
-        BspNode const *bspNode = bspElement->as<BspNode>();
+        BspNode const &bspNode = bspElement->as<BspNode>();
 
         // Decide which side the view point is on.
-        int eyeSide = bspNode->partition().pointOnSide(eyeOrigin) < 0;
+        int eyeSide = bspNode.partition().pointOnSide(eyeOrigin) < 0;
 
         // Recursively divide front space.
-        traverseBspAndDrawLeafs(bspNode->childPtr(eyeSide));
+        traverseBspAndDrawLeafs(bspNode.childPtr(eyeSide));
 
         // If the clipper is full we're pretty much done. This means no geometry
         // will be visible in the distance because every direction has already
@@ -2419,23 +2419,23 @@ static void traverseBspAndDrawLeafs(MapElement *bspElement)
             return;
 
         // ...and back space.
-        bspElement = bspNode->childPtr(eyeSide ^ 1);
+        bspElement = bspNode.childPtr(eyeSide ^ 1);
     }
 
     // We've arrived at a leaf.
-    BspLeaf *bspLeaf = bspElement->as<BspLeaf>();
+    BspLeaf &bspLeaf = bspElement->as<BspLeaf>();
 
     // Skip null leafs (those with zero volume). Neighbors handle adding the
     // solid clipper segments.
-    if(isNullLeaf(bspLeaf))
+    if(isNullLeaf(&bspLeaf))
         return;
 
     // Is this leaf visible?
-    if(!firstBspLeaf && !C_IsPolyVisible(bspLeaf->poly()))
+    if(!firstBspLeaf && !C_IsPolyVisible(bspLeaf.poly()))
         return;
 
     // This is now the current leaf.
-    makeCurrent(bspLeaf);
+    makeCurrent(&bspLeaf);
 
     drawCurrentLeaf();
 
@@ -3142,24 +3142,24 @@ static void drawTangentSpaceVectorsForWallSections(HEdge *hedge)
     if(!hedge || !hedge->mapElement())
         return;
 
-    Line::Side::Segment *seg = hedge->mapElement()->as<Line::Side::Segment>();
+    Line::Side::Segment &seg = hedge->mapElement()->as<Line::Side::Segment>();
 
-    if(!hedge->twin().hasFace() || !hedge->twin().face().mapElement()->as<BspLeaf>()->hasSector())
+    if(!hedge->twin().hasFace() || !hedge->twin().face().mapElement()->as<BspLeaf>().hasSector())
     {
-        Sector *frontSec = hedge->face().mapElement()->as<BspLeaf>()->sectorPtr();
+        Sector *frontSec = hedge->face().mapElement()->as<BspLeaf>().sectorPtr();
         coord_t const bottom = frontSec->floor().visHeight();
         coord_t const top = frontSec->ceiling().visHeight();
         Vector2d center = (hedge->twin().origin() + hedge->origin()) / 2;
-        Surface *suf = &seg->lineSide().middle();
+        Surface *suf = &seg.lineSide().middle();
 
         Vector3d origin = Vector3d(center, bottom + (top - bottom) / 2);
         drawTangentSpaceVectorsForSurface(suf, origin);
     }
     else
     {
-        Sector *frontSec = hedge->face().mapElement()->as<BspLeaf>()->sectorPtr();
-        Sector *backSec  = hedge->twin().face().mapElement()->as<BspLeaf>()->sectorPtr();
-        Line::Side &side = seg->lineSide();
+        Sector *frontSec = hedge->face().mapElement()->as<BspLeaf>().sectorPtr();
+        Sector *backSec  = hedge->twin().face().mapElement()->as<BspLeaf>().sectorPtr();
+        Line::Side &side = seg.lineSide();
 
         if(side.middle().hasMaterial())
         {

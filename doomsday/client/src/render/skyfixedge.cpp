@@ -122,9 +122,9 @@ DENG2_PIMPL(SkyFixEdge)
         // Only edges with line segments need fixes.
         if(!hedge->mapElement()) return false;
 
-        Line::Side const &lineSide = hedge->mapElement()->as<Line::Side::Segment>()->lineSide();
-        Sector const *frontSec     = hedge->face().mapElement()->as<BspLeaf>()->sectorPtr();
-        Sector const *backSec      = hedge->twin().hasFace()? hedge->twin().face().mapElement()->as<BspLeaf>()->sectorPtr() : 0;
+        Line::Side const &lineSide = hedge->mapElement()->as<Line::Side::Segment>().lineSide();
+        Sector const *frontSec     = hedge->face().mapElement()->as<BspLeaf>().sectorPtr();
+        Sector const *backSec      = hedge->twin().hasFace()? hedge->twin().face().mapElement()->as<BspLeaf>().sectorPtr() : 0;
 
         if(!(!backSec || backSec != frontSec)) return false;
 
@@ -173,8 +173,8 @@ DENG2_PIMPL(SkyFixEdge)
             return;
         }
 
-        Sector const *frontSec = hedge->face().mapElement()->as<BspLeaf>()->sectorPtr();
-        Sector const *backSec  = hedge->twin().hasFace()? hedge->twin().face().mapElement()->as<BspLeaf>()->sectorPtr() : 0;
+        Sector const *frontSec = hedge->face().mapElement()->as<BspLeaf>().sectorPtr();
+        Sector const *backSec  = hedge->twin().hasFace()? hedge->twin().face().mapElement()->as<BspLeaf>().sectorPtr() : 0;
         Plane const *ffloor = &frontSec->floor();
         Plane const *fceil  = &frontSec->ceiling();
         Plane const *bceil  = backSec? &backSec->ceiling() : 0;

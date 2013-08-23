@@ -448,46 +448,46 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
         {
             // Take ownership of the BspLeaf.
             DENG2_ASSERT(tree.userData() != 0);
-            BspLeaf *leaf = tree.userData()->as<BspLeaf>();
-            partitioner.take(leaf);
+            BspLeaf &leaf = tree.userData()->as<BspLeaf>();
+            partitioner.take(&leaf);
 
             // Add this BspLeaf to the LUT.
-            leaf->setIndexInMap(bspLeafs.count());
-            bspLeafs.append(leaf);
+            leaf.setIndexInMap(bspLeafs.count());
+            bspLeafs.append(&leaf);
 
-            if(!leaf->hasParent())
+            if(!leaf.hasParent())
             {
                 LOG_WARNING("BSP leaf %p is degenerate/orphan (%d half-edges).")
-                    << de::dintptr(leaf)
-                    << (leaf->hasPoly()? leaf->poly().hedgeCount() : 0);
+                    << de::dintptr(&leaf)
+                    << (leaf.hasPoly()? leaf.poly().hedgeCount() : 0);
 
                 // Attribute this leaf directly to the map.
-                leaf->setMap(thisPublic);
+                leaf.setMap(thisPublic);
             }
 
 #ifdef DENG_DEBUG
-            if(!leaf->isDegenerate())
+            if(!leaf.isDegenerate())
             {
                 // See if we received a partial geometry...
                 int discontinuities = 0;
-                HEdge *hedge = leaf->poly().hedge();
+                HEdge *hedge = leaf.poly().hedge();
                 do
                 {
                     if(hedge->next().origin() != hedge->twin().origin())
                     {
                         discontinuities++;
                     }
-                } while((hedge = &hedge->next()) != leaf->poly().hedge());
+                } while((hedge = &hedge->next()) != leaf.poly().hedge());
 
                 if(discontinuities)
                 {
                     LOG_WARNING("Face geometry for BSP leaf [%p] at %s in sector %i "
                                 "is not contiguous (%i gaps/overlaps).\n%s")
-                        << de::dintptr(leaf)
-                        << leaf->poly().center().asText()
-                        << (leaf->hasParent()? leaf->parent().as<Sector>()->indexInArchive() : -1)
+                        << de::dintptr(&leaf)
+                        << leaf.poly().center().asText()
+                        << (leaf.hasParent()? leaf.parent().as<Sector>().indexInArchive() : -1)
                         << discontinuities
-                        << leaf->poly().description();
+                        << leaf.poly().description();
                 }
             }
 #endif
@@ -498,13 +498,13 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
 
         // Take ownership of this BspNode.
         DENG2_ASSERT(tree.userData() != 0);
-        BspNode *node = tree.userData()->as<BspNode>();
-        partitioner.take(node);
+        BspNode &node = tree.userData()->as<BspNode>();
+        partitioner.take(&node);
 
         // Add this BspNode to the LUT.
-        node->setMap(thisPublic);
-        node->setIndexInMap(bspNodes.count());
-        bspNodes.append(node);
+        node.setMap(thisPublic);
+        node.setIndexInMap(bspNodes.count());
+        bspNodes.append(&node);
     }
 
     /**
@@ -2569,16 +2569,16 @@ BspLeaf &Map::bspLeafAt(Vector2d const &point) const
     MapElement *bspElement = d->bspRoot;
     while(bspElement->type() != DMU_BSPLEAF)
     {
-        BspNode const *bspNode = bspElement->as<BspNode>();
+        BspNode const &bspNode = bspElement->as<BspNode>();
 
-        int side = bspNode->partition().pointOnSide(point) < 0;
+        int side = bspNode.partition().pointOnSide(point) < 0;
 
         // Decend to the child subspace on "this" side.
-        bspElement = bspNode->childPtr(side);
+        bspElement = bspNode.childPtr(side);
     }
 
     // We've arrived at a leaf.
-    return *bspElement->as<BspLeaf>();
+    return bspElement->as<BspLeaf>();
 }
 
 BspLeaf &Map::bspLeafAt_FixedPrecision(Vector2d const &point) const
@@ -2592,8 +2592,8 @@ BspLeaf &Map::bspLeafAt_FixedPrecision(Vector2d const &point) const
     MapElement *bspElement = d->bspRoot;
     while(bspElement->type() != DMU_BSPLEAF)
     {
-        BspNode const *bspNode = bspElement->as<BspNode>();
-        Partition const &partition = bspNode->partition();
+        BspNode const &bspNode = bspElement->as<BspNode>();
+        Partition const &partition = bspNode.partition();
 
         fixed_t lineOriginX[2]    = { DBL2FIX(partition.origin.x),    DBL2FIX(partition.origin.y) };
         fixed_t lineDirectionX[2] = { DBL2FIX(partition.direction.x), DBL2FIX(partition.direction.y) };
@@ -2601,11 +2601,11 @@ BspLeaf &Map::bspLeafAt_FixedPrecision(Vector2d const &point) const
         int side = V2x_PointOnLineSide(pointX, lineOriginX, lineDirectionX);
 
         // Decend to the child subspace on "this" side.
-        bspElement = bspNode->childPtr(side);
+        bspElement = bspNode.childPtr(side);
     }
 
     // We've arrived at a leaf.
-    return *bspElement->as<BspLeaf>();
+    return bspElement->as<BspLeaf>();
 }
 
 #ifdef __CLIENT__

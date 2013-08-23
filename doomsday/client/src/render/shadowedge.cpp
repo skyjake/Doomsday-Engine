@@ -116,7 +116,7 @@ static bool middleMaterialCoversOpening(Line::Side &side)
 
 void ShadowEdge::prepare(int planeIndex)
 {
-    Line::Side &side = d->leftMostHEdge->mapElement()->as<Line::Side::Segment>()->lineSide();
+    Line::Side &side = d->leftMostHEdge->mapElement()->as<Line::Side::Segment>().lineSide();
     Plane const &plane = side.sector().plane(planeIndex);
     int const otherPlaneIndex = planeIndex == Sector::Floor? Sector::Ceiling : Sector::Floor;
 
@@ -128,14 +128,14 @@ void ShadowEdge::prepare(int planeIndex)
     // in the polygon corner vertices (placement, opacity).
 
     if(d->leftMostHEdge->twin().hasFace() &&
-       d->leftMostHEdge->twin().face().mapElement()->as<BspLeaf>()->hasSector())
+       d->leftMostHEdge->twin().face().mapElement()->as<BspLeaf>().hasSector())
     {
         Surface const &wallEdgeSurface =
             side.back().hasSector()? side.surface(planeIndex == Sector::Ceiling? Line::Side::Top : Line::Side::Bottom)
                                    : side.middle();
 
-        Sector const *frontSec = d->leftMostHEdge->face().mapElement()->as<BspLeaf>()->sectorPtr();
-        Sector const *backSec  = d->leftMostHEdge->twin().face().mapElement()->as<BspLeaf>()->sectorPtr();
+        Sector const *frontSec = d->leftMostHEdge->face().mapElement()->as<BspLeaf>().sectorPtr();
+        Sector const *backSec  = d->leftMostHEdge->twin().face().mapElement()->as<BspLeaf>().sectorPtr();
 
         coord_t fz = 0, bz = 0, bhz = 0;
         R_SetRelativeHeights(frontSec, backSec, planeIndex, &fz, &bz, &bhz);
@@ -198,7 +198,7 @@ void ShadowEdge::prepare(int planeIndex)
         else if(otherSide->back().hasSector())
         {
             // Its a normal neighbor.
-            Sector const *frontSec = d->leftMostHEdge->face().mapElement()->as<BspLeaf>()->sectorPtr();
+            Sector const *frontSec = d->leftMostHEdge->face().mapElement()->as<BspLeaf>().sectorPtr();
             Sector const *backSec  = otherSide->back().sectorPtr();
             if(backSec != frontSec &&
                !((plane.indexInSector() == Sector::Floor && backSec->ceiling().visHeight() <= plane.visHeight()) ||
