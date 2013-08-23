@@ -120,6 +120,14 @@ public:
          */
         AABoxd const &aaBox() const;
 
+        /**
+         * Returns the point defined by the center of the axis-aligned bounding
+         * box in the map coordinate space.
+         */
+        inline de::Vector2d center() const {
+            return (de::Vector2d(aaBox().min) + de::Vector2d(aaBox().max)) / 2;
+        }
+
         friend class Sector;
 
     private:

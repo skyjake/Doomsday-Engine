@@ -161,21 +161,31 @@ byte rendSkyLightAuto = true;
 int extraLight; // Bumped light from gun blasts.
 float extraLightDelta;
 
-byte devMobjVLights = 0; // @c 1= Draw mobj vertex lighting vector.
-int devMobjBBox = 0; // 1 = Draw mobj bounding boxes (for debug)
-int devPolyobjBBox = 0; // 1 = Draw polyobj bounding boxes (for debug)
-DGLuint dlBBox = 0; // Display list: active-textured bbox model.
+// Display list id for the active-textured bbox model.
+DGLuint dlBBox;
 
-byte devVertexIndices = 0; // @c 1= Draw world vertex indices (for debug).
-byte devVertexBars = 0; // @c 1= Draw world vertex position bars.
-byte devSoundOrigins = 0; ///< cvar @c 1= Draw sound origin debug display.
-byte devSurfaceVectors = 0;
-byte devNoTexFix = 0;
+/*
+ * Debug/Development cvars:
+ */
+
+byte devMobjVLights;    ///< @c 1= Draw mobj vertex lighting vector.
+int devMobjBBox;        ///< @c 1 = Draw mobj bounding boxes.
+int devPolyobjBBox;     ///< @c 1 = Draw polyobj bounding boxes.
+
+byte devVertexIndices;  ///< @c 1= Draw world vertex indices.
+byte devVertexBars;     ///< @c 1= Draw world vertex position bars.
+byte devSoundOrigins;   ///< @c 1= Draw sound origin debug display.
+byte devSurfaceVectors;
+byte devNoTexFix;
+
+byte devSectorIndices;  ///< @c 1= Draw map sector indicies.
 
 static void Rend_DrawBoundingBoxes(Map &map);
 static void Rend_DrawSoundOrigins(Map &map);
 static void Rend_DrawSurfaceVectors(Map &map);
-static void drawMapVertexes(Map &map);
+
+static void drawSectors(Map &map);
+static void drawVertexes(Map &map);
 
 static uint buildLeafPlaneGeometry(BspLeaf const &leaf, ClockDirection direction,
     coord_t height, Vector3f **verts, uint *vertsSize);
@@ -239,6 +249,7 @@ void Rend_Register()
     C_VAR_BYTE  ("rend-dev-tex-showfix",            &devNoTexFix,                   CVF_NO_ARCHIVE, 0, 1);
     C_VAR_BYTE  ("rend-dev-blockmap-debug",         &bmapShowDebug,                 CVF_NO_ARCHIVE, 0, 4);
     C_VAR_FLOAT ("rend-dev-blockmap-debug-size",    &bmapDebugSize,                 CVF_NO_ARCHIVE, .1f, 100);
+    C_VAR_BYTE  ("rend-dev-sector-show-indices",    &devSectorIndices,              CVF_NO_ARCHIVE, 0, 1);
     C_VAR_BYTE  ("rend-dev-vertex-show-indices",    &devVertexIndices,              CVF_NO_ARCHIVE, 0, 1);
     C_VAR_BYTE  ("rend-dev-vertex-show-bars",       &devVertexBars,                 CVF_NO_ARCHIVE, 0, 1);
     C_VAR_BYTE  ("rend-dev-surface-show-vectors",   &devSurfaceVectors,             CVF_NO_ARCHIVE, 0, 7);
@@ -2498,7 +2509,8 @@ void Rend_RenderMap(Map &map)
     Rend_DrawSurfaceVectors(map);
     LO_DrawLumobjs();             // Lumobjs.
     Rend_DrawBoundingBoxes(map);  // Mobj bounding boxes.
-    drawMapVertexes(map);
+    drawSectors(map);
+    drawVertexes(map);
     Rend_DrawSoundOrigins(map);
     Rend_RenderGenerators();
 
@@ -3424,7 +3436,7 @@ static int drawPolyObjVertexes(Polyobj *po, void * /*context*/)
 /**
  * Draw the various vertex debug aids.
  */
-static void drawMapVertexes(Map &map)
+static void drawVertexes(Map &map)
 {
     float oldLineWidth = -1;
 
@@ -3537,6 +3549,41 @@ static void drawMapVertexes(Map &map)
     }
     DGL_SetFloat(DGL_POINT_SIZE, oldPointSize);
     glDisable(GL_POINT_SMOOTH);
+}
+
+static String labelForCluster(Sector::Cluster *cluster)
+{
+    DENG_ASSERT(cluster != 0);
+    return String("%1").arg(cluster->sector().indexInMap());
+}
+
+/**
+ * Draw the sector cluster debugging aids.
+ */
+static void drawSectors(Map &map)
+{
+#define MAX_LABEL_DIST 1280
+
+    if(!devSectorIndices)
+        return;
+
+    // Draw per-cluster sector labels:
+    Vector3d const eye(vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
+
+    foreach(Sector *sector, map.sectors())
+    foreach(Sector::Cluster *cluster, sector->clusters())
+    {
+        Vector3d const origin(cluster->center(), cluster->visPlane(Sector::Floor).visHeight());
+        ddouble distToEye = (eye - origin).length();
+        if(distToEye < MAX_LABEL_DIST)
+        {
+            drawLabel(origin, labelForCluster(cluster),
+                      distToEye / (DENG_WINDOW->width() / 2),
+                      1 - distToEye / MAX_LABEL_DIST);
+        }
+    }
+
+#undef MAX_LABEL_DIST
 }
 
 MaterialVariantSpec const &Rend_MapSurfaceMaterialSpec(int wrapS, int wrapT)
