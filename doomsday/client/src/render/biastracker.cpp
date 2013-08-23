@@ -57,7 +57,8 @@ DENG2_OBSERVES(BiasSource, Deletion)
     }
 
     Instance(Instance const &other)
-        : activeContributors(other.activeContributors),
+        : IPrivate(),
+          activeContributors(other.activeContributors),
           changedContributions(other.changedContributions),
           lastSourceDeletion(other.lastSourceDeletion)
     {
