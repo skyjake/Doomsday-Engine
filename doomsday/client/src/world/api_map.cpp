@@ -407,7 +407,7 @@ int P_Iteratep(void *elPtr, uint prop, void *context, int (*callback) (void *p, 
             return false; // Continue iteration
 
         case DMU_BSPLEAF:
-            foreach(Sector::Cluster *cluster, sector.clusters())
+            foreach(SectorCluster *cluster, sector.clusters())
             foreach(BspLeaf *bspLeaf, cluster->bspLeafs())
             {
                 int result = callback(bspLeaf, context);

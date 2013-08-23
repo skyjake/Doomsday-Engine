@@ -3551,7 +3551,7 @@ static void drawVertexes(Map &map)
     glDisable(GL_POINT_SMOOTH);
 }
 
-static String labelForCluster(Sector::Cluster *cluster)
+static String labelForCluster(SectorCluster *cluster)
 {
     DENG_ASSERT(cluster != 0);
     return String("%1").arg(cluster->sector().indexInMap());
@@ -3571,7 +3571,7 @@ static void drawSectors(Map &map)
     Vector3d const eye(vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
 
     foreach(Sector *sector, map.sectors())
-    foreach(Sector::Cluster *cluster, sector->clusters())
+    foreach(SectorCluster *cluster, sector->clusters())
     {
         Vector3d const origin(cluster->center(), cluster->visPlane(Sector::Floor).visHeight());
         ddouble distToEye = (eye - origin).length();

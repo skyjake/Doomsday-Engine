@@ -549,4 +549,6 @@ private:
     DENG2_PRIVATE(d)
 };
 
+typedef Sector::Cluster SectorCluster;
+
 #endif // DENG_WORLD_SECTOR_H

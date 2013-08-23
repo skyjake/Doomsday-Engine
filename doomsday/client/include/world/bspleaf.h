@@ -161,7 +161,7 @@ public:
      *
      * @see hasCluster()
      */
-    Sector::Cluster &cluster() const;
+    SectorCluster &cluster() const;
 
     /**
      * Convenient method of returning the sector of the cluster attributed to
@@ -188,7 +188,7 @@ public:
      *
      * @see hasCluster(), cluster()
      */
-    void setCluster(Sector::Cluster *newCluster);
+    void setCluster(SectorCluster *newCluster);
 
     /**
      * Returns the identified @em physical plane of the parent sector. Naturally

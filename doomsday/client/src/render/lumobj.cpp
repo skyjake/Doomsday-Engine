@@ -1027,7 +1027,7 @@ static void createGlowLightForSurface(Surface &suf)
 
     R_LinkObjToBspLeaf(*lum->bspLeaf, *lum);
 
-    foreach(Sector::Cluster *cluster, sec->clusters())
+    foreach(SectorCluster *cluster, sec->clusters())
     foreach(BspLeaf *bspLeaf, cluster->bspLeafs())
     {
         // Don't link the lumobj to the same BSP leaf twice.

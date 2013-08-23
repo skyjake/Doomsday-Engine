@@ -63,7 +63,7 @@ typedef QMap<int, GeometryGroup> GeometryGroups;
 DENG2_PIMPL(BspLeaf)
 {
     /// Attributed sector cluster if any (not owned).
-    Sector::Cluster *cluster;
+    SectorCluster *cluster;
 
     /// Convex polygon geometry attributed to the BSP leaf if any (not owned).
     Face *poly;
@@ -366,7 +366,7 @@ bool BspLeaf::hasCluster() const
     return d->cluster != 0;
 }
 
-Sector::Cluster &BspLeaf::cluster() const
+SectorCluster &BspLeaf::cluster() const
 {
     if(d->cluster)
     {
@@ -376,7 +376,7 @@ Sector::Cluster &BspLeaf::cluster() const
     throw MissingClusterError("BspLeaf::cluster", "No sector cluster is attributed");
 }
 
-void BspLeaf::setCluster(Sector::Cluster *newCluster)
+void BspLeaf::setCluster(SectorCluster *newCluster)
 {
     d->cluster = newCluster;
 }
