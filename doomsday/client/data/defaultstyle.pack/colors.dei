@@ -1,6 +1,6 @@
 # Colors for the default UI style
 
-script { import gui }
+script { import gui, Version }
 
 color text       { rgb <1.0, 1.0, 1.0> }
 color background { rgb <0.0, 0.0, 0.0, 0.75> }
@@ -52,7 +52,16 @@ group editor {
 group log {
     color normal    { rgb <0.85, 0.85, 0.8> }
     color highlight { rgb <1.0, 1.0, 1.0> }
-    color dimmed    { rgb <0.72, 0.72, 0.68> }
+    color dimmed { 
+        condition: Version.OS != 'windows'
+        rgb <0.72, 0.72, 0.68> 
+    }
+    color dimmed {
+        # Apply some extra black because we don't have a Light style
+        # font on Windows.
+        condition: Version.OS == 'windows'
+        rgb <0.65, 0.65, 0.62> 
+    }
     color accent    { rgb $= accent.rgb }
     color dimaccent { rgb <0.85, 0.68, 0.34> }
 }

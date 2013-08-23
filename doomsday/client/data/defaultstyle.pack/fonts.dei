@@ -8,16 +8,17 @@ script {
     import Version, gui
     
     # Load some custom fonts.
-    #import App, Path
-    #fontDir = Path.fileNamePath(__file__) / "fonts/customfont"
-    #App.loadFont(fontDir / "FontName-Bold.ttf")
-    #App.loadFont(fontDir / "FontName-Regular.ttf")
-    #App.loadFont(fontDir / "FontName-Light.ttf") 
+    import App, Path
+    fontDir = Path.fileNamePath(__file__) / "fonts" 
+    App.loadFont(fontDir / "OpenSans-Regular.ttf")
+    App.loadFont(fontDir / "OpenSans-Bold.ttf")
+    App.loadFont(fontDir / "OpenSans-Italic.ttf")
+    App.loadFont(fontDir / "OpenSans-BoldItalic.ttf")
 }
 
 font default condition "Version.OS == 'windows'" {
-    family: Segoe UI
-    size: 11pt
+    family: Open Sans
+    size: 12pt
     weight: normal
     style: normal
 }
