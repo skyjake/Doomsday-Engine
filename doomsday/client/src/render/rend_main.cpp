@@ -2510,17 +2510,6 @@ void Rend_RenderMap(Map &map)
     GL_SetMultisample(false);
 }
 
-/*
- * Visuals for Shadow Bias editing:
- */
-
-static String labelForSource(BiasSource *s)
-{
-    if(!s || !editShowIndices) return String();
-    /// @todo Don't assume the current map.
-    return String::number(App_World().map().toIndex(*s));
-}
-
 static void drawStar(Vector3d const &origin, float size, Vector4f const &color)
 {
     float const black[4] = { 0, 0, 0, 0 };
@@ -2550,13 +2539,9 @@ static void drawStar(Vector3d const &origin, float size, Vector4f const &color)
     glEnd();
 }
 
-static void drawLabel(Vector3d const &origin, String const &label)
+static void drawLabel(Vector3d const &origin, String const &label, float scale, float alpha)
 {
     if(label.isEmpty()) return;
-
-    Vector3d eye(vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
-    coord_t distToEye = (eye - origin).length();
-    coord_t scale = distToEye / (DENG_WINDOW->width() / 2);
 
     glDisable(GL_DEPTH_TEST);
     glEnable(GL_TEXTURE_2D);
@@ -2568,14 +2553,13 @@ static void drawLabel(Vector3d const &origin, String const &label)
     glRotatef(vpitch, 1, 0, 0);
     glScalef(-scale, -scale, 1);
 
-    // Show the index number of the source.
     FR_SetFont(fontFixed);
     FR_LoadDefaultAttrib();
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);
 
-    Point2Raw const viewOffset(2, 2);
-    UI_TextOutEx(label.toUtf8().constData(), &viewOffset, UI_Color(UIC_TITLE), 1 - distToEye / 2000);
+    Point2Raw offset(2, 2);
+    UI_TextOutEx(label.toUtf8().constData(), &offset, UI_Color(UIC_TITLE), alpha);
 
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
@@ -2584,12 +2568,29 @@ static void drawLabel(Vector3d const &origin, String const &label)
     glDisable(GL_TEXTURE_2D);
 }
 
+static void drawLabel(Vector3d const &origin, String const &label)
+{
+    ddouble distToEye = (Vector3d(vOrigin[VX], vOrigin[VZ], vOrigin[VY]) - origin).length();
+    drawLabel(origin, label, distToEye / (DENG_WINDOW->width() / 2), 1 - distToEye / 2000);
+}
+
+/*
+ * Visuals for Shadow Bias editing:
+ */
+
+static String labelForSource(BiasSource *s)
+{
+    if(!s || !editShowIndices) return String();
+    /// @todo Don't assume the current map.
+    return String::number(App_World().map().toIndex(*s));
+}
+
 static void drawSource(BiasSource *s)
 {
     if(!s) return;
 
-    Vector3d eye(vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
-    coord_t distToEye = (s->origin() - eye).length();
+    Vector3d const eye(vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
+    ddouble distToEye = (s->origin() - eye).length();
 
     drawStar(s->origin(), 25 + s->evaluateIntensity() / 20,
              Vector4f(s->color(), 1.0f / de::max(float((distToEye - 100) / 1000), 1.f)));
@@ -2686,7 +2687,9 @@ static void drawBiasEditingVisuals(Map &map)
                       .2f + sin(t) * .15f,
                       .9f + sin(t) * .3f,
                       .8f - sin(t) * .2f));
+
     glDisable(GL_DEPTH_TEST);
+
     drawLabel(nearSource->origin(), labelForSource(nearSource));
     if(nearSource->isLocked())
         drawLock(nearSource->origin(), 2 + (nearSource->origin() - eye).length() / 100, t);
@@ -3325,9 +3328,10 @@ static void Rend_DrawSoundOrigins(Map &map)
     glEnable(GL_DEPTH_TEST);
 }
 
-static void getVertexPlaneMinMax(Vertex const *vtx, coord_t *min, coord_t *max)
+static void getVertexPlaneMinMax(Vertex const *vtx, coord_t *min, coord_t *max = 0)
 {
-    if(!vtx || (!min && !max)) return;
+    DENG_ASSERT(vtx != 0);
+    DENG_ASSERT(min != 0);
 
     LineOwner const *base = vtx->firstLineOwner();
     LineOwner const *own  = base;
@@ -3384,37 +3388,13 @@ static void drawVertexBar(Vertex const *vtx, coord_t bottom, coord_t top, float 
     glEnd();
 }
 
-static void drawVertexIndex(Vertex const *vtx, coord_t z, float scale, float alpha)
+#define MAX_VERTEX_POINT_DIST 1280
+
+static String labelForVertex(Vertex *vtx)
 {
     DENG_ASSERT(vtx != 0);
-    Point2Raw const origin(2, 2);
-    char buf[80];
-
-    FR_SetFont(fontFixed);
-    FR_LoadDefaultAttrib();
-    FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
-    FR_SetShadowStrength(UI_SHADOW_STRENGTH);
-
-    sprintf(buf, "%i", vtx->indexInMap());
-
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glTranslatef(vtx->origin().x, z, vtx->origin().y);
-    glRotatef(-vang + 180, 0, 1, 0);
-    glRotatef(vpitch, 1, 0, 0);
-    glScalef(-scale, -scale, 1);
-
-    glEnable(GL_TEXTURE_2D);
-
-    UI_TextOutEx(buf, &origin, UI_Color(UIC_TITLE), alpha);
-
-    glDisable(GL_TEXTURE_2D);
-
-    glMatrixMode(GL_MODELVIEW);
-    glPopMatrix();
+    return String("%1").arg(vtx->indexInMap());
 }
-
-#define MAX_VERTEX_POINT_DIST 1280
 
 static int drawVertex1(Line *li, void *context)
 {
@@ -3431,31 +3411,28 @@ static int drawVertex1(Line *li, void *context)
             coord_t bottom = po->sector().floor().visHeight();
             coord_t top    = po->sector().ceiling().visHeight();
 
+            glDisable(GL_DEPTH_TEST);
+
             if(devVertexBars)
                 drawVertexBar(vtx, bottom, top, MIN_OF(alpha, .15f));
 
             drawVertexPoint(vtx, bottom, alpha * 2);
+
+            glEnable(GL_DEPTH_TEST);
         }
     }
 
     if(devVertexIndices)
     {
-        coord_t eye[3], pos[3], dist3D;
+        Vector3d const eye(vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
+        Vector3d const origin(vtx->origin(), po->sector().floor().visHeight());
 
-        eye[VX] = vOrigin[VX];
-        eye[VY] = vOrigin[VZ];
-        eye[VZ] = vOrigin[VY];
-
-        pos[VX] = vtx->origin().x;
-        pos[VY] = vtx->origin().y;
-        pos[VZ] = po->sector().floor().visHeight();
-
-        dist3D = V3d_Distance(pos, eye);
-
-        if(dist3D < MAX_VERTEX_POINT_DIST)
+        ddouble distToEye = (eye - origin).length();
+        if(distToEye < MAX_VERTEX_POINT_DIST)
         {
-            drawVertexIndex(vtx, pos[VZ], dist3D / (DENG_WINDOW->width() / 2),
-                            1 - dist3D / MAX_VERTEX_POINT_DIST);
+            drawLabel(origin, labelForVertex(vtx),
+                      distToEye / (DENG_WINDOW->width() / 2),
+                      1 - distToEye / MAX_VERTEX_POINT_DIST);
         }
     }
 
@@ -3486,10 +3463,10 @@ static void Rend_DrawVertexIndices(Map &map)
 
     if(!devVertexBars && !devVertexIndices) return;
 
-    glDisable(GL_DEPTH_TEST);
-
     if(devVertexBars)
     {
+        glDisable(GL_DEPTH_TEST);
+
         glEnable(GL_LINE_SMOOTH);
         oldLineWidth = DGL_GetFloat(DGL_LINE_WIDTH);
         DGL_SetFloat(DGL_LINE_WIDTH, 2);
@@ -3516,6 +3493,8 @@ static void Rend_DrawVertexIndices(Map &map)
                 drawVertexBar(vertex, bottom, top, alpha);
             }
         }
+
+        glEnable(GL_DEPTH_TEST);
     }
 
     // Draw the vertex point nodes.
@@ -3524,39 +3503,10 @@ static void Rend_DrawVertexIndices(Map &map)
     glEnable(GL_POINT_SMOOTH);
     DGL_SetFloat(DGL_POINT_SIZE, 6);
 
-    foreach(Vertex *vertex, map.vertexes())
     {
-        // Not a line vertex?
-        LineOwner const *own = vertex->firstLineOwner();
-        if(!own) continue;
-
-        // Ignore polyobj vertexes.
-        if(own->line().definesPolyobj()) continue;
-
-        coord_t dist = M_ApproxDistance(vOrigin[VX] - vertex->origin().x,
-                                       vOrigin[VZ] - vertex->origin().y);
-
-        if(dist < MAX_VERTEX_POINT_DIST)
-        {
-            coord_t bottom = DDMAXFLOAT;
-            getVertexPlaneMinMax(vertex, &bottom, NULL);
-
-            drawVertexPoint(vertex, bottom, (1 - dist / MAX_VERTEX_POINT_DIST) * 2);
-        }
-    }
-
-    if(devVertexIndices)
-    {
-        coord_t eye[3];
-
-        eye[VX] = vOrigin[VX];
-        eye[VY] = vOrigin[VZ];
-        eye[VZ] = vOrigin[VY];
-
+        glDisable(GL_DEPTH_TEST);
         foreach(Vertex *vertex, map.vertexes())
         {
-            coord_t pos[3], dist;
-
             // Not a line vertex?
             LineOwner const *own = vertex->firstLineOwner();
             if(!own) continue;
@@ -3564,19 +3514,42 @@ static void Rend_DrawVertexIndices(Map &map)
             // Ignore polyobj vertexes.
             if(own->line().definesPolyobj()) continue;
 
-            pos[VX] = vertex->origin().x;
-            pos[VY] = vertex->origin().y;
-            pos[VZ] = DDMAXFLOAT;
-            getVertexPlaneMinMax(vertex, &pos[VZ], NULL);
-
-            dist = V3d_Distance(pos, eye);
+            coord_t dist = M_ApproxDistance(vOrigin[VX] - vertex->origin().x,
+                                           vOrigin[VZ] - vertex->origin().y);
 
             if(dist < MAX_VERTEX_POINT_DIST)
             {
-                float const alpha = 1 - dist / MAX_VERTEX_POINT_DIST;
-                float const scale = dist / (DENG_WINDOW->width() / 2);
+                coord_t bottom = DDMAXFLOAT;
+                getVertexPlaneMinMax(vertex, &bottom);
 
-                drawVertexIndex(vertex, pos[VZ], scale, alpha);
+                drawVertexPoint(vertex, bottom, (1 - dist / MAX_VERTEX_POINT_DIST) * 2);
+            }
+        }
+        glEnable(GL_DEPTH_TEST);
+    }
+
+    if(devVertexIndices)
+    {
+        Vector3d const eye(vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
+
+        foreach(Vertex *vertex, map.vertexes())
+        {
+            // Not a line vertex?
+            LineOwner const *own = vertex->firstLineOwner();
+            if(!own) continue;
+
+            // Ignore polyobj vertexes.
+            if(own->line().definesPolyobj()) continue;
+
+            Vector3d origin(vertex->origin(), DDMAXFLOAT);
+            getVertexPlaneMinMax(vertex, &origin.z);
+
+            ddouble distToEye = (eye - origin).length();
+            if(distToEye < MAX_VERTEX_POINT_DIST)
+            {
+                drawLabel(origin, labelForVertex(vertex),
+                                distToEye / (DENG_WINDOW->width() / 2),
+                                1 - distToEye / MAX_VERTEX_POINT_DIST);
             }
         }
     }
@@ -3597,7 +3570,6 @@ static void Rend_DrawVertexIndices(Map &map)
     }
     DGL_SetFloat(DGL_POINT_SIZE, oldPointSize);
     glDisable(GL_POINT_SMOOTH);
-    glEnable(GL_DEPTH_TEST);
 }
 
 MaterialVariantSpec const &Rend_MapSurfaceMaterialSpec(int wrapS, int wrapT)
