@@ -215,9 +215,15 @@ DENG2_OBSERVES(ui::Context, Removal)
                 }
             }
 
+            // Highlight the default button(s).
             if(i->role().testFlag(Default))
             {
+                but.setTextColor("dialog.default");
                 but.setText(_E(b) + but.text());
+            }
+            else
+            {
+                but.setTextColor("text");
             }
         }
     }
