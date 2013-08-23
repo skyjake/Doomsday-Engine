@@ -73,7 +73,7 @@ static uint sourceCount = 0;
 static decorsource_t *sourceFirst = 0;
 static decorsource_t *sourceCursor = 0;
 
-static void plotSourcesForLineSide(Line::Side &side, int section);
+static void plotSourcesForLineSide(LineSide &side, int section);
 static void plotSourcesForPlane(Plane &pln);
 
 void Rend_DecorRegister()
@@ -335,9 +335,9 @@ static void plotSourcesForSurface(Surface &suf)
         switch(suf.parent().type())
         {
         case DMU_SIDE: {
-            Line::Side &side = suf.parent().as<Line::Side>();
-            plotSourcesForLineSide(side, &side.middle() == &suf? Line::Side::Middle :
-                                         &side.bottom() == &suf? Line::Side::Bottom : Line::Side::Top);
+            LineSide &side = suf.parent().as<LineSide>();
+            plotSourcesForLineSide(side, &side.middle() == &suf? LineSide::Middle :
+                                         &side.bottom() == &suf? LineSide::Bottom : LineSide::Top);
             break; }
 
         case DMU_PLANE:
@@ -486,7 +486,7 @@ static void plotSourcesForPlane(Plane &pln)
     updateSurfaceDecorations(surface, offset, v1, v2, &sector);
 }
 
-static void plotSourcesForLineSide(Line::Side &side, int section)
+static void plotSourcesForLineSide(LineSide &side, int section)
 {
     if(!side.hasSections()) return;
     if(!side.surface(section).hasMaterial()) return;

@@ -1175,7 +1175,7 @@ boolean LOIT_ClipLumObjBySight(void *data, void *context)
                 continue;
 
             // Ignore half-edges facing the wrong way.
-            if(hedge->mapElement()->as<Line::Side::Segment>().isFrontFacing())
+            if(hedge->mapElement()->as<LineSideSegment>().isFrontFacing())
             {
                 coord_t fromV1[2] = { hedge->origin().x, hedge->origin().y };
                 coord_t toV1[2]   = { hedge->twin().origin().x, hedge->twin().origin().y };

@@ -77,10 +77,10 @@ public:
     /*
      * Linked-element lists/sets:
      */
-    typedef QSet<de::Mesh *>   Meshes;
-    typedef QSet<polyobj_s *>  Polyobjs;
+    typedef QSet<de::Mesh *>  Meshes;
+    typedef QSet<polyobj_s *> Polyobjs;
 #ifdef __CLIENT__
-    typedef QSet<Line::Side *> ShadowLines;
+    typedef QSet<LineSide *>  ShadowLines;
 #endif
 
 #ifdef __CLIENT__
@@ -388,7 +388,7 @@ public:
      *
      * @param side  Map line side to add to the set.
      */
-    void addShadowLine(Line::Side &side);
+    void addShadowLine(LineSide &side);
 
     /**
      * Provides access to the set of fake radio shadow lines for the BSP leaf.

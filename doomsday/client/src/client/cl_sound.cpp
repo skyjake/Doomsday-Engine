@@ -40,7 +40,7 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
     thid_t              mobjId = 0;
     Sector             *sector = NULL;
     Polyobj            *poly = NULL;
-    Line::Side         *side = NULL;
+    LineSide         *side = NULL;
     mobj_t             *emitter = NULL;
     float               volume = 1;
 

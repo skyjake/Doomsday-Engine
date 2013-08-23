@@ -47,7 +47,7 @@ DENG2_PIMPL_NOREF(LineSegment::Side)
 
     /// Map Line side that "this" segment initially comes from or @c 0 signifying
     /// a partition line segment (not owned).
-    Line::Side *mapSide;
+    LineSide *mapSide;
 
     /// Map Line of the partition line which resulted in this segment due to
     /// splitting (not owned).
@@ -175,7 +175,7 @@ bool LineSegment::Side::hasMapSide() const
     return d->mapSide != 0;
 }
 
-Line::Side &LineSegment::Side::mapSide() const
+LineSide &LineSegment::Side::mapSide() const
 {
     if(d->mapSide)
     {
@@ -185,7 +185,7 @@ Line::Side &LineSegment::Side::mapSide() const
     throw MissingMapSideError("LineSegment::Side::mapSide", "No map line side is attributed");
 }
 
-void LineSegment::Side::setMapSide(Line::Side *newMapSide)
+void LineSegment::Side::setMapSide(LineSide *newMapSide)
 {
     d->mapSide = newMapSide;
 }

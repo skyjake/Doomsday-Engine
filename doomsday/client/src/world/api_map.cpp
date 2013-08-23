@@ -391,7 +391,7 @@ int P_Iteratep(void *elPtr, uint prop, void *context, int (*callback) (void *p, 
         switch(prop)
         {
         case DMU_LINE:
-            foreach(Line::Side *side, sector.sides())
+            foreach(LineSide *side, sector.sides())
             {
                 int result = callback(&side->line(), context);
                 if(result) return result;
@@ -425,7 +425,7 @@ int P_Iteratep(void *elPtr, uint prop, void *context, int (*callback) (void *p, 
         case DMU_LINE: {
             BspLeaf &bspLeaf = elem->as<BspLeaf>();
 
-            /// @todo cleanup: BspLeaf could provide a list of Line::Side.
+            /// @todo cleanup: BspLeaf could provide a list of LineSide.
             if(!bspLeaf.isDegenerate())
             {
                 HEdge *base = bspLeaf.poly().hedge();
@@ -435,7 +435,7 @@ int P_Iteratep(void *elPtr, uint prop, void *context, int (*callback) (void *p, 
                     if(hedge->mapElement())
                     {
                         int result = callback(&hedge->mapElement()->
-                                              as<Line::Side::Segment>().line(), context);
+                                              as<LineSideSegment>().line(), context);
                         if(result) return result;
                     }
                 } while((hedge = &hedge->next()) != base);
@@ -448,7 +448,7 @@ int P_Iteratep(void *elPtr, uint prop, void *context, int (*callback) (void *p, 
                         continue;
 
                     int result = callback(&hedge->mapElement()->
-                                          as<Line::Side::Segment>().line(), context);
+                                          as<LineSideSegment>().line(), context);
                     if(result) return result;
                 }
             }
@@ -481,7 +481,7 @@ int P_Callback(int type, int index, void *context, int (*callback)(void *p, void
         break;
 
     case DMU_SIDE: {
-        Line::Side *side = App_World().map().sideByIndex(index);
+        LineSide *side = App_World().map().sideByIndex(index);
         if(side)
             return callback(side, context);
         break; }
@@ -644,17 +644,17 @@ static void setProperty(MapElement *elem, DmuArgs &args)
     {
         if(args.modifiers & DMU_TOP_OF_SIDE)
         {
-            elem = &elem->as<Line::Side>().top();
+            elem = &elem->as<LineSide>().top();
             args.type = DMU_SURFACE;
         }
         else if(args.modifiers & DMU_MIDDLE_OF_SIDE)
         {
-            elem = &elem->as<Line::Side>().middle();
+            elem = &elem->as<LineSide>().middle();
             args.type = DMU_SURFACE;
         }
         else if(args.modifiers & DMU_BOTTOM_OF_SIDE)
         {
-            elem = &elem->as<Line::Side>().bottom();
+            elem = &elem->as<LineSide>().bottom();
             args.type = DMU_SURFACE;
         }
     }
@@ -763,17 +763,17 @@ static void getProperty(MapElement const *elem, DmuArgs &args)
     {
         if(args.modifiers & DMU_TOP_OF_SIDE)
         {
-            elem = &elem->as<Line::Side>().top();
+            elem = &elem->as<LineSide>().top();
             args.type = elem->type();
         }
         else if(args.modifiers & DMU_MIDDLE_OF_SIDE)
         {
-            elem = &elem->as<Line::Side>().middle();
+            elem = &elem->as<LineSide>().middle();
             args.type = elem->type();
         }
         else if(args.modifiers & DMU_BOTTOM_OF_SIDE)
         {
-            elem = &elem->as<Line::Side>().bottom();
+            elem = &elem->as<LineSide>().bottom();
             args.type = elem->type();
         }
     }

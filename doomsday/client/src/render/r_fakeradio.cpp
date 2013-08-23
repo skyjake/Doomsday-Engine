@@ -63,7 +63,7 @@ bool Rend_RadioPlaneCastsShadow(Plane const &plane)
     return true;
 }
 
-LineSideRadioData &Rend_RadioDataForLineSide(Line::Side &side)
+LineSideRadioData &Rend_RadioDataForLineSide(LineSide &side)
 {
     return lineSideRadioData[side.line().indexInMap() * 2 + (side.isBack()? 1 : 0)];
 }
@@ -193,7 +193,7 @@ void Rend_RadioUpdateVertexShadowOffsets(Vertex &vtx)
 
 static int linkShadowLineToBspLeafWorker(BspLeaf *bspLeaf, void *context)
 {
-    bspLeaf->addShadowLine(*static_cast<Line::Side *>(context));
+    bspLeaf->addShadowLine(*static_cast<LineSide *>(context));
     return false; // Continue iteration.
 }
 
@@ -233,7 +233,7 @@ void Rend_RadioInitForMap(Map &map)
         // For each side of the line.
         for(uint i = 0; i < 2; ++i)
         {
-            Line::Side &side = line->side(i);
+            LineSide &side = line->side(i);
 
             if(!side.hasSector() || !side.hasSections()) continue;
 

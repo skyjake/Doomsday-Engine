@@ -1391,14 +1391,14 @@ static void writeWallSection(HEdge &hedge, int section,
     DENG_ASSERT(!isNullLeaf(currentBspLeaf));
     DENG_ASSERT(hedge.mapElement() != 0);
 
-    Line::Side::Segment &segment = hedge.mapElement()->as<Line::Side::Segment>();
+    LineSideSegment &segment = hedge.mapElement()->as<LineSideSegment>();
     DENG_ASSERT(segment.isFrontFacing() && segment.lineSide().hasSections());
 
     if(retWroteOpaque) *retWroteOpaque = false;
     if(retBottomZ)     *retBottomZ     = 0;
     if(retTopZ)        *retTopZ        = 0;
 
-    Line::Side &side  = segment.lineSide();
+    LineSide &side  = segment.lineSide();
     Surface &surface  = side.surface(section);
     BiasSurface &bsuf = segment;
 
@@ -1436,7 +1436,7 @@ static void writeWallSection(HEdge &hedge, int section,
     if(opacity >= .001f)
     {
         bool const skyMasked       = material->isSkyMasked() && !devRendSkyMode;
-        bool const twoSidedMiddle  = (wallSpec.section == Line::Side::Middle && !side.considerOneSided());
+        bool const twoSidedMiddle  = (wallSpec.section == LineSide::Middle && !side.considerOneSided());
 
         MaterialSnapshot const &ms = material->prepare(Rend_MapSurfaceMaterialSpec());
 
@@ -1848,7 +1848,7 @@ static void writeLeafSkyMaskStrips(SkyFixEdge::FixType fixType)
         // Add a first (left) edge to the current strip?
         if(startNode == 0 && hedge->mapElement())
         {
-            startMaterialOffset = hedge->mapElement()->as<Line::Side::Segment>().lineSideOffset();
+            startMaterialOffset = hedge->mapElement()->as<LineSideSegment>().lineSideOffset();
 
             // Prepare the edge geometry
             SkyFixEdge skyEdge(*hedge, fixType, (direction == Anticlockwise)? Line::To : Line::From,
@@ -1877,7 +1877,7 @@ static void writeLeafSkyMaskStrips(SkyFixEdge::FixType fixType)
             bool endStrip = false;
             if(hedge->mapElement())
             {
-                startMaterialOffset += hedge->mapElement()->as<Line::Side::Segment>().length()
+                startMaterialOffset += hedge->mapElement()->as<LineSideSegment>().length()
                                      * (direction == Anticlockwise? -1 : 1);
 
                 // Prepare the edge geometry
@@ -2024,7 +2024,7 @@ static void writeLeafSkyMask(int skyCap = SKYCAP_LOWER|SKYCAP_UPPER)
 static bool coveredOpenRange(HEdge &hedge, coord_t middleBottomZ, coord_t middleTopZ,
     bool wroteOpaqueMiddle)
 {
-    Line::Side const &front = hedge.mapElement()->as<Line::Side::Segment>().lineSide();
+    LineSide const &front = hedge.mapElement()->as<LineSideSegment>().lineSide();
 
     if(front.considerOneSided())
     {
@@ -2111,7 +2111,7 @@ static void writeAllWallSections(HEdge *hedge)
         return;
 
     // We are only interested in front facing segments with sections.
-    Line::Side::Segment &seg = hedge->mapElement()->as<Line::Side::Segment>();
+    LineSideSegment &seg = hedge->mapElement()->as<LineSideSegment>();
     if(!seg.isFrontFacing() || !seg.lineSide().hasSections())
         return;
 
@@ -2121,9 +2121,9 @@ static void writeAllWallSections(HEdge *hedge)
     bool wroteOpaqueMiddle = false;
     coord_t middleBottomZ = 0, middleTopZ = 0;
 
-    writeWallSection(*hedge, Line::Side::Bottom);
-    writeWallSection(*hedge, Line::Side::Top);
-    writeWallSection(*hedge, Line::Side::Middle,
+    writeWallSection(*hedge, LineSide::Bottom);
+    writeWallSection(*hedge, LineSide::Top);
+    writeWallSection(*hedge, LineSide::Middle,
                      &wroteOpaqueMiddle, &middleBottomZ, &middleTopZ);
 
     // We can occlude the angle range defined by the X|Y origins of the
@@ -2175,7 +2175,7 @@ static void writeLeafPlanes()
 static void markFrontFacingWalls(HEdge *hedge)
 {
     if(!hedge || !hedge->mapElement()) return;
-    Line::Side::Segment &seg = hedge->mapElement()->as<Line::Side::Segment>();
+    LineSideSegment &seg = hedge->mapElement()->as<LineSideSegment>();
     // Which way is the line segment facing?
     seg.setFrontFacing(viewFacingDot(hedge->origin(), hedge->twin().origin()) >= 0);
 }
@@ -2236,7 +2236,7 @@ static void occludeLeaf(bool frontFacing)
         if(!hedge->mapElement())
             continue;
 
-        Line::Side::Segment &seg = hedge->mapElement()->as<Line::Side::Segment>();
+        LineSideSegment &seg = hedge->mapElement()->as<LineSideSegment>();
         DENG_ASSERT(hedge->face().mapElement()->as<BspLeaf>().hasSector()); // sanity check
 
         // Edges without line segment surface sections can never occlude.
@@ -2289,7 +2289,7 @@ static void clipFrontFacingWalls(HEdge *hedge)
     if(!hedge || !hedge->mapElement())
         return;
 
-    Line::Side::Segment &seg = hedge->mapElement()->as<Line::Side::Segment>();
+    LineSideSegment &seg = hedge->mapElement()->as<LineSideSegment>();
     if(seg.isFrontFacing())
     {
         if(!C_CheckRangeFromViewRelPoints(hedge->origin(), hedge->twin().origin()))
@@ -3142,7 +3142,7 @@ static void drawTangentSpaceVectorsForWallSections(HEdge *hedge)
     if(!hedge || !hedge->mapElement())
         return;
 
-    Line::Side::Segment &seg = hedge->mapElement()->as<Line::Side::Segment>();
+    LineSideSegment &seg = hedge->mapElement()->as<LineSideSegment>();
 
     if(!hedge->twin().hasFace() || !hedge->twin().face().mapElement()->as<BspLeaf>().hasSector())
     {
@@ -3159,7 +3159,7 @@ static void drawTangentSpaceVectorsForWallSections(HEdge *hedge)
     {
         Sector *frontSec = hedge->face().mapElement()->as<BspLeaf>().sectorPtr();
         Sector *backSec  = hedge->twin().face().mapElement()->as<BspLeaf>().sectorPtr();
-        Line::Side &side = seg.lineSide();
+        LineSide &side = seg.lineSide();
 
         if(side.middle().hasMaterial())
         {
@@ -3296,7 +3296,7 @@ static void Rend_DrawSoundOrigins(Map &map)
         foreach(Line *line, map.lines())
         for(int i = 0; i < 2; ++i)
         {
-            Line::Side &side = line->side(i);
+            LineSide &side = line->side(i);
             if(!side.hasSections()) continue;
 
             char buf[80];

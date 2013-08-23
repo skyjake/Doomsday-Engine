@@ -93,7 +93,7 @@ DENG2_PIMPL(LineSightTest)
      * @todo cleanup: Much unnecessary representation flipping...
      * @todo cleanup: Remove front-side assumption.
      */
-    bool crossLine(Line::Side const &side)
+    bool crossLine(LineSide const &side)
     {
 #define RTOP                    0x1 ///< Top range.
 #define RBOTTOM                 0x2 ///< Bottom range.
@@ -259,7 +259,7 @@ DENG2_PIMPL(LineSightTest)
         {
             if(hedge->mapElement())
             {
-                if(!crossLine(hedge->mapElement()->as<Line::Side::Segment>().lineSide()))
+                if(!crossLine(hedge->mapElement()->as<LineSideSegment>().lineSide()))
                     return false;
             }
         } while((hedge = &hedge->next()) != base);
@@ -271,7 +271,7 @@ DENG2_PIMPL(LineSightTest)
             if(!hedge->mapElement())
                 continue;
 
-            if(!crossLine(hedge->mapElement()->as<Line::Side::Segment>().lineSide()))
+            if(!crossLine(hedge->mapElement()->as<LineSideSegment>().lineSide()))
                 return false;
         }
 

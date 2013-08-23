@@ -403,10 +403,10 @@ static void maybeSpreadOverEdge(HEdge *hedge, contactfinderparams_t *parms)
     // Are there line side surfaces which should prevent spreading?
     if(hedge->mapElement())
     {
-        Line::Side::Segment &seg = hedge->mapElement()->as<Line::Side::Segment>();
+        LineSideSegment &seg = hedge->mapElement()->as<LineSideSegment>();
 
         // On which side of the line are we? (distance is from segment to origin).
-        Line::Side &side = seg.line().side(seg.lineSide().sideId() ^ (distance < 0));
+        LineSide &side = seg.line().side(seg.lineSide().sideId() ^ (distance < 0));
 
         Sector *frontSec = side.isFront()? leaf.sectorPtr() : backLeaf.sectorPtr();
         Sector *backSec  = side.isFront()? backLeaf.sectorPtr() : leaf.sectorPtr();
@@ -432,7 +432,7 @@ static void maybeSpreadOverEdge(HEdge *hedge, contactfinderparams_t *parms)
             {
                 // Possibly; check the placement.
                 coord_t bottom, top;
-                R_SideSectionCoords(side, Line::Side::Middle, 0, &bottom, &top);
+                R_SideSectionCoords(side, LineSide::Middle, 0, &bottom, &top);
                 if(top > bottom && top >= openTop && bottom <= openBottom)
                     return;
             }

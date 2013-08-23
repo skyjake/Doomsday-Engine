@@ -138,13 +138,17 @@ public:
         public:
             /**
              * Construct a new line side segment.
+             *
+             * @param lineSide  Side parent which will own the segment.
+             * @param hedge     Half-edge from the map geometry mesh which the
+             *                  new segment visualizes.
              */
-            Segment(Line::Side &lineSide, de::HEdge &hedge);
+            Segment(Side &lineSide, de::HEdge &hedge);
 
             /**
              * Returns the line side owner of the segment.
              */
-            Line::Side &lineSide() const;
+            Side &lineSide() const;
 
             /**
              * Convenient accessor method for returning the line of the owning
@@ -222,6 +226,13 @@ public:
         typedef QList<Segment *> Segments;
 
     public:
+        /**
+         * Construct a new line side.
+         *
+         * @param line    Line parent which will own the side.
+         * @param sector  Sector on "this" side of the line. Can be @c 0. Note
+         *                once attributed the sector cannot normally be changed.
+         */
         Side(Line &line, Sector *sector = 0);
 
         /**
@@ -950,6 +961,9 @@ public:
 private:
     DENG2_PRIVATE(d)
 };
+
+typedef Line::Side LineSide;
+typedef Line::Side::Segment LineSideSegment;
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Line::Side::SectionFlags)
 

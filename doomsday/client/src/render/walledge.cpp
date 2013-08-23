@@ -84,7 +84,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
     WallSpec spec;
     int edge;
 
-    Line::Side *mapSide;
+    LineSide *mapSide;
     coord_t mapSideOffset;
     LineOwner *mapLineOwner;
 
@@ -109,7 +109,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
     Vector3f normal;
     bool needUpdateNormal;
 
-    Instance(Public *i, WallSpec const &spec, Line::Side *mapSide, int edge,
+    Instance(Public *i, WallSpec const &spec, LineSide *mapSide, int edge,
              coord_t sideOffset, LineOwner *mapLineOwner)
         : Base(i),
           spec(spec),
@@ -458,7 +458,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
         if(!neighbor) return 0;
 
         // Choose the correct side of the neighbor (determined by which vertex is shared).
-        Line::Side *otherSide;
+        LineSide *otherSide;
         if(&neighbor->vertex(edge ^ 1) == &mapSide->vertex(edge))
             otherSide = &neighbor->front();
         else
@@ -497,9 +497,9 @@ DENG2_PIMPL(WallEdge), public IHPlane
 
 WallEdge::WallEdge(WallSpec const &spec, HEdge &hedge, int edge)
     : WorldEdge((edge? hedge.twin() : hedge).origin()),
-      d(new Instance(this, spec, &hedge.mapElement()->as<Line::Side::Segment>().lineSide(), edge,
-                           hedge.mapElement()->as<Line::Side::Segment>().lineSideOffset() + (edge? hedge.mapElement()->as<Line::Side::Segment>().length() : 0),
-                           hedge.mapElement()->as<Line::Side::Segment>().lineSide().line().vertexOwner(edge? hedge.twin().vertex() : hedge.vertex())))
+      d(new Instance(this, spec, &hedge.mapElement()->as<LineSideSegment>().lineSide(), edge,
+                           hedge.mapElement()->as<LineSideSegment>().lineSideOffset() + (edge? hedge.mapElement()->as<LineSideSegment>().length() : 0),
+                           hedge.mapElement()->as<LineSideSegment>().lineSide().line().vertexOwner(edge? hedge.twin().vertex() : hedge.vertex())))
 {}
 
 Vector3d const &WallEdge::pOrigin() const
@@ -531,7 +531,7 @@ WallSpec const &WallEdge::spec() const
     return d->spec;
 }
 
-Line::Side &WallEdge::mapSide() const
+LineSide &WallEdge::mapSide() const
 {
     return *d->mapSide;
 }

@@ -1222,7 +1222,7 @@ void Rend_CacheForMap()
         foreach(Line *line, App_World().map().lines())
         for(int i = 0; i < 2; ++i)
         {
-            Line::Side &side = line->side(i);
+            LineSide &side = line->side(i);
             if(!side.hasSections()) continue;
 
             if(side.middle().hasMaterial())

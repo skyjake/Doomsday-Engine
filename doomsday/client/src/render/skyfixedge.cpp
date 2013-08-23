@@ -122,7 +122,7 @@ DENG2_PIMPL(SkyFixEdge)
         // Only edges with line segments need fixes.
         if(!hedge->mapElement()) return false;
 
-        Line::Side const &lineSide = hedge->mapElement()->as<Line::Side::Segment>().lineSide();
+        LineSide const &lineSide = hedge->mapElement()->as<LineSideSegment>().lineSide();
         Sector const *frontSec     = hedge->face().mapElement()->as<BspLeaf>().sectorPtr();
         Sector const *backSec      = hedge->twin().hasFace()? hedge->twin().face().mapElement()->as<BspLeaf>().sectorPtr() : 0;
 
@@ -146,7 +146,7 @@ DENG2_PIMPL(SkyFixEdge)
         }
         else
         {
-            int relSection = lower? Line::Side::Bottom : Line::Side::Top;
+            int relSection = lower? LineSide::Bottom : LineSide::Top;
 
             if(lineSide.surface(relSection).hasMaterial() ||
                !(hasClosedBack || (back && back->surface().hasSkyMaskedMaterial())))

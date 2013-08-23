@@ -1005,7 +1005,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
         foreach(Line *line, lines)
         for(int i = 0; i < 2; ++i)
         {
-            Line::Side &side = line->side(i);
+            LineSide &side = line->side(i);
             if(!side.hasSections()) continue;
 
             if(&soundEmitter == &side.middleSoundEmitter())
@@ -1070,7 +1070,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
 
         // Update for middle materials on lines which intersect the
         // floor and/or ceiling on the front (i.e., sector) side.
-        foreach(Line::Side *side, sector.sides())
+        foreach(LineSide *side, sector.sides())
         {
             if(!side->hasSections()) continue;
             if(!side->middle().hasMaterial()) continue;
@@ -1080,7 +1080,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
 
             coord_t bottomZ, topZ;
             Vector2f materialOrigin;
-            R_SideSectionCoords(*side, Line::Side::Middle, 0,
+            R_SideSectionCoords(*side, LineSide::Middle, 0,
                                 &bottomZ, &topZ, &materialOrigin);
             if(skyCeil && topZ + materialOrigin.y > self.skyFixCeiling())
             {
@@ -1365,7 +1365,7 @@ void Map::buildMaterialLists()
     foreach(Line *line, d->lines)
     for(int i = 0; i < 2; ++i)
     {
-        Line::Side &side = line->side(i);
+        LineSide &side = line->side(i);
         if(!side.hasSections()) continue;
 
         linkInMaterialLists(&side.middle());
@@ -1522,7 +1522,7 @@ int Map::toSideIndex(int lineIndex, int backSide) // static
     return lineIndex * 2 + (backSide? 1 : 0);
 }
 
-Line::Side *Map::sideByIndex(int index) const
+LineSide *Map::sideByIndex(int index) const
 {
     if(index < 0) return 0;
     return &d->lines.at(index / 2)->side(index % 2);
@@ -1963,7 +1963,7 @@ int Map::sectorTouchingMobjsIterator(Sector *sector,
 
     // Collate mobjs linked to the sector's lines.
     linknode_t const *ln = d->lineNodes.nodes;
-    foreach(Line::Side *side, sector->sides())
+    foreach(LineSide *side, sector->sides())
     {
         nodeindex_t root = d->lineLinks[side->line().indexInMap()];
 
@@ -2764,7 +2764,7 @@ void Map::update()
     foreach(Line *line, d->lines)
     for(int i = 0; i < 2; ++i)
     {
-        Line::Side &side = line->side(i);
+        LineSide &side = line->side(i);
         if(!side.hasSections()) continue;
 
         side.top().markAsNeedingDecorationUpdate();
@@ -3339,7 +3339,7 @@ bool Map::endEditing()
             hedge->setTwin(polyobj->mesh().newHEdge(line->to()));
             hedge->twin().setTwin(hedge);
 
-            Line::Side::Segment *seg = line->front().addSegment(*hedge);
+            LineSideSegment *seg = line->front().addSegment(*hedge);
 #ifdef __CLIENT__
             seg->setLength(line->length());
 #else

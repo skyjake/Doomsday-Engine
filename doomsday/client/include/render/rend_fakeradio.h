@@ -65,7 +65,7 @@ struct edgespan_t
 };
 
 /**
- * Stores the FakeRadio properties of a Line::Side.
+ * Stores the FakeRadio properties of a LineSide.
  * @ingroup render
  */
 struct LineSideRadioData
@@ -104,12 +104,12 @@ bool Rend_RadioPlaneCastsShadow(Plane const &plane);
 /**
  * Returns the FakeRadio data for the specified line @a side.
  */
-LineSideRadioData &Rend_RadioDataForLineSide(Line::Side &side);
+LineSideRadioData &Rend_RadioDataForLineSide(LineSide &side);
 
 /**
  * To be called to update the shadow properties for the specified line @a side.
  */
-void Rend_RadioUpdateForLineSide(Line::Side &side);
+void Rend_RadioUpdateForLineSide(LineSide &side);
 
 /**
  * Updates all the shadow offsets for the given vertex.

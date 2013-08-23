@@ -82,7 +82,7 @@ static float opennessFactor(float fz, float bz, float bhz)
     return 2;
 }
 
-static bool middleMaterialCoversOpening(Line::Side &side)
+static bool middleMaterialCoversOpening(LineSide &side)
 {
     if(!side.hasSector()) return false; // Never.
 
@@ -106,7 +106,7 @@ static bool middleMaterialCoversOpening(Line::Side &side)
         {
             // Possibly; check the placement.
             coord_t bottom, top;
-            R_SideSectionCoords(side, Line::Side::Middle, 0, &bottom, &top);
+            R_SideSectionCoords(side, LineSide::Middle, 0, &bottom, &top);
             return (top > bottom && top >= openTop && bottom <= openBottom);
         }
     }
@@ -116,7 +116,7 @@ static bool middleMaterialCoversOpening(Line::Side &side)
 
 void ShadowEdge::prepare(int planeIndex)
 {
-    Line::Side &side = d->leftMostHEdge->mapElement()->as<Line::Side::Segment>().lineSide();
+    LineSide &side = d->leftMostHEdge->mapElement()->as<LineSideSegment>().lineSide();
     Plane const &plane = side.sector().plane(planeIndex);
     int const otherPlaneIndex = planeIndex == Sector::Floor? Sector::Ceiling : Sector::Floor;
 
@@ -131,7 +131,7 @@ void ShadowEdge::prepare(int planeIndex)
        d->leftMostHEdge->twin().face().mapElement()->as<BspLeaf>().hasSector())
     {
         Surface const &wallEdgeSurface =
-            side.back().hasSector()? side.surface(planeIndex == Sector::Ceiling? Line::Side::Top : Line::Side::Bottom)
+            side.back().hasSector()? side.surface(planeIndex == Sector::Ceiling? LineSide::Top : LineSide::Bottom)
                                    : side.middle();
 
         Sector const *frontSec = d->leftMostHEdge->face().mapElement()->as<BspLeaf>().sectorPtr();
@@ -183,7 +183,7 @@ void ShadowEdge::prepare(int planeIndex)
     {
         // Choose the correct side of the neighbor (determined by which vertex is shared).
         int x = side.sideId() ^ d->edge;
-        Line::Side *otherSide = &neighbor->side(&side.line().vertex(x) == &neighbor->from()? d->edge ^ 1 : d->edge);
+        LineSide *otherSide = &neighbor->side(&side.line().vertex(x) == &neighbor->from()? d->edge ^ 1 : d->edge);
 
         if(!otherSide->hasSections() && otherSide->back().hasSector())
         {

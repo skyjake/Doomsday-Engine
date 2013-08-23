@@ -163,9 +163,9 @@ public:
     /*
      * Linked-element lists:
      */
-    typedef QList<Cluster *>    Clusters;
-    typedef QList<Plane *>      Planes;
-    typedef QList<Line::Side *> Sides;
+    typedef QList<Cluster *>  Clusters;
+    typedef QList<Plane *>    Planes;
+    typedef QList<LineSide *> Sides;
 
     // Plane identifiers:
     enum { Floor, Ceiling };

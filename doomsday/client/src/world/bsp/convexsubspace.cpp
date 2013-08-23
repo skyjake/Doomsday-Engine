@@ -422,7 +422,7 @@ void ConvexSubspace::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
             foreach(OrderedSegment const *oseg, conty.discordSegs)
             {
                 LineSegment::Side *lineSeg = oseg->segment;
-                Line::Side *mapSide = lineSeg->mapSidePtr();
+                LineSide *mapSide = lineSeg->mapSidePtr();
                 if(!mapSide) continue;
 
                 if(!extraMesh)
@@ -433,9 +433,9 @@ void ConvexSubspace::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
                 }
 
                 HEdge *hedge = extraMesh->newHEdge(lineSeg->from());
-                Line::Side::Segment *seg = mapSide->addSegment(*hedge);
+                LineSideSegment *seg = mapSide->addSegment(*hedge);
 #ifdef __CLIENT__
-                /// @todo Line::Side::newSegment() should encapsulate:
+                /// @todo LineSide::newSegment() should encapsulate:
                 seg->setLineSideOffset(Vector2d(mapSide->from().origin() - lineSeg->from().origin()).length());
                 seg->setLength(Vector2d(lineSeg->to().origin() - lineSeg->from().origin()).length());
 #else
@@ -527,11 +527,11 @@ void ConvexSubspace::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
 
             HEdge *hedge = mesh.newHEdge(lineSeg->from());
 
-            if(Line::Side *mapSide = lineSeg->mapSidePtr())
+            if(LineSide *mapSide = lineSeg->mapSidePtr())
             {
-                Line::Side::Segment *seg = mapSide->addSegment(*hedge);
+                LineSideSegment *seg = mapSide->addSegment(*hedge);
 #ifdef __CLIENT__
-                /// @todo Line::Side::newSegment() should encapsulate:
+                /// @todo LineSide::newSegment() should encapsulate:
                 seg->setLineSideOffset(Vector2d(mapSide->from().origin() - lineSeg->from().origin()).length());
                 seg->setLength(Vector2d(lineSeg->to().origin() - lineSeg->from().origin()).length());
 #else
