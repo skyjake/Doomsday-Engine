@@ -159,7 +159,6 @@ DENG2_OBSERVES(ui::Context, Removal)
     void updateButtonLayout()
     {
         buttons->items().sort(dialogButtonOrder);
-        //buttons->updateLayout();
 
         needButtonUpdate = false;
     }
@@ -325,7 +324,6 @@ int DialogWidget::exec(GuiRootWidget &root)
     // The widget is added to the root temporarily (as top child).
     DENG2_ASSERT(!hasRoot());
     root.add(this);
-    root.setFocus(0);
 
     prepare();
 
@@ -445,6 +443,8 @@ void DialogWidget::reject(int result)
 
 void DialogWidget::prepare()
 {
+    root().setFocus(0);
+
     if(openingDirection() == ui::NoDirection)
     {
         // Center the dialog.
@@ -456,8 +456,6 @@ void DialogWidget::prepare()
     // Make sure the newly added widget knows the view size.
     viewResized();
     notifyTree(&Widget::viewResized);
-
-    //d->updateButtonLayout();
 
     PopupWidget::open();
 }

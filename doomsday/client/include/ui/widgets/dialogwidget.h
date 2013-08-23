@@ -138,7 +138,7 @@ protected:
     /**
      * Derived classes can override this to do additional tasks before
      * execution of the dialog begins. DialogWidget::prepare() must be called
-     * from the overridding methods.
+     * from the overridding methods. The focused widget is reset in the method.
      */
     virtual void prepare();
 

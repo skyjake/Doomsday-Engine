@@ -474,7 +474,8 @@ void TaskBarWidget::showAbout()
 {
     AboutDialog *about = new AboutDialog;
     about->setDeleteAfterDismissed(true);
-    about->exec(root());
+    root().add(about);
+    about->open();
 }
 
 void TaskBarWidget::showUpdaterSettings()

@@ -38,6 +38,7 @@ DENG_GUI_PIMPL(PopupWidget)
 
     bool opened;
     bool deleteAfterDismiss;
+    bool clickToClose;
     Widget *realParent;
     GuiWidget *content;
     ScalarRule *openingRule;
@@ -57,6 +58,7 @@ DENG_GUI_PIMPL(PopupWidget)
         : Base(i),
           opened(false),
           deleteAfterDismiss(false),
+          clickToClose(true),
           realParent(0),
           content(0),
           anchorX(0),
@@ -316,6 +318,11 @@ void PopupWidget::setDeleteAfterDismissed(bool deleteAfterDismiss)
     d->deleteAfterDismiss = deleteAfterDismiss;
 }
 
+void PopupWidget::setClickToClose(bool clickCloses)
+{
+    d->clickToClose = clickCloses;
+}
+
 void PopupWidget::viewResized()
 {
     GuiWidget::viewResized();
@@ -355,7 +362,8 @@ bool PopupWidget::handleEvent(Event const &event)
         MouseEvent const &mouse = event.as<MouseEvent>();
 
         // Clicking outside the popup will close it.
-        if(!hitTest(event) && mouse.state() == MouseEvent::Released)
+        if(!hitTest(event) && mouse.state() == MouseEvent::Released &&
+           d->clickToClose)
         {
             d->close(0); // immediately
         }
