@@ -60,15 +60,8 @@ group {
 }
 
 font title inherits default {
-    condition: Version.OS == 'macx'
     size $: gui.scale(__this__.size, 1.75)
     weight: light
-}
-
-font title inherits default {
-    condition: Version.OS != 'macx'
-    size $: gui.scale(__this__.size, 1.4)
-    weight: bold
 }
 
 group editor {
