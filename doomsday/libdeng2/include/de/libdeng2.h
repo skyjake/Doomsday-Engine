@@ -226,7 +226,7 @@
 #define DENG2_NO_COPY(ClassName) \
     private: ClassName(ClassName const &);
 
-#define DENG2_IS_AS_METHODS() \
+#define DENG2_AS_IS_METHODS() \
     template <typename T_> \
     bool is() const { return dynamic_cast<T_ const *>(this) != 0; } \
     template <typename T_> \

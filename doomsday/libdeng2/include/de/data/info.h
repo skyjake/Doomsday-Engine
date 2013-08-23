@@ -94,7 +94,7 @@ public:
         bool isBlock() const { return _type == Block; }
         String const &name() const { return _name; }
 
-        DENG2_IS_AS_METHODS()
+        DENG2_AS_IS_METHODS()
 
         void setName(String const &name) { _name = name.toLower(); }
 
