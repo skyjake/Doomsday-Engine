@@ -213,6 +213,14 @@ boolean Sys_GLCheckError(void);
 
 #ifdef __cplusplus
 } // extern "C"
+
+/**
+ * Information about the OpenGL driver and its capabilities.
+ *
+ * @return Styled text.
+ */
+de::String Sys_GLDescription();
+
 #endif
 
 #endif /* LIBDENG_SYSTEM_OPENGL_H */
