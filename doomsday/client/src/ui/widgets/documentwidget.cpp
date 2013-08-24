@@ -306,6 +306,8 @@ public Font::RichFormat::IStyle
 DocumentWidget::DocumentWidget(String const &name) : d(new Instance(this))
 {
     setWidthPolicy(ui::Expand);
+
+    rule().setInput(Rule::Height, contentRule().height() + margin(ui::Up) + margin(ui::Down));
 }
 
 void DocumentWidget::setText(String const &styledText)
@@ -316,7 +318,10 @@ void DocumentWidget::setText(String const &styledText)
         d->tasks.waitForDone();
 
         // Show the progress indicator until the text is ready for drawing.
-        d->drawable.buffer(ID_TEXT).clear();
+        if(d->drawable.hasBuffer(ID_TEXT))
+        {
+            d->drawable.buffer(ID_TEXT).clear();
+        }
         d->progress->show();
         int indSize = style().rules().rule("document.progress").valuei();
         setContentSize(Vector2i(indSize, indSize));
