@@ -148,7 +148,10 @@ public:
             /**
              * Returns the line side owner of the segment.
              */
-            Side &lineSide() const;
+            inline Side &lineSide() { return parent().as<Side>(); }
+
+            /// @copydoc lineSide()
+            inline Side const &lineSide() const { return parent().as<Side>(); }
 
             /**
              * Convenient accessor method for returning the line of the owning
@@ -156,7 +159,10 @@ public:
              *
              * @see lineSide()
              */
-            inline Line &line() const { return lineSide().line(); }
+            inline Line &line() { return lineSide().line(); }
+
+            /// @copydoc line()
+            inline Line const &line() const { return lineSide().line(); }
 
             /**
              * Returns the half-edge for the segment.
@@ -238,7 +244,10 @@ public:
         /**
          * Returns the Line owner of the side.
          */
-        Line &line() const;
+        inline Line &line() { return parent().as<Line>(); }
+
+        /// @copydoc line()
+        inline Line const &line() const { return parent().as<Line>(); }
 
         /**
          * Returns the logical identifier for the side (Front or Back).
@@ -264,7 +273,10 @@ public:
          *
          * @see lineSideId(), line(), Line::side(),
          */
-        inline Side &back() const { return line().side(sideId() ^ 1); }
+        inline Side &back() { return line().side(sideId() ^ 1); }
+
+        /// @copydoc back()
+        inline Side const &back() const { return line().side(sideId() ^ 1); }
 
         /**
          * Determines whether "this" side of the respective line should be

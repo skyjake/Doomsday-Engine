@@ -174,11 +174,6 @@ Line::Side::Segment::Segment(Line::Side &lineSide, HEdge &hedge)
       d(new Instance(&hedge))
 {}
 
-Line::Side &Line::Side::Segment::lineSide() const
-{
-    return this->parent().as<Line::Side>();
-}
-
 HEdge &Line::Side::Segment::hedge() const
 {
     DENG_ASSERT(d->hedge != 0);
@@ -381,11 +376,6 @@ Line::Side::Side(Line &line, Sector *sector)
 #ifdef __CLIENT__
     line.audienceForFlagsChange += d;
 #endif
-}
-
-Line &Line::Side::line() const
-{
-    return this->parent().as<Line>();
 }
 
 int Line::Side::sideId() const
@@ -685,7 +675,7 @@ int Line::Side::property(DmuArgs &args) const
         args.setValue(DMT_SIDE_SECTOR, &d->sector, 0);
         break;
     case DMU_LINE: {
-        Line *lineAdr = &line();
+        Line const *lineAdr = &line();
         args.setValue(DMT_SIDE_LINE, &lineAdr, 0);
         break; }
     case DMU_FLAGS:

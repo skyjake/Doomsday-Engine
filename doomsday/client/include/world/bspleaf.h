@@ -153,7 +153,11 @@ public:
      */
     bool hasCluster() const;
 
-    /// @copydoc hasCluster()
+    /**
+     * Returns @c true iff a sector (cluster) is attributed to the BSP leaf.
+     *
+     * Equivalent to @ref hasCluster()
+     */
     inline bool hasSector() const { return hasCluster(); }
 
     /**

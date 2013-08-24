@@ -93,7 +93,7 @@ DENG2_PIMPL(LineSightTest)
      * @todo cleanup: Much unnecessary representation flipping...
      * @todo cleanup: Remove front-side assumption.
      */
-    bool crossLine(LineSide const &side)
+    bool crossLine(LineSide &side)
     {
 #define RTOP                    0x1 ///< Top range.
 #define RBOTTOM                 0x2 ///< Bottom range.

@@ -95,7 +95,10 @@ public:
      *
      * @see hasParent(), setParent()
      */
-    MapElement &parent() const;
+    MapElement &parent();
+
+    /// @copydoc parent()
+    MapElement const &parent() const;
 
     /**
      * Change the parent of the map element.

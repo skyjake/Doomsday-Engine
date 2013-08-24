@@ -181,12 +181,12 @@ Plane::Plane(Sector &sector, Vector3f const &normal, coord_t height)
 
 Sector &Plane::sector()
 {
-    return this->parent().as<Sector>();
+    return parent().as<Sector>();
 }
 
 Sector const &Plane::sector() const
 {
-    return const_cast<Sector const &>(const_cast<Plane *>(this)->sector());
+    return parent().as<Sector>();
 }
 
 int Plane::indexInSector() const
