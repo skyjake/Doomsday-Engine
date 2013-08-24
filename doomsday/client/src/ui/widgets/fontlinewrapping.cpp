@@ -48,7 +48,6 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
             info.indent = leftIndent;
         }
 
-        /*
         /// Tab stops are disabled if there is a tab stop < 0 anywhere on the line.
         bool tabsDisabled() const
         {
@@ -57,7 +56,7 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
                 if(info.segs[i].tabStop < 0) return true;
             }
             return false;
-        }*/
+        }
     };
 
     typedef QList<Line *> Lines;
@@ -428,6 +427,15 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
         return wrappedLines;
     }
 
+    Rangei findNextTabbedRange(int startLine) const
+    {
+        for(int i = startLine + 1; i < lines.size(); ++i)
+        {
+            if(lines[i]->tabsDisabled()) return Rangei(startLine, i);
+        }
+        return Rangei(startLine, lines.size());
+    }
+
     /**
      * Wraps a range of lines that contains tab stops. Wrapping takes into
      * account the space available for each tab stop.
@@ -592,7 +600,18 @@ void FontLineWrapping::wrapTextToWidth(String const &text, Font::RichFormat cons
             pos = wholeLine.end + 1;
         }
 
-        d->wrapLinesWithTabs(Rangei(0, d->lines.size()));
+        // Process the content is distinct ranges divided by untabbed content.
+        Rangei tabRange = d->findNextTabbedRange(0);
+        forever
+        {
+            int end = d->wrapLinesWithTabs(tabRange);
+            if(end == d->lines.size())
+            {
+                // All lines processed.
+                break;
+            }
+            tabRange = d->findNextTabbedRange(end);
+        }
     }
     else
     {
@@ -741,7 +760,7 @@ FontLineWrapping::LineInfo const &FontLineWrapping::lineInfo(int index) const
 
 int FontLineWrapping::LineInfo::highestTabStop() const
 {
-    int stop = 0;
+    int stop = -1;
     foreach(Segment const &seg, segs)
     {
         stop = de::max(stop, seg.tabStop);

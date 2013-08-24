@@ -47,7 +47,7 @@ DENG2_PIMPL(GLTextComposer)
             Segment() : id(Id::None), x(0), width(0), compressed(false) {}
             int right() const { return x + width; }
         };
-        QList<Segment> segs;
+        QList<Segment> segs;       
     };
     typedef QList<Line> Lines;
     Lines lines;
@@ -211,11 +211,43 @@ DENG2_PIMPL(GLTextComposer)
 
     void updateLineLayout(Rangei const &lineRange)
     {
+        Rangei current = lineRange;
+        forever
+        {
+            int end = updateLineLayoutUntilUntabbed(current);
+            if(end == lineRange.end)
+            {
+                break; // Whole range done.
+            }
+            current = Rangei(end, lineRange.end);
+        }
+    }
+
+    /**
+     * Attempts to update lines in the specified range, but stops if an
+     * untabbed line is encountered. This ensures that each distinct tabbed
+     * content subrange uses its own alignment.
+     *
+     * @param lineRange  Range of lines to update.
+     *
+     * @return The actual end of the updated range.
+     */
+    inline int updateLineLayoutUntilUntabbed(Rangei const &lineRange)
+    {
+        int rangeEnd = lineRange.end;
+
         // Find the highest tab in use and initialize seg widths.
         int highestTab = 0;
         for(int i = lineRange.start; i < lineRange.end; ++i)
         {
-            highestTab = de::max(highestTab, wraps->lineInfo(i).highestTabStop());
+            int lineStop = wraps->lineInfo(i).highestTabStop();
+            if(lineStop < 0)
+            {
+                // An untabbed line will halt the process for now.
+                rangeEnd = de::max(i, lineRange.start + 1);
+                break;
+            }
+            highestTab = de::max(highestTab, lineStop);
 
             // Initialize the segments with indentation.
             for(int k = 0; k < lines[i].segs.size(); ++k)
@@ -224,8 +256,10 @@ DENG2_PIMPL(GLTextComposer)
             }
         }
 
+        DENG2_ASSERT(rangeEnd > lineRange.start);
+
         // Set segment X coordinates by stacking them left-to-right on each line.
-        for(int i = lineRange.start; i < lineRange.end; ++i)
+        for(int i = lineRange.start; i < rangeEnd; ++i)
         {
             if(lines[i].segs.isEmpty()) continue;
 
@@ -244,7 +278,7 @@ DENG2_PIMPL(GLTextComposer)
             int maxRight = 0;
 
             // Find the maximum right edge for this spot.
-            for(int i = lineRange.start; i < lineRange.end; ++i)
+            for(int i = lineRange.start; i < rangeEnd; ++i)
             {
                 FontLineWrapping::LineInfo const &info = wraps->lineInfo(i);
                 for(int k = 0; k < info.segs.size(); ++k)
@@ -258,7 +292,7 @@ DENG2_PIMPL(GLTextComposer)
             }
 
             // Move the segments to this position.
-            for(int i = lineRange.start; i < lineRange.end; ++i)
+            for(int i = lineRange.start; i < rangeEnd; ++i)
             {
                 int localRight = maxRight;
 
@@ -273,6 +307,8 @@ DENG2_PIMPL(GLTextComposer)
                 }
             }
         }
+
+        return rangeEnd;
     }
 };
 
