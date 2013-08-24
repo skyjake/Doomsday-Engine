@@ -209,6 +209,18 @@ DENG2_OBSERVES(ui::Item,    Change     )
         if(found == mapping.constEnd()) return 0;
         return found.value();
     }
+
+    GuiWidget *findByLabel(String const &label) const
+    {
+        DENG2_FOR_EACH_CONST(Mapping, i, mapping)
+        {
+            if(i.key()->label() == label)
+            {
+                return i.value();
+            }
+        }
+        return 0;
+    }
 };
 
 ContextWidgetOrganizer::ContextWidgetOrganizer(GuiWidget &container)
@@ -250,6 +262,11 @@ ContextWidgetOrganizer::IWidgetFactory &ContextWidgetOrganizer::widgetFactory() 
 GuiWidget *ContextWidgetOrganizer::itemWidget(ui::Item const &item) const
 {
     return d->find(item);
+}
+
+GuiWidget *ContextWidgetOrganizer::itemWidget(String const &label) const
+{
+    return d->findByLabel(label);
 }
 
 GuiWidget *DefaultWidgetFactory::makeItemWidget(ui::Item const &, GuiWidget const *)
