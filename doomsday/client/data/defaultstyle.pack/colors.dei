@@ -11,7 +11,7 @@ color background  { rgb <0.0, 0.0, 0.0, 0.75> }
 color accent      { rgb <1.0, 0.8, 0.4> }
 color glow        { rgb <1.0, 1.0, 1.0, 0.14> }
 
-color textaccent  { rgb $= gui.colorMix(text.rgb, accent.rgb, 0.5) }
+color textaccent  { rgb $= gui.colorMix(text.rgb, accent.rgb, 0.6) }
 
 group inverted {
     color text       { rgb <0.0, 0.0, 0.0> }
