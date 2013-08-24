@@ -25,6 +25,7 @@
 #include "ui/style.h"
 #include "ui/signalaction.h"
 #include "gl/sys_opengl.h"
+#include "audio/audiodriver.h"
 #include "clientapp.h"
 #include "versioninfo.h"
 
@@ -37,6 +38,7 @@ using namespace de;
 DENG2_PIMPL(AboutDialog)
 {
     PopupWidget *glPopup;
+    PopupWidget *audioPopup;
 
     Instance(Public *i) : Base(i)
     {
@@ -47,6 +49,14 @@ DENG2_PIMPL(AboutDialog)
         doc->setText(Sys_GLDescription());
         glPopup->setContent(doc);
         self.add(glPopup);
+
+        // Popup with audio info.
+        audioPopup = new PopupWidget;
+        audioPopup->useInfoStyle();
+        doc = new DocumentWidget;
+        doc->setText(AudioDriver_InterfaceDescription());
+        audioPopup->setContent(doc);
+        self.add(audioPopup);
     }
 };
 
@@ -107,13 +117,20 @@ AboutDialog::AboutDialog() : DialogWidget("about"), d(new Instance(this))
 
     buttons().items()
             << new DialogButtonItem(DialogWidget::Accept | DialogWidget::Default, tr("Close"))
-            << new DialogButtonItem(DialogWidget::Action, tr("GL"), new SignalAction(this, SLOT(showGLInfo())));
+            << new DialogButtonItem(DialogWidget::Action, tr("GL"), new SignalAction(this, SLOT(showGLInfo())))
+            << new DialogButtonItem(DialogWidget::Action, tr("Audio"), new SignalAction(this, SLOT(showAudioInfo())));
 
-    // The GL popup is anchored to the button.
+    // The popups are anchored to their button.
     d->glPopup->setAnchorAndOpeningDirection(buttons().organizer().itemWidget(tr("GL"))->rule(), ui::Up);
+    d->audioPopup->setAnchorAndOpeningDirection(buttons().organizer().itemWidget(tr("Audio"))->rule(), ui::Up);
 }
 
 void AboutDialog::showGLInfo()
 {
     d->glPopup->open();
+}
+
+void AboutDialog::showAudioInfo()
+{
+    d->audioPopup->open();
 }

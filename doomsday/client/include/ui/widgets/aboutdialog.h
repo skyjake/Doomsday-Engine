@@ -33,6 +33,7 @@ public:
 
 protected slots:
     void showGLInfo();
+    void showAudioInfo();
 
 private:
     DENG2_PRIVATE(d)
