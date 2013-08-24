@@ -176,14 +176,16 @@ DENG2_OBSERVES(ui::Context, Removal)
         if(ButtonItem const *i = item.maybeAs<ButtonItem>())
         {
             ButtonWidget &but = widget.as<ButtonWidget>();
-
-            if(i->role().testFlag(Accept))
+            if(!i->action())
             {
-                but.setAction(new SignalAction(thisPublic, SLOT(accept())));
-            }
-            else if(i->role().testFlag(Reject))
-            {
-                but.setAction(new SignalAction(thisPublic, SLOT(reject())));
+                if(i->role().testFlag(Accept))
+                {
+                    but.setAction(new SignalAction(thisPublic, SLOT(accept())));
+                }
+                else if(i->role().testFlag(Reject))
+                {
+                    but.setAction(new SignalAction(thisPublic, SLOT(reject())));
+                }
             }
         }
     }
@@ -241,10 +243,7 @@ DENG2_OBSERVES(ui::Context, Removal)
         // All label-based widgets should expand on their own.
         if(LabelWidget *lab = w.maybeAs<LabelWidget>())
         {
-            if(!w.is<ChoiceWidget>())
-            {
-                lab->setSizePolicy(ui::Expand, ui::Expand);
-            }
+            lab->setSizePolicy(ui::Expand, ui::Expand);
         }
 
         // Toggles should have no background.
