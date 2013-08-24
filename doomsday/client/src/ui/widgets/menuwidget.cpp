@@ -273,13 +273,13 @@ void MenuWidget::setGridSize(int columns, ui::SizePolicy columnPolicy,
     if(d->colPolicy == ui::Filled)
     {
         DENG2_ASSERT(columns > 0);
-        d->layout.setOverrideWidth((rule().width() - margin() * 2) / float(columns));
+        d->layout.setOverrideWidth((rule().width() - margins().width()) / float(columns));
     }
 
     if(d->rowPolicy == ui::Filled)
     {
         DENG2_ASSERT(rows > 0);
-        d->layout.setOverrideHeight((rule().height() - margin() * 2) / float(rows));
+        d->layout.setOverrideHeight((rule().height() - margins().height()) / float(rows));
     }
 
     d->needLayout = true;
@@ -314,11 +314,11 @@ void MenuWidget::updateLayout()
     // Expanding policy causes the size of the menu widget to change.
     if(d->colPolicy == Expand)
     {
-        rule().setInput(Rule::Width, d->layout.width() + margin() * 2);
+        rule().setInput(Rule::Width, d->layout.width() + margins().width());
     }
     if(d->rowPolicy == Expand)
     {
-        rule().setInput(Rule::Height, d->layout.height() + margin() * 2);
+        rule().setInput(Rule::Height, d->layout.height() + margins().height());
     }
 
     d->needLayout = false;

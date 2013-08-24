@@ -128,8 +128,8 @@ DENG_GUI_PIMPL(PopupWidget)
                     .setInput(Rule::Bottom, *anchorY - *marker)
                     .setInput(Rule::Left, OperatorRule::clamped(
                                   *anchorX - self.rule().width() / 2,
-                                  self.margin(),
-                                  self.root().viewWidth() - self.rule().width() - self.margin()));
+                                  self.margins().left(),
+                                  self.root().viewWidth() - self.rule().width() - self.margins().right()));
             break;
 
         case ui::Down:
@@ -137,8 +137,8 @@ DENG_GUI_PIMPL(PopupWidget)
                     .setInput(Rule::Top,  *anchorY + *marker)
                     .setInput(Rule::Left, OperatorRule::clamped(
                                   *anchorX - self.rule().width() / 2,
-                                  self.margin(),
-                                  self.root().viewWidth() - self.rule().width() - self.margin()));
+                                  self.margins().left(),
+                                  self.root().viewWidth() - self.rule().width() - self.margins().right()));
             break;
 
         case ui::Left:

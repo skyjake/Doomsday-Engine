@@ -226,8 +226,6 @@ public Font::RichFormat::IStyle
 
         if(!self.geometryRequested()) return;
 
-        int const margin = self.margin().valuei();
-
         // Background and scroll indicator.
         VertexBuf::Builder verts;
         self.glMakeGeometry(verts);
@@ -247,7 +245,7 @@ public Font::RichFormat::IStyle
             }
             else
             {
-                wrapWidth = self.rule().width().valuei() - 2 * margin;
+                wrapWidth = self.rule().width().valuei() - self.margins().width().valuei();
             }
 
             if(wraps.isEmpty() || wraps.maximumWidth() != wrapWidth)
@@ -307,7 +305,7 @@ DocumentWidget::DocumentWidget(String const &name) : d(new Instance(this))
 {
     setWidthPolicy(ui::Expand);
 
-    rule().setInput(Rule::Height, contentRule().height() + margin(ui::Up) + margin(ui::Down));
+    rule().setInput(Rule::Height, contentRule().height() + margins().height());
 }
 
 void DocumentWidget::setText(String const &styledText)
@@ -343,7 +341,7 @@ void DocumentWidget::setWidthPolicy(ui::SizePolicy policy)
 
     if(policy == ui::Expand)
     {
-        rule().setInput(Rule::Width, contentRule().width() + 2 * margin());
+        rule().setInput(Rule::Width, contentRule().width() + margins().width());
     }
     else
     {
@@ -394,8 +392,8 @@ void DocumentWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
 {
     ScrollAreaWidget::glMakeGeometry(verts);
 
-    glMakeScrollIndicatorGeometry(verts, Vector2f(rule().left().value() + margin().value(),
-                                                  rule().top().value()  + margin().value()));
+    glMakeScrollIndicatorGeometry(verts, Vector2f(rule().left().value() + margins().left().value(),
+                                                  rule().top().value()  + margins().top().value()));
 }
 
 void DocumentWidget::updateStyle()

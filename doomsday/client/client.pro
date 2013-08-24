@@ -362,6 +362,7 @@ DENG_HEADERS += \
     include/ui/widgets/gridlayout.h \
     include/ui/widgets/guirootwidget.h \
     include/ui/widgets/guiwidget.h \
+    include/ui/widgets/guiwidgetprivate.h \
     include/ui/widgets/fontlinewrapping.h \
     include/ui/widgets/item.h \
     include/ui/widgets/labelwidget.h \
@@ -369,6 +370,7 @@ DENG_HEADERS += \
     include/ui/widgets/lineeditwidget.h \
     include/ui/widgets/listcontext.h \
     include/ui/widgets/logwidget.h \
+    include/ui/widgets/margins.h \
     include/ui/widgets/menuwidget.h \
     include/ui/widgets/messagedialog.h \
     include/ui/widgets/notificationwidget.h \
@@ -441,8 +443,7 @@ INCLUDEPATH += \
 
 HEADERS += \
     $$DENG_API_HEADERS \
-    $$DENG_HEADERS \
-    include/ui/widgets/guiwidgetprivate.h
+    $$DENG_HEADERS
 
 # Platform-specific sources.
 win32 {
@@ -685,6 +686,7 @@ SOURCES += \
     src/ui/widgets/lineeditwidget.cpp \
     src/ui/widgets/listcontext.cpp \
     src/ui/widgets/logwidget.cpp \
+    src/ui/widgets/margins.cpp \
     src/ui/widgets/menuwidget.cpp \
     src/ui/widgets/messagedialog.cpp \
     src/ui/widgets/notificationwidget.cpp \

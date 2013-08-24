@@ -65,7 +65,7 @@ public IGameChangeObserver
                 OperatorRule::minimum(
                     OperatorRule::minimum(st.rules().rule("editor.completion.height"),
                                           completions->contentRule().height() +
-                                          2 * completions->margin()),
+                                          completions->margins().height()),
                     self.rule().top() - st.rules().rule("gap")));
 
         self.add(popup);

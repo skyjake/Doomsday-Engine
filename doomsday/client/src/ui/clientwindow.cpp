@@ -123,7 +123,7 @@ public IGameChangeObserver
         background->setImage(style.images().image("window.background"));
         background->setImageFit(ui::FitToSize);
         background->setSizePolicy(ui::Filled, ui::Filled);
-        background->setMargin("");
+        background->margins().set("");
         background->rule()
                 .setInput(Rule::Left,   root.viewLeft())
                 .setInput(Rule::Top,    root.viewTop())

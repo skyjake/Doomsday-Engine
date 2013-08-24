@@ -117,13 +117,13 @@ DENG2_OBSERVES(ui::Context, Removal)
         area->rule()
                 .setInput(Rule::Left, self.rule().left())
                 .setInput(Rule::Top, self.rule().top())
-                .setInput(Rule::Width, area->contentRule().width() + area->margin() * 2)
+                .setInput(Rule::Width, area->contentRule().width() + area->margins().width())
                 .setInput(Rule::Height, container->rule().height() - buttons->rule().height() +
-                          area->margin());
+                          area->margins().bottom());
 
         // Buttons below the area.
         buttons->rule()
-                .setInput(Rule::Top, area->rule().bottom() - area->margin()) // overlap margins
+                .setInput(Rule::Top, area->rule().bottom() - area->margins().bottom()) // overlap margins
                 .setInput(Rule::Right, self.rule().right());
 
         // A blank container widget acts as the popup content parent.
@@ -142,7 +142,7 @@ DENG2_OBSERVES(ui::Context, Removal)
         self.content().rule().setInput(Rule::Height,
                                        OperatorRule::minimum(root().viewHeight(),
                                                              area->contentRule().height() +
-                                                             area->margin() +
+                                                             area->margins().bottom() +
                                                              buttons->rule().height()));
     }
 
@@ -236,7 +236,7 @@ DENG2_OBSERVES(ui::Context, Removal)
     {
         GuiWidget &w = areaChild.as<GuiWidget>();
 
-        w.setMargin("dialog.gap");
+        w.margins().set("dialog.gap");
 
         // All label-based widgets should expand on their own.
         if(LabelWidget *lab = w.maybeAs<LabelWidget>())

@@ -81,7 +81,7 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
                 << new ChoiceItem(tr("Weekly"),     UpdaterSettings::Weekly)
                 << new ChoiceItem(tr("Monthly"),    UpdaterSettings::Monthly);
 
-        lastChecked->setMargin(ui::Up, "");
+        lastChecked->margins().setTop("");
 
         releaseLabel->setText("Release type:");
 

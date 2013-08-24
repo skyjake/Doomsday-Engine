@@ -26,6 +26,7 @@
 
 #include "../uidefs.h"
 #include "ui/style.h"
+#include "margins.h"
 #include "guiwidgetprivate.h"
 
 class GuiRootWidget;
@@ -150,6 +151,9 @@ public:
      */
     de::RuleRectangle const &rule() const;
 
+    ui::Margins &margins();
+    ui::Margins const &margins() const;
+
     de::Rectanglef normalizedRect() const;
 
     /**
@@ -162,19 +166,11 @@ public:
 
     void setFont(de::DotPath const &id);
     void setTextColor(de::DotPath const &id);
-    void setMargin(de::DotPath const &id);
-    void setMargin(ui::Direction dir, de::DotPath const &id);
-    void setMargins(de::DotPath const &leftId,
-                    de::DotPath const &topId,
-                    de::DotPath const &rightId,
-                    de::DotPath const &bottomId);
     void set(Background const &bg);
 
     de::Font const &font() const;
     de::ColorBank::Color textColor() const;
     de::ColorBank::Colorf textColorf() const;
-
-    de::Rule const &margin(ui::Direction dir = ui::Left) const;
 
     /**
      * Determines whether the contents of the widget are supposed to be clipped
