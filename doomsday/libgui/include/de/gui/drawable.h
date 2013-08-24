@@ -101,6 +101,8 @@ public:
     Ids allPrograms() const;
     Ids allStates() const;
 
+    bool hasBuffer(Id id) const;
+
     /**
      * Finds an existing buffer.
      * @param id  Identifier of the buffer.
