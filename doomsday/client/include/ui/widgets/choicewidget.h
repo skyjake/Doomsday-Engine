@@ -63,7 +63,6 @@ public:
     void setSelected(ui::Context::Pos pos);
 
     ui::Context::Pos selected() const;
-
     ui::Item const &selectedItem() const;
 
 public slots:

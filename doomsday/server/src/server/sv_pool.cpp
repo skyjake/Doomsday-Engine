@@ -451,7 +451,7 @@ void Sv_RegisterSide(dt_side_t *reg, int number)
 {
     DENG_ASSERT(reg != 0);
 
-    Line::Side *side = App_World().map().sideByIndex(number);
+    LineSide *side = App_World().map().sideByIndex(number);
 
     if(side->hasSections())
     {
@@ -746,7 +746,7 @@ boolean Sv_RegisterCompareSector(cregister_t *reg, int number,
 boolean Sv_RegisterCompareSide(cregister_t *reg, uint number,
     sidedelta_t *d, byte doUpdate)
 {
-    Line::Side const *side = App_World().map().sideByIndex(number);
+    LineSide const *side = App_World().map().sideByIndex(number);
     dt_side_t *r = &reg->sides[number];
     byte lineFlags = side->line().flags() & 0xff;
     byte sideFlags = side->flags() & 0xff;
@@ -1534,7 +1534,7 @@ coord_t Sv_SectorDistance(int index, ownerinfo_t const *info)
 
 coord_t Sv_SideDistance(int index, int deltaFlags, ownerinfo_t const *info)
 {
-    Line::Side const *side = App_World().map().sideByIndex(index);
+    LineSide const *side = App_World().map().sideByIndex(index);
 
     SoundEmitter const &emitter = (deltaFlags & SNDDF_SIDE_MIDDLE? side->middleSoundEmitter()
                                      : deltaFlags & SNDDF_SIDE_TOP? side->topSoundEmitter()
@@ -1576,7 +1576,7 @@ coord_t Sv_DeltaDistance(void const *deltaPtr, ownerinfo_t const *info)
 
     if(delta->type == DT_SIDE)
     {
-        Line::Side *side = App_World().map().sideByIndex(delta->id);
+        LineSide *side = App_World().map().sideByIndex(delta->id);
         Line &line = side->line();
         return M_ApproxDistance(info->origin[VX] - line.center().x,
                                 info->origin[VY] - line.center().y);
@@ -2355,22 +2355,22 @@ void Sv_NewSoundDelta(int soundId, mobj_t* emitter, Sector* sourceSector,
         type = DT_SIDE_SOUND;
 
         // Clients need to know which emitter to use.
-        Line::Side *side = sourceSurface->parent().as<Line::Side>();
+        LineSide &side = sourceSurface->parent().as<LineSide>();
 
-        if(&side->middle() == sourceSurface)
+        if(&side.middle() == sourceSurface)
         {
             df |= SNDDF_SIDE_MIDDLE;
         }
-        else if(&side->bottom() == sourceSurface)
+        else if(&side.bottom() == sourceSurface)
         {
             df |= SNDDF_SIDE_BOTTOM;
         }
-        else if(&side->top() == sourceSurface)
+        else if(&side.top() == sourceSurface)
         {
             df |= SNDDF_SIDE_TOP;
         }
 
-        id = side->indexInMap();
+        id = side.indexInMap();
     }
     else if(emitter)
     {

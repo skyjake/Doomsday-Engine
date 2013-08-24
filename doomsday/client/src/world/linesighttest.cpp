@@ -93,7 +93,7 @@ DENG2_PIMPL(LineSightTest)
      * @todo cleanup: Much unnecessary representation flipping...
      * @todo cleanup: Remove front-side assumption.
      */
-    bool crossLine(Line::Side const &side)
+    bool crossLine(LineSide &side)
     {
 #define RTOP                    0x1 ///< Top range.
 #define RBOTTOM                 0x2 ///< Bottom range.
@@ -259,7 +259,7 @@ DENG2_PIMPL(LineSightTest)
         {
             if(hedge->mapElement())
             {
-                if(!crossLine(hedge->mapElement()->as<Line::Side::Segment>()->lineSide()))
+                if(!crossLine(hedge->mapElement()->as<LineSideSegment>().lineSide()))
                     return false;
             }
         } while((hedge = &hedge->next()) != base);
@@ -271,7 +271,7 @@ DENG2_PIMPL(LineSightTest)
             if(!hedge->mapElement())
                 continue;
 
-            if(!crossLine(hedge->mapElement()->as<Line::Side::Segment>()->lineSide()))
+            if(!crossLine(hedge->mapElement()->as<LineSideSegment>().lineSide()))
                 return false;
         }
 
@@ -287,29 +287,29 @@ DENG2_PIMPL(LineSightTest)
 
         while(bspElement->type() != DMU_BSPLEAF)
         {
-            BspNode const *bspNode = bspElement->as<BspNode>();
+            BspNode const &bspNode = bspElement->as<BspNode>();
 
             // Does the ray intersect the partition?
             /// @todo Optionally use the fixed precision version -ds
-            dint const fromSide = bspNode->partition().pointOnSide(Vector2d(from.x, from.y)) < 0;
-            dint const toSide   = bspNode->partition().pointOnSide(Vector2d(to.x, to.y)) < 0;
+            dint const fromSide = bspNode.partition().pointOnSide(Vector2d(from.x, from.y)) < 0;
+            dint const toSide   = bspNode.partition().pointOnSide(Vector2d(to.x, to.y)) < 0;
             if(fromSide != toSide)
             {
                 // Yes.
-                if(!crossBspNode(bspNode->childPtr(fromSide)))
+                if(!crossBspNode(bspNode.childPtr(fromSide)))
                     return false; // Cross the From side.
 
-                bspElement = bspNode->childPtr(fromSide ^ 1); // Cross the To side.
+                bspElement = bspNode.childPtr(fromSide ^ 1); // Cross the To side.
             }
             else
             {
                 // No - descend!
-                bspElement = bspNode->childPtr(fromSide);
+                bspElement = bspNode.childPtr(fromSide);
             }
         }
 
         // We've arrived at a leaf.
-        return crossBspLeaf(*bspElement->as<BspLeaf>());
+        return crossBspLeaf(bspElement->as<BspLeaf>());
     }
 };
 

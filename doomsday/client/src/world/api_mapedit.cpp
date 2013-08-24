@@ -301,7 +301,7 @@ void MPE_LineAddSide(int lineIdx, int sideId, short flags, ddstring_t const *top
     if(lineIdx < 0 || lineIdx >= editMap->editableLineCount()) return;
 
     Line *line = editMap->editableLines().at(lineIdx);
-    Line::Side &side = line->side(sideId);
+    LineSide &side = line->side(sideId);
 
     side.setFlags(flags);
     side.setIndexInArchive(archiveIndex);

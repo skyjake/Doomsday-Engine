@@ -32,6 +32,8 @@
  * DocumentWidget can be configured to expand horizontally, or it can use a
  * certain determined fixed width (see DocumentWidget::setWidthPolicy()).
  *
+ * By default, the height of the widget is determined by its content size.
+ *
  * The assumption is that the source document is largely static so that once
  * prepared, the GL resources can be reused as many times as possible.
  */

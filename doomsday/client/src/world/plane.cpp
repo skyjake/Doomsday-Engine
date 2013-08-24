@@ -152,7 +152,7 @@ DENG2_PIMPL(Plane)
         if(indexInSector > Sector::Ceiling) return;
 
         // Mark the decor lights on the sides of this plane as requiring an update.
-        foreach(Line::Side *side, self.sector().sides())
+        foreach(LineSide *side, self.sector().sides())
         {
             if(side->hasSections())
             {
@@ -163,7 +163,7 @@ DENG2_PIMPL(Plane)
 
             if(side->back().hasSections())
             {
-                Line::Side &back = side->back();
+                LineSide &back = side->back();
                 back.middle().markAsNeedingDecorationUpdate();
                 back.bottom().markAsNeedingDecorationUpdate();
                 back.top().markAsNeedingDecorationUpdate();
@@ -181,12 +181,12 @@ Plane::Plane(Sector &sector, Vector3f const &normal, coord_t height)
 
 Sector &Plane::sector()
 {
-    return *this->parent().as<Sector>();
+    return parent().as<Sector>();
 }
 
 Sector const &Plane::sector() const
 {
-    return const_cast<Sector const &>(const_cast<Plane *>(this)->sector());
+    return parent().as<Sector>();
 }
 
 int Plane::indexInSector() const

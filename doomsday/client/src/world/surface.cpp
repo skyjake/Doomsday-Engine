@@ -88,13 +88,13 @@ DENG2_PIMPL(Surface)
     inline bool isSideMiddle()
     {
         return self.parent().type() == DMU_SIDE &&
-               &self == &self.parent().as<Line::Side>()->middle();
+               &self == &self.parent().as<LineSide>().middle();
     }
 
     inline bool isSectorExtraPlane()
     {
         if(self.parent().type() != DMU_PLANE) return false;
-        Plane const &plane = *self.parent().as<Plane>();
+        Plane const &plane = self.parent().as<Plane>();
         return !(plane.isSectorFloor() || plane.isSectorCeiling());
     }
 #endif
@@ -272,7 +272,7 @@ bool Surface::setMaterial(Material *newMaterial, bool isMissingFix)
                 d->materialIsMissingFix = true;
 
                 // Sides of selfreferencing map lines should never receive fix materials.
-                DENG_ASSERT(!(parent().type() == DMU_SIDE && parent().as<Line::Side>()->line().isSelfReferencing()));
+                DENG_ASSERT(!(parent().type() == DMU_SIDE && parent().as<LineSide>().line().isSelfReferencing()));
             }
         }
         else if(newMaterial && d->materialIsMissingFix)
@@ -295,7 +295,7 @@ bool Surface::setMaterial(Material *newMaterial, bool isMissingFix)
                 {
                     de::Uri uri = d->material->manifest().composeUri();
                     ded_ptcgen_t const *def = Def_GetGenerator(reinterpret_cast<uri_s *>(&uri));
-                    P_SpawnPlaneParticleGen(def, parent().as<Plane>());
+                    P_SpawnPlaneParticleGen(def, &parent().as<Plane>());
                 }
 
             }

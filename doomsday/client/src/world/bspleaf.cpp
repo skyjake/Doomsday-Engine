@@ -63,7 +63,7 @@ typedef QMap<int, GeometryGroup> GeometryGroups;
 DENG2_PIMPL(BspLeaf)
 {
     /// Attributed sector cluster if any (not owned).
-    Sector::Cluster *cluster;
+    SectorCluster *cluster;
 
     /// Convex polygon geometry attributed to the BSP leaf if any (not owned).
     Face *poly;
@@ -366,7 +366,7 @@ bool BspLeaf::hasCluster() const
     return d->cluster != 0;
 }
 
-Sector::Cluster &BspLeaf::cluster() const
+SectorCluster &BspLeaf::cluster() const
 {
     if(d->cluster)
     {
@@ -376,7 +376,7 @@ Sector::Cluster &BspLeaf::cluster() const
     throw MissingClusterError("BspLeaf::cluster", "No sector cluster is attributed");
 }
 
-void BspLeaf::setCluster(Sector::Cluster *newCluster)
+void BspLeaf::setCluster(SectorCluster *newCluster)
 {
     d->cluster = newCluster;
 }
@@ -463,10 +463,10 @@ static void updateBiasForWallSectionsAfterGeometryMove(HEdge *hedge)
     if(!hedge || !hedge->mapElement())
         return;
 
-    Line::Side::Segment *seg = hedge->mapElement()->as<Line::Side::Segment>();
-    seg->updateBiasAfterGeometryMove(Line::Side::Middle);
-    seg->updateBiasAfterGeometryMove(Line::Side::Bottom);
-    seg->updateBiasAfterGeometryMove(Line::Side::Top);
+    LineSideSegment &seg = hedge->mapElement()->as<LineSideSegment>();
+    seg.updateBiasAfterGeometryMove(LineSide::Middle);
+    seg.updateBiasAfterGeometryMove(LineSide::Bottom);
+    seg.updateBiasAfterGeometryMove(LineSide::Top);
 }
 
 void BspLeaf::updateBiasAfterGeometryMove(int group)
@@ -496,7 +496,7 @@ static void applyBiasDigestToWallSections(HEdge *hedge, BiasDigest &changes)
 {
     if(!hedge || !hedge->mapElement())
         return;
-    hedge->mapElement()->as<Line::Side::Segment>()->applyBiasDigest(changes);
+    hedge->mapElement()->as<LineSideSegment>().applyBiasDigest(changes);
 }
 
 void BspLeaf::applyBiasDigest(BiasDigest &changes)
@@ -563,18 +563,18 @@ static void accumReverbForWallSections(HEdge const *hedge,
     if(!hedge || !hedge->mapElement())
         return;
 
-    Line::Side::Segment *seg = hedge->mapElement()->as<Line::Side::Segment>();
-    if(!seg->lineSide().hasSections() || !seg->lineSide().middle().hasMaterial())
+    LineSideSegment &seg = hedge->mapElement()->as<LineSideSegment>();
+    if(!seg.lineSide().hasSections() || !seg.lineSide().middle().hasMaterial())
         return;
 
-    Material &material = seg->lineSide().middle().material();
+    Material &material = seg.lineSide().middle().material();
     AudioEnvironmentId env = material.audioEnvironment();
     if(!(env >= 0 && env < NUM_AUDIO_ENVIRONMENTS))
         env = AE_WOOD; // Assume it's wood if unknown.
 
-    total += seg->length();
+    total += seg.length();
 
-    envSpaceAccum[env] += seg->length();
+    envSpaceAccum[env] += seg.length();
 }
 
 bool BspLeaf::updateReverb()
@@ -657,7 +657,7 @@ void BspLeaf::clearShadowLines()
     d->shadowLines.clear();
 }
 
-void BspLeaf::addShadowLine(Line::Side &side)
+void BspLeaf::addShadowLine(LineSide &side)
 {
     if(isDegenerate()) return;
     d->shadowLines.insert(&side);

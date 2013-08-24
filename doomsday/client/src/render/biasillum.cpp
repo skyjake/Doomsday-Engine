@@ -63,7 +63,8 @@ DENG2_PIMPL_NOREF(BiasIllum)
     Instance(BiasTracker *tracker) : tracker(tracker)
     {}
 
-    Instance(Instance const &other) : tracker(other.tracker), color(other.color)
+    Instance(Instance const &other)
+        : IPrivate(), tracker(other.tracker), color(other.color)
     {
         if(!other.lerpInfo.isNull())
         {

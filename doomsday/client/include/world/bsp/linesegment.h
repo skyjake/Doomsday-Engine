@@ -158,31 +158,31 @@ public:
         inline Side &back() const { return line().side(lineSideId() ^ 1); }
 
         /**
-         * Returns @c true iff a map Line::Side is attributed to "this" side of
+         * Returns @c true iff a map LineSide is attributed to "this" side of
          * the line segment.
          */
         bool hasMapSide() const;
 
         /**
-         * Returns the map Line::Side attributed to "this" side of the line segment.
+         * Returns the map LineSide attributed to "this" side of the line segment.
          *
          * @see hasMapSide()
          */
-        Line::Side &mapSide() const;
+        LineSide &mapSide() const;
 
         /**
-         * Returns a pointer to the map Line::Side attributed to this side of the
+         * Returns a pointer to the map LineSide attributed to this side of the
          * line segment; otherwise @c 0
          */
-        inline Line::Side *mapSidePtr() const { return hasMapSide()? &mapSide() : 0; }
+        inline LineSide *mapSidePtr() const { return hasMapSide()? &mapSide() : 0; }
 
         /**
-         * Change the map Line::Side attributed to the "this" side of the line
+         * Change the map LineSide attributed to the "this" side of the line
          * segment.
          *
          * @param newMapSide  New map line side to attribute. Can be @c 0.
          */
-        void setMapSide(Line::Side *newMapSide);
+        void setMapSide(LineSide *newMapSide);
 
         /**
          * Returns a pointer to the @em partition map Line attributed to "this"
@@ -199,7 +199,7 @@ public:
         void setPartitionMapLine(Line *newMapLine);
 
         /**
-         * Convenient accessor method for returning the map Line of the Line::Side
+         * Convenient accessor method for returning the map Line of the LineSide
          * is attributed to "this" side of the line segment.
          *
          * @see hasMapSide(), mapSide()

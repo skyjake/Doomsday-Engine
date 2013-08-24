@@ -77,7 +77,7 @@ public:
 
     virtual ~Grabbable();
 
-    DENG2_IS_AS_METHODS()
+    DENG2_AS_IS_METHODS()
 
     /**
      * Returns @c true iff the grabbable is currently grabbed.

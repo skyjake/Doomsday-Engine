@@ -215,9 +215,15 @@ DENG2_OBSERVES(ui::Context, Removal)
                 }
             }
 
+            // Highlight the default button(s).
             if(i->role().testFlag(Default))
             {
+                but.setTextColor("dialog.default");
                 but.setText(_E(b) + but.text());
+            }
+            else
+            {
+                but.setTextColor("text");
             }
         }
     }
@@ -235,7 +241,10 @@ DENG2_OBSERVES(ui::Context, Removal)
         // All label-based widgets should expand on their own.
         if(LabelWidget *lab = w.maybeAs<LabelWidget>())
         {
-            lab->setSizePolicy(ui::Expand, ui::Expand);
+            if(!w.is<ChoiceWidget>())
+            {
+                lab->setSizePolicy(ui::Expand, ui::Expand);
+            }
         }
 
         // Toggles should have no background.

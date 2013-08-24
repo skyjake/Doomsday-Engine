@@ -81,22 +81,7 @@ public:
      */
     int type() const;
 
-    /// @todo Should use DENG2_IS_AS_METHODS() to avoid cost of dynamic_cast.
-    template <typename Type>
-    inline Type *as()
-    {
-        Type *t = dynamic_cast<Type *>(this);
-        DENG2_ASSERT(t != 0);
-        return t;
-    }
-
-    template <typename Type>
-    inline Type const *as() const
-    {
-        Type const *t = dynamic_cast<Type const *>(this);
-        DENG_ASSERT(t != 0);
-        return t;
-    }
+    DENG2_AS_IS_METHODS()
 
     /**
      * Returns @c true iff a parent is attributed to the map element.
@@ -110,7 +95,10 @@ public:
      *
      * @see hasParent(), setParent()
      */
-    MapElement &parent() const;
+    MapElement &parent();
+
+    /// @copydoc parent()
+    MapElement const &parent() const;
 
     /**
      * Change the parent of the map element.

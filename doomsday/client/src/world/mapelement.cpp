@@ -57,7 +57,7 @@ bool MapElement::hasParent() const
     return d->parent != 0;
 }
 
-MapElement &MapElement::parent() const
+MapElement &MapElement::parent()
 {
     if(d->parent)
     {
@@ -65,6 +65,11 @@ MapElement &MapElement::parent() const
     }
     /// @throw MissingParentError  Attempted with no parent element is attributed.
     throw MissingParentError("MapElement::parent", "No parent map element is attributed");
+}
+
+MapElement const &MapElement::parent() const
+{
+    return const_cast<MapElement *>(this)->parent();
 }
 
 void MapElement::setParent(MapElement *newParent)

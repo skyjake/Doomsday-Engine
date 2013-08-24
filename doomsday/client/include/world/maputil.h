@@ -24,7 +24,7 @@
 
 #include <de/Vector>
 
-#include "Line" // Line::Side
+#include "Line" // LineSide
 
 class Sector;
 #ifdef __CLIENT__
@@ -40,7 +40,7 @@ void R_SetRelativeHeights(Sector const *front, Sector const *back, int planeInde
  * Determine the map space Z coordinates of a wall section.
  *
  * @param side            Map line side to determine Z heights for.
- * @param section         Line::Side section to determine coordinates for.
+ * @param section         LineSide section to determine coordinates for.
  * @param skyClip         Perform sky plane clipping to line section.
  *
  * Return values:
@@ -48,7 +48,7 @@ void R_SetRelativeHeights(Sector const *front, Sector const *back, int planeInde
  * @param top             Z map space coordinate at the top of the wall section. Can be @c 0.
  * @param materialOrigin  Surface space material coordinate offset. Can be @c 0.
  */
-void R_SideSectionCoords(Line::Side const &side, int section, bool skyClip = true,
+void R_SideSectionCoords(LineSide const &side, int section, bool skyClip = true,
     coord_t *bottom = 0, coord_t *top = 0, de::Vector2f *materialOrigin = 0);
 
 #endif // __CLIENT__
@@ -68,14 +68,14 @@ void R_SideSectionCoords(Line::Side const &side, int section, bool skyClip = tru
  *
  * @return Height of the open range.
  */
-coord_t R_OpenRange(Line::Side const &side, Sector const *frontSec, Sector const *backSec,
+coord_t R_OpenRange(LineSide const &side, Sector const *frontSec, Sector const *backSec,
     coord_t *bottom = 0, coord_t *top = 0);
 
 /**
  * Same as @ref R_OpenRange() except that the sector arguments are taken from the
  * specified line @a side.
  */
-inline coord_t R_OpenRange(Line::Side const &side, coord_t *bottom = 0, coord_t *top = 0)
+inline coord_t R_OpenRange(LineSide const &side, coord_t *bottom = 0, coord_t *top = 0)
 {
     return R_OpenRange(side, side.sectorPtr(), side.back().sectorPtr(), bottom, top);
 }
@@ -96,27 +96,27 @@ inline coord_t R_OpenRange(Line::Side const &side, coord_t *bottom = 0, coord_t 
  *
  * @return Height of the open range.
  */
-coord_t R_VisOpenRange(Line::Side const &side, Sector const *frontSec, Sector const *backSec,
+coord_t R_VisOpenRange(LineSide const &side, Sector const *frontSec, Sector const *backSec,
     coord_t *bottom = 0, coord_t *top = 0);
 
 /**
  * Same as @ref R_VisOpenRange() except that the sector arguments are taken from
  * the specified line @a side.
  */
-inline coord_t R_VisOpenRange(Line::Side const &side, coord_t *bottom = 0, coord_t *top = 0)
+inline coord_t R_VisOpenRange(LineSide const &side, coord_t *bottom = 0, coord_t *top = 0)
 {
     return R_VisOpenRange(side, side.sectorPtr(), side.back().sectorPtr(), bottom, top);
 }
 
 /**
- * @param side  Line::Side instance.
+ * @param side  LineSide instance.
  * @param ignoreOpacity  @c true= do not consider Material opacity.
  *
  * @return  @c true if this side is considered "closed" (i.e., there is no opening
  * through which the relative back Sector can be seen). Tests consider all Planes
  * which interface with this and the "middle" Material used on the "this" side.
  */
-bool R_SideBackClosed(Line::Side const &side, bool ignoreOpacity = true);
+bool R_SideBackClosed(LineSide const &side, bool ignoreOpacity = true);
 
 /**
  * A neighbour is a line that shares a vertex with 'line', and faces the

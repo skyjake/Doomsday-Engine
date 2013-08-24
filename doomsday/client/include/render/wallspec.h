@@ -89,7 +89,7 @@ public:
      * @a side and @a section of a map Line considering the current map renderer
      * configuration.
      */
-    static WallSpec fromMapSide(Line::Side const &side, int section);
+    static WallSpec fromMapSide(LineSide const &side, int section);
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(WallSpec::Flags)

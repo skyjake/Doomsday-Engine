@@ -2,10 +2,16 @@
 
 script { import gui, Version }
 
-color text       { rgb <1.0, 1.0, 1.0> }
-color background { rgb <0.0, 0.0, 0.0, 0.75> }
-color accent     { rgb <1.0, 0.8, 0.4> }
-color glow       { rgb <1.0, 1.0, 1.0, 0.14> }
+#
+# THE BASIC COLOR PALETTE
+#
+
+color text        { rgb <1.0, 1.0, 1.0> }
+color background  { rgb <0.0, 0.0, 0.0, 0.75> }
+color accent      { rgb <1.0, 0.8, 0.4> }
+color glow        { rgb <1.0, 1.0, 1.0, 0.14> }
+
+color textaccent  { rgb $= gui.colorMix(text.rgb, accent.rgb, 0.6) }
 
 group inverted {
     color text       { rgb <0.0, 0.0, 0.0> }
@@ -13,11 +19,22 @@ group inverted {
     color glow       { rgb <0.0, 0.0, 0.0, 0.15> }
 }
 
+#
+# COLORS FOR SPECIFIC WIDGETS
+#
+
 group label {
     color highlight { rgb <1.0, 1.0, 1.0> }
     color dimmed    { rgb <0.72, 0.72, 0.68> }
     color accent    { rgb $= accent.rgb }
     color dimaccent { rgb <0.85, 0.68, 0.34> }
+}
+
+group popup {
+    group info {
+        color background { rgb <1.0, 1.0, 1.0> }
+        color glow       { rgb $= inverted.glow.rgb }
+    }
 }
 
 group choice {
@@ -37,16 +54,17 @@ group progress {
 
 group dialog {
     color background { rgb $= gui.colorAlpha(background.rgb, 0.9) }
+    color default    { rgb $= textaccent.rgb }
 }
 
 group editor {
     color cursor { rgb $= gui.colorAlpha(accent.rgb, 0.7) }
-    color hint   { rgb $= gui.colorMix(text.rgb, accent.rgb, 0.5) }
+    color hint   { rgb $= textaccent.rgb }
     
-    group completion {
-        color background { rgb <1.0, 1.0, 1.0> }
-        color glow       { rgb $= inverted.glow.rgb }
-    }
+    #group completion {
+    #    color background { rgb <1.0, 1.0, 1.0> }
+    #    color glow       { rgb $= inverted.glow.rgb }
+    #}
 }
 
 group log {

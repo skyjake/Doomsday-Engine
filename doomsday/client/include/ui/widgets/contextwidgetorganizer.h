@@ -115,8 +115,8 @@ public:
     ui::Context const &context() const;
 
     GuiWidget *itemWidget(ui::Context::Pos pos) const;
-
     GuiWidget *itemWidget(ui::Item const &item) const;
+    GuiWidget *itemWidget(de::String const &label) const;
 
 private:
     DENG2_PRIVATE(d)

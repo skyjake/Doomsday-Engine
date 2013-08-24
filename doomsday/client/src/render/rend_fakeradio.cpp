@@ -67,7 +67,7 @@ typedef struct edge_s {
 } edge_t;
 
 static void scanEdges(shadowcorner_t topCorners[2], shadowcorner_t bottomCorners[2],
-    shadowcorner_t sideCorners[2], edgespan_t spans[2], Line::Side const &side);
+    shadowcorner_t sideCorners[2], edgespan_t spans[2], LineSide const &side);
 
 int rendFakeRadio = true; ///< cvar
 float rendFakeRadioDarkness = 1.2f; ///< cvar
@@ -88,7 +88,7 @@ float Rend_RadioCalcShadowDarkness(float lightLevel)
     return (0.6f - lightLevel * 0.4f) * 0.65f * rendFakeRadioDarkness;
 }
 
-void Rend_RadioUpdateForLineSide(Line::Side &side)
+void Rend_RadioUpdateForLineSide(LineSide &side)
 {
     // Disabled completely?
     if(!rendFakeRadio || levelFullBright) return;
@@ -162,7 +162,7 @@ static inline float calcTexCoordY(float z, float bottom, float top, float texHei
 }
 
 /// @todo This algorithm should be rewritten to work at half-edge level.
-static void scanNeighbor(bool scanTop, Line::Side const &side, edge_t *edge,
+static void scanNeighbor(bool scanTop, LineSide const &side, edge_t *edge,
                          bool toLeft)
 {
     int const SEP = 10;
@@ -383,7 +383,7 @@ static void scanNeighbor(bool scanTop, Line::Side const &side, edge_t *edge,
 }
 
 static void scanNeighbors(shadowcorner_t top[2], shadowcorner_t bottom[2],
-    Line::Side const &side, edgespan_t spans[2], bool toLeft)
+    LineSide const &side, edgespan_t spans[2], bool toLeft)
 {
     if(side.line().isSelfReferencing()) return;
 
@@ -479,7 +479,7 @@ static void scanNeighbors(shadowcorner_t top[2], shadowcorner_t bottom[2],
  * rare.
  */
 static void scanEdges(shadowcorner_t topCorners[2], shadowcorner_t bottomCorners[2],
-    shadowcorner_t sideCorners[2], edgespan_t spans[2], Line::Side const &side)
+    shadowcorner_t sideCorners[2], edgespan_t spans[2], LineSide const &side)
 {
     int const lineSideId = side.sideId();
 
@@ -1084,11 +1084,11 @@ void Rend_RadioWallSection(WallEdge const &leftEdge, WallEdge const &rightEdge,
 
     if(shadowSize <= 0) return;
 
-    Line::Side &side            = leftEdge.mapSide();
+    LineSide &side            = leftEdge.mapSide();
     HEdge const *hedge          = side.leftHEdge();
-    Sector const *frontSec      = hedge->face().mapElement()->as<BspLeaf>()->sectorPtr();
+    Sector const *frontSec      = hedge->face().mapElement()->as<BspLeaf>().sectorPtr();
     Sector const *backSec       =
-        (hedge->twin().hasFace() && leftEdge.spec().section != Line::Side::Middle)? hedge->twin().face().mapElement()->as<BspLeaf>()->sectorPtr() : 0;
+        (hedge->twin().hasFace() && leftEdge.spec().section != LineSide::Middle)? hedge->twin().face().mapElement()->as<BspLeaf>().sectorPtr() : 0;
 
     coord_t const lineLength    = side.line().length();
     coord_t const sectionOffset = leftEdge.mapSideOffset();
@@ -1239,7 +1239,7 @@ static void writeShadowSection2(ShadowEdge const &leftEdge, ShadowEdge const &ri
     RL_AddPoly(PT_FAN, RPF_DEFAULT | (!renderWireframe? RPF_SHADOW : 0), 4, rvertices, rcolors);
 }
 
-static void writeShadowSection(int planeIndex, Line::Side &side, float shadowDark)
+static void writeShadowSection(int planeIndex, LineSide &side, float shadowDark)
 {
     DENG_ASSERT(side.hasSections());
     DENG_ASSERT(!side.line().definesPolyobj());
@@ -1263,7 +1263,7 @@ static void writeShadowSection(int planeIndex, Line::Side &side, float shadowDar
     // is not positive) then skip shadow drawing entirely.
     /// @todo Encapsulate this logic in ShadowEdge -ds
     if(!leftHEdge->hasFace() ||
-       !leftHEdge->face().mapElement()->as<BspLeaf>()->hasWorldVolume())
+       !leftHEdge->face().mapElement()->as<BspLeaf>().hasWorldVolume())
         return;
 
     ShadowEdge leftEdge(*leftHEdge, Line::From);
@@ -1337,7 +1337,7 @@ void Rend_RadioBspLeafEdges(BspLeaf &bspLeaf)
 
     // We need to check all the shadow lines linked to this BspLeaf for
     // the purpose of fakeradio shadowing.
-    foreach(Line::Side *side, bspLeaf.shadowLines())
+    foreach(LineSide *side, bspLeaf.shadowLines())
     {
         // Already rendered during the current frame? We only want to
         // render each shadow once per frame.

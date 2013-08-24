@@ -158,7 +158,7 @@ void HPlane::configure(LineSegment::Side const &newBaseSeg)
     clearIntercepts();
 
     // Reconfigure the partition line.
-    Line::Side &mapSide = newBaseSeg.mapSide();
+    LineSide &mapSide = newBaseSeg.mapSide();
 
     d->partition.direction = mapSide.to().origin() - mapSide.from().origin();
     d->partition.origin    = mapSide.from().origin();

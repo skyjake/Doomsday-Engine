@@ -59,14 +59,14 @@ void Sector::Cluster::remapVisPlanes()
         {
             if(hedge->mapElement())
             {
-                if(hedge->mapElement()->as<Line::Side::Segment>()->line().isSelfReferencing())
+                if(hedge->mapElement()->as<LineSideSegment>().line().isSelfReferencing())
                 {
                     if(!exteriorCluster && hedge->twin().hasFace())
                     {
-                        BspLeaf *otherLeaf = hedge->twin().face().mapElement()->as<BspLeaf>();
-                        if(otherLeaf->hasCluster())
+                        BspLeaf &otherLeaf = hedge->twin().face().mapElement()->as<BspLeaf>();
+                        if(otherLeaf.hasCluster())
                         {
-                            Cluster *otherCluster = &otherLeaf->cluster();
+                            Cluster *otherCluster = &otherLeaf.cluster();
                             if(otherCluster != this)
                             {
                                 if(!_allSelfRefBoundary && otherCluster->_allSelfRefBoundary)
@@ -99,7 +99,7 @@ void Sector::Cluster::remapVisPlanes()
 
 Sector &Sector::Cluster::sector() const
 {
-    return *_bspLeafs.first()->parent().as<Sector>();
+    return _bspLeafs.first()->parent().as<Sector>();
 }
 
 Plane &Sector::Cluster::plane(int planeIndex) const
@@ -418,7 +418,7 @@ DENG2_OBSERVES(Plane, HeightChange)
         emitter.origin[VZ] = (self.floor().height() + self.ceiling().height()) / 2;
 
         // Update the sound emitter origins for all dependent surfaces.
-        foreach(Line::Side *side, sides)
+        foreach(LineSide *side, sides)
         {
             side->updateAllSoundEmitterOrigins();
             side->back().updateAllSoundEmitterOrigins();
@@ -661,9 +661,9 @@ static HEdge *findSharedEdge(Sector::Cluster const &a, Sector::Cluster const &b)
         do
         {
             if(hedge->twin().hasFace())
-            if(BspLeaf *otherLeaf = hedge->twin().face().mapElement()->as<BspLeaf>())
             {
-                if(otherLeaf->hasCluster() && &otherLeaf->cluster() == &b)
+                BspLeaf &otherLeaf = hedge->twin().face().mapElement()->as<BspLeaf>();
+                if(otherLeaf.hasCluster() && &otherLeaf.cluster() == &b)
                     return hedge;
             }
         } while((hedge = &hedge->next()) != baseHEdge);
@@ -689,7 +689,7 @@ void Sector::buildClusters()
      */
     foreach(BspLeaf *bspLeaf, map().bspLeafs())
     {
-        if(bspLeaf->parent().as<Sector>() != this)
+        if(&bspLeaf->parent().as<Sector>() != this)
             continue;
 
         // Degenerate BSP leafs are excluded (no geometry).
@@ -754,10 +754,10 @@ void Sector::buildClusters()
             {
                 if(hedge->twin().hasFace())
                 {
-                    BspLeaf *backLeaf = hedge->twin().face().mapElement()->as<BspLeaf>();
-                    if(hedge->mapElement() && backLeaf->hasCluster() && &backLeaf->cluster() != cluster)
+                    BspLeaf &backLeaf = hedge->twin().face().mapElement()->as<BspLeaf>();
+                    if(hedge->mapElement() && backLeaf.hasCluster() && &backLeaf.cluster() != cluster)
                     {
-                        if(!hedge->mapElement()->as<Line::Side::Segment>()->line().isSelfReferencing())
+                        if(!hedge->mapElement()->as<LineSideSegment>().line().isSelfReferencing())
                         {
                             cluster->_allSelfRefBoundary = false;
                             goto nextCluster;
@@ -805,7 +805,7 @@ void Sector::chainSoundEmitters()
     }
 
     // Link wall surface emitters:
-    foreach(Line::Side *side, d->sides)
+    foreach(LineSide *side, d->sides)
     {
         if(side->hasSections())
         {
@@ -815,7 +815,7 @@ void Sector::chainSoundEmitters()
         }
         if(side->line().isSelfReferencing() && side->back().hasSections())
         {
-            Line::Side &back = side->back();
+            LineSide &back = side->back();
             linkSoundEmitter(root, back.middleSoundEmitter());
             linkSoundEmitter(root, back.bottomSoundEmitter());
             linkSoundEmitter(root, back.topSoundEmitter());
@@ -912,7 +912,7 @@ void Sector::markVisible(bool yes)
  * Non-animated materials are preferred.
  * Sky materials are ignored.
  */
-static Material *chooseFixMaterial(Line::Side &side, int section)
+static Material *chooseFixMaterial(LineSide &side, int section)
 {
     Material *choice1 = 0, *choice2 = 0;
 
@@ -922,14 +922,14 @@ static Material *chooseFixMaterial(Line::Side &side, int section)
     if(backSec)
     {
         // Our first choice is a material in the other sector.
-        if(section == Line::Side::Bottom)
+        if(section == LineSide::Bottom)
         {
             if(frontSec->floor().height() < backSec->floor().height())
             {
                 choice1 = backSec->floorSurface().materialPtr();
             }
         }
-        else if(section == Line::Side::Top)
+        else if(section == LineSide::Top)
         {
             if(frontSec->ceiling().height()  > backSec->ceiling().height())
             {
@@ -965,7 +965,7 @@ static Material *chooseFixMaterial(Line::Side &side, int section)
             else
             {
                 // Compare the relative heights to decide.
-                Line::Side &otherSide = other->side(&other->frontSector() == frontSec? Line::Front : Line::Back);
+                LineSide &otherSide = other->side(&other->frontSector() == frontSec? Line::Front : Line::Back);
                 Sector &otherSec = other->side(&other->frontSector() == frontSec? Line::Back : Line::Front).sector();
 
                 if(otherSec.ceiling().height() <= frontSec->floor().height())
@@ -982,7 +982,7 @@ static Material *chooseFixMaterial(Line::Side &side, int section)
     }
 
     // Our second choice is a material from this sector.
-    choice2 = frontSec->planeSurface(section == Line::Side::Bottom? Sector::Floor : Sector::Ceiling).materialPtr();
+    choice2 = frontSec->planeSurface(section == LineSide::Bottom? Sector::Floor : Sector::Ceiling).materialPtr();
 
     // Prefer a non-animated, non-masked material.
     if(choice1 && !choice1->isAnimated() && !choice1->isSkyMasked())
@@ -1004,7 +1004,7 @@ static Material *chooseFixMaterial(Line::Side &side, int section)
     return &App_Materials().find(de::Uri("System", Path("missing"))).material();
 }
 
-static void addMissingMaterial(Line::Side &side, int section)
+static void addMissingMaterial(LineSide &side, int section)
 {
     // Sides without sections need no fixing.
     if(!side.hasSections()) return;
@@ -1028,14 +1028,14 @@ static void addMissingMaterial(Line::Side &side, int section)
         LOG_WARNING("%s of Line #%d is missing a material for the %s section.\n"
                     "  %s was chosen to complete the definition.")
             << (side.isBack()? "Back" : "Front") << side.line().indexInMap()
-            << (section == Line::Side::Middle? "middle" : section == Line::Side::Top? "top" : "bottom")
+            << (section == LineSide::Middle? "middle" : section == LineSide::Top? "top" : "bottom")
             << path;
     }
 }
 
 void Sector::fixMissingMaterialsForSides()
 {
-    foreach(Line::Side *side, d->sides)
+    foreach(LineSide *side, d->sides)
     {
         /*
          * Do as in the original Doom if the texture has not been defined -
@@ -1053,11 +1053,11 @@ void Sector::fixMissingMaterialsForSides()
             {
                 if(frontSec.floor().height() < backSec.floor().height())
                 {
-                    addMissingMaterial(*side, Line::Side::Bottom);
+                    addMissingMaterial(*side, LineSide::Bottom);
                 }
                 /*else if(frontSec.floor().height() > backSec.floor().height())
                 {
-                    addMissingMaterial(side->back(), Line::Side::Bottom);
+                    addMissingMaterial(side->back(), LineSide::Bottom);
                 }*/
             }
 
@@ -1067,18 +1067,18 @@ void Sector::fixMissingMaterialsForSides()
             {
                 if(backSec.ceiling().height() < frontSec.ceiling().height())
                 {
-                    addMissingMaterial(*side, Line::Side::Top);
+                    addMissingMaterial(*side, LineSide::Top);
                 }
                 /*else if(backSec.ceiling().height() > frontSec.ceiling().height())
                 {
-                    addMissingMaterial(side->back(), Line::Side::Top);
+                    addMissingMaterial(side->back(), LineSide::Top);
                 }*/
             }
         }
         else
         {
             // A potential middle section fix.
-            addMissingMaterial(*side, Line::Side::Middle);
+            addMissingMaterial(*side, LineSide::Middle);
         }
     }
 }

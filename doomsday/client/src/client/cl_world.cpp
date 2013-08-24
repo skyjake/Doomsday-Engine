@@ -743,7 +743,7 @@ void Cl_ReadSideDelta2(int deltaType, boolean skip)
     if(skip)
         return;
 
-    Line::Side *side = App_World().map().sideByIndex(num);
+    LineSide *side = App_World().map().sideByIndex(num);
     DENG_ASSERT(side != 0);
 
     if(df & SIDF_TOP_MATERIAL)

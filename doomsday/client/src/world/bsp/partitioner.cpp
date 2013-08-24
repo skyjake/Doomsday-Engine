@@ -576,7 +576,7 @@ DENG2_PIMPL(Partitioner)
      * @return The new line segment (front is from @a start to @a end).
      */
     LineSegment &buildLineSegmentBetweenVertexes(Vertex &start, Vertex &end,
-        Sector *frontSec, Sector *backSec, Line::Side *frontSide,
+        Sector *frontSec, Sector *backSec, LineSide *frontSide,
         Line *partitionLine = 0)
     {
         lineSegments.append(new LineSegment(start, end));

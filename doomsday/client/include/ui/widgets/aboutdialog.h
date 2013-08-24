@@ -26,8 +26,17 @@
  */
 class AboutDialog : public DialogWidget
 {
+    Q_OBJECT
+
 public:
     AboutDialog();
+
+protected slots:
+    void showGLInfo();
+    void showAudioInfo();
+
+private:
+    DENG2_PRIVATE(d)
 };
 
 #endif // DENG_CLIENT_ABOUTDIALOG_H

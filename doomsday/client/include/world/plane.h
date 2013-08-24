@@ -59,7 +59,7 @@ public:
     /**
      * Construct a new plane.
      *
-     * @param sector  Sector which will own the plane.
+     * @param sector  Sector parent which will own the plane.
      * @param normal  Normal of the plane (will be normalized if necessary).
      * @param height  Height of the plane in map space coordinates.
      */

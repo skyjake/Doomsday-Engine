@@ -29,7 +29,7 @@ using namespace de;
 /**
  * Should angle based light level deltas be applied?
  */
-static bool useWallSectionLightLevelDeltas(Line::Side const &side, int section)
+static bool useWallSectionLightLevelDeltas(LineSide const &side, int section)
 {
     // Disabled?
     if(rendLightWallAngle <= 0)
@@ -43,9 +43,9 @@ static bool useWallSectionLightLevelDeltas(Line::Side const &side, int section)
     return true;
 }
 
-WallSpec WallSpec::fromMapSide(Line::Side const &side, int section) // static
+WallSpec WallSpec::fromMapSide(LineSide const &side, int section) // static
 {
-    bool const isTwoSidedMiddle = (section == Line::Side::Middle && !side.considerOneSided());
+    bool const isTwoSidedMiddle = (section == LineSide::Middle && !side.considerOneSided());
 
     WallSpec spec(section);
 

@@ -96,7 +96,7 @@ void R_SetRelativeHeights(Sector const *front, Sector const *back, int planeInde
 
 #ifdef __CLIENT__
 
-void R_SideSectionCoords(Line::Side const &side, int section, bool skyClip,
+void R_SideSectionCoords(LineSide const &side, int section, bool skyClip,
     coord_t *retBottom, coord_t *retTop, Vector2f *retMaterialOrigin)
 {
     DENG_ASSERT(side.hasSector());
@@ -114,7 +114,7 @@ void R_SideSectionCoords(Line::Side const &side, int section, bool skyClip,
 
     if(side.considerOneSided())
     {
-        if(section == Line::Side::Middle)
+        if(section == LineSide::Middle)
         {
             bottom = frontSec->floor().visHeight();
             top    = frontSec->ceiling().visHeight();
@@ -145,7 +145,7 @@ void R_SideSectionCoords(Line::Side const &side, int section, bool skyClip,
 
         switch(section)
         {
-        case Line::Side::Top:
+        case LineSide::Top:
             // Self-referencing lines only ever get a middle.
             if(!side.line().isSelfReferencing())
             {
@@ -173,7 +173,7 @@ void R_SideSectionCoords(Line::Side const &side, int section, bool skyClip,
             }
             break;
 
-        case Line::Side::Bottom:
+        case LineSide::Bottom:
             // Self-referencing lines only ever get a middle.
             if(!side.line().isSelfReferencing())
             {
@@ -216,7 +216,7 @@ void R_SideSectionCoords(Line::Side const &side, int section, bool skyClip,
             }
             break;
 
-        case Line::Side::Middle:
+        case LineSide::Middle:
             if(!side.line().isSelfReferencing())
             {
                 bottom = de::max(bfloor->visHeight(), ffloor->visHeight());
@@ -253,9 +253,9 @@ void R_SideSectionCoords(Line::Side const &side, int section, bool skyClip,
                 }
                 else
                 {
-                    BspLeaf *bspLeaf = side.leftHEdge()->face().mapElement()->as<BspLeaf>();
-                    openBottom = bspLeaf->visFloorHeight();
-                    openTop    = bspLeaf->visCeilingHeight();
+                    BspLeaf const &bspLeaf = side.leftHEdge()->face().mapElement()->as<BspLeaf>();
+                    openBottom = bspLeaf.visFloorHeight();
+                    openTop    = bspLeaf.visCeilingHeight();
                 }
 
                 int const matHeight      = surface->material().height();
@@ -305,7 +305,7 @@ void R_SideSectionCoords(Line::Side const &side, int section, bool skyClip,
 
 #endif // __CLIENT__
 
-coord_t R_OpenRange(Line::Side const &side, Sector const *frontSec,
+coord_t R_OpenRange(LineSide const &side, Sector const *frontSec,
     Sector const *backSec, coord_t *retBottom, coord_t *retTop)
 {
     DENG_UNUSED(side); // Don't remove (present for API symmetry) -ds
@@ -339,7 +339,7 @@ coord_t R_OpenRange(Line::Side const &side, Sector const *frontSec,
 
 #ifdef __CLIENT__
 
-coord_t R_VisOpenRange(Line::Side const &side, Sector const *frontSec,
+coord_t R_VisOpenRange(LineSide const &side, Sector const *frontSec,
     Sector const *backSec, coord_t *retBottom, coord_t *retTop)
 {
     DENG_UNUSED(side); // Don't remove (present for API symmetry) -ds
@@ -371,7 +371,7 @@ coord_t R_VisOpenRange(Line::Side const &side, Sector const *frontSec,
     return top - bottom;
 }
 
-bool R_SideBackClosed(Line::Side const &side, bool ignoreOpacity)
+bool R_SideBackClosed(LineSide const &side, bool ignoreOpacity)
 {
     if(!side.hasSections()) return false;
     if(!side.hasSector()) return false;
@@ -404,7 +404,7 @@ bool R_SideBackClosed(Line::Side const &side, bool ignoreOpacity)
             {
                 // Possibly; check the placement.
                 coord_t bottom, top;
-                R_SideSectionCoords(side, Line::Side::Middle, 0, &bottom, &top);
+                R_SideSectionCoords(side, LineSide::Middle, 0, &bottom, &top);
                 return (top > bottom && top >= openTop && bottom <= openBottom);
             }
         }
@@ -448,7 +448,7 @@ Line *R_FindLineNeighbor(Sector const *sector, Line const *line,
  * @return  @c true iff there is a "middle" material on @a side which
  * completely covers the open range.
  */
-static bool middleMaterialCoversOpening(Line::Side const &side)
+static bool middleMaterialCoversOpening(LineSide const &side)
 {
     if(!side.hasSector()) return false; // Never.
 
@@ -470,7 +470,7 @@ static bool middleMaterialCoversOpening(Line::Side const &side)
         {
             // Possibly; check the placement.
             coord_t bottom, top;
-            R_SideSectionCoords(side, Line::Side::Middle, 0, &bottom, &top);
+            R_SideSectionCoords(side, LineSide::Middle, 0, &bottom, &top);
             return (top > bottom && top >= openTop && bottom <= openBottom);
         }
     }
@@ -505,7 +505,7 @@ Line *R_FindSolidLineNeighbor(Sector const *sector, Line const *line,
 
         // Perhaps a middle material completely covers the opening?
         // We should not give away the location of false walls (secrets).
-        Line::Side &otherSide = other->side(other->frontSectorPtr() == sector? Line::Front : Line::Back);
+        LineSide &otherSide = other->side(other->frontSectorPtr() == sector? Line::Front : Line::Back);
         if(middleMaterialCoversOpening(otherSide))
             return other;
     }

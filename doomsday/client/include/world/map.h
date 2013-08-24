@@ -318,15 +318,15 @@ public:
     static int toSideIndex(int lineIndex, int side);
 
     /**
-     * Locate a Line::Side in the map by it's unique @a index.
+     * Locate a LineSide in the map by it's unique @a index.
      *
      * @param index  Unique index attributed to the line side.
      *
-     * @return  Pointer to the identified Line::Side instance; otherwise @c 0.
+     * @return  Pointer to the identified LineSide instance; otherwise @c 0.
      *
      * @see toSideIndex()
      */
-    Line::Side *sideByIndex(int index) const;
+    LineSide *sideByIndex(int index) const;
 
     /**
      * Locate a Polyobj in the map by it's unique in-map tag.

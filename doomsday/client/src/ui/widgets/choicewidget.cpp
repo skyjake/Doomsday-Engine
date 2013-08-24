@@ -27,7 +27,7 @@ DENG_GUI_PIMPL(ChoiceWidget),
 DENG2_OBSERVES(Context, Addition),
 DENG2_OBSERVES(Context, Removal),
 DENG2_OBSERVES(ContextWidgetOrganizer, WidgetCreation)
-{   
+{
     /**
      * Items in the choice's popup uses this as action to change the selected
      * item.
@@ -61,6 +61,8 @@ DENG2_OBSERVES(ContextWidgetOrganizer, WidgetCreation)
     Instance(Public *i) : Base(i), selected(Context::InvalidPos)
     {
         self.setFont("choice.selected");
+        self.setSizePolicy(ui::Fixed, ui::Expand);
+        //self.setAlignment(ui::AlignLeft);
 
         choices = new PopupMenuWidget;
         choices->setAnchorAndOpeningDirection(self.hitRule(), ui::Right);
@@ -68,6 +70,10 @@ DENG2_OBSERVES(ContextWidgetOrganizer, WidgetCreation)
         choices->menu().items().audienceForRemoval += this;
         choices->menu().organizer().audienceForWidgetCreation += this;
         self.add(choices);
+
+        // The choice button itself has the same width as the choice menu
+        // (i.e., the longest item's width).
+        self.rule().setInput(Rule::Width, choices->menu().rule().width());
 
         self.setAction(new SignalAction(thisPublic, SLOT(openPopup())));
 

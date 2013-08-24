@@ -48,7 +48,7 @@ DENG2_OBSERVES(EscapeParser, EscapeSequence)
 
         Format() : sizeFactor(1.f), weight(OriginalWeight),
             style(OriginalStyle), colorIndex(-1), markIndent(false), resetIndent(false),
-            tabStop(0) {}
+            tabStop(-1 /* untabbed */) {}
     };
 
     struct FormatRange
@@ -139,7 +139,7 @@ DENG2_OBSERVES(EscapeParser, EscapeSequence)
             break;
 
         case 'T':
-            stack.last().tabStop = de::max(0, code[1].toLatin1() - 'a');
+            stack.last().tabStop = de::max(-1, code[1].toLatin1() - 'a');
             break;
 
         case 'b':
@@ -478,6 +478,11 @@ bool Font::RichFormat::Iterator::resetIndent() const
 int Font::RichFormat::Iterator::tabStop() const
 {
     return REF_RANGE_AT(index).format.tabStop;
+}
+
+bool Font::RichFormat::Iterator::isTabless() const
+{
+    return tabStop() < 0;
 }
 
 #undef REF_RANGE_AT

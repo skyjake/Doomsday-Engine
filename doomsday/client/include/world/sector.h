@@ -163,9 +163,9 @@ public:
     /*
      * Linked-element lists:
      */
-    typedef QList<Cluster *>    Clusters;
-    typedef QList<Plane *>      Planes;
-    typedef QList<Line::Side *> Sides;
+    typedef QList<Cluster *>  Clusters;
+    typedef QList<Plane *>    Planes;
+    typedef QList<LineSide *> Sides;
 
     // Plane identifiers:
     enum { Floor, Ceiling };
@@ -548,5 +548,7 @@ protected:
 private:
     DENG2_PRIVATE(d)
 };
+
+typedef Sector::Cluster SectorCluster;
 
 #endif // DENG_WORLD_SECTOR_H

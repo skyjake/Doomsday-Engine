@@ -227,7 +227,7 @@ public ContextWidgetOrganizer::IWidgetFactory
     {
         if(GuiWidget const *widget = child->maybeAs<GuiWidget>())
         {
-            return widget->isVisible();
+            return !widget->behavior().testFlag(Widget::Hidden);
         }
         return false;
     }
@@ -336,7 +336,7 @@ ContextWidgetOrganizer const &MenuWidget::organizer() const
 
 void MenuWidget::update()
 {
-    if(isHidden()) return;
+    //if(isHidden()) return;
 
     if(d->needLayout)
     {

@@ -47,7 +47,7 @@ DENG2_PIMPL(GLTextComposer)
             Segment() : id(Id::None), x(0), width(0), compressed(false) {}
             int right() const { return x + width; }
         };
-        QList<Segment> segs;
+        QList<Segment> segs;       
     };
     typedef QList<Line> Lines;
     Lines lines;
@@ -208,6 +208,110 @@ DENG2_PIMPL(GLTextComposer)
 
         return changed;
     }
+
+    void updateLineLayout(Rangei const &lineRange)
+    {
+        if(lineRange.isEmpty()) return;
+
+        Rangei current = lineRange;
+        forever
+        {
+            int end = updateLineLayoutUntilUntabbed(current);
+            if(end == lineRange.end)
+            {
+                break; // Whole range done.
+            }
+            current = Rangei(end, lineRange.end);
+        }
+    }
+
+    /**
+     * Attempts to update lines in the specified range, but stops if an
+     * untabbed line is encountered. This ensures that each distinct tabbed
+     * content subrange uses its own alignment.
+     *
+     * @param lineRange  Range of lines to update.
+     *
+     * @return The actual end of the updated range.
+     */
+    inline int updateLineLayoutUntilUntabbed(Rangei const &lineRange)
+    {
+        int rangeEnd = lineRange.end;
+
+        // Find the highest tab in use and initialize seg widths.
+        int highestTab = 0;
+        for(int i = lineRange.start; i < lineRange.end; ++i)
+        {
+            int lineStop = wraps->lineInfo(i).highestTabStop();
+            if(lineStop < 0)
+            {
+                // An untabbed line will halt the process for now.
+                rangeEnd = de::max(i, lineRange.start + 1);
+                break;
+            }
+            highestTab = de::max(highestTab, lineStop);
+
+            // Initialize the segments with indentation.
+            for(int k = 0; k < lines[i].segs.size(); ++k)
+            {
+                lines[i].segs[k].width = wraps->lineInfo(i).segs[k].width;
+            }
+        }
+
+        DENG2_ASSERT(rangeEnd > lineRange.start);
+
+        // Set segment X coordinates by stacking them left-to-right on each line.
+        for(int i = lineRange.start; i < rangeEnd; ++i)
+        {
+            if(lines[i].segs.isEmpty()) continue;
+
+            lines[i].segs[0].x = wraps->lineInfo(i).indent;
+
+            for(int k = 1; k < lines[i].segs.size(); ++k)
+            {
+                Instance::Line::Segment &seg = lines[i].segs[k];
+                seg.x = lines[i].segs[k - 1].right();
+            }
+        }
+
+        // Align each tab stop with other matching stops on the other lines.
+        for(int tab = 1; tab <= highestTab; ++tab)
+        {
+            int maxRight = 0;
+
+            // Find the maximum right edge for this spot.
+            for(int i = lineRange.start; i < rangeEnd; ++i)
+            {
+                FontLineWrapping::LineInfo const &info = wraps->lineInfo(i);
+                for(int k = 0; k < info.segs.size(); ++k)
+                {
+                    Instance::Line::Segment &seg = lines[i].segs[k];
+                    if(info.segs[k].tabStop >= 0 && info.segs[k].tabStop < tab)
+                    {
+                        maxRight = de::max(maxRight, seg.right());
+                    }
+                }
+            }
+
+            // Move the segments to this position.
+            for(int i = lineRange.start; i < rangeEnd; ++i)
+            {
+                int localRight = maxRight;
+
+                FontLineWrapping::LineInfo const &info = wraps->lineInfo(i);
+                for(int k = 0; k < info.segs.size(); ++k)
+                {
+                    if(info.segs[k].tabStop == tab)
+                    {
+                        lines[i].segs[k].x = localRight;
+                        localRight += info.segs[k].width;
+                    }
+                }
+            }
+        }
+
+        return rangeEnd;
+    }
 };
 
 GLTextComposer::GLTextComposer() : d(new Instance(this))
@@ -316,67 +420,7 @@ void GLTextComposer::makeVertices(Vertices &triStrip,
     DENG2_ASSERT(d->wraps->height() == d->lines.size());
 
     // Align segments based on tab stops.
-    int highestTab = 0;
-    for(int i = 0; i < d->lines.size(); ++i)
-    {
-        highestTab = de::max(highestTab, d->wraps->lineInfo(i).highestTabStop());
-
-        // Initialize the segments with indentation.
-        for(int k = 0; k < d->lines[i].segs.size(); ++k)
-        {
-            // Determine the width of this segment.
-            d->lines[i].segs[k].width = d->wraps->lineInfo(i).segs[k].width;
-        }
-    }
-
-    for(int i = 0; i < d->lines.size(); ++i)
-    {
-        if(d->lines[i].segs.isEmpty()) continue;
-
-        d->lines[i].segs[0].x = d->wraps->lineInfo(i).indent;
-
-        for(int k = 1; k < d->lines[i].segs.size(); ++k)
-        {
-            Instance::Line::Segment &seg = d->lines[i].segs[k];
-            seg.x = d->lines[i].segs[k - 1].right();
-        }
-    }
-
-    // Align each tab stop with other matching stops on the other lines.
-    for(int tab = 1; tab <= highestTab; ++tab)
-    {
-        int maxRight = 0;
-
-        // Find the maximum right edge for this spot.
-        for(int i = 0; i < d->lines.size(); ++i)
-        {
-            FontLineWrapping::LineInfo const &info = d->wraps->lineInfo(i);
-            for(int k = 0; k < info.segs.size(); ++k)
-            {
-                Instance::Line::Segment &seg = d->lines[i].segs[k];
-                if(info.segs[k].tabStop < tab)
-                {
-                    maxRight = de::max(maxRight, seg.right());
-                }
-            }
-        }
-
-        // Move the segments to this position.
-        for(int i = 0; i < d->lines.size(); ++i)
-        {
-            int localRight = maxRight;
-
-            FontLineWrapping::LineInfo const &info = d->wraps->lineInfo(i);
-            for(int k = 0; k < info.segs.size(); ++k)
-            {
-                if(info.segs[k].tabStop == tab)
-                {
-                    d->lines[i].segs[k].x = localRight;
-                    localRight += info.segs[k].width;
-                }
-            }
-        }
-    }
+    d->updateLineLayout(Rangei(0, d->lines.size()));
 
     // Compress lines to fit into the maximum allowed width.
     for(int i = 0; i < d->lines.size(); ++i)
@@ -384,8 +428,10 @@ void GLTextComposer::makeVertices(Vertices &triStrip,
         Instance::Line &line = d->lines[i];
         if(!d->isLineVisible(i) || line.segs.isEmpty()) continue;
 
+        /*
         if(!d->wraps->lineInfo(i).segs.last().tabStop)
             continue;
+            */
 
 #ifdef MACOSX
 #  define COMPRESSION_THRESHOLD 1

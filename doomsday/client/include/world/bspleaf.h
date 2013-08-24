@@ -77,10 +77,10 @@ public:
     /*
      * Linked-element lists/sets:
      */
-    typedef QSet<de::Mesh *>   Meshes;
-    typedef QSet<polyobj_s *>  Polyobjs;
+    typedef QSet<de::Mesh *>  Meshes;
+    typedef QSet<polyobj_s *> Polyobjs;
 #ifdef __CLIENT__
-    typedef QSet<Line::Side *> ShadowLines;
+    typedef QSet<LineSide *>  ShadowLines;
 #endif
 
 #ifdef __CLIENT__
@@ -153,7 +153,11 @@ public:
      */
     bool hasCluster() const;
 
-    /// @copydoc hasCluster()
+    /**
+     * Returns @c true iff a sector (cluster) is attributed to the BSP leaf.
+     *
+     * Equivalent to @ref hasCluster()
+     */
     inline bool hasSector() const { return hasCluster(); }
 
     /**
@@ -161,7 +165,7 @@ public:
      *
      * @see hasCluster()
      */
-    Sector::Cluster &cluster() const;
+    SectorCluster &cluster() const;
 
     /**
      * Convenient method of returning the sector of the cluster attributed to
@@ -188,7 +192,7 @@ public:
      *
      * @see hasCluster(), cluster()
      */
-    void setCluster(Sector::Cluster *newCluster);
+    void setCluster(SectorCluster *newCluster);
 
     /**
      * Returns the identified @em physical plane of the parent sector. Naturally
@@ -388,7 +392,7 @@ public:
      *
      * @param side  Map line side to add to the set.
      */
-    void addShadowLine(Line::Side &side);
+    void addShadowLine(LineSide &side);
 
     /**
      * Provides access to the set of fake radio shadow lines for the BSP leaf.

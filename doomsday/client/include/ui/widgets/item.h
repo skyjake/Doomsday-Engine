@@ -97,7 +97,7 @@ public:
 
     QVariant const &data() const { return _data; }
 
-    DENG2_IS_AS_METHODS()
+    DENG2_AS_IS_METHODS()
 
 protected:
     /**
