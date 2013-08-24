@@ -236,6 +236,7 @@ DENG2_PIMPL(GLTextComposer)
      */
     inline int updateLineLayoutUntilUntabbed(Rangei const &lineRange)
     {
+        bool includesTabbedLines = false;
         int rangeEnd = lineRange.end;
 
         // Find the highest tab in use and initialize seg widths.
@@ -243,11 +244,26 @@ DENG2_PIMPL(GLTextComposer)
         for(int i = lineRange.start; i < lineRange.end; ++i)
         {
             int lineStop = wraps->lineInfo(i).highestTabStop();
+            if(lineStop >= 0)
+            {
+                // The range now includes at least one tabbed line.
+                includesTabbedLines = true;
+            }
             if(lineStop < 0)
             {
-                // An untabbed line will halt the process for now.
-                rangeEnd = de::max(i, lineRange.start + 1);
-                break;
+                // This is an untabbed line.
+                if(!includesTabbedLines)
+                {
+                    // We can do many untabbed lines in the range as long as
+                    // there are no tabbed ones.
+                    rangeEnd = i + 1;
+                }
+                else
+                {
+                    // An untabbed line will halt the process for now.
+                    rangeEnd = de::max(i, lineRange.start + 1);
+                    break;
+                }
             }
             highestTab = de::max(highestTab, lineStop);
 
@@ -473,7 +489,7 @@ void GLTextComposer::makeVertices(Vertices &triStrip,
 
                 // Line alignment.
                 /// @todo How to center/right-align text that uses tab stops?
-                if(line.segs.size() == 1 && !d->wraps->lineInfo(0).segs[0].tabStop)
+                if(line.segs.size() == 1 && d->wraps->lineInfo(0).segs[0].tabStop < 0)
                 {
                     if(lineAlign.testFlag(AlignRight))
                     {
