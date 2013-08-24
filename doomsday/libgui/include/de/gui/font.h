@@ -243,6 +243,7 @@ public:
             bool markIndent() const;
             bool resetIndent() const;
             int tabStop() const;
+            bool isTabless() const; ///< Tabstop < 0.
         };
 
     private:
