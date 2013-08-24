@@ -323,6 +323,14 @@ void PopupWidget::setClickToClose(bool clickCloses)
     d->clickToClose = clickCloses;
 }
 
+void PopupWidget::useInfoStyle()
+{
+    set(Background(style().colors().colorf("popup.info.background"),
+                   Background::BorderGlow,
+                   style().colors().colorf("popup.info.glow"),
+                   style().rules().rule("glow").valuei()));
+}
+
 void PopupWidget::viewResized()
 {
     GuiWidget::viewResized();
