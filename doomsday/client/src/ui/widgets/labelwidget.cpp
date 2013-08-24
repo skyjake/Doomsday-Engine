@@ -532,7 +532,7 @@ void LabelWidget::update()
 {
     GuiWidget::update();
 
-    if(!isHidden())
+    //if(!isHidden())
     {
         d->update();
     }

@@ -211,6 +211,8 @@ DENG2_PIMPL(GLTextComposer)
 
     void updateLineLayout(Rangei const &lineRange)
     {
+        if(lineRange.isEmpty()) return;
+
         Rangei current = lineRange;
         forever
         {
