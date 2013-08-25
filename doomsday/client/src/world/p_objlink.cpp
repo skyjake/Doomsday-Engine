@@ -362,7 +362,8 @@ static void maybeSpreadOverEdge(HEdge *hedge, contactfinderparams_t *parms)
     BspLeaf &leaf = hedge->face().mapElement()->as<BspLeaf>();
 
     // There must be a back BSP leaf to spread to.
-    if(!hedge->hasTwin() || !hedge->twin().hasFace()) return;
+    if(!hedge->hasTwin() || !hedge->twin().hasFace())
+        return;
 
     DENG_ASSERT(hedge->twin().face().mapElement() != 0);
     BspLeaf &backLeaf = hedge->twin().face().mapElement()->as<BspLeaf>();
@@ -383,56 +384,74 @@ static void maybeSpreadOverEdge(HEdge *hedge, contactfinderparams_t *parms)
         return;
 
     // Too far from the edge?
-    coord_t length   = Vector2d(hedge->twin().origin() - hedge->origin()).length();
-    coord_t distance = pointOnHEdgeSide(*hedge, parms->objOrigin) / length;
+    coord_t const length   = Vector2d(hedge->twin().origin() - hedge->origin()).length();
+    coord_t const distance = pointOnHEdgeSide(*hedge, parms->objOrigin) / length;
     if(de::abs(distance) >= parms->objRadius)
         return;
 
     // Do not spread if the sector on the back side is closed with no height.
     if(backLeaf.hasSector())
     {
-        if(backLeaf.visCeiling().height() <= backLeaf.visFloor().height())
+        if(backLeaf.visCeilingHeight() <= backLeaf.visFloorHeight())
             return;
 
         if(leaf.hasSector() &&
-           (backLeaf.visCeiling().height() <= leaf.visFloor().height() ||
-            backLeaf.visFloor().height() >= leaf.visCeiling().height()))
+           (backLeaf.visCeilingHeight() <= leaf.visFloorHeight() ||
+            backLeaf.visFloorHeight() >= leaf.visCeilingHeight()))
             return;
     }
 
     // Are there line side surfaces which should prevent spreading?
     if(hedge->mapElement())
     {
-        LineSideSegment &seg = hedge->mapElement()->as<LineSideSegment>();
+        LineSideSegment const &seg = hedge->mapElement()->as<LineSideSegment>();
 
         // On which side of the line are we? (distance is from segment to origin).
-        LineSide &side = seg.line().side(seg.lineSide().sideId() ^ (distance < 0));
+        LineSide const &facingLineSide = seg.line().side(seg.lineSide().sideId() ^ (distance < 0));
 
-        Sector *frontSec = side.isFront()? leaf.sectorPtr() : backLeaf.sectorPtr();
-        Sector *backSec  = side.isFront()? backLeaf.sectorPtr() : leaf.sectorPtr();
+        BspLeaf const &fromLeaf = facingLineSide.isFront()? leaf : backLeaf;
+        BspLeaf const &toLeaf   = facingLineSide.isFront()? backLeaf : leaf;
 
         // One-way window?
-        if(backSec && !side.back().hasSections())
+        if(toLeaf.hasSector() && !facingLineSide.back().hasSections())
             return;
 
-        // Is there an opaque middle material which completely covers the opening?
-        if(side.hasSections() && side.middle().hasMaterial() && frontSec)
+        // Might a material cover the opening?
+        if(facingLineSide.hasSections() &&
+           facingLineSide.middle().hasMaterial() && fromLeaf.hasSector())
         {
             // Stretched middles always cover the opening.
-            if(side.isFlagged(SDF_MIDDLE_STRETCH))
+            if(facingLineSide.isFlagged(SDF_MIDDLE_STRETCH))
                 return;
 
-            // Might the material cover the opening?
-            coord_t openRange, openBottom, openTop;
-            openRange = R_VisOpenRange(side, frontSec, backSec, &openBottom, &openTop);
+            // Determine the opening between the visual sector planes at this edge.
+            coord_t openBottom;
+            if(toLeaf.hasSector() && toLeaf.visFloorHeight() > fromLeaf.visFloorHeight())
+            {
+                openBottom = toLeaf.visFloorHeight();
+            }
+            else
+            {
+                openBottom = fromLeaf.visFloorHeight();
+            }
+
+            coord_t openTop;
+            if(toLeaf.hasSector() && toLeaf.visCeilingHeight() < fromLeaf.visCeilingHeight())
+            {
+                openTop = toLeaf.visCeilingHeight();
+            }
+            else
+            {
+                openTop = fromLeaf.visCeilingHeight();
+            }
 
             // Ensure we have up to date info about the material.
-            MaterialSnapshot const &ms = side.middle().material().prepare(Rend_MapSurfaceMaterialSpec());
-            if(ms.height() >= openRange)
+            MaterialSnapshot const &ms = facingLineSide.middle().material().prepare(Rend_MapSurfaceMaterialSpec());
+            if(ms.height() >= openTop - openBottom)
             {
                 // Possibly; check the placement.
                 coord_t bottom, top;
-                R_SideSectionCoords(side, LineSide::Middle, 0, &bottom, &top);
+                R_SideSectionCoords(facingLineSide, LineSide::Middle, 0, &bottom, &top);
                 if(top > bottom && top >= openTop && bottom <= openBottom)
                     return;
             }
