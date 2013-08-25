@@ -241,20 +241,33 @@ public:
     inline Plane &visCeiling() const { return visPlane(Sector::Ceiling); }
 
 #ifdef __CLIENT__
+    /**
+     * Convenient method of accessing the visual (i.e., smoothed) height of the
+     * identified @em visual sector plane.
+     *
+     * @param planeIndex  Index of the plane to return.
+     *
+     * @see visPlane(), Plane::visHeight()
+     */
+    inline coord_t visPlaneHeight(int planeIndex) const {
+        return visPlane(planeIndex).visHeight();
+    }
 
     /**
      * Convenient method of accessing the visual (i.e., smoothed) height of the
      * @em visual floor plane.
-     * @see visFloor()
+     *
+     * @see visPlaneHeight()
      */
-    inline coord_t visFloorHeight() const   { return visFloor().visHeight(); }
+    inline coord_t visFloorHeight() const   { return visPlaneHeight(Sector::Floor); }
 
     /**
      * Convenient method of accessing the visual (i.e., smoothed) height of the
      * @em visual ceiling plane.
-     * @see visCeiling()
+     *
+     * @see visPlaneHeight()
      */
-    inline coord_t visCeilingHeight() const { return visCeiling().visHeight(); }
+    inline coord_t visCeilingHeight() const { return visPlaneHeight(Sector::Ceiling); }
 
 #endif // __CLIENT__
 

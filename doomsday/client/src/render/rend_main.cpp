@@ -182,7 +182,7 @@ byte devSectorIndices;  ///< @c 1= Draw map sector indicies.
 
 static void Rend_DrawBoundingBoxes(Map &map);
 static void Rend_DrawSoundOrigins(Map &map);
-static void Rend_DrawSurfaceVectors(Map &map);
+static void drawAllSurfaceTangentVectors(Map &map);
 
 static void drawSectors(Map &map);
 static void drawVertexes(Map &map);
@@ -1954,7 +1954,7 @@ static coord_t skyPlaneZ(BspLeaf *bspLeaf, int skyCap)
     if(!bspLeaf->hasSector() || !P_IsInVoid(viewPlayer))
         return bspLeaf->map().skyFix(relPlane == Sector::Ceiling);
 
-    return bspLeaf->visPlane(relPlane).visHeight();
+    return bspLeaf->visPlaneHeight(relPlane);
 }
 
 /// @param skyCap  @ref skyCapFlags.
@@ -2506,7 +2506,7 @@ void Rend_RenderMap(Map &map)
     RL_RenderAllLists();
 
     // Draw various debugging displays:
-    Rend_DrawSurfaceVectors(map);
+    drawAllSurfaceTangentVectors(map);
     LO_DrawLumobjs();             // Lumobjs.
     Rend_DrawBoundingBoxes(map);  // Mobj bounding boxes.
     drawSectors(map);
@@ -3115,7 +3115,7 @@ static void drawVector(Vector3f const &vector, float scalar, const float color[3
     glEnd();
 }
 
-static void drawTangentSpaceVectorsForSurface(Surface *suf, Vector3d const &origin)
+static void drawTangentVectorsForSurface(Surface const &suf, Vector3d const &origin)
 {
     int const VISUAL_LENGTH = 20;
 
@@ -3123,128 +3123,145 @@ static void drawTangentSpaceVectorsForSurface(Surface *suf, Vector3d const &orig
     static float const green[3] = { 0, 1, 0 };
     static float const blue[3]  = { 0, 0, 1 };
 
-    DENG_ASSERT(suf != 0);
-
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
     glTranslatef(origin.x, origin.z, origin.y);
 
-    if(devSurfaceVectors & SVF_TANGENT)   drawVector(suf->tangent(),   VISUAL_LENGTH, red);
-    if(devSurfaceVectors & SVF_BITANGENT) drawVector(suf->bitangent(), VISUAL_LENGTH, green);
-    if(devSurfaceVectors & SVF_NORMAL)    drawVector(suf->normal(),    VISUAL_LENGTH, blue);
+    if(devSurfaceVectors & SVF_TANGENT)   drawVector(suf.tangent(),   VISUAL_LENGTH, red);
+    if(devSurfaceVectors & SVF_BITANGENT) drawVector(suf.bitangent(), VISUAL_LENGTH, green);
+    if(devSurfaceVectors & SVF_NORMAL)    drawVector(suf.normal(),    VISUAL_LENGTH, blue);
 
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
 }
 
-static void drawTangentSpaceVectorsForWallSections(HEdge *hedge)
+/**
+ * @todo Determine Z-axis origin from a WallEdge.
+ */
+static void drawTangentVectorsForWallSections(HEdge const *hedge)
 {
     if(!hedge || !hedge->mapElement())
         return;
 
-    LineSideSegment &seg = hedge->mapElement()->as<LineSideSegment>();
+    LineSideSegment const &seg = hedge->mapElement()->as<LineSideSegment>();
+    LineSide const &lineSide   = seg.lineSide();
+    Line const &line           = lineSide.line();
+    Vector2d const center      = (hedge->twin().origin() + hedge->origin()) / 2;
 
-    if(!hedge->twin().hasFace() || !hedge->twin().face().mapElement()->as<BspLeaf>().hasSector())
+    if(lineSide.considerOneSided())
     {
-        Sector *frontSec = hedge->face().mapElement()->as<BspLeaf>().sectorPtr();
-        coord_t const bottom = frontSec->floor().visHeight();
-        coord_t const top = frontSec->ceiling().visHeight();
-        Vector2d center = (hedge->twin().origin() + hedge->origin()) / 2;
-        Surface *suf = &seg.lineSide().middle();
+        BspLeaf &frontLeaf = line.definesPolyobj()? line.polyobj().bspLeaf()
+                                                  : hedge->face().mapElement()->as<BspLeaf>();
 
-        Vector3d origin = Vector3d(center, bottom + (top - bottom) / 2);
-        drawTangentSpaceVectorsForSurface(suf, origin);
+        coord_t const bottom = frontLeaf.visFloorHeight();
+        coord_t const top    = frontLeaf.visCeilingHeight();
+
+        drawTangentVectorsForSurface(lineSide.middle(),
+                                     Vector3d(center, bottom + (top - bottom) / 2));
     }
     else
     {
-        Sector *frontSec = hedge->face().mapElement()->as<BspLeaf>().sectorPtr();
-        Sector *backSec  = hedge->twin().face().mapElement()->as<BspLeaf>().sectorPtr();
-        LineSide &side = seg.lineSide();
+        BspLeaf &frontLeaf = line.definesPolyobj()? line.polyobj().bspLeaf()
+                                                  : hedge->face().mapElement()->as<BspLeaf>();
+        BspLeaf &backLeaf  = line.definesPolyobj()? line.polyobj().bspLeaf()
+                                                  : hedge->twin().face().mapElement()->as<BspLeaf>();
 
-        if(side.middle().hasMaterial())
+        if(lineSide.middle().hasMaterial())
         {
-            coord_t const bottom = frontSec->floor().visHeight();
-            coord_t const top = frontSec->ceiling().visHeight();
-            Vector2d center = (hedge->twin().origin() + hedge->origin()) / 2;
-            Surface *suf = &side.middle();
+            coord_t const bottom = frontLeaf.visFloorHeight();
+            coord_t const top    = frontLeaf.visCeilingHeight();
 
-            Vector3d origin = Vector3d(center, bottom + (top - bottom) / 2);
-            drawTangentSpaceVectorsForSurface(suf, origin);
+            drawTangentVectorsForSurface(lineSide.middle(),
+                                         Vector3d(center, bottom + (top - bottom) / 2));
         }
 
-        if(backSec->ceiling().visHeight() <
-           frontSec->ceiling().visHeight() &&
-           !(frontSec->ceilingSurface().hasSkyMaskedMaterial() &&
-             backSec->ceilingSurface().hasSkyMaskedMaterial()))
+        if(backLeaf.visCeilingHeight() < frontLeaf.visCeilingHeight() &&
+           !(frontLeaf.visCeiling().surface().hasSkyMaskedMaterial() &&
+              backLeaf.visCeiling().surface().hasSkyMaskedMaterial()))
         {
-            coord_t const bottom = backSec->ceiling().visHeight();
-            coord_t const top = frontSec->ceiling().visHeight();
-            Vector2d center = (hedge->twin().origin() + hedge->origin()) / 2;
-            Surface *suf = &side.top();
+            coord_t const bottom =  backLeaf.visCeilingHeight();
+            coord_t const top    = frontLeaf.visCeilingHeight();
 
-            Vector3d origin = Vector3d(center, bottom + (top - bottom) / 2);
-            drawTangentSpaceVectorsForSurface(suf, origin);
+            drawTangentVectorsForSurface(lineSide.top(),
+                                         Vector3d(center, bottom + (top - bottom) / 2));
         }
 
-        if(backSec->floor().visHeight() >
-           frontSec->floor().visHeight() &&
-           !(frontSec->floorSurface().hasSkyMaskedMaterial() &&
-             backSec->floorSurface().hasSkyMaskedMaterial()))
+        if(backLeaf.visFloorHeight() > frontLeaf.visFloorHeight() &&
+           !(frontLeaf.visFloor().surface().hasSkyMaskedMaterial() &&
+              backLeaf.visFloor().surface().hasSkyMaskedMaterial()))
         {
-            coord_t const bottom = frontSec->floor().visHeight();
-            coord_t const top = backSec->floor().visHeight();
-            Vector2d center = (hedge->twin().origin() + hedge->origin()) / 2;
-            Surface *suf = &side.bottom();
+            coord_t const bottom = frontLeaf.visFloorHeight();
+            coord_t const top    =  backLeaf.visFloorHeight();
 
-            Vector3d origin = Vector3d(center, bottom + (top - bottom) / 2);
-            drawTangentSpaceVectorsForSurface(suf, origin);
+            drawTangentVectorsForSurface(lineSide.bottom(),
+                                         Vector3d(center, bottom + (top - bottom) / 2));
         }
+    }
+}
+
+/**
+ * @todo Use drawTangentVectorsForWallSections() for polyobjs too.
+ */
+static void drawSurfaceTangentVectors(SectorCluster *cluster)
+{
+    if(!cluster) return;
+
+    foreach(BspLeaf *bspLeaf, cluster->bspLeafs())
+    {
+        HEdge const *base  = bspLeaf->poly().hedge();
+        HEdge const *hedge = base;
+        do
+        {
+            drawTangentVectorsForWallSections(hedge);
+        } while((hedge = &hedge->next()) != base);
+
+        foreach(Mesh *mesh, bspLeaf->extraMeshes())
+        foreach(HEdge *hedge, mesh->hedges())
+        {
+            drawTangentVectorsForWallSections(hedge);
+        }
+
+        foreach(Polyobj *polyobj, bspLeaf->polyobjs())
+        foreach(HEdge *hedge, polyobj->mesh().hedges())
+        {
+            drawTangentVectorsForWallSections(hedge);
+        }
+    }
+
+    int const planeCount = cluster->sector().planeCount();
+    for(int i = 0; i < planeCount; ++i)
+    {
+        Plane const &plane = cluster->visPlane(i);
+        coord_t height     = 0;
+
+        if(plane.surface().hasSkyMaskedMaterial() &&
+           (plane.isSectorFloor() || plane.isSectorCeiling()))
+        {
+            height = plane.map().skyFix(plane.isSectorCeiling());
+        }
+        else
+        {
+            height = plane.visHeight();
+        }
+
+        drawTangentVectorsForSurface(plane.surface(),
+                                     Vector3d(cluster->center(), height));
     }
 }
 
 /**
  * Draw the surface tangent space vectors, primarily for debug.
  */
-static void Rend_DrawSurfaceVectors(Map &map)
+static void drawAllSurfaceTangentVectors(Map &map)
 {
     if(!devSurfaceVectors) return;
 
     glDisable(GL_CULL_FACE);
 
-    Vector3d origin;
-    foreach(BspLeaf *bspLeaf, map.bspLeafs())
+    foreach(Sector *sector, map.sectors())
+    foreach(SectorCluster *cluster, sector->clusters())
     {
-        if(!bspLeaf->hasSector() || bspLeaf->isDegenerate())
-            continue;
-
-        HEdge *base = bspLeaf->poly().hedge();
-        HEdge *hedge = base;
-        do
-        {
-            drawTangentSpaceVectorsForWallSections(hedge);
-        } while((hedge = &hedge->next()) != base);
-
-        foreach(Mesh *mesh, bspLeaf->extraMeshes())
-        foreach(HEdge *hedge, mesh->hedges())
-        {
-            drawTangentSpaceVectorsForWallSections(hedge);
-        }
-
-        foreach(Polyobj *polyobj, bspLeaf->polyobjs())
-        foreach(HEdge *hedge, polyobj->mesh().hedges())
-        {
-            drawTangentSpaceVectorsForWallSections(hedge);
-        }
-
-        foreach(Plane *plane, bspLeaf->sector().planes())
-        {
-            origin = Vector3d(bspLeaf->poly().center(), plane->visHeight());
-
-            if(plane->surface().hasSkyMaskedMaterial() && plane->indexInSector() <= Sector::Ceiling)
-                origin.z = plane->map().skyFix(plane->indexInSector() == Sector::Ceiling);
-
-            drawTangentSpaceVectorsForSurface(&plane->surface(), origin);
-        }
+        drawSurfaceTangentVectors(cluster);
     }
 
     glEnable(GL_CULL_FACE);
