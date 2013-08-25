@@ -83,32 +83,6 @@ inline coord_t R_OpenRange(LineSide const &side, coord_t *bottom = 0, coord_t *t
 #ifdef __CLIENT__
 
 /**
- * Same as @ref R_OpenRange() but works with the "visual" (i.e., smoothed) plane
- * height coordinates rather than the "sharp" coordinates.
- *
- * @param side      Line side to find the open range for.
- * @param frontSec  Sector on the front side.
- * @param backSec   Sector on the back side. Can be @c 0.
- *
- * Return values:
- * @param bottom    Bottom Z height is written here. Can be @c 0.
- * @param top       Top Z height is written here. Can be @c 0.
- *
- * @return Height of the open range.
- */
-coord_t R_VisOpenRange(LineSide const &side, Sector const *frontSec, Sector const *backSec,
-    coord_t *bottom = 0, coord_t *top = 0);
-
-/**
- * Same as @ref R_VisOpenRange() except that the sector arguments are taken from
- * the specified line @a side.
- */
-inline coord_t R_VisOpenRange(LineSide const &side, coord_t *bottom = 0, coord_t *top = 0)
-{
-    return R_VisOpenRange(side, side.sectorPtr(), side.back().sectorPtr(), bottom, top);
-}
-
-/**
  * @param side  LineSide instance.
  * @param ignoreOpacity  @c true= do not consider Material opacity.
  *

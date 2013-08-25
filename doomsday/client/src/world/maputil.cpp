@@ -342,22 +342,24 @@ coord_t R_OpenRange(LineSide const &side, Sector const *frontSec,
 
 #ifdef __CLIENT__
 
-/// @todo fixme: Should use the visual plane heights of sector clusters.
-coord_t R_VisOpenRange(LineSide const &side, Sector const *frontSec,
-    Sector const *backSec, coord_t *retBottom, coord_t *retTop)
+/**
+ * Same as @ref R_OpenRange() but works with the "visual" (i.e., smoothed) plane
+ * height coordinates rather than the "sharp" coordinates.
+ *
+ * @param side      Line side to find the open range for.
+ *
+ * Return values:
+ * @param bottom    Bottom Z height is written here. Can be @c 0.
+ * @param top       Top Z height is written here. Can be @c 0.
+ *
+ * @return Height of the open range.
+ *
+ * @todo fixme: Should use the visual plane heights of sector clusters.
+ */
+static coord_t visOpenRange(LineSide const &side, coord_t *retBottom = 0, coord_t *retTop = 0)
 {
-    DENG_UNUSED(side); // Don't remove (present for API symmetry) -ds
-    DENG_ASSERT(frontSec != 0);
-
-    coord_t top;
-    if(backSec && backSec->ceiling().visHeight() < frontSec->ceiling().visHeight())
-    {
-        top = backSec->ceiling().visHeight();
-    }
-    else
-    {
-        top = frontSec->ceiling().visHeight();
-    }
+    Sector const *frontSec = side.sectorPtr();
+    Sector const *backSec  = side.back().sectorPtr();
 
     coord_t bottom;
     if(backSec && backSec->floor().visHeight() > frontSec->floor().visHeight())
@@ -367,6 +369,16 @@ coord_t R_VisOpenRange(LineSide const &side, Sector const *frontSec,
     else
     {
         bottom = frontSec->floor().visHeight();
+    }
+
+    coord_t top;
+    if(backSec && backSec->ceiling().visHeight() < frontSec->ceiling().visHeight())
+    {
+        top = backSec->ceiling().visHeight();
+    }
+    else
+    {
+        top = frontSec->ceiling().visHeight();
     }
 
     if(retBottom) *retBottom = bottom;
@@ -404,7 +416,7 @@ bool R_SideBackClosed(LineSide const &side, bool ignoreOpacity)
                 return true;
 
             coord_t openRange, openBottom, openTop;
-            openRange = R_VisOpenRange(side, &openBottom, &openTop);
+            openRange = visOpenRange(side, &openBottom, &openTop);
             if(ms.height() >= openRange)
             {
                 // Possibly; check the placement.
@@ -472,7 +484,7 @@ static bool middleMaterialCoversOpening(LineSide const &side)
     if(ms.isOpaque() && !side.middle().blendMode() && side.middle().opacity() >= 1)
     {
         coord_t openRange, openBottom, openTop;
-        openRange = R_VisOpenRange(side, &openBottom, &openTop);
+        openRange = visOpenRange(side, &openBottom, &openTop);
         if(ms.height() >= openRange)
         {
             // Possibly; check the placement.
