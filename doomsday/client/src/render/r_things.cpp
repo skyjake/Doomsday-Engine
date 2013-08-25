@@ -787,6 +787,8 @@ typedef struct {
  * Determine the correct Z coordinate for the mobj. The visible Z coordinate
  * may be slightly different than the actual Z coordinate due to smoothed
  * plane movement.
+ *
+ * @todo fixme: Should use the visual plane heights of sector clusters.
  */
 int RIT_VisMobjZ(Sector *sector, void *parameters)
 {
@@ -1136,6 +1138,8 @@ void R_ProjectSprite(mobj_t *mo)
      * The mobj's Z coordinate must match the actual visible floor/ceiling
      * height.  When using smoothing, this requires iterating through the
      * sectors (planes) in the vicinity.
+     *
+     * @todo fixme: Should use the visual planes of touched sector clusters.
      */
     validCount++;
     params.vis = vis;

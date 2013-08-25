@@ -286,6 +286,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
 
     /**
      * @todo: Use the half-edge rings instead of LineOwners.
+     * @todo fixme: Should use the visual plane heights of sector clusters.
      */
     void addNeighborIntercepts(coord_t bottom, coord_t top)
     {

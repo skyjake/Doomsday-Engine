@@ -859,6 +859,7 @@ float P_GetParticleRadius(ded_ptcstage_t const *def, int ptcIDX)
             (1 - def->radiusVariance)) * def->radius;
 }
 
+/// @todo fixme: Should use the visual plane heights of sector clusters.
 float P_GetParticleZ(particle_t const *pt)
 {
     if(pt->origin[VZ] == DDMAXINT)

@@ -114,6 +114,7 @@ static bool middleMaterialCoversOpening(LineSide &side)
     return false;
 }
 
+/// @todo fixme: Should use the visual plane heights of sector clusters.
 void ShadowEdge::prepare(int planeIndex)
 {
     LineSide &side = d->leftMostHEdge->mapElement()->as<LineSideSegment>().lineSide();

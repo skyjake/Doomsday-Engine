@@ -102,6 +102,7 @@ void Vertex::setOriginComponent(int component, coord_t newPosition)
 
 #ifdef __CLIENT__
 
+/// @todo fixme: Should use the visual plane heights of sector clusters.
 void Vertex::planeVisHeightMinMax(coord_t *min, coord_t *max) const
 {
     if(!min && !max)

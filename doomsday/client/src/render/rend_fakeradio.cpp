@@ -161,7 +161,8 @@ static inline float calcTexCoordY(float z, float bottom, float top, float texHei
     return bottom - z;
 }
 
-/// @todo This algorithm should be rewritten to work at half-edge level.
+/// @todo fixme: Should be rewritten to work at half-edge level.
+/// @todo fixme: Should use the visual plane heights of sector clusters.
 static void scanNeighbor(bool scanTop, LineSide const &side, edge_t *edge,
                          bool toLeft)
 {
@@ -382,6 +383,7 @@ static void scanNeighbor(bool scanTop, LineSide const &side, edge_t *edge,
     }
 }
 
+/// @todo fixme: Should use the visual plane heights of sector clusters.
 static void scanNeighbors(shadowcorner_t top[2], shadowcorner_t bottom[2],
     LineSide const &side, edgespan_t spans[2], bool toLeft)
 {
@@ -1076,6 +1078,7 @@ static void drawWallSectionShadow(Vector3f const *origVertices,
     R_FreeRendColors(rcolors);
 }
 
+/// @todo fixme: Should use the visual plane heights of sector clusters.
 void Rend_RadioWallSection(WallEdge const &leftEdge, WallEdge const &rightEdge,
     float shadowDark, float shadowSize)
 {
@@ -1084,7 +1087,7 @@ void Rend_RadioWallSection(WallEdge const &leftEdge, WallEdge const &rightEdge,
 
     if(shadowSize <= 0) return;
 
-    LineSide &side            = leftEdge.mapSide();
+    LineSide &side              = leftEdge.mapSide();
     HEdge const *hedge          = side.leftHEdge();
     Sector const *frontSec      = hedge->face().mapElement()->as<BspLeaf>().sectorPtr();
     Sector const *backSec       =
@@ -1425,6 +1428,7 @@ void Rend_DrawShadowOffsetVerts()
                             GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
     glEnable(GL_TEXTURE_2D);
 
+    /// @todo fixme: Should use the visual plane heights of sector clusters.
     foreach(Line *line, map.lines())
     for(uint k = 0; k < 2; ++k)
     {

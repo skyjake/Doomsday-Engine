@@ -995,6 +995,7 @@ static void createGlowLightForSurface(Surface &suf)
     Sector *sec = &pln.sector();
 
     // Only produce a light for sectors with open space.
+    /// @todo fixme: Should check all BSP leafs which reference the surface plane.
     /// @todo Do not add surfaces from sectors with zero BSP leafs to the glowing list.
     if(!sec->hasBspLeafs() || sec->floor().visHeight() >= sec->ceiling().visHeight())
         return;

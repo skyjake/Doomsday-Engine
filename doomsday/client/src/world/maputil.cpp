@@ -37,6 +37,8 @@
 
 using namespace de;
 
+/// @todo fixme: Should work at BspLeaf level and use the visual plane heights
+///              of sector clusters.
 void R_SetRelativeHeights(Sector const *front, Sector const *back, int planeIndex,
     coord_t *fz, coord_t *bz, coord_t *bhz)
 {
@@ -96,6 +98,7 @@ void R_SetRelativeHeights(Sector const *front, Sector const *back, int planeInde
 
 #ifdef __CLIENT__
 
+/// @todo fixme: Should use the visual plane heights of sector clusters.
 void R_SideSectionCoords(LineSide const &side, int section, bool skyClip,
     coord_t *retBottom, coord_t *retTop, Vector2f *retMaterialOrigin)
 {
@@ -339,6 +342,7 @@ coord_t R_OpenRange(LineSide const &side, Sector const *frontSec,
 
 #ifdef __CLIENT__
 
+/// @todo fixme: Should use the visual plane heights of sector clusters.
 coord_t R_VisOpenRange(LineSide const &side, Sector const *frontSec,
     Sector const *backSec, coord_t *retBottom, coord_t *retTop)
 {
@@ -371,6 +375,7 @@ coord_t R_VisOpenRange(LineSide const &side, Sector const *frontSec,
     return top - bottom;
 }
 
+/// @todo fixme: Should use the visual plane heights of sector clusters.
 bool R_SideBackClosed(LineSide const &side, bool ignoreOpacity)
 {
     if(!side.hasSections()) return false;
@@ -447,6 +452,8 @@ Line *R_FindLineNeighbor(Sector const *sector, Line const *line,
  *
  * @return  @c true iff there is a "middle" material on @a side which
  * completely covers the open range.
+ *
+ * @todo fixme: Should use the visual plane heights of sector clusters.
  */
 static bool middleMaterialCoversOpening(LineSide const &side)
 {
@@ -478,6 +485,7 @@ static bool middleMaterialCoversOpening(LineSide const &side)
     return false;
 }
 
+/// @todo fixme: Should use the visual plane heights of sector clusters.
 Line *R_FindSolidLineNeighbor(Sector const *sector, Line const *line,
     LineOwner const *own, bool antiClockwise, binangle_t *diff)
 {

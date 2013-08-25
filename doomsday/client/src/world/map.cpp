@@ -1027,6 +1027,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
 
 #ifdef __CLIENT__
 
+    /// @todo fixme: Should work at sector cluster level.
     void updateMapSkyFixForSector(Sector const &sector)
     {
         if(!sector.sideCount()) return;

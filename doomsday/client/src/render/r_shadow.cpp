@@ -376,6 +376,7 @@ Plane *R_FindShadowPlane(mobj_t *mo)
     if(mo->bspLeaf)
     {
         Plane *plane = &mo->bspLeaf->visFloor();
+        /// @todo fixme: Use the visual planes of touched sector clusters.
         P_MobjSectorsIterator(mo, RIT_FindShadowPlaneIterator, (void *)&plane);
     }
     return 0;
