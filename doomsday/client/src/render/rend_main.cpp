@@ -3386,56 +3386,13 @@ static void drawVertexBar(Vertex const *vtx, coord_t bottom, coord_t top, float 
 
 #define MAX_VERTEX_POINT_DIST 1280
 
-static String labelForVertex(Vertex *vtx)
+static String labelForVertex(Vertex const *vtx)
 {
     DENG_ASSERT(vtx != 0);
     return String("%1").arg(vtx->indexInMap());
 }
 
-static int drawVertex1(Line *li, void *context)
-{
-    Vertex *vtx = &li->from();
-    Polyobj *po = (Polyobj *) context;
-    coord_t dist2D = M_ApproxDistance(vOrigin[VX] - vtx->origin().x, vOrigin[VZ] - vtx->origin().y);
-
-    if(dist2D < MAX_VERTEX_POINT_DIST)
-    {
-        float alpha = 1 - dist2D / MAX_VERTEX_POINT_DIST;
-
-        if(alpha > 0)
-        {
-            coord_t bottom = po->sector().floor().visHeight();
-            coord_t top    = po->sector().ceiling().visHeight();
-
-            glDisable(GL_DEPTH_TEST);
-
-            if(devVertexBars)
-                drawVertexBar(vtx, bottom, top, MIN_OF(alpha, .15f));
-
-            drawVertexPoint(vtx, bottom, alpha * 2);
-
-            glEnable(GL_DEPTH_TEST);
-        }
-    }
-
-    if(devVertexIndices)
-    {
-        Vector3d const eye(vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
-        Vector3d const origin(vtx->origin(), po->sector().floor().visHeight());
-
-        ddouble distToEye = (eye - origin).length();
-        if(distToEye < MAX_VERTEX_POINT_DIST)
-        {
-            drawLabel(origin, labelForVertex(vtx),
-                      distToEye / (DENG_WINDOW->width() / 2),
-                      1 - distToEye / MAX_VERTEX_POINT_DIST);
-        }
-    }
-
-    return false; // Continue iteration.
-}
-
-static int drawPolyObjVertexes(Polyobj *po, void * /*context*/)
+static int drawPolyobjVertexes(Polyobj *po, void * /*context*/)
 {
     DENG_ASSERT(po != 0);
     foreach(Line *line, po->lines())
@@ -3444,8 +3401,45 @@ static int drawPolyObjVertexes(Polyobj *po, void * /*context*/)
             continue;
 
         line->setValidCount(validCount);
-        int result = drawVertex1(line, po);
-        if(result) return result;
+
+        BspLeaf const &bspLeaf = po->bspLeaf();
+        Vertex const &vtx      = line->from();
+
+        coord_t dist2D = M_ApproxDistance(vOrigin[VX] - vtx.origin().x,
+                                          vOrigin[VZ] - vtx.origin().y);
+        if(dist2D < MAX_VERTEX_POINT_DIST)
+        {
+            float alpha = 1 - dist2D / MAX_VERTEX_POINT_DIST;
+
+            if(alpha > 0)
+            {
+                coord_t const bottom = bspLeaf.visFloorHeight();
+                coord_t const top    = bspLeaf.visCeilingHeight();
+
+                glDisable(GL_DEPTH_TEST);
+
+                if(devVertexBars)
+                    drawVertexBar(&vtx, bottom, top, MIN_OF(alpha, .15f));
+
+                drawVertexPoint(&vtx, bottom, alpha * 2);
+
+                glEnable(GL_DEPTH_TEST);
+            }
+        }
+
+        if(devVertexIndices)
+        {
+            Vector3d const eye(vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
+            Vector3d const origin(vtx.origin(), bspLeaf.visFloorHeight());
+
+            ddouble distToEye = (eye - origin).length();
+            if(distToEye < MAX_VERTEX_POINT_DIST)
+            {
+                drawLabel(origin, labelForVertex(&vtx),
+                          distToEye / (DENG_WINDOW->width() / 2),
+                          1 - distToEye / MAX_VERTEX_POINT_DIST);
+            }
+        }
     }
     return false; // Continue iteration.
 }
@@ -3511,7 +3505,7 @@ static void drawVertexes(Map &map)
             if(own->line().definesPolyobj()) continue;
 
             coord_t dist = M_ApproxDistance(vOrigin[VX] - vertex->origin().x,
-                                           vOrigin[VZ] - vertex->origin().y);
+                                            vOrigin[VZ] - vertex->origin().y);
 
             if(dist < MAX_VERTEX_POINT_DIST)
             {
@@ -3551,12 +3545,11 @@ static void drawVertexes(Map &map)
     }
 
     // Next, the vertexes of all nearby polyobjs.
-    AABoxd box;
-    box.minX = vOrigin[VX] - MAX_VERTEX_POINT_DIST;
-    box.minY = vOrigin[VY] - MAX_VERTEX_POINT_DIST;
-    box.maxX = vOrigin[VX] + MAX_VERTEX_POINT_DIST;
-    box.maxY = vOrigin[VY] + MAX_VERTEX_POINT_DIST;
-    P_PolyobjsBoxIterator(&box, drawPolyObjVertexes, NULL);
+    AABoxd box(vOrigin[VX] - MAX_VERTEX_POINT_DIST,
+               vOrigin[VY] - MAX_VERTEX_POINT_DIST,
+               vOrigin[VX] + MAX_VERTEX_POINT_DIST,
+               vOrigin[VY] + MAX_VERTEX_POINT_DIST);
+    P_PolyobjsBoxIterator(&box, drawPolyobjVertexes, NULL);
 
     // Restore previous state.
     if(devVertexBars)
@@ -3568,7 +3561,7 @@ static void drawVertexes(Map &map)
     glDisable(GL_POINT_SMOOTH);
 }
 
-static String labelForCluster(SectorCluster *cluster)
+static String labelForCluster(SectorCluster const *cluster)
 {
     DENG_ASSERT(cluster != 0);
     return String("%1").arg(cluster->sector().indexInMap());
