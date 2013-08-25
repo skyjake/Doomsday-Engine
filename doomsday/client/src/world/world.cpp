@@ -589,14 +589,15 @@ DENG2_PIMPL(World)
 
             if(mobj_t *mo = ddpl.mo)
             {
-                if(Sector *sector = map->bspLeafAt(mo->origin).sectorPtr())
+                BspLeaf &bspLeaf = map->bspLeafAt(mo->origin);
+                if(bspLeaf.hasSector() && !bspLeaf.isDegenerate())
                 {
 #ifdef __CLIENT__
-                    if(mo->origin[VZ] >= sector->floor().visHeight() &&
-                       mo->origin[VZ] <  sector->ceiling().visHeight() - 4)
+                    if(mo->origin[VZ] >= bspLeaf.visFloorHeight() &&
+                       mo->origin[VZ] <  bspLeaf.visCeilingHeight() - 4)
 #else
-                    if(mo->origin[VZ] >= sector->floor().height() &&
-                       mo->origin[VZ] <  sector->ceiling().height() - 4)
+                    if(mo->origin[VZ] >= bspLeaf.floorHeight() &&
+                       mo->origin[VZ] <  bspLeaf.ceilingHeight() - 4)
 #endif
                     {
                         ddpl.inVoid = false;

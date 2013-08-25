@@ -251,7 +251,7 @@ DENG2_PIMPL(BspLeaf)
 
         geomGroup.biasTracker.clearContributors();
 
-        Plane const &plane     = cluster->plane(planeIndex);
+        Plane const &plane     = cluster->visPlane(planeIndex);
         Surface const &surface = plane.surface();
 
         Vector3d surfacePoint(poly->center(), plane.visHeight());

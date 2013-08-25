@@ -126,34 +126,34 @@ boolean P_IsInVoid(player_t *player)
             return true;
 
         BspLeaf *bspLeaf = ddpl->mo->bspLeaf;
-        if(!bspLeaf->hasSector())
+        if(!bspLeaf->hasSector() || bspLeaf->isDegenerate())
             return true;
 
 #ifdef __CLIENT__
-        if(bspLeaf->ceiling().surface().hasSkyMaskedMaterial())
+        if(bspLeaf->visCeiling().surface().hasSkyMaskedMaterial())
         {
             coord_t const skyCeil = bspLeaf->map().skyFixCeiling();
             if(skyCeil < DDMAXFLOAT && ddpl->mo->origin[VZ] > skyCeil - 4)
                 return true;
         }
-        else if(ddpl->mo->origin[VZ] > bspLeaf->ceiling().visHeight() - 4)
+        else if(ddpl->mo->origin[VZ] > bspLeaf->visCeilingHeight() - 4)
 #else
-        if(ddpl->mo->origin[VZ] > bspLeaf->ceiling().height() - 4)
+        if(ddpl->mo->origin[VZ] > bspLeaf->ceilingHeight() - 4)
 #endif
         {
             return true;
         }
 
 #ifdef __CLIENT__
-        if(bspLeaf->floor().surface().hasSkyMaskedMaterial())
+        if(bspLeaf->visFloor().surface().hasSkyMaskedMaterial())
         {
             coord_t const skyFloor = bspLeaf->map().skyFixFloor();
             if(skyFloor > DDMINFLOAT && ddpl->mo->origin[VZ] < skyFloor + 4)
                 return true;
         }
-        else if(ddpl->mo->origin[VZ] < bspLeaf->floor().visHeight() + 4)
+        else if(ddpl->mo->origin[VZ] < bspLeaf->visFloorHeight() + 4)
 #else
-        if(ddpl->mo->origin[VZ] < bspLeaf->floor().height() + 4)
+        if(ddpl->mo->origin[VZ] < bspLeaf->floorHeight() + 4)
 #endif
         {
             return true;

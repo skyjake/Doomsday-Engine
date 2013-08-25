@@ -218,6 +218,32 @@ public:
     inline Plane &ceiling() const { return plane(Sector::Ceiling); }
 
     /**
+     * Convenient method of accessing the physical height of the identified sector plane.
+     *
+     * @param planeIndex  Index of the plane to return.
+     *
+     * @see plane(), Plane::height()
+     */
+    inline coord_t planeHeight(int planeIndex) const {
+        return plane(planeIndex).height();
+    }
+
+    /**
+     * Convenient method of accessing the physical height of the sector floor plane.
+     *
+     * @see planeHeight()
+     */
+    inline coord_t floorHeight() const   { return planeHeight(Sector::Floor); }
+
+    /**
+     * Convenient method of accessing the physical height of the sector ceiling plane.
+     *
+     * @see planeHeight()
+     */
+    inline coord_t ceilingHeight() const { return planeHeight(Sector::Ceiling); }
+
+#ifdef __CLIENT__
+    /**
      * Returns the identified @em visual sector plane for the BSP leaf (which may
      * or may not be the same as the physical plane). Note that a sector must be
      * attributed to "this" BSP leaf.
@@ -240,7 +266,6 @@ public:
      */
     inline Plane &visCeiling() const { return visPlane(Sector::Ceiling); }
 
-#ifdef __CLIENT__
     /**
      * Convenient method of accessing the visual (i.e., smoothed) height of the
      * identified @em visual sector plane.

@@ -2046,20 +2046,24 @@ void Map::link(mobj_t &mo, byte flags)
     if(mo.dPlayer && mo.dPlayer->mo)
     {
         ddplayer_t *player = mo.dPlayer;
-        Sector &sector = player->mo->bspLeaf->sector();
 
         player->inVoid = true;
-        if(sector.pointInside(player->mo->origin))
+
+        if(player->mo->bspLeaf && player->mo->bspLeaf->hasSector())
         {
-#ifdef __CLIENT__
-            if(player->mo->origin[VZ] <  sector.ceiling().visHeight() + 4 &&
-               player->mo->origin[VZ] >= sector.floor().visHeight())
-#else
-            if(player->mo->origin[VZ] <  sector.ceiling().height() + 4 &&
-               player->mo->origin[VZ] >= sector.floor().height())
-#endif
+            BspLeaf &bspLeaf = *player->mo->bspLeaf;
+            if(bspLeaf.pointInside(player->mo->origin))
             {
-                player->inVoid = false;
+#ifdef __CLIENT__
+                if(player->mo->origin[VZ] <  bspLeaf.visCeilingHeight() + 4 &&
+                   player->mo->origin[VZ] >= bspLeaf.visFloorHeight())
+#else
+                if(player->mo->origin[VZ] <  bspLeaf.ceilingHeight() + 4 &&
+                   player->mo->origin[VZ] >= bspLeaf.floorHeight())
+#endif
+                {
+                    player->inVoid = false;
+                }
             }
         }
     }
