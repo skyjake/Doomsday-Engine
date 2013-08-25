@@ -33,6 +33,11 @@
 #include "api_audiod_mus.h"
 
 #ifdef __cplusplus
+
+#include <de/String>
+
+de::String AudioDriver_InterfaceDescription();
+
 extern "C" {
 #endif
 

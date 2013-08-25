@@ -176,31 +176,25 @@ static void initialize(void)
 #endif
 }
 
-static void printGLUInfo(void)
-{
-    GLfloat fVals[2];
-    GLint iVal;
+#define TABBED(A, B)  _E(Ta) "  " A " " _E(Tb) << B << "\n"
 
+de::String Sys_GLDescription()
+{
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
-
-    LOG_MSG(_E(b) "OpenGL information:");
 
     de::String str;
     QTextStream os(&str);
 
-#define TABBED(A, B) _E(Ta) "  " A " " _E(Tb) << B << "\n"
+    os << _E(b) "OpenGL information:\n" << _E(.);
 
     os << TABBED("Version:",  (char const *) glGetString(GL_VERSION));
     os << TABBED("Renderer:", (char const *) glGetString(GL_RENDERER));
     os << TABBED("Vendor:",   (char const *) glGetString(GL_VENDOR));
 
-    LOG_MSG("%s") << str.rightStrip();
+    os << _E(T`) "Capabilities:\n";
 
-    str.clear();
-    os.setString(&str);
-
-    os << "Capabilities:\n";
+    GLint iVal;
 
 #ifdef USE_TEXTURE_COMPRESSION_S3
     if(GL_state.extensions.texCompressionS3)
@@ -226,17 +220,23 @@ static void printGLUInfo(void)
     glGetIntegerv(GL_MAX_TEXTURE_SIZE, &iVal);
     os << TABBED("Maximum texture size:", iVal);
 
+    GLfloat fVals[2];
     glGetFloatv(GL_LINE_WIDTH_GRANULARITY, fVals);
     os << TABBED("Line width granularity:", fVals[0]);
 
     glGetFloatv(GL_LINE_WIDTH_RANGE, fVals);
     os << TABBED("Line width range:", fVals[0] << "..." << fVals[1]);
 
-    LOG_MSG("%s") << str.rightStrip();
-
-    Sys_GLPrintExtensions();
+    return str.rightStrip();
 
 #undef TABBED
+}
+
+static void printGLUInfo(void)
+{
+    LOG_MSG("%s") << Sys_GLDescription();
+
+    Sys_GLPrintExtensions();
 }
 
 #if 0

@@ -28,13 +28,15 @@
 
 using namespace de;
 
-DENG2_PIMPL(GuiWidget)
+DENG2_PIMPL(GuiWidget),
+DENG2_OBSERVES(ui::Margins, Change)
 #ifdef DENG2_DEBUG
 , DENG2_OBSERVES(Widget, ParentChange)
 #endif
 {
     RuleRectangle rule;     ///< Visual rule, used when drawing.
     RuleRectangle hitRule;  ///< Used only for hit testing. By default matches the visual rule.
+    ui::Margins margins;
     Rectanglei savedPos;
     bool inited;
     bool needGeometry;
@@ -45,10 +47,6 @@ DENG2_PIMPL(GuiWidget)
     // Style.
     DotPath fontId;
     DotPath textColorId;
-    DotPath marginLeftId;
-    DotPath marginTopId;
-    DotPath marginRightId;
-    DotPath marginBottomId;
 
     // Background blurring.
     bool blurInited;
@@ -64,16 +62,13 @@ DENG2_PIMPL(GuiWidget)
 
     Instance(Public *i)
         : Base(i),
+          margins("gap"),
           inited(false),
           needGeometry(true),
           styleChanged(false),
           opacity(1.f, Animation::Linear),
           fontId("default"),
           textColorId("text"),
-          marginLeftId("gap"),
-          marginTopId("gap"),
-          marginRightId("gap"),
-          marginBottomId("gap"),
           blurInited(false),
           uBlurMvpMatrix("uMvpMatrix", GLUniform::Mat4),
           uBlurColor    ("uColor",     GLUniform::Vec4),
@@ -81,6 +76,8 @@ DENG2_PIMPL(GuiWidget)
           uBlurStep     ("uBlurStep",  GLUniform::Vec2),
           uBlurWindow   ("uWindow",    GLUniform::Vec4)
     {
+        margins.audienceForChange += this;
+
 #ifdef DENG2_DEBUG
         self.audienceForParentChange += this;
         rule.setDebugName(self.path());
@@ -107,6 +104,11 @@ DENG2_PIMPL(GuiWidget)
         if(inited) qDebug() << "GuiWidget" << &self << self.name() << "is still inited!";
         DENG2_ASSERT(!inited);
 #endif
+    }
+
+    void marginsChanged()
+    {
+        styleChanged = true;
     }
 
 #ifdef DENG2_DEBUG
@@ -297,46 +299,10 @@ ColorBank::Colorf GuiWidget::textColorf() const
     return style().colors().colorf(d->textColorId);
 }
 
-Rule const &GuiWidget::margin(ui::Direction dir) const
-{
-    return style().rules().rule(
-                dir == ui::Left?  d->marginLeftId  :
-                dir == ui::Up?    d->marginTopId   :
-                dir == ui::Right? d->marginRightId :
-                                  d->marginBottomId);
-}
-
 void GuiWidget::setTextColor(DotPath const &id)
 {
     d->textColorId = id;
     d->styleChanged = true;
-}
-
-void GuiWidget::setMargin(DotPath const &id)
-{
-    setMargins(id, id, id, id);
-}
-
-void GuiWidget::setMargin(ui::Direction dir, DotPath const &id)
-{
-    switch(dir)
-    {
-    case ui::Left:  d->marginLeftId   = id; break;
-    case ui::Up:    d->marginTopId    = id; break;
-    case ui::Right: d->marginRightId  = id; break;
-    case ui::Down:  d->marginBottomId = id; break;
-    default: return;
-    }
-    d->styleChanged = true;
-}
-
-void GuiWidget::setMargins(DotPath const &leftId, DotPath const &topId, DotPath const &rightId, DotPath const &bottomId)
-{
-    d->marginLeftId   = leftId;
-    d->marginTopId    = topId;
-    d->marginRightId  = rightId;
-    d->marginBottomId = bottomId;
-    d->styleChanged   = true;
 }
 
 RuleRectangle &GuiWidget::rule()
@@ -347,6 +313,16 @@ RuleRectangle &GuiWidget::rule()
 RuleRectangle const &GuiWidget::rule() const
 {
     return d->rule;
+}
+
+ui::Margins &GuiWidget::margins()
+{
+    return d->margins;
+}
+
+ui::Margins const &GuiWidget::margins() const
+{
+    return d->margins;
 }
 
 Rectanglef GuiWidget::normalizedRect() const
@@ -361,7 +337,10 @@ Rectanglef GuiWidget::normalizedRect() const
 
 Rectanglef GuiWidget::normalizedContentRect() const
 {
-    Rectanglef const rect = rule().rect().shrunk(margin().valuei());
+    Rectanglef const rect = rule().rect().adjusted( Vector2f(margins().left().value(),
+                                                             margins().top().value()),
+                                                   -Vector2f(margins().right().value(),
+                                                             margins().bottom().value()));
     GuiRootWidget::Size const &viewSize = root().viewSize();
     return Rectanglef(Vector2f(float(rect.left())   / float(viewSize.x),
                                float(rect.top())    / float(viewSize.y)),

@@ -128,8 +128,8 @@ DENG_GUI_PIMPL(PopupWidget)
                     .setInput(Rule::Bottom, *anchorY - *marker)
                     .setInput(Rule::Left, OperatorRule::clamped(
                                   *anchorX - self.rule().width() / 2,
-                                  self.margin(),
-                                  self.root().viewWidth() - self.rule().width() - self.margin()));
+                                  self.margins().left(),
+                                  self.root().viewWidth() - self.rule().width() - self.margins().right()));
             break;
 
         case ui::Down:
@@ -137,8 +137,8 @@ DENG_GUI_PIMPL(PopupWidget)
                     .setInput(Rule::Top,  *anchorY + *marker)
                     .setInput(Rule::Left, OperatorRule::clamped(
                                   *anchorX - self.rule().width() / 2,
-                                  self.margin(),
-                                  self.root().viewWidth() - self.rule().width() - self.margin()));
+                                  self.margins().left(),
+                                  self.root().viewWidth() - self.rule().width() - self.margins().right()));
             break;
 
         case ui::Left:
@@ -321,6 +321,14 @@ void PopupWidget::setDeleteAfterDismissed(bool deleteAfterDismiss)
 void PopupWidget::setClickToClose(bool clickCloses)
 {
     d->clickToClose = clickCloses;
+}
+
+void PopupWidget::useInfoStyle()
+{
+    set(Background(style().colors().colorf("popup.info.background"),
+                   Background::BorderGlow,
+                   style().colors().colorf("popup.info.glow"),
+                   style().rules().rule("glow").valuei()));
 }
 
 void PopupWidget::viewResized()

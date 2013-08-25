@@ -47,6 +47,16 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
         {
             info.indent = leftIndent;
         }
+
+        /// Tab stops are disabled if there is a tab stop < 0 anywhere on the line.
+        bool tabsDisabled() const
+        {
+            for(int i = 0; i < info.segs.size(); ++i)
+            {
+                if(info.segs[i].tabStop < 0) return true;
+            }
+            return false;
+        }
     };
 
     typedef QList<Line *> Lines;
@@ -212,7 +222,7 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
         return false;
     }
 
-#if 0
+#if 0 // old algorithm disabled -- now using a character-based maxWrap
     int findMaxWrapWithStep(int const stepSize, int const begin, int end,
                             int const availableWidth,
                             int *wrapPosMax)
@@ -416,6 +426,101 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
 
         return wrappedLines;
     }
+
+    Rangei findNextTabbedRange(int startLine) const
+    {
+        for(int i = startLine + 1; i < lines.size(); ++i)
+        {
+            if(lines[i]->tabsDisabled()) return Rangei(startLine, i);
+        }
+        return Rangei(startLine, lines.size());
+    }
+
+    /**
+     * Wraps a range of lines that contains tab stops. Wrapping takes into
+     * account the space available for each tab stop.
+     *
+     * @param lineRange  Range of lines to wrap.
+     *
+     * @return End of the range, taking into account possible extra lines produced
+     * when wrapping long lines.
+     */
+    int wrapLinesWithTabs(Rangei const &lineRange)
+    {
+        int extraLinesProduced = 0;
+
+        // Determine the actual positions of each tab stop according to segment widths.
+        QMap<int, int> stopMaxWidths; // stop => maxWidth
+
+        for(int i = lineRange.start; i < lineRange.end; ++i)
+        {
+            Line *line = lines[i];
+            for(int k = 0; k < line->info.segs.size(); ++k)
+            {
+                LineInfo::Segment const &seg = line->info.segs[k];
+                if(seg.tabStop < 0) continue;
+                int sw = seg.width;
+
+                // Include overall indent into the first segment width.
+                if(!k) sw += line->info.indent;
+
+                stopMaxWidths[seg.tabStop] = de::max(stopMaxWidths[seg.tabStop], sw);
+            }
+        }
+
+        // Now we can wrap the lines that area too long.
+        for(int i = lineRange.start; i < lineRange.end + extraLinesProduced; ++i)
+        {
+            Line *line = lines[i];
+            int curLeft = 0;
+            int prevRight = 0;
+
+            for(int k = 0; k < line->info.segs.size(); ++k)
+            {
+                LineInfo::Segment const &seg = line->info.segs[k];
+                int const tab = seg.tabStop;
+                int const stopWidth = (tab >= 0? stopMaxWidths[tab] : seg.width);
+
+                if(curLeft + stopWidth >= maxWidth)
+                {
+                    // Wrap the line starting from this segment.
+
+                    // The maximum width of the first line is reduced by the
+                    // added amount of tab space: the difference between the
+                    // left edge of the current segment and the right edge of
+                    // the previous one. The maximum widths of subsequent lines
+                    // is also adjusted, so that the available space depends on
+                    // where the current tab is located (indent is added
+                    // because wrapRange automatically subtracts it).
+
+                    Lines wrapped = wrapRange(line->line.range,
+                                              maxWidth - (curLeft - prevRight),
+                                              maxWidth - curLeft + line->info.indent,
+                                              line->info.indent);
+
+                    extraLinesProduced += wrapped.size() - 1;
+
+                    // Replace the original line with these wrapped lines.
+                    delete lines.takeAt(i);
+                    foreach(Line *wl, wrapped)
+                    {
+                        lines.insert(i++, wl);
+                    }
+                    --i;
+                    break; // Proceed to next line.
+                }
+
+                // Update the coordinate of the previous segment's right edge.
+                prevRight = curLeft + seg.width;
+                if(!k) prevRight += line->info.indent;
+
+                // Move on to the next segment's left edge.
+                curLeft += stopWidth;
+            }
+        }
+
+        return lineRange.end + extraLinesProduced;
+    }
 };
 
 FontLineWrapping::FontLineWrapping() : d(new Instance)
@@ -495,70 +600,17 @@ void FontLineWrapping::wrapTextToWidth(String const &text, Font::RichFormat cons
             pos = wholeLine.end + 1;
         }
 
-        // Determine the actual positions of each tab stop according to segment widths.
-        QMap<int, int> stopMaxWidths; // stop => maxWidth
-
-        for(int i = 0; i < d->lines.size(); ++i)
+        // Process the content is distinct ranges divided by untabbed content.
+        Rangei tabRange = d->findNextTabbedRange(0);
+        forever
         {
-            Instance::Line *line = d->lines[i];
-            for(int k = 0; k < line->info.segs.size(); ++k)
+            int end = d->wrapLinesWithTabs(tabRange);
+            if(end == d->lines.size())
             {
-                LineInfo::Segment const &seg = line->info.segs[k];
-                int sw = seg.width;
-
-                // Include overall indent into the first segment width.
-                if(!k) sw += line->info.indent;
-
-                stopMaxWidths[seg.tabStop] = de::max(stopMaxWidths[seg.tabStop], sw);
+                // All lines processed.
+                break;
             }
-        }
-
-        // Now we can wrap the lines that area too long.
-        for(int i = 0; i < d->lines.size(); ++i)
-        {
-            Instance::Line *line = d->lines[i];
-            int curLeft = 0;
-            int prevRight = 0;
-            for(int k = 0; k < line->info.segs.size(); ++k)
-            {
-                LineInfo::Segment const &seg = line->info.segs[k];
-                int const tab = seg.tabStop;
-                int const stopWidth = stopMaxWidths[tab];
-
-                if(curLeft + stopWidth >= maxWidth)
-                {
-                    // Wrap the line starting from this segment.
-
-                    // The maximum width of the first line is reduced by the
-                    // added amount of tab space: the difference between the
-                    // left edge of the current segment and the right edge of
-                    // the previous one. The maximum widths of subsequent lines
-                    // is also adjusted, so that the available space depends on
-                    // where the current tab is located (indent is added
-                    // because wrapRange automatically subtracts it).
-
-                    Instance::Lines wrapped = d->wrapRange(line->line.range,
-                                                           maxWidth - (curLeft - prevRight),
-                                                           maxWidth - curLeft + line->info.indent,
-                                                           line->info.indent);
-
-                    // Replace the original line with these wrapped lines.
-                    delete d->lines.takeAt(i);
-                    foreach(Instance::Line *wl, wrapped)
-                    {
-                        d->lines.insert(i++, wl);
-                    }
-                    --i;
-                    break; // Proceed to next line.
-                }
-
-                // Update the coordinate of the previous segment's right edge.
-                prevRight = curLeft + seg.width;
-                if(!k) prevRight += line->info.indent;
-
-                // Move on to the next segment's left edge.
-                curLeft += stopWidth;
-            }
+            tabRange = d->findNextTabbedRange(end);
         }
     }
     else
@@ -708,7 +760,7 @@ FontLineWrapping::LineInfo const &FontLineWrapping::lineInfo(int index) const
 
 int FontLineWrapping::LineInfo::highestTabStop() const
 {
-    int stop = 0;
+    int stop = -1;
     foreach(Segment const &seg, segs)
     {
         stop = de::max(stop, seg.tabStop);

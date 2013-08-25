@@ -413,12 +413,12 @@ static void selectInterfaces(audiodriverid_t defaultDriverId)
     AudioDriver_Music_Set(AUDIOP_SFX_INTERFACE, AudioDriver_SFX());
 }
 
-void AudioDriver_PrintInterfaces(void)
+de::String AudioDriver_InterfaceDescription()
 {
-    LOG_INFO(_E(b) "Audio configuration" _E(2) " (by decreasing priority):");
-
     de::String str;
     QTextStream os(&str);
+
+    os << _E(b) "Audio configuration" _E(2) " (by decreasing priority):\n" _E(.)_E(.);
 
     for(int i = MAX_AUDIO_INTERFACES - 1; i >= 0; --i)
     {
@@ -434,8 +434,12 @@ void AudioDriver_PrintInterfaces(void)
                << Str_Text(AudioDriver_InterfaceName(a->i.sfx)) << "\n";
         }
     }
+    return str.rightStrip();
+}
 
-    LOG_MSG("%s") << str.rightStrip();
+void AudioDriver_PrintInterfaces(void)
+{
+    LOG_MSG("%s") << AudioDriver_InterfaceDescription();
 }
 
 /*

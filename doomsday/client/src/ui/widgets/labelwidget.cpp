@@ -102,10 +102,10 @@ public Font::RichFormat::IStyle
     {
         Style const &st = self.style();
 
-        tlMargin  = Vector2i(self.margin(ui::Left).valuei(),
-                             self.margin(ui::Up).valuei());
-        brMargin  = Vector2i(self.margin(ui::Right).valuei(),
-                             self.margin(ui::Down).valuei());
+        tlMargin  = Vector2i(self.margins().left().valuei(),
+                             self.margins().top().valuei());
+        brMargin  = Vector2i(self.margins().right().valuei(),
+                             self.margins().bottom().valuei());
 
         gap = st.rules().rule(gapId).valuei();
 
@@ -532,7 +532,7 @@ void LabelWidget::update()
 {
     GuiWidget::update();
 
-    if(!isHidden())
+    //if(!isHidden())
     {
         d->update();
     }

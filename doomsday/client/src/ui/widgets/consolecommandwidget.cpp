@@ -50,10 +50,13 @@ public IGameChangeObserver
         completions->setMaximumLineWidth(640);
 
         popup = new PopupWidget;
+        popup->useInfoStyle();
+        /*
         popup->set(Background(st.colors().colorf("editor.completion.background"),
                               Background::BorderGlow,
                               st.colors().colorf("editor.completion.glow"),
                               st.rules().rule("glow").valuei()));
+                              */
         popup->setContent(completions);
 
         // Height for the content: depends on the document height (plus margins), but at
@@ -62,7 +65,7 @@ public IGameChangeObserver
                 OperatorRule::minimum(
                     OperatorRule::minimum(st.rules().rule("editor.completion.height"),
                                           completions->contentRule().height() +
-                                          2 * completions->margin()),
+                                          completions->margins().height()),
                     self.rule().top() - st.rules().rule("gap")));
 
         self.add(popup);

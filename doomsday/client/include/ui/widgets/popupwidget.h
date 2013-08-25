@@ -85,6 +85,12 @@ public:
      */
     void setClickToClose(bool clickCloses);
 
+    /**
+     * Sets the style of the popup to the one used for informational popups
+     * rather than interactive (the default) ones.
+     */
+    void useInfoStyle();
+
     // Events.
     void viewResized();
     void update();

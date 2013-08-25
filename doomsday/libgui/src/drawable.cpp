@@ -161,6 +161,11 @@ Drawable::Ids Drawable::allStates() const
     return d->states.keys();
 }
 
+bool Drawable::hasBuffer(Id id) const
+{
+    return d->buffers.contains(id);
+}
+
 GLBuffer &Drawable::buffer(Id id) const
 {
     DENG2_ASSERT(d->buffers.contains(id));

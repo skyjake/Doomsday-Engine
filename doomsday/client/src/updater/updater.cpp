@@ -1,4 +1,4 @@
-/** @file updater.cpp Automatic updater that works with dengine.net. 
+/** @file updater.cpp Automatic updater that works with dengine.net.
  * @ingroup updater
  *
  * When one of the updater dialogs is shown, the main window is automatically

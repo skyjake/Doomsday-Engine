@@ -58,7 +58,7 @@ DENG2_OBSERVES(ContextWidgetOrganizer, WidgetUpdate)
         if(ButtonWidget *b = widget.maybeAs<ButtonWidget>())
         {
             b->setSizePolicy(ui::Expand, ui::Expand);
-            b->setMargin("unit");
+            b->margins().set("unit");
 
             b->audienceForStateChange += this;
 
@@ -77,12 +77,12 @@ DENG2_OBSERVES(ContextWidgetOrganizer, WidgetUpdate)
             // The label of a separator may change.
             if(item.label().isEmpty())
             {
-                widget.setMargin("");
+                widget.margins().set("");
                 widget.setFont("separator.empty");
             }
             else
             {
-                widget.setMargin("halfunit");
+                widget.margins().set("halfunit");
                 widget.setFont("separator.label");
             }
         }

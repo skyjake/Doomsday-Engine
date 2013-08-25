@@ -27,7 +27,7 @@ DENG_GUI_PIMPL(ChoiceWidget),
 DENG2_OBSERVES(Context, Addition),
 DENG2_OBSERVES(Context, Removal),
 DENG2_OBSERVES(ContextWidgetOrganizer, WidgetCreation)
-{   
+{
     /**
      * Items in the choice's popup uses this as action to change the selected
      * item.
