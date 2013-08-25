@@ -344,9 +344,9 @@ DENG2_PIMPL(WallEdge), public IHPlane
                                 if(!stopScan)
                                 {
                                     // Clip a range bound to this height?
-                                    if(plane.indexInSector() == Sector::Floor && plane.visHeight() > bottom)
+                                    if(plane.isSectorFloor() && plane.visHeight() > bottom)
                                         bottom = plane.visHeight();
-                                    else if(plane.indexInSector() == Sector::Ceiling && plane.visHeight() < top)
+                                    else if(plane.isSectorCeiling() && plane.visHeight() < top)
                                         top = plane.visHeight();
 
                                     // All clipped away?

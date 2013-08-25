@@ -115,7 +115,7 @@ DENG2_PIMPL(SkyFixEdge)
      */
     bool wallSectionNeedsSkyFix() const
     {
-        DENG_ASSERT(hedge->hasFace() && hedge->mapElement() != 0);
+        DENG_ASSERT(hedge->hasFace());
 
         bool const lower = fixType == SkyFixEdge::Lower;
 
@@ -123,15 +123,15 @@ DENG2_PIMPL(SkyFixEdge)
         if(!hedge->mapElement()) return false;
 
         LineSide const &lineSide = hedge->mapElement()->as<LineSideSegment>().lineSide();
-        Sector const *frontSec     = hedge->face().mapElement()->as<BspLeaf>().sectorPtr();
-        Sector const *backSec      = hedge->twin().hasFace()? hedge->twin().face().mapElement()->as<BspLeaf>().sectorPtr() : 0;
+        BspLeaf const *frontLeaf = &hedge->face().mapElement()->as<BspLeaf>();
+        BspLeaf const *backLeaf  = hedge->twin().hasFace()? &hedge->twin().face().mapElement()->as<BspLeaf>() : 0;
 
-        if(!(!backSec || backSec != frontSec)) return false;
+        if(!(!backLeaf || backLeaf->sectorPtr() != frontLeaf->sectorPtr())) return false;
 
         // Select the relative planes for the fix type.
         int relPlane = lower? Sector::Floor : Sector::Ceiling;
-        Plane const *front   = &frontSec->plane(relPlane);
-        Plane const *back    = backSec? &backSec->plane(relPlane) : 0;
+        Plane const *front   = &frontLeaf->visPlane(relPlane);
+        Plane const *back    = backLeaf? &backLeaf->visPlane(relPlane) : 0;
 
         if(!front->surface().hasSkyMaskedMaterial())
             return false;
@@ -154,7 +154,7 @@ DENG2_PIMPL(SkyFixEdge)
         }
 
         coord_t fz, bz;
-        R_SetRelativeHeights(frontSec, backSec, relPlane, &fz, &bz);
+        R_SetRelativeHeights(frontLeaf->sectorPtr(), backLeaf->sectorPtr(), relPlane, &fz, &bz);
 
         coord_t planeZ = (back && back->surface().hasSkyMaskedMaterial() &&
                           fz < bz? bz : fz);
@@ -173,21 +173,21 @@ DENG2_PIMPL(SkyFixEdge)
             return;
         }
 
-        Sector const *frontSec = hedge->face().mapElement()->as<BspLeaf>().sectorPtr();
-        Sector const *backSec  = hedge->twin().hasFace()? hedge->twin().face().mapElement()->as<BspLeaf>().sectorPtr() : 0;
-        Plane const *ffloor = &frontSec->floor();
-        Plane const *fceil  = &frontSec->ceiling();
-        Plane const *bceil  = backSec? &backSec->ceiling() : 0;
-        Plane const *bfloor = backSec? &backSec->floor()   : 0;
+        BspLeaf const *frontLeaf = &hedge->face().mapElement()->as<BspLeaf>();
+        BspLeaf const *backLeaf  = hedge->twin().hasFace()? &hedge->twin().face().mapElement()->as<BspLeaf>() : 0;
+        Plane const *ffloor = &frontLeaf->visFloor();
+        Plane const *fceil  = &frontLeaf->visCeiling();
+        Plane const *bceil  = backLeaf? &backLeaf->visCeiling() : 0;
+        Plane const *bfloor = backLeaf? &backLeaf->visFloor()   : 0;
 
         if(fixType == Upper)
         {
             hi = skyFixCeilZ(fceil, bceil);
-            lo = de::max((backSec && bceil->surface().hasSkyMaskedMaterial() )? bceil->visHeight() : fceil->visHeight(),  ffloor->visHeight());
+            lo = de::max((backLeaf && bceil->surface().hasSkyMaskedMaterial() )? bceil->visHeight() : fceil->visHeight(),  ffloor->visHeight());
         }
         else
         {
-            hi = de::min((backSec && bfloor->surface().hasSkyMaskedMaterial())? bfloor->visHeight() : ffloor->visHeight(), fceil->visHeight());
+            hi = de::min((backLeaf && bfloor->surface().hasSkyMaskedMaterial())? bfloor->visHeight() : ffloor->visHeight(), fceil->visHeight());
             lo = skyFixFloorZ(ffloor, bfloor);
         }
 
