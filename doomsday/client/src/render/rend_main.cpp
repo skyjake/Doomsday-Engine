@@ -2205,12 +2205,8 @@ static void markLeafFrontFacingWalls()
     }
 }
 
-static inline bool canOccludeSectorPairBoundary(Sector const &frontSec,
-    Sector const &backSec, bool upward)
+static inline bool canOccludeEdgeBetweenPlanes(Plane &frontPlane, Plane const &backPlane)
 {
-    Plane const &frontPlane = frontSec.plane(upward? Sector::Ceiling : Sector::Floor);
-    Plane const &backPlane  =  backSec.plane(upward? Sector::Ceiling : Sector::Floor);
-
     // Do not create an occlusion between two sky-masked planes.
     // Only because the open range does not account for the sky plane height? -ds
     return !(frontPlane.surface().hasSkyMaskedMaterial() &&
@@ -2255,20 +2251,35 @@ static void occludeLeaf(bool frontFacing)
         if(!backLeaf.hasSector())
             continue;
 
-        Sector const &frontSec = leaf->sector();
-        Sector const &backSec  = backLeaf.sector();
+        // Determine the opening between the visual sector planes at this edge.
+        coord_t openBottom;
+        if(backLeaf.visFloorHeight() > leaf->visFloorHeight())
+        {
+            openBottom = backLeaf.visFloorHeight();
+        }
+        else
+        {
+            openBottom = leaf->visFloorHeight();
+        }
+
+        coord_t openTop;
+        if(backLeaf.visCeilingHeight() < leaf->visCeilingHeight())
+        {
+            openTop = backLeaf.visCeilingHeight();
+        }
+        else
+        {
+            openTop = leaf->visCeilingHeight();
+        }
 
         // Choose start and end vertexes so that it's facing forward.
         Vertex const &from = frontFacing? hedge->vertex() : hedge->twin().vertex();
         Vertex const &to   = frontFacing? hedge->twin().vertex() : hedge->vertex();
 
-        coord_t openBottom, openTop;
-        R_VisOpenRange(seg.lineSide(), &frontSec, &backSec, &openBottom, &openTop);
-
         // Does the floor create an occlusion?
         if(((openBottom > leaf->visFloorHeight() && vOrigin[VY] <= openBottom)
             || (openBottom >  backLeaf.visFloorHeight() && vOrigin[VY] >= openBottom))
-           && canOccludeSectorPairBoundary(frontSec, backSec, false))
+           && canOccludeEdgeBetweenPlanes(leaf->visFloor(), backLeaf.visFloor()))
         {
             C_AddViewRelOcclusion(from.origin(), to.origin(), openBottom, false);
         }
@@ -2276,7 +2287,7 @@ static void occludeLeaf(bool frontFacing)
         // Does the ceiling create an occlusion?
         if(((openTop < leaf->visCeilingHeight() && vOrigin[VY] >= openTop)
             || (openTop <  backLeaf.visCeilingHeight() && vOrigin[VY] <= openTop))
-           && canOccludeSectorPairBoundary(frontSec, backSec, true))
+           && canOccludeEdgeBetweenPlanes(leaf->visCeiling(), backLeaf.visCeiling()))
         {
             C_AddViewRelOcclusion(from.origin(), to.origin(), openTop, true);
         }
