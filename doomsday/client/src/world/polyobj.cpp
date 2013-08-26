@@ -130,7 +130,7 @@ void Polyobj::unlink()
     {
         Map &map = _bspLeaf->map();
 
-        _bspLeaf->removeOnePolyobj(*this);
+        _bspLeaf->removePolyobj(*this);
         _bspLeaf = 0;
 
         map.unlink(*this);
@@ -154,7 +154,7 @@ void Polyobj::link()
 
         // Given the center point determine in which BSP leaf the polyobj resides.
         _bspLeaf = &App_World().map().bspLeafAt(avg);
-        _bspLeaf->addOnePolyobj(*this);
+        _bspLeaf->addPolyobj(*this);
     }
 }
 

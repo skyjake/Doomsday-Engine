@@ -287,7 +287,7 @@ static void reportWallSectionDrawn(Line &line)
     }
 }
 
-static inline bool isNullLeaf(BspLeaf *leaf)
+static inline bool isNullLeaf(BspLeaf const *leaf)
 {
     return !leaf || !leaf->hasWorldVolume();
 }
@@ -2335,6 +2335,59 @@ static void clipLeafFrontFacingWalls()
     }
 }
 
+static int projectSpriteWorker(void *ptr, void * /*parameters*/)
+{
+    BspLeaf const *leaf = currentBspLeaf;
+    DENG_ASSERT(!isNullLeaf(leaf));
+
+    mobj_t *mo = (mobj_t *) ptr;
+
+    if(mo->addFrameCount != frameCount)
+    {
+        mo->addFrameCount = frameCount;
+
+        R_ProjectSprite(mo);
+
+        // Hack: Sprites have a tendency to extend into the ceiling in
+        // sky sectors. Here we will raise the skyfix dynamically, to make sure
+        // that no sprites get clipped by the sky.
+
+        if(leaf->visCeiling().surface().hasSkyMaskedMaterial())
+        {
+            if(Material *material = R_GetMaterialForSprite(mo->sprite, mo->frame))
+            {
+                if(!(mo->dPlayer && (mo->dPlayer->flags & DDPF_CAMERA))
+                   && mo->origin[VZ] <= leaf->visCeilingHeight()
+                   && mo->origin[VZ] >= leaf->visFloorHeight())
+                {
+                    coord_t visibleTop = mo->origin[VZ] + material->height();
+                    if(visibleTop > leaf->map().skyFixCeiling())
+                    {
+                        // Raise skyfix ceiling.
+                        leaf->map().setSkyFixCeiling(visibleTop + 16/*leeway*/);
+                    }
+                }
+            }
+        }
+    }
+
+    return false; // Continue iteration.
+}
+
+static void projectLeafSprites()
+{
+    BspLeaf *leaf = currentBspLeaf;
+    DENG_ASSERT(!isNullLeaf(leaf));
+
+    // Do not use validCount because other parts of the renderer may change it.
+    if(leaf->lastSpriteProjectFrame() == frameCount)
+        return; // Already added.
+
+    R_IterateBspLeafContacts(*leaf, OT_MOBJ, projectSpriteWorker);
+
+    leaf->setLastSpriteProjectFrame(frameCount);
+}
+
 /**
  * @pre Assumes the leaf is at least partially visible.
  */
@@ -2380,7 +2433,7 @@ static void drawCurrentLeaf()
      * Must be done AFTER the lumobjs have been clipped as this affects the projection
      * of halos.
      */
-    R_AddSprites(leaf);
+    projectLeafSprites();
 
     writeLeafSkyMask();
     writeLeafWallSections();

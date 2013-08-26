@@ -381,12 +381,12 @@ void BspLeaf::setCluster(SectorCluster *newCluster)
     d->cluster = newCluster;
 }
 
-void BspLeaf::addOnePolyobj(Polyobj const &polyobj)
+void BspLeaf::addPolyobj(Polyobj const &polyobj)
 {
     d->polyobjs.insert(const_cast<Polyobj *>(&polyobj));
 }
 
-bool BspLeaf::removeOnePolyobj(polyobj_s const &polyobj)
+bool BspLeaf::removePolyobj(polyobj_s const &polyobj)
 {
     int sizeBefore = d->polyobjs.size();
     d->polyobjs.remove(const_cast<Polyobj *>(&polyobj));
@@ -408,10 +408,9 @@ void BspLeaf::setValidCount(int newValidCount)
     d->validCount = newValidCount;
 }
 
-bool BspLeaf::pointInside(Vector2d const &point) const
+bool BspLeaf::polyContains(Vector2d const &point) const
 {
-    if(isDegenerate())
-        return false; // Obviously not.
+    if(isDegenerate()) return false; // Obviously not.
 
     HEdge const *hedge = poly().hedge();
     do
@@ -435,19 +434,24 @@ bool BspLeaf::pointInside(Vector2d const &point) const
 
 bool BspLeaf::hasWorldVolume(bool useVisualHeights) const
 {
-    if(isDegenerate()) return false;
     if(!hasCluster()) return false;
 
-    coord_t const floorHeight = useVisualHeights? visFloorHeight() : floor().height();
-    coord_t const ceilHeight  = useVisualHeights? visCeilingHeight() : ceiling().height();
-
-    return (ceilHeight - floorHeight > 0);
+    if(useVisualHeights)
+    {
+        return visCeilingHeight() - visFloorHeight() > 0;
+    }
+    else
+    {
+        return ceilingHeight() - floorHeight() > 0;
+    }
 }
 
 HEdge *BspLeaf::fanBase() const
 {
     if(d->needUpdateFanBase)
+    {
         d->chooseFanBase();
+    }
     return d->fanBase;
 }
 
@@ -579,7 +583,7 @@ static void accumReverbForWallSections(HEdge const *hedge,
 
 bool BspLeaf::updateReverb()
 {
-    if(!hasCluster() || !d->poly)
+    if(!hasCluster())
     {
         d->reverb[SRD_SPACE] = d->reverb[SRD_VOLUME] =
             d->reverb[SRD_DECAY] = d->reverb[SRD_DAMPING] = 0;
@@ -591,16 +595,13 @@ bool BspLeaf::updateReverb()
 
     // Space is the rough volume of the BSP leaf (bounding box).
     AABoxd const &aaBox = d->poly->aaBox();
-    d->reverb[SRD_SPACE] =
-        int(ceiling().height() - floor().height()) *
-        (aaBox.maxX - aaBox.minX) *
-        (aaBox.maxY - aaBox.minY);
-
-    float total = 0;
+    d->reverb[SRD_SPACE] = int(ceilingHeight() - floorHeight())
+                         * (aaBox.maxX - aaBox.minX) * (aaBox.maxY - aaBox.minY);
 
     // The other reverb properties can be found out by taking a look at the
     // materials of all surfaces in the BSP leaf.
-    HEdge *base = d->poly->hedge();
+    float total  = 0;
+    HEdge *base  = d->poly->hedge();
     HEdge *hedge = base;
     do
     {
@@ -668,12 +669,12 @@ BspLeaf::ShadowLines const &BspLeaf::shadowLines() const
     return d->shadowLines;
 }
 
-int BspLeaf::addSpriteCount() const
+int BspLeaf::lastSpriteProjectFrame() const
 {
     return d->addSpriteCount;
 }
 
-void BspLeaf::setAddSpriteCount(int newFrameCount)
+void BspLeaf::setLastSpriteProjectFrame(int newFrameCount)
 {
     d->addSpriteCount = newFrameCount;
 }

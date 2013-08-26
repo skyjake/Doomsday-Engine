@@ -249,8 +249,6 @@ vissprite_t *R_NewVisSprite(void);
 
 #ifdef __CLIENT__
 
-void R_AddSprites(BspLeaf *bspLeaf);
-
 void R_SortVisSprites(void);
 
 #endif // __CLIENT__

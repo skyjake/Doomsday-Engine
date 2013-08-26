@@ -411,7 +411,9 @@ static uint generateDecorLights(MaterialSnapshot::Decoration const &decor,
             if(containingSector)
             {
                 // The point must be inside the correct sector.
-                if(!containingSector->pointInside(origin))
+                BspLeaf const &bspLeaf = containingSector->map().bspLeafAt(origin);
+                if(bspLeaf.sectorPtr() != containingSector
+                   || !bspLeaf.polyContains(origin))
                     continue;
             }
 

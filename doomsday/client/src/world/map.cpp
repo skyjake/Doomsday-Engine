@@ -2053,7 +2053,7 @@ void Map::link(mobj_t &mo, byte flags)
         if(player->mo->bspLeaf && player->mo->bspLeaf->hasSector())
         {
             BspLeaf &bspLeaf = *player->mo->bspLeaf;
-            if(bspLeaf.pointInside(player->mo->origin))
+            if(bspLeaf.polyContains(player->mo->origin))
             {
 #ifdef __CLIENT__
                 if(player->mo->origin[VZ] <  bspLeaf.visCeilingHeight() + 4 &&

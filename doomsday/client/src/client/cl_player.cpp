@@ -339,8 +339,8 @@ void ClPlayer_MoveLocal(coord_t dx, coord_t dy, coord_t z, boolean onground)
     }
 
     mo->bspLeaf  = P_BspLeafAtPoint_FixedPrecision(mo->origin);
-    mo->floorZ   = mo->bspLeaf->floor().height();
-    mo->ceilingZ = mo->bspLeaf->ceiling().height();
+    mo->floorZ   = mo->bspLeaf->floorHeight();
+    mo->ceilingZ = mo->bspLeaf->ceilingHeight();
 
     if(onground)
     {

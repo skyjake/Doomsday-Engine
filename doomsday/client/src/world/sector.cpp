@@ -767,8 +767,8 @@ void Sector::buildClusters()
         cluster->_allSelfRefBoundary = true;
         foreach(BspLeaf *leaf, cluster->_bspLeafs)
         {
-            HEdge *base  = leaf->poly().hedge();
-            HEdge *hedge = base;
+            HEdge const *base  = leaf->poly().hedge();
+            HEdge const *hedge = base;
             do
             {
                 if(hedge->mapElement() && hedge->twin().hasFace())
@@ -841,12 +841,6 @@ void Sector::chainSoundEmitters()
             linkSoundEmitter(root, back.topSoundEmitter());
         }
     }
-}
-
-bool Sector::pointInside(Vector2d const &point) const
-{
-    BspLeaf const &bspLeaf = map().bspLeafAt(point);
-    return bspLeaf.sectorPtr() == this && bspLeaf.pointInside(point);
 }
 
 #ifdef __CLIENT__

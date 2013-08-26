@@ -1013,7 +1013,7 @@ void R_ProjectSprite(mobj_t *mo)
 
     coord_t secFloor    = mo->bspLeaf->visFloorHeight();
     coord_t secCeil     = mo->bspLeaf->visCeilingHeight();
-    boolean floorAdjust = (fabs(mo->bspLeaf->visFloorHeight() - mo->bspLeaf->floor().height()) < 8);
+    boolean floorAdjust = (fabs(mo->bspLeaf->visFloorHeight() - mo->bspLeaf->floorHeight()) < 8);
 
     // Never make a vissprite when the mobj's origin sector is of zero height.
     if(secFloor >= secCeil) return;
@@ -1386,60 +1386,6 @@ void R_ProjectSprite(mobj_t *mo)
             }
         }
     }
-}
-
-typedef struct {
-    BspLeaf *bspLeaf;
-} addspriteparams_t;
-
-int RIT_AddSprite(void *ptr, void *parameters)
-{
-    mobj_t *mo = (mobj_t *) ptr;
-    addspriteparams_t *p = (addspriteparams_t *)parameters;
-
-    Map &map = p->bspLeaf->map();
-
-    if(mo->addFrameCount != frameCount)
-    {
-        R_ProjectSprite(mo);
-
-        // Hack: Sprites have a tendency to extend into the ceiling in
-        // sky sectors. Here we will raise the skyfix dynamically, to make sure
-        // that no sprites get clipped by the sky.
-        // Only check
-        Material *material = R_GetMaterialForSprite(mo->sprite, mo->frame);
-        if(material && p->bspLeaf->visCeiling().surface().hasSkyMaskedMaterial())
-        {
-            if(!(mo->dPlayer && mo->dPlayer->flags & DDPF_CAMERA) && // Cameramen don't exist!
-               mo->origin[VZ] <= p->bspLeaf->visCeiling().height() &&
-               mo->origin[VZ] >= p->bspLeaf->visFloor().height())
-            {
-                coord_t visibleTop = mo->origin[VZ] + material->height();
-                if(visibleTop > map.skyFixCeiling())
-                {
-                    // Raise skyfix ceiling.
-                    map.setSkyFixCeiling(visibleTop + 16/*leeway*/);
-                }
-            }
-        }
-        mo->addFrameCount = frameCount;
-    }
-    return false; // Continue iteration.
-}
-
-void R_AddSprites(BspLeaf *bspLeaf)
-{
-    DENG_ASSERT(bspLeaf != 0);
-
-    // Do not use validCount because other parts of the renderer may change it.
-    if(bspLeaf->addSpriteCount() == frameCount)
-        return; // Already added.
-
-    addspriteparams_t parms;
-    parms.bspLeaf = bspLeaf;
-    R_IterateBspLeafContacts(*bspLeaf, OT_MOBJ, RIT_AddSprite, &parms);
-
-    bspLeaf->setAddSpriteCount(frameCount);
 }
 
 void R_SortVisSprites()

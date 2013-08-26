@@ -549,7 +549,7 @@ DENG2_OBSERVES(Sector, LightLevelChange)
                 samplePoint = origin + off + samplePoints[0];
 
                 BspLeaf &bspLeaf = map.bspLeafAt(samplePoint);
-                if(bspLeaf.pointInside(samplePoint))
+                if(bspLeaf.polyContains(samplePoint))
                     ssamples[idx] = bspLeaf.sectorPtr();
                 else
                     ssamples[idx] = 0;
@@ -598,7 +598,7 @@ DENG2_OBSERVES(Sector, LightLevelChange)
                         samplePoint = origin + off + samplePoints[n];
 
                         BspLeaf &bspLeaf = map.bspLeafAt(samplePoint);
-                        if(bspLeaf.pointInside(samplePoint))
+                        if(bspLeaf.polyContains(samplePoint))
                             ssamples[idx] = bspLeaf.sectorPtr();
                         else
                             ssamples[idx] = 0;

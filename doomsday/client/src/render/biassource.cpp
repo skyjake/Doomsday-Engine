@@ -93,7 +93,7 @@ DENG2_PIMPL(BiasSource)
         /// @todo Do not assume the current map.
         bspLeaf = &App_World().map().bspLeafAt(origin);
 
-        bool newInVoidState = !(bspLeaf->pointInside(origin));
+        bool newInVoidState = !(bspLeaf->polyContains(origin));
         if(inVoid != newInVoidState)
         {
             inVoid = newInVoidState;

@@ -353,7 +353,7 @@ D_CMD(InspectMobj)
     if(mo->bspLeaf && mo->bspLeaf->hasSector())
     {
         Con_Printf("Sector:%i (FloorZ:%f CeilingZ:%f)\n", mo->bspLeaf->sector().indexInMap(),
-                   mo->bspLeaf->floor().height(), mo->bspLeaf->ceiling().height());
+                   mo->bspLeaf->floorHeight(), mo->bspLeaf->ceilingHeight());
     }
     if(mo->onMobj)
     {

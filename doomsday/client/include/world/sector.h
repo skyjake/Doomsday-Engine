@@ -304,18 +304,6 @@ public:
     void buildClusters();
 
     /**
-     * Determines whether the specified @a point in the map coordinate space
-     * lies within the sector (according to the edges of the BSP leafs).
-     *
-     * @param point  Map space coordinate to test.
-     *
-     * @return  @c true iff the point lies inside the sector.
-     *
-     * @see BspLeaf::pointInside()
-     */
-    bool pointInside(de::Vector2d const &point) const;
-
-    /**
      * Returns the axis-aligned bounding box which encompases the geometry of
      * all BSP leafs attributed to the sector (map units squared). Note that if
      * no BSP leafs reference the sector the bounding box will be invalid (has

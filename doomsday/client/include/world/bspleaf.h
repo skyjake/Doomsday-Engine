@@ -130,6 +130,19 @@ public:
     void setPoly(de::Face *polygon);
 
     /**
+     * Determines whether the specified @a point in the map coordinate space
+     * lies inside the polygon geometry of the BSP leaf on the XY plane. If no
+     * face is attributed with @ref setPoly() @c false is returned.
+     *
+     * @param point  Map space coordinate to test.
+     *
+     * @return  @c true iff the point lies inside the BSP leaf's geometry.
+     *
+     * @see http://www.alienryderflex.com/polygon/
+     */
+    bool polyContains(de::Vector2d const &point) const;
+
+    /**
      * Assign an additional mesh geometry to the BSP leaf. Such @em extra
      * meshes are used to represent geometry which would otherwise result in
      * a non-manifold mesh if incorporated in the primary mesh for the map.
@@ -209,7 +222,7 @@ public:
      * Returns the sector plane which defines the physical floor of the BSP leaf.
      * @see plane(), visFloor()
      */
-    inline Plane &floor() const { return plane(Sector::Floor); }
+    inline Plane &floor() const   { return plane(Sector::Floor); }
 
     /**
      * Returns the sector plane which defines the physical ceiling of the BSP leaf.
@@ -258,7 +271,7 @@ public:
      * Returns the sector plane which defines the @em visual floor of the BSP leaf.
      * @see hasSector(), floor()
      */
-    inline Plane &visFloor() const { return visPlane(Sector::Floor); }
+    inline Plane &visFloor() const   { return visPlane(Sector::Floor); }
 
     /**
      * Returns the sector plane which defines the @em visual ceiling of the BSP leaf.
@@ -301,14 +314,14 @@ public:
      * Ownership is unaffected. If the polyobj is already linked in this set
      * then nothing will happen.
      */
-    void addOnePolyobj(struct polyobj_s const &polyobj);
+    void addPolyobj(struct polyobj_s const &polyobj);
 
     /**
      * Remove the given @a polyobj from the set of those linked to the BSP leaf.
      *
      * @return  @c true= @a polyobj was linked and subsequently removed.
      */
-    bool removeOnePolyobj(polyobj_s const &polyobj);
+    bool removePolyobj(polyobj_s const &polyobj);
 
     /**
      * Provides access to the set of polyobjs linked to the BSP leaf.
@@ -328,18 +341,6 @@ public:
      * @see aaBox()
      */
     de::Vector2d const &worldGridOffset() const;
-
-    /**
-     * Determines whether the specified @a point in the map coordinate space
-     * lies within the BSP leaf (according to the edges).
-     *
-     * @param point  Map space coordinate to test.
-     *
-     * @return  @c true iff the point lies inside the BSP leaf.
-     *
-     * @see http://www.alienryderflex.com/polygon/
-     */
-    bool pointInside(de::Vector2d const &point) const;
 
     /**
      * Returns the @em validCount of the BSP leaf. Used by some legacy iteration
@@ -441,15 +442,15 @@ public:
      * Returns the frame number of the last time mobj sprite projection was
      * performed for the BSP leaf.
      */
-    int addSpriteCount() const;
+    int lastSpriteProjectFrame() const;
 
     /**
      * Change the frame number of the last time mobj sprite projection was
      * performed for the BSP leaf.
      *
-     * @param newFrameCount  New frame number.
+     * @param newFrame  New frame number.
      */
-    void setAddSpriteCount(int newFrameCount);
+    void setLastSpriteProjectFrame(int newFrame);
 
 #endif // __CLIENT__
 
