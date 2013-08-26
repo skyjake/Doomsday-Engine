@@ -21,7 +21,7 @@
 #define LIBDENG2_OBSERVERS_H
 
 #include "../libdeng2.h"
-#include "../ReadWriteLockable"
+#include "../Lockable"
 #include "../Guard"
 
 #include <QSet>
@@ -123,7 +123,7 @@ namespace de {
  * and writing as appropriate.
  */
 template <typename Type>
-class Observers : public ReadWriteLockable
+class Observers : public Lockable
 {
 public:
     typedef QSet<Type *> Members;
@@ -139,24 +139,24 @@ public:
     class Loop {
     public:
         Loop(Observers &observers) {
-            DENG2_GUARD_READ(observers);
+            DENG2_GUARD(observers);
             _observers = observers._members;
-            _next = _observers.begin();
+            _next = _observers.constBegin();
             next();
         }
-        bool done() {
-            return _current == _observers.end();
+        bool done() const {
+            return _current == _observers.constEnd();
         }
         void next() {
             _current = _next;
-            if(_next != _observers.end()) {
+            if(_next != _observers.constEnd()) {
                 ++_next;
             }
         }
-        iterator &get() {
+        const_iterator const &get() const {
             return _current;
         }
-        Type *operator -> () {
+        Type *operator -> () const {
             return *get();
         }
         Loop &operator ++ () {
@@ -165,8 +165,8 @@ public:
         }
     private:
         Members _observers;
-        iterator _current;
-        iterator _next;
+        const_iterator _current;
+        const_iterator _next;
     };
 
     friend class Loop;
@@ -183,14 +183,14 @@ public:
     }
 
     void clear() {
-        DENG2_GUARD_WRITE(this);
+        DENG2_GUARD(this);
         _members.clear();
     }
 
     Observers<Type> &operator = (Observers<Type> const &other) {
         if(this == &other) return *this;
-        DENG2_GUARD_READ(other);
-        DENG2_GUARD_WRITE(this);
+        DENG2_GUARD(other);
+        DENG2_GUARD(this);
         _members = other._members;
         return *this;
     }
@@ -198,7 +198,7 @@ public:
     /// Add an observer into the set. The set does not receive
     /// ownership of the observer instance.
     void add(Type *observer) {
-        DENG2_GUARD_WRITE(this);
+        DENG2_GUARD(this);
         _members.insert(observer);
     }
 
@@ -218,7 +218,7 @@ public:
     }
 
     void remove(Type *observer) {
-        DENG2_GUARD_WRITE(this);
+        DENG2_GUARD(this);
         _members.remove(observer);
     }
 
@@ -238,7 +238,7 @@ public:
     }
 
     size_type size() const {
-        DENG2_GUARD_READ(this);
+        DENG2_GUARD(this);
         return _members.size();
     }
 

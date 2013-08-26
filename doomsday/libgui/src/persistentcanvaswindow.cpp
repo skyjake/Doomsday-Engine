@@ -247,6 +247,185 @@ DENG2_PIMPL(PersistentCanvasWindow)
             }
             return DisplayMode_OriginalMode();
         }
+
+        void applyAttributes(int const *attribs)
+        {
+            for(int i = 0; attribs[i]; ++i)
+            {
+                switch(attribs[i++])
+                {
+                case PersistentCanvasWindow::Left:
+                    windowRect.moveTopLeft(Vector2i(attribs[i], windowRect.topLeft.y));
+                    break;
+
+                case PersistentCanvasWindow::Top:
+                    windowRect.moveTopLeft(Vector2i(windowRect.topLeft.x, attribs[i]));
+                    break;
+
+                case PersistentCanvasWindow::Width:
+                    windowRect.setWidth(de::max(attribs[i], MIN_WIDTH));
+                    break;
+
+                case PersistentCanvasWindow::Height:
+                    windowRect.setHeight(de::max(attribs[i], MIN_HEIGHT));
+                    break;
+
+                case PersistentCanvasWindow::Centered:
+                    setFlag(State::Centered, attribs[i]);
+                    break;
+
+                case PersistentCanvasWindow::Maximized:
+                    setFlag(State::Maximized, attribs[i]);
+                    if(attribs[i]) setFlag(State::Fullscreen, false);
+                    break;
+
+                case PersistentCanvasWindow::Fullscreen:
+                    setFlag(State::Fullscreen, attribs[i]);
+                    if(attribs[i]) setFlag(State::Maximized, false);
+                    break;
+
+                case PersistentCanvasWindow::FullscreenWidth:
+                    fullSize.x = attribs[i];
+                    break;
+
+                case PersistentCanvasWindow::FullscreenHeight:
+                    fullSize.y = attribs[i];
+                    break;
+
+                case PersistentCanvasWindow::ColorDepthBits:
+                    colorDepthBits = attribs[i];
+                    DENG2_ASSERT(colorDepthBits >= 8 && colorDepthBits <= 32);
+                    break;
+
+                case PersistentCanvasWindow::FullSceneAntialias:
+                    setFlag(State::FSAA, attribs[i]);
+                    break;
+
+                case PersistentCanvasWindow::VerticalSync:
+                    setFlag(State::VSync, attribs[i]);
+                    break;
+
+                default:
+                    // Unknown attribute.
+                    DENG2_ASSERT(false);
+                }
+            }
+        }
+
+        /**
+         * Checks all command line options that affect window geometry and
+         * applies them to this logical state.
+         */
+        void modifyAccordingToOptions()
+        {
+            CommandLine const &cmdLine = App::app().commandLine();
+
+            // We will compose a set of attributes based on the options.
+            QVector<int> attribs;
+
+            if(cmdLine.has("-nofullscreen") || cmdLine.has("-window"))
+            {
+                attribs << PersistentCanvasWindow::Fullscreen << false;
+            }
+
+            if(cmdLine.has("-fullscreen") || cmdLine.has("-nowindow"))
+            {
+                attribs << PersistentCanvasWindow::Fullscreen << true;
+            }
+
+            if(int arg = cmdLine.check("-width", 1))
+            {
+                attribs << PersistentCanvasWindow::FullscreenWidth << cmdLine.at(arg + 1).toInt();
+            }
+
+            if(int arg = cmdLine.check("-height", 1))
+            {
+                attribs << PersistentCanvasWindow::FullscreenHeight << cmdLine.at(arg + 1).toInt();
+            }
+
+            if(int arg = cmdLine.check("-winwidth", 1))
+            {
+                attribs << PersistentCanvasWindow::Width << cmdLine.at(arg + 1).toInt();
+            }
+
+            if(int arg = cmdLine.check("-winheight", 1))
+            {
+                attribs << PersistentCanvasWindow::Height << cmdLine.at(arg + 1).toInt();
+            }
+
+            if(int arg = cmdLine.check("-winsize", 2))
+            {
+                attribs << PersistentCanvasWindow::Width  << cmdLine.at(arg + 1).toInt()
+                        << PersistentCanvasWindow::Height << cmdLine.at(arg + 2).toInt();
+            }
+
+            if(int arg = cmdLine.check("-colordepth", 1))
+            {
+                attribs << PersistentCanvasWindow::ColorDepthBits << de::clamp(8, cmdLine.at(arg+1).toInt(), 32);
+            }
+            if(int arg = cmdLine.check("-bpp", 1))
+            {
+                attribs << PersistentCanvasWindow::ColorDepthBits << de::clamp(8, cmdLine.at(arg+1).toInt(), 32);
+            }
+
+            if(int arg = cmdLine.check("-xpos", 1))
+            {
+                attribs << PersistentCanvasWindow::Left << cmdLine.at(arg+ 1 ).toInt()
+                        << PersistentCanvasWindow::Centered << false
+                        << PersistentCanvasWindow::Maximized << false;
+            }
+
+            if(int arg = cmdLine.check("-ypos", 1))
+            {
+                attribs << PersistentCanvasWindow:: Top << cmdLine.at(arg + 1).toInt()
+                        << PersistentCanvasWindow::Centered << false
+                        << PersistentCanvasWindow::Maximized << false;
+            }
+
+            if(cmdLine.check("-center"))
+            {
+                attribs << PersistentCanvasWindow::Centered << true;
+            }
+
+            if(cmdLine.check("-nocenter"))
+            {
+                attribs << PersistentCanvasWindow::Centered << false;
+            }
+
+            if(cmdLine.check("-maximize"))
+            {
+                attribs << PersistentCanvasWindow::Maximized << true;
+            }
+
+            if(cmdLine.check("-nomaximize"))
+            {
+                attribs << PersistentCanvasWindow::Maximized << false;
+            }
+
+            if(cmdLine.check("-nofsaa"))
+            {
+                attribs << PersistentCanvasWindow::FullSceneAntialias << false;
+            }
+
+            if(cmdLine.check("-fsaa"))
+            {
+                attribs << PersistentCanvasWindow::FullSceneAntialias << true;
+            }
+
+            if(cmdLine.check("-novsync"))
+            {
+                attribs << PersistentCanvasWindow::VerticalSync << false;
+            }
+
+            if(cmdLine.check("-vsync"))
+            {
+                attribs << PersistentCanvasWindow::VerticalSync << true;
+            }
+
+            attribs << PersistentCanvasWindow::End;
+
+            applyAttributes(attribs.constData());
+        }
     };
 
     struct Task
@@ -353,121 +532,6 @@ DENG2_PIMPL(PersistentCanvasWindow)
     }
 
     /**
-     * Checks all command line options that affect window geometry and applies
-     * them to this Window.
-     */
-    void modifyAccordingToOptions()
-    {
-        CommandLine const &cmdLine = DENG2_APP->commandLine();
-
-        // We will compose a set of attributes based on the options.
-        QVector<int> attribs;
-
-        if(cmdLine.has("-nofullscreen") || cmdLine.has("-window"))
-        {
-            attribs << Fullscreen << false;
-        }
-
-        if(cmdLine.has("-fullscreen") || cmdLine.has("-nowindow"))
-        {
-            attribs << Fullscreen << true;
-        }
-
-        if(int arg = cmdLine.check("-width", 1))
-        {
-            attribs << FullscreenWidth << cmdLine.at(arg + 1).toInt();
-        }
-
-        if(int arg = cmdLine.check("-height", 1))
-        {
-            attribs << FullscreenHeight << cmdLine.at(arg + 1).toInt();
-        }
-
-        if(int arg = cmdLine.check("-winwidth", 1))
-        {
-            attribs << Width << cmdLine.at(arg + 1).toInt();
-        }
-
-        if(int arg = cmdLine.check("-winheight", 1))
-        {
-            attribs << Height << cmdLine.at(arg + 1).toInt();
-        }
-
-        if(int arg = cmdLine.check("-winsize", 2))
-        {
-            attribs << Width  << cmdLine.at(arg + 1).toInt()
-                    << Height << cmdLine.at(arg + 2).toInt();
-        }
-
-        if(int arg = cmdLine.check("-colordepth", 1))
-        {
-            attribs << ColorDepthBits << de::clamp(8, cmdLine.at(arg+1).toInt(), 32);
-        }
-        if(int arg = cmdLine.check("-bpp", 1))
-        {
-            attribs << ColorDepthBits << de::clamp(8, cmdLine.at(arg+1).toInt(), 32);
-        }
-
-        if(int arg = cmdLine.check("-xpos", 1))
-        {
-            attribs << Left << cmdLine.at(arg+ 1 ).toInt()
-                    << Centered << false
-                    << Maximized << false;
-        }
-
-        if(int arg = cmdLine.check("-ypos", 1))
-        {
-            attribs << Top << cmdLine.at(arg + 1).toInt()
-                    << Centered << false
-                    << Maximized << false;
-        }
-
-        if(cmdLine.check("-center"))
-        {
-            attribs << Centered << true;
-        }
-
-        if(cmdLine.check("-nocenter"))
-        {
-            attribs << Centered << false;
-        }
-
-        if(cmdLine.check("-maximize"))
-        {
-            attribs << Maximized << true;
-        }
-
-        if(cmdLine.check("-nomaximize"))
-        {
-            attribs << Maximized << false;
-        }
-
-        if(cmdLine.check("-nofsaa"))
-        {
-            attribs << FullSceneAntialias << false;
-        }
-
-        if(cmdLine.check("-fsaa"))
-        {
-            attribs << FullSceneAntialias << true;
-        }
-
-        if(cmdLine.check("-novsync"))
-        {
-            attribs << VerticalSync << false;
-        }
-
-        if(cmdLine.check("-vsync"))
-        {
-            attribs << VerticalSync << true;
-        }
-
-        attribs << End;
-
-        applyAttributes(attribs.constData());
-    }
-
-    /**
      * Parse attributes and apply the values to the widget.
      *
      * @param attribs  Zero-terminated array of attributes and values.
@@ -483,70 +547,8 @@ DENG2_PIMPL(PersistentCanvasWindow)
         state = widgetState();
 
         // The new modified state.
-        State mod = state;
-
-        for(int i = 0; attribs[i]; ++i)
-        {
-            switch(attribs[i++])
-            {
-            case Left:
-                mod.windowRect.moveTopLeft(Vector2i(attribs[i], mod.windowRect.topLeft.y));
-                break;
-
-            case Top:
-                mod.windowRect.moveTopLeft(Vector2i(mod.windowRect.topLeft.x, attribs[i]));
-                break;
-
-            case Width:
-                DENG2_ASSERT(attribs[i] >= MIN_WIDTH);
-                mod.windowRect.setWidth(attribs[i]);
-                break;
-
-            case Height:
-                DENG2_ASSERT(attribs[i] >= MIN_HEIGHT);
-                mod.windowRect.setHeight(attribs[i]);
-                break;
-
-            case Centered:
-                mod.setFlag(State::Centered, attribs[i]);
-                break;
-
-            case Maximized:
-                mod.setFlag(State::Maximized, attribs[i]);
-                if(attribs[i]) mod.setFlag(State::Fullscreen, false);
-                break;
-
-            case Fullscreen:
-                mod.setFlag(State::Fullscreen, attribs[i]);
-                if(attribs[i]) mod.setFlag(State::Maximized, false);
-                break;
-
-            case FullscreenWidth:
-                mod.fullSize.x = attribs[i];
-                break;
-
-            case FullscreenHeight:
-                mod.fullSize.y = attribs[i];
-                break;
-
-            case ColorDepthBits:
-                mod.colorDepthBits = attribs[i];
-                DENG2_ASSERT(mod.colorDepthBits >= 8 && mod.colorDepthBits <= 32);
-                break;
-
-            case FullSceneAntialias:
-                mod.setFlag(State::FSAA, attribs[i]);
-                break;
-
-            case VerticalSync:
-                mod.setFlag(State::VSync, attribs[i]);
-                break;
-
-            default:
-                // Unknown attribute.
-                DENG2_ASSERT(false);
-            }
-        }
+        State mod = state;     
+        mod.applyAttributes(attribs);
 
         LOG_DEBUG("windowRect:%s fullSize:%s depth:%i flags:%x")
                 << mod.windowRect.asText()
@@ -785,6 +787,7 @@ void PersistentCanvasWindow::restoreFromConfig()
 {
     // Restore the window's state.
     d->state.restoreFromConfig();
+    d->state.modifyAccordingToOptions();
     d->applyToWidget(d->state);
 }
 
