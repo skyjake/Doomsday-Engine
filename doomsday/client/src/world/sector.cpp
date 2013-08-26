@@ -18,6 +18,7 @@
  * 02110-1301 USA</small>
  */
 
+#include <QRect>
 #include <QSet>
 #include <QtAlgorithms>
 
@@ -43,6 +44,11 @@
 
 using namespace de;
 
+static QRectF qrectFromAABox(AABoxd const &aaBox)
+{
+    return QRectF(QPointF(aaBox.minX, aaBox.maxY), QPointF(aaBox.maxX, aaBox.minY));
+}
+
 void Sector::Cluster::remapVisPlanes()
 {
     // By default both planes are mapped to the parent sector.
@@ -61,7 +67,7 @@ void Sector::Cluster::remapVisPlanes()
             {
                 if(hedge->mapElement()->as<LineSideSegment>().line().isSelfReferencing())
                 {
-                    if(!exteriorCluster && hedge->twin().hasFace())
+                    if(hedge->twin().hasFace())
                     {
                         BspLeaf &otherLeaf = hedge->twin().face().mapElement()->as<BspLeaf>();
                         if(otherLeaf.hasCluster())
@@ -89,11 +95,25 @@ void Sector::Cluster::remapVisPlanes()
     {
         // Ensure we don't produce a cyclic dependency...
         Sector *finalSector = &exteriorCluster->visPlane(Floor).sector();
-        if(finalSector != &sector())
+        if(finalSector == &sector())
         {
-            _mappedVisFloor   = exteriorCluster;
-            _mappedVisCeiling = exteriorCluster;
+            // Must share a boundary edge.
+            QRectF boundingRect = qrectFromAABox(aaBox());
+            if(boundingRect.contains(qrectFromAABox(exteriorCluster->aaBox())))
+            {
+                // The contained cluster will link to this.
+                return;
+            }
+            else
+            {
+                // Reverse the linkage (this cluster is containted).
+                exteriorCluster->_mappedVisFloor =
+                    exteriorCluster->_mappedVisCeiling = exteriorCluster;
+            }
         }
+
+        _mappedVisFloor   = exteriorCluster;
+        _mappedVisCeiling = exteriorCluster;
     }
 }
 
