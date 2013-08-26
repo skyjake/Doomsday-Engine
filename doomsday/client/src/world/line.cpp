@@ -429,7 +429,7 @@ int Line::Side::setProperty(DmuArgs const &args)
     case DMU_SECTOR: {
         if(P_IsDummy(&line()))
         {
-            args.value(DMT_SIDE_SECTOR, &d->sector, 0);
+            args.value(DMT_LINESIDE_SECTOR, &d->sector, 0);
         }
         else
         {
