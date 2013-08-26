@@ -110,6 +110,10 @@ void Sector::Cluster::remapVisPlanes()
                 // a different cluster will be selected from the boundary).
                 exteriorCluster->_mappedVisFloor =
                     exteriorCluster->_mappedVisCeiling = 0;
+
+                // Cancel our own linkage too.
+                _mappedVisFloor = _mappedVisCeiling = 0;
+                return;
             }
         }
 
@@ -708,13 +712,13 @@ void Sector::buildClusters()
      * starting with a cluster per BSP leaf and then keep merging until no more
      * shared edges are found.
      */
-    foreach(BspLeaf *bspLeaf, map().bspLeafs())
+    foreach(BspLeaf *leaf, map().bspLeafs())
     {
-        if(&bspLeaf->parent().as<Sector>() != this)
+        if(&leaf->parent().as<Sector>() != this)
             continue;
 
         // Degenerate BSP leafs are excluded (no geometry).
-        if(bspLeaf->isDegenerate())
+        if(leaf->isDegenerate())
             continue;
 
         Cluster *cluster = new Cluster;
@@ -723,10 +727,10 @@ void Sector::buildClusters()
         d->clusters.append(cluster);
 
         // Ownership of the BSP leaf is not given to the cluster.
-        cluster->_bspLeafs.append(bspLeaf);
+        cluster->_bspLeafs.append(leaf);
 
         // Attribute the BSP leaf to the cluster.
-        bspLeaf->setCluster(cluster);
+        leaf->setCluster(cluster);
     }
 
     if(d->clusters.isEmpty()) return;
@@ -744,9 +748,9 @@ void Sector::buildClusters()
             if(findSharedEdge(*d->clusters[i], *d->clusters[k]))
             {
                 // Merge k into i.
-                foreach(BspLeaf *bspLeaf, d->clusters[k]->_bspLeafs)
+                foreach(BspLeaf *leaf, d->clusters[k]->_bspLeafs)
                 {
-                    bspLeaf->setCluster(d->clusters[i]);
+                    leaf->setCluster(d->clusters[i]);
                 }
                 d->clusters[i]->_bspLeafs.append(d->clusters[k]->_bspLeafs);
                 d->clusters.removeAt(k);
@@ -767,16 +771,17 @@ void Sector::buildClusters()
     foreach(Cluster *cluster, d->clusters)
     {
         cluster->_allSelfRefBoundary = true;
-        foreach(BspLeaf *bspLeaf, cluster->_bspLeafs)
+        foreach(BspLeaf *leaf, cluster->_bspLeafs)
         {
-            HEdge *base = bspLeaf->poly().hedge();
+            HEdge *base  = leaf->poly().hedge();
             HEdge *hedge = base;
             do
             {
-                if(hedge->twin().hasFace())
+                if(hedge->mapElement() && hedge->twin().hasFace())
                 {
-                    BspLeaf &backLeaf = hedge->twin().face().mapElement()->as<BspLeaf>();
-                    if(hedge->mapElement() && backLeaf.hasCluster() && &backLeaf.cluster() != cluster)
+                    BspLeaf const &backLeaf    = hedge->twin().face().mapElement()->as<BspLeaf>();
+                    Cluster const *backCluster = backLeaf.hasCluster()? &backLeaf.cluster() : 0;
+                    if(backCluster != cluster)
                     {
                         if(!hedge->mapElement()->as<LineSideSegment>().line().isSelfReferencing())
                         {
