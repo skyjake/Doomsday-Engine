@@ -22,14 +22,10 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_PROCESSCHECKDIALOG_H
-#define LIBDENG_PROCESSCHECKDIALOG_H
+#ifndef DENG_CLIENT_PROCESSCHECKDIALOG_H
+#define DENG_CLIENT_PROCESSCHECKDIALOG_H
 
 #include <de/types.h>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 // This is only for Windows.
 #ifdef WIN32
@@ -45,12 +41,8 @@ extern "C" {
  * @return  @c true, if the process has been stopped. Otherwise @c false,
  * the process is still running.
  */
-boolean Updater_AskToStopProcess(const char* processName, const char* message);
+boolean Updater_AskToStopProcess(char const *processName, char const *message);
 
 #endif // WIN32
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
-#endif // LIBDENG_PROCESSCHECKDIALOG_H
+#endif // DENG_CLIENT_PROCESSCHECKDIALOG_H

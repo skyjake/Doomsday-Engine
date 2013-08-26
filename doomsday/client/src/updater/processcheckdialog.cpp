@@ -19,13 +19,14 @@
  */
 
 #include "updater/processcheckdialog.h"
-#include <QMessageBox>
+#include "ui/widgets/messagedialog.h"
+#include "ui/clientwindow.h"
+
 #include <QProcess>
-#include <QDebug>
 
 #ifdef WIN32
 
-static bool isProcessRunning(const char* name)
+static bool isProcessRunning(char const *name)
 {
     QProcess wmic;
     wmic.start("wmic.exe", QStringList() << "PROCESS" << "get" << "Caption");
@@ -41,15 +42,23 @@ static bool isProcessRunning(const char* name)
     return false;
 }
 
-boolean Updater_AskToStopProcess(const char* processName, const char* message)
+boolean Updater_AskToStopProcess(char const *processName, char const *message)
 {
     while(isProcessRunning(processName))
     {
+        MessageDialog *msg = new MessageDialog;
+        msg->setDeleteAfterDismissed(true);
+        msg->title().setText(QObject::tr("Files In Use"));
+        msg->message().setText(QString(message) + "\n\n" _E(2) +
+                               QObject::tr("There is a running process called %1.")
+                               .arg(_E(b) + QString(processName) + _E(.)));
+
+        msg->buttons().items()
+                << new DialogButtonItem(DialogWidget::Accept | DialogWidget::Default, QObject::tr("Retry"))
+                << new DialogButtonItem(DialogWidget::Reject, QObject::tr("Ignore"));
+
         // Show a notification dialog.
-        QMessageBox msg(QMessageBox::Warning, "Files In Use", message,
-                        QMessageBox::Retry | QMessageBox::Ignore);
-        msg.setInformativeText(QString("(There is a running process called <b>%1</b>.)").arg(processName));
-        if(msg.exec() == QMessageBox::Ignore)
+        if(!msg->exec(ClientWindow::main().root()))
         {
             return !isProcessRunning(processName);
         }
