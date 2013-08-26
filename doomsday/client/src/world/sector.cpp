@@ -73,11 +73,10 @@ void Sector::Cluster::remapVisPlanes()
                         if(otherLeaf.hasCluster())
                         {
                             Cluster *otherCluster = &otherLeaf.cluster();
-                            if(otherCluster != this)
+                            if(otherCluster != this &&
+                               otherCluster->_mappedVisFloor != this &&
+                               !(!_allSelfRefBoundary && otherCluster->_allSelfRefBoundary))
                             {
-                                if(!_allSelfRefBoundary && otherCluster->_allSelfRefBoundary)
-                                    return;
-
                                 // Remember the exterior cluster.
                                 exteriorCluster = otherCluster;
                             }
@@ -106,9 +105,11 @@ void Sector::Cluster::remapVisPlanes()
             }
             else
             {
-                // Reverse the linkage (this cluster is containted).
+                // This cluster is containted. Remove linkage from exterior to
+                // this thereby forcing it to be re-evaluated (however next time
+                // a different cluster will be selected from the boundary).
                 exteriorCluster->_mappedVisFloor =
-                    exteriorCluster->_mappedVisCeiling = exteriorCluster;
+                    exteriorCluster->_mappedVisCeiling = 0;
             }
         }
 
