@@ -65,27 +65,25 @@ void Sector::Cluster::remapVisPlanes()
         {
             if(hedge->mapElement())
             {
-                if(hedge->mapElement()->as<LineSideSegment>().line().isSelfReferencing())
-                {
-                    if(hedge->twin().hasFace())
-                    {
-                        BspLeaf &otherLeaf = hedge->twin().face().mapElement()->as<BspLeaf>();
-                        if(otherLeaf.hasCluster())
-                        {
-                            Cluster *otherCluster = &otherLeaf.cluster();
-                            if(otherCluster != this &&
-                               otherCluster->_mappedVisFloor != this &&
-                               !(!_allSelfRefBoundary && otherCluster->_allSelfRefBoundary))
-                            {
-                                // Remember the exterior cluster.
-                                exteriorCluster = otherCluster;
-                            }
-                        }
-                    }
-                }
                 // Abort if any map line lacks a back geometry.
                 if(!hedge->twin().hasFace())
                     return;
+
+                if(hedge->mapElement()->as<LineSideSegment>().line().isSelfReferencing())
+                {
+                    BspLeaf &otherLeaf = hedge->twin().face().mapElement()->as<BspLeaf>();
+                    if(otherLeaf.hasCluster())
+                    {
+                        Cluster *otherCluster = &otherLeaf.cluster();
+                        if(otherCluster != this &&
+                           otherCluster->_mappedVisFloor != this &&
+                           !(!_allSelfRefBoundary && otherCluster->_allSelfRefBoundary))
+                        {
+                            // Remember the exterior cluster.
+                            exteriorCluster = otherCluster;
+                        }
+                    }
+                }
             }
         } while((hedge = &hedge->next()) != base);
     }
@@ -110,10 +108,6 @@ void Sector::Cluster::remapVisPlanes()
                 // a different cluster will be selected from the boundary).
                 exteriorCluster->_mappedVisFloor =
                     exteriorCluster->_mappedVisCeiling = 0;
-
-                // Cancel our own linkage too.
-                _mappedVisFloor = _mappedVisCeiling = 0;
-                return;
             }
         }
 
