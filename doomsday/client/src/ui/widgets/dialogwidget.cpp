@@ -83,6 +83,7 @@ DENG2_OBSERVES(ui::Context, Addition),
 DENG2_OBSERVES(ui::Context, Removal)
 {
     Modality modality;
+    Flags flags;
     ScrollAreaWidget *area;
     MenuWidget *buttons;
     QEventLoop subloop;
@@ -91,7 +92,12 @@ DENG2_OBSERVES(ui::Context, Removal)
     float normalGlow;
     bool animatingGlow;
 
-    Instance(Public *i) : Base(i), modality(Modal), needButtonUpdate(false), animatingGlow(false)
+    Instance(Public *i, Flags const &dialogFlags)
+        : Base(i),
+          modality(Modal),
+          flags(dialogFlags),
+          needButtonUpdate(false),
+          animatingGlow(false)
     {
         // Initialize the border glow.
         normalGlow = self.style().colors().colorf("glow").w;
@@ -117,20 +123,33 @@ DENG2_OBSERVES(ui::Context, Removal)
         area->rule()
                 .setInput(Rule::Left, self.rule().left())
                 .setInput(Rule::Top, self.rule().top())
-                .setInput(Rule::Width, area->contentRule().width() + area->margins().width())
-                .setInput(Rule::Height, container->rule().height() - buttons->rule().height() +
-                          area->margins().bottom());
+                .setInput(Rule::Width, area->contentRule().width() + area->margins().width());
 
-        // Buttons below the area.
-        buttons->rule()
-                .setInput(Rule::Top, area->rule().bottom() - area->margins().bottom()) // overlap margins
-                .setInput(Rule::Right, self.rule().right());
+        if(!flags.testFlag(Buttonless))
+        {
+            area->rule().setInput(Rule::Height, container->rule().height() -
+                                  buttons->rule().height() + area->margins().bottom());
 
-        // A blank container widget acts as the popup content parent.
-        container->rule().setInput(Rule::Width, OperatorRule::maximum(area->rule().width(),
-                                                                      buttons->rule().width()));
+            // Buttons below the area.
+            buttons->rule()
+                    .setInput(Rule::Top, area->rule().bottom() - area->margins().bottom()) // overlap margins
+                    .setInput(Rule::Right, self.rule().right());
+
+            // A blank container widget acts as the popup content parent.
+            container->rule().setInput(Rule::Width, OperatorRule::maximum(area->rule().width(),
+                                                                          buttons->rule().width()));
+        }
+        else
+        {
+            area->rule().setInput(Rule::Height, container->rule().height() + area->margins().height());
+            container->rule().setInput(Rule::Width, area->rule().width());
+        }
+
         container->add(area);
-        container->add(buttons);
+        if(!flags.testFlag(Buttonless))
+        {
+            container->add(buttons);
+        }
         self.setContent(container);
     }
 
@@ -138,12 +157,22 @@ DENG2_OBSERVES(ui::Context, Removal)
     {
         // The container's height is limited by the height of the view. Normally
         // the dialog tries to show the full height of the content area.
-
-        self.content().rule().setInput(Rule::Height,
-                                       OperatorRule::minimum(root().viewHeight(),
-                                                             area->contentRule().height() +
-                                                             area->margins().bottom() +
-                                                             buttons->rule().height()));
+        if(!flags.testFlag(Buttonless))
+        {
+            self.content().rule().setInput(Rule::Height,
+                                           OperatorRule::minimum(root().viewHeight(),
+                                                                 area->contentRule().height() +
+                                                                 area->margins().bottom() +
+                                                                 buttons->rule().height()));
+        }
+        else
+        {
+            // A blank container widget acts as the popup content parent.
+            self.content().rule().setInput(Rule::Height,
+                                           OperatorRule::minimum(root().viewHeight(),
+                                                                 area->contentRule().height() +
+                                                                 area->margins().height()));
+        }
     }
 
     void contextItemAdded(ui::Context::Pos, ui::Item const &)
@@ -291,8 +320,8 @@ DENG2_OBSERVES(ui::Context, Removal)
     }
 };
 
-DialogWidget::DialogWidget(String const &name)
-    : PopupWidget(name), d(new Instance(this))
+DialogWidget::DialogWidget(String const &name, Flags const &flags)
+    : PopupWidget(name), d(new Instance(this, flags))
 {
     setOpeningDirection(ui::NoDirection);
 

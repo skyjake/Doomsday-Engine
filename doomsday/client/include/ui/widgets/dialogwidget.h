@@ -54,6 +54,12 @@ public:
         NonModal
     };
 
+    enum Flag {
+        DefaultFlags = 0,
+        Buttonless = 0x1    ///< No space is reserved for buttons in the bottom.
+    };
+    Q_DECLARE_FLAGS(Flags, Flag)
+
     enum RoleFlag {
         None    = 0,
         Default = 0x1, ///< Pressing Space or Enter will activate this.
@@ -95,7 +101,7 @@ public:
     };
 
 public:
-    DialogWidget(de::String const &name = "");
+    DialogWidget(de::String const &name = "", Flags const &flags = DefaultFlags);
 
     Modality modality() const;
 
@@ -156,6 +162,7 @@ private:
 
 typedef DialogWidget::ButtonItem DialogButtonItem;
 
+Q_DECLARE_OPERATORS_FOR_FLAGS(DialogWidget::Flags)
 Q_DECLARE_OPERATORS_FOR_FLAGS(DialogWidget::RoleFlags)
 
 #endif // DENG_CLIENT_DIALOGWIDGET_H
