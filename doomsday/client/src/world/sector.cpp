@@ -49,6 +49,10 @@ static QRectF qrectFromAABox(AABoxd const &aaBox)
     return QRectF(QPointF(aaBox.minX, aaBox.maxY), QPointF(aaBox.maxX, aaBox.minY));
 }
 
+/**
+ * @todo Redesign the implementation to avoid recursion (note visPlane() calls
+ * this also).
+ */
 void Sector::Cluster::remapVisPlanes()
 {
     // By default both planes are mapped to the parent sector.
@@ -98,7 +102,9 @@ void Sector::Cluster::remapVisPlanes()
             QRectF boundingRect = qrectFromAABox(aaBox());
             if(boundingRect.contains(qrectFromAABox(exteriorCluster->aaBox())))
             {
-                // The contained cluster will link to this.
+                // The contained cluster will link to this. However we may still
+                // need to link this one to another, so re-evaluate.
+                remapVisPlanes();
                 return;
             }
             else
