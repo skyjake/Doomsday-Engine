@@ -155,6 +155,10 @@ VideoSettingsDialog::VideoSettingsDialog(String const &name)
 
     // Choice of display modes + 16/32-bit color depth.
     d->modes->setOpeningDirection(ui::Up);
+    if(DisplayMode_Count() > 10)
+    {
+        d->modes->popup().menu().setGridSize(2, ui::Expand, 0, ui::Expand);
+    }
     for(int i = 0; i < DisplayMode_Count(); ++i)
     {
         DisplayMode const *m = DisplayMode_ByIndex(i);

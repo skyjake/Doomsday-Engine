@@ -120,10 +120,10 @@ DENG2_OBSERVES(ContextWidgetOrganizer, WidgetUpdate)
         Rectanglei hi;
         if(hover)
         {
-            hi.topLeft.x     = self.rule().left().valuei();
-            hi.topLeft.y     = hover->rule().top().valuei();
-            hi.bottomRight.x = self.rule().right().valuei();
-            hi.bottomRight.y = hover->rule().bottom().valuei();
+            hi.topLeft.x     = hover->hitRule().left().valuei();
+            hi.topLeft.y     = hover->hitRule().top().valuei();
+            hi.bottomRight.x = hover->hitRule().right().valuei();
+            hi.bottomRight.y = hover->hitRule().bottom().valuei();
         }
         return hi;
     }
