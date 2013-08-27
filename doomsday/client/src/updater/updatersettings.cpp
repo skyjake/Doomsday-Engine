@@ -45,6 +45,7 @@ using namespace de;
 
 #define SYMBOL_DEFAULT_DOWNLOAD "${DEFAULT}"
 
+#if 0
 void UpdaterSettings::initialize()
 {
     Config &config = App::config();
@@ -78,6 +79,7 @@ void UpdaterSettings::initialize()
         config.names().add(SUBREC_NAME, s);
     }
 }
+#endif
 
 UpdaterSettings::UpdaterSettings()
 {}

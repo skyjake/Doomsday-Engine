@@ -50,7 +50,7 @@ sections.subsection('Built-in functions: Text(), Number(), Time(), timedelta().'
 print Text(123), Number("123")
 print "Beginning of March 2011:", Time("2011-03-01")
 print Time("2000-01-02 03:04:05.678")
-print 'Invalid time:', Time("123-123")
+print 'Invalid time:', Time("123-123"), Time("")
 print 'Thousand seconds later:', timedelta(Time(), Time() + 1000)
 
 sections.subsection('Built-in functions: serialize() and deserialize().')

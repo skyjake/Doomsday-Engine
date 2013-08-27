@@ -478,8 +478,6 @@ DENG2_OBSERVES(App, StartupComplete)
 
 Updater::Updater() : d(new Instance(this))
 {
-    UpdaterSettings::initialize();
-
     connect(d->network, SIGNAL(finished(QNetworkReply *)), this, SLOT(gotReply(QNetworkReply *)));
 
     // Do a silent auto-update check when starting.
