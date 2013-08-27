@@ -63,7 +63,6 @@ DENG2_OBSERVES(ContextWidgetOrganizer, WidgetCreation)
         self.setFont("choice.selected");
 
         choices = new PopupMenuWidget;
-        choices->setAnchorAndOpeningDirection(self.hitRule(), ui::Right);
         choices->menu().items().audienceForAddition += this;
         choices->menu().items().audienceForRemoval += this;
         choices->menu().organizer().audienceForWidgetCreation += this;
@@ -172,7 +171,14 @@ DENG2_OBSERVES(ContextWidgetOrganizer, WidgetCreation)
 };
 
 ChoiceWidget::ChoiceWidget(String const &name) : ButtonWidget(name), d(new Instance(this))
-{}
+{
+    setOpeningDirection(ui::Right);
+}
+
+void ChoiceWidget::setOpeningDirection(Direction dir)
+{
+    d->choices->setAnchorAndOpeningDirection(hitRule(), dir);
+}
 
 PopupMenuWidget &ChoiceWidget::popup()
 {

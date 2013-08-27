@@ -56,6 +56,8 @@ public:
 public:
     ChoiceWidget(de::String const &name = "");
 
+    void setOpeningDirection(ui::Direction dir);
+
     ui::Context &items();
 
     PopupMenuWidget &popup();

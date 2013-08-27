@@ -54,6 +54,7 @@ D_CMD(SetFullRes);
 D_CMD(SetWinRes);
 D_CMD(ToggleFullscreen);
 D_CMD(ToggleMaximized);
+D_CMD(ToggleCentered);
 D_CMD(CenterWindow);
 D_CMD(DisplayModeInfo);
 D_CMD(ListDisplayModes);
@@ -144,6 +145,7 @@ void GL_Register()
     C_CMD      ("setvidramp",       "",     UpdateGammaRamp);
     C_CMD      ("togglefullscreen", "",     ToggleFullscreen);
     C_CMD      ("togglemaximized",  "",     ToggleMaximized);
+    C_CMD      ("togglecentered",   "",     ToggleCentered);
     C_CMD      ("centerwindow",     "",     CenterWindow);
 
     GL_TexRegister();
@@ -1237,6 +1239,22 @@ D_CMD(ToggleMaximized)
 
     int attribs[] = {
         ClientWindow::Maximized, !win->isMaximized(),
+        ClientWindow::End
+    };
+    return win->changeAttributes(attribs);
+}
+
+D_CMD(ToggleCentered)
+{
+    DENG2_UNUSED3(src, argc, argv);
+
+    ClientWindow *win = WindowSystem::mainPtr();
+
+    if(!win)
+        return false;
+
+    int attribs[] = {
+        ClientWindow::Centered, !win->isCentered(),
         ClientWindow::End
     };
     return win->changeAttributes(attribs);

@@ -24,6 +24,7 @@
 #include "ui/widgets/popupmenuwidget.h"
 #include "ui/widgets/blurwidget.h"
 #include "ui/widgets/aboutdialog.h"
+#include "ui/widgets/videosettingsdialog.h"
 #include "updater/updatersettingsdialog.h"
 #include "ui/clientwindow.h"
 #include "ui/commandaction.h"
@@ -47,8 +48,9 @@ using namespace ui;
 
 static TimeDelta OPEN_CLOSE_SPAN = 0.2;
 static uint POS_PANEL = 0;
-static uint POS_UNLOAD = 3;
-static uint POS_UPDATER_SETTINGS = 6;
+static uint POS_VIDEO_SETTINGS = 1;
+static uint POS_UNLOAD = 2;
+static uint POS_UPDATER_SETTINGS = 5;
 
 DENG_GUI_PIMPL(TaskBarWidget),
 public IGameChangeObserver
@@ -247,8 +249,10 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
      */
     d->mainMenu->menu().items()
             << new ui::ActionItem(_E(b) + tr("Open Control Panel"), new CommandAction("panel"))
-            << new ui::ActionItem(tr("Toggle Fullscreen"), new CommandAction("togglefullscreen"))
-            << new ui::VariableToggleItem(tr("Show FPS"), App::config()["window.main.showFps"])
+            //<< new ui::ActionItem(tr("Toggle Fullscreen"), new CommandAction("togglefullscreen"))
+            << new ui::ActionItem(ui::Item::ShownAsButton, tr("Video Settings"),
+                                  new SignalAction(this, SLOT(showVideoSettings())))
+            //<< new ui::VariableToggleItem(tr("Show FPS"), App::config()["window.main.showFps"])
             << unloadMenu
             << new ui::Item(ui::Item::Separator)
             << new ui::ActionItem(tr("Check for Updates..."), new CommandAction("updateandnotify"))
@@ -464,6 +468,11 @@ void TaskBarWidget::openMainMenu()
     d->mainMenu->open();
 }
 
+void TaskBarWidget::closeMainMenu()
+{
+    d->mainMenu->close();
+}
+
 void TaskBarWidget::unloadGame()
 {
     Con_Execute(CMDS_DDAY, "unload", false, false);
@@ -489,4 +498,20 @@ void TaskBarWidget::showUpdaterSettings()
                                           ui::Left);
     }
     dlg->exec(root());
+}
+
+void TaskBarWidget::showVideoSettings()
+{
+    VideoSettingsDialog *dlg = new VideoSettingsDialog;
+    dlg->setDeleteAfterDismissed(true);
+    if(d->mainMenu->isOpen())
+    {
+        dlg->setAnchorAndOpeningDirection(d->mainMenu->menu().organizer().
+                                          itemWidget(POS_VIDEO_SETTINGS)->hitRule(),
+                                          ui::Left);
+
+        connect(d->mainMenu, SIGNAL(closed()), dlg, SLOT(close()));
+    }
+    root().add(dlg);
+    dlg->open();
 }

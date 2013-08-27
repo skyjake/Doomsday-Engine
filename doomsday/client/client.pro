@@ -386,6 +386,7 @@ DENG_HEADERS += \
     include/ui/widgets/togglewidget.h \
     include/ui/widgets/variabletoggleitem.h \
     include/ui/widgets/variabletogglewidget.h \
+    include/ui/widgets/videosettingsdialog.h \
     include/ui/widgets/widgetactions.h \
     include/ui/windowsystem.h \
     include/ui/zonedebug.h \
@@ -700,6 +701,7 @@ SOURCES += \
     src/ui/widgets/taskbarwidget.cpp \
     src/ui/widgets/togglewidget.cpp \
     src/ui/widgets/variabletogglewidget.cpp \
+    src/ui/widgets/videosettingsdialog.cpp \
     src/ui/widgets/widgetactions.cpp \
     src/ui/windowsystem.cpp \
     src/ui/zonedebug.cpp \

@@ -55,9 +55,11 @@ public slots:
     void openAndPauseGame();
     void close();
     void openMainMenu();
+    void closeMainMenu();
     void unloadGame();
     void showAbout();
     void showUpdaterSettings();
+    void showVideoSettings();
 
 signals:
     void opened();
