@@ -46,6 +46,8 @@ DENG2_OBSERVES(ContextWidgetOrganizer, WidgetCreation)
             d->updateButtonWithSelection();
             d->updateItemHighlight();
             d->choices->dismiss();
+
+            emit d->self.selectionChangedByUser(d->selected);
         }
 
         Action *duplicate() const

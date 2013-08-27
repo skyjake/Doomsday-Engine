@@ -29,9 +29,14 @@
 
 #include <de/App>
 #include <de/DisplayMode>
+#include <QPoint>
 
 using namespace de;
 using namespace ui;
+
+#ifndef MACOSX
+#  define USE_COLOR_DEPTH_CHOICE
+#endif
 
 DENG2_PIMPL(VideoSettingsDialog),
 DENG2_OBSERVES(PersistentCanvasWindow, AttributeChange)
@@ -44,11 +49,14 @@ DENG2_OBSERVES(PersistentCanvasWindow, AttributeChange)
     ToggleWidget *fsaa;
     ToggleWidget *vsync;
     ChoiceWidget *modes;
+#ifdef USE_COLOR_DEPTH_CHOICE
     ChoiceWidget *depths;
+#endif
 
     Instance(Public *i) : Base(i), win(ClientWindow::main())
     {
         ScrollAreaWidget &area = self.area();
+
         area.add(showFps    = new VariableToggleWidget(App::config()["window.main.showFps"]));
         area.add(fullscreen = new ToggleWidget);
         area.add(maximized  = new ToggleWidget);
@@ -56,8 +64,9 @@ DENG2_OBSERVES(PersistentCanvasWindow, AttributeChange)
         area.add(fsaa       = new ToggleWidget);
         area.add(vsync      = new ToggleWidget);
         area.add(modes      = new ChoiceWidget);
+#ifdef USE_COLOR_DEPTH_CHOICE
         area.add(depths     = new ChoiceWidget);
-
+#endif
         win.audienceForAttributeChange += this;
     }
 
@@ -76,6 +85,39 @@ DENG2_OBSERVES(PersistentCanvasWindow, AttributeChange)
         centered->setActive(win.isCentered());
         fsaa->setActive(Con_GetInteger("vid-fsaa") != 0);
         vsync->setActive(Con_GetInteger("vid-vsync") != 0);
+
+        // Select the current resolution/size in the mode list.
+        Canvas::Size current;
+        if(win.isFullScreen())
+        {
+            current = win.fullscreenSize();
+        }
+        else
+        {
+            current = win.windowRect().size();
+        }
+
+        // Update selected display mode.
+        ui::Context::Pos closest = ui::Context::InvalidPos;
+        int delta;
+        for(ui::Context::Pos i = 0; i < modes->items().size(); ++i)
+        {
+            QPoint const res = modes->items().at(i).data().toPoint();
+            int dx = res.x() - current.x;
+            int dy = res.y() - current.y;
+            int d = dx*dx + dy*dy;
+            if(closest == ui::Context::InvalidPos || d < delta)
+            {
+                closest = i;
+                delta = d;
+            }
+        }
+        modes->setSelected(closest);
+
+#ifdef USE_COLOR_DEPTH_CHOICE
+        // Select the current color depth in the depth list.
+        depths->setSelected(depths->items().findData(win.colorDepthBits()));
+#endif
     }
 
     void windowAttributesChanged(PersistentCanvasWindow &)
@@ -116,13 +158,22 @@ VideoSettingsDialog::VideoSettingsDialog(String const &name)
     for(int i = 0; i < DisplayMode_Count(); ++i)
     {
         DisplayMode const *m = DisplayMode_ByIndex(i);
-        String desc = String("%1 x %2 (%3:%4)").arg(m->width).arg(m->height)
-                .arg(m->ratioX).arg(m->ratioY);
-        if(m->refreshRate > 0) desc += String(" @ %1 Hz").arg(m->refreshRate, 0, 'f', 1);
+        QPoint const res(m->width, m->height);
 
-        d->modes->items() << new ChoiceItem(desc, i);
+        if(d->modes->items().findData(res) != ui::Context::InvalidPos)
+        {
+            // Got this already.
+            continue;
+        }
+
+        String desc = String("%1 x %2 (%3:%4)")
+                .arg(m->width).arg(m->height)
+                .arg(m->ratioX).arg(m->ratioY);
+
+        d->modes->items() << new ChoiceItem(desc, res);
     }
 
+#ifdef USE_COLOR_DEPTH_CHOICE
     LabelWidget *colorLabel = new LabelWidget;
     colorLabel->setText(tr("Colors:"));
     area().add(colorLabel);
@@ -131,6 +182,7 @@ VideoSettingsDialog::VideoSettingsDialog(String const &name)
     d->depths->items()
             << new ChoiceItem(tr("32-bit"), 32)
             << new ChoiceItem(tr("16-bit"), 16);
+#endif
 
     buttons().items()
             << new DialogButtonItem(DialogWidget::Action, tr("Reset to Defaults"))
@@ -138,10 +190,12 @@ VideoSettingsDialog::VideoSettingsDialog(String const &name)
                                     new SignalAction(&d->win.taskBar(), SLOT(closeMainMenu())));
 
     // Layout all widgets.
+    Rule const &gap = style().rules().rule("dialog.gap");
+
     GridLayout layout(area().contentRule().left(),
                       area().contentRule().top(), GridLayout::RowFirst);
     layout.setGridSize(2, 3);
-    layout.setColumnPadding(style().rules().rule("gap"));
+    layout.setColumnPadding(style().rules().rule("dialog.gap"));
     layout << *d->showFps
            << *d->fsaa
            << *d->vsync
@@ -149,18 +203,23 @@ VideoSettingsDialog::VideoSettingsDialog(String const &name)
            << *d->maximized
            << *d->centered;
 
-    SequentialLayout modeLayout(d->vsync->rule().left(), d->vsync->rule().bottom(), ui::Right);
-    modeLayout << *modeLabel << *d->modes << *colorLabel << *d->depths;
+    SequentialLayout modeLayout(d->vsync->rule().left(), d->vsync->rule().bottom() + gap, ui::Right);
+    modeLayout << *modeLabel << *d->modes;
 
-    /*SequentialLayout layout2(modeLabel->rule().left(), modeLabel->rule().bottom());
-    layout2 << *color << *def;*/
+#ifdef USE_COLOR_DEPTH_CHOICE
+    modeLayout << *colorLabel << *d->depths;
+#endif
 
-    area().setContentSize(OperatorRule::maximum(layout.width(),
-                                                modeLayout.width()
-                                                /*layout2.width()*/),
-                          layout.height() + modeLayout.height()/* + layout2.height()*/);
+    area().setContentSize(OperatorRule::maximum(layout.width(), modeLayout.width()),
+                          layout.height() + gap + modeLayout.height());
 
     d->fetch();
+
+    connect(d->modes,  SIGNAL(selectionChangedByUser(uint)), this, SLOT(changeMode(uint)));
+
+#ifdef USE_COLOR_DEPTH_CHOICE
+    connect(d->depths, SIGNAL(selectionChangedByUser(uint)), this, SLOT(changeColorDepth(uint)));
+#endif
 }
 
 void VideoSettingsDialog::toggleAntialias()
@@ -171,4 +230,20 @@ void VideoSettingsDialog::toggleAntialias()
 void VideoSettingsDialog::toggleVerticalSync()
 {
     Con_SetInteger("vid-vsync", !Con_GetInteger("vid-vsync"));
+}
+
+void VideoSettingsDialog::changeMode(uint selected)
+{
+    QPoint res = d->modes->items().at(selected).data().toPoint();
+    Con_Executef(CMDS_DDAY, true, "setres %i %i", int(res.x()), int(res.y()));
+}
+
+void VideoSettingsDialog::changeColorDepth(uint selected)
+{
+#ifdef USE_COLOR_DEPTH_CHOICE
+    Con_Executef(CMDS_DDAY, true, "setcolordepth %i",
+                 d->depths->items().at(selected).data().toInt());
+#else
+    DENG2_UNUSED(selected);
+#endif
 }

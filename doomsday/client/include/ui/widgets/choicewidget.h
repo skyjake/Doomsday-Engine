@@ -71,7 +71,8 @@ public slots:
     void openPopup();
 
 signals:
-    void selectionChanged(unsigned int pos);
+    void selectionChanged(uint pos);
+    void selectionChangedByUser(uint pos);
 
 private:
     DENG2_PRIVATE(d)

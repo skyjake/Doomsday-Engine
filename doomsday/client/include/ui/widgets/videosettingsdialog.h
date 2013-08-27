@@ -34,6 +34,8 @@ public:
 protected slots:
     void toggleAntialias();
     void toggleVerticalSync();
+    void changeMode(uint selected);
+    void changeColorDepth(uint selected);
 
 private:
     DENG2_PRIVATE(d)

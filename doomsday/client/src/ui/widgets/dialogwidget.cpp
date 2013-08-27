@@ -437,10 +437,10 @@ bool DialogWidget::handleEvent(Event const &event)
     }
     else
     {
-        if(event.type() == Event::MouseButton &&
+        if((event.type() == Event::MouseButton || event.type() == Event::MousePosition) &&
            hitTest(event.as<MouseEvent>().pos()))
         {
-            // Non-modal dialogs eat mouse clicks inside the dialog.
+            // Non-modal dialogs eat mouse clicks/position inside the dialog.
             return true;
         }
     }
