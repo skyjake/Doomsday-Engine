@@ -44,10 +44,12 @@ public:
 
     void clear();
 
-    void setLeftTop(de::Rule const &left, de::Rule const &top);
+    void setMode(Mode mode);
     void setGridSize(int numCols, int numRows);
+    void setModeAndGridSize(Mode mode, int numCols, int numRows);
     void setColumnAlignment(int column, ui::Alignment cellAlign);
 
+    void setLeftTop(de::Rule const &left, de::Rule const &top);
     void setOverrideWidth(de::Rule const &width);
     void setOverrideHeight(de::Rule const &height);
     void setColumnPadding(de::Rule const &gap);
@@ -75,8 +77,20 @@ public:
      */
     de::Vector2i gridSize() const;
 
+    /**
+     * Determines the cell coordinates of a particular widget. The widget
+     * must be among the widgets previously added to the layout.
+     *
+     * @param widget  Widget to look up.
+     *
+     * @return Cell coordinates.
+     */
+    de::Vector2i widgetPos(GuiWidget &widget) const;
+
     de::Rule const &width() const;
     de::Rule const &height() const;
+    de::Rule const &columnLeft(int col) const;
+    de::Rule const &columnRight(int col) const;
     de::Rule const &columnWidth(int col) const;
     de::Rule const &rowHeight(int row) const;
     de::Rule const &overrideWidth() const;

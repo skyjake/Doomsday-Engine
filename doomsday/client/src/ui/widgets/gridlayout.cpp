@@ -40,17 +40,22 @@ DENG2_PIMPL(GridLayout)
     struct Metric {
         Rule const *current;    ///< Current size of column/row (replaced many times).
         IndirectRule *final;    ///< Final size of column/row (for others to use).
-        Rule const *accum;      ///< Sum of sizes of previous columns/rows (for others to use).
+        Rule const *accumulatedLengths; ///< Sum of sizes of previous columns/rows (for others to use).
+        Rule const *minEdge;    ///< Rule for the left/top edge.
+        Rule const *maxEdge;    ///< Rule for the right/bottom edge.
         ui::Alignment cellAlign;///< Cell alignment affecting the entire column/row.
 
-        Metric() : current(0), final(new IndirectRule), accum(0), cellAlign(ui::AlignLeft)
+        Metric() : current(0), final(new IndirectRule), accumulatedLengths(0), minEdge(0), maxEdge(0),
+            cellAlign(ui::AlignLeft)
         {}
 
         ~Metric()
         {
             releaseRef(current);
             releaseRef(final);
-            releaseRef(accum);
+            releaseRef(accumulatedLengths);
+            releaseRef(minEdge);
+            releaseRef(maxEdge);
         }
     };
     typedef QList<Metric *> Metrics;
@@ -158,7 +163,7 @@ DENG2_PIMPL(GridLayout)
         Metric *m = new Metric;
         for(int i = 0; i < list.size(); ++i)
         {
-            sumInto(m->accum, *list[i]->final);
+            sumInto(m->accumulatedLengths, *list[i]->final);
         }
         list << m;
     }
@@ -180,35 +185,48 @@ DENG2_PIMPL(GridLayout)
         metric.final->setSource(*metric.current);
     }
 
-    Rule const &columnLeftX(int col) const // refless
+    Rule const &columnLeftX(int col)
     {
-        Rule const *base = holdRef(initialX);
-        if(col > 0)
+        if(!cols.at(col)->minEdge)
         {
-            if(colPad) changeRef(base, *base + *colPad * col);
-            sumInto(base, *cols.at(col)->accum);
+            Rule const *base = holdRef(initialX);
+            if(col > 0)
+            {
+                if(colPad) changeRef(base, *base + *colPad * col);
+                sumInto(base, *cols.at(col)->accumulatedLengths);
+            }
+            cols[col]->minEdge = base;
         }
-        return *refless(base);
+        return *cols.at(col)->minEdge;
     }
 
-    Rule const &columnRightX(int col) const // refless
+    Rule const &columnRightX(int col)
     {
         if(col < cols.size() - 1)
         {
             return columnLeftX(col + 1);
         }
-        return columnLeftX(col) + *cols.last()->final;
+
+        if(!cols.at(col)->maxEdge)
+        {
+            cols[col]->maxEdge = holdRef(columnLeftX(col) + *cols.last()->final);
+        }
+        return *cols.at(col)->maxEdge;
     }
 
-    Rule const &rowTopY(int row) const // refless
+    Rule const &rowTopY(int row) const
     {
-        Rule const *base = holdRef(initialY);
-        if(row > 0)
+        if(!rows.at(row)->minEdge)
         {
-            if(rowPad) changeRef(base, *base + *rowPad * row);
-            sumInto(base, *rows.at(row)->accum);
+            Rule const *base = holdRef(initialY);
+            if(row > 0)
+            {
+                if(rowPad) changeRef(base, *base + *rowPad * row);
+                sumInto(base, *rows.at(row)->accumulatedLengths);
+            }
+            rows[row]->minEdge = base;
         }
-        return *refless(base);
+        return *rows.at(row)->minEdge;
     }
 
     /**
@@ -402,6 +420,14 @@ void GridLayout::clear()
     d->clear();
 }
 
+void GridLayout::setMode(GridLayout::Mode mode)
+{
+    DENG2_ASSERT(isEmpty());
+
+    d->mode = mode;
+    d->setup(d->maxCols, d->maxRows);
+}
+
 void GridLayout::setLeftTop(Rule const &left, Rule const &top)
 {
     DENG2_ASSERT(isEmpty());
@@ -422,6 +448,14 @@ void GridLayout::setGridSize(int numCols, int numRows)
     d->setup(numCols, numRows);
 }
 
+void GridLayout::setModeAndGridSize(GridLayout::Mode mode, int numCols, int numRows)
+{
+    DENG2_ASSERT(isEmpty());
+
+    d->mode = mode;
+    setGridSize(numCols, numRows);
+}
+
 void GridLayout::setColumnAlignment(int column, ui::Alignment cellAlign)
 {
     DENG2_ASSERT(column >= 0 && column < d->cols.size());
@@ -440,11 +474,13 @@ void GridLayout::setOverrideHeight(Rule const &height)
 
 void GridLayout::setColumnPadding(Rule const &gap)
 {
+    DENG2_ASSERT(isEmpty());
     changeRef(d->colPad, gap);
 }
 
 void GridLayout::setRowPadding(Rule const &gap)
 {
+    DENG2_ASSERT(isEmpty());
     changeRef(d->rowPad, gap);
 }
 
@@ -493,6 +529,35 @@ Vector2i GridLayout::gridSize() const
     return d->gridSize();
 }
 
+Vector2i GridLayout::widgetPos(GuiWidget &widget) const
+{
+    Vector2i pos;
+    foreach(Widget *w, d->widgets)
+    {
+        if(w == &widget) return pos;
+
+        switch(d->mode)
+        {
+        case ColumnFirst:
+            if(++pos.x >= d->maxCols)
+            {
+                pos.x = 0;
+                ++pos.y;
+            }
+            break;
+
+        case RowFirst:
+            if(++pos.y >= d->maxRows)
+            {
+                pos.y = 0;
+                ++pos.x;
+            }
+            break;
+        }
+    }
+    return Vector2i(-1, -1);
+}
+
 Rule const &GridLayout::width() const
 {
     d->updateTotal();
@@ -503,6 +568,18 @@ Rule const &GridLayout::height() const
 {
     d->updateTotal();
     return *d->totalHeight;
+}
+
+Rule const &GridLayout::columnLeft(int col) const
+{
+    DENG2_ASSERT(col >= 0 && col < d->cols.size());
+    return d->columnLeftX(col);
+}
+
+Rule const &GridLayout::columnRight(int col) const
+{
+    DENG2_ASSERT(col >= 0 && col < d->cols.size());
+    return d->columnRightX(col);
 }
 
 Rule const &GridLayout::columnWidth(int col) const

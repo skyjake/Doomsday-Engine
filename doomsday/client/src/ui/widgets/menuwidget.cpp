@@ -261,10 +261,11 @@ MenuWidget::MenuWidget(String const &name)
 {}
 
 void MenuWidget::setGridSize(int columns, ui::SizePolicy columnPolicy,
-                             int rows, ui::SizePolicy rowPolicy)
+                             int rows, ui::SizePolicy rowPolicy,
+                             GridLayout::Mode layoutMode)
 {
     d->layout.clear();
-    d->layout.setGridSize(columns, rows);
+    d->layout.setModeAndGridSize(layoutMode, columns, rows);
     d->layout.setLeftTop(contentRule().left(), contentRule().top());
 
     d->colPolicy = columnPolicy;
@@ -303,6 +304,12 @@ void MenuWidget::setItems(Data const &items)
 int MenuWidget::count() const
 {
     return d->countVisible();
+}
+
+bool MenuWidget::isWidgetPartOfMenu(Widget const &widget) const
+{
+    if(widget.parent() != this) return false;
+    return d->isVisibleItem(&widget);
 }
 
 void MenuWidget::updateLayout()

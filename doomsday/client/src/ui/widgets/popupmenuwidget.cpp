@@ -47,11 +47,6 @@ DENG2_OBSERVES(ContextWidgetOrganizer, WidgetUpdate)
             return;
         }
 
-        // We want items to be hittable throughout the width of the menu.
-        widget.hitRule()
-                .setInput(Rule::Left,  self.rule().left())
-                .setInput(Rule::Right, self.rule().right());
-
         // Customize buttons for use in the popup. We will observe the button
         // state for highlighting and possibly close the popup when an action
         // gets triggered.
@@ -84,6 +79,30 @@ DENG2_OBSERVES(ContextWidgetOrganizer, WidgetUpdate)
             {
                 widget.margins().set("halfunit");
                 widget.setFont("separator.label");
+            }
+        }
+    }
+
+    void updateItemHitRules()
+    {
+        GridLayout const &layout = self.menu().layout();
+
+        foreach(Widget *child, self.menu().childWidgets())
+        {
+            GuiWidget &widget = child->as<GuiWidget>();
+
+            if(self.menu().isWidgetPartOfMenu(widget))
+            {
+                Vector2i cell = layout.widgetPos(widget);
+                DENG2_ASSERT(cell.x >= 0 && cell.y >= 0);
+
+                // We want items to be hittable throughout the width of the menu,
+                // however restrict this to the item's column if there are multiple.
+                widget.hitRule()
+                        .setInput(Rule::Left,  (!cell.x? self.rule().left() :
+                                                         layout.columnLeft(cell.x)))
+                        .setInput(Rule::Right, (cell.x == layout.gridSize().x - 1? self.rule().right() :
+                                                                                   layout.columnRight(cell.x)));
             }
         }
     }
@@ -169,11 +188,9 @@ void PopupMenuWidget::preparePopupForOpening()
 {
     // Redo the layout.
     menu().updateLayout();
+    d->updateItemHitRules();
 
     PopupWidget::preparePopupForOpening();
-
-    //menu().rule().setInput(Rule::Width, menu().layout().width() + 2 * margin());
-    //menu().rule().setInput(Rule::Height, menu().layout().height() + 2 * margin());
 }
 
 void PopupMenuWidget::popupClosing()

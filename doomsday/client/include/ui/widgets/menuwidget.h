@@ -69,9 +69,11 @@ public:
      * @param columnPolicy  Policy for sizing columns.
      * @param rows          Number of rows in the grid.
      * @param rowPolicy     Policy for sizing rows.
+     * @param layoutMode    Layout mode (column or row first).
      */
     void setGridSize(int columns, ui::SizePolicy columnPolicy,
-                     int rows, ui::SizePolicy rowPolicy);
+                     int rows, ui::SizePolicy rowPolicy,
+                     GridLayout::Mode layoutMode = GridLayout::ColumnFirst);
 
     ui::Data &items();
 
@@ -92,6 +94,16 @@ public:
      * included in this count.
      */
     int count() const;
+
+    /**
+     * Determines if a widget is included in the menu. Hidden widgets are not
+     * part of the menu.
+     *
+     * @param widget  Widget.
+     *
+     * @return @c true, if the widget is laid out as part of the menu.
+     */
+    bool isWidgetPartOfMenu(de::Widget const &widget) const;
 
     /**
      * Lays out children of the menu according to the grid setup. This should
