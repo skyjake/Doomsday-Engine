@@ -78,10 +78,10 @@ void Sector::Cluster::remapVisPlanes()
 
                     if(hedge->mapElement()->as<LineSideSegment>().line().isSelfReferencing())
                     {
-                        BspLeaf &otherLeaf = hedge->twin().face().mapElement()->as<BspLeaf>();
-                        if(otherLeaf.hasCluster())
+                        BspLeaf &backLeaf = hedge->twin().face().mapElement()->as<BspLeaf>();
+                        if(backLeaf.hasCluster())
                         {
-                            Cluster *otherCluster = &otherLeaf.cluster();
+                            Cluster *otherCluster = &backLeaf.cluster();
                             if(otherCluster != this &&
                                otherCluster->_mappedVisFloor != this &&
                                !(!(_flags & AllSelfRef) && (otherCluster->_flags & AllSelfRef)))
@@ -106,15 +106,15 @@ void Sector::Cluster::remapVisPlanes()
             QRectF boundingRect = qrectFromAABox(aaBox());
             if(boundingRect.contains(qrectFromAABox(exteriorCluster->aaBox())))
             {
-                // The contained cluster will link to this. However we may still
-                // need to link this one to another, so re-evaluate.
+                // The contained cluster will map to this. However, we may still
+                // need to map this one to another, so re-evaluate.
                 continue;
             }
             else
             {
-                // This cluster is containted. Remove linkage from exterior to
-                // this thereby forcing it to be re-evaluated (however next time
-                // a different cluster will be selected from the boundary).
+                // This cluster is containted. Remove the mapping from exterior
+                // to this thereby forcing it to be re-evaluated (however next
+                // time a different cluster will be selected from the boundary).
                 exteriorCluster->_mappedVisFloor =
                     exteriorCluster->_mappedVisCeiling = 0;
             }
@@ -124,6 +124,67 @@ void Sector::Cluster::remapVisPlanes()
         _mappedVisFloor   = exteriorCluster;
         _mappedVisCeiling = exteriorCluster;
         break;
+    }
+
+    // No permanent mapping?
+    if(_mappedVisFloor == this && !(_flags & AllSelfRef))
+    {
+        // Evaluate the boundary to determine if a dynamic mapping is needed for
+        // one or more planes.
+        bool missingAllBottom = true;
+        bool missingAllTop = true;
+        Cluster *exteriorCluster = 0;
+        foreach(BspLeaf *leaf, _bspLeafs)
+        {
+            HEdge *base = leaf->poly().hedge();
+            HEdge *hedge = base;
+            do
+            {
+                if(hedge->mapElement())
+                {
+                    DENG_ASSERT(hedge->twin().hasFace());
+
+                    // Only consider non-selfref edges whose back face lies in
+                    // another cluster.
+                    LineSideSegment const &seg = hedge->mapElement()->as<LineSideSegment>();
+                    if(!seg.line().isSelfReferencing())
+                    {
+                        BspLeaf const &backLeaf = hedge->twin().face().mapElement()->as<BspLeaf>();
+                        if(backLeaf.hasCluster())
+                        {
+                            Cluster *otherCluster = &backLeaf.cluster();
+                            if(otherCluster != this && otherCluster->_mappedVisFloor != this)
+                            {
+                                LineSide const &lineSide = seg.lineSide();
+
+                                if(lineSide.bottom().hasMaterial() && !lineSide.bottom().hasFixMaterial())
+                                    missingAllBottom = false;
+                                if(lineSide.top().hasMaterial() && !lineSide.top().hasFixMaterial())
+                                    missingAllTop = false;
+
+                                if(!missingAllBottom && !missingAllTop)
+                                    return;
+
+                                // Remember the exterior cluster.
+                                exteriorCluster = otherCluster;
+                            }
+                        }
+                    }
+                }
+            } while((hedge = &hedge->next()) != base);
+        }
+
+        if(exteriorCluster)
+        {
+            if(missingAllBottom && exteriorCluster->visPlane(Floor).height() > sector().floor().height())
+            {
+                _mappedVisFloor = exteriorCluster;
+            }
+            if(missingAllTop && exteriorCluster->visPlane(Ceiling).height() < sector().ceiling().height())
+            {
+                _mappedVisCeiling = exteriorCluster;
+            }
+        }
     }
 }
 
@@ -802,7 +863,7 @@ void Sector::buildClusters()
                     }
                     else
                     {
-                        // If a back geometry is missing then never link.
+                        // If a back geometry is missing then never map planes.
                         cluster->_flags |= Cluster::NeverMapped;
                         cluster->_flags &= ~Cluster::AllSelfRef;
                         goto nextCluster;
