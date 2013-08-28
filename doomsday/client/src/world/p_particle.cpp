@@ -626,7 +626,7 @@ static void P_NewParticle(ptcgen_t *gen)
         }
         else if(gen->flags & PGF_FLOOR_SPAWN ||
                 (!(gen->flags & (PGF_FLOOR_SPAWN | PGF_CEILING_SPAWN)) &&
-                 plane->indexInSector() == Sector::Floor))
+                 plane->isSectorFloor()))
         {
             // Spawn on the floor.
             pt->origin[VZ] = FLT2FIX(plane->height()) + radius;

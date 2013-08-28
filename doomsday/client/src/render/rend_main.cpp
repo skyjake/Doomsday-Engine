@@ -1669,7 +1669,7 @@ static void writeLeafPlane(Plane &plane)
 
     // Add the Y offset to orient the Y flipped material.
     /// @todo fixme: What is this meant to do? -ds
-    if(plane.indexInSector() == Sector::Ceiling)
+    if(plane.isSectorCeiling())
         materialOrigin.y -= face.aaBox().maxY - face.aaBox().minY;
     materialOrigin.y = -materialOrigin.y;
 
@@ -1678,10 +1678,10 @@ static void writeLeafPlane(Plane &plane)
 
     // Set the texture origin, Y is flipped for the ceiling.
     Vector3d texTL(face.aaBox().minX,
-                   face.aaBox().arvec2[plane.indexInSector() == Sector::Floor? 1 : 0][VY],
+                   face.aaBox().arvec2[plane.isSectorFloor()? 1 : 0][VY],
                    plane.visHeight());
     Vector3d texBR(face.aaBox().maxX,
-                   face.aaBox().arvec2[plane.indexInSector() == Sector::Floor? 0 : 1][VY],
+                   face.aaBox().arvec2[plane.isSectorFloor()? 0 : 1][VY],
                    plane.visHeight());
 
     rendworldpoly_params_t parm; zap(parm);
@@ -1726,7 +1726,7 @@ static void writeLeafPlane(Plane &plane)
 
     uint numVertices;
     Vector3f *rvertices;
-    buildLeafPlaneGeometry(*leaf, (plane.indexInSector() == Sector::Ceiling)? Anticlockwise : Clockwise,
+    buildLeafPlaneGeometry(*leaf, (plane.isSectorCeiling())? Anticlockwise : Clockwise,
                            plane.visHeight(),
                            &rvertices, &numVertices);
 
@@ -1756,7 +1756,7 @@ static void writeLeafPlane(Plane &plane)
         if(parm.glowing < 1 && !(!useDynLights && !useWallGlow))
         {
             /// @ref projectLightFlags
-            int plFlags = (PLF_NO_PLANE | (plane.indexInSector() == Sector::Floor? PLF_TEX_FLOOR : PLF_TEX_CEILING));
+            int plFlags = (PLF_NO_PLANE | (plane.isSectorFloor()? PLF_TEX_FLOOR : PLF_TEX_CEILING));
 
             parm.lightListIdx =
                 LO_ProjectToSurface(plFlags, leaf, 1, *parm.texTL, *parm.texBR,
@@ -1764,7 +1764,7 @@ static void writeLeafPlane(Plane &plane)
         }
 
         // Mobj shadows?
-        if(plane.indexInSector() == Sector::Floor && parm.glowing < 1 && Rend_MobjShadowsEnabled())
+        if(plane.isSectorFloor() && parm.glowing < 1 && Rend_MobjShadowsEnabled())
         {
             // Glowing planes inversely diminish shadow strength.
             float blendFactor = 1 - parm.glowing;

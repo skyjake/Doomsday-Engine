@@ -226,8 +226,8 @@ void ShadowEdge::prepare(int planeIndex)
             // Its a normal neighbor.
             Sector const *backSec  = neighborLineSide.back().sectorPtr();
             if(backSec != leaf.sectorPtr() &&
-               !((plane.indexInSector() == Sector::Floor && backSec->ceiling().visHeight() <= plane.visHeight()) ||
-                 (plane.indexInSector() == Sector::Ceiling && backSec->floor().height() >= plane.visHeight())))
+               !((plane.isSectorFloor() && backSec->ceiling().visHeight() <= plane.visHeight()) ||
+                 (plane.isSectorCeiling() && backSec->floor().height() >= plane.visHeight())))
             {
                 coord_t fz = 0, bz = 0, bhz = 0;
                 R_SetRelativeHeights(leaf.sectorPtr(), backSec, planeIndex, &fz, &bz, &bhz);
