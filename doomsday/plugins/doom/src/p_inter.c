@@ -139,16 +139,23 @@ static boolean giveOneWeapon(player_t *plr, weapontype_t weaponType, boolean dro
 {
     int numClips = numAmmoClipsToGiveWithWeapon(dropped);
     boolean gaveAmmo = false, gaveWeapon = false;
+    weaponinfo_t const *wpnInfo;
     ammotype_t i;
 
     DENG_ASSERT(plr != 0);
     DENG_ASSERT(weaponType >= WT_FIRST && weaponType < NUM_WEAPON_TYPES);
 
+    wpnInfo = &weaponInfo[weaponType][plr->class_];
+
+    // Do not give weapons unavailable for the current mode.
+    if(!(wpnInfo->mode[0].gameModeBits & gameModeBits))
+        return false;
+
     // Give some of each of the ammo types used by this weapon.
     for(i = 0; i < NUM_AMMO_TYPES; ++i)
     {
         // Is this ammo type usable?.
-        if(!weaponInfo[weaponType][plr->class_].mode[0].ammoType[i])
+        if(!wpnInfo->mode[0].ammoType[i])
             continue;
 
         if(P_GiveAmmo(plr, i, numClips))
