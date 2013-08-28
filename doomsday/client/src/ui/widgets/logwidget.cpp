@@ -742,7 +742,7 @@ nextAttempt:
         {
             GLState &st = GLState::push();
             // Leave room for the indicator in the scissor.
-            st.setScissor(vp.adjusted(Vector2i(), Vector2i(self.rightMargin(), 0)));
+            st.setScissor(vp.adjusted(Vector2i(), Vector2i(self.margins().right().valuei(), 0)));
 
             // First draw the shadow of the text.
             uMvpMatrix = projMatrix * Matrix4f::translate(

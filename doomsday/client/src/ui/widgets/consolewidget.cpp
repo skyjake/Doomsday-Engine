@@ -93,7 +93,7 @@ DENG_GUI_PIMPL(ConsoleWidget)
         if(height->animation().target() == 0)
         {
             // On the first expansion make sure the margins are taken into account.
-            delta += 2 * log->topMargin();
+            delta += log->margins().height().valuei();
         }
 
         height->set(height->animation().target() + delta, .25f);
