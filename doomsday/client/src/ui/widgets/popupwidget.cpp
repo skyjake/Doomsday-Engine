@@ -72,7 +72,7 @@ DENG_GUI_PIMPL(PopupWidget)
         QObject::connect(&dismissTimer, SIGNAL(timeout()), thisPublic, SLOT(dismiss()));
 
         // Style.
-        marker = &self.style().rules().rule("gap");
+        marker = &style().rules().rule("gap");
     }
 
     ~Instance()

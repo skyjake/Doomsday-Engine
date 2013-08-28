@@ -556,7 +556,8 @@ public:
         }
         return Vector3<Type>();
     }
-
+    Vector2<Type> xy() const { return *this; }
+    Vector2<Type> zw() const { return Vector2<Type>(Vector3<Type>::z, w); }
 public:
     Type w;
 };

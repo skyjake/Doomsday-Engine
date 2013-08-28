@@ -51,7 +51,8 @@ signals:
 
 protected:
     void glInit();
-
+    void glDeinit();
+    void updateStyle();
 
 private:
     DENG2_PRIVATE(d)

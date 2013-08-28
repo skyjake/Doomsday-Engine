@@ -118,7 +118,7 @@ public Font::RichFormat::IStyle
 
     void updateStyle()
     {
-        Style const &st = self.style();
+        Style const &st = style();
 
         normalColor    = st.colors().color("document.normal");
         highlightColor = st.colors().color("document.highlight");

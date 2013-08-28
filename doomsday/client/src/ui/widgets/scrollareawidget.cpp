@@ -28,7 +28,7 @@
 
 using namespace de;
 
-DENG2_PIMPL(ScrollAreaWidget), public Lockable
+DENG_GUI_PIMPL(ScrollAreaWidget), public Lockable
 {
     /**
      * Rectangle for all the content shown in the widget. The widget's
@@ -86,7 +86,7 @@ DENG2_PIMPL(ScrollAreaWidget), public Lockable
 
     void updateStyle()
     {
-        Style const &st = self.style();
+        Style const &st = style();
 
         margin         = &st.rules().rule("gap");
         vertMargin     = &st.rules().rule("gap");

@@ -80,7 +80,7 @@ DENG2_OBSERVES(ContextWidgetOrganizer, WidgetCreation)
     {
         // Popup background color.
         Background bg = choices->background();
-        bg.solidFill = self.style().colors().colorf("choice.popup");
+        bg.solidFill = style().colors().colorf("choice.popup");
         choices->set(bg);
     }
 

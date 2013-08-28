@@ -22,7 +22,7 @@
 using namespace de;
 using namespace ui;
 
-DENG2_PIMPL(MessageDialog)
+DENG_GUI_PIMPL(MessageDialog)
 {
     LabelWidget *title;
     LabelWidget *message;
@@ -55,7 +55,7 @@ DENG2_PIMPL(MessageDialog)
         // Simple vertical layout.
         SequentialLayout layout(area.contentRule().left(),
                                 area.contentRule().top());
-        layout.setOverrideWidth(self.style().rules().rule("dialog.message.width"));
+        layout.setOverrideWidth(style().rules().rule("dialog.message.width"));
 
         // Put all the widgets into the layout.
         foreach(Widget *w, area.childWidgets())

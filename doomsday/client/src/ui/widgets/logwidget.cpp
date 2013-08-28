@@ -398,7 +398,7 @@ public Font::RichFormat::IStyle
     {        
         // TODO -- stop wrapping tasks in the sink
 
-        Style const &st = self.style();
+        Style const &st = style();
 
         font           = &self.font();
 
@@ -439,7 +439,7 @@ public Font::RichFormat::IStyle
                          Font::RichFormat::Style &fontStyle,
                          int &colorIndex) const
     {
-        return self.style().richStyleFormat(contentStyle, sizeFactor, fontWeight, fontStyle, colorIndex);
+        return style().richStyleFormat(contentStyle, sizeFactor, fontWeight, fontStyle, colorIndex);
     }
 
     void glInit()

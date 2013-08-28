@@ -37,7 +37,7 @@ using namespace de;
 
 static TimeDelta const LOG_OPEN_CLOSE_SPAN = 0.2;
 
-DENG2_PIMPL(ConsoleWidget)
+DENG_GUI_PIMPL(ConsoleWidget)
 {
     ButtonWidget *button;
     ConsoleCommandWidget *cmdLine;
@@ -70,10 +70,10 @@ DENG2_PIMPL(ConsoleWidget)
           grabbed(NotGrabbed)
     {
         horizShift = new ScalarRule(0);
-        width      = new ScalarRule(self.style().rules().rule("console.width").valuei());
+        width      = new ScalarRule(style().rules().rule("console.width").valuei());
         height     = new ScalarRule(0);
 
-        grabWidth  = self.style().rules().rule("unit").valuei();
+        grabWidth  = style().rules().rule("unit").valuei();
     }
 
     ~Instance()

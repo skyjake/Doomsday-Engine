@@ -81,7 +81,7 @@ public IGameChangeObserver
           uColor    ("uColor",     GLUniform::Vec4)
     {
         uColor = Vector4f(1, 1, 1, 1);
-        self.set(Background(self.style().colors().colorf("background")));
+        self.set(Background(style().colors().colorf("background")));
 
         vertShift = new ScalarRule(0);
 

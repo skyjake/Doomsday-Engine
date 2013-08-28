@@ -50,8 +50,7 @@ public Font::RichFormat::IStyle
     ConstantRule *height;
 
     // Style.
-    Vector2i tlMargin;
-    Vector2i brMargin;
+    Vector4i margin;
     DotPath gapId;
     int gap;
     ColorBank::Color highlightColor;
@@ -102,12 +101,8 @@ public Font::RichFormat::IStyle
     {
         Style const &st = self.style();
 
-        tlMargin  = Vector2i(self.margins().left().valuei(),
-                             self.margins().top().valuei());
-        brMargin  = Vector2i(self.margins().right().valuei(),
-                             self.margins().bottom().valuei());
-
-        gap = st.rules().rule(gapId).valuei();
+        margin = self.margins().toVector();
+        gap    = st.rules().rule(gapId).valuei();
 
         // Colors.
         highlightColor = st.colors().color("label.highlight");
@@ -148,7 +143,7 @@ public Font::RichFormat::IStyle
     void richStyleFormat(int contentStyle, float &sizeFactor, Font::RichFormat::Weight &fontWeight,
                          Font::RichFormat::Style &fontStyle, int &colorIndex) const
     {
-        return self.style().richStyleFormat(contentStyle, sizeFactor, fontWeight, fontStyle, colorIndex);
+        return style().richStyleFormat(contentStyle, sizeFactor, fontWeight, fontStyle, colorIndex);
     }
 
     void glInit()
@@ -196,7 +191,7 @@ public Font::RichFormat::IStyle
      */
     void contentPlacement(ContentLayout &layout) const
     {
-        Rectanglei const contentRect = self.rule().recti().adjusted(tlMargin, -brMargin);
+        Rectanglei const contentRect = self.rule().recti().adjusted(margin.xy(), -margin.zw());
 
         Vector2f const imgSize = imageSize() * imageScale;
 
@@ -355,15 +350,15 @@ public Font::RichFormat::IStyle
         if(horizPolicy == Expand)
         {
             // Expansion can occur to full view width.
-            w = root().viewSize().x - (tlMargin.x + brMargin.x);
+            w = root().viewSize().x - (margin.x + margin.z);
         }
         else
         {
-            w = self.rule().width().valuei() - (tlMargin.x + brMargin.x);
+            w = self.rule().width().valuei() - (margin.x + margin.z);
         }
         if(vertPolicy != Expand)
         {
-            h = self.rule().height().valuei() - (tlMargin.y + brMargin.y);
+            h = self.rule().height().valuei() - (margin.y + margin.w);
         }
 
         if(hasImage())
@@ -414,8 +409,8 @@ public Font::RichFormat::IStyle
             ContentLayout layout;
             contentPlacement(layout);
             Rectanglef combined = layout.image | layout.text;
-            width->set (combined.width()  + tlMargin.x + brMargin.x);
-            height->set(combined.height() + tlMargin.y + brMargin.y);
+            width->set (combined.width()  + margin.x + margin.z);
+            height->set(combined.height() + margin.y + margin.w);
         }
     }
 

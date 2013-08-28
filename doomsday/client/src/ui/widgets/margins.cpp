@@ -231,4 +231,9 @@ Rule const &Margins::margin(Direction dir) const
                         dir == Up?    SideTop   : SideBottom);
 }
 
+Vector4i Margins::toVector() const
+{
+    return Vector4i(left().valuei(), top().valuei(), right().valuei(), bottom().valuei());
+}
+
 } // namespace ui

@@ -4,6 +4,8 @@
 #include <de/libdeng2.h>
 #include "guirootwidget.h"
 
+class Style;
+
 /**
  * Base class for GuiWidget-derived widgets' private implementation. Provides
  * easy access to the root widget and shared GL resources. This should be used
@@ -60,6 +62,11 @@ public:
     de::GLShaderBank &shaders() const
     {
         return root().shaders();
+    }
+
+    Style const &style() const
+    {
+        return Base::self.style();
     }
 };
 

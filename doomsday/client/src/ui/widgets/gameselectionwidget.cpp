@@ -27,7 +27,7 @@
 
 using namespace de;
 
-DENG2_PIMPL(GameSelectionWidget),
+DENG_GUI_PIMPL(GameSelectionWidget),
 DENG2_OBSERVES(Games, Addition),
 DENG2_OBSERVES(App, StartupComplete),
 DENG2_OBSERVES(ContextWidgetOrganizer, WidgetCreation)
@@ -85,9 +85,9 @@ DENG2_OBSERVES(ContextWidgetOrganizer, WidgetCreation)
         {
             plugName = "libdoom";
         }
-        if(self.style().images().has("logo.game." + plugName))
+        if(style().images().has("logo.game." + plugName))
         {
-            item->setImage(self.style().images().image("logo.game." + plugName));
+            item->setImage(style().images().image("logo.game." + plugName));
         }
 
         return item;

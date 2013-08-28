@@ -100,7 +100,7 @@ DENG2_OBSERVES(ui::Data, Removal)
           animatingGlow(false)
     {
         // Initialize the border glow.
-        normalGlow = self.style().colors().colorf("glow").w;
+        normalGlow = style().colors().colorf("glow").w;
         glow.setValue(normalGlow);
         glow.setStyle(Animation::Linear);
 

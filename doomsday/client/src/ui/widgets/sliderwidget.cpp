@@ -23,18 +23,30 @@
 using namespace de;
 using namespace ui;
 
-DENG2_PIMPL(SliderWidget)
+DENG_GUI_PIMPL(SliderWidget)
 {
     float value;
     Rangef range;
     float step;
+
+    // Visualization.
+
+    // GL objects.
+    Drawable drawable;
 
     Instance(Public *i)
         : Base(i),
           value(0),
           range(0, 0),
           step(0)
-    {}
+    {
+        updateStyle();
+    }
+
+    void updateStyle()
+    {
+
+    }
 
     void glInit()
     {
@@ -43,7 +55,7 @@ DENG2_PIMPL(SliderWidget)
 
     void glDeinit()
     {
-
+        drawable.clear();
     }
 };
 
@@ -91,4 +103,9 @@ void SliderWidget::glInit()
 void SliderWidget::glDeinit()
 {
     d->glDeinit();
+}
+
+void SliderWidget::updateStyle()
+{
+    d->updateStyle();
 }

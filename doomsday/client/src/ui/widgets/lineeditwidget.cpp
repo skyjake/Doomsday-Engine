@@ -86,10 +86,8 @@ DENG2_OBSERVES(Atlas, Reposition)
      */
     void updateStyle()
     {
-        Style const &st = self.style();
-
         font   = &self.font();
-        margin = st.rules().rule("gap").valuei();
+        margin = style().rules().rule("gap").valuei();
 
         updateBackground();
 
@@ -114,7 +112,7 @@ DENG2_OBSERVES(Atlas, Reposition)
 
     void updateBackground()
     {
-        Background bg(self.style().colors().colorf("background"));
+        Background bg(style().colors().colorf("background"));
         if(hovering > 0)
         {
             bg.type = Background::GradientFrame;

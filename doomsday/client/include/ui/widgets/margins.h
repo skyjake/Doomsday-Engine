@@ -21,6 +21,7 @@
 
 #include <de/Rule>
 #include <de/DotPath>
+#include <de/Rectangle>
 
 #include "../uidefs.h"
 
@@ -67,6 +68,12 @@ public:
     de::Rule const &height() const;
 
     de::Rule const &margin(ui::Direction dir) const;
+
+    /**
+     * Returns all four margins as a vector. (x,y) is the left and top margins
+     * and (z,w) is the right and bottom margins.
+     */
+    de::Vector4i toVector() const;
 
 private:
     DENG2_PRIVATE(d)
