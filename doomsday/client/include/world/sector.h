@@ -131,11 +131,17 @@ public:
         friend class Sector;
 
     private:
+        enum Flag
+        {
+            NeverMapped  = 0x1,
+            AllSelfRef = 0x2
+        };
+
         de::HEdge &findBoundaryEdge() const;
         void remapVisPlanes();
 
         BspLeafs _bspLeafs;
-        bool _allSelfRefBoundary;
+        int _flags;
         QScopedPointer<AABoxd> _aaBox;
         Cluster *_mappedVisFloor;
         Cluster *_mappedVisCeiling;

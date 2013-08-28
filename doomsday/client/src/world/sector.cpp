@@ -50,8 +50,7 @@ static QRectF qrectFromAABox(AABoxd const &aaBox)
 }
 
 /**
- * @todo Redesign the implementation to avoid recursion (note visPlane() calls
- * this also).
+ * @todo Redesign the implementation to avoid recursion via visPlane().
  */
 void Sector::Cluster::remapVisPlanes()
 {
@@ -59,41 +58,46 @@ void Sector::Cluster::remapVisPlanes()
     _mappedVisFloor   = this;
     _mappedVisCeiling = this;
 
-    // Should we permanently link this cluster to another?
-    Cluster *exteriorCluster = 0;
-    foreach(BspLeaf *leaf, _bspLeafs)
-    {
-        HEdge *base = leaf->poly().hedge();
-        HEdge *hedge = base;
-        do
-        {
-            if(hedge->mapElement())
-            {
-                // Abort if any map line lacks a back geometry.
-                if(!hedge->twin().hasFace())
-                    return;
+    // Should we permanently map planes to another cluster?
+    if(_flags & NeverMapped)
+        return;
 
-                if(hedge->mapElement()->as<LineSideSegment>().line().isSelfReferencing())
+    forever
+    {
+        // Locate the next exterior cluster.
+        Cluster *exteriorCluster = 0;
+        foreach(BspLeaf *leaf, _bspLeafs)
+        {
+            HEdge *base = leaf->poly().hedge();
+            HEdge *hedge = base;
+            do
+            {
+                if(hedge->mapElement())
                 {
-                    BspLeaf &otherLeaf = hedge->twin().face().mapElement()->as<BspLeaf>();
-                    if(otherLeaf.hasCluster())
+                    DENG_ASSERT(hedge->twin().hasFace());
+
+                    if(hedge->mapElement()->as<LineSideSegment>().line().isSelfReferencing())
                     {
-                        Cluster *otherCluster = &otherLeaf.cluster();
-                        if(otherCluster != this &&
-                           otherCluster->_mappedVisFloor != this &&
-                           !(!_allSelfRefBoundary && otherCluster->_allSelfRefBoundary))
+                        BspLeaf &otherLeaf = hedge->twin().face().mapElement()->as<BspLeaf>();
+                        if(otherLeaf.hasCluster())
                         {
-                            // Remember the exterior cluster.
-                            exteriorCluster = otherCluster;
+                            Cluster *otherCluster = &otherLeaf.cluster();
+                            if(otherCluster != this &&
+                               otherCluster->_mappedVisFloor != this &&
+                               !(!(_flags & AllSelfRef) && (otherCluster->_flags & AllSelfRef)))
+                            {
+                                // Remember the exterior cluster.
+                                exteriorCluster = otherCluster;
+                            }
                         }
                     }
                 }
-            }
-        } while((hedge = &hedge->next()) != base);
-    }
+            } while((hedge = &hedge->next()) != base);
+        }
 
-    if(exteriorCluster)
-    {
+        if(!exteriorCluster)
+            break; // Nothing to map to.
+
         // Ensure we don't produce a cyclic dependency...
         Sector *finalSector = &exteriorCluster->visPlane(Floor).sector();
         if(finalSector == &sector())
@@ -104,8 +108,7 @@ void Sector::Cluster::remapVisPlanes()
             {
                 // The contained cluster will link to this. However we may still
                 // need to link this one to another, so re-evaluate.
-                remapVisPlanes();
-                return;
+                continue;
             }
             else
             {
@@ -117,8 +120,10 @@ void Sector::Cluster::remapVisPlanes()
             }
         }
 
+        // Setup the mapping and we're done.
         _mappedVisFloor   = exteriorCluster;
         _mappedVisCeiling = exteriorCluster;
+        break;
     }
 }
 
@@ -722,7 +727,7 @@ void Sector::buildClusters()
             continue;
 
         Cluster *cluster = new Cluster;
-        cluster->_allSelfRefBoundary = false;
+        cluster->_flags = 0;
         cluster->_mappedVisFloor = cluster->_mappedVisCeiling = 0;
         d->clusters.append(cluster);
 
@@ -770,24 +775,37 @@ void Sector::buildClusters()
     // Classify clusters.
     foreach(Cluster *cluster, d->clusters)
     {
-        cluster->_allSelfRefBoundary = true;
+        cluster->_flags |= Cluster::AllSelfRef;
         foreach(BspLeaf *leaf, cluster->_bspLeafs)
         {
             HEdge const *base  = leaf->poly().hedge();
             HEdge const *hedge = base;
             do
             {
-                if(hedge->mapElement() && hedge->twin().hasFace())
+                if(hedge->mapElement())
                 {
-                    BspLeaf const &backLeaf    = hedge->twin().face().mapElement()->as<BspLeaf>();
-                    Cluster const *backCluster = backLeaf.hasCluster()? &backLeaf.cluster() : 0;
-                    if(backCluster != cluster)
+                    // This edge defines a section of a map line.
+                    if(hedge->twin().hasFace())
                     {
-                        if(!hedge->mapElement()->as<LineSideSegment>().line().isSelfReferencing())
+                        if(cluster->_flags & Cluster::AllSelfRef)
                         {
-                            cluster->_allSelfRefBoundary = false;
-                            goto nextCluster;
+                            BspLeaf const &backLeaf    = hedge->twin().face().mapElement()->as<BspLeaf>();
+                            Cluster const *backCluster = backLeaf.hasCluster()? &backLeaf.cluster() : 0;
+                            if(backCluster != cluster)
+                            {
+                                if(!hedge->mapElement()->as<LineSideSegment>().line().isSelfReferencing())
+                                {
+                                    cluster->_flags &= ~Cluster::AllSelfRef;
+                                }
+                            }
                         }
+                    }
+                    else
+                    {
+                        // If a back geometry is missing then never link.
+                        cluster->_flags |= Cluster::NeverMapped;
+                        cluster->_flags &= ~Cluster::AllSelfRef;
+                        goto nextCluster;
                     }
                 }
             } while((hedge = &hedge->next()) != base);
