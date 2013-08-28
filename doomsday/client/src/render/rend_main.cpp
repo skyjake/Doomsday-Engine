@@ -1775,7 +1775,22 @@ static void writeLeafPlane(Plane &plane)
         }
     }
 
+    // Is this a mapped visual plane?
+    if(&plane.sector() != leaf->sectorPtr())
+    {
+        // Temporarily modify the draw state.
+        currentSectorLightColor = Rend_SectorLightColor(plane.sector());
+        currentSectorLightLevel = plane.sector().lightLevel();
+    }
+
     renderWorldPoly(rvertices, numVertices, parm, ms);
+
+    if(&plane.sector() != leaf->sectorPtr())
+    {
+        // Undo temporary draw state changes.
+        currentSectorLightColor = Rend_SectorLightColor(leaf->sector());
+        currentSectorLightLevel = leaf->sector().lightLevel();
+    }
 
     R_FreeRendVertices(rvertices);
 }
