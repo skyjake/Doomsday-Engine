@@ -1,4 +1,4 @@
-/** @file item.h Context item.
+/** @file item.h  Data context item.
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef DENG_CLIENT_UI_CONTEXTITEM_H
-#define DENG_CLIENT_UI_CONTEXTITEM_H
+#ifndef DENG_CLIENT_UI_DATAITEM_H
+#define DENG_CLIENT_UI_DATAITEM_H
 
 #include <de/Observers>
 #include <de/String>
@@ -26,17 +26,17 @@
 
 namespace ui {
 
-class Context;
+class Data;
 
 /**
  * Data item.
  *
- * Context items are pure content -- the exact presentation parameters (widget
- * type, alignment, scaling, etc.) is determined by the container widget and/or
+ * Items are pure content -- the exact presentation parameters (widget type,
+ * alignment, scaling, etc.) is determined by the container widget and/or
  * responsible organizer, not by the item. This allows one item to be presented
  * in different ways by different widgets/contexts.
  *
- * @see ui::Context
+ * @see ui::Data
  */
 class Item
 {
@@ -55,11 +55,6 @@ public:
         Separator             = 0x200,
 
         DefaultSemantics      = ShownAsLabel
-
-        //Action, ///< Closes popup menu.
-        //Submenu,
-        //Separator,
-        //Toggle
     };
     Q_DECLARE_FLAGS(Semantics, SemanticFlag)
 
@@ -78,12 +73,12 @@ public:
 
     de::String label() const;
 
-    void setContext(Context &context) { _context = &context; }
+    void setDataContext(Data &context) { _context = &context; }
 
-    bool hasContext() const { return _context != 0; }
+    bool hasDataContext() const { return _context != 0; }
 
-    Context &context() const {
-        DENG2_ASSERT(_context != 0);
+    Data &dataContext() const {
+        DENG2_ASSERT(hasDataContext());
         return *_context;
     }
 
@@ -93,6 +88,11 @@ public:
      */
     virtual de::String sortKey() const;
 
+    /**
+     * Sets the custom user data of the item.
+     *
+     * @param d  Variant data to be associated with the item.
+     */
     void setData(QVariant const &d) { _data = d; }
 
     QVariant const &data() const { return _data; }
@@ -107,15 +107,15 @@ protected:
 
 private:
     Semantics _semantics;
-    Context *_context;
+    Data *_context;
     de::String _label;
     QVariant _data;
 
-    friend class Context;
+    friend class Data;
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Item::Semantics)
 
 } // namespace ui
 
-#endif // DENG_CLIENT_UI_CONTEXTITEM_H
+#endif // DENG_CLIENT_UI_DATAITEM_H

@@ -28,13 +28,13 @@ static DefaultWidgetFactory defaultWidgetFactory;
 
 DENG2_PIMPL(ContextWidgetOrganizer),
 DENG2_OBSERVES(Widget,      Deletion   ),
-DENG2_OBSERVES(ui::Context, Addition   ),
-DENG2_OBSERVES(ui::Context, Removal    ),
-DENG2_OBSERVES(ui::Context, OrderChange),
+DENG2_OBSERVES(ui::Data, Addition   ),
+DENG2_OBSERVES(ui::Data, Removal    ),
+DENG2_OBSERVES(ui::Data, OrderChange),
 DENG2_OBSERVES(ui::Item,    Change     )
 {
     GuiWidget *container;
-    ui::Context const *context;
+    ui::Data const *context;
     IWidgetFactory *factory;
 
     typedef QMap<ui::Item const *, GuiWidget *> Mapping;
@@ -56,7 +56,7 @@ DENG2_OBSERVES(ui::Item,    Change     )
         }
     }
 
-    void set(ui::Context const *ctx)
+    void set(ui::Data const *ctx)
     {
         if(context)
         {
@@ -80,7 +80,7 @@ DENG2_OBSERVES(ui::Item,    Change     )
         }
     }
 
-    void addItemWidget(ui::Context::Pos pos, bool alwaysAppend = false)
+    void addItemWidget(ui::Data::Pos pos, bool alwaysAppend = false)
     {
         DENG2_ASSERT(factory != 0);
 
@@ -118,7 +118,7 @@ DENG2_OBSERVES(ui::Item,    Change     )
         DENG2_ASSERT(context != 0);
         DENG2_ASSERT(container != 0);
 
-        for(ui::Context::Pos i = 0; i < context->size(); ++i)
+        for(ui::Data::Pos i = 0; i < context->size(); ++i)
         {
             addItemWidget(i, true /*always append*/);
         }
@@ -159,12 +159,12 @@ DENG2_OBSERVES(ui::Item,    Change     )
         }
     }
 
-    void contextItemAdded(ui::Context::Pos pos, ui::Item const &)
+    void contextItemAdded(ui::Data::Pos pos, ui::Item const &)
     {
         addItemWidget(pos);
     }
 
-    void contextItemRemoved(ui::Context::Pos, ui::Item &item)
+    void contextItemRemoved(ui::Data::Pos, ui::Item &item)
     {
         Mapping::const_iterator found = mapping.constFind(&item);
         if(found != mapping.constEnd())
@@ -182,7 +182,7 @@ DENG2_OBSERVES(ui::Item,    Change     )
         {
             container->remove(*i.value());
         }
-        for(ui::Context::Pos i = 0; i < context->size(); ++i)
+        for(ui::Data::Pos i = 0; i < context->size(); ++i)
         {
             DENG2_ASSERT(mapping.contains(&context->at(i)));
             container->add(mapping[&context->at(i)]);
@@ -227,7 +227,7 @@ ContextWidgetOrganizer::ContextWidgetOrganizer(GuiWidget &container)
     : d(new Instance(this, &container))
 {}
 
-void ContextWidgetOrganizer::setContext(ui::Context const &context)
+void ContextWidgetOrganizer::setContext(ui::Data const &context)
 {
     d->set(&context);
 }
@@ -237,13 +237,13 @@ void ContextWidgetOrganizer::unsetContext()
     d->set(0);
 }
 
-ui::Context const &ContextWidgetOrganizer::context() const
+ui::Data const &ContextWidgetOrganizer::context() const
 {
     DENG2_ASSERT(d->context != 0);
     return *d->context;
 }
 
-GuiWidget *ContextWidgetOrganizer::itemWidget(ui::Context::Pos pos) const
+GuiWidget *ContextWidgetOrganizer::itemWidget(ui::Data::Pos pos) const
 {
     return itemWidget(context().at(pos));
 }

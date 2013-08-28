@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#include "ui/widgets/context.h"
+#include "ui/widgets/data.h"
 #include "ui/widgets/labelwidget.h"
 #include "ui/widgets/item.h"
 
@@ -25,7 +25,7 @@
 using namespace de;
 using namespace ui;
 
-dsize const Context::InvalidPos = dsize(-1);
+dsize const Data::InvalidPos = dsize(-1);
 
 static bool itemLessThan(Item const &a, Item const &b)
 {
@@ -37,7 +37,7 @@ static bool itemGreaterThan(Item const &a, Item const &b)
     return a.sortKey().compareWithoutCase(b.sortKey()) > 0;
 }
 
-void Context::sort(SortMethod method)
+void Data::sort(SortMethod method)
 {
     switch(method)
     {

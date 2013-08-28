@@ -21,7 +21,7 @@
 
 #include "../uidefs.h"
 #include "item.h"
-#include "listcontext.h"
+#include "listdata.h"
 
 namespace ui {
 
@@ -34,12 +34,12 @@ public:
     SubmenuItem(de::String const &label, ui::Direction openingDirection)
         : Item(ShownAsButton, label), _dir(openingDirection) {}
 
-    Context &items() { return _items; }
-    Context const &items() const { return _items; }
+    Data &items() { return _items; }
+    Data const &items() const { return _items; }
     ui::Direction openingDirection() const { return _dir; }
 
 private:
-    ListContext _items;
+    ListData _items;
     ui::Direction _dir;
 };
 

@@ -19,7 +19,7 @@
 #ifndef DENG_CLIENT_CONTEXTWIDGETORGANIZER_H
 #define DENG_CLIENT_CONTEXTWIDGETORGANIZER_H
 
-#include "context.h"
+#include "data.h"
 #include "guiwidget.h"
 
 /**
@@ -108,13 +108,13 @@ public:
      *
      * @param context  Context with items.
      */
-    void setContext(ui::Context const &context);
+    void setContext(ui::Data const &context);
 
     void unsetContext();
 
-    ui::Context const &context() const;
+    ui::Data const &context() const;
 
-    GuiWidget *itemWidget(ui::Context::Pos pos) const;
+    GuiWidget *itemWidget(ui::Data::Pos pos) const;
     GuiWidget *itemWidget(ui::Item const &item) const;
     GuiWidget *itemWidget(de::String const &label) const;
 

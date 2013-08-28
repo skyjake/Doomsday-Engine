@@ -79,8 +79,8 @@ DENG_GUI_PIMPL(DialogWidget),
 DENG2_OBSERVES(ContextWidgetOrganizer, WidgetCreation),
 DENG2_OBSERVES(ContextWidgetOrganizer, WidgetUpdate),
 DENG2_OBSERVES(Widget, ChildAddition), // for styling the contents
-DENG2_OBSERVES(ui::Context, Addition),
-DENG2_OBSERVES(ui::Context, Removal)
+DENG2_OBSERVES(ui::Data, Addition),
+DENG2_OBSERVES(ui::Data, Removal)
 {
     Modality modality;
     Flags flags;
@@ -175,12 +175,12 @@ DENG2_OBSERVES(ui::Context, Removal)
         }
     }
 
-    void contextItemAdded(ui::Context::Pos, ui::Item const &)
+    void contextItemAdded(ui::Data::Pos, ui::Item const &)
     {
         needButtonUpdate = true;
     }
 
-    void contextItemRemoved(ui::Context::Pos, ui::Item &)
+    void contextItemRemoved(ui::Data::Pos, ui::Item &)
     {
         needButtonUpdate = true;
     }
@@ -284,7 +284,7 @@ DENG2_OBSERVES(ui::Context, Removal)
 
     ui::ActionItem const *findDefaultAction() const
     {
-        for(ui::Context::Pos i = 0; i < buttons->items().size(); ++i)
+        for(ui::Data::Pos i = 0; i < buttons->items().size(); ++i)
         {
             ButtonItem const *act = buttons->items().at(i).maybeAs<ButtonItem>();
             if(act->role().testFlag(Default) &&

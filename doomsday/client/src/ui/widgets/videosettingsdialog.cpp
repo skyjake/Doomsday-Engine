@@ -98,15 +98,15 @@ DENG2_OBSERVES(PersistentCanvasWindow, AttributeChange)
         }
 
         // Update selected display mode.
-        ui::Context::Pos closest = ui::Context::InvalidPos;
+        ui::Data::Pos closest = ui::Data::InvalidPos;
         int delta;
-        for(ui::Context::Pos i = 0; i < modes->items().size(); ++i)
+        for(ui::Data::Pos i = 0; i < modes->items().size(); ++i)
         {
             QPoint const res = modes->items().at(i).data().toPoint();
             int dx = res.x() - current.x;
             int dy = res.y() - current.y;
             int d = dx*dx + dy*dy;
-            if(closest == ui::Context::InvalidPos || d < delta)
+            if(closest == ui::Data::InvalidPos || d < delta)
             {
                 closest = i;
                 delta = d;
@@ -164,7 +164,7 @@ VideoSettingsDialog::VideoSettingsDialog(String const &name)
         DisplayMode const *m = DisplayMode_ByIndex(i);
         QPoint const res(m->width, m->height);
 
-        if(d->modes->items().findData(res) != ui::Context::InvalidPos)
+        if(d->modes->items().findData(res) != ui::Data::InvalidPos)
         {
             // Got this already.
             continue;

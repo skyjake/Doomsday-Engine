@@ -154,13 +154,13 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
         UpdaterSettings st;
 
         st.setOnlyCheckManually(autoCheck->isInactive());
-        ui::Context::Pos sel = freqs->selected();
-        if(sel != ui::Context::InvalidPos)
+        ui::Data::Pos sel = freqs->selected();
+        if(sel != ui::Data::InvalidPos)
         {
             st.setFrequency(UpdaterSettings::Frequency(freqs->items().at(sel).data().toInt()));
         }
         sel = channels->selected();
-        if(sel != ui::Context::InvalidPos)
+        if(sel != ui::Data::InvalidPos)
         {
             st.setChannel(UpdaterSettings::Channel(channels->items().at(sel).data().toInt()));
         }

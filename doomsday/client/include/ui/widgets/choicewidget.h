@@ -58,13 +58,13 @@ public:
 
     void setOpeningDirection(ui::Direction dir);
 
-    ui::Context &items();
+    ui::Data &items();
 
     PopupMenuWidget &popup();
 
-    void setSelected(ui::Context::Pos pos);
+    void setSelected(ui::Data::Pos pos);
 
-    ui::Context::Pos selected() const;
+    ui::Data::Pos selected() const;
     ui::Item const &selectedItem() const;
 
 public slots:

@@ -21,7 +21,7 @@
 
 #include "scrollareawidget.h"
 #include "buttonwidget.h"
-#include "context.h"
+#include "data.h"
 #include "contextwidgetorganizer.h"
 #include "actionitem.h"
 #include "submenuitem.h"
@@ -73,9 +73,9 @@ public:
     void setGridSize(int columns, ui::SizePolicy columnPolicy,
                      int rows, ui::SizePolicy rowPolicy);
 
-    ui::Context &items();
+    ui::Data &items();
 
-    ui::Context const &items() const;
+    ui::Data const &items() const;
 
     /**
      * Sets the data context of the menu to some existing context. The context
@@ -83,7 +83,7 @@ public:
      *
      * @param items  Ownership not taken.
      */
-    void setItems(ui::Context const &items);
+    void setItems(ui::Data const &items);
 
     ContextWidgetOrganizer const &organizer() const;
 

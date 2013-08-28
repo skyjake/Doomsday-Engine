@@ -25,7 +25,7 @@
 
 #include "guiwidget.h"
 #include "../uidefs.h"
-#include "context.h"
+#include "data.h"
 #include "proceduralimage.h"
 
 /**

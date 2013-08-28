@@ -353,8 +353,8 @@ DENG_HEADERS += \
     include/ui/widgets/choicewidget.h \
     include/ui/widgets/consolecommandwidget.h \
     include/ui/widgets/consolewidget.h \
-    include/ui/widgets/context.h \
     include/ui/widgets/contextwidgetorganizer.h \
+    include/ui/widgets/data.h \
     include/ui/widgets/documentwidget.h \
     include/ui/widgets/gameselectionwidget.h \
     include/ui/widgets/dialogwidget.h \
@@ -368,7 +368,7 @@ DENG_HEADERS += \
     include/ui/widgets/labelwidget.h \
     include/ui/widgets/legacywidget.h \
     include/ui/widgets/lineeditwidget.h \
-    include/ui/widgets/listcontext.h \
+    include/ui/widgets/listdata.h \
     include/ui/widgets/logwidget.h \
     include/ui/widgets/margins.h \
     include/ui/widgets/menuwidget.h \
@@ -671,8 +671,8 @@ SOURCES += \
     src/ui/widgets/choicewidget.cpp \
     src/ui/widgets/consolecommandwidget.cpp \
     src/ui/widgets/consolewidget.cpp \
-    src/ui/widgets/context.cpp \
     src/ui/widgets/contextwidgetorganizer.cpp \
+    src/ui/widgets/data.cpp \
     src/ui/widgets/documentwidget.cpp \
     src/ui/widgets/gameselectionwidget.cpp \
     src/ui/widgets/dialogwidget.cpp \
@@ -685,7 +685,7 @@ SOURCES += \
     src/ui/widgets/labelwidget.cpp \
     src/ui/widgets/legacywidget.cpp \
     src/ui/widgets/lineeditwidget.cpp \
-    src/ui/widgets/listcontext.cpp \
+    src/ui/widgets/listdata.cpp \
     src/ui/widgets/logwidget.cpp \
     src/ui/widgets/margins.cpp \
     src/ui/widgets/menuwidget.cpp \

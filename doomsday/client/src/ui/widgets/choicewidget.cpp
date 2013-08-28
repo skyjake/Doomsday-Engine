@@ -24,8 +24,8 @@ using namespace de;
 using namespace ui;
 
 DENG_GUI_PIMPL(ChoiceWidget),
-DENG2_OBSERVES(Context, Addition),
-DENG2_OBSERVES(Context, Removal),
+DENG2_OBSERVES(Data, Addition),
+DENG2_OBSERVES(Data, Removal),
 DENG2_OBSERVES(ContextWidgetOrganizer, WidgetCreation)
 {
     /**
@@ -58,9 +58,9 @@ DENG2_OBSERVES(ContextWidgetOrganizer, WidgetCreation)
     };
 
     PopupMenuWidget *choices;
-    Context::Pos selected; ///< One item is always selected.
+    Data::Pos selected; ///< One item is always selected.
 
-    Instance(Public *i) : Base(i), selected(Context::InvalidPos)
+    Instance(Public *i) : Base(i), selected(Data::InvalidPos)
     {
         self.setFont("choice.selected");
 
@@ -94,7 +94,7 @@ DENG2_OBSERVES(ContextWidgetOrganizer, WidgetCreation)
         }
     }
 
-    Context const &items() const
+    Data const &items() const
     {
         return choices->menu().items();
     }
@@ -104,7 +104,7 @@ DENG2_OBSERVES(ContextWidgetOrganizer, WidgetCreation)
         return selected < items().size();
     }
 
-    void contextItemAdded(Context::Pos id, ui::Item const &)
+    void contextItemAdded(Data::Pos id, ui::Item const &)
     {
         if(selected >= items().size())
         {
@@ -122,7 +122,7 @@ DENG2_OBSERVES(ContextWidgetOrganizer, WidgetCreation)
         }
     }
 
-    void contextItemRemoved(Context::Pos id, ui::Item &)
+    void contextItemRemoved(Data::Pos id, ui::Item &)
     {
         if(id <= selected && selected > 0)
         {
@@ -138,7 +138,7 @@ DENG2_OBSERVES(ContextWidgetOrganizer, WidgetCreation)
     void updateItemHighlight()
     {
         // Highlight the currently selected item.
-        for(Context::Pos i = 0; i < items().size(); ++i)
+        for(Data::Pos i = 0; i < items().size(); ++i)
         {
             if(GuiWidget *w = choices->menu().organizer().itemWidget(i))
             {
@@ -187,7 +187,7 @@ PopupMenuWidget &ChoiceWidget::popup()
     return *d->choices;
 }
 
-void ChoiceWidget::setSelected(Context::Pos pos)
+void ChoiceWidget::setSelected(Data::Pos pos)
 {
     if(d->selected != pos)
     {
@@ -197,7 +197,7 @@ void ChoiceWidget::setSelected(Context::Pos pos)
     }
 }
 
-Context::Pos ChoiceWidget::selected() const
+Data::Pos ChoiceWidget::selected() const
 {
     return d->selected;
 }
@@ -214,7 +214,7 @@ void ChoiceWidget::openPopup()
     d->choices->open();
 }
 
-ui::Context &ChoiceWidget::items()
+ui::Data &ChoiceWidget::items()
 {
     return d->choices->menu().items();
 }

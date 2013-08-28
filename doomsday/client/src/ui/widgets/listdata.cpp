@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#include "ui/widgets/listcontext.h"
+#include "ui/widgets/listdata.h"
 
 #include <QtAlgorithms>
 #include <algorithm>
@@ -24,24 +24,24 @@
 using namespace de;
 using namespace ui;
 
-ListContext::~ListContext()
+ListData::~ListData()
 {
     // Delete all items.
     qDeleteAll(_items);
 }
 
-dsize ListContext::size() const
+dsize ListData::size() const
 {
     return _items.size();
 }
 
-Item const &ListContext::at(Pos pos) const
+Item const &ListData::at(Pos pos) const
 {
     DENG2_ASSERT(pos < size());
     return *_items.at(pos);
 }
 
-Context::Pos ListContext::find(Item const &item) const
+Data::Pos ListData::find(Item const &item) const
 {
     for(Pos i = 0; i < size(); ++i)
     {
@@ -50,7 +50,7 @@ Context::Pos ListContext::find(Item const &item) const
     return InvalidPos;
 }
 
-Context::Pos ListContext::findData(QVariant const &data) const
+Data::Pos ListData::findData(QVariant const &data) const
 {
     for(Pos i = 0; i < size(); ++i)
     {
@@ -59,7 +59,7 @@ Context::Pos ListContext::findData(QVariant const &data) const
     return InvalidPos;
 }
 
-Context &ListContext::clear()
+Data &ListData::clear()
 {
     while(!isEmpty())
     {
@@ -68,10 +68,10 @@ Context &ListContext::clear()
     return *this;
 }
 
-Context &ListContext::insert(Pos pos, Item *item)
+Data &ListData::insert(Pos pos, Item *item)
 {    
     _items.insert(pos, item);
-    item->setContext(*this);
+    item->setDataContext(*this);
 
     // Notify.
     DENG2_FOR_AUDIENCE(Addition, i)
@@ -82,12 +82,12 @@ Context &ListContext::insert(Pos pos, Item *item)
     return *this;
 }
 
-void ListContext::remove(Pos pos)
+void ListData::remove(Pos pos)
 {
     delete take(pos);
 }
 
-Item *ListContext::take(Context::Pos pos)
+Item *ListData::take(Data::Pos pos)
 {
     DENG2_ASSERT(pos < size());
 
@@ -103,15 +103,15 @@ Item *ListContext::take(Context::Pos pos)
 }
 
 struct ListItemSorter {
-    Context::LessThanFunc lessThan;
+    Data::LessThanFunc lessThan;
 
-    ListItemSorter(Context::LessThanFunc func) : lessThan(func) {}
+    ListItemSorter(Data::LessThanFunc func) : lessThan(func) {}
     bool operator () (Item const *a, Item const *b) const {
         return lessThan(*a, *b);
     }
 };
 
-void ListContext::sort(LessThanFunc lessThan)
+void ListData::sort(LessThanFunc lessThan)
 {
     qSort(_items.begin(), _items.end(), ListItemSorter(lessThan));
 
@@ -122,7 +122,7 @@ void ListContext::sort(LessThanFunc lessThan)
     }
 }
 
-void ListContext::stableSort(LessThanFunc lessThan)
+void ListData::stableSort(LessThanFunc lessThan)
 {
     qStableSort(_items.begin(), _items.end(), ListItemSorter(lessThan));
 
