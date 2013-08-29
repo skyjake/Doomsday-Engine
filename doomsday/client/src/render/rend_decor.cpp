@@ -37,6 +37,8 @@
 #include "world/maputil.h"
 #include "BspLeaf"
 
+#include "WallEdge"
+
 #include "render/rend_decor.h"
 
 using namespace de;
@@ -73,7 +75,7 @@ static uint sourceCount = 0;
 static decorsource_t *sourceFirst = 0;
 static decorsource_t *sourceCursor = 0;
 
-static void plotSourcesForLineSide(LineSide &side, int section);
+static void plotSourcesForWallSection(LineSide &side, int section);
 static void plotSourcesForPlane(Plane &pln);
 
 void Rend_DecorRegister()
@@ -336,8 +338,8 @@ static void plotSourcesForSurface(Surface &suf)
         {
         case DMU_SIDE: {
             LineSide &side = suf.parent().as<LineSide>();
-            plotSourcesForLineSide(side, &side.middle() == &suf? LineSide::Middle :
-                                         &side.bottom() == &suf? LineSide::Bottom : LineSide::Top);
+            plotSourcesForWallSection(side, &side.middle() == &suf? LineSide::Middle :
+                                      &side.bottom() == &suf? LineSide::Bottom : LineSide::Top);
             break; }
 
         case DMU_PLANE:
@@ -488,21 +490,28 @@ static void plotSourcesForPlane(Plane &pln)
     updateSurfaceDecorations(surface, offset, v1, v2, &sector);
 }
 
-static void plotSourcesForLineSide(LineSide &side, int section)
+static void plotSourcesForWallSection(LineSide &side, int section)
 {
     if(!side.hasSections()) return;
     if(!side.surface(section).hasMaterial()) return;
 
     // Is the wall section potentially visible?
-    coord_t bottom, top;
-    Vector2f materialOrigin;
-    R_SideSectionCoords(side, section, !devRendSkyMode, &bottom, &top, &materialOrigin);
-    if(!(top > bottom)) return;
+    HEdge *leftHEdge  = side.leftHEdge();
+    HEdge *rightHEdge = side.rightHEdge();
 
-    Vector3d v1(side.from().origin().x, side.from().origin().y, top);
-    Vector3d v2(  side.to().origin().x,   side.to().origin().y, bottom);
+    if(!leftHEdge || !rightHEdge)
+        return;
 
-    updateSurfaceDecorations(side.surface(section), -materialOrigin, v1, v2);
+    WallSpec const wallSpec = WallSpec::fromMapSide(side, section);
+    WallEdge leftEdge (wallSpec, *leftHEdge, Line::From);
+    WallEdge rightEdge(wallSpec, *rightHEdge, Line::To);
+
+    if(!leftEdge.isValid() || !rightEdge.isValid()
+       || de::fequal(leftEdge.bottom().z(), rightEdge.top().z()))
+        return;
+
+    updateSurfaceDecorations(side.surface(section), -leftEdge.materialOrigin(),
+                             leftEdge.top().origin(), rightEdge.bottom().origin());
 }
 
 void Rend_DecorBeginFrame()
