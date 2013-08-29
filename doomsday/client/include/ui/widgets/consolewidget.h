@@ -21,7 +21,7 @@
 
 #include <QObject>
 
-#include "ui/framework/guiwidget.h"
+#include "GuiWidget"
 #include "buttonwidget.h"
 #include "consolecommandwidget.h"
 #include "logwidget.h"

@@ -17,7 +17,7 @@
  */
 
 #include "ui/dialogs/messagedialog.h"
-#include "ui/framework/sequentiallayout.h"
+#include "SequentialLayout"
 
 using namespace de;
 using namespace ui;

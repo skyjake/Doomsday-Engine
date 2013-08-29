@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#include "ui/framework/margins.h"
+#include "ui/Margins"
 #include "clientapp.h"
 
 using namespace de;

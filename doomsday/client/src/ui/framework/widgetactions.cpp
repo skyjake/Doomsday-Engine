@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "ui/framework/widgetactions.h"
+#include "WidgetActions"
 #include "ui/b_main.h"
 #include "ui/b_context.h"
 

@@ -108,7 +108,8 @@ DENG_API_HEADERS = \
     $$DENG_API_DIR/doomsday.h
 
 # Convenience headers.
-DENG_HEADERS += \
+DENG_CONVENIENCE_HEADERS += \
+    include/AtlasProceduralImage \
     include/BiasDigest \
     include/BiasIllum \
     include/BiasSource \
@@ -116,28 +117,24 @@ DENG_HEADERS += \
     include/BiasTracker \
     include/BspLeaf \
     include/BspNode \
+    include/CommandAction \
+    include/ContextWidgetOrganizer \
     include/EntityDatabase \
     include/Face \
+    include/FontLineWrapping \
     include/Game \
     include/Games \
+    include/GLTextComposer \
     include/Grabbable \
+    include/GridLayout \
+    include/GuiRootWidget \
+    include/GuiWidget \
     include/Hand \
     include/HEdge \
     include/HueCircle \
     include/HueCircleVisual \
     include/IHPlane \
     include/Line \
-    include/Mesh \
-    include/Plane \
-    include/Polyobj \
-    include/WallEdge \
-    include/WallSpec \
-    include/Sector \
-    include/Surface \
-    include/Vertex
-
-# Private headers.
-DENG_HEADERS += \
     include/MapElement \
     include/Material \
     include/MaterialArchive \
@@ -147,13 +144,36 @@ DENG_HEADERS += \
     include/MaterialScheme \
     include/MaterialSnapshot \
     include/MaterialVariantSpec \
+    include/Mesh \
+    include/Plane \
+    include/Polyobj \
+    include/ProceduralImage \
+    include/Sector \
+    include/SequentialLayout \
+    include/SignalAction \
     include/SkyFixEdge \
+    include/SubmenuAction \
+    include/Surface \
+    include/TextDrawable \
     include/Texture \
     include/TextureManifest \
     include/Textures \
     include/TextureScheme \
     include/TextureVariantSpec \
-    include/TriangleStripBuilder \
+    include/TriangleStripBuilder \    
+    include/ui/Data \
+    include/ui/Item \
+    include/ui/ListData \
+    include/ui/Margins \
+    include/ui/VariableToggleItem \
+    include/Vertex \
+    include/WallEdge \
+    include/WallSpec \
+    include/WidgetActions
+
+# Private headers.
+DENG_HEADERS += \
+    $$DENG_CONVENIENCE_HEADERS \
     include/audio/audiodriver.h \
     include/audio/audiodriver_music.h \
     include/audio/m_mus2midi.h \

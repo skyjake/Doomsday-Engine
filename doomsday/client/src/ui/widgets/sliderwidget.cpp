@@ -17,7 +17,7 @@
  */
 
 #include "ui/widgets/sliderwidget.h"
-#include "ui/framework/gltextcomposer.h"
+#include "GLTextComposer"
 
 #include <de/Font>
 #include <de/Drawable>

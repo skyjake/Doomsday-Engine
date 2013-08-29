@@ -22,8 +22,8 @@
  */
 
 #include "ui/widgets/logwidget.h"
-#include "ui/framework/fontlinewrapping.h"
-#include "ui/framework/gltextcomposer.h"
+#include "FontLineWrapping"
+#include "GLTextComposer"
 #include "ui/styledlogsinkformatter.h"
 #include "ui/style.h"
 #include "clientapp.h"

@@ -17,8 +17,8 @@
  */
 
 #include "ui/widgets/gameselectionwidget.h"
-#include "ui/framework/actionitem.h"
-#include "ui/framework/commandaction.h"
+#include "ui/ActionItem"
+#include "CommandAction"
 #include "clientapp.h"
 #include "games.h"
 #include "dd_main.h"

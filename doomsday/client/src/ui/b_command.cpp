@@ -25,7 +25,7 @@
 #include "world/p_players.h"
 #include "ui/b_main.h"
 #include "ui/b_command.h"
-#include "ui/framework/commandaction.h"
+#include "CommandAction"
 
 void B_InitCommandBindingList(evbinding_t* listRoot)
 {

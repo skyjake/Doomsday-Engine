@@ -18,9 +18,9 @@
 
 #include "ui/widgets/lineeditwidget.h"
 #include "ui/widgets/labelwidget.h"
-#include "ui/framework/fontlinewrapping.h"
-#include "ui/framework/guirootwidget.h"
-#include "ui/framework/gltextcomposer.h"
+#include "FontLineWrapping"
+#include "GuiRootWidget"
+#include "GLTextComposer"
 #include "ui/style.h"
 
 #include <de/KeyEvent>

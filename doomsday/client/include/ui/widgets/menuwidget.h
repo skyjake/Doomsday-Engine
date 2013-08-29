@@ -19,12 +19,12 @@
 #ifndef DENG_CLIENT_MENUWIDGET_H
 #define DENG_CLIENT_MENUWIDGET_H
 
-#include "ui/framework/data.h"
-#include "ui/framework/contextwidgetorganizer.h"
-#include "ui/framework/actionitem.h"
-#include "ui/framework/submenuitem.h"
-#include "ui/framework/variabletoggleitem.h"
-#include "ui/framework/gridlayout.h"
+#include "ui/Data"
+#include "ContextWidgetOrganizer"
+#include "ui/ActionItem"
+#include "ui/SubmenuItem"
+#include "ui/VariableToggleItem"
+#include "GridLayout"
 #include "scrollareawidget.h"
 #include "buttonwidget.h"
 

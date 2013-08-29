@@ -19,7 +19,7 @@
 #ifndef DENG_CLIENT_SCROLLAREAWIDGET_H
 #define DENG_CLIENT_SCROLLAREAWIDGET_H
 
-#include "ui/framework/guiwidget.h"
+#include "GuiWidget"
 
 /**
  * Scrollable area.

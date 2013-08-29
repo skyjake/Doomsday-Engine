@@ -20,7 +20,7 @@
 #define DENG_CLIENT_SEQUENTIALLAYOUT_H
 
 #include "../uidefs.h"
-#include "guiwidget.h"
+#include "GuiWidget"
 
 /**
  * Widget layout for a sequence of widgets.

@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#include "ui/framework/signalaction.h"
+#include "SignalAction"
 
 using namespace de;
 

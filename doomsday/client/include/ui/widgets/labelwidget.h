@@ -24,9 +24,9 @@
 #include <de/GLUniform>
 
 #include "../uidefs.h"
-#include "ui/framework/guiwidget.h"
-#include "ui/framework/data.h"
-#include "ui/framework/proceduralimage.h"
+#include "GuiWidget"
+#include "ProceduralImage"
+#include "ui/Data"
 
 /**
  * Widget showing a label text and/or image.

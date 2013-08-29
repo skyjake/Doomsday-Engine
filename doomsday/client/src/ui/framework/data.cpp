@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#include "ui/framework/data.h"
-#include "ui/framework/item.h"
+#include "ui/Data"
+#include "ui/Item"
 #include "ui/widgets/labelwidget.h"
 
 #include <QtAlgorithms>

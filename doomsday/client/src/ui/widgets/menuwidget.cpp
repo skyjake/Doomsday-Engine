@@ -19,10 +19,10 @@
 #include "ui/widgets/menuwidget.h"
 #include "ui/widgets/popupmenuwidget.h"
 #include "ui/widgets/variabletogglewidget.h"
-#include "ui/framework/contextwidgetorganizer.h"
-#include "ui/framework/listdata.h"
-#include "ui/framework/actionitem.h"
-#include "ui/framework/gridlayout.h"
+#include "ContextWidgetOrganizer"
+#include "ui/ListData"
+#include "ui/ActionItem"
+#include "GridLayout"
 
 using namespace de;
 using namespace ui;

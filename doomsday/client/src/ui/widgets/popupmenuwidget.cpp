@@ -18,9 +18,9 @@
 
 #include "ui/widgets/popupmenuwidget.h"
 #include "ui/widgets/menuwidget.h"
-#include "ui/framework/guirootwidget.h"
-#include "ui/framework/contextwidgetorganizer.h"
-#include "ui/framework/item.h"
+#include "GuiRootWidget"
+#include "ContextWidgetOrganizer"
+#include "ui/Item"
 
 using namespace de;
 

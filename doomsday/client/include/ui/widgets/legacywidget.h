@@ -20,7 +20,7 @@
 #ifndef CLIENT_LEGACYWIDGET_H
 #define CLIENT_LEGACYWIDGET_H
 
-#include "ui/framework/guiwidget.h"
+#include "GuiWidget"
 
 /**
  * Widget for legacy UI components.

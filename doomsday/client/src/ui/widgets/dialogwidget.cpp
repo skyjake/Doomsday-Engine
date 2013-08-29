@@ -19,8 +19,8 @@
 #include "ui/widgets/dialogwidget.h"
 #include "ui/widgets/togglewidget.h"
 #include "ui/widgets/choicewidget.h"
-#include "ui/framework/guirootwidget.h"
-#include "ui/framework/signalaction.h"
+#include "GuiRootWidget"
+#include "SignalAction"
 #include "dd_main.h"
 
 #include <de/KeyEvent>

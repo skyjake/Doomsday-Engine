@@ -25,7 +25,7 @@
 #include "updater/updatersettings.h"
 #include "ui/widgets/progresswidget.h"
 #include "ui/widgets/taskbarwidget.h"
-#include "ui/framework/signalaction.h"
+#include "SignalAction"
 #include "ui/clientwindow.h"
 #include "dd_version.h"
 

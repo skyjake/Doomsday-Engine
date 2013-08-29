@@ -41,7 +41,7 @@
 #include "ui/widgets/notificationwidget.h"
 #include "ui/widgets/gameselectionwidget.h"
 #include "ui/widgets/progresswidget.h"
-#include "ui/framework/commandaction.h"
+#include "CommandAction"
 #include "ui/mouse_qt.h"
 
 #include "dd_main.h"

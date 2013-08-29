@@ -20,7 +20,7 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#include "ui/framework/fontlinewrapping.h"
+#include "FontLineWrapping"
 
 #include <QMap>
 

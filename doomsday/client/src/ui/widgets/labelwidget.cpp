@@ -17,9 +17,9 @@
  */
 
 #include "ui/widgets/labelwidget.h"
-#include "ui/framework/gltextcomposer.h"
-#include "ui/framework/fontlinewrapping.h"
-#include "ui/framework/atlasproceduralimage.h"
+#include "GLTextComposer"
+#include "FontLineWrapping"
+#include "AtlasProceduralImage"
 
 #include <de/Drawable>
 #include <de/AtlasTexture>

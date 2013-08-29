@@ -24,7 +24,7 @@
 #include "ui/widgets/labelwidget.h"
 #include "ui/widgets/choicewidget.h"
 #include "ui/widgets/variabletogglewidget.h"
-#include "ui/framework/gridlayout.h"
+#include "GridLayout"
 #include <de/Log>
 #include <QDesktopServices>
 

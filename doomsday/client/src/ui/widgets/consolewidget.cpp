@@ -17,10 +17,10 @@
  */
 
 #include "ui/widgets/consolewidget.h"
-#include "ui/framework/guirootwidget.h"
-#include "ui/framework/variabletoggleitem.h"
-#include "ui/framework/commandaction.h"
-#include "ui/framework/signalaction.h"
+#include "GuiRootWidget"
+#include "ui/VariableToggleItem"
+#include "CommandAction"
+#include "SignalAction"
 #include "ui/widgets/buttonwidget.h"
 #include "ui/widgets/consolecommandwidget.h"
 #include "ui/widgets/popupmenuwidget.h"

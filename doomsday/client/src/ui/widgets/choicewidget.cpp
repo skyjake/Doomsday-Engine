@@ -18,7 +18,7 @@
 
 #include "ui/widgets/choicewidget.h"
 #include "ui/widgets/popupmenuwidget.h"
-#include "ui/framework/signalaction.h"
+#include "SignalAction"
 
 using namespace de;
 using namespace ui;

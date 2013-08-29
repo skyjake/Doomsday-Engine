@@ -17,7 +17,7 @@
  */
 
 #include "de_platform.h"
-#include "ui/framework/commandaction.h"
+#include "CommandAction"
 #include "con_main.h"
 
 using namespace de;

@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#include "ui/framework/gridlayout.h"
-#include "ui/framework/sequentiallayout.h"
+#include "GridLayout"
+#include "SequentialLayout"
 
 using namespace de;
 

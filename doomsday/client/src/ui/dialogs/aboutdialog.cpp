@@ -17,8 +17,8 @@
  */
 
 #include "ui/dialogs/aboutdialog.h"
-#include "ui/framework/sequentiallayout.h"
-#include "ui/framework/signalaction.h"
+#include "SequentialLayout"
+#include "SignalAction"
 #include "ui/widgets/labelwidget.h"
 #include "ui/widgets/popupwidget.h"
 #include "ui/widgets/documentwidget.h"

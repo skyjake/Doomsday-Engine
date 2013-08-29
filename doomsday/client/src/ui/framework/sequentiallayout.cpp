@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#include "ui/framework/sequentiallayout.h"
+#include "SequentialLayout"
 
 using namespace de;
 

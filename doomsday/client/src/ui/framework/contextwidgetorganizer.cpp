@@ -16,9 +16,9 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#include "ui/framework/contextwidgetorganizer.h"
-#include "ui/framework/item.h"
+#include "ContextWidgetOrganizer"
 #include "ui/widgets/labelwidget.h"
+#include "ui/Item"
 
 #include <QMap>
 

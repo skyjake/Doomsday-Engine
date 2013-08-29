@@ -17,7 +17,7 @@
  */
 
 #include "ui/widgets/progresswidget.h"
-#include "ui/framework/guirootwidget.h"
+#include "GuiRootWidget"
 
 #include <de/Animation>
 #include <de/Lockable>

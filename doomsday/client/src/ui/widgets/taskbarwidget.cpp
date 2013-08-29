@@ -24,9 +24,9 @@
 #include "ui/widgets/blurwidget.h"
 #include "ui/dialogs/aboutdialog.h"
 #include "ui/dialogs/videosettingsdialog.h"
-#include "ui/framework/guirootwidget.h"
-#include "ui/framework/commandaction.h"
-#include "ui/framework/signalaction.h"
+#include "GuiRootWidget"
+#include "CommandAction"
+#include "SignalAction"
 #include "updater/updatersettingsdialog.h"
 #include "ui/clientwindow.h"
 #include "client/cl_def.h" // clientPaused

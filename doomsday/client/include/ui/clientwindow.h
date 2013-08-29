@@ -23,7 +23,7 @@
 
 #include <de/PersistentCanvasWindow>
 
-#include "ui/framework/guirootwidget.h"
+#include "GuiRootWidget"
 #include "resource/image.h"
 
 /**
