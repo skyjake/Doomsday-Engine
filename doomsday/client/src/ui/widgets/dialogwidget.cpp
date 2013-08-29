@@ -17,10 +17,10 @@
  */
 
 #include "ui/widgets/dialogwidget.h"
-#include "ui/widgets/guirootwidget.h"
 #include "ui/widgets/togglewidget.h"
 #include "ui/widgets/choicewidget.h"
-#include "ui/signalaction.h"
+#include "ui/framework/guirootwidget.h"
+#include "ui/framework/signalaction.h"
 #include "dd_main.h"
 
 #include <de/KeyEvent>

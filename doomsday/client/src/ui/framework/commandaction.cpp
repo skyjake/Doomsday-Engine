@@ -1,4 +1,4 @@
-/** @file context.cpp  UI data context.
+/** @file commandaction.cpp  Action that executes a console command.
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -13,40 +13,27 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details. You should have received a copy of the GNU
  * General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
-#include "ui/widgets/data.h"
-#include "ui/widgets/labelwidget.h"
-#include "ui/widgets/item.h"
-
-#include <QtAlgorithms>
+#include "de_platform.h"
+#include "ui/framework/commandaction.h"
+#include "con_main.h"
 
 using namespace de;
-using namespace ui;
 
-dsize const Data::InvalidPos = dsize(-1);
+CommandAction::CommandAction(String const &cmd, int commandSource)
+    : _command(cmd), _source(commandSource)
+{}
 
-static bool itemLessThan(Item const &a, Item const &b)
+void CommandAction::trigger()
 {
-    return a.sortKey().compareWithoutCase(b.sortKey()) < 0;
+    Action::trigger();
+
+    Con_Execute(_source, _command.toUtf8(), false /*silent*/, false /*net*/);
 }
 
-static bool itemGreaterThan(Item const &a, Item const &b)
+CommandAction *CommandAction::duplicate() const
 {
-    return a.sortKey().compareWithoutCase(b.sortKey()) > 0;
-}
-
-void Data::sort(SortMethod method)
-{
-    switch(method)
-    {
-    case Ascending:
-        sort(itemLessThan);
-        break;
-
-    case Descending:
-        sort(itemGreaterThan);
-        break;
-    }
+    return new CommandAction(_command, _source);
 }

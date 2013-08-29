@@ -23,10 +23,10 @@
 #include <de/GLBuffer>
 #include <de/GLUniform>
 
-#include "guiwidget.h"
 #include "../uidefs.h"
-#include "data.h"
-#include "proceduralimage.h"
+#include "ui/framework/guiwidget.h"
+#include "ui/framework/data.h"
+#include "ui/framework/proceduralimage.h"
 
 /**
  * Widget showing a label text and/or image.

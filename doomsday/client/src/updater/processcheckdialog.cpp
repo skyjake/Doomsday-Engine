@@ -19,7 +19,7 @@
  */
 
 #include "updater/processcheckdialog.h"
-#include "ui/widgets/messagedialog.h"
+#include "ui/dialogs//messagedialog.h"
 #include "ui/clientwindow.h"
 
 #include <QProcess>

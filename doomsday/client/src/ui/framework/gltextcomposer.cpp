@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#include "ui/widgets/gltextcomposer.h"
+#include "ui/framework/gltextcomposer.h"
 
 #include <QList>
 

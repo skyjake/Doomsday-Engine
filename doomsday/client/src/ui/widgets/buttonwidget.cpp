@@ -17,7 +17,7 @@
  */
 
 #include "ui/widgets/buttonwidget.h"
-#include "ui/widgets/guirootwidget.h"
+#include "ui/framework/guirootwidget.h"
 
 #include <de/MouseEvent>
 #include <de/Animation>

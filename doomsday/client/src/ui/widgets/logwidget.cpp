@@ -22,9 +22,9 @@
  */
 
 #include "ui/widgets/logwidget.h"
-#include "ui/widgets/fontlinewrapping.h"
-#include "ui/widgets/gltextcomposer.h"
-#include "ui/widgets/styledlogsinkformatter.h"
+#include "ui/framework/fontlinewrapping.h"
+#include "ui/framework/gltextcomposer.h"
+#include "ui/styledlogsinkformatter.h"
 #include "ui/style.h"
 #include "clientapp.h"
 

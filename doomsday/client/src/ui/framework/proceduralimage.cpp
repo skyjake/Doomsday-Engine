@@ -1,4 +1,4 @@
-/** @file signalaction.cpp
+/** @file proceduralimage.cpp  Procedural image.
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,23 +16,42 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#include "ui/signalaction.h"
+#include "ui/framework/proceduralimage.h"
 
 using namespace de;
 
-SignalAction::SignalAction(QObject *target, char const *slot)
-    : Action(), _target(target), _slot(slot)
+ProceduralImage::ProceduralImage(Size const &size) : _size(size), _color(1, 1, 1, 1)
+{}
+
+ProceduralImage::~ProceduralImage()
+{}
+
+ProceduralImage::Size ProceduralImage::size() const
 {
-    connect(this, SIGNAL(triggered()), target, slot);
+    return _size;
 }
 
-void SignalAction::trigger()
+ProceduralImage::Color ProceduralImage::color() const
 {
-    Action::trigger();
-    emit triggered();
+    return _color;
 }
 
-SignalAction *SignalAction::duplicate() const
+void ProceduralImage::setSize(Size const &size)
 {
-    return new SignalAction(_target, _slot);
+    _size = size;
+}
+
+void ProceduralImage::setColor(Color const &color)
+{
+    _color = color;
+}
+
+void ProceduralImage::update()
+{
+    // optional for derived classes
+}
+
+void ProceduralImage::glDeinit()
+{
+    // optional for derived classes
 }

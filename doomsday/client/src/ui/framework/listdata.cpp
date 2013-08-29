@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#include "ui/widgets/listdata.h"
+#include "ui/framework/listdata.h"
 
 #include <QtAlgorithms>
 #include <algorithm>

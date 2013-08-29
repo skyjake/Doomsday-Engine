@@ -21,7 +21,7 @@
 
 #include "buttonwidget.h"
 #include "popupmenuwidget.h"
-#include "actionitem.h"
+#include "ui/framework/actionitem.h"
 
 /**
  * Widget for choosing an item from a set of alternatives.

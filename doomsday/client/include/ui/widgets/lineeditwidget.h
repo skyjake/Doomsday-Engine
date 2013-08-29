@@ -19,7 +19,7 @@
 #ifndef DENG_CLIENT_LINEEDITWIDGET_H
 #define DENG_CLIENT_LINEEDITWIDGET_H
 
-#include "guiwidget.h"
+#include "ui/framework/guiwidget.h"
 #include <de/shell/AbstractLineEditor>
 #include <de/KeyEvent>
 

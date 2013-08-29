@@ -17,15 +17,15 @@
  */
 
 #include "ui/widgets/consolewidget.h"
-#include "ui/widgets/guirootwidget.h"
+#include "ui/framework/guirootwidget.h"
+#include "ui/framework/variabletoggleitem.h"
+#include "ui/framework/commandaction.h"
+#include "ui/framework/signalaction.h"
 #include "ui/widgets/buttonwidget.h"
 #include "ui/widgets/consolecommandwidget.h"
 #include "ui/widgets/popupmenuwidget.h"
-#include "ui/widgets/variabletoggleitem.h"
 #include "ui/widgets/logwidget.h"
 #include "ui/clientwindow.h"
-#include "ui/commandaction.h"
-#include "ui/signalaction.h"
 
 #include <de/App>
 #include <de/ScalarRule>

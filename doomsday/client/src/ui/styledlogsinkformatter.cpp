@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "ui/widgets/styledlogsinkformatter.h"
+#include "ui/styledlogsinkformatter.h"
 
 using namespace de;
 

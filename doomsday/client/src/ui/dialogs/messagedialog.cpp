@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#include "ui/widgets/messagedialog.h"
-#include "ui/widgets/sequentiallayout.h"
+#include "ui/dialogs/messagedialog.h"
+#include "ui/framework/sequentiallayout.h"
 
 using namespace de;
 using namespace ui;

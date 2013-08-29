@@ -16,14 +16,13 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#include "ui/widgets/aboutdialog.h"
+#include "ui/dialogs/aboutdialog.h"
+#include "ui/framework/sequentiallayout.h"
+#include "ui/framework/signalaction.h"
 #include "ui/widgets/labelwidget.h"
-#include "ui/widgets/sequentiallayout.h"
 #include "ui/widgets/popupwidget.h"
 #include "ui/widgets/documentwidget.h"
-#include "ui/signalaction.h"
 #include "ui/style.h"
-#include "ui/signalaction.h"
 #include "gl/sys_opengl.h"
 #include "audio/audiodriver.h"
 #include "clientapp.h"

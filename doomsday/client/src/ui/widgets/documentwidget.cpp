@@ -18,7 +18,7 @@
 
 #include "ui/widgets/documentwidget.h"
 #include "ui/widgets/progresswidget.h"
-#include "ui/widgets/textdrawable.h"
+#include "ui/framework/textdrawable.h"
 
 #include <de/Drawable>
 

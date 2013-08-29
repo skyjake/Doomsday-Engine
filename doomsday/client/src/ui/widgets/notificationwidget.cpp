@@ -17,7 +17,7 @@
  */
 
 #include "ui/widgets/notificationwidget.h"
-#include "ui/widgets/sequentiallayout.h"
+#include "ui/framework/sequentiallayout.h"
 
 #include <de/Drawable>
 #include <de/Matrix>

@@ -1,4 +1,4 @@
-/** @file aboutdialog.h Information about the Doomsday Client.
+/** @file signalaction.cpp
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,27 +16,23 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef DENG_CLIENT_ABOUTDIALOG_H
-#define DENG_CLIENT_ABOUTDIALOG_H
+#include "ui/framework/signalaction.h"
 
-#include "dialogwidget.h"
+using namespace de;
 
-/**
- * Dialog that shows information about the client.
- */
-class AboutDialog : public DialogWidget
+SignalAction::SignalAction(QObject *target, char const *slot)
+    : Action(), _target(target), _slot(slot)
 {
-    Q_OBJECT
+    connect(this, SIGNAL(triggered()), target, slot);
+}
 
-public:
-    AboutDialog();
+void SignalAction::trigger()
+{
+    Action::trigger();
+    emit triggered();
+}
 
-protected slots:
-    void showGLInfo();
-    void showAudioInfo();
-
-private:
-    DENG2_PRIVATE(d)
-};
-
-#endif // DENG_CLIENT_ABOUTDIALOG_H
+SignalAction *SignalAction::duplicate() const
+{
+    return new SignalAction(_target, _slot);
+}

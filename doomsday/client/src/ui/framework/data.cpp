@@ -1,4 +1,4 @@
-/** @file proceduralimage.cpp  Procedural image.
+/** @file context.cpp  UI data context.
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,42 +16,37 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#include "ui/widgets/proceduralimage.h"
+#include "ui/framework/data.h"
+#include "ui/framework/item.h"
+#include "ui/widgets/labelwidget.h"
+
+#include <QtAlgorithms>
 
 using namespace de;
+using namespace ui;
 
-ProceduralImage::ProceduralImage(Size const &size) : _size(size), _color(1, 1, 1, 1)
-{}
+dsize const Data::InvalidPos = dsize(-1);
 
-ProceduralImage::~ProceduralImage()
-{}
-
-ProceduralImage::Size ProceduralImage::size() const
+static bool itemLessThan(Item const &a, Item const &b)
 {
-    return _size;
+    return a.sortKey().compareWithoutCase(b.sortKey()) < 0;
 }
 
-ProceduralImage::Color ProceduralImage::color() const
+static bool itemGreaterThan(Item const &a, Item const &b)
 {
-    return _color;
+    return a.sortKey().compareWithoutCase(b.sortKey()) > 0;
 }
 
-void ProceduralImage::setSize(Size const &size)
+void Data::sort(SortMethod method)
 {
-    _size = size;
-}
+    switch(method)
+    {
+    case Ascending:
+        sort(itemLessThan);
+        break;
 
-void ProceduralImage::setColor(Color const &color)
-{
-    _color = color;
-}
-
-void ProceduralImage::update()
-{
-    // optional for derived classes
-}
-
-void ProceduralImage::glDeinit()
-{
-    // optional for derived classes
+    case Descending:
+        sort(itemGreaterThan);
+        break;
+    }
 }

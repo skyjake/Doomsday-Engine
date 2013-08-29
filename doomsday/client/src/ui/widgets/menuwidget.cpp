@@ -18,11 +18,11 @@
 
 #include "ui/widgets/menuwidget.h"
 #include "ui/widgets/popupmenuwidget.h"
-#include "ui/widgets/contextwidgetorganizer.h"
-#include "ui/widgets/listdata.h"
-#include "ui/widgets/actionitem.h"
 #include "ui/widgets/variabletogglewidget.h"
-#include "ui/widgets/gridlayout.h"
+#include "ui/framework/contextwidgetorganizer.h"
+#include "ui/framework/listdata.h"
+#include "ui/framework/actionitem.h"
+#include "ui/framework/gridlayout.h"
 
 using namespace de;
 using namespace ui;

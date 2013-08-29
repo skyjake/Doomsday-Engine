@@ -180,7 +180,6 @@ DENG_HEADERS += \
     include/con_config.h \
     include/con_main.h \
     include/dd_def.h \
-    include/games.h \
     include/dd_help.h \
     include/dd_loop.h \
     include/dd_main.h \
@@ -197,8 +196,8 @@ DENG_HEADERS += \
     include/de_network.h \
     include/de_platform.h \
     include/de_play.h \
-    include/de_resource.h \
     include/de_render.h \
+    include/de_resource.h \
     include/de_system.h \
     include/de_ui.h \
     include/def_data.h \
@@ -219,6 +218,7 @@ DENG_HEADERS += \
     include/filesys/sys_direc.h \
     include/filetype.h \
     include/game.h \
+    include/games.h \
     include/gl/gl_defer.h \
     include/gl/gl_deferredapi.h \
     include/gl/gl_draw.h \
@@ -327,69 +327,69 @@ DENG_HEADERS += \
     include/ui/b_util.h \
     include/ui/busyvisual.h \
     include/ui/clientwindow.h \
-    include/ui/commandaction.h \
     include/ui/dd_input.h \
     include/ui/dd_ui.h \
+    include/ui/dialogs/aboutdialog.h \
+    include/ui/dialogs/messagedialog.h \
+    include/ui/dialogs/videosettingsdialog.h \
     include/ui/fi_main.h \
     include/ui/finaleinterpreter.h \
+    include/ui/framework/actionitem.h \
+    include/ui/framework/atlasproceduralimage.h \
+    include/ui/framework/commandaction.h \
+    include/ui/framework/contextwidgetorganizer.h \
+    include/ui/framework/data.h \
+    include/ui/framework/fontlinewrapping.h \
+    include/ui/framework/gltextcomposer.h \
+    include/ui/framework/gridlayout.h \
+    include/ui/framework/guirootwidget.h \
+    include/ui/framework/guiwidget.h \
+    include/ui/framework/guiwidgetprivate.h \
+    include/ui/framework/item.h \
+    include/ui/framework/listdata.h \
+    include/ui/framework/margins.h \
+    include/ui/framework/proceduralimage.h \
+    include/ui/framework/sequentiallayout.h \
+    include/ui/framework/signalaction.h \
+    include/ui/framework/submenuitem.h \
+    include/ui/framework/textdrawable.h \
+    include/ui/framework/variabletoggleitem.h \
+    include/ui/framework/widgetactions.h \
     include/ui/inputsystem.h \
     include/ui/joystick.h \
     include/ui/mouse_qt.h \
     include/ui/nativeui.h \
     include/ui/p_control.h \
     include/ui/style.h \
-    include/ui/signalaction.h \
+    include/ui/styledlogsinkformatter.h \
     include/ui/sys_input.h \
+    include/ui/ui2_main.h \
     include/ui/ui_main.h \
     include/ui/ui_panel.h \
-    include/ui/ui2_main.h \
     include/ui/uidefs.h \
-    include/ui/widgets/aboutdialog.h \
-    include/ui/widgets/actionitem.h \
-    include/ui/widgets/atlasproceduralimage.h \
     include/ui/widgets/blurwidget.h \
     include/ui/widgets/busywidget.h \
     include/ui/widgets/buttonwidget.h \
     include/ui/widgets/choicewidget.h \
     include/ui/widgets/consolecommandwidget.h \
     include/ui/widgets/consolewidget.h \
-    include/ui/widgets/contextwidgetorganizer.h \
-    include/ui/widgets/data.h \
+    include/ui/widgets/dialogwidget.h \
     include/ui/widgets/documentwidget.h \
     include/ui/widgets/gameselectionwidget.h \
-    include/ui/widgets/dialogwidget.h \
-    include/ui/widgets/gltextcomposer.h \
-    include/ui/widgets/gridlayout.h \
-    include/ui/widgets/guirootwidget.h \
-    include/ui/widgets/guiwidget.h \
-    include/ui/widgets/guiwidgetprivate.h \
-    include/ui/widgets/fontlinewrapping.h \
-    include/ui/widgets/item.h \
     include/ui/widgets/labelwidget.h \
     include/ui/widgets/legacywidget.h \
     include/ui/widgets/lineeditwidget.h \
-    include/ui/widgets/listdata.h \
     include/ui/widgets/logwidget.h \
-    include/ui/widgets/margins.h \
     include/ui/widgets/menuwidget.h \
-    include/ui/widgets/messagedialog.h \
     include/ui/widgets/notificationwidget.h \
     include/ui/widgets/popupmenuwidget.h \
     include/ui/widgets/popupwidget.h \
-    include/ui/widgets/proceduralimage.h \
     include/ui/widgets/progresswidget.h \
     include/ui/widgets/scrollareawidget.h \
-    include/ui/widgets/sequentiallayout.h \
     include/ui/widgets/sliderwidget.h \
-    include/ui/widgets/submenuitem.h \
-    include/ui/widgets/styledlogsinkformatter.h \
     include/ui/widgets/taskbarwidget.h \
-    include/ui/widgets/textdrawable.h \
     include/ui/widgets/togglewidget.h \
-    include/ui/widgets/variabletoggleitem.h \
     include/ui/widgets/variabletogglewidget.h \
-    include/ui/widgets/videosettingsdialog.h \
-    include/ui/widgets/widgetactions.h \
     include/ui/windowsystem.h \
     include/ui/zonedebug.h \
     include/updater.h \
@@ -519,7 +519,6 @@ SOURCES += \
     src/con_config.cpp \
     src/con_data.cpp \
     src/con_main.cpp \
-    src/games.cpp \
     src/dd_help.cpp \
     src/dd_loop.cpp \
     src/dd_main.cpp \
@@ -543,6 +542,7 @@ SOURCES += \
     src/filesys/searchpath.cpp \
     src/filesys/sys_direc.cpp \
     src/game.cpp \
+    src/games.cpp \
     src/gl/dgl_common.cpp \
     src/gl/dgl_draw.cpp \
     src/gl/gl_defer.cpp \
@@ -637,8 +637,8 @@ SOURCES += \
     src/resource/rawtexture.cpp \
     src/resource/texture.cpp \
     src/resource/texturemanifest.cpp \
-    src/resource/texturescheme.cpp \
     src/resource/textures.cpp \
+    src/resource/texturescheme.cpp \
     src/resource/texturevariant.cpp \
     src/resource/tga.cpp \
     src/resource/wad.cpp \
@@ -652,61 +652,61 @@ SOURCES += \
     src/ui/b_util.cpp \
     src/ui/busyvisual.cpp \
     src/ui/clientwindow.cpp \
-    src/ui/commandaction.cpp \
     src/ui/dd_input.cpp \
+    src/ui/dialogs/aboutdialog.cpp \
+    src/ui/dialogs/messagedialog.cpp \
+    src/ui/dialogs/videosettingsdialog.cpp \
     src/ui/fi_main.cpp \
     src/ui/finaleinterpreter.cpp \
+    src/ui/framework/commandaction.cpp \
+    src/ui/framework/contextwidgetorganizer.cpp \
+    src/ui/framework/data.cpp \
+    src/ui/framework/fontlinewrapping.cpp \
+    src/ui/framework/gltextcomposer.cpp \
+    src/ui/framework/gridlayout.cpp \
+    src/ui/framework/guirootwidget.cpp \
+    src/ui/framework/guiwidget.cpp \
+    src/ui/framework/item.cpp \
+    src/ui/framework/listdata.cpp \
+    src/ui/framework/margins.cpp \
+    src/ui/framework/proceduralimage.cpp \
+    src/ui/framework/sequentiallayout.cpp \
+    src/ui/framework/signalaction.cpp \
+    src/ui/framework/textdrawable.cpp \
+    src/ui/framework/widgetactions.cpp \
     src/ui/inputsystem.cpp \
     src/ui/mouse_qt.cpp \
     src/ui/nativeui.cpp \
     src/ui/p_control.cpp \
-    src/ui/signalaction.cpp \
     src/ui/style.cpp \
+    src/ui/styledlogsinkformatter.cpp \
     src/ui/sys_input.cpp \
     src/ui/ui2_main.cpp \
     src/ui/ui_main.cpp \
     src/ui/ui_panel.cpp \
-    src/ui/widgets/aboutdialog.cpp \
     src/ui/widgets/blurwidget.cpp \
     src/ui/widgets/busywidget.cpp \
     src/ui/widgets/buttonwidget.cpp \
     src/ui/widgets/choicewidget.cpp \
     src/ui/widgets/consolecommandwidget.cpp \
     src/ui/widgets/consolewidget.cpp \
-    src/ui/widgets/contextwidgetorganizer.cpp \
-    src/ui/widgets/data.cpp \
+    src/ui/widgets/dialogwidget.cpp \
     src/ui/widgets/documentwidget.cpp \
     src/ui/widgets/gameselectionwidget.cpp \
-    src/ui/widgets/dialogwidget.cpp \
-    src/ui/widgets/gltextcomposer.cpp \
-    src/ui/widgets/gridlayout.cpp \
-    src/ui/widgets/guirootwidget.cpp \
-    src/ui/widgets/guiwidget.cpp \
-    src/ui/widgets/fontlinewrapping.cpp \
-    src/ui/widgets/item.cpp \
     src/ui/widgets/labelwidget.cpp \
     src/ui/widgets/legacywidget.cpp \
     src/ui/widgets/lineeditwidget.cpp \
-    src/ui/widgets/listdata.cpp \
     src/ui/widgets/logwidget.cpp \
-    src/ui/widgets/margins.cpp \
     src/ui/widgets/menuwidget.cpp \
-    src/ui/widgets/messagedialog.cpp \
     src/ui/widgets/notificationwidget.cpp \
     src/ui/widgets/popupmenuwidget.cpp \
     src/ui/widgets/popupwidget.cpp \
-    src/ui/widgets/proceduralimage.cpp \
     src/ui/widgets/progresswidget.cpp \
-    src/ui/widgets/sliderwidget.cpp \
     src/ui/widgets/scrollareawidget.cpp \
-    src/ui/widgets/sequentiallayout.cpp \
-    src/ui/widgets/styledlogsinkformatter.cpp \
+    src/ui/widgets/sliderwidget.cpp \
     src/ui/widgets/taskbarwidget.cpp \
-    src/ui/widgets/textdrawable.cpp \
     src/ui/widgets/togglewidget.cpp \
     src/ui/widgets/variabletogglewidget.cpp \
-    src/ui/widgets/videosettingsdialog.cpp \
-    src/ui/widgets/widgetactions.cpp \
     src/ui/windowsystem.cpp \
     src/ui/zonedebug.cpp \
     src/updater/downloaddialog.cpp \

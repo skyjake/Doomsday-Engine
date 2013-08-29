@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "ui/widgets/guirootwidget.h"
+#include "ui/framework/guirootwidget.h"
 #include "ui/clientwindow.h"
 #include "clientapp.h"
 

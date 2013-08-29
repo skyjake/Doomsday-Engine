@@ -17,7 +17,7 @@
  */
 
 #include "ui/widgets/popupwidget.h"
-#include "ui/widgets/guirootwidget.h"
+#include "ui/framework/guirootwidget.h"
 #include "ui/style.h"
 #include "ui/clientwindow.h"
 

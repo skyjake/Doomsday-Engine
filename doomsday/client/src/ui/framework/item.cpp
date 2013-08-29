@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#include "ui/widgets/item.h"
+#include "ui/framework/item.h"
 
 using namespace de;
 using namespace ui;

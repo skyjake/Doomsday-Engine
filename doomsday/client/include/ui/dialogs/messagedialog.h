@@ -1,4 +1,4 @@
-/** @file commandaction.cpp  Action that executes a console command.
+/** @file messagedialog.h Dialog for showing a message.
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -13,27 +13,34 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details. You should have received a copy of the GNU
  * General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small>
+ * http://www.gnu.org/licenses</small> 
  */
 
-#include "de_platform.h"
-#include "ui/commandaction.h"
-#include "con_main.h"
+#ifndef DENG_CLIENT_MESSAGEDIALOG_H
+#define DENG_CLIENT_MESSAGEDIALOG_H
 
-using namespace de;
+#include "ui/widgets/dialogwidget.h"
 
-CommandAction::CommandAction(String const &cmd, int commandSource)
-    : _command(cmd), _source(commandSource)
-{}
-
-void CommandAction::trigger()
+/**
+ * Dialog for showing a message.
+ */
+class MessageDialog : public DialogWidget
 {
-    Action::trigger();
+public:
+    MessageDialog(de::String const &name = "");
 
-    Con_Execute(_source, _command.toUtf8(), false /*silent*/, false /*net*/);
-}
+    LabelWidget &title();
+    LabelWidget &message();
 
-CommandAction *CommandAction::duplicate() const
-{
-    return new CommandAction(_command, _source);
-}
+protected:
+    /**
+     * Derived classes should call this after they add or remove widgets in the
+     * dialog content area.
+     */
+    void updateLayout();
+
+private:
+    DENG2_PRIVATE(d)
+};
+
+#endif // DENG_CLIENT_MESSAGEDIALOG_H

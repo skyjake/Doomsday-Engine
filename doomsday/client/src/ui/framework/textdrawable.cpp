@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "ui/widgets/textdrawable.h"
+#include "ui/framework/textdrawable.h"
 
 #include <de/Task>
 #include <de/TaskPool>

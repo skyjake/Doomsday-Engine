@@ -40,9 +40,8 @@
 #include "ui/widgets/consolewidget.h"
 #include "ui/widgets/notificationwidget.h"
 #include "ui/widgets/gameselectionwidget.h"
-//#include "ui/widgets/documentwidget.h"
 #include "ui/widgets/progresswidget.h"
-#include "ui/commandaction.h"
+#include "ui/framework/commandaction.h"
 #include "ui/mouse_qt.h"
 
 #include "dd_main.h"

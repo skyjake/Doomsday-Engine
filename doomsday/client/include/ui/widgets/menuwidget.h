@@ -19,14 +19,14 @@
 #ifndef DENG_CLIENT_MENUWIDGET_H
 #define DENG_CLIENT_MENUWIDGET_H
 
+#include "ui/framework/data.h"
+#include "ui/framework/contextwidgetorganizer.h"
+#include "ui/framework/actionitem.h"
+#include "ui/framework/submenuitem.h"
+#include "ui/framework/variabletoggleitem.h"
+#include "ui/framework/gridlayout.h"
 #include "scrollareawidget.h"
 #include "buttonwidget.h"
-#include "data.h"
-#include "contextwidgetorganizer.h"
-#include "actionitem.h"
-#include "submenuitem.h"
-#include "variabletoggleitem.h"
-#include "gridlayout.h"
 
 /**
  * Menu with an N-by-M grid of items (child widgets).

@@ -22,7 +22,7 @@
 #include <QObject>
 #include <de/Action>
 
-#include "guiwidget.h"
+#include "ui/framework/guiwidget.h"
 #include "consolewidget.h"
 #include "buttonwidget.h"
 

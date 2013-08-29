@@ -17,10 +17,10 @@
  */
 
 #include "ui/widgets/popupmenuwidget.h"
-#include "ui/widgets/guirootwidget.h"
 #include "ui/widgets/menuwidget.h"
-#include "ui/widgets/contextwidgetorganizer.h"
-#include "ui/widgets/item.h"
+#include "ui/framework/guirootwidget.h"
+#include "ui/framework/contextwidgetorganizer.h"
+#include "ui/framework/item.h"
 
 using namespace de;
 

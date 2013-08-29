@@ -19,7 +19,7 @@
 #ifndef DENG_CLIENT_SLIDERWIDGET_H
 #define DENG_CLIENT_SLIDERWIDGET_H
 
-#include "guiwidget.h"
+#include "ui/framework/guiwidget.h"
 
 #include <de/Range>
 

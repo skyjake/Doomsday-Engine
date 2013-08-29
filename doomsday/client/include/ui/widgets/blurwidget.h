@@ -19,7 +19,7 @@
 #ifndef DENG_CLIENT_BLURWIDGET_H
 #define DENG_CLIENT_BLURWIDGET_H
 
-#include "guiwidget.h"
+#include "ui/framework/guiwidget.h"
 
 /**
  * Utility widget for drawing blurred widget backgrounds. Many widgets can

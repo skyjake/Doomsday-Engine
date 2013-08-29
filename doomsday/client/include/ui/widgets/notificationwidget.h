@@ -19,7 +19,7 @@
 #ifndef DENG_CLIENT_NOTIFICATIONWIDGET_H
 #define DENG_CLIENT_NOTIFICATIONWIDGET_H
 
-#include "guiwidget.h"
+#include "ui/framework/guiwidget.h"
 
 /**
  * Notification area.

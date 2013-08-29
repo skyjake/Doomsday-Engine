@@ -17,18 +17,18 @@
  */
 
 #include "ui/widgets/taskbarwidget.h"
-#include "ui/widgets/guirootwidget.h"
 #include "ui/widgets/labelwidget.h"
 #include "ui/widgets/buttonwidget.h"
 #include "ui/widgets/consolecommandwidget.h"
 #include "ui/widgets/popupmenuwidget.h"
 #include "ui/widgets/blurwidget.h"
-#include "ui/widgets/aboutdialog.h"
-#include "ui/widgets/videosettingsdialog.h"
+#include "ui/dialogs/aboutdialog.h"
+#include "ui/dialogs/videosettingsdialog.h"
+#include "ui/framework/guirootwidget.h"
+#include "ui/framework/commandaction.h"
+#include "ui/framework/signalaction.h"
 #include "updater/updatersettingsdialog.h"
 #include "ui/clientwindow.h"
-#include "ui/commandaction.h"
-#include "ui/signalaction.h"
 #include "client/cl_def.h" // clientPaused
 
 #include "ui/ui_main.h"

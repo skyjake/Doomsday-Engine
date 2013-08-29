@@ -19,7 +19,7 @@
 #include "de_platform.h"
 #include "ui/widgets/busywidget.h"
 #include "ui/widgets/progresswidget.h"
-#include "ui/widgets/guirootwidget.h"
+#include "ui/framework/guirootwidget.h"
 #include "ui/busyvisual.h"
 #include "busymode.h"
 #include "sys_system.h"

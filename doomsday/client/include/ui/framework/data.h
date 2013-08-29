@@ -20,7 +20,7 @@
 #define DENG_CLIENT_UI_DATA_H
 
 #include <de/Observers>
-#include "ui/widgets/guiwidget.h"
+#include "ui/framework/guiwidget.h"
 
 namespace ui {
 

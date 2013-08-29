@@ -16,15 +16,15 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#include "ui/widgets/videosettingsdialog.h"
+#include "ui/dialogs/videosettingsdialog.h"
 #include "ui/widgets/variabletogglewidget.h"
 #include "ui/widgets/choicewidget.h"
 #include "ui/widgets/taskbarwidget.h"
-#include "ui/widgets/sequentiallayout.h"
-#include "ui/widgets/gridlayout.h"
+#include "ui/framework/sequentiallayout.h"
+#include "ui/framework/gridlayout.h"
+#include "ui/framework/commandaction.h"
+#include "ui/framework/signalaction.h"
 #include "ui/clientwindow.h"
-#include "ui/commandaction.h"
-#include "ui/signalaction.h"
 #include "con_main.h"
 
 #include <de/App>

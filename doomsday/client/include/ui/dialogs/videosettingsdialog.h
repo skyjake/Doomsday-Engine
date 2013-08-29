@@ -19,7 +19,7 @@
 #ifndef DENG_CLIENT_VIDEOSETTINGSDIALOG_H
 #define DENG_CLIENT_VIDEOSETTINGSDIALOG_H
 
-#include "dialogwidget.h"
+#include "ui/widgets/dialogwidget.h"
 
 /**
  * Dialog for modifying video settings.
