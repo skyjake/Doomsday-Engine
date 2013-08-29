@@ -131,8 +131,12 @@ void Sector::Cluster::remapVisPlanes()
     {
         // Evaluate the boundary to determine if a dynamic mapping is needed for
         // one or more planes.
-        bool missingAllBottom = true;
-        bool missingAllTop = true;
+        bool missingAllBottom = !sector().floorSurface().hasSkyMaskedMaterial();
+        bool missingAllTop    = !sector().ceilingSurface().hasSkyMaskedMaterial();
+
+        if(!missingAllBottom && !missingAllTop)
+            return;
+
         Cluster *exteriorCluster = 0;
         foreach(BspLeaf *leaf, _bspLeafs)
         {
