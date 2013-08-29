@@ -187,7 +187,7 @@ public Font::RichFormat::IStyle
         if(composer.update())
         {
             // Text has changed.
-            qDebug() << "composer updated";
+            //qDebug() << "composer updated";
             self.requestGeometry();
         }
 

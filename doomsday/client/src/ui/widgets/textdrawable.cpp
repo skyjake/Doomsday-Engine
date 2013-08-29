@@ -35,8 +35,8 @@ DENG2_PIMPL(TextDrawable)
         WrapTask(Instance *inst, int toWidth) : d(inst), _width(toWidth) {}
         void runTask() {
             DENG2_GUARD_FOR(d->wraps, G);
-            qDebug() << "running WrapTask" << _width;
-            TimeDelta(2).sleep();
+            //qDebug() << "running WrapTask" << _width;
+            //TimeDelta(2).sleep();
             d->wraps.wrapTextToWidth(d->plainText, d->format, _width);
         }
     private:
