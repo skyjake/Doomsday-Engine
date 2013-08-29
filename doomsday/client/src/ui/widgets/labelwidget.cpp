@@ -201,27 +201,25 @@ public Font::RichFormat::IStyle
 
         if(horizPolicy == Filled)
         {
-            if(textAlign & (AlignLeft | AlignRight))
+            if(hasText() && textAlign & (AlignLeft | AlignRight))
             {
-                layout.image.setWidth(imageScale * (int(contentRect.width()) -
-                                                    int(layout.text.width()) - gap));
+                layout.image.setWidth(int(contentRect.width()) - int(layout.text.width()) - gap);
             }
             else
             {
-                layout.image.setWidth(imageScale * contentRect.width());
+                layout.image.setWidth(contentRect.width());
                 layout.text.setWidth(contentRect.width());
             }
         }
         if(vertPolicy == Filled)
         {
-            if(textAlign & (AlignTop | AlignBottom))
+            if(hasText() && textAlign & (AlignTop | AlignBottom))
             {
-                layout.image.setHeight(imageScale * (int(contentRect.height()) -
-                                                     int(layout.text.height()) - gap));
+                layout.image.setHeight(int(contentRect.height()) - int(layout.text.height()) - gap);
             }
             else
             {
-                layout.image.setHeight(imageScale * contentRect.height());
+                layout.image.setHeight(contentRect.height());
                 layout.text.setHeight(contentRect.height());
             }
         }
@@ -266,14 +264,24 @@ public Font::RichFormat::IStyle
                         layout.image.setSize(Vector2f(layout.image.size()) * scale);
                     }
                 }
+            }           
+
+            // Apply Filled image scaling now.
+            if(horizPolicy == Filled)
+            {
+                layout.image.setWidth(imageScale * layout.image.width());
+            }
+            if(vertPolicy == Filled)
+            {
+                layout.image.setHeight(imageScale * layout.image.height());
             }
         }
 
+        // By default the image and the text are centered over each other.
+        layout.image.move((Vector2f(layout.text.size()) - layout.image.size()) / 2);
+
         if(hasImage() && hasText())
         {
-            // By default the image and the text are centered over each other.
-            layout.image.move((Vector2f(layout.text.size()) - layout.image.size()) / 2);
-
             // Determine the position of the image in relation to the text
             // (keeping the image at its current position).
             if(textAlign & AlignLeft)
