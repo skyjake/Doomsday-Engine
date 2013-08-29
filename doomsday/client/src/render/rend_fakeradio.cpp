@@ -1083,15 +1083,24 @@ void Rend_RadioWallSection(WallEdge const &leftEdge, WallEdge const &rightEdge,
     float shadowDark, float shadowSize)
 {
     // Disabled?
-    if(!rendFakeRadio || levelFullBright) return;
+    if(!rendFakeRadio || levelFullBright)
+        return;
 
-    if(shadowSize <= 0) return;
+    if(shadowSize <= 0)
+        return;
 
-    LineSide &side              = leftEdge.mapLineSide();
-    HEdge const *hedge          = side.leftHEdge();
-    Sector const *frontSec      = hedge->face().mapElement()->as<BspLeaf>().sectorPtr();
-    Sector const *backSec       =
-        (hedge->twin().hasFace() && leftEdge.spec().section != LineSide::Middle)? hedge->twin().face().mapElement()->as<BspLeaf>().sectorPtr() : 0;
+    LineSide &side          = leftEdge.mapLineSide();
+    HEdge const *hedge      = side.leftHEdge();
+    BspLeaf const *leaf     = &hedge->face().mapElement()->as<BspLeaf>();
+    BspLeaf const *backLeaf = (hedge->twin().hasFace() && leftEdge.spec().section != LineSide::Middle)? &hedge->twin().face().mapElement()->as<BspLeaf>() : 0;
+
+    bool const haveBottomShadower = Rend_RadioPlaneCastsShadow(leaf->visFloor());
+    bool const haveTopShadower    = Rend_RadioPlaneCastsShadow(leaf->visCeiling());
+
+    // Walls unaffected by floor and ceiling shadow casters receive no
+    // side shadows either. We could do better here...
+    if(!haveBottomShadower && !haveTopShadower)
+        return;
 
     coord_t const lineLength    = side.line().length();
     coord_t const sectionOffset = leftEdge.mapLineSideOffset();
@@ -1099,86 +1108,74 @@ void Rend_RadioWallSection(WallEdge const &leftEdge, WallEdge const &rightEdge,
 
     LineSideRadioData &frData = Rend_RadioDataForLineSide(side);
 
-    coord_t const fFloor = frontSec->floor().visHeight();
-    coord_t const fCeil  = frontSec->ceiling().visHeight();
-    coord_t const bFloor = (backSec? backSec->floor().visHeight() : 0);
-    coord_t const bCeil  = (backSec? backSec->ceiling().visHeight()  : 0);
-
-    bool const haveBottomShadower = Rend_RadioPlaneCastsShadow(frontSec->floor());
-    bool const haveTopShadower    = Rend_RadioPlaneCastsShadow(frontSec->ceiling());
+    coord_t const fFloor = leaf->visFloorHeight();
+    coord_t const fCeil  = leaf->visCeilingHeight();
+    coord_t const bFloor = (backLeaf? backLeaf->visFloorHeight() : 0);
+    coord_t const bCeil  = (backLeaf? backLeaf->visCeilingHeight() : 0);
 
     Vector3f rvertices[4] = {
-        // Bottom left.
-        Vector3f( leftEdge.bottom().origin().x,  leftEdge.bottom().origin().y,  leftEdge.bottom().origin().z),
-        // Top left.
-        Vector3f(    leftEdge.top().origin().x,     leftEdge.top().origin().y,     leftEdge.top().origin().z),
-        // Bottom right.
-        Vector3f(rightEdge.bottom().origin().x, rightEdge.bottom().origin().y, rightEdge.bottom().origin().z),
-        // Top right.
-        Vector3f(   rightEdge.top().origin().x,    rightEdge.top().origin().y,    rightEdge.top().origin().z)
+         leftEdge.bottom().origin(),
+            leftEdge.top().origin(),
+        rightEdge.bottom().origin(),
+           rightEdge.top().origin()
     };
 
     // Top Shadow?
     if(haveTopShadower)
     {
-        if(rightEdge.top().origin().z > fCeil - shadowSize &&
-           leftEdge.bottom().origin().z < fCeil)
+        if(rightEdge.top().z() > fCeil - shadowSize
+           && leftEdge.bottom().z() < fCeil)
         {
-            rendershadowseg_params_t wsParms;
+            rendershadowseg_params_t parms;
 
-            setTopShadowParams(&wsParms, shadowSize, shadowDark,
-                               leftEdge.top().origin().z, sectionOffset, sectionWidth, fFloor, fCeil,
-                               frData);
-            drawWallSectionShadow(rvertices, leftEdge, rightEdge, wsParms);
+            setTopShadowParams(&parms, shadowSize, shadowDark,
+                               leftEdge.top().z(), sectionOffset, sectionWidth,
+                               fFloor, fCeil, frData);
+            drawWallSectionShadow(rvertices, leftEdge, rightEdge, parms);
         }
     }
 
     // Bottom Shadow?
     if(haveBottomShadower)
     {
-        if(leftEdge.bottom().origin().z < fFloor + shadowSize &&
-           rightEdge.top().origin().z > fFloor)
+        if(leftEdge.bottom().z() < fFloor + shadowSize
+           && rightEdge.top().z() > fFloor)
         {
-            rendershadowseg_params_t wsParms;
+            rendershadowseg_params_t parms;
 
-            setBottomShadowParams(&wsParms, shadowSize, shadowDark,
-                                  leftEdge.top().origin().z, sectionOffset, sectionWidth, fFloor, fCeil,
-                                  frData);
-            drawWallSectionShadow(rvertices, leftEdge, rightEdge, wsParms);
+            setBottomShadowParams(&parms, shadowSize, shadowDark,
+                                  leftEdge.top().z(), sectionOffset, sectionWidth,
+                                  fFloor, fCeil, frData);
+            drawWallSectionShadow(rvertices, leftEdge, rightEdge, parms);
         }
     }
-
-    // Walls unaffected by floor and ceiling shadow casters receive no
-    // side shadows either. We could do better here...
-    if(!haveBottomShadower && !haveTopShadower)
-        return;
 
     // Left Shadow?
     if(frData.sideCorners[0].corner > 0 && sectionOffset < shadowSize)
     {
-        rendershadowseg_params_t wsParms;
+        rendershadowseg_params_t parms;
 
-        setSideShadowParams(&wsParms, shadowSize, shadowDark,
-                            leftEdge.bottom().origin().z, leftEdge.top().origin().z, false,
+        setSideShadowParams(&parms, shadowSize, shadowDark,
+                            leftEdge.bottom().z(), leftEdge.top().z(), false,
                             haveBottomShadower, haveTopShadower,
                             sectionOffset, sectionWidth,
-                            fFloor, fCeil, backSec != 0, bFloor, bCeil, lineLength,
+                            fFloor, fCeil, backLeaf != 0, bFloor, bCeil, lineLength,
                             frData);
-        drawWallSectionShadow(rvertices, leftEdge, rightEdge, wsParms);
+        drawWallSectionShadow(rvertices, leftEdge, rightEdge, parms);
     }
 
     // Right Shadow?
     if(frData.sideCorners[1].corner > 0 &&
        sectionOffset + sectionWidth > lineLength - shadowSize)
     {
-        rendershadowseg_params_t wsParms;
+        rendershadowseg_params_t parms;
 
-        setSideShadowParams(&wsParms, shadowSize, shadowDark,
-                            leftEdge.bottom().origin().z, leftEdge.top().origin().z, true,
+        setSideShadowParams(&parms, shadowSize, shadowDark,
+                            leftEdge.bottom().z(), leftEdge.top().z(), true,
                             haveBottomShadower, haveTopShadower, sectionOffset, sectionWidth,
-                            fFloor, fCeil, backSec != 0, bFloor, bCeil, lineLength,
+                            fFloor, fCeil, backLeaf != 0, bFloor, bCeil, lineLength,
                             frData);
-        drawWallSectionShadow(rvertices, leftEdge, rightEdge, wsParms);
+        drawWallSectionShadow(rvertices, leftEdge, rightEdge, parms);
     }
 }
 
