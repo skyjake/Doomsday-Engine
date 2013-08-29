@@ -123,15 +123,15 @@ DENG2_PIMPL(SkyFixEdge)
         if(!hedge->mapElement()) return false;
 
         LineSide const &lineSide = hedge->mapElement()->as<LineSideSegment>().lineSide();
-        BspLeaf const *frontLeaf = &hedge->face().mapElement()->as<BspLeaf>();
+        BspLeaf const *leaf      = &hedge->face().mapElement()->as<BspLeaf>();
         BspLeaf const *backLeaf  = hedge->twin().hasFace()? &hedge->twin().face().mapElement()->as<BspLeaf>() : 0;
 
-        if(!(!backLeaf || backLeaf->sectorPtr() != frontLeaf->sectorPtr()))
+        if(!(!backLeaf || backLeaf->sectorPtr() != leaf->sectorPtr()))
             return false;
 
         // Select the relative planes for the fix type.
         int relPlane = lower? Sector::Floor : Sector::Ceiling;
-        Plane const *front   = &frontLeaf->visPlane(relPlane);
+        Plane const *front   = &leaf->visPlane(relPlane);
         Plane const *back    = backLeaf? &backLeaf->visPlane(relPlane) : 0;
 
         if(!front->surface().hasSkyMaskedMaterial())

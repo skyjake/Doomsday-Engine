@@ -1485,6 +1485,51 @@ TraceOpening const &Map::traceOpening() const
     return d->traceOpening;
 }
 
+/**
+ * Find the "sharp" Z coordinate range of the opening between sectors @a frontSec
+ * and @a backSec. The open range is defined as the gap between foor and ceiling on
+ * the front side clipped by the floor and ceiling planes on the back side (if present).
+ *
+ * @param side      Line side to find the open range for.
+ *
+ * Return values:
+ * @param bottom    Bottom Z height is written here. Can be @c 0.
+ * @param top       Top Z height is written here. Can be @c 0.
+ *
+ * @return Height of the open range.
+ */
+static coord_t openRange(LineSide const &side, coord_t *retBottom, coord_t *retTop)
+{
+    Sector const *frontSec = side.sectorPtr();
+    Sector const *backSec  = side.back().sectorPtr();
+    DENG_ASSERT(frontSec != 0);
+
+    coord_t top;
+    if(backSec && backSec->ceiling().height() < frontSec->ceiling().height())
+    {
+        top = backSec->ceiling().height();
+    }
+    else
+    {
+        top = frontSec->ceiling().height();
+    }
+
+    coord_t bottom;
+    if(backSec && backSec->floor().height() > frontSec->floor().height())
+    {
+        bottom = backSec->floor().height();
+    }
+    else
+    {
+        bottom = frontSec->floor().height();
+    }
+
+    if(retBottom) *retBottom = bottom;
+    if(retTop)    *retTop    = top;
+
+    return top - bottom;
+}
+
 void Map::setTraceOpening(Line &line)
 {
     if(!line.hasBackSector())
@@ -1494,7 +1539,7 @@ void Map::setTraceOpening(Line &line)
     }
 
     coord_t bottom, top;
-    d->traceOpening.range  = float( R_OpenRange(line.front(), &bottom, &top) );
+    d->traceOpening.range  = float( openRange(line.front(), &bottom, &top) );
     d->traceOpening.bottom = float( bottom );
     d->traceOpening.top    = float( top );
 

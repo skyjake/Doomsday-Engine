@@ -20,6 +20,8 @@
 #ifndef DENG_WORLD_MAPUTIL_H
 #define DENG_WORLD_MAPUTIL_H
 
+#ifdef __CLIENT__
+
 #include <de/binangle.h>
 
 #include <de/Vector>
@@ -27,14 +29,10 @@
 #include "Line" // LineSide
 
 class Sector;
-#ifdef __CLIENT__
 class LineOwner;
-#endif
 
 void R_SetRelativeHeights(Sector const *front, Sector const *back, int planeIndex,
     coord_t *fz = 0, coord_t *bz = 0, coord_t *bhz = 0);
-
-#ifdef __CLIENT__
 
 /**
  * Determine the map space Z coordinates of a wall section.
@@ -50,37 +48,6 @@ void R_SetRelativeHeights(Sector const *front, Sector const *back, int planeInde
  */
 void R_SideSectionCoords(LineSide const &side, int section, bool skyClip = true,
     coord_t *bottom = 0, coord_t *top = 0, de::Vector2f *materialOrigin = 0);
-
-#endif // __CLIENT__
-
-/**
- * Find the "sharp" Z coordinate range of the opening between sectors @a frontSec
- * and @a backSec. The open range is defined as the gap between foor and ceiling on
- * the front side clipped by the floor and ceiling planes on the back side (if present).
- *
- * @param side      Line side to find the open range for.
- * @param frontSec  Sector on the front side.
- * @param backSec   Sector on the back side. Can be @c 0.
- *
- * Return values:
- * @param bottom    Bottom Z height is written here. Can be @c 0.
- * @param top       Top Z height is written here. Can be @c 0.
- *
- * @return Height of the open range.
- */
-coord_t R_OpenRange(LineSide const &side, Sector const *frontSec, Sector const *backSec,
-    coord_t *bottom = 0, coord_t *top = 0);
-
-/**
- * Same as @ref R_OpenRange() except that the sector arguments are taken from the
- * specified line @a side.
- */
-inline coord_t R_OpenRange(LineSide const &side, coord_t *bottom = 0, coord_t *top = 0)
-{
-    return R_OpenRange(side, side.sectorPtr(), side.back().sectorPtr(), bottom, top);
-}
-
-#ifdef __CLIENT__
 
 /**
  * @param side  LineSide instance.

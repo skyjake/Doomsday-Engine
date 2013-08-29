@@ -18,6 +18,8 @@
  * 02110-1301 USA</small>
  */
 
+#ifdef __CLIENT__
+
 #include "Face"
 
 #include "BspLeaf"
@@ -26,48 +28,14 @@
 #include "world/lineowner.h"
 #include "world/p_players.h"
 
-#ifdef __CLIENT__
-#  include "MaterialSnapshot"
-#  include "MaterialVariantSpec"
+#include "MaterialSnapshot"
+#include "MaterialVariantSpec"
 
-#  include "render/rend_main.h"
-#endif
+#include "render/rend_main.h"
 
 #include "world/maputil.h"
 
 using namespace de;
-
-coord_t R_OpenRange(LineSide const &side, Sector const *frontSec,
-    Sector const *backSec, coord_t *retBottom, coord_t *retTop)
-{
-    DENG_UNUSED(side); // Don't remove (present for API symmetry) -ds
-    DENG_ASSERT(frontSec != 0);
-
-    coord_t top;
-    if(backSec && backSec->ceiling().height() < frontSec->ceiling().height())
-    {
-        top = backSec->ceiling().height();
-    }
-    else
-    {
-        top = frontSec->ceiling().height();
-    }
-
-    coord_t bottom;
-    if(backSec && backSec->floor().height() > frontSec->floor().height())
-    {
-        bottom = backSec->floor().height();
-    }
-    else
-    {
-        bottom = frontSec->floor().height();
-    }
-
-    if(retBottom) *retBottom = bottom;
-    if(retTop)    *retTop    = top;
-
-    return top - bottom;
-}
 
 /// @todo fixme: Should work at BspLeaf level and use the visual plane heights
 ///              of sector clusters.
@@ -78,11 +46,7 @@ void R_SetRelativeHeights(Sector const *front, Sector const *back, int planeInde
     {
         if(front)
         {
-#ifdef __CLIENT__
             *fz = front->plane(planeIndex).visHeight();
-#else
-            *fz = front->plane(planeIndex).height();
-#endif
             if(planeIndex != Sector::Floor)
                 *fz = -(*fz);
         }
@@ -95,11 +59,7 @@ void R_SetRelativeHeights(Sector const *front, Sector const *back, int planeInde
     {
         if(back)
         {
-#ifdef __CLIENT__
             *bz = back->plane(planeIndex).visHeight();
-#else
-            *bz = back->plane(planeIndex).height();
-#endif
             if(planeIndex != Sector::Floor)
                 *bz = -(*bz);
         }
@@ -113,11 +73,7 @@ void R_SetRelativeHeights(Sector const *front, Sector const *back, int planeInde
         if(back)
         {
             int otherPlaneIndex = planeIndex == Sector::Floor? Sector::Ceiling : Sector::Floor;
-#ifdef __CLIENT__
             *bhz = back->plane(otherPlaneIndex).visHeight();
-#else
-            *bhz = back->plane(otherPlaneIndex).height();
-#endif
             if(planeIndex != Sector::Floor)
                 *bhz = -(*bhz);
         }
@@ -127,8 +83,6 @@ void R_SetRelativeHeights(Sector const *front, Sector const *back, int planeInde
         }
     }
 }
-
-#ifdef __CLIENT__
 
 /// @todo fixme: Should use the visual plane heights of sector clusters.
 void R_SideSectionCoords(LineSide const &side, int section, bool skyClip,
@@ -272,13 +226,8 @@ void R_SideSectionCoords(LineSide const &side, int section, bool skyClip,
             // Perform clipping.
             if(surface->hasMaterial() && !stretchMiddle)
             {
-#ifdef __CLIENT__
                 bool const clipBottom = !(!(devRendSkyMode || P_IsInVoid(viewPlayer)) && ffloor->surface().hasSkyMaskedMaterial() && bfloor->surface().hasSkyMaskedMaterial());
                 bool const clipTop    = !(!(devRendSkyMode || P_IsInVoid(viewPlayer)) && fceil->surface().hasSkyMaskedMaterial()  && bceil->surface().hasSkyMaskedMaterial());
-#else
-                bool const clipBottom = !(ffloor->surface().hasSkyMaskedMaterial() && bfloor->surface().hasSkyMaskedMaterial());
-                bool const clipTop    = !(fceil->surface().hasSkyMaskedMaterial()  && bceil->surface().hasSkyMaskedMaterial());
-#endif
 
                 coord_t openBottom, openTop;
                 if(!side.line().isSelfReferencing())
