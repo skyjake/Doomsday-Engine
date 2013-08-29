@@ -154,9 +154,18 @@ DENG2_PIMPL(SkyFixEdge)
                 return false;
         }
 
-        coord_t fz, bz;
-        R_SetRelativeHeights(&front->sector(), back? &back->sector() : 0,
-                             relPlane, &fz, &bz);
+        // Figure out the relative plane heights.
+        coord_t fz = front->visHeight();
+        if(relPlane == Sector::Ceiling)
+            fz = -fz;
+
+        coord_t bz = 0;
+        if(back)
+        {
+            bz = back->visHeight();
+            if(relPlane == Sector::Ceiling)
+                bz = -bz;
+        }
 
         coord_t planeZ = (back && back->surface().hasSkyMaskedMaterial() &&
                           fz < bz? bz : fz);

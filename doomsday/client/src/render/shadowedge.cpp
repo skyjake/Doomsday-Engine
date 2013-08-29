@@ -143,7 +143,7 @@ void ShadowEdge::prepare(int planeIndex)
     BspLeaf const &leaf = hedge.face().mapElement()->as<BspLeaf>();
     Plane const &plane  = leaf.visPlane(planeIndex);
 
-    LineSide &lineSide = hedge.mapElement()->as<LineSideSegment>().lineSide();
+    LineSide &lineSide  = hedge.mapElement()->as<LineSideSegment>().lineSide();
 
     d->sectorOpenness = 0; // Default is fully closed.
     d->openness = 0; // Default is fully closed.
@@ -156,15 +156,25 @@ void ShadowEdge::prepare(int planeIndex)
        hedge.twin().face().mapElement()->as<BspLeaf>().hasSector())
     {
         BspLeaf const &backLeaf = hedge.twin().face().mapElement()->as<BspLeaf>();
+        Plane const &backPlane  = backLeaf.visPlane(planeIndex);
         Surface const &wallEdgeSurface =
             lineSide.back().hasSector()? lineSide.surface(planeIndex == Sector::Ceiling? LineSide::Top : LineSide::Bottom)
                                        : lineSide.middle();
 
-        coord_t fz = 0, bz = 0, bhz = 0;
-        R_SetRelativeHeights(&leaf.visPlane(planeIndex).sector(),
-                             &backLeaf.visPlane(planeIndex).sector(),
-                             planeIndex, &fz, &bz, &bhz);
+        // Figure out the relative plane heights.
+        coord_t fz = plane.visHeight();
+        if(planeIndex == Sector::Ceiling)
+            fz = -fz;
 
+        coord_t bz = backPlane.visHeight();
+        if(planeIndex == Sector::Ceiling)
+            bz = -bz;
+
+        coord_t bhz = backLeaf.plane(otherPlaneIndex).visHeight();
+        if(planeIndex == Sector::Ceiling)
+            bhz = -bhz;
+
+        // Determine openness.
         if(fz < bz && !wallEdgeSurface.hasMaterial())
         {
             d->sectorOpenness = 2; // Consider it fully open.
@@ -229,8 +239,18 @@ void ShadowEdge::prepare(int planeIndex)
                !((plane.isSectorFloor() && backSec->ceiling().visHeight() <= plane.visHeight()) ||
                  (plane.isSectorCeiling() && backSec->floor().height() >= plane.visHeight())))
             {
-                coord_t fz = 0, bz = 0, bhz = 0;
-                R_SetRelativeHeights(leaf.sectorPtr(), backSec, planeIndex, &fz, &bz, &bhz);
+                // Figure out the relative plane heights.
+                coord_t fz = plane.visHeight();
+                if(planeIndex == Sector::Ceiling)
+                    fz = -fz;
+
+                coord_t bz = backSec->plane(planeIndex).visHeight();
+                if(planeIndex == Sector::Ceiling)
+                    bz = -bz;
+
+                coord_t bhz = backSec->plane(otherPlaneIndex).visHeight();
+                if(planeIndex == Sector::Ceiling)
+                    bhz = -bhz;
 
                 d->openness = opennessFactor(fz, bz, bhz);
             }

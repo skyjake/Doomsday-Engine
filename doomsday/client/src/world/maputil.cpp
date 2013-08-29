@@ -37,53 +37,6 @@
 
 using namespace de;
 
-/// @todo fixme: Should work at BspLeaf level and use the visual plane heights
-///              of sector clusters.
-void R_SetRelativeHeights(Sector const *front, Sector const *back, int planeIndex,
-    coord_t *fz, coord_t *bz, coord_t *bhz)
-{
-    if(fz)
-    {
-        if(front)
-        {
-            *fz = front->plane(planeIndex).visHeight();
-            if(planeIndex != Sector::Floor)
-                *fz = -(*fz);
-        }
-        else
-        {
-            *fz = 0;
-        }
-    }
-    if(bz)
-    {
-        if(back)
-        {
-            *bz = back->plane(planeIndex).visHeight();
-            if(planeIndex != Sector::Floor)
-                *bz = -(*bz);
-        }
-        else
-        {
-            *bz = 0;
-        }
-    }
-    if(bhz)
-    {
-        if(back)
-        {
-            int otherPlaneIndex = planeIndex == Sector::Floor? Sector::Ceiling : Sector::Floor;
-            *bhz = back->plane(otherPlaneIndex).visHeight();
-            if(planeIndex != Sector::Floor)
-                *bhz = -(*bhz);
-        }
-        else
-        {
-            *bhz = 0;
-        }
-    }
-}
-
 /// @todo fixme: Should use the visual plane heights of sector clusters.
 void R_SideSectionCoords(LineSide const &side, int section, bool skyClip,
     coord_t *retBottom, coord_t *retTop, Vector2f *retMaterialOrigin)
