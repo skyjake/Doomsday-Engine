@@ -80,7 +80,7 @@ using namespace de;
 #  define PLATFORM_ID       "win-x86"
 
 #elif defined(MACOSX)
-#  if defined(MACOS_10_7)
+#  if defined(MACOS_10_7) || defined(MACOSX_NATIVESDK)
 #    define PLATFORM_ID     "mac10_8-x86_64"
 #  elif defined(__64BIT__)
 #    define PLATFORM_ID     "mac10_6-x86-x86_64"
