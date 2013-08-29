@@ -257,6 +257,8 @@ bool NotificationWidget::isChildShown(GuiWidget &notif) const
 
 void NotificationWidget::viewResized()
 {
+    GuiWidget::viewResized();
+
     d->uMvpMatrix = root().projMatrix2D();
 }
 

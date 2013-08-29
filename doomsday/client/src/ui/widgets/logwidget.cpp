@@ -804,6 +804,8 @@ Animation const &LogWidget::contentYOffset() const
 
 void LogWidget::viewResized()
 {
+    GuiWidget::viewResized();
+
     d->updateProjection();
 }
 

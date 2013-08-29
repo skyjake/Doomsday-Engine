@@ -306,6 +306,8 @@ void DocumentWidget::setMaximumLineWidth(int maxWidth)
 
 void DocumentWidget::viewResized()
 {
+    ScrollAreaWidget::viewResized();
+
     d->uMvpMatrix = root().projMatrix2D();
     requestGeometry();
 }

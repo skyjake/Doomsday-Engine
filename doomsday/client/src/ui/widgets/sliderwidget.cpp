@@ -17,9 +17,8 @@
  */
 
 #include "ui/widgets/sliderwidget.h"
-#include "GLTextComposer"
+#include "TextDrawable"
 
-#include <de/Font>
 #include <de/Drawable>
 
 using namespace de;
@@ -38,13 +37,17 @@ DENG_GUI_PIMPL(SliderWidget)
 
     // GL objects.
     Drawable drawable;
+    GLUniform uMvpMatrix;
+    GLUniform uColor;
 
     Instance(Public *i)
         : Base(i),
           value(0),
           range(0, 0),
           step(0),
-          animating(false)
+          animating(false),
+          uMvpMatrix("uMvpMatrix", GLUniform::Mat4),
+          uColor    ("uColor",     GLUniform::Vec4)
     {
         self.setFont("slider.label");
 
@@ -58,7 +61,11 @@ DENG_GUI_PIMPL(SliderWidget)
 
     void glInit()
     {
+        DefaultVertexBuf *buf = new DefaultVertexBuf;
+        drawable.addBuffer(buf);
 
+        shaders().build(drawable.program(), "generic.textured.color_ucolor")
+                << uMvpMatrix << uColor << uAtlas();
     }
 
     void glDeinit()
@@ -122,6 +129,13 @@ Rangef SliderWidget::range() const
 float SliderWidget::value() const
 {
     return d->value;
+}
+
+void SliderWidget::viewResized()
+{
+    GuiWidget::viewResized();
+
+    d->uMvpMatrix = root().projMatrix2D();
 }
 
 void SliderWidget::update()

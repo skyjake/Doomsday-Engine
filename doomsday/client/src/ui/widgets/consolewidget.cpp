@@ -265,6 +265,8 @@ void ConsoleWidget::enableBlur(bool yes)
 
 void ConsoleWidget::viewResized()
 {
+    GuiWidget::viewResized();
+
     if(!d->opened)
     {
         // Make sure it stays shifted out of the view.

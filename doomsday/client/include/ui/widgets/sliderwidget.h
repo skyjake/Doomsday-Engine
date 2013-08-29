@@ -43,6 +43,7 @@ public:
     float value() const;
 
     // Events.
+    void viewResized();
     void update();
     bool handleEvent(de::Event const &event);
 

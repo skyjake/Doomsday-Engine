@@ -304,6 +304,8 @@ void LineEditWidget::updateStyle()
 
 void LineEditWidget::viewResized()
 {
+    GuiWidget::viewResized();
+
     updateLineWraps(RewrapNow);
     d->updateProjection();
 }

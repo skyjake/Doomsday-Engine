@@ -598,6 +598,7 @@ void LabelWidget::updateModelViewProjection(GLUniform &uMvp)
 
 void LabelWidget::viewResized()
 {
+    GuiWidget::viewResized();
     updateModelViewProjection(d->uMvpMatrix);
 }
 

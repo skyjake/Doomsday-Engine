@@ -309,6 +309,8 @@ void TaskBarWidget::glDeinit()
 
 void TaskBarWidget::viewResized()
 {
+    GuiWidget::viewResized();
+
     d->updateProjection();
 }
 
