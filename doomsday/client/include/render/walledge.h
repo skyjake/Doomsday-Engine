@@ -93,9 +93,9 @@ public:
 
     WallSpec const &spec() const;
 
-    LineSide &mapSide() const;
+    LineSide &mapLineSide() const;
 
-    coord_t mapSideOffset() const;
+    coord_t mapLineSideOffset() const;
 
     /// Implement IEdge.
     bool isValid() const;

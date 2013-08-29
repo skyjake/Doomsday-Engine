@@ -79,14 +79,17 @@ static bool eventSorter(WorldEdge::Event *a, WorldEdge::Event *b)
     return *a < *b;
 }
 
+static inline coord_t lineSideOffset(LineSideSegment &seg, int edge)
+{
+    return seg.lineSideOffset() + (edge? seg.length() : 0);
+}
+
 DENG2_PIMPL(WallEdge), public IHPlane
 {
     WallSpec spec;
     int edge;
 
-    LineSide *mapSide;
-    coord_t mapSideOffset;
-    LineOwner *mapLineOwner;
+    HEdge *hedge;
 
     /// The half-plane which partitions the surface coordinate space.
     Partition hplane;
@@ -109,34 +112,39 @@ DENG2_PIMPL(WallEdge), public IHPlane
     Vector3f normal;
     bool needUpdateNormal;
 
-    Instance(Public *i, WallSpec const &spec, LineSide *mapSide, int edge,
-             coord_t sideOffset, LineOwner *mapLineOwner)
+    Instance(Public *i, WallSpec const &spec, HEdge &wallHEdge, int edge)
         : Base(i),
           spec(spec),
           edge(edge),
-          mapSide(mapSide),
-          mapSideOffset(sideOffset),
-          mapLineOwner(mapLineOwner),
-          lo(0), hi(0),
+          hedge(&wallHEdge),
+          lo(0),
+          hi(0),
           bottom(*i, 0),
           top(*i, 1),
           events(0),
           needSortEvents(false),
           needUpdateNormal(true)
     {
+        LineSideSegment &seg = lineSideSegment();
+
         Vector2f materialOffset;
-        R_SideSectionCoords(*mapSide, spec.section, spec.flags.testFlag(WallSpec::SkyClip),
+        R_SideSectionCoords(seg.lineSide(), spec.section, spec.flags.testFlag(WallSpec::SkyClip),
                             &lo, &hi, &materialOffset);
 
         pOrigin    = Vector3d(self.origin(), lo);
         pDirection = Vector3d(0, 0, hi - lo);
 
-        materialOrigin = Vector2f(mapSideOffset, 0) + materialOffset;
+        materialOrigin = Vector2f(lineSideOffset(seg, edge), 0) + materialOffset;
     }
 
     ~Instance()
     {
         clearIntercepts();
+    }
+
+    inline LineSideSegment &lineSideSegment()
+    {
+        return hedge->mapElement()->as<LineSideSegment>();
     }
 
     void verifyValid() const
@@ -290,9 +298,11 @@ DENG2_PIMPL(WallEdge), public IHPlane
      */
     void addNeighborIntercepts(coord_t bottom, coord_t top)
     {
+        LineSideSegment const &seg = lineSideSegment();
+        LineOwner *mapLineOwner    = seg.line().vertexOwner(edge? hedge->twin().vertex() : hedge->vertex());
         if(!mapLineOwner) return;
 
-        Sector const *frontSec = mapSide->sectorPtr();
+        Sector const *frontSec = seg.lineSide().sectorPtr();
         LineOwner *own = mapLineOwner;
         bool stopScan = false;
         do
@@ -438,20 +448,22 @@ DENG2_PIMPL(WallEdge), public IHPlane
         if(spec.flags.testFlag(WallSpec::NoEdgeNormalSmoothing))
             return 0;
 
+        LineSide const &lineSide = lineSideSegment().lineSide();
+
         // Polyobj lines have no owner rings.
-        if(mapSide->line().definesPolyobj())
+        if(lineSide.line().definesPolyobj())
             return 0;
 
-        LineOwner const *farVertOwner = mapSide->line().vertexOwner(mapSide->sideId() ^ edge);
+        LineOwner const *farVertOwner = lineSide.line().vertexOwner(lineSide.sideId() ^ edge);
         Line *neighbor;
-        if(R_SideBackClosed(*mapSide))
+        if(R_SideBackClosed(lineSide))
         {
-            neighbor = R_FindSolidLineNeighbor(mapSide->sectorPtr(), &mapSide->line(),
+            neighbor = R_FindSolidLineNeighbor(lineSide.sectorPtr(), &lineSide.line(),
                                                farVertOwner, edge, &diff);
         }
         else
         {
-            neighbor = R_FindLineNeighbor(mapSide->sectorPtr(), &mapSide->line(),
+            neighbor = R_FindLineNeighbor(lineSide.sectorPtr(), &lineSide.line(),
                                           farVertOwner, edge, &diff);
         }
 
@@ -460,7 +472,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
 
         // Choose the correct side of the neighbor (determined by which vertex is shared).
         LineSide *otherSide;
-        if(&neighbor->vertex(edge ^ 1) == &mapSide->vertex(edge))
+        if(&neighbor->vertex(edge ^ 1) == &lineSide.vertex(edge))
             otherSide = &neighbor->front();
         else
             otherSide = &neighbor->back();
@@ -474,13 +486,15 @@ DENG2_PIMPL(WallEdge), public IHPlane
 
     /**
      * Determine the (possibly smoothed) edge normal.
+     * @todo Cache the smoothed normal value somewhere...
      */
     void updateNormal()
     {
         needUpdateNormal = false;
 
-        /// @todo Cache the smoothed normal value somewhere.
-        Surface &surface = mapSide->surface(spec.section);
+        LineSide &lineSide = lineSideSegment().lineSide();
+        Surface &surface   = lineSide.surface(spec.section);
+
         binangle_t angleDiff;
         Surface *blendSurface = findBlendNeighbor(angleDiff);
 
@@ -498,9 +512,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
 
 WallEdge::WallEdge(WallSpec const &spec, HEdge &hedge, int edge)
     : WorldEdge((edge? hedge.twin() : hedge).origin()),
-      d(new Instance(this, spec, &hedge.mapElement()->as<LineSideSegment>().lineSide(), edge,
-                           hedge.mapElement()->as<LineSideSegment>().lineSideOffset() + (edge? hedge.mapElement()->as<LineSideSegment>().length() : 0),
-                           hedge.mapElement()->as<LineSideSegment>().lineSide().line().vertexOwner(edge? hedge.twin().vertex() : hedge.vertex())))
+      d(new Instance(this, spec, hedge, edge))
 {}
 
 Vector3d const &WallEdge::pOrigin() const
@@ -532,14 +544,14 @@ WallSpec const &WallEdge::spec() const
     return d->spec;
 }
 
-LineSide &WallEdge::mapSide() const
+LineSide &WallEdge::mapLineSide() const
 {
-    return *d->mapSide;
+    return d->lineSideSegment().lineSide();
 }
 
-coord_t WallEdge::mapSideOffset() const
+coord_t WallEdge::mapLineSideOffset() const
 {
-    return d->mapSideOffset;
+    return lineSideOffset(d->lineSideSegment(), d->edge);
 }
 
 int WallEdge::divisionCount() const

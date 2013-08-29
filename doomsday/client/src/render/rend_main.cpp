@@ -1262,7 +1262,7 @@ static bool nearFadeOpacity(WallEdge const &leftEdge, WallEdge const &rightEdge,
 
     mobj_t const *mo = viewPlayer->shared.mo;
 
-    Line const &line = leftEdge.mapSide().line();
+    Line const &line = leftEdge.mapLineSide().line();
     coord_t linePoint[2]     = { line.fromOrigin().x, line.fromOrigin().y };
     coord_t lineDirection[2] = {  line.direction().x,  line.direction().y };
     vec2d_t result;
@@ -1312,8 +1312,8 @@ static void wallSectionLightLevelDeltas(WallEdge const &leftEdge, WallEdge const
 
         // Linearly interpolate to find the light level delta values for the
         // vertical edges of this wall section.
-        coord_t const lineLength = leftEdge.mapSide().line().length();
-        coord_t const sectionOffset = leftEdge.mapSideOffset();
+        coord_t const lineLength = leftEdge.mapLineSide().line().length();
+        coord_t const sectionOffset = leftEdge.mapLineSideOffset();
         coord_t const sectionWidth = de::abs(Vector2d(rightEdge.origin() - leftEdge.origin()).length());
 
         float deltaDiff = rightDelta - leftDelta;

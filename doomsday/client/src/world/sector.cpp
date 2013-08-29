@@ -112,7 +112,7 @@ void Sector::Cluster::remapVisPlanes()
             }
             else
             {
-                // This cluster is containted. Remove the mapping from exterior
+                // This cluster is contained. Remove the mapping from exterior
                 // to this thereby forcing it to be re-evaluated (however next
                 // time a different cluster will be selected from the boundary).
                 exteriorCluster->_mappedVisFloor =

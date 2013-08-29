@@ -37,6 +37,38 @@
 
 using namespace de;
 
+coord_t R_OpenRange(LineSide const &side, Sector const *frontSec,
+    Sector const *backSec, coord_t *retBottom, coord_t *retTop)
+{
+    DENG_UNUSED(side); // Don't remove (present for API symmetry) -ds
+    DENG_ASSERT(frontSec != 0);
+
+    coord_t top;
+    if(backSec && backSec->ceiling().height() < frontSec->ceiling().height())
+    {
+        top = backSec->ceiling().height();
+    }
+    else
+    {
+        top = frontSec->ceiling().height();
+    }
+
+    coord_t bottom;
+    if(backSec && backSec->floor().height() > frontSec->floor().height())
+    {
+        bottom = backSec->floor().height();
+    }
+    else
+    {
+        bottom = frontSec->floor().height();
+    }
+
+    if(retBottom) *retBottom = bottom;
+    if(retTop)    *retTop    = top;
+
+    return top - bottom;
+}
+
 /// @todo fixme: Should work at BspLeaf level and use the visual plane heights
 ///              of sector clusters.
 void R_SetRelativeHeights(Sector const *front, Sector const *back, int planeIndex,
@@ -305,42 +337,6 @@ void R_SideSectionCoords(LineSide const &side, int section, bool skyClip,
     if(retBottom) *retBottom = bottom;
     if(retTop)    *retTop    = top;
 }
-
-#endif // __CLIENT__
-
-coord_t R_OpenRange(LineSide const &side, Sector const *frontSec,
-    Sector const *backSec, coord_t *retBottom, coord_t *retTop)
-{
-    DENG_UNUSED(side); // Don't remove (present for API symmetry) -ds
-    DENG_ASSERT(frontSec != 0);
-
-    coord_t top;
-    if(backSec && backSec->ceiling().height() < frontSec->ceiling().height())
-    {
-        top = backSec->ceiling().height();
-    }
-    else
-    {
-        top = frontSec->ceiling().height();
-    }
-
-    coord_t bottom;
-    if(backSec && backSec->floor().height() > frontSec->floor().height())
-    {
-        bottom = backSec->floor().height();
-    }
-    else
-    {
-        bottom = frontSec->floor().height();
-    }
-
-    if(retBottom) *retBottom = bottom;
-    if(retTop)    *retTop    = top;
-
-    return top - bottom;
-}
-
-#ifdef __CLIENT__
 
 /**
  * Same as @ref R_OpenRange() but works with the "visual" (i.e., smoothed) plane
