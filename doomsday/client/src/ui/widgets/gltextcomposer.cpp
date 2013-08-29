@@ -76,7 +76,8 @@ DENG2_PIMPL(GLTextComposer)
 
     void releaseOutsideRange()
     {
-        DENG2_ASSERT(atlas != 0);
+        if(!atlas) return;
+
         for(int i = 0; i < lines.size(); ++i)
         {
             if(!isLineVisible(i))

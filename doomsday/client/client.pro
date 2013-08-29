@@ -384,6 +384,7 @@ DENG_HEADERS += \
     include/ui/widgets/submenuitem.h \
     include/ui/widgets/styledlogsinkformatter.h \
     include/ui/widgets/taskbarwidget.h \
+    include/ui/widgets/textdrawable.h \
     include/ui/widgets/togglewidget.h \
     include/ui/widgets/variabletoggleitem.h \
     include/ui/widgets/variabletogglewidget.h \
@@ -701,6 +702,7 @@ SOURCES += \
     src/ui/widgets/sequentiallayout.cpp \
     src/ui/widgets/styledlogsinkformatter.cpp \
     src/ui/widgets/taskbarwidget.cpp \
+    src/ui/widgets/textdrawable.cpp \
     src/ui/widgets/togglewidget.cpp \
     src/ui/widgets/variabletogglewidget.cpp \
     src/ui/widgets/videosettingsdialog.cpp \
