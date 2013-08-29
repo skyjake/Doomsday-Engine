@@ -1027,76 +1027,6 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
 
 #ifdef __CLIENT__
 
-    /// @todo fixme: Should work at sector cluster level.
-    void updateMapSkyFixForSector(Sector const &sector)
-    {
-        if(!sector.sideCount()) return;
-
-        bool const skyFloor = sector.floorSurface().hasSkyMaskedMaterial();
-        bool const skyCeil  = sector.ceilingSurface().hasSkyMaskedMaterial();
-
-        if(!skyFloor && !skyCeil) return;
-
-        if(skyCeil)
-        {
-            // Adjust for the plane height.
-            if(sector.ceiling().visHeight() > self.skyFixCeiling())
-            {
-                // Must raise the skyfix ceiling.
-                self.setSkyFixCeiling(sector.ceiling().visHeight());
-            }
-
-            // Check that all the mobjs in the sector fit in.
-            for(mobj_t *mo = sector.firstMobj(); mo; mo = mo->sNext)
-            {
-                coord_t extent = mo->origin[VZ] + mo->height;
-
-                if(extent > self.skyFixCeiling())
-                {
-                    // Must raise the skyfix ceiling.
-                    self.setSkyFixCeiling(extent);
-                }
-            }
-        }
-
-        if(skyFloor)
-        {
-            // Adjust for the plane height.
-            if(sector.floor().visHeight() < self.skyFixFloor())
-            {
-                // Must lower the skyfix floor.
-                self.setSkyFixFloor(sector.floor().visHeight());
-            }
-        }
-
-        // Update for middle materials on lines which intersect the
-        // floor and/or ceiling on the front (i.e., sector) side.
-        foreach(LineSide *side, sector.sides())
-        {
-            if(!side->hasSections()) continue;
-            if(!side->middle().hasMaterial()) continue;
-
-            // There must be a sector on both sides.
-            if(!side->hasSector() || !side->back().hasSector()) continue;
-
-            coord_t bottomZ, topZ;
-            Vector2f materialOrigin;
-            R_SideSectionCoords(*side, LineSide::Middle, 0,
-                                &bottomZ, &topZ, &materialOrigin);
-            if(skyCeil && topZ + materialOrigin.y > self.skyFixCeiling())
-            {
-                // Must raise the skyfix ceiling.
-                self.setSkyFixCeiling(topZ + materialOrigin.y);
-            }
-
-            if(skyFloor && bottomZ + materialOrigin.y < self.skyFixFloor())
-            {
-                // Must lower the skyfix floor.
-                self.setSkyFixFloor(bottomZ + materialOrigin.y);
-            }
-        }
-    }
-
     /**
      * $smoothplane: interpolate the visual offset of planes.
      */
@@ -2696,9 +2626,76 @@ void Map::initSkyFix()
     d->skyCeilingHeight = DDMINFLOAT;
 
     // Update for sector plane heights and mobjs which intersect the ceiling.
+    /// @todo Can't we defer this?
     foreach(Sector *sector, d->sectors)
     {
-        d->updateMapSkyFixForSector(*sector);
+        if(!sector->sideCount())
+            continue;
+
+        bool const skyFloor = sector->floorSurface().hasSkyMaskedMaterial();
+        bool const skyCeil  = sector->ceilingSurface().hasSkyMaskedMaterial();
+
+        if(!skyFloor && !skyCeil)
+            continue;
+
+        if(skyCeil)
+        {
+            // Adjust for the plane height.
+            if(sector->ceiling().visHeight() > d->skyCeilingHeight)
+            {
+                // Must raise the skyfix ceiling.
+                d->skyCeilingHeight = sector->ceiling().visHeight();
+            }
+
+            // Check that all the mobjs in the sector fit in.
+            for(mobj_t *mo = sector->firstMobj(); mo; mo = mo->sNext)
+            {
+                coord_t extent = mo->origin[VZ] + mo->height;
+
+                if(extent > d->skyCeilingHeight)
+                {
+                    // Must raise the skyfix ceiling.
+                    d->skyCeilingHeight = extent;
+                }
+            }
+        }
+
+        if(skyFloor)
+        {
+            // Adjust for the plane height.
+            if(sector->floor().visHeight() < d->skyFloorHeight)
+            {
+                // Must lower the skyfix floor.
+                d->skyFloorHeight = sector->floor().visHeight();
+            }
+        }
+
+        // Update for middle materials on lines which intersect the
+        // floor and/or ceiling on the front (i.e., sector) side.
+        foreach(LineSide *side, sector->sides())
+        {
+            if(!side->hasSections()) continue;
+            if(!side->middle().hasMaterial()) continue;
+
+            // There must be a sector on both sides.
+            if(!side->hasSector() || !side->back().hasSector()) continue;
+
+            coord_t bottomZ, topZ;
+            Vector2f materialOrigin;
+            R_SideSectionCoords(*side, LineSide::Middle, 0,
+                                &bottomZ, &topZ, &materialOrigin);
+            if(skyCeil && topZ + materialOrigin.y > d->skyCeilingHeight)
+            {
+                // Must raise the skyfix ceiling.
+                d->skyCeilingHeight = topZ + materialOrigin.y;
+            }
+
+            if(skyFloor && bottomZ + materialOrigin.y < d->skyFloorHeight)
+            {
+                // Must lower the skyfix floor.
+                d->skyFloorHeight = bottomZ + materialOrigin.y;
+            }
+        }
     }
 
     LOG_INFO(String("Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
