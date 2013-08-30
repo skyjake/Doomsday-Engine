@@ -24,27 +24,10 @@
 
 #include <de/binangle.h>
 
-#include <de/Vector>
-
 #include "Line" // LineSide
 
 class Sector;
 class LineOwner;
-
-/**
- * Determine the map space Z coordinates of a wall section.
- *
- * @param side            Map line side to determine Z heights for.
- * @param section         LineSide section to determine coordinates for.
- * @param skyClip         Perform sky plane clipping to line section.
- *
- * Return values:
- * @param bottom          Z map space coordinate at the bottom of the wall section. Can be @c 0.
- * @param top             Z map space coordinate at the top of the wall section. Can be @c 0.
- * @param materialOrigin  Surface space material coordinate offset. Can be @c 0.
- */
-void R_SideSectionCoords(LineSide const &side, int section, bool skyClip = true,
-    coord_t *bottom = 0, coord_t *top = 0, de::Vector2f *materialOrigin = 0);
 
 /**
  * @param side  LineSide instance.

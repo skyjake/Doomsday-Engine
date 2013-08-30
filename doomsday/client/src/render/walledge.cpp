@@ -19,10 +19,16 @@
 
 #include <QtAlgorithms>
 
+#include "BspLeaf"
 #include "Sector"
 
+#include "Face"
+
 #include "world/lineowner.h"
+#include "world/p_players.h"
 #include "world/maputil.h"
+
+#include "render/rend_main.h" // devRendSkyMode, remove me
 
 #include "render/walledge.h"
 
@@ -84,6 +90,222 @@ static inline coord_t lineSideOffset(LineSideSegment &seg, int edge)
     return seg.lineSideOffset() + (edge? seg.length() : 0);
 }
 
+/**
+ * Determine the map space Z coordinates of a wall section.
+ *
+ * @param side            Map line side to determine Z heights for.
+ * @param section         LineSide section to determine coordinates for.
+ * @param skyClip         Perform sky plane clipping to line section.
+ *
+ * Return values:
+ * @param bottom          Z map space coordinate at the bottom of the wall section. Can be @c 0.
+ * @param top             Z map space coordinate at the top of the wall section. Can be @c 0.
+ * @param materialOrigin  Surface space material coordinate offset. Can be @c 0.
+ *
+ * @todo fixme: Should use the visual plane heights of sector clusters.
+ */
+static void sideSectionCoords(LineSide const &side, int section, bool skyClip = true,
+    coord_t *retBottom = 0, coord_t *retTop = 0, de::Vector2f *retMaterialOrigin = 0)
+{
+    DENG_ASSERT(side.hasSector());
+    DENG_ASSERT(side.hasSections());
+
+    Line const &line       = side.line();
+
+    Sector const *frontSec = line.definesPolyobj()? line.polyobj().sectorPtr() : side.sectorPtr();
+    Sector const *backSec  = side.back().sectorPtr();
+
+    bool const unpegBottom = (line.flags() & DDLF_DONTPEGBOTTOM) != 0;
+    bool const unpegTop    = (line.flags() & DDLF_DONTPEGTOP) != 0;
+
+    coord_t bottom = 0, top = 0; // Shutup compiler.
+
+    if(side.considerOneSided())
+    {
+        if(section == LineSide::Middle)
+        {
+            bottom = frontSec->floor().visHeight();
+            top    = frontSec->ceiling().visHeight();
+        }
+        else
+        {
+            bottom = top = frontSec->floor().visHeight();
+        }
+
+        if(retMaterialOrigin)
+        {
+            *retMaterialOrigin = side.middle().visMaterialOrigin();
+            if(unpegBottom)
+            {
+                retMaterialOrigin->y -= top - bottom;
+            }
+        }
+    }
+    else
+    {
+        // Two sided.
+        bool const stretchMiddle = side.isFlagged(SDF_MIDDLE_STRETCH);
+        Surface const *surface = &side.surface(section);
+        Plane const *ffloor = &frontSec->floor();
+        Plane const *fceil  = &frontSec->ceiling();
+        Plane const *bfloor = &backSec->floor();
+        Plane const *bceil  = &backSec->ceiling();
+
+        switch(section)
+        {
+        case LineSide::Top:
+            // Self-referencing lines only ever get a middle.
+            if(!side.line().isSelfReferencing())
+            {
+                // Can't go over front ceiling (would induce geometry flaws).
+                if(bceil->visHeight() < ffloor->visHeight())
+                    bottom = ffloor->visHeight();
+                else
+                    bottom = bceil->visHeight();
+                top = fceil->visHeight();
+
+                if(skyClip && fceil->surface().hasSkyMaskedMaterial() && bceil->surface().hasSkyMaskedMaterial())
+                {
+                    top = bottom;
+                }
+
+                if(retMaterialOrigin)
+                {
+                    *retMaterialOrigin = surface->visMaterialOrigin();
+                    if(!unpegTop)
+                    {
+                        // Align with normal middle texture.
+                        retMaterialOrigin->y -= fceil->visHeight() - bceil->visHeight();
+                    }
+                }
+            }
+            break;
+
+        case LineSide::Bottom:
+            // Self-referencing lines only ever get a middle.
+            if(!side.line().isSelfReferencing())
+            {
+                bool const raiseToBackFloor = (fceil->surface().hasSkyMaskedMaterial() && bceil->surface().hasSkyMaskedMaterial() &&
+                                               fceil->visHeight() < bceil->visHeight() &&
+                                               bfloor->visHeight() > fceil->visHeight());
+                coord_t t = bfloor->visHeight();
+
+                bottom = ffloor->visHeight();
+                // Can't go over the back ceiling, would induce polygon flaws.
+                if(bfloor->visHeight() > bceil->visHeight())
+                    t = bceil->visHeight();
+
+                // Can't go over front ceiling, would induce polygon flaws.
+                // In the special case of a sky masked upper we must extend the bottom
+                // section up to the height of the back floor.
+                if(t > fceil->visHeight() && !raiseToBackFloor)
+                    t = fceil->visHeight();
+                top = t;
+
+                if(skyClip && ffloor->surface().hasSkyMaskedMaterial() && bfloor->surface().hasSkyMaskedMaterial())
+                {
+                    bottom = top;
+                }
+
+                if(retMaterialOrigin)
+                {
+                    *retMaterialOrigin = surface->visMaterialOrigin();
+                    if(bfloor->visHeight() > fceil->visHeight())
+                    {
+                        retMaterialOrigin->y -= (raiseToBackFloor? t : fceil->visHeight()) - bfloor->visHeight();
+                    }
+
+                    if(unpegBottom)
+                    {
+                        // Align with normal middle texture.
+                        retMaterialOrigin->y += (raiseToBackFloor? t : fceil->visHeight()) - bfloor->visHeight();
+                    }
+                }
+            }
+            break;
+
+        case LineSide::Middle:
+            if(!side.line().isSelfReferencing())
+            {
+                bottom = de::max(bfloor->visHeight(), ffloor->visHeight());
+                top    = de::min(bceil->visHeight(),  fceil->visHeight());
+            }
+            else
+            {
+                bottom = ffloor->visHeight();
+                top    = bceil->visHeight();
+            }
+
+            if(retMaterialOrigin)
+            {
+                retMaterialOrigin->x = surface->visMaterialOrigin().x;
+                retMaterialOrigin->y = 0;
+            }
+
+            // Perform clipping.
+            if(surface->hasMaterial() && !stretchMiddle)
+            {
+                bool const clipBottom = !(!(devRendSkyMode || P_IsInVoid(viewPlayer)) && ffloor->surface().hasSkyMaskedMaterial() && bfloor->surface().hasSkyMaskedMaterial());
+                bool const clipTop    = !(!(devRendSkyMode || P_IsInVoid(viewPlayer)) && fceil->surface().hasSkyMaskedMaterial()  && bceil->surface().hasSkyMaskedMaterial());
+
+                coord_t openBottom, openTop;
+                if(!side.line().isSelfReferencing())
+                {
+                    openBottom = bottom;
+                    openTop    = top;
+                }
+                else
+                {
+                    BspLeaf const &bspLeaf = side.leftHEdge()->face().mapElement()->as<BspLeaf>();
+                    openBottom = bspLeaf.visFloorHeight();
+                    openTop    = bspLeaf.visCeilingHeight();
+                }
+
+                int const matHeight      = surface->material().height();
+                coord_t const matYOffset = surface->visMaterialOrigin().y;
+
+                if(openTop > openBottom)
+                {
+                    if(unpegBottom)
+                    {
+                        bottom += matYOffset;
+                        top = bottom + matHeight;
+                    }
+                    else
+                    {
+                        top += matYOffset;
+                        bottom = top - matHeight;
+                    }
+
+                    if(retMaterialOrigin && top > openTop)
+                    {
+                        retMaterialOrigin->y = top - openTop;
+                    }
+
+                    // Clip it?
+                    if(clipTop || clipBottom)
+                    {
+                        if(clipBottom && bottom < openBottom)
+                            bottom = openBottom;
+
+                        if(clipTop && top > openTop)
+                            top = openTop;
+                    }
+
+                    if(retMaterialOrigin && !clipTop)
+                    {
+                        retMaterialOrigin->y = 0;
+                    }
+                }
+            }
+            break;
+        }
+    }
+
+    if(retBottom) *retBottom = bottom;
+    if(retTop)    *retTop    = top;
+}
+
 DENG2_PIMPL(WallEdge), public IHPlane
 {
     WallSpec spec;
@@ -128,8 +350,8 @@ DENG2_PIMPL(WallEdge), public IHPlane
         LineSideSegment &seg = lineSideSegment();
 
         Vector2f materialOffset;
-        R_SideSectionCoords(seg.lineSide(), spec.section, spec.flags.testFlag(WallSpec::SkyClip),
-                            &lo, &hi, &materialOffset);
+        sideSectionCoords(seg.lineSide(), spec.section, spec.flags.testFlag(WallSpec::SkyClip),
+                          &lo, &hi, &materialOffset);
 
         pOrigin    = Vector3d(self.origin(), lo);
         pDirection = Vector3d(0, 0, hi - lo);
