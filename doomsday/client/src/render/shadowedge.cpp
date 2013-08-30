@@ -23,7 +23,6 @@
 #include "Sector"
 
 #include "world/lineowner.h"
-#include "world/maputil.h"
 
 #include "Face"
 #include "HEdge"

@@ -73,7 +73,9 @@
 #include "api_map.h"
 #include "world/entitydef.h"
 #include "world/p_players.h"
-#include "world/p_objlink.h"
+#ifdef __CLIENT__
+#  include "world/p_objlink.h"
+#endif
 #include "world/world.h"
 
 #include "ui/p_control.h"

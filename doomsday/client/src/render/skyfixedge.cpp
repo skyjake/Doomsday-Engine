@@ -26,7 +26,7 @@
 #include "Sector"
 
 #include "world/map.h"
-#include "world/maputil.h"
+#include "world/maputil.h" // R_SideBackClosed, remove me
 #include "world/p_players.h"
 
 #include "render/rend_main.h"

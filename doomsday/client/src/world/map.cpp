@@ -45,10 +45,11 @@
 #include "world/entitydatabase.h"
 #include "world/generators.h"
 #include "world/lineowner.h"
-#include "world/maputil.h"
 #include "world/p_intercept.h"
 #include "world/p_object.h"
-#include "world/p_objlink.h"
+#ifdef __CLIENT__
+#  include "world/p_objlink.h"
+#endif
 #include "world/thinkers.h"
 #include "world/world.h" // ddMapSetup
 

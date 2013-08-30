@@ -44,7 +44,6 @@
 
 #include "Hand"
 #include "world/map.h"
-#include "world/maputil.h"
 #include "world/lineowner.h"
 #include "world/p_object.h"
 #include "world/p_objlink.h"

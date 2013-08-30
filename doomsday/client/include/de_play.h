@@ -39,7 +39,9 @@
 #include "world/p_particle.h"
 #include "world/p_ticker.h"
 #include "world/p_players.h"
-#include "world/p_objlink.h"
+#ifdef __CLIENT__
+#  include "world/p_objlink.h"
+#endif
 #include "Material"
 #include "ui/p_control.h"
 #include "r_util.h"

@@ -34,7 +34,6 @@
 #include "MaterialVariantSpec"
 
 #include "world/map.h"
-#include "world/maputil.h"
 #include "BspLeaf"
 
 #include "WallEdge"

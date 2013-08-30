@@ -30,10 +30,10 @@
 #include "Face"
 
 #include "world/map.h"
-#include "world/maputil.h"
 #include "BspLeaf"
 
 #include "MaterialSnapshot"
+#include "WallEdge"
 
 #include "gridmap.h"
 
@@ -450,9 +450,11 @@ static void maybeSpreadOverEdge(HEdge *hedge, contactfinderparams_t *parms)
             if(ms.height() >= openTop - openBottom)
             {
                 // Possibly; check the placement.
-                coord_t bottom, top;
-                R_SideSectionCoords(facingLineSide, LineSide::Middle, 0, &bottom, &top);
-                if(top > bottom && top >= openTop && bottom <= openBottom)
+                WallEdge edge(WallSpec::fromMapSide(facingLineSide, LineSide::Middle),
+                              *facingLineSide.leftHEdge(), Line::From);
+
+                if(edge.isValid() && edge.top().z() > edge.bottom().z()
+                   && edge.top().z() >= openTop && edge.bottom().z() <= openBottom)
                     return;
             }
         }
@@ -504,7 +506,6 @@ static void findContacts(objlink_t *link)
 
     switch(link->type)
     {
-#ifdef __CLIENT__
     case OT_LUMOBJ: {
         lumobj_t *lum = (lumobj_t *) link->obj;
         // Only omni lights spread.
@@ -514,7 +515,7 @@ static void findContacts(objlink_t *link)
         radius = LUM_OMNI(lum)->radius;
         bspLeaf = lum->bspLeaf;
         break; }
-#endif
+
     case OT_MOBJ: {
         mobj_t *mo = (mobj_t *) link->obj;
 
@@ -590,9 +591,7 @@ static void spreadContactsForBspLeaf(objlinkblockmap_t &obm, BspLeaf const &bspL
 static inline float maxRadius(objtype_t type)
 {
     DENG_ASSERT(VALID_OBJTYPE(type));
-#ifdef __CLIENT__
     if(type == OT_LUMOBJ) return loMaxRadius;
-#endif
     // Must be OT_MOBJ
     return DDMOBJ_RADIUS_MAX;
 }
@@ -633,10 +632,9 @@ BEGIN_PROF( PROF_OBJLINK_LINK );
     {
         switch(link->type)
         {
-#ifdef __CLIENT__
         case OT_LUMOBJ:
             origin = ((lumobj_t *)link->obj)->origin; break;
-#endif
+
         case OT_MOBJ:
             origin = ((mobj_t *)link->obj)->origin; break;
 
@@ -701,8 +699,6 @@ void R_LinkObjToBspLeaf(BspLeaf &bspLeaf, mobj_t &mobj)
     linkObjToBspLeaf(bspLeaf, (void *)&mobj, OT_MOBJ);
 }
 
-#ifdef __CLIENT__
-
 void R_ObjlinkCreate(lumobj_t &lum)
 {
     if(!lum.bspLeaf) return;
@@ -713,5 +709,3 @@ void R_LinkObjToBspLeaf(BspLeaf &bspLeaf, lumobj_t &lum)
 {
     linkObjToBspLeaf(bspLeaf, (void *)&lum, OT_LUMOBJ);
 }
-
-#endif // __CLIENT__

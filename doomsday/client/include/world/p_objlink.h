@@ -17,8 +17,10 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_WORLD_P_OBJLINK_H
-#define DENG_WORLD_P_OBJLINK_H
+#ifndef DENG_CLIENT_WORLD_OBJLINK_H
+#define DENG_CLIENT_WORLD_OBJLINK_H
+
+#ifdef __CLIENT__
 
 class BspLeaf;
 
@@ -64,10 +66,8 @@ void R_ClearObjlinksForFrame();
  */
 void R_ObjlinkCreate(struct mobj_s &mobj);
 
-#ifdef __CLIENT__
 /// @copydoc R_ObjlinkCreate()
 void R_ObjlinkCreate(struct lumobj_s &lumobj);
-#endif
 
 /**
  * To be called at the beginning of a render frame to link all objects
@@ -86,10 +86,8 @@ void R_InitForBspLeaf(BspLeaf &bspLeaf);
  * Create a new object => BspLeaf contact in the objlink blockmap.
  */
 void R_LinkObjToBspLeaf(BspLeaf &bspLeaf, struct mobj_s &mobj);
-#ifdef __CLIENT__
 /// @copydoc R_LinkObjToBspLeaf()
 void R_LinkObjToBspLeaf(BspLeaf &bspLeaf, struct lumobj_s &lumobj);
-#endif
 
 /**
  * Traverse the list of objects of the specified @a type which have been linked
@@ -98,4 +96,6 @@ void R_LinkObjToBspLeaf(BspLeaf &bspLeaf, struct lumobj_s &lumobj);
 int R_IterateBspLeafContacts(BspLeaf &bspLeaf, objtype_t type,
     int (*func) (void *object, void *parameters), void *parameters = 0);
 
-#endif // DENG_WORLD_P_OBJLINK_H
+#endif // __CLIENT__
+
+#endif // DENG_CLIENT_WORLD_OBJLINK_H
