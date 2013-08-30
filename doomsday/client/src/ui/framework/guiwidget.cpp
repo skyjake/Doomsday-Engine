@@ -603,7 +603,7 @@ void GuiWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
     switch(d->background.type)
     {
     case Background::GradientFrame:
-        verts.makeFlexibleFrame(rule().recti(),
+        verts.makeFlexibleFrame(rule().recti().shrunk(1),
                                 d->background.thickness,
                                 d->background.color,
                                 root().atlas().imageRectf(root().gradientFrame()));

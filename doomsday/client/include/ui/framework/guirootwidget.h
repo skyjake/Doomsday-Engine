@@ -56,6 +56,7 @@ public:
     de::Id gradientFrame() const;
     de::Id borderGlow() const;
     de::Id toggleOnOff() const;
+    de::Id tinyDot() const;
 
     static de::GLShaderBank &shaders();
 

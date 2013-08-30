@@ -40,6 +40,7 @@ DENG2_PIMPL(GuiRootWidget)
     Id gradientFrame;
     Id borderGlow;
     Id toggleOnOff;
+    Id tinyDot;
     bool noFramesDrawnYet;
 
     Instance(Public *i, ClientWindow *win)
@@ -95,6 +96,12 @@ DENG2_PIMPL(GuiRootWidget)
                 QImage frame(QSize(12, 12), QImage::Format_ARGB32);
                 frame.fill(QColor(255, 255, 255, 0).rgba());
                 QPainter painter(&frame);
+                painter.setRenderHint(QPainter::Antialiasing, true);
+                painter.setPen(QPen(QColor(255, 255, 255, 255), 3));
+                painter.setBrush(Qt::NoBrush);//QColor(255, 255, 255, 255));
+                painter.drawEllipse(QPoint(6, 6), 4, 4);
+                /*
+                painter.setCompositionMode(QPainter::CompositionMode_Source);
                 painter.setBrush(Qt::NoBrush);
                 painter.setPen(QColor(255, 255, 255, 32));
                 painter.drawRect(QRect(1, 1, 9, 9));
@@ -104,6 +111,39 @@ DENG2_PIMPL(GuiRootWidget)
                 painter.drawRect(QRect(3, 3, 5, 5));
                 painter.setPen(QColor(255, 255, 255, 255));
                 painter.drawRect(QRect(4, 4, 3, 3));
+                {
+                    painter.setPen(QColor(255, 255, 255, 192));
+                    QPointF const points[4] = {
+                        QPointF(4, 4), QPointF(4, 7),
+                        QPointF(7, 4), QPointF(7, 7)
+                    };
+                    painter.drawPoints(points, 4);
+                }
+                {
+                    painter.setPen(QColor(255, 255, 255, 96));
+                    QPointF const points[4] = {
+                        QPointF(3, 3), QPointF(3, 8),
+                        QPointF(8, 3), QPointF(8, 8)
+                    };
+                    painter.drawPoints(points, 4);
+                }
+                {
+                    painter.setPen(QColor(255, 255, 255, 48));
+                    QPointF const points[4] = {
+                        QPointF(2, 2), QPointF(2, 9),
+                        QPointF(9, 2), QPointF(9, 9)
+                    };
+                    painter.drawPoints(points, 4);
+                }
+                {
+                    painter.setPen(QColor(255, 255, 255, 16));
+                    QPointF const points[4] = {
+                        QPointF(1, 1), QPointF(1, 10),
+                        QPointF(10, 1), QPointF(10, 10)
+                    };
+                    painter.drawPoints(points, 4);
+                }
+                */
                 gradientFrame = atlas->alloc(frame);
             }
 
@@ -112,6 +152,18 @@ DENG2_PIMPL(GuiRootWidget)
 
             // On/Off toggle.
             toggleOnOff = atlas->alloc(st.images().image("toggle.onoff"));
+
+            // Tiny dot.
+            {
+                QImage dot(QSize(5, 5), QImage::Format_ARGB32);
+                dot.fill(QColor(255, 255, 255, 0).rgba());
+                QPainter painter(&dot);
+                painter.setRenderHint(QPainter::Antialiasing, true);
+                painter.setPen(Qt::NoPen);
+                painter.setBrush(Qt::white);
+                painter.drawEllipse(QPointF(2.5f, 2.5f), 2, 2);
+                tinyDot = atlas->alloc(dot);
+            }
         }
     }
 };
@@ -170,6 +222,12 @@ Id GuiRootWidget::toggleOnOff() const
 {
     d->initAtlas();
     return d->toggleOnOff;
+}
+
+Id GuiRootWidget::tinyDot() const
+{
+    d->initAtlas();
+    return d->tinyDot;
 }
 
 GLShaderBank &GuiRootWidget::shaders()
