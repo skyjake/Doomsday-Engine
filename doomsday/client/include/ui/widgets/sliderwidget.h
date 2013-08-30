@@ -37,6 +37,7 @@ public:
 
     void setRange(de::Rangei const &intRange, int step = 0);
     void setRange(de::Rangef const &floatRange, float step = 0);
+    void setPrecision(int precisionDecimals);
     void setValue(float value);
 
     de::Rangef range() const;
@@ -45,6 +46,7 @@ public:
     // Events.
     void viewResized();
     void update();
+    void drawContent();
     bool handleEvent(de::Event const &event);
 
 signals:

@@ -19,6 +19,7 @@
 #include "ui/dialogs/videosettingsdialog.h"
 #include "ui/widgets/variabletogglewidget.h"
 #include "ui/widgets/choicewidget.h"
+#include "ui/widgets/sliderwidget.h"
 #include "ui/widgets/taskbarwidget.h"
 #include "SequentialLayout"
 #include "GridLayout"
@@ -131,6 +132,9 @@ VideoSettingsDialog::VideoSettingsDialog(String const &name)
 {
     // Fullscreen, Maximized, Centered, FPS, FSAA, VSync
 
+    SliderWidget *slider = new SliderWidget;
+    area().add(slider);
+
     // Toggles for video/window options.
     d->fullscreen->setText(tr("Fullscreen"));
     d->fullscreen->setAction(new CommandAction("togglefullscreen"));
@@ -198,9 +202,10 @@ VideoSettingsDialog::VideoSettingsDialog(String const &name)
 
     GridLayout layout(area().contentRule().left(),
                       area().contentRule().top(), GridLayout::RowFirst);
-    layout.setGridSize(2, 3);
+    layout.setGridSize(2, 4);
     layout.setColumnPadding(style().rules().rule("dialog.gap"));
-    layout << *d->showFps
+    layout << *slider
+           << *d->showFps
            << *d->fsaa
            << *d->vsync
            << *d->fullscreen

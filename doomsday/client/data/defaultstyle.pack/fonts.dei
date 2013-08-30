@@ -91,6 +91,9 @@ group slider {
     font label inherits default {
         size $: gui.scale(__this__.size, 0.75)
     }
+    font value inherits slider.label {
+        weight: bold
+    }
 }
 
 group log {

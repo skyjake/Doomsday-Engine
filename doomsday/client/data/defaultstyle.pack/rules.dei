@@ -25,6 +25,11 @@ group progress {
     rule textgap { constant $= gap.constant }
 }
 
+group slider {
+    rule width { constant $= UNIT * 50 }
+    rule label { constant $= UNIT * 8 }
+}
+
 group dialog {
     rule gap { constant $= UNIT * 2 }
 

@@ -494,11 +494,11 @@ void GLTextComposer::makeVertices(Vertices &triStrip,
                 {
                     if(lineAlign.testFlag(AlignRight))
                     {
-                        linePos.x += int(rect.width()) - int(size.x);
+                        linePos.x += int(contentSize.x) - int(size.x);
                     }
                     else if(!lineAlign.testFlag(AlignLeft))
                     {
-                        linePos.x += (int(rect.width()) - int(size.x)) / 2;
+                        linePos.x += (int(contentSize.x) - int(size.x)) / 2;
                     }
                 }
 
