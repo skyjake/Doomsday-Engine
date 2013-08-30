@@ -38,6 +38,8 @@
  * for all views.
  */
 
+#define SPRITEFRAME_MAX_ANGLES 8
+
 typedef struct {
     byte rotate; // 0= no rotations, 1= only front, 2= more...
     Material *mats[8]; // Material to use for view angles 0-7

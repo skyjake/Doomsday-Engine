@@ -26,14 +26,19 @@
 #include <de/Vector>
 
 /**
- * Get a global angle from Cartesian coordinates relative to the viewer.
+ * Get a global angle from Cartesian coordinates in the map coordinate space
+ * relative to the viewer.
  *
- * @param x   X coordinate to test.
- * @param y   Y coordinate to test.
+ * @param point  Map point to test.
  *
  * @return  Angle between the test point and view x,y.
  */
-angle_t R_ViewPointToAngle(coord_t x, coord_t y);
+angle_t R_ViewPointToAngle(de::Vector2d point);
+
+/// @copydoc R_ViewPointToAngle()
+inline angle_t R_ViewPointToAngle(coord_t x, coord_t y) {
+    return R_ViewPointToAngle(de::Vector2d(x, y));
+}
 
 /**
  * Determine distance to the specified point relative to the viewer.
@@ -50,6 +55,9 @@ de::Vector3d R_ClosestPointOnPlane(de::Vector3f const &planeNormal,
 
 void R_ProjectViewRelativeLine2D(coord_t const center[2], boolean alignToViewPlane,
     coord_t width, coord_t offset, coord_t start[2], coord_t end[2]);
+
+void R_ProjectViewRelativeLine2D(de::Vector2d const center, bool alignToViewPlane,
+    coord_t width, coord_t offset, de::Vector2d &start, de::Vector2d &end);
 
 /**
  * Scale @a color uniformly so that the highest component becomes one.

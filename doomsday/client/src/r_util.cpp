@@ -34,12 +34,12 @@
 
 using namespace de;
 
-angle_t R_ViewPointToAngle(coord_t x, coord_t y)
+angle_t R_ViewPointToAngle(Vector2d point)
 {
     viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
-    x -= viewData->current.origin[VX];
-    y -= viewData->current.origin[VY];
-    return M_PointXYToAngle(x, y);
+    point -= Vector2d(viewData->current.origin[VX],
+                      viewData->current.origin[VY]);
+    return M_PointXYToAngle(point.x, point.y);
 }
 
 coord_t R_ViewPointDistance(coord_t x, coord_t y)
@@ -88,6 +88,33 @@ void R_ProjectViewRelativeLine2D(coord_t const center[2], boolean alignToViewPla
     start[VY] -= sinrv * ((width / 2) + offset);
     end[VX] = start[VX] + cosrv * width;
     end[VY] = start[VY] + sinrv * width;
+}
+
+void R_ProjectViewRelativeLine2D(Vector2d const center, bool alignToViewPlane,
+    coord_t width, coord_t offset, Vector2d &start, Vector2d &end)
+{
+    viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
+    float sinrv, cosrv;
+
+    if(alignToViewPlane)
+    {
+        // Should be fully aligned to view plane.
+        sinrv = -viewData->viewCos;
+        cosrv =  viewData->viewSin;
+    }
+    else
+    {
+        // Transform the origin point.
+        coord_t trX   = center[VX] - viewData->current.origin[VX];
+        coord_t trY   = center[VY] - viewData->current.origin[VY];
+        float thangle = BANG2RAD(bamsAtan2(trY * 10, trX * 10)) - float(de::PI) / 2;
+        sinrv = sin(thangle);
+        cosrv = cos(thangle);
+    }
+
+    start = center - Vector2d(cosrv * ((width / 2) + offset),
+                              sinrv * ((width / 2) + offset));
+    end = start + Vector2d(cosrv * width, sinrv * width);
 }
 
 void R_AmplifyColor(de::Vector3f &rgb)

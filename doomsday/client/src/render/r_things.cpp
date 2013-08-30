@@ -986,6 +986,21 @@ static spriteframe_t *spriteFrame(int sprite, int frame)
     return &def.spriteFrames[frame];
 }
 
+/// @todo use Mobj_OriginSmoothed
+static Vector3d mobjOriginSmoothed(mobj_t *mo)
+{
+    DENG_ASSERT(mo != 0);
+    coord_t moPos[] = { mo->origin[VX], mo->origin[VY], mo->origin[VZ] };
+
+    // The client may have a Smoother for this object.
+    if(isClient && mo->dPlayer && P_GetDDPlayerIdx(mo->dPlayer) != consolePlayer)
+    {
+        Smoother_Evaluate(clients[P_GetDDPlayerIdx(mo->dPlayer)].smoother, moPos);
+    }
+
+    return moPos;
+}
+
 void R_ProjectSprite(mobj_t *mo)
 {
     if(!mo) return;
@@ -1000,26 +1015,14 @@ void R_ProjectSprite(mobj_t *mo)
     // ...no sprite frame is defined?
     spriteframe_t *sprFrame = spriteFrame(mo->sprite, mo->frame);
     if(!sprFrame) return;
-
-    // Skip objects whose origin lies in a sector with no volume.
-    Plane &floor           = mo->bspLeaf->visFloor();
-    Plane &ceiling         = mo->bspLeaf->visCeiling();
-    bool const floorAdjust = (fabs(floor.visHeight() - mo->bspLeaf->floor().height()) < 8);
-    if(floor.visHeight() >= ceiling.visHeight())
-        return;
-
-    // Skip fully transparent objects.
+    // ...fully transparent?
     float const alpha = R_Alpha(mo);
     if(alpha <= 0) return;
+    // ...origin lies in a sector with no volume?
+    if(!mo->bspLeaf->hasWorldVolume()) return;
 
     // Determine distance to object.
-    coord_t moPos[] = { mo->origin[VX], mo->origin[VY], mo->origin[VZ] };
-
-    // The client may have a Smoother for this object.
-    if(isClient && mo->dPlayer && P_GetDDPlayerIdx(mo->dPlayer) != consolePlayer)
-    {
-        Smoother_Evaluate(clients[P_GetDDPlayerIdx(mo->dPlayer)].smoother, moPos);
-    }
+    Vector3d const moPos = mobjOriginSmoothed(mo);
     coord_t const distFromEye = Rend_PointDist2D(moPos);
 
     // Should we use a 3D model?
@@ -1028,12 +1031,15 @@ void R_ProjectSprite(mobj_t *mo)
     if(useModels)
     {
         interp = Models_ModelForMobj(mo, &mf, &nextmf);
-        if(mf && !(mf->flags & MFF_NO_DISTANCE_CHECK) && maxModelDistance &&
-           distFromEye > maxModelDistance)
+        if(mf)
         {
-            // Don't use a 3D model.
-            mf = nextmf = NULL;
-            interp = -1;
+            // Use a sprite if the object is beyond the maximum model distance.
+            if(maxModelDistance && !(mf->flags & MFF_NO_DISTANCE_CHECK)
+               && distFromEye > maxModelDistance)
+            {
+                mf = nextmf = 0;
+                interp = -1;
+            }
         }
     }
 
@@ -1041,7 +1047,7 @@ void R_ProjectSprite(mobj_t *mo)
     // relative to that of the viewer.
 
     Material *mat;
-    bool matFlipS, matFlipT;
+    bool matFlipS, matFlipT = false;
     if(sprFrame->rotate && !mf)
     {
         // Choose a different rotation according to the relative angle to the viewer.
@@ -1057,7 +1063,7 @@ void R_ProjectSprite(mobj_t *mo)
         mat      = sprFrame->mats[0];
         matFlipS = CPP_BOOL(sprFrame->flip[0]);
     }
-    matFlipT = false;
+    DENG_ASSERT(mat != 0);
 
     // A valid sprite texture in the "Sprites" scheme is required.
     MaterialSnapshot const &ms = mat->prepare(Rend_SpriteMaterialSpec(mo->tclass, mo->tmap));
@@ -1070,51 +1076,52 @@ void R_ProjectSprite(mobj_t *mo)
     viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
     float thangle = 0;
 
-    // Align to the view plane?
+    // Align to the view plane? (Means scaling down Z with models)
     bool align = (mo->ddFlags & DDMF_VIEWALIGN) || alwaysAlign == 1;
     if(mf)
     {
-        // View-aligning means scaling down Z with models.
-
         // Transform the origin point.
-        coord_t delta[2] = { moPos[VY] - viewData->current.origin[VY],
-                             moPos[VX] - viewData->current.origin[VX] };
+        Vector2d delta(moPos.y - viewData->current.origin[VY],
+                       moPos.x - viewData->current.origin[VX]);
 
-        thangle = BANG2RAD(bamsAtan2(delta[0] * 10, delta[1] * 10)) - PI / 2;
+        thangle = BANG2RAD(bamsAtan2(delta.x * 10, delta.y * 10)) - PI / 2;
         align = false;
     }
 
-    // Perform visibility checking.
-    /// @todo R_VisualRadius() does not consider sprite rotation.
-    coord_t const width  = R_VisualRadius(mo) * 2;
-    coord_t const offset = (mf? 0 : coord_t(-tex.origin().x) - (width / 2.0f));
-    coord_t v1[2], v2[2];
+    /*
+     * Perform visibility checking.
+     */
+    Plane &floor           = mo->bspLeaf->visFloor();
+    Plane &ceiling         = mo->bspLeaf->visCeiling();
+    bool const floorAdjust = (fabs(floor.visHeight() - mo->bspLeaf->floor().height()) < 8);
 
     // Project a line segment relative to the view in 2D, then check if not
     // entirely clipped away in the 360 degree angle clipper.
-    R_ProjectViewRelativeLine2D(moPos, mf || (align || alwaysAlign == 3),
-                                width, offset, v1, v2);
+    coord_t const width = R_VisualRadius(mo) * 2; /// @todo ignorant of rotation...
+    Vector2d v1, v2;
+    R_ProjectViewRelativeLine2D(moPos, mf || (align || alwaysAlign == 3), width,
+                                (mf? 0 : coord_t(-tex.origin().x) - (width / 2.0f)),
+                                v1, v2);
 
-    // Check for visibility.
+    // Not visible?
     if(!C_CheckRangeFromViewRelPoints(v1, v2))
     {
-        // Not visible.
         // Sprite visibility is absolute.
         if(!mf) return;
 
         // If the model is close to the viewpoint we will need to draw it.
         // Otherwise large models are likely to disappear too early.
-        coord_t delta[] = { distFromEye, moPos[VZ] + (mo->height / 2) - viewData->current.origin[VZ] };
-        if(M_ApproxDistance(delta[0], delta[1]) > MAX_OBJECT_RADIUS)
+        Vector2d delta(distFromEye, moPos.z + (mo->height / 2) - viewData->current.origin[VZ]);
+        if(M_ApproxDistance(delta.x, delta.y) > MAX_OBJECT_RADIUS)
             return;
     }
 
     // Store information in a vissprite.
     vissprite_t *vis = R_NewVisSprite();
     vis->type       = mf? VSPR_MODEL : VSPR_SPRITE;
-    vis->origin[VX] = moPos[VX];
-    vis->origin[VY] = moPos[VY];
-    vis->origin[VZ] = moPos[VZ];
+    vis->origin[VX] = moPos.x;
+    vis->origin[VY] = moPos.y;
+    vis->origin[VZ] = moPos.z;
     vis->distance   = distFromEye;
 
     /**
@@ -1189,14 +1196,13 @@ void R_ProjectSprite(mobj_t *mo)
     }
 
     // Determine possible short-range visual offset.
-    vec3d_t visOff; V3d_Set(visOff, 0, 0, 0);
+    Vector3d visOff;
 
     if((mf && useSRVO > 0) || (!mf && useSRVO > 1))
     {
         if(mo->state && mo->tics >= 0)
         {
-            V3d_Set(visOff, mo->srvo[VX], mo->srvo[VY], mo->srvo[VZ]);
-            V3d_Scale(visOff, (mo->tics - frameTimePos) / (float) mo->state->tics);
+            visOff = Vector3d(mo->srvo) * (mo->tics - frameTimePos) / (float) mo->state->tics;
         }
 
         if(!INRANGE_OF(mo->mom[MX], 0, NOMOMENTUM_THRESHOLD) ||
@@ -1204,10 +1210,7 @@ void R_ProjectSprite(mobj_t *mo)
            !INRANGE_OF(mo->mom[MZ], 0, NOMOMENTUM_THRESHOLD))
         {
             // Use the object's speed to calculate a short-range offset.
-            vec3d_t tmp; V3d_Set(tmp, mo->mom[MX], mo->mom[MY], mo->mom[MZ]);
-            V3d_Scale(tmp, frameTimePos);
-
-            V3d_Sum(visOff, visOff, tmp);
+            visOff += Vector3d(mo->mom) * frameTimePos;
         }
     }
 
@@ -1293,13 +1296,11 @@ void R_ProjectSprite(mobj_t *mo)
     if(mo->lumIdx)
     {
         // Determine the sprite frame lump of the source.
-        spritedef_t *sprDef     = &sprites[mo->sprite];
-        spriteframe_t *sprFrame = &sprDef->spriteFrames[mo->frame];
-
         Material *mat;
         if(sprFrame->rotate)
         {
-            int spriteAngle = (R_ViewPointToAngle(moPos[VX], moPos[VY]) - mo->angle + (unsigned) (ANG45 / 2) * 9) >> 29;
+            int spriteAngle = (R_ViewPointToAngle(moPos) - mo->angle + (unsigned) (ANG45 / 2) * 9) >> 29;
+            DENG_ASSERT(spriteAngle >= 0 && spriteAngle < SPRITEFRAME_MAX_ANGLES);
             mat = sprFrame->mats[spriteAngle];
         }
         else
@@ -1315,13 +1316,15 @@ void R_ProjectSprite(mobj_t *mo)
 
         lumobj_t const *lum = LO_GetLuminous(mo->lumIdx);
 
-        vis = R_NewVisSprite();
-        vis->type     = VSPR_FLARE;
-        vis->distance = distFromEye;
+        vissprite_t *vis = R_NewVisSprite();
+        vis->type       = VSPR_FLARE;
+        vis->distance   = distFromEye;
 
         // Determine the exact center of the flare.
-        V3d_Sum(vis->origin, moPos, visOff);
-        vis->origin[VZ] += LUM_OMNI(lum)->zOff;
+        Vector3d center = moPos + visOff;
+        vis->origin[VX] = center.x;
+        vis->origin[VY] = center.y;
+        vis->origin[VZ] = center.z + LUM_OMNI(lum)->zOff;
 
         float flareSize = pl->brightMul;
         // X offset to the flare position.
