@@ -281,7 +281,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
                     else
                     {
                         openBottom = ffloor->visHeight();
-                        openTop    = bceil->visHeight();
+                        openTop    = fceil->visHeight();
                     }
 
                     if(openTop > openBottom)
