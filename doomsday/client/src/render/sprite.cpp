@@ -330,8 +330,6 @@ static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
     }
     else
     {
-        collectaffectinglights_params_t lparams;
-
         Map &map = App_World().map();
 
         if(useBias && map.hasLightGrid())
@@ -363,13 +361,12 @@ static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
 
         Rend_ApplyTorchLight(params->ambientColor, 0);
 
-        zap(lparams);
-        lparams.starkLight = false;
-        lparams.origin[VX] = spr->origin[VX];
-        lparams.origin[VY] = spr->origin[VY];
-        lparams.origin[VZ] = spr->origin[VZ];
-        lparams.bspLeaf = spr->data.sprite.bspLeaf;
-        lparams.ambientColor = params->ambientColor;
+        collectaffectinglights_params_t lparams; zap(lparams);
+        lparams.origin[VX]   = spr->origin[VX];
+        lparams.origin[VY]   = spr->origin[VY];
+        lparams.origin[VZ]   = spr->origin[VZ];
+        lparams.bspLeaf      = spr->data.sprite.bspLeaf;
+        std::memcpy(lparams.ambientColor, params->ambientColor, sizeof(lparams.ambientColor));
 
         params->vLightListIdx = R_CollectAffectingLights(&lparams);
     }
@@ -723,8 +720,6 @@ static void setupModelParamsForVisPSprite(rendmodelparams_t *params, vispsprite_
     }
     else
     {
-        collectaffectinglights_params_t lparams;
-
         Map &map = App_World().map();
 
         if(useBias && map.hasLightGrid())
@@ -758,13 +753,13 @@ static void setupModelParamsForVisPSprite(rendmodelparams_t *params, vispsprite_
 
         Rend_ApplyTorchLight(params->ambientColor, params->distance);
 
-        zap(lparams);
-        lparams.starkLight = true;
-        lparams.origin[VX] = spr->origin[VX];
-        lparams.origin[VY] = spr->origin[VY];
-        lparams.origin[VZ] = spr->origin[VZ];
-        lparams.bspLeaf = spr->data.model.bspLeaf;
-        lparams.ambientColor = params->ambientColor;
+        collectaffectinglights_params_t lparams; zap(lparams);
+        lparams.starkLight   = true;
+        lparams.origin[VX]   = spr->origin[VX];
+        lparams.origin[VY]   = spr->origin[VY];
+        lparams.origin[VZ]   = spr->origin[VZ];
+        lparams.bspLeaf      = spr->data.model.bspLeaf;
+        std::memcpy(lparams.ambientColor, params->ambientColor, sizeof(lparams.ambientColor));
 
         params->vLightListIdx = R_CollectAffectingLights(&lparams);
     }

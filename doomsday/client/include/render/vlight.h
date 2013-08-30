@@ -65,7 +65,7 @@ boolean VL_ListIterator(uint listIdx, void *data, boolean (*func) (vlight_t cons
 
 typedef struct collectaffectinglights_params_s {
     coord_t origin[3];
-    float *ambientColor;
+    float ambientColor[3];
     BspLeaf *bspLeaf;
     boolean starkLight; ///< World light has a more pronounced effect.
 } collectaffectinglights_params_t;

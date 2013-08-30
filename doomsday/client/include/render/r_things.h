@@ -207,7 +207,7 @@ DENG_EXTERN_C int psp3d;
 extern "C" {
 #endif
 
-Material *R_GetMaterialForSprite(int sprite, int frame);
+Material *R_MaterialForSprite(int sprite, int frame);
 
 /// @return  Radius of the mobj as it would visually appear to be.
 coord_t R_VisualRadius(struct mobj_s *mo);

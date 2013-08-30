@@ -458,8 +458,6 @@ static void setupModelParamsForParticle(rendmodelparams_t* params,
     }
     else
     {
-        collectaffectinglights_params_t lparams;
-
         Map &map = pt->sector->map();
 
         if(useBias && map.hasLightGrid())
@@ -489,13 +487,12 @@ static void setupModelParamsForParticle(rendmodelparams_t* params,
 
         Rend_ApplyTorchLight(params->ambientColor, params->distance);
 
-        zap(lparams);
-        lparams.starkLight   = false;
+        collectaffectinglights_params_t lparams; zap(lparams);
         lparams.origin[VX]   = params->origin[VX];
         lparams.origin[VY]   = params->origin[VY];
         lparams.origin[VZ]   = params->origin[VZ];
         lparams.bspLeaf      = &map.bspLeafAt(Vector2d(origin[VX], origin[VY]));
-        lparams.ambientColor = params->ambientColor;
+        std::memcpy(lparams.ambientColor, params->ambientColor, sizeof(lparams.ambientColor));
 
         params->vLightListIdx = R_CollectAffectingLights(&lparams);
     }

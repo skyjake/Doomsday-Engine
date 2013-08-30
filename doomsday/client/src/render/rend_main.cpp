@@ -527,14 +527,6 @@ static void lightVertices(uint num, Vector4f *colors, Vector3f const *verts,
     }
 }
 
-static void torchLightVertices(uint num, Vector4f *colors, Vector3f const *verts)
-{
-    for(uint i = 0; i < num; ++i)
-    {
-        Rend_ApplyTorchLight(colors[i], Rend_PointDist2D(verts[i]));
-    }
-}
-
 int RIT_FirstDynlightIterator(dynlight_t const *dyn, void *parameters)
 {
     dynlight_t const **ptr = (dynlight_t const **)parameters;
@@ -996,7 +988,12 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
             // Apply torch light?
             if(viewPlayer->shared.fixedColorMap)
             {
-                torchLightVertices(numVertices, colorCoords, posCoords);
+                Vector3f const *posIt = posCoords;
+                Vector4f *colorIt = colorCoords;
+                for(uint i = 0; i < numVertices; ++i, colorIt++, posIt++)
+                {
+                    Rend_ApplyTorchLight(*colorIt, Rend_PointDist2D(*posIt));
+                }
             }
         }
 
@@ -2370,7 +2367,7 @@ static int projectSpriteWorker(void *ptr, void * /*parameters*/)
 
         if(leaf->visCeiling().surface().hasSkyMaskedMaterial())
         {
-            if(Material *material = R_GetMaterialForSprite(mo->sprite, mo->frame))
+            if(Material *material = R_MaterialForSprite(mo->sprite, mo->frame))
             {
                 if(!(mo->dPlayer && (mo->dPlayer->flags & DDPF_CAMERA))
                    && mo->origin[VZ] <= leaf->visCeilingHeight()
