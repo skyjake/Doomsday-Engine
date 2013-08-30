@@ -55,6 +55,7 @@
 #include "render/r_main.h" // validCount
 #ifdef __CLIENT__
 #  include "BiasDigest"
+#  include "WallEdge"
 #  include "render/lumobj.h"
 #  include "render/rend_decor.h"
 #  include "render/rend_main.h"
@@ -2680,20 +2681,25 @@ void Map::initSkyFix()
             // There must be a sector on both sides.
             if(!side->hasSector() || !side->back().hasSector()) continue;
 
-            coord_t bottomZ, topZ;
-            Vector2f materialOrigin;
-            R_SideSectionCoords(*side, LineSide::Middle, 0,
-                                &bottomZ, &topZ, &materialOrigin);
-            if(skyCeil && topZ + materialOrigin.y > d->skyCeilingHeight)
-            {
-                // Must raise the skyfix ceiling.
-                d->skyCeilingHeight = topZ + materialOrigin.y;
-            }
+            // Possibility of degenerate BSP leaf.
+            if(!side->leftHEdge()) continue;
 
-            if(skyFloor && bottomZ + materialOrigin.y < d->skyFloorHeight)
+            WallEdge edge(WallSpec::fromMapSide(*side, LineSide::Middle),
+                          *side->leftHEdge(), Line::From);
+
+            if(edge.isValid() && edge.top().z() > edge.bottom().z())
             {
-                // Must lower the skyfix floor.
-                d->skyFloorHeight = bottomZ + materialOrigin.y;
+                if(skyCeil && edge.top().z() + edge.materialOrigin().y > d->skyCeilingHeight)
+                {
+                    // Must raise the skyfix ceiling.
+                    d->skyCeilingHeight = edge.top().z() + edge.materialOrigin().y;
+                }
+
+                if(skyFloor && edge.bottom().z() + edge.materialOrigin().y < d->skyFloorHeight)
+                {
+                    // Must lower the skyfix floor.
+                    d->skyFloorHeight = edge.bottom().z() + edge.materialOrigin().y;
+                }
             }
         }
     }

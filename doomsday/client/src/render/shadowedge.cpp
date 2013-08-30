@@ -26,8 +26,10 @@
 #include "world/maputil.h"
 
 #include "Face"
+#include "HEdge"
 
 #include "render/rend_main.h"
+#include "WallEdge"
 
 #include "render/shadowedge.h"
 
@@ -127,9 +129,13 @@ static bool middleMaterialCoversOpening(LineSide const &side)
         if(ms.height() >= openTop - openBottom)
         {
             // Possibly; check the placement.
-            coord_t bottom, top;
-            R_SideSectionCoords(side, LineSide::Middle, 0, &bottom, &top);
-            return (top > bottom && top >= openTop && bottom <= openBottom);
+            if(side.leftHEdge()) // possibility of degenerate BSP leaf
+            {
+                WallEdge edge(WallSpec::fromMapSide(side, LineSide::Middle),
+                              *side.leftHEdge(), Line::From);
+                return (edge.isValid() && edge.top().z() > edge.bottom().z()
+                        && edge.top().z() >= openTop && edge.bottom().z() <= openBottom);
+            }
         }
     }
 

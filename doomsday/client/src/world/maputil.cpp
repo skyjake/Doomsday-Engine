@@ -313,14 +313,19 @@ bool R_SideBackClosed(LineSide const &side, bool ignoreOpacity)
             if(side.isFlagged(SDF_MIDDLE_STRETCH))
                 return true;
 
-            coord_t openRange, openBottom, openTop;
-            openRange = visOpenRange(side, &openBottom, &openTop);
-            if(ms.height() >= openRange)
+            if(side.leftHEdge()) // possibility of degenerate BSP leaf
             {
-                // Possibly; check the placement.
-                coord_t bottom, top;
-                R_SideSectionCoords(side, LineSide::Middle, 0, &bottom, &top);
-                return (top > bottom && top >= openTop && bottom <= openBottom);
+                coord_t openRange, openBottom, openTop;
+                openRange = visOpenRange(side, &openBottom, &openTop);
+                if(ms.height() >= openRange)
+                {
+                    // Possibly; check the placement.
+                    WallEdge edge(WallSpec::fromMapSide(side, LineSide::Middle),
+                                  *side.leftHEdge(), Line::From);
+
+                    return (edge.isValid() && edge.top().z() > edge.bottom().z()
+                            && edge.top().z() >= openTop && edge.bottom().z() <= openBottom);
+                }
             }
         }
     }
@@ -381,14 +386,19 @@ static bool middleMaterialCoversOpening(LineSide const &side)
 
     if(ms.isOpaque() && !side.middle().blendMode() && side.middle().opacity() >= 1)
     {
-        coord_t openRange, openBottom, openTop;
-        openRange = visOpenRange(side, &openBottom, &openTop);
-        if(ms.height() >= openRange)
+        if(side.leftHEdge()) // possibility of degenerate BSP leaf
         {
-            // Possibly; check the placement.
-            coord_t bottom, top;
-            R_SideSectionCoords(side, LineSide::Middle, 0, &bottom, &top);
-            return (top > bottom && top >= openTop && bottom <= openBottom);
+            coord_t openRange, openBottom, openTop;
+            openRange = visOpenRange(side, &openBottom, &openTop);
+            if(ms.height() >= openRange)
+            {
+                // Possibly; check the placement.
+                WallEdge edge(WallSpec::fromMapSide(side, LineSide::Middle),
+                              *side.leftHEdge(), Line::From);
+
+                return (edge.isValid() && edge.top().z() > edge.bottom().z()
+                        && edge.top().z() >= openTop && edge.bottom().z() <= openBottom);
+            }
         }
     }
 
