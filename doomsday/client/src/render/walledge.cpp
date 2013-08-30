@@ -251,7 +251,8 @@ DENG2_PIMPL(WallEdge), public IHPlane
                 break;
 
             case LineSide::Middle: {
-                Surface const &middle = seg.lineSide().middle();
+                LineSide const &lineSide = seg.lineSide();
+                Surface const &middle    = lineSide.middle();
 
                 if(!line.isSelfReferencing())
                 {
@@ -260,8 +261,9 @@ DENG2_PIMPL(WallEdge), public IHPlane
                 }
                 else
                 {
-                    lo = ffloor->visHeight();
-                    hi = bceil->visHeight();
+                    // Use the unmapped heights for positioning purposes.
+                    lo = lineSide.sector().floor().visHeight();
+                    hi = lineSide.back().sector().ceiling().visHeight();
                 }
 
                 materialOrigin = Vector2f(middle.visMaterialOrigin().x, 0);
@@ -279,7 +281,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
                     else
                     {
                         openBottom = ffloor->visHeight();
-                        openTop    = fceil->visHeight();
+                        openTop    = bceil->visHeight();
                     }
 
                     if(openTop > openBottom)
