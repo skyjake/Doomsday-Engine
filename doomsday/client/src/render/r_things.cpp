@@ -809,98 +809,88 @@ int RIT_VisMobjZ(Sector *sector, void *parameters)
     return false; // Continue iteration.
 }
 
-static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
+static void setupSpriteParamsForVisSprite(rendspriteparams_t &p,
     float x, float y, float z, float distance, float visOffX, float visOffY, float visOffZ,
     float /*secFloor*/, float /*secCeil*/, float /*floorClip*/, float /*top*/,
-    Material &material, boolean matFlipS, boolean matFlipT, blendmode_t blendMode,
+    Material &material, bool matFlipS, bool matFlipT, blendmode_t blendMode,
     float ambientColorR, float ambientColorG, float ambientColorB, float alpha,
     uint vLightListIdx, int tClass, int tMap, BspLeaf *bspLeaf,
-    boolean /*floorAdjust*/, boolean /*fitTop*/, boolean /*fitBottom*/, boolean viewAligned)
+    bool /*floorAdjust*/, bool /*fitTop*/, bool /*fitBottom*/, bool viewAligned)
 {
-    if(!params) return; // Wha?
-
     MaterialVariantSpec const &spec = Rend_SpriteMaterialSpec(tClass, tMap);
     MaterialVariant *variant = material.chooseVariant(spec, true);
 
-#ifdef DENG_DEBUG
-    if(tClass || tMap)
-    {
-        DENG_ASSERT(spec.primarySpec->data.variant.translated);
-    }
-#endif
+    DENG_ASSERT((tClass == 0 && tMap == 0) || spec.primarySpec->data.variant.translated);
 
-    params->center[VX] = x;
-    params->center[VY] = y;
-    params->center[VZ] = z;
-    params->srvo[VX] = visOffX;
-    params->srvo[VY] = visOffY;
-    params->srvo[VZ] = visOffZ;
-    params->distance = distance;
-    params->bspLeaf = bspLeaf;
-    params->viewAligned = viewAligned;
-    params->noZWrite = noSpriteZWrite;
+    p.center[VX]       = x;
+    p.center[VY]       = y;
+    p.center[VZ]       = z;
+    p.srvo[VX]         = visOffX;
+    p.srvo[VY]         = visOffY;
+    p.srvo[VZ]         = visOffZ;
+    p.distance         = distance;
+    p.bspLeaf          = bspLeaf;
+    p.viewAligned      = viewAligned;
+    p.noZWrite         = noSpriteZWrite;
 
-    params->material = variant;
-    params->matFlip[0] = matFlipS;
-    params->matFlip[1] = matFlipT;
-    params->blendMode = (useSpriteBlend? blendMode : BM_NORMAL);
+    p.material         = variant;
+    p.matFlip[0]       = matFlipS;
+    p.matFlip[1]       = matFlipT;
+    p.blendMode        = (useSpriteBlend? blendMode : BM_NORMAL);
 
-    params->ambientColor[CR] = ambientColorR;
-    params->ambientColor[CG] = ambientColorG;
-    params->ambientColor[CB] = ambientColorB;
-    params->ambientColor[CA] = (useSpriteAlpha? alpha : 1);
+    p.ambientColor[CR] = ambientColorR;
+    p.ambientColor[CG] = ambientColorG;
+    p.ambientColor[CB] = ambientColorB;
+    p.ambientColor[CA] = (useSpriteAlpha? alpha : 1);
 
-    params->vLightListIdx = vLightListIdx;
+    p.vLightListIdx    = vLightListIdx;
 }
 
-void setupModelParamsForVisSprite(rendmodelparams_t *params,
+void setupModelParamsForVisSprite(rendmodelparams_t &p,
     float x, float y, float z, float distance, float visOffX, float visOffY, float visOffZ,
     float gzt, float yaw, float yawAngleOffset, float pitch, float pitchAngleOffset,
     ModelDef *mf, ModelDef *nextMF, float inter,
     float ambientColorR, float ambientColorG, float ambientColorB, float alpha,
     uint vLightListIdx,
     int id, int selector, BspLeaf * /*bspLeaf*/, int mobjDDFlags, int tmap,
-    boolean viewAlign, boolean /*fullBright*/, boolean alwaysInterpolate)
+    bool viewAlign, bool /*fullBright*/, bool alwaysInterpolate)
 {
-    if(!params)
-        return; // Hmm...
+    p.mf                = mf;
+    p.nextMF            = nextMF;
+    p.inter             = inter;
+    p.alwaysInterpolate = alwaysInterpolate;
+    p.id                = id;
+    p.selector          = selector;
+    p.flags             = mobjDDFlags;
+    p.tmap              = tmap;
+    p.origin[VX]        = x;
+    p.origin[VY]        = y;
+    p.origin[VZ]        = z;
+    p.srvo[VX]          = visOffX;
+    p.srvo[VY]          = visOffY;
+    p.srvo[VZ]          = visOffZ;
+    p.gzt               = gzt;
+    p.distance          = distance;
+    p.yaw               = yaw;
+    p.extraYawAngle     = 0;
+    p.yawAngleOffset    = yawAngleOffset;
+    p.pitch             = pitch;
+    p.extraPitchAngle   = 0;
+    p.pitchAngleOffset  = pitchAngleOffset;
+    p.extraScale        = 0;
+    p.viewAlign         = viewAlign;
+    p.mirror            = 0;
+    p.shineYawOffset    = 0;
+    p.shinePitchOffset  = 0;
 
-    params->mf = mf;
-    params->nextMF = nextMF;
-    params->inter = inter;
-    params->alwaysInterpolate = alwaysInterpolate;
-    params->id = id;
-    params->selector = selector;
-    params->flags = mobjDDFlags;
-    params->tmap = tmap;
-    params->origin[VX] = x;
-    params->origin[VY] = y;
-    params->origin[VZ] = z;
-    params->srvo[VX] = visOffX;
-    params->srvo[VY] = visOffY;
-    params->srvo[VZ] = visOffZ;
-    params->gzt = gzt;
-    params->distance = distance;
-    params->yaw = yaw;
-    params->extraYawAngle = 0;
-    params->yawAngleOffset = yawAngleOffset;
-    params->pitch = pitch;
-    params->extraPitchAngle = 0;
-    params->pitchAngleOffset = pitchAngleOffset;
-    params->extraScale = 0;
-    params->viewAlign = viewAlign;
-    params->mirror = 0;
-    params->shineYawOffset = 0;
-    params->shinePitchOffset = 0;
-    params->shineTranslateWithViewerPos = false;
-    params->shinepspriteCoordSpace = false;
+    p.shineTranslateWithViewerPos = p.shinepspriteCoordSpace = false;
 
-    params->ambientColor[CR] = ambientColorR;
-    params->ambientColor[CG] = ambientColorG;
-    params->ambientColor[CB] = ambientColorB;
-    params->ambientColor[CA] = alpha;
+    p.ambientColor[CR]  = ambientColorR;
+    p.ambientColor[CG]  = ambientColorG;
+    p.ambientColor[CB]  = ambientColorB;
+    p.ambientColor[CA]  = alpha;
 
-    params->vLightListIdx = vLightListIdx;
+    p.vLightListIdx     = vLightListIdx;
 }
 
 void getLightingParams(coord_t x, coord_t y, coord_t z, BspLeaf *bspLeaf,
@@ -984,155 +974,148 @@ static DGLuint prepareFlaremap(de::Uri const &resourceUri)
     return 0;
 }
 
+static spriteframe_t *spriteFrame(int sprite, int frame)
+{
+    if(sprite < 0 || (unsigned) sprite >= (unsigned) numSprites)
+        return 0;
+
+    spritedef_t &def = sprites[sprite];
+    if(frame >= def.numFrames)
+        return 0;
+
+    return &def.spriteFrames[frame];
+}
+
 void R_ProjectSprite(mobj_t *mo)
 {
-    float thangle = 0, alpha, yaw = 0, pitch = 0;
-    coord_t distance, gzt, floorClip;
-    vec3d_t visOff;
-    spritedef_t *sprDef;
-    spriteframe_t *sprFrame = NULL;
-    boolean matFlipS, matFlipT;
-    vissprite_t *vis;
-    boolean align, fullBright, viewAlign;
-    modeldef_t *mf = 0, *nextmf = 0;
-    float interp = 0;
-    vismobjzparams_t params;
-    visspritetype_t visType = VSPR_SPRITE;
-    float ambientColor[3];
-    uint vLightListIdx = 0;
-    Material *mat;
-    viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
-    coord_t moPos[3];
+    if(!mo) return;
 
-    if(!mo || !mo->bspLeaf) return;
+    // Not all objects can/will be visualized. Skip this object if:
+    // ...hidden?
+    if((mo->ddFlags & DDMF_DONTDRAW)) return;
+    // ...not linked into the map?
+    if(!mo->bspLeaf) return;
+    // ...in an invalid state?
+    if(!mo->state || mo->state == states) return;
+    // ...no sprite frame is defined?
+    spriteframe_t *sprFrame = spriteFrame(mo->sprite, mo->frame);
+    if(!sprFrame) return;
 
-    // Never make a vissprite when DDMF_DONTDRAW is set or when when the mobj
-    // is in an invalid state.
-    if((mo->ddFlags & DDMF_DONTDRAW) || !mo->state || mo->state == states)
+    // Skip objects whose origin lies in a sector with no volume.
+    Plane &floor           = mo->bspLeaf->visFloor();
+    Plane &ceiling         = mo->bspLeaf->visCeiling();
+    bool const floorAdjust = (fabs(floor.visHeight() - mo->bspLeaf->floor().height()) < 8);
+    if(floor.visHeight() >= ceiling.visHeight())
         return;
 
-    coord_t secFloor    = mo->bspLeaf->visFloorHeight();
-    coord_t secCeil     = mo->bspLeaf->visCeilingHeight();
-    boolean floorAdjust = (fabs(mo->bspLeaf->visFloorHeight() - mo->bspLeaf->floorHeight()) < 8);
-
-    // Never make a vissprite when the mobj's origin sector is of zero height.
-    if(secFloor >= secCeil) return;
-
-    alpha = R_Alpha(mo);
-    // Never make a vissprite when the mobj is fully transparent.
+    // Skip fully transparent objects.
+    float const alpha = R_Alpha(mo);
     if(alpha <= 0) return;
 
-    moPos[VX] = mo->origin[VX];
-    moPos[VY] = mo->origin[VY];
-    moPos[VZ] = mo->origin[VZ];
+    // Determine distance to object.
+    coord_t moPos[] = { mo->origin[VX], mo->origin[VY], mo->origin[VZ] };
 
     // The client may have a Smoother for this object.
     if(isClient && mo->dPlayer && P_GetDDPlayerIdx(mo->dPlayer) != consolePlayer)
     {
         Smoother_Evaluate(clients[P_GetDDPlayerIdx(mo->dPlayer)].smoother, moPos);
     }
-
-    // Decide which patch to use according to the sprite's angle and position
-    // relative to that of the viewer.
-
-#ifdef RANGECHECK
-    if(mo->sprite < 0 || (unsigned) mo->sprite >= (unsigned) numSprites)
-    {
-        Con_Error("R_ProjectSprite: invalid sprite number %i\n", mo->sprite);
-    }
-#endif
-    sprDef = &sprites[mo->sprite];
-
-    // If the frame is not defined, we can't display this object.
-    if(mo->frame >= sprDef->numFrames) return;
-    sprFrame = &sprDef->spriteFrames[mo->frame];
-
-    // Determine distance to object.
-    distance = Rend_PointDist2D(moPos);
+    coord_t const distFromEye = Rend_PointDist2D(moPos);
 
     // Should we use a 3D model?
+    modeldef_t *mf = 0, *nextmf = 0;
+    float interp = 0;
     if(useModels)
     {
         interp = Models_ModelForMobj(mo, &mf, &nextmf);
         if(mf && !(mf->flags & MFF_NO_DISTANCE_CHECK) && maxModelDistance &&
-           distance > maxModelDistance)
+           distFromEye > maxModelDistance)
         {
             // Don't use a 3D model.
             mf = nextmf = NULL;
             interp = -1;
         }
     }
-    visType = !mf? VSPR_SPRITE : VSPR_MODEL;
 
+    // Decide which material to use according to the sprite's angle and position
+    // relative to that of the viewer.
+
+    Material *mat;
+    bool matFlipS, matFlipT;
     if(sprFrame->rotate && !mf)
     {
         // Choose a different rotation according to the relative angle to the viewer.
         angle_t ang = R_ViewPointToAngle(mo->origin[VX], mo->origin[VY]);
-        uint rot = (ang - mo->angle + (unsigned) (ANG45 / 2) * 9) >> 29;
-        mat = sprFrame->mats[rot];
-        matFlipS = (boolean) sprFrame->flip[rot];
+        uint rot    = (ang - mo->angle + (unsigned) (ANG45 / 2) * 9) >> 29;
+
+        mat      = sprFrame->mats[rot];
+        matFlipS = CPP_BOOL(sprFrame->flip[rot]);
     }
     else
     {
         // Use single rotation for all views.
-        mat = sprFrame->mats[0];
-        matFlipS = (boolean) sprFrame->flip[0];
+        mat      = sprFrame->mats[0];
+        matFlipS = CPP_BOOL(sprFrame->flip[0]);
     }
     matFlipT = false;
 
+    // A valid sprite texture in the "Sprites" scheme is required.
     MaterialSnapshot const &ms = mat->prepare(Rend_SpriteMaterialSpec(mo->tclass, mo->tmap));
-    if(!ms.hasTexture(MTU_PRIMARY)) return;
-
-    // An invalid sprite texture?
+    if(!ms.hasTexture(MTU_PRIMARY))
+        return;
     Texture &tex = ms.texture(MTU_PRIMARY).generalCase();
-    if(tex.manifest().schemeName().compareWithoutCase("Sprites")) return;
+    if(tex.manifest().schemeName().compareWithoutCase("Sprites"))
+        return;
+
+    viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
+    float thangle = 0;
 
     // Align to the view plane?
-    align = (mo->ddFlags & DDMF_VIEWALIGN) || alwaysAlign == 1;
+    bool align = (mo->ddFlags & DDMF_VIEWALIGN) || alwaysAlign == 1;
     if(mf)
     {
+        // View-aligning means scaling down Z with models.
+
         // Transform the origin point.
         coord_t delta[2] = { moPos[VY] - viewData->current.origin[VY],
                              moPos[VX] - viewData->current.origin[VX] };
 
         thangle = BANG2RAD(bamsAtan2(delta[0] * 10, delta[1] * 10)) - PI / 2;
-        // View-aligning means scaling down Z with models.
         align = false;
     }
 
     // Perform visibility checking.
     /// @todo R_VisualRadius() does not consider sprite rotation.
-    coord_t const width = R_VisualRadius(mo) * 2;
+    coord_t const width  = R_VisualRadius(mo) * 2;
     coord_t const offset = (mf? 0 : coord_t(-tex.origin().x) - (width / 2.0f));
     coord_t v1[2], v2[2];
 
     // Project a line segment relative to the view in 2D, then check if not
     // entirely clipped away in the 360 degree angle clipper.
-    R_ProjectViewRelativeLine2D(moPos, mf || (align || alwaysAlign == 3), width, offset, v1, v2);
+    R_ProjectViewRelativeLine2D(moPos, mf || (align || alwaysAlign == 3),
+                                width, offset, v1, v2);
 
     // Check for visibility.
     if(!C_CheckRangeFromViewRelPoints(v1, v2))
     {
         // Not visible.
-        coord_t delta[2];
-
         // Sprite visibility is absolute.
         if(!mf) return;
 
         // If the model is close to the viewpoint we will need to draw it.
         // Otherwise large models are likely to disappear too early.
-        delta[0] = distance;
-        delta[1] = moPos[VZ] + (mo->height / 2) - viewData->current.origin[VZ];
-        if(M_ApproxDistance(delta[0], delta[1]) > MAX_OBJECT_RADIUS) return;
+        coord_t delta[] = { distFromEye, moPos[VZ] + (mo->height / 2) - viewData->current.origin[VZ] };
+        if(M_ApproxDistance(delta[0], delta[1]) > MAX_OBJECT_RADIUS)
+            return;
     }
 
     // Store information in a vissprite.
-    vis = R_NewVisSprite();
-    vis->type = visType;
+    vissprite_t *vis = R_NewVisSprite();
+    vis->type       = mf? VSPR_MODEL : VSPR_SPRITE;
     vis->origin[VX] = moPos[VX];
     vis->origin[VY] = moPos[VY];
     vis->origin[VZ] = moPos[VZ];
-    vis->distance = distance;
+    vis->distance   = distFromEye;
 
     /**
      * The mobj's Z coordinate must match the actual visible floor/ceiling
@@ -1141,25 +1124,28 @@ void R_ProjectSprite(mobj_t *mo)
      *
      * @todo fixme: Should use the visual planes of touched sector clusters.
      */
-    validCount++;
-    params.vis = vis;
-    params.mo = mo;
+    vismobjzparams_t params;
+    params.vis         = vis;
+    params.mo          = mo;
     params.floorAdjust = floorAdjust;
+
+    validCount++;
     P_MobjSectorsIterator(mo, RIT_VisMobjZ, &params);
 
-    gzt = vis->origin[VZ] + -tex.origin().y;
+    coord_t gzt = vis->origin[VZ] + -tex.origin().y;
 
-    viewAlign  = (align || alwaysAlign == 3)? true : false;
-    fullBright = ((mo->state->flags & STF_FULLBRIGHT) || levelFullBright)? true : false;
+    bool const viewAlign  = (align || alwaysAlign == 3);
+    bool const fullBright = ((mo->state->flags & STF_FULLBRIGHT) != 0 || levelFullBright);
 
     // Foot clipping.
-    floorClip = mo->floorClip;
+    coord_t floorClip = mo->floorClip;
     if(mo->ddFlags & DDMF_BOB)
     {
         // Bobbing is applied to the floorclip.
         floorClip += R_GetBobOffset(mo);
     }
 
+    float yaw = 0, pitch = 0;
     if(mf)
     {
         // Determine the rotation angles (in degrees).
@@ -1189,9 +1175,7 @@ void R_ProjectSprite(mobj_t *mo)
 
         if(mf->testSubFlag(0, MFF_ALIGN_PITCH))
         {
-            coord_t delta[2];
-            delta[0] = (vis->origin[VZ] + gzt) / 2 - viewData->current.origin[VZ];
-            delta[1] = distance;
+            coord_t delta[] = { (vis->origin[VZ] + gzt) / 2 - viewData->current.origin[VZ], distFromEye };
             pitch = -BANG2DEG(bamsAtan2(delta[0] * 10, delta[1] * 10));
         }
         else if(mf->testSubFlag(0, MFF_MOVEMENT_PITCH))
@@ -1205,7 +1189,7 @@ void R_ProjectSprite(mobj_t *mo)
     }
 
     // Determine possible short-range visual offset.
-    V3d_Set(visOff, 0, 0, 0);
+    vec3d_t visOff; V3d_Set(visOff, 0, 0, 0);
 
     if((mf && useSRVO > 0) || (!mf && useSRVO > 1))
     {
@@ -1219,10 +1203,8 @@ void R_ProjectSprite(mobj_t *mo)
            !INRANGE_OF(mo->mom[MY], 0, NOMOMENTUM_THRESHOLD) ||
            !INRANGE_OF(mo->mom[MZ], 0, NOMOMENTUM_THRESHOLD))
         {
-            vec3d_t tmp;
-
             // Use the object's speed to calculate a short-range offset.
-            V3d_Set(tmp, mo->mom[MX], mo->mom[MY], mo->mom[MZ]);
+            vec3d_t tmp; V3d_Set(tmp, mo->mom[MX], mo->mom[MY], mo->mom[MZ]);
             V3d_Scale(tmp, frameTimePos);
 
             V3d_Sum(visOff, visOff, tmp);
@@ -1231,12 +1213,12 @@ void R_ProjectSprite(mobj_t *mo)
 
     if(!mf && mat)
     {
-        const boolean brightShadow = !!(mo->ddFlags & DDMF_BRIGHTSHADOW);
-        const boolean fitTop       = !!(mo->ddFlags & DDMF_FITTOP);
-        const boolean fitBottom    = !(mo->ddFlags & DDMF_NOFITBOTTOM);
-        blendmode_t blendMode;
+        bool const brightShadow = (mo->ddFlags & DDMF_BRIGHTSHADOW) != 0;
+        bool const fitTop       = (mo->ddFlags & DDMF_FITTOP)       != 0;
+        bool const fitBottom    = (mo->ddFlags & DDMF_NOFITBOTTOM)  == 0;
 
         // Additive blending?
+        blendmode_t blendMode;
         if(brightShadow)
         {
             blendMode = BM_ADD;
@@ -1253,30 +1235,32 @@ void R_ProjectSprite(mobj_t *mo)
 
         // We must find the correct positioning using the sector floor
         // and ceiling heights as an aid.
-        if(ms.height() < secCeil - secFloor)
+        if(ms.height() < ceiling.visHeight() - floor.visHeight())
         {
             // Sprite fits in, adjustment possible?
             // Check top.
-            if(fitTop && gzt > secCeil)
-                gzt = secCeil;
+            if(fitTop && gzt > ceiling.visHeight())
+                gzt = ceiling.visHeight();
             // Check bottom.
-            if(floorAdjust && fitBottom && gzt - ms.height() < secFloor)
-                gzt = secFloor + ms.height();
+            if(floorAdjust && fitBottom && gzt - ms.height() < floor.visHeight())
+                gzt = floor.visHeight() + ms.height();
         }
         // Adjust by the floor clip.
         gzt -= floorClip;
 
+        float ambientColor[3];
+        uint vLightListIdx = 0;
         getLightingParams(vis->origin[VX], vis->origin[VY],
                           gzt - ms.height() / 2.0f,
                           mo->bspLeaf, vis->distance, fullBright,
                           ambientColor, &vLightListIdx);
 
-        setupSpriteParamsForVisSprite(&vis->data.sprite,
+        setupSpriteParamsForVisSprite(vis->data.sprite,
                                       vis->origin[VX], vis->origin[VY],
                                       gzt - ms.height() / 2.0f,
                                       vis->distance,
                                       visOff[VX], visOff[VY], visOff[VZ],
-                                      secFloor, secCeil,
+                                      floor.visHeight(), ceiling.visHeight(),
                                       floorClip, gzt, *mat, matFlipS, matFlipT, blendMode,
                                       ambientColor[CR], ambientColor[CG], ambientColor[CB], alpha,
                                       vLightListIdx,
@@ -1286,11 +1270,13 @@ void R_ProjectSprite(mobj_t *mo)
     }
     else
     {
+        float ambientColor[3];
+        uint vLightListIdx = 0;
         getLightingParams(vis->origin[VX], vis->origin[VY], vis->origin[VZ],
                           mo->bspLeaf, vis->distance, fullBright,
                           ambientColor, &vLightListIdx);
 
-        setupModelParamsForVisSprite(&vis->data.model,
+        setupModelParamsForVisSprite(vis->data.model,
                                      vis->origin[VX], vis->origin[VY], vis->origin[VZ], vis->distance,
                                      visOff[VX], visOff[VY], visOff[VZ] - floorClip, gzt, yaw, 0, pitch, 0,
                                      mf, nextmf, interp,
@@ -1313,33 +1299,25 @@ void R_ProjectSprite(mobj_t *mo)
         Material *mat;
         if(sprFrame->rotate)
         {
-            mat = sprFrame->mats[(R_ViewPointToAngle(moPos[VX], moPos[VY]) - mo->angle + (unsigned) (ANG45 / 2) * 9) >> 29];
+            int spriteAngle = (R_ViewPointToAngle(moPos[VX], moPos[VY]) - mo->angle + (unsigned) (ANG45 / 2) * 9) >> 29;
+            mat = sprFrame->mats[spriteAngle];
         }
         else
         {
             mat = sprFrame->mats[0];
         }
-
-#if _DEBUG
-        if(!mat) Con_Error("R_ProjectSprite: Sprite '%i' frame '%i' missing material.", (int) mo->sprite, mo->frame);
-#endif
+        DENG_ASSERT(mat != 0);
 
         // Ensure we have up-to-date information about the material.
         MaterialSnapshot const &ms = mat->prepare(Rend_SpriteMaterialSpec());
-
         pointlight_analysis_t const *pl = (pointlight_analysis_t const *) ms.texture(MTU_PRIMARY).generalCase().analysisDataPointer(Texture::BrightPointAnalysis);
-        if(!pl)
-        {
-            QByteArray uri = ms.texture(MTU_PRIMARY).generalCase().manifest().composeUri().asText().toUtf8();
-            Con_Error("R_ProjectSprite: Texture \"%s\" has no BrightPointAnalysis", uri.constData());
-        }
+        DENG_ASSERT(pl != 0);
 
         lumobj_t const *lum = LO_GetLuminous(mo->lumIdx);
-        ded_light_t const *def = (mo->state? stateLights[mo->state - states] : 0);
 
         vis = R_NewVisSprite();
-        vis->type = VSPR_FLARE;
-        vis->distance = distance;
+        vis->type     = VSPR_FLARE;
+        vis->distance = distFromEye;
 
         // Determine the exact center of the flare.
         V3d_Sum(vis->origin, moPos, visOff);
@@ -1350,6 +1328,7 @@ void R_ProjectSprite(mobj_t *mo)
         float xOffset = ms.width() * pl->originX - -tex.origin().x;
 
         // Does the mobj have an active light definition?
+        ded_light_t const *def = (mo->state? stateLights[mo->state - states] : 0);
         if(def)
         {
             if(def->size)
@@ -1363,7 +1342,8 @@ void R_ProjectSprite(mobj_t *mo)
         }
 
         vis->data.flare.size = flareSize * 60 * (50 + haloSize) / 100.0f;
-        if(vis->data.flare.size < 8) vis->data.flare.size = 8;
+        if(vis->data.flare.size < 8)
+            vis->data.flare.size = 8;
 
         // Color is taken from the associated lumobj.
         V3f_Copy(vis->data.flare.color, LUM_OMNI(lum)->color);
@@ -1371,8 +1351,8 @@ void R_ProjectSprite(mobj_t *mo)
         vis->data.flare.factor = mo->haloFactors[viewPlayer - ddPlayers];
         vis->data.flare.xOff = xOffset;
         vis->data.flare.mul = 1;
-
         vis->data.flare.tex = 0;
+
         if(def && def->flare)
         {
             de::Uri const &flaremapResourceUri = *reinterpret_cast<de::Uri const *>(def->flare);
