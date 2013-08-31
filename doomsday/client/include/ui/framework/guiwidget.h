@@ -21,6 +21,7 @@
 
 #include <de/Widget>
 #include <de/RuleRectangle>
+#include <de/MouseEvent>
 #include <de/GLBuffer>
 #include <QObject>
 
@@ -234,7 +235,8 @@ public:
         MouseClickAborted
     };
 
-    MouseClickStatus handleMouseClick(de::Event const &event);
+    MouseClickStatus handleMouseClick(de::Event const &event,
+                                      de::MouseEvent::Button button = de::MouseEvent::Left);
 
     /**
      * Requests the widget to refresh its geometry, if it has any static

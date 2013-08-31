@@ -510,14 +510,14 @@ RuleRectangle &GuiWidget::hitRule()
     return d->hitRule;
 }
 
-GuiWidget::MouseClickStatus GuiWidget::handleMouseClick(Event const &event)
+GuiWidget::MouseClickStatus GuiWidget::handleMouseClick(Event const &event, MouseEvent::Button button)
 {
     if(isDisabled()) return MouseClickUnrelated;
 
     if(event.type() == Event::MouseButton)
     {
         MouseEvent const &mouse = event.as<MouseEvent>();
-        if(mouse.button() != MouseEvent::Left)
+        if(mouse.button() != button)
         {
             return MouseClickUnrelated;
         }
