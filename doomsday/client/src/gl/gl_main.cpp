@@ -36,6 +36,7 @@
 #include "de_defs.h"
 
 #include "world/map.h"
+#include "world/p_object.h"
 #include "gl/texturecontent.h"
 #include "ui/windowsystem.h"
 #include "resource/colorpalettes.h"
