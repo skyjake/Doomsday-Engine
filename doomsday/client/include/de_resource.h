@@ -18,8 +18,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG_RESOURCE_SUBSYSTEM_H
-#define LIBDENG_RESOURCE_SUBSYSTEM_H
+#ifndef DENG_RESOURCE_SUBSYSTEM_H
+#define DENG_RESOURCE_SUBSYSTEM_H
 
 #include "resourceclass.h"
 
@@ -32,6 +32,7 @@
 #include "resource/models.h"
 #include "resource/compositetexture.h"
 #include "resource/rawtexture.h"
+#include "resource/sprites.h"
 #include "Textures"
 
 #ifdef __CLIENT__
@@ -49,4 +50,4 @@
 
 #include "api_resource.h"
 
-#endif /* LIBDENG_RESOURCE_SUBSYSTEM_H */
+#endif // DENG_RESOURCE_SUBSYSTEM_H

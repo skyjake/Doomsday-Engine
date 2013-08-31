@@ -310,6 +310,7 @@ DENG_HEADERS += \
     include/resource/pcx.h \
     include/resource/r_data.h \
     include/resource/rawtexture.h \
+    include/resource/sprites.h \
     include/resource/texture.h \
     include/resource/texturemanifest.h \
     include/resource/textures.h \
@@ -634,6 +635,7 @@ SOURCES += \
     src/resource/pcx.cpp \
     src/resource/r_data.cpp \
     src/resource/rawtexture.cpp \
+    src/resource/sprites.cpp \
     src/resource/texture.cpp \
     src/resource/texturemanifest.cpp \
     src/resource/texturescheme.cpp \

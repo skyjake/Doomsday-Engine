@@ -23,34 +23,7 @@
 
 #include "Materials"
 
-/**
- * Sprites are patches with a special naming convention so they can be
- * recognized by R_InitSprites.  The sprite and frame specified by a
- * mobj is range checked at run time.
- *
- * A sprite is a patch_t that is assumed to represent a three dimensional
- * object and may have multiple rotations pre drawn.  Horizontal flipping
- * is used to save space. Some sprites will only have one picture used
- * for all views.
- */
-
-#define SPRITEFRAME_MAX_ANGLES 8
-
-typedef struct {
-    byte rotate; // 0= no rotations, 1= only front, 2= more...
-    Material *mats[8]; // Material to use for view angles 0-7
-    byte flip[8]; // Flip (1 = flip) to use for view angles 0-7
-} spriteframe_t;
-
-typedef struct {
-    char name[5];
-    int numFrames;
-    spriteframe_t *spriteFrames;
-} spritedef_t;
-
 DENG_EXTERN_C int levelFullBright;
-DENG_EXTERN_C spritedef_t *sprites;
-DENG_EXTERN_C int numSprites;
 DENG_EXTERN_C float pspOffset[2], pspLightLevelMultiplier;
 DENG_EXTERN_C int alwaysAlign;
 DENG_EXTERN_C float weaponOffsetScale, weaponFOVShift;
@@ -64,8 +37,6 @@ DENG_EXTERN_C int psp3d;
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-Material *R_MaterialForSprite(int sprite, int frame);
 
 /// @return  Radius of the mobj as it would visually appear to be.
 coord_t R_VisualRadius(struct mobj_s *mo);
@@ -101,10 +72,6 @@ void R_ProjectSprite(struct mobj_s *mobj);
  * If 3D models are found for psprites, here we will create vissprites for them.
  */
 void R_ProjectPlayerSprites(void);
-
-void R_InitSprites(void);
-
-void R_ShutdownSprites(void);
 
 #ifdef __cplusplus
 } // extern "C"

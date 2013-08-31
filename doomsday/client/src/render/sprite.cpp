@@ -36,6 +36,8 @@
 #include "world/thinkers.h"
 #include "BspLeaf"
 
+#include "resource/sprites.h"
+
 #include "render/vissprite.h"
 
 #include "render/sprite.h"
@@ -283,26 +285,24 @@ void Spr_VertexColors(int count, dgl_color_t *out, dgl_vertex_t *normal,
 
 static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
 {
-    ddpsprite_t *psp = spr->psp;
-    int sprite = psp->statePtr->sprite;
-    int frame = psp->statePtr->frame;
-    float offScaleY = weaponOffsetScaleY / 1000.0f;
-    spritedef_t const *sprDef;
-    spriteframe_t const *sprFrame;
-    boolean flip;
+    ddpsprite_t *psp      = spr->psp;
+    int const sprite      = psp->statePtr->sprite;
+    int const frame       = psp->statePtr->frame;
+    float const offScaleY = weaponOffsetScaleY / 1000.0f;
 
 #ifdef RANGECHECK
     if((unsigned) sprite >= (unsigned) numSprites)
         Con_Error("setupPSpriteParams: Invalid sprite number %i.\n", sprite);
 #endif
-    sprDef = &sprites[sprite];
+
+    spritedef_t const *sprDef = &sprites[sprite];
 #ifdef RANGECHECK
     if(frame >= sprDef->numFrames)
         Con_Error("setupPSpriteParams: Invalid frame number %i for sprite %i", frame, sprite);
 #endif
 
-    sprFrame = &sprDef->spriteFrames[frame];
-    flip = sprFrame->flip[0];
+    spriteframe_t const *sprFrame = &sprDef->spriteFrames[frame];
+    boolean flip = sprFrame->flip[0];
 
     MaterialVariantSpec const &spec =
         App_Materials().variantSpec(PSpriteContext, 0, 1, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
