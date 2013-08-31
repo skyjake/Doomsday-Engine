@@ -23,7 +23,9 @@
 #ifndef DENG_RESOURCE_SPRITES_H
 #define DENG_RESOURCE_SPRITES_H
 
-#include "Materials"
+#include <de/libdeng1.h>
+
+class Material;
 
 /**
  * Sprites are patches with a special naming convention so they can be

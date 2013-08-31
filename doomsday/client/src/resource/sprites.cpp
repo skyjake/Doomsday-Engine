@@ -383,9 +383,6 @@ spritedef_t *R_SpriteDef(int sprite)
     return 0; // Not found.
 }
 
-/**
- * Lookup a sprite frame by unique @a frame index.
- */
 spriteframe_t *SpriteDef_Frame(spritedef_t const &sprDef, int frame)
 {
     if(frame >= 0 && frame < sprDef.numFrames)
@@ -395,21 +392,6 @@ spriteframe_t *SpriteDef_Frame(spritedef_t const &sprDef, int frame)
     return 0; // Invalid frame.
 }
 
-/**
- * Select an appropriate material for a mobj's angle and relative position with
- * that of the viewer (the 'eye').
- *
- * @param sprFrame    spriteframe_t instance.
- * @param mobjAngle   Angle of the mobj in the map coordinate space.
- * @param angleToEye  Relative angle of the mobj from the view position.
- * @param noRotation  @c true= Ignore rotations and always use the "front".
- *
- * Return values:
- * @param flipX       @c true= chosen material should be flipped on the X axis.
- * @param flipY       @c true= chosen material should be flipped on the Y axis.
- *
- * @return  The chosen material otherwise @c 0.
- */
 Material *SpriteFrame_Material(spriteframe_t &sprFrame, angle_t mobjAngle,
     angle_t angleToEye, bool noRotation, bool &flipX, bool &flipY)
 {

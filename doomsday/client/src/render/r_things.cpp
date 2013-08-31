@@ -55,46 +55,45 @@
 
 using namespace de;
 
-float weaponOffsetScale = 0.3183f; // 1/Pi
-int weaponOffsetScaleY = 1000;
-float weaponFOVShift = 45;
-byte weaponScaleMode = SCALEMODE_SMART_STRETCH;
-float modelSpinSpeed = 1;
-int alwaysAlign;
-int noSpriteZWrite = false;
-float pspOffset[2];
-float pspLightLevelMultiplier = 1;
-// useSRVO: 1 = models only, 2 = sprites + models
-int useSRVO = 2, useSRVOAngle = true;
-
 int psp3d;
-
-int maxModelDistance = 1500;
+float pspLightLevelMultiplier = 1;
+float pspOffset[2];
 int levelFullBright;
+int weaponOffsetScaleY = 1000;
+
+/*
+ * Console variables:
+ */
+int useSRVO             = 2; ///< @c 1= models only, @c 2= sprites + models
+int useSRVOAngle        = 1;
+
+int alwaysAlign;
+int noSpriteZWrite      = false;
+
+float modelSpinSpeed    = 1;
+int maxModelDistance    = 1500;
+
+float weaponFOVShift    = 45;
+float weaponOffsetScale = 0.3183f; // 1/Pi
+byte weaponScaleMode    = SCALEMODE_SMART_STRETCH;
 
 #ifdef __CLIENT__
 
 void R_ProjectPlayerSprites()
 {
-    int i;
-    float inter;
-    modeldef_t *mf, *nextmf;
-    ddpsprite_t *psp;
-    boolean isFullBright = (levelFullBright != 0);
-    boolean isModel;
-    ddplayer_t *ddpl = &viewPlayer->shared;
-    viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
-
     psp3d = false;
 
     // Cameramen have no psprites.
+    ddplayer_t *ddpl = &viewPlayer->shared;
     if((ddpl->flags & DDPF_CAMERA) || (ddpl->flags & DDPF_CHASECAM))
         return;
 
     // Determine if we should be drawing all the psprites full bright?
+    boolean isFullBright = (levelFullBright != 0);
     if(!isFullBright)
     {
-        for(i = 0, psp = ddpl->pSprites; i < DDMAXPSPRITES; ++i, psp++)
+        ddpsprite_t *psp = ddpl->pSprites;
+        for(int i = 0; i < DDMAXPSPRITES; ++i, psp++)
         {
             if(!psp->statePtr) continue;
 
@@ -104,9 +103,12 @@ void R_ProjectPlayerSprites()
         }
     }
 
-    for(i = 0, psp = ddpl->pSprites; i < DDMAXPSPRITES; ++i, psp++)
+    viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
+
+    ddpsprite_t *psp = ddpl->pSprites;
+    for(int i = 0; i < DDMAXPSPRITES; ++i, psp++)
     {
-        vispsprite_t* spr = &visPSprites[i];
+        vispsprite_t *spr = &visPSprites[i];
 
         spr->type = VPSPR_SPRITE;
         spr->psp = psp;
@@ -114,7 +116,9 @@ void R_ProjectPlayerSprites()
         if(!psp->statePtr) continue;
 
         // First, determine whether this is a model or a sprite.
-        isModel = false;
+        bool isModel = false;
+        modeldef_t *mf = 0, *nextmf = 0;
+        float inter = 0;
         if(useModels)
         {
             // Is there a model for this frame?
@@ -186,11 +190,12 @@ void R_ProjectPlayerSprites()
     }
 }
 
-typedef struct {
+struct vismobjzparams_t
+{
     vissprite_t *vis;
     mobj_t const *mo;
-    boolean floorAdjust;
-} vismobjzparams_t;
+    bool floorAdjust;
+};
 
 /**
  * Determine the correct Z coordinate for the mobj. The visible Z coordinate
@@ -201,8 +206,8 @@ typedef struct {
  */
 int RIT_VisMobjZ(Sector *sector, void *parameters)
 {
-    DENG_ASSERT(sector);
-    DENG_ASSERT(parameters);
+    DENG_ASSERT(sector != 0);
+    DENG_ASSERT(parameters != 0);
     vismobjzparams_t *p = (vismobjzparams_t *) parameters;
 
     if(p->floorAdjust && p->mo->origin[VZ] == sector->floor().height())
