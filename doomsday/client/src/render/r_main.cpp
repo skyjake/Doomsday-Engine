@@ -41,6 +41,8 @@
 #include "world/p_objlink.h"
 #include "world/thinkers.h"
 #include "render/vignette.h"
+#include "render/vissprite.h"
+
 #include "api_render.h"
 
 #include "render/r_main.h"
@@ -879,10 +881,10 @@ void R_SetupFrame(player_t *player)
     extraLightDelta = extraLight / 16.0f;
 
     if(!freezeRLs)
-#endif
     {
         R_ClearVisSprites();
     }
+#endif
 
 #undef MINEXTRALIGHTFRAMES
 }

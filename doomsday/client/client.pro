@@ -283,6 +283,7 @@ DENG_HEADERS += \
     include/render/sprite.h \
     include/render/trianglestripbuilder.h \
     include/render/vignette.h \
+    include/render/vissprite.h \
     include/render/vlight.h \
     include/render/walledge.h \
     include/render/wallspec.h \
@@ -605,6 +606,7 @@ SOURCES += \
     src/render/sprite.cpp \
     src/render/trianglestripbuilder.cpp \
     src/render/vignette.cpp \
+    src/render/vissprite.cpp \
     src/render/vlight.cpp \
     src/render/walledge.cpp \
     src/render/wallspec.cpp \

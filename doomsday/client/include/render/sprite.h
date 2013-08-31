@@ -75,8 +75,6 @@ void Rend_Draw2DPlayerSprites(void);
 
 void Rend_Draw3DPlayerSprites(void);
 
-void Rend_RenderSprite(rendspriteparams_t const* params);
-
 #ifdef __cplusplus
 } // extern "C"
 #endif

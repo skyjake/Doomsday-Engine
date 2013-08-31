@@ -36,9 +36,15 @@
 #include "world/thinkers.h"
 #include "BspLeaf"
 
+#include "render/vissprite.h"
+
+#include "render/sprite.h"
+
 using namespace de;
 
 #define DOTPROD(a, b)       (a[0]*b[0] + a[1]*b[1] + a[2]*b[2])
+
+void Rend_RenderSprite(rendspriteparams_t const *params);
 
 static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr);
 static void setupModelParamsForVisPSprite(rendmodelparams_t *params, vispsprite_t *spr);
@@ -47,12 +53,12 @@ int spriteLight = 4;
 float maxSpriteAngle = 60;
 
 // If true - use the "no translucency" blending mode for sprites/masked walls
-byte noSpriteTrans = false;
+byte noSpriteTrans;
 int useSpriteAlpha = 1;
 int useSpriteBlend = 1;
 
-byte devNoSprites = false;
-byte devThinkerIds = false;
+byte devNoSprites;
+byte devThinkerIds;
 
 void Rend_SpriteRegister()
 {

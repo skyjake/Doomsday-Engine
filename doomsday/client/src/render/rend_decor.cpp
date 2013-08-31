@@ -36,6 +36,7 @@
 #include "world/map.h"
 #include "BspLeaf"
 
+#include "render/vissprite.h"
 #include "WallEdge"
 
 #include "render/rend_decor.h"

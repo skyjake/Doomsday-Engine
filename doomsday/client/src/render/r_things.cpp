@@ -1,9 +1,9 @@
 /** @file r_things.cpp Map Object Management.
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
- * @authors Copyright &copy; 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
- * @authors Copyright &copy; 1993-1996 by id Software, Inc.
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
+ * @authors Copyright © 1993-1996 by id Software, Inc.
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -44,6 +44,8 @@
 #endif
 #include <de/memoryblockset.h>
 
+#include "render/vissprite.h"
+
 #include "render/r_things.h"
 
 using namespace de;
@@ -70,28 +72,20 @@ int weaponOffsetScaleY = 1000;
 float weaponFOVShift = 45;
 byte weaponScaleMode = SCALEMODE_SMART_STRETCH;
 float modelSpinSpeed = 1;
-int alwaysAlign = 0;
+int alwaysAlign;
 int noSpriteZWrite = false;
-float pspOffset[2] = {0, 0};
+float pspOffset[2];
 float pspLightLevelMultiplier = 1;
 // useSRVO: 1 = models only, 2 = sprites + models
 int useSRVO = 2, useSRVOAngle = true;
 
 int psp3d;
 
-// Variables used to look up and range check sprites patches.
-spritedef_t* sprites = 0;
-int numSprites = 0;
-
-vissprite_t visSprites[MAXVISSPRITES], *visSpriteP;
-vispsprite_t visPSprites[DDMAXPSPRITES];
+spritedef_t *sprites;
+int numSprites;
 
 int maxModelDistance = 1500;
-int levelFullBright = false;
-
-vissprite_t visSprSortedHead;
-
-static vissprite_t overflowVisSprite;
+int levelFullBright;
 
 // Tempory storage, used when reading sprite definitions.
 static int numSpriteRecords;
@@ -675,30 +669,6 @@ float R_Alpha(mobj_t *mo)
     return alpha;
 }
 
-void R_ClearVisSprites()
-{
-    visSpriteP = visSprites;
-}
-
-vissprite_t *R_NewVisSprite()
-{
-    vissprite_t *spr;
-
-    if(visSpriteP == &visSprites[MAXVISSPRITES])
-    {
-        spr = &overflowVisSprite;
-    }
-    else
-    {
-        visSpriteP++;
-        spr = visSpriteP - 1;
-    }
-
-    memset(spr, 0, sizeof(*spr));
-
-    return spr;
-}
-
 #ifdef __CLIENT__
 
 void R_ProjectPlayerSprites()
@@ -1108,36 +1078,24 @@ void R_ProjectSprite(mobj_t *mo)
     if(tex.manifest().schemeName().compareWithoutCase("Sprites"))
         return;
 
-    viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
-    float thangle = 0;
-
-    // Align to the view plane? (Means scaling down Z with models)
-    bool align = (mo->ddFlags & DDMF_VIEWALIGN) || alwaysAlign == 1;
-    if(mf)
-    {
-        // Transform the origin point.
-        Vector2d delta(moPos.y - viewData->current.origin[VY],
-                       moPos.x - viewData->current.origin[VX]);
-
-        thangle = BANG2RAD(bamsAtan2(delta.x * 10, delta.y * 10)) - PI / 2;
-        align = false;
-    }
-    bool const viewAlign  = (align || alwaysAlign == 3);
     bool const fullbright = ((mo->state->flags & STF_FULLBRIGHT) != 0 || levelFullBright);
+    // Align to the view plane? (Means scaling down Z with models)
+    bool const viewAlign  = (!mf && ((mo->ddFlags & DDMF_VIEWALIGN) || alwaysAlign == 1))
+                            || alwaysAlign == 3;
 
-    /*
-     * Perform visibility checking.
-     */
     Plane &floor           = mo->bspLeaf->visFloor();
     Plane &ceiling         = mo->bspLeaf->visCeiling();
     bool const floorAdjust = (fabs(floor.visHeight() - mo->bspLeaf->floor().height()) < 8);
 
-    // Project a line segment relative to the view in 2D, then check if not
-    // entirely clipped away in the 360 degree angle clipper.
-    coord_t const width = R_VisualRadius(mo) * 2; /// @todo ignorant of rotation...
+    /*
+     * Perform visibility checking by projecting a view-aligned line segment
+     * relative to the viewer and determining if the whole of the segment has
+     * been clipped away according to the 360 degree angle clipper.
+     */
+    coord_t const visWidth = R_VisualRadius(mo) * 2; /// @todo ignorant of rotation...
     Vector2d v1, v2;
-    R_ProjectViewRelativeLine2D(moPos, mf || (align || alwaysAlign == 3), width,
-                                (mf? 0 : coord_t(-tex.origin().x) - (width / 2.0f)),
+    R_ProjectViewRelativeLine2D(moPos, mf || viewAlign, visWidth,
+                                (mf? 0 : coord_t(-tex.origin().x) - (visWidth / 2.0f)),
                                 v1, v2);
 
     // Not visible?
@@ -1148,6 +1106,7 @@ void R_ProjectSprite(mobj_t *mo)
 
         // If the model is close to the viewpoint we should still to draw it,
         // otherwise large models are likely to disappear too early.
+        viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
         Vector2d delta(distFromEye, moPos.z + (mo->height / 2) - viewData->current.origin[VZ]);
         if(M_ApproxDistance(delta.x, delta.y) > MAX_OBJECT_RADIUS)
             return;
@@ -1191,7 +1150,12 @@ void R_ProjectSprite(mobj_t *mo)
         // Determine the rotation angles (in degrees).
         if(mf->testSubFlag(0, MFF_ALIGN_YAW))
         {
-            yaw = 90 - thangle / PI * 180;
+            // Transform the origin point.
+            viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
+            Vector2d delta(moPos.y - viewData->current.origin[VY],
+                           moPos.x - viewData->current.origin[VX]);
+
+            yaw = 90 - (BANG2RAD(bamsAtan2(delta.x * 10, delta.y * 10)) - PI / 2) / PI * 180;
         }
         else if(mf->testSubFlag(0, MFF_SPIN))
         {
@@ -1203,19 +1167,20 @@ void R_ProjectSprite(mobj_t *mo)
         }
         else
         {
-            yaw = Mobj_AngleSmoothed(mo) / (float) ANGLE_MAX * -360;
+            yaw = Mobj_AngleSmoothed(mo) / float( ANGLE_MAX ) * -360;
         }
 
         // How about a unique offset?
         if(mf->testSubFlag(0, MFF_IDANGLE))
         {
-            // Add an arbitrary offset.
-            yaw += MOBJ_TO_ID(mo) % 360;
+            yaw += MOBJ_TO_ID(mo) % 360; // arbitrary
         }
 
         if(mf->testSubFlag(0, MFF_ALIGN_PITCH))
         {
+            viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
             Vector2d delta((vis->origin[VZ] + gzt) / 2 - viewData->current.origin[VZ], distFromEye);
+
             pitch = -BANG2DEG(bamsAtan2(delta.x * 10, delta.y * 10));
         }
         else if(mf->testSubFlag(0, MFF_MOVEMENT_PITCH))
@@ -1246,7 +1211,7 @@ void R_ProjectSprite(mobj_t *mo)
         }
     }
 
-    if(!mf && mat)
+    if(!mf)
     {
         bool const brightShadow = (mo->ddFlags & DDMF_BRIGHTSHADOW) != 0;
         bool const fitTop       = (mo->ddFlags & DDMF_FITTOP)       != 0;
@@ -1396,63 +1361,6 @@ void R_ProjectSprite(mobj_t *mo)
                 vis->data.flare.flags |= RFF_NO_PRIMARY;
             }
         }
-    }
-}
-
-void R_SortVisSprites()
-{
-    int i, count;
-    vissprite_t* ds, *best = 0;
-    vissprite_t unsorted;
-    coord_t bestdist;
-
-    count = visSpriteP - visSprites;
-
-    unsorted.next = unsorted.prev = &unsorted;
-    if(!count) return;
-
-    for(ds = visSprites; ds < visSpriteP; ds++)
-    {
-        ds->next = ds + 1;
-        ds->prev = ds - 1;
-    }
-    visSprites[0].prev = &unsorted;
-    unsorted.next = &visSprites[0];
-    (visSpriteP - 1)->next = &unsorted;
-    unsorted.prev = visSpriteP - 1;
-
-    // Pull the vissprites out by distance.
-    visSprSortedHead.next = visSprSortedHead.prev = &visSprSortedHead;
-
-    /**
-     * \todo
-     * Oprofile results from nuts.wad show over 25% of total execution time
-     * was spent sorting vissprites (nuts.wad map01 is a perfect pathological
-     * test case).
-     *
-     * Rather than try to speed up the sort, it would make more sense to
-     * actually construct the vissprites in z order if it can be done in
-     * linear time.
-     */
-
-    for(i = 0; i < count; ++i)
-    {
-        bestdist = 0;
-        for(ds = unsorted.next; ds != &unsorted; ds = ds->next)
-        {
-            if(ds->distance >= bestdist)
-            {
-                bestdist = ds->distance;
-                best = ds;
-            }
-        }
-
-        best->next->prev = best->prev;
-        best->prev->next = best->next;
-        best->next = &visSprSortedHead;
-        best->prev = visSprSortedHead.prev;
-        visSprSortedHead.prev->next = best;
-        visSprSortedHead.prev = best;
     }
 }
 
