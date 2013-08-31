@@ -152,7 +152,6 @@ DENG_CONVENIENCE_HEADERS += \
     include/SequentialLayout \
     include/SignalAction \
     include/SkyFixEdge \
-    include/SubmenuAction \
     include/Surface \
     include/TextDrawable \
     include/Texture \
@@ -165,6 +164,7 @@ DENG_CONVENIENCE_HEADERS += \
     include/ui/Item \
     include/ui/ListData \
     include/ui/Margins \
+    include/ui/SubmenuItem \
     include/ui/VariableToggleItem \
     include/Vertex \
     include/WallEdge \
