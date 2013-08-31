@@ -25,26 +25,43 @@
 #include <cctype>
 #include <cmath>
 
-#include "de_base.h"
-#include "de_console.h"
-#include "de_network.h"
-#include "de_play.h"
-#include "de_render.h"
-#include "de_graphics.h"
-#include "de_misc.h"
-#include "de_resource.h"
+#include <de/memory.h>
+#include <de/memoryblockset.h>
 
-#include "gl/sys_opengl.h" // TODO: get rid of this
+#include <de/Error>
+
+#include "de_platform.h"
+
+#include "dd_main.h"
+#include "sys_system.h" // novideo
+#ifdef __CLIENT__
+#  include "network/net_main.h" // clients[]
+
+#  include "r_util.h"
+#endif
+
 #include "world/map.h"
+#include "world/p_object.h"
+#include "world/p_players.h"
 #include "BspLeaf"
 
 #include "def_main.h"
-#ifdef __CLIENT__
-#  include "MaterialSnapshot"
-#endif
-#include <de/memoryblockset.h>
 
-#include "render/vissprite.h"
+#ifdef __CLIENT__
+#  include "gl/gl_tex.h"
+#  include "gl/gl_texmanager.h"
+
+#  include "MaterialSnapshot"
+
+#  include "render/lumobj.h"
+#  include "render/r_main.h"
+#  include "render/rend_clip.h"
+#  include "render/rend_halo.h"
+#  include "render/rend_main.h"
+#  include "render/sprite.h"
+#  include "render/vissprite.h"
+#  include "render/vlight.h"
+#endif
 
 #include "render/r_things.h"
 
@@ -263,37 +280,32 @@ static void buildSprites()
  */
 static void initSpriteDefs(spriterecord_t *const *sprRecords, int num)
 {
+    spriteframe_t sprTemp[MAX_FRAMES];
+
     clearSpriteDefs();
 
     numSprites = num;
     if(numSprites)
     {
-        spriteframe_t sprTemp[MAX_FRAMES];
-        int maxFrame, rotation, n, j;
-
         sprites = (spritedef_t *) M_Malloc(sizeof(*sprites) * numSprites);
-        if(!sprites) Con_Error("initSpriteDefs: Failed on allocation of %lu bytes for SpriteDef list.", (unsigned long) sizeof(*sprites) * numSprites);
 
-        for(n = 0; n < num; ++n)
+        for(int n = 0; n < num; ++n)
         {
             spritedef_t *sprDef = &sprites[n];
-            spriterecord_frame_t const *frame;
-            spriterecord_t const *rec;
 
             if(!sprRecords[n])
             {
                 // A record for a sprite we were unable to locate.
-                sprDef->numFrames = 0;
-                sprDef->spriteFrames = NULL;
+                sprDef->numFrames    = 0;
+                sprDef->spriteFrames = 0;
                 continue;
             }
 
-            rec = sprRecords[n];
+            std::memset(sprTemp, -1, sizeof(sprTemp));
+            int maxFrame = -1;
 
-            memset(sprTemp, -1, sizeof(sprTemp));
-            maxFrame = -1;
-
-            frame = rec->frames;
+            spriterecord_t const *rec = sprRecords[n];
+            spriterecord_frame_t const *frame = rec->frames;
             do
             {
                 installSpriteLump(sprTemp, &maxFrame, frame->mat, frame->frame[0] - 1,
@@ -305,49 +317,43 @@ static void initSpriteDefs(spriterecord_t *const *sprRecords, int num)
                 }
             } while((frame = frame->next));
 
-            /**
+            /*
              * Check the frames that were found for completeness.
              */
             if(-1 == maxFrame)
             {
-                // Should NEVER happen. djs - So why is this here then?
+                // Should NEVER happen.
                 sprDef->numFrames = 0;
             }
 
             ++maxFrame;
-            for(j = 0; j < maxFrame; ++j)
+            for(int j = 0; j < maxFrame; ++j)
             {
-                switch((int) sprTemp[j].rotate)
+                if(int( sprTemp[j].rotate) == -1) // Ahem!
                 {
-                case -1: // No rotations were found for that frame at all.
-                    Con_Error("R_InitSprites: No patches found for %s frame %c.", rec->name, j + 'A');
-                    break;
+                    // No rotations were found for that frame at all.
+                    Error("R_InitSprites", QString("No patches found for %1 frame %2")
+                                               .arg(rec->name).arg(char(j + 'A')));
+                }
 
-                case 0: // Only the first rotation is needed.
-                    break;
-
-                case 1: // Must have all 8 frames.
-                    for(rotation = 0; rotation < 8; ++rotation)
+                if(sprTemp[j].rotate)
+                {
+                    // Must have all 8 frames.
+                    for(int rotation = 0; rotation < 8; ++rotation)
                     {
                         if(!sprTemp[j].mats[rotation])
-                            Con_Error("R_InitSprites: Sprite %s frame %c is missing rotations.", rec->name, j + 'A');
+                            Error("R_InitSprites", QString("Sprite %1 frame %2 is missing rotations")
+                                                       .arg(rec->name).arg(char(j + 'A')));
                     }
-                    break;
-
-                default:
-                    Con_Error("R_InitSpriteDefs: Invalid value, sprTemp[frame].rotate = %i.", (int) sprTemp[j].rotate);
-                    exit(1); // Unreachable.
                 }
             }
 
+            qstrncpy(sprDef->name, rec->name, 5);
+
             // Allocate space for the frames present and copy sprTemp to it.
-            strncpy(sprDef->name, rec->name, 4);
-            sprDef->name[4] = '\0';
             sprDef->numFrames = maxFrame;
             sprDef->spriteFrames = (spriteframe_t*) M_Malloc(sizeof(*sprDef->spriteFrames) * maxFrame);
-            if(!sprDef->spriteFrames) Con_Error("R_InitSpriteDefs: Failed on allocation of %lu bytes for sprite frame list.", (unsigned long) sizeof(*sprDef->spriteFrames) * maxFrame);
-
-            memcpy(sprDef->spriteFrames, sprTemp, sizeof *sprDef->spriteFrames * maxFrame);
+            std::memcpy(sprDef->spriteFrames, sprTemp, sizeof(*sprDef->spriteFrames) * maxFrame);
         }
     }
 }
@@ -614,18 +620,14 @@ float R_ShadowStrength(mobj_t *mo)
             // Ensure we've prepared this.
             MaterialSnapshot const &ms = mat->prepare(Rend_SpriteMaterialSpec());
 
-            averagealpha_analysis_t const *aa = (averagealpha_analysis_t const *) ms.texture(MTU_PRIMARY).generalCase().analysisDataPointer(Texture::AverageAlphaAnalysis);
-            float weightedSpriteAlpha;
-            if(!aa)
-            {
-                QByteArray uri = ms.texture(MTU_PRIMARY).generalCase().manifest().composeUri().asText().toUtf8();
-                Con_Error("R_ShadowStrength: Texture \"%s\" has no AverageAlphaAnalysis", uri.constData());
-            }
+            averagealpha_analysis_t const *aa = (averagealpha_analysis_t const *)
+                ms.texture(MTU_PRIMARY).generalCase().analysisDataPointer(Texture::AverageAlphaAnalysis);
+            DENG_ASSERT(aa != 0);
 
             // We use an average which factors in the coverage ratio
             // of alpha:non-alpha pixels.
             /// @todo Constant weights could stand some tweaking...
-            weightedSpriteAlpha = aa->alpha * (0.4f + (1 - aa->coverage) * 0.6f);
+            float weightedSpriteAlpha = aa->alpha * (0.4f + (1 - aa->coverage) * 0.6f);
 
             // Almost entirely translucent sprite? => no shadow.
             if(weightedSpriteAlpha < minSpriteAlphaLimit) return 0;
@@ -641,7 +643,6 @@ float R_ShadowStrength(mobj_t *mo)
     /// @note This equation is the same as that used for fakeradio.
     return (0.6f - ambientLightLevel * 0.4f) * strength;
 }
-#endif // __CLIENT__
 
 float R_Alpha(mobj_t *mo)
 {
@@ -668,8 +669,6 @@ float R_Alpha(mobj_t *mo)
     }
     return alpha;
 }
-
-#ifdef __CLIENT__
 
 void R_ProjectPlayerSprites()
 {
@@ -783,8 +782,6 @@ void R_ProjectPlayerSprites()
     }
 }
 
-#endif // __CLIENT__
-
 float R_MovementYaw(float const mom[])
 {
     // Multiply by 100 to get some artificial accuracy in bamsAtan2.
@@ -807,8 +804,6 @@ float R_MovementXYZPitch(float momx, float momy, float momz)
     float mom[3] = { momx, momy, momz };
     return R_MovementPitch(mom);
 }
-
-#ifdef __CLIENT__
 
 typedef struct {
     vissprite_t *vis;
@@ -855,28 +850,28 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t &p,
 
     DENG_ASSERT((tClass == 0 && tMap == 0) || spec.primarySpec->data.variant.translated);
 
-    p.center[VX]       = center.x;
-    p.center[VY]       = center.y;
-    p.center[VZ]       = center.z;
-    p.srvo[VX]         = visOffset.x;
-    p.srvo[VY]         = visOffset.y;
-    p.srvo[VZ]         = visOffset.z;
-    p.distance         = distToEye;
-    p.bspLeaf          = bspLeafAtOrigin;
-    p.viewAligned      = viewAligned;
-    p.noZWrite         = noSpriteZWrite;
+    p.center[VX]      = center.x;
+    p.center[VY]      = center.y;
+    p.center[VZ]      = center.z;
+    p.srvo[VX]        = visOffset.x;
+    p.srvo[VY]        = visOffset.y;
+    p.srvo[VZ]        = visOffset.z;
+    p.distance        = distToEye;
+    p.bspLeaf         = bspLeafAtOrigin;
+    p.viewAligned     = viewAligned;
+    p.noZWrite        = noSpriteZWrite;
 
-    p.material         = variant;
-    p.matFlip[0]       = matFlipS;
-    p.matFlip[1]       = matFlipT;
-    p.blendMode        = (useSpriteBlend? blendMode : BM_NORMAL);
+    p.material        = variant;
+    p.matFlip[0]      = matFlipS;
+    p.matFlip[1]      = matFlipT;
+    p.blendMode       = (useSpriteBlend? blendMode : BM_NORMAL);
 
-    p.ambientColor[CR] = ambientColor.x;
-    p.ambientColor[CG] = ambientColor.y;
-    p.ambientColor[CB] = ambientColor.z;
-    p.ambientColor[CA] = (useSpriteAlpha? ambientColor.w : 1);
+    p.ambientColor[0] = ambientColor.x;
+    p.ambientColor[1] = ambientColor.y;
+    p.ambientColor[2] = ambientColor.z;
+    p.ambientColor[3] = (useSpriteAlpha? ambientColor.w : 1);
 
-    p.vLightListIdx    = vLightListIdx;
+    p.vLightListIdx   = vLightListIdx;
 }
 
 void setupModelParamsForVisSprite(rendmodelparams_t &p,
@@ -918,10 +913,10 @@ void setupModelParamsForVisSprite(rendmodelparams_t &p,
 
     p.shineTranslateWithViewerPos = p.shinepspriteCoordSpace = false;
 
-    p.ambientColor[CR]  = ambientColor.x;
-    p.ambientColor[CG]  = ambientColor.y;
-    p.ambientColor[CB]  = ambientColor.z;
-    p.ambientColor[CA]  = ambientColor.w;
+    p.ambientColor[0]   = ambientColor.x;
+    p.ambientColor[1]   = ambientColor.y;
+    p.ambientColor[2]   = ambientColor.z;
+    p.ambientColor[3]   = ambientColor.w;
 
     p.vLightListIdx     = vLightListIdx;
 }
@@ -970,13 +965,13 @@ static void evaluateLighting(Vector3d const &origin, BspLeaf *bspLeafAtOrigin,
         Rend_ApplyTorchLight(ambientColor, distToEye);
 
         collectaffectinglights_params_t parm; zap(parm);
-        parm.origin[VX]       = origin.x;
-        parm.origin[VY]       = origin.y;
-        parm.origin[VZ]       = origin.z;
-        parm.bspLeaf          = bspLeafAtOrigin;
-        parm.ambientColor[CR] = ambientColor.x;
-        parm.ambientColor[CG] = ambientColor.y;
-        parm.ambientColor[CB] = ambientColor.z;
+        parm.origin[VX]      = origin.x;
+        parm.origin[VY]      = origin.y;
+        parm.origin[VZ]      = origin.z;
+        parm.bspLeaf         = bspLeafAtOrigin;
+        parm.ambientColor[0] = ambientColor.x;
+        parm.ambientColor[1] = ambientColor.y;
+        parm.ambientColor[2] = ambientColor.z;
 
         *vLightListIdx = R_CollectAffectingLights(&parm);
     }
@@ -1364,8 +1359,6 @@ void R_ProjectSprite(mobj_t *mo)
     }
 }
 
-#endif // __CLIENT__
-
 coord_t R_GetBobOffset(mobj_t* mo)
 {
     if(mo->ddFlags & DDMF_BOB)
@@ -1374,3 +1367,5 @@ coord_t R_GetBobOffset(mobj_t* mo)
     }
     return 0;
 }
+
+#endif // __CLIENT__
