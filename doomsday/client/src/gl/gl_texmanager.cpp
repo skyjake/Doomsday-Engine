@@ -1873,6 +1873,29 @@ DGLuint GL_PrepareSysFlaremap(flaretexid_t which)
     return sysFlareTextures[which];
 }
 
+DGLuint GL_PrepareFlaremap(de::Uri const &resourceUri)
+{
+    if(resourceUri.path().length() == 1)
+    {
+        // Select a system flare by numeric identifier?
+        int number = resourceUri.path().toStringRef().first().digitValue();
+        if(number == 0) return 0; // automatic
+        if(number >= 1 && number <= 4)
+        {
+            return GL_PrepareSysFlaremap(flaretexid_t(number - 1));
+        }
+    }
+    if(Texture *tex = R_FindTextureByResourceUri("Flaremaps", &resourceUri))
+    {
+        if(TextureVariant const *variant = tex->prepareVariant(Rend_HaloTextureSpec()))
+        {
+            return variant->glName();
+        }
+        // Dang...
+    }
+    return 0;
+}
+
 TexSource GL_LoadExtImage(image_t &image, char const *_searchPath, gfxmode_t mode)
 {
     DENG_ASSERT(_searchPath);

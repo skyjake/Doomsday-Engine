@@ -1,4 +1,4 @@
-/** @file r_things.cpp Map Object Management.
+/** @file r_things.cpp Map Object => Vissprite Projection.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -37,7 +37,7 @@
 
 #ifdef __CLIENT__
 #  include "gl/gl_tex.h"
-#  include "gl/gl_texmanager.h" // GL_PrepareSysFlaremap
+#  include "gl/gl_texmanager.h" // GL_PrepareFlaremap
 
 #  include "render/lumobj.h"
 #  include "render/r_main.h"
@@ -55,12 +55,6 @@
 
 using namespace de;
 
-int psp3d;
-float pspLightLevelMultiplier = 1;
-float pspOffset[2];
-int levelFullBright;
-int weaponOffsetScaleY = 1000;
-
 /*
  * Console variables:
  */
@@ -68,160 +62,12 @@ int useSRVO             = 2; ///< @c 1= models only, @c 2= sprites + models
 int useSRVOAngle        = 1;
 
 int alwaysAlign;
-int noSpriteZWrite      = false;
+int noSpriteZWrite;
 
 float modelSpinSpeed    = 1;
 int maxModelDistance    = 1500;
 
-float weaponFOVShift    = 45;
-float weaponOffsetScale = 0.3183f; // 1/Pi
-byte weaponScaleMode    = SCALEMODE_SMART_STRETCH;
-
 #ifdef __CLIENT__
-
-void R_ProjectPlayerSprites()
-{
-    psp3d = false;
-
-    // Cameramen have no psprites.
-    ddplayer_t *ddpl = &viewPlayer->shared;
-    if((ddpl->flags & DDPF_CAMERA) || (ddpl->flags & DDPF_CHASECAM))
-        return;
-
-    // Determine if we should be drawing all the psprites full bright?
-    boolean isFullBright = (levelFullBright != 0);
-    if(!isFullBright)
-    {
-        ddpsprite_t *psp = ddpl->pSprites;
-        for(int i = 0; i < DDMAXPSPRITES; ++i, psp++)
-        {
-            if(!psp->statePtr) continue;
-
-            // If one of the psprites is fullbright, both are.
-            if(psp->statePtr->flags & STF_FULLBRIGHT)
-                isFullBright = true;
-        }
-    }
-
-    viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
-
-    ddpsprite_t *psp = ddpl->pSprites;
-    for(int i = 0; i < DDMAXPSPRITES; ++i, psp++)
-    {
-        vispsprite_t *spr = &visPSprites[i];
-
-        spr->type = VPSPR_SPRITE;
-        spr->psp = psp;
-
-        if(!psp->statePtr) continue;
-
-        // First, determine whether this is a model or a sprite.
-        bool isModel = false;
-        modeldef_t *mf = 0, *nextmf = 0;
-        float inter = 0;
-        if(useModels)
-        {
-            // Is there a model for this frame?
-            mobj_t dummy;
-
-            // Setup a dummy for the call to R_CheckModelFor.
-            dummy.state = psp->statePtr;
-            dummy.tics = psp->tics;
-
-            inter = Models_ModelForMobj(&dummy, &mf, &nextmf);
-            if(mf) isModel = true;
-        }
-
-        if(isModel)
-        {
-            // Yes, draw a 3D model (in Rend_Draw3DPlayerSprites).
-            // There are 3D psprites.
-            psp3d = true;
-
-            spr->type = VPSPR_MODEL;
-
-            spr->data.model.bspLeaf = ddpl->mo->bspLeaf;
-            spr->data.model.flags = 0;
-            // 32 is the raised weapon height.
-            spr->data.model.gzt = viewData->current.origin[VZ];
-            spr->data.model.secFloor = ddpl->mo->bspLeaf->visFloorHeight();
-            spr->data.model.secCeil  = ddpl->mo->bspLeaf->visCeilingHeight();
-            spr->data.model.pClass = 0;
-            spr->data.model.floorClip = 0;
-
-            spr->data.model.mf = mf;
-            spr->data.model.nextMF = nextmf;
-            spr->data.model.inter = inter;
-            spr->data.model.viewAligned = true;
-            spr->origin[VX] = viewData->current.origin[VX];
-            spr->origin[VY] = viewData->current.origin[VY];
-            spr->origin[VZ] = viewData->current.origin[VZ];
-
-            // Offsets to rotation angles.
-            spr->data.model.yawAngleOffset = psp->pos[VX] * weaponOffsetScale - 90;
-            spr->data.model.pitchAngleOffset =
-                (32 - psp->pos[VY]) * weaponOffsetScale * weaponOffsetScaleY / 1000.0f;
-            // Is the FOV shift in effect?
-            if(weaponFOVShift > 0 && fieldOfView > 90)
-                spr->data.model.pitchAngleOffset -= weaponFOVShift * (fieldOfView - 90) / 90;
-            // Real rotation angles.
-            spr->data.model.yaw =
-                viewData->current.angle / (float) ANGLE_MAX *-360 + spr->data.model.yawAngleOffset + 90;
-            spr->data.model.pitch = viewData->current.pitch * 85 / 110 + spr->data.model.yawAngleOffset;
-            memset(spr->data.model.visOff, 0, sizeof(spr->data.model.visOff));
-
-            spr->data.model.alpha = psp->alpha;
-            spr->data.model.stateFullBright = (psp->flags & DDPSPF_FULLBRIGHT)!=0;
-        }
-        else
-        {
-            // No, draw a 2D sprite (in Rend_DrawPlayerSprites).
-            spr->type = VPSPR_SPRITE;
-
-            // Adjust the center slightly so an angle can be calculated.
-            spr->origin[VX] = viewData->current.origin[VX];
-            spr->origin[VY] = viewData->current.origin[VY];
-            spr->origin[VZ] = viewData->current.origin[VZ];
-
-            spr->data.sprite.bspLeaf = ddpl->mo->bspLeaf;
-            spr->data.sprite.alpha = psp->alpha;
-            spr->data.sprite.isFullBright = (psp->flags & DDPSPF_FULLBRIGHT)!=0;
-        }
-    }
-}
-
-struct vismobjzparams_t
-{
-    vissprite_t *vis;
-    mobj_t const *mo;
-    bool floorAdjust;
-};
-
-/**
- * Determine the correct Z coordinate for the mobj. The visible Z coordinate
- * may be slightly different than the actual Z coordinate due to smoothed
- * plane movement.
- *
- * @todo fixme: Should use the visual plane heights of sector clusters.
- */
-int RIT_VisMobjZ(Sector *sector, void *parameters)
-{
-    DENG_ASSERT(sector != 0);
-    DENG_ASSERT(parameters != 0);
-    vismobjzparams_t *p = (vismobjzparams_t *) parameters;
-
-    if(p->floorAdjust && p->mo->origin[VZ] == sector->floor().height())
-    {
-        p->vis->origin[VZ] = sector->floor().visHeight();
-    }
-
-    if(p->mo->origin[VZ] + p->mo->height == sector->ceiling().height())
-    {
-        p->vis->origin[VZ] = sector->ceiling().visHeight() - p->mo->height;
-    }
-
-    return false; // Continue iteration.
-}
 
 static void setupSpriteParamsForVisSprite(rendspriteparams_t &p,
     Vector3d const &center, coord_t distToEye, Vector3d const &visOffset,
@@ -363,29 +209,6 @@ static void evaluateLighting(Vector3d const &origin, BspLeaf *bspLeafAtOrigin,
     }
 }
 
-static DGLuint prepareFlaremap(de::Uri const &resourceUri)
-{
-    if(resourceUri.path().length() == 1)
-    {
-        // Select a system flare by numeric identifier?
-        int number = resourceUri.path().toStringRef().first().digitValue();
-        if(number == 0) return 0; // automatic
-        if(number >= 1 && number <= 4)
-        {
-            return GL_PrepareSysFlaremap(flaretexid_t(number - 1));
-        }
-    }
-    if(Texture *tex = R_FindTextureByResourceUri("Flaremaps", &resourceUri))
-    {
-        if(TextureVariant const *variant = tex->prepareVariant(Rend_HaloTextureSpec()))
-        {
-            return variant->glName();
-        }
-        // Dang...
-    }
-    return 0;
-}
-
 /// @todo use Mobj_OriginSmoothed
 static Vector3d mobjOriginSmoothed(mobj_t *mo)
 {
@@ -408,6 +231,54 @@ static inline spriteframe_t *spriteFrame(int sprite, int frame)
         return SpriteDef_Frame(*sprDef, frame);
     }
     return 0;
+}
+
+struct findmobjzoriginworker_params_t
+{
+    vissprite_t *vis;
+    mobj_t const *mo;
+    bool floorAdjust;
+};
+
+/**
+ * Determine the correct Z coordinate for the mobj. The visible Z coordinate
+ * may be slightly different than the actual Z coordinate due to smoothed
+ * plane movement.
+ *
+ * @todo fixme: Should use the visual plane heights of sector clusters.
+ */
+static int findMobjZOriginWorker(Sector *sector, void *parameters)
+{
+    DENG_ASSERT(sector != 0);
+    DENG_ASSERT(parameters != 0);
+    findmobjzoriginworker_params_t *p = (findmobjzoriginworker_params_t *) parameters;
+
+    if(p->floorAdjust && p->mo->origin[VZ] == sector->floor().height())
+    {
+        p->vis->origin[VZ] = sector->floor().visHeight();
+    }
+
+    if(p->mo->origin[VZ] + p->mo->height == sector->ceiling().height())
+    {
+        p->vis->origin[VZ] = sector->ceiling().visHeight() - p->mo->height;
+    }
+
+    return false; // Continue iteration.
+}
+
+/// @todo fixme: Should use the visual planes of sector clusters.
+static void findMobjZOrigin(mobj_t *mo, bool floorAdjust, vissprite_t *vis)
+{
+    DENG_ASSERT(mo != 0);
+    DENG_ASSERT(vis != 0);
+
+    findmobjzoriginworker_params_t params; zap(params);
+    params.vis         = vis;
+    params.mo          = mo;
+    params.floorAdjust = floorAdjust;
+
+    validCount++;
+    P_MobjSectorsIterator(mo, findMobjZOriginWorker, &params);
 }
 
 void R_ProjectSprite(mobj_t *mo)
@@ -514,19 +385,11 @@ void R_ProjectSprite(mobj_t *mo)
     vis->origin[VZ] = moPos.z;
     vis->distance   = distFromEye;
 
-    /**
+    /*
      * The Z origin of the visual should match that of the mobj. When smoothing
      * is enabled this requires examining all touched sector planes in the vicinity.
-     *
-     * @todo fixme: Should use the visual planes of sector clusters.
      */
-    vismobjzparams_t params;
-    params.vis         = vis;
-    params.mo          = mo;
-    params.floorAdjust = floorAdjust;
-
-    validCount++;
-    P_MobjSectorsIterator(mo, RIT_VisMobjZ, &params);
+    findMobjZOrigin(mo, floorAdjust, vis);
 
     coord_t gzt = vis->origin[VZ] + -tex.origin().y;
 
@@ -748,7 +611,7 @@ void R_ProjectSprite(mobj_t *mo)
             de::Uri const &flaremapResourceUri = *reinterpret_cast<de::Uri const *>(def->flare);
             if(flaremapResourceUri.path().toStringRef().compareWithoutCase("-"))
             {
-                vis->data.flare.tex = prepareFlaremap(flaremapResourceUri);
+                vis->data.flare.tex = GL_PrepareFlaremap(flaremapResourceUri);
             }
             else
             {

@@ -1,4 +1,4 @@
-/** @file r_things.h Map Object Management and Refresh.
+/** @file r_things.h Map Object => Vissprite Projection.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -23,16 +23,10 @@
 
 #include <de/libdeng1.h>
 
-DENG_EXTERN_C int levelFullBright;
-DENG_EXTERN_C float pspOffset[2], pspLightLevelMultiplier;
 DENG_EXTERN_C int alwaysAlign;
-DENG_EXTERN_C float weaponOffsetScale, weaponFOVShift;
-DENG_EXTERN_C int weaponOffsetScaleY;
-DENG_EXTERN_C byte weaponScaleMode; // cvar
 DENG_EXTERN_C float modelSpinSpeed;
 DENG_EXTERN_C int maxModelDistance, noSpriteZWrite;
 DENG_EXTERN_C int useSRVO, useSRVOAngle;
-DENG_EXTERN_C int psp3d;
 
 #ifdef __cplusplus
 extern "C" {
@@ -42,11 +36,6 @@ extern "C" {
  * Generates a vissprite for a mobj if it might be visible.
  */
 void R_ProjectSprite(struct mobj_s *mobj);
-
-/**
- * If 3D models are found for psprites, here we will create vissprites for them.
- */
-void R_ProjectPlayerSprites(void);
 
 #ifdef __cplusplus
 } // extern "C"

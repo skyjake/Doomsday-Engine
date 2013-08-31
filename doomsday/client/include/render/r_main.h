@@ -67,6 +67,14 @@ DENG_EXTERN_C int      validCount;
 DENG_EXTERN_C int      frameCount;
 DENG_EXTERN_C int      rendInfoTris;
 
+DENG_EXTERN_C int      levelFullBright;
+
+DENG_EXTERN_C float    pspOffset[2], pspLightLevelMultiplier;
+DENG_EXTERN_C int      psp3d;
+DENG_EXTERN_C float    weaponOffsetScale, weaponFOVShift;
+DENG_EXTERN_C int      weaponOffsetScaleY;
+DENG_EXTERN_C byte     weaponScaleMode; // cvar
+
 DENG_EXTERN_C boolean  firstFrameAfterLoad;
 
 DENG_EXTERN_C byte     precacheMapMaterials, precacheSprites, precacheSkins;
