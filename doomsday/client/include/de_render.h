@@ -23,11 +23,11 @@
 #define DOOMSDAY_CLIENT_RENDERER
 
 #include "render/r_main.h"
-#include "render/r_things.h"
 
 #ifdef __CLIENT__
 #include "render/rend_main.h"
 #include "render/r_draw.h"
+#include "render/r_things.h"
 #include "render/lightgrid.h"
 #include "render/lumobj.h"
 #include "render/r_shadow.h"
@@ -45,6 +45,7 @@
 #include "render/sky.h"
 #include "render/sprite.h"
 #include "render/vignette.h"
+#include "render/vissprite.h"
 #include "render/vlight.h"
 #endif
 

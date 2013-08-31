@@ -75,6 +75,8 @@ DENG_EXTERN_C int modelLight;
 DENG_EXTERN_C int frameInter;
 DENG_EXTERN_C int mirrorHudModels;
 DENG_EXTERN_C int modelShinyMultitex;
+DENG_EXTERN_C float modelSpinSpeed;
+DENG_EXTERN_C int maxModelDistance;
 DENG_EXTERN_C float rendModelLOD;
 
 /**

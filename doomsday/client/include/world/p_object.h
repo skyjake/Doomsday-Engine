@@ -25,6 +25,8 @@
 #  error Attempted to include internal Doomsday p_object.h from a game
 #endif
 
+#include <de/libdeng1.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -45,6 +47,8 @@ typedef struct mobj_s
 
 #define IS_SECTOR_LINKED(mo)    ((mo)->sPrev != NULL)
 #define IS_BLOCK_LINKED(mo)     ((mo)->bNext != NULL)
+
+DENG_EXTERN_C int useSRVO, useSRVOAngle;
 
 void P_InitUnusedMobjList(void);
 

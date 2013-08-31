@@ -23,6 +23,8 @@
 
 #ifdef __CLIENT__
 
+#include <de/Vector>
+
 #include "resource/r_data.h"
 #include "rend_model.h"
 
@@ -121,6 +123,23 @@ typedef struct vissprite_s {
 #define VS_MODEL(v)         (&((v)->data.model))
 #define VS_FLARE(v)         (&((v)->data.flare))
 
+void VisSprite_SetupSprite(rendspriteparams_t &p,
+    de::Vector3d const &center, coord_t distToEye, de::Vector3d const &visOffset,
+    float secFloor, float secCeil, float floorClip, float top,
+    Material &material, bool matFlipS, bool matFlipT, blendmode_t blendMode,
+    de::Vector4f const &ambientColor,
+    uint vLightListIdx, int tClass, int tMap, BspLeaf *bspLeafAtOrigin,
+    bool floorAdjust, bool fitTop, bool fitBottom, bool viewAligned);
+
+void VisSprite_SetupModel(rendmodelparams_t &p,
+    de::Vector3d const &origin, coord_t distToEye, de::Vector3d const &visOffset,
+    float gzt, float yaw, float yawAngleOffset, float pitch, float pitchAngleOffset,
+    ModelDef *mf, ModelDef *nextMF, float inter,
+    de::Vector4f const &ambientColor,
+    uint vLightListIdx,
+    int id, int selector, BspLeaf *bspLeafAtOrigin, int mobjDDFlags, int tmap,
+    bool viewAlign, bool fullBright, bool alwaysInterpolate);
+
 typedef enum {
     VPSPR_SPRITE,
     VPSPR_MODEL
@@ -166,11 +185,11 @@ DENG_EXTERN_C vissprite_t visSprSortedHead;
 DENG_EXTERN_C vispsprite_t visPSprites[DDMAXPSPRITES];
 
 /// To be called at the start of the current render frame to clear the vissprite list.
-void R_ClearVisSprites(void);
+void R_ClearVisSprites();
 
-vissprite_t *R_NewVisSprite(void);
+vissprite_t *R_NewVisSprite();
 
-void R_SortVisSprites(void);
+void R_SortVisSprites();
 
 #endif // __CLIENT__
 

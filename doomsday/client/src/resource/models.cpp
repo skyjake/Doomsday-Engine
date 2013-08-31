@@ -21,19 +21,20 @@
  * 02110-1301 USA</small>
  */
 
+#include <cmath>
+#include <cstring> // memset
+
 #include <QDir>
+
+#include <de/mathutil.h> // M_CycleIntoRange()
+#include <de/memory.h>
 
 #include <de/App>
 #include <de/ByteOrder>
 #include <de/NativePath>
 #include <de/StringPool>
-#include <de/mathutil.h> // for M_CycleIntoRange()
-#include <de/memory.h>
 
 #include "de_platform.h"
-
-#include <cmath>
-#include <cstring> // memset
 
 #include "de_base.h"
 #include "de_console.h"
@@ -46,10 +47,12 @@
 
 #ifdef __CLIENT__
 #  include "MaterialSnapshot"
+#  include "render/r_things.h"
 #endif
-#include "render/r_things.h"
 #include "render/rend_model.h"
 #include "render/sprite.h"
+
+#include "resource/models.h"
 
 using namespace de;
 

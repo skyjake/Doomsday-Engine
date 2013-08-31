@@ -59,6 +59,9 @@ byte noSpriteTrans;
 int useSpriteAlpha = 1;
 int useSpriteBlend = 1;
 
+int alwaysAlign;
+int noSpriteZWrite;
+
 byte devNoSprites;
 byte devThinkerIds;
 

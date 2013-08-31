@@ -40,7 +40,9 @@ typedef struct rendpspriteparams_s
     uint vLightListIdx;
 } rendpspriteparams_t;
 
+DENG_EXTERN_C int alwaysAlign;
 DENG_EXTERN_C int spriteLight, useSpriteAlpha, useSpriteBlend;
+DENG_EXTERN_C int noSpriteZWrite;
 DENG_EXTERN_C byte noSpriteTrans;
 DENG_EXTERN_C byte devNoSprites;
 

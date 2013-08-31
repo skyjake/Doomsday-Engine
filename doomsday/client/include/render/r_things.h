@@ -18,15 +18,9 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_RENDER_THINGS_H
-#define DENG_RENDER_THINGS_H
-
-#include <de/libdeng1.h>
-
-DENG_EXTERN_C int alwaysAlign;
-DENG_EXTERN_C float modelSpinSpeed;
-DENG_EXTERN_C int maxModelDistance, noSpriteZWrite;
-DENG_EXTERN_C int useSRVO, useSRVOAngle;
+#ifdef __CLIENT__
+#ifndef DENG_CLIENT_RENDER_THINGS_H
+#define DENG_CLIENT_RENDER_THINGS_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -41,4 +35,5 @@ void R_ProjectSprite(struct mobj_s *mobj);
 } // extern "C"
 #endif
 
-#endif /* DENG_RENDER_THINGS_H */
+#endif // DENG_CLIENT_RENDER_THINGS_H
+#endif // __CLIENT__

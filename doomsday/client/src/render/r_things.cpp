@@ -21,137 +21,25 @@
  */
 
 #include "de_platform.h"
+#include "de_render.h"
+#include "de_resource.h"
 
 #include "dd_main.h" // App_World()
-#ifdef __CLIENT__
-#  include "r_util.h"
-#  include "network/net_main.h" // clients[]
-#endif
+#include "def_main.h" // states
+
+#include "gl/gl_tex.h"
+#include "gl/gl_texmanager.h" // GL_PrepareFlaremap
+
+#include "network/net_main.h" // clients[]
 
 #include "world/map.h"
 #include "world/p_object.h"
 #include "world/p_players.h"
 #include "BspLeaf"
 
-#include "def_main.h" // states
-
-#ifdef __CLIENT__
-#  include "gl/gl_tex.h"
-#  include "gl/gl_texmanager.h" // GL_PrepareFlaremap
-
-#  include "render/lumobj.h"
-#  include "render/r_main.h"
-#  include "render/rend_clip.h"
-#  include "render/rend_halo.h"
-#  include "render/rend_main.h"
-#  include "render/sprite.h"
-#  include "render/vissprite.h"
-#  include "render/vlight.h"
-#endif
-
-#include "resource/sprites.h"
-
 #include "render/r_things.h"
 
 using namespace de;
-
-/*
- * Console variables:
- */
-int useSRVO             = 2; ///< @c 1= models only, @c 2= sprites + models
-int useSRVOAngle        = 1;
-
-int alwaysAlign;
-int noSpriteZWrite;
-
-float modelSpinSpeed    = 1;
-int maxModelDistance    = 1500;
-
-#ifdef __CLIENT__
-
-static void setupSpriteParamsForVisSprite(rendspriteparams_t &p,
-    Vector3d const &center, coord_t distToEye, Vector3d const &visOffset,
-    float /*secFloor*/, float /*secCeil*/, float /*floorClip*/, float /*top*/,
-    Material &material, bool matFlipS, bool matFlipT, blendmode_t blendMode,
-    Vector4f const &ambientColor,
-    uint vLightListIdx, int tClass, int tMap, BspLeaf *bspLeafAtOrigin,
-    bool /*floorAdjust*/, bool /*fitTop*/, bool /*fitBottom*/, bool viewAligned)
-{
-    MaterialVariantSpec const &spec = Rend_SpriteMaterialSpec(tClass, tMap);
-    MaterialVariant *variant = material.chooseVariant(spec, true);
-
-    DENG_ASSERT((tClass == 0 && tMap == 0) || spec.primarySpec->data.variant.translated);
-
-    p.center[VX]      = center.x;
-    p.center[VY]      = center.y;
-    p.center[VZ]      = center.z;
-    p.srvo[VX]        = visOffset.x;
-    p.srvo[VY]        = visOffset.y;
-    p.srvo[VZ]        = visOffset.z;
-    p.distance        = distToEye;
-    p.bspLeaf         = bspLeafAtOrigin;
-    p.viewAligned     = viewAligned;
-    p.noZWrite        = noSpriteZWrite;
-
-    p.material        = variant;
-    p.matFlip[0]      = matFlipS;
-    p.matFlip[1]      = matFlipT;
-    p.blendMode       = (useSpriteBlend? blendMode : BM_NORMAL);
-
-    p.ambientColor[0] = ambientColor.x;
-    p.ambientColor[1] = ambientColor.y;
-    p.ambientColor[2] = ambientColor.z;
-    p.ambientColor[3] = (useSpriteAlpha? ambientColor.w : 1);
-
-    p.vLightListIdx   = vLightListIdx;
-}
-
-void setupModelParamsForVisSprite(rendmodelparams_t &p,
-    Vector3d const &origin, coord_t distToEye, Vector3d const &visOffset,
-    float gzt, float yaw, float yawAngleOffset, float pitch, float pitchAngleOffset,
-    ModelDef *mf, ModelDef *nextMF, float inter,
-    Vector4f const &ambientColor,
-    uint vLightListIdx,
-    int id, int selector, BspLeaf * /*bspLeafAtOrigin*/, int mobjDDFlags, int tmap,
-    bool viewAlign, bool /*fullBright*/, bool alwaysInterpolate)
-{
-    p.mf                = mf;
-    p.nextMF            = nextMF;
-    p.inter             = inter;
-    p.alwaysInterpolate = alwaysInterpolate;
-    p.id                = id;
-    p.selector          = selector;
-    p.flags             = mobjDDFlags;
-    p.tmap              = tmap;
-    p.origin[VX]        = origin.x;
-    p.origin[VY]        = origin.y;
-    p.origin[VZ]        = origin.z;
-    p.srvo[VX]          = visOffset.x;
-    p.srvo[VY]          = visOffset.y;
-    p.srvo[VZ]          = visOffset.z;
-    p.gzt               = gzt;
-    p.distance          = distToEye;
-    p.yaw               = yaw;
-    p.extraYawAngle     = 0;
-    p.yawAngleOffset    = yawAngleOffset;
-    p.pitch             = pitch;
-    p.extraPitchAngle   = 0;
-    p.pitchAngleOffset  = pitchAngleOffset;
-    p.extraScale        = 0;
-    p.viewAlign         = viewAlign;
-    p.mirror            = 0;
-    p.shineYawOffset    = 0;
-    p.shinePitchOffset  = 0;
-
-    p.shineTranslateWithViewerPos = p.shinepspriteCoordSpace = false;
-
-    p.ambientColor[0]   = ambientColor.x;
-    p.ambientColor[1]   = ambientColor.y;
-    p.ambientColor[2]   = ambientColor.z;
-    p.ambientColor[3]   = ambientColor.w;
-
-    p.vLightListIdx     = vLightListIdx;
-}
 
 static void evaluateLighting(Vector3d const &origin, BspLeaf *bspLeafAtOrigin,
     coord_t distToEye, bool fullbright, Vector4f &ambientColor, uint *vLightListIdx)
@@ -240,13 +128,6 @@ struct findmobjzoriginworker_params_t
     bool floorAdjust;
 };
 
-/**
- * Determine the correct Z coordinate for the mobj. The visible Z coordinate
- * may be slightly different than the actual Z coordinate due to smoothed
- * plane movement.
- *
- * @todo fixme: Should use the visual plane heights of sector clusters.
- */
 static int findMobjZOriginWorker(Sector *sector, void *parameters)
 {
     DENG_ASSERT(sector != 0);
@@ -266,7 +147,13 @@ static int findMobjZOriginWorker(Sector *sector, void *parameters)
     return false; // Continue iteration.
 }
 
-/// @todo fixme: Should use the visual planes of sector clusters.
+/**
+ * Determine the correct Z coordinate for the mobj. The visible Z coordinate
+ * may be slightly different than the actual Z coordinate due to smoothed
+ * plane movement.
+ *
+ * @todo fixme: Should use the visual plane heights of sector clusters.
+ */
 static void findMobjZOrigin(mobj_t *mo, bool floorAdjust, vissprite_t *vis)
 {
     DENG_ASSERT(mo != 0);
@@ -512,14 +399,13 @@ void R_ProjectSprite(mobj_t *mo)
 
         ambientColor.w = alpha;
 
-        setupSpriteParamsForVisSprite(vis->data.sprite, origin, vis->distance, visOff,
-                                      floor.visHeight(), ceiling.visHeight(),
-                                      floorClip, gzt, *mat, matFlipS, matFlipT, blendMode,
-                                      ambientColor,
-                                      vLightListIdx,
-                                      mo->tclass, mo->tmap,
-                                      mo->bspLeaf,
-                                      floorAdjust, fitTop, fitBottom, viewAlign);
+        VisSprite_SetupSprite(vis->data.sprite, origin, vis->distance, visOff,
+                              floor.visHeight(), ceiling.visHeight(),
+                              floorClip, gzt, *mat, matFlipS, matFlipT, blendMode,
+                              ambientColor, vLightListIdx,
+                              mo->tclass, mo->tmap,
+                              mo->bspLeaf,
+                              floorAdjust, fitTop, fitBottom, viewAlign);
     }
     else
     {
@@ -531,17 +417,14 @@ void R_ProjectSprite(mobj_t *mo)
 
         ambientColor.w = alpha;
 
-        setupModelParamsForVisSprite(vis->data.model, origin, vis->distance,
-                                     Vector3d(visOff.x, visOff.y, visOff.z - floorClip),
-                                     gzt, yaw, 0, pitch, 0,
-                                     mf, nextmf, interp,
-                                     ambientColor,
-                                     vLightListIdx, mo->thinker.id, mo->selector,
-                                     mo->bspLeaf, mo->ddFlags,
-                                     mo->tmap,
-                                     viewAlign,
-                                     fullbright && !(mf && mf->testSubFlag(0, MFF_DIM)),
-                                     false);
+        VisSprite_SetupModel(vis->data.model, origin, vis->distance,
+                             Vector3d(visOff.x, visOff.y, visOff.z - floorClip),
+                             gzt, yaw, 0, pitch, 0,
+                             mf, nextmf, interp,
+                             ambientColor, vLightListIdx, mo->thinker.id, mo->selector,
+                             mo->bspLeaf,
+                             mo->ddFlags, mo->tmap, viewAlign,
+                             fullbright && !(mf && mf->testSubFlag(0, MFF_DIM)), false);
     }
 
     // Do we need to project a flare source too?
@@ -620,5 +503,3 @@ void R_ProjectSprite(mobj_t *mo)
         }
     }
 }
-
-#endif // __CLIENT__

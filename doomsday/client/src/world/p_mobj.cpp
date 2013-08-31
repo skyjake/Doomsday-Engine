@@ -34,7 +34,6 @@
 
 #include "def_main.h"
 #include "render/r_main.h" // validCount, viewport
-#include "render/r_things.h" // useSRVO
 #ifdef __CLIENT__
 #  include "render/sprite.h"
 #endif
@@ -45,6 +44,12 @@
 using namespace de;
 
 static mobj_t *unusedMobjs;
+
+/*
+ * Console variables:
+ */
+int useSRVO          = 2; ///< @c 1= models only, @c 2= sprites + models
+int useSRVOAngle     = 1;
 
 /**
  * Called during map loading.
