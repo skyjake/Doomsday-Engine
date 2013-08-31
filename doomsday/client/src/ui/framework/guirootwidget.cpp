@@ -97,7 +97,7 @@ DENG2_PIMPL(GuiRootWidget)
                 frame.fill(QColor(255, 255, 255, 0).rgba());
                 QPainter painter(&frame);
                 painter.setRenderHint(QPainter::Antialiasing, true);
-                painter.setPen(QPen(QColor(255, 255, 255, 255), 3));
+                painter.setPen(QPen(QColor(255, 255, 255, 255), 2));
                 painter.setBrush(Qt::NoBrush);//QColor(255, 255, 255, 255));
                 painter.drawEllipse(QPoint(6, 6), 4, 4);
                 /*
