@@ -29,6 +29,7 @@
 using namespace de;
 
 DENG2_PIMPL(GuiWidget),
+DENG2_OBSERVES(Widget, ChildAddition),
 DENG2_OBSERVES(ui::Margins, Change)
 #ifdef DENG2_DEBUG
 , DENG2_OBSERVES(Widget, ParentChange)
@@ -76,6 +77,7 @@ DENG2_OBSERVES(ui::Margins, Change)
           uBlurStep     ("uBlurStep",  GLUniform::Vec2),
           uBlurWindow   ("uWindow",    GLUniform::Vec4)
     {
+        self.audienceForChildAddition += this;
         margins.audienceForChange += this;
 
 #ifdef DENG2_DEBUG
@@ -117,6 +119,16 @@ DENG2_OBSERVES(ui::Margins, Change)
         rule.setDebugName(self.path());
     }
 #endif
+
+    void widgetChildAdded(Widget &child)
+    {
+        if(self.hasRoot())
+        {
+            // Make sure newly added children know the view size.
+            child.viewResized();
+            child.notifyTree(&Widget::viewResized);
+        }
+    }
 
     void initBlur()
     {

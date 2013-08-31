@@ -30,7 +30,8 @@
 
 using namespace de;
 
-DENG2_PIMPL(GuiRootWidget)
+DENG2_PIMPL(GuiRootWidget),
+DENG2_OBSERVES(Widget, ChildAddition)
 {
     ClientWindow *window;
     QScopedPointer<AtlasTexture> atlas; ///< Shared atlas for most UI graphics/text.
@@ -49,7 +50,9 @@ DENG2_PIMPL(GuiRootWidget)
           atlas(0),
           uTexAtlas("uTex", GLUniform::Sampler2D),
           noFramesDrawnYet(true)
-    {}
+    {
+        self.audienceForChildAddition += this;
+    }
 
     ~Instance()
     {
@@ -165,6 +168,13 @@ DENG2_PIMPL(GuiRootWidget)
                 tinyDot = atlas->alloc(dot);
             }
         }
+    }
+
+    void widgetChildAdded(Widget &child)
+    {
+        // Make sure newly added children know the view size.
+        child.viewResized();
+        child.notifyTree(&Widget::viewResized);
     }
 };
 

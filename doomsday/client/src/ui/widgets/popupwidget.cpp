@@ -201,7 +201,7 @@ DENG_GUI_PIMPL(PopupWidget)
     }
 };
 
-PopupWidget::PopupWidget(String const &name) : d(new Instance(this))
+PopupWidget::PopupWidget(String const &name) : GuiWidget(name), d(new Instance(this))
 {
     setBehavior(ChildHitClipping);
 
@@ -337,7 +337,8 @@ void PopupWidget::viewResized()
 
     d->uMvpMatrix = root().projMatrix2D();
 
-    update();
+    requestGeometry();
+    //update();
 }
 
 void PopupWidget::update()
@@ -400,8 +401,11 @@ void PopupWidget::open()
 
     // Reparent the popup into the root widget, on top of everything else.
     d->realParent = Widget::parent();
-    d->realParent->remove(*this);
-    d->realParent->root().add(this);
+    if(d->realParent != &d->realParent->root())
+    {
+        d->realParent->remove(*this);
+        d->realParent->root().add(this);
+    }
 
     unsetBehavior(DisableEventDispatchToChildren);
 
@@ -439,8 +443,11 @@ void PopupWidget::dismiss()
     d->dismissTimer.stop();
 
     // Move back to the original parent widget.
-    root().remove(*this);
-    d->realParent->add(this);
+    if(d->realParent != &root())
+    {
+        root().remove(*this);
+        d->realParent->add(this);
+    }
 
     popupDismissed();
 

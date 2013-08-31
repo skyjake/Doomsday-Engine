@@ -459,9 +459,10 @@ bool SliderWidget::handleEvent(Event const &event)
         d->updateHover(event.as<MouseEvent>().pos());
     }
 
-    if(d->state != Instance::Inert && event.type() == Event::MouseButton)
+    // Left mouse button can be used to drag/step the value.
+    if(d->state != Instance::Inert)
     {
-        switch(handleMouseClick(event))
+        switch(handleMouseClick(event, MouseEvent::Left))
         {
         case MouseClickStarted:
             d->startGrab(event.as<MouseEvent>());

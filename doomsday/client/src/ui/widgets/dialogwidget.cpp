@@ -490,10 +490,6 @@ void DialogWidget::prepare()
 
     d->updateContentHeight();
 
-    // Make sure the newly added widget knows the view size.
-    viewResized();
-    notifyTree(&Widget::viewResized);
-
     PopupWidget::open();
 }
 
@@ -507,6 +503,7 @@ void DialogWidget::preparePopupForOpening()
 
 void DialogWidget::finish(int)
 {
+    root().setFocus(0);
     close();
 }
 

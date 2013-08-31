@@ -18,6 +18,7 @@
 
 #include "de_platform.h"
 #include "ui/widgets/legacywidget.h"
+#include "clientapp.h"
 #include "ui/dd_input.h"
 #include "ui/ui_main.h"
 #include "ui/ui2_main.h"
@@ -147,7 +148,11 @@ LegacyWidget::LegacyWidget(String const &name)
 
 void LegacyWidget::viewResized()
 {
-    if(BusyMode_Active() || isDisabled() || Sys_IsShuttingDown()) return;
+    if(BusyMode_Active() || isDisabled() || Sys_IsShuttingDown() ||
+       !ClientApp::windowSystem().hasMain())
+    {
+        return;
+    }
 
     LOG_AS("LegacyWidget");
     LOG_TRACE("View resized to ") << root().viewSize().asText();
