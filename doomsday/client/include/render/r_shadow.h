@@ -91,4 +91,12 @@ int R_IterateShadowProjections(uint listIdx, int (*callback) (shadowprojection_t
  */
 Plane *R_FindShadowPlane(struct mobj_s *mobj);
 
+/**
+ * Calculate the strength of the shadow this mobj should cast.
+ *
+ * @note Implemented using a greatly simplified version of the lighting equation;
+ *       no light diminishing or light range compression.
+ */
+float R_ShadowStrength(struct mobj_s *mo);
+
 #endif // DENG_RENDER_SHADOW_H

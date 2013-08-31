@@ -693,12 +693,6 @@ void Sys_MessageBoxWithDetailsFromFile(messageboxtype_t /*type*/, const char* /*
 {
 }
 
-DENG_EXTERN_C coord_t R_VisualRadius(struct mobj_s *mo)
-{
-    DENG_UNUSED(mo);
-    return 0;
-}
-
 DENG_EXTERN_C void R_ProjectSprite(struct mobj_s *mo)
 {
     DENG_UNUSED(mo);

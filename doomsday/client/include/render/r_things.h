@@ -21,7 +21,7 @@
 #ifndef DENG_RENDER_THINGS_H
 #define DENG_RENDER_THINGS_H
 
-#include "Materials"
+#include <de/libdeng1.h>
 
 DENG_EXTERN_C int levelFullBright;
 DENG_EXTERN_C float pspOffset[2], pspLightLevelMultiplier;
@@ -37,31 +37,6 @@ DENG_EXTERN_C int psp3d;
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-/// @return  Radius of the mobj as it would visually appear to be.
-coord_t R_VisualRadius(struct mobj_s *mo);
-
-/**
- * Calculate the strength of the shadow this mobj should cast.
- *
- * @note Implemented using a greatly simplified version of the lighting equation;
- *       no light diminishing or light range compression.
- */
-float R_ShadowStrength(struct mobj_s *mo);
-
-float R_Alpha(struct mobj_s *mo);
-
-/**
- * @return  The current floatbob offset for the mobj, if the mobj is flagged
- *          for bobbing; otherwise @c 0.
- */
-coord_t R_GetBobOffset(struct mobj_s *mo);
-
-float R_MovementYaw(float const mom[2]);
-float R_MovementXYYaw(float momx, float momy);
-
-float R_MovementPitch(float const mom[3]);
-float R_MovementXYZPitch(float momx, float momy, float momz);
 
 /**
  * Generates a vissprite for a mobj if it might be visible.

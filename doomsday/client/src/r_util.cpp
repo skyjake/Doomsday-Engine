@@ -34,6 +34,29 @@
 
 using namespace de;
 
+float R_MovementYaw(float const mom[])
+{
+    // Multiply by 100 to get some artificial accuracy in bamsAtan2.
+    return BANG2DEG(bamsAtan2(-100 * mom[MY], 100 * mom[MX]));
+}
+
+float R_MovementXYYaw(float momx, float momy)
+{
+    float mom[2] = { momx, momy };
+    return R_MovementYaw(mom);
+}
+
+float R_MovementPitch(float const mom[])
+{
+    return BANG2DEG(bamsAtan2 (100 * mom[MZ], 100 * V2f_Length(mom)));
+}
+
+float R_MovementXYZPitch(float momx, float momy, float momz)
+{
+    float mom[3] = { momx, momy, momz };
+    return R_MovementPitch(mom);
+}
+
 angle_t R_ViewPointToAngle(Vector2d point)
 {
     viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);

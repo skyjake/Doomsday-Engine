@@ -520,7 +520,7 @@ static void findContacts(objlink_t *link)
         mobj_t *mo = (mobj_t *) link->obj;
 
         origin = mo->origin;
-        radius = R_VisualRadius(mo);
+        radius = Mobj_VisualRadius(mo);
         bspLeaf = mo->bspLeaf;
         break; }
 

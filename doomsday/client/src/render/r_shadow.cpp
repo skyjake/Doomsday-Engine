@@ -30,10 +30,13 @@
 #include "de_console.h"
 #include "de_render.h"
 #include "de_play.h"
+#include "de_resource.h"
 #include "api_map.h"
 
 #include "world/map.h"
 #include "BspLeaf"
+
+#include "gl/gl_tex.h"
 
 #include "render/r_shadow.h"
 
@@ -227,7 +230,7 @@ int RIT_ProjectShadowToSurfaceIterator(void *mobj, void *parameters)
         return false;
 
     // Calculate the radius of the shadow.
-    float shadowRadius = R_VisualRadius(mo);
+    float shadowRadius = Mobj_VisualRadius(mo);
     if(shadowRadius <= 0)
         return false;
 
@@ -236,7 +239,7 @@ int RIT_ProjectShadowToSurfaceIterator(void *mobj, void *parameters)
 
     mobjOrigin[VZ] -= mo->floorClip;
     if(mo->ddFlags & DDMF_BOB)
-        mobjOrigin[VZ] -= R_GetBobOffset(mo);
+        mobjOrigin[VZ] -= Mobj_BobOffset(mo);
 
     coord_t mobjHeight = mo->height;
     if(!mobjHeight) mobjHeight = 1;
@@ -380,4 +383,76 @@ Plane *R_FindShadowPlane(mobj_t *mo)
         P_MobjSectorsIterator(mo, RIT_FindShadowPlaneIterator, (void *)&plane);
     }
     return 0;
+}
+
+static modeldef_t *currentModelDefForMobj(mobj_t *mo)
+{
+    // If models are being used, use the model's radius.
+    if(useModels)
+    {
+        modeldef_t *mf = 0, *nextmf = 0;
+        Models_ModelForMobj(mo, &mf, &nextmf);
+        return mf;
+    }
+    return 0;
+}
+
+float R_ShadowStrength(mobj_t *mo)
+{
+    DENG_ASSERT(mo);
+
+    float const minSpriteAlphaLimit = .1f;
+    float ambientLightLevel, strength = .65f; ///< Default strength factor.
+
+    // Is this mobj in a valid state for shadow casting?
+    if(!mo->state || !mo->bspLeaf) return 0;
+
+    // Should this mobj even have a shadow?
+    if((mo->state->flags & STF_FULLBRIGHT) ||
+       (mo->ddFlags & DDMF_DONTDRAW) || (mo->ddFlags & DDMF_ALWAYSLIT))
+        return 0;
+
+    // Sample the ambient light level at the mobj's position.
+    if(useBias && App_World().map().hasLightGrid())
+    {
+        // Evaluate in the light grid.
+        ambientLightLevel = App_World().map().lightGrid().evaluateLightLevel(mo->origin);
+    }
+    else
+    {
+        ambientLightLevel = mo->bspLeaf->sector().lightLevel();
+        Rend_ApplyLightAdaptation(ambientLightLevel);
+    }
+
+    // Sprites have their own shadow strength factor.
+    if(!currentModelDefForMobj(mo))
+    {
+        Material *mat = R_MaterialForSprite(mo->sprite, mo->frame);
+        if(mat)
+        {
+            // Ensure we've prepared this.
+            MaterialSnapshot const &ms = mat->prepare(Rend_SpriteMaterialSpec());
+
+            averagealpha_analysis_t const *aa = (averagealpha_analysis_t const *)
+                ms.texture(MTU_PRIMARY).generalCase().analysisDataPointer(Texture::AverageAlphaAnalysis);
+            DENG_ASSERT(aa != 0);
+
+            // We use an average which factors in the coverage ratio
+            // of alpha:non-alpha pixels.
+            /// @todo Constant weights could stand some tweaking...
+            float weightedSpriteAlpha = aa->alpha * (0.4f + (1 - aa->coverage) * 0.6f);
+
+            // Almost entirely translucent sprite? => no shadow.
+            if(weightedSpriteAlpha < minSpriteAlphaLimit) return 0;
+
+            // Apply this factor.
+            strength *= MIN_OF(1, 0.2f + weightedSpriteAlpha);
+        }
+    }
+
+    // Factor in Mobj alpha.
+    strength *= Mobj_Alpha(mo);
+
+    /// @note This equation is the same as that used for fakeradio.
+    return (0.6f - ambientLightLevel * 0.4f) * strength;
 }

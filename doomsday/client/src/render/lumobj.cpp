@@ -27,6 +27,7 @@
 #include "de_console.h"
 #include "de_render.h"
 #include "de_graphics.h"
+#include "de_resource.h"
 #include "de_misc.h"
 #include "de_play.h"
 #include "de_defs.h"
@@ -801,7 +802,7 @@ static void addLuminous(mobj_t *mo)
     }
 
     Texture &tex = ms.texture(MTU_PRIMARY).generalCase();
-    float center = -tex.origin().y - mo->floorClip - R_GetBobOffset(mo) - yOffset;
+    float center = -tex.origin().y - mo->floorClip - Mobj_BobOffset(mo) - yOffset;
 
     // Will the sprite be allowed to go inside the floor?
     float mul = mo->origin[VZ] + -tex.origin().y - (float) ms.height() - mo->bspLeaf->visFloor().height();

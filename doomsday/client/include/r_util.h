@@ -25,6 +25,12 @@
 #include <de/Matrix>
 #include <de/Vector>
 
+float R_MovementYaw(float const mom[2]);
+float R_MovementXYYaw(float momx, float momy);
+
+float R_MovementPitch(float const mom[3]);
+float R_MovementXYZPitch(float momx, float momy, float momz);
+
 /**
  * Get a global angle from Cartesian coordinates in the map coordinate space
  * relative to the viewer.

@@ -28,12 +28,16 @@
 #include "de_system.h"
 #include "de_network.h"
 #include "de_play.h"
+#include "de_resource.h"
 #include "de_misc.h"
 #include "de_audio.h"
 
 #include "def_main.h"
 #include "render/r_main.h" // validCount, viewport
 #include "render/r_things.h" // useSRVO
+#ifdef __CLIENT__
+#  include "render/sprite.h"
+#endif
 
 #include "world/thinkers.h"
 #include "BspLeaf"
@@ -139,6 +143,28 @@ void P_MobjRecycle(mobj_t* mo)
     // The sector next link is used as the unused mobj list links.
     mo->sNext = unusedMobjs;
     unusedMobjs = mo;
+}
+
+/**
+ * Two links to update:
+ * 1) The link to us from the previous node (sprev, always set) will
+ *    be modified to point to the node following us.
+ * 2) If there is a node following us, set its sprev pointer to point
+ *    to the pointer that points back to it (our sprev, just modified).
+ */
+boolean Mobj_UnlinkFromSector(mobj_t *mo)
+{
+    if(!mo || !IS_SECTOR_LINKED(mo))
+        return false;
+
+    if((*mo->sPrev = mo->sNext))
+        mo->sNext->sPrev = mo->sPrev;
+
+    // Not linked any more.
+    mo->sNext = 0;
+    mo->sPrev = 0;
+
+    return true;
 }
 
 /**
@@ -271,26 +297,78 @@ coord_t Mobj_ApproxPointDistance(mobj_t* mo, coord_t const* point)
                                              point[VY] - mo->origin[VY]));
 }
 
-/**
- * Two links to update:
- * 1) The link to us from the previous node (sprev, always set) will
- *    be modified to point to the node following us.
- * 2) If there is a node following us, set its sprev pointer to point
- *    to the pointer that points back to it (our sprev, just modified).
- */
-boolean Mobj_UnlinkFromSector(mobj_t *mo)
+coord_t Mobj_BobOffset(mobj_t *mo)
 {
-    if(!mo || !IS_SECTOR_LINKED(mo))
-        return false;
+    if(mo->ddFlags & DDMF_BOB)
+    {
+        return (sin(MOBJ_TO_ID(mo) + App_World().time() / 1.8286 * 2 * PI) * 8);
+    }
+    return 0;
+}
 
-    if((*mo->sPrev = mo->sNext))
-        mo->sNext->sPrev = mo->sPrev;
+float Mobj_Alpha(mobj_t *mo)
+{
+    DENG_ASSERT(mo);
 
-    // Not linked any more.
-    mo->sNext = 0;
-    mo->sPrev = 0;
+    float alpha = (mo->ddFlags & DDMF_BRIGHTSHADOW)? .80f :
+                  (mo->ddFlags & DDMF_SHADOW      )? .33f :
+                  (mo->ddFlags & DDMF_ALTSHADOW   )? .66f : 1;
+    /**
+     * The three highest bits of the selector are used for alpha.
+     * 0 = opaque (alpha -1)
+     * 1 = 1/8 transparent
+     * 4 = 1/2 transparent
+     * 7 = 7/8 transparent
+     */
+    int selAlpha = mo->selector >> DDMOBJ_SELECTOR_SHIFT;
+    if(selAlpha & 0xe0)
+    {
+        alpha *= 1 - ((selAlpha & 0xe0) >> 5) / 8.0f;
+    }
+    else if(mo->translucency)
+    {
+        alpha *= 1 - mo->translucency * reciprocal255;
+    }
+    return alpha;
+}
 
-    return true;
+#ifdef __CLIENT__
+
+static modeldef_t *currentModelDefForMobj(mobj_t *mo)
+{
+    // If models are being used, use the model's radius.
+    if(useModels)
+    {
+        modeldef_t *mf = 0, *nextmf = 0;
+        Models_ModelForMobj(mo, &mf, &nextmf);
+        return mf;
+    }
+    return 0;
+}
+
+#endif // __CLIENT__
+
+coord_t Mobj_VisualRadius(mobj_t *mo)
+{
+#ifdef __CLIENT__
+
+    // If models are being used, use the model's radius.
+    if(modeldef_t *mf = currentModelDefForMobj(mo))
+    {
+        return mf->visualRadius;
+    }
+
+    // Use the sprite frame's width?
+    if(Material *material = R_MaterialForSprite(mo->sprite, mo->frame))
+    {
+        MaterialSnapshot const &ms = material->prepare(Rend_SpriteMaterialSpec());
+        return ms.width() / 2;
+    }
+
+#endif
+
+    // Use the physical radius.
+    return mo->radius;
 }
 
 D_CMD(InspectMobj)

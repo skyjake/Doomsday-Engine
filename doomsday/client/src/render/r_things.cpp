@@ -73,122 +73,6 @@ int maxModelDistance = 1500;
 int levelFullBright;
 
 #ifdef __CLIENT__
-static modeldef_t *currentModelDefForMobj(mobj_t *mo)
-{
-    // If models are being used, use the model's radius.
-    if(useModels)
-    {
-        modeldef_t *mf = 0, *nextmf = 0;
-        Models_ModelForMobj(mo, &mf, &nextmf);
-        return mf;
-    }
-    return 0;
-}
-
-coord_t R_VisualRadius(mobj_t *mo)
-{
-    // If models are being used, use the model's radius.
-    if(modeldef_t *mf = currentModelDefForMobj(mo))
-    {
-        return mf->visualRadius;
-    }
-
-    // Use the sprite frame's width?
-    if(Material *material = R_MaterialForSprite(mo->sprite, mo->frame))
-    {
-        MaterialSnapshot const &ms = material->prepare(Rend_SpriteMaterialSpec());
-        return ms.width() / 2;
-    }
-
-    // Use the physical radius.
-    return mo->radius;
-}
-
-float R_ShadowStrength(mobj_t *mo)
-{
-    DENG_ASSERT(mo);
-
-    float const minSpriteAlphaLimit = .1f;
-    float ambientLightLevel, strength = .65f; ///< Default strength factor.
-
-    // Is this mobj in a valid state for shadow casting?
-    if(!mo->state || !mo->bspLeaf) return 0;
-
-    // Should this mobj even have a shadow?
-    if((mo->state->flags & STF_FULLBRIGHT) ||
-       (mo->ddFlags & DDMF_DONTDRAW) || (mo->ddFlags & DDMF_ALWAYSLIT))
-        return 0;
-
-    // Sample the ambient light level at the mobj's position.
-    if(useBias && App_World().map().hasLightGrid())
-    {
-        // Evaluate in the light grid.
-        ambientLightLevel = App_World().map().lightGrid().evaluateLightLevel(mo->origin);
-    }
-    else
-    {
-        ambientLightLevel = mo->bspLeaf->sector().lightLevel();
-        Rend_ApplyLightAdaptation(ambientLightLevel);
-    }
-
-    // Sprites have their own shadow strength factor.
-    if(!currentModelDefForMobj(mo))
-    {
-        Material *mat = R_MaterialForSprite(mo->sprite, mo->frame);
-        if(mat)
-        {
-            // Ensure we've prepared this.
-            MaterialSnapshot const &ms = mat->prepare(Rend_SpriteMaterialSpec());
-
-            averagealpha_analysis_t const *aa = (averagealpha_analysis_t const *)
-                ms.texture(MTU_PRIMARY).generalCase().analysisDataPointer(Texture::AverageAlphaAnalysis);
-            DENG_ASSERT(aa != 0);
-
-            // We use an average which factors in the coverage ratio
-            // of alpha:non-alpha pixels.
-            /// @todo Constant weights could stand some tweaking...
-            float weightedSpriteAlpha = aa->alpha * (0.4f + (1 - aa->coverage) * 0.6f);
-
-            // Almost entirely translucent sprite? => no shadow.
-            if(weightedSpriteAlpha < minSpriteAlphaLimit) return 0;
-
-            // Apply this factor.
-            strength *= MIN_OF(1, 0.2f + weightedSpriteAlpha);
-        }
-    }
-
-    // Factor in Mobj alpha.
-    strength *= R_Alpha(mo);
-
-    /// @note This equation is the same as that used for fakeradio.
-    return (0.6f - ambientLightLevel * 0.4f) * strength;
-}
-
-float R_Alpha(mobj_t *mo)
-{
-    DENG_ASSERT(mo);
-
-    float alpha = (mo->ddFlags & DDMF_BRIGHTSHADOW)? .80f :
-                  (mo->ddFlags & DDMF_SHADOW      )? .33f :
-                  (mo->ddFlags & DDMF_ALTSHADOW   )? .66f : 1;
-    /**
-     * The three highest bits of the selector are used for alpha.
-     * 0 = opaque (alpha -1)
-     * 1 = 1/8 transparent
-     * 4 = 1/2 transparent
-     * 7 = 7/8 transparent
-     */
-    int selAlpha = mo->selector >> DDMOBJ_SELECTOR_SHIFT;
-    if(selAlpha & 0xe0)
-    {
-        alpha *= 1 - ((selAlpha & 0xe0) >> 5) / 8.0f;
-    }
-    else if(mo->translucency)
-    {
-        alpha *= 1 - mo->translucency * reciprocal255;
-    }
-    return alpha;
-}
 
 void R_ProjectPlayerSprites()
 {
@@ -300,29 +184,6 @@ void R_ProjectPlayerSprites()
             spr->data.sprite.isFullBright = (psp->flags & DDPSPF_FULLBRIGHT)!=0;
         }
     }
-}
-
-float R_MovementYaw(float const mom[])
-{
-    // Multiply by 100 to get some artificial accuracy in bamsAtan2.
-    return BANG2DEG(bamsAtan2(-100 * mom[MY], 100 * mom[MX]));
-}
-
-float R_MovementXYYaw(float momx, float momy)
-{
-    float mom[2] = { momx, momy };
-    return R_MovementYaw(mom);
-}
-
-float R_MovementPitch(float const mom[])
-{
-    return BANG2DEG(bamsAtan2 (100 * mom[MZ], 100 * V2f_Length(mom)));
-}
-
-float R_MovementXYZPitch(float momx, float momy, float momz)
-{
-    float mom[3] = { momx, momy, momz };
-    return R_MovementPitch(mom);
 }
 
 typedef struct {
@@ -559,7 +420,7 @@ void R_ProjectSprite(mobj_t *mo)
     spriteframe_t *sprFrame = spriteFrame(mo->sprite, mo->frame);
     if(!sprFrame) return;
     // ...fully transparent?
-    float const alpha = R_Alpha(mo);
+    float const alpha = Mobj_Alpha(mo);
     if(alpha <= 0) return;
     // ...origin lies in a sector with no volume?
     if(!mo->bspLeaf->hasWorldVolume()) return;
@@ -616,7 +477,7 @@ void R_ProjectSprite(mobj_t *mo)
      * relative to the viewer and determining if the whole of the segment has
      * been clipped away according to the 360 degree angle clipper.
      */
-    coord_t const visWidth = R_VisualRadius(mo) * 2; /// @todo ignorant of rotation...
+    coord_t const visWidth = Mobj_VisualRadius(mo) * 2; /// @todo ignorant of rotation...
     Vector2d v1, v2;
     R_ProjectViewRelativeLine2D(moPos, mf || viewAlign, visWidth,
                                 (mf? 0 : coord_t(-tex.origin().x) - (visWidth / 2.0f)),
@@ -669,7 +530,7 @@ void R_ProjectSprite(mobj_t *mo)
     if(mo->ddFlags & DDMF_BOB)
     {
         // Bobbing is applied using floorclip.
-        floorClip += R_GetBobOffset(mo);
+        floorClip += Mobj_BobOffset(mo);
     }
 
     float yaw = 0, pitch = 0;
@@ -890,15 +751,6 @@ void R_ProjectSprite(mobj_t *mo)
             }
         }
     }
-}
-
-coord_t R_GetBobOffset(mobj_t* mo)
-{
-    if(mo->ddFlags & DDMF_BOB)
-    {
-        return (sin(MOBJ_TO_ID(mo) + App_World().time() / 1.8286 * 2 * PI) * 8);
-    }
-    return 0;
 }
 
 #endif // __CLIENT__

@@ -36,8 +36,7 @@ extern "C" {
 typedef struct mobj_s
 {
     DD_BASE_MOBJ_ELEMENTS()
-}
-mobj_t;
+} mobj_t;
 
 #define MOBJ_SIZE               gx.mobjSize
 
@@ -67,6 +66,17 @@ boolean Mobj_SetOrigin(mobj_t *mobj, coord_t x, coord_t y, coord_t z);
 coord_t Mobj_ApproxPointDistance(mobj_t *start, coord_t const *point);
 
 boolean Mobj_UnlinkFromSector(mobj_t *mobj);
+
+/**
+ * @return  The current floatbob offset for the mobj, if the mobj is flagged
+ *          for bobbing; otherwise @c 0.
+ */
+coord_t Mobj_BobOffset(mobj_t *mobj);
+
+float Mobj_Alpha(mobj_t *mo);
+
+/// @return  Radius of the mobj as it would visually appear to be.
+coord_t Mobj_VisualRadius(mobj_t *mo);
 
 #ifdef __cplusplus
 } // extern "C"

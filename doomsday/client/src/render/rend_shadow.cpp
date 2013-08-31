@@ -108,13 +108,13 @@ static void processMobjShadow(mobj_t *mo)
     if(usingFog) shadowStrength /= 2;
     if(shadowStrength <= 0) return;
 
-    coord_t shadowRadius = R_VisualRadius(mo);
+    coord_t shadowRadius = Mobj_VisualRadius(mo);
     if(shadowRadius <= 0) return;
 
     // Check the height.
     coord_t moz = mo->origin[VZ] - mo->floorClip;
     if(mo->ddFlags & DDMF_BOB)
-        moz -= R_GetBobOffset(mo);
+        moz -= Mobj_BobOffset(mo);
 
     coord_t heightFromSurface = moz - mo->floorZ;
     coord_t moh = mo->height;
