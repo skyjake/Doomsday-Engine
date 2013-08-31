@@ -134,6 +134,7 @@ public IGameChangeObserver
         legacy->rule()
                 .setLeftTop    (root.viewLeft(),  root.viewTop())
                 .setRightBottom(root.viewRight(), root.viewBottom());
+        legacy->disable();
         root.add(legacy);
 
         // Game selection.

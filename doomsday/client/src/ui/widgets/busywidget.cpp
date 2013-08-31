@@ -77,7 +77,9 @@ DENG_GUI_PIMPL(BusyWidget)
 
 BusyWidget::BusyWidget(String const &name)
     : GuiWidget(name), d(new Instance(this))
-{}
+{
+    requestGeometry(false);
+}
 
 ProgressWidget &BusyWidget::progress()
 {
@@ -86,6 +88,8 @@ ProgressWidget &BusyWidget::progress()
 
 void BusyWidget::viewResized()
 {
+    GuiWidget::viewResized();
+
     if(!BusyMode_Active() || isDisabled() || Sys_IsShuttingDown()) return;
 
     ClientWindow::main().glActivate(); // needed for legacy stuff

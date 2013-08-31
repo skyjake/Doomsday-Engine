@@ -144,7 +144,9 @@ DENG2_PIMPL(LegacyWidget)
 
 LegacyWidget::LegacyWidget(String const &name)
     : GuiWidget(name), d(new Instance(this))
-{}
+{
+    requestGeometry(false);
+}
 
 void LegacyWidget::viewResized()
 {

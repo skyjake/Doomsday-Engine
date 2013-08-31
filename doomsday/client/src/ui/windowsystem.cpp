@@ -133,5 +133,6 @@ void WindowSystem::timeChanged(Clock const &/*clock*/)
 {
     d->dispatchLatestMousePosition();
 
+    // Update periodically.
     main().root().update();
 }

@@ -338,17 +338,11 @@ void PopupWidget::viewResized()
     d->uMvpMatrix = root().projMatrix2D();
 
     requestGeometry();
-    //update();
 }
 
 void PopupWidget::update()
 {
     GuiWidget::update();
-
-    if(!isHidden())
-    {
-        d->updateGeometry();
-    }
 }
 
 void PopupWidget::preDrawChildren()
@@ -459,6 +453,7 @@ void PopupWidget::dismiss()
 
 void PopupWidget::drawContent()
 {
+    d->updateGeometry();
     d->drawable.draw();
 }
 
