@@ -298,6 +298,16 @@ void PopupWidget::setAnchorY(Rule const &y)
     d->anchorY = holdRef(y);
 }
 
+Rule const &PopupWidget::anchorX() const
+{
+    return *d->anchorX;
+}
+
+Rule const &PopupWidget::anchorY() const
+{
+    return *d->anchorY;
+}
+
 void PopupWidget::setOpeningDirection(ui::Direction dir)
 {
     d->dir = dir;

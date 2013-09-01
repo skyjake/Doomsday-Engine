@@ -96,6 +96,12 @@ public:
      */
     Style &style();
 
+    /**
+     * Dispatches a mouse position event with the latest mouse position. This
+     * happens automatically whenever the mouse has moved and time advances.
+     */
+    void dispatchLatestMousePosition();
+
     // System.
     bool processEvent(de::Event const &);
     void timeChanged(de::Clock const &);

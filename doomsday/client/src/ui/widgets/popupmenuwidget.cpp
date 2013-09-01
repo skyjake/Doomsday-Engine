@@ -21,6 +21,7 @@
 #include "GuiRootWidget"
 #include "ContextWidgetOrganizer"
 #include "ui/Item"
+#include "clientapp.h"
 
 using namespace de;
 
@@ -31,9 +32,9 @@ DENG2_OBSERVES(ContextWidgetOrganizer, WidgetCreation),
 DENG2_OBSERVES(ContextWidgetOrganizer, WidgetUpdate)
 {
     ButtonWidget *hover;
-    Rectanglei hoverHighlightRect;
+    int oldScrollY;
 
-    Instance(Public *i) : Base(i), hover(0) {}
+    Instance(Public *i) : Base(i), hover(0), oldScrollY(0) {}
 
     void widgetCreatedForItem(GuiWidget &widget, ui::Item const &item)
     {
@@ -144,13 +145,32 @@ DENG2_OBSERVES(ContextWidgetOrganizer, WidgetUpdate)
             hi.bottomRight.x = hover->hitRule().right().valuei();
             hi.bottomRight.y = hover->hitRule().bottom().valuei();
         }
-        return hi;
+        // Clip the highlight to the main popup area.
+        return hi & self.rule().recti();
     }
 
     void buttonActionTriggered(ButtonWidget &)
     {
         // The popup menu is closed when an action is triggered.
         self.close();
+    }
+
+    void updateIfScrolled()
+    {
+        // If the menu is scrolled, we need to update some things.
+        int scrollY = self.menu().scrollPositionY().valuei();
+        if(scrollY == oldScrollY)
+        {
+            return;
+        }
+        oldScrollY = scrollY;
+
+        //qDebug() << "menu scrolling" << scrollY;
+
+        // Resend the mouse position so the buttons realize they've moved.
+        ClientApp::windowSystem().dispatchLatestMousePosition();
+
+        self.requestGeometry();
     }
 };
 
@@ -168,6 +188,12 @@ PopupMenuWidget::PopupMenuWidget(String const &name)
 MenuWidget &PopupMenuWidget::menu() const
 {
     return static_cast<MenuWidget &>(content());
+}
+
+void PopupMenuWidget::update()
+{
+    PopupWidget::update();
+    d->updateIfScrolled();
 }
 
 void PopupMenuWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
@@ -189,6 +215,14 @@ void PopupMenuWidget::preparePopupForOpening()
     // Redo the layout.
     menu().updateLayout();
     d->updateItemHitRules();
+
+    // Make sure the menu doesn't go beyond the top of the view.
+    if(openingDirection() == ui::Up)
+    {
+        menu().rule().setInput(Rule::Height,
+                OperatorRule::minimum(menu().contentRule().height() + menu().margins().height(),
+                                      anchorY() - menu().margins().top()));
+    }
 
     PopupWidget::preparePopupForOpening();
 }
