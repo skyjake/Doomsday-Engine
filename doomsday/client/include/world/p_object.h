@@ -67,6 +67,18 @@ void P_MobjRecycle(mobj_t *mobj);
  */
 boolean Mobj_SetOrigin(mobj_t *mobj, coord_t x, coord_t y, coord_t z);
 
+#ifdef __CLIENT__
+
+/**
+ * Determines whether the Z origin of the mobj lies above the visual ceiling,
+ * or below the visual floor plane of the BSP leaf at the origin. This can be
+ * used to determine whether this origin should be adjusted with respect to
+ * smoothed plane movement.
+ */
+boolean Mobj_OriginBehindVisPlane(mobj_t *mobj);
+
+#endif // __CLIENT__
+
 coord_t Mobj_ApproxPointDistance(mobj_t *start, coord_t const *point);
 
 boolean Mobj_UnlinkFromSector(mobj_t *mobj);

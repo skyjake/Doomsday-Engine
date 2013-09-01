@@ -266,6 +266,26 @@ DENG_EXTERN_C void Mobj_OriginSmoothed(mobj_t* mo, coord_t origin[3])
     }
 }
 
+#ifdef __CLIENT__
+
+boolean Mobj_OriginBehindVisPlane(mobj_t *mo)
+{
+    if(!mo || !mo->bspLeaf)
+        return false;
+
+    Plane const &visFloor = mo->bspLeaf->visFloor();
+    if(&mo->bspLeaf->floor() != &visFloor && mo->origin[VZ] < visFloor.visHeight())
+        return true;
+
+    Plane const &visCeiling = mo->bspLeaf->visCeiling();
+    if(&mo->bspLeaf->ceiling() != &visCeiling && mo->origin[VZ] > visCeiling.visHeight())
+        return true;
+
+    return false;
+}
+
+#endif // __CLIENT__
+
 #undef Mobj_AngleSmoothed
 DENG_EXTERN_C angle_t Mobj_AngleSmoothed(mobj_t* mo)
 {

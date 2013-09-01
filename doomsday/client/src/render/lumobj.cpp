@@ -805,11 +805,19 @@ static void addLuminous(mobj_t *mo)
     float center = -tex.origin().y - mo->floorClip - Mobj_BobOffset(mo) - yOffset;
 
     // Will the sprite be allowed to go inside the floor?
-    float mul = mo->origin[VZ] + -tex.origin().y - (float) ms.height() - mo->bspLeaf->visFloor().height();
-    if(!(mo->ddFlags & DDMF_NOFITBOTTOM) && mul < 0)
+    float impacted = mo->origin[VZ] + -tex.origin().y - ms.height() - mo->bspLeaf->visFloorHeight();
+    if(impacted < 0)
     {
-        // Must adjust.
-        center -= mul;
+        // If the floor is a visual plane then no light should be emitted.
+        /// @todo Handle this as occlusion so that the halo fades smoothly.
+        if(&mo->bspLeaf->visFloor() != &mo->bspLeaf->floor())
+            return;
+
+        if(!(mo->ddFlags & DDMF_NOFITBOTTOM))
+        {
+            // Must adjust.
+            center -= impacted;
+        }
     }
 
     int radius = size * 40 * loRadiusFactor;
@@ -823,11 +831,8 @@ static void addLuminous(mobj_t *mo)
     {
         // Also reduce the size of the light according to
         // the scale flags. *Won't affect the flare.*
-        mul =
-            1.0f -
-            ((mo->ddFlags & DDMF_LIGHTSCALE) >> DDMF_LIGHTSCALESHIFT) /
-            4.0f;
-        radius *= mul;
+        radius *= 1.0f -
+                ((mo->ddFlags & DDMF_LIGHTSCALE) >> DDMF_LIGHTSCALESHIFT) / 4.0f;
     }
 
     // If any of the color components are != 0, use the def's color.

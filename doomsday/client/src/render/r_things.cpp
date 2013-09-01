@@ -156,7 +156,7 @@ static int findMobjZOriginWorker(Sector *sector, void *parameters)
  */
 static void findMobjZOrigin(mobj_t *mo, bool floorAdjust, vissprite_t *vis)
 {
-    DENG_ASSERT(mo != 0);
+    DENG_ASSERT(mo != 0 && mo->bspLeaf != 0);
     DENG_ASSERT(vis != 0);
 
     findmobjzoriginworker_params_t params; zap(params);
@@ -231,10 +231,6 @@ void R_ProjectSprite(mobj_t *mo)
     bool const viewAlign  = (!mf && ((mo->ddFlags & DDMF_VIEWALIGN) || alwaysAlign == 1))
                             || alwaysAlign == 3;
 
-    Plane &floor           = mo->bspLeaf->visFloor();
-    Plane &ceiling         = mo->bspLeaf->visCeiling();
-    bool const floorAdjust = (fabs(floor.visHeight() - mo->bspLeaf->floor().height()) < 8);
-
     /*
      * Perform visibility checking by projecting a view-aligned line segment
      * relative to the viewer and determining if the whole of the segment has
@@ -276,7 +272,14 @@ void R_ProjectSprite(mobj_t *mo)
      * The Z origin of the visual should match that of the mobj. When smoothing
      * is enabled this requires examining all touched sector planes in the vicinity.
      */
-    findMobjZOrigin(mo, floorAdjust, vis);
+    Plane &floor     = mo->bspLeaf->visFloor();
+    Plane &ceiling   = mo->bspLeaf->visCeiling();
+    bool floorAdjust = false;
+    if(!Mobj_OriginBehindVisPlane(mo))
+    {
+        floorAdjust = de::abs(floor.visHeight() - floor.height()) < 8;
+        findMobjZOrigin(mo, floorAdjust, vis);
+    }
 
     coord_t gzt = vis->origin[VZ] + -tex.origin().y;
 
