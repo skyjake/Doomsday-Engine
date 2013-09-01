@@ -27,10 +27,13 @@
 using namespace de;
 using namespace ui;
 
+/**
+ * Popup for editing the value of a slider.
+ */
 class ValuePopup : public PopupWidget
 {
 public:
-    ValuePopup(SliderWidget &slider) : _slider(slider)
+    ValuePopup(SliderWidget &slider)
     {
         setContent(_edit = new LineEditWidget);
         //_edit->setEmptyContentHint(tr("Enter value"));
@@ -59,7 +62,6 @@ public:
     }
 
 private:
-    SliderWidget &_slider;
     LineEditWidget *_edit;
 };
 
