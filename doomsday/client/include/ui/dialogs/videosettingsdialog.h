@@ -36,6 +36,7 @@ protected slots:
     void toggleVerticalSync();
     void changeMode(uint selected);
     void changeColorDepth(uint selected);
+    void showColorAdjustments();
 
 private:
     DENG2_PRIVATE(d)

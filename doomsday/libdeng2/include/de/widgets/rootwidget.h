@@ -25,6 +25,7 @@
 namespace de {
 
 class Rule;
+class RuleRectangle;
 
 /**
  * Widget that represents the root of the widget tree.
@@ -48,6 +49,7 @@ public:
 
     Size viewSize() const;
 
+    RuleRectangle const &viewRule() const;
     Rule const &viewLeft() const;
     Rule const &viewRight() const;
     Rule const &viewTop() const;

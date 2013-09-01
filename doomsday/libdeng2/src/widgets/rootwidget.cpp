@@ -56,6 +56,11 @@ RootWidget::Size RootWidget::viewSize() const
     return d->viewSize();
 }
 
+RuleRectangle const &RootWidget::viewRule() const
+{
+    return *d->viewRect;
+}
+
 Rule const &RootWidget::viewLeft() const
 {
     return d->viewRect->left();

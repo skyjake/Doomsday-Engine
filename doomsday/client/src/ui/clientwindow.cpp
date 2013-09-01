@@ -41,6 +41,7 @@
 #include "ui/widgets/notificationwidget.h"
 #include "ui/widgets/gameselectionwidget.h"
 #include "ui/widgets/progresswidget.h"
+#include "ui/dialogs/coloradjustmentdialog.h"
 #include "CommandAction"
 #include "ui/mouse_qt.h"
 
@@ -68,6 +69,7 @@ public IGameChangeObserver
     LegacyWidget *legacy;
     TaskBarWidget *taskBar;
     NotificationWidget *notifications;
+    ColorAdjustmentDialog *colorAdjust;
     LabelWidget *background;
     GameSelectionWidget *games;
     BusyWidget *busy;
@@ -87,6 +89,7 @@ public IGameChangeObserver
           legacy(0),
           taskBar(0),
           notifications(0),
+          colorAdjust(0),
           background(0),
           games(0),
           busyRoot(thisPublic),
@@ -134,6 +137,8 @@ public IGameChangeObserver
         legacy->rule()
                 .setLeftTop    (root.viewLeft(),  root.viewTop())
                 .setRightBottom(root.viewRight(), root.viewBottom());
+        // Initially the widget is disabled. It will be enabled when the window
+        // is visible and ready to be drawn.
         legacy->disable();
         root.add(legacy);
 
@@ -173,9 +178,11 @@ public IGameChangeObserver
                                                      (taskBar->rule().top() - root.viewHeight() / 2) * 2,
                                                      style.rules().rule("gameselection.max.height")));
 
-        // Initially the widget is disabled. It will be enabled when the window
-        // is visible and ready to be drawn.
-        legacy->disable();
+        // Color adjustment dialog.
+        colorAdjust = new ColorAdjustmentDialog;
+        colorAdjust->setAnchor(root.viewWidth() / 2, root.viewTop());
+        colorAdjust->setOpeningDirection(ui::Down);
+        root.add(colorAdjust);
 
         // For busy mode we have an entirely different widget tree.
         busy = new BusyWidget;
@@ -598,4 +605,9 @@ void GL_AssertContextActive()
 void ClientWindow::toggleFPSCounter()
 {
     App::config().set(configName("showFps"), !isFPSCounterVisible());
+}
+
+void ClientWindow::showColorAdjustments()
+{
+    d->colorAdjust->open();
 }

@@ -122,6 +122,7 @@ public:
 
 public slots:
     void toggleFPSCounter();
+    void showColorAdjustments();
 
 private:
     DENG2_PRIVATE(d)

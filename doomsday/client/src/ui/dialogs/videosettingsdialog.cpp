@@ -19,7 +19,6 @@
 #include "ui/dialogs/videosettingsdialog.h"
 #include "ui/widgets/variabletogglewidget.h"
 #include "ui/widgets/choicewidget.h"
-#include "ui/widgets/sliderwidget.h"
 #include "ui/widgets/taskbarwidget.h"
 #include "SequentialLayout"
 #include "GridLayout"
@@ -130,11 +129,6 @@ DENG2_OBSERVES(PersistentCanvasWindow, AttributeChange)
 VideoSettingsDialog::VideoSettingsDialog(String const &name)
     : DialogWidget(name), d(new Instance(this))
 {
-    // Fullscreen, Maximized, Centered, FPS, FSAA, VSync
-
-    SliderWidget *slider = new SliderWidget;
-    area().add(slider);
-
     // Toggles for video/window options.
     d->fullscreen->setText(tr("Fullscreen"));
     d->fullscreen->setAction(new CommandAction("togglefullscreen"));
@@ -195,17 +189,16 @@ VideoSettingsDialog::VideoSettingsDialog(String const &name)
     buttons().items()
             << new DialogButtonItem(DialogWidget::Action, tr("Reset to Defaults"))
             << new DialogButtonItem(DialogWidget::Action, tr("Color Adjustments..."),
-                                    new SignalAction(&d->win.taskBar(), SLOT(closeMainMenu())));
+                                    new SignalAction(this, SLOT(showColorAdjustments())));
 
     // Layout all widgets.
     Rule const &gap = style().rules().rule("dialog.gap");
 
     GridLayout layout(area().contentRule().left(),
                       area().contentRule().top(), GridLayout::RowFirst);
-    layout.setGridSize(2, 4);
+    layout.setGridSize(2, 3);
     layout.setColumnPadding(style().rules().rule("dialog.gap"));
-    layout << *slider
-           << *d->showFps
+    layout << *d->showFps
            << *d->fsaa
            << *d->vsync
            << *d->fullscreen
@@ -255,4 +248,10 @@ void VideoSettingsDialog::changeColorDepth(uint selected)
 #else
     DENG2_UNUSED(selected);
 #endif
+}
+
+void VideoSettingsDialog::showColorAdjustments()
+{
+    d->win.showColorAdjustments();
+    d->win.taskBar().closeMainMenu();
 }
