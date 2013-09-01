@@ -222,7 +222,7 @@ DENG_GUI_PIMPL(SliderWidget)
         float altAlpha = 0;
         if(dotSpace / numDots > 30)
         {
-            altAlpha = .3f;
+            altAlpha = .333f;
             numDots = 2 * numDots + 1;
         }
         Image::Size const dotSize = atlas().imageRect(root().tinyDot()).size();
