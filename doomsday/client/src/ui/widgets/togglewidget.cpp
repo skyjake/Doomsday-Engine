@@ -17,8 +17,8 @@
  */
 
 #include "ui/widgets/togglewidget.h"
-#include "ui/widgets/proceduralimage.h"
-#include "ui/widgets/guirootwidget.h"
+#include "ProceduralImage"
+#include "GuiRootWidget"
 #include "ui/style.h"
 #include "clientapp.h"
 

@@ -19,7 +19,7 @@
 #ifndef DENG_CLIENT_LINEEDITWIDGET_H
 #define DENG_CLIENT_LINEEDITWIDGET_H
 
-#include "guiwidget.h"
+#include "GuiWidget"
 #include <de/shell/AbstractLineEditor>
 #include <de/KeyEvent>
 
@@ -33,6 +33,8 @@
  */
 class LineEditWidget : public GuiWidget, public de::shell::AbstractLineEditor
 {
+    Q_OBJECT
+
 public:
     LineEditWidget(de::String const &name = "");
 
@@ -42,6 +44,16 @@ public:
      * @param hintText  Hint text.
      */
     void setEmptyContentHint(de::String const &hintText);
+
+    /**
+     * Enables or disables the signal emitted when the edit widget receives an
+     * Enter key. By default, no a signal is emitted (and the key is thus not
+     * eaten).
+     *
+     * @param enterSignal  @c true to enable signal and eat event, @c false to
+     *                     disable.
+     */
+    void setSignalOnEnter(bool enterSignal);
 
     /**
      * Determines where the cursor is currently in view coordinates.
@@ -58,6 +70,9 @@ public:
 
 public:
     static KeyModifiers modifiersFromKeyEvent(de::KeyEvent::Modifiers const &keyMods);
+
+signals:
+    void enterPressed(QString text);
 
 protected:
     void glInit();

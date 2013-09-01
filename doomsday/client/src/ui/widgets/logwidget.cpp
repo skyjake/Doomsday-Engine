@@ -22,9 +22,9 @@
  */
 
 #include "ui/widgets/logwidget.h"
-#include "ui/widgets/fontlinewrapping.h"
-#include "ui/widgets/gltextcomposer.h"
-#include "ui/widgets/styledlogsinkformatter.h"
+#include "FontLineWrapping"
+#include "GLTextComposer"
+#include "ui/styledlogsinkformatter.h"
 #include "ui/style.h"
 #include "clientapp.h"
 
@@ -398,7 +398,7 @@ public Font::RichFormat::IStyle
     {        
         // TODO -- stop wrapping tasks in the sink
 
-        Style const &st = self.style();
+        Style const &st = style();
 
         font           = &self.font();
 
@@ -439,7 +439,7 @@ public Font::RichFormat::IStyle
                          Font::RichFormat::Style &fontStyle,
                          int &colorIndex) const
     {
-        return self.style().richStyleFormat(contentStyle, sizeFactor, fontWeight, fontStyle, colorIndex);
+        return style().richStyleFormat(contentStyle, sizeFactor, fontWeight, fontStyle, colorIndex);
     }
 
     void glInit()
@@ -742,7 +742,7 @@ nextAttempt:
         {
             GLState &st = GLState::push();
             // Leave room for the indicator in the scissor.
-            st.setScissor(vp.adjusted(Vector2i(), Vector2i(self.rightMargin(), 0)));
+            st.setScissor(vp.adjusted(Vector2i(), Vector2i(self.margins().right().valuei(), 0)));
 
             // First draw the shadow of the text.
             uMvpMatrix = projMatrix * Matrix4f::translate(
@@ -804,6 +804,8 @@ Animation const &LogWidget::contentYOffset() const
 
 void LogWidget::viewResized()
 {
+    GuiWidget::viewResized();
+
     d->updateProjection();
 }
 

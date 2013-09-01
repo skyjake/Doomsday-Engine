@@ -23,7 +23,7 @@
 #ifndef DENG_CLIENT_UPDATEAVAILABLEDIALOG_H
 #define DENG_CLIENT_UPDATEAVAILABLEDIALOG_H
 
-#include "ui/widgets/messagedialog.h"
+#include "ui/dialogs/messagedialog.h"
 #include "versioninfo.h"
 
 class UpdateAvailableDialog : public MessageDialog

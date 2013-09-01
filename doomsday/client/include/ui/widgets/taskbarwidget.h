@@ -22,7 +22,7 @@
 #include <QObject>
 #include <de/Action>
 
-#include "guiwidget.h"
+#include "GuiWidget"
 #include "consolewidget.h"
 #include "buttonwidget.h"
 
@@ -55,9 +55,11 @@ public slots:
     void openAndPauseGame();
     void close();
     void openMainMenu();
+    void closeMainMenu();
     void unloadGame();
     void showAbout();
     void showUpdaterSettings();
+    void showVideoSettings();
 
 signals:
     void opened();

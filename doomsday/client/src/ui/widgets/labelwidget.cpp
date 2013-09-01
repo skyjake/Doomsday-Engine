@@ -17,9 +17,9 @@
  */
 
 #include "ui/widgets/labelwidget.h"
-#include "ui/widgets/gltextcomposer.h"
-#include "ui/widgets/fontlinewrapping.h"
-#include "ui/widgets/atlasproceduralimage.h"
+#include "GLTextComposer"
+#include "FontLineWrapping"
+#include "AtlasProceduralImage"
 
 #include <de/Drawable>
 #include <de/AtlasTexture>
@@ -50,8 +50,7 @@ public Font::RichFormat::IStyle
     ConstantRule *height;
 
     // Style.
-    Vector2i tlMargin;
-    Vector2i brMargin;
+    Vector4i margin;
     DotPath gapId;
     int gap;
     ColorBank::Color highlightColor;
@@ -102,12 +101,8 @@ public Font::RichFormat::IStyle
     {
         Style const &st = self.style();
 
-        tlMargin  = Vector2i(self.margins().left().valuei(),
-                             self.margins().top().valuei());
-        brMargin  = Vector2i(self.margins().right().valuei(),
-                             self.margins().bottom().valuei());
-
-        gap = st.rules().rule(gapId).valuei();
+        margin = self.margins().toVector();
+        gap    = st.rules().rule(gapId).valuei();
 
         // Colors.
         highlightColor = st.colors().color("label.highlight");
@@ -148,7 +143,7 @@ public Font::RichFormat::IStyle
     void richStyleFormat(int contentStyle, float &sizeFactor, Font::RichFormat::Weight &fontWeight,
                          Font::RichFormat::Style &fontStyle, int &colorIndex) const
     {
-        return self.style().richStyleFormat(contentStyle, sizeFactor, fontWeight, fontStyle, colorIndex);
+        return style().richStyleFormat(contentStyle, sizeFactor, fontWeight, fontStyle, colorIndex);
     }
 
     void glInit()
@@ -196,7 +191,7 @@ public Font::RichFormat::IStyle
      */
     void contentPlacement(ContentLayout &layout) const
     {
-        Rectanglei const contentRect = self.rule().recti().adjusted(tlMargin, -brMargin);
+        Rectanglei const contentRect = self.rule().recti().adjusted(margin.xy(), -margin.zw());
 
         Vector2f const imgSize = imageSize() * imageScale;
 
@@ -206,27 +201,25 @@ public Font::RichFormat::IStyle
 
         if(horizPolicy == Filled)
         {
-            if(textAlign & (AlignLeft | AlignRight))
+            if(hasText() && textAlign & (AlignLeft | AlignRight))
             {
-                layout.image.setWidth(imageScale * (int(contentRect.width()) -
-                                                    int(layout.text.width()) - gap));
+                layout.image.setWidth(int(contentRect.width()) - int(layout.text.width()) - gap);
             }
             else
             {
-                layout.image.setWidth(imageScale * contentRect.width());
+                layout.image.setWidth(contentRect.width());
                 layout.text.setWidth(contentRect.width());
             }
         }
         if(vertPolicy == Filled)
         {
-            if(textAlign & (AlignTop | AlignBottom))
+            if(hasText() && textAlign & (AlignTop | AlignBottom))
             {
-                layout.image.setHeight(imageScale * (int(contentRect.height()) -
-                                                     int(layout.text.height()) - gap));
+                layout.image.setHeight(int(contentRect.height()) - int(layout.text.height()) - gap);
             }
             else
             {
-                layout.image.setHeight(imageScale * contentRect.height());
+                layout.image.setHeight(contentRect.height());
                 layout.text.setHeight(contentRect.height());
             }
         }
@@ -271,14 +264,24 @@ public Font::RichFormat::IStyle
                         layout.image.setSize(Vector2f(layout.image.size()) * scale);
                     }
                 }
+            }           
+
+            // Apply Filled image scaling now.
+            if(horizPolicy == Filled)
+            {
+                layout.image.setWidth(imageScale * layout.image.width());
+            }
+            if(vertPolicy == Filled)
+            {
+                layout.image.setHeight(imageScale * layout.image.height());
             }
         }
 
+        // By default the image and the text are centered over each other.
+        layout.image.move((Vector2f(layout.text.size()) - layout.image.size()) / 2);
+
         if(hasImage() && hasText())
         {
-            // By default the image and the text are centered over each other.
-            layout.image.move((Vector2f(layout.text.size()) - layout.image.size()) / 2);
-
             // Determine the position of the image in relation to the text
             // (keeping the image at its current position).
             if(textAlign & AlignLeft)
@@ -355,15 +358,15 @@ public Font::RichFormat::IStyle
         if(horizPolicy == Expand)
         {
             // Expansion can occur to full view width.
-            w = root().viewSize().x - (tlMargin.x + brMargin.x);
+            w = root().viewSize().x - (margin.x + margin.z);
         }
         else
         {
-            w = self.rule().width().valuei() - (tlMargin.x + brMargin.x);
+            w = self.rule().width().valuei() - (margin.x + margin.z);
         }
         if(vertPolicy != Expand)
         {
-            h = self.rule().height().valuei() - (tlMargin.y + brMargin.y);
+            h = self.rule().height().valuei() - (margin.y + margin.w);
         }
 
         if(hasImage())
@@ -414,8 +417,8 @@ public Font::RichFormat::IStyle
             ContentLayout layout;
             contentPlacement(layout);
             Rectanglef combined = layout.image | layout.text;
-            width->set (combined.width()  + tlMargin.x + brMargin.x);
-            height->set(combined.height() + tlMargin.y + brMargin.y);
+            width->set (combined.width()  + margin.x + margin.z);
+            height->set(combined.height() + margin.y + margin.w);
         }
     }
 
@@ -595,6 +598,7 @@ void LabelWidget::updateModelViewProjection(GLUniform &uMvp)
 
 void LabelWidget::viewResized()
 {
+    GuiWidget::viewResized();
     updateModelViewProjection(d->uMvpMatrix);
 }
 

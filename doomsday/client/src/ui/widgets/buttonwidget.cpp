@@ -17,7 +17,7 @@
  */
 
 #include "ui/widgets/buttonwidget.h"
-#include "ui/widgets/guirootwidget.h"
+#include "GuiRootWidget"
 
 #include <de/MouseEvent>
 #include <de/Animation>
@@ -92,7 +92,7 @@ DENG2_OBSERVES(Action, Triggered)
 
     void setDefaultBackground()
     {
-        self.set(Background(self.style().colors().colorf("background"),
+        self.set(Background(style().colors().colorf("background"),
                             Background::GradientFrame, Vector4f(1, 1, 1, frameOpacity), 6));
     }
 
@@ -101,7 +101,7 @@ DENG2_OBSERVES(Action, Triggered)
         Background bg = self.background();
         if(bg.type == Background::GradientFrame)
         {
-            bg.solidFill = self.style().colors().colorf("background");
+            bg.solidFill = style().colors().colorf("background");
             bg.color = Vector4f(1, 1, 1, frameOpacity);
             self.set(bg);
         }

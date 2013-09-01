@@ -28,7 +28,7 @@
 
 using namespace de;
 
-DENG2_PIMPL(ScrollAreaWidget), public Lockable
+DENG_GUI_PIMPL(ScrollAreaWidget), public Lockable
 {
     /**
      * Rectangle for all the content shown in the widget. The widget's
@@ -49,18 +49,13 @@ DENG2_PIMPL(ScrollAreaWidget), public Lockable
     bool indicatorAnimating;
     ColorBank::Colorf accent;
 
-    Rule const *margin;
-    Rule const *vertMargin;
-
     Instance(Public *i)
         : Base(i),
           origin(Top),
           pageKeysEnabled(true),
           scrollOpacity(0),
           scrollBarWidth(0),
-          indicatorAnimating(false),
-          margin(0),
-          vertMargin(0)
+          indicatorAnimating(false)
     {
         contentRule.setDebugName("ScrollArea-contentRule");
 
@@ -70,10 +65,10 @@ DENG2_PIMPL(ScrollAreaWidget), public Lockable
         y = new ScalarRule(0);
 
         maxX = new OperatorRule(OperatorRule::Maximum, Const(0),
-                                contentRule.width() - self.rule().width() + *margin * 2);
+                                contentRule.width() - self.rule().width() + self.margins().width());
 
         maxY = new OperatorRule(OperatorRule::Maximum, Const(0),
-                                contentRule.height() - self.rule().height() + *vertMargin * 2);
+                                contentRule.height() - self.rule().height() + self.margins().height());
     }
 
     ~Instance()
@@ -86,10 +81,8 @@ DENG2_PIMPL(ScrollAreaWidget), public Lockable
 
     void updateStyle()
     {
-        Style const &st = self.style();
+        Style const &st = style();
 
-        margin         = &st.rules().rule("gap");
-        vertMargin     = &st.rules().rule("gap");
         scrollBarWidth = st.rules().rule("scrollarea.bar").valuei();
         accent         = st.colors().colorf("accent");
     }
@@ -114,7 +107,7 @@ ScrollAreaWidget::ScrollAreaWidget(String const &name)
     setBehavior(ChildHitClipping);
 
     // Link the content rule into the widget's rectangle.
-    d->contentRule.setInput(Rule::Left, rule().left() + *d->margin -
+    d->contentRule.setInput(Rule::Left, rule().left() + margins().left() -
                             OperatorRule::minimum(*d->x, *d->maxX));
 
     setOrigin(Top);
@@ -131,7 +124,7 @@ void ScrollAreaWidget::setOrigin(Origin origin)
     if(origin == Top)
     {
         // Anchor content to the top of the widget.
-        d->contentRule.setInput(Rule::Top, rule().top() + *d->vertMargin -
+        d->contentRule.setInput(Rule::Top, rule().top() + margins().top() -
                                 OperatorRule::minimum(*d->y, *d->maxY));
 
         d->contentRule.clearInput(Rule::Bottom);
@@ -139,7 +132,7 @@ void ScrollAreaWidget::setOrigin(Origin origin)
     else
     {
         // Anchor content to the bottom of the widget.
-        d->contentRule.setInput(Rule::Bottom, rule().bottom() - *d->vertMargin +
+        d->contentRule.setInput(Rule::Bottom, rule().bottom() - margins().bottom() +
                                 OperatorRule::minimum(*d->y, *d->maxY));
 
         d->contentRule.clearInput(Rule::Top);
@@ -255,44 +248,33 @@ bool ScrollAreaWidget::isScrolling() const
 
 Rectanglei ScrollAreaWidget::viewport() const
 {
-    duint const margin = d->margin->valuei();
-    duint const vertMargin = d->vertMargin->valuei();
+    Vector4i const margin = margins().toVector();
 
-    Rectanglei vp = rule().recti().moved(Vector2i(margin, vertMargin));
-    if(vp.width() <= 2 * margin)
+    Rectanglei vp = rule().recti().moved(margin.xy());
+    if(int(vp.width()) <= margin.x + margin.z)
     {
         vp.setWidth(0);
     }
     else
     {
-        vp.bottomRight.x -= 2 * margin;
+        vp.bottomRight.x -= margin.x + margin.z;
     }
-    if(vp.height() <= 2 * vertMargin)
+    if(int(vp.height()) <= margin.y + margin.w)
     {
         vp.setHeight(0);
     }
     else
     {
-        vp.bottomRight.y -= 2 * vertMargin;
+        vp.bottomRight.y -= margin.y + margin.w;
     }
     return vp;
 }
 
 Vector2i ScrollAreaWidget::viewportSize() const
 {
-    return Vector2i(rule().width().valuei()  - 2 * d->margin->valuei(),
-                    rule().height().valuei() - 2 * d->vertMargin->valuei())
+    return Vector2i(rule().width().valuei()  - margins().width().valuei(),
+                    rule().height().valuei() - margins().height().valuei())
             .max(Vector2i(0, 0));
-}
-
-int ScrollAreaWidget::topMargin() const
-{
-    return d->vertMargin->valuei();
-}
-
-int ScrollAreaWidget::rightMargin() const
-{
-    return d->margin->valuei();
 }
 
 Vector2i ScrollAreaWidget::scrollPosition() const
@@ -441,7 +423,7 @@ void ScrollAreaWidget::glMakeScrollIndicatorGeometry(DefaultVertexBuf::Builder &
     if(viewSize == Vector2i(0, 0)) return;
 
     int const indHeight = de::clamp(
-                d->vertMargin->valuei() * 2,
+                margins().height().valuei(),
                 int(float(viewSize.y * viewSize.y) / float(d->contentRule.height().value())),
                 viewSize.y / 2);
 
@@ -450,9 +432,9 @@ void ScrollAreaWidget::glMakeScrollIndicatorGeometry(DefaultVertexBuf::Builder &
 
     float const avail = viewSize.y - indHeight;
 
-    verts.makeQuad(Rectanglef(origin + Vector2f(viewSize.x + d->margin->value() - 2 * d->scrollBarWidth,
+    verts.makeQuad(Rectanglef(origin + Vector2f(viewSize.x + margins().left().value() - 2 * d->scrollBarWidth,
                                                 avail - indPos * avail + indHeight),
-                              origin + Vector2f(viewSize.x + d->margin->value() - d->scrollBarWidth,
+                              origin + Vector2f(viewSize.x + margins().left().value() - d->scrollBarWidth,
                                                 avail - indPos * avail)),
                    Vector4f(1, 1, 1, d->scrollOpacity) * d->accent,
                    d->indicatorUv);

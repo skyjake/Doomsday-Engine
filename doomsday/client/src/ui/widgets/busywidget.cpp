@@ -19,7 +19,7 @@
 #include "de_platform.h"
 #include "ui/widgets/busywidget.h"
 #include "ui/widgets/progresswidget.h"
-#include "ui/widgets/guirootwidget.h"
+#include "GuiRootWidget"
 #include "ui/busyvisual.h"
 #include "busymode.h"
 #include "sys_system.h"
@@ -77,7 +77,9 @@ DENG_GUI_PIMPL(BusyWidget)
 
 BusyWidget::BusyWidget(String const &name)
     : GuiWidget(name), d(new Instance(this))
-{}
+{
+    requestGeometry(false);
+}
 
 ProgressWidget &BusyWidget::progress()
 {
@@ -86,6 +88,8 @@ ProgressWidget &BusyWidget::progress()
 
 void BusyWidget::viewResized()
 {
+    GuiWidget::viewResized();
+
     if(!BusyMode_Active() || isDisabled() || Sys_IsShuttingDown()) return;
 
     ClientWindow::main().glActivate(); // needed for legacy stuff

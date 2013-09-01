@@ -57,6 +57,9 @@ public:
     void setAnchorX(de::Rule const &x);
     void setAnchorY(de::Rule const &y);
 
+    de::Rule const &anchorX() const;
+    de::Rule const &anchorY() const;
+
     /**
      * Sets the preferred opening direction of the popup. If there isn't enough
      * room in the specified direction, the opposite direction is used instead.

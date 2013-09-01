@@ -43,8 +43,6 @@ public IGameChangeObserver
         App::app().audienceForStartupComplete += this;
         audienceForGameChange += this;
 
-        Style const &st = self.style();
-
         // Popup for autocompletions.
         completions = new DocumentWidget;
         completions->setMaximumLineWidth(640);
@@ -63,10 +61,10 @@ public IGameChangeObserver
         // most 400; never extend outside the view, though.
         completions->rule().setInput(Rule::Height,
                 OperatorRule::minimum(
-                    OperatorRule::minimum(st.rules().rule("editor.completion.height"),
+                    OperatorRule::minimum(style().rules().rule("editor.completion.height"),
                                           completions->contentRule().height() +
                                           completions->margins().height()),
-                    self.rule().top() - st.rules().rule("gap")));
+                    self.rule().top() - style().rules().rule("gap")));
 
         self.add(popup);
     }

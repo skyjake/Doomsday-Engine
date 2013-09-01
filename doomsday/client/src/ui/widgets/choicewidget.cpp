@@ -18,14 +18,14 @@
 
 #include "ui/widgets/choicewidget.h"
 #include "ui/widgets/popupmenuwidget.h"
-#include "ui/signalaction.h"
+#include "SignalAction"
 
 using namespace de;
 using namespace ui;
 
 DENG_GUI_PIMPL(ChoiceWidget),
-DENG2_OBSERVES(Context, Addition),
-DENG2_OBSERVES(Context, Removal),
+DENG2_OBSERVES(Data, Addition),
+DENG2_OBSERVES(Data, Removal),
 DENG2_OBSERVES(ContextWidgetOrganizer, WidgetCreation)
 {
     /**
@@ -46,6 +46,8 @@ DENG2_OBSERVES(ContextWidgetOrganizer, WidgetCreation)
             d->updateButtonWithSelection();
             d->updateItemHighlight();
             d->choices->dismiss();
+
+            emit d->self.selectionChangedByUser(d->selected);
         }
 
         Action *duplicate() const
@@ -56,14 +58,13 @@ DENG2_OBSERVES(ContextWidgetOrganizer, WidgetCreation)
     };
 
     PopupMenuWidget *choices;
-    Context::Pos selected; ///< One item is always selected.
+    Data::Pos selected; ///< One item is always selected.
 
-    Instance(Public *i) : Base(i), selected(Context::InvalidPos)
+    Instance(Public *i) : Base(i), selected(Data::InvalidPos)
     {
         self.setFont("choice.selected");
 
         choices = new PopupMenuWidget;
-        choices->setAnchorAndOpeningDirection(self.hitRule(), ui::Right);
         choices->menu().items().audienceForAddition += this;
         choices->menu().items().audienceForRemoval += this;
         choices->menu().organizer().audienceForWidgetCreation += this;
@@ -79,7 +80,7 @@ DENG2_OBSERVES(ContextWidgetOrganizer, WidgetCreation)
     {
         // Popup background color.
         Background bg = choices->background();
-        bg.solidFill = self.style().colors().colorf("choice.popup");
+        bg.solidFill = style().colors().colorf("choice.popup");
         choices->set(bg);
     }
 
@@ -93,7 +94,7 @@ DENG2_OBSERVES(ContextWidgetOrganizer, WidgetCreation)
         }
     }
 
-    Context const &items() const
+    Data const &items() const
     {
         return choices->menu().items();
     }
@@ -103,7 +104,7 @@ DENG2_OBSERVES(ContextWidgetOrganizer, WidgetCreation)
         return selected < items().size();
     }
 
-    void contextItemAdded(Context::Pos id, ui::Item const &)
+    void contextItemAdded(Data::Pos id, ui::Item const &)
     {
         if(selected >= items().size())
         {
@@ -121,7 +122,7 @@ DENG2_OBSERVES(ContextWidgetOrganizer, WidgetCreation)
         }
     }
 
-    void contextItemRemoved(Context::Pos id, ui::Item &)
+    void contextItemRemoved(Data::Pos id, ui::Item &)
     {
         if(id <= selected && selected > 0)
         {
@@ -137,7 +138,7 @@ DENG2_OBSERVES(ContextWidgetOrganizer, WidgetCreation)
     void updateItemHighlight()
     {
         // Highlight the currently selected item.
-        for(Context::Pos i = 0; i < items().size(); ++i)
+        for(Data::Pos i = 0; i < items().size(); ++i)
         {
             if(GuiWidget *w = choices->menu().organizer().itemWidget(i))
             {
@@ -172,14 +173,21 @@ DENG2_OBSERVES(ContextWidgetOrganizer, WidgetCreation)
 };
 
 ChoiceWidget::ChoiceWidget(String const &name) : ButtonWidget(name), d(new Instance(this))
-{}
+{
+    setOpeningDirection(ui::Right);
+}
+
+void ChoiceWidget::setOpeningDirection(Direction dir)
+{
+    d->choices->setAnchorAndOpeningDirection(hitRule(), dir);
+}
 
 PopupMenuWidget &ChoiceWidget::popup()
 {
     return *d->choices;
 }
 
-void ChoiceWidget::setSelected(Context::Pos pos)
+void ChoiceWidget::setSelected(Data::Pos pos)
 {
     if(d->selected != pos)
     {
@@ -189,7 +197,7 @@ void ChoiceWidget::setSelected(Context::Pos pos)
     }
 }
 
-Context::Pos ChoiceWidget::selected() const
+Data::Pos ChoiceWidget::selected() const
 {
     return d->selected;
 }
@@ -206,7 +214,7 @@ void ChoiceWidget::openPopup()
     d->choices->open();
 }
 
-ui::Context &ChoiceWidget::items()
+ui::Data &ChoiceWidget::items()
 {
     return d->choices->menu().items();
 }

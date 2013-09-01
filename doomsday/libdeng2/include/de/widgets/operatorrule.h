@@ -57,6 +57,10 @@ public:
         return *refless(new OperatorRule(Maximum, left, right));
     }
 
+    static OperatorRule &maximum(Rule const &a, Rule const &b, Rule const &c) {
+        return maximum(a, maximum(b, c));
+    }
+
     static Rule const &maximum(Rule const &left, Rule const *rightOrNull) {
         if(rightOrNull) return *refless(new OperatorRule(Maximum, left, *rightOrNull));
         return left;

@@ -17,17 +17,18 @@
  */
 
 #include "ui/widgets/taskbarwidget.h"
-#include "ui/widgets/guirootwidget.h"
 #include "ui/widgets/labelwidget.h"
 #include "ui/widgets/buttonwidget.h"
 #include "ui/widgets/consolecommandwidget.h"
 #include "ui/widgets/popupmenuwidget.h"
 #include "ui/widgets/blurwidget.h"
-#include "ui/widgets/aboutdialog.h"
+#include "ui/dialogs/aboutdialog.h"
+#include "ui/dialogs/videosettingsdialog.h"
+#include "GuiRootWidget"
+#include "CommandAction"
+#include "SignalAction"
 #include "updater/updatersettingsdialog.h"
 #include "ui/clientwindow.h"
-#include "ui/commandaction.h"
-#include "ui/signalaction.h"
 #include "client/cl_def.h" // clientPaused
 
 #include "ui/ui_main.h"
@@ -47,8 +48,10 @@ using namespace ui;
 
 static TimeDelta OPEN_CLOSE_SPAN = 0.2;
 static uint POS_PANEL = 0;
-static uint POS_UNLOAD = 3;
-static uint POS_UPDATER_SETTINGS = 6;
+static uint POS_UNLOAD = 1;
+static uint POS_GAME_SEPARATOR = 2;
+static uint POS_VIDEO_SETTINGS = 3;
+static uint POS_UPDATER_SETTINGS = 5;
 
 DENG_GUI_PIMPL(TaskBarWidget),
 public IGameChangeObserver
@@ -79,7 +82,7 @@ public IGameChangeObserver
           uColor    ("uColor",     GLUniform::Vec4)
     {
         uColor = Vector4f(1, 1, 1, 1);
-        self.set(Background(self.style().colors().colorf("background")));
+        self.set(Background(style().colors().colorf("background")));
 
         vertShift = new ScalarRule(0);
 
@@ -137,6 +140,7 @@ public IGameChangeObserver
 
         itemWidget(POS_PANEL).show(!isNullGame(newGame));
         itemWidget(POS_UNLOAD).show(!isNullGame(newGame));
+        itemWidget(POS_GAME_SEPARATOR).show(!isNullGame(newGame));
 
         mainMenu->menu().updateLayout(); // Include/exclude shown/hidden menu items.
     }
@@ -247,11 +251,10 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
      */
     d->mainMenu->menu().items()
             << new ui::ActionItem(_E(b) + tr("Open Control Panel"), new CommandAction("panel"))
-            << new ui::ActionItem(tr("Toggle Fullscreen"), new CommandAction("togglefullscreen"))
-            << new ui::VariableToggleItem(tr("Show FPS"), App::config()["window.main.showFps"])
             << unloadMenu
             << new ui::Item(ui::Item::Separator)
-            << new ui::ActionItem(tr("Check for Updates..."), new CommandAction("updateandnotify"))
+            << new ui::ActionItem(ui::Item::ShownAsButton, tr("Video Settings"),
+                                  new SignalAction(this, SLOT(showVideoSettings())))
             << new ui::ActionItem(ui::Item::ShownAsButton, tr("Updater Settings"),
                                   new SignalAction(this, SLOT(showUpdaterSettings())))
             << new ui::Item(ui::Item::Separator)
@@ -263,6 +266,7 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
 
     d->itemWidget(POS_PANEL).hide();
     d->itemWidget(POS_UNLOAD).hide();
+    d->itemWidget(POS_GAME_SEPARATOR).hide();
 
     d->logo->setAction(new SignalAction(this, SLOT(openMainMenu())));
 }
@@ -305,6 +309,8 @@ void TaskBarWidget::glDeinit()
 
 void TaskBarWidget::viewResized()
 {
+    GuiWidget::viewResized();
+
     d->updateProjection();
 }
 
@@ -464,6 +470,11 @@ void TaskBarWidget::openMainMenu()
     d->mainMenu->open();
 }
 
+void TaskBarWidget::closeMainMenu()
+{
+    d->mainMenu->close();
+}
+
 void TaskBarWidget::unloadGame()
 {
     Con_Execute(CMDS_DDAY, "unload", false, false);
@@ -480,7 +491,7 @@ void TaskBarWidget::showAbout()
 
 void TaskBarWidget::showUpdaterSettings()
 {
-    UpdaterSettingsDialog *dlg = new UpdaterSettingsDialog;
+    UpdaterSettingsDialog *dlg = new UpdaterSettingsDialog(UpdaterSettingsDialog::WithApplyAndCheckButton);
     dlg->setDeleteAfterDismissed(true);
     if(d->mainMenu->isOpen())
     {
@@ -489,4 +500,20 @@ void TaskBarWidget::showUpdaterSettings()
                                           ui::Left);
     }
     dlg->exec(root());
+}
+
+void TaskBarWidget::showVideoSettings()
+{
+    VideoSettingsDialog *dlg = new VideoSettingsDialog;
+    dlg->setDeleteAfterDismissed(true);
+    if(d->mainMenu->isOpen())
+    {
+        dlg->setAnchorAndOpeningDirection(d->mainMenu->menu().organizer().
+                                          itemWidget(POS_VIDEO_SETTINGS)->hitRule(),
+                                          ui::Left);
+
+        connect(d->mainMenu, SIGNAL(closed()), dlg, SLOT(close()));
+    }
+    root().add(dlg);
+    dlg->open();
 }

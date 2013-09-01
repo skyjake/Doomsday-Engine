@@ -17,10 +17,11 @@
  */
 
 #include "ui/widgets/popupmenuwidget.h"
-#include "ui/widgets/guirootwidget.h"
 #include "ui/widgets/menuwidget.h"
-#include "ui/widgets/contextwidgetorganizer.h"
-#include "ui/widgets/item.h"
+#include "GuiRootWidget"
+#include "ContextWidgetOrganizer"
+#include "ui/Item"
+#include "clientapp.h"
 
 using namespace de;
 
@@ -31,9 +32,9 @@ DENG2_OBSERVES(ContextWidgetOrganizer, WidgetCreation),
 DENG2_OBSERVES(ContextWidgetOrganizer, WidgetUpdate)
 {
     ButtonWidget *hover;
-    Rectanglei hoverHighlightRect;
+    int oldScrollY;
 
-    Instance(Public *i) : Base(i), hover(0) {}
+    Instance(Public *i) : Base(i), hover(0), oldScrollY(0) {}
 
     void widgetCreatedForItem(GuiWidget &widget, ui::Item const &item)
     {
@@ -46,11 +47,6 @@ DENG2_OBSERVES(ContextWidgetOrganizer, WidgetUpdate)
             lab.setTextColor("label.accent");
             return;
         }
-
-        // We want items to be hittable throughout the width of the menu.
-        widget.hitRule()
-                .setInput(Rule::Left,  self.rule().left())
-                .setInput(Rule::Right, self.rule().right());
 
         // Customize buttons for use in the popup. We will observe the button
         // state for highlighting and possibly close the popup when an action
@@ -88,6 +84,30 @@ DENG2_OBSERVES(ContextWidgetOrganizer, WidgetUpdate)
         }
     }
 
+    void updateItemHitRules()
+    {
+        GridLayout const &layout = self.menu().layout();
+
+        foreach(Widget *child, self.menu().childWidgets())
+        {
+            GuiWidget &widget = child->as<GuiWidget>();
+
+            if(self.menu().isWidgetPartOfMenu(widget))
+            {
+                Vector2i cell = layout.widgetPos(widget);
+                DENG2_ASSERT(cell.x >= 0 && cell.y >= 0);
+
+                // We want items to be hittable throughout the width of the menu,
+                // however restrict this to the item's column if there are multiple.
+                widget.hitRule()
+                        .setInput(Rule::Left,  (!cell.x? self.rule().left() :
+                                                         layout.columnLeft(cell.x)))
+                        .setInput(Rule::Right, (cell.x == layout.gridSize().x - 1? self.rule().right() :
+                                                                                   layout.columnRight(cell.x)));
+            }
+        }
+    }
+
     void buttonStateChanged(ButtonWidget &button, ButtonWidget::State state)
     {
         // Update button style.
@@ -120,18 +140,37 @@ DENG2_OBSERVES(ContextWidgetOrganizer, WidgetUpdate)
         Rectanglei hi;
         if(hover)
         {
-            hi.topLeft.x     = self.rule().left().valuei();
-            hi.topLeft.y     = hover->rule().top().valuei();
-            hi.bottomRight.x = self.rule().right().valuei();
-            hi.bottomRight.y = hover->rule().bottom().valuei();
+            hi.topLeft.x     = hover->hitRule().left().valuei();
+            hi.topLeft.y     = hover->hitRule().top().valuei();
+            hi.bottomRight.x = hover->hitRule().right().valuei();
+            hi.bottomRight.y = hover->hitRule().bottom().valuei();
         }
-        return hi;
+        // Clip the highlight to the main popup area.
+        return hi & self.rule().recti();
     }
 
     void buttonActionTriggered(ButtonWidget &)
     {
         // The popup menu is closed when an action is triggered.
         self.close();
+    }
+
+    void updateIfScrolled()
+    {
+        // If the menu is scrolled, we need to update some things.
+        int scrollY = self.menu().scrollPositionY().valuei();
+        if(scrollY == oldScrollY)
+        {
+            return;
+        }
+        oldScrollY = scrollY;
+
+        //qDebug() << "menu scrolling" << scrollY;
+
+        // Resend the mouse position so the buttons realize they've moved.
+        ClientApp::windowSystem().dispatchLatestMousePosition();
+
+        self.requestGeometry();
     }
 };
 
@@ -149,6 +188,12 @@ PopupMenuWidget::PopupMenuWidget(String const &name)
 MenuWidget &PopupMenuWidget::menu() const
 {
     return static_cast<MenuWidget &>(content());
+}
+
+void PopupMenuWidget::update()
+{
+    PopupWidget::update();
+    d->updateIfScrolled();
 }
 
 void PopupMenuWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
@@ -169,11 +214,17 @@ void PopupMenuWidget::preparePopupForOpening()
 {
     // Redo the layout.
     menu().updateLayout();
+    d->updateItemHitRules();
+
+    // Make sure the menu doesn't go beyond the top of the view.
+    if(openingDirection() == ui::Up)
+    {
+        menu().rule().setInput(Rule::Height,
+                OperatorRule::minimum(menu().contentRule().height() + menu().margins().height(),
+                                      anchorY() - menu().margins().top()));
+    }
 
     PopupWidget::preparePopupForOpening();
-
-    //menu().rule().setInput(Rule::Width, menu().layout().width() + 2 * margin());
-    //menu().rule().setInput(Rule::Height, menu().layout().height() + 2 * margin());
 }
 
 void PopupMenuWidget::popupClosing()

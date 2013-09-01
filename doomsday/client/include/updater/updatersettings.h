@@ -50,12 +50,6 @@ public:
     };
 
 public:
-    /**
-     * Initializes the settings by restoring them from the persistent
-     * application data (Config.updater) or by using the default values.
-     */
-    static void initialize();
-
     UpdaterSettings();
 
     Frequency frequency() const;

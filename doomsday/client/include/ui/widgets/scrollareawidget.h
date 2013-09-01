@@ -19,7 +19,7 @@
 #ifndef DENG_CLIENT_SCROLLAREAWIDGET_H
 #define DENG_CLIENT_SCROLLAREAWIDGET_H
 
-#include "guiwidget.h"
+#include "GuiWidget"
 
 /**
  * Scrollable area.
@@ -67,14 +67,6 @@ public:
 
     de::Rectanglei viewport() const;
     de::Vector2i viewportSize() const;
-
-    /**
-     * Returns the amount of space between the top edge of the widget and the
-     * top edge of the content.
-     */
-    int topMargin() const;
-
-    int rightMargin() const;
 
     /**
      * Returns the current scroll XY position, with 0 being the top/left corner

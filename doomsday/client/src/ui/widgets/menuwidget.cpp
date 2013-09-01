@@ -18,19 +18,19 @@
 
 #include "ui/widgets/menuwidget.h"
 #include "ui/widgets/popupmenuwidget.h"
-#include "ui/widgets/contextwidgetorganizer.h"
-#include "ui/widgets/listcontext.h"
-#include "ui/widgets/actionitem.h"
 #include "ui/widgets/variabletogglewidget.h"
-#include "ui/widgets/gridlayout.h"
+#include "ContextWidgetOrganizer"
+#include "ui/ListData"
+#include "ui/ActionItem"
+#include "GridLayout"
 
 using namespace de;
 using namespace ui;
 
 DENG2_PIMPL(MenuWidget),
-DENG2_OBSERVES(Context, Addition),    // for layout update
-DENG2_OBSERVES(Context, Removal),     // for layout update
-DENG2_OBSERVES(Context, OrderChange), // for layout update
+DENG2_OBSERVES(Data, Addition),    // for layout update
+DENG2_OBSERVES(Data, Removal),     // for layout update
+DENG2_OBSERVES(Data, OrderChange), // for layout update
 DENG2_OBSERVES(PopupWidget, Close),
 public ContextWidgetOrganizer::IWidgetFactory
 {
@@ -97,8 +97,8 @@ public ContextWidgetOrganizer::IWidgetFactory
 
     bool needLayout;
     GridLayout layout;
-    ListContext defaultItems;
-    Context const *items;
+    ListData defaultItems;
+    Data const *items;
     ContextWidgetOrganizer organizer;
     QSet<PopupWidget *> openPopups;
 
@@ -120,7 +120,7 @@ public ContextWidgetOrganizer::IWidgetFactory
         setContext(&defaultItems);
     }
 
-    void setContext(Context const *ctx)
+    void setContext(Data const *ctx)
     {
         if(items)
         {
@@ -140,13 +140,13 @@ public ContextWidgetOrganizer::IWidgetFactory
         organizer.setContext(*items); // recreates widgets
     }
 
-    void contextItemAdded(Context::Pos id, Item const &)
+    void contextItemAdded(Data::Pos id, Item const &)
     {
         // Make sure we determine the layout for the new item.
         needLayout = true;
     }
 
-    void contextItemRemoved(Context::Pos id, Item &)
+    void contextItemRemoved(Data::Pos id, Item &)
     {
         // Make sure we determine the layout after this item is gone.
         needLayout = true;
@@ -261,10 +261,11 @@ MenuWidget::MenuWidget(String const &name)
 {}
 
 void MenuWidget::setGridSize(int columns, ui::SizePolicy columnPolicy,
-                             int rows, ui::SizePolicy rowPolicy)
+                             int rows, ui::SizePolicy rowPolicy,
+                             GridLayout::Mode layoutMode)
 {
     d->layout.clear();
-    d->layout.setGridSize(columns, rows);
+    d->layout.setModeAndGridSize(layoutMode, columns, rows);
     d->layout.setLeftTop(contentRule().left(), contentRule().top());
 
     d->colPolicy = columnPolicy;
@@ -285,17 +286,17 @@ void MenuWidget::setGridSize(int columns, ui::SizePolicy columnPolicy,
     d->needLayout = true;
 }
 
-Context &MenuWidget::items()
+Data &MenuWidget::items()
 {
-    return *const_cast<Context *>(d->items);
+    return *const_cast<Data *>(d->items);
 }
 
-Context const &MenuWidget::items() const
+Data const &MenuWidget::items() const
 {
     return *d->items;
 }
 
-void MenuWidget::setItems(Context const &items)
+void MenuWidget::setItems(Data const &items)
 {
     d->setContext(&items);
 }
@@ -303,6 +304,12 @@ void MenuWidget::setItems(Context const &items)
 int MenuWidget::count() const
 {
     return d->countVisible();
+}
+
+bool MenuWidget::isWidgetPartOfMenu(Widget const &widget) const
+{
+    if(widget.parent() != this) return false;
+    return d->isVisibleItem(&widget);
 }
 
 void MenuWidget::updateLayout()

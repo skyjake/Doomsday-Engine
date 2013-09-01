@@ -19,7 +19,7 @@
 #ifndef CLIENT_BUSYWIDGET_H
 #define CLIENT_BUSYWIDGET_H
 
-#include "guiwidget.h"
+#include "GuiWidget"
 #include "progresswidget.h"
 
 #include <de/GLTexture>

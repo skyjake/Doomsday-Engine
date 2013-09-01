@@ -23,7 +23,7 @@
 
 #include <de/PersistentCanvasWindow>
 
-#include "ui/widgets/guirootwidget.h"
+#include "GuiRootWidget"
 #include "resource/image.h"
 
 /**
@@ -122,6 +122,7 @@ public:
 
 public slots:
     void toggleFPSCounter();
+    void showColorAdjustments();
 
 private:
     DENG2_PRIVATE(d)

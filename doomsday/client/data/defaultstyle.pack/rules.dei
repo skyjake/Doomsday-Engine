@@ -7,11 +7,13 @@ script {
 rule unit     { constant $= UNIT }
 rule halfunit { constant $= UNIT / 2 }
 rule gap      { constant $= UNIT * 3 }
-rule glow     { constant $= UNIT * 7 }
+rule glow     { constant $= UNIT * 25 }
 
 group label {
     rule gap { constant $= gap.constant / 2 }
 }
+
+rule scrollarea.bar { constant $= UNIT }
 
 group document {
     rule progress { constant $= UNIT * 30 }
@@ -23,6 +25,12 @@ group editor {
 
 group progress {
     rule textgap { constant $= gap.constant }
+}
+
+group slider {
+    rule width  { constant $= UNIT * 50 }
+    rule label  { constant $= UNIT * 9 }
+    rule editor { constant $= UNIT * 20 }
 }
 
 group dialog {
@@ -42,4 +50,6 @@ group gameselection {
     rule max.height { constant $= UNIT * 150 }
 }
 
-rule scrollarea.bar { constant $= UNIT }
+group coloradjustment {
+    rule slider { constant $= slider.width.constant * 1.5 }
+}

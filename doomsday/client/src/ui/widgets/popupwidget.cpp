@@ -17,7 +17,7 @@
  */
 
 #include "ui/widgets/popupwidget.h"
-#include "ui/widgets/guirootwidget.h"
+#include "GuiRootWidget"
 #include "ui/style.h"
 #include "ui/clientwindow.h"
 
@@ -72,7 +72,7 @@ DENG_GUI_PIMPL(PopupWidget)
         QObject::connect(&dismissTimer, SIGNAL(timeout()), thisPublic, SLOT(dismiss()));
 
         // Style.
-        marker = &self.style().rules().rule("gap");
+        marker = &style().rules().rule("gap");
     }
 
     ~Instance()
@@ -201,7 +201,7 @@ DENG_GUI_PIMPL(PopupWidget)
     }
 };
 
-PopupWidget::PopupWidget(String const &name) : d(new Instance(this))
+PopupWidget::PopupWidget(String const &name) : GuiWidget(name), d(new Instance(this))
 {
     setBehavior(ChildHitClipping);
 
@@ -298,6 +298,16 @@ void PopupWidget::setAnchorY(Rule const &y)
     d->anchorY = holdRef(y);
 }
 
+Rule const &PopupWidget::anchorX() const
+{
+    return *d->anchorX;
+}
+
+Rule const &PopupWidget::anchorY() const
+{
+    return *d->anchorY;
+}
+
 void PopupWidget::setOpeningDirection(ui::Direction dir)
 {
     d->dir = dir;
@@ -337,17 +347,12 @@ void PopupWidget::viewResized()
 
     d->uMvpMatrix = root().projMatrix2D();
 
-    update();
+    requestGeometry();
 }
 
 void PopupWidget::update()
 {
     GuiWidget::update();
-
-    if(!isHidden())
-    {
-        d->updateGeometry();
-    }
 }
 
 void PopupWidget::preDrawChildren()
@@ -452,6 +457,7 @@ void PopupWidget::dismiss()
 
 void PopupWidget::drawContent()
 {
+    d->updateGeometry();
     d->drawable.draw();
 }
 

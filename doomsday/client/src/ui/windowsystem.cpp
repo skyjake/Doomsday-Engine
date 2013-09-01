@@ -46,13 +46,17 @@ DENG2_PIMPL(WindowSystem)
         self.closeAll();
     }
 
-    void dispatchLatestMousePosition()
+    void processLatestMousePosition()
+    {
+        self.main().root().processEvent(MouseEvent(MouseEvent::Absolute, latestMousePos));
+    }
+
+    void processLatestMousePositionIfMoved()
     {
         if(mouseMoved)
         {
             mouseMoved = false;
-
-            self.main().root().processEvent(MouseEvent(MouseEvent::Absolute, latestMousePos));
+            processLatestMousePosition();
         }
     }
 };
@@ -103,6 +107,11 @@ Style &WindowSystem::style()
     return d->style;
 }
 
+void WindowSystem::dispatchLatestMousePosition()
+{
+    d->processLatestMousePosition();
+}
+
 bool WindowSystem::processEvent(Event const &event)
 {
     /*
@@ -131,7 +140,8 @@ bool WindowSystem::processEvent(Event const &event)
 
 void WindowSystem::timeChanged(Clock const &/*clock*/)
 {
-    d->dispatchLatestMousePosition();
+    d->processLatestMousePositionIfMoved();
 
+    // Update periodically.
     main().root().update();
 }

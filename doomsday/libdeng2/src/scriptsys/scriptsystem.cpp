@@ -69,7 +69,11 @@ DENG2_PIMPL(ScriptSystem), DENG2_OBSERVES(Record, Deletion)
             mod.addText   ("OS",       Version::operatingSystem()).setReadOnly();
             mod.addNumber ("CPU_BITS", Version::cpuBits()        ).setReadOnly();
             mod.addBoolean("DEBUG",    Version::isDebugBuild()   ).setReadOnly();
-
+#ifdef DENG_STABLE
+            mod.addBoolean("STABLE",   true).setReadOnly();
+#else
+            mod.addBoolean("STABLE",   false).setReadOnly();
+#endif
             addNativeModule("Version", mod);
         }
 

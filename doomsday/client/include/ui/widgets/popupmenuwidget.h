@@ -32,6 +32,9 @@ public:
 
     MenuWidget &menu() const;
 
+    // Events.
+    void update();
+
 protected:
     void glMakeGeometry(DefaultVertexBuf::Builder &verts);
     void preparePopupForOpening();

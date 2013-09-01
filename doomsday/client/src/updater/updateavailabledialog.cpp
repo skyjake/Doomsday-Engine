@@ -25,7 +25,7 @@
 #include "updater/updatersettingsdialog.h"
 #include "ui/widgets/progresswidget.h"
 #include "ui/widgets/togglewidget.h"
-#include "ui/signalaction.h"
+#include "SignalAction"
 #include "clientapp.h"
 #include "versioninfo.h"
 #include <de/GuiApp>

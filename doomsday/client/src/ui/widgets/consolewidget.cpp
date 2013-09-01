@@ -17,15 +17,15 @@
  */
 
 #include "ui/widgets/consolewidget.h"
-#include "ui/widgets/guirootwidget.h"
+#include "GuiRootWidget"
+#include "ui/VariableToggleItem"
+#include "CommandAction"
+#include "SignalAction"
 #include "ui/widgets/buttonwidget.h"
 #include "ui/widgets/consolecommandwidget.h"
 #include "ui/widgets/popupmenuwidget.h"
-#include "ui/widgets/variabletoggleitem.h"
 #include "ui/widgets/logwidget.h"
 #include "ui/clientwindow.h"
-#include "ui/commandaction.h"
-#include "ui/signalaction.h"
 
 #include <de/App>
 #include <de/ScalarRule>
@@ -37,7 +37,7 @@ using namespace de;
 
 static TimeDelta const LOG_OPEN_CLOSE_SPAN = 0.2;
 
-DENG2_PIMPL(ConsoleWidget)
+DENG_GUI_PIMPL(ConsoleWidget)
 {
     ButtonWidget *button;
     ConsoleCommandWidget *cmdLine;
@@ -70,10 +70,10 @@ DENG2_PIMPL(ConsoleWidget)
           grabbed(NotGrabbed)
     {
         horizShift = new ScalarRule(0);
-        width      = new ScalarRule(self.style().rules().rule("console.width").valuei());
+        width      = new ScalarRule(style().rules().rule("console.width").valuei());
         height     = new ScalarRule(0);
 
-        grabWidth  = self.style().rules().rule("unit").valuei();
+        grabWidth  = style().rules().rule("unit").valuei();
     }
 
     ~Instance()
@@ -93,7 +93,7 @@ DENG2_PIMPL(ConsoleWidget)
         if(height->animation().target() == 0)
         {
             // On the first expansion make sure the margins are taken into account.
-            delta += 2 * log->topMargin();
+            delta += log->margins().height().valuei();
         }
 
         height->set(height->animation().target() + delta, .25f);
@@ -265,6 +265,8 @@ void ConsoleWidget::enableBlur(bool yes)
 
 void ConsoleWidget::viewResized()
 {
+    GuiWidget::viewResized();
+
     if(!d->opened)
     {
         // Make sure it stays shifted out of the view.

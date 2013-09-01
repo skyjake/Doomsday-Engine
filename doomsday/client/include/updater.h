@@ -101,28 +101,4 @@ private:
     DENG2_PRIVATE(d)
 };
 
-/**
- * Initializes the automatic updater. If it is time to check for an update,
- * queries the latest version from http://dengine.net/ and determines the need
- * to update.
- */
-//void Updater_Init(void);
-
-/**
- * Shuts down the automatic updater. Must be called at engine shutdown.
- */
-//void Updater_Shutdown(void);
-
-/**
- * Tells the updater to check for updates now. This is called when a manual
- * check is requested.
- *
- * @param notify  Show the notification dialog even when up to date.
- */
-//void Updater_CheckNow(boolean notify);
-
-//void Updater_ShowSettings(void);
-
-//void Updater_PrintLastUpdated(void);
-
 #endif // LIBDENG_UPDATER_H

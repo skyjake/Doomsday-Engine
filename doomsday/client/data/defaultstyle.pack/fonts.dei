@@ -4,23 +4,22 @@
 # - weight: normal bold light
 # - style: normal italic
 
-script { 
-    import Version, gui
-    
-    # Load some custom fonts.
-    import App, Path
-    fontDir = Path.fileNamePath(__file__) / "fonts" 
-    App.loadFont(fontDir / "OpenSans-Regular.ttf")
-    App.loadFont(fontDir / "OpenSans-Bold.ttf")
-    App.loadFont(fontDir / "OpenSans-Italic.ttf")
-    App.loadFont(fontDir / "OpenSans-BoldItalic.ttf")
-}
+script { import Version, gui }
 
 font default condition "Version.OS == 'windows'" {
     family: Open Sans
     size: 12pt
     weight: normal
     style: normal
+    
+    script {
+        # Load the Open Sans font contained in this pack.
+        import App, Path
+        fontDir = Path.fileNamePath(__file__) / "fonts"
+        for style in ['Regular', 'Bold', 'Italic', 'BoldItalic']
+            App.loadFont(fontDir / ("OpenSans-%s.ttf" % style))
+        end
+    }
 }
 
 group {
@@ -84,6 +83,15 @@ group separator {
 
 group choice {
     font selected inherits default {
+        weight: bold
+    }
+}
+
+group slider {
+    font label inherits default {
+        size $: gui.scale(__this__.size, 0.75)
+    }
+    font value inherits slider.label {
         weight: bold
     }
 }

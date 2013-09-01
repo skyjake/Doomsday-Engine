@@ -17,7 +17,7 @@
  */
 
 #include "ui/widgets/progresswidget.h"
-#include "ui/widgets/guirootwidget.h"
+#include "GuiRootWidget"
 
 #include <de/Animation>
 #include <de/Lockable>
@@ -55,12 +55,12 @@ DENG_GUI_PIMPL(ProgressWidget), public Lockable
 
     void updateStyle()
     {
-        self.setImageColor(self.style().colors().colorf(colorId) * Vector4f(1, 1, 1, .5f));
+        self.setImageColor(style().colors().colorf(colorId) * Vector4f(1, 1, 1, .5f));
     }
 
     void glInit()
     {
-        gearTex = atlas().alloc(self.style().images().image(gearId));
+        gearTex = atlas().alloc(style().images().image(gearId));
     }
 
     void glDeinit()

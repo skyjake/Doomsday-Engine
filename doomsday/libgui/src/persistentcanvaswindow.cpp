@@ -736,6 +736,12 @@ DENG2_PIMPL(PersistentCanvasWindow)
                 queue.takeFirst();
             }
         }
+
+        // The queue is now empty; all modifications to state have been applied.
+        DENG2_FOR_PUBLIC_AUDIENCE(AttributeChange, i)
+        {
+            i->windowAttributesChanged(self);
+        }
     }
 
     /**
@@ -889,12 +895,18 @@ void PersistentCanvasWindow::moveEvent(QMoveEvent *)
         if(len > BREAK_CENTERING_THRESHOLD)
         {
             d->state.setFlag(Instance::State::Centered, false);
+
+            // Notify.
+            DENG2_FOR_AUDIENCE(AttributeChange, i)
+            {
+                i->windowAttributesChanged(*this);
+            }
         }
         else
         {
             // Recenter.
             setGeometry(centeredQRect(size()));
-        }
+        }        
     }
 }
 

@@ -38,15 +38,15 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define NUM_CP_BUTTONS  11
+#define NUM_CP_BUTTONS  10
 #define NUMITEMS(x)     (sizeof(x)/sizeof(uidata_listitem_t))
-#define RES(x, y)       ((x) | ((y) << 16))
+//#define RES(x, y)       ((x) | ((y) << 16))
 #define CPID_FRAME      (UIF_ID0 | UIF_ID1)
-#define CPID_RES_X      UIF_ID0
-#define CPID_RES_Y      UIF_ID1
-#define CPID_SET_RES    UIF_ID2
-#define CPID_RES_LIST   UIF_ID3
-#define CPG_VIDEO       2
+//#define CPID_RES_X      UIF_ID0
+//#define CPID_RES_Y      UIF_ID1
+//#define CPID_SET_RES    UIF_ID2
+//#define CPID_RES_LIST   UIF_ID3
+//#define CPG_VIDEO       2
 #define HELP_OFFSET     (UI_ScreenW(UI_WIDTH)*290/UI_WIDTH)
 
 // TYPES -------------------------------------------------------------------
@@ -78,18 +78,18 @@ void    CP_CvarSlider(ui_object_t *ob);
 int     CP_KeyGrabResponder(ui_object_t *ob, ddevent_t *ev);
 void    CP_KeyGrabDrawer(ui_object_t *ob);
 void    CP_QuickFOV(ui_object_t *ob);
-void    CP_VideoModeInfo(ui_object_t *ob);
-void    CP_ResolutionList(ui_object_t *ob);
-void    CP_SetDefaultVidMode(ui_object_t *ob);
-void    CP_SetVidMode(ui_object_t *ob);
-void    CP_VidModeChanged(ui_object_t *ob);
+//void    CP_VideoModeInfo(ui_object_t *ob);
+//void    CP_ResolutionList(ui_object_t *ob);
+//void    CP_SetDefaultVidMode(ui_object_t *ob);
+//void    CP_SetVidMode(ui_object_t *ob);
+//void    CP_VidModeChanged(ui_object_t *ob);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 char    panel_buttons[NUM_CP_BUTTONS] = { true };   // The first is active.
-char    panel_sv_password[100], panel_res_x[40], panel_res_y[40];
+char    panel_sv_password[100]; //, panel_res_x[40], panel_res_y[40];
 int     panel_fullscreen, panel_bpp;
 int     panel_help_active = false;
 int     panel_help_offset = 0;  // Zero means the help is completely hidden.
@@ -113,8 +113,8 @@ cvarbutton_t cvarbuttons[] = {
     {0, "sound-16bit"},
     {0, "sound-3d"},
     {0, "sound-info"},
-    {0, "vid-vsync", "VSync on", "VSync off"},
-    {0, "vid-fsaa", "Antialias", "No antialias"},
+    //{0, "vid-vsync", "VSync on", "VSync off"},
+    //{0, "vid-fsaa", "Antialias", "No antialias"},
     {0, "rend-particle"},
     {0, "rend-camera-smooth"},
     {0, "rend-mobj-smooth-turn"},
@@ -149,10 +149,10 @@ cvarbutton_t cvarbuttons[] = {
     {0, 0}
 };
 
+#if 0
 uidata_button_t btn_bpp = {&panel_bpp, "32", "16"};
 uidata_button_t btn_fullscreen = {&panel_fullscreen, "Yes", "No"};
 
-#if 0
 uidata_listitem_t lstit_con_completion[] = {
     {"List with values", 0},
     {"Cycle through", 1}
@@ -220,6 +220,7 @@ uidata_list_t lst_blend = {
     lstit_blend, NUMITEMS(lstit_blend), (void*) "rend-light-blend"
 };
 
+#if 0
 uidata_listitem_t* lstit_resolution; /* = {
     // 5:4
     {"1280 x 1024 (5:4 SXGA)", RES(1280, 1024)},
@@ -259,11 +260,13 @@ uidata_list_t lst_resolution = {
     NULL, 0 // dynamically populated
     //   lstit_resolution, NUMITEMS(lstit_resolution)
 };
+#endif
 
 //uidata_slider_t sld_con_alpha = { 0, 1, 0, .01f, true, (void*) "con-alpha" };
 //uidata_slider_t sld_con_light = { 0, 1, 0, .01f, true, (void*) "con-light" };
 //uidata_slider_t sld_keywait1 = { 50, 1000, 0, 1, false, (void*) "input-key-delay1" };
 //uidata_slider_t sld_keywait2 = { 20, 1000, 0, 1, false, (void*) "input-key-delay2" };
+
 uidata_slider_t sld_mouse_x_scale = { 0, .01f, 0, .00005f, true, (void*) "input-mouse-x-scale" };
 uidata_slider_t sld_mouse_y_scale = { 0, .01f, 0, .00005f, true, (void*) "input-mouse-y-scale" };
 uidata_slider_t sld_client_pos_interval =
@@ -325,9 +328,11 @@ uidata_slider_t sld_shadow_radmax =
     { 0, 128, 0, 1, false, (void*) "rend-shadow-radius-max" };
 uidata_slider_t sld_fakeradio_dark =
     { 0, 2, 0, .01f, true, (void*) "rend-fakeradio-darkness" };
+#if 0
 uidata_slider_t sld_vid_gamma = { .1f, 3, 0, .01f, true, (void*) "vid-gamma" };
 uidata_slider_t sld_vid_contrast = { .1f, 3, 0, .01f, true, (void*) "vid-contrast" };
 uidata_slider_t sld_vid_bright = { -.5f, .5f, 0, .01f, true, (void*) "vid-bright" };
+#endif
 uidata_slider_t sld_halo = { 0, 5, 0, 1, false, (void*) "rend-halo", (char*) "None" };
 uidata_slider_t sld_halo_bright = { 0, 100, 0, 1, false, (void*) "rend-halo-bright" };
 uidata_slider_t sld_halo_occlusion =
@@ -348,30 +353,31 @@ uidata_slider_t sld_sprite_lights = { 0, 10, 0, 1, false, (void*) "rend-sprite-l
 #if 0
 uidata_edit_t ed_server_password =
     { panel_sv_password, 100, (void*) "server-password" };
-#endif
 uidata_edit_t ed_res_x = { panel_res_x, 40 };
 uidata_edit_t ed_res_y = { panel_res_y, 40 };
+#endif
 
 ui_page_t page_panel;
 
 /* *INDENT-OFF* */
 ui_object_t ob_panel[] =
 {
-    { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 10, 210, 240, 60,   "Video",    UIButton_Drawer, UIButton_Responder, 0,             CP_ChooseGroup, &panel_buttons[0] },
-    { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 10, 275, 240, 60,   "Audio",    UIButton_Drawer, UIButton_Responder, 0,             CP_ChooseGroup, &panel_buttons[1] },
-    { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 10, 340, 240, 60,   "Input",    UIButton_Drawer, UIButton_Responder, 0,             CP_ChooseGroup, &panel_buttons[2] },
-    { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 10, 405, 240, 60,   "Graphics", UIButton_Drawer, UIButton_Responder, 0,             CP_ChooseGroup, &panel_buttons[3] },
-    { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 40, 467, 210, 60,   "Lights",   UIButton_Drawer, UIButton_Responder, 0,             CP_ChooseGroup, &panel_buttons[4] },
-    { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 40, 529, 210, 60,   "Halos",    UIButton_Drawer, UIButton_Responder, 0,             CP_ChooseGroup, &panel_buttons[5] },
-    { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 40, 591, 210, 60,   "Textures", UIButton_Drawer, UIButton_Responder, 0,             CP_ChooseGroup, &panel_buttons[6] },
-    { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 40, 653, 210, 60,   "Objects",  UIButton_Drawer, UIButton_Responder, 0,             CP_ChooseGroup, &panel_buttons[7] },
-    { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 40, 715, 210, 60,   "Particles", UIButton_Drawer, UIButton_Responder, 0,            CP_ChooseGroup, &panel_buttons[8] },
-    { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 10, 780, 240, 60,   "Network",  UIButton_Drawer, UIButton_Responder, 0,             CP_ChooseGroup, &panel_buttons[9] },
-    { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 10, 845, 240, 60,   "Console",  UIButton_Drawer, UIButton_Responder, 0,             CP_ChooseGroup, &panel_buttons[10] },
+//  { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 10, 210, 240, 60,   "Video",    UIButton_Drawer, UIButton_Responder, 0,             CP_ChooseGroup, &panel_buttons[0] },
+    { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 10, 210, 240, 60,   "Audio",    UIButton_Drawer, UIButton_Responder, 0,             CP_ChooseGroup, &panel_buttons[0] },
+    { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 10, 275, 240, 60,   "Input",    UIButton_Drawer, UIButton_Responder, 0,             CP_ChooseGroup, &panel_buttons[1] },
+    { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 10, 340, 240, 60,   "Graphics", UIButton_Drawer, UIButton_Responder, 0,             CP_ChooseGroup, &panel_buttons[2] },
+    { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 40, 405, 210, 60,   "Lights",   UIButton_Drawer, UIButton_Responder, 0,             CP_ChooseGroup, &panel_buttons[3] },
+    { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 40, 467, 210, 60,   "Halos",    UIButton_Drawer, UIButton_Responder, 0,             CP_ChooseGroup, &panel_buttons[4] },
+    { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 40, 529, 210, 60,   "Textures", UIButton_Drawer, UIButton_Responder, 0,             CP_ChooseGroup, &panel_buttons[5] },
+    { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 40, 591, 210, 60,   "Objects",  UIButton_Drawer, UIButton_Responder, 0,             CP_ChooseGroup, &panel_buttons[6] },
+    { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 40, 653, 210, 60,   "Particles", UIButton_Drawer, UIButton_Responder, 0,            CP_ChooseGroup, &panel_buttons[7] },
+    { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 10, 715, 240, 60,   "Network",  UIButton_Drawer, UIButton_Responder, 0,             CP_ChooseGroup, &panel_buttons[8] },
+    { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 10, 780, 240, 60,   "Console",  UIButton_Drawer, UIButton_Responder, 0,             CP_ChooseGroup, &panel_buttons[9] },
     { UI_BUTTON,    0,  UIF_NEVER_FADE, 10, 940, 240, 60,   "Close Panel (Esc)", UIButton_Drawer, UIButton_Responder, 0,    CP_ClosePanel },
     { UI_BOX,       0,  0,              8, -20, 250, 250,   "",         CP_DrawLogo },
     { UI_BOX,       0,  CPID_FRAME,     280, 55, 720, 945,  "",         CP_DrawBorder },
 
+#if 0
     { UI_META,      2 },
     { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Video Options", UIText_BrightDrawer },
     { UI_TEXT,      0,  0,              300, 70, 0, 55,     "Quality",  UIText_Drawer },
@@ -400,8 +406,8 @@ ui_object_t ob_panel[] =
     { UI_BUTTON,    0,  0,              680, 790, 170, 60,  "Set Default", UIButton_Drawer, UIButton_Responder, 0, CP_SetDefaultVidMode },
     { UI_TEXT,      0,  0,              300, 910, 0, 55,    "Change to", UIText_Drawer },
     { UI_BUTTON,    0,  CPID_SET_RES,   680, 910, 300, 60,  "",         UIButton_Drawer, UIButton_Responder, 0, CP_SetVidMode },
-
-    { UI_META,      3 },
+#endif
+    { UI_META,      2 },
     { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Audio Options", UIText_BrightDrawer },
     { UI_TEXT,      0,  0,              300, 70, 0, 55,     "Sound volume", UIText_Drawer },
     { UI_SLIDER,    0,  0,              680, 70, 300, 55,   "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_sound_volume },
@@ -420,7 +426,7 @@ ui_object_t ob_panel[] =
     { UI_TEXT,      0,  0,              300, 680, 0, 55,    "Show status of channels", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 680, 70, 55,   "sound-info", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
 
-    { UI_META,      4 },
+    { UI_META,      3 },
     { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Input Options", UIText_BrightDrawer },
     { UI_TEXT,      0,  0,              300, 70, 0, 55,     "Mouse X sensitivity", UIText_Drawer },
     { UI_SLIDER,    0,  0,              680, 70, 300, 55,   "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_mouse_x_scale },
@@ -432,7 +438,7 @@ ui_object_t ob_panel[] =
     { UI_TEXT,      0,  0,              300, 250, 0, 55,    "Mouse Y mode", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 250, 80, 55,   "input-mouse-y-flags", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton, 0, IDA_INVERT },
     { UI_BUTTON2,   0,  0,              765, 250, 80, 55,   "input-mouse-y-flags", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton, 0, IDA_DISABLED },
-    { UI_META,      4,  0,              0, 60 },
+    { UI_META,      3,  0,              0, 60 },
     { UI_TEXT,      0,  0,              300, 250, 0, 55,    "Enable joystick", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 250, 70, 55,   "input-joy", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
 #if 0
@@ -442,9 +448,9 @@ ui_object_t ob_panel[] =
     { UI_SLIDER,    0,  0,              680, 490, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_keywait2 },
 #endif
 
-    { UI_META,      5 },
+    { UI_META,      4 },
     { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Graphics Options", UIText_BrightDrawer },
-    { UI_META,      5,  0,              0, -60 },
+    { UI_META,      4,  0,              0, -60 },
     { UI_TEXT,      0,  UIF_FADE_AWAY,  300, 130, 0, 55,    "Field Of View angle", UIText_Drawer },
     { UI_SLIDER,    0,  UIF_FADE_AWAY,  680, 130, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_fov },
     { UI_BUTTON,    0,  UIF_FADE_AWAY,  680, 190, 70, 60,   "95",       UIButton_Drawer, UIButton_Responder, 0, CP_QuickFOV },
@@ -453,7 +459,7 @@ ui_object_t ob_panel[] =
     { UI_BUTTON,    0,  UIF_FADE_AWAY,  905, 190, 70, 60,   "125",      UIButton_Drawer, UIButton_Responder, 0, CP_QuickFOV },
     { UI_TEXT,      0,  0,              300, 255, 0, 55,    "Mirror player weapon models", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 255, 70, 55,   "rend-model-mirror-hud", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
-    { UI_META,      5,  0,              0, 60 },
+    { UI_META,      4,  0,              0, 60 },
     { UI_TEXT,      0,  UIF_FADE_AWAY,  300, 255, 0, 55,    "Sky sphere radius", UIText_Drawer },
     { UI_SLIDER,    0,  UIF_FADE_AWAY,  680, 255, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_sky_distance },
     { UI_TEXT,      0,  0,              300, 315, 0, 55,    "Objects cast shadows", UIText_Drawer },
@@ -469,7 +475,7 @@ ui_object_t ob_panel[] =
     { UI_TEXT,      0,  UIF_FADE_AWAY,  300, 615, 0, 55,    "Radiosity shadow darkness", UIText_Drawer },
     { UI_SLIDER,    0,  UIF_FADE_AWAY,  680, 615, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_fakeradio_dark },
 
-    { UI_META,      6 },
+    { UI_META,      5 },
     { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Graphics Options: Lights", UIText_BrightDrawer },
     { UI_TEXT,      0,  0,              300, 70, 0, 55,     "Enable dynamic lights", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 70, 70, 55,    "rend-light", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
@@ -483,7 +489,7 @@ ui_object_t ob_panel[] =
     { UI_SLIDER,    0,  UIF_FADE_AWAY,  680, 370, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_light_radmax },
     { UI_TEXT,      0,  UIF_FADE_AWAY,  300, 430, 0, 55,    "Maximum number of dynamic lights", UIText_Drawer },
     { UI_SLIDER,    0,  UIF_FADE_AWAY,  680, 430, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_light_max },
-    { UI_META,      6,  0,              0, -120 },
+    { UI_META,      5,  0,              0, -120 },
     { UI_TEXT,      0,  UIF_FADE_AWAY,  300, 610, 0, 55,    "Ambient light level", UIText_Drawer },
     { UI_SLIDER,    0,  UIF_FADE_AWAY,  680, 610, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_light_ambient },
     { UI_TEXT,      0,  UIF_FADE_AWAY,  300, 670, 0, 55,    "Light range compression", UIText_Drawer },
@@ -501,13 +507,13 @@ ui_object_t ob_panel[] =
     { UI_TEXT,      0,  0,              300, 1030, 0, 55,    "Enable decorations", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 1030, 70, 55,   "rend-light-decor", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
 
-    { UI_META,      7 },
+    { UI_META,      6 },
     { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Graphics Options: Halos", UIText_BrightDrawer },
     { UI_TEXT,      0,  UIF_FADE_AWAY,  300, 70, 0, 55,     "Number of flares per halo", UIText_Drawer },
     { UI_SLIDER,    0,  UIF_FADE_AWAY,  680, 70, 300, 55,   "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_halo },
     { UI_TEXT,      0,  UIF_FADE_AWAY,  300, 130, 0, 55,    "Use realistic halos", UIText_Drawer },
     { UI_BUTTON2,   0,  UIF_FADE_AWAY,  680, 130, 70, 55,   "rend-halo-realistic", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
-    { UI_META,      7,  0,              0,   60 },
+    { UI_META,      6,  0,              0,   60 },
     { UI_TEXT,      0,  UIF_FADE_AWAY,  300, 130, 0, 55,    "Halo brightness", UIText_Drawer },
     { UI_SLIDER,    0,  UIF_FADE_AWAY,  680, 130, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_halo_bright },
     { UI_TEXT,      0,  UIF_FADE_AWAY,  300, 190, 0, 55,    "Halo size factor", UIText_Drawer },
@@ -525,7 +531,7 @@ ui_object_t ob_panel[] =
     { UI_TEXT,      0,  UIF_FADE_AWAY,  300, 550, 0, 55,    "Z magnification divisor", UIText_Drawer },
     { UI_SLIDER,    0,  UIF_FADE_AWAY,  680, 550, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_halo_zmagdiv },
 
-    { UI_META,      8 },
+    { UI_META,      7 },
     { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Graphics Options: Textures", UIText_BrightDrawer },
     { UI_TEXT,      0,  0,              300, 70, 0, 55,     "Enable textures", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 70, 70, 55,    "rend-tex", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
@@ -535,14 +541,14 @@ ui_object_t ob_panel[] =
     { UI_BUTTON2,   0,  0,              880, 130, 95, 55,   "rend-model-shiny-multitex", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
     { UI_TEXT,      0,  0,              300, 190, 0, 55,    "Smooth texture animation", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 190, 70, 55,   "rend-tex-anim-smooth", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
-    { UI_META,      8,  0,              0, 120 },
+    { UI_META,      7,  0,              0, 120 },
     { UI_TEXT,      0,  0,              300, 130, 0, 55,    "Mipmapping filter", UIText_Drawer },
     { UI_LIST,      0,  0,              680, 130, 300, 175, "",         UIList_Drawer, UIList_Responder, UIList_Ticker, CP_CvarList, &lst_mipmap },
     { UI_TEXT,      0,  0,              300, 310, 0, 55,    "Texture quality", UIText_Drawer },
     { UI_SLIDER,    0,  0,              680, 310, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_tex_quality },
     { UI_TEXT,      0,  0,              300, 370, 0, 55,    "Smart texture filtering", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 370, 70, 55,   "rend-tex-filter-smart", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
-    { UI_META,      8,  0,              0,   180 },
+    { UI_META,      7,  0,              0,   180 },
     { UI_TEXT,      0,  0,              300, 370, 0, 55,    "Bilinear filtering", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 370, 95, 55,   "rend-tex-filter-sprite", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
     { UI_BUTTON2,   0,  0,              780, 370, 95, 55,   "rend-tex-filter-mag", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
@@ -556,7 +562,7 @@ ui_object_t ob_panel[] =
     { UI_TEXT,      0,  UIF_FADE_AWAY,  300, 610, 0, 55,    "Detail texture contrast", UIText_Drawer },
     { UI_SLIDER,    0,  UIF_FADE_AWAY,  680, 610, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_detail_strength },
 
-    { UI_META,      9 },
+    { UI_META,      8 },
     { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Graphics Options: Objects", UIText_BrightDrawer },
     { UI_TEXT,      0,  0,              300, 70, 0, 55,     "Enable 3D models", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 70, 70, 55,    "rend-model", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
@@ -585,7 +591,7 @@ ui_object_t ob_panel[] =
     { UI_TEXT,      0,  0,              300, 850, 0, 55,    "Smooth actor movement", UIText_Drawer },
     { UI_LIST,      0,  0,              680, 850, 300, 115, "",         UIList_Drawer, UIList_Responder, UIList_Ticker, CP_CvarList, &lst_smooth_move },
 
-    { UI_META,      10 },
+    { UI_META,      9 },
     { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Graphics Options: Particles", UIText_BrightDrawer },
     { UI_TEXT,      0,  0,              300, 70, 0, 55,     "Enable particle effects", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 70, 70, 55,    "rend-particle", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
@@ -598,7 +604,7 @@ ui_object_t ob_panel[] =
     { UI_TEXT,      0,  UIF_FADE_AWAY,  300, 310, 0, 55,    "Near clip distance", UIText_Drawer },
     { UI_SLIDER,    0,  UIF_FADE_AWAY,  680, 310, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_particle_visnear },
 
-    { UI_META,      11 },
+    { UI_META,      10 },
     { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Network Options", UIText_BrightDrawer },
 #if 0
     { UI_TEXT,      0,  0,              300, 70, 0, 55,     "Continuous screen refresh", UIText_Drawer },
@@ -617,7 +623,7 @@ ui_object_t ob_panel[] =
     { UI_SLIDER,    0,  0,              680, 190, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_server_frame_interval },
 #endif
 
-    { UI_META,      12 },
+    { UI_META,      11 },
     { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Console Options", UIText_BrightDrawer },
 #if 0
     { UI_TEXT,      0,  0,              300, 70, 0, 55,     "Display FPS counter", UIText_Drawer },
@@ -880,6 +886,7 @@ void CP_QuickFOV(ui_object_t* ob)
     Con_SetFloat2("rend-camera-fov", sld_fov.value = atoi(ob->text), SVF_WRITE_OVERRIDE);
 }
 
+#if 0
 void CP_VideoModeInfo(ui_object_t *ob)
 {
     DENG_ASSERT(ob != 0);
@@ -990,6 +997,7 @@ void CP_VidModeChanged(ui_object_t *ob)
     CP_UpdateSetVidModeButton(atoi(panel_res_x), atoi(panel_res_y),
                               panel_bpp, panel_fullscreen);
 }
+#endif
 
 /**
  * Returns the object, if any, the mouse is currently hovering on. The
@@ -1211,6 +1219,7 @@ void CP_InitCvarSliders(ui_object_t *ob)
     }
 }
 
+#if 0
 static void populateDisplayResolutions(void)
 {
     int i, k, p = 0;
@@ -1240,6 +1249,7 @@ static void populateDisplayResolutions(void)
     lst_resolution.items = lstit_resolution;
     lst_resolution.count = p;
 }
+#endif
 
 /**
  * Initialize and open the Control Panel.
@@ -1254,7 +1264,7 @@ D_CMD(OpenPanel)
     //Con_Execute(CMDS_DDAY, "conclose", true, false);
     ClientWindow::main().taskBar().close();
 
-    populateDisplayResolutions();
+    //populateDisplayResolutions();
 
     // The help window is hidden.
     panel_help_active = false;
@@ -1339,6 +1349,7 @@ D_CMD(OpenPanel)
     }
     CP_InitCvarSliders(ob_panel);
 
+#if 0
     // Update width the current resolution.
     ClientWindow &mainWindow = ClientWindow::main();
     bool isFull = mainWindow.isFullScreen();
@@ -1356,6 +1367,7 @@ D_CMD(OpenPanel)
     panel_fullscreen = isFull;
     panel_bpp = (mainWindow.colorDepthBits() == 32? 1 : 0);
     CP_ResolutionList(ob);
+#endif
 
     UI_PageInit(true, true, false, false, false);
     UI_SetPage(&page_panel);

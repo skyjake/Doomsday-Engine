@@ -25,8 +25,8 @@
 #include "updater/updatersettings.h"
 #include "ui/widgets/progresswidget.h"
 #include "ui/widgets/taskbarwidget.h"
+#include "SignalAction"
 #include "ui/clientwindow.h"
-#include "ui/signalaction.h"
 #include "dd_version.h"
 
 #include <QNetworkAccessManager>

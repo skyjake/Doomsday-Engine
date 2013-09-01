@@ -21,7 +21,7 @@
 
 #include "buttonwidget.h"
 #include "popupmenuwidget.h"
-#include "actionitem.h"
+#include "ui/ActionItem"
 
 /**
  * Widget for choosing an item from a set of alternatives.
@@ -56,20 +56,23 @@ public:
 public:
     ChoiceWidget(de::String const &name = "");
 
-    ui::Context &items();
+    void setOpeningDirection(ui::Direction dir);
+
+    ui::Data &items();
 
     PopupMenuWidget &popup();
 
-    void setSelected(ui::Context::Pos pos);
+    void setSelected(ui::Data::Pos pos);
 
-    ui::Context::Pos selected() const;
+    ui::Data::Pos selected() const;
     ui::Item const &selectedItem() const;
 
 public slots:
     void openPopup();
 
 signals:
-    void selectionChanged(unsigned int pos);
+    void selectionChanged(uint pos);
+    void selectionChangedByUser(uint pos);
 
 private:
     DENG2_PRIVATE(d)

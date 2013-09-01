@@ -49,9 +49,9 @@
 #include "con_main.h"
 #include "clientapp.h"
 #include "ui/nativeui.h"
-#include "ui/signalaction.h"
 #include "ui/windowsystem.h"
 #include "ui/clientwindow.h"
+#include "SignalAction"
 #include "ui/widgets/taskbarwidget.h"
 #include "ui/widgets/progresswidget.h"
 #include "ui/widgets/notificationwidget.h"
@@ -80,7 +80,7 @@ using namespace de;
 #  define PLATFORM_ID       "win-x86"
 
 #elif defined(MACOSX)
-#  if defined(MACOS_10_7)
+#  if defined(MACOS_10_7) || defined(MACOSX_NATIVESDK)
 #    define PLATFORM_ID     "mac10_8-x86_64"
 #  elif defined(__64BIT__)
 #    define PLATFORM_ID     "mac10_6-x86-x86_64"
@@ -478,8 +478,6 @@ DENG2_OBSERVES(App, StartupComplete)
 
 Updater::Updater() : d(new Instance(this))
 {
-    UpdaterSettings::initialize();
-
     connect(d->network, SIGNAL(finished(QNetworkReply *)), this, SLOT(gotReply(QNetworkReply *)));
 
     // Do a silent auto-update check when starting.

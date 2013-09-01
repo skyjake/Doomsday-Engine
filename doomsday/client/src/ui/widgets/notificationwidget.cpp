@@ -17,7 +17,7 @@
  */
 
 #include "ui/widgets/notificationwidget.h"
-#include "ui/widgets/sequentiallayout.h"
+#include "SequentialLayout"
 
 #include <de/Drawable>
 #include <de/Matrix>
@@ -102,7 +102,7 @@ DENG2_OBSERVES(Widget, ChildRemoval)
 
     void updateChildLayout()
     {
-        Rule const &gap = self.style().rules().rule("unit");
+        Rule const &gap = style().rules().rule("unit");
 
         // The children are laid out simply in a row from right to left.
         SequentialLayout layout(self.rule().right(), self.rule().top(), ui::Left);
@@ -134,7 +134,7 @@ DENG2_OBSERVES(Widget, ChildRemoval)
     void hide(TimeDelta const &span = ANIM_SPAN)
     {
         //self.setOpacity(0, span);
-        shift->set(self.rule().height() + self.style().rules().rule("gap"), span);
+        shift->set(self.rule().height() + style().rules().rule("gap"), span);
         shift->setStyle(Animation::EaseIn);
     }
 
@@ -165,7 +165,7 @@ DENG2_OBSERVES(Widget, ChildRemoval)
     void widgetChildAdded(Widget &child)
     {
         // Set a background for all notifications.
-        child.as<GuiWidget>().set(Background(self.style().colors().colorf("background")));
+        child.as<GuiWidget>().set(Background(style().colors().colorf("background")));
 
         updateChildLayout();
         self.show();
@@ -257,6 +257,8 @@ bool NotificationWidget::isChildShown(GuiWidget &notif) const
 
 void NotificationWidget::viewResized()
 {
+    GuiWidget::viewResized();
+
     d->uMvpMatrix = root().projMatrix2D();
 }
 

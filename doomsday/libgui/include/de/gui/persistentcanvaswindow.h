@@ -75,6 +75,13 @@ public:
         VerticalSync
     };
 
+    /**
+     * Notified after one or more window attributes have changed. If the
+     * changes are queued, the notification is made only after all the changes
+     * have been applied.
+     */
+    DENG2_DEFINE_AUDIENCE(AttributeChange, void windowAttributesChanged(PersistentCanvasWindow &))
+
 public:    
     /**
      * Constructs a new window using the persistent configuration associated

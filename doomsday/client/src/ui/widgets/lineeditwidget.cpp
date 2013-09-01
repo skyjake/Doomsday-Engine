@@ -18,9 +18,9 @@
 
 #include "ui/widgets/lineeditwidget.h"
 #include "ui/widgets/labelwidget.h"
-#include "ui/widgets/fontlinewrapping.h"
-#include "ui/widgets/guirootwidget.h"
-#include "ui/widgets/gltextcomposer.h"
+#include "FontLineWrapping"
+#include "GuiRootWidget"
+#include "GLTextComposer"
 #include "ui/style.h"
 
 #include <de/KeyEvent>
@@ -43,6 +43,7 @@ DENG2_OBSERVES(Atlas, Reposition)
     ScalarRule *height;
     FontLineWrapping &wraps;
     LabelWidget *hint;
+    bool signalOnEnter;
 
     // Style.
     Font const *font;
@@ -61,6 +62,7 @@ DENG2_OBSERVES(Atlas, Reposition)
         : Base(i),
           wraps(static_cast<FontLineWrapping &>(i->lineWraps())),
           hint(0),
+          signalOnEnter(false),
           font(0),
           margin(0),
           hovering(0, Animation::Linear),
@@ -86,10 +88,8 @@ DENG2_OBSERVES(Atlas, Reposition)
      */
     void updateStyle()
     {
-        Style const &st = self.style();
-
         font   = &self.font();
-        margin = st.rules().rule("gap").valuei();
+        margin = style().rules().rule("gap").valuei();
 
         updateBackground();
 
@@ -114,7 +114,7 @@ DENG2_OBSERVES(Atlas, Reposition)
 
     void updateBackground()
     {
-        Background bg(self.style().colors().colorf("background"));
+        Background bg(style().colors().colorf("background"));
         if(hovering > 0)
         {
             bg.type = Background::GradientFrame;
@@ -246,6 +246,11 @@ void LineEditWidget::setEmptyContentHint(String const &hintText)
     d->hint->setText(hintText);
 }
 
+void LineEditWidget::setSignalOnEnter(bool enterSignal)
+{
+    d->signalOnEnter = enterSignal;
+}
+
 Rectanglei LineEditWidget::cursorRect() const
 {
     Vector2i const cursorPos = lineCursorPos();
@@ -306,6 +311,8 @@ void LineEditWidget::updateStyle()
 
 void LineEditWidget::viewResized()
 {
+    GuiWidget::viewResized();
+
     updateLineWraps(RewrapNow);
     d->updateProjection();
 }
@@ -388,6 +395,12 @@ bool LineEditWidget::handleEvent(Event const &event)
            key.qtKey() == Qt::Key_Meta)
         {
             // Modifier keys alone will be eaten when focused.
+            return true;
+        }
+
+        if(d->signalOnEnter && (key.qtKey() == Qt::Key_Enter || key.qtKey() == Qt::Key_Return))
+        {
+            emit enterPressed(text());
             return true;
         }
 

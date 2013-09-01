@@ -25,7 +25,7 @@
 #include "network/serverlink.h"
 #include "ui/inputsystem.h"
 #include "ui/windowsystem.h"
-#include "ui/widgets/widgetactions.h"
+#include "WidgetActions"
 #include "updater.h"
 #include "Games"
 #include "world/world.h"
