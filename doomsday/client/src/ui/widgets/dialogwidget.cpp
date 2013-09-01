@@ -318,25 +318,30 @@ DENG2_OBSERVES(ui::Data, Removal)
 
         if(glow.done()) animatingGlow = false;
     }
+
+    void updateBackground()
+    {
+        Background bg = self.background();
+        if(!App_GameLoaded()) // blurring is not yet compatible with game rendering
+        {
+            /// @todo Should use the Style for this.
+            bg.type = Background::BlurredWithBorderGlow;
+            bg.solidFill = Vector4f(0, 0, 0, .65f);
+        }
+        else
+        {
+            bg.type = Background::BorderGlow;
+            bg.solidFill = style().colors().colorf("dialog.background");
+        }
+        self.set(bg);
+    }
 };
 
 DialogWidget::DialogWidget(String const &name, Flags const &flags)
     : PopupWidget(name), d(new Instance(this, flags))
 {
     setOpeningDirection(ui::NoDirection);
-
-    Background bg = background();
-    if(!App_GameLoaded()) // blurring is not yet compatible with game rendering
-    {
-        /// @todo Should use the Style for this.
-        bg.type = Background::BlurredWithBorderGlow;
-        bg.solidFill = Vector4f(0, 0, 0, .65f);
-    }
-    else
-    {
-        bg.solidFill = style().colors().colorf("dialog.background");
-    }
-    set(bg);
+    d->updateBackground();
 }
 
 DialogWidget::Modality DialogWidget::modality() const
@@ -499,6 +504,8 @@ void DialogWidget::preparePopupForOpening()
 
     // Redo the layout (items visible now).
     d->buttons->updateLayout();
+
+    d->updateBackground();
 }
 
 void DialogWidget::finish(int)

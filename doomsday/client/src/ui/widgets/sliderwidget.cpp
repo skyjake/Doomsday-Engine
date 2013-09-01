@@ -17,6 +17,8 @@
  */
 
 #include "ui/widgets/sliderwidget.h"
+#include "ui/widgets/dialogwidget.h"
+#include "ui/widgets/lineeditwidget.h"
 #include "TextDrawable"
 
 #include <de/Drawable>
@@ -24,6 +26,42 @@
 
 using namespace de;
 using namespace ui;
+
+class ValuePopup : public PopupWidget
+{
+public:
+    ValuePopup(SliderWidget &slider) : _slider(slider)
+    {
+        setContent(_edit = new LineEditWidget);
+        //_edit->setEmptyContentHint(tr("Enter value"));
+        _edit->setSignalOnEnter(true);
+        connect(_edit, SIGNAL(enterPressed(QString)), &slider, SLOT(setValueFromText(QString)));
+        connect(_edit, SIGNAL(enterPressed(QString)), this, SLOT(close()));
+        _edit->rule().setInput(Rule::Width, slider.style().rules().rule("slider.editor"));
+
+        _edit->setText(QString::number(slider.value(), 'g', 4));
+    }
+
+    LineEditWidget &editor() const
+    {
+        return *_edit;
+    }
+
+    void preparePopupForOpening()
+    {
+        PopupWidget::preparePopupForOpening();
+        root().setFocus(_edit);
+    }
+
+    void popupClosing()
+    {
+        root().setFocus(0);
+    }
+
+private:
+    SliderWidget &_slider;
+    LineEditWidget *_edit;
+};
 
 DENG_GUI_PIMPL(SliderWidget)
 {
@@ -46,7 +84,6 @@ DENG_GUI_PIMPL(SliderWidget)
     Animation pos;
     int endLabelSize;
     Animation frameOpacity;
-    //int thickness;
 
     // GL objects.
     enum Labels {
@@ -80,7 +117,6 @@ DENG_GUI_PIMPL(SliderWidget)
 
     void updateStyle()
     {
-        //thickness = style().fonts().font("default").height().valuei();
         endLabelSize = style().rules().rule("slider.label").valuei();
 
         for(int i = 0; i < int(NUM_LABELS); ++i)
@@ -160,7 +196,7 @@ DENG_GUI_PIMPL(SliderWidget)
 
         if(!self.geometryRequested()) return;
 
-        ColorBank::Colorf const accentColor = style().colors().colorf("accent");
+        //ColorBank::Colorf const accentColor = style().colors().colorf("accent");
         ColorBank::Colorf const textColor = style().colors().colorf("text");
         ColorBank::Colorf const invTextColor = style().colors().colorf("inverted.text");
 
@@ -183,13 +219,26 @@ DENG_GUI_PIMPL(SliderWidget)
         int numDots = de::clamp(5, round<int>(range.size() / step) + 1, 11);
         int dotSpace = sliderArea.width() - endLabelSize;
         int dotX = sliderArea.topLeft.x + endLabelSize / 2;
+        float altAlpha = 0;
+        if(dotSpace / numDots > 30)
+        {
+            altAlpha = .3f;
+            numDots = 2 * numDots + 1;
+        }
         Image::Size const dotSize = atlas().imageRect(root().tinyDot()).size();
         for(int i = 0; i < numDots; ++i)
         {
             Vector2i dotPos(dotX + dotSpace * float(i) / float(numDots - 1),
                             sliderArea.middle().y);
+
+            Vector4f dotColor = textColor;
+            if(altAlpha > 0 && i % 2)
+            {
+                // Dim alt dots.
+                dotColor.w *= altAlpha;
+            }
             verts.makeQuad(Rectanglei::fromSize(dotPos - dotSize.toVector2i()/2, dotSize),
-                           textColor, atlas().imageRectf(root().tinyDot()));
+                           dotColor, atlas().imageRectf(root().tinyDot()));
         }
 
         // Current slider position.
@@ -340,6 +389,8 @@ DENG_GUI_PIMPL(SliderWidget)
         Rectanglei const area = sliderRect();
         float unitsPerPixel = range.size() / (area.width() - endLabelSize);
         setValue(grabValue + (ev.pos().x - grabFrom.x) * unitsPerPixel);
+
+        emit self.valueChangedByUser(value);
     }
 
     void endGrab(MouseEvent const &ev)
@@ -478,7 +529,41 @@ bool SliderWidget::handleEvent(Event const &event)
         }
     }
 
+    // Right-click to edit the value as text.
+    if(d->state != Instance::Grabbed)
+    {
+        switch(handleMouseClick(event, MouseEvent::Right))
+        {
+        case MouseClickFinished: {
+            ValuePopup *pop = new ValuePopup(*this);
+            pop->setAnchorAndOpeningDirection(rule(),
+                    rule().recti().middle().y < root().viewHeight().valuei()/2? ui::Down : ui::Up);
+            pop->setDeleteAfterDismissed(true);
+            //root().add(pop);
+            //pop->open();
+            root().add(pop);
+            pop->open();
+            //pop->viewResized();
+            //pop->notifyTree(&Widget::viewResized);
+            //root().setFocus(&pop->editor());
+            return true; }
+
+        case MouseClickStarted:
+        case MouseClickAborted:
+            return true;
+
+        default:
+            break;
+        }
+    }
+
     return GuiWidget::handleEvent(event);
+}
+
+void SliderWidget::setValueFromText(QString text)
+{
+    setValue(text.toDouble());
+    emit valueChangedByUser(d->value);
 }
 
 void SliderWidget::glInit()

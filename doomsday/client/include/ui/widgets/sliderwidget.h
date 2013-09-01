@@ -49,6 +49,9 @@ public:
     void drawContent();
     bool handleEvent(de::Event const &event);
 
+public slots:
+    void setValueFromText(QString text);
+
 signals:
     void valueChanged(float value);
     void valueChangedByUser(float value);

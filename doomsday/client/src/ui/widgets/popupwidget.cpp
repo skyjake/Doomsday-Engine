@@ -395,11 +395,8 @@ void PopupWidget::open()
 
     // Reparent the popup into the root widget, on top of everything else.
     d->realParent = Widget::parent();
-    if(d->realParent != &d->realParent->root())
-    {
-        d->realParent->remove(*this);
-        d->realParent->root().add(this);
-    }
+    d->realParent->remove(*this);
+    d->realParent->root().add(this);
 
     unsetBehavior(DisableEventDispatchToChildren);
 
@@ -437,11 +434,8 @@ void PopupWidget::dismiss()
     d->dismissTimer.stop();
 
     // Move back to the original parent widget.
-    if(d->realParent != &root())
-    {
-        root().remove(*this);
-        d->realParent->add(this);
-    }
+    root().remove(*this);
+    d->realParent->add(this);
 
     popupDismissed();
 
