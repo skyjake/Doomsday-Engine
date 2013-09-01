@@ -30,8 +30,18 @@
  */
 class UpdaterSettingsDialog : public DialogWidget
 {
+    Q_OBJECT
+
 public:
-    UpdaterSettingsDialog(de::String const &name = "updatersettings");
+    enum Mode {
+        Normal = 0,
+        WithApplyAndCheckButton = 1
+    };
+
+    UpdaterSettingsDialog(Mode mode = Normal, de::String const &name = "updatersettings");
+
+public slots:
+    void applyAndCheckNow();
 
 protected:
     void finish(int result);

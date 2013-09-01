@@ -21,10 +21,12 @@
 
 #include "updater/updatersettingsdialog.h"
 #include "updater/updatersettings.h"
+#include "clientapp.h"
 #include "ui/widgets/labelwidget.h"
 #include "ui/widgets/choicewidget.h"
 #include "ui/widgets/variabletogglewidget.h"
 #include "GridLayout"
+#include "SignalAction"
 #include <de/Log>
 #include <QDesktopServices>
 
@@ -54,7 +56,7 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
     ChoiceWidget *paths;
     ToggleWidget *deleteAfter;
 
-    Instance(Public *i) : Base(i)
+    Instance(Public *i, Mode mode) : Base(i)
     {
         ScrollAreaWidget &area = self.area();
 
@@ -117,6 +119,13 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
         self.buttons().items()
                 << new DialogButtonItem(DialogWidget::Default | DialogWidget::Accept)
                 << new DialogButtonItem(DialogWidget::Reject);
+
+        if(mode == WithApplyAndCheckButton)
+        {
+            self.buttons().items()
+                    << new DialogButtonItem(DialogWidget::Action, tr("Apply & Check Now"),
+                                            new SignalAction(thisPublic, SLOT(applyAndCheckNow())));
+        }
     }
 
     void fetch()
@@ -189,9 +198,15 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
     }
 };
 
-UpdaterSettingsDialog::UpdaterSettingsDialog(String const &name)
-    : DialogWidget(name), d(new Instance(this))
+UpdaterSettingsDialog::UpdaterSettingsDialog(Mode mode, String const &name)
+    : DialogWidget(name), d(new Instance(this, mode))
 {}
+
+void UpdaterSettingsDialog::applyAndCheckNow()
+{
+    accept();
+    ClientApp::app().updater().checkNow();
+}
 
 void UpdaterSettingsDialog::finish(int result)
 {
