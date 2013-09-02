@@ -484,8 +484,8 @@ static void plotSourcesForPlane(Plane &pln)
     Vector3d v1(sectorAABox.minX, pln.isSectorFloor()? sectorAABox.maxY : sectorAABox.minY, pln.visHeight());
     Vector3d v2(sectorAABox.maxX, pln.isSectorFloor()? sectorAABox.minY : sectorAABox.maxY, pln.visHeight());
 
-    Vector2f offset(-fmod(sectorAABox.minX, 64) - surface.visMaterialOrigin()[0],
-                    -fmod(sectorAABox.minY, 64) - surface.visMaterialOrigin()[1]);
+    Vector2f offset(-fmod(sectorAABox.minX, 64) - surface.visMaterialOrigin().x,
+                    -fmod(sectorAABox.minY, 64) - surface.visMaterialOrigin().y);
 
     updateSurfaceDecorations(surface, offset, v1, v2, &sector);
 }

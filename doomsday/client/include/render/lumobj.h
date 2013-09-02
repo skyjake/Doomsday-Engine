@@ -1,8 +1,7 @@
-/** @file render/lumobj.h Luminous Object Management
- * @ingroup render
+/** @file lumobj.h Luminous object management.
  *
- * @author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @author Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -19,44 +18,40 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_RENDER_LUMINOUS_H
-#define DENG_RENDER_LUMINOUS_H
+#ifndef DENG_CLIENT_RENDER_LUMINOUS_H
+#define DENG_CLIENT_RENDER_LUMINOUS_H
 
 #include <de/Matrix>
 #include <de/Vector>
 
-#include "api_gl.h"
-
-#include "dd_types.h"
-#include "color.h"
-#include "resource/r_data.h"
+#include "api_gl.h" // DGLuint
+#include "world/map.h"
 
 class BspLeaf;
 
 // Luminous object types.
-typedef enum {
+enum lumtype_t
+{
     LT_OMNI,  ///< Omni (spherical) light.
     LT_PLANE  ///< Planar light.
-} lumtype_t;
+};
 
-// Helper macros for accessing lum data.
-#define LUM_OMNI(x)         (&((x)->data.omni))
-#define LUM_PLANE(x)        (&((x)->data.plane))
-
-typedef struct lumobj_s {
+struct lumobj_t
+{
     lumtype_t type;
-    coord_t origin[3]; // Center of the obj.
+    coord_t origin[3]; ///< Position in the map coordinate space.
     BspLeaf *bspLeaf;
     coord_t maxDistance;
-    void *decorSource; // decorsource_t ptr, else @c NULL.
+    void *decorSource; ///< Source of the light (if any).
 
     union lumobj_data_u {
         struct lumobj_omni_s {
             float color[3];
-            coord_t radius; // Radius for this omnilight source.
-            coord_t zOff; // Offset to center from pos[VZ].
-            DGLuint tex; // Lightmap texture.
-            DGLuint floorTex, ceilTex; // Lightmaps for floor/ceil.
+            coord_t radius;   ///< Radius for this omnilight source.
+            coord_t zOff;     ///< Offset to center from pos[VZ].
+            DGLuint tex;      ///< Primary lightmap texture.
+            DGLuint floorTex; ///< Floor lightmap (if any).
+            DGLuint ceilTex;  ///< Ceiling lightmap (if any).
         } omni;
         struct lumobj_plane_s {
             float color[3];
@@ -64,16 +59,21 @@ typedef struct lumobj_s {
             float normal[3];
         } plane;
     } data;
-} lumobj_t;
+};
+
+// Helper macros for accessing lum data.
+#define LUM_OMNI(x)         (&((x)->data.omni))
+#define LUM_PLANE(x)        (&((x)->data.plane))
 
 /**
  * Dynlight stores a luminous object => surface projection.
  */
-typedef struct {
+struct dynlight_t
+{
     DGLuint texture;
     float s[2], t[2];
     de::Vector4f color;
-} dynlight_t;
+};
 
 DENG_EXTERN_C boolean loInited;
 
@@ -130,10 +130,10 @@ lumobj_t *LO_GetLuminous(uint idx);
 uint LO_ToIndex(lumobj_t const *lum);
 
 /// @return  @c true if the lumobj is clipped for the viewer.
-boolean LO_IsClipped(uint idx, int i);
+bool LO_IsClipped(uint idx, int i);
 
 /// @return  @c true if the lumobj is hidden for the viewer.
-boolean LO_IsHidden(uint idx, int i);
+bool LO_IsHidden(uint idx, int i);
 
 /// @return  Approximated distance between the lumobj and the viewer.
 coord_t LO_DistanceToViewer(uint idx, int i);
@@ -235,4 +235,4 @@ int LO_IterateProjections(uint listIdx, int (*callback) (dynlight_t const *, voi
 
 void LO_DrawLumobjs();
 
-#endif // DENG_RENDER_LUMINOUS_H
+#endif // DENG_CLIENT_RENDER_LUMINOUS_H

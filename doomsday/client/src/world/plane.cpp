@@ -318,7 +318,7 @@ int Plane::property(DmuArgs &args) const
         args.setValue(DMT_PLANE_EMITTER, &d->soundEmitter, 0);
         break;
     case DMU_SECTOR: {
-        Sector *secPtr = &const_cast<Plane *>(this)->sector();
+        Sector const *secPtr = &sector();
         args.setValue(DMT_PLANE_SECTOR, &secPtr, 0);
         break; }
     case DMU_HEIGHT:
