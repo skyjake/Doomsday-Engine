@@ -40,7 +40,7 @@ class GuiRootWidget;
  * automatically applies certain common style parameters (margins, backgrounds,
  * etc.).
  *
- * @par Dialog Structure
+ * @par Widget Structure
  *
  * Dialogs are composed of several child widgets:
  * <pre>
