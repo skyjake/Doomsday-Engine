@@ -32,7 +32,9 @@ public:
     AudioSettingsDialog(de::String const &name = "audiosettings");
 
 public slots:
-    void resetToDefaults();
+    void sampleRateChanged(uint);
+    void musicSourceChanged(uint);
+    void resetToDefaults();    
 
 private:
     DENG2_PRIVATE(d)

@@ -21,6 +21,7 @@
 #include "ui/widgets/cvartogglewidget.h"
 #include "ui/widgets/choicewidget.h"
 
+#include "de_audio.h"
 #include "con_main.h"
 #include "SignalAction"
 
@@ -35,6 +36,7 @@ DENG_GUI_PIMPL(AudioSettingsDialog)
     CVarToggleWidget *sound3D;
     CVarToggleWidget *sound16bit;
     ChoiceWidget *sampleRate;
+    ChoiceWidget *musicSource;
     CVarToggleWidget *soundInfo;
 
     Instance(Public *i) : Base(i)
@@ -47,6 +49,7 @@ DENG_GUI_PIMPL(AudioSettingsDialog)
         area.add(sound3D      = new CVarToggleWidget("sound-3d"));
         area.add(sound16bit   = new CVarToggleWidget("sound-16bit"));
         area.add(sampleRate   = new ChoiceWidget);
+        area.add(musicSource  = new ChoiceWidget);
         area.add(soundInfo    = new CVarToggleWidget("sound-info"));
     }
 
@@ -59,8 +62,8 @@ DENG_GUI_PIMPL(AudioSettingsDialog)
         sound16bit->updateFromCVar();
         soundInfo->updateFromCVar();
 
-        // Update the selected sample rate.
         sampleRate->setSelected(sampleRate->items().findData(Con_GetInteger("sound-rate")));
+        musicSource->setSelected(musicSource->items().findData(Con_GetInteger("music-source")));
     }
 };
 
@@ -93,6 +96,21 @@ AudioSettingsDialog::AudioSettingsDialog(String const &name)
             << new ChoiceItem(tr("2x @ 22050 Hz"), 22050)
             << new ChoiceItem(tr("4x @ 44100 Hz"), 44100);
 
+    connect(d->sampleRate, SIGNAL(selectionChangedByUser(uint)),
+            this, SLOT(sampleRateChanged(uint)));
+
+    LabelWidget *musSrcLabel = new LabelWidget;
+    musSrcLabel->setText(tr("Preferred Music:"));
+    area().add(musSrcLabel);
+
+    d->musicSource->items()
+            << new ChoiceItem(tr("MUS lumps"), MUSP_MUS)
+            << new ChoiceItem(tr("External files"), MUSP_EXT)
+            << new ChoiceItem(tr("CD"), MUSP_CD);
+
+    connect(d->musicSource, SIGNAL(selectionChangedByUser(uint)),
+            this, SLOT(musicSourceChanged(uint)));
+
     d->soundInfo->setText(tr("Developer Info"));
 
     // Layout.
@@ -103,6 +121,7 @@ AudioSettingsDialog::AudioSettingsDialog(String const &name)
            << *musicVolLabel << *d->musicVolume
            << *rvbVolLabel   << *d->reverbVolume
            << Const(0)       << *d->sound3D
+           << *musSrcLabel   << *d->musicSource
            << *rateLabel     << *d->sampleRate
            << Const(0)       << *d->sound16bit
            << Const(0)       << *d->soundInfo;
@@ -117,6 +136,16 @@ AudioSettingsDialog::AudioSettingsDialog(String const &name)
     d->fetch();
 }
 
+void AudioSettingsDialog::sampleRateChanged(uint)
+{
+    Con_SetInteger("sound-rate", d->sampleRate->selectedItem().data().toInt());
+}
+
+void AudioSettingsDialog::musicSourceChanged(uint)
+{
+    Con_SetInteger("music-source", d->musicSource->selectedItem().data().toInt());
+}
+
 void AudioSettingsDialog::resetToDefaults()
 {
     Con_SetInteger("sound-volume",        255  );
@@ -126,6 +155,7 @@ void AudioSettingsDialog::resetToDefaults()
     Con_SetInteger("sound-rate",          11025);
     Con_SetInteger("sound-16bit",         0    );
     Con_SetInteger("sound-3d",            0    );
+    Con_SetInteger("music-source",        MUSP_EXT);
 
     d->fetch();
 }
