@@ -2304,11 +2304,11 @@ void Sv_NewPolyDeltas(cregister_t *reg, boolean doUpdate, pool_t **targets)
     }
 }
 
-void Sv_NewSoundDelta(int soundId, mobj_t* emitter, Sector* sourceSector,
-    Polyobj* sourcePoly, Plane *sourcePlane, Surface* sourceSurface,
+void Sv_NewSoundDelta(int soundId, mobj_t *emitter, Sector *sourceSector,
+    Polyobj *sourcePoly, Plane *sourcePlane, Surface *sourceSurface,
     float volume, boolean isRepeating, int clientsMask)
 {
-    pool_t* targets[DDMAXPLAYERS + 1];
+    pool_t *targets[DDMAXPLAYERS + 1];
     sounddelta_t soundDelta;
     int type = DT_SOUND, df = 0;
     int id = soundId;
@@ -2334,11 +2334,11 @@ void Sv_NewSoundDelta(int soundId, mobj_t* emitter, Sector* sourceSector,
         // Clients need to know which emitter to use.
         if(emitter && emitter == (mobj_t *) &sourcePlane->soundEmitter())
         {
-            if(sourcePlane == &sourcePlane->sector().floor())
+            if(sourcePlane->isSectorFloor())
             {
                 df |= SNDDF_PLANE_FLOOR;
             }
-            else if(sourcePlane == &sourcePlane->sector().ceiling())
+            else if(sourcePlane->isSectorCeiling())
             {
                 df |= SNDDF_PLANE_CEILING;
             }
