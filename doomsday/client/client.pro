@@ -876,6 +876,10 @@ macx {
     doPostLink("macdeployqt Doomsday.app")
 }
 
+# i18n -----------------------------------------------------------------------
+
+#TRANSLATIONS = client_en.ts
+
 # Installation ---------------------------------------------------------------
 
 !macx {

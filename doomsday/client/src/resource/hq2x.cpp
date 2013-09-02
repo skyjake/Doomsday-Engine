@@ -69,10 +69,12 @@
 #define ARGB8888_Bmask      RGB888_Bmask
 #define ARGB8888_RGBmask    ((int)0x00FFFFFF)
 
+/*
 // YUV conversion.
 #define RGB888toYUV888(v)   (BGR888toYUV888(RGB888toBGR888(v)))
 #define ARGB8888toYUV888(v) (RGB888toYUV888((v) & ARGB8888_RGBmask])
 #define ARGB8888toAYUV8888(v) (ARGB8888toYUV888(v) | (((v) & ARGB8888_Amask) << 24))
+*/
 
 #define BGR565_PACK(b, g, r) ( ((uint16_t)(b) << 11) | ((uint16_t)(g) << 5) | (uint16_t)(r) )
 #define BGR565_Bmask        ((int)0xF800)
