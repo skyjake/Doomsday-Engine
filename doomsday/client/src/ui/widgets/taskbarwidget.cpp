@@ -51,7 +51,7 @@ static uint POS_PANEL = 0;
 static uint POS_UNLOAD = 1;
 static uint POS_GAME_SEPARATOR = 2;
 static uint POS_VIDEO_SETTINGS = 3;
-static uint POS_UPDATER_SETTINGS = 5;
+static uint POS_UPDATER_SETTINGS = 4;
 
 DENG_GUI_PIMPL(TaskBarWidget),
 public IGameChangeObserver

@@ -85,6 +85,7 @@ DENG2_OBSERVES(ui::Data, Removal)
     Modality modality;
     Flags flags;
     ScrollAreaWidget *area;
+    LabelWidget *heading;
     MenuWidget *buttons;
     QEventLoop subloop;
     Animation glow;
@@ -96,6 +97,7 @@ DENG2_OBSERVES(ui::Data, Removal)
         : Base(i),
           modality(Modal),
           flags(dialogFlags),
+          heading(0),
           needButtonUpdate(false),
           animatingGlow(false)
     {
@@ -125,7 +127,26 @@ DENG2_OBSERVES(ui::Data, Removal)
                 .setInput(Rule::Top, self.rule().top())
                 .setInput(Rule::Width, area->contentRule().width() + area->margins().width());
 
-        if(!flags.testFlag(Buttonless))
+        // Will a title be included?
+        if(flags & WithHeading)
+        {
+            heading = new LabelWidget;
+            heading->setFont("heading");
+            heading->margins().setBottom("");
+            heading->setSizePolicy(ui::Expand, ui::Expand);
+            heading->setTextColor("accent");
+            heading->setAlignment(ui::AlignLeft);
+            heading->setTextLineAlignment(ui::AlignLeft);
+            container->add(heading);
+
+            heading->rule()
+                    .setInput(Rule::Top, self.rule().top())
+                    .setInput(Rule::Left, self.rule().left());
+
+            area->rule().setInput(Rule::Top, heading->rule().bottom());
+        }
+
+        //if(!flags.testFlag(Buttonless))
         {
             area->rule().setInput(Rule::Height, container->rule().height() -
                                   buttons->rule().height() + area->margins().bottom());
@@ -139,14 +160,23 @@ DENG2_OBSERVES(ui::Data, Removal)
             container->rule().setInput(Rule::Width, OperatorRule::maximum(area->rule().width(),
                                                                           buttons->rule().width()));
         }
-        else
+
+        if(flags.testFlag(WithHeading))
+        {
+            area->rule().setInput(Rule::Height,
+                                  container->rule().height()
+                                  - heading->rule().height()
+                                  - buttons->rule().height()
+                                  + area->margins().bottom());
+        }
+        /*else
         {
             area->rule().setInput(Rule::Height, container->rule().height() + area->margins().height());
             container->rule().setInput(Rule::Width, area->rule().width());
-        }
+        }*/
 
         container->add(area);
-        if(!flags.testFlag(Buttonless))
+        //if(!flags.testFlag(Buttonless))
         {
             container->add(buttons);
         }
@@ -157,7 +187,7 @@ DENG2_OBSERVES(ui::Data, Removal)
     {
         // The container's height is limited by the height of the view. Normally
         // the dialog tries to show the full height of the content area.
-        if(!flags.testFlag(Buttonless))
+        if(!flags.testFlag(WithHeading))
         {
             self.content().rule().setInput(Rule::Height,
                                            OperatorRule::minimum(root().viewHeight(),
@@ -167,12 +197,22 @@ DENG2_OBSERVES(ui::Data, Removal)
         }
         else
         {
+            self.content().rule().setInput(Rule::Height,
+                                           OperatorRule::minimum(root().viewHeight(),
+                                                                 heading->rule().height() +
+                                                                 area->contentRule().height() +
+                                                                 area->margins().bottom() +
+                                                                 buttons->rule().height()));
+        }
+
+        /*else
+        {
             // A blank container widget acts as the popup content parent.
             self.content().rule().setInput(Rule::Height,
                                            OperatorRule::minimum(root().viewHeight(),
                                                                  area->contentRule().height() +
                                                                  area->margins().height()));
-        }
+        }*/
     }
 
     void contextItemAdded(ui::Data::Pos, ui::Item const &)
@@ -347,6 +387,12 @@ DialogWidget::DialogWidget(String const &name, Flags const &flags)
 DialogWidget::Modality DialogWidget::modality() const
 {
     return d->modality;
+}
+
+LabelWidget &DialogWidget::heading()
+{
+    DENG2_ASSERT(d->heading != 0);
+    return *d->heading;
 }
 
 ScrollAreaWidget &DialogWidget::area()

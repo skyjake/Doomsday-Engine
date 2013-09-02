@@ -56,7 +56,7 @@ public:
 
     enum Flag {
         DefaultFlags = 0,
-        Buttonless = 0x1    ///< No space is reserved for buttons in the bottom.
+        WithHeading  = 0x1      ///< Dialog has a heading above the content area.
     };
     Q_DECLARE_FLAGS(Flags, Flag)
 
@@ -104,6 +104,12 @@ public:
     DialogWidget(de::String const &name = "", Flags const &flags = DefaultFlags);
 
     Modality modality() const;
+
+    /**
+     * If the dialog was created using the WithHeading flag, this will return the
+     * label used for the dialog heading.
+     */
+    LabelWidget &heading();
 
     ScrollAreaWidget &area();
 

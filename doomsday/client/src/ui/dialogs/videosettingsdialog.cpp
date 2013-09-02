@@ -127,8 +127,10 @@ DENG2_OBSERVES(PersistentCanvasWindow, AttributeChange)
 };
 
 VideoSettingsDialog::VideoSettingsDialog(String const &name)
-    : DialogWidget(name), d(new Instance(this))
+    : DialogWidget(name, WithHeading), d(new Instance(this))
 {
+    heading().setText(tr("Video Settings"));
+
     // Toggles for video/window options.
     d->fullscreen->setText(tr("Fullscreen"));
     d->fullscreen->setAction(new CommandAction("togglefullscreen"));
