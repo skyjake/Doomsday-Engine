@@ -42,6 +42,7 @@ DENG2_PIMPL(CanvasWindow)
 {
     Canvas* canvas; ///< Drawing surface for the contents of the window.
     Canvas* recreated;
+    Canvas::FocusChangeAudience canvasFocusAudience; ///< Stored here during recreation.
     bool ready;
     bool mouseWasTrapped;
     unsigned int frameCount;
@@ -115,6 +116,9 @@ DENG2_PIMPL(CanvasWindow)
             canvas->trapMouse();
         }
 
+        // Restore the old focus change audience.
+        canvas->audienceForFocusChange = canvasFocusAudience;
+
         LOG_DEBUG("Canvas replaced with %p") << de::dintptr(canvas);
     }
 };
@@ -145,6 +149,11 @@ float CanvasWindow::frameRate() const
 void CanvasWindow::recreateCanvas()
 {
     d->ready = false;
+
+    // Steal the focus change audience temporarily so no spurious focus
+    // notifications are sent.
+    d->canvasFocusAudience = canvas().audienceForFocusChange;
+    canvas().audienceForFocusChange.clear();
 
     // We'll re-trap the mouse after the new canvas is ready.
     d->mouseWasTrapped = canvas().isMouseTrapped();
