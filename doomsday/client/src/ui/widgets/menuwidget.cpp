@@ -353,6 +353,19 @@ void MenuWidget::update()
     ScrollAreaWidget::update();
 }
 
+bool MenuWidget::handleEvent(Event const &event)
+{
+    if(event.type() == Event::MousePosition)
+    {
+        if(rule().recti().contains(event.as<MouseEvent>().pos()))
+        {
+            // Eat position events inside the menu area.
+            return true;
+        }
+    }
+    return ScrollAreaWidget::handleEvent(event);
+}
+
 void MenuWidget::dismissPopups()
 {
     foreach(PopupWidget *pop, d->openPopups)
