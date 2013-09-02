@@ -425,9 +425,12 @@ DENG_GUI_PIMPL(SliderWidget)
 SliderWidget::SliderWidget(String const &name)
     : GuiWidget(name), d(new Instance(this))
 {
+    /*
+    // Testing.
     setRange(Rangef(0, 1));
     setPrecision(2);
     setValue(.5f);
+    */
 
     // Default size.
     rule().setInput(Rule::Width,  style().rules().rule("slider.width"))

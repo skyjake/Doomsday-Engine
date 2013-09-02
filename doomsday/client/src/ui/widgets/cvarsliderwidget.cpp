@@ -48,12 +48,28 @@ void CVarSliderWidget::updateFromCVar()
     float step = 0;
 
     cvar_t *var = d->var();
-    setRange(Rangef(var->min, var->max), step);
-    setValue(CVar_Float(var));
-    setPrecision(2);
+    if(var->type == CVT_FLOAT)
+    {
+        setRange(Rangef(var->min, var->max), step);
+        setValue(CVar_Float(var));
+        setPrecision(2);
+    }
+    else
+    {
+        setRange(Rangei(var->min, var->max));
+        setValue(CVar_Integer(var));
+    }
 }
 
 void CVarSliderWidget::setCVarValueFromWidget()
 {
-    CVar_SetFloat(d->var(), value());
+    cvar_t *var = d->var();
+    if(var->type == CVT_FLOAT)
+    {
+        CVar_SetFloat(d->var(), value());
+    }
+    else
+    {
+        CVar_SetInteger(d->var(), round<int>(value()));
+    }
 }

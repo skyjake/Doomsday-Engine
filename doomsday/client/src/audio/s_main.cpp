@@ -102,7 +102,7 @@ void S_Register(void)
     C_VAR_INT("sound-rate", &sfxSampleRate, 0, 11025, 44100);
     C_VAR_INT("sound-16bit", &sfx16Bit, 0, 0, 1);
     C_VAR_INT("sound-3d", &sfx3D, 0, 0, 1);
-    C_VAR_FLOAT2("sound-reverb-volume", &sfxReverbStrength, 0, 0, 10, S_ReverbVolumeChanged);
+    C_VAR_FLOAT2("sound-reverb-volume", &sfxReverbStrength, 0, 0, 1.5f, S_ReverbVolumeChanged);
 
     // Ccmds
     C_CMD_FLAGS("playsound", NULL, PlaySound, CMDF_NO_DEDICATED);

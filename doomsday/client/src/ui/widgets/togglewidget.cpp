@@ -118,6 +118,8 @@ DENG2_OBSERVES(ButtonWidget, Press)
     {
         // Toggle the state.
         self.setActive(self.isInactive());
+
+        emit self.stateChangedByUser(self.toggleState());
     }
 };
 
@@ -138,6 +140,7 @@ void ToggleWidget::setToggleState(ToggleState state, bool notify)
         {
             DENG2_FOR_AUDIENCE(Toggle, i) i->toggleStateChanged(*this);
         }
+        emit stateChanged(state);
     }
 }
 

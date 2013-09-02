@@ -24,6 +24,7 @@
 #include "ui/widgets/blurwidget.h"
 #include "ui/dialogs/aboutdialog.h"
 #include "ui/dialogs/videosettingsdialog.h"
+#include "ui/dialogs/audiosettingsdialog.h"
 #include "GuiRootWidget"
 #include "CommandAction"
 #include "SignalAction"
@@ -51,7 +52,8 @@ static uint POS_PANEL = 0;
 static uint POS_UNLOAD = 1;
 static uint POS_GAME_SEPARATOR = 2;
 static uint POS_VIDEO_SETTINGS = 3;
-static uint POS_UPDATER_SETTINGS = 4;
+static uint POS_AUDIO_SETTINGS = 4;
+static uint POS_UPDATER_SETTINGS = 5;
 
 DENG_GUI_PIMPL(TaskBarWidget),
 public IGameChangeObserver
@@ -156,6 +158,19 @@ public IGameChangeObserver
             status->setText(tr("No game loaded"));
         }
     }
+
+    void setupItemSubDialog(ui::Data::Pos item, DialogWidget *dlg)
+    {
+        dlg->setDeleteAfterDismissed(true);
+        if(mainMenu->isOpen())
+        {
+            dlg->setAnchorAndOpeningDirection(mainMenu->menu().organizer().
+                                              itemWidget(item)->hitRule(),
+                                              ui::Left);
+
+            connect(mainMenu, SIGNAL(closed()), dlg, SLOT(close()));
+        }
+    }
 };
 
 TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
@@ -191,7 +206,6 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
 
     // DE logo.
     d->logo = new ButtonWidget;
-    //d->logo->setAction(new CommandAction("panel"));
     d->logo->setImage(style().images().image("logo.px128"));
     d->logo->setImageScale(.475f);
     d->logo->setImageFit(FitToHeight | OriginalAspectRatio);
@@ -255,6 +269,8 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
             << new ui::Item(ui::Item::Separator)
             << new ui::ActionItem(ui::Item::ShownAsButton, tr("Video Settings"),
                                   new SignalAction(this, SLOT(showVideoSettings())))
+            << new ui::ActionItem(ui::Item::ShownAsButton, tr("Audio Settings"),
+                                  new SignalAction(this, SLOT(showAudioSettings())))
             << new ui::ActionItem(ui::Item::ShownAsButton, tr("Updater Settings"),
                                   new SignalAction(this, SLOT(showUpdaterSettings())))
             << new ui::Item(ui::Item::Separator)
@@ -492,28 +508,22 @@ void TaskBarWidget::showAbout()
 void TaskBarWidget::showUpdaterSettings()
 {
     UpdaterSettingsDialog *dlg = new UpdaterSettingsDialog(UpdaterSettingsDialog::WithApplyAndCheckButton);
-    dlg->setDeleteAfterDismissed(true);
-    if(d->mainMenu->isOpen())
-    {
-        dlg->setAnchorAndOpeningDirection(d->mainMenu->menu().organizer().
-                                          itemWidget(POS_UPDATER_SETTINGS)->hitRule(),
-                                          ui::Left);
-    }
+    d->setupItemSubDialog(POS_UPDATER_SETTINGS, dlg);
     dlg->exec(root());
 }
 
 void TaskBarWidget::showVideoSettings()
 {
     VideoSettingsDialog *dlg = new VideoSettingsDialog;
-    dlg->setDeleteAfterDismissed(true);
-    if(d->mainMenu->isOpen())
-    {
-        dlg->setAnchorAndOpeningDirection(d->mainMenu->menu().organizer().
-                                          itemWidget(POS_VIDEO_SETTINGS)->hitRule(),
-                                          ui::Left);
+    d->setupItemSubDialog(POS_VIDEO_SETTINGS, dlg);
+    root().add(dlg);
+    dlg->open();
+}
 
-        connect(d->mainMenu, SIGNAL(closed()), dlg, SLOT(close()));
-    }
+void TaskBarWidget::showAudioSettings()
+{
+    AudioSettingsDialog *dlg = new AudioSettingsDialog;
+    d->setupItemSubDialog(POS_AUDIO_SETTINGS, dlg);
     root().add(dlg);
     dlg->open();
 }
