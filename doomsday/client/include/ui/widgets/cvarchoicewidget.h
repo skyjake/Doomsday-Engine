@@ -1,4 +1,4 @@
-/** @file audiosettingsdialog.h Dialog for audio settings.
+/** @file cvarchoicewidget.h  Console variable choice.
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,26 +16,30 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_AUDIOSETTINGSDIALOG_H
-#define DENG_CLIENT_AUDIOSETTINGSDIALOG_H
+#ifndef DENG_CLIENT_CVARCHOICEWIDGET_H
+#define DENG_CLIENT_CVARCHOICEWIDGET_H
 
-#include "ui/widgets/dialogwidget.h"
+#include "choicewidget.h"
 
 /**
- * Dialog for modifying video settings.
+ * Console variable choice for integer-type cvars with a limited number of
+ * valid settings. The choice items' user data is used as the cvar value.
  */
-class AudioSettingsDialog : public DialogWidget
+class CVarChoiceWidget : public ChoiceWidget
 {
     Q_OBJECT
 
 public:
-    AudioSettingsDialog(de::String const &name = "audiosettings");
+    CVarChoiceWidget(char const *cvarPath);
 
 public slots:
-    void resetToDefaults();    
+    void updateFromCVar();
+
+protected slots:
+    void setCVarValueFromWidget();
 
 private:
     DENG2_PRIVATE(d)
 };
 
-#endif // DENG_CLIENT_AUDIOSETTINGSDIALOG_H
+#endif // DENG_CLIENT_CVARCHOICEWIDGET_H

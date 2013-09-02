@@ -397,6 +397,7 @@ DENG_HEADERS += \
     include/ui/widgets/choicewidget.h \
     include/ui/widgets/consolecommandwidget.h \
     include/ui/widgets/consolewidget.h \
+    include/ui/widgets/cvarchoicewidget.h \
     include/ui/widgets/cvarsliderwidget.h \
     include/ui/widgets/cvartogglewidget.h \
     include/ui/widgets/dialogwidget.h \
@@ -720,6 +721,7 @@ SOURCES += \
     src/ui/widgets/choicewidget.cpp \
     src/ui/widgets/consolecommandwidget.cpp \
     src/ui/widgets/consolewidget.cpp \
+    src/ui/widgets/cvarchoicewidget.cpp \
     src/ui/widgets/cvarsliderwidget.cpp \
     src/ui/widgets/cvartogglewidget.cpp \
     src/ui/widgets/dialogwidget.cpp \
