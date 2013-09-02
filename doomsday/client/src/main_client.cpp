@@ -60,6 +60,7 @@
 
 #include <QDebug>
 #include <QMessageBox>
+#include <QTranslator>
 
 /**
  * Application entry point.
@@ -67,6 +68,19 @@
 int main(int argc, char** argv)
 {
     ClientApp clientApp(argc, argv);
+
+    /**
+     * @todo Translations are presently disabled because lupdate can't seem to
+     * parse tr strings from inside private implementation classes. Workaround
+     * or fix is needed?
+     */
+#if 0
+    // Load the current locale's translation.
+    QTranslator translator;
+    translator.load(QString("client_") + QLocale::system().name());
+    clientApp.installTranslator(&translator);
+#endif
+
     try
     {
         clientApp.initialize();

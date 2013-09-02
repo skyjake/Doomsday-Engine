@@ -60,6 +60,7 @@ public slots:
     void showAbout();
     void showUpdaterSettings();
     void showVideoSettings();
+    void showAudioSettings();
 
 signals:
     void opened();

@@ -18,6 +18,7 @@
 
 #include "ui/dialogs/videosettingsdialog.h"
 #include "ui/widgets/variabletogglewidget.h"
+#include "ui/widgets/cvartogglewidget.h"
 #include "ui/widgets/choicewidget.h"
 #include "ui/widgets/taskbarwidget.h"
 #include "SequentialLayout"
@@ -46,8 +47,8 @@ DENG2_OBSERVES(PersistentCanvasWindow, AttributeChange)
     ToggleWidget *fullscreen;
     ToggleWidget *maximized;
     ToggleWidget *centered;
-    ToggleWidget *fsaa;
-    ToggleWidget *vsync;
+    CVarToggleWidget *fsaa;
+    CVarToggleWidget *vsync;
     ChoiceWidget *modes;
 #ifdef USE_COLOR_DEPTH_CHOICE
     ChoiceWidget *depths;
@@ -61,8 +62,8 @@ DENG2_OBSERVES(PersistentCanvasWindow, AttributeChange)
         area.add(fullscreen = new ToggleWidget);
         area.add(maximized  = new ToggleWidget);
         area.add(centered   = new ToggleWidget);
-        area.add(fsaa       = new ToggleWidget);
-        area.add(vsync      = new ToggleWidget);
+        area.add(fsaa       = new CVarToggleWidget("vid-fsaa"));
+        area.add(vsync      = new CVarToggleWidget("vid-vsync"));
         area.add(modes      = new ChoiceWidget);
 #ifdef USE_COLOR_DEPTH_CHOICE
         area.add(depths     = new ChoiceWidget);
@@ -83,8 +84,8 @@ DENG2_OBSERVES(PersistentCanvasWindow, AttributeChange)
         fullscreen->setActive(win.isFullScreen());
         maximized->setActive(win.isMaximized());
         centered->setActive(win.isCentered());
-        fsaa->setActive(Con_GetInteger("vid-fsaa") != 0);
-        vsync->setActive(Con_GetInteger("vid-vsync") != 0);
+        fsaa->updateFromCVar();
+        vsync->updateFromCVar();
 
         // Select the current resolution/size in the mode list.
         Canvas::Size current;
@@ -97,7 +98,8 @@ DENG2_OBSERVES(PersistentCanvasWindow, AttributeChange)
             current = win.windowRect().size();
         }
 
-        // Update selected display mode.
+        // Update selected display mode. We'll find the closest one
+        // because the current canvas size may be anything.
         ui::Data::Pos closest = ui::Data::InvalidPos;
         int delta;
         for(ui::Data::Pos i = 0; i < modes->items().size(); ++i)
@@ -127,8 +129,10 @@ DENG2_OBSERVES(PersistentCanvasWindow, AttributeChange)
 };
 
 VideoSettingsDialog::VideoSettingsDialog(String const &name)
-    : DialogWidget(name), d(new Instance(this))
+    : DialogWidget(name, WithHeading), d(new Instance(this))
 {
+    heading().setText(tr("Video Settings"));
+
     // Toggles for video/window options.
     d->fullscreen->setText(tr("Fullscreen"));
     d->fullscreen->setAction(new CommandAction("togglefullscreen"));
@@ -142,10 +146,8 @@ VideoSettingsDialog::VideoSettingsDialog(String const &name)
     d->showFps->setText(tr("Show FPS"));
 
     d->fsaa->setText(tr("Antialias"));
-    d->fsaa->setAction(new SignalAction(this, SLOT(toggleAntialias())));
 
     d->vsync->setText(tr("VSync"));
-    d->vsync->setAction(new SignalAction(this, SLOT(toggleVerticalSync())));
 
     LabelWidget *modeLabel = new LabelWidget;
     modeLabel->setText(tr("Mode:"));
@@ -222,16 +224,6 @@ VideoSettingsDialog::VideoSettingsDialog(String const &name)
 #ifdef USE_COLOR_DEPTH_CHOICE
     connect(d->depths, SIGNAL(selectionChangedByUser(uint)), this, SLOT(changeColorDepth(uint)));
 #endif
-}
-
-void VideoSettingsDialog::toggleAntialias()
-{
-    Con_SetInteger("vid-fsaa", !Con_GetInteger("vid-fsaa"));
-}
-
-void VideoSettingsDialog::toggleVerticalSync()
-{
-    Con_SetInteger("vid-vsync", !Con_GetInteger("vid-vsync"));
 }
 
 void VideoSettingsDialog::changeMode(uint selected)

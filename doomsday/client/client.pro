@@ -352,6 +352,7 @@ DENG_HEADERS += \
     include/ui/dd_input.h \
     include/ui/dd_ui.h \
     include/ui/dialogs/aboutdialog.h \
+    include/ui/dialogs/audiosettingsdialog.h \
     include/ui/dialogs/coloradjustmentdialog.h \
     include/ui/dialogs/messagedialog.h \
     include/ui/dialogs/videosettingsdialog.h \
@@ -397,6 +398,7 @@ DENG_HEADERS += \
     include/ui/widgets/consolecommandwidget.h \
     include/ui/widgets/consolewidget.h \
     include/ui/widgets/cvarsliderwidget.h \
+    include/ui/widgets/cvartogglewidget.h \
     include/ui/widgets/dialogwidget.h \
     include/ui/widgets/documentwidget.h \
     include/ui/widgets/gameselectionwidget.h \
@@ -680,6 +682,7 @@ SOURCES += \
     src/ui/clientwindow.cpp \
     src/ui/dd_input.cpp \
     src/ui/dialogs/aboutdialog.cpp \
+    src/ui/dialogs/audiosettingsdialog.cpp \
     src/ui/dialogs/coloradjustmentdialog.cpp \
     src/ui/dialogs/messagedialog.cpp \
     src/ui/dialogs/videosettingsdialog.cpp \
@@ -718,6 +721,7 @@ SOURCES += \
     src/ui/widgets/consolecommandwidget.cpp \
     src/ui/widgets/consolewidget.cpp \
     src/ui/widgets/cvarsliderwidget.cpp \
+    src/ui/widgets/cvartogglewidget.cpp \
     src/ui/widgets/dialogwidget.cpp \
     src/ui/widgets/documentwidget.cpp \
     src/ui/widgets/gameselectionwidget.cpp \
@@ -871,6 +875,10 @@ macx {
 
     doPostLink("macdeployqt Doomsday.app")
 }
+
+# i18n -----------------------------------------------------------------------
+
+#TRANSLATIONS = client_en.ts
 
 # Installation ---------------------------------------------------------------
 

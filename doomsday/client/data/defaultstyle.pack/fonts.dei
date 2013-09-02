@@ -63,6 +63,10 @@ font title inherits default {
     weight: light
 }
 
+font heading inherits title {
+    size $: gui.scale(default.size, 1.2)
+}
+
 group editor {
     font plaintext inherits default {}
     font hint inherits default {

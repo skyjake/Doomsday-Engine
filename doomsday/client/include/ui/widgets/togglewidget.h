@@ -27,6 +27,8 @@
  */
 class ToggleWidget : public ButtonWidget
 {
+    Q_OBJECT
+
 public:
     enum ToggleState {
         Active,
@@ -53,6 +55,10 @@ public:
 
     bool isActive() const   { return toggleState() == Active;   }
     bool isInactive() const { return toggleState() == Inactive; }
+
+signals:
+    void stateChanged(ToggleWidget::ToggleState active);
+    void stateChangedByUser(ToggleWidget::ToggleState active);
 
 private:
     DENG2_PRIVATE(d)

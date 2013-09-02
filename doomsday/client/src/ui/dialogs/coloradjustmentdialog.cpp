@@ -74,8 +74,9 @@ DENG_GUI_PIMPL(ColorAdjustmentDialog)
 };
 
 ColorAdjustmentDialog::ColorAdjustmentDialog(String const &name)
-    : DialogWidget(name), d(new Instance(this))
+    : DialogWidget(name, WithHeading), d(new Instance(this))
 {
+    heading().setText(tr("Color Adjustments"));
     buttons().items()
             << new DialogButtonItem(DialogWidget::Default | DialogWidget::Accept, tr("Close"))
             << new DialogButtonItem(DialogWidget::Action, tr("Reset to Defaults"),

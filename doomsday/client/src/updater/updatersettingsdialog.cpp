@@ -199,8 +199,10 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
 };
 
 UpdaterSettingsDialog::UpdaterSettingsDialog(Mode mode, String const &name)
-    : DialogWidget(name), d(new Instance(this, mode))
-{}
+    : DialogWidget(name, WithHeading), d(new Instance(this, mode))
+{
+    heading().setText(tr("Updater Settings"));
+}
 
 void UpdaterSettingsDialog::applyAndCheckNow()
 {

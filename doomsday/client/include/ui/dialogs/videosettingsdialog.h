@@ -32,8 +32,6 @@ public:
     VideoSettingsDialog(de::String const &name = "videosettings");
 
 protected slots:
-    void toggleAntialias();
-    void toggleVerticalSync();
     void changeMode(uint selected);
     void changeColorDepth(uint selected);
     void showColorAdjustments();
