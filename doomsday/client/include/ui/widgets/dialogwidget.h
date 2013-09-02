@@ -39,6 +39,21 @@ class GuiRootWidget;
  * Note that when a widget is added to the content area, the dialog
  * automatically applies certain common style parameters (margins, backgrounds,
  * etc.).
+ *
+ * @par Dialog Structure
+ *
+ * Dialogs are composed of several child widgets:
+ * <pre>
+ * DialogWidget    (PopupWidget)
+ *  +- container   (GuiWidget; the popup content widget)
+ *      +- heading (LabelWidget; optional)
+ *      +- area    (ScrollAreaWidget; contains actual dialog widgets)
+ *      +- buttons (MenuWidget)
+ * </pre>
+ *
+ * Scrolling is set up so that the dialog height doesn't surpass the view
+ * rectangle's height. Contents of the "area" widget scroll while the other
+ * elements remain static in relation to the container.
  */
 class DialogWidget : public PopupWidget
 {
