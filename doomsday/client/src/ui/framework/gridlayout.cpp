@@ -251,21 +251,21 @@ DENG2_PIMPL(GridLayout)
     /**
      * Ends the current column or row, if it is full.
      */
-    void end()
+    void end(int cellSpan)
     {
         DENG2_ASSERT(current != 0);
 
         // Advance to next cell.
         if(mode == ColumnFirst)
         {
-            ++cell.x;
+            cell.x += cellSpan;
 
-            if(maxCols > 0 && cell.x == maxCols)
+            if(maxCols > 0 && cell.x >= maxCols)
             {
                 cell.x = 0;
                 cell.y++;
                 sumInto(baseY, current->height());
-                if(rowPad) sumInto(baseY, *rowPad);
+                if(rowPad) sumInto(baseY, *rowPad * cellSpan);
 
                 // This one is finished.
                 delete current; current = 0;
@@ -273,14 +273,14 @@ DENG2_PIMPL(GridLayout)
         }
         else
         {
-            ++cell.y;
+            cell.y += cellSpan;
 
-            if(maxRows > 0 && cell.y == maxRows)
+            if(maxRows > 0 && cell.y >= maxRows)
             {
                 cell.y = 0;
                 cell.x++;
                 sumInto(baseX, current->width());
-                if(colPad) sumInto(baseX, *colPad);
+                if(colPad) sumInto(baseX, *colPad * cellSpan);
 
                 // This one is finished.
                 delete current; current = 0;
@@ -294,7 +294,7 @@ DENG2_PIMPL(GridLayout)
      * @param widget  Widget.
      * @param space   Empty cell.
      */
-    void append(GuiWidget *widget, Rule const *space)
+    void append(GuiWidget *widget, Rule const *space, int cellSpan = 1)
     {
         DENG2_ASSERT(!(widget && space));
         DENG2_ASSERT(widget || space);
@@ -325,12 +325,12 @@ DENG2_PIMPL(GridLayout)
         // Update the column and row maximum width/height.
         if(mode == ColumnFirst)
         {
-            updateMaximum(cols, cell.x, widget? widget->rule().width() : *space);
+            if(cellSpan == 1) updateMaximum(cols, cell.x, widget? widget->rule().width() : *space);
             if(widget) updateMaximum(rows, cell.y, widget->rule().height());
         }
         else
         {
-            updateMaximum(rows, cell.y, widget? widget->rule().height() : *space);
+            if(cellSpan == 1) updateMaximum(rows, cell.y, widget? widget->rule().height() : *space);
             if(widget) updateMaximum(cols, cell.x, widget->rule().width());
         }
 
@@ -357,7 +357,7 @@ DENG2_PIMPL(GridLayout)
             }
         }
 
-        end();
+        end(cellSpan);
 
         needTotalUpdate = true;
     }
@@ -484,9 +484,9 @@ void GridLayout::setRowPadding(Rule const &gap)
     changeRef(d->rowPad, gap);
 }
 
-GridLayout &GridLayout::append(GuiWidget &widget)
+GridLayout &GridLayout::append(GuiWidget &widget, int cellSpan)
 {
-    d->append(&widget, 0);
+    d->append(&widget, 0, cellSpan);
     return *this;
 }
 

@@ -1,4 +1,4 @@
-/** @file cvarsliderwidget.h  Slider for adjusting a cvar.
+/** @file networksettingsdialog.h Dialog for network settings.
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,27 +16,26 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_CVARSLIDERWIDGET_H
-#define DENG_CLIENT_CVARSLIDERWIDGET_H
+#ifndef DENG_CLIENT_NETWORKSETTINGSDIALOG_H
+#define DENG_CLIENT_NETWORKSETTINGSDIALOG_H
 
-#include "sliderwidget.h"
+#include "ui/widgets/dialogwidget.h"
 
 /**
- * Console variable slider.
+ * Dialog for modifying network settings.
  */
-class CVarSliderWidget : public SliderWidget
+class NetworkSettingsDialog : public DialogWidget
 {
     Q_OBJECT
 
 public:
-    CVarSliderWidget(char const *cvarPath);
+    NetworkSettingsDialog(de::String const &name = "networksettings");
 
 public slots:
-    void updateFromCVar();
-    void setCVarValueFromWidget();
+    void resetToDefaults();
 
 private:
     DENG2_PRIVATE(d)
 };
 
-#endif // DENG_CLIENT_CVARSLIDERWIDGET_H
+#endif // DENG_CLIENT_NETWORKSETTINGSDIALOG_H

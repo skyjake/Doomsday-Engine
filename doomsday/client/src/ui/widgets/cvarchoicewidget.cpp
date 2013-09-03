@@ -1,4 +1,4 @@
-/** @file cvarsliderwidget.cpp  Slider for adjusting a cvar.
+/** @file cvarchoicewidget.cpp  Console variable choice.
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,13 +16,13 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "ui/widgets/cvarsliderwidget.h"
+#include "ui/widgets/cvarchoicewidget.h"
 #include "con_main.h"
 
 using namespace de;
 using namespace ui;
 
-DENG2_PIMPL_NOREF(CVarSliderWidget)
+DENG2_PIMPL_NOREF(CVarChoiceWidget)
 {
     char const *cvar;
 
@@ -34,45 +34,21 @@ DENG2_PIMPL_NOREF(CVarSliderWidget)
     }
 };
 
-CVarSliderWidget::CVarSliderWidget(char const *cvarPath) : d(new Instance)
+CVarChoiceWidget::CVarChoiceWidget(char const *cvarPath) : d(new Instance)
 {
     d->cvar = cvarPath;
     updateFromCVar();
 
-    connect(this, SIGNAL(valueChangedByUser(double)), this, SLOT(setCVarValueFromWidget()));
+    connect(this, SIGNAL(selectionChangedByUser(uint)),
+            this, SLOT(setCVarValueFromWidget()));
 }
 
-void CVarSliderWidget::updateFromCVar()
+void CVarChoiceWidget::updateFromCVar()
 {
-    /// @todo Pick a reasonable step value.
-    float step = 0;
-
-    cvar_t *var = d->var();
-    if(var->type == CVT_FLOAT)
-    {
-        if(!(var->flags & (CVF_NO_MIN | CVF_NO_MAX)))
-        {
-            setRange(Rangef(var->min, var->max), step);
-        }
-        setValue(CVar_Float(var));
-        setPrecision(2);
-    }
-    else
-    {
-        setRange(Rangei(var->min, var->max));
-        setValue(CVar_Integer(var));
-    }
+    setSelected(items().findData(CVar_Integer(d->var())));
 }
 
-void CVarSliderWidget::setCVarValueFromWidget()
+void CVarChoiceWidget::setCVarValueFromWidget()
 {
-    cvar_t *var = d->var();
-    if(var->type == CVT_FLOAT)
-    {
-        CVar_SetFloat(d->var(), value());
-    }
-    else
-    {
-        CVar_SetInteger(d->var(), round<int>(value()));
-    }
+    CVar_SetInteger(d->var(), selectedItem().data().toInt());
 }

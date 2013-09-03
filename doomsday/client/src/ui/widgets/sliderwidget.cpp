@@ -23,6 +23,7 @@
 
 #include <de/Drawable>
 #include <de/MouseEvent>
+#include <cmath>
 
 using namespace de;
 using namespace ui;
@@ -42,7 +43,7 @@ public:
         connect(_edit, SIGNAL(enterPressed(QString)), this, SLOT(close()));
         _edit->rule().setInput(Rule::Width, slider.style().rules().rule("slider.editor"));
 
-        _edit->setText(QString::number(slider.value(), 'g', 4));
+        _edit->setText(QString::number(slider.value() * slider.displayFactor(), 'g', 4));
     }
 
     LineEditWidget &editor() const
@@ -67,10 +68,11 @@ private:
 
 DENG_GUI_PIMPL(SliderWidget)
 {
-    float value;
-    Rangef range;
-    float step;
+    ddouble value;
+    Ranged range;
+    ddouble step;
     int precision;
+    ddouble displayFactor;
 
     enum State {
         Inert,
@@ -79,7 +81,7 @@ DENG_GUI_PIMPL(SliderWidget)
     };
     State state;
     Vector2i grabFrom;
-    float grabValue;
+    ddouble grabValue;
 
     // Visualization.
     bool animating;
@@ -105,6 +107,7 @@ DENG_GUI_PIMPL(SliderWidget)
           range(0, 0),
           step(0),
           precision(0),
+          displayFactor(1),
           state(Inert),
           animating(false),
           uMvpMatrix("uMvpMatrix", GLUniform::Mat4),
@@ -171,7 +174,7 @@ DENG_GUI_PIMPL(SliderWidget)
     Rectanglei sliderValueRect() const
     {
         Rectanglei const area = sliderRect();
-        float i = range.size() > 0? (pos - range.start) / range.size() : 0;
+        ddouble i = range.size() > 0? (pos - range.start) / range.size() : 0;
         return Rectanglei::fromSize(Vector2i(area.topLeft.x +
                                              (area.width() - endLabelSize) * i,
                                              area.topLeft.y),
@@ -339,15 +342,15 @@ DENG_GUI_PIMPL(SliderWidget)
 
     void updateValueLabel()
     {
-        labels[Value].setText(QString::number(value, 'f', precision));
+        labels[Value].setText(QString::number(value * displayFactor, 'f', precision));
     }
 
-    void setValue(float v)
+    void setValue(ddouble v)
     {
         // Round to nearest step.
         if(step > 0)
         {
-            v = de::roundf((v - range.start) / step) * step;
+            v = de::round<ddouble>((v - range.start) / step) * step;
         }
 
         v = range.clamp(v);
@@ -359,7 +362,7 @@ DENG_GUI_PIMPL(SliderWidget)
             updateValueLabel();
 
             animating = true;
-            pos.setValue(value, 0.1);
+            pos.setValue(float(value), 0.1);
             self.requestGeometry();
 
             emit self.valueChanged(v);
@@ -368,8 +371,8 @@ DENG_GUI_PIMPL(SliderWidget)
 
     void updateRangeLabels()
     {
-        labels[Start].setText(QString::number(range.start));
-        labels[End].setText(QString::number(range.end));
+        labels[Start].setText(QString::number(range.start * displayFactor));
+        labels[End].setText(QString::number(range.end * displayFactor));
     }
 
     void startGrab(MouseEvent const &ev)
@@ -389,10 +392,20 @@ DENG_GUI_PIMPL(SliderWidget)
         //qDebug() << "delta" << (ev.pos() - grabFrom).asText();
 
         Rectanglei const area = sliderRect();
-        float unitsPerPixel = range.size() / (area.width() - endLabelSize);
+        ddouble unitsPerPixel = range.size() / (area.width() - endLabelSize);
         setValue(grabValue + (ev.pos().x - grabFrom.x) * unitsPerPixel);
 
         emit self.valueChangedByUser(value);
+    }
+
+    /// Amount to step when clicking a label.
+    ddouble clickStep() const
+    {
+        if(step > 0)
+        {
+            return step;
+        }
+        return 1.0 / std::pow(10.0, precision) / displayFactor;
     }
 
     void endGrab(MouseEvent const &ev)
@@ -402,20 +415,25 @@ DENG_GUI_PIMPL(SliderWidget)
             setState(Inert);
             updateHover(ev.pos());
         }
-        else if(step > 0)
+        else
         {
             Rectanglei const rect = contentRect();
+
+            qDebug() << "click step:" << clickStep() << "value:" << value << "range:"
+                     << range.asText() << "new value:" << value - clickStep();
 
             // Maybe a click on the start/end label?
             if(rect.contains(ev.pos()))
             {
                 if(ev.pos().x < rect.left() + endLabelSize)
                 {
-                    setValue(value - step);
+                    setValue(value - clickStep());
+                    emit self.valueChangedByUser(value);
                 }
                 else if(ev.pos().x > rect.right() - endLabelSize)
                 {
-                    setValue(value + step);
+                    setValue(value + clickStep());
+                    emit self.valueChangedByUser(value);
                 }
             }
         }
@@ -439,17 +457,17 @@ SliderWidget::SliderWidget(String const &name)
 
 void SliderWidget::setRange(Rangei const &intRange, int step)
 {
-    d->range = Rangef(intRange.start, intRange.end);
-    d->step = step;
-
-    d->updateRangeLabels();
-    d->setValue(d->value);
-    d->pos.finish();
+    setRange(Ranged(intRange.start, intRange.end), ddouble(step));
 }
 
 void SliderWidget::setRange(Rangef const &floatRange, float step)
 {
-    d->range = floatRange;
+    setRange(Ranged(floatRange.start, floatRange.end), ddouble(step));
+}
+
+void SliderWidget::setRange(Ranged const &doubleRange, ddouble step)
+{
+    d->range = doubleRange;
     d->step = step;
 
     d->updateRangeLabels();
@@ -463,19 +481,31 @@ void SliderWidget::setPrecision(int precisionDecimals)
     d->updateValueLabel();
 }
 
-void SliderWidget::setValue(float value)
+void SliderWidget::setValue(ddouble value)
 {
     d->setValue(value);
 }
 
-Rangef SliderWidget::range() const
+void SliderWidget::setDisplayFactor(ddouble factor)
+{
+    d->displayFactor = factor;
+    d->updateRangeLabels();
+    d->updateValueLabel();
+}
+
+Ranged SliderWidget::range() const
 {
     return d->range;
 }
 
-float SliderWidget::value() const
+ddouble SliderWidget::value() const
 {
     return d->value;
+}
+
+ddouble SliderWidget::displayFactor() const
+{
+    return d->displayFactor;
 }
 
 void SliderWidget::viewResized()
@@ -567,7 +597,7 @@ bool SliderWidget::handleEvent(Event const &event)
 
 void SliderWidget::setValueFromText(QString text)
 {
-    setValue(text.toDouble());
+    setValue(text.toDouble() / d->displayFactor);
     emit valueChangedByUser(d->value);
 }
 

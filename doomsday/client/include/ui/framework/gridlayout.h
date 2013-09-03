@@ -58,7 +58,7 @@ public:
     GridLayout &operator << (GuiWidget &widget) { return append(widget); }
     GridLayout &operator << (de::Rule const &empty) { return append(empty); }
 
-    GridLayout &append(GuiWidget &widget);
+    GridLayout &append(GuiWidget &widget, int cellSpan = 1);
     GridLayout &append(de::Rule const &empty);
 
     /**

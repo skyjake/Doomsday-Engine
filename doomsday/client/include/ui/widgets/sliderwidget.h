@@ -37,11 +37,21 @@ public:
 
     void setRange(de::Rangei const &intRange, int step = 0);
     void setRange(de::Rangef const &floatRange, float step = 0);
+    void setRange(de::Ranged const &doubleRange, de::ddouble step = 0);
     void setPrecision(int precisionDecimals);
-    void setValue(float value);
+    void setValue(de::ddouble value);
 
-    de::Rangef range() const;
-    float value() const;
+    /**
+     * Displayed values are multiplied by this factor when displayed.
+     * Does not affect the real value of the slider.
+     *
+     * @param factor  Display multiplier.
+     */
+    void setDisplayFactor(de::ddouble factor);
+
+    de::Ranged range() const;
+    de::ddouble value() const;
+    de::ddouble displayFactor() const;
 
     // Events.
     void viewResized();
@@ -53,8 +63,8 @@ public slots:
     void setValueFromText(QString text);
 
 signals:
-    void valueChanged(float value);
-    void valueChangedByUser(float value);
+    void valueChanged(double value);
+    void valueChangedByUser(double value);
 
 protected:
     void glInit();

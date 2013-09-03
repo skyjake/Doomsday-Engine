@@ -354,7 +354,9 @@ DENG_HEADERS += \
     include/ui/dialogs/aboutdialog.h \
     include/ui/dialogs/audiosettingsdialog.h \
     include/ui/dialogs/coloradjustmentdialog.h \
+    include/ui/dialogs/inputsettingsdialog.h \
     include/ui/dialogs/messagedialog.h \
+    include/ui/dialogs/networksettingsdialog.h \
     include/ui/dialogs/videosettingsdialog.h \
     include/ui/fi_main.h \
     include/ui/finaleinterpreter.h \
@@ -397,6 +399,7 @@ DENG_HEADERS += \
     include/ui/widgets/choicewidget.h \
     include/ui/widgets/consolecommandwidget.h \
     include/ui/widgets/consolewidget.h \
+    include/ui/widgets/cvarchoicewidget.h \
     include/ui/widgets/cvarsliderwidget.h \
     include/ui/widgets/cvartogglewidget.h \
     include/ui/widgets/dialogwidget.h \
@@ -684,7 +687,9 @@ SOURCES += \
     src/ui/dialogs/aboutdialog.cpp \
     src/ui/dialogs/audiosettingsdialog.cpp \
     src/ui/dialogs/coloradjustmentdialog.cpp \
+    src/ui/dialogs/inputsettingsdialog.cpp \
     src/ui/dialogs/messagedialog.cpp \
+    src/ui/dialogs/networksettingsdialog.cpp \
     src/ui/dialogs/videosettingsdialog.cpp \
     src/ui/fi_main.cpp \
     src/ui/finaleinterpreter.cpp \
@@ -720,6 +725,7 @@ SOURCES += \
     src/ui/widgets/choicewidget.cpp \
     src/ui/widgets/consolecommandwidget.cpp \
     src/ui/widgets/consolewidget.cpp \
+    src/ui/widgets/cvarchoicewidget.cpp \
     src/ui/widgets/cvarsliderwidget.cpp \
     src/ui/widgets/cvartogglewidget.cpp \
     src/ui/widgets/dialogwidget.cpp \

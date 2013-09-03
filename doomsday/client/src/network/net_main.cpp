@@ -160,7 +160,6 @@ void Net_Register(void)
 
 #ifdef __CLIENT__
     // Cvars (client)
-    //C_VAR_INT("client-pos-interval", &netCoordTime, CVF_NO_MAX, 0, 0);
     C_VAR_FLOAT("client-connect-timeout", &netConnectTimeout, CVF_NO_MAX, 0, 0);
 #endif
 

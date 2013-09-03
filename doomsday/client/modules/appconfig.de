@@ -29,6 +29,11 @@ def setDefaults(d)
     # Applies the client's defaults.
     # - d: Record where to set the values.
     
+    # Input defaults.
+    record d.input
+    record d.input.mouse
+    d.input.mouse.syncSensitivity = True
+    
     try
         import DisplayMode
         
