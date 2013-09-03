@@ -39,7 +39,7 @@ CVarSliderWidget::CVarSliderWidget(char const *cvarPath) : d(new Instance)
     d->cvar = cvarPath;
     updateFromCVar();
 
-    connect(this, SIGNAL(valueChangedByUser(float)), this, SLOT(setCVarValueFromWidget()));
+    connect(this, SIGNAL(valueChangedByUser(double)), this, SLOT(setCVarValueFromWidget()));
 }
 
 void CVarSliderWidget::updateFromCVar()
@@ -50,7 +50,10 @@ void CVarSliderWidget::updateFromCVar()
     cvar_t *var = d->var();
     if(var->type == CVT_FLOAT)
     {
-        setRange(Rangef(var->min, var->max), step);
+        if(!(var->flags & (CVF_NO_MIN | CVF_NO_MAX)))
+        {
+            setRange(Rangef(var->min, var->max), step);
+        }
         setValue(CVar_Float(var));
         setPrecision(2);
     }

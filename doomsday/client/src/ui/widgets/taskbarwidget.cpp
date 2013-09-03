@@ -25,6 +25,7 @@
 #include "ui/dialogs/aboutdialog.h"
 #include "ui/dialogs/videosettingsdialog.h"
 #include "ui/dialogs/audiosettingsdialog.h"
+#include "ui/dialogs/inputsettingsdialog.h"
 #include "ui/dialogs/networksettingsdialog.h"
 #include "GuiRootWidget"
 #include "CommandAction"
@@ -54,8 +55,9 @@ static uint POS_UNLOAD = 1;
 static uint POS_GAME_SEPARATOR = 2;
 static uint POS_VIDEO_SETTINGS = 3;
 static uint POS_AUDIO_SETTINGS = 4;
-static uint POS_NETWORK_SETTINGS = 5;
-static uint POS_UPDATER_SETTINGS = 6;
+static uint POS_INPUT_SETTINGS = 5;
+static uint POS_NETWORK_SETTINGS = 6;
+static uint POS_UPDATER_SETTINGS = 7;
 
 DENG_GUI_PIMPL(TaskBarWidget),
 public IGameChangeObserver
@@ -170,6 +172,8 @@ public IGameChangeObserver
                                               itemWidget(item)->hitRule(),
                                               ui::Left);
 
+            // Mutual, automatic closing.
+            connect(dlg, SIGNAL(accepted(int)), mainMenu, SLOT(close()));
             connect(mainMenu, SIGNAL(closed()), dlg, SLOT(close()));
         }
     }
@@ -273,6 +277,8 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
                                   new SignalAction(this, SLOT(showVideoSettings())))
             << new ui::ActionItem(ui::Item::ShownAsButton, tr("Audio Settings"),
                                   new SignalAction(this, SLOT(showAudioSettings())))
+            << new ui::ActionItem(ui::Item::ShownAsButton, tr("Input Settings"),
+                                  new SignalAction(this, SLOT(showInputSettings())))
             << new ui::ActionItem(ui::Item::ShownAsButton, tr("Network Settings"),
                                   new SignalAction(this, SLOT(showNetworkSettings())))
             << new ui::ActionItem(ui::Item::ShownAsButton, tr("Updater Settings"),
@@ -528,6 +534,14 @@ void TaskBarWidget::showAudioSettings()
 {
     AudioSettingsDialog *dlg = new AudioSettingsDialog;
     d->setupItemSubDialog(POS_AUDIO_SETTINGS, dlg);
+    root().add(dlg);
+    dlg->open();
+}
+
+void TaskBarWidget::showInputSettings()
+{
+    InputSettingsDialog *dlg = new InputSettingsDialog;
+    d->setupItemSubDialog(POS_INPUT_SETTINGS, dlg);
     root().add(dlg);
     dlg->open();
 }

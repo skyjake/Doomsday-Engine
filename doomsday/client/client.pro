@@ -354,7 +354,9 @@ DENG_HEADERS += \
     include/ui/dialogs/aboutdialog.h \
     include/ui/dialogs/audiosettingsdialog.h \
     include/ui/dialogs/coloradjustmentdialog.h \
+    include/ui/dialogs/inputsettingsdialog.h \
     include/ui/dialogs/messagedialog.h \
+    include/ui/dialogs/networksettingsdialog.h \
     include/ui/dialogs/videosettingsdialog.h \
     include/ui/fi_main.h \
     include/ui/finaleinterpreter.h \
@@ -473,8 +475,7 @@ INCLUDEPATH += \
 
 HEADERS += \
     $$DENG_API_HEADERS \
-    $$DENG_HEADERS \
-    include/ui/dialogs/networksettingsdialog.h
+    $$DENG_HEADERS
 
 # Platform-specific sources.
 win32 {
@@ -686,7 +687,9 @@ SOURCES += \
     src/ui/dialogs/aboutdialog.cpp \
     src/ui/dialogs/audiosettingsdialog.cpp \
     src/ui/dialogs/coloradjustmentdialog.cpp \
+    src/ui/dialogs/inputsettingsdialog.cpp \
     src/ui/dialogs/messagedialog.cpp \
+    src/ui/dialogs/networksettingsdialog.cpp \
     src/ui/dialogs/videosettingsdialog.cpp \
     src/ui/fi_main.cpp \
     src/ui/finaleinterpreter.cpp \
@@ -787,8 +790,7 @@ SOURCES += \
     src/world/surface.cpp \
     src/world/thinkers.cpp \
     src/world/vertex.cpp \
-    src/world/world.cpp \
-    src/ui/dialogs/networksettingsdialog.cpp
+    src/world/world.cpp
 
 !deng_nosdlmixer:!deng_nosdl {
     HEADERS += include/audio/sys_audiod_sdlmixer.h

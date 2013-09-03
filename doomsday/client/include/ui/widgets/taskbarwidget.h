@@ -61,6 +61,7 @@ public slots:
     void showUpdaterSettings();
     void showVideoSettings();
     void showAudioSettings();
+    void showInputSettings();
     void showNetworkSettings();
 
 signals:
