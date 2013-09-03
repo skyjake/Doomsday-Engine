@@ -473,7 +473,8 @@ INCLUDEPATH += \
 
 HEADERS += \
     $$DENG_API_HEADERS \
-    $$DENG_HEADERS
+    $$DENG_HEADERS \
+    include/ui/dialogs/networksettingsdialog.h
 
 # Platform-specific sources.
 win32 {
@@ -786,7 +787,8 @@ SOURCES += \
     src/world/surface.cpp \
     src/world/thinkers.cpp \
     src/world/vertex.cpp \
-    src/world/world.cpp
+    src/world/world.cpp \
+    src/ui/dialogs/networksettingsdialog.cpp
 
 !deng_nosdlmixer:!deng_nosdl {
     HEADERS += include/audio/sys_audiod_sdlmixer.h

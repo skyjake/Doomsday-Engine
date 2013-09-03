@@ -38,7 +38,7 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define NUM_CP_BUTTONS  9
+#define NUM_CP_BUTTONS  7
 #define NUMITEMS(x)     (sizeof(x)/sizeof(uidata_listitem_t))
 //#define RES(x, y)       ((x) | ((y) << 16))
 #define CPID_FRAME      (UIF_ID0 | UIF_ID1)
@@ -371,8 +371,8 @@ ui_object_t ob_panel[] =
     { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 40, 467, 210, 60,   "Textures", UIButton_Drawer, UIButton_Responder, 0,             CP_ChooseGroup, &panel_buttons[4] },
     { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 40, 529, 210, 60,   "Objects",  UIButton_Drawer, UIButton_Responder, 0,             CP_ChooseGroup, &panel_buttons[5] },
     { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 40, 591, 210, 60,   "Particles", UIButton_Drawer, UIButton_Responder, 0,            CP_ChooseGroup, &panel_buttons[6] },
-    { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 10, 653, 240, 60,   "Network",  UIButton_Drawer, UIButton_Responder, 0,             CP_ChooseGroup, &panel_buttons[7] },
-    { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 10, 715, 240, 60,   "Console",  UIButton_Drawer, UIButton_Responder, 0,             CP_ChooseGroup, &panel_buttons[8] },
+//  { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 10, 653, 240, 60,   "Network",  UIButton_Drawer, UIButton_Responder, 0,             CP_ChooseGroup, &panel_buttons[7] },
+//  { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 10, 715, 240, 60,   "Console",  UIButton_Drawer, UIButton_Responder, 0,             CP_ChooseGroup, &panel_buttons[8] },
     { UI_BUTTON,    0,  UIF_NEVER_FADE, 10, 940, 240, 60,   "Close Panel (Esc)", UIButton_Drawer, UIButton_Responder, 0,    CP_ClosePanel },
     { UI_BOX,       0,  0,              8, -20, 250, 250,   "",         CP_DrawLogo },
     { UI_BOX,       0,  CPID_FRAME,     280, 55, 720, 945,  "",         CP_DrawBorder },
@@ -605,37 +605,20 @@ ui_object_t ob_panel[] =
     { UI_TEXT,      0,  UIF_FADE_AWAY,  300, 310, 0, 55,    "Near clip distance", UIText_Drawer },
     { UI_SLIDER,    0,  UIF_FADE_AWAY,  680, 310, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_particle_visnear },
 
+#if 0
     { UI_META,      9 },
     { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Network Options", UIText_BrightDrawer },
-#if 0
-    { UI_TEXT,      0,  0,              300, 70, 0, 55,     "Continuous screen refresh", UIText_Drawer },
-    { UI_BUTTON2,   0,  0,              680, 70, 70, 55,    "net-nosleep", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
-#endif
     { UI_TEXT,      0,  0,              300, 70, 0, 55,     "Show development info", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 70, 70, 55,    "net-dev", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
-#if 0
-    { UI_TEXT,      0,  0,              300, 190, 0, 55,    "Server login password", UIText_Drawer },
-    { UI_EDIT,      0,  0,              680, 190, 300, 55,  "",         UIEdit_Drawer, UIEdit_Responder, 0, CP_CvarEdit, &ed_server_password },
-#endif
-    { UI_TEXT,      0,  0,              300, 130, 0, 55,    "Cl-to-sv pos transmit tics", UIText_Drawer },
-    { UI_SLIDER,    0,  0,              680, 130, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_client_pos_interval },
-#if 0
-    { UI_TEXT,      0,  0,              300, 190, 0, 55,    "Frame interval tics", UIText_Drawer },
-    { UI_SLIDER,    0,  0,              680, 190, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_server_frame_interval },
 #endif
 
-    { UI_META,      10 },
-    { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Console Options", UIText_BrightDrawer },
 #if 0
-    { UI_TEXT,      0,  0,              300, 70, 0, 55,     "Display FPS counter", UIText_Drawer },
-    { UI_BUTTON2,   0,  0,              680, 70, 70, 55,    "con-fps",  UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
-    { UI_META,      12, 0,              0, 60 },
-#endif
+    { UI_META,      9 },
+    { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Console Options", UIText_BrightDrawer },
     { UI_TEXT,      0,  0,              300, 70, 0, 55,     "Display Control Panel help window", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 70, 70, 55,    "ui-panel-help", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
     { UI_TEXT,      0,  0,              300, 130, 0, 55,    "Display help indicators", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 130, 70, 55,   "ui-panel-tips", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
-#if 0
     { UI_META,      12, 0,              0, 180 },
     { UI_TEXT,      0,  0,              300, 130, 0, 55,    "Silent console variables", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 130, 70, 55,   "con-var-silent", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
