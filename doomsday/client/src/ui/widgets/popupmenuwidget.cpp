@@ -200,7 +200,7 @@ void PopupMenuWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
 {
     PopupWidget::glMakeGeometry(verts);
 
-    if(d->hover)
+    if(d->hover && d->hover->isEnabled())
     {
         verts.makeQuad(d->highlightRect(),
                        d->hover->state() == ButtonWidget::Hover?

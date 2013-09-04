@@ -359,6 +359,7 @@ DENG_HEADERS += \
     include/ui/dialogs/inputsettingsdialog.h \
     include/ui/dialogs/messagedialog.h \
     include/ui/dialogs/networksettingsdialog.h \
+    include/ui/dialogs/renderersettingsdialog.h \
     include/ui/dialogs/videosettingsdialog.h \
     include/ui/fi_main.h \
     include/ui/finaleinterpreter.h \
@@ -745,6 +746,7 @@ SOURCES += \
     src/ui/widgets/popupmenuwidget.cpp \
     src/ui/widgets/popupwidget.cpp \
     src/ui/widgets/progresswidget.cpp \
+    src/ui/dialogs/renderersettingsdialog.cpp \
     src/ui/widgets/scrollareawidget.cpp \
     src/ui/widgets/sliderwidget.cpp \
     src/ui/widgets/taskbarwidget.cpp \

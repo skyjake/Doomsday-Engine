@@ -27,6 +27,7 @@
 #include "ui/dialogs/audiosettingsdialog.h"
 #include "ui/dialogs/inputsettingsdialog.h"
 #include "ui/dialogs/networksettingsdialog.h"
+#include "ui/dialogs/renderersettingsdialog.h"
 #include "updater/updatersettingsdialog.h"
 #include "ui/clientwindow.h"
 #include "GuiRootWidget"
@@ -52,15 +53,16 @@ using namespace ui;
 
 static TimeDelta OPEN_CLOSE_SPAN = 0.2;
 
-static uint POS_UNLOAD = 0;
+static uint POS_UNLOAD         = 0;
 static uint POS_GAME_SEPARATOR = 1;
 
-static uint POS_PANEL = 0;
-static uint POS_VIDEO_SETTINGS = 1;
-static uint POS_AUDIO_SETTINGS = 2;
-static uint POS_INPUT_SETTINGS = 3;
-static uint POS_NETWORK_SETTINGS = 4;
-static uint POS_UPDATER_SETTINGS = 5;
+static uint POS_PANEL             = 0;
+static uint POS_RENDERER_SETTINGS = 1;
+static uint POS_VIDEO_SETTINGS    = 3;
+static uint POS_AUDIO_SETTINGS    = 4;
+static uint POS_INPUT_SETTINGS    = 5;
+static uint POS_NETWORK_SETTINGS  = 6;
+static uint POS_UPDATER_SETTINGS  = 8;
 
 DENG_GUI_PIMPL(TaskBarWidget),
 public IGameChangeObserver
@@ -290,6 +292,9 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
      */
     d->configMenu->menu().items()
             << new ui::ActionItem(_E(b) + tr("Control Panel"), new CommandAction("panel")) // hidden with null-game
+            << new ui::ActionItem(ui::Item::ShownAsButton, tr("Renderer"),
+                                  new SignalAction(this, SLOT(showRendererSettings())))
+            << new ui::Item(ui::Item::Separator)
             << new ui::ActionItem(ui::Item::ShownAsButton, tr("Video"),
                                   new SignalAction(this, SLOT(showVideoSettings())))
             << new ui::ActionItem(ui::Item::ShownAsButton, tr("Audio"),
@@ -298,13 +303,14 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
                                   new SignalAction(this, SLOT(showInputSettings())))
             << new ui::ActionItem(ui::Item::ShownAsButton, tr("Network"),
                                   new SignalAction(this, SLOT(showNetworkSettings())))
-            << new ui::ActionItem(ui::Item::ShownAsButton, tr("Updater"),
+            << new ui::Item(ui::Item::Separator)
+            << new ui::ActionItem(ui::Item::ShownAsButton, tr("Updater..."),
                                   new SignalAction(this, SLOT(showUpdaterSettings())));
 
     d->mainMenu->menu().items()
             << unloadMenu // hidden with null-game
             << new ui::Item(ui::Item::Separator) // hidden with null-game
-            << new ui::ActionItem(tr("About Doomsday..."), new SignalAction(this, SLOT(showAbout())))
+            << new ui::ActionItem(tr("About Doomsday"), new SignalAction(this, SLOT(showAbout())))
             << new ui::ActionItem(tr("Check for Updates..."), new CommandAction("updateandnotify"))
             << new ui::Item(ui::Item::Separator)
             << new ui::ActionItem(tr("Quit Doomsday"), new CommandAction("quit"));
@@ -554,6 +560,14 @@ void TaskBarWidget::showUpdaterSettings()
     UpdaterSettingsDialog *dlg = new UpdaterSettingsDialog(UpdaterSettingsDialog::WithApplyAndCheckButton);
     d->setupItemSubDialog(d->configMenu, POS_UPDATER_SETTINGS, dlg);
     dlg->exec(root()); // modal
+}
+
+void TaskBarWidget::showRendererSettings()
+{
+    RendererSettingsDialog *dlg = new RendererSettingsDialog;
+    d->setupItemSubDialog(d->configMenu, POS_RENDERER_SETTINGS, dlg);
+    root().add(dlg);
+    dlg->open();
 }
 
 void TaskBarWidget::showVideoSettings()
