@@ -119,6 +119,7 @@ DENG_CONVENIENCE_HEADERS += \
     include/BspNode \
     include/CommandAction \
     include/ContextWidgetOrganizer \
+    include/DialogContentStylist \
     include/EntityDatabase \
     include/Face \
     include/FontLineWrapping \
@@ -164,6 +165,7 @@ DENG_CONVENIENCE_HEADERS += \
     include/ui/Item \
     include/ui/ListData \
     include/ui/Margins \
+    include/ui/Stylist \
     include/ui/SubmenuItem \
     include/ui/VariableToggleItem \
     include/Vertex \
@@ -365,6 +367,7 @@ DENG_HEADERS += \
     include/ui/framework/commandaction.h \
     include/ui/framework/contextwidgetorganizer.h \
     include/ui/framework/data.h \
+    include/ui/framework/dialogcontentstylist.h \
     include/ui/framework/fontlinewrapping.h \
     include/ui/framework/gltextcomposer.h \
     include/ui/framework/gridlayout.h \
@@ -377,6 +380,7 @@ DENG_HEADERS += \
     include/ui/framework/proceduralimage.h \
     include/ui/framework/sequentiallayout.h \
     include/ui/framework/signalaction.h \
+    include/ui/framework/stylist.h \
     include/ui/framework/submenuitem.h \
     include/ui/framework/textdrawable.h \
     include/ui/framework/variabletoggleitem.h \
@@ -696,6 +700,7 @@ SOURCES += \
     src/ui/framework/commandaction.cpp \
     src/ui/framework/contextwidgetorganizer.cpp \
     src/ui/framework/data.cpp \
+    src/ui/framework/dialogcontentstylist.cpp \
     src/ui/framework/fontlinewrapping.cpp \
     src/ui/framework/gltextcomposer.cpp \
     src/ui/framework/gridlayout.cpp \

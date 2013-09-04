@@ -21,6 +21,7 @@
 #include "ui/widgets/choicewidget.h"
 #include "GuiRootWidget"
 #include "SignalAction"
+#include "DialogContentStylist"
 #include "dd_main.h"
 
 #include <de/KeyEvent>
@@ -78,7 +79,6 @@ static bool dialogButtonOrder(ui::Item const &a, ui::Item const &b)
 DENG_GUI_PIMPL(DialogWidget),
 DENG2_OBSERVES(ContextWidgetOrganizer, WidgetCreation),
 DENG2_OBSERVES(ContextWidgetOrganizer, WidgetUpdate),
-DENG2_OBSERVES(Widget, ChildAddition), // for styling the contents
 DENG2_OBSERVES(ui::Data, Addition),
 DENG2_OBSERVES(ui::Data, Removal)
 {
@@ -92,6 +92,7 @@ DENG2_OBSERVES(ui::Data, Removal)
     bool needButtonUpdate;
     float normalGlow;
     bool animatingGlow;
+    DialogContentStylist stylist;
 
     Instance(Public *i, Flags const &dialogFlags)
         : Base(i),
@@ -110,7 +111,6 @@ DENG2_OBSERVES(ui::Data, Removal)
         GuiWidget *container = new GuiWidget("container");
 
         area = new ScrollAreaWidget("area");
-        area->audienceForChildAddition += this;
 
         buttons = new MenuWidget("buttons");
         buttons->items().audienceForAddition += this;
@@ -303,29 +303,6 @@ DENG2_OBSERVES(ui::Data, Removal)
         }
     }
 
-    /**
-     * Applies the default dialog style for child widgets added to
-     * the content area.
-     */
-    void widgetChildAdded(Widget &areaChild)
-    {
-        GuiWidget &w = areaChild.as<GuiWidget>();
-
-        w.margins().set("dialog.gap");
-
-        // All label-based widgets should expand on their own.
-        if(LabelWidget *lab = w.maybeAs<LabelWidget>())
-        {
-            lab->setSizePolicy(ui::Expand, ui::Expand);
-        }
-
-        // Toggles should have no background.
-        if(ToggleWidget *tog = w.maybeAs<ToggleWidget>())
-        {
-            tog->set(Background());
-        }
-    }
-
     ui::ActionItem const *findDefaultAction() const
     {
         for(ui::Data::Pos i = 0; i < buttons->items().size(); ++i)
@@ -384,6 +361,7 @@ DENG2_OBSERVES(ui::Data, Removal)
 DialogWidget::DialogWidget(String const &name, Flags const &flags)
     : PopupWidget(name), d(new Instance(this, flags))
 {
+    d->stylist.setContainer(area());
     setOpeningDirection(ui::NoDirection);
     d->updateBackground();
 }
