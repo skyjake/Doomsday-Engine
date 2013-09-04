@@ -244,7 +244,6 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
     // Settings.
     ButtonWidget *conf = new ButtonWidget;
     conf->setImage(style().images().image("gear"));
-    //conf->setOverrideImageSize(style().fonts().font("default").height().valuei());
     conf->setSizePolicy(ui::Expand, ui::Filled);
     conf->rule()
             .setInput(Rule::Height, rule().height())
