@@ -71,33 +71,21 @@ AudioSettingsDialog::AudioSettingsDialog(String const &name)
 {
     heading().setText(tr("Audio Settings"));
 
-    LabelWidget *sfxVolLabel = new LabelWidget;
-    sfxVolLabel->setText(tr("SFX Volume:"));
-    area().add(sfxVolLabel);
-
-    LabelWidget *musicVolLabel = new LabelWidget;
-    musicVolLabel->setText(tr("Music Volume:"));
-    area().add(musicVolLabel);
-
-    LabelWidget *rvbVolLabel = new LabelWidget;
-    rvbVolLabel->setText(tr("Reverb Volume:"));
-    area().add(rvbVolLabel);
+    LabelWidget *sfxVolLabel   = LabelWidget::newWithText(tr("SFX Volume:"), &area());
+    LabelWidget *musicVolLabel = LabelWidget::newWithText(tr("Music Volume:"), &area());
+    LabelWidget *rvbVolLabel   = LabelWidget::newWithText(tr("Reverb Volume:"), &area());
 
     d->sound3D->setText(tr("3D Effects & Reverb"));
     d->sound16bit->setText(tr("16-bit Resampling"));
 
-    LabelWidget *rateLabel = new LabelWidget;
-    rateLabel->setText(tr("Resampling:"));
-    area().add(rateLabel);
+    LabelWidget *rateLabel = LabelWidget::newWithText(tr("Resampling:"), &area());
 
     d->sampleRate->items()
             << new ChoiceItem(tr("1x @ 11025 Hz"), 11025)
             << new ChoiceItem(tr("2x @ 22050 Hz"), 22050)
             << new ChoiceItem(tr("4x @ 44100 Hz"), 44100);
 
-    LabelWidget *musSrcLabel = new LabelWidget;
-    musSrcLabel->setText(tr("Preferred Music:"));
-    area().add(musSrcLabel);
+    LabelWidget *musSrcLabel = LabelWidget::newWithText(tr("Preferred Music:"), &area());
 
     d->musicSource->items()
             << new ChoiceItem(tr("MUS lumps"), MUSP_MUS)

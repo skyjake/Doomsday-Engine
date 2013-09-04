@@ -39,23 +39,25 @@ CVarSliderWidget::CVarSliderWidget(char const *cvarPath) : d(new Instance)
     d->cvar = cvarPath;
     updateFromCVar();
 
+    // Default range and precision for floating point variables (may be altered later).
+    if(d->var()->type == CVT_FLOAT)
+    {
+        if(!(d->var()->flags & (CVF_NO_MIN | CVF_NO_MAX)))
+        {
+            setRange(Rangef(d->var()->min, d->var()->max));
+        }
+        setPrecision(2);
+    }
+
     connect(this, SIGNAL(valueChangedByUser(double)), this, SLOT(setCVarValueFromWidget()));
 }
 
 void CVarSliderWidget::updateFromCVar()
 {
-    /// @todo Pick a reasonable step value.
-    float step = 0;
-
     cvar_t *var = d->var();
     if(var->type == CVT_FLOAT)
     {
-        if(!(var->flags & (CVF_NO_MIN | CVF_NO_MAX)))
-        {
-            setRange(Rangef(var->min, var->max), step);
-        }
         setValue(CVar_Float(var));
-        setPrecision(2);
     }
     else
     {

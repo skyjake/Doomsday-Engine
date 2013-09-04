@@ -69,10 +69,9 @@ AboutDialog::AboutDialog() : DialogWidget("about"), d(new Instance(this))
     logo->setSizePolicy(ui::Fixed, ui::Expand);
 
     // Set up the contents of the widget.
-    LabelWidget *title = new LabelWidget;
+    LabelWidget *title = LabelWidget::newWithText(DOOMSDAY_NICENAME);
     title->margins().set("");
     title->setFont("title");
-    title->setText(DOOMSDAY_NICENAME);
     title->setSizePolicy(ui::Fixed, ui::Expand);
 
     VersionInfo version;

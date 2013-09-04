@@ -419,8 +419,8 @@ DENG_GUI_PIMPL(SliderWidget)
         {
             Rectanglei const rect = contentRect();
 
-            qDebug() << "click step:" << clickStep() << "value:" << value << "range:"
-                     << range.asText() << "new value:" << value - clickStep();
+            //qDebug() << "click step:" << clickStep() << "value:" << value << "range:"
+            //   << range.asText() << "new value:" << value - clickStep();
 
             // Maybe a click on the start/end label?
             if(rect.contains(ev.pos()))

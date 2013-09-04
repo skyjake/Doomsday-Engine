@@ -557,6 +557,17 @@ void LabelWidget::contentLayout(LabelWidget::ContentLayout &layout)
     d->contentPlacement(layout);
 }
 
+LabelWidget *LabelWidget::newWithText(String const &label, GuiWidget *parent)
+{
+    LabelWidget *w = new LabelWidget;
+    w->setText(label);
+    if(parent)
+    {
+        parent->add(w);
+    }
+    return w;
+}
+
 void LabelWidget::glInit()
 {
     d->glInit();

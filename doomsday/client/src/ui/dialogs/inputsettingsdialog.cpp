@@ -96,13 +96,8 @@ InputSettingsDialog::InputSettingsDialog(String const &name)
 
     d->syncMouse->setText(tr("Uniform Mouse Axis Sensitivity"));
 
-    LabelWidget *mouseXLabel = new LabelWidget;
-    mouseXLabel->setText(_E(1) + tr("Mouse X"));
-    area().add(mouseXLabel);
-
-    LabelWidget *mouseYLabel = new LabelWidget;
-    mouseYLabel->setText(_E(1) + tr("Mouse Y"));
-    area().add(mouseYLabel);
+    LabelWidget *mouseXLabel = LabelWidget::newWithText(_E(1) + tr("Mouse X"), &area());
+    LabelWidget *mouseYLabel = LabelWidget::newWithText(_E(1) + tr("Mouse Y"), &area());
 
     mouseXLabel->margins().setTop(style().rules().rule("gap"));
     mouseYLabel->margins().setTop(style().rules().rule("gap"));
