@@ -285,7 +285,7 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
             << new ui::ActionItem(tr("Cancel"), new SignalAction(&d->mainMenu->menu(), SLOT(dismissPopups())));
 
     /*
-     * Set up items for the DE menu. Some of these are shown/hidden
+     * Set up items for the config and DE menus. Some of these are shown/hidden
      * depending on whether a game is loaded.
      */
     d->configMenu->menu().items()
@@ -553,7 +553,7 @@ void TaskBarWidget::showUpdaterSettings()
 {
     UpdaterSettingsDialog *dlg = new UpdaterSettingsDialog(UpdaterSettingsDialog::WithApplyAndCheckButton);
     d->setupItemSubDialog(d->configMenu, POS_UPDATER_SETTINGS, dlg);
-    dlg->exec(root());
+    dlg->exec(root()); // modal
 }
 
 void TaskBarWidget::showVideoSettings()
