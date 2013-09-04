@@ -123,6 +123,8 @@ public:
      */
     void setOverrideImageSize(de::Vector2f const &size);
 
+    void setOverrideImageSize(float widthAndHeight);
+
     void setImageScale(float scaleFactor);
 
     void setImageColor(de::Vector4f const &imageColor);

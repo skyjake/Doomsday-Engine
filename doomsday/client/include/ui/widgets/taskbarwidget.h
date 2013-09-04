@@ -54,6 +54,8 @@ public slots:
     void open();
     void openAndPauseGame();
     void close();
+    void openConfigMenu();
+    void closeConfigMenu();
     void openMainMenu();
     void closeMainMenu();
     void unloadGame();

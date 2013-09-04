@@ -27,11 +27,12 @@
 #include "ui/dialogs/audiosettingsdialog.h"
 #include "ui/dialogs/inputsettingsdialog.h"
 #include "ui/dialogs/networksettingsdialog.h"
-#include "GuiRootWidget"
-#include "CommandAction"
-#include "SignalAction"
 #include "updater/updatersettingsdialog.h"
 #include "ui/clientwindow.h"
+#include "GuiRootWidget"
+#include "SequentialLayout"
+#include "CommandAction"
+#include "SignalAction"
 #include "client/cl_def.h" // clientPaused
 
 #include "ui/ui_main.h"
@@ -50,14 +51,16 @@ using namespace de;
 using namespace ui;
 
 static TimeDelta OPEN_CLOSE_SPAN = 0.2;
+
+static uint POS_UNLOAD = 0;
+static uint POS_GAME_SEPARATOR = 1;
+
 static uint POS_PANEL = 0;
-static uint POS_UNLOAD = 1;
-static uint POS_GAME_SEPARATOR = 2;
-static uint POS_VIDEO_SETTINGS = 3;
-static uint POS_AUDIO_SETTINGS = 4;
-static uint POS_INPUT_SETTINGS = 5;
-static uint POS_NETWORK_SETTINGS = 6;
-static uint POS_UPDATER_SETTINGS = 7;
+static uint POS_VIDEO_SETTINGS = 1;
+static uint POS_AUDIO_SETTINGS = 2;
+static uint POS_INPUT_SETTINGS = 3;
+static uint POS_NETWORK_SETTINGS = 4;
+static uint POS_UPDATER_SETTINGS = 5;
 
 DENG_GUI_PIMPL(TaskBarWidget),
 public IGameChangeObserver
@@ -69,6 +72,7 @@ public IGameChangeObserver
     ButtonWidget *logo;
     LabelWidget *status;
     PopupMenuWidget *mainMenu;
+    PopupMenuWidget *configMenu;
     ScalarRule *vertShift;
     bool mouseWasTrappedWhenOpening;
 
@@ -83,6 +87,7 @@ public IGameChangeObserver
           opened(true),
           status(0),
           mainMenu(0),
+          configMenu(0),
           mouseWasTrappedWhenOpening(false),
           uMvpMatrix("uMvpMatrix", GLUniform::Mat4),
           uColor    ("uColor",     GLUniform::Vec4)
@@ -135,19 +140,20 @@ public IGameChangeObserver
         uMvpMatrix = root().projMatrix2D();
     }
 
-    GuiWidget &itemWidget(uint pos) const
+    GuiWidget &itemWidget(PopupMenuWidget *menu, uint pos) const
     {
-        return *mainMenu->menu().organizer().itemWidget(pos);
+        return *menu->menu().organizer().itemWidget(pos);
     }
 
     void currentGameChanged(Game &newGame)
     {
         updateStatus();
 
-        itemWidget(POS_PANEL).show(!isNullGame(newGame));
-        itemWidget(POS_UNLOAD).show(!isNullGame(newGame));
-        itemWidget(POS_GAME_SEPARATOR).show(!isNullGame(newGame));
+        itemWidget(configMenu, POS_PANEL).show(!isNullGame(newGame));
+        itemWidget(mainMenu, POS_UNLOAD).show(!isNullGame(newGame));
+        itemWidget(mainMenu, POS_GAME_SEPARATOR).show(!isNullGame(newGame));
 
+        configMenu->menu().updateLayout();
         mainMenu->menu().updateLayout(); // Include/exclude shown/hidden menu items.
     }
 
@@ -163,18 +169,18 @@ public IGameChangeObserver
         }
     }
 
-    void setupItemSubDialog(ui::Data::Pos item, DialogWidget *dlg)
+    void setupItemSubDialog(PopupMenuWidget *menu, ui::Data::Pos item, DialogWidget *dlg)
     {
         dlg->setDeleteAfterDismissed(true);
-        if(mainMenu->isOpen())
+        if(menu->isOpen())
         {
-            dlg->setAnchorAndOpeningDirection(mainMenu->menu().organizer().
+            dlg->setAnchorAndOpeningDirection(menu->menu().organizer().
                                               itemWidget(item)->hitRule(),
                                               ui::Left);
 
             // Mutual, automatic closing.
-            connect(dlg, SIGNAL(accepted(int)), mainMenu, SLOT(close()));
-            connect(mainMenu, SIGNAL(closed()), dlg, SLOT(close()));
+            connect(dlg, SIGNAL(accepted(int)), menu, SLOT(close()));
+            connect(menu, SIGNAL(closed()), dlg, SLOT(close()));
         }
     }
 };
@@ -235,6 +241,16 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
             .setInput(Rule::Bottom, rule().bottom());
     add(d->logo);
 
+    // Settings.
+    ButtonWidget *conf = new ButtonWidget;
+    conf->setImage(style().images().image("gear"));
+    conf->setSizePolicy(ui::Expand, ui::Filled);
+    conf->rule()
+            .setInput(Rule::Height, rule().height())
+            .setInput(Rule::Right,  d->logo->rule().left())
+            .setInput(Rule::Bottom, rule().bottom());
+    add(conf);
+
     // Currently loaded game.
     d->status = new LabelWidget;
     d->status->set(bg);
@@ -242,7 +258,7 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
     d->status->rule()
             .setInput(Rule::Height, rule().height())
             .setInput(Rule::Bottom, rule().bottom())
-            .setInput(Rule::Right,  d->logo->rule().left());
+            .setInput(Rule::Right,  conf->rule().left());
     add(d->status);        
 
     // The command line extends all the way to the status indicator.
@@ -253,10 +269,13 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
     // Taskbar height depends on the font size.
     rule().setInput(Rule::Height, style().fonts().font("default").height() + gap * 2);
 
+    // Settings menu.
+    d->configMenu = new PopupMenuWidget("conf-menu");
+    d->configMenu->setAnchorAndOpeningDirection(conf->rule(), ui::Up);
+
     // The DE menu.
     d->mainMenu = new PopupMenuWidget("de-menu");
-    d->mainMenu->setAnchor(d->logo->rule().left() + d->logo->rule().width() / 2,
-                           d->logo->rule().top());
+    d->mainMenu->setAnchorAndOpeningDirection(d->logo->rule(), ui::Up);
 
     // Game unloading confirmation submenu.
     ui::SubmenuItem *unloadMenu = new ui::SubmenuItem(tr("Unload Game"), ui::Left);
@@ -269,31 +288,35 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
      * Set up items for the DE menu. Some of these are shown/hidden
      * depending on whether a game is loaded.
      */
-    d->mainMenu->menu().items()
-            << new ui::ActionItem(_E(b) + tr("Open Control Panel"), new CommandAction("panel"))
-            << unloadMenu
-            << new ui::Item(ui::Item::Separator)
-            << new ui::ActionItem(ui::Item::ShownAsButton, tr("Video Settings"),
+    d->configMenu->menu().items()
+            << new ui::ActionItem(_E(b) + tr("Control Panel"), new CommandAction("panel")) // hidden with null-game
+            << new ui::ActionItem(ui::Item::ShownAsButton, tr("Video"),
                                   new SignalAction(this, SLOT(showVideoSettings())))
-            << new ui::ActionItem(ui::Item::ShownAsButton, tr("Audio Settings"),
+            << new ui::ActionItem(ui::Item::ShownAsButton, tr("Audio"),
                                   new SignalAction(this, SLOT(showAudioSettings())))
-            << new ui::ActionItem(ui::Item::ShownAsButton, tr("Input Settings"),
+            << new ui::ActionItem(ui::Item::ShownAsButton, tr("Input"),
                                   new SignalAction(this, SLOT(showInputSettings())))
-            << new ui::ActionItem(ui::Item::ShownAsButton, tr("Network Settings"),
+            << new ui::ActionItem(ui::Item::ShownAsButton, tr("Network"),
                                   new SignalAction(this, SLOT(showNetworkSettings())))
-            << new ui::ActionItem(ui::Item::ShownAsButton, tr("Updater Settings"),
-                                  new SignalAction(this, SLOT(showUpdaterSettings())))
-            << new ui::Item(ui::Item::Separator)
+            << new ui::ActionItem(ui::Item::ShownAsButton, tr("Updater"),
+                                  new SignalAction(this, SLOT(showUpdaterSettings())));
+
+    d->mainMenu->menu().items()
+            << unloadMenu // hidden with null-game
+            << new ui::Item(ui::Item::Separator) // hidden with null-game
             << new ui::ActionItem(tr("About Doomsday..."), new SignalAction(this, SLOT(showAbout())))
+            << new ui::ActionItem(tr("Check for Updates..."), new CommandAction("updateandnotify"))
             << new ui::Item(ui::Item::Separator)
             << new ui::ActionItem(tr("Quit Doomsday"), new CommandAction("quit"));
 
+    add(d->configMenu);
     add(d->mainMenu);
 
-    d->itemWidget(POS_PANEL).hide();
-    d->itemWidget(POS_UNLOAD).hide();
-    d->itemWidget(POS_GAME_SEPARATOR).hide();
+    d->itemWidget(d->configMenu, POS_PANEL).hide();
+    d->itemWidget(d->mainMenu, POS_UNLOAD).hide();
+    d->itemWidget(d->mainMenu, POS_GAME_SEPARATOR).hide();
 
+    conf->setAction(new SignalAction(this, SLOT(openConfigMenu())));
     d->logo->setAction(new SignalAction(this, SLOT(openMainMenu())));
 }
 
@@ -472,7 +495,8 @@ void TaskBarWidget::close()
         d->console->closeLog();
         d->console->closeMenu();
         d->console->commandLine().dismissContentToHistory();
-        d->mainMenu->close();
+        closeMainMenu();
+        closeConfigMenu();
 
         // Clear focus now; callbacks/signal handlers may set the focus elsewhere.
         if(hasRoot()) root().setFocus(0);
@@ -489,6 +513,16 @@ void TaskBarWidget::close()
             }
         }
     }
+}
+
+void TaskBarWidget::openConfigMenu()
+{
+    d->configMenu->open();
+}
+
+void TaskBarWidget::closeConfigMenu()
+{
+    d->configMenu->close();
 }
 
 void TaskBarWidget::openMainMenu()
@@ -518,14 +552,14 @@ void TaskBarWidget::showAbout()
 void TaskBarWidget::showUpdaterSettings()
 {
     UpdaterSettingsDialog *dlg = new UpdaterSettingsDialog(UpdaterSettingsDialog::WithApplyAndCheckButton);
-    d->setupItemSubDialog(POS_UPDATER_SETTINGS, dlg);
+    d->setupItemSubDialog(d->configMenu, POS_UPDATER_SETTINGS, dlg);
     dlg->exec(root());
 }
 
 void TaskBarWidget::showVideoSettings()
 {
     VideoSettingsDialog *dlg = new VideoSettingsDialog;
-    d->setupItemSubDialog(POS_VIDEO_SETTINGS, dlg);
+    d->setupItemSubDialog(d->configMenu, POS_VIDEO_SETTINGS, dlg);
     root().add(dlg);
     dlg->open();
 }
@@ -533,7 +567,7 @@ void TaskBarWidget::showVideoSettings()
 void TaskBarWidget::showAudioSettings()
 {
     AudioSettingsDialog *dlg = new AudioSettingsDialog;
-    d->setupItemSubDialog(POS_AUDIO_SETTINGS, dlg);
+    d->setupItemSubDialog(d->configMenu, POS_AUDIO_SETTINGS, dlg);
     root().add(dlg);
     dlg->open();
 }
@@ -541,7 +575,7 @@ void TaskBarWidget::showAudioSettings()
 void TaskBarWidget::showInputSettings()
 {
     InputSettingsDialog *dlg = new InputSettingsDialog;
-    d->setupItemSubDialog(POS_INPUT_SETTINGS, dlg);
+    d->setupItemSubDialog(d->configMenu, POS_INPUT_SETTINGS, dlg);
     root().add(dlg);
     dlg->open();
 }
@@ -549,7 +583,7 @@ void TaskBarWidget::showInputSettings()
 void TaskBarWidget::showNetworkSettings()
 {
     NetworkSettingsDialog *dlg = new NetworkSettingsDialog;
-    d->setupItemSubDialog(POS_NETWORK_SETTINGS, dlg);
+    d->setupItemSubDialog(d->configMenu, POS_NETWORK_SETTINGS, dlg);
     root().add(dlg);
     dlg->open();
 }
