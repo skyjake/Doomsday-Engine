@@ -377,12 +377,15 @@ bool PopupWidget::handleEvent(Event const &event)
     if(event.type() == Event::MouseButton)
     {
         MouseEvent const &mouse = event.as<MouseEvent>();
+        bool const inside = hitTest(event);
 
-        // Clicking outside the popup will close it.
-        if(!hitTest(event) && mouse.state() == MouseEvent::Released &&
-           d->clickToClose)
+        if(d->clickToClose)
         {
-            d->close(0); // immediately
+            // Clicking outside the popup will close it.
+            if(!inside && mouse.state() == MouseEvent::Pressed)
+            {
+                d->close(0); // immediately
+            }
         }
         return true;
     }

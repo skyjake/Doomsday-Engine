@@ -37,7 +37,6 @@ DENG2_PIMPL_NOREF(CVarSliderWidget)
 CVarSliderWidget::CVarSliderWidget(char const *cvarPath) : d(new Instance)
 {
     d->cvar = cvarPath;
-    updateFromCVar();
 
     // Default range and precision for floating point variables (may be altered later).
     if(d->var()->type == CVT_FLOAT)
@@ -48,6 +47,8 @@ CVarSliderWidget::CVarSliderWidget(char const *cvarPath) : d(new Instance)
         }
         setPrecision(2);
     }
+
+    updateFromCVar();
 
     connect(this, SIGNAL(valueChangedByUser(double)), this, SLOT(setCVarValueFromWidget()));
 }

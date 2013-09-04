@@ -79,9 +79,7 @@ DENG2_OBSERVES(ContextWidgetOrganizer, WidgetCreation)
     void updateStyle()
     {
         // Popup background color.
-        Background bg = choices->background();
-        bg.solidFill = style().colors().colorf("choice.popup");
-        choices->set(bg);
+        choices->set(choices->background().withSolidFill(style().colors().colorf("choice.popup")));
     }
 
     void widgetCreatedForItem(GuiWidget &widget, ui::Item const &item)

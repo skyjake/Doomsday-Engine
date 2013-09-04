@@ -119,6 +119,18 @@ public:
                    float borderThickness = 0)
             : solidFill(solid), type(t), color(borderColor), thickness(borderThickness),
               blur(0) {}
+
+        inline Background withSolidFill(de::Vector4f const &newSolidFill) const {
+            Background bg = *this;
+            bg.solidFill = newSolidFill;
+            return bg;
+        }
+
+        inline Background withSolidFillOpacity(float opacity) const {
+            Background bg = *this;
+            bg.solidFill.w = opacity;
+            return bg;
+        }
     };
 
     typedef de::Vertex2TexRgba DefaultVertex;
