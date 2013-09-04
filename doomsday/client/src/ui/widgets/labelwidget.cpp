@@ -521,6 +521,11 @@ void LabelWidget::setOverrideImageSize(Vector2f const &size)
     d->overrideImageSize = size;
 }
 
+void LabelWidget::setOverrideImageSize(float widthAndHeight)
+{
+    d->overrideImageSize = Vector2f(widthAndHeight, widthAndHeight);
+}
+
 void LabelWidget::setImageScale(float scaleFactor)
 {
     d->imageScale = scaleFactor;
