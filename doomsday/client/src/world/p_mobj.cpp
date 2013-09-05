@@ -23,6 +23,8 @@
 
 #include <cmath>
 
+#include <de/Error>
+
 #include "de_base.h"
 #include "de_console.h"
 #include "de_system.h"
@@ -35,6 +37,7 @@
 #include "def_main.h"
 #include "render/r_main.h" // validCount, viewport
 #ifdef __CLIENT__
+#  include "render/lumobj.h"
 #  include "render/sprite.h"
 #endif
 
@@ -48,8 +51,9 @@ static mobj_t *unusedMobjs;
 /*
  * Console variables:
  */
-int useSRVO          = 2; ///< @c 1= models only, @c 2= sprites + models
-int useSRVOAngle     = 1;
+int useSRVO                = 2; ///< @c 1= models only, @c 2= sprites + models
+int useSRVOAngle           = 1;
+static byte mobjAutoLights = true;
 
 /**
  * Called during map loading.
@@ -284,6 +288,124 @@ boolean Mobj_OriginBehindVisPlane(mobj_t *mo)
     return false;
 }
 
+void Mobj_UnlinkLumobjs(mobj_t *mo)
+{
+    if(!mo) return;
+    mo->lumIdx = Lumobj::NoIndex;
+}
+
+static ded_light_t *lightDefByMobjState(state_t const *state)
+{
+    if(state)
+    {
+        return stateLights[state - states];
+    }
+    return 0;
+}
+
+static inline Texture *lightmap(uri_s const *textureUri)
+{
+    return R_FindTextureByResourceUri("Lightmaps", reinterpret_cast<de::Uri const *>(textureUri));
+}
+
+void Mobj_GenerateLumobjs(mobj_t *mo)
+{
+    if(!mo) return;
+
+    Mobj_UnlinkLumobjs(mo);
+
+    if(!mo->bspLeaf) return;
+
+    if(!(((mo->state && (mo->state->flags & STF_FULLBRIGHT)) &&
+         !(mo->ddFlags & DDMF_DONTDRAW)) ||
+       (mo->ddFlags & DDMF_ALWAYSLIT)))
+        return;
+
+    // Are the automatically calculated light values for fullbright sprite frames in use?
+    if(mo->state &&
+       (!mobjAutoLights || (mo->state->flags & STF_NOAUTOLIGHT)) &&
+       !stateLights[mo->state - states])
+       return;
+
+    // If the mobj's origin is outside the BSP leaf it is linked within, then
+    // this means it is outside the playable map (and no light should be emitted).
+    /// @todo Optimize: P_MobjLink() should do this and flag the mobj accordingly.
+    if(!mo->bspLeaf->polyContains(mo->origin))
+        return;
+
+    spritedef_t *sprDef = R_SpriteDef(mo->sprite);
+    if(!sprDef) return;
+
+    spriteframe_t *sprFrame = SpriteDef_Frame(*sprDef, mo->frame);
+    if(!sprFrame) return;
+
+    // Always use the front rotation when determining light properties.
+    Material *mat = SpriteFrame_Material(*sprFrame);
+    if(!mat) return;
+
+    MaterialSnapshot const &ms = mat->prepare(Rend_SpriteMaterialSpec());
+    if(!ms.hasTexture(MTU_PRIMARY)) return; // Unloadable texture?
+    Texture &tex = ms.texture(MTU_PRIMARY).generalCase();
+
+    // Will the visual be allowed to go inside the floor?
+    /// @todo Handle this as occlusion so that the halo fades smoothly.
+    coord_t impacted = mo->origin[VZ] + -tex.origin().y - ms.height() - mo->bspLeaf->visFloorHeight();
+
+    // If the floor is a visual plane then no light should be emitted.
+    if(impacted < 0 && &mo->bspLeaf->visFloor() != &mo->bspLeaf->floor())
+        return;
+
+    // Attempt to generate luminous object from the sprite.
+    QScopedPointer<Lumobj> lum(SpriteDef_GenerateLumobj(*sprDef, mo->frame));
+    if(lum.isNull()) return;
+
+    // A light definition may override the (auto-calculated) defaults.
+    if(ded_light_t *def = lightDefByMobjState(mo->state))
+    {
+        if(!de::fequal(def->size, 0))
+        {
+            lum->setRadius(def->size);
+        }
+
+        if(!de::fequal(def->offset[1], 0))
+        {
+            lum->setZOffset(-tex.origin().y - def->offset[1]);
+        }
+
+        if(Vector3f(def->color) != Vector3f(0, 0, 0))
+        {
+            lum->setColor(def->color);
+        }
+
+        lum->setLightmap(Lumobj::Side, lightmap(def->sides))
+            .setLightmap(Lumobj::Down, lightmap(def->down))
+            .setLightmap(Lumobj::Up,   lightmap(def->up));
+    }
+
+    // Translate to the mobj's origin in map space.
+    lum->move(mo->origin);
+
+    // Does the mobj use a light scale?
+    if(mo->ddFlags & DDMF_LIGHTSCALE)
+    {
+        float scale = 1.0f - ((mo->ddFlags & DDMF_LIGHTSCALE) >> DDMF_LIGHTSCALESHIFT) / 4.0f;
+        lum->setRadius(lum->radius() * scale);
+    }
+
+    // Does the mobj need a Z origin offset?
+    coord_t zOffset = -mo->floorClip - Mobj_BobOffset(mo);
+    if(!(mo->ddFlags & DDMF_NOFITBOTTOM) && impacted < 0)
+    {
+        // Raise the light out of the impacted surface.
+        zOffset -= impacted;
+    }
+    lum->setZOffset(lum->zOffset() + zOffset);
+
+    // Insert a copy of the temporary lumobj in the map and remember it's unique
+    // index in the mobj (this'll allow a halo to be rendered).
+    mo->lumIdx = App_World().map().addLumobj(*lum).indexInMap();
+}
+
 #endif // __CLIENT__
 
 #undef Mobj_AngleSmoothed
@@ -394,6 +516,13 @@ coord_t Mobj_VisualRadius(mobj_t *mo)
 
     // Use the physical radius.
     return mo->radius;
+}
+
+void Mobj_ConsoleRegister(void)
+{
+#ifdef __CLIENT__
+    C_VAR_BYTE("rend-mobj-light-auto", &mobjAutoLights, 0, 0, 1);
+#endif
 }
 
 D_CMD(InspectMobj)

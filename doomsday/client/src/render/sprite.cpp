@@ -44,8 +44,6 @@
 
 using namespace de;
 
-#define DOTPROD(a, b)       (a[0]*b[0] + a[1]*b[1] + a[2]*b[2])
-
 void Rend_RenderSprite(rendspriteparams_t const *params);
 
 static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr);
@@ -203,51 +201,41 @@ void Spr_UniformVertexColors(int count, dgl_color_t *colors, float const *rgba)
     }
 }
 
-typedef struct {
-    float color[3], extra[3];
-    dgl_vertex_t *normal;
-    uint processedLights, maxLights;
-} lightspriteparams_t;
-
-static boolean lightSprite(vlight_t const *vlight, void *context)
+struct lightspriteworker_params_t
 {
-    float *dest;
-    float dot;
-    lightspriteparams_t *params = (lightspriteparams_t*) context;
+    Vector3f color, extra;
+    Vector3f normal;
+    uint numProcessed, max;
+};
 
-    dot = DOTPROD(vlight->vector, params->normal->xyz);
-    dot += vlight->offset; // Shift a bit towards the light.
-
-    if(!vlight->affectedByAmbient)
-    {   // Won't be affected by ambient.
-        dest = params->extra;
-    }
-    else
-    {
-        dest = params->color;
-    }
+static void lightSprite(VectorLight const &vlight, lightspriteworker_params_t &parms)
+{
+    float strength = vlight.direction.dot(parms.normal)
+                   + vlight.offset; // Shift toward the light a little.
 
     // Ability to both light and shade.
-    if(dot > 0)
+    if(strength > 0)
     {
-        dot *= vlight->lightSide;
+        strength *= vlight.lightSide;
     }
     else
     {
-        dot *= vlight->darkSide;
+        strength *= vlight.darkSide;
     }
 
-    dot = MINMAX_OF(-1, dot, 1);
+    Vector3f &dest = vlight.affectedByAmbient? parms.color : parms.extra;
+    dest += vlight.color * de::clamp(-1.f, strength, 1.f);
+}
 
-    dest[CR] += dot * vlight->color[CR];
-    dest[CG] += dot * vlight->color[CG];
-    dest[CB] += dot * vlight->color[CB];
+static int lightSpriteWorker(VectorLight const *vlight, void *context)
+{
+    lightspriteworker_params_t &parms = *static_cast<lightspriteworker_params_t *>(context);
 
-    params->processedLights++;
-    if(params->maxLights && !(params->processedLights < params->maxLights))
-        return false; // Stop iteration.
+    lightSprite(*vlight, parms);
+    parms.numProcessed += 1;
 
-    return true; // Continue iteration.
+    // Time to stop?
+    return parms.max && parms.numProcessed == parms.max;
 }
 
 /**
@@ -256,33 +244,27 @@ static boolean lightSprite(vlight_t const *vlight, void *context)
 void Spr_VertexColors(int count, dgl_color_t *out, dgl_vertex_t *normal,
     uint vLightListIdx, uint maxLights, float const *ambient)
 {
-    int i, k;
-    lightspriteparams_t params;
+    Vector3f const saturated(1, 1, 1);
+    lightspriteworker_params_t parms;
 
-    for(i = 0; i < count; ++i, out++, normal++)
+    for(int i = 0; i < count; ++i, out++, normal++)
     {
         // Begin with total darkness.
-        params.color[CR] = params.color[CG] = params.color[CB] = 0;
-        params.extra[CR] = params.extra[CG] = params.extra[CB] = 0;
-        params.normal = normal;
-        params.processedLights = 0;
-        params.maxLights = maxLights;
+        parms.color        = Vector3f();
+        parms.extra        = Vector3f();
+        parms.normal       = Vector3f(normal->xyz);
+        parms.max          = maxLights;
+        parms.numProcessed = 0;
 
-        VL_ListIterator(vLightListIdx, &params, lightSprite);
+        VL_ListIterator(vLightListIdx, lightSpriteWorker, &parms);
 
         // Check for ambient and convert to ubyte.
-        for(k = 0; k < 3; ++k)
-        {
-            if(params.color[k] < ambient[k])
-                params.color[k] = ambient[k];
-            params.color[k] += params.extra[k];
-            params.color[k] = MINMAX_OF(0, params.color[k], 1);
+        Vector3f color = (parms.color.max(ambient) + parms.extra).min(saturated);
 
-            // This is the final color.
-            out->rgba[k] = (byte) (255 * params.color[k]);
-        }
-
-        out->rgba[CA] = (byte) (255 * ambient[CA]);
+        out->rgba[CR] = byte( 255 * color[CR] );
+        out->rgba[CG] = byte( 255 * color[CG] );
+        out->rgba[CB] = byte( 255 * color[CB] );
+        out->rgba[CA] = byte( 255 * ambient[CA] );
     }
 }
 
@@ -371,11 +353,9 @@ static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
         Rend_ApplyTorchLight(params->ambientColor, 0);
 
         collectaffectinglights_params_t lparams; zap(lparams);
-        lparams.origin[VX]   = spr->origin[VX];
-        lparams.origin[VY]   = spr->origin[VY];
-        lparams.origin[VZ]   = spr->origin[VZ];
+        lparams.origin       = Vector3d(spr->origin);
         lparams.bspLeaf      = spr->data.sprite.bspLeaf;
-        std::memcpy(lparams.ambientColor, params->ambientColor, sizeof(lparams.ambientColor));
+        lparams.ambientColor = Vector3f(params->ambientColor);
 
         params->vLightListIdx = R_CollectAffectingLights(&lparams);
     }
@@ -763,12 +743,10 @@ static void setupModelParamsForVisPSprite(rendmodelparams_t *params, vispsprite_
         Rend_ApplyTorchLight(params->ambientColor, params->distance);
 
         collectaffectinglights_params_t lparams; zap(lparams);
-        lparams.starkLight   = true;
-        lparams.origin[VX]   = spr->origin[VX];
-        lparams.origin[VY]   = spr->origin[VY];
-        lparams.origin[VZ]   = spr->origin[VZ];
+        lparams.origin       = Vector3d(spr->origin);
         lparams.bspLeaf      = spr->data.model.bspLeaf;
-        std::memcpy(lparams.ambientColor, params->ambientColor, sizeof(lparams.ambientColor));
+        lparams.ambientColor = Vector3f(params->ambientColor);
+        lparams.starkLight   = true;
 
         params->vLightListIdx = R_CollectAffectingLights(&lparams);
     }
@@ -782,12 +760,12 @@ static boolean generateHaloForVisSprite(vissprite_t const *spr, boolean primary)
 
     if(spr->data.flare.isDecoration)
     {
-        /**
+        /*
          * Surface decorations do not yet persist over frames, so we do
          * not smoothly occlude their flares. Instead, we will have to
          * put up with them instantly appearing/disappearing.
          */
-        occlusionFactor = (LO_IsClipped(spr->data.flare.lumIdx, viewPlayer - ddPlayers)? 0 : 1);
+        occlusionFactor = R_ViewerLumobjIsClipped(spr->data.flare.lumIdx)? 0 : 1;
     }
     else
     {
@@ -889,6 +867,16 @@ static MaterialVariant *chooseSpriteMaterial(rendspriteparams_t const &p)
 
     // Use the pre-chosen sprite.
     return reinterpret_cast<MaterialVariant *>(p.material);
+}
+
+static int drawVectorLightWorker(VectorLight const *vlight, void *context)
+{
+    coord_t distFromViewer = *static_cast<coord_t *>(context);
+    if(distFromViewer < 1600 - 8)
+    {
+        Rend_DrawVectorLight(vlight, 1 - distFromViewer / 1600);
+    }
+    return false; // Continue iteration.
 }
 
 void Rend_RenderSprite(rendspriteparams_t const *params)
@@ -1100,7 +1088,8 @@ void Rend_RenderSprite(rendspriteparams_t const *params)
 
         glTranslatef(params->center[VX], params->center[VZ], params->center[VY]);
 
-        VL_ListIterator(params->vLightListIdx, (void *)&params->distance, R_DrawVLightVector);
+        coord_t distFromViewer = de::abs(params->distance);
+        VL_ListIterator(params->vLightListIdx, drawVectorLightWorker, &distFromViewer);
 
         glMatrixMode(GL_MODELVIEW);
         glPopMatrix();

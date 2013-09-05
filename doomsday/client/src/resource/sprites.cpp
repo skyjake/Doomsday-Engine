@@ -36,7 +36,12 @@
 
 #ifdef __CLIENT__
 #  include "MaterialSnapshot"
+
+#  include "gl/gl_tex.h"
 #  include "gl/gl_texmanager.h"
+
+#  include "render/lumobj.h"
+#  include "render/sprite.h"
 #endif
 
 #include "resource/sprites.h"
@@ -374,13 +379,31 @@ void R_ShutdownSprites()
     clearSpriteDefs();
 }
 
-spritedef_t *R_SpriteDef(int sprite)
+Material *SpriteFrame_Material(spriteframe_t &sprFrame, int rotation,
+    bool *flipX, bool *flipY)
 {
-    if(sprite >= 0 && sprite < numSprites)
+    if(flipX) *flipX = false;
+    if(flipY) *flipY = false;
+
+    if(rotation < 0 || rotation >= SPRITEFRAME_MAX_ANGLES)
+        return 0;
+
+    if(flipX) *flipX = CPP_BOOL(sprFrame.flip[rotation]);
+    return sprFrame.mats[rotation];
+}
+
+Material *SpriteFrame_Material(spriteframe_t &sprFrame, angle_t mobjAngle,
+    angle_t angleToEye, bool noRotation, bool *flipX, bool *flipY)
+{
+    int rotation = 0; // Use single rotation for all viewing angles (default).
+
+    if(!noRotation && sprFrame.rotate)
     {
-        return &sprites[sprite];
+        // Rotation is determined by the relative angle to the viewer.
+        rotation = (angleToEye - mobjAngle + (unsigned) (ANG45 / 2) * 9) >> 29;
     }
-    return 0; // Not found.
+
+    return SpriteFrame_Material(sprFrame, rotation, flipX, flipY);
 }
 
 spriteframe_t *SpriteDef_Frame(spritedef_t const &sprDef, int frame)
@@ -392,23 +415,43 @@ spriteframe_t *SpriteDef_Frame(spritedef_t const &sprDef, int frame)
     return 0; // Invalid frame.
 }
 
-Material *SpriteFrame_Material(spriteframe_t &sprFrame, angle_t mobjAngle,
-    angle_t angleToEye, bool noRotation, bool &flipX, bool &flipY)
+#ifdef __CLIENT__
+Lumobj *SpriteDef_GenerateLumobj(spritedef_t const &sprDef, int frame)
 {
-    int rotation = 0; // Use single rotation for all views (default).
+    spriteframe_t *sprFrame = SpriteDef_Frame(sprDef, frame);
+    if(!sprFrame) return 0;
 
-    if(!noRotation && sprFrame.rotate)
+    // Always use rotation zero.
+    /// @todo We could do better here...
+    Material *mat = SpriteFrame_Material(*sprFrame);
+    if(!mat) return 0;
+
+    // Ensure we have up-to-date information about the material.
+    MaterialSnapshot const &ms = mat->prepare(Rend_SpriteMaterialSpec());
+    if(!ms.hasTexture(MTU_PRIMARY)) return 0; // Unloadable texture?
+    Texture &tex = ms.texture(MTU_PRIMARY).generalCase();
+
+    pointlight_analysis_t const *pl = reinterpret_cast<pointlight_analysis_t const *>(ms.texture(MTU_PRIMARY).generalCase().analysisDataPointer(Texture::BrightPointAnalysis));
+    if(!pl) throw Error("SpriteDef_GenerateLumobj", QString("Texture \"%1\" has no BrightPointAnalysis")
+                                                        .arg(ms.texture(MTU_PRIMARY).generalCase().manifest().composeUri()));
+
+    Lumobj *lum = new Lumobj();
+
+    lum->setRadius (pl->brightMul)
+        .setZOffset(-tex.origin().y - pl->originY * ms.height())
+        .setColor  (pl->color.rgb); // Apply the auto-calculated color.
+
+    return lum;
+}
+#endif // __CLIENT__
+
+spritedef_t *R_SpriteDef(int sprite)
+{
+    if(sprite >= 0 && sprite < numSprites)
     {
-        // Rotation is determined by the relative angle to the viewer.
-        rotation = (angleToEye - mobjAngle + (unsigned) (ANG45 / 2) * 9) >> 29;
+        return &sprites[sprite];
     }
-
-    DENG_ASSERT(rotation >= 0 && rotation < SPRITEFRAME_MAX_ANGLES);
-    Material *mat = sprFrame.mats[rotation];
-    flipX = CPP_BOOL(sprFrame.flip[rotation]);
-    flipY = false;
-
-    return mat;
+    return 0; // Not found.
 }
 
 Material *R_MaterialForSprite(int sprite, int frame)
@@ -417,9 +460,7 @@ Material *R_MaterialForSprite(int sprite, int frame)
     {
         if(spriteframe_t *sprFrame = SpriteDef_Frame(*sprDef, frame))
         {
-            bool flipX, flipY;
-            return SpriteFrame_Material(*sprFrame, 0, 0, true/*no rotation*/,
-                                        flipX, flipY);
+            return SpriteFrame_Material(*sprFrame);
         }
     }
     return 0;

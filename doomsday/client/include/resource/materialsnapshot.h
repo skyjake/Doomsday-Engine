@@ -59,7 +59,7 @@ public:
         float haloRadius; // Halo radius (zero = no halo).
         float lightLevels[2]; // Fade by sector lightlevel.
 
-        DGLuint tex, ceilTex, floorTex;
+        Texture *tex, *ceilTex, *floorTex;
         DGLuint flareTex;
     };
 

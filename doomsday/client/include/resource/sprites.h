@@ -26,6 +26,9 @@
 #include <de/libdeng1.h>
 
 class Material;
+#ifdef __CLIENT__
+class Lumobj;
+#endif
 
 /**
  * Sprites are patches with a special naming convention so they can be
@@ -48,8 +51,8 @@ struct spriteframe_t
 };
 
 /**
- * Select an appropriate material for a mobj's angle and relative position with
- * that of the viewer (the 'eye').
+ * Select an appropriate material for visualizing the sprite given a mobj's
+ * angle and relative angle with the viewer (the 'eye').
  *
  * @param sprFrame    spriteframe_t instance.
  * @param mobjAngle   Angle of the mobj in the map coordinate space.
@@ -63,7 +66,23 @@ struct spriteframe_t
  * @return  The chosen material otherwise @c 0.
  */
 Material *SpriteFrame_Material(spriteframe_t &sprFrame, angle_t mobjAngle,
-    angle_t angleToEye, bool noRotation, bool &flipX, bool &flipY);
+    angle_t angleToEye, bool noRotation = false, bool *flipX = 0, bool *flipY = 0);
+
+/**
+ * Returns the material attributed to the specified rotation.
+ *
+ * @param sprFrame    spriteframe_t instance.
+ * @param rotation    Rotation index/identifier to lookup the material for. The
+ *                    valid range is [0...SPRITEFRAME_MAX_ANGLES).
+ *
+ * Return values:
+ * @param flipX       @c true= chosen material should be flipped on the X axis.
+ * @param flipY       @c true= chosen material should be flipped on the Y axis.
+ *
+ * @return  The attributed material otherwise @c 0.
+ */
+Material *SpriteFrame_Material(spriteframe_t &sprFrame, int rotation = 0,
+    bool *flipX = 0, bool *flipY = 0);
 
 struct spritedef_t
 {
@@ -76,6 +95,24 @@ struct spritedef_t
  * Lookup a sprite frame by unique @a frame index.
  */
 spriteframe_t *SpriteDef_Frame(spritedef_t const &sprDef, int frame);
+
+#ifdef __CLIENT__
+
+/**
+ * Produce a luminous object from the sprite configuration. The properties of
+ * any resultant lumobj are configured in "sprite-local" space. This means that
+ * it will positioned relative to the center of the sprite and must be further
+ * configured before adding to the map (i.e., translated to the origin in map
+ * space.
+ *
+ * @param sprDef  SpriteDef instance.
+ * @param frame   Animation frame to produce a lumobj for.
+ *
+ * @return  Newly generated lumobj otherwise @c 0.
+ */
+Lumobj *SpriteDef_GenerateLumobj(spritedef_t const &sprDef, int frame);
+
+#endif
 
 DENG_EXTERN_C spritedef_t *sprites;
 DENG_EXTERN_C int numSprites;
