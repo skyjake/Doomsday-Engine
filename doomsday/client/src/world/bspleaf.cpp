@@ -62,41 +62,26 @@ typedef QMap<int, GeometryGroup> GeometryGroups;
 
 DENG2_PIMPL(BspLeaf)
 {
-    /// Attributed sector cluster if any (not owned).
-    SectorCluster *cluster;
+    SectorCluster *cluster;         ///< Attributed cluster (if any, not owned).
 
-    /// Convex polygon geometry attributed to the BSP leaf if any (not owned).
-    Face *poly;
-
-    /// Additional meshes assigned to the BSP leaf (owned).
-    Meshes extraMeshes;
+    Face *poly;                     ///< Convex polygon geometry (if any, not owned).
+    Meshes extraMeshes;             ///< Additional meshes (owned).
+    Polyobjs polyobjs;              ///< Linked polyobjs (if any, not owned).
 
     /// Offset to align the top left of materials in the built geometry to the
     /// map coordinate space grid.
     Vector2d worldGridOffset;
 
-    /// Set of polyobjs linked to the leaf (not owned).
-    Polyobjs polyobjs;
-
 #ifdef __CLIENT__
+    HEdge *fanBase;                 ///< Trifan base Half-edge (otherwise the center point is used).
 
-    /// Half-edge whose vertex to use as the base for a trifan.
-    /// If @c 0 the center point will be used instead.
-    HEdge *fanBase;
+    bool needUpdateFanBase;         ///< @c true= need to rechoose a fan base half-edge.
+    int addSpriteCount;             ///< Frame number of last R_AddSprites.
 
-    bool needUpdateFanBase; ///< @c true= need to rechoose a fan base half-edge.
-
-    /// Frame number of last R_AddSprites.
-    int addSpriteCount;
-
-    /// Bias lighting data for each geometry group (i.e., each plane).
     GeometryGroups geomGroups;
-
-    /// Set of fake radio shadow lines.
-    ShadowLines shadowLines;
-
-    /// Final audio environment characteristics.
-    AudioEnvironmentFactors reverb;
+    Lumobjs lumobjs;                ///< Linked lumobjs (not owned).
+    ShadowLines shadowLines;        ///< Linked map lines for fake radio shadowing.
+    AudioEnvironmentFactors reverb; ///< Cached characteristics.
 
 #endif // __CLIENT__
 
@@ -667,6 +652,27 @@ void BspLeaf::addShadowLine(LineSide &side)
 BspLeaf::ShadowLines const &BspLeaf::shadowLines() const
 {
     return d->shadowLines;
+}
+
+void BspLeaf::clearLumobjs()
+{
+    d->lumobjs.clear();
+}
+
+void BspLeaf::unlinkLumobj(Lumobj &lumobj)
+{
+    d->lumobjs.remove(&lumobj);
+}
+
+void BspLeaf::linkLumobj(Lumobj &lumobj)
+{
+    if(isDegenerate()) return;
+    d->lumobjs.insert(&lumobj);
+}
+
+BspLeaf::Lumobjs const &BspLeaf::lumobjs() const
+{
+    return d->lumobjs;
 }
 
 int BspLeaf::lastSpriteProjectFrame() const

@@ -39,6 +39,7 @@
 struct polyobj_s;
 #ifdef __CLIENT__
 class BiasDigest;
+class Lumobj;
 #endif
 
 /**
@@ -79,7 +80,9 @@ public:
      */
     typedef QSet<de::Mesh *>  Meshes;
     typedef QSet<polyobj_s *> Polyobjs;
+
 #ifdef __CLIENT__
+    typedef QSet<Lumobj *>    Lumobjs;
     typedef QSet<LineSide *>  ShadowLines;
 #endif
 
@@ -418,6 +421,38 @@ public:
      * of the BSP leaf, for efficient accumulation.
      */
     AudioEnvironmentFactors const &reverb() const;
+
+    /**
+     * Clear all lumobj links for the BSP leaf.
+     */
+    void clearLumobjs();
+
+    /**
+     * Unlink the specified @a lumobj in the BSP leaf. If the lumobj is not
+     * linked then nothing will happen.
+     *
+     * @param lumobj  Lumobj to unlink.
+     *
+     * @see linkLumobj()
+     */
+    void unlinkLumobj(Lumobj &lumobj);
+
+    /**
+     * Link the specified @a lumobj in the BSP leaf. If the lumobj is already
+     * linked then nothing will happen.
+     *
+     * @param lumobj  Lumobj to link.
+     *
+     * @see lumobjs(), unlinkLumobj()
+     */
+    void linkLumobj(Lumobj &lumobj);
+
+    /**
+     * Provides access to the set of lumobjs linked to the BSP leaf.
+     *
+     * @see linkLumobj(), clearLumobjs()
+     */
+    Lumobjs const &lumobjs() const;
 
     /**
      * Clear the list of fake radio shadow line sides for the BSP leaf.
