@@ -61,7 +61,7 @@ typedef struct cmhash_s {
     struct clmoinfo_s *first, *last;
 } cmhash_t;
 
-#define CLIENT_MAX_MOVERS          1024 // Definitely enough!
+#define CLIENT_MAX_MOVERS           1024 // Definitely enough!
 
 /**
  * @ingroup world

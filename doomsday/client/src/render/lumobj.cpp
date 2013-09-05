@@ -46,9 +46,7 @@ DENG2_PIMPL_NOREF(Lumobj)
     Texture *upTex;
 
     Instance()
-        : map        (0),
-          indexInMap (NoIndex),
-          bspLeaf    (0),
+        : bspLeaf    (0),
           maxDistance(0),
           radius     (256),
           zOffset    (0),
@@ -58,9 +56,7 @@ DENG2_PIMPL_NOREF(Lumobj)
     {}
 
     Instance(Instance const &other)
-        : map        (0), // Never copied.
-          indexInMap (NoIndex), // Never copied.
-          origin     (other.origin),
+        : origin     (other.origin),
           bspLeaf    (other.bspLeaf),
           maxDistance(other.maxDistance),
           color      (other.color),
@@ -72,41 +68,11 @@ DENG2_PIMPL_NOREF(Lumobj)
     {}
 };
 
-Lumobj::Lumobj() : d(new Instance())
+Lumobj::Lumobj() : MapObject(), d(new Instance())
 {}
 
-Lumobj::Lumobj(Lumobj const &other) : d(new Instance(*other.d))
+Lumobj::Lumobj(Lumobj const &other) : MapObject(), d(new Instance(*other.d))
 {}
-
-bool Lumobj::hasMap() const
-{
-    return d->map != 0;
-}
-
-Map &Lumobj::map() const
-{
-    if(d->map)
-    {
-        return *d->map;
-    }
-    /// @throw MissingMapError  Attempted with no map attributed.
-    throw MissingMapError("Lumobj::map", "No map is attributed");
-}
-
-void Lumobj::setMap(Map *newMap)
-{
-    d->map = newMap;
-}
-
-int Lumobj::indexInMap() const
-{
-    return d->indexInMap;
-}
-
-void Lumobj::setIndexInMap(int newIndex)
-{
-    d->indexInMap = newIndex;
-}
 
 Vector3d const &Lumobj::origin() const
 {

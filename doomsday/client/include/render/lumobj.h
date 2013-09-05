@@ -21,26 +21,20 @@
 #ifndef DENG_CLIENT_RENDER_LUMOBJ_H
 #define DENG_CLIENT_RENDER_LUMOBJ_H
 
-#include <de/Error>
 #include <de/Vector>
 
+#include "MapObject"
 #include "Texture"
 
 class BspLeaf;
 
-namespace de {
-class Map;
-}
-
-class Lumobj
+/**
+ * Luminous object.
+ * @ingroup render
+ */
+class Lumobj : public de::MapObject
 {
 public:
-    /// No map is attributed. @ingroup errors
-    DENG2_ERROR(MissingMapError);
-
-    /// Special identifier used to mark an invalid index.
-    enum { NoIndex = -1 };
-
     /// Identifiers for attributing lightmaps for projection (relative surface directions).
     enum LightmapSemantic {
         Side,
@@ -60,48 +54,8 @@ public:
      */
     static void consoleRegister();
 
-    static int radiusMax();
     static float radiusFactor();
-
-    /**
-     * Returns @c true iff a map is attributed to the lumobj.
-     *
-     * @see map(), setMap()
-     */
-    bool hasMap() const;
-
-    /**
-     * Returns the map attributed to the lumobj.
-     *
-     * @see hasMap(), setMap()
-     */
-    de::Map &map() const;
-
-    /**
-     * Change the map attributed to the lumobj.
-     *
-     * @param newMap
-     *
-     * @see hasMap(), map()
-     */
-    void setMap(de::Map *newMap);
-
-    /**
-     * Returns the "in-map" index attributed to the lumobj.
-     *
-     * @see setIndexInMap()
-     */
-    int indexInMap() const;
-
-    /**
-     * Change the "in-map" index attributed to the lumobj.
-     *
-     * @param newIndex  New index to attribute to the lumobj. Use @c NoIndex to
-     *                  clear the attribution (not a valid index).
-     *
-     * @see indexInMap()
-     */
-    void setIndexInMap(int newIndex = NoIndex);
+    static int radiusMax();
 
     /**
      * Translate the origin of the lumobj in map space.

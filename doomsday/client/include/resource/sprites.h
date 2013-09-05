@@ -73,7 +73,7 @@ Material *SpriteFrame_Material(spriteframe_t &sprFrame, angle_t mobjAngle,
  *
  * @param sprFrame    spriteframe_t instance.
  * @param rotation    Rotation index/identifier to lookup the material for. The
- *                    valid range is [0...SPRITEFRAME_MAX_ANGLES).
+ *                    valid range is [0...SPRITEFRAME_MAX_ANGLES)
  *
  * Return values:
  * @param flipX       @c true= chosen material should be flipped on the X axis.
@@ -103,7 +103,7 @@ spriteframe_t *SpriteDef_Frame(spritedef_t const &sprDef, int frame);
  * any resultant lumobj are configured in "sprite-local" space. This means that
  * it will positioned relative to the center of the sprite and must be further
  * configured before adding to the map (i.e., translated to the origin in map
- * space.
+ * space).
  *
  * @param sprDef  SpriteDef instance.
  * @param frame   Animation frame to produce a lumobj for.

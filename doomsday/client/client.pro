@@ -137,6 +137,7 @@ DENG_CONVENIENCE_HEADERS += \
     include/IHPlane \
     include/Line \
     include/MapElement \
+    include/MapObject \
     include/Material \
     include/MaterialArchive \
     include/MaterialContext \
@@ -461,6 +462,7 @@ DENG_HEADERS += \
     include/world/linesighttest.h \
     include/world/map.h \
     include/world/mapelement.h \
+    include/world/mapobject.h \
     include/world/maputil.h \
     include/world/p_intercept.h \
     include/world/p_object.h \
@@ -789,6 +791,7 @@ SOURCES += \
     src/world/linesighttest.cpp \
     src/world/map.cpp \
     src/world/mapelement.cpp \
+    src/world/mapobject.cpp \
     src/world/maputil.cpp \
     src/world/p_intercept.cpp \
     src/world/p_mobj.cpp \
