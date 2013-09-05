@@ -27,8 +27,8 @@
 #include "SignalAction"
 #include "ui/clientwindow.h"
 #include "con_main.h"
+#include "clientapp.h"
 
-#include <de/App>
 #include <de/DisplayMode>
 #include <QPoint>
 
@@ -189,7 +189,8 @@ VideoSettingsDialog::VideoSettingsDialog(String const &name)
 #endif
 
     buttons().items()
-            << new DialogButtonItem(DialogWidget::Action, tr("Reset to Defaults"))
+            << new DialogButtonItem(DialogWidget::Action, tr("Reset to Defaults"),
+                                    new SignalAction(this, SLOT(resetToDefaults())))
             << new DialogButtonItem(DialogWidget::Action, tr("Color Adjustments..."),
                                     new SignalAction(this, SLOT(showColorAdjustments())));
 
@@ -224,6 +225,13 @@ VideoSettingsDialog::VideoSettingsDialog(String const &name)
 #ifdef USE_COLOR_DEPTH_CHOICE
     connect(d->depths, SIGNAL(selectionChangedByUser(uint)), this, SLOT(changeColorDepth(uint)));
 #endif
+}
+
+void VideoSettingsDialog::resetToDefaults()
+{
+    ClientApp::windowSystem().settings().resetToDefaults();
+
+    d->fetch();
 }
 
 void VideoSettingsDialog::changeMode(uint selected)

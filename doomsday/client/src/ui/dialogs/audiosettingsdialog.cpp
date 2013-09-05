@@ -21,6 +21,7 @@
 #include "ui/widgets/cvartogglewidget.h"
 #include "ui/widgets/cvarchoicewidget.h"
 
+#include "clientapp.h"
 #include "de_audio.h"
 #include "con_main.h"
 #include "SignalAction"
@@ -119,14 +120,7 @@ AudioSettingsDialog::AudioSettingsDialog(String const &name)
 
 void AudioSettingsDialog::resetToDefaults()
 {
-    Con_SetInteger("sound-volume",        255  );
-    Con_SetInteger("music-volume",        255  );
-    Con_SetFloat  ("sound-reverb-volume", 0.5f );
-    Con_SetInteger("sound-info",          0    );
-    Con_SetInteger("sound-rate",          11025);
-    Con_SetInteger("sound-16bit",         0    );
-    Con_SetInteger("sound-3d",            0    );
-    Con_SetInteger("music-source",        MUSP_EXT);
+    ClientApp::audioSettings().resetToDefaults();
 
     d->fetch();
 }

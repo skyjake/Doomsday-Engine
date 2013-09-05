@@ -37,6 +37,7 @@
 #include "dd_main.h"
 #include "dd_def.h"
 #include "dd_loop.h"
+#include "de_audio.h"
 #include "con_main.h"
 #include "sys_system.h"
 #include "audio/s_main.h"
@@ -116,6 +117,7 @@ DENG2_PIMPL(ClientApp)
 {    
     QScopedPointer<Updater> updater;
     SettingsRegister rendererSettings;
+    SettingsRegister audioSettings;
     QMenuBar *menuBar;
     InputSystem *inputSys;
     QScopedPointer<WidgetActions> widgetActions;
@@ -181,7 +183,8 @@ DENG2_PIMPL(ClientApp)
 
     void initSettings()
     {
-        // Renderer settings.
+        /// @todo These belong in their respective subsystems.
+
         rendererSettings
                 .define(SettingsRegister::FloatCVar, "rend-camera-fov", 95.f)
                 .define(SettingsRegister::IntCVar,   "rend-model-mirror-hud", 0)
@@ -196,6 +199,16 @@ DENG2_PIMPL(ClientApp)
                 .define(SettingsRegister::IntCVar,   "rend-dev-sector-show-indices", 0)
                 .define(SettingsRegister::IntCVar,   "rend-dev-vertex-show-indices", 0)
                 .define(SettingsRegister::IntCVar,   "rend-dev-generator-show-indices", 0);
+
+        audioSettings
+                .define(SettingsRegister::IntCVar,   "sound-volume",        255)
+                .define(SettingsRegister::IntCVar,   "music-volume",        255)
+                .define(SettingsRegister::FloatCVar, "sound-reverb-volume", 0.5f)
+                .define(SettingsRegister::IntCVar,   "sound-info",          0)
+                .define(SettingsRegister::IntCVar,   "sound-rate",          11025)
+                .define(SettingsRegister::IntCVar,   "sound-16bit",         0)
+                .define(SettingsRegister::IntCVar,   "sound-3d",            0)
+                .define(SettingsRegister::IntCVar,   "music-source",        MUSP_EXT);
     }
 };
 
@@ -333,6 +346,11 @@ Updater &ClientApp::updater()
 SettingsRegister &ClientApp::rendererSettings()
 {
     return app().d->rendererSettings;
+}
+
+SettingsRegister &ClientApp::audioSettings()
+{
+    return app().d->audioSettings;
 }
 
 ServerLink &ClientApp::serverLink()
