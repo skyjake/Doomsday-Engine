@@ -19,34 +19,21 @@
 #ifndef DENG_CLIENT_POPUPWIDGET_H
 #define DENG_CLIENT_POPUPWIDGET_H
 
-#include "scrollareawidget.h"
+#include "panelwidget.h"
 #include "../uidefs.h"
 
 /**
- * Popup anchored to a specified point.
+ * Popup anchored to a specified point. Extends PanelWidget with positioning
+ * and an anchor graphic.
  *
  * Initially a popup widget is in a hidden state.
  */
-class PopupWidget : public GuiWidget
+class PopupWidget : public PanelWidget
 {
     Q_OBJECT
 
 public:
-    DENG2_DEFINE_AUDIENCE(Close, void popupBeingClosed(PopupWidget &))
-
-public:
     PopupWidget(de::String const &name = "");
-
-    /**
-     * Sets the content widget of the popup. If there is an earlier
-     * content widget, it will be destroyed.
-     *
-     * @param content  Content widget. PopupWidget takes ownership.
-     *                 @a content becomes a child of the popup.
-     */
-    void setContent(GuiWidget *content);
-
-    GuiWidget &content() const;
 
     void setAnchorAndOpeningDirection(de::RuleRectangle const &rule, ui::Direction dir);
 
@@ -59,18 +46,6 @@ public:
 
     de::Rule const &anchorX() const;
     de::Rule const &anchorY() const;
-
-    /**
-     * Sets the preferred opening direction of the popup. If there isn't enough
-     * room in the specified direction, the opposite direction is used instead.
-     *
-     * @param dir  Opening direction.
-     */
-    void setOpeningDirection(ui::Direction dir);
-
-    ui::Direction openingDirection() const;
-
-    bool isOpen() const;
 
     /**
      * Tells the popup to delete itself after being dismissed. The default is that
@@ -95,43 +70,13 @@ public:
     void useInfoStyle();
 
     // Events.
-    void viewResized();
-    void update();
-    void preDrawChildren();
-    void postDrawChildren();
     bool handleEvent(de::Event const &event);
 
-public slots:
-    /**
-     * Opens the popup, positioning it appropriately so that is anchored to the
-     * position specified with setAnchor().
-     */
-    void open();
-
-    /**
-     * Closes the popup. The widget is dismissed once the closing animation
-     * completes.
-     */
-    void close();
-
-    /**
-     * Immediately hides the popup.
-     */
-    void dismiss();
-
-signals:
-    void opened();
-    void closed();
-
 protected:
-    void glInit();
-    void glDeinit();
-    void drawContent();
     void glMakeGeometry(DefaultVertexBuf::Builder &verts);
 
-    virtual void preparePopupForOpening();
-    virtual void popupClosing();
-    virtual void popupDismissed();
+    virtual void preparePanelForOpening();
+    virtual void panelDismissed();
 
 private:
     DENG2_PRIVATE(d)

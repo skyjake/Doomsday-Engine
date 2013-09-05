@@ -210,8 +210,10 @@ void PopupMenuWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
     }
 }
 
-void PopupMenuWidget::preparePopupForOpening()
+void PopupMenuWidget::preparePanelForOpening()
 {
+    PopupWidget::preparePanelForOpening();
+
     // Redo the layout.
     menu().updateLayout();
     d->updateItemHitRules();
@@ -224,12 +226,12 @@ void PopupMenuWidget::preparePopupForOpening()
                                       anchorY() - menu().margins().top()));
     }
 
-    PopupWidget::preparePopupForOpening();
+    PopupWidget::preparePanelForOpening();
 }
 
-void PopupMenuWidget::popupClosing()
+void PopupMenuWidget::panelClosing()
 {
-    PopupWidget::popupClosing();
+    PopupWidget::panelClosing();
 
     if(d->hover)
     {

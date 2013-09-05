@@ -291,7 +291,8 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
      * depending on whether a game is loaded.
      */
     d->configMenu->menu().items()
-            << new ui::ActionItem(_E(b) + tr("Control Panel"), new CommandAction("panel")) // hidden with null-game
+            << new ui::ActionItem(_E(b) + tr("Control Panel"),
+                                  new CommandAction("panel")) // hidden with null-game
             << new ui::ActionItem(ui::Item::ShownAsButton, tr("Renderer"),
                                   new SignalAction(this, SLOT(showRendererSettings())))
             << new ui::Item(ui::Item::Separator)

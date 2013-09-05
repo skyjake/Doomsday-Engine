@@ -218,9 +218,9 @@ public ContextWidgetOrganizer::IWidgetFactory
         }
     }
 
-    void popupBeingClosed(PopupWidget &popup)
+    void panelBeingClosed(PanelWidget &popup)
     {
-        openPopups.remove(&popup);
+        openPopups.remove(&popup.as<PopupWidget>());
     }
 
     bool isVisibleItem(Widget const *child) const

@@ -526,9 +526,9 @@ void DialogWidget::prepare()
     PopupWidget::open();
 }
 
-void DialogWidget::preparePopupForOpening()
+void DialogWidget::preparePanelForOpening()
 {
-    PopupWidget::preparePopupForOpening();
+    PopupWidget::preparePanelForOpening();
 
     // Redo the layout (items visible now).
     d->buttons->updateLayout();

@@ -416,6 +416,7 @@ DENG_HEADERS += \
     include/ui/widgets/logwidget.h \
     include/ui/widgets/menuwidget.h \
     include/ui/widgets/notificationwidget.h \
+    include/ui/widgets/panelwidget.h \
     include/ui/widgets/popupmenuwidget.h \
     include/ui/widgets/popupwidget.h \
     include/ui/widgets/progresswidget.h \
@@ -743,6 +744,7 @@ SOURCES += \
     src/ui/widgets/logwidget.cpp \
     src/ui/widgets/menuwidget.cpp \
     src/ui/widgets/notificationwidget.cpp \
+    src/ui/widgets/panelwidget.cpp \
     src/ui/widgets/popupmenuwidget.cpp \
     src/ui/widgets/popupwidget.cpp \
     src/ui/widgets/progresswidget.cpp \

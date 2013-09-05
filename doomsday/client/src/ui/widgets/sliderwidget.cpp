@@ -51,14 +51,15 @@ public:
         return *_edit;
     }
 
-    void preparePopupForOpening()
+    void preparePanelForOpening()
     {
-        PopupWidget::preparePopupForOpening();
+        PopupWidget::preparePanelForOpening();
         root().setFocus(_edit);
     }
 
-    void popupClosing()
+    void panelClosing()
     {
+        PopupWidget::panelClosing();
         root().setFocus(0);
     }
 
