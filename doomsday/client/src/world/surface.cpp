@@ -22,6 +22,7 @@
 
 #include <de/Log>
 
+#include "de_platform.h"
 #include "de_defs.h" // Def_GetGenerator
 #include "Materials"
 
@@ -29,6 +30,12 @@
 #include "world/world.h" // ddMapSetup
 
 #include "render/r_main.h" // frameTimePos
+#ifdef __CLIENT__
+#  include "gl/gl_tex.h"
+#  include "gl/gl_texmanager.h"
+
+#  include "render/rend_main.h"
+#endif
 
 #include "world/surface.h"
 
@@ -494,6 +501,22 @@ void Surface::setBlendMode(blendmode_t newBlendMode)
 }
 
 #ifdef __CLIENT__
+float Surface::glow(Vector3f &color) const
+{
+    if(!d->material || !d->material->hasGlow())
+    {
+        color = Vector3f();
+        return 0;
+    }
+
+    MaterialSnapshot const &ms = d->material->prepare(Rend_MapSurfaceMaterialSpec());
+    averagecolor_analysis_t const *avgColorAmplified = reinterpret_cast<averagecolor_analysis_t const *>(ms.texture(MTU_PRIMARY).generalCase().analysisDataPointer(Texture::AverageColorAmplifiedAnalysis));
+    if(!avgColorAmplified) throw Error("Surface::glow", QString("Texture \"%1\" has no AverageColorAmplifiedAnalysis").arg(ms.texture(MTU_PRIMARY).generalCase().manifest().composeUri()));
+
+    color = Vector3f(avgColorAmplified->color.rgb);
+    return ms.glowStrength() * glowFactor; // Global scale factor.
+}
+
 Surface::DecorSource *Surface::newDecoration()
 {
     Surface::DecorSource *newSources =

@@ -428,6 +428,17 @@ public:
     void updateMaterialOriginTracking();
 
     /**
+     * Determine the glow properties of the surface, which, are derived from the
+     * bound material (averaged color).
+     *
+     * Return values:
+     * @param color  Amplified glow color is written here.
+     *
+     * @return  Glow strength/intensity or @c 0 if not presently glowing.
+     */
+    float glow(de::Vector3f &color) const;
+
+    /**
      * Create a new projected (light) decoration source for the surface.
      *
      * @return  Newly created decoration source.

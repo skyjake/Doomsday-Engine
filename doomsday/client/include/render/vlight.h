@@ -1,8 +1,7 @@
-/**
- * @file vlight.h Vector light
+/** @file vlight.h Vector light sources and source lists.
  *
- * @author Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @author Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -19,26 +18,28 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_RENDER_VLIGHT_H
-#define LIBDENG_RENDER_VLIGHT_H
+#ifndef DENG_CLIENT_RENDER_VECTORLIGHT_H
+#define DENG_CLIENT_RENDER_VECTORLIGHT_H
+
+#include <de/Vector>
+
+#include "world/map.h"
 
 class BspLeaf;
 
 /**
- * Vector light.
+ * Vector light source.
  * @ingroup render
  */
-typedef struct
+struct VectorLight
 {
-    float approxDist; // Only an approximation.
-    float vector[3]; // Light direction vector.
-    float color[3]; // How intense the light is (0..1, RGB).
+    float approxDist;          ///< Only an approximation.
+    de::Vector3f direction;    ///< Normalized vector from light origin to illumination point.
+    de::Vector3f color;        ///< How intense the light is (0..1, RGB).
     float offset;
-    float lightSide, darkSide; // Factors for world light.
-    boolean affectedByAmbient;
-} vlight_t;
-
-boolean R_DrawVLightVector(vlight_t const *light, void *context);
+    float lightSide, darkSide; ///< Factors for world light.
+    bool affectedByAmbient;
+};
 
 /**
  * Initialize the vlight system in preparation for rendering view(s) of the
@@ -50,26 +51,30 @@ void VL_InitForMap(de::Map &map);
  * Moves all used vlight nodes to the list of unused nodes, so they can be
  * reused.
  */
-void VL_InitForNewFrame(void);
+void VL_InitForNewFrame();
+
+struct collectaffectinglights_params_t
+{
+    de::Vector3d origin;
+    de::Vector3f ambientColor;
+    BspLeaf *bspLeaf;
+    bool starkLight; ///< World light has a more pronounced effect.
+};
+
+uint R_CollectAffectingLights(collectaffectinglights_params_t const *params);
 
 /**
  * Calls func for all vlights in the given list.
  *
- * @param listIdx  Identifier of the list to process.
- * @param data  Ptr to pass to the callback.
- * @param func  Callback to make for each object.
+ * @param listIdx   Unique identifier of the list to process.
+ * @param callback  Callback to make for each visited projection.
+ * @param context   Passed to the callback.
  *
- * @return  @c true, iff every callback returns @c true.
+ * @return  @c 0 iff iteration completed wholly.
  */
-boolean VL_ListIterator(uint listIdx, void *data, boolean (*func) (vlight_t const *, void *));
+int VL_ListIterator(uint listIdx, int (*callback) (VectorLight const *, void *),
+                    void *context = 0);
 
-typedef struct collectaffectinglights_params_s {
-    coord_t origin[3];
-    float ambientColor[3];
-    BspLeaf *bspLeaf;
-    boolean starkLight; ///< World light has a more pronounced effect.
-} collectaffectinglights_params_t;
+void Rend_DrawVectorLight(VectorLight const *vlight, float alpha);
 
-uint R_CollectAffectingLights(collectaffectinglights_params_t const *params);
-
-#endif /* LIBDENG_RENDER_VLIGHT_H */
+#endif // DENG_CLIENT_RENDER_VECTORLIGHT_H
