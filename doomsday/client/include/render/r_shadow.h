@@ -63,11 +63,14 @@ float R_ShadowAttenuationFactor(coord_t distance);
  * @param bottomRight    Bottom right coordinates of the surface being projected to.
  * @param tangentMatrix  Normalized tangent space matrix of the surface being projected to.
  *
- * @return  Projection list identifier if surface is lit else @c 0.
+ * Return values:
+ * @param listIdx        If projected to, the identifier of the resultant list
+ *                       (1-based) is written here. If a projection list already
+ *                       exists it will be reused.
  */
-uint R_ProjectShadowsToSurface(BspLeaf *bspLeaf, float blendFactor,
+void Rend_ProjectMobjShadows(BspLeaf *bspLeaf, float blendFactor,
     de::Vector3d const &topLeft, de::Vector3d const &bottomRight,
-    de::Matrix3f const &tangentMatrix);
+    de::Matrix3f const &tangentMatrix, uint &listIdx);
 
 /**
  * Iterate over projections in the identified shadow-projection list, making

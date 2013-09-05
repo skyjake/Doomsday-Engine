@@ -67,8 +67,9 @@ DENG_EXTERN_C int useBias;
 
 DENG_EXTERN_C int useDynLights;
 DENG_EXTERN_C float dynlightFactor, dynlightFogBright;
+DENG_EXTERN_C int rendMaxLumobjs;
 
-DENG_EXTERN_C int useWallGlow;
+DENG_EXTERN_C int useGlowOnWalls;
 DENG_EXTERN_C float glowFactor, glowHeightFactor;
 DENG_EXTERN_C int glowHeightMax;
 
@@ -82,6 +83,9 @@ DENG_EXTERN_C int useShinySurfaces;
 DENG_EXTERN_C float detailFactor, detailScale;
 
 DENG_EXTERN_C byte devRendSkyAlways;
+DENG_EXTERN_C byte rendInfoLums;
+DENG_EXTERN_C byte devDrawLums;
+
 DENG_EXTERN_C byte freezeRLs;
 
 void Rend_Register();
@@ -154,6 +158,25 @@ void Rend_DrawLightModMatrix();
  * Sector light color may be affected by the sky light color.
  */
 de::Vector3f const &Rend_SectorLightColor(Sector const &sector);
+
+/**
+ * Blend the given light value with the luminous object's color, applying any
+ * applicable global modifiers and returns the result.
+ *
+ * @param color  Source light color.
+ * @param light  Strength of the light on the illumination point.
+ *
+ * @return  Calculated result.
+ */
+de::Vector3f Rend_LuminousColor(de::Vector3f const &color, float light);
+
+/**
+ * Given an @a intensity determine the height of the plane glow, applying any
+ * applicable global modifiers.
+ *
+ * @return Calculated result.
+ */
+coord_t Rend_PlaneGlowHeight(float intensity);
 
 /**
  * Selects a Material for the given map @a surface considering the current map

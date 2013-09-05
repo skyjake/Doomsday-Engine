@@ -104,7 +104,7 @@ int useDynLights = true;
 float dynlightFactor = .5f;
 float dynlightFogBright = .15f;
 
-int useWallGlow = true;
+int useGlowOnWalls = true;
 float glowFactor = .5f;
 float glowHeightFactor = 3; // Glow height as a multiplier.
 int glowHeightMax = 100; // 100 is the default (0-1024).
@@ -159,6 +159,8 @@ byte rendLightWallAngleSmooth = true;
 float rendSkyLight = .2f; // Intensity factor.
 byte rendSkyLightAuto = true;
 
+int rendMaxLumobjs; ///< Max lumobjs per viewer, per frame. @c 0= no maximum.
+
 int extraLight; // Bumped light from gun blasts.
 float extraLightDelta;
 
@@ -181,9 +183,13 @@ byte devNoTexFix;
 
 byte devSectorIndices;  ///< @c 1= Draw map sector indicies.
 
+byte rendInfoLums;      ///< @c 1= Print lumobj debug info to the console.
+byte devDrawLums;       ///< @c 1= Draw lumobj origin debug display.
+
 static void Rend_DrawBoundingBoxes(Map &map);
 static void Rend_DrawSoundOrigins(Map &map);
 static void drawAllSurfaceTangentVectors(Map &map);
+static void drawLumobjs(Map &map);
 
 static void drawSectors(Map &map);
 static void drawVertexes(Map &map);
@@ -208,6 +214,22 @@ static void markLightGridForFullUpdate()
     }
 }
 
+static int unlinkMobjLumobjWorker(thinker_t *th, void *)
+{
+    Mobj_UnlinkLumobjs(reinterpret_cast<mobj_t *>(th));
+    return false; // Continue iteration.
+}
+
+static void unlinkMobjLumobjs()
+{
+    if(App_World().hasMap())
+    {
+        Map &map = App_World().map();
+        map.thinkers().iterate(reinterpret_cast<thinkfunc_t>(gx.MobjThinker), 0x1,
+                               unlinkMobjLumobjWorker);
+    }
+}
+
 void Rend_Register()
 {
     C_VAR_INT   ("rend-bias",                       &useBias,                       0, 0, 1);
@@ -216,14 +238,17 @@ void Rend_Register()
     C_VAR_FLOAT ("rend-glow",                       &glowFactor,                    0, 0, 2);
     C_VAR_INT   ("rend-glow-height",                &glowHeightMax,                 0, 0, 1024);
     C_VAR_FLOAT ("rend-glow-scale",                 &glowHeightFactor,              0, 0.1f, 10);
-    C_VAR_INT   ("rend-glow-wall",                  &useWallGlow,                   0, 0, 1);
+    C_VAR_INT   ("rend-glow-wall",                  &useGlowOnWalls,                0, 0, 1);
 
-    C_VAR_INT2  ("rend-light",                      &useDynLights,                  0, 0, 1, LO_UnlinkMobjLumobjs);
+    C_VAR_BYTE  ("rend-info-lums",                  &rendInfoLums,                  0, 0, 1);
+
+    C_VAR_INT2  ("rend-light",                      &useDynLights,                  0, 0, 1, unlinkMobjLumobjs);
     C_VAR_INT2  ("rend-light-ambient",              &ambientLight,                  0, 0, 255, Rend_UpdateLightModMatrix);
     C_VAR_FLOAT ("rend-light-attenuation",          &rendLightDistanceAttenuation,  CVF_NO_MAX, 0, 0);
     C_VAR_FLOAT ("rend-light-bright",               &dynlightFactor,                0, 0, 1);
     C_VAR_FLOAT2("rend-light-compression",          &lightRangeCompression,         0, -1, 1, Rend_UpdateLightModMatrix);
     C_VAR_FLOAT ("rend-light-fog-bright",           &dynlightFogBright,             0, 0, 1);
+    C_VAR_INT   ("rend-light-num",                  &rendMaxLumobjs,                CVF_NO_MAX, 0, 0);
     C_VAR_FLOAT2("rend-light-sky",                  &rendSkyLight,                  0, 0, 1, markLightGridForFullUpdate);
     C_VAR_BYTE2 ("rend-light-sky-auto",             &rendSkyLightAuto,              0, 0, 1, markLightGridForFullUpdate);
     C_VAR_FLOAT ("rend-light-wall-angle",           &rendLightWallAngle,            CVF_NO_MAX, 0, 0);
@@ -242,7 +267,8 @@ void Rend_Register()
     C_VAR_INT   ("rend-dev-sky",                    &devRendSkyMode,                CVF_NO_ARCHIVE, 0, 1);
     C_VAR_BYTE  ("rend-dev-sky-always",             &devRendSkyAlways,              CVF_NO_ARCHIVE, 0, 1);
     C_VAR_BYTE  ("rend-dev-freeze",                 &freezeRLs,                     CVF_NO_ARCHIVE, 0, 1);
-    C_VAR_INT   ("rend-dev-cull-leafs",             &devNoCulling,                  CVF_NO_ARCHIVE,0,1);
+    C_VAR_BYTE  ("rend-dev-lums",                   &devDrawLums,                   CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_INT   ("rend-dev-cull-leafs",             &devNoCulling,                  CVF_NO_ARCHIVE, 0, 1);
     C_VAR_INT   ("rend-dev-mobj-bbox",              &devMobjBBox,                   CVF_NO_ARCHIVE, 0, 1);
     C_VAR_BYTE  ("rend-dev-mobj-show-vlights",      &devMobjVLights,                CVF_NO_ARCHIVE, 0, 1);
     C_VAR_INT   ("rend-dev-polyobj-bbox",           &devPolyobjBBox,                CVF_NO_ARCHIVE, 0, 1);
@@ -257,7 +283,7 @@ void Rend_Register()
     C_VAR_BYTE  ("rend-dev-soundorigins",           &devSoundOrigins,               CVF_NO_ARCHIVE, 0, 7);
 
     RL_Register();
-    LO_Register();
+    Lumobj::consoleRegister();
     Rend_DecorRegister();
     BiasIllum::consoleRegister();
     BiasSurface::consoleRegister();
@@ -315,7 +341,11 @@ void Rend_Shutdown()
 /// World/map renderer reset.
 void Rend_Reset()
 {
-    LO_Clear(); // Free lumobj stuff.
+    R_ClearViewData();
+    if(App_World().hasMap())
+    {
+        App_World().map().removeAllLumobjs();
+    }
     if(dlBBox)
     {
         GL_DeleteLists(dlBBox, 1);
@@ -476,6 +506,22 @@ Vector3f const &Rend_SectorLightColor(Sector const &sector)
     return sector.lightColor();
 }
 
+Vector3f Rend_LuminousColor(Vector3f const &color, float light)
+{
+    light = de::clamp(0.f, light, 1.f) * dynlightFactor;
+
+    // In fog additive blending is used; the normal fog color is way too bright.
+    if(usingFog) light *= dynlightFogBright;
+
+    // Multiply light with (ambient) color.
+    return color * light;
+}
+
+coord_t Rend_PlaneGlowHeight(float intensity)
+{
+    return de::clamp<double>(0, GLOW_HEIGHT_MAX * intensity * glowHeightFactor, glowHeightMax);
+}
+
 Material *Rend_ChooseMapSurfaceMaterial(Surface const &surface)
 {
     switch(renderTextures)
@@ -630,13 +676,13 @@ void Rend_AddMaskedPoly(Vector3f const *rvertices, Vector4f const *rcolors,
          * The dynlights will have already been sorted so that the brightest
          * and largest of them is first in the list. So grab that one.
          */
-        LO_IterateProjections(lightListIdx, RIT_FirstDynlightIterator, (void *)&dyn);
+        Rend_IterateProjectionList(lightListIdx, RIT_FirstDynlightIterator, (void *)&dyn);
 
         VS_WALL(vis)->modTex = dyn->texture;
-        VS_WALL(vis)->modTexCoord[0][0] = dyn->s[0];
-        VS_WALL(vis)->modTexCoord[0][1] = dyn->t[0];
-        VS_WALL(vis)->modTexCoord[1][0] = dyn->s[1];
-        VS_WALL(vis)->modTexCoord[1][1] = dyn->t[1];
+        VS_WALL(vis)->modTexCoord[0][0] = dyn->topLeft.x;
+        VS_WALL(vis)->modTexCoord[0][1] = dyn->topLeft.y;
+        VS_WALL(vis)->modTexCoord[1][0] = dyn->bottomRight.x;
+        VS_WALL(vis)->modTexCoord[1][1] = dyn->bottomRight.y;
         for(int c = 0; c < 4; ++c)
         {
             VS_WALL(vis)->modColor[c] = dyn->color[c];
@@ -658,12 +704,12 @@ static void quadTexCoords(Vector2f *tc, Vector3f const *rverts,
     tc[0].y = tc[3].y + (rverts[3].z - rverts[2].z);
 }
 
-static void quadLightCoords(Vector2f *tc, float const s[2], float const t[2])
+static void quadLightCoords(Vector2f *tc, Vector2f const &topLeft, Vector2f const &bottomRight)
 {
-    tc[1].x = tc[0].x = s[0];
-    tc[1].y = tc[3].y = t[0];
-    tc[3].x = tc[2].x = s[1];
-    tc[2].y = tc[0].y = t[1];
+    tc[1].x = tc[0].x = topLeft.x;
+    tc[1].y = tc[3].y = topLeft.y;
+    tc[3].x = tc[2].x = bottomRight.x;
+    tc[2].y = tc[0].y = bottomRight.y;
 }
 
 static float shinyVertical(float dy, float dx)
@@ -809,7 +855,7 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
     Vector2f *modCoords      = 0;
 
     DGLuint modTex = 0;
-    float modTexSt[2][2] = {{ 0, 0 }, { 0, 0 }};
+    Vector2f modTexSt[2]; // [topLeft, bottomRight]
     Vector4f modColor;
 
     if(!skyMaskedMaterial)
@@ -837,15 +883,13 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
             if(useLights && RL_IsMTexLights())
             {
                 dynlight_t *dyn = 0;
-                LO_IterateProjections(p.lightListIdx, RIT_FirstDynlightIterator, (void *)&dyn);
+                Rend_IterateProjectionList(p.lightListIdx, RIT_FirstDynlightIterator, (void *)&dyn);
 
-                modTex         = dyn->texture;
-                modCoords      = R_AllocRendTexCoords(realNumVertices);
-                modColor       = dyn->color;
-                modTexSt[0][0] = dyn->s[0];
-                modTexSt[0][1] = dyn->s[1];
-                modTexSt[1][0] = dyn->t[0];
-                modTexSt[1][1] = dyn->t[1];
+                modTex      = dyn->texture;
+                modCoords   = R_AllocRendTexCoords(realNumVertices);
+                modColor    = dyn->color;
+                modTexSt[0] = dyn->topLeft;
+                modTexSt[1] = dyn->bottomRight;
             }
         }
     }
@@ -898,8 +942,8 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
                 float const width  = p.texBR->x - p.texTL->x;
                 float const height = p.texBR->y - p.texTL->y;
 
-                modCoords[i] = Vector2f(((p.texBR->x - vtx.x) / width  * modTexSt[0][0]) + (delta.x / width  * modTexSt[0][1]),
-                                        ((p.texBR->y - vtx.y) / height * modTexSt[1][0]) + (delta.y / height * modTexSt[1][1]));
+                modCoords[i] = Vector2f(((p.texBR->x - vtx.x) / width  * modTexSt[0].x) + (delta.x / width  * modTexSt[1].x),
+                                        ((p.texBR->y - vtx.y) / height * modTexSt[0].y) + (delta.y / height * modTexSt[1].y));
             }
         }
     }
@@ -1329,72 +1373,10 @@ static void wallSectionLightLevelDeltas(WallEdge const &leftEdge, WallEdge const
     }
 }
 
-/**
- * Project lights for the given map @a surface.
- *
- * @pre currentBspLeaf is set to the BSP leaf which "contains" the surface.
- *
- * @param surface          Map surface to project lights onto.
- * @param glowStrength     Surface glow strength (glow scale factor(s) are assumed to
- *                         have already been applied).
- * @param topLeft          Top left coordinates for the conceptual quad used for projection.
- * @param bottomRight      Bottom right coordinates for the conceptual quad used for projection.
- * @param sortProjections  @c true= instruct the projection algorithm to sort the resultant
- *                         projections by descending luminosity. Default = @c false.
- *
- * @return  Identifier for the resultant light projection list; otherwise @c 0.
- *
- * @see LO_ProjectToSurface()
- */
-static uint projectSurfaceLights(Surface &surface, float glowStrength,
-    Vector3d const &topLeft, Vector3d const &bottomRight, bool sortProjections = false)
-{
-    BspLeaf *leaf = currentBspLeaf;
-    DENG_ASSERT(!isNullLeaf(leaf));
-
-    // Is light projection disabled?
-    if(glowStrength >= 1) return 0;
-    if(!useDynLights && !useWallGlow) return 0;
-
-    return LO_ProjectToSurface(0 | (sortProjections? PLF_SORT_LUMINOSITY_DESC : 0), leaf,
-                               1, topLeft, bottomRight, surface.tangentMatrix());
-}
-
-/**
- * Project shadows for the given map @a surface.
- *
- * @pre currentBspLeaf is set to the BSP leaf which "contains" the surface.
- *
- * @param surface       Map surface to project shadows onto.
- * @param glowStrength  Surface glow strength (glow scale factor(s) are assumed to
- *                      have already been applied).
- * @param topLeft       Top left coordinates for the conceptual quad used for projection.
- * @param bottomRight   Bottom right coordinates for the conceptual quad used for projection.
- *
- * @return  Identifier for the resultant shadow projection list; otherwise @c 0.
- *
- * @see R_ProjectShadowsToSurface()
- */
-static uint projectSurfaceShadows(Surface &surface, float glowStrength,
-    Vector3d const &topLeft, Vector3d const &bottomRight)
-{
-    BspLeaf *leaf = currentBspLeaf;
-    DENG_ASSERT(!isNullLeaf(leaf));
-
-    // Is shadow projection disabled?
-    if(glowStrength >= 1) return 0;
-    if(!Rend_MobjShadowsEnabled()) return 0;
-
-    // Glow inversely diminishes shadow strength.
-    float const shadowStrength = 1 - glowStrength;
-
-    return R_ProjectShadowsToSurface(leaf, shadowStrength, topLeft, bottomRight,
-                                     surface.tangentMatrix());
-}
-
 static void writeWallSection(HEdge &hedge, int section,
     bool *retWroteOpaque = 0, coord_t *retBottomZ = 0, coord_t *retTopZ = 0)
 {
+    BspLeaf *leaf = currentBspLeaf;
     DENG_ASSERT(!isNullLeaf(currentBspLeaf));
     DENG_ASSERT(hedge.mapElement() != 0);
 
@@ -1510,19 +1492,45 @@ static void writeWallSection(HEdge &hedge, int section,
             side.chooseSurfaceTintColors(wallSpec.section, &parm.surfaceColor, &parm.wall.surfaceColor2);
         }
 
-        // Project dynamic Lights?
-        if(!wallSpec.flags.testFlag(WallSpec::NoDynLights) && !skyMasked)
+        if(!skyMasked && parm.glowing < 1)
         {
-            parm.lightListIdx =
-                projectSurfaceLights(surface, parm.glowing, texQuad[0], texQuad[1],
-                                     wallSpec.flags.testFlag(WallSpec::SortDynLights));
-        }
+            Vector3d const &topLeft     = texQuad[0];
+            Vector3d const &bottomRight = texQuad[1];
 
-        // Project dynamic shadows?
-        if(!wallSpec.flags.testFlag(WallSpec::NoDynShadows) && !skyMasked)
-        {
-            parm.shadowListIdx =
-                projectSurfaceShadows(surface, parm.glowing, texQuad[0], texQuad[1]);
+            // Project lights?
+            if(!wallSpec.flags.testFlag(WallSpec::NoDynLights))
+            {
+                bool const doSort = wallSpec.flags.testFlag(WallSpec::SortDynLights);
+                float const blendFactor = 1;
+
+                if(useDynLights)
+                {
+                    Rend_ProjectLumobjs(0 | (doSort? PLF_SORT_LUMINOSITY_DESC : 0),
+                                        leaf, blendFactor,
+                                        topLeft, bottomRight, surface.tangentMatrix(),
+                                        parm.lightListIdx);
+                }
+
+                if(useGlowOnWalls)
+                {
+                    Rend_ProjectPlaneGlows(0 | (doSort? PLF_SORT_LUMINOSITY_DESC : 0),
+                                           leaf, blendFactor,
+                                           topLeft, bottomRight, surface.tangentMatrix(),
+                                           parm.lightListIdx);
+                }
+            }
+
+            // Project dynamic shadows?
+            if(!wallSpec.flags.testFlag(WallSpec::NoDynShadows)
+               && Rend_MobjShadowsEnabled())
+            {
+                // Glow inversely diminishes shadow strength.
+                float const blendFactor = 1 - parm.glowing;
+
+                Rend_ProjectMobjShadows(leaf, blendFactor,
+                                        topLeft, bottomRight, surface.tangentMatrix(),
+                                        parm.shadowListIdx);
+            }
         }
 
         /*
@@ -1759,26 +1767,33 @@ static void writeLeafPlane(Plane &plane)
             parm.glowing *= glowFactor; // Global scale factor.
         }
 
-        // Dynamic lights?
-        if(parm.glowing < 1 && !(!useDynLights && !useWallGlow))
+        if(parm.glowing < 1)
         {
-            /// @ref projectLightFlags
-            int plFlags = (PLF_NO_PLANE | (plane.isSectorFloor()? PLF_TEX_FLOOR : PLF_TEX_CEILING));
+            Vector3d const &topLeft     = *parm.texTL;
+            Vector3d const &bottomRight = *parm.texBR;
 
-            parm.lightListIdx =
-                LO_ProjectToSurface(plFlags, leaf, 1, *parm.texTL, *parm.texBR,
-                                    surface.tangentMatrix());
-        }
+            // Dynamic lights?
+            if(useDynLights)
+            {
+                /// @ref projectLightFlags
+                float const blendFactor = 1;
 
-        // Mobj shadows?
-        if(plane.isSectorFloor() && parm.glowing < 1 && Rend_MobjShadowsEnabled())
-        {
-            // Glowing planes inversely diminish shadow strength.
-            float blendFactor = 1 - parm.glowing;
+                Rend_ProjectLumobjs(0 | (plane.isSectorFloor()? PLF_TEX_FLOOR : PLF_TEX_CEILING),
+                                    leaf, blendFactor,
+                                    topLeft, bottomRight, surface.tangentMatrix(),
+                                    parm.lightListIdx);
+            }
 
-            parm.shadowListIdx =
-                R_ProjectShadowsToSurface(leaf, blendFactor, *parm.texTL, *parm.texBR,
-                                          surface.tangentMatrix());
+            // Mobj shadows?
+            if(plane.isSectorFloor() && Rend_MobjShadowsEnabled())
+            {
+                // Glow inversely diminishes shadow strength.
+                float const blendFactor = 1 - parm.glowing;
+
+                Rend_ProjectMobjShadows(leaf, blendFactor, topLeft, bottomRight,
+                                        surface.tangentMatrix(),
+                                        parm.shadowListIdx);
+            }
         }
     }
 
@@ -2316,6 +2331,33 @@ static void occludeLeaf(bool frontFacing)
     } while((hedge = &hedge->next()) != base);
 }
 
+static void clipLeafLumobjs()
+{
+    BspLeaf *bspLeaf = currentBspLeaf;
+    DENG_ASSERT(!isNullLeaf(bspLeaf));
+
+    foreach(Lumobj *lum, bspLeaf->lumobjs())
+    {
+        R_ViewerClipLumobj(lum);
+    }
+}
+
+/**
+ * In the situation where a BSP leaf contains both lumobjs and a polyobj, lumobjs
+ * must be clipped more carefully. Here we check if the line of sight intersects any
+ * of the polyobj half-edges facing the viewer.
+ */
+static void clipLeafLumobjsBySight()
+{
+    BspLeaf *bspLeaf = currentBspLeaf;
+    DENG_ASSERT(!isNullLeaf(bspLeaf));
+
+    foreach(Lumobj *lum, bspLeaf->lumobjs())
+    {
+        R_ViewerClipLumobjBySight(lum, bspLeaf);
+    }
+}
+
 /// If not front facing this is no-op.
 static void clipFrontFacingWalls(HEdge *hedge)
 {
@@ -2432,7 +2474,7 @@ static void drawCurrentLeaf()
      */
 
     occludeLeaf(false /* back facing */);
-    LO_ClipInBspLeaf(*leaf);
+    clipLeafLumobjs();
     occludeLeaf(true /* front facing */);
 
     clipLeafFrontFacingWalls();
@@ -2440,7 +2482,7 @@ static void drawCurrentLeaf()
     if(leaf->polyobjCount())
     {
         // Polyobjs don't obstruct - clip lights with another algorithm.
-        LO_ClipInBspLeafBySight(*leaf);
+        clipLeafLumobjsBySight();
     }
 
     // Mark particle generators in the sector visible.
@@ -2552,7 +2594,7 @@ void Rend_RenderMap(Map &map)
         // Make vissprites of all the visible decorations.
         Rend_DecorProject();
 
-        LO_BeginFrame();
+        R_BeginFrame();
 
         // Clear particle generator visibilty info.
         Rend_ParticleInitForNewFrame();
@@ -2593,7 +2635,7 @@ void Rend_RenderMap(Map &map)
 
     // Draw various debugging displays:
     drawAllSurfaceTangentVectors(map);
-    LO_DrawLumobjs();             // Lumobjs.
+    drawLumobjs(map);
     Rend_DrawBoundingBoxes(map);  // Mobj bounding boxes.
     drawSectors(map);
     drawVertexes(map);
@@ -3351,6 +3393,63 @@ static void drawAllSurfaceTangentVectors(Map &map)
     }
 
     glEnable(GL_CULL_FACE);
+}
+
+static void drawLumobjs(Map &map)
+{
+    DENG_UNUSED(map);
+
+    static float const black[4] = { 0, 0, 0, 0 };
+
+    if(!devDrawLums) return;
+
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_CULL_FACE);
+
+    for(int i = 0; i < map.lumobjCount(); ++i)
+    {
+        Lumobj *lum = map.lumobj(i);
+
+        if(rendMaxLumobjs > 0 && R_ViewerLumobjIsHidden(i))
+            continue;
+
+        glMatrixMode(GL_MODELVIEW);
+        glPushMatrix();
+
+        glTranslated(lum->origin().x, lum->origin().z + lum->zOffset(), lum->origin().y);
+
+        glBegin(GL_LINES);
+        {
+            glColor4fv(black);
+            glVertex3f(-lum->radius(), 0, 0);
+            glColor4f(lum->color().x, lum->color().y, lum->color().z, 1);
+            glVertex3f(0, 0, 0);
+            glVertex3f(0, 0, 0);
+            glColor4fv(black);
+            glVertex3f(lum->radius(), 0, 0);
+
+            glVertex3f(0, -lum->radius(), 0);
+            glColor4f(lum->color().x, lum->color().y, lum->color().z, 1);
+            glVertex3f(0, 0, 0);
+            glVertex3f(0, 0, 0);
+            glColor4fv(black);
+            glVertex3f(0, lum->radius(), 0);
+
+            glVertex3f(0, 0, -lum->radius());
+            glColor4f(lum->color().x, lum->color().y, lum->color().z, 1);
+            glVertex3f(0, 0, 0);
+            glVertex3f(0, 0, 0);
+            glColor4fv(black);
+            glVertex3f(0, 0, lum->radius());
+        }
+        glEnd();
+
+        glMatrixMode(GL_MODELVIEW);
+        glPopMatrix();
+    }
+
+    glEnable(GL_CULL_FACE);
+    glEnable(GL_DEPTH_TEST);
 }
 
 static void drawSoundOrigin(Vector3d const &origin, char const *label, Vector3d const &eye)

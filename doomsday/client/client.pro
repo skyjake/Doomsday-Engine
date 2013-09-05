@@ -284,6 +284,7 @@ DENG_HEADERS += \
     include/render/lightgrid.h \
     include/render/lumobj.h \
     include/render/materialcontext.h \
+    include/render/projector.h \
     include/render/r_draw.h \
     include/render/r_main.h \
     include/render/r_shadow.h \
@@ -622,6 +623,7 @@ SOURCES += \
     src/render/huecirclevisual.cpp \
     src/render/lightgrid.cpp \
     src/render/lumobj.cpp \
+    src/render/projector.cpp \
     src/render/r_draw.cpp \
     src/render/r_fakeradio.cpp \
     src/render/r_main.cpp \

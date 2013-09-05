@@ -324,27 +324,23 @@ void R_InitShadowProjectionListsForNewFrame()
     }
 }
 
-uint R_ProjectShadowsToSurface(BspLeaf *bspLeaf, float blendFactor,
+void Rend_ProjectMobjShadows(BspLeaf *bspLeaf, float blendFactor,
     Vector3d const &topLeft, Vector3d const &bottomRight,
-    Matrix3f const &tangentMatrix)
+    Matrix3f const &tangentMatrix, uint &listIdx)
 {
     DENG_ASSERT(bspLeaf != 0);
 
-    // Early test of the external blend factor for quick rejection.
-    if(blendFactor < SHADOW_SURFACE_LUMINOSITY_ATTRIBUTION_MIN) return 0;
+    if(blendFactor < SHADOW_SURFACE_LUMINOSITY_ATTRIBUTION_MIN)
+        return;
 
-    projectshadowonsurfaceiteratorparams_t p;
+    projectshadowonsurfaceiteratorparams_t parm; zap(parm);
+    parm.listIdx                = listIdx;
+    parm.spParams.blendFactor   = blendFactor;
+    parm.spParams.v1            = topLeft;
+    parm.spParams.v2            = bottomRight;
+    parm.spParams.tangentMatrix = tangentMatrix;
 
-    p.listIdx = 0;
-    p.spParams.blendFactor   = blendFactor;
-    p.spParams.v1            = topLeft;
-    p.spParams.v2            = bottomRight;
-    p.spParams.tangentMatrix = tangentMatrix;
-
-    R_IterateBspLeafContacts(*bspLeaf, OT_MOBJ, RIT_ProjectShadowToSurfaceIterator, (void *)&p);
-
-    // Did we produce a projection list?
-    return p.listIdx;
+    R_IterateBspLeafContacts(*bspLeaf, OT_MOBJ, RIT_ProjectShadowToSurfaceIterator, &parm);
 }
 
 int R_IterateShadowProjections(uint listIdx, int (*callback) (shadowprojection_t const *, void *),
