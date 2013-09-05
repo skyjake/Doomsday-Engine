@@ -24,6 +24,11 @@
 #include <de/rect.h>
 #include "dd_share.h"
 
+#ifdef __CLIENT__
+class BspLeaf;
+class Lumobj;
+#endif
+
 typedef struct viewport_s {
     int console;
     RectRaw geometry;
@@ -84,6 +89,9 @@ DENG_EXTERN_C fontid_t fontFixed, fontVariable[FONTSTYLE_COUNT];
 DENG_EXTERN_C fixed_t  fineTangent[FINEANGLES / 2];
 
 DENG_EXTERN_C byte     texGammaLut[256];
+#ifdef __CLIENT__
+DENG_EXTERN_C boolean  loInited;
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -143,6 +151,36 @@ void R_UpdateViewer(int consoleNum);
 void R_ResetViewer(void);
 
 int R_NextViewer(void);
+
+#ifdef __CLIENT__
+
+void R_ClearViewData(void);
+
+/**
+ * To be called at the beginning of a render frame to perform necessary initialization.
+ */
+void R_BeginFrame(void);
+
+/// @return  Distance in map space units between the lumobj and viewer.
+double R_ViewerLumobjDistance(int idx);
+
+/// @return  @c true if the lumobj is clipped for the viewer.
+bool R_ViewerLumobjIsClipped(int idx);
+
+/// @return  @c true if the lumobj is hidden for the viewer.
+bool R_ViewerLumobjIsHidden(int idx);
+
+/**
+ * Clipping strategy:
+ *
+ * If culling world surfaces with the angle clipper and the viewer is not in the
+ * void; use the angle clipper. Otherwise, use the BSP-based LOS algorithm.
+ */
+void R_ViewerClipLumobj(Lumobj *lum);
+
+void R_ViewerClipLumobjBySight(Lumobj *lum, BspLeaf *bspLeaf);
+
+#endif // __CLIENT__
 
 /**
  * Update the sharp world data by rotating the stored values of plane

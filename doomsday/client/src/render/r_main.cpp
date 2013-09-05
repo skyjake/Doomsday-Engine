@@ -38,6 +38,7 @@
 #endif
 #include "gl/svg.h"
 
+#include "world/linesighttest.h"
 #include "world/p_players.h"
 #include "world/p_objlink.h"
 #include "world/thinkers.h"
@@ -93,6 +94,12 @@ static viewport_t viewportOfLocalPlayer[DDMAXPLAYERS];
 #ifdef __CLIENT__
 static int rendCameraSmooth = true; // Smoothed by default.
 static viewport_t *currentViewport;
+
+boolean loInited;
+
+static coord_t *luminousDist;
+static byte *luminousClipped;
+static uint *luminousOrder;
 #endif
 
 int psp3d;
@@ -1147,7 +1154,7 @@ DENG_EXTERN_C void R_RenderPlayerView(int num)
 
     if(rendInfoLums)
     {
-        Con_Printf("LumObjs: %-4i\n", LO_GetNumLuminous());
+        //Con_Printf("LumObjs: %-4i\n", LO_GetNumLuminous());
     }
 
     R_PrintRendPoolInfo();
@@ -1275,6 +1282,192 @@ void R_RenderViewPorts()
     // Restore things back to normal.
     displayPlayer = oldDisplay;
     R_UseViewPort(NULL);
+}
+
+void R_ClearViewData()
+{
+    M_Free(luminousDist); luminousDist = 0;
+    M_Free(luminousClipped); luminousClipped = 0;
+    M_Free(luminousOrder); luminousOrder = 0;
+}
+
+double R_ViewerLumobjDistance(int idx)
+{
+    /// @todo Do not assume the current map.
+    if(idx >= 0 && idx < App_World().map().lumobjCount())
+    {
+        return luminousDist[idx];
+    }
+    return 0;
+}
+
+bool R_ViewerLumobjIsClipped(int idx)
+{
+    /// @todo Do not assume the current map.
+    if(idx >= 0 && idx < App_World().map().lumobjCount())
+    {
+        return CPP_BOOL(luminousClipped[idx]);
+    }
+    return false;
+}
+
+bool R_ViewerLumobjIsHidden(int idx)
+{
+    /// @todo Do not assume the current map.
+    if(idx >= 0 && idx < App_World().map().lumobjCount())
+    {
+        return luminousClipped[idx] == 2;
+    }
+    return false;
+}
+
+/// Used to sort lumobjs by distance from viewpoint.
+static int lumobjSorter(void const *e1, void const *e2)
+{
+    coord_t a = luminousDist[*(uint const *) e1];
+    coord_t b = luminousDist[*(uint const *) e2];
+    if(a > b) return 1;
+    if(a < b) return -1;
+    return 0;
+}
+
+void R_BeginFrame()
+{
+    if(useDynLights || useLightDecorations)
+    {
+        /*
+         * Clear the projected dynlight lists. This is done here as
+         * the projections are sensitive to distance from the viewer
+         * (e.g. some may fade out when far away).
+         */
+        Rend_ProjectorReset();
+    }
+
+    Map &map = App_World().map();
+    int numLuminous = map.lumobjCount();
+    if(!(numLuminous > 0)) return;
+
+    // Resize the associated buffers used for per-frame stuff.
+    int maxLuminous = numLuminous;
+    luminousDist    = (coord_t *) M_Realloc(luminousDist,    sizeof(*luminousDist)    * maxLuminous);
+    luminousClipped =    (byte *) M_Realloc(luminousClipped, sizeof(*luminousClipped) * maxLuminous);
+    luminousOrder   =    (uint *) M_Realloc(luminousOrder,   sizeof(*luminousOrder)   * maxLuminous);
+
+    // Update viewer => lumobj distances ready for linking and sorting.
+    viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
+    foreach(Lumobj *lum, map.lumobjs())
+    {
+        // Approximate the distance in 3D.
+        Vector3d delta = lum->origin() - Vector3d(viewData->current.origin);
+        luminousDist[lum->indexInMap()] = M_ApproxDistance3(delta.x, delta.y, delta.z * 1.2 /*correct aspect*/);
+    }
+
+    if(rendMaxLumobjs > 0 && numLuminous > rendMaxLumobjs)
+    {
+        // Sort lumobjs by distance from the viewer. Then clip all lumobjs
+        // so that only the closest are visible (max loMaxLumobjs).
+
+        // Init the lumobj indices, sort array.
+        for(int i = 0; i < numLuminous; ++i)
+        {
+            luminousOrder[i] = i;
+        }
+        qsort(luminousOrder, numLuminous, sizeof(uint), lumobjSorter);
+
+        // Mark all as hidden.
+        std::memset(luminousClipped, 2, numLuminous * sizeof(*luminousClipped));
+
+        int n = 0;
+        for(int i = 0; i < numLuminous; ++i)
+        {
+            if(n++ > rendMaxLumobjs)
+                break;
+
+            // Unhide this lumobj.
+            luminousClipped[luminousOrder[i]] = 1;
+        }
+    }
+    else
+    {
+        // Mark all as clipped.
+        std::memset(luminousClipped, 1, numLuminous * sizeof(*luminousClipped));
+    }
+
+    // objLinks already contains links if there are any light decorations
+    // currently in use.
+    loInited = true;
+}
+
+void R_ViewerClipLumobj(Lumobj *lum)
+{
+    if(!lum) return;
+
+    // Has this already been occluded?
+    int lumIdx = lum->indexInMap();
+    if(luminousClipped[lumIdx] > 1)
+        return;
+
+    luminousClipped[lumIdx] = 0;
+
+    /// @todo Determine the exact centerpoint of the light in addLuminous!
+    Vector3d origin = lum->origin();
+    origin.z += lum->zOffset();
+
+    if(!(devNoCulling || P_IsInVoid(&ddPlayers[displayPlayer])))
+    {
+        if(!C_IsPointVisible(origin.x, origin.y, origin.z))
+        {
+            luminousClipped[lumIdx] = 1; // Won't have a halo.
+        }
+    }
+    else
+    {
+        luminousClipped[lumIdx] = 1;
+
+        Vector3d eye(vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
+
+        if(LineSightTest(eye, origin, -1, 1, LS_PASSLEFT | LS_PASSOVER | LS_PASSUNDER)
+                .trace(App_World().map().bspRoot()))
+        {
+            luminousClipped[lumIdx] = 0; // Will have a halo.
+        }
+    }
+}
+
+void R_ViewerClipLumobjBySight(Lumobj *lum, BspLeaf *bspLeaf)
+{
+    if(!lum || !bspLeaf) return;
+
+    // Already clipped?
+    int lumIdx = lum->indexInMap();
+    if(luminousClipped[lumIdx])
+        return;
+
+    // We need to figure out if any of the polyobj's segments lies
+    // between the viewpoint and the lumobj.
+    Vector3d eye(vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
+
+    foreach(Polyobj *po, bspLeaf->polyobjs())
+    foreach(HEdge *hedge, po->mesh().hedges())
+    {
+        // Is this on the back of a one-sided line?
+        if(!hedge->mapElement())
+            continue;
+
+        // Ignore half-edges facing the wrong way.
+        if(hedge->mapElement()->as<LineSideSegment>().isFrontFacing())
+        {
+            coord_t eyeV1[2]       = { eye.x, eye.y };
+            coord_t lumOriginV1[2] = { lum->origin().x, lum->origin().y };
+            coord_t fromV1[2]      = { hedge->origin().x, hedge->origin().y };
+            coord_t toV1[2]        = { hedge->twin().origin().x, hedge->twin().origin().y };
+            if(V2d_Intercept2(lumOriginV1, eyeV1, fromV1, toV1, 0, 0, 0))
+            {
+                luminousClipped[lumIdx] = 1;
+                break;
+            }
+        }
+    }
 }
 
 static int findSpriteOwner(thinker_t *th, void *context)
