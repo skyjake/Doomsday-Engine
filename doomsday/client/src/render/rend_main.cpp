@@ -323,6 +323,13 @@ void Rend_Reset()
     }
 }
 
+float Rend_FieldOfView()
+{
+    float widescreenCorrection = float(viewpw)/float(viewph) / (4.f / 3.f);
+    widescreenCorrection = (1 + 2 * widescreenCorrection) / 3;
+    return de::clamp(1.f, widescreenCorrection * fieldOfView, 179.f);
+}
+
 void Rend_ModelViewMatrix(bool useAngles)
 {
     viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
@@ -2559,7 +2566,7 @@ void Rend_RenderMap(Map &map)
         if(vpitch <= 90 - yfov / 2 && vpitch >= -90 + yfov / 2)
         {
             float a = de::abs(vpitch) / (90 - yfov / 2);
-            binangle_t startAngle = binangle_t(BANG_45 * fieldOfView / 90) * (1 + a);
+            binangle_t startAngle = binangle_t(BANG_45 * Rend_FieldOfView() / 90) * (1 + a);
             binangle_t angLen = BANG_180 - startAngle;
 
             binangle_t viewside = (viewData->current.angle >> (32 - BAMS_BITS)) + startAngle;

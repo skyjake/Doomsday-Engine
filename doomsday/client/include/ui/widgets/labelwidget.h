@@ -155,6 +155,9 @@ public:
 
     void contentLayout(ContentLayout &layout);
 
+public:
+    static LabelWidget *newWithText(de::String const &label, GuiWidget *parent = 0);
+
 protected:
     void glInit();
     void glDeinit();

@@ -119,6 +119,7 @@ DENG_CONVENIENCE_HEADERS += \
     include/BspNode \
     include/CommandAction \
     include/ContextWidgetOrganizer \
+    include/DialogContentStylist \
     include/EntityDatabase \
     include/Face \
     include/FontLineWrapping \
@@ -150,6 +151,7 @@ DENG_CONVENIENCE_HEADERS += \
     include/ProceduralImage \
     include/Sector \
     include/SequentialLayout \
+    include/SettingsRegister \
     include/SignalAction \
     include/SkyFixEdge \
     include/Surface \
@@ -164,6 +166,7 @@ DENG_CONVENIENCE_HEADERS += \
     include/ui/Item \
     include/ui/ListData \
     include/ui/Margins \
+    include/ui/Stylist \
     include/ui/SubmenuItem \
     include/ui/VariableToggleItem \
     include/Vertex \
@@ -340,6 +343,7 @@ DENG_HEADERS += \
     include/resource/wad.h \
     include/resource/zip.h \
     include/resourceclass.h \
+    include/settingsregister.h \
     include/sys_system.h \
     include/tab_anorms.h \
     include/ui/b_command.h \
@@ -357,6 +361,7 @@ DENG_HEADERS += \
     include/ui/dialogs/inputsettingsdialog.h \
     include/ui/dialogs/messagedialog.h \
     include/ui/dialogs/networksettingsdialog.h \
+    include/ui/dialogs/renderersettingsdialog.h \
     include/ui/dialogs/videosettingsdialog.h \
     include/ui/fi_main.h \
     include/ui/finaleinterpreter.h \
@@ -365,6 +370,7 @@ DENG_HEADERS += \
     include/ui/framework/commandaction.h \
     include/ui/framework/contextwidgetorganizer.h \
     include/ui/framework/data.h \
+    include/ui/framework/dialogcontentstylist.h \
     include/ui/framework/fontlinewrapping.h \
     include/ui/framework/gltextcomposer.h \
     include/ui/framework/gridlayout.h \
@@ -377,6 +383,7 @@ DENG_HEADERS += \
     include/ui/framework/proceduralimage.h \
     include/ui/framework/sequentiallayout.h \
     include/ui/framework/signalaction.h \
+    include/ui/framework/stylist.h \
     include/ui/framework/submenuitem.h \
     include/ui/framework/textdrawable.h \
     include/ui/framework/variabletoggleitem.h \
@@ -411,6 +418,7 @@ DENG_HEADERS += \
     include/ui/widgets/logwidget.h \
     include/ui/widgets/menuwidget.h \
     include/ui/widgets/notificationwidget.h \
+    include/ui/widgets/panelwidget.h \
     include/ui/widgets/popupmenuwidget.h \
     include/ui/widgets/popupwidget.h \
     include/ui/widgets/progresswidget.h \
@@ -674,6 +682,7 @@ SOURCES += \
     src/resource/tga.cpp \
     src/resource/wad.cpp \
     src/resource/zip.cpp \
+    src/settingsregister.cpp \
     src/sys_system.cpp \
     src/tab_tables.c \
     src/ui/b_command.cpp \
@@ -696,6 +705,7 @@ SOURCES += \
     src/ui/framework/commandaction.cpp \
     src/ui/framework/contextwidgetorganizer.cpp \
     src/ui/framework/data.cpp \
+    src/ui/framework/dialogcontentstylist.cpp \
     src/ui/framework/fontlinewrapping.cpp \
     src/ui/framework/gltextcomposer.cpp \
     src/ui/framework/gridlayout.cpp \
@@ -737,9 +747,11 @@ SOURCES += \
     src/ui/widgets/logwidget.cpp \
     src/ui/widgets/menuwidget.cpp \
     src/ui/widgets/notificationwidget.cpp \
+    src/ui/widgets/panelwidget.cpp \
     src/ui/widgets/popupmenuwidget.cpp \
     src/ui/widgets/popupwidget.cpp \
     src/ui/widgets/progresswidget.cpp \
+    src/ui/dialogs/renderersettingsdialog.cpp \
     src/ui/widgets/scrollareawidget.cpp \
     src/ui/widgets/sliderwidget.cpp \
     src/ui/widgets/taskbarwidget.cpp \

@@ -588,7 +588,7 @@ void GL_ProjectionMatrix()
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(yfov = fieldOfView / aspect, aspect, glNearClip, glFarClip);
+    gluPerspective(yfov = Rend_FieldOfView() / aspect, aspect, glNearClip, glFarClip);
 
     // We'd like to have a left-handed coordinate system.
     glScalef(1, 1, -1);

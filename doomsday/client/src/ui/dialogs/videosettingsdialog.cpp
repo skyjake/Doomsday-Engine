@@ -27,8 +27,8 @@
 #include "SignalAction"
 #include "ui/clientwindow.h"
 #include "con_main.h"
+#include "clientapp.h"
 
-#include <de/App>
 #include <de/DisplayMode>
 #include <QPoint>
 
@@ -84,22 +84,23 @@ DENG2_OBSERVES(PersistentCanvasWindow, AttributeChange)
         fullscreen->setActive(win.isFullScreen());
         maximized->setActive(win.isMaximized());
         centered->setActive(win.isCentered());
+
         fsaa->updateFromCVar();
         vsync->updateFromCVar();
 
         // Select the current resolution/size in the mode list.
         Canvas::Size current;
-        if(win.isFullScreen())
+        //if(win.isFullScreen())
         {
             current = win.fullscreenSize();
         }
+        /*
         else
         {
             current = win.windowRect().size();
-        }
+        }*/
 
-        // Update selected display mode. We'll find the closest one
-        // because the current canvas size may be anything.
+        // Update selected display mode.
         ui::Data::Pos closest = ui::Data::InvalidPos;
         int delta;
         for(ui::Data::Pos i = 0; i < modes->items().size(); ++i)
@@ -150,7 +151,7 @@ VideoSettingsDialog::VideoSettingsDialog(String const &name)
     d->vsync->setText(tr("VSync"));
 
     LabelWidget *modeLabel = new LabelWidget;
-    modeLabel->setText(tr("Mode:"));
+    modeLabel->setText(tr("Fullscreen Mode:"));
     area().add(modeLabel);
 
     // Choice of display modes + 16/32-bit color depth.
@@ -189,9 +190,9 @@ VideoSettingsDialog::VideoSettingsDialog(String const &name)
 #endif
 
     buttons().items()
-            << new DialogButtonItem(DialogWidget::Action, tr("Reset to Defaults"))
-            << new DialogButtonItem(DialogWidget::Action, tr("Color Adjustments..."),
-                                    new SignalAction(this, SLOT(showColorAdjustments())));
+            << new DialogButtonItem(DialogWidget::Accept | DialogWidget::Default, tr("Close"))
+            << new DialogButtonItem(DialogWidget::Action, tr("Reset to Defaults"),
+                                    new SignalAction(this, SLOT(resetToDefaults())));
 
     // Layout all widgets.
     Rule const &gap = style().rules().rule("dialog.gap");
@@ -199,7 +200,7 @@ VideoSettingsDialog::VideoSettingsDialog(String const &name)
     GridLayout layout(area().contentRule().left(),
                       area().contentRule().top(), GridLayout::RowFirst);
     layout.setGridSize(2, 3);
-    layout.setColumnPadding(style().rules().rule("dialog.gap"));
+    layout.setColumnPadding(style().rules().rule("unit"));
     layout << *d->showFps
            << *d->fsaa
            << *d->vsync
@@ -207,12 +208,20 @@ VideoSettingsDialog::VideoSettingsDialog(String const &name)
            << *d->maximized
            << *d->centered;
 
-    SequentialLayout modeLayout(d->vsync->rule().left(), d->vsync->rule().bottom() + gap, ui::Right);
+    GridLayout modeLayout(d->vsync->rule().left(), d->vsync->rule().bottom() + gap);
+    modeLayout.setGridSize(2, 0);
+    modeLayout.setColumnAlignment(0, ui::AlignRight);
     modeLayout << *modeLabel << *d->modes;
-
 #ifdef USE_COLOR_DEPTH_CHOICE
     modeLayout << *colorLabel << *d->depths;
 #endif
+
+    ButtonWidget *adjustButton = new ButtonWidget;
+    adjustButton->setText(tr("Color Adjustments..."));
+    adjustButton->setAction(new SignalAction(this, SLOT(showColorAdjustments())));
+    area().add(adjustButton);
+
+    modeLayout << Const(0) << *adjustButton;
 
     area().setContentSize(OperatorRule::maximum(layout.width(), modeLayout.width()),
                           layout.height() + gap + modeLayout.height());
@@ -226,10 +235,24 @@ VideoSettingsDialog::VideoSettingsDialog(String const &name)
 #endif
 }
 
+void VideoSettingsDialog::resetToDefaults()
+{
+    ClientApp::windowSystem().settings().resetToDefaults();
+
+    d->fetch();
+}
+
 void VideoSettingsDialog::changeMode(uint selected)
 {
-    QPoint res = d->modes->items().at(selected).data().toPoint();
-    Con_Executef(CMDS_DDAY, true, "setres %i %i", int(res.x()), int(res.y()));
+    QPoint const res = d->modes->items().at(selected).data().toPoint();
+
+    int attribs[] = {
+        ClientWindow::FullscreenWidth,  int(res.x()),
+        ClientWindow::FullscreenHeight, int(res.y()),
+        ClientWindow::End
+    };
+
+    d->win.changeAttributes(attribs);
 }
 
 void VideoSettingsDialog::changeColorDepth(uint selected)
@@ -245,5 +268,5 @@ void VideoSettingsDialog::changeColorDepth(uint selected)
 void VideoSettingsDialog::showColorAdjustments()
 {
     d->win.showColorAdjustments();
-    d->win.taskBar().closeMainMenu();
+    d->win.taskBar().closeConfigMenu();
 }

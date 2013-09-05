@@ -25,6 +25,7 @@
 
 #include <de/System>
 #include <de/String>
+#include "SettingsRegister"
 
 class ClientWindow;
 class Style;
@@ -45,6 +46,8 @@ public:
 
 public:
     WindowSystem();
+
+    SettingsRegister &settings();
 
     /**
      * Constructs a new window using the default configuration. Note that the

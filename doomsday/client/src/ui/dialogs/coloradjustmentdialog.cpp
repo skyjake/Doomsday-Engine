@@ -35,20 +35,12 @@ DENG_GUI_PIMPL(ColorAdjustmentDialog)
     {
         ScrollAreaWidget &area = self.area();
 
-        LabelWidget *gammaLabel = new LabelWidget;
-        gammaLabel->setText(tr("Gamma:"));
+        LabelWidget *gammaLabel      = LabelWidget::newWithText(tr("Gamma:"), &area);
+        LabelWidget *contrastLabel   = LabelWidget::newWithText(tr("Contrast:"), &area);
+        LabelWidget *brightnessLabel = LabelWidget::newWithText(tr("Brightness:"), &area);
 
-        LabelWidget *contrastLabel = new LabelWidget;
-        contrastLabel->setText(tr("Contrast:"));
-
-        LabelWidget *brightnessLabel = new LabelWidget;
-        brightnessLabel->setText(tr("Brightness:"));
-
-        area.add(gammaLabel);
         area.add(gamma = new CVarSliderWidget("vid-gamma"));
-        area.add(contrastLabel);
         area.add(contrast = new CVarSliderWidget("vid-contrast"));
-        area.add(brightnessLabel);
         area.add(brightness = new CVarSliderWidget("vid-bright"));
 
         Rule const &sliderWidth = style().rules().rule("coloradjustment.slider");

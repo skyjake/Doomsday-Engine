@@ -1,4 +1,4 @@
-/** @file inputsystem.h  Input subsystem.
+/** @file renderersettingsdialog.h  Settings for the renderer.
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -13,32 +13,37 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details. You should have received a copy of the GNU
  * General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
-#ifndef CLIENT_INPUTSYSTEM_H
-#define CLIENT_INPUTSYSTEM_H
+#ifndef DENG_CLIENT_RENDERERSETTINGSDIALOG_H
+#define DENG_CLIENT_RENDERERSETTINGSDIALOG_H
 
-#include <de/System>
-#include "SettingsRegister"
+#include "ui/widgets/dialogwidget.h"
 
 /**
- * Input devices and events. @ingroup ui
- *
- * @todo Input drivers belong in this system.
+ * Dialog for modifying input settings.
  */
-class InputSystem : public de::System
+class RendererSettingsDialog : public DialogWidget
 {
+    Q_OBJECT
+
 public:
-    InputSystem();
+    RendererSettingsDialog(de::String const &name = "renderersettings");
 
-    SettingsRegister &settings();
+public slots:
+    void resetToDefaults();
 
-    // System.
-    void timeChanged(de::Clock const &);
+protected slots:
+    void showAppearanceMenu();
+    void showDeveloperPopup();
+    void editProfile();
+    void renameProfile();
+    void duplicateProfile();
+    void deleteProfile();
 
 private:
     DENG2_PRIVATE(d)
 };
 
-#endif // CLIENT_INPUTSYSTEM_H
+#endif // DENG_CLIENT_RENDERERSETTINGSDIALOG_H

@@ -349,7 +349,7 @@ boolean Demo_BeginPlayback(const char* fileName)
     lookdirDelta = 0;
     demoFrameZ = 1;
     demoZ = 0;
-    startFOV = fieldOfView;
+    startFOV = 95; //Rend_FieldOfView();
     demoStartTic = DEMOTIC;
     memset(posDelta, 0, sizeof(posDelta));
     // Start counting frames from here.
@@ -375,7 +375,7 @@ void Demo_StopPlayback(void)
     playback = false;
     lzClose(playdemo);
     playdemo = 0;
-    fieldOfView = startFOV;
+    //fieldOfView = startFOV;
     Net_StopGame();
 
     /*
@@ -455,7 +455,7 @@ void Demo_WriteLocalCamera(int plrNum)
     mobj_t* mo = ddpl->mo;
     fixed_t x, y, z;
     byte flags;
-    boolean incfov = (writeInfo[plrNum].fov != fieldOfView);
+    boolean incfov = false; //(writeInfo[plrNum].fov != fieldOfView);
     const viewdata_t* viewData = R_ViewData(plrNum);
 
     if(!mo)
@@ -487,11 +487,11 @@ void Demo_WriteLocalCamera(int plrNum)
     Writer_WriteInt16(msgWriter, mo->angle /*ddpl->clAngle*/ >> 16); /* $unifiedangles */
     Writer_WriteInt16(msgWriter, ddpl->lookDir / 110 * DDMAXSHORT /* $unifiedangles */);
     // Field of view is optional.
-    if(incfov)
+    /*if(incfov)
     {
         Writer_WriteInt16(msgWriter, fieldOfView / 180 * DDMAXSHORT);
         writeInfo[plrNum].fov = fieldOfView;
-    }
+    }*/
     Msg_End();
     Net_SendBuffer(plrNum, SPF_DONT_SEND);
 }
@@ -544,8 +544,10 @@ void Demo_ReadLocalCamera(void)
     dlook = Reader_ReadInt16(msgReader) * 110.0f / DDMAXSHORT;
 
     // FOV included?
+    /*
     if(flags & LCAMF_FOV)
         fieldOfView = Reader_ReadInt16(msgReader) * 180.0f / DDMAXSHORT;
+    */
 
     if(intertics == 1 || demoFrameZ == 1)
     {

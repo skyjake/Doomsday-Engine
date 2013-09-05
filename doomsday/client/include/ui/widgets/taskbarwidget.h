@@ -61,6 +61,7 @@ public slots:
     void unloadGame();
     void showAbout();
     void showUpdaterSettings();
+    void showRendererSettings();
     void showVideoSettings();
     void showAudioSettings();
     void showInputSettings();

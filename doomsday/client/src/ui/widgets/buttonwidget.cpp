@@ -79,6 +79,11 @@ DENG2_OBSERVES(Action, Triggered)
     void updateHover(Vector2i const &pos)
     {
         if(state == Down) return;
+        if(self.isDisabled())
+        {
+            setState(Up);
+            return;
+        }
 
         if(self.hitTest(pos))
         {

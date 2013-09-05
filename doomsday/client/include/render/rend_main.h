@@ -42,7 +42,7 @@ class Map;
 #define SHADOW_SURFACE_LUMINOSITY_ATTRIBUTION_MIN (.05f)
 
 DENG_EXTERN_C coord_t vOrigin[3];
-DENG_EXTERN_C float vang, vpitch, fieldOfView, yfov;
+DENG_EXTERN_C float vang, vpitch, yfov;
 DENG_EXTERN_C float viewsidex, viewsidey;
 DENG_EXTERN_C float fogColor[4];
 
@@ -90,6 +90,8 @@ void Rend_Init();
 void Rend_Shutdown();
 void Rend_Reset();
 void Rend_RenderMap(de::Map &map);
+
+float Rend_FieldOfView();
 
 /**
  * @param useAngles  @c true= Apply viewer angle rotation.

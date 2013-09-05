@@ -1,4 +1,4 @@
-/** @file inputsystem.h  Input subsystem.
+/** @file stylist.h  Widget stylist.
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -13,32 +13,27 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details. You should have received a copy of the GNU
  * General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
-#ifndef CLIENT_INPUTSYSTEM_H
-#define CLIENT_INPUTSYSTEM_H
+#ifndef DENG_CLIENT_UI_STYLIST_H
+#define DENG_CLIENT_UI_STYLIST_H
 
-#include <de/System>
-#include "SettingsRegister"
+class GuiWidget;
+
+namespace ui {
 
 /**
- * Input devices and events. @ingroup ui
- *
- * @todo Input drivers belong in this system.
+ * Widget stylist.
  */
-class InputSystem : public de::System
+class Stylist
 {
 public:
-    InputSystem();
+    virtual ~Stylist() {}
 
-    SettingsRegister &settings();
-
-    // System.
-    void timeChanged(de::Clock const &);
-
-private:
-    DENG2_PRIVATE(d)
+    virtual void applyStyle(GuiWidget &widget) = 0;
 };
 
-#endif // CLIENT_INPUTSYSTEM_H
+} // namespace ui
+
+#endif // DENG_CLIENT_UI_STYLIST_H

@@ -37,6 +37,7 @@
 #include "dd_main.h"
 #include "dd_def.h"
 #include "dd_loop.h"
+#include "de_audio.h"
 #include "con_main.h"
 #include "sys_system.h"
 #include "audio/s_main.h"
@@ -67,7 +68,7 @@ static void continueInitWithEventLoopRunning()
     // as the canvas is visible and ready for initialization.
     WindowSystem::main().show();
 
-    ClientApp::app().updater().setupUI();
+    ClientApp::updater().setupUI();
 }
 
 Value *Binding_App_GamePlugin(Context &, Function::ArgumentValues const &)
@@ -113,8 +114,10 @@ Value *Binding_App_LoadFont(Context &, Function::ArgumentValues const &args)
 }
 
 DENG2_PIMPL(ClientApp)
-{
+{    
     QScopedPointer<Updater> updater;
+    SettingsRegister rendererSettings;
+    SettingsRegister audioSettings;
     QMenuBar *menuBar;
     InputSystem *inputSys;
     QScopedPointer<WidgetActions> widgetActions;
@@ -177,6 +180,36 @@ DENG2_PIMPL(ClientApp)
         checkForUpdates->setMenuRole(QAction::ApplicationSpecificRole);
 #endif
     }
+
+    void initSettings()
+    {
+        /// @todo These belong in their respective subsystems.
+
+        rendererSettings
+                .define(SettingsRegister::FloatCVar, "rend-camera-fov", 95.f)
+                .define(SettingsRegister::IntCVar,   "rend-model-mirror-hud", 0)
+                .define(SettingsRegister::IntCVar,   "rend-tex", 1)
+                .define(SettingsRegister::IntCVar,   "rend-light-multitex", 1)
+                .define(SettingsRegister::IntCVar,   "rend-model-shiny-multitex", 1)
+                .define(SettingsRegister::IntCVar,   "rend-tex-detail-multitex", 1)
+                .define(SettingsRegister::IntCVar,   "rend-dev-wireframe", 0)
+                .define(SettingsRegister::IntCVar,   "rend-dev-thinker-ids", 0)
+                .define(SettingsRegister::IntCVar,   "rend-dev-mobj-bbox", 0)
+                .define(SettingsRegister::IntCVar,   "rend-dev-polyobj-bbox", 0)
+                .define(SettingsRegister::IntCVar,   "rend-dev-sector-show-indices", 0)
+                .define(SettingsRegister::IntCVar,   "rend-dev-vertex-show-indices", 0)
+                .define(SettingsRegister::IntCVar,   "rend-dev-generator-show-indices", 0);
+
+        audioSettings
+                .define(SettingsRegister::IntCVar,   "sound-volume",        255)
+                .define(SettingsRegister::IntCVar,   "music-volume",        255)
+                .define(SettingsRegister::FloatCVar, "sound-reverb-volume", 0.5f)
+                .define(SettingsRegister::IntCVar,   "sound-info",          0)
+                .define(SettingsRegister::IntCVar,   "sound-rate",          11025)
+                .define(SettingsRegister::IntCVar,   "sound-16bit",         0)
+                .define(SettingsRegister::IntCVar,   "sound-3d",            0)
+                .define(SettingsRegister::IntCVar,   "music-source",        MUSP_EXT);
+    }
 };
 
 ClientApp::ClientApp(int &argc, char **argv)
@@ -214,7 +247,9 @@ void ClientApp::initialize()
     // subsystems and Config.
     DisplayMode_Init();
 
-    initSubsystems();
+    initSubsystems(); // loads Config
+
+    d->initSettings();
 
     // Initialize.
 #if WIN32
@@ -306,6 +341,16 @@ Updater &ClientApp::updater()
 {
     DENG2_ASSERT(!app().d->updater.isNull());
     return *app().d->updater;
+}
+
+SettingsRegister &ClientApp::rendererSettings()
+{
+    return app().d->rendererSettings;
+}
+
+SettingsRegister &ClientApp::audioSettings()
+{
+    return app().d->audioSettings;
 }
 
 ServerLink &ClientApp::serverLink()

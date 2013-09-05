@@ -21,9 +21,9 @@
 #include "ui/widgets/cvartogglewidget.h"
 #include "ui/widgets/variabletogglewidget.h"
 
+#include "clientapp.h"
 #include "con_main.h"
 #include "SignalAction"
-#include <de/App>
 
 using namespace de;
 using namespace ui;
@@ -96,13 +96,8 @@ InputSettingsDialog::InputSettingsDialog(String const &name)
 
     d->syncMouse->setText(tr("Uniform Mouse Axis Sensitivity"));
 
-    LabelWidget *mouseXLabel = new LabelWidget;
-    mouseXLabel->setText(_E(b) + tr("Mouse X"));
-    area().add(mouseXLabel);
-
-    LabelWidget *mouseYLabel = new LabelWidget;
-    mouseYLabel->setText(_E(b) + tr("Mouse Y"));
-    area().add(mouseYLabel);
+    LabelWidget *mouseXLabel = LabelWidget::newWithText(_E(1) + tr("Mouse X"), &area());
+    LabelWidget *mouseYLabel = LabelWidget::newWithText(_E(1) + tr("Mouse Y"), &area());
 
     mouseXLabel->margins().setTop(style().rules().rule("gap"));
     mouseYLabel->margins().setTop(style().rules().rule("gap"));
@@ -152,11 +147,7 @@ InputSettingsDialog::InputSettingsDialog(String const &name)
 
 void InputSettingsDialog::resetToDefaults()
 {
-    Con_SetFloat  ("input-mouse-x-scale", .001f);
-    Con_SetFloat  ("input-mouse-y-scale", .001f);
-    Con_SetInteger("input-mouse-x-flags", 0    );
-    Con_SetInteger("input-mouse-y-flags", 0    );
-    Con_SetInteger("input-joy",           1    );
+    ClientApp::inputSystem().settings().resetToDefaults();
 
     d->fetch();
 }

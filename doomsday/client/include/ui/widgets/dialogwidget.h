@@ -160,7 +160,7 @@ signals:
     void rejected(int result);
 
 protected:
-    void preparePopupForOpening();
+    void preparePanelForOpening();
 
     /**
      * Derived classes can override this to do additional tasks before

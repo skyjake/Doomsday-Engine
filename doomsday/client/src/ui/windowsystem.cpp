@@ -28,6 +28,8 @@ using namespace de;
 
 DENG2_PIMPL(WindowSystem)
 {
+    SettingsRegister settings;
+
     typedef QMap<String, ClientWindow *> Windows;
     Windows windows;
     Style style;
@@ -38,6 +40,10 @@ DENG2_PIMPL(WindowSystem)
 
     Instance(Public *i) : Base(i), mouseMoved(false)
     {
+        settings.define(SettingsRegister::ConfigVariable, "window.main.showFps")
+                .define(SettingsRegister::IntCVar,        "vid-fsaa", 1)
+                .define(SettingsRegister::IntCVar,        "vid-vsync", 1);
+
         style.load(App::fileSystem().find("defaultstyle.pack").path());
     }
 
@@ -65,6 +71,11 @@ WindowSystem::WindowSystem()
     : System(ObservesTime | ReceivesInputEvents), d(new Instance(this))
 {
     ClientWindow::setDefaultGLFormat();
+}
+
+SettingsRegister &WindowSystem::settings()
+{
+    return d->settings;
 }
 
 ClientWindow *WindowSystem::createWindow(String const &id)

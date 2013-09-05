@@ -1024,8 +1024,8 @@ void R_SetupPlayerSprites()
             spr->data.model.pitchAngleOffset =
                 (32 - psp->pos[VY]) * weaponOffsetScale * weaponOffsetScaleY / 1000.0f;
             // Is the FOV shift in effect?
-            if(weaponFOVShift > 0 && fieldOfView > 90)
-                spr->data.model.pitchAngleOffset -= weaponFOVShift * (fieldOfView - 90) / 90;
+            if(weaponFOVShift > 0 && Rend_FieldOfView() > 90)
+                spr->data.model.pitchAngleOffset -= weaponFOVShift * (Rend_FieldOfView() - 90) / 90;
             // Real rotation angles.
             spr->data.model.yaw =
                 viewData->current.angle / (float) ANGLE_MAX *-360 + spr->data.model.yawAngleOffset + 90;
@@ -1130,7 +1130,7 @@ DENG_EXTERN_C void R_RenderPlayerView(int num)
         GL_DrawFilter();
     }
 
-    Vignette_Render(&vd->window, fieldOfView);
+    Vignette_Render(&vd->window, Rend_FieldOfView());
 
     // Now we can show the viewPlayer's mobj again.
     if(!(player->shared.flags & DDPF_CHASECAM))

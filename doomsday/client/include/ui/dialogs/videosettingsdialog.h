@@ -32,6 +32,7 @@ public:
     VideoSettingsDialog(de::String const &name = "videosettings");
 
 protected slots:
+    void resetToDefaults();
     void changeMode(uint selected);
     void changeColorDepth(uint selected);
     void showColorAdjustments();
