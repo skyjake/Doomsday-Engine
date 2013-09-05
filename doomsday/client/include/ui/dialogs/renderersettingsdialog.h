@@ -37,6 +37,10 @@ public slots:
 protected slots:
     void showAppearanceMenu();
     void showDeveloperPopup();
+    void editProfile();
+    void renameProfile();
+    void duplicateProfile();
+    void deleteProfile();
 
 private:
     DENG2_PRIVATE(d)

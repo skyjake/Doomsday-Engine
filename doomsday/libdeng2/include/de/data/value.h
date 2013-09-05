@@ -86,6 +86,11 @@ public:
     virtual Text asText() const = 0;
 
     template <typename ValueType>
+    bool is() const {
+        return dynamic_cast<ValueType const *>(this) != 0;
+    }
+
+    template <typename ValueType>
     ValueType &as() {
         ValueType *t = dynamic_cast<ValueType *>(this);
         if(!t) throw ConversionError("Value::as<>", "Illegal type conversion");

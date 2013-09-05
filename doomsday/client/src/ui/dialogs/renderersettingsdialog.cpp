@@ -24,6 +24,7 @@
 #include "SignalAction"
 #include "DialogContentStylist"
 #include "con_main.h"
+#include "clientapp.h"
 
 using namespace de;
 using namespace ui;
@@ -39,6 +40,8 @@ DENG_GUI_PIMPL(RendererSettingsDialog)
     CVarToggleWidget *multiDetail;
     CVarChoiceWidget *rendTex;
     CVarChoiceWidget *wireframe;
+
+    // Developer settings.
     PopupWidget *devPopup;
     QScopedPointer<DialogContentStylist> stylist;
     CVarToggleWidget *bboxMobj;
@@ -204,20 +207,7 @@ RendererSettingsDialog::RendererSettingsDialog(String const &name)
 
 void RendererSettingsDialog::resetToDefaults()
 {
-    Con_SetFloat  ("rend-camera-fov", 95.f);
-    Con_SetInteger("rend-model-mirror-hud", 0);
-    Con_SetInteger("rend-tex", 1);
-    Con_SetInteger("rend-light-multitex", 1);
-    Con_SetInteger("rend-model-shiny-multitex", 1);
-    Con_SetInteger("rend-tex-detail-multitex", 1);
-    Con_SetInteger("rend-dev-wireframe", 0);
-
-    Con_SetInteger("rend-dev-thinker-ids", 0);
-    Con_SetInteger("rend-dev-mobj-bbox", 0);
-    Con_SetInteger("rend-dev-polyobj-bbox", 0);
-    Con_SetInteger("rend-dev-sector-show-indices", 0);
-    Con_SetInteger("rend-dev-vertex-show-indices", 0);
-    Con_SetInteger("rend-dev-generator-show-indices", 0);
+    ClientApp::rendererSettings().resetToDefaults();
 
     d->fetch();
 }
@@ -254,4 +244,24 @@ void RendererSettingsDialog::showAppearanceMenu()
 void RendererSettingsDialog::showDeveloperPopup()
 {
     d->devPopup->open();
+}
+
+void RendererSettingsDialog::editProfile()
+{
+
+}
+
+void RendererSettingsDialog::renameProfile()
+{
+
+}
+
+void RendererSettingsDialog::duplicateProfile()
+{
+
+}
+
+void RendererSettingsDialog::deleteProfile()
+{
+
 }

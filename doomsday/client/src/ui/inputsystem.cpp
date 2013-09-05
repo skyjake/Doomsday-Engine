@@ -53,10 +53,19 @@ static Value *Binding_InputSystem_BindEvent(Context &, Function::ArgumentValues 
 
 DENG2_PIMPL(InputSystem)
 {
+    SettingsRegister settings;
     Record *scriptBindings;
 
     Instance(Public *i) : Base(i)
     {
+        // Initialize settings.
+        settings.define(SettingsRegister::ConfigVariable, "input.mouse.syncSensitivity")
+                .define(SettingsRegister::FloatCVar,      "input-mouse-x-scale", 1.f/1000.f)
+                .define(SettingsRegister::FloatCVar,      "input-mouse-y-scale", 1.f/1000.f)
+                .define(SettingsRegister::IntCVar,        "input-mouse-x-flags", 0)
+                .define(SettingsRegister::IntCVar,        "input-mouse-y-flags", 0)
+                .define(SettingsRegister::IntCVar,        "input-joy", 1);
+
         // Initialize script bindings.
         Function::registerNativeEntryPoint("InputSystem_BindEvent", Binding_InputSystem_BindEvent);
 
@@ -94,5 +103,9 @@ InputSystem::InputSystem() : d(new Instance(this))
 {}
 
 void InputSystem::timeChanged(Clock const &)
+{}
+
+SettingsRegister &InputSystem::settings()
 {
+    return d->settings;
 }

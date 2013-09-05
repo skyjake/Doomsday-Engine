@@ -21,9 +21,9 @@
 #include "ui/widgets/cvartogglewidget.h"
 #include "ui/widgets/variabletogglewidget.h"
 
+#include "clientapp.h"
 #include "con_main.h"
 #include "SignalAction"
-#include <de/App>
 
 using namespace de;
 using namespace ui;
@@ -147,11 +147,7 @@ InputSettingsDialog::InputSettingsDialog(String const &name)
 
 void InputSettingsDialog::resetToDefaults()
 {
-    Con_SetFloat  ("input-mouse-x-scale", .001f);
-    Con_SetFloat  ("input-mouse-y-scale", .001f);
-    Con_SetInteger("input-mouse-x-flags", 0    );
-    Con_SetInteger("input-mouse-y-flags", 0    );
-    Con_SetInteger("input-joy",           1    );
+    ClientApp::inputSystem().settings().resetToDefaults();
 
     d->fetch();
 }

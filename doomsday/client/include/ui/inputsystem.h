@@ -20,6 +20,7 @@
 #define CLIENT_INPUTSYSTEM_H
 
 #include <de/System>
+#include "SettingsRegister"
 
 /**
  * Input devices and events. @ingroup ui
@@ -30,6 +31,8 @@ class InputSystem : public de::System
 {
 public:
     InputSystem();
+
+    SettingsRegister &settings();
 
     // System.
     void timeChanged(de::Clock const &);

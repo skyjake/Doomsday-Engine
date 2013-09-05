@@ -207,7 +207,7 @@ UpdaterSettingsDialog::UpdaterSettingsDialog(Mode mode, String const &name)
 void UpdaterSettingsDialog::applyAndCheckNow()
 {
     accept();
-    ClientApp::app().updater().checkNow();
+    ClientApp::updater().checkNow();
 }
 
 void UpdaterSettingsDialog::finish(int result)

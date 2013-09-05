@@ -151,6 +151,7 @@ DENG_CONVENIENCE_HEADERS += \
     include/ProceduralImage \
     include/Sector \
     include/SequentialLayout \
+    include/SettingsRegister \
     include/SignalAction \
     include/SkyFixEdge \
     include/Surface \
@@ -342,6 +343,7 @@ DENG_HEADERS += \
     include/resource/wad.h \
     include/resource/zip.h \
     include/resourceclass.h \
+    include/settingsregister.h \
     include/sys_system.h \
     include/tab_anorms.h \
     include/ui/b_command.h \
@@ -680,6 +682,7 @@ SOURCES += \
     src/resource/tga.cpp \
     src/resource/wad.cpp \
     src/resource/zip.cpp \
+    src/settingsregister.cpp \
     src/sys_system.cpp \
     src/tab_tables.c \
     src/ui/b_command.cpp \

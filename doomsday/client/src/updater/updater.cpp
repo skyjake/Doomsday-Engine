@@ -125,7 +125,7 @@ public:
         _clickable = new ButtonWidget;
         _clickable->setOpacity(0); // not drawn
         _clickable->rule().setRect(rule());
-        _clickable->setAction(new SignalAction(&ClientApp::app().updater(),
+        _clickable->setAction(new SignalAction(&ClientApp::updater(),
                                                SLOT(showCurrentDownload())));
         add(_clickable);
     }
