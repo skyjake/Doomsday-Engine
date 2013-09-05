@@ -325,8 +325,9 @@ void Rend_Reset()
 
 float Rend_FieldOfView()
 {
-    float const widescreenCorrection = float(viewpw)/float(viewph) / (4.f / 3.f);
-    return widescreenCorrection * fieldOfView;
+    float widescreenCorrection = float(viewpw)/float(viewph) / (4.f / 3.f);
+    widescreenCorrection = (1 + 2 * widescreenCorrection) / 3;
+    return de::clamp(1.f, widescreenCorrection * fieldOfView, 179.f);
 }
 
 void Rend_ModelViewMatrix(bool useAngles)
