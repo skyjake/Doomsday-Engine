@@ -16,7 +16,10 @@
  * http://www.gnu.org/licenses</small>
  */
 
+#include "de_platform.h"
+#include "con_main.h"
 #include "settingsregister.h"
+
 #include <QMap>
 #include <QList>
 
@@ -25,7 +28,6 @@
 #include <de/Process>
 #include <de/RecordValue>
 #include <de/NumberValue>
-#include "con_main.h"
 
 using namespace de;
 
