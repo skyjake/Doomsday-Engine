@@ -34,6 +34,7 @@
 #  include "world/world.h"
 
 #  include "BiasSource"
+#  include "render/lumobj.h"
 #endif
 
 class BspLeaf;
@@ -159,6 +160,7 @@ public:
     typedef QSet<Surface *>  SurfaceSet;
 
     typedef QList<BiasSource *> BiasSources;
+    typedef QList<Lumobj *>  Lumobjs;
 #endif
 
 public: /// @todo make private:
@@ -577,6 +579,44 @@ public:
     Generators &generators();
 
     /**
+     * Add a new lumobj to the map (a copy is made).
+     *
+     * @return  Reference to the newly added lumobj.
+     *
+     * @see lumobjCount()
+     */
+    Lumobj &addLumobj(Lumobj const &lumobj = Lumobj());
+
+    /**
+     * Removes the specified lumobj from the map.
+     *
+     * @see removeAllLumobjs()
+     */
+    void removeLumobj(int which);
+
+    /**
+     * Remove all lumobjs from the map.
+     *
+     * @see removeLumobj()
+     */
+    void removeAllLumobjs();
+
+    /**
+     * Provides a list of all the lumobjs in the map.
+     */
+    Lumobjs const &lumobjs() const;
+
+    /**
+     * Returns the total number of lumobjs in the map.
+     */
+    inline int lumobjCount() const { return lumobjs().count(); }
+
+    /**
+     * Lookup a lumobj in the map by it's unique @a index.
+     */
+    Lumobj *lumobj(int index) const;
+
+    /**
      * Attempt to add a new bias light source to the map (a copy is made).
      *
      * @note At most @ref MAX_BIAS_SOURCES are supported for technical reasons.
@@ -732,12 +772,6 @@ public:
     SurfaceSet const &decoratedSurfaces();
 
     /**
-     * Provides a set of all surfaces linked to the material lists for which
-     * glow animations are defined.
-     */
-    SurfaceSet const &glowingSurfaces();
-
-    /**
      * Returns the set of scrolling surfaces for the map.
      */
     SurfaceSet /*const*/ &scrollingSurfaces();
@@ -826,7 +860,6 @@ public: /// @todo Make private:
      * Must be called before rendering a frame with bias lighting enabled.
      */
     void initBias();
-
 #endif // __CLIENT__
 
 public:

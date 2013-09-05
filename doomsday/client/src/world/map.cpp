@@ -159,12 +159,11 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
     SurfaceSet scrollingSurfaces;
 
     SurfaceSet decoratedSurfaces;
-    SurfaceSet glowingSurfaces;
 
     QScopedPointer<Generators> generators;
     QScopedPointer<LightGrid> lightGrid;
 
-    /// Shadow Bias data for the map.
+    /// Shadow Bias data.
     struct Bias
     {
         /// Time in milliseconds of the "current" frame.
@@ -179,6 +178,9 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
         Bias() : currentTime(0), lastChangeOnFrame(0)
         {}
     } bias;
+
+    /// Luminous object data.
+    Lumobjs lumobjs;
 
     coord_t skyFloorHeight;
     coord_t skyCeilingHeight;
@@ -210,6 +212,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
         DENG2_FOR_PUBLIC_AUDIENCE(Deletion, i) i->mapBeingDeleted(self);
 
 #ifdef __CLIENT__
+        self.removeAllLumobjs();
         self.removeAllBiasSources();
 
         // The light grid observes changes to sector lighting and so
@@ -1170,6 +1173,7 @@ Map::Map(Uri const &uri) : d(new Instance(this, uri))
 
 void Map::consoleRegister() // static
 {
+    Mobj_ConsoleRegister();
     C_VAR_INT("bsp-factor", &bspSplitFactor, CVF_NO_MAX, 0, 0);
 }
 
@@ -1262,7 +1266,6 @@ void Map::unlinkInMaterialLists(Surface *surface)
     if(!surface) return;
 
     d->decoratedSurfaces.remove(surface);
-    d->glowingSurfaces.remove(surface);
 }
 
 void Map::linkInMaterialLists(Surface *surface)
@@ -1280,10 +1283,6 @@ void Map::linkInMaterialLists(Surface *surface)
     }
 
     Material &material = surface->material();
-    if(material.hasGlow())
-    {
-        d->glowingSurfaces.insert(surface);
-    }
     if(material.isDecorated())
     {
         d->decoratedSurfaces.insert(surface);
@@ -1293,7 +1292,6 @@ void Map::linkInMaterialLists(Surface *surface)
 void Map::buildMaterialLists()
 {
     d->decoratedSurfaces.clear();
-    d->glowingSurfaces.clear();
 
     foreach(Line *line, d->lines)
     for(int i = 0; i < 2; ++i)
@@ -1323,10 +1321,6 @@ Map::SurfaceSet const &Map::decoratedSurfaces()
     return d->decoratedSurfaces;
 }
 
-Map::SurfaceSet const &Map::glowingSurfaces()
-{
-    return d->glowingSurfaces;
-}
 #endif // __CLIENT__
 
 void Map::updateSurfacesOnMaterialChange(Material &material)
@@ -2729,6 +2723,52 @@ Generators &Map::generators()
     return *d->generators;
 }
 
+Lumobj &Map::addLumobj(Lumobj const &lumobj)
+{
+    d->lumobjs.append(new Lumobj(lumobj));
+    Lumobj &lum = *d->lumobjs.last();
+
+    lum.setMap(this);
+    lum.setIndexInMap(d->lumobjs.count() - 1);
+
+    lum.bspLeafAtOrigin().linkLumobj(lum);
+    R_ObjlinkCreate(lum); // For spreading purposes.
+
+    return lum;
+}
+
+void Map::removeLumobj(int which)
+{
+    if(which >= 0 && which < lumobjCount())
+    {
+        delete d->lumobjs.takeAt(which);
+    }
+}
+
+void Map::removeAllLumobjs()
+{
+    foreach(BspLeaf *leaf, d->bspLeafs)
+    {
+        leaf->clearLumobjs();
+    }
+    qDeleteAll(d->lumobjs);
+    d->lumobjs.clear();
+}
+
+Map::Lumobjs const &Map::lumobjs() const
+{
+    return d->lumobjs;
+}
+
+Lumobj *Map::lumobj(int index) const
+{
+    if(index >= 0 && index < lumobjCount())
+    {
+        return lumobjs().at(index);
+    }
+    return 0;
+}
+
 BiasSource &Map::addBiasSource(BiasSource const &biasSource)
 {
     if(biasSourceCount() < MAX_BIAS_SOURCES)
@@ -2898,7 +2938,8 @@ void Map::worldFrameBegins(World &world, bool resetNextViewer)
 
         d->biasBeginFrame();
 
-        LO_BeginWorldFrame();
+        removeAllLumobjs();
+
         R_ClearObjlinksForFrame(); // Zeroes the links.
 
         // Clear the objlinks.
@@ -2910,8 +2951,15 @@ void Map::worldFrameBegins(World &world, bool resetNextViewer)
         // Spawn omnilights for decorations.
         Rend_DecorAddLuminous();
 
-        // Spawn omnilights for mobjs.
-        LO_AddLuminousMobjs();
+        // Spawn omnilights for mobjs?
+        if(useDynLights)
+        {
+            foreach(Sector *sector, d->sectors)
+            for(mobj_t *iter = sector->firstMobj(); iter; iter = iter->sNext)
+            {
+                Mobj_GenerateLumobjs(iter);
+            }
+        }
 
         // Create objlinks for mobjs.
         d->createMobjLinks();
