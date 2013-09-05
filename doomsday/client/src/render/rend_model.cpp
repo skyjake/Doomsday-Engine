@@ -45,7 +45,6 @@
 
 using namespace de;
 
-#define DOTPROD(a, b)       (a[0]*b[0] + a[1]*b[1] + a[2]*b[2])
 #define QATAN2(y,x)         qatan2(y,x)
 #define QASIN(x)            asin(x) // @todo Precalculate arcsin.
 
@@ -624,75 +623,66 @@ static void Mod_MirrorVertices(int count, dgl_vertex_t *v, int axis)
     }
 }
 
-typedef struct {
-    float color[3], extra[3], rotateYaw, rotatePitch;
-    dgl_vertex_t *normal;
-    uint processedLights, maxLights;
-    bool invert;
-} lightmodelvertexparams_t;
-
-static boolean lightModelVertex(vlight_t const *vlight, void *context)
+struct lightmodelvertexworker_params_t
 {
-    lightmodelvertexparams_t* parm = (lightmodelvertexparams_t *) context;
+    Vector3f color, extra;
+    float rotateYaw, rotatePitch;
+    Vector3f normal;
+    uint numProcessed, max;
+    bool invert;
+};
 
-    // Take a copy of the light vector as we intend to change it.
-    float lightVector[3] = { vlight->vector[0], vlight->vector[1], vlight->vector[2] };
-
+static void lightModelVertex(VectorLight const &vlight, lightmodelvertexworker_params_t &parms)
+{
     // We must transform the light vector to model space.
-    M_RotateVector(lightVector, parm->rotateYaw, parm->rotatePitch);
+    float vlightDirection[3] = { vlight.direction.x, vlight.direction.y, vlight.direction.z };
+    M_RotateVector(vlightDirection, parms.rotateYaw, parms.rotatePitch);
 
     // Quick hack: Flip light normal if model inverted.
-    if(parm->invert)
+    if(parms.invert)
     {
-        lightVector[VX] = -lightVector[VX];
-        lightVector[VY] = -lightVector[VY];
+        vlightDirection[VX] = -vlightDirection[VX];
+        vlightDirection[VY] = -vlightDirection[VY];
     }
 
-    float dot = DOTPROD(lightVector, parm->normal->xyz);
-    dot += vlight->offset; // Shift a bit towards the light.
-
-    float *dest;
-    if(!vlight->affectedByAmbient)
-    {
-        // Won't be affected by ambient.
-        dest = parm->extra;
-    }
-    else
-    {
-        dest = parm->color;
-    }
+    float strength = Vector3f(vlightDirection).dot(parms.normal)
+                   + vlight.offset; // Shift a bit towards the light.
 
     // Ability to both light and shade.
-    if(dot > 0)
+    if(strength > 0)
     {
-        dot *= vlight->lightSide;
+        strength *= vlight.lightSide;
     }
     else
     {
-        dot *= vlight->darkSide;
+        strength *= vlight.darkSide;
     }
 
-    dot = MINMAX_OF(-1, dot, 1);
+    Vector3f &dest = vlight.affectedByAmbient? parms.color : parms.extra;
+    dest += vlight.color * de::clamp(-1.f, strength, 1.f);
+}
 
-    dest[CR] += dot * vlight->color[CR];
-    dest[CG] += dot * vlight->color[CG];
-    dest[CB] += dot * vlight->color[CB];
+static int lightModelVertexWorker(VectorLight const *vlight, void *context)
+{
+    lightmodelvertexworker_params_t &parms = *static_cast<lightmodelvertexworker_params_t *>(context);
 
-    parm->processedLights++;
-    if(parm->maxLights && !(parm->processedLights < parm->maxLights))
-        return false; // Stop iteration.
+    lightModelVertex(*vlight, parms);
+    parms.numProcessed += 1;
 
-    return true; // Continue iteration.
+    // Time to stop?
+    return parms.max && parms.numProcessed == parms.max;
 }
 
 /**
  * Calculate vertex lighting.
+ * @todo construct a rotation matrix once and use it for all vertices.
  */
 static void Mod_VertexColors(int count, dgl_color_t *out, dgl_vertex_t *normal,
     uint vLightListIdx, uint maxLights, float ambient[4], bool invert,
     float rotateYaw, float rotatePitch)
 {
-    lightmodelvertexparams_t parm;
+    Vector3f const saturated(1, 1, 1);
+    lightmodelvertexworker_params_t parms;
 
     for(int i = 0; i < count; ++i, out++, normal++)
     {
@@ -700,32 +690,25 @@ static void Mod_VertexColors(int count, dgl_color_t *out, dgl_vertex_t *normal,
             continue;
 
         // Begin with total darkness.
-        parm.color[CR] = parm.color[CG] = parm.color[CB] = 0;
-        parm.extra[CR] = parm.extra[CG] = parm.extra[CB] = 0;
-        parm.processedLights = 0;
-        parm.maxLights = maxLights;
-        parm.normal = normal;
-        parm.invert = invert;
-        parm.rotateYaw = rotateYaw;
-        parm.rotatePitch = rotatePitch;
+        parms.color        = Vector3f();
+        parms.extra        = Vector3f();
+        parms.normal       = Vector3f(normal->xyz);
+        parms.invert       = invert;
+        parms.rotateYaw    = rotateYaw;
+        parms.rotatePitch  = rotatePitch;
+        parms.max          = maxLights;
+        parms.numProcessed = 0;
 
         // Add light from each source.
-        VL_ListIterator(vLightListIdx, &parm, lightModelVertex);
+        VL_ListIterator(vLightListIdx, lightModelVertexWorker, &parms);
 
         // Check for ambient and convert to ubyte.
-        for(int k = 0; k < 3; ++k)
-        {
-            if(parm.color[k] < ambient[k])
-                parm.color[k] = ambient[k];
+        Vector3f color = (parms.color.max(ambient) + parms.extra).min(saturated);
 
-            parm.color[k] += parm.extra[k];
-            parm.color[k] = MINMAX_OF(0, parm.color[k], 1);
-
-            // This is the final color.
-            out->rgba[k] = byte(255 * parm.color[k]);
-        }
-
-        out->rgba[CA] = byte(255 * ambient[CA]);
+        out->rgba[CR] = byte( 255 * color[CR] );
+        out->rgba[CG] = byte( 255 * color[CG] );
+        out->rgba[CB] = byte( 255 * color[CB] );
+        out->rgba[CA] = byte( 255 * ambient[CA] );
     }
 }
 
@@ -1350,6 +1333,16 @@ void Rend_ModelShutdown()
     inited = false;
 }
 
+static int drawLightVectorWorker(VectorLight const *vlight, void *context)
+{
+    coord_t distFromViewer = *static_cast<coord_t *>(context);
+    if(distFromViewer < 1600 - 8)
+    {
+        Rend_DrawVectorLight(vlight, 1 - distFromViewer / 1600);
+    }
+    return false; // Continue iteration.
+}
+
 /**
  * Render all the submodels of a model.
  */
@@ -1390,7 +1383,8 @@ void Rend_RenderModel(rendmodelparams_t const *parm)
 
         glTranslatef(parm->origin[VX], parm->origin[VZ], parm->origin[VY]);
 
-        VL_ListIterator(parm->vLightListIdx, (void *)&parm->distance, R_DrawVLightVector);
+        coord_t distFromViewer = de::abs(parm->distance);
+        VL_ListIterator(parm->vLightListIdx, drawLightVectorWorker, &distFromViewer);
 
         glMatrixMode(GL_MODELVIEW);
         glPopMatrix();
