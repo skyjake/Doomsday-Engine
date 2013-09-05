@@ -27,10 +27,6 @@
 
 #include <de/libdeng1.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 // This macro can be used to calculate a mobj-specific 'random' number.
 #define MOBJ_TO_ID(mo)          ( (long)(mo)->thinker.id * 48 + ((unsigned long)(mo)/1000) )
 
@@ -50,7 +46,12 @@ typedef struct mobj_s
 
 DENG_EXTERN_C int useSRVO, useSRVOAngle;
 
-void P_InitUnusedMobjList(void);
+void P_InitUnusedMobjList();
+
+/**
+ * To be called to register the commands and variables of this module.
+ */
+void Mobj_ConsoleRegister();
 
 mobj_t *P_MobjCreate(thinkfunc_t function, coord_t const post[3], angle_t angle,
     coord_t radius, coord_t height, int ddflags);
@@ -77,6 +78,17 @@ boolean Mobj_SetOrigin(mobj_t *mobj, coord_t x, coord_t y, coord_t z);
  */
 boolean Mobj_OriginBehindVisPlane(mobj_t *mobj);
 
+/**
+ * To be called when lumobjs are disabled to perform necessary bookkeeping.
+ */
+void Mobj_UnlinkLumobjs(mobj_t *mobj);
+
+/**
+ * Generates lumobjs for the mobj.
+ * @note: This is called each frame for each luminous object!
+ */
+void Mobj_GenerateLumobjs(mobj_t *mobj);
+
 #endif // __CLIENT__
 
 coord_t Mobj_ApproxPointDistance(mobj_t *start, coord_t const *point);
@@ -89,13 +101,9 @@ boolean Mobj_UnlinkFromSector(mobj_t *mobj);
  */
 coord_t Mobj_BobOffset(mobj_t *mobj);
 
-float Mobj_Alpha(mobj_t *mo);
+float Mobj_Alpha(mobj_t *mobj);
 
 /// @return  Radius of the mobj as it would visually appear to be.
-coord_t Mobj_VisualRadius(mobj_t *mo);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
+coord_t Mobj_VisualRadius(mobj_t *mobj);
 
 #endif // DENG_WORLD_P_OBJECT_H

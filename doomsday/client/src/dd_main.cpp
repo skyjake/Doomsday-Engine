@@ -1525,7 +1525,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
         Con_SaveDefaults();
 
 #ifdef __CLIENT__
-        LO_Clear();
+        R_ClearViewData();
         R_DestroyObjlinkBlockmap();
         P_ControlShutdown();
 

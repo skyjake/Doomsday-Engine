@@ -685,7 +685,7 @@ enum { MX, MY, MZ };
     int             selector; /* multipurpose info */ \
     int             validCount; /* used in iterating */ \
     int             addFrameCount; \
-    unsigned int    lumIdx; /* index+1 of the lumobj/bias source, or 0 */ \
+    int             lumIdx; /* index of the lumobj or -1 */ \
     byte            haloFactors[DDMAXPLAYERS]; /* strengths of halo */ \
     byte            translucency; /* default = 0 = opaque */ \
     short           visTarget; /* -1 = mobj is becoming less visible, */ \
