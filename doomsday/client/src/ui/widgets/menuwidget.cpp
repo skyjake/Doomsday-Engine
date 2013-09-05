@@ -355,6 +355,7 @@ void MenuWidget::update()
 
 bool MenuWidget::handleEvent(Event const &event)
 {
+#if 0
     if(event.type() == Event::MousePosition)
     {
         if(rule().recti().contains(event.as<MouseEvent>().pos()))
@@ -363,6 +364,7 @@ bool MenuWidget::handleEvent(Event const &event)
             return true;
         }
     }
+#endif
     return ScrollAreaWidget::handleEvent(event);
 }
 
