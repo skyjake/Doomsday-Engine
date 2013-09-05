@@ -61,7 +61,7 @@ typedef struct decorsource_s {
     coord_t maxDistance;
     Surface const *surface;
     BspLeaf *bspLeaf;
-    uint lumIdx; // Index+1 of linked lumobj, or 0.
+    int lumIdx; // Index of linked lumobj, or Lumobj::NoIndex.
     float fadeMul;
     MaterialSnapshot::Decoration const *decor;
     struct decorsource_s *next;
@@ -124,8 +124,8 @@ static void projectSource(decorsource_t const &src)
     coord_t distance = Rend_PointDist3D(src.origin);
     if(distance > src.maxDistance) return;
 
-    /// @todo dj: Why is LO_GetLuminous returning NULL given a supposedly valid index?
-    if(!LO_GetLuminous(src.lumIdx)) return;
+    Lumobj *lum = App_World().map().lumobj(src.lumIdx);
+    if(!lum) return; // Huh?
 
     /*
      * Light decorations become flare-type vissprites.
@@ -136,16 +136,14 @@ static void projectSource(decorsource_t const &src)
     V3d_Copy(vis->origin, src.origin);
     vis->distance = distance;
 
-    lumobj_t const *lum = LO_GetLuminous(src.lumIdx);
-
     vis->data.flare.isDecoration = true;
     vis->data.flare.lumIdx = src.lumIdx;
 
     // Color is taken from the associated lumobj.
-    V3f_Copy(vis->data.flare.color, LUM_OMNI(lum)->color);
+    V3f_Set(vis->data.flare.color, lum->color().x, lum->color().y, lum->color().z);
 
     if(decor->haloRadius > 0)
-        vis->data.flare.size = MAX_OF(1, decor->haloRadius * 60 * (50 + haloSize) / 100.0f);
+        vis->data.flare.size = de::max(1.f, decor->haloRadius * 60 * (50 + haloSize) / 100.0f);
     else
         vis->data.flare.size = 0;
 
@@ -204,49 +202,31 @@ static void addLuminousDecoration(decorsource_t &src)
     if(decor->color.x == 0 && decor->color.y == 0 && decor->color.z == 0) return;
 
     // Does it pass the sector light limitation?
-    float min = decor->lightLevels[0];
-    float max = decor->lightLevels[1];
-
     float lightLevel = src.bspLeaf->sector().lightLevel();
     Rend_ApplyLightAdaptation(lightLevel);
+    float brightness = checkSectorLightLevel(lightLevel, decor->lightLevels[0], decor->lightLevels[1]);
 
-    float brightness = checkSectorLightLevel(lightLevel, min, max);
-    if(!(brightness > 0)) return;
+    if(brightness < .0001f) return;
 
     // Apply the brightness factor (was calculated using sector lightlevel).
     src.fadeMul = brightness * decorLightBrightFactor;
-    src.lumIdx = 0;
+    src.lumIdx = Lumobj::NoIndex;
 
     if(src.fadeMul <= 0) return;
 
-    /**
-     * @todo From here on is pretty much the same as LO_AddLuminous,
-     *       reconcile the two.
-     */
+    QScopedPointer<Lumobj> lum(new Lumobj());
 
-    uint lumIdx = LO_NewLuminous(LT_OMNI, src.bspLeaf);
-    lumobj_t *l = LO_GetLuminous(lumIdx);
+    lum->setOrigin     (src.origin)
+        .setRadius     (decor->radius)
+        .setColor      (decor->color * src.fadeMul)
+        .setMaxDistance(src.maxDistance)
+        .setLightmap   (Lumobj::Side, decor->tex)
+        .setLightmap   (Lumobj::Down, decor->floorTex)
+        .setLightmap   (Lumobj::Up,   decor->ceilTex);
 
-    V3d_Copy(l->origin, src.origin);
-    l->maxDistance = src.maxDistance;
-    l->decorSource = (void*)&src;
-
-    LUM_OMNI(l)->zOff = 0;
-    LUM_OMNI(l)->tex      = decor->tex;
-    LUM_OMNI(l)->ceilTex  = decor->ceilTex;
-    LUM_OMNI(l)->floorTex = decor->floorTex;
-
-    // These are the same rules as in DL_MobjRadius().
-    LUM_OMNI(l)->radius = decor->radius * 40 * loRadiusFactor;
-
-    // Don't make a too small or too large light.
-    if(LUM_OMNI(l)->radius > loMaxRadius)
-        LUM_OMNI(l)->radius = loMaxRadius;
-
-    for(uint i = 0; i < 3; ++i)
-        LUM_OMNI(l)->color[i] = decor->color[i] * src.fadeMul;
-
-    src.lumIdx = lumIdx;
+    // Insert a copy of the temporary lumobj in the map and remember it's unique
+    // index in the decoration (this'll allow a halo to be rendered).
+    src.lumIdx = App_World().map().addLumobj(*lum).indexInMap();
 }
 
 void Rend_DecorAddLuminous()
@@ -294,7 +274,7 @@ static decorsource_t *allocDecorSource()
         src = sourceCursor;
 
         src->fadeMul = 0;
-        src->lumIdx  = 0;
+        src->lumIdx  = Lumobj::NoIndex;
         src->maxDistance = 0;
         V3d_Set(src->origin, 0, 0, 0);
         src->bspLeaf = 0;

@@ -500,27 +500,25 @@ static void findContacts(objlink_t *link)
 {
     DENG_ASSERT(link != 0);
 
+    Vector3d origin;
     coord_t radius = 0;
-    pvec3d_t origin = 0;
     BspLeaf *bspLeaf = 0;
 
     switch(link->type)
     {
     case OT_LUMOBJ: {
-        lumobj_t *lum = (lumobj_t *) link->obj;
-        // Only omni lights spread.
-        if(lum->type != LT_OMNI) return;
+        Lumobj *lum = (Lumobj *) link->obj;
 
-        origin = lum->origin;
-        radius = LUM_OMNI(lum)->radius;
-        bspLeaf = lum->bspLeaf;
+        origin  = lum->origin();
+        radius  = lum->radius();
+        bspLeaf = &lum->bspLeafAtOrigin();
         break; }
 
     case OT_MOBJ: {
         mobj_t *mo = (mobj_t *) link->obj;
 
-        origin = mo->origin;
-        radius = Mobj_VisualRadius(mo);
+        origin  = Vector3d(mo->origin);
+        radius  = Mobj_VisualRadius(mo);
         bspLeaf = mo->bspLeaf;
         break; }
 
@@ -535,7 +533,7 @@ static void findContacts(objlink_t *link)
     contactfinderparams_t cfParms;
     cfParms.obj            = link->obj;
     cfParms.objType        = link->type;
-    V3d_Copy(cfParms.objOrigin, origin);
+    V3d_Set(cfParms.objOrigin, origin.x, origin.y, origin.z);
     // Use a slightly smaller radius than what the obj really is.
     cfParms.objRadius      = radius * .98f;
 
@@ -588,10 +586,10 @@ static void spreadContactsForBspLeaf(objlinkblockmap_t &obm, BspLeaf const &bspL
     }
 }
 
-static inline float maxRadius(objtype_t type)
+static inline float radiusMax(objtype_t type)
 {
     DENG_ASSERT(VALID_OBJTYPE(type));
-    if(type == OT_LUMOBJ) return loMaxRadius;
+    if(type == OT_LUMOBJ) return Lumobj::radiusMax();
     // Must be OT_MOBJ
     return DDMOBJ_RADIUS_MAX;
 }
@@ -605,7 +603,7 @@ BEGIN_PROF( PROF_OBJLINK_SPREAD );
     for(int i = 0; i < NUM_OBJ_TYPES; ++i)
     {
         objlinkblockmap_t &obm = chooseObjlinkBlockmap(objtype_t(i));
-        spreadContactsForBspLeaf(obm, bspLeaf, maxRadius(objtype_t(i)));
+        spreadContactsForBspLeaf(obm, bspLeaf, radiusMax(objtype_t(i)));
     }
 
 END_PROF( PROF_OBJLINK_SPREAD );
@@ -622,7 +620,7 @@ static void linkObjlinkInBlockmap(objlinkblockmap_t &obm, objlink_t &link, Gridm
 void R_LinkObjs()
 {
     uint block[2];
-    pvec3d_t origin = 0;
+    Vector3d origin;
 
 BEGIN_PROF( PROF_OBJLINK_LINK );
 
@@ -633,10 +631,10 @@ BEGIN_PROF( PROF_OBJLINK_LINK );
         switch(link->type)
         {
         case OT_LUMOBJ:
-            origin = ((lumobj_t *)link->obj)->origin; break;
+            origin = ((Lumobj *)link->obj)->origin(); break;
 
         case OT_MOBJ:
-            origin = ((mobj_t *)link->obj)->origin; break;
+            origin = Vector3d(((mobj_t *)link->obj)->origin); break;
 
         case NUM_OBJ_TYPES:
             DENG_ASSERT(false);
@@ -644,7 +642,7 @@ BEGIN_PROF( PROF_OBJLINK_LINK );
         }
 
         objlinkblockmap_t &obm = chooseObjlinkBlockmap(link->type);
-        if(!toObjlinkBlockmapCell(obm, block, origin[VX], origin[VY]))
+        if(!toObjlinkBlockmapCell(obm, block, origin.x, origin.y))
         {
             linkObjlinkInBlockmap(obm, *link, block);
         }
@@ -691,21 +689,20 @@ int R_IterateBspLeafContacts(BspLeaf &bspLeaf, objtype_t type,
 void R_ObjlinkCreate(mobj_t &mobj)
 {
     if(!mobj.bspLeaf) return;
-    createObjlink(*mobj.bspLeaf, (void *)&mobj, OT_MOBJ);
+    createObjlink(*mobj.bspLeaf, &mobj, OT_MOBJ);
 }
 
 void R_LinkObjToBspLeaf(BspLeaf &bspLeaf, mobj_t &mobj)
 {
-    linkObjToBspLeaf(bspLeaf, (void *)&mobj, OT_MOBJ);
+    linkObjToBspLeaf(bspLeaf, &mobj, OT_MOBJ);
 }
 
-void R_ObjlinkCreate(lumobj_t &lum)
+void R_ObjlinkCreate(Lumobj &lum)
 {
-    if(!lum.bspLeaf) return;
-    createObjlink(*lum.bspLeaf, (void *)&lum, OT_LUMOBJ);
+    createObjlink(lum.bspLeafAtOrigin(), &lum, OT_LUMOBJ);
 }
 
-void R_LinkObjToBspLeaf(BspLeaf &bspLeaf, lumobj_t &lum)
+void R_LinkObjToBspLeaf(BspLeaf &bspLeaf, Lumobj &lum)
 {
-    linkObjToBspLeaf(bspLeaf, (void *)&lum, OT_LUMOBJ);
+    linkObjToBspLeaf(bspLeaf, &lum, OT_LUMOBJ);
 }

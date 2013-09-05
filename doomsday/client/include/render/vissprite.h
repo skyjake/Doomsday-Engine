@@ -51,7 +51,7 @@ typedef struct rendmaskedwallparams_s {
     float texCoord[2][2]; ///< u and v coordinates.
 
     DGLuint modTex; ///< Texture to modulate with.
-    float modTexCoord[2][2]; ///< u and v coordinates.
+    float modTexCoord[2][2]; ///< [top-left, bottom-right][x, y]
     float modColor[4];
 } rendmaskedwallparams_t;
 
@@ -95,7 +95,7 @@ typedef struct rendflareparams_s {
     DGLuint tex; // Flaremap if flareCustom ELSE (flaretexName id. Zero = automatical)
     float mul; // Flare brightness factor.
     boolean isDecoration;
-    uint lumIdx;
+    int lumIdx;
 } rendflareparams_t;
 
 #define MAX_VISSPRITE_LIGHTS    (10)

@@ -1,4 +1,4 @@
-/** @file lumobj.h Luminous object management.
+/** @file lumobj.h Luminous object.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -18,221 +18,218 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_CLIENT_RENDER_LUMINOUS_H
-#define DENG_CLIENT_RENDER_LUMINOUS_H
+#ifndef DENG_CLIENT_RENDER_LUMOBJ_H
+#define DENG_CLIENT_RENDER_LUMOBJ_H
 
-#include <de/Matrix>
+#include <de/Error>
 #include <de/Vector>
 
-#include "api_gl.h" // DGLuint
-#include "world/map.h"
+#include "Texture"
 
 class BspLeaf;
 
-// Luminous object types.
-enum lumtype_t
+namespace de {
+class Map;
+}
+
+class Lumobj
 {
-    LT_OMNI,  ///< Omni (spherical) light.
-    LT_PLANE  ///< Planar light.
+public:
+    /// No map is attributed. @ingroup errors
+    DENG2_ERROR(MissingMapError);
+
+    /// Special identifier used to mark an invalid index.
+    enum { NoIndex = -1 };
+
+    /// Identifiers for attributing lightmaps for projection (relative surface directions).
+    enum LightmapSemantic {
+        Side,
+        Down,
+        Up
+    };
+
+public:
+    /**
+     * Construct a new luminous object.
+     */
+    Lumobj();
+    Lumobj(Lumobj const &other);
+
+    /**
+     * To be called to register the commands and variables of this module.
+     */
+    static void consoleRegister();
+
+    static int radiusMax();
+    static float radiusFactor();
+
+    /**
+     * Returns @c true iff a map is attributed to the lumobj.
+     *
+     * @see map(), setMap()
+     */
+    bool hasMap() const;
+
+    /**
+     * Returns the map attributed to the lumobj.
+     *
+     * @see hasMap(), setMap()
+     */
+    de::Map &map() const;
+
+    /**
+     * Change the map attributed to the lumobj.
+     *
+     * @param newMap
+     *
+     * @see hasMap(), map()
+     */
+    void setMap(de::Map *newMap);
+
+    /**
+     * Returns the "in-map" index attributed to the lumobj.
+     *
+     * @see setIndexInMap()
+     */
+    int indexInMap() const;
+
+    /**
+     * Change the "in-map" index attributed to the lumobj.
+     *
+     * @param newIndex  New index to attribute to the lumobj. Use @c NoIndex to
+     *                  clear the attribution (not a valid index).
+     *
+     * @see indexInMap()
+     */
+    void setIndexInMap(int newIndex = NoIndex);
+
+    /**
+     * Translate the origin of the lumobj in map space.
+     *
+     * @param delta  Movement delta on the XY plane.
+     *
+     * @see setOrigin(), origin()
+     */
+    void move(de::Vector3d const &delta);
+
+    /**
+     * Returns the origin of the lumobj in map space.
+     *
+     * @see move(), setOrigin(), bspLeafAtOrigin()
+     */
+    de::Vector3d const &origin() const;
+
+    /**
+     * Change the origin of the lumobj in map space.
+     *
+     * @param newOrigin  New absolute map space origin to apply, in map units.
+     *
+     * @see move(), origin()
+     */
+    Lumobj &setOrigin(de::Vector3d const &newOrigin);
+
+    /**
+     * Returns the map BSP leaf at the origin of the lumobj (result cached).
+     */
+    BspLeaf &bspLeafAtOrigin() const;
+
+    /**
+     * Returns the light color/intensity of the lumobj.
+     *
+     * @see setColor()
+     */
+    de::Vector3f const &color() const;
+
+    /**
+     * Change the light color/intensity of the lumobj.
+     *
+     * @param newColor  New color to apply.
+     *
+     * @see color()
+     */
+    Lumobj &setColor(de::Vector3f const &newColor);
+
+    /**
+     * Returns the radius of the lumobj in map space units.
+     *
+     * @see setRadius()
+     */
+    double radius() const;
+
+    /**
+     * Change the radius of the lumobj in map space units.
+     *
+     * @param newRadius  New radius to apply.
+     *
+     * @see radius()
+     */
+    Lumobj &setRadius(double newRadius);
+
+    /**
+     * Returns the z-offset of the lumobj.
+     *
+     * @see setZOffset()
+     */
+    double zOffset() const;
+
+    /**
+     * Change the z-offset of the lumobj.
+     *
+     * @param newZOffset  New z-offset to apply.
+     *
+     * @see zOffset()
+     */
+    Lumobj &setZOffset(double newZOffset);
+
+    /**
+     * Returns the maximum distance at which the lumobj will be drawn. If no
+     * maximum is configured then @c 0 is returned (default).
+     *
+     * @see setMaxDistance()
+     */
+    double maxDistance() const;
+
+    /**
+     * Change the maximum distance at which the lumobj will drawn. For use with
+     * surface decorations, which, should only de visible within a fairly small
+     * radius around the viewer).
+     *
+     * @param newMaxDistance  New maximum distance to apply.
+     *
+     * @see maxDistance()
+     */
+    Lumobj &setMaxDistance(double newMaxDistance);
+
+    /**
+     * Returns the identified custom lightmap (if any).
+     *
+     * @param semantic  Identifier of the lightmap.
+     *
+     * @see setLightmap()
+     */
+    de::Texture *lightmap(LightmapSemantic semantic) const;
+
+    /**
+     * Change an attributed lightmap to the texture specified.
+     *
+     * @param semantic    Identifier of the lightmap to change.
+     * @param newTexture  Lightmap texture to apply. Use @c 0 to clear.
+     *
+     * @see lightmap()
+     */
+    Lumobj &setLightmap(LightmapSemantic semantic, de::Texture *newTexture);
+
+    /**
+     * Calculate a distance attentuation factor for the lumobj.
+     *
+     * @param distance  Distance between the lumobj and the viewer.
+     *
+     * @return  Attentuation factor [0..1].
+     */
+    float attenuation(double distance) const;
+
+private:
+    DENG2_PRIVATE(d)
 };
 
-struct lumobj_t
-{
-    lumtype_t type;
-    coord_t origin[3]; ///< Position in the map coordinate space.
-    BspLeaf *bspLeaf;
-    coord_t maxDistance;
-    void *decorSource; ///< Source of the light (if any).
-
-    union lumobj_data_u {
-        struct lumobj_omni_s {
-            float color[3];
-            coord_t radius;   ///< Radius for this omnilight source.
-            coord_t zOff;     ///< Offset to center from pos[VZ].
-            DGLuint tex;      ///< Primary lightmap texture.
-            DGLuint floorTex; ///< Floor lightmap (if any).
-            DGLuint ceilTex;  ///< Ceiling lightmap (if any).
-        } omni;
-        struct lumobj_plane_s {
-            float color[3];
-            float intensity;
-            float normal[3];
-        } plane;
-    } data;
-};
-
-// Helper macros for accessing lum data.
-#define LUM_OMNI(x)         (&((x)->data.omni))
-#define LUM_PLANE(x)        (&((x)->data.plane))
-
-/**
- * Dynlight stores a luminous object => surface projection.
- */
-struct dynlight_t
-{
-    DGLuint texture;
-    float s[2], t[2];
-    de::Vector4f color;
-};
-
-DENG_EXTERN_C boolean loInited;
-
-DENG_EXTERN_C uint loMaxLumobjs;
-DENG_EXTERN_C int loMaxRadius;
-DENG_EXTERN_C float loRadiusFactor;
-DENG_EXTERN_C byte rendInfoLums;
-DENG_EXTERN_C int useMobjAutoLights;
-
-/// Register the console commands, variables, etc..., of this module.
-void LO_Register();
-
-// Setup.
-void LO_InitForMap(de::Map &map);
-
-/// Release all system resources acquired by this module for managing.
-void LO_Clear();
-
-/**
- * To be called at the beginning of a world frame (prior to rendering views of the
- * world), to perform necessary initialization within this module.
- */
-void LO_BeginWorldFrame();
-
-/**
- * To be called at the beginning of a render frame to perform necessary initialization
- * within this module.
- */
-void LO_BeginFrame();
-
-/**
- * Create lumobjs for all sector-linked mobjs who want them.
- */
-void LO_AddLuminousMobjs();
-
-/**
- * To be called when lumobjs are disabled to perform necessary bookkeeping within this module.
- */
-void LO_UnlinkMobjLumobjs();
-
-/// @return  The number of active lumobjs for this frame.
-uint LO_GetNumLuminous();
-
-/**
- * Construct a new lumobj and link it into @a bspLeaf.
- * @return  Logical index (name) for referencing the new lumobj.
- */
-uint LO_NewLuminous(lumtype_t type, BspLeaf *bspLeaf);
-
-/// @return  Lumobj associated with logical index @a idx else @c NULL.
-lumobj_t *LO_GetLuminous(uint idx);
-
-/// @return  Logical index associated with lumobj @a lum.
-uint LO_ToIndex(lumobj_t const *lum);
-
-/// @return  @c true if the lumobj is clipped for the viewer.
-bool LO_IsClipped(uint idx, int i);
-
-/// @return  @c true if the lumobj is hidden for the viewer.
-bool LO_IsHidden(uint idx, int i);
-
-/// @return  Approximated distance between the lumobj and the viewer.
-coord_t LO_DistanceToViewer(uint idx, int i);
-
-/**
- * Calculate a distance attentuation factor for a lumobj.
- *
- * @param idx           Logical index associated with the lumobj.
- * @param distance      Distance between the lumobj and the viewer.
- *
- * @return  Attentuation factor [0..1]
- */
-float LO_AttenuationFactor(uint idx, coord_t distance);
-
-/**
- * Returns the texture variant specification for lightmaps.
- */
-texturevariantspecification_t &Rend_LightmapTextureSpec();
-
-/**
- * Clip lumobj, omni lights in the given BspLeaf.
- *
- * @param bspLeaf  BspLeaf in which lights will be clipped.
- */
-void LO_ClipInBspLeaf(BspLeaf &bspLeaf);
-
-/**
- * In the situation where a BSP leaf contains both lumobjs and a polyobj,
- * the lumobjs must be clipped more carefully. Here we check if the line of
- * sight intersects any of the polyobj hedges that face the camera.
- *
- * @param bspLeaf  BspLeaf in which lumobjs will be clipped.
- */
-void LO_ClipInBspLeafBySight(BspLeaf &bspLeaf);
-
-/**
- * Iterate over all luminous objects within the specified origin range, making
- * a callback for each visited. Iteration ends when all selected luminous objects
- * have been visited or a callback returns non-zero.
- *
- * @param bspLeaf       BspLeaf in which the origin resides.
- * @param x             X coordinate of the origin (must be within @a bspLeaf).
- * @param y             Y coordinate of the origin (must be within @a bspLeaf).
- * @param radius        Radius of the range around the origin point.
- * @param callback      Callback to make for each object.
- * @param parameters    Data to pass to the callback.
- *
- * @return  @c 0 iff iteration completed wholly.
- */
-int LO_LumobjsRadiusIterator(BspLeaf *bspLeaf, coord_t x, coord_t y, coord_t radius,
-                             int (*callback) (lumobj_t const *lum, coord_t distance, void *parameters),
-                             void *parameters = 0);
-
-/**
- * @defgroup projectLightFlags  Flags for LO_ProjectToSurface
- * @ingroup flags
- */
-///@{
-#define PLF_SORT_LUMINOSITY_DESC    0x1 ///< Sort by descending luminosity, brightest to dullest.
-#define PLF_NO_PLANE                0x2 ///< Surface is not lit by planar lights.
-#define PLF_TEX_FLOOR               0x4 ///< Prefer the "floor" slot when picking textures.
-#define PLF_TEX_CEILING             0x8 ///< Prefer the "ceiling" slot when picking textures.
-///@}
-
-/**
- * Project all lights affecting the given quad (world space), calculate
- * coordinates (in texture space) then store into a new list of projections.
- *
- * @pre The coordinates of the given quad must be contained wholly within
- * the BSP leaf specified. This is due to an optimization within the lumobj
- * management which separates them according to their position in the BSP.
- *
- * @param flags          @ref projectLightFlags
- * @param bspLeaf        BspLeaf within which the quad wholly resides.
- * @param blendFactor    Multiplied with projection alpha.
- * @param topLeft        Top left coordinates of the surface being projected to.
- * @param bottomRight    Bottom right coordinates of the surface being projected to.
- * @param tangentMatrix  Normalized tangent space matrix of the surface being projected to.
- *
- * @return  Projection list identifier if surface is lit else @c 0.
- */
-uint LO_ProjectToSurface(int flags, BspLeaf *bspLeaf, float blendFactor,
-    de::Vector3d const &topLeft, de::Vector3d const &bottomRight,
-    de::Matrix3f const &tangentMatrix);
-
-/**
- * Iterate over projections in the identified surface-projection list, making
- * a callback for each visited. Iteration ends when all selected projections
- * have been visited or a callback returns non-zero.
- *
- * @param listIdx       Unique identifier of the list to process.
- * @param callback      Callback to make for each visited projection.
- * @param parameters    Passed to the callback.
- *
- * @return  @c 0 iff iteration completed wholly.
- */
-int LO_IterateProjections(uint listIdx, int (*callback) (dynlight_t const *, void *),
-                          void *parameters = 0);
-
-void LO_DrawLumobjs();
-
-#endif // DENG_CLIENT_RENDER_LUMINOUS_H
+#endif // DENG_CLIENT_RENDER_LUMOBJ_H

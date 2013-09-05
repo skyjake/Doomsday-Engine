@@ -23,7 +23,7 @@
 #ifdef __CLIENT__
 
 class BspLeaf;
-struct lumobj_t;
+class Lumobj;
 
 enum objtype_t
 {
@@ -68,7 +68,7 @@ void R_ClearObjlinksForFrame();
 void R_ObjlinkCreate(struct mobj_s &mobj);
 
 /// @copydoc R_ObjlinkCreate()
-void R_ObjlinkCreate(lumobj_t &lumobj);
+void R_ObjlinkCreate(Lumobj &lumobj);
 
 /**
  * To be called at the beginning of a render frame to link all objects
@@ -88,7 +88,7 @@ void R_InitForBspLeaf(BspLeaf &bspLeaf);
  */
 void R_LinkObjToBspLeaf(BspLeaf &bspLeaf, struct mobj_s &mobj);
 /// @copydoc R_LinkObjToBspLeaf()
-void R_LinkObjToBspLeaf(BspLeaf &bspLeaf, lumobj_t &lumobj);
+void R_LinkObjToBspLeaf(BspLeaf &bspLeaf, Lumobj &lumobj);
 
 /**
  * Traverse the list of objects of the specified @a type which have been linked

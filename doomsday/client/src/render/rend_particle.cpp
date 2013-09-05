@@ -19,7 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#include <stdlib.h>
+#include <cstdlib>
 
 #include "de_base.h"
 #include "de_console.h"
@@ -488,11 +488,9 @@ static void setupModelParamsForParticle(rendmodelparams_t* params,
         Rend_ApplyTorchLight(params->ambientColor, params->distance);
 
         collectaffectinglights_params_t lparams; zap(lparams);
-        lparams.origin[VX]   = params->origin[VX];
-        lparams.origin[VY]   = params->origin[VY];
-        lparams.origin[VZ]   = params->origin[VZ];
+        lparams.origin       = Vector3d(params->origin);
         lparams.bspLeaf      = &map.bspLeafAt(Vector2d(origin[VX], origin[VY]));
-        std::memcpy(lparams.ambientColor, params->ambientColor, sizeof(lparams.ambientColor));
+        lparams.ambientColor = Vector3f(params->ambientColor);
 
         params->vLightListIdx = R_CollectAffectingLights(&lparams);
     }

@@ -172,20 +172,6 @@ MaterialSnapshot::Decoration &MaterialSnapshot::decoration(int index) const
     return d->stored.decorations[index];
 }
 
-static DGLuint prepareLightmap(Texture *texture)
-{
-    if(texture)
-    {
-        if(TextureVariant *variant = texture->prepareVariant(Rend_LightmapTextureSpec()))
-        {
-            return variant->glName();
-        }
-        // Dang...
-    }
-    // Prepare the default lightmap instead.
-    return GL_PrepareLSTexture(LST_DYNAMIC);
-}
-
 /**
  * Attempt to locate and prepare a flare texture.
  * Somewhat more complicated than it needs to be due to the fact there
@@ -505,9 +491,10 @@ void MaterialSnapshot::Instance::takeSnapshot()
             }
         }
 
-        decor.tex      = prepareLightmap(lsCur->sides);
-        decor.ceilTex  = prepareLightmap(lsCur->up);
-        decor.floorTex = prepareLightmap(lsCur->down);
+        decor.tex      = lsCur->sides;
+        decor.ceilTex  = lsCur->up;
+        decor.floorTex = lsCur->down;
+
         decor.flareTex = prepareFlaremap(lsCur->flare, lsCur->sysFlareIdx);
     }
 

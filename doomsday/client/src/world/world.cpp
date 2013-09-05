@@ -57,6 +57,7 @@
 #  include "HueCircle"
 
 #  include "render/lumobj.h"
+#  include "render/projector.h"
 #  include "render/r_shadow.h"
 #  include "render/rend_decor.h"
 #  include "render/rend_fakeradio.h"
@@ -646,7 +647,7 @@ DENG2_PIMPL(World)
 
         R_InitObjlinkBlockmapForMap(*map);
         R_InitShadowProjectionListsForMap(*map); // Projected mobj shadows.
-        LO_InitForMap(*map); // Lumobj management.
+        Rend_ProjectorInitForMap(*map);
         VL_InitForMap(*map); // Converted vlights (from lumobjs).
         map->initBias(); // Shadow bias sources and surfaces.
 

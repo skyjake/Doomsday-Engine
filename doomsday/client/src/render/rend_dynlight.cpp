@@ -49,10 +49,10 @@ static void drawDynlight(dynlight_t const &dyn, renderlightprojectionparams_t &p
             WallEdge const &leftEdge = *parm.wall.leftEdge;
             WallEdge const &rightEdge = *parm.wall.rightEdge;
 
-            rtexcoords[1].x = rtexcoords[0].x = dyn.s[0];
-            rtexcoords[1].y = rtexcoords[3].y = dyn.t[0];
-            rtexcoords[3].x = rtexcoords[2].x = dyn.s[1];
-            rtexcoords[2].y = rtexcoords[0].y = dyn.t[1];
+            rtexcoords[1].x = rtexcoords[0].x = dyn.topLeft.x;
+            rtexcoords[1].y = rtexcoords[3].y = dyn.topLeft.y;
+            rtexcoords[3].x = rtexcoords[2].x = dyn.bottomRight.x;
+            rtexcoords[2].y = rtexcoords[0].y = dyn.bottomRight.y;
 
             if(mustSubdivide)
             {
@@ -83,11 +83,11 @@ static void drawDynlight(dynlight_t const &dyn, renderlightprojectionparams_t &p
 
             for(uint i = 0; i < parm.numVertices; ++i)
             {
-                rtexcoords[i].x = ((parm.texBR->x - parm.rvertices[i].x) / width * dyn.s[0]) +
-                    ((parm.rvertices[i].x - parm.texTL->x) / width * dyn.s[1]);
+                rtexcoords[i].x = ((parm.texBR->x - parm.rvertices[i].x) / width * dyn.topLeft.x) +
+                    ((parm.rvertices[i].x - parm.texTL->x) / width * dyn.bottomRight.x);
 
-                rtexcoords[i].y = ((parm.texBR->y - parm.rvertices[i].y) / height * dyn.t[0]) +
-                    ((parm.rvertices[i].y - parm.texTL->y) / height * dyn.t[1]);
+                rtexcoords[i].y = ((parm.texBR->y - parm.rvertices[i].y) / height * dyn.topLeft.y) +
+                    ((parm.rvertices[i].y - parm.texTL->y) / height * dyn.bottomRight.y);
             }
 
             std::memcpy(rvertices, parm.rvertices, sizeof(Vector3f) * parm.numVertices);
@@ -137,10 +137,11 @@ uint Rend_RenderLightProjections(uint listIdx, renderlightprojectionparams_t &p)
 {
     uint numRendered = p.lastIdx;
 
-    LO_IterateProjections(listIdx, drawDynlightWorker, (void *)&p);
+    Rend_IterateProjectionList(listIdx, drawDynlightWorker, (void *)&p);
 
     numRendered = p.lastIdx - numRendered;
     if(RL_IsMTexLights())
         numRendered -= 1;
+
     return numRendered;
 }

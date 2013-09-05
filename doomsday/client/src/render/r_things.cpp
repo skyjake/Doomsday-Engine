@@ -215,7 +215,7 @@ void R_ProjectSprite(mobj_t *mo)
     bool matFlipS, matFlipT;
     Material *mat = SpriteFrame_Material(*sprFrame, mo->angle,
                         R_ViewPointToAngle(mo->origin),
-                        mf != 0, matFlipS, matFlipT);
+                        mf != 0, &matFlipS, &matFlipT);
     if(!mat) return;
 
     // A valid sprite texture in the "Sprites" scheme is required.
@@ -431,11 +431,9 @@ void R_ProjectSprite(mobj_t *mo)
     }
 
     // Do we need to project a flare source too?
-    if(mo->lumIdx)
+    if(mo->lumIdx != Lumobj::NoIndex)
     {
-        Material *mat = SpriteFrame_Material(*sprFrame, mo->angle,
-                            R_ViewPointToAngle(mo->origin), false /*use rotations*/,
-                            matFlipS, matFlipT);
+        Material *mat = SpriteFrame_Material(*sprFrame, mo->angle, R_ViewPointToAngle(mo->origin));
         if(!mat) return;
 
         // A valid sprite texture in the "Sprites" scheme is required.
@@ -450,7 +448,8 @@ void R_ProjectSprite(mobj_t *mo)
             ms.texture(MTU_PRIMARY).generalCase().analysisDataPointer(Texture::BrightPointAnalysis);
         DENG_ASSERT(pl != 0);
 
-        lumobj_t const *lum = LO_GetLuminous(mo->lumIdx);
+        /// @todo fixme: Do not assume the current map.
+        Lumobj const *lum = App_World().map().lumobj(mo->lumIdx);
 
         vissprite_t *vis = R_NewVisSprite();
         vis->type       = VSPR_FLARE;
@@ -460,7 +459,7 @@ void R_ProjectSprite(mobj_t *mo)
         Vector3d center = moPos + visOff;
         vis->origin[VX] = center.x;
         vis->origin[VY] = center.y;
-        vis->origin[VZ] = center.z + LUM_OMNI(lum)->zOff;
+        vis->origin[VZ] = center.z + lum->zOffset();
 
         float flareSize = pl->brightMul;
         // X offset to the flare position.
@@ -485,7 +484,7 @@ void R_ProjectSprite(mobj_t *mo)
             vis->data.flare.size = 8;
 
         // Color is taken from the associated lumobj.
-        V3f_Copy(vis->data.flare.color, LUM_OMNI(lum)->color);
+        V3f_Set(vis->data.flare.color, lum->color().x, lum->color().y, lum->color().z);
 
         vis->data.flare.factor = mo->haloFactors[viewPlayer - ddPlayers];
         vis->data.flare.xOff = xOffset;

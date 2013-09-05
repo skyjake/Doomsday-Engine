@@ -46,7 +46,7 @@ int P_MobjTicker(thinker_t *th, void *context)
         // Set the high bit of halofactor if the light is clipped. This will
         // make P_Ticker diminish the factor to zero. Take the first step here
         // and now, though.
-        if(mo->lumIdx == 0 || LO_IsClipped(mo->lumIdx, i))
+        if(mo->lumIdx == Lumobj::NoIndex || R_ViewerLumobjIsClipped(mo->lumIdx))
         {
             if(*haloFactor & 0x80)
             {
