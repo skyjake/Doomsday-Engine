@@ -424,7 +424,8 @@ void ClientWindow::canvasGLReady(Canvas &canvas)
     d->root.find(LEGACY_WIDGET_NAME)->enable();
 
     // Configure a viewport immediately.
-    glViewport(0, FLIP(0 + canvas.height() - 1), canvas.width(), canvas.height());
+    //glViewport(0, FLIP(0 + canvas.height() - 1), canvas.width(), canvas.height());
+    GLState::top().setViewport(Rectangleui(0, 0, canvas.width(), canvas.height())).apply();
 
     LOG_DEBUG("LegacyWidget enabled");
 

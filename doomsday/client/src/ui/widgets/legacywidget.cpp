@@ -222,7 +222,12 @@ void LegacyWidget::drawContent()
     GL_Init2DState();
 #endif
 
+    GLState::push();
+
     d->draw();
+
+    GLState::considerNativeStateUndefined();
+    GLState::pop();
 
 #if 0
     glPopClientAttrib();
