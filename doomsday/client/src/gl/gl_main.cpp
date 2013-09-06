@@ -569,7 +569,7 @@ void GL_Restore2DState(int step, viewport_t const *port, viewdata_t const *viewD
         GLState::top().setViewport(Rectangleui(currentView.geometry.origin.x,
                                                currentView.geometry.origin.y,
                                                currentView.geometry.size.width,
-                                               currentView.geometry.size.height));
+                                               currentView.geometry.size.height)).apply();
         glMatrixMode(GL_PROJECTION);
         glPopMatrix();
         glMatrixMode(GL_MODELVIEW);
