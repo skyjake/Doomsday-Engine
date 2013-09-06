@@ -49,7 +49,7 @@ public:
      * @param origin       Origin in map space.
      * @param radius       Radius in map space units.
      * @param color        Color/intensity.
-     * @param maxDistance  Maximum distance at which to drawn (default: no-max).
+     * @param maxDistance  Maximum distance at which to be drawn (default: no-max).
      */
     Lumobj(de::Vector3d const &origin = de::Vector3d(),
            double             radius  = 256,
@@ -64,7 +64,14 @@ public:
      */
     static void consoleRegister();
 
+    /**
+     * Returns the current radius scale factor (user configurable).
+     */
     static float radiusFactor();
+
+    /**
+     * Returns the current radius maximum (user configurable).
+     */
     static int radiusMax();
 
     /**

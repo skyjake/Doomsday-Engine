@@ -69,8 +69,7 @@ DENG2_PIMPL_NOREF(Lumobj)
     {}
 };
 
-Lumobj::Lumobj(Vector3d const &origin, double radius, Vector3f const &color,
-    double maxDistance)
+Lumobj::Lumobj(Vector3d const &origin, double radius, Vector3f const &color, double maxDistance)
     : MapObject(), d(new Instance())
 {
     setOrigin     (origin);
