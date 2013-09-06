@@ -63,11 +63,9 @@ DENG_GUI_PIMPL(RendererSettingsDialog)
         fov->setRange(Ranged(30, 160));
 
         area.add(mirrorWeapon = new CVarToggleWidget("rend-model-mirror-hud"));
-        area.add(rendTex      = new CVarChoiceWidget("rend-tex"));
         area.add(multiLight   = new CVarToggleWidget("rend-light-multitex"));
         area.add(multiShiny   = new CVarToggleWidget("rend-model-shiny-multitex"));
         area.add(multiDetail  = new CVarToggleWidget("rend-tex-detail-multitex"));
-        area.add(wireframe    = new CVarChoiceWidget("rend-dev-wireframe"));
 
         // Set up a separate popup for developer settings.
         self.add(devPopup = new PopupWidget);
@@ -77,25 +75,35 @@ DENG_GUI_PIMPL(RendererSettingsDialog)
         devPopup->setContent(container);
         stylist.reset(new DialogContentStylist(*container));
 
+        LabelWidget *boundLabel = LabelWidget::newWithText(tr("Bounds:"), container);
+        LabelWidget *idLabel    = LabelWidget::newWithText(tr("Identifiers:"), container);
+        LabelWidget *texLabel   = LabelWidget::newWithText(tr("Surface Texturing:"), container);
+        LabelWidget *wireLabel  = LabelWidget::newWithText(tr("Draw as Wireframe:"), container);
+
         container->add(bboxMobj   = new CVarToggleWidget("rend-dev-mobj-bbox"));
         container->add(bboxPoly   = new CVarToggleWidget("rend-dev-polyobj-bbox"));
         container->add(thinkerIds = new CVarToggleWidget("rend-dev-thinker-ids"));
         container->add(secIdx     = new CVarToggleWidget("rend-dev-sector-show-indices"));
         container->add(vertIdx    = new CVarToggleWidget("rend-dev-vertex-show-indices"));
         container->add(genIdx     = new CVarToggleWidget("rend-dev-generator-show-indices"));
+        container->add(rendTex    = new CVarChoiceWidget("rend-tex"));
+        container->add(wireframe  = new CVarChoiceWidget("rend-dev-wireframe"));
 
         // Layout for the developer settings.
         Rule const &gap = self.style().rules().rule("gap");
         GridLayout layout(container->rule().left() + gap,
                           container->rule().top()  + gap);
-        layout.setGridSize(1, 0);
+        layout.setGridSize(2, 0);
+        layout.setColumnAlignment(0, ui::AlignRight);
 
-        layout << *bboxMobj
-               << *bboxPoly
-               << *thinkerIds
-               << *secIdx
-               << *vertIdx
-               << *genIdx;
+        layout << *texLabel   << *rendTex
+               << *wireLabel  << *wireframe
+               << *boundLabel << *bboxMobj
+               << Const(0)    << *bboxPoly
+               << *idLabel    << *thinkerIds
+               << Const(0)    << *secIdx
+               << Const(0)    << *vertIdx
+               << Const(0)    << *genIdx;
 
         container->rule().setSize(layout.width()  + gap * 2,
                                   layout.height() + gap * 2);
@@ -150,13 +158,11 @@ RendererSettingsDialog::RendererSettingsDialog(String const &name)
     d->multiShiny->setText(tr("3D Model Shiny Surfaces"));
     d->multiDetail->setText(tr("Surface Details"));
 
-    LabelWidget *texLabel = LabelWidget::newWithText(tr("Surface Texturing:"), &area());
     d->rendTex->items()
             << new ChoiceItem(tr("Materials"),   1)
             << new ChoiceItem(tr("Plain white"), 0)
             << new ChoiceItem(tr("Plain gray"),  2);
 
-    LabelWidget *wireLabel = LabelWidget::newWithText(tr("Draw as Wireframe:"), &area());
     d->wireframe->items()
             << new ChoiceItem(tr("Nothing"), 0)
             << new ChoiceItem(tr("Game world"), 1)
@@ -179,9 +185,7 @@ RendererSettingsDialog::RendererSettingsDialog(String const &name)
            << Const(0)    << *d->mirrorWeapon
            << *multiLabel << *d->multiLight
            << Const(0)    << *d->multiShiny
-           << Const(0)    << *d->multiDetail
-           << *texLabel   << *d->rendTex
-           << *wireLabel  << *d->wireframe;
+           << Const(0)    << *d->multiDetail;
     area().setContentSize(layout.width(), layout.height());
 
     // Attach the appearance button next to the choice.
