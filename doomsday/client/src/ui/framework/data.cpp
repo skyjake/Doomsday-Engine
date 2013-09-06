@@ -1,4 +1,4 @@
-/** @file context.cpp  UI data context.
+/** @file data.cpp  UI data context.
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
