@@ -319,11 +319,11 @@ static inline bool isNullLeaf(BspLeaf const *leaf)
     return !leaf || !leaf->hasWorldVolume();
 }
 
-coord_t Rend_PointDist3D(coord_t const point[3])
+coord_t Rend_PointDist3D(Vector3d const &point)
 {
-    return M_ApproxDistance3(vOrigin[VX] - point[VX],
-                             vOrigin[VZ] - point[VY],
-                             1.2 * (vOrigin[VY] - point[VZ]));
+    return M_ApproxDistance3(vOrigin[VX] - point.x,
+                             vOrigin[VZ] - point.y,
+                             1.2 * (vOrigin[VY] - point.z));
 }
 
 void Rend_Init()

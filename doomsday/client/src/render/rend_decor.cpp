@@ -19,19 +19,15 @@
  * 02110-1301 USA</small>
  */
 
-#include <de/vector1.h>
+#include <de/memoryzone.h>
+#include <de/Vector>
 
-#include <de/math.h>
-
-#include "de_base.h"
+#include "de_platform.h"
 #include "de_console.h"
-#include "de_play.h"
 #include "de_render.h"
 
+#include "dd_main.h" // App_World(), remove me
 #include "def_main.h"
-#include "m_profiler.h"
-
-#include "MaterialVariantSpec"
 
 #include "world/map.h"
 #include "BspLeaf"
@@ -49,38 +45,33 @@ using namespace de;
 /// No decorations are visible beyond this.
 #define MAX_DECOR_DISTANCE      (2048)
 
-BEGIN_PROF_TIMERS()
-  PROF_DECOR_UPDATE,
-  PROF_DECOR_BEGIN_FRAME,
-  PROF_DECOR_ADD_LUMINOUS
-END_PROF_TIMERS()
-
-/// @todo This abstraction is now unnecessary (merge with Surface::DecorSource) -ds
-typedef struct decorsource_s {
-    coord_t origin[3];
+/// @todo This abstraction is now unnecessary -ds
+struct Decoration
+{
+    Vector3d origin;
     coord_t maxDistance;
     Surface const *surface;
     BspLeaf *bspLeaf;
     int lumIdx; // Index of linked lumobj, or Lumobj::NoIndex.
     float fadeMul;
     MaterialSnapshot::Decoration const *decor;
-    struct decorsource_s *next;
-} decorsource_t;
+    Decoration *next;
+};
 
-byte useLightDecorations = true;
+byte useLightDecorations     = true;
 float decorLightBrightFactor = 1;
-float decorLightFadeAngle = .1f;
+float decorLightFadeAngle    = .1f;
 
-static uint sourceCount = 0;
-static decorsource_t *sourceFirst = 0;
-static decorsource_t *sourceCursor = 0;
+static uint sourceCount;
+static Decoration *sourceFirst;
+static Decoration *sourceCursor;
 
 static void plotSourcesForWallSection(LineSide &side, int section);
 static void plotSourcesForPlane(Plane &pln);
 
 void Rend_DecorRegister()
 {
-    C_VAR_BYTE("rend-light-decor",         &useLightDecorations,    0, 0, 1);
+    C_VAR_BYTE ("rend-light-decor",        &useLightDecorations,    0, 0, 1);
     C_VAR_FLOAT("rend-light-decor-angle",  &decorLightFadeAngle,    0, 0, 1);
     C_VAR_FLOAT("rend-light-decor-bright", &decorLightBrightFactor, 0, 0, 10);
 }
@@ -101,7 +92,7 @@ static float checkSectorLightLevel(float lightlevel, float min, float max)
     return de::clamp(0.f, (lightlevel - min) / float(max - min), 1.f);
 }
 
-static void projectSource(decorsource_t const &src)
+static void projectSource(Decoration const &src)
 {
     MaterialSnapshot::Decoration const *decor = src.decor;
 
@@ -121,10 +112,10 @@ static void projectSource(decorsource_t const &src)
     if(src.fadeMul <= 0) return;
 
     // Is the point in range?
-    coord_t distance = Rend_PointDist3D(src.origin);
+    double distance = Rend_PointDist3D(src.origin);
     if(distance > src.maxDistance) return;
 
-    Lumobj *lum = App_World().map().lumobj(src.lumIdx);
+    Lumobj *lum = src.surface->map().lumobj(src.lumIdx);
     if(!lum) return; // Huh?
 
     /*
@@ -133,7 +124,7 @@ static void projectSource(decorsource_t const &src)
     vissprite_t *vis = R_NewVisSprite();
     vis->type = VSPR_FLARE;
 
-    V3d_Copy(vis->origin, src.origin);
+    V3d_Set(vis->origin, src.origin.x, src.origin.y, src.origin.z);
     vis->distance = distance;
 
     vis->data.flare.isDecoration = true;
@@ -161,20 +152,19 @@ static void projectSource(decorsource_t const &src)
     vis->data.flare.mul = 1;
     if(decor->elevation < 2 && decorLightFadeAngle > 0) // Close the surface?
     {
-        float vector[3];
-        V3f_Set(vector, src.origin[VX] - vOrigin[VX],
-                        src.origin[VY] - vOrigin[VZ],
-                        src.origin[VZ] - vOrigin[VY]);
-        V3f_Normalize(vector);
+        Vector3d const eye(vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
+        Vector3d const vecFromOriginToEye = (src.origin - eye).normalize();
 
-        float dot = -(src.surface->normal()[VX] * vector[VX] +
-                      src.surface->normal()[VY] * vector[VY] +
-                      src.surface->normal()[VZ] * vector[VZ]);
-
+        float dot = float( -src.surface->normal().dot(vecFromOriginToEye) );
         if(dot < decorLightFadeAngle / 2)
+        {
             vis->data.flare.mul = 0;
+        }
         else if(dot < 3 * decorLightFadeAngle)
-            vis->data.flare.mul = (dot - decorLightFadeAngle / 2) / (2.5f * decorLightFadeAngle);
+        {
+            vis->data.flare.mul = (dot - decorLightFadeAngle / 2)
+                                / (2.5f * decorLightFadeAngle);
+        }
     }
 }
 
@@ -188,36 +178,36 @@ void Rend_DecorProject()
 {
     if(!useLightDecorations) return;
 
-    for(decorsource_t *src = sourceFirst; src != sourceCursor; src = src->next)
+    for(Decoration *src = sourceFirst; src != sourceCursor; src = src->next)
     {
         projectSource(*src);
     }
 }
 
-static void addLuminousDecoration(decorsource_t &src)
+static void addLuminousDecoration(Decoration &src)
 {
     MaterialSnapshot::Decoration const *decor = src.decor;
 
     // Don't add decorations which emit no color.
-    if(decor->color.x == 0 && decor->color.y == 0 && decor->color.z == 0) return;
+    if(decor->color == Vector3f(0, 0, 0))
+        return;
 
     // Does it pass the sector light limitation?
     float lightLevel = src.bspLeaf->sector().lightLevel();
     Rend_ApplyLightAdaptation(lightLevel);
-    float brightness = checkSectorLightLevel(lightLevel, decor->lightLevels[0], decor->lightLevels[1]);
+    float intensity = checkSectorLightLevel(lightLevel, decor->lightLevels[0], decor->lightLevels[1]);
 
-    if(brightness < .0001f) return;
+    if(intensity < .0001f)
+        return;
 
     // Apply the brightness factor (was calculated using sector lightlevel).
-    src.fadeMul = brightness * decorLightBrightFactor;
+    src.fadeMul = intensity * decorLightBrightFactor;
     src.lumIdx = Lumobj::NoIndex;
 
-    if(src.fadeMul <= 0) return;
+    if(src.fadeMul <= 0)
+        return;
 
-    /// @todo fixme: Do not assume the current map.
-    Map &map = App_World().map();
-
-    Lumobj &lum = map.addLumobj(
+    Lumobj &lum = src.surface->map().addLumobj(
         Lumobj(src.origin, decor->radius, decor->color * src.fadeMul, src.maxDistance));
 
     // Any lightmaps to configure?
@@ -232,32 +222,28 @@ static void addLuminousDecoration(decorsource_t &src)
 
 void Rend_DecorAddLuminous()
 {
-BEGIN_PROF( PROF_DECOR_ADD_LUMINOUS );
-
     if(useLightDecorations && sourceFirst != sourceCursor)
     {
-        decorsource_t *src = sourceFirst;
+        Decoration *src = sourceFirst;
         do
         {
             addLuminousDecoration(*src);
         } while((src = src->next) != sourceCursor);
     }
-
-END_PROF( PROF_DECOR_ADD_LUMINOUS );
 }
 
 /**
  * Create a new decoration source.
  */
-static decorsource_t *allocDecorSource()
+static Decoration *allocDecorSource()
 {
-    decorsource_t *src;
+    Decoration *src;
 
     // If the cursor is NULL, new sources must be allocated.
     if(!sourceCursor)
     {
         // Allocate a new entry.
-        src = (decorsource_t *) Z_Calloc(sizeof(decorsource_t), PU_APPSTATIC, NULL);
+        src = (Decoration *) Z_Calloc(sizeof(Decoration), PU_APPSTATIC, NULL);
 
         if(!sourceFirst)
         {
@@ -274,13 +260,13 @@ static decorsource_t *allocDecorSource()
         // There are old sources to use.
         src = sourceCursor;
 
-        src->fadeMul = 0;
-        src->lumIdx  = Lumobj::NoIndex;
+        src->fadeMul     = 0;
+        src->lumIdx      = Lumobj::NoIndex;
         src->maxDistance = 0;
-        V3d_Set(src->origin, 0, 0, 0);
-        src->bspLeaf = 0;
-        src->surface = 0;
-        src->decor   = 0;
+        src->origin      = Vector3d();
+        src->bspLeaf     = 0;
+        src->surface     = 0;
+        src->decor       = 0;
 
         // Advance the cursor.
         sourceCursor = sourceCursor->next;
@@ -298,99 +284,51 @@ static void newSource(Surface const &suf, Surface::DecorSource const &dec)
     if(sourceCount >= MAX_DECOR_LIGHTS) return;
 
     ++sourceCount;
-    decorsource_t *src = allocDecorSource();
+    Decoration *src = allocDecorSource();
 
     // Fill in the data for a new surface decoration.
-    V3d_Set(src->origin, dec.origin.x, dec.origin.y, dec.origin.z);
+    src->origin      = dec.origin;
     src->maxDistance = MAX_DECOR_DISTANCE;
-    src->bspLeaf = dec.bspLeaf;
-    src->surface = &suf;
-    src->fadeMul = 1;
-    src->decor = dec.decor;
-}
-
-static void plotSourcesForSurface(Surface &suf)
-{
-    if(suf._decorationData.needsUpdate)
-    {
-        suf.clearDecorations();
-
-        switch(suf.parent().type())
-        {
-        case DMU_SIDE: {
-            LineSide &side = suf.parent().as<LineSide>();
-            plotSourcesForWallSection(side, &side.middle() == &suf? LineSide::Middle :
-                                      &side.bottom() == &suf? LineSide::Bottom : LineSide::Top);
-            break; }
-
-        case DMU_PLANE:
-            plotSourcesForPlane(suf.parent().as<Plane>());
-            break;
-
-        default:
-            DENG2_ASSERT(0); // Invalid type.
-        }
-
-        suf._decorationData.needsUpdate = false;
-    }
-
-    if(useLightDecorations)
-    {
-        Surface::DecorSource const *sources = (Surface::DecorSource const *)suf._decorationData.sources;
-        for(int i = 0; i < suf.decorationCount(); ++i)
-        {
-            newSource(suf, sources[i]);
-        }
-    }
-}
-
-static inline void getDecorationSkipPattern(Vector2i const &patternSkip, Vector2i &skip)
-{
-    // Skip values must be at least one.
-    skip.x = de::max(patternSkip.x + 1, 1);
-    skip.y = de::max(patternSkip.y + 1, 1);
+    src->bspLeaf     = dec.bspLeaf;
+    src->surface     = &suf;
+    src->fadeMul     = 1;
+    src->decor       = dec.decor;
 }
 
 static uint generateDecorLights(MaterialSnapshot::Decoration const &decor,
     Vector2i const &patternOffset, Vector2i const &patternSkip, Surface &suf,
     Material &material, Vector3d const &v1, Vector3d const &/*v2*/,
     Vector2d sufDimensions, Vector3d const &delta, int axis,
-    Vector2f const &offset, Sector *containingSector)
+    Vector2f const &matOffset, Sector *containingSector)
 {
-    uint decorCount = 0;
+    // Skip values must be at least one.
+    Vector2i skip = Vector2i(patternSkip.x + 1, patternSkip.y + 1)
+                        .max(Vector2i(1, 1));
 
-    // Skip must be at least one.
-    Vector2i skip;
-    getDecorationSkipPattern(patternSkip, skip);
+    Vector2f repeat = material.dimensions() * skip;
+    if(repeat == Vector2f(0, 0))
+        return 0;
 
-    float patternW = material.width()  * skip.x;
-    float patternH = material.height() * skip.y;
+    Vector3d topLeft = v1 + suf.normal() * decor.elevation;
 
-    if(de::fequal(patternW, 0) && de::fequal(patternH, 0)) return 0;
-
-    Vector3d topLeft = v1 + Vector3d(decor.elevation * suf.normal()[VX],
-                                     decor.elevation * suf.normal()[VY],
-                                     decor.elevation * suf.normal()[VZ]);
-
-    // Determine the leftmost point.
-    float s = de::wrap(decor.pos[0] - material.width() * patternOffset.x + offset.x,
-                       0.f, patternW);
+    float s = de::wrap(decor.pos[0] - material.width() * patternOffset.x + matOffset.x,
+                       0.f, repeat.x);
 
     // Plot decorations.
-    for(; s < sufDimensions.x; s += patternW)
+    uint plotted = 0;
+    for(; s < sufDimensions.x; s += repeat.x)
     {
         // Determine the topmost point for this row.
-        float t = de::wrap(decor.pos[1] - material.height() * patternOffset.y + offset.y,
-                           0.f, patternH);
+        float t = de::wrap(decor.pos[1] - material.height() * patternOffset.y + matOffset.y,
+                           0.f, repeat.y);
 
-        for(; t < sufDimensions.y; t += patternH)
+        for(; t < sufDimensions.y; t += repeat.y)
         {
             float const offS = s / sufDimensions.x;
             float const offT = t / sufDimensions.y;
+            Vector3d offset(offS, axis == VZ? offT : offS, axis == VZ? offS : offT);
 
-            Vector3d origin = topLeft + Vector3d(delta.x * offS,
-                                                 delta.y * (axis == VZ? offT : offS),
-                                                 delta.z * (axis == VZ? offS : offT));
+            Vector3d origin = topLeft + delta * offset;
             if(containingSector)
             {
                 // The point must be inside the correct sector.
@@ -405,12 +343,13 @@ static uint generateDecorLights(MaterialSnapshot::Decoration const &decor,
                 source->origin  = origin;
                 source->bspLeaf = &suf.map().bspLeafAt(origin);
                 source->decor   = &decor;
-                decorCount++;
+
+                plotted += 1;
             }
         }
     }
 
-    return decorCount;
+    return plotted;
 }
 
 /**
@@ -495,31 +434,52 @@ static void plotSourcesForWallSection(LineSide &side, int section)
                              leftEdge.top().origin(), rightEdge.bottom().origin());
 }
 
+static void plotSourcesForSurface(Surface &suf)
+{
+    if(suf._decorationData.needsUpdate)
+    {
+        suf.clearDecorations();
+
+        switch(suf.parent().type())
+        {
+        case DMU_SIDE: {
+            LineSide &side = suf.parent().as<LineSide>();
+            plotSourcesForWallSection(side, &side.middle() == &suf? LineSide::Middle :
+                                      &side.bottom() == &suf? LineSide::Bottom : LineSide::Top);
+            break; }
+
+        case DMU_PLANE:
+            plotSourcesForPlane(suf.parent().as<Plane>());
+            break;
+
+        default:
+            DENG2_ASSERT(0); // Invalid type.
+        }
+
+        suf._decorationData.needsUpdate = false;
+    }
+
+    if(useLightDecorations)
+    {
+        Surface::DecorSource const *sources = (Surface::DecorSource const *)suf._decorationData.sources;
+        for(int i = 0; i < suf.decorationCount(); ++i)
+        {
+            newSource(suf, sources[i]);
+        }
+    }
+}
+
 void Rend_DecorBeginFrame()
 {
-#ifdef DD_PROFILE
-    static int i;
-    if(++i > 40)
-    {
-        i = 0;
-        PRINT_PROF( PROF_DECOR_UPDATE );
-        PRINT_PROF( PROF_DECOR_BEGIN_FRAME );
-        PRINT_PROF( PROF_DECOR_ADD_LUMINOUS );
-    }
-#endif
-
     // This only needs to be done if decorations have been enabled.
     if(!useLightDecorations) return;
 
-BEGIN_PROF( PROF_DECOR_BEGIN_FRAME );
-
     recycleSources();
 
+    /// @todo fixme: do not assume the current map.
     Map &map = App_World().map();
     foreach(Surface *surface, map.decoratedSurfaces())
     {
         plotSourcesForSurface(*surface);
     }
-
-END_PROF( PROF_DECOR_BEGIN_FRAME );
 }

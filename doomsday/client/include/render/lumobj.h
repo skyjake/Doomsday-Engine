@@ -52,9 +52,9 @@ public:
      * @param maxDistance  Maximum distance at which to be drawn (default: no-max).
      */
     Lumobj(de::Vector3d const &origin = de::Vector3d(),
-           double             radius  = 256,
+           double radius              = 256,
            de::Vector3f const &color  = de::Vector3f(1, 1, 1),
-           double        maxDistance  = 0);
+           double maxDistance         = 0);
 
     /// Construct a new luminious object by copying @a other.
     Lumobj(Lumobj const &other);

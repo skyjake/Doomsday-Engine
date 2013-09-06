@@ -107,7 +107,7 @@ void Rend_ModelViewMatrix(bool useAngles = true);
 /**
  * Approximated! The Z axis aspect ratio is corrected.
  */
-coord_t Rend_PointDist3D(coord_t const point[3]);
+double Rend_PointDist3D(de::Vector3d const &point);
 
 void Rend_ApplyTorchLight(float *color3, float distance);
 void Rend_ApplyTorchLight(de::Vector4f &color, float distance);
