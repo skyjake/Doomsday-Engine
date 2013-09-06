@@ -140,6 +140,25 @@ DENG2_PIMPL(LegacyWidget)
         // End any open DGL sequence.
         DGL_End();
     }
+
+    void updateSize()
+    {
+        LOG_AS("LegacyWidget");
+        LOG_TRACE("View resized to ") << self.rule().recti().size().asText();
+
+        // Update viewports.
+        R_SetViewGrid(0, 0);
+        if(UI_IsActive() || !App_GameLoaded())
+        {
+            // Update for busy mode.
+            R_UseViewPort(0);
+        }
+        R_LoadSystemFonts();
+        if(UI_IsActive())
+        {
+            UI_UpdatePageLayout();
+        }
+    }
 };
 
 LegacyWidget::LegacyWidget(String const &name)
@@ -150,27 +169,16 @@ LegacyWidget::LegacyWidget(String const &name)
 
 void LegacyWidget::viewResized()
 {
+    GuiWidget::viewResized();
+
+    /*
     if(BusyMode_Active() || isDisabled() || Sys_IsShuttingDown() ||
        !ClientApp::windowSystem().hasMain())
     {
         return;
     }
 
-    LOG_AS("LegacyWidget");
-    LOG_TRACE("View resized to ") << root().viewSize().asText();
-
-    // Update viewports.
-    R_SetViewGrid(0, 0);
-    if(/*BusyMode_Active() ||*/ UI_IsActive() || !App_GameLoaded())
-    {
-        // Update for busy mode.
-        R_UseViewPort(0);
-    }
-    R_LoadSystemFonts();
-    if(UI_IsActive())
-    {
-        UI_UpdatePageLayout();
-    }
+    d->updateSize();*/
 }
 
 void LegacyWidget::update()
@@ -223,6 +231,13 @@ void LegacyWidget::drawContent()
 #endif
 
     GLState::push();
+
+    Rectanglei pos;
+    if(hasChangedPlace(pos))
+    {
+        // Automatically update if the widget is resized.
+        d->updateSize();
+    }
 
     d->draw();
 
