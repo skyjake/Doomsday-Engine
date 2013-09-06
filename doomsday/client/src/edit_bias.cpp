@@ -521,8 +521,8 @@ static void drawInfoBox(BiasSource *s, int rightX, String const title, float alp
     int th = FR_SingleLineHeight("Info");
     Vector2i size(16 + FR_TextWidth("Color:(0.000, 0.000, 0.000)"), 16 + th * 6);
 
-    Vector2i origin(DENG_WINDOW->width()  - 10 - size.x - rightX,
-                    DENG_WINDOW->height() - 10 - size.y);
+    Vector2i origin(DENG_GAMEVIEW_WIDTH  - 10 - size.x - rightX,
+                    DENG_GAMEVIEW_HEIGHT - 10 - size.y);
 
     ui_color_t color;
     color.red   = s->color().x;
@@ -680,7 +680,7 @@ void SBE_DrawGui()
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
-    glOrtho(0, DENG_WINDOW->width(), DENG_WINDOW->height(), 0, -1, 1);
+    glOrtho(0, DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT, 0, -1, 1);
 
     glEnable(GL_TEXTURE_2D);
 
@@ -697,7 +697,7 @@ void SBE_DrawGui()
 
     Vector2i size(FR_TextWidth(text.toUtf8().constData()) + 16,
                   FR_SingleLineHeight(text.toUtf8().constData()) + 16);
-    int top = DENG_WINDOW->height() - 10 - size.y;
+    int top = DENG_GAMEVIEW_HEIGHT - 10 - size.y;
 
     Vector2i origin(10, top);
     drawBoxBackground(origin, size, 0);
@@ -724,7 +724,7 @@ void SBE_DrawGui()
             drawInfoBox(&hand.grabbed().first()->as<BiasSource>(), x, "Grabbed", opacity);
         }
 
-        drawLightGauge(Vector2i(20, DENG_WINDOW->height()/2 - 255/2));
+        drawLightGauge(Vector2i(20, DENG_GAMEVIEW_HEIGHT/2 - 255/2));
     }
 
     glMatrixMode(GL_PROJECTION);

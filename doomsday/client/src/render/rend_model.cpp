@@ -1009,7 +1009,7 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
     // Determine the suitable LOD.
     if(mdl->info.numLODs > 1 && rend_model_lod != 0)
     {
-        float lodFactor = rend_model_lod * DENG_WINDOW->width() / 640.0f / (Rend_FieldOfView() / 90.0f);
+        float lodFactor = rend_model_lod * DENG_GAMEVIEW_WIDTH / 640.0f / (Rend_FieldOfView() / 90.0f);
         if(!FEQUAL(lodFactor, 0))
             lodFactor = 1 / lodFactor;
 

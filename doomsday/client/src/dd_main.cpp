@@ -762,8 +762,7 @@ void DD_StartTitle(void)
     ddstring_t setupCmds; Str_Init(&setupCmds);
 
     // Configure the predefined fonts (all normal, variable width).
-    char const *fontName = R_ChooseVariableFont(FS_NORMAL, DENG_WINDOW->width(),
-                                                           DENG_WINDOW->height());
+    char const *fontName = R_ChooseVariableFont(FS_NORMAL, DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT);
 
     for(int i = 1; i <= FIPAGE_NUM_PREDEFINED_FONTS; ++i)
     {
@@ -1611,7 +1610,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
 #ifdef __CLIENT__
     char buf[256];
     DD_ComposeMainWindowTitle(buf);
-    DENG_WINDOW->setWindowTitle(buf);
+    ClientWindow::main().setWindowTitle(buf);
 #endif
 
     if(!DD_IsShuttingDown())
@@ -1635,7 +1634,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
 
 #ifdef __CLIENT__
     DD_ComposeMainWindowTitle(buf);
-    DENG_WINDOW->setWindowTitle(buf);
+    ClientWindow::main().setWindowTitle(buf);
 #endif
 
     /**
@@ -1837,7 +1836,7 @@ void DD_FinishInitializationAfterWindowReady()
     {
         char buf[256];
         DD_ComposeMainWindowTitle(buf);
-        DENG_WINDOW->setWindowTitle(buf);
+        ClientWindow::main().setWindowTitle(buf);
     }
 #endif
 
@@ -2458,10 +2457,10 @@ int DD_GetInteger(int ddvalue)
         return I_ShiftDown();
 
     case DD_WINDOW_WIDTH:
-        return DENG_WINDOW->width();
+        return DENG_GAMEVIEW_WIDTH;
 
     case DD_WINDOW_HEIGHT:
-        return DENG_WINDOW->height();
+        return DENG_GAMEVIEW_HEIGHT;
 
     case DD_CURRENT_CLIENT_FINALE_ID:
         return Cl_CurrentFinale();

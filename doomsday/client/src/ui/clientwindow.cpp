@@ -136,7 +136,7 @@ public IGameChangeObserver
         legacy = new LegacyWidget(LEGACY_WIDGET_NAME);
         legacy->rule()
                 .setLeftTop    (root.viewLeft(),  root.viewTop())
-                .setRightBottom(root.viewRight(), root.viewBottom());
+                .setRightBottom(root.viewWidth() / 2, root.viewBottom());
         // Initially the widget is disabled. It will be enabled when the window
         // is visible and ready to be drawn.
         legacy->disable();
@@ -376,6 +376,11 @@ ConsoleWidget &ClientWindow::console()
 NotificationWidget &ClientWindow::notifications()
 {
     return *d->notifications;
+}
+
+LegacyWidget &ClientWindow::game()
+{
+    return *d->legacy;
 }
 
 BusyWidget &ClientWindow::busy()

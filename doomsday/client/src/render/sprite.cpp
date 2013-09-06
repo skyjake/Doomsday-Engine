@@ -126,7 +126,7 @@ static int drawThinkerId(thinker_t *thinker, void *context)
 
     if(alpha > 0)
     {
-        float scale = dist / (DENG_WINDOW->width() / 2);
+        float scale = dist / (DENG_GAMEVIEW_WIDTH / 2);
 
         glMatrixMode(GL_MODELVIEW);
         glPushMatrix();

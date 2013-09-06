@@ -103,7 +103,7 @@ DENG2_PIMPL(LegacyWidget)
                 // Draw any full window game graphics.
                 if(App_GameLoaded() && gx.DrawWindow)
                 {
-                    Size2Raw dimensions(DENG_WINDOW->width(), DENG_WINDOW->height());
+                    Size2Raw dimensions(DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT);
                     gx.DrawWindow(&dimensions);
                 }
             }

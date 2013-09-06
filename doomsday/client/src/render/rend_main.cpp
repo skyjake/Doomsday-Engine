@@ -2669,7 +2669,7 @@ static void drawLabel(Vector3d const &origin, String const &label, float scale, 
 static void drawLabel(Vector3d const &origin, String const &label)
 {
     ddouble distToEye = (Vector3d(vOrigin[VX], vOrigin[VZ], vOrigin[VY]) - origin).length();
-    drawLabel(origin, label, distToEye / (DENG_WINDOW->width() / 2), 1 - distToEye / 2000);
+    drawLabel(origin, label, distToEye / (DENG_GAMEVIEW_WIDTH / 2), 1 - distToEye / 2000);
 }
 
 /*
@@ -2903,7 +2903,7 @@ void Rend_DrawLightModMatrix()
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
-    glOrtho(0, DENG_WINDOW->width(), DENG_WINDOW->height(), 0, -1, 1);
+    glOrtho(0, DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT, 0, -1, 1);
 
     glTranslatef(BORDER, BORDER, 0);
 
@@ -3094,7 +3094,7 @@ static int drawMobjBBox(thinker_t *th, void * /*context*/)
 
     Vector3d eye(vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
 
-    float alpha = 1 - ((Vector3d(eye - Vector3d(mo->origin)).length() / (DENG_WINDOW->width()/2)) / 4);
+    float alpha = 1 - ((Vector3d(eye - Vector3d(mo->origin)).length() / (DENG_GAMEVIEW_WIDTH/2)) / 4);
     if(alpha < .25f)
         alpha = .25f; // Don't make them totally invisible.
 
@@ -3165,7 +3165,7 @@ static void Rend_DrawBoundingBoxes(Map &map)
                          polyobj->aaBox.minY + length,
                          sec.floor().height());
 
-            float alpha = 1 - ((Vector3d(eye - pos).length() / (DENG_WINDOW->width()/2)) / 4);
+            float alpha = 1 - ((Vector3d(eye - pos).length() / (DENG_GAMEVIEW_WIDTH/2)) / 4);
             if(alpha < .25f)
                 alpha = .25f; // Don't make them totally invisible.
 
@@ -3364,7 +3364,7 @@ static void drawSoundOrigin(Vector3d const &origin, char const *label, Vector3d 
 
     if(alpha > 0)
     {
-        float scale = dist / (DENG_WINDOW->width() / 2);
+        float scale = dist / (DENG_GAMEVIEW_WIDTH / 2);
 
         glMatrixMode(GL_MODELVIEW);
         glPushMatrix();
@@ -3522,7 +3522,7 @@ static int drawPolyobjVertexes(Polyobj *po, void * /*context*/)
             if(distToEye < MAX_VERTEX_POINT_DIST)
             {
                 drawLabel(origin, labelForVertex(&vtx),
-                          distToEye / (DENG_WINDOW->width() / 2),
+                          distToEye / (DENG_GAMEVIEW_WIDTH / 2),
                           1 - distToEye / MAX_VERTEX_POINT_DIST);
             }
         }
@@ -3624,7 +3624,7 @@ static void drawVertexes(Map &map)
             if(distToEye < MAX_VERTEX_POINT_DIST)
             {
                 drawLabel(origin, labelForVertex(vertex),
-                                distToEye / (DENG_WINDOW->width() / 2),
+                                distToEye / (DENG_GAMEVIEW_WIDTH / 2),
                                 1 - distToEye / MAX_VERTEX_POINT_DIST);
             }
         }
@@ -3674,7 +3674,7 @@ static void drawSectors(Map &map)
         if(distToEye < MAX_LABEL_DIST)
         {
             drawLabel(origin, labelForCluster(cluster),
-                      distToEye / (DENG_WINDOW->width() / 2),
+                      distToEye / (DENG_GAMEVIEW_WIDTH / 2),
                       1 - distToEye / MAX_LABEL_DIST);
         }
     }
