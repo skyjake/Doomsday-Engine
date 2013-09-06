@@ -129,14 +129,21 @@ void Sector::Cluster::remapVisPlanes()
     // No permanent mapping?
     if(_mappedVisFloor == this && !(_flags & AllSelfRef))
     {
-        // Evaluate the boundary to determine if a dynamic mapping is needed for
-        // one or more planes.
-        bool missingAllBottom = !sector().floorSurface().hasSkyMaskedMaterial();
-        bool missingAllTop    = !sector().ceilingSurface().hasSkyMaskedMaterial();
+        // Dynamic mapping may be needed for one or more planes.
+        Plane const &sectorFloor   = sector().floor();
+        Plane const &sectorCeiling = sector().ceiling();
 
+        // The sector must have open space.
+        if(!(sectorCeiling.height() > sectorFloor.height()))
+            return;
+
+        // The plane must not use a sky-masked material.
+        bool missingAllBottom = !sectorFloor.surface().hasSkyMaskedMaterial();
+        bool missingAllTop    = !sectorCeiling.surface().hasSkyMaskedMaterial();
         if(!missingAllBottom && !missingAllTop)
             return;
 
+        // Evaluate the boundary to determine if mapping is required.
         Cluster *exteriorCluster = 0;
         foreach(BspLeaf *leaf, _bspLeafs)
         {
@@ -180,11 +187,11 @@ void Sector::Cluster::remapVisPlanes()
 
         if(exteriorCluster)
         {
-            if(missingAllBottom && exteriorCluster->visPlane(Floor).height() > sector().floor().height())
+            if(missingAllBottom && exteriorCluster->visPlane(Floor).height() > sectorFloor().height())
             {
                 _mappedVisFloor = exteriorCluster;
             }
-            if(missingAllTop && exteriorCluster->visPlane(Ceiling).height() < sector().ceiling().height())
+            if(missingAllTop && exteriorCluster->visPlane(Ceiling).height() < sectorCeiling().height())
             {
                 _mappedVisCeiling = exteriorCluster;
             }
