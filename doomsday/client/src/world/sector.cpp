@@ -187,11 +187,11 @@ void Sector::Cluster::remapVisPlanes()
 
         if(exteriorCluster)
         {
-            if(missingAllBottom && exteriorCluster->visPlane(Floor).height() > sectorFloor().height())
+            if(missingAllBottom && exteriorCluster->visPlane(Floor).height() > sectorFloor.height())
             {
                 _mappedVisFloor = exteriorCluster;
             }
-            if(missingAllTop && exteriorCluster->visPlane(Ceiling).height() < sectorCeiling().height())
+            if(missingAllTop && exteriorCluster->visPlane(Ceiling).height() < sectorCeiling.height())
             {
                 _mappedVisCeiling = exteriorCluster;
             }
