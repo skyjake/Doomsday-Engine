@@ -364,7 +364,7 @@ void Mobj_GenerateLumobjs(mobj_t *mo)
     {
         if(!de::fequal(def->size, 0))
         {
-            lum->setRadius(def->size);
+            lum->setRadius(de::max(def->size, 32.f));
         }
 
         if(!de::fequal(def->offset[1], 0))

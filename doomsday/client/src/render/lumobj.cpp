@@ -31,8 +31,6 @@ static float radiusScale = 3;   ///< Radius scale factor (cvar).
 
 DENG2_PIMPL_NOREF(Lumobj)
 {
-    Map *map;           ///< Attributed map (if any, not owned).
-    int indexInMap;     ///< Unique index in the map (or NoIndex if not valid).
     Vector3d origin;    ///< Position in map space.
     BspLeaf *bspLeaf;   ///< BSP leaf at @ref origin in the map (not owned).
     double maxDistance; ///< Used when rendering to limit the number drawn lumobjs.
@@ -142,7 +140,7 @@ Lumobj &Lumobj::setRadius(double newRadius)
     newRadius *= 40 * ::radiusScale;
 
     // Normalize.
-    newRadius = de::clamp<double>(32, de::abs(newRadius), ::radiusMax);
+    newRadius = de::clamp<double>(.0001, de::abs(newRadius), ::radiusMax);
 
     if(d->radius != newRadius)
     {
