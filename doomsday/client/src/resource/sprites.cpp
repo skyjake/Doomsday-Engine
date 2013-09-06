@@ -435,13 +435,9 @@ Lumobj *SpriteDef_GenerateLumobj(spritedef_t const &sprDef, int frame)
     if(!pl) throw Error("SpriteDef_GenerateLumobj", QString("Texture \"%1\" has no BrightPointAnalysis")
                                                         .arg(ms.texture(MTU_PRIMARY).generalCase().manifest().composeUri()));
 
-    Lumobj *lum = new Lumobj();
-
-    lum->setRadius (pl->brightMul)
-        .setZOffset(-tex.origin().y - pl->originY * ms.height())
-        .setColor  (pl->color.rgb); // Apply the auto-calculated color.
-
-    return lum;
+    // Apply the auto-calculated color.
+    return &(new Lumobj(Vector3d(), pl->brightMul, pl->color.rgb))
+                    ->setZOffset(-tex.origin().y - pl->originY * ms.height());
 }
 #endif // __CLIENT__
 

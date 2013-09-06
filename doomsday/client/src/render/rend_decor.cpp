@@ -214,19 +214,20 @@ static void addLuminousDecoration(decorsource_t &src)
 
     if(src.fadeMul <= 0) return;
 
-    QScopedPointer<Lumobj> lum(new Lumobj());
+    /// @todo fixme: Do not assume the current map.
+    Map &map = App_World().map();
 
-    lum->setOrigin     (src.origin)
-        .setRadius     (decor->radius)
-        .setColor      (decor->color * src.fadeMul)
-        .setMaxDistance(src.maxDistance)
-        .setLightmap   (Lumobj::Side, decor->tex)
-        .setLightmap   (Lumobj::Down, decor->floorTex)
-        .setLightmap   (Lumobj::Up,   decor->ceilTex);
+    Lumobj &lum = map.addLumobj(
+        Lumobj(src.origin, decor->radius, decor->color * src.fadeMul, src.maxDistance));
 
-    // Insert a copy of the temporary lumobj in the map and remember it's unique
-    // index in the decoration (this'll allow a halo to be rendered).
-    src.lumIdx = App_World().map().addLumobj(*lum).indexInMap();
+    // Any lightmaps to configure?
+    lum.setLightmap(Lumobj::Side, decor->tex)
+       .setLightmap(Lumobj::Down, decor->floorTex)
+       .setLightmap(Lumobj::Up,   decor->ceilTex);
+
+    // Remember it's unique index in the decoration for the purpose of drawing
+    // halos/lens-flares.
+    src.lumIdx = lum.indexInMap();
 }
 
 void Rend_DecorAddLuminous()

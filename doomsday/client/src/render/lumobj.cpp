@@ -48,6 +48,7 @@ DENG2_PIMPL_NOREF(Lumobj)
     Instance()
         : bspLeaf    (0),
           maxDistance(0),
+          color      (Vector3f(1, 1, 1)),
           radius     (256),
           zOffset    (0),
           sideTex    (0),
@@ -68,8 +69,15 @@ DENG2_PIMPL_NOREF(Lumobj)
     {}
 };
 
-Lumobj::Lumobj() : MapObject(), d(new Instance())
-{}
+Lumobj::Lumobj(Vector3d const &origin, double radius, Vector3f const &color,
+    double maxDistance)
+    : MapObject(), d(new Instance())
+{
+    setOrigin     (origin);
+    setRadius     (radius);
+    setColor      (color);
+    setMaxDistance(maxDistance);
+}
 
 Lumobj::Lumobj(Lumobj const &other) : MapObject(), d(new Instance(*other.d))
 {}

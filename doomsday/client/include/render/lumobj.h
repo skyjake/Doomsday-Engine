@@ -35,7 +35,7 @@ class BspLeaf;
 class Lumobj : public de::MapObject
 {
 public:
-    /// Identifiers for attributing lightmaps for projection (relative surface directions).
+    /// Identifiers for attributing lightmaps (used during projection).
     enum LightmapSemantic {
         Side,
         Down,
@@ -45,8 +45,18 @@ public:
 public:
     /**
      * Construct a new luminous object.
+     *
+     * @param origin       Origin in map space.
+     * @param radius       Radius in map space units.
+     * @param color        Color/intensity.
+     * @param maxDistance  Maximum distance at which to drawn (default: no-max).
      */
-    Lumobj();
+    Lumobj(de::Vector3d const &origin = de::Vector3d(),
+           double             radius  = 256,
+           de::Vector3f const &color  = de::Vector3f(1, 1, 1),
+           double        maxDistance  = 0);
+
+    /// Construct a new luminious object by copying @a other.
     Lumobj(Lumobj const &other);
 
     /**
