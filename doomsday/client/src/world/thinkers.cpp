@@ -393,6 +393,7 @@ using namespace de;
 #undef P_MobjForID
 DENG_EXTERN_C struct mobj_s *P_MobjForID(int id)
 {
+    /// @todo fixme: Do not assume the current map.
     if(!App_World().hasMap()) return 0;
     return App_World().map().thinkers().mobjById(id);
 }
@@ -400,6 +401,7 @@ DENG_EXTERN_C struct mobj_s *P_MobjForID(int id)
 #undef Thinker_Init
 void Thinker_Init()
 {
+    /// @todo fixme: Do not assume the current map.
     if(!App_World().hasMap()) return;
     App_World().map().thinkers().initLists(0x1); // Init the public thinker lists.
 }
@@ -407,6 +409,7 @@ void Thinker_Init()
 #undef Thinker_Run
 void Thinker_Run()
 {
+    /// @todo fixme: Do not assume the current map.
     if(!App_World().hasMap()) return;
     App_World().map().thinkers().iterate(NULL, 0x1 | 0x2, runThinker);
 }
@@ -414,6 +417,7 @@ void Thinker_Run()
 #undef Thinker_Add
 void Thinker_Add(thinker_t *th)
 {
+    /// @todo fixme: Do not assume the current map.
     if(!th || !App_World().hasMap()) return;
     App_World().map().thinkers().add(*th);
 }
@@ -421,6 +425,7 @@ void Thinker_Add(thinker_t *th)
 #undef Thinker_Remove
 void Thinker_Remove(thinker_t *th)
 {
+    /// @todo fixme: Do not assume the current map.
     if(!th || !App_World().hasMap()) return;
     App_World().map().thinkers().remove(*th);
 }

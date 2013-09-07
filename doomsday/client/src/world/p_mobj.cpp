@@ -418,7 +418,7 @@ void Mobj_GenerateLumobjs(mobj_t *mo)
 
     // Insert a copy of the temporary lumobj in the map and remember it's unique
     // index in the mobj (this'll allow a halo to be rendered).
-    mo->lumIdx = App_World().map().addLumobj(*lum).indexInMap();
+    mo->lumIdx = mo->bspLeaf->map().addLumobj(*lum).indexInMap();
 }
 
 float Mobj_ShadowStrength(mobj_t *mo)
@@ -436,11 +436,13 @@ float Mobj_ShadowStrength(mobj_t *mo)
        (mo->ddFlags & DDMF_DONTDRAW) || (mo->ddFlags & DDMF_ALWAYSLIT))
         return 0;
 
+    Map &map = mo->bspLeaf->map();
+
     // Sample the ambient light level at the mobj's position.
-    if(useBias && App_World().map().hasLightGrid())
+    if(useBias && map.hasLightGrid())
     {
         // Evaluate in the light grid.
-        ambientLightLevel = App_World().map().lightGrid().evaluateLightLevel(mo->origin);
+        ambientLightLevel = map.lightGrid().evaluateLightLevel(mo->origin);
     }
     else
     {
@@ -451,8 +453,7 @@ float Mobj_ShadowStrength(mobj_t *mo)
     // Sprites have their own shadow strength factor.
     if(!currentModelDefForMobj(mo))
     {
-        Material *mat = R_MaterialForSprite(mo->sprite, mo->frame);
-        if(mat)
+        if(Material *mat = R_MaterialForSprite(mo->sprite, mo->frame))
         {
             // Ensure we've prepared this.
             MaterialSnapshot const &ms = mat->prepare(Rend_SpriteMaterialSpec());
@@ -470,7 +471,7 @@ float Mobj_ShadowStrength(mobj_t *mo)
             if(weightedSpriteAlpha < minSpriteAlphaLimit) return 0;
 
             // Apply this factor.
-            strength *= MIN_OF(1, 0.2f + weightedSpriteAlpha);
+            strength *= de::min(1.f, .2f + weightedSpriteAlpha);
         }
     }
 

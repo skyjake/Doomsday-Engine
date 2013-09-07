@@ -137,6 +137,7 @@ static Generators::ptcgenid_t findIdForNewGenerator(Generators &gens)
  */
 static ptcgen_t *P_NewGenerator()
 {
+    /// @todo fixme: Do not assume the current map.
     Map &map = App_World().map();
     Generators &gens = map.generators();
     Generators::ptcgenid_t id = findIdForNewGenerator(gens);
@@ -178,6 +179,7 @@ void P_PtcInitForMap(Map &map)
     LOG_INFO(String("Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 }
 
+/// @todo fixme: Do not assume the current map.
 void P_MapSpawnPlaneParticleGens()
 {
     if(isDedicated || !useParticles) return;
@@ -207,6 +209,7 @@ static int linkGeneratorParticles(ptcgen_t *gen, void *parameters)
     return false; // Continue iteration.
 }
 
+/// @todo fixme: Do not assume the current map.
 void P_CreatePtcGenLinks()
 {
 #ifdef DD_PROFILE
@@ -707,6 +710,7 @@ static void P_NewParticle(ptcgen_t *gen)
     }
     else
     {
+        /// @todo fixme: Do not assume the current map.
         Vector2d ptOrigin(FIX2FLT(pt->origin[VX]), FIX2FLT(pt->origin[VY]));
         pt->sector = App_World().map().bspLeafAt(ptOrigin).sectorPtr();
     }

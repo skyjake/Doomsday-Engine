@@ -448,8 +448,7 @@ void R_ProjectSprite(mobj_t *mo)
             ms.texture(MTU_PRIMARY).generalCase().analysisDataPointer(Texture::BrightPointAnalysis);
         DENG_ASSERT(pl != 0);
 
-        /// @todo fixme: Do not assume the current map.
-        Lumobj const *lum = App_World().map().lumobj(mo->lumIdx);
+        Lumobj const *lum = mo->bspLeaf->map().lumobj(mo->lumIdx);
 
         vissprite_t *vis = R_NewVisSprite();
         vis->type       = VSPR_FLARE;

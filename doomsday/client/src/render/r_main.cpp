@@ -728,8 +728,9 @@ void R_NewSharpWorld()
 #ifdef __CLIENT__
     if(App_World().hasMap())
     {
-        App_World().map().updateTrackedPlanes();
-        App_World().map().updateScrollingSurfaces();
+        Map &map = App_World().map();
+        map.updateTrackedPlanes();
+        map.updateScrollingSurfaces();
     }
 #endif
 }
@@ -740,14 +741,12 @@ void R_UpdateViewer(int consoleNum)
 
     int const VIEWPOS_MAX_SMOOTHDISTANCE = 172;
 
-    viewdata_t *vd = viewDataOfConsole + consoleNum;
+    viewdata_t *vd   = viewDataOfConsole + consoleNum;
     player_t *player = ddPlayers + consoleNum;
-    viewer_t sharpView, smoothView;
-    float yawRad, pitchRad;
-    uint an;
 
     if(!player->shared.inGame || !player->shared.mo) return;
 
+    viewer_t sharpView;
     R_GetSharpView(&sharpView, player);
 
     if(resetNextViewer ||
@@ -770,6 +769,7 @@ void R_UpdateViewer(int consoleNum)
         // Calculate the smoothed camera position, which is somewhere between
         // the previous and current sharp positions. This introduces a slight
         // delay (max. 1/35 sec) to the movement of the smoothed camera.
+        viewer_t smoothView;
         R_InterpolateViewer(vd->lastSharp, vd->lastSharp + 1, frameTimePos, &smoothView);
 
         // Use the latest view angles known to us, if the interpolation flags
@@ -813,13 +813,14 @@ void R_UpdateViewer(int consoleNum)
         // The Rdx and Rdy should stay constant when moving.
         if(showViewPosDeltas)
         {
-            typedef struct oldpos_s {
+            struct OldPos
+            {
                 double time;
                 float x, y, z;
-            } oldpos_t;
+            };
 
-            static oldpos_t oldpos[DDMAXPLAYERS];
-            oldpos_t *old = &oldpos[viewPlayer - ddPlayers];
+            static OldPos oldpos[DDMAXPLAYERS];
+            OldPos *old = &oldpos[viewPlayer - ddPlayers];
 
             Con_Message("(%i) F=%.3f dt=%-10.3f dx=%-10.3f dy=%-10.3f dz=%-10.3f dx/dt=%-10.3f dy/dt=%-10.3f",
                         //"Rdx=%-10.3f Rdy=%-10.3f\n",
@@ -840,13 +841,13 @@ void R_UpdateViewer(int consoleNum)
     }
 
     // Update viewer.
-    an = vd->current.angle >> ANGLETOFINESHIFT;
+    uint an = vd->current.angle >> ANGLETOFINESHIFT;
     vd->viewSin = FIX2FLT(finesine[an]);
     vd->viewCos = FIX2FLT(fineCosine[an]);
 
     // Calculate the front, up and side unit vectors.
-    yawRad = ((vd->current.angle / (float) ANGLE_MAX) *2) * PI;
-    pitchRad = vd->current.pitch * 85 / 110.f / 180 * PI;
+    float yawRad = ((vd->current.angle / (float) ANGLE_MAX) *2) * PI;
+    float pitchRad = vd->current.pitch * 85 / 110.f / 180 * PI;
 
     // The front vector.
     vd->frontVec[VX] = cos(yawRad) * cos(pitchRad);
@@ -1423,7 +1424,7 @@ void R_ViewerClipLumobj(Lumobj *lum)
         Vector3d eye(vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
 
         if(LineSightTest(eye, origin, -1, 1, LS_PASSLEFT | LS_PASSOVER | LS_PASSUNDER)
-                .trace(App_World().map().bspRoot()))
+                .trace(lum->map().bspRoot()))
         {
             luminousClipped[lumIdx] = 0; // Will have a halo.
         }
@@ -1533,11 +1534,14 @@ void Rend_CacheForMap()
     // Precaching from 100 to 200.
     Con_SetProgress(100);
 
+    /// @todo fixme: Do not assume the current map.
+    Map &map = App_World().map();
+
     if(precacheMapMaterials)
     {
         MaterialVariantSpec const &spec = Rend_MapSurfaceMaterialSpec();
 
-        foreach(Line *line, App_World().map().lines())
+        foreach(Line *line, map.lines())
         for(int i = 0; i < 2; ++i)
         {
             LineSide &side = line->side(i);
@@ -1553,7 +1557,7 @@ void Rend_CacheForMap()
                 App_Materials().cache(side.bottom().material(), spec);
         }
 
-        foreach(Sector *sector, App_World().map().sectors())
+        foreach(Sector *sector, map.sectors())
         {
             // Skip sectors with no line sides as their planes will never be drawn.
             if(!sector->sideCount()) continue;
@@ -1574,9 +1578,9 @@ void Rend_CacheForMap()
         {
             spritedef_t *sprDef = &sprites[i];
 
-            if(App_World().map().thinkers()
-                   .iterate(reinterpret_cast<thinkfunc_t>(gx.MobjThinker), 0x1/*mobjs are public*/,
-                            findSpriteOwner, sprDef))
+            if(map.thinkers().iterate(reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
+                                      0x1/*mobjs are public*/,
+                                      findSpriteOwner, sprDef))
             {
                 // This sprite is used by some state of at least one mobj.
 
@@ -1600,9 +1604,8 @@ void Rend_CacheForMap()
     if(useModels && precacheSkins)
     {
         // All mobjs are public.
-        App_World().map().thinkers()
-            .iterate(reinterpret_cast<thinkfunc_t>(gx.MobjThinker), 0x1,
-                     Models_CacheForMobj);
+        map.thinkers().iterate(reinterpret_cast<thinkfunc_t>(gx.MobjThinker), 0x1,
+                               Models_CacheForMobj);
     }
 }
 

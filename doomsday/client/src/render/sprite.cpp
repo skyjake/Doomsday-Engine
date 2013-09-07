@@ -105,26 +105,21 @@ static int drawThinkerId(thinker_t *thinker, void *context)
 {
     static int const MAX_THINKER_DIST = 2048;
 
-    Point2Raw const labelOrigin = Point2Raw(2, 2);
-    float *eye = (float *) context;
-    float pos[3], dist, alpha;
-    char buf[80];
-    mobj_t *mo;
+    float const *eye = static_cast<float *>(context);
 
     // Skip non-mobjs.
-    if(!Thinker_IsMobjFunc(thinker->function)) return false;
+    if(!Thinker_IsMobjFunc(thinker->function))
+        return false;
 
-    mo = (mobj_t *)thinker;
-    pos[VX] = mo->origin[VX];
-    pos[VY] = mo->origin[VY];
-    pos[VZ] = mo->origin[VZ] + mo->height/2;
+    mobj_t *mo = (mobj_t *)thinker;
+    float pos[3] = { mo->origin[VX], mo->origin[VY], mo->origin[VZ] + mo->height/2 };
 
-    dist = V3f_Distance(pos, eye);
-    alpha = 1.f - MIN_OF(dist, MAX_THINKER_DIST) / MAX_THINKER_DIST;
+    float dist = V3f_Distance(pos, eye);
+    float alpha = 1.f - MIN_OF(dist, MAX_THINKER_DIST) / MAX_THINKER_DIST;
 
     if(alpha > 0)
     {
-        float scale = dist / (DENG_WINDOW->width() / 2);
+        float const scale = dist / (DENG_WINDOW->width() / 2);
 
         glMatrixMode(GL_MODELVIEW);
         glPushMatrix();
@@ -134,7 +129,8 @@ static int drawThinkerId(thinker_t *thinker, void *context)
         glRotatef(vpitch, 1, 0, 0);
         glScalef(-scale, -scale, 1);
 
-        sprintf(buf, "%i", mo->thinker.id);
+        char buf[80]; sprintf(buf, "%i", mo->thinker.id);
+        Point2Raw const labelOrigin = Point2Raw(2, 2);
         UI_TextOutEx(buf, &labelOrigin, UI_Color(UIC_TITLE), alpha);
 
         glMatrixMode(GL_MODELVIEW);
@@ -155,10 +151,7 @@ void Rend_DrawThinkerIds()
     glDisable(GL_DEPTH_TEST);
     glEnable(GL_TEXTURE_2D);
 
-    float eye[3];
-    eye[VX] = vOrigin[VX];
-    eye[VY] = vOrigin[VZ];
-    eye[VZ] = vOrigin[VY];
+    float eye[3] = { vOrigin[VX], vOrigin[VZ], vOrigin[VY] };
 
     App_World().map().thinkers().iterate(NULL, 0x1 | 0x2, drawThinkerId, eye);
 
