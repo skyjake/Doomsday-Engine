@@ -1512,17 +1512,15 @@ static void writeWallSection(HEdge &hedge, int section,
 
                 if(useDynLights)
                 {
-                    Rend_ProjectLumobjs(0 | (doSort? PLF_SORT_LUMINOSITY_DESC : 0),
-                                        leaf, blendFactor,
-                                        topLeft, bottomRight, surface.tangentMatrix(),
+                    Rend_ProjectLumobjs(leaf, topLeft, bottomRight, surface.tangentMatrix(),
+                                        blendFactor, Lumobj::Side, doSort,
                                         parm.lightListIdx);
                 }
 
                 if(useGlowOnWalls)
                 {
-                    Rend_ProjectPlaneGlows(0 | (doSort? PLF_SORT_LUMINOSITY_DESC : 0),
-                                           leaf, blendFactor,
-                                           topLeft, bottomRight, surface.tangentMatrix(),
+                    Rend_ProjectPlaneGlows(leaf, topLeft, bottomRight, surface.tangentMatrix(),
+                                           blendFactor, doSort,
                                            parm.lightListIdx);
                 }
             }
@@ -1534,8 +1532,8 @@ static void writeWallSection(HEdge &hedge, int section,
                 // Glow inversely diminishes shadow strength.
                 float const blendFactor = 1 - parm.glowing;
 
-                Rend_ProjectMobjShadows(leaf, blendFactor,
-                                        topLeft, bottomRight, surface.tangentMatrix(),
+                Rend_ProjectMobjShadows(leaf, topLeft, bottomRight, surface.tangentMatrix(),
+                                        blendFactor,
                                         parm.shadowListIdx);
             }
         }
@@ -1779,12 +1777,11 @@ static void writeLeafPlane(Plane &plane)
             // Dynamic lights?
             if(useDynLights)
             {
-                /// @ref projectLightFlags
+                bool const doSort = false;
                 float const blendFactor = 1;
 
-                Rend_ProjectLumobjs(0 | (plane.isSectorFloor()? PLF_TEX_FLOOR : PLF_TEX_CEILING),
-                                    leaf, blendFactor,
-                                    topLeft, bottomRight, surface.tangentMatrix(),
+                Rend_ProjectLumobjs(leaf, topLeft, bottomRight, surface.tangentMatrix(),
+                                    blendFactor, plane.isSectorFloor()? Lumobj::Down : Lumobj::Up, doSort,
                                     parm.lightListIdx);
             }
 
@@ -1794,8 +1791,8 @@ static void writeLeafPlane(Plane &plane)
                 // Glow inversely diminishes shadow strength.
                 float const blendFactor = 1 - parm.glowing;
 
-                Rend_ProjectMobjShadows(leaf, blendFactor, topLeft, bottomRight,
-                                        surface.tangentMatrix(),
+                Rend_ProjectMobjShadows(leaf, topLeft, bottomRight, surface.tangentMatrix(),
+                                        blendFactor,
                                         parm.shadowListIdx);
             }
         }

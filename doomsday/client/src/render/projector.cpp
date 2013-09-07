@@ -31,6 +31,10 @@
 
 using namespace de;
 
+#define PLF_SORT_LUMINOSITY_DESC    0x1 ///< Sort by descending luminosity, brightest to dullest.
+#define PLF_TEX_FLOOR               0x4 ///< Prefer the "floor" slot when picking textures.
+#define PLF_TEX_CEILING             0x8 ///< Prefer the "ceiling" slot when picking textures.
+
 struct ListNode
 {
     ListNode *next, *nextUsed;
@@ -318,8 +322,9 @@ static int projectLumobjWorker(void *lum, void *context)
     return false; // Continue iteration.
 }
 
-void Rend_ProjectLumobjs(int flags, BspLeaf *bspLeaf, float blendFactor,
-    Vector3d const &topLeft, Vector3d const &bottomRight, Matrix3f const &tangentMatrix,
+void Rend_ProjectLumobjs(BspLeaf *bspLeaf, Vector3d const &topLeft,
+    Vector3d const &bottomRight, Matrix3f const &tangentMatrix,
+    float blendFactor, Lumobj::LightmapSemantic lightmap, bool sortByLuminance,
     uint &listIdx)
 {
     DENG_ASSERT(bspLeaf != 0);
@@ -329,7 +334,10 @@ void Rend_ProjectLumobjs(int flags, BspLeaf *bspLeaf, float blendFactor,
 
     project_params_t parm; zap(parm);
     parm.listIdx       = &listIdx;
-    parm.flags         = flags;
+    parm.flags         = (sortByLuminance? PLF_SORT_LUMINOSITY_DESC : 0)
+                         | (  lightmap == Lumobj::Down? PLF_TEX_FLOOR
+                            :   lightmap == Lumobj::Up? PLF_TEX_CEILING
+                                                      : 0);
     parm.blendFactor   = blendFactor;
     parm.topLeft       = &topLeft;
     parm.bottomRight   = &bottomRight;
@@ -384,9 +392,9 @@ static void projectGlow(Surface &surface, Vector3d const &origin,
                   Rend_LuminousColor(color, intensity), parm.blendFactor);
 }
 
-void Rend_ProjectPlaneGlows(int flags, BspLeaf *bspLeaf, float blendFactor,
-    Vector3d const &topLeft, Vector3d const &bottomRight, Matrix3f const &tangentMatrix,
-    uint &listIdx)
+void Rend_ProjectPlaneGlows(BspLeaf *bspLeaf, Vector3d const &topLeft,
+    Vector3d const &bottomRight, Matrix3f const &tangentMatrix,
+    float blendFactor, bool sortByLuminance, uint &listIdx)
 {
     DENG_ASSERT(bspLeaf != 0);
 
@@ -398,7 +406,7 @@ void Rend_ProjectPlaneGlows(int flags, BspLeaf *bspLeaf, float blendFactor,
 
     project_params_t parm; zap(parm);
     parm.listIdx       = &listIdx;
-    parm.flags         = flags;
+    parm.flags         = sortByLuminance? PLF_SORT_LUMINOSITY_DESC : 0;
     parm.blendFactor   = blendFactor;
     parm.topLeft       = &topLeft;
     parm.bottomRight   = &bottomRight;
@@ -514,9 +522,9 @@ static int projectMobjShadowWorker(void *mobj, void *context)
     return false; // Continue iteration.
 }
 
-void Rend_ProjectMobjShadows(BspLeaf *bspLeaf, float blendFactor,
-    Vector3d const &topLeft, Vector3d const &bottomRight,
-    Matrix3f const &tangentMatrix, uint &listIdx)
+void Rend_ProjectMobjShadows(BspLeaf *bspLeaf, Vector3d const &topLeft,
+    Vector3d const &bottomRight, Matrix3f const &tangentMatrix,
+    float blendFactor, uint &listIdx)
 {
     DENG_ASSERT(bspLeaf != 0);
 
