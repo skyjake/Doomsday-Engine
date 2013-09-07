@@ -24,23 +24,6 @@
 
 #include "WallEdge"
 
-/**
- * This value defines the offset from the shadowed surface applied to
- * shadows rendered with the simple drop-to-highest-floor method.
- * As such shadows are drawn using additional primitives on top of the map
- * surface they touch; a small visual offset is used to avoid z-fighting.
- */
-#define SHADOW_ZOFFSET              (.8f)
-
-/// @return  @c true if rendering of mobj shadows is currently enabled.
-bool Rend_MobjShadowsEnabled();
-
-/**
- * Use the simple, drop-to-highest-floor algorithm for rendering mobj shadows
- * selected for this method. Rendering lists are not used.
- */
-void Rend_RenderMobjShadows();
-
 /// Parameters for Rend_RenderShadowProjections (POD).
 typedef struct {
     uint lastIdx;

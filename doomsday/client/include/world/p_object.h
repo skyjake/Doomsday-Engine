@@ -92,14 +92,6 @@ void Mobj_UnlinkLumobjs(mobj_t *mobj);
 void Mobj_GenerateLumobjs(mobj_t *mobj);
 
 /**
- * Find the highest plane beneath @a mobj onto which it's shadow should be cast.
- * Used with the simple, non-projective method for mobj shadows.
- *
- * @return  Found plane else @c NULL if @a mobj is not presently sector-linked.
- */
-Plane *Mobj_ShadowPlane(mobj_t *mobj);
-
-/**
  * Calculate the strength of the shadow this mobj should cast.
  *
  * @note Implemented using a greatly simplified version of the lighting equation;

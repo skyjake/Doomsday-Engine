@@ -421,28 +421,6 @@ void Mobj_GenerateLumobjs(mobj_t *mo)
     mo->lumIdx = App_World().map().addLumobj(*lum).indexInMap();
 }
 
-static int findShadowPlaneWorker(Sector *sector, void *parameters)
-{
-    Plane **highest = (Plane **)parameters;
-    Plane *compare = &sector->floor();
-    if(compare->visHeight() > (*highest)->visHeight())
-        *highest = compare;
-    return false; // Continue iteration.
-}
-
-Plane *Mobj_ShadowPlane(mobj_t *mo)
-{
-    if(!mo) return 0;
-
-    if(mo->bspLeaf)
-    {
-        Plane *plane = &mo->bspLeaf->visFloor();
-        /// @todo fixme: Use the visual planes of touched sector clusters.
-        P_MobjSectorsIterator(mo, findShadowPlaneWorker, (void *)&plane);
-    }
-    return 0;
-}
-
 float Mobj_ShadowStrength(mobj_t *mo)
 {
     if(!mo) return 0;

@@ -1318,7 +1318,7 @@ static void projectDynamics(Surface const &surface, float glowStrength,
     BspLeaf *leaf = currentBspLeaf;
     DENG_ASSERT(!isNullLeaf(currentBspLeaf));
 
-    if(glowStrength >= 1)
+    if(glowStrength >= 1 || levelFullBright)
         return;
 
     // lights?
@@ -1342,7 +1342,7 @@ static void projectDynamics(Surface const &surface, float glowStrength,
     }
 
     // Shadows?
-    if(!noShadows && Rend_MobjShadowsEnabled())
+    if(!noShadows && useShadows)
     {
         // Glow inversely diminishes shadow strength.
         float const blendFactor = 1 - glowStrength;
@@ -2624,8 +2624,6 @@ void Rend_RenderMap(Map &map)
 
         // Draw the world!
         traverseBspAndDrawLeafs(&map.bspRoot());
-
-        Rend_RenderMobjShadows();
     }
     RL_RenderAllLists();
 
