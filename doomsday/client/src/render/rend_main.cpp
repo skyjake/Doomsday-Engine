@@ -1435,6 +1435,8 @@ static void wallSectionLightLevelDeltas(WallEdge const &leftEdge, WallEdge const
 static void writeWallSection(HEdge &hedge, int section,
     bool *retWroteOpaque = 0, coord_t *retBottomZ = 0, coord_t *retTopZ = 0)
 {
+    BspLeaf *leaf = currentBspLeaf;
+    DENG_ASSERT(!isNullLeaf(leaf));
     DENG_ASSERT(hedge.mapElement() != 0);
 
     LineSideSegment &segment = hedge.mapElement()->as<LineSideSegment>();
@@ -1446,7 +1448,6 @@ static void writeWallSection(HEdge &hedge, int section,
 
     LineSide &side    = segment.lineSide();
     Surface &surface  = side.surface(section);
-    BiasSurface &bsuf = segment;
 
     // Skip nearly transparent surfaces.
     float opacity = surface.opacity();
@@ -1478,142 +1479,134 @@ static void writeWallSection(HEdge &hedge, int section,
         didNearFade = nearFadeOpacity(leftEdge, rightEdge, opacity);
     }
 
-    bool wroteOpaque = false;
-    if(opacity >= .001f)
+    bool const skyMasked       = material->isSkyMasked() && !devRendSkyMode;
+    bool const twoSidedMiddle  = (wallSpec.section == LineSide::Middle && !side.considerOneSided());
+
+    MaterialSnapshot const &ms = material->prepare(Rend_MapSurfaceMaterialSpec());
+
+    Vector2f const materialScale((surface.flags() & DDSUF_MATERIAL_FLIPH)? -1 : 1,
+                                 (surface.flags() & DDSUF_MATERIAL_FLIPV)? -1 : 1);
+
+    rendworldpoly_params_t parm; zap(parm);
+
+    parm.flags               = RPF_DEFAULT | (skyMasked? RPF_SKYMASK : 0);
+    parm.bsuf                = &segment;
+    parm.geomGroup           = wallSpec.section;
+    parm.topLeft             = &leftEdge.top().origin();
+    parm.bottomRight         = &rightEdge.bottom().origin();
+    parm.forceOpaque         = wallSpec.flags.testFlag(WallSpec::ForceOpaque);
+    parm.alpha               = parm.forceOpaque? 1 : opacity;
+
+    // Calculate the light level deltas for this wall section?
+    if(!wallSpec.flags.testFlag(WallSpec::NoLightDeltas))
     {
-        bool const skyMasked       = material->isSkyMasked() && !devRendSkyMode;
-        bool const twoSidedMiddle  = (wallSpec.section == LineSide::Middle && !side.considerOneSided());
-
-        MaterialSnapshot const &ms = material->prepare(Rend_MapSurfaceMaterialSpec());
-
-        Vector2f const materialScale((surface.flags() & DDSUF_MATERIAL_FLIPH)? -1 : 1,
-                                     (surface.flags() & DDSUF_MATERIAL_FLIPV)? -1 : 1);
-
-        Vector2f const &materialOrigin = leftEdge.materialOrigin();
-        Vector3d const &topLeft        = leftEdge.top().origin();
-        Vector3d const &bottomRight    = rightEdge.bottom().origin();
-
-        rendworldpoly_params_t parm; zap(parm);
-
-        parm.flags               = RPF_DEFAULT | (skyMasked? RPF_SKYMASK : 0);
-        parm.forceOpaque         = wallSpec.flags.testFlag(WallSpec::ForceOpaque);
-        parm.alpha               = parm.forceOpaque? 1 : opacity;
-        parm.bsuf                = &bsuf;
-        parm.geomGroup           = wallSpec.section;
-        parm.topLeft             = &topLeft;
-        parm.bottomRight         = &bottomRight;
-
-        // Calculate the light level deltas for this wall section?
-        if(!wallSpec.flags.testFlag(WallSpec::NoLightDeltas))
-        {
-            wallSectionLightLevelDeltas(leftEdge, rightEdge,
-                                        parm.surfaceLightLevelDL, parm.surfaceLightLevelDR);
-        }
-
-        parm.blendMode           = BM_NORMAL;
-        parm.materialOrigin      = &materialOrigin;
-        parm.materialScale       = &materialScale;
-
-        parm.isWall              = true;
-        parm.wall.sectionWidth   = de::abs(Vector2d(rightEdge.origin() - leftEdge.origin()).length());
-        parm.wall.leftEdge       = &leftEdge;
-        parm.wall.rightEdge      = &rightEdge;
-
-        if(!(parm.flags & RPF_SKYMASK))
-        {
-            if(glowFactor > .0001f)
-            {
-                if(material == surface.materialPtr())
-                {
-                    parm.glowing = ms.glowStrength();
-                }
-                else
-                {
-                    Material *actualMaterial =
-                        surface.hasMaterial()? surface.materialPtr()
-                                             : &App_Materials().find(de::Uri("System", Path("missing"))).material();
-
-                    MaterialSnapshot const &ms = actualMaterial->prepare(Rend_MapSurfaceMaterialSpec());
-                    parm.glowing = ms.glowStrength();
-                }
-
-                parm.glowing *= glowFactor; // Global scale factor.
-            }
-
-            projectDynamics(surface, parm.glowing, topLeft, bottomRight,
-                            wallSpec.flags.testFlag(WallSpec::NoDynLights),
-                            wallSpec.flags.testFlag(WallSpec::NoDynShadows),
-                            wallSpec.flags.testFlag(WallSpec::SortDynLights),
-                            parm.lightListIdx, parm.shadowListIdx);
-
-            if(twoSidedMiddle)
-            {
-                parm.blendMode = surface.blendMode();
-                if(parm.blendMode == BM_NORMAL && noSpriteTrans)
-                    parm.blendMode = BM_ZEROALPHA; // "no translucency" mode
-            }
-
-            side.chooseSurfaceTintColors(wallSpec.section, &parm.surfaceColor, &parm.wall.surfaceColor2);
-        }
-
-        /*
-         * Geometry write/drawing begins.
-         */
-
-        if(twoSidedMiddle && side.sectorPtr() != currentBspLeaf->sectorPtr())
-        {
-            // Temporarily modify the draw state.
-            currentSectorLightColor = Rend_SectorLightColor(side.sector());
-            currentSectorLightLevel = side.sector().lightLevel();
-        }
-
-        // Allocate position coordinates.
-        Vector3f *posCoords;
-        if(leftEdge.divisionCount() || rightEdge.divisionCount())
-        {
-            // Two fans plus edge divisions.
-            posCoords = R_AllocRendVertices(3 + leftEdge.divisionCount() +
-                                            3 + rightEdge.divisionCount());
-        }
-        else
-        {
-            // One quad.
-            posCoords = R_AllocRendVertices(4);
-        }
-
-        posCoords[0] =  leftEdge.bottom().origin();
-        posCoords[1] =     leftEdge.top().origin();
-        posCoords[2] = rightEdge.bottom().origin();
-        posCoords[3] =    rightEdge.top().origin();
-
-        // Draw this section.
-        wroteOpaque = renderWorldPoly(posCoords, 4, parm, ms);
-        if(wroteOpaque)
-        {
-            // Render FakeRadio for this section?
-            if(!wallSpec.flags.testFlag(WallSpec::NoFakeRadio) && !skyMasked &&
-               !(parm.glowing > 0) && currentSectorLightLevel > 0)
-            {
-                Rend_RadioUpdateForLineSide(side);
-
-                // Determine the shadow properties.
-                /// @todo Make cvars out of constants.
-                float shadowSize = 2 * (8 + 16 - currentSectorLightLevel * 16);
-                float shadowDark = Rend_RadioCalcShadowDarkness(currentSectorLightLevel);
-
-                Rend_RadioWallSection(leftEdge, rightEdge, shadowDark, shadowSize);
-            }
-        }
-
-        if(twoSidedMiddle && side.sectorPtr() != currentBspLeaf->sectorPtr())
-        {
-            // Undo temporary draw state changes.
-            currentSectorLightColor = Rend_SectorLightColor(currentBspLeaf->sector());
-            currentSectorLightLevel = currentBspLeaf->sector().lightLevel();
-        }
-
-        R_FreeRendVertices(posCoords);
+        wallSectionLightLevelDeltas(leftEdge, rightEdge,
+                                    parm.surfaceLightLevelDL, parm.surfaceLightLevelDR);
     }
+
+    parm.blendMode           = BM_NORMAL;
+    parm.materialOrigin      = &leftEdge.materialOrigin();
+    parm.materialScale       = &materialScale;
+
+    parm.isWall              = true;
+    parm.wall.sectionWidth   = de::abs(Vector2d(rightEdge.origin() - leftEdge.origin()).length());
+    parm.wall.leftEdge       = &leftEdge;
+    parm.wall.rightEdge      = &rightEdge;
+
+    if(!(parm.flags & RPF_SKYMASK))
+    {
+        if(glowFactor > .0001f)
+        {
+            if(material == surface.materialPtr())
+            {
+                parm.glowing = ms.glowStrength();
+            }
+            else
+            {
+                Material *actualMaterial =
+                    surface.hasMaterial()? surface.materialPtr()
+                                         : &App_Materials().find(de::Uri("System", Path("missing"))).material();
+
+                MaterialSnapshot const &ms = actualMaterial->prepare(Rend_MapSurfaceMaterialSpec());
+                parm.glowing = ms.glowStrength();
+            }
+
+            parm.glowing *= glowFactor; // Global scale factor.
+        }
+
+        projectDynamics(surface, parm.glowing, *parm.topLeft, *parm.bottomRight,
+                        wallSpec.flags.testFlag(WallSpec::NoDynLights),
+                        wallSpec.flags.testFlag(WallSpec::NoDynShadows),
+                        wallSpec.flags.testFlag(WallSpec::SortDynLights),
+                        parm.lightListIdx, parm.shadowListIdx);
+
+        if(twoSidedMiddle)
+        {
+            parm.blendMode = surface.blendMode();
+            if(parm.blendMode == BM_NORMAL && noSpriteTrans)
+                parm.blendMode = BM_ZEROALPHA; // "no translucency" mode
+        }
+
+        side.chooseSurfaceTintColors(wallSpec.section, &parm.surfaceColor, &parm.wall.surfaceColor2);
+    }
+
+    /*
+     * Geometry write/drawing begins.
+     */
+
+    if(twoSidedMiddle && side.sectorPtr() != leaf->sectorPtr())
+    {
+        // Temporarily modify the draw state.
+        currentSectorLightColor = Rend_SectorLightColor(side.sector());
+        currentSectorLightLevel = side.sector().lightLevel();
+    }
+
+    // Allocate position coordinates.
+    Vector3f *posCoords;
+    if(leftEdge.divisionCount() || rightEdge.divisionCount())
+    {
+        // Two fans plus edge divisions.
+        posCoords = R_AllocRendVertices(3 + leftEdge.divisionCount() +
+                                        3 + rightEdge.divisionCount());
+    }
+    else
+    {
+        // One quad.
+        posCoords = R_AllocRendVertices(4);
+    }
+
+    posCoords[0] =  leftEdge.bottom().origin();
+    posCoords[1] =     leftEdge.top().origin();
+    posCoords[2] = rightEdge.bottom().origin();
+    posCoords[3] =    rightEdge.top().origin();
+
+    // Draw this section.
+    bool wroteOpaque = renderWorldPoly(posCoords, 4, parm, ms);
+    if(wroteOpaque)
+    {
+        // Render FakeRadio for this section?
+        if(!wallSpec.flags.testFlag(WallSpec::NoFakeRadio) && !skyMasked &&
+           !(parm.glowing > 0) && currentSectorLightLevel > 0)
+        {
+            Rend_RadioUpdateForLineSide(side);
+
+            // Determine the shadow properties.
+            /// @todo Make cvars out of constants.
+            float shadowSize = 2 * (8 + 16 - currentSectorLightLevel * 16);
+            float shadowDark = Rend_RadioCalcShadowDarkness(currentSectorLightLevel);
+
+            Rend_RadioWallSection(leftEdge, rightEdge, shadowDark, shadowSize);
+        }
+    }
+
+    if(twoSidedMiddle && side.sectorPtr() != leaf->sectorPtr())
+    {
+        // Undo temporary draw state changes.
+        currentSectorLightColor = Rend_SectorLightColor(leaf->sector());
+        currentSectorLightLevel = leaf->sector().lightLevel();
+    }
+
+    R_FreeRendVertices(posCoords);
 
     if(retWroteOpaque) *retWroteOpaque = wroteOpaque && !didNearFade;
     if(retBottomZ)     *retBottomZ     = leftEdge.bottom().z();
@@ -1677,15 +1670,12 @@ static void writeLeafPlane(Plane &plane)
     BspLeaf *leaf = currentBspLeaf;
     DENG_ASSERT(!isNullLeaf(leaf));
 
-    Face const &face = leaf->poly();
-
+    Face const &poly = leaf->poly();
     Surface const &surface = plane.surface();
-    Vector3f eyeToSurface(vOrigin[VX] - face.center().x,
-                          vOrigin[VZ] - face.center().y,
-                          vOrigin[VY] - plane.visHeight());
 
-    // Skip planes facing away from the viewer.
-    if(eyeToSurface.dot(surface.normal()) < 0)
+    // Skip nearly transparent surfaces.
+    float opacity = surface.opacity();
+    if(opacity < .001f)
         return;
 
     // Determine which Material to use.
@@ -1702,24 +1692,26 @@ static void writeLeafPlane(Plane &plane)
             return; // Not handled here (drawn with the mask geometry).
     }
 
+    MaterialSnapshot const &ms = material->prepare(Rend_MapSurfaceMaterialSpec());
+
     Vector2f materialOrigin = leaf->worldGridOffset() // Align to the worldwide grid.
                             + surface.visMaterialOrigin();
 
     // Add the Y offset to orient the Y flipped material.
     /// @todo fixme: What is this meant to do? -ds
     if(plane.isSectorCeiling())
-        materialOrigin.y -= face.aaBox().maxY - face.aaBox().minY;
+        materialOrigin.y -= poly.aaBox().maxY - poly.aaBox().minY;
     materialOrigin.y = -materialOrigin.y;
 
-    Vector2f materialScale((surface.flags() & DDSUF_MATERIAL_FLIPH)? -1 : 1,
-                           (surface.flags() & DDSUF_MATERIAL_FLIPV)? -1 : 1);
+    Vector2f const materialScale((surface.flags() & DDSUF_MATERIAL_FLIPH)? -1 : 1,
+                                 (surface.flags() & DDSUF_MATERIAL_FLIPV)? -1 : 1);
 
     // Set the texture origin, Y is flipped for the ceiling.
-    Vector3d topLeft(face.aaBox().minX,
-                     face.aaBox().arvec2[plane.isSectorFloor()? 1 : 0][VY],
+    Vector3d topLeft(poly.aaBox().minX,
+                     poly.aaBox().arvec2[plane.isSectorFloor()? 1 : 0][VY],
                      plane.visHeight());
-    Vector3d bottomRight(face.aaBox().maxX,
-                         face.aaBox().arvec2[plane.isSectorFloor()? 0 : 1][VY],
+    Vector3d bottomRight(poly.aaBox().maxX,
+                         poly.aaBox().arvec2[plane.isSectorFloor()? 0 : 1][VY],
                          plane.visHeight());
 
     rendworldpoly_params_t parm; zap(parm);
@@ -1729,10 +1721,10 @@ static void writeLeafPlane(Plane &plane)
     parm.geomGroup           = plane.indexInSector();
     parm.topLeft             = &topLeft;
     parm.bottomRight         = &bottomRight;
-    parm.surfaceLightLevelDL = parm.surfaceLightLevelDR = 0;
-    parm.surfaceColor        = &surface.tintColor();
     parm.materialOrigin      = &materialOrigin;
     parm.materialScale       = &materialScale;
+    parm.surfaceLightLevelDL = parm.surfaceLightLevelDR = 0;
+    parm.surfaceColor        = &surface.tintColor();
 
     if(material->isSkyMasked())
     {
@@ -1762,14 +1754,6 @@ static void writeLeafPlane(Plane &plane)
         parm.alpha = surface.opacity();
     }
 
-    uint numVertices;
-    Vector3f *rvertices;
-    buildLeafPlaneGeometry(*leaf, (plane.isSectorCeiling())? Anticlockwise : Clockwise,
-                           plane.visHeight(),
-                           &rvertices, &numVertices);
-
-    MaterialSnapshot const &ms = material->prepare(Rend_MapSurfaceMaterialSpec());
-
     if(!(parm.flags & RPF_SKYMASK))
     {
         if(glowFactor > .0001f)
@@ -1780,8 +1764,9 @@ static void writeLeafPlane(Plane &plane)
             }
             else
             {
-                Material *actualMaterial = surface.hasMaterial()? surface.materialPtr()
-                                                                : &App_Materials().find(de::Uri("System", Path("missing"))).material();
+                Material *actualMaterial =
+                    surface.hasMaterial()? surface.materialPtr()
+                                         : &App_Materials().find(de::Uri("System", Path("missing"))).material();
 
                 MaterialSnapshot const &ms = actualMaterial->prepare(Rend_MapSurfaceMaterialSpec());
                 parm.glowing = ms.glowStrength();
@@ -1790,12 +1775,15 @@ static void writeLeafPlane(Plane &plane)
             parm.glowing *= glowFactor; // Global scale factor.
         }
 
-        projectDynamics(surface, parm.glowing, topLeft, bottomRight,
+        projectDynamics(surface, parm.glowing, *parm.topLeft, *parm.bottomRight,
                         false /*do light*/, false /*do shadow*/, false /*don't sort*/,
                         parm.lightListIdx, parm.shadowListIdx);
     }
 
-    // Is this a mapped visual plane?
+    /*
+     * Geometry write/drawing begins.
+     */
+
     if(&plane.sector() != leaf->sectorPtr())
     {
         // Temporarily modify the draw state.
@@ -1803,7 +1791,15 @@ static void writeLeafPlane(Plane &plane)
         currentSectorLightLevel = plane.sector().lightLevel();
     }
 
-    renderWorldPoly(rvertices, numVertices, parm, ms);
+    // Allocate position coordinates.
+    uint numVertices;
+    Vector3f *posCoords;
+    buildLeafPlaneGeometry(*leaf, (plane.isSectorCeiling())? Anticlockwise : Clockwise,
+                           plane.visHeight(),
+                           &posCoords, &numVertices);
+
+    // Draw this section.
+    renderWorldPoly(posCoords, numVertices, parm, ms);
 
     if(&plane.sector() != leaf->sectorPtr())
     {
@@ -1812,22 +1808,22 @@ static void writeLeafPlane(Plane &plane)
         currentSectorLightLevel = leaf->sector().lightLevel();
     }
 
-    R_FreeRendVertices(rvertices);
+    R_FreeRendVertices(posCoords);
 }
 
-static void writeSkyFixStrip(int numElements, Vector3f const *positions,
-    Vector2f const *texcoords, Material *material)
+static void writeSkyFixStrip(int numElements, Vector3f const *posCoords,
+    Vector2f const *texCoords, Material *material)
 {
-    DENG_ASSERT(positions != 0);
+    DENG_ASSERT(posCoords != 0);
 
     int const rendPolyFlags = RPF_DEFAULT | (!devRendSkyMode? RPF_SKYMASK : 0);
     if(!devRendSkyMode)
     {
-        RL_AddPoly(PT_TRIANGLE_STRIP, rendPolyFlags, numElements, positions, 0);
+        RL_AddPoly(PT_TRIANGLE_STRIP, rendPolyFlags, numElements, posCoords, 0);
     }
     else
     {
-        DENG_ASSERT(texcoords != 0);
+        DENG_ASSERT(texCoords != 0);
 
         if(renderTextures != 2)
         {
@@ -1840,17 +1836,17 @@ static void writeSkyFixStrip(int numElements, Vector3f const *positions,
         }
 
         RL_AddPolyWithCoords(PT_TRIANGLE_STRIP, rendPolyFlags, numElements,
-                             positions, NULL, texcoords, NULL);
+                             posCoords, NULL, texCoords, NULL);
     }
 }
 
 static void writeLeafSkyMaskStrips(SkyFixEdge::FixType fixType)
 {
-    BspLeaf *bspLeaf = currentBspLeaf;
-    DENG_ASSERT(!isNullLeaf(bspLeaf));
+    BspLeaf *leaf = currentBspLeaf;
+    DENG_ASSERT(!isNullLeaf(leaf));
 
     // Determine strip generation behavior.
-    ClockDirection direction         = Clockwise;
+    ClockDirection const direction   = Clockwise;
     bool const buildTexCoords        = CPP_BOOL(devRendSkyMode);
     bool const splitOnMaterialChange = (devRendSkyMode && renderTextures != 2);
 
@@ -1869,7 +1865,7 @@ static void writeLeafSkyMaskStrips(SkyFixEdge::FixType fixType)
     int relPlane = fixType == SkyFixEdge::Upper? Sector::Ceiling : Sector::Floor;
 
     // Begin generating geometry.
-    HEdge *base = bspLeaf->poly().hedge();
+    HEdge *base  = leaf->poly().hedge();
     HEdge *hedge = base;
     forever
     {
@@ -1995,8 +1991,8 @@ static coord_t skyPlaneZ(BspLeaf *bspLeaf, int skyCap)
 /// @param skyCap  @ref skyCapFlags.
 static void writeLeafSkyMaskCap(int skyCap)
 {
-    BspLeaf *bspLeaf = currentBspLeaf;
-    DENG_ASSERT(!isNullLeaf(bspLeaf));
+    BspLeaf *leaf = currentBspLeaf;
+    DENG_ASSERT(!isNullLeaf(leaf));
 
     // Caps are unnecessary in sky debug mode (will be drawn as regular planes).
     if(devRendSkyMode) return;
@@ -2004,8 +2000,8 @@ static void writeLeafSkyMaskCap(int skyCap)
 
     Vector3f *verts;
     uint numVerts;
-    buildLeafPlaneGeometry(*bspLeaf, (skyCap & SKYCAP_UPPER)? Anticlockwise : Clockwise,
-                           skyPlaneZ(bspLeaf, skyCap),
+    buildLeafPlaneGeometry(*leaf, (skyCap & SKYCAP_UPPER)? Anticlockwise : Clockwise,
+                           skyPlaneZ(leaf, skyCap),
                            &verts, &numVerts);
 
     RL_AddPoly(PT_FAN, RPF_DEFAULT | RPF_SKYMASK, numVerts, verts, 0);
@@ -2015,14 +2011,14 @@ static void writeLeafSkyMaskCap(int skyCap)
 /// @param skyCap  @ref skyCapFlags
 static void writeLeafSkyMask(int skyCap = SKYCAP_LOWER|SKYCAP_UPPER)
 {
-    BspLeaf *bspLeaf = currentBspLeaf;
-    DENG_ASSERT(!isNullLeaf(bspLeaf));
+    BspLeaf *leaf = currentBspLeaf;
+    DENG_ASSERT(!isNullLeaf(leaf));
 
     // Any work to do?
     // Sky caps are only necessary in sectors with sky-masked planes.
-    if((skyCap & SKYCAP_LOWER) && !bspLeaf->visFloor().surface().hasSkyMaskedMaterial())
+    if((skyCap & SKYCAP_LOWER) && !leaf->visFloor().surface().hasSkyMaskedMaterial())
         skyCap &= ~SKYCAP_LOWER;
-    if((skyCap & SKYCAP_UPPER) && !bspLeaf->visCeiling().surface().hasSkyMaskedMaterial())
+    if((skyCap & SKYCAP_UPPER) && !leaf->visCeiling().surface().hasSkyMaskedMaterial())
         skyCap &= ~SKYCAP_UPPER;
 
     if(!skyCap) return;
@@ -2203,7 +2199,15 @@ static void writeLeafPlanes()
 
     for(int i = 0; i < leaf->sector().planeCount(); ++i)
     {
-        writeLeafPlane(leaf->visPlane(i));
+        Plane &plane = leaf->visPlane(i);
+
+        // Skip planes facing away from the viewer.
+        Vector3d const eye(vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
+        Vector3d const pointOnPlane(leaf->poly().center(), plane.visHeight());
+        if((eye - pointOnPlane).dot(plane.surface().normal()) < 0)
+            continue;
+
+        writeLeafPlane(plane);
     }
 }
 
