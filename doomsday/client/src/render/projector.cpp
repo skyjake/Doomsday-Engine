@@ -261,8 +261,8 @@ struct project_params_t
 /**
  * Project the given lumobj onto the surface.
  *
- * @param lum      Lumobj representing the light being projected.
- * @param parm     project_params_t parameters.
+ * @param lum   Lumobj representing the light being projected.
+ * @param parm  project_params_t parameters.
  */
 static void projectLumobj(Lumobj &lum, project_params_t &parm)
 {
@@ -422,13 +422,10 @@ void Rend_ProjectPlaneGlows(BspLeaf *bspLeaf, Vector3d const &topLeft,
 }
 
 /**
- * Project a mobj shadow onto the surface. If valid and the surface is
- * contacted a new projection node will constructed and returned.
+ * Project a shadow for the given mobj onto the surface.
  *
- * @param mobj  Mobj for which a shadow may be projected.
- * @param parameters  ProjectShadowToSurfaceIterator paramaters.
- *
- * @return  @c 0 = continue iteration.
+ * @param mobj  Mobj to project a shadow for.
+ * @param parm  project_params_t parameters.
  */
 static void projectMobjShadow(mobj_t &mobj, project_params_t &parm)
 {

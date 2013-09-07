@@ -278,7 +278,6 @@ DENG_EXTERN_C void Mobj_OriginSmoothed(mobj_t *mo, coord_t origin[3])
 
 static modeldef_t *currentModelDefForMobj(mobj_t *mo)
 {
-    // If models are being used, use the model's radius.
     if(useModels)
     {
         modeldef_t *mf = 0, *nextmf = 0;
@@ -380,7 +379,7 @@ void Mobj_GenerateLumobjs(mobj_t *mo)
     {
         if(!de::fequal(def->size, 0))
         {
-            lum->setRadius(de::max(def->size, 32.f));
+            lum->setRadius(de::max(def->size, 32.f / (40 * lum->radiusFactor())));
         }
 
         if(!de::fequal(def->offset[1], 0))

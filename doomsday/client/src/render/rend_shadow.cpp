@@ -294,10 +294,9 @@ static void drawShadow(TexProjection const &tp, rendershadowprojectionparams_t &
     R_FreeRendColors(rcolors);
 }
 
-static int drawShadowWorker(TexProjection const *tp, void *parameters)
+static int drawShadowWorker(TexProjection const *tp, void *context)
 {
-    rendershadowprojectionparams_t *p = (rendershadowprojectionparams_t *)parameters;
-    drawShadow(*tp, *p);
+    drawShadow(*tp, *static_cast<rendershadowprojectionparams_t *>(context));
     return 0; // Continue iteration.
 }
 
@@ -309,5 +308,5 @@ void Rend_RenderShadowProjections(uint listIdx, rendershadowprojectionparams_t &
                                GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 
     // Write shadows to the render lists.
-    Rend_IterateProjectionList(listIdx, drawShadowWorker, (void *)&p);
+    Rend_IterateProjectionList(listIdx, drawShadowWorker, &p);
 }
