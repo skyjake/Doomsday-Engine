@@ -1302,6 +1302,56 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
             !(p.alpha < 1 || !ms.isOpaque() || p.blendMode > 0));
 }
 
+static Lumobj::LightmapSemantic lightmapForSurface(Surface const &surface)
+{
+    if(surface.parent().type() == DMU_SIDE) return Lumobj::Side;
+    // Must be a plane then.
+    Plane const &plane = surface.parent().as<Plane>();
+    return plane.isSectorFloor()? Lumobj::Down : Lumobj::Up;
+}
+
+static void projectDynamics(Surface const &surface, float glowStrength,
+    Vector3d const &topLeft, Vector3d const &bottomRight,
+    bool noLights, bool noShadows, bool sortLights,
+    uint &lightListIdx, uint &shadowListIdx)
+{
+    BspLeaf *leaf = currentBspLeaf;
+    DENG_ASSERT(!isNullLeaf(currentBspLeaf));
+
+    if(glowStrength >= 1)
+        return;
+
+    // lights?
+    if(!noLights)
+    {
+        float const blendFactor = 1;
+
+        if(useDynLights)
+        {
+            Rend_ProjectLumobjs(leaf, topLeft, bottomRight, surface.tangentMatrix(),
+                                blendFactor, lightmapForSurface(surface), sortLights,
+                                lightListIdx);
+        }
+
+        if(useGlowOnWalls && surface.parent().type() == DMU_SIDE)
+        {
+            Rend_ProjectPlaneGlows(leaf, topLeft, bottomRight, surface.tangentMatrix(),
+                                   blendFactor, sortLights,
+                                   lightListIdx);
+        }
+    }
+
+    // Shadows?
+    if(!noShadows && Rend_MobjShadowsEnabled())
+    {
+        // Glow inversely diminishes shadow strength.
+        float const blendFactor = 1 - glowStrength;
+
+        Rend_ProjectMobjShadows(leaf, topLeft, bottomRight, surface.tangentMatrix(),
+                                blendFactor, shadowListIdx);
+    }
+}
+
 /**
  * Fade the specified @a opacity value to fully transparent the closer the view
  * player is to the geometry.
@@ -1385,8 +1435,6 @@ static void wallSectionLightLevelDeltas(WallEdge const &leftEdge, WallEdge const
 static void writeWallSection(HEdge &hedge, int section,
     bool *retWroteOpaque = 0, coord_t *retBottomZ = 0, coord_t *retTopZ = 0)
 {
-    BspLeaf *leaf = currentBspLeaf;
-    DENG_ASSERT(!isNullLeaf(currentBspLeaf));
     DENG_ASSERT(hedge.mapElement() != 0);
 
     LineSideSegment &segment = hedge.mapElement()->as<LineSideSegment>();
@@ -1471,15 +1519,8 @@ static void writeWallSection(HEdge &hedge, int section,
         parm.wall.leftEdge       = &leftEdge;
         parm.wall.rightEdge      = &rightEdge;
 
-        if(!skyMasked)
+        if(!(parm.flags & RPF_SKYMASK))
         {
-            if(twoSidedMiddle)
-            {
-                parm.blendMode = surface.blendMode();
-                if(parm.blendMode == BM_NORMAL && noSpriteTrans)
-                    parm.blendMode = BM_ZEROALPHA; // "no translucency" mode
-            }
-
             if(glowFactor > .0001f)
             {
                 if(material == surface.materialPtr())
@@ -1499,43 +1540,20 @@ static void writeWallSection(HEdge &hedge, int section,
                 parm.glowing *= glowFactor; // Global scale factor.
             }
 
+            projectDynamics(surface, parm.glowing, topLeft, bottomRight,
+                            wallSpec.flags.testFlag(WallSpec::NoDynLights),
+                            wallSpec.flags.testFlag(WallSpec::NoDynShadows),
+                            wallSpec.flags.testFlag(WallSpec::SortDynLights),
+                            parm.lightListIdx, parm.shadowListIdx);
+
+            if(twoSidedMiddle)
+            {
+                parm.blendMode = surface.blendMode();
+                if(parm.blendMode == BM_NORMAL && noSpriteTrans)
+                    parm.blendMode = BM_ZEROALPHA; // "no translucency" mode
+            }
+
             side.chooseSurfaceTintColors(wallSpec.section, &parm.surfaceColor, &parm.wall.surfaceColor2);
-        }
-
-        if(!skyMasked && parm.glowing < 1)
-        {
-            // Project lights?
-            if(!wallSpec.flags.testFlag(WallSpec::NoDynLights))
-            {
-                bool const doSort = wallSpec.flags.testFlag(WallSpec::SortDynLights);
-                float const blendFactor = 1;
-
-                if(useDynLights)
-                {
-                    Rend_ProjectLumobjs(leaf, topLeft, bottomRight, surface.tangentMatrix(),
-                                        blendFactor, Lumobj::Side, doSort,
-                                        parm.lightListIdx);
-                }
-
-                if(useGlowOnWalls)
-                {
-                    Rend_ProjectPlaneGlows(leaf, topLeft, bottomRight, surface.tangentMatrix(),
-                                           blendFactor, doSort,
-                                           parm.lightListIdx);
-                }
-            }
-
-            // Project dynamic shadows?
-            if(!wallSpec.flags.testFlag(WallSpec::NoDynShadows)
-               && Rend_MobjShadowsEnabled())
-            {
-                // Glow inversely diminishes shadow strength.
-                float const blendFactor = 1 - parm.glowing;
-
-                Rend_ProjectMobjShadows(leaf, topLeft, bottomRight, surface.tangentMatrix(),
-                                        blendFactor,
-                                        parm.shadowListIdx);
-            }
         }
 
         /*
@@ -1772,30 +1790,9 @@ static void writeLeafPlane(Plane &plane)
             parm.glowing *= glowFactor; // Global scale factor.
         }
 
-        if(parm.glowing < 1)
-        {
-            // Dynamic lights?
-            if(useDynLights)
-            {
-                bool const doSort = false;
-                float const blendFactor = 1;
-
-                Rend_ProjectLumobjs(leaf, topLeft, bottomRight, surface.tangentMatrix(),
-                                    blendFactor, plane.isSectorFloor()? Lumobj::Down : Lumobj::Up, doSort,
-                                    parm.lightListIdx);
-            }
-
-            // Mobj shadows?
-            if(plane.isSectorFloor() && Rend_MobjShadowsEnabled())
-            {
-                // Glow inversely diminishes shadow strength.
-                float const blendFactor = 1 - parm.glowing;
-
-                Rend_ProjectMobjShadows(leaf, topLeft, bottomRight, surface.tangentMatrix(),
-                                        blendFactor,
-                                        parm.shadowListIdx);
-            }
-        }
+        projectDynamics(surface, parm.glowing, topLeft, bottomRight,
+                        false /*do light*/, false /*do shadow*/, false /*don't sort*/,
+                        parm.lightListIdx, parm.shadowListIdx);
     }
 
     // Is this a mapped visual plane?
