@@ -2252,21 +2252,24 @@ void Sv_NewSideDeltas(cregister_t *reg, boolean doUpdate, pool_t **targets)
 {
     static uint numShifts = 2, shift = 0;
 
+    /// @todo fixme: Do not assume the current map.
+    Map &map = App_World().map();
+
     // When comparing against an initial register, always compare all
     // sides (since the comparing is only done once, not continuously).
     uint start, end;
     if(reg->isInitial)
     {
         start = 0;
-        end = App_World().map().sideCount();
+        end = map.sideCount();
     }
     else
     {
         // Because there are so many sides in a typical map, the number
         // of compared sides soon accumulates to millions. To reduce the
         // load, we'll check only a portion of all sides for a frame.
-        start = shift * App_World().map().sideCount() / numShifts;
-        end = ++shift * App_World().map().sideCount() / numShifts;
+        start = shift * map.sideCount() / numShifts;
+        end = ++shift * map.sideCount() / numShifts;
         shift %= numShifts;
     }
 
@@ -2287,6 +2290,7 @@ void Sv_NewPolyDeltas(cregister_t *reg, boolean doUpdate, pool_t **targets)
 {
     polydelta_t delta;
 
+    /// @todo fixme: Do not assume the current map.
     for(int i = 0; i < App_World().map().polyobjCount(); ++i)
     {
         if(Sv_RegisterComparePoly(reg, i, &delta))
