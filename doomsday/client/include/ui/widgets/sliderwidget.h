@@ -35,11 +35,14 @@ class SliderWidget : public GuiWidget
 public:
     SliderWidget(de::String const &name = "");
 
-    void setRange(de::Rangei const &intRange, int step = 0);
+    void setRange(de::Rangei const &intRange, int step = 1);
     void setRange(de::Rangef const &floatRange, float step = 0);
     void setRange(de::Ranged const &doubleRange, de::ddouble step = 0);
     void setPrecision(int precisionDecimals);
     void setValue(de::ddouble value);
+
+    void setMinLabel(de::String const &labelText);
+    void setMaxLabel(de::String const &labelText);
 
     /**
      * Displayed values are multiplied by this factor when displayed.

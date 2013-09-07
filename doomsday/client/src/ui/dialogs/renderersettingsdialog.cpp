@@ -20,6 +20,8 @@
 #include "ui/widgets/cvarsliderwidget.h"
 #include "ui/widgets/cvartogglewidget.h"
 #include "ui/widgets/cvarchoicewidget.h"
+#include "ui/widgets/taskbarwidget.h"
+#include "ui/editors/rendererappearanceeditor.h"
 #include "GridLayout"
 #include "SignalAction"
 #include "DialogContentStylist"
@@ -35,15 +37,17 @@ DENG_GUI_PIMPL(RendererSettingsDialog)
     ButtonWidget *appearButton;
     CVarSliderWidget *fov;
     CVarToggleWidget *mirrorWeapon;
+    CVarToggleWidget *precacheModels;
+    CVarToggleWidget *precacheSprites;
     CVarToggleWidget *multiLight;
     CVarToggleWidget *multiShiny;
     CVarToggleWidget *multiDetail;
-    CVarChoiceWidget *rendTex;
-    CVarChoiceWidget *wireframe;
 
     // Developer settings.
     PopupWidget *devPopup;
     QScopedPointer<DialogContentStylist> stylist;
+    CVarChoiceWidget *rendTex;
+    CVarChoiceWidget *wireframe;
     CVarToggleWidget *bboxMobj;
     CVarToggleWidget *bboxPoly;
     CVarToggleWidget *thinkerIds;
@@ -62,10 +66,12 @@ DENG_GUI_PIMPL(RendererSettingsDialog)
         fov->setPrecision(0);
         fov->setRange(Ranged(30, 160));
 
-        area.add(mirrorWeapon = new CVarToggleWidget("rend-model-mirror-hud"));
-        area.add(multiLight   = new CVarToggleWidget("rend-light-multitex"));
-        area.add(multiShiny   = new CVarToggleWidget("rend-model-shiny-multitex"));
-        area.add(multiDetail  = new CVarToggleWidget("rend-tex-detail-multitex"));
+        area.add(mirrorWeapon    = new CVarToggleWidget("rend-model-mirror-hud"));
+        area.add(precacheModels  = new CVarToggleWidget("rend-model-precache"));
+        area.add(precacheSprites = new CVarToggleWidget("rend-sprite-precache"));
+        area.add(multiLight      = new CVarToggleWidget("rend-light-multitex"));
+        area.add(multiShiny      = new CVarToggleWidget("rend-model-shiny-multitex"));
+        area.add(multiDetail     = new CVarToggleWidget("rend-tex-detail-multitex"));
 
         // Set up a separate popup for developer settings.
         self.add(devPopup = new PopupWidget);
@@ -116,15 +122,7 @@ DENG_GUI_PIMPL(RendererSettingsDialog)
 
         foreach(Widget *child, self.area().childWidgets() + devPopup->content().childWidgets())
         {
-            if(CVarToggleWidget *w = child->maybeAs<CVarToggleWidget>())
-            {
-                w->updateFromCVar();
-            }
-            if(CVarChoiceWidget *w = child->maybeAs<CVarChoiceWidget>())
-            {
-                w->updateFromCVar();
-            }
-            if(CVarSliderWidget *w = child->maybeAs<CVarSliderWidget>())
+            if(ICVarWidget *w = child->maybeAs<ICVarWidget>())
             {
                 w->updateFromCVar();
             }
@@ -151,7 +149,11 @@ RendererSettingsDialog::RendererSettingsDialog(String const &name)
 
     LabelWidget *fovLabel = LabelWidget::newWithText(tr("Field of View:"), &area());
 
-    d->mirrorWeapon->setText(tr("Mirror Player Weapon Model"));
+    d->mirrorWeapon->setText(tr("Mirror Player Weapon Model"));   
+
+    LabelWidget *precacheLabel = LabelWidget::newWithText(tr("Precaching:"), &area());
+    d->precacheModels->setText(tr("3D Models"));
+    d->precacheSprites->setText(tr("Sprites " _E(l) "(slow)"));
 
     LabelWidget *multiLabel = LabelWidget::newWithText(tr("Multitexturing:"), &area());
     d->multiLight->setText(tr("Dynamic Lights"));
@@ -180,12 +182,14 @@ RendererSettingsDialog::RendererSettingsDialog(String const &name)
     GridLayout layout(area().contentRule().left(), area().contentRule().top());
     layout.setGridSize(2, 0);
     layout.setColumnAlignment(0, ui::AlignRight);
-    layout << *appearLabel << *d->appear
-           << *fovLabel   << *d->fov
-           << Const(0)    << *d->mirrorWeapon
-           << *multiLabel << *d->multiLight
-           << Const(0)    << *d->multiShiny
-           << Const(0)    << *d->multiDetail;
+    layout << *appearLabel   << *d->appear
+           << *fovLabel      << *d->fov
+           << Const(0)       << *d->mirrorWeapon
+           << *precacheLabel << *d->precacheModels
+           << Const(0)       << *d->precacheSprites
+           << *multiLabel    << *d->multiLight
+           << Const(0)       << *d->multiShiny
+           << Const(0)       << *d->multiDetail;
     area().setContentSize(layout.width(), layout.height());
 
     // Attach the appearance button next to the choice.
@@ -221,7 +225,7 @@ void RendererSettingsDialog::showAppearanceMenu()
     PopupMenuWidget *popup = new PopupMenuWidget;
     popup->set(popup->background().withSolidFillOpacity(1));
     popup->menu().items()
-            << new ActionItem(tr("Edit"))
+            << new ActionItem(tr("Edit"), new SignalAction(this, SLOT(showEditor())))
             << new ActionItem(tr("Rename..."))
             << new Item(Item::Separator)
             << new ActionItem(tr("Add Duplicate..."))
@@ -235,7 +239,7 @@ void RendererSettingsDialog::showAppearanceMenu()
     if(d->appear->selectedItem().data().toString().isEmpty())
     {
         // Default profile.
-        org.itemWidget(0)->disable();
+        //org.itemWidget(0)->disable();
         org.itemWidget(1)->disable();
         org.itemWidget(5)->disable();
     }
@@ -268,4 +272,12 @@ void RendererSettingsDialog::duplicateProfile()
 void RendererSettingsDialog::deleteProfile()
 {
 
+}
+
+void RendererSettingsDialog::showEditor()
+{
+    RendererAppearanceEditor *editor = new RendererAppearanceEditor;
+    editor->open();
+
+    ClientWindow::main().taskBar().closeConfigMenu();
 }

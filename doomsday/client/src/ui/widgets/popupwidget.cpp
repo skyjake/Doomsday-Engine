@@ -116,9 +116,6 @@ PopupWidget::PopupWidget(String const &name) : PanelWidget(name), d(new Instance
 {
     setOpeningDirection(ui::Up);
 
-    // Initially the popup is hidden.
-    hide();
-
     /// @todo Move these to an updateStyle.
     Style const &st = style();
     set(Background(st.colors().colorf("background"),
@@ -274,9 +271,13 @@ void PopupWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
     }
     else if(dir == ui::Left)
     {
-        v.pos = anchorPos; tri << v;
-        v.pos = anchorPos + Vector2i(-marker, marker); tri << v;
-        v.pos = anchorPos + Vector2i(-marker, -marker); tri << v;
+        // The anchor may still get clamped out of sight.
+        if(anchorPos.x > rule().right().valuei())
+        {
+            v.pos = anchorPos; tri << v;
+            v.pos = anchorPos + Vector2i(-marker, marker); tri << v;
+            v.pos = anchorPos + Vector2i(-marker, -marker); tri << v;
+        }
     }
     else if(dir == ui::Right)
     {

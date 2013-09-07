@@ -230,6 +230,7 @@ public:
     };
 
     NotifyArgs::Result notifyTree(NotifyArgs const &args);
+    NotifyArgs::Result notifySelfAndTree(NotifyArgs const &args);
     void notifyTreeReversed(NotifyArgs const &args);
     bool dispatchEvent(Event const &event, bool (Widget::*memberFunc)(Event const &));
 

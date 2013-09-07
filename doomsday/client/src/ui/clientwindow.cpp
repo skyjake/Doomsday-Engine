@@ -73,6 +73,7 @@ public IGameChangeObserver
     LabelWidget *background;
     GameSelectionWidget *games;
     BusyWidget *busy;
+    GuiWidget *sidebar;
 
     GuiRootWidget busyRoot;
 
@@ -92,6 +93,7 @@ public IGameChangeObserver
           colorAdjust(0),
           background(0),
           games(0),
+          sidebar(0),
           busyRoot(thisPublic),
           fpsCounter(0),
           oldFps(0)
@@ -136,7 +138,7 @@ public IGameChangeObserver
         legacy = new LegacyWidget(LEGACY_WIDGET_NAME);
         legacy->rule()
                 .setLeftTop    (root.viewLeft(),  root.viewTop())
-                .setRightBottom(root.viewWidth() / 2, root.viewBottom());
+                .setRightBottom(root.viewWidth(), root.viewBottom());
         // Initially the widget is disabled. It will be enabled when the window
         // is visible and ready to be drawn.
         legacy->disable();
@@ -156,7 +158,7 @@ public IGameChangeObserver
         notifications = new NotificationWidget;
         notifications->rule()
                 .setInput(Rule::Top,   root.viewTop()   + style.rules().rule("gap") - notifications->shift())
-                .setInput(Rule::Right, root.viewRight() - style.rules().rule("gap"));
+                .setInput(Rule::Right, legacy->rule().right() - style.rules().rule("gap"));
         root.add(notifications);
 
         // FPS counter for the notification area.
@@ -339,6 +341,50 @@ public IGameChangeObserver
             fpsCounter->setText(QString("%1 " _E(l) + tr("FPS")).arg(fps, 0, 'f', 1));
             oldFps = fps;
         }
+    }
+
+    void installSidebar(SidebarLocation location, GuiWidget *widget)
+    {
+        // Get rid of the old sidebar.
+        if(sidebar)
+        {
+            uninstallSidebar(location);
+        }
+        if(!widget) return;
+
+        DENG2_ASSERT(sidebar == NULL);
+
+        // Attach the widget.
+        switch(location)
+        {
+        case RightEdge:
+            widget->rule()
+                    .setInput(Rule::Top,    root.viewTop())
+                    .setInput(Rule::Right,  root.viewRight())
+                    .setInput(Rule::Bottom, taskBar->rule().top());
+            legacy->rule()
+                    .setInput(Rule::Right,  widget->rule().left());
+            break;
+        }
+
+        sidebar = widget;
+        root.insertBefore(sidebar, *notifications);
+    }
+
+    void uninstallSidebar(SidebarLocation location)
+    {
+        DENG2_ASSERT(sidebar != NULL);
+
+        switch(location)
+        {
+        case RightEdge:
+            legacy->rule().setInput(Rule::Right, root.viewRight());
+            break;
+        }
+
+        root.remove(*sidebar);
+        sidebar->deleteLater();
+        sidebar = 0;
     }
 };
 
@@ -616,4 +662,11 @@ void ClientWindow::toggleFPSCounter()
 void ClientWindow::showColorAdjustments()
 {
     d->colorAdjust->open();
+}
+
+void ClientWindow::setSidebar(SidebarLocation location, GuiWidget *sidebar)
+{
+    DENG2_ASSERT(location == RightEdge);
+
+    d->installSidebar(location, sidebar);
 }

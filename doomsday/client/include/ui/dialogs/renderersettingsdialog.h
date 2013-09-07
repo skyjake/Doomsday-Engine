@@ -41,6 +41,7 @@ protected slots:
     void renameProfile();
     void duplicateProfile();
     void deleteProfile();
+    void showEditor();
 
 private:
     DENG2_PRIVATE(d)

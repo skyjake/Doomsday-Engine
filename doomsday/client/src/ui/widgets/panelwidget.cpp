@@ -38,6 +38,7 @@ DENG_GUI_PIMPL(PanelWidget)
 
     bool opened;
     ui::Direction dir;
+    ui::SizePolicy secondaryPolicy;
     GuiWidget *content;
     ScalarRule *openingRule;
     QTimer dismissTimer;
@@ -51,6 +52,7 @@ DENG_GUI_PIMPL(PanelWidget)
         : Base(i),
           opened(false),
           dir(ui::Down),
+          secondaryPolicy(ui::Expand),
           content(0),
           uMvpMatrix("uMvpMatrix", GLUniform::Mat4)
     {
@@ -89,13 +91,19 @@ DENG_GUI_PIMPL(PanelWidget)
         // Widget's size depends on the opening animation.
         if(isVerticalAnimation())
         {
-            self.rule().setInput(Rule::Width,  content->rule().width())
-                       .setInput(Rule::Height, *openingRule);
+            self.rule().setInput(Rule::Height, *openingRule);
+            if(secondaryPolicy == ui::Expand)
+            {
+                self.rule().setInput(Rule::Width, content->rule().width());
+            }
         }
         else
         {
-            self.rule().setInput(Rule::Width,  *openingRule)
-                       .setInput(Rule::Height, content->rule().height());
+            self.rule().setInput(Rule::Width, *openingRule);
+            if(secondaryPolicy == ui::Expand)
+            {
+                self.rule().setInput(Rule::Height, content->rule().height());
+            }
         }
     }
 
@@ -110,6 +118,19 @@ DENG_GUI_PIMPL(PanelWidget)
             self.glMakeGeometry(verts);
             drawable.buffer<VertexBuf>().setVertices(gl::TriangleStrip, verts, gl::Static);
         }
+    }
+
+    void startOpeningAnimation(TimeDelta span)
+    {
+        if(isVerticalAnimation())
+        {
+            openingRule->set(content->rule().height(), span);
+        }
+        else
+        {
+            openingRule->set(content->rule().width(), span);
+        }
+        openingRule->setStyle(Animation::Bounce, 8);
     }
 
     void close(TimeDelta delay)
@@ -141,19 +162,14 @@ DENG_GUI_PIMPL(PanelWidget)
 PanelWidget::PanelWidget(String const &name) : GuiWidget(name), d(new Instance(this))
 {
     setBehavior(ChildHitClipping);
+    hide();
 }
 
 void PanelWidget::setContent(GuiWidget *content)
 {
     if(d->content)
-    {
-        d->content->rule().clearInput(Rule::Left);
-        d->content->rule().clearInput(Rule::Top);
-
-        rule().clearInput(Rule::Width);
-        rule().clearInput(Rule::Height);
-
-        delete remove(*d->content);
+    {        
+        destroy(takeContent());
     }
 
     d->content = content;
@@ -171,9 +187,32 @@ GuiWidget &PanelWidget::content() const
     return *d->content;
 }
 
+GuiWidget *PanelWidget::takeContent()
+{
+    GuiWidget *w = d->content;
+    d->content = 0;
+
+    w->rule().clearInput(Rule::Left);
+    w->rule().clearInput(Rule::Top);
+
+    if(d->secondaryPolicy == ui::Expand)
+    {
+        rule().clearInput(Rule::Width);
+        rule().clearInput(Rule::Height);
+    }
+
+    remove(*w);
+    return w;
+}
+
 void PanelWidget::setOpeningDirection(ui::Direction dir)
 {
     d->dir = dir;
+}
+
+void PanelWidget::setSizePolicy(ui::SizePolicy policy)
+{
+    d->secondaryPolicy = policy;
 }
 
 ui::Direction PanelWidget::openingDirection() const
@@ -227,15 +266,7 @@ void PanelWidget::open()
     preparePanelForOpening();
 
     // Start the opening animation.
-    if(d->isVerticalAnimation())
-    {
-        d->openingRule->set(d->content->rule().height(), OPENING_ANIM_SPAN);
-    }
-    else
-    {
-        d->openingRule->set(d->content->rule().width(), OPENING_ANIM_SPAN);
-    }
-    d->openingRule->setStyle(Animation::Bounce, 8);
+    d->startOpeningAnimation(OPENING_ANIM_SPAN);
 
     d->opened = true;
 

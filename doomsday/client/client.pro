@@ -363,6 +363,7 @@ DENG_HEADERS += \
     include/ui/dialogs/networksettingsdialog.h \
     include/ui/dialogs/renderersettingsdialog.h \
     include/ui/dialogs/videosettingsdialog.h \
+    include/ui/editors/rendererappearanceeditor.h \
     include/ui/fi_main.h \
     include/ui/finaleinterpreter.h \
     include/ui/framework/actionitem.h \
@@ -411,7 +412,9 @@ DENG_HEADERS += \
     include/ui/widgets/cvartogglewidget.h \
     include/ui/widgets/dialogwidget.h \
     include/ui/widgets/documentwidget.h \
+    include/ui/widgets/foldpanelwidget.h \
     include/ui/widgets/gameselectionwidget.h \
+    include/ui/widgets/icvarwidget.h \
     include/ui/widgets/labelwidget.h \
     include/ui/widgets/legacywidget.h \
     include/ui/widgets/lineeditwidget.h \
@@ -700,6 +703,7 @@ SOURCES += \
     src/ui/dialogs/messagedialog.cpp \
     src/ui/dialogs/networksettingsdialog.cpp \
     src/ui/dialogs/videosettingsdialog.cpp \
+    src/ui/editors/rendererappearanceeditor.cpp \
     src/ui/fi_main.cpp \
     src/ui/finaleinterpreter.cpp \
     src/ui/framework/commandaction.cpp \
@@ -740,6 +744,7 @@ SOURCES += \
     src/ui/widgets/cvartogglewidget.cpp \
     src/ui/widgets/dialogwidget.cpp \
     src/ui/widgets/documentwidget.cpp \
+    src/ui/widgets/foldpanelwidget.cpp \
     src/ui/widgets/gameselectionwidget.cpp \
     src/ui/widgets/labelwidget.cpp \
     src/ui/widgets/legacywidget.cpp \

@@ -17,6 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
+#if 0
+
 /**
  * Control Panel.
  *
@@ -445,6 +447,7 @@ ui_object_t ob_panel[] =
     { UI_BUTTON2,   0,  0,              680, 250, 70, 55,   "input-joy", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
 #endif
 
+#if 0
     { UI_META,      2 },
     { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Graphics Options", UIText_BrightDrawer },
     { UI_META,      2,  0,              0, -60 },
@@ -558,6 +561,7 @@ ui_object_t ob_panel[] =
     { UI_SLIDER,    0,  UIF_FADE_AWAY,  680, 550, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_detail_scale },
     { UI_TEXT,      0,  UIF_FADE_AWAY,  300, 610, 0, 55,    "Detail texture contrast", UIText_Drawer },
     { UI_SLIDER,    0,  UIF_FADE_AWAY,  680, 610, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_detail_strength },
+#endif
 
     { UI_META,      6 },
     { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Graphics Options: Objects", UIText_BrightDrawer },
@@ -1354,3 +1358,4 @@ D_CMD(OpenPanel)
     UI_Focus(foc);
     return true;
 }
+#endif

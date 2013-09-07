@@ -74,6 +74,8 @@ DENG_GUI_PIMPL(SliderWidget)
     ddouble step;
     int precision;
     ddouble displayFactor;
+    String minLabel;
+    String maxLabel;
 
     enum State {
         Inert,
@@ -146,6 +148,7 @@ DENG_GUI_PIMPL(SliderWidget)
         }
 
         updateValueLabel();
+        updateRangeLabels();
     }
 
     void glDeinit()
@@ -343,7 +346,18 @@ DENG_GUI_PIMPL(SliderWidget)
 
     void updateValueLabel()
     {
-        labels[Value].setText(QString::number(value * displayFactor, 'f', precision));
+        if(!minLabel.isEmpty() && fequal(value, range.start))
+        {
+            labels[Value].setText(minLabel);
+        }
+        else if(!maxLabel.isEmpty() && fequal(value, range.end))
+        {
+            labels[Value].setText(maxLabel);
+        }
+        else
+        {
+            labels[Value].setText(QString::number(value * displayFactor, 'f', precision));
+        }
     }
 
     void setValue(ddouble v)
@@ -372,8 +386,8 @@ DENG_GUI_PIMPL(SliderWidget)
 
     void updateRangeLabels()
     {
-        labels[Start].setText(QString::number(range.start * displayFactor));
-        labels[End].setText(QString::number(range.end * displayFactor));
+        labels[Start].setText(minLabel.isEmpty()? QString::number(range.start * displayFactor) : minLabel);
+        labels[End].setText(maxLabel.isEmpty()?   QString::number(range.end * displayFactor)   : maxLabel);
     }
 
     void startGrab(MouseEvent const &ev)
@@ -485,6 +499,22 @@ void SliderWidget::setPrecision(int precisionDecimals)
 void SliderWidget::setValue(ddouble value)
 {
     d->setValue(value);
+}
+
+void SliderWidget::setMinLabel(const String &labelText)
+{
+    d->minLabel = labelText;
+
+    d->updateRangeLabels();
+    d->updateValueLabel();
+}
+
+void SliderWidget::setMaxLabel(const String &labelText)
+{
+    d->maxLabel = labelText;
+
+    d->updateRangeLabels();
+    d->updateValueLabel();
 }
 
 void SliderWidget::setDisplayFactor(ddouble factor)

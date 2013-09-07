@@ -23,6 +23,12 @@
 
 /**
  * Scrollable area.
+ *
+ * ScrollAreaWidget does not control its own position or size. The user
+ * must define its rectangle. The content rule rectangle is defined in
+ * relation to the widget's rectangle.
+ *
+ * The user must always define the size of the content area.
  */
 class ScrollAreaWidget : public GuiWidget
 {

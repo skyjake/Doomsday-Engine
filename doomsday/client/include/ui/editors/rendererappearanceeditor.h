@@ -1,4 +1,4 @@
-/** @file cvarchoicewidget.h  Console variable choice.
+/** @file rendererappearanceeditor.h
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,31 +16,34 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_CVARCHOICEWIDGET_H
-#define DENG_CLIENT_CVARCHOICEWIDGET_H
+#ifndef DENG_CLIENT_RENDERERAPPEARANCEEDITOR_H
+#define DENG_CLIENT_RENDERERAPPEARANCEEDITOR_H
 
-#include "choicewidget.h"
-#include "icvarwidget.h"
+#include "ui/widgets/panelwidget.h"
 
 /**
- * Console variable choice for integer-type cvars with a limited number of
- * valid settings. The choice items' user data is used as the cvar value.
+ * Editor for modifying the settings for the renderer's visual appearance.
+ *
+ * Automatically installs itself into the main window's right sidebar.
+ *
+ * @see ClientApp::rendererAppearanceSettings()
  */
-class CVarChoiceWidget : public ChoiceWidget, public ICVarWidget
+class RendererAppearanceEditor : public PanelWidget
 {
     Q_OBJECT
 
 public:
-    CVarChoiceWidget(char const *cvarPath);
+    RendererAppearanceEditor();
 
 public slots:
-    void updateFromCVar();
+    void showRendererSettings();
 
-protected slots:
-    void setCVarValueFromWidget();
+protected:
+    void preparePanelForOpening();
+    void panelDismissed();
 
 private:
     DENG2_PRIVATE(d)
 };
 
-#endif // DENG_CLIENT_CVARCHOICEWIDGET_H
+#endif // DENG_CLIENT_RENDERERAPPEARANCEEDITOR_H

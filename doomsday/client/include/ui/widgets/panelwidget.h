@@ -30,7 +30,8 @@
  * determines the size of the panel. The user must define the position of the
  * panel.
  *
- * Initially panels are in the open state.
+ * Initially panels are in the closed state. They can be opened once the
+ * content widget has been set.
  */
 class PanelWidget : public GuiWidget
 {
@@ -46,6 +47,20 @@ public:
     PanelWidget(de::String const &name = "");
 
     /**
+     * Sets the size policy for the secondary dimension. For instance, for a
+     * panel that opens horizontally, this determines what is done to the
+     * widget height.
+     *
+     * - ui::Expand (the default) means that the widget automatically uses the
+     *   content's size for the secondary dimension.
+     * - ui::Fixed means that the user is expected to define the panel's secondary
+     *   dimension and the panel does not touch it.
+     *
+     * @param policy  Size policy.
+     */
+    void setSizePolicy(ui::SizePolicy policy);
+
+    /**
      * Sets the content widget of the panel. If there is an earlier content
      * widget, it will be destroyed.
      *
@@ -55,6 +70,8 @@ public:
     void setContent(GuiWidget *content);
 
     GuiWidget &content() const;
+
+    GuiWidget *takeContent();
 
     /**
      * Sets the opening direction of the panel.

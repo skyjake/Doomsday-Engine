@@ -117,6 +117,7 @@ DENG2_PIMPL(ClientApp)
 {    
     QScopedPointer<Updater> updater;
     SettingsRegister rendererSettings;
+    SettingsRegister rendererAppearanceSettings;
     SettingsRegister audioSettings;
     QMenuBar *menuBar;
     InputSystem *inputSys;
@@ -199,6 +200,9 @@ DENG2_PIMPL(ClientApp)
                 .define(SettingsRegister::IntCVar,   "rend-dev-sector-show-indices", 0)
                 .define(SettingsRegister::IntCVar,   "rend-dev-vertex-show-indices", 0)
                 .define(SettingsRegister::IntCVar,   "rend-dev-generator-show-indices", 0);
+
+//        rendererAppearanceSettings
+//                .define();
 
         audioSettings
                 .define(SettingsRegister::IntCVar,   "sound-volume",        255)
@@ -346,6 +350,11 @@ Updater &ClientApp::updater()
 SettingsRegister &ClientApp::rendererSettings()
 {
     return app().d->rendererSettings;
+}
+
+SettingsRegister &ClientApp::rendererAppearanceSettings()
+{
+    return app().d->rendererAppearanceSettings;
 }
 
 SettingsRegister &ClientApp::audioSettings()

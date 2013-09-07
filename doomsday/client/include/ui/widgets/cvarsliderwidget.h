@@ -20,11 +20,12 @@
 #define DENG_CLIENT_CVARSLIDERWIDGET_H
 
 #include "sliderwidget.h"
+#include "icvarwidget.h"
 
 /**
  * Console variable slider.
  */
-class CVarSliderWidget : public SliderWidget
+class CVarSliderWidget : public SliderWidget, public ICVarWidget
 {
     Q_OBJECT
 

@@ -400,6 +400,12 @@ Widget::NotifyArgs::Result Widget::notifyTree(NotifyArgs const &args)
     return NotifyArgs::Continue;
 }
 
+Widget::NotifyArgs::Result Widget::notifySelfAndTree(NotifyArgs const &args)
+{
+    (this->*args.notifyFunc)();
+    return notifyTree(args);
+}
+
 void Widget::notifyTreeReversed(NotifyArgs const &args)
 {
     if(args.preNotifyFunc)

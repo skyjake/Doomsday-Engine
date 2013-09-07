@@ -98,7 +98,6 @@ void UI_Register(void)
     // Ccmds
     C_CMD_FLAGS("uicolor", "sfff", UIColor, CMDF_NO_DEDICATED);
 
-    CP_Register();
     Fonts_Register();
 }
 

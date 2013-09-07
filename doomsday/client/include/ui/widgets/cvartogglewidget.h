@@ -20,11 +20,12 @@
 #define DENG_CLIENT_CVARTOGGLEWIDGET_H
 
 #include "togglewidget.h"
+#include "icvarwidget.h"
 
 /**
  * Console variable toggle for on/off type of cvars (value 0 or 1).
  */
-class CVarToggleWidget : public ToggleWidget
+class CVarToggleWidget : public ToggleWidget, public ICVarWidget
 {
     Q_OBJECT
 
