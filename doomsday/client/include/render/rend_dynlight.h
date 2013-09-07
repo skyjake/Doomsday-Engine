@@ -29,8 +29,8 @@ typedef struct {
     uint lastIdx;
     de::Vector3f const *rvertices;
     uint numVertices, realNumVertices;
-    de::Vector3d const *texTL;
-    de::Vector3d const *texBR;
+    de::Vector3d const *topLeft;
+    de::Vector3d const *bottomRight;
     bool isWall;
     struct {
         de::WallEdge const *leftEdge;

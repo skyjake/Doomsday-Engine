@@ -1333,15 +1333,11 @@ static int lumobjSorter(void const *e1, void const *e2)
 
 void R_BeginFrame()
 {
-    if(useDynLights || useLightDecorations)
-    {
-        /*
-         * Clear the projected dynlight lists. This is done here as
-         * the projections are sensitive to distance from the viewer
-         * (e.g. some may fade out when far away).
-         */
-        Rend_ProjectorReset();
-    }
+    /*
+     * Clear the projected texture lists. This is done here as the projections
+     * are sensitive to distance from the viewer.
+     */
+    Rend_ProjectorReset();
 
     Map &map = App_World().map();
     int numLuminous = map.lumobjCount();

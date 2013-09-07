@@ -406,6 +406,11 @@ static void Rend_VertexColorsAlpha(Vector4f *colors, uint num, float alpha)
     }
 }
 
+float Rend_ExtraLightDelta()
+{
+    return extraLightDelta;
+}
+
 void Rend_ApplyTorchLight(Vector4f &color, float distance)
 {
     ddplayer_t *ddpl = &viewPlayer->shared;
@@ -463,9 +468,13 @@ float Rend_AttenuateLightLevel(float distToViewer, float lightLevel)
     return lightLevel;
 }
 
-float Rend_ExtraLightDelta()
+float Rend_ShadowAttenuationFactor(coord_t distance)
 {
-    return extraLightDelta;
+    if(shadowMaxDistance > 0 && distance > 3 * shadowMaxDistance / 4)
+    {
+        return (shadowMaxDistance - distance) / (shadowMaxDistance / 4);
+    }
+    return 1;
 }
 
 Vector3f const &Rend_SectorLightColor(Sector const &sector)
@@ -582,9 +591,9 @@ static void lightVertices(uint num, Vector4f *colors, Vector3f const *verts,
     }
 }
 
-int RIT_FirstDynlightIterator(dynlight_t const *dyn, void *parameters)
+int RIT_FirstDynlightIterator(TexProjection const *dyn, void *parameters)
 {
-    dynlight_t const **ptr = (dynlight_t const **)parameters;
+    TexProjection const **ptr = (TexProjection const **)parameters;
     *ptr = dyn;
     return 1; // Stop iteration.
 }
@@ -670,7 +679,7 @@ void Rend_AddMaskedPoly(Vector3f const *rvertices, Vector4f const *rcolors,
     if(glow < 1 && lightListIdx && numTexUnits > 1 && envModAdd &&
        !(rcolors[0].w < 1))
     {
-        dynlight_t const *dyn = 0;
+        TexProjection const *dyn = 0;
 
         /**
          * The dynlights will have already been sorted so that the brightest
@@ -796,8 +805,8 @@ struct rendworldpoly_params_t
 {
     int             flags; /// @ref rendpolyFlags
     blendmode_t     blendMode;
-    Vector3d const *texTL;
-    Vector3d const *texBR;
+    Vector3d const *topLeft;
+    Vector3d const *bottomRight;
     Vector2f const *materialOrigin;
     Vector2f const *materialScale;
     float           alpha;
@@ -882,7 +891,7 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
              */
             if(useLights && RL_IsMTexLights())
             {
-                dynlight_t *dyn = 0;
+                TexProjection *dyn = 0;
                 Rend_IterateProjectionList(p.lightListIdx, RIT_FirstDynlightIterator, (void *)&dyn);
 
                 modTex      = dyn->texture;
@@ -897,11 +906,11 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
     if(p.isWall)
     {
         // Primary texture coordinates.
-        quadTexCoords(primaryCoords, posCoords, p.wall.sectionWidth, *p.texTL);
+        quadTexCoords(primaryCoords, posCoords, p.wall.sectionWidth, *p.topLeft);
 
         // Blend texture coordinates.
         if(interRTU && !drawAsVisSprite)
-            quadTexCoords(interCoords, posCoords, p.wall.sectionWidth, *p.texTL);
+            quadTexCoords(interCoords, posCoords, p.wall.sectionWidth, *p.topLeft);
 
         // Shiny texture coordinates.
         if(shinyRTU && !drawAsVisSprite)
@@ -916,7 +925,7 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
         for(uint i = 0; i < numVertices; ++i)
         {
             Vector3f const &vtx = posCoords[i];
-            Vector3f const delta(vtx - *p.texTL);
+            Vector3f const delta(vtx - *p.topLeft);
 
             // Primary texture coordinates.
             if(primaryRTU)
@@ -939,11 +948,11 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
             // First light texture coordinates.
             if(modTex && RL_IsMTexLights())
             {
-                float const width  = p.texBR->x - p.texTL->x;
-                float const height = p.texBR->y - p.texTL->y;
+                float const width  = p.bottomRight->x - p.topLeft->x;
+                float const height = p.bottomRight->y - p.topLeft->y;
 
-                modCoords[i] = Vector2f(((p.texBR->x - vtx.x) / width  * modTexSt[0].x) + (delta.x / width  * modTexSt[1].x),
-                                        ((p.texBR->y - vtx.y) / height * modTexSt[0].y) + (delta.y / height * modTexSt[1].y));
+                modCoords[i] = Vector2f(((p.bottomRight->x - vtx.x) / width  * modTexSt[0].x) + (delta.x / width  * modTexSt[1].x),
+                                        ((p.bottomRight->y - vtx.y) / height * modTexSt[0].y) + (delta.y / height * modTexSt[1].y));
             }
         }
     }
@@ -1124,8 +1133,8 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
         parm.numVertices     = numVertices;
         parm.realNumVertices = realNumVertices;
         parm.lastIdx         = 0;
-        parm.texTL           = p.texTL;
-        parm.texBR           = p.texBR;
+        parm.topLeft         = p.topLeft;
+        parm.bottomRight     = p.bottomRight;
         parm.isWall          = p.isWall;
         if(parm.isWall)
         {
@@ -1145,8 +1154,8 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
         parm.rvertices       = posCoords;
         parm.numVertices     = numVertices;
         parm.realNumVertices = realNumVertices;
-        parm.texTL           = p.texTL;
-        parm.texBR           = p.texBR;
+        parm.topLeft         = p.topLeft;
+        parm.bottomRight     = p.bottomRight;
         parm.isWall          = p.isWall;
         if(parm.isWall)
         {
@@ -1387,7 +1396,7 @@ static void writeWallSection(HEdge &hedge, int section,
     if(retBottomZ)     *retBottomZ     = 0;
     if(retTopZ)        *retTopZ        = 0;
 
-    LineSide &side  = segment.lineSide();
+    LineSide &side    = segment.lineSide();
     Surface &surface  = side.surface(section);
     BiasSurface &bsuf = segment;
 
@@ -1432,7 +1441,9 @@ static void writeWallSection(HEdge &hedge, int section,
         Vector2f const materialScale((surface.flags() & DDSUF_MATERIAL_FLIPH)? -1 : 1,
                                      (surface.flags() & DDSUF_MATERIAL_FLIPV)? -1 : 1);
 
-        Vector3d const texQuad[]   = { leftEdge.top().origin(), rightEdge.bottom().origin() };
+        Vector2f const &materialOrigin = leftEdge.materialOrigin();
+        Vector3d const &topLeft        = leftEdge.top().origin();
+        Vector3d const &bottomRight    = rightEdge.bottom().origin();
 
         rendworldpoly_params_t parm; zap(parm);
 
@@ -1441,8 +1452,8 @@ static void writeWallSection(HEdge &hedge, int section,
         parm.alpha               = parm.forceOpaque? 1 : opacity;
         parm.bsuf                = &bsuf;
         parm.geomGroup           = wallSpec.section;
-        parm.texTL               = &texQuad[0];
-        parm.texBR               = &texQuad[1];
+        parm.topLeft             = &topLeft;
+        parm.bottomRight         = &bottomRight;
 
         // Calculate the light level deltas for this wall section?
         if(!wallSpec.flags.testFlag(WallSpec::NoLightDeltas))
@@ -1452,7 +1463,6 @@ static void writeWallSection(HEdge &hedge, int section,
         }
 
         parm.blendMode           = BM_NORMAL;
-        Vector2f materialOrigin  = leftEdge.materialOrigin();
         parm.materialOrigin      = &materialOrigin;
         parm.materialScale       = &materialScale;
 
@@ -1494,9 +1504,6 @@ static void writeWallSection(HEdge &hedge, int section,
 
         if(!skyMasked && parm.glowing < 1)
         {
-            Vector3d const &topLeft     = texQuad[0];
-            Vector3d const &bottomRight = texQuad[1];
-
             // Project lights?
             if(!wallSpec.flags.testFlag(WallSpec::NoDynLights))
             {
@@ -1692,20 +1699,20 @@ static void writeLeafPlane(Plane &plane)
                            (surface.flags() & DDSUF_MATERIAL_FLIPV)? -1 : 1);
 
     // Set the texture origin, Y is flipped for the ceiling.
-    Vector3d texTL(face.aaBox().minX,
-                   face.aaBox().arvec2[plane.isSectorFloor()? 1 : 0][VY],
-                   plane.visHeight());
-    Vector3d texBR(face.aaBox().maxX,
-                   face.aaBox().arvec2[plane.isSectorFloor()? 0 : 1][VY],
-                   plane.visHeight());
+    Vector3d topLeft(face.aaBox().minX,
+                     face.aaBox().arvec2[plane.isSectorFloor()? 1 : 0][VY],
+                     plane.visHeight());
+    Vector3d bottomRight(face.aaBox().maxX,
+                         face.aaBox().arvec2[plane.isSectorFloor()? 0 : 1][VY],
+                         plane.visHeight());
 
     rendworldpoly_params_t parm; zap(parm);
 
     parm.flags               = RPF_DEFAULT;
     parm.bsuf                = leaf;
     parm.geomGroup           = plane.indexInSector();
-    parm.texTL               = &texTL;
-    parm.texBR               = &texBR;
+    parm.topLeft             = &topLeft;
+    parm.bottomRight         = &bottomRight;
     parm.surfaceLightLevelDL = parm.surfaceLightLevelDR = 0;
     parm.surfaceColor        = &surface.tintColor();
     parm.materialOrigin      = &materialOrigin;
@@ -1769,9 +1776,6 @@ static void writeLeafPlane(Plane &plane)
 
         if(parm.glowing < 1)
         {
-            Vector3d const &topLeft     = *parm.texTL;
-            Vector3d const &bottomRight = *parm.texBR;
-
             // Dynamic lights?
             if(useDynLights)
             {
@@ -2598,8 +2602,6 @@ void Rend_RenderMap(Map &map)
 
         // Clear particle generator visibilty info.
         Rend_ParticleInitForNewFrame();
-
-        R_InitShadowProjectionListsForNewFrame();
 
         viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
         eyeOrigin = Vector2d(viewData->current.origin);

@@ -104,7 +104,7 @@ static void processMobjShadow(mobj_t *mo)
         if(distanceFromViewer > shadowMaxDistance) return;
     }
 
-    float shadowStrength = R_ShadowStrength(mo) * shadowFactor;
+    float shadowStrength = Mobj_ShadowStrength(mo) * shadowFactor;
     if(usingFog) shadowStrength /= 2;
     if(shadowStrength <= 0) return;
 
@@ -132,10 +132,10 @@ static void processMobjShadow(mobj_t *mo)
     }
 
     // Fade when nearing the maximum distance?
-    shadowStrength *= R_ShadowAttenuationFactor(distanceFromViewer);
+    shadowStrength *= Rend_ShadowAttenuationFactor(distanceFromViewer);
 
     // Figure out the visible floor height...
-    Plane *plane = R_FindShadowPlane(mo);
+    Plane *plane = Mobj_ShadowPlane(mo);
     if(!plane) return;
 
     // Do not draw shadows above the shadow caster.
@@ -206,7 +206,7 @@ void Rend_RenderMobjShadows()
 /**
  * Generates a new primitive for the shadow projection.
  */
-static void drawShadow(shadowprojection_t const &sp, rendershadowprojectionparams_t &parm)
+static void drawShadow(TexProjection const &tp, rendershadowprojectionparams_t &parm)
 {
     // Allocate enough for the divisions too.
     Vector3f *rvertices  = R_AllocRendVertices(parm.realNumVertices);
@@ -216,24 +216,21 @@ static void drawShadow(shadowprojection_t const &sp, rendershadowprojectionparam
 
     for(uint i = 0; i < parm.numVertices; ++i)
     {
-        // Shadows are black.
-        rcolors[i] = Vector4f(0, 0, 0, sp.alpha /*Blend factor*/);
+        rcolors[i] = tp.color;
     }
 
     if(parm.isWall)
     {
-        WallEdge const &leftEdge = *parm.wall.leftEdge;
+        WallEdge const &leftEdge  = *parm.wall.leftEdge;
         WallEdge const &rightEdge = *parm.wall.rightEdge;
 
-        rtexcoords[1].x = rtexcoords[0].x = sp.s[0];
-        rtexcoords[1].y = rtexcoords[3].y = sp.t[0];
-        rtexcoords[3].x = rtexcoords[2].x = sp.s[1];
-        rtexcoords[2].y = rtexcoords[0].y = sp.t[1];
+        rtexcoords[1].x = rtexcoords[0].x = tp.topLeft.x;
+        rtexcoords[1].y = rtexcoords[3].y = tp.topLeft.y;
+        rtexcoords[3].x = rtexcoords[2].x = tp.bottomRight.x;
+        rtexcoords[2].y = rtexcoords[0].y = tp.bottomRight.y;
 
         if(mustSubdivide)
         {
-            // We need to subdivide the projection quad.
-
             /*
              * Need to swap indices around into fans set the position
              * of the division vertices, interpolate texcoords and
@@ -256,16 +253,16 @@ static void drawShadow(shadowprojection_t const &sp, rendershadowprojectionparam
     else
     {
         // It's a flat.
-        float const width  = parm.texBR->x - parm.texTL->x;
-        float const height = parm.texBR->y - parm.texTL->y;
+        float const width  = parm.bottomRight->x - parm.topLeft->x;
+        float const height = parm.bottomRight->y - parm.topLeft->y;
 
         for(uint i = 0; i < parm.numVertices; ++i)
         {
-            rtexcoords[i].x = ((parm.texBR->x - parm.rvertices[i].x) / width * sp.s[0]) +
-                ((parm.rvertices[i].x - parm.texTL->x) / width * sp.s[1]);
+            rtexcoords[i].x = ((parm.bottomRight->x - parm.rvertices[i].x) / width * tp.topLeft.x) +
+                ((parm.rvertices[i].x - parm.topLeft->x) / width * tp.bottomRight.x);
 
-            rtexcoords[i].y = ((parm.texBR->y - parm.rvertices[i].y) / height * sp.t[0]) +
-                ((parm.rvertices[i].y - parm.texTL->y) / height * sp.t[1]);
+            rtexcoords[i].y = ((parm.bottomRight->y - parm.rvertices[i].y) / height * tp.topLeft.y) +
+                ((parm.rvertices[i].y - parm.topLeft->y) / height * tp.bottomRight.y);
         }
 
         std::memcpy(rvertices, parm.rvertices, sizeof(Vector3f) * parm.numVertices);
@@ -297,10 +294,10 @@ static void drawShadow(shadowprojection_t const &sp, rendershadowprojectionparam
     R_FreeRendColors(rcolors);
 }
 
-static int drawShadowWorker(shadowprojection_t const *sp, void *parameters)
+static int drawShadowWorker(TexProjection const *tp, void *parameters)
 {
     rendershadowprojectionparams_t *p = (rendershadowprojectionparams_t *)parameters;
-    drawShadow(*sp, *p);
+    drawShadow(*tp, *p);
     return 0; // Continue iteration.
 }
 
@@ -312,5 +309,5 @@ void Rend_RenderShadowProjections(uint listIdx, rendershadowprojectionparams_t &
                                GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 
     // Write shadows to the render lists.
-    R_IterateShadowProjections(listIdx, drawShadowWorker, (void *)&p);
+    Rend_IterateProjectionList(listIdx, drawShadowWorker, (void *)&p);
 }

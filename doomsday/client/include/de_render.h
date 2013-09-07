@@ -29,7 +29,6 @@
 #include "render/lumobj.h"
 #include "render/projector.h"
 #include "render/r_draw.h"
-#include "render/r_shadow.h"
 #include "render/r_things.h"
 #include "render/rend_clip.h"
 #include "render/rend_halo.h"

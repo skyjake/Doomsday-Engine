@@ -109,6 +109,14 @@ void Rend_ModelViewMatrix(bool useAngles = true);
  */
 double Rend_PointDist3D(de::Vector3d const &point);
 
+/**
+ * The DOOM lighting model applies a light level delta to everything when
+ * e.g. the player shoots.
+ *
+ * @return  Calculated delta.
+ */
+float Rend_ExtraLightDelta();
+
 void Rend_ApplyTorchLight(float *color3, float distance);
 void Rend_ApplyTorchLight(de::Vector4f &color, float distance);
 
@@ -131,13 +139,7 @@ float Rend_LightAdaptationDelta(float lightvalue);
  */
 float Rend_AttenuateLightLevel(float distToViewer, float lightLevel);
 
-/**
- * The DOOM lighting model applies a light level delta to everything when
- * e.g. the player shoots.
- *
- * @return  Calculated delta.
- */
-float Rend_ExtraLightDelta();
+float Rend_ShadowAttenuationFactor(coord_t distance);
 
 /**
  * Updates the lightModRange which is used to applify sector light to help

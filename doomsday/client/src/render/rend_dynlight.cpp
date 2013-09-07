@@ -28,7 +28,7 @@
 
 using namespace de;
 
-static void drawDynlight(dynlight_t const &dyn, renderlightprojectionparams_t &parm)
+static void drawDynlight(TexProjection const &tp, renderlightprojectionparams_t &parm)
 {
     // If multitexturing is in use we skip the first.
     if(!(RL_IsMTexLights() && parm.lastIdx == 0))
@@ -41,7 +41,7 @@ static void drawDynlight(dynlight_t const &dyn, renderlightprojectionparams_t &p
 
         for(uint i = 0; i < parm.numVertices; ++i)
         {
-            rcolors[i] = dyn.color;
+            rcolors[i] = tp.color;
         }
 
         if(parm.isWall)
@@ -49,10 +49,10 @@ static void drawDynlight(dynlight_t const &dyn, renderlightprojectionparams_t &p
             WallEdge const &leftEdge = *parm.wall.leftEdge;
             WallEdge const &rightEdge = *parm.wall.rightEdge;
 
-            rtexcoords[1].x = rtexcoords[0].x = dyn.topLeft.x;
-            rtexcoords[1].y = rtexcoords[3].y = dyn.topLeft.y;
-            rtexcoords[3].x = rtexcoords[2].x = dyn.bottomRight.x;
-            rtexcoords[2].y = rtexcoords[0].y = dyn.bottomRight.y;
+            rtexcoords[1].x = rtexcoords[0].x = tp.topLeft.x;
+            rtexcoords[1].y = rtexcoords[3].y = tp.topLeft.y;
+            rtexcoords[3].x = rtexcoords[2].x = tp.bottomRight.x;
+            rtexcoords[2].y = rtexcoords[0].y = tp.bottomRight.y;
 
             if(mustSubdivide)
             {
@@ -78,23 +78,23 @@ static void drawDynlight(dynlight_t const &dyn, renderlightprojectionparams_t &p
         else
         {
             // It's a flat.
-            float const width  = parm.texBR->x - parm.texTL->x;
-            float const height = parm.texBR->y - parm.texTL->y;
+            float const width  = parm.bottomRight->x - parm.topLeft->x;
+            float const height = parm.bottomRight->y - parm.topLeft->y;
 
             for(uint i = 0; i < parm.numVertices; ++i)
             {
-                rtexcoords[i].x = ((parm.texBR->x - parm.rvertices[i].x) / width * dyn.topLeft.x) +
-                    ((parm.rvertices[i].x - parm.texTL->x) / width * dyn.bottomRight.x);
+                rtexcoords[i].x = ((parm.bottomRight->x - parm.rvertices[i].x) / width * tp.topLeft.x) +
+                    ((parm.rvertices[i].x - parm.topLeft->x) / width * tp.bottomRight.x);
 
-                rtexcoords[i].y = ((parm.texBR->y - parm.rvertices[i].y) / height * dyn.topLeft.y) +
-                    ((parm.rvertices[i].y - parm.texTL->y) / height * dyn.bottomRight.y);
+                rtexcoords[i].y = ((parm.bottomRight->y - parm.rvertices[i].y) / height * tp.topLeft.y) +
+                    ((parm.rvertices[i].y - parm.topLeft->y) / height * tp.bottomRight.y);
             }
 
             std::memcpy(rvertices, parm.rvertices, sizeof(Vector3f) * parm.numVertices);
         }
 
         RL_LoadDefaultRtus();
-        RL_Rtu_SetTextureUnmanaged(RTU_PRIMARY, dyn.texture,
+        RL_Rtu_SetTextureUnmanaged(RTU_PRIMARY, tp.texture,
                                    GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 
         if(mustSubdivide)
@@ -126,10 +126,9 @@ static void drawDynlight(dynlight_t const &dyn, renderlightprojectionparams_t &p
 }
 
 /// Generates a new primitive for each light projection.
-static int drawDynlightWorker(dynlight_t const *dyn, void *parameters)
+static int drawDynlightWorker(TexProjection const *tp, void *context)
 {
-    renderlightprojectionparams_t *p = (renderlightprojectionparams_t *)parameters;
-    drawDynlight(*dyn, *p);
+    drawDynlight(*tp, *static_cast<renderlightprojectionparams_t *>(context));
     return 0; // Continue iteration.
 }
 

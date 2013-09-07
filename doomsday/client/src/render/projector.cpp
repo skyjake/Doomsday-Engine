@@ -24,6 +24,7 @@
 #include "de_render.h"
 
 #include "BspLeaf"
+#include "world/p_object.h"
 #include "world/p_objlink.h"
 
 #include "render/projector.h"
@@ -33,7 +34,7 @@ using namespace de;
 struct ListNode
 {
     ListNode *next, *nextUsed;
-    dynlight_t projection;
+    TexProjection projection;
 };
 
 struct List
@@ -116,20 +117,20 @@ static ListNode *newProjection(DGLuint texture, Vector2f const &topLeft,
 
     ListNode *node = newListNode();
 
-    dynlight_t &dyn = node->projection;
-    dyn.texture     = texture;
-    dyn.topLeft     = topLeft;
-    dyn.bottomRight = bottomRight;
-    dyn.color       = Vector4f(color, de::clamp(0.f, alpha, 1.f));
+    TexProjection &tp = node->projection;
+    tp.texture     = texture;
+    tp.topLeft     = topLeft;
+    tp.bottomRight = bottomRight;
+    tp.color       = Vector4f(color, de::clamp(0.f, alpha, 1.f));
 
     return node;
 }
 
 /// Average color * alpha.
-static inline float dynlightLuminosity(dynlight_t *dyn)
+static inline float dynlightLuminosity(TexProjection *tp)
 {
-    DENG_ASSERT(dyn != 0);
-    return (dyn->color.x + dyn->color.y + dyn->color.z) / 3 * dyn->color.w;
+    DENG_ASSERT(tp != 0);
+    return (tp->color.x + tp->color.y + tp->color.z) / 3 * tp->color.w;
 }
 
 static ListNode *linkNodeInList(ListNode *node, List *list)
@@ -412,7 +413,127 @@ void Rend_ProjectPlaneGlows(int flags, BspLeaf *bspLeaf, float blendFactor,
     }
 }
 
-int Rend_IterateProjectionList(uint listIdx, int (*callback) (dynlight_t const *, void *),
+/**
+ * Project a mobj shadow onto the surface. If valid and the surface is
+ * contacted a new projection node will constructed and returned.
+ *
+ * @param mobj  Mobj for which a shadow may be projected.
+ * @param parameters  ProjectShadowToSurfaceIterator paramaters.
+ *
+ * @return  @c 0 = continue iteration.
+ */
+static void projectMobjShadow(mobj_t &mobj, project_params_t &parm)
+{
+    coord_t mobjOrigin[3];
+    Mobj_OriginSmoothed(&mobj, mobjOrigin);
+
+    // Is this too far?
+    coord_t distanceFromViewer = 0;
+    if(shadowMaxDistance > 0)
+    {
+        distanceFromViewer = Rend_PointDist2D(mobjOrigin);
+        if(distanceFromViewer > shadowMaxDistance)
+            return;
+    }
+
+    // Should this mobj even have a shadow?
+    float shadowStrength = Mobj_ShadowStrength(&mobj) * shadowFactor;
+    if(usingFog) shadowStrength /= 2;
+    if(shadowStrength <= 0)
+        return;
+
+    // Calculate the radius of the shadow.
+    float shadowRadius = Mobj_VisualRadius(&mobj);
+    if(shadowRadius <= 0)
+        return;
+
+    if(shadowRadius > shadowMaxRadius)
+        shadowRadius = shadowMaxRadius;
+
+    mobjOrigin[VZ] -= mobj.floorClip;
+    if(mobj.ddFlags & DDMF_BOB)
+        mobjOrigin[VZ] -= Mobj_BobOffset(&mobj);
+
+    coord_t mobjHeight = mobj.height;
+    if(!mobjHeight) mobjHeight = 1;
+
+    // If this were a light this is where we would check whether the origin is on
+    // the right side of the surface. However this is a shadow and light is moving
+    // in the opposite direction (inward toward the mobj's origin), therefore this
+    // has "volume/depth".
+
+    // Calculate 3D distance between surface and mobj.
+    Vector3d point = R_ClosestPointOnPlane(parm.tangentMatrix->column(2)/*normal*/,
+                                           *parm.topLeft, mobjOrigin);
+    coord_t distanceFromSurface = (Vector3d(mobjOrigin) - Vector3d(point)).length();
+
+    // Too far above or below the shadowed surface?
+    if(distanceFromSurface > mobj.height)
+        return;
+    if(mobjOrigin[VZ] + mobj.height < point[VZ])
+        return;
+    if(distanceFromSurface > shadowRadius)
+        return;
+
+    // Calculate the final strength of the shadow's attribution to the surface.
+    shadowStrength *= 1.5f - 1.5f * distanceFromSurface / shadowRadius;
+
+    // Fade at half mobj height for smooth fade out when embedded in the surface.
+    coord_t halfMobjHeight = mobjHeight / 2;
+    if(distanceFromSurface > halfMobjHeight)
+    {
+        shadowStrength *= 1 - (distanceFromSurface - halfMobjHeight) / (mobjHeight - halfMobjHeight);
+    }
+
+    // Fade when nearing the maximum distance?
+    shadowStrength *= Rend_ShadowAttenuationFactor(distanceFromViewer);
+
+    // Apply the external blending factor.
+    shadowStrength *= parm.blendFactor;
+
+    // Would this shadow be seen?
+    if(shadowStrength < SHADOW_SURFACE_LUMINOSITY_ATTRIBUTION_MIN)
+        return;
+
+    // Project, counteracting aspect correction slightly.
+    Vector2f s, t;
+    float const scale = 1.0f / ((2.f * shadowRadius) - distanceFromSurface);
+    if(!R_GenerateTexCoords(s, t, point, scale, scale * 1.08f,
+                            *parm.topLeft, *parm.bottomRight, *parm.tangentMatrix))
+        return;
+
+    // Write to the projection list.
+    newProjection(parm.listIdx, 0, GL_PrepareLSTexture(LST_DYNAMIC),
+                  Vector2f(s[0], t[0]), Vector2f(s[1], t[1]),
+                  Vector3f(0, 0, 0) /*Shadows are black*/, shadowStrength);
+}
+
+static int projectMobjShadowWorker(void *mobj, void *context)
+{
+    projectMobjShadow(*static_cast<mobj_t *>(mobj), *static_cast<project_params_t *>(context));
+    return false; // Continue iteration.
+}
+
+void Rend_ProjectMobjShadows(BspLeaf *bspLeaf, float blendFactor,
+    Vector3d const &topLeft, Vector3d const &bottomRight,
+    Matrix3f const &tangentMatrix, uint &listIdx)
+{
+    DENG_ASSERT(bspLeaf != 0);
+
+    if(blendFactor < SHADOW_SURFACE_LUMINOSITY_ATTRIBUTION_MIN)
+        return;
+
+    project_params_t parm; zap(parm);
+    parm.listIdx       = &listIdx;
+    parm.blendFactor   = blendFactor;
+    parm.topLeft       = &topLeft;
+    parm.bottomRight   = &bottomRight;
+    parm.tangentMatrix = &tangentMatrix;
+
+    R_IterateBspLeafContacts(*bspLeaf, OT_MOBJ, projectMobjShadowWorker, &parm);
+}
+
+int Rend_IterateProjectionList(uint listIdx, int (*callback) (TexProjection const *, void *),
                                void *context)
 {
     if(callback && listIdx != 0 && listIdx <= listCount)

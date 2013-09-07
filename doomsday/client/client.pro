@@ -288,7 +288,6 @@ DENG_HEADERS += \
     include/render/projector.h \
     include/render/r_draw.h \
     include/render/r_main.h \
-    include/render/r_shadow.h \
     include/render/r_things.h \
     include/render/rend_clip.h \
     include/render/rend_decor.h \
@@ -629,7 +628,6 @@ SOURCES += \
     src/render/r_draw.cpp \
     src/render/r_fakeradio.cpp \
     src/render/r_main.cpp \
-    src/render/r_shadow.cpp \
     src/render/r_things.cpp \
     src/render/rend_clip.cpp \
     src/render/rend_decor.cpp \

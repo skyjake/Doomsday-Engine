@@ -34,9 +34,9 @@
 class BspLeaf;
 
 /**
- * Dynlight stores a luminous object => surface projection.
+ * Stores data for a texture surface projection.
  */
-struct dynlight_t
+struct TexProjection
 {
     DGLuint texture;
     de::Vector2f topLeft, bottomRight;
@@ -115,6 +115,29 @@ void Rend_ProjectPlaneGlows(int flags, BspLeaf *bspLeaf, float blendFactor,
     de::Matrix3f const &tangentMatrix, uint &listIdx);
 
 /**
+ * Project all mobj shadows affecting the given quad (world space), calculate
+ * coordinates (in texture space) then store into a new list of projections.
+ *
+ * @pre The coordinates of the given quad must be contained wholly within
+ * the BSP leaf specified. This is due to an optimization within the mobj
+ * management which separates them according to their position in the BSP.
+ *
+ * @param bspLeaf        BspLeaf within which the quad wholly resides.
+ * @param blendFactor    Multiplied with projection alpha.
+ * @param topLeft        Top left coordinates of the surface being projected to.
+ * @param bottomRight    Bottom right coordinates of the surface being projected to.
+ * @param tangentMatrix  Normalized tangent space matrix of the surface being projected to.
+ *
+ * Return values:
+ * @param listIdx        If projected to, the identifier of the resultant list
+ *                       (1-based) is written here. If a projection list already
+ *                       exists it will be reused.
+ */
+void Rend_ProjectMobjShadows(BspLeaf *bspLeaf, float blendFactor,
+    de::Vector3d const &topLeft, de::Vector3d const &bottomRight,
+    de::Matrix3f const &tangentMatrix, uint &listIdx);
+
+/**
  * Iterate over projections in the identified surface-projection list, making
  * a callback for each visited. Iteration ends when all selected projections
  * have been visited or a callback returns non-zero.
@@ -125,7 +148,7 @@ void Rend_ProjectPlaneGlows(int flags, BspLeaf *bspLeaf, float blendFactor,
  *
  * @return  @c 0 iff iteration completed wholly.
  */
-int Rend_IterateProjectionList(uint listIdx, int (*callback) (dynlight_t const *, void *),
+int Rend_IterateProjectionList(uint listIdx, int (*callback) (TexProjection const *, void *),
                                void *context = 0);
 
 #endif // DENG_CLIENT_RENDER_PROJECTOR_H

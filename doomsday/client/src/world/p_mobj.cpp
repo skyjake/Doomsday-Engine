@@ -35,10 +35,14 @@
 #include "de_audio.h"
 
 #include "def_main.h"
+
 #include "render/r_main.h" // validCount, viewport
 #ifdef __CLIENT__
 #  include "render/lumobj.h"
+#  include "render/rend_main.h"
 #  include "render/sprite.h"
+
+#  include "gl/gl_tex.h"
 #endif
 
 #include "world/thinkers.h"
@@ -222,7 +226,7 @@ DENG_EXTERN_C void P_MobjSetState(mobj_t *mobj, int statenum)
     }
 }
 
-boolean Mobj_SetOrigin(struct mobj_s* mo, coord_t x, coord_t y, coord_t z)
+boolean Mobj_SetOrigin(struct mobj_s *mo, coord_t x, coord_t y, coord_t z)
 {
     if(!gx.MobjTryMoveXYZ)
     {
@@ -232,7 +236,7 @@ boolean Mobj_SetOrigin(struct mobj_s* mo, coord_t x, coord_t y, coord_t z)
 }
 
 #undef Mobj_OriginSmoothed
-DENG_EXTERN_C void Mobj_OriginSmoothed(mobj_t* mo, coord_t origin[3])
+DENG_EXTERN_C void Mobj_OriginSmoothed(mobj_t *mo, coord_t origin[3])
 {
     if(!origin) return;
 
@@ -271,6 +275,18 @@ DENG_EXTERN_C void Mobj_OriginSmoothed(mobj_t* mo, coord_t origin[3])
 }
 
 #ifdef __CLIENT__
+
+static modeldef_t *currentModelDefForMobj(mobj_t *mo)
+{
+    // If models are being used, use the model's radius.
+    if(useModels)
+    {
+        modeldef_t *mf = 0, *nextmf = 0;
+        Models_ModelForMobj(mo, &mf, &nextmf);
+        return mf;
+    }
+    return 0;
+}
 
 boolean Mobj_OriginBehindVisPlane(mobj_t *mo)
 {
@@ -406,6 +422,88 @@ void Mobj_GenerateLumobjs(mobj_t *mo)
     mo->lumIdx = App_World().map().addLumobj(*lum).indexInMap();
 }
 
+static int findShadowPlaneWorker(Sector *sector, void *parameters)
+{
+    Plane **highest = (Plane **)parameters;
+    Plane *compare = &sector->floor();
+    if(compare->visHeight() > (*highest)->visHeight())
+        *highest = compare;
+    return false; // Continue iteration.
+}
+
+Plane *Mobj_ShadowPlane(mobj_t *mo)
+{
+    if(!mo) return 0;
+
+    if(mo->bspLeaf)
+    {
+        Plane *plane = &mo->bspLeaf->visFloor();
+        /// @todo fixme: Use the visual planes of touched sector clusters.
+        P_MobjSectorsIterator(mo, findShadowPlaneWorker, (void *)&plane);
+    }
+    return 0;
+}
+
+float Mobj_ShadowStrength(mobj_t *mo)
+{
+    if(!mo) return 0;
+
+    float const minSpriteAlphaLimit = .1f;
+    float ambientLightLevel, strength = .65f; ///< Default strength factor.
+
+    // Is this mobj in a valid state for shadow casting?
+    if(!mo->state || !mo->bspLeaf) return 0;
+
+    // Should this mobj even have a shadow?
+    if((mo->state->flags & STF_FULLBRIGHT) ||
+       (mo->ddFlags & DDMF_DONTDRAW) || (mo->ddFlags & DDMF_ALWAYSLIT))
+        return 0;
+
+    // Sample the ambient light level at the mobj's position.
+    if(useBias && App_World().map().hasLightGrid())
+    {
+        // Evaluate in the light grid.
+        ambientLightLevel = App_World().map().lightGrid().evaluateLightLevel(mo->origin);
+    }
+    else
+    {
+        ambientLightLevel = mo->bspLeaf->sector().lightLevel();
+        Rend_ApplyLightAdaptation(ambientLightLevel);
+    }
+
+    // Sprites have their own shadow strength factor.
+    if(!currentModelDefForMobj(mo))
+    {
+        Material *mat = R_MaterialForSprite(mo->sprite, mo->frame);
+        if(mat)
+        {
+            // Ensure we've prepared this.
+            MaterialSnapshot const &ms = mat->prepare(Rend_SpriteMaterialSpec());
+
+            averagealpha_analysis_t const *aa = (averagealpha_analysis_t const *)
+                ms.texture(MTU_PRIMARY).generalCase().analysisDataPointer(Texture::AverageAlphaAnalysis);
+            DENG_ASSERT(aa != 0);
+
+            // We use an average which factors in the coverage ratio
+            // of alpha:non-alpha pixels.
+            /// @todo Constant weights could stand some tweaking...
+            float weightedSpriteAlpha = aa->alpha * (0.4f + (1 - aa->coverage) * 0.6f);
+
+            // Almost entirely translucent sprite? => no shadow.
+            if(weightedSpriteAlpha < minSpriteAlphaLimit) return 0;
+
+            // Apply this factor.
+            strength *= MIN_OF(1, 0.2f + weightedSpriteAlpha);
+        }
+    }
+
+    // Factor in Mobj alpha.
+    strength *= Mobj_Alpha(mo);
+
+    /// @note This equation is the same as that used for fakeradio.
+    return (0.6f - ambientLightLevel * 0.4f) * strength;
+}
+
 #endif // __CLIENT__
 
 #undef Mobj_AngleSmoothed
@@ -478,22 +576,6 @@ float Mobj_Alpha(mobj_t *mo)
     }
     return alpha;
 }
-
-#ifdef __CLIENT__
-
-static modeldef_t *currentModelDefForMobj(mobj_t *mo)
-{
-    // If models are being used, use the model's radius.
-    if(useModels)
-    {
-        modeldef_t *mf = 0, *nextmf = 0;
-        Models_ModelForMobj(mo, &mf, &nextmf);
-        return mf;
-    }
-    return 0;
-}
-
-#endif // __CLIENT__
 
 coord_t Mobj_VisualRadius(mobj_t *mo)
 {
