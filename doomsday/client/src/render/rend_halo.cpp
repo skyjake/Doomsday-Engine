@@ -33,12 +33,15 @@
 
 #define NUM_FLARES          5
 
-typedef struct flare_s {
-    float       offset;
-    float       size;
-    float       alpha;
-    int         texture; // 0=round, 1=flare, 2=brflare, 3=bigflare
-} flare_t;
+using namespace de;
+
+struct flare_t
+{
+    float offset;
+    float size;
+    float alpha;
+    int   texture; // 0=round, 1=flare, 2=brflare, 3=bigflare
+};
 
 D_CMD(FlareConfig);
 
@@ -106,23 +109,33 @@ void H_SetupState(bool dosetup)
     }
 }
 
-bool H_RenderHalo(coord_t x, coord_t y, coord_t z, float size,
-    DGLuint tex, float const color[3], coord_t distanceToViewer,
-    float occlusionFactor, float brightnessFactor, float viewXOffset,
-    bool primary, bool viewRelativeRotate)
+static inline float distanceDimFactorAt(coord_t distToViewer, float size)
 {
-    int i, k;
-    float viewToCenter[3], mirror[3], normalViewToCenter[3];
-    float leftOff[3], rightOff[3], center[3], radius;
-    float haloPos[3];
-    float rgba[4], radX, radY, scale, turnAngle = 0;
-    float fadeFactor = 1, secBold, secDimFactor;
-    float colorAverage, f, distanceDim;
-    flare_t *fl;
-    viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
+    if(haloDimStart && haloDimStart < haloDimEnd &&
+       distToViewer / size > haloDimStart)
+    {
+        return 1 - (distToViewer / size - haloDimStart) / (haloDimEnd - haloDimStart);
+    }
+    return 1;
+}
 
+static inline float fadeFactorAt(coord_t distToViewer)
+{
+    if(haloFadeMax && haloFadeMax != haloFadeMin &&
+       distToViewer < haloFadeMax && distToViewer >= haloFadeMin)
+    {
+        return (distToViewer - haloFadeMin) / (haloFadeMax - haloFadeMin);
+    }
+    return 1;
+}
+
+bool H_RenderHalo(Vector3d const &origin, float size, DGLuint tex,
+    Vector3f const &color, coord_t distanceToViewer,
+    float occlusionFactor, float brightnessFactor, float viewXOffset,
+    bool doPrimary, bool viewRelativeRotate)
+{
     // In realistic mode we don't render secondary halos.
-    if(!primary && haloRealistic)
+    if(!doPrimary && haloRealistic)
         return false;
 
     if(distanceToViewer <= 0 || occlusionFactor == 0 ||
@@ -131,61 +144,39 @@ bool H_RenderHalo(coord_t x, coord_t y, coord_t z, float size,
 
     occlusionFactor = (1 + occlusionFactor) / 2;
 
-    if(haloFadeMax && haloFadeMax != haloFadeMin &&
-       distanceToViewer < haloFadeMax && distanceToViewer >= haloFadeMin)
-    {
-        fadeFactor = (distanceToViewer - haloFadeMin) / (haloFadeMax - haloFadeMin);
-    }
-
     // viewSideVec is to the left.
-    for(i = 0; i < 3; ++i)
-    {
-        leftOff[i] = viewData->upVec[i] + viewData->sideVec[i];
-        rightOff[i] = viewData->upVec[i] - viewData->sideVec[i];
-    }
+    viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
+    Vector3f const leftOff  = Vector3f(viewData->upVec) + Vector3f(viewData->sideVec);
+    Vector3f const rightOff = Vector3f(viewData->upVec) - Vector3f(viewData->sideVec);
 
-    rgba[CR] = color[CR];
-    rgba[CG] = color[CG];
-    rgba[CB] = color[CB];
-    rgba[CA] = 1; // Real alpha is set later.
-
-    center[VX] = x;
-    center[VZ] = y;
-    center[VY] = z;
-
+    // Calculate the center of the flare.
     // Apply the flare's X offset. (Positive is to the right.)
-    for(i = 0; i < 3; i++)
-        center[i] -= viewXOffset * viewData->sideVec[i];
+    Vector3f const center = Vector3f(origin.x, origin.z, origin.y)
+                          - Vector3f(viewData->sideVec) * viewXOffset;
 
     // Calculate the mirrored position.
     // Project viewtocenter vector onto viewSideVec.
-    for(i = 0; i < 3; ++i)
-    {
-        normalViewToCenter[i] = viewToCenter[i] = center[i] - (float)(vOrigin[i]);
-    }
-    V3f_Normalize(normalViewToCenter);
+    Vector3f const viewToCenter = center - Vector3d(vOrigin);
 
-    // Calculate the dimming factor for secondary flares.
-    secDimFactor = V3f_DotProduct(normalViewToCenter, viewData->frontVec);
+    // Calculate the 'mirror' vector.
+    float const scale = viewToCenter.dot(viewData->frontVec)
+                        / Vector3f(viewData->frontVec).dot(viewData->frontVec);
+    Vector3f const mirror =
+        (Vector3f(viewData->frontVec) * scale - viewToCenter) * 2;
 
-    scale = V3f_DotProduct(viewToCenter, viewData->frontVec) / V3f_DotProduct(viewData->frontVec, viewData->frontVec);
-
-    for(i = 0; i < 3; ++i)
-        haloPos[i] = mirror[i] = (viewData->frontVec[i] * scale - viewToCenter[i]) * 2;
-    // Now adding 'mirror' to a position will mirror it.
+    // Calculate dimming factors.
+    float const fadeFactor    = fadeFactorAt(distanceToViewer);
+    float const secFadeFactor = viewToCenter.normalize().dot(viewData->frontVec);
 
     // Calculate texture turn angle.
-    if(V3f_Normalize(haloPos))
+    float turnAngle = 0;
+    if(viewRelativeRotate)
     {
-        // Now halopos is a normalized version of the mirror vector.
-        // Both vectors are on the view plane.
-        if(viewRelativeRotate)
+        // Normalize the mirror vector so that both are on the view plane.
+        Vector3f haloPos = mirror.normalize();
+        if(haloPos.length())
         {
-            turnAngle = V3f_DotProduct(haloPos, viewData->upVec);
-            if(turnAngle > 1)
-                turnAngle = 1;
-            else if(turnAngle < -1)
-                turnAngle = -1;
+            turnAngle = de::clamp<float>(-1, haloPos.dot(viewData->upVec), 1);
 
             if(turnAngle >= 1)
                 turnAngle = 0;
@@ -195,27 +186,19 @@ bool H_RenderHalo(coord_t x, coord_t y, coord_t z, float size,
                 turnAngle = acos(turnAngle);
 
             // On which side of the up vector (left or right)?
-            if(V3f_DotProduct(haloPos, viewData->sideVec) < 0)
+            if(haloPos.dot(viewData->sideVec) < 0)
                 turnAngle = -turnAngle;
-        }
-        else
-        {
-            turnAngle = 0;
         }
     }
 
-    // The overall brightness of the flare.
-    colorAverage = (rgba[CR] + rgba[CG] + rgba[CB] + 1) / 4;
+    // The overall brightness of the flare (average color).
+    float const luminosity = (color.x + color.y + color.z) / 3;
 
     // Small flares have stronger dimming.
-    f = distanceToViewer / size;
-    if(haloDimStart && haloDimStart < haloDimEnd && f > haloDimStart)
-        distanceDim = 1 - (f - haloDimStart) / (haloDimEnd - haloDimStart);
-    else
-        distanceDim = 1;
+    float const distanceDim = distanceDimFactorAt(distanceToViewer, size);
 
     // Setup GL state.
-    if(primary)
+    if(doPrimary)
         H_SetupState(true);
 
     DENG_ASSERT_IN_MAIN_THREAD();
@@ -230,44 +213,56 @@ bool H_RenderHalo(coord_t x, coord_t y, coord_t z, float size,
     glRotatef(turnAngle / float(de::PI) * 180, 0, 0, 1);
     glTranslatef(-0.5f, -0.5f, 0);
 
-    for(i = 0, fl = flares; i < haloMode && i < NUM_FLARES; ++i, fl++)
+    flare_t *fl = flares;
+    for(int i = 0; i < haloMode && i < NUM_FLARES; ++i, fl++)
     {
-        if(primary && i)
+        bool const secondary = i != 0;
+
+        if(doPrimary && secondary)
             break;
-        if(!primary && !i)
+        if(!doPrimary && !secondary)
             continue;
 
-        // Calculate the dimming factor.
-        if(i > 0)
-            // Secondary flares receive additional dimming.
-            f = MAX_OF(minHaloSize * size / distanceToViewer, 1);
-        else
-            f = 1;
-        f *= distanceDim * brightnessFactor;
+        // Determine visibility.
+        float alpha = fl->alpha * occlusionFactor * fadeFactor
+                    + luminosity * luminosity / 5;
 
-        // The rgba & alpha of the flare.
-        rgba[CA] = f * (fl->alpha * occlusionFactor * fadeFactor + colorAverage * colorAverage / 5);
+        // Apply a dimming factor (secondary flares receive stronger dimming).
+        alpha *= (!secondary? 1 : de::max<float>(minHaloSize * size / distanceToViewer, 1))
+                 * distanceDim * brightnessFactor;
 
-        radius = size * (1 - colorAverage / 3) + distanceToViewer / haloZMagDiv;
-        if(radius < haloMinRadius)
-            radius = haloMinRadius;
-        radius *= occlusionFactor;
+        // Apply the global dimming factor.
+        alpha *= .8f * haloBright / 100.0f;
 
-        secBold = colorAverage - 8 * (1 - secDimFactor);
-
-        rgba[CA] *= .8f * haloBright / 100.0f;
-        if(i)
+        // Secondary flares are a little bolder.
+        if(secondary)
         {
-            rgba[CA] *= secBold; // Secondary flare boldness.
+            alpha *= luminosity - 8 * (1 - secFadeFactor);
         }
-
-        if(rgba[CA] <= 0)
-            break; // Not visible.
 
         // In the realistic mode, halos are slightly dimmer.
         if(haloRealistic)
         {
-            rgba[CA] *= .6f;
+            alpha *= .6f;
+        }
+
+        // Not visible?
+        if(alpha <= 0)
+            break;
+
+        // Determine radius.
+        float radius = size * (1 - luminosity / 3)
+                     + distanceToViewer / haloZMagDiv;
+
+        if(radius < haloMinRadius)
+            radius = haloMinRadius;
+
+        radius *= occlusionFactor;
+
+        // In the realistic mode, halos are slightly smaller.
+        if(haloRealistic)
+        {
+            radius *= 0.8f;
         }
 
         if(haloRealistic)
@@ -279,20 +274,20 @@ bool H_RenderHalo(coord_t x, coord_t y, coord_t z, float size,
         }
         else
         {
-            if(!(primary && tex))
+            if(!(doPrimary && tex))
             {
-                if(size > 45 || (colorAverage > .90 && size > 20))
+                if(size > 45 || (luminosity > .90 && size > 20))
                 {
                     // The "Very Bright" condition.
                     radius *= .65f;
-                    if(!i)
+                    if(!secondary)
                         tex = GL_PrepareSysFlaremap(FXT_BIGFLARE);
                     else
                         tex = GL_PrepareSysFlaremap(flaretexid_t(fl->texture));
                 }
                 else
                 {
-                    if(!i)
+                    if(!secondary)
                         tex = GL_PrepareSysFlaremap(FXT_ROUND);
                     else
                         tex = GL_PrepareSysFlaremap(flaretexid_t(fl->texture));
@@ -300,49 +295,39 @@ bool H_RenderHalo(coord_t x, coord_t y, coord_t z, float size,
             }
         }
 
-        // In the realistic mode, halos are slightly smaller.
-        if(haloRealistic)
+        // Determine the final position of the flare.
+        Vector3f pos = center;
+
+        // Secondary halos are mirrored according to the flare table.
+        if(secondary)
         {
-            radius *= 0.8f;
-        }
-
-        // The final radius.
-        radX = radius * fl->size;
-        radY = radX / 1.2f;
-
-        // Determine the final position of the halo.
-        haloPos[VX] = center[VX];
-        haloPos[VY] = center[VY];
-        haloPos[VZ] = center[VZ];
-        if(i)
-        {   // Secondary halos.
-            // Mirror it according to the flare table.
-            for(k = 0; k < 3; ++k)
-                haloPos[k] += mirror[k] * fl->offset;
+            pos += mirror * fl->offset;
         }
 
         GL_BindTextureUnmanaged(renderTextures? tex : 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
         glEnable(GL_TEXTURE_2D);
 
-        glColor4fv(rgba);
+        float const radX = radius * fl->size;
+        float const radY = radX / 1.2f; // Aspect correction.
 
+        glColor4f(color.x, color.y, color.z, alpha);
         glBegin(GL_QUADS);
             glTexCoord2f(0, 0);
-            glVertex3f(haloPos[VX] + radX * leftOff[VX],
-                       haloPos[VY] + radY * leftOff[VY],
-                       haloPos[VZ] + radX * leftOff[VZ]);
+            glVertex3f(pos.x + radX * leftOff.x,
+                       pos.y + radY * leftOff.y,
+                       pos.z + radX * leftOff.z);
             glTexCoord2f(1, 0);
-            glVertex3f(haloPos[VX] + radX * rightOff[VX],
-                       haloPos[VY] + radY * rightOff[VY],
-                       haloPos[VZ] + radX * rightOff[VZ]);
+            glVertex3f(pos.x + radX * rightOff.x,
+                       pos.y + radY * rightOff.y,
+                       pos.z + radX * rightOff.z);
             glTexCoord2f(1, 1);
-            glVertex3f(haloPos[VX] - radX * leftOff[VX],
-                       haloPos[VY] - radY * leftOff[VY],
-                       haloPos[VZ] - radX * leftOff[VZ]);
+            glVertex3f(pos.x - radX * leftOff.x,
+                       pos.y - radY * leftOff.y,
+                       pos.z - radX * leftOff.z);
             glTexCoord2f(0, 1);
-            glVertex3f(haloPos[VX] - radX * rightOff[VX],
-                       haloPos[VY] - radY * rightOff[VY],
-                       haloPos[VZ] - radX * rightOff[VZ]);
+            glVertex3f(pos.x - radX * rightOff.x,
+                       pos.y - radY * rightOff.y,
+                       pos.z - radX * rightOff.z);
         glEnd();
 
         glDisable(GL_TEXTURE_2D);
@@ -352,7 +337,7 @@ bool H_RenderHalo(coord_t x, coord_t y, coord_t z, float size,
     glPopMatrix();
 
     // Restore previous GL state.
-    if(primary)
+    if(doPrimary)
         H_SetupState(false);
 
     return true;

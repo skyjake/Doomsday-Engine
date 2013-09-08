@@ -608,12 +608,9 @@ void Rend_AddMaskedPoly(Vector3f const *rvertices, Vector4f const *rcolors,
     coord_t wallLength, MaterialVariant *material, Vector2f const &materialOrigin,
     blendmode_t blendMode, uint lightListIdx, float glow)
 {
-    vissprite_t *vis = R_NewVisSprite();
+    vissprite_t *vis = R_NewVisSprite(VSPR_MASKED_WALL);
 
-    vis->type = VSPR_MASKED_WALL;
-    vis->origin[VX] = (rvertices[0].x + rvertices[3].x) / 2;
-    vis->origin[VY] = (rvertices[0].y + rvertices[3].y) / 2;
-    vis->origin[VZ] = (rvertices[0].z + rvertices[3].z) / 2;
+    vis->origin   = (rvertices[0] + rvertices[3]) / 2;
     vis->distance = Rend_PointDist2D(vis->origin);
 
     VS_WALL(vis)->texOffset[0] = materialOrigin[VX];

@@ -82,154 +82,10 @@ static void recycleSources()
     sourceCursor = sourceFirst;
 }
 
-/**
- * @return  @c > 0 if @a lightlevel passes the min max limit condition.
- */
-static float checkSectorLightLevel(float lightlevel, float min, float max)
-{
-    // Has a limit been set?
-    if(min == max) return 1;
-    return de::clamp(0.f, (lightlevel - min) / float(max - min), 1.f);
-}
-
-static void projectSource(Decoration const &src)
-{
-    MaterialSnapshot::Decoration const *decor = src.decor;
-
-    // Don't project decorations which emit no color.
-    if(decor->color.x == 0 && decor->color.y == 0 && decor->color.z == 0) return;
-
-    // Does it pass the sector light limitation?
-    float min = decor->lightLevels[0];
-    float max = decor->lightLevels[1];
-
-    float lightLevel = src.bspLeaf->sector().lightLevel();
-    Rend_ApplyLightAdaptation(lightLevel);
-
-    float brightness = checkSectorLightLevel(lightLevel, min, max);
-    if(!(brightness > 0)) return;
-
-    if(src.fadeMul <= 0) return;
-
-    // Is the point in range?
-    double distance = Rend_PointDist3D(src.origin);
-    if(distance > src.maxDistance) return;
-
-    Lumobj *lum = src.surface->map().lumobj(src.lumIdx);
-    if(!lum) return; // Huh?
-
-    /*
-     * Light decorations become flare-type vissprites.
-     */
-    vissprite_t *vis = R_NewVisSprite();
-    vis->type = VSPR_FLARE;
-
-    V3d_Set(vis->origin, src.origin.x, src.origin.y, src.origin.z);
-    vis->distance = distance;
-
-    vis->data.flare.isDecoration = true;
-    vis->data.flare.lumIdx = src.lumIdx;
-
-    // Color is taken from the associated lumobj.
-    V3f_Set(vis->data.flare.color, lum->color().x, lum->color().y, lum->color().z);
-
-    if(decor->haloRadius > 0)
-        vis->data.flare.size = de::max(1.f, decor->haloRadius * 60 * (50 + haloSize) / 100.0f);
-    else
-        vis->data.flare.size = 0;
-
-    if(decor->flareTex != 0)
-    {
-        vis->data.flare.tex = decor->flareTex;
-    }
-    else
-    {   // Primary halo disabled.
-        vis->data.flare.flags |= RFF_NO_PRIMARY;
-        vis->data.flare.tex = 0;
-    }
-
-    // Halo brightness drops as the angle gets too big.
-    vis->data.flare.mul = 1;
-    if(decor->elevation < 2 && decorLightFadeAngle > 0) // Close the surface?
-    {
-        Vector3d const eye(vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
-        Vector3d const vecFromOriginToEye = (src.origin - eye).normalize();
-
-        float dot = float( -src.surface->normal().dot(vecFromOriginToEye) );
-        if(dot < decorLightFadeAngle / 2)
-        {
-            vis->data.flare.mul = 0;
-        }
-        else if(dot < 3 * decorLightFadeAngle)
-        {
-            vis->data.flare.mul = (dot - decorLightFadeAngle / 2)
-                                / (2.5f * decorLightFadeAngle);
-        }
-    }
-}
-
 void Rend_DecorInitForMap(Map &map)
 {
     DENG_UNUSED(map);
     recycleSources();
-}
-
-void Rend_DecorProject()
-{
-    if(!useLightDecorations) return;
-
-    for(Decoration *src = sourceFirst; src != sourceCursor; src = src->next)
-    {
-        projectSource(*src);
-    }
-}
-
-static void addLuminousDecoration(Decoration &src)
-{
-    MaterialSnapshot::Decoration const *decor = src.decor;
-
-    // Don't add decorations which emit no color.
-    if(decor->color == Vector3f(0, 0, 0))
-        return;
-
-    // Does it pass the sector light limitation?
-    float lightLevel = src.bspLeaf->sector().lightLevel();
-    Rend_ApplyLightAdaptation(lightLevel);
-    float intensity = checkSectorLightLevel(lightLevel, decor->lightLevels[0], decor->lightLevels[1]);
-
-    if(intensity < .0001f)
-        return;
-
-    // Apply the brightness factor (was calculated using sector lightlevel).
-    src.fadeMul = intensity * decorLightBrightFactor;
-    src.lumIdx = Lumobj::NoIndex;
-
-    if(src.fadeMul <= 0)
-        return;
-
-    Lumobj &lum = src.surface->map().addLumobj(
-        Lumobj(src.origin, decor->radius, decor->color * src.fadeMul, src.maxDistance));
-
-    // Any lightmaps to configure?
-    lum.setLightmap(Lumobj::Side, decor->tex)
-       .setLightmap(Lumobj::Down, decor->floorTex)
-       .setLightmap(Lumobj::Up,   decor->ceilTex);
-
-    // Remember it's unique index in the decoration for the purpose of drawing
-    // halos/lens-flares.
-    src.lumIdx = lum.indexInMap();
-}
-
-void Rend_DecorAddLuminous()
-{
-    if(useLightDecorations && sourceFirst != sourceCursor)
-    {
-        Decoration *src = sourceFirst;
-        do
-        {
-            addLuminousDecoration(*src);
-        } while((src = src->next) != sourceCursor);
-    }
 }
 
 /**
@@ -297,7 +153,7 @@ static void newSource(Surface const &suf, Surface::DecorSource const &dec)
 
 static uint generateDecorLights(MaterialSnapshot::Decoration const &decor,
     Vector2i const &patternOffset, Vector2i const &patternSkip, Surface &suf,
-    Material &material, Vector3d const &v1, Vector3d const &/*v2*/,
+    Material &material, Vector3d const &topLeft_, Vector3d const &/*bottomRight*/,
     Vector2d sufDimensions, Vector3d const &delta, int axis,
     Vector2f const &matOffset, Sector *containingSector)
 {
@@ -309,7 +165,7 @@ static uint generateDecorLights(MaterialSnapshot::Decoration const &decor,
     if(repeat == Vector2f(0, 0))
         return 0;
 
-    Vector3d topLeft = v1 + suf.normal() * decor.elevation;
+    Vector3d topLeft = topLeft_ + suf.normal() * decor.elevation;
 
     float s = de::wrap(decor.pos[0] - material.width() * patternOffset.x + matOffset.x,
                        0.f, repeat.x);
@@ -356,9 +212,9 @@ static uint generateDecorLights(MaterialSnapshot::Decoration const &decor,
  * Generate decorations for the specified surface.
  */
 static void updateSurfaceDecorations(Surface &suf, Vector2f const &offset,
-    Vector3d const &v1, Vector3d const &v2, Sector *sec = 0)
+    Vector3d const &topLeft, Vector3d const &bottomRight, Sector *sec = 0)
 {
-    Vector3d delta = v2 - v1;
+    Vector3d delta = bottomRight - topLeft;
     if(de::fequal(delta.length(), 0)) return;
 
     int const axis = suf.normal().maxAxis();
@@ -388,7 +244,7 @@ static void updateSurfaceDecorations(Surface &suf, Vector2f const &offset,
         MaterialDecoration const *def = decorations[i];
 
         generateDecorLights(decor, def->patternOffset(), def->patternSkip(),
-                            suf, suf.material(), v1, v2, sufDimensions,
+                            suf, suf.material(), topLeft, bottomRight, sufDimensions,
                             delta, axis, offset, sec);
     }
 }
@@ -481,5 +337,145 @@ void Rend_DecorBeginFrame()
     foreach(Surface *surface, map.decoratedSurfaces())
     {
         plotSourcesForSurface(*surface);
+    }
+}
+
+/**
+ * @return  @c > 0 if @a lightlevel passes the min max limit condition.
+ */
+static float checkSectorLightLevel(float lightlevel, float min, float max)
+{
+    // Has a limit been set?
+    if(min == max) return 1;
+    return de::clamp(0.f, (lightlevel - min) / float(max - min), 1.f);
+}
+
+static void addLuminousDecoration(Decoration &src)
+{
+    MaterialSnapshot::Decoration const *decor = src.decor;
+
+    // Don't add decorations which emit no color.
+    if(decor->color == Vector3f(0, 0, 0))
+        return;
+
+    // Does it pass the sector light limitation?
+    float lightLevel = src.bspLeaf->sector().lightLevel();
+    Rend_ApplyLightAdaptation(lightLevel);
+    float intensity = checkSectorLightLevel(lightLevel, decor->lightLevels[0], decor->lightLevels[1]);
+
+    if(intensity < .0001f)
+        return;
+
+    // Apply the brightness factor (was calculated using sector lightlevel).
+    src.fadeMul = intensity * decorLightBrightFactor;
+    src.lumIdx = Lumobj::NoIndex;
+
+    if(src.fadeMul <= 0)
+        return;
+
+    Lumobj &lum = src.surface->map().addLumobj(
+        Lumobj(src.origin, decor->radius, decor->color * src.fadeMul, src.maxDistance));
+
+    // Any lightmaps to configure?
+    lum.setLightmap(Lumobj::Side, decor->tex)
+       .setLightmap(Lumobj::Down, decor->floorTex)
+       .setLightmap(Lumobj::Up,   decor->ceilTex);
+
+    // Remember it's unique index in the decoration for the purpose of drawing
+    // halos/lens-flares.
+    src.lumIdx = lum.indexInMap();
+}
+
+void Rend_DecorAddLuminous()
+{
+    if(useLightDecorations && sourceFirst != sourceCursor)
+    {
+        Decoration *src = sourceFirst;
+        do
+        {
+            addLuminousDecoration(*src);
+        } while((src = src->next) != sourceCursor);
+    }
+}
+
+static void projectSource(Decoration const &src)
+{
+    Surface const &surface = *src.surface;
+    MaterialSnapshot::Decoration const *decor = src.decor;
+
+    Lumobj *lum = surface.map().lumobj(src.lumIdx);
+    if(!lum) return; // Huh?
+
+    // Is the point in range?
+    double distance = Rend_PointDist3D(lum->origin());
+    if(R_ViewerLumobjDistance(lum->indexInMap()) > lum->maxDistance())
+        return;
+
+    // Does it pass the sector light limitation?
+    float min = decor->lightLevels[0];
+    float max = decor->lightLevels[1];
+
+    float lightLevel = lum->bspLeafAtOrigin().sector().lightLevel();
+    Rend_ApplyLightAdaptation(lightLevel);
+
+    float brightness = checkSectorLightLevel(lightLevel, min, max);
+    if(!(brightness > 0)) return;
+
+    /*
+     * Light decorations become flare-type vissprites.
+     */
+    vissprite_t *vis = R_NewVisSprite(VSPR_FLARE);
+
+    vis->origin   = lum->origin();
+    vis->distance = distance;
+
+    vis->data.flare.lumIdx       = lum->indexInMap();
+    vis->data.flare.isDecoration = true;
+
+    // Color is taken from the associated lumobj.
+    V3f_Set(vis->data.flare.color, lum->color().x, lum->color().y, lum->color().z);
+
+    if(decor->haloRadius > 0)
+        vis->data.flare.size = de::max(1.f, decor->haloRadius * 60 * (50 + haloSize) / 100.0f);
+    else
+        vis->data.flare.size = 0;
+
+    if(decor->flareTex != 0)
+    {
+        vis->data.flare.tex = decor->flareTex;
+    }
+    else
+    {   // Primary halo disabled.
+        vis->data.flare.flags |= RFF_NO_PRIMARY;
+        vis->data.flare.tex = 0;
+    }
+
+    // Halo brightness drops as the angle gets too big.
+    vis->data.flare.mul = 1;
+    if(decor->elevation < 2 && decorLightFadeAngle > 0) // Close the surface?
+    {
+        Vector3d const eye(vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
+        Vector3d const vecFromOriginToEye = (lum->origin() - eye).normalize();
+
+        float dot = float( -surface.normal().dot(vecFromOriginToEye) );
+        if(dot < decorLightFadeAngle / 2)
+        {
+            vis->data.flare.mul = 0;
+        }
+        else if(dot < 3 * decorLightFadeAngle)
+        {
+            vis->data.flare.mul = (dot - decorLightFadeAngle / 2)
+                                / (2.5f * decorLightFadeAngle);
+        }
+    }
+}
+
+void Rend_DecorProject()
+{
+    if(!useLightDecorations) return;
+
+    for(Decoration *src = sourceFirst; src != sourceCursor; src = src->next)
+    {
+        projectSource(*src);
     }
 }

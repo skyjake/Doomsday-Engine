@@ -18,10 +18,9 @@
  * 02110-1301 USA</small>
  */
 
+#ifdef __CLIENT__
 #ifndef DENG_CLIENT_RENDER_VISSPRITE_H
 #define DENG_CLIENT_RENDER_VISSPRITE_H
-
-#ifdef __CLIENT__
 
 #include <de/Vector>
 
@@ -107,7 +106,7 @@ typedef struct vissprite_s {
     struct vissprite_s *prev, *next;
     visspritetype_t type; // VSPR_* type of vissprite.
     coord_t distance; // Vissprites are sorted by distance.
-    coord_t origin[3];
+    de::Vector3d origin;
 
     // An anonymous union for the data.
     union vissprite_data_u {
@@ -187,10 +186,9 @@ DENG_EXTERN_C vispsprite_t visPSprites[DDMAXPSPRITES];
 /// To be called at the start of the current render frame to clear the vissprite list.
 void R_ClearVisSprites();
 
-vissprite_t *R_NewVisSprite();
+vissprite_t *R_NewVisSprite(visspritetype_t type);
 
 void R_SortVisSprites();
 
-#endif // __CLIENT__
-
 #endif // DENG_CLIENT_RENDER_VISSPRITE_H
+#endif // __CLIENT__

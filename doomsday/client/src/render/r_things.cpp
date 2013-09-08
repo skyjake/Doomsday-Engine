@@ -136,12 +136,12 @@ static int findMobjZOriginWorker(Sector *sector, void *parameters)
 
     if(p->floorAdjust && p->mo->origin[VZ] == sector->floor().height())
     {
-        p->vis->origin[VZ] = sector->floor().visHeight();
+        p->vis->origin.z = sector->floor().visHeight();
     }
 
     if(p->mo->origin[VZ] + p->mo->height == sector->ceiling().height())
     {
-        p->vis->origin[VZ] = sector->ceiling().visHeight() - p->mo->height;
+        p->vis->origin.z = sector->ceiling().visHeight() - p->mo->height;
     }
 
     return false; // Continue iteration.
@@ -261,12 +261,10 @@ void R_ProjectSprite(mobj_t *mo)
     }
 
     // Store information in a vissprite.
-    vissprite_t *vis = R_NewVisSprite();
-    vis->type       = mf? VSPR_MODEL : VSPR_SPRITE;
-    vis->origin[VX] = moPos.x;
-    vis->origin[VY] = moPos.y;
-    vis->origin[VZ] = moPos.z;
-    vis->distance   = distFromEye;
+    vissprite_t *vis = R_NewVisSprite(mf? VSPR_MODEL : VSPR_SPRITE);
+
+    vis->origin   = moPos;
+    vis->distance = distFromEye;
 
     /*
      * The Z origin of the visual should match that of the mobj. When smoothing
@@ -281,7 +279,7 @@ void R_ProjectSprite(mobj_t *mo)
         findMobjZOrigin(mo, floorAdjust, vis);
     }
 
-    coord_t gzt = vis->origin[VZ] + -tex.origin().y;
+    coord_t gzt = vis->origin.z + -tex.origin().y;
 
     // Determine floor clipping.
     coord_t floorClip = mo->floorClip;
@@ -326,7 +324,7 @@ void R_ProjectSprite(mobj_t *mo)
         if(mf->testSubFlag(0, MFF_ALIGN_PITCH))
         {
             viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
-            Vector2d delta((vis->origin[VZ] + gzt) / 2 - viewData->current.origin[VZ], distFromEye);
+            Vector2d delta((vis->origin.z + gzt) / 2 - viewData->current.origin[VZ], distFromEye);
 
             pitch = -BANG2DEG(bamsAtan2(delta.x * 10, delta.y * 10));
         }
@@ -394,7 +392,7 @@ void R_ProjectSprite(mobj_t *mo)
         // Adjust by the floor clip.
         gzt -= floorClip;
 
-        Vector3d const origin(vis->origin[VX], vis->origin[VY], gzt - ms.height() / 2.0f);
+        Vector3d const origin(vis->origin.x, vis->origin.y, gzt - ms.height() / 2.0f);
         Vector4f ambientColor;
         uint vLightListIdx = 0;
         evaluateLighting(origin, mo->bspLeaf, vis->distance, fullbright,
@@ -412,15 +410,14 @@ void R_ProjectSprite(mobj_t *mo)
     }
     else
     {
-        Vector3d const origin(vis->origin);
         Vector4f ambientColor;
         uint vLightListIdx = 0;
-        evaluateLighting(origin, mo->bspLeaf, vis->distance, fullbright,
+        evaluateLighting(vis->origin, mo->bspLeaf, vis->distance, fullbright,
                          ambientColor, &vLightListIdx);
 
         ambientColor.w = alpha;
 
-        VisSprite_SetupModel(vis->data.model, origin, vis->distance,
+        VisSprite_SetupModel(vis->data.model, vis->origin, vis->distance,
                              Vector3d(visOff.x, visOff.y, visOff.z - floorClip),
                              gzt, yaw, 0, pitch, 0,
                              mf, nextmf, interp,
@@ -450,15 +447,13 @@ void R_ProjectSprite(mobj_t *mo)
 
         Lumobj const *lum = mo->bspLeaf->map().lumobj(mo->lumIdx);
 
-        vissprite_t *vis = R_NewVisSprite();
-        vis->type       = VSPR_FLARE;
+        vissprite_t *vis = R_NewVisSprite(VSPR_FLARE);
+
         vis->distance   = distFromEye;
 
         // Determine the exact center of the flare.
-        Vector3d center = moPos + visOff;
-        vis->origin[VX] = center.x;
-        vis->origin[VY] = center.y;
-        vis->origin[VZ] = center.z + lum->zOffset();
+        vis->origin = moPos + visOff;
+        vis->origin.z += lum->zOffset();
 
         float flareSize = pl->brightMul;
         // X offset to the flare position.

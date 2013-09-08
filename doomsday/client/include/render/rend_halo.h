@@ -17,14 +17,16 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG_RENDER_HALO_H
-#define LIBDENG_RENDER_HALO_H
+#ifndef DENG_CLIENT_RENDER_HALO_H
+#define DENG_CLIENT_RENDER_HALO_H
+
+#include <de/Vector>
 
 #include "TextureVariantSpec"
 
-DENG_EXTERN_C int      haloOccludeSpeed;
-DENG_EXTERN_C int      haloMode, haloRealistic, haloBright, haloSize;
-DENG_EXTERN_C float    haloFadeMax, haloFadeMin, minHaloSize;
+DENG_EXTERN_C int   haloOccludeSpeed;
+DENG_EXTERN_C int   haloMode, haloRealistic, haloBright, haloSize;
+DENG_EXTERN_C float haloFadeMax, haloFadeMin, minHaloSize;
 
 void H_Register();
 
@@ -40,9 +42,7 @@ void H_SetupState(bool dosetup);
  *
  * The caller must check that @c sourcevis, really has a ->light! (? -jk)
  *
- * @param x         X coordinate of the center of the halo.
- * @param y         Y coordinate of the center of the halo.
- * @param z         Z coordinate of the center of the halo.
+ * @param origin    Origin of the halo in map space.
  * @param size      The precalculated radius of the primary halo.
  * @param tex       Texture to use for the halo.
  * @param color     Color for the halo.
@@ -59,8 +59,8 @@ void H_SetupState(bool dosetup);
  *
  * @return          @c true, iff a halo was rendered.
  */
-bool H_RenderHalo(coord_t x, coord_t y, coord_t z, float size,
-                  DGLuint tex, float const color[3],
+bool H_RenderHalo(de::Vector3d const &origin, float size,
+                  DGLuint tex, de::Vector3f const &color,
                   coord_t distanceToViewer, float occlusionFactor,
                   float brightnessFactor, float viewXOffset,
                   bool primary, bool viewRelativeRotate);
@@ -68,4 +68,4 @@ bool H_RenderHalo(coord_t x, coord_t y, coord_t z, float size,
 // Console commands.
 D_CMD(FlareConfig);
 
-#endif /* LIBDENG_RENDER_HALO_H */
+#endif // DENG_CLIENT_RENDER_HALO_H

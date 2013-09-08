@@ -745,7 +745,7 @@ static void setupModelParamsForVisPSprite(rendmodelparams_t *params, vispsprite_
     }
 }
 
-static boolean generateHaloForVisSprite(vissprite_t const *spr, boolean primary)
+static bool generateHaloForVisSprite(vissprite_t const *spr, bool primary = false)
 {
     float occlusionFactor;
 
@@ -765,14 +765,14 @@ static boolean generateHaloForVisSprite(vissprite_t const *spr, boolean primary)
         occlusionFactor = (spr->data.flare.factor & 0x7f) / 127.0f;
     }
 
-    return H_RenderHalo(spr->origin[VX], spr->origin[VY], spr->origin[VZ],
+    return H_RenderHalo(spr->origin,
                         spr->data.flare.size,
                         spr->data.flare.tex,
                         spr->data.flare.color,
                         spr->distance,
                         occlusionFactor, spr->data.flare.mul,
                         spr->data.flare.xOff, primary,
-                        (spr->data.flare.flags & RFF_NO_TURN));
+                        (spr->data.flare.flags & RFF_NO_TURN) != 0);
 }
 
 void Rend_DrawMasked(void)
@@ -783,7 +783,7 @@ void Rend_DrawMasked(void)
 
     if(visSpriteP > visSprites)
     {
-        boolean flareDrawn = false;
+        bool primaryHaloDrawn = false;
 
         // Draw all vissprites back to front.
         // Sprites look better with Z buffer writes turned off.
@@ -808,25 +808,25 @@ void Rend_DrawMasked(void)
                 break;
 
             case VSPR_FLARE:
-                if(generateHaloForVisSprite(spr, true) && !flareDrawn)
+                if(generateHaloForVisSprite(spr, true) && !primaryHaloDrawn)
                 {
-                    flareDrawn = true;
+                    primaryHaloDrawn = true;
                 }
                 break;
             }
         }
 
-        // Draw secondary halos.
-        if(flareDrawn && haloMode > 1)
+        // Draw secondary halos?
+        if(primaryHaloDrawn && haloMode > 1)
         {
             // Now we can setup the state only once.
             H_SetupState(true);
 
-            for(vissprite_t* spr = visSprSortedHead.next; spr != &visSprSortedHead; spr = spr->next)
+            for(vissprite_t *spr = visSprSortedHead.next; spr != &visSprSortedHead; spr = spr->next)
             {
                 if(spr->type == VSPR_FLARE)
                 {
-                    generateHaloForVisSprite(spr, false);
+                    generateHaloForVisSprite(spr);
                 }
             }
 

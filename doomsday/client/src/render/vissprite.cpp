@@ -40,7 +40,7 @@ void R_ClearVisSprites()
     visSpriteP = visSprites;
 }
 
-vissprite_t *R_NewVisSprite()
+vissprite_t *R_NewVisSprite(visspritetype_t type)
 {
     vissprite_t *spr;
 
@@ -55,6 +55,7 @@ vissprite_t *R_NewVisSprite()
     }
 
     zapPtr(spr);
+    spr->type = type;
 
     return spr;
 }
