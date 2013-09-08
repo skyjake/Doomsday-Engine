@@ -292,12 +292,9 @@ static void projectLumobj(Lumobj &lum, project_params_t &parm)
 
     // Calculate the final surface light attribution factor.
     float luma = 1.5f - 1.5f * distToLum / lum.radius();
-
-    // Fade out as distance from viewer increases?
-    if(lum.maxDistance() > 0)
-    {
-        luma *= lum.attenuation(R_ViewerLumobjDistance(lum.indexInMap()));
-    }
+    
+    // Fade out as distance from viewer increases.
+    luma *= lum.attenuation(R_ViewerLumobjDistance(lum.indexInMap()));
 
     // Would this be seen?
     if(luma * parm.blendFactor < OMNILIGHT_SURFACE_LUMINOSITY_ATTRIBUTION_MIN)

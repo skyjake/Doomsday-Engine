@@ -196,10 +196,12 @@ Lumobj &Lumobj::setLightmap(LightmapSemantic semantic, Texture *newTexture)
 
 float Lumobj::attenuation(double distance) const
 {
-    if(distance <= 0) return 1;
-    if(distance > d->maxDistance) return 0;
-    if(distance > .67 * d->maxDistance)
-        return (d->maxDistance - distance) / (.33 * d->maxDistance);
+    if(distance > 0 && d->maxDistance > 0)
+    {
+        if(distance > d->maxDistance) return 0;
+        if(distance > .67 * d->maxDistance)
+            return (d->maxDistance - distance) / (.33 * d->maxDistance);
+    }
     return 1;
 }
 

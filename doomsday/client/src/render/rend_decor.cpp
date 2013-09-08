@@ -184,11 +184,11 @@ static uint generateDecorLights(MaterialSnapshot::Decoration const &decor,
             float const offT = t / sufDimensions.y;
             Vector3d offset(offS, axis == VZ? offT : offS, axis == VZ? offS : offT);
 
-            Vector3d origin = topLeft + delta * offset;
+            Vector3d origin  = topLeft + delta * offset;
+            BspLeaf &bspLeaf = suf.map().bspLeafAt(origin);
             if(containingSector)
             {
                 // The point must be inside the correct sector.
-                BspLeaf const &bspLeaf = containingSector->map().bspLeafAt(origin);
                 if(bspLeaf.sectorPtr() != containingSector
                    || !bspLeaf.polyContains(origin))
                     continue;
@@ -197,7 +197,7 @@ static uint generateDecorLights(MaterialSnapshot::Decoration const &decor,
             if(Surface::DecorSource *source = suf.newDecoration())
             {
                 source->origin  = origin;
-                source->bspLeaf = &suf.map().bspLeafAt(origin);
+                source->bspLeaf = &bspLeaf;
                 source->decor   = &decor;
 
                 plotted += 1;
@@ -257,13 +257,18 @@ static void plotSourcesForPlane(Plane &pln)
     Sector &sector = pln.sector();
     AABoxd const &sectorAABox = sector.aaBox();
 
-    Vector3d v1(sectorAABox.minX, pln.isSectorFloor()? sectorAABox.maxY : sectorAABox.minY, pln.visHeight());
-    Vector3d v2(sectorAABox.maxX, pln.isSectorFloor()? sectorAABox.minY : sectorAABox.maxY, pln.visHeight());
+    Vector3d topLeft(sectorAABox.minX,
+                     pln.isSectorFloor()? sectorAABox.maxY : sectorAABox.minY,
+                     pln.visHeight());
+
+    Vector3d bottomRight(sectorAABox.maxX,
+                         pln.isSectorFloor()? sectorAABox.minY : sectorAABox.maxY,
+                         pln.visHeight());
 
     Vector2f offset(-fmod(sectorAABox.minX, 64) - surface.visMaterialOrigin().x,
                     -fmod(sectorAABox.minY, 64) - surface.visMaterialOrigin().y);
 
-    updateSurfaceDecorations(surface, offset, v1, v2, &sector);
+    updateSurfaceDecorations(surface, offset, topLeft, bottomRight, &sector);
 }
 
 static void plotSourcesForWallSection(LineSide &side, int section)
@@ -407,8 +412,8 @@ static void projectSource(Decoration const &src)
     if(!lum) return; // Huh?
 
     // Is the point in range?
-    double distance = Rend_PointDist3D(lum->origin());
-    if(R_ViewerLumobjDistance(lum->indexInMap()) > lum->maxDistance())
+    double distance = R_ViewerLumobjDistance(lum->indexInMap());
+    if(distance > lum->maxDistance())
         return;
 
     // Does it pass the sector light limitation?
@@ -429,8 +434,9 @@ static void projectSource(Decoration const &src)
     vis->origin   = lum->origin();
     vis->distance = distance;
 
-    vis->data.flare.lumIdx       = lum->indexInMap();
     vis->data.flare.isDecoration = true;
+    vis->data.flare.tex          = decor->flareTex;
+    vis->data.flare.lumIdx       = lum->indexInMap();
 
     // Color is taken from the associated lumobj.
     V3f_Set(vis->data.flare.color, lum->color().x, lum->color().y, lum->color().z);
@@ -440,18 +446,10 @@ static void projectSource(Decoration const &src)
     else
         vis->data.flare.size = 0;
 
-    if(decor->flareTex != 0)
-    {
-        vis->data.flare.tex = decor->flareTex;
-    }
-    else
-    {   // Primary halo disabled.
-        vis->data.flare.flags |= RFF_NO_PRIMARY;
-        vis->data.flare.tex = 0;
-    }
+    // Fade out as distance from viewer increases.
+    vis->data.flare.mul = lum->attenuation(distance);
 
     // Halo brightness drops as the angle gets too big.
-    vis->data.flare.mul = 1;
     if(decor->elevation < 2 && decorLightFadeAngle > 0) // Close the surface?
     {
         Vector3d const eye(vOrigin[VX], vOrigin[VZ], vOrigin[VY]);

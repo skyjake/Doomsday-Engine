@@ -749,7 +749,8 @@ static bool generateHaloForVisSprite(vissprite_t const *spr, bool primary = fals
 {
     float occlusionFactor;
 
-    if(primary && (spr->data.flare.flags & RFF_NO_PRIMARY)) return false;
+    if(primary && (spr->data.flare.flags & RFF_NO_PRIMARY))
+        return false;
 
     if(spr->data.flare.isDecoration)
     {
@@ -775,7 +776,7 @@ static bool generateHaloForVisSprite(vissprite_t const *spr, bool primary = fals
                         (spr->data.flare.flags & RFF_NO_TURN) != 0);
 }
 
-void Rend_DrawMasked(void)
+void Rend_DrawMasked()
 {
     if(devNoSprites) return;
 
@@ -808,7 +809,7 @@ void Rend_DrawMasked(void)
                 break;
 
             case VSPR_FLARE:
-                if(generateHaloForVisSprite(spr, true) && !primaryHaloDrawn)
+                if(generateHaloForVisSprite(spr, true))
                 {
                     primaryHaloDrawn = true;
                 }

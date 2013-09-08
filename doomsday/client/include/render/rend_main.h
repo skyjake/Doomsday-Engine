@@ -105,11 +105,6 @@ void Rend_ModelViewMatrix(bool useAngles = true);
 #define Rend_PointDist2D(c) (fabs((vOrigin[VZ]-(c)[VY])*viewsidex - (vOrigin[VX]-(c)[VX])*viewsidey))
 
 /**
- * Approximated! The Z axis aspect ratio is corrected.
- */
-double Rend_PointDist3D(de::Vector3d const &point);
-
-/**
  * The DOOM lighting model applies a light level delta to everything when
  * e.g. the player shoots.
  *

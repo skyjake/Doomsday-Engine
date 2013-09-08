@@ -449,7 +449,7 @@ void R_ProjectSprite(mobj_t *mo)
 
         vissprite_t *vis = R_NewVisSprite(VSPR_FLARE);
 
-        vis->distance   = distFromEye;
+        vis->distance = distFromEye;
 
         // Determine the exact center of the flare.
         vis->origin = moPos + visOff;
@@ -491,10 +491,6 @@ void R_ProjectSprite(mobj_t *mo)
             if(flaremapResourceUri.path().toStringRef().compareWithoutCase("-"))
             {
                 vis->data.flare.tex = GL_PrepareFlaremap(flaremapResourceUri);
-            }
-            else
-            {
-                vis->data.flare.flags |= RFF_NO_PRIMARY;
             }
         }
     }
