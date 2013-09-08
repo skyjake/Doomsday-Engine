@@ -228,7 +228,7 @@ bool H_RenderHalo(Vector3d const &origin, float size, DGLuint tex,
                     + luminosity * luminosity / 5;
 
         // Apply a dimming factor (secondary flares receive stronger dimming).
-        alpha *= (!secondary? 1 : de::max<float>(minHaloSize * size / distanceToViewer, 1))
+        alpha *= (!secondary? 1 : de::min<float>(minHaloSize * size / distanceToViewer, 1))
                  * distanceDim * brightnessFactor;
 
         // Apply the global dimming factor.
