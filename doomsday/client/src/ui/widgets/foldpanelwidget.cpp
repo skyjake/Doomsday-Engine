@@ -72,7 +72,7 @@ void FoldPanelWidget::toggleFold()
     }
     else
     {
-        close();
+        close(0);
     }
 }
 

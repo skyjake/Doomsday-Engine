@@ -231,7 +231,7 @@ DENG_GUI_PIMPL(SliderWidget)
         float altAlpha = 0;
         if(dotSpace / numDots > 30)
         {
-            altAlpha = .333f;
+            altAlpha = .5f;
             numDots = 2 * numDots + 1;
         }
         Image::Size const dotSize = atlas().imageRect(root().tinyDot()).size();
@@ -241,6 +241,7 @@ DENG_GUI_PIMPL(SliderWidget)
                             sliderArea.middle().y);
 
             Vector4f dotColor = textColor;
+            dotColor.w *= .666f;
             if(altAlpha > 0 && i % 2)
             {
                 // Dim alt dots.
@@ -365,7 +366,7 @@ DENG_GUI_PIMPL(SliderWidget)
         // Round to nearest step.
         if(step > 0)
         {
-            v = de::round<ddouble>((v - range.start) / step) * step;
+            v = de::round<ddouble>((v - range.start) / step) * step + range.start;
         }
 
         v = range.clamp(v);

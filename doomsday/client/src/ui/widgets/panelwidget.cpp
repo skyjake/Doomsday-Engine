@@ -254,6 +254,22 @@ void PanelWidget::postDrawChildren()
     GLState::pop();
 }
 
+bool PanelWidget::handleEvent(Event const &event)
+{
+    if(event.type() == Event::MouseButton)
+    {
+        MouseEvent const &mouse = event.as<MouseEvent>();
+
+        // Eat buttons that land on the panel.
+        if(hitTest(mouse.pos()))
+        {
+            return true;
+        }
+    }
+
+    return GuiWidget::handleEvent(event);
+}
+
 void PanelWidget::open()
 {
     if(d->opened) return;

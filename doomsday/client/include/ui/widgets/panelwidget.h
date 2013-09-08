@@ -91,6 +91,7 @@ public:
     void update();
     void preDrawChildren();
     void postDrawChildren();
+    bool handleEvent(de::Event const &event);
 
 public slots:
     /**
