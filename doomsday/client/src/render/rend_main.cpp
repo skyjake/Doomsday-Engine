@@ -451,7 +451,7 @@ float Rend_AttenuateLightLevel(float distToViewer, float lightLevel)
             (distToViewer - 32) / rendLightDistanceAttenuation *
                 (1 - lightLevel);
 
-        float minimum = lightLevel * lightLevel + (lightLevel - .63f) * .5f;
+        float minimum = de::max(0.f, de::squared(lightLevel) + (lightLevel - .63f) * .5f);
         if(real < minimum)
             real = minimum; // Clamp it.
 
