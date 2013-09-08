@@ -773,7 +773,7 @@ static bool generateHaloForVisSprite(vissprite_t const *spr, bool primary = fals
                         spr->distance,
                         occlusionFactor, spr->data.flare.mul,
                         spr->data.flare.xOff, primary,
-                        (spr->data.flare.flags & RFF_NO_TURN) != 0);
+                        (spr->data.flare.flags & RFF_NO_TURN) == 0);
 }
 
 void Rend_DrawMasked()
