@@ -56,13 +56,12 @@ static TimeDelta OPEN_CLOSE_SPAN = 0.2;
 static uint POS_UNLOAD         = 0;
 static uint POS_GAME_SEPARATOR = 1;
 
-static uint POS_PANEL             = 0;
-static uint POS_RENDERER_SETTINGS = 1;
-static uint POS_VIDEO_SETTINGS    = 3;
-static uint POS_AUDIO_SETTINGS    = 4;
-static uint POS_INPUT_SETTINGS    = 5;
-static uint POS_NETWORK_SETTINGS  = 6;
-static uint POS_UPDATER_SETTINGS  = 8;
+static uint POS_RENDERER_SETTINGS = 0;
+static uint POS_VIDEO_SETTINGS    = 2;
+static uint POS_AUDIO_SETTINGS    = 3;
+static uint POS_INPUT_SETTINGS    = 4;
+static uint POS_NETWORK_SETTINGS  = 5;
+static uint POS_UPDATER_SETTINGS  = 7;
 
 DENG_GUI_PIMPL(TaskBarWidget),
 public IGameChangeObserver
@@ -151,7 +150,6 @@ public IGameChangeObserver
     {
         updateStatus();
 
-        itemWidget(configMenu, POS_PANEL).show(!isNullGame(newGame));
         itemWidget(mainMenu, POS_UNLOAD).show(!isNullGame(newGame));
         itemWidget(mainMenu, POS_GAME_SEPARATOR).show(!isNullGame(newGame));
 
@@ -291,8 +289,6 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
      * depending on whether a game is loaded.
      */
     d->configMenu->menu().items()
-            << new ui::ActionItem(_E(b) + tr("Control Panel"),
-                                  new CommandAction("panel")) // hidden with null-game
             << new ui::ActionItem(ui::Item::ShownAsButton, tr("Renderer"),
                                   new SignalAction(this, SLOT(showRendererSettings())))
             << new ui::Item(ui::Item::Separator)
@@ -319,7 +315,6 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
     add(d->configMenu);
     add(d->mainMenu);
 
-    d->itemWidget(d->configMenu, POS_PANEL).hide();
     d->itemWidget(d->mainMenu, POS_UNLOAD).hide();
     d->itemWidget(d->mainMenu, POS_GAME_SEPARATOR).hide();
 
