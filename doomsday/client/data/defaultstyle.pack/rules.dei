@@ -57,3 +57,7 @@ group gameselection {
 group coloradjustment {
     rule slider { constant $= slider.width.constant * 1.36 }
 }
+
+group rendererappearance {
+    rule width { constant $= UNIT * 100 }
+}

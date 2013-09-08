@@ -29,98 +29,180 @@
 #include "SequentialLayout"
 #include "SignalAction"
 #include "clientapp.h"
+#include "con_main.h"
 
 using namespace de;
 using namespace ui;
 
-class Group : public FoldPanelWidget
-{
-public:
-    Group(GuiWidget *parent, String const &titleText)
-    {
-        _group = new GuiWidget;
-        setContent(_group);
-        title().setText(titleText);
-        title().setTextColor("accent");
-
-        _layout.setGridSize(2, 0);
-        _layout.setColumnAlignment(0, AlignRight);
-        _layout.setLeftTop(_group->rule().left(), _group->rule().top());
-
-        parent->add(&title());
-        parent->add(this);
-    }
-
-    void addSpace()
-    {
-        _layout << Const(0);
-    }
-
-    void addLabel(String const &text)
-    {
-        _layout << *LabelWidget::newWithText(text, _group);
-    }
-
-    CVarToggleWidget *addToggle(char const *cvar, String const &label)
-    {
-        CVarToggleWidget *w = new CVarToggleWidget(cvar);
-        w->setText(label);
-        _group->add(w);
-        _layout << *w;
-        return w;
-    }
-
-    CVarChoiceWidget *addChoice(char const *cvar)
-    {
-        CVarChoiceWidget *w = new CVarChoiceWidget(cvar);
-        w->setOpeningDirection(ui::Up);
-        _group->add(w);
-        _layout << *w;
-        return w;
-    }
-
-    CVarSliderWidget *addSlider(char const *cvar)
-    {
-        CVarSliderWidget *w = new CVarSliderWidget(cvar);
-        _group->add(w);
-        _layout << *w;
-        return w;
-    }
-
-    CVarSliderWidget *addSlider(char const *cvar, Ranged const &range, double step, int precision)
-    {
-        CVarSliderWidget *w = addSlider(cvar);
-        w->setRange(range, step);
-        w->setPrecision(precision);
-        return w;
-    }
-
-    void fetch()
-    {
-        foreach(Widget *child, _group->childWidgets())
-        {
-            if(ICVarWidget *w = child->maybeAs<ICVarWidget>())
-            {
-                w->updateFromCVar();
-            }
-        }
-    }
-
-    void commit()
-    {
-        _group->rule().setSize(_layout.width(), _layout.height());
-    }
-
-private:
-    GuiWidget *_group;
-    GridLayout _layout;
-};
-
 DENG_GUI_PIMPL(RendererAppearanceEditor)
 {
+    /**
+     * Foldable group of settings.
+     */
+    class Group : public FoldPanelWidget
+    {
+        /// Action for reseting the group's settings to defaults.
+        struct ResetAction : public Action
+        {
+            Group *group;
+
+            ResetAction(Group *groupToReset) : group(groupToReset) {}
+            Action *duplicate() const { return new ResetAction(group); }
+
+            void trigger()
+            {
+                Action::trigger();
+                group->resetToDefaults();
+            }
+        };
+
+    public:
+
+        Group(RendererAppearanceEditor::Instance *inst, String const &titleText)
+            : d(inst), _firstColumnWidth(0)
+        {
+            _group = new GuiWidget;
+            setContent(_group);
+            title().setText(titleText);
+            title().setTextColor("accent");
+
+            // We want the first column of all groups to be aligned with each other.
+            _layout.setColumnFixedWidth(0, *d->firstColumnWidth);
+
+            _layout.setGridSize(2, 0);
+            _layout.setColumnAlignment(0, AlignRight);
+            _layout.setLeftTop(_group->rule().left(), _group->rule().top());
+
+            // Button for reseting this group to defaults.
+            _resetButton = new ButtonWidget;
+            _resetButton->setText(tr("Reset"));
+            _resetButton->setAction(new ResetAction(this));
+            _resetButton->rule()
+                    .setInput(Rule::Right, d->container->contentRule().right())
+                    .setInput(Rule::Top, title().rule().top());
+            _resetButton->disable();
+
+            d->container->add(&title());
+            d->container->add(_resetButton);
+            d->container->add(this);
+        }
+
+        ~Group()
+        {
+            releaseRef(_firstColumnWidth);
+        }
+
+        void preparePanelForOpening()
+        {
+            FoldPanelWidget::preparePanelForOpening();
+            _resetButton->enable();
+        }
+
+        void panelClosing()
+        {
+            FoldPanelWidget::panelClosing();
+            _resetButton->disable();
+        }
+
+        void addSpace()
+        {
+            _layout << Const(0);
+        }
+
+        void addLabel(String const &text)
+        {
+            _layout << *LabelWidget::newWithText(text, _group);
+        }
+
+        CVarToggleWidget *addToggle(char const *cvar, String const &label)
+        {
+            CVarToggleWidget *w = new CVarToggleWidget(cvar);
+            w->setText(label);
+            _group->add(w);
+            _layout << *w;
+            return w;
+        }
+
+        CVarChoiceWidget *addChoice(char const *cvar, ui::Direction opening = ui::Up)
+        {
+            CVarChoiceWidget *w = new CVarChoiceWidget(cvar);
+            w->setOpeningDirection(opening);
+            _group->add(w);
+            _layout << *w;
+            return w;
+        }
+
+        CVarSliderWidget *addSlider(char const *cvar)
+        {
+            CVarSliderWidget *w = new CVarSliderWidget(cvar);
+            _group->add(w);
+            _layout << *w;
+            return w;
+        }
+
+        CVarSliderWidget *addSlider(char const *cvar, Ranged const &range, double step, int precision)
+        {
+            CVarSliderWidget *w = addSlider(cvar);
+            w->setRange(range, step);
+            w->setPrecision(precision);
+            return w;
+        }
+
+        void commit()
+        {
+            _group->rule().setSize(_layout.width(), _layout.height());
+
+            // Calculate the maximum rule for the first column items.
+            for(int i = 0; i < _layout.gridSize().y; ++i)
+            {
+                GuiWidget *w = _layout.at(Vector2i(0, i));
+                if(w)
+                {
+                    changeRef(_firstColumnWidth, OperatorRule::maximum(w->rule().width(), _firstColumnWidth));
+                }
+            }
+        }
+
+        void fetch()
+        {
+            foreach(Widget *child, _group->childWidgets())
+            {
+                if(ICVarWidget *w = child->maybeAs<ICVarWidget>())
+                {
+                    w->updateFromCVar();
+                }
+            }
+        }
+
+        void resetToDefaults()
+        {
+            foreach(Widget *child, _group->childWidgets())
+            {
+                if(ICVarWidget *w = child->maybeAs<ICVarWidget>())
+                {
+                    d->settings.resetSettingToDefaults(w->cvarPath());
+                    w->updateFromCVar();
+                }
+            }
+        }
+
+        Rule const &firstColumnWidth() const
+        {
+            return *_firstColumnWidth;
+        }
+
+    private:
+        RendererAppearanceEditor::Instance *d;
+        ButtonWidget *_resetButton;
+        GuiWidget *_group;
+        GridLayout _layout;
+        Rule const *_firstColumnWidth;
+    };
+
     SettingsRegister &settings;
     DialogContentStylist stylist;
     ScrollAreaWidget *container;
+    IndirectRule *firstColumnWidth; ///< Shared by all groups.
     ButtonWidget *conf;
     ButtonWidget *close;    
 
@@ -137,7 +219,8 @@ DENG_GUI_PIMPL(RendererAppearanceEditor)
 
     Instance(Public *i)
         : Base(i),
-          settings(ClientApp::rendererAppearanceSettings())
+          settings(ClientApp::rendererAppearanceSettings()),
+          firstColumnWidth(new IndirectRule)
     {
         // The contents of the editor will scroll.
         container = new ScrollAreaWidget;
@@ -155,7 +238,7 @@ DENG_GUI_PIMPL(RendererAppearanceEditor)
         close->setAction(new SignalAction(thisPublic, SLOT(close())));
 
         // Sky settings.
-        skyGroup = new Group(container, tr("Sky"));
+        skyGroup = new Group(this, tr("Sky"));
 
         skyGroup->addLabel(tr("Sky Sphere Radius:"));
         skyGroup->addSlider("rend-sky-distance", Ranged(0, 8000), 10, 0);
@@ -163,7 +246,7 @@ DENG_GUI_PIMPL(RendererAppearanceEditor)
         skyGroup->commit();
 
         // Shadow settings.
-        shadowGroup = new Group(container, tr("Shadows"));
+        shadowGroup = new Group(this, tr("Shadows"));
 
         shadowGroup->addSpace();
         shadowGroup->addToggle("rend-fakeradio", tr("Ambient Occlusion"));
@@ -186,10 +269,10 @@ DENG_GUI_PIMPL(RendererAppearanceEditor)
         shadowGroup->commit();
 
         // Dynamic light settings.
-        lightGroup = new Group(container, "Dynamic Lights");
+        lightGroup = new Group(this, "Dynamic Lights");
 
         lightGroup->addLabel(tr("Dynamic Lights:"));
-        lightGroup->addChoice("rend-light")->items()
+        lightGroup->addChoice("rend-light", ui::Down)->items()
                 << new ChoiceItem(tr("Enabled"), 1)
                 << new ChoiceItem(tr("Disabled"), 0)
                 << new ChoiceItem(tr("Process without drawing"), 2);
@@ -206,8 +289,11 @@ DENG_GUI_PIMPL(RendererAppearanceEditor)
         lightGroup->addLabel(tr("Number of Lights:"));
         lightGroup->addSlider("rend-light-num", Ranged(0, 2000), 1, 0)->setMinLabel("Max");
 
-        lightGroup->addLabel(tr("Light Brightness:"));
+        lightGroup->addLabel(tr("Brightness:"));
         lightGroup->addSlider("rend-light-bright");
+
+        lightGroup->addLabel(tr("Brightness in Fog:"));
+        lightGroup->addSlider("rend-light-fog-bright");
 
         lightGroup->addLabel(tr("Light Radius Factor:"));
         lightGroup->addSlider("rend-light-radius-scale");
@@ -224,7 +310,7 @@ DENG_GUI_PIMPL(RendererAppearanceEditor)
         lightGroup->commit();
 
         // Glow settings.
-        glowGroup = new Group(container, tr("Surface Glow"));
+        glowGroup = new Group(this, tr("Surface Glow"));
 
         glowGroup->addLabel(tr("Material Glow:"));
         glowGroup->addSlider("rend-glow");
@@ -235,19 +321,16 @@ DENG_GUI_PIMPL(RendererAppearanceEditor)
         glowGroup->addLabel(tr("Glow Height Factor:"));
         glowGroup->addSlider("rend-glow-scale");
 
-        glowGroup->addLabel(tr("Brightness in Fog:"));
-        glowGroup->addSlider("rend-light-fog-bright");
-
         glowGroup->addSpace();
         glowGroup->addToggle("rend-glow-wall", tr("Glow Visible on Walls"));
 
         glowGroup->commit();
 
         // Halo and lens flare settings.
-        haloGroup = new Group(container, tr("Lens Flares & Halos"));
+        haloGroup = new Group(this, tr("Lens Flares & Halos"));
 
         haloGroup->addSpace();
-        haloGroup->addToggle("rend-halo-realistic", tr("Realistic Halos"));
+        haloGroup->addToggle("rend-halo-realistic", tr("Realistic Appearance"));
 
         haloGroup->addLabel(tr("Flares per Halo:"));
         haloGroup->addSlider("rend-halo")->setMinLabel(tr("None"));
@@ -256,7 +339,7 @@ DENG_GUI_PIMPL(RendererAppearanceEditor)
         haloGroup->addSlider("rend-halo-bright", Ranged(0, 100), 1, 0);
 
         haloGroup->addLabel(tr("Halo Size Factor:"));
-        haloGroup->addSlider("rend-halo-size", Ranged(0, 100), 1, 0);
+        haloGroup->addSlider("rend-halo-size");
 
         haloGroup->addLabel(tr("Occlusion Fading:"));
         haloGroup->addSlider("rend-halo-occlusion", Ranged(1, 256), 1, 0);
@@ -274,12 +357,12 @@ DENG_GUI_PIMPL(RendererAppearanceEditor)
         haloGroup->addSlider("rend-halo-dim-far", Ranged(0, 200), .1, 1);
 
         haloGroup->addLabel(tr("Z-Mag Divisor:"));
-        haloGroup->addSlider("rend-halo-zmag-div", Ranged(1, 200), .1, 1);
+        haloGroup->addSlider("rend-halo-zmag-div", Ranged(1, 100), .1, 1);
 
         haloGroup->commit();
 
         // Texture settings.
-        texGroup = new Group(container, tr("Textures"));
+        texGroup = new Group(this, tr("Textures"));
 
         texGroup->addLabel(tr("Filtering Mode:"));
         texGroup->addChoice("rend-tex-mipmap")->items()
@@ -329,7 +412,7 @@ DENG_GUI_PIMPL(RendererAppearanceEditor)
         texGroup->commit();
 
         // Model settings.
-        modelGroup = new Group(container, tr("3D Models"));
+        modelGroup = new Group(this, tr("3D Models"));
 
         modelGroup->addSpace();
         modelGroup->addToggle("rend-model", tr("3D Models"));
@@ -341,7 +424,7 @@ DENG_GUI_PIMPL(RendererAppearanceEditor)
         modelGroup->addSlider("rend-model-distance", Ranged(0, 3000), 10, 0)->setMinLabel(tr("Inf"));
 
         modelGroup->addLabel(tr("LOD #0 Distance:"));
-        modelGroup->addSlider("rend-model-lod", Ranged(0, 1000), 10, 0)->setMinLabel(tr("No LOD"));
+        modelGroup->addSlider("rend-model-lod", Ranged(0, 1000), 1, 0)->setMinLabel(tr("No LOD"));
 
         modelGroup->addLabel(tr("Number of Lights:"));
         modelGroup->addSlider("rend-model-lights");
@@ -349,7 +432,7 @@ DENG_GUI_PIMPL(RendererAppearanceEditor)
         modelGroup->commit();
 
         // Sprite settings.
-        spriteGroup = new Group(container, tr("Sprites"));
+        spriteGroup = new Group(this, tr("Sprites"));
 
         spriteGroup->addSpace();
         spriteGroup->addToggle("rend-sprite-blend", tr("Additive Blending"));
@@ -370,7 +453,7 @@ DENG_GUI_PIMPL(RendererAppearanceEditor)
         spriteGroup->commit();
 
         // Object settings.
-        objectGroup = new Group(container, tr("Objects"));
+        objectGroup = new Group(this, tr("Objects"));
 
         objectGroup->addLabel(tr("Smooth Movement:"));
         objectGroup->addChoice("rend-mobj-smooth-move")->items()
@@ -384,7 +467,7 @@ DENG_GUI_PIMPL(RendererAppearanceEditor)
         objectGroup->commit();
 
         // Particle settings.
-        partGroup = new Group(container, tr("Particle Effects"));
+        partGroup = new Group(this, tr("Particle Effects"));
 
         partGroup->addSpace();
         partGroup->addToggle("rend-particle", tr("Particle Effects"));
@@ -402,6 +485,27 @@ DENG_GUI_PIMPL(RendererAppearanceEditor)
         partGroup->addSlider("rend-particle-visible-near", Ranged(0, 1000), 1, 0)->setMinLabel(tr("None"));
 
         partGroup->commit();
+
+        // Now we can define the first column width.
+        firstColumnWidth->setSource(maximumOfAllGroupFirstColumns());
+    }
+
+    ~Instance()
+    {
+        releaseRef(firstColumnWidth);
+    }
+
+    Rule const &maximumOfAllGroupFirstColumns()
+    {
+        Rule const *max = 0;
+        foreach(Widget *child, container->childWidgets())
+        {
+            if(Group *g = child->maybeAs<Group>())
+            {
+                changeRef(max, OperatorRule::maximum(g->firstColumnWidth(), max));
+            }
+        }
+        return *refless(max);
     }
 
     void fetch()
@@ -434,11 +538,11 @@ RendererAppearanceEditor::RendererAppearanceEditor()
             .setInput(Rule::Top,  area.top())
             .setInput(Rule::Left, area.left());
     d->close->rule()
-            .setInput(Rule::Right, area.right())
-            .setInput(Rule::Top,   area.top());
+            .setInput(Rule::Right,  area.right())
+            .setInput(Rule::Top,    area.top());
     d->conf->rule()
-            .setInput(Rule::Right, d->close->rule().left())
-            .setInput(Rule::Top,   area.top());
+            .setInput(Rule::Right,  d->close->rule().left())
+            .setInput(Rule::Top,    d->close->rule().top());
 
     SequentialLayout layout(area.left(), title->rule().bottom(), Down);
 
@@ -456,7 +560,7 @@ RendererAppearanceEditor::RendererAppearanceEditor()
 
     // Update container size.
     d->container->setContentSize(OperatorRule::maximum(layout.width(),
-                                                       style().rules().rule("sidebar.width")),
+                                                       style().rules().rule("rendererappearance.width")),
                                  title->rule().height() + layout.height());
     d->container->rule().setSize(d->container->contentRule().width() +
                                  d->container->margins().width(),
@@ -467,6 +571,9 @@ RendererAppearanceEditor::RendererAppearanceEditor()
 
     // Install the editor.
     ClientWindow::main().setSidebar(ClientWindow::RightEdge, this);
+
+    // Open the first group.
+    d->lightGroup->open();
 }
 
 void RendererAppearanceEditor::showRendererSettings()

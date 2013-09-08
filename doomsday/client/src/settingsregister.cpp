@@ -38,10 +38,38 @@ DENG2_PIMPL_NOREF(SettingsRegister)
         SettingType type;
         String name;
 
+        Setting() : type(IntCVar) {}
         Setting(SettingType t, String n) : type(t), name(n) {}
+
+        /**
+         * Changes the current value of the setting.
+         *
+         * @param val  New value.
+         */
+        void setValue(QVariant const &val) const
+        {
+            switch(type)
+            {
+            case IntCVar:
+                Con_SetInteger(name.toAscii(), val.toInt());
+                break;
+
+            case FloatCVar:
+                Con_SetFloat(name.toAscii(), val.toFloat());
+                break;
+
+            case StringCVar:
+                Con_SetString(name.toAscii(), val.toString().toUtf8());
+                break;
+
+            case ConfigVariable:
+                App::config()[name].set(NumberValue(val.toDouble()));
+                break;
+            }
+        }
     };
 
-    typedef QList<Setting> Settings;
+    typedef QMap<String, Setting> Settings;
     Settings settings;
 
     struct Profile
@@ -117,7 +145,7 @@ DENG2_PIMPL_NOREF(SettingsRegister)
 
         Profile &prof = *profiles[profileName];
 
-        foreach(Setting const &st, settings)
+        foreach(Setting const &st, settings.values())
         {
             QVariant val;
 
@@ -150,28 +178,10 @@ DENG2_PIMPL_NOREF(SettingsRegister)
 
         Profile const &prof = *profiles[profileName];
 
-        foreach(Setting const &st, settings)
+        foreach(Setting const &st, settings.values())
         {
             QVariant const &val = prof.values[st.name];
-
-            switch(st.type)
-            {
-            case IntCVar:
-                Con_SetInteger(st.name.toAscii(), val.toInt());
-                break;
-
-            case FloatCVar:
-                Con_SetFloat(st.name.toAscii(), val.toFloat());
-                break;
-
-            case StringCVar:
-                Con_SetString(st.name.toAscii(), val.toString().toUtf8());
-                break;
-
-            case ConfigVariable:
-                App::config()[st.name].set(NumberValue(val.toDouble()));
-                break;
-            }
+            st.setValue(val);
         }
     }
 
@@ -193,6 +203,14 @@ DENG2_PIMPL_NOREF(SettingsRegister)
         currentProfile().values = defaults.values;
         apply(current);
     }
+
+    void resetSetting(String const &settingName) const
+    {
+        DENG2_ASSERT(settings.contains(settingName));
+        DENG2_ASSERT(defaults.values.contains(settingName));
+
+        settings[settingName].setValue(defaults.values[settingName]);
+    }
 };
 
 SettingsRegister::SettingsRegister() : d(new Instance)
@@ -202,7 +220,7 @@ SettingsRegister &SettingsRegister::define(SettingType type,
                                            String const &settingName,
                                            QVariant const &defaultValue)
 {
-    d->settings << Instance::Setting(type, settingName);
+    d->settings.insert(settingName, Instance::Setting(type, settingName));
 
     QVariant def;
     if(type == ConfigVariable)
@@ -237,6 +255,11 @@ void SettingsRegister::setProfile(String const &name)
 void SettingsRegister::resetToDefaults()
 {
     d->reset();
+}
+
+void SettingsRegister::resetSettingToDefaults(String const &settingName)
+{
+    d->resetSetting(settingName);
 }
 
 void SettingsRegister::rename(String const &name)

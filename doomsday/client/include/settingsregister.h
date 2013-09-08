@@ -93,6 +93,13 @@ public:
     void resetToDefaults();
 
     /**
+     * Resets one setting in the current profile to its default value.
+     *
+     * @param settingName  Name of the setting.
+     */
+    void resetSettingToDefaults(de::String const &settingName);
+
+    /**
      * Renames the current profile.
      *
      * @param name  New name of the profile.

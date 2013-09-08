@@ -153,7 +153,7 @@ RendererSettingsDialog::RendererSettingsDialog(String const &name)
 
     LabelWidget *precacheLabel = LabelWidget::newWithText(tr("Precaching:"), &area());
     d->precacheModels->setText(tr("3D Models"));
-    d->precacheSprites->setText(tr("Sprites " _E(l) "(slow)"));
+    d->precacheSprites->setText(tr("Sprites"));
 
     LabelWidget *multiLabel = LabelWidget::newWithText(tr("Multitexturing:"), &area());
     d->multiLight->setText(tr("Dynamic Lights"));
