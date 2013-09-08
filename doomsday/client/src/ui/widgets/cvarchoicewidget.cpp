@@ -43,6 +43,11 @@ CVarChoiceWidget::CVarChoiceWidget(char const *cvarPath) : d(new Instance)
             this, SLOT(setCVarValueFromWidget()));
 }
 
+char const *CVarChoiceWidget::cvarPath() const
+{
+    return d->cvar;
+}
+
 void CVarChoiceWidget::updateFromCVar()
 {
     setSelected(items().findData(CVar_Integer(d->var())));

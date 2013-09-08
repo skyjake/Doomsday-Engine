@@ -43,6 +43,11 @@ CVarToggleWidget::CVarToggleWidget(char const *cvarPath) : d(new Instance)
             this, SLOT(setCVarValueFromWidget()));
 }
 
+char const *CVarToggleWidget::cvarPath() const
+{
+    return d->cvar;
+}
+
 void CVarToggleWidget::updateFromCVar()
 {
     setActive(CVar_Integer(d->var()) != 0);

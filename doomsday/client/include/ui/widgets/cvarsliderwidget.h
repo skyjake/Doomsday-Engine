@@ -32,6 +32,8 @@ class CVarSliderWidget : public SliderWidget, public ICVarWidget
 public:
     CVarSliderWidget(char const *cvarPath);
 
+    char const *cvarPath() const;
+
 public slots:
     void updateFromCVar();
     void setCVarValueFromWidget();

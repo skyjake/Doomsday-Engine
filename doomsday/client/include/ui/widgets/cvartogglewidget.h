@@ -32,6 +32,8 @@ class CVarToggleWidget : public ToggleWidget, public ICVarWidget
 public:
     CVarToggleWidget(char const *cvarPath);
 
+    char const *cvarPath() const;
+
 public slots:
     void updateFromCVar();
 

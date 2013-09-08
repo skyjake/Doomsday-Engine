@@ -60,6 +60,11 @@ CVarSliderWidget::CVarSliderWidget(char const *cvarPath) : d(new Instance)
     connect(this, SIGNAL(valueChangedByUser(double)), this, SLOT(setCVarValueFromWidget()));
 }
 
+char const *CVarSliderWidget::cvarPath() const
+{
+    return d->cvar;
+}
+
 void CVarSliderWidget::updateFromCVar()
 {
     cvar_t *var = d->var();

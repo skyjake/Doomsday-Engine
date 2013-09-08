@@ -27,6 +27,7 @@ class ICVarWidget
 public:
     virtual ~ICVarWidget() {}
 
+    virtual char const *cvarPath() const = 0;
     virtual void updateFromCVar() = 0;
 };
 

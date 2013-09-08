@@ -33,6 +33,8 @@ class CVarChoiceWidget : public ChoiceWidget, public ICVarWidget
 public:
     CVarChoiceWidget(char const *cvarPath);
 
+    char const *cvarPath() const;
+
 public slots:
     void updateFromCVar();
 
