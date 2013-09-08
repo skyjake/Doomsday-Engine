@@ -25,6 +25,7 @@
 #include <de/KeyEvent>
 #include <de/MouseEvent>
 #include <de/Lockable>
+#include <de/Drawable>
 
 using namespace de;
 
@@ -49,13 +50,22 @@ DENG_GUI_PIMPL(ScrollAreaWidget), public Lockable
     bool indicatorAnimating;
     ColorBank::Colorf accent;
 
+    // GL objects.
+    bool indicatorShown;
+    Drawable drawable;
+    GLUniform uMvpMatrix;
+    GLUniform uColor;
+
     Instance(Public *i)
         : Base(i),
           origin(Top),
           pageKeysEnabled(true),
           scrollOpacity(0),
           scrollBarWidth(0),
-          indicatorAnimating(false)
+          indicatorAnimating(false),
+          indicatorShown(false),
+          uMvpMatrix("uMvpMatrix", GLUniform::Mat4),
+          uColor    ("uColor",     GLUniform::Vec4)
     {
         contentRule.setDebugName("ScrollArea-contentRule");
 
@@ -77,6 +87,23 @@ DENG_GUI_PIMPL(ScrollAreaWidget), public Lockable
         releaseRef(y);
         releaseRef(maxX);
         releaseRef(maxY);
+    }
+
+    void glInit()
+    {
+        if(indicatorShown)
+        {
+            DefaultVertexBuf *buf = new DefaultVertexBuf;
+            drawable.addBuffer(buf);
+
+            shaders().build(drawable.program(), "generic.textured.color_ucolor")
+                    << uMvpMatrix << uAtlas() << uColor;
+        }
+    }
+
+    void glDeinit()
+    {
+        drawable.clear();
     }
 
     void updateStyle()
@@ -321,6 +348,11 @@ void ScrollAreaWidget::enablePageKeys(bool enabled)
     d->pageKeysEnabled = enabled;
 }
 
+void ScrollAreaWidget::enableIndicatorDraw(bool enabled)
+{
+    d->indicatorShown = enabled;
+}
+
 bool ScrollAreaWidget::handleEvent(Event const &event)
 {
     // Mouse wheel scrolling.
@@ -413,6 +445,16 @@ void ScrollAreaWidget::scrollToRight(TimeDelta span)
     scrollX(maximumScrollX().valuei(), span);
 }
 
+void ScrollAreaWidget::glInit()
+{
+    d->glInit();
+}
+
+void ScrollAreaWidget::glDeinit()
+{
+    d->glDeinit();
+}
+
 void ScrollAreaWidget::glMakeScrollIndicatorGeometry(DefaultVertexBuf::Builder &verts,
                                                      Vector2f const &origin)
 {
@@ -440,6 +482,12 @@ void ScrollAreaWidget::glMakeScrollIndicatorGeometry(DefaultVertexBuf::Builder &
                    d->indicatorUv);
 }
 
+void ScrollAreaWidget::viewResized()
+{
+    GuiWidget::viewResized();
+    d->uMvpMatrix = root().projMatrix2D();
+}
+
 void ScrollAreaWidget::update()
 {
     GuiWidget::update();
@@ -461,6 +509,26 @@ void ScrollAreaWidget::update()
     if(d->y->value() > d->maxY->value())
     {
         d->y->set(d->maxY->value());
+    }
+}
+
+void ScrollAreaWidget::drawContent()
+{
+    if(d->indicatorShown)
+    {
+        d->uColor = Vector4f(1, 1, 1, visibleOpacity());
+
+        // The indicator is quite simple, so just keep it dynamic. This will
+        // also avoid the need to detect when the indicator is moving and
+        // whether the atlas has been repositioned.
+
+        setIndicatorUv(root().atlas().imageRectf(root().solidWhitePixel()).middle());
+
+        DefaultVertexBuf::Builder verts;
+        glMakeScrollIndicatorGeometry(verts, rule().recti().topLeft + margins().toVector().xy());
+        d->drawable.buffer<DefaultVertexBuf>().setVertices(gl::TriangleStrip, verts, gl::Dynamic);
+
+        d->drawable.draw();
     }
 }
 

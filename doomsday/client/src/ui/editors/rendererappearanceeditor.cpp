@@ -227,6 +227,7 @@ DENG_GUI_PIMPL(RendererAppearanceEditor)
     {
         // The contents of the editor will scroll.
         container = new ScrollAreaWidget;
+        container->enableIndicatorDraw(true);
         stylist.setContainer(*container);
 
         container->add(conf  = new ButtonWidget);

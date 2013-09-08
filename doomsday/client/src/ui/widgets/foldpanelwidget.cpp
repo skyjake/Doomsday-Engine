@@ -74,6 +74,7 @@ FoldPanelWidget::FoldPanelWidget(String const &name) : PanelWidget(name), d(new 
     d->title->set(Background());
     d->title->setFont("heading");
     d->title->setAction(new SignalAction(this, SLOT(toggleFold())));
+    d->title->setOpacity(.75f);
 
     // Icon is disabled for now, doesn't look quite right.
     //d->title->setImage(new Instance::FoldImage(*this));
@@ -124,12 +125,16 @@ void FoldPanelWidget::preparePanelForOpening()
         d->container = 0;
     }
 
+    d->title->setOpacity(1);
+
     PanelWidget::preparePanelForOpening();
 }
 
 void FoldPanelWidget::panelDismissed()
 {
     PanelWidget::panelDismissed();
+
+    d->title->setOpacity(.666f, .5f);
 
     content().notifySelfAndTree(&Widget::deinitialize);
 

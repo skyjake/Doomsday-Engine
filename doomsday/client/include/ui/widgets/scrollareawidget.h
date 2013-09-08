@@ -24,11 +24,16 @@
 /**
  * Scrollable area.
  *
- * ScrollAreaWidget does not control its own position or size. The user
- * must define its rectangle. The content rule rectangle is defined in
- * relation to the widget's rectangle.
+ * ScrollAreaWidget does not control its own position or size. The user must
+ * define its rectangle. The content rule rectangle is defined in relation to
+ * the widget's rectangle.
  *
  * The user must always define the size of the content area.
+ *
+ * ScrollAreaWidget can optionally independently draw a scroll indicator.
+ * However, the default behavior is that the user must call
+ * glMakeScrollIndicatorGeometry() to include the indicator geometry as part of
+ * the derived/owner widget.
  */
 class ScrollAreaWidget : public GuiWidget
 {
@@ -111,11 +116,20 @@ public:
      */
     void enablePageKeys(bool enabled);
 
+    /**
+     * Enables or disables the drawing of the scroll indicator.
+     *
+     * @param enabled  @c true to enable the indicator. The default is @c false.
+     */
+    void enableIndicatorDraw(bool enabled);
+
     void glMakeScrollIndicatorGeometry(DefaultVertexBuf::Builder &verts,
                                        de::Vector2f const &origin = de::Vector2f(0, 0));
 
     // Events.
+    void viewResized();
     void update();
+    void drawContent();
     void preDrawChildren();
     void postDrawChildren();
     bool handleEvent(de::Event const &event);
@@ -130,6 +144,10 @@ public slots:
 
     void scrollToLeft(de::TimeDelta span = .3f);
     void scrollToRight(de::TimeDelta span = .3f);
+
+protected:
+    void glInit();
+    void glDeinit();
 
 private:
     DENG2_PRIVATE(d)
