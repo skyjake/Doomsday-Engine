@@ -48,6 +48,7 @@ public:
     void setGridSize(int numCols, int numRows);
     void setModeAndGridSize(Mode mode, int numCols, int numRows);
     void setColumnAlignment(int column, ui::Alignment cellAlign);
+    void setColumnFixedWidth(int column, de::Rule const &fixedWidth);
 
     void setLeftTop(de::Rule const &left, de::Rule const &top);
     void setOverrideWidth(de::Rule const &width);
@@ -86,6 +87,8 @@ public:
      * @return Cell coordinates.
      */
     de::Vector2i widgetPos(GuiWidget &widget) const;
+
+    GuiWidget *at(de::Vector2i const &cell) const;
 
     de::Rule const &width() const;
     de::Rule const &height() const;

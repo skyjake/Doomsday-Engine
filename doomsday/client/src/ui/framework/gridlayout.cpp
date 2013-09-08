@@ -19,6 +19,8 @@
 #include "GridLayout"
 #include "SequentialLayout"
 
+#include <QMap>
+
 using namespace de;
 
 DENG2_PIMPL(GridLayout)
@@ -34,10 +36,12 @@ DENG2_PIMPL(GridLayout)
     Vector2i cell;
     Rule const *fixedCellWidth;
     Rule const *fixedCellHeight;
+    QMap<int, Rule const *> fixedColWidths;
     Rule const *colPad;
     Rule const *rowPad;
 
     struct Metric {
+        Rule const *fixedLength; ///< May be @c NULL.
         Rule const *current;    ///< Current size of column/row (replaced many times).
         IndirectRule *final;    ///< Final size of column/row (for others to use).
         Rule const *accumulatedLengths; ///< Sum of sizes of previous columns/rows (for others to use).
@@ -45,12 +49,18 @@ DENG2_PIMPL(GridLayout)
         Rule const *maxEdge;    ///< Rule for the right/bottom edge.
         ui::Alignment cellAlign;///< Cell alignment affecting the entire column/row.
 
-        Metric() : current(0), final(new IndirectRule), accumulatedLengths(0), minEdge(0), maxEdge(0),
-            cellAlign(ui::AlignLeft)
-        {}
+        Metric()
+            : fixedLength(0),
+              current(0),
+              final(new IndirectRule),
+              accumulatedLengths(0),
+              minEdge(0),
+              maxEdge(0),
+              cellAlign(ui::AlignLeft) {}
 
         ~Metric()
         {
+            releaseRef(fixedLength);
             releaseRef(current);
             releaseRef(final);
             releaseRef(accumulatedLengths);
@@ -98,6 +108,12 @@ DENG2_PIMPL(GridLayout)
         releaseRef(rowPad);
         releaseRef(totalWidth);
         releaseRef(totalHeight);
+
+        foreach(Rule const *rule, fixedColWidths.values())
+        {
+            releaseRef(rule);
+        }
+        fixedColWidths.clear();
 
         clearMetrics();
 
@@ -161,9 +177,19 @@ DENG2_PIMPL(GridLayout)
     void addMetric(Metrics &list)
     {
         Metric *m = new Metric;
+        int pos = list.size();
+
+        // Check if there is a fixed width defined for this column.
+        if(&list == &cols && fixedColWidths.contains(pos))
+        {
+            DENG2_ASSERT(fixedColWidths[pos] != 0);
+            m->fixedLength = holdRef(*fixedColWidths[pos]);
+        }
+
         for(int i = 0; i < list.size(); ++i)
         {
-            sumInto(m->accumulatedLengths, *list[i]->final);
+            sumInto(m->accumulatedLengths, list[i]->fixedLength? *list[i]->fixedLength :
+                                                                 *list[i]->final);
         }
         list << m;
     }
@@ -179,10 +205,18 @@ DENG2_PIMPL(GridLayout)
         DENG2_ASSERT(index < list.size());
 
         Metric &metric = *list[index];
-        changeRef(metric.current, OperatorRule::maximum(rule, metric.current));
+        if(!metric.fixedLength)
+        {
+            changeRef(metric.current, OperatorRule::maximum(rule, metric.current));
 
-        // Update the indirection.
-        metric.final->setSource(*metric.current);
+            // Update the indirection.
+            metric.final->setSource(*metric.current);
+        }
+        else
+        {
+            // Fixed lengths are never affected.
+            metric.final->setSource(*metric.fixedLength);
+        }
     }
 
     Rule const &columnLeftX(int col)
@@ -462,6 +496,21 @@ void GridLayout::setColumnAlignment(int column, ui::Alignment cellAlign)
     d->cols[column]->cellAlign = cellAlign;
 }
 
+void GridLayout::setColumnFixedWidth(int column, Rule const &fixedWidth)
+{
+    DENG2_ASSERT(isEmpty());
+
+    if(d->fixedColWidths.contains(column))
+    {
+        releaseRef(d->fixedColWidths[column]);
+    }
+
+    d->fixedColWidths[column] = holdRef(fixedWidth);
+
+    // Set up the rules again.
+    d->setup(d->maxCols, d->maxRows);
+}
+
 void GridLayout::setOverrideWidth(Rule const &width)
 {
     changeRef(d->fixedCellWidth, width);
@@ -556,6 +605,39 @@ Vector2i GridLayout::widgetPos(GuiWidget &widget) const
         }
     }
     return Vector2i(-1, -1);
+}
+
+GuiWidget *GridLayout::at(Vector2i const &cell) const
+{
+    Vector2i pos;
+    foreach(Widget *w, d->widgets)
+    {
+        if(pos == cell)
+        {
+            if(w) return &w->as<GuiWidget>();
+            return 0;
+        }
+
+        switch(d->mode)
+        {
+        case ColumnFirst:
+            if(++pos.x >= d->maxCols)
+            {
+                pos.x = 0;
+                ++pos.y;
+            }
+            break;
+
+        case RowFirst:
+            if(++pos.y >= d->maxRows)
+            {
+                pos.y = 0;
+                ++pos.x;
+            }
+            break;
+        }
+    }
+    return 0;
 }
 
 Rule const &GridLayout::width() const
