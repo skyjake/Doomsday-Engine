@@ -40,6 +40,8 @@ void IndirectRule::unsetSource()
 {
     independentOf(_source);
     _source = 0;
+
+    invalidate();
 }
 
 void IndirectRule::update()
