@@ -84,7 +84,7 @@ public:
         de::Vector3d origin; ///< World coordinates of the decoration.
         BspLeaf *bspLeaf;
         /// @todo $revise-texture-animation reference by index.
-        de::MaterialSnapshot::Decoration const *decor;
+        de::MaterialSnapshot::Decoration const *matDecor;
     };
 #endif // __CLIENT__
 
