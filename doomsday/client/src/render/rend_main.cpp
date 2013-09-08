@@ -2590,10 +2590,10 @@ void Rend_RenderMap(Map &map)
         // not shared by all viewports.
         VL_InitForNewFrame();
 
+        R_BeginFrame();
+
         // Make vissprites of all the visible decorations.
         Rend_DecorProject();
-
-        R_BeginFrame();
 
         // Clear particle generator visibilty info.
         Rend_ParticleInitForNewFrame();
