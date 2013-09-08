@@ -41,55 +41,8 @@ struct ListNode
     TexProjection projection;
 };
 
-struct List
-{
-    ListNode *head;
-    bool sortByLuma; ///< @c true= Sort from brightest to darkest.
-};
-
 // Projection list nodes.
 static ListNode *firstNode, *cursorNode;
-
-// Projection lists.
-static uint listCount, cursorList;
-static List *lists;
-
-/**
- * Find/create a new projection list.
- *
- * @param listIdx     Address holding the list index to retrieve. If the referenced
- *                    list index is non-zero return the associated list. Otherwise
- *                    allocate a new list and write it's index back to this address.
- *
- * @param sortByLuma  @c true= The list should maintain luma-sorted order.
- *
- * @return  ProjectionList associated with the (possibly newly attributed) index.
- */
-static List *newList(uint *listIdx, bool sortByLuma)
-{
-    DENG_ASSERT(listIdx != 0);
-
-    // Do we need to allocate a list?
-    if(!(*listIdx))
-    {
-        // Do we need to allocate more lists?
-        if(++cursorList >= listCount)
-        {
-            listCount *= 2;
-            if(!listCount) listCount = 2;
-
-            lists = (List *) Z_Realloc(lists, listCount * sizeof(*lists), PU_MAP);
-        }
-
-        List *list = &lists[cursorList-1];
-        list->head       = 0;
-        list->sortByLuma = sortByLuma;
-
-        *listIdx = cursorList;
-    }
-
-    return lists + ((*listIdx) - 1); // 1-based index.
-}
 
 static ListNode *newListNode()
 {
@@ -114,80 +67,94 @@ static ListNode *newListNode()
     return node;
 }
 
-static ListNode *newProjection(DGLuint texture, Vector2f const &topLeft,
-    Vector2f const &bottomRight, Vector3f const &color, float alpha)
+struct List
 {
-    DENG_ASSERT(texture != 0);
+    ListNode *head;
+    bool sortByLuma; ///< @c true= Sort from brightest to darkest.
 
-    ListNode *node = newListNode();
+    List &operator << (TexProjection &texp) { return add(texp); }
 
-    TexProjection &tp = node->projection;
-    tp.texture     = texture;
-    tp.topLeft     = topLeft;
-    tp.bottomRight = bottomRight;
-    tp.color       = Vector4f(color, de::clamp(0.f, alpha, 1.f));
-
-    return node;
-}
-
-/// Average color * alpha.
-static inline float dynlightLuminosity(TexProjection *tp)
-{
-    DENG_ASSERT(tp != 0);
-    return (tp->color.x + tp->color.y + tp->color.z) / 3 * tp->color.w;
-}
-
-static ListNode *linkNodeInList(ListNode *node, List *list)
-{
-    DENG_ASSERT(node && list);
-
-    if(list->head && list->sortByLuma)
+    List &add(TexProjection &texp)
     {
-        float luma = dynlightLuminosity(&node->projection);
-        ListNode *iter = list->head, *last = iter;
-        do
+        ListNode *node = newListNode();
+        node->projection = texp;
+
+        if(head && sortByLuma)
         {
-            // Is this brighter than that being added?
-            if(dynlightLuminosity(&iter->projection) > luma)
+            float luma = luminosity(node->projection);
+            ListNode *iter = head;
+            ListNode *last = iter;
+            do
             {
-                last = iter;
-                iter = iter->next;
-            }
-            else
-            {
-                // Insert it here.
-                node->next = last->next;
-                last->next = node;
-                return node;
-            }
-        } while(iter);
+                // Is this brighter than that being added?
+                if(luminosity(iter->projection) > luma)
+                {
+                    last = iter;
+                    iter = iter->next;
+                }
+                else
+                {
+                    // Insert it here.
+                    node->next = last->next;
+                    last->next = node;
+                    return *this;
+                }
+            } while(iter);
+        }
+
+        node->next = head;
+        head = node;
+
+        return *this;
     }
 
-    node->next = list->head;
-    list->head = node;
-    return node;
-}
+private:
+    /// Average color * alpha.
+    static inline float luminosity(TexProjection const &texp)
+    {
+        return (texp.color.x + texp.color.y + texp.color.z) / 3 * texp.color.w;
+    }
+};
+
+// Projection lists.
+static uint listCount, cursorList;
+static List *lists;
 
 /**
- * Construct a new surface projection (and a list, if one has not already been
- * constructed for the referenced index).
+ * Find/create a new projection list.
  *
  * @param listIdx     Address holding the list index to retrieve. If the referenced
  *                    list index is non-zero return the associated list. Otherwise
  *                    allocate a new list and write it's index back to this address.
+ *
  * @param sortByLuma  @c true= The list should maintain luma-sorted order.
- * @param texture     GL identifier to texture attributed to the new projection.
- * @param topLeft     GL texture coordinates for the top left point in texture space.
- * @param bottomRight GL texture coordinates for the bottom right point in texture space.
- * @param color       RGB color attributed to the new projection.
- * @param alpha       Alpha attributed to the new projection.
+ *
+ * @return  ProjectionList associated with the (possibly newly attributed) index.
  */
-static inline void newProjection(uint *listIdx, bool sortByLuma, DGLuint texture,
-    Vector2f const &topLeft, Vector2f const &bottomRight, Vector3f const &color,
-    float alpha)
+static List &newList(uint *listIdx, bool sortByLuma = false)
 {
-    linkNodeInList(newProjection(texture, topLeft, bottomRight, color, alpha),
-                   newList(listIdx, sortByLuma));
+    DENG_ASSERT(listIdx != 0);
+
+    // Do we need to allocate a list?
+    if(!(*listIdx))
+    {
+        // Do we need to allocate more lists?
+        if(++cursorList >= listCount)
+        {
+            listCount *= 2;
+            if(!listCount) listCount = 2;
+
+            lists = (List *) Z_Realloc(lists, listCount * sizeof(*lists), PU_MAP);
+        }
+
+        List *list = &lists[cursorList-1];
+        list->head       = 0;
+        list->sortByLuma = sortByLuma;
+
+        *listIdx = cursorList;
+    }
+
+    return lists[(*listIdx) - 1]; // 1-based index.
 }
 
 static Lumobj::LightmapSemantic semanticFromFlags(int flags)
@@ -307,10 +274,11 @@ static void projectLumobj(Lumobj &lum, project_params_t &parm)
                             *parm.topLeft, *parm.bottomRight, *parm.tangentMatrix))
         return;
 
-    // Write to the projection list.
-    newProjection(parm.listIdx, (parm.flags & PLF_SORT_LUMINOSITY_DESC) != 0,
-                  tex, Vector2f(s[0], t[0]), Vector2f(s[1], t[1]),
-                  Rend_LuminousColor(lum.color(), luma), parm.blendFactor);
+    TexProjection texp(tex, Vector2f(s[0], t[0]), Vector2f(s[1], t[1]),
+                       Vector4f(Rend_LuminousColor(lum.color(), luma), parm.blendFactor));
+
+    // Write it to the (new) projection list.
+    newList(parm.listIdx, (parm.flags & PLF_SORT_LUMINOSITY_DESC) != 0) << texp;
 }
 
 static int projectLumobjWorker(void *lum, void *context)
@@ -328,6 +296,8 @@ void Rend_ProjectLumobjs(BspLeaf *bspLeaf, Vector3d const &topLeft,
 
     if(blendFactor < OMNILIGHT_SURFACE_LUMINOSITY_ATTRIBUTION_MIN)
         return;
+
+    blendFactor = de::clamp(0.f, blendFactor, 1.f);
 
     project_params_t parm; zap(parm);
     parm.listIdx       = &listIdx;
@@ -382,11 +352,12 @@ static void projectGlow(Surface &surface, Vector3d const &origin,
     if(!(bottom <= 1 || top >= 0))
         return;
 
-    // Write to the projection list.
-    newProjection(parm.listIdx, (parm.flags & PLF_SORT_LUMINOSITY_DESC) != 0,
-                  GL_PrepareLSTexture(LST_GRADIENT),
-                  Vector2f(0, bottom), Vector2f(1, top),
-                  Rend_LuminousColor(color, intensity), parm.blendFactor);
+    TexProjection texp(GL_PrepareLSTexture(LST_GRADIENT),
+                       Vector2f(0, bottom), Vector2f(1, top),
+                       Vector4f(Rend_LuminousColor(color, intensity), parm.blendFactor));
+
+    // Write to the (new) projection list.
+    newList(parm.listIdx, (parm.flags & PLF_SORT_LUMINOSITY_DESC) != 0) << texp;
 }
 
 void Rend_ProjectPlaneGlows(BspLeaf *bspLeaf, Vector3d const &topLeft,
@@ -400,6 +371,8 @@ void Rend_ProjectPlaneGlows(BspLeaf *bspLeaf, Vector3d const &topLeft,
 
     if(blendFactor < OMNILIGHT_SURFACE_LUMINOSITY_ATTRIBUTION_MIN)
         return;
+
+    blendFactor = de::clamp(0.f, blendFactor, 1.f);
 
     project_params_t parm; zap(parm);
     parm.listIdx       = &listIdx;
@@ -504,10 +477,13 @@ static void projectMobjShadow(mobj_t &mobj, project_params_t &parm)
                             *parm.topLeft, *parm.bottomRight, *parm.tangentMatrix))
         return;
 
-    // Write to the projection list.
-    newProjection(parm.listIdx, 0, GL_PrepareLSTexture(LST_DYNAMIC),
-                  Vector2f(s[0], t[0]), Vector2f(s[1], t[1]),
-                  Vector3f(0, 0, 0) /*Shadows are black*/, shadowStrength);
+    TexProjection texp(GL_PrepareLSTexture(LST_DYNAMIC),
+                       Vector2f(s[0], t[0]), Vector2f(s[1], t[1]),
+                       /*Shadows are black*/
+                       Vector4f(0, 0, 0, shadowStrength));
+
+    // Write to the (new) projection list.
+    newList(parm.listIdx) << texp;
 }
 
 static int projectMobjShadowWorker(void *mobj, void *context)
@@ -524,6 +500,8 @@ void Rend_ProjectMobjShadows(BspLeaf *bspLeaf, Vector3d const &topLeft,
 
     if(blendFactor < SHADOW_SURFACE_LUMINOSITY_ATTRIBUTION_MIN)
         return;
+
+    blendFactor = de::clamp(0.f, blendFactor, 1.f);
 
     project_params_t parm; zap(parm);
     parm.listIdx       = &listIdx;
