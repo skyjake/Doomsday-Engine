@@ -26,6 +26,7 @@
 #include "api_plugin.h"
 #include <de/ddstring.h>
 #include <de/Error>
+#include <de/game/Game>
 
 /**
  * @defgroup printGameFlags  Print Game Flags
@@ -54,7 +55,7 @@ class ResourceManifest;
  *
  * @ingroup core
  */
-class Game
+class Game : public de::game::Game
 {
 public:
     typedef QMultiMap<resourceclassid_t, ResourceManifest *> Manifests;
@@ -197,11 +198,6 @@ public:
         throw NullObjectError("NullGame::fromDef", "Not valid for null-object");
     }
 };
-
-/// @return  @c true= @a game is a "null-game" object (not a real playable game).
-inline bool isNullGame(Game const &game) {
-    return !!dynamic_cast<NullGame const *>(&game);
-}
 
 } // namespace de
 

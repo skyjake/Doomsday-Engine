@@ -57,7 +57,7 @@ DENG2_OBSERVES(KeyEventSource,   KeyEvent),
 DENG2_OBSERVES(MouseEventSource, MouseStateChange),
 DENG2_OBSERVES(MouseEventSource, MouseEvent),
 DENG2_OBSERVES(Canvas,           FocusChange),
-public IGameChangeObserver
+DENG2_OBSERVES(App,              GameChange)
 {
     bool needMainInit;
     bool needRecreateCanvas;
@@ -101,7 +101,7 @@ public IGameChangeObserver
         /// @todo The decision whether to receive input notifications from the
         /// canvas is really a concern for the input drivers.
 
-        audienceForGameChange += this;
+        App::app().audienceForGameChange += this;
 
         // Listen to input.
         self.canvas().audienceForKeyEvent += this;
@@ -111,7 +111,7 @@ public IGameChangeObserver
 
     ~Instance()
     {
-        audienceForGameChange -= this;
+        App::app().audienceForGameChange -= this;
 
         self.canvas().audienceForFocusChange -= this;
         self.canvas().audienceForMouseStateChange -= this;
@@ -194,9 +194,9 @@ public IGameChangeObserver
         busyRoot.add(busy);
     }
 
-    void currentGameChanged(Game &newGame)
+    void currentGameChanged(game::Game const &newGame)
     {
-        if(isNullGame(newGame))
+        if(newGame.isNull())
         {
             //legacy->hide();
             background->show();

@@ -74,6 +74,11 @@ static void continueInitWithEventLoopRunning()
 
 Value *Binding_App_GamePlugin(Context &, Function::ArgumentValues const &)
 {
+    if(App_CurrentGame().isNull())
+    {
+        // The null game has no plugin.
+        return 0;
+    }
     String name = Plug_FileForPlugin(App_CurrentGame().pluginId()).name().fileNameWithoutExtension();
     if(name.startsWith("lib")) name.remove(0, 3);
     return new TextValue(name);
@@ -307,7 +312,7 @@ ClientApp::ClientApp(int &argc, char **argv)
     setTerminateFunc(handleLegacyCoreTerminate);
 
     // We must presently set the current game manually (the collection is global).
-    App_SetCurrentGame(d->games.nullGame());
+    setGame(d->games.nullGame());
 
     d->initScriptBindings();
 }

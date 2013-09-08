@@ -91,7 +91,7 @@ ServerApp::ServerApp(int &argc, char **argv)
     addSystem(*d->serverSystem);
 
     // We must presently set the current game manually (the collection is global).
-    App_SetCurrentGame(d->games.nullGame());
+    setGame(d->games.nullGame());
 }
 
 ServerApp::~ServerApp()

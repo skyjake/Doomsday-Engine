@@ -24,6 +24,7 @@
 #include "filesys/manifest.h"
 #include "resource/zip.h"
 #include <QtAlgorithms>
+#include <de/App>
 
 #include "games.h"
 
@@ -175,7 +176,7 @@ void Games::locateStartupResources(Game &game)
     if(oldCurrentGame != &game)
     {
         /// @attention Kludge: Temporarily switch Game.
-        App_SetCurrentGame(game);
+        App::app().setGame(game);
         DD_ExchangeGamePluginEntryPoints(game.pluginId());
 
         // Re-init the filesystem subspace schemes using the search paths of this Game.
@@ -193,7 +194,7 @@ void Games::locateStartupResources(Game &game)
     if(oldCurrentGame != &game)
     {
         // Kludge end - Restore the old Game.
-        App_SetCurrentGame(*oldCurrentGame);
+        App::app().setGame(*oldCurrentGame);
         DD_ExchangeGamePluginEntryPoints(oldCurrentGame->pluginId());
 
         // Re-init the filesystem subspace schemes using the search paths of this Game.

@@ -32,7 +32,7 @@ using namespace de;
 
 DENG_GUI_PIMPL(ConsoleCommandWidget),
 DENG2_OBSERVES(App, StartupComplete),
-public IGameChangeObserver
+DENG2_OBSERVES(App, GameChange)
 {
     shell::EditorHistory history;
     DocumentWidget *completions;
@@ -41,7 +41,7 @@ public IGameChangeObserver
     Instance(Public *i) : Base(i), history(i)
     {
         App::app().audienceForStartupComplete += this;
-        audienceForGameChange += this;
+        App::app().audienceForGameChange += this;
 
         // Popup for autocompletions.
         completions = new DocumentWidget;
@@ -72,7 +72,7 @@ public IGameChangeObserver
     ~Instance()
     {
         App::app().audienceForStartupComplete -= this;
-        audienceForGameChange -= this;
+        App::app().audienceForGameChange -= this;
     }
 
     void appStartupCompleted()
@@ -80,7 +80,7 @@ public IGameChangeObserver
         updateLexicon();
     }
 
-    void currentGameChanged(Game &)
+    void currentGameChanged(game::Game const &)
     {
         updateLexicon();
     }

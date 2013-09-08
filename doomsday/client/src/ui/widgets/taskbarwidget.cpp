@@ -65,7 +65,7 @@ static uint POS_NETWORK_SETTINGS  = 5;
 static uint POS_UPDATER_SETTINGS  = 7;
 
 DENG_GUI_PIMPL(TaskBarWidget),
-public IGameChangeObserver
+DENG2_OBSERVES(App, GameChange)
 {
     typedef DefaultVertexBuf VertexBuf;
 
@@ -99,12 +99,12 @@ public IGameChangeObserver
 
         vertShift = new ScalarRule(0);
 
-        audienceForGameChange += this;
+        App::app().audienceForGameChange += this;
     }
 
     ~Instance()
     {
-        audienceForGameChange -= this;
+        App::app().audienceForGameChange -= this;
         releaseRef(vertShift);
     }
 
@@ -147,17 +147,17 @@ public IGameChangeObserver
         return *menu->menu().organizer().itemWidget(pos);
     }
 
-    void currentGameChanged(Game &newGame)
+    void currentGameChanged(game::Game const &newGame)
     {
         updateStatus();
 
-        itemWidget(mainMenu, POS_UNLOAD).show(!isNullGame(newGame));
-        itemWidget(mainMenu, POS_GAME_SEPARATOR).show(!isNullGame(newGame));
+        itemWidget(mainMenu, POS_UNLOAD).show(!newGame.isNull());
+        itemWidget(mainMenu, POS_GAME_SEPARATOR).show(!newGame.isNull());
 
-        itemWidget(configMenu, POS_RENDERER_SETTINGS).show(!isNullGame(newGame));
-        itemWidget(configMenu, POS_CONFIG_SEPARATOR).show(!isNullGame(newGame));
-        itemWidget(configMenu, POS_AUDIO_SETTINGS).show(!isNullGame(newGame));
-        itemWidget(configMenu, POS_INPUT_SETTINGS).show(!isNullGame(newGame));
+        itemWidget(configMenu, POS_RENDERER_SETTINGS).show(!newGame.isNull());
+        itemWidget(configMenu, POS_CONFIG_SEPARATOR).show(!newGame.isNull());
+        itemWidget(configMenu, POS_AUDIO_SETTINGS).show(!newGame.isNull());
+        itemWidget(configMenu, POS_INPUT_SETTINGS).show(!newGame.isNull());
 
         configMenu->menu().updateLayout();
         mainMenu->menu().updateLayout(); // Include/exclude shown/hidden menu items.
