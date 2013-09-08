@@ -57,6 +57,7 @@ static uint POS_UNLOAD         = 0;
 static uint POS_GAME_SEPARATOR = 1;
 
 static uint POS_RENDERER_SETTINGS = 0;
+static uint POS_CONFIG_SEPARATOR  = 1;
 static uint POS_VIDEO_SETTINGS    = 2;
 static uint POS_AUDIO_SETTINGS    = 3;
 static uint POS_INPUT_SETTINGS    = 4;
@@ -152,6 +153,11 @@ public IGameChangeObserver
 
         itemWidget(mainMenu, POS_UNLOAD).show(!isNullGame(newGame));
         itemWidget(mainMenu, POS_GAME_SEPARATOR).show(!isNullGame(newGame));
+
+        itemWidget(configMenu, POS_RENDERER_SETTINGS).show(!isNullGame(newGame));
+        itemWidget(configMenu, POS_CONFIG_SEPARATOR).show(!isNullGame(newGame));
+        itemWidget(configMenu, POS_AUDIO_SETTINGS).show(!isNullGame(newGame));
+        itemWidget(configMenu, POS_INPUT_SETTINGS).show(!isNullGame(newGame));
 
         configMenu->menu().updateLayout();
         mainMenu->menu().updateLayout(); // Include/exclude shown/hidden menu items.
@@ -317,6 +323,11 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
 
     d->itemWidget(d->mainMenu, POS_UNLOAD).hide();
     d->itemWidget(d->mainMenu, POS_GAME_SEPARATOR).hide();
+
+    d->itemWidget(d->configMenu, POS_RENDERER_SETTINGS).hide();
+    d->itemWidget(d->configMenu, POS_CONFIG_SEPARATOR).hide();
+    d->itemWidget(d->configMenu, POS_AUDIO_SETTINGS).hide();
+    d->itemWidget(d->configMenu, POS_INPUT_SETTINGS).hide();
 
     conf->setAction(new SignalAction(this, SLOT(openConfigMenu())));
     d->logo->setAction(new SignalAction(this, SLOT(openMainMenu())));
