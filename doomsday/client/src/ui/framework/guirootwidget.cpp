@@ -82,15 +82,15 @@ DENG2_OBSERVES(Widget, ChildAddition)
 
             // Rounded corners.
             {
-                QImage corners(QSize(20, 20), QImage::Format_ARGB32);
+                QImage corners(QSize(15, 15), QImage::Format_ARGB32);
                 corners.fill(QColor(255, 255, 255, 0).rgba());
                 QPainter painter(&corners);
                 painter.setRenderHint(QPainter::Antialiasing, true);
                 painter.setBrush(Qt::NoBrush);
                 painter.setPen(QPen(Qt::white, 1));
-                painter.drawEllipse(QPoint(11, 11), 8, 8);
-                painter.setPen(QPen(Qt::black, 1));
-                painter.drawEllipse(QPoint(10, 10), 8, 8);
+                painter.drawEllipse(QPoint(8, 8), 6, 6);
+                //painter.setPen(QPen(Qt::black, 1));
+                //painter.drawEllipse(QPoint(10, 10), 8, 8);
                 roundCorners = atlas->alloc(corners);
             }
 

@@ -82,6 +82,9 @@ DENG_GUI_PIMPL(RendererAppearanceEditor)
                     .setInput(Rule::Top, title().rule().top());
             _resetButton->disable();
 
+            // Extend the title all the way to the button.
+            title().hitRule().setInput(Rule::Right, _resetButton->rule().left());
+
             d->container->add(&title());
             d->container->add(_resetButton);
             d->container->add(this);

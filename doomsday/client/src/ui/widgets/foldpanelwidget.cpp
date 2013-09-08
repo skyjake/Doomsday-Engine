@@ -17,6 +17,7 @@
  */
 
 #include "ui/widgets/foldpanelwidget.h"
+#include "ProceduralImage"
 #include "DialogContentStylist"
 #include "SignalAction"
 
@@ -25,9 +26,43 @@ using namespace ui;
 
 DENG2_PIMPL_NOREF(FoldPanelWidget)
 {
+    /*
+    struct FoldImage : public ProceduralImage
+    {
+        FoldPanelWidget &fold;
+        bool needUpdate;
+
+        FoldImage(FoldPanelWidget &owner) : fold(owner), needUpdate(true)
+        {}
+
+        void update()
+        {
+            setSize(fold.root().atlas().imageRect(fold.root().roundCorners()).size());
+        }
+
+        void glMakeGeometry(DefaultVertexBuf::Builder &verts, Rectanglef const &rect)
+        {
+            GuiRootWidget &root = fold.root();
+            Atlas &atlas = root.atlas();
+
+            ColorBank::Colorf const &textColor   = fold.style().colors().colorf("text");
+            ColorBank::Colorf accentColor = fold.style().colors().colorf("accent")
+                    * Vector4f(1, 1, 1, fold.isOpen()? .5f : 1);
+
+            verts.makeQuad(rect, accentColor,
+                           atlas.imageRectf(root.roundCorners()));
+
+            Vector2ui dotSize = atlas.imageRect(root.tinyDot()).size();
+            verts.makeQuad(Rectanglef::fromSize(rect.middle() - dotSize/2,
+                                                dotSize),
+                           fold.isOpen()? accentColor : textColor,
+                           atlas.imageRectf(root.tinyDot()));
+        }
+    };*/
+
     ButtonWidget *title;
     GuiWidget *container; ///< Held here while not part of the widget tree.
-    DialogContentStylist stylist;
+    DialogContentStylist stylist;    
 
     Instance() : title(0), container(0) {}
 };
@@ -39,6 +74,10 @@ FoldPanelWidget::FoldPanelWidget(String const &name) : PanelWidget(name), d(new 
     d->title->set(Background());
     d->title->setFont("heading");
     d->title->setAction(new SignalAction(this, SLOT(toggleFold())));
+
+    // Icon is disabled for now, doesn't look quite right.
+    //d->title->setImage(new Instance::FoldImage(*this));
+    //d->title->setTextAlignment(ui::AlignRight); // Text is on the right from the image.
 }
 
 ButtonWidget &FoldPanelWidget::title()
