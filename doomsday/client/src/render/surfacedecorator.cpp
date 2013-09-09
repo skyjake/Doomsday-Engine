@@ -19,6 +19,8 @@
  * 02110-1301 USA</small>
  */
 
+#include <QSet>
+
 #include <de/memoryzone.h>
 
 #include <de/Vector>
@@ -28,6 +30,7 @@
 #include "world/map.h"
 #include "BspLeaf"
 
+#include "Material"
 #include "MaterialSnapshot"
 
 #include "render/rend_main.h" // Rend_MapSurfaceMaterialSpec()
@@ -75,6 +78,9 @@ static Decoration *allocDecoration()
 
 DENG2_PIMPL(SurfaceDecorator)
 {
+    typedef QSet<Surface *> SurfaceSet;
+    SurfaceSet decorated;
+
     Instance(Public *i) : Base(i)
     {}
 
@@ -254,6 +260,48 @@ void SurfaceDecorator::decorate(Surface &surface)
     for(int i = 0; i < surface.decorationCount(); ++i)
     {
         d->newDecoration(sources[i]);
+    }
+}
+
+void SurfaceDecorator::add(Surface *surface)
+{
+    if(!surface) return;
+    if(!surface->hasMaterial()) return;
+    if(!surface->material().isDecorated()) return;
+
+    d->decorated.insert(surface);
+}
+
+void SurfaceDecorator::remove(Surface *surface)
+{
+    if(!surface) return;
+
+    d->decorated.remove(surface);
+}
+
+void SurfaceDecorator::updateOnMaterialChange(Material &material)
+{
+    if(!material.isDecorated()) return; // Huh??
+
+    foreach(Surface *surface, d->decorated)
+    {
+        if(&material == surface->materialPtr())
+        {
+            surface->markAsNeedingDecorationUpdate();
+        }
+    }
+}
+
+void SurfaceDecorator::reset()
+{
+    d->decorated.clear();
+}
+
+void SurfaceDecorator::redecorate()
+{
+    foreach(Surface *surface, d->decorated)
+    {
+        decorate(*surface);
     }
 }
 

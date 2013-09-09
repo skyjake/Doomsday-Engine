@@ -181,7 +181,6 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
     Lumobjs lumobjs;
 
     QScopedPointer<SurfaceDecorator> decorator;
-    SurfaceSet decoratedSurfaces;
 
     coord_t skyFloorHeight;
     coord_t skyCeilingHeight;
@@ -1274,8 +1273,9 @@ void Map::initBias()
 void Map::unlinkInMaterialLists(Surface *surface)
 {
     if(!surface) return;
+    if(d->decorator.isNull()) return;
 
-    d->decoratedSurfaces.remove(surface);
+    d->surfaceDecorator().remove(surface);
 }
 
 void Map::linkInMaterialLists(Surface *surface)
@@ -1292,16 +1292,12 @@ void Map::linkInMaterialLists(Surface *surface)
         return;
     }
 
-    Material &material = surface->material();
-    if(material.isDecorated())
-    {
-        d->decoratedSurfaces.insert(surface);
-    }
+    d->surfaceDecorator().add(surface);
 }
 
 void Map::buildMaterialLists()
 {
-    d->decoratedSurfaces.clear();
+    d->surfaceDecorator().reset();
 
     foreach(Line *line, d->lines)
     for(int i = 0; i < 2; ++i)
@@ -1330,19 +1326,10 @@ void Map::buildMaterialLists()
 
 void Map::updateSurfacesOnMaterialChange(Material &material)
 {
-    if(ddMapSetup) return;
-
 #ifdef __CLIENT__
-    if(material.isDecorated())
-    {
-        foreach(Surface *surface, d->decoratedSurfaces)
-        {
-            if(&material == surface->materialPtr())
-            {
-                surface->markAsNeedingDecorationUpdate();
-            }
-        }
-    }
+    if(ddMapSetup) return;
+    if(d->decorator.isNull()) return;
+    d->decorator->updateOnMaterialChange(material);
 #endif
 }
 
@@ -2954,10 +2941,7 @@ void Map::worldFrameBegins(World &world, bool resetNextViewer)
         Rend_DecorReset();
         if(useLightDecorations)
         {
-            foreach(Surface *surface, d->decoratedSurfaces)
-            {
-                d->surfaceDecorator().decorate(*surface);
-            }
+            d->surfaceDecorator().redecorate();
         }
 
         // Spawn omnilights for decorations.

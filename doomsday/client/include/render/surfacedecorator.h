@@ -23,6 +23,8 @@
 #include "Decoration"
 #include "Surface"
 
+class Material; // remove me
+
 #define MAX_DECOR_LIGHTS        (16384)
 
 /**
@@ -40,6 +42,12 @@ public:
      * Decorate @a surface.
      */
     void decorate(Surface &surface);
+
+    void add(Surface *surface);
+    void remove(Surface *surface);
+    void updateOnMaterialChange(Material &material);
+    void reset();
+    void redecorate();
 
 private:
     DENG2_PRIVATE(d)
