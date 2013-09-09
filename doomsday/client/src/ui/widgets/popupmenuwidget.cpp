@@ -53,6 +53,7 @@ DENG2_OBSERVES(ContextWidgetOrganizer, WidgetUpdate)
         // gets triggered.
         if(ButtonWidget *b = widget.maybeAs<ButtonWidget>())
         {
+            b->setHoverTextColor("inverted.text");
             b->setSizePolicy(ui::Expand, ui::Expand);
             b->margins().set("unit");
 
@@ -110,16 +111,6 @@ DENG2_OBSERVES(ContextWidgetOrganizer, WidgetUpdate)
 
     void buttonStateChanged(ButtonWidget &button, ButtonWidget::State state)
     {
-        // Update button style.
-        if(state == ButtonWidget::Up)
-        {
-            button.setTextColor("text");
-        }
-        else
-        {
-            button.setTextColor("inverted.text");
-        }
-
         // Position item highlight.
         if(&button == hover && state == ButtonWidget::Up)
         {

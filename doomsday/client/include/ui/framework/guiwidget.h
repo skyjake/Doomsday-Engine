@@ -182,6 +182,7 @@ public:
     void set(Background const &bg);
 
     de::Font const &font() const;
+    de::DotPath const &textColorId() const;
     de::ColorBank::Color textColor() const;
     de::ColorBank::Colorf textColorf() const;
 

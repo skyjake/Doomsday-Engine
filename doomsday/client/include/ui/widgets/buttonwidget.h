@@ -60,6 +60,14 @@ public:
     ButtonWidget(de::String const &name = "");
 
     /**
+     * Text color to use in the Hover state. The default is to use the normal text
+     * color of the button (label).
+     *
+     * @param hoverTextId  Style color identifier.
+     */
+    void setHoverTextColor(de::DotPath const &hoverTextId);
+
+    /**
      * Sets the action of the button. It gets triggered when the button is
      * pressed.
      *
