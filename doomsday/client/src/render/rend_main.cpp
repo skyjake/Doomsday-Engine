@@ -43,6 +43,8 @@
 
 #include "Face"
 
+#include "BspLeaf"
+#include "BspNode"
 #include "Hand"
 #include "world/map.h"
 #include "world/lineowner.h"
@@ -50,16 +52,17 @@
 #include "world/p_objlink.h"
 #include "world/p_players.h"
 #include "world/thinkers.h"
-#include "BspLeaf"
-#include "BspNode"
 
 #include "BiasIllum"
 #include "BiasSurface"
-#include "SkyFixEdge"
-#include "WallEdge"
-#include "TriangleStripBuilder"
+#include "Decoration"
 #include "HueCircleVisual"
+#include "SkyFixEdge"
+#include "SurfaceDecorator"
+#include "TriangleStripBuilder"
+#include "WallEdge"
 #include "render/blockmapvisual.h"
+#include "render/lumobj.h"
 #include "render/sprite.h"
 #include "render/vissprite.h"
 
@@ -113,6 +116,8 @@ int useShadows = true;
 float shadowFactor = 1.2f;
 int shadowMaxRadius = 80;
 int shadowMaxDistance = 1000;
+
+byte useLightDecorations = true; ///< cvar
 
 float detailFactor = .5f;
 float detailScale = 4;
@@ -247,6 +252,7 @@ void Rend_Register()
     C_VAR_FLOAT ("rend-light-attenuation",          &rendLightDistanceAttenuation,  CVF_NO_MAX, 0, 0);
     C_VAR_FLOAT ("rend-light-bright",               &dynlightFactor,                0, 0, 1);
     C_VAR_FLOAT2("rend-light-compression",          &lightRangeCompression,         0, -1, 1, Rend_UpdateLightModMatrix);
+    C_VAR_BYTE  ("rend-light-decor",                &useLightDecorations,           0, 0, 1);
     C_VAR_FLOAT ("rend-light-fog-bright",           &dynlightFogBright,             0, 0, 1);
     C_VAR_INT   ("rend-light-num",                  &rendMaxLumobjs,                CVF_NO_MAX, 0, 0);
     C_VAR_FLOAT2("rend-light-sky",                  &rendSkyLight,                  0, 0, 1, markLightGridForFullUpdate);
@@ -283,11 +289,11 @@ void Rend_Register()
     C_VAR_BYTE  ("rend-dev-soundorigins",           &devSoundOrigins,               CVF_NO_ARCHIVE, 0, 7);
 
     RL_Register();
-    Lumobj::consoleRegister();
-    Rend_DecorRegister();
     BiasIllum::consoleRegister();
     BiasSurface::consoleRegister();
+    Decoration::consoleRegister();
     LightGrid::consoleRegister();
+    Lumobj::consoleRegister();
     Sky_Register();
     Rend_ModelRegister();
     Rend_ParticleRegister();

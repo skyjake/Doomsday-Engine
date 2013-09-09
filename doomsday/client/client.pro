@@ -157,6 +157,7 @@ DENG_CONVENIENCE_HEADERS += \
     include/SignalAction \
     include/SkyFixEdge \
     include/Surface \
+    include/SurfaceDecorator \
     include/TextDrawable \
     include/Texture \
     include/TextureManifest \
@@ -292,7 +293,6 @@ DENG_HEADERS += \
     include/render/r_main.h \
     include/render/r_things.h \
     include/render/rend_clip.h \
-    include/render/rend_decor.h \
     include/render/rend_dynlight.h \
     include/render/rend_fakeradio.h \
     include/render/rend_font.h \
@@ -307,6 +307,7 @@ DENG_HEADERS += \
     include/render/sky.h \
     include/render/skyfixedge.h \
     include/render/sprite.h \
+    include/render/surfacedecorator.h \
     include/render/trianglestripbuilder.h \
     include/render/vignette.h \
     include/render/vissprite.h \
@@ -633,7 +634,6 @@ SOURCES += \
     src/render/r_main.cpp \
     src/render/r_things.cpp \
     src/render/rend_clip.cpp \
-    src/render/rend_decor.cpp \
     src/render/rend_dynlight.cpp \
     src/render/rend_fakeradio.cpp \
     src/render/rend_font.cpp \
@@ -648,6 +648,7 @@ SOURCES += \
     src/render/sky.cpp \
     src/render/skyfixedge.cpp \
     src/render/sprite.cpp \
+    src/render/surfacedecorator.cpp \
     src/render/trianglestripbuilder.cpp \
     src/render/vignette.cpp \
     src/render/vissprite.cpp \

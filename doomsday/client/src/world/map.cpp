@@ -56,9 +56,9 @@
 #include "render/r_main.h" // validCount
 #ifdef __CLIENT__
 #  include "BiasDigest"
+#  include "SurfaceDecorator"
 #  include "WallEdge"
 #  include "render/lumobj.h"
-#  include "render/rend_decor.h"
 #  include "render/rend_main.h"
 #  include "render/sky.h"
 #endif
@@ -158,8 +158,6 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
     PlaneSet trackedPlanes;
     SurfaceSet scrollingSurfaces;
 
-    SurfaceSet decoratedSurfaces;
-
     QScopedPointer<Generators> generators;
     QScopedPointer<LightGrid> lightGrid;
 
@@ -181,6 +179,9 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
 
     /// Luminous object data.
     Lumobjs lumobjs;
+
+    QScopedPointer<SurfaceDecorator> decorator;
+    SurfaceSet decoratedSurfaces;
 
     coord_t skyFloorHeight;
     coord_t skyCeilingHeight;
@@ -1314,11 +1315,6 @@ void Map::buildMaterialLists()
             linkInMaterialLists(&plane->surface());
         }
     }
-}
-
-Map::SurfaceSet const &Map::decoratedSurfaces()
-{
-    return d->decoratedSurfaces;
 }
 
 #endif // __CLIENT__
@@ -2946,7 +2942,20 @@ void Map::worldFrameBegins(World &world, bool resetNextViewer)
         R_InitForNewFrame();
 
         // Generate surface decorations for the frame.
-        Rend_DecorBeginFrame();
+        Rend_DecorReset();
+        if(useLightDecorations)
+        {
+            foreach(Surface *surface, d->decoratedSurfaces)
+            {
+                if(d->decorator.isNull())
+                {
+                    Rend_DecorReset();
+                    d->decorator.reset(new SurfaceDecorator);
+                }
+
+                d->decorator->decorate(*surface);
+            }
+        }
 
         // Spawn omnilights for decorations.
         Rend_DecorAddLuminous();

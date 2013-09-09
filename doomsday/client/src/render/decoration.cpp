@@ -217,7 +217,7 @@ Lumobj *Decoration::lumobj() const
     return map().lumobj(_lumIdx);
 }
 
-void Decoration::consoleRegister() //static
+void Decoration::consoleRegister() // static
 {
     C_VAR_FLOAT("rend-light-decor-angle",  &::angleFadeFactor, 0, 0, 1);
     C_VAR_FLOAT("rend-light-decor-bright", &::brightFactor,    0, 0, 10);

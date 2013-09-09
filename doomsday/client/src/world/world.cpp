@@ -58,7 +58,6 @@
 
 #  include "render/lumobj.h"
 #  include "render/projector.h"
-#  include "render/rend_decor.h"
 #  include "render/rend_fakeradio.h"
 #  include "render/rend_list.h"
 #  include "render/rend_main.h"
@@ -641,7 +640,6 @@ DENG2_PIMPL(World)
         R_InitRendPolyPools();
         Rend_UpdateLightModMatrix();
 
-        Rend_DecorInitForMap(*map);
         Rend_RadioInitForMap(*map);
 
         R_InitObjlinkBlockmapForMap(*map);

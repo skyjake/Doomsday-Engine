@@ -78,6 +78,8 @@ DENG_EXTERN_C float shadowFactor;
 DENG_EXTERN_C int shadowMaxRadius;
 DENG_EXTERN_C int shadowMaxDistance;
 
+DENG_EXTERN_C byte useLightDecorations;
+
 DENG_EXTERN_C int useShinySurfaces;
 
 DENG_EXTERN_C float detailFactor, detailScale;

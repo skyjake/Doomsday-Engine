@@ -766,12 +766,6 @@ public:
     void unlinkInMaterialLists(Surface *surface);
 
     /**
-     * Provides a set of all surfaces linked to the material lists for which
-     * decorations are defined.
-     */
-    SurfaceSet const &decoratedSurfaces();
-
-    /**
      * Returns the set of scrolling surfaces for the map.
      */
     SurfaceSet /*const*/ &scrollingSurfaces();
