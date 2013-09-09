@@ -312,8 +312,8 @@ class FrontController
     <meta name="revisit-after" content="<?=$this->robotRevisitDays()?> DAYS" />
     <meta name="rating" content="GENERAL" />
     <meta name="generator" content="<?=$this->homeURL()?>" />
-    <link rel="icon" href="http://dl.dropboxusercontent.com/u/11948701/dengine.net/images/favicon.png" type="image/png" />
-    <link rel="shortcut icon" href="http://dl.dropboxusercontent.com/u/11948701/dengine.net/images/favicon.png" type="image/png" />
+    <link rel="icon" href="http://dl.dropboxusercontent.com/u/11948701/dengine.net/images/favicon.ico" type="image/x-icon" />
+    <link rel="shortcut icon" href="http://dl.dropboxusercontent.com/u/11948701/dengine.net/images/favicon.ico" type="image/x-icon" />
     <link rel="alternate" type="application/rss+xml" title="Doomsday Engine RSS News Feed" href="http://dengine.net/forums/rss.php?mode=news" />
 
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
