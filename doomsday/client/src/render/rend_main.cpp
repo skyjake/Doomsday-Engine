@@ -1485,11 +1485,15 @@ static void writeWallSection(HEdge &hedge, int section,
 
     rendworldpoly_params_t parm; zap(parm);
 
+    Vector3f materialOrigin = leftEdge.materialOrigin();
+    Vector3d topLeft        = leftEdge.top().origin();
+    Vector3d bottomRight    = rightEdge.bottom().origin();
+
     parm.flags               = RPF_DEFAULT | (skyMasked? RPF_SKYMASK : 0);
     parm.bsuf                = &segment;
     parm.geomGroup           = wallSpec.section;
-    parm.topLeft             = &leftEdge.top().origin();
-    parm.bottomRight         = &rightEdge.bottom().origin();
+    parm.topLeft             = &topLeft;
+    parm.bottomRight         = &bottomRight;
     parm.forceOpaque         = wallSpec.flags.testFlag(WallSpec::ForceOpaque);
     parm.alpha               = parm.forceOpaque? 1 : opacity;
 
@@ -1501,7 +1505,7 @@ static void writeWallSection(HEdge &hedge, int section,
     }
 
     parm.blendMode           = BM_NORMAL;
-    parm.materialOrigin      = &leftEdge.materialOrigin();
+    parm.materialOrigin      = &materialOrigin;
     parm.materialScale       = &materialScale;
 
     parm.isWall              = true;
