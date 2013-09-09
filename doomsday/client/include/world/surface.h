@@ -81,10 +81,17 @@ public:
 #ifdef __CLIENT__
     struct DecorSource
     {
+        Surface *_surface;
         de::Vector3d origin; ///< World coordinates of the decoration.
         BspLeaf *bspLeaf;
         /// @todo $revise-texture-animation reference by index.
         de::MaterialSnapshot::Decoration const *matDecor;
+
+        Surface &surface() const
+        {
+            DENG_ASSERT(_surface != 0);
+            return *_surface;
+        }
     };
 #endif // __CLIENT__
 
@@ -469,5 +476,9 @@ protected:
 private:
     DENG2_PRIVATE(d)
 };
+
+#ifdef __CLIENT__
+typedef Surface::DecorSource SurfaceDecorSource;
+#endif
 
 #endif // DENG_WORLD_SURFACE_H

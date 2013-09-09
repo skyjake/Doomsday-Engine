@@ -1,8 +1,8 @@
 /** @file rend_decor.cpp Surface Decorations.
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
- * @authors Copyright &copy; 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -20,6 +20,8 @@
  */
 
 #include <de/memoryzone.h>
+
+#include <de/Error>
 #include <de/Vector>
 
 #include "de_platform.h"
@@ -39,46 +41,102 @@
 
 using namespace de;
 
-/// Quite a bit of decorations, there!
-#define MAX_DECOR_LIGHTS        (16384)
-
 /// No decorations are visible beyond this.
 #define MAX_DECOR_DISTANCE      (2048)
 
-byte useLightDecorations     = true;
-float decorLightBrightFactor = 1;
-float decorLightFadeAngle    = .1f;
+static float decorLightBrightFactor = 1;
+static float decorLightFadeAngle    = .1f;
 
-struct Decoration
+/**
+ * @ingroup render
+ */
+class Decoration
 {
-    Surface::DecorSource *_source;
-    Surface *_surface;
-    int _lumIdx; // Index of linked lumobj, or Lumobj::NoIndex.
-    float _fadeMul;
+public:
+    /// Required source is missing. @ingroup errors
+    DENG2_ERROR(MissingSourceError);
 
-    Surface::DecorSource &source()
+public: /// @todo remove me.
+    Decoration *next;
+
+public:
+    /**
+     * Construct a new decoration.
+     *
+     * @param source  Source of the decoration (can be set later).
+     */
+    Decoration(SurfaceDecorSource *source = 0)
+        : next(0),
+          _source(source), _lumIdx(Lumobj::NoIndex), _fadeMul(1)
+    {}
+
+    /**
+     * To be called to register the commands and variables of this module.
+     */
+    static void consoleRegister()
     {
-        DENG_ASSERT(_source != 0);
-        return *_source;
+        C_VAR_FLOAT("rend-light-decor-angle",  &decorLightFadeAngle,    0, 0, 1);
+        C_VAR_FLOAT("rend-light-decor-bright", &decorLightBrightFactor, 0, 0, 10);
     }
 
-    Surface::DecorSource const &source() const
+    /**
+     * Returns @c true iff a source is defined for the decoration.
+     *
+     * @see source(), setSource()
+     */
+    bool hasSource() const
     {
-        DENG_ASSERT(_source != 0);
-        return *_source;
+        return _source != 0;
     }
 
-    Surface &surface()
+    /**
+     * Returns the source of the decoration.
+     *
+     * @see hasSource(), setSource()
+     */
+    SurfaceDecorSource &source()
     {
-        DENG_ASSERT(_surface != 0);
-        return *_surface;
+        if(_source != 0)
+        {
+            return *_source;
+        }
+        /// @throw MissingSourceError Attempted with no source attributed.
+        throw MissingSourceError("Decoration::source", "No source is attributed");
     }
 
-    Surface const &surface() const
+    /// @copydoc source()
+    SurfaceDecorSource const &source() const
     {
-        DENG_ASSERT(_surface != 0);
-        return *_surface;
+        if(_source != 0)
+        {
+            return *_source;
+        }
+        /// @throw MissingSourceError Attempted with no source attributed.
+        throw MissingSourceError("Decoration::source", "No source is attributed");
     }
+
+    /**
+     * Change the attributed source of the decoration.
+     *
+     * @param newSource
+     */
+    void setSource(SurfaceDecorSource *newSource)
+    {
+        _source = newSource;
+        // Forget the previously generated lumobj.
+        _lumIdx = Lumobj::NoIndex;
+    }
+
+    /**
+     * Convenient method which returns the surface owner of the source of the
+     * decoration. Naturally a source must currently be attributed.
+     *
+     * @see source()
+     */
+    inline Surface &surface() { return source().surface(); }
+
+    /// @copydoc surface()
+    inline Surface const &surface() const { return source().surface(); }
 
     Map &map()
     {
@@ -125,7 +183,7 @@ struct Decoration
 
         // Apply the brightness factor (was calculated using sector lightlevel).
         _fadeMul = intensity * decorLightBrightFactor;
-        _lumIdx = Lumobj::NoIndex;
+        _lumIdx   = Lumobj::NoIndex;
 
         if(_fadeMul <= 0)
             return;
@@ -222,9 +280,15 @@ private:
         return de::clamp(0.f, (lightlevel - min) / float(max - min), 1.f);
     }
 
-public:
-    Decoration *next;
+    SurfaceDecorSource *_source; ///< Attributed source (if any, not owned).
+    int _lumIdx;                 ///< Generated lumobj index (or Lumobj::NoIndex).
+    float _fadeMul;              ///< Intensity multiplier (lumobj and flare).
 };
+
+/// Quite a bit of decorations, there!
+#define MAX_DECOR_LIGHTS        (16384)
+
+byte useLightDecorations     = true;
 
 static uint decorCount;
 static Decoration *decorFirst;
@@ -337,22 +401,19 @@ public:
         Surface::DecorSource *sources = surface._decorationData.sources;
         for(int i = 0; i < surface.decorationCount(); ++i)
         {
-            newDecoration(surface, sources[i]);
+            newDecoration(sources[i]);
         }
     }
 
 private:
-    static void newDecoration(Surface &suf, Surface::DecorSource &source)
+    static void newDecoration(SurfaceDecorSource &source)
     {
         // Out of sources?
         if(decorCount >= MAX_DECOR_LIGHTS) return;
 
         Decoration *decor = allocDecoration();
 
-        decor->_source  = &source;
-        decor->_surface = &suf;
-        decor->_lumIdx  = Lumobj::NoIndex;
-        decor->_fadeMul = 1;
+        decor->setSource(&source);
 
         decorCount += 1;
     }
@@ -400,7 +461,7 @@ private:
                         continue;
                 }
 
-                if(Surface::DecorSource *source = suf.newDecoration())
+                if(SurfaceDecorSource *source = suf.newDecoration())
                 {
                     source->origin   = origin;
                     source->bspLeaf  = &bspLeaf;
@@ -455,9 +516,8 @@ private:
 
 void Rend_DecorRegister()
 {
+    Decoration::consoleRegister();
     C_VAR_BYTE ("rend-light-decor",        &useLightDecorations,    0, 0, 1);
-    C_VAR_FLOAT("rend-light-decor-angle",  &decorLightFadeAngle,    0, 0, 1);
-    C_VAR_FLOAT("rend-light-decor-bright", &decorLightBrightFactor, 0, 0, 10);
 }
 
 void Rend_DecorInitForMap(Map &map)

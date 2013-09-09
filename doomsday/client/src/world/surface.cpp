@@ -536,10 +536,11 @@ Surface::DecorSource *Surface::newDecoration()
         Z_Free(_decorationData.sources);
     }
 
-    Surface::DecorSource *d = &newSources[_decorationData.numSources - 1];
+    Surface::DecorSource *decor = &newSources[_decorationData.numSources - 1];
     _decorationData.sources = newSources;
 
-    return d;
+    decor->_surface = this;
+    return decor;
 }
 
 void Surface::clearDecorations()
