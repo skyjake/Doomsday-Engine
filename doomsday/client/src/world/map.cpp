@@ -1032,6 +1032,15 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
     }
 
 #ifdef __CLIENT__
+    SurfaceDecorator &surfaceDecorator()
+    {
+        if(decorator.isNull())
+        {
+            Rend_DecorReset();
+            decorator.reset(new SurfaceDecorator);
+        }
+        return *decorator;
+    }
 
     /**
      * $smoothplane: interpolate the visual offset of planes.
@@ -2947,13 +2956,7 @@ void Map::worldFrameBegins(World &world, bool resetNextViewer)
         {
             foreach(Surface *surface, d->decoratedSurfaces)
             {
-                if(d->decorator.isNull())
-                {
-                    Rend_DecorReset();
-                    d->decorator.reset(new SurfaceDecorator);
-                }
-
-                d->decorator->decorate(*surface);
+                d->surfaceDecorator().decorate(*surface);
             }
         }
 

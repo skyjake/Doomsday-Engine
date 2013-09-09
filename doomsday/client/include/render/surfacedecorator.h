@@ -20,9 +20,7 @@
 #ifndef DENG_CLIENT_RENDER_SURFACEDECORATOR_H
 #define DENG_CLIENT_RENDER_SURFACEDECORATOR_H
 
-#include <de/Vector>
-
-#include "MaterialSnapshot" // remove me
+#include "Decoration"
 #include "Surface"
 
 #define MAX_DECOR_LIGHTS        (16384)
@@ -36,7 +34,7 @@ public:
     /**
      * Construct a new surface decorator.
      */
-    //SurfaceDecorator();
+    SurfaceDecorator();
 
     /**
      * Decorate @a surface.
@@ -44,16 +42,7 @@ public:
     void decorate(Surface &surface);
 
 private:
-    void newDecoration(SurfaceDecorSource &source);
-
-    uint generateDecorations(de::MaterialSnapshot::Decoration const &decor,
-        de::Vector2i const &patternOffset, de::Vector2i const &patternSkip, Surface &suf,
-        Material &material, de::Vector3d const &topLeft_, de::Vector3d const &/*bottomRight*/,
-        de::Vector2d sufDimensions, de::Vector3d const &delta, int axis,
-        de::Vector2f const &matOffset, Sector *containingSector);
-
-    void plotSources(Surface &suf, de::Vector2f const &offset,
-        de::Vector3d const &topLeft, de::Vector3d const &bottomRight, Sector *sec = 0);
+    DENG2_PRIVATE(d)
 };
 
 /// @todo Refactor away --------------------------------------------------------
