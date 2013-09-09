@@ -22,6 +22,7 @@
 #include "ui/widgets/cvarchoicewidget.h"
 #include "ui/widgets/taskbarwidget.h"
 #include "ui/editors/rendererappearanceeditor.h"
+#include "ui/dialogs/inputdialog.h"
 #include "GridLayout"
 #include "SignalAction"
 #include "DialogContentStylist"
@@ -128,6 +129,11 @@ DENG_GUI_PIMPL(RendererSettingsDialog)
             }
         }
     }
+
+    String currentAppearance() const
+    {
+        return appear->selectedItem().data().toString();
+    }
 };
 
 RendererSettingsDialog::RendererSettingsDialog(String const &name)
@@ -138,8 +144,16 @@ RendererSettingsDialog::RendererSettingsDialog(String const &name)
     LabelWidget *appearLabel = LabelWidget::newWithText(tr("Appearance:"), &area());
 
     d->appear->setOpeningDirection(ui::Down);
-    d->appear->items()
-            << new ChoiceItem(tr("Default"), "");
+
+    // Populate the appearance profiles list.
+    foreach(String prof, ClientApp::rendererAppearanceSettings().profiles())
+    {
+        d->appear->items() << new ChoiceItem(prof, prof);
+    }
+    d->appear->items().sort();
+    d->appear->setSelected(d->appear->items().findData(
+            ClientApp::rendererAppearanceSettings().currentProfile()));
+    connect(d->appear, SIGNAL(selectionChangedByUser(uint)), this, SLOT(applySelectedAppearance()));
 
     d->appearButton->setImage(style().images().image("gear"));
     d->appearButton->setSizePolicy(ui::Expand, ui::Expand);
@@ -222,25 +236,33 @@ void RendererSettingsDialog::resetToDefaults()
 
 void RendererSettingsDialog::showAppearanceMenu()
 {
+    SettingsRegister &reg = ClientApp::rendererAppearanceSettings();
+
     PopupMenuWidget *popup = new PopupMenuWidget;
     popup->set(popup->background().withSolidFillOpacity(1));
     popup->menu().items()
-            << new ActionItem(tr("Edit"), new SignalAction(this, SLOT(showEditor())))
-            << new ActionItem(tr("Rename..."))
+            << new ActionItem(tr("Edit"), new SignalAction(this, SLOT(editProfile())))
+            << new ActionItem(tr("Rename..."), new SignalAction(this, SLOT(renameProfile())))
             << new Item(Item::Separator)
-            << new ActionItem(tr("Add Duplicate..."))
+            << new ActionItem(tr("Add Duplicate..."), new SignalAction(this, SLOT(duplicateProfile())))
             << new Item(Item::Separator)
-            << new ActionItem(tr("Delete"));
+            << new ActionItem(tr("Delete..."), new SignalAction(this, SLOT(deleteProfile())));
     add(popup);
 
     ContextWidgetOrganizer const &org = popup->menu().organizer();
 
     // Enable or disable buttons depending on the selected profile.
-    if(d->appear->selectedItem().data().toString().isEmpty())
+    String selProf = d->appear->selectedItem().data().toString();
+    if(reg.isReadOnlyProfile(selProf))
     {
-        // Default profile.
-        //org.itemWidget(0)->disable();
+        // Read-only profiles can only be duplicated.
+        org.itemWidget(0)->disable();
         org.itemWidget(1)->disable();
+        org.itemWidget(5)->disable();
+    }
+    if(reg.profileCount() == 1)
+    {
+        // The last profile cannot be deleted.
         org.itemWidget(5)->disable();
     }
 
@@ -256,28 +278,99 @@ void RendererSettingsDialog::showDeveloperPopup()
 
 void RendererSettingsDialog::editProfile()
 {
-
-}
-
-void RendererSettingsDialog::renameProfile()
-{
-
-}
-
-void RendererSettingsDialog::duplicateProfile()
-{
-
-}
-
-void RendererSettingsDialog::deleteProfile()
-{
-
-}
-
-void RendererSettingsDialog::showEditor()
-{
     RendererAppearanceEditor *editor = new RendererAppearanceEditor;
     editor->open();
 
     ClientWindow::main().taskBar().closeConfigMenu();
+}
+
+void RendererSettingsDialog::renameProfile()
+{
+    InputDialog dlg;
+    dlg.title().setText(tr("Renaming \"%1\"").arg(d->currentAppearance()));
+    dlg.message().setText(tr("Enter a new name for the appearance profile:"));
+
+    dlg.editor().setText(d->currentAppearance());
+
+    if(dlg.exec(root()))
+    {
+        String clean = dlg.editor().text().trimmed().left(100);
+        if(!clean.isEmpty() && d->currentAppearance() != clean)
+        {
+            if(ClientApp::rendererAppearanceSettings().rename(clean))
+            {
+                ui::Data &items = d->appear->items();
+
+                ui::Item &item = items.at(d->appear->selected());
+                item.setLabel(clean);
+                item.setData(clean);
+
+                // Keep the list sorted.
+                items.sort();
+                d->appear->setSelected(items.findData(clean));
+            }
+            else
+            {
+                LOG_WARNING("Failed to rename profile to \"%s\"") << clean;
+            }
+        }
+    }
+}
+
+void RendererSettingsDialog::duplicateProfile()
+{
+    InputDialog dlg;
+    dlg.title().setText(tr("Duplicating \"%1\"").arg(d->currentAppearance()));
+    dlg.message().setText(tr("Enter a name for the new appearance profile:"));
+
+    if(dlg.exec(root()))
+    {
+        String clean = dlg.editor().text().trimmed().left(100);
+        if(!clean.isEmpty())
+        {
+            SettingsRegister &reg = ClientApp::rendererAppearanceSettings();
+
+            if(reg.saveAsProfile(clean))
+            {
+                reg.setProfile(clean);
+
+                d->appear->items().append(new ChoiceItem(clean, clean)).sort();
+                d->appear->setSelected(d->appear->items().findData(clean));
+            }
+            else
+            {
+                LOG_WARNING("Failed to duplicate current profile to create \"%s\"")
+                        << clean;
+            }
+        }
+    }
+}
+
+void RendererSettingsDialog::deleteProfile()
+{
+    MessageDialog dlg;
+    dlg.title().setText(tr("Delete?"));
+    dlg.message().setText(
+                tr("Are you sure you want to delete the appearance profile %1? This cannot be undone.")
+                .arg(_E(b) + d->currentAppearance() + _E(.)));
+    dlg.buttons().items()
+            << new DialogButtonItem(DialogWidget::Default | DialogWidget::No)
+            << new DialogButtonItem(DialogWidget::Yes);
+
+    if(!dlg.exec(root())) return;
+
+    // We've got the permission.
+    String const profToDelete = d->currentAppearance();
+
+    d->appear->items().remove(d->appear->selected());
+
+    // Switch to the new selection.
+    applySelectedAppearance();
+
+    ClientApp::rendererAppearanceSettings().deleteProfile(profToDelete);
+}
+
+void RendererSettingsDialog::applySelectedAppearance()
+{
+    ClientApp::rendererAppearanceSettings().setProfile(d->currentAppearance());
 }

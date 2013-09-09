@@ -211,6 +211,7 @@ DENG2_PIMPL(ClientApp)
                 .define(SReg::IntCVar,   "rend-dev-vertex-show-indices", 0)
                 .define(SReg::IntCVar,   "rend-dev-generator-show-indices", 0);
 
+        rendererAppearanceSettings.setPersistentName("renderer");
         rendererAppearanceSettings
                 .define(SReg::IntCVar,   "rend-light", 1)
                 .define(SReg::IntCVar,   "rend-light-decor", 1)

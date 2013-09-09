@@ -34,7 +34,8 @@
 using namespace de;
 using namespace ui;
 
-DENG_GUI_PIMPL(RendererAppearanceEditor)
+DENG_GUI_PIMPL(RendererAppearanceEditor),
+DENG2_OBSERVES(SettingsRegister, ProfileChange)
 {
     /**
      * Foldable group of settings.
@@ -225,6 +226,8 @@ DENG_GUI_PIMPL(RendererAppearanceEditor)
           settings(ClientApp::rendererAppearanceSettings()),
           firstColumnWidth(new IndirectRule)
     {
+        settings.audienceForProfileChange += this;
+
         // The contents of the editor will scroll.
         container = new ScrollAreaWidget;
         container->enableIndicatorDraw(true);
@@ -496,7 +499,14 @@ DENG_GUI_PIMPL(RendererAppearanceEditor)
 
     ~Instance()
     {
+        settings.audienceForProfileChange -= this;
         releaseRef(firstColumnWidth);
+    }
+
+    void currentProfileChanged(String const &)
+    {
+        // Update with values from the new profile.
+        fetch();
     }
 
     Rule const &maximumOfAllGroupFirstColumns()

@@ -20,6 +20,7 @@
 #define DENG_SETTINGSREGISTER_H
 
 #include <de/String>
+#include <de/Observers>
 #include <QVariant>
 #include <QList>
 
@@ -36,25 +37,39 @@
  * The current profile is simply whatever values the identified cvars/variables
  * presently hold. These current values get stored persistently in the app's
  * Config (and via con_config) as usual. SettingsRegister is responsible for
- * storing the non-current profiles persistently.
+ * storing the non-current profiles persistently. The (de)serialization occurs
+ * whenever the game is (un)loaded, as all cvars are presently game-specific.
  *
- * @todo It should be possible to install new profiles via resource packs.
- * Also, any built-in profiles (e.g., "Developer" or "Debugging") should be
- * defined in resource packs and not hardcoded in code.
+ * It is possible to install new profiles via resource packs. The profiles should
+ * be placed to /data/profiles/(persistentName)/.
  */
 class SettingsRegister
 {
 public:
-    enum SettingType
-    {
+    enum SettingType {
         IntCVar,
         FloatCVar,
         StringCVar,
         ConfigVariable      ///< Default value gotten from Config.setDefaults().
     };
 
+    DENG2_DEFINE_AUDIENCE(ProfileChange, void currentProfileChanged(de::String const &name))
+
 public:
     SettingsRegister();
+
+    /**
+     * Sets the name this register will use for storing profiles persistently.
+     * By default the register has no persistent name and thus will not be
+     * stored persistently.
+     *
+     * In the Config, there will be a record called "Config.(persistentName)"
+     * containing relevant information.
+     *
+     * @param name  Persistent name for the register. Must be file name and
+     *              script variable name friendly.
+     */
+    void setPersistentName(de::String const &name);
 
     /**
      * Defines a new setting in the profile.
@@ -72,13 +87,26 @@ public:
     de::String currentProfile() const;
 
     /**
+     * Determines if a profile should be considered read-only. The UI should
+     * not let the user modify profiles that are read-only.
+     *
+     * @param name  Profile name.
+     *
+     * @return @c true, if the profile is read-only.
+     */
+    bool isReadOnlyProfile(de::String const &name) const;
+
+    /**
      * Current values of the settings are saved as a profile. If there is a
      * profile with the same name, it will be replaced. The current profile is
      * not changed.
      *
      * @param name  Name of the profile.
+     *
+     * @return @c true if a new profile was created. @c false, if the operation
+     * failed (e.g., name already in use).
      */
-    void saveAsProfile(de::String const &name);
+    bool saveAsProfile(de::String const &name);
 
     /**
      * Changes the current settings profile.
@@ -103,8 +131,10 @@ public:
      * Renames the current profile.
      *
      * @param name  New name of the profile.
+     *
+     * @return @c true, if renamed successfully.
      */
-    void rename(de::String const &name);
+    bool rename(de::String const &name);
 
     /**
      * Deletes a profile. The current profile cannot be deleted.
@@ -117,6 +147,8 @@ public:
      * Lists the names of all the existing profiles.
      */
     QList<de::String> profiles() const;
+
+    int profileCount() const;
 
 private:
     DENG2_PRIVATE(d)
