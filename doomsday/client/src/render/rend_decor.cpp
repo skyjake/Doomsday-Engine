@@ -21,274 +21,27 @@
 
 #include <de/memoryzone.h>
 
-#include <de/Error>
 #include <de/Vector>
 
 #include "de_platform.h"
 #include "de_console.h"
-#include "de_render.h"
-
 #include "dd_main.h" // App_World(), remove me
-#include "def_main.h"
 
 #include "world/map.h"
 #include "BspLeaf"
 
-#include "render/vissprite.h"
+#include "render/rend_main.h" // Rend_MapSurfaceMaterialSpec()
+#include "Decoration"
 #include "WallEdge"
 
 #include "render/rend_decor.h"
 
 using namespace de;
 
-/// No decorations are visible beyond this.
-#define MAX_DECOR_DISTANCE      (2048)
-
-static float decorLightBrightFactor = 1;
-static float decorLightFadeAngle    = .1f;
-
-/**
- * @ingroup render
- */
-class Decoration
-{
-public:
-    /// Required source is missing. @ingroup errors
-    DENG2_ERROR(MissingSourceError);
-
-public: /// @todo remove me.
-    Decoration *next;
-
-public:
-    /**
-     * Construct a new decoration.
-     *
-     * @param source  Source of the decoration (can be set later).
-     */
-    Decoration(SurfaceDecorSource *source = 0)
-        : next(0),
-          _source(source), _lumIdx(Lumobj::NoIndex), _fadeMul(1)
-    {}
-
-    /**
-     * To be called to register the commands and variables of this module.
-     */
-    static void consoleRegister()
-    {
-        C_VAR_FLOAT("rend-light-decor-angle",  &decorLightFadeAngle,    0, 0, 1);
-        C_VAR_FLOAT("rend-light-decor-bright", &decorLightBrightFactor, 0, 0, 10);
-    }
-
-    /**
-     * Returns @c true iff a source is defined for the decoration.
-     *
-     * @see source(), setSource()
-     */
-    bool hasSource() const
-    {
-        return _source != 0;
-    }
-
-    /**
-     * Returns the source of the decoration.
-     *
-     * @see hasSource(), setSource()
-     */
-    SurfaceDecorSource &source()
-    {
-        if(_source != 0)
-        {
-            return *_source;
-        }
-        /// @throw MissingSourceError Attempted with no source attributed.
-        throw MissingSourceError("Decoration::source", "No source is attributed");
-    }
-
-    /// @copydoc source()
-    SurfaceDecorSource const &source() const
-    {
-        if(_source != 0)
-        {
-            return *_source;
-        }
-        /// @throw MissingSourceError Attempted with no source attributed.
-        throw MissingSourceError("Decoration::source", "No source is attributed");
-    }
-
-    /**
-     * Change the attributed source of the decoration.
-     *
-     * @param newSource
-     */
-    void setSource(SurfaceDecorSource *newSource)
-    {
-        _source = newSource;
-        // Forget the previously generated lumobj.
-        _lumIdx = Lumobj::NoIndex;
-    }
-
-    /**
-     * Convenient method which returns the surface owner of the source of the
-     * decoration. Naturally a source must currently be attributed.
-     *
-     * @see source()
-     */
-    inline Surface &surface() { return source().surface(); }
-
-    /// @copydoc surface()
-    inline Surface const &surface() const { return source().surface(); }
-
-    Map &map()
-    {
-        return surface().map();
-    }
-
-    Map const &map() const
-    {
-        return surface().map();
-    }
-
-    Vector3d const &origin() const
-    {
-        return source().origin;
-    }
-
-    BspLeaf &bspLeafAtOrigin() const
-    {
-        return *source().bspLeaf;
-    }
-
-    /**
-     * Generates a lumobj for the decoration.
-     */
-    void generateLumobj()
-    {
-        _lumIdx = Lumobj::NoIndex;
-
-        MaterialSnapshot::Decoration const &matDecor = materialDecoration();
-
-        // Decorations with zero color intensity produce no light.
-        if(matDecor.color == Vector3f(0, 0, 0))
-            return;
-
-        // Does it pass the ambient light limitation?
-        float lightLevel = lightLevelAtOrigin();
-        Rend_ApplyLightAdaptation(lightLevel);
-
-        float intensity = checkLightLevel(lightLevel, matDecor.lightLevels[0],
-                                          matDecor.lightLevels[1]);
-
-        if(intensity < .0001f)
-            return;
-
-        // Apply the brightness factor (was calculated using sector lightlevel).
-        _fadeMul = intensity * decorLightBrightFactor;
-        _lumIdx   = Lumobj::NoIndex;
-
-        if(_fadeMul <= 0)
-            return;
-
-        Lumobj &lum = map().addLumobj(
-            Lumobj(origin(), matDecor.radius, matDecor.color * _fadeMul,
-                   MAX_DECOR_DISTANCE));
-
-        // Any lightmaps to configure?
-        lum.setLightmap(Lumobj::Side, matDecor.tex)
-           .setLightmap(Lumobj::Down, matDecor.floorTex)
-           .setLightmap(Lumobj::Up,   matDecor.ceilTex);
-
-        // Remember the light's unique index (for projecting a flare).
-        _lumIdx = lum.indexInMap();
-    }
-
-    /**
-     * Generates a VSPR_FLARE vissprite for the decoration.
-     */
-    void generateFlare()
-    {
-        // Only decorations with active light sources produce flares.
-        Lumobj *lum = lumobj();
-        if(!lum) return; // Huh?
-
-        // Is the point in range?
-        double distance = R_ViewerLumobjDistance(lum->indexInMap());
-        if(distance > lum->maxDistance())
-            return;
-
-        MaterialSnapshot::Decoration const &matDecor = materialDecoration();
-
-        vissprite_t *vis = R_NewVisSprite(VSPR_FLARE);
-
-        vis->origin   = lum->origin();
-        vis->distance = distance;
-
-        vis->data.flare.isDecoration = true;
-        vis->data.flare.tex          = matDecor.flareTex;
-        vis->data.flare.size         =
-            matDecor.haloRadius > 0? de::max(1.f, matDecor.haloRadius * 60 * (50 + haloSize) / 100.0f) : 0;
-
-        // Color is taken from the lumobj.
-        V3f_Set(vis->data.flare.color, lum->color().x, lum->color().y, lum->color().z);
-
-        vis->data.flare.lumIdx       = lum->indexInMap();
-
-        // Fade out as distance from viewer increases.
-        vis->data.flare.mul          = lum->attenuation(distance);
-
-        // Halo brightness drops as the angle gets too big.
-        if(matDecor.elevation < 2 && decorLightFadeAngle > 0) // Close the surface?
-        {
-            Vector3d const eye(vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
-            Vector3d const vecFromOriginToEye = (lum->origin() - eye).normalize();
-
-            float dot = float( -surface().normal().dot(vecFromOriginToEye) );
-            if(dot < decorLightFadeAngle / 2)
-            {
-                vis->data.flare.mul = 0;
-            }
-            else if(dot < 3 * decorLightFadeAngle)
-            {
-                vis->data.flare.mul = (dot - decorLightFadeAngle / 2)
-                                    / (2.5f * decorLightFadeAngle);
-            }
-        }
-    }
-
-private:
-    float lightLevelAtOrigin() const
-    {
-        return bspLeafAtOrigin().sector().lightLevel();
-    }
-
-    MaterialSnapshot::Decoration const &materialDecoration() const
-    {
-        return *source().matDecor;
-    }
-
-    Lumobj *lumobj() const
-    {
-        return map().lumobj(_lumIdx);
-    }
-
-    /**
-     * @return  @c > 0 if @a lightlevel passes the min max limit condition.
-     */
-    static float checkLightLevel(float lightlevel, float min, float max)
-    {
-        // Has a limit been set?
-        if(de::fequal(min, max)) return 1;
-        return de::clamp(0.f, (lightlevel - min) / float(max - min), 1.f);
-    }
-
-    SurfaceDecorSource *_source; ///< Attributed source (if any, not owned).
-    int _lumIdx;                 ///< Generated lumobj index (or Lumobj::NoIndex).
-    float _fadeMul;              ///< Intensity multiplier (lumobj and flare).
-};
-
 /// Quite a bit of decorations, there!
 #define MAX_DECOR_LIGHTS        (16384)
 
-byte useLightDecorations     = true;
+byte useLightDecorations = true; ///< cvar
 
 static uint decorCount;
 static Decoration *decorFirst;
@@ -332,7 +85,7 @@ static Decoration *allocDecoration()
     }
 }
 
-class LightDecorator
+class SurfaceDecorator
 {
 public:
     /**
@@ -537,7 +290,7 @@ void Rend_DecorBeginFrame()
     Map &map = App_World().map();
     foreach(Surface *surface, map.decoratedSurfaces())
     {
-        LightDecorator::decorate(*surface);
+        SurfaceDecorator::decorate(*surface);
     }
 }
 

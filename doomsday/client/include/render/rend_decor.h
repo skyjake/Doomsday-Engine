@@ -1,7 +1,7 @@
 /** @file rend_decor.h Surface Decoration Projection.
  *
- * @author Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @author Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -17,16 +17,18 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG_RENDER_DECOR_H
-#define LIBDENG_RENDER_DECOR_H
+#ifndef DENG_CLIENT_RENDER_DECOR_H
+#define DENG_CLIENT_RENDER_DECOR_H
 
 #include <de/libdeng1.h>
 
-DENG_EXTERN_C byte useLightDecorations;
-DENG_EXTERN_C float decorLightBrightFactor;
-DENG_EXTERN_C float decorLightFadeAngle;
+namespace de {
+class Map;
+}
 
-void Rend_DecorRegister(void);
+DENG_EXTERN_C byte useLightDecorations;
+
+void Rend_DecorRegister();
 
 /**
  * Re-initialize the decoration source tracking (might be called during a map
@@ -37,16 +39,16 @@ void Rend_DecorInitForMap(de::Map &map);
 /**
  * Decorations are generated for each frame.
  */
-void Rend_DecorBeginFrame(void);
+void Rend_DecorBeginFrame();
 
 /**
  * Create lumobjs for all decorations who want them.
  */
-void Rend_DecorAddLuminous(void);
+void Rend_DecorAddLuminous();
 
 /**
  * Project all the non-clipped decorations. They become regular vissprites.
  */
-void Rend_DecorProject(void);
+void Rend_DecorProject();
 
-#endif /* LIBDENG_RENDER_DECOR_H */
+#endif // DENG_CLIENT_RENDER_DECOR_H

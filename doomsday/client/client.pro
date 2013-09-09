@@ -119,6 +119,7 @@ DENG_CONVENIENCE_HEADERS += \
     include/BspNode \
     include/CommandAction \
     include/ContextWidgetOrganizer \
+    include/Decoration \
     include/DialogContentStylist \
     include/EntityDatabase \
     include/Face \
@@ -281,6 +282,7 @@ DENG_HEADERS += \
     include/render/biassurface.h \
     include/render/biastracker.h \
     include/render/blockmapvisual.h \
+    include/render/decoration.h \
     include/render/huecirclevisual.h \
     include/render/lightgrid.h \
     include/render/lumobj.h \
@@ -621,6 +623,7 @@ SOURCES += \
     src/render/biassurface.cpp \
     src/render/biastracker.cpp \
     src/render/blockmapvisual.cpp \
+    src/render/decoration.cpp \
     src/render/huecirclevisual.cpp \
     src/render/lightgrid.cpp \
     src/render/lumobj.cpp \
