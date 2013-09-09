@@ -358,6 +358,7 @@ DENG_HEADERS += \
     include/ui/dialogs/aboutdialog.h \
     include/ui/dialogs/audiosettingsdialog.h \
     include/ui/dialogs/coloradjustmentdialog.h \
+    include/ui/dialogs/inputdialog.h \
     include/ui/dialogs/inputsettingsdialog.h \
     include/ui/dialogs/messagedialog.h \
     include/ui/dialogs/networksettingsdialog.h \
@@ -699,6 +700,7 @@ SOURCES += \
     src/ui/dialogs/aboutdialog.cpp \
     src/ui/dialogs/audiosettingsdialog.cpp \
     src/ui/dialogs/coloradjustmentdialog.cpp \
+    src/ui/dialogs/inputdialog.cpp \
     src/ui/dialogs/inputsettingsdialog.cpp \
     src/ui/dialogs/messagedialog.cpp \
     src/ui/dialogs/networksettingsdialog.cpp \

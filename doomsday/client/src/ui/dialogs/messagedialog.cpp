@@ -71,6 +71,11 @@ MessageDialog::MessageDialog(String const &name)
     : DialogWidget(name), d(new Instance(this))
 {}
 
+MessageDialog::~MessageDialog()
+{
+    deinitialize();
+}
+
 LabelWidget &MessageDialog::title()
 {
     return *d->title;
