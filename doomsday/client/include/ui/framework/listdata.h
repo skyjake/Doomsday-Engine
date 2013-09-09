@@ -36,6 +36,7 @@ public:
     ~ListData();
 
     de::dsize size() const;
+    Item &at(Pos pos);
     Item const &at(Pos pos) const;
     Pos find(Item const &item) const;
     Pos findData(QVariant const &data) const;

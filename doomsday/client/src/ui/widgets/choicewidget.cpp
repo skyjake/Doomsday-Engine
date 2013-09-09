@@ -26,7 +26,8 @@ using namespace ui;
 DENG_GUI_PIMPL(ChoiceWidget),
 DENG2_OBSERVES(Data, Addition),
 DENG2_OBSERVES(Data, Removal),
-DENG2_OBSERVES(ContextWidgetOrganizer, WidgetCreation)
+DENG2_OBSERVES(ContextWidgetOrganizer, WidgetCreation),
+DENG2_OBSERVES(ContextWidgetOrganizer, WidgetUpdate)
 {
     /**
      * Items in the choice's popup uses this as action to change the selected
@@ -68,6 +69,7 @@ DENG2_OBSERVES(ContextWidgetOrganizer, WidgetCreation)
         choices->menu().items().audienceForAddition += this;
         choices->menu().items().audienceForRemoval += this;
         choices->menu().organizer().audienceForWidgetCreation += this;
+        choices->menu().organizer().audienceForWidgetUpdate += this;
         self.add(choices);
 
         self.setAction(new SignalAction(thisPublic, SLOT(openPopup())));
@@ -89,6 +91,15 @@ DENG2_OBSERVES(ContextWidgetOrganizer, WidgetCreation)
             // Make sure the created buttons have an action that updates the
             // selected item.
             but->setAction(new SelectAction(this, item));
+        }
+    }
+
+    void widgetUpdatedForItem(GuiWidget &, ui::Item const &item)
+    {
+        if(isValidSelection() && &item == &self.selectedItem())
+        {
+            // Make sure the button is up to date, too.
+            updateButtonWithItem(self.selectedItem());
         }
     }
 
@@ -127,10 +138,7 @@ DENG2_OBSERVES(ContextWidgetOrganizer, WidgetCreation)
             selected--;
         }
 
-        if(!isValidSelection())
-        {
-            updateButtonWithSelection();
-        }
+        updateButtonWithSelection();
     }
 
     void updateItemHighlight()
@@ -145,19 +153,23 @@ DENG2_OBSERVES(ContextWidgetOrganizer, WidgetCreation)
         }
     }
 
+    void updateButtonWithItem(ui::Item const &item)
+    {
+        self.setText(item.label());
+
+        ActionItem const *act = dynamic_cast<ActionItem const *>(&item);
+        if(act)
+        {
+            self.setImage(act->image());
+        }
+    }
+
     void updateButtonWithSelection()
     {
         // Update the main button.
         if(isValidSelection())
         {
-            ui::Item const &item = items().at(selected);
-            self.setText(item.label());
-
-            ActionItem const *act = dynamic_cast<ActionItem const *>(&item);
-            if(act)
-            {
-                self.setImage(act->image());
-            }
+            updateButtonWithItem(items().at(selected));
         }
         else
         {

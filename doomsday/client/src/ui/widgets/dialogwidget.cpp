@@ -251,11 +251,11 @@ DENG2_OBSERVES(ui::Data, Removal)
             ButtonWidget &but = widget.as<ButtonWidget>();
             if(!i->action())
             {
-                if(i->role().testFlag(Accept))
+                if(i->role() & (Accept | Yes))
                 {
                     but.setAction(new SignalAction(thisPublic, SLOT(accept())));
                 }
-                else if(i->role().testFlag(Reject))
+                else if(i->role() & (Reject | No))
                 {
                     but.setAction(new SignalAction(thisPublic, SLOT(reject())));
                 }

@@ -85,6 +85,8 @@ public:
 
     virtual Item *take(Pos pos) = 0;
 
+    virtual Item &at(Pos pos) = 0;
+
     virtual Item const &at(Pos pos) const = 0;
 
     /**

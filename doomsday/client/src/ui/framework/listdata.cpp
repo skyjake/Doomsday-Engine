@@ -35,6 +35,12 @@ dsize ListData::size() const
     return _items.size();
 }
 
+Item &ListData::at(Data::Pos pos)
+{
+    DENG2_ASSERT(pos < size());
+    return *_items[pos];
+}
+
 Item const &ListData::at(Pos pos) const
 {
     DENG2_ASSERT(pos < size());
