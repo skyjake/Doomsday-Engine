@@ -19,10 +19,12 @@
  * 02110-1301 USA</small>
  */
 
+#include <QMap>
 #include <QSet>
 
 #include <de/memoryzone.h>
 
+#include <de/Observers>
 #include <de/Vector>
 
 #include "de_platform.h"
@@ -76,10 +78,14 @@ static Decoration *allocDecoration()
     }
 }
 
-DENG2_PIMPL(SurfaceDecorator)
+typedef QSet<Surface *> SurfaceSet;
+typedef QMap<Material *, SurfaceSet> MaterialSurfaceMap;
+
+DENG2_PIMPL(SurfaceDecorator),
+DENG2_OBSERVES(Material, DimensionsChange),
+DENG2_OBSERVES(MaterialAnimation, DecorationStageChange)
 {
-    typedef QSet<Surface *> SurfaceSet;
-    SurfaceSet decorated;
+    MaterialSurfaceMap decorated; ///< All surfaces being looked after.
 
     Instance(Public *i) : Base(i)
     {}
@@ -96,11 +102,11 @@ DENG2_PIMPL(SurfaceDecorator)
         decorCount += 1;
     }
 
-    uint generateDecorations(MaterialSnapshot::Decoration const &decor,
+    void generateDecorations(MaterialSnapshot::Decoration const &matDecor,
         Vector2i const &patternOffset, Vector2i const &patternSkip, Surface &suf,
         Material &material, Vector3d const &topLeft_, Vector3d const &/*bottomRight*/,
         Vector2d sufDimensions, Vector3d const &delta, int axis,
-        Vector2f const &matOffset, Sector *containingSector)
+        Vector2f const &matOffset, Sector *containingSector = 0)
     {
         // Skip values must be at least one.
         Vector2i skip = Vector2i(patternSkip.x + 1, patternSkip.y + 1)
@@ -108,19 +114,18 @@ DENG2_PIMPL(SurfaceDecorator)
 
         Vector2f repeat = material.dimensions() * skip;
         if(repeat == Vector2f(0, 0))
-            return 0;
+            return;
 
-        Vector3d topLeft = topLeft_ + suf.normal() * decor.elevation;
+        Vector3d topLeft = topLeft_ + suf.normal() * matDecor.elevation;
 
-        float s = de::wrap(decor.pos[0] - material.width() * patternOffset.x + matOffset.x,
+        float s = de::wrap(matDecor.pos[0] - material.width() * patternOffset.x + matOffset.x,
                            0.f, repeat.x);
 
         // Plot decorations.
-        uint plotted = 0;
         for(; s < sufDimensions.x; s += repeat.x)
         {
             // Determine the topmost point for this row.
-            float t = de::wrap(decor.pos[1] - material.height() * patternOffset.y + matOffset.y,
+            float t = de::wrap(matDecor.pos[1] - material.height() * patternOffset.y + matOffset.y,
                                0.f, repeat.y);
 
             for(; t < sufDimensions.y; t += repeat.y)
@@ -129,11 +134,11 @@ DENG2_PIMPL(SurfaceDecorator)
                 float const offT = t / sufDimensions.y;
                 Vector3d offset(offS, axis == VZ? offT : offS, axis == VZ? offS : offT);
 
-                Vector3d origin  = topLeft + delta * offset;
-                BspLeaf &bspLeaf = suf.map().bspLeafAt(origin);
+                Vector3d origin = topLeft + delta * offset;
                 if(containingSector)
                 {
                     // The point must be inside the correct sector.
+                    BspLeaf &bspLeaf = suf.map().bspLeafAt(origin);
                     if(bspLeaf.sectorPtr() != containingSector
                        || !bspLeaf.polyContains(origin))
                         continue;
@@ -142,19 +147,15 @@ DENG2_PIMPL(SurfaceDecorator)
                 if(SurfaceDecorSource *source = suf.newDecoration())
                 {
                     source->origin   = origin;
-                    source->bspLeaf  = &bspLeaf;
-                    source->matDecor = &decor;
-
-                    plotted += 1;
+                    //source->bspLeaf  = &bspLeaf;
+                    source->matDecor = &matDecor;
                 }
             }
         }
-
-        return plotted;
     }
 
     void plotSources(Surface &suf, Vector2f const &offset, Vector3d const &topLeft,
-                     Vector3d const &bottomRight, Sector *sec = 0)
+                     Vector3d const &bottomRight, Sector *containingSector = 0)
     {
         Vector3d delta = bottomRight - topLeft;
         if(de::fequal(delta.length(), 0)) return;
@@ -164,12 +165,12 @@ DENG2_PIMPL(SurfaceDecorator)
         Vector2d sufDimensions;
         if(axis == 0 || axis == 1)
         {
-            sufDimensions.x = std::sqrt(delta.x * delta.x + delta.y * delta.y);
+            sufDimensions.x = std::sqrt(de::squared(delta.x) + de::squared(delta.y));
             sufDimensions.y = delta.z;
         }
         else
         {
-            sufDimensions.x = std::sqrt(delta.x * delta.x);
+            sufDimensions.x = std::sqrt(de::squared(delta.x));
             sufDimensions.y = delta.y;
         }
 
@@ -187,10 +188,33 @@ DENG2_PIMPL(SurfaceDecorator)
 
             generateDecorations(decor, def->patternOffset(), def->patternSkip(),
                                 suf, suf.material(), topLeft, bottomRight, sufDimensions,
-                                delta, axis, offset, sec);
+                                delta, axis, offset, containingSector);
         }
     }
 
+    void markSurfacesForRedecoration(Material &material)
+    {
+        MaterialSurfaceMap::const_iterator found = decorated.constFind(&material);
+        if(found != decorated.constEnd())
+        foreach(Surface *surface, found.value())
+        {
+            surface->markAsNeedingDecorationUpdate();
+        }
+    }
+
+    /// Observes Material DimensionsChange
+    void materialDimensionsChanged(Material &material)
+    {
+        markSurfacesForRedecoration(material);
+    }
+
+    /// Observes MaterialAnimation DecorationStageChange
+    void materialAnimationDecorationStageChanged(MaterialAnimation &anim,
+        Material::Decoration &decor)
+    {
+        markSurfacesForRedecoration(decor.material());
+        DENG2_UNUSED(anim);
+    }
 };
 
 SurfaceDecorator::SurfaceDecorator() : d(new Instance(this))
@@ -266,29 +290,60 @@ void SurfaceDecorator::decorate(Surface &surface)
 void SurfaceDecorator::add(Surface *surface)
 {
     if(!surface) return;
+
+    remove(surface);
+
     if(!surface->hasMaterial()) return;
     if(!surface->material().isDecorated()) return;
 
-    d->decorated.insert(surface);
+    d->decorated[&surface->material()].insert(surface);
+
+    /// @todo Defer until first decorated?
+    surface->material().audienceForDimensionsChange += d;
+    surface->material().animation(MapSurfaceContext).audienceForDecorationStageChange += d;
 }
 
 void SurfaceDecorator::remove(Surface *surface)
 {
     if(!surface) return;
 
-    d->decorated.remove(surface);
-}
-
-void SurfaceDecorator::updateOnMaterialChange(Material &material)
-{
-    if(!material.isDecorated()) return; // Huh??
-
-    foreach(Surface *surface, d->decorated)
+    // First try the set for the currently assigned material.
+    if(surface->hasMaterial())
     {
-        if(&material == surface->materialPtr())
+        MaterialSurfaceMap::iterator found = d->decorated.find(&surface->material());
+        if(found != d->decorated.end())
         {
-            surface->markAsNeedingDecorationUpdate();
+            SurfaceSet &surfaceSet = found.value();
+            if(surfaceSet.remove(surface))
+            {
+                if(surfaceSet.isEmpty())
+                {
+                    d->decorated.remove(&surface->material());
+                    surface->material().audienceForDimensionsChange -= d;
+                    surface->material().animation(MapSurfaceContext).audienceForDecorationStageChange -= d;
+                }
+                return;
+            }
         }
+    }
+
+    // The material may have changed.
+    MaterialSurfaceMap::iterator i = d->decorated.begin();
+    while(i != d->decorated.end())
+    {
+        SurfaceSet &surfaceSet = i.value();
+        if(surfaceSet.remove(surface))
+        {
+            if(surfaceSet.isEmpty())
+            {
+                Material *material = i.key();
+                d->decorated.remove(material);
+                material->audienceForDimensionsChange -= d;
+                material->animation(MapSurfaceContext).audienceForDecorationStageChange -= d;
+            }
+            return;
+        }
+        ++i;
     }
 }
 
@@ -299,7 +354,8 @@ void SurfaceDecorator::reset()
 
 void SurfaceDecorator::redecorate()
 {
-    foreach(Surface *surface, d->decorated)
+    foreach(SurfaceSet const &set, d->decorated)
+    foreach(Surface *surface, set)
     {
         decorate(*surface);
     }

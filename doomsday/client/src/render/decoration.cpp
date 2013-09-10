@@ -47,7 +47,7 @@ static float checkLightLevel(float lightlevel, float min, float max)
 
 Decoration::Decoration(SurfaceDecorSource *source)
     : next(0),
-      _source(source), _lumIdx(Lumobj::NoIndex), _fadeMul(1)
+      _source(source), _bspLeaf(0), _lumIdx(Lumobj::NoIndex), _fadeMul(1)
 {}
 
 bool Decoration::hasSource() const
@@ -78,7 +78,8 @@ SurfaceDecorSource const &Decoration::source() const
 void Decoration::setSource(SurfaceDecorSource *newSource)
 {
     _source = newSource;
-    // Forget the previously generated lumobj.
+    // Forget the previously determnined BSP leaf and generated lumobj.
+    _bspLeaf = 0;
     _lumIdx = Lumobj::NoIndex;
 }
 
@@ -109,7 +110,12 @@ Vector3d const &Decoration::origin() const
 
 BspLeaf &Decoration::bspLeafAtOrigin() const
 {
-    return *source().bspLeaf;
+    if(!_bspLeaf)
+    {
+        // Determnine this now.
+        _bspLeaf = &map().bspLeafAt(origin());
+    }
+    return *_bspLeaf;
 }
 
 void Decoration::generateLumobj()

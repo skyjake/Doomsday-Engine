@@ -91,6 +91,17 @@ DENG2_PIMPL(Surface)
           flags(0)
     {}
 
+    ~Instance()
+    {
+#ifdef __CLIENT__
+        // Stop scroll interpolation for this surface.
+        self.map().scrollingSurfaces().remove(&self);
+
+        // Stop material redecoration for this surface.
+        self.map().unlinkInMaterialLists(&self);
+#endif
+    }
+
 #ifdef DENG_DEBUG
     inline bool isSideMiddle()
     {

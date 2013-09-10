@@ -260,11 +260,11 @@ String Material::Decoration::Stage::LightLevels::asText() const
 }
 
 Material::Decoration::Decoration()
-    : _patternSkip(0, 0), _patternOffset(0, 0)
+    : _material(0), _patternSkip(0, 0), _patternOffset(0, 0)
 {}
 
 Material::Decoration::Decoration(Vector2i const &_patternSkip, Vector2i const &_patternOffset)
-    : _patternSkip(_patternSkip), _patternOffset(_patternOffset)
+    : _material(0), _patternSkip(_patternSkip), _patternOffset(_patternOffset)
 {}
 
 Material::Decoration::~Decoration()
@@ -290,6 +290,23 @@ Material::Decoration *Material::Decoration::fromDef(ded_decoration_t const &def)
     // Only the one stage.
     dec->_stages.push_back(Stage::fromDef(def.stage));
     return dec;
+}
+
+Material &Material::Decoration::material()
+{
+    DENG2_ASSERT(_material != 0);
+    return *_material;
+}
+
+Material const &Material::Decoration::material() const
+{
+    DENG2_ASSERT(_material != 0);
+    return *_material;
+}
+
+void Material::Decoration::setMaterial(Material *newOwner)
+{
+    _material = newOwner;
 }
 
 Vector2i const &Material::Decoration::patternSkip() const
@@ -416,10 +433,9 @@ DENG2_PIMPL(Material)
     /// Notify interested parties of a change in world dimensions.
     void notifyDimensionsChanged()
     {
-        if(App_World().hasMap())
+        DENG2_FOR_PUBLIC_AUDIENCE(DimensionsChange, i)
         {
-            /// @todo Replace with a de::Observers-based mechanism?
-            App_World().map().updateSurfacesOnMaterialChange(self);
+            i->materialDimensionsChanged(self);
         }
     }
 
@@ -686,6 +702,7 @@ void Material::addDecoration(Material::Decoration &decor)
 {
     if(d->decorations.contains(&decor)) return;
 
+    decor.setMaterial(this);
     d->decorations.push_back(&decor);
     d->animationsAreDirty = true;
 }

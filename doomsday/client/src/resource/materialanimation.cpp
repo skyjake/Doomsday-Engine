@@ -48,6 +48,14 @@ DENG2_PIMPL(Material::Animation)
         : Base(i), material(_material), context(_context)
     {}
 
+    void notifyDecorationStageChanged(Material::Decoration &decor)
+    {
+        DENG2_FOR_PUBLIC_AUDIENCE(DecorationStageChange, i)
+        {
+            i->materialAnimationDecorationStageChanged(self, decor);
+        }
+    }
+
     template <typename StageType>
     void resetLayer(Material::Animation::LayerState &ls, StageType const &stage)
     {
@@ -65,7 +73,7 @@ DENG2_PIMPL(Material::Animation)
     }
 
     template <typename LayerType>
-    void animateLayer(Material::Animation::LayerState &ls, LayerType const &layer)
+    void animateLayer(Material::Animation::LayerState &ls, LayerType &layer)
     {
         if(DD_IsSharpTick() && ls.tics-- <= 0)
         {
@@ -90,7 +98,7 @@ DENG2_PIMPL(Material::Animation)
         }
     }
 
-    void animateDecoration(Material::Animation::DecorationState &ds, Material::Decoration const &decor)
+    void animateDecoration(Material::Animation::DecorationState &ds, Material::Decoration &decor)
     {
         if(DD_IsSharpTick() && ds.tics-- <= 0)
         {
@@ -108,16 +116,7 @@ DENG2_PIMPL(Material::Animation)
             else
                 ds.tics = lsCur->tics;
 
-            // Notify interested parties about this.
-            if(context == MapSurfaceContext)
-            {
-                // Surfaces using this material may need to be updated.
-                if(App_World().hasMap())
-                {
-                    /// @todo Replace with a de::Observers-based mechanism?
-                    App_World().map().updateSurfacesOnMaterialChange(material);
-                }
-            }
+            notifyDecorationStageChanged(decor);
         }
         else
         {

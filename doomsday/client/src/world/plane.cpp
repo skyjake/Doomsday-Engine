@@ -78,18 +78,9 @@ DENG2_PIMPL(Plane)
         DENG2_FOR_PUBLIC_AUDIENCE(Deletion, i) i->planeBeingDeleted(self);
 
 #ifdef __CLIENT__
-        Map &map = self.map();
-
-        // If this plane is currently being watched - remove it.
-        map.trackedPlanes().remove(&self);
-
-        // If this plane's surface is in the moving list - remove it.
-        map.scrollingSurfaces().remove(&surface);
-
-        // If this plane's surface is linked any material list(s) - remove it.
-        map.unlinkInMaterialLists(&surface);
-
-#endif // __CLIENT__
+        // Stop movement tracking of this plane.
+        self.map().trackedPlanes().remove(&self);
+#endif
     }
 
     void notifyHeightChanged(coord_t oldHeight)

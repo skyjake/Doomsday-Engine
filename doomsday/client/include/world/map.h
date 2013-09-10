@@ -824,14 +824,6 @@ public: /// @todo Make private:
      */
     void initPolyobjs();
 
-    /**
-     * To be called in response to a Material property changing which may
-     * require updating any map surfaces which are presently using it.
-     *
-     * @todo Replace with a de::Observers-based mechanism.
-     */
-    void updateSurfacesOnMaterialChange(Material &material);
-
 #ifdef __CLIENT__
     /**
      * Fixing the sky means that for adjacent sky sectors the lower sky

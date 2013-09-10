@@ -85,7 +85,15 @@ public:
     DENG2_ERROR(UnknownDecorationError);
 #endif
 
+    /**
+     * Notified when the material is about to be deleted.
+     */
     DENG2_DEFINE_AUDIENCE(Deletion, void materialBeingDeleted(Material const &material))
+
+    /**
+     * Notified when the logical dimensions change.
+     */
+    DENG2_DEFINE_AUDIENCE(DimensionsChange, void materialDimensionsChanged(Material &material))
 
     /// @todo Define these values here instead of at API level
     enum Flag
@@ -427,6 +435,24 @@ public:
          */
         static Decoration *fromDef(ded_decoration_t const &def);
 
+        /**
+         * Returns the attributed owner material for the decoration.
+         */
+        Material &material();
+
+        /// @copydoc material()
+        Material const &material() const;
+
+        /**
+         * Change the attributed 'owner' material for the decoration. Usually
+         * it is unnecessary to call this manually as adding the decoration to
+         * a material will setup the attribution automatically.
+         *
+         * @param newOwner  New material to attribute as 'owner'. Use @c 0 to
+         *                  clear the attribution.
+         */
+        void setMaterial(Material *newOwner);
+
         /// @return  @c true if the decoration is animated; otherwise @c false.
         inline bool isAnimated() const { return stageCount() > 1; }
 
@@ -459,14 +485,10 @@ public:
         Stages const &stages() const;
 
     private:
-        /// Pattern skip intervals.
-        de::Vector2i _patternSkip;
-
-        /// Pattern skip interval offsets.
-        de::Vector2i _patternOffset;
-
-        /// Animation stages.
-        Stages _stages;
+        Material *_material;         ///< Owning Material.
+        de::Vector2i _patternSkip;   ///< Pattern skip intervals.
+        de::Vector2i _patternOffset; ///< Pattern skip interval offsets.
+        Stages _stages;              ///< Animation stages.
     };
 
     /// A list of decorations.
@@ -480,6 +502,12 @@ public:
         Animation(Material &material, MaterialContextId context);
 
     public:
+        /**
+         * Notified when a decoration stage change occurs.
+         */
+        DENG2_DEFINE_AUDIENCE(DecorationStageChange,
+            void materialAnimationDecorationStageChanged(Animation &anim, Material::Decoration &decor))
+
         /// Current state of a layer animation.
         struct LayerState
         {

@@ -132,6 +132,7 @@ private:
     Lumobj *lumobj() const;
 
     SurfaceDecorSource *_source; ///< Attributed source (if any, not owned).
+    mutable BspLeaf *_bspLeaf;   ///< BSP leaf at @ref origin in the map (not owned).
     int _lumIdx;                 ///< Generated lumobj index (or Lumobj::NoIndex).
     float _fadeMul;              ///< Intensity multiplier (lumobj and flare).
 };

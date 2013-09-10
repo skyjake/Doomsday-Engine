@@ -28,6 +28,15 @@ class Material; // remove me
 #define MAX_DECOR_LIGHTS        (16384)
 
 /**
+ * The decorator assumes responsibility for decorating surfaces according to
+ * the defined material when the surface is assigned. When a material changes
+ * (e.g., animation) the decorator automatically schedules these surfaces for
+ * redecoration.
+ *
+ * Note that it is the responsibility of the user to inform the decorator when
+ * a surface moves or a new material is assigned. Otherwise decorations may not
+ * be updated or done so using an out of date material.
+ *
  * @ingroup render
  */
 class SurfaceDecorator
@@ -43,9 +52,13 @@ public:
      */
     void decorate(Surface &surface);
 
+    /// Note that existing decorations are retained.
     void add(Surface *surface);
+
+    /// Note that existing decorations are retained.
     void remove(Surface *surface);
-    void updateOnMaterialChange(Material &material);
+
+    //void updateOnMaterialChange(Material &material);
     void reset();
     void redecorate();
 

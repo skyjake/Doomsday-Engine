@@ -1324,15 +1324,6 @@ void Map::buildMaterialLists()
 
 #endif // __CLIENT__
 
-void Map::updateSurfacesOnMaterialChange(Material &material)
-{
-#ifdef __CLIENT__
-    if(ddMapSetup) return;
-    if(d->decorator.isNull()) return;
-    d->decorator->updateOnMaterialChange(material);
-#endif
-}
-
 Uri const &Map::uri() const
 {
     return d->uri;
