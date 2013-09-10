@@ -16,11 +16,12 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "ui/widgets/scriptcommandwidget.h"
-#include "ui/widgets/popupwidget.h"
 #include <de/Script>
 #include <de/Process>
 #include <de/ScriptLex>
+
+#include "ui/widgets/scriptcommandwidget.h"
+#include "ui/widgets/popupwidget.h"
 
 using namespace de;
 

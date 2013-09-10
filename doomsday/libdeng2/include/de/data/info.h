@@ -37,7 +37,7 @@ namespace de {
  *
  * @todo Should use de::Lex internally.
  */
-class Info
+class DENG2_PUBLIC Info
 {
 public:
     class BlockElement;
@@ -45,7 +45,7 @@ public:
     /**
      * Base class for all elements.
      */
-    class Element {
+    class DENG2_PUBLIC Element {
     public:
         enum Type {
             None,
@@ -110,7 +110,7 @@ public:
     /**
      * Element that contains a single string value.
      */
-    class KeyElement : public Element {
+    class DENG2_PUBLIC KeyElement : public Element {
     public:
         enum Flag {
             Attribute = 0x1,
@@ -139,7 +139,7 @@ public:
     /**
      * Element that contains a list of string values.
      */
-    class ListElement : public Element {
+    class DENG2_PUBLIC ListElement : public Element {
     public:
         ListElement(String const &name) : Element(List, name) {}
         void add(Value const &v) { _values << v; }
@@ -154,7 +154,7 @@ public:
      * a name, each block may have a "block type", which is a case insensitive
      * identifier.
      */
-    class BlockElement : public Element {
+    class DENG2_PUBLIC BlockElement : public Element {
     public:
         DENG2_ERROR(ValuesError);
 

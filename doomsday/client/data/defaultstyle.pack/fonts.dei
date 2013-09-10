@@ -6,7 +6,9 @@
 
 script { import Version, gui }
 
-group condition "Version.OS == 'windows'" {
+group {
+    condition: Version.OS == 'windows'
+    
     font default {
         family: Open Sans
         size: 12pt
