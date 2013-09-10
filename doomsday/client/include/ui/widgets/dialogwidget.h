@@ -147,6 +147,8 @@ public:
      */
     void open();
 
+    ui::ActionItem *defaultActionItem();
+
     // Events.
     void update();
     bool handleEvent(de::Event const &event);

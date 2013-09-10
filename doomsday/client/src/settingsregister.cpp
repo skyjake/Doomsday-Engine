@@ -533,6 +533,11 @@ void SettingsRegister::setProfile(String const &name)
 void SettingsRegister::resetToDefaults()
 {
     d->reset();
+
+    DENG2_FOR_AUDIENCE(ProfileChange, i)
+    {
+        i->currentProfileChanged(d->current);
+    }
 }
 
 void SettingsRegister::resetSettingToDefaults(String const &settingName)

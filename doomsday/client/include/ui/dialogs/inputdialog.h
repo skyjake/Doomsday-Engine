@@ -28,7 +28,7 @@
 class InputDialog : public MessageDialog
 {
 public:
-    InputDialog(de::String const &name = "");
+    InputDialog(de::String const &name = "");    
     ~InputDialog();
 
     LineEditWidget &editor();

@@ -246,6 +246,7 @@ void RendererSettingsDialog::showAppearanceMenu()
             << new Item(Item::Separator)
             << new ActionItem(tr("Add Duplicate..."), new SignalAction(this, SLOT(duplicateProfile())))
             << new Item(Item::Separator)
+            << new ActionItem(tr("Reset to Defaults..."), new SignalAction(this, SLOT(resetProfile())))
             << new ActionItem(tr("Delete..."), new SignalAction(this, SLOT(deleteProfile())));
     add(popup);
 
@@ -259,11 +260,12 @@ void RendererSettingsDialog::showAppearanceMenu()
         org.itemWidget(0)->disable();
         org.itemWidget(1)->disable();
         org.itemWidget(5)->disable();
+        org.itemWidget(6)->disable();
     }
     if(reg.profileCount() == 1)
     {
         // The last profile cannot be deleted.
-        org.itemWidget(5)->disable();
+        org.itemWidget(6)->disable();
     }
 
     popup->setDeleteAfterDismissed(true);
@@ -289,6 +291,7 @@ void RendererSettingsDialog::renameProfile()
     InputDialog dlg;
     dlg.title().setText(tr("Renaming \"%1\"").arg(d->currentAppearance()));
     dlg.message().setText(tr("Enter a new name for the appearance profile:"));
+    dlg.defaultActionItem()->setLabel(tr("Rename Profile"));
 
     dlg.editor().setText(d->currentAppearance());
 
@@ -322,6 +325,7 @@ void RendererSettingsDialog::duplicateProfile()
     InputDialog dlg;
     dlg.title().setText(tr("Duplicating \"%1\"").arg(d->currentAppearance()));
     dlg.message().setText(tr("Enter a name for the new appearance profile:"));
+    dlg.defaultActionItem()->setLabel(tr("Duplicate Profile"));
 
     if(dlg.exec(root()))
     {
@@ -346,6 +350,23 @@ void RendererSettingsDialog::duplicateProfile()
     }
 }
 
+void RendererSettingsDialog::resetProfile()
+{
+    MessageDialog dlg;
+    dlg.title().setText(tr("Reset?").arg(d->currentAppearance()));
+    dlg.message().setText(tr("Are you sure you want to reset the appearance profile %1 to the default values?")
+                          .arg(_E(b) + d->currentAppearance() + _E(.)));
+
+    dlg.buttons().items()
+            << new DialogButtonItem(DialogWidget::Default | DialogWidget::Reject)
+            << new DialogButtonItem(DialogWidget::Accept, tr("Reset Profile"));
+
+    if(dlg.exec(root()))
+    {
+        ClientApp::rendererAppearanceSettings().resetToDefaults();
+    }
+}
+
 void RendererSettingsDialog::deleteProfile()
 {
     MessageDialog dlg;
@@ -354,8 +375,8 @@ void RendererSettingsDialog::deleteProfile()
                 tr("Are you sure you want to delete the appearance profile %1? This cannot be undone.")
                 .arg(_E(b) + d->currentAppearance() + _E(.)));
     dlg.buttons().items()
-            << new DialogButtonItem(DialogWidget::Default | DialogWidget::No)
-            << new DialogButtonItem(DialogWidget::Yes);
+               << new DialogButtonItem(DialogWidget::Default | DialogWidget::Reject)
+               << new DialogButtonItem(DialogWidget::Accept, tr("Delete Profile"));
 
     if(!dlg.exec(root())) return;
 

@@ -412,6 +412,11 @@ void DialogWidget::open()
     prepare();
 }
 
+ui::ActionItem *DialogWidget::defaultActionItem()
+{
+    return const_cast<ui::ActionItem *>(d->findDefaultAction());
+}
+
 void DialogWidget::update()
 {
     PopupWidget::update();
