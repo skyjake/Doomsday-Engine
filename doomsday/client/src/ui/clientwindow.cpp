@@ -670,3 +670,10 @@ void ClientWindow::setSidebar(SidebarLocation location, GuiWidget *sidebar)
 
     d->installSidebar(location, sidebar);
 }
+
+bool ClientWindow::hasSidebar(SidebarLocation location) const
+{
+    DENG2_ASSERT(location == RightEdge);
+
+    return d->sidebar != 0;
+}

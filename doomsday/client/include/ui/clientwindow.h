@@ -92,6 +92,8 @@ public:
 
     void unsetSidebar(SidebarLocation location) { setSidebar(location, 0); }
 
+    bool hasSidebar(SidebarLocation location = RightEdge) const;
+
     /**
      * Sets the operating mode of the window. In Busy mode, the normal
      * widgets of the window will be replaced with a single BusyWidget.

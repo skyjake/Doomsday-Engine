@@ -383,7 +383,8 @@ bool TaskBarWidget::handleEvent(Event const &event)
 {
     Canvas &canvas = root().window().canvas();
 
-    if(!canvas.isMouseTrapped() && event.type() == Event::MouseButton)
+    if(!canvas.isMouseTrapped() && event.type() == Event::MouseButton &&
+       !root().window().hasSidebar())
     {
         // Clicking outside the taskbar will trap the mouse automatically.
         MouseEvent const &mouse = event.as<MouseEvent>();
@@ -404,6 +405,15 @@ bool TaskBarWidget::handleEvent(Event const &event)
             }
 
             root().window().taskBar().close();
+            return true;
+        }
+    }
+
+    if(event.type() == Event::MouseButton)
+    {
+        // Eat all button events occurring inside the task bar area.
+        if(hitTest(event))
+        {
             return true;
         }
     }
@@ -435,8 +445,11 @@ bool TaskBarWidget::handleEvent(Event const &event)
                 if(key.modifiers().testFlag(KeyEvent::Shift) ||
                    !App_GameLoaded())
                 {
-                    // Automatically focus the command line.
-                    root().setFocus(&d->console->commandLine());
+                    if(!root().window().hasSidebar())
+                    {
+                        // Automatically focus the command line, unless an editor is open.
+                        root().setFocus(&d->console->commandLine());
+                    }
 
                     open();
                     return true;
@@ -462,21 +475,21 @@ void TaskBarWidget::open()
         setOpacity(1, OPEN_CLOSE_SPAN);
 
         emit opened();
+    }
 
-        // Untrap the mouse if it is trapped.
-        if(hasRoot())
+    // Untrap the mouse if it is trapped.
+    if(hasRoot())
+    {
+        Canvas &canvas = root().window().canvas();
+        d->mouseWasTrappedWhenOpening = canvas.isMouseTrapped();
+        if(canvas.isMouseTrapped())
         {
-            Canvas &canvas = root().window().canvas();
-            d->mouseWasTrappedWhenOpening = canvas.isMouseTrapped();
-            if(canvas.isMouseTrapped())
-            {
-                canvas.trapMouse(false);
-            }
+            canvas.trapMouse(false);
+        }
 
-            if(!App_GameLoaded())
-            {
-                root().setFocus(&d->console->commandLine());
-            }
+        if(!App_GameLoaded())
+        {
+            root().setFocus(&d->console->commandLine());
         }
     }
 }
@@ -515,7 +528,7 @@ void TaskBarWidget::close()
         emit closed();
 
         // Retrap the mouse if it was trapped when opening.
-        if(hasRoot() && App_GameLoaded())
+        if(hasRoot() && App_GameLoaded() && !root().window().hasSidebar())
         {
             Canvas &canvas = root().window().canvas();
             if(d->mouseWasTrappedWhenOpening)

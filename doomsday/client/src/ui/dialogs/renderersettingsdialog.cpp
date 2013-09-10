@@ -267,6 +267,11 @@ void RendererSettingsDialog::showAppearanceMenu()
         // The last profile cannot be deleted.
         org.itemWidget(6)->disable();
     }
+    if(root().window().hasSidebar())
+    {
+        // The sidebar is already open, so don't allow editing.
+        org.itemWidget(0)->disable();
+    }
 
     popup->setDeleteAfterDismissed(true);
     popup->setAnchorAndOpeningDirection(d->appearButton->rule(), ui::Down);

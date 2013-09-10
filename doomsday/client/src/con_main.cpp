@@ -2739,13 +2739,9 @@ D_CMD(TaskBar)
     DENG2_UNUSED3(src, argc, argv);
 
     ClientWindow &win = ClientWindow::main();
-    if(!win.taskBar().isOpen())
+    if(!win.taskBar().isOpen() || !win.console().commandLine().hasFocus())
     {
         win.taskBar().open();
-        win.console().focusOnCommandLine();
-    }
-    else if(!win.console().commandLine().hasFocus())
-    {
         win.console().focusOnCommandLine();
     }
     else

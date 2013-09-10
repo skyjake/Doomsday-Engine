@@ -467,7 +467,7 @@ bool DialogWidget::handleEvent(Event const &event)
         if(event.isKeyDown() ||
            (event.type() == Event::MouseButton &&
             event.as<MouseEvent>().state() == MouseEvent::Pressed &&
-            !hitTest(event.as<MouseEvent>().pos())))
+            !hitTest(event)))
         {
             d->startBorderFlash();
         }
@@ -476,7 +476,7 @@ bool DialogWidget::handleEvent(Event const &event)
     else
     {
         if((event.type() == Event::MouseButton || event.type() == Event::MousePosition) &&
-           hitTest(event.as<MouseEvent>().pos()))
+           hitTest(event))
         {
             // Non-modal dialogs eat mouse clicks/position inside the dialog.
             return true;

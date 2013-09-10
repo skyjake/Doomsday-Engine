@@ -263,6 +263,7 @@ bool PanelWidget::handleEvent(Event const &event)
         // Eat buttons that land on the panel.
         if(hitTest(mouse.pos()))
         {
+            root().setFocus(0);
             return true;
         }
     }

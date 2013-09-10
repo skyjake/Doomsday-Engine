@@ -270,9 +270,28 @@ bool LegacyWidget::handleEvent(Event const &event)
 
     if(event.type() == Event::MouseButton && !root().window().canvas().isMouseTrapped())
     {
-        // If the mouse is not trapped, we will just eat button clicks which
-        // will prevent them from reaching the legacy input system.
-        return true;
+        if(!root().window().hasSidebar())
+        {
+            // If the mouse is not trapped, we will just eat button clicks which
+            // will prevent them from reaching the legacy input system.
+            return true;
+        }
+
+        // If the sidebar is open, we must explicitly click on the LegacyWidget to
+        // cause input to be trapped.
+        switch(handleMouseClick(event))
+        {
+        case MouseClickFinished:
+            // Click completed on the widget, trap the mouse.
+            root().window().canvas().trapMouse();
+            root().window().taskBar().close();
+            root().setFocus(0); // Allow input to reach here.
+            break;
+
+        default:
+            // Just ignore the event.
+            return true;
+        }
     }
 
     if(event.type() == Event::KeyPress ||

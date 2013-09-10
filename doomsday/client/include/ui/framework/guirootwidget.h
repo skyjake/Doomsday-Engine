@@ -67,6 +67,8 @@ public:
 
     void routeMouse(de::Widget *routeTo);
 
+    bool processEvent(de::Event const &event);
+
     // Events.
     void update();
     void draw();
