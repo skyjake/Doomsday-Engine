@@ -199,6 +199,16 @@ DENG2_OBSERVES(App, GameChange)
         }
     }
 
+    void setCurrent(String const &name)
+    {
+        current = name;
+
+        if(!persistentName.isEmpty())
+        {
+            App::config().set(confName(), name);
+        }
+    }
+
     void apply(String const &profileName)
     {
         DENG2_ASSERT(profiles.contains(profileName));
@@ -227,7 +237,8 @@ DENG2_OBSERVES(App, GameChange)
         fetch(current);
 
         // Then set the values from the other profile.
-        apply(current = profileName);
+        setCurrent(profileName);
+        apply(current);
 
         DENG2_FOR_PUBLIC_AUDIENCE(ProfileChange, i)
         {
@@ -392,12 +403,21 @@ DENG2_OBSERVES(App, GameChange)
             if(!profiles.contains(current))
             {
                 // Fall back to the one profile we know is available.
-                current = CUSTOM_PROFILE;
+                if(profiles.contains(CUSTOM_PROFILE))
+                {
+                    current = CUSTOM_PROFILE;
+                }
+                else
+                {
+                    current = profiles.keys().first();
+                }
             }
 
             // Make sure these are the values now in use.
             apply(current);
         }
+
+        App::config().set(confName(), current);
     }
 
     /**
@@ -551,7 +571,7 @@ bool SettingsRegister::rename(String const &name)
     {
         Instance::Profile *p = d->profiles.take(d->current);
         d->profiles.insert(name, p);
-        d->current = name;
+        d->setCurrent(name);
         return true;
     }
     return false;
