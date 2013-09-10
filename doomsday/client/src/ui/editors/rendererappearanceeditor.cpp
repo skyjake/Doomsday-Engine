@@ -209,6 +209,7 @@ DENG2_OBSERVES(SettingsRegister, ProfileChange)
     IndirectRule *firstColumnWidth; ///< Shared by all groups.
     ButtonWidget *conf;
     ButtonWidget *close;    
+    LabelWidget *current;
 
     Group *skyGroup;
     Group *shadowGroup;
@@ -233,8 +234,9 @@ DENG2_OBSERVES(SettingsRegister, ProfileChange)
         container->enableIndicatorDraw(true);
         stylist.setContainer(*container);
 
-        container->add(conf  = new ButtonWidget);
-        container->add(close = new ButtonWidget);
+        container->add(conf    = new ButtonWidget);
+        container->add(close   = new ButtonWidget);
+        container->add(current = new LabelWidget);
 
         // Button for showing renderer settings.
         conf->setImage(style().images().image("gear"));
@@ -243,6 +245,10 @@ DENG2_OBSERVES(SettingsRegister, ProfileChange)
 
         close->setText(tr("Close"));
         close->setAction(new SignalAction(thisPublic, SLOT(close())));
+
+        // Label for the current profile.
+        current->setAlignment(AlignLeft);
+        current->setTextLineAlignment(AlignLeft);
 
         // Sky settings.
         skyGroup = new Group(this, tr("Sky"));
@@ -524,6 +530,8 @@ DENG2_OBSERVES(SettingsRegister, ProfileChange)
 
     void fetch()
     {
+        current->setText(tr("Profile: %1").arg(_E(b) + settings.currentProfile()));
+
         foreach(Widget *child, container->childWidgets())
         {
             if(Group *g = child->maybeAs<Group>())
@@ -558,10 +566,14 @@ RendererAppearanceEditor::RendererAppearanceEditor()
             .setInput(Rule::Right,  d->close->rule().left())
             .setInput(Rule::Top,    d->close->rule().top());
 
+    d->current->setWidthPolicy(ui::Fixed);
+    d->current->rule().setInput(Rule::Width, area.width());
+
     SequentialLayout layout(area.left(), title->rule().bottom(), Down);
 
-    layout
-           << d->lightGroup->title()  << *d->lightGroup
+    layout.append(*d->current, SequentialLayout::IgnoreMinorAxis);
+
+    layout << d->lightGroup->title()  << *d->lightGroup
            << d->haloGroup->title()   << *d->haloGroup
            << d->glowGroup->title()   << *d->glowGroup
            << d->shadowGroup->title() << *d->shadowGroup

@@ -572,6 +572,11 @@ bool SettingsRegister::rename(String const &name)
         Instance::Profile *p = d->profiles.take(d->current);
         d->profiles.insert(name, p);
         d->setCurrent(name);
+
+        DENG2_FOR_AUDIENCE(ProfileChange, i)
+        {
+            i->currentProfileChanged(name);
+        }
         return true;
     }
     return false;

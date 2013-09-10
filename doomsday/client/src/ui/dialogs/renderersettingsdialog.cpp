@@ -32,6 +32,8 @@
 using namespace de;
 using namespace ui;
 
+static int const MAX_VISIBLE_PROFILE_NAME = 50;
+
 DENG_GUI_PIMPL(RendererSettingsDialog)
 {
     ChoiceWidget *appear;
@@ -148,7 +150,7 @@ RendererSettingsDialog::RendererSettingsDialog(String const &name)
     // Populate the appearance profiles list.
     foreach(String prof, ClientApp::rendererAppearanceSettings().profiles())
     {
-        d->appear->items() << new ChoiceItem(prof, prof);
+        d->appear->items() << new ChoiceItem(prof.left(MAX_VISIBLE_PROFILE_NAME), prof);
     }
     d->appear->items().sort();
     d->appear->setSelected(d->appear->items().findData(
@@ -196,14 +198,19 @@ RendererSettingsDialog::RendererSettingsDialog(String const &name)
     GridLayout layout(area().contentRule().left(), area().contentRule().top());
     layout.setGridSize(2, 0);
     layout.setColumnAlignment(0, ui::AlignRight);
-    layout << *appearLabel   << *d->appear
-           << *fovLabel      << *d->fov
+    layout << *appearLabel;
+
+    // The button is included in the layout.
+    layout.append(*d->appear, d->appear->rule().width() + d->appearButton->rule().width());
+
+    layout << *fovLabel      << *d->fov
            << Const(0)       << *d->mirrorWeapon
            << *precacheLabel << *d->precacheModels
            << Const(0)       << *d->precacheSprites
            << *multiLabel    << *d->multiLight
            << Const(0)       << *d->multiShiny
            << Const(0)       << *d->multiDetail;
+
     area().setContentSize(layout.width(), layout.height());
 
     // Attach the appearance button next to the choice.
@@ -311,7 +318,7 @@ void RendererSettingsDialog::renameProfile()
                 ui::Data &items = d->appear->items();
 
                 ui::Item &item = items.at(d->appear->selected());
-                item.setLabel(clean);
+                item.setLabel(clean.left(MAX_VISIBLE_PROFILE_NAME));
                 item.setData(clean);
 
                 // Keep the list sorted.
@@ -345,7 +352,7 @@ void RendererSettingsDialog::duplicateProfile()
             {
                 reg.setProfile(clean);
 
-                d->appear->items().append(new ChoiceItem(clean, clean)).sort();
+                d->appear->items().append(new ChoiceItem(clean.left(MAX_VISIBLE_PROFILE_NAME), clean)).sort();
                 d->appear->setSelected(d->appear->items().findData(clean));
             }
             else
