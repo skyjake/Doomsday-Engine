@@ -328,7 +328,7 @@ DENG2_PIMPL(GridLayout)
      * @param widget  Widget.
      * @param space   Empty cell.
      */
-    void append(GuiWidget *widget, Rule const *space, int cellSpan = 1)
+    void append(GuiWidget *widget, Rule const *space, int cellSpan = 1, Rule const *layoutWidth = 0)
     {
         DENG2_ASSERT(!(widget && space));
         DENG2_ASSERT(widget || space);
@@ -356,16 +356,18 @@ DENG2_PIMPL(GridLayout)
             current->append(*space);
         }
 
+        Rule const &cellWidth = (layoutWidth? *layoutWidth : widget? widget->rule().width() : *space);
+
         // Update the column and row maximum width/height.
         if(mode == ColumnFirst)
         {
-            if(cellSpan == 1) updateMaximum(cols, cell.x, widget? widget->rule().width() : *space);
+            if(cellSpan == 1) updateMaximum(cols, cell.x, cellWidth);
             if(widget) updateMaximum(rows, cell.y, widget->rule().height());
         }
         else
         {
             if(cellSpan == 1) updateMaximum(rows, cell.y, widget? widget->rule().height() : *space);
-            if(widget) updateMaximum(cols, cell.x, widget->rule().width());
+            if(widget) updateMaximum(cols, cell.x, cellWidth);
         }
 
         if(widget)
@@ -536,6 +538,12 @@ void GridLayout::setRowPadding(Rule const &gap)
 GridLayout &GridLayout::append(GuiWidget &widget, int cellSpan)
 {
     d->append(&widget, 0, cellSpan);
+    return *this;
+}
+
+GridLayout &GridLayout::append(GuiWidget &widget, de::Rule const &layoutWidth, int cellSpan)
+{
+    d->append(&widget, 0, cellSpan, &layoutWidth);
     return *this;
 }
 
