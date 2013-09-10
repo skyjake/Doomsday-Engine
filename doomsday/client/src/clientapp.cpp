@@ -330,6 +330,9 @@ void ClientApp::initialize()
 
     initSubsystems(); // loads Config
 
+    // Create the user's configurations and settings folder, if it doesn't exist.
+    fileSystem().makeFolder("/home/configs");
+
     d->initSettings();
 
     // Initialize.
