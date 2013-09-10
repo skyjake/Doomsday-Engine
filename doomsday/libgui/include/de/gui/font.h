@@ -105,7 +105,8 @@ public:
         enum Style {
             OriginalStyle  = -1,
             Regular        = 0,
-            Italic         = 1
+            Italic         = 1,
+            Monospace      = 2
         };
         enum Color {
             OriginalColor  = -1,
@@ -136,6 +137,16 @@ public:
 
             virtual void richStyleFormat(int contentStyle, float &sizeFactor, Weight &fontWeight,
                                          Style &fontStyle, int &colorIndex) const = 0;
+
+            /**
+             * Returns a font to be used with a particular style.
+             * @param fontStyle  Style.
+             * @return @c NULL to use the default font.
+             */
+            virtual Font const *richStyleFont(Style fontStyle) const {
+                DENG2_UNUSED(fontStyle);
+                return NULL; // Use default.
+            }
         };
 
         /**

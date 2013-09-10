@@ -6,19 +6,26 @@
 
 script { import Version, gui }
 
-font default condition "Version.OS == 'windows'" {
-    family: Open Sans
-    size: 12pt
-    weight: normal
-    style: normal
+group condition "Version.OS == 'windows'" {
+    font default {
+        family: Open Sans
+        size: 12pt
+        weight: normal
+        style: normal
     
-    script {
-        # Load the Open Sans font contained in this pack.
-        import App, Path
-        fontDir = Path.fileNamePath(__file__) / "fonts"
-        for style in ['Regular', 'Bold', 'Italic', 'BoldItalic']
-            App.loadFont(fontDir / ("OpenSans-%s.ttf" % style))
-        end
+        script {
+            # Load the Open Sans font contained in this pack.
+            import App, Path
+            fontDir = Path.fileNamePath(__file__) / "fonts"
+            for style in ['Regular', 'Bold', 'Italic', 'BoldItalic']
+                App.loadFont(fontDir / ("OpenSans-%s.ttf" % style))
+            end
+        }
+    }
+    
+    font monospace inherits default {
+        family: Courier New
+        size: 10pt
     }
 }
 
@@ -32,11 +39,9 @@ group {
         style: normal
     }
     
-    font monospace {
+    font monospace inherits default {
         family: Menlo
-        size: 14pt
-        weight: normal
-        style: normal
+        size: 13pt
     }
 }
 
@@ -50,11 +55,9 @@ group {
         style: normal
     }
 
-    font monospace {
+    font monospace inherits default {
         family: FreeMono
         size: 12pt
-        weight: normal
-        style: normal
     }
 }
 

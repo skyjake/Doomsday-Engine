@@ -51,6 +51,8 @@ public:
                          de::Font::RichFormat::Style &fontStyle,
                          int &colorIndex) const;
 
+    de::Font const *richStyleFont(de::Font::RichFormat::Style fontStyle) const;
+
 private:
     DENG2_PRIVATE(d)
 };
