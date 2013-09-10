@@ -57,7 +57,7 @@ DENG2_PIMPL(Game)
         : Base(a), pluginId(0), manifests()
     {
         Str_Set(Str_InitStd(&identityKey), _identityKey);
-        DENG_ASSERT(!Str_IsEmpty(&identityKey));
+        //DENG_ASSERT(!Str_IsEmpty(&identityKey));
 
         Str_InitStd(&title);
         Str_InitStd(&author);
@@ -90,7 +90,8 @@ DENG2_PIMPL(Game)
 
 Game::Game(char const *identityKey, char const *configDir,
            char const *title, char const *author)
-    : d(new Instance(*this, identityKey, configDir))
+    : game::Game(identityKey),
+      d(new Instance(*this, identityKey, configDir))
 {
     if(title)  Str_Set(&d->title, title);
     if(author) Str_Set(&d->author, author);
@@ -231,7 +232,7 @@ void Game::printFiles(Game const &game, int rflags, bool printStatus)
 
 void Game::print(Game const &game, int flags)
 {
-    if(isNullGame(game))
+    if(game.isNull())
         flags &= ~PGF_BANNER;
 
 #ifdef DENG_DEBUG
@@ -269,7 +270,7 @@ void Game::print(Game const &game, int flags)
 }
 
 NullGame::NullGame()
-    : Game("null-game", "doomsday", "null-game", "null-game")
+    : Game("" /*null*/, "doomsday", "null-game", "null-game")
 {}
 
 } // namespace de

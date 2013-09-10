@@ -861,8 +861,8 @@ Expression *Parser::parseTokenExpression(TokenRange const &range, Expression::Fl
         
     default:
         throw UnexpectedTokenError("Parser::parseTokenExpression",
-            token.asText() + " which was identified as " +
-            Token::typeToText(token.type()) + " was unexpected");
+            "Unexpected " + token.asText() + " which was identified as " +
+            Token::typeToText(token.type()));
     }
 }
 

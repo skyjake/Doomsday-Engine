@@ -39,6 +39,12 @@ Script::Script(File const &file) : _path(file.path())
 Script::~Script()
 {}
 
+void Script::parse(String const &source)
+{
+    _compound.clear();
+    Parser().parse(source, *this);
+}
+
 Statement const *Script::firstStatement() const
 {
     return _compound.firstStatement();

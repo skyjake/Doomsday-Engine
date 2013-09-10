@@ -68,6 +68,15 @@ public:
     virtual ~Script();
 
     /**
+     * Parses a source into statements, replacing any statements currently
+     * in the Script. The user must ensure that the script is not currently
+     * being executed by a Process.
+     *
+     * @param source  Script source.
+     */
+    void parse(String const &source);
+
+    /**
      * Sets the path of the source. Used as the value of __file__ in the
      * executing process's global namespace.
      *

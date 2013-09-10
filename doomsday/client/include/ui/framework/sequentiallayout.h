@@ -67,8 +67,13 @@ public:
     SequentialLayout &operator << (GuiWidget &widget) { return append(widget); }
     SequentialLayout &operator << (de::Rule const &emptySpace) { return append(emptySpace); }
 
-    SequentialLayout &append(GuiWidget &widget);
-    SequentialLayout &append(GuiWidget &widget, de::Rule const &spaceBefore);
+    enum AppendMode {
+        UpdateMinorAxis,    ///< Layout total length on the minor axis is updated.
+        IgnoreMinorAxis     ///< Does not affect layou total length on the minor axis.
+    };
+
+    SequentialLayout &append(GuiWidget &widget, AppendMode mode = UpdateMinorAxis);
+    SequentialLayout &append(GuiWidget &widget, de::Rule const &spaceBefore, AppendMode mode = UpdateMinorAxis);
     SequentialLayout &append(de::Rule const &emptySpace);
 
     de::WidgetList widgets() const;

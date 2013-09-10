@@ -251,11 +251,11 @@ DENG2_OBSERVES(ui::Data, Removal)
             ButtonWidget &but = widget.as<ButtonWidget>();
             if(!i->action())
             {
-                if(i->role().testFlag(Accept))
+                if(i->role() & (Accept | Yes))
                 {
                     but.setAction(new SignalAction(thisPublic, SLOT(accept())));
                 }
-                else if(i->role().testFlag(Reject))
+                else if(i->role() & (Reject | No))
                 {
                     but.setAction(new SignalAction(thisPublic, SLOT(reject())));
                 }
@@ -412,6 +412,11 @@ void DialogWidget::open()
     prepare();
 }
 
+ui::ActionItem *DialogWidget::defaultActionItem()
+{
+    return const_cast<ui::ActionItem *>(d->findDefaultAction());
+}
+
 void DialogWidget::update()
 {
     PopupWidget::update();
@@ -462,7 +467,7 @@ bool DialogWidget::handleEvent(Event const &event)
         if(event.isKeyDown() ||
            (event.type() == Event::MouseButton &&
             event.as<MouseEvent>().state() == MouseEvent::Pressed &&
-            !hitTest(event.as<MouseEvent>().pos())))
+            !hitTest(event)))
         {
             d->startBorderFlash();
         }
@@ -471,7 +476,7 @@ bool DialogWidget::handleEvent(Event const &event)
     else
     {
         if((event.type() == Event::MouseButton || event.type() == Event::MousePosition) &&
-           hitTest(event.as<MouseEvent>().pos()))
+           hitTest(event))
         {
             // Non-modal dialogs eat mouse clicks/position inside the dialog.
             return true;

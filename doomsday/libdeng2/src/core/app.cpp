@@ -17,11 +17,12 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "de/App"
 #include "de/Animation"
+#include "de/App"
 #include "de/ArchiveFeed"
 #include "de/ArrayValue"
 #include "de/Block"
+#include "de/DictionaryValue"
 #include "de/DirectoryFeed"
 #include "de/Log"
 #include "de/LogBuffer"
@@ -34,6 +35,7 @@
 #include "de/Version"
 #include "de/Writer"
 #include "de/ZipArchive"
+#include "de/game/Game"
 #include "de/math.h"
 
 #include <QDir>
@@ -77,12 +79,32 @@ DENG2_PIMPL(App)
     /// The configuration.
     Config *config;
 
+    game::Game *currentGame;
+
     void (*terminateFunc)(char const *);
 
-    Instance(Public &a, QStringList args)
-        : Base(a), cmdLine(args), persistentData(0), config(0), terminateFunc(0)
+    /**
+     * Delegates game change notifications to scripts.
+     */
+    class GameChangeScriptAudience : DENG2_OBSERVES(App, GameChange)
     {
-        singletonApp = &a;
+    public:
+        void currentGameChanged(game::Game const &newGame)
+        {
+            ArrayValue args;
+            args << DictionaryValue() << TextValue(newGame.id());
+            App::scriptSystem().nativeModule("App")["audienceForGameChange"]
+                    .value<ArrayValue>().callElements(args);
+        }
+    };
+
+    GameChangeScriptAudience scriptAudienceForGameChange;
+
+    Instance(Public *a, QStringList args)
+        : Base(a), cmdLine(args), persistentData(0), config(0),
+          currentGame(0), terminateFunc(0)
+    {
+        singletonApp = a;
         mainThread = QThread::currentThread();
 
         Clock::setAppClock(&clock);
@@ -95,6 +117,8 @@ DENG2_PIMPL(App)
         // Native App module.
         appModule.addArray("audienceForGameChange"); // game change observers
         scriptSys.addNativeModule("App", appModule);
+
+        self.audienceForGameChange += scriptAudienceForGameChange;
     }
 
     ~Instance()
@@ -143,7 +167,7 @@ DENG2_PIMPL(App)
 };
 
 App::App(NativePath const &appFilePath, QStringList args)
-    : d(new Instance(*this, args))
+    : d(new Instance(this, args))
 {
     // Global time source for animations.
     Animation::setClock(&d->clock);
@@ -238,6 +262,17 @@ void App::timeChanged(Clock const &clock)
             sys->timeChanged(clock);
         }
     }
+}
+
+game::Game &App::game()
+{
+    DENG2_ASSERT(app().d->currentGame != 0);
+    return *app().d->currentGame;
+}
+
+void App::setGame(game::Game &game)
+{
+    d->currentGame = &game;
 }
 
 bool App::inMainThread()

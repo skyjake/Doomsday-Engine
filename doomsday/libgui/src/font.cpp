@@ -162,6 +162,10 @@ DENG2_OBSERVES(EscapeParser, EscapeSequence)
             stack.last().style = Italic;
             break;
 
+        case 'm':
+            stack.last().style = Monospace;
+            break;
+
         case 's':
             stack.last().sizeFactor = .8f;
             break;
@@ -535,10 +539,36 @@ DENG2_PIMPL(Font)
             {
                 mod.setPointSizeF(mod.pointSizeF() * rich.sizeFactor());
             }
-            if(rich.style() != RichFormat::OriginalStyle)
+
+            switch(rich.style())
             {
-                mod.setItalic(rich.style() == RichFormat::Italic);
+            case RichFormat::OriginalStyle:
+                break;
+
+            case RichFormat::Regular:
+                mod.setFamily(font.family());
+                mod.setItalic(false);
+                break;
+
+            case RichFormat::Italic:
+                mod.setFamily(font.family());
+                mod.setItalic(true);
+                break;
+
+            case RichFormat::Monospace:
+                if(rich.format.format().hasStyle())
+                {
+                    if(Font const *altFont = rich.format.format().style().richStyleFont(rich.style()))
+                    {
+                        mod.setFamily(altFont->d->font.family());
+                        mod.setItalic(altFont->d->font.italic());
+                        mod.setWeight(altFont->d->font.weight());
+                        mod.setPointSizeF(altFont->d->font.pointSizeF());
+                    }
+                }
+                break;
             }
+
             if(rich.weight() != RichFormat::OriginalWeight)
             {
                 mod.setWeight(rich.weight() == RichFormat::Normal? QFont::Normal :

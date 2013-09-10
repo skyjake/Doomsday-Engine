@@ -43,6 +43,11 @@ namespace de {
 
 class Archive;
 
+namespace game
+{
+    class Game;
+}
+
 /**
  * Represents the application and its subsystems. This is the common
  * denominator (and abstract base class) for GUI and non-GUI apps. de::App is
@@ -61,10 +66,19 @@ public:
     Q_DECLARE_FLAGS(SubsystemInitFlags, SubsystemInitFlag)
 
     /**
-     * Observers to be notified when application startup has been fully
-     * completed.
+     * Notified when application startup has been fully completed.
      */
     DENG2_DEFINE_AUDIENCE(StartupComplete, void appStartupCompleted())
+
+    /**
+     * Notified before the current game is unloaded.
+     */
+    DENG2_DEFINE_AUDIENCE(GameUnload, void aboutToUnloadGame(game::Game const &gameBeingUnloaded))
+
+    /**
+     * Notified after the current game has been changed.
+     */
+    DENG2_DEFINE_AUDIENCE(GameChange, void currentGameChanged(game::Game const &newGame))
 
 public:
     /**
@@ -249,6 +263,21 @@ public:
      */
     void timeChanged(Clock const &);
 
+    /**
+     * Sets the currently active game. App does not take ownership of the
+     * provided Game instance.
+     *
+     * @param game  Game instance. Must not be deleted until another Game is
+     *              used as the current one.
+     */
+    void setGame(game::Game &game);
+
+    /**
+     * Returns the currently active game.
+     */
+    static game::Game &game();
+
+public:
     /**
      * Determines if the currently executing thread is the application's main
      * (UI) thread.

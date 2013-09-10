@@ -42,6 +42,7 @@
 #include "sys_system.h"
 #include "audio/s_main.h"
 #include "gl/gl_main.h"
+#include "gl/gl_texmanager.h"
 #include "ui/inputsystem.h"
 #include "ui/windowsystem.h"
 #include "ui/clientwindow.h"
@@ -73,6 +74,11 @@ static void continueInitWithEventLoopRunning()
 
 Value *Binding_App_GamePlugin(Context &, Function::ArgumentValues const &)
 {
+    if(App_CurrentGame().isNull())
+    {
+        // The null game has no plugin.
+        return 0;
+    }
     String name = Plug_FileForPlugin(App_CurrentGame().pluginId()).name().fileNameWithoutExtension();
     if(name.startsWith("lib")) name.remove(0, 3);
     return new TextValue(name);
@@ -117,6 +123,7 @@ DENG2_PIMPL(ClientApp)
 {    
     QScopedPointer<Updater> updater;
     SettingsRegister rendererSettings;
+    SettingsRegister rendererAppearanceSettings;
     SettingsRegister audioSettings;
     QMenuBar *menuBar;
     InputSystem *inputSys;
@@ -183,32 +190,106 @@ DENG2_PIMPL(ClientApp)
 
     void initSettings()
     {
+        typedef SettingsRegister SReg;
+
         /// @todo These belong in their respective subsystems.
 
         rendererSettings
-                .define(SettingsRegister::FloatCVar, "rend-camera-fov", 95.f)
-                .define(SettingsRegister::IntCVar,   "rend-model-mirror-hud", 0)
-                .define(SettingsRegister::IntCVar,   "rend-tex", 1)
-                .define(SettingsRegister::IntCVar,   "rend-light-multitex", 1)
-                .define(SettingsRegister::IntCVar,   "rend-model-shiny-multitex", 1)
-                .define(SettingsRegister::IntCVar,   "rend-tex-detail-multitex", 1)
-                .define(SettingsRegister::IntCVar,   "rend-dev-wireframe", 0)
-                .define(SettingsRegister::IntCVar,   "rend-dev-thinker-ids", 0)
-                .define(SettingsRegister::IntCVar,   "rend-dev-mobj-bbox", 0)
-                .define(SettingsRegister::IntCVar,   "rend-dev-polyobj-bbox", 0)
-                .define(SettingsRegister::IntCVar,   "rend-dev-sector-show-indices", 0)
-                .define(SettingsRegister::IntCVar,   "rend-dev-vertex-show-indices", 0)
-                .define(SettingsRegister::IntCVar,   "rend-dev-generator-show-indices", 0);
+                .define(SReg::FloatCVar, "rend-camera-fov", 95.f)
+                .define(SReg::IntCVar,   "rend-model-mirror-hud", 0)
+                .define(SReg::IntCVar,   "rend-model-precache", 1)
+                .define(SReg::IntCVar,   "rend-sprite-precache", 1)
+                .define(SReg::IntCVar,   "rend-light-multitex", 1)
+                .define(SReg::IntCVar,   "rend-model-shiny-multitex", 1)
+                .define(SReg::IntCVar,   "rend-tex-detail-multitex", 1)
+                .define(SReg::IntCVar,   "rend-tex", 1)
+                .define(SReg::IntCVar,   "rend-dev-wireframe", 0)
+                .define(SReg::IntCVar,   "rend-dev-thinker-ids", 0)
+                .define(SReg::IntCVar,   "rend-dev-mobj-bbox", 0)
+                .define(SReg::IntCVar,   "rend-dev-polyobj-bbox", 0)
+                .define(SReg::IntCVar,   "rend-dev-sector-show-indices", 0)
+                .define(SReg::IntCVar,   "rend-dev-vertex-show-indices", 0)
+                .define(SReg::IntCVar,   "rend-dev-generator-show-indices", 0);
+
+        rendererAppearanceSettings.setPersistentName("renderer");
+        rendererAppearanceSettings
+                .define(SReg::IntCVar,   "rend-light", 1)
+                .define(SReg::IntCVar,   "rend-light-decor", 1)
+                .define(SReg::IntCVar,   "rend-light-blend", 0)
+                .define(SReg::IntCVar,   "rend-light-num", 0)
+                .define(SReg::FloatCVar, "rend-light-bright", .5f)
+                .define(SReg::FloatCVar, "rend-light-fog-bright", .15f)
+                .define(SReg::FloatCVar, "rend-light-radius-scale", 3)
+                .define(SReg::IntCVar,   "rend-light-radius-max", 256)
+                .define(SReg::IntCVar,   "rend-light-ambient", 0)
+                .define(SReg::FloatCVar, "rend-light-compression", 0)
+
+                .define(SReg::IntCVar,   "rend-halo-realistic", 1)
+                .define(SReg::IntCVar,   "rend-halo", 5)
+                .define(SReg::IntCVar,   "rend-halo-bright", 35)
+                .define(SReg::IntCVar,   "rend-halo-size", 80)
+                .define(SReg::IntCVar,   "rend-halo-occlusion", 48)
+                .define(SReg::FloatCVar, "rend-halo-radius-min", 20)
+                .define(SReg::FloatCVar, "rend-halo-secondary-limit", 1)
+                .define(SReg::FloatCVar, "rend-halo-dim-near", 10)
+                .define(SReg::FloatCVar, "rend-halo-dim-far", 100)
+                .define(SReg::FloatCVar, "rend-halo-zmag-div", 100)
+
+                .define(SReg::FloatCVar, "rend-glow", .5f)
+                .define(SReg::IntCVar,   "rend-glow-height", 100)
+                .define(SReg::FloatCVar, "rend-glow-scale", 3)
+                .define(SReg::IntCVar,   "rend-glow-wall", 1)
+
+                .define(SReg::IntCVar,   "rend-fakeradio", 1)
+                .define(SReg::FloatCVar, "rend-fakeradio-darkness", 1.2f)
+                .define(SReg::IntCVar,   "rend-shadow", 1)
+                .define(SReg::FloatCVar, "rend-shadow-darkness", 1.2f)
+                .define(SReg::IntCVar,   "rend-shadow-far", 1000)
+                .define(SReg::IntCVar,   "rend-shadow-radius-max", 80)
+
+                .define(SReg::IntCVar,   "rend-tex-mipmap", 5)
+                .define(SReg::IntCVar,   "rend-tex-quality", TEXQ_BEST)
+                .define(SReg::IntCVar,   "rend-tex-anim-smooth", 1)
+                .define(SReg::IntCVar,   "rend-tex-filter-smart", 0)
+                .define(SReg::IntCVar,   "rend-tex-filter-sprite", 1)
+                .define(SReg::IntCVar,   "rend-tex-filter-mag", 1)
+                .define(SReg::IntCVar,   "rend-tex-filter-ui", 1)
+                .define(SReg::IntCVar,   "rend-tex-filter-anisotropic", -1)
+                .define(SReg::IntCVar,   "rend-tex-detail", 1)
+                .define(SReg::FloatCVar, "rend-tex-detail-scale", 4)
+                .define(SReg::FloatCVar, "rend-tex-detail-strength", .5f)
+
+                .define(SReg::IntCVar,   "rend-mobj-smooth-move", 2)
+                .define(SReg::IntCVar,   "rend-mobj-smooth-turn", 1)
+
+                .define(SReg::IntCVar,   "rend-model", 1)
+                .define(SReg::IntCVar,   "rend-model-inter", 1)
+                .define(SReg::IntCVar,   "rend-model-distance", 1500)
+                .define(SReg::FloatCVar, "rend-model-lod", 256)
+                .define(SReg::FloatCVar, "rend-model-lights", 4)
+
+                .define(SReg::IntCVar,   "rend-sprite-blend", 1)
+                .define(SReg::IntCVar,   "rend-sprite-lights", 4)
+                .define(SReg::IntCVar,   "rend-sprite-align", 0)
+                .define(SReg::IntCVar,   "rend-sprite-noz", 0)
+
+                .define(SReg::IntCVar,   "rend-particle", 1)
+                .define(SReg::IntCVar,   "rend-particle-max", 0)
+                .define(SReg::FloatCVar, "rend-particle-rate", 1)
+                .define(SReg::FloatCVar, "rend-particle-diffuse", 4)
+                .define(SReg::IntCVar,   "rend-particle-visible-near", 0)
+
+                .define(SReg::FloatCVar, "rend-sky-distance", 1600);
 
         audioSettings
-                .define(SettingsRegister::IntCVar,   "sound-volume",        255)
-                .define(SettingsRegister::IntCVar,   "music-volume",        255)
-                .define(SettingsRegister::FloatCVar, "sound-reverb-volume", 0.5f)
-                .define(SettingsRegister::IntCVar,   "sound-info",          0)
-                .define(SettingsRegister::IntCVar,   "sound-rate",          11025)
-                .define(SettingsRegister::IntCVar,   "sound-16bit",         0)
-                .define(SettingsRegister::IntCVar,   "sound-3d",            0)
-                .define(SettingsRegister::IntCVar,   "music-source",        MUSP_EXT);
+                .define(SReg::IntCVar,   "sound-volume",        255)
+                .define(SReg::IntCVar,   "music-volume",        255)
+                .define(SReg::FloatCVar, "sound-reverb-volume", 0.5f)
+                .define(SReg::IntCVar,   "sound-info",          0)
+                .define(SReg::IntCVar,   "sound-rate",          11025)
+                .define(SReg::IntCVar,   "sound-16bit",         0)
+                .define(SReg::IntCVar,   "sound-3d",            0)
+                .define(SReg::IntCVar,   "music-source",        MUSP_EXT);
     }
 };
 
@@ -232,7 +313,7 @@ ClientApp::ClientApp(int &argc, char **argv)
     setTerminateFunc(handleLegacyCoreTerminate);
 
     // We must presently set the current game manually (the collection is global).
-    App_SetCurrentGame(d->games.nullGame());
+    setGame(d->games.nullGame());
 
     d->initScriptBindings();
 }
@@ -248,6 +329,9 @@ void ClientApp::initialize()
     DisplayMode_Init();
 
     initSubsystems(); // loads Config
+
+    // Create the user's configurations and settings folder, if it doesn't exist.
+    fileSystem().makeFolder("/home/configs");
 
     d->initSettings();
 
@@ -346,6 +430,11 @@ Updater &ClientApp::updater()
 SettingsRegister &ClientApp::rendererSettings()
 {
     return app().d->rendererSettings;
+}
+
+SettingsRegister &ClientApp::rendererAppearanceSettings()
+{
+    return app().d->rendererAppearanceSettings;
 }
 
 SettingsRegister &ClientApp::audioSettings()

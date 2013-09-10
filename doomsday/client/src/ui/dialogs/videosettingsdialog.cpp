@@ -183,7 +183,6 @@ VideoSettingsDialog::VideoSettingsDialog(String const &name)
     colorLabel->setText(tr("Colors:"));
     area().add(colorLabel);
 
-    d->depths->setOpeningDirection(ui::Up);
     d->depths->items()
             << new ChoiceItem(tr("32-bit"), 32)
             << new ChoiceItem(tr("16-bit"), 16);

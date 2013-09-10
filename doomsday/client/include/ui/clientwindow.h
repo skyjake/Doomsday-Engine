@@ -25,18 +25,22 @@
 
 #include "GuiRootWidget"
 #include "resource/image.h"
+#include "ui/widgets/legacywidget.h"
 
 /**
  * Macro for conveniently accessing the current active window. There is always
  * one active window, so no need to worry about NULLs. The easiest way to get
  * information about the window where drawing is done.
  */
-#define DENG_WINDOW         (&ClientWindow::main())
+//#define DENG_WINDOW         (&ClientWindow::main())
+
+#define DENG_GAMEVIEW_WIDTH     ClientWindow::main().game().rule().width().valuei()
+#define DENG_GAMEVIEW_HEIGHT    ClientWindow::main().game().rule().height().valuei()
 
 /**
  * A helpful macro that changes the origin of the window space coordinate system.
  */
-#define FLIP(y)             (DENG_WINDOW->height() - (y+1))
+#define FLIP(y)             (ClientWindow::main().height() - ((y)+1))
 
 class ConsoleWidget;
 class TaskBarWidget;
@@ -59,6 +63,11 @@ public:
         Busy
     };
 
+    enum SidebarLocation
+    {
+        RightEdge
+    };
+
 public:
     ClientWindow(de::String const &id = "main");
 
@@ -66,7 +75,24 @@ public:
     TaskBarWidget &taskBar();
     ConsoleWidget &console();
     NotificationWidget &notifications();
+    LegacyWidget &game();
     BusyWidget &busy();
+
+    /**
+     * Installs a sidebar widget into the window. If there is an existing
+     * sidebar, it will be deleted. Sidebar widgets are expected to control
+     * their own width (on the right/left edges) or height (on the top/bottom
+     * edges).
+     *
+     * @param location  Location to attach the sidebar. Window takes ownership
+     *                  of the widget.
+     * @param sidebar   Widget to install, or @c NULL to remove the sidebar.
+     */
+    void setSidebar(SidebarLocation location, GuiWidget *sidebar);
+
+    void unsetSidebar(SidebarLocation location) { setSidebar(location, 0); }
+
+    bool hasSidebar(SidebarLocation location = RightEdge) const;
 
     /**
      * Sets the operating mode of the window. In Busy mode, the normal

@@ -96,7 +96,7 @@ DENG2_PIMPL(SequentialLayout)
         }
     }
 
-    void append(GuiWidget *widget, Rule const *spaceBefore)
+    void append(GuiWidget *widget, Rule const *spaceBefore, AppendMode mode)
     {
         if(spaceBefore)
         {
@@ -113,7 +113,7 @@ DENG2_PIMPL(SequentialLayout)
 
         RuleRectangle &rule = widget->rule();
 
-        // Update the minor axis.
+        // Set position on the minor axis.
         if(isVertical(dir) || dir == ui::NoDirection)
         {
             rule.setInput(Rule::Left, *posX);
@@ -127,13 +127,16 @@ DENG2_PIMPL(SequentialLayout)
         Rule const &h = (fixedHeight? *fixedHeight : rule.height());
 
         // Update the minor axis maximum size.
-        if(isHorizontal(dir) && !fixedHeight)
+        if(mode == UpdateMinorAxis)
         {
-            changeRef(totalHeight, OperatorRule::maximum(*totalHeight, h));
-        }
-        else if(isVertical(dir) && !fixedWidth)
-        {
-            changeRef(totalWidth, OperatorRule::maximum(*totalWidth, w));
+            if(isHorizontal(dir) && !fixedHeight)
+            {
+                changeRef(totalHeight, OperatorRule::maximum(*totalHeight, h));
+            }
+            else if(isVertical(dir) && !fixedWidth)
+            {
+                changeRef(totalWidth, OperatorRule::maximum(*totalWidth, w));
+            }
         }
 
         // Move along the movement direction for the major axis.
@@ -202,21 +205,21 @@ void SequentialLayout::setOverrideHeight(Rule const &height)
     changeRef(d->totalHeight, height);
 }
 
-SequentialLayout &SequentialLayout::append(GuiWidget &widget)
+SequentialLayout &SequentialLayout::append(GuiWidget &widget, AppendMode mode)
 {
-    d->append(&widget, 0);
+    d->append(&widget, 0, mode);
     return *this;
 }
 
-SequentialLayout &SequentialLayout::append(GuiWidget &widget, Rule const &spaceBefore)
+SequentialLayout &SequentialLayout::append(GuiWidget &widget, Rule const &spaceBefore, AppendMode mode)
 {
-    d->append(&widget, &spaceBefore);
+    d->append(&widget, &spaceBefore, mode);
     return *this;
 }
 
 SequentialLayout &SequentialLayout::append(Rule const &emptySpace)
 {
-    d->append(0, &emptySpace);
+    d->append(0, &emptySpace, IgnoreMinorAxis);
     return *this;
 }
 

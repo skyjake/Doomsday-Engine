@@ -64,9 +64,25 @@ public:
     RuleRectangle &setInput(Rule::Semantic inputRule, Rule const &rule);
 
     RuleRectangle &setLeftTop(Rule const &left, Rule const &top);
+
     RuleRectangle &setRightBottom(Rule const &right, Rule const &bottom);
-    RuleRectangle &setRect(RuleRectangle const &rect);
+
     RuleRectangle &setSize(Rule const &width, Rule const &height);
+
+    /**
+     * Sets the outputs of another rule rectangle as the inputs of this one.
+     *
+     * @param rect  Rectangle whose outputs to use as inputs.
+     */
+    RuleRectangle &setRect(RuleRectangle const &rect);
+
+    /**
+     * Sets the inputs of another rule rectangle as the inputs of this one.
+     * (Note the difference to setRect().)
+     *
+     * @param rect  Rectangle whose inputs to use as inputs.
+     */
+    RuleRectangle &setInputsFromRect(RuleRectangle const &rect);
 
     RuleRectangle &clearInput(Rule::Semantic inputRule);
 

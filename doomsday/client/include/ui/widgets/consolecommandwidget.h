@@ -19,7 +19,7 @@
 #ifndef DENG_CLIENT_CONSOLECOMMANDWIDGET_H
 #define DENG_CLIENT_CONSOLECOMMANDWIDGET_H
 
-#include "lineeditwidget.h"
+#include "commandwidget.h"
 
 /**
  * Text editor with a history buffer. Entered commands are executed as console
@@ -30,33 +30,18 @@
  *
  * @ingroup gui
  */
-class ConsoleCommandWidget : public LineEditWidget
+class ConsoleCommandWidget : public CommandWidget
 {
-    Q_OBJECT
-
 public:
     ConsoleCommandWidget(de::String const &name = "");
 
     // Events.
-    void focusGained();
-    void focusLost();
     bool handleEvent(de::Event const &event);
 
-public slots:
-    /**
-     * Moves the current contents of the command line to the history. The
-     * command line contents are then cleared.
-     */
-    void dismissContentToHistory();
-
 protected:
+    bool isAcceptedAsCommand(de::String const &text);
+    void executeCommand(de::String const &text);
     void autoCompletionBegan(de::String const &prefix);
-    void autoCompletionEnded(bool accepted);
-
-signals:
-    void gotFocus();
-    void lostFocus();
-    void commandEntered(de::String const &command);
 
 private:
     DENG2_PRIVATE(d)

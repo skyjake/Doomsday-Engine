@@ -417,8 +417,7 @@ DENG2_OBSERVES(Loop, Iteration)
     class Job : public Task
     {
     public:
-        enum Task
-        {
+        enum Task {
             Load,
             Serialize,
             Unload

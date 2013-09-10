@@ -321,6 +321,9 @@ public:
     IIStream &operator >> (IByteArray &bytes);
     IIStream const &operator >> (IByteArray &bytes) const;
 
+    // Standard casting methods.
+    DENG2_AS_IS_METHODS()
+
 protected:
     /**
      * Constructs a new file. By default files are in read-only mode.

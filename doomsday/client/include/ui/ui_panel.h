@@ -24,9 +24,7 @@
 #ifndef LIBDENG_CONTROL_PANEL_H
 #define LIBDENG_CONTROL_PANEL_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#if 0
 
 void            CP_Register(void);
 
@@ -34,8 +32,6 @@ void            CP_Register(void);
 void            CP_CvarSlider(ui_object_t *ob);
 void            CP_InitCvarSliders(ui_object_t *ob);
 
-#ifdef __cplusplus
-} // extern "C"
 #endif
 
 #endif /* LIBDENG_CONTROL_PANEL_H */

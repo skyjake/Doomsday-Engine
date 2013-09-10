@@ -56,6 +56,7 @@ public:
     static ClientApp &app();
     static Updater &updater();
     static SettingsRegister &rendererSettings(); ///< @todo Belongs in a subsystem.
+    static SettingsRegister &rendererAppearanceSettings(); ///< @todo Belongs in a subsystem.
     static SettingsRegister &audioSettings();    ///< @todo Belongs in AudioSystem.
     static ServerLink &serverLink();
     static InputSystem &inputSystem();

@@ -39,7 +39,7 @@ public:
     TaskBarWidget();
 
     ConsoleWidget &console();
-    ConsoleCommandWidget &commandLine();
+    CommandWidget &commandLine();
     ButtonWidget &logoButton();
 
     bool isOpen() const;
@@ -66,6 +66,9 @@ public slots:
     void showAudioSettings();
     void showInputSettings();
     void showNetworkSettings();
+
+protected slots:
+    void updateCommandLineLayout();
 
 signals:
     void opened();

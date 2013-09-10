@@ -56,16 +56,16 @@ static TimeDelta OPEN_CLOSE_SPAN = 0.2;
 static uint POS_UNLOAD         = 0;
 static uint POS_GAME_SEPARATOR = 1;
 
-static uint POS_PANEL             = 0;
-static uint POS_RENDERER_SETTINGS = 1;
-static uint POS_VIDEO_SETTINGS    = 3;
-static uint POS_AUDIO_SETTINGS    = 4;
-static uint POS_INPUT_SETTINGS    = 5;
-static uint POS_NETWORK_SETTINGS  = 6;
-static uint POS_UPDATER_SETTINGS  = 8;
+static uint POS_RENDERER_SETTINGS = 0;
+static uint POS_CONFIG_SEPARATOR  = 1;
+static uint POS_VIDEO_SETTINGS    = 2;
+static uint POS_AUDIO_SETTINGS    = 3;
+static uint POS_INPUT_SETTINGS    = 4;
+static uint POS_NETWORK_SETTINGS  = 5;
+static uint POS_UPDATER_SETTINGS  = 7;
 
 DENG_GUI_PIMPL(TaskBarWidget),
-public IGameChangeObserver
+DENG2_OBSERVES(App, GameChange)
 {
     typedef DefaultVertexBuf VertexBuf;
 
@@ -99,12 +99,12 @@ public IGameChangeObserver
 
         vertShift = new ScalarRule(0);
 
-        audienceForGameChange += this;
+        App::app().audienceForGameChange += this;
     }
 
     ~Instance()
     {
-        audienceForGameChange -= this;
+        App::app().audienceForGameChange -= this;
         releaseRef(vertShift);
     }
 
@@ -147,13 +147,17 @@ public IGameChangeObserver
         return *menu->menu().organizer().itemWidget(pos);
     }
 
-    void currentGameChanged(Game &newGame)
+    void currentGameChanged(game::Game const &newGame)
     {
         updateStatus();
 
-        itemWidget(configMenu, POS_PANEL).show(!isNullGame(newGame));
-        itemWidget(mainMenu, POS_UNLOAD).show(!isNullGame(newGame));
-        itemWidget(mainMenu, POS_GAME_SEPARATOR).show(!isNullGame(newGame));
+        itemWidget(mainMenu, POS_UNLOAD).show(!newGame.isNull());
+        itemWidget(mainMenu, POS_GAME_SEPARATOR).show(!newGame.isNull());
+
+        itemWidget(configMenu, POS_RENDERER_SETTINGS).show(!newGame.isNull());
+        itemWidget(configMenu, POS_CONFIG_SEPARATOR).show(!newGame.isNull());
+        itemWidget(configMenu, POS_AUDIO_SETTINGS).show(!newGame.isNull());
+        itemWidget(configMenu, POS_INPUT_SETTINGS).show(!newGame.isNull());
 
         configMenu->menu().updateLayout();
         mainMenu->menu().updateLayout(); // Include/exclude shown/hidden menu items.
@@ -214,10 +218,6 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
             .setInput(Rule::Bottom, rule().bottom())
             .setInput(Rule::Height, rule().height());
 
-    d->console->commandLine().rule()
-            .setInput(Rule::Left,   d->console->button().rule().right())
-            .setInput(Rule::Bottom, rule().bottom());
-
     // DE logo.
     d->logo = new ButtonWidget;
     d->logo->setImage(style().images().image("logo.px128"));
@@ -263,9 +263,6 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
             .setInput(Rule::Right,  conf->rule().left());
     add(d->status);        
 
-    // The command line extends all the way to the status indicator.
-    d->console->commandLine().rule().setInput(Rule::Right, d->status->rule().left());
-
     d->updateStatus();
 
     // Taskbar height depends on the font size.
@@ -291,8 +288,6 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
      * depending on whether a game is loaded.
      */
     d->configMenu->menu().items()
-            << new ui::ActionItem(_E(b) + tr("Control Panel"),
-                                  new CommandAction("panel")) // hidden with null-game
             << new ui::ActionItem(ui::Item::ShownAsButton, tr("Renderer"),
                                   new SignalAction(this, SLOT(showRendererSettings())))
             << new ui::Item(ui::Item::Separator)
@@ -319,12 +314,21 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
     add(d->configMenu);
     add(d->mainMenu);
 
-    d->itemWidget(d->configMenu, POS_PANEL).hide();
     d->itemWidget(d->mainMenu, POS_UNLOAD).hide();
     d->itemWidget(d->mainMenu, POS_GAME_SEPARATOR).hide();
 
+    d->itemWidget(d->configMenu, POS_RENDERER_SETTINGS).hide();
+    d->itemWidget(d->configMenu, POS_CONFIG_SEPARATOR).hide();
+    d->itemWidget(d->configMenu, POS_AUDIO_SETTINGS).hide();
+    d->itemWidget(d->configMenu, POS_INPUT_SETTINGS).hide();
+
     conf->setAction(new SignalAction(this, SLOT(openConfigMenu())));
     d->logo->setAction(new SignalAction(this, SLOT(openMainMenu())));
+
+    // Set the initial command line layout.
+    updateCommandLineLayout();
+
+    connect(d->console, SIGNAL(commandModeChanged()), this, SLOT(updateCommandLineLayout()));
 }
 
 ConsoleWidget &TaskBarWidget::console()
@@ -332,7 +336,7 @@ ConsoleWidget &TaskBarWidget::console()
     return *d->console;
 }
 
-ConsoleCommandWidget &TaskBarWidget::commandLine()
+CommandWidget &TaskBarWidget::commandLine()
 {
     return d->console->commandLine();
 }
@@ -379,7 +383,8 @@ bool TaskBarWidget::handleEvent(Event const &event)
 {
     Canvas &canvas = root().window().canvas();
 
-    if(!canvas.isMouseTrapped() && event.type() == Event::MouseButton)
+    if(!canvas.isMouseTrapped() && event.type() == Event::MouseButton &&
+       !root().window().hasSidebar())
     {
         // Clicking outside the taskbar will trap the mouse automatically.
         MouseEvent const &mouse = event.as<MouseEvent>();
@@ -400,6 +405,15 @@ bool TaskBarWidget::handleEvent(Event const &event)
             }
 
             root().window().taskBar().close();
+            return true;
+        }
+    }
+
+    if(event.type() == Event::MouseButton)
+    {
+        // Eat all button events occurring inside the task bar area.
+        if(hitTest(event))
+        {
             return true;
         }
     }
@@ -431,8 +445,11 @@ bool TaskBarWidget::handleEvent(Event const &event)
                 if(key.modifiers().testFlag(KeyEvent::Shift) ||
                    !App_GameLoaded())
                 {
-                    // Automatically focus the command line.
-                    root().setFocus(&d->console->commandLine());
+                    if(!root().window().hasSidebar())
+                    {
+                        // Automatically focus the command line, unless an editor is open.
+                        root().setFocus(&d->console->commandLine());
+                    }
 
                     open();
                     return true;
@@ -458,21 +475,21 @@ void TaskBarWidget::open()
         setOpacity(1, OPEN_CLOSE_SPAN);
 
         emit opened();
+    }
 
-        // Untrap the mouse if it is trapped.
-        if(hasRoot())
+    // Untrap the mouse if it is trapped.
+    if(hasRoot())
+    {
+        Canvas &canvas = root().window().canvas();
+        d->mouseWasTrappedWhenOpening = canvas.isMouseTrapped();
+        if(canvas.isMouseTrapped())
         {
-            Canvas &canvas = root().window().canvas();
-            d->mouseWasTrappedWhenOpening = canvas.isMouseTrapped();
-            if(canvas.isMouseTrapped())
-            {
-                canvas.trapMouse(false);
-            }
+            canvas.trapMouse(false);
+        }
 
-            if(!App_GameLoaded())
-            {
-                root().setFocus(&d->console->commandLine());
-            }
+        if(!App_GameLoaded())
+        {
+            root().setFocus(&d->console->commandLine());
         }
     }
 }
@@ -511,7 +528,7 @@ void TaskBarWidget::close()
         emit closed();
 
         // Retrap the mouse if it was trapped when opening.
-        if(hasRoot() && App_GameLoaded())
+        if(hasRoot() && App_GameLoaded() && !root().window().hasSidebar())
         {
             Canvas &canvas = root().window().canvas();
             if(d->mouseWasTrappedWhenOpening)
@@ -601,4 +618,13 @@ void TaskBarWidget::showNetworkSettings()
     d->setupItemSubDialog(d->configMenu, POS_NETWORK_SETTINGS, dlg);
     root().add(dlg);
     dlg->open();
+}
+
+void TaskBarWidget::updateCommandLineLayout()
+{
+    // The command line extends all the way to the status indicator.
+    d->console->commandLine().rule()
+            .setInput(Rule::Left,   d->console->button().rule().right())
+            .setInput(Rule::Right,  d->status->rule().left())
+            .setInput(Rule::Bottom, rule().bottom());
 }

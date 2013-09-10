@@ -1,4 +1,4 @@
-/** @file listcontext.cpp  List-based UI data context.
+/** @file listdata.cpp  List-based UI data context.
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -33,6 +33,12 @@ ListData::~ListData()
 dsize ListData::size() const
 {
     return _items.size();
+}
+
+Item &ListData::at(Data::Pos pos)
+{
+    DENG2_ASSERT(pos < size());
+    return *_items[pos];
 }
 
 Item const &ListData::at(Pos pos) const

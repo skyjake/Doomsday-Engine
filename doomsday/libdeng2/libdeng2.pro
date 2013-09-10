@@ -62,6 +62,7 @@ INCLUDEPATH += include
 include(concurrency.pri)
 include(data.pri)
 include(filesys.pri)
+include(game.pri)
 include(network.pri)
 include(scriptsys.pri)
 include(widgets.pri)

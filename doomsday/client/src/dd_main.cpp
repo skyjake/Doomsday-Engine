@@ -186,29 +186,6 @@ static Materials *materials;
 // The app's global Texture collection.
 static Textures *textures;
 
-/// Notified when the current game changes. @todo Should be owned by App.
-GameChangeAudience audienceForGameChange;
-
-/**
- * Delegates game change notifications to scripts.
- */
-class GameChangeScriptAudience : public IGameChangeObserver
-{
-public:
-    void currentGameChanged(Game &newGame)
-    {
-        ArrayValue args;
-        args << DictionaryValue() << TextValue(Str_Text(newGame.identityKey()));
-        App::scriptSystem().nativeModule("App")["audienceForGameChange"]
-                .value<ArrayValue>().callElements(args);
-    }
-};
-
-static GameChangeScriptAudience scriptAudienceForGameChange;
-
-/// Current game. @todo Should be owned by App.
-Game *currentGame;
-
 #ifdef __CLIENT__
 
 D_CMD(CheckForUpdates)
@@ -762,8 +739,7 @@ void DD_StartTitle(void)
     ddstring_t setupCmds; Str_Init(&setupCmds);
 
     // Configure the predefined fonts (all normal, variable width).
-    char const *fontName = R_ChooseVariableFont(FS_NORMAL, DENG_WINDOW->width(),
-                                                           DENG_WINDOW->height());
+    char const *fontName = R_ChooseVariableFont(FS_NORMAL, DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT);
 
     for(int i = 1; i <= FIPAGE_NUM_PREDEFINED_FONTS; ++i)
     {
@@ -1321,19 +1297,6 @@ de::Games &App_Games()
     throw Error("App_Games", "App not yet initialized");
 }
 
-Game &App_CurrentGame()
-{
-    DENG_ASSERT(currentGame != 0);
-    return *currentGame;
-}
-
-void App_SetCurrentGame(Game const &game)
-{
-    // Ensure the specified game is actually in this collection (NullGame is implicitly).
-    DENG_ASSERT(isNullGame(game) || App_Games().id(game) > 0);
-    currentGame = const_cast<Game *>(&game);
-}
-
 boolean App_GameLoaded()
 {
 #ifdef __CLIENT__
@@ -1342,14 +1305,14 @@ boolean App_GameLoaded()
 #ifdef __SERVER__
     if(!ServerApp::haveApp()) return false;
 #endif
-    return !isNullGame(App_CurrentGame());
+    return !App_CurrentGame().isNull();
 }
 
 void DD_DestroyGames()
 {
     destroyPathList(&sessionResourceFileList, &numSessionResourceFileList);
     App_Games().clear();
-    currentGame = &App_Games().nullGame();
+    App::app().setGame(App_Games().nullGame());
 }
 
 static void populateGameInfo(GameInfo& info, de::Game& game)
@@ -1460,6 +1423,11 @@ gameid_t DD_GameIdForKey(char const *identityKey)
     return 0; // Invalid id.
 }
 
+de::Game &App_CurrentGame()
+{
+    return App::game().as<de::Game>();
+}
+
 bool App_ChangeGame(Game &game, bool allowReload)
 {
     //LOG_AS("App_ChangeGame");
@@ -1480,6 +1448,12 @@ bool App_ChangeGame(Game &game, bool allowReload)
         }
         // We are re-loading.
         isReload = true;
+    }
+
+    // The current game will be gone very soon.
+    DENG2_FOR_EACH_OBSERVER(App::GameUnloadAudience, i, App::app().audienceForGameUnload)
+    {
+        i->aboutToUnloadGame(App::game());
     }
 
     // Quit netGame if one is in progress.
@@ -1504,7 +1478,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
     GL_ResetTextureManager();
     GL_SetFilter(false);
 
-    if(!isNullGame(game))
+    if(!game.isNull())
     {
         ClientWindow &mainWin = ClientWindow::main();
         mainWin.taskBar().close();
@@ -1561,7 +1535,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
         }
 
         // The current game is now the special "null-game".
-        currentGame = &App_Games().nullGame();
+        App::app().setGame(App_Games().nullGame());
 
         Con_InitDatabases();
         DD_Register();
@@ -1597,7 +1571,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
     /// @todo Material collection should not be destroyed during a reload.
     App_DeleteMaterials();
 
-    if(!isNullGame(game))
+    if(!game.isNull())
     {
         LOG_VERBOSE("Selecting game '%s'...") << Str_Text(game.identityKey());
     }
@@ -1611,7 +1585,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
 #ifdef __CLIENT__
     char buf[256];
     DD_ComposeMainWindowTitle(buf);
-    DENG_WINDOW->setWindowTitle(buf);
+    ClientWindow::main().setWindowTitle(buf);
 #endif
 
     if(!DD_IsShuttingDown())
@@ -1631,11 +1605,11 @@ bool App_ChangeGame(Game &game, bool allowReload)
     }
 
     // This is now the current game.
-    currentGame = &game;
+    App::app().setGame(game);
 
 #ifdef __CLIENT__
     DD_ComposeMainWindowTitle(buf);
-    DENG_WINDOW->setWindowTitle(buf);
+    ClientWindow::main().setWindowTitle(buf);
 #endif
 
     /**
@@ -1680,7 +1654,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
         }
 
         /// @todo Kludge: Use more appropriate task names when unloading a game.
-        if(isNullGame(game))
+        if(game.isNull())
         {
             gameChangeTasks[0].name = "Unloading game...";
             gameChangeTasks[3].name = "Switching to ringzero...";
@@ -1725,7 +1699,11 @@ bool App_ChangeGame(Game &game, bool allowReload)
     }
 #endif
 
-    DENG2_FOR_AUDIENCE(GameChange, i) i->currentGameChanged(App_CurrentGame());
+    // Game change is complete.
+    DENG2_FOR_EACH_OBSERVER(App::GameChangeAudience, i, App::app().audienceForGameChange)
+    {
+        i->currentGameChanged(App::game());
+    }
 
     return true;
 }
@@ -1837,7 +1815,7 @@ void DD_FinishInitializationAfterWindowReady()
     {
         char buf[256];
         DD_ComposeMainWindowTitle(buf);
-        DENG_WINDOW->setWindowTitle(buf);
+        ClientWindow::main().setWindowTitle(buf);
     }
 #endif
 
@@ -1849,10 +1827,9 @@ void DD_FinishInitializationAfterWindowReady()
     }
 
     /// @todo This notification should be done from the app.
-    for(App::StartupCompleteAudience::Loop iter(App::app().audienceForStartupComplete);
-        !iter.done(); ++iter)
+    DENG2_FOR_EACH_OBSERVER(App::StartupCompleteAudience, i, App::app().audienceForStartupComplete)
     {
-        iter->appStartupCompleted();
+        i->appStartupCompleted();
     }
 }
 
@@ -1896,8 +1873,6 @@ boolean DD_Init(void)
         return false;
     }
 #endif
-
-    audienceForGameChange += scriptAudienceForGameChange;
 
     // Initialize the subsystems needed prior to entering busy mode for the first time.
     Sys_Init();
@@ -2458,10 +2433,10 @@ int DD_GetInteger(int ddvalue)
         return I_ShiftDown();
 
     case DD_WINDOW_WIDTH:
-        return DENG_WINDOW->width();
+        return DENG_GAMEVIEW_WIDTH;
 
     case DD_WINDOW_HEIGHT:
-        return DENG_WINDOW->height();
+        return DENG_GAMEVIEW_HEIGHT;
 
     case DD_CURRENT_CLIENT_FINALE_ID:
         return Cl_CurrentFinale();

@@ -103,7 +103,7 @@ DENG2_PIMPL(LegacyWidget)
                 // Draw any full window game graphics.
                 if(App_GameLoaded() && gx.DrawWindow)
                 {
-                    Size2Raw dimensions(DENG_WINDOW->width(), DENG_WINDOW->height());
+                    Size2Raw dimensions(DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT);
                     gx.DrawWindow(&dimensions);
                 }
             }
@@ -140,6 +140,25 @@ DENG2_PIMPL(LegacyWidget)
         // End any open DGL sequence.
         DGL_End();
     }
+
+    void updateSize()
+    {
+        LOG_AS("LegacyWidget");
+        LOG_TRACE("View resized to ") << self.rule().recti().size().asText();
+
+        // Update viewports.
+        R_SetViewGrid(0, 0);
+        if(UI_IsActive() || !App_GameLoaded())
+        {
+            // Update for busy mode.
+            R_UseViewPort(0);
+        }
+        R_LoadSystemFonts();
+        if(UI_IsActive())
+        {
+            UI_UpdatePageLayout();
+        }
+    }
 };
 
 LegacyWidget::LegacyWidget(String const &name)
@@ -150,27 +169,16 @@ LegacyWidget::LegacyWidget(String const &name)
 
 void LegacyWidget::viewResized()
 {
+    GuiWidget::viewResized();
+
+    /*
     if(BusyMode_Active() || isDisabled() || Sys_IsShuttingDown() ||
        !ClientApp::windowSystem().hasMain())
     {
         return;
     }
 
-    LOG_AS("LegacyWidget");
-    LOG_TRACE("View resized to ") << root().viewSize().asText();
-
-    // Update viewports.
-    R_SetViewGrid(0, 0);
-    if(/*BusyMode_Active() ||*/ UI_IsActive() || !App_GameLoaded())
-    {
-        // Update for busy mode.
-        R_UseViewPort(0);
-    }
-    R_LoadSystemFonts();
-    if(UI_IsActive())
-    {
-        UI_UpdatePageLayout();
-    }
+    d->updateSize();*/
 }
 
 void LegacyWidget::update()
@@ -222,7 +230,19 @@ void LegacyWidget::drawContent()
     GL_Init2DState();
 #endif
 
+    GLState::push();
+
+    Rectanglei pos;
+    if(hasChangedPlace(pos))
+    {
+        // Automatically update if the widget is resized.
+        d->updateSize();
+    }
+
     d->draw();
+
+    GLState::considerNativeStateUndefined();
+    GLState::pop();
 
 #if 0
     glPopClientAttrib();
@@ -250,9 +270,28 @@ bool LegacyWidget::handleEvent(Event const &event)
 
     if(event.type() == Event::MouseButton && !root().window().canvas().isMouseTrapped())
     {
-        // If the mouse is not trapped, we will just eat button clicks which
-        // will prevent them from reaching the legacy input system.
-        return true;
+        if(!root().window().hasSidebar())
+        {
+            // If the mouse is not trapped, we will just eat button clicks which
+            // will prevent them from reaching the legacy input system.
+            return true;
+        }
+
+        // If the sidebar is open, we must explicitly click on the LegacyWidget to
+        // cause input to be trapped.
+        switch(handleMouseClick(event))
+        {
+        case MouseClickFinished:
+            // Click completed on the widget, trap the mouse.
+            root().window().canvas().trapMouse();
+            root().window().taskBar().close();
+            root().setFocus(0); // Allow input to reach here.
+            break;
+
+        default:
+            // Just ignore the event.
+            return true;
+        }
     }
 
     if(event.type() == Event::KeyPress ||

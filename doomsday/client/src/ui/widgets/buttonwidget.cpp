@@ -28,6 +28,8 @@ DENG_GUI_PIMPL(ButtonWidget),
 DENG2_OBSERVES(Action, Triggered)
 {
     State state;
+    DotPath hoverTextColor;
+    DotPath textColor;
     QScopedPointer<Action> action;
     Animation scale;
     Animation frameOpacity;
@@ -56,12 +58,24 @@ DENG2_OBSERVES(Action, Triggered)
             scale.setValue(1.f, .3f);
             scale.setStyle(prev == Down? Animation::Bounce : Animation::EaseOut);
             frameOpacity.setValue(.08f, .6f);
+            if(!hoverTextColor.isEmpty())
+            {
+                // Restore old color.
+                self.setTextColor(textColor);
+            }
             break;
 
         case Hover:
             //scale.setValue(1.1f, .15f);
             //scale.setStyle(Animation::EaseOut);
             frameOpacity.setValue(.4f, .15f);
+            if(!hoverTextColor.isEmpty())
+            {
+                // Remember the old color.
+                textColor = self.textColorId();
+
+                self.setTextColor(hoverTextColor);
+            }
             break;
 
         case Down:
@@ -136,6 +150,11 @@ DENG2_OBSERVES(Action, Triggered)
 
 ButtonWidget::ButtonWidget(String const &name) : LabelWidget(name), d(new Instance(this))
 {}
+
+void ButtonWidget::setHoverTextColor(const DotPath &hoverTextId)
+{
+    d->hoverTextColor = hoverTextId;
+}
 
 void ButtonWidget::setAction(Action *action)
 {

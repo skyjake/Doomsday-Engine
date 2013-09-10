@@ -57,7 +57,7 @@ DENG2_OBSERVES(KeyEventSource,   KeyEvent),
 DENG2_OBSERVES(MouseEventSource, MouseStateChange),
 DENG2_OBSERVES(MouseEventSource, MouseEvent),
 DENG2_OBSERVES(Canvas,           FocusChange),
-public IGameChangeObserver
+DENG2_OBSERVES(App,              GameChange)
 {
     bool needMainInit;
     bool needRecreateCanvas;
@@ -73,6 +73,7 @@ public IGameChangeObserver
     LabelWidget *background;
     GameSelectionWidget *games;
     BusyWidget *busy;
+    GuiWidget *sidebar;
 
     GuiRootWidget busyRoot;
 
@@ -92,6 +93,7 @@ public IGameChangeObserver
           colorAdjust(0),
           background(0),
           games(0),
+          sidebar(0),
           busyRoot(thisPublic),
           fpsCounter(0),
           oldFps(0)
@@ -99,7 +101,7 @@ public IGameChangeObserver
         /// @todo The decision whether to receive input notifications from the
         /// canvas is really a concern for the input drivers.
 
-        audienceForGameChange += this;
+        App::app().audienceForGameChange += this;
 
         // Listen to input.
         self.canvas().audienceForKeyEvent += this;
@@ -109,7 +111,7 @@ public IGameChangeObserver
 
     ~Instance()
     {
-        audienceForGameChange -= this;
+        App::app().audienceForGameChange -= this;
 
         self.canvas().audienceForFocusChange -= this;
         self.canvas().audienceForMouseStateChange -= this;
@@ -136,7 +138,7 @@ public IGameChangeObserver
         legacy = new LegacyWidget(LEGACY_WIDGET_NAME);
         legacy->rule()
                 .setLeftTop    (root.viewLeft(),  root.viewTop())
-                .setRightBottom(root.viewRight(), root.viewBottom());
+                .setRightBottom(root.viewWidth(), root.viewBottom());
         // Initially the widget is disabled. It will be enabled when the window
         // is visible and ready to be drawn.
         legacy->disable();
@@ -156,7 +158,7 @@ public IGameChangeObserver
         notifications = new NotificationWidget;
         notifications->rule()
                 .setInput(Rule::Top,   root.viewTop()   + style.rules().rule("gap") - notifications->shift())
-                .setInput(Rule::Right, root.viewRight() - style.rules().rule("gap"));
+                .setInput(Rule::Right, legacy->rule().right() - style.rules().rule("gap"));
         root.add(notifications);
 
         // FPS counter for the notification area.
@@ -192,9 +194,9 @@ public IGameChangeObserver
         busyRoot.add(busy);
     }
 
-    void currentGameChanged(Game &newGame)
+    void currentGameChanged(game::Game const &newGame)
     {
-        if(isNullGame(newGame))
+        if(newGame.isNull())
         {
             //legacy->hide();
             background->show();
@@ -340,6 +342,50 @@ public IGameChangeObserver
             oldFps = fps;
         }
     }
+
+    void installSidebar(SidebarLocation location, GuiWidget *widget)
+    {
+        // Get rid of the old sidebar.
+        if(sidebar)
+        {
+            uninstallSidebar(location);
+        }
+        if(!widget) return;
+
+        DENG2_ASSERT(sidebar == NULL);
+
+        // Attach the widget.
+        switch(location)
+        {
+        case RightEdge:
+            widget->rule()
+                    .setInput(Rule::Top,    root.viewTop())
+                    .setInput(Rule::Right,  root.viewRight())
+                    .setInput(Rule::Bottom, taskBar->rule().top());
+            legacy->rule()
+                    .setInput(Rule::Right,  widget->rule().left());
+            break;
+        }
+
+        sidebar = widget;
+        root.insertBefore(sidebar, *notifications);
+    }
+
+    void uninstallSidebar(SidebarLocation location)
+    {
+        DENG2_ASSERT(sidebar != NULL);
+
+        switch(location)
+        {
+        case RightEdge:
+            legacy->rule().setInput(Rule::Right, root.viewRight());
+            break;
+        }
+
+        root.remove(*sidebar);
+        sidebar->deleteLater();
+        sidebar = 0;
+    }
 };
 
 ClientWindow::ClientWindow(String const &id)
@@ -376,6 +422,11 @@ ConsoleWidget &ClientWindow::console()
 NotificationWidget &ClientWindow::notifications()
 {
     return *d->notifications;
+}
+
+LegacyWidget &ClientWindow::game()
+{
+    return *d->legacy;
 }
 
 BusyWidget &ClientWindow::busy()
@@ -419,7 +470,8 @@ void ClientWindow::canvasGLReady(Canvas &canvas)
     d->root.find(LEGACY_WIDGET_NAME)->enable();
 
     // Configure a viewport immediately.
-    glViewport(0, FLIP(0 + canvas.height() - 1), canvas.width(), canvas.height());
+    //glViewport(0, FLIP(0 + canvas.height() - 1), canvas.width(), canvas.height());
+    GLState::top().setViewport(Rectangleui(0, 0, canvas.width(), canvas.height())).apply();
 
     LOG_DEBUG("LegacyWidget enabled");
 
@@ -610,4 +662,18 @@ void ClientWindow::toggleFPSCounter()
 void ClientWindow::showColorAdjustments()
 {
     d->colorAdjust->open();
+}
+
+void ClientWindow::setSidebar(SidebarLocation location, GuiWidget *sidebar)
+{
+    DENG2_ASSERT(location == RightEdge);
+
+    d->installSidebar(location, sidebar);
+}
+
+bool ClientWindow::hasSidebar(SidebarLocation location) const
+{
+    DENG2_ASSERT(location == RightEdge);
+
+    return d->sidebar != 0;
 }

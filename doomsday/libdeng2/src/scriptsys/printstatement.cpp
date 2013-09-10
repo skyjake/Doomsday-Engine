@@ -63,7 +63,7 @@ void PrintStatement::execute(Context &context) const
        os << (*i)->asText();
     }
     
-    LOG_MSG("") << msg;
+    LOG_MSG(_E(m)) << msg;
     
     context.proceed();
 }

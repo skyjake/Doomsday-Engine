@@ -28,7 +28,7 @@ group progress {
 }
 
 group slider {
-    rule width  { constant $= UNIT * 50 }
+    rule width  { constant $= UNIT * 55 }
     rule label  { constant $= UNIT * 9 }
     rule editor { constant $= UNIT * 20 }
 }
@@ -41,6 +41,10 @@ group dialog {
     rule download.width { constant $= UNIT * 115 }
 }
 
+group sidebar {
+    rule width { constant $= UNIT * 80 }
+}
+
 group console {
     rule width { constant $= UNIT * 125 }
 }
@@ -51,5 +55,9 @@ group gameselection {
 }
 
 group coloradjustment {
-    rule slider { constant $= slider.width.constant * 1.5 }
+    rule slider { constant $= slider.width.constant * 1.36 }
+}
+
+group rendererappearance {
+    rule width { constant $= UNIT * 100 }
 }

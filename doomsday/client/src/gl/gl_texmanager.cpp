@@ -129,7 +129,7 @@ void GL_TexRegister()
     C_VAR_INT   ("rend-tex-detail",             &r_detail,           0, 0, 1);
     C_VAR_INT   ("rend-tex-detail-multitex",    &useMultiTexDetails, 0, 0, 1);
     C_VAR_FLOAT ("rend-tex-detail-scale",       &detailScale,        CVF_NO_MIN | CVF_NO_MAX, 0, 0);
-    C_VAR_FLOAT2("rend-tex-detail-strength",    &detailFactor,       0, 0, 10, GL_DoResetDetailTextures);
+    C_VAR_FLOAT2("rend-tex-detail-strength",    &detailFactor,       0, 0, 5, GL_DoResetDetailTextures);
     C_VAR_BYTE2 ("rend-tex-external-always",    &loadExtAlways,      0, 0, 1, GL_DoTexReset);
     C_VAR_INT   ("rend-tex-filter-anisotropic", &texAniso,           0, -1, 4);
     C_VAR_INT   ("rend-tex-filter-mag",         &texMagMode,         0, 0, 1);

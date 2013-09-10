@@ -923,7 +923,7 @@ static int drawGeneratorOrigin(ptcgen_t* gen, void* parameters)
         if(alpha > 0)
         {
             Point2Raw const labelOrigin(2, 2);
-            float scale = dist / (DENG_WINDOW->width() / 2);
+            float scale = dist / (DENG_GAMEVIEW_WIDTH / 2);
             char buf[80];
 
             sprintf(buf, "%i", gens->generatorId(gen));

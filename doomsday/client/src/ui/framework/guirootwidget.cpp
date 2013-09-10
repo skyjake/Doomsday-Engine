@@ -82,15 +82,15 @@ DENG2_OBSERVES(Widget, ChildAddition)
 
             // Rounded corners.
             {
-                QImage corners(QSize(20, 20), QImage::Format_ARGB32);
+                QImage corners(QSize(15, 15), QImage::Format_ARGB32);
                 corners.fill(QColor(255, 255, 255, 0).rgba());
                 QPainter painter(&corners);
                 painter.setRenderHint(QPainter::Antialiasing, true);
                 painter.setBrush(Qt::NoBrush);
                 painter.setPen(QPen(Qt::white, 1));
-                painter.drawEllipse(QPoint(11, 11), 8, 8);
-                painter.setPen(QPen(Qt::black, 1));
-                painter.drawEllipse(QPoint(10, 10), 8, 8);
+                painter.drawEllipse(QPoint(8, 8), 6, 6);
+                //painter.setPen(QPen(Qt::black, 1));
+                //painter.drawEllipse(QPoint(10, 10), 8, 8);
                 roundCorners = atlas->alloc(corners);
             }
 
@@ -258,6 +258,20 @@ void GuiRootWidget::routeMouse(Widget *routeTo)
                     << Event::MouseMotion
                     << Event::MousePosition
                     << Event::MouseWheel, routeTo);
+}
+
+bool GuiRootWidget::processEvent(Event const &event)
+{
+    if(!RootWidget::processEvent(event))
+    {
+        if(event.type() == Event::MouseButton)
+        {
+            // Button events that no one handles will relinquish input focus.
+            setFocus(0);
+        }
+        return false;
+    }
+    return true;
 }
 
 void GuiRootWidget::update()

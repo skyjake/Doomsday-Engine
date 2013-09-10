@@ -98,7 +98,6 @@ void UI_Register(void)
     // Ccmds
     C_CMD_FLAGS("uicolor", "sfff", UIColor, CMDF_NO_DEDICATED);
 
-    CP_Register();
     Fonts_Register();
 }
 
@@ -141,8 +140,8 @@ void UI_PageInit(boolean halttime, boolean tckui, boolean tckframe, boolean drwg
     allowEscape = !noescape;
 
     // Init cursor to the center of the screen.
-    uiCX = DENG_WINDOW->width() / 2;
-    uiCY = DENG_WINDOW->height() / 2;
+    uiCX = DENG_GAMEVIEW_WIDTH / 2;
+    uiCY = DENG_GAMEVIEW_HEIGHT / 2;
     uiMoved = false;
 }
 
@@ -305,12 +304,12 @@ void UI_InitPage(ui_page_t* page, ui_object_t* objects)
 
 int UI_AvailableWidth(void)
 {
-    return DENG_WINDOW->width() - UI_BORDER * 4;
+    return DENG_GAMEVIEW_WIDTH - UI_BORDER * 4;
 }
 
 int UI_AvailableHeight(void)
 {
-    return DENG_WINDOW->height() - UI_BORDER * 4;
+    return DENG_GAMEVIEW_HEIGHT - UI_BORDER * 4;
 }
 
 int UI_ScreenX(int relx)
@@ -419,16 +418,16 @@ int UI_Responder(const ddevent_t* ev)
             uiCX += ev->axis.pos;
             if(uiCX < 0)
                 uiCX = 0;
-            if(uiCX >= DENG_WINDOW->width())
-                uiCX = DENG_WINDOW->width() - 1;
+            if(uiCX >= DENG_GAMEVIEW_WIDTH)
+                uiCX = DENG_GAMEVIEW_WIDTH - 1;
         }
         else if(ev->axis.id == 1) // yaxis.
         {
             uiCY += ev->axis.pos;
             if(uiCY < 0)
                 uiCY = 0;
-            if(uiCY >= DENG_WINDOW->height())
-                uiCY = DENG_WINDOW->height() - 1;
+            if(uiCY >= DENG_GAMEVIEW_HEIGHT)
+                uiCY = DENG_GAMEVIEW_HEIGHT - 1;
         }
     }
 
@@ -486,24 +485,24 @@ void UI_Drawer(void)
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
-    glOrtho(0, DENG_WINDOW->width(), DENG_WINDOW->height(), 0, -1, 1);
+    glOrtho(0, DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT, 0, -1, 1);
 
     // Call the active page's drawer.
     uiCurrentPage->drawer(uiCurrentPage);
 
     // Draw mouse cursor?
-    if(!uiNoMouse && DENG_WINDOW->canvas().isMouseTrapped())
+    if(!uiNoMouse && ClientWindow::main().canvas().isMouseTrapped())
     {
         Point2Raw origin;
         Size2Raw size;
         float scale;
 
-        if(DENG_WINDOW->width() >= DENG_WINDOW->height())
-            scale = (DENG_WINDOW->width()  / UI_WIDTH)  *
-                    (DENG_WINDOW->height() / (float) DENG_WINDOW->width());
+        if(DENG_GAMEVIEW_WIDTH >= DENG_GAMEVIEW_HEIGHT)
+            scale = (DENG_GAMEVIEW_WIDTH  / UI_WIDTH)  *
+                    (DENG_GAMEVIEW_HEIGHT / (float) DENG_GAMEVIEW_WIDTH);
         else
-            scale = (DENG_WINDOW->height() / UI_HEIGHT) *
-                    (DENG_WINDOW->width()  / (float) DENG_WINDOW->height());
+            scale = (DENG_GAMEVIEW_HEIGHT / UI_HEIGHT) *
+                    (DENG_GAMEVIEW_WIDTH  / (float) DENG_GAMEVIEW_HEIGHT);
 
         origin.x = uiCX - 1;
         origin.y = uiCY - 1;
@@ -768,7 +767,7 @@ void UIPage_Drawer(ui_page_t *page)
     // Draw background?
     if(page->flags.showBackground)
     {
-        UI_DrawDDBackground(Point2Raw(0, 0), Size2Raw(DENG_WINDOW->width(), DENG_WINDOW->height()),
+        UI_DrawDDBackground(Point2Raw(0, 0), Size2Raw(DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT),
                             uiAlpha);
     }
 

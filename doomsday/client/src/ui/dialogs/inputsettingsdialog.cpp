@@ -1,4 +1,4 @@
-/** @file inputettingsdialog.cpp Dialog for input settings.
+/** @file inputsettingsdialog.cpp Dialog for input settings.
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *

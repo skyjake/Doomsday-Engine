@@ -158,11 +158,13 @@ public Font::RichFormat::IStyle
 
     void glDeinit()
     {
+        drawable.clear();
         composer.release();
         if(!image.isNull())
         {
             image->glDeinit();
         }
+        wrapWidth = 0;
     }
 
     bool hasImage() const

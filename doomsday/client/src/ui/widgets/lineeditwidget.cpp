@@ -374,25 +374,30 @@ bool LineEditWidget::handleEvent(Event const &event)
         d->updateHover(event.as<MouseEvent>().pos());
     }
 
-    switch(handleMouseClick(event))
+    // Only handle clicks when not already focused.
+    if(!hasFocus())
     {
-    case MouseClickStarted:
-        return true;
+        switch(handleMouseClick(event))
+        {
+        case MouseClickStarted:
+            return true;
 
-    case MouseClickFinished:
-        root().setFocus(this);
-        return true;
+        case MouseClickFinished:
+            root().setFocus(this);
+            return true;
 
-    default:
-        break;
+        default:
+            break;
+        }
     }
 
+    // Only handle keys when focused.
     if(hasFocus() && event.isKeyDown())
     {
         KeyEvent const &key = event.as<KeyEvent>();
 
         if(key.qtKey() == Qt::Key_Control || key.qtKey() == Qt::Key_Alt ||
-           key.qtKey() == Qt::Key_Meta)
+           key.qtKey() == Qt::Key_Meta || key.qtKey() == Qt::Key_Shift)
         {
             // Modifier keys alone will be eaten when focused.
             return true;

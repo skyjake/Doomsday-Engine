@@ -90,6 +90,7 @@ void BusyWidget::viewResized()
 {
     GuiWidget::viewResized();
 
+#if 0
     if(!BusyMode_Active() || isDisabled() || Sys_IsShuttingDown()) return;
 
     ClientWindow::main().glActivate(); // needed for legacy stuff
@@ -108,6 +109,7 @@ void BusyWidget::viewResized()
     {
         UI_UpdatePageLayout();
     }
+#endif
 }
 
 void BusyWidget::update()

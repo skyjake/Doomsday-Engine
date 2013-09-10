@@ -295,6 +295,11 @@ Font const &GuiWidget::font() const
     return style().fonts().font(d->fontId);
 }
 
+DotPath const &GuiWidget::textColorId() const
+{
+    return d->textColorId;
+}
+
 void GuiWidget::setFont(DotPath const &id)
 {
     d->fontId = id;

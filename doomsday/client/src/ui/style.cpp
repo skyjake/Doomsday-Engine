@@ -157,3 +157,15 @@ void Style::richStyleFormat(int contentStyle,
         break;
     }
 }
+
+Font const *Style::richStyleFont(Font::RichFormat::Style fontStyle) const
+{
+    switch(fontStyle)
+    {
+    case Font::RichFormat::Monospace:
+        return &fonts().font("monospace");
+
+    default:
+        return 0;
+    }
+}

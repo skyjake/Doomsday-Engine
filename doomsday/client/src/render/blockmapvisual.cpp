@@ -78,7 +78,7 @@ static int rendBspLeaf(BspLeaf *bspLeaf, void * /*parameters*/)
     if(!bspLeaf->isDegenerate() && bspLeaf->validCount() != validCount)
     {
         float const scale = de::max(bmapDebugSize, 1.f);
-        float const width = (DENG_WINDOW->width() / 16) / scale;
+        float const width = (DENG_GAMEVIEW_WIDTH / 16) / scale;
         float length, dx, dy, normal[2], unit[2];
         vec2f_t start, end;
 
@@ -562,12 +562,12 @@ void Rend_BlockmapDebug()
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
-    glOrtho(0, DENG_WINDOW->width(), DENG_WINDOW->height(), 0, -1, 1);
+    glOrtho(0, DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT, 0, -1, 1);
     // Orient on the center of the window.
-    glTranslatef((DENG_WINDOW->width() / 2), (DENG_WINDOW->height() / 2), 0);
+    glTranslatef((DENG_GAMEVIEW_WIDTH / 2), (DENG_GAMEVIEW_HEIGHT / 2), 0);
 
     // Uniform scaling factor for this visual.
-    scale = bmapDebugSize / de::max(DENG_WINDOW->height() / 100, 1);
+    scale = bmapDebugSize / de::max(DENG_GAMEVIEW_HEIGHT / 100, 1);
     glScalef(scale, -scale, 1);
 
     // If possible we'll tailor what we draw relative to the viewPlayer.
@@ -586,7 +586,7 @@ void Rend_BlockmapDebug()
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
-    glOrtho(0, DENG_WINDOW->width(), DENG_WINDOW->height(), 0, -1, 1);
+    glOrtho(0, DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT, 0, -1, 1);
 
     if(followMobj)
     {
@@ -595,15 +595,15 @@ void Rend_BlockmapDebug()
         Blockmap::Cell cell = blockmap->toCell(followMobj->origin, &didClip);
         if(!didClip)
         {
-            origin.x = DENG_WINDOW->width() / 2;
+            origin.x = DENG_GAMEVIEW_WIDTH / 2;
             origin.y = 30;
             drawCellInfoBox(blockmap, &origin, objectTypeName, cell);
         }
     }
 
     // About the Blockmap itself.
-    origin.x = DENG_WINDOW->width()  - 10;
-    origin.y = DENG_WINDOW->height() - 10;
+    origin.x = DENG_GAMEVIEW_WIDTH  - 10;
+    origin.y = DENG_GAMEVIEW_HEIGHT - 10;
     drawBlockmapInfo(&origin, blockmap);
 
     glMatrixMode(GL_PROJECTION);

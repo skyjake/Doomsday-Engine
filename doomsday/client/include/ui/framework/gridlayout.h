@@ -48,6 +48,7 @@ public:
     void setGridSize(int numCols, int numRows);
     void setModeAndGridSize(Mode mode, int numCols, int numRows);
     void setColumnAlignment(int column, ui::Alignment cellAlign);
+    void setColumnFixedWidth(int column, de::Rule const &fixedWidth);
 
     void setLeftTop(de::Rule const &left, de::Rule const &top);
     void setOverrideWidth(de::Rule const &width);
@@ -59,6 +60,21 @@ public:
     GridLayout &operator << (de::Rule const &empty) { return append(empty); }
 
     GridLayout &append(GuiWidget &widget, int cellSpan = 1);
+
+    /**
+     * Appends a widget to the layout as the next cell. Instead of using the
+     * widget's actual widget, @a layoutWidth is treated as the widget's width
+     * in the layout. This allows specifying a custom width that may include
+     * additional space needed by the widget.
+     *
+     * @param widget       Widget.
+     * @param layoutWidth  Width of the widget, overriding the actual width.
+     * @param cellSpan     How many cells does the widget span.
+     *
+     * @return Reference to this GridLayout.
+     */
+    GridLayout &append(GuiWidget &widget, de::Rule const &layoutWidth, int cellSpan = 1);
+
     GridLayout &append(de::Rule const &empty);
 
     /**
@@ -86,6 +102,8 @@ public:
      * @return Cell coordinates.
      */
     de::Vector2i widgetPos(GuiWidget &widget) const;
+
+    GuiWidget *at(de::Vector2i const &cell) const;
 
     de::Rule const &width() const;
     de::Rule const &height() const;

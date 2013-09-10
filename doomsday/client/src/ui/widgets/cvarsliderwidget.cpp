@@ -47,10 +47,22 @@ CVarSliderWidget::CVarSliderWidget(char const *cvarPath) : d(new Instance)
         }
         setPrecision(2);
     }
+    else
+    {
+        if(!(d->var()->flags & (CVF_NO_MIN | CVF_NO_MAX)))
+        {
+            setRange(Rangei(d->var()->min, d->var()->max));
+        }
+    }
 
     updateFromCVar();
 
     connect(this, SIGNAL(valueChangedByUser(double)), this, SLOT(setCVarValueFromWidget()));
+}
+
+char const *CVarSliderWidget::cvarPath() const
+{
+    return d->cvar;
 }
 
 void CVarSliderWidget::updateFromCVar()
@@ -62,7 +74,6 @@ void CVarSliderWidget::updateFromCVar()
     }
     else
     {
-        setRange(Rangei(var->min, var->max));
         setValue(CVar_Integer(var));
     }
 }
