@@ -288,16 +288,17 @@ void RendererSettingsDialog::editProfile()
 
 void RendererSettingsDialog::renameProfile()
 {
-    InputDialog dlg;
-    dlg.title().setText(tr("Renaming \"%1\"").arg(d->currentAppearance()));
-    dlg.message().setText(tr("Enter a new name for the appearance profile:"));
-    dlg.defaultActionItem()->setLabel(tr("Rename Profile"));
+    InputDialog *dlg = new InputDialog;
+    dlg->setDeleteAfterDismissed(true);
+    dlg->title().setText(tr("Renaming \"%1\"").arg(d->currentAppearance()));
+    dlg->message().setText(tr("Enter a new name for the appearance profile:"));
+    dlg->defaultActionItem()->setLabel(tr("Rename Profile"));
 
-    dlg.editor().setText(d->currentAppearance());
+    dlg->editor().setText(d->currentAppearance());
 
-    if(dlg.exec(root()))
+    if(dlg->exec(root()))
     {
-        String clean = dlg.editor().text().trimmed().left(100);
+        String clean = dlg->editor().text().trimmed().left(100);
         if(!clean.isEmpty() && d->currentAppearance() != clean)
         {
             if(ClientApp::rendererAppearanceSettings().rename(clean))
@@ -322,14 +323,15 @@ void RendererSettingsDialog::renameProfile()
 
 void RendererSettingsDialog::duplicateProfile()
 {
-    InputDialog dlg;
-    dlg.title().setText(tr("Duplicating \"%1\"").arg(d->currentAppearance()));
-    dlg.message().setText(tr("Enter a name for the new appearance profile:"));
-    dlg.defaultActionItem()->setLabel(tr("Duplicate Profile"));
+    InputDialog *dlg = new InputDialog;
+    dlg->setDeleteAfterDismissed(true);
+    dlg->title().setText(tr("Duplicating \"%1\"").arg(d->currentAppearance()));
+    dlg->message().setText(tr("Enter a name for the new appearance profile:"));
+    dlg->defaultActionItem()->setLabel(tr("Duplicate Profile"));
 
-    if(dlg.exec(root()))
+    if(dlg->exec(root()))
     {
-        String clean = dlg.editor().text().trimmed().left(100);
+        String clean = dlg->editor().text().trimmed().left(100);
         if(!clean.isEmpty())
         {
             SettingsRegister &reg = ClientApp::rendererAppearanceSettings();
@@ -352,16 +354,17 @@ void RendererSettingsDialog::duplicateProfile()
 
 void RendererSettingsDialog::resetProfile()
 {
-    MessageDialog dlg;
-    dlg.title().setText(tr("Reset?").arg(d->currentAppearance()));
-    dlg.message().setText(tr("Are you sure you want to reset the appearance profile %1 to the default values?")
+    MessageDialog *dlg = new MessageDialog;
+    dlg->setDeleteAfterDismissed(true);
+    dlg->title().setText(tr("Reset?").arg(d->currentAppearance()));
+    dlg->message().setText(tr("Are you sure you want to reset the appearance profile %1 to the default values?")
                           .arg(_E(b) + d->currentAppearance() + _E(.)));
 
-    dlg.buttons().items()
+    dlg->buttons().items()
             << new DialogButtonItem(DialogWidget::Default | DialogWidget::Reject)
             << new DialogButtonItem(DialogWidget::Accept, tr("Reset Profile"));
 
-    if(dlg.exec(root()))
+    if(dlg->exec(root()))
     {
         ClientApp::rendererAppearanceSettings().resetToDefaults();
     }
@@ -369,16 +372,17 @@ void RendererSettingsDialog::resetProfile()
 
 void RendererSettingsDialog::deleteProfile()
 {
-    MessageDialog dlg;
-    dlg.title().setText(tr("Delete?"));
-    dlg.message().setText(
+    MessageDialog *dlg = new MessageDialog;
+    dlg->setDeleteAfterDismissed(true);
+    dlg->title().setText(tr("Delete?"));
+    dlg->message().setText(
                 tr("Are you sure you want to delete the appearance profile %1? This cannot be undone.")
                 .arg(_E(b) + d->currentAppearance() + _E(.)));
-    dlg.buttons().items()
+    dlg->buttons().items()
                << new DialogButtonItem(DialogWidget::Default | DialogWidget::Reject)
                << new DialogButtonItem(DialogWidget::Accept, tr("Delete Profile"));
 
-    if(!dlg.exec(root())) return;
+    if(!dlg->exec(root())) return;
 
     // We've got the permission.
     String const profToDelete = d->currentAppearance();

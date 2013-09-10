@@ -40,11 +40,6 @@ InputDialog::InputDialog(String const &name)
     updateLayout();
 }
 
-InputDialog::~InputDialog()
-{
-    deinitialize();
-}
-
 LineEditWidget &InputDialog::editor()
 {
     return *d->editor;

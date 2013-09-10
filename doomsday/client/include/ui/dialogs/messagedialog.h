@@ -28,7 +28,6 @@ class MessageDialog : public DialogWidget
 {
 public:
     MessageDialog(de::String const &name = "");
-    ~MessageDialog();
 
     LabelWidget &title();
     LabelWidget &message();
