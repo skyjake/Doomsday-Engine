@@ -270,6 +270,22 @@ RuleRectangle &RuleRectangle::setRect(RuleRectangle const &rect)
     return *this;
 }
 
+RuleRectangle &RuleRectangle::setInputsFromRect(RuleRectangle const &rect)
+{
+    for(int i = 0; i < int(Rule::MAX_SEMANTICS); ++i)
+    {
+        if(rect.d->inputRules[i])
+        {
+            setInput(Rule::Semantic(i), *rect.d->inputRules[i]);
+        }
+        else
+        {
+            clearInput(Rule::Semantic(i));
+        }
+    }
+    return *this;
+}
+
 RuleRectangle &RuleRectangle::setSize(Rule const &width, Rule const &height)
 {
     setInput(Rule::Width,  width);
@@ -285,6 +301,7 @@ RuleRectangle &RuleRectangle::clearInput(Rule::Semantic inputRule)
 
 Rule const &RuleRectangle::inputRule(Rule::Semantic inputRule)
 {
+    DENG2_ASSERT(d->ruleRef(inputRule) != 0);
     return *d->ruleRef(inputRule);
 }
 
