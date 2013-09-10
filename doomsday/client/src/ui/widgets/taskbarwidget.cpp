@@ -218,10 +218,6 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
             .setInput(Rule::Bottom, rule().bottom())
             .setInput(Rule::Height, rule().height());
 
-    d->console->commandLine().rule()
-            .setInput(Rule::Left,   d->console->button().rule().right())
-            .setInput(Rule::Bottom, rule().bottom());
-
     // DE logo.
     d->logo = new ButtonWidget;
     d->logo->setImage(style().images().image("logo.px128"));
@@ -266,9 +262,6 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
             .setInput(Rule::Bottom, rule().bottom())
             .setInput(Rule::Right,  conf->rule().left());
     add(d->status);        
-
-    // The command line extends all the way to the status indicator.
-    d->console->commandLine().rule().setInput(Rule::Right, d->status->rule().left());
 
     d->updateStatus();
 
@@ -331,6 +324,11 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
 
     conf->setAction(new SignalAction(this, SLOT(openConfigMenu())));
     d->logo->setAction(new SignalAction(this, SLOT(openMainMenu())));
+
+    // Set the initial command line layout.
+    updateCommandLineLayout();
+
+    connect(d->console, SIGNAL(commandModeChanged()), this, SLOT(updateCommandLineLayout()));
 }
 
 ConsoleWidget &TaskBarWidget::console()
@@ -338,7 +336,7 @@ ConsoleWidget &TaskBarWidget::console()
     return *d->console;
 }
 
-ConsoleCommandWidget &TaskBarWidget::commandLine()
+CommandWidget &TaskBarWidget::commandLine()
 {
     return d->console->commandLine();
 }
@@ -607,4 +605,13 @@ void TaskBarWidget::showNetworkSettings()
     d->setupItemSubDialog(d->configMenu, POS_NETWORK_SETTINGS, dlg);
     root().add(dlg);
     dlg->open();
+}
+
+void TaskBarWidget::updateCommandLineLayout()
+{
+    // The command line extends all the way to the status indicator.
+    d->console->commandLine().rule()
+            .setInput(Rule::Left,   d->console->button().rule().right())
+            .setInput(Rule::Right,  d->status->rule().left())
+            .setInput(Rule::Bottom, rule().bottom());
 }

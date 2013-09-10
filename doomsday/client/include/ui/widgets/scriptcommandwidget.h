@@ -1,4 +1,4 @@
-/** @file consolecommandwidget.h  Text editor with a history buffer.
+/** @file scriptwidget.h  Interactive Doomsday Script command line.
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -13,38 +13,42 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details. You should have received a copy of the GNU
  * General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_CONSOLECOMMANDWIDGET_H
-#define DENG_CLIENT_CONSOLECOMMANDWIDGET_H
+#ifndef DENG_CLIENT_SCRIPTCOMMANDWIDGET_H
+#define DENG_CLIENT_SCRIPTCOMMANDWIDGET_H
 
 #include "commandwidget.h"
 
 /**
- * Text editor with a history buffer. Entered commands are executed as console
- * commands. Uses the console Lexicon for word completion.
+ * Interactive Doomsday Script command line.
  *
- * Whenever the current game changes, the lexicon is automatically updated to
- * include the terms of the loaded game.
+ * The widget has its own script Process in which all commands gets executed.
+ * The namespace of this process persists across entered commands (but not
+ * across engine shutdown).
+ *
+ * An entered command is not accepted until it parses successfully as a
+ * Doomsday Script statement. In other words, it is possible to enter
+ * multi-line scripts when there are open braces etc. If there is a true syntax
+ * error in the entered script, a popup will open showing the exception from
+ * the parser.
  *
  * @ingroup gui
  */
-class ConsoleCommandWidget : public CommandWidget
+class ScriptCommandWidget : public CommandWidget
 {
 public:
-    ConsoleCommandWidget(de::String const &name = "");
+    ScriptCommandWidget(de::String const &name = "");
 
-    // Events.
     bool handleEvent(de::Event const &event);
 
 protected:
     bool isAcceptedAsCommand(de::String const &text);
     void executeCommand(de::String const &text);
-    void autoCompletionBegan(de::String const &prefix);
 
 private:
     DENG2_PRIVATE(d)
 };
 
-#endif // DENG_CLIENT_CONSOLECOMMANDWIDGET_H
+#endif // DENG_CLIENT_SCRIPTCOMMANDWIDGET_H

@@ -23,7 +23,9 @@
 #include "SignalAction"
 #include "ui/widgets/buttonwidget.h"
 #include "ui/widgets/consolecommandwidget.h"
+#include "ui/widgets/scriptcommandwidget.h"
 #include "ui/widgets/popupmenuwidget.h"
+#include "ui/widgets/togglewidget.h"
 #include "ui/widgets/logwidget.h"
 #include "ui/clientwindow.h"
 
@@ -37,10 +39,14 @@ using namespace de;
 
 static TimeDelta const LOG_OPEN_CLOSE_SPAN = 0.2;
 
-DENG_GUI_PIMPL(ConsoleWidget)
+static uint const POS_SCRIPT_MODE = 5;
+
+DENG_GUI_PIMPL(ConsoleWidget),
+DENG2_OBSERVES(Variable, Change)
 {
     ButtonWidget *button;
     ConsoleCommandWidget *cmdLine;
+    ScriptCommandWidget *scriptCmd;
     PopupMenuWidget *menu;
     LogWidget *log;
     ScalarRule *horizShift;
@@ -54,6 +60,7 @@ DENG_GUI_PIMPL(ConsoleWidget)
     };
 
     bool opened;
+    bool scriptMode;
     int grabWidth;
     GrabEdge grabHover;
     GrabEdge grabbed;
@@ -62,9 +69,11 @@ DENG_GUI_PIMPL(ConsoleWidget)
         : Base(i),
           button(0),
           cmdLine(0),
+          scriptCmd(0),
           menu(0),
           log(0),
           opened(true),
+          scriptMode(false),
           grabWidth(0),
           grabHover(NotGrabbed),
           grabbed(NotGrabbed)
@@ -74,10 +83,14 @@ DENG_GUI_PIMPL(ConsoleWidget)
         height     = new ScalarRule(0);
 
         grabWidth  = style().rules().rule("unit").valuei();
+
+        App::config()["console.script"].audienceForChange += this;
     }
 
     ~Instance()
     {
+        App::config()["console.script"].audienceForChange -= this;
+
         releaseRef(horizShift);
         releaseRef(width);
         releaseRef(height);
@@ -159,14 +172,67 @@ DENG_GUI_PIMPL(ConsoleWidget)
 
         return false;
     }
+
+    void variableValueChanged(Variable &, Value const &newValue)
+    {
+        // We are listening to the 'console.script' variable.
+        setScriptMode(newValue.isTrue());
+    }
+
+    void setScriptMode(bool yes)
+    {
+        CommandWidget *current;
+        CommandWidget *next;
+
+        if(scriptMode)
+        {
+            current = scriptCmd;
+        }
+        else
+        {
+            current = cmdLine;
+        }
+
+        if(yes)
+        {
+            next = scriptCmd;
+        }
+        else
+        {
+            next = cmdLine;
+        }
+
+        // Update the prompt to reflect the mode.
+        button->setText(yes? _E(b) "$" : _E(b) ">");
+
+        // Bottom of the console must follow the active command line height.
+        self.rule().setInput(Rule::Bottom, next->rule().top() - style().rules().rule("unit"));
+
+        if(scriptMode == yes)
+        {
+            return; // No need to change anything else.
+        }
+
+        scriptCmd->show(yes);        
+        scriptCmd->enable(yes);
+        cmdLine->show(!yes);
+        cmdLine->disable(yes);
+
+        // Transfer focus.
+        if(current->hasFocus())
+        {
+            root().setFocus(next);
+        }
+
+        scriptMode = yes;
+
+        emit self.commandModeChanged();
+    }
 };
 
 ConsoleWidget::ConsoleWidget() : GuiWidget("console"), d(new Instance(this))
 {
-    Rule const &unit = style().rules().rule("unit");
-
     d->button = new ButtonWidget;
-    d->button->setText(_E(b) ">");
     d->button->setAction(new SignalAction(this, SLOT(openMenu())));
     add(d->button);
 
@@ -174,16 +240,14 @@ ConsoleWidget::ConsoleWidget() : GuiWidget("console"), d(new Instance(this))
     d->cmdLine->setEmptyContentHint(tr("Enter commands here") /*  " _E(r)_E(l)_E(t) "SHIFT-ESC" */);
     add(d->cmdLine);
 
-    connect(d->cmdLine, SIGNAL(gotFocus()), this, SLOT(openLog()));
-    connect(d->cmdLine, SIGNAL(commandEntered(de::String)), this, SLOT(commandWasEntered(de::String)));
-
-    // Keep the button at the bottom of the expanding command line.
-    //consoleButton->rule().setInput(Rule::Bottom, d->cmdLine->rule().bottom());
+    d->scriptCmd = new ScriptCommandWidget("script");
+    d->scriptCmd->setEmptyContentHint(tr("Enter scripts here"));
+    add(d->scriptCmd);
 
     d->button->setOpacity(.75f);
     d->cmdLine->setOpacity(.75f);
+    d->scriptCmd->setOpacity(.75f);
 
-    // The Log is attached to the top of the command line.
     d->log = new LogWidget("log");
     d->log->rule()
             .setInput(Rule::Left,   rule().left())
@@ -195,14 +259,11 @@ ConsoleWidget::ConsoleWidget() : GuiWidget("console"), d(new Instance(this))
     // Blur the log background.
     enableBlur();
 
-    connect(d->log, SIGNAL(contentHeightIncreased(int)), this, SLOT(logContentHeightIncreased(int)));
-
     // Width of the console is defined by the style.
     rule()
-        .setInput(Rule::Width, OperatorRule::minimum(ClientWindow::main().root().viewWidth(),
-                                                     OperatorRule::maximum(*d->width, Const(320))))
         .setInput(Rule::Height, *d->height)
-        .setInput(Rule::Bottom, d->cmdLine->rule().top() - unit);
+        .setInput(Rule::Width, OperatorRule::minimum(ClientWindow::main().root().viewWidth(),
+                                                     OperatorRule::maximum(*d->width, Const(320))));
 
     closeLog();
 
@@ -215,13 +276,26 @@ ConsoleWidget::ConsoleWidget() : GuiWidget("console"), d(new Instance(this))
             << new ui::ActionItem(tr("Clear Log"), new CommandAction("clear"))
             << new ui::ActionItem(tr("Show Full Log"), new SignalAction(this, SLOT(showFullLog())))
             << new ui::ActionItem(tr("Scroll to Bottom"), new SignalAction(d->log, SLOT(scrollToBottom())))
-            << new ui::VariableToggleItem(tr("Go to Bottom on Enter"), App::config()["console.snap"]);
+            << new ui::VariableToggleItem(tr("Go to Bottom on Enter"), App::config()["console.snap"])
+            << new ui::Item(ui::Item::Separator)
+            << new ui::VariableToggleItem(tr("Doomsday Script"), App::config()["console.script"]);
 
     add(d->menu);
 
+    d->setScriptMode(App::config().getb("console.script"));
+
     // Signals.
+    connect(d->log, SIGNAL(contentHeightIncreased(int)), this, SLOT(logContentHeightIncreased(int)));
+
     connect(d->cmdLine, SIGNAL(gotFocus()), this, SLOT(setFullyOpaque()));
+    connect(d->cmdLine, SIGNAL(gotFocus()), this, SLOT(openLog()));
     connect(d->cmdLine, SIGNAL(lostFocus()), this, SLOT(commandLineFocusLost()));
+    connect(d->cmdLine, SIGNAL(commandEntered(de::String)), this, SLOT(commandWasEntered(de::String)));
+
+    connect(d->scriptCmd, SIGNAL(gotFocus()), this, SLOT(setFullyOpaque()));
+    connect(d->scriptCmd, SIGNAL(gotFocus()), this, SLOT(openLog()));
+    connect(d->scriptCmd, SIGNAL(lostFocus()), this, SLOT(commandLineFocusLost()));
+    connect(d->scriptCmd, SIGNAL(commandEntered(de::String)), this, SLOT(commandWasEntered(de::String)));
 }
 
 ButtonWidget &ConsoleWidget::button()
@@ -229,8 +303,9 @@ ButtonWidget &ConsoleWidget::button()
     return *d->button;
 }
 
-ConsoleCommandWidget &ConsoleWidget::commandLine()
+CommandWidget &ConsoleWidget::commandLine()
 {
+    if(d->scriptMode) return *d->scriptCmd;
     return *d->cmdLine;
 }
 
@@ -384,18 +459,20 @@ void ConsoleWidget::setFullyOpaque()
 {
     d->button->setOpacity(1, .25f);
     d->cmdLine->setOpacity(1, .25f);
+    d->scriptCmd->setOpacity(1, .25f);
 }
 
 void ConsoleWidget::commandLineFocusLost()
 {
     d->button->setOpacity(.75f, .25f);
     d->cmdLine->setOpacity(.75f, .25f);
+    d->scriptCmd->setOpacity(.75f, .25f);
     closeLog();
 }
 
 void ConsoleWidget::focusOnCommandLine()
 {
-    root().setFocus(d->cmdLine);
+    root().setFocus(&commandLine());
 }
 
 void ConsoleWidget::openMenu()

@@ -406,6 +406,7 @@ DENG_HEADERS += \
     include/ui/widgets/busywidget.h \
     include/ui/widgets/buttonwidget.h \
     include/ui/widgets/choicewidget.h \
+    include/ui/widgets/commandwidget.h \
     include/ui/widgets/consolecommandwidget.h \
     include/ui/widgets/consolewidget.h \
     include/ui/widgets/cvarchoicewidget.h \
@@ -426,6 +427,7 @@ DENG_HEADERS += \
     include/ui/widgets/popupmenuwidget.h \
     include/ui/widgets/popupwidget.h \
     include/ui/widgets/progresswidget.h \
+    include/ui/widgets/scriptcommandwidget.h \
     include/ui/widgets/scrollareawidget.h \
     include/ui/widgets/sliderwidget.h \
     include/ui/widgets/taskbarwidget.h \
@@ -705,6 +707,7 @@ SOURCES += \
     src/ui/dialogs/messagedialog.cpp \
     src/ui/dialogs/networksettingsdialog.cpp \
     src/ui/dialogs/videosettingsdialog.cpp \
+    src/ui/dialogs/renderersettingsdialog.cpp \
     src/ui/editors/rendererappearanceeditor.cpp \
     src/ui/fi_main.cpp \
     src/ui/finaleinterpreter.cpp \
@@ -739,6 +742,7 @@ SOURCES += \
     src/ui/widgets/busywidget.cpp \
     src/ui/widgets/buttonwidget.cpp \
     src/ui/widgets/choicewidget.cpp \
+    src/ui/widgets/commandwidget.cpp \
     src/ui/widgets/consolecommandwidget.cpp \
     src/ui/widgets/consolewidget.cpp \
     src/ui/widgets/cvarchoicewidget.cpp \
@@ -758,7 +762,7 @@ SOURCES += \
     src/ui/widgets/popupmenuwidget.cpp \
     src/ui/widgets/popupwidget.cpp \
     src/ui/widgets/progresswidget.cpp \
-    src/ui/dialogs/renderersettingsdialog.cpp \
+    src/ui/widgets/scriptcommandwidget.cpp \
     src/ui/widgets/scrollareawidget.cpp \
     src/ui/widgets/sliderwidget.cpp \
     src/ui/widgets/taskbarwidget.cpp \

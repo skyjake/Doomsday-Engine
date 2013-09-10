@@ -42,7 +42,7 @@ public:
     ConsoleWidget();
 
     ButtonWidget &button();
-    ConsoleCommandWidget &commandLine();
+    CommandWidget &commandLine();
     LogWidget &log();
 
     de::Rule const &shift();
@@ -62,6 +62,9 @@ public:
     void viewResized();
     void update();
     bool handleEvent(de::Event const &event);
+
+signals:
+    void commandModeChanged();
 
 public slots:
     void openLog();

@@ -35,6 +35,8 @@
 
 using namespace de;
 
+static String const CUSTOM_PROFILE = "Custom";
+
 DENG2_PIMPL(SettingsRegister),
 DENG2_OBSERVES(App, GameUnload),
 DENG2_OBSERVES(App, GameChange)
@@ -95,7 +97,7 @@ DENG2_OBSERVES(App, GameChange)
     String persistentName;
     String current;
 
-    Instance(Public *i) : Base(i), current("Custom")
+    Instance(Public *i) : Base(i), current(CUSTOM_PROFILE)
     {
         App::app().audienceForGameUnload += this;
         App::app().audienceForGameChange += this;
@@ -373,10 +375,25 @@ DENG2_OBSERVES(App, GameChange)
             loadProfilesFromInfo(*file);
         }
 
+        // Make sure we at least have the Custom profile.
+        if(profiles.isEmpty())
+        {
+            addProfile(CUSTOM_PROFILE);
+
+            // Use whatever values are currently in effect.
+            fetch(CUSTOM_PROFILE);
+        }
+
         if(App::config().names().has(confName()))
         {
             // Update current profile.
             current = App::config()[confName()].value().asText();
+
+            if(!profiles.contains(current))
+            {
+                // Fall back to the one profile we know is available.
+                current = CUSTOM_PROFILE;
+            }
 
             // Make sure these are the values now in use.
             apply(current);

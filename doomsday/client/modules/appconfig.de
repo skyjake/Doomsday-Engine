@@ -107,4 +107,6 @@ def setDefaults(d)
     # Console defaults.
     record d.console
     d.console.snap = True
+    d.console.script = False
+
     

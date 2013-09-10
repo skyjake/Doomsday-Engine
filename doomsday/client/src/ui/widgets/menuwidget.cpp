@@ -186,10 +186,14 @@ public ContextWidgetOrganizer::IWidgetFactory
         else if(item.semantics().testFlag(Item::ShownAsToggle))
         {
             // We know how to present variable toggles.
-            VariableToggleItem const *varTog = dynamic_cast<VariableToggleItem const *>(&item);
-            if(varTog)
+            if(VariableToggleItem const *varTog = item.maybeAs<VariableToggleItem>())
             {
                 return new VariableToggleWidget(varTog->variable());
+            }
+            else
+            {
+                // A regular toggle.
+                return new ToggleWidget;
             }
         }
         return 0;
@@ -207,6 +211,15 @@ public ContextWidgetOrganizer::IWidgetFactory
                 if(act->action())
                 {
                     b.setAction(act->action()->duplicate());
+                }
+            }
+            else if(item.semantics().testFlag(Item::ShownAsToggle))
+            {
+                ToggleWidget &t = widget.as<ToggleWidget>();
+                t.setText(act->label());
+                if(act->action())
+                {
+                    t.setAction(act->action()->duplicate());
                 }
             }
         }
