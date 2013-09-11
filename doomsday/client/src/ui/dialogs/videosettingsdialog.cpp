@@ -50,6 +50,7 @@ DENG2_OBSERVES(PersistentCanvasWindow, AttributeChange)
     CVarToggleWidget *fsaa;
     CVarToggleWidget *vsync;
     ChoiceWidget *modes;
+    ButtonWidget *windowButton;
 #ifdef USE_COLOR_DEPTH_CHOICE
     ChoiceWidget *depths;
 #endif
@@ -58,15 +59,16 @@ DENG2_OBSERVES(PersistentCanvasWindow, AttributeChange)
     {
         ScrollAreaWidget &area = self.area();
 
-        area.add(showFps    = new VariableToggleWidget(App::config()["window.main.showFps"]));
-        area.add(fullscreen = new ToggleWidget);
-        area.add(maximized  = new ToggleWidget);
-        area.add(centered   = new ToggleWidget);
-        area.add(fsaa       = new CVarToggleWidget("vid-fsaa"));
-        area.add(vsync      = new CVarToggleWidget("vid-vsync"));
-        area.add(modes      = new ChoiceWidget);
+        area.add(showFps      = new VariableToggleWidget(App::config()["window.main.showFps"]));
+        area.add(fullscreen   = new ToggleWidget);
+        area.add(maximized    = new ToggleWidget);
+        area.add(centered     = new ToggleWidget);
+        area.add(fsaa         = new CVarToggleWidget("vid-fsaa"));
+        area.add(vsync        = new CVarToggleWidget("vid-vsync"));
+        area.add(modes        = new ChoiceWidget);
+        area.add(windowButton = new ButtonWidget);
 #ifdef USE_COLOR_DEPTH_CHOICE
-        area.add(depths     = new ChoiceWidget);
+        area.add(depths       = new ChoiceWidget);
 #endif
         win.audienceForAttributeChange += this;
     }
@@ -84,6 +86,8 @@ DENG2_OBSERVES(PersistentCanvasWindow, AttributeChange)
         fullscreen->setActive(win.isFullScreen());
         maximized->setActive(win.isMaximized());
         centered->setActive(win.isCentered());
+
+        windowButton->enable(!win.isFullScreen() && !win.isMaximized());
 
         fsaa->updateFromCVar();
         vsync->updateFromCVar();
@@ -193,6 +197,10 @@ VideoSettingsDialog::VideoSettingsDialog(String const &name)
             << new DialogButtonItem(DialogWidget::Action, tr("Reset to Defaults"),
                                     new SignalAction(this, SLOT(resetToDefaults())));
 
+    d->windowButton->setImage(style().images().image("window.icon"));
+    d->windowButton->setOverrideImageSize(style().fonts().font("default").height().valuei());
+    d->windowButton->setAction(new SignalAction(this, SLOT(showWindowMenu())));
+
     // Layout all widgets.
     Rule const &gap = style().rules().rule("dialog.gap");
 
@@ -210,7 +218,14 @@ VideoSettingsDialog::VideoSettingsDialog(String const &name)
     GridLayout modeLayout(d->vsync->rule().left(), d->vsync->rule().bottom() + gap);
     modeLayout.setGridSize(2, 0);
     modeLayout.setColumnAlignment(0, ui::AlignRight);
-    modeLayout << *modeLabel << *d->modes;
+    modeLayout << *modeLabel;
+
+    modeLayout.append(*d->modes, d->modes->rule().width() + d->windowButton->rule().width());
+
+    d->windowButton->rule()
+            .setInput(Rule::Top,  d->modes->rule().top())
+            .setInput(Rule::Left, d->modes->rule().right());
+
 #ifdef USE_COLOR_DEPTH_CHOICE
     modeLayout << *colorLabel << *d->depths;
 #endif
@@ -268,4 +283,30 @@ void VideoSettingsDialog::showColorAdjustments()
 {
     d->win.showColorAdjustments();
     d->win.taskBar().closeConfigMenu();
+}
+
+void VideoSettingsDialog::showWindowMenu()
+{
+    PopupMenuWidget *menu = new PopupMenuWidget;
+    menu->setDeleteAfterDismissed(true);
+    add(menu);
+
+    menu->setAnchorAndOpeningDirection(d->windowButton->rule(), ui::Up);
+    menu->items()
+            << new ActionItem(tr("Apply to Window"),
+                              new SignalAction(this, SLOT(applyModeToWindow())));
+    menu->open();
+}
+
+void VideoSettingsDialog::applyModeToWindow()
+{
+    QPoint const res = d->modes->selectedItem().data().toPoint();
+
+    int attribs[] = {
+        ClientWindow::Width,  res.x(),
+        ClientWindow::Height, res.y(),
+        ClientWindow::End
+    };
+
+    d->win.changeAttributes(attribs);
 }
