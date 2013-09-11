@@ -188,9 +188,19 @@ void Canvas::setParent(CanvasWindow *parent)
 
 QImage Canvas::grabImage(QSize const &outputSize)
 {
+    return grabImage(rect(), outputSize);
+}
+
+QImage Canvas::grabImage(QRect const &area, QSize const &outputSize)
+{
     // We will be grabbing the visible, latest complete frame.
     glReadBuffer(GL_FRONT);
     QImage grabbed = grabFrameBuffer(); // no alpha
+    if(area.size() != grabbed.size())
+    {
+        // Just take a portion of the full image.
+        grabbed = grabbed.copy(area);
+    }
     glReadBuffer(GL_BACK);
     if(outputSize.isValid())
     {
@@ -201,7 +211,12 @@ QImage Canvas::grabImage(QSize const &outputSize)
 
 GLuint Canvas::grabAsTexture(QSize const &outputSize)
 {
-    return bindTexture(grabImage(outputSize), GL_TEXTURE_2D, GL_RGB,
+    return grabAsTexture(rect(), outputSize);
+}
+
+GLuint Canvas::grabAsTexture(QRect const &area, QSize const &outputSize)
+{
+    return bindTexture(grabImage(area, outputSize), GL_TEXTURE_2D, GL_RGB,
                        QGLContext::LinearFilteringBindOption);
 }
 

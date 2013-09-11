@@ -24,6 +24,7 @@
 #include <QMainWindow>
 #include <de/Canvas>
 #include <de/Vector>
+#include <de/Rectangle>
 #include <de/NativePath>
 
 #ifdef WIN32
@@ -132,6 +133,8 @@ public:
      * @return OpenGL texture name. Caller is reponsible for deleting the texture.
      */
     duint grabAsTexture(GrabMode grabMode = GrabNormal) const;
+
+    duint grabAsTexture(de::Rectanglei const &area, GrabMode mode = GrabNormal) const;
 
     /**
      * Grabs the contents of the window and saves it into a native image file.

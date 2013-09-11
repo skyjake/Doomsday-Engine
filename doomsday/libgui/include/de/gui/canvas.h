@@ -102,6 +102,17 @@ public:
     QImage grabImage(QSize const &outputSize = QSize());
 
     /**
+     * Grabs a portion of the contents of the canvas framebuffer.
+     *
+     * @param area        Portion to grab.
+     * @param outputSize  If specified, the contents will be scaled to this size before
+     *                    the image is returned.
+     *
+     * @return  Framebuffer contents (no alpha channel).
+     */
+    QImage grabImage(QRect const &area, QSize const &outputSize = QSize());
+
+    /**
      * Grabs the contents of the canvas framebuffer and creates an OpenGL
      * texture out of it.
      *
@@ -111,6 +122,8 @@ public:
      * @return  OpenGL texture name. Caller is responsible for deleting the texture.
      */
     GLuint grabAsTexture(QSize const &outputSize = QSize());
+
+    GLuint grabAsTexture(QRect const &area, QSize const &outputSize = QSize());
 
     /**
      * Returns the size of the canvas in pixels.

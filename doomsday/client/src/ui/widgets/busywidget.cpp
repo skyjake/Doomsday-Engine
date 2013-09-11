@@ -147,7 +147,10 @@ void BusyWidget::grabTransitionScreenshot()
     GLTexture::Size size(rule().width().valuei() / 2,
                          rule().height().valuei() / 2);
 
-    GLuint grabbed = root().window().grabAsTexture(ClientWindow::GrabHalfSized);
+    // Grab the game view's rectangle, as that's where the transition will be drawn.
+    GLuint grabbed = root().window().grabAsTexture(
+                root().window().game().rule().recti(),
+                ClientWindow::GrabHalfSized);
 
     d->transitionTex.reset(new GLTexture(grabbed, size));
     d->uTex = *d->transitionTex;

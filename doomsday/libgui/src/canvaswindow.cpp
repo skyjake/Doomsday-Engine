@@ -226,6 +226,17 @@ duint CanvasWindow::grabAsTexture(GrabMode mode) const
                 mode == GrabHalfSized? QSize(width()/2, height()/2) : QSize());
 }
 
+duint CanvasWindow::grabAsTexture(Rectanglei const &area, GrabMode mode) const
+{
+    QSize size;
+    if(mode == GrabHalfSized)
+    {
+        size = QSize(width()/2, height()/2);
+    }
+    return d->canvas->grabAsTexture(
+                QRect(area.left(), area.top(), area.width(), area.height()), size);
+}
+
 bool CanvasWindow::grabToFile(NativePath const &path) const
 {
     return d->canvas->grabImage().save(path.toString());
