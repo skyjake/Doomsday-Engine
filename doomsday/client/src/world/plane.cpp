@@ -226,39 +226,39 @@ coord_t Plane::heightSmoothedDelta() const
 
 void Plane::lerpSmoothedHeight()
 {
-    coord_t newSmoothedHeight = d->height + d->heightSmoothedDelta;
-    if(!de::fequal(d->heightSmoothed, newSmoothedHeight))
+    // Interpolate.
+    d->heightSmoothedDelta = d->oldHeight[0] * (1 - frameTimePos)
+                           + d->height * frameTimePos - d->height;
+
+    coord_t newHeightSmoothed = d->height + d->heightSmoothedDelta;
+    if(!de::fequal(d->heightSmoothed, newHeightSmoothed))
     {
         coord_t oldHeightSmoothed = d->heightSmoothed;
-
-        d->heightSmoothed = newSmoothedHeight;
-        d->heightSmoothedDelta = d->oldHeight[0] * (1 - frameTimePos) + d->height * frameTimePos - d->height;
-
+        d->heightSmoothed = newHeightSmoothed;
         d->notifySmoothedHeightChanged(oldHeightSmoothed);
     }
 }
 
 void Plane::resetSmoothedHeight()
 {
-    coord_t newSmoothedHeight = d->oldHeight[0] = d->oldHeight[1] = d->height;
-    if(!de::fequal(d->heightSmoothed, newSmoothedHeight))
+    // Reset interpolation.
+    d->heightSmoothedDelta = 0;
+
+    coord_t newHeightSmoothed = d->oldHeight[0] = d->oldHeight[1] = d->height;
+    if(!de::fequal(d->heightSmoothed, newHeightSmoothed))
     {
         coord_t oldHeightSmoothed = d->heightSmoothed;
-
-        d->heightSmoothed = newSmoothedHeight;
-        d->heightSmoothedDelta = 0;
-
+        d->heightSmoothed = newHeightSmoothed;
         d->notifySmoothedHeightChanged(oldHeightSmoothed);
     }
 }
 
 void Plane::updateHeightTracking()
 {
-    // $smoothplane
     d->oldHeight[0] = d->oldHeight[1];
     d->oldHeight[1] = d->height;
 
-    if(d->oldHeight[0] != d->oldHeight[1])
+    if(!de::fequal(d->oldHeight[0], d->oldHeight[1]))
     {
         if(de::abs(d->oldHeight[0] - d->oldHeight[1]) >= MAX_SMOOTH_MOVE)
         {
