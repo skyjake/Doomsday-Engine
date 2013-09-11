@@ -287,7 +287,7 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
      * Set up items for the config and DE menus. Some of these are shown/hidden
      * depending on whether a game is loaded.
      */
-    d->configMenu->menu().items()
+    d->configMenu->items()
             << new ui::ActionItem(ui::Item::ShownAsButton, tr("Renderer"),
                                   new SignalAction(this, SLOT(showRendererSettings())))
             << new ui::Item(ui::Item::Separator)
@@ -303,7 +303,7 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
             << new ui::ActionItem(ui::Item::ShownAsButton, tr("Updater..."),
                                   new SignalAction(this, SLOT(showUpdaterSettings())));
 
-    d->mainMenu->menu().items()
+    d->mainMenu->items()
             << unloadMenu // hidden with null-game
             << new ui::Item(ui::Item::Separator) // hidden with null-game
             << new ui::ActionItem(tr("About Doomsday"), new SignalAction(this, SLOT(showAbout())))

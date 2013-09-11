@@ -66,8 +66,8 @@ DENG2_OBSERVES(ContextWidgetOrganizer, WidgetUpdate)
         self.setFont("choice.selected");
 
         choices = new PopupMenuWidget;
-        choices->menu().items().audienceForAddition += this;
-        choices->menu().items().audienceForRemoval += this;
+        choices->items().audienceForAddition += this;
+        choices->items().audienceForRemoval += this;
         choices->menu().organizer().audienceForWidgetCreation += this;
         choices->menu().organizer().audienceForWidgetUpdate += this;
         self.add(choices);
@@ -105,7 +105,7 @@ DENG2_OBSERVES(ContextWidgetOrganizer, WidgetUpdate)
 
     Data const &items() const
     {
-        return choices->menu().items();
+        return choices->items();
     }
 
     bool isValidSelection() const
@@ -226,5 +226,5 @@ void ChoiceWidget::openPopup()
 
 ui::Data &ChoiceWidget::items()
 {
-    return d->choices->menu().items();
+    return d->choices->items();
 }

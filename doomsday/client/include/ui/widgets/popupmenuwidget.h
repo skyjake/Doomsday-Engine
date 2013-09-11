@@ -32,6 +32,8 @@ public:
 
     MenuWidget &menu() const;
 
+    ui::Data &items() { return menu().items(); }
+
     // Events.
     void update();
 

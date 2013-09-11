@@ -247,11 +247,11 @@ void RendererSettingsDialog::showAppearanceMenu()
 
     PopupMenuWidget *popup = new PopupMenuWidget;
     popup->set(popup->background().withSolidFillOpacity(1));
-    popup->menu().items()
+    popup->items()
             << new ActionItem(tr("Edit"), new SignalAction(this, SLOT(editProfile())))
             << new ActionItem(tr("Rename..."), new SignalAction(this, SLOT(renameProfile())))
             << new Item(Item::Separator)
-            << new ActionItem(tr("Add Duplicate..."), new SignalAction(this, SLOT(duplicateProfile())))
+            << new ActionItem(tr("Duplicate..."), new SignalAction(this, SLOT(duplicateProfile())))
             << new Item(Item::Separator)
             << new ActionItem(tr("Reset to Defaults..."), new SignalAction(this, SLOT(resetProfile())))
             << new ActionItem(tr("Delete..."), new SignalAction(this, SLOT(deleteProfile())));

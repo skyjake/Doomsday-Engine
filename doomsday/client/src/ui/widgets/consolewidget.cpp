@@ -272,7 +272,7 @@ ConsoleWidget::ConsoleWidget() : GuiWidget("console"), d(new Instance(this))
     d->menu->setAnchor(d->button->rule().left() + d->button->rule().width() / 2,
                        d->button->rule().top());
 
-    d->menu->menu().items()
+    d->menu->items()
             << new ui::ActionItem(tr("Clear Log"), new CommandAction("clear"))
             << new ui::ActionItem(tr("Show Full Log"), new SignalAction(this, SLOT(showFullLog())))
             << new ui::ActionItem(tr("Scroll to Bottom"), new SignalAction(d->log, SLOT(scrollToBottom())))
