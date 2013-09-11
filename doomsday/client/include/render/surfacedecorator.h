@@ -69,12 +69,6 @@ private:
 /// @todo Refactor away --------------------------------------------------------
 
 /**
- * Re-initialize the decoration pool (might be called during a map load or when
- * beginning a new render frame).
- */
-void Rend_DecorReset();
-
-/**
  * Create lumobjs for all decorations who want them.
  */
 void Rend_DecorAddLuminous();

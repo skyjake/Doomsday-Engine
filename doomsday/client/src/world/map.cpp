@@ -1035,7 +1035,6 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
     {
         if(decorator.isNull())
         {
-            Rend_DecorReset();
             decorator.reset(new SurfaceDecorator);
         }
         return *decorator;
@@ -2925,7 +2924,6 @@ void Map::worldFrameBegins(World &world, bool resetNextViewer)
         R_InitForNewFrame();
 
         // Generate surface decorations for the frame.
-        Rend_DecorReset();
         if(useLightDecorations)
         {
             d->surfaceDecorator().redecorate();

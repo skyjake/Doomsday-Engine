@@ -27,10 +27,6 @@
 #include "MaterialSnapshot"
 
 class Lumobj;
-namespace de
-{
-class Map;
-}
 class Surface;
 
 /// No decorations are visible beyond this.
@@ -42,14 +38,8 @@ class Surface;
 class Decoration
 {
 public:
-    /// Required source is missing. @ingroup errors
-    //DENG2_ERROR(MissingSourceError);
-
     /// Required surface is missing. @ingroup errors
     DENG2_ERROR(MissingSurfaceError);
-
-public: /// @todo remove me.
-    //Decoration *next;
 
 public:
     /**
@@ -58,8 +48,7 @@ public:
      * @param source  Source of the decoration (a material).
      * @param origin  Origin of the decoration in map space.
      */
-    Decoration(/*SurfaceDecorSource *source = 0*/
-               de::MaterialSnapshotDecoration &source,
+    Decoration(de::MaterialSnapshotDecoration &source,
                de::Vector3d const &origin = de::Vector3d());
 
     /**
@@ -78,13 +67,6 @@ public:
     static float brightFactor();
 
     /**
-     * Returns @c true iff a source is defined for the decoration.
-     *
-     * @see source(), setSource()
-     */
-    //bool hasSource() const;
-
-    /**
      * Returns the source of the decoration.
      *
      * @see hasSource(), setSource()
@@ -93,13 +75,6 @@ public:
 
     /// @copydoc source()
     de::MaterialSnapshotDecoration const &source() const;
-
-    /**
-     * Change the attributed source of the decoration.
-     *
-     * @param newSource
-     */
-    //void setSource(SurfaceDecorSource *newSource);
 
     /**
      * Returns @c true iff a surface is attributed for the decoration.
@@ -123,38 +98,36 @@ public:
      */
     void setSurface(Surface *newSurface);
 
-    /*de::Map &map();
-
-    de::Map const &map() const;*/
-
+    /**
+     * Returns the origin of the decoration in map space.
+     */
     de::Vector3d const &origin() const;
 
+    /**
+     * Returns the map BSP leaf at the origin of decoration (result cached).
+     * A map surface must be attributed.
+     *
+     * @see setSurface(), hasSurface()
+     */
     BspLeaf &bspLeafAtOrigin() const;
 
     /**
-     * Generates a lumobj for the decoration.
+     * Generates a lumobj for the decoration. A map surface must be attributed.
+     *
+     * @see setSurface(), hasSurface()
      */
     void generateLumobj();
 
     /**
-     * Generates a VSPR_FLARE vissprite for the decoration.
+     * Generates a VSPR_FLARE vissprite for the decoration. A map surface must
+     * be attributed.
+     *
+     * @see setSurface(), hasSurface()
      */
     void generateFlare();
 
 private:
-    float lightLevelAtOrigin() const;
-
-    //de::MaterialSnapshotDecoration const &materialDecoration() const;
-
-    Lumobj *lumobj() const;
-
-    //SurfaceDecorSource *_source; ///< Attributed source (if any, not owned).
-    de::MaterialSnapshotDecoration *_source;
-    de::Vector3d _origin;
-    mutable BspLeaf *_bspLeaf;   ///< BSP leaf at @ref origin in the map (not owned).
-    Surface *_surface;
-    int _lumIdx;                 ///< Generated lumobj index (or Lumobj::NoIndex).
-    float _fadeMul;              ///< Intensity multiplier (lumobj and flare).
+    DENG2_PRIVATE(d)
 };
 
 #endif // DENG_CLIENT_RENDER_DECORATION_H

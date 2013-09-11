@@ -34,7 +34,6 @@
 #include "Material"
 #ifdef __CLIENT__
 #  include "Decoration"
-#  include "MaterialSnapshot"
 #endif
 #include "uri.hh"
 
@@ -84,35 +83,6 @@ public:
     static int const MAX_SMOOTH_MATERIAL_MOVE = 8; ///< Maximum speed for a smoothed material offset.
 
 #ifdef __CLIENT__
-    /*struct DecorSource
-    {
-        Surface *_surface;
-        de::MaterialSnapshotDecoration *_matDecor; ///< @todo reference by index?
-        de::Vector3d _origin; ///< Map space origin.
-
-        DecorSource(Surface &surface,
-                    de::MaterialSnapshotDecoration &matDecor,
-                    de::Vector3d const &origin = de::Vector3d())
-            : _surface(&surface), _matDecor(&matDecor), _origin(origin)
-        {}
-
-        Surface &surface() const
-        {
-            DENG_ASSERT(_surface != 0);
-            return *_surface;
-        }
-
-        de::MaterialSnapshotDecoration &materialDecoration() const
-        {
-            return *_matDecor;
-        }
-
-        de::Vector3d const &origin() const
-        {
-            return _origin;
-        }
-    };*/
-
     typedef QList<Decoration *> Decorations;
 
 public: /// @todo Does not belong at this level
@@ -490,11 +460,5 @@ protected:
 private:
     DENG2_PRIVATE(d)
 };
-
-/*
-#ifdef __CLIENT__
-typedef Surface::DecorSource SurfaceDecorSource;
-#endif
-*/
 
 #endif // DENG_WORLD_SURFACE_H

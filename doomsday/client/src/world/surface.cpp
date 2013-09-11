@@ -50,11 +50,11 @@ DENG2_PIMPL(Surface)
     Vector2f materialOrigin;       ///< @em sharp surface space material origin.
 
 #ifdef __CLIENT__
+    Decorations decorations;       ///< Surface (light) decorations (owned).
+
     Vector2f oldMaterialOrigin[2];        ///< Old @em sharp surface space material origins, for smoothing.
     Vector2f materialOriginSmoothed;      ///< @em smoothed surface space material origin.
     Vector2f materialOriginSmoothedDelta; ///< Delta between @em sharp and @em smoothed.
-
-    Decorations decorations;       ///< Surface (light) decorations.
 #endif
 
     /// Surface color tint.

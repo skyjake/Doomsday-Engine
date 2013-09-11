@@ -46,59 +46,49 @@ static float checkLightLevel(float lightlevel, float min, float max)
     return de::clamp(0.f, (lightlevel - min) / float(max - min), 1.f);
 }
 
-Decoration::Decoration(MaterialSnapshotDecoration &source, const Vector3d &origin)
-    : //next(0),
-      _source(&source),
-      _origin(origin),
-      _bspLeaf(0),
-      _surface(0),
-      _lumIdx(Lumobj::NoIndex),
-      _fadeMul(1)
-{}
-
-/*bool Decoration::hasSource() const
+DENG2_PIMPL_NOREF(Decoration)
 {
-    return _source != 0;
-}*/
+    MaterialSnapshotDecoration *source;
+    Vector3d origin;
+    BspLeaf *bspLeaf;   ///< BSP leaf at @ref origin in the map (not owned).
+    Surface *surface;
+    int lumIdx;         ///< Generated lumobj index (or Lumobj::NoIndex).
+    float fadeMul;      ///< Intensity multiplier (lumobj and flare).
+
+    Instance(MaterialSnapshotDecoration &source, Vector3d const &origin)
+        : source(&source),
+          origin(origin),
+          bspLeaf(0),
+          surface(0),
+          lumIdx(Lumobj::NoIndex),
+          fadeMul(1)
+    {}
+};
+
+Decoration::Decoration(MaterialSnapshotDecoration &source, Vector3d const &origin)
+    : d(new Instance(source, origin))
+{}
 
 MaterialSnapshotDecoration &Decoration::source()
 {
-    //if(_source != 0)
-    {
-        return *_source;
-    }
-    /// @throw MissingSourceError Attempted with no source attributed.
-    //throw MissingSourceError("Decoration::source", "No source is attributed");
+    return *d->source;
 }
 
 MaterialSnapshotDecoration const &Decoration::source() const
 {
-    //if(_source != 0)
-    {
-        return *_source;
-    }
-    /// @throw MissingSourceError Attempted with no source attributed.
-    //throw MissingSourceError("Decoration::source", "No source is attributed");
+    return *d->source;
 }
-
-/*void Decoration::setSource(SurfaceDecorSource *newSource)
-{
-    _source = newSource;
-    // Forget the previously determnined BSP leaf and generated lumobj.
-    _bspLeaf = 0;
-    _lumIdx = Lumobj::NoIndex;
-}*/
 
 bool Decoration::hasSurface() const
 {
-    return _surface != 0;
+    return d->surface != 0;
 }
 
 Surface &Decoration::surface()
 {
-    if(_surface != 0)
+    if(d->surface != 0)
     {
-        return *_surface;
+        return *d->surface;
     }
     /// @throw MissingSurfaceError Attempted with no surface attributed.
     throw MissingSurfaceError("Decoration::surface", "No surface is attributed");
@@ -106,9 +96,9 @@ Surface &Decoration::surface()
 
 Surface const &Decoration::surface() const
 {
-    if(_surface != 0)
+    if(d->surface != 0)
     {
-        return *_surface;
+        return *d->surface;
     }
     /// @throw MissingSurfaceError Attempted with no surface attributed.
     throw MissingSurfaceError("Decoration::surface", "No surface is attributed");
@@ -116,81 +106,66 @@ Surface const &Decoration::surface() const
 
 void Decoration::setSurface(Surface *newSurface)
 {
-    _surface = newSurface;
-    // Forget the previously determnined BSP leaf and generated lumobj.
-    //_bspLeaf = 0;
-    //_lumIdx = Lumobj::NoIndex;
+    d->surface = newSurface;
 }
-
-/*Map &Decoration::map()
-{
-    return surface().map();
-}
-
-Map const &Decoration::map() const
-{
-    return surface().map();
-}*/
 
 Vector3d const &Decoration::origin() const
 {
-    return _origin;
+    return d->origin;
 }
 
 BspLeaf &Decoration::bspLeafAtOrigin() const
 {
-    if(!_bspLeaf)
+    if(!d->bspLeaf)
     {
         // Determnine this now.
-        _bspLeaf = &surface().map().bspLeafAt(_origin);
+        d->bspLeaf = &surface().map().bspLeafAt(d->origin);
     }
-    return *_bspLeaf;
+    return *d->bspLeaf;
 }
 
 void Decoration::generateLumobj()
 {
-    _lumIdx = Lumobj::NoIndex;
-
-    //MaterialSnapshotDecoration const &_source = materialDecoration();
+    d->lumIdx = Lumobj::NoIndex;
 
     // Decorations with zero color intensity produce no light.
-    if(_source->color == Vector3f(0, 0, 0))
+    if(d->source->color == Vector3f(0, 0, 0))
         return;
 
     // Does it pass the ambient light limitation?
-    float lightLevel = lightLevelAtOrigin();
+    float lightLevel = bspLeafAtOrigin().sector().lightLevel();
     Rend_ApplyLightAdaptation(lightLevel);
 
-    float intensity = checkLightLevel(lightLevel, _source->lightLevels[0],
-                                      _source->lightLevels[1]);
+    float intensity = checkLightLevel(lightLevel, d->source->lightLevels[0],
+                                      d->source->lightLevels[1]);
 
     if(intensity < .0001f)
         return;
 
     // Apply the brightness factor (was calculated using sector lightlevel).
-    _fadeMul = intensity * ::brightFactor;
-    _lumIdx   = Lumobj::NoIndex;
+    d->fadeMul = intensity * ::brightFactor;
+    d->lumIdx  = Lumobj::NoIndex;
 
-    if(_fadeMul <= 0)
+    if(d->fadeMul <= 0)
         return;
 
     Lumobj &lum = surface().map().addLumobj(
-        Lumobj(origin(), _source->radius, _source->color * _fadeMul,
+        Lumobj(d->origin, d->source->radius, d->source->color * d->fadeMul,
                MAX_DECOR_DISTANCE));
 
     // Any lightmaps to configure?
-    lum.setLightmap(Lumobj::Side, _source->tex)
-       .setLightmap(Lumobj::Down, _source->floorTex)
-       .setLightmap(Lumobj::Up,   _source->ceilTex);
+    lum.setLightmap(Lumobj::Side, d->source->tex)
+       .setLightmap(Lumobj::Down, d->source->floorTex)
+       .setLightmap(Lumobj::Up,   d->source->ceilTex);
 
     // Remember the light's unique index (for projecting a flare).
-    _lumIdx = lum.indexInMap();
+    d->lumIdx = lum.indexInMap();
 }
 
 void Decoration::generateFlare()
 {
     // Only decorations with active light sources produce flares.
-    Lumobj *lum = lumobj();
+    Lumobj *lum = surface().map().lumobj(d->lumIdx);
     if(!lum) return; // Huh?
 
     // Is the point in range?
@@ -198,17 +173,15 @@ void Decoration::generateFlare()
     if(distance > lum->maxDistance())
         return;
 
-    //MaterialSnapshotDecoration const &_source = materialDecoration();
-
     vissprite_t *vis = R_NewVisSprite(VSPR_FLARE);
 
     vis->origin   = lum->origin();
     vis->distance = distance;
 
     vis->data.flare.isDecoration = true;
-    vis->data.flare.tex          = _source->flareTex;
+    vis->data.flare.tex          = d->source->flareTex;
     vis->data.flare.size         =
-        _source->haloRadius > 0? de::max(1.f, _source->haloRadius * 60 * (50 + haloSize) / 100.0f) : 0;
+        d->source->haloRadius > 0? de::max(1.f, d->source->haloRadius * 60 * (50 + haloSize) / 100.0f) : 0;
 
     // Color is taken from the lumobj.
     V3f_Set(vis->data.flare.color, lum->color().x, lum->color().y, lum->color().z);
@@ -219,7 +192,7 @@ void Decoration::generateFlare()
     vis->data.flare.mul          = lum->attenuation(distance);
 
     // Halo brightness drops as the angle gets too big.
-    if(_source->elevation < 2 && ::angleFadeFactor > 0) // Close the surface?
+    if(d->source->elevation < 2 && ::angleFadeFactor > 0) // Close the surface?
     {
         Vector3d const eye(vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
         Vector3d const vecFromOriginToEye = (lum->origin() - eye).normalize();
@@ -235,21 +208,6 @@ void Decoration::generateFlare()
                                 / (2.5f * ::angleFadeFactor);
         }
     }
-}
-
-float Decoration::lightLevelAtOrigin() const
-{
-    return bspLeafAtOrigin().sector().lightLevel();
-}
-
-/*MaterialSnapshotDecoration const &Decoration::materialDecoration() const
-{
-    return source().materialDecoration();
-}*/
-
-Lumobj *Decoration::lumobj() const
-{
-    return surface().map().lumobj(_lumIdx);
 }
 
 void Decoration::consoleRegister() // static

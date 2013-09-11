@@ -22,8 +22,6 @@
 #include <QMap>
 #include <QSet>
 
-//#include <de/memoryzone.h>
-
 #include <de/Observers>
 #include <de/Vector>
 
@@ -33,53 +31,12 @@
 #include "world/map.h"
 #include "BspLeaf"
 
-//#include "Material"
-//#include "MaterialSnapshot"
-
 #include "render/rend_main.h" // Rend_MapSurfaceMaterialSpec()
 #include "WallEdge"
 
 #include "render/surfacedecorator.h"
 
 using namespace de;
-
-#if 0
-static uint decorCount;
-static Decoration *decorFirst;
-static Decoration *decorCursor;
-
-static Decoration *allocDecoration()
-{
-    // If the cursor is NULL, new decorations must be allocated.
-    if(!decorCursor)
-    {
-        // Allocate a new entry.
-        Decoration *decor = (Decoration *) Z_Calloc(sizeof(Decoration), PU_APPSTATIC, NULL);
-
-        if(!decorFirst)
-        {
-            decorFirst = decor;
-        }
-        else
-        {
-            decor->next = decorFirst;
-            decorFirst = decor;
-        }
-
-        return decor;
-    }
-    else
-    {
-        // Reuse an existing decoration.
-        Decoration *decor = decorCursor;
-
-        // Advance the cursor.
-        decorCursor = decorCursor->next;
-
-        return decor;
-    }
-}
-#endif
 
 typedef QSet<Surface *> SurfaceSet;
 typedef QMap<Material *, SurfaceSet> MaterialSurfaceMap;
@@ -92,29 +49,6 @@ DENG2_OBSERVES(MaterialAnimation, DecorationStageChange)
 
     Instance(Public *i) : Base(i)
     {}
-
-#if 0
-    void newDecoration(SurfaceDecorSource &source)
-    {
-        // Out of sources?
-        if(decorCount >= MAX_DECOR_LIGHTS) return;
-
-        Decoration *decor = allocDecoration();
-
-        decor->setSource(&source);
-
-        decorCount += 1;
-    }
-
-    void generateDecorations(MaterialSnapshotDecoration &matDecor,
-        Vector2i const &patternOffset, Vector2i const &patternSkip, Surface &suf,
-        Material &material, Vector3d const &topLeft_, Vector3d const &/*bottomRight*/,
-        Vector2d sufDimensions, Vector3d const &delta, int axis,
-        Vector2f const &matOffset, Sector *containingSector = 0)
-    {
-
-    }
-#endif
 
     void plotSources(Surface &suf, Vector2f const &offset, Vector3d const &topLeft,
                      Vector3d const &bottomRight, Sector *containingSector = 0)
@@ -148,10 +82,6 @@ DENG2_OBSERVES(MaterialAnimation, DecorationStageChange)
         {
             MaterialSnapshotDecoration &matDecor = ms.decoration(i);
             MaterialDecoration const *def = decorations[i];
-
-            //generateDecorations(decor, def->patternOffset(), def->patternSkip(),
-            //                    suf, suf.material(), topLeft, bottomRight, sufDimensions,
-            //                    delta, axis, offset, containingSector);
 
             // Skip values must be at least one.
             Vector2i skip = Vector2i(def->patternSkip().x + 1, def->patternSkip().y + 1)
@@ -359,12 +289,6 @@ void SurfaceDecorator::redecorate()
 }
 
 /// @todo Refactor away --------------------------------------------------------
-
-void Rend_DecorReset()
-{
-//    decorCount = 0;
-//    decorCursor = decorFirst;
-}
 
 void Rend_DecorAddLuminous()
 {
