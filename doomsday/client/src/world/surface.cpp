@@ -51,8 +51,8 @@ DENG2_PIMPL(Surface)
 
 #ifdef __CLIENT__
     Vector2f oldMaterialOrigin[2];   ///< Old @em sharp surface space material origins, for smoothing.
-    Vector2f visMaterialOrigin;      ///< @em smoothed surface space material origin.
-    Vector2f visMaterialOriginDelta; ///< Delta between @em sharp and @em smoothed.
+    Vector2f materialOriginSmoothed;      ///< @em smoothed surface space material origin.
+    Vector2f materialOriginSmoothedDelta; ///< Delta between @em sharp and @em smoothed.
 
     /// @todo Decorations do not belong at this level. Plotting decorations
     /// requires knowledge of the geometry (a BiasSurface-like abstraction
@@ -333,8 +333,8 @@ void Surface::setMaterialOrigin(Vector2f const &newOrigin)
         // During map setup we'll apply this immediately to the visual origin also.
         if(ddMapSetup)
         {
-            d->visMaterialOrigin = d->materialOrigin;
-            d->visMaterialOriginDelta.x = d->visMaterialOriginDelta.y = 0;
+            d->materialOriginSmoothed = d->materialOrigin;
+            d->materialOriginSmoothedDelta.x = d->materialOriginSmoothedDelta.y = 0;
 
             d->oldMaterialOrigin[0] = d->oldMaterialOrigin[1] = d->materialOrigin;
         }
@@ -357,8 +357,8 @@ void Surface::setMaterialOriginComponent(int component, float newPosition)
         // During map setup we'll apply this immediately to the visual origin also.
         if(ddMapSetup)
         {
-            d->visMaterialOrigin[component] = d->materialOrigin[component];
-            d->visMaterialOriginDelta[component] = 0;
+            d->materialOriginSmoothed[component] = d->materialOrigin[component];
+            d->materialOriginSmoothedDelta[component] = 0;
 
             d->oldMaterialOrigin[0][component] =
                 d->oldMaterialOrigin[1][component] =
@@ -379,35 +379,35 @@ de::Uri Surface::composeMaterialUri() const
 
 #ifdef __CLIENT__
 
-Vector2f const &Surface::visMaterialOrigin() const
+Vector2f const &Surface::materialOriginSmoothed() const
 {
-    return d->visMaterialOrigin;
+    return d->materialOriginSmoothed;
 }
 
-Vector2f const &Surface::visMaterialOriginDelta() const
+Vector2f const &Surface::materialOriginSmoothedDelta() const
 {
-    return d->visMaterialOriginDelta;
+    return d->materialOriginSmoothedDelta;
 }
 
-void Surface::lerpVisMaterialOrigin()
+void Surface::lerpSmoothedMaterialOrigin()
 {
     // $smoothmaterialorigin
-    d->visMaterialOriginDelta = d->oldMaterialOrigin[0] * (1 - frameTimePos)
+    d->materialOriginSmoothedDelta = d->oldMaterialOrigin[0] * (1 - frameTimePos)
         + d->materialOrigin * frameTimePos - d->materialOrigin;
 
     // Visible material origin.
-    d->visMaterialOrigin = d->materialOrigin + d->visMaterialOriginDelta;
+    d->materialOriginSmoothed = d->materialOrigin + d->materialOriginSmoothedDelta;
 
 #ifdef __CLIENT__
     markAsNeedingDecorationUpdate();
 #endif
 }
 
-void Surface::resetVisMaterialOrigin()
+void Surface::resetSmoothedMaterialOrigin()
 {
     // $smoothmaterialorigin
-    d->visMaterialOrigin = d->oldMaterialOrigin[0] = d->oldMaterialOrigin[1] = d->materialOrigin;
-    d->visMaterialOriginDelta.x = d->visMaterialOriginDelta.y = 0;
+    d->materialOriginSmoothed = d->oldMaterialOrigin[0] = d->oldMaterialOrigin[1] = d->materialOrigin;
+    d->materialOriginSmoothedDelta.x = d->materialOriginSmoothedDelta.y = 0;
 
 #ifdef __CLIENT__
     markAsNeedingDecorationUpdate();

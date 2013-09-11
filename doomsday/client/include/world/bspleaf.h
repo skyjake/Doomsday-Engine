@@ -283,33 +283,36 @@ public:
     inline Plane &visCeiling() const { return visPlane(Sector::Ceiling); }
 
     /**
-     * Convenient method of accessing the visual (i.e., smoothed) height of the
-     * identified @em visual sector plane.
+     * Convenient method of accessing the @em smoothed height of the identified
+     * @em visual sector plane.
      *
      * @param planeIndex  Index of the plane to return.
      *
-     * @see visPlane(), Plane::visHeight()
+     * @see visPlane(), Plane::heightSmoothed()
      */
-    inline coord_t visPlaneHeight(int planeIndex) const {
-        return visPlane(planeIndex).visHeight();
+    inline coord_t visPlaneHeightSmoothed(int planeIndex) const {
+        return visPlane(planeIndex).heightSmoothed();
     }
 
     /**
-     * Convenient method of accessing the visual (i.e., smoothed) height of the
-     * @em visual floor plane.
+     * Convenient method of accessing the @em smoothed height of the @em visual
+     * floor plane.
      *
-     * @see visPlaneHeight()
+     * @see visPlaneHeightSmoothed()
      */
-    inline coord_t visFloorHeight() const   { return visPlaneHeight(Sector::Floor); }
+    inline coord_t visFloorHeightSmoothed() const {
+        return visPlaneHeightSmoothed(Sector::Floor);
+    }
 
     /**
-     * Convenient method of accessing the visual (i.e., smoothed) height of the
-     * @em visual ceiling plane.
+     * Convenient method of accessing the @em smoothed height of the @em visual
+     * ceiling plane.
      *
-     * @see visPlaneHeight()
+     * @see visPlaneHeightSmoothed()
      */
-    inline coord_t visCeilingHeight() const { return visPlaneHeight(Sector::Ceiling); }
-
+    inline coord_t visCeilingHeightSmoothed() const {
+        return visPlaneHeightSmoothed(Sector::Ceiling);
+    }
 #endif // __CLIENT__
 
     /**
@@ -367,10 +370,10 @@ public:
      * - The height of floor is lower than that of the ceiling plane for the
      *   attributed sector.
      *
-     * @param useVisualHeights  @c true= use the visual (i.e., smoothed) plane
-     *                          heights instead of the @em sharp heights.
+     * @param useSmoothedHeights  @c true= use the @em smoothed plane heights
+     *                            instead of the @em sharp heights.
      */
-    bool hasWorldVolume(bool useVisualHeights = true) const;
+    bool hasWorldVolume(bool useSmoothedHeights = true) const;
 
     /**
      * Returns a pointer to the face geometry half-edge which has been chosen

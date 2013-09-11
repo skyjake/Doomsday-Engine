@@ -1042,7 +1042,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
     }
 
     /**
-     * $smoothplane: interpolate the visual offset of planes.
+     * Interpolate the smoothed height of planes.
      */
     void lerpTrackedPlanes(bool resetNextViewer)
     {
@@ -1051,26 +1051,24 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
             // Reset the plane height trackers.
             foreach(Plane *plane, trackedPlanes)
             {
-                plane->resetVisHeight();
+                plane->resetSmoothedHeight();
             }
 
             // Tracked movement is now all done.
             trackedPlanes.clear();
         }
-        // While the game is paused there is no need to calculate any
-        // visual plane offsets $smoothplane.
+        // While the game is paused there is no need to smooth.
         else //if(!clientPaused)
         {
-            // Set the visible offsets.
             QMutableSetIterator<Plane *> iter(trackedPlanes);
             while(iter.hasNext())
             {
                 Plane *plane = iter.next();
 
-                plane->lerpVisHeight();
+                plane->lerpSmoothedHeight();
 
                 // Has this plane reached its destination?
-                if(de::fequal(plane->visHeight(), plane->height()))
+                if(de::fequal(plane->heightSmoothed(), plane->height()))
                 {
                     iter.remove();
                 }
@@ -1079,7 +1077,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
     }
 
     /**
-     * $smoothmatoffset: interpolate the visual offset of surfaces.
+     * Interpolate the smoothed material origin of surfaces.
      */
     void lerpScrollingSurfaces(bool resetNextViewer)
     {
@@ -1088,26 +1086,24 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
             // Reset the surface material origin trackers.
             foreach(Surface *surface, scrollingSurfaces)
             {
-                surface->resetVisMaterialOrigin();
+                surface->resetSmoothedMaterialOrigin();
             }
 
             // Tracked movement is now all done.
             scrollingSurfaces.clear();
         }
-        // While the game is paused there is no need to calculate any
-        // visual material origin offsets $smoothmaterialorigin.
+        // While the game is paused there is no need to smooth.
         else //if(!clientPaused)
         {
-            // Set the visible origins.
             QMutableSetIterator<Surface *> iter(scrollingSurfaces);
             while(iter.hasNext())
             {
                 Surface *surface = iter.next();
 
-                surface->lerpVisMaterialOrigin();
+                surface->lerpSmoothedMaterialOrigin();
 
                 // Has this material reached its destination?
-                if(surface->visMaterialOrigin() == surface->materialOrigin())
+                if(surface->materialOriginSmoothed() == surface->materialOrigin())
                 {
                     iter.remove();
                 }
@@ -2010,8 +2006,8 @@ void Map::link(mobj_t &mo, byte flags)
             if(bspLeaf.polyContains(player->mo->origin))
             {
 #ifdef __CLIENT__
-                if(player->mo->origin[VZ] <  bspLeaf.visCeilingHeight() + 4 &&
-                   player->mo->origin[VZ] >= bspLeaf.visFloorHeight())
+                if(player->mo->origin[VZ] <  bspLeaf.visCeilingHeightSmoothed() + 4 &&
+                   player->mo->origin[VZ] >= bspLeaf.visFloorHeightSmoothed())
 #else
                 if(player->mo->origin[VZ] <  bspLeaf.ceilingHeight() + 4 &&
                    player->mo->origin[VZ] >= bspLeaf.floorHeight())
@@ -2620,10 +2616,10 @@ void Map::initSkyFix()
         if(skyCeil)
         {
             // Adjust for the plane height.
-            if(sector->ceiling().visHeight() > d->skyCeilingHeight)
+            if(sector->ceiling().heightSmoothed() > d->skyCeilingHeight)
             {
                 // Must raise the skyfix ceiling.
-                d->skyCeilingHeight = sector->ceiling().visHeight();
+                d->skyCeilingHeight = sector->ceiling().heightSmoothed();
             }
 
             // Check that all the mobjs in the sector fit in.
@@ -2642,10 +2638,10 @@ void Map::initSkyFix()
         if(skyFloor)
         {
             // Adjust for the plane height.
-            if(sector->floor().visHeight() < d->skyFloorHeight)
+            if(sector->floor().heightSmoothed() < d->skyFloorHeight)
             {
                 // Must lower the skyfix floor.
-                d->skyFloorHeight = sector->floor().visHeight();
+                d->skyFloorHeight = sector->floor().heightSmoothed();
             }
         }
 

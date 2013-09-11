@@ -116,20 +116,20 @@ void Vertex::planeVisHeightMinMax(coord_t *min, coord_t *max) const
 
         if(li->hasFrontSector())
         {
-            if(min && li->frontSector().floor().visHeight() < *min)
-                *min = li->frontSector().floor().visHeight();
+            if(min && li->frontSector().floor().heightSmoothed() < *min)
+                *min = li->frontSector().floor().heightSmoothed();
 
-            if(max && li->frontSector().ceiling().visHeight() > *max)
-                *max = li->frontSector().ceiling().visHeight();
+            if(max && li->frontSector().ceiling().heightSmoothed() > *max)
+                *max = li->frontSector().ceiling().heightSmoothed();
         }
 
         if(li->hasBackSector())
         {
-            if(min && li->backSector().floor().visHeight() < *min)
-                *min = li->backSector().floor().visHeight();
+            if(min && li->backSector().floor().heightSmoothed() < *min)
+                *min = li->backSector().floor().heightSmoothed();
 
-            if(max && li->backSector().ceiling().visHeight() > *max)
-                *max = li->backSector().ceiling().visHeight();
+            if(max && li->backSector().ceiling().heightSmoothed() > *max)
+                *max = li->backSector().ceiling().heightSmoothed();
         }
 
         own = &own->next();

@@ -106,23 +106,23 @@ static bool middleMaterialCoversOpening(LineSide const &side)
 
         // Determine the opening between the visual sector planes at this edge.
         coord_t openBottom;
-        if(backSec && backSec->floor().visHeight() > frontSec.floor().visHeight())
+        if(backSec && backSec->floor().heightSmoothed() > frontSec.floor().heightSmoothed())
         {
-            openBottom = backSec->floor().visHeight();
+            openBottom = backSec->floor().heightSmoothed();
         }
         else
         {
-            openBottom = frontSec.floor().visHeight();
+            openBottom = frontSec.floor().heightSmoothed();
         }
 
         coord_t openTop;
-        if(backSec && backSec->ceiling().visHeight() < frontSec.ceiling().visHeight())
+        if(backSec && backSec->ceiling().heightSmoothed() < frontSec.ceiling().heightSmoothed())
         {
-            openTop = backSec->ceiling().visHeight();
+            openTop = backSec->ceiling().heightSmoothed();
         }
         else
         {
-            openTop = frontSec.ceiling().visHeight();
+            openTop = frontSec.ceiling().heightSmoothed();
         }
 
         if(ms.height() >= openTop - openBottom)
@@ -167,15 +167,15 @@ void ShadowEdge::prepare(int planeIndex)
                                        : lineSide.middle();
 
         // Figure out the relative plane heights.
-        coord_t fz = plane.visHeight();
+        coord_t fz = plane.heightSmoothed();
         if(planeIndex == Sector::Ceiling)
             fz = -fz;
 
-        coord_t bz = backPlane.visHeight();
+        coord_t bz = backPlane.heightSmoothed();
         if(planeIndex == Sector::Ceiling)
             bz = -bz;
 
-        coord_t bhz = backLeaf.plane(otherPlaneIndex).visHeight();
+        coord_t bhz = backLeaf.plane(otherPlaneIndex).heightSmoothed();
         if(planeIndex == Sector::Ceiling)
             bhz = -bhz;
 
@@ -185,7 +185,7 @@ void ShadowEdge::prepare(int planeIndex)
             d->sectorOpenness = 2; // Consider it fully open.
         }
         // Is the back sector a closed yet sky-masked surface?
-        else if(leaf.visFloorHeight() >= backLeaf.visCeilingHeight() &&
+        else if(leaf.visFloorHeightSmoothed() >= backLeaf.visCeilingHeightSmoothed() &&
                 leaf.visPlane(otherPlaneIndex).surface().hasSkyMaskedMaterial() &&
                 backLeaf.visPlane(otherPlaneIndex).surface().hasSkyMaskedMaterial())
         {
@@ -241,19 +241,19 @@ void ShadowEdge::prepare(int planeIndex)
             // Its a normal neighbor.
             Sector const *backSec  = neighborLineSide.back().sectorPtr();
             if(backSec != leaf.sectorPtr() &&
-               !((plane.isSectorFloor() && backSec->ceiling().visHeight() <= plane.visHeight()) ||
-                 (plane.isSectorCeiling() && backSec->floor().height() >= plane.visHeight())))
+               !((plane.isSectorFloor() && backSec->ceiling().heightSmoothed() <= plane.heightSmoothed()) ||
+                 (plane.isSectorCeiling() && backSec->floor().height() >= plane.heightSmoothed())))
             {
                 // Figure out the relative plane heights.
-                coord_t fz = plane.visHeight();
+                coord_t fz = plane.heightSmoothed();
                 if(planeIndex == Sector::Ceiling)
                     fz = -fz;
 
-                coord_t bz = backSec->plane(planeIndex).visHeight();
+                coord_t bz = backSec->plane(planeIndex).heightSmoothed();
                 if(planeIndex == Sector::Ceiling)
                     bz = -bz;
 
-                coord_t bhz = backSec->plane(otherPlaneIndex).visHeight();
+                coord_t bhz = backSec->plane(otherPlaneIndex).heightSmoothed();
                 if(planeIndex == Sector::Ceiling)
                     bhz = -bhz;
 
@@ -268,15 +268,15 @@ void ShadowEdge::prepare(int planeIndex)
         if(d->edge) vo = &vo->prev();
 
         d->inner = Vector3d(lineSide.vertex(d->edge).origin() + vo->innerShadowOffset(),
-                            plane.visHeight());
+                            plane.heightSmoothed());
     }
     else
     {
         d->inner = Vector3d(lineSide.vertex(d->edge).origin() + vo->extendedShadowOffset(),
-                            plane.visHeight());
+                            plane.heightSmoothed());
     }
 
-    d->outer = Vector3d(lineSide.vertex(d->edge).origin(), plane.visHeight());
+    d->outer = Vector3d(lineSide.vertex(d->edge).origin(), plane.heightSmoothed());
 }
 
 Vector3d const &ShadowEdge::inner() const

@@ -408,34 +408,34 @@ public:
 #ifdef __CLIENT__
 
     /**
-     * Returns the current interpolated visual material origin of the surface
+     * Returns the current smoothed (interpolated) material origin for the plane
      * in the map coordinate space.
      *
      * @see setMaterialOrigin()
      */
-    de::Vector2f const &visMaterialOrigin() const;
+    de::Vector2f const &materialOriginSmoothed() const;
 
     /**
-     * Returns the delta between current material origin and the interpolated
-     * visual origin of the material in the map coordinate space.
+     * Returns the delta between current and the smoothed material origin for
+     * the surface in the map coordinate space.
      *
-     * @see setMaterialOrigin(), visMaterialOrigin()
+     * @see setMaterialOrigin(), smoothMaterialOrigin()
      */
-    de::Vector2f const &visMaterialOriginDelta() const;
+    de::Vector2f const &materialOriginSmoothedDelta() const;
 
     /**
-     * Interpolate the visible material origin.
+     * Perform smoothed material origin interpolation.
      *
-     * @see visMaterialOrigin()
+     * @see materialOriginSmoothed()
      */
-    void lerpVisMaterialOrigin();
+    void lerpSmoothedMaterialOrigin();
 
     /**
      * Reset the surface's material origin tracking.
      *
-     * @see visMaterialOrigin()
+     * @see materialOriginSmoothed()
      */
-    void resetVisMaterialOrigin();
+    void resetSmoothedMaterialOrigin();
 
     /**
      * Roll the surface's material origin tracking buffer.

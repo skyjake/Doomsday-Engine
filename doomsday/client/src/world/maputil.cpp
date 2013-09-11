@@ -55,23 +55,23 @@ static coord_t visOpenRange(LineSide const &side, coord_t *retBottom = 0, coord_
     Sector const *backSec  = side.back().sectorPtr();
 
     coord_t bottom;
-    if(backSec && backSec->floor().visHeight() > frontSec->floor().visHeight())
+    if(backSec && backSec->floor().heightSmoothed() > frontSec->floor().heightSmoothed())
     {
-        bottom = backSec->floor().visHeight();
+        bottom = backSec->floor().heightSmoothed();
     }
     else
     {
-        bottom = frontSec->floor().visHeight();
+        bottom = frontSec->floor().heightSmoothed();
     }
 
     coord_t top;
-    if(backSec && backSec->ceiling().visHeight() < frontSec->ceiling().visHeight())
+    if(backSec && backSec->ceiling().heightSmoothed() < frontSec->ceiling().heightSmoothed())
     {
-        top = backSec->ceiling().visHeight();
+        top = backSec->ceiling().heightSmoothed();
     }
     else
     {
-        top = frontSec->ceiling().visHeight();
+        top = frontSec->ceiling().heightSmoothed();
     }
 
     if(retBottom) *retBottom = bottom;
@@ -92,9 +92,9 @@ bool R_SideBackClosed(LineSide const &side, bool ignoreOpacity)
     Sector const &frontSec = side.sector();
     Sector const &backSec  = side.back().sector();
 
-    if(backSec.floor().visHeight()   >= backSec.ceiling().visHeight())  return true;
-    if(backSec.ceiling().visHeight() <= frontSec.floor().visHeight())   return true;
-    if(backSec.floor().visHeight()   >= frontSec.ceiling().visHeight()) return true;
+    if(backSec.floor().heightSmoothed()   >= backSec.ceiling().heightSmoothed())  return true;
+    if(backSec.ceiling().heightSmoothed() <= frontSec.floor().heightSmoothed())   return true;
+    if(backSec.floor().heightSmoothed()   >= frontSec.ceiling().heightSmoothed()) return true;
 
     // Perhaps a middle material completely covers the opening?
     if(side.middle().hasMaterial())
@@ -217,11 +217,11 @@ Line *R_FindSolidLineNeighbor(Sector const *sector, Line const *line,
         if(!other->hasFrontSector()) return other;
         if(!other->hasBackSector()) return other;
 
-        if(other->frontSector().floor().visHeight() >= sector->ceiling().visHeight() ||
-           other->frontSector().ceiling().visHeight() <= sector->floor().visHeight() ||
-           other->backSector().floor().visHeight() >= sector->ceiling().visHeight() ||
-           other->backSector().ceiling().visHeight() <= sector->floor().visHeight() ||
-           other->backSector().ceiling().visHeight() <= other->backSector().floor().visHeight())
+        if(other->frontSector().floor().heightSmoothed() >= sector->ceiling().heightSmoothed() ||
+           other->frontSector().ceiling().heightSmoothed() <= sector->floor().heightSmoothed() ||
+           other->backSector().floor().heightSmoothed() >= sector->ceiling().heightSmoothed() ||
+           other->backSector().ceiling().heightSmoothed() <= sector->floor().heightSmoothed() ||
+           other->backSector().ceiling().heightSmoothed() <= other->backSector().floor().heightSmoothed())
             return other;
 
         // Both front and back MUST be open by this point.

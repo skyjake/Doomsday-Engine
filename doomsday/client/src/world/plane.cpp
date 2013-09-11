@@ -48,10 +48,10 @@ DENG2_PIMPL(Plane)
     coord_t targetHeight;
 
     /// Visual plane height (smoothed).
-    coord_t visHeight;
+    coord_t heightSmoothed;
 
     /// Delta between the current @em sharp height and the visual height.
-    coord_t visHeightDelta;
+    coord_t heightSmoothedDelta;
 
     /// Movement speed (map space units per tic).
     coord_t speed;
@@ -64,8 +64,8 @@ DENG2_PIMPL(Plane)
           indexInSector(-1),
           height(height),
           targetHeight(height),
-          visHeight(height),
-          visHeightDelta(0),
+          heightSmoothed(height),
+          heightSmoothedDelta(0),
           speed(0),
           surface(dynamic_cast<MapElement &>(*i))
     {
@@ -251,34 +251,32 @@ coord_t Plane::speed() const
 
 #ifdef __CLIENT__
 
-coord_t Plane::visHeight() const
+coord_t Plane::heightSmoothed() const
 {
-    // $smoothplane
-    return d->visHeight;
+    return d->heightSmoothed;
 }
 
-coord_t Plane::visHeightDelta() const
+coord_t Plane::heightSmoothedDelta() const
 {
-    // $smoothplane
-    return d->visHeightDelta;
+    return d->heightSmoothedDelta;
 }
 
-void Plane::lerpVisHeight()
+void Plane::lerpSmoothedHeight()
 {
     // $smoothplane
-    d->visHeightDelta = d->oldHeight[0] * (1 - frameTimePos) + d->height * frameTimePos - d->height;
+    d->heightSmoothedDelta = d->oldHeight[0] * (1 - frameTimePos) + d->height * frameTimePos - d->height;
 
     // Visible plane height.
-    d->visHeight = d->height + d->visHeightDelta;
+    d->heightSmoothed = d->height + d->heightSmoothedDelta;
 
     d->markDependantSurfacesForDecorationUpdate();
 }
 
-void Plane::resetVisHeight()
+void Plane::resetSmoothedHeight()
 {
     // $smoothplane
-    d->visHeightDelta = 0;
-    d->visHeight = d->oldHeight[0] = d->oldHeight[1] = d->height;
+    d->heightSmoothedDelta = 0;
+    d->heightSmoothed = d->oldHeight[0] = d->oldHeight[1] = d->height;
 
     d->markDependantSurfacesForDecorationUpdate();
 }

@@ -592,8 +592,8 @@ DENG2_PIMPL(World)
                 if(bspLeaf.hasSector() && !bspLeaf.isDegenerate())
                 {
 #ifdef __CLIENT__
-                    if(mo->origin[VZ] >= bspLeaf.visFloorHeight() &&
-                       mo->origin[VZ] <  bspLeaf.visCeilingHeight() - 4)
+                    if(mo->origin[VZ] >= bspLeaf.visFloorHeightSmoothed() &&
+                       mo->origin[VZ] <  bspLeaf.visCeilingHeightSmoothed() - 4)
 #else
                     if(mo->origin[VZ] >= bspLeaf.floorHeight() &&
                        mo->origin[VZ] <  bspLeaf.ceilingHeight() - 4)

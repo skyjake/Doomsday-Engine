@@ -259,14 +259,14 @@ void SurfaceDecorator::decorate(Surface &surface)
 
                 Vector3d topLeft(sectorAABox.minX,
                                  plane.isSectorFloor()? sectorAABox.maxY : sectorAABox.minY,
-                                 plane.visHeight());
+                                 plane.heightSmoothed());
 
                 Vector3d bottomRight(sectorAABox.maxX,
                                      plane.isSectorFloor()? sectorAABox.minY : sectorAABox.maxY,
-                                     plane.visHeight());
+                                     plane.heightSmoothed());
 
-                Vector2f offset(-fmod(sectorAABox.minX, 64) - surface.visMaterialOrigin().x,
-                                -fmod(sectorAABox.minY, 64) - surface.visMaterialOrigin().y);
+                Vector2f offset(-fmod(sectorAABox.minX, 64) - surface.materialOriginSmoothed().x,
+                                -fmod(sectorAABox.minY, 64) - surface.materialOriginSmoothed().y);
 
                 d->plotSources(surface, offset, topLeft, bottomRight, &sector);
             }

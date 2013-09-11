@@ -136,7 +136,7 @@ boolean P_IsInVoid(player_t *player)
             if(skyCeil < DDMAXFLOAT && ddpl->mo->origin[VZ] > skyCeil - 4)
                 return true;
         }
-        else if(ddpl->mo->origin[VZ] > bspLeaf->visCeilingHeight() - 4)
+        else if(ddpl->mo->origin[VZ] > bspLeaf->visCeilingHeightSmoothed() - 4)
 #else
         if(ddpl->mo->origin[VZ] > bspLeaf->ceilingHeight() - 4)
 #endif
@@ -151,7 +151,7 @@ boolean P_IsInVoid(player_t *player)
             if(skyFloor > DDMINFLOAT && ddpl->mo->origin[VZ] < skyFloor + 4)
                 return true;
         }
-        else if(ddpl->mo->origin[VZ] < bspLeaf->visFloorHeight() + 4)
+        else if(ddpl->mo->origin[VZ] < bspLeaf->visFloorHeightSmoothed() + 4)
 #else
         if(ddpl->mo->origin[VZ] < bspLeaf->floorHeight() + 4)
 #endif

@@ -385,7 +385,7 @@ void Rend_ProjectPlaneGlows(BspLeaf *bspLeaf, Vector3d const &topLeft,
     for(int i = 0; i < bspLeaf->sector().planeCount(); ++i)
     {
         Plane &plane = bspLeaf->visPlane(i);
-        Vector3d pointOnPlane(bspLeaf->cluster().center(), plane.visHeight());
+        Vector3d pointOnPlane(bspLeaf->cluster().center(), plane.heightSmoothed());
 
         projectGlow(plane.surface(), pointOnPlane, parm);
     }

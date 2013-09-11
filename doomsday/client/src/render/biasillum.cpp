@@ -166,9 +166,9 @@ DENG2_PIMPL_NOREF(BiasIllum)
         /// @todo LineSightTest should (optionally) perform this test.
         BspLeaf &leaf = source.bspLeafAtOrigin();
         if((!leaf.visFloor().surface().hasSkyMaskedMaterial() &&
-                source.origin().z < leaf.visFloorHeight()) ||
+                source.origin().z < leaf.visFloorHeightSmoothed()) ||
            (!leaf.visCeiling().surface().hasSkyMaskedMaterial() &&
-                source.origin().z > leaf.visCeilingHeight()))
+                source.origin().z > leaf.visCeilingHeightSmoothed()))
         {
             // This affecting source does not contribute any light.
             casted = Vector3f();

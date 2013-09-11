@@ -392,12 +392,12 @@ static void maybeSpreadOverEdge(HEdge *hedge, contactfinderparams_t *parms)
     // Do not spread if the sector on the back side is closed with no height.
     if(backLeaf.hasSector())
     {
-        if(backLeaf.visCeilingHeight() <= backLeaf.visFloorHeight())
+        if(backLeaf.visCeilingHeightSmoothed() <= backLeaf.visFloorHeightSmoothed())
             return;
 
         if(leaf.hasSector() &&
-           (backLeaf.visCeilingHeight() <= leaf.visFloorHeight() ||
-            backLeaf.visFloorHeight() >= leaf.visCeilingHeight()))
+           (backLeaf.visCeilingHeightSmoothed() <= leaf.visFloorHeightSmoothed() ||
+            backLeaf.visFloorHeightSmoothed() >= leaf.visCeilingHeightSmoothed()))
             return;
     }
 
@@ -426,23 +426,23 @@ static void maybeSpreadOverEdge(HEdge *hedge, contactfinderparams_t *parms)
 
             // Determine the opening between the visual sector planes at this edge.
             coord_t openBottom;
-            if(toLeaf.hasSector() && toLeaf.visFloorHeight() > fromLeaf.visFloorHeight())
+            if(toLeaf.hasSector() && toLeaf.visFloorHeightSmoothed() > fromLeaf.visFloorHeightSmoothed())
             {
-                openBottom = toLeaf.visFloorHeight();
+                openBottom = toLeaf.visFloorHeightSmoothed();
             }
             else
             {
-                openBottom = fromLeaf.visFloorHeight();
+                openBottom = fromLeaf.visFloorHeightSmoothed();
             }
 
             coord_t openTop;
-            if(toLeaf.hasSector() && toLeaf.visCeilingHeight() < fromLeaf.visCeilingHeight())
+            if(toLeaf.hasSector() && toLeaf.visCeilingHeightSmoothed() < fromLeaf.visCeilingHeightSmoothed())
             {
-                openTop = toLeaf.visCeilingHeight();
+                openTop = toLeaf.visCeilingHeightSmoothed();
             }
             else
             {
-                openTop = fromLeaf.visCeilingHeight();
+                openTop = fromLeaf.visCeilingHeightSmoothed();
             }
 
             // Ensure we have up to date info about the material.

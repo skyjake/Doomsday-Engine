@@ -1017,8 +1017,8 @@ void R_SetupPlayerSprites()
             spr->data.model.flags = 0;
             // 32 is the raised weapon height.
             spr->data.model.gzt = viewData->current.origin[VZ];
-            spr->data.model.secFloor = ddpl->mo->bspLeaf->visFloorHeight();
-            spr->data.model.secCeil  = ddpl->mo->bspLeaf->visCeilingHeight();
+            spr->data.model.secFloor = ddpl->mo->bspLeaf->visFloorHeightSmoothed();
+            spr->data.model.secCeil  = ddpl->mo->bspLeaf->visCeilingHeightSmoothed();
             spr->data.model.pClass = 0;
             spr->data.model.floorClip = 0;
 

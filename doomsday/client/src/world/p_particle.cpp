@@ -867,9 +867,9 @@ float P_GetParticleRadius(ded_ptcstage_t const *def, int ptcIDX)
 float P_GetParticleZ(particle_t const *pt)
 {
     if(pt->origin[VZ] == DDMAXINT)
-        return pt->sector->ceiling().visHeight() - 2;
+        return pt->sector->ceiling().heightSmoothed() - 2;
     else if(pt->origin[VZ] == DDMININT)
-        return (pt->sector->floor().visHeight() + 2);
+        return (pt->sector->floor().heightSmoothed() + 2);
 
     return FIX2FLT(pt->origin[VZ]);
 }

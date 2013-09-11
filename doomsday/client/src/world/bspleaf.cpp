@@ -239,7 +239,7 @@ DENG2_PIMPL(BspLeaf)
         Plane const &plane     = cluster->visPlane(planeIndex);
         Surface const &surface = plane.surface();
 
-        Vector3d surfacePoint(poly->center(), plane.visHeight());
+        Vector3d surfacePoint(poly->center(), plane.heightSmoothed());
 
         foreach(BiasSource *source, self.map().biasSources())
         {
@@ -417,13 +417,13 @@ bool BspLeaf::polyContains(Vector2d const &point) const
 
 #ifdef __CLIENT__
 
-bool BspLeaf::hasWorldVolume(bool useVisualHeights) const
+bool BspLeaf::hasWorldVolume(bool useSmoothedHeights) const
 {
     if(!hasCluster()) return false;
 
-    if(useVisualHeights)
+    if(useSmoothedHeights)
     {
-        return visCeilingHeight() - visFloorHeight() > 0;
+        return visCeilingHeightSmoothed() - visFloorHeightSmoothed() > 0;
     }
     else
     {

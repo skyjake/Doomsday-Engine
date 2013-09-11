@@ -380,7 +380,8 @@ dl.codebox code:hover {
     overflow: auto;
 }
 
-.block .newspost.content img {
+.block .newspost.content img,
+.block .blogpost.content img {
     max-width: 100%;
     margin-left: auto;
     margin-right: auto;
@@ -388,7 +389,7 @@ dl.codebox code:hover {
 }
 
 /* Quick "fix" kludge to address link spacing in news posts on the homepage. */
-.block .newspost.content > a {
+.block .newspost.content > a, .block .blogpost.content > a {
     display:inline-block;
     margin-left: 0.5ex;
 }

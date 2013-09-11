@@ -52,6 +52,11 @@ public:
      */
     DENG2_DEFINE_AUDIENCE(HeightChange, void planeHeightChanged(Plane &plane, coord_t oldHeight))
 
+    /*
+     * Notified whenever a @em smoothed height change occurs.
+     */
+    DENG2_DEFINE_AUDIENCE(SmoothedHeightChange, void planeSmoothedHeightChanged(Plane &plane, coord_t oldHeight))
+
     // Constants:
     static int const MAX_SMOOTH_MOVE = 64; ///< $smoothplane: Maximum speed for a smoothed plane.
 
@@ -157,34 +162,34 @@ public:
 #ifdef __CLIENT__
 
     /**
-     * Returns the current interpolated visual height of the plane in the map
-     * coordinate space.
+     * Returns the current smoothed height of the plane (interpolated) in the
+     * map coordinate space.
      *
      * @see targetHeight(), height()
      */
-    coord_t visHeight() const;
+    coord_t heightSmoothed() const;
 
     /**
-     * Returns the delta between current height and the interpolated visual
-     * height of the plane in the map coordinate space.
+     * Returns the delta between current height and the smoothed height of the
+     * plane in the map coordinate space.
      *
-     * @see targetHeight()
+     * @see heightSmoothed(), targetHeight()
      */
-    coord_t visHeightDelta() const;
+    coord_t heightSmoothedDelta() const;
 
     /**
-     * Set the visible offsets.
+     * Perform smoothed height interpolation.
      *
-     * @see visHeight(), targetHeight()
+     * @see heightSmoothed(), targetHeight()
      */
-    void lerpVisHeight();
+    void lerpSmoothedHeight();
 
     /**
-     * Reset the plane's height tracking.
+     * Reset the plane's height tracking buffer (for smoothing).
      *
-     * @see visHeight(), targetHeight()
+     * @see heightSmoothed(), targetHeight()
      */
-    void resetVisHeight();
+    void resetSmoothedHeight();
 
     /**
      * Roll the plane's height tracking buffer.

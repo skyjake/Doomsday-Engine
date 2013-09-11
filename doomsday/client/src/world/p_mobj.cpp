@@ -293,11 +293,11 @@ boolean Mobj_OriginBehindVisPlane(mobj_t *mo)
         return false;
 
     Plane const &visFloor = mo->bspLeaf->visFloor();
-    if(&mo->bspLeaf->floor() != &visFloor && mo->origin[VZ] < visFloor.visHeight())
+    if(&mo->bspLeaf->floor() != &visFloor && mo->origin[VZ] < visFloor.heightSmoothed())
         return true;
 
     Plane const &visCeiling = mo->bspLeaf->visCeiling();
-    if(&mo->bspLeaf->ceiling() != &visCeiling && mo->origin[VZ] > visCeiling.visHeight())
+    if(&mo->bspLeaf->ceiling() != &visCeiling && mo->origin[VZ] > visCeiling.heightSmoothed())
         return true;
 
     return false;
@@ -364,7 +364,7 @@ void Mobj_GenerateLumobjs(mobj_t *mo)
 
     // Will the visual be allowed to go inside the floor?
     /// @todo Handle this as occlusion so that the halo fades smoothly.
-    coord_t impacted = mo->origin[VZ] + -tex.origin().y - ms.height() - mo->bspLeaf->visFloorHeight();
+    coord_t impacted = mo->origin[VZ] + -tex.origin().y - ms.height() - mo->bspLeaf->visFloorHeightSmoothed();
 
     // If the floor is a visual plane then no light should be emitted.
     if(impacted < 0 && &mo->bspLeaf->visFloor() != &mo->bspLeaf->floor())

@@ -39,7 +39,7 @@ static coord_t skyFixFloorZ(Plane const *frontFloor, Plane const *backFloor)
 {
     DENG_UNUSED(backFloor);
     if(devRendSkyMode || P_IsInVoid(viewPlayer))
-        return frontFloor->visHeight();
+        return frontFloor->heightSmoothed();
     return frontFloor->map().skyFixFloor();
 }
 
@@ -47,7 +47,7 @@ static coord_t skyFixCeilZ(Plane const *frontCeil, Plane const *backCeil)
 {
     DENG_UNUSED(backCeil);
     if(devRendSkyMode || P_IsInVoid(viewPlayer))
-        return frontCeil->visHeight();
+        return frontCeil->heightSmoothed();
     return frontCeil->map().skyFixCeiling();
 }
 
@@ -155,14 +155,14 @@ DENG2_PIMPL(SkyFixEdge)
         }
 
         // Figure out the relative plane heights.
-        coord_t fz = front->visHeight();
+        coord_t fz = front->heightSmoothed();
         if(relPlane == Sector::Ceiling)
             fz = -fz;
 
         coord_t bz = 0;
         if(back)
         {
-            bz = back->visHeight();
+            bz = back->heightSmoothed();
             if(relPlane == Sector::Ceiling)
                 bz = -bz;
         }
@@ -194,11 +194,11 @@ DENG2_PIMPL(SkyFixEdge)
         if(fixType == Upper)
         {
             hi = skyFixCeilZ(fceil, bceil);
-            lo = de::max((backLeaf && bceil->surface().hasSkyMaskedMaterial() )? bceil->visHeight() : fceil->visHeight(),  ffloor->visHeight());
+            lo = de::max((backLeaf && bceil->surface().hasSkyMaskedMaterial() )? bceil->heightSmoothed() : fceil->heightSmoothed(),  ffloor->heightSmoothed());
         }
         else
         {
-            hi = de::min((backLeaf && bfloor->surface().hasSkyMaskedMaterial())? bfloor->visHeight() : ffloor->visHeight(), fceil->visHeight());
+            hi = de::min((backLeaf && bfloor->surface().hasSkyMaskedMaterial())? bfloor->heightSmoothed() : ffloor->heightSmoothed(), fceil->heightSmoothed());
             lo = skyFixFloorZ(ffloor, bfloor);
         }
 

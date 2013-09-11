@@ -279,7 +279,7 @@ static void lightWithPlaneGlows(Vector3d const &origin, BspLeaf &bspLeaf, uint l
             continue; // Not too small!
 
         // In front of the plane?
-        Vector3d pointOnPlane = Vector3d(bspLeaf.cluster().center(), plane.visHeight());
+        Vector3d pointOnPlane = Vector3d(bspLeaf.cluster().center(), plane.heightSmoothed());
         double dist = (origin - pointOnPlane).dot(surface.normal());
         if(dist < 0)
             continue;

@@ -145,15 +145,15 @@ DENG2_PIMPL(WallEdge), public IHPlane
         {
             if(spec.section == LineSide::Middle)
             {
-                lo = leaf->visFloorHeight();
-                hi = leaf->visCeilingHeight();
+                lo = leaf->visFloorHeightSmoothed();
+                hi = leaf->visCeilingHeightSmoothed();
             }
             else
             {
-                lo = hi = leaf->visFloorHeight();
+                lo = hi = leaf->visFloorHeightSmoothed();
             }
 
-            materialOrigin = seg.lineSide().middle().visMaterialOrigin();
+            materialOrigin = seg.lineSide().middle().materialOriginSmoothed();
             if(unpegBottom)
             {
                 materialOrigin.y -= hi - lo;
@@ -178,12 +178,12 @@ DENG2_PIMPL(WallEdge), public IHPlane
                 if(!line.isSelfReferencing())
                 {
                     // Can't go over front ceiling (would induce geometry flaws).
-                    if(bceil->visHeight() < ffloor->visHeight())
-                        lo = ffloor->visHeight();
+                    if(bceil->heightSmoothed() < ffloor->heightSmoothed())
+                        lo = ffloor->heightSmoothed();
                     else
-                        lo = bceil->visHeight();
+                        lo = bceil->heightSmoothed();
 
-                    hi = fceil->visHeight();
+                    hi = fceil->heightSmoothed();
 
                     if(spec.flags.testFlag(WallSpec::SkyClip)
                        && fceil->surface().hasSkyMaskedMaterial()
@@ -192,11 +192,11 @@ DENG2_PIMPL(WallEdge), public IHPlane
                         hi = lo;
                     }
 
-                    materialOrigin = seg.lineSide().middle().visMaterialOrigin();
+                    materialOrigin = seg.lineSide().middle().materialOriginSmoothed();
                     if(!unpegTop)
                     {
                         // Align with normal middle texture.
-                        materialOrigin.y -= fceil->visHeight() - bceil->visHeight();
+                        materialOrigin.y -= fceil->heightSmoothed() - bceil->heightSmoothed();
                     }
                 }
                 break;
@@ -208,22 +208,22 @@ DENG2_PIMPL(WallEdge), public IHPlane
                     bool const raiseToBackFloor =
                         (fceil->surface().hasSkyMaskedMaterial()
                          && bceil->surface().hasSkyMaskedMaterial()
-                         && fceil->visHeight() < bceil->visHeight()
-                         && bfloor->visHeight() > fceil->visHeight());
+                         && fceil->heightSmoothed() < bceil->heightSmoothed()
+                         && bfloor->heightSmoothed() > fceil->heightSmoothed());
 
-                    coord_t t = bfloor->visHeight();
+                    coord_t t = bfloor->heightSmoothed();
 
-                    lo = ffloor->visHeight();
+                    lo = ffloor->heightSmoothed();
 
                     // Can't go over the back ceiling, would induce polygon flaws.
-                    if(bfloor->visHeight() > bceil->visHeight())
-                        t = bceil->visHeight();
+                    if(bfloor->heightSmoothed() > bceil->heightSmoothed())
+                        t = bceil->heightSmoothed();
 
                     // Can't go over front ceiling, would induce polygon flaws.
                     // In the special case of a sky masked upper we must extend the bottom
                     // section up to the height of the back floor.
-                    if(t > fceil->visHeight() && !raiseToBackFloor)
-                        t = fceil->visHeight();
+                    if(t > fceil->heightSmoothed() && !raiseToBackFloor)
+                        t = fceil->heightSmoothed();
 
                     hi = t;
 
@@ -234,18 +234,18 @@ DENG2_PIMPL(WallEdge), public IHPlane
                         lo = hi;
                     }
 
-                    materialOrigin = seg.lineSide().bottom().visMaterialOrigin();
-                    if(bfloor->visHeight() > fceil->visHeight())
+                    materialOrigin = seg.lineSide().bottom().materialOriginSmoothed();
+                    if(bfloor->heightSmoothed() > fceil->heightSmoothed())
                     {
-                        materialOrigin.y -= (raiseToBackFloor? t : fceil->visHeight())
-                                          - bfloor->visHeight();
+                        materialOrigin.y -= (raiseToBackFloor? t : fceil->heightSmoothed())
+                                          - bfloor->heightSmoothed();
                     }
 
                     if(unpegBottom)
                     {
                         // Align with normal middle texture.
-                        materialOrigin.y += (raiseToBackFloor? t : fceil->visHeight())
-                                          - bfloor->visHeight();
+                        materialOrigin.y += (raiseToBackFloor? t : fceil->heightSmoothed())
+                                          - bfloor->heightSmoothed();
                     }
                 }
                 break;
@@ -256,17 +256,17 @@ DENG2_PIMPL(WallEdge), public IHPlane
 
                 if(!line.isSelfReferencing())
                 {
-                    lo = de::max(bfloor->visHeight(), ffloor->visHeight());
-                    hi = de::min(bceil->visHeight(),  fceil->visHeight());
+                    lo = de::max(bfloor->heightSmoothed(), ffloor->heightSmoothed());
+                    hi = de::min(bceil->heightSmoothed(),  fceil->heightSmoothed());
                 }
                 else
                 {
                     // Use the unmapped heights for positioning purposes.
-                    lo = lineSide.sector().floor().visHeight();
-                    hi = lineSide.back().sector().ceiling().visHeight();
+                    lo = lineSide.sector().floor().heightSmoothed();
+                    hi = lineSide.back().sector().ceiling().heightSmoothed();
                 }
 
-                materialOrigin = Vector2f(middle.visMaterialOrigin().x, 0);
+                materialOrigin = Vector2f(middle.materialOriginSmoothed().x, 0);
 
                 // Perform clipping.
                 if(middle.hasMaterial()
@@ -280,20 +280,20 @@ DENG2_PIMPL(WallEdge), public IHPlane
                     }
                     else
                     {
-                        openBottom = ffloor->visHeight();
-                        openTop    = fceil->visHeight();
+                        openBottom = ffloor->heightSmoothed();
+                        openTop    = fceil->heightSmoothed();
                     }
 
                     if(openTop > openBottom)
                     {
                         if(unpegBottom)
                         {
-                            lo += middle.visMaterialOrigin().y;
+                            lo += middle.materialOriginSmoothed().y;
                             hi = lo + middle.material().height();
                         }
                         else
                         {
-                            hi += middle.visMaterialOrigin().y;
+                            hi += middle.materialOriginSmoothed().y;
                             lo = hi - middle.material().height();
                         }
 
@@ -524,15 +524,15 @@ DENG2_PIMPL(WallEdge), public IHPlane
 
                     if(scanSec)
                     {
-                        if(scanSec->ceiling().visHeight() - scanSec->floor().visHeight() > 0)
+                        if(scanSec->ceiling().heightSmoothed() - scanSec->floor().heightSmoothed() > 0)
                         {
                             for(int j = 0; j < scanSec->planeCount() && !stopScan; ++j)
                             {
                                 Plane const &plane = scanSec->plane(j);
 
-                                if(plane.visHeight() > bottom && plane.visHeight() < top)
+                                if(plane.heightSmoothed() > bottom && plane.heightSmoothed() < top)
                                 {
-                                    double distance = distanceTo(plane.visHeight());
+                                    double distance = distanceTo(plane.heightSmoothed());
 
                                     if(!haveEvent(distance))
                                     {
@@ -547,10 +547,10 @@ DENG2_PIMPL(WallEdge), public IHPlane
                                 if(!stopScan)
                                 {
                                     // Clip a range bound to this height?
-                                    if(plane.isSectorFloor() && plane.visHeight() > bottom)
-                                        bottom = plane.visHeight();
-                                    else if(plane.isSectorCeiling() && plane.visHeight() < top)
-                                        top = plane.visHeight();
+                                    if(plane.isSectorFloor() && plane.heightSmoothed() > bottom)
+                                        bottom = plane.heightSmoothed();
+                                    else if(plane.isSectorCeiling() && plane.heightSmoothed() < top)
+                                        top = plane.heightSmoothed();
 
                                     // All clipped away?
                                     if(bottom >= top)
@@ -567,7 +567,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
                              * we automatically fix the case of a floor above a
                              * ceiling by lowering the floor.
                              */
-                            coord_t z = scanSec->ceiling().visHeight();
+                            coord_t z = scanSec->ceiling().heightSmoothed();
 
                             if(z > bottom && z < top)
                             {

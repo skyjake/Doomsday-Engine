@@ -1695,7 +1695,7 @@ static void writeLeafPlane(Plane &plane)
     MaterialSnapshot const &ms = material->prepare(Rend_MapSurfaceMaterialSpec());
 
     Vector2f materialOrigin = leaf->worldGridOffset() // Align to the worldwide grid.
-                            + surface.visMaterialOrigin();
+                            + surface.materialOriginSmoothed();
 
     // Add the Y offset to orient the Y flipped material.
     /// @todo fixme: What is this meant to do? -ds
@@ -1709,10 +1709,10 @@ static void writeLeafPlane(Plane &plane)
     // Set the texture origin, Y is flipped for the ceiling.
     Vector3d topLeft(poly.aaBox().minX,
                      poly.aaBox().arvec2[plane.isSectorFloor()? 1 : 0][VY],
-                     plane.visHeight());
+                     plane.heightSmoothed());
     Vector3d bottomRight(poly.aaBox().maxX,
                          poly.aaBox().arvec2[plane.isSectorFloor()? 0 : 1][VY],
-                         plane.visHeight());
+                         plane.heightSmoothed());
 
     rendworldpoly_params_t parm; zap(parm);
 
@@ -1795,7 +1795,7 @@ static void writeLeafPlane(Plane &plane)
     uint numVertices;
     Vector3f *posCoords;
     buildLeafPlaneGeometry(*leaf, (plane.isSectorCeiling())? Anticlockwise : Clockwise,
-                           plane.visHeight(),
+                           plane.heightSmoothed(),
                            &posCoords, &numVertices);
 
     // Draw this section.
@@ -1985,7 +1985,7 @@ static coord_t skyPlaneZ(BspLeaf *bspLeaf, int skyCap)
     if(!bspLeaf->hasSector() || !P_IsInVoid(viewPlayer))
         return bspLeaf->map().skyFix(relPlane == Sector::Ceiling);
 
-    return bspLeaf->visPlaneHeight(relPlane);
+    return bspLeaf->visPlaneHeightSmoothed(relPlane);
 }
 
 /// @param skyCap  @ref skyCapFlags.
@@ -2073,10 +2073,10 @@ static bool coveredOpenRange(HEdge &hedge, coord_t middleBottomZ, coord_t middle
     BspLeaf const &leaf     = hedge.face().mapElement()->as<BspLeaf>();
     BspLeaf const &backLeaf = hedge.twin().face().mapElement()->as<BspLeaf>();
 
-    coord_t const ffloor   = leaf.visFloorHeight();
-    coord_t const fceil    = leaf.visCeilingHeight();
-    coord_t const bfloor   = backLeaf.visFloorHeight();
-    coord_t const bceil    = backLeaf.visCeilingHeight();
+    coord_t const ffloor   = leaf.visFloorHeightSmoothed();
+    coord_t const fceil    = leaf.visCeilingHeightSmoothed();
+    coord_t const bfloor   = backLeaf.visFloorHeightSmoothed();
+    coord_t const bceil    = backLeaf.visCeilingHeightSmoothed();
 
     bool middleCoversOpening = false;
     if(wroteOpaqueMiddle)
@@ -2085,8 +2085,8 @@ static bool coveredOpenRange(HEdge &hedge, coord_t middleBottomZ, coord_t middle
         coord_t xtop    = de::min(bceil,  fceil);
 
         Surface const &middle = front.middle();
-        xbottom += middle.visMaterialOrigin().y;
-        xtop    += middle.visMaterialOrigin().y;
+        xbottom += middle.materialOriginSmoothed().y;
+        xtop    += middle.materialOriginSmoothed().y;
 
         middleCoversOpening = (middleTopZ >= xtop &&
                                middleBottomZ <= xbottom);
@@ -2203,7 +2203,7 @@ static void writeLeafPlanes()
 
         // Skip planes facing away from the viewer.
         Vector3d const eye(vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
-        Vector3d const pointOnPlane(leaf->poly().center(), plane.visHeight());
+        Vector3d const pointOnPlane(leaf->poly().center(), plane.heightSmoothed());
         if((eye - pointOnPlane).dot(plane.surface().normal()) < 0)
             continue;
 
@@ -2292,23 +2292,23 @@ static void occludeLeaf(bool frontFacing)
 
         // Determine the opening between the visual sector planes at this edge.
         coord_t openBottom;
-        if(backLeaf.visFloorHeight() > leaf->visFloorHeight())
+        if(backLeaf.visFloorHeightSmoothed() > leaf->visFloorHeightSmoothed())
         {
-            openBottom = backLeaf.visFloorHeight();
+            openBottom = backLeaf.visFloorHeightSmoothed();
         }
         else
         {
-            openBottom = leaf->visFloorHeight();
+            openBottom = leaf->visFloorHeightSmoothed();
         }
 
         coord_t openTop;
-        if(backLeaf.visCeilingHeight() < leaf->visCeilingHeight())
+        if(backLeaf.visCeilingHeightSmoothed() < leaf->visCeilingHeightSmoothed())
         {
-            openTop = backLeaf.visCeilingHeight();
+            openTop = backLeaf.visCeilingHeightSmoothed();
         }
         else
         {
-            openTop = leaf->visCeilingHeight();
+            openTop = leaf->visCeilingHeightSmoothed();
         }
 
         // Choose start and end vertexes so that it's facing forward.
@@ -2316,16 +2316,16 @@ static void occludeLeaf(bool frontFacing)
         Vertex const &to   = frontFacing? hedge->twin().vertex() : hedge->vertex();
 
         // Does the floor create an occlusion?
-        if(((openBottom > leaf->visFloorHeight() && vOrigin[VY] <= openBottom)
-            || (openBottom >  backLeaf.visFloorHeight() && vOrigin[VY] >= openBottom))
+        if(((openBottom > leaf->visFloorHeightSmoothed() && vOrigin[VY] <= openBottom)
+            || (openBottom >  backLeaf.visFloorHeightSmoothed() && vOrigin[VY] >= openBottom))
            && canOccludeEdgeBetweenPlanes(leaf->visFloor(), backLeaf.visFloor()))
         {
             C_AddViewRelOcclusion(from.origin(), to.origin(), openBottom, false);
         }
 
         // Does the ceiling create an occlusion?
-        if(((openTop < leaf->visCeilingHeight() && vOrigin[VY] >= openTop)
-            || (openTop <  backLeaf.visCeilingHeight() && vOrigin[VY] <= openTop))
+        if(((openTop < leaf->visCeilingHeightSmoothed() && vOrigin[VY] >= openTop)
+            || (openTop <  backLeaf.visCeilingHeightSmoothed() && vOrigin[VY] <= openTop))
            && canOccludeEdgeBetweenPlanes(leaf->visCeiling(), backLeaf.visCeiling()))
         {
             C_AddViewRelOcclusion(from.origin(), to.origin(), openTop, true);
@@ -2423,8 +2423,8 @@ static int projectSpriteWorker(void *ptr, void * /*parameters*/)
             if(Material *material = R_MaterialForSprite(mo->sprite, mo->frame))
             {
                 if(!(mo->dPlayer && (mo->dPlayer->flags & DDPF_CAMERA))
-                   && mo->origin[VZ] <= leaf->visCeilingHeight()
-                   && mo->origin[VZ] >= leaf->visFloorHeight())
+                   && mo->origin[VZ] <= leaf->visCeilingHeightSmoothed()
+                   && mo->origin[VZ] >= leaf->visFloorHeightSmoothed())
                 {
                     coord_t visibleTop = mo->origin[VZ] + material->height();
                     if(visibleTop > leaf->map().skyFixCeiling())
@@ -3279,8 +3279,8 @@ static void drawTangentVectorsForWallSections(HEdge const *hedge)
         BspLeaf &frontLeaf = line.definesPolyobj()? line.polyobj().bspLeaf()
                                                   : hedge->face().mapElement()->as<BspLeaf>();
 
-        coord_t const bottom = frontLeaf.visFloorHeight();
-        coord_t const top    = frontLeaf.visCeilingHeight();
+        coord_t const bottom = frontLeaf.visFloorHeightSmoothed();
+        coord_t const top    = frontLeaf.visCeilingHeightSmoothed();
 
         drawTangentVectorsForSurface(lineSide.middle(),
                                      Vector3d(center, bottom + (top - bottom) / 2));
@@ -3294,30 +3294,30 @@ static void drawTangentVectorsForWallSections(HEdge const *hedge)
 
         if(lineSide.middle().hasMaterial())
         {
-            coord_t const bottom = frontLeaf.visFloorHeight();
-            coord_t const top    = frontLeaf.visCeilingHeight();
+            coord_t const bottom = frontLeaf.visFloorHeightSmoothed();
+            coord_t const top    = frontLeaf.visCeilingHeightSmoothed();
 
             drawTangentVectorsForSurface(lineSide.middle(),
                                          Vector3d(center, bottom + (top - bottom) / 2));
         }
 
-        if(backLeaf.visCeilingHeight() < frontLeaf.visCeilingHeight() &&
+        if(backLeaf.visCeilingHeightSmoothed() < frontLeaf.visCeilingHeightSmoothed() &&
            !(frontLeaf.visCeiling().surface().hasSkyMaskedMaterial() &&
               backLeaf.visCeiling().surface().hasSkyMaskedMaterial()))
         {
-            coord_t const bottom =  backLeaf.visCeilingHeight();
-            coord_t const top    = frontLeaf.visCeilingHeight();
+            coord_t const bottom =  backLeaf.visCeilingHeightSmoothed();
+            coord_t const top    = frontLeaf.visCeilingHeightSmoothed();
 
             drawTangentVectorsForSurface(lineSide.top(),
                                          Vector3d(center, bottom + (top - bottom) / 2));
         }
 
-        if(backLeaf.visFloorHeight() > frontLeaf.visFloorHeight() &&
+        if(backLeaf.visFloorHeightSmoothed() > frontLeaf.visFloorHeightSmoothed() &&
            !(frontLeaf.visFloor().surface().hasSkyMaskedMaterial() &&
               backLeaf.visFloor().surface().hasSkyMaskedMaterial()))
         {
-            coord_t const bottom = frontLeaf.visFloorHeight();
-            coord_t const top    =  backLeaf.visFloorHeight();
+            coord_t const bottom = frontLeaf.visFloorHeightSmoothed();
+            coord_t const top    =  backLeaf.visFloorHeightSmoothed();
 
             drawTangentVectorsForSurface(lineSide.bottom(),
                                          Vector3d(center, bottom + (top - bottom) / 2));
@@ -3367,7 +3367,7 @@ static void drawSurfaceTangentVectors(SectorCluster *cluster)
         }
         else
         {
-            height = plane.visHeight();
+            height = plane.heightSmoothed();
         }
 
         drawTangentVectorsForSurface(plane.surface(),
@@ -3596,8 +3596,8 @@ static int drawPolyobjVertexes(Polyobj *po, void * /*context*/)
 
             if(alpha > 0)
             {
-                coord_t const bottom = bspLeaf.visFloorHeight();
-                coord_t const top    = bspLeaf.visCeilingHeight();
+                coord_t const bottom = bspLeaf.visFloorHeightSmoothed();
+                coord_t const top    = bspLeaf.visCeilingHeightSmoothed();
 
                 glDisable(GL_DEPTH_TEST);
 
@@ -3613,7 +3613,7 @@ static int drawPolyobjVertexes(Polyobj *po, void * /*context*/)
         if(devVertexIndices)
         {
             Vector3d const eye(vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
-            Vector3d const origin(vtx.origin(), bspLeaf.visFloorHeight());
+            Vector3d const origin(vtx.origin(), bspLeaf.visFloorHeightSmoothed());
 
             ddouble distToEye = (eye - origin).length();
             if(distToEye < MAX_VERTEX_POINT_DIST)
@@ -3766,7 +3766,7 @@ static void drawSectors(Map &map)
     foreach(Sector *sector, map.sectors())
     foreach(SectorCluster *cluster, sector->clusters())
     {
-        Vector3d const origin(cluster->center(), cluster->visPlane(Sector::Floor).visHeight());
+        Vector3d const origin(cluster->center(), cluster->visPlane(Sector::Floor).heightSmoothed());
         ddouble distToEye = (eye - origin).length();
         if(distToEye < MAX_LABEL_DIST)
         {

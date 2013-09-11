@@ -180,8 +180,8 @@ static void scanNeighbor(bool scanTop, LineSide const &side, edge_t *edge,
     bool stopScan = false;
     bool closed;
 
-    coord_t fFloor = startSector->floor().visHeight();
-    coord_t fCeil  = startSector->ceiling().visHeight();
+    coord_t fFloor = startSector->floor().heightSmoothed();
+    coord_t fCeil  = startSector->ceiling().heightSmoothed();
 
     // Retrieve the start owner node.
     LineOwner *own = side.line().vertexOwner(side.vertex((int)!toLeft));
@@ -214,13 +214,13 @@ static void scanNeighbor(bool scanTop, LineSide const &side, edge_t *edge,
         // Pick plane heights for relative offset comparison.
         if(!stopScan)
         {
-            iFFloor = iter->frontSector().floor().visHeight();
-            iFCeil  = iter->frontSector().ceiling().visHeight();
+            iFFloor = iter->frontSector().floor().heightSmoothed();
+            iFCeil  = iter->frontSector().ceiling().heightSmoothed();
 
             if(iter->hasBackSector())
             {
-                iBFloor = iter->backSector().floor().visHeight();
-                iBCeil  = iter->backSector().ceiling().visHeight();
+                iBFloor = iter->backSector().floor().heightSmoothed();
+                iBCeil  = iter->backSector().ceiling().heightSmoothed();
             }
             else
                 iBFloor = iBCeil = 0;
@@ -316,16 +316,16 @@ static void scanNeighbor(bool scanTop, LineSide const &side, edge_t *edge,
                     // A height difference from the start sector?
                     if(scanTop)
                     {
-                        if(scanSector->ceiling().visHeight() != fCeil &&
-                           scanSector->floor().visHeight() <
-                                startSector->ceiling().visHeight())
+                        if(scanSector->ceiling().heightSmoothed() != fCeil &&
+                           scanSector->floor().heightSmoothed() <
+                                startSector->ceiling().heightSmoothed())
                             stopScan = true;
                     }
                     else
                     {
-                        if(scanSector->floor().visHeight() != fFloor &&
-                           scanSector->ceiling().visHeight() >
-                                startSector->floor().visHeight())
+                        if(scanSector->floor().heightSmoothed() != fFloor &&
+                           scanSector->ceiling().heightSmoothed() >
+                                startSector->floor().heightSmoothed())
                             stopScan = true;
                     }
                 }
@@ -345,10 +345,10 @@ static void scanNeighbor(bool scanTop, LineSide const &side, edge_t *edge,
             // heights are within accepted range.
             if(scanSector && side.back().hasSector() &&
                scanSector != side.back().sectorPtr() &&
-                ((scanTop && scanSector->ceiling().visHeight() ==
-                                startSector->ceiling().visHeight()) ||
-                 (!scanTop && scanSector->floor().visHeight() ==
-                                startSector->floor().visHeight())))
+                ((scanTop && scanSector->ceiling().heightSmoothed() ==
+                                startSector->ceiling().heightSmoothed()) ||
+                 (!scanTop && scanSector->floor().heightSmoothed() ==
+                                startSector->floor().heightSmoothed())))
             {
                 // If the map is formed correctly, we should find a back
                 // neighbor attached to this line. However, if this is not
@@ -389,8 +389,8 @@ static void scanNeighbors(shadowcorner_t top[2], shadowcorner_t bottom[2],
 {
     if(side.line().isSelfReferencing()) return;
 
-    coord_t fFloor = side.sector().floor().visHeight();
-    coord_t fCeil  = side.sector().ceiling().visHeight();
+    coord_t fFloor = side.sector().floor().heightSmoothed();
+    coord_t fCeil  = side.sector().ceiling().heightSmoothed();
 
     edge_t edges[2]; // {bottom, top}
     std::memset(edges, 0, sizeof(edges));
@@ -450,13 +450,13 @@ static void scanNeighbors(shadowcorner_t top[2], shadowcorner_t bottom[2],
             corner->proximity = edge->sector;
             if(i == 0) // Floor.
             {
-                corner->pOffset = corner->proximity->floor().visHeight() - fFloor;
-                corner->pHeight = corner->proximity->floor().visHeight();
+                corner->pOffset = corner->proximity->floor().heightSmoothed() - fFloor;
+                corner->pHeight = corner->proximity->floor().heightSmoothed();
             }
             else // Ceiling.
             {
-                corner->pOffset = corner->proximity->ceiling().visHeight() - fCeil;
-                corner->pHeight = corner->proximity->ceiling().visHeight();
+                corner->pOffset = corner->proximity->ceiling().heightSmoothed() - fCeil;
+                corner->pHeight = corner->proximity->ceiling().heightSmoothed();
             }
         }
         else
@@ -1108,10 +1108,10 @@ void Rend_RadioWallSection(WallEdge const &leftEdge, WallEdge const &rightEdge,
 
     LineSideRadioData &frData = Rend_RadioDataForLineSide(side);
 
-    coord_t const fFloor = leaf->visFloorHeight();
-    coord_t const fCeil  = leaf->visCeilingHeight();
-    coord_t const bFloor = (backLeaf? backLeaf->visFloorHeight() : 0);
-    coord_t const bCeil  = (backLeaf? backLeaf->visCeilingHeight() : 0);
+    coord_t const fFloor = leaf->visFloorHeightSmoothed();
+    coord_t const fCeil  = leaf->visCeilingHeightSmoothed();
+    coord_t const bFloor = (backLeaf? backLeaf->visFloorHeightSmoothed() : 0);
+    coord_t const bCeil  = (backLeaf? backLeaf->visCeilingHeightSmoothed() : 0);
 
     Vector3f rvertices[4] = {
          leftEdge.bottom().origin(),
@@ -1324,7 +1324,7 @@ void Rend_RadioBspLeafEdges(BspLeaf &bspLeaf)
     {
         Plane const &plane = bspLeaf.visPlane(pln);
 
-        eyeToSurface.z = vOrigin[VY] - plane.visHeight();
+        eyeToSurface.z = vOrigin[VY] - plane.heightSmoothed();
 
         // Don't bother with planes facing away from the camera.
         if(eyeToSurface.dot(plane.surface().normal()) < 0) continue;
@@ -1435,7 +1435,7 @@ void Rend_DrawShadowOffsetVerts()
         do
         {
             Vector2d xy = vtx.origin() + own->extendedShadowOffset();
-            coord_t z = own->line().frontSector().floor().visHeight();
+            coord_t z = own->line().frontSector().floor().heightSmoothed();
             drawPoint(Vector3d(xy.x, xy.y, z), 1, yellow);
 
             xy = vtx.origin() + own->innerShadowOffset();

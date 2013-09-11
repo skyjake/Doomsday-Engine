@@ -136,12 +136,12 @@ static int findMobjZOriginWorker(Sector *sector, void *parameters)
 
     if(p->floorAdjust && p->mo->origin[VZ] == sector->floor().height())
     {
-        p->vis->origin.z = sector->floor().visHeight();
+        p->vis->origin.z = sector->floor().heightSmoothed();
     }
 
     if(p->mo->origin[VZ] + p->mo->height == sector->ceiling().height())
     {
-        p->vis->origin.z = sector->ceiling().visHeight() - p->mo->height;
+        p->vis->origin.z = sector->ceiling().heightSmoothed() - p->mo->height;
     }
 
     return false; // Continue iteration.
@@ -275,7 +275,7 @@ void R_ProjectSprite(mobj_t *mo)
     bool floorAdjust = false;
     if(!Mobj_OriginBehindVisPlane(mo))
     {
-        floorAdjust = de::abs(floor.visHeight() - floor.height()) < 8;
+        floorAdjust = de::abs(floor.heightSmoothed() - floor.height()) < 8;
         findMobjZOrigin(mo, floorAdjust, vis);
     }
 
@@ -380,14 +380,14 @@ void R_ProjectSprite(mobj_t *mo)
 
         // We must find the correct positioning using the sector floor
         // and ceiling heights as an aid.
-        if(ms.height() < ceiling.visHeight() - floor.visHeight())
+        if(ms.height() < ceiling.heightSmoothed() - floor.heightSmoothed())
         {
             // Sprite fits in, adjustment possible?
-            if(fitTop && gzt > ceiling.visHeight())
-                gzt = ceiling.visHeight();
+            if(fitTop && gzt > ceiling.heightSmoothed())
+                gzt = ceiling.heightSmoothed();
 
-            if(floorAdjust && fitBottom && gzt - ms.height() < floor.visHeight())
-                gzt = floor.visHeight() + ms.height();
+            if(floorAdjust && fitBottom && gzt - ms.height() < floor.heightSmoothed())
+                gzt = floor.heightSmoothed() + ms.height();
         }
         // Adjust by the floor clip.
         gzt -= floorClip;
@@ -401,7 +401,7 @@ void R_ProjectSprite(mobj_t *mo)
         ambientColor.w = alpha;
 
         VisSprite_SetupSprite(vis->data.sprite, origin, vis->distance, visOff,
-                              floor.visHeight(), ceiling.visHeight(),
+                              floor.heightSmoothed(), ceiling.heightSmoothed(),
                               floorClip, gzt, *mat, matFlipS, matFlipT, blendMode,
                               ambientColor, vLightListIdx,
                               mo->tclass, mo->tmap,
