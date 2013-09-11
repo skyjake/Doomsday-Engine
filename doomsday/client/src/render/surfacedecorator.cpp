@@ -25,8 +25,6 @@
 #include <de/Observers>
 #include <de/Vector>
 
-//#include "de_platform.h"
-
 #include "world/map.h"
 #include "BspLeaf"
 #include "Surface"
@@ -50,13 +48,37 @@ DENG2_OBSERVES(MaterialAnimation, DecorationStageChange)
     Instance(Public *i) : Base(i)
     {}
 
-    void plotSources(Surface &suf, Vector2f const &offset, Vector3d const &topLeft,
-                     Vector3d const &bottomRight, Sector *containingSector = 0)
+    ~Instance()
+    {
+        foreach(SurfaceSet const &set, decorated)
+        foreach(Surface *surface, set)
+        {
+            observeMaterial(surface->material(), false);
+        }
+    }
+
+    void observeMaterial(Material &material, bool yes = true)
+    {
+        if(yes)
+        {
+            material.audienceForDimensionsChange += this;
+            material.animation(MapSurfaceContext).audienceForDecorationStageChange += this;
+        }
+        else
+        {
+            material.audienceForDimensionsChange -= this;
+            material.animation(MapSurfaceContext).audienceForDecorationStageChange -= this;
+        }
+    }
+
+    void updateDecorations(Surface &suf, MaterialSnapshot const &materialSnapshot,
+        Vector2f const &materialOrigin, Vector3d const &topLeft,
+        Vector3d const &bottomRight, Sector *containingSector = 0)
     {
         Vector3d delta = bottomRight - topLeft;
         if(de::fequal(delta.length(), 0)) return;
 
-        Material &material = suf.material();
+        Material &material = materialSnapshot.material();
         int const axis = suf.normal().maxAxis();
 
         Vector2d sufDimensions;
@@ -74,13 +96,11 @@ DENG2_OBSERVES(MaterialAnimation, DecorationStageChange)
         if(sufDimensions.x < 0) sufDimensions.x = -sufDimensions.x;
         if(sufDimensions.y < 0) sufDimensions.y = -sufDimensions.y;
 
-        // Generate a number of lights.
-        MaterialSnapshot const &ms = material.prepare(Rend_MapSurfaceMaterialSpec());
-
-        Material::Decorations const &decorations = suf.material().decorations();
+        // Generate a number of decorations.
+        Material::Decorations const &decorations = material.decorations();
         for(int i = 0; i < decorations.count(); ++i)
         {
-            MaterialSnapshotDecoration &matDecor = ms.decoration(i);
+            MaterialSnapshotDecoration &matDecor = materialSnapshot.decoration(i);
             MaterialDecoration const *def = decorations[i];
 
             // Skip values must be at least one.
@@ -93,14 +113,14 @@ DENG2_OBSERVES(MaterialAnimation, DecorationStageChange)
 
             Vector3d origin = topLeft + suf.normal() * matDecor.elevation;
 
-            float s = de::wrap(matDecor.pos[0] - material.width() * def->patternOffset().x + offset.x,
+            float s = de::wrap(matDecor.pos[0] - material.width() * def->patternOffset().x + materialOrigin.x,
                                0.f, repeat.x);
 
             // Plot decorations.
             for(; s < sufDimensions.x; s += repeat.x)
             {
                 // Determine the topmost point for this row.
-                float t = de::wrap(matDecor.pos[1] - material.height() * def->patternOffset().y + offset.y,
+                float t = de::wrap(matDecor.pos[1] - material.height() * def->patternOffset().y + materialOrigin.y,
                                    0.f, repeat.y);
 
                 for(; t < sufDimensions.y; t += repeat.y)
@@ -153,64 +173,88 @@ DENG2_OBSERVES(MaterialAnimation, DecorationStageChange)
 SurfaceDecorator::SurfaceDecorator() : d(new Instance(this))
 {}
 
+static bool prepareGeometry(Surface &surface, Vector3d &topLeft,
+    Vector3d &bottomRight, Vector2f &materialOrigin)
+{
+    if(surface.parent().type() == DMU_SIDE)
+    {
+        LineSide &side = surface.parent().as<LineSide>();
+        int section = &side.middle() == &surface? LineSide::Middle
+                    : &side.bottom() == &surface? LineSide::Bottom : LineSide::Top;
+
+        if(!side.hasSections()) return false;
+
+        HEdge *leftHEdge  = side.leftHEdge();
+        HEdge *rightHEdge = side.rightHEdge();
+
+        if(!leftHEdge || !rightHEdge) return false;
+
+        // Is the wall section potentially visible?
+        WallSpec const wallSpec = WallSpec::fromMapSide(side, section);
+        WallEdge leftEdge (wallSpec, *leftHEdge, Line::From);
+        WallEdge rightEdge(wallSpec, *rightHEdge, Line::To);
+
+        if(!leftEdge.isValid() || !rightEdge.isValid() ||
+           de::fequal(leftEdge.bottom().z(), rightEdge.top().z()))
+            return false;
+
+        topLeft        = leftEdge.top().origin();
+        bottomRight    = rightEdge.bottom().origin();
+        materialOrigin = -leftEdge.materialOrigin();
+
+        return true;
+    }
+
+    if(surface.parent().type() == DMU_PLANE)
+    {
+        Plane &plane = surface.parent().as<Plane>();
+        AABoxd const &sectorAABox = plane.sector().aaBox();
+
+        topLeft = Vector3d(sectorAABox.minX,
+                           plane.isSectorFloor()? sectorAABox.maxY : sectorAABox.minY,
+                           plane.heightSmoothed());
+
+        bottomRight = Vector3d(sectorAABox.maxX,
+                               plane.isSectorFloor()? sectorAABox.minY : sectorAABox.maxY,
+                               plane.heightSmoothed());
+
+        materialOrigin = Vector2f(-fmod(sectorAABox.minX, 64) - surface.materialOriginSmoothed().x,
+                                  -fmod(sectorAABox.minY, 64) - surface.materialOriginSmoothed().y);
+
+        return true;
+    }
+
+    return false;
+}
+
+static inline Sector *containingSector(Surface &surface)
+{
+    if(surface.parent().type() == DMU_PLANE)
+        return &surface.parent().as<Plane>().sector();
+    return 0;
+}
+
 void SurfaceDecorator::decorate(Surface &surface)
 {
+    if(!surface.hasMaterial())
+        return; // Huh?
+
     if(!surface._needDecorationUpdate)
         return;
 
     surface._needDecorationUpdate = false;
     surface.clearDecorations();
 
-    /// @todo clear decorations in Surface when the material is changed.
-    if(!surface.hasMaterial())
-        return;
+    Vector3d topLeft, bottomRight;
+    Vector2f materialOrigin;
 
-    if(surface.parent().type() == DMU_SIDE)
+    if(prepareGeometry(surface, topLeft, bottomRight, materialOrigin))
     {
-        LineSide &side = surface.parent().as<LineSide>();
-        DENG_ASSERT(side.hasSections());
+        MaterialSnapshot const &materialSnapshot =
+            surface.material().prepare(Rend_MapSurfaceMaterialSpec());
 
-        HEdge *leftHEdge  = side.leftHEdge();
-        HEdge *rightHEdge = side.rightHEdge();
-
-        if(leftHEdge && rightHEdge)
-        {
-            // Is the wall section potentially visible?
-            int const section = &side.middle() == &surface? LineSide::Middle
-                              : &side.bottom() == &surface? LineSide::Bottom : LineSide::Top;
-
-            WallSpec const wallSpec = WallSpec::fromMapSide(side, section);
-            WallEdge leftEdge (wallSpec, *leftHEdge, Line::From);
-            WallEdge rightEdge(wallSpec, *rightHEdge, Line::To);
-
-            if(leftEdge.isValid() && rightEdge.isValid()
-               && !de::fequal(leftEdge.bottom().z(), rightEdge.top().z()))
-            {
-                d->plotSources(side.surface(section), -leftEdge.materialOrigin(),
-                               leftEdge.top().origin(), rightEdge.bottom().origin());
-            }
-        }
-    }
-
-    if(surface.parent().type() == DMU_PLANE)
-    {
-        Plane &plane = surface.parent().as<Plane>();
-
-        Sector &sector = plane.sector();
-        AABoxd const &sectorAABox = sector.aaBox();
-
-        Vector3d topLeft(sectorAABox.minX,
-                         plane.isSectorFloor()? sectorAABox.maxY : sectorAABox.minY,
-                         plane.heightSmoothed());
-
-        Vector3d bottomRight(sectorAABox.maxX,
-                             plane.isSectorFloor()? sectorAABox.minY : sectorAABox.maxY,
-                             plane.heightSmoothed());
-
-        Vector2f offset(-fmod(sectorAABox.minX, 64) - surface.materialOriginSmoothed().x,
-                        -fmod(sectorAABox.minY, 64) - surface.materialOriginSmoothed().y);
-
-        d->plotSources(surface, offset, topLeft, bottomRight, &sector);
+        d->updateDecorations(surface, materialSnapshot, materialOrigin,
+                             topLeft, bottomRight, containingSector(surface));
     }
 }
 
@@ -226,8 +270,7 @@ void SurfaceDecorator::add(Surface *surface)
     d->decorated[&surface->material()].insert(surface);
 
     /// @todo Defer until first decorated?
-    surface->material().audienceForDimensionsChange += d;
-    surface->material().animation(MapSurfaceContext).audienceForDecorationStageChange += d;
+    d->observeMaterial(surface->material());
 }
 
 void SurfaceDecorator::remove(Surface *surface)
@@ -246,8 +289,7 @@ void SurfaceDecorator::remove(Surface *surface)
                 if(surfaceSet.isEmpty())
                 {
                     d->decorated.remove(&surface->material());
-                    surface->material().audienceForDimensionsChange -= d;
-                    surface->material().animation(MapSurfaceContext).audienceForDecorationStageChange -= d;
+                    d->observeMaterial(surface->material(), false);
                 }
                 return;
             }
@@ -265,8 +307,7 @@ void SurfaceDecorator::remove(Surface *surface)
             {
                 Material *material = i.key();
                 d->decorated.remove(material);
-                material->audienceForDimensionsChange -= d;
-                material->animation(MapSurfaceContext).audienceForDecorationStageChange -= d;
+                d->observeMaterial(surface->material(), false);
             }
             return;
         }
@@ -281,9 +322,29 @@ void SurfaceDecorator::reset()
 
 void SurfaceDecorator::redecorate()
 {
-    foreach(SurfaceSet const &set, d->decorated)
-    foreach(Surface *surface, set)
+    MaterialSurfaceMap::iterator i = d->decorated.begin();
+    while(i != d->decorated.end())
     {
-        decorate(*surface);
+        Material &material     = *i.key();
+        SurfaceSet &surfaceSet = i.value();
+
+        MaterialSnapshot const &materialSnapshot =
+            material.prepare(Rend_MapSurfaceMaterialSpec());
+
+        foreach(Surface *surface, surfaceSet)
+        {
+            surface->_needDecorationUpdate = false;
+            surface->clearDecorations();
+
+            Vector3d topLeft, bottomRight;
+            Vector2f materialOrigin;
+
+            if(prepareGeometry(*surface, topLeft, bottomRight, materialOrigin))
+            {
+                d->updateDecorations(*surface, materialSnapshot, materialOrigin,
+                                     topLeft, bottomRight, containingSector(*surface));
+            }
+        }
+        ++i;
     }
 }
