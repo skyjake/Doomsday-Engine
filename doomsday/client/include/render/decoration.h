@@ -127,7 +127,7 @@ public:
 private:
     float lightLevelAtOrigin() const;
 
-    de::MaterialSnapshot::Decoration const &materialDecoration() const;
+    de::MaterialSnapshotDecoration const &materialDecoration() const;
 
     Lumobj *lumobj() const;
 

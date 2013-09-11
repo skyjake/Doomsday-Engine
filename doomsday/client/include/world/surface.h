@@ -21,6 +21,10 @@
 #ifndef DENG_WORLD_SURFACE_H
 #define DENG_WORLD_SURFACE_H
 
+#ifdef __CLIENT__
+#  include <QList>
+#endif
+
 #include <de/Error>
 #include <de/Matrix>
 #include <de/Observers>
@@ -82,34 +86,38 @@ public:
     struct DecorSource
     {
         Surface *_surface;
-        de::Vector3d origin; ///< World coordinates of the decoration.
-        //BspLeaf *bspLeaf;
-        /// @todo $revise-texture-animation reference by index.
-        de::MaterialSnapshot::Decoration const *matDecor;
+        de::MaterialSnapshotDecoration *_matDecor; ///< @todo reference by index?
+        de::Vector3d _origin; ///< Map space origin.
+
+        DecorSource(Surface &surface,
+                    de::MaterialSnapshotDecoration &matDecor,
+                    de::Vector3d const &origin = de::Vector3d())
+            : _surface(&surface), _matDecor(&matDecor), _origin(origin)
+        {}
 
         Surface &surface() const
         {
             DENG_ASSERT(_surface != 0);
             return *_surface;
         }
+
+        de::MaterialSnapshotDecoration &materialDecoration() const
+        {
+            return *_matDecor;
+        }
+
+        de::Vector3d const &origin() const
+        {
+            return _origin;
+        }
     };
+
+    typedef QList<DecorSource *> DecorSources;
+
+public: /// @todo Does not belong at this level
+    bool _needDecorationUpdate; ///< @c true= An update is needed.
+
 #endif // __CLIENT__
-
-public:
-    /// @todo Decorations do not belong at this level. Plotting decorations
-    /// requires knowledge of the geometry (a BiasSurface-like abstraction
-    /// is needed one level up from this).
-#ifdef __CLIENT__
-    struct DecorationData
-    {
-        /// @c true= An update is needed.
-        bool needsUpdate;
-
-        /// Plotted decoration sources [numSources size].
-        DecorSource *sources;
-        int numSources;
-    } _decorationData;
-#endif
 
 public:
     /**
@@ -446,21 +454,30 @@ public:
     float glow(de::Vector3f &color) const;
 
     /**
-     * Create a new projected (light) decoration source for the surface.
+     * Create a new decoration source for the surface.
+     *
+     * @param matDecor  Material decoration which defines the source.
+     * @param origin    Map space origin.
      *
      * @return  Newly created decoration source.
      */
-    DecorSource *newDecoration();
+    DecorSource *newDecorSource(de::MaterialSnapshotDecoration &matDecor,
+                                de::Vector3d const &origin = de::Vector3d());
 
     /**
-     * Clear all the projected (light) decoration sources for the surface.
+     * Clear all the decoration sources for the surface.
      */
-    void clearDecorations();
+    void clearDecorSources();
+
+    /**
+     * Provides access to the decoration sources for efficient traversal.
+     */
+    DecorSources const &decorSources() const;
 
     /**
      * Returns the total number of decoration sources for the surface.
      */
-    int decorationCount() const;
+    int decorSourceCount() const;
 
     /**
      * Mark the surface as needing a decoration source update.

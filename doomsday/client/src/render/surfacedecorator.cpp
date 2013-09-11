@@ -102,7 +102,7 @@ DENG2_OBSERVES(MaterialAnimation, DecorationStageChange)
         decorCount += 1;
     }
 
-    void generateDecorations(MaterialSnapshot::Decoration const &matDecor,
+    void generateDecorations(MaterialSnapshotDecoration &matDecor,
         Vector2i const &patternOffset, Vector2i const &patternSkip, Surface &suf,
         Material &material, Vector3d const &topLeft_, Vector3d const &/*bottomRight*/,
         Vector2d sufDimensions, Vector3d const &delta, int axis,
@@ -144,12 +144,7 @@ DENG2_OBSERVES(MaterialAnimation, DecorationStageChange)
                         continue;
                 }
 
-                if(SurfaceDecorSource *source = suf.newDecoration())
-                {
-                    source->origin   = origin;
-                    //source->bspLeaf  = &bspLeaf;
-                    source->matDecor = &matDecor;
-                }
+                suf.newDecorSource(matDecor, origin);
             }
         }
     }
@@ -183,7 +178,7 @@ DENG2_OBSERVES(MaterialAnimation, DecorationStageChange)
         Material::Decorations const &decorations = suf.material().decorations();
         for(int i = 0; i < decorations.count(); ++i)
         {
-            MaterialSnapshot::Decoration const &decor = ms.decoration(i);
+            MaterialSnapshotDecoration &decor = ms.decoration(i);
             MaterialDecoration const *def = decorations[i];
 
             generateDecorations(decor, def->patternOffset(), def->patternSkip(),
@@ -222,9 +217,9 @@ SurfaceDecorator::SurfaceDecorator() : d(new Instance(this))
 
 void SurfaceDecorator::decorate(Surface &surface)
 {
-    if(surface._decorationData.needsUpdate)
+    if(surface._needDecorationUpdate)
     {
-        surface.clearDecorations();
+        surface.clearDecorSources();
 
         if(surface.hasMaterial())
         {
@@ -277,13 +272,12 @@ void SurfaceDecorator::decorate(Surface &surface)
             }
         }
 
-        surface._decorationData.needsUpdate = false;
+        surface._needDecorationUpdate = false;
     }
 
-    Surface::DecorSource *sources = surface._decorationData.sources;
-    for(int i = 0; i < surface.decorationCount(); ++i)
+    foreach(SurfaceDecorSource *source, surface.decorSources())
     {
-        d->newDecoration(sources[i]);
+        d->newDecoration(*source);
     }
 }
 

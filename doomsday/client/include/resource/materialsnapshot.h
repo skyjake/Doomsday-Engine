@@ -17,12 +17,19 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_RESOURCE_MATERIALSNAPSHOT_H
-#define LIBDENG_RESOURCE_MATERIALSNAPSHOT_H
+#ifndef DENG_RESOURCE_MATERIALSNAPSHOT_H
+#define DENG_RESOURCE_MATERIALSNAPSHOT_H
 
 #ifndef __CLIENT__
 #  error "resource/materialsnapshot.h only exists in the Client"
 #endif
+
+#include <de/Error>
+#include <de/Vector>
+
+#include "Material"
+#include "Texture"
+#include "render/rendpoly.h"
 
 // Material texture unit idents:
 enum {
@@ -32,12 +39,6 @@ enum {
     MTU_REFLECTION_MASK,
     NUM_MATERIAL_TEXTURE_UNITS
 };
-
-#include "Material"
-#include "Texture"
-#include "render/rendpoly.h"
-#include <de/Error>
-#include <de/Vector>
 
 namespace de {
 
@@ -151,6 +152,8 @@ private:
     DENG2_PRIVATE(d)
 };
 
+typedef MaterialSnapshot::Decoration MaterialSnapshotDecoration;
+
 } // namespace de
 
-#endif /* LIBDENG_RESOURCE_MATERIALSNAPSHOT_H */
+#endif // DENG_RESOURCE_MATERIALSNAPSHOT_H

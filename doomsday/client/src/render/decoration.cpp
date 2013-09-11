@@ -105,7 +105,7 @@ Map const &Decoration::map() const
 
 Vector3d const &Decoration::origin() const
 {
-    return source().origin;
+    return source().origin();
 }
 
 BspLeaf &Decoration::bspLeafAtOrigin() const
@@ -122,7 +122,7 @@ void Decoration::generateLumobj()
 {
     _lumIdx = Lumobj::NoIndex;
 
-    MaterialSnapshot::Decoration const &matDecor = materialDecoration();
+    MaterialSnapshotDecoration const &matDecor = materialDecoration();
 
     // Decorations with zero color intensity produce no light.
     if(matDecor.color == Vector3f(0, 0, 0))
@@ -169,7 +169,7 @@ void Decoration::generateFlare()
     if(distance > lum->maxDistance())
         return;
 
-    MaterialSnapshot::Decoration const &matDecor = materialDecoration();
+    MaterialSnapshotDecoration const &matDecor = materialDecoration();
 
     vissprite_t *vis = R_NewVisSprite(VSPR_FLARE);
 
@@ -213,9 +213,9 @@ float Decoration::lightLevelAtOrigin() const
     return bspLeafAtOrigin().sector().lightLevel();
 }
 
-MaterialSnapshot::Decoration const &Decoration::materialDecoration() const
+MaterialSnapshotDecoration const &Decoration::materialDecoration() const
 {
-    return *source().matDecor;
+    return source().materialDecoration();
 }
 
 Lumobj *Decoration::lumobj() const

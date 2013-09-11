@@ -18,7 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#include <de/memoryzone.h> /// @todo remove me
+#include <QtAlgorithms>
 
 #include <de/Log>
 
@@ -43,30 +43,21 @@ using namespace de;
 
 DENG2_PIMPL(Surface)
 {
-    /// Tangent space matrix.
-    Matrix3f tangentMatrix;
-    bool needUpdateTangentMatrix; ///< @c true= marked for update.
-
-    /// Bound material.
-    Material *material;
-
-    /// @c true= Bound material is a "missing material fix".
-    bool materialIsMissingFix;
-
-    /// @em Sharp origin of the surface material.
-    Vector2f materialOrigin;
+    Matrix3f tangentMatrix;        ///< Tangent space vectors.
+    bool needUpdateTangentMatrix;  ///< @c true= marked for update.
+    Material *material;            ///< Currently bound material.
+    bool materialIsMissingFix;     ///< @c true= @ref material is a "missing fix".
+    Vector2f materialOrigin;       ///< @em sharp surface space material origin.
 
 #ifdef __CLIENT__
+    Vector2f oldMaterialOrigin[2];   ///< Old @em sharp surface space material origins, for smoothing.
+    Vector2f visMaterialOrigin;      ///< @em smoothed surface space material origin.
+    Vector2f visMaterialOriginDelta; ///< Delta between @em sharp and @em smoothed.
 
-    /// Old @em sharp origin of the surface material, for smoothing.
-    Vector2f oldMaterialOrigin[2];
-
-    /// Smoothed origin of the surface material.
-    Vector2f visMaterialOrigin;
-
-    /// Delta between the @em sharp and smoothed origin of the surface material.
-    Vector2f visMaterialOriginDelta;
-
+    /// @todo Decorations do not belong at this level. Plotting decorations
+    /// requires knowledge of the geometry (a BiasSurface-like abstraction
+    /// is needed one level up from this).
+    DecorSources decorSources;  ///< Plotted decoration sources.
 #endif
 
     /// Surface color tint.
@@ -99,6 +90,8 @@ DENG2_PIMPL(Surface)
 
         // Stop material redecoration for this surface.
         self.map().unlinkInMaterialLists(&self);
+
+        qDeleteAll(decorSources);
 #endif
     }
 
@@ -145,7 +138,7 @@ DENG2_PIMPL(Surface)
         if(!ddMapSetup)
         {
             /// @todo Replace with a de::Observer-based mechanism.
-            self._decorationData.needsUpdate = true;
+            self._needDecorationUpdate = true;
 
             self.map().scrollingSurfaces().insert(&self);
         }
@@ -208,14 +201,12 @@ DENG2_PIMPL(Surface)
 };
 
 Surface::Surface(MapElement &owner, float opacity, Vector3f const &tintColor)
-    : MapElement(DMU_SURFACE, &owner), d(new Instance(this))
-{
+    : MapElement(DMU_SURFACE, &owner),
 #ifdef __CLIENT__
-    _decorationData.needsUpdate = true;
-    _decorationData.sources     = 0;
-    _decorationData.numSources  = 0;
+      _needDecorationUpdate(true),
 #endif
-
+      d(new Instance(this))
+{
     d->opacity   = opacity;
     d->tintColor = tintColor;
 }
@@ -319,8 +310,7 @@ bool Surface::setMaterial(Material *newMaterial, bool isMissingFix)
             }
         }
 
-        /// @todo Replace with a de::Observer-based mechanism.
-        _decorationData.needsUpdate = true;
+        _needDecorationUpdate = true;
 #endif // __CLIENT__
     }
     return true;
@@ -528,51 +518,33 @@ float Surface::glow(Vector3f &color) const
     return ms.glowStrength() * glowFactor; // Global scale factor.
 }
 
-Surface::DecorSource *Surface::newDecoration()
+Surface::DecorSource *Surface::newDecorSource(MaterialSnapshotDecoration &matDecor,
+    Vector3d const &origin)
 {
-    Surface::DecorSource *newSources =
-        (DecorSource *) Z_Malloc(sizeof(*newSources) * (++_decorationData.numSources), PU_MAP, 0);
-
-    if(_decorationData.numSources > 1)
-    {
-        // Copy the existing decorations.
-        for(int i = 0; i < _decorationData.numSources - 1; ++i)
-        {
-            Surface::DecorSource *d = &newSources[i];
-            Surface::DecorSource *s = &_decorationData.sources[i];
-
-            std::memcpy(d, s, sizeof(*d));
-        }
-
-        Z_Free(_decorationData.sources);
-    }
-
-    Surface::DecorSource *decor = &newSources[_decorationData.numSources - 1];
-    _decorationData.sources = newSources;
-
-    decor->_surface = this;
-    return decor;
+    d->decorSources.append(new DecorSource(*this, matDecor, origin));
+    return d->decorSources.last();
 }
 
-void Surface::clearDecorations()
+void Surface::clearDecorSources()
 {
-    if(_decorationData.sources)
-    {
-        Z_Free(_decorationData.sources); _decorationData.sources = 0;
-    }
-    _decorationData.numSources = 0;
+    d->decorSources.clear();
 }
 
-int Surface::decorationCount() const
+Surface::DecorSources const &Surface::decorSources() const
 {
-    return _decorationData.numSources;
+    return d->decorSources;
+}
+
+int Surface::decorSourceCount() const
+{
+    return d->decorSources.count();
 }
 
 void Surface::markAsNeedingDecorationUpdate()
 {
     if(ddMapSetup) return;
 
-    _decorationData.needsUpdate = true;
+    _needDecorationUpdate = true;
 }
 #endif // __CLIENT__
 
