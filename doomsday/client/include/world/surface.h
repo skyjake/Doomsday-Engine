@@ -408,8 +408,8 @@ public:
 #ifdef __CLIENT__
 
     /**
-     * Returns the current smoothed (interpolated) material origin for the plane
-     * in the map coordinate space.
+     * Returns the current smoothed (interpolated) material origin for the
+     * surface in the map coordinate space.
      *
      * @see setMaterialOrigin()
      */

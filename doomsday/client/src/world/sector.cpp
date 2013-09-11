@@ -272,6 +272,9 @@ typedef QSet<BspLeaf *> ReverbBspLeafs;
 
 DENG2_PIMPL(Sector),
 DENG2_OBSERVES(Plane, HeightChange)
+#ifdef __CLIENT__
+, DENG2_OBSERVES(Plane, HeightSmoothedChange)
+#endif
 {
     /// Bounding box for the whole sector (all clusters).
     AABoxd aaBox;
@@ -505,16 +508,40 @@ DENG2_OBSERVES(Plane, HeightChange)
         if(reverb[SRD_VOLUME] > 1)
             reverb[SRD_VOLUME] = 1;
     }
-#endif
+
+    /**
+     * To be called when the height changes to update the plotted decoration
+     * origins for surfaces whose material offset is dependant upon this.
+     */
+    void markDependantSurfacesForDecorationUpdate()
+    {
+        if(ddMapSetup) return;
+
+        foreach(LineSide *side, self.sides())
+        {
+            if(side->hasSections())
+            {
+                side->middle().markAsNeedingDecorationUpdate();
+                side->bottom().markAsNeedingDecorationUpdate();
+                side->top().markAsNeedingDecorationUpdate();
+            }
+
+            if(side->back().hasSections())
+            {
+                LineSide &back = side->back();
+                back.middle().markAsNeedingDecorationUpdate();
+                back.bottom().markAsNeedingDecorationUpdate();
+                back.top().markAsNeedingDecorationUpdate();
+            }
+        }
+    }
+
+#endif // __CLIENT__
 
     // Observes Plane HeightChange.
     void planeHeightChanged(Plane &plane, coord_t oldHeight)
     {
         DENG2_UNUSED(oldHeight);
-
-        // We are presently only interested in floor and/or ceiling height changes.
-        if(!(&plane == &self.floor() || &plane == &self.ceiling()))
-            return;
 
         // Update the z-height origin of our sound emitter right away.
         emitter.origin[VZ] = (self.floor().height() + self.ceiling().height()) / 2;
@@ -562,8 +589,18 @@ DENG2_OBSERVES(Plane, HeightChange)
             }
         }
 
+        markDependantSurfacesForDecorationUpdate();
 #endif // __CLIENT__
     }
+
+#ifdef __CLIENT__
+    /// Observes Plane HeightSmoothedChange
+    void planeHeightSmoothedChanged(Plane &plane, coord_t oldHeight)
+    {
+        DENG2_UNUSED(oldHeight);
+        markDependantSurfacesForDecorationUpdate();
+    }
+#endif
 };
 
 Sector::Sector(float lightLevel, Vector3f const &lightColor)
@@ -713,12 +750,18 @@ Plane *Sector::addPlane(Vector3f const &normal, coord_t height)
 {
     Plane *plane = new Plane(*this, normal, height);
 
-    // We want notification of height changes so that we can relay and/or update
-    // other components (e.g., BSP leafs) accordingly.
-    plane->audienceForHeightChange += d;
     plane->setIndexInSector(d->planes.count());
-
     d->planes.append(plane);
+
+    if(plane->isSectorFloor() || plane->isSectorCeiling())
+    {
+        // We want notification of height changes so that we can relay and/or
+        // update other components (e.g., BSP leafs) accordingly.
+        plane->audienceForHeightChange += d;
+#ifdef __CLIENT__
+        plane->audienceForHeightSmoothedChange += d;
+#endif
+    }
 
     // Once both floor and ceiling are known we can determine the z-height origin
     // of our sound emitter.

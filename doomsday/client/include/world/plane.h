@@ -52,10 +52,14 @@ public:
      */
     DENG2_DEFINE_AUDIENCE(HeightChange, void planeHeightChanged(Plane &plane, coord_t oldHeight))
 
+#ifdef __CLIENT__
+
     /*
      * Notified whenever a @em smoothed height change occurs.
      */
-    DENG2_DEFINE_AUDIENCE(SmoothedHeightChange, void planeSmoothedHeightChanged(Plane &plane, coord_t oldHeight))
+    DENG2_DEFINE_AUDIENCE(HeightSmoothedChange, void planeHeightSmoothedChanged(Plane &plane, coord_t oldHeight))
+
+#endif
 
     // Constants:
     static int const MAX_SMOOTH_MOVE = 64; ///< $smoothplane: Maximum speed for a smoothed plane.

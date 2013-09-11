@@ -32,44 +32,34 @@ using namespace de;
 
 DENG2_PIMPL(Plane)
 {
-    /// Sound emitter.
     SoundEmitter soundEmitter;
-
-    /// Index of the plane in the owning sector.
-    int indexInSector;
-
-    /// Current @em sharp height relative to @c 0 on the map up axis (positive is up).
-    coord_t height;
-
-    /// @em sharp height change tracking buffer (for smoothing).
-    coord_t oldHeight[2];
-
-    /// Target @em sharp height.
-    coord_t targetHeight;
-
-    /// Visual plane height (smoothed).
-    coord_t heightSmoothed;
-
-    /// Delta between the current @em sharp height and the visual height.
-    coord_t heightSmoothedDelta;
-
-    /// Movement speed (map space units per tic).
-    coord_t speed;
-
-    /// Plane surface.
+    int indexInSector;           ///< Index in the owning sector.
+    coord_t height;              ///< Current @em sharp height.
+    coord_t targetHeight;        ///< Target @em sharp height.
+    coord_t speed;               ///< Movement speed (map space units per tic).
     Surface surface;
+
+#ifdef __CLIENT__
+    coord_t oldHeight[2];        ///< @em sharp height change tracking buffer (for smoothing).
+    coord_t heightSmoothed;      ///< @ref height (smoothed).
+    coord_t heightSmoothedDelta; ///< Delta between the current @em sharp height and the visual height.
+#endif
 
     Instance(Public *i, coord_t height)
         : Base(i),
           indexInSector(-1),
           height(height),
           targetHeight(height),
-          heightSmoothed(height),
-          heightSmoothedDelta(0),
           speed(0),
           surface(dynamic_cast<MapElement &>(*i))
+#ifdef __CLIENT__
+         ,heightSmoothed(height),
+          heightSmoothedDelta(0)
+#endif
     {
+#ifdef __CLIENT__
         oldHeight[0] = oldHeight[1] = height;
+#endif
         zap(soundEmitter);
     }
 
@@ -90,6 +80,16 @@ DENG2_PIMPL(Plane)
             i->planeHeightChanged(self, oldHeight);
         }
     }
+
+#ifdef __CLIENT__
+    void notifySmoothedHeightChanged(coord_t oldHeight)
+    {
+        DENG2_FOR_PUBLIC_AUDIENCE(HeightSmoothedChange, i)
+        {
+            i->planeHeightSmoothedChanged(self, oldHeight);
+        }
+    }
+#endif
 
     void applySharpHeightChange(coord_t newHeight)
     {
@@ -122,46 +122,9 @@ DENG2_PIMPL(Plane)
         {
             // Add ourself to tracked plane list (for movement interpolation).
             self.map().trackedPlanes().insert(&self);
-
-            markDependantSurfacesForDecorationUpdate();
         }
 #endif
     }
-
-#ifdef __CLIENT__
-    /**
-     * To be called when the height changes to update the plotted decoration
-     * origins for surfaces whose material offset is dependant upon this.
-     *
-     * @todo Sector should observe instead.
-     */
-    void markDependantSurfacesForDecorationUpdate()
-    {
-        if(ddMapSetup) return;
-
-        // "Middle" planes have no dependent surfaces.
-        if(indexInSector > Sector::Ceiling) return;
-
-        // Mark the decor lights on the sides of this plane as requiring an update.
-        foreach(LineSide *side, self.sector().sides())
-        {
-            if(side->hasSections())
-            {
-                side->middle().markAsNeedingDecorationUpdate();
-                side->bottom().markAsNeedingDecorationUpdate();
-                side->top().markAsNeedingDecorationUpdate();
-            }
-
-            if(side->back().hasSections())
-            {
-                LineSide &back = side->back();
-                back.middle().markAsNeedingDecorationUpdate();
-                back.bottom().markAsNeedingDecorationUpdate();
-                back.top().markAsNeedingDecorationUpdate();
-            }
-        }
-    }
-#endif // __CLIENT__
 };
 
 Plane::Plane(Sector &sector, Vector3f const &normal, coord_t height)
@@ -263,22 +226,30 @@ coord_t Plane::heightSmoothedDelta() const
 
 void Plane::lerpSmoothedHeight()
 {
-    // $smoothplane
-    d->heightSmoothedDelta = d->oldHeight[0] * (1 - frameTimePos) + d->height * frameTimePos - d->height;
+    coord_t newSmoothedHeight = d->height + d->heightSmoothedDelta;
+    if(!de::fequal(d->heightSmoothed, newSmoothedHeight))
+    {
+        coord_t oldHeightSmoothed = d->heightSmoothed;
 
-    // Visible plane height.
-    d->heightSmoothed = d->height + d->heightSmoothedDelta;
+        d->heightSmoothed = newSmoothedHeight;
+        d->heightSmoothedDelta = d->oldHeight[0] * (1 - frameTimePos) + d->height * frameTimePos - d->height;
 
-    d->markDependantSurfacesForDecorationUpdate();
+        d->notifySmoothedHeightChanged(oldHeightSmoothed);
+    }
 }
 
 void Plane::resetSmoothedHeight()
 {
-    // $smoothplane
-    d->heightSmoothedDelta = 0;
-    d->heightSmoothed = d->oldHeight[0] = d->oldHeight[1] = d->height;
+    coord_t newSmoothedHeight = d->oldHeight[0] = d->oldHeight[1] = d->height;
+    if(!de::fequal(d->heightSmoothed, newSmoothedHeight))
+    {
+        coord_t oldHeightSmoothed = d->heightSmoothed;
 
-    d->markDependantSurfacesForDecorationUpdate();
+        d->heightSmoothed = newSmoothedHeight;
+        d->heightSmoothedDelta = 0;
+
+        d->notifySmoothedHeightChanged(oldHeightSmoothed);
+    }
 }
 
 void Plane::updateHeightTracking()
