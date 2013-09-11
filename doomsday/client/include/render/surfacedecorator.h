@@ -20,10 +20,9 @@
 #ifndef DENG_CLIENT_RENDER_SURFACEDECORATOR_H
 #define DENG_CLIENT_RENDER_SURFACEDECORATOR_H
 
-#include "Decoration"
-#include "Surface"
+#include <de/libdeng2.h>
 
-class Material; // remove me
+class Surface;
 
 #define MAX_DECOR_LIGHTS        (16384)
 
@@ -58,24 +57,11 @@ public:
     /// Note that existing decorations are retained.
     void remove(Surface *surface);
 
-    //void updateOnMaterialChange(Material &material);
     void reset();
     void redecorate();
 
 private:
     DENG2_PRIVATE(d)
 };
-
-/// @todo Refactor away --------------------------------------------------------
-
-/**
- * Create lumobjs for all decorations who want them.
- */
-void Rend_DecorAddLuminous();
-
-/**
- * Project all the non-clipped decorations. They become regular vissprites.
- */
-void Rend_DecorProject();
 
 #endif // DENG_CLIENT_RENDER_SURFACEDECORATOR_H

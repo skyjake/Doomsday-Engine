@@ -2573,6 +2573,43 @@ static void traverseBspAndDrawLeafs(MapElement *bspElement)
     firstBspLeaf = false;
 }
 
+/**
+ * Project all the non-clipped decorations. They become regular vissprites.
+ */
+static void generateDecorationFlares(Map &map)
+{
+    if(!useLightDecorations) return;
+
+    foreach(Line *line, map.lines())
+    for(int i = 0; i < 2; ++i)
+    {
+        LineSide &side = line->side(i);
+        if(!side.hasSections()) continue;
+
+        foreach(Decoration *decor, side.middle().decorations())
+        {
+            decor->generateFlare();
+        }
+        foreach(Decoration *decor, side.bottom().decorations())
+        {
+            decor->generateFlare();
+        }
+        foreach(Decoration *decor, side.top().decorations())
+        {
+            decor->generateFlare();
+        }
+    }
+
+    foreach(Sector *sector, map.sectors())
+    foreach(Plane *plane, sector->planes())
+    {
+        foreach(Decoration *decor, plane->surface().decorations())
+        {
+            decor->generateFlare();
+        }
+    }
+}
+
 void Rend_RenderMap(Map &map)
 {
     // Set to true if dynlights are inited for this frame.
@@ -2596,7 +2633,7 @@ void Rend_RenderMap(Map &map)
         R_BeginFrame();
 
         // Make vissprites of all the visible decorations.
-        Rend_DecorProject();
+        generateDecorationFlares(map);
 
         // Clear particle generator visibilty info.
         Rend_ParticleInitForNewFrame();

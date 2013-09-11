@@ -2926,11 +2926,38 @@ void Map::worldFrameBegins(World &world, bool resetNextViewer)
         // Generate surface decorations for the frame.
         if(useLightDecorations)
         {
+            // Perform scheduled redecoration.
             d->surfaceDecorator().redecorate();
-        }
 
-        // Spawn omnilights for decorations.
-        Rend_DecorAddLuminous();
+            // Generate lumobjs for all decorations who want them.
+            foreach(Line *line, d->lines)
+            for(int i = 0; i < 2; ++i)
+            {
+                LineSide &side = line->side(i);
+                if(!side.hasSections()) continue;
+
+                foreach(Decoration *decor, side.middle().decorations())
+                {
+                    decor->generateLumobj();
+                }
+                foreach(Decoration *decor, side.bottom().decorations())
+                {
+                    decor->generateLumobj();
+                }
+                foreach(Decoration *decor, side.top().decorations())
+                {
+                    decor->generateLumobj();
+                }
+            }
+            foreach(Sector *sector, d->sectors)
+            foreach(Plane *plane, sector->planes())
+            {
+                foreach(Decoration *decor, plane->surface().decorations())
+                {
+                    decor->generateLumobj();
+                }
+            }
+        }
 
         // Spawn omnilights for mobjs?
         if(useDynLights)

@@ -48,6 +48,10 @@ DENG2_PIMPL(Surface)
     Material *material;            ///< Currently bound material.
     bool materialIsMissingFix;     ///< @c true= @ref material is a "missing fix".
     Vector2f materialOrigin;       ///< @em sharp surface space material origin.
+    Vector3f tintColor;
+    float opacity;
+    blendmode_t blendMode;
+    int flags;                     ///< @ref sufFlags
 
 #ifdef __CLIENT__
     Decorations decorations;       ///< Surface (light) decorations (owned).
@@ -57,24 +61,13 @@ DENG2_PIMPL(Surface)
     Vector2f materialOriginSmoothedDelta; ///< Delta between @em sharp and @em smoothed.
 #endif
 
-    /// Surface color tint.
-    de::Vector3f tintColor;
-
-    /// Surface opacity.
-    float opacity;
-
-    /// Blending mode.
-    blendmode_t blendMode;
-
-    /// @ref sufFlags
-    int flags;
-
     Instance(Public *i)
         : Base(i),
           tangentMatrix(Matrix3f::Zero),
           needUpdateTangentMatrix(false),
           material(0),
           materialIsMissingFix(false),
+          opacity(0),
           blendMode(BM_NORMAL),
           flags(0)
     {}

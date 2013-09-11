@@ -25,11 +25,11 @@
 #include <de/Observers>
 #include <de/Vector>
 
-#include "de_platform.h"
-#include "dd_main.h" // App_World(), remove me
+//#include "de_platform.h"
 
 #include "world/map.h"
 #include "BspLeaf"
+#include "Surface"
 
 #include "render/rend_main.h" // Rend_MapSurfaceMaterialSpec()
 #include "WallEdge"
@@ -285,75 +285,5 @@ void SurfaceDecorator::redecorate()
     foreach(Surface *surface, set)
     {
         decorate(*surface);
-    }
-}
-
-/// @todo Refactor away --------------------------------------------------------
-
-void Rend_DecorAddLuminous()
-{
-    if(!useLightDecorations) return;
-
-    foreach(Line *line, App_World().map().lines())
-    for(int i = 0; i < 2; ++i)
-    {
-        LineSide &side = line->side(i);
-        if(!side.hasSections()) continue;
-
-        foreach(Decoration *decor, side.middle().decorations())
-        {
-            decor->generateLumobj();
-        }
-        foreach(Decoration *decor, side.bottom().decorations())
-        {
-            decor->generateLumobj();
-        }
-        foreach(Decoration *decor, side.top().decorations())
-        {
-            decor->generateLumobj();
-        }
-    }
-
-    foreach(Sector *sector, App_World().map().sectors())
-    foreach(Plane *plane, sector->planes())
-    {
-        foreach(Decoration *decor, plane->surface().decorations())
-        {
-            decor->generateLumobj();
-        }
-    }
-}
-
-void Rend_DecorProject()
-{
-    if(!useLightDecorations) return;
-
-    foreach(Line *line, App_World().map().lines())
-    for(int i = 0; i < 2; ++i)
-    {
-        LineSide &side = line->side(i);
-        if(!side.hasSections()) continue;
-
-        foreach(Decoration *decor, side.middle().decorations())
-        {
-            decor->generateFlare();
-        }
-        foreach(Decoration *decor, side.bottom().decorations())
-        {
-            decor->generateFlare();
-        }
-        foreach(Decoration *decor, side.top().decorations())
-        {
-            decor->generateFlare();
-        }
-    }
-
-    foreach(Sector *sector, App_World().map().sectors())
-    foreach(Plane *plane, sector->planes())
-    {
-        foreach(Decoration *decor, plane->surface().decorations())
-        {
-            decor->generateFlare();
-        }
     }
 }
