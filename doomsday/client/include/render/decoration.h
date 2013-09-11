@@ -24,14 +24,14 @@
 #include <de/Error>
 #include <de/Vector>
 
-#include "MaterialSnapshot" // remove me
-#include "Surface"
+#include "MaterialSnapshot"
 
 class Lumobj;
 namespace de
 {
 class Map;
 }
+class Surface;
 
 /// No decorations are visible beyond this.
 #define MAX_DECOR_DISTANCE      (2048)
@@ -43,18 +43,24 @@ class Decoration
 {
 public:
     /// Required source is missing. @ingroup errors
-    DENG2_ERROR(MissingSourceError);
+    //DENG2_ERROR(MissingSourceError);
+
+    /// Required surface is missing. @ingroup errors
+    DENG2_ERROR(MissingSurfaceError);
 
 public: /// @todo remove me.
-    Decoration *next;
+    //Decoration *next;
 
 public:
     /**
      * Construct a new decoration.
      *
-     * @param source  Source of the decoration (can be set later).
+     * @param source  Source of the decoration (a material).
+     * @param origin  Origin of the decoration in map space.
      */
-    Decoration(SurfaceDecorSource *source = 0);
+    Decoration(/*SurfaceDecorSource *source = 0*/
+               de::MaterialSnapshotDecoration &source,
+               de::Vector3d const &origin = de::Vector3d());
 
     /**
      * To be called to register the commands and variables of this module.
@@ -76,39 +82,50 @@ public:
      *
      * @see source(), setSource()
      */
-    bool hasSource() const;
+    //bool hasSource() const;
 
     /**
      * Returns the source of the decoration.
      *
      * @see hasSource(), setSource()
      */
-    SurfaceDecorSource &source();
+    de::MaterialSnapshotDecoration &source();
 
     /// @copydoc source()
-    SurfaceDecorSource const &source() const;
+    de::MaterialSnapshotDecoration const &source() const;
 
     /**
      * Change the attributed source of the decoration.
      *
      * @param newSource
      */
-    void setSource(SurfaceDecorSource *newSource);
+    //void setSource(SurfaceDecorSource *newSource);
 
     /**
-     * Convenient method which returns the surface owner of the source of the
-     * decoration. Naturally a source must currently be attributed.
+     * Returns @c true iff a surface is attributed for the decoration.
      *
-     * @see source()
+     * @see surface(), setSurface()
+     */
+    bool hasSurface() const;
+
+    /**
+     * Convenient method which returns the surface owner of the decoration.
      */
     Surface &surface();
 
     /// @copydoc surface()
     Surface const &surface() const;
 
-    de::Map &map();
+    /**
+     * Change the attributed surface of the decoration.
+     *
+     * @param newSurface  Map surface to attribute. Use @c 0 to clear.
+     */
+    void setSurface(Surface *newSurface);
 
-    de::Map const &map() const;
+    /*de::Map &map();
+
+    de::Map const &map() const;*/
 
     de::Vector3d const &origin() const;
 
@@ -127,12 +144,15 @@ public:
 private:
     float lightLevelAtOrigin() const;
 
-    de::MaterialSnapshotDecoration const &materialDecoration() const;
+    //de::MaterialSnapshotDecoration const &materialDecoration() const;
 
     Lumobj *lumobj() const;
 
-    SurfaceDecorSource *_source; ///< Attributed source (if any, not owned).
+    //SurfaceDecorSource *_source; ///< Attributed source (if any, not owned).
+    de::MaterialSnapshotDecoration *_source;
+    de::Vector3d _origin;
     mutable BspLeaf *_bspLeaf;   ///< BSP leaf at @ref origin in the map (not owned).
+    Surface *_surface;
     int _lumIdx;                 ///< Generated lumobj index (or Lumobj::NoIndex).
     float _fadeMul;              ///< Intensity multiplier (lumobj and flare).
 };

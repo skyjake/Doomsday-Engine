@@ -22,18 +22,19 @@
 #include <QMap>
 #include <QSet>
 
-#include <de/memoryzone.h>
+//#include <de/memoryzone.h>
 
 #include <de/Observers>
 #include <de/Vector>
 
 #include "de_platform.h"
+#include "dd_main.h" // App_World(), remove me
 
 #include "world/map.h"
 #include "BspLeaf"
 
-#include "Material"
-#include "MaterialSnapshot"
+//#include "Material"
+//#include "MaterialSnapshot"
 
 #include "render/rend_main.h" // Rend_MapSurfaceMaterialSpec()
 #include "WallEdge"
@@ -42,6 +43,7 @@
 
 using namespace de;
 
+#if 0
 static uint decorCount;
 static Decoration *decorFirst;
 static Decoration *decorCursor;
@@ -77,6 +79,7 @@ static Decoration *allocDecoration()
         return decor;
     }
 }
+#endif
 
 typedef QSet<Surface *> SurfaceSet;
 typedef QMap<Material *, SurfaceSet> MaterialSurfaceMap;
@@ -90,6 +93,7 @@ DENG2_OBSERVES(MaterialAnimation, DecorationStageChange)
     Instance(Public *i) : Base(i)
     {}
 
+#if 0
     void newDecoration(SurfaceDecorSource &source)
     {
         // Out of sources?
@@ -108,46 +112,9 @@ DENG2_OBSERVES(MaterialAnimation, DecorationStageChange)
         Vector2d sufDimensions, Vector3d const &delta, int axis,
         Vector2f const &matOffset, Sector *containingSector = 0)
     {
-        // Skip values must be at least one.
-        Vector2i skip = Vector2i(patternSkip.x + 1, patternSkip.y + 1)
-                            .max(Vector2i(1, 1));
 
-        Vector2f repeat = material.dimensions() * skip;
-        if(repeat == Vector2f(0, 0))
-            return;
-
-        Vector3d topLeft = topLeft_ + suf.normal() * matDecor.elevation;
-
-        float s = de::wrap(matDecor.pos[0] - material.width() * patternOffset.x + matOffset.x,
-                           0.f, repeat.x);
-
-        // Plot decorations.
-        for(; s < sufDimensions.x; s += repeat.x)
-        {
-            // Determine the topmost point for this row.
-            float t = de::wrap(matDecor.pos[1] - material.height() * patternOffset.y + matOffset.y,
-                               0.f, repeat.y);
-
-            for(; t < sufDimensions.y; t += repeat.y)
-            {
-                float const offS = s / sufDimensions.x;
-                float const offT = t / sufDimensions.y;
-                Vector3d offset(offS, axis == VZ? offT : offS, axis == VZ? offS : offT);
-
-                Vector3d origin = topLeft + delta * offset;
-                if(containingSector)
-                {
-                    // The point must be inside the correct sector.
-                    BspLeaf &bspLeaf = suf.map().bspLeafAt(origin);
-                    if(bspLeaf.sectorPtr() != containingSector
-                       || !bspLeaf.polyContains(origin))
-                        continue;
-                }
-
-                suf.newDecorSource(matDecor, origin);
-            }
-        }
     }
+#endif
 
     void plotSources(Surface &suf, Vector2f const &offset, Vector3d const &topLeft,
                      Vector3d const &bottomRight, Sector *containingSector = 0)
@@ -155,6 +122,7 @@ DENG2_OBSERVES(MaterialAnimation, DecorationStageChange)
         Vector3d delta = bottomRight - topLeft;
         if(de::fequal(delta.length(), 0)) return;
 
+        Material &material = suf.material();
         int const axis = suf.normal().maxAxis();
 
         Vector2d sufDimensions;
@@ -173,17 +141,57 @@ DENG2_OBSERVES(MaterialAnimation, DecorationStageChange)
         if(sufDimensions.y < 0) sufDimensions.y = -sufDimensions.y;
 
         // Generate a number of lights.
-        MaterialSnapshot const &ms = suf.material().prepare(Rend_MapSurfaceMaterialSpec());
+        MaterialSnapshot const &ms = material.prepare(Rend_MapSurfaceMaterialSpec());
 
         Material::Decorations const &decorations = suf.material().decorations();
         for(int i = 0; i < decorations.count(); ++i)
         {
-            MaterialSnapshotDecoration &decor = ms.decoration(i);
+            MaterialSnapshotDecoration &matDecor = ms.decoration(i);
             MaterialDecoration const *def = decorations[i];
 
-            generateDecorations(decor, def->patternOffset(), def->patternSkip(),
-                                suf, suf.material(), topLeft, bottomRight, sufDimensions,
-                                delta, axis, offset, containingSector);
+            //generateDecorations(decor, def->patternOffset(), def->patternSkip(),
+            //                    suf, suf.material(), topLeft, bottomRight, sufDimensions,
+            //                    delta, axis, offset, containingSector);
+
+            // Skip values must be at least one.
+            Vector2i skip = Vector2i(def->patternSkip().x + 1, def->patternSkip().y + 1)
+                                .max(Vector2i(1, 1));
+
+            Vector2f repeat = material.dimensions() * skip;
+            if(repeat == Vector2f(0, 0))
+                return;
+
+            Vector3d origin = topLeft + suf.normal() * matDecor.elevation;
+
+            float s = de::wrap(matDecor.pos[0] - material.width() * def->patternOffset().x + offset.x,
+                               0.f, repeat.x);
+
+            // Plot decorations.
+            for(; s < sufDimensions.x; s += repeat.x)
+            {
+                // Determine the topmost point for this row.
+                float t = de::wrap(matDecor.pos[1] - material.height() * def->patternOffset().y + offset.y,
+                                   0.f, repeat.y);
+
+                for(; t < sufDimensions.y; t += repeat.y)
+                {
+                    float const offS = s / sufDimensions.x;
+                    float const offT = t / sufDimensions.y;
+                    Vector3d patternOffset(offS, axis == VZ? offT : offS, axis == VZ? offS : offT);
+
+                    Vector3d decorOrigin = origin + delta * patternOffset;
+                    if(containingSector)
+                    {
+                        // The point must be inside the correct sector.
+                        BspLeaf &bspLeaf = suf.map().bspLeafAt(decorOrigin);
+                        if(bspLeaf.sectorPtr() != containingSector
+                           || !bspLeaf.polyContains(decorOrigin))
+                            continue;
+                    }
+
+                    suf.addDecoration(new Decoration(matDecor, decorOrigin));
+                }
+            }
         }
     }
 
@@ -217,67 +225,62 @@ SurfaceDecorator::SurfaceDecorator() : d(new Instance(this))
 
 void SurfaceDecorator::decorate(Surface &surface)
 {
-    if(surface._needDecorationUpdate)
+    if(!surface._needDecorationUpdate)
+        return;
+
+    surface._needDecorationUpdate = false;
+    surface.clearDecorations();
+
+    /// @todo clear decorations in Surface when the material is changed.
+    if(!surface.hasMaterial())
+        return;
+
+    if(surface.parent().type() == DMU_SIDE)
     {
-        surface.clearDecorSources();
+        LineSide &side = surface.parent().as<LineSide>();
+        DENG_ASSERT(side.hasSections());
 
-        if(surface.hasMaterial())
+        HEdge *leftHEdge  = side.leftHEdge();
+        HEdge *rightHEdge = side.rightHEdge();
+
+        if(leftHEdge && rightHEdge)
         {
-            if(surface.parent().type() == DMU_SIDE)
+            // Is the wall section potentially visible?
+            int const section = &side.middle() == &surface? LineSide::Middle
+                              : &side.bottom() == &surface? LineSide::Bottom : LineSide::Top;
+
+            WallSpec const wallSpec = WallSpec::fromMapSide(side, section);
+            WallEdge leftEdge (wallSpec, *leftHEdge, Line::From);
+            WallEdge rightEdge(wallSpec, *rightHEdge, Line::To);
+
+            if(leftEdge.isValid() && rightEdge.isValid()
+               && !de::fequal(leftEdge.bottom().z(), rightEdge.top().z()))
             {
-                LineSide &side = surface.parent().as<LineSide>();
-                DENG_ASSERT(side.hasSections());
-
-                HEdge *leftHEdge  = side.leftHEdge();
-                HEdge *rightHEdge = side.rightHEdge();
-
-                if(leftHEdge && rightHEdge)
-                {
-                    // Is the wall section potentially visible?
-                    int const section = &side.middle() == &surface? LineSide::Middle
-                                      : &side.bottom() == &surface? LineSide::Bottom : LineSide::Top;
-
-                    WallSpec const wallSpec = WallSpec::fromMapSide(side, section);
-                    WallEdge leftEdge (wallSpec, *leftHEdge, Line::From);
-                    WallEdge rightEdge(wallSpec, *rightHEdge, Line::To);
-
-                    if(leftEdge.isValid() && rightEdge.isValid()
-                       && !de::fequal(leftEdge.bottom().z(), rightEdge.top().z()))
-                    {
-                        d->plotSources(side.surface(section), -leftEdge.materialOrigin(),
-                                       leftEdge.top().origin(), rightEdge.bottom().origin());
-                    }
-                }
-            }
-
-            if(surface.parent().type() == DMU_PLANE)
-            {
-                Plane &plane = surface.parent().as<Plane>();
-
-                Sector &sector = plane.sector();
-                AABoxd const &sectorAABox = sector.aaBox();
-
-                Vector3d topLeft(sectorAABox.minX,
-                                 plane.isSectorFloor()? sectorAABox.maxY : sectorAABox.minY,
-                                 plane.heightSmoothed());
-
-                Vector3d bottomRight(sectorAABox.maxX,
-                                     plane.isSectorFloor()? sectorAABox.minY : sectorAABox.maxY,
-                                     plane.heightSmoothed());
-
-                Vector2f offset(-fmod(sectorAABox.minX, 64) - surface.materialOriginSmoothed().x,
-                                -fmod(sectorAABox.minY, 64) - surface.materialOriginSmoothed().y);
-
-                d->plotSources(surface, offset, topLeft, bottomRight, &sector);
+                d->plotSources(side.surface(section), -leftEdge.materialOrigin(),
+                               leftEdge.top().origin(), rightEdge.bottom().origin());
             }
         }
-
-        surface._needDecorationUpdate = false;
     }
 
-    foreach(SurfaceDecorSource *source, surface.decorSources())
+    if(surface.parent().type() == DMU_PLANE)
     {
-        d->newDecoration(*source);
+        Plane &plane = surface.parent().as<Plane>();
+
+        Sector &sector = plane.sector();
+        AABoxd const &sectorAABox = sector.aaBox();
+
+        Vector3d topLeft(sectorAABox.minX,
+                         plane.isSectorFloor()? sectorAABox.maxY : sectorAABox.minY,
+                         plane.heightSmoothed());
+
+        Vector3d bottomRight(sectorAABox.maxX,
+                             plane.isSectorFloor()? sectorAABox.minY : sectorAABox.maxY,
+                             plane.heightSmoothed());
+
+        Vector2f offset(-fmod(sectorAABox.minX, 64) - surface.materialOriginSmoothed().x,
+                        -fmod(sectorAABox.minY, 64) - surface.materialOriginSmoothed().y);
+
+        d->plotSources(surface, offset, topLeft, bottomRight, &sector);
     }
 }
 
@@ -359,17 +362,41 @@ void SurfaceDecorator::redecorate()
 
 void Rend_DecorReset()
 {
-    decorCount = 0;
-    decorCursor = decorFirst;
+//    decorCount = 0;
+//    decorCursor = decorFirst;
 }
 
 void Rend_DecorAddLuminous()
 {
     if(!useLightDecorations) return;
 
-    for(Decoration *decor = decorFirst; decor != decorCursor; decor = decor->next)
+    foreach(Line *line, App_World().map().lines())
+    for(int i = 0; i < 2; ++i)
     {
-        decor->generateLumobj();
+        LineSide &side = line->side(i);
+        if(!side.hasSections()) continue;
+
+        foreach(Decoration *decor, side.middle().decorations())
+        {
+            decor->generateLumobj();
+        }
+        foreach(Decoration *decor, side.bottom().decorations())
+        {
+            decor->generateLumobj();
+        }
+        foreach(Decoration *decor, side.top().decorations())
+        {
+            decor->generateLumobj();
+        }
+    }
+
+    foreach(Sector *sector, App_World().map().sectors())
+    foreach(Plane *plane, sector->planes())
+    {
+        foreach(Decoration *decor, plane->surface().decorations())
+        {
+            decor->generateLumobj();
+        }
     }
 }
 
@@ -377,8 +404,32 @@ void Rend_DecorProject()
 {
     if(!useLightDecorations) return;
 
-    for(Decoration *decor = decorFirst; decor != decorCursor; decor = decor->next)
+    foreach(Line *line, App_World().map().lines())
+    for(int i = 0; i < 2; ++i)
     {
-        decor->generateFlare();
+        LineSide &side = line->side(i);
+        if(!side.hasSections()) continue;
+
+        foreach(Decoration *decor, side.middle().decorations())
+        {
+            decor->generateFlare();
+        }
+        foreach(Decoration *decor, side.bottom().decorations())
+        {
+            decor->generateFlare();
+        }
+        foreach(Decoration *decor, side.top().decorations())
+        {
+            decor->generateFlare();
+        }
+    }
+
+    foreach(Sector *sector, App_World().map().sectors())
+    foreach(Plane *plane, sector->planes())
+    {
+        foreach(Decoration *decor, plane->surface().decorations())
+        {
+            decor->generateFlare();
+        }
     }
 }

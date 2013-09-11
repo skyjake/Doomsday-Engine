@@ -54,10 +54,7 @@ DENG2_PIMPL(Surface)
     Vector2f materialOriginSmoothed;      ///< @em smoothed surface space material origin.
     Vector2f materialOriginSmoothedDelta; ///< Delta between @em sharp and @em smoothed.
 
-    /// @todo Decorations do not belong at this level. Plotting decorations
-    /// requires knowledge of the geometry (a BiasSurface-like abstraction
-    /// is needed one level up from this).
-    DecorSources decorSources;  ///< Plotted decoration sources.
+    Decorations decorations;       ///< Surface (light) decorations.
 #endif
 
     /// Surface color tint.
@@ -91,7 +88,7 @@ DENG2_PIMPL(Surface)
         // Stop material redecoration for this surface.
         self.map().unlinkInMaterialLists(&self);
 
-        qDeleteAll(decorSources);
+        qDeleteAll(decorations);
 #endif
     }
 
@@ -518,26 +515,27 @@ float Surface::glow(Vector3f &color) const
     return ms.glowStrength() * glowFactor; // Global scale factor.
 }
 
-Surface::DecorSource *Surface::newDecorSource(MaterialSnapshotDecoration &matDecor,
-    Vector3d const &origin)
+void Surface::addDecoration(Decoration *decoration)
 {
-    d->decorSources.append(new DecorSource(*this, matDecor, origin));
-    return d->decorSources.last();
+    if(!decoration) return;
+    d->decorations.append(decoration);
+    decoration->setSurface(this);
 }
 
-void Surface::clearDecorSources()
+void Surface::clearDecorations()
 {
-    d->decorSources.clear();
+    qDeleteAll(d->decorations);
+    d->decorations.clear();
 }
 
-Surface::DecorSources const &Surface::decorSources() const
+Surface::Decorations const &Surface::decorations() const
 {
-    return d->decorSources;
+    return d->decorations;
 }
 
-int Surface::decorSourceCount() const
+int Surface::decorationCount() const
 {
-    return d->decorSources.count();
+    return d->decorations.count();
 }
 
 void Surface::markAsNeedingDecorationUpdate()

@@ -33,6 +33,7 @@
 #include "MapElement"
 #include "Material"
 #ifdef __CLIENT__
+#  include "Decoration"
 #  include "MaterialSnapshot"
 #endif
 #include "uri.hh"
@@ -83,7 +84,7 @@ public:
     static int const MAX_SMOOTH_MATERIAL_MOVE = 8; ///< Maximum speed for a smoothed material offset.
 
 #ifdef __CLIENT__
-    struct DecorSource
+    /*struct DecorSource
     {
         Surface *_surface;
         de::MaterialSnapshotDecoration *_matDecor; ///< @todo reference by index?
@@ -110,9 +111,9 @@ public:
         {
             return _origin;
         }
-    };
+    };*/
 
-    typedef QList<DecorSource *> DecorSources;
+    typedef QList<Decoration *> Decorations;
 
 public: /// @todo Does not belong at this level
     bool _needDecorationUpdate; ///< @c true= An update is needed.
@@ -454,33 +455,29 @@ public:
     float glow(de::Vector3f &color) const;
 
     /**
-     * Create a new decoration source for the surface.
+     * Add the specified decoration to the surface.
      *
-     * @param matDecor  Material decoration which defines the source.
-     * @param origin    Map space origin.
-     *
-     * @return  Newly created decoration source.
+     * @param decoration  Decoration to add. Ownership is given to the surface.
      */
-    DecorSource *newDecorSource(de::MaterialSnapshotDecoration &matDecor,
-                                de::Vector3d const &origin = de::Vector3d());
+    void addDecoration(Decoration *decoration);
 
     /**
-     * Clear all the decoration sources for the surface.
+     * Clear all surface decorations.
      */
-    void clearDecorSources();
+    void clearDecorations();
 
     /**
-     * Provides access to the decoration sources for efficient traversal.
+     * Provides access to the surface decorations for efficient traversal.
      */
-    DecorSources const &decorSources() const;
+    Decorations const &decorations() const;
 
     /**
-     * Returns the total number of decoration sources for the surface.
+     * Returns the total number of surface decorations.
      */
-    int decorSourceCount() const;
+    int decorationCount() const;
 
     /**
-     * Mark the surface as needing a decoration source update.
+     * Mark the surface as needing a decoration update.
      */
     void markAsNeedingDecorationUpdate();
 
@@ -494,8 +491,10 @@ private:
     DENG2_PRIVATE(d)
 };
 
+/*
 #ifdef __CLIENT__
 typedef Surface::DecorSource SurfaceDecorSource;
 #endif
+*/
 
 #endif // DENG_WORLD_SURFACE_H
