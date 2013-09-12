@@ -59,7 +59,7 @@ public:
          *
          * @param eye  Position of the eye in map space.
          */
-        float occlusion(de::Vector3d const &eye) const;
+        virtual float occlusion(de::Vector3d const &eye) const;
     };
 
 public:
