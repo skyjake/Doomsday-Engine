@@ -82,7 +82,6 @@ Lumobj *LightDecoration::generateLumobj()
 
     float intensity = checkLightLevel(lightLevel,
         source().lightLevels[0], source().lightLevels[1]);
-
     if(intensity < .0001f)
         return 0;
 
@@ -91,13 +90,18 @@ Lumobj *LightDecoration::generateLumobj()
     if(fadeMul <= 0)
         return 0;
 
-    return &(new Lumobj(origin(), source().radius, source().color * fadeMul))
-              ->setMaxDistance (MAX_DECOR_DISTANCE)
-               .setLightmap    (Lumobj::Side, source().tex)
-               .setLightmap    (Lumobj::Down, source().floorTex)
-               .setLightmap    (Lumobj::Up,   source().ceilTex)
-               .setFlareSize   (source().flareSize)
-               .setFlareTexture(source().flareTex);
+    Lumobj *lum = new Lumobj(origin(), source().radius, source().color * fadeMul);
+
+    lum->setSource(this);
+
+    lum->setMaxDistance (MAX_DECOR_DISTANCE)
+        .setLightmap    (Lumobj::Side, source().tex)
+        .setLightmap    (Lumobj::Down, source().floorTex)
+        .setLightmap    (Lumobj::Up,   source().ceilTex)
+        .setFlareSize   (source().flareSize)
+        .setFlareTexture(source().flareTex);
+
+    return lum;
 }
 
 void LightDecoration::consoleRegister() // static
