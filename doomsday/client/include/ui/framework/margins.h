@@ -51,6 +51,7 @@ public:
     void setBottom(de::Rule const &rule);
     void set      (ui::Direction dir, de::Rule const &rule);
     void set      (de::Rule const &rule);
+    void setAll   (Margins const &margins);
 
     de::Rule const &left() const;
     de::Rule const &right() const;

@@ -34,6 +34,7 @@ static TimeDelta const CLOSING_ANIM_SPAN = 0.3;
 
 DENG_GUI_PIMPL(PopupWidget)
 {
+    bool useInfoStyle;
     bool deleteAfterDismiss;
     bool clickToClose;
     Widget *realParent;
@@ -43,6 +44,7 @@ DENG_GUI_PIMPL(PopupWidget)
 
     Instance(Public *i)
         : Base(i),
+          useInfoStyle(false),
           deleteAfterDismiss(false),
           clickToClose(true),
           realParent(0),
@@ -110,18 +112,51 @@ DENG_GUI_PIMPL(PopupWidget)
             break;
         }
     }
+
+    void updateStyle()
+    {
+        Style const &st = style();
+
+        if(useInfoStyle)
+        {
+            self.set(Background(st.colors().colorf("popup.info.background"),
+                                Background::BorderGlow,
+                                st.colors().colorf("popup.info.glow"),
+                                st.rules().rule("glow").valuei()));
+        }
+        else
+        {
+            self.set(Background(st.colors().colorf("background"),
+                                Background::BorderGlow,
+                                st.colors().colorf("glow"),
+                                st.rules().rule("glow").valuei()));
+        }
+
+        if(self.levelOfNesting() > 0)
+        {
+            // If nested, use an opaque background.
+            self.set(self.background().withSolidFillOpacity(1));
+        }
+    }
 };
 
 PopupWidget::PopupWidget(String const &name) : PanelWidget(name), d(new Instance(this))
 {
     setOpeningDirection(ui::Up);
+    d->updateStyle();
+}
 
-    /// @todo Move these to an updateStyle.
-    Style const &st = style();
-    set(Background(st.colors().colorf("background"),
-                   Background::BorderGlow,
-                   st.colors().colorf("glow"),
-                   st.rules().rule("glow").valuei()));
+int PopupWidget::levelOfNesting() const
+{
+    int nesting = 0;
+    for(Widget const *p = d->realParent? d->realParent : parentWidget(); p; p = p->parent())
+    {
+        if(p->is<PopupWidget>())
+        {
+            ++nesting;
+        }
+    }
+    return nesting;
 }
 
 void PopupWidget::setAnchorAndOpeningDirection(RuleRectangle const &rule, ui::Direction dir)
@@ -201,10 +236,8 @@ void PopupWidget::setClickToClose(bool clickCloses)
 
 void PopupWidget::useInfoStyle()
 {
-    set(Background(style().colors().colorf("popup.info.background"),
-                   Background::BorderGlow,
-                   style().colors().colorf("popup.info.glow"),
-                   style().rules().rule("glow").valuei()));
+    d->useInfoStyle = true;
+    d->updateStyle();
 }
 
 bool PopupWidget::handleEvent(Event const &event)
@@ -295,8 +328,17 @@ void PopupWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
     verts += tri;
 }
 
+void PopupWidget::updateStyle()
+{
+    PanelWidget::updateStyle();
+
+    d->updateStyle();
+}
+
 void PopupWidget::preparePanelForOpening()
 {
+    d->updateStyle();
+
     PanelWidget::preparePanelForOpening();
 
     // Reparent the popup into the root widget, on top of everything else.
@@ -314,6 +356,7 @@ void PopupWidget::panelDismissed()
     // Move back to the original parent widget.
     root().remove(*this);
     d->realParent->add(this);
+    d->realParent = 0;
 
     if(d->deleteAfterDismiss)
     {

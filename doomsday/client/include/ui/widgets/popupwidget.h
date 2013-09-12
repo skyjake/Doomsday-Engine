@@ -35,6 +35,14 @@ class PopupWidget : public PanelWidget
 public:
     PopupWidget(de::String const &name = "");
 
+    /**
+     * Determines how deeply nested this popup is within parent popups.
+     *
+     * @return 0, if parents include no other popups. Otherwise +1 for each popup
+     * present in the parents (i.e., number of popups among ancestors).
+     */
+    int levelOfNesting() const;
+
     void setAnchorAndOpeningDirection(de::RuleRectangle const &rule, ui::Direction dir);
 
     void setAnchor(de::Vector2i const &pos);
@@ -74,6 +82,7 @@ public:
 
 protected:
     void glMakeGeometry(DefaultVertexBuf::Builder &verts);
+    void updateStyle();
 
     virtual void preparePanelForOpening();
     virtual void panelDismissed();

@@ -174,6 +174,16 @@ void Margins::set(Rule const &rule)
     set(Down,  rule);
 }
 
+void Margins::setAll(Margins const &margins)
+{
+    if(this == &margins) return;
+
+    set(Left,  margins.left());
+    set(Right, margins.right());
+    set(Up,    margins.top());
+    set(Down,  margins.bottom());
+}
+
 void Margins::setLeft(Rule const &rule)
 {
     set(ui::Left, rule);
