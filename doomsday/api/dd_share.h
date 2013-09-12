@@ -621,8 +621,8 @@ typedef struct linknode_s {
 #define DDMF_FITTOP         0x00000020 ///< Don't let the sprite go into the ceiling.
 #define DDMF_NOFITBOTTOM    0x00000040
 //#define DDMF_UNUSED1        0x00000080 // Formerly DDMF_NOBLOCKMAP
-#define DDMF_LIGHTSCALE     0x00000180 ///< Light scale (0: full, 3: 1/4).
-#define DDMF_LIGHTOFFSET    0x0000f000 ///< How to offset light (along Z axis).
+//#define DDMF_LIGHTSCALE     0x00000180 ///< Light scale (0: full, 3: 1/4).
+//#define DDMF_LIGHTOFFSET    0x0000f000 ///< How to offset light (along Z axis).
 //#define DDMF_RESERVED       0x00030000 // Don't touch these!! (translation class).
 #define DDMF_BOB            0x00040000 ///< Bob the Z coord up and down.
 #define DDMF_LOWGRAVITY     0x00080000 ///< 1/8th gravity (predict).
@@ -638,8 +638,8 @@ typedef struct linknode_s {
 /// Clear masks (flags the game plugin is not allowed to touch).
 #define DDMF_CLEAR_MASK     0xc0000000
 
-#define DDMF_LIGHTSCALESHIFT 7
-#define DDMF_LIGHTOFFSETSHIFT 12
+//#define DDMF_LIGHTSCALESHIFT 7
+//#define DDMF_LIGHTOFFSETSHIFT 12
 ///@}
 
 #define DDMOBJ_RADIUS_MAX   32

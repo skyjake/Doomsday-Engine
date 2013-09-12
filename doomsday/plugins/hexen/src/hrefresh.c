@@ -388,7 +388,7 @@ void R_SetAllDoomsdayFlags(void)
 
             // The Mage's ice shards need to be a bit smaller.
             // This'll make them half the normal size.
-            if(mo->type == MT_SHARDFX1)
-                mo->ddFlags |= 2 << DDMF_LIGHTSCALESHIFT;
+            /*if(mo->type == MT_SHARDFX1)
+                mo->ddFlags |= 2 << DDMF_LIGHTSCALESHIFT;*/
         }
 }

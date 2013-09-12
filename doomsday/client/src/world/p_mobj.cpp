@@ -403,13 +403,6 @@ void Mobj_GenerateLumobjs(mobj_t *mo)
     // Translate to the mobj's origin in map space.
     lum->move(mo->origin);
 
-    // Does the mobj use a light scale?
-    if(mo->ddFlags & DDMF_LIGHTSCALE)
-    {
-        float scale = 1.0f - ((mo->ddFlags & DDMF_LIGHTSCALE) >> DDMF_LIGHTSCALESHIFT) / 4.0f;
-        lum->setRadius(lum->radius() * scale);
-    }
-
     // Does the mobj need a Z origin offset?
     coord_t zOffset = -mo->floorClip - Mobj_BobOffset(mo);
     if(!(mo->ddFlags & DDMF_NOFITBOTTOM) && impacted < 0)
