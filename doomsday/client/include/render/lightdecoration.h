@@ -52,11 +52,6 @@ public:
     static float brightFactor();
 
     /**
-     * R
-     */
-    de::Vector3d const &origin() const;
-
-    /**
      * Calculates an occlusion factor for the light source. Determined by the
      * relative position of the @a eye (the viewer) and the decoration.
      *

@@ -40,11 +40,6 @@ LightDecoration::LightDecoration(MaterialSnapshotDecoration &source, const Vecto
     : Source(), Decoration(source, origin)
 {}
 
-Vector3d const &LightDecoration::origin() const
-{
-    return Decoration::origin();
-}
-
 float LightDecoration::occlusion(Vector3d const &eye) const
 {
     // Halo brightness drops as the angle gets too big.
