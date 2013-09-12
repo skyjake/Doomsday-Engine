@@ -37,7 +37,7 @@ static float angleFadeFactor = .1f; ///< cvar
 static float brightFactor    = 1;   ///< cvar
 
 LightDecoration::LightDecoration(MaterialSnapshotDecoration &source, const Vector3d &origin)
-    : Source(), Decoration(source, origin)
+    : Decoration(source, origin), Source()
 {}
 
 float LightDecoration::occlusion(Vector3d const &eye) const
