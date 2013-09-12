@@ -56,6 +56,7 @@
 #include "render/r_main.h" // validCount
 #ifdef __CLIENT__
 #  include "BiasDigest"
+#  include "LightDecoration"
 #  include "SurfaceDecorator"
 #  include "WallEdge"
 #  include "render/lumobj.h"
@@ -1157,6 +1158,20 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
         for(mobj_t *iter = sector->firstMobj(); iter; iter = iter->sNext)
         {
             R_ObjlinkCreate(*iter);
+        }
+    }
+
+    void generateLumobjs(QList<Decoration *> const &decorList)
+    {
+        foreach(Decoration *decor, decorList)
+        {
+            if(LightDecoration *decorLight = decor->maybeAs<LightDecoration>())
+            {
+                if(Lumobj *lum = decorLight->generateLumobj())
+                {
+                    self.addLumobj(*lum);
+                }
+            }
         }
     }
 
@@ -2936,50 +2951,14 @@ void Map::worldFrameBegins(World &world, bool resetNextViewer)
                 LineSide &side = line->side(i);
                 if(!side.hasSections()) continue;
 
-                foreach(Decoration *decor, side.middle().decorations())
-                {
-                    if(LightDecoration *decorLight = decor->maybeAs<LightDecoration>())
-                    {
-                        if(Lumobj *lum = decorLight->generateLumobj())
-                        {
-                            addLumobj(*lum);
-                        }
-                    }
-                }
-                foreach(Decoration *decor, side.bottom().decorations())
-                {
-                    if(LightDecoration *decorLight = decor->maybeAs<LightDecoration>())
-                    {
-                        if(Lumobj *lum = decorLight->generateLumobj())
-                        {
-                            addLumobj(*lum);
-                        }
-                    }
-                }
-                foreach(Decoration *decor, side.top().decorations())
-                {
-                    if(LightDecoration *decorLight = decor->maybeAs<LightDecoration>())
-                    {
-                        if(Lumobj *lum = decorLight->generateLumobj())
-                        {
-                            addLumobj(*lum);
-                        }
-                    }
-                }
+                d->generateLumobjs(side.middle().decorations());
+                d->generateLumobjs(side.bottom().decorations());
+                d->generateLumobjs(side.top().decorations());
             }
             foreach(Sector *sector, d->sectors)
             foreach(Plane *plane, sector->planes())
             {
-                foreach(Decoration *decor, plane->surface().decorations())
-                {
-                    if(LightDecoration *decorLight = decor->maybeAs<LightDecoration>())
-                    {
-                        if(Lumobj *lum = decorLight->generateLumobj())
-                        {
-                            addLumobj(*lum);
-                        }
-                    }
-                }
+                d->generateLumobjs(plane->surface().decorations());
             }
         }
 
