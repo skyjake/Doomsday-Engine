@@ -57,7 +57,10 @@ static mobj_t *unusedMobjs;
  */
 int useSRVO                = 2; ///< @c 1= models only, @c 2= sprites + models
 int useSRVOAngle           = 1;
+
+#ifdef __CLIENT__
 static byte mobjAutoLights = true;
+#endif
 
 /**
  * Called during map loading.

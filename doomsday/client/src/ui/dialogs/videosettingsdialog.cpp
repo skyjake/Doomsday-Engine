@@ -155,7 +155,7 @@ VideoSettingsDialog::VideoSettingsDialog(String const &name)
     d->vsync->setText(tr("VSync"));
 
     LabelWidget *modeLabel = new LabelWidget;
-    modeLabel->setText(tr("Fullscreen Mode:"));
+    modeLabel->setText(tr("Resolution:"));
     area().add(modeLabel);
 
     // Choice of display modes + 16/32-bit color depth.
