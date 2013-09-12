@@ -35,14 +35,8 @@ public slots:
     void resetToDefaults();
 
 protected slots:
-    void showAppearanceMenu();
     void showDeveloperPopup();
     void editProfile();
-    void renameProfile();
-    void duplicateProfile();
-    void resetProfile();
-    void deleteProfile();
-    void applySelectedAppearance();
 
 private:
     DENG2_PRIVATE(d)

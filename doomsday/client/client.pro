@@ -430,6 +430,7 @@ DENG_HEADERS += \
     include/ui/widgets/panelwidget.h \
     include/ui/widgets/popupmenuwidget.h \
     include/ui/widgets/popupwidget.h \
+    include/ui/widgets/profilepickerwidget.h \
     include/ui/widgets/progresswidget.h \
     include/ui/widgets/scriptcommandwidget.h \
     include/ui/widgets/scrollareawidget.h \
@@ -767,6 +768,7 @@ SOURCES += \
     src/ui/widgets/panelwidget.cpp \
     src/ui/widgets/popupmenuwidget.cpp \
     src/ui/widgets/popupwidget.cpp \
+    src/ui/widgets/profilepickerwidget.cpp \
     src/ui/widgets/progresswidget.cpp \
     src/ui/widgets/scriptcommandwidget.cpp \
     src/ui/widgets/scrollareawidget.cpp \
