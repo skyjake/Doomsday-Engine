@@ -1167,9 +1167,10 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
         {
             if(LightDecoration *decorLight = decor->maybeAs<LightDecoration>())
             {
-                if(Lumobj *lum = decorLight->generateLumobj())
+                QScopedPointer<Lumobj>lum(decorLight->generateLumobj());
+                if(!lum.isNull())
                 {
-                    self.addLumobj(*lum);
+                    self.addLumobj(*lum); // a copy is made.
                 }
             }
         }
