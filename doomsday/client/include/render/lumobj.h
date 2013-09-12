@@ -42,6 +42,26 @@ public:
         Up
     };
 
+    /**
+     * Base for any class wishing to act as the source of the luminous object.
+     */
+    class Source
+    {
+    public:
+        virtual ~Source() {}
+
+        /**
+         * Calculate an occlusion factor for the light. The implementation should
+         * return a value in the range [0..1], where @c 0 is fully occluded and
+         * @c 1 is fully visible.
+         *
+         * In the default implementation assumes the source is always visible.
+         *
+         * @param eye  Position of the eye in map space.
+         */
+        float occlusion(de::Vector3d const &eye) const;
+    };
+
 public:
     /**
      * Construct a new luminous object.
@@ -49,12 +69,10 @@ public:
      * @param origin       Origin in map space.
      * @param radius       Radius in map space units.
      * @param color        Color/intensity.
-     * @param maxDistance  Maximum distance at which to be drawn (default: no-max).
      */
     Lumobj(de::Vector3d const &origin = de::Vector3d(),
            double radius              = 256,
-           de::Vector3f const &color  = de::Vector3f(1, 1, 1),
-           double maxDistance         = 0);
+           de::Vector3f const &color  = de::Vector3f(1, 1, 1));
 
     /// Construct a new luminious object by copying @a other.
     Lumobj(Lumobj const &other);
@@ -73,6 +91,13 @@ public:
      * Returns the current radius maximum (user configurable).
      */
     static int radiusMax();
+
+    /**
+     * Change the attributed source of the lumobj.
+     *
+     * @param newSource  New source to attribute. Use @c 0 to clear.
+     */
+    void setSource(Source *newSource);
 
     /**
      * Translate the origin of the lumobj in map space.
@@ -191,13 +216,45 @@ public:
     Lumobj &setLightmap(LightmapSemantic semantic, de::Texture *newTexture);
 
     /**
+     * Returns the current flare size of the lumobj.
+     */
+    float flareSize() const;
+
+    /**
+     * Change the flare size of the lumobj.
+     *
+     * @param newFlareSize  New flare size factor.
+     */
+    Lumobj &setFlareSize(float newFlareSize);
+
+    /**
+     * Returns the current flare texture of the lumobj.
+     */
+    DGLuint flareTexture() const;
+
+    /**
+     * Change the flare texture of the lumobj.
+     *
+     * @param newTexture  New flare texture.
+     */
+    Lumobj &setFlareTexture(DGLuint newTexture);
+
+    /**
      * Calculate a distance attentuation factor for the lumobj.
      *
-     * @param distance  Distance between the lumobj and the viewer.
+     * @param distFromEye  Distance between the lumobj and the viewer.
      *
      * @return  Attentuation factor [0..1].
      */
-    float attenuation(double distance) const;
+    float attenuation(double distFromEye) const;
+
+    /**
+     * Generates a VSPR_FLARE vissprite for the lumobj.
+     *
+     * @param eye          Position of the viewer in map space.
+     * @param distFromEye  Distance between the lumobj and the viewer.
+     */
+    void generateFlare(de::Vector3d const &eye, double distFromEye);
 
 private:
     DENG2_PRIVATE(d)

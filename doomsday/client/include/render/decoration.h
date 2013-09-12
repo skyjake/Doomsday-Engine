@@ -26,7 +26,6 @@
 
 #include "MaterialSnapshot"
 
-class Lumobj;
 class Surface;
 
 /// No decorations are visible beyond this.
@@ -50,21 +49,9 @@ public:
      */
     Decoration(de::MaterialSnapshotDecoration &source,
                de::Vector3d const &origin = de::Vector3d());
+    virtual ~Decoration();
 
-    /**
-     * To be called to register the commands and variables of this module.
-     */
-    static void consoleRegister();
-
-    /**
-     * Returns the current angle fade factor (user configurable).
-     */
-    static float angleFadeFactor();
-
-    /**
-     * Returns the current brightness scale factor (user configurable).
-     */
-    static float brightFactor();
+    DENG2_AS_IS_METHODS()
 
     /**
      * Returns the source of the decoration.
@@ -110,21 +97,6 @@ public:
      * @see setSurface(), hasSurface()
      */
     BspLeaf &bspLeafAtOrigin() const;
-
-    /**
-     * Generates a lumobj for the decoration. A map surface must be attributed.
-     *
-     * @see setSurface(), hasSurface()
-     */
-    void generateLumobj();
-
-    /**
-     * Generates a VSPR_FLARE vissprite for the decoration. A map surface must
-     * be attributed.
-     *
-     * @see setSurface(), hasSurface()
-     */
-    void generateFlare();
 
 private:
     DENG2_PRIVATE(d)

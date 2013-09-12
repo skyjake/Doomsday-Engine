@@ -30,6 +30,7 @@
 #include "Surface"
 
 #include "render/rend_main.h" // Rend_MapSurfaceMaterialSpec()
+#include "LightDecoration"
 #include "WallEdge"
 
 #include "render/surfacedecorator.h"
@@ -139,7 +140,7 @@ DENG2_OBSERVES(MaterialAnimation, DecorationStageChange)
                             continue;
                     }
 
-                    suf.addDecoration(new Decoration(matDecor, decorOrigin));
+                    suf.addDecoration(new LightDecoration(matDecor, decorOrigin));
                 }
             }
         }

@@ -470,7 +470,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
             decor.pos            = lsCur->pos;
             decor.elevation      = lsCur->elevation;
             decor.radius         = lsCur->radius;
-            decor.haloRadius     = lsCur->haloRadius;
+            decor.flareSize      = lsCur->haloRadius;
             decor.lightLevels[0] = lsCur->lightLevels.min;
             decor.lightLevels[1] = lsCur->lightLevels.max;
             decor.color          = lsCur->color;
@@ -481,7 +481,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
             decor.pos.y          = LERP(lsCur->pos.y, lsNext->pos.y, l.inter);
             decor.elevation      = LERP(lsCur->elevation, lsNext->elevation, l.inter);
             decor.radius         = LERP(lsCur->radius, lsNext->radius, l.inter);
-            decor.haloRadius     = LERP(lsCur->haloRadius, lsNext->haloRadius, l.inter);
+            decor.flareSize      = LERP(lsCur->haloRadius, lsNext->haloRadius, l.inter);
             decor.lightLevels[0] = LERP(lsCur->lightLevels.min, lsNext->lightLevels.min, l.inter);
             decor.lightLevels[1] = LERP(lsCur->lightLevels.max, lsNext->lightLevels.max, l.inter);
 

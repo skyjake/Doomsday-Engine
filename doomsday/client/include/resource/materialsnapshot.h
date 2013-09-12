@@ -57,7 +57,7 @@ public:
         float elevation; // Distance from the surface.
         de::Vector3f color; // Light color.
         float radius; // Dynamic light radius (-1 = no light).
-        float haloRadius; // Halo radius (zero = no halo).
+        float flareSize; // Halo radius (zero = no halo).
         float lightLevels[2]; // Fade by sector lightlevel.
 
         Texture *tex, *ceilTex, *floorTex;

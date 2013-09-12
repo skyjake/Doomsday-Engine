@@ -55,7 +55,7 @@
 
 #include "BiasIllum"
 #include "BiasSurface"
-#include "Decoration"
+#include "LightDecoration"
 #include "HueCircleVisual"
 #include "SkyFixEdge"
 #include "SurfaceDecorator"
@@ -291,7 +291,7 @@ void Rend_Register()
     RL_Register();
     BiasIllum::consoleRegister();
     BiasSurface::consoleRegister();
-    Decoration::consoleRegister();
+    LightDecoration::consoleRegister();
     LightGrid::consoleRegister();
     Lumobj::consoleRegister();
     Sky_Register();
@@ -2578,35 +2578,11 @@ static void traverseBspAndDrawLeafs(MapElement *bspElement)
  */
 static void generateDecorationFlares(Map &map)
 {
-    if(!useLightDecorations) return;
+    Vector3d const viewPos(vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
 
-    foreach(Line *line, map.lines())
-    for(int i = 0; i < 2; ++i)
+    foreach(Lumobj *lum, map.lumobjs())
     {
-        LineSide &side = line->side(i);
-        if(!side.hasSections()) continue;
-
-        foreach(Decoration *decor, side.middle().decorations())
-        {
-            decor->generateFlare();
-        }
-        foreach(Decoration *decor, side.bottom().decorations())
-        {
-            decor->generateFlare();
-        }
-        foreach(Decoration *decor, side.top().decorations())
-        {
-            decor->generateFlare();
-        }
-    }
-
-    foreach(Sector *sector, map.sectors())
-    foreach(Plane *plane, sector->planes())
-    {
-        foreach(Decoration *decor, plane->surface().decorations())
-        {
-            decor->generateFlare();
-        }
+        lum->generateFlare(viewPos, R_ViewerLumobjDistance(lum->indexInMap()));
     }
 }
 

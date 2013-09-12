@@ -136,6 +136,7 @@ DENG_CONVENIENCE_HEADERS += \
     include/HueCircle \
     include/HueCircleVisual \
     include/IHPlane \
+    include/LightDecoration \
     include/Line \
     include/MapElement \
     include/MapObject \
@@ -285,6 +286,7 @@ DENG_HEADERS += \
     include/render/blockmapvisual.h \
     include/render/decoration.h \
     include/render/huecirclevisual.h \
+    include/render/lightdecoration.h \
     include/render/lightgrid.h \
     include/render/lumobj.h \
     include/render/materialcontext.h \
@@ -633,6 +635,7 @@ SOURCES += \
     src/render/blockmapvisual.cpp \
     src/render/decoration.cpp \
     src/render/huecirclevisual.cpp \
+    src/render/lightdecoration.cpp \
     src/render/lightgrid.cpp \
     src/render/lumobj.cpp \
     src/render/projector.cpp \

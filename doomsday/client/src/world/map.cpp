@@ -2938,15 +2938,33 @@ void Map::worldFrameBegins(World &world, bool resetNextViewer)
 
                 foreach(Decoration *decor, side.middle().decorations())
                 {
-                    decor->generateLumobj();
+                    if(LightDecoration *decorLight = decor->maybeAs<LightDecoration>())
+                    {
+                        if(Lumobj *lum = decorLight->generateLumobj())
+                        {
+                            addLumobj(*lum);
+                        }
+                    }
                 }
                 foreach(Decoration *decor, side.bottom().decorations())
                 {
-                    decor->generateLumobj();
+                    if(LightDecoration *decorLight = decor->maybeAs<LightDecoration>())
+                    {
+                        if(Lumobj *lum = decorLight->generateLumobj())
+                        {
+                            addLumobj(*lum);
+                        }
+                    }
                 }
                 foreach(Decoration *decor, side.top().decorations())
                 {
-                    decor->generateLumobj();
+                    if(LightDecoration *decorLight = decor->maybeAs<LightDecoration>())
+                    {
+                        if(Lumobj *lum = decorLight->generateLumobj())
+                        {
+                            addLumobj(*lum);
+                        }
+                    }
                 }
             }
             foreach(Sector *sector, d->sectors)
@@ -2954,7 +2972,13 @@ void Map::worldFrameBegins(World &world, bool resetNextViewer)
             {
                 foreach(Decoration *decor, plane->surface().decorations())
                 {
-                    decor->generateLumobj();
+                    if(LightDecoration *decorLight = decor->maybeAs<LightDecoration>())
+                    {
+                        if(Lumobj *lum = decorLight->generateLumobj())
+                        {
+                            addLumobj(*lum);
+                        }
+                    }
                 }
             }
         }

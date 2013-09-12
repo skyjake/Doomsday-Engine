@@ -20,6 +20,8 @@
 
 #include "de_platform.h"
 #include "de_console.h"
+#include "de_render.h"
+
 #include "world/map.h"
 
 #include "render/lumobj.h"
@@ -29,14 +31,23 @@ using namespace de;
 static int radiusMax     = 256; ///< Absolute maximum lumobj radius (cvar).
 static float radiusScale = 3;   ///< Radius scale factor (cvar).
 
+float Lumobj::Source::occlusion(Vector3d const &eye) const
+{
+    DENG2_UNUSED(eye);
+    return 1; // Fully visible.
+}
+
 DENG2_PIMPL_NOREF(Lumobj)
 {
+    Source *source;     ///< Source of the lumobj (if any, not owned).
     Vector3d origin;    ///< Position in map space.
     BspLeaf *bspLeaf;   ///< BSP leaf at @ref origin in the map (not owned).
     double maxDistance; ///< Used when rendering to limit the number drawn lumobjs.
     Vector3f color;     ///< Light color/intensity.
     double radius;      ///< Radius in map space units.
     double zOffset;     ///< Z-axis origin offset in map space units.
+    float flareSize;    ///< Scale factor.
+    DGLuint flareTex;   ///< Custom flare texture (@todo should be Texture ptr).
 
     /// Custom lightmaps (if any, not owned):
     Texture *sideTex;
@@ -44,40 +55,50 @@ DENG2_PIMPL_NOREF(Lumobj)
     Texture *upTex;
 
     Instance()
-        : bspLeaf    (0),
+        : source     (0),
+          bspLeaf    (0),
           maxDistance(0),
           color      (Vector3f(1, 1, 1)),
           radius     (256),
           zOffset    (0),
+          flareSize  (0),
+          flareTex   (0),
           sideTex    (0),
           downTex    (0),
           upTex      (0)
     {}
 
     Instance(Instance const &other)
-        : origin     (other.origin),
+        : source     (other.source),
+          origin     (other.origin),
           bspLeaf    (other.bspLeaf),
           maxDistance(other.maxDistance),
           color      (other.color),
           radius     (other.radius),
           zOffset    (other.zOffset),
+          flareSize  (other.flareSize),
+          flareTex   (other.flareTex),
           sideTex    (other.sideTex),
           downTex    (other.downTex),
           upTex      (other.upTex)
     {}
 };
 
-Lumobj::Lumobj(Vector3d const &origin, double radius, Vector3f const &color, double maxDistance)
+Lumobj::Lumobj(Vector3d const &origin, double radius, Vector3f const &color)
     : MapObject(), d(new Instance())
 {
-    setOrigin     (origin);
-    setRadius     (radius);
-    setColor      (color);
-    setMaxDistance(maxDistance);
+    setOrigin(origin);
+    setRadius(radius);
+    setColor(color);
 }
 
 Lumobj::Lumobj(Lumobj const &other) : MapObject(), d(new Instance(*other.d))
 {}
+
+void Lumobj::setSource(Source *newSource)
+{
+    d->source = newSource;
+}
 
 Vector3d const &Lumobj::origin() const
 {
@@ -110,7 +131,7 @@ BspLeaf &Lumobj::bspLeafAtOrigin() const
     if(!d->bspLeaf)
     {
         // Determine this now.
-        d->bspLeaf = &map().bspLeafAt(d->origin);
+        d->bspLeaf = &map().bspLeafAt(origin());
     }
     return *d->bspLeaf;
 }
@@ -194,15 +215,58 @@ Lumobj &Lumobj::setLightmap(LightmapSemantic semantic, Texture *newTexture)
     return *this;
 }
 
-float Lumobj::attenuation(double distance) const
+float Lumobj::flareSize() const
 {
-    if(distance > 0 && d->maxDistance > 0)
+    return d->flareSize;
+}
+
+Lumobj &Lumobj::setFlareSize(float newFlareSize)
+{
+    d->flareSize = de::max(0.f, newFlareSize);
+    return *this;
+}
+
+DGLuint Lumobj::flareTexture() const
+{
+    return d->flareTex;
+}
+
+Lumobj &Lumobj::setFlareTexture(DGLuint newTexture)
+{
+    d->flareTex = newTexture;
+    return *this;
+}
+
+float Lumobj::attenuation(double distFromEye) const
+{
+    if(distFromEye > 0 && d->maxDistance > 0)
     {
-        if(distance > d->maxDistance) return 0;
-        if(distance > .67 * d->maxDistance)
-            return (d->maxDistance - distance) / (.33 * d->maxDistance);
+        if(distFromEye > d->maxDistance) return 0;
+        if(distFromEye > .67 * d->maxDistance)
+            return (d->maxDistance - distFromEye) / (.33 * d->maxDistance);
     }
     return 1;
+}
+
+void Lumobj::generateFlare(Vector3d const &eye, double distFromEye)
+{
+    // Is the point in range?
+    if(d->maxDistance > 0 && distFromEye > d->maxDistance)
+        return;
+
+    /// @todo Remove this limitation.
+    if(!d->source) return;
+
+    vissprite_t *vis = R_NewVisSprite(VSPR_FLARE);
+
+    vis->origin                  = origin();
+    vis->distance                = distFromEye;
+    V3f_Set(vis->data.flare.color, d->color.x, d->color.y, d->color.z);
+    vis->data.flare.mul          = d->source->occlusion(eye) * attenuation(distFromEye);
+    vis->data.flare.size         = d->flareSize > 0? de::max(1.f, d->flareSize * 60 * (50 + haloSize) / 100.0f) : 0;
+    vis->data.flare.tex          = d->flareTex;
+    vis->data.flare.lumIdx       = indexInMap();
+    vis->data.flare.isDecoration = true;
 }
 
 void Lumobj::consoleRegister() // static
