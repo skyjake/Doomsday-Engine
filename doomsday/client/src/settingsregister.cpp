@@ -328,6 +328,9 @@ DENG2_OBSERVES(App, GameChange)
 
                     Profile *prof = addProfile(profileName);
 
+                    // Use the default settings for anything not defined in the file.
+                    prof->values = defaults.values;
+
                     // Read all the setting values from the profile block.
                     foreach(de::Info::Element const *e, profBlock.contentsInOrder())
                     {
@@ -485,7 +488,9 @@ DENG2_OBSERVES(App, GameChange)
         }
 
         // Create the pack and update the file system.
-        App::rootFolder().replaceFile(fileName()) << info.toUtf8();
+        File &outFile = App::rootFolder().replaceFile(fileName());
+        outFile << info.toUtf8();
+        outFile.flush();
 
         LOG_VERBOSE("Wrote \"%s\" with %i profile%s") << fileName() << count << (count != 1? "s" : "");
     }

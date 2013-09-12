@@ -36,7 +36,8 @@ using namespace de;
 using namespace ui;
 
 DENG_GUI_PIMPL(RendererAppearanceEditor),
-DENG2_OBSERVES(SettingsRegister, ProfileChange)
+DENG2_OBSERVES(SettingsRegister, ProfileChange),
+DENG2_OBSERVES(App, GameChange)
 {
     /**
      * Foldable group of settings.
@@ -228,6 +229,9 @@ DENG2_OBSERVES(SettingsRegister, ProfileChange)
           settings(ClientApp::rendererAppearanceSettings()),
           firstColumnWidth(new IndirectRule)
     {
+        // The editor will close automatically when going to Ring Zero.
+        App::app().audienceForGameChange += this;
+
         settings.audienceForProfileChange += this;
 
         // The contents of the editor will scroll.
@@ -510,8 +514,18 @@ DENG2_OBSERVES(SettingsRegister, ProfileChange)
 
     ~Instance()
     {
+        App::app().audienceForGameChange -= this;
         settings.audienceForProfileChange -= this;
         releaseRef(firstColumnWidth);
+    }
+
+    void currentGameChanged(game::Game const &newGame)
+    {
+        if(newGame.isNull())
+        {
+            // Entering Ring Zero -- persistent cvars are not available.
+            self.close();
+        }
     }
 
     void currentProfileChanged(String const &)
