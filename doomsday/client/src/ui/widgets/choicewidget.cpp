@@ -26,6 +26,7 @@ using namespace ui;
 DENG_GUI_PIMPL(ChoiceWidget),
 DENG2_OBSERVES(Data, Addition),
 DENG2_OBSERVES(Data, Removal),
+DENG2_OBSERVES(Data, OrderChange),
 DENG2_OBSERVES(ContextWidgetOrganizer, WidgetCreation),
 DENG2_OBSERVES(ContextWidgetOrganizer, WidgetUpdate)
 {
@@ -68,6 +69,7 @@ DENG2_OBSERVES(ContextWidgetOrganizer, WidgetUpdate)
         choices = new PopupMenuWidget;
         choices->items().audienceForAddition += this;
         choices->items().audienceForRemoval += this;
+        choices->items().audienceForOrderChange += this;
         choices->menu().organizer().audienceForWidgetCreation += this;
         choices->menu().organizer().audienceForWidgetUpdate += this;
         self.add(choices);
@@ -138,6 +140,11 @@ DENG2_OBSERVES(ContextWidgetOrganizer, WidgetUpdate)
             selected--;
         }
 
+        updateButtonWithSelection();
+    }
+
+    void contextItemOrderChanged()
+    {
         updateButtonWithSelection();
     }
 

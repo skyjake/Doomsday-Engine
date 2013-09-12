@@ -198,6 +198,8 @@ void ProfilePickerWidget::duplicate()
 
                 items().append(new ChoiceItem(newName.left(MAX_VISIBLE_PROFILE_NAME), newName)).sort();
                 setSelected(items().findData(newName));
+
+                applySelectedProfile();
             }
             else
             {
