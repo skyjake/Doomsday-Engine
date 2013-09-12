@@ -36,7 +36,7 @@ public:
     RendererAppearanceEditor();
 
 public slots:
-    void showRendererSettings();
+    //void showRendererSettings();
 
 protected:
     void preparePanelForOpening();

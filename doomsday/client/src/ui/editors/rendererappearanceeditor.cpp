@@ -20,10 +20,11 @@
 #include "ui/dialogs/renderersettingsdialog.h"
 #include "ui/widgets/buttonwidget.h"
 #include "ui/widgets/scrollareawidget.h"
+#include "ui/widgets/foldpanelwidget.h"
+#include "ui/widgets/profilepickerwidget.h"
 #include "ui/widgets/cvarchoicewidget.h"
 #include "ui/widgets/cvarsliderwidget.h"
 #include "ui/widgets/cvartogglewidget.h"
-#include "ui/widgets/foldpanelwidget.h"
 #include "ui/clientwindow.h"
 #include "DialogContentStylist"
 #include "SequentialLayout"
@@ -207,16 +208,16 @@ DENG2_OBSERVES(SettingsRegister, ProfileChange)
     DialogContentStylist stylist;
     ScrollAreaWidget *container;
     IndirectRule *firstColumnWidth; ///< Shared by all groups.
-    ButtonWidget *conf;
+    //ButtonWidget *conf;
     ButtonWidget *close;    
-    LabelWidget *current;
+    ProfilePickerWidget *profile;
 
     Group *skyGroup;
     Group *shadowGroup;
     Group *lightGroup;
     Group *glowGroup;
     Group *haloGroup;
-    Group *texGroup;
+    Group *matGroup;
     Group *modelGroup;
     Group *spriteGroup;
     Group *objectGroup;
@@ -234,21 +235,17 @@ DENG2_OBSERVES(SettingsRegister, ProfileChange)
         container->enableIndicatorDraw(true);
         stylist.setContainer(*container);
 
-        container->add(conf    = new ButtonWidget);
+        //container->add(conf    = new ButtonWidget);
         container->add(close   = new ButtonWidget);
-        container->add(current = new LabelWidget);
+        container->add(profile = new ProfilePickerWidget(settings, tr("appearance")));
 
         // Button for showing renderer settings.
-        conf->setImage(style().images().image("gear"));
-        conf->setOverrideImageSize(style().fonts().font("default").height().value());
-        conf->setAction(new SignalAction(thisPublic, SLOT(showRendererSettings())));
+        //conf->setImage(style().images().image("gear"));
+        //conf->setOverrideImageSize(style().fonts().font("default").height().value());
+        //conf->setAction(new SignalAction(thisPublic, SLOT(showRendererSettings())));
 
         close->setText(tr("Close"));
         close->setAction(new SignalAction(thisPublic, SLOT(close())));
-
-        // Label for the current profile.
-        current->setAlignment(AlignLeft);
-        current->setTextLineAlignment(AlignLeft);
 
         // Sky settings.
         skyGroup = new Group(this, tr("Sky"));
@@ -282,13 +279,12 @@ DENG2_OBSERVES(SettingsRegister, ProfileChange)
         shadowGroup->commit();
 
         // Dynamic light settings.
-        lightGroup = new Group(this, "Dynamic Lights");
+        lightGroup = new Group(this, tr("Lighting"));
 
         lightGroup->addLabel(tr("Dynamic Lights:"));
         lightGroup->addChoice("rend-light", ui::Down)->items()
                 << new ChoiceItem(tr("Enabled"), 1)
-                << new ChoiceItem(tr("Disabled"), 0)
-                << new ChoiceItem(tr("Process without drawing"), 2);
+                << new ChoiceItem(tr("Disabled"), 0);
 
         lightGroup->addSpace();
         lightGroup->addToggle("rend-light-decor", tr("Light Decorations"));
@@ -339,11 +335,20 @@ DENG2_OBSERVES(SettingsRegister, ProfileChange)
 
         glowGroup->commit();
 
-        // Halo and lens flare settings.
-        haloGroup = new Group(this, tr("Lens Flares & Halos"));
+        // Camera lens settings.
+        haloGroup = new Group(this, tr("Camera Lens"));
 
         haloGroup->addSpace();
-        haloGroup->addToggle("rend-halo-realistic", tr("Realistic Appearance"));
+        haloGroup->addToggle("rend-vignette", tr("Vignetting"));
+
+        haloGroup->addLabel(tr("Vignette Darkness:"));
+        haloGroup->addSlider("rend-vignette-darkness", Ranged(0, 2), .01, 2);
+
+        haloGroup->addLabel(tr("Vignette Width:"));
+        haloGroup->addSlider("rend-vignette-width");
+
+        haloGroup->addSpace();
+        haloGroup->addToggle("rend-halo-realistic", tr("Realistic Halos"));
 
         haloGroup->addLabel(tr("Flares per Halo:"));
         haloGroup->addSlider("rend-halo")->setMinLabel(tr("None"));
@@ -374,11 +379,17 @@ DENG2_OBSERVES(SettingsRegister, ProfileChange)
 
         haloGroup->commit();
 
-        // Texture settings.
-        texGroup = new Group(this, tr("Textures"));
+        // Material settings.
+        matGroup = new Group(this, tr("Materials"));
 
-        texGroup->addLabel(tr("Filtering Mode:"));
-        texGroup->addChoice("rend-tex-mipmap")->items()
+        matGroup->addSpace();
+        matGroup->addToggle("rend-tex-anim-smooth", tr("Smooth Animation"));
+
+        matGroup->addLabel(tr("Texture Quality:"));
+        matGroup->addSlider("rend-tex-quality");
+
+        matGroup->addLabel(tr("Texture Filtering:"));
+        matGroup->addChoice("rend-tex-mipmap")->items()
                 << new ChoiceItem(tr("None"),                       0)
                 << new ChoiceItem(tr("Linear filter, no mip"),      1)
                 << new ChoiceItem(tr("No filter, nearest mip"),     2)
@@ -386,26 +397,20 @@ DENG2_OBSERVES(SettingsRegister, ProfileChange)
                 << new ChoiceItem(tr("No filter, linear mip"),      4)
                 << new ChoiceItem(tr("Linear filter, linear mip"),  5);
 
-        texGroup->addLabel(tr("Texture Quality:"));
-        texGroup->addSlider("rend-tex-quality");
+        matGroup->addSpace();
+        matGroup->addToggle("rend-tex-filter-smart", tr("2x Smart Filtering"));
 
-        texGroup->addSpace();
-        texGroup->addToggle("rend-tex-anim-smooth", tr("Smooth Blend Animation"));
+        matGroup->addLabel(tr("Bilinear Filtering:"));
+        matGroup->addToggle("rend-tex-filter-sprite", tr("Sprites"));
 
-        texGroup->addSpace();
-        texGroup->addToggle("rend-tex-filter-smart", tr("2x Smart Filtering"));
+        matGroup->addSpace();
+        matGroup->addToggle("rend-tex-filter-mag", tr("World Surfaces"));
 
-        texGroup->addLabel(tr("Bilinear Filtering:"));
-        texGroup->addToggle("rend-tex-filter-sprite", tr("Sprites"));
+        matGroup->addSpace();
+        matGroup->addToggle("rend-tex-filter-ui", tr("User Interface"));
 
-        texGroup->addSpace();
-        texGroup->addToggle("rend-tex-filter-mag", tr("World Surfaces"));
-
-        texGroup->addSpace();
-        texGroup->addToggle("rend-tex-filter-ui", tr("User Interface"));
-
-        texGroup->addLabel(tr("Anisotopic Filter:"));
-        texGroup->addChoice("rend-tex-filter-anisotropic")->items()
+        matGroup->addLabel(tr("Anisotopic Filter:"));
+        matGroup->addChoice("rend-tex-filter-anisotropic")->items()
                 << new ChoiceItem(tr("Best available"), -1)
                 << new ChoiceItem(tr("Off"), 0)
                 << new ChoiceItem(tr("2x"),  1)
@@ -413,16 +418,16 @@ DENG2_OBSERVES(SettingsRegister, ProfileChange)
                 << new ChoiceItem(tr("8x"),  3)
                 << new ChoiceItem(tr("16x"), 4);
 
-        texGroup->addSpace();
-        texGroup->addToggle("rend-tex-detail", tr("Detail Textures"));
+        matGroup->addSpace();
+        matGroup->addToggle("rend-tex-detail", tr("Detail Textures"));
 
-        texGroup->addLabel(tr("Scaling Factor:"));
-        texGroup->addSlider("rend-tex-detail-scale", Ranged(0, 16), .01, 2);
+        matGroup->addLabel(tr("Scaling Factor:"));
+        matGroup->addSlider("rend-tex-detail-scale", Ranged(0, 16), .01, 2);
 
-        texGroup->addLabel(tr("Contrast:"));
-        texGroup->addSlider("rend-tex-detail-strength");
+        matGroup->addLabel(tr("Contrast:"));
+        matGroup->addSlider("rend-tex-detail-strength");
 
-        texGroup->commit();
+        matGroup->commit();
 
         // Model settings.
         modelGroup = new Group(this, tr("3D Models"));
@@ -530,8 +535,6 @@ DENG2_OBSERVES(SettingsRegister, ProfileChange)
 
     void fetch()
     {
-        current->setText(tr("Profile: %1").arg(_E(b) + settings.currentProfile()));
-
         foreach(Widget *child, container->childWidgets())
         {
             if(Group *g = child->maybeAs<Group>())
@@ -549,10 +552,14 @@ RendererAppearanceEditor::RendererAppearanceEditor()
     setOpeningDirection(Left);
     set(Background(style().colors().colorf("background")).withSolidFillOpacity(1));
 
+    d->profile->setOpeningDirection(Down);
+
     // Set up the editor UI.
     LabelWidget *title = LabelWidget::newWithText("Renderer Appearance", d->container);
     title->setFont("title");
     title->setTextColor("accent");
+
+    LabelWidget *profLabel = LabelWidget::newWithText(tr("Profile:"), d->container);
 
     // Layout.
     RuleRectangle const &area = d->container->contentRule();
@@ -562,22 +569,25 @@ RendererAppearanceEditor::RendererAppearanceEditor()
     d->close->rule()
             .setInput(Rule::Right,  area.right())
             .setInput(Rule::Top,    area.top());
-    d->conf->rule()
+    /*d->conf->rule()
             .setInput(Rule::Right,  d->close->rule().left())
-            .setInput(Rule::Top,    d->close->rule().top());
+            .setInput(Rule::Top,    d->close->rule().top());*/
 
-    d->current->setWidthPolicy(ui::Fixed);
-    d->current->rule().setInput(Rule::Width, area.width());
+    //d->current->setWidthPolicy(ui::Fixed);
+    //d->current->rule().setInput(Rule::Width, area.width());
 
-    SequentialLayout layout(area.left(), title->rule().bottom(), Down);
+    SequentialLayout layout(area.left(), title->rule().bottom(), Down);    
 
-    layout.append(*d->current, SequentialLayout::IgnoreMinorAxis);
+    layout.append(*profLabel, SequentialLayout::IgnoreMinorAxis);
+    d->profile->rule()
+            .setInput(Rule::Left, profLabel->rule().right())
+            .setInput(Rule::Top,  profLabel->rule().top());
 
     layout << d->lightGroup->title()  << *d->lightGroup
-           << d->haloGroup->title()   << *d->haloGroup
            << d->glowGroup->title()   << *d->glowGroup
            << d->shadowGroup->title() << *d->shadowGroup
-           << d->texGroup->title()    << *d->texGroup
+           << d->haloGroup->title()   << *d->haloGroup
+           << d->matGroup->title()    << *d->matGroup
            << d->objectGroup->title() << *d->objectGroup
            << d->modelGroup->title()  << *d->modelGroup
            << d->spriteGroup->title() << *d->spriteGroup
@@ -586,6 +596,9 @@ RendererAppearanceEditor::RendererAppearanceEditor()
 
     // Update container size.
     d->container->setContentSize(OperatorRule::maximum(layout.width(),
+                                                       profLabel->rule().width() +
+                                                       d->profile->rule().width() +
+                                                       d->profile->button().rule().width(),
                                                        style().rules().rule("rendererappearance.width")),
                                  title->rule().height() + layout.height());
     d->container->rule().setSize(d->container->contentRule().width() +
@@ -602,6 +615,7 @@ RendererAppearanceEditor::RendererAppearanceEditor()
     d->lightGroup->open();
 }
 
+/*
 void RendererAppearanceEditor::showRendererSettings()
 {
     RendererSettingsDialog *dlg = new RendererSettingsDialog;
@@ -609,7 +623,7 @@ void RendererAppearanceEditor::showRendererSettings()
     dlg->setAnchorAndOpeningDirection(d->conf->rule(), Down);
     root().add(dlg);
     dlg->open();
-}
+}*/
 
 void RendererAppearanceEditor::preparePanelForOpening()
 {

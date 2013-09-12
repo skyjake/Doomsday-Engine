@@ -224,6 +224,10 @@ DENG2_PIMPL(ClientApp)
                 .define(SReg::IntCVar,   "rend-light-ambient", 0)
                 .define(SReg::FloatCVar, "rend-light-compression", 0)
 
+                .define(SReg::IntCVar,   "rend-vignette", 1)
+                .define(SReg::FloatCVar, "rend-vignette-darkness", 1)
+                .define(SReg::FloatCVar, "rend-vignette-width", 1)
+
                 .define(SReg::IntCVar,   "rend-halo-realistic", 1)
                 .define(SReg::IntCVar,   "rend-halo", 5)
                 .define(SReg::IntCVar,   "rend-halo-bright", 35)
