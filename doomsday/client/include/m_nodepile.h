@@ -28,7 +28,22 @@
 
 #include "dd_types.h"
 
-struct linknode_s;                 // Defined in dd_share.h.
+/**
+ * Linknodes are used when linking mobjs to lines. Each mobj has a ring
+ * of linknodes, each node pointing to a line the mobj has been linked to.
+ * Correspondingly each line has a ring of nodes, with pointers to the
+ * mobjs that are linked to that particular line. This way it is possible
+ * that a single mobj is linked simultaneously to multiple lines (which
+ * is common).
+ *
+ * All these rings are maintained by P_MobjLink() and P_MobjUnlink().
+ * @ingroup mobj
+ */
+typedef struct linknode_s {
+    nodeindex_t     prev, next;
+    void*           ptr;
+    int             data;
+} linknode_t;
 
 typedef struct nodepile_s {
     int             count;
