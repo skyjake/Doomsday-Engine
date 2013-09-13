@@ -212,13 +212,13 @@ public:
         return *this;
     }
 
-    Observers<Type> const &operator += (Type *observer) const {
-        const_cast<Observers<Type> *>(this)->add(observer);
+    Observers<Type> const &operator += (Type const *observer) const {
+        const_cast<Observers<Type> *>(this)->add(const_cast<Type *>(observer));
         return *this;
     }
 
-    Observers<Type> const &operator += (Type &observer) const {
-        const_cast<Observers<Type> *>(this)->add(&observer);
+    Observers<Type> const &operator += (Type const &observer) const {
+        const_cast<Observers<Type> *>(this)->add(const_cast<Type *>(&observer));
         return *this;
     }
 

@@ -20,7 +20,7 @@
 #define DENG_CLIENT_MENUWIDGET_H
 
 #include "ui/Data"
-#include "ContextWidgetOrganizer"
+#include "ChildWidgetOrganizer"
 #include "ui/ActionItem"
 #include "ui/SubmenuItem"
 #include "ui/VariableToggleItem"
@@ -39,7 +39,7 @@
  * MenuWidget::ISortOrder. Sorting affects layout only, not the actual order of
  * the children.
  *
- * MenuWidget uses a ContextWidgetOrganizer to create widgets based on the
+ * MenuWidget uses a ChildWidgetOrganizer to create widgets based on the
  * provided menu items. The organizer can be queried to find widgets matching
  * specific items.
  */
@@ -87,7 +87,8 @@ public:
      */
     void setItems(ui::Data const &items);
 
-    ContextWidgetOrganizer const &organizer() const;
+    ChildWidgetOrganizer &organizer();
+    ChildWidgetOrganizer const &organizer() const;
 
     /**
      * Returns the number of visible items in the menu. Hidden items are not

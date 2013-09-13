@@ -137,7 +137,7 @@ InputSettingsDialog::InputSettingsDialog(String const &name)
 
     area().setContentSize(layout.width(), layout.height());
 
-    buttons().items()
+    buttons()
             << new DialogButtonItem(DialogWidget::Default | DialogWidget::Accept, tr("Close"))
             << new DialogButtonItem(DialogWidget::Action, tr("Reset to Defaults"),
                                     new SignalAction(this, SLOT(resetToDefaults())));

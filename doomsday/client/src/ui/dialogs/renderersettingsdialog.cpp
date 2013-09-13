@@ -187,16 +187,16 @@ RendererSettingsDialog::RendererSettingsDialog(String const &name)
 
     area().setContentSize(layout.width(), layout.height());
 
-    buttons().items()
+    buttons()
             << new DialogButtonItem(DialogWidget::Default | DialogWidget::Accept, tr("Close"))
             << new DialogButtonItem(DialogWidget::Action, tr("Reset to Defaults"),
                                     new SignalAction(this, SLOT(resetToDefaults())))
-            << new DialogButtonItem(DialogWidget::Action, tr("Developer"),
+            << new DialogButtonItem(DialogWidget::Action | Id1,
+                                    style().images().image("gauge"),
                                     new SignalAction(this, SLOT(showDeveloperPopup())));
 
     // Identifiers popup opens from the button.
-    d->devPopup->setAnchorAndOpeningDirection(
-                buttons().organizer().itemWidget(tr("Developer"))->rule(), ui::Up);
+    d->devPopup->setAnchorAndOpeningDirection(buttonWidget(Id1)->rule(), ui::Up);
 
     connect(this, SIGNAL(closed()), d->devPopup, SLOT(close()));
     connect(d->appear, SIGNAL(profileEditorRequested()), this, SLOT(editProfile()));

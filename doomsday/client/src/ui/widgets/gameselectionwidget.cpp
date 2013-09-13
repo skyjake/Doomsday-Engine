@@ -30,7 +30,7 @@ using namespace de;
 DENG_GUI_PIMPL(GameSelectionWidget),
 DENG2_OBSERVES(Games, Addition),
 DENG2_OBSERVES(App, StartupComplete),
-DENG2_OBSERVES(ContextWidgetOrganizer, WidgetCreation)
+DENG2_OBSERVES(ChildWidgetOrganizer, WidgetCreation)
 {
     /// ActionItem with a Game member.
     struct GameItem : public ui::ActionItem {

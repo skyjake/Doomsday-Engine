@@ -118,7 +118,7 @@ DENG_CONVENIENCE_HEADERS += \
     include/BspLeaf \
     include/BspNode \
     include/CommandAction \
-    include/ContextWidgetOrganizer \
+    include/ChildWidgetOrganizer \
     include/Decoration \
     include/DialogContentStylist \
     include/EntityDatabase \
@@ -377,7 +377,7 @@ DENG_HEADERS += \
     include/ui/framework/actionitem.h \
     include/ui/framework/atlasproceduralimage.h \
     include/ui/framework/commandaction.h \
-    include/ui/framework/contextwidgetorganizer.h \
+    include/ui/framework/childwidgetorganizer.h \
     include/ui/framework/data.h \
     include/ui/framework/dialogcontentstylist.h \
     include/ui/framework/fontlinewrapping.h \
@@ -723,7 +723,7 @@ SOURCES += \
     src/ui/fi_main.cpp \
     src/ui/finaleinterpreter.cpp \
     src/ui/framework/commandaction.cpp \
-    src/ui/framework/contextwidgetorganizer.cpp \
+    src/ui/framework/childwidgetorganizer.cpp \
     src/ui/framework/data.cpp \
     src/ui/framework/dialogcontentstylist.cpp \
     src/ui/framework/fontlinewrapping.cpp \

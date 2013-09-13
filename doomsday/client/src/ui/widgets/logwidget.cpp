@@ -45,7 +45,6 @@ using namespace de;
 using namespace ui;
 
 DENG_GUI_PIMPL(LogWidget),
-DENG2_OBSERVES(Atlas, Reposition),
 DENG2_OBSERVES(Atlas, OutOfSpace),
 public Font::RichFormat::IStyle
 {

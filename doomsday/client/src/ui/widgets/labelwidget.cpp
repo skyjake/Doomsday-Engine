@@ -538,6 +538,11 @@ void LabelWidget::setImageColor(Vector4f const &imageColor)
     d->imageColor = imageColor;
 }
 
+bool LabelWidget::hasImage() const
+{
+    return d->hasImage();
+}
+
 void LabelWidget::update()
 {
     GuiWidget::update();

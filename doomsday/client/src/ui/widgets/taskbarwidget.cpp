@@ -288,19 +288,25 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
      * depending on whether a game is loaded.
      */
     d->configMenu->items()
-            << new ui::ActionItem(ui::Item::ShownAsButton, tr("Renderer"),
+            << new ui::ActionItem(ui::Item::ShownAsButton,
+                                  style().images().image("renderer"), tr("Renderer"),
                                   new SignalAction(this, SLOT(showRendererSettings())))
             << new ui::Item(ui::Item::Separator)
-            << new ui::ActionItem(ui::Item::ShownAsButton, tr("Video"),
+            << new ui::ActionItem(ui::Item::ShownAsButton,
+                                  style().images().image("display"), tr("Video"),
                                   new SignalAction(this, SLOT(showVideoSettings())))
-            << new ui::ActionItem(ui::Item::ShownAsButton, tr("Audio"),
+            << new ui::ActionItem(ui::Item::ShownAsButton,
+                                  style().images().image("audio"), tr("Audio"),
                                   new SignalAction(this, SLOT(showAudioSettings())))
-            << new ui::ActionItem(ui::Item::ShownAsButton, tr("Input"),
+            << new ui::ActionItem(ui::Item::ShownAsButton,
+                                  style().images().image("input"), tr("Input"),
                                   new SignalAction(this, SLOT(showInputSettings())))
-            << new ui::ActionItem(ui::Item::ShownAsButton, tr("Network"),
+            << new ui::ActionItem(ui::Item::ShownAsButton,
+                                  style().images().image("network"), tr("Network"),
                                   new SignalAction(this, SLOT(showNetworkSettings())))
             << new ui::Item(ui::Item::Separator)
-            << new ui::ActionItem(ui::Item::ShownAsButton, tr("Updater..."),
+            << new ui::ActionItem(ui::Item::ShownAsButton,
+                                  style().images().image("updater"), tr("Updater..."),
                                   new SignalAction(this, SLOT(showUpdaterSettings())));
 
     d->mainMenu->items()

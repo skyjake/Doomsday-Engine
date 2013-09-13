@@ -1,4 +1,4 @@
-/** @file contextwidgetorganizer.cpp Organizes widgets according to a UI context.
+/** @file childwidgetorganizer.cpp Organizes widgets according to a UI context.
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#include "ContextWidgetOrganizer"
+#include "ChildWidgetOrganizer"
 #include "ui/widgets/labelwidget.h"
 #include "ui/Item"
 
@@ -26,16 +26,17 @@ using namespace de;
 
 static DefaultWidgetFactory defaultWidgetFactory;
 
-DENG2_PIMPL(ContextWidgetOrganizer),
-DENG2_OBSERVES(Widget,      Deletion   ),
+DENG2_PIMPL(ChildWidgetOrganizer),
+DENG2_OBSERVES(Widget,   Deletion   ),
 DENG2_OBSERVES(ui::Data, Addition   ),
 DENG2_OBSERVES(ui::Data, Removal    ),
 DENG2_OBSERVES(ui::Data, OrderChange),
-DENG2_OBSERVES(ui::Item,    Change     )
+DENG2_OBSERVES(ui::Item, Change     )
 {
     GuiWidget *container;
     ui::Data const *context;
     IWidgetFactory *factory;
+    IFilter const *filter;
 
     typedef QMap<ui::Item const *, GuiWidget *> Mapping;
     typedef QMutableMapIterator<ui::Item const *, GuiWidget *> MutableMappingIterator;
@@ -45,7 +46,8 @@ DENG2_OBSERVES(ui::Item,    Change     )
         : Base(i),
           container(c),
           context(0),
-          factory(&defaultWidgetFactory)
+          factory(&defaultWidgetFactory),
+          filter(0)
     {}
 
     ~Instance()
@@ -83,6 +85,15 @@ DENG2_OBSERVES(ui::Item,    Change     )
     void addItemWidget(ui::Data::Pos pos, bool alwaysAppend = false)
     {
         DENG2_ASSERT(factory != 0);
+
+        if(filter)
+        {
+            if(!filter->isItemAccepted(self, *context, pos))
+            {
+                // Skip this one.
+                return;
+            }
+        }
 
         ui::Item const &item = context->at(pos);
         GuiWidget *w = factory->makeItemWidget(item, container);
@@ -184,14 +195,20 @@ DENG2_OBSERVES(ui::Item,    Change     )
         }
         for(ui::Data::Pos i = 0; i < context->size(); ++i)
         {
-            DENG2_ASSERT(mapping.contains(&context->at(i)));
-            container->add(mapping[&context->at(i)]);
+            if(mapping.contains(&context->at(i)))
+            {
+                container->add(mapping[&context->at(i)]);
+            }
         }
     }
 
     void itemChanged(ui::Item const &item)
     {
-        DENG2_ASSERT(mapping.contains(&item));
+        if(!mapping.contains(&item))
+        {
+            // Not represented as a child widget.
+            return;
+        }
 
         GuiWidget &w = *mapping[&item];
         factory->updateItemWidget(w, item);
@@ -223,48 +240,53 @@ DENG2_OBSERVES(ui::Item,    Change     )
     }
 };
 
-ContextWidgetOrganizer::ContextWidgetOrganizer(GuiWidget &container)
+ChildWidgetOrganizer::ChildWidgetOrganizer(GuiWidget &container)
     : d(new Instance(this, &container))
 {}
 
-void ContextWidgetOrganizer::setContext(ui::Data const &context)
+void ChildWidgetOrganizer::setContext(ui::Data const &context)
 {
     d->set(&context);
 }
 
-void ContextWidgetOrganizer::unsetContext()
+void ChildWidgetOrganizer::unsetContext()
 {
     d->set(0);
 }
 
-ui::Data const &ContextWidgetOrganizer::context() const
+ui::Data const &ChildWidgetOrganizer::context() const
 {
     DENG2_ASSERT(d->context != 0);
     return *d->context;
 }
 
-GuiWidget *ContextWidgetOrganizer::itemWidget(ui::Data::Pos pos) const
+GuiWidget *ChildWidgetOrganizer::itemWidget(ui::Data::Pos pos) const
 {
     return itemWidget(context().at(pos));
 }
 
-void ContextWidgetOrganizer::setWidgetFactory(IWidgetFactory &factory)
+void ChildWidgetOrganizer::setWidgetFactory(IWidgetFactory &factory)
 {
     d->factory = &factory;
 }
 
-ContextWidgetOrganizer::IWidgetFactory &ContextWidgetOrganizer::widgetFactory() const
+ChildWidgetOrganizer::IWidgetFactory &ChildWidgetOrganizer::widgetFactory() const
 {
     DENG2_ASSERT(d->factory != 0);
     return *d->factory;
 }
 
-GuiWidget *ContextWidgetOrganizer::itemWidget(ui::Item const &item) const
+void ChildWidgetOrganizer::setFilter(ChildWidgetOrganizer::IFilter const &filter)
+{
+    d->filter = &filter;
+}
+
+GuiWidget *ChildWidgetOrganizer::itemWidget(ui::Item const &item) const
 {
     return d->find(item);
 }
 
-GuiWidget *ContextWidgetOrganizer::itemWidget(String const &label) const
+GuiWidget *ChildWidgetOrganizer::itemWidget(String const &label) const
 {
     return d->findByLabel(label);
 }

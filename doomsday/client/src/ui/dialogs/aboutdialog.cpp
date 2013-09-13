@@ -113,14 +113,14 @@ AboutDialog::AboutDialog() : DialogWidget("about"), d(new Instance(this))
     // Total size of the dialog's content.
     area().setContentSize(layout.width(), layout.height() + homepage->rule().height());
 
-    buttons().items()
+    buttons()
             << new DialogButtonItem(DialogWidget::Accept | DialogWidget::Default, tr("Close"))
             << new DialogButtonItem(DialogWidget::Action, tr("GL"), new SignalAction(this, SLOT(showGLInfo())))
             << new DialogButtonItem(DialogWidget::Action, tr("Audio"), new SignalAction(this, SLOT(showAudioInfo())));
 
     // The popups are anchored to their button.
-    d->glPopup->setAnchorAndOpeningDirection(buttons().organizer().itemWidget(tr("GL"))->rule(), ui::Up);
-    d->audioPopup->setAnchorAndOpeningDirection(buttons().organizer().itemWidget(tr("Audio"))->rule(), ui::Up);
+    d->glPopup->setAnchorAndOpeningDirection(buttonWidget(tr("GL")).rule(), ui::Up);
+    d->audioPopup->setAnchorAndOpeningDirection(buttonWidget(tr("Audio")).rule(), ui::Up);
 }
 
 void AboutDialog::showGLInfo()

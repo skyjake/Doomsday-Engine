@@ -60,6 +60,9 @@ DENG2_OBSERVES(Widget, ChildAddition)
         // class destructor will destroy all widgets, but this class governs
         // shared GL resources, so we'll ask the widgets to do this now.
         self.notifyTree(&Widget::deinitialize);
+
+        // Destroy GUI widgets while the shared resources are still available.
+        self.clearTree();
     }
 
     void initAtlas()

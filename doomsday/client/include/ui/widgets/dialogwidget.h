@@ -49,6 +49,7 @@ class GuiRootWidget;
  *      +- heading (LabelWidget; optional)
  *      +- area    (ScrollAreaWidget; contains actual dialog widgets)
  *      +- buttons (MenuWidget)
+ *      +- extra   (MenuWidget; might be empty)
  * </pre>
  *
  * Scrolling is set up so that the dialog height doesn't surpass the view
@@ -82,7 +83,13 @@ public:
         Reject  = 0x4,
         Yes     = 0x8,
         No      = 0x10,
-        Action  = 0x20
+        Action  = 0x20,
+
+        IdMask  = 0xff0000,
+        Id1     = 0x010000,
+        Id2     = 0x020000,
+        Id3     = 0x030000,
+        Id4     = 0x040000
     };
     Q_DECLARE_FLAGS(RoleFlags, RoleFlag)
 
@@ -109,6 +116,8 @@ public:
          */
         ButtonItem(RoleFlags flags, de::String const &label, de::Action *action);
 
+        ButtonItem(RoleFlags flags, de::Image const &image, de::Action *action);
+
         RoleFlags role() const { return _role; }
 
     private:
@@ -128,7 +137,23 @@ public:
 
     ScrollAreaWidget &area();
 
-    MenuWidget &buttons();
+    //MenuWidget &buttons();
+
+    /**
+     * Additional buttons of the dialog, laid out opposite to the normal dialog
+     * buttons. These are used for functionality related to the dialog's content,
+     * but they don't accept or reject the dialog. For instance, shortcut for
+     * settings, showing what's new in an update, etc.
+     *
+     * @return Widget for dialog's extra buttons.
+     */
+    //MenuWidget &extraButtons();
+
+    ui::Data &buttons();
+
+    ButtonWidget &buttonWidget(de::String const &label) const;
+
+    ButtonWidget *buttonWidget(int roleId) const;
 
     /**
      * Shows the dialog and blocks execution until the dialog is closed --

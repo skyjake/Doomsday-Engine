@@ -13,20 +13,36 @@ class Style;
  * used (i.e., glInit() and glDeinit() are being called).
  *
  * Use DENG_GUI_PIMPL() instead of the DENG2_PIMPL() macro.
+ *
+ * Note that GuiWidgetPrivate automatically observes the root widget's atlas
+ * content repositioning, so derived private implementations can just override
+ * the observer method if necessary.
  */
 template <typename PublicType>
-class GuiWidgetPrivate : public de::Private<PublicType>
+class GuiWidgetPrivate : public de::Private<PublicType>,
+                         DENG2_OBSERVES(de::Atlas, Reposition)
 {
 public:
     typedef GuiWidgetPrivate<PublicType> Base; // shadows de::Private<>::Base
 
 public:
-    GuiWidgetPrivate(PublicType &i) : de::Private<PublicType>(i) {}
+    GuiWidgetPrivate(PublicType &i)
+        : de::Private<PublicType>(i),
+          _observingAtlas(0)
+    {}
 
-    GuiWidgetPrivate(PublicType *i) : de::Private<PublicType>(i) {}
+    GuiWidgetPrivate(PublicType *i)
+        : de::Private<PublicType>(i),
+          _observingAtlas(0)
+    {}
 
     virtual ~GuiWidgetPrivate()
     {
+        if(_observingAtlas)
+        {
+            _observingAtlas->audienceForReposition -= this;
+        }
+
         /**
          * Ensure that the derived's class's glDeinit() method has been
          * called before the private class instance is destroyed. At least
@@ -36,6 +52,16 @@ public:
          * @see GuiWidget::destroy()
          */
         DENG2_ASSERT(!Base::self.isInitialized());
+    }
+
+    void observeRootAtlas() const
+    {
+        if(!_observingAtlas)
+        {
+            // Automatically start observing the root atlas.
+            _observingAtlas = &root().atlas();
+            _observingAtlas->audienceForReposition += this;
+        }
     }
 
     bool hasRoot() const
@@ -50,12 +76,14 @@ public:
     }
 
     de::AtlasTexture &atlas() const
-    {
+    {        
+        observeRootAtlas();
         return root().atlas();
     }
 
     de::GLUniform &uAtlas() const
     {
+        observeRootAtlas();
         return root().uAtlas();
     }
 
@@ -68,6 +96,18 @@ public:
     {
         return Base::self.style();
     }
+
+    void atlasContentRepositioned(de::Atlas &atlas)
+    {
+        if(_observingAtlas == &atlas)
+        {
+            // Make sure the new texture coordinates get used by the widget.
+            Base::self.requestGeometry();
+        }
+    }
+
+private:
+    mutable de::Atlas *_observingAtlas;
 };
 
 #define DENG_GUI_PIMPL(ClassName) \

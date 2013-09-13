@@ -119,6 +119,7 @@ public:
     UpdaterStatusWidget()
     {
         useMiniStyle();
+        setColor("text");
         setSizePolicy(ui::Expand, ui::Expand);
 
         // The notification has a hidden button that can be clicked.
@@ -266,10 +267,24 @@ DENG2_OBSERVES(App, StartupComplete)
         ClientWindow::main().notifications().showOrHide(status, show);
     }
 
-    void queryLatestVersion(bool notifyAlways)
+    void showCheckingNotification()
+    {
+        status->setRange(Rangei(0, 1));
+        status->setProgress(0, 0);
+        status->setImage(ClientApp::windowSystem().style().images().image("updater"));
+        showNotification(true);
+    }
+
+    void showDownloadNotification()
     {
         status->setMode(ProgressWidget::Indefinite);
+        status->setImage(Image());
         showNotification(true);
+    }
+
+    void queryLatestVersion(bool notifyAlways)
+    {
+        showCheckingNotification();
 
         UpdaterSettings().setLastCheckTime(de::Time());
         alwaysShowNotification = notifyAlways;
@@ -354,8 +369,7 @@ DENG2_OBSERVES(App, StartupComplete)
             //availableDlg = 0;
 
             // The notification provides access to the download dialog.
-            showNotification(true);
-            status->setMode(ProgressWidget::Indefinite);
+            showDownloadNotification();
 
             LOG_MSG("Download and install.");
 
@@ -520,7 +534,7 @@ void Updater::downloadCompleted(int)
                                   _E(.) "Doomsday will be shut down before the installation can start. "
                                   "The game is not saved automatically, so you will have to "
                                   "save the game before installing the update."));
-        msg->buttons().items()
+        msg->buttons()
                 << new DialogButtonItem(DialogWidget::Accept | DialogWidget::Default, tr("I'll Save First"))
                 << new DialogButtonItem(DialogWidget::Reject, tr("Discard Progress & Install"));
 

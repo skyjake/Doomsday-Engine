@@ -46,30 +46,25 @@ static bool dialogButtonOrder(ui::Item const &a, ui::Item const &b)
     DialogButtonItem const &left  = a.as<DialogButtonItem>();
     DialogButtonItem const &right = b.as<DialogButtonItem>();
 
-#ifdef MACOSX
-    // Default buttons go to the end on OS X.
     if(!left.role().testFlag(DialogWidget::Default) && right.role().testFlag(DialogWidget::Default))
     {
+#ifdef MACOSX
+        // Default buttons go to the right on OS X.
         return true;
+#else
+        // Default buttons to the left.
+        return false;
+#endif
     }
     if(left.role().testFlag(DialogWidget::Default) && !right.role().testFlag(DialogWidget::Default))
     {
+#ifdef MACOSX
+        // Default buttons go to the right on OS X.
         return false;
-    }
-
-    bool const actionsFirst = true; // OS X actions before other buttons.
 #else
-    bool const actionsFirst = false; // Actions after the regular buttons.
+        // Default buttons to the left.
+        return true;
 #endif
-
-    // Action buttons appear before/after other buttons.
-    if(left.role().testFlag(DialogWidget::Action) && !right.role().testFlag(DialogWidget::Action))
-    {
-        return actionsFirst;
-    }
-    if(!left.role().testFlag(DialogWidget::Action) && right.role().testFlag(DialogWidget::Action))
-    {
-        return !actionsFirst;
     }
 
     // Order unchanged.
@@ -77,16 +72,19 @@ static bool dialogButtonOrder(ui::Item const &a, ui::Item const &b)
 }
 
 DENG_GUI_PIMPL(DialogWidget),
-DENG2_OBSERVES(ContextWidgetOrganizer, WidgetCreation),
-DENG2_OBSERVES(ContextWidgetOrganizer, WidgetUpdate),
+DENG2_OBSERVES(ChildWidgetOrganizer, WidgetCreation),
+DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate),
 DENG2_OBSERVES(ui::Data, Addition),
-DENG2_OBSERVES(ui::Data, Removal)
+DENG2_OBSERVES(ui::Data, Removal),
+public ChildWidgetOrganizer::IFilter
 {
     Modality modality;
     Flags flags;
     ScrollAreaWidget *area;
     LabelWidget *heading;
     MenuWidget *buttons;
+    MenuWidget *extraButtons;
+    ui::ListData buttonItems;
     QEventLoop subloop;
     Animation glow;
     bool needButtonUpdate;
@@ -113,14 +111,25 @@ DENG2_OBSERVES(ui::Data, Removal)
         area = new ScrollAreaWidget("area");
 
         buttons = new MenuWidget("buttons");
+        buttons->setItems(buttonItems);
         buttons->items().audienceForAddition += this;
         buttons->items().audienceForRemoval += this;
         buttons->organizer().audienceForWidgetCreation += this;
         buttons->organizer().audienceForWidgetUpdate += this;
+        buttons->organizer().setFilter(*this);
+
+        extraButtons = new MenuWidget("extra");
+        extraButtons->setItems(buttonItems);
+        extraButtons->items().audienceForAddition += this;
+        extraButtons->items().audienceForRemoval += this;
+        extraButtons->organizer().audienceForWidgetCreation += this;
+        extraButtons->organizer().audienceForWidgetUpdate += this;
+        extraButtons->organizer().setFilter(*this);
 
         // The menu maintains its own width and height based on children.
         // Set up one row with variable number of columns.
         buttons->setGridSize(0, ui::Expand, 1, ui::Expand);
+        extraButtons->setGridSize(0, ui::Expand, 1, ui::Expand);
 
         area->rule()
                 .setInput(Rule::Left, self.rule().left())
@@ -150,20 +159,21 @@ DENG2_OBSERVES(ui::Data, Removal)
             area->rule().setInput(Rule::Top, heading->rule().bottom());
         }
 
-        //if(!flags.testFlag(Buttonless))
-        {
-            area->rule().setInput(Rule::Height, container->rule().height() -
-                                  buttons->rule().height() + area->margins().bottom());
+        area->rule().setInput(Rule::Height, container->rule().height() -
+                              buttons->rule().height() + area->margins().bottom());
 
-            // Buttons below the area.
-            buttons->rule()
-                    .setInput(Rule::Top, area->rule().bottom() - area->margins().bottom()) // overlap margins
-                    .setInput(Rule::Right, self.rule().right());
+        // Buttons below the area.
+        buttons->rule()
+                .setInput(Rule::Top, area->rule().bottom() - area->margins().bottom()) // overlap margins
+                .setInput(Rule::Right, self.rule().right());
+        extraButtons->rule()
+                .setInput(Rule::Top, buttons->rule().top())
+                .setInput(Rule::Left, self.rule().left());
 
-            // A blank container widget acts as the popup content parent.
-            container->rule().setInput(Rule::Width, OperatorRule::maximum(area->rule().width(),
-                                                                          buttons->rule().width()));
-        }
+        // A blank container widget acts as the popup content parent.
+        container->rule().setInput(Rule::Width, OperatorRule::maximum(
+                                       area->rule().width(),
+                                       buttons->rule().width() + extraButtons->rule().width()));
 
         if(flags.testFlag(WithHeading))
         {
@@ -173,17 +183,10 @@ DENG2_OBSERVES(ui::Data, Removal)
                                   - buttons->rule().height()
                                   + area->margins().bottom());
         }
-        /*else
-        {
-            area->rule().setInput(Rule::Height, container->rule().height() + area->margins().height());
-            container->rule().setInput(Rule::Width, area->rule().width());
-        }*/
 
         container->add(area);
-        //if(!flags.testFlag(Buttonless))
-        {
-            container->add(buttons);
-        }
+        container->add(buttons);
+        container->add(extraButtons);
         self.setContent(container);
     }
 
@@ -208,15 +211,26 @@ DENG2_OBSERVES(ui::Data, Removal)
                                                                  area->margins().bottom() +
                                                                  buttons->rule().height()));
         }
+    }
 
-        /*else
+    bool isItemAccepted(ChildWidgetOrganizer const &organizer, ui::Data const &data, ui::Data::Pos pos) const
+    {
+        // Only dialog buttons allowed in the dialog button menus.
+        if(!data.at(pos).is<DialogButtonItem>()) return false;
+
+        if(&organizer == &buttons->organizer())
         {
-            // A blank container widget acts as the popup content parent.
-            self.content().rule().setInput(Rule::Height,
-                                           OperatorRule::minimum(root().viewHeight(),
-                                                                 area->contentRule().height() +
-                                                                 area->margins().height()));
-        }*/
+            // Non-Action buttons only.
+            return !data.at(pos).as<DialogButtonItem>().role().testFlag(Action);
+        }
+        else if(&organizer == &extraButtons->organizer())
+        {
+            // Only Action buttons allowed.
+            return data.at(pos).as<DialogButtonItem>().role().testFlag(Action);
+        }
+
+        DENG2_ASSERT(false); // unexpected
+        return false;
     }
 
     void contextItemAdded(ui::Data::Pos, ui::Item const &)
@@ -232,6 +246,7 @@ DENG2_OBSERVES(ui::Data, Removal)
     void updateButtonLayout()
     {
         buttons->items().sort(dialogButtonOrder);
+        //extraButtons->item().sort(dialogButtonOrder);
 
         needButtonUpdate = false;
     }
@@ -269,6 +284,9 @@ DENG2_OBSERVES(ui::Data, Removal)
         {
             ButtonWidget &but = widget.as<ButtonWidget>();
 
+            // Button images must be a certain size.
+            but.setOverrideImageSize(style().fonts().font("default").height().valuei());
+
             // Set default label?
             if(item.label().isEmpty())
             {
@@ -305,6 +323,8 @@ DENG2_OBSERVES(ui::Data, Removal)
 
     ui::ActionItem const *findDefaultAction() const
     {
+        // Note: extra buttons not searched because they shouldn't contain default actions.
+
         for(ui::Data::Pos i = 0; i < buttons->items().size(); ++i)
         {
             ButtonItem const *act = buttons->items().at(i).maybeAs<ButtonItem>();
@@ -319,6 +339,9 @@ DENG2_OBSERVES(ui::Data, Removal)
 
     ButtonWidget const &buttonWidget(ui::Item const &item) const
     {
+        GuiWidget *w = extraButtons->organizer().itemWidget(item);
+        if(w) return w->as<ButtonWidget>();
+        // Try the normal buttons.
         return buttons->organizer().itemWidget(item)->as<ButtonWidget>();
     }
 
@@ -382,9 +405,49 @@ ScrollAreaWidget &DialogWidget::area()
     return *d->area;
 }
 
+/*
 MenuWidget &DialogWidget::buttons()
 {
     return *d->buttons;
+}
+
+MenuWidget &DialogWidget::extraButtons()
+{
+    return *d->extraButtons;
+}
+*/
+
+ui::Data &DialogWidget::buttons()
+{
+    return d->buttonItems;
+}
+
+ButtonWidget &DialogWidget::buttonWidget(de::String const &label) const
+{
+    GuiWidget *w = d->buttons->organizer().itemWidget(label);
+    if(w) return w->as<ButtonWidget>();
+
+    w = d->extraButtons->organizer().itemWidget(label);
+    DENG2_ASSERT(w != 0);
+
+    return w->as<ButtonWidget>();
+}
+
+ButtonWidget *DialogWidget::buttonWidget(int roleId) const
+{
+    for(uint i = 0; i < d->buttonItems.size(); ++i)
+    {
+        DialogButtonItem const &item = d->buttonItems.at(i).as<DialogButtonItem>();
+
+        if((item.role() & IdMask) == roleId)
+        {
+            GuiWidget *w = d->buttons->organizer().itemWidget(i);
+            if(w) return &w->as<ButtonWidget>();
+
+            return &d->extraButtons->organizer().itemWidget(i)->as<ButtonWidget>();
+        }
+    }
+    return 0;
 }
 
 int DialogWidget::exec(GuiRootWidget &root)
@@ -537,6 +600,7 @@ void DialogWidget::preparePanelForOpening()
 
     // Redo the layout (items visible now).
     d->buttons->updateLayout();
+    d->extraButtons->updateLayout();
 
     d->updateBackground();
 }
@@ -553,4 +617,8 @@ DialogWidget::ButtonItem::ButtonItem(RoleFlags flags, String const &label)
 
 DialogWidget::ButtonItem::ButtonItem(RoleFlags flags, String const &label, de::Action *action)
     : ui::ActionItem(label, action), _role(flags)
+{}
+
+DialogWidget::ButtonItem::ButtonItem(RoleFlags flags, Image const &image, de::Action *action)
+    : ui::ActionItem(image, "", action), _role(flags)
 {}

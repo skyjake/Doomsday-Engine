@@ -192,7 +192,7 @@ VideoSettingsDialog::VideoSettingsDialog(String const &name)
             << new ChoiceItem(tr("16-bit"), 16);
 #endif
 
-    buttons().items()
+    buttons()
             << new DialogButtonItem(DialogWidget::Accept | DialogWidget::Default, tr("Close"))
             << new DialogButtonItem(DialogWidget::Action, tr("Reset to Defaults"),
                                     new SignalAction(this, SLOT(resetToDefaults())));

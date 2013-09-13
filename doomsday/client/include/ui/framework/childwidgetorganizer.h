@@ -1,4 +1,4 @@
-/** @file contextwidgetorganizer.h Organizes widgets according to a UI context.
+/** @file childwidgetorganizer.h Organizes widgets according to a UI context.
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef DENG_CLIENT_CONTEXTWIDGETORGANIZER_H
-#define DENG_CLIENT_CONTEXTWIDGETORGANIZER_H
+#ifndef DENG_CLIENT_CHILDWIDGETORGANIZER_H
+#define DENG_CLIENT_CHILDWIDGETORGANIZER_H
 
 #include "data.h"
 #include "guiwidget.h"
@@ -29,7 +29,7 @@
  * change, and reordering them when the items' order changes.
  *
  * The concrete task of creating widgets is done by an object that implements
- * the ContextWidgetOrganizer::IWidgetFactory interface. Also, third parties
+ * the ChildWidgetOrganizer::IWidgetFactory interface. Also, third parties
  * may observe widget creation and updates and alter the widget as they choose.
  *
  * @todo Virtualization: it is not required that all the items of the context
@@ -37,7 +37,7 @@
  * large numbers of items, virtualization should be applied to keep only a
  * subset/range of items present as widgets.
  */
-class ContextWidgetOrganizer
+class ChildWidgetOrganizer
 {
 public:
     /**
@@ -72,6 +72,28 @@ public:
     };
 
     /**
+     * Filters out data items.
+     */
+    class IFilter
+    {
+    public:
+        virtual ~IFilter() {}
+
+        /**
+         * Determines whether an item should be ignored by the organizer.
+         *
+         * @param organizer  Which organizer is asking the question.
+         * @param data       Data context.
+         * @param pos        Position of the item in the context.
+         *
+         * @return @c true to accept item, @c false to ignore it.
+         */
+        virtual bool isItemAccepted(ChildWidgetOrganizer const &organizer,
+                                    ui::Data const &data,
+                                    ui::Data::Pos pos) const = 0;
+    };
+
+    /**
      * Notified when the organizer creates a widget for a context item. Allows
      * third parties to customize the widget as needed.
      */
@@ -88,7 +110,7 @@ public:
                                                     ui::Item const &item))
 
 public:
-    ContextWidgetOrganizer(GuiWidget &container);
+    ChildWidgetOrganizer(GuiWidget &container);
 
     /**
      * Sets the object responsible for creating widgets for this organizer. The
@@ -100,6 +122,13 @@ public:
     void setWidgetFactory(IWidgetFactory &factory);
 
     IWidgetFactory &widgetFactory() const;
+
+    /**
+     * Sets the object that decides whether items are accepted or ignored.
+     *
+     * @param filter  Filtering object.
+     */
+    void setFilter(IFilter const &filter);
 
     /**
      * Sets the data context of the organizer. If there was a previous context,
@@ -126,11 +155,11 @@ private:
  * Simple widget factory that creates label widgets with their default
  * settings, using the label from the ui::Item.
  */
-class DefaultWidgetFactory : public ContextWidgetOrganizer::IWidgetFactory
+class DefaultWidgetFactory : public ChildWidgetOrganizer::IWidgetFactory
 {
 public:
     GuiWidget *makeItemWidget(ui::Item const &item, GuiWidget const *parent);
     void updateItemWidget(GuiWidget &widget, ui::Item const &item);
 };
 
-#endif // DENG_CLIENT_CONTEXTWIDGETORGANIZER_H
+#endif // DENG_CLIENT_CHILDWIDGETORGANIZER_H

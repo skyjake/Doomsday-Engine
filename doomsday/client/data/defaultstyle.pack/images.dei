@@ -18,7 +18,14 @@ group logo {
     }
 }
 
-image gear { path = "graphics/gear.png" }
+image gauge    { path = "graphics/gauge.png" }
+image gear     { path = "graphics/gear.png" }
+image display  { path = "graphics/display.png" }
+image network  { path = "graphics/network.png" }
+image renderer { path = "graphics/renderer.png" }
+image input    { path = "graphics/input.png" }
+image audio    { path = "graphics/audio.png" }
+image updater  { path = "graphics/updater.png" }
 
 group toggle {
     image onoff { path = "graphics/toggle-onoff.png" }
@@ -27,4 +34,5 @@ group toggle {
 group progress {
     image wheel { path = "graphics/progress-wheel.png" }
     image gear  { path = "graphics/progress-gear.png" }
+    image mini  { path = "graphics/progress-mini.png" }
 }

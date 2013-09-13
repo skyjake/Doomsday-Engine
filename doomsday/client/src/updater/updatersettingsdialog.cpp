@@ -116,13 +116,13 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
 
         area.setContentSize(layout.width(), layout.height());
 
-        self.buttons().items()
+        self.buttons()
                 << new DialogButtonItem(DialogWidget::Default | DialogWidget::Accept)
                 << new DialogButtonItem(DialogWidget::Reject);
 
         if(mode == WithApplyAndCheckButton)
         {
-            self.buttons().items()
+            self.buttons()
                     << new DialogButtonItem(DialogWidget::Action, tr("Apply & Check Now"),
                                             new SignalAction(thisPublic, SLOT(applyAndCheckNow())));
         }
