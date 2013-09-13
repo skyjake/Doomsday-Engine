@@ -18,7 +18,8 @@ group logo {
     }
 }
 
-image gear { path = "graphics/gear.png" }
+image gear  { path = "graphics/gear.png" }
+image gauge { path = "graphics/gauge.png" }
 
 group toggle {
     image onoff { path = "graphics/toggle-onoff.png" }
