@@ -118,7 +118,7 @@ DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
 
     void buttonStateChanged(ButtonWidget &button, ButtonWidget::State state)
     {
-        if(state == ButtonWidget::Hover)
+        if(state != ButtonWidget::Up)
         {
             button.setImageColor(style().colors().colorf("inverted.text"));
         }
@@ -243,6 +243,7 @@ void PopupMenuWidget::panelClosing()
     if(d->hover)
     {
         d->hover->setTextColor("text");
+        d->hover->setImageColor(style().colors().colorf("text"));
         d->hover = 0;
         requestGeometry();
     }
