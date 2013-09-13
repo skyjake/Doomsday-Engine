@@ -138,6 +138,7 @@ DENG_CONVENIENCE_HEADERS += \
     include/IHPlane \
     include/LightDecoration \
     include/Line \
+    include/Lumobj \
     include/MapElement \
     include/MapObject \
     include/Material \

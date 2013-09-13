@@ -55,14 +55,14 @@
 
 #include "BiasIllum"
 #include "BiasSurface"
-#include "LightDecoration"
 #include "HueCircleVisual"
+#include "LightDecoration"
+#include "Lumobj"
 #include "SkyFixEdge"
 #include "SurfaceDecorator"
 #include "TriangleStripBuilder"
 #include "WallEdge"
 #include "render/blockmapvisual.h"
-#include "render/lumobj.h"
 #include "render/sprite.h"
 #include "render/vissprite.h"
 

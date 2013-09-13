@@ -40,7 +40,7 @@
 #  include "gl/gl_tex.h"
 #  include "gl/gl_texmanager.h"
 
-#  include "render/lumobj.h"
+#  include "Lumobj"
 #  include "render/sprite.h"
 #endif
 

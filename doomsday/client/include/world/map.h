@@ -34,7 +34,7 @@
 #  include "world/world.h"
 
 #  include "BiasSource"
-#  include "render/lumobj.h"
+#  include "Lumobj"
 #endif
 
 class BspLeaf;

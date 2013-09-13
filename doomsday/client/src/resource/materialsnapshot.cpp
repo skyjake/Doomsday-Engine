@@ -21,7 +21,7 @@
 
 #include "de_base.h"
 #include "de_defs.h"
-#include "render/lumobj.h" // Rend_LightmapTextureSpec()
+#include "Lumobj" // Rend_LightmapTextureSpec()
 #include "render/rend_halo.h" // Rend_HaloTextureSpec()
 #include "render/rend_main.h" // detailFactor, detailScale, smoothTexAnim, etc...
 #include "gl/gl_texmanager.h"

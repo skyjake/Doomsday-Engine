@@ -38,7 +38,7 @@
 
 #include "render/r_main.h" // validCount, viewport
 #ifdef __CLIENT__
-#  include "render/lumobj.h"
+#  include "Lumobj"
 #  include "render/rend_main.h"
 #  include "render/sprite.h"
 

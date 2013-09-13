@@ -56,7 +56,7 @@
 #  include "Hand"
 #  include "HueCircle"
 
-#  include "render/lumobj.h"
+#  include "Lumobj"
 #  include "render/projector.h"
 #  include "render/rend_fakeradio.h"
 #  include "render/rend_list.h"

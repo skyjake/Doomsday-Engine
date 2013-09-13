@@ -57,9 +57,9 @@
 #ifdef __CLIENT__
 #  include "BiasDigest"
 #  include "LightDecoration"
+#  include "Lumobj"
 #  include "SurfaceDecorator"
 #  include "WallEdge"
-#  include "render/lumobj.h"
 #  include "render/rend_main.h"
 #  include "render/sky.h"
 #endif

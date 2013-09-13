@@ -22,7 +22,7 @@
 #define DENG_CLIENT_RENDER_LIGHTDECORATION_H
 
 #include "Decoration"
-#include "render/lumobj.h"
+#include "Lumobj"
 
 /**
  * World surface light decoration.

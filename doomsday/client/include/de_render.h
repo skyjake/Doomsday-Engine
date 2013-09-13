@@ -26,7 +26,6 @@
 
 #ifdef __CLIENT__
 #include "render/lightgrid.h"
-#include "render/lumobj.h"
 #include "render/projector.h"
 #include "render/r_draw.h"
 #include "render/r_things.h"
