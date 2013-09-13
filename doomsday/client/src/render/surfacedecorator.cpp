@@ -326,14 +326,21 @@ void SurfaceDecorator::redecorate()
     MaterialSurfaceMap::iterator i = d->decorated.begin();
     while(i != d->decorated.end())
     {
-        Material &material     = *i.key();
+        MaterialSnapshot const *materialSnapshot = 0;
+
         SurfaceSet &surfaceSet = i.value();
-
-        MaterialSnapshot const &materialSnapshot =
-            material.prepare(Rend_MapSurfaceMaterialSpec());
-
         foreach(Surface *surface, surfaceSet)
         {
+            if(!surface->_needDecorationUpdate)
+                continue;
+
+            // Time to prepare the material?
+            if(!materialSnapshot)
+            {
+                Material &material = *i.key();
+                materialSnapshot = &material.prepare(Rend_MapSurfaceMaterialSpec());
+            }
+
             surface->_needDecorationUpdate = false;
             surface->clearDecorations();
 
@@ -342,7 +349,7 @@ void SurfaceDecorator::redecorate()
 
             if(prepareGeometry(*surface, topLeft, bottomRight, materialOrigin))
             {
-                d->updateDecorations(*surface, materialSnapshot, materialOrigin,
+                d->updateDecorations(*surface, *materialSnapshot, materialOrigin,
                                      topLeft, bottomRight, containingSector(*surface));
             }
         }

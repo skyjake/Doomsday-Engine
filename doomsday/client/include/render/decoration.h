@@ -33,6 +33,7 @@ class Surface;
 #define MAX_DECOR_DISTANCE      (2048)
 
 /**
+ * World surface decoration.
  * @ingroup render
  */
 class Decoration : public de::MapObject

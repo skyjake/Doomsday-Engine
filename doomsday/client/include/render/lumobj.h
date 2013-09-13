@@ -55,7 +55,7 @@ public:
          * return a value in the range [0..1], where @c 0 is fully occluded and
          * @c 1 is fully visible.
          *
-         * In the default implementation assumes the source is always visible.
+         * The default implementation assumes the source is always visible.
          *
          * @param eye  Position of the eye in map space.
          */

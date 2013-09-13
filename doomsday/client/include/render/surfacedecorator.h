@@ -47,18 +47,42 @@ public:
     SurfaceDecorator();
 
     /**
-     * Decorate @a surface.
+     * Perform one time decoration of a single @a surface. The surface will not
+     * be remembered and any resulting decorations will not be updated later.
      */
     void decorate(Surface &surface);
 
-    /// Note that existing decorations are retained.
+    /**
+     * Perform scheduled (re)decoration work.
+     */
+    void redecorate();
+
+    /**
+     * Forget all known surfaces and previous decorations.
+     */
+    void reset();
+
+    /**
+     * Add the specified @a surface to the decorator's job list. If the surface
+     * is already on this list then nothing will happen. If the surface lacks a
+     * material or no decorations are defined for this material, then nothing
+     * will happen.
+     *
+     * Any existing decorations are retained until the material next changes.
+     *
+     * @param surface  Surface to add to the job list.
+     */
     void add(Surface *surface);
 
-    /// Note that existing decorations are retained.
+    /**
+     * Remove the specified @a surface from the decorator's job list. If the
+     * surface is not on this list then nothing will happen.
+     *
+     * Any existing decorations are retained and will no longer be updated.
+     *
+     * @param surface  Surface to add to the job list.
+     */
     void remove(Surface *surface);
-
-    void reset();
-    void redecorate();
 
 private:
     DENG2_PRIVATE(d)

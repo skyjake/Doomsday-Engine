@@ -24,6 +24,10 @@
 #include "Decoration"
 #include "render/lumobj.h"
 
+/**
+ * World surface light decoration.
+ * @ingroup render
+ */
 class LightDecoration : public Decoration, public Lumobj::Source
 {
 public:
