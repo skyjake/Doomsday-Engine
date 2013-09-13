@@ -43,11 +43,11 @@ group choice {
 
 group progress {
     group light {
-        color wheel  { rgb <1.0, 1.0, 1.0, 0.5> }
+        color wheel  { rgb <1.0, 1.0, 1.0, 0.25> }
         color shadow { rgb <0.0, 0.0, 0.0, 0.54> }
     }
     group dark {
-        color wheel  { rgb <0.0, 0.0, 0.0, 0.5> }
+        color wheel  { rgb <0.0, 0.0, 0.0, 0.25> }
         color shadow { rgb <1.0, 1.0, 1.0, 0.54> }
     }
 }

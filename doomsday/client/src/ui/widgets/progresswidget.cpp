@@ -55,7 +55,7 @@ DENG_GUI_PIMPL(ProgressWidget), public Lockable
 
     void updateStyle()
     {
-        self.setImageColor(style().colors().colorf(colorId) * Vector4f(1, 1, 1, .5f));
+        self.setImageColor(style().colors().colorf(colorId) /* * Vector4f(1, 1, 1, .5f)*/);
     }
 
     void glInit()
@@ -86,16 +86,16 @@ ProgressWidget::ProgressWidget(String const &name) : d(new Instance(this))
 
 void ProgressWidget::useMiniStyle()
 {
-    /// @todo Make this look better.
+    // Don't use the normal wheel.
+    setImage(de::Image());
 
-    d->gearId = "gear"; // Mini gear icon.
+    d->gearId = "progress.mini";
     d->colorId = "text";
     setImageScale(1);
     setAlignment(ui::AlignCenter, LabelWidget::AlignByCombination);
 
     // Resize to the height of the default font.
-    float hgt = style().fonts().font("default").height().value();
-    setOverrideImageSize(Vector2f(hgt, hgt));
+    setOverrideImageSize(style().fonts().font("default").height().value());
 }
 
 ProgressWidget::Mode ProgressWidget::mode() const
@@ -239,7 +239,7 @@ void ProgressWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
 
     DefaultVertexBuf::Builder gear;
     DefaultVertexBuf::Type v;
-    v.rgba = style().colors().colorf(d->colorId);
+    v.rgba = style().colors().colorf(d->colorId) * Vector4f(1, 1, 1, 2);
 
     for(int i = 0; i <= edgeCount; ++i)
     {
