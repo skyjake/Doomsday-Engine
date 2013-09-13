@@ -56,6 +56,8 @@ public:
     MapObject(de::Vector3d const &origin = de::Vector3d());
     virtual ~MapObject();
 
+    DENG2_AS_IS_METHODS()
+
     /**
      * Returns the map BSP leaf at the origin of the object (result cached).
      * Naturally a map must be attributed.

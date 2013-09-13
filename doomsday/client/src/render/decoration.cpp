@@ -19,8 +19,6 @@
  * 02110-1301 USA</small>
  */
 
-#include "world/map.h"
-#include "BspLeaf"
 #include "Surface"
 
 #include "render/decoration.h"
@@ -30,20 +28,14 @@ using namespace de;
 DENG2_PIMPL_NOREF(Decoration)
 {
     MaterialSnapshotDecoration *source;
-    Vector3d origin;
-    BspLeaf *bspLeaf; ///< BSP leaf at @ref origin in the map (not owned).
     Surface *surface;
 
-    Instance(MaterialSnapshotDecoration &source, Vector3d const &origin)
-        : source (&source),
-          origin (origin),
-          bspLeaf(0),
-          surface(0)
+    Instance(MaterialSnapshotDecoration &source) : source(&source), surface(0)
     {}
 };
 
 Decoration::Decoration(MaterialSnapshotDecoration &source, Vector3d const &origin)
-    : d(new Instance(source, origin))
+    : MapObject(origin), d(new Instance(source))
 {}
 
 Decoration::~Decoration()
@@ -87,19 +79,4 @@ Surface const &Decoration::surface() const
 void Decoration::setSurface(Surface *newSurface)
 {
     d->surface = newSurface;
-}
-
-Vector3d const &Decoration::origin() const
-{
-    return d->origin;
-}
-
-BspLeaf &Decoration::bspLeafAtOrigin() const
-{
-    if(!d->bspLeaf)
-    {
-        // Determnine this now.
-        d->bspLeaf = &surface().map().bspLeafAt(d->origin);
-    }
-    return *d->bspLeaf;
 }

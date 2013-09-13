@@ -512,7 +512,9 @@ void Surface::addDecoration(Decoration *decoration)
 {
     if(!decoration) return;
     d->decorations.append(decoration);
+
     decoration->setSurface(this);
+    if(hasMap()) decoration->setMap(&map());
 }
 
 void Surface::clearDecorations()

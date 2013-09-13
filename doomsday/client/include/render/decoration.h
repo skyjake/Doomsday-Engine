@@ -24,6 +24,7 @@
 #include <de/Error>
 #include <de/Vector>
 
+#include "MapObject"
 #include "MaterialSnapshot"
 
 class Surface;
@@ -34,7 +35,7 @@ class Surface;
 /**
  * @ingroup render
  */
-class Decoration
+class Decoration : public de::MapObject
 {
 public:
     /// Required surface is missing. @ingroup errors
@@ -50,8 +51,6 @@ public:
     Decoration(de::MaterialSnapshotDecoration &source,
                de::Vector3d const &origin = de::Vector3d());
     virtual ~Decoration();
-
-    DENG2_AS_IS_METHODS()
 
     /**
      * Returns the source of the decoration.
@@ -84,19 +83,6 @@ public:
      * @param newSurface  Map surface to attribute. Use @c 0 to clear.
      */
     void setSurface(Surface *newSurface);
-
-    /**
-     * Returns the origin of the decoration in map space.
-     */
-    de::Vector3d const &origin() const;
-
-    /**
-     * Returns the map BSP leaf at the origin of decoration (result cached).
-     * A map surface must be attributed.
-     *
-     * @see setSurface(), hasSurface()
-     */
-    BspLeaf &bspLeafAtOrigin() const;
 
 private:
     DENG2_PRIVATE(d)
