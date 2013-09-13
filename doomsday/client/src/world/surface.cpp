@@ -127,7 +127,6 @@ DENG2_PIMPL(Surface)
 #ifdef __CLIENT__
         if(!ddMapSetup)
         {
-            /// @todo Replace with a de::Observer-based mechanism.
             self._needDecorationUpdate = true;
 
             self.map().scrollingSurfaces().insert(&self);
@@ -282,6 +281,10 @@ bool Surface::setMaterial(Material *newMaterial, bool isMissingFix)
         d->material = newMaterial;
 
 #ifdef __CLIENT__
+        // When the material changes any existing decorations are cleared.
+        clearDecorations();
+        _needDecorationUpdate = true;
+
         if(!ddMapSetup)
         {
             map().unlinkInMaterialLists(this);
@@ -299,8 +302,6 @@ bool Surface::setMaterial(Material *newMaterial, bool isMissingFix)
 
             }
         }
-
-        _needDecorationUpdate = true;
 #endif // __CLIENT__
     }
     return true;
@@ -451,9 +452,10 @@ Vector3f const &Surface::tintColor() const
 
 void Surface::setTintColor(Vector3f const &newTintColor)
 {
-    Vector3f newColorClamped = Vector3f(de::clamp(0.f, newTintColor.x, 1.f),
-                                        de::clamp(0.f, newTintColor.y, 1.f),
-                                        de::clamp(0.f, newTintColor.z, 1.f));
+    Vector3f newColorClamped(de::clamp(0.f, newTintColor.x, 1.f),
+                             de::clamp(0.f, newTintColor.y, 1.f),
+                             de::clamp(0.f, newTintColor.z, 1.f));
+
     if(d->tintColor != newColorClamped)
     {
         Vector3f oldTintColor = d->tintColor;

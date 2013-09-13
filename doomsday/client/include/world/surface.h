@@ -178,34 +178,36 @@ public:
     }
 
     /**
-     * Returns the material bound to the surface.
+     * Returns the attributed material of the surface.
      *
      * @see hasMaterial(), hasFixMaterial()
      */
     Material &material() const;
 
     /**
-     * Returns a pointer to the material bound to the surface; otherwise @c 0.
+     * Returns a pointer to the attributed material of the surface; otherwise @c 0.
      *
      * @see hasMaterial(), hasFixMaterial()
      */
     inline Material *materialPtr() const { return hasMaterial()? &material() : 0; }
 
     /**
-     * Change Material bound to the surface.
+     * Change the attributed material of the surface. On client side, any existing
+     * decorations are cleared whenever the material changes and the surface is
+     * marked for redecoration.
      *
-     * @param newMaterial   New material to be bound.
-     * @param isMissingFix  The new material is a fix for a "missing" material.
+     * @param newMaterial   New material to apply. Use @c 0 to clear.
+     * @param isMissingFix  @c true= this is a fix for a "missing" material.
      */
     bool setMaterial(Material *newMaterial, bool isMissingFix = false);
 
     /**
-     * Returns the material origin offset for the surface.
+     * Returns the material origin offset of the surface.
      */
     de::Vector2f const &materialOrigin() const;
 
     /**
-     * Change the material origin offset for the surface.
+     * Change the material origin offset of the surface.
      *
      * @param newOrigin  New origin offset in map coordinate space units.
      */
