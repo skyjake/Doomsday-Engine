@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#include <QRect>
-#include <QSet>
+#include <QList>
 #include <QtAlgorithms>
 
 #include <de/Log>
@@ -43,228 +42,6 @@
 #include "world/sector.h"
 
 using namespace de;
-
-static QRectF qrectFromAABox(AABoxd const &aaBox)
-{
-    return QRectF(QPointF(aaBox.minX, aaBox.maxY), QPointF(aaBox.maxX, aaBox.minY));
-}
-
-/**
- * @todo Redesign the implementation to avoid recursion via visPlane().
- */
-void Sector::Cluster::remapVisPlanes()
-{
-    // By default both planes are mapped to the parent sector.
-    _mappedVisFloor   = this;
-    _mappedVisCeiling = this;
-
-    // Should we permanently map planes to another cluster?
-    if(_flags & NeverMapped)
-        return;
-
-    forever
-    {
-        // Locate the next exterior cluster.
-        Cluster *exteriorCluster = 0;
-        foreach(BspLeaf *leaf, _bspLeafs)
-        {
-            HEdge *base = leaf->poly().hedge();
-            HEdge *hedge = base;
-            do
-            {
-                if(hedge->mapElement())
-                {
-                    DENG_ASSERT(hedge->twin().hasFace());
-
-                    if(hedge->mapElement()->as<LineSideSegment>().line().isSelfReferencing())
-                    {
-                        BspLeaf &backLeaf = hedge->twin().face().mapElement()->as<BspLeaf>();
-                        if(backLeaf.hasCluster())
-                        {
-                            Cluster *otherCluster = &backLeaf.cluster();
-                            if(otherCluster != this &&
-                               otherCluster->_mappedVisFloor != this &&
-                               !(!(_flags & AllSelfRef) && (otherCluster->_flags & AllSelfRef)))
-                            {
-                                // Remember the exterior cluster.
-                                exteriorCluster = otherCluster;
-                            }
-                        }
-                    }
-                }
-            } while((hedge = &hedge->next()) != base);
-        }
-
-        if(!exteriorCluster)
-            break; // Nothing to map to.
-
-        // Ensure we don't produce a cyclic dependency...
-        Sector *finalSector = &exteriorCluster->visPlane(Floor).sector();
-        if(finalSector == &sector())
-        {
-            // Must share a boundary edge.
-            QRectF boundingRect = qrectFromAABox(aaBox());
-            if(boundingRect.contains(qrectFromAABox(exteriorCluster->aaBox())))
-            {
-                // The contained cluster will map to this. However, we may still
-                // need to map this one to another, so re-evaluate.
-                continue;
-            }
-            else
-            {
-                // This cluster is contained. Remove the mapping from exterior
-                // to this thereby forcing it to be re-evaluated (however next
-                // time a different cluster will be selected from the boundary).
-                exteriorCluster->_mappedVisFloor =
-                    exteriorCluster->_mappedVisCeiling = 0;
-            }
-        }
-
-        // Setup the mapping and we're done.
-        _mappedVisFloor   = exteriorCluster;
-        _mappedVisCeiling = exteriorCluster;
-        break;
-    }
-
-    // No permanent mapping?
-    if(_mappedVisFloor == this && !(_flags & AllSelfRef))
-    {
-        // Dynamic mapping may be needed for one or more planes.
-        Plane const &sectorFloor   = sector().floor();
-        Plane const &sectorCeiling = sector().ceiling();
-
-        // The sector must have open space.
-        if(!(sectorCeiling.height() > sectorFloor.height()))
-            return;
-
-        // The plane must not use a sky-masked material.
-        bool missingAllBottom = !sectorFloor.surface().hasSkyMaskedMaterial();
-        bool missingAllTop    = !sectorCeiling.surface().hasSkyMaskedMaterial();
-        if(!missingAllBottom && !missingAllTop)
-            return;
-
-        // Evaluate the boundary to determine if mapping is required.
-        Cluster *exteriorCluster = 0;
-        foreach(BspLeaf *leaf, _bspLeafs)
-        {
-            HEdge *base = leaf->poly().hedge();
-            HEdge *hedge = base;
-            do
-            {
-                if(hedge->mapElement())
-                {
-                    DENG_ASSERT(hedge->twin().hasFace());
-
-                    // Only consider non-selfref edges whose back face lies in
-                    // another cluster.
-                    LineSideSegment const &seg = hedge->mapElement()->as<LineSideSegment>();
-                    if(!seg.line().isSelfReferencing())
-                    {
-                        BspLeaf const &backLeaf = hedge->twin().face().mapElement()->as<BspLeaf>();
-                        if(backLeaf.hasCluster())
-                        {
-                            Cluster *otherCluster = &backLeaf.cluster();
-                            if(otherCluster != this && otherCluster->_mappedVisFloor != this)
-                            {
-                                LineSide const &lineSide = seg.lineSide();
-
-                                if(lineSide.bottom().hasMaterial() && !lineSide.bottom().hasFixMaterial())
-                                    missingAllBottom = false;
-                                if(lineSide.top().hasMaterial() && !lineSide.top().hasFixMaterial())
-                                    missingAllTop = false;
-
-                                if(!missingAllBottom && !missingAllTop)
-                                    return;
-
-                                // Remember the exterior cluster.
-                                exteriorCluster = otherCluster;
-                            }
-                        }
-                    }
-                }
-            } while((hedge = &hedge->next()) != base);
-        }
-
-        if(exteriorCluster)
-        {
-            if(missingAllBottom && exteriorCluster->visPlane(Floor).height() > sectorFloor.height())
-            {
-                _mappedVisFloor = exteriorCluster;
-            }
-            if(missingAllTop && exteriorCluster->visPlane(Ceiling).height() < sectorCeiling.height())
-            {
-                _mappedVisCeiling = exteriorCluster;
-            }
-        }
-    }
-}
-
-Sector &Sector::Cluster::sector() const
-{
-    return _bspLeafs.first()->parent().as<Sector>();
-}
-
-Plane &Sector::Cluster::plane(int planeIndex) const
-{
-    // Physical planes are never mapped.
-    return sector().plane(planeIndex);
-}
-
-Plane &Sector::Cluster::visPlane(int planeIndex) const
-{
-    if(planeIndex >= Floor && planeIndex <= Ceiling)
-    {
-        // Time to remap the planes?
-        if(!_mappedVisFloor)
-        {
-            const_cast<Sector::Cluster *>(this)->remapVisPlanes();
-        }
-
-        /// @todo Cache this result.
-        Cluster *mappedCluster = (planeIndex == Ceiling? _mappedVisCeiling : _mappedVisFloor);
-        if(mappedCluster != this)
-        {
-            return mappedCluster->visPlane(planeIndex);
-        }
-    }
-    // Not mapped.
-    return sector().plane(planeIndex);
-}
-
-AABoxd const &Sector::Cluster::aaBox() const
-{
-    // If the cluster is comprised of a single BSP leaf we can use the bounding
-    // box of the leaf's geometry directly.
-    if(_bspLeafs.count() == 1)
-    {
-        return _bspLeafs.first()->poly().aaBox();
-    }
-
-    // Time to determine bounds?
-    if(_aaBox.isNull())
-    {
-        // Unite the geometry bounding boxes of all BSP leafs in the cluster.
-        foreach(BspLeaf *leaf, _bspLeafs)
-        {
-            AABoxd const &leafAABox = leaf->poly().aaBox();
-            if(!_aaBox.isNull())
-            {
-                V2d_UniteBox((*_aaBox).arvec2, leafAABox.arvec2);
-            }
-            else
-            {
-                const_cast<Sector::Cluster *>(this)->_aaBox.reset(new AABoxd(leafAABox));
-            }
-        }
-    }
-
-    return *_aaBox;
-}
-
-Sector::Cluster::BspLeafs const &Sector::Cluster::bspLeafs() const
-{
-    return _bspLeafs;
-}
 
 #ifdef __CLIENT__
 typedef QSet<BspLeaf *> ReverbBspLeafs;
@@ -794,28 +571,6 @@ Sector::Clusters const &Sector::clusters() const
     return d->clusters;
 }
 
-static HEdge *findSharedEdge(Sector::Cluster const &a, Sector::Cluster const &b)
-{
-    // Comparing internal edges of the cluster could be avoided by recording the
-    // boundary representation (B-rep) of the cluster. However, it remains to be
-    // seen whether this is actually worthwhile (wrt update perf).
-    foreach(BspLeaf *leaf, a.bspLeafs())
-    {
-        HEdge *baseHEdge = leaf->poly().hedge();
-        HEdge *hedge = baseHEdge;
-        do
-        {
-            if(hedge->twin().hasFace())
-            {
-                BspLeaf &otherLeaf = hedge->twin().face().mapElement()->as<BspLeaf>();
-                if(otherLeaf.hasCluster() && &otherLeaf.cluster() == &b)
-                    return hedge;
-            }
-        } while((hedge = &hedge->next()) != baseHEdge);
-    }
-    return 0; // None.
-}
-
 void Sector::buildClusters()
 {
     d->clusters.clear();
@@ -827,106 +582,79 @@ void Sector::buildClusters()
     d->needRoughAreaUpdate = true;
 #endif
 
+    typedef QList<BspLeaf *> BspLeafs;
+    typedef QList<BspLeafs> BspLeafSets;
+    BspLeafSets bspLeafSets;
+
     /*
      * Separate the BSP leafs into edge-adjacency clusters. We'll do this by
-     * starting with a cluster per BSP leaf and then keep merging until no more
+     * starting with a set per BSP leaf and then keep merging these sets until
      * shared edges are found.
      */
-    foreach(BspLeaf *leaf, map().bspLeafs())
+    foreach(BspLeaf *bspLeaf, map().bspLeafs())
     {
-        if(&leaf->parent().as<Sector>() != this)
+        if(&bspLeaf->parent().as<Sector>() != this)
             continue;
 
         // Degenerate BSP leafs are excluded (no geometry).
-        if(leaf->isDegenerate())
+        if(bspLeaf->isDegenerate())
             continue;
 
-        Cluster *cluster = new Cluster;
-        cluster->_flags = 0;
-        cluster->_mappedVisFloor = cluster->_mappedVisCeiling = 0;
-        d->clusters.append(cluster);
-
-        // Ownership of the BSP leaf is not given to the cluster.
-        cluster->_bspLeafs.append(leaf);
-
-        // Attribute the BSP leaf to the cluster.
-        leaf->setCluster(cluster);
+        bspLeafSets.append(BspLeafs());
+        bspLeafSets.last().append(bspLeaf);
     }
 
-    if(d->clusters.isEmpty()) return;
+    if(bspLeafSets.isEmpty()) return;
 
-    // Merge clusters whose BSP leafs share a common edge.
-    while(d->clusters.count() > 1)
+    // Merge sets whose BSP leafs share a common edge.
+    while(bspLeafSets.count() > 1)
     {
         bool didMerge = false;
-        for(int i = 0; i < d->clusters.count(); ++i)
-        for(int k = 0; k < d->clusters.count(); ++k)
+        for(int i = 0; i < bspLeafSets.count(); ++i)
+        for(int k = 0; k < bspLeafSets.count(); ++k)
         {
-            if(i == k)
-                continue;
+            if(i == k) continue;
 
-            if(findSharedEdge(*d->clusters[i], *d->clusters[k]))
+            foreach(BspLeaf *leaf, bspLeafSets[i])
             {
-                // Merge k into i.
-                foreach(BspLeaf *leaf, d->clusters[k]->_bspLeafs)
+                HEdge *baseHEdge = leaf->poly().hedge();
+                HEdge *hedge = baseHEdge;
+                do
                 {
-                    leaf->setCluster(d->clusters[i]);
-                }
-                d->clusters[i]->_bspLeafs.append(d->clusters[k]->_bspLeafs);
-                d->clusters.removeAt(k);
+                    if(hedge->twin().hasFace())
+                    {
+                        BspLeaf &otherLeaf = hedge->twin().face().mapElement()->as<BspLeaf>();
+                        if(&otherLeaf.parent() == this &&
+                           bspLeafSets[k].contains(&otherLeaf))
+                        {
+                            // Merge k into i.
+                            bspLeafSets[i].append(bspLeafSets[k]);
+                            bspLeafSets.removeAt(k);
 
-                // Compare the next pair.
-                if(i >= k) i -= 1;
-                k -= 1;
+                            // Compare the next pair.
+                            if(i >= k) i -= 1;
+                            k -= 1;
 
-                // We'll need to repeat in any case.
-                didMerge = true;
+                            // We'll need to repeat in any case.
+                            didMerge = true;
+                            break;
+                        }
+                    }
+                } while((hedge = &hedge->next()) != baseHEdge);
+
+                if(didMerge) break;
             }
         }
+
         if(!didMerge) break;
     }
     // Clustering complete.
 
-    // Classify clusters.
-    foreach(Cluster *cluster, d->clusters)
+    // Build clusters.
+    foreach(BspLeafs const &bspLeafSet, bspLeafSets)
     {
-        cluster->_flags |= Cluster::AllSelfRef;
-        foreach(BspLeaf *leaf, cluster->_bspLeafs)
-        {
-            HEdge const *base  = leaf->poly().hedge();
-            HEdge const *hedge = base;
-            do
-            {
-                if(hedge->mapElement())
-                {
-                    // This edge defines a section of a map line.
-                    if(hedge->twin().hasFace())
-                    {
-                        if(cluster->_flags & Cluster::AllSelfRef)
-                        {
-                            BspLeaf const &backLeaf    = hedge->twin().face().mapElement()->as<BspLeaf>();
-                            Cluster const *backCluster = backLeaf.hasCluster()? &backLeaf.cluster() : 0;
-                            if(backCluster != cluster)
-                            {
-                                if(!hedge->mapElement()->as<LineSideSegment>().line().isSelfReferencing())
-                                {
-                                    cluster->_flags &= ~Cluster::AllSelfRef;
-                                }
-                            }
-                        }
-                    }
-                    else
-                    {
-                        // If a back geometry is missing then never map planes.
-                        cluster->_flags |= Cluster::NeverMapped;
-                        cluster->_flags &= ~Cluster::AllSelfRef;
-                        goto nextCluster;
-                    }
-                }
-            } while((hedge = &hedge->next()) != base);
-        }
-
-nextCluster:;
+        // BSP leaf ownership is not given to the cluster.
+        d->clusters.append(new Cluster(bspLeafSet));
     }
 }
 

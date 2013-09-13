@@ -823,6 +823,7 @@ SOURCES += \
     src/world/propertyvalue.cpp \
     src/world/reject.cpp \
     src/world/sector.cpp \
+    src/world/sectorcluster.cpp \
     src/world/surface.cpp \
     src/world/thinkers.cpp \
     src/world/vertex.cpp \

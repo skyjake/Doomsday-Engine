@@ -80,10 +80,33 @@ public:
     class Cluster
     {
     public:
+        /// Classification flags:
+        enum Flag
+        {
+            NeverMapped        = 0x1,
+            AllSelfRef         = 0x2
+        };
+        Q_DECLARE_FLAGS(Flags, Flag)
+
         typedef QList<BspLeaf *> BspLeafs;
 
+    public:
         /**
-         * Returns the parent sector of the BSP leaf cluster.
+         * Construct a new sector cluster comprised of the specified set of BSP
+         * leafs. It is assumed that all BSP leafs in the list are attributed to
+         * the same sector and there is always at least one.
+         *
+         * @param bspLeafs  Set of BSP leafs comprising the resulting cluster.
+         */
+        Cluster(BspLeafs const &bspLeafs);
+
+        /**
+         * Returns a copy of the classification flags for the cluster.
+         */
+        Flags flags() const;
+
+        /**
+         * Returns the parent sector of the cluster.
          */
         Sector &sector() const;
 
@@ -128,23 +151,8 @@ public:
             return (de::Vector2d(aaBox().min) + de::Vector2d(aaBox().max)) / 2;
         }
 
-        friend class Sector;
-
     private:
-        enum Flag
-        {
-            NeverMapped  = 0x1,
-            AllSelfRef = 0x2
-        };
-
-        de::HEdge &findBoundaryEdge() const;
-        void remapVisPlanes();
-
-        BspLeafs _bspLeafs;
-        int _flags;
-        QScopedPointer<AABoxd> _aaBox;
-        Cluster *_mappedVisFloor;
-        Cluster *_mappedVisCeiling;
+        DENG2_PRIVATE(d)
     };
 
 #ifdef __CLIENT__
@@ -542,6 +550,8 @@ protected:
 private:
     DENG2_PRIVATE(d)
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(Sector::Cluster::Flags)
 
 typedef Sector::Cluster SectorCluster;
 

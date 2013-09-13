@@ -425,6 +425,7 @@ SOURCES += \
     $$SRC/src/world/propertyvalue.cpp \
     $$SRC/src/world/reject.cpp \
     $$SRC/src/world/sector.cpp \
+    $$SRC/src/world/sectorcluster.cpp \
     $$SRC/src/world/surface.cpp \
     $$SRC/src/world/thinkers.cpp \
     $$SRC/src/world/vertex.cpp \
