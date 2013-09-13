@@ -129,6 +129,8 @@ public:
 
     void setImageColor(de::Vector4f const &imageColor);
 
+    bool hasImage() const;
+
     /**
      * Allows or disallows the label to expand vertically to fit the provided
      * content. By default, labels do not adjust their own size.

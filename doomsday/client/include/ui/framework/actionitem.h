@@ -38,6 +38,9 @@ public:
     ActionItem(Semantics semantics, de::String const &label = "", de::Action *action = 0)
         : Item(semantics, label), _action(action) {}
 
+    ActionItem(Semantics semantics, de::Image const &img, de::String const &label = "", de::Action *action = 0)
+        : Item(semantics, label), _action(action), _image(img) {}
+
     ActionItem(de::Image const &img, de::String const &label = "", de::Action *action = 0)
         : Item(ShownAsButton | ActivationClosesPopup, label), _action(action), _image(img) {}
 

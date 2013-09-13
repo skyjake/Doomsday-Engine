@@ -18,6 +18,7 @@
 
 #include "ui/widgets/popupmenuwidget.h"
 #include "ui/widgets/menuwidget.h"
+#include "ui/widgets/togglewidget.h"
 #include "GuiRootWidget"
 #include "ChildWidgetOrganizer"
 #include "ui/Item"
@@ -25,7 +26,7 @@
 
 using namespace de;
 
-DENG2_PIMPL(PopupMenuWidget),
+DENG_GUI_PIMPL(PopupMenuWidget),
 DENG2_OBSERVES(ButtonWidget, StateChange),
 DENG2_OBSERVES(ButtonWidget, Triggered),
 DENG2_OBSERVES(ChildWidgetOrganizer, WidgetCreation),
@@ -56,6 +57,12 @@ DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
             b->setHoverTextColor("inverted.text");
             b->setSizePolicy(ui::Expand, ui::Expand);
             b->margins().set("unit");
+
+            if(!b->is<ToggleWidget>())
+            {
+                b->setTextGap("dialog.gap");
+                b->setOverrideImageSize(style().fonts().font("default").height().valuei());
+            }
 
             b->audienceForStateChange += this;
 
@@ -111,6 +118,15 @@ DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
 
     void buttonStateChanged(ButtonWidget &button, ButtonWidget::State state)
     {
+        if(state == ButtonWidget::Hover)
+        {
+            button.setImageColor(style().colors().colorf("inverted.text"));
+        }
+        else
+        {
+            button.setImageColor(style().colors().colorf("text"));
+        }
+
         // Position item highlight.
         if(&button == hover && state == ButtonWidget::Up)
         {
