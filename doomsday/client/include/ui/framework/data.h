@@ -37,7 +37,7 @@ class Item;
  *
  * Data has ownership of all the items in it.
  *
- * @see ContextWidgetOrganizer
+ * @see ChildWidgetOrganizer
  */
 class Data
 {

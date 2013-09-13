@@ -37,12 +37,12 @@ using namespace de;
 
 static TimeDelta const SHOW_ANIM_SPAN = 0.3;
 
-DENG2_PIMPL(UpdateAvailableDialog),
+DENG_GUI_PIMPL(UpdateAvailableDialog),
 DENG2_OBSERVES(ToggleWidget, Toggle)
 {
     ProgressWidget *checking;
     ToggleWidget *autoCheck;
-    ButtonWidget *settings;
+    //ButtonWidget *settings;
     VersionInfo latestVersion;
     String changeLog;
 
@@ -76,7 +76,7 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
         if(show)
         {
             // Set up a cancel button.
-            self.buttons().items().clear()
+            self.buttons().clear()
                     << new DialogButtonItem(DialogWidget::Reject);
         }
     }
@@ -90,18 +90,18 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
         checking->rule().setRect(self.rule());
         self.add(checking);
 
-        settings = new ButtonWidget;
-        self.add(settings);
+        //settings = new ButtonWidget;
+        //self.add(settings);
 
         /// @todo The dialog buttons should support a opposite-aligned button.
-        settings->setSizePolicy(ui::Filled, ui::Filled);
+        /*settings->setSizePolicy(ui::Filled, ui::Filled);
         settings->setImage(self.style().images().image("gear"));
         settings->rule()
                 .setInput(Rule::Left,   self.area().contentRule().left())
                 .setInput(Rule::Bottom, self.buttons().contentRule().bottom())
                 .setInput(Rule::Height, self.buttons().contentRule().height())
                 .setInput(Rule::Width,  settings->rule().height());
-        settings->setAction(new SignalAction(thisPublic, SLOT(editSettings())));
+        settings->setAction()));*/
 
         autoCheck = new ToggleWidget;
         self.area().add(autoCheck);
@@ -155,30 +155,35 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
 
         autoCheck->setInactive(UpdaterSettings().onlyCheckManually());
 
-        self.buttons().items().clear();
+        self.buttons().clear();
 
         if(askDowngrade)
         {
-            self.buttons().items()
+            self.buttons()
                     << new DialogButtonItem(DialogWidget::Accept, tr("Downgrade to Older"))
                     << new DialogButtonItem(DialogWidget::Reject | DialogWidget::Default, tr("Close"));
         }
         else if(askUpgrade)
         {
-            self.buttons().items()
+            self.buttons()
                     << new DialogButtonItem(DialogWidget::Accept | DialogWidget::Default, tr("Upgrade"))
                     << new DialogButtonItem(DialogWidget::Reject, tr("Not Now"));
         }
         else
         {
-            self.buttons().items()
+            self.buttons()
                     << new DialogButtonItem(DialogWidget::Accept, tr("Reinstall"))
                     << new DialogButtonItem(DialogWidget::Reject | DialogWidget::Default, tr("Close"));
         }
 
+        self.buttons()
+                << new DialogButtonItem(DialogWidget::Action | DialogWidget::Id1,
+                                        style().images().image("gear"),
+                                        new SignalAction(thisPublic, SLOT(editSettings())));
+
         if(askUpgrade)
         {
-            self.buttons().items()
+            self.buttons()
                     << new DialogButtonItem(DialogWidget::Action, tr("What's New?"),
                                             new SignalAction(thisPublic, SLOT(showWhatsNew())));
         }
@@ -217,7 +222,7 @@ void UpdateAvailableDialog::showWhatsNew()
 void UpdateAvailableDialog::editSettings()
 {
     UpdaterSettingsDialog *st = new UpdaterSettingsDialog;
-    st->setAnchorAndOpeningDirection(d->settings->rule(), ui::Up);
+    st->setAnchorAndOpeningDirection(buttonWidget(DialogWidget::Id1)->rule(), ui::Up);
     st->setDeleteAfterDismissed(true);
     if(st->exec(root()))
     {

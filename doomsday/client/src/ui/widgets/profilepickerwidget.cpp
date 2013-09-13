@@ -113,7 +113,7 @@ void ProfilePickerWidget::openMenu()
             << new ActionItem(tr("Delete..."), new SignalAction(this, SLOT(remove())));
     add(popup);
 
-    ContextWidgetOrganizer const &org = popup->menu().organizer();
+    ChildWidgetOrganizer const &org = popup->menu().organizer();
 
     // Enable or disable buttons depending on the selected profile.
     String selProf = selectedItem().data().toString();
@@ -219,7 +219,7 @@ void ProfilePickerWidget::reset()
                            .arg(d->description)
                            .arg(_E(b) + d->currentProfile() + _E(.)));
 
-    dlg->buttons().items()
+    dlg->buttons()
             << new DialogButtonItem(DialogWidget::Default | DialogWidget::Reject)
             << new DialogButtonItem(DialogWidget::Accept, tr("Reset Profile"));
 
@@ -238,7 +238,7 @@ void ProfilePickerWidget::remove()
                 tr("Are you sure you want to delete the %1 profile %2? This cannot be undone.")
                 .arg(d->description)
                 .arg(_E(b) + d->currentProfile() + _E(.)));
-    dlg->buttons().items()
+    dlg->buttons()
                << new DialogButtonItem(DialogWidget::Default | DialogWidget::Reject)
                << new DialogButtonItem(DialogWidget::Accept, tr("Delete Profile"));
 

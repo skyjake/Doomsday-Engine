@@ -19,7 +19,7 @@
 #include "ui/widgets/popupmenuwidget.h"
 #include "ui/widgets/menuwidget.h"
 #include "GuiRootWidget"
-#include "ContextWidgetOrganizer"
+#include "ChildWidgetOrganizer"
 #include "ui/Item"
 #include "clientapp.h"
 
@@ -28,8 +28,8 @@ using namespace de;
 DENG2_PIMPL(PopupMenuWidget),
 DENG2_OBSERVES(ButtonWidget, StateChange),
 DENG2_OBSERVES(ButtonWidget, Triggered),
-DENG2_OBSERVES(ContextWidgetOrganizer, WidgetCreation),
-DENG2_OBSERVES(ContextWidgetOrganizer, WidgetUpdate)
+DENG2_OBSERVES(ChildWidgetOrganizer, WidgetCreation),
+DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
 {
     ButtonWidget *hover;
     int oldScrollY;

@@ -19,7 +19,7 @@
 #include "ui/widgets/menuwidget.h"
 #include "ui/widgets/popupmenuwidget.h"
 #include "ui/widgets/variabletogglewidget.h"
-#include "ContextWidgetOrganizer"
+#include "ChildWidgetOrganizer"
 #include "ui/ListData"
 #include "ui/ActionItem"
 #include "GridLayout"
@@ -32,7 +32,7 @@ DENG2_OBSERVES(Data, Addition),    // for layout update
 DENG2_OBSERVES(Data, Removal),     // for layout update
 DENG2_OBSERVES(Data, OrderChange), // for layout update
 DENG2_OBSERVES(PopupWidget, Close),
-public ContextWidgetOrganizer::IWidgetFactory
+public ChildWidgetOrganizer::IWidgetFactory
 {
     /**
      * Action owned by the button that represents a SubmenuItem.
@@ -99,7 +99,7 @@ public ContextWidgetOrganizer::IWidgetFactory
     GridLayout layout;
     ListData defaultItems;
     Data const *items;
-    ContextWidgetOrganizer organizer;
+    ChildWidgetOrganizer organizer;
     QSet<PopupWidget *> openPopups;
 
     SizePolicy colPolicy;
@@ -349,7 +349,12 @@ GridLayout const &MenuWidget::layout() const
     return d->layout;
 }
 
-ContextWidgetOrganizer const &MenuWidget::organizer() const
+ChildWidgetOrganizer &MenuWidget::organizer()
+{
+    return d->organizer;
+}
+
+ChildWidgetOrganizer const &MenuWidget::organizer() const
 {
     return d->organizer;
 }

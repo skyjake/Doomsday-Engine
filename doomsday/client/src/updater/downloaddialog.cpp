@@ -85,9 +85,9 @@ DENG2_PIMPL(DownloadDialog)
 
         area.setContentSize(progress->rule().width(), progress->rule().height());
 
-        self.buttons().items() << new DialogButtonItem(DialogWidget::Reject,
-                                                       tr("Cancel Download"),
-                                                       new SignalAction(thisPublic, SLOT(cancel())));
+        self.buttons() << new DialogButtonItem(DialogWidget::Reject,
+                                               tr("Cancel Download"),
+                                               new SignalAction(thisPublic, SLOT(cancel())));
 
         updateLocation(uri);
         updateProgress();
@@ -263,7 +263,7 @@ void DownloadDialog::finished(QNetworkReply *reply)
         emit downloadFailed(d->uri.toString());
     }
 
-    buttons().items().clear()
+    buttons().clear()
             << new DialogButtonItem(DialogWidget::Reject, tr("Abort"),
                                     new SignalAction(this, SLOT(cancel())))
             << new DialogButtonItem(DialogWidget::Accept | DialogWidget::Default, tr("Install"));
@@ -286,7 +286,7 @@ void DownloadDialog::cancel()
     if(d->reply)
     {
         d->reply->abort();
-        buttons().items().clear()
+        buttons().clear()
                 << new DialogButtonItem(DialogWidget::Reject, tr("Close"));
     }
     else

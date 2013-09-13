@@ -28,7 +28,6 @@ static int const ID_BACKGROUND = 1; // does not scroll
 static int const ID_TEXT = 2;       // scrolls
 
 DENG_GUI_PIMPL(DocumentWidget),
-DENG2_OBSERVES(Atlas, Reposition),
 public Font::RichFormat::IStyle
 {
     typedef DefaultVertexBuf VertexBuf;
