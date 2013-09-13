@@ -1,4 +1,4 @@
-/** @file indirectule.cpp  Indirect rule.
+/** @file indirectrule.cpp  Indirect rule.
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -46,8 +46,6 @@ void IndirectRule::unsetSource()
 
 void IndirectRule::update()
 {
-    //DENG2_ASSERT(_source != 0);
-
     setValue(_source? _source->value() : 0);
 }
 
