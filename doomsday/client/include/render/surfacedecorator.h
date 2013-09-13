@@ -80,7 +80,7 @@ public:
      *
      * Any existing decorations are retained and will no longer be updated.
      *
-     * @param surface  Surface to add to the job list.
+     * @param surface  Surface to remove from the job list.
      */
     void remove(Surface *surface);
 

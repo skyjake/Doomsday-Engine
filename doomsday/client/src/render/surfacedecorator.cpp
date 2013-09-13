@@ -259,19 +259,45 @@ void SurfaceDecorator::decorate(Surface &surface)
     }
 }
 
-void SurfaceDecorator::add(Surface *surface)
+void SurfaceDecorator::redecorate()
 {
-    if(!surface) return;
+    MaterialSurfaceMap::iterator i = d->decorated.begin();
+    while(i != d->decorated.end())
+    {
+        MaterialSnapshot const *materialSnapshot = 0;
 
-    remove(surface);
+        SurfaceSet const &surfaceSet = i.value();
+        foreach(Surface *surface, surfaceSet)
+        {
+            if(!surface->_needDecorationUpdate)
+                continue;
 
-    if(!surface->hasMaterial()) return;
-    if(!surface->material().isDecorated()) return;
+            // Time to prepare the material?
+            if(!materialSnapshot)
+            {
+                Material &material = *i.key();
+                materialSnapshot = &material.prepare(Rend_MapSurfaceMaterialSpec());
+            }
 
-    d->decorated[&surface->material()].insert(surface);
+            surface->_needDecorationUpdate = false;
+            surface->clearDecorations();
 
-    /// @todo Defer until first decorated?
-    d->observeMaterial(surface->material());
+            Vector3d topLeft, bottomRight;
+            Vector2f materialOrigin;
+
+            if(prepareGeometry(*surface, topLeft, bottomRight, materialOrigin))
+            {
+                d->updateDecorations(*surface, *materialSnapshot, materialOrigin,
+                                     topLeft, bottomRight, containingSector(*surface));
+            }
+        }
+        ++i;
+    }
+}
+
+void SurfaceDecorator::reset()
+{
+    d->decorated.clear();
 }
 
 void SurfaceDecorator::remove(Surface *surface)
@@ -316,43 +342,17 @@ void SurfaceDecorator::remove(Surface *surface)
     }
 }
 
-void SurfaceDecorator::reset()
+void SurfaceDecorator::add(Surface *surface)
 {
-    d->decorated.clear();
-}
+    if(!surface) return;
 
-void SurfaceDecorator::redecorate()
-{
-    MaterialSurfaceMap::iterator i = d->decorated.begin();
-    while(i != d->decorated.end())
-    {
-        MaterialSnapshot const *materialSnapshot = 0;
+    remove(surface);
 
-        SurfaceSet &surfaceSet = i.value();
-        foreach(Surface *surface, surfaceSet)
-        {
-            if(!surface->_needDecorationUpdate)
-                continue;
+    if(!surface->hasMaterial()) return;
+    if(!surface->material().isDecorated()) return;
 
-            // Time to prepare the material?
-            if(!materialSnapshot)
-            {
-                Material &material = *i.key();
-                materialSnapshot = &material.prepare(Rend_MapSurfaceMaterialSpec());
-            }
+    d->decorated[&surface->material()].insert(surface);
 
-            surface->_needDecorationUpdate = false;
-            surface->clearDecorations();
-
-            Vector3d topLeft, bottomRight;
-            Vector2f materialOrigin;
-
-            if(prepareGeometry(*surface, topLeft, bottomRight, materialOrigin))
-            {
-                d->updateDecorations(*surface, *materialSnapshot, materialOrigin,
-                                     topLeft, bottomRight, containingSector(*surface));
-            }
-        }
-        ++i;
-    }
+    /// @todo Defer until first decorated?
+    d->observeMaterial(surface->material());
 }
