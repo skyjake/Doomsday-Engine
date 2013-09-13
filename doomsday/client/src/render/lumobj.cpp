@@ -40,8 +40,6 @@ float Lumobj::Source::occlusion(Vector3d const &eye) const
 DENG2_PIMPL_NOREF(Lumobj)
 {
     Source *source;     ///< Source of the lumobj (if any, not owned).
-    Vector3d origin;    ///< Position in map space.
-    BspLeaf *bspLeaf;   ///< BSP leaf at @ref origin in the map (not owned).
     double maxDistance; ///< Used when rendering to limit the number drawn lumobjs.
     Vector3f color;     ///< Light color/intensity.
     double radius;      ///< Radius in map space units.
@@ -56,7 +54,6 @@ DENG2_PIMPL_NOREF(Lumobj)
 
     Instance()
         : source     (0),
-          bspLeaf    (0),
           maxDistance(0),
           color      (Vector3f(1, 1, 1)),
           radius     (256),
@@ -70,8 +67,6 @@ DENG2_PIMPL_NOREF(Lumobj)
 
     Instance(Instance const &other)
         : source     (other.source),
-          origin     (other.origin),
-          bspLeaf    (other.bspLeaf),
           maxDistance(other.maxDistance),
           color      (other.color),
           radius     (other.radius),
@@ -85,55 +80,19 @@ DENG2_PIMPL_NOREF(Lumobj)
 };
 
 Lumobj::Lumobj(Vector3d const &origin, double radius, Vector3f const &color)
-    : MapObject(), d(new Instance())
+    : MapObject(origin), d(new Instance())
 {
-    setOrigin(origin);
     setRadius(radius);
     setColor(color);
 }
 
-Lumobj::Lumobj(Lumobj const &other) : MapObject(), d(new Instance(*other.d))
+Lumobj::Lumobj(Lumobj const &other)
+    : MapObject(other.origin()), d(new Instance(*other.d))
 {}
 
 void Lumobj::setSource(Source *newSource)
 {
     d->source = newSource;
-}
-
-Vector3d const &Lumobj::origin() const
-{
-    return d->origin;
-}
-
-Lumobj &Lumobj::setOrigin(Vector3d const &newOrigin)
-{
-    if(d->origin != newOrigin)
-    {
-        // When moving on the XY plane; invalidate the BSP leaf.
-        if(!de::fequal(d->origin.x, newOrigin.x) ||
-           !de::fequal(d->origin.y, newOrigin.y))
-        {
-            d->bspLeaf = 0;
-        }
-
-        d->origin = newOrigin;
-    }
-    return *this;
-}
-
-void Lumobj::move(Vector3d const &delta)
-{
-    setOrigin(d->origin + delta);
-}
-
-BspLeaf &Lumobj::bspLeafAtOrigin() const
-{
-    if(!d->bspLeaf)
-    {
-        // Determine this now.
-        d->bspLeaf = &map().bspLeafAt(origin());
-    }
-    return *d->bspLeaf;
 }
 
 de::Vector3f const &Lumobj::color() const

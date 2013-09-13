@@ -100,36 +100,6 @@ public:
     void setSource(Source *newSource);
 
     /**
-     * Translate the origin of the lumobj in map space.
-     *
-     * @param delta  Movement delta on the XY plane.
-     *
-     * @see setOrigin(), origin()
-     */
-    void move(de::Vector3d const &delta);
-
-    /**
-     * Returns the origin of the lumobj in map space.
-     *
-     * @see move(), setOrigin(), bspLeafAtOrigin()
-     */
-    de::Vector3d const &origin() const;
-
-    /**
-     * Change the origin of the lumobj in map space.
-     *
-     * @param newOrigin  New absolute map space origin to apply, in map units.
-     *
-     * @see move(), origin()
-     */
-    Lumobj &setOrigin(de::Vector3d const &newOrigin);
-
-    /**
-     * Returns the map BSP leaf at the origin of the lumobj (result cached).
-     */
-    BspLeaf &bspLeafAtOrigin() const;
-
-    /**
      * Returns the light color/intensity of the lumobj.
      *
      * @see setColor()

@@ -27,13 +27,57 @@ DENG2_PIMPL_NOREF(MapObject)
 {
     Map *map;
     int indexInMap;
+    Vector3d origin;    ///< Position in map space.
+    BspLeaf *bspLeaf;   ///< BSP leaf at @ref origin in the map (not owned).
 
-    Instance() : map(0), indexInMap(NoIndex)
+    Instance(Vector3d const &origin)
+        : map(0),
+          indexInMap(NoIndex),
+          origin(origin),
+          bspLeaf(0)
     {}
 };
 
-MapObject::MapObject() : d(new Instance())
+MapObject::MapObject(Vector3d const &origin) : d(new Instance(origin))
 {}
+
+MapObject::~MapObject()
+{}
+
+Vector3d const &MapObject::origin() const
+{
+    return d->origin;
+}
+
+void MapObject::setOrigin(Vector3d const &newOrigin)
+{
+    if(d->origin != newOrigin)
+    {
+        // When moving on the XY plane; invalidate the BSP leaf.
+        if(!de::fequal(d->origin.x, newOrigin.x) ||
+           !de::fequal(d->origin.y, newOrigin.y))
+        {
+            d->bspLeaf = 0;
+        }
+
+        d->origin = newOrigin;
+    }
+}
+
+void MapObject::move(Vector3d const &delta)
+{
+    setOrigin(d->origin + delta);
+}
+
+BspLeaf &MapObject::bspLeafAtOrigin() const
+{
+    if(!d->bspLeaf)
+    {
+        // Determine this now.
+        d->bspLeaf = &map().bspLeafAt(origin());
+    }
+    return *d->bspLeaf;
+}
 
 bool MapObject::hasMap() const
 {

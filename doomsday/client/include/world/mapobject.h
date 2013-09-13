@@ -20,8 +20,10 @@
 #ifndef DENG_WORLD_MAPOBJECT_H
 #define DENG_WORLD_MAPOBJECT_H
 
-#include <de/libdeng2.h>
 #include <de/Error>
+#include <de/Vector>
+
+class BspLeaf;
 
 namespace de {
 
@@ -51,17 +53,51 @@ public:
     enum { NoIndex = -1 };
 
 public:
-    MapObject();
+    MapObject(de::Vector3d const &origin = de::Vector3d());
+    virtual ~MapObject();
 
     /**
-     * Returns @c true iff a map is attributed to the map object.
+     * Returns the map BSP leaf at the origin of the object (result cached).
+     * Naturally a map must be attributed.
+     *
+     * @see setMap(), hasMap()
+     */
+    BspLeaf &bspLeafAtOrigin() const;
+
+    /**
+     * Returns the origin of the object in map space.
+     *
+     * @see move(), setOrigin(), bspLeafAtOrigin()
+     */
+    de::Vector3d const &origin() const;
+
+    /**
+     * Change the origin of the object in map space.
+     *
+     * @param newOrigin  New absolute origin to apply, in map units.
+     *
+     * @see move(), origin()
+     */
+    virtual void setOrigin(de::Vector3d const &newOrigin);
+
+    /**
+     * Translate the origin of the object in map space.
+     *
+     * @param delta  Movement delta.
+     *
+     * @see setOrigin(), origin()
+     */
+    virtual void move(de::Vector3d const &delta);
+
+    /**
+     * Returns @c true iff a map is attributed to the object.
      *
      * @see map(), setMap()
      */
     bool hasMap() const;
 
     /**
-     * Returns the map attributed to the map object.
+     * Returns the map attributed to the object.
      *
      * @see hasMap(), setMap()
      */
