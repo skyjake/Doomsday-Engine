@@ -221,9 +221,9 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
         lightGrid.reset();
 #endif
 
+        qDeleteAll(sectors);
         qDeleteAll(bspNodes);
         qDeleteAll(bspLeafs);
-        qDeleteAll(sectors);
         foreach(Polyobj *polyobj, polyobjs)
         {
             polyobj->~Polyobj();
