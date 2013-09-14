@@ -312,8 +312,8 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
     d->mainMenu->items()
             << unloadMenu // hidden with null-game
             << new ui::Item(ui::Item::Separator) // hidden with null-game
-            << new ui::ActionItem(tr("About Doomsday"), new SignalAction(this, SLOT(showAbout())))
             << new ui::ActionItem(tr("Check for Updates..."), new CommandAction("updateandnotify"))
+            << new ui::ActionItem(tr("About Doomsday"), new SignalAction(this, SLOT(showAbout())))
             << new ui::Item(ui::Item::Separator)
             << new ui::ActionItem(tr("Quit Doomsday"), new CommandAction("quit"));
 

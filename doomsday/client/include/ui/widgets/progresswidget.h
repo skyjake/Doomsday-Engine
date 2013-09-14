@@ -47,6 +47,7 @@ public:
     ProgressWidget(de::String const &name = "");
 
     void useMiniStyle();
+    void setRotationSpeed(float anglesPerSecond);
 
     Mode mode() const;
     de::Rangei range() const;

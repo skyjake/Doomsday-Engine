@@ -120,6 +120,7 @@ public:
     {
         useMiniStyle();
         setColor("text");
+        setRotationSpeed(0);
         setSizePolicy(ui::Expand, ui::Expand);
 
         // The notification has a hidden button that can be clicked.

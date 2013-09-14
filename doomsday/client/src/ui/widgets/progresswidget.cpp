@@ -31,6 +31,7 @@ DENG_GUI_PIMPL(ProgressWidget), public Lockable
     Rangef visualRange;
     Animation pos;
     float angle;
+    float rotationSpeed;
     Id gearTex;
     DotPath colorId;
     DotPath shadowColorId;
@@ -44,6 +45,7 @@ DENG_GUI_PIMPL(ProgressWidget), public Lockable
           visualRange(0, 1),
           pos(0, Animation::Linear),
           angle(0),
+          rotationSpeed(20),
           colorId("progress.light.wheel"),
           shadowColorId("progress.light.shadow"),
           gearId("progress.gear"),
@@ -96,6 +98,11 @@ void ProgressWidget::useMiniStyle()
 
     // Resize to the height of the default font.
     setOverrideImageSize(style().fonts().font("default").height().value());
+}
+
+void ProgressWidget::setRotationSpeed(float anglesPerSecond)
+{
+    d->rotationSpeed = anglesPerSecond;
 }
 
 ProgressWidget::Mode ProgressWidget::mode() const
@@ -169,7 +176,7 @@ void ProgressWidget::update()
     TimeDelta const elapsed = d->updateAt.since();
     d->updateAt = now;
 
-    d->angle = de::wrap(d->angle + float(elapsed * 20), 0.f, 360.f);
+    d->angle = de::wrap(d->angle + float(elapsed * d->rotationSpeed), 0.f, 360.f);
 
     requestGeometry();
 }

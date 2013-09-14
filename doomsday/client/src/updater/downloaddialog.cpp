@@ -264,11 +264,12 @@ void DownloadDialog::finished(QNetworkReply *reply)
     }
 
     buttons().clear()
-            << new DialogButtonItem(DialogWidget::Reject, tr("Abort"),
+            << new DialogButtonItem(DialogWidget::Reject, tr("Delete"),
                                     new SignalAction(this, SLOT(cancel())))
-            << new DialogButtonItem(DialogWidget::Accept | DialogWidget::Default, tr("Install"));
+            << new DialogButtonItem(DialogWidget::Accept | DialogWidget::Default, tr("Install Update"));
 
     d->state = Instance::Finished;
+    d->progress->setRotationSpeed(0);
     d->updateProgress();
 
     // Make sure the finished download is noticed by the user.
@@ -282,6 +283,7 @@ void DownloadDialog::cancel()
     LOG_INFO("Download cancelled via user request");
 
     d->state = Instance::Error;
+    d->progress->setRotationSpeed(0);
 
     if(d->reply)
     {
