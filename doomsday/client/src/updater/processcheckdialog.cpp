@@ -53,7 +53,7 @@ boolean Updater_AskToStopProcess(char const *processName, char const *message)
                                QObject::tr("There is a running process called %1.")
                                .arg(_E(b) + QString(processName) + _E(.)));
 
-        msg->buttons().items()
+        msg->buttons()
                 << new DialogButtonItem(DialogWidget::Accept | DialogWidget::Default, QObject::tr("Retry"))
                 << new DialogButtonItem(DialogWidget::Reject, QObject::tr("Ignore"));
 
