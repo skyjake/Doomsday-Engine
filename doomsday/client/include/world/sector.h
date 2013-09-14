@@ -221,10 +221,6 @@ public:
     // Plane identifiers:
     enum { Floor, Ceiling };
 
-public: /// @todo Make private:
-    /// Head of the linked list of mobjs "in" the sector (not owned).
-    struct mobj_s *_mobjList;
-
 public:
     /**
      * Construct a new sector.
@@ -502,6 +498,20 @@ public:
      * Returns the first mobj in the linked list of mobjs "in" the sector.
      */
     struct mobj_s *firstMobj() const;
+
+    /**
+     * Unlink the mobj from the list of mobjs "in" the sector.
+     *
+     * @param mobj  Mobj to be unlinked.
+     */
+    void unlink(struct mobj_s *mobj);
+
+    /**
+     * Link the mobj to the head of the list of mobjs "in" the sector.
+     *
+     * @param mobj  Mobj to be linked.
+     */
+    void link(struct mobj_s *mobj);
 
     /**
      * Returns the @em validCount of the sector. Used by some legacy iteration

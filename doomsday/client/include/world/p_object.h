@@ -43,8 +43,7 @@ typedef struct mobj_s
 #define DEFAULT_FRICTION        FIX2FLT(0xe800)
 #define NOMOMENTUM_THRESHOLD    (0.0001)
 
-#define IS_SECTOR_LINKED(mo)    ((mo)->sPrev != NULL)
-#define IS_BLOCK_LINKED(mo)     ((mo)->bNext != NULL)
+#define IS_BLOCK_LINKED(mo)     ((mo)->bNext != 0)
 
 DENG_EXTERN_C int useSRVO, useSRVOAngle;
 
@@ -103,7 +102,7 @@ float Mobj_ShadowStrength(mobj_t *mobj);
 
 coord_t Mobj_ApproxPointDistance(mobj_t *start, coord_t const *point);
 
-boolean Mobj_UnlinkFromSector(mobj_t *mobj);
+boolean Mobj_IsSectorLinked(mobj_t *mobj);
 
 /**
  * @return  The current floatbob offset for the mobj, if the mobj is flagged

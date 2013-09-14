@@ -109,36 +109,24 @@ struct EditableElements
 DENG2_PIMPL(Map),
 DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
 {
-    /// @c true= editing is currently enabled.
     bool editingEnabled;
-
-    /// Editable map element LUTs:
     EditableElements editable;
 
-    /// Universal resource identifier for the map.
     Uri uri;
+    char oldUniqueId[256]; ///< Used with some legacy definitions.
 
-    /// Old unique identifier for the map (used with some legacy definitions).
-    char oldUniqueId[256];
+    AABoxd bounds; ///< Boundary points which encompass the entire map
 
-    /// Boundary points which encompass the entire map.
-    AABoxd bounds;
-
-    /// Map thinkers.
     QScopedPointer<Thinkers> thinkers;
-
-    /// Mesh from which we'll assign geometries.
-    Mesh mesh;
+    Mesh mesh; ///< All map geometries.
 
     /// Element LUTs:
     Sectors sectors;
     Lines lines;
     Polyobjs polyobjs;
 
-    /// BSP root element.
+    /// BSP data structure:
     MapElement *bspRoot;
-
-    /// BSP element LUTs:
     BspNodes bspNodes;
     BspLeafs bspLeafs;
 
@@ -153,7 +141,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
 
     nodepile_t mobjNodes;
     nodepile_t lineNodes;
-    nodeindex_t *lineLinks; // Indices to roots.
+    nodeindex_t *lineLinks; ///< Indices to roots.
 
 #ifdef __CLIENT__
     PlaneSet trackedPlanes;
@@ -165,21 +153,15 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
     /// Shadow Bias data.
     struct Bias
     {
-        /// Time in milliseconds of the "current" frame.
-        uint currentTime;
-
-        /// Frame number of the last update.
+        uint currentTime;       ///< The "current" frame in milliseconds.
         uint lastChangeOnFrame;
-
-        /// The set of light sources.
-        BiasSources sources;
+        BiasSources sources;    ///< All bias light sources (owned).
 
         Bias() : currentTime(0), lastChangeOnFrame(0)
         {}
     } bias;
 
-    /// Luminous object data.
-    Lumobjs lumobjs;
+    Lumobjs lumobjs; ///< All lumobjs (owned).
 
     QScopedPointer<SurfaceDecorator> decorator;
 
@@ -187,7 +169,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
     coord_t skyCeilingHeight;
 #endif
 
-    // Current LOS trace state.
+    // Current LOS trace state:
     /// @todo Does not belong here.
     TraceOpening traceOpening;
     divline_t traceLine;
@@ -633,6 +615,17 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
         LOG_INFO(String("BSP built in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 
         return bspRoot != 0;
+    }
+
+    /// @return  @c true= @a mobj was unlinked successfully.
+    bool unlinkMobjFromSectors(mobj_t &mobj)
+    {
+        if(Mobj_IsSectorLinked(&mobj))
+        {
+            mobj.bspLeaf->sector().unlink(&mobj);
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -1957,7 +1950,7 @@ int Map::unlink(mobj_t &mo)
 {
     int links = 0;
 
-    if(Mobj_UnlinkFromSector(&mo))
+    if(d->unlinkMobjFromSectors(mo))
         links |= DDLINK_SECTOR;
     if(d->unlinkMobjInBlockmap(mo))
         links |= DDLINK_BLOCKMAP;
@@ -1969,29 +1962,17 @@ int Map::unlink(mobj_t &mo)
 
 void Map::link(mobj_t &mo, byte flags)
 {
-    // Link into the sector.
-    mo.bspLeaf = &bspLeafAt_FixedPrecision(mo.origin);
+    BspLeaf &bspLeafAtOrigin = bspLeafAt_FixedPrecision(mo.origin);
 
+    // Link into the sector?
+    /// @todo fixme: Never link to a degenerate BSP leaf!
     if(flags & DDLINK_SECTOR)
     {
-        /// @todo fixme: Never link to a degenerate BSP leaf!
-        DENG_ASSERT(mo.bspLeaf->hasSector());
-
-        // Unlink from the current sector, if any.
-        Sector &sec = mo.bspLeaf->sector();
-
-        if(mo.sPrev)
-            Mobj_UnlinkFromSector(&mo);
-
-        // Link the new mobj to the head of the list.
-        // Prev pointers point to the pointer that points back to us.
-        // (Which practically disallows traversing the list backwards.)
-
-        if((mo.sNext = sec.firstMobj()))
-            mo.sNext->sPrev = &mo.sNext;
-
-        *(mo.sPrev = &sec._mobjList) = &mo;
+        d->unlinkMobjFromSectors(mo);
+        DENG_ASSERT(bspLeafAtOrigin.hasSector());
+        bspLeafAtOrigin.sector().link(&mo);
     }
+    mo.bspLeaf = &bspLeafAtOrigin;
 
     // Link into blockmap?
     if(flags & DDLINK_BLOCKMAP)
@@ -2015,7 +1996,7 @@ void Map::link(mobj_t &mo, byte flags)
 
         player->inVoid = true;
 
-        if(player->mo->bspLeaf && player->mo->bspLeaf->hasSector())
+        if(player->mo->bspLeaf)
         {
             BspLeaf &bspLeaf = *player->mo->bspLeaf;
             if(bspLeaf.polyContains(player->mo->origin))

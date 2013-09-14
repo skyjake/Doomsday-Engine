@@ -32,6 +32,7 @@
 
 #include "world/map.h"
 #include "world/maputil.h"
+#include "world/p_object.h"
 
 #include "world/sector.h"
 
@@ -40,8 +41,7 @@ using namespace de;
 DENG2_PIMPL(Sector),
 DENG2_OBSERVES(Plane, HeightChange)
 {
-    /// Bounding box for the whole sector (all clusters).
-    AABoxd aaBox;
+    AABoxd aaBox;         ///< Bounding box for the whole sector (all clusters).
     bool needAABoxUpdate; ///< @c true= marked for update.
 
     SoundEmitter emitter; ///< Head of the sound emitter chain.
@@ -49,6 +49,7 @@ DENG2_OBSERVES(Plane, HeightChange)
     Planes planes;        ///< All owned planes.
     Sides sides;          ///< All referencing line sides (not owned).
     Clusters clusters;    ///< All owned BSP leaf clusters.
+    mobj_t *mobjList;     ///< All mobjs "in" the sector (not owned).
 
     float lightLevel;     ///< Ambient light level.
     Vector3f lightColor;  ///< Ambient light color.
@@ -56,9 +57,7 @@ DENG2_OBSERVES(Plane, HeightChange)
     int validCount;
 
 #ifdef __CLIENT__
-    /// Rough approximation of sector area (map units squared). @c <0 means an
-    /// update is necessary.
-    coord_t roughArea;
+    coord_t roughArea;    ///< Approximated. @c <0 means an update is needed.
 
     /// Ambient lighting data for the bias lighting model.
     LightGridData lightGridData;
@@ -67,6 +66,7 @@ DENG2_OBSERVES(Plane, HeightChange)
     Instance(Public *i, float lightLevel, Vector3f const &lightColor)
         : Base(i),
           needAABoxUpdate(false), // No BSP leafs thus no geometry.
+          mobjList(0),
           lightLevel(lightLevel),
           lightColor(lightColor),
           validCount(0)
@@ -187,9 +187,7 @@ DENG2_OBSERVES(Plane, HeightChange)
 
 Sector::Sector(float lightLevel, Vector3f const &lightColor)
     : MapElement(DMU_SECTOR), d(new Instance(this, lightLevel, lightColor))
-{
-    _mobjList = 0;
-}
+{}
 
 float Sector::lightLevel() const
 {
@@ -233,7 +231,7 @@ void Sector::setLightColor(Vector3f const &newLightColor)
 
 void Sector::setLightColorComponent(int component, float newStrength)
 {
-    DENG_ASSERT(component >= 0 && component < 3);
+    DENG2_ASSERT(component >= 0 && component < 3);
     newStrength = de::clamp(0.f, newStrength, 1.f);
     if(!de::fequal(d->lightColor[component], newStrength))
     {
@@ -247,7 +245,40 @@ void Sector::setLightColorComponent(int component, float newStrength)
 
 struct mobj_s *Sector::firstMobj() const
 {
-    return _mobjList;
+    return d->mobjList;
+}
+
+/**
+ * Two links to update:
+ * 1) The link to the mobj from the previous node (sprev, always set) will
+ *    be modified to point to the node following it.
+ * 2) If there is a node following the mobj, set its sprev pointer to point
+ *    to the pointer that points back to it (the mobj's sprev, just modified).
+ */
+void Sector::unlink(mobj_t *mobj)
+{
+    if(!mobj || !Mobj_IsSectorLinked(mobj))
+        return;
+
+    if((*mobj->sPrev = mobj->sNext))
+        mobj->sNext->sPrev = mobj->sPrev;
+
+    // Not linked any more.
+    mobj->sNext = 0;
+    mobj->sPrev = 0;
+}
+
+void Sector::link(mobj_t *mobj)
+{
+    if(!mobj) return;
+
+    // Prev pointers point to the pointer that points back to us.
+    // (Which practically disallows traversing the list backwards.)
+
+    if((mobj->sNext = d->mobjList))
+        mobj->sNext->sPrev = &mobj->sNext;
+
+    *(mobj->sPrev = &d->mobjList) = mobj;
 }
 
 SoundEmitter &Sector::soundEmitter()
@@ -737,7 +768,7 @@ int Sector::property(DmuArgs &args) const
         args.setValue(DMT_SECTOR_EMITTER, &emitterAdr, 0);
         break; }
     case DMT_MOBJS:
-        args.setValue(DMT_SECTOR_MOBJLIST, &_mobjList, 0);
+        args.setValue(DMT_SECTOR_MOBJLIST, &d->mobjList, 0);
         break;
     case DMU_VALID_COUNT:
         args.setValue(DMT_SECTOR_VALIDCOUNT, &d->validCount, 0);
