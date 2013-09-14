@@ -20,6 +20,7 @@
 #define DENG_CLIENT_UI_DEFS_H
 
 #include <QFlags>
+#include <de/math.h>
 
 namespace ui {
 
@@ -95,7 +96,7 @@ typename RectType::Corner applyAlignment(Alignment align, SizeType const &size, 
     }
     else if(!align.testFlag(AlignTop))
     {
-        p.y += (int(bounds.height()) - int(size.y)) / 2;
+        p.y += de::floor(double(bounds.height() - size.y) / 2.0);
     }
 
     return p;

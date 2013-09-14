@@ -499,8 +499,9 @@ DENG2_PIMPL(Font)
     ConstantRule *ascentRule;
     ConstantRule *descentRule;
     ConstantRule *lineSpacingRule;
+    int ascent;
 
-    Instance(Public *i) : Base(i)
+    Instance(Public *i) : Base(i), ascent(0)
     {
         createRules();
     }
@@ -523,9 +524,17 @@ DENG2_PIMPL(Font)
     {
         metrics.reset(new QFontMetrics(font));
 
-        heightRule->set(metrics->height());
-        ascentRule->set(metrics->ascent());
+        ascent = metrics->ascent();
+        if(font.weight() != QFont::Normal)
+        {
+            // Use the ascent of the normal weight for non-normal weights;
+            // we need to align content to baseline regardless of weight.
+            ascent = QFontMetrics(QFont(font.family(), font.pointSize())).ascent();
+        }
+
+        ascentRule->set(ascent);
         descentRule->set(metrics->descent());
+        heightRule->set(metrics->height());
         lineSpacingRule->set(metrics->lineSpacing());
     }
 
@@ -733,7 +742,7 @@ QImage Font::rasterize(String const &textLine,
         painter.setFont(font);
 
         String const part = textLine.substr(iter.range());
-        painter.drawText(advance, d->metrics->ascent(), part);
+        painter.drawText(advance, d->ascent, part);
         advance += QFontMetrics(font).width(part);
     }
     return img;
