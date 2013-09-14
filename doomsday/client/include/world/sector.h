@@ -80,14 +80,6 @@ public:
     class Cluster
     {
     public:
-        /// Classification flags:
-        enum Flag
-        {
-            NeverMapped        = 0x1,
-            AllSelfRef         = 0x2
-        };
-        Q_DECLARE_FLAGS(Flags, Flag)
-
         typedef QList<BspLeaf *> BspLeafs;
 
     public:
@@ -99,11 +91,6 @@ public:
          * @param bspLeafs  Set of BSP leafs comprising the resulting cluster.
          */
         Cluster(BspLeafs const &bspLeafs);
-
-        /**
-         * Returns a copy of the classification flags for the cluster.
-         */
-        Flags flags() const;
 
         /**
          * Returns the parent sector of the cluster.
@@ -538,8 +525,6 @@ protected:
 private:
     DENG2_PRIVATE(d)
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(Sector::Cluster::Flags)
 
 typedef Sector::Cluster SectorCluster;
 

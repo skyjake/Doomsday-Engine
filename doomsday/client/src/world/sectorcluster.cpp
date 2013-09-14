@@ -29,6 +29,21 @@
 
 using namespace de;
 
+namespace internal
+{
+    /// Classification flags:
+    enum ClusterFlag
+    {
+        NeverMapped        = 0x1,
+        AllSelfRef         = 0x2
+    };
+
+    Q_DECLARE_FLAGS(ClusterFlags, ClusterFlag)
+    Q_DECLARE_OPERATORS_FOR_FLAGS(ClusterFlags)
+}
+
+using namespace internal;
+
 static QRectF qrectFromAABox(AABoxd const &aaBox)
 {
     return QRectF(QPointF(aaBox.minX, aaBox.maxY), QPointF(aaBox.maxX, aaBox.minY));
@@ -37,7 +52,7 @@ static QRectF qrectFromAABox(AABoxd const &aaBox)
 DENG2_PIMPL(Sector::Cluster)
 {
     bool needClassify; ///< @c true= (Re)classification is necessary.
-    Flags flags;
+    ClusterFlags flags;
     BspLeafs bspLeafs;
     QScopedPointer<AABoxd> aaBox;
 
@@ -53,50 +68,56 @@ DENG2_PIMPL(Sector::Cluster)
     {}
 
     /**
-     * (Re)classify the cluster by examining the boundary edges.
+     * Returns a copy of the classification flags for the cluster, performing
+     * classification of the cluster if necessary.
      */
-    void classify()
+    ClusterFlags classification()
     {
-        needClassify = false;
-
-        flags &= ~NeverMapped;
-        flags |= AllSelfRef;
-        foreach(BspLeaf *leaf, bspLeafs)
+        if(needClassify)
         {
-            HEdge const *base  = leaf->poly().hedge();
-            HEdge const *hedge = base;
-            do
+            needClassify = false;
+
+            flags &= ~NeverMapped;
+            flags |= AllSelfRef;
+            foreach(BspLeaf *leaf, bspLeafs)
             {
-                if(hedge->mapElement())
+                HEdge const *base  = leaf->poly().hedge();
+                HEdge const *hedge = base;
+                do
                 {
-                    // This edge defines a section of a map line.
-                    if(hedge->twin().hasFace())
+                    if(hedge->mapElement())
                     {
-                        if(flags.testFlag(AllSelfRef))
+                        // This edge defines a section of a map line.
+                        if(hedge->twin().hasFace())
                         {
-                            BspLeaf const &backLeaf    = hedge->twin().face().mapElement()->as<BspLeaf>();
-                            Cluster const *backCluster = backLeaf.hasCluster()? &backLeaf.cluster() : 0;
-                            if(backCluster != thisPublic)
+                            if(flags.testFlag(AllSelfRef))
                             {
-                                if(!hedge->mapElement()->as<LineSideSegment>().line().isSelfReferencing())
+                                BspLeaf const &backLeaf    = hedge->twin().face().mapElement()->as<BspLeaf>();
+                                Cluster const *backCluster = backLeaf.hasCluster()? &backLeaf.cluster() : 0;
+                                if(backCluster != thisPublic)
                                 {
-                                    flags &= ~AllSelfRef;
+                                    if(!hedge->mapElement()->as<LineSideSegment>().line().isSelfReferencing())
+                                    {
+                                        flags &= ~AllSelfRef;
+                                    }
                                 }
                             }
                         }
-                    }
-                    else
-                    {
-                        // If a back geometry is missing then never map planes.
-                        flags |= NeverMapped;
-                        flags &= ~AllSelfRef;
+                        else
+                        {
+                            // If a back geometry is missing then never map planes.
+                            flags |= NeverMapped;
+                            flags &= ~AllSelfRef;
 
-                        // We're done.
-                        return;
+                            // We're done.
+                            return flags;
+                        }
                     }
-                }
-            } while((hedge = &hedge->next()) != base);
+                } while((hedge = &hedge->next()) != base);
+            }
         }
+
+        return flags;
     }
 
     /**
@@ -104,17 +125,12 @@ DENG2_PIMPL(Sector::Cluster)
      */
     void remapVisPlanes()
     {
-        if(needClassify)
-        {
-            classify();
-        }
-
         // By default both planes are mapped to the parent sector.
         mappedVisFloor   = thisPublic;
         mappedVisCeiling = thisPublic;
 
         // Should we permanently map planes to another cluster?
-        if(flags.testFlag(NeverMapped))
+        if(classification() & NeverMapped)
             return;
 
         forever
@@ -139,7 +155,7 @@ DENG2_PIMPL(Sector::Cluster)
                                 Cluster *otherCluster = &backLeaf.cluster();
                                 if(otherCluster != thisPublic &&
                                    otherCluster->d->mappedVisFloor != thisPublic &&
-                                   !(!flags.testFlag(AllSelfRef) && otherCluster->flags().testFlag(AllSelfRef)))
+                                   !(!(classification() & AllSelfRef) && (otherCluster->d->classification() & AllSelfRef)))
                                 {
                                     // Remember the exterior cluster.
                                     exteriorCluster = otherCluster;
@@ -182,7 +198,7 @@ DENG2_PIMPL(Sector::Cluster)
         }
 
         // No permanent mapping?
-        if(mappedVisFloor == thisPublic && !(flags & AllSelfRef))
+        if(mappedVisFloor == thisPublic && !(classification() & AllSelfRef))
         {
             // Dynamic mapping may be needed for one or more planes.
             Plane const &sectorFloor   = self.sector().floor();
@@ -267,15 +283,6 @@ Sector::Cluster::Cluster(BspLeafs const &bspLeafs) : d(new Instance(this))
         // Attribute the BSP leaf to the cluster.
         bspLeaf->setCluster(this);
     }
-}
-
-Sector::Cluster::Flags Sector::Cluster::flags() const
-{
-    if(d->needClassify)
-    {
-        d->classify();
-    }
-    return d->flags;
 }
 
 Sector &Sector::Cluster::sector() const
