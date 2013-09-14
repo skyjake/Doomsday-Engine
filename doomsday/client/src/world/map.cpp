@@ -2916,9 +2916,9 @@ void Map::worldFrameBegins(World &world, bool resetNextViewer)
     DENG2_ASSERT(&world.map() == this); // Sanity check.
 
     /// @todo optimize: Use a de::BitField instead.
-    foreach(Sector *sector, d->sectors)
+    foreach(BspLeaf *bspLeaf, d->bspLeafs)
     {
-        sector->markVisible(false);
+        bspLeaf->markVisible(false);
     }
 
     // Interpolate the map ready for drawing view(s) of it.

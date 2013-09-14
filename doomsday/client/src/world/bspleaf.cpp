@@ -83,6 +83,7 @@ DENG2_PIMPL(BspLeaf)
     ShadowLines shadowLines;        ///< Linked map lines for fake radio shadowing.
     AudioEnvironmentFactors reverb; ///< Cached characteristics.
 
+    bool visible;                   ///< @c true= marked as visible for the current frame.
 #endif // __CLIENT__
 
     /// Used by legacy algorithms to prevent repeated processing.
@@ -96,6 +97,7 @@ DENG2_PIMPL(BspLeaf)
           fanBase(0),
           needUpdateFanBase(true),
           addSpriteCount(0),
+          visible(false),
 #endif
           validCount(0)
     {
@@ -685,6 +687,15 @@ void BspLeaf::setLastSpriteProjectFrame(int newFrameCount)
     d->addSpriteCount = newFrameCount;
 }
 
+bool BspLeaf::isVisible() const
+{
+    return d->visible;
+}
+
+void BspLeaf::markVisible(bool yes)
+{
+    d->visible = yes;
+}
 #endif // __CLIENT__
 
 int BspLeaf::property(DmuArgs &args) const

@@ -201,10 +201,11 @@ static int linkGeneratorParticles(ptcgen_t *gen, void *parameters)
     /// @todo Overkill?
     for(int i = 0; i < gen->count; ++i)
     {
-        if(gen->ptcs[i].stage < 0 || !gen->ptcs[i].sector) continue;
+        if(gen->ptcs[i].stage < 0 || !gen->ptcs[i].bspLeaf)
+            continue;
 
         /// @todo Do not assume sector is from the CURRENT map.
-        gens->linkToList(gen, gen->ptcs[i].sector->indexInMap());
+        gens->linkToList(gen, gen->ptcs[i].bspLeaf->sector().indexInMap());
     }
     return false; // Continue iteration.
 }
@@ -704,15 +705,22 @@ static void P_NewParticle(ptcgen_t *gen)
 
     // The other place where this gets updated is after moving over
     // a two-sided line.
-    if(gen->plane)
+    /*if(gen->plane)
     {
         pt->sector = &gen->plane->sector();
     }
-    else
+    else*/
     {
         /// @todo fixme: Do not assume the current map.
         Vector2d ptOrigin(FIX2FLT(pt->origin[VX]), FIX2FLT(pt->origin[VY]));
-        pt->sector = App_World().map().bspLeafAt(ptOrigin).sectorPtr();
+        pt->bspLeaf = &App_World().map().bspLeafAt(ptOrigin);
+
+        // A degenerate BSP leaf is not a suitable place for a particle.
+        if(pt->bspLeaf->isDegenerate())
+        {
+            pt->stage = -1;
+            return;
+        }
     }
 
     // Play a stage sound?
@@ -863,13 +871,12 @@ float P_GetParticleRadius(ded_ptcstage_t const *def, int ptcIDX)
             (1 - def->radiusVariance)) * def->radius;
 }
 
-/// @todo fixme: Should use the visual plane heights of sector clusters.
 float P_GetParticleZ(particle_t const *pt)
 {
     if(pt->origin[VZ] == DDMAXINT)
-        return pt->sector->ceiling().heightSmoothed() - 2;
+        return pt->bspLeaf->visCeilingHeightSmoothed() - 2;
     else if(pt->origin[VZ] == DDMININT)
-        return (pt->sector->floor().heightSmoothed() + 2);
+        return (pt->bspLeaf->visFloorHeightSmoothed() + 2);
 
     return FIX2FLT(pt->origin[VZ]);
 }
@@ -1011,12 +1018,12 @@ static void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
 
     // Check the new Z position only if not stuck to a plane.
     z = pt->origin[VZ] + pt->mov[VZ];
-    if(pt->origin[VZ] != DDMININT && pt->origin[VZ] != DDMAXINT && pt->sector)
+    if(pt->origin[VZ] != DDMININT && pt->origin[VZ] != DDMAXINT && pt->bspLeaf)
     {
-        if(z > FLT2FIX(pt->sector->ceiling().height()) - hardRadius)
+        if(z > FLT2FIX(pt->bspLeaf->visCeilingHeightSmoothed()) - hardRadius)
         {
             // The Z is through the roof!
-            if(pt->sector->ceilingSurface().hasSkyMaskedMaterial())
+            if(pt->bspLeaf->visCeiling().surface().hasSkyMaskedMaterial())
             {
                 // Special case: particle gets lost in the sky.
                 pt->stage = -1;
@@ -1025,15 +1032,15 @@ static void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
 
             if(!P_TouchParticle(pt, st, stDef, false)) return;
 
-            z = FLT2FIX(pt->sector->ceiling().height()) - hardRadius;
+            z = FLT2FIX(pt->bspLeaf->visCeilingHeightSmoothed()) - hardRadius;
             zBounce = true;
             hitFloor = false;
         }
 
         // Also check the floor.
-        if(z < FLT2FIX(pt->sector->floor().height()) + hardRadius)
+        if(z < FLT2FIX(pt->bspLeaf->visFloorHeightSmoothed()) + hardRadius)
         {
-            if(pt->sector->floorSurface().hasSkyMaskedMaterial())
+            if(pt->bspLeaf->visFloor().surface().hasSkyMaskedMaterial())
             {
                 pt->stage = -1;
                 return;
@@ -1041,7 +1048,7 @@ static void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
 
             if(!P_TouchParticle(pt, st, stDef, false)) return;
 
-            z = FLT2FIX(pt->sector->floor().height()) + hardRadius;
+            z = FLT2FIX(pt->bspLeaf->visFloorHeightSmoothed()) + hardRadius;
             zBounce = true;
             hitFloor = true;
         }
@@ -1182,8 +1189,14 @@ static void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
     // Should we update the sector pointer?
     if(tmcross)
     {
-        Vector2d ptOrigin(FIX2FLT(x), FIX2FLT(y));
-        pt->sector = App_World().map().bspLeafAt(ptOrigin).sectorPtr();
+        pt->bspLeaf = &App_World().map().bspLeafAt(Vector2d(FIX2FLT(x), FIX2FLT(y)));
+
+        // A degenerate BSP leaf is not a suitable place for a particle.
+        if(pt->bspLeaf->isDegenerate())
+        {
+            // Kill the particle.
+            pt->stage = -1;
+        }
     }
 }
 

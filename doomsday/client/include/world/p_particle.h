@@ -20,14 +20,14 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_WORLD_P_PARTICLE_H
-#define DENG_WORLD_P_PARTICLE_H
+#ifndef DENG_CLIENT_WORLD_P_PARTICLE_H
+#define DENG_CLIENT_WORLD_P_PARTICLE_H
 
 #include "def_data.h"
 
-#include "Sector"
-#include "Line"
-#include "Plane"
+class BspLeaf;
+class Line;
+class Plane;
 
 // Maximum number of particle textures (not instances).
 #define MAX_PTC_TEXTURES        300
@@ -98,7 +98,7 @@ typedef struct {
     short tics;
     fixed_t origin[3]; // Coordinates.
     fixed_t mov[3]; // Momentum.
-    Sector *sector; // Updated when needed.
+    BspLeaf *bspLeaf; // Updated when needed.
     Line *contact; // Updated when lines hit/avoided.
     ushort yaw, pitch; // Rotation angles (0-65536 => 0-360).
 } particle_t;
@@ -193,4 +193,4 @@ float P_GetParticleRadius(ded_ptcstage_t const *stageDef, int ptcIndex);
  */
 float P_GetParticleZ(particle_t const *pt);
 
-#endif // DENG_WORLD_P_PARTICLE_H
+#endif // DENG_CLIENT_WORLD_P_PARTICLE_H

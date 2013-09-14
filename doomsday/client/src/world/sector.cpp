@@ -82,8 +82,6 @@ DENG2_OBSERVES(Plane, HeightChange)
     /// Final environmental audio characteristics.
     AudioEnvironmentFactors reverb;
     bool needReverbUpdate; ///< @c true= marked for update.
-
-    bool visible; ///< @c true= marked as visible for the current frame.
 #endif
 
     Instance(Public *i, float lightLevel, Vector3f const &lightColor)
@@ -95,8 +93,7 @@ DENG2_OBSERVES(Plane, HeightChange)
 #ifdef __CLIENT__
          ,roughArea(0),
           needRoughAreaUpdate(false), // No BSP leafs thus zero area.
-          needReverbUpdate(true),
-          visible(false)
+          needReverbUpdate(true)
 #endif
     {
         zap(emitter);
@@ -412,9 +409,9 @@ Vector3f const &Sector::lightColor() const
 
 void Sector::setLightColor(Vector3f const &newLightColor)
 {
-    Vector3f newColorClamped = Vector3f(de::clamp(0.f, newLightColor.x, 1.f),
-                                        de::clamp(0.f, newLightColor.y, 1.f),
-                                        de::clamp(0.f, newLightColor.z, 1.f));
+    Vector3f newColorClamped(de::clamp(0.f, newLightColor.x, 1.f),
+                             de::clamp(0.f, newLightColor.y, 1.f),
+                             de::clamp(0.f, newLightColor.z, 1.f));
 
     if(d->lightColor != newColorClamped)
     {
@@ -589,7 +586,7 @@ void Sector::buildClusters()
     /*
      * Separate the BSP leafs into edge-adjacency clusters. We'll do this by
      * starting with a set per BSP leaf and then keep merging these sets until
-     * shared edges are found.
+     * no more shared edges are found.
      */
     foreach(BspLeaf *bspLeaf, map().bspLeafs())
     {
@@ -772,16 +769,6 @@ coord_t Sector::roughArea() const
         d->updateRoughArea();
     }
     return d->roughArea;
-}
-
-bool Sector::isVisible() const
-{
-    return d->visible;
-}
-
-void Sector::markVisible(bool yes)
-{
-    d->visible = yes;
 }
 
 /**

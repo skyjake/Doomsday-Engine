@@ -525,18 +525,6 @@ public:
     coord_t roughArea() const;
 
     /**
-     * Returns @c true iff the sector is marked as visible for the current frame.
-     * @see markVisible()
-     */
-    bool isVisible() const;
-
-    /**
-     * Mark the sector as visible for the current frame.
-     * @see isVisible()
-     */
-    void markVisible(bool yes = true);
-
-    /**
      * Perform missing material fixes again for all line sides in the sector.
      */
     void fixMissingMaterialsForSides();

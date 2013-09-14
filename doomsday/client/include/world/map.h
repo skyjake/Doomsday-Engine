@@ -27,11 +27,13 @@
 #include <de/Observers>
 
 #include "Mesh"
-#include "p_particle.h"
+
+#include "Line"
 #include "Polyobj"
 
 #ifdef __CLIENT__
 #  include "world/world.h"
+#  include "p_particle.h"
 
 #  include "BiasSource"
 #  include "Lumobj"
@@ -39,9 +41,9 @@
 
 class BspLeaf;
 class BspNode;
-class Line;
 class Plane;
 class Sector;
+class Surface;
 class Vertex;
 
 #ifdef __CLIENT__

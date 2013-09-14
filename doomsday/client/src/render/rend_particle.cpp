@@ -32,6 +32,10 @@
 
 #include "resource/image.h"
 #include "gl/texturecontent.h"
+
+#include "BspLeaf"
+#include "Line"
+#include "Plane"
 #include "world/generators.h"
 #include "world/map.h"
 
@@ -315,11 +319,11 @@ static int populateSortBuffer(ptcgen_t *gen, void *parameters)
     particle_t *pt          = gen->ptcs;
     for(int p = 0; p < gen->count; ++p, pt++)
     {
-        if(pt->stage < 0 || !pt->sector)
+        if(pt->stage < 0 || !pt->bspLeaf)
             continue;
 
         // Is the particle's sector visible?
-        if(!pt->sector->isVisible())
+        if(!pt->bspLeaf->isVisible())
             continue; // No; this particle can't be seen.
 
         // Don't allow zero distance.
@@ -458,7 +462,7 @@ static void setupModelParamsForParticle(rendmodelparams_t* params,
     }
     else
     {
-        Map &map = pt->sector->map();
+        Map &map = pt->bspLeaf->map();
 
         if(useBias && map.hasLightGrid())
         {
@@ -467,8 +471,9 @@ static void setupModelParamsForParticle(rendmodelparams_t* params,
         }
         else
         {
-            float lightLevel = pt->sector->lightLevel();
-            Vector3f const &secColor = Rend_SectorLightColor(*pt->sector);
+            Sector &sector = pt->bspLeaf->sector();
+            float lightLevel = sector.lightLevel();
+            Vector3f const &secColor = Rend_SectorLightColor(sector);
 
             // Apply distance attenuation.
             lightLevel = Rend_AttenuateLightLevel(params->distance, lightLevel);
@@ -657,8 +662,8 @@ static void renderParticles(int rtype, boolean withBlend)
             {
                 // This is a simplified version of sectorlight (no distance
                 // attenuation or range compression).
-                if(pt->sector)
-                    color[c] *= pt->sector->lightLevel();
+                if(pt->bspLeaf)
+                    color[c] *= pt->bspLeaf->sector().lightLevel();
             }
         }
 
@@ -685,9 +690,9 @@ static void renderParticles(int rtype, boolean withBlend)
 
         glColor4fv(color);
 
-        nearPlane = (pt->sector &&
-                     (FLT2FIX(pt->sector->floor().height()) + 2 * FRACUNIT >= pt->origin[VZ] ||
-                      FLT2FIX(pt->sector->ceiling().height())  - 2 * FRACUNIT <= pt->origin[VZ]));
+        nearPlane = (pt->bspLeaf &&
+                     (FLT2FIX(pt->bspLeaf->visFloorHeightSmoothed()) + 2 * FRACUNIT >= pt->origin[VZ] ||
+                      FLT2FIX(pt->bspLeaf->visCeilingHeightSmoothed())  - 2 * FRACUNIT <= pt->origin[VZ]));
         nearWall = (pt->contact && !pt->mov[VX] && !pt->mov[VY]);
 
         if(stageType == PTC_POINT || (stageType >= PTC_TEXTURE && stageType < PTC_TEXTURE + MAX_PTC_TEXTURES))

@@ -139,7 +139,7 @@ DENG2_PIMPL(Sector::Cluster)
                                 Cluster *otherCluster = &backLeaf.cluster();
                                 if(otherCluster != thisPublic &&
                                    otherCluster->d->mappedVisFloor != thisPublic &&
-                                   !(!(flags.testFlag(AllSelfRef)) && (otherCluster->flags().testFlag(AllSelfRef))))
+                                   !(!flags.testFlag(AllSelfRef) && otherCluster->flags().testFlag(AllSelfRef)))
                                 {
                                     // Remember the exterior cluster.
                                     exteriorCluster = otherCluster;
@@ -161,8 +161,8 @@ DENG2_PIMPL(Sector::Cluster)
                 QRectF boundingRect = qrectFromAABox(self.aaBox());
                 if(boundingRect.contains(qrectFromAABox(exteriorCluster->aaBox())))
                 {
-                    // The contained cluster will map to this. However, we may still
-                    // need to map this one to another, so re-evaluate.
+                    // The contained cluster will map to this. However, we may
+                    // still need to map this one to another, so re-evaluate.
                     continue;
                 }
                 else
@@ -210,8 +210,8 @@ DENG2_PIMPL(Sector::Cluster)
                     {
                         DENG_ASSERT(hedge->twin().hasFace());
 
-                        // Only consider non-selfref edges whose back face lies in
-                        // another cluster.
+                        // Only consider non-selfref edges whose back face lies
+                        // in another cluster.
                         LineSideSegment const &seg = hedge->mapElement()->as<LineSideSegment>();
                         if(!seg.line().isSelfReferencing())
                         {
