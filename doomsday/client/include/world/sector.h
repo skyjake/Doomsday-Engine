@@ -355,14 +355,6 @@ public:
     void buildClusters();
 
     /**
-     * Returns the axis-aligned bounding box which encompases the geometry of
-     * all BSP leafs attributed to the sector (map units squared). Note that if
-     * no BSP leafs reference the sector the bounding box will be invalid (has
-     * negative dimensions).
-     */
-    AABoxd const &aaBox() const;
-
-    /**
      * Returns the primary sound emitter for the sector. Other emitters in the
      * sector are linked to this, forming a chain which can be traversed using
      * the 'next' pointer of the emitter's thinker_t.
@@ -523,6 +515,17 @@ public:
     void setValidCount(int newValidCount);
 
 #ifdef __CLIENT__
+
+    /**
+     * Returns the axis-aligned bounding box which encompases the geometry of
+     * all BSP leafs attributed to the sector (map units squared). Note that if
+     * no BSP leafs reference the sector the bounding box will be invalid (has
+     * negative dimensions).
+     *
+     * @todo Refactor away (still used by light decration and particle systems).
+     */
+    AABoxd const &aaBox() const;
+
     /**
      * Returns the LightGrid data values (for smoothed ambient lighting) for
      * the sector.

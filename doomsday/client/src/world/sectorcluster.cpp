@@ -319,7 +319,8 @@ DENG2_PIMPL(Sector::Cluster)
     {
         needReverbUpdate = false;
 
-        uint spaceVolume = int((self.visCeiling().height() - self.visFloor().height()) * self.roughArea());
+        uint spaceVolume = int((self.visCeiling().height() - self.visFloor().height())
+                         * self.roughArea());
 
         reverb[SRD_SPACE] = reverb[SRD_VOLUME] =
             reverb[SRD_DECAY] = reverb[SRD_DAMPING] = 0;

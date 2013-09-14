@@ -65,9 +65,9 @@ DENG2_OBSERVES(Plane, HeightChange)
     int validCount;
 
 #ifdef __CLIENT__
-    /// Rough approximation of sector area (map units squared).
+    /// Rough approximation of sector area (map units squared). @c <0 means an
+    /// update is necessary.
     coord_t roughArea;
-    bool needRoughAreaUpdate; /// @c true= marked for update.
 
     /// Ambient lighting data for the bias lighting model.
     LightGridData lightGridData;
@@ -80,8 +80,7 @@ DENG2_OBSERVES(Plane, HeightChange)
           lightColor(lightColor),
           validCount(0)
 #ifdef __CLIENT__
-         ,roughArea(0),
-          needRoughAreaUpdate(true)
+         ,roughArea(-1) // needs updating
 #endif
     {
         zap(emitter);
@@ -163,8 +162,6 @@ DENG2_OBSERVES(Plane, HeightChange)
 #ifdef __CLIENT__
     void updateRoughArea()
     {
-        needRoughAreaUpdate = false;
-
         roughArea = 0;
         foreach(Cluster *cluster, clusters)
         {
@@ -468,7 +465,7 @@ void Sector::buildClusters()
     d->needAABoxUpdate = true;
 #ifdef __CLIENT__
     // ...and the rough area approximation.
-    d->needRoughAreaUpdate = true;
+    d->roughArea = -1;
 #endif
 
     typedef QList<BspLeaf *> BspLeafs;
@@ -547,16 +544,6 @@ void Sector::buildClusters()
     }
 }
 
-AABoxd const &Sector::aaBox() const
-{
-    // Perform any scheduled update now.
-    if(d->needAABoxUpdate)
-    {
-        d->updateAABox();
-    }
-    return d->aaBox;
-}
-
 static void linkSoundEmitter(SoundEmitter &root, SoundEmitter &newEmitter)
 {
     // The sector's base is always root of the chain, so link the other after it.
@@ -601,6 +588,16 @@ void Sector::chainSoundEmitters()
 
 #ifdef __CLIENT__
 
+AABoxd const &Sector::aaBox() const
+{
+    // Perform any scheduled update now.
+    if(d->needAABoxUpdate)
+    {
+        d->updateAABox();
+    }
+    return d->aaBox;
+}
+
 Sector::LightGridData &Sector::lightGridData()
 {
     return d->lightGridData;
@@ -609,7 +606,7 @@ Sector::LightGridData &Sector::lightGridData()
 coord_t Sector::roughArea() const
 {
     // Perform any scheduled update now.
-    if(d->needRoughAreaUpdate)
+    if(d->roughArea < 0)
     {
         d->updateRoughArea();
     }
