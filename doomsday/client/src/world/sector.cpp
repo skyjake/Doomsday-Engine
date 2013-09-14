@@ -767,9 +767,9 @@ int Sector::property(DmuArgs &args) const
         SoundEmitter const *emitterAdr = &d->emitter;
         args.setValue(DMT_SECTOR_EMITTER, &emitterAdr, 0);
         break; }
-    case DMT_MOBJS:
+    /*case DMT_MOBJS:
         args.setValue(DMT_SECTOR_MOBJLIST, &d->mobjList, 0);
-        break;
+        break;*/
     case DMU_VALID_COUNT:
         args.setValue(DMT_SECTOR_VALIDCOUNT, &d->validCount, 0);
         break;
