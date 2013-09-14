@@ -35,8 +35,7 @@ static TimeDelta const ANIM_SPAN = .5f;
 static duint const ID_BUF_TEXT   = 1;
 static duint const ID_BUF_CURSOR = 2;
 
-DENG_GUI_PIMPL(LineEditWidget),
-DENG2_OBSERVES(Atlas, Reposition)
+DENG_GUI_PIMPL(LineEditWidget)
 {
     typedef GLBufferT<Vertex2TexRgba> VertexBuf;
 
