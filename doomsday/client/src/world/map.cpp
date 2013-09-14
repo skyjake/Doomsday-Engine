@@ -3487,15 +3487,6 @@ bool Map::endEditing()
     // We can now initialize the BSP leaf blockmap.
     d->initBspLeafBlockmap();
 
-#ifdef __CLIENT__
-    // Perform pre-processing for environmental audio.
-    foreach(Sector *sector, d->sectors)
-    foreach(SectorCluster *cluster, sector->clusters())
-    {
-        cluster->initReverb();
-    }
-#endif
-
     // Prepare the thinker lists.
     d->thinkers.reset(new Thinkers);
 

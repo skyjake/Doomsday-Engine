@@ -436,10 +436,39 @@ DENG2_OBSERVES(Plane, HeightChange)
     }
 
     /**
+     * Perform environmental audio (reverb) initialization.
+     *
+     * Determines the BSP leafs which contribute to the environmental audio
+     * characteristics. Given that BSP leafs do not change shape (on the XY plane,
+     * that is), they do not move and are not created/destroyed once the map has
+     * been loaded; this step can be pre-processed.
+     *
+     * @pre The Map's BSP leaf blockmap for must be ready for use.
+     */
+    void findReverbBspLeafs()
+    {
+        AABoxd affectionBounds = self.aaBox();
+        affectionBounds.minX -= 128;
+        affectionBounds.minY -= 128;
+        affectionBounds.maxX += 128;
+        affectionBounds.maxY += 128;
+
+        // Link all non-degenerate BspLeafs whose axis-aligned bounding box intersects
+        // with the affection bounds to the reverb set.
+        self.sector().map().bspLeafsBoxIterator(affectionBounds, 0, addReverbBspLeafWorker, this);
+    }
+
+    /**
      * Recalculate environmental audio (reverb) for the sector.
      */
     void updateReverb()
     {
+        // Need to initialize?
+        if(reverbBspLeafs.isEmpty())
+        {
+            findReverbBspLeafs();
+        }
+
         needReverbUpdate = false;
 
         uint spaceVolume = int((self.visCeiling().height() - self.visFloor().height())
@@ -602,30 +631,6 @@ coord_t Sector::Cluster::roughArea() const
 {
     AABoxd const &bounds = aaBox();
     return (bounds.maxX - bounds.minX) * (bounds.maxY - bounds.minY);
-}
-
-/**
- * Determine the BSP leafs which contribute to the cluster's environmental audio
- * characteristics. Given that BSP leafs do not change shape (on the XY plane,
- * that is), they do not move and are not created/destroyed once the map has been
- * loaded; this step can be pre-processed.
- */
-void Sector::Cluster::initReverb()
-{
-    d->reverbBspLeafs.clear();
-
-    AABoxd affectionBounds = aaBox();
-    affectionBounds.minX -= 128;
-    affectionBounds.minY -= 128;
-    affectionBounds.maxX += 128;
-    affectionBounds.maxY += 128;
-
-    // Link all non-degenerate BspLeafs whose axis-aligned bounding box intersects
-    // with the affection bounds to the reverb set.
-    sector().map().bspLeafsBoxIterator(affectionBounds, 0, Instance::addReverbBspLeafWorker, d);
-
-    // We still need to update the final characteristics.
-    d->needReverbUpdate = true;
 }
 
 void Sector::Cluster::markReverbDirty(bool yes)

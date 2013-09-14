@@ -161,16 +161,6 @@ public:
         coord_t roughArea() const;
 
         /**
-         * Perform environmental audio (reverb) initialization for the cluster.
-         * Duties include determining the set of BSP leafs which will contribute
-         * to the final audio characteristics of the sector. To be called when
-         * initializing the map after loading.
-         *
-         * @pre The Map's BSP leaf blockmap for must be ready for use.
-         */
-        void initReverb();
-
-        /**
          * Request re-calculation of environmental audio (reverb) characteristics
          * for the cluster (update is deferred until next accessed).
          *
