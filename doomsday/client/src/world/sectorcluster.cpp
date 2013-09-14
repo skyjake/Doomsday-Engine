@@ -517,4 +517,4 @@ AudioEnvironmentFactors const &Sector::Cluster::reverb() const
     return d->reverb;
 }
 
-#endif __CLIENT__
+#endif // __CLIENT__
