@@ -23,6 +23,7 @@
 #include "world/map.h"
 #include "world/world.h" /// ddMapSetup
 #include "Surface"
+#include "Sector"
 
 #include "render/r_main.h" // frameTimePos
 

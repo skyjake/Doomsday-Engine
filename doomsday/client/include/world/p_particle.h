@@ -29,6 +29,8 @@ class BspLeaf;
 class Line;
 class Plane;
 
+#include "map.h"
+
 // Maximum number of particle textures (not instances).
 #define MAX_PTC_TEXTURES        300
 

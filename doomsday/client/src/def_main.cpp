@@ -38,6 +38,8 @@
 #include "de_filesys.h"
 #include "de_resource.h"
 
+#include "world/p_particle.h"
+
 #define DENG_NO_API_MACROS_DEFINITIONS
 #include "api_def.h"
 

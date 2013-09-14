@@ -30,15 +30,13 @@
 #include "dd_main.h"
 #include "dd_loop.h"
 #include "sys_system.h"
-#ifdef __CLIENT__
-#  include "edit_bias.h"
-#endif
+#include "edit_bias.h"
 #include "world/map.h"
 #include "network/net_main.h"
 #include "render/r_main.h"
 #include "render/rend_list.h"
-//#include "render/rend_console.h"
 #include "audio/s_main.h"
+#include "render/lightgrid.h"
 #include "gl/gl_main.h"
 #include "gl/sys_opengl.h"
 #include "gl/gl_defer.h"

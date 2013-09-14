@@ -27,6 +27,7 @@
 #include "Materials"
 
 #include "world/map.h"
+#include "Plane"
 #include "world/world.h" // ddMapSetup
 
 #include "render/r_main.h" // frameTimePos
