@@ -29,6 +29,7 @@
 #include "de_render.h"
 
 #include "BspLeaf"
+#include "Sector"
 
 #include "audio/sys_audio.h"
 #include "api_fontrender.h"
@@ -55,7 +56,7 @@ int sfxSampleRate = 11025;
 static int numChannels;
 static sfxchannel_t *channels;
 static mobj_t *listener;
-static Sector *listenerSector;
+static SectorCluster *listenerCluster;
 
 static thread_t refreshHandle;
 static volatile boolean allowRefresh, refreshing;
@@ -64,7 +65,7 @@ static byte refMonitor;
 
 void Sfx_UpdateReverb()
 {
-    listenerSector = 0;
+    listenerCluster = 0;
 }
 
 #ifdef __CLIENT__
@@ -493,13 +494,13 @@ void Sfx_ListenerUpdate()
         vec[VZ] = listener->mom[MZ] * TICSPERSEC;
         AudioDriver_SFX()->Listenerv(SFXLP_VELOCITY, vec);
 
-        // Reverb effects. Has the current sector changed?
-        if(listenerSector != listener->bspLeaf->sectorPtr())
+        // Reverb effects. Has the current sector cluster changed?
+        if(listenerCluster != &listener->bspLeaf->cluster())
         {
-            listenerSector = listener->bspLeaf->sectorPtr();
+            listenerCluster = &listener->bspLeaf->cluster();
 
             // It may be necessary to recalculate the reverb properties...
-            AudioEnvironmentFactors const &envFactors = listenerSector->reverb();
+            AudioEnvironmentFactors const &envFactors = listenerCluster->reverb();
 
             for(int i = 0; i < NUM_REVERB_DATA; ++i)
             {
@@ -525,7 +526,7 @@ void Sfx_ListenerNoReverb(void)
     if(!sfxAvail)
         return;
 
-    listenerSector = NULL;
+    listenerCluster = NULL;
     AudioDriver_SFX()->Listenerv(SFXLP_REVERB, rev);
     AudioDriver_SFX()->Listener(SFXLP_UPDATE, 0);
 }
@@ -1079,7 +1080,7 @@ void Sfx_Reset(void)
 {
     if(!sfxAvail) return;
 
-    listenerSector = 0;
+    listenerCluster = 0;
 
     // Stop all channels.
     for(int i = 0; i < numChannels; ++i)
@@ -1156,7 +1157,7 @@ void Sfx_MapChange(void)
     }
 
     // Sectors, too, for that matter.
-    listenerSector = 0;
+    listenerCluster = 0;
 }
 
 void Sfx_DebugInfo(void)

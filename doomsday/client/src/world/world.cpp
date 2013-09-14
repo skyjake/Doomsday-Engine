@@ -610,7 +610,10 @@ DENG2_PIMPL(World)
         foreach(Sector *sector, map->sectors())
         {
             sector->fixMissingMaterialsForSides();
-            sector->markReverbDirty();
+            foreach(SectorCluster *cluster, sector->clusters())
+            {
+                cluster->markReverbDirty();
+            }
         }
 #endif
 

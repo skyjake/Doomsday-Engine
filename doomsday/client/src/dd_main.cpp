@@ -3003,7 +3003,10 @@ DENG_EXTERN_C void R_SetupMap(int mode, int flags)
     foreach(Sector *sector, map.sectors())
     {
         sector->fixMissingMaterialsForSides();
-        sector->markReverbDirty();
+        foreach(SectorCluster *cluster, sector->clusters())
+        {
+            cluster->markReverbDirty();
+        }
     }
 #endif
 

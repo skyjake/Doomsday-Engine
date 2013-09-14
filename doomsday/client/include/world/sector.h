@@ -115,6 +115,20 @@ public:
         Plane &visPlane(int planeIndex) const;
 
         /**
+         * Returns the sector plane which defines the @em visual floor of the
+         * cluster.
+         * @see hasSector(), floor()
+         */
+        inline Plane &visFloor() const   { return visPlane(Sector::Floor); }
+
+        /**
+         * Returns the sector plane which defines the @em visual ceiling of the
+         * cluster.
+         * @see hasSector(), ceiling()
+         */
+        inline Plane &visCeiling() const { return visPlane(Sector::Ceiling); }
+
+        /**
          * Provides access to the list of all BSP leafs in the cluster, for
          * efficient traversal.
          */
@@ -137,6 +151,42 @@ public:
         inline de::Vector2d center() const {
             return (de::Vector2d(aaBox().min) + de::Vector2d(aaBox().max)) / 2;
         }
+
+#ifdef __CLIENT__
+
+        /**
+         * Returns a rough approximation of the total combined area of the geometry
+         * for all BSP leafs which define the cluster (map units squared).
+         */
+        coord_t roughArea() const;
+
+        /**
+         * Perform environmental audio (reverb) initialization for the cluster.
+         * Duties include determining the set of BSP leafs which will contribute
+         * to the final audio characteristics of the sector. To be called when
+         * initializing the map after loading.
+         *
+         * @pre The Map's BSP leaf blockmap for must be ready for use.
+         */
+        void initReverb();
+
+        /**
+         * Request re-calculation of environmental audio (reverb) characteristics
+         * for the cluster (update is deferred until next accessed).
+         *
+         * To be called whenever any of the properties governing reverb properties
+         * have changed (i.e., wall/plane material changes).
+         */
+        void markReverbDirty(bool yes = true);
+
+        /**
+         * Returns the final environmental audio characteristics (reverb) of the
+         * cluster. Note that if a reverb update is scheduled it will be done at
+         * this time (@ref markReverbDirty()).
+         */
+        AudioEnvironmentFactors const &reverb() const;
+
+#endif // __CLIENT__
 
     private:
         DENG2_PRIVATE(d)
@@ -480,34 +530,10 @@ public:
     LightGridData &lightGridData();
 
     /**
-     * Perform initialization for environmental audio (reverb). Duties include
-     * determining the set of BSP leafs which will contribute to the final audio
-     * characteristics of the sector. To be called when initializing the map after
-     * loading.
-     *
-     * The BspLeaf Blockmap for the owning map must be prepared before calling.
-     */
-    void initReverb();
-
-    /**
-     * Request re-calculation of the environmental audio (reverb) characteristics
-     * for the sector (update is deferred until next accessed).
-     *
-     * Should be called whenever any of the properties governing reverb properties
-     * have changed (i.e., wall/plane material changes).
-     */
-    void markReverbDirty(bool yes = true);
-
-    /**
-     * Provides access to the final environmental audio characteristics (reverb)
-     * of the sector. Note that if a reverb update is scheduled it will be done
-     * at this time (@ref markReverbDirty()).
-     */
-    AudioEnvironmentFactors const &reverb() const;
-
-    /**
      * Returns a rough approximation of the total combined area of the geometry
      * for all BSP leafs attributed to the sector (map units squared).
+     *
+     * @todo Refactor away (still used by the particle system).
      */
     coord_t roughArea() const;
 

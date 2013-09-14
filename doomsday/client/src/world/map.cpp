@@ -3509,8 +3509,9 @@ bool Map::endEditing()
 #ifdef __CLIENT__
     // Perform pre-processing for environmental audio.
     foreach(Sector *sector, d->sectors)
+    foreach(SectorCluster *cluster, sector->clusters())
     {
-        sector->initReverb();
+        cluster->initReverb();
     }
 #endif
 

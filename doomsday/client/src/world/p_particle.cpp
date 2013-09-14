@@ -614,6 +614,7 @@ static void P_NewParticle(ptcgen_t *gen)
     }
     else if(gen->plane)
     {
+        /// @todo fixme: ignorant of mapped sector planes.
         fixed_t radius = gen->stages[pt->stage].radius;
         Plane const *plane = gen->plane;
         Sector const *sector = &gen->plane->sector();
