@@ -522,15 +522,9 @@ public:
      * no BSP leafs reference the sector the bounding box will be invalid (has
      * negative dimensions).
      *
-     * @todo Refactor away (still used by light decration and particle systems).
+     * @todo Refactor away (still used by light decoration and particle systems).
      */
     AABoxd const &aaBox() const;
-
-    /**
-     * Returns the LightGrid data values (for smoothed ambient lighting) for
-     * the sector.
-     */
-    LightGridData &lightGridData();
 
     /**
      * Returns a rough approximation of the total combined area of the geometry
@@ -539,6 +533,12 @@ public:
      * @todo Refactor away (still used by the particle system).
      */
     coord_t roughArea() const;
+
+    /**
+     * Returns the LightGrid data values (for smoothed ambient lighting) for
+     * the sector.
+     */
+    LightGridData &lightGridData();
 
     /**
      * Perform missing material fixes again for all line sides in the sector.

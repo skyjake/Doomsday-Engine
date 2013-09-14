@@ -25,6 +25,12 @@
 #include "Line"
 #include "Plane"
 #include "world/map.h"
+#include "world/p_object.h"
+#include "world/p_players.h"
+
+#ifdef __CLIENT__
+#  include "render/rend_main.h" // useBias
+#endif
 
 #include "world/sector.h"
 
@@ -54,7 +60,11 @@ static QRectF qrectFromAABox(AABoxd const &aaBox)
 typedef QSet<BspLeaf *> ReverbBspLeafs;
 #endif
 
-DENG2_PIMPL(Sector::Cluster)
+DENG2_PIMPL(Sector::Cluster),
+DENG2_OBSERVES(Plane, HeightChange)
+#ifdef __CLIENT__
+, DENG2_OBSERVES(Plane, HeightSmoothedChange)
+#endif
 {
     bool needClassify; ///< @c true= (Re)classification is necessary.
     ClusterFlags flags;
@@ -86,6 +96,33 @@ DENG2_PIMPL(Sector::Cluster)
 #ifdef __CLIENT__
         zap(reverb);
 #endif
+    }
+
+    ~Instance()
+    {
+        observePlane(Sector::Floor, false);
+        observePlane(Sector::Ceiling, false);
+    }
+
+    void observePlane(int planeIdx, bool yes = true)
+    {
+        if(planeIdx < 0 || planeIdx > Sector::Ceiling) return;
+
+        Plane &plane = self.sector().plane(planeIdx);
+        if(yes)
+        {
+            plane.audienceForHeightChange += this;
+#ifdef __CLIENT__
+            plane.audienceForHeightSmoothedChange += this;
+#endif
+        }
+        else
+        {
+            plane.audienceForHeightChange -= this;
+#ifdef __CLIENT__
+            plane.audienceForHeightSmoothedChange -= this;
+#endif
+        }
     }
 
     /**
@@ -297,6 +334,92 @@ DENG2_PIMPL(Sector::Cluster)
 
 #ifdef __CLIENT__
 
+    /**
+     * To be called when the height changes to update the plotted decoration
+     * origins for surfaces whose material offset is dependant upon this.
+     */
+    void markDependantSurfacesForDecorationUpdate()
+    {
+        if(ddMapSetup) return;
+
+        foreach(LineSide *side, self.sector().sides())
+        {
+            if(side->hasSections())
+            {
+                side->middle().markAsNeedingDecorationUpdate();
+                side->bottom().markAsNeedingDecorationUpdate();
+                side->top().markAsNeedingDecorationUpdate();
+            }
+
+            if(side->back().hasSections())
+            {
+                LineSide &back = side->back();
+                back.middle().markAsNeedingDecorationUpdate();
+                back.bottom().markAsNeedingDecorationUpdate();
+                back.top().markAsNeedingDecorationUpdate();
+            }
+        }
+    }
+
+#endif // __CLIENT__
+
+    // Observes Plane HeightChange.
+    void planeHeightChanged(Plane &plane, coord_t oldHeight)
+    {
+        DENG2_UNUSED(oldHeight);
+
+        // Check if there are any camera players in this sector. If their height
+        // is now above the ceiling/below the floor they are now in the void.
+        for(int i = 0; i < DDMAXPLAYERS; ++i)
+        {
+            player_t *plr = &ddPlayers[i];
+            ddplayer_t *ddpl = &plr->shared;
+
+            if(!ddpl->inGame || !ddpl->mo)
+                continue;
+            if(!ddpl->mo->bspLeaf || !ddpl->mo->bspLeaf->isDegenerate())
+                continue;
+            if(&ddpl->mo->bspLeaf->cluster() != thisPublic)
+                continue;
+
+            if((ddpl->flags & DDPF_CAMERA) &&
+               (ddpl->mo->origin[VZ] > self.visCeiling().height() - 4 ||
+                ddpl->mo->origin[VZ] < self.visFloor().height()))
+            {
+                ddpl->inVoid = true;
+            }
+        }
+
+#ifdef __CLIENT__
+        // A plane move means we must re-apply missing material fixes.
+        /// @todo optimize: Defer until actually necessary.
+        self.sector().fixMissingMaterialsForSides();
+
+        // We'll need to recalculate environmental audio characteristics.
+        needReverbUpdate = true;
+
+        if(!ddMapSetup && useBias)
+        {
+            // Inform bias surfaces of changed geometry.
+            foreach(BspLeaf *bspLeaf, bspLeafs)
+            {
+                bspLeaf->updateBiasAfterGeometryMove(plane.indexInSector());
+            }
+        }
+
+        markDependantSurfacesForDecorationUpdate();
+#endif // __CLIENT__
+    }
+
+#ifdef __CLIENT__
+
+    /// Observes Plane HeightSmoothedChange
+    void planeHeightSmoothedChanged(Plane &plane, coord_t oldHeight)
+    {
+        DENG2_UNUSED(oldHeight);
+        markDependantSurfacesForDecorationUpdate();
+    }
+
     void addReverbBspLeaf(BspLeaf *bspLeaf)
     {
         // Degenerate leafs never contribute.
@@ -401,6 +524,9 @@ Sector::Cluster::Cluster(BspLeafs const &bspLeafs) : d(new Instance(this))
         // Attribute the BSP leaf to the cluster.
         bspLeaf->setCluster(this);
     }
+
+    d->observePlane(Sector::Floor);
+    d->observePlane(Sector::Ceiling);
 }
 
 Sector &Sector::Cluster::sector() const

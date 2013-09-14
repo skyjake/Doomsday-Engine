@@ -32,12 +32,6 @@
 
 #include "world/map.h"
 #include "world/maputil.h"
-#include "world/p_object.h"
-#include "world/p_players.h"
-
-#ifdef __CLIENT__
-#  include "render/rend_main.h" // useBias
-#endif
 
 #include "world/sector.h"
 
@@ -45,9 +39,6 @@ using namespace de;
 
 DENG2_PIMPL(Sector),
 DENG2_OBSERVES(Plane, HeightChange)
-#ifdef __CLIENT__
-, DENG2_OBSERVES(Plane, HeightSmoothedChange)
-#endif
 {
     /// Bounding box for the whole sector (all clusters).
     AABoxd aaBox;
@@ -159,6 +150,29 @@ DENG2_OBSERVES(Plane, HeightChange)
         }
     }
 
+    /**
+     * To be called to update sound emitter origins for all dependent surfaces.
+     */
+    void updateDependentSurfaceSoundEmitterOrigins()
+    {
+        foreach(LineSide *side, sides)
+        {
+            side->updateAllSoundEmitterOrigins();
+            side->back().updateAllSoundEmitterOrigins();
+        }
+    }
+
+    // Observes Plane HeightChange.
+    void planeHeightChanged(Plane &plane, coord_t oldHeight)
+    {
+        DENG2_UNUSED2(plane, oldHeight);
+
+        // Update the z-height origin of our sound emitter right away.
+        emitter.origin[VZ] = (self.floor().height() + self.ceiling().height()) / 2;
+
+        updateDependentSurfaceSoundEmitterOrigins();
+    }
+
 #ifdef __CLIENT__
     void updateRoughArea()
     {
@@ -168,102 +182,7 @@ DENG2_OBSERVES(Plane, HeightChange)
             roughArea += cluster->roughArea();
         }
     }
-
-    /**
-     * To be called when the height changes to update the plotted decoration
-     * origins for surfaces whose material offset is dependant upon this.
-     */
-    void markDependantSurfacesForDecorationUpdate()
-    {
-        if(ddMapSetup) return;
-
-        foreach(LineSide *side, self.sides())
-        {
-            if(side->hasSections())
-            {
-                side->middle().markAsNeedingDecorationUpdate();
-                side->bottom().markAsNeedingDecorationUpdate();
-                side->top().markAsNeedingDecorationUpdate();
-            }
-
-            if(side->back().hasSections())
-            {
-                LineSide &back = side->back();
-                back.middle().markAsNeedingDecorationUpdate();
-                back.bottom().markAsNeedingDecorationUpdate();
-                back.top().markAsNeedingDecorationUpdate();
-            }
-        }
-    }
-
 #endif // __CLIENT__
-
-    // Observes Plane HeightChange.
-    void planeHeightChanged(Plane &plane, coord_t oldHeight)
-    {
-        DENG2_UNUSED(oldHeight);
-
-        // Update the z-height origin of our sound emitter right away.
-        emitter.origin[VZ] = (self.floor().height() + self.ceiling().height()) / 2;
-
-        // Update the sound emitter origins for all dependent surfaces.
-        foreach(LineSide *side, sides)
-        {
-            side->updateAllSoundEmitterOrigins();
-            side->back().updateAllSoundEmitterOrigins();
-        }
-
-        // Check if there are any camera players in this sector. If their height
-        // is now above the ceiling/below the floor they are now in the void.
-        for(int i = 0; i < DDMAXPLAYERS; ++i)
-        {
-            player_t *plr = &ddPlayers[i];
-            ddplayer_t *ddpl = &plr->shared;
-
-            if(!ddpl->inGame || !ddpl->mo || !ddpl->mo->bspLeaf)
-                continue;
-
-            if((ddpl->flags & DDPF_CAMERA) && ddpl->mo->bspLeaf->sectorPtr() == &self &&
-               (ddpl->mo->origin[VZ] > self.ceiling().height() - 4 ||
-                ddpl->mo->origin[VZ] < self.floor().height()))
-            {
-                ddpl->inVoid = true;
-            }
-        }
-
-#ifdef __CLIENT__
-        // A plane move means we must re-apply missing material fixes.
-        /// @todo optimize: Defer until actually necessary.
-        self.fixMissingMaterialsForSides();
-
-        // We'll need to recalculate environmental audio characteristics.
-        foreach(Cluster *cluster, clusters)
-        {
-            cluster->markReverbDirty();
-        }
-
-        if(!ddMapSetup && useBias)
-        {
-            // Inform bias surfaces of changed geometry.
-            foreach(Cluster *cluster, clusters)
-            foreach(BspLeaf *bspLeaf, cluster->bspLeafs())
-            {
-                bspLeaf->updateBiasAfterGeometryMove(plane.indexInSector());
-            }
-        }
-
-        markDependantSurfacesForDecorationUpdate();
-#endif // __CLIENT__
-    }
-
-#ifdef __CLIENT__
-    /// Observes Plane HeightSmoothedChange
-    void planeHeightSmoothedChanged(Plane &plane, coord_t oldHeight)
-    {
-        DENG2_UNUSED(oldHeight);
-        markDependantSurfacesForDecorationUpdate();
-    }
-#endif
 };
 
 Sector::Sector(float lightLevel, Vector3f const &lightColor)
@@ -418,12 +337,9 @@ Plane *Sector::addPlane(Vector3f const &normal, coord_t height)
 
     if(plane->isSectorFloor() || plane->isSectorCeiling())
     {
-        // We want notification of height changes so that we can relay and/or
-        // update other components (e.g., BSP leafs) accordingly.
+        // We want notification of height changes so that we can update sound
+        // emitter origins of dependent surfaces.
         plane->audienceForHeightChange += d;
-#ifdef __CLIENT__
-        plane->audienceForHeightSmoothedChange += d;
-#endif
     }
 
     // Once both floor and ceiling are known we can determine the z-height origin
@@ -598,11 +514,6 @@ AABoxd const &Sector::aaBox() const
     return d->aaBox;
 }
 
-Sector::LightGridData &Sector::lightGridData()
-{
-    return d->lightGridData;
-}
-
 coord_t Sector::roughArea() const
 {
     // Perform any scheduled update now.
@@ -611,6 +522,11 @@ coord_t Sector::roughArea() const
         d->updateRoughArea();
     }
     return d->roughArea;
+}
+
+Sector::LightGridData &Sector::lightGridData()
+{
+    return d->lightGridData;
 }
 
 /**
