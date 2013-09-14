@@ -216,6 +216,7 @@ DENG2_OBSERVES(App, GameChange)
     Group *skyGroup;
     Group *shadowGroup;
     Group *lightGroup;
+    Group *volLightGroup;
     Group *glowGroup;
     Group *haloGroup;
     Group *matGroup;
@@ -283,7 +284,7 @@ DENG2_OBSERVES(App, GameChange)
         shadowGroup->commit();
 
         // Dynamic light settings.
-        lightGroup = new Group(this, tr("Lighting"));
+        lightGroup = new Group(this, tr("Point Lighting"));
 
         lightGroup->addLabel(tr("Dynamic Lights:"));
         lightGroup->addChoice("rend-light", ui::Down)->items()
@@ -300,7 +301,7 @@ DENG2_OBSERVES(App, GameChange)
                 << new ChoiceItem(tr("Process without drawing"), 2);
 
         lightGroup->addLabel(tr("Number of Lights:"));
-        lightGroup->addSlider("rend-light-num", Ranged(0, 2000), 1, 0)->setMinLabel("Max");
+        lightGroup->addSlider("rend-light-num", Ranged(0, 2000), 1, 0)->setMinLabel(tr("Max"));
 
         lightGroup->addLabel(tr("Brightness:"));
         lightGroup->addSlider("rend-light-bright");
@@ -314,13 +315,33 @@ DENG2_OBSERVES(App, GameChange)
         lightGroup->addLabel(tr("Light Max Radius:"));
         lightGroup->addSlider("rend-light-radius-max");
 
-        lightGroup->addLabel(tr("Ambient Light:"));
-        lightGroup->addSlider("rend-light-ambient");
-
-        lightGroup->addLabel(tr("Light Compression:"));
-        lightGroup->addSlider("rend-light-compression");
-
         lightGroup->commit();
+
+        // Volume lighting group.
+        volLightGroup = new Group(this, tr("Volume Lighting"));
+
+        volLightGroup->addSpace();
+        volLightGroup->addToggle("rend-light-sky-auto", tr("Apply Sky Color"));
+
+        volLightGroup->addLabel(tr("Sky Color Factor:"));
+        volLightGroup->addSlider("rend-light-sky");
+
+        volLightGroup->addLabel(tr("Attenuation Distance:"));
+        volLightGroup->addSlider("rend-light-attenuation", Ranged(0, 4000), 1, 0)->setMinLabel(tr("Off"));
+
+        volLightGroup->addLabel(tr("Light Compression:"));
+        volLightGroup->addSlider("rend-light-compression");
+
+        volLightGroup->addLabel(tr("Ambient Light:"));
+        volLightGroup->addSlider("rend-light-ambient");
+
+        volLightGroup->addLabel(tr("Wall Angle Factor:"));
+        volLightGroup->addSlider("rend-light-wall-angle", Ranged(0, 3), .01, 2);
+
+        volLightGroup->addSpace();
+        volLightGroup->addToggle("rend-light-wall-angle-smooth", tr("Smoothed Angle"));
+
+        volLightGroup->commit();
 
         // Glow settings.
         glowGroup = new Group(this, tr("Surface Glow"));
@@ -385,6 +406,9 @@ DENG2_OBSERVES(App, GameChange)
 
         // Material settings.
         matGroup = new Group(this, tr("Materials"));
+
+        matGroup->addSpace();
+        matGroup->addToggle("rend-tex-shiny", tr("Shiny Surfaces"));
 
         matGroup->addSpace();
         matGroup->addToggle("rend-tex-anim-smooth", tr("Smooth Animation"));
@@ -468,6 +492,9 @@ DENG2_OBSERVES(App, GameChange)
                 << new ChoiceItem(tr("View plane"), 1)
                 << new ChoiceItem(tr("Camera (limited)"), 2)
                 << new ChoiceItem(tr("View plane (limited)"), 3);
+
+        spriteGroup->addSpace();
+        spriteGroup->addToggle("rend-sprite-mode", tr("Sharp Edges"));
 
         spriteGroup->addSpace();
         spriteGroup->addToggle("rend-sprite-noz", tr("Disable Z-Write"));
@@ -597,16 +624,17 @@ RendererAppearanceEditor::RendererAppearanceEditor()
             .setInput(Rule::Left, profLabel->rule().right())
             .setInput(Rule::Top,  profLabel->rule().top());
 
-    layout << d->lightGroup->title()  << *d->lightGroup
-           << d->glowGroup->title()   << *d->glowGroup
-           << d->shadowGroup->title() << *d->shadowGroup
-           << d->haloGroup->title()   << *d->haloGroup
-           << d->matGroup->title()    << *d->matGroup
-           << d->objectGroup->title() << *d->objectGroup
-           << d->modelGroup->title()  << *d->modelGroup
-           << d->spriteGroup->title() << *d->spriteGroup
-           << d->partGroup->title()   << *d->partGroup
-           << d->skyGroup->title()    << *d->skyGroup;
+    layout << d->lightGroup->title()    << *d->lightGroup
+           << d->volLightGroup->title() << *d->volLightGroup
+           << d->glowGroup->title()     << *d->glowGroup
+           << d->shadowGroup->title()   << *d->shadowGroup
+           << d->haloGroup->title()     << *d->haloGroup
+           << d->matGroup->title()      << *d->matGroup
+           << d->objectGroup->title()   << *d->objectGroup
+           << d->modelGroup->title()    << *d->modelGroup
+           << d->spriteGroup->title()   << *d->spriteGroup
+           << d->partGroup->title()     << *d->partGroup
+           << d->skyGroup->title()      << *d->skyGroup;
 
     // Update container size.
     d->container->setContentSize(OperatorRule::maximum(layout.width(),
