@@ -168,4 +168,4 @@ void Sfx_DebugInfo(void);
 #endif
 
 #endif // DENG_CLIENT_SOUND_SFX_H
-#endif __CLIENT__
+#endif // __CLIENT__
