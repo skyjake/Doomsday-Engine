@@ -1,4 +1,4 @@
-/** @file s_sfx.cpp
+/** @file s_sfx.cpp Sound Effects.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -18,12 +18,6 @@
  * http://www.gnu.org/licenses</small>
  */
 
-/**
- * Sound Effects.
- */
-
-// HEADER FILES ------------------------------------------------------------
-
 #include "de_base.h"
 #include "de_console.h"
 #include "de_system.h"
@@ -39,25 +33,13 @@
 #include "audio/sys_audio.h"
 #include "api_fontrender.h"
 
-// MACROS ------------------------------------------------------------------
+#include "audio/s_sfx.h"
 
 #define SFX_MAX_CHANNELS        (256)
 #define SFX_LOWEST_PRIORITY     (-1000)
 
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-void            Sfx_3DMode(boolean activate);
-void            Sfx_SampleFormat(int newBits, int newRate);
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
+void Sfx_3DMode(boolean activate);
+void Sfx_SampleFormat(int newBits, int newRate);
 
 boolean sfxAvail = false;
 
@@ -66,30 +48,23 @@ int sfxDedicated2D = 4;
 float sfxReverbStrength = .5f;
 
 // Console variables:
-int sfx3D = false;
-int sfx16Bit = false;
+int sfx3D;
+int sfx16Bit;
 int sfxSampleRate = 11025;
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-static int numChannels = 0;
-static sfxchannel_t* channels;
-static mobj_t* listener;
-static Sector* listenerSector = NULL;
+static int numChannels;
+static sfxchannel_t *channels;
+static mobj_t *listener;
+static Sector *listenerSector;
 
 static thread_t refreshHandle;
 static volatile boolean allowRefresh, refreshing;
 
-static byte refMonitor = 0;
+static byte refMonitor;
 
-// CODE --------------------------------------------------------------------
-
-/**
- * Requests listener reverb update at the end of the frame.
- */
-void Sfx_UpdateReverb(void)
+void Sfx_UpdateReverb()
 {
-    listenerSector = NULL;
+    listenerSector = 0;
 }
 
 #ifdef __CLIENT__
@@ -103,11 +78,8 @@ void Sfx_UpdateReverb(void)
  *
  * @todo Use a real mutex, will you?
  */
-int C_DECL Sfx_ChannelRefreshThread(void* parm)
+int C_DECL Sfx_ChannelRefreshThread(void *parm)
 {
-    int                 i;
-    sfxchannel_t*       ch;
-
     DENG_UNUSED(parm);
 
     // We'll continue looping until the Sfx module is shut down.
@@ -120,7 +92,8 @@ int C_DECL Sfx_ChannelRefreshThread(void* parm)
         {
             // Do the refresh.
             refreshing = true;
-            for(i = 0, ch = channels; i < numChannels; ++i, ch++)
+            sfxchannel_t *ch = channels;
+            for(int i = 0; i < numChannels; ++i, ch++)
             {
                 if(!ch->buffer || !(ch->buffer->flags & SFXBF_PLAYING))
                     continue;
@@ -146,18 +119,10 @@ int C_DECL Sfx_ChannelRefreshThread(void* parm)
 
 #endif // __CLIENT__
 
-/**
- * Enabling refresh is simple: the refresh thread is resumed. When
- * disabling refresh, first make sure a new refresh doesn't begin (using
- * allowRefresh). We still have to see if a refresh is being made and wait
- * for it to stop. Then we can suspend the refresh thread.
- */
 void Sfx_AllowRefresh(boolean allow)
 {
-    if(!sfxAvail)
-        return;
-    if(allowRefresh == allow)
-        return; // No change.
+    if(!sfxAvail) return;
+    if(allowRefresh == allow) return; // No change.
 
     allowRefresh = allow;
 
@@ -166,29 +131,25 @@ void Sfx_AllowRefresh(boolean allow)
     if(!allow)
     {
         while(refreshing)
+        {
             Sys_Sleep(0);
+        }
     }
 
     // Sys_SuspendThread(refreshHandle, !allow);
 }
 
-/**
- * Stop all sounds of the group. If an emitter is specified, only it's
- * sounds are checked.
- */
-void Sfx_StopSoundGroup(int group, mobj_t* emitter)
+void Sfx_StopSoundGroup(int group, mobj_t *emitter)
 {
-    int                 i;
-    sfxchannel_t*       ch;
-
     if(!sfxAvail)
         return;
 
-    for(i = 0, ch = channels; i < numChannels; ++i, ch++)
+    sfxchannel_t *ch = channels;
+    for(int i = 0; i < numChannels; ++i, ch++)
     {
-        if(!ch->buffer || !(ch->buffer->flags & SFXBF_PLAYING) ||
-           ch->buffer->sample->group != group || (emitter &&
-                                                  ch->emitter != emitter))
+        if(!ch->buffer || !(ch->buffer->flags & SFXBF_PLAYING))
+            continue;
+        if(ch->buffer->sample->group != group || (emitter && ch->emitter != emitter))
             continue;
 
         // This channel must stop.
@@ -196,36 +157,23 @@ void Sfx_StopSoundGroup(int group, mobj_t* emitter)
     }
 }
 
-int Sfx_StopSound(int id, mobj_t* emitter)
+int Sfx_StopSound(int id, mobj_t *emitter)
 {
     return Sfx_StopSoundWithLowerPriority(id, emitter, -1);
 }
 
-/**
- * Stops all channels that are playing the specified sound.
- *
- * @param id            @c 0 = all sounds are stopped.
- * @param emitter       If not @c NULL, then the channel's emitter mobj
- *                      must match it.
- * @param defPriority   If >= 0, the currently playing sound must have
- *                      a lower priority than this to be stopped. Returns -1
- *                      if the sound @a id has a lower priority than a
- *                      currently playing sound.
- *
- * @return              The number of samples stopped.
- */
-int Sfx_StopSoundWithLowerPriority(int id, mobj_t* emitter, int defPriority)
+int Sfx_StopSoundWithLowerPriority(int id, mobj_t *emitter, int defPriority)
 {
-    int                 i, stopCount = 0;
-    sfxchannel_t*       ch;
-
     if(!sfxAvail)
         return false;
 
-    for(i = 0, ch = channels; i < numChannels; ++i, ch++)
+    int stopCount = 0;
+    sfxchannel_t *ch = channels;
+    for(int i = 0; i < numChannels; ++i, ch++)
     {
-        if(!ch->buffer || !(ch->buffer->flags & SFXBF_PLAYING) ||
-           (id && ch->buffer->sample->id != id) || (emitter && ch->emitter != emitter))
+        if(!ch->buffer || !(ch->buffer->flags & SFXBF_PLAYING))
+            continue;
+        if((id && ch->buffer->sample->id != id) || (emitter && ch->emitter != emitter))
             continue;
 
         // Can it be stopped?
@@ -282,24 +230,16 @@ int Sfx_IsPlaying(int id, mobj_t* emitter)
 }
 #endif
 
-/**
- * The specified sample will soon no longer exist. All channel buffers
- * loaded with the sample will be reset.
- */
 void Sfx_UnloadSoundID(int id)
 {
-    int                 i;
-    sfxchannel_t*       ch;
-
-    if(!sfxAvail)
-        return;
+    if(!sfxAvail) return;
 
     BEGIN_COP;
 
-    for(i = 0, ch = channels; i < numChannels; ++i, ch++)
+    sfxchannel_t *ch = channels;
+    for(int i = 0; i < numChannels; ++i, ch++)
     {
-        if(!ch->buffer || !ch->buffer->sample ||
-           ch->buffer->sample->id != id)
+        if(!ch->buffer || !ch->buffer->sample || ch->buffer->sample->id != id)
             continue;
 
         // Stop and unload.
@@ -309,22 +249,18 @@ void Sfx_UnloadSoundID(int id)
     END_COP;
 }
 
-/**
- * @return              The number of channels the sound is playing on.
- */
 int Sfx_CountPlaying(int id)
 {
-    int                 i = 0, count = 0;
-    sfxchannel_t*       ch = channels;
-
     if(!sfxAvail)
         return 0;
 
-    for(; i < numChannels; i++, ch++)
+    int count = 0;
+    sfxchannel_t *ch = channels;
+    for(int i = 0; i < numChannels; i++, ch++)
     {
-        if(!ch->buffer || !ch->buffer->sample ||
-           ch->buffer->sample->id != id ||
-           !(ch->buffer->flags & SFXBF_PLAYING))
+        if(!ch->buffer || !ch->buffer->sample)
+            continue;
+        if(ch->buffer->sample->id != id || !(ch->buffer->flags & SFXBF_PLAYING))
             continue;
 
         count++;
@@ -336,11 +272,11 @@ int Sfx_CountPlaying(int id)
 /**
  * The priority of a sound is affected by distance, volume and age.
  */
-float Sfx_Priority(mobj_t* emitter, coord_t* point, float volume, int startTic)
+float Sfx_Priority(mobj_t *emitter, coord_t *point, float volume, int startTic)
 {
     // In five seconds all priority of a sound is gone.
     float timeoff = 1000 * (Timer_Ticks() - startTic) / (5.0f * TICSPERSEC);
-    coord_t* origin;
+    coord_t *origin;
 
     if(!listener || (!emitter && !point))
     {
@@ -914,9 +850,6 @@ void Sfx_Update(void)
     Sfx_ListenerUpdate();
 }
 
-/**
- * Periodical routines: channel updates, cache purge, cvar checks.
- */
 void Sfx_StartFrame(void)
 {
     static int          old16Bit = false;
@@ -1077,11 +1010,6 @@ noRefresh:
     }
 }
 
-/**
- * Initialize the Sfx module. This includes setting up the available Sfx
- * drivers and the channels, and initializing the sound cache. Returns
- * true if the module is operational after the init.
- */
 boolean Sfx_Init(void)
 {
     if(sfxAvail)
@@ -1124,9 +1052,6 @@ boolean Sfx_Init(void)
     return true;
 }
 
-/**
- * Shut down the whole Sfx module: drivers, channel buffers and the cache.
- */
 void Sfx_Shutdown(void)
 {
     if(!sfxAvail)
@@ -1150,21 +1075,17 @@ void Sfx_Shutdown(void)
     Sfx_ShutdownChannels();
 }
 
-/**
- * Stop all channels, clear the cache.
- */
 void Sfx_Reset(void)
 {
-    int                 i;
+    if(!sfxAvail) return;
 
-    if(!sfxAvail)
-        return;
-
-    listenerSector = NULL;
+    listenerSector = 0;
 
     // Stop all channels.
-    for(i = 0; i < numChannels; ++i)
+    for(int i = 0; i < numChannels; ++i)
+    {
         Sfx_ChannelStop(&channels[i]);
+    }
 
     // Free all samples.
     Sfx_ShutdownCache();
@@ -1219,21 +1140,15 @@ void Sfx_SampleFormat(int newBits, int newRate)
     Sfx_ShutdownCache();
 }
 
-/**
- * Must be done before the map is changed (from P_SetupMap, via
- * S_MapChange).
- */
 void Sfx_MapChange(void)
 {
-    int                 i;
-    sfxchannel_t*       ch;
-
-    for(i = 0, ch = channels; i < numChannels; ++i, ch++)
+    sfxchannel_t *ch = channels;
+    for(int i = 0; i < numChannels; ++i, ch++)
     {
         if(ch->emitter)
         {
             // Mobjs are about to be destroyed.
-            ch->emitter = NULL;
+            ch->emitter = 0;
 
             // Stop all channels with an origin.
             Sfx_ChannelStop(ch);
@@ -1241,7 +1156,7 @@ void Sfx_MapChange(void)
     }
 
     // Sectors, too, for that matter.
-    listenerSector = NULL;
+    listenerSector = 0;
 }
 
 void Sfx_DebugInfo(void)

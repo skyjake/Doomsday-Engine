@@ -1,4 +1,4 @@
-/** @file
+/** @file s_sfx.h Sound Effects
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
@@ -18,16 +18,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-/**
- * s_sfx.h: Sound Effects
- */
-
-#ifndef __DOOMSDAY_SOUND_SFX_H__
-#define __DOOMSDAY_SOUND_SFX_H__
-
-#ifdef __SERVER__
-#  error "audio" is not available in a SERVER build
-#endif
+#ifdef __CLIENT__
+#ifndef DENG_CLIENT_SOUND_SFX_H
+#define DENG_CLIENT_SOUND_SFX_H
 
 #include "api_audiod.h"
 #include "api_audiod_sfx.h"
@@ -50,8 +43,8 @@ extern "C" {
 
 typedef struct sfxchannel_s {
     int             flags;
-    sfxbuffer_t*    buffer;
-    struct mobj_s*  emitter; // Mobj that is emitting the sound.
+    sfxbuffer_t    *buffer;
+    struct mobj_s  *emitter; // Mobj that is emitting the sound.
     coord_t         origin[3]; // Emit from here (synced with emitter).
     float           volume; // Sound volume: 1.0 is max.
     float           frequency; // Frequency adjustment: 1.0 is normal.
@@ -63,13 +56,44 @@ extern float sfxReverbStrength;
 extern int sfxMaxCacheKB, sfxMaxCacheTics;
 extern int sfx3D, sfx16Bit, sfxSampleRate;
 
+/**
+ * Initialize the Sfx module. This includes setting up the available Sfx
+ * drivers and the channels, and initializing the sound cache. Returns
+ * true if the module is operational after the init.
+ */
 boolean Sfx_Init(void);
+
+/**
+ * Shut down the whole Sfx module: drivers, channel buffers and the cache.
+ */
 void Sfx_Shutdown(void);
+
+/**
+ * Stop all channels, clear the cache.
+ */
 void Sfx_Reset(void);
+
+/**
+ * Enabling refresh is simple: the refresh thread is resumed. When
+ * disabling refresh, first make sure a new refresh doesn't begin (using
+ * allowRefresh). We still have to see if a refresh is being made and wait
+ * for it to stop. Then we can suspend the refresh thread.
+ */
 void Sfx_AllowRefresh(boolean allow);
+
+/**
+ * Must be done before the map is changed (from P_SetupMap, via
+ * S_MapChange).
+ */
 void Sfx_MapChange(void);
+
 void Sfx_SetListener(struct mobj_s *mobj);
+
+/**
+ * Periodical routines: channel updates, cache purge, cvar checks.
+ */
 void Sfx_StartFrame(void);
+
 void Sfx_EndFrame(void);
 
 /**
@@ -93,22 +117,55 @@ void Sfx_RefreshChannels(void);
  * @param fixedpos      Fixed position where the sound if emitted, or @c NULL.
  * @param flags         Additional flags (@ref soundPlayFlags).
  *
- * @return              @c true, if a sound is started.
+ * @return  @c true, if a sound is started.
  */
 int Sfx_StartSound(sfxsample_t *sample, float volume, float freq,
                    struct mobj_s *emitter, coord_t *fixedpos, int flags);
 
-int             Sfx_StopSound(int id, struct mobj_s *emitter);
-int             Sfx_StopSoundWithLowerPriority(int id, struct mobj_s *emitter, ddboolean_t byPriority);
-void            Sfx_StopSoundGroup(int group, struct mobj_s *emitter);
-int             Sfx_CountPlaying(int id);
-void            Sfx_UnloadSoundID(int id);
-void            Sfx_UpdateReverb(void);
+int Sfx_StopSound(int id, struct mobj_s *emitter);
 
-void            Sfx_DebugInfo(void);
+/**
+ * Stops all channels that are playing the specified sound.
+ *
+ * @param id            @c 0 = all sounds are stopped.
+ * @param emitter       If not @c NULL, then the channel's emitter mobj
+ *                      must match it.
+ * @param defPriority   If >= 0, the currently playing sound must have
+ *                      a lower priority than this to be stopped. Returns -1
+ *                      if the sound @a id has a lower priority than a
+ *                      currently playing sound.
+ *
+ * @return  The number of samples stopped.
+ */
+int Sfx_StopSoundWithLowerPriority(int id, struct mobj_s *emitter, ddboolean_t byPriority);
+
+/**
+ * Stop all sounds of the group. If an emitter is specified, only it's
+ * sounds are checked.
+ */
+void Sfx_StopSoundGroup(int group, struct mobj_s *emitter);
+
+/**
+ * @return  The number of channels the sound is playing on.
+ */
+int Sfx_CountPlaying(int id);
+
+/**
+ * The specified sample will soon no longer exist. All channel buffers
+ * loaded with the sample will be reset.
+ */
+void Sfx_UnloadSoundID(int id);
+
+/**
+ * Requests listener reverb update at the end of the frame.
+ */
+void Sfx_UpdateReverb(void);
+
+void Sfx_DebugInfo(void);
 
 #ifdef __cplusplus
 } // extern "C"
 #endif
 
-#endif
+#endif // DENG_CLIENT_SOUND_SFX_H
+#endif __CLIENT__
