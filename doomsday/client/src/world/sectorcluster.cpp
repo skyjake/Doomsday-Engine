@@ -46,8 +46,10 @@ namespace internal
     /// Classification flags:
     enum ClusterFlag
     {
-        NeverMapped        = 0x1,
-        AllSelfRef         = 0x2
+        NeverMapped      = 0x1,
+        AllSelfRef       = 0x2,
+        AllMissingBottom = 0x4,
+        AllMissingTop    = 0x8
     };
 
     Q_DECLARE_FLAGS(ClusterFlags, ClusterFlag)
@@ -221,40 +223,52 @@ DENG2_OBSERVES(Plane, HeightChange)
             needClassify = false;
 
             flags &= ~NeverMapped;
-            flags |= AllSelfRef;
+            flags |= AllSelfRef|AllMissingBottom|AllMissingTop;
             foreach(BspLeaf *leaf, bspLeafs)
             {
                 HEdge const *base  = leaf->poly().hedge();
                 HEdge const *hedge = base;
                 do
                 {
-                    if(hedge->mapElement())
+                    if(!hedge->mapElement())
+                        continue;
+
+                    // This edge defines a section of a map line.
+                    if(hedge->twin().hasFace())
                     {
-                        // This edge defines a section of a map line.
-                        if(hedge->twin().hasFace())
+                        BspLeaf const &backLeaf    = hedge->twin().face().mapElement()->as<BspLeaf>();
+                        Cluster const *backCluster = backLeaf.hasCluster()? &backLeaf.cluster() : 0;
+
+                        if(backCluster != thisPublic)
                         {
-                            if(flags.testFlag(AllSelfRef))
+                            LineSideSegment const &seg = hedge->mapElement()->as<LineSideSegment>();
+                            if(!seg.line().isSelfReferencing())
                             {
-                                BspLeaf const &backLeaf    = hedge->twin().face().mapElement()->as<BspLeaf>();
-                                Cluster const *backCluster = backLeaf.hasCluster()? &backLeaf.cluster() : 0;
-                                if(backCluster != thisPublic)
+                                flags &= ~AllSelfRef;
+
+                                LineSide const &lineSide = seg.lineSide();
+                                if(lineSide.bottom().hasMaterial() &&
+                                   !lineSide.bottom().hasFixMaterial())
                                 {
-                                    if(!hedge->mapElement()->as<LineSideSegment>().line().isSelfReferencing())
-                                    {
-                                        flags &= ~AllSelfRef;
-                                    }
+                                    flags &= ~AllMissingBottom;
+                                }
+
+                                if(lineSide.top().hasMaterial() &&
+                                   !lineSide.top().hasFixMaterial())
+                                {
+                                    flags &= ~AllMissingTop;
                                 }
                             }
                         }
-                        else
-                        {
-                            // If a back geometry is missing then never map planes.
-                            flags |= NeverMapped;
-                            flags &= ~AllSelfRef;
+                    }
+                    else
+                    {
+                        // If a back geometry is missing then never map planes.
+                        flags |= NeverMapped;
+                        flags &= ~(AllSelfRef|AllMissingBottom|AllMissingTop);
 
-                            // We're done.
-                            return flags;
-                        }
+                        // We're done.
+                        return flags;
                     }
                 } while((hedge = &hedge->next()) != base);
             }
@@ -387,72 +401,24 @@ DENG2_OBSERVES(Plane, HeightChange)
             return;
 
         // Dynamic mapping may be needed for one or more planes.
+        bool doFloor   = classification().testFlag(AllMissingBottom);
+        bool doCeiling = classification().testFlag(AllMissingTop);
+
+        // The plane must not use a sky-masked material.
         Plane const &sectorFloor   = self.sector().floor();
         Plane const &sectorCeiling = self.sector().ceiling();
+
+        if(sectorFloor.surface().hasSkyMaskedMaterial())
+            doFloor = false;
+        if(sectorCeiling.surface().hasSkyMaskedMaterial())
+            doCeiling = false;
+
+        if(!doFloor && !doCeiling)
+            return;
 
         // The sector must have open space.
         if(!(sectorCeiling.height() > sectorFloor.height()))
             return;
-
-        // The plane must not use a sky-masked material.
-        bool missingAllBottom = !sectorFloor.surface().hasSkyMaskedMaterial();
-        bool missingAllTop    = !sectorCeiling.surface().hasSkyMaskedMaterial();
-        if(!missingAllBottom && !missingAllTop)
-            return;
-
-        // Evaluate the outer boundary to determine if mapping is required.
-        foreach(BspLeaf *leaf, bspLeafs)
-        {
-            HEdge *base = leaf->poly().hedge();
-            HEdge *hedge = base;
-            do
-            {
-                if(!hedge->mapElement())
-                    continue;
-
-                DENG_ASSERT(hedge->twin().hasFace());
-
-                // Only consider non-selfref edges whose back face lies
-                // in another cluster.
-                LineSideSegment const &seg = hedge->mapElement()->as<LineSideSegment>();
-                if(seg.line().isSelfReferencing())
-                    continue;
-
-                BspLeaf const &backLeaf = hedge->twin().face().mapElement()->as<BspLeaf>();
-                if(!backLeaf.hasCluster())
-                    continue;
-
-                Cluster *otherCluster = &backLeaf.cluster();
-                if(otherCluster == thisPublic)
-                    continue;
-
-                LineSide const &lineSide = seg.lineSide();
-                if(missingAllBottom &&
-                   otherCluster->d->mappedVisFloor != thisPublic)
-                {
-                    if(lineSide.bottom().hasMaterial() &&
-                       !lineSide.bottom().hasFixMaterial())
-                    {
-                        missingAllBottom = false;
-                    }
-                }
-
-                if(missingAllTop &&
-                   otherCluster->d->mappedVisCeiling != thisPublic)
-                {
-                    if(lineSide.top().hasMaterial() &&
-                       !lineSide.top().hasFixMaterial())
-                    {
-                        missingAllTop = false;
-                    }
-                }
-
-                if(!missingAllBottom && !missingAllTop)
-                    return;
-            } while((hedge = &hedge->next()) != base);
-        }
-
-        DENG2_ASSERT(missingAllBottom || missingAllTop);
 
         // Is it time to initialize the boundary info?
         if(boundaryInfo.isNull())
@@ -464,20 +430,20 @@ DENG2_OBSERVES(Plane, HeightChange)
         {
             Cluster &extCluster = hedge->twin().face().mapElement()->as<BspLeaf>().cluster();
 
-            if(missingAllBottom && mappedVisFloor == thisPublic &&
+            if(doFloor && mappedVisFloor == thisPublic &&
                extCluster.visFloor().height() > sectorFloor.height())
             {
                 map(Sector::Floor, &extCluster);
 
-                if(!missingAllTop) break;
+                if(!doCeiling) break;
             }
 
-            if(missingAllTop && mappedVisCeiling == thisPublic &&
+            if(doCeiling && mappedVisCeiling == thisPublic &&
                extCluster.visCeiling().height() < sectorCeiling.height())
             {
                 map(Sector::Ceiling, &extCluster);
 
-                if(!missingAllBottom) break;
+                if(!doFloor) break;
             }
         }
 
@@ -485,13 +451,13 @@ DENG2_OBSERVES(Plane, HeightChange)
         {
             Cluster &extCluster = hedge->twin().face().mapElement()->as<BspLeaf>().cluster();
 
-            if(missingAllBottom &&
+            if(doFloor &&
                extCluster.visFloor().height() >= sectorFloor.height())
             {
                 extCluster.d->map(Sector::Floor, thisPublic);
             }
 
-            if(missingAllTop &&
+            if(doCeiling &&
                extCluster.visCeiling().height() <= sectorCeiling.height())
             {
                 extCluster.d->map(Sector::Ceiling, thisPublic);
@@ -590,6 +556,7 @@ DENG2_OBSERVES(Plane, HeightChange)
 #endif // __CLIENT__
 
         // We may need to update one or both mapped planes.
+        needClassify = true;
         maybeInvalidateMapping(plane.indexInSector());
     }
 
@@ -603,6 +570,7 @@ DENG2_OBSERVES(Plane, HeightChange)
         markDependantSurfacesForDecorationUpdate();
 
         // We may need to update one or both mapped planes.
+        needClassify = true;
         maybeInvalidateMapping(plane.indexInSector());
     }
 
