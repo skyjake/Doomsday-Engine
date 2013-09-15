@@ -401,40 +401,64 @@ DENG2_OBSERVES(Plane, HeightChange)
             return;
 
         // Evaluate the outer boundary to determine if mapping is required.
+        foreach(BspLeaf *leaf, bspLeafs)
+        {
+            HEdge *base = leaf->poly().hedge();
+            HEdge *hedge = base;
+            do
+            {
+                if(!hedge->mapElement())
+                    continue;
+
+                DENG_ASSERT(hedge->twin().hasFace());
+
+                // Only consider non-selfref edges whose back face lies
+                // in another cluster.
+                LineSideSegment const &seg = hedge->mapElement()->as<LineSideSegment>();
+                if(seg.line().isSelfReferencing())
+                    continue;
+
+                BspLeaf const &backLeaf = hedge->twin().face().mapElement()->as<BspLeaf>();
+                if(!backLeaf.hasCluster())
+                    continue;
+
+                Cluster *otherCluster = &backLeaf.cluster();
+                if(otherCluster == thisPublic)
+                    continue;
+
+                LineSide const &lineSide = seg.lineSide();
+                if(missingAllBottom &&
+                   otherCluster->d->mappedVisFloor != thisPublic)
+                {
+                    if(lineSide.bottom().hasMaterial() &&
+                       !lineSide.bottom().hasFixMaterial())
+                    {
+                        missingAllBottom = false;
+                    }
+                }
+
+                if(missingAllTop &&
+                   otherCluster->d->mappedVisCeiling != thisPublic)
+                {
+                    if(lineSide.top().hasMaterial() &&
+                       !lineSide.top().hasFixMaterial())
+                    {
+                        missingAllTop = false;
+                    }
+                }
+
+                if(!missingAllBottom && !missingAllTop)
+                    return;
+            } while((hedge = &hedge->next()) != base);
+        }
+
+        DENG2_ASSERT(missingAllBottom || missingAllTop);
 
         // Is it time to initialize the boundary info?
         if(boundaryInfo.isNull())
         {
             initBoundaryInfo();
         }
-
-        foreach(HEdge *hedge, boundaryInfo->uniqueOuterEdges)
-        {
-            Cluster &extCluster = hedge->twin().face().mapElement()->as<BspLeaf>().cluster();
-
-            // Only consider non-selfref edges.
-            LineSideSegment const &seg = hedge->mapElement()->as<LineSideSegment>();
-            if(seg.line().isSelfReferencing())
-                continue;
-
-            LineSide const &lineSide = seg.lineSide();
-            if(extCluster.d->mappedVisFloor != thisPublic &&
-               lineSide.bottom().hasMaterial() && !lineSide.bottom().hasFixMaterial())
-            {
-                missingAllBottom = false;
-            }
-
-            if(extCluster.d->mappedVisCeiling != thisPublic &&
-               lineSide.top().hasMaterial() && !lineSide.top().hasFixMaterial())
-            {
-                missingAllTop = false;
-            }
-
-            if(!missingAllBottom && !missingAllTop)
-                return;
-        }
-
-        DENG2_ASSERT(missingAllBottom || missingAllTop);
 
         foreach(HEdge *hedge, boundaryInfo->uniqueOuterEdges)
         {
