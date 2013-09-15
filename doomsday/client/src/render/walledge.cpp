@@ -255,15 +255,23 @@ DENG2_PIMPL(WallEdge), public IHPlane
                 LineSide const &lineSide = seg.lineSide();
                 Surface const &middle    = lineSide.middle();
 
-                if(!line.isSelfReferencing())
+                if(!line.isSelfReferencing() && ffloor == &leaf->sector().floor())
                 {
                     lo = de::max(bfloor->heightSmoothed(), ffloor->heightSmoothed());
-                    hi = de::min(bceil->heightSmoothed(),  fceil->heightSmoothed());
                 }
                 else
                 {
                     // Use the unmapped heights for positioning purposes.
                     lo = lineSide.sector().floor().heightSmoothed();
+                }
+
+                if(!line.isSelfReferencing() && fceil == &leaf->sector().ceiling())
+                {
+                    hi = de::min(bceil->heightSmoothed(),  fceil->heightSmoothed());
+                }
+                else
+                {
+                    // Use the unmapped heights for positioning purposes.
                     hi = lineSide.back().sector().ceiling().heightSmoothed();
                 }
 

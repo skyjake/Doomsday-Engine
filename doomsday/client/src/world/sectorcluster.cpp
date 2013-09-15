@@ -158,13 +158,10 @@ DENG2_OBSERVES(Plane, HeightChange)
         else
         {
             plane->audienceForDeletion -= this;
-            if(observeHeight)
-            {
-                plane->audienceForHeightChange -= this;
+            plane->audienceForHeightChange -= this;
 #ifdef __CLIENT__
-                plane->audienceForHeightSmoothedChange -= this;
+            plane->audienceForHeightSmoothedChange -= this;
 #endif
-            }
         }
     }
 
