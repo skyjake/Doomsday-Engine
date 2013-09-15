@@ -29,7 +29,6 @@ using namespace de;
 using namespace ui;
 
 DENG_GUI_PIMPL(LabelWidget),
-DENG2_OBSERVES(Atlas, Reposition),
 public Font::RichFormat::IStyle
 {
     typedef GLBufferT<Vertex2TexRgba> VertexBuf;
