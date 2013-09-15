@@ -25,7 +25,6 @@
 #include <QList>
 
 #include <de/binangle.h>
-#include <de/vector1.h> /// @todo remove me
 
 #include <de/Error>
 #include <de/Observers>
@@ -35,7 +34,6 @@
 
 #include "MapElement"
 #include "Polyobj"
-#include "Surface"
 #include "Vertex"
 
 #ifdef __CLIENT__
@@ -44,6 +42,7 @@
 
 class LineOwner;
 class Sector;
+class Surface;
 
 #ifdef __CLIENT__
 class BiasDigest;
@@ -800,49 +799,19 @@ public:
     /**
      * @param offset  Returns the position of the nearest point along the line [0..1].
      */
-    inline coord_t pointDistance(const_pvec2d_t point, coord_t *offset) const
-    {
-        coord_t fromV1[2]      = { fromOrigin().x, fromOrigin().y };
-        coord_t directionV1[2] = { direction().x, direction().y };
-        return V2d_PointLineDistance(point, fromV1, directionV1, offset);
-    }
-
-    /// @copydoc pointDistance()
-    inline coord_t pointDistance(coord_t x, coord_t y, coord_t *offset) const
-    {
-        coord_t point[2] = { x, y };
-        return pointDistance(point, offset);
-    }
+    coord_t pointDistance(de::Vector2d const &point, coord_t *offset = 0) const;
 
     /**
-     * On which side of the line does the specified point lie?
+     * Where does the given @a point lie relative to the line? Note that the
+     * line is considered to extend to infinity for this test.
      *
-     * @param point  Point in the map coordinate space to test.
+     * @param point  The point to test.
      *
-     * @return One of the following:
-     * - Negative: @a point is to the left/back side.
-     * - Zero: @a point lies directly on the line.
-     * - Positive: @a point is to the right/front side.
+     * @return @c <0 Point is to the left of the line.
+     *         @c =0 Point lies directly on/incident with the line.
+     *         @c >0 Point is to the right of the line.
      */
-    inline coord_t pointOnSide(const_pvec2d_t point) const
-    {
-        coord_t fromV1[2]      = { fromOrigin().x, fromOrigin().y };
-        coord_t directionV1[2] = { direction().x, direction().y };
-        return V2d_PointOnLineSide(point, fromV1, directionV1);
-    }
-
-    /// @copydoc pointOnSide()
-    inline coord_t pointOnSide(de::Vector2d const &point) const
-    {
-        coord_t pointV1[2] = { point.x, point.y };
-        return pointOnSide(pointV1);
-    }
-
-    /// @copydoc pointOnSide()
-    inline coord_t pointOnSide(coord_t x, coord_t y) const
-    {
-        return pointOnSide(de::Vector2d(x, y));
-    }
+    coord_t pointOnSide(de::Vector2d const &point) const;
 
     /**
      * Returns @c true iff the line defines a section of some Polyobj.

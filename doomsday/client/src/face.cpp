@@ -43,7 +43,7 @@ DENG2_PIMPL_NOREF(Face)
 };
 
 Face::Face(Mesh &mesh)
-    : Mesh::Element(mesh),
+    : MeshElement(mesh),
       _hedgeCount(0),
       d(new Instance())
 {}

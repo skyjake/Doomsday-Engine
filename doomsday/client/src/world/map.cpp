@@ -37,6 +37,7 @@
 #include "Line"
 #include "Polyobj"
 #include "Sector"
+#include "Surface"
 #include "Vertex"
 
 #include "world/bsp/partitioner.h"
@@ -2391,9 +2392,10 @@ static int interceptLinesWorker(Line *line, void * /*parameters*/)
     }
     else
     {
-        s1 = line->pointOnSide(FIX2FLT(traceLos.origin[VX]), FIX2FLT(traceLos.origin[VY])) < 0;
-        s2 = line->pointOnSide(FIX2FLT(traceLos.origin[VX] + traceLos.direction[VX]),
-                               FIX2FLT(traceLos.origin[VY] + traceLos.direction[VY])) < 0;
+        s1 = line->pointOnSide(Vector2d(FIX2FLT(traceLos.origin[VX]),
+                                        FIX2FLT(traceLos.origin[VY]))) < 0;
+        s2 = line->pointOnSide(Vector2d(FIX2FLT(traceLos.origin[VX] + traceLos.direction[VX]),
+                                        FIX2FLT(traceLos.origin[VY] + traceLos.direction[VY]))) < 0;
     }
     if(s1 == s2) return false;
 
@@ -2706,7 +2708,7 @@ Lumobj &Map::addLumobj(Lumobj const &lumobj)
     lum.setMap(this);
     lum.setIndexInMap(d->lumobjs.count() - 1);
 
-    lum.bspLeafAtOrigin().linkLumobj(lum);
+    lum.bspLeafAtOrigin().link(lum);
     R_ObjlinkCreate(lum); // For spreading purposes.
 
     return lum;

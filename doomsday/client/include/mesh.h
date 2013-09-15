@@ -177,6 +177,8 @@ private:
     DENG2_PRIVATE(d)
 };
 
+typedef Mesh::Element MeshElement;
+
 } // namespace de
 
 #endif // DENG_DATA_MESH_H

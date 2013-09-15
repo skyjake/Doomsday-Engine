@@ -436,9 +436,9 @@ public:
      *
      * @param lumobj  Lumobj to unlink.
      *
-     * @see linkLumobj()
+     * @see link()
      */
-    void unlinkLumobj(Lumobj &lumobj);
+    void unlink(Lumobj &lumobj);
 
     /**
      * Link the specified @a lumobj in the BSP leaf. If the lumobj is already
@@ -446,9 +446,9 @@ public:
      *
      * @param lumobj  Lumobj to link.
      *
-     * @see lumobjs(), unlinkLumobj()
+     * @see lumobjs(), unlink()
      */
-    void linkLumobj(Lumobj &lumobj);
+    void link(Lumobj &lumobj);
 
     /**
      * Provides access to the set of lumobjs linked to the BSP leaf.

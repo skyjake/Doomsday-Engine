@@ -56,7 +56,7 @@ DENG2_PIMPL_NOREF(HEdge)
 };
 
 HEdge::HEdge(Mesh &mesh, Vertex &vertex)
-    : Mesh::Element(mesh), d(new Instance(vertex))
+    : MeshElement(mesh), d(new Instance(vertex))
 {}
 
 Vertex &HEdge::vertex() const

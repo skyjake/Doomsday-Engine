@@ -25,6 +25,8 @@
 
 #include <memory>
 
+#include <de/vector1.h> /// @todo remove me
+
 #include <QtAlgorithms>
 
 #include <de/Error>

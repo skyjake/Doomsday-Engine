@@ -31,8 +31,9 @@
 
 #include "world/entitydatabase.h"
 #include "world/map.h"
-#include "Sector"
 #include "Plane"
+#include "Sector"
+#include "Surface"
 
 #include "edit_map.h"
 #include "api_mapedit.h"

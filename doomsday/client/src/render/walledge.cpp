@@ -21,6 +21,7 @@
 
 #include "BspLeaf"
 #include "Sector"
+#include "Surface"
 
 #include "Face"
 

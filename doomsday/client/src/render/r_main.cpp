@@ -48,6 +48,7 @@
 #include "world/p_objlink.h"
 #include "world/thinkers.h"
 #include "BspLeaf"
+#include "Surface"
 
 using namespace de;
 

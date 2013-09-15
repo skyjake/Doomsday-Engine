@@ -33,7 +33,7 @@ namespace de {
  *
  * @ingroup world
  */
-class HEdge : public Mesh::Element
+class HEdge : public MeshElement
 {
 public:
     /// Required twin half-edge is missing. @ingroup errors

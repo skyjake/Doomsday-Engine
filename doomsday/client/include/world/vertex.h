@@ -21,9 +21,6 @@
 #ifndef DENG_WORLD_VERTEX_H
 #define DENG_WORLD_VERTEX_H
 
-#include <de/types.h>
-
-#include <de/Error>
 #include <de/Observers>
 #include <de/Vector>
 
@@ -41,7 +38,7 @@ class LineOwner;
  *
  * @ingroup world
  */
-class Vertex : public de::MapElement, public de::Mesh::Element
+class Vertex : public de::MapElement, public de::MeshElement
 {
     DENG2_NO_COPY  (Vertex)
     DENG2_NO_ASSIGN(Vertex)
@@ -145,7 +142,8 @@ public:
 
 #endif // __CLIENT__
 
-public:
+public: // Deprecated ----------------------------------------------------------
+
     /**
      * Returns the total number of Line owners for the vertex.
      *

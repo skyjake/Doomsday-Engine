@@ -18,14 +18,15 @@
  * 02110-1301 USA</small>
  */
 
+#include "Face"
+#include "HEdge"
+
 #include "BspLeaf"
 #include "Plane"
 #include "Sector"
+#include "Surface"
 
 #include "world/lineowner.h"
-
-#include "Face"
-#include "HEdge"
 
 #include "render/rend_main.h"
 #include "WallEdge"

@@ -186,7 +186,7 @@ SoundEmitter &Plane::soundEmitter()
 
 SoundEmitter const &Plane::soundEmitter() const
 {
-    return const_cast<SoundEmitter const &>(const_cast<Plane &>(*this).soundEmitter());
+    return d->soundEmitter;
 }
 
 void Plane::updateSoundEmitterOrigin()

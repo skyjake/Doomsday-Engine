@@ -26,10 +26,11 @@
 #include "dd_main.h" // App_Materials(), verbose
 
 #include "Face"
+
 #include "BspLeaf"
 #include "Line"
 #include "Plane"
-
+#include "Surface"
 #include "world/map.h"
 #include "world/maputil.h"
 #include "world/p_object.h"

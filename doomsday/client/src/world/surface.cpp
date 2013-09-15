@@ -24,6 +24,7 @@
 
 #include "de_platform.h"
 #include "de_defs.h" // Def_GetGenerator
+
 #include "Materials"
 
 #include "world/map.h"
@@ -488,10 +489,7 @@ blendmode_t Surface::blendMode() const
 
 void Surface::setBlendMode(blendmode_t newBlendMode)
 {
-    if(d->blendMode != newBlendMode)
-    {
-        d->blendMode = newBlendMode;
-    }
+    d->blendMode = newBlendMode;
 }
 
 #ifdef __CLIENT__
@@ -549,9 +547,7 @@ int Surface::property(DmuArgs &args) const
     switch(args.prop)
     {
     case DMU_MATERIAL: {
-        Material *mat = d->material;
-        if(d->materialIsMissingFix)
-            mat = 0;
+        Material *mat = d->materialIsMissingFix? 0 : d->material;
         args.setValue(DMT_SURFACE_MATERIAL, &mat, 0);
         break; }
 

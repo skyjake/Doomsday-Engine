@@ -23,6 +23,9 @@
 #include <QList>
 
 #include <de/Error>
+#ifdef DENG_DEBUG
+#  include <de/Log>
+#endif
 
 #include "world/bsp/linesegment.h"
 

@@ -25,6 +25,7 @@
 #include "world/map.h"
 #include "world/linesighttest.h"
 #include "BspLeaf"
+#include "Surface"
 
 #include "BiasTracker"
 

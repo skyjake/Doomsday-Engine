@@ -22,6 +22,7 @@
 
 #include <de/aabox.h>
 #include <de/fixedpoint.h>
+#include <de/vector1.h> /// @todo remove me
 
 #include "Face"
 
@@ -152,7 +153,7 @@ DENG2_PIMPL(LineSightTest)
             // Does the ray pass from left to right?
             if(flags & LS_PASSLEFT) // Allowed.
             {
-                if(line.pointOnSide(from.x, from.y) < 0)
+                if(line.pointOnSide(Vector2d(from.x, from.y)) < 0)
                     return true;
             }
 

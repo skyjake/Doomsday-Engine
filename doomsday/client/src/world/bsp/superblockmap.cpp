@@ -22,6 +22,7 @@
  */
 
 #include <de/kdtree.h>
+#include <de/vector1.h>
 
 #include "world/bsp/linesegment.h"
 

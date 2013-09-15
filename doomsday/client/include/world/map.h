@@ -24,6 +24,8 @@
 #include <QList>
 #include <QSet>
 
+#include <de/vector1.h> /// @todo remove me
+
 #include <de/Observers>
 
 #include "Mesh"
@@ -38,6 +40,8 @@
 #  include "BiasSource"
 #  include "Lumobj"
 #endif
+
+#include "uri.hh"
 
 class BspLeaf;
 class BspNode;

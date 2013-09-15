@@ -46,6 +46,7 @@
 #include "BspLeaf"
 #include "BspNode"
 #include "Hand"
+#include "Surface"
 #include "world/map.h"
 #include "world/lineowner.h"
 #include "world/p_object.h"

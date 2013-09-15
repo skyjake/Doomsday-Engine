@@ -28,6 +28,7 @@
 
 #include "BspLeaf"
 #include "Sector"
+#include "Surface"
 #include "Vertex"
 
 #ifdef __CLIENT__
@@ -925,6 +926,32 @@ int Line::boxOnSide_FixedPrecision(AABoxd const &box) const
                          DBL2FIX(d->direction.y) };
 
     return M_BoxOnLineSide_FixedPrecision(boxx, pos, delta);
+}
+
+coord_t Line::pointDistance(Vector2d const &point, coord_t *offset) const
+{
+    Vector2d lineVec = d->direction - fromOrigin();
+    coord_t len = lineVec.length();
+    if(len == 0)
+    {
+        if(offset) *offset = 0;
+        return 0;
+    }
+
+    Vector2d delta = fromOrigin() - point;
+    if(offset)
+    {
+        *offset = (  delta.y * (fromOrigin().y - d->direction.y)
+                   - delta.x * (d->direction.x - fromOrigin().x) ) / len;
+    }
+
+    return (delta.y * lineVec.x - delta.x * lineVec.y) / len;
+}
+
+coord_t Line::pointOnSide(Vector2d const &point) const
+{
+    Vector2d delta = fromOrigin() - point;
+    return delta.y * d->direction.x - delta.x * d->direction.y;
 }
 
 bool Line::isMappedByPlayer(int playerNum) const

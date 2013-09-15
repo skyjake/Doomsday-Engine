@@ -33,7 +33,7 @@ namespace de {
  *
  * @ingroup data
  */
-class Face : public Mesh::Element
+class Face : public MeshElement
 {
 public: /// @todo make private:
     /// Total number of half-edge's in the face geometry.

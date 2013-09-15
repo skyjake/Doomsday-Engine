@@ -24,6 +24,7 @@
 #include "BspLeaf"
 #include "Plane"
 #include "Sector"
+#include "Surface"
 
 #include "world/map.h"
 #include "world/maputil.h" // R_SideBackClosed, remove me

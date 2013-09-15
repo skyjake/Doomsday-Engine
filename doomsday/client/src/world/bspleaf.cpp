@@ -24,10 +24,15 @@
 #include <de/Log>
 
 #include "Face"
-#include "Polyobj"
 
+#include "Polyobj"
+#include "Sector"
+#include "Surface"
 #ifdef __CLIENT__
 #  include "world/map.h"
+#endif
+
+#ifdef __CLIENT__
 #  include "BiasDigest"
 #  include "BiasIllum"
 #  include "BiasSource"
@@ -661,12 +666,12 @@ void BspLeaf::clearLumobjs()
     d->lumobjs.clear();
 }
 
-void BspLeaf::unlinkLumobj(Lumobj &lumobj)
+void BspLeaf::unlink(Lumobj &lumobj)
 {
     d->lumobjs.remove(&lumobj);
 }
 
-void BspLeaf::linkLumobj(Lumobj &lumobj)
+void BspLeaf::link(Lumobj &lumobj)
 {
     if(isDegenerate()) return;
     d->lumobjs.insert(&lumobj);

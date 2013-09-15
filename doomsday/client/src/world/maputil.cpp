@@ -23,6 +23,7 @@
 #include "BspLeaf"
 #include "Plane"
 #include "Sector"
+#include "Surface"
 #include "world/lineowner.h"
 
 #include "MaterialSnapshot"

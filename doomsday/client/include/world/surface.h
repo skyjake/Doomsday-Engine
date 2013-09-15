@@ -30,8 +30,9 @@
 #include <de/Observers>
 #include <de/Vector>
 
-#include "MapElement"
 #include "Material"
+
+#include "MapElement"
 #ifdef __CLIENT__
 #  include "Decoration"
 #endif

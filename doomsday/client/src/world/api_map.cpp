@@ -1852,7 +1852,7 @@ DENG_EXTERN_C coord_t Line_PointDistance(Line *line, coord_t const point[2], coo
 DENG_EXTERN_C coord_t Line_PointXYDistance(Line* line, coord_t x, coord_t y, coord_t* offset)
 {
     DENG_ASSERT(line);
-    return line->pointDistance(x, y, offset);
+    return line->pointDistance(Vector2d(x, y), offset);
 }
 
 #undef Line_PointOnSide
@@ -1872,7 +1872,7 @@ DENG_EXTERN_C coord_t Line_PointOnSide(Line const *line, coord_t const point[2])
 DENG_EXTERN_C coord_t Line_PointXYOnSide(Line const *line, coord_t x, coord_t y)
 {
     DENG_ASSERT(line);
-    return line->pointOnSide(x, y);
+    return line->pointOnSide(Vector2d(x, y));
 }
 
 #undef Line_BoxOnSide

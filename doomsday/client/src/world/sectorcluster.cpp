@@ -1,6 +1,7 @@
 /** @file sectorcluster.cpp World map sector cluster.
  *
- * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -21,9 +22,11 @@
 #include <QtAlgorithms>
 
 #include "Face"
+
 #include "BspLeaf"
 #include "Line"
 #include "Plane"
+#include "Surface"
 #include "world/map.h"
 #include "world/p_object.h"
 #include "world/p_players.h"
@@ -56,10 +59,6 @@ static QRectF qrectFromAABox(AABoxd const &aaBox)
     return QRectF(QPointF(aaBox.minX, aaBox.maxY), QPointF(aaBox.maxX, aaBox.minY));
 }
 
-#ifdef __CLIENT__
-typedef QSet<BspLeaf *> ReverbBspLeafs;
-#endif
-
 DENG2_PIMPL(Sector::Cluster),
 DENG2_OBSERVES(Plane, HeightChange)
 #ifdef __CLIENT__
@@ -76,6 +75,7 @@ DENG2_OBSERVES(Plane, HeightChange)
 
 #ifdef __CLIENT__
     /// BSP leafs in the neighborhood effecting environmental audio characteristics.
+    typedef QSet<BspLeaf *> ReverbBspLeafs;
     ReverbBspLeafs reverbBspLeafs;
 
     /// Final environmental audio characteristics.
@@ -443,7 +443,7 @@ DENG2_OBSERVES(Plane, HeightChange)
      * that is), they do not move and are not created/destroyed once the map has
      * been loaded; this step can be pre-processed.
      *
-     * @pre The Map's BSP leaf blockmap for must be ready for use.
+     * @pre The Map's BSP leaf blockmap must be ready for use.
      */
     void findReverbBspLeafs()
     {
@@ -472,7 +472,7 @@ DENG2_OBSERVES(Plane, HeightChange)
         needReverbUpdate = false;
 
         uint spaceVolume = int((self.visCeiling().height() - self.visFloor().height())
-                         * self.roughArea());
+                               * self.roughArea());
 
         reverb[SRD_SPACE] = reverb[SRD_VOLUME] =
             reverb[SRD_DECAY] = reverb[SRD_DAMPING] = 0;

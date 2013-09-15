@@ -27,6 +27,7 @@
 #include "de_render.h"
 
 #include "BspLeaf"
+#include "Surface"
 #include "world/map.h"
 #include "world/p_objlink.h"
 
