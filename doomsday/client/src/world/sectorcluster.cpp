@@ -60,6 +60,8 @@ static QRectF qrectFromAABox(AABoxd const &aaBox)
 }
 
 DENG2_PIMPL(Sector::Cluster),
+DENG2_OBSERVES(Sector::Cluster, Deletion),
+DENG2_OBSERVES(Plane, Deletion),
 DENG2_OBSERVES(Plane, HeightChange)
 #ifdef __CLIENT__
 , DENG2_OBSERVES(Plane, HeightSmoothedChange)
@@ -100,29 +102,100 @@ DENG2_OBSERVES(Plane, HeightChange)
 
     ~Instance()
     {
-        observePlane(Sector::Floor, false);
-        observePlane(Sector::Ceiling, false);
+        clearMapping(Sector::Floor);
+        clearMapping(Sector::Ceiling);
+
+        DENG2_FOR_PUBLIC_AUDIENCE(Deletion, i) i->sectorClusterBeingDeleted(self);
     }
 
-    void observePlane(int planeIdx, bool yes = true)
+    Cluster **mappedClusterAdr(int planeIdx)
     {
-        if(planeIdx < 0 || planeIdx > Sector::Ceiling) return;
+        if(planeIdx == Sector::Floor)   return &mappedVisFloor;
+        if(planeIdx == Sector::Ceiling) return &mappedVisCeiling;
+        return 0;
+    }
 
-        Plane &plane = self.sector().plane(planeIdx);
+    inline Plane *mappedPlane(int planeIdx)
+    {
+        Cluster **clusterAdr = mappedClusterAdr(planeIdx);
+        if(clusterAdr && *clusterAdr)
+        {
+            return &(*clusterAdr)->plane(planeIdx);
+        }
+        return 0;
+    }
+
+    void observeCluster(Cluster *cluster, bool yes = true)
+    {
+        if(!cluster || cluster == thisPublic)
+            return;
+
         if(yes)
         {
-            plane.audienceForHeightChange += this;
+            cluster->audienceForDeletion += this;
+        }
+        else
+        {
+            cluster->audienceForDeletion -= this;
+        }
+    }
+
+    void observePlane(Plane *plane, bool yes = true)
+    {
+        if(!plane) return;
+
+        if(yes)
+        {
+            plane->audienceForDeletion             += this;
+            plane->audienceForHeightChange         += this;
 #ifdef __CLIENT__
-            plane.audienceForHeightSmoothedChange += this;
+            plane->audienceForHeightSmoothedChange += this;
 #endif
         }
         else
         {
-            plane.audienceForHeightChange -= this;
+            plane->audienceForDeletion             -= this;
+            plane->audienceForHeightChange         -= this;
 #ifdef __CLIENT__
-            plane.audienceForHeightSmoothedChange -= this;
+            plane->audienceForHeightSmoothedChange -= this;
 #endif
         }
+    }
+
+    void map(int planeIdx, Cluster *newCluster)
+    {
+        Cluster **clusterAdr = mappedClusterAdr(planeIdx);
+        if(!clusterAdr || *clusterAdr == newCluster)
+            return;
+
+        observeCluster(*clusterAdr, false);
+        observePlane(mappedPlane(planeIdx), false);
+
+        *clusterAdr = newCluster;
+
+        observeCluster(*clusterAdr);
+        observePlane(mappedPlane(planeIdx));
+    }
+
+    void clearMapping(int planeIdx)
+    {
+        map(planeIdx , 0);
+    }
+
+    /**
+     * To be called when a plane moves to possibly invalidate mapped planes so
+     * that they will be re-evaluated later.
+     */
+    void maybeInvalidateMapping(int planeIdx)
+    {
+        if(classification() & NeverMapped)
+            return;
+
+        Cluster **clusterAdr = mappedClusterAdr(planeIdx);
+        if(!clusterAdr || *clusterAdr == thisPublic)
+            return;
+
+        clearMapping(planeIdx);
     }
 
     /**
@@ -184,8 +257,8 @@ DENG2_OBSERVES(Plane, HeightChange)
     void remapVisPlanes()
     {
         // By default both planes are mapped to the parent sector.
-        mappedVisFloor   = thisPublic;
-        mappedVisCeiling = thisPublic;
+        map(Sector::Floor, thisPublic);
+        map(Sector::Ceiling, thisPublic);
 
         // Should we permanently map planes to another cluster?
         if(classification() & NeverMapped)
@@ -244,14 +317,14 @@ DENG2_OBSERVES(Plane, HeightChange)
                     // This cluster is contained. Remove the mapping from exterior
                     // to this thereby forcing it to be re-evaluated (however next
                     // time a different cluster will be selected from the boundary).
-                    exteriorCluster->d->mappedVisFloor =
-                        exteriorCluster->d->mappedVisCeiling = 0;
+                    exteriorCluster->d->clearMapping(Sector::Floor);
+                    exteriorCluster->d->clearMapping(Sector::Ceiling);
                 }
             }
 
             // Setup the mapping and we're done.
-            mappedVisFloor   = exteriorCluster;
-            mappedVisCeiling = exteriorCluster;
+            map(Sector::Floor, exteriorCluster);
+            map(Sector::Ceiling, exteriorCluster);
             break;
         }
 
@@ -318,16 +391,17 @@ DENG2_OBSERVES(Plane, HeightChange)
                 } while((hedge = &hedge->next()) != base);
             }
 
-            if(exteriorCluster)
+            if(!exteriorCluster) return;
+
+            if(missingAllBottom &&
+               exteriorCluster->visFloor().height() > sectorFloor.height())
             {
-                if(missingAllBottom && exteriorCluster->visPlane(Floor).height() > sectorFloor.height())
-                {
-                    mappedVisFloor = exteriorCluster;
-                }
-                if(missingAllTop && exteriorCluster->visPlane(Ceiling).height() < sectorCeiling.height())
-                {
-                    mappedVisCeiling = exteriorCluster;
-                }
+                map(Sector::Floor, exteriorCluster);
+            }
+            if(missingAllTop &&
+               exteriorCluster->visCeiling().height() < sectorCeiling.height())
+            {
+                map(Sector::Ceiling, exteriorCluster);
             }
         }
     }
@@ -363,7 +437,19 @@ DENG2_OBSERVES(Plane, HeightChange)
 
 #endif // __CLIENT__
 
-    // Observes Plane HeightChange.
+    /// Observes Sector::Cluster Deletion.
+    void sectorClusterBeingDeleted(Cluster const &cluster)
+    {
+        clearMapping(mappedVisFloor == &cluster? Sector::Floor : Sector::Ceiling);
+    }
+
+    /// Observes Plane Deletion.
+    void planeBeingDeleted(Plane const &plane)
+    {
+        clearMapping(plane.indexInSector());
+    }
+
+    /// Observes Plane HeightChange.
     void planeHeightChanged(Plane &plane, coord_t oldHeight)
     {
         DENG2_UNUSED(oldHeight);
@@ -409,15 +495,22 @@ DENG2_OBSERVES(Plane, HeightChange)
 
         markDependantSurfacesForDecorationUpdate();
 #endif // __CLIENT__
+
+        // We may need to update one or both mapped planes.
+        maybeInvalidateMapping(plane.indexInSector());
     }
 
 #ifdef __CLIENT__
 
-    /// Observes Plane HeightSmoothedChange
+    /// Observes Plane HeightSmoothedChange.
     void planeHeightSmoothedChanged(Plane &plane, coord_t oldHeight)
     {
         DENG2_UNUSED(oldHeight);
+
         markDependantSurfacesForDecorationUpdate();
+
+        // We may need to update one or both mapped planes.
+        maybeInvalidateMapping(plane.indexInSector());
     }
 
     void addReverbBspLeaf(BspLeaf *bspLeaf)
@@ -553,9 +646,6 @@ Sector::Cluster::Cluster(BspLeafs const &bspLeafs) : d(new Instance(this))
         // Attribute the BSP leaf to the cluster.
         bspLeaf->setCluster(this);
     }
-
-    d->observePlane(Sector::Floor);
-    d->observePlane(Sector::Ceiling);
 }
 
 Sector &Sector::Cluster::sector() const

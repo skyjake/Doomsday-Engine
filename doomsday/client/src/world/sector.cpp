@@ -48,8 +48,8 @@ DENG2_OBSERVES(Plane, HeightChange)
     SoundEmitter emitter; ///< Head of the sound emitter chain.
 
     Planes planes;        ///< All owned planes.
-    Sides sides;          ///< All referencing line sides (not owned).
     Clusters clusters;    ///< All owned BSP leaf clusters.
+    Sides sides;          ///< All referencing line sides (not owned).
     mobj_t *mobjList;     ///< All mobjs "in" the sector (not owned).
 
     float lightLevel;     ///< Ambient light level.
@@ -83,8 +83,8 @@ DENG2_OBSERVES(Plane, HeightChange)
 
     ~Instance()
     {
-        qDeleteAll(clusters);
         qDeleteAll(planes);
+        qDeleteAll(clusters);
     }
 
     void notifyLightLevelChanged(float oldLightLevel)

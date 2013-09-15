@@ -80,6 +80,11 @@ public:
     class Cluster
     {
     public:
+        /*
+         * Notified when the cluster is about to be deleted.
+         */
+        DENG2_DEFINE_AUDIENCE(Deletion, void sectorClusterBeingDeleted(Cluster const &cluster))
+
         typedef QList<BspLeaf *> BspLeafs;
 
     public:

@@ -43,7 +43,7 @@ class Plane : public de::MapElement
 
 public:
     /*
-     * Notified when a Plane is about to be deleted.
+     * Notified when the plane is about to be deleted.
      */
     DENG2_DEFINE_AUDIENCE(Deletion, void planeBeingDeleted(Plane const &plane))
 
