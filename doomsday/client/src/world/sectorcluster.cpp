@@ -19,6 +19,8 @@
  */
 
 #include <QRect>
+#include <QMap>
+#include <QSet>
 #include <QtAlgorithms>
 
 #include "Face"
@@ -74,6 +76,13 @@ DENG2_OBSERVES(Plane, HeightChange)
 
     Cluster *mappedVisFloor;
     Cluster *mappedVisCeiling;
+
+    struct BoundaryInfo
+    {
+        QList<HEdge *> uniqueInnerEdges; /// not owned.
+        QList<HEdge *> uniqueOuterEdges; /// not owned.
+    };
+    QScopedPointer<BoundaryInfo> boundaryInfo;
 
 #ifdef __CLIENT__
     /// BSP leafs in the neighborhood effecting environmental audio characteristics.
@@ -254,6 +263,49 @@ DENG2_OBSERVES(Plane, HeightChange)
         return flags;
     }
 
+    void initBoundaryInfo()
+    {
+        QMap<Cluster *, HEdge *> extClusterMap;
+        foreach(BspLeaf *leaf, bspLeafs)
+        {
+            HEdge *base = leaf->poly().hedge();
+            HEdge *hedge = base;
+            do
+            {
+                if(!hedge->mapElement())
+                    continue;
+
+                DENG2_ASSERT(hedge->twin().hasFace()); // Sanity check.
+
+                BspLeaf &backLeaf = hedge->twin().face().mapElement()->as<BspLeaf>();
+                if(!backLeaf.hasCluster())
+                    continue;
+
+                if(&backLeaf.cluster() != thisPublic)
+                {
+                    extClusterMap.insert(&backLeaf.cluster(), hedge);
+                }
+            } while((hedge = &hedge->next()) != base);
+        }
+
+        boundaryInfo.reset(new BoundaryInfo);
+
+        QRectF boundingRect = qrectFromAABox(self.aaBox());
+        foreach(HEdge *hedge, extClusterMap)
+        {
+            Cluster &extCluster = hedge->twin().face().mapElement()->as<BspLeaf>().cluster();
+
+            if(boundingRect.contains(qrectFromAABox(extCluster.aaBox())))
+            {
+                boundaryInfo->uniqueInnerEdges.append(hedge);
+            }
+            else
+            {
+                boundaryInfo->uniqueOuterEdges.append(hedge);
+            }
+        }
+    }
+
     /**
      * @todo Redesign the implementation to avoid recursion via visPlane().
      */
@@ -331,130 +383,94 @@ DENG2_OBSERVES(Plane, HeightChange)
             return;
         }
 
+        if(classification() & AllSelfRef)
+            return;
+
         // Dynamic mapping may be needed for one or more planes.
-        if(!classification().testFlag(AllSelfRef))
+        Plane const &sectorFloor   = self.sector().floor();
+        Plane const &sectorCeiling = self.sector().ceiling();
+
+        // The sector must have open space.
+        if(!(sectorCeiling.height() > sectorFloor.height()))
+            return;
+
+        // The plane must not use a sky-masked material.
+        bool missingAllBottom = !sectorFloor.surface().hasSkyMaskedMaterial();
+        bool missingAllTop    = !sectorCeiling.surface().hasSkyMaskedMaterial();
+        if(!missingAllBottom && !missingAllTop)
+            return;
+
+        // Evaluate the outer boundary to determine if mapping is required.
+
+        // Is it time to initialize the boundary info?
+        if(boundaryInfo.isNull())
         {
-            Plane const &sectorFloor   = self.sector().floor();
-            Plane const &sectorCeiling = self.sector().ceiling();
+            initBoundaryInfo();
+        }
 
-            // The sector must have open space.
-            if(!(sectorCeiling.height() > sectorFloor.height()))
-                return;
+        foreach(HEdge *hedge, boundaryInfo->uniqueOuterEdges)
+        {
+            Cluster &extCluster = hedge->twin().face().mapElement()->as<BspLeaf>().cluster();
 
-            // The plane must not use a sky-masked material.
-            bool missingAllBottom = !sectorFloor.surface().hasSkyMaskedMaterial();
-            bool missingAllTop    = !sectorCeiling.surface().hasSkyMaskedMaterial();
+            // Only consider non-selfref edges.
+            LineSideSegment const &seg = hedge->mapElement()->as<LineSideSegment>();
+            if(seg.line().isSelfReferencing())
+                continue;
+
+            LineSide const &lineSide = seg.lineSide();
+            if(extCluster.d->mappedVisFloor != thisPublic &&
+               lineSide.bottom().hasMaterial() && !lineSide.bottom().hasFixMaterial())
+            {
+                missingAllBottom = false;
+            }
+
+            if(extCluster.d->mappedVisCeiling != thisPublic &&
+               lineSide.top().hasMaterial() && !lineSide.top().hasFixMaterial())
+            {
+                missingAllTop = false;
+            }
+
             if(!missingAllBottom && !missingAllTop)
                 return;
+        }
 
-            // Evaluate the boundary to determine if mapping is required.
-            QSet<Cluster *> exteriorFloorClusters;
-            QSet<Cluster *> exteriorCeilingClusters;
-            foreach(BspLeaf *leaf, bspLeafs)
+        DENG2_ASSERT(missingAllBottom || missingAllTop);
+
+        foreach(HEdge *hedge, boundaryInfo->uniqueOuterEdges)
+        {
+            Cluster &extCluster = hedge->twin().face().mapElement()->as<BspLeaf>().cluster();
+
+            if(missingAllBottom && mappedVisFloor == thisPublic &&
+               extCluster.visFloor().height() > sectorFloor.height())
             {
-                HEdge *base = leaf->poly().hedge();
-                HEdge *hedge = base;
-                do
-                {
-                    if(!hedge->mapElement())
-                        continue;
+                map(Sector::Floor, &extCluster);
 
-                    DENG_ASSERT(hedge->twin().hasFace());
-
-                    // Only consider non-selfref edges whose back face lies
-                    // in another cluster.
-                    LineSideSegment const &seg = hedge->mapElement()->as<LineSideSegment>();
-                    if(seg.line().isSelfReferencing())
-                        continue;
-
-                    BspLeaf const &backLeaf = hedge->twin().face().mapElement()->as<BspLeaf>();
-                    if(!backLeaf.hasCluster())
-                        continue;
-
-                    Cluster *otherCluster = &backLeaf.cluster();
-                    if(otherCluster == thisPublic)
-                        continue;
-
-                    LineSide const &lineSide = seg.lineSide();
-                    if(missingAllBottom &&
-                       otherCluster->d->mappedVisFloor != thisPublic)
-                    {
-                        if(lineSide.bottom().hasMaterial() &&
-                           !lineSide.bottom().hasFixMaterial())
-                        {
-                            missingAllBottom = false;
-                        }
-                        else
-                        {
-                            // Remember the exterior cluster.
-                            exteriorFloorClusters.insert(otherCluster);
-                        }
-                    }
-
-                    if(missingAllTop &&
-                       otherCluster->d->mappedVisCeiling != thisPublic)
-                    {
-                        if(lineSide.top().hasMaterial() &&
-                           !lineSide.top().hasFixMaterial())
-                        {
-                            missingAllTop = false;
-                        }
-                        else
-                        {
-                            // Remember the exterior cluster.
-                            exteriorCeilingClusters.insert(otherCluster);
-                        }
-                    }
-
-                    if(!missingAllBottom && !missingAllTop)
-                        return;
-                } while((hedge = &hedge->next()) != base);
+                if(!missingAllTop) break;
             }
 
-            if(missingAllBottom)
+            if(missingAllTop && mappedVisCeiling == thisPublic &&
+               extCluster.visCeiling().height() < sectorCeiling.height())
             {
-                foreach(Cluster *exteriorCluster, exteriorFloorClusters)
-                {
-                    Plane &exteriorPlane = exteriorCluster->visFloor();
-                    if(exteriorPlane.height() < sectorFloor.height())
-                        continue;
+                map(Sector::Ceiling, &extCluster);
 
-                    QRectF boundingRect = qrectFromAABox(self.aaBox());
-                    if(boundingRect.contains(qrectFromAABox(exteriorCluster->aaBox())))
-                    {
-                        exteriorCluster->d->map(Sector::Floor, thisPublic);
-                    }
-                    else if(mappedVisFloor == thisPublic)
-                    {
-                        if(exteriorPlane.height() > sectorFloor.height())
-                        {
-                            map(Sector::Floor, exteriorCluster);
-                        }
-                    }
-                }
+                if(!missingAllBottom) break;
+            }
+        }
+
+        foreach(HEdge *hedge, boundaryInfo->uniqueInnerEdges)
+        {
+            Cluster &extCluster = hedge->twin().face().mapElement()->as<BspLeaf>().cluster();
+
+            if(missingAllBottom &&
+               extCluster.visFloor().height() >= sectorFloor.height())
+            {
+                extCluster.d->map(Sector::Floor, thisPublic);
             }
 
-            if(missingAllTop)
+            if(missingAllTop &&
+               extCluster.visCeiling().height() <= sectorCeiling.height())
             {
-                foreach(Cluster *exteriorCluster, exteriorCeilingClusters)
-                {
-                    Plane &exteriorPlane = exteriorCluster->visCeiling();
-                    if(exteriorPlane.height() > sectorCeiling.height())
-                        continue;
-
-                    QRectF boundingRect = qrectFromAABox(self.aaBox());
-                    if(boundingRect.contains(qrectFromAABox(exteriorCluster->aaBox())))
-                    {
-                        exteriorCluster->d->map(Sector::Ceiling, thisPublic);
-                    }
-                    else if(mappedVisCeiling == thisPublic)
-                    {
-                        if(exteriorPlane.height() < sectorCeiling.height())
-                        {
-                            map(Sector::Ceiling, exteriorCluster);
-                        }
-                    }
-                }
+                extCluster.d->map(Sector::Ceiling, thisPublic);
             }
         }
     }
