@@ -149,6 +149,8 @@ void TextDrawable::init(Atlas &atlas, Font const &font, Font::RichFormat::IStyle
 
 void TextDrawable::deinit()
 {
+    d->tasks.waitForDone();
+
     d->frontWrap->clear();
     d->backWrap->clear();
 
