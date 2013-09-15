@@ -112,6 +112,20 @@ public:
         Plane &plane(int planeIndex) const;
 
         /**
+         * Returns the sector plane which defines the @em physical floor of the
+         * cluster.
+         * @see hasSector(), plane()
+         */
+        inline Plane &floor() const { return plane(Sector::Floor); }
+
+        /**
+         * Returns the sector plane which defines the @em physical ceiling of the
+         * cluster.
+         * @see hasSector(), plane()
+         */
+        inline Plane &ceiling() const { return plane(Sector::Ceiling); }
+
+        /**
          * Returns the identified @em visual sector plane for the cluster (which
          * may or may not be the same as the physical plane).
          *
