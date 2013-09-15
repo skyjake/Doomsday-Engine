@@ -140,29 +140,35 @@ DENG2_OBSERVES(Plane, HeightChange)
         }
     }
 
-    void observePlane(Plane *plane, bool yes = true)
+    void observePlane(Plane *plane, bool yes = true, bool observeHeight = true)
     {
         if(!plane) return;
 
         if(yes)
         {
-            plane->audienceForDeletion             += this;
-            plane->audienceForHeightChange         += this;
+            plane->audienceForDeletion += this;
+            if(observeHeight)
+            {
+                plane->audienceForHeightChange += this;
 #ifdef __CLIENT__
-            plane->audienceForHeightSmoothedChange += this;
+                plane->audienceForHeightSmoothedChange += this;
 #endif
+            }
         }
         else
         {
-            plane->audienceForDeletion             -= this;
-            plane->audienceForHeightChange         -= this;
+            plane->audienceForDeletion -= this;
+            if(observeHeight)
+            {
+                plane->audienceForHeightChange -= this;
 #ifdef __CLIENT__
-            plane->audienceForHeightSmoothedChange -= this;
+                plane->audienceForHeightSmoothedChange -= this;
 #endif
+            }
         }
     }
 
-    void map(int planeIdx, Cluster *newCluster)
+    void map(int planeIdx, Cluster *newCluster, bool permanent = false)
     {
         Cluster **clusterAdr = mappedClusterAdr(planeIdx);
         if(!clusterAdr || *clusterAdr == newCluster)
@@ -174,7 +180,7 @@ DENG2_OBSERVES(Plane, HeightChange)
         *clusterAdr = newCluster;
 
         observeCluster(*clusterAdr);
-        observePlane(mappedPlane(planeIdx));
+        observePlane(mappedPlane(planeIdx), true, !permanent);
     }
 
     void clearMapping(int planeIdx)
@@ -260,10 +266,10 @@ DENG2_OBSERVES(Plane, HeightChange)
         map(Sector::Floor, thisPublic);
         map(Sector::Ceiling, thisPublic);
 
-        // Should we permanently map planes to another cluster?
         if(classification() & NeverMapped)
             return;
 
+        // Should we permanently map planes to another cluster?
         forever
         {
             // Locate the next exterior cluster.
@@ -323,15 +329,14 @@ DENG2_OBSERVES(Plane, HeightChange)
             }
 
             // Setup the mapping and we're done.
-            map(Sector::Floor, exteriorCluster);
-            map(Sector::Ceiling, exteriorCluster);
-            break;
+            map(Sector::Floor, exteriorCluster, true /*permanently*/);
+            map(Sector::Ceiling, exteriorCluster, true /*permanently*/);
+            return;
         }
 
-        // No permanent mapping?
-        if(mappedVisFloor == thisPublic && !(classification() & AllSelfRef))
+        // Dynamic mapping may be needed for one or more planes.
+        if(!classification().testFlag(AllSelfRef))
         {
-            // Dynamic mapping may be needed for one or more planes.
             Plane const &sectorFloor   = self.sector().floor();
             Plane const &sectorCeiling = self.sector().ceiling();
 
