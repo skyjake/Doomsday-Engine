@@ -210,6 +210,9 @@ DENG2_OBSERVES(Plane, HeightChange)
             return;
 
         clearMapping(planeIdx);
+
+        // Reclassify incase material visibility has changed,
+        needClassify = true;
     }
 
     /**
@@ -556,7 +559,6 @@ DENG2_OBSERVES(Plane, HeightChange)
 #endif // __CLIENT__
 
         // We may need to update one or both mapped planes.
-        needClassify = true;
         maybeInvalidateMapping(plane.indexInSector());
     }
 
@@ -570,7 +572,6 @@ DENG2_OBSERVES(Plane, HeightChange)
         markDependantSurfacesForDecorationUpdate();
 
         // We may need to update one or both mapped planes.
-        needClassify = true;
         maybeInvalidateMapping(plane.indexInSector());
     }
 
