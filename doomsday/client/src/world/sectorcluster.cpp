@@ -81,6 +81,8 @@ DENG2_OBSERVES(Plane, HeightChange)
 
     struct BoundaryInfo
     {
+        /// Lists of unique exterior clusters which share a boundary edge with
+        /// "this" cluster (i.e., one edge per cluster).
         QList<HEdge *> uniqueInnerEdges; /// not owned.
         QList<HEdge *> uniqueOuterEdges; /// not owned.
     };
@@ -141,14 +143,8 @@ DENG2_OBSERVES(Plane, HeightChange)
         if(!cluster || cluster == thisPublic)
             return;
 
-        if(yes)
-        {
-            cluster->audienceForDeletion += this;
-        }
-        else
-        {
-            cluster->audienceForDeletion -= this;
-        }
+        if(yes) cluster->audienceForDeletion += this;
+        else    cluster->audienceForDeletion -= this;
     }
 
     void observePlane(Plane *plane, bool yes = true, bool observeHeight = true)
@@ -395,7 +391,7 @@ DENG2_OBSERVES(Plane, HeightChange)
             }
 
             // Setup the mapping and we're done.
-            map(Sector::Floor, exteriorCluster, true /*permanently*/);
+            map(Sector::Floor,   exteriorCluster, true /*permanently*/);
             map(Sector::Ceiling, exteriorCluster, true /*permanently*/);
             return;
         }
@@ -420,7 +416,7 @@ DENG2_OBSERVES(Plane, HeightChange)
             return;
 
         // The sector must have open space.
-        if(!(sectorCeiling.height() > sectorFloor.height()))
+        if(sectorCeiling.height() <= sectorFloor.height())
             return;
 
         // Is it time to initialize the boundary info?
@@ -429,6 +425,7 @@ DENG2_OBSERVES(Plane, HeightChange)
             initBoundaryInfo();
         }
 
+        // Map "this" cluster to the first outer cluster found.
         foreach(HEdge *hedge, boundaryInfo->uniqueOuterEdges)
         {
             Cluster &extCluster = hedge->twin().face().mapElement()->as<BspLeaf>().cluster();
@@ -437,7 +434,6 @@ DENG2_OBSERVES(Plane, HeightChange)
                extCluster.visFloor().height() > sectorFloor.height())
             {
                 map(Sector::Floor, &extCluster);
-
                 if(!doCeiling) break;
             }
 
@@ -445,23 +441,21 @@ DENG2_OBSERVES(Plane, HeightChange)
                extCluster.visCeiling().height() < sectorCeiling.height())
             {
                 map(Sector::Ceiling, &extCluster);
-
                 if(!doFloor) break;
             }
         }
 
+        // Map all inner clusters to "this" cluster.
         foreach(HEdge *hedge, boundaryInfo->uniqueInnerEdges)
         {
             Cluster &extCluster = hedge->twin().face().mapElement()->as<BspLeaf>().cluster();
 
-            if(doFloor &&
-               extCluster.visFloor().height() >= sectorFloor.height())
+            if(doFloor && extCluster.visFloor().height() >= sectorFloor.height())
             {
                 extCluster.d->map(Sector::Floor, thisPublic);
             }
 
-            if(doCeiling &&
-               extCluster.visCeiling().height() <= sectorCeiling.height())
+            if(doCeiling && extCluster.visCeiling().height() <= sectorCeiling.height())
             {
                 extCluster.d->map(Sector::Ceiling, thisPublic);
             }
