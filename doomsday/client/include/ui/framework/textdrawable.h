@@ -30,7 +30,7 @@
  *
  * - de::EscapeParser parses style escape codes.
  * - de::Font understands rich text formatting and performs the actual
- *   rasterizing of text onto bitmap images.
+ *   rasterization of text onto bitmap images.
  * - FontLineWrapping takes rich-formatted ("styled") text and wraps it onto
  *   multiple lines, taking into account tab stops and indentation.
  * - GLTextComposer allocates the text lines from an Atlas and generates the
@@ -86,7 +86,7 @@ public:
 
     FontLineWrapping const &wraps() const;
 
-    de::Vector2i wrappedSize() const;    
+    de::Vector2ui wrappedSize() const;
     de::String text() const;
     de::String plainText() const;
     bool isBeingWrapped() const;

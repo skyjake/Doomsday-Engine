@@ -49,7 +49,7 @@ public Font::RichFormat::IStyle
     String text;
 
     // GL objects.
-    TextDrawable composer;
+    TextDrawable glText;
     Drawable drawable;
     Matrix4f modelMatrix;
     GLUniform uMvpMatrix;
@@ -88,7 +88,7 @@ public Font::RichFormat::IStyle
         accentColor    = st.colors().color("document.accent");
         dimAccentColor = st.colors().color("document.dimaccent");
 
-        composer.setFont(self.font());
+        glText.setFont(self.font());
         self.requestGeometry();
     }
 
@@ -127,7 +127,7 @@ public Font::RichFormat::IStyle
     {        
         atlas().audienceForReposition += this;
 
-        composer.init(atlas(), self.font(), this);
+        glText.init(atlas(), self.font(), this);
 
         self.setIndicatorUv(atlas().imageRectf(root().solidWhitePixel()).middle());
 
@@ -146,7 +146,7 @@ public Font::RichFormat::IStyle
     void glDeinit()
     {
         atlas().audienceForReposition -= this;
-        composer.deinit();
+        glText.deinit();
         drawable.clear();
     }
 
@@ -182,8 +182,8 @@ public Font::RichFormat::IStyle
         {
             wrapWidth = self.rule().width().valuei() - self.margins().width().valuei();
         }
-        composer.setLineWrapWidth(wrapWidth);
-        if(composer.update())
+        glText.setLineWrapWidth(wrapWidth);
+        if(glText.update())
         {
             // Text has changed.
             //qDebug() << "composer updated";
@@ -200,12 +200,12 @@ public Font::RichFormat::IStyle
 
         uMvpMatrix = root().projMatrix2D();
 
-        if(composer.isReady())
+        if(glText.isReady())
         {
             // Text is ready for drawing.
             if(progress->isVisible())
             {
-                self.setContentSize(composer.wrappedSize());
+                self.setContentSize(glText.wrappedSize());
                 progress->hide();
             }
 
@@ -218,13 +218,13 @@ public Font::RichFormat::IStyle
 
             // Update visible range and release/alloc lines accordingly.
             Rangei visRange(firstVisLine, firstVisLine + numVisLines);
-            if(visRange != composer.range())
+            if(visRange != glText.range())
             {
-                composer.setRange(visRange);
-                composer.update(); // alloc visible lines
+                glText.setRange(visRange);
+                glText.update(); // alloc visible lines
 
                 VertexBuf::Builder verts;
-                composer.makeVertices(verts, Vector2i(0, 0), ui::AlignLeft);
+                glText.makeVertices(verts, Vector2i(0, 0), ui::AlignLeft);
                 drawable.buffer<VertexBuf>(ID_TEXT).setVertices(gl::TriangleStrip, verts, gl::Static);
             }
 
@@ -260,7 +260,7 @@ DocumentWidget::DocumentWidget(String const &name) : d(new Instance(this))
 
 void DocumentWidget::setText(String const &styledText)
 {
-    if(styledText != d->composer.text())
+    if(styledText != d->glText.text())
     {
         // Show the progress indicator until the text is ready for drawing.
         if(d->drawable.hasBuffer(ID_TEXT))
@@ -274,8 +274,8 @@ void DocumentWidget::setText(String const &styledText)
 
         d->styledText = styledText;
 
-        d->composer.setText(styledText);
-        d->composer.setRange(Rangei()); // updated later
+        d->glText.setText(styledText);
+        d->glText.setRange(Rangei()); // updated later
 
         requestGeometry();
     }

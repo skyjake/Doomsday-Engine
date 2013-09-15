@@ -83,6 +83,7 @@ void TextDrawable::init(Atlas &atlas, Font const &font, Font::RichFormat::IStyle
         d->format.setStyle(*style);
     }
     GLTextComposer::setText(d->plainText, d->format);
+    setFont(font);
 }
 
 void TextDrawable::deinit()
@@ -156,14 +157,14 @@ FontLineWrapping const &TextDrawable::wraps() const
     return d->wraps;
 }
 
-Vector2i TextDrawable::wrappedSize() const
+Vector2ui TextDrawable::wrappedSize() const
 {
     if(isBeingWrapped())
     {
         // Don't block.
-        return Vector2i(0, 0);
+        return Vector2ui(0, 0);
     }
-    return Vector2i(d->wraps.width(), d->wraps.totalHeightInPixels());
+    return Vector2ui(d->wraps.width(), d->wraps.totalHeightInPixels());
 }
 
 String TextDrawable::text() const
