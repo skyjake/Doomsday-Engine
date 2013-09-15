@@ -32,107 +32,160 @@ DENG2_PIMPL(TextDrawable)
     class WrapTask : public Task
     {
     public:
-        WrapTask(Instance *inst, int toWidth) : d(inst), _width(toWidth) {}
+        WrapTask(Instance *inst, int toWidth) : d(inst), _width(toWidth), _valid(inst->validWrapId) {}
         void runTask() {
-            DENG2_GUARD_FOR(d->wraps, G);
+            if(_valid < d->validWrapId) {
+                return; // There's a later one.
+            }
+            DENG2_GUARD_FOR(d->backWrap, G);
+
             //qDebug() << "running WrapTask" << _width;
-            //TimeDelta(2).sleep();
-            d->wraps.wrapTextToWidth(d->plainText, d->format, _width);
+            //TimeDelta(0.5).sleep();
+
+            d->backWrap->wrapTextToWidth(d->backWrap->plainText, d->backWrap->format, _width);
+            d->needSwap = true;
+
+            //qDebug() << "WrapTask" << _width << "completed" << d->thisPublic << d->backWrap->text;
         }
     private:
         Instance *d;
         int _width;
+        duint32 _valid;
     };
 
     bool inited;
-    int lineWidth;
-    FontLineWrapping wraps;
-    String text;
-    String plainText;
-    Font::RichFormat format;
-    TaskPool tasks;
 
-    Instance(Public *i) : Base(i), inited(false), lineWidth(0)
-    {}
+    struct Wrapper : public FontLineWrapping
+    {
+        String text;
+        String plainText;
+        Font::RichFormat format;
+        int lineWidth;
+
+        Wrapper() : lineWidth(0) {}
+    };
+
+    Wrapper *frontWrap; ///< For drawing.
+    Wrapper *backWrap;  ///< For background task.
+    bool needSwap;
+    bool needUpdate;
+    TaskPool tasks;
+    volatile duint32 validWrapId;
+
+    Instance(Public *i) : Base(i), inited(false), needSwap(false), needUpdate(false), validWrapId(0)
+    {
+        frontWrap = new Wrapper;
+        backWrap  = new Wrapper;
+    }
 
     ~Instance()
     {
         tasks.waitForDone();
+
+        delete frontWrap;
+        delete backWrap;
     }
 
     void beginWrapTask(int toWidth)
     {
         if(inited && toWidth > 0)
         {
+            ++validWrapId;
             tasks.start(new WrapTask(this, toWidth));
         }
+    }
+
+    /**
+     * Swaps the back wrapping used by the background task with the front
+     * wrapping used for drawing.
+     */
+    void swap()
+    {
+        DENG2_ASSERT(tasks.isDone());
+
+        if(!frontWrap->hasFont() || &backWrap->font() != &frontWrap->font())
+        {
+            frontWrap->setFont(backWrap->font());
+        }
+
+        frontWrap->lineWidth = backWrap->lineWidth;
+        frontWrap->text      = backWrap->text;
+        frontWrap->plainText = backWrap->plainText;
+        frontWrap->format    = backWrap->format;
+
+        std::swap(backWrap, frontWrap);
+
+        self.setWrapping(*frontWrap);
+        self.GLTextComposer::setText(frontWrap->plainText, frontWrap->format);
+
+        if(needUpdate)
+        {
+            self.forceUpdate();
+            needUpdate = false;
+        }
+
+        needSwap = false;
     }
 };
 
 TextDrawable::TextDrawable() : d(new Instance(this))
 {
-    setWrapping(d->wraps);
+    setWrapping(*d->frontWrap);
 }
 
 void TextDrawable::init(Atlas &atlas, Font const &font, Font::RichFormat::IStyle const *style)
 {
     d->inited = true;
+
     setAtlas(atlas);
     if(style)
     {
-        d->format.setStyle(*style);
+        d->frontWrap->format.setStyle(*style);
+        d->backWrap->format.setStyle(*style);
     }
-    GLTextComposer::setText(d->plainText, d->format);
+    GLTextComposer::setText(d->backWrap->plainText, d->backWrap->format);
     setFont(font);
 }
 
 void TextDrawable::deinit()
 {
-    d->wraps.clear();
+    d->frontWrap->clear();
+    d->backWrap->clear();
+
     release();
+
     d->inited = false;
 }
 
 void TextDrawable::setLineWrapWidth(int maxLineWidth)
 {
-    if(d->lineWidth != maxLineWidth)
+    if(d->backWrap->lineWidth != maxLineWidth)
     {
-        setState(false);
-        d->lineWidth = maxLineWidth;
-        d->beginWrapTask(d->lineWidth);
-    }
-
-    /*
-    if(maxLineWidth != d->wraps.maximumWidth())
-    {
-        // Needs rewrap.
-        d->wraps.clear();
-        setState(false);
-
+        // Start a new background task.
+        d->backWrap->lineWidth = maxLineWidth;
         d->beginWrapTask(maxLineWidth);
-    }*/
+    }
 }
 
 void TextDrawable::setText(String const &styledText)
 {
-    d->wraps.clear();
-    release();
+    d->backWrap->clear();
+    d->needUpdate = true;
 
-    d->text = styledText;
-    d->plainText = d->format.initFromStyledText(styledText);
-    GLTextComposer::setText(d->plainText, d->format);
+    d->backWrap->text = styledText;
+    d->backWrap->plainText = d->backWrap->format.initFromStyledText(styledText);
 
-    d->beginWrapTask(d->lineWidth);
+    d->beginWrapTask(d->backWrap->lineWidth);
 }
 
 void TextDrawable::setFont(Font const &font)
 {
-    d->wraps.setFont(font);
-    d->wraps.clear();
-    forceUpdate();
-    setState(false);
+    d->backWrap->setFont(font);
+    d->backWrap->clear();
 
-    d->beginWrapTask(d->lineWidth);
+    d->needUpdate = true;
+
+    d->beginWrapTask(d->backWrap->lineWidth);
 }
 
 void TextDrawable::setRange(Rangei const &lineRange)
@@ -143,38 +196,44 @@ void TextDrawable::setRange(Rangei const &lineRange)
 
 bool TextDrawable::update()
 {
-    // Are we still wrapping?
-    if(isBeingWrapped())
+    bool swapped = false;
+
+    // Has a background wrap completed?
+    if(!isBeingWrapped() && d->needSwap)
     {
-        setState(false);
-        return false;
+        d->swap();
+        swapped = true;
     }
-    return GLTextComposer::update();
+
+    if(!d->frontWrap->hasFont()) return false;
+
+    bool wasNotReady = !isReady();
+    bool changed = GLTextComposer::update() || swapped || (isReady() && wasNotReady);
+    return changed;
 }
 
 FontLineWrapping const &TextDrawable::wraps() const
 {
-    return d->wraps;
+    return *d->frontWrap;
 }
 
 Vector2ui TextDrawable::wrappedSize() const
 {
-    if(isBeingWrapped())
-    {
-        // Don't block.
-        return Vector2ui(0, 0);
-    }
-    return Vector2ui(d->wraps.width(), d->wraps.totalHeightInPixels());
+    return Vector2ui(d->frontWrap->width(), d->frontWrap->totalHeightInPixels());
 }
 
 String TextDrawable::text() const
 {
-    return d->text;
+    if(!d->frontWrap->hasFont())
+    {
+        return d->backWrap->text;
+    }
+    return d->frontWrap->text;
 }
 
 String TextDrawable::plainText() const
 {
-    return d->plainText;
+    return d->frontWrap->plainText;
 }
 
 bool TextDrawable::isBeingWrapped() const

@@ -537,8 +537,13 @@ Font const &FontLineWrapping::font() const
 {
     DENG2_GUARD(this);
 
-    DENG2_ASSERT(d->font != 0);
+    DENG2_ASSERT(hasFont());
     return *d->font;
+}
+
+bool FontLineWrapping::hasFont() const
+{
+    return d->font != 0;
 }
 
 bool FontLineWrapping::isEmpty() const

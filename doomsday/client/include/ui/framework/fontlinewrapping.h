@@ -43,6 +43,7 @@ public:
 
     void setFont(de::Font const &font);
     de::Font const &font() const;
+    bool hasFont() const;
 
     /**
      * Clears the wrapping completely. The text is also cleared.

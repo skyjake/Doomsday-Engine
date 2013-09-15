@@ -114,6 +114,7 @@ DENG2_PIMPL(GLTextComposer)
     {
         if(info.segs.size() != lines[lineIndex].segs.size())
         {
+            //qDebug() << "line" << lineIndex << "number of segs changed";
             return false;
         }
         for(int i = 0; i < info.segs.size(); ++i)
@@ -121,16 +122,20 @@ DENG2_PIMPL(GLTextComposer)
             if(info.segs[i].range != lines[lineIndex].segs[i].range)
             {
                 // Range has changed.
+                //qDebug() << "line" << lineIndex << "seg" << i << "range change";
                 return false;
             }
             if(segmentText(i, info) != lines[lineIndex].segs[i].text)
             {
                 // Text has changed.
+                //qDebug() << "line" << lineIndex << "seg" << i << "text change";
                 return false;
             }
-            if(lines[lineIndex].segs[i].id.isNone())
+            if(lines[lineIndex].segs[i].id.isNone() && info.segs[i].range.size() > 0)
             {
                 // This segment has previously failed allocation.
+                //qDebug() << "line" << lineIndex << "seg" << i << "not alloced before, len" <<
+                //            info.segs[i].range.size();
                 return false;
             }
         }
@@ -388,6 +393,7 @@ Rangei GLTextComposer::range() const
 bool GLTextComposer::update()
 {
     DENG2_ASSERT(d->wraps != 0);
+
     if(d->font != &d->wraps->font())
     {
         d->font = &d->wraps->font();

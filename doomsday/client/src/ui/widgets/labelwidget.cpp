@@ -388,7 +388,17 @@ public Font::RichFormat::IStyle
         return w;
     }
 
-    void update()
+    void updateSize()
+    {
+        // Figure out the actual size of the content.
+        ContentLayout layout;
+        contentPlacement(layout);
+        Rectanglef combined = layout.image | layout.text;
+        width->set (combined.width()  + margin.x + margin.z);
+        height->set(combined.height() + margin.y + margin.w);
+    }
+
+    void updateGeometry()
     {
         // Update the image on the atlas.
         if(!image.isNull())
@@ -403,37 +413,26 @@ public Font::RichFormat::IStyle
             self.requestGeometry();
         }
 
-        // Figure out the actual size of the content.
-        ContentLayout layout;
-        contentPlacement(layout);
-        Rectanglef combined = layout.image | layout.text;
-        width->set (combined.width()  + margin.x + margin.z);
-        height->set(combined.height() + margin.y + margin.w);
-    }
-
-    void updateGeometry()
-    {
-        self.requestGeometry(false);
+        Rectanglei pos;
+        if(!self.hasChangedPlace(pos) && !self.geometryRequested())
+        {
+            // Nothing changed.
+            return;
+        }
 
         VertexBuf::Builder verts;
         self.glMakeGeometry(verts);
         drawable.buffer<VertexBuf>().setVertices(gl::TriangleStrip, verts, gl::Static);
+
+        self.requestGeometry(false);
     }
 
     void draw()
     {
-        Rectanglei pos;
-        if(self.hasChangedPlace(pos) || self.geometryRequested())
-        {
-            updateGeometry();
-        }
+        updateGeometry();
+
         self.updateModelViewProjection(uMvpMatrix);
         drawable.draw();
-    }
-
-    void atlasContentRepositioned(Atlas &)
-    {
-        self.requestGeometry();
     }
 };
 
@@ -533,10 +532,7 @@ void LabelWidget::update()
 {
     GuiWidget::update();
 
-    //if(!isHidden())
-    {
-        d->update();
-    }
+    d->updateSize();
 }
 
 void LabelWidget::drawContent()
@@ -548,17 +544,6 @@ void LabelWidget::drawContent()
 void LabelWidget::contentLayout(LabelWidget::ContentLayout &layout)
 {
     d->contentPlacement(layout);
-}
-
-LabelWidget *LabelWidget::newWithText(String const &label, GuiWidget *parent)
-{
-    LabelWidget *w = new LabelWidget;
-    w->setText(label);
-    if(parent)
-    {
-        parent->add(w);
-    }
-    return w;
 }
 
 void LabelWidget::glInit()
@@ -573,8 +558,6 @@ void LabelWidget::glDeinit()
 
 void LabelWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
 {
-    d->update();
-
     // Background/frame.
     GuiWidget::glMakeGeometry(verts);
 
@@ -586,7 +569,7 @@ void LabelWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
         d->image->setColor(d->imageColor);
         d->image->glMakeGeometry(verts, layout.image);
     }
-    if(d->hasText() && d->glText.isReady())
+    if(d->hasText())
     {
         // Shadow + text.
         /*composer.makeVertices(verts, textPos.topLeft + Vector2i(0, 2),
@@ -635,4 +618,15 @@ void LabelWidget::setHeightPolicy(SizePolicy policy)
     {
         rule().clearInput(Rule::Height);
     }
+}
+
+LabelWidget *LabelWidget::newWithText(String const &label, GuiWidget *parent)
+{
+    LabelWidget *w = new LabelWidget;
+    w->setText(label);
+    if(parent)
+    {
+        parent->add(w);
+    }
+    return w;
 }
