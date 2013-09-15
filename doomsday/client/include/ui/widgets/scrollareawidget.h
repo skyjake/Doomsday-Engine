@@ -60,6 +60,7 @@ public:
     void setContentHeight(de::Rule const &height);
     void setContentSize(de::Rule const &width, de::Rule const &height);
     void setContentSize(de::Vector2i const &size);
+    void setContentSize(de::Vector2ui const &size);
 
     void modifyContentWidth(int delta);
     void modifyContentHeight(int delta);

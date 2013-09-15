@@ -219,6 +219,11 @@ void ScrollAreaWidget::setContentSize(Vector2i const &size)
     setContentHeight(size.y);
 }
 
+void ScrollAreaWidget::setContentSize(Vector2ui const &size)
+{
+    setContentSize(Vector2i(size.x, size.y));
+}
+
 void ScrollAreaWidget::modifyContentWidth(int delta)
 {
     DENG2_GUARD(d);

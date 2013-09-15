@@ -17,8 +17,7 @@
  */
 
 #include "ui/widgets/labelwidget.h"
-#include "GLTextComposer"
-#include "FontLineWrapping"
+#include "TextDrawable"
 #include "AtlasProceduralImage"
 
 #include <de/Drawable>
@@ -29,10 +28,9 @@ using namespace de;
 using namespace ui;
 
 DENG_GUI_PIMPL(LabelWidget),
-DENG2_OBSERVES(Atlas, Reposition),
 public Font::RichFormat::IStyle
 {
-    typedef GLBufferT<Vertex2TexRgba> VertexBuf;
+    typedef DefaultVertexBuf VertexBuf;
 
     SizePolicy horizPolicy;
     SizePolicy vertPolicy;
@@ -58,10 +56,8 @@ public Font::RichFormat::IStyle
     ColorBank::Color accentColor;
     ColorBank::Color dimAccentColor;
 
-    String styledText;
-    FontLineWrapping wraps;
-    int wrapWidth;
-    GLTextComposer composer;
+    TextDrawable glText;
+    mutable Vector2ui latestTextSize;
 
     QScopedPointer<ProceduralImage> image;
     Drawable drawable;
@@ -80,7 +76,6 @@ public Font::RichFormat::IStyle
           imageScale(1),
           imageColor(1, 1, 1, 1),
           gapId("label.gap"),
-          wrapWidth(0),
           uMvpMatrix("uMvpMatrix", GLUniform::Mat4),
           uColor    ("uColor",     GLUniform::Vec4)
     {
@@ -110,10 +105,7 @@ public Font::RichFormat::IStyle
         accentColor    = st.colors().color("label.accent");
         dimAccentColor = st.colors().color("label.dimaccent");
 
-        wraps.setFont(self.font());
-        wrapWidth = 0;
-
-        composer.forceUpdate();
+        glText.setFont(self.font());
 
         self.requestGeometry();
     }
@@ -152,19 +144,17 @@ public Font::RichFormat::IStyle
         shaders().build(drawable.program(), "generic.textured.color_ucolor")
                 << uMvpMatrix << uColor << uAtlas();
 
-        composer.setAtlas(atlas());
-        composer.setWrapping(wraps);
+        glText.init(atlas(), self.font(), this);
     }
 
     void glDeinit()
     {
         drawable.clear();
-        composer.release();
+        glText.deinit();
         if(!image.isNull())
         {
             image->glDeinit();
         }
-        wrapWidth = 0;
     }
 
     bool hasImage() const
@@ -174,7 +164,7 @@ public Font::RichFormat::IStyle
 
     bool hasText() const
     {
-        return !styledText.isEmpty();
+        return !glText.text().isEmpty();
     }
 
     Vector2f imageSize() const
@@ -184,6 +174,15 @@ public Font::RichFormat::IStyle
             return overrideImageSize;
         }
         return image.isNull()? Vector2f() : image->size();
+    }
+
+    Vector2ui textSize() const
+    {
+        if(!glText.isBeingWrapped())
+        {
+            latestTextSize = glText.wrappedSize();
+        }
+        return latestTextSize;
     }
 
     /**
@@ -341,11 +340,6 @@ public Font::RichFormat::IStyle
         layout.text.move(delta.toVector2i());
     }
 
-    Vector2ui textSize() const
-    {
-        return Vector2ui(wraps.width(), wraps.totalHeightInPixels());
-    }
-
     /**
      * Determines the maximum amount of width available for text, taking into
      * account the given constraints for the possible image of the label.
@@ -402,26 +396,19 @@ public Font::RichFormat::IStyle
             image->update();
         }
 
-        // Update the wrapped text.
-        if(wrapWidth != availableTextWidth())
+        glText.setLineWrapWidth(availableTextWidth());
+        if(glText.update())
         {
-            wrapWidth = availableTextWidth();
+            // Need to recompose.
             self.requestGeometry();
-
-            Font::RichFormat format(*this);
-            String plain = format.initFromStyledText(styledText);
-            wraps.wrapTextToWidth(plain, format, wrapWidth);
-
-            composer.setText(plain, format);
-            composer.update();
-
-            // Figure out the actual size of the content.
-            ContentLayout layout;
-            contentPlacement(layout);
-            Rectanglef combined = layout.image | layout.text;
-            width->set (combined.width()  + margin.x + margin.z);
-            height->set(combined.height() + margin.y + margin.w);
         }
+
+        // Figure out the actual size of the content.
+        ContentLayout layout;
+        contentPlacement(layout);
+        Rectanglef combined = layout.image | layout.text;
+        width->set (combined.width()  + margin.x + margin.z);
+        height->set(combined.height() + margin.y + margin.w);
     }
 
     void updateGeometry()
@@ -455,10 +442,9 @@ LabelWidget::LabelWidget(String const &name) : GuiWidget(name), d(new Instance(t
 
 void LabelWidget::setText(String const &text)
 {
-    if(text != d->styledText)
+    if(text != d->glText.text())
     {
-        d->styledText = text;
-        d->wrapWidth = 0; // force rewrap
+        d->glText.setText(text);
     }
 }
 
@@ -483,7 +469,7 @@ void LabelWidget::setImage(ProceduralImage *procImage)
 
 String LabelWidget::text() const
 {
-    return d->styledText;
+    return d->glText.text();
 }
 
 void LabelWidget::setTextGap(DotPath const &styleRuleId)
@@ -600,12 +586,12 @@ void LabelWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
         d->image->setColor(d->imageColor);
         d->image->glMakeGeometry(verts, layout.image);
     }
-    if(d->hasText())
+    if(d->hasText() && d->glText.isReady())
     {
         // Shadow + text.
         /*composer.makeVertices(verts, textPos.topLeft + Vector2i(0, 2),
                               lineAlign, Vector4f(0, 0, 0, 1));*/
-        d->composer.makeVertices(verts, layout.text, AlignCenter, d->lineAlign);
+        d->glText.makeVertices(verts, layout.text, AlignCenter, d->lineAlign);
     }
 }
 
