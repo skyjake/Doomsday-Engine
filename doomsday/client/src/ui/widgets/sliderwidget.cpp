@@ -260,7 +260,7 @@ DENG_GUI_PIMPL(SliderWidget)
         verts.makeFlexibleFrame(slider.expanded(5), 6, Vector4f(1, 1, 1, frameOpacity),
                                 atlas().imageRectf(root().gradientFrame()));
 
-        // Labels.
+        // Labels.        
         if(labels[Start].isReady())
         {
             labels[Start].makeVertices(verts,

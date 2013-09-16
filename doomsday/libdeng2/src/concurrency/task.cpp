@@ -44,7 +44,7 @@ void Task::run()
     }
 
     // Cleanup.
-    pool().taskFinished(*this);
+    if(_pool) _pool->taskFinished(*this);
     Log::disposeThreadLog();
 }
 

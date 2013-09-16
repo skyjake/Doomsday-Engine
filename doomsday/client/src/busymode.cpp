@@ -230,6 +230,13 @@ static int runTask(BusyTask* task)
 #endif
 }
 
+#ifdef __CLIENT__
+boolean BusyMode_IsTransitionAnimated(void)
+{
+    return busyWillAnimateTransition;
+}
+#endif
+
 static void preBusySetup(int initialMode)
 {
 #ifdef __CLIENT__

@@ -43,6 +43,10 @@ boolean BusyMode_IsWorkerThread(uint threadId);
 /// @return  @c true if the current thread is the busy task worker.
 boolean BusyMode_InWorkerThread(void);
 
+#ifdef __CLIENT__
+boolean BusyMode_IsTransitionAnimated(void);
+#endif
+
 /// @return  Current busy task, else @c NULL.
 BusyTask* BusyMode_CurrentTask(void);
 

@@ -96,7 +96,7 @@ typename RectType::Corner applyAlignment(Alignment align, SizeType const &size, 
     }
     else if(!align.testFlag(AlignTop))
     {
-        p.y += de::floor(double(bounds.height() - size.y) / 2.0);
+        p.y += de::floor((double(bounds.height()) - double(size.y)) / 2.0);
     }
 
     return p;

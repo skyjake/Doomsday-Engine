@@ -90,8 +90,20 @@ DENG2_PIMPL(TextDrawable)
     {
         if(inited && toWidth > 0)
         {
-            ++validWrapId;
-            tasks.start(new WrapTask(this, toWidth));
+            // Should this be done immediately? Background tasks unavoidably
+            // bring some extra latency before the job is finished, especially
+            // if a large number of tasks is queued.
+            if(backWrap->plainText.size() < 20)
+            {
+                // Looks quick enough, just do it now.
+                WrapTask(this, toWidth).runTask();
+            }
+            else
+            {
+                // Queue the task to be run when there's time.
+                ++validWrapId;
+                tasks.start(new WrapTask(this, toWidth));
+            }
         }
     }
 
