@@ -608,12 +608,9 @@ DENG2_PIMPL(World)
 #ifdef __CLIENT__
         /// @todo Refactor away:
         foreach(Sector *sector, map->sectors())
+        foreach(LineSide *side, sector->sides())
         {
-            sector->fixMissingMaterialsForSides();
-            foreach(SectorCluster *cluster, sector->clusters())
-            {
-                cluster->markReverbDirty();
-            }
+            side->fixMissingMaterials();
         }
 #endif
 

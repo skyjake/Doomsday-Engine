@@ -3001,12 +3001,9 @@ DENG_EXTERN_C void R_SetupMap(int mode, int flags)
     // Update all sectors.
     /// @todo Refactor away.
     foreach(Sector *sector, map.sectors())
+    foreach(LineSide *side, sector->sides())
     {
-        sector->fixMissingMaterialsForSides();
-        foreach(SectorCluster *cluster, sector->clusters())
-        {
-            cluster->markReverbDirty();
-        }
+        side->fixMissingMaterials();
     }
 #endif
 

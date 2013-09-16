@@ -131,7 +131,7 @@ public:
      *
      * @param newNormal  New normal vector (will be normalized if needed).
      */
-    void setNormal(de::Vector3f const &newNormal);
+    Surface &setNormal(de::Vector3f const &newNormal);
 
     /**
      * Returns a copy of the current @ref surfaceFlags of the surface.
@@ -144,7 +144,7 @@ public:
      * @param flagsToChange  Flags to change the value of.
      * @param operation      Logical operation to perform on the flags.
      */
-    void setFlags(int flagsToChange, de::FlagOp operation = de::SetFlags);
+    Surface &setFlags(int flagsToChange, de::FlagOp operation = de::SetFlags);
 
     /**
      * Returns @c true iff the surface is flagged @a flagsToTest.
@@ -200,7 +200,7 @@ public:
      * @param newMaterial   New material to apply. Use @c 0 to clear.
      * @param isMissingFix  @c true= this is a fix for a "missing" material.
      */
-    bool setMaterial(Material *newMaterial, bool isMissingFix = false);
+    Surface &setMaterial(Material *newMaterial, bool isMissingFix = false);
 
     /**
      * Returns the material origin offset of the surface.
@@ -212,7 +212,7 @@ public:
      *
      * @param newOrigin  New origin offset in map coordinate space units.
      */
-    void setMaterialOrigin(de::Vector2f const &newOrigin);
+    Surface &setMaterialOrigin(de::Vector2f const &newOrigin);
 
     /**
      * Change the specified @a component of the material origin for the surface.
@@ -224,7 +224,7 @@ public:
      *
      * @see setMaterialorigin(), setMaterialOriginX(), setMaterialOriginY()
      */
-    void setMaterialOriginComponent(int component, float newPosition);
+    Surface &setMaterialOriginComponent(int component, float newPosition);
 
     /**
      * Change the position of the X axis component of the material origin for the
@@ -235,7 +235,9 @@ public:
      *
      * @see setMaterialOriginComponent(), setMaterialOriginY()
      */
-    inline void setMaterialOriginX(float newPosition) { setMaterialOriginComponent(0, newPosition); }
+    inline Surface &setMaterialOriginX(float newPosition) {
+        return setMaterialOriginComponent(0, newPosition);
+    }
 
     /**
      * Change the position of the Y axis component of the material origin for the
@@ -246,7 +248,9 @@ public:
      *
      * @see setMaterialOriginComponent(), setMaterialOriginX()
      */
-    inline void setMaterialOriginY(float newPosition) { setMaterialOriginComponent(1, newPosition); }
+    inline Surface &setMaterialOriginY(float newPosition) {
+        return setMaterialOriginComponent(1, newPosition);
+    }
 
     /**
      * Compose a URI for the surface's material. If no material is bound then a
@@ -272,7 +276,7 @@ public:
      *
      * @see opacity()
      */
-    void setOpacity(float newOpacity);
+    Surface &setOpacity(float newOpacity);
 
     /**
      * Returns the tint color of the surface. The TintColorChange audience is notified
@@ -324,7 +328,7 @@ public:
      *
      * @see tintColor(), setTintColorComponent(), setTintRed(), setTintGreen(), setTintBlue()
      */
-    void setTintColor(de::Vector3f const &newTintColor);
+    Surface &setTintColor(de::Vector3f const &newTintColor);
 
     /**
      * Change the strength of the specified @a component of the tint color for the
@@ -335,7 +339,7 @@ public:
      *
      * @see setTintColor(), setTintRed(), setTintGreen(), setTintBlue()
      */
-    void setTintColorComponent(int component, float newStrength);
+    Surface &setTintColorComponent(int component, float newStrength);
 
     /**
      * Change the strength of the red component of the tint color for the surface.
@@ -345,7 +349,9 @@ public:
      *
      * @see setTintColorComponent(), setTintGreen(), setTintBlue()
      */
-    inline void setTintRed(float newStrength)  { setTintColorComponent(0, newStrength); }
+    inline Surface &setTintRed(float newStrength) {
+        return setTintColorComponent(0, newStrength);
+    }
 
     /**
      * Change the strength of the green component of the tint color for the surface.
@@ -355,7 +361,9 @@ public:
      *
      * @see setTintColorComponent(), setTintRed(), setTintBlue()
      */
-    inline void setTintGreen(float newStrength) { setTintColorComponent(1, newStrength); }
+    inline Surface &setTintGreen(float newStrength) {
+        return setTintColorComponent(1, newStrength);
+    }
 
     /**
      * Change the strength of the blue component of the tint color for the surface.
@@ -365,7 +373,9 @@ public:
      *
      * @see setTintColorComponent(), setTintRed(), setTintGreen()
      */
-    inline void setTintBlue(float newStrength)  { setTintColorComponent(2, newStrength); }
+    inline Surface &setTintBlue(float newStrength) {
+        return setTintColorComponent(2, newStrength);
+    }
 
     /**
      * Returns the blendmode for the surface.
@@ -377,7 +387,7 @@ public:
      *
      * @param newBlendMode  New blendmode.
      */
-    void setBlendMode(blendmode_t newBlendMode);
+    Surface &setBlendMode(blendmode_t newBlendMode);
 
 #ifdef __CLIENT__
 

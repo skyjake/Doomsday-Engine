@@ -313,18 +313,21 @@ void MPE_LineAddSide(int lineIdx, int sideId, short flags, ddstring_t const *top
     side.addSections();
 
     // Assign the resolved material if found.
-    side.top().setMaterial(findMaterialInDict(topMaterialUri));
-    side.top().setMaterialOrigin(Vector2f(topOffsetX, topOffsetY));
-    side.top().setTintColor(Vector3f(topRed, topGreen, topBlue));
+    side.top()
+        .setMaterial(findMaterialInDict(topMaterialUri))
+        .setMaterialOrigin(Vector2f(topOffsetX, topOffsetY))
+        .setTintColor(Vector3f(topRed, topGreen, topBlue));
 
-    side.middle().setMaterial(findMaterialInDict(middleMaterialUri));
-    side.middle().setMaterialOrigin(Vector2f(middleOffsetX, middleOffsetY));
-    side.middle().setTintColor(Vector3f(middleRed, middleGreen, middleBlue));
-    side.middle().setOpacity(middleOpacity);
+    side.middle()
+        .setMaterial(findMaterialInDict(middleMaterialUri))
+        .setMaterialOrigin(Vector2f(middleOffsetX, middleOffsetY))
+        .setTintColor(Vector3f(middleRed, middleGreen, middleBlue))
+        .setOpacity(middleOpacity);
 
-    side.bottom().setMaterial(findMaterialInDict(bottomMaterialUri));
-    side.bottom().setMaterialOrigin(Vector2f(bottomOffsetX, bottomOffsetY));
-    side.bottom().setTintColor(Vector3f(bottomRed, bottomGreen, bottomBlue));
+    side.bottom()
+        .setMaterial(findMaterialInDict(bottomMaterialUri))
+        .setMaterialOrigin(Vector2f(bottomOffsetX, bottomOffsetY))
+        .setTintColor(Vector3f(bottomRed, bottomGreen, bottomBlue));
 }
 
 #undef MPE_PlaneCreate
@@ -341,9 +344,10 @@ int MPE_PlaneCreate(int sectorIdx, coord_t height, ddstring_t const *materialUri
 
     plane->setIndexInArchive(archiveIndex);
 
-    plane->surface().setMaterial(findMaterialInDict(materialUri));
-    plane->surface().setTintColor(Vector3f(tintRed, tintGreen, tintBlue));
-    plane->surface().setMaterialOrigin(Vector2f(matOffsetX, matOffsetY));
+    plane->surface()
+        .setMaterial(findMaterialInDict(materialUri))
+        .setTintColor(Vector3f(tintRed, tintGreen, tintBlue))
+        .setMaterialOrigin(Vector2f(matOffsetX, matOffsetY));
 
     if(!plane->isSectorFloor() && !plane->isSectorCeiling())
     {

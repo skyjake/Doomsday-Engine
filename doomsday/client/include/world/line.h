@@ -534,6 +534,16 @@ public:
          */
         void setShadowVisCount(int newCount);
 
+#ifdef __CLIENT__
+
+        /**
+         * Do as in the original DOOM if the texture has not been defined -
+         * extend the floor/ceiling to fill the space (unless it is skymasked).
+         */
+        void fixMissingMaterials();
+
+#endif // __CLIENT__
+
     protected:
         int property(DmuArgs &args) const;
         int setProperty(DmuArgs const &args);

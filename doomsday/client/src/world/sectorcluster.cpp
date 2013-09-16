@@ -519,7 +519,7 @@ DENG2_OBSERVES(Plane, HeightChange)
 
             if(!ddpl->inGame || !ddpl->mo)
                 continue;
-            if(!ddpl->mo->bspLeaf || !ddpl->mo->bspLeaf->isDegenerate())
+            if(!ddpl->mo->bspLeaf || ddpl->mo->bspLeaf->isDegenerate())
                 continue;
             if(&ddpl->mo->bspLeaf->cluster() != thisPublic)
                 continue;
@@ -535,7 +535,10 @@ DENG2_OBSERVES(Plane, HeightChange)
 #ifdef __CLIENT__
         // A plane move means we must re-apply missing material fixes.
         /// @todo optimize: Defer until actually necessary.
-        self.sector().fixMissingMaterialsForSides();
+        foreach(LineSide *side, self.sector().sides())
+        {
+            side->fixMissingMaterials();
+        }
 
         // We'll need to recalculate environmental audio characteristics.
         needReverbUpdate = true;

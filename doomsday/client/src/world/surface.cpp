@@ -212,7 +212,7 @@ Matrix3f const &Surface::tangentMatrix() const
     return d->tangentMatrix;
 }
 
-void Surface::setNormal(Vector3f const &newNormal)
+Surface &Surface::setNormal(Vector3f const &newNormal)
 {
     Vector3f oldNormal = normal();
     Vector3f newNormalNormalized = newNormal.normalize();
@@ -228,6 +228,7 @@ void Surface::setNormal(Vector3f const &newNormal)
         // Notify interested parties of the change.
         d->notifyNormalChanged(oldNormal);
     }
+    return *this;
 }
 
 int Surface::flags() const
@@ -235,9 +236,10 @@ int Surface::flags() const
     return d->flags;
 }
 
-void Surface::setFlags(int flagsToChange, FlagOp operation)
+Surface &Surface::setFlags(int flagsToChange, FlagOp operation)
 {
     applyFlagOperation(d->flags, flagsToChange, operation);
+    return *this;
 }
 
 bool Surface::hasMaterial() const
@@ -260,53 +262,54 @@ Material &Surface::material() const
     throw MissingMaterialError("Surface::material", "No material is bound");
 }
 
-bool Surface::setMaterial(Material *newMaterial, bool isMissingFix)
+Surface &Surface::setMaterial(Material *newMaterial, bool isMissingFix)
 {
-    if(d->material != newMaterial)
+    if(d->material == newMaterial)
+        return *this;
+
+    // Update the missing-material-fix state.
+    if(!d->material)
     {
-        // Update the missing-material-fix state.
-        if(!d->material)
+        if(newMaterial && isMissingFix)
         {
-            if(newMaterial && isMissingFix)
-            {
-                d->materialIsMissingFix = true;
+            d->materialIsMissingFix = true;
 
-                // Sides of selfreferencing map lines should never receive fix materials.
-                DENG_ASSERT(!(parent().type() == DMU_SIDE && parent().as<LineSide>().line().isSelfReferencing()));
-            }
+            // Sides of selfreferencing map lines should never receive fix materials.
+            DENG_ASSERT(!(parent().type() == DMU_SIDE && parent().as<LineSide>().line().isSelfReferencing()));
         }
-        else if(newMaterial && d->materialIsMissingFix)
-        {
-            d->materialIsMissingFix = false;
-        }
+    }
+    else if(newMaterial && d->materialIsMissingFix)
+    {
+        d->materialIsMissingFix = false;
+    }
 
-        d->material = newMaterial;
+    d->material = newMaterial;
 
 #ifdef __CLIENT__
-        // When the material changes any existing decorations are cleared.
-        clearDecorations();
-        _needDecorationUpdate = true;
+    // When the material changes any existing decorations are cleared.
+    clearDecorations();
+    _needDecorationUpdate = true;
 
-        if(!ddMapSetup)
+    if(!ddMapSetup)
+    {
+        map().unlinkInMaterialLists(this);
+
+        if(d->material)
         {
-            map().unlinkInMaterialLists(this);
+            map().linkInMaterialLists(this);
 
-            if(d->material)
+            if(parent().type() == DMU_PLANE)
             {
-                map().linkInMaterialLists(this);
-
-                if(parent().type() == DMU_PLANE)
-                {
-                    de::Uri uri = d->material->manifest().composeUri();
-                    ded_ptcgen_t const *def = Def_GetGenerator(reinterpret_cast<uri_s *>(&uri));
-                    P_SpawnPlaneParticleGen(def, &parent().as<Plane>());
-                }
-
+                de::Uri uri = d->material->manifest().composeUri();
+                ded_ptcgen_t const *def = Def_GetGenerator(reinterpret_cast<uri_s *>(&uri));
+                P_SpawnPlaneParticleGen(def, &parent().as<Plane>());
             }
+
         }
-#endif // __CLIENT__
     }
-    return true;
+#endif // __CLIENT__
+
+    return *this;
 }
 
 Vector2f const &Surface::materialOrigin() const
@@ -314,7 +317,7 @@ Vector2f const &Surface::materialOrigin() const
     return d->materialOrigin;
 }
 
-void Surface::setMaterialOrigin(Vector2f const &newOrigin)
+Surface &Surface::setMaterialOrigin(Vector2f const &newOrigin)
 {
     if(d->materialOrigin != newOrigin)
     {
@@ -336,9 +339,10 @@ void Surface::setMaterialOrigin(Vector2f const &newOrigin)
         // Notify interested parties of the change.
         d->notifyMaterialOriginChanged(oldMaterialOrigin);
     }
+    return *this;
 }
 
-void Surface::setMaterialOriginComponent(int component, float newPosition)
+Surface &Surface::setMaterialOriginComponent(int component, float newPosition)
 {
     if(!de::fequal(d->materialOrigin[component], newPosition))
     {
@@ -362,6 +366,7 @@ void Surface::setMaterialOriginComponent(int component, float newPosition)
         // Notify interested parties of the change.
         d->notifyMaterialOriginChanged(oldMaterialOrigin, (1 << component));
     }
+    return *this;
 }
 
 de::Uri Surface::composeMaterialUri() const
@@ -432,7 +437,7 @@ float Surface::opacity() const
     return d->opacity;
 }
 
-void Surface::setOpacity(float newOpacity)
+Surface &Surface::setOpacity(float newOpacity)
 {
     DENG_ASSERT(d->isSideMiddle() || d->isSectorExtraPlane()); // sanity check
 
@@ -445,6 +450,7 @@ void Surface::setOpacity(float newOpacity)
         // Notify interested parties of the change.
         d->notifyOpacityChanged(oldOpacity);
     }
+    return *this;
 }
 
 Vector3f const &Surface::tintColor() const
@@ -452,7 +458,7 @@ Vector3f const &Surface::tintColor() const
     return d->tintColor;
 }
 
-void Surface::setTintColor(Vector3f const &newTintColor)
+Surface &Surface::setTintColor(Vector3f const &newTintColor)
 {
     Vector3f newColorClamped(de::clamp(0.f, newTintColor.x, 1.f),
                              de::clamp(0.f, newTintColor.y, 1.f),
@@ -466,9 +472,10 @@ void Surface::setTintColor(Vector3f const &newTintColor)
         // Notify interested parties of the change.
         d->notifyTintColorChanged(oldTintColor);
     }
+    return *this;
 }
 
-void Surface::setTintColorComponent(int component, float newStrength)
+Surface &Surface::setTintColorComponent(int component, float newStrength)
 {
     DENG_ASSERT(component >= 0 && component < 3);
     newStrength = de::clamp(0.f, newStrength, 1.f);
@@ -480,6 +487,7 @@ void Surface::setTintColorComponent(int component, float newStrength)
         // Notify interested parties of the change.
         d->notifyTintColorChanged(oldTintColor, (1 << component));
     }
+    return *this;
 }
 
 blendmode_t Surface::blendMode() const
@@ -487,9 +495,10 @@ blendmode_t Surface::blendMode() const
     return d->blendMode;
 }
 
-void Surface::setBlendMode(blendmode_t newBlendMode)
+Surface &Surface::setBlendMode(blendmode_t newBlendMode)
 {
     d->blendMode = newBlendMode;
+    return *this;
 }
 
 #ifdef __CLIENT__
