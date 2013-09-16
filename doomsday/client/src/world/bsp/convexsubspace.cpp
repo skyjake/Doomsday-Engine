@@ -34,6 +34,8 @@
 
 #include "world/bsp/convexsubspace.h"
 
+#include <de/Log>
+
 /// Smallest difference between two angles before being considered equal (in degrees).
 static coord_t const ANG_EPSILON = 1.0 / 1024.0;
 
