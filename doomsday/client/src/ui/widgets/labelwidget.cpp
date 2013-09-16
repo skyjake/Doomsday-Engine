@@ -410,6 +410,7 @@ public Font::RichFormat::IStyle
         if(glText.update())
         {
             // Need to recompose.
+            updateSize();
             self.requestGeometry();
         }
 
