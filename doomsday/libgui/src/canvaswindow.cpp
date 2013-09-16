@@ -231,7 +231,7 @@ duint CanvasWindow::grabAsTexture(Rectanglei const &area, GrabMode mode) const
     QSize size;
     if(mode == GrabHalfSized)
     {
-        size = QSize(width()/2, height()/2);
+        size = QSize(area.width()/2, area.height()/2);
     }
     return d->canvas->grabAsTexture(
                 QRect(area.left(), area.top(), area.width(), area.height()), size);

@@ -144,15 +144,22 @@ bool BusyWidget::handleEvent(Event const &)
 
 void BusyWidget::grabTransitionScreenshot()
 {
-    GLTexture::Size size(rule().width().valuei() / 2,
-                         rule().height().valuei() / 2);
+    //GLTexture::Size size(rule().width().valuei() / 2,
+    //                         rule().height().valuei() / 2);
+
+    Rectanglei grabRect = Rectanglei::fromSize(root().window().canvas().size());
+
+    if(BusyMode_IsTransitionAnimated())
+    {
+        // Animation transitions are drawn only inside LegacyWidget, so just
+        // grab that portion of the screen.
+        grabRect = root().window().game().rule().recti();
+    }
 
     // Grab the game view's rectangle, as that's where the transition will be drawn.
-    GLuint grabbed = root().window().grabAsTexture(
-                root().window().game().rule().recti(),
-                ClientWindow::GrabHalfSized);
+    GLuint grabbed = root().window().grabAsTexture(grabRect, ClientWindow::GrabHalfSized);
 
-    d->transitionTex.reset(new GLTexture(grabbed, size));
+    d->transitionTex.reset(new GLTexture(grabbed, grabRect.size() / 2));
     d->uTex = *d->transitionTex;
 }
 
