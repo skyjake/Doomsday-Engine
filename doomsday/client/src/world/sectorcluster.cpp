@@ -121,6 +121,21 @@ DENG2_OBSERVES(Plane, HeightChange)
         DENG2_FOR_PUBLIC_AUDIENCE(Deletion, i) i->sectorClusterBeingDeleted(self);
     }
 
+    inline bool floorIsMapped()
+    {
+        return mappedVisFloor != 0 && mappedVisFloor != thisPublic;
+    }
+
+    inline bool ceilingIsMapped()
+    {
+        return mappedVisCeiling != 0 && mappedVisCeiling != thisPublic;
+    }
+
+    inline bool needRemapVisPlanes()
+    {
+        return mappedVisFloor == 0 || mappedVisCeiling == 0;
+    }
+
     Cluster **mappedClusterAdr(int planeIdx)
     {
         if(planeIdx == Sector::Floor)   return &mappedVisFloor;
@@ -207,8 +222,11 @@ DENG2_OBSERVES(Plane, HeightChange)
 
         clearMapping(planeIdx);
 
-        // Reclassify incase material visibility has changed,
-        needClassify = true;
+        if(classification() & (AllMissingBottom|AllMissingTop))
+        {
+            // Reclassify incase material visibility has changed.
+            needClassify = true;
+        }
     }
 
     /**
@@ -324,9 +342,11 @@ DENG2_OBSERVES(Plane, HeightChange)
      */
     void remapVisPlanes()
     {
+        Sector &sector = self.sector();
+
         // By default both planes are mapped to the parent sector.
-        map(Sector::Floor, thisPublic);
-        map(Sector::Ceiling, thisPublic);
+        if(!floorIsMapped())   map(Sector::Floor,   thisPublic);
+        if(!ceilingIsMapped()) map(Sector::Ceiling, thisPublic);
 
         if(classification() & NeverMapped)
             return;
@@ -370,7 +390,7 @@ DENG2_OBSERVES(Plane, HeightChange)
 
             // Ensure we don't produce a cyclic dependency...
             Sector *finalSector = &exteriorCluster->visPlane(Floor).sector();
-            if(finalSector == &self.sector())
+            if(finalSector == &sector)
             {
                 // Must share a boundary edge.
                 QRectF boundingRect = qrectFromAABox(self.aaBox());
@@ -400,23 +420,20 @@ DENG2_OBSERVES(Plane, HeightChange)
             return;
 
         // Dynamic mapping may be needed for one or more planes.
-        bool doFloor   = classification().testFlag(AllMissingBottom);
-        bool doCeiling = classification().testFlag(AllMissingTop);
+        bool doFloor   =   !floorIsMapped() && classification().testFlag(AllMissingBottom);
+        bool doCeiling = !ceilingIsMapped() && classification().testFlag(AllMissingTop);
 
         // The plane must not use a sky-masked material.
-        Plane const &sectorFloor   = self.sector().floor();
-        Plane const &sectorCeiling = self.sector().ceiling();
-
-        if(sectorFloor.surface().hasSkyMaskedMaterial())
-            doFloor = false;
-        if(sectorCeiling.surface().hasSkyMaskedMaterial())
+        if(sector.floor().surface().hasSkyMaskedMaterial())
+            doFloor   = false;
+        if(sector.ceiling().surface().hasSkyMaskedMaterial())
             doCeiling = false;
 
         if(!doFloor && !doCeiling)
             return;
 
         // The sector must have open space.
-        if(sectorCeiling.height() <= sectorFloor.height())
+        if(sector.ceiling().height() <= sector.floor().height())
             return;
 
         // Is it time to initialize the boundary info?
@@ -430,34 +447,36 @@ DENG2_OBSERVES(Plane, HeightChange)
         {
             Cluster &extCluster = hedge->twin().face().mapElement()->as<BspLeaf>().cluster();
 
-            if(doFloor && mappedVisFloor == thisPublic &&
-               extCluster.visFloor().height() > sectorFloor.height())
+            if(doFloor && !floorIsMapped() &&
+               extCluster.visFloor().height() > sector.floor().height())
             {
                 map(Sector::Floor, &extCluster);
                 if(!doCeiling) break;
             }
 
-            if(doCeiling && mappedVisCeiling == thisPublic &&
-               extCluster.visCeiling().height() < sectorCeiling.height())
+            if(doCeiling && !ceilingIsMapped() &&
+               extCluster.visCeiling().height() < sector.ceiling().height())
             {
                 map(Sector::Ceiling, &extCluster);
                 if(!doFloor) break;
             }
         }
 
-        // Map all inner clusters to "this" cluster.
+        // Clear mappings for all inner clusters to force re-evaluation (which
+        // may in turn lead to their inner clusters being re-evaluated, producing
+        // a "ripple effect" that will remap any deeply nested dependents).
         foreach(HEdge *hedge, boundaryInfo->uniqueInnerEdges)
         {
             Cluster &extCluster = hedge->twin().face().mapElement()->as<BspLeaf>().cluster();
 
-            if(doFloor && extCluster.visFloor().height() >= sectorFloor.height())
+            if(doFloor && extCluster.visFloor().height() >= sector.floor().height())
             {
-                extCluster.d->map(Sector::Floor, thisPublic);
+                extCluster.d->clearMapping(Sector::Floor);
             }
 
-            if(doCeiling && extCluster.visCeiling().height() <= sectorCeiling.height())
+            if(doCeiling && extCluster.visCeiling().height() <= sector.ceiling().height())
             {
-                extCluster.d->map(Sector::Ceiling, thisPublic);
+                extCluster.d->clearMapping(Sector::Ceiling);
             }
         }
     }
@@ -478,7 +497,7 @@ DENG2_OBSERVES(Plane, HeightChange)
             {
                 side->middle().markAsNeedingDecorationUpdate();
                 side->bottom().markAsNeedingDecorationUpdate();
-                side->top().markAsNeedingDecorationUpdate();
+                side   ->top().markAsNeedingDecorationUpdate();
             }
 
             if(side->back().hasSections())
@@ -486,7 +505,7 @@ DENG2_OBSERVES(Plane, HeightChange)
                 LineSide &back = side->back();
                 back.middle().markAsNeedingDecorationUpdate();
                 back.bottom().markAsNeedingDecorationUpdate();
-                back.top().markAsNeedingDecorationUpdate();
+                back   .top().markAsNeedingDecorationUpdate();
             }
         }
     }
@@ -496,7 +515,8 @@ DENG2_OBSERVES(Plane, HeightChange)
     /// Observes Sector::Cluster Deletion.
     void sectorClusterBeingDeleted(Cluster const &cluster)
     {
-        clearMapping(mappedVisFloor == &cluster? Sector::Floor : Sector::Ceiling);
+        if(  mappedVisFloor == &cluster) clearMapping(Sector::Floor);
+        if(mappedVisCeiling == &cluster) clearMapping(Sector::Ceiling);
     }
 
     /// Observes Plane Deletion.
@@ -723,7 +743,7 @@ Plane &Sector::Cluster::visPlane(int planeIndex) const
     if(planeIndex >= Floor && planeIndex <= Ceiling)
     {
         // Time to remap the planes?
-        if(!d->mappedVisFloor)
+        if(d->needRemapVisPlanes())
         {
             d->remapVisPlanes();
         }
