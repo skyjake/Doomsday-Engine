@@ -40,6 +40,7 @@ DENG2_OBSERVES(ButtonWidget, Press)
               _animating(false)
         {
             setSize(style().images().image("toggle.onoff").size());
+            updateStyle();
         }
 
         Style const &style() const { return _owner.style(); }
@@ -64,36 +65,41 @@ DENG2_OBSERVES(ButtonWidget, Press)
         {
             float p = _pos;
 
-            ColorBank::Colorf const &accentColor = style().colors().colorf("accent");
-            ColorBank::Colorf const &textColor   = style().colors().colorf("text");
-
             // Clamp the position to non-fractional coordinates.
             Rectanglei const recti(rect.topLeft.toVector2i(), rect.bottomRight.toVector2i());
 
             // Background.
-            ColorBank::Colorf bgColor = style().colors().colorf("background");
-            bgColor.w = 1;
             float c = (.3f + .33f * p);
-            verts.makeQuad(recti, (accentColor * p + textColor * (1-p)) * Vector4f(c, c, c, 1),
+            verts.makeQuad(recti, (_accentColor * p + _textColor * (1-p)) * Vector4f(c, c, c, 1),
                            atlas().imageRectf(_owner.root().solidWhitePixel()).middle());
 
             Id onOff = _owner.root().toggleOnOff();
 
             // The on/off graphic.
-            verts.makeQuad(recti, accentColor * p + textColor * (1-p) * .8f, atlas().imageRectf(onOff));
+            verts.makeQuad(recti, _accentColor * p + _textColor * (1-p) * .8f, atlas().imageRectf(onOff));
 
             // The flipper.
             int flipWidth = size().x - size().y + 2;
             Rectanglei flip = Rectanglei::fromSize(recti.topLeft +
                                                    Vector2i(1 + de::round<int>(p * (size().x - flipWidth)), 1),
                                                    Vector2ui(flipWidth, size().y) - Vector2ui(2, 2));
-            verts.makeQuad(flip, bgColor, atlas().imageRectf(_owner.root().solidWhitePixel()).middle());
+            verts.makeQuad(flip, _bgColor, atlas().imageRectf(_owner.root().solidWhitePixel()).middle());
+        }
+
+        void updateStyle()
+        {
+            _bgColor     = style().colors().colorf("background").min(Vector4f(0, 0, 0, 1));
+            _accentColor = style().colors().colorf("accent");
+            _textColor   = style().colors().colorf("text");
         }
 
     private:
         GuiWidget &_owner;
         Animation _pos;
         bool _animating;
+        ColorBank::Colorf _bgColor;
+        ColorBank::Colorf _accentColor;
+        ColorBank::Colorf _textColor;
     };
 
     ToggleState state;
