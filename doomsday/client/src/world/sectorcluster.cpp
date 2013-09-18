@@ -46,10 +46,11 @@ namespace internal
     /// Classification flags:
     enum ClusterFlag
     {
-        NeverMapped      = 0x1,
-        AllSelfRef       = 0x2,
-        AllMissingBottom = 0x4,
-        AllMissingTop    = 0x8
+        NeverMapped      = 0x01,
+        AllMissingBottom = 0x02,
+        AllMissingTop    = 0x04,
+        AllSelfRef       = 0x08,
+        PartSelfRef      = 0x10
     };
 
     Q_DECLARE_FLAGS(ClusterFlags, ClusterFlag)
@@ -239,7 +240,7 @@ DENG2_OBSERVES(Plane, HeightChange)
         {
             needClassify = false;
 
-            flags &= ~NeverMapped;
+            flags &= ~(NeverMapped|PartSelfRef);
             flags |= AllSelfRef|AllMissingBottom|AllMissingTop;
             foreach(BspLeaf *leaf, bspLeafs)
             {
@@ -276,13 +277,17 @@ DENG2_OBSERVES(Plane, HeightChange)
                                     flags &= ~AllMissingTop;
                                 }
                             }
+                            else
+                            {
+                                flags |= PartSelfRef;
+                            }
                         }
                     }
                     else
                     {
                         // If a back geometry is missing then never map planes.
                         flags |= NeverMapped;
-                        flags &= ~(AllSelfRef|AllMissingBottom|AllMissingTop);
+                        flags &= ~(PartSelfRef|AllSelfRef|AllMissingBottom|AllMissingTop);
 
                         // We're done.
                         return flags;
@@ -312,10 +317,11 @@ DENG2_OBSERVES(Plane, HeightChange)
                 if(!backLeaf.hasCluster())
                     continue;
 
-                if(&backLeaf.cluster() != thisPublic)
-                {
-                    extClusterMap.insert(&backLeaf.cluster(), hedge);
-                }
+                if(&backLeaf.cluster() == thisPublic)
+                    continue;
+
+                extClusterMap.insert(&backLeaf.cluster(), hedge);
+
             } while((hedge = &hedge->next()) != base);
         }
 
@@ -337,9 +343,6 @@ DENG2_OBSERVES(Plane, HeightChange)
         }
     }
 
-    /**
-     * @todo Redesign the implementation to avoid recursion via visPlane().
-     */
     void remapVisPlanes()
     {
         Sector &sector = self.sector();
@@ -351,69 +354,66 @@ DENG2_OBSERVES(Plane, HeightChange)
         if(classification() & NeverMapped)
             return;
 
-        // Should we permanently map planes to another cluster?
-        forever
+        if(classification() & (AllSelfRef|PartSelfRef))
         {
-            // Locate the next exterior cluster.
-            Cluster *exteriorCluster = 0;
-            foreach(BspLeaf *leaf, bspLeafs)
-            {
-                HEdge *base = leaf->poly().hedge();
-                HEdge *hedge = base;
-                do
-                {
-                    if(hedge->mapElement())
-                    {
-                        DENG_ASSERT(hedge->twin().hasFace());
+            // Should we permanently map planes to another cluster?
 
-                        if(hedge->mapElement()->as<LineSideSegment>().line().isSelfReferencing())
-                        {
-                            BspLeaf &backLeaf = hedge->twin().face().mapElement()->as<BspLeaf>();
-                            if(backLeaf.hasCluster())
-                            {
-                                Cluster *otherCluster = &backLeaf.cluster();
-                                if(otherCluster != thisPublic &&
-                                   otherCluster->d->mappedVisFloor != thisPublic &&
-                                   !(!(classification() & AllSelfRef) && (otherCluster->d->classification() & AllSelfRef)))
-                                {
-                                    // Remember the exterior cluster.
-                                    exteriorCluster = otherCluster;
-                                }
-                            }
-                        }
-                    }
-                } while((hedge = &hedge->next()) != base);
+            // Is it time to initialize the boundary info?
+            if(boundaryInfo.isNull())
+            {
+                initBoundaryInfo();
             }
 
-            if(!exteriorCluster)
-                break; // Nothing to map to.
-
-            // Ensure we don't produce a cyclic dependency...
-            Sector *finalSector = &exteriorCluster->visPlane(Floor).sector();
-            if(finalSector == &sector)
+            foreach(HEdge *hedge, boundaryInfo->uniqueOuterEdges)
             {
-                // Must share a boundary edge.
-                QRectF boundingRect = qrectFromAABox(self.aaBox());
-                if(boundingRect.contains(qrectFromAABox(exteriorCluster->aaBox())))
-                {
-                    // The contained cluster will map to this. However, we may
-                    // still need to map this one to another, so re-evaluate.
+                Cluster &extCluster = hedge->twin().face().mapElement()->as<BspLeaf>().cluster();
+
+                if(!hedge->mapElement()->as<LineSideSegment>().line().isSelfReferencing())
                     continue;
-                }
-                else
-                {
-                    // This cluster is contained. Remove the mapping from exterior
-                    // to this thereby forcing it to be re-evaluated (however next
-                    // time a different cluster will be selected from the boundary).
-                    exteriorCluster->d->clearMapping(Sector::Floor);
-                    exteriorCluster->d->clearMapping(Sector::Ceiling);
-                }
+
+                if(!(classification() & AllSelfRef) &&
+                   (extCluster.d->classification() & AllSelfRef))
+                    continue;
+
+                if(extCluster.d->mappedVisFloor == thisPublic)
+                    continue;
+
+                // Setup the mapping and we're done.
+                map(Sector::Floor,   &extCluster, true /*permanently*/);
+                map(Sector::Ceiling, &extCluster, true /*permanently*/);
+                break;
             }
 
-            // Setup the mapping and we're done.
-            map(Sector::Floor,   exteriorCluster, true /*permanently*/);
-            map(Sector::Ceiling, exteriorCluster, true /*permanently*/);
-            return;
+            if(floorIsMapped())
+            {
+                // Remove the mapping from all inner clusters to this, forcing
+                // their re-evaluation (however next time a different cluster
+                // will be selected from the boundary).
+                foreach(HEdge *hedge, boundaryInfo->uniqueInnerEdges)
+                {
+                    Cluster &extCluster = hedge->twin().face().mapElement()->as<BspLeaf>().cluster();
+
+                    if(!hedge->mapElement()->as<LineSideSegment>().line().isSelfReferencing())
+                        continue;
+
+                    if(!(classification() & AllSelfRef) &&
+                       (extCluster.d->classification() & AllSelfRef))
+                        continue;
+
+                    if(extCluster.d->mappedVisFloor == thisPublic)
+                    {
+                        extCluster.d->clearMapping(Sector::Floor);
+                    }
+                    if(extCluster.d->mappedVisCeiling == thisPublic)
+                    {
+                        extCluster.d->clearMapping(Sector::Ceiling);
+                    }
+                }
+
+                // Permanent mappings won't be remapped.
+                boundaryInfo.reset();
+                return;
+            }
         }
 
         if(classification() & AllSelfRef)
@@ -468,6 +468,9 @@ DENG2_OBSERVES(Plane, HeightChange)
         foreach(HEdge *hedge, boundaryInfo->uniqueInnerEdges)
         {
             Cluster &extCluster = hedge->twin().face().mapElement()->as<BspLeaf>().cluster();
+
+            if(extCluster.d->classification() & NeverMapped)
+                continue;
 
             if(doFloor && extCluster.visFloor().height() >= sector.floor().height())
             {
