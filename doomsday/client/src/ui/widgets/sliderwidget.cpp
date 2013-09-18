@@ -91,6 +91,8 @@ DENG_GUI_PIMPL(SliderWidget)
     Animation pos;
     int endLabelSize;
     Animation frameOpacity;
+    ColorBank::Colorf textColor;
+    ColorBank::Colorf invTextColor;
 
     // GL objects.
     enum Labels {
@@ -125,6 +127,9 @@ DENG_GUI_PIMPL(SliderWidget)
 
     void updateStyle()
     {
+        textColor    = style().colors().colorf("text");
+        invTextColor = style().colors().colorf("inverted.text");
+
         endLabelSize = style().rules().rule("slider.label").valuei();
 
         for(int i = 0; i < int(NUM_LABELS); ++i)
@@ -205,24 +210,14 @@ DENG_GUI_PIMPL(SliderWidget)
 
         if(!self.geometryRequested()) return;
 
-        //ColorBank::Colorf const accentColor = style().colors().colorf("accent");
-        ColorBank::Colorf const textColor = style().colors().colorf("text");
-        ColorBank::Colorf const invTextColor = style().colors().colorf("inverted.text");
-
         Vector4i const margin = self.margins().toVector();
         rect = rect.adjusted(margin.xy(), -margin.zw());
 
         DefaultVertexBuf::Builder verts;
         self.glMakeGeometry(verts);
 
-//        verts.makeQuad(rect, Vector4f(1, 0, 1, .5f),
-//                       atlas().imageRectf(root().solidWhitePixel()).middle());
-
-
         // Determine the area where the slider is moving.
         Rectanglei sliderArea = sliderRect();
-//        verts.makeFlexibleFrame(sliderArea.expanded(5), 6, Vector4f(1, 1, 1, .2f),
-//                                atlas().imageRectf(root().gradientFrame()));
 
         // Range dots.
         int numDots = de::clamp(5, round<int>(range.size() / step) + 1, 11);
@@ -253,8 +248,6 @@ DENG_GUI_PIMPL(SliderWidget)
 
         // Current slider position.
         Rectanglei slider = sliderValueRect();
-//        verts.makeQuad(slider, style().colors().colorf("accent"),
-//                       atlas().imageRectf(root().solidWhitePixel()).middle());
         verts.makeQuad(slider.expanded(2), state == Grabbed? textColor : invTextColor,
                        atlas().imageRectf(root().solidWhitePixel()).middle());
         verts.makeFlexibleFrame(slider.expanded(5), 6, Vector4f(1, 1, 1, frameOpacity),
