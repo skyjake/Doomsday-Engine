@@ -78,6 +78,7 @@
 #ifdef DENG2_USE_QT
 #  include <QtCore/qglobal.h>
 #  include <QScopedPointer>
+#  include <QDebug>
 
 // Qt versioning helper. Qt 4.7 is the oldest we support.
 #  if (QT_VERSION <= QT_VERSION_CHECK(4, 6, 0))
@@ -136,7 +137,6 @@
 #  define DENG2_DEBUG
 #  ifdef DENG2_USE_QT
 #    define DENG2_ASSERT(x) Q_ASSERT(x)
-#    include <QDebug>
 #  else
 #    define DENG2_ASSERT(x) assert(x)
 #  endif

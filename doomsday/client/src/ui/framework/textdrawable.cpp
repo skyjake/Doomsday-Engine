@@ -151,9 +151,12 @@ void TextDrawable::init(Atlas &atlas, Font const &font, Font::RichFormat::IStyle
 
     setAtlas(atlas);
     if(style)
-    {
+    {        
         d->frontWrap->format.setStyle(*style);
         d->backWrap->format.setStyle(*style);
+
+        // Previously defined text should be restyled, now.
+        d->backWrap->plainText = d->backWrap->format.initFromStyledText(d->backWrap->text);
     }
     GLTextComposer::setText(d->backWrap->plainText, d->backWrap->format);
     setFont(font);
