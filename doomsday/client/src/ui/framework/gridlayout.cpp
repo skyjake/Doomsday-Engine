@@ -37,6 +37,7 @@ DENG2_PIMPL(GridLayout)
     Rule const *fixedCellWidth;
     Rule const *fixedCellHeight;
     QMap<int, Rule const *> fixedColWidths;
+    QMap<Vector2i, ui::Alignment> cellAlignment;
     Rule const *colPad;
     Rule const *rowPad;
 
@@ -138,6 +139,8 @@ DENG2_PIMPL(GridLayout)
     {
         qDeleteAll(cols); cols.clear();
         qDeleteAll(rows); rows.clear();
+
+        cellAlignment.clear();
     }
 
     void setup(int numCols, int numRows)
@@ -263,6 +266,19 @@ DENG2_PIMPL(GridLayout)
         return *rows.at(row)->minEdge;
     }
 
+    ui::Alignment alignment(Vector2i pos) const
+    {
+        if(cellAlignment.contains(pos))
+        {
+            return cellAlignment[pos];
+        }
+        if(cols.at(pos.x)->cellAlign)
+        {
+            return cols.at(pos.x)->cellAlign;
+        }
+        return ui::AlignTopLeft;
+    }
+
     /**
      * Begins the next column or row.
      */
@@ -376,7 +392,7 @@ DENG2_PIMPL(GridLayout)
             // the final column/row base widths.
             if(mode == ColumnFirst && !fixedCellWidth)
             {
-                if(cols.at(cell.x)->cellAlign & ui::AlignRight)
+                if(alignment(cell) & ui::AlignRight)
                 {
                     widget->rule()
                             .clearInput(Rule::Left)
@@ -694,4 +710,9 @@ Rule const &GridLayout::overrideHeight() const
 {
     DENG2_ASSERT(d->fixedCellHeight != 0);
     return *d->fixedCellHeight;
+}
+
+void GridLayout::setCellAlignment(Vector2i const &cell, ui::Alignment cellAlign)
+{
+    d->cellAlignment[cell] = cellAlign;
 }

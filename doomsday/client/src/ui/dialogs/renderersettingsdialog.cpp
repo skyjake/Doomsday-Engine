@@ -37,7 +37,6 @@ DENG_GUI_PIMPL(RendererSettingsDialog)
 {
     ProfilePickerWidget *appear;
     CVarSliderWidget *fov;
-    CVarToggleWidget *mirrorWeapon;
     CVarToggleWidget *precacheModels;
     CVarToggleWidget *precacheSprites;
     CVarToggleWidget *multiLight;
@@ -68,7 +67,6 @@ DENG_GUI_PIMPL(RendererSettingsDialog)
         fov->setPrecision(0);
         fov->setRange(Ranged(30, 160));
 
-        area.add(mirrorWeapon    = new CVarToggleWidget("rend-model-mirror-hud"));
         area.add(precacheModels  = new CVarToggleWidget("rend-model-precache"));
         area.add(precacheSprites = new CVarToggleWidget("rend-sprite-precache"));
         area.add(multiLight      = new CVarToggleWidget("rend-light-multitex"));
@@ -139,8 +137,6 @@ RendererSettingsDialog::RendererSettingsDialog(String const &name)
     LabelWidget *appearLabel = LabelWidget::newWithText(tr("Appearance:"), &area());
     LabelWidget *fovLabel = LabelWidget::newWithText(tr("Field of View:"), &area());
 
-    d->mirrorWeapon->setText(tr("Mirror Player Weapon Model"));   
-
     LabelWidget *precacheLabel = LabelWidget::newWithText(tr("Precaching:"), &area());
     d->precacheModels->setText(tr("3D Models"));
     d->precacheSprites->setText(tr("Sprites"));
@@ -168,6 +164,9 @@ RendererSettingsDialog::RendererSettingsDialog(String const &name)
     d->vertIdx->setText(tr("Vertex Indices"));
     d->genIdx->setText(tr("Particle Generator Indices"));
 
+    LabelWidget *capLabel = LabelWidget::newWithText(_E(1) + tr("Behavior"), &area());
+    capLabel->margins().setTop("gap");
+
     // Layout.
     GridLayout layout(area().contentRule().left(), area().contentRule().top());
     layout.setGridSize(2, 0);
@@ -177,8 +176,13 @@ RendererSettingsDialog::RendererSettingsDialog(String const &name)
     // The profile button must be included in the layout.
     layout.append(*d->appear, d->appear->rule().width() + d->appear->button().rule().width());
 
-    layout << *fovLabel      << *d->fov
-           << Const(0)       << *d->mirrorWeapon
+    layout << *fovLabel << *d->fov;
+
+    // Label for the tech caps.
+    layout.setCellAlignment(Vector2i(0, 2), ui::AlignTopLeft);
+    layout.append(*capLabel, 2);
+
+    layout
            << *precacheLabel << *d->precacheModels
            << Const(0)       << *d->precacheSprites
            << *multiLabel    << *d->multiLight

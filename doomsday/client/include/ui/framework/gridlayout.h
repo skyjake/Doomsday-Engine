@@ -48,6 +48,15 @@ public:
     void setGridSize(int numCols, int numRows);
     void setModeAndGridSize(Mode mode, int numCols, int numRows);
     void setColumnAlignment(int column, ui::Alignment cellAlign);
+
+    /**
+     * Sets the alignment for an individual cell. Overrides column/row alignment.
+     *
+     * @param cell       Cell position.
+     * @param cellAlign  Alignment for the cell.
+     */
+    void setCellAlignment(de::Vector2i const &cell, ui::Alignment cellAlign);
+
     void setColumnFixedWidth(int column, de::Rule const &fixedWidth);
 
     void setLeftTop(de::Rule const &left, de::Rule const &top);

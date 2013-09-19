@@ -118,6 +118,8 @@ public:
 
         ButtonItem(RoleFlags flags, de::Image const &image, de::Action *action);
 
+        ButtonItem(RoleFlags flags, de::Image const &image, de::String const &label, de::Action *action);
+
         RoleFlags role() const { return _role; }
 
     private:

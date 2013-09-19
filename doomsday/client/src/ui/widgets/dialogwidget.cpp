@@ -622,3 +622,7 @@ DialogWidget::ButtonItem::ButtonItem(RoleFlags flags, String const &label, de::A
 DialogWidget::ButtonItem::ButtonItem(RoleFlags flags, Image const &image, de::Action *action)
     : ui::ActionItem(image, "", action), _role(flags)
 {}
+
+DialogWidget::ButtonItem::ButtonItem(RoleFlags flags, Image const &image, String const &label, de::Action *action)
+    : ui::ActionItem(image, label, action), _role(flags)
+{}

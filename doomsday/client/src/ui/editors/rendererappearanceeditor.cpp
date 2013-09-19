@@ -466,6 +466,9 @@ DENG2_OBSERVES(App, GameChange)
         modelGroup->addSpace();
         modelGroup->addToggle("rend-model-inter", tr("Interpolate Frames"));
 
+        modelGroup->addSpace();
+        modelGroup->addToggle("rend-model-mirror-hud", tr("Mirror Player Weapon"));
+
         modelGroup->addLabel(tr("Max Visible Distance:"));
         modelGroup->addSlider("rend-model-distance", Ranged(0, 3000), 10, 0)->setMinLabel(tr("Inf"));
 
