@@ -164,7 +164,7 @@ RendererSettingsDialog::RendererSettingsDialog(String const &name)
     d->vertIdx->setText(tr("Vertex Indices"));
     d->genIdx->setText(tr("Particle Generator Indices"));
 
-    LabelWidget *capLabel = LabelWidget::newWithText(_E(1) + tr("Behavior"), &area());
+    LabelWidget *capLabel = LabelWidget::newWithText(_E(1)_E(D) + tr("Behavior"), &area());
     capLabel->margins().setTop("gap");
 
     // Layout.
