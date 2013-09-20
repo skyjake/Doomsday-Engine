@@ -2218,6 +2218,7 @@ void Hu_MenuInitOptionsPage(void)
     }
     ob++;
 
+    /*
     ob->_type = MN_BUTTON;
     ob->_shortcut = 'm';
     ob->_pageFontIdx = MENU_FONT1;
@@ -2250,7 +2251,7 @@ void Hu_MenuInitOptionsPage(void)
     { mndata_button_t* btn = (mndata_button_t*)ob->_typedata;
     btn->text = "Joystick";
     }
-    ob++;
+    ob++;*/
 
     ob->_type = MN_NONE;
 
@@ -4118,6 +4119,7 @@ void Hu_MenuInitSoundOptionsPage(void)
     }
     ob++;
 
+    /*
     ob->_type = MN_BUTTON;
     ob->_shortcut = 'p';
     ob->_pageFontIdx = MENU_FONT1;
@@ -4134,6 +4136,7 @@ void Hu_MenuInitSoundOptionsPage(void)
     btn->text = "Open Audio Panel";
     }
     ob++;
+    */
 
     ob->_type = MN_NONE;
 
@@ -6432,12 +6435,12 @@ int Hu_MenuActionInitNewGame(mn_object_t* ob, mn_actionid_t action, void* parame
 
 int Hu_MenuSelectControlPanelLink(mn_object_t* ob, mn_actionid_t action, void* parameters)
 {
-#define NUM_PANEL_NAMES         3
+#define NUM_PANEL_NAMES         1
 
     static const char* panelNames[NUM_PANEL_NAMES] = {
-        "taskbar",
-        "panel audio",
-        "panel input"
+        "taskbar" //,
+        //"panel audio",
+        //"panel input"
     };
     int idx = ob->data2;
 
