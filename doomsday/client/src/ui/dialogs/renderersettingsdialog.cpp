@@ -23,6 +23,7 @@
 #include "ui/widgets/taskbarwidget.h"
 #include "ui/editors/rendererappearanceeditor.h"
 #include "ui/widgets/profilepickerwidget.h"
+#include "ui/widgets/gridpopupwidget.h"
 #include "ui/dialogs/inputdialog.h"
 #include "GridLayout"
 #include "SignalAction"
@@ -44,16 +45,7 @@ DENG_GUI_PIMPL(RendererSettingsDialog)
     CVarToggleWidget *multiDetail;
 
     // Developer settings.
-    PopupWidget *devPopup;
-    QScopedPointer<DialogContentStylist> stylist;
-    CVarChoiceWidget *rendTex;
-    CVarChoiceWidget *wireframe;
-    CVarToggleWidget *bboxMobj;
-    CVarToggleWidget *bboxPoly;
-    CVarToggleWidget *thinkerIds;
-    CVarToggleWidget *secIdx;
-    CVarToggleWidget *vertIdx;
-    CVarToggleWidget *genIdx;
+    GridPopupWidget *devPopup;
 
     Instance(Public *i) : Base(i)
     {
@@ -74,44 +66,38 @@ DENG_GUI_PIMPL(RendererSettingsDialog)
         area.add(multiDetail     = new CVarToggleWidget("rend-tex-detail-multitex"));
 
         // Set up a separate popup for developer settings.
-        self.add(devPopup = new PopupWidget);
+        self.add(devPopup = new GridPopupWidget);
 
-        GuiWidget *container = new GuiWidget;
-        devPopup->setContent(container);
-        stylist.reset(new DialogContentStylist(*container));
+        CVarChoiceWidget *rendTex = new CVarChoiceWidget("rend-tex");
+        rendTex->items()
+                << new ChoiceItem(tr("Materials"),   1)
+                << new ChoiceItem(tr("Plain white"), 0)
+                << new ChoiceItem(tr("Plain gray"),  2);
 
-        LabelWidget *boundLabel = LabelWidget::newWithText(tr("Bounds:"), container);
-        LabelWidget *idLabel    = LabelWidget::newWithText(tr("Identifiers:"), container);
-        LabelWidget *texLabel   = LabelWidget::newWithText(tr("Surface Texturing:"), container);
-        LabelWidget *wireLabel  = LabelWidget::newWithText(tr("Draw as Wireframe:"), container);
+        CVarChoiceWidget *wireframe = new CVarChoiceWidget("rend-dev-wireframe");
+        wireframe->items()
+                << new ChoiceItem(tr("Nothing"), 0)
+                << new ChoiceItem(tr("Game world"), 1)
+                << new ChoiceItem(tr("Game world and UI"), 2);
 
-        container->add(bboxMobj   = new CVarToggleWidget("rend-dev-mobj-bbox"));
-        container->add(bboxPoly   = new CVarToggleWidget("rend-dev-polyobj-bbox"));
-        container->add(thinkerIds = new CVarToggleWidget("rend-dev-thinker-ids"));
-        container->add(secIdx     = new CVarToggleWidget("rend-dev-sector-show-indices"));
-        container->add(vertIdx    = new CVarToggleWidget("rend-dev-vertex-show-indices"));
-        container->add(genIdx     = new CVarToggleWidget("rend-dev-generator-show-indices"));
-        container->add(rendTex    = new CVarChoiceWidget("rend-tex"));
-        container->add(wireframe  = new CVarChoiceWidget("rend-dev-wireframe"));
+        *devPopup << LabelWidget::newWithText(tr("Surface Texturing:"))
+                  << rendTex
+                  << LabelWidget::newWithText(tr("Draw as Wireframe:"))
+                  << wireframe
+                  << LabelWidget::newWithText(tr("Bounds:"))
+                  << new CVarToggleWidget("rend-dev-mobj-bbox", tr("Mobj Bounding Boxes"))
+                  << Const(0)
+                  << new CVarToggleWidget("rend-dev-polyobj-bbox", tr("Polyobj Bounding Boxes"))
+                  << LabelWidget::newWithText(tr("Identifiers:"))
+                  << new CVarToggleWidget("rend-dev-thinker-ids", tr("Thinker IDs"))
+                  << Const(0)
+                  << new CVarToggleWidget("rend-dev-sector-show-indices", tr("Sector Indices"))
+                  << Const(0)
+                  << new CVarToggleWidget("rend-dev-vertex-show-indices", tr("Vertex Indices"))
+                  << Const(0)
+                  << new CVarToggleWidget("rend-dev-generator-show-indices", tr("Particle Generator Indices"));
 
-        // Layout for the developer settings.
-        Rule const &gap = self.style().rules().rule("gap");
-        GridLayout layout(container->rule().left() + gap,
-                          container->rule().top()  + gap);
-        layout.setGridSize(2, 0);
-        layout.setColumnAlignment(0, ui::AlignRight);
-
-        layout << *texLabel   << *rendTex
-               << *wireLabel  << *wireframe
-               << *boundLabel << *bboxMobj
-               << Const(0)    << *bboxPoly
-               << *idLabel    << *thinkerIds
-               << Const(0)    << *secIdx
-               << Const(0)    << *vertIdx
-               << Const(0)    << *genIdx;
-
-        container->rule().setSize(layout.width()  + gap * 2,
-                                  layout.height() + gap * 2);
+        devPopup->commit();
     }
 
     void fetch()
@@ -146,24 +132,6 @@ RendererSettingsDialog::RendererSettingsDialog(String const &name)
     d->multiShiny->setText(tr("3D Model Shiny Surfaces"));
     d->multiDetail->setText(tr("Surface Details"));
 
-    d->rendTex->items()
-            << new ChoiceItem(tr("Materials"),   1)
-            << new ChoiceItem(tr("Plain white"), 0)
-            << new ChoiceItem(tr("Plain gray"),  2);
-
-    d->wireframe->items()
-            << new ChoiceItem(tr("Nothing"), 0)
-            << new ChoiceItem(tr("Game world"), 1)
-            << new ChoiceItem(tr("Game world and UI"), 2);
-
-    // Developer labels.
-    d->bboxMobj->setText(tr("Mobj Bounding Boxes"));
-    d->bboxPoly->setText(tr("Polyobj Bounding Boxes"));
-    d->thinkerIds->setText(tr("Thinker IDs"));
-    d->secIdx->setText(tr("Sector Indices"));
-    d->vertIdx->setText(tr("Vertex Indices"));
-    d->genIdx->setText(tr("Particle Generator Indices"));
-
     LabelWidget *capLabel = LabelWidget::newWithText(_E(1)_E(D) + tr("Behavior"), &area());
     capLabel->margins().setTop("gap");
 
@@ -179,7 +147,7 @@ RendererSettingsDialog::RendererSettingsDialog(String const &name)
     layout << *fovLabel << *d->fov;
 
     // Label for the tech caps.
-    layout.setCellAlignment(Vector2i(0, 2), ui::AlignTopLeft);
+    layout.setCellAlignment(Vector2i(0, 2), ui::AlignLeft);
     layout.append(*capLabel, 2);
 
     layout

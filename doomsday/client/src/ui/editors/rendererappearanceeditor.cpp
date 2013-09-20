@@ -122,8 +122,7 @@ DENG2_OBSERVES(App, GameChange)
 
         CVarToggleWidget *addToggle(char const *cvar, String const &label)
         {
-            CVarToggleWidget *w = new CVarToggleWidget(cvar);
-            w->setText(label);
+            CVarToggleWidget *w = new CVarToggleWidget(cvar, label);
             _group->add(w);
             _layout << *w;
             return w;

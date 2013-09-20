@@ -30,7 +30,7 @@ class CVarToggleWidget : public ToggleWidget, public ICVarWidget
     Q_OBJECT
 
 public:
-    CVarToggleWidget(char const *cvarPath);
+    CVarToggleWidget(char const *cvarPath, de::String const &labelText = "");
 
     char const *cvarPath() const;
 
