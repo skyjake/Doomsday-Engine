@@ -25,6 +25,8 @@ using namespace de;
 
 DENG2_PIMPL(GridLayout)
 {
+    typedef QMap<Vector2i, ui::Alignment> CellAlignments;
+
     WidgetList widgets;
     Mode mode;
     int maxCols;
@@ -37,7 +39,7 @@ DENG2_PIMPL(GridLayout)
     Rule const *fixedCellWidth;
     Rule const *fixedCellHeight;
     QMap<int, Rule const *> fixedColWidths;
-    QMap<Vector2i, ui::Alignment> cellAlignment;
+    CellAlignments cellAlignment;
     Rule const *colPad;
     Rule const *rowPad;
 
@@ -268,15 +270,12 @@ DENG2_PIMPL(GridLayout)
 
     ui::Alignment alignment(Vector2i pos) const
     {
-        if(cellAlignment.contains(pos))
+        CellAlignments::const_iterator found = cellAlignment.find(pos);
+        if(found != cellAlignment.end())
         {
-            return cellAlignment[pos];
+            return found.value();
         }
-        if(cols.at(pos.x)->cellAlign)
-        {
-            return cols.at(pos.x)->cellAlign;
-        }
-        return ui::AlignTopLeft;
+        return cols.at(pos.x)->cellAlign;
     }
 
     /**
