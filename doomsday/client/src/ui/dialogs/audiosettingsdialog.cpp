@@ -20,6 +20,7 @@
 #include "ui/widgets/cvarsliderwidget.h"
 #include "ui/widgets/cvartogglewidget.h"
 #include "ui/widgets/cvarchoicewidget.h"
+#include "ui/widgets/gridpopupwidget.h"
 
 #include "clientapp.h"
 #include "de_audio.h"
@@ -39,6 +40,7 @@ DENG_GUI_PIMPL(AudioSettingsDialog)
     CVarChoiceWidget *sampleRate;
     CVarChoiceWidget *musicSource;
     CVarToggleWidget *soundInfo;
+    GridPopupWidget *devPopup;
 
     Instance(Public *i) : Base(i)
     {
@@ -51,7 +53,12 @@ DENG_GUI_PIMPL(AudioSettingsDialog)
         area.add(sound16bit   = new CVarToggleWidget("sound-16bit"));
         area.add(sampleRate   = new CVarChoiceWidget("sound-rate"));
         area.add(musicSource  = new CVarChoiceWidget("music-source"));
-        area.add(soundInfo    = new CVarToggleWidget("sound-info"));
+
+        // Developer options.
+        self.add(devPopup = new GridPopupWidget);
+        soundInfo = new CVarToggleWidget("sound-info", tr("Sound Channel Status"));
+        *devPopup << soundInfo;
+        devPopup->commit();
     }
 
     void fetch()
@@ -93,7 +100,6 @@ AudioSettingsDialog::AudioSettingsDialog(String const &name)
             << new ChoiceItem(tr("External files"), MUSP_EXT)
             << new ChoiceItem(tr("CD"), MUSP_CD);
 
-    d->soundInfo->setText(tr("Developer Info"));
 
     // Layout.
     GridLayout layout(area().contentRule().left(), area().contentRule().top());
@@ -105,15 +111,19 @@ AudioSettingsDialog::AudioSettingsDialog(String const &name)
            << Const(0)       << *d->sound3D
            << *musSrcLabel   << *d->musicSource
            << *rateLabel     << *d->sampleRate
-           << Const(0)       << *d->sound16bit
-           << Const(0)       << *d->soundInfo;
+           << Const(0)       << *d->sound16bit;
 
     area().setContentSize(layout.width(), layout.height());
 
     buttons()
             << new DialogButtonItem(DialogWidget::Default | DialogWidget::Accept, tr("Close"))
             << new DialogButtonItem(DialogWidget::Action, tr("Reset to Defaults"),
-                                    new SignalAction(this, SLOT(resetToDefaults())));
+                                    new SignalAction(this, SLOT(resetToDefaults())))
+            << new DialogButtonItem(DialogWidget::Action | Id1,
+                                    style().images().image("gauge"),
+                                    new SignalAction(this, SLOT(showDeveloperPopup())));
+
+    d->devPopup->setAnchorAndOpeningDirection(buttonWidget(Id1)->rule(), ui::Up);
 
     d->fetch();
 }
@@ -123,4 +133,9 @@ void AudioSettingsDialog::resetToDefaults()
     ClientApp::audioSettings().resetToDefaults();
 
     d->fetch();
+}
+
+void AudioSettingsDialog::showDeveloperPopup()
+{
+    d->devPopup->open();
 }
