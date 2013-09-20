@@ -65,11 +65,8 @@ public:
          * @param lineSeg       The intercepted line segment.
          * @param edge          Relative edge of the line segment nearest to the
          *                      interception point.
-         * @param meetAtVertex  @c true= consider the interception incident with
-         *                      nearest edge.
          */
-        Intercept(double distance, LineSegmentSide &lineSeg, int edge,
-                  bool meetAtVertex);
+        Intercept(double distance, LineSegmentSide &lineSeg, int edge);
 
         bool operator < (Intercept const &other) const {
             return _distance < other._distance;
@@ -118,8 +115,6 @@ public:
         LineSegmentSide *beforeLineSegment() const;
         LineSegmentSide *afterLineSegment() const;
 
-        bool meetAtVertex() const;
-
 #ifdef DENG_DEBUG
         void debugPrint() const;
 #endif
@@ -132,7 +127,6 @@ public:
         /// a map line that has no Sector on the relevant side).
         LineSegmentSide *_before;
         LineSegmentSide *_after;
-        bool _meetAtVertex;
 
         /// Distance along the half-plane relative to the origin.
         double _distance;
@@ -182,16 +176,13 @@ public:
      * @param edge      Line segment edge identifier of the vertex to associate
      *                  with any resulting intercept.
      *
-     * @param meetAtVertex  @c true intercept point is close enough to the
-     *                      @a edge vertex to be considered incident.
-     *
      * @param edgeTips  Set of EdgeTips for the identified @a edge of
      *                  @a lineSeg. (@todo Refactor away -ds)
      *
      * @return  The resultant new intercept; otherwise @a 0.
      */
     Intercept *intercept(LineSegmentSide const &lineSeg, int edge,
-                         bool meetAtVertex, EdgeTips const &edgeTips);
+                         EdgeTips const &edgeTips);
 
     /**
      * Sort and then merge near-intercepts from the given list.

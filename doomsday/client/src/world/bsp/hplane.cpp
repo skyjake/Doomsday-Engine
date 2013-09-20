@@ -46,11 +46,9 @@
 namespace de {
 namespace bsp {
 
-HPlane::Intercept::Intercept(ddouble distance, LineSegmentSide &lineSeg, int edge,
-    bool meetAtVertex)
+HPlane::Intercept::Intercept(ddouble distance, LineSegmentSide &lineSeg, int edge)
     : _before(0),
       _after(0),
-      _meetAtVertex(meetAtVertex),
       _distance(distance),
       _lineSeg(&lineSeg),
       _edge(edge)
@@ -84,11 +82,6 @@ LineSegmentSide *HPlane::Intercept::beforeLineSegment() const
 LineSegmentSide *HPlane::Intercept::afterLineSegment() const
 {
     return _after;
-}
-
-bool HPlane::Intercept::meetAtVertex() const
-{
-    return _meetAtVertex;
 }
 
 #ifdef DENG_DEBUG
@@ -156,10 +149,8 @@ DENG2_PIMPL(HPlane)
         if(&cur.lineSegment().line() == &next.lineSegment().line())
             return;
 
-        bool curSelfRef  = (cur.lineSegment().hasMapSide() && cur.lineSegment().mapLine().isSelfReferencing());
-        bool nextSelfRef = (next.lineSegment().hasMapSide() && next.lineSegment().mapLine().isSelfReferencing());
-
-        if(curSelfRef && !nextSelfRef)
+        if(cur.lineSegmentIsSelfReferencing() &&
+           !next.lineSegmentIsSelfReferencing())
         {
             if(cur.before() && next.before())
                 cur._before = next._before;
@@ -274,7 +265,7 @@ double HPlane::intersect(LineSegmentSide const &lineSeg, int edge)
 }
 
 HPlane::Intercept *HPlane::intercept(LineSegmentSide const &lineSeg, int edge,
-    bool meetAtVertex, EdgeTips const &edgeTips)
+    EdgeTips const &edgeTips)
 {
     bool selfRef = (lineSeg.hasMapSide() && lineSeg.mapLine().isSelfReferencing());
 
@@ -291,8 +282,8 @@ HPlane::Intercept *HPlane::intercept(LineSegmentSide const &lineSeg, int edge,
     else
     {
         d->intercepts.append(
-            Intercept(intersect(lineSeg, edge), const_cast<LineSegmentSide &>(lineSeg),
-                      edge, meetAtVertex));
+            Intercept(intersect(lineSeg, edge),
+                      const_cast<LineSegmentSide &>(lineSeg), edge));
         icpt = &d->intercepts.last();
 
         // The addition of a new intercept means we'll need to resort.
