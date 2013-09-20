@@ -178,10 +178,6 @@ desc = Leave the current map.
 [setclass]
 desc = Set player class.
 
-[setmap]
-desc = Set map.
-inf = Params: setmap (episode) (map)\nFor example, 'setmap 1 7'.
-
 [spy]
 desc = Spy mode: cycle player views in co-op.
 

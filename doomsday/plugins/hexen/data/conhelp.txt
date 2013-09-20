@@ -194,10 +194,6 @@ desc = Show information about all scripts or one particular script.
 desc = Set player class.
 inf = Params: setclass (0-2).
 
-[setmap]
-desc = Set map.
-inf = Params: setmap (map)\nFor example, 'setmap 23'.
-
 [spy]
 desc = Change the viewplayer when not in deathmatch.
 

@@ -250,9 +250,6 @@ inf = Params: mipmap (0-5)\n0 = GL_NEAREST\n1 = GL_LINEAR\n2 = GL_NEAREST_MIPMAP
 [net]
 desc = Network setup and control.
 
-[panel]
-desc = Open the Doomsday Control Panel.
-
 [pausedemo]
 desc = Pause/resume demo recording.
 
@@ -283,6 +280,9 @@ desc = Start recording a demo.
 
 [reload]
 desc = Reloads the current game (if loaded).
+
+[rendedit]
+desc = Open the Renderer Appearance editor in a sidebar.
 
 [repeat]
 desc = Repeat a command at given intervals.
@@ -403,9 +403,6 @@ desc = glBSP: changes the cost assigned to edge splits (default: 7).
 
 [client-connect-timeout]
 desc = Maximum number of seconds to attempt connecting to a server.
-
-[client-pos-interval]
-desc = Number of tics between client coord packets.
 
 [con-move-speed]
 desc = Speed of console opening/closing.
@@ -592,6 +589,9 @@ desc = 1=Disable drawing of all sprites and masked walls.
 
 [rend-dev-polyobj-bbox]
 desc = 1=Render polyobj bounding boxes.
+
+[rend-dev-sector-show-indices]
+desc = 1=Enable drawing of sector indices, for debug.
 
 [rend-dev-sky-always]
 desc = 1=Always render the sky, even if there are no sky surfaces visible.

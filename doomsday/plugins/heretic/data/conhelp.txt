@@ -181,10 +181,6 @@ desc = Toggle God mode (invulnerability).
 [setclass]
 desc = Set player class.
 
-[setmap]
-desc = Set map.
-inf = Params: setmap (episode) (map)\nFor example, 'setmap 1 7'.
-
 [spy]
 desc = Change the viewplayer when not in deathmatch.
 

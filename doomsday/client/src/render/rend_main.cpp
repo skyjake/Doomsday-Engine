@@ -34,6 +34,8 @@
 #include "de_graphics.h"
 #include "de_ui.h"
 
+#include "ui/editors/rendererappearanceeditor.h"
+
 #include "edit_bias.h" /// @todo remove me
 #include "network/net_main.h" /// @todo remove me
 
@@ -95,6 +97,8 @@ void Rend_DrawBBox(Vector3d const &pos, coord_t w, coord_t l, coord_t h, float a
     float const color[3], float alpha, float br, bool alignToBase = true);
 
 void Rend_DrawArrow(Vector3d const &pos, float a, float s, float const color3f[3], float alpha);
+
+D_CMD(OpenRendererAppearanceEditor);
 
 int useBias; // Shadow Bias enabled? cvar
 
@@ -288,6 +292,8 @@ void Rend_Register()
     C_VAR_BYTE  ("rend-dev-vertex-show-bars",       &devVertexBars,                 CVF_NO_ARCHIVE, 0, 1);
     C_VAR_BYTE  ("rend-dev-surface-show-vectors",   &devSurfaceVectors,             CVF_NO_ARCHIVE, 0, 7);
     C_VAR_BYTE  ("rend-dev-soundorigins",           &devSoundOrigins,               CVF_NO_ARCHIVE, 0, 7);
+
+    C_CMD("rendedit", "", OpenRendererAppearanceEditor);
 
     RL_Register();
     BiasIllum::consoleRegister();
@@ -3816,4 +3822,24 @@ texturevariantspecification_t &Rend_MapSurfaceShinyMaskTextureSpec()
     return GL_TextureVariantSpec(TC_MAPSURFACE_REFLECTIONMASK, 0,
                                  0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1,
                                  true, false, false, false);
+}
+
+D_CMD(OpenRendererAppearanceEditor)
+{
+    DENG2_UNUSED3(src, argc, argv);
+
+    if(!App_GameLoaded())
+    {
+        LOG_ERROR("A game must be loaded before the Renderer Appearance editor can be opened");
+        return false;
+    }
+
+    if(!ClientWindow::main().hasSidebar())
+    {
+        // The editor sidebar will give its ownership automatically
+        // to the window.
+        RendererAppearanceEditor *editor = new RendererAppearanceEditor;
+        editor->open();
+    }
+    return true;
 }
