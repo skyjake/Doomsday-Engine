@@ -1,4 +1,4 @@
-/** @file world/bsp/hplane.cpp BSP Builder Half-plane.
+/** @file hplane.cpp World map BSP builder half-plane.
  *
  * Originally based on glBSP 2.24 (in turn, based on BSP 2.3)
  * @see http://sourceforge.net/projects/glbsp/
@@ -25,7 +25,8 @@
 
 #include <memory>
 
-#include <de/vector1.h> /// @todo remove me
+#include <de/vector1.h> // remove me
+#include <de/mathutil.h> // M_InverseAngle
 
 #include <QtAlgorithms>
 
@@ -45,18 +46,17 @@
 namespace de {
 namespace bsp {
 
-HPlane::Intercept::Intercept(ddouble distance, LineSegment::Side &lineSeg, int edge,
+HPlane::Intercept::Intercept(ddouble distance, LineSegmentSide &lineSeg, int edge,
     bool meetAtVertex)
-    : selfRef(false),
-      before(0),
-      after(0),
-      meetAtVertex(meetAtVertex),
+    : _before(0),
+      _after(0),
+      _meetAtVertex(meetAtVertex),
       _distance(distance),
       _lineSeg(&lineSeg),
       _edge(edge)
 {}
 
-LineSegment::Side &HPlane::Intercept::lineSegment() const
+LineSegmentSide &HPlane::Intercept::lineSegment() const
 {
     return *_lineSeg;
 }
@@ -66,50 +66,60 @@ int HPlane::Intercept::lineSegmentEdge() const
     return _edge;
 }
 
+Sector *HPlane::Intercept::before() const
+{
+    return _before? _before->sectorPtr() : 0;
+}
+
+Sector *HPlane::Intercept::after() const
+{
+    return _after? _after->sectorPtr() : 0;
+}
+
+LineSegmentSide *HPlane::Intercept::beforeLineSegment() const
+{
+    return _before;
+}
+
+LineSegmentSide *HPlane::Intercept::afterLineSegment() const
+{
+    return _after;
+}
+
+bool HPlane::Intercept::meetAtVertex() const
+{
+    return _meetAtVertex;
+}
+
 #ifdef DENG_DEBUG
 void HPlane::Intercept::debugPrint() const
 {
     LOG_INFO("Vertex #%i %s beforeSector: #%d afterSector: #%d %s")
         << vertex().indexInMap()
         << vertex().origin().asText()
-        << (before? before->indexInArchive() : -1)
-        << (after? after->indexInArchive() : -1)
-        << (selfRef? "SELFREF" : "");
+        << (_before && _before->hasSector()? _before->sector().indexInArchive() : -1)
+        << (_after && _after->hasSector()? _after->sector().indexInArchive() : -1);
 }
 #endif
 
 DENG2_PIMPL(HPlane)
 {
-    /// The partition line.
-    Partition partition;
+    Partition partition;          ///< The partition line.
+    coord_t length;               ///< Direction vector length.
+    coord_t angle;                ///< Cartesian world angle.
+    slopetype_t slopeType;        ///< Logical world angle classification.
 
-    /// Direction vector length.
-    coord_t length;
+    coord_t perp;                 ///< Perpendicular scale factor.
+    coord_t para;                 ///< Parallel scale factor.
 
-    /// World angle.
-    coord_t angle;
+    LineSegmentSide *lineSegment; ///< Source of the partition (if any, not owned).
 
-    /// Logical line slope (i.e., world angle) classification.
-    slopetype_t slopeType;
+    Intercepts intercepts;        ///< Points along the half-plane.
+    bool needSortIntercepts;      ///< @c true= @var intercepts requires sorting.
 
-    /// Perpendicular scale factor.
-    coord_t perp;
-
-    /// Parallel scale factor.
-    coord_t para;
-
-    /// Line segment from which the partition line was derived (if any).
-    LineSegment::Side *lineSegment;
-
-    /// Intercept points along the half-plane.
-    Intercepts intercepts;
-
-    /// Set to @c true when @var intercepts requires sorting.
-    bool needSortIntercepts;
-
-    Instance(Public *i, Partition const &partition_)
+    Instance(Public *i, Partition const &partition)
         : Base(i),
-          partition(partition_),
+          partition(partition),
           length(partition.direction.length()),
           angle(M_DirectionToAngleXY(partition.direction.x, partition.direction.y)),
           slopeType(M_SlopeTypeXY(partition.direction.x, partition.direction.y)),
@@ -120,26 +130,58 @@ DENG2_PIMPL(HPlane)
     {}
 
     /**
-     * Search the list of intercepts for to see if there is one for the
-     * specified @a vertex.
-     *
-     * @param vertex  The vertex to look for.
-     *
-     * @return  @c true iff an intercept for @a vertex was found.
+     * Find an intercept by @a vertex.
      */
-    bool haveInterceptForVertex(Vertex const &vertex) const
+    Intercept *interceptByVertex(Vertex const &vertex)
     {
         foreach(Intercept const &icpt, intercepts)
         {
             if(&icpt.vertex() == &vertex)
-                return true;
+                return const_cast<Intercept *>(&icpt);
         }
-        return false;
+        return 0;
+    }
+
+    /**
+     * Merges @a next into @a cur.
+     */
+    static void mergeIntercepts(HPlane::Intercept &cur, HPlane::Intercept const &next)
+    {
+        /*
+        LOG_AS("HPlane::mergeIntercepts");
+        cur.debugPrint();
+        next.debugPrint();
+        */
+
+        if(&cur.lineSegment().line() == &next.lineSegment().line())
+            return;
+
+        bool curSelfRef  = (cur.lineSegment().hasMapSide() && cur.lineSegment().mapLine().isSelfReferencing());
+        bool nextSelfRef = (next.lineSegment().hasMapSide() && next.lineSegment().mapLine().isSelfReferencing());
+
+        if(curSelfRef && !nextSelfRef)
+        {
+            if(cur.before() && next.before())
+                cur._before = next._before;
+
+            if(cur.after() && next.after())
+                cur._after = next._after;
+        }
+
+        if(!cur.before() && next.before())
+            cur._before = next._before;
+
+        if(!cur.after() && next.after())
+            cur._after = next._after;
+
+        /*
+        LOG_TRACE("Result:");
+        cur.debugPrint();
+        */
     }
 };
 
-HPlane::HPlane(Partition const &partition)
-    : d(new Instance(this, partition))
+HPlane::HPlane(Partition const &partition) : d(new Instance(this, partition))
 {}
 
 void HPlane::clearIntercepts()
@@ -149,7 +191,7 @@ void HPlane::clearIntercepts()
     d->needSortIntercepts = false;
 }
 
-void HPlane::configure(LineSegment::Side const &newBaseSeg)
+void HPlane::configure(LineSegmentSide const &newBaseSeg)
 {
     // Only map line segments are suitable.
     DENG_ASSERT(newBaseSeg.hasMapSide());
@@ -165,7 +207,7 @@ void HPlane::configure(LineSegment::Side const &newBaseSeg)
     d->partition.direction = mapSide.to().origin() - mapSide.from().origin();
     d->partition.origin    = mapSide.from().origin();
 
-    d->lineSegment = const_cast<LineSegment::Side *>(&newBaseSeg);
+    d->lineSegment = const_cast<LineSegmentSide *>(&newBaseSeg);
 
     d->length    = d->partition.direction.length();
     d->angle     = M_DirectionToAngleXY(d->partition.direction.x, d->partition.direction.y);
@@ -189,7 +231,7 @@ void HPlane::configure(LineSegment::Side const &newBaseSeg)
  *
  * @return  The "open" sector at this angle; otherwise @c 0 (closed).
  */
-static Sector *openSectorAtAngle(EdgeTips const &tips, coord_t angle)
+static LineSegmentSide *lineSegAtAngle(EdgeTips const &tips, coord_t angle)
 {
     DENG_ASSERT(!tips.isEmpty());
 
@@ -213,18 +255,17 @@ static Sector *openSectorAtAngle(EdgeTips const &tips, coord_t angle)
         EdgeTip const &tip = *it;
         if(angle + ANG_EPSILON < tip.angle())
         {
-            // Found it.
-            return (tip.hasFront()? tip.front().sectorPtr() : 0);
+            return tip.hasFront()? &tip.front() : 0;
         }
     }
 
     // Not found. The open sector will therefore be on the back of the tip
     // at the greatest angle.
     EdgeTip const &tip = tips.all().back();
-    return (tip.hasBack()? tip.back().sectorPtr() : 0);
+    return tip.hasBack()? &tip.back() : 0;
 }
 
-double HPlane::intersect(LineSegment::Side const &lineSeg, int edge)
+double HPlane::intersect(LineSegmentSide const &lineSeg, int edge)
 {
     Vertex &vertex = lineSeg.vertex(edge);
     coord_t pointV1[2] = { vertex.origin().x, vertex.origin().y };
@@ -232,64 +273,38 @@ double HPlane::intersect(LineSegment::Side const &lineSeg, int edge)
     return V2d_PointLineParaDistance(pointV1, directionV1, d->para, d->length);
 }
 
-HPlane::Intercept *HPlane::intercept(LineSegment::Side const &lineSeg, int edge,
+HPlane::Intercept *HPlane::intercept(LineSegmentSide const &lineSeg, int edge,
     bool meetAtVertex, EdgeTips const &edgeTips)
 {
+    bool selfRef = (lineSeg.hasMapSide() && lineSeg.mapLine().isSelfReferencing());
+
     // Already present for this vertex?
-    Vertex &vertex = lineSeg.vertex(edge);
-    if(d->haveInterceptForVertex(vertex)) return 0;
-
-    coord_t distToVertex = intersect(lineSeg, edge);
-
-    d->intercepts.append(Intercept(distToVertex, const_cast<LineSegment::Side &>(lineSeg), edge, meetAtVertex));
-    Intercept *newIntercept = &d->intercepts.last();
-
-    newIntercept->selfRef = (lineSeg.hasMapSide() && lineSeg.mapLine().isSelfReferencing());
-
-    newIntercept->before = openSectorAtAngle(edgeTips, inverseAngle());
-    newIntercept->after  = openSectorAtAngle(edgeTips, angle());
-
-    // The addition of a new intercept means we'll need to resort.
-    d->needSortIntercepts = true;
-
-    return newIntercept;
-}
-
-/**
- * Merges @a next into @a cur.
- */
-static void mergeIntercepts(HPlane::Intercept &cur, HPlane::Intercept const &next)
-{
-    /*
-    LOG_AS("HPlane::mergeIntercepts");
-    cur.debugPrint();
-    next.debugPrint();
-    */
-
-    if(&cur.lineSegment().line() == &next.lineSegment().line())
-        return;
-
-    if(cur.selfRef && !next.selfRef)
+    Intercept *icpt;
+    if((icpt = d->interceptByVertex(lineSeg.vertex(edge))))
     {
-        if(cur.before && next.before)
-            cur.before = next.before;
+        // If the new intercept line is not self-referencing we'll replace it.
+        if(!(icpt->lineSegmentIsSelfReferencing() && !selfRef))
+        {
+            return icpt;
+        }
+    }
+    else
+    {
+        d->intercepts.append(
+            Intercept(intersect(lineSeg, edge), const_cast<LineSegmentSide &>(lineSeg),
+                      edge, meetAtVertex));
+        icpt = &d->intercepts.last();
 
-        if(cur.after && next.after)
-            cur.after = next.after;
-
-        cur.selfRef = false;
+        // The addition of a new intercept means we'll need to resort.
+        d->needSortIntercepts = true;
     }
 
-    if(!cur.before && next.before)
-        cur.before = next.before;
+    icpt->_lineSeg = const_cast<LineSegmentSide *>(&lineSeg);
+    icpt->_edge    = edge;
+    icpt->_before  = lineSegAtAngle(edgeTips, inverseAngle());
+    icpt->_after   = lineSegAtAngle(edgeTips, angle());
 
-    if(!cur.after && next.after)
-        cur.after = next.after;
-
-    /*
-    LOG_TRACE("Result:");
-    cur.debugPrint();
-    */
+    return icpt;
 }
 
 void HPlane::sortAndMergeIntercepts()
@@ -318,7 +333,7 @@ void HPlane::sortAndMergeIntercepts()
         if(distance <= HPLANE_INTERCEPT_MERGE_DISTANCE_EPSILON)
         {
             // Yes - merge the "next" intercept into "cur".
-            mergeIntercepts(cur, next);
+            d->mergeIntercepts(cur, next);
 
             // Destroy the "next" intercept.
             d->intercepts.removeAt(i+1);
@@ -341,17 +356,22 @@ coord_t HPlane::angle() const
     return d->angle;
 }
 
+coord_t HPlane::inverseAngle() const
+{
+    return M_InverseAngle(angle());
+}
+
 slopetype_t HPlane::slopeType() const
 {
     return d->slopeType;
 }
 
-LineSegment::Side *HPlane::lineSegment() const
+LineSegmentSide *HPlane::lineSegment() const
 {
     return d->lineSegment;
 }
 
-void HPlane::distance(LineSegment::Side const &lineSeg, coord_t *fromDist, coord_t *toDist) const
+void HPlane::distance(LineSegmentSide const &lineSeg, coord_t *fromDist, coord_t *toDist) const
 {
     // Any work to do?
     if(!fromDist && !toDist) return;
@@ -382,7 +402,7 @@ void HPlane::distance(LineSegment::Side const &lineSeg, coord_t *fromDist, coord
     }
 }
 
-LineRelationship HPlane::relationship(LineSegment::Side const &lineSeg,
+LineRelationship HPlane::relationship(LineSegmentSide const &lineSeg,
     coord_t *retFromDist, coord_t *retToDist) const
 {
     coord_t fromDist, toDist;

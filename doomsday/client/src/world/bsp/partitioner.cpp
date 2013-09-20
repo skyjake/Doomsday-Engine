@@ -715,7 +715,7 @@ DENG2_PIMPL(Partitioner)
         return point;
     }
 
-    /// @todo refactor away -ds
+    /// @todo refactor away
     inline void interceptPartition(LineSegment::Side &seg, int edge, bool meetAtVertex = false)
     {
         hplane.intercept(seg, edge, meetAtVertex, edgeTips(seg.vertex(edge)));
@@ -910,8 +910,7 @@ DENG2_PIMPL(Partitioner)
         }
 
         // Create new line segments.
-        Sector *prevSector = 0;
-        for(int i = 0; i < hplane.intercepts().count() - 1; ++i)
+        for(int i = 0; i < hplane.interceptCount() - 1; ++i)
         {
             HPlane::Intercept const &cur  = hplane.intercepts()[i];
             HPlane::Intercept const &next = hplane.intercepts()[i+1];
@@ -920,32 +919,27 @@ DENG2_PIMPL(Partitioner)
             if(partSeg && cur.distance() >= nearDist && next.distance() <= farDist)
                 continue;
 
-            if(!cur.after && !next.before)
-            {
-                prevSector = 0;
+            if(!cur.after() && !next.before())
                 continue;
-            }
 
             // Check for some nasty open/closed or close/open cases.
-            if(cur.after && !next.before)
+            if(cur.after() && !next.before())
             {
-                if(!cur.selfRef)
+                if(!cur.lineSegmentIsSelfReferencing())
                 {
                     Vector2d nearPoint = (cur.vertex().origin() + next.vertex().origin()) / 2;
-                    notifyUnclosedSectorFound(*cur.after, nearPoint);
+                    notifyUnclosedSectorFound(*cur.after(), nearPoint);
                 }
-                prevSector = 0;
                 continue;
             }
 
-            if(!cur.after && next.before)
+            if(!cur.after() && next.before())
             {
-                if(!next.selfRef)
+                if(!next.lineSegmentIsSelfReferencing())
                 {
                     Vector2d nearPoint = (cur.vertex().origin() + next.vertex().origin()) / 2;
-                    notifyUnclosedSectorFound(*next.before, nearPoint);
+                    notifyUnclosedSectorFound(*next.before(), nearPoint);
                 }
-                prevSector = 0;
                 continue;
             }
 
@@ -955,35 +949,35 @@ DENG2_PIMPL(Partitioner)
             Vertex &fromVertex = cur.vertex();
             Vertex &toVertex   = next.vertex();
 
-            Sector *sector = cur.after;
-            if(prevSector && cur.meetAtVertex && cur.before == cur.after)
+            Sector *sector = cur.after();
+            if(!cur.before() && next.before() == next.after())
             {
-                sector = prevSector;
-            }
-            else if(prevSector && next.meetAtVertex && next.before == next.after)
-            {
-                sector = prevSector;
-            }
-            else if(!cur.before && next.before == next.after)
-            {
-                sector = next.before;
+                sector = next.before();
             }
             else
             {
                 // Choose the non-self-referencing sector when we can.
-                if(cur.after != next.before)
+                if(cur.after() != next.before())
                 {
-                    if(!cur.selfRef && !next.selfRef)
+                    if(!cur.lineSegmentIsSelfReferencing() &&
+                       !next.lineSegmentIsSelfReferencing())
                     {
                         LOG_DEBUG("Sector mismatch #%d %s != #%d %s.")
-                            << cur.after->indexInMap()
+                            << cur.after()->indexInMap()
                             << cur.vertex().origin().asText()
-                            << next.before->indexInMap()
+                            << next.before()->indexInMap()
                             << next.vertex().origin().asText();
                     }
 
-                    if(cur.selfRef && !next.selfRef)
-                        sector = next.before;
+                    LineSegmentSide *afterSeg = cur.afterLineSegment();
+                    if(afterSeg->hasMapLine() && afterSeg->mapLine().isSelfReferencing())
+                    {
+                        LineSegmentSide *beforeSeg = next.beforeLineSegment();
+                        if(beforeSeg->hasMapLine() && !beforeSeg->mapLine().isSelfReferencing())
+                        {
+                            sector = next.before();
+                        }
+                    }
                 }
             }
 
@@ -1007,8 +1001,6 @@ DENG2_PIMPL(Partitioner)
                 << toVertex.origin().asText()
                 << sector->indexInArchive();
             */
-
-            prevSector = sector;
         }
     }
 

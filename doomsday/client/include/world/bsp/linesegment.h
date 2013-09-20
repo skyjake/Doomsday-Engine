@@ -163,6 +163,9 @@ public:
          */
         bool hasMapSide() const;
 
+        /// @copydoc hasMapSide()
+        inline bool hasMapLine() { return hasMapSide(); }
+
         /**
          * Returns the map LineSide attributed to "this" side of the line segment.
          *
@@ -558,6 +561,8 @@ public:
 private:
     DENG2_PRIVATE(d)
 };
+
+typedef LineSegment::Side LineSegmentSide;
 
 } // namespace bsp
 } // namespace de

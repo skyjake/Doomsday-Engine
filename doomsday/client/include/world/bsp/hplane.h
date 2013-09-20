@@ -28,8 +28,6 @@
 
 #include <QList>
 
-#include <de/mathutil.h> // M_InverseAngle
-
 #include <de/Vector>
 
 #include "world/bsp/linesegment.h"
@@ -59,19 +57,18 @@ public:
      */
     class Intercept
     {
-    public: /// @todo make private:
-        // True if this intersection was on a self-referencing line.
-        bool selfRef;
-
-        /// Sector on each side of the vertex (along the partition), or @c 0
-        /// if that direction is "closed" (i.e., the intercept point is along
-        /// a map line that has no Sector on the relevant side).
-        Sector *before;
-        Sector *after;
-        bool meetAtVertex;
-
     public:
-        Intercept(double distance, LineSegment::Side &lineSeg, int edge,
+        /**
+         * Construct a new intercept.
+         *
+         * @param distance      Distance from the origin of the partition line.
+         * @param lineSeg       The intercepted line segment.
+         * @param edge          Relative edge of the line segment nearest to the
+         *                      interception point.
+         * @param meetAtVertex  @c true= consider the interception incident with
+         *                      nearest edge.
+         */
+        Intercept(double distance, LineSegmentSide &lineSeg, int edge,
                   bool meetAtVertex);
 
         bool operator < (Intercept const &other) const {
@@ -93,7 +90,12 @@ public:
         /**
          * Returns the intercepted line segment.
          */
-        LineSegment::Side &lineSegment() const;
+        LineSegmentSide &lineSegment() const;
+
+        inline bool lineSegmentIsSelfReferencing() const {
+            LineSegmentSide &seg = lineSegment();
+            return seg.hasMapLine() && seg.mapLine().isSelfReferencing();
+        }
 
         /**
          * Returns the identifier for the relevant edge of the intercepted
@@ -110,16 +112,33 @@ public:
             return lineSegment().vertex(lineSegmentEdge());
         }
 
+        Sector *before() const;
+        Sector *after() const;
+
+        LineSegmentSide *beforeLineSegment() const;
+        LineSegmentSide *afterLineSegment() const;
+
+        bool meetAtVertex() const;
+
 #ifdef DENG_DEBUG
         void debugPrint() const;
 #endif
 
+        friend class HPlane;
+
     private:
+        /// Sector on each side of the vertex (along the partition), or @c 0
+        /// if that direction is "closed" (i.e., the intercept point is along
+        /// a map line that has no Sector on the relevant side).
+        LineSegmentSide *_before;
+        LineSegmentSide *_after;
+        bool _meetAtVertex;
+
         /// Distance along the half-plane relative to the origin.
         double _distance;
 
         // The intercepted line segment and edge identifier.
-        LineSegment::Side *_lineSeg;
+        LineSegmentSide *_lineSeg;
         int _edge;
     };
 
@@ -136,7 +155,7 @@ public:
      *
      * @param newLineSeg  The "new" line segment to configure using.
      */
-    void configure(LineSegment::Side const &newLineSeg);
+    void configure(LineSegmentSide const &newLineSeg);
 
     /**
      * Perform intersection of the half-plane with the specified @a lineSeg
@@ -150,7 +169,7 @@ public:
      * @return  Distance to intersection point along the half-plane (relative
      *          to the origin).
      */
-    double intersect(LineSegment::Side const &lineSeg, int edge);
+    double intersect(LineSegmentSide const &lineSeg, int edge);
 
     /**
      * Perform intersection of the half-plane with the specified @a lineSeg.
@@ -171,7 +190,7 @@ public:
      *
      * @return  The resultant new intercept; otherwise @a 0.
      */
-    Intercept *intercept(LineSegment::Side const &lineSeg, int edge,
+    Intercept *intercept(LineSegmentSide const &lineSeg, int edge,
                          bool meetAtVertex, EdgeTips const &edgeTips);
 
     /**
@@ -222,7 +241,7 @@ public:
      *
      * @see angle()
      */
-    inline coord_t inverseAngle() const { return M_InverseAngle(angle()); }
+    coord_t inverseAngle() const;
 
     /**
      * Returns the logical @em slopetype for the partition line (which, is determined
@@ -238,7 +257,7 @@ public:
      * chosen as the half-plane partition. May return @c 0 (if no map line was
      * attributed).
      */
-    LineSegment::Side *lineSegment() const;
+    LineSegmentSide *lineSegment() const;
 
     /**
      * Calculate @em perpendicular distances from one or both of the vertexe(s)
@@ -254,7 +273,7 @@ public:
      * @param fromDist  Perpendicular distance from the "from" vertex. Can be @c 0.
      * @param toDist    Perpendicular distance from the "to" vertex. Can be @c 0.
      */
-    void distance(LineSegment::Side const &lineSegment, coord_t *fromDist = 0,
+    void distance(LineSegmentSide const &lineSegment, coord_t *fromDist = 0,
                   coord_t *toDist = 0) const;
 
     /**
@@ -270,7 +289,7 @@ public:
      *
      * @return LineRelationship between the partition line and the line segment.
      */
-    LineRelationship relationship(LineSegment::Side const &lineSegment,
+    LineRelationship relationship(LineSegmentSide const &lineSegment,
                                   coord_t *retFromDist, coord_t *retToDist) const;
 
     /**
@@ -283,9 +302,16 @@ public:
      */
     Intercepts const &intercepts() const;
 
+    /**
+     * Returns the current number of half-plane intercepts.
+     */
+    inline int interceptCount() const { return intercepts().count(); }
+
 private:
     DENG2_PRIVATE(d)
 };
+
+typedef HPlane::Intercept HPlaneIntercept;
 
 } // namespace bsp
 } // namespace de
