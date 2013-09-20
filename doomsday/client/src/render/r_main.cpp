@@ -1308,6 +1308,9 @@ double R_ViewerLumobjDistance(int idx)
 
 bool R_ViewerLumobjIsClipped(int idx)
 {
+    // If we are not yet prepared for this, just say everything is clipped.
+    if(!luminousClipped) return true;
+
     /// @todo Do not assume the current map.
     if(idx >= 0 && idx < App_World().map().lumobjCount())
     {
@@ -1318,6 +1321,9 @@ bool R_ViewerLumobjIsClipped(int idx)
 
 bool R_ViewerLumobjIsHidden(int idx)
 {
+    // If we are not yet prepared for this, just say everything is hidden.
+    if(!luminousClipped) return true;
+
     /// @todo Do not assume the current map.
     if(idx >= 0 && idx < App_World().map().lumobjCount())
     {
