@@ -1,5 +1,11 @@
 /** @file vector.h Vector templates.
  *
+ * The Vector templates use the convention that in an expression, the type of
+ * the left-hand operand defines which type is used for the operation. For
+ * instance, when comparing a < b, where @a a is a 2D vector and @a b is a 3D
+ * vector, the comparison only involves the first two components of @a b
+ * (comparing as a 2D vector).
+ *
  * @authors Copyright © 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
  *
@@ -37,6 +43,20 @@
 #endif
 
 namespace de {
+
+// Function for comparing numbers for equality in the Vector templates.
+template <typename T>
+inline bool numberEqual(T const &a, T const &b) {
+    return a == b;
+}
+template <>
+inline bool numberEqual(dfloat const &a, dfloat const &b) {
+    return fequal(a, b);
+}
+template <>
+inline bool numberEqual(ddouble const &a, ddouble const &b) {
+    return fequal(a, b);
+}
 
 /**
  * Template class for 2D vectors (points). The members are public for
@@ -119,17 +139,25 @@ public:
     inline Vector2 &operator /= (ddouble scalar) {
         return (*this) *= 1.0 / scalar;
     }
+    inline bool operator == (Vector2 const &other) const {
+        return numberEqual(x, other.x) && numberEqual(y, other.y);
+    }
+    inline bool operator != (Vector2 const &other) const {
+        return !(*this == other);
+    }
     bool operator > (Vector2 const &other) const {
+        if(x == other.x) return y > other.y;
         return x > other.x && y > other.y;
     }
     bool operator < (Vector2 const &other) const {
+        if(x == other.x) return y < other.y;
         return x < other.x && y < other.y;
     }
     bool operator >= (Vector2 const &other) const {
-        return x >= other.x && y >= other.y;
+        return *this == other || *this > other;
     }
     bool operator <= (Vector2 const &other) const {
-        return x <= other.x && y <= other.y;
+        return *this == other || *this < other;
     }
     ddouble length() const {
         return std::sqrt(ddouble(x*x + y*y));
@@ -287,17 +315,25 @@ public:
     inline Vector3 &operator /= (ddouble scalar) {
         return (*this) *= 1.0 / scalar;
     }
+    inline bool operator == (Vector3 const &other) const {
+        return Vector2<Type>::operator == (other) && numberEqual(z, other.z);
+    }
+    inline bool operator != (Vector3 const &other) const {
+        return !(*this == other);
+    }
     bool operator > (Vector3 const &other) const {
+        if(Vector2<Type>::operator == (other)) return z > other.z;
         return Vector2<Type>::operator > (other) && z > other.z;
     }
     bool operator < (Vector3 const &other) const {
+        if(Vector2<Type>::operator == (other)) return z < other.z;
         return Vector2<Type>::operator < (other) && z < other.z;
     }
     bool operator >= (Vector3 const &other) const {
-        return Vector2<Type>::operator >= (other) && z >= other.z;
+        return *this == other || *this > other;
     }
     bool operator <= (Vector3 const &other) const {
-        return Vector2<Type>::operator <= (other) && z <= other.z;
+        return *this == other || *this < other;
     }
     ddouble length() const {
         return std::sqrt(Vector2<Type>::x*Vector2<Type>::x + Vector2<Type>::y*Vector2<Type>::y + z*z);
@@ -481,17 +517,25 @@ public:
     inline Vector4 &operator /= (ddouble scalar) {
         return (*this) *= 1.0 / scalar;
     }
+    inline bool operator == (Vector4 const &other) const {
+        return Vector3<Type>::operator == (other) && numberEqual(w, other.w);
+    }
+    inline bool operator != (Vector4 const &other) const {
+        return !(*this == other);
+    }
     bool operator > (Vector4 const &other) const {
+        if(Vector3<Type>::operator == (other)) return w > other.w;
         return Vector3<Type>::operator > (other) && w > other.w;
     }
     bool operator < (Vector4 const &other) const {
+        if(Vector3<Type>::operator == (other)) return w < other.w;
         return Vector3<Type>::operator < (other) && w < other.w;
     }
     bool operator >= (Vector4 const &other) const {
-        return Vector3<Type>::operator >= (other) && w >= other.w;
+        return *this == other || *this > other;
     }
     bool operator <= (Vector4 const &other) const {
-        return Vector3<Type>::operator <= (other) && w <= other.w;
+        return *this == other || *this < other;
     }
     String asText() const {
         String str;
@@ -592,132 +636,6 @@ QTextStream &operator << (QTextStream &os, Vector4<Type> const &vec4)
 {
     os << "(" << vec4.x << ", " << vec4.y << ", " << vec4.z << ", " << vec4.w << ")";
     return os;
-}
-
-// Equality operators for integer types.
-inline bool operator == (Vector2<dint> const &a, Vector2<dint> const &b)
-{
-    return a.x == b.x && a.y == b.y;
-}
-
-inline bool operator == (Vector3<dint> const &a, Vector3<dint> const &b)
-{
-    return a.x == b.x && a.y == b.y && a.z == b.z;
-}
-
-inline bool operator == (Vector4<dint> const &a, Vector4<dint> const &b)
-{
-    return a.x == b.x && a.y == b.y && a.z == b.z && a.w == b.w;
-}
-
-inline bool operator == (Vector2<duint> const &a, Vector2<duint> const &b)
-{
-    return a.x == b.x && a.y == b.y;
-}
-
-inline bool operator == (Vector3<duint> const &a, Vector3<duint> const &b)
-{
-    return a.x == b.x && a.y == b.y && a.z == b.z;
-}
-
-inline bool operator == (Vector4<duint> const &a, Vector4<duint> const &b)
-{
-    return a.x == b.x && a.y == b.y && a.z == b.z && a.w == b.w;
-}
-
-// Inequality operators for integer types.
-inline bool operator != (Vector2<dint> const &a, Vector2<dint> const &b)
-{
-    return !(a == b);
-}
-
-inline bool operator != (Vector3<dint> const &a, Vector3<dint> const &b)
-{
-    return !(a == b);
-}
-
-inline bool operator != (Vector4<dint> const &a, Vector4<dint> const &b)
-{
-    return !(a == b);
-}
-
-inline bool operator != (Vector2<duint> const &a, Vector2<duint> const &b)
-{
-    return !(a == b);
-}
-
-inline bool operator != (Vector3<duint> const &a, Vector3<duint> const &b)
-{
-    return !(a == b);
-}
-
-inline bool operator != (Vector4<duint> const &a, Vector4<duint> const &b)
-{
-    return !(a == b);
-}
-
-// Equality operators for single-precision floating-point types.
-inline bool operator == (Vector2<dfloat> const &a, Vector2<dfloat> const &b)
-{
-    return de::fequal(a.x, b.x) && de::fequal(a.y, b.y);
-}
-
-inline bool operator == (Vector3<dfloat> const &a, Vector3<dfloat> const &b)
-{
-    return de::fequal(a.x, b.x) && de::fequal(a.y, b.y) && de::fequal(a.z, b.z);
-}
-
-inline bool operator == (Vector4<dfloat> const &a, Vector4<dfloat> const &b)
-{
-    return de::fequal(a.x, b.x) && de::fequal(a.y, b.y) && de::fequal(a.z, b.z) && de::fequal(a.w, b.w);
-}
-
-// Equality operators for double-precision floating-point types.
-inline bool operator == (Vector2<ddouble> const &a, Vector2<ddouble> const &b)
-{
-    return de::fequal(a.x, b.x) && de::fequal(a.y, b.y);
-}
-
-inline bool operator == (Vector3<ddouble> const &a, Vector3<ddouble> const &b)
-{
-    return de::fequal(a.x, b.x) && de::fequal(a.y, b.y) && de::fequal(a.z, b.z);
-}
-
-inline bool operator == (Vector4<ddouble> const &a, Vector4<ddouble> const &b)
-{
-    return de::fequal(a.x, b.x) && de::fequal(a.y, b.y) && de::fequal(a.z, b.z) && de::fequal(a.w, b.w);
-}
-
-// Inequality operators for single-precision floating-point types.
-inline bool operator != (Vector2<dfloat> const &a, Vector2<dfloat> const &b)
-{
-    return !(a == b);
-}
-
-inline bool operator != (Vector3<dfloat> const &a, Vector3<dfloat> const &b)
-{
-    return !(a == b);
-}
-
-inline bool operator != (Vector4<dfloat> const &a, Vector4<dfloat> const &b)
-{
-    return !(a == b);
-}
-
-// Inequality operators for double-precision floating-point types.
-inline bool operator != (Vector2<ddouble> const &a, Vector2<ddouble> const &b)
-{
-    return !(a == b);
-}
-
-inline bool operator != (Vector3<ddouble> const &a, Vector3<ddouble> const &b)
-{
-    return !(a == b);
-}
-
-inline bool operator != (Vector4<ddouble> const &a, Vector4<ddouble> const &b)
-{
-    return !(a == b);
 }
 
 ///@{
