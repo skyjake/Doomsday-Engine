@@ -168,6 +168,15 @@ DENG2_OBSERVES(Plane, HeightChange)
         // Update the z-height origin of our sound emitter right away.
         emitter.origin[VZ] = (self.floor().height() + self.ceiling().height()) / 2;
 
+#ifdef __CLIENT__
+        // A plane move means we must re-apply missing material fixes.
+        foreach(LineSide *side, sides)
+        {
+            side->fixMissingMaterials();
+            side->back().fixMissingMaterials();
+        }
+#endif
+
         updateDependentSurfaceSoundEmitterOrigins();
     }
 

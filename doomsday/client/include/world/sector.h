@@ -119,8 +119,8 @@ public:
         inline Plane &floor() const { return plane(Sector::Floor); }
 
         /**
-         * Returns the sector plane which defines the @em physical ceiling of the
-         * cluster.
+         * Returns the sector plane which defines the @em physical ceiling of
+         * the cluster.
          * @see hasSector(), plane()
          */
         inline Plane &ceiling() const { return plane(Sector::Ceiling); }
@@ -146,6 +146,13 @@ public:
          * @see hasSector(), ceiling()
          */
         inline Plane &visCeiling() const { return visPlane(Sector::Ceiling); }
+
+        /**
+         * To be called to force re-evaluation of mapped visual planes. This is
+         * only necessary when a surface material change occurs on boundary line
+         * of the cluster.
+         */
+        void markVisPlanesDirty();
 
         /**
          * Provides access to the list of all BSP leafs in the cluster, for

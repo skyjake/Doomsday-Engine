@@ -596,13 +596,6 @@ DENG2_OBSERVES(Plane, HeightChange)
         }
 
 #ifdef __CLIENT__
-        // A plane move means we must re-apply missing material fixes.
-        /// @todo optimize: Defer until actually necessary.
-        foreach(LineSide *side, self.sector().sides())
-        {
-            side->fixMissingMaterials();
-        }
-
         // We'll need to recalculate environmental audio characteristics.
         needReverbUpdate = true;
 
@@ -858,6 +851,12 @@ AudioEnvironmentFactors const &Sector::Cluster::reverb() const
         d->updateReverb();
     }
     return d->reverb;
+}
+
+void Sector::Cluster::markVisPlanesDirty()
+{
+    d->maybeInvalidateMapping(Sector::Floor);
+    d->maybeInvalidateMapping(Sector::Ceiling);
 }
 
 #endif // __CLIENT__

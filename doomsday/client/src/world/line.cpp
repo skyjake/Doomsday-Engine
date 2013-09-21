@@ -701,7 +701,7 @@ static Material *chooseFixMaterial(LineSide &side, int section)
         }
         else if(section == LineSide::Top)
         {
-            if(frontSec->ceiling().height()  > backSec->ceiling().height())
+            if(frontSec->ceiling().height() > backSec->ceiling().height())
             {
                 choice1 = backSec->ceilingSurface().materialPtr();
             }
@@ -785,10 +785,30 @@ static void addMissingMaterial(LineSide &side, int section)
 
     // A material must actually be missing to qualify for fixing.
     Surface &surface = side.surface(section);
-    if(surface.hasMaterial()) return;
+    if(surface.hasMaterial() && !surface.hasFixMaterial())
+        return;
 
-    // Look for and apply a suitable replacement if found.
+    Material *oldMaterial = surface.materialPtr();
+
+    // Look for and apply a suitable replacement (if found).
     surface.setMaterial(chooseFixMaterial(side, section), true/* is missing fix */);
+
+    if(oldMaterial == surface.materialPtr())
+        return;
+
+    // We'll need to recalculate reverb.
+    if(HEdge *hedge = side.leftHEdge())
+    {
+        if(hedge->hasFace())
+        {
+            BspLeaf &bspLeaf = hedge->face().mapElement()->as<BspLeaf>();
+            if(bspLeaf.hasCluster())
+            {
+                bspLeaf.cluster().markReverbDirty();
+                bspLeaf.cluster().markVisPlanesDirty();
+            }
+        }
+    }
 
     // During map setup we log missing materials.
     if(ddMapSetup && verbose)
@@ -800,22 +820,6 @@ static void addMissingMaterial(LineSide &side, int section)
             << (side.isBack()? "Back" : "Front") << side.line().indexInMap()
             << (section == LineSide::Middle? "middle" : section == LineSide::Top? "top" : "bottom")
             << path;
-    }
-
-    if(surface.hasMaterial())
-    {
-        // We'll need to recalculate reverb.
-        if(HEdge *hedge = side.leftHEdge())
-        {
-            if(hedge->hasFace())
-            {
-                BspLeaf &bspLeaf = hedge->face().mapElement()->as<BspLeaf>();
-                if(bspLeaf.hasCluster())
-                {
-                    bspLeaf.cluster().markReverbDirty();
-                }
-            }
-        }
     }
 }
 
@@ -834,10 +838,10 @@ void Line::Side::fixMissingMaterials()
             {
                 addMissingMaterial(*this, LineSide::Bottom);
             }
-            /*else if(frontSec.floor().height() > backSec.floor().height())
+            else if(bottom().hasFixMaterial())
             {
-                addMissingMaterial(&back(), LineSide::Bottom);
-            }*/
+                bottom().setMaterial(0);
+            }
         }
 
         // A potential top section fix?
@@ -848,10 +852,10 @@ void Line::Side::fixMissingMaterials()
             {
                 addMissingMaterial(*this, LineSide::Top);
             }
-            /*else if(backSec.ceiling().height() > frontSec.ceiling().height())
+            else if(top().hasFixMaterial())
             {
-                addMissingMaterial(back(), LineSide::Top);
-            }*/
+                top().setMaterial(0);
+            }
         }
     }
     else

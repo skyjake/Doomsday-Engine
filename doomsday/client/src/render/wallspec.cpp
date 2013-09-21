@@ -19,6 +19,7 @@
 
 #include "de_base.h"
 
+#include "Sector"
 #include "Surface"
 #include "world/p_players.h" // viewPlayer
 
@@ -39,8 +40,13 @@ static bool useWallSectionLightLevelDeltas(LineSide const &side, int section)
 
     // Never if the surface's material was chosen as a HOM fix (lighting must
     // be consistent with that applied to the relative back sector plane).
-    if(side.hasSector() && side.back().hasSector() && side.surface(section).hasFixMaterial())
-        return false;
+    if(side.surface(section).hasFixMaterial() &&
+       side.hasSector() && side.back().hasSector())
+    {
+        Sector &backSector = side.back().sector();
+        if(backSector.floor().height() < backSector.ceiling().height())
+            return false;
+    }
 
     return true;
 }
