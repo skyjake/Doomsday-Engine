@@ -108,6 +108,7 @@ mobj_t *P_MobjCreate(thinkfunc_t function, coord_t const pos[3], angle_t angle,
     mo->radius = radius;
     mo->height = height;
     mo->ddFlags = ddflags;
+    mo->lumIdx = -1;
     mo->thinker.function = function;
     if(mo->thinker.function)
     {
