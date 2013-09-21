@@ -45,10 +45,10 @@ struct flare_t
 
 D_CMD(FlareConfig);
 
-int     haloMode = 5, haloBright = 35, haloSize = 80;
+int     haloMode = 5, haloBright = 45, haloSize = 80;
 int     haloRealistic = true;
 int     haloOccludeSpeed = 48;
-float   haloZMagDiv = 100, haloMinRadius = 20;
+float   haloZMagDiv = 62, haloMinRadius = 20;
 float   haloDimStart = 10, haloDimEnd = 100;
 
 float   haloFadeMax = 0, haloFadeMin = 0, minHaloSize = 1;

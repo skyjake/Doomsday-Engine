@@ -373,7 +373,7 @@ DENG2_OBSERVES(App, GameChange)
 
         clearProfiles();
 
-        // Read all fixed profiles from /data/profiles/(persistentName)/
+        // Read all fixed profiles from */profiles/(persistentName)/
         FS::FoundFiles folders;
         App::fileSystem().findAll(String("profiles") / persistentName, folders);
         DENG2_FOR_EACH(FS::FoundFiles, i, folders)
