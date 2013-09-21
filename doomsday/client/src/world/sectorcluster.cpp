@@ -264,17 +264,33 @@ DENG2_OBSERVES(Plane, HeightChange)
                             {
                                 flags &= ~AllSelfRef;
 
-                                LineSide const &lineSide = seg.lineSide();
-                                if(lineSide.bottom().hasMaterial() &&
-                                   !lineSide.bottom().hasFixMaterial())
+                                LineSide const &frontSide = seg.lineSide();
+                                if(frontSide.bottom().hasMaterial() &&
+                                   !frontSide.bottom().hasFixMaterial())
                                 {
                                     flags &= ~AllMissingBottom;
                                 }
 
-                                if(lineSide.top().hasMaterial() &&
-                                   !lineSide.top().hasFixMaterial())
+                                if(frontSide.top().hasMaterial() &&
+                                   !frontSide.top().hasFixMaterial())
                                 {
                                     flags &= ~AllMissingTop;
+                                }
+
+                                if(hedge->twin().mapElement())
+                                {
+                                    LineSide const &backSide = hedge->twin().mapElement()->as<LineSideSegment>().lineSide();
+                                    if(backCluster->floor().height() < self.sector().floor().height() &&
+                                       backSide.bottom().hasMaterial() && !backSide.bottom().hasFixMaterial())
+                                    {
+                                        flags &= ~AllMissingBottom;
+                                    }
+
+                                    if(backCluster->ceiling().height() > self.sector().ceiling().height() &&
+                                       backSide.top().hasMaterial() && !backSide.top().hasFixMaterial())
+                                    {
+                                        flags &= ~AllMissingTop;
+                                    }
                                 }
                             }
                             else
@@ -341,6 +357,28 @@ DENG2_OBSERVES(Plane, HeightChange)
                 boundaryInfo->uniqueOuterEdges.append(hedge);
             }
         }
+    }
+
+    bool suitableForDynamicMapping(int planeIdx)
+    {
+        if(planeIdx == Sector::Floor)
+        {
+            if(!classification().testFlag(AllMissingBottom))
+                return false;
+
+            // The plane must not use a sky-masked material.
+            if(self.sector().floor().surface().hasSkyMaskedMaterial())
+                return false;
+        }
+        if(planeIdx == Sector::Ceiling)
+        {
+            if(!classification().testFlag(AllMissingTop))
+                return false;
+
+            if(self.sector().ceiling().surface().hasSkyMaskedMaterial())
+                return false;
+        }
+        return true;
     }
 
     void remapVisPlanes()
@@ -419,21 +457,18 @@ DENG2_OBSERVES(Plane, HeightChange)
         if(classification() & AllSelfRef)
             return;
 
-        // Dynamic mapping may be needed for one or more planes.
-        bool doFloor   =   !floorIsMapped() && classification().testFlag(AllMissingBottom);
-        bool doCeiling = !ceilingIsMapped() && classification().testFlag(AllMissingTop);
-
-        // The plane must not use a sky-masked material.
-        if(sector.floor().surface().hasSkyMaskedMaterial())
-            doFloor   = false;
-        if(sector.ceiling().surface().hasSkyMaskedMaterial())
-            doCeiling = false;
-
-        if(!doFloor && !doCeiling)
-            return;
+        /*
+         * Dynamic mapping may be needed for one or more planes.
+         */
 
         // The sector must have open space.
         if(sector.ceiling().height() <= sector.floor().height())
+            return;
+
+        bool doFloor   =   !floorIsMapped() && suitableForDynamicMapping(Sector::Floor);
+        bool doCeiling = !ceilingIsMapped() && suitableForDynamicMapping(Sector::Ceiling);
+
+        if(!doFloor && !doCeiling)
             return;
 
         // Is it time to initialize the boundary info?
@@ -462,6 +497,9 @@ DENG2_OBSERVES(Plane, HeightChange)
             }
         }
 
+        if(!floorIsMapped() && !ceilingIsMapped())
+            return;
+
         // Clear mappings for all inner clusters to force re-evaluation (which
         // may in turn lead to their inner clusters being re-evaluated, producing
         // a "ripple effect" that will remap any deeply nested dependents).
@@ -472,12 +510,14 @@ DENG2_OBSERVES(Plane, HeightChange)
             if(extCluster.d->classification() & NeverMapped)
                 continue;
 
-            if(doFloor && extCluster.visFloor().height() >= sector.floor().height())
+            if(doFloor && floorIsMapped() &&
+               extCluster.visFloor().height() >= sector.floor().height())
             {
                 extCluster.d->clearMapping(Sector::Floor);
             }
 
-            if(doCeiling && extCluster.visCeiling().height() <= sector.ceiling().height())
+            if(doCeiling && ceilingIsMapped() &&
+               extCluster.visCeiling().height() <= sector.ceiling().height())
             {
                 extCluster.d->clearMapping(Sector::Ceiling);
             }
