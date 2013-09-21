@@ -98,6 +98,8 @@ DENG2_OBSERVES(App, GameChange)
             releaseRef(_firstColumnWidth);
         }
 
+        ButtonWidget &resetButton() { return *_resetButton; }
+
         void preparePanelForOpening()
         {
             FoldPanelWidget::preparePanelForOpening();
@@ -578,11 +580,30 @@ DENG2_OBSERVES(App, GameChange)
 
     void fetch()
     {
+        bool const isReadOnly = settings.isReadOnlyProfile(settings.currentProfile());
+
         foreach(Widget *child, container->childWidgets())
         {
             if(Group *g = child->maybeAs<Group>())
             {
                 g->fetch();
+
+                qDebug() << "Group" << g;
+                qDebug() << "content:" << &g->content();
+
+                g->resetButton().enable(!isReadOnly);
+                g->content().enable(!isReadOnly);
+
+                /*
+                // Enable or disable settings based on read-onlyness.
+                foreach(Widget *w, g->content().childWidgets())
+                {
+                    if(GuiWidget *st = w->maybeAs<GuiWidget>())
+                    {
+                        st->enable(!isReadOnly);
+                    }
+                }
+                */
             }
         }
     }
