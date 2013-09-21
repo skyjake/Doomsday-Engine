@@ -1,0 +1,207 @@
+profile {
+    name: Enhanced (built-in)
+    setting "rend-fakeradio" {
+        value: 1
+    }
+    setting "rend-fakeradio-darkness" {
+        value: 1.2
+    }
+    setting "rend-glow" {
+        value: 0.8
+    }
+    setting "rend-glow-height" {
+        value: 200
+    }
+    setting "rend-glow-scale" {
+        value: 3
+    }
+    setting "rend-glow-wall" {
+        value: 1
+    }
+    setting "rend-halo" {
+        value: 5
+    }
+    setting "rend-halo-bright" {
+        value: 48
+    }
+    setting "rend-halo-dim-far" {
+        value: 100
+    }
+    setting "rend-halo-dim-near" {
+        value: 10
+    }
+    setting "rend-halo-occlusion" {
+        value: 48
+    }
+    setting "rend-halo-radius-min" {
+        value: 25
+    }
+    setting "rend-halo-realistic" {
+        value: 0
+    }
+    setting "rend-halo-secondary-limit" {
+        value: 1
+    }
+    setting "rend-halo-size" {
+        value: 80
+    }
+    setting "rend-halo-zmag-div" {
+        value: 50
+    }
+    setting "rend-light" {
+        value: 1
+    }
+    setting "rend-light-ambient" {
+        value: 0
+    }
+    setting "rend-light-attenuation" {
+        value: 924
+    }
+    setting "rend-light-blend" {
+        value: 0
+    }
+    setting "rend-light-bright" {
+        value: 0.375
+    }
+    setting "rend-light-compression" {
+        value: -0.1
+    }
+    setting "rend-light-decor" {
+        value: 1
+    }
+    setting "rend-light-fog-bright" {
+        value: 0.295833
+    }
+    setting "rend-light-num" {
+        value: 0
+    }
+    setting "rend-light-radius-max" {
+        value: 256
+    }
+    setting "rend-light-radius-scale" {
+        value: 4.8
+    }
+    setting "rend-light-sky" {
+        value: 0.30425
+    }
+    setting "rend-light-sky-auto" {
+        value: 1
+    }
+    setting "rend-light-wall-angle" {
+        value: 1.2
+    }
+    setting "rend-light-wall-angle-smooth" {
+        value: 1
+    }
+    setting "rend-mobj-smooth-move" {
+        value: 2
+    }
+    setting "rend-mobj-smooth-turn" {
+        value: 1
+    }
+    setting "rend-model" {
+        value: 1
+    }
+    setting "rend-model-distance" {
+        value: 1500
+    }
+    setting "rend-model-inter" {
+        value: 1
+    }
+    setting "rend-model-lights" {
+        value: 4
+    }
+    setting "rend-model-lod" {
+        value: 256
+    }
+    setting "rend-particle" {
+        value: 1
+    }
+    setting "rend-particle-diffuse" {
+        value: 4
+    }
+    setting "rend-particle-max" {
+        value: 0
+    }
+    setting "rend-particle-rate" {
+        value: 1
+    }
+    setting "rend-particle-visible-near" {
+        value: 0
+    }
+    setting "rend-shadow" {
+        value: 1
+    }
+    setting "rend-shadow-darkness" {
+        value: 1.2
+    }
+    setting "rend-shadow-far" {
+        value: 1000
+    }
+    setting "rend-shadow-radius-max" {
+        value: 80
+    }
+    setting "rend-sky-distance" {
+        value: 1600
+    }
+    setting "rend-sprite-align" {
+        value: 0
+    }
+    setting "rend-sprite-blend" {
+        value: 1
+    }
+    setting "rend-sprite-lights" {
+        value: 4
+    }
+    setting "rend-sprite-mode" {
+        value: 0
+    }
+    setting "rend-sprite-noz" {
+        value: 0
+    }
+    setting "rend-tex-anim-smooth" {
+        value: 1
+    }
+    setting "rend-tex-detail" {
+        value: 1
+    }
+    setting "rend-tex-detail-scale" {
+        value: 4
+    }
+    setting "rend-tex-detail-strength" {
+        value: 0.5
+    }
+    setting "rend-tex-filter-anisotropic" {
+        value: -1
+    }
+    setting "rend-tex-filter-mag" {
+        value: 1
+    }
+    setting "rend-tex-filter-smart" {
+        value: 1
+    }
+    setting "rend-tex-filter-sprite" {
+        value: 1
+    }
+    setting "rend-tex-filter-ui" {
+        value: 1
+    }
+    setting "rend-tex-mipmap" {
+        value: 5
+    }
+    setting "rend-tex-quality" {
+        value: 8
+    }
+    setting "rend-tex-shiny" {
+        value: 1
+    }
+    setting "rend-vignette" {
+        value: 1
+    }
+    setting "rend-vignette-darkness" {
+        value: 1
+    }
+    setting "rend-vignette-width" {
+        value: 1
+    }
+}

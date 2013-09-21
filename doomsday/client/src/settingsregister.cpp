@@ -308,7 +308,7 @@ DENG2_OBSERVES(App, GameChange)
         return QVariant();
     }
 
-    void loadProfilesFromInfo(File const &file)
+    void loadProfilesFromInfo(File const &file, bool markReadOnly)
     {
         try
         {
@@ -335,6 +335,7 @@ DENG2_OBSERVES(App, GameChange)
                     LOG_DEBUG("Reading profile '%s'") << profileName;
 
                     Profile *prof = addProfile(profileName);
+                    if(markReadOnly) prof->readOnly = true;
 
                     // Use the default settings for anything not defined in the file.
                     prof->values = defaults.values;
@@ -386,7 +387,7 @@ DENG2_OBSERVES(App, GameChange)
                     if(k->first.fileNameExtension() == ".dei")
                     {
                         // Load this profile.
-                        loadProfilesFromInfo(*k->second);
+                        loadProfilesFromInfo(*k->second, true /* read-only */);
                     }
                 }
             }
@@ -395,7 +396,7 @@ DENG2_OBSERVES(App, GameChange)
         // Read /home/configs/(persistentName).dei
         if(File const *file = App::rootFolder().tryLocate<File const>(fileName()))
         {
-            loadProfilesFromInfo(*file);
+            loadProfilesFromInfo(*file, false /* modifiable */);
         }
 
         // Make sure we at least have the Custom profile.
