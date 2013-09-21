@@ -103,7 +103,10 @@ DENG2_OBSERVES(App, GameChange)
         void preparePanelForOpening()
         {
             FoldPanelWidget::preparePanelForOpening();
-            _resetButton->enable();
+            if(!d->settings.isReadOnlyProfile(d->settings.currentProfile()))
+            {
+                _resetButton->enable();
+            }
         }
 
         void panelClosing()
@@ -210,7 +213,6 @@ DENG2_OBSERVES(App, GameChange)
     DialogContentStylist stylist;
     ScrollAreaWidget *container;
     IndirectRule *firstColumnWidth; ///< Shared by all groups.
-    //ButtonWidget *conf;
     ButtonWidget *close;    
     ProfilePickerWidget *profile;
 
@@ -241,14 +243,8 @@ DENG2_OBSERVES(App, GameChange)
         container->enableIndicatorDraw(true);
         stylist.setContainer(*container);
 
-        //container->add(conf    = new ButtonWidget);
         container->add(close   = new ButtonWidget);
         container->add(profile = new ProfilePickerWidget(settings, tr("appearance")));
-
-        // Button for showing renderer settings.
-        //conf->setImage(style().images().image("gear"));
-        //conf->setOverrideImageSize(style().fonts().font("default").height().value());
-        //conf->setAction(new SignalAction(thisPublic, SLOT(showRendererSettings())));
 
         close->setText(tr("Close"));
         close->setAction(new SignalAction(thisPublic, SLOT(close())));
@@ -588,13 +584,8 @@ DENG2_OBSERVES(App, GameChange)
             {
                 g->fetch();
 
-                qDebug() << "Group" << g;
-                qDebug() << "content:" << &g->content();
+                g->resetButton().enable(!isReadOnly && g->isOpen());
 
-                g->resetButton().enable(!isReadOnly);
-                g->content().enable(!isReadOnly);
-
-                /*
                 // Enable or disable settings based on read-onlyness.
                 foreach(Widget *w, g->content().childWidgets())
                 {
@@ -603,7 +594,6 @@ DENG2_OBSERVES(App, GameChange)
                         st->enable(!isReadOnly);
                     }
                 }
-                */
             }
         }
     }
@@ -633,12 +623,6 @@ RendererAppearanceEditor::RendererAppearanceEditor()
     d->close->rule()
             .setInput(Rule::Right,  area.right())
             .setInput(Rule::Top,    area.top());
-    /*d->conf->rule()
-            .setInput(Rule::Right,  d->close->rule().left())
-            .setInput(Rule::Top,    d->close->rule().top());*/
-
-    //d->current->setWidthPolicy(ui::Fixed);
-    //d->current->rule().setInput(Rule::Width, area.width());
 
     SequentialLayout layout(area.left(), title->rule().bottom(), Down);    
 
