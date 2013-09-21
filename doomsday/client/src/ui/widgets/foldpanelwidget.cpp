@@ -105,6 +105,15 @@ void FoldPanelWidget::setContent(GuiWidget *content)
     PanelWidget::setContent(content);
 }
 
+GuiWidget &FoldPanelWidget::content() const
+{
+    if(d->container)
+    {
+        return *d->container;
+    }
+    return PanelWidget::content();
+}
+
 void FoldPanelWidget::toggleFold()
 {
     if(!isOpen())

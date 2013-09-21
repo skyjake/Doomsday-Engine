@@ -46,6 +46,8 @@ public:
 
     void setContent(GuiWidget *content);
 
+    GuiWidget &content() const;
+
 public slots:
     void toggleFold();
 

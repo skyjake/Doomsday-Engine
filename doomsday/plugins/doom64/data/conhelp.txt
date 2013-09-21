@@ -875,6 +875,9 @@ desc = 1=The death of ANY boss monster triggers a 666 special (on applicable map
 [game-monsters-stuckindoors]
 desc = 1=Monsters can get stuck in doortracks (disables DOOM bug fix).
 
+[game-objects-gibcrushednonbleeders]
+desc = 1=Turn any crushed object into a pile of gibs (disables DOOM bug fix).
+
 [game-objects-hangoverledges]
 desc = 1=Only some objects can hang over tall ledges (enables DOOM bug fix).
 

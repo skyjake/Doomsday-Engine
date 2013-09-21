@@ -169,6 +169,7 @@ typedef struct jdoom_config_s {
     byte            wallRunNorthOnly; // If handle large make exception for wallrunning
     byte            zombiesCanExit; // Zombie players can exit levels.
     byte            fallOff; // Objects fall under their own weight.
+    byte            gibCrushedNonBleeders;
     byte            fixOuchFace;
     byte            fixStatusbarOwnedWeapons;
 
