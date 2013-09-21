@@ -2752,7 +2752,7 @@ int PIT_ChangeSector(mobj_t* thing, void* data)
 
     // Crunch bodies to giblets.
 #if __JDOOM__ || __JDOOM64__
-    if(thing->health <= 0 && !(thing->flags & MF_NOBLOOD))
+    if(thing->health <= 0 && (cfg.gibCrushedNonBleeders || !(thing->flags & MF_NOBLOOD)))
 #elif __JHEXEN__
     if(thing->health <= 0 && (thing->flags & MF_CORPSE))
 #else

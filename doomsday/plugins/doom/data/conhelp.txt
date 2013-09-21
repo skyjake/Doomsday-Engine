@@ -742,6 +742,9 @@ desc = 1=Use EXACTLY DOOM's clipping code (disables DOOM bug fix).
 [game-objects-falloff]
 desc = 1=Objects fall under their own weight (enables DOOM bug fix).
 
+[game-objects-gibcrushednonbleeders]
+desc = 1=Turn any crushed object into a pile of gibs (disables DOOM bug fix).
+
 [game-objects-hangoverledges]
 desc = 1=Only some objects can hang over tall ledges (enables DOOM bug fix).
 
