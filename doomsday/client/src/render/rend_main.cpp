@@ -113,7 +113,7 @@ float dynlightFactor = .5f;
 float dynlightFogBright = .15f;
 
 int useGlowOnWalls = true;
-float glowFactor = .5f;
+float glowFactor = .8f;
 float glowHeightFactor = 3; // Glow height as a multiplier.
 int glowHeightMax = 100; // 100 is the default (0-1024).
 
@@ -160,13 +160,13 @@ float lightRangeCompression = 0;
 float lightModRange[255];
 byte devLightModRange = 0;
 
-float rendLightDistanceAttenuation = 1024;
+float rendLightDistanceAttenuation = 924;
 int rendLightAttenuateFixedColormap = 1;
 
 float rendLightWallAngle = 1.2f; // Intensity of angle-based wall lighting.
 byte rendLightWallAngleSmooth = true;
 
-float rendSkyLight = .2f; // Intensity factor.
+float rendSkyLight = .273f; // Intensity factor.
 byte rendSkyLightAuto = true;
 
 int rendMaxLumobjs; ///< Max lumobjs per viewer, per frame. @c 0= no maximum.
