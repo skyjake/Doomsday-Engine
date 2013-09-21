@@ -263,12 +263,20 @@ DENG2_OBSERVES(App, GameChange)
         settings[settingName].setValue(defaults.values[settingName]);
     }
 
+    /**
+     * For a persistent register, determines the name of the Config variable
+     * that stores the name of the currently selected profile.
+     */
     String confName() const
     {
         if(persistentName.isEmpty()) return "";
         return persistentName + ".profile";
     }
 
+    /**
+     * For a persistent register, determines the file name of the Info file
+     * where all the profile values are written to and read from.
+     */
     String fileName() const
     {
         if(persistentName.isEmpty()) return "";
@@ -345,7 +353,8 @@ DENG2_OBSERVES(App, GameChange)
         }
         catch(Error const &er)
         {
-            LOG_WARNING("Failed to load setting profiles from %s:\n%s") << file.description() << er.asText();
+            LOG_WARNING("Failed to load setting profiles from %s:\n%s")
+                    << file.description() << er.asText();
         }
     }
 
