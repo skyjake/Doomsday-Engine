@@ -112,7 +112,7 @@ private:
 } // namespace internal
 
 DENG2_PIMPL(Bank),
-DENG2_OBSERVES(Loop, Iteration)
+DENG2_OBSERVES(Loop, Iteration) // notifications from other threads sent via main Loop
 {
     /**
      * Data item. Has ownership of the in-memory cached data and the source
