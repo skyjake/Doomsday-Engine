@@ -252,61 +252,64 @@ DENG2_OBSERVES(Plane, HeightChange)
                         continue;
 
                     // This edge defines a section of a map line.
-                    if(hedge->twin().hasFace())
+
+                    // If a back geometry is missing then never map planes.
+                    if(!hedge->twin().hasFace())
                     {
-                        BspLeaf const &backLeaf    = hedge->twin().face().mapElement()->as<BspLeaf>();
-                        Cluster const *backCluster = backLeaf.hasCluster()? &backLeaf.cluster() : 0;
-
-                        if(backCluster != thisPublic)
-                        {
-                            LineSideSegment const &seg = hedge->mapElement()->as<LineSideSegment>();
-                            if(!seg.line().isSelfReferencing())
-                            {
-                                flags &= ~AllSelfRef;
-
-                                LineSide const &frontSide = seg.lineSide();
-                                if(frontSide.bottom().hasMaterial() &&
-                                   !frontSide.bottom().hasFixMaterial())
-                                {
-                                    flags &= ~AllMissingBottom;
-                                }
-
-                                if(frontSide.top().hasMaterial() &&
-                                   !frontSide.top().hasFixMaterial())
-                                {
-                                    flags &= ~AllMissingTop;
-                                }
-
-                                if(hedge->twin().mapElement())
-                                {
-                                    LineSide const &backSide = hedge->twin().mapElement()->as<LineSideSegment>().lineSide();
-                                    if(backCluster->floor().height() < self.sector().floor().height() &&
-                                       backSide.bottom().hasMaterial() && !backSide.bottom().hasFixMaterial())
-                                    {
-                                        flags &= ~AllMissingBottom;
-                                    }
-
-                                    if(backCluster->ceiling().height() > self.sector().ceiling().height() &&
-                                       backSide.top().hasMaterial() && !backSide.top().hasFixMaterial())
-                                    {
-                                        flags &= ~AllMissingTop;
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                flags |= PartSelfRef;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        // If a back geometry is missing then never map planes.
                         flags |= NeverMapped;
                         flags &= ~(PartSelfRef|AllSelfRef|AllMissingBottom|AllMissingTop);
-
-                        // We're done.
                         return flags;
+                    }
+
+                    BspLeaf const &backLeaf    = hedge->twin().face().mapElement()->as<BspLeaf>();
+                    Cluster const *backCluster = backLeaf.hasCluster()? &backLeaf.cluster() : 0;
+
+                    // Cluster internal edges are not considered.
+                    if(backCluster == thisPublic)
+                        continue;
+
+                    LineSide const &frontSide = hedge->mapElement()->as<LineSideSegment>().lineSide();
+                    LineSide const &backSide  = hedge->twin().mapElement()->as<LineSideSegment>().lineSide();
+
+                    // Similarly if no sections are defined for either side then
+                    // never map planes. This can happen due to mapping errors
+                    // where a group of one-sided lines facing outward in the
+                    // void partly form a convex subspace.
+                    if(!frontSide.hasSections() || !backSide.hasSections())
+                    {
+                        flags |= NeverMapped;
+                        flags &= ~(PartSelfRef|AllSelfRef|AllMissingBottom|AllMissingTop);
+                        return flags;
+                    }
+
+                    if(frontSide.line().isSelfReferencing())
+                    {
+                        flags |= PartSelfRef;
+                        continue;
+                    }
+
+                    flags &= ~AllSelfRef;
+
+                    if(frontSide.bottom().hasMaterial() && !frontSide.bottom().hasFixMaterial())
+                    {
+                        flags &= ~AllMissingBottom;
+                    }
+
+                    if(frontSide.top().hasMaterial() && !frontSide.top().hasFixMaterial())
+                    {
+                        flags &= ~AllMissingTop;
+                    }
+
+                    if(backCluster->floor().height() < self.sector().floor().height() &&
+                       backSide.bottom().hasMaterial() && !backSide.bottom().hasFixMaterial())
+                    {
+                        flags &= ~AllMissingBottom;
+                    }
+
+                    if(backCluster->ceiling().height() > self.sector().ceiling().height() &&
+                       backSide.top().hasMaterial() && !backSide.top().hasFixMaterial())
+                    {
+                        flags &= ~AllMissingTop;
                     }
                 } while((hedge = &hedge->next()) != base);
             }
