@@ -886,6 +886,7 @@ void P_SpawnDoorCloseIn30(Sector *sec)
     door->type = DT_NORMAL;
     door->speed = DOORSPEED;
     door->topCountDown = 30 * TICSPERSEC;
+    door->topHeight = P_GetDoublep(sec, DMU_CEILING_HEIGHT);
 }
 
 void P_SpawnDoorRaiseIn5Mins(Sector *sec)
