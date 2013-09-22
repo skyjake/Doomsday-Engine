@@ -1,5 +1,5 @@
 profile {
-    name: Enhanced (built-in)
+    name: Amplified (built-in)
     setting "rend-fakeradio" {
         value: 1
     }
