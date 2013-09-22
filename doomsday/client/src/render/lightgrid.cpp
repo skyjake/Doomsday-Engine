@@ -923,7 +923,8 @@ void LightGrid::update()
             continue;
 
         // Determine the ambient light properties of the sector at this block.
-        Sector &sector = block.sector();
+        /// @todo fixme: Should work with sector clusters instead.
+        Sector &sector        = block.sector();
         Vector3f const &color = Rend_SectorLightColor(sector);
         float const level     = sector.lightLevel();
         int const bias        = biasForSector(sector);

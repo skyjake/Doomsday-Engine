@@ -60,10 +60,10 @@ static void evaluateLighting(Vector3d const &origin, BspLeaf *bspLeafAtOrigin,
         }
         else
         {
-            Sector const &sec        = bspLeafAtOrigin->sector();
-            Vector3f const &secColor = Rend_SectorLightColor(sec);
+            SectorCluster const &cluster = bspLeafAtOrigin->cluster();
+            Vector3f const &secColor = Rend_SectorLightColor(cluster);
 
-            float lightLevel = sec.lightLevel();
+            float lightLevel = cluster.sector().lightLevel();
             /* if(spr->type == VSPR_DECORATION)
             {
                 // Wall decorations receive an additional light delta.
@@ -186,7 +186,8 @@ void R_ProjectSprite(mobj_t *mo)
     float const alpha = Mobj_Alpha(mo);
     if(alpha <= 0) return;
     // ...origin lies in a sector with no volume?
-    if(!mo->bspLeaf->hasWorldVolume()) return;
+    if(!mo->bspLeaf->hasCluster()) return;
+    if(!mo->bspLeaf->cluster().hasWorldVolume()) return;
 
     // Determine distance to object.
     Vector3d const moPos = mobjOriginSmoothed(mo);

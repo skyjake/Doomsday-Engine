@@ -329,7 +329,7 @@ static void reportWallSectionDrawn(Line &line)
 
 static inline bool isNullLeaf(BspLeaf const *leaf)
 {
-    return !leaf || !leaf->hasWorldVolume();
+    return !leaf || !leaf->hasCluster() || !leaf->cluster().hasWorldVolume();
 }
 
 void Rend_Init()
@@ -483,13 +483,58 @@ float Rend_ShadowAttenuationFactor(coord_t distance)
     return 1;
 }
 
+static Vector3f skyLightColor;
+static Vector3f oldSkyAmbientColor(-1.f, -1.f, -1.f);
+static float oldRendSkyLight = -1;
+
+Vector3f const &Rend_SectorLightColor(SectorCluster const &cluster)
+{
+    if(rendSkyLight > .001f && cluster.hasSkyMaskedPlane())
+    {
+        ColorRawf const *ambientColor = Sky_AmbientColor();
+
+        if(rendSkyLight != oldRendSkyLight ||
+           !INRANGE_OF(ambientColor->red,   oldSkyAmbientColor.x, .001f) ||
+           !INRANGE_OF(ambientColor->green, oldSkyAmbientColor.y, .001f) ||
+           !INRANGE_OF(ambientColor->blue,  oldSkyAmbientColor.z, .001f))
+        {
+            skyLightColor = Vector3f(ambientColor->rgb);
+            R_AmplifyColor(skyLightColor);
+
+            // Apply the intensity factor cvar.
+            for(int i = 0; i < 3; ++i)
+            {
+                skyLightColor[i] = skyLightColor[i] + (1 - rendSkyLight) * (1.f - skyLightColor[i]);
+            }
+
+            // When the sky light color changes we must update the light grid.
+            markLightGridForFullUpdate();
+            oldSkyAmbientColor = Vector3f(ambientColor->rgb);
+        }
+
+        oldRendSkyLight = rendSkyLight;
+        return skyLightColor;
+    }
+
+    // A non-skylight sector (i.e., everything else!)
+    // Return the sector's ambient light color.
+    return cluster.sector().lightColor();
+}
+
+static bool sectorHasSkyMaskedPlane(Sector const &sector)
+{
+    foreach(Plane *plane, sector.planes())
+    {
+        if(plane->surface().hasSkyMaskedMaterial())
+            return true;
+    }
+    return false;
+}
+
+/// @todo refactor away.
 Vector3f const &Rend_SectorLightColor(Sector const &sector)
 {
-    static Vector3f skyLightColor;
-    static Vector3f oldSkyAmbientColor(-1.f, -1.f, -1.f);
-    static float oldRendSkyLight = -1;
-
-    if(rendSkyLight > .001f && sector.hasSkyMaskedPlane())
+    if(rendSkyLight > .001f && sectorHasSkyMaskedPlane(sector))
     {
         ColorRawf const *ambientColor = Sky_AmbientColor();
 
@@ -1609,7 +1654,7 @@ static void writeWallSection(HEdge &hedge, int section,
     if(twoSidedMiddle && side.sectorPtr() != leaf->sectorPtr())
     {
         // Undo temporary draw state changes.
-        currentSectorLightColor = Rend_SectorLightColor(leaf->sector());
+        currentSectorLightColor = Rend_SectorLightColor(leaf->cluster());
         currentSectorLightLevel = leaf->sector().lightLevel();
     }
 
@@ -1811,7 +1856,7 @@ static void writeLeafPlane(Plane &plane)
     if(&plane.sector() != leaf->sectorPtr())
     {
         // Undo temporary draw state changes.
-        currentSectorLightColor = Rend_SectorLightColor(leaf->sector());
+        currentSectorLightColor = Rend_SectorLightColor(leaf->cluster());
         currentSectorLightLevel = leaf->sector().lightLevel();
     }
 
@@ -2529,7 +2574,7 @@ static void makeCurrent(BspLeaf *bspLeaf)
     // Update draw state.
     if(sectorChanged)
     {
-        currentSectorLightColor = Rend_SectorLightColor(bspLeaf->sector());
+        currentSectorLightColor = Rend_SectorLightColor(bspLeaf->cluster());
         currentSectorLightLevel = bspLeaf->sector().lightLevel();
     }
 }

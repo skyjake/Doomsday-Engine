@@ -362,28 +362,6 @@ DENG2_OBSERVES(Plane, HeightChange)
         }
     }
 
-    bool suitableForDynamicMapping(int planeIdx)
-    {
-        if(planeIdx == Sector::Floor)
-        {
-            if(!classification().testFlag(AllMissingBottom))
-                return false;
-
-            // The plane must not use a sky-masked material.
-            if(self.sector().floor().surface().hasSkyMaskedMaterial())
-                return false;
-        }
-        if(planeIdx == Sector::Ceiling)
-        {
-            if(!classification().testFlag(AllMissingTop))
-                return false;
-
-            if(self.sector().ceiling().surface().hasSkyMaskedMaterial())
-                return false;
-        }
-        return true;
-    }
-
     void remapVisPlanes()
     {
         Sector &sector = self.sector();
@@ -468,8 +446,8 @@ DENG2_OBSERVES(Plane, HeightChange)
         if(sector.ceiling().height() <= sector.floor().height())
             return;
 
-        bool doFloor   =   !floorIsMapped() && suitableForDynamicMapping(Sector::Floor);
-        bool doCeiling = !ceilingIsMapped() && suitableForDynamicMapping(Sector::Ceiling);
+        bool doFloor   =   !floorIsMapped() && classification().testFlag(AllMissingBottom);
+        bool doCeiling = !ceilingIsMapped() && classification().testFlag(AllMissingTop);
 
         if(!doFloor && !doCeiling)
             return;
@@ -485,18 +463,26 @@ DENG2_OBSERVES(Plane, HeightChange)
         {
             Cluster &extCluster = hedge->twin().face().mapElement()->as<BspLeaf>().cluster();
 
-            if(doFloor && !floorIsMapped() &&
-               extCluster.visFloor().height() > sector.floor().height())
+            if(doFloor && !floorIsMapped())
             {
-                map(Sector::Floor, &extCluster);
-                if(!doCeiling) break;
+                Plane &extVisPlane = extCluster.visFloor();
+                if(!extVisPlane.surface().hasSkyMaskedMaterial() &&
+                   extVisPlane.height() > sector.floor().height())
+                {
+                    map(Sector::Floor, &extCluster);
+                    if(!doCeiling) break;
+                }
             }
 
-            if(doCeiling && !ceilingIsMapped() &&
-               extCluster.visCeiling().height() < sector.ceiling().height())
+            if(doCeiling && !ceilingIsMapped())
             {
-                map(Sector::Ceiling, &extCluster);
-                if(!doFloor) break;
+                Plane &extVisPlane = extCluster.visCeiling();
+                if(!extVisPlane.surface().hasSkyMaskedMaterial() &&
+                   extCluster.visCeiling().height() < sector.ceiling().height())
+                {
+                    map(Sector::Ceiling, &extCluster);
+                    if(!doFloor) break;
+                }
             }
         }
 
@@ -835,6 +821,18 @@ Sector::Cluster::BspLeafs const &Sector::Cluster::bspLeafs() const
 
 #ifdef __CLIENT__
 
+bool Sector::Cluster::hasWorldVolume(bool useSmoothedHeights) const
+{
+    if(useSmoothedHeights)
+    {
+        return visCeiling().heightSmoothed() - visFloor().heightSmoothed() > 0;
+    }
+    else
+    {
+        return ceiling().height() - floor().height() > 0;
+    }
+}
+
 coord_t Sector::Cluster::roughArea() const
 {
     AABoxd const &bounds = aaBox();
@@ -860,6 +858,16 @@ void Sector::Cluster::markVisPlanesDirty()
 {
     d->maybeInvalidateMapping(Sector::Floor);
     d->maybeInvalidateMapping(Sector::Ceiling);
+}
+
+bool Sector::Cluster::hasSkyMaskedPlane() const
+{
+    for(int i = 0; i < sector().planeCount(); ++i)
+    {
+        if(visPlane(i).surface().hasSkyMaskedMaterial())
+            return true;
+    }
+    return false;
 }
 
 #endif // __CLIENT__

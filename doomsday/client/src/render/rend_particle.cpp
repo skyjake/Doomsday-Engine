@@ -471,9 +471,9 @@ static void setupModelParamsForParticle(rendmodelparams_t* params,
         }
         else
         {
-            Sector &sector = pt->bspLeaf->sector();
-            float lightLevel = sector.lightLevel();
-            Vector3f const &secColor = Rend_SectorLightColor(sector);
+            SectorCluster &cluster = pt->bspLeaf->cluster();
+            float lightLevel = cluster.sector().lightLevel();
+            Vector3f const &secColor = Rend_SectorLightColor(cluster);
 
             // Apply distance attenuation.
             lightLevel = Rend_AttenuateLightLevel(params->distance, lightLevel);

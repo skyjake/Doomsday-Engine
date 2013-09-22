@@ -424,20 +424,6 @@ bool BspLeaf::polyContains(Vector2d const &point) const
 
 #ifdef __CLIENT__
 
-bool BspLeaf::hasWorldVolume(bool useSmoothedHeights) const
-{
-    if(!hasCluster()) return false;
-
-    if(useSmoothedHeights)
-    {
-        return visCeilingHeightSmoothed() - visFloorHeightSmoothed() > 0;
-    }
-    else
-    {
-        return ceilingHeight() - floorHeight() > 0;
-    }
-}
-
 HEdge *BspLeaf::fanBase() const
 {
     if(d->needUpdateFanBase)

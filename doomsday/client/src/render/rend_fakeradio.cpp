@@ -1262,8 +1262,10 @@ static void writeShadowSection(int planeIndex, LineSide &side, float shadowDark)
     // If the sector containing the shadowing line section is fully closed (i.e., volume
     // is not positive) then skip shadow drawing entirely.
     /// @todo Encapsulate this logic in ShadowEdge -ds
-    if(!leftHEdge->hasFace() ||
-       !leftHEdge->face().mapElement()->as<BspLeaf>().hasWorldVolume())
+    if(!leftHEdge->hasFace()) return;
+
+    BspLeaf &frontLeaf = leftHEdge->face().mapElement()->as<BspLeaf>();
+    if(!frontLeaf.hasCluster() || !frontLeaf.cluster().hasWorldVolume())
         return;
 
     ShadowEdge leftEdge(*leftHEdge, Line::From);

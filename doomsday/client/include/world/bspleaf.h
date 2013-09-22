@@ -362,20 +362,6 @@ public:
 #ifdef __CLIENT__
 
     /**
-     * Determines whether the BSP leaf has a positive world volume. For this
-     * to be true the following criteria must be met:
-     *
-     * - The polygon geometry is @em not degenerate (see @ref isDegenerate()).
-     * - A sector is attributed (see @ref hasSector())
-     * - The height of floor is lower than that of the ceiling plane for the
-     *   attributed sector.
-     *
-     * @param useSmoothedHeights  @c true= use the @em smoothed plane heights
-     *                            instead of the @em sharp heights.
-     */
-    bool hasWorldVolume(bool useSmoothedHeights = true) const;
-
-    /**
      * Returns a pointer to the face geometry half-edge which has been chosen
      * for use as the base for a triangle fan GL primitive. May return @c 0 if
      * no suitable base was determined.

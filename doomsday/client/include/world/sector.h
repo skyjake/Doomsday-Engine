@@ -155,6 +155,14 @@ public:
         void markVisPlanesDirty();
 
         /**
+         * Returns @c true iff at least one of the mapped visual planes of the
+         * cluster presently has a sky-masked material bound.
+         *
+         * @see Surface::hasSkyMaskedMaterial()
+         */
+        bool hasSkyMaskedPlane() const;
+
+        /**
          * Provides access to the list of all BSP leafs in the cluster, for
          * efficient traversal.
          */
@@ -179,6 +187,15 @@ public:
         }
 
 #ifdef __CLIENT__
+
+        /**
+         * Determines whether the cluster has a positive world volume, i.e., the
+         * height of floor is lower than that of the ceiling plane.
+         *
+         * @param useSmoothedHeights  @c true= use the @em smoothed plane heights
+         *                            instead of the @em sharp heights.
+         */
+        bool hasWorldVolume(bool useSmoothedHeights = true) const;
 
         /**
          * Returns a rough approximation of the total combined area of the geometry
@@ -283,14 +300,6 @@ public:
      * Returns the total number of planes in/owned by the sector.
      */
     inline int planeCount() const { return planes().count(); }
-
-    /**
-     * Returns @c true iff at least one of the surfaces of a plane in/owned
-     * by the sector presently has a sky-masked material bound.
-     *
-     * @see Surface::hasSkyMaskedMaterial()
-     */
-    bool hasSkyMaskedPlane() const;
 
     /**
      * Convenient accessor method for returning the surface of the specified
