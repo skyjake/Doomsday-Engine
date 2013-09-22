@@ -164,14 +164,19 @@ void TextDrawable::init(Atlas &atlas, Font const &font, Font::RichFormat::IStyle
 
 void TextDrawable::deinit()
 {
+    clear();
+
+    d->inited = false;
+}
+
+void TextDrawable::clear()
+{
     d->tasks.waitForDone();
 
     d->frontWrap->clear();
     d->backWrap->clear();
 
     release();
-
-    d->inited = false;
 }
 
 void TextDrawable::setLineWrapWidth(int maxLineWidth)
@@ -226,7 +231,7 @@ bool TextDrawable::update()
 
     bool wasNotReady = !isReady();
     bool changed = GLTextComposer::update() || swapped || (isReady() && wasNotReady);
-    return changed;
+    return changed && !isBeingWrapped();
 }
 
 FontLineWrapping const &TextDrawable::wraps() const

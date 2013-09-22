@@ -185,8 +185,13 @@ public Font::RichFormat::IStyle
         glText.setLineWrapWidth(wrapWidth);
         if(glText.update())
         {
-            // Text has changed.
-            //qDebug() << "composer updated";
+            // Text is ready for drawing.
+            if(progress->isVisible())
+            {
+                self.setContentSize(glText.wrappedSize());
+                progress->hide();
+            }
+
             self.requestGeometry();
         }
 
@@ -200,14 +205,9 @@ public Font::RichFormat::IStyle
 
         uMvpMatrix = root().projMatrix2D();
 
-        if(glText.isReady())
+        if(!progress->isVisible())
         {
-            // Text is ready for drawing.
-            if(progress->isVisible())
-            {
-                self.setContentSize(glText.wrappedSize());
-                progress->hide();
-            }
+            DENG2_ASSERT(glText.isReady());
 
             // Determine visible range of lines.
             Font const &font = self.font();
@@ -274,8 +274,9 @@ void DocumentWidget::setText(String const &styledText)
 
         d->styledText = styledText;
 
+        d->glText.clear();
         d->glText.setText(styledText);
-        d->glText.setRange(Rangei()); // updated later
+        d->glText.setRange(Rangei()); // none visible initially -- updated later
 
         requestGeometry();
     }
