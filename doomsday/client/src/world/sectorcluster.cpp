@@ -290,24 +290,24 @@ DENG2_OBSERVES(Plane, HeightChange)
 
                     flags &= ~AllSelfRef;
 
-                    if(frontSide.bottom().hasMaterial() && !frontSide.bottom().hasFixMaterial())
+                    if(frontSide.bottom().hasDrawableNonFixMaterial())
                     {
                         flags &= ~AllMissingBottom;
                     }
 
-                    if(frontSide.top().hasMaterial() && !frontSide.top().hasFixMaterial())
+                    if(frontSide.top().hasDrawableNonFixMaterial())
                     {
                         flags &= ~AllMissingTop;
                     }
 
                     if(backCluster->floor().height() < self.sector().floor().height() &&
-                       backSide.bottom().hasMaterial() && !backSide.bottom().hasFixMaterial())
+                       backSide.bottom().hasDrawableNonFixMaterial())
                     {
                         flags &= ~AllMissingBottom;
                     }
 
                     if(backCluster->ceiling().height() > self.sector().ceiling().height() &&
-                       backSide.top().hasMaterial() && !backSide.top().hasFixMaterial())
+                       backSide.top().hasDrawableNonFixMaterial())
                     {
                         flags &= ~AllMissingTop;
                     }
