@@ -1,0 +1,5 @@
+profile {
+    name: Defaults (built-in)
+    
+    # The values for all settings are taken from the built-in defaults.
+}
