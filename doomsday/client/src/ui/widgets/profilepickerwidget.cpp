@@ -120,7 +120,7 @@ void ProfilePickerWidget::openMenu()
     if(reg.isReadOnlyProfile(selProf))
     {
         // Read-only profiles can only be duplicated.
-        org.itemWidget(0)->disable();
+        popup->items().at(0).setLabel("View");
         org.itemWidget(1)->disable();
         org.itemWidget(5)->disable();
         org.itemWidget(6)->disable();
