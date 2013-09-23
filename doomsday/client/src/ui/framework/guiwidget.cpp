@@ -26,6 +26,8 @@
 #include <de/GLTexture>
 #include <de/GLTarget>
 
+#include <QList>
+
 using namespace de;
 
 DENG2_PIMPL(GuiWidget),
@@ -44,6 +46,7 @@ DENG2_OBSERVES(ui::Margins, Change)
     bool styleChanged;
     Background background;
     Animation opacity;
+    QList<IEventHandler *> eventHandlers;
 
     // Style.
     DotPath fontId;
@@ -91,6 +94,8 @@ DENG2_OBSERVES(ui::Margins, Change)
 
     ~Instance()
     {        
+        qDeleteAll(eventHandlers);
+
         // The base class will delete all children, but we need to deinitialize
         // them first.
         self.notifyTree(&Widget::deinitialize);
@@ -419,6 +424,16 @@ float GuiWidget::visibleOpacity() const
     return opacity;
 }
 
+void GuiWidget::addEventHandler(IEventHandler *handler)
+{
+    d->eventHandlers.append(handler);
+}
+
+void GuiWidget::removeEventHandler(IEventHandler *handler)
+{
+    d->eventHandlers.removeOne(handler);
+}
+
 void GuiWidget::initialize()
 {
     if(d->inited) return;
@@ -488,6 +503,18 @@ void GuiWidget::draw()
             GLState::pop();
         }
     }
+}
+
+bool GuiWidget::handleEvent(Event const &event)
+{
+    foreach(IEventHandler *handler, d->eventHandlers)
+    {
+        if(handler->handleEvent(*this, event))
+        {
+            return true;
+        }
+    }
+    return Widget::handleEvent(event);
 }
 
 bool GuiWidget::hitTest(Vector2i const &pos) const

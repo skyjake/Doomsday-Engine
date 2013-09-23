@@ -136,6 +136,25 @@ public:
     typedef de::Vertex2TexRgba DefaultVertex;
     typedef de::GLBufferT<DefaultVertex> DefaultVertexBuf;
 
+    /**
+     * Handles events.
+     */
+    class IEventHandler
+    {
+    public:
+        virtual ~IEventHandler() {}
+
+        /**
+         * Handle an event.
+         *
+         * @param widget  Widget that received the event.
+         * @param event   Event.
+         *
+         * @return @c true, if the event was eaten. @c false otherwise.
+         */
+        virtual bool handleEvent(GuiWidget &widget, de::Event const &event) = 0;
+    };
+
 public:
     GuiWidget(de::String const &name = "");
 
@@ -214,12 +233,24 @@ public:
      */
     float visibleOpacity() const;
 
+    /**
+     * Sets an object that will be offered events received by this widget. The
+     * handler may eat the event. Any number of event handlers can be added;
+     * they are called in the order of addition.
+     *
+     * @param handler  Event handler. Ownership given to GuiWidget.
+     */
+    void addEventHandler(IEventHandler *handler);
+
+    void removeEventHandler(IEventHandler *handler);
+
     // Events.
     void initialize();
     void deinitialize();
     void viewResized();
     void update();
     void draw() /*final*/;
+    bool handleEvent(de::Event const &event);
 
     /**
      * Determines if the widget occupies on-screen position @a pos.

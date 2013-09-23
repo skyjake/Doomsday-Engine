@@ -223,7 +223,8 @@ bool ButtonWidget::handleEvent(Event const &event)
             }
         }
     }
-    return false;
+
+    return LabelWidget::handleEvent(event);
 }
 
 void ButtonWidget::updateModelViewProjection(GLUniform &uMvp)

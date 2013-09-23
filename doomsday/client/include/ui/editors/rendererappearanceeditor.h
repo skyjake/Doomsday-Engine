@@ -36,7 +36,8 @@ public:
     RendererAppearanceEditor();
 
 public slots:
-    //void showRendererSettings();
+    void foldAll();
+    void unfoldAll();
 
 protected:
     void preparePanelForOpening();
