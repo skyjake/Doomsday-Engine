@@ -54,6 +54,7 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
     LabelWidget *lastChecked;
     ChoiceWidget *channels;
     ChoiceWidget *paths;
+    ToggleWidget *autoDown;
     ToggleWidget *deleteAfter;
 
     Instance(Public *i, Mode mode) : Base(i)
@@ -65,6 +66,7 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
         area.add(freqs       = new ChoiceWidget);
         area.add(lastChecked = new LabelWidget);
         area.add(channels    = new ChoiceWidget);
+        area.add(autoDown    = new ToggleWidget);
         area.add(paths       = new ChoiceWidget);
         area.add(deleteAfter = new ToggleWidget);
 
@@ -97,6 +99,7 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
                 << new ChoiceItem(defaultLocationName(),
                                   UpdaterSettings::defaultDownloadPath().toString());
 
+        autoDown->setText(tr("Download automatically"));
         deleteAfter->setText(tr("Delete file after install"));
 
         fetch();
@@ -111,8 +114,9 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
         layout << *autoCheck    << *freqs
                << Const(0)      << *lastChecked
                << *releaseLabel << *channels
-               << *pathLabel    << *paths
-               << Const(0)      << *deleteAfter;
+               << Const(0)      << *autoDown
+               << Const(0)      << *deleteAfter
+               << *pathLabel    << *paths;
 
         area.setContentSize(layout.width(), layout.height());
 
@@ -147,6 +151,7 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
         freqs->setSelected(freqs->items().findData(st.frequency()));
         channels->setSelected(channels->items().findData(st.channel()));
         setDownloadPath(st.downloadPath());
+        autoDown->setActive(st.autoDownload());
         deleteAfter->setActive(st.deleteAfterUpdate());
     }
 
@@ -174,6 +179,7 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
             st.setChannel(UpdaterSettings::Channel(channels->items().at(sel).data().toInt()));
         }
         //st.setDownloadPath(pathList->itemData(pathList->currentIndex()).toString());
+        st.setAutoDownload(autoDown->isActive());
         st.setDeleteAfterUpdate(deleteAfter->isActive());
     }
 

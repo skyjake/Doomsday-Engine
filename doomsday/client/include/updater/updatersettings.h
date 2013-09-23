@@ -56,6 +56,7 @@ public:
     Channel channel() const;
     de::Time lastCheckTime() const;
     bool onlyCheckManually() const;
+    bool autoDownload() const;
     bool deleteAfterUpdate() const;
     bool isDefaultDownloadPath() const;
     de::NativePath downloadPath() const;
@@ -71,6 +72,7 @@ public:
     void setChannel(Channel channel);
     void setLastCheckTime(const de::Time& time);
     void setOnlyCheckManually(bool onlyManually);
+    void setAutoDownload(bool autoDl);
     void setDeleteAfterUpdate(bool deleteAfter);
     void setDownloadPath(de::NativePath downloadPath);
     void useDefaultDownloadPath();

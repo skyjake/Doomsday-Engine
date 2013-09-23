@@ -39,6 +39,7 @@ using namespace de;
 #define VAR_DELETE          "delete"
 #define VAR_DOWNLOAD_PATH   "downloadPath"
 #define VAR_DELETE_PATH     "deleteAtStartup"
+#define VAR_AUTO_DOWNLOAD   "autoDownload"
 
 #define SUBREC_NAME         "updater"
 #define CONF(name)          SUBREC_NAME "." name
@@ -105,6 +106,11 @@ bool UpdaterSettings::onlyCheckManually() const
     return App::config().getb(CONF(VAR_ONLY_MANUAL));
 }
 
+bool UpdaterSettings::autoDownload() const
+{
+    return App::config().getb(CONF(VAR_AUTO_DOWNLOAD));
+}
+
 bool UpdaterSettings::deleteAfterUpdate() const
 {
     return App::config().getb(CONF(VAR_DELETE));
@@ -164,6 +170,11 @@ void UpdaterSettings::setLastCheckTime(de::Time const &time)
 void UpdaterSettings::setOnlyCheckManually(bool onlyManually)
 {
     App::config().set(CONF(VAR_ONLY_MANUAL), onlyManually);
+}
+
+void UpdaterSettings::setAutoDownload(bool autoDl)
+{
+    App::config().set(CONF(VAR_AUTO_DOWNLOAD), autoDl);
 }
 
 void UpdaterSettings::setDeleteAfterUpdate(bool deleteAfter)

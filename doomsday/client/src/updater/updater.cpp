@@ -340,11 +340,22 @@ DENG2_OBSERVES(App, StartupComplete)
             return;
         }
 
-        // Is this newer than what we're running?
-        if(latestVersion > currentVersion || alwaysShowNotification)
+        bool const gotUpdate = latestVersion > currentVersion;
+
+        if(gotUpdate)
         {
             LOG_INFO("Found an update: " _E(b)) << latestVersion.asText();
 
+            if(!alwaysShowNotification && UpdaterSettings().autoDownload())
+            {
+                startDownload();
+                return;
+            }
+        }
+
+        // Is this newer than what we're running?
+        if(gotUpdate || alwaysShowNotification)
+        {
             // Modal dialogs will interrupt gameplay.
             ClientWindow::main().taskBar().openAndPauseGame();
 
@@ -367,24 +378,29 @@ DENG2_OBSERVES(App, StartupComplete)
 
         if(availableDlg->exec(ClientWindow::main().root()))
         {
-            //availableDlg = 0;
-
-            // The notification provides access to the download dialog.
-            showDownloadNotification();
-
-            LOG_MSG("Download and install.");
-
-            download = new DownloadDialog(latestPackageUri, latestPackageUri2);
-            download->setAnchorAndOpeningDirection(status->rule(), ui::Down);
-            QObject::connect(download, SIGNAL(closed()), thisPublic, SLOT(downloadDialogClosed()));
-            QObject::connect(download, SIGNAL(downloadProgress(int)),thisPublic, SLOT(downloadProgressed(int)));
-            QObject::connect(download, SIGNAL(downloadFailed(QString)), thisPublic, SLOT(downloadFailed(QString)));
-            QObject::connect(download, SIGNAL(accepted(int)), thisPublic, SLOT(downloadCompleted(int)));
-
-            ClientWindow::main().root().add(download);
+            startDownload();
             download->open();
         }
         availableDlg = 0;
+    }
+
+    void startDownload()
+    {
+        DENG2_ASSERT(download == 0);
+
+        // The notification provides access to the download dialog.
+        showDownloadNotification();
+
+        LOG_MSG("Download and install.");
+
+        download = new DownloadDialog(latestPackageUri, latestPackageUri2);
+        download->setAnchorAndOpeningDirection(status->rule(), ui::Down);
+        QObject::connect(download, SIGNAL(closed()), thisPublic, SLOT(downloadDialogClosed()));
+        QObject::connect(download, SIGNAL(downloadProgress(int)),thisPublic, SLOT(downloadProgressed(int)));
+        QObject::connect(download, SIGNAL(downloadFailed(QString)), thisPublic, SLOT(downloadFailed(QString)));
+        QObject::connect(download, SIGNAL(accepted(int)), thisPublic, SLOT(downloadCompleted(int)));
+
+        ClientWindow::main().root().add(download);
     }
 
     /**

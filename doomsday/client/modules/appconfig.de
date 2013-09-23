@@ -91,7 +91,7 @@ def setDefaults(d)
     
     const d.updater.CHANNEL_STABLE   = 0
     const d.updater.CHANNEL_UNSTABLE = 1
-
+    
     d.updater.frequency = d.updater.WEEKLY
     if Version.STABLE
         d.updater.channel = d.updater.CHANNEL_STABLE
@@ -100,6 +100,7 @@ def setDefaults(d)
     end
     d.updater.lastChecked = Time("")
     d.updater.onlyManually = (Version.OS == 'unix')    
+    d.updater.autoDownload = False
     d.updater.delete = True
     d.updater.downloadPath = "${DEFAULT}"
     d.updater.deleteAtStartup = ""
