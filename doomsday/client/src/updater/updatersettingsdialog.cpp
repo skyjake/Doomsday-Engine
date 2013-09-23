@@ -70,6 +70,14 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
         area.add(paths       = new ChoiceWidget);
         area.add(deleteAfter = new ToggleWidget);
 
+        // The updater Config is changed when the widget state is modified.
+        QObject::connect(autoCheck,   SIGNAL(stateChangedByUser(ToggleWidget::ToggleState)), thisPublic, SLOT(apply()));
+        QObject::connect(freqs,       SIGNAL(selectionChangedByUser(uint)),                  thisPublic, SLOT(apply()));
+        QObject::connect(channels,    SIGNAL(selectionChangedByUser(uint)),                  thisPublic, SLOT(apply()));
+        QObject::connect(autoDown,    SIGNAL(stateChangedByUser(ToggleWidget::ToggleState)), thisPublic, SLOT(apply()));
+        QObject::connect(paths,       SIGNAL(selectionChangedByUser(uint)),                  thisPublic, SLOT(apply()));
+        QObject::connect(deleteAfter, SIGNAL(stateChangedByUser(ToggleWidget::ToggleState)), thisPublic, SLOT(apply()));
+
         LabelWidget *releaseLabel = new LabelWidget;
         area.add(releaseLabel);
 
@@ -121,13 +129,12 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
         area.setContentSize(layout.width(), layout.height());
 
         self.buttons()
-                << new DialogButtonItem(DialogWidget::Default | DialogWidget::Accept)
-                << new DialogButtonItem(DialogWidget::Reject);
+                << new DialogButtonItem(DialogWidget::Default | DialogWidget::Accept, tr("Close"));
 
         if(mode == WithApplyAndCheckButton)
         {
             self.buttons()
-                    << new DialogButtonItem(DialogWidget::Action, tr("Apply & Check Now"),
+                    << new DialogButtonItem(DialogWidget::Action, tr("Check Now"),
                                             new SignalAction(thisPublic, SLOT(applyAndCheckNow())));
         }
     }
@@ -208,6 +215,11 @@ UpdaterSettingsDialog::UpdaterSettingsDialog(Mode mode, String const &name)
     : DialogWidget(name, WithHeading), d(new Instance(this, mode))
 {
     heading().setText(tr("Updater Settings"));
+}
+
+void UpdaterSettingsDialog::apply()
+{
+    d->apply();
 }
 
 void UpdaterSettingsDialog::applyAndCheckNow()
