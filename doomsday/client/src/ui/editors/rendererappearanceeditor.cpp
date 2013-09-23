@@ -319,10 +319,8 @@ DENG2_OBSERVES(App, GameChange)
         // Dynamic light settings.
         lightGroup = new Group(this, tr("Point Lighting"));
 
-        lightGroup->addLabel(tr("Dynamic Lights:"));
-        lightGroup->addChoice("rend-light", ui::Down)->items()
-                << new ChoiceItem(tr("Enabled"), 1)
-                << new ChoiceItem(tr("Disabled"), 0);
+        lightGroup->addSpace();
+        lightGroup->addToggle("rend-light", tr("Dynamic Lights"));
 
         lightGroup->addSpace();
         lightGroup->addToggle("rend-light-decor", tr("Light Decorations"));
