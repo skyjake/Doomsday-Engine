@@ -20,6 +20,7 @@
 
 #include <QRect>
 #include <QMap>
+#include <QMutableMapIterator>
 #include <QSet>
 #include <QtAlgorithms>
 
@@ -345,19 +346,85 @@ DENG2_OBSERVES(Plane, HeightChange)
         }
 
         boundaryInfo.reset(new BoundaryInfo);
+        if(extClusterMap.isEmpty())
+            return;
 
         QRectF boundingRect = qrectFromAABox(self.aaBox());
-        foreach(HEdge *hedge, extClusterMap)
-        {
-            Cluster &extCluster = hedge->twin().face().mapElement()->as<BspLeaf>().cluster();
 
-            if(boundingRect.contains(qrectFromAABox(extCluster.aaBox())))
+        // First try to quickly decide by comparing cluster bounding boxes.
+        QMutableMapIterator<Cluster *, HEdge *> iter(extClusterMap);
+        while(iter.hasNext())
+        {
+            iter.next();
+            Cluster &extCluster = iter.value()->twin().face().mapElement()->as<BspLeaf>().cluster();
+            if(!boundingRect.contains(qrectFromAABox(extCluster.aaBox())))
             {
-                boundaryInfo->uniqueInnerEdges.append(hedge);
+                boundaryInfo->uniqueOuterEdges.append(iter.value());
+                iter.remove();
+            }
+        }
+
+        if(extClusterMap.isEmpty())
+            return;
+
+        // More extensive tests are necessary. At this point we know that all
+        // clusters which remain in the map are inside according to the bounding
+        // box of "this" cluster.
+        QList<HEdge *> const boundaryEdges = extClusterMap.values();
+        QList<QRectF> boundaries;
+        for(int i = 0; i < boundaryEdges.count(); ++i)
+        {
+            HEdge *base = boundaryEdges[i];
+
+            QRectF bounds = QRectF(QPointF(base->origin().x, base->origin().y),
+                                   QPointF(base->twin().origin().x, base->twin().origin().y))
+                            .normalized();
+
+            HEdge *hedge = &base->next();
+            do
+            {
+                while(hedge->twin().hasFace())
+                {
+                    Cluster &backCluster = hedge->twin().face().mapElement()->as<BspLeaf>().cluster();
+                    if(&backCluster == thisPublic)
+                    {
+                        hedge = &hedge->twin().next();
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+
+                if(hedge == base)
+                    break;
+
+                bounds |= QRectF(QPointF(hedge->origin().x, hedge->origin().y),
+                                 QPointF(hedge->twin().origin().x, hedge->twin().origin().y))
+                             .normalized();
+            } while((hedge = &hedge->next()) != base);
+
+            boundaries.append(bounds);
+        }
+
+        QRectF const *largest = 0;
+        foreach(QRectF const &boundary, boundaries)
+        {
+            if(!largest || boundary.contains(*largest))
+                largest = &boundary;
+        }
+
+        for(int i = 0; i < boundaryEdges.count(); ++i)
+        {
+            HEdge *hedge = boundaryEdges[i];
+            QRectF const &boundary = boundaries[i];
+            if(&boundary == largest || boundary == *largest)
+            {
+                boundaryInfo->uniqueOuterEdges.append(hedge);
             }
             else
             {
-                boundaryInfo->uniqueOuterEdges.append(hedge);
+                boundaryInfo->uniqueInnerEdges.append(hedge);
             }
         }
     }
