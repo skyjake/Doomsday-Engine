@@ -372,13 +372,11 @@ DENG2_OBSERVES(Plane, HeightChange)
         // box of "this" cluster.
         QList<HEdge *> const boundaryEdges = extClusterMap.values();
         QList<QRectF> boundaries;
-        for(int i = 0; i < boundaryEdges.count(); ++i)
+        foreach(HEdge *base, boundaryEdges)
         {
-            HEdge *base = boundaryEdges[i];
-
             QRectF bounds = QRectF(QPointF(base->origin().x, base->origin().y),
                                    QPointF(base->twin().origin().x, base->twin().origin().y))
-                            .normalized();
+                                .normalized();
 
             HEdge *hedge = &base->next();
             do
@@ -401,7 +399,7 @@ DENG2_OBSERVES(Plane, HeightChange)
 
                 bounds |= QRectF(QPointF(hedge->origin().x, hedge->origin().y),
                                  QPointF(hedge->twin().origin().x, hedge->twin().origin().y))
-                             .normalized();
+                              .normalized();
             } while((hedge = &hedge->next()) != base);
 
             boundaries.append(bounds);

@@ -176,7 +176,7 @@ void R_ProjectSprite(mobj_t *mo)
     // ...hidden?
     if((mo->ddFlags & DDMF_DONTDRAW)) return;
     // ...not linked into the map?
-    if(!mo->bspLeaf) return;
+    if(!mo->bspLeaf || !mo->bspLeaf->hasCluster()) return;
     // ...in an invalid state?
     if(!mo->state || mo->state == states) return;
     // ...no sprite frame is defined?
@@ -186,8 +186,8 @@ void R_ProjectSprite(mobj_t *mo)
     float const alpha = Mobj_Alpha(mo);
     if(alpha <= 0) return;
     // ...origin lies in a sector with no volume?
-    if(!mo->bspLeaf->hasCluster()) return;
-    if(!mo->bspLeaf->cluster().hasWorldVolume()) return;
+    SectorCluster &cluster = mo->bspLeaf->cluster();
+    if(!cluster.hasWorldVolume()) return;
 
     // Determine distance to object.
     Vector3d const moPos = mobjOriginSmoothed(mo);
@@ -271,8 +271,8 @@ void R_ProjectSprite(mobj_t *mo)
      * The Z origin of the visual should match that of the mobj. When smoothing
      * is enabled this requires examining all touched sector planes in the vicinity.
      */
-    Plane &floor     = mo->bspLeaf->visFloor();
-    Plane &ceiling   = mo->bspLeaf->visCeiling();
+    Plane &floor     = cluster.visFloor();
+    Plane &ceiling   = cluster.visCeiling();
     bool floorAdjust = false;
     if(!Mobj_OriginBehindVisPlane(mo))
     {
@@ -446,7 +446,7 @@ void R_ProjectSprite(mobj_t *mo)
             ms.texture(MTU_PRIMARY).generalCase().analysisDataPointer(Texture::BrightPointAnalysis);
         DENG_ASSERT(pl != 0);
 
-        Lumobj const *lum = mo->bspLeaf->map().lumobj(mo->lumIdx);
+        Lumobj const *lum = cluster.sector().map().lumobj(mo->lumIdx);
 
         vissprite_t *vis = R_NewVisSprite(VSPR_FLARE);
 

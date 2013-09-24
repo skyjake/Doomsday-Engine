@@ -165,13 +165,19 @@ DENG2_PIMPL_NOREF(BiasIllum)
         Vector3f &casted = contribution(index);
 
         /// @todo LineSightTest should (optionally) perform this test.
-        BspLeaf &leaf = source.bspLeafAtOrigin();
-        if((!leaf.visFloor().surface().hasSkyMaskedMaterial() &&
-                source.origin().z < leaf.visFloorHeightSmoothed()) ||
-           (!leaf.visCeiling().surface().hasSkyMaskedMaterial() &&
-                source.origin().z > leaf.visCeilingHeightSmoothed()))
+        SectorCluster *cluster = source.bspLeafAtOrigin().clusterPtr();
+        if(!cluster)
         {
             // This affecting source does not contribute any light.
+            casted = Vector3f();
+            return;
+        }
+
+        if((!cluster->visFloor().surface().hasSkyMaskedMaterial() &&
+                source.origin().z < cluster->visFloor().heightSmoothed()) ||
+           (!cluster->visCeiling().surface().hasSkyMaskedMaterial() &&
+                source.origin().z > cluster->visCeiling().heightSmoothed()))
+        {
             casted = Vector3f();
             return;
         }
@@ -192,7 +198,6 @@ DENG2_PIMPL_NOREF(BiasIllum)
                         .trace(bspRoot))
         {
             // LOS fail.
-            // This affecting source does not contribute any light.
             casted = Vector3f();
             return;
         }

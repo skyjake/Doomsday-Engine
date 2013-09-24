@@ -138,20 +138,20 @@ DENG2_PIMPL(WallEdge), public IHPlane
         bool const unpegBottom = (line.flags() & DDLF_DONTPEGBOTTOM) != 0;
         bool const unpegTop    = (line.flags() & DDLF_DONTPEGTOP)    != 0;
 
-        BspLeaf const *leaf =
-            line.definesPolyobj()? &line.polyobj().bspLeaf()
-                                 : &hedge->face().mapElement()->as<BspLeaf>();
+        SectorCluster const *cluster =
+            (line.definesPolyobj()? &line.polyobj().bspLeaf()
+                                  : &hedge->face().mapElement()->as<BspLeaf>())->clusterPtr();
 
         if(seg.lineSide().considerOneSided())
         {
             if(spec.section == LineSide::Middle)
             {
-                lo = leaf->visFloorHeightSmoothed();
-                hi = leaf->visCeilingHeightSmoothed();
+                lo = cluster->visFloor().heightSmoothed();
+                hi = cluster->visCeiling().heightSmoothed();
             }
             else
             {
-                lo = hi = leaf->visFloorHeightSmoothed();
+                lo = hi = cluster->visFloor().heightSmoothed();
             }
 
             materialOrigin = seg.lineSide().middle().materialOriginSmoothed();
@@ -163,14 +163,14 @@ DENG2_PIMPL(WallEdge), public IHPlane
         else
         {
             // Two sided.
-            BspLeaf const *backLeaf =
-                line.definesPolyobj()? leaf
-                                     : &hedge->twin().face().mapElement()->as<BspLeaf>();
+            SectorCluster const *backCluster =
+                line.definesPolyobj()? cluster
+                                     : hedge->twin().face().mapElement()->as<BspLeaf>().clusterPtr();
 
-            Plane const *ffloor = &leaf->visFloor();
-            Plane const *fceil  = &leaf->visCeiling();
-            Plane const *bfloor = &backLeaf->visFloor();
-            Plane const *bceil  = &backLeaf->visCeiling();
+            Plane const *ffloor = &cluster->visFloor();
+            Plane const *fceil  = &cluster->visCeiling();
+            Plane const *bfloor = &backCluster->visFloor();
+            Plane const *bceil  = &backCluster->visCeiling();
 
             switch(spec.section)
             {
@@ -255,7 +255,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
                 LineSide const &lineSide = seg.lineSide();
                 Surface const &middle    = lineSide.middle();
 
-                if(!line.isSelfReferencing() && ffloor == &leaf->sector().floor())
+                if(!line.isSelfReferencing() && ffloor == &cluster->sector().floor())
                 {
                     lo = de::max(bfloor->heightSmoothed(), ffloor->heightSmoothed());
                 }
@@ -265,7 +265,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
                     lo = lineSide.sector().floor().heightSmoothed();
                 }
 
-                if(!line.isSelfReferencing() && fceil == &leaf->sector().ceiling())
+                if(!line.isSelfReferencing() && fceil == &cluster->sector().ceiling())
                 {
                     hi = de::min(bceil->heightSmoothed(),  fceil->heightSmoothed());
                 }

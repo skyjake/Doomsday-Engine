@@ -1089,13 +1089,18 @@ void Rend_RadioWallSection(WallEdge const &leftEdge, WallEdge const &rightEdge,
     if(shadowSize <= 0)
         return;
 
-    LineSide &side          = leftEdge.mapLineSide();
-    HEdge const *hedge      = side.leftHEdge();
-    BspLeaf const *leaf     = &hedge->face().mapElement()->as<BspLeaf>();
-    BspLeaf const *backLeaf = (hedge->twin().hasFace() && leftEdge.spec().section != LineSide::Middle)? &hedge->twin().face().mapElement()->as<BspLeaf>() : 0;
+    LineSide &side = leftEdge.mapLineSide();
+    HEdge const *hedge = side.leftHEdge();
+    SectorCluster const *cluster = &hedge->face().mapElement()->as<BspLeaf>().cluster();
+    SectorCluster const *backCluster = 0;
 
-    bool const haveBottomShadower = Rend_RadioPlaneCastsShadow(leaf->visFloor());
-    bool const haveTopShadower    = Rend_RadioPlaneCastsShadow(leaf->visCeiling());
+    if(leftEdge.spec().section != LineSide::Middle && hedge->twin().hasFace())
+    {
+        backCluster = hedge->twin().face().mapElement()->as<BspLeaf>().clusterPtr();
+    }
+
+    bool const haveBottomShadower = Rend_RadioPlaneCastsShadow(cluster->visFloor());
+    bool const haveTopShadower    = Rend_RadioPlaneCastsShadow(cluster->visCeiling());
 
     // Walls unaffected by floor and ceiling shadow casters receive no
     // side shadows either. We could do better here...
@@ -1108,10 +1113,10 @@ void Rend_RadioWallSection(WallEdge const &leftEdge, WallEdge const &rightEdge,
 
     LineSideRadioData &frData = Rend_RadioDataForLineSide(side);
 
-    coord_t const fFloor = leaf->visFloorHeightSmoothed();
-    coord_t const fCeil  = leaf->visCeilingHeightSmoothed();
-    coord_t const bFloor = (backLeaf? backLeaf->visFloorHeightSmoothed() : 0);
-    coord_t const bCeil  = (backLeaf? backLeaf->visCeilingHeightSmoothed() : 0);
+    coord_t const fFloor = cluster->visFloor().heightSmoothed();
+    coord_t const fCeil  = cluster->visCeiling().heightSmoothed();
+    coord_t const bFloor = (backCluster? backCluster->visFloor().heightSmoothed() : 0);
+    coord_t const bCeil  = (backCluster? backCluster->visCeiling().heightSmoothed() : 0);
 
     Vector3f rvertices[4] = {
          leftEdge.bottom().origin(),
@@ -1159,7 +1164,7 @@ void Rend_RadioWallSection(WallEdge const &leftEdge, WallEdge const &rightEdge,
                             leftEdge.bottom().z(), leftEdge.top().z(), false,
                             haveBottomShadower, haveTopShadower,
                             sectionOffset, sectionWidth,
-                            fFloor, fCeil, backLeaf != 0, bFloor, bCeil, lineLength,
+                            fFloor, fCeil, backCluster != 0, bFloor, bCeil, lineLength,
                             frData);
         drawWallSectionShadow(rvertices, leftEdge, rightEdge, parms);
     }
@@ -1173,7 +1178,7 @@ void Rend_RadioWallSection(WallEdge const &leftEdge, WallEdge const &rightEdge,
         setSideShadowParams(&parms, shadowSize, shadowDark,
                             leftEdge.bottom().z(), leftEdge.top().z(), true,
                             haveBottomShadower, haveTopShadower, sectionOffset, sectionWidth,
-                            fFloor, fCeil, backLeaf != 0, bFloor, bCeil, lineLength,
+                            fFloor, fCeil, backCluster != 0, bFloor, bCeil, lineLength,
                             frData);
         drawWallSectionShadow(rvertices, leftEdge, rightEdge, parms);
     }
@@ -1285,15 +1290,16 @@ static void writeShadowSection(int planeIndex, LineSide &side, float shadowDark)
  */
 void Rend_RadioBspLeafEdges(BspLeaf &bspLeaf)
 {
-    DENG_ASSERT(!bspLeaf.isDegenerate());
+    DENG_ASSERT(bspLeaf.hasCluster());
 
-    if(!rendFakeRadio || levelFullBright) return;
+    if(!rendFakeRadio || levelFullBright)
+        return;
 
     static int doPlaneSize = 0;
     static byte *doPlanes = 0;
 
-    Sector &sector = bspLeaf.sector();
-    float sectorlight = sector.lightLevel();
+    SectorCluster &cluster = bspLeaf.cluster();
+    float sectorlight = cluster.sector().lightLevel();
 
     // Determine the shadow properties.
     /// @todo Make cvars out of constants.
@@ -1308,7 +1314,7 @@ void Rend_RadioBspLeafEdges(BspLeaf &bspLeaf)
                           vOrigin[VZ] - face.center().y);
 
     // Do we need to enlarge the size of the doPlanes array?
-    if(sector.planeCount() > doPlaneSize)
+    if(cluster.visPlaneCount() > doPlaneSize)
     {
         if(!doPlaneSize)
             doPlaneSize = 2;
@@ -1322,9 +1328,9 @@ void Rend_RadioBspLeafEdges(BspLeaf &bspLeaf)
 
     // See if any of this BspLeaf's planes will get shadows.
     bool workToDo = false;
-    for(int pln = 0; pln < bspLeaf.sector().planeCount(); ++pln)
+    for(int pln = 0; pln < cluster.visPlaneCount(); ++pln)
     {
-        Plane const &plane = bspLeaf.visPlane(pln);
+        Plane const &plane = cluster.visPlane(pln);
 
         eyeToSurface.z = vOrigin[VY] - plane.heightSmoothed();
 
@@ -1346,7 +1352,7 @@ void Rend_RadioBspLeafEdges(BspLeaf &bspLeaf)
         if(side->shadowVisCount() == frameCount)
             continue;
 
-        for(int pln = 0; pln < sector.planeCount(); ++pln)
+        for(int pln = 0; pln < cluster.visPlaneCount(); ++pln)
         {
             if(doPlanes[pln])
             {

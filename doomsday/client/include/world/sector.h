@@ -148,6 +148,11 @@ public:
         inline Plane &visCeiling() const { return visPlane(Sector::Ceiling); }
 
         /**
+         * Returns the total number of @em visual planes in the cluster.
+         */
+        inline int visPlaneCount() const { return sector().planeCount(); }
+
+        /**
          * To be called to force re-evaluation of mapped visual planes. This is
          * only necessary when a surface material change occurs on boundary line
          * of the cluster.

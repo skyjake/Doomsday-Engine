@@ -373,12 +373,12 @@ void BspLeaf::setCluster(SectorCluster *newCluster)
     d->cluster = newCluster;
 }
 
-void BspLeaf::addPolyobj(Polyobj const &polyobj)
+void BspLeaf::link(Polyobj const &polyobj)
 {
     d->polyobjs.insert(const_cast<Polyobj *>(&polyobj));
 }
 
-bool BspLeaf::removePolyobj(polyobj_s const &polyobj)
+bool BspLeaf::unlink(polyobj_s const &polyobj)
 {
     int sizeBefore = d->polyobjs.size();
     d->polyobjs.remove(const_cast<Polyobj *>(&polyobj));
@@ -524,7 +524,7 @@ void BspLeaf::lightBiasPoly(int group, Vector3f const *posCoords, Vector4f *colo
         d->updateBiasContributors(*geomGroup, planeIndex);
     }
 
-    Surface const &surface = visPlane(planeIndex).surface();
+    Surface const &surface = cluster().visPlane(planeIndex).surface();
     uint const biasTime = map().biasCurrentTime();
 
     Vector3f const *posIt = posCoords;
@@ -573,7 +573,7 @@ bool BspLeaf::updateReverb()
 
     // Space is the rough volume of the BSP leaf (bounding box).
     AABoxd const &aaBox = d->poly->aaBox();
-    d->reverb[SRD_SPACE] = int(ceilingHeight() - floorHeight())
+    d->reverb[SRD_SPACE] = int(cluster().ceiling().height() - cluster().floor().height())
                          * (aaBox.maxX - aaBox.minX) * (aaBox.maxY - aaBox.minY);
 
     // The other reverb properties can be found out by taking a look at the
@@ -647,7 +647,7 @@ BspLeaf::ShadowLines const &BspLeaf::shadowLines() const
     return d->shadowLines;
 }
 
-void BspLeaf::clearLumobjs()
+void BspLeaf::unlinkAllLumobjs()
 {
     d->lumobjs.clear();
 }

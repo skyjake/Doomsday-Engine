@@ -170,11 +170,15 @@ public:
     bool hasCluster() const;
 
     /**
-     * Returns @c true iff a sector (cluster) is attributed to the BSP leaf.
+     * Change the sector cluster attributed to the BSP leaf.
      *
-     * Equivalent to @ref hasCluster()
+     * @param newCluster New sector cluster to attribute to the BSP leaf.
+     *                   Ownership is unaffected. Can be @c 0 (to clear the
+     *                   attribution).
+     *
+     * @see hasCluster(), cluster()
      */
-    inline bool hasSector() const { return hasCluster(); }
+    void setCluster(SectorCluster *newCluster);
 
     /**
      * Returns the sector cluster attributed to the BSP leaf.
@@ -182,6 +186,16 @@ public:
      * @see hasCluster()
      */
     SectorCluster &cluster() const;
+
+    /**
+     * Convenient method returning a pointer to the sector cluster attributed to
+     * the BSP leaf. If not attributed then @c 0 is returned.
+     *
+     * @see hasCluster(), cluster()
+     */
+    inline SectorCluster *clusterPtr() const {
+        return hasCluster()? &cluster() : 0;
+    }
 
     /**
      * Convenient method of returning the sector of the cluster attributed to
@@ -197,137 +211,21 @@ public:
      *
      * @see hasSector(), sector()
      */
-    inline Sector *sectorPtr() const { return hasSector()? &sector() : 0; }
-
-    /**
-     * Change the sector cluster attributed to the BSP leaf.
-     *
-     * @param newCluster New sector cluster to attribute to the BSP leaf.
-     *                   Ownership is unaffected. Can be @c 0 (to clear the
-     *                   attribution).
-     *
-     * @see hasCluster(), cluster()
-     */
-    void setCluster(SectorCluster *newCluster);
-
-    /**
-     * Returns the identified @em physical plane of the parent sector. Naturally
-     * a sector must be attributed for this. Note that this is not the same as
-     * the "visual" plane which may well be defined by another sector.
-     *
-     * @see hasSector()
-     *
-     * @param planeIndex  Index of the plane to return.
-     */
-    inline Plane &plane(int planeIndex) const { return cluster().plane(planeIndex); }
-
-    /**
-     * Returns the sector plane which defines the physical floor of the BSP leaf.
-     * @see plane(), visFloor()
-     */
-    inline Plane &floor() const   { return plane(Sector::Floor); }
-
-    /**
-     * Returns the sector plane which defines the physical ceiling of the BSP leaf.
-     * @see plane(), visCeiling()
-     */
-    inline Plane &ceiling() const { return plane(Sector::Ceiling); }
-
-    /**
-     * Convenient method of accessing the physical height of the identified sector plane.
-     *
-     * @param planeIndex  Index of the plane to return.
-     *
-     * @see plane(), Plane::height()
-     */
-    inline coord_t planeHeight(int planeIndex) const {
-        return plane(planeIndex).height();
-    }
-
-    /**
-     * Convenient method of accessing the physical height of the sector floor plane.
-     *
-     * @see planeHeight()
-     */
-    inline coord_t floorHeight() const   { return planeHeight(Sector::Floor); }
-
-    /**
-     * Convenient method of accessing the physical height of the sector ceiling plane.
-     *
-     * @see planeHeight()
-     */
-    inline coord_t ceilingHeight() const { return planeHeight(Sector::Ceiling); }
-
-#ifdef __CLIENT__
-    /**
-     * Returns the identified @em visual sector plane for the BSP leaf (which may
-     * or may not be the same as the physical plane). Note that a sector must be
-     * attributed to "this" BSP leaf.
-     *
-     * @see hasSector()
-     *
-     * @param planeIndex  Index of the plane to return.
-     */
-    inline Plane &visPlane(int planeIndex) const { return cluster().visPlane(planeIndex); }
-
-    /**
-     * Returns the sector plane which defines the @em visual floor of the BSP leaf.
-     * @see hasSector(), floor()
-     */
-    inline Plane &visFloor() const   { return visPlane(Sector::Floor); }
-
-    /**
-     * Returns the sector plane which defines the @em visual ceiling of the BSP leaf.
-     * @see hasSector(), ceiling()
-     */
-    inline Plane &visCeiling() const { return visPlane(Sector::Ceiling); }
-
-    /**
-     * Convenient method of accessing the @em smoothed height of the identified
-     * @em visual sector plane.
-     *
-     * @param planeIndex  Index of the plane to return.
-     *
-     * @see visPlane(), Plane::heightSmoothed()
-     */
-    inline coord_t visPlaneHeightSmoothed(int planeIndex) const {
-        return visPlane(planeIndex).heightSmoothed();
-    }
-
-    /**
-     * Convenient method of accessing the @em smoothed height of the @em visual
-     * floor plane.
-     *
-     * @see visPlaneHeightSmoothed()
-     */
-    inline coord_t visFloorHeightSmoothed() const {
-        return visPlaneHeightSmoothed(Sector::Floor);
-    }
-
-    /**
-     * Convenient method of accessing the @em smoothed height of the @em visual
-     * ceiling plane.
-     *
-     * @see visPlaneHeightSmoothed()
-     */
-    inline coord_t visCeilingHeightSmoothed() const {
-        return visPlaneHeightSmoothed(Sector::Ceiling);
-    }
-#endif // __CLIENT__
-
-    /**
-     * Add the given @a polyobj to the set of those linked to the BSP leaf.
-     * Ownership is unaffected. If the polyobj is already linked in this set
-     * then nothing will happen.
-     */
-    void addPolyobj(struct polyobj_s const &polyobj);
+    inline Sector *sectorPtr() const { return hasCluster()? &cluster().sector() : 0; }
 
     /**
      * Remove the given @a polyobj from the set of those linked to the BSP leaf.
      *
      * @return  @c true= @a polyobj was linked and subsequently removed.
      */
-    bool removePolyobj(polyobj_s const &polyobj);
+    bool unlink(polyobj_s const &polyobj);
+
+    /**
+     * Add the given @a polyobj to the set of those linked to the BSP leaf.
+     * Ownership is unaffected. If the polyobj is already linked in this set
+     * then nothing will happen.
+     */
+    void link(struct polyobj_s const &polyobj);
 
     /**
      * Provides access to the set of polyobjs linked to the BSP leaf.
@@ -414,7 +312,7 @@ public:
     /**
      * Clear all lumobj links for the BSP leaf.
      */
-    void clearLumobjs();
+    void unlinkAllLumobjs();
 
     /**
      * Unlink the specified @a lumobj in the BSP leaf. If the lumobj is not

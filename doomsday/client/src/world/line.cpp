@@ -405,7 +405,7 @@ bool Line::Side::considerOneSided() const
         if(!hedge || !hedge->twin().hasFace())
             return true;
 
-        if(!hedge->twin().face().mapElement()->as<BspLeaf>().hasSector())
+        if(!hedge->twin().face().mapElement()->as<BspLeaf>().hasCluster())
             return true;
     }
 

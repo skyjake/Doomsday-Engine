@@ -120,40 +120,39 @@ boolean P_IsInVoid(player_t *player)
     // above/below ceiling/floor).
     if(ddpl->flags & DDPF_CAMERA)
     {
-        if(ddpl->inVoid) return true;
-
-        if(!ddpl->mo || !ddpl->mo->bspLeaf)
+        if(ddpl->inVoid || !ddpl->mo)
             return true;
+        mobj_t *mo = ddpl->mo;
 
-        BspLeaf *bspLeaf = ddpl->mo->bspLeaf;
-        if(!bspLeaf->hasSector() || bspLeaf->isDegenerate())
+        if(!mo->bspLeaf || !mo->bspLeaf->hasCluster())
             return true;
+        SectorCluster &cluster = mo->bspLeaf->cluster();
 
 #ifdef __CLIENT__
-        if(bspLeaf->visCeiling().surface().hasSkyMaskedMaterial())
+        if(cluster.visCeiling().surface().hasSkyMaskedMaterial())
         {
-            coord_t const skyCeil = bspLeaf->map().skyFixCeiling();
-            if(skyCeil < DDMAXFLOAT && ddpl->mo->origin[VZ] > skyCeil - 4)
+            coord_t const skyCeil = cluster.sector().map().skyFixCeiling();
+            if(skyCeil < DDMAXFLOAT && mo->origin[VZ] > skyCeil - 4)
                 return true;
         }
-        else if(ddpl->mo->origin[VZ] > bspLeaf->visCeilingHeightSmoothed() - 4)
+        else if(mo->origin[VZ] > cluster.visCeiling().heightSmoothed() - 4)
 #else
-        if(ddpl->mo->origin[VZ] > bspLeaf->ceilingHeight() - 4)
+        if(mo->origin[VZ] > cluster.ceiling().height() - 4)
 #endif
         {
             return true;
         }
 
 #ifdef __CLIENT__
-        if(bspLeaf->visFloor().surface().hasSkyMaskedMaterial())
+        if(cluster.visFloor().surface().hasSkyMaskedMaterial())
         {
-            coord_t const skyFloor = bspLeaf->map().skyFixFloor();
-            if(skyFloor > DDMINFLOAT && ddpl->mo->origin[VZ] < skyFloor + 4)
+            coord_t const skyFloor = cluster.sector().map().skyFixFloor();
+            if(skyFloor > DDMINFLOAT && mo->origin[VZ] < skyFloor + 4)
                 return true;
         }
-        else if(ddpl->mo->origin[VZ] < bspLeaf->visFloorHeightSmoothed() + 4)
+        else if(mo->origin[VZ] < cluster.visFloor().heightSmoothed() + 4)
 #else
-        if(ddpl->mo->origin[VZ] < bspLeaf->floorHeight() + 4)
+        if(mo->origin[VZ] < cluster.floor().height() + 4)
 #endif
         {
             return true;

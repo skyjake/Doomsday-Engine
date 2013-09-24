@@ -962,6 +962,14 @@ void R_SetupPlayerSprites()
     if((ddpl->flags & DDPF_CAMERA) || (ddpl->flags & DDPF_CHASECAM))
         return;
 
+    if(!ddpl->mo)
+        return;
+    mobj_t *mo = ddpl->mo;
+
+    if(!mo->bspLeaf || !mo->bspLeaf->hasCluster())
+        return;
+    SectorCluster &cluster = mo->bspLeaf->cluster();
+
     // Determine if we should be drawing all the psprites full bright?
     boolean isFullBright = (levelFullBright != 0);
     if(!isFullBright)
@@ -1014,12 +1022,12 @@ void R_SetupPlayerSprites()
 
             spr->type = VPSPR_MODEL;
 
-            spr->data.model.bspLeaf = ddpl->mo->bspLeaf;
+            spr->data.model.bspLeaf = mo->bspLeaf;
             spr->data.model.flags = 0;
             // 32 is the raised weapon height.
             spr->data.model.gzt = viewData->current.origin[VZ];
-            spr->data.model.secFloor = ddpl->mo->bspLeaf->visFloorHeightSmoothed();
-            spr->data.model.secCeil  = ddpl->mo->bspLeaf->visCeilingHeightSmoothed();
+            spr->data.model.secFloor = cluster.visFloor().heightSmoothed();
+            spr->data.model.secCeil  = cluster.visCeiling().heightSmoothed();
             spr->data.model.pClass = 0;
             spr->data.model.floorClip = 0;
 
@@ -1057,7 +1065,7 @@ void R_SetupPlayerSprites()
             spr->origin[VY] = viewData->current.origin[VY];
             spr->origin[VZ] = viewData->current.origin[VZ];
 
-            spr->data.sprite.bspLeaf = ddpl->mo->bspLeaf;
+            spr->data.sprite.bspLeaf = mo->bspLeaf;
             spr->data.sprite.alpha = psp->alpha;
             spr->data.sprite.isFullBright = (psp->flags & DDPSPF_FULLBRIGHT)!=0;
         }

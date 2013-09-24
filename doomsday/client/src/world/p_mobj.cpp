@@ -276,15 +276,16 @@ static modeldef_t *currentModelDefForMobj(mobj_t *mo)
 
 boolean Mobj_OriginBehindVisPlane(mobj_t *mo)
 {
-    if(!mo || !mo->bspLeaf)
+    if(!mo || !mo->bspLeaf || !mo->bspLeaf->hasCluster())
         return false;
+    SectorCluster &cluster = mo->bspLeaf->cluster();
 
-    Plane const &visFloor = mo->bspLeaf->visFloor();
-    if(&mo->bspLeaf->floor() != &visFloor && mo->origin[VZ] < visFloor.heightSmoothed())
+    if(&cluster.floor() != &cluster.visFloor() &&
+       mo->origin[VZ] < cluster.visFloor().heightSmoothed())
         return true;
 
-    Plane const &visCeiling = mo->bspLeaf->visCeiling();
-    if(&mo->bspLeaf->ceiling() != &visCeiling && mo->origin[VZ] > visCeiling.heightSmoothed())
+    if(&cluster.ceiling() != &cluster.visCeiling() &&
+       mo->origin[VZ] > cluster.visCeiling().heightSmoothed())
         return true;
 
     return false;
@@ -316,7 +317,9 @@ void Mobj_GenerateLumobjs(mobj_t *mo)
 
     Mobj_UnlinkLumobjs(mo);
 
-    if(!mo->bspLeaf) return;
+    if(!mo->bspLeaf || !mo->bspLeaf->hasCluster())
+        return;
+    SectorCluster &cluster = mo->bspLeaf->cluster();
 
     if(!(((mo->state && (mo->state->flags & STF_FULLBRIGHT)) &&
          !(mo->ddFlags & DDMF_DONTDRAW)) ||
@@ -351,10 +354,10 @@ void Mobj_GenerateLumobjs(mobj_t *mo)
 
     // Will the visual be allowed to go inside the floor?
     /// @todo Handle this as occlusion so that the halo fades smoothly.
-    coord_t impacted = mo->origin[VZ] + -tex.origin().y - ms.height() - mo->bspLeaf->visFloorHeightSmoothed();
+    coord_t impacted = mo->origin[VZ] + -tex.origin().y - ms.height() - cluster.visFloor().heightSmoothed();
 
     // If the floor is a visual plane then no light should be emitted.
-    if(impacted < 0 && &mo->bspLeaf->visFloor() != &mo->bspLeaf->floor())
+    if(impacted < 0 && &cluster.visFloor() != &cluster.floor())
         return;
 
     // Attempt to generate luminous object from the sprite.
@@ -398,7 +401,7 @@ void Mobj_GenerateLumobjs(mobj_t *mo)
 
     // Insert a copy of the temporary lumobj in the map and remember it's unique
     // index in the mobj (this'll allow a halo to be rendered).
-    mo->lumIdx = mo->bspLeaf->map().addLumobj(*lum).indexInMap();
+    mo->lumIdx = cluster.sector().map().addLumobj(*lum).indexInMap();
 }
 
 float Mobj_ShadowStrength(mobj_t *mo)
@@ -622,10 +625,12 @@ D_CMD(InspectMobj)
                mo->origin[0], mo->origin[1], mo->origin[2],
                mo->mom[0], mo->mom[1], mo->mom[2]);
     Con_Printf("FloorZ:%f CeilingZ:%f\n", mo->floorZ, mo->ceilingZ);
-    if(mo->bspLeaf && mo->bspLeaf->hasSector())
+    if(mo->bspLeaf && mo->bspLeaf->hasCluster())
     {
-        Con_Printf("Sector:%i (FloorZ:%f CeilingZ:%f)\n", mo->bspLeaf->sector().indexInMap(),
-                   mo->bspLeaf->floorHeight(), mo->bspLeaf->ceilingHeight());
+        SectorCluster &cluster = mo->bspLeaf->cluster();
+        Con_Printf("Sector:%i (FloorZ:%f CeilingZ:%f)\n",
+                   cluster.sector().indexInMap(),
+                   cluster.floor().height(), cluster.ceiling().height());
     }
     if(mo->onMobj)
     {

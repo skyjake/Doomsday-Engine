@@ -327,11 +327,6 @@ static void reportWallSectionDrawn(Line &line)
     }
 }
 
-static inline bool isNullLeaf(BspLeaf const *leaf)
-{
-    return !leaf || !leaf->hasCluster() || !leaf->cluster().hasWorldVolume();
-}
-
 void Rend_Init()
 {
     C_Init();
@@ -883,7 +878,6 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
     rendworldpoly_params_t const &p, MaterialSnapshot const &ms)
 {
     BspLeaf *leaf = currentBspLeaf;
-    DENG_ASSERT(!isNullLeaf(leaf));
 
     DENG_ASSERT(posCoords != 0);
 
@@ -1364,7 +1358,6 @@ static void projectDynamics(Surface const &surface, float glowStrength,
     uint &lightListIdx, uint &shadowListIdx)
 {
     BspLeaf *leaf = currentBspLeaf;
-    DENG_ASSERT(!isNullLeaf(currentBspLeaf));
 
     if(glowStrength >= 1 || levelFullBright)
         return;
@@ -1484,7 +1477,6 @@ static void writeWallSection(HEdge &hedge, int section,
     bool *retWroteOpaque = 0, coord_t *retBottomZ = 0, coord_t *retTopZ = 0)
 {
     BspLeaf *leaf = currentBspLeaf;
-    DENG_ASSERT(!isNullLeaf(leaf));
     DENG_ASSERT(hedge.mapElement() != 0);
 
     LineSideSegment &segment = hedge.mapElement()->as<LineSideSegment>();
@@ -1720,7 +1712,6 @@ static uint buildLeafPlaneGeometry(BspLeaf const &leaf, ClockDirection direction
 static void writeLeafPlane(Plane &plane)
 {
     BspLeaf *leaf = currentBspLeaf;
-    DENG_ASSERT(!isNullLeaf(leaf));
 
     Face const &poly = leaf->poly();
     Surface const &surface = plane.surface();
@@ -1895,7 +1886,6 @@ static void writeSkyFixStrip(int numElements, Vector3f const *posCoords,
 static void writeLeafSkyMaskStrips(SkyFixEdge::FixType fixType)
 {
     BspLeaf *leaf = currentBspLeaf;
-    DENG_ASSERT(!isNullLeaf(leaf));
 
     // Determine strip generation behavior.
     ClockDirection const direction   = Clockwise;
@@ -1925,7 +1915,8 @@ static void writeLeafSkyMaskStrips(SkyFixEdge::FixType fixType)
         Material *skyMaterial = 0;
         if(splitOnMaterialChange)
         {
-            skyMaterial = hedge->face().mapElement()->as<BspLeaf>().visPlane(relPlane).surface().materialPtr();
+            skyMaterial = hedge->face().mapElement()->as<BspLeaf>()
+                              .cluster().visPlane(relPlane).surface().materialPtr();
         }
 
         // Add a first (left) edge to the current strip?
@@ -2034,17 +2025,16 @@ static coord_t skyPlaneZ(BspLeaf *bspLeaf, int skyCap)
 {
     DENG_ASSERT(bspLeaf);
     int const relPlane = (skyCap & SKYCAP_UPPER)? Sector::Ceiling : Sector::Floor;
-    if(!bspLeaf->hasSector() || !P_IsInVoid(viewPlayer))
+    if(!P_IsInVoid(viewPlayer))
         return bspLeaf->map().skyFix(relPlane == Sector::Ceiling);
 
-    return bspLeaf->visPlaneHeightSmoothed(relPlane);
+    return bspLeaf->cluster().visPlane(relPlane).heightSmoothed();
 }
 
 /// @param skyCap  @ref skyCapFlags.
 static void writeLeafSkyMaskCap(int skyCap)
 {
     BspLeaf *leaf = currentBspLeaf;
-    DENG_ASSERT(!isNullLeaf(leaf));
 
     // Caps are unnecessary in sky debug mode (will be drawn as regular planes).
     if(devRendSkyMode) return;
@@ -2064,13 +2054,13 @@ static void writeLeafSkyMaskCap(int skyCap)
 static void writeLeafSkyMask(int skyCap = SKYCAP_LOWER|SKYCAP_UPPER)
 {
     BspLeaf *leaf = currentBspLeaf;
-    DENG_ASSERT(!isNullLeaf(leaf));
+    SectorCluster &cluster = leaf->cluster();
 
     // Any work to do?
     // Sky caps are only necessary in sectors with sky-masked planes.
-    if((skyCap & SKYCAP_LOWER) && !leaf->visFloor().surface().hasSkyMaskedMaterial())
+    if((skyCap & SKYCAP_LOWER) && !cluster.visFloor().surface().hasSkyMaskedMaterial())
         skyCap &= ~SKYCAP_LOWER;
-    if((skyCap & SKYCAP_UPPER) && !leaf->visCeiling().surface().hasSkyMaskedMaterial())
+    if((skyCap & SKYCAP_UPPER) && !cluster.visCeiling().surface().hasSkyMaskedMaterial())
         skyCap &= ~SKYCAP_UPPER;
 
     if(!skyCap) return;
@@ -2122,13 +2112,13 @@ static bool coveredOpenRange(HEdge &hedge, coord_t middleBottomZ, coord_t middle
         return wroteOpaqueMiddle;
     }
 
-    BspLeaf const &leaf     = hedge.face().mapElement()->as<BspLeaf>();
-    BspLeaf const &backLeaf = hedge.twin().face().mapElement()->as<BspLeaf>();
+    SectorCluster const &cluster     = hedge.face().mapElement()->as<BspLeaf>().cluster();
+    SectorCluster const &backCluster = hedge.twin().face().mapElement()->as<BspLeaf>().cluster();
 
-    coord_t const ffloor   = leaf.visFloorHeightSmoothed();
-    coord_t const fceil    = leaf.visCeilingHeightSmoothed();
-    coord_t const bfloor   = backLeaf.visFloorHeightSmoothed();
-    coord_t const bceil    = backLeaf.visCeilingHeightSmoothed();
+    coord_t const ffloor   = cluster.visFloor().heightSmoothed();
+    coord_t const fceil    = cluster.visCeiling().heightSmoothed();
+    coord_t const bfloor   = backCluster.visFloor().heightSmoothed();
+    coord_t const bceil    = backCluster.visCeiling().heightSmoothed();
 
     bool middleCoversOpening = false;
     if(wroteOpaqueMiddle)
@@ -2152,10 +2142,10 @@ static bool coveredOpenRange(HEdge &hedge, coord_t middleBottomZ, coord_t middle
        || (bfloor >= fceil &&
                (front.bottom().hasMaterial() || front.middle().hasMaterial())))
     {
-        Surface const &ffloorSurface = leaf.visFloor().surface();
-        Surface const &fceilSurface  = leaf.visCeiling().surface();
-        Surface const &bfloorSurface = backLeaf.visFloor().surface();
-        Surface const &bceilSurface  = backLeaf.visCeiling().surface();
+        Surface const &ffloorSurface = cluster.visFloor().surface();
+        Surface const &fceilSurface  = cluster.visCeiling().surface();
+        Surface const &bfloorSurface = backCluster.visFloor().surface();
+        Surface const &bceilSurface  = backCluster.visCeiling().surface();
 
         // A closed gap?
         if(de::fequal(fceil, bfloor))
@@ -2222,7 +2212,6 @@ static void writeAllWallSections(HEdge *hedge)
 static void writeLeafWallSections()
 {
     BspLeaf *leaf = currentBspLeaf;
-    DENG_ASSERT(!isNullLeaf(leaf));
 
     HEdge *base = leaf->poly().hedge();
     HEdge *hedge = base;
@@ -2247,15 +2236,15 @@ static void writeLeafWallSections()
 static void writeLeafPlanes()
 {
     BspLeaf *leaf = currentBspLeaf;
-    DENG_ASSERT(!isNullLeaf(leaf));
+    SectorCluster &cluster = leaf->cluster();
 
-    for(int i = 0; i < leaf->sector().planeCount(); ++i)
+    for(int i = 0; i < cluster.visPlaneCount(); ++i)
     {
-        Plane &plane = leaf->visPlane(i);
+        Plane &plane = cluster.visPlane(i);
 
         // Skip planes facing away from the viewer.
         Vector3d const eye(vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
-        Vector3d const pointOnPlane(leaf->poly().center(), plane.heightSmoothed());
+        Vector3d const pointOnPlane(cluster.center(), plane.heightSmoothed());
         if((eye - pointOnPlane).dot(plane.surface().normal()) < 0)
             continue;
 
@@ -2274,7 +2263,6 @@ static void markFrontFacingWalls(HEdge *hedge)
 static void markLeafFrontFacingWalls()
 {
     BspLeaf *bspLeaf = currentBspLeaf;
-    DENG_ASSERT(!isNullLeaf(bspLeaf));
 
     HEdge *base = bspLeaf->poly().hedge();
     HEdge *hedge = base;
@@ -2310,7 +2298,7 @@ static inline bool canOccludeEdgeBetweenPlanes(Plane &frontPlane, Plane const &b
 static void occludeLeaf(bool frontFacing)
 {
     BspLeaf *leaf = currentBspLeaf;
-    DENG_ASSERT(!isNullLeaf(leaf));
+    SectorCluster &cluster = leaf->cluster();
 
     if(devNoCulling) return;
     if(P_IsInVoid(viewPlayer)) return;
@@ -2324,7 +2312,6 @@ static void occludeLeaf(bool frontFacing)
             continue;
 
         LineSideSegment &seg = hedge->mapElement()->as<LineSideSegment>();
-        DENG_ASSERT(hedge->face().mapElement()->as<BspLeaf>().hasSector()); // sanity check
 
         // Edges without line segment surface sections can never occlude.
         if(!seg.lineSide().hasSections())
@@ -2339,28 +2326,29 @@ static void occludeLeaf(bool frontFacing)
             continue;
 
         BspLeaf &backLeaf = hedge->twin().face().mapElement()->as<BspLeaf>();
-        if(!backLeaf.hasSector())
+        if(!backLeaf.hasCluster())
             continue;
+        SectorCluster &backCluster = backLeaf.cluster();
 
         // Determine the opening between the visual sector planes at this edge.
         coord_t openBottom;
-        if(backLeaf.visFloorHeightSmoothed() > leaf->visFloorHeightSmoothed())
+        if(backCluster.visFloor().heightSmoothed() > cluster.visFloor().heightSmoothed())
         {
-            openBottom = backLeaf.visFloorHeightSmoothed();
+            openBottom = backCluster.visFloor().heightSmoothed();
         }
         else
         {
-            openBottom = leaf->visFloorHeightSmoothed();
+            openBottom = cluster.visFloor().heightSmoothed();
         }
 
         coord_t openTop;
-        if(backLeaf.visCeilingHeightSmoothed() < leaf->visCeilingHeightSmoothed())
+        if(backCluster.visCeiling().heightSmoothed() < cluster.visCeiling().heightSmoothed())
         {
-            openTop = backLeaf.visCeilingHeightSmoothed();
+            openTop = backCluster.visCeiling().heightSmoothed();
         }
         else
         {
-            openTop = leaf->visCeilingHeightSmoothed();
+            openTop = cluster.visCeiling().heightSmoothed();
         }
 
         // Choose start and end vertexes so that it's facing forward.
@@ -2368,17 +2356,17 @@ static void occludeLeaf(bool frontFacing)
         Vertex const &to   = frontFacing? hedge->twin().vertex() : hedge->vertex();
 
         // Does the floor create an occlusion?
-        if(((openBottom > leaf->visFloorHeightSmoothed() && vOrigin[VY] <= openBottom)
-            || (openBottom >  backLeaf.visFloorHeightSmoothed() && vOrigin[VY] >= openBottom))
-           && canOccludeEdgeBetweenPlanes(leaf->visFloor(), backLeaf.visFloor()))
+        if(((openBottom > cluster.visFloor().heightSmoothed() && vOrigin[VY] <= openBottom)
+            || (openBottom >  backCluster.visFloor().heightSmoothed() && vOrigin[VY] >= openBottom))
+           && canOccludeEdgeBetweenPlanes(cluster.visFloor(), backCluster.visFloor()))
         {
             C_AddViewRelOcclusion(from.origin(), to.origin(), openBottom, false);
         }
 
         // Does the ceiling create an occlusion?
-        if(((openTop < leaf->visCeilingHeightSmoothed() && vOrigin[VY] >= openTop)
-            || (openTop <  backLeaf.visCeilingHeightSmoothed() && vOrigin[VY] <= openTop))
-           && canOccludeEdgeBetweenPlanes(leaf->visCeiling(), backLeaf.visCeiling()))
+        if(((openTop < cluster.visCeiling().heightSmoothed() && vOrigin[VY] >= openTop)
+            || (openTop <  backCluster.visCeiling().heightSmoothed() && vOrigin[VY] <= openTop))
+           && canOccludeEdgeBetweenPlanes(cluster.visCeiling(), backCluster.visCeiling()))
         {
             C_AddViewRelOcclusion(from.origin(), to.origin(), openTop, true);
         }
@@ -2388,7 +2376,6 @@ static void occludeLeaf(bool frontFacing)
 static void clipLeafLumobjs()
 {
     BspLeaf *bspLeaf = currentBspLeaf;
-    DENG_ASSERT(!isNullLeaf(bspLeaf));
 
     foreach(Lumobj *lum, bspLeaf->lumobjs())
     {
@@ -2404,7 +2391,6 @@ static void clipLeafLumobjs()
 static void clipLeafLumobjsBySight()
 {
     BspLeaf *bspLeaf = currentBspLeaf;
-    DENG_ASSERT(!isNullLeaf(bspLeaf));
 
     foreach(Lumobj *lum, bspLeaf->lumobjs())
     {
@@ -2431,7 +2417,6 @@ static void clipFrontFacingWalls(HEdge *hedge)
 static void clipLeafFrontFacingWalls()
 {
     BspLeaf *bspLeaf = currentBspLeaf;
-    DENG_ASSERT(!isNullLeaf(bspLeaf));
 
     HEdge *base = bspLeaf->poly().hedge();
     HEdge *hedge = base;
@@ -2456,7 +2441,7 @@ static void clipLeafFrontFacingWalls()
 static int projectSpriteWorker(void *ptr, void * /*parameters*/)
 {
     BspLeaf const *leaf = currentBspLeaf;
-    DENG_ASSERT(!isNullLeaf(leaf));
+    SectorCluster &cluster = leaf->cluster();
 
     mobj_t *mo = (mobj_t *) ptr;
 
@@ -2470,19 +2455,19 @@ static int projectSpriteWorker(void *ptr, void * /*parameters*/)
         // sky sectors. Here we will raise the skyfix dynamically, to make sure
         // that no sprites get clipped by the sky.
 
-        if(leaf->visCeiling().surface().hasSkyMaskedMaterial())
+        if(cluster.visCeiling().surface().hasSkyMaskedMaterial())
         {
             if(Material *material = R_MaterialForSprite(mo->sprite, mo->frame))
             {
                 if(!(mo->dPlayer && (mo->dPlayer->flags & DDPF_CAMERA))
-                   && mo->origin[VZ] <= leaf->visCeilingHeightSmoothed()
-                   && mo->origin[VZ] >= leaf->visFloorHeightSmoothed())
+                   && mo->origin[VZ] <= cluster.visCeiling().heightSmoothed()
+                   && mo->origin[VZ] >= cluster.visFloor().heightSmoothed())
                 {
                     coord_t visibleTop = mo->origin[VZ] + material->height();
-                    if(visibleTop > leaf->map().skyFixCeiling())
+                    if(visibleTop > cluster.sector().map().skyFixCeiling())
                     {
                         // Raise skyfix ceiling.
-                        leaf->map().setSkyFixCeiling(visibleTop + 16/*leeway*/);
+                        cluster.sector().map().setSkyFixCeiling(visibleTop + 16/*leeway*/);
                     }
                 }
             }
@@ -2495,7 +2480,6 @@ static int projectSpriteWorker(void *ptr, void * /*parameters*/)
 static void projectLeafSprites()
 {
     BspLeaf *leaf = currentBspLeaf;
-    DENG_ASSERT(!isNullLeaf(leaf));
 
     // Do not use validCount because other parts of the renderer may change it.
     if(leaf->lastSpriteProjectFrame() == frameCount)
@@ -2512,7 +2496,6 @@ static void projectLeafSprites()
 static void drawCurrentLeaf()
 {
     BspLeaf *leaf = currentBspLeaf;
-    DENG_ASSERT(!isNullLeaf(leaf));
 
     // Mark the leaf as visible for this frame.
     leaf->markVisible();
@@ -2564,18 +2547,17 @@ static void drawCurrentLeaf()
  *
  * @param bspLeaf  The new BSP leaf to make current.
  */
-static void makeCurrent(BspLeaf *bspLeaf)
+static void makeCurrent(BspLeaf &bspLeaf)
 {
-    DENG_ASSERT(bspLeaf != 0);
-    bool sectorChanged = (!currentBspLeaf || currentBspLeaf->sectorPtr() != bspLeaf->sectorPtr());
+    bool sectorChanged = (!currentBspLeaf || currentBspLeaf->sectorPtr() != bspLeaf.sectorPtr());
 
-    currentBspLeaf = bspLeaf;
+    currentBspLeaf = &bspLeaf;
 
     // Update draw state.
     if(sectorChanged)
     {
-        currentSectorLightColor = Rend_SectorLightColor(bspLeaf->cluster());
-        currentSectorLightLevel = bspLeaf->sector().lightLevel();
+        currentSectorLightColor = Rend_SectorLightColor(bspLeaf.cluster());
+        currentSectorLightLevel = bspLeaf.sector().lightLevel();
     }
 }
 
@@ -2609,7 +2591,7 @@ static void traverseBspAndDrawLeafs(MapElement *bspElement)
 
     // Skip null leafs (those with zero volume). Neighbors handle adding the
     // solid clipper segments.
-    if(isNullLeaf(&bspLeaf))
+    if(!bspLeaf.hasCluster() || !bspLeaf.cluster().hasWorldVolume())
         return;
 
     // Is this leaf visible?
@@ -2617,7 +2599,7 @@ static void traverseBspAndDrawLeafs(MapElement *bspElement)
         return;
 
     // This is now the current leaf.
-    makeCurrent(&bspLeaf);
+    makeCurrent(bspLeaf);
 
     drawCurrentLeaf();
 
@@ -3341,48 +3323,51 @@ static void drawTangentVectorsForWallSections(HEdge const *hedge)
 
     if(lineSide.considerOneSided())
     {
-        BspLeaf &frontLeaf = line.definesPolyobj()? line.polyobj().bspLeaf()
-                                                  : hedge->face().mapElement()->as<BspLeaf>();
+        SectorCluster &cluster =
+            (line.definesPolyobj()? line.polyobj().bspLeaf()
+                                  : hedge->face().mapElement()->as<BspLeaf>()).cluster();
 
-        coord_t const bottom = frontLeaf.visFloorHeightSmoothed();
-        coord_t const top    = frontLeaf.visCeilingHeightSmoothed();
+        coord_t const bottom = cluster.  visFloor().heightSmoothed();
+        coord_t const top    = cluster.visCeiling().heightSmoothed();
 
         drawTangentVectorsForSurface(lineSide.middle(),
                                      Vector3d(center, bottom + (top - bottom) / 2));
     }
     else
     {
-        BspLeaf &frontLeaf = line.definesPolyobj()? line.polyobj().bspLeaf()
-                                                  : hedge->face().mapElement()->as<BspLeaf>();
-        BspLeaf &backLeaf  = line.definesPolyobj()? line.polyobj().bspLeaf()
-                                                  : hedge->twin().face().mapElement()->as<BspLeaf>();
+        SectorCluster &cluster =
+            (line.definesPolyobj()? line.polyobj().bspLeaf()
+                                  : hedge->face().mapElement()->as<BspLeaf>()).cluster();
+        SectorCluster &backCluster =
+            (line.definesPolyobj()? line.polyobj().bspLeaf()
+                                  : hedge->twin().face().mapElement()->as<BspLeaf>()).cluster();
 
         if(lineSide.middle().hasMaterial())
         {
-            coord_t const bottom = frontLeaf.visFloorHeightSmoothed();
-            coord_t const top    = frontLeaf.visCeilingHeightSmoothed();
+            coord_t const bottom = cluster.  visFloor().heightSmoothed();
+            coord_t const top    = cluster.visCeiling().heightSmoothed();
 
             drawTangentVectorsForSurface(lineSide.middle(),
                                          Vector3d(center, bottom + (top - bottom) / 2));
         }
 
-        if(backLeaf.visCeilingHeightSmoothed() < frontLeaf.visCeilingHeightSmoothed() &&
-           !(frontLeaf.visCeiling().surface().hasSkyMaskedMaterial() &&
-              backLeaf.visCeiling().surface().hasSkyMaskedMaterial()))
+        if(backCluster.visCeiling().heightSmoothed() < cluster.visCeiling().heightSmoothed() &&
+           !(cluster.    visCeiling().surface().hasSkyMaskedMaterial() &&
+             backCluster.visCeiling().surface().hasSkyMaskedMaterial()))
         {
-            coord_t const bottom =  backLeaf.visCeilingHeightSmoothed();
-            coord_t const top    = frontLeaf.visCeilingHeightSmoothed();
+            coord_t const bottom = backCluster.visCeiling().heightSmoothed();
+            coord_t const top    = cluster.    visCeiling().heightSmoothed();
 
             drawTangentVectorsForSurface(lineSide.top(),
                                          Vector3d(center, bottom + (top - bottom) / 2));
         }
 
-        if(backLeaf.visFloorHeightSmoothed() > frontLeaf.visFloorHeightSmoothed() &&
-           !(frontLeaf.visFloor().surface().hasSkyMaskedMaterial() &&
-              backLeaf.visFloor().surface().hasSkyMaskedMaterial()))
+        if(backCluster.visFloor().heightSmoothed() > cluster.visFloor().heightSmoothed() &&
+           !(cluster.    visFloor().surface().hasSkyMaskedMaterial() &&
+             backCluster.visFloor().surface().hasSkyMaskedMaterial()))
         {
-            coord_t const bottom = frontLeaf.visFloorHeightSmoothed();
-            coord_t const top    =  backLeaf.visFloorHeightSmoothed();
+            coord_t const bottom = cluster.    visFloor().heightSmoothed();
+            coord_t const top    = backCluster.visFloor().heightSmoothed();
 
             drawTangentVectorsForSurface(lineSide.bottom(),
                                          Vector3d(center, bottom + (top - bottom) / 2));
@@ -3650,8 +3635,8 @@ static int drawPolyobjVertexes(Polyobj *po, void * /*context*/)
 
         line->setValidCount(validCount);
 
-        BspLeaf const &bspLeaf = po->bspLeaf();
-        Vertex const &vtx      = line->from();
+        SectorCluster const &cluster = po->bspLeaf().cluster();
+        Vertex const &vtx = line->from();
 
         coord_t dist2D = M_ApproxDistance(vOrigin[VX] - vtx.origin().x,
                                           vOrigin[VZ] - vtx.origin().y);
@@ -3661,8 +3646,8 @@ static int drawPolyobjVertexes(Polyobj *po, void * /*context*/)
 
             if(alpha > 0)
             {
-                coord_t const bottom = bspLeaf.visFloorHeightSmoothed();
-                coord_t const top    = bspLeaf.visCeilingHeightSmoothed();
+                coord_t const bottom = cluster.visFloor().heightSmoothed();
+                coord_t const top    = cluster.visCeiling().heightSmoothed();
 
                 glDisable(GL_DEPTH_TEST);
 
@@ -3678,7 +3663,7 @@ static int drawPolyobjVertexes(Polyobj *po, void * /*context*/)
         if(devVertexIndices)
         {
             Vector3d const eye(vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
-            Vector3d const origin(vtx.origin(), bspLeaf.visFloorHeightSmoothed());
+            Vector3d const origin(vtx.origin(), cluster.visFloor().heightSmoothed());
 
             ddouble distToEye = (eye - origin).length();
             if(distToEye < MAX_VERTEX_POINT_DIST)

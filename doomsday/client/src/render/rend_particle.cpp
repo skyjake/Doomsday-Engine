@@ -591,7 +591,7 @@ static void renderParticles(int rtype, boolean withBlend)
         ded_ptcstage_t const *dst, *nextDst;
         float size, color[4], center[3], mark, invMark;
         float dist, maxdist;
-        boolean flatOnPlane = false, flatOnWall = false, nearPlane, nearWall;
+        boolean flatOnPlane = false, flatOnWall = false;
         short stageType;
 
         gen = gens->generator(slot->ptcGenID);
@@ -662,8 +662,10 @@ static void renderParticles(int rtype, boolean withBlend)
             {
                 // This is a simplified version of sectorlight (no distance
                 // attenuation or range compression).
-                if(pt->bspLeaf)
-                    color[c] *= pt->bspLeaf->sector().lightLevel();
+                if(SectorCluster *cluster = pt->bspLeaf->clusterPtr())
+                {
+                    color[c] *= cluster->sector().lightLevel();
+                }
             }
         }
 
@@ -690,12 +692,20 @@ static void renderParticles(int rtype, boolean withBlend)
 
         glColor4fv(color);
 
-        nearPlane = (pt->bspLeaf &&
-                     (FLT2FIX(pt->bspLeaf->visFloorHeightSmoothed()) + 2 * FRACUNIT >= pt->origin[VZ] ||
-                      FLT2FIX(pt->bspLeaf->visCeilingHeightSmoothed())  - 2 * FRACUNIT <= pt->origin[VZ]));
-        nearWall = (pt->contact && !pt->mov[VX] && !pt->mov[VY]);
+        boolean nearWall = (pt->contact && !pt->mov[VX] && !pt->mov[VY]);
 
-        if(stageType == PTC_POINT || (stageType >= PTC_TEXTURE && stageType < PTC_TEXTURE + MAX_PTC_TEXTURES))
+        boolean nearPlane = false;
+        if(SectorCluster *cluster = pt->bspLeaf->clusterPtr())
+        {
+            if(FLT2FIX(cluster->  visFloor().heightSmoothed()) + 2 * FRACUNIT >= pt->origin[VZ] ||
+               FLT2FIX(cluster->visCeiling().heightSmoothed()) - 2 * FRACUNIT <= pt->origin[VZ])
+            {
+                nearPlane = true;
+            }
+        }
+
+        if(stageType == PTC_POINT ||
+           (stageType >= PTC_TEXTURE && stageType < PTC_TEXTURE + MAX_PTC_TEXTURES))
         {
             if((st->flags & PTCF_PLANE_FLAT) && nearPlane)
                 flatOnPlane = true;

@@ -922,11 +922,8 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
 
     void linkBspLeafInBlockmap(BspLeaf &bspLeaf)
     {
-        // Degenerate BspLeafs don't get in.
-        if(bspLeaf.isDegenerate()) return;
-
-        // BspLeafs without sectors don't get in.
-        if(!bspLeaf.hasSector()) return;
+        // BspLeafs without sector clusters don't get in.
+        if(!bspLeaf.hasCluster()) return;
 
         Blockmap::CellBlock cellBlock = bspLeafBlockmap->toCellBlock(bspLeaf.poly().aaBox());
 
@@ -1970,7 +1967,7 @@ void Map::link(mobj_t &mo, byte flags)
     if(flags & DDLINK_SECTOR)
     {
         d->unlinkMobjFromSectors(mo);
-        DENG_ASSERT(bspLeafAtOrigin.hasSector());
+        DENG_ASSERT(bspLeafAtOrigin.hasCluster());
         bspLeafAtOrigin.sector().link(&mo);
     }
     mo.bspLeaf = &bspLeafAtOrigin;
@@ -1996,22 +1993,21 @@ void Map::link(mobj_t &mo, byte flags)
         ddplayer_t *player = mo.dPlayer;
 
         player->inVoid = true;
+        if(!player->mo->bspLeaf ||
+           !player->mo->bspLeaf->polyContains(player->mo->origin))
+            return;
 
-        if(player->mo->bspLeaf)
+        if(SectorCluster *cluster = player->mo->bspLeaf->clusterPtr())
         {
-            BspLeaf &bspLeaf = *player->mo->bspLeaf;
-            if(bspLeaf.polyContains(player->mo->origin))
-            {
 #ifdef __CLIENT__
-                if(player->mo->origin[VZ] <  bspLeaf.visCeilingHeightSmoothed() + 4 &&
-                   player->mo->origin[VZ] >= bspLeaf.visFloorHeightSmoothed())
+            if(player->mo->origin[VZ] <  cluster->visCeiling().heightSmoothed() + 4 &&
+               player->mo->origin[VZ] >= cluster->visFloor().heightSmoothed())
 #else
-                if(player->mo->origin[VZ] <  bspLeaf.ceilingHeight() + 4 &&
-                   player->mo->origin[VZ] >= bspLeaf.floorHeight())
+            if(player->mo->origin[VZ] <  cluster->ceiling().height() + 4 &&
+               player->mo->origin[VZ] >= cluster->floor().height())
 #endif
-                {
-                    player->inVoid = false;
-                }
+            {
+                player->inVoid = false;
             }
         }
     }
@@ -2726,7 +2722,7 @@ void Map::removeAllLumobjs()
 {
     foreach(BspLeaf *leaf, d->bspLeafs)
     {
-        leaf->clearLumobjs();
+        leaf->unlinkAllLumobjs();
     }
     qDeleteAll(d->lumobjs);
     d->lumobjs.clear();

@@ -145,9 +145,9 @@ static bool middleMaterialCoversOpening(LineSide const &side)
 void ShadowEdge::prepare(int planeIndex)
 {
     int const otherPlaneIndex = planeIndex == Sector::Floor? Sector::Ceiling : Sector::Floor;
-    HEdge const &hedge  = *d->leftMostHEdge;
-    BspLeaf const &leaf = hedge.face().mapElement()->as<BspLeaf>();
-    Plane const &plane  = leaf.visPlane(planeIndex);
+    HEdge const &hedge = *d->leftMostHEdge;
+    SectorCluster const &cluster = hedge.face().mapElement()->as<BspLeaf>().cluster();
+    Plane const &plane = cluster.visPlane(planeIndex);
 
     LineSide &lineSide  = hedge.mapElement()->as<LineSideSegment>().lineSide();
 
@@ -159,10 +159,10 @@ void ShadowEdge::prepare(int planeIndex)
     // in the polygon corner vertices (placement, opacity).
 
     if(hedge.twin().hasFace() &&
-       hedge.twin().face().mapElement()->as<BspLeaf>().hasSector())
+       hedge.twin().face().mapElement()->as<BspLeaf>().hasCluster())
     {
-        BspLeaf const &backLeaf = hedge.twin().face().mapElement()->as<BspLeaf>();
-        Plane const &backPlane  = backLeaf.visPlane(planeIndex);
+        SectorCluster const &backCluster = hedge.twin().face().mapElement()->as<BspLeaf>().cluster();
+        Plane const &backPlane  = backCluster.visPlane(planeIndex);
         Surface const &wallEdgeSurface =
             lineSide.back().hasSector()? lineSide.surface(planeIndex == Sector::Ceiling? LineSide::Top : LineSide::Bottom)
                                        : lineSide.middle();
@@ -176,7 +176,7 @@ void ShadowEdge::prepare(int planeIndex)
         if(planeIndex == Sector::Ceiling)
             bz = -bz;
 
-        coord_t bhz = backLeaf.plane(otherPlaneIndex).heightSmoothed();
+        coord_t bhz = backCluster.plane(otherPlaneIndex).heightSmoothed();
         if(planeIndex == Sector::Ceiling)
             bhz = -bhz;
 
@@ -186,9 +186,9 @@ void ShadowEdge::prepare(int planeIndex)
             d->sectorOpenness = 2; // Consider it fully open.
         }
         // Is the back sector a closed yet sky-masked surface?
-        else if(leaf.visFloorHeightSmoothed() >= backLeaf.visCeilingHeightSmoothed() &&
-                leaf.visPlane(otherPlaneIndex).surface().hasSkyMaskedMaterial() &&
-                backLeaf.visPlane(otherPlaneIndex).surface().hasSkyMaskedMaterial())
+        else if(cluster.visFloor().heightSmoothed() >= backCluster.visCeiling().heightSmoothed() &&
+                cluster.visPlane(otherPlaneIndex).surface().hasSkyMaskedMaterial() &&
+                backCluster.visPlane(otherPlaneIndex).surface().hasSkyMaskedMaterial())
         {
             d->sectorOpenness = 2; // Consider it fully open.
         }
@@ -241,7 +241,7 @@ void ShadowEdge::prepare(int planeIndex)
         {
             // Its a normal neighbor.
             Sector const *backSec  = neighborLineSide.back().sectorPtr();
-            if(backSec != leaf.sectorPtr() &&
+            if(backSec != &cluster.sector() &&
                !((plane.isSectorFloor() && backSec->ceiling().heightSmoothed() <= plane.heightSmoothed()) ||
                  (plane.isSectorCeiling() && backSec->floor().height() >= plane.heightSmoothed())))
             {
