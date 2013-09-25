@@ -198,20 +198,23 @@ public:
     }
 
     /**
-     * Convenient method of returning the sector of the cluster attributed to
-     * the BSP leaf.
-     *
-     * @see hasSector(), cluster()
+     * Convenient method of returning the parent sector of the BSP leaf.
      */
-    inline Sector &sector() const { return cluster().sector(); }
+    inline Sector &sector() { return parent().as<Sector>(); }
+
+    /// @copydoc sector()
+    inline Sector const &sector() const { return parent().as<Sector>(); }
 
     /**
-     * Convenient method returning a pointer to the sector of the cluster
-     * attributed to the BSP leaf. If not attributed then @c 0 is returned.
+     * Convenient method returning a pointer to the sector attributed to the
+     * BSP leaf. If not attributed then @c 0 is returned.
      *
-     * @see hasSector(), sector()
+     * @see sector()
      */
-    inline Sector *sectorPtr() const { return hasCluster()? &cluster().sector() : 0; }
+    inline Sector *sectorPtr() { return hasParent()? &sector() : 0; }
+
+    /// @copydoc sectorPtr()
+    inline Sector const *sectorPtr() const { return hasParent()? &sector() : 0; }
 
     /**
      * Remove the given @a polyobj from the set of those linked to the BSP leaf.

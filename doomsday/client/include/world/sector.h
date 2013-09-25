@@ -532,7 +532,10 @@ public:
     void unlink(struct mobj_s *mobj);
 
     /**
-     * Link the mobj to the head of the list of mobjs "in" the sector.
+     * Link the mobj to the head of the list of mobjs "in" the sector. Note that
+     * mobjs in this list may not actually be inside the sector. This is because
+     * the sector is determined by interpreting the BSP leaf as a half-space and
+     * not a closed convex subspace (@ref Map::link()).
      *
      * @param mobj  Mobj to be linked.
      */

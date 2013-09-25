@@ -1963,11 +1963,9 @@ void Map::link(mobj_t &mo, byte flags)
     BspLeaf &bspLeafAtOrigin = bspLeafAt_FixedPrecision(mo.origin);
 
     // Link into the sector?
-    /// @todo fixme: Never link to a degenerate BSP leaf!
     if(flags & DDLINK_SECTOR)
     {
         d->unlinkMobjFromSectors(mo);
-        DENG_ASSERT(bspLeafAtOrigin.hasCluster());
         bspLeafAtOrigin.sector().link(&mo);
     }
     mo.bspLeaf = &bspLeafAtOrigin;
@@ -1990,25 +1988,21 @@ void Map::link(mobj_t &mo, byte flags)
     // entered or exited the void.
     if(mo.dPlayer && mo.dPlayer->mo)
     {
-        ddplayer_t *player = mo.dPlayer;
+        mo.dPlayer->inVoid = true;
 
-        player->inVoid = true;
-        if(!player->mo->bspLeaf ||
-           !player->mo->bspLeaf->polyContains(player->mo->origin))
+        if(!Mobj_BspLeafAtOrigin(mo).polyContains(mo.origin))
             return;
 
-        if(SectorCluster *cluster = player->mo->bspLeaf->clusterPtr())
-        {
+        SectorCluster &cluster = Mobj_Cluster(mo);
 #ifdef __CLIENT__
-            if(player->mo->origin[VZ] <  cluster->visCeiling().heightSmoothed() + 4 &&
-               player->mo->origin[VZ] >= cluster->visFloor().heightSmoothed())
+        if(mo.origin[VZ] <  cluster.visCeiling().heightSmoothed() + 4 &&
+           mo.origin[VZ] >= cluster.visFloor().heightSmoothed())
 #else
-            if(player->mo->origin[VZ] <  cluster->ceiling().height() + 4 &&
-               player->mo->origin[VZ] >= cluster->floor().height())
+        if(mo.origin[VZ] <  cluster.ceiling().height() + 4 &&
+           mo.origin[VZ] >= cluster.floor().height())
 #endif
-            {
-                player->inVoid = false;
-            }
+        {
+            mo.dPlayer->inVoid = false;
         }
     }
 }

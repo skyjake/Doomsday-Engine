@@ -694,7 +694,7 @@ int BspLeaf::property(DmuArgs &args) const
     switch(args.prop)
     {
     case DMU_SECTOR: {
-        Sector *sectorAdr = sectorPtr();
+        Sector const *sectorAdr = sectorPtr();
         args.setValue(DMT_BSPLEAF_SECTOR, &sectorAdr, 0);
         break; }
     default:
