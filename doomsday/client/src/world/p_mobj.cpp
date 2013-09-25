@@ -261,6 +261,36 @@ DENG_EXTERN_C void Mobj_OriginSmoothed(mobj_t *mo, coord_t origin[3])
     }
 }
 
+bool Mobj_IsLinked(mobj_t &mobj)
+{
+    return mobj.bspLeaf != 0;
+}
+
+BspLeaf &Mobj_BspLeafAtOrigin(mobj_t &mobj)
+{
+    if(Mobj_IsLinked(mobj))
+    {
+        return *mobj.bspLeaf;
+    }
+    throw Error("Mobj_BspLeafAtOrigin", "Mobj is not yet linked");
+}
+
+bool Mobj_HasCluster(mobj_t &mobj)
+{
+    if(!Mobj_IsLinked(mobj)) return false;
+    return Mobj_BspLeafAtOrigin(mobj).hasCluster();
+}
+
+SectorCluster &Mobj_Cluster(mobj_t &mobj)
+{
+    return Mobj_BspLeafAtOrigin(mobj).cluster();
+}
+
+Sector &Mobj_Sector(mobj_t &mobj)
+{
+    return Mobj_Cluster(mobj).sector();
+}
+
 #ifdef __CLIENT__
 
 static modeldef_t *currentModelDefForMobj(mobj_t *mo)
@@ -276,9 +306,9 @@ static modeldef_t *currentModelDefForMobj(mobj_t *mo)
 
 boolean Mobj_OriginBehindVisPlane(mobj_t *mo)
 {
-    if(!mo || !mo->bspLeaf || !mo->bspLeaf->hasCluster())
+    if(!mo || !Mobj_HasCluster(*mo))
         return false;
-    SectorCluster &cluster = mo->bspLeaf->cluster();
+    SectorCluster &cluster = Mobj_Cluster(*mo);
 
     if(&cluster.floor() != &cluster.visFloor() &&
        mo->origin[VZ] < cluster.visFloor().heightSmoothed())

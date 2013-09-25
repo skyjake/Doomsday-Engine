@@ -27,6 +27,9 @@
 
 #include <de/libdeng1.h>
 
+#include "Sector"
+
+class BspLeaf;
 class Plane;
 
 // This macro can be used to calculate a mobj-specific 'random' number.
@@ -60,6 +63,16 @@ mobj_t *P_MobjCreate(thinkfunc_t function, coord_t const post[3], angle_t angle,
 void P_MobjRecycle(mobj_t *mobj);
 
 /**
+ * Returns @c true iff the mobj has been linked into the map. The only time this
+ * is not true is if @ref Mobj_SetOrigin() has not yet been called.
+ *
+ * @param mobj  Mobj instance.
+ *
+ * @todo Automatically link all new mobjs into the map (making this redundant).
+ */
+bool Mobj_IsLinked(mobj_t &mobj);
+
+/**
  * Sets a mobj's position.
  *
  * @return  @c true if successful, @c false otherwise. The object's position is
@@ -68,6 +81,41 @@ void P_MobjRecycle(mobj_t *mobj);
  * @note Internal to the engine.
  */
 boolean Mobj_SetOrigin(mobj_t *mobj, coord_t x, coord_t y, coord_t z);
+
+/**
+ * Returns the map BSP leaf at the origin of the mobj. Note that the mobj must
+ * be linked in the map (i.e., @ref Mobj_SetOrigin() has been called).
+ *
+ * @param mobj  Mobj instance.
+ *
+ * @see Mobj_IsLinked(), Mobj_SetOrigin()
+ */
+BspLeaf &Mobj_BspLeafAtOrigin(mobj_t &mobj);
+
+/**
+ * Returns @c true iff the sector cluster at the mobj's origin is known (i.e.,
+ * it has been linked into the map by calling @ref Mobj_SetOrigin() and the BSP
+ * leaf at the origin is not degenerate @ref BspLeaf::isDegenerate()).
+ *
+ * @param mobj  Mobj instance.
+ */
+bool Mobj_HasCluster(mobj_t &mobj);
+
+/**
+ * Returns the sector cluster in which the mobj currently resides.
+ *
+ * @param mobj  Mobj instance.
+ *
+ * @see Mobj_HasCluster()
+ */
+SectorCluster &Mobj_Cluster(mobj_t &mobj);
+
+/**
+ * Convenient method of returning the sector in which the mobj currently resides.
+ *
+ * @see Mobj_Cluster(), Sector::Cluster::sector()
+ */
+Sector &Mobj_Sector(mobj_t &mobj);
 
 #ifdef __CLIENT__
 
