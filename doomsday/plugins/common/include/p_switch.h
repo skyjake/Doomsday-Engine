@@ -26,6 +26,7 @@
 
 #include "doomsday.h"
 #include "p_mobj.h"
+#include "dmu_lib.h"
 
 #ifdef __cplusplus
 extern "C" {
