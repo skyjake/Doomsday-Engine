@@ -53,7 +53,6 @@ DENG2_OBSERVES(App, GameChange)
             switch(widget.handleMouseClick(event, MouseEvent::Right))
             {
             case MouseClickFinished: {
-                MouseEvent const &mouse = event.as<MouseEvent>();
                 PopupMenuWidget *pop = new PopupMenuWidget;
                 pop->setDeleteAfterDismissed(true);
                 d->self.add(pop);
