@@ -446,7 +446,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
 
             if(!leaf.hasParent())
             {
-                LOG_WARNING("BSP leaf %p is degenerate/orphan (%d half-edges).")
+                LOG_WARNING("BSP leaf %p has degenerate geometry (%d half-edges).")
                     << de::dintptr(&leaf)
                     << (leaf.hasPoly()? leaf.poly().hedgeCount() : 0);
 
@@ -455,7 +455,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
             }
 
 #ifdef DENG_DEBUG
-            if(!leaf.isDegenerate())
+            if(leaf.hasPoly())
             {
                 // See if we received a partial geometry...
                 int discontinuities = 0;

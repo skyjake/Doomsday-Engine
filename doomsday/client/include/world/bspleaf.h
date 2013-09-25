@@ -44,14 +44,16 @@ class Lumobj;
 
 /**
  * Represents a leaf in the map's binary space partition (BSP) tree. Each leaf
- * defines a two dimensioned convex subspace region (which, may be represented
- * by a face (polygon) in the map's half-edge @ref de::Mesh geometry).
+ * defines a half-space of the parent space (a node, or the whole map space).
+ *
+ * A leaf may be assigned a two dimensioned convex subspace geometry, which, is
+ * represented by a face (polygon) in the map's half-edge @ref de::Mesh.
+ *
+ * Each leaf is attributed to a @ref Sector in the map regardless of whether a
+ * closed convex geometry exists at the leaf.
  *
  * On client side a leaf also provides / links to various geometry data assets
  * and properties used to visualize the subspace.
- *
- * Each leaf is attributed to a @ref Sector in the map (with the exception of
- * wholly degenerate subspaces which may occur during the partitioning process).
  *
  * @see http://en.wikipedia.org/wiki/Binary_space_partitioning
  *
@@ -99,12 +101,23 @@ public:
     explicit BspLeaf(Sector *sector = 0);
 
     /**
-     * Returns @c true iff the BSP leaf is "degenerate", which is to say that
-     * no convex face geometry is attributed.
-     *
-     * Equivalent to @code !hasPoly() @endcode
+     * Convenient method of returning the parent sector of the BSP leaf.
      */
-    inline bool isDegenerate() const { return !hasPoly(); }
+    inline Sector &sector() { return parent().as<Sector>(); }
+
+    /// @copydoc sector()
+    inline Sector const &sector() const { return parent().as<Sector>(); }
+
+    /**
+     * Convenient method returning a pointer to the sector attributed to the
+     * BSP leaf. If not attributed then @c 0 is returned.
+     *
+     * @see sector()
+     */
+    inline Sector *sectorPtr() { return hasParent()? &sector() : 0; }
+
+    /// @copydoc sectorPtr()
+    inline Sector const *sectorPtr() const { return hasParent()? &sector() : 0; }
 
     /**
      * Determines whether a convex face geometry (a polygon) is attributed.
@@ -164,7 +177,7 @@ public:
 
     /**
      * Returns @c true iff a sector cluster is attributed to the BSP leaf. The
-     * only time a leaf might not be attributed to a sector is if the map geometry
+     * only time a leaf might not be attributed to a sector is if the geometry
      * was @em orphaned by the partitioning algorithm (a bug).
      */
     bool hasCluster() const;
@@ -196,25 +209,6 @@ public:
     inline SectorCluster *clusterPtr() const {
         return hasCluster()? &cluster() : 0;
     }
-
-    /**
-     * Convenient method of returning the parent sector of the BSP leaf.
-     */
-    inline Sector &sector() { return parent().as<Sector>(); }
-
-    /// @copydoc sector()
-    inline Sector const &sector() const { return parent().as<Sector>(); }
-
-    /**
-     * Convenient method returning a pointer to the sector attributed to the
-     * BSP leaf. If not attributed then @c 0 is returned.
-     *
-     * @see sector()
-     */
-    inline Sector *sectorPtr() { return hasParent()? &sector() : 0; }
-
-    /// @copydoc sectorPtr()
-    inline Sector const *sectorPtr() const { return hasParent()? &sector() : 0; }
 
     /**
      * Remove the given @a polyobj from the set of those linked to the BSP leaf.

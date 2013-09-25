@@ -286,6 +286,11 @@ SectorCluster &Mobj_Cluster(mobj_t &mobj)
     return Mobj_BspLeafAtOrigin(mobj).cluster();
 }
 
+SectorCluster *Mobj_ClusterPtr(mobj_t &mobj)
+{
+    return Mobj_HasCluster(mobj)? &Mobj_Cluster(mobj) : 0;
+}
+
 Sector &Mobj_Sector(mobj_t &mobj)
 {
     return Mobj_Cluster(mobj).sector();

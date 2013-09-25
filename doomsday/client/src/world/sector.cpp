@@ -426,8 +426,8 @@ void Sector::buildClusters()
         if(&bspLeaf->parent().as<Sector>() != this)
             continue;
 
-        // Degenerate BSP leafs are excluded (no geometry).
-        if(bspLeaf->isDegenerate())
+        // BSP leaf with no geometry are excluded.
+        if(!bspLeaf->hasPoly())
             continue;
 
         bspLeafSets.append(BspLeafs());

@@ -662,7 +662,7 @@ static void P_NewParticle(ptcgen_t *gen)
             bspLeaf = 0;
         }
 
-        if(!bspLeaf || bspLeaf->isDegenerate())
+        if(!bspLeaf || !bspLeaf->hasPoly())
         {
             pt->stage = -1;
             return;
@@ -716,8 +716,8 @@ static void P_NewParticle(ptcgen_t *gen)
         Vector2d ptOrigin(FIX2FLT(pt->origin[VX]), FIX2FLT(pt->origin[VY]));
         pt->bspLeaf = &App_World().map().bspLeafAt(ptOrigin);
 
-        // A degenerate BSP leaf is not a suitable place for a particle.
-        if(pt->bspLeaf->isDegenerate())
+        // A BSP leaf with no geometry is not a suitable place for a particle.
+        if(!pt->bspLeaf->hasPoly())
         {
             pt->stage = -1;
             return;
@@ -1196,8 +1196,8 @@ static void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
     {
         pt->bspLeaf = &App_World().map().bspLeafAt(Vector2d(FIX2FLT(x), FIX2FLT(y)));
 
-        // A degenerate BSP leaf is not a suitable place for a particle.
-        if(pt->bspLeaf->isDegenerate())
+        // A BSP leaf with no geometry is not a suitable place for a particle.
+        if(!pt->bspLeaf->hasPoly())
         {
             // Kill the particle.
             pt->stage = -1;

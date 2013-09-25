@@ -1673,7 +1673,6 @@ static void writeWallSection(HEdge &hedge, int section,
 static uint buildLeafPlaneGeometry(BspLeaf const &leaf, ClockDirection direction,
     coord_t height, Vector3f **verts, uint *vertsSize)
 {
-    DENG_ASSERT(!leaf.isDegenerate());
     DENG_ASSERT(verts != 0);
 
     Face const &face = leaf.poly();

@@ -636,9 +636,7 @@ DENG2_OBSERVES(Plane, HeightChange)
 
             if(!ddpl->inGame || !ddpl->mo)
                 continue;
-            if(!ddpl->mo->bspLeaf || ddpl->mo->bspLeaf->isDegenerate())
-                continue;
-            if(&ddpl->mo->bspLeaf->cluster() != thisPublic)
+            if(Mobj_ClusterPtr(*ddpl->mo) != thisPublic)
                 continue;
 
             if((ddpl->flags & DDPF_CAMERA) &&
@@ -684,10 +682,7 @@ DENG2_OBSERVES(Plane, HeightChange)
 
     void addReverbBspLeaf(BspLeaf *bspLeaf)
     {
-        // Degenerate leafs never contribute.
-        if(!bspLeaf || !bspLeaf->isDegenerate())
-            return;
-
+        if(!bspLeaf) return;
         reverbBspLeafs.insert(bspLeaf);
     }
 

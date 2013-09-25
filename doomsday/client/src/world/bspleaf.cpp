@@ -203,7 +203,7 @@ DENG2_PIMPL(BspLeaf)
      */
     GeometryGroup *geometryGroup(int group, bool canAlloc = true)
     {
-        DENG_ASSERT(cluster != 0 && !self.isDegenerate()); // sanity check
+        DENG_ASSERT(cluster != 0); // sanity check
         DENG_ASSERT(group >= 0 && group < cluster->sector().planeCount()); // sanity check
 
         GeometryGroups::iterator foundAt = geomGroups.find(group);
@@ -402,7 +402,7 @@ void BspLeaf::setValidCount(int newValidCount)
 
 bool BspLeaf::polyContains(Vector2d const &point) const
 {
-    if(isDegenerate()) return false; // Obviously not.
+    if(!hasPoly()) return false; // Obviously not.
 
     HEdge const *hedge = poly().hedge();
     do
@@ -453,7 +453,7 @@ static void updateBiasForWallSectionsAfterGeometryMove(HEdge *hedge)
 
 void BspLeaf::updateBiasAfterGeometryMove(int group)
 {
-    if(isDegenerate()) return;
+    if(!hasPoly()) return;
 
     if(GeometryGroup *geomGroup = d->geometryGroup(group, false /*don't allocate*/))
     {
@@ -483,7 +483,7 @@ static void applyBiasDigestToWallSections(HEdge *hedge, BiasDigest &changes)
 
 void BspLeaf::applyBiasDigest(BiasDigest &changes)
 {
-    if(isDegenerate()) return;
+    if(!hasPoly()) return;
 
     for(GeometryGroups::iterator it = d->geomGroups.begin();
         it != d->geomGroups.end(); ++it)
@@ -638,7 +638,7 @@ void BspLeaf::clearShadowLines()
 
 void BspLeaf::addShadowLine(LineSide &side)
 {
-    if(isDegenerate()) return;
+    if(!hasPoly()) return;
     d->shadowLines.insert(&side);
 }
 
@@ -659,7 +659,7 @@ void BspLeaf::unlink(Lumobj &lumobj)
 
 void BspLeaf::link(Lumobj &lumobj)
 {
-    if(isDegenerate()) return;
+    if(!hasPoly()) return;
     d->lumobjs.insert(&lumobj);
 }
 

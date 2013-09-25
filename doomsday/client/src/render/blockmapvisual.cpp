@@ -75,7 +75,7 @@ static int rendLine(Line *line, void * /*parameters*/)
 
 static int rendBspLeaf(BspLeaf *bspLeaf, void * /*parameters*/)
 {
-    if(!bspLeaf->isDegenerate() && bspLeaf->validCount() != validCount)
+    if(bspLeaf->hasPoly() && bspLeaf->validCount() != validCount)
     {
         float const scale = de::max(bmapDebugSize, 1.f);
         float const width = (DENG_GAMEVIEW_WIDTH / 16) / scale;

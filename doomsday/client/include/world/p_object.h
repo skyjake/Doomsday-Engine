@@ -95,7 +95,7 @@ BspLeaf &Mobj_BspLeafAtOrigin(mobj_t &mobj);
 /**
  * Returns @c true iff the sector cluster at the mobj's origin is known (i.e.,
  * it has been linked into the map by calling @ref Mobj_SetOrigin() and the BSP
- * leaf at the origin is not degenerate @ref BspLeaf::isDegenerate()).
+ * leaf at the origin has a convex geometry (not degenerate)).
  *
  * @param mobj  Mobj instance.
  */
@@ -109,6 +109,16 @@ bool Mobj_HasCluster(mobj_t &mobj);
  * @see Mobj_HasCluster()
  */
 SectorCluster &Mobj_Cluster(mobj_t &mobj);
+
+/**
+ * Returns a pointer to sector cluster in which the mobj currently resides, or
+ * @c 0 if not linked or that BSP leaf at the origin has a convex geometry.
+ *
+ * @param mobj  Mobj instance.
+ *
+ * @see Mobj_HasCluster()
+ */
+SectorCluster *Mobj_ClusterPtr(mobj_t &mobj);
 
 /**
  * Convenient method of returning the sector in which the mobj currently resides.

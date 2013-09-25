@@ -426,7 +426,7 @@ int P_Iteratep(void *elPtr, uint prop, void *context, int (*callback) (void *p, 
             BspLeaf &bspLeaf = elem->as<BspLeaf>();
 
             /// @todo cleanup: BspLeaf could provide a list of LineSide.
-            if(!bspLeaf.isDegenerate())
+            if(bspLeaf.hasPoly())
             {
                 HEdge *base = bspLeaf.poly().hedge();
                 HEdge *hedge = base;
@@ -603,12 +603,12 @@ static void setProperty(MapElement *elem, DmuArgs &args)
         if(args.modifiers & DMU_FLOOR_OF_SECTOR)
         {
             elem = elem->as<BspLeaf>().sectorPtr();
-            args.type = DMU_SECTOR;
+            args.type = elem->type();
         }
         else if(args.modifiers & DMU_CEILING_OF_SECTOR)
         {
             elem = elem->as<BspLeaf>().sectorPtr();
-            args.type = DMU_SECTOR;
+            args.type = elem->type();
         }
     }
 
@@ -617,12 +617,12 @@ static void setProperty(MapElement *elem, DmuArgs &args)
         if(args.modifiers & DMU_FLOOR_OF_SECTOR)
         {
             elem = &elem->as<Sector>().floor();
-            args.type = DMU_PLANE;
+            args.type = elem->type();
         }
         else if(args.modifiers & DMU_CEILING_OF_SECTOR)
         {
             elem = &elem->as<Sector>().ceiling();
-            args.type = DMU_PLANE;
+            args.type = elem->type();
         }
     }
 
@@ -631,12 +631,12 @@ static void setProperty(MapElement *elem, DmuArgs &args)
         if(args.modifiers & DMU_FRONT_OF_LINE)
         {
             elem = &elem->as<Line>().front();
-            args.type = DMU_SIDE;
+            args.type = elem->type();
         }
         else if(args.modifiers & DMU_BACK_OF_LINE)
         {
             elem = &elem->as<Line>().back();
-            args.type = DMU_SIDE;
+            args.type = elem->type();
         }
     }
 
@@ -645,17 +645,17 @@ static void setProperty(MapElement *elem, DmuArgs &args)
         if(args.modifiers & DMU_TOP_OF_SIDE)
         {
             elem = &elem->as<LineSide>().top();
-            args.type = DMU_SURFACE;
+            args.type = elem->type();
         }
         else if(args.modifiers & DMU_MIDDLE_OF_SIDE)
         {
             elem = &elem->as<LineSide>().middle();
-            args.type = DMU_SURFACE;
+            args.type = elem->type();
         }
         else if(args.modifiers & DMU_BOTTOM_OF_SIDE)
         {
             elem = &elem->as<LineSide>().bottom();
-            args.type = DMU_SURFACE;
+            args.type = elem->type();
         }
     }
 
@@ -687,7 +687,7 @@ static void setProperty(MapElement *elem, DmuArgs &args)
         case DMU_BLENDMODE:
         case DMU_FLAGS:
             elem = &elem->as<Plane>().surface();
-            args.type = DMU_SURFACE;
+            args.type = elem->type();
             break;
 
         default: break;

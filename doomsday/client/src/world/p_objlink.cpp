@@ -312,8 +312,8 @@ static void linkObjToBspLeaf(BspLeaf &bspLeaf, void *object, objtype_t type)
 {
     if(!object) return;
 
-    // Never link to degenerate BspLeafs.
-    if(bspLeaf.isDegenerate()) return;
+    // Never link to a BspLeaf with no geometry.
+    if(!bspLeaf.hasPoly()) return;
 
     objcontact_t *con = allocObjContact();
     con->obj = object;
@@ -325,8 +325,8 @@ static void createObjlink(BspLeaf &bspLeaf, void *object, objtype_t type)
 {
     if(!object) return;
 
-    // We don't create objlinks for objects in degenerate BSPLeafs.
-    if(bspLeaf.isDegenerate()) return;
+    // Never link to a BspLeaf with no geometry.
+    if(!bspLeaf.hasPoly()) return;
 
     objlink_t *link = allocObjlink();
     link->obj = object;
@@ -595,7 +595,8 @@ static inline float radiusMax(objtype_t type)
 
 void R_InitForBspLeaf(BspLeaf &bspLeaf)
 {
-    DENG_ASSERT(!bspLeaf.isDegenerate());
+    if(!bspLeaf.hasPoly())
+        return;
 
 BEGIN_PROF( PROF_OBJLINK_SPREAD );
 
