@@ -1595,8 +1595,8 @@ DENG_EXTERN_C void P_MobjLink(mobj_t *mo, byte flags)
 #undef P_MobjUnlink
 DENG_EXTERN_C int P_MobjUnlink(mobj_t *mo)
 {
-    if(!mo || !mo->bspLeaf) return 0;
-    return mo->bspLeaf->map().unlink(*mo);
+    if(!mo || !Mobj_IsLinked(*mo)) return 0;
+    return Mobj_BspLeafAtOrigin(*mo).map().unlink(*mo);
 }
 
 #undef P_BspLeafAtPoint_FixedPrecision
@@ -1617,15 +1617,15 @@ DENG_EXTERN_C BspLeaf *P_BspLeafAtPoint_FixedPrecisionXY(coord_t x, coord_t y)
 #undef P_MobjLinesIterator
 DENG_EXTERN_C int P_MobjLinesIterator(mobj_t *mo, int (*callback) (Line *, void *), void *parameters)
 {
-    if(!mo || !mo->bspLeaf) return false; // Continue iteration.
-    return mo->bspLeaf->map().mobjLinesIterator(mo, callback, parameters);
+    if(!mo || !Mobj_IsLinked(*mo)) return false; // Continue iteration.
+    return Mobj_BspLeafAtOrigin(*mo).map().mobjLinesIterator(mo, callback, parameters);
 }
 
 #undef P_MobjSectorsIterator
 DENG_EXTERN_C int P_MobjSectorsIterator(mobj_t *mo, int (*callback) (Sector *, void *), void *parameters)
 {
-    if(!mo || !mo->bspLeaf) return false; // Continue iteration.
-    return mo->bspLeaf->map().mobjSectorsIterator(mo, callback, parameters);
+    if(!mo || !Mobj_IsLinked(*mo)) return false; // Continue iteration.
+    return Mobj_BspLeafAtOrigin(*mo).map().mobjSectorsIterator(mo, callback, parameters);
 }
 
 #undef P_LineMobjsIterator

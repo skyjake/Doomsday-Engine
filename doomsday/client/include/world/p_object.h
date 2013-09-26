@@ -112,7 +112,7 @@ SectorCluster &Mobj_Cluster(mobj_t &mobj);
 
 /**
  * Returns a pointer to sector cluster in which the mobj currently resides, or
- * @c 0 if not linked or that BSP leaf at the origin has a convex geometry.
+ * @c 0 if not linked or the BSP leaf at the origin has no convex geometry.
  *
  * @param mobj  Mobj instance.
  *

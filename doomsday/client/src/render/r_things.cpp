@@ -156,7 +156,7 @@ static int findMobjZOriginWorker(Sector *sector, void *parameters)
  */
 static void findMobjZOrigin(mobj_t *mo, bool floorAdjust, vissprite_t *vis)
 {
-    DENG_ASSERT(mo != 0 && mo->bspLeaf != 0);
+    DENG_ASSERT(mo != 0);
     DENG_ASSERT(vis != 0);
 
     findmobjzoriginworker_params_t params; zap(params);
@@ -176,7 +176,7 @@ void R_ProjectSprite(mobj_t *mo)
     // ...hidden?
     if((mo->ddFlags & DDMF_DONTDRAW)) return;
     // ...not linked into the map?
-    if(!mo->bspLeaf || !mo->bspLeaf->hasCluster()) return;
+    if(!Mobj_HasCluster(*mo)) return;
     // ...in an invalid state?
     if(!mo->state || mo->state == states) return;
     // ...no sprite frame is defined?
@@ -186,7 +186,7 @@ void R_ProjectSprite(mobj_t *mo)
     float const alpha = Mobj_Alpha(mo);
     if(alpha <= 0) return;
     // ...origin lies in a sector with no volume?
-    SectorCluster &cluster = mo->bspLeaf->cluster();
+    SectorCluster &cluster = Mobj_Cluster(*mo);
     if(!cluster.hasWorldVolume()) return;
 
     // Determine distance to object.
@@ -396,7 +396,7 @@ void R_ProjectSprite(mobj_t *mo)
         Vector3d const origin(vis->origin.x, vis->origin.y, gzt - ms.height() / 2.0f);
         Vector4f ambientColor;
         uint vLightListIdx = 0;
-        evaluateLighting(origin, mo->bspLeaf, vis->distance, fullbright,
+        evaluateLighting(origin, &Mobj_BspLeafAtOrigin(*mo), vis->distance, fullbright,
                          ambientColor, &vLightListIdx);
 
         ambientColor.w = alpha;
@@ -406,15 +406,15 @@ void R_ProjectSprite(mobj_t *mo)
                               floorClip, gzt, *mat, matFlipS, matFlipT, blendMode,
                               ambientColor, vLightListIdx,
                               mo->tclass, mo->tmap,
-                              mo->bspLeaf,
+                              &Mobj_BspLeafAtOrigin(*mo),
                               floorAdjust, fitTop, fitBottom, viewAlign);
     }
     else
     {
         Vector4f ambientColor;
         uint vLightListIdx = 0;
-        evaluateLighting(vis->origin, mo->bspLeaf, vis->distance, fullbright,
-                         ambientColor, &vLightListIdx);
+        evaluateLighting(vis->origin, &Mobj_BspLeafAtOrigin(*mo), vis->distance,
+                         fullbright, ambientColor, &vLightListIdx);
 
         ambientColor.w = alpha;
 
@@ -423,7 +423,7 @@ void R_ProjectSprite(mobj_t *mo)
                              gzt, yaw, 0, pitch, 0,
                              mf, nextmf, interp,
                              ambientColor, vLightListIdx, mo->thinker.id, mo->selector,
-                             mo->bspLeaf,
+                             &Mobj_BspLeafAtOrigin(*mo),
                              mo->ddFlags, mo->tmap, viewAlign,
                              fullbright && !(mf && mf->testSubFlag(0, MFF_DIM)), false);
     }

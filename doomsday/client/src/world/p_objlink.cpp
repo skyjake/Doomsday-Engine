@@ -518,7 +518,7 @@ static void findContacts(objlink_t *link)
 
         origin  = Vector3d(mo->origin);
         radius  = Mobj_VisualRadius(mo);
-        bspLeaf = mo->bspLeaf;
+        bspLeaf = &Mobj_BspLeafAtOrigin(*mo);
         break; }
 
     case NUM_OBJ_TYPES:

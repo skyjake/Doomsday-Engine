@@ -588,8 +588,7 @@ DENG2_PIMPL(World)
 
             if(mobj_t *mo = ddpl.mo)
             {
-                BspLeaf &bspLeaf = map->bspLeafAt(mo->origin);
-                if(SectorCluster *cluster = bspLeaf.clusterPtr())
+                if(SectorCluster *cluster = Mobj_ClusterPtr(*mo))
                 {
 #ifdef __CLIENT__
                     if(mo->origin[VZ] >= cluster->visFloor().heightSmoothed() &&

@@ -966,9 +966,9 @@ void R_SetupPlayerSprites()
         return;
     mobj_t *mo = ddpl->mo;
 
-    if(!mo->bspLeaf || !mo->bspLeaf->hasCluster())
+    if(!Mobj_HasCluster(*mo))
         return;
-    SectorCluster &cluster = mo->bspLeaf->cluster();
+    SectorCluster &cluster = Mobj_Cluster(*mo);
 
     // Determine if we should be drawing all the psprites full bright?
     boolean isFullBright = (levelFullBright != 0);
@@ -1022,7 +1022,7 @@ void R_SetupPlayerSprites()
 
             spr->type = VPSPR_MODEL;
 
-            spr->data.model.bspLeaf = mo->bspLeaf;
+            spr->data.model.bspLeaf = &Mobj_BspLeafAtOrigin(*mo);
             spr->data.model.flags = 0;
             // 32 is the raised weapon height.
             spr->data.model.gzt = viewData->current.origin[VZ];
@@ -1065,7 +1065,7 @@ void R_SetupPlayerSprites()
             spr->origin[VY] = viewData->current.origin[VY];
             spr->origin[VZ] = viewData->current.origin[VZ];
 
-            spr->data.sprite.bspLeaf = mo->bspLeaf;
+            spr->data.sprite.bspLeaf = &Mobj_BspLeafAtOrigin(*mo);
             spr->data.sprite.alpha = psp->alpha;
             spr->data.sprite.isFullBright = (psp->flags & DDPSPF_FULLBRIGHT)!=0;
         }

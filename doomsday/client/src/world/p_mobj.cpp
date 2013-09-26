@@ -352,9 +352,9 @@ void Mobj_GenerateLumobjs(mobj_t *mo)
 
     Mobj_UnlinkLumobjs(mo);
 
-    if(!mo->bspLeaf || !mo->bspLeaf->hasCluster())
+    if(!Mobj_HasCluster(*mo))
         return;
-    SectorCluster &cluster = mo->bspLeaf->cluster();
+    SectorCluster &cluster = Mobj_Cluster(*mo);
 
     if(!(((mo->state && (mo->state->flags & STF_FULLBRIGHT)) &&
          !(mo->ddFlags & DDMF_DONTDRAW)) ||
@@ -370,7 +370,7 @@ void Mobj_GenerateLumobjs(mobj_t *mo)
     // If the mobj's origin is outside the BSP leaf it is linked within, then
     // this means it is outside the playable map (and no light should be emitted).
     /// @todo Optimize: P_MobjLink() should do this and flag the mobj accordingly.
-    if(!mo->bspLeaf->polyContains(mo->origin))
+    if(!Mobj_BspLeafAtOrigin(*mo).polyContains(mo->origin))
         return;
 
     spritedef_t *sprDef = R_SpriteDef(mo->sprite);
@@ -447,14 +447,15 @@ float Mobj_ShadowStrength(mobj_t *mo)
     float ambientLightLevel, strength = .65f; ///< Default strength factor.
 
     // Is this mobj in a valid state for shadow casting?
-    if(!mo->state || !mo->bspLeaf) return 0;
+    if(!mo->state) return 0;
+    if(!Mobj_IsLinked(*mo)) return 0;
 
     // Should this mobj even have a shadow?
     if((mo->state->flags & STF_FULLBRIGHT) ||
        (mo->ddFlags & DDMF_DONTDRAW) || (mo->ddFlags & DDMF_ALWAYSLIT))
         return 0;
 
-    Map &map = mo->bspLeaf->map();
+    Map &map = Mobj_BspLeafAtOrigin(*mo).map();
 
     // Sample the ambient light level at the mobj's position.
     if(useBias && map.hasLightGrid())
@@ -464,7 +465,7 @@ float Mobj_ShadowStrength(mobj_t *mo)
     }
     else
     {
-        ambientLightLevel = mo->bspLeaf->sector().lightLevel();
+        ambientLightLevel = Mobj_BspLeafAtOrigin(*mo).sector().lightLevel();
         Rend_ApplyLightAdaptation(ambientLightLevel);
     }
 
@@ -660,12 +661,11 @@ D_CMD(InspectMobj)
                mo->origin[0], mo->origin[1], mo->origin[2],
                mo->mom[0], mo->mom[1], mo->mom[2]);
     Con_Printf("FloorZ:%f CeilingZ:%f\n", mo->floorZ, mo->ceilingZ);
-    if(mo->bspLeaf && mo->bspLeaf->hasCluster())
+    if(SectorCluster *cluster = Mobj_ClusterPtr(*mo))
     {
-        SectorCluster &cluster = mo->bspLeaf->cluster();
         Con_Printf("Sector:%i (FloorZ:%f CeilingZ:%f)\n",
-                   cluster.sector().indexInMap(),
-                   cluster.floor().height(), cluster.ceiling().height());
+                   cluster->sector().indexInMap(),
+                   cluster->floor().height(), cluster->ceiling().height());
     }
     if(mo->onMobj)
     {

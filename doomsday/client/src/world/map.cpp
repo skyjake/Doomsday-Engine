@@ -1841,7 +1841,7 @@ int Map::mobjSectorsIterator(mobj_t *mo, int (*callback) (Sector *, void *),
     linknode_t *tn = d->mobjNodes.nodes;
 
     // Always process the mobj's own sector first.
-    Sector &ownSec = mo->bspLeaf->sector();
+    Sector &ownSec = Mobj_BspLeafAtOrigin(*mo).sector();
     *end++ = &ownSec;
     ownSec.setValidCount(validCount);
 
@@ -2423,10 +2423,8 @@ static int interceptMobjsWorker(mobj_t *mo, void * /*parameters*/)
     if(mo->dPlayer && (mo->dPlayer->flags & DDPF_CAMERA))
         return false; // $democam: ssshh, keep going, we're not here...
 
-    DENG_ASSERT(mo->bspLeaf);
-
     // Check a corner to corner crossection for hit.
-    divline_t const &traceLos = mo->bspLeaf->map().traceLine();
+    divline_t const &traceLos = Mobj_BspLeafAtOrigin(*mo).map().traceLine();
     vec2d_t from, to;
     if((traceLos.direction[VX] ^ traceLos.direction[VY]) > 0)
     {

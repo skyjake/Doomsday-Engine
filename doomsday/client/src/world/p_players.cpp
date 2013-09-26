@@ -124,9 +124,9 @@ boolean P_IsInVoid(player_t *player)
             return true;
         mobj_t *mo = ddpl->mo;
 
-        if(!mo->bspLeaf || !mo->bspLeaf->hasCluster())
+        if(!Mobj_HasCluster(*mo))
             return true;
-        SectorCluster &cluster = mo->bspLeaf->cluster();
+        SectorCluster &cluster = Mobj_Cluster(*mo);
 
 #ifdef __CLIENT__
         if(cluster.visCeiling().surface().hasSkyMaskedMaterial())
