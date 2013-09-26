@@ -25,7 +25,9 @@
 #  error Attempted to include internal Doomsday p_object.h from a game
 #endif
 
-#include <de/libdeng1.h>
+//#include <de/libdeng1.h>
+
+#include <de/Vector>
 
 #include "Sector"
 
@@ -71,6 +73,11 @@ void P_MobjRecycle(mobj_t *mobj);
  * @todo Automatically link all new mobjs into the map (making this redundant).
  */
 bool Mobj_IsLinked(mobj_t &mobj);
+
+/**
+ * Returns a copy of the mobj's map space origin.
+ */
+de::Vector3d Mobj_Origin(mobj_t &mobj);
 
 /**
  * Sets a mobj's position.

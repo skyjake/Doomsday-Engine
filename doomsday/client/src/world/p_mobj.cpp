@@ -213,6 +213,11 @@ DENG_EXTERN_C void P_MobjSetState(mobj_t *mobj, int statenum)
     }
 }
 
+Vector3d Mobj_Origin(mobj_t &mobj)
+{
+    return Vector3d(mobj.origin);
+}
+
 boolean Mobj_SetOrigin(struct mobj_s *mo, coord_t x, coord_t y, coord_t z)
 {
     if(!gx.MobjTryMoveXYZ)

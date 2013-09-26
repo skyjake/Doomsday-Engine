@@ -212,7 +212,7 @@ static uint buildLeafPlaneGeometry(BspLeaf const &leaf, ClockDirection direction
     coord_t height, Vector3f **verts, uint *vertsSize);
 
 // Draw state:
-static Vector2d eyeOrigin; // Viewer origin.
+static Vector3d eyeOrigin; // Viewer origin.
 static BspLeaf *currentBspLeaf; // BSP leaf currently being drawn.
 static Vector3f currentSectorLightColor;
 static float currentSectorLightLevel;
@@ -2247,9 +2247,8 @@ static void writeLeafPlanes()
         Plane &plane = cluster.visPlane(i);
 
         // Skip planes facing away from the viewer.
-        Vector3d const eye(vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
         Vector3d const pointOnPlane(cluster.center(), plane.heightSmoothed());
-        if((eye - pointOnPlane).dot(plane.surface().normal()) < 0)
+        if((eyeOrigin - pointOnPlane).dot(plane.surface().normal()) < 0)
             continue;
 
         writeLeafPlane(plane);
@@ -2594,7 +2593,7 @@ static void traverseBspAndDrawLeafs(MapElement *bspElement)
     BspLeaf &bspLeaf = bspElement->as<BspLeaf>();
 
     // Skip null leafs (those with zero volume). Neighbors handle adding the
-    // solid clipper segments.
+    // angle clipper ranges.
     if(!bspLeaf.hasCluster() || !bspLeaf.cluster().hasWorldVolume())
         return;
 
@@ -2653,7 +2652,7 @@ void Rend_RenderMap(Map &map)
         Rend_ParticleInitForNewFrame();
 
         viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
-        eyeOrigin = Vector2d(viewData->current.origin);
+        eyeOrigin = Vector3d(viewData->current.origin);
 
         // Add the backside clipping range (if vpitch allows).
         if(vpitch <= 90 - yfov / 2 && vpitch >= -90 + yfov / 2)
@@ -2774,8 +2773,7 @@ static void drawSource(BiasSource *s)
 {
     if(!s) return;
 
-    Vector3d const eye(vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
-    ddouble distToEye = (s->origin() - eye).length();
+    ddouble distToEye = (s->origin() - eyeOrigin).length();
 
     drawStar(s->origin(), 25 + s->evaluateIntensity() / 20,
              Vector4f(s->color(), 1.0f / de::max(float((distToEye - 100) / 1000), 1.f)));
@@ -2821,7 +2819,6 @@ static void drawBiasEditingVisuals(Map &map)
         return;
 
     double const t = Timer_RealMilliseconds() / 100.0f;
-    Vector3d eye(vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
 
     if(HueCircle *hueCircle = SBE_HueCircle())
     {
@@ -2877,7 +2874,7 @@ static void drawBiasEditingVisuals(Map &map)
 
     drawLabel(nearSource->origin(), labelForSource(nearSource));
     if(nearSource->isLocked())
-        drawLock(nearSource->origin(), 2 + (nearSource->origin() - eye).length() / 100, t);
+        drawLock(nearSource->origin(), 2 + (nearSource->origin() - eyeOrigin).length() / 100, t);
 
     foreach(Grabbable *grabbable, hand.grabbed())
     {
@@ -2891,7 +2888,7 @@ static void drawBiasEditingVisuals(Map &map)
         drawLabel(s->origin(), labelForSource(s));
 
         if(s->isLocked())
-            drawLock(s->origin(), 2 + (s->origin() - eye).length() / 100, t);
+            drawLock(s->origin(), 2 + (s->origin() - eyeOrigin).length() / 100, t);
     }
 
     /*BiasSource *s = hand.nearestBiasSource();
@@ -3179,9 +3176,8 @@ static int drawMobjBBox(thinker_t *th, void * /*context*/)
     if(!Mobj_IsLinked(*mo) || !Mobj_BspLeafAtOrigin(*mo).isVisible())
         return false; // Continue iteration.
 
-    Vector3d eye(vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
-
-    float alpha = 1 - ((Vector3d(eye - Vector3d(mo->origin)).length() / (DENG_GAMEVIEW_WIDTH/2)) / 4);
+    ddouble const distToEye = (eyeOrigin - Mobj_Origin(*mo)).length();
+    float alpha = 1 - ((distToEye / (DENG_GAMEVIEW_WIDTH/2)) / 4);
     if(alpha < .25f)
         alpha = .25f; // Don't make them totally invisible.
 
@@ -3221,8 +3217,6 @@ static void drawMobjBoundingBoxes(Map &map)
     if(!dlBBox)
         dlBBox = constructBBox(0, .08f);
 
-    Vector3d eye(vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
-
     glDisable(GL_DEPTH_TEST);
     glEnable(GL_TEXTURE_2D);
     glDisable(GL_CULL_FACE);
@@ -3252,7 +3246,8 @@ static void drawMobjBoundingBoxes(Map &map)
                          polyobj->aaBox.minY + length,
                          sec.floor().height());
 
-            float alpha = 1 - ((Vector3d(eye - pos).length() / (DENG_GAMEVIEW_WIDTH/2)) / 4);
+            ddouble const distToEye = (eyeOrigin - pos).length();
+            float alpha = 1 - ((distToEye / (DENG_GAMEVIEW_WIDTH/2)) / 4);
             if(alpha < .25f)
                 alpha = .25f; // Don't make them totally invisible.
 
@@ -3500,33 +3495,20 @@ static void drawLumobjs(Map &map)
     glEnable(GL_DEPTH_TEST);
 }
 
-static void drawSoundOrigin(Vector3d const &origin, char const *label, Vector3d const &eye)
+static void drawSoundEmitter(SoundEmitter &emitter, String const &label)
 {
-    coord_t const MAX_SOUNDORIGIN_DIST = 384; ///< Maximum distance from origin to eye in map coordinates.
+#define MAX_SOUNDORIGIN_DIST 384
 
-    if(!label) return;
-
-    coord_t dist = Vector3d(eye - origin).length();
-    float alpha = 1.f - de::min(dist, MAX_SOUNDORIGIN_DIST) / MAX_SOUNDORIGIN_DIST;
-
-    if(alpha > 0)
+    Vector3d const &origin  = Vector3d(emitter.origin);
+    ddouble const distToEye = (eyeOrigin - origin).length();
+    if(distToEye < MAX_SOUNDORIGIN_DIST)
     {
-        float scale = dist / (DENG_GAMEVIEW_WIDTH / 2);
-
-        glMatrixMode(GL_MODELVIEW);
-        glPushMatrix();
-
-        glTranslatef(origin.x, origin.z, origin.y);
-        glRotatef(-vang + 180, 0, 1, 0);
-        glRotatef(vpitch, 1, 0, 0);
-        glScalef(-scale, -scale, 1);
-
-        Point2Raw const labelOrigin(2, 2);
-        UI_TextOutEx(label, &labelOrigin, UI_Color(UIC_TITLE), alpha);
-
-        glMatrixMode(GL_MODELVIEW);
-        glPopMatrix();
+        drawLabel(origin, label,
+                  distToEye / (DENG_GAMEVIEW_WIDTH / 2),
+                  1 - distToEye / MAX_SOUNDORIGIN_DIST);
     }
+
+#undef MAX_SOUNDORIGIN_DIST
 }
 
 /**
@@ -3536,11 +3518,6 @@ static void drawSoundEmitters(Map &map)
 {
     if(!devSoundEmitters) return;
 
-    glDisable(GL_DEPTH_TEST);
-    glEnable(GL_TEXTURE_2D);
-
-    Vector3d eye(vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
-
     if(devSoundEmitters & SOF_SIDE)
     {
         foreach(Line *line, map.lines())
@@ -3549,16 +3526,20 @@ static void drawSoundEmitters(Map &map)
             LineSide &side = line->side(i);
             if(!side.hasSections()) continue;
 
-            char buf[80];
+            drawSoundEmitter(side.middleSoundEmitter(),
+                             String("Line #%1 (%2, middle)")
+                                 .arg(line->indexInMap())
+                                 .arg(i? "back" : "front"));
 
-            dd_snprintf(buf, 80, "Line #%d (%s, middle)", line->indexInMap(), (i? "back" : "front"));
-            drawSoundOrigin(Vector3d(side.middleSoundEmitter().origin), buf, eye);
+            drawSoundEmitter(side.bottomSoundEmitter(),
+                             String("Line #%1 (%2, bottom)")
+                                 .arg(line->indexInMap())
+                                 .arg(i? "back" : "front"));
 
-            dd_snprintf(buf, 80, "Line #%d (%s, bottom)", line->indexInMap(), (i? "back" : "front"));
-            drawSoundOrigin(Vector3d(side.bottomSoundEmitter().origin), buf, eye);
-
-            dd_snprintf(buf, 80, "Line #%d (%s, top)", line->indexInMap(), (i? "back" : "front"));
-            drawSoundOrigin(Vector3d(side.topSoundEmitter().origin), buf, eye);
+            drawSoundEmitter(side.topSoundEmitter(),
+                             String("Line #%1 (%2, top)")
+                                 .arg(line->indexInMap())
+                                 .arg(i? "back" : "front"));
         }
     }
 
@@ -3566,28 +3547,24 @@ static void drawSoundEmitters(Map &map)
     {
         foreach(Sector *sec, map.sectors())
         {
-            char buf[80];
-
             if(devSoundEmitters & SOF_PLANE)
             {
-                for(int i = 0; i < sec->planeCount(); ++i)
+                foreach(Plane *plane, sec->planes())
                 {
-                    Plane &plane = sec->plane(i);
-                    dd_snprintf(buf, 80, "Sector #%i (pln:%i)", sec->indexInMap(), i);
-                    drawSoundOrigin(Vector3d(plane.soundEmitter().origin), buf, eye);
+                    drawSoundEmitter(plane->soundEmitter(),
+                                     String("Sector #%1 (pln:%2)")
+                                         .arg(sec->indexInMap())
+                                         .arg(plane->indexInSector()));
                 }
             }
 
             if(devSoundEmitters & SOF_SECTOR)
             {
-                dd_snprintf(buf, 80, "Sector #%i", sec->indexInMap());
-                drawSoundOrigin(Vector3d(sec->soundEmitter().origin), buf, eye);
+                drawSoundEmitter(sec->soundEmitter(),
+                                 String("Sector #%1").arg(sec->indexInMap()));
             }
         }
     }
-
-    // Restore previous state.
-    glEnable(GL_DEPTH_TEST);
 }
 
 // Currently active Generators collection.
@@ -3601,14 +3578,14 @@ static String labelForGenerator(ptcgen_t const *gen)
 
 static int drawGenerator(ptcgen_t *gen, void *context)
 {
-#define MAX_GENERATOR_DIST  2048
+    DENG2_UNUSED(context);
 
-    Vector3d const &eye = *static_cast<Vector3d *>(context);
+#define MAX_GENERATOR_DIST  2048
 
     if(gen->source || (gen->flags & PGF_UNTRIGGERED))
     {
         Vector3d const origin   = Generator_Origin(*gen);
-        ddouble const distToEye = (eye - origin).length();
+        ddouble const distToEye = (eyeOrigin - origin).length();
         if(distToEye < MAX_GENERATOR_DIST)
         {
             drawLabel(origin, labelForGenerator(gen),
@@ -3629,9 +3606,8 @@ static void drawGenerators(Map &map)
 {
     if(!devDrawGenerators) return;
 
-    Vector3d eye(vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
     gens = &map.generators();
-    gens->iterate(drawGenerator, &eye);
+    gens->iterate(drawGenerator);
 }
 
 static void drawVertexPoint(const Vertex* vtx, coord_t z, float alpha)
@@ -3706,10 +3682,8 @@ static int drawPolyobjVertexes(Polyobj *po, void * /*context*/)
 
         if(devVertexIndices)
         {
-            Vector3d const eye(vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
             Vector3d const origin(vtx.origin(), cluster.visFloor().heightSmoothed());
-
-            ddouble distToEye = (eye - origin).length();
+            ddouble distToEye = (eyeOrigin - origin).length();
             if(distToEye < MAX_VERTEX_POINT_DIST)
             {
                 drawLabel(origin, labelForVertex(&vtx),
@@ -3797,8 +3771,6 @@ static void drawVertexes(Map &map)
 
     if(devVertexIndices)
     {
-        Vector3d const eye(vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
-
         foreach(Vertex *vertex, map.vertexes())
         {
             // Not a line vertex?
@@ -3811,7 +3783,7 @@ static void drawVertexes(Map &map)
             Vector3d origin(vertex->origin(), DDMAXFLOAT);
             vertex->planeVisHeightMinMax(&origin.z);
 
-            ddouble distToEye = (eye - origin).length();
+            ddouble distToEye = (eyeOrigin - origin).length();
             if(distToEye < MAX_VERTEX_POINT_DIST)
             {
                 drawLabel(origin, labelForVertex(vertex),
@@ -3851,17 +3823,15 @@ static void drawSectors(Map &map)
 {
 #define MAX_LABEL_DIST 1280
 
-    if(!devSectorIndices)
-        return;
+    if(!devSectorIndices) return;
 
     // Draw per-cluster sector labels:
-    Vector3d const eye(vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
 
     foreach(Sector *sector, map.sectors())
     foreach(SectorCluster *cluster, sector->clusters())
     {
         Vector3d const origin(cluster->center(), cluster->visPlane(Sector::Floor).heightSmoothed());
-        ddouble distToEye = (eye - origin).length();
+        ddouble distToEye = (eyeOrigin - origin).length();
         if(distToEye < MAX_LABEL_DIST)
         {
             drawLabel(origin, labelForCluster(cluster),
