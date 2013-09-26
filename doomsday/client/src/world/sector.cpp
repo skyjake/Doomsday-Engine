@@ -396,16 +396,6 @@ Sector::Planes const &Sector::planes() const
     return d->planes;
 }
 
-bool Sector::hasSkyMaskedPlane() const
-{
-    foreach(Plane *plane, d->planes)
-    {
-        if(plane->surface().hasSkyMaskedMaterial())
-            return true;
-    }
-    return false;
-}
-
 Sector::Clusters const &Sector::clusters() const
 {
     return d->clusters;
@@ -436,8 +426,8 @@ void Sector::buildClusters()
         if(&bspLeaf->parent().as<Sector>() != this)
             continue;
 
-        // Degenerate BSP leafs are excluded (no geometry).
-        if(bspLeaf->isDegenerate())
+        // BSP leaf with no geometry are excluded.
+        if(!bspLeaf->hasPoly())
             continue;
 
         bspLeafSets.append(BspLeafs());

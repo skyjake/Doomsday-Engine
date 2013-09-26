@@ -261,6 +261,41 @@ DENG_EXTERN_C void Mobj_OriginSmoothed(mobj_t *mo, coord_t origin[3])
     }
 }
 
+bool Mobj_IsLinked(mobj_t &mobj)
+{
+    return mobj.bspLeaf != 0;
+}
+
+BspLeaf &Mobj_BspLeafAtOrigin(mobj_t &mobj)
+{
+    if(Mobj_IsLinked(mobj))
+    {
+        return *mobj.bspLeaf;
+    }
+    throw Error("Mobj_BspLeafAtOrigin", "Mobj is not yet linked");
+}
+
+bool Mobj_HasCluster(mobj_t &mobj)
+{
+    if(!Mobj_IsLinked(mobj)) return false;
+    return Mobj_BspLeafAtOrigin(mobj).hasCluster();
+}
+
+SectorCluster &Mobj_Cluster(mobj_t &mobj)
+{
+    return Mobj_BspLeafAtOrigin(mobj).cluster();
+}
+
+SectorCluster *Mobj_ClusterPtr(mobj_t &mobj)
+{
+    return Mobj_HasCluster(mobj)? &Mobj_Cluster(mobj) : 0;
+}
+
+Sector &Mobj_Sector(mobj_t &mobj)
+{
+    return Mobj_Cluster(mobj).sector();
+}
+
 #ifdef __CLIENT__
 
 static modeldef_t *currentModelDefForMobj(mobj_t *mo)
@@ -276,15 +311,16 @@ static modeldef_t *currentModelDefForMobj(mobj_t *mo)
 
 boolean Mobj_OriginBehindVisPlane(mobj_t *mo)
 {
-    if(!mo || !mo->bspLeaf)
+    if(!mo || !Mobj_HasCluster(*mo))
         return false;
+    SectorCluster &cluster = Mobj_Cluster(*mo);
 
-    Plane const &visFloor = mo->bspLeaf->visFloor();
-    if(&mo->bspLeaf->floor() != &visFloor && mo->origin[VZ] < visFloor.heightSmoothed())
+    if(&cluster.floor() != &cluster.visFloor() &&
+       mo->origin[VZ] < cluster.visFloor().heightSmoothed())
         return true;
 
-    Plane const &visCeiling = mo->bspLeaf->visCeiling();
-    if(&mo->bspLeaf->ceiling() != &visCeiling && mo->origin[VZ] > visCeiling.heightSmoothed())
+    if(&cluster.ceiling() != &cluster.visCeiling() &&
+       mo->origin[VZ] > cluster.visCeiling().heightSmoothed())
         return true;
 
     return false;
@@ -316,7 +352,9 @@ void Mobj_GenerateLumobjs(mobj_t *mo)
 
     Mobj_UnlinkLumobjs(mo);
 
-    if(!mo->bspLeaf) return;
+    if(!Mobj_HasCluster(*mo))
+        return;
+    SectorCluster &cluster = Mobj_Cluster(*mo);
 
     if(!(((mo->state && (mo->state->flags & STF_FULLBRIGHT)) &&
          !(mo->ddFlags & DDMF_DONTDRAW)) ||
@@ -332,7 +370,7 @@ void Mobj_GenerateLumobjs(mobj_t *mo)
     // If the mobj's origin is outside the BSP leaf it is linked within, then
     // this means it is outside the playable map (and no light should be emitted).
     /// @todo Optimize: P_MobjLink() should do this and flag the mobj accordingly.
-    if(!mo->bspLeaf->polyContains(mo->origin))
+    if(!Mobj_BspLeafAtOrigin(*mo).polyContains(mo->origin))
         return;
 
     spritedef_t *sprDef = R_SpriteDef(mo->sprite);
@@ -351,10 +389,10 @@ void Mobj_GenerateLumobjs(mobj_t *mo)
 
     // Will the visual be allowed to go inside the floor?
     /// @todo Handle this as occlusion so that the halo fades smoothly.
-    coord_t impacted = mo->origin[VZ] + -tex.origin().y - ms.height() - mo->bspLeaf->visFloorHeightSmoothed();
+    coord_t impacted = mo->origin[VZ] + -tex.origin().y - ms.height() - cluster.visFloor().heightSmoothed();
 
     // If the floor is a visual plane then no light should be emitted.
-    if(impacted < 0 && &mo->bspLeaf->visFloor() != &mo->bspLeaf->floor())
+    if(impacted < 0 && &cluster.visFloor() != &cluster.floor())
         return;
 
     // Attempt to generate luminous object from the sprite.
@@ -398,7 +436,7 @@ void Mobj_GenerateLumobjs(mobj_t *mo)
 
     // Insert a copy of the temporary lumobj in the map and remember it's unique
     // index in the mobj (this'll allow a halo to be rendered).
-    mo->lumIdx = mo->bspLeaf->map().addLumobj(*lum).indexInMap();
+    mo->lumIdx = cluster.sector().map().addLumobj(*lum).indexInMap();
 }
 
 float Mobj_ShadowStrength(mobj_t *mo)
@@ -409,14 +447,15 @@ float Mobj_ShadowStrength(mobj_t *mo)
     float ambientLightLevel, strength = .65f; ///< Default strength factor.
 
     // Is this mobj in a valid state for shadow casting?
-    if(!mo->state || !mo->bspLeaf) return 0;
+    if(!mo->state) return 0;
+    if(!Mobj_IsLinked(*mo)) return 0;
 
     // Should this mobj even have a shadow?
     if((mo->state->flags & STF_FULLBRIGHT) ||
        (mo->ddFlags & DDMF_DONTDRAW) || (mo->ddFlags & DDMF_ALWAYSLIT))
         return 0;
 
-    Map &map = mo->bspLeaf->map();
+    Map &map = Mobj_BspLeafAtOrigin(*mo).map();
 
     // Sample the ambient light level at the mobj's position.
     if(useBias && map.hasLightGrid())
@@ -426,7 +465,7 @@ float Mobj_ShadowStrength(mobj_t *mo)
     }
     else
     {
-        ambientLightLevel = mo->bspLeaf->sector().lightLevel();
+        ambientLightLevel = Mobj_BspLeafAtOrigin(*mo).sector().lightLevel();
         Rend_ApplyLightAdaptation(ambientLightLevel);
     }
 
@@ -622,10 +661,11 @@ D_CMD(InspectMobj)
                mo->origin[0], mo->origin[1], mo->origin[2],
                mo->mom[0], mo->mom[1], mo->mom[2]);
     Con_Printf("FloorZ:%f CeilingZ:%f\n", mo->floorZ, mo->ceilingZ);
-    if(mo->bspLeaf && mo->bspLeaf->hasSector())
+    if(SectorCluster *cluster = Mobj_ClusterPtr(*mo))
     {
-        Con_Printf("Sector:%i (FloorZ:%f CeilingZ:%f)\n", mo->bspLeaf->sector().indexInMap(),
-                   mo->bspLeaf->floorHeight(), mo->bspLeaf->ceilingHeight());
+        Con_Printf("Sector:%i (FloorZ:%f CeilingZ:%f)\n",
+                   cluster->sector().indexInMap(),
+                   cluster->floor().height(), cluster->ceiling().height());
     }
     if(mo->onMobj)
     {

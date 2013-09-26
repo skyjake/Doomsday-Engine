@@ -868,7 +868,7 @@ boolean P_CheckSpot(coord_t x, coord_t y)
     if(!dummy) Con_Error("P_CheckSpot: Failed creating dummy mobj.");
 
     dummy->flags &= ~MF_PICKUP;
-    dummy->flags2 &= ~MF2_PASSMOBJ;
+    //dummy->flags2 &= ~MF2_PASSMOBJ;
 
     boolean result = P_CheckPosition(dummy, pos);
 

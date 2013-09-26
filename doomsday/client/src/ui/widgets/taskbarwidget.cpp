@@ -62,7 +62,7 @@ static uint POS_VIDEO_SETTINGS    = 2;
 static uint POS_AUDIO_SETTINGS    = 3;
 static uint POS_INPUT_SETTINGS    = 4;
 static uint POS_NETWORK_SETTINGS  = 5;
-static uint POS_UPDATER_SETTINGS  = 7;
+static uint POS_UPDATER_SETTINGS  = 6;
 
 DENG_GUI_PIMPL(TaskBarWidget),
 DENG2_OBSERVES(App, GameChange)
@@ -304,9 +304,8 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
             << new ui::ActionItem(ui::Item::ShownAsButton,
                                   style().images().image("network"), tr("Network"),
                                   new SignalAction(this, SLOT(showNetworkSettings())))
-            << new ui::Item(ui::Item::Separator)
             << new ui::ActionItem(ui::Item::ShownAsButton,
-                                  style().images().image("updater"), tr("Updater..."),
+                                  style().images().image("updater"), tr("Updater"),
                                   new SignalAction(this, SLOT(showUpdaterSettings())));
 
     d->mainMenu->items()
@@ -583,7 +582,8 @@ void TaskBarWidget::showUpdaterSettings()
 {
     UpdaterSettingsDialog *dlg = new UpdaterSettingsDialog(UpdaterSettingsDialog::WithApplyAndCheckButton);
     d->setupItemSubDialog(d->configMenu, POS_UPDATER_SETTINGS, dlg);
-    dlg->exec(root()); // modal
+    root().add(dlg);
+    dlg->open();
 }
 
 void TaskBarWidget::showRendererSettings()

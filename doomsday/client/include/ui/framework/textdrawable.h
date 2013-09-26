@@ -56,6 +56,8 @@ public:
 
     void deinit();
 
+    void clear();
+
     /**
      * Sets the maximum width for text lines.
      *
@@ -77,10 +79,12 @@ public:
 
     /**
      * Updates the status of the composer. This includes first checking if a
-     * background wrapping task has been completed.
+     * background wrapping task has been completed, and if so, the results of
+     * background wrapping become the visible data to be drawn.
      *
      * @return @c true, if the lines have changed and it is necessary to remake
-     * the geometry. @c false, if nothing further needs to be done.
+     * the geometry. @c false, if nothing further needs to be done or text is
+     * still being preprocessed for drawing.
      */
     bool update();
 

@@ -365,7 +365,8 @@ void Rend_ProjectPlaneGlows(BspLeaf *bspLeaf, Vector3d const &topLeft,
     Vector3d const &bottomRight, Matrix3f const &tangentMatrix,
     float blendFactor, bool sortByLuminance, uint &listIdx)
 {
-    DENG_ASSERT(bspLeaf != 0);
+    DENG_ASSERT(bspLeaf != 0 && bspLeaf->hasCluster());
+    SectorCluster &cluster = bspLeaf->cluster();
 
     if(bottomRight.z >= topLeft.z)
         return;
@@ -383,10 +384,10 @@ void Rend_ProjectPlaneGlows(BspLeaf *bspLeaf, Vector3d const &topLeft,
     parm.bottomRight   = &bottomRight;
     parm.tangentMatrix = &tangentMatrix;
 
-    for(int i = 0; i < bspLeaf->sector().planeCount(); ++i)
+    for(int i = 0; i < cluster.visPlaneCount(); ++i)
     {
-        Plane &plane = bspLeaf->visPlane(i);
-        Vector3d pointOnPlane(bspLeaf->cluster().center(), plane.heightSmoothed());
+        Plane &plane = cluster.visPlane(i);
+        Vector3d pointOnPlane(cluster.center(), plane.heightSmoothed());
 
         projectGlow(plane.surface(), pointOnPlane, parm);
     }

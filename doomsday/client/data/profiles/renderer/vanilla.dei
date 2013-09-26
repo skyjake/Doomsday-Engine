@@ -1,5 +1,5 @@
 profile {
-    name: Retro (built-in)
+    name: Vanilla (built-in)
     setting "rend-fakeradio" {
         value: 0
     }
@@ -154,10 +154,10 @@ profile {
         value: 4
     }
     setting "rend-sprite-mode" {
-        value: 0
+        value: 1
     }
     setting "rend-sprite-noz" {
-        value: 0
+        value: 1
     }
     setting "rend-tex-anim-smooth" {
         value: 0

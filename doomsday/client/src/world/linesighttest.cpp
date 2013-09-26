@@ -242,7 +242,7 @@ DENG2_PIMPL(LineSightTest)
      */
     bool crossBspLeaf(BspLeaf const &bspLeaf)
     {
-        if(bspLeaf.isDegenerate())
+        if(!bspLeaf.hasPoly())
             return false;
 
         // Check polyobj lines.

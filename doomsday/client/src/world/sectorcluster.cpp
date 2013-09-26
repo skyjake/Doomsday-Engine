@@ -20,6 +20,7 @@
 
 #include <QRect>
 #include <QMap>
+#include <QMutableMapIterator>
 #include <QSet>
 #include <QtAlgorithms>
 
@@ -290,24 +291,24 @@ DENG2_OBSERVES(Plane, HeightChange)
 
                     flags &= ~AllSelfRef;
 
-                    if(frontSide.bottom().hasMaterial() && !frontSide.bottom().hasFixMaterial())
+                    if(frontSide.bottom().hasDrawableNonFixMaterial())
                     {
                         flags &= ~AllMissingBottom;
                     }
 
-                    if(frontSide.top().hasMaterial() && !frontSide.top().hasFixMaterial())
+                    if(frontSide.top().hasDrawableNonFixMaterial())
                     {
                         flags &= ~AllMissingTop;
                     }
 
                     if(backCluster->floor().height() < self.sector().floor().height() &&
-                       backSide.bottom().hasMaterial() && !backSide.bottom().hasFixMaterial())
+                       backSide.bottom().hasDrawableNonFixMaterial())
                     {
                         flags &= ~AllMissingBottom;
                     }
 
                     if(backCluster->ceiling().height() > self.sector().ceiling().height() &&
-                       backSide.top().hasMaterial() && !backSide.top().hasFixMaterial())
+                       backSide.top().hasDrawableNonFixMaterial())
                     {
                         flags &= ~AllMissingTop;
                     }
@@ -345,43 +346,85 @@ DENG2_OBSERVES(Plane, HeightChange)
         }
 
         boundaryInfo.reset(new BoundaryInfo);
+        if(extClusterMap.isEmpty())
+            return;
 
         QRectF boundingRect = qrectFromAABox(self.aaBox());
-        foreach(HEdge *hedge, extClusterMap)
-        {
-            Cluster &extCluster = hedge->twin().face().mapElement()->as<BspLeaf>().cluster();
 
-            if(boundingRect.contains(qrectFromAABox(extCluster.aaBox())))
+        // First try to quickly decide by comparing cluster bounding boxes.
+        QMutableMapIterator<Cluster *, HEdge *> iter(extClusterMap);
+        while(iter.hasNext())
+        {
+            iter.next();
+            Cluster &extCluster = iter.value()->twin().face().mapElement()->as<BspLeaf>().cluster();
+            if(!boundingRect.contains(qrectFromAABox(extCluster.aaBox())))
             {
-                boundaryInfo->uniqueInnerEdges.append(hedge);
+                boundaryInfo->uniqueOuterEdges.append(iter.value());
+                iter.remove();
             }
-            else
+        }
+
+        if(extClusterMap.isEmpty())
+            return;
+
+        // More extensive tests are necessary. At this point we know that all
+        // clusters which remain in the map are inside according to the bounding
+        // box of "this" cluster.
+        QList<HEdge *> const boundaryEdges = extClusterMap.values();
+        QList<QRectF> boundaries;
+        foreach(HEdge *base, boundaryEdges)
+        {
+            QRectF bounds = QRectF(QPointF(base->origin().x, base->origin().y),
+                                   QPointF(base->twin().origin().x, base->twin().origin().y))
+                                .normalized();
+
+            HEdge *hedge = &base->next();
+            do
+            {
+                while(hedge->twin().hasFace())
+                {
+                    Cluster &backCluster = hedge->twin().face().mapElement()->as<BspLeaf>().cluster();
+                    if(&backCluster == thisPublic)
+                    {
+                        hedge = &hedge->twin().next();
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+
+                if(hedge == base)
+                    break;
+
+                bounds |= QRectF(QPointF(hedge->origin().x, hedge->origin().y),
+                                 QPointF(hedge->twin().origin().x, hedge->twin().origin().y))
+                              .normalized();
+            } while((hedge = &hedge->next()) != base);
+
+            boundaries.append(bounds);
+        }
+
+        QRectF const *largest = 0;
+        foreach(QRectF const &boundary, boundaries)
+        {
+            if(!largest || boundary.contains(*largest))
+                largest = &boundary;
+        }
+
+        for(int i = 0; i < boundaryEdges.count(); ++i)
+        {
+            HEdge *hedge = boundaryEdges[i];
+            QRectF const &boundary = boundaries[i];
+            if(&boundary == largest || boundary == *largest)
             {
                 boundaryInfo->uniqueOuterEdges.append(hedge);
             }
+            else
+            {
+                boundaryInfo->uniqueInnerEdges.append(hedge);
+            }
         }
-    }
-
-    bool suitableForDynamicMapping(int planeIdx)
-    {
-        if(planeIdx == Sector::Floor)
-        {
-            if(!classification().testFlag(AllMissingBottom))
-                return false;
-
-            // The plane must not use a sky-masked material.
-            if(self.sector().floor().surface().hasSkyMaskedMaterial())
-                return false;
-        }
-        if(planeIdx == Sector::Ceiling)
-        {
-            if(!classification().testFlag(AllMissingTop))
-                return false;
-
-            if(self.sector().ceiling().surface().hasSkyMaskedMaterial())
-                return false;
-        }
-        return true;
     }
 
     void remapVisPlanes()
@@ -468,8 +511,8 @@ DENG2_OBSERVES(Plane, HeightChange)
         if(sector.ceiling().height() <= sector.floor().height())
             return;
 
-        bool doFloor   =   !floorIsMapped() && suitableForDynamicMapping(Sector::Floor);
-        bool doCeiling = !ceilingIsMapped() && suitableForDynamicMapping(Sector::Ceiling);
+        bool doFloor   =   !floorIsMapped() && classification().testFlag(AllMissingBottom);
+        bool doCeiling = !ceilingIsMapped() && classification().testFlag(AllMissingTop);
 
         if(!doFloor && !doCeiling)
             return;
@@ -485,18 +528,26 @@ DENG2_OBSERVES(Plane, HeightChange)
         {
             Cluster &extCluster = hedge->twin().face().mapElement()->as<BspLeaf>().cluster();
 
-            if(doFloor && !floorIsMapped() &&
-               extCluster.visFloor().height() > sector.floor().height())
+            if(doFloor && !floorIsMapped())
             {
-                map(Sector::Floor, &extCluster);
-                if(!doCeiling) break;
+                Plane &extVisPlane = extCluster.visFloor();
+                if(!extVisPlane.surface().hasSkyMaskedMaterial() &&
+                   extVisPlane.height() > sector.floor().height())
+                {
+                    map(Sector::Floor, &extCluster);
+                    if(!doCeiling) break;
+                }
             }
 
-            if(doCeiling && !ceilingIsMapped() &&
-               extCluster.visCeiling().height() < sector.ceiling().height())
+            if(doCeiling && !ceilingIsMapped())
             {
-                map(Sector::Ceiling, &extCluster);
-                if(!doFloor) break;
+                Plane &extVisPlane = extCluster.visCeiling();
+                if(!extVisPlane.surface().hasSkyMaskedMaterial() &&
+                   extCluster.visCeiling().height() < sector.ceiling().height())
+                {
+                    map(Sector::Ceiling, &extCluster);
+                    if(!doFloor) break;
+                }
             }
         }
 
@@ -585,9 +636,7 @@ DENG2_OBSERVES(Plane, HeightChange)
 
             if(!ddpl->inGame || !ddpl->mo)
                 continue;
-            if(!ddpl->mo->bspLeaf || ddpl->mo->bspLeaf->isDegenerate())
-                continue;
-            if(&ddpl->mo->bspLeaf->cluster() != thisPublic)
+            if(Mobj_ClusterPtr(*ddpl->mo) != thisPublic)
                 continue;
 
             if((ddpl->flags & DDPF_CAMERA) &&
@@ -633,10 +682,7 @@ DENG2_OBSERVES(Plane, HeightChange)
 
     void addReverbBspLeaf(BspLeaf *bspLeaf)
     {
-        // Degenerate leafs never contribute.
-        if(!bspLeaf || !bspLeaf->isDegenerate())
-            return;
-
+        if(!bspLeaf) return;
         reverbBspLeafs.insert(bspLeaf);
     }
 
@@ -835,6 +881,18 @@ Sector::Cluster::BspLeafs const &Sector::Cluster::bspLeafs() const
 
 #ifdef __CLIENT__
 
+bool Sector::Cluster::hasWorldVolume(bool useSmoothedHeights) const
+{
+    if(useSmoothedHeights)
+    {
+        return visCeiling().heightSmoothed() - visFloor().heightSmoothed() > 0;
+    }
+    else
+    {
+        return ceiling().height() - floor().height() > 0;
+    }
+}
+
 coord_t Sector::Cluster::roughArea() const
 {
     AABoxd const &bounds = aaBox();
@@ -860,6 +918,16 @@ void Sector::Cluster::markVisPlanesDirty()
 {
     d->maybeInvalidateMapping(Sector::Floor);
     d->maybeInvalidateMapping(Sector::Ceiling);
+}
+
+bool Sector::Cluster::hasSkyMaskedPlane() const
+{
+    for(int i = 0; i < sector().planeCount(); ++i)
+    {
+        if(visPlane(i).surface().hasSkyMaskedMaterial())
+            return true;
+    }
+    return false;
 }
 
 #endif // __CLIENT__

@@ -135,6 +135,20 @@
 #define DMU_CEILING_NORMAL_Z    (DMU_CEILING_OF_SECTOR | DMU_NORMAL_Z)
 #define DMU_CEILING_NORMAL_XYZ  (DMU_CEILING_OF_SECTOR | DMU_NORMAL_XYZ)
 
+/// Side section indices.
+typedef enum sidesection_e {
+    SS_MIDDLE,
+    SS_BOTTOM,
+    SS_TOP
+} SideSection;
+
+#define VALID_SIDESECTION(v) ((v) >= SS_MIDDLE && (v) <= SS_TOP)
+
+/// Helper macro for converting SideSection indices to their associated DMU flag. @ingroup world
+#define DMU_FLAG_FOR_SIDESECTION(s) (\
+    (s) == SS_MIDDLE? DMU_MIDDLE_OF_SIDE : \
+    (s) == SS_BOTTOM? DMU_BOTTOM_OF_SIDE : DMU_TOP_OF_SIDE)
+
 #ifdef __cplusplus
 extern "C" {
 #endif

@@ -317,7 +317,7 @@ void P_SpawnMobjParticleGen(ded_ptcgen_t const *def, mobj_t *source)
     // Size of source sector might determine count.
     if(def->flags & PGF_SCALED_RATE)
     {
-        gen->spawnRateMultiplier = source->bspLeaf->sector().roughArea() / (128 * 128);
+        gen->spawnRateMultiplier = Mobj_BspLeafAtOrigin(*source).sector().roughArea() / (128 * 128);
     }
     else
     {
@@ -662,7 +662,7 @@ static void P_NewParticle(ptcgen_t *gen)
             bspLeaf = 0;
         }
 
-        if(!bspLeaf || bspLeaf->isDegenerate())
+        if(!bspLeaf || !bspLeaf->hasPoly())
         {
             pt->stage = -1;
             return;
@@ -716,8 +716,8 @@ static void P_NewParticle(ptcgen_t *gen)
         Vector2d ptOrigin(FIX2FLT(pt->origin[VX]), FIX2FLT(pt->origin[VY]));
         pt->bspLeaf = &App_World().map().bspLeafAt(ptOrigin);
 
-        // A degenerate BSP leaf is not a suitable place for a particle.
-        if(pt->bspLeaf->isDegenerate())
+        // A BSP leaf with no geometry is not a suitable place for a particle.
+        if(!pt->bspLeaf->hasPoly())
         {
             pt->stage = -1;
             return;
@@ -874,10 +874,11 @@ float P_GetParticleRadius(ded_ptcstage_t const *def, int ptcIDX)
 
 float P_GetParticleZ(particle_t const *pt)
 {
+    SectorCluster &cluster = pt->bspLeaf->cluster();
     if(pt->origin[VZ] == DDMAXINT)
-        return pt->bspLeaf->visCeilingHeightSmoothed() - 2;
+        return cluster.visCeiling().heightSmoothed() - 2;
     else if(pt->origin[VZ] == DDMININT)
-        return (pt->bspLeaf->visFloorHeightSmoothed() + 2);
+        return (cluster.visFloor().heightSmoothed() + 2);
 
     return FIX2FLT(pt->origin[VZ]);
 }
@@ -1021,35 +1022,38 @@ static void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
     z = pt->origin[VZ] + pt->mov[VZ];
     if(pt->origin[VZ] != DDMININT && pt->origin[VZ] != DDMAXINT && pt->bspLeaf)
     {
-        if(z > FLT2FIX(pt->bspLeaf->visCeilingHeightSmoothed()) - hardRadius)
+        SectorCluster &cluster = pt->bspLeaf->cluster();
+        if(z > FLT2FIX(cluster.visCeiling().heightSmoothed()) - hardRadius)
         {
             // The Z is through the roof!
-            if(pt->bspLeaf->visCeiling().surface().hasSkyMaskedMaterial())
+            if(cluster.visCeiling().surface().hasSkyMaskedMaterial())
             {
                 // Special case: particle gets lost in the sky.
                 pt->stage = -1;
                 return;
             }
 
-            if(!P_TouchParticle(pt, st, stDef, false)) return;
+            if(!P_TouchParticle(pt, st, stDef, false))
+                return;
 
-            z = FLT2FIX(pt->bspLeaf->visCeilingHeightSmoothed()) - hardRadius;
+            z = FLT2FIX(cluster.visCeiling().heightSmoothed()) - hardRadius;
             zBounce = true;
             hitFloor = false;
         }
 
         // Also check the floor.
-        if(z < FLT2FIX(pt->bspLeaf->visFloorHeightSmoothed()) + hardRadius)
+        if(z < FLT2FIX(cluster.visFloor().heightSmoothed()) + hardRadius)
         {
-            if(pt->bspLeaf->visFloor().surface().hasSkyMaskedMaterial())
+            if(cluster.visFloor().surface().hasSkyMaskedMaterial())
             {
                 pt->stage = -1;
                 return;
             }
 
-            if(!P_TouchParticle(pt, st, stDef, false)) return;
+            if(!P_TouchParticle(pt, st, stDef, false))
+                return;
 
-            z = FLT2FIX(pt->bspLeaf->visFloorHeightSmoothed()) + hardRadius;
+            z = FLT2FIX(cluster.visFloor().heightSmoothed()) + hardRadius;
             zBounce = true;
             hitFloor = true;
         }
@@ -1192,8 +1196,8 @@ static void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
     {
         pt->bspLeaf = &App_World().map().bspLeafAt(Vector2d(FIX2FLT(x), FIX2FLT(y)));
 
-        // A degenerate BSP leaf is not a suitable place for a particle.
-        if(pt->bspLeaf->isDegenerate())
+        // A BSP leaf with no geometry is not a suitable place for a particle.
+        if(!pt->bspLeaf->hasPoly())
         {
             // Kill the particle.
             pt->stage = -1;

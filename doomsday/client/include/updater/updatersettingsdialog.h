@@ -41,6 +41,7 @@ public:
     UpdaterSettingsDialog(Mode mode = Normal, de::String const &name = "updatersettings");
 
 public slots:
+    void apply();
     void applyAndCheckNow();
 
 protected:

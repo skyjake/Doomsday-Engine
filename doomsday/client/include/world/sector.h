@@ -148,11 +148,24 @@ public:
         inline Plane &visCeiling() const { return visPlane(Sector::Ceiling); }
 
         /**
+         * Returns the total number of @em visual planes in the cluster.
+         */
+        inline int visPlaneCount() const { return sector().planeCount(); }
+
+        /**
          * To be called to force re-evaluation of mapped visual planes. This is
          * only necessary when a surface material change occurs on boundary line
          * of the cluster.
          */
         void markVisPlanesDirty();
+
+        /**
+         * Returns @c true iff at least one of the mapped visual planes of the
+         * cluster presently has a sky-masked material bound.
+         *
+         * @see Surface::hasSkyMaskedMaterial()
+         */
+        bool hasSkyMaskedPlane() const;
 
         /**
          * Provides access to the list of all BSP leafs in the cluster, for
@@ -179,6 +192,15 @@ public:
         }
 
 #ifdef __CLIENT__
+
+        /**
+         * Determines whether the cluster has a positive world volume, i.e., the
+         * height of floor is lower than that of the ceiling plane.
+         *
+         * @param useSmoothedHeights  @c true= use the @em smoothed plane heights
+         *                            instead of the @em sharp heights.
+         */
+        bool hasWorldVolume(bool useSmoothedHeights = true) const;
 
         /**
          * Returns a rough approximation of the total combined area of the geometry
@@ -283,14 +305,6 @@ public:
      * Returns the total number of planes in/owned by the sector.
      */
     inline int planeCount() const { return planes().count(); }
-
-    /**
-     * Returns @c true iff at least one of the surfaces of a plane in/owned
-     * by the sector presently has a sky-masked material bound.
-     *
-     * @see Surface::hasSkyMaskedMaterial()
-     */
-    bool hasSkyMaskedPlane() const;
 
     /**
      * Convenient accessor method for returning the surface of the specified
@@ -518,7 +532,10 @@ public:
     void unlink(struct mobj_s *mobj);
 
     /**
-     * Link the mobj to the head of the list of mobjs "in" the sector.
+     * Link the mobj to the head of the list of mobjs "in" the sector. Note that
+     * mobjs in this list may not actually be inside the sector. This is because
+     * the sector is determined by interpreting the BSP leaf as a half-space and
+     * not a closed convex subspace (@ref Map::link()).
      *
      * @param mobj  Mobj to be linked.
      */

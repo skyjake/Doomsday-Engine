@@ -498,25 +498,6 @@ enum {
 /// Environmental audio characteristics. @ingroup world
 typedef float AudioEnvironmentFactors[NUM_REVERB_DATA];
 
-/// Side section indices. @ingroup world
-typedef enum sidesection_e {
-    SS_MIDDLE,
-    SS_BOTTOM,
-    SS_TOP
-} SideSection;
-
-#define VALID_SIDESECTION(v) ((v) >= SS_MIDDLE && (v) <= SS_TOP)
-
-/// Helper macro for converting SideSection indices to their associated DMU flag. @ingroup world
-#define DMU_FLAG_FOR_SIDESECTION(s) (\
-    (s) == SS_MIDDLE? DMU_MIDDLE_OF_SIDE : \
-    (s) == SS_BOTTOM? DMU_BOTTOM_OF_SIDE : DMU_TOP_OF_SIDE)
-
-typedef struct {
-    float origin[2];
-    float direction[2];
-} fdivline_t;
-
 /**
  * @defgroup pathTraverseFlags  Path Traverse Flags
  * @ingroup apiFlags map

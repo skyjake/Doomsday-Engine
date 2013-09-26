@@ -172,10 +172,22 @@ public:
      * Convenient helper method for determining whether a sky-masked material
      * is bound to the surface.
      *
-     * @return  @c true iff a sky-masked material is bound; otherwise @c 0.
+     * @return  @c true iff a sky-masked material is bound.
      */
     inline bool hasSkyMaskedMaterial() const {
         return hasMaterial() && material().isSkyMasked();
+    }
+
+    /**
+     * Convenient helper method for determining whether a drawable, non @em fix
+     * material is bound to the surface.
+     *
+     * @return  @c true iff drawable, non @em fix masked material is bound.
+     *
+     * @see hasMaterial(), hasFixMaterial(), Material::isDrawable()
+     */
+    inline bool hasDrawableNonFixMaterial() const {
+        return hasMaterial() && !hasFixMaterial() && material().isDrawable();
     }
 
     /**

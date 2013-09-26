@@ -203,7 +203,7 @@ DENG2_PIMPL(BspLeaf)
      */
     GeometryGroup *geometryGroup(int group, bool canAlloc = true)
     {
-        DENG_ASSERT(cluster != 0 && !self.isDegenerate()); // sanity check
+        DENG_ASSERT(cluster != 0); // sanity check
         DENG_ASSERT(group >= 0 && group < cluster->sector().planeCount()); // sanity check
 
         GeometryGroups::iterator foundAt = geomGroups.find(group);
@@ -373,12 +373,12 @@ void BspLeaf::setCluster(SectorCluster *newCluster)
     d->cluster = newCluster;
 }
 
-void BspLeaf::addPolyobj(Polyobj const &polyobj)
+void BspLeaf::link(Polyobj const &polyobj)
 {
     d->polyobjs.insert(const_cast<Polyobj *>(&polyobj));
 }
 
-bool BspLeaf::removePolyobj(polyobj_s const &polyobj)
+bool BspLeaf::unlink(polyobj_s const &polyobj)
 {
     int sizeBefore = d->polyobjs.size();
     d->polyobjs.remove(const_cast<Polyobj *>(&polyobj));
@@ -402,7 +402,7 @@ void BspLeaf::setValidCount(int newValidCount)
 
 bool BspLeaf::polyContains(Vector2d const &point) const
 {
-    if(isDegenerate()) return false; // Obviously not.
+    if(!hasPoly()) return false; // Obviously not.
 
     HEdge const *hedge = poly().hedge();
     do
@@ -423,20 +423,6 @@ bool BspLeaf::polyContains(Vector2d const &point) const
 }
 
 #ifdef __CLIENT__
-
-bool BspLeaf::hasWorldVolume(bool useSmoothedHeights) const
-{
-    if(!hasCluster()) return false;
-
-    if(useSmoothedHeights)
-    {
-        return visCeilingHeightSmoothed() - visFloorHeightSmoothed() > 0;
-    }
-    else
-    {
-        return ceilingHeight() - floorHeight() > 0;
-    }
-}
 
 HEdge *BspLeaf::fanBase() const
 {
@@ -467,7 +453,7 @@ static void updateBiasForWallSectionsAfterGeometryMove(HEdge *hedge)
 
 void BspLeaf::updateBiasAfterGeometryMove(int group)
 {
-    if(isDegenerate()) return;
+    if(!hasPoly()) return;
 
     if(GeometryGroup *geomGroup = d->geometryGroup(group, false /*don't allocate*/))
     {
@@ -497,7 +483,7 @@ static void applyBiasDigestToWallSections(HEdge *hedge, BiasDigest &changes)
 
 void BspLeaf::applyBiasDigest(BiasDigest &changes)
 {
-    if(isDegenerate()) return;
+    if(!hasPoly()) return;
 
     for(GeometryGroups::iterator it = d->geomGroups.begin();
         it != d->geomGroups.end(); ++it)
@@ -538,7 +524,7 @@ void BspLeaf::lightBiasPoly(int group, Vector3f const *posCoords, Vector4f *colo
         d->updateBiasContributors(*geomGroup, planeIndex);
     }
 
-    Surface const &surface = visPlane(planeIndex).surface();
+    Surface const &surface = cluster().visPlane(planeIndex).surface();
     uint const biasTime = map().biasCurrentTime();
 
     Vector3f const *posIt = posCoords;
@@ -587,7 +573,7 @@ bool BspLeaf::updateReverb()
 
     // Space is the rough volume of the BSP leaf (bounding box).
     AABoxd const &aaBox = d->poly->aaBox();
-    d->reverb[SRD_SPACE] = int(ceilingHeight() - floorHeight())
+    d->reverb[SRD_SPACE] = int(cluster().ceiling().height() - cluster().floor().height())
                          * (aaBox.maxX - aaBox.minX) * (aaBox.maxY - aaBox.minY);
 
     // The other reverb properties can be found out by taking a look at the
@@ -652,7 +638,7 @@ void BspLeaf::clearShadowLines()
 
 void BspLeaf::addShadowLine(LineSide &side)
 {
-    if(isDegenerate()) return;
+    if(!hasPoly()) return;
     d->shadowLines.insert(&side);
 }
 
@@ -661,7 +647,7 @@ BspLeaf::ShadowLines const &BspLeaf::shadowLines() const
     return d->shadowLines;
 }
 
-void BspLeaf::clearLumobjs()
+void BspLeaf::unlinkAllLumobjs()
 {
     d->lumobjs.clear();
 }
@@ -673,7 +659,7 @@ void BspLeaf::unlink(Lumobj &lumobj)
 
 void BspLeaf::link(Lumobj &lumobj)
 {
-    if(isDegenerate()) return;
+    if(!hasPoly()) return;
     d->lumobjs.insert(&lumobj);
 }
 
@@ -708,7 +694,7 @@ int BspLeaf::property(DmuArgs &args) const
     switch(args.prop)
     {
     case DMU_SECTOR: {
-        Sector *sectorAdr = sectorPtr();
+        Sector const *sectorAdr = sectorPtr();
         args.setValue(DMT_BSPLEAF_SECTOR, &sectorAdr, 0);
         break; }
     default:

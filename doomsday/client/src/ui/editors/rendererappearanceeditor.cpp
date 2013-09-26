@@ -40,6 +40,39 @@ DENG2_OBSERVES(SettingsRegister, ProfileChange),
 DENG2_OBSERVES(App, GameChange)
 {
     /**
+     * Opens a popup menu for folding/unfolding all settings groups.
+     */
+    struct RightClickHandler : public GuiWidget::IEventHandler
+    {
+        Instance *d;
+
+        RightClickHandler(Instance *inst) : d(inst) {}
+
+        bool handleEvent(GuiWidget &widget, Event const &event)
+        {
+            switch(widget.handleMouseClick(event, MouseEvent::Right))
+            {
+            case MouseClickFinished: {
+                PopupMenuWidget *pop = new PopupMenuWidget;
+                pop->setDeleteAfterDismissed(true);
+                d->self.add(pop);
+                pop->setAnchorAndOpeningDirection(widget.rule(), ui::Left);
+                pop->items()
+                        << new ActionItem(tr("Fold All"),   new SignalAction(d->thisPublic, SLOT(foldAll())))
+                        << new ActionItem(tr("Unfold All"), new SignalAction(d->thisPublic, SLOT(unfoldAll())));
+                pop->open();
+                return true; }
+
+            case MouseClickUnrelated:
+                return false;
+
+            default:
+                return true;
+            }
+        }
+    };
+
+    /**
      * Foldable group of settings.
      */
     class Group : public FoldPanelWidget
@@ -60,7 +93,6 @@ DENG2_OBSERVES(App, GameChange)
         };
 
     public:
-
         Group(RendererAppearanceEditor::Instance *inst, String const &titleText)
             : d(inst), _firstColumnWidth(0)
         {
@@ -68,6 +100,9 @@ DENG2_OBSERVES(App, GameChange)
             setContent(_group);
             title().setText(titleText);
             title().setTextColor("accent");
+
+            // Set up a context menu for right-clicking.
+            title().addEventHandler(new RightClickHandler(d));
 
             // We want the first column of all groups to be aligned with each other.
             _layout.setColumnFixedWidth(0, *d->firstColumnWidth);
@@ -283,10 +318,8 @@ DENG2_OBSERVES(App, GameChange)
         // Dynamic light settings.
         lightGroup = new Group(this, tr("Point Lighting"));
 
-        lightGroup->addLabel(tr("Dynamic Lights:"));
-        lightGroup->addChoice("rend-light", ui::Down)->items()
-                << new ChoiceItem(tr("Enabled"), 1)
-                << new ChoiceItem(tr("Disabled"), 0);
+        lightGroup->addSpace();
+        lightGroup->addToggle("rend-light", tr("Dynamic Lights"));
 
         lightGroup->addSpace();
         lightGroup->addToggle("rend-light-decor", tr("Light Decorations"));
@@ -597,6 +630,20 @@ DENG2_OBSERVES(App, GameChange)
             }
         }
     }
+
+    void foldAll(bool fold)
+    {
+        foreach(Widget *child, container->childWidgets())
+        {
+            if(Group *g = child->maybeAs<Group>())
+            {
+                if(fold)
+                    g->close(0);
+                else
+                    g->open();
+            }
+        }
+    }
 };
 
 RendererAppearanceEditor::RendererAppearanceEditor()
@@ -662,6 +709,16 @@ RendererAppearanceEditor::RendererAppearanceEditor()
 
     // Open the first group.
     d->lightGroup->open();
+}
+
+void RendererAppearanceEditor::foldAll()
+{
+    d->foldAll(true);
+}
+
+void RendererAppearanceEditor::unfoldAll()
+{
+    d->foldAll(false);
 }
 
 /*

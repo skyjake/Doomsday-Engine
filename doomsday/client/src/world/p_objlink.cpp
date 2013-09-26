@@ -312,8 +312,8 @@ static void linkObjToBspLeaf(BspLeaf &bspLeaf, void *object, objtype_t type)
 {
     if(!object) return;
 
-    // Never link to degenerate BspLeafs.
-    if(bspLeaf.isDegenerate()) return;
+    // Never link to a BspLeaf with no geometry.
+    if(!bspLeaf.hasPoly()) return;
 
     objcontact_t *con = allocObjContact();
     con->obj = object;
@@ -325,8 +325,8 @@ static void createObjlink(BspLeaf &bspLeaf, void *object, objtype_t type)
 {
     if(!object) return;
 
-    // We don't create objlinks for objects in degenerate BSPLeafs.
-    if(bspLeaf.isDegenerate()) return;
+    // Never link to a BspLeaf with no geometry.
+    if(!bspLeaf.hasPoly()) return;
 
     objlink_t *link = allocObjlink();
     link->obj = object;
@@ -360,6 +360,7 @@ static void maybeSpreadOverEdge(HEdge *hedge, contactfinderparams_t *parms)
     DENG_ASSERT(hedge->face().mapElement() != 0);
 
     BspLeaf &leaf = hedge->face().mapElement()->as<BspLeaf>();
+    SectorCluster &cluster = leaf.cluster();
 
     // There must be a back BSP leaf to spread to.
     if(!hedge->hasTwin() || !hedge->twin().hasFace())
@@ -367,6 +368,9 @@ static void maybeSpreadOverEdge(HEdge *hedge, contactfinderparams_t *parms)
 
     DENG_ASSERT(hedge->twin().face().mapElement() != 0);
     BspLeaf &backLeaf = hedge->twin().face().mapElement()->as<BspLeaf>();
+    if(!backLeaf.hasCluster())
+        return;
+    SectorCluster &backCluster = backLeaf.cluster();
 
     // Which way does the spread go?
     if(!(leaf.validCount() == validCount && backLeaf.validCount() != validCount))
@@ -390,16 +394,12 @@ static void maybeSpreadOverEdge(HEdge *hedge, contactfinderparams_t *parms)
         return;
 
     // Do not spread if the sector on the back side is closed with no height.
-    if(backLeaf.hasSector())
-    {
-        if(backLeaf.visCeilingHeightSmoothed() <= backLeaf.visFloorHeightSmoothed())
-            return;
+    if(!backCluster.hasWorldVolume())
+        return;
 
-        if(leaf.hasSector() &&
-           (backLeaf.visCeilingHeightSmoothed() <= leaf.visFloorHeightSmoothed() ||
-            backLeaf.visFloorHeightSmoothed() >= leaf.visCeilingHeightSmoothed()))
-            return;
-    }
+    if(backCluster.visCeiling().heightSmoothed() <= cluster.visFloor().heightSmoothed() ||
+       backCluster.visFloor().heightSmoothed() >= cluster.visCeiling().heightSmoothed())
+        return;
 
     // Are there line side surfaces which should prevent spreading?
     if(hedge->mapElement())
@@ -409,16 +409,15 @@ static void maybeSpreadOverEdge(HEdge *hedge, contactfinderparams_t *parms)
         // On which side of the line are we? (distance is from segment to origin).
         LineSide const &facingLineSide = seg.line().side(seg.lineSide().sideId() ^ (distance < 0));
 
-        BspLeaf const &fromLeaf = facingLineSide.isFront()? leaf : backLeaf;
-        BspLeaf const &toLeaf   = facingLineSide.isFront()? backLeaf : leaf;
-
         // One-way window?
-        if(toLeaf.hasSector() && !facingLineSide.back().hasSections())
+        if(!facingLineSide.back().hasSections())
             return;
 
+        SectorCluster const &fromCluster = facingLineSide.isFront()? cluster : backCluster;
+        SectorCluster const &toCluster   = facingLineSide.isFront()? backCluster : cluster;
+
         // Might a material cover the opening?
-        if(facingLineSide.hasSections() &&
-           facingLineSide.middle().hasMaterial() && fromLeaf.hasSector())
+        if(facingLineSide.hasSections() && facingLineSide.middle().hasMaterial())
         {
             // Stretched middles always cover the opening.
             if(facingLineSide.isFlagged(SDF_MIDDLE_STRETCH))
@@ -426,23 +425,23 @@ static void maybeSpreadOverEdge(HEdge *hedge, contactfinderparams_t *parms)
 
             // Determine the opening between the visual sector planes at this edge.
             coord_t openBottom;
-            if(toLeaf.hasSector() && toLeaf.visFloorHeightSmoothed() > fromLeaf.visFloorHeightSmoothed())
+            if(toCluster.visFloor().heightSmoothed() > fromCluster.visFloor().heightSmoothed())
             {
-                openBottom = toLeaf.visFloorHeightSmoothed();
+                openBottom = toCluster.visFloor().heightSmoothed();
             }
             else
             {
-                openBottom = fromLeaf.visFloorHeightSmoothed();
+                openBottom = fromCluster.visFloor().heightSmoothed();
             }
 
             coord_t openTop;
-            if(toLeaf.hasSector() && toLeaf.visCeilingHeightSmoothed() < fromLeaf.visCeilingHeightSmoothed())
+            if(toCluster.visCeiling().heightSmoothed() < fromCluster.visCeiling().heightSmoothed())
             {
-                openTop = toLeaf.visCeilingHeightSmoothed();
+                openTop = toCluster.visCeiling().heightSmoothed();
             }
             else
             {
-                openTop = fromLeaf.visCeilingHeightSmoothed();
+                openTop = fromCluster.visCeiling().heightSmoothed();
             }
 
             // Ensure we have up to date info about the material.
@@ -480,7 +479,7 @@ static void maybeSpreadOverEdge(HEdge *hedge, contactfinderparams_t *parms)
  */
 static void spreadInBspLeaf(BspLeaf *bspLeaf, contactfinderparams_t *parms)
 {
-    if(!bspLeaf || bspLeaf->isDegenerate()) return;
+    if(!bspLeaf || !bspLeaf->hasCluster()) return;
 
     HEdge *base = bspLeaf->poly().hedge();
     HEdge *hedge = base;
@@ -519,7 +518,7 @@ static void findContacts(objlink_t *link)
 
         origin  = Vector3d(mo->origin);
         radius  = Mobj_VisualRadius(mo);
-        bspLeaf = mo->bspLeaf;
+        bspLeaf = &Mobj_BspLeafAtOrigin(*mo);
         break; }
 
     case NUM_OBJ_TYPES:
@@ -596,7 +595,8 @@ static inline float radiusMax(objtype_t type)
 
 void R_InitForBspLeaf(BspLeaf &bspLeaf)
 {
-    DENG_ASSERT(!bspLeaf.isDegenerate());
+    if(!bspLeaf.hasPoly())
+        return;
 
 BEGIN_PROF( PROF_OBJLINK_SPREAD );
 

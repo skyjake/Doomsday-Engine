@@ -446,7 +446,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
 
             if(!leaf.hasParent())
             {
-                LOG_WARNING("BSP leaf %p is degenerate/orphan (%d half-edges).")
+                LOG_WARNING("BSP leaf %p has degenerate geometry (%d half-edges).")
                     << de::dintptr(&leaf)
                     << (leaf.hasPoly()? leaf.poly().hedgeCount() : 0);
 
@@ -455,7 +455,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
             }
 
 #ifdef DENG_DEBUG
-            if(!leaf.isDegenerate())
+            if(leaf.hasPoly())
             {
                 // See if we received a partial geometry...
                 int discontinuities = 0;
@@ -922,11 +922,8 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
 
     void linkBspLeafInBlockmap(BspLeaf &bspLeaf)
     {
-        // Degenerate BspLeafs don't get in.
-        if(bspLeaf.isDegenerate()) return;
-
-        // BspLeafs without sectors don't get in.
-        if(!bspLeaf.hasSector()) return;
+        // BspLeafs without sector clusters don't get in.
+        if(!bspLeaf.hasCluster()) return;
 
         Blockmap::CellBlock cellBlock = bspLeafBlockmap->toCellBlock(bspLeaf.poly().aaBox());
 
@@ -1844,7 +1841,7 @@ int Map::mobjSectorsIterator(mobj_t *mo, int (*callback) (Sector *, void *),
     linknode_t *tn = d->mobjNodes.nodes;
 
     // Always process the mobj's own sector first.
-    Sector &ownSec = mo->bspLeaf->sector();
+    Sector &ownSec = Mobj_BspLeafAtOrigin(*mo).sector();
     *end++ = &ownSec;
     ownSec.setValidCount(validCount);
 
@@ -1966,11 +1963,9 @@ void Map::link(mobj_t &mo, byte flags)
     BspLeaf &bspLeafAtOrigin = bspLeafAt_FixedPrecision(mo.origin);
 
     // Link into the sector?
-    /// @todo fixme: Never link to a degenerate BSP leaf!
     if(flags & DDLINK_SECTOR)
     {
         d->unlinkMobjFromSectors(mo);
-        DENG_ASSERT(bspLeafAtOrigin.hasSector());
         bspLeafAtOrigin.sector().link(&mo);
     }
     mo.bspLeaf = &bspLeafAtOrigin;
@@ -1993,26 +1988,21 @@ void Map::link(mobj_t &mo, byte flags)
     // entered or exited the void.
     if(mo.dPlayer && mo.dPlayer->mo)
     {
-        ddplayer_t *player = mo.dPlayer;
+        mo.dPlayer->inVoid = true;
 
-        player->inVoid = true;
+        if(!Mobj_BspLeafAtOrigin(mo).polyContains(mo.origin))
+            return;
 
-        if(player->mo->bspLeaf)
-        {
-            BspLeaf &bspLeaf = *player->mo->bspLeaf;
-            if(bspLeaf.polyContains(player->mo->origin))
-            {
+        SectorCluster &cluster = Mobj_Cluster(mo);
 #ifdef __CLIENT__
-                if(player->mo->origin[VZ] <  bspLeaf.visCeilingHeightSmoothed() + 4 &&
-                   player->mo->origin[VZ] >= bspLeaf.visFloorHeightSmoothed())
+        if(mo.origin[VZ] <  cluster.visCeiling().heightSmoothed() + 4 &&
+           mo.origin[VZ] >= cluster.visFloor().heightSmoothed())
 #else
-                if(player->mo->origin[VZ] <  bspLeaf.ceilingHeight() + 4 &&
-                   player->mo->origin[VZ] >= bspLeaf.floorHeight())
+        if(mo.origin[VZ] <  cluster.ceiling().height() + 4 &&
+           mo.origin[VZ] >= cluster.floor().height())
 #endif
-                {
-                    player->inVoid = false;
-                }
-            }
+        {
+            mo.dPlayer->inVoid = false;
         }
     }
 }
@@ -2433,10 +2423,8 @@ static int interceptMobjsWorker(mobj_t *mo, void * /*parameters*/)
     if(mo->dPlayer && (mo->dPlayer->flags & DDPF_CAMERA))
         return false; // $democam: ssshh, keep going, we're not here...
 
-    DENG_ASSERT(mo->bspLeaf);
-
     // Check a corner to corner crossection for hit.
-    divline_t const &traceLos = mo->bspLeaf->map().traceLine();
+    divline_t const &traceLos = Mobj_BspLeafAtOrigin(*mo).map().traceLine();
     vec2d_t from, to;
     if((traceLos.direction[VX] ^ traceLos.direction[VY]) > 0)
     {
@@ -2726,7 +2714,7 @@ void Map::removeAllLumobjs()
 {
     foreach(BspLeaf *leaf, d->bspLeafs)
     {
-        leaf->clearLumobjs();
+        leaf->unlinkAllLumobjs();
     }
     qDeleteAll(d->lumobjs);
     d->lumobjs.clear();

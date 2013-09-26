@@ -28,6 +28,8 @@
 
 #include "dd_types.h"
 
+#include "Sector"
+
 #include "MaterialVariantSpec"
 #include "WallEdge"
 
@@ -155,6 +157,12 @@ void Rend_DrawLightModMatrix();
 
 /**
  * Sector light color may be affected by the sky light color.
+ */
+de::Vector3f const &Rend_SectorLightColor(SectorCluster const &cluster);
+
+/**
+ * @copydoc Rend_SectorLightColor()
+ * @deprecated Caller should work at cluster level.
  */
 de::Vector3f const &Rend_SectorLightColor(Sector const &sector);
 

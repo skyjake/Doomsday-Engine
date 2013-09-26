@@ -130,7 +130,7 @@ void Polyobj::unlink()
     {
         Map &map = _bspLeaf->map();
 
-        _bspLeaf->removePolyobj(*this);
+        _bspLeaf->unlink(*this);
         _bspLeaf = 0;
 
         map.unlink(*this);
@@ -154,7 +154,7 @@ void Polyobj::link()
 
         // Given the center point determine in which BSP leaf the polyobj resides.
         _bspLeaf = &App_World().map().bspLeafAt(avg);
-        _bspLeaf->addPolyobj(*this);
+        _bspLeaf->link(*this);
     }
 }
 
@@ -175,7 +175,7 @@ BspLeaf &Polyobj::bspLeaf() const
 
 bool Polyobj::hasSector() const
 {
-    return hasBspLeaf() && bspLeaf().hasSector();
+    return hasBspLeaf() && bspLeaf().hasCluster();
 }
 
 Sector &Polyobj::sector() const

@@ -264,9 +264,10 @@ static void lightWithLumobjs(Vector3d const &origin, BspLeaf &bspLeaf, uint list
  */
 static void lightWithPlaneGlows(Vector3d const &origin, BspLeaf &bspLeaf, uint listIdx)
 {
-    for(int i = 0; i < bspLeaf.sector().planeCount(); ++i)
+    SectorCluster &cluster = bspLeaf.cluster();
+    for(int i = 0; i < cluster.sector().planeCount(); ++i)
     {
-        Plane &plane     = bspLeaf.visPlane(i);
+        Plane &plane     = cluster.visPlane(i);
         Surface &surface = plane.surface();
 
         // Glowing at this moment?
@@ -280,7 +281,7 @@ static void lightWithPlaneGlows(Vector3d const &origin, BspLeaf &bspLeaf, uint l
             continue; // Not too small!
 
         // In front of the plane?
-        Vector3d pointOnPlane = Vector3d(bspLeaf.cluster().center(), plane.heightSmoothed());
+        Vector3d pointOnPlane = Vector3d(cluster.center(), plane.heightSmoothed());
         double dist = (origin - pointOnPlane).dot(surface.normal());
         if(dist < 0)
             continue;
