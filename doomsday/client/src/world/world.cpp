@@ -749,6 +749,9 @@ bool World::changeMap(de::Uri const &uri)
     /// mechanisms allowed more fine grained control. It is no longer useful
     /// for allocating memory used elsewhere so it should be repurposed for
     /// this usage specifically.
+#ifdef __CLIENT__
+    R_DestroyObjlinkBlockmap();
+#endif
     delete d->map; d->map = 0;
     Z_FreeTags(PU_MAP, PU_PURGELEVEL - 1);
 
