@@ -1,8 +1,8 @@
-/** @file render/rend_main.cpp Map Renderer.
+/** @file rend_main.cpp World Map Renderer.
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
- * @authors Copyright &copy; 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -50,6 +50,7 @@
 #include "Hand"
 #include "Surface"
 #include "world/map.h"
+#include "world/generators.h"
 #include "world/lineowner.h"
 #include "world/p_object.h"
 #include "world/p_objlink.h"
@@ -185,19 +186,22 @@ byte devMobjVLights;    ///< @c 1= Draw mobj vertex lighting vector.
 int devMobjBBox;        ///< @c 1= Draw mobj bounding boxes.
 int devPolyobjBBox;     ///< @c 1= Draw polyobj bounding boxes.
 
-byte devVertexIndices;  ///< @c 1= Draw world vertex indices.
-byte devVertexBars;     ///< @c 1= Draw world vertex position bars.
-byte devSoundOrigins;   ///< @c 1= Draw sound origin debug display.
-byte devSurfaceVectors;
-byte devNoTexFix;
+byte devVertexIndices;  ///< @c 1= Draw vertex indices.
+byte devVertexBars;     ///< @c 1= Draw vertex position bars.
 
-byte devSectorIndices;  ///< @c 1= Draw map sector indicies.
+byte devDrawGenerators; ///< @c 1= Draw active generators.
+byte devSoundEmitters;  ///< @c 1= Draw sound emitters.
+byte devSurfaceVectors; ///< @c 1= Draw tangent space vectors for surfaces.
+byte devNoTexFix;       ///< @c 1= Draw "missing" rather than fix materials.
+
+byte devSectorIndices;  ///< @c 1= Draw sector indicies.
 
 byte rendInfoLums;      ///< @c 1= Print lumobj debug info to the console.
-byte devDrawLums;       ///< @c 1= Draw lumobj origin debug display.
+byte devDrawLums;       ///< @c 1= Draw lumobjs origins.
 
-static void Rend_DrawBoundingBoxes(Map &map);
-static void Rend_DrawSoundOrigins(Map &map);
+static void drawMobjBoundingBoxes(Map &map);
+static void drawSoundEmitters(Map &map);
+static void drawGenerators(Map &map);
 static void drawAllSurfaceTangentVectors(Map &map);
 static void drawLumobjs(Map &map);
 
@@ -275,23 +279,24 @@ void Rend_Register()
     C_VAR_BYTE  ("rend-tex-anim-smooth",            &smoothTexAnim,                 0, 0, 1);
     C_VAR_INT   ("rend-tex-shiny",                  &useShinySurfaces,              0, 0, 1);
 
-    C_VAR_INT   ("rend-dev-sky",                    &devRendSkyMode,                CVF_NO_ARCHIVE, 0, 1);
-    C_VAR_BYTE  ("rend-dev-sky-always",             &devRendSkyAlways,              CVF_NO_ARCHIVE, 0, 1);
-    C_VAR_BYTE  ("rend-dev-freeze",                 &freezeRLs,                     CVF_NO_ARCHIVE, 0, 1);
-    C_VAR_BYTE  ("rend-dev-lums",                   &devDrawLums,                   CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_BYTE  ("rend-dev-blockmap-debug",         &bmapShowDebug,                 CVF_NO_ARCHIVE, 0, 4);
+    C_VAR_FLOAT ("rend-dev-blockmap-debug-size",    &bmapDebugSize,                 CVF_NO_ARCHIVE, .1f, 100);
     C_VAR_INT   ("rend-dev-cull-leafs",             &devNoCulling,                  CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_BYTE  ("rend-dev-freeze",                 &freezeRLs,                     CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_BYTE  ("rend-dev-generator-show-indices", &devDrawGenerators,             CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_BYTE  ("rend-dev-light-mod",              &devLightModRange,              CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_BYTE  ("rend-dev-lums",                   &devDrawLums,                   CVF_NO_ARCHIVE, 0, 1);
     C_VAR_INT   ("rend-dev-mobj-bbox",              &devMobjBBox,                   CVF_NO_ARCHIVE, 0, 1);
     C_VAR_BYTE  ("rend-dev-mobj-show-vlights",      &devMobjVLights,                CVF_NO_ARCHIVE, 0, 1);
     C_VAR_INT   ("rend-dev-polyobj-bbox",           &devPolyobjBBox,                CVF_NO_ARCHIVE, 0, 1);
-    C_VAR_BYTE  ("rend-dev-light-mod",              &devLightModRange,              CVF_NO_ARCHIVE, 0, 1);
-    C_VAR_BYTE  ("rend-dev-tex-showfix",            &devNoTexFix,                   CVF_NO_ARCHIVE, 0, 1);
-    C_VAR_BYTE  ("rend-dev-blockmap-debug",         &bmapShowDebug,                 CVF_NO_ARCHIVE, 0, 4);
-    C_VAR_FLOAT ("rend-dev-blockmap-debug-size",    &bmapDebugSize,                 CVF_NO_ARCHIVE, .1f, 100);
     C_VAR_BYTE  ("rend-dev-sector-show-indices",    &devSectorIndices,              CVF_NO_ARCHIVE, 0, 1);
-    C_VAR_BYTE  ("rend-dev-vertex-show-indices",    &devVertexIndices,              CVF_NO_ARCHIVE, 0, 1);
-    C_VAR_BYTE  ("rend-dev-vertex-show-bars",       &devVertexBars,                 CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_INT   ("rend-dev-sky",                    &devRendSkyMode,                CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_BYTE  ("rend-dev-sky-always",             &devRendSkyAlways,              CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_BYTE  ("rend-dev-soundorigins",           &devSoundEmitters,               CVF_NO_ARCHIVE, 0, 7);
     C_VAR_BYTE  ("rend-dev-surface-show-vectors",   &devSurfaceVectors,             CVF_NO_ARCHIVE, 0, 7);
-    C_VAR_BYTE  ("rend-dev-soundorigins",           &devSoundOrigins,               CVF_NO_ARCHIVE, 0, 7);
+    C_VAR_BYTE  ("rend-dev-tex-showfix",            &devNoTexFix,                   CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_BYTE  ("rend-dev-vertex-show-bars",       &devVertexBars,                 CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_BYTE  ("rend-dev-vertex-show-indices",    &devVertexIndices,              CVF_NO_ARCHIVE, 0, 1);
 
     C_CMD("rendedit", "", OpenRendererAppearanceEditor);
 
@@ -2261,22 +2266,22 @@ static void markFrontFacingWalls(HEdge *hedge)
 
 static void markLeafFrontFacingWalls()
 {
-    BspLeaf *bspLeaf = currentBspLeaf;
+    BspLeaf *leaf = currentBspLeaf;
 
-    HEdge *base = bspLeaf->poly().hedge();
+    HEdge *base = leaf->poly().hedge();
     HEdge *hedge = base;
     do
     {
         markFrontFacingWalls(hedge);
     } while((hedge = &hedge->next()) != base);
 
-    foreach(Mesh *mesh, bspLeaf->extraMeshes())
+    foreach(Mesh *mesh, leaf->extraMeshes())
     foreach(HEdge *hedge, mesh->hedges())
     {
         markFrontFacingWalls(hedge);
     }
 
-    foreach(Polyobj *po, bspLeaf->polyobjs())
+    foreach(Polyobj *po, leaf->polyobjs())
     foreach(HEdge *hedge, po->mesh().hedges())
     {
         markFrontFacingWalls(hedge);
@@ -2374,9 +2379,9 @@ static void occludeLeaf(bool frontFacing)
 
 static void clipLeafLumobjs()
 {
-    BspLeaf *bspLeaf = currentBspLeaf;
+    BspLeaf *leaf = currentBspLeaf;
 
-    foreach(Lumobj *lum, bspLeaf->lumobjs())
+    foreach(Lumobj *lum, leaf->lumobjs())
     {
         R_ViewerClipLumobj(lum);
     }
@@ -2389,11 +2394,11 @@ static void clipLeafLumobjs()
  */
 static void clipLeafLumobjsBySight()
 {
-    BspLeaf *bspLeaf = currentBspLeaf;
+    BspLeaf *leaf = currentBspLeaf;
 
-    foreach(Lumobj *lum, bspLeaf->lumobjs())
+    foreach(Lumobj *lum, leaf->lumobjs())
     {
-        R_ViewerClipLumobjBySight(lum, bspLeaf);
+        R_ViewerClipLumobjBySight(lum, leaf);
     }
 }
 
@@ -2415,22 +2420,22 @@ static void clipFrontFacingWalls(HEdge *hedge)
 
 static void clipLeafFrontFacingWalls()
 {
-    BspLeaf *bspLeaf = currentBspLeaf;
+    BspLeaf *leaf = currentBspLeaf;
 
-    HEdge *base = bspLeaf->poly().hedge();
+    HEdge *base = leaf->poly().hedge();
     HEdge *hedge = base;
     do
     {
         clipFrontFacingWalls(hedge);
     } while((hedge = &hedge->next()) != base);
 
-    foreach(Mesh *mesh, bspLeaf->extraMeshes())
+    foreach(Mesh *mesh, leaf->extraMeshes())
     foreach(HEdge *hedge, mesh->hedges())
     {
         clipFrontFacingWalls(hedge);
     }
 
-    foreach(Polyobj *po, bspLeaf->polyobjs())
+    foreach(Polyobj *po, leaf->polyobjs())
     foreach(HEdge *hedge, po->mesh().hedges())
     {
         clipFrontFacingWalls(hedge);
@@ -2680,16 +2685,12 @@ void Rend_RenderMap(Map &map)
     // Draw various debugging displays:
     drawAllSurfaceTangentVectors(map);
     drawLumobjs(map);
-    Rend_DrawBoundingBoxes(map);  // Mobj bounding boxes.
+    drawMobjBoundingBoxes(map);
     drawSectors(map);
     drawVertexes(map);
-    Rend_DrawSoundOrigins(map);
-    Rend_RenderGenerators();
-
-    if(!freezeRLs)
-    {
-        drawBiasEditingVisuals(map);
-    }
+    drawSoundEmitters(map);
+    drawGenerators(map);
+    drawBiasEditingVisuals(map);
 
     GL_SetMultisample(false);
 }
@@ -2813,8 +2814,8 @@ static void drawLock(Vector3d const &origin, double unit, double t)
 
 static void drawBiasEditingVisuals(Map &map)
 {
-    if(!SBE_Active() || editHidden)
-        return;
+    if(freezeRLs) return;
+    if(!SBE_Active() || editHidden) return;
 
     if(!map.biasSourceCount())
         return;
@@ -3204,7 +3205,7 @@ static int drawMobjBBox(thinker_t *th, void * /*context*/)
  * Depth test is disabled to show all mobjs that are being rendered, regardless
  * if they are actually vissible (hidden by previously drawn map geometry).
  */
-static void Rend_DrawBoundingBoxes(Map &map)
+static void drawMobjBoundingBoxes(Map &map)
 {
     //static float const red[3]   = { 1, 0.2f, 0.2f}; // non-solid objects
     static float const green[3]  = { 0.2f, 1, 0.2f}; // solid objects
@@ -3531,16 +3532,16 @@ static void drawSoundOrigin(Vector3d const &origin, char const *label, Vector3d 
 /**
  * Debugging aid for visualizing sound origins.
  */
-static void Rend_DrawSoundOrigins(Map &map)
+static void drawSoundEmitters(Map &map)
 {
-    if(!devSoundOrigins) return;
+    if(!devSoundEmitters) return;
 
     glDisable(GL_DEPTH_TEST);
     glEnable(GL_TEXTURE_2D);
 
     Vector3d eye(vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
 
-    if(devSoundOrigins & SOF_SIDE)
+    if(devSoundEmitters & SOF_SIDE)
     {
         foreach(Line *line, map.lines())
         for(int i = 0; i < 2; ++i)
@@ -3561,13 +3562,13 @@ static void Rend_DrawSoundOrigins(Map &map)
         }
     }
 
-    if(devSoundOrigins & (SOF_SECTOR|SOF_PLANE))
+    if(devSoundEmitters & (SOF_SECTOR|SOF_PLANE))
     {
         foreach(Sector *sec, map.sectors())
         {
             char buf[80];
 
-            if(devSoundOrigins & SOF_PLANE)
+            if(devSoundEmitters & SOF_PLANE)
             {
                 for(int i = 0; i < sec->planeCount(); ++i)
                 {
@@ -3577,7 +3578,7 @@ static void Rend_DrawSoundOrigins(Map &map)
                 }
             }
 
-            if(devSoundOrigins & SOF_SECTOR)
+            if(devSoundEmitters & SOF_SECTOR)
             {
                 dd_snprintf(buf, 80, "Sector #%i", sec->indexInMap());
                 drawSoundOrigin(Vector3d(sec->soundEmitter().origin), buf, eye);
@@ -3587,6 +3588,50 @@ static void Rend_DrawSoundOrigins(Map &map)
 
     // Restore previous state.
     glEnable(GL_DEPTH_TEST);
+}
+
+// Currently active Generators collection.
+static Generators *gens;
+
+static String labelForGenerator(ptcgen_t const *gen)
+{
+    DENG_ASSERT(gen != 0);
+    return String("%1").arg(gens->generatorId(gen));
+}
+
+static int drawGenerator(ptcgen_t *gen, void *context)
+{
+#define MAX_GENERATOR_DIST  2048
+
+    Vector3d const &eye = *static_cast<Vector3d *>(context);
+
+    if(gen->source || (gen->flags & PGF_UNTRIGGERED))
+    {
+        Vector3d const origin   = Generator_Origin(*gen);
+        ddouble const distToEye = (eye - origin).length();
+        if(distToEye < MAX_GENERATOR_DIST)
+        {
+            drawLabel(origin, labelForGenerator(gen),
+                      distToEye / (DENG_GAMEVIEW_WIDTH / 2),
+                      1 - distToEye / MAX_GENERATOR_DIST);
+        }
+    }
+
+    return false; // Continue iteration.
+
+#undef MAX_GENERATOR_DIST
+}
+
+/**
+ * Debugging aid; Draw all active generators.
+ */
+static void drawGenerators(Map &map)
+{
+    if(!devDrawGenerators) return;
+
+    Vector3d eye(vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
+    gens = &map.generators();
+    gens->iterate(drawGenerator, &eye);
 }
 
 static void drawVertexPoint(const Vertex* vtx, coord_t z, float alpha)

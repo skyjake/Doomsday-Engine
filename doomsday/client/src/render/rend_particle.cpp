@@ -55,7 +55,6 @@ extern float vang, vpitch;
 DGLuint pointTex, ptctexname[MAX_PTC_TEXTURES];
 int particleNearLimit = 0;
 float particleDiffuse = 4;
-byte devDrawGenerators = false; // Display active generators?
 
 static size_t numParts;
 static boolean hasPoints, hasLines, hasModels, hasNoBlend, hasBlend;
@@ -76,7 +75,6 @@ void Rend_ParticleRegister()
     C_VAR_FLOAT("rend-particle-rate",              &particleSpawnRate, 0,              0, 5);
     C_VAR_FLOAT("rend-particle-diffuse",           &particleDiffuse,   CVF_NO_MAX,     0, 0);
     C_VAR_INT  ("rend-particle-visible-near",      &particleNearLimit, CVF_NO_MAX,     0, 0);
-    C_VAR_BYTE ("rend-dev-generator-show-indices", &devDrawGenerators, CVF_NO_ARCHIVE, 0, 1);
 }
 
 static int markPtcGenVisible(ptcgen_t *gen, void *parameters)
@@ -907,78 +905,4 @@ void Rend_RenderParticles()
         // particles.
         renderPass(true);
     }
-}
-
-static int drawGeneratorOrigin(ptcgen_t* gen, void* parameters)
-{
-#define MAX_GENERATOR_DIST  2048
-
-    float* eye = (float*) parameters;
-
-    // Determine approximate center.
-    if((gen->source || (gen->flags & PGF_UNTRIGGERED)))
-    {
-        float pos[3], dist, alpha;
-
-        if(gen->source)
-        {
-            V3f_Copyd(pos, gen->source->origin);
-            pos[VZ] += -gen->source->floorClip + FIX2FLT(gen->center[VZ]);
-        }
-        else
-        {
-            pos[VX] = FIX2FLT(gen->center[VX]);
-            pos[VY] = FIX2FLT(gen->center[VY]);
-            pos[VZ] = FIX2FLT(gen->center[VZ]);
-        }
-
-        dist = V3f_Distance(pos, eye);
-        alpha = 1 - MIN_OF(dist, MAX_GENERATOR_DIST) / MAX_GENERATOR_DIST;
-
-        if(alpha > 0)
-        {
-            Point2Raw const labelOrigin(2, 2);
-            float scale = dist / (DENG_GAMEVIEW_WIDTH / 2);
-            char buf[80];
-
-            sprintf(buf, "%i", gens->generatorId(gen));
-
-            glMatrixMode(GL_MODELVIEW);
-            glPushMatrix();
-
-            glTranslatef(pos[VX], pos[VZ], pos[VY]);
-            glRotatef(-vang + 180, 0, 1, 0);
-            glRotatef(vpitch, 1, 0, 0);
-            glScalef(-scale, -scale, 1);
-
-            glEnable(GL_TEXTURE_2D);
-            FR_SetFont(fontFixed);
-            FR_LoadDefaultAttrib();
-            FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
-            FR_SetShadowStrength(UI_SHADOW_STRENGTH);
-            UI_TextOutEx(buf, &labelOrigin, UI_Color(UIC_TITLE), alpha);
-            glDisable(GL_TEXTURE_2D);
-
-            glMatrixMode(GL_MODELVIEW);
-            glPopMatrix();
-        }
-    }
-
-    return false; // Continue iteration.
-
-#undef MAX_GENERATOR_DIST
-}
-
-void Rend_RenderGenerators()
-{
-    if(!devDrawGenerators) return;
-    if(!App_World().hasMap()) return;
-
-    glDisable(GL_DEPTH_TEST);
-
-    float eye[3] = { float(vOrigin[VX]), float(vOrigin[VZ]), float(vOrigin[VY]) };
-    gens->iterate(drawGeneratorOrigin, eye);
-
-    // Restore previous state.
-    glEnable(GL_DEPTH_TEST);
 }

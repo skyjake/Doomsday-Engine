@@ -23,6 +23,8 @@
 #ifndef DENG_CLIENT_WORLD_P_PARTICLE_H
 #define DENG_CLIENT_WORLD_P_PARTICLE_H
 
+#include <de/Vector>
+
 #include "def_data.h"
 
 class BspLeaf;
@@ -134,6 +136,11 @@ typedef struct ptcgen_s {
     particle_t *ptcs; // List of particles.
     ptcstage_t *stages;
 } ptcgen_t;
+
+/**
+ * Determine the @em approximate origin of the generator in map space.
+ */
+de::Vector3d Generator_Origin(ptcgen_t &gen);
 
 DENG_EXTERN_C byte useParticles;
 DENG_EXTERN_C int maxParticles;

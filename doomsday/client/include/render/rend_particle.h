@@ -1,7 +1,9 @@
-/** @file rend_particle.h Particle Effect Rendering. @ingroup render
+/** @file rend_particle.h Particle Effect Rendering.
  *
- * @author Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @author Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @ingroup render
+ *
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,38 +20,38 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_RENDER_PARTICLE_H
-#define LIBDENG_RENDER_PARTICLE_H
+#ifndef DENG_CLIENT_RENDER_PARTICLE_H
+#define DENG_CLIENT_RENDER_PARTICLE_H
 
-#include "world/p_particle.h"
+class Sector;
 
-void Rend_ParticleRegister(void);
+void Rend_ParticleRegister();
 
 /**
  * Loads all system-level textures (i.e., those available by default)
  * for a minimal resource set needed for particle rendering.
  */
-void Rend_ParticleLoadSystemTextures(void);
-void Rend_ParticleReleaseSystemTextures(void);
+void Rend_ParticleLoadSystemTextures();
+void Rend_ParticleReleaseSystemTextures();
 
 /**
  * Load any custom particle textures. They are loaded from the
  * highres texture directory and are named "ParticleNN.(tga|png|pcx)".
  * The first is "Particle00". (based on Leesz' textured particles mod)
  */
-void Rend_ParticleLoadExtraTextures(void);
-void Rend_ParticleReleaseExtraTextures(void);
+void Rend_ParticleLoadExtraTextures();
+void Rend_ParticleReleaseExtraTextures();
 
 /**
  * Prepare for rendering a new view of the world.
  */
-void Rend_ParticleInitForNewFrame(void);
+void Rend_ParticleInitForNewFrame();
 
 /**
  * The given sector is visible. All PGs in it should be rendered.
  * Scans PG links.
  */
-void Rend_ParticleMarkInSectorVisible(Sector* sector);
+void Rend_ParticleMarkInSectorVisible(Sector *sector);
 
 /**
  * Render all the visible particle generators.
@@ -57,11 +59,6 @@ void Rend_ParticleMarkInSectorVisible(Sector* sector);
  * particles from one generator will obscure particles from another.
  * This would be especially bad with smoke trails.
  */
-void Rend_RenderParticles(void);
+void Rend_RenderParticles();
 
-/**
- * Debugging aid; Draw all active generators.
- */
-void Rend_RenderGenerators(void);
-
-#endif // LIBDENG_RENDER_PARTICLE_H
+#endif // DENG_CLIENT_RENDER_PARTICLE_H

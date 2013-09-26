@@ -165,6 +165,18 @@ static ptcgen_t *P_NewGenerator()
     return 0; // Creation failed.
 }
 
+Vector3d Generator_Origin(ptcgen_t &gen)
+{
+    if(gen.source)
+    {
+        Vector3d origin(gen.source->origin);
+        origin.z += -gen.source->floorClip + FIX2FLT(gen.center[VZ]);
+        return origin;
+    }
+
+    return Vector3d(FIX2FLT(gen.center[VX]), FIX2FLT(gen.center[VY]), FIX2FLT(gen.center[VZ]));
+}
+
 void P_PtcInitForMap(Map &map)
 {
     Time begunAt;
