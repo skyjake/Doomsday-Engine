@@ -142,7 +142,9 @@ DENG2_PIMPL(WallEdge), public IHPlane
             (line.definesPolyobj()? &line.polyobj().bspLeaf()
                                   : &hedge->face().mapElement()->as<BspLeaf>())->clusterPtr();
 
-        if(seg.lineSide().considerOneSided())
+        if(seg.lineSide().considerOneSided() ||
+           // Mapping errors may result in a line segment missing a back face.
+           (!line.definesPolyobj() && !hedge->twin().hasFace()))
         {
             if(spec.section == LineSide::Middle)
             {

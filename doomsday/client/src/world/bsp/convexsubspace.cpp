@@ -380,10 +380,9 @@ void ConvexSubspace::addOneSegment(LineSegment::Side const &newSegment)
 void ConvexSubspace::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
 {
     LOG_AS("ConvexSubspace::buildGeometry");
-    bool const isDegenerate = segmentCount() < 3;
 
     // Sanity check.
-    if(!isDegenerate && !d->haveMapLineSegment())
+    if(segmentCount() >= 3 && !d->haveMapLineSegment())
         throw Error("ConvexSubspace::buildGeometry", "No map line segment");
 
     if(d->needRebuildOrderedSegments)
@@ -415,6 +414,7 @@ void ConvexSubspace::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
         conty->addOneSegment(oseg);
     }
 
+    int extraMeshSegments = 0;
     for(int i = 0; i < continuities.count(); ++i)
     {
         Continuity &conty = continuities[i];
@@ -441,6 +441,9 @@ void ConvexSubspace::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
 
                 HEdge *hedge = extraMesh->newHEdge(lineSeg->from());
                 LineSideSegment *seg = mapSide->addSegment(*hedge);
+
+                extraMeshSegments += 1;
+
 #ifdef __CLIENT__
                 /// @todo LineSide::newSegment() should encapsulate:
                 seg->setLineSideOffset(Vector2d(mapSide->from().origin() - lineSeg->from().origin()).length());
@@ -519,7 +522,7 @@ void ConvexSubspace::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
     }
 #endif*/
 
-    if(!isDegenerate)
+    if(segmentCount() - extraMeshSegments >= 3)
     {
         // Construct a new face and a ring of half-edges.
         Face *face = mesh.newFace();
@@ -529,6 +532,7 @@ void ConvexSubspace::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
         {
             LineSegment::Side *lineSeg = d->orderedSegments[i].segment;
 
+            // Already added this to an extra mesh?
             if(lineSeg->hasHEdge())
                 continue;
 

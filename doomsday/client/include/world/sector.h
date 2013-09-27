@@ -370,12 +370,6 @@ public:
     inline int clusterCount() const { return clusters().count(); }
 
     /**
-     * Convenient method of determning whether the sector is a parent of one or
-     * BSP leaf (i.e., at least one cluster is defined).
-     */
-    inline bool hasBspLeafs() const { return clusterCount() != 0; }
-
-    /**
      * (Re)Build BSP leaf clusters for the sector.
      */
     void buildClusters();
