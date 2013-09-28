@@ -218,6 +218,11 @@ Vector3d Mobj_Origin(mobj_t &mobj)
     return Vector3d(mobj.origin);
 }
 
+Vector3d Mobj_Center(mobj_t &mobj)
+{
+    return Vector3d(mobj.origin[0], mobj.origin[1], mobj.origin[2] + mobj.height / 2);
+}
+
 boolean Mobj_SetOrigin(struct mobj_s *mo, coord_t x, coord_t y, coord_t z)
 {
     if(!gx.MobjTryMoveXYZ)

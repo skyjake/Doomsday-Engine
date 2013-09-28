@@ -61,7 +61,6 @@ int alwaysAlign;
 int noSpriteZWrite;
 
 byte devNoSprites;
-byte devThinkerIds;
 
 void Rend_SpriteRegister()
 {
@@ -74,7 +73,6 @@ void Rend_SpriteRegister()
     C_VAR_INT   ("rend-sprite-noz",         &noSpriteZWrite,    0, 0, 1);
     C_VAR_BYTE  ("rend-sprite-precache",    &precacheSprites,   0, 0, 1);
     C_VAR_BYTE  ("rend-dev-nosprite",       &devNoSprites,      CVF_NO_ARCHIVE, 0, 1);
-    C_VAR_BYTE  ("rend-dev-thinker-ids",    &devThinkerIds,     CVF_NO_ARCHIVE, 0, 1);
 }
 
 static inline void renderQuad(dgl_vertex_t *v, dgl_color_t *c, dgl_texcoord_t *tc)
@@ -99,64 +97,6 @@ static inline void renderQuad(dgl_vertex_t *v, dgl_color_t *c, dgl_texcoord_t *t
         glTexCoord2fv(tc[3].st);
         glVertex3fv(v[3].xyz);
     glEnd();
-}
-
-static int drawThinkerId(thinker_t *thinker, void *context)
-{
-    static int const MAX_THINKER_DIST = 2048;
-
-    float const *eye = static_cast<float *>(context);
-
-    // Skip non-mobjs.
-    if(!Thinker_IsMobjFunc(thinker->function))
-        return false;
-
-    mobj_t *mo = (mobj_t *)thinker;
-    float pos[3] = { mo->origin[VX], mo->origin[VY], mo->origin[VZ] + mo->height/2 };
-
-    float dist = V3f_Distance(pos, eye);
-    float alpha = 1.f - MIN_OF(dist, MAX_THINKER_DIST) / MAX_THINKER_DIST;
-
-    if(alpha > 0)
-    {
-        float const scale = dist / (DENG_GAMEVIEW_WIDTH / 2);
-
-        glMatrixMode(GL_MODELVIEW);
-        glPushMatrix();
-
-        glTranslatef(pos[VX], pos[VZ], pos[VY]);
-        glRotatef(-vang + 180, 0, 1, 0);
-        glRotatef(vpitch, 1, 0, 0);
-        glScalef(-scale, -scale, 1);
-
-        char buf[80]; sprintf(buf, "%i", mo->thinker.id);
-        Point2Raw const labelOrigin = Point2Raw(2, 2);
-        UI_TextOutEx(buf, &labelOrigin, UI_Color(UIC_TITLE), alpha);
-
-        glMatrixMode(GL_MODELVIEW);
-        glPopMatrix();
-    }
-
-    return false; // Continue iteration.
-}
-
-/**
- * Debugging aid for visualizing thinker IDs.
- */
-void Rend_DrawThinkerIds()
-{
-    if(!devThinkerIds) return;
-    if(!App_World().hasMap()) return;
-
-    glDisable(GL_DEPTH_TEST);
-    glEnable(GL_TEXTURE_2D);
-
-    float eye[3] = { vOrigin[VX], vOrigin[VZ], vOrigin[VY] };
-
-    App_World().map().thinkers().iterate(NULL, 0x1 | 0x2, drawThinkerId, eye);
-
-    // Restore previous state.
-    glEnable(GL_DEPTH_TEST);
 }
 
 void Rend_Draw3DPlayerSprites()
@@ -834,12 +774,6 @@ void Rend_DrawMasked()
             // And we're done...
             H_SetupState(false);
         }
-    }
-
-    // Developer aid: visualize thinker IDs.
-    if(devThinkerIds)
-    {
-        Rend_DrawThinkerIds();
     }
 }
 

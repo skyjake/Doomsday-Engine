@@ -80,6 +80,11 @@ bool Mobj_IsLinked(mobj_t &mobj);
 de::Vector3d Mobj_Origin(mobj_t &mobj);
 
 /**
+ * Returns the mobj's visual center (i.e., origin plus z-height offset).
+ */
+de::Vector3d Mobj_Center(mobj_t &mobj);
+
+/**
  * Sets a mobj's position.
  *
  * @return  @c true if successful, @c false otherwise. The object's position is

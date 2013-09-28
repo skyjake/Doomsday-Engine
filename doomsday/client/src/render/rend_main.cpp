@@ -195,6 +195,7 @@ byte devSurfaceVectors; ///< @c 1= Draw tangent space vectors for surfaces.
 byte devNoTexFix;       ///< @c 1= Draw "missing" rather than fix materials.
 
 byte devSectorIndices;  ///< @c 1= Draw sector indicies.
+byte devThinkerIds;     ///< @c 1= Draw (mobj) thinker indicies.
 
 byte rendInfoLums;      ///< @c 1= Print lumobj debug info to the console.
 byte devDrawLums;       ///< @c 1= Draw lumobjs origins.
@@ -204,8 +205,8 @@ static void drawSoundEmitters(Map &map);
 static void drawGenerators(Map &map);
 static void drawAllSurfaceTangentVectors(Map &map);
 static void drawLumobjs(Map &map);
-
 static void drawSectors(Map &map);
+static void drawThinkers(Map &map);
 static void drawVertexes(Map &map);
 
 static uint buildLeafPlaneGeometry(BspLeaf const &leaf, ClockDirection direction,
@@ -294,6 +295,7 @@ void Rend_Register()
     C_VAR_BYTE  ("rend-dev-sky-always",             &devRendSkyAlways,              CVF_NO_ARCHIVE, 0, 1);
     C_VAR_BYTE  ("rend-dev-soundorigins",           &devSoundEmitters,               CVF_NO_ARCHIVE, 0, 7);
     C_VAR_BYTE  ("rend-dev-surface-show-vectors",   &devSurfaceVectors,             CVF_NO_ARCHIVE, 0, 7);
+    C_VAR_BYTE  ("rend-dev-thinker-ids",            &devThinkerIds,                 CVF_NO_ARCHIVE, 0, 1);
     C_VAR_BYTE  ("rend-dev-tex-showfix",            &devNoTexFix,                   CVF_NO_ARCHIVE, 0, 1);
     C_VAR_BYTE  ("rend-dev-vertex-show-bars",       &devVertexBars,                 CVF_NO_ARCHIVE, 0, 1);
     C_VAR_BYTE  ("rend-dev-vertex-show-indices",    &devVertexIndices,              CVF_NO_ARCHIVE, 0, 1);
@@ -2687,6 +2689,7 @@ void Rend_RenderMap(Map &map)
     drawMobjBoundingBoxes(map);
     drawSectors(map);
     drawVertexes(map);
+    drawThinkers(map);
     drawSoundEmitters(map);
     drawGenerators(map);
     drawBiasEditingVisuals(map);
@@ -3831,7 +3834,7 @@ static void drawSectors(Map &map)
     foreach(SectorCluster *cluster, sector->clusters())
     {
         Vector3d const origin(cluster->center(), cluster->visPlane(Sector::Floor).heightSmoothed());
-        ddouble distToEye = (eyeOrigin - origin).length();
+        ddouble const distToEye = (eyeOrigin - origin).length();
         if(distToEye < MAX_LABEL_DIST)
         {
             drawLabel(origin, labelForCluster(cluster),
@@ -3841,6 +3844,45 @@ static void drawSectors(Map &map)
     }
 
 #undef MAX_LABEL_DIST
+}
+
+static String labelForThinker(thinker_t *thinker)
+{
+    DENG_ASSERT(thinker != 0);
+    return String("%1").arg(thinker->id);
+}
+
+static int drawThinkersWorker(thinker_t *thinker, void *context)
+{
+    DENG2_UNUSED(context);
+
+#define MAX_THINKER_DIST 2048
+
+    // Skip non-mobjs.
+    if(!Thinker_IsMobjFunc(thinker->function))
+        return false;
+
+    Vector3d const origin = Mobj_Center(*(mobj_t *)thinker);
+    ddouble const distToEye = (eyeOrigin - origin).length();
+    if(distToEye < MAX_THINKER_DIST)
+    {
+        drawLabel(origin, labelForThinker(thinker),
+                  distToEye / (DENG_GAMEVIEW_WIDTH / 2),
+                  1 - distToEye / MAX_THINKER_DIST);
+    }
+
+    return false; // Continue iteration.
+
+#undef MAX_THINKER_DIST
+}
+
+/**
+ * Debugging aid for visualizing thinker IDs.
+ */
+static void drawThinkers(Map &map)
+{
+    if(!devThinkerIds) return;
+    map.thinkers().iterate(NULL, 0x1 | 0x2, drawThinkersWorker);
 }
 
 MaterialVariantSpec const &Rend_MapSurfaceMaterialSpec(int wrapS, int wrapT)
