@@ -188,8 +188,6 @@ static boolean pickupBloodScourge1(player_t* plr);
 static boolean pickupBloodScourge2(player_t* plr);
 static boolean pickupBloodScourge3(player_t* plr);
 
-int echoMsg = 1;
-
 int TextKeyMessages[] = {
     TXT_TXT_KEY_STEEL,
     TXT_TXT_KEY_CAVE,

@@ -312,6 +312,7 @@ void X_PreInit(void)
     cfg.msgColor[0] = defFontRGB3[0];
     cfg.msgColor[1] = defFontRGB3[1];
     cfg.msgColor[2] = defFontRGB3[2];
+    cfg.echoMsg = true;
 
     cfg.inventoryTimer = 5;
     cfg.inventoryWrap = false;
