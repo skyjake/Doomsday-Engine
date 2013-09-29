@@ -25,11 +25,14 @@
 
 #include <de/aabox.h>
 
+#include <de/libdeng2.h>
 #include <de/Error>
 #include <de/Observers>
 #include <de/Vector>
 
 #include "dd_share.h" // AudioEnvironmentFactors
+
+#include "HEdge"
 
 #include "MapElement"
 #include "Line"
@@ -583,5 +586,117 @@ private:
 };
 
 typedef Sector::Cluster SectorCluster;
+
+/**
+ * Specialized sector cluster half-edge circulator. Used like an iterator, for
+ * circumnavigating the boundary half-edges of a cluster.
+ *
+ * Cluster-internal edges (i.e., where both half-edge faces reference the same
+ * cluster) are automatically skipped during traversal. Otherwise behavior is
+ * the same as a "regular" half-edge face circulator.
+ *
+ * Also provides static search utilities for convenient, one-time use of this
+ * specialized search logic (avoiding circulator instantiation).
+ */
+class SectorClusterCirculator
+{
+public:
+    /// Attempt to dereference a NULL circulator. @ingroup errors
+    DENG2_ERROR(NullError);
+
+public:
+    /**
+     * Construct a new sector cluster circulator.
+     *
+     * @param hedge  Half-edge to circulate. It is assumed the half-edge lies on
+     * the @em boundary of the cluster and is not an "internal" edge.
+     */
+    SectorClusterCirculator(de::HEdge *hedge = 0)
+        : _hedge(hedge),
+          _current(hedge),
+          _cluster(hedge? getCluster(*hedge) : 0)
+    {}
+
+    /**
+     * Intended as a convenient way to employ the specialized circulator logic
+     * to locate the relative back of the next/previous neighboring half-edge.
+     * Particularly useful when a geometry traversal requires a switch from the
+     * cluster to face boundary, or when navigating the so-called "one-ring" of
+     * a vertex.
+     */
+    static de::HEdge &findBackNeighbor(de::HEdge &hedge, de::ClockDirection direction)
+    {
+        return getNeighbor(hedge, direction, getCluster(hedge)).twin();
+    }
+
+    /**
+     * Returns the neighbor half-edge in the specified @a direction around the
+     * boundary of the cluster.
+     *
+     * @param direction  Relative direction of the desired neighbor.
+     */
+    de::HEdge &neighbor(de::ClockDirection direction) {
+        _current = &getNeighbor(*_current, direction, _cluster);
+        return *_current;
+    }
+
+    /// Returns the next half-edge (clockwise) and advances the circulator.
+    inline de::HEdge &next() { return neighbor(de::Clockwise); }
+
+    /// Returns the previous half-edge (anticlockwise) and advances the circulator.
+    inline de::HEdge &previous() { return neighbor(de::Anticlockwise); }
+
+    /// Advance to the next half-edge (clockwise).
+    inline SectorClusterCirculator &operator ++ () {
+        next(); return *this;
+    }
+    /// Advance to the previous half-edge (anticlockwise).
+    inline SectorClusterCirculator &operator -- () {
+        previous(); return *this;
+    }
+
+    /// Returns @c true iff @a other references the same half-edge as "this"
+    /// circulator; otherwise returns false.
+    inline bool operator == (SectorClusterCirculator const &other) const {
+        return _current == other._current;
+    }
+    inline bool operator != (SectorClusterCirculator const &other) const {
+        return !(*this == other);
+    }
+
+    /// Returns @c true iff the range of the circulator [c, c) is not empty.
+    inline operator bool () const { return _hedge != 0; }
+
+    /// Makes the circulator operate on @a hedge.
+    SectorClusterCirculator &operator = (de::HEdge &hedge) {
+        _hedge = _current = &hedge;
+        _cluster = getCluster(hedge);
+        return *this;
+    }
+
+    /// Returns the current half-edge of a non-empty sequence.
+    de::HEdge &operator * () const {
+        if(!_current)
+        {
+            /// @throw NullError Attempted to dereference a "null" circulator.
+            throw NullError("SectorClusterCirculator::operator *", "Circulator references an empty sequence");
+        }
+        return *_current;
+    }
+
+    /// Returns a pointer to the current half-edge (might be @c NULL, meaning the
+    /// circulator references an empty sequence).
+    de::HEdge *operator -> () const { return _current; }
+
+private:
+    static SectorCluster *getCluster(de::HEdge &hedge);
+
+    static de::HEdge &getNeighbor(de::HEdge &hedge, de::ClockDirection direction,
+                                  SectorCluster *cluster = 0);
+
+    de::HEdge *_hedge;
+    de::HEdge *_current;
+    SectorCluster *_cluster;
+};
 
 #endif // DENG_WORLD_SECTOR_H

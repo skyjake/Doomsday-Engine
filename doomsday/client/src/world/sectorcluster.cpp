@@ -374,33 +374,14 @@ DENG2_OBSERVES(Plane, HeightChange)
         QList<QRectF> boundaries;
         foreach(HEdge *base, boundaryEdges)
         {
-            QRectF bounds = QRectF(QPointF(base->origin().x, base->origin().y),
-                                   QPointF(base->twin().origin().x, base->twin().origin().y))
-                                .normalized();
-
-            HEdge *hedge = &base->next();
+            QRectF bounds;
+            SectorClusterCirculator it(base);
             do
             {
-                while(hedge->twin().hasFace())
-                {
-                    Cluster &backCluster = hedge->twin().face().mapElement()->as<BspLeaf>().cluster();
-                    if(&backCluster == thisPublic)
-                    {
-                        hedge = &hedge->twin().next();
-                    }
-                    else
-                    {
-                        break;
-                    }
-                }
-
-                if(hedge == base)
-                    break;
-
-                bounds |= QRectF(QPointF(hedge->origin().x, hedge->origin().y),
-                                 QPointF(hedge->twin().origin().x, hedge->twin().origin().y))
+                bounds |= QRectF(QPointF(it->origin().x, it->origin().y),
+                                 QPointF(it->twin().origin().x, it->twin().origin().y))
                               .normalized();
-            } while((hedge = &hedge->next()) != base);
+            } while(&it.next() != base);
 
             boundaries.append(bounds);
         }
@@ -931,3 +912,28 @@ bool Sector::Cluster::hasSkyMaskedPlane() const
 }
 
 #endif // __CLIENT__
+
+// SectorClusterCirculator -----------------------------------------------------
+
+SectorCluster *SectorClusterCirculator::getCluster(HEdge &hedge) // static
+{
+    if(!hedge.hasFace()) return 0;
+    if(!hedge.face().mapElement()) return 0;
+    if(hedge.face().mapElement()->type() != DMU_BSPLEAF) return 0;
+    return hedge.face().mapElement()->as<BspLeaf>().clusterPtr();
+}
+
+HEdge &SectorClusterCirculator::getNeighbor(HEdge &hedge, ClockDirection direction,
+    SectorCluster *cluster) // static
+{
+    HEdge *neighbor = &hedge.neighbor(direction);
+    // Skip over interior edges.
+    if(cluster)
+    {
+        while(neighbor->hasTwin() && cluster == getCluster(neighbor->twin()))
+        {
+            neighbor = &neighbor->twin().neighbor(direction);
+        }
+    }
+    return *neighbor;
+}

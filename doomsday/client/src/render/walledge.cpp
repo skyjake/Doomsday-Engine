@@ -96,7 +96,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
     WallSpec spec;
     int edge;
 
-    HEdge *hedge;
+    HEdge *wallHEdge;
 
     /// The half-plane which partitions the surface coordinate space.
     Partition hplane;
@@ -119,11 +119,11 @@ DENG2_PIMPL(WallEdge), public IHPlane
     Vector3f normal;
     bool needUpdateNormal;
 
-    Instance(Public *i, WallSpec const &spec, HEdge &wallHEdge, int edge)
+    Instance(Public *i, WallSpec const &spec, HEdge &hedge, int edge)
         : Base(i),
           spec(spec),
           edge(edge),
-          hedge(&wallHEdge),
+          wallHEdge(&hedge),
           lo(0),
           hi(0),
           bottom(*i, 0),
@@ -140,11 +140,11 @@ DENG2_PIMPL(WallEdge), public IHPlane
 
         SectorCluster const *cluster =
             (line.definesPolyobj()? &line.polyobj().bspLeaf()
-                                  : &hedge->face().mapElement()->as<BspLeaf>())->clusterPtr();
+                                  : &wallHEdge->face().mapElement()->as<BspLeaf>())->clusterPtr();
 
         if(seg.lineSide().considerOneSided() ||
            // Mapping errors may result in a line segment missing a back face.
-           (!line.definesPolyobj() && !hedge->twin().hasFace()))
+           (!line.definesPolyobj() && !wallHEdge->twin().hasFace()))
         {
             if(spec.section == LineSide::Middle)
             {
@@ -167,7 +167,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
             // Two sided.
             SectorCluster const *backCluster =
                 line.definesPolyobj()? cluster
-                                     : hedge->twin().face().mapElement()->as<BspLeaf>().clusterPtr();
+                                     : wallHEdge->twin().face().mapElement()->as<BspLeaf>().clusterPtr();
 
             Plane const *ffloor = &cluster->visFloor();
             Plane const *fceil  = &cluster->visCeiling();
@@ -347,7 +347,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
 
     inline LineSideSegment &lineSideSegment()
     {
-        return hedge->mapElement()->as<LineSideSegment>();
+        return wallHEdge->mapElement()->as<LineSideSegment>();
     }
 
     void verifyValid() const
@@ -495,112 +495,70 @@ DENG2_PIMPL(WallEdge), public IHPlane
         return (worldHeight - lo) / (hi - lo);
     }
 
-    /**
-     * @todo: Use the half-edge rings instead of LineOwners.
-     * @todo fixme: Should use the visual plane heights of sector clusters.
-     */
     void addNeighborIntercepts(coord_t bottom, coord_t top)
     {
-        LineSideSegment const &seg = lineSideSegment();
-        LineOwner *mapLineOwner    = seg.line().vertexOwner(edge? hedge->twin().vertex() : hedge->vertex());
-        if(!mapLineOwner) return;
+        ClockDirection const direction = edge? Clockwise : Anticlockwise;
 
-        Sector const *frontSec = seg.lineSide().sectorPtr();
-        LineOwner *own = mapLineOwner;
-        bool stopScan = false;
-        do
+        HEdge *hedge = wallHEdge;
+        while((hedge = &SectorClusterCirculator::findBackNeighbor(*hedge, direction)) != wallHEdge)
         {
-            own = &own->navigate(edge? Anticlockwise : Clockwise);
+            // Stop if there is no back cluster.
+            if(!hedge->hasFace())
+                break;
 
-            if(own == mapLineOwner)
+            SectorCluster &cluster = hedge->face().mapElement()->as<BspLeaf>().cluster();
+            if(cluster.hasWorldVolume())
             {
-                stopScan = true;
+                for(int i = 0; i < cluster.visPlaneCount(); ++i)
+                {
+                    Plane const &plane = cluster.visPlane(i);
+
+                    if(plane.heightSmoothed() > bottom && plane.heightSmoothed() < top)
+                    {
+                        ddouble distance = distanceTo(plane.heightSmoothed());
+                        if(!haveEvent(distance))
+                        {
+                            createEvent(distance);
+
+                            // Have we reached the div limit?
+                            if(interceptCount() == WALLEDGE_MAX_INTERCEPTS)
+                                return;
+                        }
+                    }
+
+                    // Clip a range bound to this height?
+                    if(plane.isSectorFloor() && plane.heightSmoothed() > bottom)
+                        bottom = plane.heightSmoothed();
+                    else if(plane.isSectorCeiling() && plane.heightSmoothed() < top)
+                        top = plane.heightSmoothed();
+
+                    // All clipped away?
+                    if(bottom >= top)
+                        return;
+                }
             }
             else
             {
-                Line *iter = &own->line();
+                /*
+                 * A neighbor with zero volume is a special case -- the potential
+                 * division is at the height of the back ceiling. This is because
+                 * elsewhere we automatically fix the case of a floor above a
+                 * ceiling by lowering the floor.
+                 */
+                coord_t z = cluster.visCeiling().heightSmoothed();
 
-                if(iter->isSelfReferencing())
-                    continue;
-
-                uint i = 0;
-                do
+                if(z > bottom && z < top)
                 {
-                    // First front, then back.
-                    Sector *scanSec = 0;
-                    if(!i && iter->hasFrontSector() && iter->frontSectorPtr() != frontSec)
-                        scanSec = iter->frontSectorPtr();
-                    else if(i && iter->hasBackSector() && iter->backSectorPtr() != frontSec)
-                        scanSec = iter->backSectorPtr();
-
-                    if(scanSec)
+                    ddouble distance = distanceTo(z);
+                    if(!haveEvent(distance))
                     {
-                        if(scanSec->ceiling().heightSmoothed() - scanSec->floor().heightSmoothed() > 0)
-                        {
-                            for(int j = 0; j < scanSec->planeCount() && !stopScan; ++j)
-                            {
-                                Plane const &plane = scanSec->plane(j);
-
-                                if(plane.heightSmoothed() > bottom && plane.heightSmoothed() < top)
-                                {
-                                    double distance = distanceTo(plane.heightSmoothed());
-
-                                    if(!haveEvent(distance))
-                                    {
-                                        createEvent(distance);
-
-                                        // Have we reached the div limit?
-                                        if(interceptCount() == WALLEDGE_MAX_INTERCEPTS)
-                                            stopScan = true;
-                                    }
-                                }
-
-                                if(!stopScan)
-                                {
-                                    // Clip a range bound to this height?
-                                    if(plane.isSectorFloor() && plane.heightSmoothed() > bottom)
-                                        bottom = plane.heightSmoothed();
-                                    else if(plane.isSectorCeiling() && plane.heightSmoothed() < top)
-                                        top = plane.heightSmoothed();
-
-                                    // All clipped away?
-                                    if(bottom >= top)
-                                        stopScan = true;
-                                }
-                            }
-                        }
-                        else
-                        {
-                            /**
-                             * A zero height sector is a special case. In this
-                             * instance, the potential division is at the height
-                             * of the back ceiling. This is because elsewhere
-                             * we automatically fix the case of a floor above a
-                             * ceiling by lowering the floor.
-                             */
-                            coord_t z = scanSec->ceiling().heightSmoothed();
-
-                            if(z > bottom && z < top)
-                            {
-                                double distance = distanceTo(z);
-
-                                if(!haveEvent(distance))
-                                {
-                                    createEvent(distance);
-
-                                    // All clipped away.
-                                    stopScan = true;
-                                }
-                            }
-                        }
+                        createEvent(distance);
+                        // All clipped away.
+                        return;
                     }
-                } while(!stopScan && ++i < 2);
-
-                // Stop the scan when a side with no back sector is reached.
-                if(!iter->hasFrontSector() || !iter->hasBackSector())
-                    stopScan = true;
+                }
             }
-        } while(!stopScan);
+        }
     }
 
     void prepareEvents()
