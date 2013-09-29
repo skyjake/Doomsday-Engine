@@ -395,8 +395,15 @@ bool LineEditWidget::handleEvent(Event const &event)
     {
         KeyEvent const &key = event.as<KeyEvent>();
 
+        if(key.qtKey() == Qt::Key_Shift)
+        {
+            // Shift is not eaten so that Shift-Tilde can produce ~.
+            // If we ate Shift, the bindings system would not realize it is down.
+            return false;
+        }
+
         if(key.qtKey() == Qt::Key_Control || key.qtKey() == Qt::Key_Alt ||
-           key.qtKey() == Qt::Key_Meta || key.qtKey() == Qt::Key_Shift)
+           key.qtKey() == Qt::Key_Meta)
         {
             // Modifier keys alone will be eaten when focused.
             return true;
