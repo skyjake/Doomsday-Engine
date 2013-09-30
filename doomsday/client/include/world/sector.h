@@ -101,6 +101,19 @@ public:
         Cluster(BspLeafs const &bspLeafs);
 
         /**
+         * Determines whether the specified @a hedge is an "internal" edge:
+         *
+         * - both the half-edge and it's twin have a face.
+         * - both faces are assigned to a BSP leaf.
+         * - both of the assigned BSP leafs are in the same cluster.
+         *
+         * @param hedge  Half-edge to test.
+         *
+         * @return  @c true= @a hedge is a cluster internal edge.
+         */
+        static bool isInternalEdge(de::HEdge *hedge);
+
+        /**
          * Returns the parent sector of the cluster.
          */
         Sector &sector() const;

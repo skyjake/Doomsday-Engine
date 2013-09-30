@@ -503,10 +503,11 @@ DENG2_PIMPL(WallEdge), public IHPlane
         while((hedge = &SectorClusterCirculator::findBackNeighbor(*hedge, direction)) != wallHEdge)
         {
             // Stop if there is no back cluster.
-            if(!hedge->hasFace())
+            BspLeaf *backLeaf = hedge->hasFace()? &hedge->face().mapElement()->as<BspLeaf>() : 0;
+            if(!backLeaf || !backLeaf->hasCluster())
                 break;
 
-            SectorCluster &cluster = hedge->face().mapElement()->as<BspLeaf>().cluster();
+            SectorCluster &cluster = backLeaf->cluster();
             if(cluster.hasWorldVolume())
             {
                 for(int i = 0; i < cluster.visPlaneCount(); ++i)
@@ -561,6 +562,27 @@ DENG2_PIMPL(WallEdge), public IHPlane
         }
     }
 
+    /**
+     * Determines whether the wall edge should be intercepted with neighboring
+     * planes from other sector clusters.
+     */
+    bool shouldInterceptNeighbors()
+    {
+        if(spec.flags & WallSpec::NoEdgeDivisions)
+            return false;
+
+        if(de::fequal(hi, lo))
+            return false;
+
+        // Cluster-internal edges won't be intercepted. This is because such an
+        // edge only ever produces middle wall sections, which, do not support
+        // divisions in any case (they become vissprites).
+        if(SectorCluster::isInternalEdge(wallHEdge))
+            return false;
+
+        return true;
+    }
+
     void prepareEvents()
     {
         DENG_ASSERT(self.isValid());
@@ -579,7 +601,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
         events->append(&top);
 
         // Add intecepts for neighbor planes?
-        if(!spec.flags.testFlag(WallSpec::NoEdgeDivisions) && !de::fequal(hi, lo))
+        if(shouldInterceptNeighbors())
         {
             configure(Partition(Vector2d(0, hi - lo)));
 

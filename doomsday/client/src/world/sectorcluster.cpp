@@ -793,6 +793,18 @@ Sector::Cluster::Cluster(BspLeafs const &bspLeafs) : d(new Instance(this))
     }
 }
 
+bool Sector::Cluster::isInternalEdge(HEdge *hedge) // static
+{
+    if(!hedge) return false;
+    if(!hedge->hasFace() || !hedge->twin().hasFace()) return false;
+    if(!hedge->face().mapElement() || hedge->face().mapElement()->type() != DMU_BSPLEAF) return false;
+    if(!hedge->twin().face().mapElement() || hedge->twin().face().mapElement()->type() != DMU_BSPLEAF) return false;
+
+    Cluster *frontCluster = hedge->face().mapElement()->as<BspLeaf>().clusterPtr();
+    if(!frontCluster) return false;
+    return frontCluster == hedge->twin().face().mapElement()->as<BspLeaf>().clusterPtr();
+}
+
 Sector &Sector::Cluster::sector() const
 {
     return d->bspLeafs.first()->parent().as<Sector>();
