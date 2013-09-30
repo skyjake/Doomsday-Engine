@@ -1741,28 +1741,28 @@ void P_BrainAddTarget(mobj_t* mo)
     brain.targets[brain.numTargets++] = mo;
 }
 
-void C_DECL A_BrainAwake(mobj_t* mo)
+void C_DECL A_BrainAwake(mobj_t *mo)
 {
     S_StartSound(SFX_BOSSIT, NULL);
 }
 
-void C_DECL A_BrainPain(mobj_t* mo)
+void C_DECL A_BrainPain(mobj_t *mo)
 {
     S_StartSound(SFX_BOSPN, NULL);
 }
 
-void C_DECL A_BrainScream(mobj_t* mo)
+void C_DECL A_BrainScream(mobj_t *mo)
 {
     coord_t pos[3];
 
-    pos[VY] = mo->origin[VY] - 320;
+    pos[VX] = mo->origin[VX] - 196; // -280
+    pos[VY] = mo->origin[VY] - 320; //  280
 
-    for(pos[VX] = mo->origin[VX] - 196; pos[VX] < mo->origin[VX] + 320;
-        pos[VX] += 8)
+    for(; pos[VX] < mo->origin[VX] + 320 /*280*/; pos[VX] += 8)
     {
-        mobj_t* th;
+        mobj_t *th;
 
-        pos[VZ] = 128 + (P_Random() * 2);
+        pos[VZ] = FIX2FLT(128) + (P_Random() * 2);
 
         if((th = P_SpawnMobj(MT_ROCKET, pos, P_Random() << 24, 0)))
         {
@@ -1779,14 +1779,14 @@ void C_DECL A_BrainScream(mobj_t* mo)
     S_StartSound(SFX_BOSDTH, NULL);
 }
 
-void C_DECL A_BrainExplode(mobj_t* mo)
+void C_DECL A_BrainExplode(mobj_t *mo)
 {
     coord_t pos[3];
-    mobj_t* th;
+    mobj_t *th;
 
     pos[VX] = mo->origin[VX] + FIX2FLT((P_Random() - P_Random()) * 2048);
     pos[VY] = mo->origin[VY];
-    pos[VZ] = 128 + (P_Random() * 2);
+    pos[VZ] = FIX2FLT(128) + (P_Random() * 2);
 
     if((th = P_SpawnMobj(MT_ROCKET, pos, P_Random() << 24, 0)))
     {
