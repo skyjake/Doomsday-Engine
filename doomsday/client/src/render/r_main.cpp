@@ -1430,7 +1430,7 @@ void R_ViewerClipLumobj(Lumobj *lum)
 
     if(!(devNoCulling || P_IsInVoid(&ddPlayers[displayPlayer])))
     {
-        if(!C_IsPointVisible(origin.x, origin.y, origin.z))
+        if(!C_IsPointVisible(origin))
         {
             luminousClipped[lumIdx] = 1; // Won't have a halo.
         }

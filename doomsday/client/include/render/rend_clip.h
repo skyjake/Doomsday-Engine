@@ -28,8 +28,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_RENDER_ANGLE_CLIPPER
-#define DENG_RENDER_ANGLE_CLIPPER
+#ifndef DENG_CLIENT_RENDER_ANGLE_CLIPPER
+#define DENG_CLIENT_RENDER_ANGLE_CLIPPER
 
 #include <de/binangle.h>
 
@@ -54,7 +54,7 @@ int C_SafeAddRange(binangle_t startAngle, binangle_t endAngle);
  * @return  Non-zero if the point is visible after checking both the clipnodes
  *          and the occlusion planes.
  */
-int C_IsPointVisible(coord_t x, coord_t y, coord_t height);
+int C_IsPointVisible(de::Vector3d const &point);
 
 /**
  * @return  Non-zero if the angle is visible after checking both the clipnodes
@@ -73,40 +73,18 @@ int C_IsPolyVisible(de::Face const &poly);
 /**
  * Add a segment relative to the current viewpoint.
  */
-void C_AddRangeFromViewRelPoints(coord_t const from[2], coord_t const to[2]);
-
-inline void C_AddRangeFromViewRelPoints(de::Vector2d const &from, de::Vector2d const &to)
-{
-    coord_t fromV1[2] = { from.x, from.y };
-    coord_t toV1[2]   = {   to.x,   to.y };
-    C_AddRangeFromViewRelPoints(fromV1, toV1);
-}
+void C_AddRangeFromViewRelPoints(de::Vector2d const &from, de::Vector2d const &to);
 
 /**
  * Add an occlusion segment relative to the current viewpoint.
  */
-void C_AddViewRelOcclusion(coord_t const from[2], coord_t const to[2],
+void C_AddViewRelOcclusion(de::Vector2d const &from, de::Vector2d const &to,
                            coord_t height, bool tophalf);
-
-inline void C_AddViewRelOcclusion(de::Vector2d const &from, de::Vector2d const &to,
-                                  coord_t height, bool tophalf)
-{
-    coord_t fromV1[2] = { from.x, from.y };
-    coord_t toV1[2]   = {   to.x,   to.y };
-    C_AddViewRelOcclusion(fromV1, toV1, height, tophalf);
-}
 
 /**
  * Check a segment relative to the current viewpoint.
  */
-int C_CheckRangeFromViewRelPoints(coord_t const from[2], coord_t const to[2]);
-
-inline int C_CheckRangeFromViewRelPoints(de::Vector2d const &from, de::Vector2d const &to)
-{
-    coord_t fromV1[2] = { from.x, from.y };
-    coord_t toV1[2]   = {   to.x,   to.y };
-    return C_CheckRangeFromViewRelPoints(fromV1, toV1);
-}
+int C_CheckRangeFromViewRelPoints(de::Vector2d const &from, de::Vector2d const &to);
 
 #ifdef DENG_DEBUG
 /**
@@ -115,4 +93,4 @@ inline int C_CheckRangeFromViewRelPoints(de::Vector2d const &from, de::Vector2d 
 void C_Ranger();
 #endif
 
-#endif // DENG_RENDER_ANGLE_CLIPPER
+#endif // DENG_CLIENT_RENDER_ANGLE_CLIPPER

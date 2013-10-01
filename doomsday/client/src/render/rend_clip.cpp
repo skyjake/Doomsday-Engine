@@ -1,5 +1,4 @@
 /** @file rend_clip.cpp Angle Clipper (clipnodes and oranges). 
- * @ingroup render
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -21,8 +20,6 @@
 
 #include <cstdlib>
 
-#include <de/vector1.h>
-
 #include <de/Log>
 
 #include "de_base.h"
@@ -35,14 +32,14 @@ using namespace de;
 
 struct RoverNode
 {
-    RoverNode* prev, *next;
+    RoverNode *prev, *next;
 };
 
 struct Rover
 {
-    RoverNode* first;
-    RoverNode* last;
-    RoverNode* rover;
+    RoverNode *first;
+    RoverNode *last;
+    RoverNode *rover;
 };
 
 struct ClipNode
@@ -50,7 +47,7 @@ struct ClipNode
     RoverNode rover;
 
     /// Previous and next nodes.
-    ClipNode* prev, *next;
+    ClipNode *prev, *next;
 
     /// The start and end angles (start < end).
     binangle_t start, end;
@@ -69,7 +66,7 @@ struct OccNode
     RoverNode rover;
 
     /// Previous and next nodes.
-    OccNode* prev, *next;
+    OccNode *prev, *next;
 
     /// @ref occlussionNodeFlags
     byte flags;
@@ -78,14 +75,11 @@ struct OccNode
     binangle_t start, end;
 
     /// The normal of the occlusion plane.
-    float normal[3];
+    Vector3f normal;
 };
 
 static void C_CutOcclusionRange(binangle_t startAngle, binangle_t endAngle);
 static int C_SafeCheckRange(binangle_t startAngle, binangle_t endAngle);
-#if 0
-static ClipNode* C_AngleClippedBy(binangle_t bang);
-#endif
 
 #if _DEBUG
 static void C_OrangeRanger(int mark);
@@ -98,42 +92,25 @@ int devNoCulling = 0; ///< cvar. Set to 1 to fully disable angle based culling.
 static Rover clipNodes;
 
 /// Head of the clipped regions list.
-static ClipNode* clipHead; // The head node.
+static ClipNode *clipHead; // The head node.
 
 /// The list of occlusion nodes.
 static Rover occNodes;
 
 /// Head of the occlusion range list.
-static OccNode* occHead; // The head occlusion node.
+static OccNode *occHead; // The head occlusion node.
 
-static int anglistSize = 0;
+static int anglistSize;
 static binangle_t *anglist;
 
 /**
  * @note The point should be view-relative!
  */
-static binangle_t C_PointToAngle(coord_t* point)
+static inline binangle_t pointToAngle(Vector2d const &point)
 {
-    return bamsAtan2((int) (point[VY] * 100), (int) (point[VX] * 100));
+    // Shift for more accuracy;
+    return bamsAtan2(int(point.y * 100), int(point.x * 100));
 }
-
-#if 0 // Unused.
-static uint C_CountNodes(void)
-{
-    uint count = 0;
-    for(ClipNode* ci = clipHead; ci; count++, ci = ci->next)
-    {}
-    return count;
-}
-
-static int C_CountUsedOranges(void)
-{
-    uint count = 0;
-    for(OccNode* orange = occHead; orange; count++, orange = orange->next)
-    {}
-    return count;
-}
-#endif
 
 static void C_RoverInit(Rover *rover)
 {
@@ -415,7 +392,7 @@ static void C_AddRange(binangle_t startAngle, binangle_t endAngle)
 }
 
 static OccNode *C_NewOcclusionRange(binangle_t stAng, binangle_t endAng,
-    float const normal[3], bool topHalf)
+    Vector3f const &normal, bool topHalf)
 {
     OccNode *node = reinterpret_cast<OccNode *>(C_RoverGet(&occNodes));
     if(!node)
@@ -425,10 +402,10 @@ static OccNode *C_NewOcclusionRange(binangle_t stAng, binangle_t endAng,
         C_RoverAdd(&occNodes, reinterpret_cast<RoverNode *>(node));
     }
 
-    node->flags = (topHalf ? OCNF_TOPHALF : 0);
-    node->start = stAng;
-    node->end = endAng;
-    V3f_Copy(node->normal, normal);
+    node->flags  = (topHalf ? OCNF_TOPHALF : 0);
+    node->start  = stAng;
+    node->end    = endAng;
+    node->normal = normal;
 
     return node;
 }
@@ -450,8 +427,8 @@ static void C_RemoveOcclusionRange(OccNode *orange)
 /**
  * The given range must be safe.
  */
-static void C_AddOcclusionRange(binangle_t start, binangle_t end, float const normal[3],
-    bool topHalf)
+static void C_AddOcclusionRange(binangle_t start, binangle_t end,
+    Vector3f const &normal, bool topHalf)
 {
     // Is the range valid?
     if(start > end) return;
@@ -521,9 +498,8 @@ static int C_TryMergeOccludes(OccNode *orange, OccNode *other)
     if(!orange->normal[VZ]) return 0;
 
     // Where do they cross?
-    float cross[3];
-    V3f_CrossProduct(cross, orange->normal, other->normal);
-    if(!cross[VX] && !cross[VY] && !cross[VZ])
+    Vector3f cross = orange->normal.cross(other->normal);
+    if(!cross.x && !cross.y && !cross.z)
     {
         // These two planes are exactly the same! Remove one.
         C_RemoveOcclusionRange(orange);
@@ -531,7 +507,7 @@ static int C_TryMergeOccludes(OccNode *orange, OccNode *other)
     }
 
     // The cross angle must be outside the range.
-    binangle_t crossAngle = bamsAtan2((int) cross[VY], (int) cross[VX]);
+    binangle_t crossAngle = bamsAtan2(int(cross.y), int(cross.x));
     if(crossAngle >= orange->start && crossAngle <= orange->end)
         return 0; // Inside the range, can't do a thing.
 
@@ -544,14 +520,14 @@ static int C_TryMergeOccludes(OccNode *orange, OccNode *other)
     // Now we must determine which plane occludes which.
     // Pick a point in the middle of the range.
     crossAngle = (orange->start + orange->end) >> (1 + BAMS_BITS - 13);
-    cross[VX] = 100 * FIX2FLT(fineCosine[crossAngle]);
-    cross[VY] = 100 * FIX2FLT(finesine[crossAngle]);
+    cross.x = 100 * FIX2FLT(fineCosine[crossAngle]);
+    cross.y = 100 * FIX2FLT(finesine[crossAngle]);
     // z = -(A*x+B*y)/C
-    cross[VZ] = -(orange->normal[VX] * cross[VX] +
-                  orange->normal[VY] * cross[VY]) / orange->normal[VZ];
+    cross.z = -(orange->normal.x * cross.x +
+                orange->normal.y * cross.y) / orange->normal.z;
 
     // Is orange occluded by the other one?
-    if(V3f_DotProduct(cross, other->normal) < 0)
+    if(cross.dot(other->normal) < 0)
     {
         // No; then the other one is occluded by us. Remove it instead.
         C_RemoveOcclusionRange(other);
@@ -785,21 +761,18 @@ int C_SafeAddRange(binangle_t startAngle, binangle_t endAngle)
     return true;
 }
 
-void C_AddRangeFromViewRelPoints(coord_t const from[], coord_t const to[])
+void C_AddRangeFromViewRelPoints(Vector2d const &from, Vector2d const &to)
 {
-    vec2d_t eye;     V2d_Set(eye, vOrigin[VX], vOrigin[VZ]);
-    vec2d_t fromDir; V2d_Subtract(fromDir, from, eye);
-    vec2d_t toDir;   V2d_Subtract(toDir, to, eye);
-
-    C_SafeAddRange(bamsAtan2(int(   toDir[VY] * 100 ), int(   toDir[VX] * 100 )),
-                   bamsAtan2(int( fromDir[VY] * 100 ), int( fromDir[VX] * 100 )));
+    Vector2d const eyeOrigin(vOrigin[VX], vOrigin[VZ]);
+    C_SafeAddRange(pointToAngle(to   - eyeOrigin),
+                   pointToAngle(from - eyeOrigin));
 }
 
 /**
  * If necessary, cut the given range in two.
  */
 static void C_SafeAddOcclusionRange(binangle_t startAngle, binangle_t endAngle,
-    float *normal, bool tophalf)
+    Vector3f const &normal, bool tophalf)
 {
     // Is this range already clipped?
     if(!C_SafeCheckRange(startAngle, endAngle)) return;
@@ -824,34 +797,34 @@ static void C_SafeAddOcclusionRange(binangle_t startAngle, binangle_t endAngle,
     }
 }
 
-void C_AddViewRelOcclusion(coord_t const from[], coord_t const to[], coord_t height, bool topHalf)
+void C_AddViewRelOcclusion(Vector2d const &from, Vector2d const &to, coord_t height, bool topHalf)
 {
     /// @todo Optimize:: Check if the given line is already occluded?
 
     // Calculate the occlusion plane normal.
     // We'll use the game's coordinate system (left-handed, but Y and Z are swapped).
-    vec3d_t viewToV1, viewToV2;
-    V3d_Set(viewToV1, from[VX] - vOrigin[VX], from[VY] - vOrigin[VZ], height - vOrigin[VY]);
-    V3d_Set(viewToV2,   to[VX] - vOrigin[VX],   to[VY] - vOrigin[VZ], height - vOrigin[VY]);
+    Vector3d const eyeOrigin(vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
+    Vector3d eyeToV1 = Vector3d(from, height) - eyeOrigin;
+    Vector3d eyeToV2 = Vector3d(to,   height) - eyeOrigin;
+
+    binangle_t startAngle = pointToAngle(eyeToV2);
+    binangle_t endAngle   = pointToAngle(eyeToV1);
 
     // Do not attempt to occlude with a zero-length range.
-    binangle_t startAngle = C_PointToAngle(viewToV2);
-    binangle_t endAngle   = C_PointToAngle(viewToV1);
-    if(startAngle == endAngle) return;
+    if(startAngle == endAngle)
+        return;
 
     // The normal points to the half we want to occlude.
-    vec3f_t normal;
-    V3f_CrossProductd(normal, topHalf ? viewToV2 : viewToV1,
-                              topHalf ? viewToV1 : viewToV2);
+    Vector3f normal = (topHalf? eyeToV2 : eyeToV1).cross(topHalf? eyeToV1 : eyeToV2);
 
 #ifdef DENG_DEBUG
-    vec3f_t testPos; V3f_Set(testPos, 0, 0, (topHalf ? 1000 : -1000));
-    if(bool Failed_C_AddViewRelOcclusion_SideTest = V3f_DotProduct(testPos, normal) < 0)
+    Vector3f testPos(0, 0, (topHalf ? 1000 : -1000));
+    if(bool Failed_C_AddViewRelOcclusion_SideTest = testPos.dot(normal) < 0)
     {
         // Uh-oh.
-        LOG_WARNING("C_AddViewRelOcclusion: Wrong side v1[x:%f, y:%f] v2[x:%f, y:%f] view[x:%f, y:%f]!")
-                << from[VX] << from[VY] << to[VX] << to[VY]
-                << vOrigin[VX] << vOrigin[VZ];
+        LOG_WARNING("C_AddViewRelOcclusion: Wrong side v1:%s v2:%s eyeOrigin:%s!")
+                << from.asText() << to.asText()
+                << Vector2d(eyeOrigin).asText();
         DENG_ASSERT(!Failed_C_AddViewRelOcclusion_SideTest);
     }
 #endif
@@ -863,9 +836,9 @@ void C_AddViewRelOcclusion(coord_t const from[], coord_t const to[], coord_t hei
 /**
  * @return  Non-zero if the view relative point is occluded by an occlusion range.
  */
-static int C_IsPointOccluded(coord_t *viewRelPoint)
+static int C_IsPointOccluded(Vector3d const &viewRelPoint)
 {
-    binangle_t angle = C_PointToAngle(viewRelPoint);
+    binangle_t angle = pointToAngle(viewRelPoint);
 
     for(OccNode *orange = occHead; orange; orange = orange->next)
     {
@@ -876,7 +849,7 @@ static int C_IsPointOccluded(coord_t *viewRelPoint)
 
             // On which side of the occlusion plane is it?
             // The positive side is the occluded one.
-            if(V3d_DotProductf(viewRelPoint, orange->normal) > 0)
+            if(Vector3f(viewRelPoint).dot(orange->normal) > 0)
                 return true;
         }
     }
@@ -885,23 +858,19 @@ static int C_IsPointOccluded(coord_t *viewRelPoint)
     return false;
 }
 
-int C_IsPointVisible(coord_t x, coord_t y, coord_t height)
+int C_IsPointVisible(Vector3d const &point)
 {
     if(devNoCulling) return true;
 
-    coord_t point[3];
-    point[0] = x - vOrigin[VX];
-    point[1] = y - vOrigin[VZ];
-    point[2] = height - vOrigin[VY];
+    Vector3d const eyeOrigin(vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
+    Vector3d const viewRelPoint = point - eyeOrigin;
 
-    binangle_t angle = C_PointToAngle(point);
-
+    binangle_t const angle = pointToAngle(viewRelPoint);
     if(!C_IsAngleVisible(angle))
         return false;
 
-    // The point was not clipped by the clipnodes. Perhaps it's occluded
-    // by an orange.
-    return !C_IsPointOccluded(point);
+    // Not clipped by the clipnodes. Perhaps it's occluded by an orange.
+    return !C_IsPointOccluded(viewRelPoint);
 }
 
 /**
@@ -932,16 +901,13 @@ static int C_SafeCheckRange(binangle_t startAngle, binangle_t endAngle)
     return C_IsRangeVisible(startAngle, endAngle);
 }
 
-int C_CheckRangeFromViewRelPoints(coord_t const from[], coord_t const to[])
+int C_CheckRangeFromViewRelPoints(Vector2d const &from, Vector2d const &to)
 {
     if(devNoCulling) return true;
 
-    vec2d_t eye;     V2d_Set(eye, vOrigin[VX], vOrigin[VZ]);
-    vec2d_t fromDir; V2d_Subtract(fromDir, from, eye);
-    vec2d_t toDir;   V2d_Subtract(toDir, to, eye);
-
-    return C_SafeCheckRange(bamsAtan2(int(   toDir[VY] * 1000 ), int(   toDir[VX] * 1000 )) - BANG_45/90,
-                            bamsAtan2(int( fromDir[VY] * 1000 ), int( fromDir[VX] * 1000 )) + BANG_45/90);
+    Vector2d const eyeOrigin(vOrigin[VX], vOrigin[VZ]);
+    return C_SafeCheckRange(pointToAngle(to   - eyeOrigin) - BANG_45/90,
+                            pointToAngle(from - eyeOrigin) + BANG_45/90);
 }
 
 int C_IsAngleVisible(binangle_t bang)
@@ -975,13 +941,12 @@ int C_IsPolyVisible(Face const &poly)
     }
 
     // Find angles to all corners.
+    Vector2d const eyeOrigin(vOrigin[VX], vOrigin[VZ]);
     int n = 0;
     HEdge const *hedge = poly.hedge();
     do
     {
-        // Shift for more accuracy.
-        anglist[n++] = bamsAtan2(int( (hedge->origin().y - vOrigin[VZ]) * 100 ),
-                                 int( (hedge->origin().x - vOrigin[VX]) * 100 ));
+        anglist[n++] = pointToAngle(hedge->origin() - eyeOrigin);
 
     } while((hedge = &hedge->next()) != poly.hedge());
 
