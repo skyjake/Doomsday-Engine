@@ -298,8 +298,8 @@ int P_ToIndex(void const *ptr)
     case DMU_VERTEX:
     case DMU_LINE:
     case DMU_SIDE:
-    case DMU_BSPLEAF:
     case DMU_SECTOR:
+    case DMU_BSPLEAF:
     case DMU_BSPNODE:
         return elem->indexInMap();
 
@@ -405,15 +405,6 @@ int P_Iteratep(void *elPtr, uint prop, void *context, int (*callback) (void *p, 
                 if(result) return result;
             }
             return false; // Continue iteration
-
-        case DMU_BSPLEAF:
-            foreach(SectorCluster *cluster, sector.clusters())
-            foreach(BspLeaf *bspLeaf, cluster->bspLeafs())
-            {
-                int result = callback(bspLeaf, context);
-                if(result) return result;
-            }
-            return false; // Continue iteration.
 
         default:
             throw Error("P_Iteratep", QString("Property %1 unknown/not vector").arg(DMU_Str(prop)));
@@ -598,20 +589,6 @@ static void setProperty(MapElement *elem, DmuArgs &args)
      */
 
     // Dereference where necessary. Note the order, these cascade.
-    if(args.type == DMU_BSPLEAF)
-    {
-        if(args.modifiers & DMU_FLOOR_OF_SECTOR)
-        {
-            elem = elem->as<BspLeaf>().sectorPtr();
-            args.type = elem->type();
-        }
-        else if(args.modifiers & DMU_CEILING_OF_SECTOR)
-        {
-            elem = elem->as<BspLeaf>().sectorPtr();
-            args.type = elem->type();
-        }
-    }
-
     if(args.type == DMU_SECTOR)
     {
         if(args.modifiers & DMU_FLOOR_OF_SECTOR)
@@ -704,33 +681,6 @@ static void getProperty(MapElement const *elem, DmuArgs &args)
     DENG_ASSERT(elem != 0);
 
     // Dereference where necessary. Note the order, these cascade.
-    if(args.type == DMU_BSPLEAF)
-    {
-        if(args.modifiers & DMU_FLOOR_OF_SECTOR)
-        {
-            elem = elem->as<BspLeaf>().sectorPtr();
-            args.type = elem->type();
-        }
-        else if(args.modifiers & DMU_CEILING_OF_SECTOR)
-        {
-            elem = elem->as<BspLeaf>().sectorPtr();
-            args.type = elem->type();
-        }
-        else
-        {
-            switch(args.prop)
-            {
-            case DMU_LIGHT_LEVEL:
-            case DMT_MOBJS:
-                elem = elem->as<BspLeaf>().sectorPtr();
-                args.type = elem->type();
-                break;
-
-            default: break;
-            }
-        }
-    }
-
     if(args.type == DMU_SECTOR)
     {
         if(args.modifiers & DMU_FLOOR_OF_SECTOR)

@@ -385,9 +385,6 @@ public:
 
 #endif // __CLIENT__
 
-protected:
-    int property(DmuArgs &args) const;
-
 private:
     DENG2_PRIVATE(d)
 };
