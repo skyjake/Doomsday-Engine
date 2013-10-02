@@ -1163,11 +1163,11 @@ void C_DECL A_Fire(mobj_t* actor)
 
     an = dest->angle >> ANGLETOFINESHIFT;
 
-    P_MobjUnsetOrigin(actor);
+    P_MobjUnlink(actor);
     memcpy(actor->origin, dest->origin, sizeof(actor->origin));
     actor->origin[VX] += 24 * FIX2FLT(finecosine[an]);
     actor->origin[VY] += 24 * FIX2FLT(finesine[an]);
-    P_MobjSetOrigin(actor);
+    P_MobjLink(actor);
 }
 
 /**

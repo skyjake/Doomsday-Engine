@@ -1046,11 +1046,11 @@ void C_DECL A_MinotaurLook(mobj_t* actor)
 
     if(actor->target)
     {
-        P_SetMobjStateNF(actor, S_MNTR_WALK1);
+        P_MobjChangeStateNoAction(actor, S_MNTR_WALK1);
     }
     else
     {
-        P_SetMobjStateNF(actor, S_MNTR_ROAM1);
+        P_MobjChangeStateNoAction(actor, S_MNTR_ROAM1);
     }
 }
 
@@ -1149,7 +1149,7 @@ void C_DECL A_MinotaurDecide(mobj_t* actor)
         {
             // Charge attack.
             // Don't call the state function right away.
-            P_SetMobjStateNF(actor, S_MNTR_ATK4_1);
+            P_MobjChangeStateNoAction(actor, S_MNTR_ATK4_1);
             actor->flags |= MF_SKULLFLY;
             A_FaceTarget(actor);
 
@@ -2072,7 +2072,7 @@ void C_DECL A_SerpentHeadCheck(mobj_t *actor)
 {
     if(actor->origin[VZ] <= actor->floorZ)
     {
-        const terraintype_t* tt = P_MobjGetFloorTerrainType(actor);
+        const terraintype_t* tt = P_MobjFloorTerrain(actor);
 
         if(tt->flags & TTF_NONSOLID)
         {
@@ -3368,7 +3368,7 @@ void C_DECL A_SorcBallOrbit(mobj_t* actor)
         {
             // Put sorcerer into special throw spell anim.
             if(parent->health > 0)
-                P_SetMobjStateNF(parent, S_SORC_ATTACK1);
+                P_MobjChangeStateNoAction(parent, S_SORC_ATTACK1);
 
             if(actor->type == MT_SORCBALL1 && P_Random() < 200)
             {
@@ -3394,7 +3394,7 @@ void C_DECL A_SorcBallOrbit(mobj_t* actor)
                 parent->args[3] = SORC_STOPPED;
                 // Back to orbit balls.
                 if(parent->health > 0)
-                    P_SetMobjStateNF(parent, S_SORC_ATTACK4);
+                    P_MobjChangeStateNoAction(parent, S_SORC_ATTACK4);
             }
             else
             {
@@ -3417,7 +3417,7 @@ void C_DECL A_SorcBallOrbit(mobj_t* actor)
     }
     actor->special1 = angle; // Set previous angle.
 
-    P_MobjUnsetOrigin(actor);
+    P_MobjUnlink(actor);
 
     actor->origin[VX] = parent->origin[VX];
     actor->origin[VY] = parent->origin[VY];
@@ -3429,7 +3429,7 @@ void C_DECL A_SorcBallOrbit(mobj_t* actor)
     actor->origin[VZ] += parent->info->height;
     actor->origin[VZ] -= parent->floorClip;
 
-    P_MobjSetOrigin(actor);
+    P_MobjLink(actor);
 }
 
 /**
@@ -3540,7 +3540,7 @@ void C_DECL A_CastSorcererSpell(mobj_t* mo)
 
     // Put sorcerer into throw spell animation.
     if(parent->health > 0)
-        P_SetMobjStateNF(parent, S_SORC_ATTACK4);
+        P_MobjChangeStateNoAction(parent, S_SORC_ATTACK4);
 
     switch(spell)
     {
@@ -3719,7 +3719,7 @@ void C_DECL A_SorcFX2Split(mobj_t* mo)
         pmo->target = mo->target;
         pmo->args[0] = 0; // CW.
         pmo->special1 = mo->angle; // Set angle.
-        P_SetMobjStateNF(pmo, S_SORCFX2_ORBIT1);
+        P_MobjChangeStateNoAction(pmo, S_SORCFX2_ORBIT1);
     }
 
     if((pmo = P_SpawnMobj(MT_SORCFX2, mo->origin, mo->angle, 0)))
@@ -3727,10 +3727,10 @@ void C_DECL A_SorcFX2Split(mobj_t* mo)
         pmo->target = mo->target;
         pmo->args[0] = 1; // CCW.
         pmo->special1 = mo->angle; // Set angle.
-        P_SetMobjStateNF(pmo, S_SORCFX2_ORBIT1);
+        P_MobjChangeStateNoAction(pmo, S_SORCFX2_ORBIT1);
     }
 
-    P_SetMobjStateNF(mo, S_NULL);
+    P_MobjChangeStateNoAction(mo, S_NULL);
 }
 
 /**
@@ -3752,14 +3752,14 @@ void C_DECL A_SorcFX2Orbit(mobj_t* mo)
     if(parent->health <= 0 || // Sorcerer is dead.
        !parent->args[0]) // Time expired.
     {
-        P_SetMobjStateNF(mo, P_GetState(mo->type, SN_DEATH));
+        P_MobjChangeStateNoAction(mo, P_GetState(mo->type, SN_DEATH));
         parent->args[0] = 0;
         parent->flags2 &= ~(MF2_REFLECTIVE | MF2_INVULNERABLE);
     }
 
     if(mo->args[0] && (parent->args[0]-- <= 0)) // Time expired.
     {
-        P_SetMobjStateNF(mo, P_GetState(mo->type, SN_DEATH));
+        P_MobjChangeStateNoAction(mo, P_GetState(mo->type, SN_DEATH));
         parent->args[0] = 0;
         parent->flags2 &= ~MF2_REFLECTIVE;
     }
@@ -3786,13 +3786,13 @@ void C_DECL A_SorcFX2Orbit(mobj_t* mo)
     // Spawn trailer.
     P_SpawnMobj(MT_SORCFX2_T1, pos, angle, 0);
 
-    P_MobjUnsetOrigin(mo);
+    P_MobjUnlink(mo);
 
     mo->origin[VX] = pos[VX];
     mo->origin[VY] = pos[VY];
     mo->origin[VZ] = pos[VZ];
 
-    P_MobjSetOrigin(mo);
+    P_MobjLink(mo);
 }
 
 /**
@@ -3831,7 +3831,7 @@ void C_DECL A_SorcFX4Check(mobj_t* mo)
 {
     if(mo->special2-- <= 0)
     {
-        P_SetMobjStateNF(mo, P_GetState(mo->type, SN_DEATH));
+        P_MobjChangeStateNoAction(mo, P_GetState(mo->type, SN_DEATH));
     }
 }
 
@@ -4087,7 +4087,7 @@ void C_DECL A_FreezeDeath(mobj_t* mo)
 
 void C_DECL A_IceSetTics(mobj_t* mo)
 {
-    const terraintype_t* tt = P_MobjGetFloorTerrainType(mo);
+    const terraintype_t* tt = P_MobjFloorTerrain(mo);
 
     mo->tics = 70 + (P_Random() & 63);
 

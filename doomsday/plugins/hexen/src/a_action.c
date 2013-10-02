@@ -1,33 +1,23 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file a_action.c
  *
- *\author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1999 Activision
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 1999 Activision
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
-
-/**
- * a_action.c:
- */
-
-// HEADER FILES ------------------------------------------------------------
 
 #include <string.h>
 #include <math.h>
@@ -35,22 +25,9 @@
 #include "jhexen.h"
 
 #include "p_map.h"
-
-// MACROS ------------------------------------------------------------------
+#include "mobj.h"
 
 #define TELEPORT_LIFE           (1)
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 static coord_t* orbitTableX = NULL;
 static coord_t* orbitTableY = NULL;
@@ -58,10 +35,6 @@ static coord_t* orbitTableY = NULL;
 coord_t* FloatBobOffset = NULL;
 
 int localQuakeHappening[MAXPLAYERS];
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
 
 void X_CreateLUTs(void)
 {
@@ -299,7 +272,7 @@ void C_DECL A_BridgeOrbit(mobj_t* actor)
     }
     actor->args[0] += 3;
 
-    P_MobjUnsetOrigin(actor);
+    P_MobjUnlink(actor);
 
     actor->origin[VX] = actor->target->origin[VX];
     actor->origin[VY] = actor->target->origin[VY];
@@ -307,7 +280,7 @@ void C_DECL A_BridgeOrbit(mobj_t* actor)
     actor->origin[VX] += orbitTableX[actor->args[0]];
     actor->origin[VY] += orbitTableY[actor->args[0]];
 
-    P_MobjSetOrigin(actor);
+    P_MobjLink(actor);
 }
 
 void C_DECL A_BridgeInit(mobj_t* actor)
@@ -513,7 +486,7 @@ void C_DECL A_FogMove(mobj_t* actor)
 
     if(actor->args[3]-- <= 0)
     {
-        P_SetMobjStateNF(actor, P_GetState(actor->type, SN_DEATH));
+        P_MobjChangeStateNoAction(actor, P_GetState(actor->type, SN_DEATH));
         return;
     }
 
@@ -806,9 +779,9 @@ void C_DECL A_ThrustRaise(mobj_t* actor)
     {   // Reached it's target height.
         actor->args[0] = 1;
         if(actor->args[1])
-            P_SetMobjStateNF(actor, S_BTHRUSTINIT2_1);
+            P_MobjChangeStateNoAction(actor, S_BTHRUSTINIT2_1);
         else
-            P_SetMobjStateNF(actor, S_THRUSTINIT2_1);
+            P_MobjChangeStateNoAction(actor, S_THRUSTINIT2_1);
     }
 
     // Lose the dirt clump.
@@ -830,9 +803,9 @@ void C_DECL A_ThrustLower(mobj_t *actor)
     {
         actor->args[0] = 0;
         if(actor->args[1])
-            P_SetMobjStateNF(actor, S_BTHRUSTINIT1_1);
+            P_MobjChangeStateNoAction(actor, S_BTHRUSTINIT1_1);
         else
-            P_SetMobjStateNF(actor, S_THRUSTINIT1_1);
+            P_MobjChangeStateNoAction(actor, S_THRUSTINIT1_1);
     }
 }
 

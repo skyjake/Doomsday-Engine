@@ -1535,18 +1535,18 @@ DENG_EXTERN_C fixed_t P_GetGMOFixed(int entityId, int elementIndex, int property
 DENG_EXTERN_C angle_t P_GetGMOAngle(int entityId, int elementIndex, int propertyId);
 DENG_EXTERN_C float P_GetGMOFloat(int entityId, int elementIndex, int propertyId);
 
-#undef P_MobjLink
-DENG_EXTERN_C void P_MobjLink(mobj_t *mo, byte flags)
+#undef Mobj_Link
+DENG_EXTERN_C void Mobj_Link(mobj_t *mobj, int flags)
 {
-    if(!mo || !App_World().hasMap()) return;
-    App_World().map().link(*mo, flags);
+    if(!mobj || !App_World().hasMap()) return; // Huh?
+    App_World().map().link(*mobj, flags);
 }
 
-#undef P_MobjUnlink
-DENG_EXTERN_C int P_MobjUnlink(mobj_t *mo)
+#undef Mobj_Unlink
+DENG_EXTERN_C void Mobj_Unlink(mobj_t *mobj)
 {
-    if(!mo || !Mobj_IsLinked(*mo)) return 0;
-    return Mobj_BspLeafAtOrigin(*mo).map().unlink(*mo);
+    if(!mobj || !Mobj_IsLinked(*mobj)) return;
+    Mobj_BspLeafAtOrigin(*mobj).map().unlink(*mobj);
 }
 
 #undef P_MobjLinesIterator
@@ -1696,9 +1696,14 @@ DENG_EXTERN_C void P_SetTraceOpening(Line *line)
     line->map().setTraceOpening(*line);
 }
 
+#undef P_MobjCreateXYZ
+DENG_EXTERN_C mobj_t *P_MobjCreateXYZ(thinkfunc_t function, coord_t x, coord_t y, coord_t z,
+    angle_t angle, coord_t radius, coord_t height, int ddflags)
+{
+    return P_MobjCreate(function, Vector3d(x, y, z), angle, radius, height, ddflags);
+}
+
 // p_mobj.c
-DENG_EXTERN_C mobj_t *P_MobjCreateXYZ(thinkfunc_t function, coord_t x, coord_t y, coord_t z, angle_t angle, coord_t radius, coord_t height, int ddflags);
-DENG_EXTERN_C void P_MobjDestroy(mobj_t *mobj);
 DENG_EXTERN_C void P_MobjDestroy(mobj_t *mobj);
 DENG_EXTERN_C void P_MobjSetState(mobj_t *mobj, int statenum);
 DENG_EXTERN_C angle_t Mobj_AngleSmoothed(mobj_t *mobj);
@@ -1850,8 +1855,8 @@ DENG_DECLARE_API(Map) =
     P_MobjDestroy,
     P_MobjForID,
     P_MobjSetState,
-    P_MobjLink,
-    P_MobjUnlink,
+    Mobj_Link,
+    Mobj_Unlink,
     P_SpawnDamageParticleGen,
     P_MobjLinesIterator,
     P_MobjSectorsIterator,

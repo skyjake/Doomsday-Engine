@@ -281,11 +281,7 @@ mobj_t* P_SpawnTeleFog(coord_t x, coord_t y, angle_t angle);
 
 mobj_t* P_SpawnMotherMissile(mobjtype_t type, coord_t x, coord_t y, coord_t z, mobj_t* source, mobj_t* dest);
 
-boolean P_MobjChangeState(mobj_t* mo, statenum_t state);
-
 void P_MobjThinker(void *moThinkerPtr);
-
-const terraintype_t* P_MobjGetFloorTerrainType(mobj_t* mo);
 
 void P_RipperBlood(mobj_t* mo);
 

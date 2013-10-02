@@ -1,33 +1,24 @@
-/**\file p_xgsec.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file p_xgsec.c Extended generalized sector types.
  *
- *\author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
-/**
- * Extended Generalized Sector Types.
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-// HEADER FILES ------------------------------------------------------------
 
 #include <math.h>
 #include <ctype.h>
@@ -40,8 +31,6 @@
 #  include "jdoom64.h"
 #elif __JHERETIC__
 #  include "jheretic.h"
-#elif __JSTRIFE__
-#  include "jstrife.h"
 #endif
 
 #include "dmu_lib.h"
@@ -50,12 +39,12 @@
 #include "p_xgsec.h"
 #include "g_common.h"
 #include "p_map.h"
+#include "mobj.h"
+#include "p_actor.h"
 #include "p_mapspec.h"
 #include "p_sound.h"
 #include "p_terraintype.h"
 #include "p_tick.h"
-
-// MACROS ------------------------------------------------------------------
 
 #define MAX_VALS        128
 
@@ -113,25 +102,9 @@
         : x == 1? DMU_FLOOR_COLOR_GREEN \
         : DMU_FLOOR_COLOR_BLUE)
 
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
 void XS_DoChain(Sector *sec, int ch, int activating, void *actThing);
 
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
 static sectortype_t sectypebuffer;
-
-// CODE --------------------------------------------------------------------
 
 sectortype_t *XS_GetType(int id)
 {
@@ -2292,7 +2265,7 @@ int C_DECL XSTrav_Teleport(Sector* sector, boolean ceiling, void* context,
 
             if(FEQUAL(thing->origin[VZ], P_GetDoublep(Mobj_Sector(thing), DMU_FLOOR_HEIGHT)))
             {
-                terraintype_t const *tt = P_MobjGetFloorTerrainType(thing);
+                terraintype_t const *tt = P_MobjFloorTerrain(thing);
                 if(tt->flags & TTF_FLOORCLIP)
                 {
                     thing->floorClip = 10;

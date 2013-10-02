@@ -1,37 +1,25 @@
-/**\file p_xgline.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file p_xgline.c Extended generalized line types.
  *
- *\author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
-/**
- * Extended Generalized Line Types.
- *
- * Implements all XG line interactions on a map
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-
-// HEADER FILES ------------------------------------------------------------
 
 #include <time.h>
 #include <math.h>
@@ -39,21 +27,14 @@
 #include <stdio.h>
 #include <string.h>
 
-#if __JDOOM__
-#  include "jdoom.h"
-#elif __JDOOM64__
-# include "jdoom64.h"
-#elif __JHERETIC__
-#  include "jheretic.h"
-#elif __JSTRIFE__
-#  include "jstrife.h"
-#endif
+#include "common.h"
 
 #include "dmu_lib.h"
 #include "p_mapsetup.h"
 #include "d_net.h"
 #include "p_xgline.h"
 #include "p_xgsec.h"
+#include "p_actor.h"
 #include "p_player.h"
 #include "p_map.h"
 #include "p_mapspec.h"
@@ -61,8 +42,6 @@
 #include "p_tick.h"
 #include "p_sound.h"
 #include "p_switch.h"
-
-// MACROS ------------------------------------------------------------------
 
 #define XLTIMER_STOPPED 1    // Timer stopped.
 
@@ -129,42 +108,27 @@
         : (x) == 1? DMU_BOTTOM_COLOR_GREEN \
         : DMU_BOTTOM_COLOR_BLUE)
 
-// TYPES -------------------------------------------------------------------
+void XL_ChangeMaterial(Line *line, int sidenum, int section, Material *mat,
+    blendmode_t blend, byte rgba[4], int flags);
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+int C_DECL XL_DoChainSequence();
+int C_DECL XL_DoDamage();
+int C_DECL XL_DoPower();
+int C_DECL XL_DoKey();
+int C_DECL XL_DoExplode();
+int C_DECL XL_DoCommand();
 
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-void            XL_ChangeMaterial(Line* line, int sidenum, int section,
-                                  Material* mat, blendmode_t blend,
-                                  byte rgba[4], int flags);
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-int C_DECL      XL_DoChainSequence();
-int C_DECL      XL_DoDamage();
-int C_DECL      XL_DoPower();
-int C_DECL      XL_DoKey();
-int C_DECL      XL_DoExplode();
-int C_DECL      XL_DoCommand();
-
-int C_DECL      XLTrav_ChangeLineType();
-int C_DECL      XLTrav_Activate();
-int C_DECL      XLTrav_Music();
-int C_DECL      XLTrav_LineCount();
-int C_DECL      XLTrav_LeaveMap();
-int C_DECL      XLTrav_DisableLine();
-int C_DECL      XLTrav_EnableLine();
-int C_DECL      XLTrav_ChangeWallMaterial();
-int C_DECL      XLTrav_LineTeleport();
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
+int C_DECL XLTrav_ChangeLineType();
+int C_DECL XLTrav_Activate();
+int C_DECL XLTrav_Music();
+int C_DECL XLTrav_LineCount();
+int C_DECL XLTrav_LeaveMap();
+int C_DECL XLTrav_DisableLine();
+int C_DECL XLTrav_EnableLine();
+int C_DECL XLTrav_ChangeWallMaterial();
+int C_DECL XLTrav_LineTeleport();
 
 int xgDev = 0; // Print dev messages.
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static linetype_t typebuffer;
 static char msgbuf[80];
@@ -1728,7 +1692,7 @@ int C_DECL XLTrav_LineTeleport(Line* newLine, boolean dummy,
 
         if(FEQUAL(mobj->origin[VZ], P_GetDoublep(Mobj_Sector(mobj), DMU_FLOOR_HEIGHT)))
         {
-            terraintype_t const *tt = P_MobjGetFloorTerrainType(mobj);
+            terraintype_t const *tt = P_MobjFloorTerrain(mobj);
             if(tt->flags & TTF_FLOORCLIP)
             {
                 mobj->floorClip = 10;

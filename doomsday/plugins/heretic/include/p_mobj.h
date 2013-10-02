@@ -270,7 +270,6 @@ mobj_t *Vanilla_P_SpawnMissileAngle(mobj_t *source, mobjtype_t type, angle_t ang
 
 mobj_t* P_SpawnTeleFog(coord_t x, coord_t y, angle_t angle);
 
-const terraintype_t* P_MobjGetFloorTerrainType(mobj_t* mobj);
 coord_t P_MobjGetFriction(mobj_t* mobj);
 
 #ifdef __cplusplus

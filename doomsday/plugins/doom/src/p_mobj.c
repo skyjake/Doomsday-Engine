@@ -42,43 +42,6 @@
 
 #define MAX_BOB_OFFSET          (8)
 
-terraintype_t const *P_MobjGetFloorTerrainType(mobj_t *mobj)
-{
-    return P_PlaneMaterialTerrainType(Mobj_Sector(mobj), PLN_FLOOR);
-}
-
-/**
- * @return  @c true, if the mobj is still present.
- */
-boolean P_MobjChangeState(mobj_t *mobj, statenum_t state)
-{
-    state_t *st;
-
-    do
-    {
-        if(state == S_NULL)
-        {
-            mobj->state = (state_t *) S_NULL;
-            P_MobjRemove(mobj, false);
-            return false;
-        }
-
-        P_MobjSetState(mobj, state);
-        st = &STATES[state];
-
-        mobj->turnTime = false; // $visangle-facetarget
-
-        if(Mobj_ActionFunctionAllowed(mobj))
-        {
-            // Call action functions when the state is set.
-            if(st->action) st->action(mobj);
-        }
-        state = st->nextState;
-    } while(!mobj->tics);
-
-    return true;
-}
-
 void P_ExplodeMissile(mobj_t *mo)
 {
     mo->mom[MX] = mo->mom[MY] = mo->mom[MZ] = 0;
@@ -802,7 +765,7 @@ mobj_t* P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z, angle_t
 
     // Must link before setting state (ID assigned for the mo).
     P_MobjSetState(mo, P_GetState(mo->type, SN_SPAWN));
-    P_MobjSetOrigin(mo);
+    P_MobjLink(mo);
 
     mo->floorZ   = P_GetDoublep(Mobj_Sector(mo), DMU_FLOOR_HEIGHT);
     mo->dropOffZ = mo->floorZ;
@@ -837,7 +800,7 @@ mobj_t* P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z, angle_t
     if((mo->flags2 & MF2_FLOORCLIP) &&
        FEQUAL(mo->origin[VZ], P_GetDoublep(Mobj_Sector(mo), DMU_FLOOR_HEIGHT)))
     {
-        terraintype_t const *tt = P_MobjGetFloorTerrainType(mo);
+        terraintype_t const *tt = P_MobjFloorTerrain(mo);
         if(tt->flags & TTF_FLOORCLIP)
         {
             mo->floorClip = 10;

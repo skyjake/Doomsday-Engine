@@ -1,33 +1,23 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file d_netsv.c Common code related to net games (server-side).
  *
- *\author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
-
-/**
- * d_netsv.c : Common code related to net games (server-side).
- */
-
-// HEADER FILES ------------------------------------------------------------
 
 #include <ctype.h>
 #include <stdio.h>
@@ -40,6 +30,8 @@
 #include "p_player.h"
 #include "p_user.h"
 #include "p_map.h"
+#include "mobj.h"
+#include "p_actor.h"
 #include "g_common.h"
 #include "p_tick.h"
 #include "p_start.h"
@@ -48,8 +40,6 @@
 #ifdef __JHEXEN__
 #  include "s_sequence.h"
 #endif
-
-// MACROS ------------------------------------------------------------------
 
 #if __JHEXEN__ || __JSTRIFE__
 #  define SOUND_COUNTDOWN       SFX_PICKUP_KEY
@@ -60,14 +50,6 @@
 #endif
 
 #define SOUND_VICTORY           SOUND_COUNTDOWN
-
-//#define UPD_BUFFER_LEN          500
-
-// How long is the largest possible sector update?
-//#define MAX_SECTORUPD           20
-//#define MAX_SIDEUPD             9
-
-// TYPES -------------------------------------------------------------------
 
 typedef struct maprule_s {
     boolean     usetime, usefrags;
@@ -80,22 +62,12 @@ typedef enum cyclemode_s {
     CYCLE_COUNTDOWN
 } cyclemode_t;
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
 void    R_SetAllDoomsdayFlags();
 void    P_FireWeapon(player_t *player);
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 int     NetSv_GetFrags(int pl);
 void    NetSv_MapCycleTicker(void);
 void    NetSv_SendPlayerClass(int pnum, char cls);
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 char    cyclingMaps = false;
 char   *mapCycle = "";
@@ -107,8 +79,6 @@ int     netSvAllowCheats = false;
 // of space-separated keywords.
 char    gameConfigString[128];
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
 static int cycleIndex;
 static int cycleCounter = -1, cycleMode = CYCLE_IDLE;
 static int cycleRulesCounter[MAXPLAYERS];
@@ -116,8 +86,6 @@ static int cycleRulesCounter[MAXPLAYERS];
 #if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
 static int oldClasses[MAXPLAYERS];
 #endif
-
-// CODE --------------------------------------------------------------------
 
 /**
  * Update the game config string with keywords that describe the game.
@@ -1360,13 +1328,13 @@ void NetSv_DoCheat(int player, Reader* msg)
  * Calls @a callback on @a thing while it is temporarily placed at the
  * specified position and angle. Afterwards the thing's old position is restored.
  */
-void NetSv_TemporaryPlacedCallback(mobj_t* thing, void* param, coord_t tempOrigin[3],
-                                   angle_t angle, void (*callback)(mobj_t*, void*))
+void NetSv_TemporaryPlacedCallback(mobj_t *thing, void *param, coord_t tempOrigin[3],
+    angle_t angle, void (*callback)(mobj_t *, void *))
 {
-    coord_t oldOrigin[3] = { thing->origin[VX], thing->origin[VY], thing->origin[VZ] };
-    coord_t oldFloorZ = thing->floorZ;
-    coord_t oldCeilingZ = thing->ceilingZ;
-    angle_t oldAngle = thing->angle;
+    coord_t const oldOrigin[3] = { thing->origin[VX], thing->origin[VY], thing->origin[VZ] };
+    coord_t const oldFloorZ    = thing->floorZ;
+    coord_t const oldCeilingZ  = thing->ceilingZ;
+    angle_t const oldAngle     = thing->angle;
 
     // We will temporarily move the object to the temp coords.
     if(P_CheckPosition(thing, tempOrigin))
@@ -1375,7 +1343,7 @@ void NetSv_TemporaryPlacedCallback(mobj_t* thing, void* param, coord_t tempOrigi
         thing->origin[VX] = tempOrigin[VX];
         thing->origin[VY] = tempOrigin[VY];
         thing->origin[VZ] = tempOrigin[VZ];
-        P_MobjLink(thing, DDLINK_SECTOR | DDLINK_BLOCKMAP);
+        P_MobjLink(thing);
         thing->floorZ = tmFloorZ;
         thing->ceilingZ = tmCeilingZ;
     }
@@ -1388,7 +1356,7 @@ void NetSv_TemporaryPlacedCallback(mobj_t* thing, void* param, coord_t tempOrigi
     thing->origin[VX] = oldOrigin[VX];
     thing->origin[VY] = oldOrigin[VY];
     thing->origin[VZ] = oldOrigin[VZ];
-    P_MobjLink(thing, DDLINK_SECTOR | DDLINK_BLOCKMAP);
+    P_MobjLink(thing);
     thing->floorZ = oldFloorZ;
     thing->ceilingZ = oldCeilingZ;
     thing->angle = oldAngle;
@@ -1497,38 +1465,6 @@ void NetSv_DoAction(int player, Reader* msg)
 
             NetSv_TemporaryPlacedCallback(pl->plr->mo, pl, pos, angle,
                                           type == GPA_USE? NetSv_UseActionCallback : NetSv_FireWeaponCallback);
-            /*
-            mobj_t* mo = pl->plr->mo;
-            coord_t oldPos[3] = { mo->origin[VX], mo->origin[VY], mo->origin[VZ] };
-            coord_t oldFloorZ = mo->floorZ;
-            coord_t oldCeilingZ = mo->ceilingZ;
-
-            // We will temporarily move the object to the action coords.
-            if(P_CheckPosition(mo, pos))
-            {
-                P_MobjUnlink(mo);
-                mo->origin[VX] = pos[VX];
-                mo->origin[VY] = pos[VY];
-                mo->origin[VZ] = pos[VZ];
-                P_MobjLink(mo, DDLINK_SECTOR | DDLINK_BLOCKMAP);
-                mo->floorZ = tmFloorZ;
-                mo->ceilingZ = tmCeilingZ;
-            }
-            mo->angle = angle;
-
-            if(type == GPA_USE)
-                P_UseLines(pl);
-            else
-                P_FireWeapon(pl);
-
-            // Restore the old position.
-            P_MobjUnlink(mo);
-            mo->origin[VX] = oldPos[VX];
-            mo->origin[VY] = oldPos[VY];
-            mo->origin[VZ] = oldPos[VZ];
-            P_MobjLink(mo, DDLINK_SECTOR | DDLINK_BLOCKMAP);
-            mo->floorZ = oldFloorZ;
-            mo->ceilingZ = oldCeilingZ;*/
         }
         break;
 

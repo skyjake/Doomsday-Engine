@@ -73,7 +73,8 @@ void P_MobjRemove(mobj_t *mo, boolean noRespawn)
     DENG_UNUSED(noRespawn);
 #endif
 
-    if(mo->ddFlags & DDMF_REMOTE) goto justDoIt;
+    if(mo->ddFlags & DDMF_REMOTE)
+        goto justDoIt;
 
 #if __JDOOM__ || __JDOOM64__
     if(!noRespawn)
@@ -124,21 +125,15 @@ void P_RemoveAllPlayerMobjs()
     }
 }
 
-void P_MobjSetOrigin(mobj_t *mo)
+void P_MobjLink(struct mobj_s *mobj)
 {
-    DENG_ASSERT(mo != 0);
-
-    int flags = DDLINK_BLOCKMAP; // Always.
-
-    if(!(mo->flags & MF_NOSECTOR))
-        flags |= DDLINK_SECTOR;
-
-    P_MobjLink(mo, flags);
+    DENG_ASSERT(mobj != 0);
+    Mobj_Link(mobj, DDLINK_BLOCKMAP | (!(mobj->flags & MF_NOSECTOR)? DDLINK_SECTOR : 0));
 }
 
-void P_MobjUnsetOrigin(mobj_t *mo)
+void P_MobjUnlink(struct mobj_s *mobj)
 {
-    P_MobjUnlink(mo);
+    Mobj_Unlink(mobj);
 }
 
 void P_MobjSetSRVO(mobj_t *mo, coord_t stepx, coord_t stepy)
@@ -215,6 +210,11 @@ boolean P_MobjIsCamera(mobj_t const *mo)
     // Client mobjs do not have thinkers and thus cannot be cameras.
     return (mo && mo->thinker.function && mo->player &&
             (mo->player->plr->flags & DDPF_CAMERA));
+}
+
+terraintype_t const *P_MobjFloorTerrain(mobj_t *mobj)
+{
+    return P_PlaneMaterialTerrainType(Mobj_Sector(mobj), PLN_FLOOR);
 }
 
 void P_UpdateHealthBits(mobj_t *mo)

@@ -188,14 +188,14 @@ int Map::clMobjIterator(int (*callback) (mobj_t *, void *), void *context)
     return true;
 }
 
-void ClMobj_Unlink(mobj_t* mo)
+void ClMobj_Unlink(mobj_t *mo)
 {
-    P_MobjUnlink(mo);
+    Mobj_Unlink(mo);
 }
 
-void ClMobj_Link(mobj_t* mo)
+void ClMobj_Link(mobj_t *mo)
 {
-    clmoinfo_t* info = ClMobj_GetInfo(mo);
+    clmoinfo_t *info = ClMobj_GetInfo(mo);
 
     CL_ASSERT_CLMOBJ(mo);
 
@@ -209,8 +209,8 @@ void ClMobj_Link(mobj_t* mo)
     DEBUG_VERBOSE2_Message(("ClMobj_Link: id %i, x%f Y%f, solid:%s\n", mo->thinker.id,
                             mo->origin[VX], mo->origin[VY], mo->ddFlags & DDMF_SOLID? "yes" : "no"));
 
-    P_MobjLink(mo, (mo->ddFlags & DDMF_DONTDRAW ? 0 : DDLINK_SECTOR) |
-                   (mo->ddFlags & DDMF_SOLID ? DDLINK_BLOCKMAP : 0));
+    Mobj_Link(mo, (mo->ddFlags & DDMF_DONTDRAW ? 0 : DDLINK_SECTOR) |
+                  (mo->ddFlags & DDMF_SOLID ? DDLINK_BLOCKMAP : 0));
 }
 
 #undef ClMobj_EnableLocalActions
@@ -233,7 +233,7 @@ void ClMobj_EnableLocalActions(struct mobj_s *mo, boolean enable)
 #undef ClMobj_LocalActionsEnabled
 boolean ClMobj_LocalActionsEnabled(struct mobj_s *mo)
 {
-    clmoinfo_t* info = ClMobj_GetInfo(mo);
+    clmoinfo_t *info = ClMobj_GetInfo(mo);
     if(!isClient || !info) return true;
     return (info->flags & CLMF_LOCAL_ACTIONS) != 0;
 }
@@ -246,8 +246,8 @@ void ClMobj_SetState(mobj_t *mo, int stnum)
     {
         P_MobjSetState(mo, stnum);
         stnum = states[stnum].nextState;
-    }
-    while(!mo->tics && stnum > 0);
+
+    } while(!mo->tics && stnum > 0);
 }
 
 void Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj,
@@ -312,9 +312,9 @@ void Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj,
         if(gx.MobjTryMoveXYZ)
         {
             if(gx.MobjTryMoveXYZ(localMobj,
-                                remoteClientMobj->origin[VX],
-                                remoteClientMobj->origin[VY],
-                                (flags & MDF_ORIGIN_Z)? remoteClientMobj->origin[VZ] : localMobj->origin[VZ]))
+                                 remoteClientMobj->origin[VX],
+                                 remoteClientMobj->origin[VY],
+                                 (flags & MDF_ORIGIN_Z)? remoteClientMobj->origin[VZ] : localMobj->origin[VZ]))
             {
                 if((flags & MDF_ORIGIN_Z) && onFloor)
                 {

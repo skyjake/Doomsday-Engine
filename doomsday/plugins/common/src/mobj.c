@@ -263,17 +263,66 @@ boolean Mobj_LookForPlayers(mobj_t* mo, boolean allAround)
     return foundTarget;
 }
 
-boolean Mobj_ActionFunctionAllowed(mobj_t* mo)
+/**
+ * Determines if it is allowed to execute the action function of @a mo.
+ * @return @c true, if allowed.
+ */
+static boolean shouldCallAction(mobj_t *mobj)
 {
     if(IS_CLIENT)
     {
-        if(ClMobj_LocalActionsEnabled(mo))
+        if(ClMobj_LocalActionsEnabled(mobj))
             return true;
     }
-    if(!(mo->ddFlags & DDMF_REMOTE) ||    // only for local mobjs
-       (mo->flags3 & MF3_CLIENTACTION))   // action functions allowed?
+    if(!(mobj->ddFlags & DDMF_REMOTE) ||    // only for local mobjs
+       (mobj->flags3 & MF3_CLIENTACTION))   // action functions allowed?
     {
         return true;
     }
     return false;
+}
+
+static boolean changeMobjState(mobj_t *mobj, statenum_t stateNum, boolean doCallAction)
+{
+    state_t *st;
+
+    DENG_ASSERT(mobj != 0);
+
+    // Skip zero-tic states -- call their action but then advance to the next.
+    do
+    {
+        if(stateNum == S_NULL)
+        {
+            mobj->state = (state_t *) S_NULL;
+            P_MobjRemove(mobj, false);
+            return false;
+        }
+
+        P_MobjSetState(mobj, stateNum);
+        mobj->turnTime = false; // $visangle-facetarget
+
+        st = &STATES[stateNum];
+
+        // Call the action function?
+        if(doCallAction && st->action)
+        {
+            if(shouldCallAction(mobj))
+                st->action(mobj);
+        }
+
+        stateNum = st->nextState;
+    } while(!mobj->tics);
+
+    // Return false if an action function removed the mobj.
+    return mobj->thinker.function != (thinkfunc_t) NOPFUNC;
+}
+
+boolean P_MobjChangeState(mobj_t *mobj, statenum_t stateNum)
+{
+    return changeMobjState(mobj, stateNum, true /*call action functions*/);
+}
+
+boolean P_MobjChangeStateNoAction(mobj_t *mobj, statenum_t stateNum)
+{
+    return changeMobjState(mobj, stateNum, false /*don't call action functions*/);
 }

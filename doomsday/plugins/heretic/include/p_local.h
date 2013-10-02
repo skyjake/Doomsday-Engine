@@ -121,10 +121,6 @@ void            P_FireWeapon(player_t* player);
 
 boolean         P_UndoPlayerMorph(player_t* player);
 
-
-
-boolean     P_MobjChangeState(mobj_t* mo, statenum_t state);
-boolean     P_SetMobjStateNF(mobj_t* mo, statenum_t state);
 void        P_ThrustMobj(mobj_t* mo, angle_t angle, coord_t move);
 void        P_WindThrust(mobj_t* mo);
 int         P_FaceMobj(mobj_t* source, mobj_t* target, angle_t* delta);

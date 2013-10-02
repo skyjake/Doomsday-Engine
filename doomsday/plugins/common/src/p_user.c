@@ -238,7 +238,7 @@ void P_Thrust(player_t *player, angle_t angle, coord_t move)
         Sector *sec = Mobj_Sector(mo);
 #endif
 #if __JHEXEN__
-        terraintype_t const *tt = P_MobjGetFloorTerrainType(mo);
+        terraintype_t const *tt = P_MobjFloorTerrain(mo);
 #endif
 
 #if __JHEXEN__
@@ -323,12 +323,12 @@ void P_CheckPlayerJump(player_t* player)
 /**
  * Moves a player according to its smoother.
  */
-void P_PlayerRemoteMove(player_t* player)
+void P_PlayerRemoteMove(player_t *player)
 {
     int plrNum = player - players;
-    ddplayer_t* ddpl = player->plr;
-    Smoother* smoother = Net_PlayerSmoother(plrNum);
-    mobj_t* mo = player->plr->mo;
+    ddplayer_t *ddpl = player->plr;
+    Smoother *smoother = Net_PlayerSmoother(plrNum);
+    mobj_t *mo = player->plr->mo;
     coord_t xyz[3];
 
     /*
@@ -409,26 +409,6 @@ void P_PlayerRemoteMove(player_t* player)
                         plrNum, mo->origin[VX], mo->origin[VY], mo->origin[VZ]);
 #endif
         }
-    }
-    else
-    {
-#ifdef _DEBUG
-        //Smoother_Debug(smoother);
-#endif
-        /*Con_Message("P_PlayerRemoteMove: Player %i: Smooth move to %f, %f, %f (floorz)",
-                    plrNum, xyz[VX], xyz[VY], xyz[VZ]);*/
-
-        /*
-        // Clientside moves have no side-effects.
-        P_MobjUnlink(mo);
-        mo->origin[VX] = xyz[VX];
-        mo->origin[VY] = xyz[VY];
-        mo->origin[VZ] = xyz[VZ];
-        P_MobjLink(mo, DDLINK_SECTOR | DDLINK_BLOCKMAP);
-        P_CheckPosition(mo, xyz);
-        mo->floorZ = tmFloorZ;
-        mo->ceilingZ = tmCeilingZ;
-        */
     }
 }
 

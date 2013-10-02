@@ -346,7 +346,7 @@ static void SV_v13_ReadMobj(void)
         mo->player->plr->mo = mo;
         mo->player->plr->mo->dPlayer = mo->player->plr;
     }
-    P_MobjSetOrigin(mo);
+    P_MobjLink(mo);
     mo->floorZ   = P_GetDoublep(Mobj_Sector(mo), DMU_FLOOR_HEIGHT);
     mo->ceilingZ = P_GetDoublep(Mobj_Sector(mo), DMU_CEILING_HEIGHT);
 }

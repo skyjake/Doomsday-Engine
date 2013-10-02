@@ -36,7 +36,7 @@
  * that a single mobj is linked simultaneously to multiple lines (which
  * is common).
  *
- * All these rings are maintained by P_MobjLink() and P_MobjUnlink().
+ * All these rings are maintained by Mobj_Link() and Mobj_Unlink().
  * @ingroup mobj
  */
 typedef struct linknode_s {

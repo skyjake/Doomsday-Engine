@@ -121,13 +121,9 @@ void        P_MobjThinker(void *mo);
 boolean     P_HealRadius(player_t* plr);
 void        P_BlastRadius(player_t* plr);
 
-boolean     P_MobjChangeState(mobj_t* mo, statenum_t state);
-boolean     P_SetMobjStateNF(mobj_t* mo, statenum_t state);
-
 boolean     P_CheckMissileSpawn(mobj_t* mo);
 coord_t     P_MobjGetFriction(mobj_t* mo);
 void        P_RipperBlood(mobj_t* mo);
-const terraintype_t* P_MobjGetFloorTerrainType(mobj_t* mo);
 boolean     P_HitFloor(mobj_t* mo);
 
 void        P_NoiseAlert(mobj_t* target, mobj_t* emmiter);

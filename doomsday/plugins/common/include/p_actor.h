@@ -39,14 +39,18 @@ void P_MobjRemove(mobj_t *mo, boolean noRespawn);
 void P_RemoveAllPlayerMobjs(void);
 
 /**
- * Unlinks a mobj from the world so that it can be moved.
+ * To be called after a move, to link the mobj back into the world.
+ *
+ * @param mobj   Mobj instance.
  */
-void P_MobjUnsetOrigin(mobj_t *mo);
+void P_MobjLink(struct mobj_s *mobj);
 
 /**
- * To be called after a move, to link the mobj back into the world.
+ * Unlinks a mobj from the world so that it can be moved.
+ *
+ * @param mobj   Mobj instance.
  */
-void P_MobjSetOrigin(mobj_t *mo);
+void P_MobjUnlink(struct mobj_s *mobj);
 
 /**
  * The actor has taken a step, set the corresponding short-range visual
@@ -77,6 +81,13 @@ void P_MobjAngleSRVOTicker(mobj_t *mo);
 boolean P_MobjIsCamera(mobj_t const *mo);
 
 /**
+ * Returns the terraintype_t of the floor plane at the mobj's origin.
+ *
+ * @param mobj  Mobj instance.
+ */
+terraintype_t const *P_MobjFloorTerrain(mobj_t *mobj);
+
+/**
  * The first three bits of the selector special byte contain a relative
  * health level.
  */
@@ -85,10 +96,10 @@ void P_UpdateHealthBits(mobj_t *mo);
 /**
  * Given a mobjtype, lookup the statenum associated to the named state.
  *
- * @param mobjType      Type of mobj.
- * @param name          State name identifier.
+ * @param mobjType  Type of mobj.
+ * @param name      State name identifier.
  *
- * @return              Statenum of the associated state ELSE @c, S_NULL.
+ * @return  Statenum of the associated state ELSE @c, S_NULL.
  */
 statenum_t P_GetState(mobjtype_t mobjType, statename_t name);
 

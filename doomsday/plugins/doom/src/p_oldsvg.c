@@ -326,7 +326,7 @@ static void SV_v19_ReadMobj(void)
         //mo->dPlayer->clAngle = mo->angle; /* $unifiedangles */
         mo->dPlayer->lookDir = 0; /* $unifiedangles */
     }
-    P_MobjSetOrigin(mo);
+    P_MobjLink(mo);
     mo->floorZ   = P_GetDoublep(Mobj_Sector(mo), DMU_FLOOR_HEIGHT);
     mo->ceilingZ = P_GetDoublep(Mobj_Sector(mo), DMU_CEILING_HEIGHT);
 }

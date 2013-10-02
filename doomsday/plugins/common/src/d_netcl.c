@@ -166,11 +166,11 @@ void NetCl_UpdateGameState(Reader* msg)
         mo = pl->plr->mo;
         if(mo)
         {
-            P_MobjUnsetOrigin(mo);
+            P_MobjUnlink(mo);
             mo->origin[VX] = Reader_ReadFloat(msg);
             mo->origin[VY] = Reader_ReadFloat(msg);
             mo->origin[VZ] = Reader_ReadFloat(msg);
-            P_MobjSetOrigin(mo);
+            P_MobjLink(mo);
             mo->angle = Reader_ReadUInt32(msg);
             // Update floorz and ceilingz.
 #if __JDOOM__ || __JDOOM64__

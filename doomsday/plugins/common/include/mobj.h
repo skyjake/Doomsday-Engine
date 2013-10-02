@@ -1,4 +1,4 @@
-/** @file common/mobj.h Common Map Object (Mobj) functionality.
+/** @file mobj.h Common Map Object (Mobj) functionality.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -31,40 +31,60 @@ extern "C" {
 /**
  * Handles the stopping of mobj movement. Also stops player walking animation.
  *
- * @param mo  Mobj.
+ * @param mobj  Mobj instance.
  */
-void Mobj_XYMoveStopping(mobj_t *mo);
+void Mobj_XYMoveStopping(mobj_t *mobj);
 
 /**
  * Checks if @a thing is a clmobj of one of the players.
+ *
+ * @param mobj  Mobj instance.
  */
-boolean Mobj_IsPlayerClMobj(mobj_t *mo);
+boolean Mobj_IsPlayerClMobj(mobj_t *mobj);
 
 /**
  * Determines if a mobj is a player mobj. It could still be a voodoo doll, also.
- * @param mo  Map object.
+ *
+ * @param mobj  Mobj instance.
+ *
  * @return @c true, iff the mobj is a player.
  */
-boolean Mobj_IsPlayer(mobj_t const *mo);
+boolean Mobj_IsPlayer(mobj_t const *mobj);
 
 /**
  * Determines if a mobj is a voodoo doll.
- * @param mo  Map object.
+ *
+ * @param mobj  Mobj instance.
+ *
  * @return @c true, iff the mobj is a voodoo doll.
  */
-boolean Mobj_IsVoodooDoll(mobj_t const *mo);
+boolean Mobj_IsVoodooDoll(mobj_t const *mobj);
 
 /**
+ * @param mobj       Mobj instance.
  * @param allAround  @c false= only look 180 degrees in front.
+ *
  * @return  @c true iff a player was targeted.
  */
-boolean Mobj_LookForPlayers(mobj_t *mo, boolean allAround);
+boolean Mobj_LookForPlayers(mobj_t *mobj, boolean allAround);
 
 /**
- * Determines if it is allowed to execute the action function of @a mo.
- * @return @c true, if allowed.
+ * @param mobj      Mobj instance.
+ * @param stateNum  Unique identifier of the state to change to.
+ *
+ * @return  @c true, if the mobj is still present.
  */
-boolean Mobj_ActionFunctionAllowed(mobj_t *mo);
+boolean P_MobjChangeState(mobj_t *mobj, statenum_t stateNum);
+
+/**
+ * Same as P_MobjChangeState but does not call action functions.
+ *
+ * @param mobj      Mobj instance.
+ * @param stateNum  Unique identifier of the state to change to.
+ *
+ * @return  @c true, if the mobj is still present.
+ */
+boolean P_MobjChangeStateNoAction(mobj_t *mobj, statenum_t stateNum);
 
 #ifdef __cplusplus
 } // extern "C"

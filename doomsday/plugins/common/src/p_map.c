@@ -300,7 +300,7 @@ boolean P_TeleportMove(mobj_t *thing, coord_t x, coord_t y, boolean alwaysStomp)
         return false;
 
     // The move is ok, so link the thing into its new position.
-    P_MobjUnsetOrigin(thing);
+    P_MobjUnlink(thing);
 
     thing->floorZ = tmFloorZ;
     thing->ceilingZ = tmCeilingZ;
@@ -310,7 +310,7 @@ boolean P_TeleportMove(mobj_t *thing, coord_t x, coord_t y, boolean alwaysStomp)
     thing->origin[VX] = x;
     thing->origin[VY] = y;
 
-    P_MobjSetOrigin(thing);
+    P_MobjLink(thing);
     P_MobjClearSRVO(thing);
 
     return true;
@@ -1484,7 +1484,7 @@ static boolean P_TryMove2(mobj_t *thing, coord_t x, coord_t y, boolean dropoff)
     }
 
     // The move is ok, so link the thing into its new position.
-    P_MobjUnsetOrigin(thing);
+    P_MobjUnlink(thing);
 
     oldpos[VX] = thing->origin[VX];
     oldpos[VY] = thing->origin[VY];
@@ -1499,7 +1499,7 @@ static boolean P_TryMove2(mobj_t *thing, coord_t x, coord_t y, boolean dropoff)
     thing->origin[VX] = x;
     thing->origin[VY] = y;
 
-    P_MobjSetOrigin(thing);
+    P_MobjLink(thing);
 
     if(thing->flags2 & MF2_FLOORCLIP)
     {
@@ -1507,7 +1507,7 @@ static boolean P_TryMove2(mobj_t *thing, coord_t x, coord_t y, boolean dropoff)
 
         if(FEQUAL(thing->origin[VZ], P_GetDoublep(Mobj_Sector(thing), DMU_FLOOR_HEIGHT)))
         {
-            terraintype_t const *tt = P_MobjGetFloorTerrainType(thing);
+            terraintype_t const *tt = P_MobjFloorTerrain(thing);
             if(tt->flags & TTF_FLOORCLIP)
             {
                 thing->floorClip = 10;

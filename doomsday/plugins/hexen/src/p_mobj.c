@@ -52,56 +52,6 @@ extern mobj_t lavaInflictor;
 mobjtype_t PuffType;
 mobj_t *MissileMobj;
 
-terraintype_t const *P_MobjGetFloorTerrainType(mobj_t *mobj)
-{
-    return P_PlaneMaterialTerrainType(Mobj_Sector(mobj), PLN_FLOOR);
-}
-
-/**
- * @return  @c true if the mobj is still present.
- */
-boolean P_MobjChangeState(mobj_t *mobj, statenum_t state)
-{
-    state_t *st;
-
-    if(state == S_NULL)
-    {
-        // Remove mobj.
-        mobj->state = (state_t *) S_NULL;
-        P_MobjRemove(mobj, false);
-        return false;
-    }
-
-    P_MobjSetState(mobj, state);
-    mobj->turnTime = false; // $visangle-facetarget
-
-    if(Mobj_ActionFunctionAllowed(mobj))
-    {
-        st = &STATES[state];
-        if(st->action) st->action(mobj); // Call action function.
-    }
-
-    // Return false if the action function removed the mobj.
-    return mobj->thinker.function != (thinkfunc_t) NOPFUNC;
-}
-
-/**
- * Same as P_MobjChangeState, but does not call the state function.
- */
-boolean P_SetMobjStateNF(mobj_t* mobj, statenum_t state)
-{
-    if(state == S_NULL)
-    {   // Remove mobj
-        mobj->state = (state_t *) S_NULL;
-        P_MobjRemove(mobj, false);
-        return false;
-    }
-
-    mobj->turnTime = false; // $visangle-facetarget
-    P_MobjSetState(mobj, state);
-    return true;
-}
-
 void P_ExplodeMissile(mobj_t* mo)
 {
     mo->mom[MX] = mo->mom[MY] = mo->mom[MZ] = 0;
@@ -326,7 +276,7 @@ coord_t P_MobjGetFriction(mobj_t* mo)
     }
     else
     {
-        const terraintype_t* tt = P_MobjGetFloorTerrainType(mo);
+        const terraintype_t* tt = P_MobjFloorTerrain(mo);
 
         if(tt->flags & TTF_FRICTION_LOW)
             return FRICTION_LOW;
@@ -816,7 +766,7 @@ void P_MobjMoveZ(mobj_t* mo)
                     else if(!mo->player->morphTics)
                     {
                         const terraintype_t* tt =
-                            P_MobjGetFloorTerrainType(mo);
+                            P_MobjFloorTerrain(mo);
 
                         if(!(tt->flags & TTF_NONSOLID))
                             S_StartSound(SFX_PLAYER_LAND, mo);
@@ -1228,7 +1178,7 @@ mobj_t* P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z,
     P_MobjSetState(mo, P_GetState(mo->type, SN_SPAWN));
 
     // Link the mobj into the world.
-    P_MobjSetOrigin(mo);
+    P_MobjLink(mo);
 
     mo->floorZ   = P_GetDoublep(Mobj_Sector(mo), DMU_FLOOR_HEIGHT);
     mo->ceilingZ = P_GetDoublep(Mobj_Sector(mo), DMU_CEILING_HEIGHT);
@@ -1265,7 +1215,7 @@ mobj_t* P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z,
     if((mo->flags2 & MF2_FLOORCLIP) &&
        FEQUAL(mo->origin[VZ], P_GetDoublep(Mobj_Sector(mo), DMU_FLOOR_HEIGHT)))
     {
-        terraintype_t const *tt = P_MobjGetFloorTerrainType(mo);
+        terraintype_t const *tt = P_MobjFloorTerrain(mo);
         if(tt->flags & TTF_FLOORCLIP)
             mo->floorClip = 10;
     }
@@ -1388,7 +1338,7 @@ boolean P_HitFloor(mobj_t *thing)
     if(thing->info->mass < 10)
         smallsplash = true;
 
-    tt = P_MobjGetFloorTerrainType(thing);
+    tt = P_MobjFloorTerrain(thing);
     if(tt->flags & TTF_SPAWN_SPLASHES)
     {
         if(smallsplash)

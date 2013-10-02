@@ -519,11 +519,6 @@ typedef float AudioEnvironmentFactors[NUM_REVERB_DATA];
 #define LS_PASSUNDER           0x4 ///< Ray may cross under sector floor height on ray-entry side.
 ///@}
 
-// For (un)linking.
-#define DDLINK_SECTOR           0x1
-#define DDLINK_BLOCKMAP         0x2
-#define DDLINK_NOLINE           0x4
-
 typedef enum intercepttype_e {
     ICPT_MOBJ,
     ICPT_LINE

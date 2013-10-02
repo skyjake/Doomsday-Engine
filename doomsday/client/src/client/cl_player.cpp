@@ -92,26 +92,18 @@ DENG_EXTERN_C struct mobj_s* ClPlayer_ClMobj(int plrNum)
     return ClMobj_Find(clPlayerStates[plrNum].clMobjId);
 }
 
-/**
- * Move the (hidden, unlinked) client player mobj to the same coordinates
- * where the real mobj of the player is.
- */
 void ClPlayer_UpdateOrigin(int plrNum)
 {
-    player_t           *plr;
-    mobj_t             *remoteClientMobj, *localMobj;
-    clplayerstate_t    *s;
+    DENG2_ASSERT(plrNum >= 0 && plrNum < DDMAXPLAYERS);
 
-    assert(plrNum >= 0 && plrNum < DDMAXPLAYERS);
-
-    plr = &ddPlayers[plrNum];
-    s = ClPlayer_State(plrNum);
+    player_t *plr = &ddPlayers[plrNum];
+    clplayerstate_t *s = ClPlayer_State(plrNum);
 
     if(!s->clMobjId || !plr->shared.mo)
         return;                 // Must have a mobj!
 
-    remoteClientMobj = ClMobj_Find(s->clMobjId);
-    localMobj = plr->shared.mo;
+    mobj_t *remoteClientMobj = ClMobj_Find(s->clMobjId);
+    mobj_t *localMobj = plr->shared.mo;
 
     // The client mobj is never solid.
     remoteClientMobj->ddFlags &= ~DDMF_SOLID;
@@ -121,31 +113,13 @@ void ClPlayer_UpdateOrigin(int plrNum)
     // The player's client mobj is not linked to any lists, so position
     // can be updated without any hassles.
     memcpy(remoteClientMobj->origin, localMobj->origin, sizeof(localMobj->origin));
-    P_MobjLink(remoteClientMobj, 0); // Update bspLeaf pointer.
+    Mobj_Link(remoteClientMobj, 0); // Update bspLeaf pointer.
     remoteClientMobj->floorZ = localMobj->floorZ;
     remoteClientMobj->ceilingZ = localMobj->ceilingZ;
     remoteClientMobj->mom[MX] = localMobj->mom[MX];
     remoteClientMobj->mom[MY] = localMobj->mom[MY];
     remoteClientMobj->mom[MZ] = localMobj->mom[MZ];
 }
-
-/*
-void ClPlayer_CoordsReceived(void)
-{
-    if(playback)
-        return;
-
-#ifdef _DEBUG
-    //Con_Printf("ClPlayer_CoordsReceived\n");
-#endif
-
-    fixPos[VX] = (float) Msg_ReadShort();
-    fixPos[VY] = (float) Msg_ReadShort();
-    fixTics = fixSpeed;
-    fixPos[VX] /= fixSpeed;
-    fixPos[VY] /= fixSpeed;
-}
-*/
 
 void ClPlayer_ApplyPendingFixes(int plrNum)
 {
@@ -310,10 +284,10 @@ void ClPlayer_MoveLocal(coord_t dx, coord_t dy, coord_t z, boolean onground)
 
     if(dx != 0 || dy != 0)
     {
-        P_MobjUnlink(mo);
+        Mobj_Unlink(mo);
         mo->origin[VX] += dx;
         mo->origin[VY] += dy;
-        P_MobjLink(mo, DDLINK_SECTOR | DDLINK_BLOCKMAP);
+        Mobj_Link(mo, DDLINK_SECTOR | DDLINK_BLOCKMAP);
     }
 
     mo->_bspLeaf = &App_World().map().bspLeafAt_FixedPrecision(Mobj_Origin(*mo));

@@ -1350,7 +1350,7 @@ void C_DECL A_MinotaurDecide(mobj_t* actor)
     {
         // Charge attack.
         // Don't call the state function right away.
-        P_SetMobjStateNF(actor, S_MNTR_ATK4_1);
+        P_MobjChangeStateNoAction(actor, S_MNTR_ATK4_1);
         actor->flags |= MF_SKULLFLY;
 
         A_FaceTarget(actor);
@@ -2335,12 +2335,12 @@ void C_DECL A_FlameSnd(mobj_t* actor)
 
 void C_DECL A_HideThing(mobj_t* actor)
 {
-    //P_MobjUnsetOrigin(actor);
+    //P_MobjUnlink(actor);
     actor->flags2 |= MF2_DONTDRAW;
 }
 
 void C_DECL A_UnHideThing(mobj_t* actor)
 {
-    //P_MobjSetOrigin(actor);
+    //P_MobjLink(actor);
     actor->flags2 &= ~MF2_DONTDRAW;
 }

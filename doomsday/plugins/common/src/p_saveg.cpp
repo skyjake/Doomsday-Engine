@@ -1882,7 +1882,7 @@ static void RestoreMobj(mobj_t *mo, int ver)
         SV_TranslateLegacyMobjFlags(mo, ver);
 #endif
 
-    P_MobjSetOrigin(mo);
+    P_MobjLink(mo);
     mo->floorZ   = P_GetDoublep(Mobj_Sector(mo), DMU_FLOOR_HEIGHT);
     mo->ceilingZ = P_GetDoublep(Mobj_Sector(mo), DMU_CEILING_HEIGHT);
 
@@ -5487,11 +5487,11 @@ void SV_LoadGameClient(uint gameId)
     }
     mapTime = hdr->mapTime;
 
-    P_MobjUnsetOrigin(mo);
+    P_MobjUnlink(mo);
     mo->origin[VX] = FIX2FLT(SV_ReadLong());
     mo->origin[VY] = FIX2FLT(SV_ReadLong());
     mo->origin[VZ] = FIX2FLT(SV_ReadLong());
-    P_MobjSetOrigin(mo);
+    P_MobjLink(mo);
     mo->floorZ = FIX2FLT(SV_ReadLong());
     mo->ceilingZ = FIX2FLT(SV_ReadLong());
     mo->angle = SV_ReadLong(); /* $unifiedangles */

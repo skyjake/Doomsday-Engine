@@ -120,7 +120,7 @@ boolean P_Teleport(mobj_t* mo, coord_t x, coord_t y, angle_t angle, boolean spaw
 
         if(FEQUAL(mo->origin[VZ], P_GetDoublep(Mobj_Sector(mo), DMU_FLOOR_HEIGHT)))
         {
-            terraintype_t const *tt = P_MobjGetFloorTerrainType(mo);
+            terraintype_t const *tt = P_MobjFloorTerrain(mo);
             if(tt->flags & TTF_FLOORCLIP)
             {
                 mo->floorClip = 10;

@@ -884,10 +884,10 @@ int P_CameraXYMovement(mobj_t *mo)
     {
 #endif
 
-        P_MobjUnsetOrigin(mo);
+        P_MobjUnlink(mo);
         mo->origin[VX] += mo->mom[MX];
         mo->origin[VY] += mo->mom[MY];
-        P_MobjSetOrigin(mo);
+        P_MobjLink(mo);
         P_CheckPositionXY(mo, mo->origin[VX], mo->origin[VY]);
         mo->floorZ = tmFloorZ;
         mo->ceilingZ = tmCeilingZ;

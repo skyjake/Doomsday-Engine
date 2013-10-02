@@ -59,7 +59,7 @@ void P_InitUnusedMobjList();
  */
 void Mobj_ConsoleRegister();
 
-mobj_t *P_MobjCreate(thinkfunc_t function, coord_t const post[3], angle_t angle,
+mobj_t *P_MobjCreate(thinkfunc_t function, de::Vector3d const &origin, angle_t angle,
     coord_t radius, coord_t height, int ddflags);
 
 void P_MobjRecycle(mobj_t *mobj);

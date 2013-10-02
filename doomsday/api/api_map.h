@@ -85,15 +85,24 @@
 struct intercept_s;
 
 /**
+ * @defgroup mobjLinkFlags Mobj Link Flags
+ */
+///@{
+#define DDLINK_SECTOR       0x1 ///< Link to map sectors.
+#define DDLINK_BLOCKMAP     0x2 ///< Link in the map's mobj blockmap.
+#define DDLINK_NOLINE       0x4 ///< Do not link to map lines.
+///@}
+
+/**
  * @defgroup boxLineIteratorFlags Box Line Iterator Flags
  * @ingroup apiFlags map
  */
 ///@{
-#define BLF_SECTOR      0x1 ///< Process map lines defining sectors
-#define BLF_POLYOBJ     0x2 ///< Process map lines defining polyobjs
+#define BLF_SECTOR          0x1 ///< Process map lines defining sectors
+#define BLF_POLYOBJ         0x2 ///< Process map lines defining polyobjs
 
 /// Process all map line types.
-#define BLF_ALL         BLF_SECTOR | BLF_POLYOBJ
+#define BLF_ALL             BLF_SECTOR | BLF_POLYOBJ
 ///@}
 
 /**
@@ -228,9 +237,27 @@ DENG_API_TYPEDEF(Map)
     struct mobj_s  *(*MO_CreateXYZ)(thinkfunc_t function, coord_t x, coord_t y, coord_t z, angle_t angle, coord_t radius, coord_t height, int ddflags);
     void            (*MO_Destroy)(struct mobj_s *mobj);
     struct mobj_s  *(*MO_MobjForID)(int id);
+
+    /**
+     * @param statenum  Must be a valid state (not null!).
+     */
     void            (*MO_SetState)(struct mobj_s *mobj, int statenum);
-    void            (*MO_Link)(struct mobj_s *mobj, byte flags);
-    int             (*MO_Unlink)(struct mobj_s *mobj);
+
+    /**
+     * To be called after a move, to link the mobj back into the world.
+     *
+     * @param mobj   Mobj instance.
+     * @param flags  @ref mobjLinkFlags
+     */
+    void            (*MO_Link)(struct mobj_s *mobj, int flags);
+
+    /**
+     * Unlinks a mobj from the world so that it can be moved.
+     *
+     * @param mobj   Mobj instance.
+     */
+    void            (*MO_Unlink)(struct mobj_s *mobj);
+
     void            (*MO_SpawnDamageParticleGen)(struct mobj_s *mobj, struct mobj_s *inflictor, int amount);
 
     /**
@@ -593,8 +620,8 @@ DENG_API_T(Map);
 #define P_MobjDestroy                       _api_Map.MO_Destroy
 #define P_MobjForID                         _api_Map.MO_MobjForID
 #define P_MobjSetState                      _api_Map.MO_SetState
-#define P_MobjLink                          _api_Map.MO_Link
-#define P_MobjUnlink                        _api_Map.MO_Unlink
+#define Mobj_Link                           _api_Map.MO_Link
+#define Mobj_Unlink                         _api_Map.MO_Unlink
 #define P_SpawnDamageParticleGen            _api_Map.MO_SpawnDamageParticleGen
 #define P_MobjLinesIterator                 _api_Map.MO_LinesIterator
 #define P_MobjSectorsIterator               _api_Map.MO_SectorsIterator

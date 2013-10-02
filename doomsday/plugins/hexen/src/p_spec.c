@@ -767,7 +767,7 @@ void P_PlayerInSpecialSector(player_t *player)
 
 void P_PlayerOnSpecialFloor(player_t* player)
 {
-    const terraintype_t* tt = P_MobjGetFloorTerrainType(player->plr->mo);
+    const terraintype_t* tt = P_MobjFloorTerrain(player->plr->mo);
 
     if(!(tt->flags & TTF_DAMAGING))
         return;

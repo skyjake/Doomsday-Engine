@@ -74,27 +74,27 @@ void P_InitUnusedMobjList()
 /**
  * All mobjs must be allocated through this routine. Part of the public API.
  */
-mobj_t *P_MobjCreate(thinkfunc_t function, coord_t const pos[3], angle_t angle,
+mobj_t *P_MobjCreate(thinkfunc_t function, Vector3d const &origin, angle_t angle,
     coord_t radius, coord_t height, int ddflags)
 {
-    mobj_t *mo;
-
     if(!function)
-        Con_Error("P_MobjCreateXYZ: Think function invalid, cannot create mobj.");
+        Con_Error("P_MobjCreate: Think function invalid, cannot create mobj.");
 
 #ifdef _DEBUG
     if(isClient)
     {
-        VERBOSE2( Con_Message("P_MobjCreate: Client creating mobj at [x:%f, y:%f, z:%f]", pos[VX], pos[VY], pos[VZ]) );
+        LOG_VERBOSE("P_MobjCreate: Client creating mobj at %s")
+            << origin.asText();
     }
 #endif
 
     // Do we have any unused mobjs we can reuse?
+    mobj_t *mo;
     if(unusedMobjs)
     {
         mo = unusedMobjs;
         unusedMobjs = unusedMobjs->sNext;
-        memset(mo, 0, MOBJ_SIZE);
+        std::memset(mo, 0, MOBJ_SIZE);
     }
     else
     {
@@ -102,7 +102,7 @@ mobj_t *P_MobjCreate(thinkfunc_t function, coord_t const pos[3], angle_t angle,
         mo = (mobj_t *) Z_Calloc(MOBJ_SIZE, PU_MAP, NULL);
     }
 
-    V3d_Copy(mo->origin, pos);
+    V3d_Set(mo->origin, origin.x, origin.y, origin.z);
     mo->angle = angle;
     mo->visAngle = mo->angle >> 16; // "angle-servo"; smooth actor turning.
     mo->radius = radius;
@@ -116,15 +116,6 @@ mobj_t *P_MobjCreate(thinkfunc_t function, coord_t const pos[3], angle_t angle,
     }
 
     return mo;
-}
-
-#undef P_MobjCreateXYZ
-DENG_EXTERN_C mobj_t* P_MobjCreateXYZ(thinkfunc_t function, coord_t x, coord_t y, coord_t z,
-    angle_t angle, coord_t radius, coord_t height, int ddflags)
-{
-    coord_t pos[3];
-    V3d_Set(pos, x, y, z);
-    return P_MobjCreate(function, pos, angle, radius, height, ddflags);
 }
 
 /**
@@ -144,7 +135,7 @@ DENG_EXTERN_C void P_MobjDestroy(mobj_t *mo)
 #endif
 
     // Unlink from sector and block lists.
-    P_MobjUnlink(mo);
+    Mobj_Unlink(mo);
 
     S_StopSound(0, mo);
 
@@ -167,32 +158,24 @@ boolean Mobj_IsSectorLinked(mobj_t *mo)
     return mo != 0 && mo->_bspLeaf != 0 && mo->sPrev != 0;
 }
 
-/**
- * 'statenum' must be a valid state (not null!).
- */
 #undef P_MobjSetState
 DENG_EXTERN_C void P_MobjSetState(mobj_t *mobj, int statenum)
 {
-    state_t *st = states + statenum;
+    if(!mobj) return;
+
 #ifdef __CLIENT__
-    boolean spawning = (mobj->state == 0);
+    bool spawning = (mobj->state == 0);
 #endif
 
 #ifdef DENG_DEBUG
     if(statenum < 0 || statenum >= defs.count.states.num)
         Con_Error("P_MobjSetState: statenum %i out of bounds.\n", statenum);
-    /*
-    if(mobj->ddFlags & DDMF_MISSILE)
-    {
-        Con_Message("P_MobjSetState: Missile %i going to state %i.", mobj->thinker.id, statenum);
-    }
-    */
 #endif
 
-    mobj->state = st;
-    mobj->tics = st->tics;
-    mobj->sprite = st->sprite;
-    mobj->frame = st->frame;
+    mobj->state  = states + statenum;
+    mobj->tics   = mobj->state->tics;
+    mobj->sprite = mobj->state->sprite;
+    mobj->frame  = mobj->state->frame;
 
 #ifdef __CLIENT__
     // Check for a ptcgen trigger.
@@ -381,7 +364,7 @@ void Mobj_GenerateLumobjs(mobj_t *mo)
 
     // If the mobj's origin is outside the BSP leaf it is linked within, then
     // this means it is outside the playable map (and no light should be emitted).
-    /// @todo Optimize: P_MobjLink() should do this and flag the mobj accordingly.
+    /// @todo Optimize: Mobj_Link() should do this and flag the mobj accordingly.
     if(!Mobj_BspLeafAtOrigin(*mo).polyContains(mo->origin))
         return;
 

@@ -1210,10 +1210,10 @@ static int moveMobjOutOfNearbyLines(thinker_t *th, void *paramaters)
 
     if(!FEQUAL(mo->origin[VX], params.pos[VX]) || !FEQUAL(mo->origin[VY], params.pos[VY]))
     {
-        P_MobjUnsetOrigin(mo);
+        P_MobjUnlink(mo);
         mo->origin[VX] = params.pos[VX];
         mo->origin[VY] = params.pos[VY];
-        P_MobjSetOrigin(mo);
+        P_MobjLink(mo);
     }
 
     return false; // Continue iteration.

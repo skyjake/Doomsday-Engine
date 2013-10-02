@@ -68,6 +68,10 @@ void            Cl_InitPlayers(void);
  */
 void ClPlayer_MoveLocal(coord_t dx, coord_t dy, coord_t z, boolean onground);
 
+/**
+ * Move the (hidden, unlinked) client player mobj to the same coordinates
+ * where the real mobj of the player is.
+ */
 void ClPlayer_UpdateOrigin(int plrnum);
 
 void            ClPlayer_HandleFix(void);

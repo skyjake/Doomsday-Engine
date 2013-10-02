@@ -45,56 +45,6 @@
 mobjtype_t puffType;
 mobj_t *missileMobj;
 
-terraintype_t const *P_MobjGetFloorTerrainType(mobj_t *mobj)
-{
-    return P_PlaneMaterialTerrainType(Mobj_Sector(mobj), PLN_FLOOR);
-}
-
-/**
- * @return  @c true, if the mobj is still present.
- */
-boolean P_MobjChangeState(mobj_t *mobj, statenum_t state)
-{
-    state_t *st;
-
-    if(state == S_NULL)
-    {
-        // Remove mobj.
-        mobj->state = (state_t *) S_NULL;
-        P_MobjRemove(mobj, false);
-        return false;
-    }
-
-    P_MobjSetState(mobj, state);
-    mobj->turnTime = false; // $visangle-facetarget.
-
-    st = &STATES[state];
-    if(Mobj_ActionFunctionAllowed(mobj))
-    {
-        if(st->action) st->action(mobj); // Call action function.
-    }
-
-    return true;
-}
-
-/**
- * Same as P_MobjChangeState, but does not call the state function.
- */
-boolean P_SetMobjStateNF(mobj_t *mobj, statenum_t state)
-{
-    if(state == S_NULL)
-    {   // Remove mobj.
-        mobj->state = (state_t *) S_NULL;
-        P_MobjRemove(mobj, false);
-        return false;
-    }
-
-    mobj->turnTime = false; // $visangle-facetarget
-    P_MobjSetState(mobj, state);
-
-    return true;
-}
-
 void P_ExplodeMissile(mobj_t *mo)
 {
     if(!mo->info) return;
@@ -1062,7 +1012,7 @@ mobj_t* P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z,
         mo->special3 = 1000;
 
     // Link the mobj into the world.
-    P_MobjSetOrigin(mo);
+    P_MobjLink(mo);
 
     mo->floorZ   = P_GetDoublep(Mobj_Sector(mo), DMU_FLOOR_HEIGHT);
     mo->dropOffZ = mo->floorZ;
@@ -1098,7 +1048,7 @@ mobj_t* P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z,
     if((mo->flags2 & MF2_FLOORCLIP) &&
        FEQUAL(mo->origin[VZ], P_GetDoublep(Mobj_Sector(mo), DMU_FLOOR_HEIGHT)))
     {
-        const terraintype_t* tt = P_MobjGetFloorTerrainType(mo);
+        const terraintype_t* tt = P_MobjFloorTerrain(mo);
 
         if(tt->flags & TTF_FLOORCLIP)
         {
@@ -1140,7 +1090,7 @@ void P_RepositionMace(mobj_t *mo)
         return;
     }
 
-    P_MobjUnsetOrigin(mo);
+    P_MobjUnlink(mo);
     {
         mo->origin[VX] = mapSpot->origin[VX];
         mo->origin[VY] = mapSpot->origin[VY];
@@ -1151,7 +1101,7 @@ void P_RepositionMace(mobj_t *mo)
 
         mo->ceilingZ = P_GetDoublep(sector, DMU_CEILING_HEIGHT);
     }
-    P_MobjSetOrigin(mo);
+    P_MobjLink(mo);
 
 #if _DEBUG
     Con_Message("P_RepositionMace: Mobj [%p], thinkerId:%i - now at (%.2f, %.2f, %.2f).",
@@ -1239,7 +1189,7 @@ boolean P_HitFloor(mobj_t* thing)
         break;
     }
 
-    tt = P_MobjGetFloorTerrainType(thing);
+    tt = P_MobjFloorTerrain(thing);
     if(tt->flags & TTF_SPAWN_SPLASHES)
     {
         P_SpawnMobjXYZ(MT_SPLASHBASE, thing->origin[VX], thing->origin[VY],
