@@ -398,13 +398,24 @@ DENG2_OBSERVES(App, GameChange)
         {
             loadProfilesFromInfo(*file, false /* modifiable */);
         }
+        else
+        {
+            // Settings haven't previously been created -- make sure we at least
+            // have the Custom profile.
+            if(!profiles.contains(CUSTOM_PROFILE))
+            {
+                addProfile(CUSTOM_PROFILE);
 
-        // Make sure we at least have the Custom profile.
+                // Use whatever values are currently in effect.
+                fetch(CUSTOM_PROFILE);
+                current = CUSTOM_PROFILE;
+            }
+        }
+
+        // Still nothing?
         if(profiles.isEmpty())
         {
             addProfile(CUSTOM_PROFILE);
-
-            // Use whatever values are currently in effect.
             fetch(CUSTOM_PROFILE);
         }
 
