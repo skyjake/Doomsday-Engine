@@ -614,11 +614,11 @@ void P_TagFinished(int tag)
     }
 }
 
-void P_ACSPolyobjFinished(int po)
+void P_ACSPolyobjFinished(int tag)
 {
     int i;
 
-    if(PO_Busy(po) == true)
+    if(PO_Busy(tag) == true)
     {
         return;
     }
@@ -626,7 +626,7 @@ void P_ACSPolyobjFinished(int po)
     for(i = 0; i < ACScriptCount; ++i)
     {
         if(ACSInfo[i].state == ASTE_WAITING_FOR_POLY &&
-           ACSInfo[i].waitValue == po)
+           ACSInfo[i].waitValue == tag)
         {
             ACSInfo[i].state = ASTE_RUNNING;
         }

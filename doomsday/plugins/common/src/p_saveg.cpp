@@ -4753,7 +4753,7 @@ static void writeSoundSequences()
         {
             for(; i < numpolyobjs; ++i)
             {
-                if(node->mobj == (mobj_t *) P_GetPolyobj(i | 0x80000000))
+                if(node->mobj == (mobj_t *) P_PolyobjByID(i))
                 {
                     break;
                 }

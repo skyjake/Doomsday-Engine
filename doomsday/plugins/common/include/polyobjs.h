@@ -32,7 +32,7 @@ typedef enum {
 
 typedef struct {
     thinker_t       thinker;
-    int             polyobj;
+    int             polyobj; // tag
     int             intSpeed;
     unsigned int    dist;
     int             fangle;
@@ -41,7 +41,7 @@ typedef struct {
 
 typedef struct {
     thinker_t       thinker;
-    int             polyobj;
+    int             polyobj; // tag
     int             intSpeed;
     int             dist;
     int             totalDist;
@@ -77,20 +77,9 @@ extern "C" {
  */
 void PO_InitForMap(void);
 
-boolean PO_Busy(int polyobj);
+boolean PO_Busy(int tag);
 
 boolean PO_FindAndCreatePolyobj(int tag, boolean crush, float startX, float startY);
-
-/**
- * Lookup a Polyobj instance by unique ID or tag.
- *
- * @deprecated Prefer using P_PolyobjByID() or P_PolyobjByTag().
- *
- * @param num  If the MSB is set this is interpreted as a unique ID.
- *             Otherwise this value is interpreted as a tag that *should*
- *             match one polyobj.
- */
-Polyobj *P_GetPolyobj(int num);
 
 void T_PolyDoor(void *pd);
 
