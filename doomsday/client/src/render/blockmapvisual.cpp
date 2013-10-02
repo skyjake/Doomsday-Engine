@@ -44,7 +44,7 @@ using namespace de;
 byte bmapShowDebug = 0; // 1 = mobjs, 2 = lines, 3 = BSP leafs, 4 = polyobjs. cvar
 float bmapDebugSize = 1.5f; // cvar
 
-static int rendMobj(mobj_t *mo, void * /*parameters*/)
+static int drawMobj(mobj_t *mo, void * /*parameters*/)
 {
     if(mo->validCount != validCount)
     {
@@ -61,7 +61,7 @@ static int rendMobj(mobj_t *mo, void * /*parameters*/)
     return false; // Continue iteration.
 }
 
-static int rendLine(Line *line, void * /*parameters*/)
+static int drawLine(Line *line, void * /*parameters*/)
 {
     if(line->validCount() != validCount)
     {
@@ -73,7 +73,7 @@ static int rendLine(Line *line, void * /*parameters*/)
     return false; // Continue iteration.
 }
 
-static int rendBspLeaf(BspLeaf *bspLeaf, void * /*parameters*/)
+static int drawBspLeaf(BspLeaf *bspLeaf, void * /*parameters*/)
 {
     if(bspLeaf->hasPoly() && bspLeaf->validCount() != validCount)
     {
@@ -150,53 +150,48 @@ static int rendBspLeaf(BspLeaf *bspLeaf, void * /*parameters*/)
     return false; // Continue iteration.
 }
 
-static int rendCellLines(Blockmap const &bmap, Blockmap::Cell const &cell, void *parameters)
+static int drawCellLines(Blockmap const &bmap, Blockmap::Cell const &cell, void *parameters)
 {
     glBegin(GL_LINES);
-        bmap.iterate(cell, (int (*)(void*,void*)) rendLine, parameters);
+        bmap.iterate(cell, (int (*)(void*,void*)) drawLine, parameters);
     glEnd();
     return false; // Continue iteration.
 }
 
-static int rendCellPolyobjLines(void *object, void *parameters)
+static int drawCellPolyobjLines(void *object, void *parameters)
 {
     Polyobj *po = (Polyobj *)object;
-    DENG_ASSERT(po != 0);
     foreach(Line *line, po->lines())
     {
-        if(line->validCount() == validCount)
-            continue;
-
-        line->setValidCount(validCount);
-        int result = rendLine(line, parameters);
-        if(result) return result;
+        if(int result = drawLine(line, parameters))
+            return result;
     }
     return false; // Continue iteration.
 }
 
-static int rendCellPolyobjs(Blockmap const &bmap, Blockmap::Cell const &cell, void *parameters)
+static int drawCellPolyobjs(Blockmap const &bmap, Blockmap::Cell const &cell, void *parameters)
 {
     glBegin(GL_LINES);
-        bmap.iterate(cell, (int (*)(void*,void*)) rendCellPolyobjLines, parameters);
+        bmap.iterate(cell, (int (*)(void*,void*)) drawCellPolyobjLines, parameters);
     glEnd();
     return false; // Continue iteration.
 }
 
-static int rendCellMobjs(Blockmap const &bmap, Blockmap::Cell const &cell, void *parameters)
+static int drawCellMobjs(Blockmap const &bmap, Blockmap::Cell const &cell, void *parameters)
 {
     glBegin(GL_QUADS);
-        bmap.iterate(cell, (int (*)(void*,void*)) rendMobj, parameters);
+        bmap.iterate(cell, (int (*)(void*,void*)) drawMobj, parameters);
     glEnd();
     return false; // Continue iteration.
 }
 
-static int rendCellBspLeafs(Blockmap const &bmap, Blockmap::Cell const &cell, void *parameters)
+static int drawCellBspLeafs(Blockmap const &bmap, Blockmap::Cell const &cell, void *parameters)
 {
-    bmap.iterate(cell, (int (*)(void*,void*)) rendBspLeaf, parameters);
+    bmap.iterate(cell, (int (*)(void*,void*)) drawBspLeaf, parameters);
     return false; // Continue iteration.
 }
 
-static void rendBlockmapBackground(Blockmap const &bmap)
+static void drawBackground(Blockmap const &bmap)
 {
     Blockmap::Cell const &bmapDimensions = bmap.dimensions();
 
@@ -331,7 +326,7 @@ static void drawCellInfoBox(Blockmap const *blockmap, Point2Raw const *origin,
  * @param followMobj  Mobj to center/focus the visual on. Can be @c NULL.
  * @param cellDrawer  Blockmap cell content drawing callback. Can be @a NULL.
  */
-static void rendBlockmap(Blockmap const &bmap, mobj_t *followMobj,
+static void drawBlockmap(Blockmap const &bmap, mobj_t *followMobj,
     int (*cellDrawer) (Blockmap const &bmap, Blockmap::Cell const &cell, void *parameters))
 {
     Blockmap::CellBlock vCellBlock;
@@ -378,7 +373,7 @@ static void rendBlockmap(Blockmap const &bmap, mobj_t *followMobj,
     }
 
     // First we'll draw a background showing the "null" cells.
-    rendBlockmapBackground(bmap);
+    drawBackground(bmap);
     if(followMobj)
     {
         // Highlight cells the followed Mobj "touches".
@@ -502,7 +497,7 @@ static void rendBlockmap(Blockmap const &bmap, mobj_t *followMobj,
         validCount++;
         glColor3f(0, 1, 0);
         glBegin(GL_QUADS);
-            rendMobj(followMobj, NULL/*no params*/);
+            drawMobj(followMobj, NULL/*no params*/);
         glEnd();
     }
 
@@ -530,25 +525,25 @@ void Rend_BlockmapDebug()
     {
     default: // Mobjs.
         blockmap = &map.mobjBlockmap();
-        cellDrawer = rendCellMobjs;
+        cellDrawer = drawCellMobjs;
         objectTypeName = "Mobjs";
         break;
 
     case 2: // Lines.
         blockmap = &map.lineBlockmap();
-        cellDrawer = rendCellLines;
+        cellDrawer = drawCellLines;
         objectTypeName = "Lines";
         break;
 
     case 3: // BSP leafs.
         blockmap = &map.bspLeafBlockmap();
-        cellDrawer = rendCellBspLeafs;
+        cellDrawer = drawCellBspLeafs;
         objectTypeName = "BSP Leafs";
         break;
 
     case 4: // Polyobjs.
         blockmap = &map.polyobjBlockmap();
-        cellDrawer = rendCellPolyobjs;
+        cellDrawer = drawCellPolyobjs;
         objectTypeName = "Polyobjs";
         break;
     }
@@ -575,7 +570,7 @@ void Rend_BlockmapDebug()
         followMobj = viewPlayer->shared.mo;
 
     // Draw!
-    rendBlockmap(*blockmap, followMobj, cellDrawer);
+    drawBlockmap(*blockmap, followMobj, cellDrawer);
 
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();
