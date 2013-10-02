@@ -312,35 +312,35 @@ float Sv_GetMaxedMobjZ(const mobj_t* mo)
  * Store the state of the mobj into the register-mobj.
  * Called at register init and after each delta generation cycle.
  */
-void Sv_RegisterMobj(dt_mobj_t* reg, const mobj_t* mo)
+void Sv_RegisterMobj(dt_mobj_t *reg, mobj_t const *mo)
 {
     // (dt_mobj_t <=> mobj_t)
     // Just copy the data we need.
-    reg->thinker.id = mo->thinker.id;
-    reg->type = mo->type;
-    reg->dPlayer = mo->dPlayer;
-    reg->bspLeaf = mo->bspLeaf;
-    reg->origin[VX] = mo->origin[VX];
-    reg->origin[VY] = mo->origin[VY];
-    reg->origin[VZ] = Sv_GetMaxedMobjZ(mo);
-    reg->floorZ = mo->floorZ;
-    reg->ceilingZ = mo->ceilingZ;
-    reg->mom[MX] = mo->mom[MX];
-    reg->mom[MY] = mo->mom[MY];
-    reg->mom[MZ] = mo->mom[MZ];
-    reg->angle = mo->angle;
-    reg->selector = mo->selector;
-    reg->state = mo->state;
-    reg->radius = mo->radius;
-    reg->height = mo->height;
-    reg->ddFlags = mo->ddFlags;
-    reg->flags = mo->flags;
-    reg->flags2 = mo->flags2;
-    reg->flags3 = mo->flags3;
-    reg->health = mo->health;
-    reg->floorClip = mo->floorClip;
+    reg->thinker.id   = mo->thinker.id;
+    reg->type         = mo->type;
+    reg->dPlayer      = mo->dPlayer;
+    reg->_bspLeaf     = mo->_bspLeaf;
+    reg->origin[VX]   = mo->origin[VX];
+    reg->origin[VY]   = mo->origin[VY];
+    reg->origin[VZ]   = Sv_GetMaxedMobjZ(mo);
+    reg->floorZ       = mo->floorZ;
+    reg->ceilingZ     = mo->ceilingZ;
+    reg->mom[MX]      = mo->mom[MX];
+    reg->mom[MY]      = mo->mom[MY];
+    reg->mom[MZ]      = mo->mom[MZ];
+    reg->angle        = mo->angle;
+    reg->selector     = mo->selector;
+    reg->state        = mo->state;
+    reg->radius       = mo->radius;
+    reg->height       = mo->height;
+    reg->ddFlags      = mo->ddFlags;
+    reg->flags        = mo->flags;
+    reg->flags2       = mo->flags2;
+    reg->flags3       = mo->flags3;
+    reg->health       = mo->health;
+    reg->floorClip    = mo->floorClip;
     reg->translucency = mo->translucency;
-    reg->visTarget = mo->visTarget;
+    reg->visTarget    = mo->visTarget;
 }
 
 /**
@@ -1171,22 +1171,22 @@ void Sv_SubtractDelta(void* deltaPtr1, const void* deltaPtr2)
  * Applies the data in the source delta to the destination delta.
  * Both must be in the NEW state. Handles all types of deltas.
  */
-void Sv_ApplyDeltaData(void* destDelta, const void* srcDelta)
+void Sv_ApplyDeltaData(void *destDelta, void const *srcDelta)
 {
-    const delta_t*      src = (delta_t const *) srcDelta;
-    delta_t*            dest = (delta_t *) destDelta;
-    int                 sf = src->flags;
+    delta_t const *src = (delta_t const *) srcDelta;
+    delta_t *dest      = (delta_t *) destDelta;
+    int sf = src->flags;
 
     if(src->type == DT_MOBJ)
     {
-        const dt_mobj_t*    s = &((const mobjdelta_t *) src)->mo;
-        dt_mobj_t*          d = &((mobjdelta_t *) dest)->mo;
+        dt_mobj_t const *s = &((mobjdelta_t const *) src)->mo;
+        dt_mobj_t *d       = &((mobjdelta_t *) dest)->mo;
 
         // *Always* set the player pointer.
         d->dPlayer = s->dPlayer;
 
         if(sf & (MDF_ORIGIN_X | MDF_ORIGIN_Y))
-            d->bspLeaf = s->bspLeaf;
+            d->_bspLeaf = s->_bspLeaf;
         if(sf & MDF_ORIGIN_X)
             d->origin[VX] = s->origin[VX];
         if(sf & MDF_ORIGIN_Y)

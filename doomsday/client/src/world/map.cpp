@@ -623,7 +623,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
     {
         if(Mobj_IsSectorLinked(&mobj))
         {
-            mobj.bspLeaf->sector().unlink(&mobj);
+            Mobj_Sector(&mobj)->unlink(&mobj);
             return true;
         }
         return false;
@@ -1968,7 +1968,7 @@ void Map::link(mobj_t &mo, byte flags)
         d->unlinkMobjFromSectors(mo);
         bspLeafAtOrigin.sector().link(&mo);
     }
-    mo.bspLeaf = &bspLeafAtOrigin;
+    mo._bspLeaf = &bspLeafAtOrigin;
 
     // Link into blockmap?
     if(flags & DDLINK_BLOCKMAP)

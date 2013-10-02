@@ -688,8 +688,8 @@ int R_IterateBspLeafContacts(BspLeaf &bspLeaf, objtype_t type,
 
 void R_ObjlinkCreate(mobj_t &mobj)
 {
-    if(!mobj.bspLeaf) return;
-    createObjlink(*mobj.bspLeaf, &mobj, OT_MOBJ);
+    if(!Mobj_IsLinked(mobj)) return;
+    createObjlink(Mobj_BspLeafAtOrigin(mobj), &mobj, OT_MOBJ);
 }
 
 void R_LinkObjToBspLeaf(BspLeaf &bspLeaf, mobj_t &mobj)

@@ -1,4 +1,4 @@
-/** @file
+/** @file cl_player.cpp Clientside Player Management.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -17,11 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-/**
- * cl_player.c: Clientside Player Management
- */
-
-// HEADER FILES ------------------------------------------------------------
+#include <de/Vector>
 
 #include "de_base.h"
 #include "de_console.h"
@@ -32,28 +28,14 @@
 
 #include "BspLeaf"
 
-// MACROS ------------------------------------------------------------------
+using namespace de;
 
 #define TOP_PSPY            (32)
 #define BOTTOM_PSPY         (128)
 
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
 float pspMoveSpeed = 6;
 float cplrThrustMul = 1;
 clplayerstate_t clPlayerStates[DDMAXPLAYERS];
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 //static int fixSpeed = 15;
 //static float fixPos[3];
@@ -62,8 +44,6 @@ static float pspY;
 
 // Console player demo momentum (used to smooth out abrupt momentum changes).
 static float cpMom[3][LOCALCAM_WRITE_TICS];
-
-// CODE --------------------------------------------------------------------
 
 /**
  * Clears the player state table.
@@ -318,17 +298,15 @@ void ClPlayer_MoveLocal(coord_t dx, coord_t dy, coord_t z, boolean onground)
     cpMom[MY][SECONDS_TO_TICKS(gameTime) % LOCALCAM_WRITE_TICS] = dy;
 
     // Calculate an average.
-    coord_t mom[3] = { 0, 0, 0 };
+    Vector2d mom;
     for(int i = 0; i < LOCALCAM_WRITE_TICS; ++i)
     {
-        mom[MX] += cpMom[MX][i];
-        mom[MY] += cpMom[MY][i];
+        mom += Vector2d(cpMom[MX][i], cpMom[MY][i]);
     }
-    mom[MX] /= LOCALCAM_WRITE_TICS;
-    mom[MY] /= LOCALCAM_WRITE_TICS;
+    mom /= LOCALCAM_WRITE_TICS;
 
-    mo->mom[MX] = mom[MX];
-    mo->mom[MY] = mom[MY];
+    mo->mom[MX] = mom.x;
+    mo->mom[MY] = mom.y;
 
     if(dx != 0 || dy != 0)
     {
@@ -338,7 +316,7 @@ void ClPlayer_MoveLocal(coord_t dx, coord_t dy, coord_t z, boolean onground)
         P_MobjLink(mo, DDLINK_SECTOR | DDLINK_BLOCKMAP);
     }
 
-    mo->bspLeaf  = P_BspLeafAtPoint_FixedPrecision(mo->origin);
+    mo->_bspLeaf = P_BspLeafAtPoint_FixedPrecision(mo->origin);
     mo->floorZ   = Mobj_Cluster(*mo).floor().height();
     mo->ceilingZ = Mobj_Cluster(*mo).ceiling().height();
 

@@ -471,8 +471,9 @@ enum { /* Do NOT change the numerical values of the constants. */
 
 /// @ingroup mobj
 #define DD_BASE_DDMOBJ_ELEMENTS() \
-    thinker_t       thinker;            /* thinker node */ \
-    coord_t         origin[3];          /* origin [x,y,z] */
+    thinker_t       thinker;   /* thinker node */ \
+    coord_t         origin[3]; /* origin [x,y,z] */ \
+    BspLeaf        *_bspLeaf;  /* BSP leaf in which this resides (if known) */
 
 /**
  * All map think-able objects must use this as a base. Also used for sound
@@ -626,7 +627,6 @@ enum { MX, MY, MZ };
     nodeindex_t     lineRoot; /* lines to which this is linked */ \
     struct mobj_s  *sNext, **sPrev; /* links in sector (if needed) */ \
 \
-    BspLeaf        *bspLeaf; /* bspLeaf in which this resides */ \
     coord_t         mom[3]; \
     angle_t         angle; \
     spritenum_t     sprite; /* used to find patch_t and flip value */ \
@@ -666,7 +666,6 @@ enum { MX, MY, MZ };
 #define DD_BASE_POLYOBJ_ELEMENTS() \
     DD_BASE_DDMOBJ_ELEMENTS() \
 \
-    BspLeaf        *_bspLeaf; /* bspLeaf in which this resides */ \
     int             _indexInMap; \
     int             tag; /* Reference tag. */ \
     int             validCount; \

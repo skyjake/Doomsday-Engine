@@ -164,7 +164,7 @@ void P_MobjRecycle(mobj_t* mo)
 
 boolean Mobj_IsSectorLinked(mobj_t *mo)
 {
-    return mo != 0 && mo->bspLeaf != 0 && mo->sPrev != 0;
+    return mo != 0 && mo->_bspLeaf != 0 && mo->sPrev != 0;
 }
 
 /**
@@ -273,14 +273,14 @@ DENG_EXTERN_C void Mobj_OriginSmoothed(mobj_t *mo, coord_t origin[3])
 
 bool Mobj_IsLinked(mobj_t const &mobj)
 {
-    return mobj.bspLeaf != 0;
+    return mobj._bspLeaf != 0;
 }
 
 BspLeaf &Mobj_BspLeafAtOrigin(mobj_t const &mobj)
 {
     if(Mobj_IsLinked(mobj))
     {
-        return *mobj.bspLeaf;
+        return *mobj._bspLeaf;
     }
     throw Error("Mobj_BspLeafAtOrigin", "Mobj is not yet linked");
 }
