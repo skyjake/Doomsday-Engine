@@ -696,7 +696,6 @@ static int drawMapLinesForBspLeafWorker(BspLeaf *bspLeaf, void *context)
 static void drawMapLines(uiwidget_t *obj, int objType, boolean addToLists)
 {
     //guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
-    int i;
     assert(obj && obj->type == GUI_AUTOMAP);
 
     // VALIDCOUNT is used to track which lines have been drawn this frame.
@@ -714,9 +713,11 @@ static void drawMapLines(uiwidget_t *obj, int objType, boolean addToLists)
         P_BspLeafsBoxIterator(&aaBox, NULL, drawMapLinesForBspLeafWorker, obj);
     }
     else
-    {   // No. As the map lists are considered static we want them to contain all
+    {
+        // No. As the map lists are considered static we want them to contain all
         // walls, not just those visible *now* (note rotation).
-        for(i = 0; i < numbspleafs; ++i)
+        int i, numBspLeafs = P_Count(DMU_BSPLEAF);
+        for(i = 0; i < numBspLeafs; ++i)
         {
             P_Iteratep(P_ToPtr(DMU_BSPLEAF, i), DMU_LINE, obj, drawMapLineWorker);
         }

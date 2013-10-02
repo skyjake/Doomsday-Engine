@@ -35,8 +35,6 @@
 
 #define numvertexes             (P_Count(DMU_VERTEX))
 #define numsectors              (P_Count(DMU_SECTOR))
-#define numbspleafs             (P_Count(DMU_BSPLEAF))
-#define numbspnodes             (P_Count(DMU_BSPNODE))
 #define numlines                (P_Count(DMU_LINE))
 #define numsides                (P_Count(DMU_SIDE))
 #define numpolyobjs             (*(int*) DD_GetVariable(DD_POLYOBJ_COUNT))

@@ -244,7 +244,7 @@ static void SV_v13_ReadMobj(void)
     Reader_ReadInt32(svReader);
     Reader_ReadInt32(svReader);
 
-    // BspLeaf.
+    // Subsector.
     Reader_ReadInt32(svReader);
 
     floorz   = FIX2FLT(Reader_ReadInt32(svReader));
