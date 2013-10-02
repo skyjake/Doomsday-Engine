@@ -450,13 +450,7 @@ public:
         Polyobj **poly, Plane **plane, Surface **surface) const;
 
     int mobjsBoxIterator(AABoxd const &box,
-        int (*callback) (struct mobj_s *, void *), void *parameters = 0) const;
-
-    int linesBoxIterator(AABoxd const &box,
-        int (*callback) (Line *, void *), void *parameters = 0) const;
-
-    int polyobjLinesBoxIterator(AABoxd const &box,
-        int (*callback) (Line *, void *), void *parameters = 0) const;
+        int (*callback) (struct mobj_s *, void *), void *context = 0) const;
 
     /**
      * Lines and Polyobj lines (note polyobj lines are iterated first).
@@ -465,12 +459,21 @@ public:
      * a new logical traversal. Otherwise Lines marked with a validCount
      * equal to this will be skipped over (can be used to avoid processing
      * a line multiple times during complex / non-linear traversals.
+     *
+     * @param flags  @ref boxLineIteratorFlags
      */
-    int allLinesBoxIterator(AABoxd const &box,
-        int (*callback) (Line *, void *), void *parameters = 0) const;
+    int linesBoxIterator(AABoxd const &box, int flags,
+        int (*callback) (Line *, void *), void *context = 0) const;
+
+    /// @copydoc linesBoxIterator()
+    inline int linesBoxIterator(AABoxd const &box,
+        int (*callback) (Line *, void *), void *context = 0) const
+    {
+        return linesBoxIterator(box, BLF_ALL, callback, context);
+    }
 
     int bspLeafsBoxIterator(AABoxd const &box, Sector *sector,
-        int (*callback) (BspLeaf *, void *), void *parameters = 0) const;
+        int (*callback) (BspLeaf *, void *), void *context = 0) const;
 
     /**
      * @note validCount should be incremented before calling this to begin a
@@ -479,14 +482,14 @@ public:
      * multiple times during complex / non-linear traversals.
      */
     int polyobjsBoxIterator(AABoxd const &box,
-        int (*callback) (struct polyobj_s *, void *), void *parameters = 0) const;
+        int (*callback) (struct polyobj_s *, void *), void *context = 0) const;
 
     /**
      * The callback function will be called once for each line that crosses
      * trough the object. This means all the lines will be two-sided.
      */
     int mobjLinesIterator(struct mobj_s *mo,
-        int (*callback) (Line *, void *), void *parameters = 0) const;
+        int (*callback) (Line *, void *), void *context = 0) const;
 
     /**
      * Increment validCount before calling this routine. The callback function
@@ -495,10 +498,10 @@ public:
      * above or under the sector.
      */
     int mobjSectorsIterator(struct mobj_s *mo,
-        int (*callback) (Sector *, void *), void *parameters = 0) const;
+        int (*callback) (Sector *, void *), void *context = 0) const;
 
     int lineMobjsIterator(Line *line,
-        int (*callback) (struct mobj_s *, void *), void *parameters = 0) const;
+        int (*callback) (struct mobj_s *, void *), void *context = 0) const;
 
     /**
      * Increment validCount before using this. 'func' is called for each mobj
@@ -509,7 +512,7 @@ public:
      * a bunch of LineMobjs iterations.)
      */
     int sectorTouchingMobjsIterator(Sector *sector,
-        int (*callback) (struct mobj_s *, void *), void *parameters = 0) const;
+        int (*callback) (struct mobj_s *, void *), void *context = 0) const;
 
     /**
      * Trace a line between @a from and @a to, making a callback for each
@@ -517,7 +520,7 @@ public:
      * this defines.
      */
     int pathTraverse(const_pvec2d_t from, const_pvec2d_t to, int flags,
-                     traverser_t callback, void *parameters = 0);
+                     traverser_t callback, void *context = 0);
 
     /**
      * @copydoc pathTraverse()
@@ -528,11 +531,11 @@ public:
      * @param toY           Y axis map space coordinate for the path destination.
      */
     inline int pathTraverse(coord_t fromX, coord_t fromY, coord_t toX, coord_t toY,
-                            int flags, traverser_t callback, void *parameters = 0)
+                            int flags, traverser_t callback, void *context = 0)
     {
         coord_t from[2] = { fromX, fromY };
         coord_t to[2]   = { toX, toY };
-        return pathTraverse(from, to, flags, callback, parameters);
+        return pathTraverse(from, to, flags, callback, context);
     }
 
     /**

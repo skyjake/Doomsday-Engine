@@ -85,6 +85,18 @@
 struct intercept_s;
 
 /**
+ * @defgroup boxLineIteratorFlags Box Line Iterator Flags
+ * @ingroup apiFlags map
+ */
+///@{
+#define BLF_SECTOR      0x1 ///< Process map lines defining sectors
+#define BLF_POLYOBJ     0x2 ///< Process map lines defining polyobjs
+
+/// Process all map line types.
+#define BLF_ALL         BLF_SECTOR | BLF_POLYOBJ
+///@}
+
+/**
  * Public definitions of the internal map data pointers.  These can be
  * accessed externally, but only as identifiers to data instances.
  * For example, a game could use Sector to identify to sector to
@@ -302,26 +314,21 @@ DENG_API_TYPEDEF(Map)
     // Iterators
 
     int             (*Box_MobjsIterator)(AABoxd const *box, int (*callback) (struct mobj_s *, void *), void *context);
-    int             (*Box_LinesIterator)(AABoxd const *box, int (*callback) (Line *, void *), void *context);
 
     /**
      * Lines and Polyobj Lines (note Polyobj Lines are iterated first).
      *
-     * The validCount flags are used to avoid checking lines that are marked
-     * in multiple mapblocks, so increment validCount before the first call
-     * to Map::iterateCellLines() then make one or more calls to it.
-     */
-    int             (*Box_AllLinesIterator)(AABoxd const *box, int (*callback) (Line *, void *), void *context);
-
-    /**
-     * The validCount flags are used to avoid checking polys that are marked in
+     * The validCount flags are used to avoid checking lines that are marked in
      * multiple mapblocks, so increment validCount before the first call, then
      * make one or more calls to it.
+     *
+     * @param flags  @ref boxLineIteratorFlags
      */
-    int             (*Box_PolyobjLinesIterator)(AABoxd const *box, int (*callback) (Line *, void *), void *context);
+    int             (*Box_LinesIterator)(AABoxd const *box, int flags, int (*callback) (Line *, void *), void *context);
 
     int             (*Box_BspLeafsIterator)(AABoxd const *box, Sector *sector, int (*callback) (BspLeaf *, void *), void *context);
     int             (*Box_PolyobjsIterator)(AABoxd const *box, int (*callback) (struct polyobj_s *, void *), void *context);
+
     int             (*PathTraverse2)(coord_t const from[2], coord_t const to[2], int flags, int (*callback) (struct intercept_s const *, void *context), void *context);
     int             (*PathTraverse)(coord_t const from[2], coord_t const to[2], int flags, int (*callback) (struct intercept_s const *, void *context)/*, context=0*/);
 
@@ -606,8 +613,6 @@ DENG_API_T(Map);
 
 #define P_MobjsBoxIterator                  _api_Map.Box_MobjsIterator
 #define P_LinesBoxIterator                  _api_Map.Box_LinesIterator
-#define P_AllLinesBoxIterator               _api_Map.Box_AllLinesIterator
-#define P_PolyobjLinesBoxIterator           _api_Map.Box_PolyobjLinesIterator
 #define P_BspLeafsBoxIterator               _api_Map.Box_BspLeafsIterator
 #define P_PolyobjsBoxIterator               _api_Map.Box_PolyobjsIterator
 #define P_PathTraverse2                     _api_Map.PathTraverse2

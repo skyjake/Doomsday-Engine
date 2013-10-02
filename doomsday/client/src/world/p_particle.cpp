@@ -1159,14 +1159,16 @@ static void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
     V2d_AddToBox(mbox.arvec2, point);
 
     // Iterate the lines in the contacted blocks.
+    /// @todo Don't assume the current map.
 
     validCount++;
-    if(P_AllLinesBoxIterator(&mbox, PIT_CheckLinePtc, 0))
+    if(App_World().map().linesBoxIterator(mbox, PIT_CheckLinePtc))
     {
         fixed_t normal[2], dotp;
 
         // Must survive the touch.
-        if(!P_TouchParticle(pt, st, stDef, true)) return;
+        if(!P_TouchParticle(pt, st, stDef, true))
+            return;
 
         // There was a hit! Calculate bounce vector.
         // - Project movement vector on the normal of hitline.

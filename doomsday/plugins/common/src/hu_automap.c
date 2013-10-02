@@ -845,7 +845,7 @@ static void rendPolyobjs(uiwidget_t* ob)
 
     // Draw any polyobjects in view.
     UIAutomap_PVisibleAABounds(ob, &aaBox.minX, &aaBox.maxX, &aaBox.minY, &aaBox.maxY);
-    P_PolyobjLinesBoxIterator(&aaBox, rendPolyobjLine, ob);
+    P_LinesBoxIterator(&aaBox, BLF_POLYOBJ, rendPolyobjLine, ob);
 }
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
@@ -886,7 +886,7 @@ static void rendXGLinedefs(uiwidget_t* obj)
     rs.objType = -1;
 
     UIAutomap_PVisibleAABounds(obj, &aaBox.minX, &aaBox.maxX, &aaBox.minY, &aaBox.maxY);
-    P_LinesBoxIterator(&aaBox, rendXGLinedef, obj);
+    P_LinesBoxIterator(&aaBox, BLF_SECTOR, rendXGLinedef, obj);
 }
 #endif
 

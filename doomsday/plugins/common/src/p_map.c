@@ -401,7 +401,7 @@ boolean P_CheckSides(mobj_t* actor, coord_t x, coord_t y)
     tmBox.maxY = (startPos[VY] > endPos[VY]? startPos[VY] : endPos[VY]);
 
     VALIDCOUNT++;
-    return P_AllLinesBoxIterator(&tmBox, PIT_CrossLine, 0);
+    return P_LinesBoxIterator(&tmBox, BLF_ALL, PIT_CrossLine, 0);
 }
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
@@ -1240,20 +1240,20 @@ boolean P_CheckPositionXYZ(mobj_t *thing, coord_t x, coord_t y, coord_t z)
     tmBoxExpanded.maxX = tmBox.maxX;
     tmBoxExpanded.maxY = tmBox.maxY;
 
-    return !P_AllLinesBoxIterator(&tmBoxExpanded, PIT_CheckLine, 0);
+    return !P_LinesBoxIterator(&tmBoxExpanded, BLF_ALL, PIT_CheckLine, 0);
 }
 
-boolean P_CheckPosition(mobj_t* thing, coord_t const pos[3])
+boolean P_CheckPosition(mobj_t *thing, coord_t const pos[3])
 {
     return P_CheckPositionXYZ(thing, pos[VX], pos[VY], pos[VZ]);
 }
 
-boolean P_CheckPositionXY(mobj_t* thing, coord_t x, coord_t y)
+boolean P_CheckPositionXY(mobj_t *thing, coord_t x, coord_t y)
 {
     return P_CheckPositionXYZ(thing, x, y, DDMAXFLOAT);
 }
 
-boolean Mobj_IsRemotePlayer(mobj_t* mo)
+boolean Mobj_IsRemotePlayer(mobj_t *mo)
 {
     return (mo && ((IS_DEDICATED && mo->dPlayer) ||
                    (IS_CLIENT && mo->player && mo->player - players != CONSOLEPLAYER)));
@@ -1264,9 +1264,9 @@ boolean Mobj_IsRemotePlayer(mobj_t* mo)
  * MF_TELEPORT is set. $dropoff_fix
  */
 #if __JHEXEN__
-static boolean P_TryMove2(mobj_t* thing, coord_t x, coord_t y)
+static boolean P_TryMove2(mobj_t *thing, coord_t x, coord_t y)
 #else
-static boolean P_TryMove2(mobj_t* thing, coord_t x, coord_t y, boolean dropoff)
+static boolean P_TryMove2(mobj_t *thing, coord_t x, coord_t y, boolean dropoff)
 #endif
 {
     boolean isRemotePlayer = Mobj_IsRemotePlayer(thing);

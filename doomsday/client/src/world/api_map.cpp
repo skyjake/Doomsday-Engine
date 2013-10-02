@@ -1609,19 +1609,11 @@ DENG_EXTERN_C int P_PolyobjsBoxIterator(AABoxd const *box,
 }
 
 #undef P_LinesBoxIterator
-DENG_EXTERN_C int P_LinesBoxIterator(AABoxd const *box,
+DENG_EXTERN_C int P_LinesBoxIterator(AABoxd const *box, int flags,
     int (*callback) (Line *, void *), void *parameters)
 {
     if(!box || !App_World().hasMap()) return false; // Continue iteration.
-    return App_World().map().linesBoxIterator(*box, callback, parameters);
-}
-
-#undef P_PolyobjLinesBoxIterator
-DENG_EXTERN_C int P_PolyobjLinesBoxIterator(AABoxd const *box,
-    int (*callback) (Line *, void *), void *parameters)
-{
-    if(!box || !App_World().hasMap()) return false; // Continue iteration.
-    return App_World().map().polyobjLinesBoxIterator(*box, callback, parameters);
+    return App_World().map().linesBoxIterator(*box, flags, callback, parameters);
 }
 
 #undef P_BspLeafsBoxIterator
@@ -1630,14 +1622,6 @@ DENG_EXTERN_C int P_BspLeafsBoxIterator(AABoxd const *box, Sector *sector,
 {
     if(!box || !App_World().hasMap()) return false; // Continue iteration.
     return App_World().map().bspLeafsBoxIterator(*box, sector, callback, parameters);
-}
-
-#undef P_AllLinesBoxIterator
-DENG_EXTERN_C int P_AllLinesBoxIterator(AABoxd const *box,
-    int (*callback) (Line *, void *), void *parameters)
-{
-    if(!box || !App_World().hasMap()) return false; // Continue iteration.
-    return App_World().map().allLinesBoxIterator(*box, callback, parameters);
 }
 
 #undef P_PathTraverse2
@@ -1884,8 +1868,6 @@ DENG_DECLARE_API(Map) =
 
     P_MobjsBoxIterator,
     P_LinesBoxIterator,
-    P_AllLinesBoxIterator,
-    P_PolyobjLinesBoxIterator,
     P_BspLeafsBoxIterator,
     P_PolyobjsBoxIterator,
     P_PathTraverse2,
