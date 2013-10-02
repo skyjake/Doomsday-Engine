@@ -31,29 +31,28 @@
 #include "p_mapspec.h"
 #include "p_terraintype.h"
 
-mobj_t* P_SpawnTeleFog(coord_t x, coord_t y, angle_t angle)
+mobj_t *P_SpawnTeleFog(coord_t x, coord_t y, angle_t angle)
 {
     return P_SpawnMobjXYZ(MT_TFOG, x, y, 0, angle, MSF_Z_FLOOR);
 }
 
 typedef struct {
-    Sector* sec;
+    Sector *sec;
     mobjtype_t type;
-    mobj_t* foundMobj;
+    mobj_t *foundMobj;
 } findmobjparams_t;
 
-static int findMobj(thinker_t* th, void* context)
+static int findMobj(thinker_t *th, void *context)
 {
-    findmobjparams_t* params = (findmobjparams_t*) context;
-    mobj_t* mo = (mobj_t *) th;
+    findmobjparams_t *params = (findmobjparams_t *) context;
+    mobj_t *mo = (mobj_t *) th;
 
     // Must be of the correct type?
     if(params->type >= 0 && params->type != mo->type)
         return false; // Continue iteration.
 
     // Must be in the specified sector?
-    if(params->sec &&
-       params->sec != P_GetPtrp(mo->bspLeaf, DMU_SECTOR))
+    if(params->sec && params->sec != Mobj_Sector(mo))
         return false; // Continue iteration.
 
     // Found it!
@@ -61,12 +60,12 @@ static int findMobj(thinker_t* th, void* context)
     return true; // Stop iteration.
 }
 
-static mobj_t* getTeleportDestination(short tag)
+static mobj_t *getTeleportDestination(short tag)
 {
-    iterlist_t* list = P_GetSectorIterListForTag(tag, false);
+    iterlist_t *list = P_GetSectorIterListForTag(tag, false);
     if(list)
     {
-        Sector* sec = NULL;
+        Sector *sec = NULL;
         findmobjparams_t params;
 
         params.type = MT_TELEPORTMAN;
@@ -146,10 +145,9 @@ int EV_Teleport(Line* line, int side, mobj_t* mo, boolean spawnFog)
         {
             mo->floorClip = 0;
 
-            if(FEQUAL(mo->origin[VZ], P_GetDoublep(mo->bspLeaf, DMU_FLOOR_HEIGHT)))
+            if(FEQUAL(mo->origin[VZ], P_GetDoublep(Mobj_Sector(mo), DMU_FLOOR_HEIGHT)))
             {
-                const terraintype_t* tt = P_MobjGetFloorTerrainType(mo);
-
+                terraintype_t const *tt = P_MobjGetFloorTerrainType(mo);
                 if(tt->flags & TTF_FLOORCLIP)
                 {
                     mo->floorClip = 10;

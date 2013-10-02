@@ -347,8 +347,8 @@ static void SV_v13_ReadMobj(void)
         mo->player->plr->mo->dPlayer = mo->player->plr;
     }
     P_MobjSetOrigin(mo);
-    mo->floorZ   = P_GetDoublep(mo->bspLeaf, DMU_FLOOR_HEIGHT);
-    mo->ceilingZ = P_GetDoublep(mo->bspLeaf, DMU_CEILING_HEIGHT);
+    mo->floorZ   = P_GetDoublep(Mobj_Sector(mo), DMU_FLOOR_HEIGHT);
+    mo->ceilingZ = P_GetDoublep(Mobj_Sector(mo), DMU_CEILING_HEIGHT);
 }
 
 static void P_v13_UnArchivePlayers(void)
@@ -364,7 +364,7 @@ static void P_v13_UnArchivePlayers(void)
         players[i].attacker = NULL;
         for(j = 0; j < NUMPSPRITES; ++j)
         {
-            player_t* plr = &players[i];
+            player_t *plr = &players[i];
 
             if(plr->pSprites[j].state)
             {

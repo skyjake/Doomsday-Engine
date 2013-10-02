@@ -203,18 +203,18 @@ DENG_API_TYPEDEF(Map)
     // Map Objects
 
     struct mobj_s*  (*MO_CreateXYZ)(thinkfunc_t function, coord_t x, coord_t y, coord_t z, angle_t angle, coord_t radius, coord_t height, int ddflags);
-    void            (*MO_Destroy)(struct mobj_s* mo);
+    void            (*MO_Destroy)(struct mobj_s *mo);
     struct mobj_s*  (*MO_MobjForID)(int id);
-    void            (*MO_SetState)(struct mobj_s* mo, int statenum);
-    void            (*MO_Link)(struct mobj_s* mo, byte flags);
-    int             (*MO_Unlink)(struct mobj_s* mo);
-    void            (*MO_SpawnDamageParticleGen)(struct mobj_s* mo, struct mobj_s* inflictor, int amount);
+    void            (*MO_SetState)(struct mobj_s *mo, int statenum);
+    void            (*MO_Link)(struct mobj_s *mo, byte flags);
+    int             (*MO_Unlink)(struct mobj_s *mo);
+    void            (*MO_SpawnDamageParticleGen)(struct mobj_s *mo, struct mobj_s* inflictor, int amount);
 
     /**
      * The callback function will be called once for each line that crosses
      * trough the object. This means all the lines will be two-sided.
      */
-    int             (*MO_LinesIterator)(struct mobj_s* mo, int (*callback) (Line*, void*), void* parameters);
+    int             (*MO_LinesIterator)(struct mobj_s *mo, int (*callback) (Line*, void*), void* parameters);
 
     /**
      * Increment validCount before calling this routine. The callback function
@@ -222,14 +222,24 @@ DENG_API_TYPEDEF(Map)
      * partly inside). This is not a 3D check; the mobj may actually reside
      * above or under the sector.
      */
-    int             (*MO_SectorsIterator)(struct mobj_s* mo, int (*callback) (Sector*, void*), void* parameters);
+    int             (*MO_SectorsIterator)(struct mobj_s *mo, int (*callback) (Sector*, void*), void* parameters);
 
     /**
      * Calculate the visible @a origin of @a mobj in world space, including
      * any short range offset.
      */
-    void            (*MO_OriginSmoothed)(struct mobj_s* mobj, coord_t origin[3]);
-    angle_t         (*MO_AngleSmoothed)(struct mobj_s* mobj);
+    void            (*MO_OriginSmoothed)(struct mobj_s *mobj, coord_t origin[3]);
+    angle_t         (*MO_AngleSmoothed)(struct mobj_s *mobj);
+
+    /**
+     * Returns the sector attributed to the BSP leaf in which the mobj's origin
+     * currently falls. If the mobj is not yet linked then @c 0 is returned.
+     *
+     * Note: The mobj is necessarily within the bounds of the sector!
+     *
+     * @param mobj  Mobj instance.
+     */
+    Sector         *(*MO_Sector)(struct mobj_s const *mobj);
 
     // Polyobjs
 
@@ -349,7 +359,7 @@ DENG_API_TYPEDEF(Map)
      *
      * @note Always returns a valid divline_t even if there is no current map.
      */
-    Divline const * (*TraceLOS)(void);
+    Divline const  *(*TraceLOS)(void);
 
     /**
      * Retrieve an immutable copy of the TraceOpening state for the CURRENT map.
@@ -588,6 +598,7 @@ DENG_API_T(Map);
 #define P_MobjSectorsIterator               _api_Map.MO_SectorsIterator
 #define Mobj_AngleSmoothed                  _api_Map.MO_AngleSmoothed
 #define Mobj_OriginSmoothed                 _api_Map.MO_OriginSmoothed
+#define Mobj_Sector                         _api_Map.MO_Sector
 
 #define P_PolyobjMoveXY                     _api_Map.PO_MoveXY
 #define P_PolyobjRotate                     _api_Map.PO_Rotate

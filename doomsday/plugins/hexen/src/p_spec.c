@@ -661,15 +661,15 @@ boolean P_ActivateLine(Line *line, mobj_t *mo, int side, int activationType)
 /**
  * Called every tic frame that the player origin is in a special sector.
  */
-void P_PlayerInSpecialSector(player_t* player)
+void P_PlayerInSpecialSector(player_t *player)
 {
-    static const coord_t pushTab[3] = {
+    static coord_t const pushTab[3] = {
         1.0 / 32 * 5,
         1.0 / 32 * 10,
         1.0 / 32 * 25
     };
-    Sector* sector = P_GetPtrp(player->plr->mo->bspLeaf, DMU_SECTOR);
-    xsector_t* xsector;
+    Sector *sector = Mobj_Sector(player->plr->mo);
+    xsector_t *xsector;
 
     if(!FEQUAL(player->plr->mo->origin[VZ], P_GetDoublep(sector, DMU_FLOOR_HEIGHT)))
         return; // Player is not touching the floor
@@ -773,7 +773,7 @@ void P_PlayerOnSpecialFloor(player_t* player)
         return;
 
     if(player->plr->mo->origin[VZ] >
-       P_GetDoublep(player->plr->mo->bspLeaf, DMU_FLOOR_HEIGHT))
+       P_GetDoublep(Mobj_Sector(player->plr->mo), DMU_FLOOR_HEIGHT))
     {
         return; // Player is not touching the floor
     }

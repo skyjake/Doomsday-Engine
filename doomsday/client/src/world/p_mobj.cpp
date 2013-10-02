@@ -271,12 +271,12 @@ DENG_EXTERN_C void Mobj_OriginSmoothed(mobj_t *mo, coord_t origin[3])
     }
 }
 
-bool Mobj_IsLinked(mobj_t &mobj)
+bool Mobj_IsLinked(mobj_t const &mobj)
 {
     return mobj.bspLeaf != 0;
 }
 
-BspLeaf &Mobj_BspLeafAtOrigin(mobj_t &mobj)
+BspLeaf &Mobj_BspLeafAtOrigin(mobj_t const &mobj)
 {
     if(Mobj_IsLinked(mobj))
     {
@@ -285,25 +285,27 @@ BspLeaf &Mobj_BspLeafAtOrigin(mobj_t &mobj)
     throw Error("Mobj_BspLeafAtOrigin", "Mobj is not yet linked");
 }
 
-bool Mobj_HasCluster(mobj_t &mobj)
+bool Mobj_HasCluster(mobj_t const &mobj)
 {
     if(!Mobj_IsLinked(mobj)) return false;
     return Mobj_BspLeafAtOrigin(mobj).hasCluster();
 }
 
-SectorCluster &Mobj_Cluster(mobj_t &mobj)
+SectorCluster &Mobj_Cluster(mobj_t const &mobj)
 {
     return Mobj_BspLeafAtOrigin(mobj).cluster();
 }
 
-SectorCluster *Mobj_ClusterPtr(mobj_t &mobj)
+SectorCluster *Mobj_ClusterPtr(mobj_t const &mobj)
 {
     return Mobj_HasCluster(mobj)? &Mobj_Cluster(mobj) : 0;
 }
 
-Sector &Mobj_Sector(mobj_t &mobj)
+#undef Mobj_Sector
+DENG_EXTERN_C Sector *Mobj_Sector(mobj_t const *mobj)
 {
-    return Mobj_Cluster(mobj).sector();
+    if(!mobj) return 0;
+    return Mobj_BspLeafAtOrigin(*mobj).sectorPtr();
 }
 
 #ifdef __CLIENT__

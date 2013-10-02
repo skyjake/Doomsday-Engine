@@ -1761,18 +1761,19 @@ DENG_EXTERN_C void P_SetTraceOpening(Line *line)
 }
 
 // p_mobj.c
-DENG_EXTERN_C mobj_t* P_MobjCreateXYZ(thinkfunc_t function, coord_t x, coord_t y, coord_t z, angle_t angle, coord_t radius, coord_t height, int ddflags);
-DENG_EXTERN_C void P_MobjDestroy(mobj_t* mo);
-DENG_EXTERN_C void P_MobjDestroy(mobj_t* mobj);
-DENG_EXTERN_C void P_MobjSetState(mobj_t* mobj, int statenum);
-DENG_EXTERN_C angle_t Mobj_AngleSmoothed(mobj_t* mo);
-DENG_EXTERN_C void Mobj_OriginSmoothed(mobj_t* mo, coord_t origin[3]);
+DENG_EXTERN_C mobj_t *P_MobjCreateXYZ(thinkfunc_t function, coord_t x, coord_t y, coord_t z, angle_t angle, coord_t radius, coord_t height, int ddflags);
+DENG_EXTERN_C void P_MobjDestroy(mobj_t *mobj);
+DENG_EXTERN_C void P_MobjDestroy(mobj_t *mobj);
+DENG_EXTERN_C void P_MobjSetState(mobj_t *mobj, int statenum);
+DENG_EXTERN_C angle_t Mobj_AngleSmoothed(mobj_t *mobj);
+DENG_EXTERN_C void Mobj_OriginSmoothed(mobj_t *mobj, coord_t origin[3]);
+DENG_EXTERN_C Sector *Mobj_Sector(mobj_t const *mobj);
 
 #undef P_SpawnDamageParticleGen
-DENG_EXTERN_C void P_SpawnDamageParticleGen(mobj_t *mo, mobj_t *inflictor, int amount)
+DENG_EXTERN_C void P_SpawnDamageParticleGen(mobj_t *mobj, mobj_t *inflictor, int amount)
 {
 #ifdef __CLIENT__
-    P_SpawnMapDamageParticleGen(mo, inflictor, amount);
+    P_SpawnMapDamageParticleGen(mobj, inflictor, amount);
 #endif
 }
 
@@ -1918,6 +1919,7 @@ DENG_DECLARE_API(Map) =
     P_MobjSectorsIterator,
     Mobj_OriginSmoothed,
     Mobj_AngleSmoothed,
+    Mobj_Sector,
 
     P_PolyobjMoveXY,
     P_PolyobjRotate,

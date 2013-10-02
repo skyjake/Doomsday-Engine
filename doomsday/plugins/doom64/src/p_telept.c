@@ -36,29 +36,28 @@
 #include "p_terraintype.h"
 #include "p_start.h"
 
-mobj_t* P_SpawnTeleFog(coord_t x, coord_t y, angle_t angle)
+mobj_t *P_SpawnTeleFog(coord_t x, coord_t y, angle_t angle)
 {
     return P_SpawnMobjXYZ(MT_TFOG, x, y, TELEFOGHEIGHT, angle, MSF_Z_FLOOR);
 }
 
 typedef struct {
-    Sector* sec;
+    Sector *sec;
     mobjtype_t type;
-    mobj_t* foundMobj;
+    mobj_t *foundMobj;
 } findmobjparams_t;
 
-static int findMobj(thinker_t* th, void* context)
+static int findMobj(thinker_t *th, void *context)
 {
-    findmobjparams_t* params = (findmobjparams_t*) context;
-    mobj_t* mo = (mobj_t*) th;
+    findmobjparams_t *params = (findmobjparams_t *) context;
+    mobj_t *mo = (mobj_t *) th;
 
     // Must be of the correct type?
     if(params->type >= 0 && params->type != mo->type)
         return false; // Continue iteration.
 
     // Must be in the specified sector?
-    if(params->sec &&
-       params->sec != P_GetPtrp(mo->bspLeaf, DMU_SECTOR))
+    if(params->sec && params->sec != Mobj_Sector(mo))
         return false; // Continue iteration.
 
     // Found it!
@@ -145,10 +144,9 @@ int EV_Teleport(Line* line, int side, mobj_t* mo, boolean spawnFog)
         {
             mo->floorClip = 0;
 
-            if(FEQUAL(mo->origin[VZ], P_GetDoublep(mo->bspLeaf, DMU_FLOOR_HEIGHT)))
+            if(FEQUAL(mo->origin[VZ], P_GetDoublep(Mobj_Sector(mo), DMU_FLOOR_HEIGHT)))
             {
-                const terraintype_t* tt = P_MobjGetFloorTerrainType(mo);
-
+                terraintype_t const *tt = P_MobjGetFloorTerrainType(mo);
                 if(tt->flags & TTF_FLOORCLIP)
                 {
                     mo->floorClip = 10;
@@ -274,18 +272,17 @@ static mobjtype_t isFadeSpawner(int doomEdNum)
 }
 
 typedef struct {
-    Sector* sec;
+    Sector *sec;
     coord_t spawnHeight;
 } fadespawnparams_t;
 
-static int fadeSpawn(thinker_t* th, void* context)
+static int fadeSpawn(thinker_t *th, void *context)
 {
-    fadespawnparams_t* params = (fadespawnparams_t*) context;
-    mobj_t* origin = (mobj_t *) th;
+    fadespawnparams_t *params = (fadespawnparams_t *) context;
+    mobj_t *origin = (mobj_t *) th;
     mobjtype_t spawntype;
 
-    if(params->sec &&
-       params->sec != P_GetPtrp(origin->bspLeaf, DMU_SECTOR))
+    if(params->sec && params->sec != Mobj_Sector(origin))
         return false; // Continue iteration.
 
     // Only fade spawn origins of a certain type.
@@ -294,7 +291,7 @@ static int fadeSpawn(thinker_t* th, void* context)
     {
         coord_t pos[3];
         angle_t an;
-        mobj_t* mo;
+        mobj_t *mo;
 
         an = origin->angle >> ANGLETOFINESHIFT;
 
@@ -359,20 +356,18 @@ typedef enum {
 } bitwiseop_t;
 
 typedef struct {
-    Sector*             sec;
-    boolean             notPlayers;
-    int                 flags;
-    bitwiseop_t         op;
+    Sector *sec;
+    boolean notPlayers;
+    int flags;
+    bitwiseop_t op;
 } pit_changemobjflagsparams_t;
 
-int PIT_ChangeMobjFlags(thinker_t* th, void* context)
+int PIT_ChangeMobjFlags(thinker_t *th, void *context)
 {
-    pit_changemobjflagsparams_t* params =
-        (pit_changemobjflagsparams_t*) context;
-    mobj_t*             mo = (mobj_t*) th;
+    pit_changemobjflagsparams_t *params = (pit_changemobjflagsparams_t *) context;
+    mobj_t *mo = (mobj_t *) th;
 
-    if(params->sec &&
-       params->sec != P_GetPtrp(mo->bspLeaf, DMU_SECTOR))
+    if(params->sec && params->sec != Mobj_Sector(mo))
         return false; // Continue iteration.
 
     if(params->notPlayers && mo->player)

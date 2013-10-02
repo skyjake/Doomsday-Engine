@@ -69,21 +69,16 @@ extern "C" {
 /**
  * Converts a line to an xline.
  */
-xline_t*    P_ToXLine(Line* line);
+xline_t *P_ToXLine(Line *line);
 
-xline_t*    P_GetXLine(int index);
+xline_t *P_GetXLine(int index);
 
 /**
  * Converts a sector to an xsector.
  */
-xsector_t*  P_ToXSector(Sector* sector);
+xsector_t *P_ToXSector(Sector *sector);
 
-xsector_t*  P_GetXSector(int index);
-
-/**
- * Given a BSP leaf - find its parent xsector.
- */
-xsector_t*  P_ToXSectorOfBspLeaf(BspLeaf* sub);
+xsector_t *P_GetXSector(int index);
 
 /**
  * Update the specified player's automap.

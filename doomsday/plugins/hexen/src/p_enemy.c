@@ -144,10 +144,10 @@ void P_ClearBodyQueue(void)
  * If a monster yells at a player, it will alert other monsters to the
  * player's whereabouts.
  */
-void P_NoiseAlert(mobj_t* target, mobj_t* emitter)
+void P_NoiseAlert(mobj_t* target, mobj_t *emitter)
 {
     VALIDCOUNT++;
-    P_RecursiveSound(target, P_GetPtrp(emitter->bspLeaf, DMU_SECTOR), 0);
+    P_RecursiveSound(target, Mobj_Sector(emitter), 0);
 }
 
 boolean P_CheckMeleeRange(mobj_t* actor, boolean midrange)
@@ -506,12 +506,12 @@ boolean P_LookForPlayers(mobj_t* actor, boolean allAround)
 /**
  * Stay in state until a player is sighted.
  */
-void C_DECL A_Look(mobj_t* actor)
+void C_DECL A_Look(mobj_t *actor)
 {
-    mobj_t         *targ;
+    mobj_t *targ;
 
     actor->threshold = 0; // Any shot will wake up.
-    targ = P_ToXSectorOfBspLeaf(actor->bspLeaf)->soundTarget;
+    targ = P_ToXSector(Mobj_Sector(actor))->soundTarget;
     if(targ && (targ->flags & MF_SHOOTABLE))
     {
         actor->target = targ;
@@ -531,9 +531,7 @@ void C_DECL A_Look(mobj_t* actor)
   seeyou:
     if(actor->info->seeSound)
     {
-        int     sound;
-
-        sound = actor->info->seeSound;
+        int sound = actor->info->seeSound;
         if(actor->flags2 & MF2_BOSS)
         {   // Full volume
             S_StartSound(sound, NULL);
@@ -1776,13 +1774,13 @@ void C_DECL A_SerpentChase(mobj_t* actor)
     // Chase towards player.
     memcpy(oldpos, actor->origin, sizeof(oldpos));
 
-    oldMaterial = P_GetPtrp(actor->bspLeaf, DMU_FLOOR_MATERIAL);
+    oldMaterial = P_GetPtrp(Mobj_Sector(actor), DMU_FLOOR_MATERIAL);
     if(--actor->moveCount < 0 || !P_Move(actor))
     {
         P_NewChaseDir(actor);
     }
 
-    if(P_GetPtrp(actor->bspLeaf, DMU_FLOOR_MATERIAL) != oldMaterial)
+    if(P_GetPtrp(Mobj_Sector(actor), DMU_FLOOR_MATERIAL) != oldMaterial)
     {
         P_TryMoveXY(actor, oldpos[VX], oldpos[VY]);
         P_NewChaseDir(actor);

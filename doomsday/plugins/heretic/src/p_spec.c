@@ -815,9 +815,9 @@ static void P_ShootSpecialLine(mobj_t* thing, Line* line)
 /**
  * Called every tic frame that the player origin is in a special sector.
  */
-void P_PlayerInSpecialSector(player_t* player)
+void P_PlayerInSpecialSector(player_t *player)
 {
-    Sector* sector = P_GetPtrp(player->plr->mo->bspLeaf, DMU_SECTOR);
+    Sector *sector = Mobj_Sector(player->plr->mo);
 
     // Falling, not all the way down yet?
     if(!FEQUAL(player->plr->mo->origin[VZ], P_GetDoublep(sector, DMU_FLOOR_HEIGHT)))
@@ -985,17 +985,17 @@ void P_InitLava(void)
     LavaInflictor.flags2 = MF2_FIREDAMAGE | MF2_NODMGTHRUST;
 }
 
-void P_PlayerInWindSector(player_t* player)
+void P_PlayerInWindSector(player_t *player)
 {
-    static const coord_t pushTab[5] = {
+    static coord_t const pushTab[5] = {
         2048.0 / FRACUNIT * 5,
         2048.0 / FRACUNIT * 10,
         2048.0 / FRACUNIT * 25,
         2048.0 / FRACUNIT * 30,
         2048.0 / FRACUNIT * 35
     };
-    Sector* sector = P_GetPtrp(player->plr->mo->bspLeaf, DMU_SECTOR);
-    xsector_t* xsector = P_ToXSector(sector);
+    Sector *sector     = Mobj_Sector(player->plr->mo);
+    xsector_t *xsector = P_ToXSector(sector);
 
     switch(xsector->special)
     {

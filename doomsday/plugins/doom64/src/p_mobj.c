@@ -1,40 +1,30 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file p_mobj.c World map object interactions.
  *
- *\author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
- *\author Copyright © 1999 by Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
- *\author Copyright © 1999-2000 by Jess Haas, Nicolas Kalkhof, Colin Phipps, Florian Schulze (PrBoom 2.2.6)
- *\author Copyright © 1993-1996 by id Software, Inc.
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
+ * @authors Copyright © 1999 by Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
+ * @authors Copyright © 1999-2000 by Jess Haas, Nicolas Kalkhof, Colin Phipps, Florian Schulze (PrBoom 2.2.6)
+ * @authors Copyright © 1993-1996 by id Software, Inc.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
-/**
- * p_mobj.c: Moving object handling. Spawn functions.
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 #ifdef MSVC
 #  pragma optimize("g", off)
 #endif
-
-// HEADER FILES ------------------------------------------------------------
 
 #include <math.h>
 #include <stdio.h>
@@ -52,34 +42,14 @@
 #include "p_actor.h"
 #include "p_start.h"
 
-// MACROS ------------------------------------------------------------------
-
 #define VANISHTICS              (2*TICSPERSEC)
 #define SPAWNFADETICS           (1*TICSPERSEC)
 
 #define MAX_BOB_OFFSET          (8)
 
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
-
-const terraintype_t* P_MobjGetFloorTerrainType(mobj_t* mo)
+terraintype_t const *P_MobjGetFloorTerrainType(mobj_t *mobj)
 {
-    Sector*             sec = P_GetPtrp(mo->bspLeaf, DMU_SECTOR);
-
-    return P_PlaneMaterialTerrainType(sec, PLN_FLOOR);
+    return P_PlaneMaterialTerrainType(Mobj_Sector(mobj), PLN_FLOOR);
 }
 
 /**
@@ -156,10 +126,10 @@ coord_t P_MobjGetFriction(mobj_t *mo)
         return FRICTION_FLY;
     }
 
-    return XS_Friction(P_GetPtrp(mo->bspLeaf, DMU_SECTOR));
+    return XS_Friction(Mobj_Sector(mo));
 }
 
-static coord_t getFriction(mobj_t* mo)
+static coord_t getFriction(mobj_t *mo)
 {
     if((mo->flags2 & MF2_FLY) && !(mo->origin[VZ] <= mo->floorZ) &&
        !mo->onMobj)
@@ -169,7 +139,7 @@ static coord_t getFriction(mobj_t* mo)
     }
 
 #if __JHERETIC__
-    if(P_ToXSector(P_GetPtrp(mo->bspLeaf, DMU_SECTOR))->special == 15)
+    if(P_ToXSector(Mobj_Sector(mo))->special == 15)
     {
         // Friction_Low
         return FRICTION_LOW;
@@ -323,11 +293,10 @@ void P_HitFloor(mobj_t* mo)
     //P_MobjSectorsIterator(mo, PIT_Splash, mo);
 }
 
-void P_MobjMoveZ(mobj_t* mo)
+void P_MobjMoveZ(mobj_t *mo)
 {
-    coord_t gravity, dist, delta;
-
-    gravity = XS_Gravity(P_GetPtrp(mo->bspLeaf, DMU_SECTOR));
+    coord_t gravity = XS_Gravity(Mobj_Sector(mo));
+    coord_t dist, delta;
 
     // $democam: cameramen get special z movement.
     if(P_CameraZMovement(mo))
@@ -563,8 +532,8 @@ void P_MobjMoveZ(mobj_t* mo)
         if(!((mo->flags ^ MF_MISSILE) & (MF_MISSILE | MF_NOCLIP)))
         {
             // Don't explode against sky.
-            if(P_GetIntp(P_GetPtrp(mo->bspLeaf, DMU_CEILING_MATERIAL),
-                           DMU_FLAGS) & MATF_SKYMASK)
+            if(P_GetIntp(P_GetPtrp(Mobj_Sector(mo), DMU_CEILING_MATERIAL),
+                         DMU_FLAGS) & MATF_SKYMASK)
             {
                 P_MobjRemove(mo, false);
             }
@@ -622,9 +591,9 @@ void P_MobjThinker(void *mobjThinkerPtr)
     if(mobj->type == MT_LIGHTSOURCE)
     {
         if(mobj->moveDir > 0)
-            mobj->origin[VZ] = P_GetDoublep(mobj->bspLeaf, DMU_FLOOR_HEIGHT);
+            mobj->origin[VZ] = P_GetDoublep(Mobj_Sector(mobj), DMU_FLOOR_HEIGHT);
         else
-            mobj->origin[VZ] = P_GetDoublep(mobj->bspLeaf, DMU_CEILING_HEIGHT);
+            mobj->origin[VZ] = P_GetDoublep(Mobj_Sector(mobj), DMU_CEILING_HEIGHT);
 
         mobj->origin[VZ] += FIX2FLT(mobj->moveDir);
         return;
@@ -853,9 +822,9 @@ mobj_t* P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z, angle_t
     // Set BSP leaf and/or block links.
     P_MobjSetOrigin(mo);
 
-    mo->floorZ   = P_GetDoublep(mo->bspLeaf, DMU_FLOOR_HEIGHT);
+    mo->floorZ   = P_GetDoublep(Mobj_Sector(mo), DMU_FLOOR_HEIGHT);
     mo->dropOffZ = mo->floorZ;
-    mo->ceilingZ = P_GetDoublep(mo->bspLeaf, DMU_CEILING_HEIGHT);
+    mo->ceilingZ = P_GetDoublep(Mobj_Sector(mo), DMU_CEILING_HEIGHT);
 
     if((spawnFlags & MSF_Z_CEIL) || (info->flags & MF_SPAWNCEILING))
     {
@@ -891,10 +860,9 @@ mobj_t* P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z, angle_t
     mo->floorClip = 0;
 
     if((mo->flags2 & MF2_FLOORCLIP) &&
-       FEQUAL(mo->origin[VZ], P_GetDoublep(mo->bspLeaf, DMU_FLOOR_HEIGHT)))
+       FEQUAL(mo->origin[VZ], P_GetDoublep(Mobj_Sector(mo), DMU_FLOOR_HEIGHT)))
     {
-        const terraintype_t* tt = P_MobjGetFloorTerrainType(mo);
-
+        terraintype_t const *tt = P_MobjGetFloorTerrainType(mo);
         if(tt->flags & TTF_FLOORCLIP)
         {
             mo->floorClip = 10;

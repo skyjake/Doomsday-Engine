@@ -870,9 +870,9 @@ static void P_ShootSpecialLine(mobj_t* thing, Line* line)
 /**
  * Called every tic frame that the player origin is in a special sector
  */
-void P_PlayerInSpecialSector(player_t* player)
+void P_PlayerInSpecialSector(player_t *player)
 {
-    Sector* sector = P_GetPtrp(player->plr->mo->bspLeaf, DMU_SECTOR);
+    Sector *sector = Mobj_Sector(player->plr->mo);
 
     if(IS_CLIENT) return;
 

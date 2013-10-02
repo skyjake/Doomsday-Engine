@@ -1,42 +1,32 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
- *\author Copyright © 1999 by Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
- *\author Copyright © 1999-2000 by Jess Haas, Nicolas Kalkhof, Colin Phipps, Florian Schulze (PrBoom 2.2.6)
- *\author Copyright © 1993-1996 by id Software, Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
-/**
- * p_enemy.c: Enemy thinking, AI.
+/** @file p_enemy.c Enemy thinking, AI.
  *
  * Action Pointer Functions that are associated with states/frames.
  *
  * Enemies are allways spawned with targetplayer = -1, threshold = 0
  * Most monsters are spawned unaware of all players,
  * but some can be made preaware
+ *
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
+ * @authors Copyright © 1999 by Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
+ * @authors Copyright © 1999-2000 by Jess Haas, Nicolas Kalkhof, Colin Phipps, Florian Schulze (PrBoom 2.2.6)
+ * @authors Copyright © 1993-1996 by id Software, Inc.
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
-
-// HEADER FILES ------------------------------------------------------------
 
 #include <stdio.h>
 #include <string.h>
@@ -55,8 +45,6 @@
 #include "p_door.h"
 #include "p_floor.h"
 
-// MACROS ------------------------------------------------------------------
-
 #define FATSPREAD               (ANG90/8)
 #define FAT_DELTAANGLE          (85*ANGLE_1) // jd64
 #define FAT_ARM_EXTENSION_SHORT (32) // jd64
@@ -66,32 +54,18 @@
 
 #define TRACEANGLE              (0xc000000)
 
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
 void C_DECL A_ReFire(player_t *player, pspdef_t *psp);
 void C_DECL A_Fall(mobj_t *actor);
 void C_DECL A_Fire(mobj_t *actor);
 void C_DECL A_SpawnFly(mobj_t *mo);
 
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-static mobj_t* corpseHit;
+static mobj_t *corpseHit;
 
 static coord_t dropoffDelta[2], floorZ;
 
 // Eight directional movement speeds.
 #define MOVESPEED_DIAGONAL      (0.71716309f)
-static const coord_t dirSpeed[8][2] =
+static coord_t const dirSpeed[8][2] =
 {
     {1, 0},
     {MOVESPEED_DIAGONAL, MOVESPEED_DIAGONAL},
@@ -104,24 +78,23 @@ static const coord_t dirSpeed[8][2] =
 };
 #undef MOVESPEED_DIAGONAL
 
-// CODE --------------------------------------------------------------------
-
 /**
  * If a monster yells at a player, it will alert other monsters to the
  * player's whereabouts.
  */
-void P_NoiseAlert(mobj_t* target, mobj_t* emitter)
+void P_NoiseAlert(mobj_t *target, mobj_t *emitter)
 {
     VALIDCOUNT++;
-    P_RecursiveSound(target, P_GetPtrp(emitter->bspLeaf, DMU_SECTOR), 0);
+    P_RecursiveSound(target, Mobj_Sector(emitter), 0);
 }
 
-static boolean checkMeleeRange(mobj_t* actor)
+static boolean checkMeleeRange(mobj_t *actor)
 {
-    mobj_t* pl;
+    mobj_t *pl;
     coord_t dist, range;
 
-    if(!actor->target) return false;
+    if(!actor->target)
+        return false;
 
     pl = actor->target;
     dist = M_ApproxDistance(pl->origin[VX] - actor->origin[VX],
@@ -858,13 +831,10 @@ void C_DECL A_CybrSpecial(mobj_t* mo)
  */
 void C_DECL A_Look(mobj_t *actor)
 {
-    Sector             *sec = NULL;
-    mobj_t             *targ;
+    Sector *sec = Mobj_Sector(actor);
+    mobj_t *targ;
 
-    sec = P_GetPtrp(actor->bspLeaf, DMU_SECTOR);
-
-    if(!sec)
-        return;
+    if(!sec) return;
 
     actor->threshold = 0; // Any shot will wake us up.
     targ = P_ToXSector(sec)->soundTarget;
@@ -1709,7 +1679,7 @@ void C_DECL A_PainShootSkull(mobj_t* actor, angle_t angle)
     // Compat option to prevent spawning lost souls inside walls.
     if(!cfg.allowSkullsInWalls)
     {
-        /**
+        /*
          * Check whether the Lost Soul is being fired through a 1-sided
          * wall or an impassible line, or a "monsters can't cross" line.
          * If it is, then we don't allow the spawn.
@@ -1721,7 +1691,7 @@ void C_DECL A_PainShootSkull(mobj_t* actor, angle_t angle)
         if(!(newmobj = P_SpawnMobj(MT_SKULL, pos, angle, 0)))
             return;
 
-        sec = P_GetPtrp(newmobj->bspLeaf, DMU_SECTOR);
+        sec = Mobj_Sector(newmobj);
 
         // Check to see if the new Lost Soul's z value is above the
         // ceiling of its new sector, or below the floor. If so, kill it.

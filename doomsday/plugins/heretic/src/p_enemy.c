@@ -1,35 +1,25 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1999 Activision
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
-/**
- * p_enemy.c: Enemy thinking, AI.
+/** @file p_enemy.c Enemy thinking, AI.
  *
  * Action Pointer Functions that are associated with states/frames.
+ *
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 1999 Activision
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
-
-// HEADER FILES ------------------------------------------------------------
 
 #include <math.h>
 #include <string.h>
@@ -45,8 +35,6 @@
 #include "p_map.h"
 #include "p_floor.h"
 
-// MACROS ------------------------------------------------------------------
-
 #define MONS_LOOK_RANGE     (20*64)
 #define MONS_LOOK_LIMIT     64
 
@@ -56,22 +44,10 @@
 
 #define BODYQUESIZE         32
 
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
 boolean P_TestMobjLocation(mobj_t *mobj);
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 extern boolean fellDown; //$dropoff_fix: used to flag pushed off ledge
 extern Line *blockLine; // $unstuck: blocking line
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 // Eight directional movement speeds.
 #define MOVESPEED_DIAGONAL      (0.71716309f)
@@ -91,11 +67,7 @@ static const coord_t dirSpeed[8][2] =
 mobj_t *bodyque[BODYQUESIZE];
 int bodyqueslot;
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
 static coord_t dropoffDelta[2], floorZ;
-
-// CODE --------------------------------------------------------------------
 
 void P_ClearBodyQueue(void)
 {
@@ -107,10 +79,10 @@ void P_ClearBodyQueue(void)
  * If a monster yells at a player, it will alert other monsters to the
  * player's whereabouts.
  */
-void P_NoiseAlert(mobj_t* target, mobj_t* emitter)
+void P_NoiseAlert(mobj_t *target, mobj_t *emitter)
 {
     VALIDCOUNT++;
-    P_RecursiveSound(target, P_GetPtrp(emitter->bspLeaf, DMU_SECTOR), 0);
+    P_RecursiveSound(target, Mobj_Sector(emitter), 0);
 }
 
 boolean P_CheckMeleeRange(mobj_t* actor)
@@ -555,14 +527,14 @@ boolean P_LookForPlayers(mobj_t* actor, boolean allAround)
 /**
  * Stay in state until a player is sighted.
  */
-void C_DECL A_Look(mobj_t* actor)
+void C_DECL A_Look(mobj_t *actor)
 {
-    mobj_t     *targ;
-    Sector     *sec;
+    mobj_t *targ;
+    Sector *sec;
 
     // Any shot will wake up
     actor->threshold = 0;
-    sec = P_GetPtrp(actor->bspLeaf, DMU_SECTOR);
+    sec = Mobj_Sector(actor);
     targ = P_ToXSector(sec)->soundTarget;
     if(targ && (targ->flags & MF_SHOOTABLE))
     {
@@ -2156,7 +2128,7 @@ void C_DECL A_SpawnTeleGlitter(mobj_t* actor)
     if((mo = P_SpawnMobjXYZ(MT_TELEGLITTER,
                            actor->origin[VX] + ((P_Random() & 31) - 16),
                            actor->origin[VY] + ((P_Random() & 31) - 16),
-                           P_GetDoublep(actor->bspLeaf, DMU_FLOOR_HEIGHT),
+                           P_GetDoublep(Mobj_Sector(actor), DMU_FLOOR_HEIGHT),
                            P_Random() << 24, 0)))
     {
         mo->mom[MZ] = 1.0f / 4;
@@ -2173,7 +2145,7 @@ void C_DECL A_SpawnTeleGlitter2(mobj_t* actor)
     if((mo = P_SpawnMobjXYZ(MT_TELEGLITTER2,
                            actor->origin[VX] + ((P_Random() & 31) - 16),
                            actor->origin[VY] + ((P_Random() & 31) - 16),
-                           P_GetDoublep(actor->bspLeaf, DMU_FLOOR_HEIGHT),
+                           P_GetDoublep(Mobj_Sector(actor), DMU_FLOOR_HEIGHT),
                            P_Random() << 24, 0)))
     {
         mo->mom[MZ] = 1.0f / 4;

@@ -1,33 +1,23 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file p_map.c Common map routines.
  *
- *\author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1993-1996 by id Software, Inc.
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 1993-1996 by id Software, Inc.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
-
-/**
- * p_map.c: Common map routines.
- */
-
-// HEADER FILES ------------------------------------------------------------
 
 #include <math.h>
 #include <stdio.h>
@@ -42,8 +32,6 @@
 #  include "jheretic.h"
 #elif __JHEXEN__
 #  include "jhexen.h"
-#elif __JSTRIFE__
-#  include "jstrife.h"
 #endif
 
 #include "d_net.h"
@@ -56,37 +44,23 @@
 #include "p_player.h"
 #include "p_mapsetup.h"
 
-// MACROS ------------------------------------------------------------------
-
 #if __JHEXEN__
 #define USE_PUZZLE_ITEM_SPECIAL     129
 #endif
 
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
 #if __JDOOM64__
-static void CheckMissileImpact(mobj_t* mobj);
+static void CheckMissileImpact(mobj_t *mobj);
 #endif
 
 #if __JHERETIC__
-static void  CheckMissileImpact(mobj_t* mobj);
+static void  CheckMissileImpact(mobj_t *mobj);
 #elif __JHEXEN__
-static void  P_FakeZMovement(mobj_t* mo);
-static void  checkForPushSpecial(Line* line, int side, mobj_t* mobj);
+static void  P_FakeZMovement(mobj_t *mo);
+static void  checkForPushSpecial(Line *line, int side, mobj_t *mobj);
 #endif
 
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
 AABoxd tmBox;
-mobj_t* tmThing;
+mobj_t *tmThing;
 
 // If "floatOk" true, move would be ok if within "tmFloorZ - tmCeilingZ".
 boolean floatOk;
@@ -94,7 +68,7 @@ boolean floatOk;
 coord_t tmFloorZ;
 coord_t tmCeilingZ;
 #if __JHEXEN__
-Material* tmFloorMaterial;
+Material *tmFloorMaterial;
 #endif
 
 boolean fellDown; // $dropoff_fix
@@ -102,34 +76,32 @@ boolean fellDown; // $dropoff_fix
 // The following is used to keep track of the lines that clip the open
 // height range e.g. PIT_CheckLine. They in turn are used with the &unstuck
 // logic and to prevent missiles from exploding against sky hack walls.
-Line* ceilingLine;
-Line* floorLine;
+Line *ceilingLine;
+Line *floorLine;
 
-mobj_t* lineTarget; // Who got hit (or NULL).
-Line* blockLine; // $unstuck: blocking line
+mobj_t *lineTarget; // Who got hit (or NULL).
+Line *blockLine; // $unstuck: blocking line
 
 coord_t attackRange;
 
 #if __JHEXEN__
-mobj_t* puffSpawned;
-mobj_t* blockingMobj;
+mobj_t *puffSpawned;
+mobj_t *blockingMobj;
 #endif
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static coord_t tm[3];
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
 static coord_t tmHeight;
-static Line* tmHitLine;
+static Line *tmHitLine;
 #endif
 static coord_t tmDropoffZ;
 static coord_t bestSlideDistance, secondSlideDistance;
-static Line* bestSlideLine, *secondSlideLine;
+static Line *bestSlideLine, *secondSlideLine;
 
-static mobj_t* slideMo;
+static mobj_t *slideMo;
 
 static coord_t tmMove[3];
-static mobj_t* shootThing;
+static mobj_t *shootThing;
 
 // Height if not aiming up or down.
 static coord_t shootZ;
@@ -140,9 +112,9 @@ static float aimSlope;
 // slopes to top and bottom of target
 static float topSlope, bottomSlope;
 
-static mobj_t* useThing;
+static mobj_t *useThing;
 
-static mobj_t* bombSource, *bombSpot;
+static mobj_t *bombSource, *bombSpot;
 static int bombDamage;
 static int bombDistance;
 
@@ -153,11 +125,11 @@ static coord_t startPos[3]; // start position for trajectory line checks
 static coord_t endPos[3]; // end position for trajectory checks
 
 #if __JHEXEN__
-static mobj_t* tsThing;
+static mobj_t *tsThing;
 static boolean damageSource;
-static mobj_t* onMobj; // generic global onMobj...used for landing on pods/players
+static mobj_t *onMobj; // generic global onMobj...used for landing on pods/players
 
-static mobj_t* puzzleItemUser;
+static mobj_t *puzzleItemUser;
 static int puzzleItemType;
 static boolean puzzleActivated;
 #endif
@@ -166,9 +138,7 @@ static boolean puzzleActivated;
 static int tmUnstuck; // $unstuck: used to check unsticking
 #endif
 
-static byte* rejectMatrix = NULL; // For fast sight rejection.
-
-// CODE --------------------------------------------------------------------
+static byte *rejectMatrix; // For fast sight rejection.
 
 coord_t P_GetGravity(void)
 {
@@ -182,20 +152,14 @@ coord_t P_GetGravity(void)
  * Checks the reject matrix to find out if the two sectors are visible
  * from each other.
  */
-static boolean checkReject(BspLeaf* a, BspLeaf* b)
+static boolean checkReject(Sector *sec1, Sector *sec2)
 {
-    if(rejectMatrix != NULL)
+    if(rejectMatrix)
     {
-        int                 s1, s2, pnum, bytenum, bitnum;
-        Sector*             sec1 = P_GetPtrp(a, DMU_SECTOR);
-        Sector*             sec2 = P_GetPtrp(b, DMU_SECTOR);
-
         // Determine BSP leaf entries in REJECT table.
-        s1 = P_ToIndex(sec1);
-        s2 = P_ToIndex(sec2);
-        pnum = s1 * numsectors + s2;
-        bytenum = pnum >> 3;
-        bitnum = 1 << (pnum & 7);
+        int const pnum = P_ToIndex(sec1) * numsectors + P_ToIndex(sec2);
+        int const bytenum = pnum >> 3;
+        int const bitnum = 1 << (pnum & 7);
 
         // Check in REJECT table.
         if(rejectMatrix[bytenum] & bitnum)
@@ -217,21 +181,21 @@ static boolean checkReject(BspLeaf* a, BspLeaf* b)
  * @return              @c true if a straight line between t1 and t2 is
  *                      unobstructed.
  */
-boolean P_CheckSight(const mobj_t* from, const mobj_t* to)
+boolean P_CheckSight(mobj_t const *from, mobj_t const *to)
 {
     coord_t fPos[3];
 
     if(!from || !to) return false;
 
     // If either is unlinked, they can't see each other.
-    if(!from->bspLeaf || !to->bspLeaf)
+    if(!Mobj_Sector(from) || !Mobj_Sector(to))
         return false;
 
     if(to->dPlayer && (to->dPlayer->flags & DDPF_CAMERA))
         return false; // Cameramen don't exist!
 
     // Check for trivial rejection.
-    if(!checkReject(from->bspLeaf, to->bspLeaf))
+    if(!checkReject(Mobj_Sector(from), Mobj_Sector(to)))
         return false;
 
     fPos[VX] = from->origin[VX];
@@ -289,10 +253,10 @@ int PIT_StompThing(mobj_t* mo, void* data)
     return false;
 }
 
-boolean P_TeleportMove(mobj_t* thing, coord_t x, coord_t y, boolean alwaysStomp)
+boolean P_TeleportMove(mobj_t *thing, coord_t x, coord_t y, boolean alwaysStomp)
 {
     int stomping;
-    BspLeaf* newSSec;
+    BspLeaf *newBspLeaf;
     AABoxd tmBoxExpanded;
 
     // Kill anything occupying the position.
@@ -307,7 +271,7 @@ boolean P_TeleportMove(mobj_t* thing, coord_t x, coord_t y, boolean alwaysStomp)
     tmBox.maxX = tm[VX] + tmThing->radius;
     tmBox.maxY = tm[VY] + tmThing->radius;
 
-    newSSec = P_BspLeafAtPoint_FixedPrecision(tm);
+    newBspLeaf = P_BspLeafAtPoint_FixedPrecision(tm);
 
     ceilingLine = floorLine = NULL;
 #if !__JHEXEN__
@@ -317,10 +281,10 @@ boolean P_TeleportMove(mobj_t* thing, coord_t x, coord_t y, boolean alwaysStomp)
 
     // The base floor / ceiling is from the BSP leaf that contains the
     // point. Any contacted lines the step closer together will adjust them.
-    tmFloorZ = tmDropoffZ = P_GetDoublep(newSSec, DMU_FLOOR_HEIGHT);
-    tmCeilingZ = P_GetDoublep(newSSec, DMU_CEILING_HEIGHT);
+    tmFloorZ = tmDropoffZ = P_GetDoublep(newBspLeaf, DMU_FLOOR_HEIGHT);
+    tmCeilingZ = P_GetDoublep(newBspLeaf, DMU_CEILING_HEIGHT);
 #if __JHEXEN__
-    tmFloorMaterial = P_GetPtrp(newSSec, DMU_FLOOR_MATERIAL);
+    tmFloorMaterial = P_GetPtrp(newBspLeaf, DMU_FLOOR_MATERIAL);
 #endif
 
     IterList_Clear(spechit);
@@ -1178,10 +1142,10 @@ int PIT_CheckLine(Line* ld, void* data)
  *  speciallines[]
  *  numspeciallines
  */
-boolean P_CheckPositionXYZ(mobj_t* thing, coord_t x, coord_t y, coord_t z)
+boolean P_CheckPositionXYZ(mobj_t *thing, coord_t x, coord_t y, coord_t z)
 {
     AABoxd tmBoxExpanded;
-    Sector* newSec;
+    Sector *newSec;
 
     tmThing = thing;
 
@@ -1328,7 +1292,7 @@ static boolean P_TryMove2(mobj_t* thing, coord_t x, coord_t y, boolean dropoff)
             goto pushline;
         }
         else if(blockingMobj->origin[VZ] + blockingMobj->height - thing->origin[VZ] > 24 ||
-                (P_GetDoublep(blockingMobj->bspLeaf, DMU_CEILING_HEIGHT) -
+                (P_GetDoublep(Mobj_Sector(blockingMobj), DMU_CEILING_HEIGHT) -
                  (blockingMobj->origin[VZ] + blockingMobj->height) < thing->height) ||
                 (tmCeilingZ - (blockingMobj->origin[VZ] + blockingMobj->height) <
                  thing->height))
@@ -1501,7 +1465,7 @@ static boolean P_TryMove2(mobj_t* thing, coord_t x, coord_t y, boolean dropoff)
 #if __JHEXEN__
         // Must stay within a sector of a certain floor type?
         if((thing->flags2 & MF2_CANTLEAVEFLOORPIC) &&
-           (tmFloorMaterial != P_GetPtrp(thing->bspLeaf, DMU_FLOOR_MATERIAL) ||
+           (tmFloorMaterial != P_GetPtrp(Mobj_Sector(thing), DMU_FLOOR_MATERIAL) ||
             !FEQUAL(tmFloorZ, thing->origin[VZ])))
         {
             return false;
@@ -1541,10 +1505,9 @@ static boolean P_TryMove2(mobj_t* thing, coord_t x, coord_t y, boolean dropoff)
     {
         thing->floorClip = 0;
 
-        if(FEQUAL(thing->origin[VZ], P_GetDoublep(thing->bspLeaf, DMU_FLOOR_HEIGHT)))
+        if(FEQUAL(thing->origin[VZ], P_GetDoublep(Mobj_Sector(thing), DMU_FLOOR_HEIGHT)))
         {
-            const terraintype_t* tt = P_MobjGetFloorTerrainType(thing);
-
+            terraintype_t const *tt = P_MobjGetFloorTerrainType(thing);
             if(tt->flags & TTF_FLOORCLIP)
             {
                 thing->floorClip = 10;
@@ -1696,7 +1659,7 @@ int PTR_ShootTraverse(intercept_t const *in, void *parameters)
     mobj_t *th;
     divline_t const *trace = P_TraceLOS();
     TraceOpening const *opening;
-    BspLeaf *contact, *originSub;
+    BspLeaf *contact, *originBspLeaf;
     boolean lineWasHit;
 
     tracePos[VX] = FIX2FLT(trace->origin[VX]);
@@ -1784,7 +1747,7 @@ int PTR_ShootTraverse(intercept_t const *in, void *parameters)
         lineWasHit = true;
 
         // This is the BSP leaf where the trace originates.
-        originSub = P_BspLeafAtPoint_FixedPrecision(tracePos);
+        originBspLeaf = P_BspLeafAtPoint_FixedPrecision(tracePos);
 
         d[VX] = pos[VX] - tracePos[VX];
         d[VY] = pos[VY] - tracePos[VY];
@@ -1801,7 +1764,7 @@ int PTR_ShootTraverse(intercept_t const *in, void *parameters)
             cFloor = P_GetDoublep(contact, DMU_FLOOR_HEIGHT);
             cCeil  = P_GetDoublep(contact, DMU_CEILING_HEIGHT);
             // Backtrack until we find a non-empty sector.
-            while(cCeil <= cFloor && contact != originSub)
+            while(cCeil <= cFloor && contact != originBspLeaf)
             {
                 d[VX] -= 8 * stepv[VX];
                 d[VY] -= 8 * stepv[VY];
@@ -2989,9 +2952,9 @@ int PIT_CheckOnmobjZ(mobj_t* thing, void* data)
     return !!(thing->flags & MF_SOLID);
 }
 
-mobj_t* P_CheckOnMobj(mobj_t* thing)
+mobj_t *P_CheckOnMobj(mobj_t *thing)
 {
-    BspLeaf* newSSec;
+    BspLeaf *newBspLeaf;
     coord_t pos[3];
     mobj_t oldMo;
     AABoxd tmBoxExpanded;
@@ -3022,15 +2985,15 @@ mobj_t* P_CheckOnMobj(mobj_t* thing)
     tmBox.maxX = pos[VX] + tmThing->radius;
     tmBox.maxY = pos[VY] + tmThing->radius;
 
-    newSSec = P_BspLeafAtPoint_FixedPrecision(pos);
+    newBspLeaf = P_BspLeafAtPoint_FixedPrecision(pos);
     ceilingLine = floorLine = NULL;
 
     // The base floor/ceiling is from the BSP leaf that contains the point.
     // Any contacted lines the step closer together will adjust them.
 
-    tmFloorZ = tmDropoffZ = P_GetDoublep(newSSec, DMU_FLOOR_HEIGHT);
-    tmCeilingZ = P_GetDoublep(newSSec, DMU_CEILING_HEIGHT);
-    tmFloorMaterial = P_GetPtrp(newSSec, DMU_FLOOR_MATERIAL);
+    tmFloorZ = tmDropoffZ = P_GetDoublep(newBspLeaf, DMU_FLOOR_HEIGHT);
+    tmCeilingZ = P_GetDoublep(newBspLeaf, DMU_CEILING_HEIGHT);
+    tmFloorMaterial = P_GetPtrp(newBspLeaf, DMU_FLOOR_MATERIAL);
 
     IterList_Clear(spechit);
 

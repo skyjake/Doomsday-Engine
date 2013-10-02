@@ -72,7 +72,7 @@ void P_MobjRecycle(mobj_t *mobj);
  *
  * @todo Automatically link all new mobjs into the map (making this redundant).
  */
-bool Mobj_IsLinked(mobj_t &mobj);
+bool Mobj_IsLinked(mobj_t const &mobj);
 
 /**
  * Returns a copy of the mobj's map space origin.
@@ -102,7 +102,7 @@ boolean Mobj_SetOrigin(mobj_t *mobj, coord_t x, coord_t y, coord_t z);
  *
  * @see Mobj_IsLinked(), Mobj_SetOrigin()
  */
-BspLeaf &Mobj_BspLeafAtOrigin(mobj_t &mobj);
+BspLeaf &Mobj_BspLeafAtOrigin(mobj_t const &mobj);
 
 /**
  * Returns @c true iff the sector cluster at the mobj's origin is known (i.e.,
@@ -111,7 +111,7 @@ BspLeaf &Mobj_BspLeafAtOrigin(mobj_t &mobj);
  *
  * @param mobj  Mobj instance.
  */
-bool Mobj_HasCluster(mobj_t &mobj);
+bool Mobj_HasCluster(mobj_t const &mobj);
 
 /**
  * Returns the sector cluster in which the mobj currently resides.
@@ -120,7 +120,7 @@ bool Mobj_HasCluster(mobj_t &mobj);
  *
  * @see Mobj_HasCluster()
  */
-SectorCluster &Mobj_Cluster(mobj_t &mobj);
+SectorCluster &Mobj_Cluster(mobj_t const &mobj);
 
 /**
  * Returns a pointer to sector cluster in which the mobj currently resides, or
@@ -130,14 +130,7 @@ SectorCluster &Mobj_Cluster(mobj_t &mobj);
  *
  * @see Mobj_HasCluster()
  */
-SectorCluster *Mobj_ClusterPtr(mobj_t &mobj);
-
-/**
- * Convenient method of returning the sector in which the mobj currently resides.
- *
- * @see Mobj_Cluster(), Sector::Cluster::sector()
- */
-Sector &Mobj_Sector(mobj_t &mobj);
+SectorCluster *Mobj_ClusterPtr(mobj_t const &mobj);
 
 #ifdef __CLIENT__
 

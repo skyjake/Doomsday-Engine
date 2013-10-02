@@ -105,23 +105,6 @@ xsector_t *P_ToXSector(Sector *sector)
     }
 }
 
-xsector_t *P_ToXSectorOfBspLeaf(BspLeaf *bspLeaf)
-{
-    if(!bspLeaf) return 0;
-
-    Sector *sec = (Sector *)P_GetPtrp(bspLeaf, DMU_SECTOR);
-
-    // Is it a dummy?
-    if(P_IsDummy(sec))
-    {
-        return (xsector_t *) P_DummyExtraData(sec);
-    }
-    else
-    {
-        return &xsectors[P_ToIndex(sec)];
-    }
-}
-
 xsector_t *P_GetXSector(int index)
 {
     if(index < 0 || index >= numsectors) return 0;

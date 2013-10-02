@@ -2186,8 +2186,9 @@ int C_DECL XSTrav_Teleport(Sector* sector, boolean ceiling, void* context,
     }
 
     if(ok)
-    {   // We can teleport.
-        mobj_t* flash;
+    {
+        // We can teleport.
+        mobj_t *flash;
         unsigned an;
         coord_t oldpos[3];
         coord_t thfloorz, thceilz;
@@ -2206,8 +2207,8 @@ int C_DECL XSTrav_Teleport(Sector* sector, boolean ceiling, void* context,
 
         memcpy(oldpos, thing->origin, sizeof(thing->origin));
         oldAngle = thing->angle;
-        thfloorz = P_GetDoublep(thing->bspLeaf, DMU_FLOOR_HEIGHT);
-        thceilz  = P_GetDoublep(thing->bspLeaf, DMU_CEILING_HEIGHT);
+        thfloorz = P_GetDoublep(Mobj_Sector(thing), DMU_FLOOR_HEIGHT);
+        thceilz  = P_GetDoublep(Mobj_Sector(thing), DMU_CEILING_HEIGHT);
         aboveFloor = thing->origin[VZ] - thfloorz;
 
         // Players get special consideration
@@ -2298,9 +2299,9 @@ int C_DECL XSTrav_Teleport(Sector* sector, boolean ceiling, void* context,
         {
             thing->floorClip = 0;
 
-            if(FEQUAL(thing->origin[VZ], P_GetDoublep(thing->bspLeaf, DMU_FLOOR_HEIGHT)))
+            if(FEQUAL(thing->origin[VZ], P_GetDoublep(Mobj_Sector(thing), DMU_FLOOR_HEIGHT)))
             {
-                const terraintype_t* tt = P_MobjGetFloorTerrainType(thing);
+                terraintype_t const *tt = P_MobjGetFloorTerrainType(thing);
                 if(tt->flags & TTF_FLOORCLIP)
                 {
                     thing->floorClip = 10;
@@ -2763,17 +2764,16 @@ static boolean checkChainRequirements(Sector* sec, mobj_t* mo, int ch,
 }
 
 typedef struct {
-    Sector* sec;
+    Sector *sec;
     int data;
 } xstrav_sectorchainparams_t;
 
-int XSTrav_SectorChain(thinker_t* th, void* context)
+int XSTrav_SectorChain(thinker_t *th, void *context)
 {
-    xstrav_sectorchainparams_t* params =
-        (xstrav_sectorchainparams_t*) context;
-    mobj_t* mo = (mobj_t *) th;
+    xstrav_sectorchainparams_t *params = (xstrav_sectorchainparams_t *) context;
+    mobj_t *mo = (mobj_t *) th;
 
-    if(params->sec == P_GetPtrp(mo->bspLeaf, DMU_SECTOR))
+    if(params->sec == Mobj_Sector(mo))
     {
         boolean activating;
 
@@ -2784,9 +2784,9 @@ int XSTrav_SectorChain(thinker_t* th, void* context)
     return false; // Continue iteration.
 }
 
-void P_ApplyWind(mobj_t* mo, Sector* sec)
+void P_ApplyWind(mobj_t *mo, Sector *sec)
 {
-    sectortype_t* info;
+    sectortype_t *info;
     float ang;
 
     if(mo->player && (mo->player->plr->flags & DDPF_CAMERA))
@@ -2808,8 +2808,8 @@ void P_ApplyWind(mobj_t* mo, Sector* sec)
        ((info->flags & STF_MONSTER_WIND) && (mo->flags & MF_COUNTKILL)) ||
        ((info->flags & STF_MISSILE_WIND) && (mo->flags & MF_MISSILE)))
     {
-        coord_t thfloorz = P_GetDoublep(mo->bspLeaf, DMU_FLOOR_HEIGHT);
-        coord_t thceilz  = P_GetDoublep(mo->bspLeaf, DMU_CEILING_HEIGHT);
+        coord_t thfloorz = P_GetDoublep(Mobj_Sector(mo), DMU_FLOOR_HEIGHT);
+        coord_t thceilz  = P_GetDoublep(Mobj_Sector(mo), DMU_CEILING_HEIGHT);
 
         if(!(info->flags & (STF_FLOOR_WIND | STF_CEILING_WIND)) ||
            ((info->flags & STF_FLOOR_WIND) && mo->origin[VZ] <= thfloorz) ||
@@ -2827,15 +2827,15 @@ void P_ApplyWind(mobj_t* mo, Sector* sec)
 }
 
 typedef struct {
-    Sector* sec;
+    Sector *sec;
 } xstrav_windparams_t;
 
-int XSTrav_Wind(thinker_t* th, void* context)
+int XSTrav_Wind(thinker_t *th, void *context)
 {
-    xstrav_windparams_t* params = (xstrav_windparams_t*) context;
-    mobj_t* mo = (mobj_t *) th;
+    xstrav_windparams_t *params = (xstrav_windparams_t *) context;
+    mobj_t *mo = (mobj_t *) th;
 
-    if(params->sec == P_GetPtrp(mo->bspLeaf, DMU_SECTOR))
+    if(params->sec == Mobj_Sector(mo))
     {
         P_ApplyWind(mo, params->sec);
     }
@@ -3129,7 +3129,7 @@ D_CMD(MovePlane)
         p = 2;
         if(!players[CONSOLEPLAYER].plr->mo)
             return false;
-        sector = P_GetPtrp(players[CONSOLEPLAYER].plr->mo->bspLeaf, DMU_SECTOR);
+        sector = Mobj_Sector(players[CONSOLEPLAYER].plr->mo);
     }
     else if(!stricmp(argv[1], "at") && argc >= 4)
     {

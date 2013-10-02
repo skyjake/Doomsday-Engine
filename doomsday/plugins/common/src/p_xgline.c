@@ -1726,10 +1726,9 @@ int C_DECL XLTrav_LineTeleport(Line* newLine, boolean dummy,
     {
         mobj->floorClip = 0;
 
-        if(FEQUAL(mobj->origin[VZ], P_GetDoublep(mobj->bspLeaf, DMU_FLOOR_HEIGHT)))
+        if(FEQUAL(mobj->origin[VZ], P_GetDoublep(Mobj_Sector(mobj), DMU_FLOOR_HEIGHT)))
         {
-            const terraintype_t* tt = P_MobjGetFloorTerrainType(mobj);
-
+            terraintype_t const *tt = P_MobjGetFloorTerrainType(mobj);
             if(tt->flags & TTF_FLOORCLIP)
             {
                 mobj->floorClip = 10;

@@ -220,7 +220,7 @@ static int newTorchDelta[MAXPLAYERS];
  */
 void P_Thrust(player_t *player, angle_t angle, coord_t move)
 {
-    mobj_t* mo = player->plr->mo;
+    mobj_t *mo = player->plr->mo;
     uint an = angle >> ANGLETOFINESHIFT;
 
     /*coord_t xmul=1, ymul=1;
@@ -235,10 +235,10 @@ void P_Thrust(player_t *player, angle_t angle, coord_t move)
     if(!(player->powers[PT_FLIGHT] && !(mo->origin[VZ] <= mo->floorZ)))
     {
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-        Sector* sec = P_GetPtrp(mo->bspLeaf, DMU_SECTOR);
+        Sector *sec = Mobj_Sector(mo);
 #endif
 #if __JHEXEN__
-        const terraintype_t* tt = P_MobjGetFloorTerrainType(mo);
+        terraintype_t const *tt = P_MobjGetFloorTerrainType(mo);
 #endif
 
 #if __JHEXEN__
@@ -1144,7 +1144,7 @@ void P_PlayerThinkJump(player_t *player)
     P_CheckPlayerJump(player);
 }
 
-void P_PlayerThinkView(player_t* player)
+void P_PlayerThinkView(player_t *player)
 {
     if(player->plr->mo)
     {
@@ -1153,11 +1153,11 @@ void P_PlayerThinkView(player_t* player)
 }
 
 
-void P_PlayerThinkSpecial(player_t* player)
+void P_PlayerThinkSpecial(player_t *player)
 {
     if(!player->plr->mo) return;
 
-    if(P_ToXSector(P_GetPtrp(player->plr->mo->bspLeaf, DMU_SECTOR))->special)
+    if(P_ToXSector(Mobj_Sector(player->plr->mo))->special)
         P_PlayerInSpecialSector(player);
 
 #if __JHEXEN__
@@ -1169,9 +1169,9 @@ void P_PlayerThinkSpecial(player_t* player)
 /**
  * For inventory management, could be done client-side.
  */
-void P_PlayerThinkInventory(player_t* player)
+void P_PlayerThinkInventory(player_t *player)
 {
-    int                 pnum = player - players;
+    int pnum = player - players;
 
     if(player->brain.cycleInvItem)
     {

@@ -47,7 +47,7 @@
 /// Threshold for stopping walk animation.
 #define STANDSPEED              (1.0 / 2) // FIX2FLT(0x8000)
 
-static coord_t getFriction(mobj_t* mo)
+static coord_t getFriction(mobj_t *mo)
 {
     if((mo->flags2 & MF2_FLY) && !(mo->origin[VZ] <= mo->floorZ) && !mo->onMobj)
     {
@@ -56,7 +56,7 @@ static coord_t getFriction(mobj_t* mo)
     }
 
 #ifdef __JHERETIC__
-    if(P_ToXSector(P_GetPtrp(mo->bspLeaf, DMU_SECTOR))->special == 15)
+    if(P_ToXSector(Mobj_Sector(mo))->special == 15)
     {
         // Low friction.
         return FRICTION_LOW;
@@ -104,17 +104,14 @@ void Mobj_XYMoveStopping(mobj_t* mo)
 #ifndef __JHEXEN__
     if(cfg.slidingCorpses)
     {
-        /**
-         * $dropoff_fix:
-         * Add objects falling off ledges. Does not apply to players!
-         */
+        // $dropoff_fix: Add objects falling off ledges. Does not apply to players!
         if(((mo->flags & MF_CORPSE) || (mo->intFlags & MIF_FALLING)) && !mo->player)
         {
             // Do not stop sliding if halfway off a step with some momentum.
             if(!INRANGE_OF(mo->mom[MX], 0, DROPOFFMOMENTUM_THRESHOLD) ||
                !INRANGE_OF(mo->mom[MY], 0, DROPOFFMOMENTUM_THRESHOLD))
             {
-                if(!FEQUAL(mo->floorZ, P_GetDoublep(mo->bspLeaf, DMU_FLOOR_HEIGHT)))
+                if(!FEQUAL(mo->floorZ, P_GetDoublep(Mobj_Sector(mo), DMU_FLOOR_HEIGHT)))
                     return;
             }
         }

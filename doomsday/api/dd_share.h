@@ -624,9 +624,9 @@ enum { MX, MY, MZ };
     DD_BASE_DDMOBJ_ELEMENTS() \
 \
     nodeindex_t     lineRoot; /* lines to which this is linked */ \
-    struct mobj_s*  sNext, **sPrev; /* links in sector (if needed) */ \
+    struct mobj_s  *sNext, **sPrev; /* links in sector (if needed) */ \
 \
-    BspLeaf *bspLeaf; /* bspLeaf in which this resides */ \
+    BspLeaf        *bspLeaf; /* bspLeaf in which this resides */ \
     coord_t         mom[3]; \
     angle_t         angle; \
     spritenum_t     sprite; /* used to find patch_t and flip value */ \
@@ -637,13 +637,13 @@ enum { MX, MY, MZ };
     coord_t         floorClip; /* value to use for floor clipping */ \
     int             valid; /* if == valid, already checked */ \
     int             type; /* mobj type */ \
-    struct state_s* state; \
+    struct state_s *state; \
     int             tics; /* state tic counter */ \
     coord_t         floorZ; /* highest contacted floor */ \
     coord_t         ceilingZ; /* lowest contacted ceiling */ \
-    struct mobj_s*  onMobj; /* the mobj this one is on top of. */ \
+    struct mobj_s  *onMobj; /* the mobj this one is on top of. */ \
     boolean         wallHit; /* the mobj is hitting a wall. */ \
-    struct ddplayer_s* dPlayer; /* NULL if not a player mobj. */ \
+    struct ddplayer_s *dPlayer; /* NULL if not a player mobj. */ \
     coord_t         srvo[3]; /* short-range visual offset (xyz) */ \
     short           visAngle; /* visual angle ("angle-servo") */ \
     int             selector; /* multipurpose info */ \

@@ -1,33 +1,23 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file p_mobj.c World map object interaction.
  *
- *\author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1999 Activision
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 1999 Activision
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
-
-/**
- * Moving object handling. Spawn functions.
- */
-
-// HEADER FILES ------------------------------------------------------------
 
 #include <math.h>
 #include <string.h>
@@ -45,8 +35,6 @@
 
 #include <assert.h>
 
-// MACROS ------------------------------------------------------------------
-
 #define VANISHTICS              (2*TICSPERSEC)
 
 #define MAX_BOB_OFFSET          (8)
@@ -54,28 +42,20 @@
 #define NOMOMENTUM_THRESHOLD    (0.000001)
 #define WALKSTOP_THRESHOLD      (0.062484741) // FIX2FLT(0x1000-1)
 
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
 mobjtype_t puffType;
 mobj_t *missileMobj;
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
-
-const terraintype_t* P_MobjGetFloorTerrainType(mobj_t* mo)
+terraintype_t const *P_MobjGetFloorTerrainType(mobj_t *mobj)
 {
-    Sector*             sec = P_GetPtrp(mo->bspLeaf, DMU_SECTOR);
-
-    return P_PlaneMaterialTerrainType(sec, PLN_FLOOR);
+    return P_PlaneMaterialTerrainType(Mobj_Sector(mobj), PLN_FLOOR);
 }
 
 /**
- * @return              @c true, if the mobj is still present.
+ * @return  @c true, if the mobj is still present.
  */
-boolean P_MobjChangeState(mobj_t* mobj, statenum_t state)
+boolean P_MobjChangeState(mobj_t *mobj, statenum_t state)
 {
-    state_t*            st;
+    state_t *st;
 
     if(state == S_NULL)
     {
@@ -263,11 +243,11 @@ boolean P_SeekerMissile(mobj_t* actor, angle_t thresh, angle_t turnMax)
 /**
  * Wind pushes the mobj, if its sector special is a wind type.
  */
-void P_WindThrust(mobj_t* mo)
+void P_WindThrust(mobj_t *mo)
 {
     static int windTab[3] = { 2048 * 5, 2048 * 10, 2048 * 25 };
 
-    Sector* sec = P_GetPtrp(mo->bspLeaf, DMU_SECTOR);
+    Sector *sec = Mobj_Sector(mo);
     int special = P_ToXSector(sec)->special;
 
     switch(special)
@@ -301,7 +281,7 @@ void P_WindThrust(mobj_t* mo)
     }
 }
 
-coord_t P_MobjGetFriction(mobj_t* mo)
+coord_t P_MobjGetFriction(mobj_t *mo)
 {
     if((mo->flags2 & MF2_FLY) && !(mo->origin[VZ] <= mo->floorZ) && !mo->onMobj)
     {
@@ -309,7 +289,7 @@ coord_t P_MobjGetFriction(mobj_t* mo)
     }
     else
     {
-        Sector* sec = P_GetPtrp(mo->bspLeaf, DMU_SECTOR);
+        Sector *sec = Mobj_Sector(mo);
 
         if(P_ToXSector(sec)->special == 15)
         {
@@ -320,10 +300,10 @@ coord_t P_MobjGetFriction(mobj_t* mo)
     }
 }
 
-void P_MobjMoveXY(mobj_t* mo)
+void P_MobjMoveXY(mobj_t *mo)
 {
     coord_t pos[2], mom[2];
-    player_t* player;
+    player_t *player;
     boolean largeNegative;
 
     // $democam: cameramen have their own movement code
@@ -451,7 +431,7 @@ void P_MobjMoveXY(mobj_t* mo)
     Mobj_XYMoveStopping(mo);
 }
 
-void P_MobjMoveZ(mobj_t* mo)
+void P_MobjMoveZ(mobj_t *mo)
 {
     coord_t gravity;
     coord_t dist;
@@ -461,7 +441,7 @@ void P_MobjMoveZ(mobj_t* mo)
     if(P_CameraZMovement(mo))
         return;
 
-    gravity = XS_Gravity(P_GetPtrp(mo->bspLeaf, DMU_SECTOR));
+    gravity = XS_Gravity(Mobj_Sector(mo));
 
     // $voodoodolls: Check for smooth step up unless a voodoo doll.
     if(mo->player && mo->player->plr->mo == mo && mo->origin[VZ] < mo->floorZ)
@@ -702,8 +682,8 @@ void P_MobjMoveZ(mobj_t* mo)
 
         if((mo->flags & MF_MISSILE) && !(mo->flags & MF_NOCLIP))
         {
-            if(P_GetIntp(P_GetPtrp(mo->bspLeaf, DMU_CEILING_MATERIAL),
-                           DMU_FLAGS) & MATF_SKYMASK)
+            if(P_GetIntp(P_GetPtrp(Mobj_Sector(mo), DMU_CEILING_MATERIAL),
+                         DMU_FLAGS) & MATF_SKYMASK)
             {
 #if __JHERETIC__
                 if(mo->type == MT_BLOODYSKULL)
@@ -1084,9 +1064,9 @@ mobj_t* P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z,
     // Link the mobj into the world.
     P_MobjSetOrigin(mo);
 
-    mo->floorZ   = P_GetDoublep(mo->bspLeaf, DMU_FLOOR_HEIGHT);
+    mo->floorZ   = P_GetDoublep(Mobj_Sector(mo), DMU_FLOOR_HEIGHT);
     mo->dropOffZ = mo->floorZ;
-    mo->ceilingZ = P_GetDoublep(mo->bspLeaf, DMU_CEILING_HEIGHT);
+    mo->ceilingZ = P_GetDoublep(Mobj_Sector(mo), DMU_CEILING_HEIGHT);
 
     if((spawnFlags & MSF_Z_CEIL) || (info->flags & MF_SPAWNCEILING))
     {
@@ -1116,7 +1096,7 @@ mobj_t* P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z,
     mo->floorClip = 0;
 
     if((mo->flags2 & MF2_FLOORCLIP) &&
-       FEQUAL(mo->origin[VZ], P_GetDoublep(mo->bspLeaf, DMU_FLOOR_HEIGHT)))
+       FEQUAL(mo->origin[VZ], P_GetDoublep(Mobj_Sector(mo), DMU_FLOOR_HEIGHT)))
     {
         const terraintype_t* tt = P_MobjGetFloorTerrainType(mo);
 
@@ -1239,7 +1219,7 @@ boolean P_HitFloor(mobj_t* thing)
         return false;
     }
 
-    if(!FEQUAL(thing->floorZ, P_GetDoublep(thing->bspLeaf, DMU_FLOOR_HEIGHT)))
+    if(!FEQUAL(thing->floorZ, P_GetDoublep(Mobj_Sector(thing), DMU_FLOOR_HEIGHT)))
     {
         // Don't splash if landing on the edge above water/lava/etc...
         return false;
