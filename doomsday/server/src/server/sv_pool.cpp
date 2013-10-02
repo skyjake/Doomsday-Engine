@@ -24,6 +24,7 @@
 
 #include <math.h>
 #include <de/mathutil.h>
+#include <de/vector1.h>
 
 #include "de_base.h"
 #include "de_console.h"

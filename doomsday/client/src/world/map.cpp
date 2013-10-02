@@ -22,6 +22,7 @@
  */
 
 #include <de/aabox.h>
+#include <de/vector1.h>
 
 #include <de/Rectangle>
 
@@ -2244,8 +2245,8 @@ static int traverseCellPath2(Blockmap &bmap, Blockmap::Cell const &fromCell,
 }
 
 static int traversePath(divline_t &traceLine, Blockmap &bmap,
-    const_pvec2d_t from_, const_pvec2d_t to_,
-    int (*callback) (Blockmap::Cell const &cell, void *parameters), void *parameters = 0)
+    Vector2d const &from_, Vector2d const &to_,
+    int (*callback) (Blockmap::Cell const &cell, void *context), void *context = 0)
 {
     // Constant terms implicitly defined by DOOM's original version of this
     // algorithm (we must honor these fudge factors for compatibility).
@@ -2256,8 +2257,8 @@ static int traversePath(divline_t &traceLine, Blockmap &bmap,
     vec2d_t max; V2d_Copy(max, bmap.bounds().max);
 
     // We may need to clip and/or fudge these points.
-    vec2d_t from; V2d_Copy(from, from_);
-    vec2d_t to;   V2d_Copy(to, to_);
+    vec2d_t from; V2d_Set(from, from_.x, from_.y);
+    vec2d_t to;   V2d_Set(to, to_.x, to_.y);
 
     if(!(from[VX] >= min[VX] && from[VX] <= max[VX] &&
          from[VY] >= min[VY] && from[VY] <= max[VY]))
@@ -2329,7 +2330,7 @@ static int traversePath(divline_t &traceLine, Blockmap &bmap,
 
     V2d_Subtract(from, from, min);
     V2d_Subtract(to, to, min);
-    return traverseCellPath2(bmap, fromCell, toCell, from, to, callback, parameters);
+    return traverseCellPath2(bmap, fromCell, toCell, from, to, callback, context);
 }
 
 struct iteratepolyobjlines_params_t
@@ -2467,8 +2468,8 @@ static int collectMobjIntercepts(Blockmap::Cell const &cell, void *parameters)
     return iterateCellMobjs(*mobjBlockmap, cell, interceptMobjsWorker);
 }
 
-int Map::pathTraverse(const_pvec2d_t from, const_pvec2d_t to, int flags,
-    traverser_t callback, void *parameters)
+int Map::pathTraverse(Vector2d const &from, Vector2d const &to, int flags,
+    traverser_t callback, void *context)
 {
     // A new intercept trace begins...
     P_ClearIntercepts();
@@ -2494,7 +2495,7 @@ int Map::pathTraverse(const_pvec2d_t from, const_pvec2d_t to, int flags,
     }
 
     // Step #2: Process sorted intercepts.
-    return P_TraverseIntercepts(callback, parameters);
+    return P_TraverseIntercepts(callback, context);
 }
 
 BspLeaf &Map::bspLeafAt(Vector2d const &point) const

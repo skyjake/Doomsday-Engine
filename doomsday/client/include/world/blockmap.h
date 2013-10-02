@@ -136,6 +136,9 @@ private:
     DENG2_PRIVATE(d)
 };
 
+typedef Blockmap::Cell BlockmapCell;
+typedef Blockmap::CellBlock BlockmapCellBlock;
+
 } //namespace de
 
 #endif // DENG_WORLD_BLOCKMAP_H

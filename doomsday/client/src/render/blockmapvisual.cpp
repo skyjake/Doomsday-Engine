@@ -150,7 +150,7 @@ static int drawBspLeaf(BspLeaf *bspLeaf, void * /*parameters*/)
     return false; // Continue iteration.
 }
 
-static int drawCellLines(Blockmap const &bmap, Blockmap::Cell const &cell, void *parameters)
+static int drawCellLines(Blockmap const &bmap, BlockmapCell const &cell, void *parameters)
 {
     glBegin(GL_LINES);
         bmap.iterate(cell, (int (*)(void*,void*)) drawLine, parameters);
@@ -169,7 +169,7 @@ static int drawCellPolyobjLines(void *object, void *parameters)
     return false; // Continue iteration.
 }
 
-static int drawCellPolyobjs(Blockmap const &bmap, Blockmap::Cell const &cell, void *parameters)
+static int drawCellPolyobjs(Blockmap const &bmap, BlockmapCell const &cell, void *parameters)
 {
     glBegin(GL_LINES);
         bmap.iterate(cell, (int (*)(void*,void*)) drawCellPolyobjLines, parameters);
@@ -177,7 +177,7 @@ static int drawCellPolyobjs(Blockmap const &bmap, Blockmap::Cell const &cell, vo
     return false; // Continue iteration.
 }
 
-static int drawCellMobjs(Blockmap const &bmap, Blockmap::Cell const &cell, void *parameters)
+static int drawCellMobjs(Blockmap const &bmap, BlockmapCell const &cell, void *parameters)
 {
     glBegin(GL_QUADS);
         bmap.iterate(cell, (int (*)(void*,void*)) drawMobj, parameters);
@@ -185,7 +185,7 @@ static int drawCellMobjs(Blockmap const &bmap, Blockmap::Cell const &cell, void 
     return false; // Continue iteration.
 }
 
-static int drawCellBspLeafs(Blockmap const &bmap, Blockmap::Cell const &cell, void *parameters)
+static int drawCellBspLeafs(Blockmap const &bmap, BlockmapCell const &cell, void *parameters)
 {
     bmap.iterate(cell, (int (*)(void*,void*)) drawBspLeaf, parameters);
     return false; // Continue iteration.
@@ -193,7 +193,7 @@ static int drawCellBspLeafs(Blockmap const &bmap, Blockmap::Cell const &cell, vo
 
 static void drawBackground(Blockmap const &bmap)
 {
-    Blockmap::Cell const &bmapDimensions = bmap.dimensions();
+    BlockmapCell const &bmapDimensions = bmap.dimensions();
 
     // Scale modelview matrix so we can express cell geometry
     // using a cell-sized unit coordinate space.
@@ -216,7 +216,7 @@ static void drawBackground(Blockmap const &bmap)
      * Draw the "null cells" over the top.
      */
     glColor4f(0, 0, 0, .95f);
-    Blockmap::Cell cell;
+    BlockmapCell cell;
     for(cell.y = 0; cell.y < bmapDimensions.y; ++cell.y)
     for(cell.x = 0; cell.x < bmapDimensions.x; ++cell.x)
     {
@@ -312,7 +312,7 @@ static void drawBlockmapInfo(Point2Raw const *_origin, Blockmap const *blockmap)
 }
 
 static void drawCellInfoBox(Blockmap const *blockmap, Point2Raw const *origin,
-    char const *objectTypeName, Blockmap::Cell const &cell)
+    char const *objectTypeName, BlockmapCell const &cell)
 {
     uint count = blockmap->cellElementCount(cell);
     char info[160];
@@ -327,12 +327,12 @@ static void drawCellInfoBox(Blockmap const *blockmap, Point2Raw const *origin,
  * @param cellDrawer  Blockmap cell content drawing callback. Can be @a NULL.
  */
 static void drawBlockmap(Blockmap const &bmap, mobj_t *followMobj,
-    int (*cellDrawer) (Blockmap const &bmap, Blockmap::Cell const &cell, void *parameters))
+    int (*cellDrawer) (Blockmap const &bmap, BlockmapCell const &cell, void *parameters))
 {
-    Blockmap::CellBlock vCellBlock;
-    Blockmap::Cell vCell;
+    BlockmapCellBlock vCellBlock;
+    BlockmapCell vCell;
 
-    Blockmap::Cell const &dimensions = bmap.dimensions();
+    BlockmapCell const &dimensions = bmap.dimensions();
     Vector2d const &cellDimensions   = bmap.cellDimensions();
 
     if(followMobj)
@@ -379,7 +379,7 @@ static void drawBlockmap(Blockmap const &bmap, mobj_t *followMobj,
         // Highlight cells the followed Mobj "touches".
         glBegin(GL_QUADS);
 
-        Blockmap::Cell cell;
+        BlockmapCell cell;
         for(cell.y = vCellBlock.min.y; cell.y <= vCellBlock.max.y; ++cell.y)
         for(cell.x = vCellBlock.min.x; cell.x <= vCellBlock.max.x; ++cell.x)
         {
@@ -442,7 +442,7 @@ static void drawBlockmap(Blockmap const &bmap, mobj_t *followMobj,
             // First, the cells outside the "touch" range (crimson).
             validCount++;
             glColor4f(.33f, 0, 0, .75f);
-            Blockmap::Cell cell;
+            BlockmapCell cell;
             for(cell.y = 0; cell.y < dimensions.y; ++cell.y)
             for(cell.x = 0; cell.x < dimensions.x; ++cell.x)
             {
@@ -478,7 +478,7 @@ static void drawBlockmap(Blockmap const &bmap, mobj_t *followMobj,
             // Draw all cells without color coding.
             validCount++;
             glColor4f(.33f, 0, 0, .75f);
-            Blockmap::Cell cell;
+            BlockmapCell cell;
             for(cell.y = 0; cell.y < dimensions.y; ++cell.y)
             for(cell.x = 0; cell.x < dimensions.x; ++cell.x)
             {
@@ -508,7 +508,7 @@ static void drawBlockmap(Blockmap const &bmap, mobj_t *followMobj,
 
 void Rend_BlockmapDebug()
 {
-    int (*cellDrawer) (Blockmap const &blockmap, Blockmap::Cell const &cell, void *parameters);
+    int (*cellDrawer) (Blockmap const &blockmap, BlockmapCell const &cell, void *parameters);
     char const *objectTypeName;
     mobj_t *followMobj = 0;
     Blockmap const *blockmap;
@@ -587,7 +587,7 @@ void Rend_BlockmapDebug()
     {
         // About the cell the followed Mobj is in.
         bool didClip;
-        Blockmap::Cell cell = blockmap->toCell(followMobj->origin, &didClip);
+        BlockmapCell cell = blockmap->toCell(followMobj->origin, &didClip);
         if(!didClip)
         {
             origin.x = DENG_GAMEVIEW_WIDTH / 2;

@@ -28,6 +28,8 @@
 #include <QHash>
 #include <QtAlgorithms>
 
+#include <de/vector1.h>
+
 #include <de/Log>
 
 #include "world/map.h"

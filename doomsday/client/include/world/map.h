@@ -24,9 +24,8 @@
 #include <QList>
 #include <QSet>
 
-#include <de/vector1.h> /// @todo remove me
-
 #include <de/Observers>
+#include <de/Vector>
 
 #include "Mesh"
 
@@ -519,24 +518,8 @@ public:
      * interceptable object linked within Blockmap cells which cover the path
      * this defines.
      */
-    int pathTraverse(const_pvec2d_t from, const_pvec2d_t to, int flags,
+    int pathTraverse(de::Vector2d const &from, de::Vector2d const &to, int flags,
                      traverser_t callback, void *context = 0);
-
-    /**
-     * @copydoc pathTraverse()
-     *
-     * @param fromX         X axis map space coordinate for the path origin.
-     * @param fromY         Y axis map space coordinate for the path origin.
-     * @param toX           X axis map space coordinate for the path destination.
-     * @param toY           Y axis map space coordinate for the path destination.
-     */
-    inline int pathTraverse(coord_t fromX, coord_t fromY, coord_t toX, coord_t toY,
-                            int flags, traverser_t callback, void *context = 0)
-    {
-        coord_t from[2] = { fromX, fromY };
-        coord_t to[2]   = { toX, toY };
-        return pathTraverse(from, to, flags, callback, context);
-    }
 
     /**
      * Retrieve an immutable copy of the LOS trace line state.

@@ -24,6 +24,8 @@
 #include <QSet>
 #include <QtAlgorithms>
 
+#include <de/vector1.h>
+
 #include "Face"
 
 #include "BspLeaf"

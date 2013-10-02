@@ -211,7 +211,7 @@ AABoxd const &Blockmap::bounds() const
     return d->bounds;
 }
 
-Blockmap::Cell const &Blockmap::dimensions() const
+BlockmapCell const &Blockmap::dimensions() const
 {
     return d->dimensions();
 }
@@ -221,7 +221,7 @@ Vector2d const &Blockmap::cellDimensions() const
     return d->cellDimensions;
 }
 
-Blockmap::Cell Blockmap::toCell(Vector2d const &point, bool *retDidClip) const
+BlockmapCell Blockmap::toCell(Vector2d const &point, bool *retDidClip) const
 {
     bool didClipX, didClipY;
     Cell cell(d->toCellX(point.x, didClipX), d->toCellY(point.y, didClipY));
@@ -229,7 +229,7 @@ Blockmap::Cell Blockmap::toCell(Vector2d const &point, bool *retDidClip) const
     return cell;
 }
 
-Blockmap::CellBlock Blockmap::toCellBlock(AABoxd const &box, bool *retDidClip) const
+BlockmapCellBlock Blockmap::toCellBlock(AABoxd const &box, bool *retDidClip) const
 {
     bool didClipMin, didClipMax;
     CellBlock block(toCell(box.min, &didClipMin), toCell(box.max, &didClipMax));
