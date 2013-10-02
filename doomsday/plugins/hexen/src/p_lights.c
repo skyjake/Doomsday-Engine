@@ -338,9 +338,9 @@ static int findLightSequenceStartSector(void* p, void* context)
     return false; // Continue iteration.
 }
 
-void P_SpawnLightSequence(Sector* sector, int indexStep)
+void P_SpawnLightSequence(Sector *sector, int indexStep)
 {
-    int                 count;
+    int count;
 
     {
     findlightsequencesectorparams_t params;
@@ -354,8 +354,7 @@ void P_SpawnLightSequence(Sector* sector, int indexStep)
         P_ToXSector(params.sec)->special = LIGHT_SEQUENCE_START;
 
         params.nextSec = NULL;
-        P_Iteratep(params.sec, DMU_LINE, &params,
-                   findLightSequenceSector);
+        P_Iteratep(params.sec, DMU_LINE, findLightSequenceSector, &params);
         params.sec = params.nextSec;
     } while(params.sec);
 
@@ -364,8 +363,8 @@ void P_SpawnLightSequence(Sector* sector, int indexStep)
 
     {
     findlightsequencestartsectorparams_t params;
-    float               base;
-    fixed_t             index, indexDelta;
+    float base;
+    fixed_t index, indexDelta;
 
     params.sec = sector;
     count *= indexStep;
@@ -382,8 +381,7 @@ void P_SpawnLightSequence(Sector* sector, int indexStep)
         index += indexDelta;
 
         params.nextSec = NULL;
-        P_Iteratep(params.sec, DMU_LINE, &params,
-                   findLightSequenceStartSector);
+        P_Iteratep(params.sec, DMU_LINE, findLightSequenceStartSector, &params);
         params.sec = params.nextSec;
     } while(params.sec);
     }

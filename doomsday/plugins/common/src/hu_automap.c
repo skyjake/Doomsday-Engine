@@ -685,7 +685,7 @@ static int drawMapLineWorker(void *line, void *uiWidget)
 
 static int drawMapLinesForBspLeafWorker(BspLeaf *bspLeaf, void *context)
 {
-    return P_Iteratep(bspLeaf, DMU_LINE, context, drawMapLineWorker);
+    return P_Iteratep(bspLeaf, DMU_LINE, drawMapLineWorker, context);
 }
 
 /**
@@ -719,7 +719,7 @@ static void drawMapLines(uiwidget_t *obj, int objType, boolean addToLists)
         int i, numBspLeafs = P_Count(DMU_BSPLEAF);
         for(i = 0; i < numBspLeafs; ++i)
         {
-            P_Iteratep(P_ToPtr(DMU_BSPLEAF, i), DMU_LINE, obj, drawMapLineWorker);
+            P_Iteratep(P_ToPtr(DMU_BSPLEAF, i), DMU_LINE, drawMapLineWorker, obj);
         }
     }
 }

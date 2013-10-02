@@ -100,10 +100,10 @@ static int spreadSoundToNeighbors(void *ptr, void *context)
     return false; // Continue iteration.
 }
 
-void P_RecursiveSound(struct mobj_s* soundTarget, Sector* sec, int soundBlocks)
+void P_RecursiveSound(struct mobj_s *soundTarget, Sector *sec, int soundBlocks)
 {
     spreadsoundtoneighborsparams_t params;
-    xsector_t* xsec = P_ToXSector(sec);
+    xsector_t *xsec = P_ToXSector(sec);
 
     // Wake up all monsters in this sector.
     if(P_GetIntp(sec, DMU_VALID_COUNT) == VALIDCOUNT && xsec->soundTraversed <= soundBlocks + 1)
@@ -116,5 +116,5 @@ void P_RecursiveSound(struct mobj_s* soundTarget, Sector* sec, int soundBlocks)
     params.baseSec = sec;
     params.soundBlocks = soundBlocks;
     params.soundTarget = soundTarget;
-    P_Iteratep(sec, DMU_LINE, &params, spreadSoundToNeighbors);
+    P_Iteratep(sec, DMU_LINE, spreadSoundToNeighbors, &params);
 }

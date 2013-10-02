@@ -158,7 +158,7 @@ DENG_API_TYPEDEF(Map)
      * @param uri  Uri identifying the map to be searched for.
      * @return  Fully qualified (i.e., absolute) path to the source file.
      */
-    AutoStr*        (*SourceFile)(char const *uri);
+    AutoStr        *(*SourceFile)(char const *uri);
 
     /**
      * Change the current map (will be loaded if necessary).
@@ -172,11 +172,11 @@ DENG_API_TYPEDEF(Map)
 
     int             (*LD_BoxOnSide)(Line *line, AABoxd const *box);
     int             (*LD_BoxOnSide_FixedPrecision)(Line *line, AABoxd const *box);
-    coord_t         (*LD_PointDistance)(Line* line, coord_t const point[2], coord_t *offset);
-    coord_t         (*LD_PointXYDistance)(Line* line, coord_t x, coord_t y, coord_t *offset);
+    coord_t         (*LD_PointDistance)(Line *line, coord_t const point[2], coord_t *offset);
+    coord_t         (*LD_PointXYDistance)(Line *line, coord_t x, coord_t y, coord_t *offset);
     coord_t         (*LD_PointOnSide)(Line const *line, coord_t const point[2]);
     coord_t         (*LD_PointXYOnSide)(Line const *line, coord_t x, coord_t y);
-    int             (*LD_MobjsIterator)(Line *line, int (*callback) (struct mobj_s *, void *), void *parameters);
+    int             (*LD_MobjsIterator)(Line *line, int (*callback) (struct mobj_s *, void *), void *context);
 
     // Sectors
 
@@ -188,7 +188,7 @@ DENG_API_TYPEDEF(Map)
      * (Lovely name; actually this is a combination of SectorMobjs and
      * a bunch of LineMobjs iterations.)
      */
-    int             (*S_TouchingMobjsIterator)(Sector* sector, int (*callback) (struct mobj_s*, void*), void* parameters);
+    int             (*S_TouchingMobjsIterator)(Sector *sector, int (*callback) (struct mobj_s *, void *), void *context);
 
     /**
      * Determine the Sector on the back side of the binary space partition that
@@ -214,18 +214,18 @@ DENG_API_TYPEDEF(Map)
     // Map Objects
 
     struct mobj_s  *(*MO_CreateXYZ)(thinkfunc_t function, coord_t x, coord_t y, coord_t z, angle_t angle, coord_t radius, coord_t height, int ddflags);
-    void            (*MO_Destroy)(struct mobj_s *mo);
+    void            (*MO_Destroy)(struct mobj_s *mobj);
     struct mobj_s  *(*MO_MobjForID)(int id);
-    void            (*MO_SetState)(struct mobj_s *mo, int statenum);
-    void            (*MO_Link)(struct mobj_s *mo, byte flags);
-    int             (*MO_Unlink)(struct mobj_s *mo);
-    void            (*MO_SpawnDamageParticleGen)(struct mobj_s *mo, struct mobj_s* inflictor, int amount);
+    void            (*MO_SetState)(struct mobj_s *mobj, int statenum);
+    void            (*MO_Link)(struct mobj_s *mobj, byte flags);
+    int             (*MO_Unlink)(struct mobj_s *mobj);
+    void            (*MO_SpawnDamageParticleGen)(struct mobj_s *mobj, struct mobj_s *inflictor, int amount);
 
     /**
      * The callback function will be called once for each line that crosses
      * trough the object. This means all the lines will be two-sided.
      */
-    int             (*MO_LinesIterator)(struct mobj_s *mo, int (*callback) (Line*, void*), void* parameters);
+    int             (*MO_LinesIterator)(struct mobj_s *mobj, int (*callback) (Line *, void *), void *context);
 
     /**
      * Increment validCount before calling this routine. The callback function
@@ -233,7 +233,7 @@ DENG_API_TYPEDEF(Map)
      * partly inside). This is not a 3D check; the mobj may actually reside
      * above or under the sector.
      */
-    int             (*MO_SectorsIterator)(struct mobj_s *mo, int (*callback) (Sector*, void*), void* parameters);
+    int             (*MO_SectorsIterator)(struct mobj_s *mobj, int (*callback) (Sector *, void *), void *context);
 
     /**
      * Calculate the visible @a origin of @a mobj in world space, including
@@ -254,29 +254,29 @@ DENG_API_TYPEDEF(Map)
 
     // Polyobjs
 
-    boolean         (*PO_MoveXY)(struct polyobj_s* po, coord_t x, coord_t y);
+    boolean         (*PO_MoveXY)(struct polyobj_s *po, coord_t x, coord_t y);
 
     /**
      * Rotate @a polyobj in the map coordinate space.
      */
-    boolean         (*PO_Rotate)(struct polyobj_s* po, angle_t angle);
+    boolean         (*PO_Rotate)(struct polyobj_s *po, angle_t angle);
 
     /**
      * Link @a polyobj to the current map. To be called after moving, rotating
      * or any other translation of the Polyobj within the map.
      */
-    void            (*PO_Link)(struct polyobj_s* po);
+    void            (*PO_Link)(struct polyobj_s *po);
 
     /**
      * Unlink @a polyobj from the current map. To be called prior to moving,
      * rotating or any other translation of the Polyobj within the map.
      */
-    void            (*PO_Unlink)(struct polyobj_s* po);
+    void            (*PO_Unlink)(struct polyobj_s *po);
 
     /**
      * Returns a pointer to the first Line in the polyobj.
      */
-    Line*           (*PO_FirstLine)(struct polyobj_s* po);
+    Line           *(*PO_FirstLine)(struct polyobj_s *po);
 
     /**
      * Lookup a Polyobj on the current map by unique ID.
@@ -284,7 +284,7 @@ DENG_API_TYPEDEF(Map)
      * @param id  Unique identifier of the Polyobj to be found.
      * @return  Found Polyobj instance else @c NULL.
      */
-    struct polyobj_s* (*PO_PolyobjByID)(int id);
+    struct polyobj_s *(*PO_PolyobjByID)(int id);
 
     /**
      * Lookup a Polyobj on the current map by tag.
@@ -292,17 +292,17 @@ DENG_API_TYPEDEF(Map)
      * @param tag  Tag associated with the Polyobj to be found.
      * @return  Found Polyobj instance, or @c NULL.
      */
-    struct polyobj_s* (*PO_PolyobjByTag)(int tag);
+    struct polyobj_s *(*PO_PolyobjByTag)(int tag);
 
     /**
      * The po_callback is called when a (any) polyobj hits a mobj.
      */
-    void            (*PO_SetCallback)(void (*func)(struct mobj_s*, void*, void*));
+    void            (*PO_SetCallback)(void (*func)(struct mobj_s *, void *, void *));
 
     // Iterators
 
-    int             (*Box_MobjsIterator)(const AABoxd* box, int (*callback) (struct mobj_s*, void*), void* parameters);
-    int             (*Box_LinesIterator)(const AABoxd* box, int (*callback) (Line*, void*), void* parameters);
+    int             (*Box_MobjsIterator)(AABoxd const *box, int (*callback) (struct mobj_s *, void *), void *context);
+    int             (*Box_LinesIterator)(AABoxd const *box, int (*callback) (Line *, void *), void *context);
 
     /**
      * Lines and Polyobj Lines (note Polyobj Lines are iterated first).
@@ -311,26 +311,26 @@ DENG_API_TYPEDEF(Map)
      * in multiple mapblocks, so increment validCount before the first call
      * to Map::iterateCellLines() then make one or more calls to it.
      */
-    int             (*Box_AllLinesIterator)(const AABoxd* box, int (*callback) (Line*, void*), void* parameters);
+    int             (*Box_AllLinesIterator)(AABoxd const *box, int (*callback) (Line *, void *), void *context);
 
     /**
      * The validCount flags are used to avoid checking polys that are marked in
      * multiple mapblocks, so increment validCount before the first call, then
      * make one or more calls to it.
      */
-    int             (*Box_PolyobjLinesIterator)(const AABoxd* box, int (*callback) (Line*, void*), void* parameters);
+    int             (*Box_PolyobjLinesIterator)(AABoxd const *box, int (*callback) (Line *, void *), void *context);
 
-    int             (*Box_BspLeafsIterator)(const AABoxd* box, Sector* sector, int (*callback) (BspLeaf*, void*), void* parameters);
-    int             (*Box_PolyobjsIterator)(const AABoxd* box, int (*callback) (struct polyobj_s*, void*), void* parameters);
-    int             (*PathTraverse2)(coord_t const from[2], coord_t const to[2], int flags, int (*callback) (const struct intercept_s*, void* paramaters), void* parameters);
-    int             (*PathTraverse)(coord_t const from[2], coord_t const to[2], int flags, int (*callback) (const struct intercept_s*, void* paramaters)/*parameters=NULL*/);
+    int             (*Box_BspLeafsIterator)(AABoxd const *box, Sector *sector, int (*callback) (BspLeaf *, void *), void *context);
+    int             (*Box_PolyobjsIterator)(AABoxd const *box, int (*callback) (struct polyobj_s *, void *), void *context);
+    int             (*PathTraverse2)(coord_t const from[2], coord_t const to[2], int flags, int (*callback) (struct intercept_s const *, void *context), void *context);
+    int             (*PathTraverse)(coord_t const from[2], coord_t const to[2], int flags, int (*callback) (struct intercept_s const *, void *context)/*, context=0*/);
 
     /**
      * Same as P_PathTraverse except 'from' and 'to' arguments are specified
      * as two sets of separate X and Y map space coordinates.
      */
-    int             (*PathXYTraverse2)(coord_t fromX, coord_t fromY, coord_t toX, coord_t toY, int flags, int (*callback) (const struct intercept_s*, void* paramaters), void* parameters);
-    int             (*PathXYTraverse)(coord_t fromX, coord_t fromY, coord_t toX, coord_t toY, int flags, int (*callback) (const struct intercept_s*, void* paramaters)/*parameters=NULL*/);
+    int             (*PathXYTraverse2)(coord_t fromX, coord_t fromY, coord_t toX, coord_t toY, int flags, int (*callback) (struct intercept_s const *, void *context), void *context);
+    int             (*PathXYTraverse)(coord_t fromX, coord_t fromY, coord_t toX, coord_t toY, int flags, int (*callback) (struct intercept_s const *, void *context)/*, context=0*/);
 
     /**
      * Traces a line of sight.
@@ -365,7 +365,7 @@ DENG_API_TYPEDEF(Map)
      * Update the TraceOpening state for the CURRENT map according to the opening
      * defined by the inner-minimal planes heights which intercept @a line.
      */
-    void            (*SetTraceOpening)(Line* line);
+    void            (*SetTraceOpening)(Line *line);
 
     /*
      * Map Updates (DMU):
@@ -380,7 +380,7 @@ DENG_API_TYPEDEF(Map)
      * Translate a DMU element/property constant to a string. Primarily intended
      * for error/debug messages.
      */
-    char const*     (*Str)(uint prop);
+    char const     *(*Str)(uint prop);
 
     /**
      * Determines the type of the map data object.
@@ -397,7 +397,7 @@ DENG_API_TYPEDEF(Map)
     /**
      * Convert an element index to a DMU object pointer.
      */
-    void*           (*ToPtr)(int type, int index);
+    void           *(*ToPtr)(int type, int index);
 
     /**
      * Returns the total number of DMU objects of @a type. For example, if the
@@ -411,14 +411,14 @@ DENG_API_TYPEDEF(Map)
      *
      * @param type          DMU type for selected object(s).
      * @param index         Index of the selected object(s).
-     * @param context       Data context pointer passed to the callback.
      * @param callback      Function to be called for each object.
+     * @param context       Data context pointer passed to the callback.
      *
      * @return  @c =false if all callbacks return @c false. If a non-zero value
      * is returned by the callback function, iteration is aborted immediately
      * and the value returned by the callback is returned.
      */
-    int             (*Callback)(int type, int index, void* context, int (*callback)(MapElementPtr p, void* ctx));
+    int             (*Callback)(int type, int index, int (*callback)(MapElementPtr p, void *context), void *context);
 
     /**
      * @ref Callback() alternative where the set of selected objects is instead
@@ -427,14 +427,14 @@ DENG_API_TYPEDEF(Map)
      *
      * @param type          DMU type for selected object(s).
      * @param pointer       DMU element pointer to make callback(s) for.
-     * @param context       Data context pointer passed to the callback.
      * @param callback      Function to be called for each object.
+     * @param context       Data context pointer passed to the callback.
      *
      * @return  @c =false if all callbacks return @c false. If a non-zero value
      * is returned by the callback function, iteration is aborted immediately
      * and the value returned by the callback is returned.
      */
-    int             (*Callbackp)(int type, MapElementPtr pointer, void* context, int (*callback)(MapElementPtr p, void* ctx));
+    int             (*Callbackp)(int type, MapElementPtr pointer, int (*callback)(MapElementPtr p, void *context), void *context);
 
     /**
      * An efficient alternative mechanism for iterating a selection of sub-objects
@@ -442,14 +442,14 @@ DENG_API_TYPEDEF(Map)
      *
      * @param pointer       DMU object to iterate sub-objects of.
      * @param prop          DMU property type identifying the sub-objects to iterate.
-     * @param context       Data context pointer passsed to the callback.
      * @param callback      Function to be called for each object.
+     * @param context       Data context pointer passsed to the callback.
      *
      * @return  @c =false if all callbacks return @c false. If a non-zero value
      * is returned by the callback function, iteration is aborted immediately
      * and the value returned by the callback is returned.
      */
-    int             (*Iteratep)(MapElementPtr pointer, uint prop, void* context, int (*callback) (MapElementPtr p, void* ctx));
+    int             (*Iteratep)(MapElementPtr pointer, uint prop, int (*callback) (MapElementPtr p, void *context), void *context);
 
     /**
      * Allocates a new dummy object.
@@ -459,7 +459,7 @@ DENG_API_TYPEDEF(Map)
      *                      caller-allocated memory area of extra data for the
      *                      dummy.
      */
-    MapElementPtr   (*AllocDummy)(int type, void* extraData);
+    MapElementPtr   (*AllocDummy)(int type, void *extraData);
 
     /**
      * Frees a dummy object.
@@ -475,7 +475,7 @@ DENG_API_TYPEDEF(Map)
      * Returns the extra data pointer of the dummy, or NULL if the object is not
      * a dummy object.
      */
-    void*           (*DummyExtraData)(MapElementPtr dummy);
+    void           *(*DummyExtraData)(MapElementPtr dummy);
 
     // Map Entities
     uint            (*CountMapObjs)(int entityId);
@@ -494,16 +494,16 @@ DENG_API_TYPEDEF(Map)
     void            (*SetAngle)(int type, int index, uint prop, angle_t param);
     void            (*SetFloat)(int type, int index, uint prop, float param);
     void            (*SetDouble)(int type, int index, uint prop, double param);
-    void            (*SetPtr)(int type, int index, uint prop, void* param);
+    void            (*SetPtr)(int type, int index, uint prop, void *param);
 
-    void            (*SetBoolv)(int type, int index, uint prop, boolean* params);
-    void            (*SetBytev)(int type, int index, uint prop, byte* params);
-    void            (*SetIntv)(int type, int index, uint prop, int* params);
-    void            (*SetFixedv)(int type, int index, uint prop, fixed_t* params);
-    void            (*SetAnglev)(int type, int index, uint prop, angle_t* params);
-    void            (*SetFloatv)(int type, int index, uint prop, float* params);
-    void            (*SetDoublev)(int type, int index, uint prop, double* params);
-    void            (*SetPtrv)(int type, int index, uint prop, void* params);
+    void            (*SetBoolv)(int type, int index, uint prop, boolean *params);
+    void            (*SetBytev)(int type, int index, uint prop, byte *params);
+    void            (*SetIntv)(int type, int index, uint prop, int *params);
+    void            (*SetFixedv)(int type, int index, uint prop, fixed_t *params);
+    void            (*SetAnglev)(int type, int index, uint prop, angle_t *params);
+    void            (*SetFloatv)(int type, int index, uint prop, float *params);
+    void            (*SetDoublev)(int type, int index, uint prop, double *params);
+    void            (*SetPtrv)(int type, int index, uint prop, void *params);
 
     /* pointer-based write functions */
     void            (*SetBoolp)(MapElementPtr ptr, uint prop, boolean param);
@@ -515,14 +515,14 @@ DENG_API_TYPEDEF(Map)
     void            (*SetDoublep)(MapElementPtr ptr, uint prop, double param);
     void            (*SetPtrp)(MapElementPtr ptr, uint prop, void* param);
 
-    void            (*SetBoolpv)(MapElementPtr ptr, uint prop, boolean* params);
-    void            (*SetBytepv)(MapElementPtr ptr, uint prop, byte* params);
-    void            (*SetIntpv)(MapElementPtr ptr, uint prop, int* params);
-    void            (*SetFixedpv)(MapElementPtr ptr, uint prop, fixed_t* params);
-    void            (*SetAnglepv)(MapElementPtr ptr, uint prop, angle_t* params);
-    void            (*SetFloatpv)(MapElementPtr ptr, uint prop, float* params);
-    void            (*SetDoublepv)(MapElementPtr ptr, uint prop, double* params);
-    void            (*SetPtrpv)(MapElementPtr ptr, uint prop, void* params);
+    void            (*SetBoolpv)(MapElementPtr ptr, uint prop, boolean *params);
+    void            (*SetBytepv)(MapElementPtr ptr, uint prop, byte *params);
+    void            (*SetIntpv)(MapElementPtr ptr, uint prop, int *params);
+    void            (*SetFixedpv)(MapElementPtr ptr, uint prop, fixed_t *params);
+    void            (*SetAnglepv)(MapElementPtr ptr, uint prop, angle_t *params);
+    void            (*SetFloatpv)(MapElementPtr ptr, uint prop, float *params);
+    void            (*SetDoublepv)(MapElementPtr ptr, uint prop, double *params);
+    void            (*SetPtrpv)(MapElementPtr ptr, uint prop, void *params);
 
     /* index-based read functions */
     boolean         (*GetBool)(int type, int index, uint prop);
@@ -534,14 +534,14 @@ DENG_API_TYPEDEF(Map)
     double          (*GetDouble)(int type, int index, uint prop);
     void*           (*GetPtr)(int type, int index, uint prop);
 
-    void            (*GetBoolv)(int type, int index, uint prop, boolean* params);
-    void            (*GetBytev)(int type, int index, uint prop, byte* params);
-    void            (*GetIntv)(int type, int index, uint prop, int* params);
-    void            (*GetFixedv)(int type, int index, uint prop, fixed_t* params);
-    void            (*GetAnglev)(int type, int index, uint prop, angle_t* params);
-    void            (*GetFloatv)(int type, int index, uint prop, float* params);
-    void            (*GetDoublev)(int type, int index, uint prop, double* params);
-    void            (*GetPtrv)(int type, int index, uint prop, void* params);
+    void            (*GetBoolv)(int type, int index, uint prop, boolean *params);
+    void            (*GetBytev)(int type, int index, uint prop, byte *params);
+    void            (*GetIntv)(int type, int index, uint prop, int *params);
+    void            (*GetFixedv)(int type, int index, uint prop, fixed_t *params);
+    void            (*GetAnglev)(int type, int index, uint prop, angle_t *params);
+    void            (*GetFloatv)(int type, int index, uint prop, float *params);
+    void            (*GetDoublev)(int type, int index, uint prop, double *params);
+    void            (*GetPtrv)(int type, int index, uint prop, void *params);
 
     /* pointer-based read functions */
     boolean         (*GetBoolp)(MapElementPtr ptr, uint prop);
@@ -553,14 +553,14 @@ DENG_API_TYPEDEF(Map)
     double          (*GetDoublep)(MapElementPtr ptr, uint prop);
     void*           (*GetPtrp)(MapElementPtr ptr, uint prop);
 
-    void            (*GetBoolpv)(MapElementPtr ptr, uint prop, boolean* params);
-    void            (*GetBytepv)(MapElementPtr ptr, uint prop, byte* params);
-    void            (*GetIntpv)(MapElementPtr ptr, uint prop, int* params);
-    void            (*GetFixedpv)(MapElementPtr ptr, uint prop, fixed_t* params);
-    void            (*GetAnglepv)(MapElementPtr ptr, uint prop, angle_t* params);
-    void            (*GetFloatpv)(MapElementPtr ptr, uint prop, float* params);
-    void            (*GetDoublepv)(MapElementPtr ptr, uint prop, double* params);
-    void            (*GetPtrpv)(MapElementPtr ptr, uint prop, void* params);
+    void            (*GetBoolpv)(MapElementPtr ptr, uint prop, boolean *params);
+    void            (*GetBytepv)(MapElementPtr ptr, uint prop, byte *params);
+    void            (*GetIntpv)(MapElementPtr ptr, uint prop, int *params);
+    void            (*GetFixedpv)(MapElementPtr ptr, uint prop, fixed_t *params);
+    void            (*GetAnglepv)(MapElementPtr ptr, uint prop, angle_t *params);
+    void            (*GetFloatpv)(MapElementPtr ptr, uint prop, float *params);
+    void            (*GetDoublepv)(MapElementPtr ptr, uint prop, double *params);
+    void            (*GetPtrpv)(MapElementPtr ptr, uint prop, void *params);
 }
 DENG_API_T(Map);
 

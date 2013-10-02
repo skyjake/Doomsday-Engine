@@ -1265,8 +1265,7 @@ boolean XS_GetPlane(Line* actline, Sector* sector, int ref, int* refdata,
         params.part = part;
         params.flags = (findMin? FSETHF_MIN : 0);
         params.val = (findMin? DDMAXFLOAT : DDMINFLOAT);
-        P_Iteratep(sector, DMU_LINE, &params,
-                   findSectorExtremalMaterialHeight);
+        P_Iteratep(sector, DMU_LINE, findSectorExtremalMaterialHeight, &params);
         if(height)
             *height = params.val;
 
@@ -1276,61 +1275,53 @@ boolean XS_GetPlane(Line* actline, Sector* sector, int ref, int* refdata,
     // Get the right height and pic.
     if(ref == SPREF_HIGHEST_CEILING)
     {
-        otherSec =
-            P_FindSectorSurroundingHighestCeiling(sector, DDMINFLOAT, &otherHeight);
+        otherSec = P_FindSectorSurroundingHighestCeiling(sector, DDMINFLOAT, &otherHeight);
         if(otherSec)
             otherMat = P_GetPtrp(otherSec, DMU_CEILING_MATERIAL);
     }
     else if(ref == SPREF_HIGHEST_FLOOR)
     {
-        otherSec =
-            P_FindSectorSurroundingHighestFloor(sector, DDMINFLOAT, &otherHeight);
+        otherSec = P_FindSectorSurroundingHighestFloor(sector, DDMINFLOAT, &otherHeight);
         if(otherSec)
             otherMat = P_GetPtrp(otherSec, DMU_CEILING_MATERIAL);
     }
     else if(ref == SPREF_LOWEST_CEILING)
     {
-        otherSec =
-            P_FindSectorSurroundingLowestCeiling(sector, DDMAXFLOAT, &otherHeight);
+        otherSec = P_FindSectorSurroundingLowestCeiling(sector, DDMAXFLOAT, &otherHeight);
         if(otherSec)
             otherMat = P_GetPtrp(otherSec, DMU_CEILING_MATERIAL);
     }
     else if(ref == SPREF_LOWEST_FLOOR)
     {
-        otherSec =
-            P_FindSectorSurroundingLowestFloor(sector, DDMAXFLOAT, &otherHeight);
+        otherSec = P_FindSectorSurroundingLowestFloor(sector, DDMAXFLOAT, &otherHeight);
         if(otherSec)
             otherMat = P_GetPtrp(otherSec, DMU_FLOOR_MATERIAL);
     }
     else if(ref == SPREF_NEXT_HIGHEST_CEILING)
     {
-        otherSec =
-            P_FindSectorSurroundingNextHighestCeiling(sector,
-                P_GetDoublep(sector, DMU_CEILING_HEIGHT), &otherHeight);
+        otherSec = P_FindSectorSurroundingNextHighestCeiling(sector,
+                        P_GetDoublep(sector, DMU_CEILING_HEIGHT), &otherHeight);
         if(otherSec)
             otherMat = P_GetPtrp(otherSec, DMU_CEILING_MATERIAL);
     }
     else if(ref == SPREF_NEXT_HIGHEST_FLOOR)
     {
-        otherSec =
-            P_FindSectorSurroundingNextHighestFloor(sector,
-                P_GetDoublep(sector, DMU_FLOOR_HEIGHT), &otherHeight);
+        otherSec = P_FindSectorSurroundingNextHighestFloor(sector,
+                        P_GetDoublep(sector, DMU_FLOOR_HEIGHT), &otherHeight);
         if(otherSec)
             otherMat = P_GetPtrp(otherSec, DMU_FLOOR_MATERIAL);
     }
     else if(ref == SPREF_NEXT_LOWEST_CEILING)
     {
-        otherSec =
-            P_FindSectorSurroundingNextLowestCeiling(sector,
-                P_GetDoublep(sector, DMU_CEILING_HEIGHT), &otherHeight);
+        otherSec = P_FindSectorSurroundingNextLowestCeiling(sector,
+                        P_GetDoublep(sector, DMU_CEILING_HEIGHT), &otherHeight);
         if(otherSec)
             otherMat = P_GetPtrp(otherSec, DMU_CEILING_MATERIAL);
     }
     else if(ref == SPREF_NEXT_LOWEST_FLOOR)
     {
-        otherSec =
-            P_FindSectorSurroundingNextLowestFloor(sector,
-                P_GetDoublep(sector, DMU_FLOOR_HEIGHT), &otherHeight);
+        otherSec = P_FindSectorSurroundingNextLowestFloor(sector,
+                        P_GetDoublep(sector, DMU_FLOOR_HEIGHT), &otherHeight);
         if(otherSec)
             otherMat = P_GetPtrp(otherSec, DMU_FLOOR_MATERIAL);
     }
@@ -1702,7 +1693,7 @@ static boolean spreadBuildToNeighborAll(Line *origin, linetype_t *info,
         params.baseSec = sec;
         params.spreaded = 0;
 
-        P_Iteratep(sec, DMU_LINE, &params, spreadBuild);
+        P_Iteratep(sec, DMU_LINE, spreadBuild, &params);
         if(params.spreaded > 0)
             result = true;
     }
@@ -1807,7 +1798,7 @@ boolean spreadBuildToNeighborLowestIDX(Line *origin, linetype_t *info,
         params.foundIDX = numlines;
         params.foundSec = NULL;
 
-        P_Iteratep(sec, DMU_LINE, &params, findBuildNeighbor);
+        P_Iteratep(sec, DMU_LINE, findBuildNeighbor, &params);
 
         if(params.foundSec)
         {

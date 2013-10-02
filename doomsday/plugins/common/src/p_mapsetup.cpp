@@ -377,7 +377,7 @@ static void initXSectors()
         getSurfaceColor(TOLIGHTIDX(P_GetGMOShort(MO_XSECTOR, i, MO_WALLTOPCOLOR)), params.topColor);
         getSurfaceColor(TOLIGHTIDX(P_GetGMOShort(MO_XSECTOR, i, MO_WALLBOTTOMCOLOR)), params.bottomColor);
 
-        P_Iteratep(sec, DMU_LINE, &params, applySurfaceColor);
+        P_Iteratep(sec, DMU_LINE, applySurfaceColor, &params);
 #endif
     }
 }

@@ -507,8 +507,7 @@ Line* P_FindLineInSectorSmallestBottomMaterial(Sector *sec, int *val)
     params.baseSec = sec;
     params.minSize = DDMAXINT;
     params.foundLine = NULL;
-    P_Iteratep(sec, DMU_LINE, &params,
-               findLineInSectorSmallestBottomMaterial);
+    P_Iteratep(sec, DMU_LINE, findLineInSectorSmallestBottomMaterial, &params);
 
     if(val)
         *val = params.minSize;
@@ -556,14 +555,14 @@ static int findFirstNeighbourAtFloorHeight(void* ptr, void* context)
     return false; // Continue iteration.
 }
 
-static Sector* findSectorSurroundingAtFloorHeight(Sector* sec, coord_t height)
+static Sector *findSectorSurroundingAtFloorHeight(Sector *sec, coord_t height)
 {
     findfirstneighbouratfloorheightparams_t params;
 
     params.baseSec = sec;
     params.foundSec = NULL;
     params.height = height;
-    P_Iteratep(sec, DMU_LINE, &params, findFirstNeighbourAtFloorHeight);
+    P_Iteratep(sec, DMU_LINE, findFirstNeighbourAtFloorHeight, &params);
     return params.foundSec;
 }
 #endif
@@ -1124,8 +1123,7 @@ int EV_BuildStairs(Line* line, stair_e type)
         params.height = height;
         params.stairSize = stairsize;
 
-        while(P_Iteratep(params.baseSec, DMU_LINE, &params,
-                          findAdjacentSectorForSpread))
+        while(P_Iteratep(params.baseSec, DMU_LINE, findAdjacentSectorForSpread, &params))
         {
             // We found another sector to spread to.
             floor = Z_Calloc(sizeof(*floor), PU_MAP, 0);
@@ -1234,7 +1232,7 @@ static void processStairSector(Sector* sec, int type, coord_t height,
 
     // Find all neigboring sectors with sector special equal to type and add
     // them to the stairbuild queue.
-    P_Iteratep(sec, DMU_LINE, &params, findSectorNeighborsForStairBuild);
+    P_Iteratep(sec, DMU_LINE, findSectorNeighborsForStairBuild, &params);
 }
 #endif
 
@@ -1349,7 +1347,7 @@ int EV_DoDonut(Line *line)
         params.sector = NULL;
         params.foundLine = NULL;
 
-        if(P_Iteratep(sec, DMU_LINE, &params, findFirstTwosided))
+        if(P_Iteratep(sec, DMU_LINE, findFirstTwosided, &params))
         {
             ring = P_GetPtrp(params.foundLine, DMU_BACK_SECTOR);
             if(ring == sec)
@@ -1357,7 +1355,7 @@ int EV_DoDonut(Line *line)
 
             params.sector = sec;
             params.foundLine = NULL;
-            if(P_Iteratep(ring, DMU_LINE, &params, findFirstTwosided))
+            if(P_Iteratep(ring, DMU_LINE, findFirstTwosided, &params))
                 outer = P_GetPtrp(params.foundLine, DMU_BACK_SECTOR);
         }
 
