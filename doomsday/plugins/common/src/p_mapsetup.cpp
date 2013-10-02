@@ -421,8 +421,7 @@ static void initMapSpots()
         // Sound sequence origin?
         if(spot->doomEdNum >= 1400 && spot->doomEdNum < 1410)
         {
-            BspLeaf *bspLeaf = P_BspLeafAtPoint_FixedPrecision(spot->origin);
-            xsector_t *xsector = P_ToXSector((Sector *)P_GetPtrp(bspLeaf, DMU_SECTOR));
+            xsector_t *xsector = P_ToXSector(P_SectorAtPoint_FixedPrecision(spot->origin));
 
             xsector->seqType = seqtype_t(spot->doomEdNum - 1400);
             continue;

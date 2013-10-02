@@ -1599,21 +1599,6 @@ DENG_EXTERN_C int P_MobjUnlink(mobj_t *mo)
     return Mobj_BspLeafAtOrigin(*mo).map().unlink(*mo);
 }
 
-#undef P_BspLeafAtPoint_FixedPrecision
-DENG_EXTERN_C BspLeaf *P_BspLeafAtPoint_FixedPrecision(const_pvec2d_t point)
-{
-    if(!App_World().hasMap()) return 0;
-    return &App_World().map().bspLeafAt_FixedPrecision(point);
-}
-
-#undef P_BspLeafAtPoint_FixedPrecisionXY
-DENG_EXTERN_C BspLeaf *P_BspLeafAtPoint_FixedPrecisionXY(coord_t x, coord_t y)
-{
-    if(!App_World().hasMap()) return 0;
-    coord_t point[2] = { x, y };
-    return &App_World().map().bspLeafAt_FixedPrecision(point);
-}
-
 #undef P_MobjLinesIterator
 DENG_EXTERN_C int P_MobjLinesIterator(mobj_t *mo, int (*callback) (Line *, void *), void *parameters)
 {
@@ -1640,6 +1625,21 @@ DENG_EXTERN_C int P_SectorTouchingMobjsIterator(Sector *sector, int (*callback) 
 {
     if(!sector) return false; // Continue iteration.
     return sector->map().sectorTouchingMobjsIterator(sector, callback, parameters);
+}
+
+#undef P_SectorAtPoint_FixedPrecision
+DENG_EXTERN_C Sector *P_SectorAtPoint_FixedPrecision(const_pvec2d_t point)
+{
+    if(!App_World().hasMap()) return 0;
+    return App_World().map().bspLeafAt_FixedPrecision(point).sectorPtr();
+}
+
+#undef P_SectorAtPoint_FixedPrecisionXY
+DENG_EXTERN_C Sector *P_SectorAtPoint_FixedPrecisionXY(coord_t x, coord_t y)
+{
+    if(!App_World().hasMap()) return 0;
+    coord_t point[2] = { x, y };
+    return App_World().map().bspLeafAt_FixedPrecision(point).sectorPtr();
 }
 
 #undef P_MobjsBoxIterator
@@ -1907,6 +1907,8 @@ DENG_DECLARE_API(Map) =
     P_LineMobjsIterator,
 
     P_SectorTouchingMobjsIterator,
+    P_SectorAtPoint_FixedPrecision,
+    P_SectorAtPoint_FixedPrecisionXY,
 
     P_MobjCreateXYZ,
     P_MobjDestroy,
@@ -1929,9 +1931,6 @@ DENG_DECLARE_API(Map) =
     P_PolyobjByID,
     P_PolyobjByTag,
     P_SetPolyobjCallback,
-
-    P_BspLeafAtPoint_FixedPrecision,
-    P_BspLeafAtPoint_FixedPrecisionXY,
 
     P_MobjsBoxIterator,
     P_LinesBoxIterator,

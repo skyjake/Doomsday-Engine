@@ -256,7 +256,7 @@ int PIT_StompThing(mobj_t* mo, void* data)
 boolean P_TeleportMove(mobj_t *thing, coord_t x, coord_t y, boolean alwaysStomp)
 {
     int stomping;
-    BspLeaf *newBspLeaf;
+    Sector *newSector;
     AABoxd tmBoxExpanded;
 
     // Kill anything occupying the position.
@@ -271,7 +271,7 @@ boolean P_TeleportMove(mobj_t *thing, coord_t x, coord_t y, boolean alwaysStomp)
     tmBox.maxX = tm[VX] + tmThing->radius;
     tmBox.maxY = tm[VY] + tmThing->radius;
 
-    newBspLeaf = P_BspLeafAtPoint_FixedPrecision(tm);
+    newSector = P_SectorAtPoint_FixedPrecision(tm);
 
     ceilingLine = floorLine = NULL;
 #if !__JHEXEN__
@@ -281,10 +281,10 @@ boolean P_TeleportMove(mobj_t *thing, coord_t x, coord_t y, boolean alwaysStomp)
 
     // The base floor / ceiling is from the BSP leaf that contains the
     // point. Any contacted lines the step closer together will adjust them.
-    tmFloorZ = tmDropoffZ = P_GetDoublep(newBspLeaf, DMU_FLOOR_HEIGHT);
-    tmCeilingZ = P_GetDoublep(newBspLeaf, DMU_CEILING_HEIGHT);
+    tmFloorZ = tmDropoffZ = P_GetDoublep(newSector, DMU_FLOOR_HEIGHT);
+    tmCeilingZ = P_GetDoublep(newSector, DMU_CEILING_HEIGHT);
 #if __JHEXEN__
-    tmFloorMaterial = P_GetPtrp(newBspLeaf, DMU_FLOOR_MATERIAL);
+    tmFloorMaterial = P_GetPtrp(newSector, DMU_FLOOR_MATERIAL);
 #endif
 
     IterList_Clear(spechit);
@@ -1145,7 +1145,7 @@ int PIT_CheckLine(Line* ld, void* data)
 boolean P_CheckPositionXYZ(mobj_t *thing, coord_t x, coord_t y, coord_t z)
 {
     AABoxd tmBoxExpanded;
-    Sector *newSec;
+    Sector *newSector;
 
     tmThing = thing;
 
@@ -1168,7 +1168,7 @@ boolean P_CheckPositionXYZ(mobj_t *thing, coord_t x, coord_t y, coord_t z)
     tmBox.maxX = tm[VX] + tmThing->radius;
     tmBox.maxY = tm[VY] + tmThing->radius;
 
-    newSec = P_GetPtrp(P_BspLeafAtPoint_FixedPrecision(tm), DMU_SECTOR);
+    newSector = P_SectorAtPoint_FixedPrecision(tm);
 
     ceilingLine = floorLine = NULL;
 #if !__JHEXEN__
@@ -1178,10 +1178,10 @@ boolean P_CheckPositionXYZ(mobj_t *thing, coord_t x, coord_t y, coord_t z)
 
     // The base floor/ceiling is from the BSP leaf that contains the point.
     // Any contacted lines the step closer together will adjust them.
-    tmFloorZ = tmDropoffZ = P_GetDoublep(newSec, DMU_FLOOR_HEIGHT);
-    tmCeilingZ = P_GetDoublep(newSec, DMU_CEILING_HEIGHT);
+    tmFloorZ = tmDropoffZ = P_GetDoublep(newSector, DMU_FLOOR_HEIGHT);
+    tmCeilingZ = P_GetDoublep(newSector, DMU_CEILING_HEIGHT);
 #if __JHEXEN__
-    tmFloorMaterial = P_GetPtrp(newSec, DMU_FLOOR_MATERIAL);
+    tmFloorMaterial = P_GetPtrp(newSector, DMU_FLOOR_MATERIAL);
 #endif
 
     IterList_Clear(spechit);
@@ -1659,7 +1659,7 @@ int PTR_ShootTraverse(intercept_t const *in, void *parameters)
     mobj_t *th;
     divline_t const *trace = P_TraceLOS();
     TraceOpening const *opening;
-    BspLeaf *contact, *originBspLeaf;
+    Sector *contact, *originSector;
     boolean lineWasHit;
 
     tracePos[VX] = FIX2FLT(trace->origin[VX]);
@@ -1746,8 +1746,8 @@ int PTR_ShootTraverse(intercept_t const *in, void *parameters)
 
         lineWasHit = true;
 
-        // This is the BSP leaf where the trace originates.
-        originBspLeaf = P_BspLeafAtPoint_FixedPrecision(tracePos);
+        // This is the sector where the trace originates.
+        originSector = P_SectorAtPoint_FixedPrecision(tracePos);
 
         d[VX] = pos[VX] - tracePos[VX];
         d[VY] = pos[VY] - tracePos[VY];
@@ -1755,7 +1755,7 @@ int PTR_ShootTraverse(intercept_t const *in, void *parameters)
 
         if(!INRANGE_OF(d[VZ], 0, .0001f)) // Epsilon
         {
-            contact = P_BspLeafAtPoint_FixedPrecision(pos);
+            contact = P_SectorAtPoint_FixedPrecision(pos);
             step = M_ApproxDistance3(d[VX], d[VY], d[VZ] * 1.2/*aspect ratio*/);
             stepv[VX] = d[VX] / step;
             stepv[VY] = d[VY] / step;
@@ -1764,7 +1764,7 @@ int PTR_ShootTraverse(intercept_t const *in, void *parameters)
             cFloor = P_GetDoublep(contact, DMU_FLOOR_HEIGHT);
             cCeil  = P_GetDoublep(contact, DMU_CEILING_HEIGHT);
             // Backtrack until we find a non-empty sector.
-            while(cCeil <= cFloor && contact != originBspLeaf)
+            while(cCeil <= cFloor && contact != originSector)
             {
                 d[VX] -= 8 * stepv[VX];
                 d[VY] -= 8 * stepv[VY];
@@ -1772,7 +1772,7 @@ int PTR_ShootTraverse(intercept_t const *in, void *parameters)
                 pos[VX] = tracePos[VX] + d[VX];
                 pos[VY] = tracePos[VY] + d[VY];
                 pos[VZ] = tracePos[VZ] + d[VZ];
-                contact = P_BspLeafAtPoint_FixedPrecision(pos);
+                contact = P_SectorAtPoint_FixedPrecision(pos);
             }
 
             // Should we backtrack to hit a plane instead?
@@ -2954,7 +2954,7 @@ int PIT_CheckOnmobjZ(mobj_t* thing, void* data)
 
 mobj_t *P_CheckOnMobj(mobj_t *thing)
 {
-    BspLeaf *newBspLeaf;
+    Sector *newSector;
     coord_t pos[3];
     mobj_t oldMo;
     AABoxd tmBoxExpanded;
@@ -2985,15 +2985,15 @@ mobj_t *P_CheckOnMobj(mobj_t *thing)
     tmBox.maxX = pos[VX] + tmThing->radius;
     tmBox.maxY = pos[VY] + tmThing->radius;
 
-    newBspLeaf = P_BspLeafAtPoint_FixedPrecision(pos);
+    newSector = P_SectorAtPoint_FixedPrecision(pos);
     ceilingLine = floorLine = NULL;
 
     // The base floor/ceiling is from the BSP leaf that contains the point.
     // Any contacted lines the step closer together will adjust them.
 
-    tmFloorZ = tmDropoffZ = P_GetDoublep(newBspLeaf, DMU_FLOOR_HEIGHT);
-    tmCeilingZ = P_GetDoublep(newBspLeaf, DMU_CEILING_HEIGHT);
-    tmFloorMaterial = P_GetPtrp(newBspLeaf, DMU_FLOOR_MATERIAL);
+    tmFloorZ = tmDropoffZ = P_GetDoublep(newSector, DMU_FLOOR_HEIGHT);
+    tmCeilingZ = P_GetDoublep(newSector, DMU_CEILING_HEIGHT);
+    tmFloorMaterial = P_GetPtrp(newSector, DMU_FLOOR_MATERIAL);
 
     IterList_Clear(spechit);
 

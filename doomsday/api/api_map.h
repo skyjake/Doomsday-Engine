@@ -200,11 +200,32 @@ DENG_API_TYPEDEF(Map)
      */
     int             (*S_TouchingMobjsIterator)(Sector* sector, int (*callback) (struct mobj_s*, void*), void* parameters);
 
+    /**
+     * Determine the Sector on the back side of the binary space partition that
+     * lies in front of the specified point within the CURRENT map's coordinate
+     * space.
+     *
+     * A valid Sector is always returned unless the BSP leaf at that point is
+     * fully degenerate (thus no sector can be determnied).
+     *
+     * Note: The point may not actually lay within the sector returned! (however,
+     * it is on the same side of the space partition!).
+     *
+     * @param x  X coordinate of the point to test.
+     * @param y  Y coordinate of the point to test.
+     *
+     * @return  Sector attributed to the BSP leaf at the specified point.
+     */
+    Sector         *(*S_AtPoint_FixedPrecision)(coord_t const point[2]);
+
+    /// @copydoc S_AtPoint_FixedPrecision()
+    Sector         *(*S_AtPoint_FixedPrecisionXY)(coord_t x, coord_t y);
+
     // Map Objects
 
-    struct mobj_s*  (*MO_CreateXYZ)(thinkfunc_t function, coord_t x, coord_t y, coord_t z, angle_t angle, coord_t radius, coord_t height, int ddflags);
+    struct mobj_s  *(*MO_CreateXYZ)(thinkfunc_t function, coord_t x, coord_t y, coord_t z, angle_t angle, coord_t radius, coord_t height, int ddflags);
     void            (*MO_Destroy)(struct mobj_s *mo);
-    struct mobj_s*  (*MO_MobjForID)(int id);
+    struct mobj_s  *(*MO_MobjForID)(int id);
     void            (*MO_SetState)(struct mobj_s *mo, int statenum);
     void            (*MO_Link)(struct mobj_s *mo, byte flags);
     int             (*MO_Unlink)(struct mobj_s *mo);
@@ -287,24 +308,6 @@ DENG_API_TYPEDEF(Map)
      * The po_callback is called when a (any) polyobj hits a mobj.
      */
     void            (*PO_SetCallback)(void (*func)(struct mobj_s*, void*, void*));
-
-    // BSP Leafs
-
-    BspLeaf*        (*BL_AtPoint_FixedPrecision)(coord_t const point[2]);
-
-    /**
-     * Determine the BSP leaf on the back side of the BS partition that lies in
-     * front of the specified point within the CURRENT map's coordinate space.
-     *
-     * Always returns a valid BspLeaf although the point may not actually lay
-     * within it (however it is on the same side of the space partition!).
-     *
-     * @param x  X coordinate of the point to test.
-     * @param y  Y coordinate of the point to test.
-     *
-     * @return  BspLeaf instance for that BSP node's leaf.
-     */
-    BspLeaf*        (*BL_AtPoint_FixedPrecisionXY)(coord_t x, coord_t y);
 
     // Iterators
 
@@ -586,6 +589,8 @@ DENG_API_T(Map);
 #define P_LineMobjsIterator                 _api_Map.LD_MobjsIterator
 
 #define P_SectorTouchingMobjsIterator       _api_Map.S_TouchingMobjsIterator
+#define P_SectorAtPoint_FixedPrecision      _api_Map.S_AtPoint_FixedPrecision
+#define P_SectorAtPoint_FixedPrecisionXY    _api_Map.S_AtPoint_FixedPrecisionXY
 
 #define P_MobjCreateXYZ                     _api_Map.MO_CreateXYZ
 #define P_MobjDestroy                       _api_Map.MO_Destroy
@@ -608,9 +613,6 @@ DENG_API_T(Map);
 #define P_PolyobjByID                       _api_Map.PO_PolyobjByID
 #define P_PolyobjByTag                      _api_Map.PO_PolyobjByTag
 #define P_SetPolyobjCallback                _api_Map.PO_SetCallback
-
-#define P_BspLeafAtPoint_FixedPrecision     _api_Map.BL_AtPoint_FixedPrecision
-#define P_BspLeafAtPoint_FixedPrecisionXY   _api_Map.BL_AtPoint_FixedPrecisionXY
 
 #define P_MobjsBoxIterator                  _api_Map.Box_MobjsIterator
 #define P_LinesBoxIterator                  _api_Map.Box_LinesIterator

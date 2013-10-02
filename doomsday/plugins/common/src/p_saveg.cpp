@@ -4753,7 +4753,7 @@ static void writeSoundSequences()
         {
             for(; i < numpolyobjs; ++i)
             {
-                if(node->mobj == (mobj_t*) P_GetPolyobj(i | 0x80000000))
+                if(node->mobj == (mobj_t *) P_GetPolyobj(i | 0x80000000))
                 {
                     break;
                 }
@@ -4764,8 +4764,7 @@ static void writeSoundSequences()
         if(i == numpolyobjs)
         {
             // The sound's emitter is the sector, not the polyobj itself.
-            BspLeaf *bspLeaf = P_BspLeafAtPoint_FixedPrecision(node->mobj->origin);
-            difference = P_ToIndex((Sector *)P_GetPtrp(bspLeaf, DMU_SECTOR));
+            difference = P_ToIndex(P_SectorAtPoint_FixedPrecision(node->mobj->origin));
             SV_WriteLong(0); // 0 -- sector sound origin.
         }
         else

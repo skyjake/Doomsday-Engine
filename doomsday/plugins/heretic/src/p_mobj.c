@@ -1124,7 +1124,7 @@ mobj_t* P_SpawnMobj(mobjtype_t type, coord_t const pos[3], angle_t angle, int sp
 void P_RepositionMace(mobj_t *mo)
 {
     mapspot_t const *mapSpot;
-    BspLeaf *bspLeaf;
+    Sector *sector;
 
     DENG_ASSERT(mo && mo->type == MT_WMACE);
 #if _DEBUG
@@ -1144,12 +1144,12 @@ void P_RepositionMace(mobj_t *mo)
     {
         mo->origin[VX] = mapSpot->origin[VX];
         mo->origin[VY] = mapSpot->origin[VY];
-        bspLeaf = P_BspLeafAtPoint_FixedPrecision(mo->origin);
+        sector = P_SectorAtPoint_FixedPrecision(mo->origin);
 
-        mo->floorZ = P_GetDoublep(bspLeaf, DMU_CEILING_HEIGHT);
+        mo->floorZ = P_GetDoublep(sector, DMU_CEILING_HEIGHT);
         mo->origin[VZ] = mo->floorZ;
 
-        mo->ceilingZ = P_GetDoublep(bspLeaf, DMU_CEILING_HEIGHT);
+        mo->ceilingZ = P_GetDoublep(sector, DMU_CEILING_HEIGHT);
     }
     P_MobjSetOrigin(mo);
 
