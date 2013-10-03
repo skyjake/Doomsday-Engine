@@ -3801,7 +3801,7 @@ static void drawVertexes(Map &map)
                vOrigin[VY] - MAX_VERTEX_POINT_DIST,
                vOrigin[VX] + MAX_VERTEX_POINT_DIST,
                vOrigin[VY] + MAX_VERTEX_POINT_DIST);
-    P_PolyobjsBoxIterator(&box, drawPolyobjVertexes, NULL);
+    Polyobj_BoxIterator(&box, drawPolyobjVertexes, NULL);
 
     // Restore previous state.
     if(devVertexBars)

@@ -161,7 +161,7 @@ void P_ApplyTorque(mobj_t *mo)
     // Use VALIDCOUNT to prevent checking the same line twice.
     VALIDCOUNT++;
 
-    P_MobjLinesIterator(mo, PIT_ApplyTorque, 0);
+    Mobj_TouchedLinesIterator(mo, PIT_ApplyTorque, 0);
 
     // If any momentum, mark object as 'falling' using engine-internal
     // flags.

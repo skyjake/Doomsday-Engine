@@ -710,7 +710,7 @@ static void drawMapLines(uiwidget_t *obj, int objType, boolean addToLists)
     {
         AABoxd aaBox;
         UIAutomap_PVisibleAABounds(obj, &aaBox.minX, &aaBox.maxX, &aaBox.minY, &aaBox.maxY);
-        P_BspLeafsBoxIterator(&aaBox, NULL, drawMapLinesForBspLeafWorker, obj);
+        BspLeaf_BoxIterator(&aaBox, NULL, drawMapLinesForBspLeafWorker, obj);
     }
     else
     {
@@ -845,7 +845,7 @@ static void rendPolyobjs(uiwidget_t* ob)
 
     // Draw any polyobjects in view.
     UIAutomap_PVisibleAABounds(ob, &aaBox.minX, &aaBox.maxX, &aaBox.minY, &aaBox.maxY);
-    P_LinesBoxIterator(&aaBox, BLF_POLYOBJ, rendPolyobjLine, ob);
+    Line_BoxIterator(&aaBox, BLF_POLYOBJ, rendPolyobjLine, ob);
 }
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
@@ -886,7 +886,7 @@ static void rendXGLinedefs(uiwidget_t* obj)
     rs.objType = -1;
 
     UIAutomap_PVisibleAABounds(obj, &aaBox.minX, &aaBox.maxX, &aaBox.minY, &aaBox.maxY);
-    P_LinesBoxIterator(&aaBox, BLF_SECTOR, rendXGLinedef, obj);
+    Line_BoxIterator(&aaBox, BLF_SECTOR, rendXGLinedef, obj);
 }
 #endif
 
@@ -1062,7 +1062,7 @@ static void rendThingPoints(uiwidget_t* obj)
 
     UIAutomap_PVisibleAABounds(obj, &aaBox.minX, &aaBox.maxX, &aaBox.minY, &aaBox.maxY);
     VALIDCOUNT++;
-    P_MobjsBoxIterator(&aaBox, rendThingPoint, &params);
+    Mobj_BoxIterator(&aaBox, rendThingPoint, &params);
 }
 
 static boolean interceptEdge(coord_t point[2], coord_t const startA[2], coord_t const endA[2],

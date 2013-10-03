@@ -390,8 +390,8 @@ using namespace de;
 /**
  * Locates a mobj by it's unique identifier in the CURRENT map.
  */
-#undef P_MobjForID
-DENG_EXTERN_C struct mobj_s *P_MobjForID(int id)
+#undef Mobj_ById
+DENG_EXTERN_C struct mobj_s *Mobj_ById(int id)
 {
     /// @todo fixme: Do not assume the current map.
     if(!App_World().hasMap()) return 0;

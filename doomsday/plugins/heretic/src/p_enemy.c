@@ -393,7 +393,7 @@ static coord_t P_AvoidDropoff(mobj_t* actor)
     VALIDCOUNT++;
 
     // Check lines
-    P_MobjLinesIterator(actor, PIT_AvoidDropoff, 0);
+    Mobj_TouchedLinesIterator(actor, PIT_AvoidDropoff, 0);
 
     // Non-zero if movement prescribed.
     return !(FEQUAL(dropoffDelta[VX], 0) || FEQUAL(dropoffDelta[VY], 0));

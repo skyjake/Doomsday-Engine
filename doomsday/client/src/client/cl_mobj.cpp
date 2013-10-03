@@ -244,7 +244,7 @@ void ClMobj_SetState(mobj_t *mo, int stnum)
         return;
     do
     {
-        P_MobjSetState(mo, stnum);
+        Mobj_SetState(mo, stnum);
         stnum = states[stnum].nextState;
 
     } while(!mo->tics && stnum > 0);
@@ -400,7 +400,7 @@ void Map::expireClMobjs()
                 // Too long. The server will probably never send anything
                 // for this mobj, so get rid of it. (Both unpredictable
                 // and hidden mobjs are not visible or bl/seclinked.)
-                P_MobjDestroy(mo);
+                Mobj_Destroy(mo);
             }
         }
     }

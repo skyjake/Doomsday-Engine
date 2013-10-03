@@ -1549,75 +1549,75 @@ DENG_EXTERN_C void Mobj_Unlink(mobj_t *mobj)
     Mobj_BspLeafAtOrigin(*mobj).map().unlink(*mobj);
 }
 
-#undef P_MobjLinesIterator
-DENG_EXTERN_C int P_MobjLinesIterator(mobj_t *mo, int (*callback) (Line *, void *), void *context)
+#undef Mobj_TouchedLinesIterator
+DENG_EXTERN_C int Mobj_TouchedLinesIterator(mobj_t *mo, int (*callback) (Line *, void *), void *context)
 {
     if(!mo || !Mobj_IsLinked(*mo)) return false; // Continue iteration.
     return Mobj_BspLeafAtOrigin(*mo).map().mobjLinesIterator(mo, callback, context);
 }
 
-#undef P_MobjSectorsIterator
-DENG_EXTERN_C int P_MobjSectorsIterator(mobj_t *mo, int (*callback) (Sector *, void *), void *context)
+#undef Mobj_TouchedSectorsIterator
+DENG_EXTERN_C int Mobj_TouchedSectorsIterator(mobj_t *mo, int (*callback) (Sector *, void *), void *context)
 {
     if(!mo || !Mobj_IsLinked(*mo)) return false; // Continue iteration.
     return Mobj_BspLeafAtOrigin(*mo).map().mobjSectorsIterator(mo, callback, context);
 }
 
-#undef P_LineMobjsIterator
-DENG_EXTERN_C int P_LineMobjsIterator(Line *line, int (*callback) (mobj_t *, void *), void *context)
+#undef Line_TouchingMobjsIterator
+DENG_EXTERN_C int Line_TouchingMobjsIterator(Line *line, int (*callback) (mobj_t *, void *), void *context)
 {
     if(!line) return false; // Continue iteration.
     return line->map().lineMobjsIterator(line, callback, context);
 }
 
-#undef P_SectorTouchingMobjsIterator
-DENG_EXTERN_C int P_SectorTouchingMobjsIterator(Sector *sector, int (*callback) (mobj_t *, void *), void *context)
+#undef Sector_TouchingMobjsIterator
+DENG_EXTERN_C int Sector_TouchingMobjsIterator(Sector *sector, int (*callback) (mobj_t *, void *), void *context)
 {
     if(!sector) return false; // Continue iteration.
     return sector->map().sectorTouchingMobjsIterator(sector, callback, context);
 }
 
-#undef P_SectorAtPoint_FixedPrecision
-DENG_EXTERN_C Sector *P_SectorAtPoint_FixedPrecision(const_pvec2d_t point)
+#undef Sector_AtPoint_FixedPrecision
+DENG_EXTERN_C Sector *Sector_AtPoint_FixedPrecision(const_pvec2d_t point)
 {
     if(!App_World().hasMap()) return 0;
     return App_World().map().bspLeafAt_FixedPrecision(point).sectorPtr();
 }
 
-#undef P_SectorAtPoint_FixedPrecisionXY
-DENG_EXTERN_C Sector *P_SectorAtPoint_FixedPrecisionXY(coord_t x, coord_t y)
+#undef Sector_AtPoint_FixedPrecisionXY
+DENG_EXTERN_C Sector *Sector_AtPoint_FixedPrecisionXY(coord_t x, coord_t y)
 {
     if(!App_World().hasMap()) return 0;
     coord_t point[2] = { x, y };
     return App_World().map().bspLeafAt_FixedPrecision(point).sectorPtr();
 }
 
-#undef P_MobjsBoxIterator
-DENG_EXTERN_C int P_MobjsBoxIterator(AABoxd const *box,
+#undef Mobj_BoxIterator
+DENG_EXTERN_C int Mobj_BoxIterator(AABoxd const *box,
     int (*callback) (mobj_t *, void *), void *context)
 {
     if(!box || !App_World().hasMap()) return false; // Continue iteration.
     return App_World().map().mobjsBoxIterator(*box, callback, context);
 }
 
-#undef P_PolyobjsBoxIterator
-DENG_EXTERN_C int P_PolyobjsBoxIterator(AABoxd const *box,
+#undef Polyobj_BoxIterator
+DENG_EXTERN_C int Polyobj_BoxIterator(AABoxd const *box,
     int (*callback) (struct polyobj_s *, void *), void *context)
 {
     if(!box || !App_World().hasMap()) return false; // Continue iteration.
     return App_World().map().polyobjsBoxIterator(*box, callback, context);
 }
 
-#undef P_LinesBoxIterator
-DENG_EXTERN_C int P_LinesBoxIterator(AABoxd const *box, int flags,
+#undef Line_BoxIterator
+DENG_EXTERN_C int Line_BoxIterator(AABoxd const *box, int flags,
     int (*callback) (Line *, void *), void *context)
 {
     if(!box || !App_World().hasMap()) return false; // Continue iteration.
     return App_World().map().linesBoxIterator(*box, flags, callback, context);
 }
 
-#undef P_BspLeafsBoxIterator
-DENG_EXTERN_C int P_BspLeafsBoxIterator(AABoxd const *box, Sector *sector,
+#undef BspLeaf_BoxIterator
+DENG_EXTERN_C int BspLeaf_BoxIterator(AABoxd const *box, Sector *sector,
     int (*callback) (BspLeaf *, void *), void *context)
 {
     if(!box || !App_World().hasMap()) return false; // Continue iteration.
@@ -1696,22 +1696,22 @@ DENG_EXTERN_C void P_SetTraceOpening(Line *line)
     line->map().setTraceOpening(*line);
 }
 
-#undef P_MobjCreateXYZ
-DENG_EXTERN_C mobj_t *P_MobjCreateXYZ(thinkfunc_t function, coord_t x, coord_t y, coord_t z,
+#undef Mobj_CreateXYZ
+DENG_EXTERN_C mobj_t *Mobj_CreateXYZ(thinkfunc_t function, coord_t x, coord_t y, coord_t z,
     angle_t angle, coord_t radius, coord_t height, int ddflags)
 {
     return P_MobjCreate(function, Vector3d(x, y, z), angle, radius, height, ddflags);
 }
 
 // p_mobj.c
-DENG_EXTERN_C void P_MobjDestroy(mobj_t *mobj);
-DENG_EXTERN_C void P_MobjSetState(mobj_t *mobj, int statenum);
+DENG_EXTERN_C void Mobj_Destroy(mobj_t *mobj);
+DENG_EXTERN_C void Mobj_SetState(mobj_t *mobj, int statenum);
 DENG_EXTERN_C angle_t Mobj_AngleSmoothed(mobj_t *mobj);
 DENG_EXTERN_C void Mobj_OriginSmoothed(mobj_t *mobj, coord_t origin[3]);
 DENG_EXTERN_C Sector *Mobj_Sector(mobj_t const *mobj);
 
-#undef P_SpawnDamageParticleGen
-DENG_EXTERN_C void P_SpawnDamageParticleGen(mobj_t *mobj, mobj_t *inflictor, int amount)
+#undef Mobj_SpawnDamageParticleGen
+DENG_EXTERN_C void Mobj_SpawnDamageParticleGen(mobj_t *mobj, mobj_t *inflictor, int amount)
 {
 #ifdef __CLIENT__
     P_SpawnMapDamageParticleGen(mobj, inflictor, amount);
@@ -1719,65 +1719,65 @@ DENG_EXTERN_C void P_SpawnDamageParticleGen(mobj_t *mobj, mobj_t *inflictor, int
 }
 
 // p_think.c
-DENG_EXTERN_C struct mobj_s* P_MobjForID(int id);
+DENG_EXTERN_C struct mobj_s* Mobj_ById(int id);
 
-#undef P_SetPolyobjCallback
-DENG_EXTERN_C void P_SetPolyobjCallback(void (*func) (struct mobj_s *, void *, void *))
+#undef Polyobj_SetCallback
+DENG_EXTERN_C void Polyobj_SetCallback(void (*func) (struct mobj_s *, void *, void *))
 {
     Polyobj::setCollisionCallback(func);
 }
 
-#undef P_PolyobjUnlink
-DENG_EXTERN_C void P_PolyobjUnlink(Polyobj *po)
+#undef Polyobj_Unlink
+DENG_EXTERN_C void Polyobj_Unlink(Polyobj *po)
 {
     if(!po) return;
     po->unlink();
 }
 
-#undef P_PolyobjLink
-DENG_EXTERN_C void P_PolyobjLink(Polyobj *po)
+#undef Polyobj_Link
+DENG_EXTERN_C void Polyobj_Link(Polyobj *po)
 {
     if(!po) return;
     po->link();
 }
 
-#undef P_PolyobjByID
-DENG_EXTERN_C Polyobj *P_PolyobjByID(int index)
+#undef Polyobj_ById
+DENG_EXTERN_C Polyobj *Polyobj_ById(int index)
 {
     if(!App_World().hasMap()) return 0;
     return App_World().map().polyobjs().at(index);
 }
 
-#undef P_PolyobjByTag
-DENG_EXTERN_C Polyobj *P_PolyobjByTag(int tag)
+#undef Polyobj_ByTag
+DENG_EXTERN_C Polyobj *Polyobj_ByTag(int tag)
 {
     if(!App_World().hasMap()) return 0;
     return App_World().map().polyobjByTag(tag);
 }
 
-#undef P_PolyobjMove
-DENG_EXTERN_C boolean P_PolyobjMove(Polyobj *po, const_pvec3d_t xy)
+#undef Polyobj_Move
+DENG_EXTERN_C boolean Polyobj_Move(Polyobj *po, const_pvec3d_t xy)
 {
     if(!po) return false;
     return po->move(xy);
 }
 
-#undef P_PolyobjMoveXY
-DENG_EXTERN_C boolean P_PolyobjMoveXY(Polyobj *po, coord_t x, coord_t y)
+#undef Polyobj_MoveXY
+DENG_EXTERN_C boolean Polyobj_MoveXY(Polyobj *po, coord_t x, coord_t y)
 {
     if(!po) return false;
     return po->move(x, y);
 }
 
-#undef P_PolyobjRotate
-DENG_EXTERN_C boolean P_PolyobjRotate(Polyobj *po, angle_t angle)
+#undef Polyobj_Rotate
+DENG_EXTERN_C boolean Polyobj_Rotate(Polyobj *po, angle_t angle)
 {
     if(!po) return false;
     return po->rotate(angle);
 }
 
-#undef P_PolyobjFirstLine
-DENG_EXTERN_C Line *P_PolyobjFirstLine(Polyobj *po)
+#undef Polyobj_FirstLine
+DENG_EXTERN_C Line *Polyobj_FirstLine(Polyobj *po)
 {
     if(!po) return 0;
     return po->lines()[0];
@@ -1839,44 +1839,45 @@ DENG_DECLARE_API(Map) =
     P_MapSourceFile,
     P_MapChange,
 
+    Line_BoxIterator,
     Line_BoxOnSide,
     Line_BoxOnSide_FixedPrecision,
     Line_PointDistance,
     Line_PointXYDistance,
     Line_PointOnSide,
     Line_PointXYOnSide,
-    P_LineMobjsIterator,
+    Line_TouchingMobjsIterator,
 
-    P_SectorTouchingMobjsIterator,
-    P_SectorAtPoint_FixedPrecision,
-    P_SectorAtPoint_FixedPrecisionXY,
+    Sector_TouchingMobjsIterator,
+    Sector_AtPoint_FixedPrecision,
+    Sector_AtPoint_FixedPrecisionXY,
 
-    P_MobjCreateXYZ,
-    P_MobjDestroy,
-    P_MobjForID,
-    P_MobjSetState,
+    Mobj_CreateXYZ,
+    Mobj_Destroy,
+    Mobj_ById,
+    Mobj_BoxIterator,
+    Mobj_SetState,
     Mobj_Link,
     Mobj_Unlink,
-    P_SpawnDamageParticleGen,
-    P_MobjLinesIterator,
-    P_MobjSectorsIterator,
+    Mobj_SpawnDamageParticleGen,
+    Mobj_TouchedLinesIterator,
+    Mobj_TouchedSectorsIterator,
     Mobj_OriginSmoothed,
     Mobj_AngleSmoothed,
     Mobj_Sector,
 
-    P_PolyobjMoveXY,
-    P_PolyobjRotate,
-    P_PolyobjLink,
-    P_PolyobjUnlink,
-    P_PolyobjFirstLine,
-    P_PolyobjByID,
-    P_PolyobjByTag,
-    P_SetPolyobjCallback,
+    Polyobj_MoveXY,
+    Polyobj_Rotate,
+    Polyobj_Link,
+    Polyobj_Unlink,
+    Polyobj_FirstLine,
+    Polyobj_ById,
+    Polyobj_ByTag,
+    Polyobj_BoxIterator,
+    Polyobj_SetCallback,
 
-    P_MobjsBoxIterator,
-    P_LinesBoxIterator,
-    P_BspLeafsBoxIterator,
-    P_PolyobjsBoxIterator,
+    BspLeaf_BoxIterator,
+
     P_PathTraverse2,
     P_PathTraverse,
     P_PathXYTraverse2,

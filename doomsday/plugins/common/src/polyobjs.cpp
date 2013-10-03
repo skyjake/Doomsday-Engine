@@ -40,10 +40,10 @@ static int findMirrorPolyobj(int tag)
 #if __JHEXEN__
     for(int i = 0; i < numpolyobjs; ++i)
     {
-        Polyobj *po = P_PolyobjByID(i);
+        Polyobj *po = Polyobj_ById(i);
         if(po->tag == tag)
         {
-            return P_ToXLine(P_PolyobjFirstLine(po))->arg2;
+            return P_ToXLine(Polyobj_FirstLine(po))->arg2;
         }
     }
 #else
@@ -91,7 +91,7 @@ static void PO_SetDestination(Polyobj *po, coord_t dist, uint fineAngle, float s
 static void PODoor_UpdateDestination(polydoor_t *pd)
 {
     DENG2_ASSERT(pd != 0);
-    Polyobj *po = P_PolyobjByTag(pd->polyobj);
+    Polyobj *po = Polyobj_ByTag(pd->polyobj);
 
     // Only sliding doors need the destination info. (Right? -jk)
     if(pd->type == PODOOR_SLIDE)
@@ -106,9 +106,9 @@ void T_RotatePoly(void *polyThinker)
 
     polyevent_t *pe = (polyevent_t *)polyThinker;
     uint absSpeed;
-    Polyobj *po = P_PolyobjByTag(pe->polyobj);
+    Polyobj *po = Polyobj_ByTag(pe->polyobj);
 
-    if(P_PolyobjRotate(po, pe->intSpeed))
+    if(Polyobj_Rotate(po, pe->intSpeed))
     {
         absSpeed = abs(pe->intSpeed);
 
@@ -143,7 +143,7 @@ boolean EV_RotatePoly(Line *line, byte *args, int direction, boolean overRide)
     DENG_ASSERT(args != 0);
 
     int tag = args[0];
-    Polyobj *po = P_PolyobjByTag(tag);
+    Polyobj *po = Polyobj_ByTag(tag);
     if(po)
     {
         if(po->specialData && !overRide)
@@ -190,7 +190,7 @@ boolean EV_RotatePoly(Line *line, byte *args, int direction, boolean overRide)
     int mirror; // tag
     while((mirror = findMirrorPolyobj(tag)) != 0)
     {
-        po = P_PolyobjByTag(mirror);
+        po = Polyobj_ByTag(mirror);
         if(po && po->specialData && !overRide)
         {
             // Mirroring po is already in motion.
@@ -225,7 +225,7 @@ boolean EV_RotatePoly(Line *line, byte *args, int direction, boolean overRide)
         pe->intSpeed = (args[1] * direction * (ANGLE_90 / 64)) >> 3;
         po->angleSpeed = pe->intSpeed;
 
-        po = P_PolyobjByTag(tag);
+        po = Polyobj_ByTag(tag);
         if(po)
         {
             po->specialData = pe;
@@ -246,9 +246,9 @@ void T_MovePoly(void *polyThinker)
     DENG_ASSERT(polyThinker != 0);
 
     polyevent_t *pe = (polyevent_t *)polyThinker;
-    Polyobj *po = P_PolyobjByTag(pe->polyobj);
+    Polyobj *po = Polyobj_ByTag(pe->polyobj);
 
-    if(P_PolyobjMoveXY(po, pe->speed[MX], pe->speed[MY]))
+    if(Polyobj_MoveXY(po, pe->speed[MX], pe->speed[MY]))
     {
         uint const absSpeed = abs(pe->intSpeed);
 
@@ -280,7 +280,7 @@ boolean EV_MovePoly(Line *line, byte *args, boolean timesEight, boolean override
     DENG_ASSERT(args != 0);
 
     int tag = args[0];
-    Polyobj *po = P_PolyobjByTag(tag);
+    Polyobj *po = Polyobj_ByTag(tag);
     DENG_ASSERT(po != 0);
 
     // Already moving?
@@ -315,7 +315,7 @@ boolean EV_MovePoly(Line *line, byte *args, boolean timesEight, boolean override
     int mirror; // tag
     while((mirror = findMirrorPolyobj(tag)) != 0)
     {
-        po = P_PolyobjByTag(mirror);
+        po = Polyobj_ByTag(mirror);
 
         // Is the mirror already in motion?
         if(po && po->specialData && !override)
@@ -353,7 +353,7 @@ void T_PolyDoor(void *polyDoorThinker)
     DENG_ASSERT(polyDoorThinker != 0);
 
     polydoor_t *pd = (polydoor_t *)polyDoorThinker;
-    Polyobj *po = P_PolyobjByTag(pd->polyobj);
+    Polyobj *po = Polyobj_ByTag(pd->polyobj);
 
     if(pd->tics)
     {
@@ -370,7 +370,7 @@ void T_PolyDoor(void *polyDoorThinker)
     switch(pd->type)
     {
     case PODOOR_SLIDE:
-        if(P_PolyobjMoveXY(po, pd->speed[MX], pd->speed[MY]))
+        if(Polyobj_MoveXY(po, pd->speed[MX], pd->speed[MY]))
         {
             int absSpeed = abs(pd->intSpeed);
             pd->dist -= absSpeed;
@@ -419,7 +419,7 @@ void T_PolyDoor(void *polyDoorThinker)
         break;
 
     case PODOOR_SWING:
-        if(P_PolyobjRotate(po, pd->intSpeed))
+        if(Polyobj_Rotate(po, pd->intSpeed))
         {
             int absSpeed = abs(pd->intSpeed);
             if(pd->dist == -1)
@@ -478,7 +478,7 @@ boolean EV_OpenPolyDoor(Line *line, byte *args, podoortype_t type)
     DENG_ASSERT(args != 0);
 
     int tag = args[0];
-    Polyobj *po = P_PolyobjByTag(tag);
+    Polyobj *po = Polyobj_ByTag(tag);
     if(po)
     {
         if(po->specialData)
@@ -527,7 +527,7 @@ boolean EV_OpenPolyDoor(Line *line, byte *args, podoortype_t type)
     int mirror; // tag
     while((mirror = findMirrorPolyobj(tag)) != 0)
     {
-        po = P_PolyobjByTag(mirror);
+        po = Polyobj_ByTag(mirror);
         if(po && po->specialData)
         {
             // Mirroring po is already in motion.
@@ -629,11 +629,11 @@ void PO_InitForMap()
     Con_Message("PO_InitForMap: Initializing polyobjects.");
 
     // thrustMobj will handle polyobj <-> mobj interaction.
-    P_SetPolyobjCallback(thrustMobj);
+    Polyobj_SetCallback(thrustMobj);
 
     for(int i = 0; i < numpolyobjs; ++i)
     {
-        Polyobj *po = P_PolyobjByID(i);
+        Polyobj *po = Polyobj_ById(i);
 
         // Init game-specific properties.
         po->specialData = NULL;
@@ -659,7 +659,7 @@ void PO_InitForMap()
         if(spot)
         {
             po->crush = (spot->doomEdNum == PO_SPAWNCRUSH_DOOMEDNUM? 1 : 0);
-            P_PolyobjMoveXY(po, -po->origin[VX] + spot->origin[VX],
+            Polyobj_MoveXY(po, -po->origin[VX] + spot->origin[VX],
                                 -po->origin[VY] + spot->origin[VY]);
         }
         else
@@ -671,6 +671,6 @@ void PO_InitForMap()
 
 boolean PO_Busy(int tag)
 {
-    Polyobj *po = P_PolyobjByTag(tag);
+    Polyobj *po = Polyobj_ByTag(tag);
     return (po && po->specialData);
 }

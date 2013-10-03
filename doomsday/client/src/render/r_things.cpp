@@ -165,7 +165,7 @@ static void findMobjZOrigin(mobj_t *mo, bool floorAdjust, vissprite_t *vis)
     params.floorAdjust = floorAdjust;
 
     validCount++;
-    P_MobjSectorsIterator(mo, findMobjZOriginWorker, &params);
+    Mobj_TouchedSectorsIterator(mo, findMobjZOriginWorker, &params);
 }
 
 void R_ProjectSprite(mobj_t *mo)

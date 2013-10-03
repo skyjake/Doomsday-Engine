@@ -421,7 +421,7 @@ static void initMapSpots()
         // Sound sequence origin?
         if(spot->doomEdNum >= 1400 && spot->doomEdNum < 1410)
         {
-            xsector_t *xsector = P_ToXSector(P_SectorAtPoint_FixedPrecision(spot->origin));
+            xsector_t *xsector = P_ToXSector(Sector_AtPoint_FixedPrecision(spot->origin));
 
             xsector->seqType = seqtype_t(spot->doomEdNum - 1400);
             continue;

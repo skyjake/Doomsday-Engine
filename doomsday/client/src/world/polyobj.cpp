@@ -319,7 +319,7 @@ static bool checkMobjBlocking(Polyobj &po, Line &line)
                           line.aaBox().maxY + DDMOBJ_RADIUS_MAX);
 
     validCount++;
-    P_MobjsBoxIterator(&interceptRange, PTR_CheckMobjBlocking, &parms);
+    Mobj_BoxIterator(&interceptRange, PTR_CheckMobjBlocking, &parms);
 
     return parms.isBlocked;
 }

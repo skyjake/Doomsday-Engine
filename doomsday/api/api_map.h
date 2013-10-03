@@ -191,13 +191,24 @@ DENG_API_TYPEDEF(Map)
 
     // Lines
 
-    int             (*LD_BoxOnSide)(Line *line, AABoxd const *box);
-    int             (*LD_BoxOnSide_FixedPrecision)(Line *line, AABoxd const *box);
-    coord_t         (*LD_PointDistance)(Line *line, coord_t const point[2], coord_t *offset);
-    coord_t         (*LD_PointXYDistance)(Line *line, coord_t x, coord_t y, coord_t *offset);
-    coord_t         (*LD_PointOnSide)(Line const *line, coord_t const point[2]);
-    coord_t         (*LD_PointXYOnSide)(Line const *line, coord_t x, coord_t y);
-    int             (*LD_MobjsIterator)(Line *line, int (*callback) (struct mobj_s *, void *), void *context);
+    /**
+     * Lines and Polyobj Lines (note Polyobj Lines are iterated first).
+     *
+     * The validCount flags are used to avoid checking lines that are marked in
+     * multiple mapblocks, so increment validCount before the first call, then
+     * make one or more calls to it.
+     *
+     * @param flags  @ref boxLineIteratorFlags
+     */
+    int             (*L_BoxIterator)(AABoxd const *box, int flags, int (*callback) (Line *, void *), void *context);
+
+    int             (*L_BoxOnSide)(Line *line, AABoxd const *box);
+    int             (*L_BoxOnSide_FixedPrecision)(Line *line, AABoxd const *box);
+    coord_t         (*L_PointDistance)(Line *line, coord_t const point[2], coord_t *offset);
+    coord_t         (*L_PointXYDistance)(Line *line, coord_t x, coord_t y, coord_t *offset);
+    coord_t         (*L_PointOnSide)(Line const *line, coord_t const point[2]);
+    coord_t         (*L_PointXYOnSide)(Line const *line, coord_t x, coord_t y);
+    int             (*L_MobjsIterator)(Line *line, int (*callback) (struct mobj_s *, void *), void *context);
 
     // Sectors
 
@@ -236,7 +247,8 @@ DENG_API_TYPEDEF(Map)
 
     struct mobj_s  *(*MO_CreateXYZ)(thinkfunc_t function, coord_t x, coord_t y, coord_t z, angle_t angle, coord_t radius, coord_t height, int ddflags);
     void            (*MO_Destroy)(struct mobj_s *mobj);
-    struct mobj_s  *(*MO_MobjForID)(int id);
+    struct mobj_s  *(*MO_MobjById)(int id);
+    int             (*MO_BoxIterator)(AABoxd const *box, int (*callback) (struct mobj_s *, void *), void *context);
 
     /**
      * @param statenum  Must be a valid state (not null!).
@@ -323,7 +335,7 @@ DENG_API_TYPEDEF(Map)
      * @param id  Unique identifier of the Polyobj to be found.
      * @return  Found Polyobj instance else @c NULL.
      */
-    struct polyobj_s *(*PO_PolyobjByID)(int id);
+    struct polyobj_s *(*PO_PolyobjById)(int id);
 
     /**
      * Lookup a Polyobj on the current map by tag.
@@ -333,28 +345,16 @@ DENG_API_TYPEDEF(Map)
      */
     struct polyobj_s *(*PO_PolyobjByTag)(int tag);
 
+    int             (*PO_BoxIterator)(AABoxd const *box, int (*callback) (struct polyobj_s *, void *), void *context);
+
     /**
      * The po_callback is called when a (any) polyobj hits a mobj.
      */
     void            (*PO_SetCallback)(void (*func)(struct mobj_s *, void *, void *));
 
-    // Iterators
+    int             (*BL_BoxIterator)(AABoxd const *box, Sector *sector, int (*callback) (BspLeaf *, void *), void *context);
 
-    int             (*Box_MobjsIterator)(AABoxd const *box, int (*callback) (struct mobj_s *, void *), void *context);
-
-    /**
-     * Lines and Polyobj Lines (note Polyobj Lines are iterated first).
-     *
-     * The validCount flags are used to avoid checking lines that are marked in
-     * multiple mapblocks, so increment validCount before the first call, then
-     * make one or more calls to it.
-     *
-     * @param flags  @ref boxLineIteratorFlags
-     */
-    int             (*Box_LinesIterator)(AABoxd const *box, int flags, int (*callback) (Line *, void *), void *context);
-
-    int             (*Box_BspLeafsIterator)(AABoxd const *box, Sector *sector, int (*callback) (BspLeaf *, void *), void *context);
-    int             (*Box_PolyobjsIterator)(AABoxd const *box, int (*callback) (struct polyobj_s *, void *), void *context);
+    // Traversers
 
     int             (*PathTraverse2)(coord_t const from[2], coord_t const to[2], int flags, int (*callback) (struct intercept_s const *, void *context), void *context);
     int             (*PathTraverse)(coord_t const from[2], coord_t const to[2], int flags, int (*callback) (struct intercept_s const *, void *context)/*, context=0*/);
@@ -604,44 +604,45 @@ DENG_API_T(Map);
 #define P_MapSourceFile                     _api_Map.SourceFile
 #define P_MapChange                         _api_Map.Change
 
-#define Line_BoxOnSide                      _api_Map.LD_BoxOnSide
-#define Line_BoxOnSide_FixedPrecision       _api_Map.LD_BoxOnSide_FixedPrecision
-#define Line_PointDistance                  _api_Map.LD_PointDistance
-#define Line_PointXYDistance                _api_Map.LD_PointXYDistance
-#define Line_PointOnSide                    _api_Map.LD_PointOnSide
-#define Line_PointXYOnSide                  _api_Map.LD_PointXYOnSide
-#define P_LineMobjsIterator                 _api_Map.LD_MobjsIterator
+#define Line_BoxIterator                    _api_Map.L_BoxIterator
+#define Line_BoxOnSide                      _api_Map.L_BoxOnSide
+#define Line_BoxOnSide_FixedPrecision       _api_Map.L_BoxOnSide_FixedPrecision
+#define Line_PointDistance                  _api_Map.L_PointDistance
+#define Line_PointXYDistance                _api_Map.L_PointXYDistance
+#define Line_PointOnSide                    _api_Map.L_PointOnSide
+#define Line_PointXYOnSide                  _api_Map.L_PointXYOnSide
+#define Line_TouchingMobjsIterator          _api_Map.L_MobjsIterator
 
-#define P_SectorTouchingMobjsIterator       _api_Map.S_TouchingMobjsIterator
-#define P_SectorAtPoint_FixedPrecision      _api_Map.S_AtPoint_FixedPrecision
-#define P_SectorAtPoint_FixedPrecisionXY    _api_Map.S_AtPoint_FixedPrecisionXY
+#define Sector_TouchingMobjsIterator        _api_Map.S_TouchingMobjsIterator
+#define Sector_AtPoint_FixedPrecision       _api_Map.S_AtPoint_FixedPrecision
+#define Sector_AtPoint_FixedPrecisionXY     _api_Map.S_AtPoint_FixedPrecisionXY
 
-#define P_MobjCreateXYZ                     _api_Map.MO_CreateXYZ
-#define P_MobjDestroy                       _api_Map.MO_Destroy
-#define P_MobjForID                         _api_Map.MO_MobjForID
-#define P_MobjSetState                      _api_Map.MO_SetState
+#define Mobj_CreateXYZ                      _api_Map.MO_CreateXYZ
+#define Mobj_Destroy                        _api_Map.MO_Destroy
+#define Mobj_ById                           _api_Map.MO_MobjById
+#define Mobj_BoxIterator                    _api_Map.MO_BoxIterator
+#define Mobj_SetState                       _api_Map.MO_SetState
 #define Mobj_Link                           _api_Map.MO_Link
 #define Mobj_Unlink                         _api_Map.MO_Unlink
-#define P_SpawnDamageParticleGen            _api_Map.MO_SpawnDamageParticleGen
-#define P_MobjLinesIterator                 _api_Map.MO_LinesIterator
-#define P_MobjSectorsIterator               _api_Map.MO_SectorsIterator
+#define Mobj_SpawnDamageParticleGen         _api_Map.MO_SpawnDamageParticleGen
+#define Mobj_TouchedLinesIterator           _api_Map.MO_LinesIterator
+#define Mobj_TouchedSectorsIterator         _api_Map.MO_SectorsIterator
 #define Mobj_AngleSmoothed                  _api_Map.MO_AngleSmoothed
 #define Mobj_OriginSmoothed                 _api_Map.MO_OriginSmoothed
 #define Mobj_Sector                         _api_Map.MO_Sector
 
-#define P_PolyobjMoveXY                     _api_Map.PO_MoveXY
-#define P_PolyobjRotate                     _api_Map.PO_Rotate
-#define P_PolyobjLink                       _api_Map.PO_Link
-#define P_PolyobjUnlink                     _api_Map.PO_Unlink
-#define P_PolyobjFirstLine                  _api_Map.PO_FirstLine
-#define P_PolyobjByID                       _api_Map.PO_PolyobjByID
-#define P_PolyobjByTag                      _api_Map.PO_PolyobjByTag
-#define P_SetPolyobjCallback                _api_Map.PO_SetCallback
+#define Polyobj_MoveXY                      _api_Map.PO_MoveXY
+#define Polyobj_Rotate                      _api_Map.PO_Rotate
+#define Polyobj_Link                        _api_Map.PO_Link
+#define Polyobj_Unlink                      _api_Map.PO_Unlink
+#define Polyobj_FirstLine                   _api_Map.PO_FirstLine
+#define Polyobj_ById                        _api_Map.PO_PolyobjById
+#define Polyobj_ByTag                       _api_Map.PO_PolyobjByTag
+#define Polyobj_BoxIterator                 _api_Map.PO_BoxIterator
+#define Polyobj_SetCallback                 _api_Map.PO_SetCallback
 
-#define P_MobjsBoxIterator                  _api_Map.Box_MobjsIterator
-#define P_LinesBoxIterator                  _api_Map.Box_LinesIterator
-#define P_BspLeafsBoxIterator               _api_Map.Box_BspLeafsIterator
-#define P_PolyobjsBoxIterator               _api_Map.Box_PolyobjsIterator
+#define BspLeaf_BoxIterator                 _api_Map.BL_BoxIterator
+
 #define P_PathTraverse2                     _api_Map.PathTraverse2
 #define P_PathTraverse                      _api_Map.PathTraverse
 #define P_PathXYTraverse2                   _api_Map.PathXYTraverse2

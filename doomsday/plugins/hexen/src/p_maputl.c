@@ -185,7 +185,7 @@ mobj_t* P_RoughMonsterSearch(mobj_t* mo, int distance)
 
     // Check the first block.
     VALIDCOUNT++;
-    if(P_MobjsBoxIterator(&box, PIT_MobjTargetable, &params))
+    if(Mobj_BoxIterator(&box, PIT_MobjTargetable, &params))
     {
         // Found a target right away!
         return params.target;
@@ -204,7 +204,7 @@ mobj_t* P_RoughMonsterSearch(mobj_t* mo, int distance)
         // Trace the first block section (along the top).
         for(i = 0; i < count * 2 + 1; ++i)
         {
-            if(P_MobjsBoxIterator(&box, PIT_MobjTargetable, &params))
+            if(Mobj_BoxIterator(&box, PIT_MobjTargetable, &params))
                 return params.target;
 
             if(i < count * 2)
@@ -220,7 +220,7 @@ mobj_t* P_RoughMonsterSearch(mobj_t* mo, int distance)
             box.minY += MAPBLOCKUNITS;
             box.maxY += MAPBLOCKUNITS;
 
-            if(P_MobjsBoxIterator(&box, PIT_MobjTargetable, &params))
+            if(Mobj_BoxIterator(&box, PIT_MobjTargetable, &params))
                 return params.target;
         }
 
@@ -230,7 +230,7 @@ mobj_t* P_RoughMonsterSearch(mobj_t* mo, int distance)
             box.minX -= MAPBLOCKUNITS;
             box.maxX -= MAPBLOCKUNITS;
 
-            if(P_MobjsBoxIterator(&box, PIT_MobjTargetable, &params))
+            if(Mobj_BoxIterator(&box, PIT_MobjTargetable, &params))
                 return params.target;
         }
 
@@ -240,7 +240,7 @@ mobj_t* P_RoughMonsterSearch(mobj_t* mo, int distance)
             box.minY -= MAPBLOCKUNITS;
             box.maxY -= MAPBLOCKUNITS;
 
-            if(P_MobjsBoxIterator(&box, PIT_MobjTargetable, &params))
+            if(Mobj_BoxIterator(&box, PIT_MobjTargetable, &params))
                 return params.target;
         }
     }

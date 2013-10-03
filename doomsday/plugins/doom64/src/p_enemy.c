@@ -392,7 +392,7 @@ static boolean avoidDropoff(mobj_t *actor)
     VALIDCOUNT++;
 
     // Check lines.
-    P_MobjLinesIterator(actor, PIT_AvoidDropoff, 0);
+    Mobj_TouchedLinesIterator(actor, PIT_AvoidDropoff, 0);
 
     // Non-zero if movement prescribed.
     return !(dropoffDelta[VX] == 0 || dropoffDelta[VY] == 0);

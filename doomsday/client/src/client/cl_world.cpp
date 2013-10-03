@@ -453,10 +453,10 @@ void Cl_PolyMoverThinker(clpolyobj_t *mover)
     if(mover->move)
     {
         // How much to go?
-        coord_t dx = po->dest[VX] - po->origin[VX];
-        coord_t dy = po->dest[VY] - po->origin[VY];
-        coord_t dist = M_ApproxDistance(dx, dy);
-        if(dist <= po->speed || FEQUAL(po->speed, 0))
+        Vector2d delta = Vector2d(po->dest) - Vector2d(po->origin);
+
+        ddouble dist = M_ApproxDistance(delta.x, delta.y);
+        if(dist <= po->speed || de::fequal(po->speed, 0))
         {
             // We'll arrive at the destination.
             mover->move = false;
@@ -464,12 +464,11 @@ void Cl_PolyMoverThinker(clpolyobj_t *mover)
         else
         {
             // Adjust deltas to fit speed.
-            dx = po->speed * (dx / dist);
-            dy = po->speed * (dy / dist);
+            delta = (delta / dist) * po->speed;
         }
 
         // Do the move.
-        P_PolyobjMoveXY(P_PolyobjByID(mover->number), dx, dy);
+        po->move(delta);
     }
 
     if(mover->rotate)
@@ -495,7 +494,7 @@ void Cl_PolyMoverThinker(clpolyobj_t *mover)
             dist = /*FIX2FLT((int)*/ po->angleSpeed;
         }
 
-        P_PolyobjRotate(P_PolyobjByID(mover->number), dist);
+        po->rotate(dist);
     }
 
     // Can we get rid of this mover?

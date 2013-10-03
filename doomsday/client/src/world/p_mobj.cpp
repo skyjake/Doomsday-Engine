@@ -124,13 +124,13 @@ mobj_t *P_MobjCreate(thinkfunc_t function, Vector3d const &origin, angle_t angle
  * @note Does not actually destroy the mobj. Instead, mobj is marked as
  * awaiting removal (which occurs when its turn for thinking comes around).
  */
-#undef P_MobjDestroy
-DENG_EXTERN_C void P_MobjDestroy(mobj_t *mo)
+#undef Mobj_Destroy
+DENG_EXTERN_C void Mobj_Destroy(mobj_t *mo)
 {
 #ifdef _DEBUG
     if(mo->ddFlags & DDMF_MISSILE)
     {
-        VERBOSE2( Con_Message("P_MobjDestroy: Destroying missile %i.", mo->thinker.id) );
+        VERBOSE2( Con_Message("Mobj_Destroy: Destroying missile %i.", mo->thinker.id) );
     }
 #endif
 
@@ -158,8 +158,8 @@ boolean Mobj_IsSectorLinked(mobj_t *mo)
     return mo != 0 && mo->_bspLeaf != 0 && mo->sPrev != 0;
 }
 
-#undef P_MobjSetState
-DENG_EXTERN_C void P_MobjSetState(mobj_t *mobj, int statenum)
+#undef Mobj_SetState
+DENG_EXTERN_C void Mobj_SetState(mobj_t *mobj, int statenum)
 {
     if(!mobj) return;
 
@@ -169,7 +169,7 @@ DENG_EXTERN_C void P_MobjSetState(mobj_t *mobj, int statenum)
 
 #ifdef DENG_DEBUG
     if(statenum < 0 || statenum >= defs.count.states.num)
-        Con_Error("P_MobjSetState: statenum %i out of bounds.\n", statenum);
+        Con_Error("Mobj_SetState: statenum %i out of bounds.\n", statenum);
 #endif
 
     mobj->state  = states + statenum;

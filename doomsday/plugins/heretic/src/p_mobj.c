@@ -986,7 +986,7 @@ mobj_t* P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z,
     if(info->flags2 & MF2_DONTDRAW)
         ddflags |= DDMF_DONTDRAW;
 
-    mo = P_MobjCreateXYZ(P_MobjThinker, x, y, z, angle, info->radius,
+    mo = Mobj_CreateXYZ(P_MobjThinker, x, y, z, angle, info->radius,
                       info->height, ddflags);
     mo->type = type;
     mo->info = info;
@@ -1005,7 +1005,7 @@ mobj_t* P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z,
     mo->lastLook = P_Random() % MAXPLAYERS;
 
     // Must link before setting state (ID assigned for the mo).
-    P_MobjSetState(mo, P_GetState(mo->type, SN_SPAWN));
+    Mobj_SetState(mo, P_GetState(mo->type, SN_SPAWN));
 
     if(mo->type == MT_MACEFX1 || mo->type == MT_MACEFX2 ||
        mo->type == MT_MACEFX3)
@@ -1094,7 +1094,7 @@ void P_RepositionMace(mobj_t *mo)
     {
         mo->origin[VX] = mapSpot->origin[VX];
         mo->origin[VY] = mapSpot->origin[VY];
-        sector = P_SectorAtPoint_FixedPrecision(mo->origin);
+        sector = Sector_AtPoint_FixedPrecision(mo->origin);
 
         mo->floorZ = P_GetDoublep(sector, DMU_CEILING_HEIGHT);
         mo->origin[VZ] = mo->floorZ;

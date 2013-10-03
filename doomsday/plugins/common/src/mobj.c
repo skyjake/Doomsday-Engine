@@ -298,7 +298,7 @@ static boolean changeMobjState(mobj_t *mobj, statenum_t stateNum, boolean doCall
             return false;
         }
 
-        P_MobjSetState(mobj, stateNum);
+        Mobj_SetState(mobj, stateNum);
         mobj->turnTime = false; // $visangle-facetarget
 
         st = &STATES[stateNum];

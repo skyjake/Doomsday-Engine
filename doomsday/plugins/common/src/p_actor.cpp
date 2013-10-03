@@ -110,7 +110,7 @@ void P_MobjRemove(mobj_t *mo, boolean noRespawn)
 #endif
 
 justDoIt:
-    P_MobjDestroy(mo);
+    Mobj_Destroy(mo);
 }
 
 void P_RemoveAllPlayerMobjs()

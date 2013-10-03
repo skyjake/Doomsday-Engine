@@ -271,7 +271,7 @@ boolean P_TeleportMove(mobj_t *thing, coord_t x, coord_t y, boolean alwaysStomp)
     tmBox.maxX = tm[VX] + tmThing->radius;
     tmBox.maxY = tm[VY] + tmThing->radius;
 
-    newSector = P_SectorAtPoint_FixedPrecision(tm);
+    newSector = Sector_AtPoint_FixedPrecision(tm);
 
     ceilingLine = floorLine = NULL;
 #if !__JHEXEN__
@@ -296,7 +296,7 @@ boolean P_TeleportMove(mobj_t *thing, coord_t x, coord_t y, boolean alwaysStomp)
 
     // Stomp on any things contacted.
     VALIDCOUNT++;
-    if(P_MobjsBoxIterator(&tmBoxExpanded, PIT_StompThing, &stomping))
+    if(Mobj_BoxIterator(&tmBoxExpanded, PIT_StompThing, &stomping))
         return false;
 
     // The move is ok, so link the thing into its new position.
@@ -401,7 +401,7 @@ boolean P_CheckSides(mobj_t* actor, coord_t x, coord_t y)
     tmBox.maxY = (startPos[VY] > endPos[VY]? startPos[VY] : endPos[VY]);
 
     VALIDCOUNT++;
-    return P_LinesBoxIterator(&tmBox, BLF_ALL, PIT_CrossLine, 0);
+    return Line_BoxIterator(&tmBox, BLF_ALL, PIT_CrossLine, 0);
 }
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
@@ -1168,7 +1168,7 @@ boolean P_CheckPositionXYZ(mobj_t *thing, coord_t x, coord_t y, coord_t z)
     tmBox.maxX = tm[VX] + tmThing->radius;
     tmBox.maxY = tm[VY] + tmThing->radius;
 
-    newSector = P_SectorAtPoint_FixedPrecision(tm);
+    newSector = Sector_AtPoint_FixedPrecision(tm);
 
     ceilingLine = floorLine = NULL;
 #if !__JHEXEN__
@@ -1211,7 +1211,7 @@ boolean P_CheckPositionXYZ(mobj_t *thing, coord_t x, coord_t y, coord_t z)
 #if __JHEXEN__
         blockingMobj = NULL;
 #endif
-        if(P_MobjsBoxIterator(&tmBoxExpanded, PIT_CheckThing, 0))
+        if(Mobj_BoxIterator(&tmBoxExpanded, PIT_CheckThing, 0))
         {
             return false;
         }
@@ -1240,7 +1240,7 @@ boolean P_CheckPositionXYZ(mobj_t *thing, coord_t x, coord_t y, coord_t z)
     tmBoxExpanded.maxX = tmBox.maxX;
     tmBoxExpanded.maxY = tmBox.maxY;
 
-    return !P_LinesBoxIterator(&tmBoxExpanded, BLF_ALL, PIT_CheckLine, 0);
+    return !Line_BoxIterator(&tmBoxExpanded, BLF_ALL, PIT_CheckLine, 0);
 }
 
 boolean P_CheckPosition(mobj_t *thing, coord_t const pos[3])
@@ -1747,7 +1747,7 @@ int PTR_ShootTraverse(intercept_t const *in, void *parameters)
         lineWasHit = true;
 
         // This is the sector where the trace originates.
-        originSector = P_SectorAtPoint_FixedPrecision(tracePos);
+        originSector = Sector_AtPoint_FixedPrecision(tracePos);
 
         d[VX] = pos[VX] - tracePos[VX];
         d[VY] = pos[VY] - tracePos[VY];
@@ -1755,7 +1755,7 @@ int PTR_ShootTraverse(intercept_t const *in, void *parameters)
 
         if(!INRANGE_OF(d[VZ], 0, .0001f)) // Epsilon
         {
-            contact = P_SectorAtPoint_FixedPrecision(pos);
+            contact = Sector_AtPoint_FixedPrecision(pos);
             step = M_ApproxDistance3(d[VX], d[VY], d[VZ] * 1.2/*aspect ratio*/);
             stepv[VX] = d[VX] / step;
             stepv[VY] = d[VY] / step;
@@ -1772,7 +1772,7 @@ int PTR_ShootTraverse(intercept_t const *in, void *parameters)
                 pos[VX] = tracePos[VX] + d[VX];
                 pos[VY] = tracePos[VY] + d[VY];
                 pos[VZ] = tracePos[VZ] + d[VZ];
-                contact = P_SectorAtPoint_FixedPrecision(pos);
+                contact = Sector_AtPoint_FixedPrecision(pos);
             }
 
             // Should we backtrack to hit a plane instead?
@@ -2297,7 +2297,7 @@ void P_RadiusAttack(mobj_t* spot, mobj_t* source, int damage, int distance)
     damageSource = canDamageSource;
 #endif
     VALIDCOUNT++;
-    P_MobjsBoxIterator(&box, PIT_RadiusAttack, 0);
+    Mobj_BoxIterator(&box, PIT_RadiusAttack, 0);
 }
 
 int PTR_UseTraverse(intercept_t const *in, void *parameters)
@@ -2806,7 +2806,7 @@ boolean P_ChangeSector(Sector* sector, boolean crunch)
     crushChange = crunch;
 
     VALIDCOUNT++;
-    P_SectorTouchingMobjsIterator(sector, PIT_ChangeSector, 0);
+    Sector_TouchingMobjsIterator(sector, PIT_ChangeSector, 0);
 
     return noFit;
 }
@@ -2913,7 +2913,7 @@ void PIT_ThrustSpike(mobj_t* actor)
 
     // Stomp on any things contacted.
     VALIDCOUNT++;
-    P_MobjsBoxIterator(&box, PIT_ThrustStompThing, 0);
+    Mobj_BoxIterator(&box, PIT_ThrustStompThing, 0);
 }
 
 int PIT_CheckOnmobjZ(mobj_t* thing, void* data)
@@ -2985,7 +2985,7 @@ mobj_t *P_CheckOnMobj(mobj_t *thing)
     tmBox.maxX = pos[VX] + tmThing->radius;
     tmBox.maxY = pos[VY] + tmThing->radius;
 
-    newSector = P_SectorAtPoint_FixedPrecision(pos);
+    newSector = Sector_AtPoint_FixedPrecision(pos);
     ceilingLine = floorLine = NULL;
 
     // The base floor/ceiling is from the BSP leaf that contains the point.
@@ -3011,7 +3011,7 @@ mobj_t *P_CheckOnMobj(mobj_t *thing)
     tmBoxExpanded.maxY = tmBox.maxY + MAXRADIUS;
 
     VALIDCOUNT++;
-    if(P_MobjsBoxIterator(&tmBoxExpanded, PIT_CheckOnmobjZ, 0))
+    if(Mobj_BoxIterator(&tmBoxExpanded, PIT_CheckOnmobjZ, 0))
     {
         *tmThing = oldMo;
         return onMobj;

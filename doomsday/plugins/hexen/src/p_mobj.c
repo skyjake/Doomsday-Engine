@@ -1155,7 +1155,7 @@ mobj_t* P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z,
     if(info->flags2 & MF2_DONTDRAW)
         ddflags |= DDMF_DONTDRAW;
 
-    mo = P_MobjCreateXYZ(P_MobjThinker, x, y, z, angle, info->radius,
+    mo = Mobj_CreateXYZ(P_MobjThinker, x, y, z, angle, info->radius,
                       info->height, ddflags);
     mo->type = type;
     mo->info = info;
@@ -1175,7 +1175,7 @@ mobj_t* P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z,
     }
     mo->lastLook = P_Random() % MAXPLAYERS;
 
-    P_MobjSetState(mo, P_GetState(mo->type, SN_SPAWN));
+    Mobj_SetState(mo, P_GetState(mo->type, SN_SPAWN));
 
     // Link the mobj into the world.
     P_MobjLink(mo);

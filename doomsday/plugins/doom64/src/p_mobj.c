@@ -253,7 +253,7 @@ static int PIT_Splash(Sector* sector, void* parameters)
 
 void P_HitFloor(mobj_t* mo)
 {
-    //P_MobjSectorsIterator(mo, PIT_Splash, mo);
+    //Mobj_TouchedSectorsIterator(mo, PIT_Splash, mo);
 }
 
 void P_MobjMoveZ(mobj_t *mo)
@@ -760,7 +760,7 @@ mobj_t* P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z, angle_t
     if(info->flags2 & MF2_DONTDRAW)
         ddflags |= DDMF_DONTDRAW;
 
-    mo = P_MobjCreateXYZ(P_MobjThinker, x, y, z, angle, info->radius,
+    mo = Mobj_CreateXYZ(P_MobjThinker, x, y, z, angle, info->radius,
                          info->height, ddflags);
     mo->type = type;
     mo->info = info;
@@ -780,7 +780,7 @@ mobj_t* P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z, angle_t
     mo->lastLook = P_Random() % MAXPLAYERS;
 
     // Must link before setting state (ID assigned for the mo).
-    P_MobjSetState(mo, P_GetState(mo->type, SN_SPAWN));
+    Mobj_SetState(mo, P_GetState(mo->type, SN_SPAWN));
 
     // Set BSP leaf and/or block links.
     P_MobjLink(mo);

@@ -388,7 +388,7 @@ static boolean avoidDropoff(mobj_t* actor)
     VALIDCOUNT++;
 
     // Check lines.
-    P_MobjLinesIterator(actor, PIT_AvoidDropoff, 0);
+    Mobj_TouchedLinesIterator(actor, PIT_AvoidDropoff, 0);
 
     // Non-zero if movement prescribed.
     return !(FEQUAL(dropoffDelta[VX], 0) || FEQUAL(dropoffDelta[VY], 0));
@@ -1091,7 +1091,7 @@ void C_DECL A_VileChase(mobj_t* actor)
         aaBB.maxY = parm.resurrectorOrigin[VY] + MAXRADIUS * 2;
 
         VALIDCOUNT++;
-        if(P_MobjsBoxIterator(&aaBB, PIT_VileCheck, &parm))
+        if(Mobj_BoxIterator(&aaBB, PIT_VileCheck, &parm))
         {
             mobj_t* corpse = parm.foundCorpse;
             mobj_t* oldTarget = actor->target;

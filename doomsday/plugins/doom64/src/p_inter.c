@@ -1212,7 +1212,7 @@ int P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source,
 
     // How about some particles, yes?
     // Only works when both target and inflictor are real mobjs.
-    P_SpawnDamageParticleGen(target, inflictor, damage);
+    Mobj_SpawnDamageParticleGen(target, inflictor, damage);
 
     // Do the damage.
     target->health -= damage;

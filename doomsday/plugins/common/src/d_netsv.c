@@ -1492,7 +1492,7 @@ void NetSv_DoDamage(int player, Reader* msg)
                 player, damage, target, inflictor, source);
 #endif
 
-    P_DamageMobj2(P_MobjForID(target), P_MobjForID(inflictor), P_MobjForID(source), damage,
+    P_DamageMobj2(Mobj_ById(target), Mobj_ById(inflictor), Mobj_ById(source), damage,
                   false /*not stomping*/, true /*just do it*/);
 }
 

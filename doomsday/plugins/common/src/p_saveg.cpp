@@ -1833,7 +1833,7 @@ static void RestoreMobj(mobj_t *mo, int ver)
 
     mo->info = &MOBJINFO[mo->type];
 
-    P_MobjSetState(mo, PTR2INT(mo->state));
+    Mobj_SetState(mo, PTR2INT(mo->state));
 #if __JHEXEN__
     if(mo->flags2 & MF2_DORMANT)
         mo->tics = -1;
@@ -1870,7 +1870,7 @@ static void RestoreMobj(mobj_t *mo, int ver)
     {
         if(mo->dPlayer)
             mo->dPlayer->mo = NULL;
-        P_MobjDestroy(mo);
+        Mobj_Destroy(mo);
 
         return;
     }
@@ -2884,16 +2884,16 @@ static int SV_ReadPolyObj()
     int ver = (mapVersion >= 3)? SV_ReadByte() : 0;
     DENG_UNUSED(ver);
 
-    Polyobj *po = P_PolyobjByTag(SV_ReadLong());
+    Polyobj *po = Polyobj_ByTag(SV_ReadLong());
     DENG_ASSERT(po != 0);
 
     angle_t angle = angle_t(SV_ReadLong());
-    P_PolyobjRotate(po, angle);
+    Polyobj_Rotate(po, angle);
     po->destAngle = angle;
 
     float const origX = FIX2FLT(SV_ReadLong());
     float const origY = FIX2FLT(SV_ReadLong());
-    P_PolyobjMoveXY(po, origX - po->origin[VX], origY - po->origin[VY]);
+    Polyobj_MoveXY(po, origX - po->origin[VX], origY - po->origin[VY]);
 
     /// @todo What about speed? It isn't saved at all?
 
@@ -2919,7 +2919,7 @@ static void writeMapElements()
     SV_BeginSegment(ASEG_POLYOBJS);
     SV_WriteLong(numpolyobjs);
     for(int i = 0; i < numpolyobjs; ++i)
-        SV_WritePolyObj(P_PolyobjByID(i));
+        SV_WritePolyObj(Polyobj_ById(i));
 #endif
 }
 
@@ -4604,7 +4604,7 @@ static void readThinkers()
         thinker_t *th = 0;
         if(thInfo->thinkclass == TC_MOBJ)
         {
-            th = reinterpret_cast<thinker_t *>(P_MobjCreateXYZ((thinkfunc_t) P_MobjThinker, 0, 0, 0, 0, 64, 64, 0));
+            th = reinterpret_cast<thinker_t *>(Mobj_CreateXYZ((thinkfunc_t) P_MobjThinker, 0, 0, 0, 0, 64, 64, 0));
         }
         else
         {
@@ -4753,7 +4753,7 @@ static void writeSoundSequences()
         {
             for(; i < numpolyobjs; ++i)
             {
-                if(node->mobj == (mobj_t *) P_PolyobjByID(i))
+                if(node->mobj == (mobj_t *) Polyobj_ById(i))
                 {
                     break;
                 }
@@ -4764,7 +4764,7 @@ static void writeSoundSequences()
         if(i == numpolyobjs)
         {
             // The sound's emitter is the sector, not the polyobj itself.
-            difference = P_ToIndex(P_SectorAtPoint_FixedPrecision(node->mobj->origin));
+            difference = P_ToIndex(Sector_AtPoint_FixedPrecision(node->mobj->origin));
             SV_WriteLong(0); // 0 -- sector sound origin.
         }
         else
@@ -4806,7 +4806,7 @@ static void readSoundSequences()
         }
         else
         {
-            Polyobj *po = P_PolyobjByID(secNum);
+            Polyobj *po = Polyobj_ById(secNum);
             if(po) sndMobj = (mobj_t*) po;
         }
 
