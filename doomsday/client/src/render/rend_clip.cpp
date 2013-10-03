@@ -849,7 +849,7 @@ static int C_IsPointOccluded(Vector3d const &viewRelPoint)
 
             // On which side of the occlusion plane is it?
             // The positive side is the occluded one.
-            if(Vector3f(viewRelPoint).dot(orange->normal) > 0)
+            if(viewRelPoint.dot(orange->normal) > 0)
                 return true;
         }
     }
