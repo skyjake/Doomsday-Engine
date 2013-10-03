@@ -128,7 +128,7 @@ void P_RemoveAllPlayerMobjs()
 void P_MobjLink(struct mobj_s *mobj)
 {
     DENG_ASSERT(mobj != 0);
-    Mobj_Link(mobj, DDLINK_BLOCKMAP | (!(mobj->flags & MF_NOSECTOR)? DDLINK_SECTOR : 0));
+    Mobj_Link(mobj, MLF_BLOCKMAP | (!(mobj->flags & MF_NOSECTOR)? MLF_SECTOR : 0));
 }
 
 void P_MobjUnlink(struct mobj_s *mobj)

@@ -209,8 +209,8 @@ void ClMobj_Link(mobj_t *mo)
     DEBUG_VERBOSE2_Message(("ClMobj_Link: id %i, x%f Y%f, solid:%s\n", mo->thinker.id,
                             mo->origin[VX], mo->origin[VY], mo->ddFlags & DDMF_SOLID? "yes" : "no"));
 
-    Mobj_Link(mo, (mo->ddFlags & DDMF_DONTDRAW ? 0 : DDLINK_SECTOR) |
-                  (mo->ddFlags & DDMF_SOLID ? DDLINK_BLOCKMAP : 0));
+    Mobj_Link(mo, (mo->ddFlags & DDMF_DONTDRAW ? 0 : MLF_SECTOR) |
+                  (mo->ddFlags & DDMF_SOLID ? MLF_BLOCKMAP : 0));
 }
 
 #undef ClMobj_EnableLocalActions
@@ -305,7 +305,7 @@ void Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj,
         P_MobjUnlink(localMobj);
         localMobj->pos[VX] = remoteClientMobj->pos[VX];
         localMobj->pos[VY] = remoteClientMobj->pos[VY];
-        P_MobjLink(localMobj, DDLINK_SECTOR | DDLINK_BLOCKMAP);
+        P_MobjLink(localMobj, MLF_SECTOR | MLF_BLOCKMAP);
         */
 
         // This'll update the contacted floor and ceiling heights as well.

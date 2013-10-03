@@ -401,7 +401,7 @@ boolean P_CheckSides(mobj_t* actor, coord_t x, coord_t y)
     tmBox.maxY = (startPos[VY] > endPos[VY]? startPos[VY] : endPos[VY]);
 
     VALIDCOUNT++;
-    return Line_BoxIterator(&tmBox, BLF_ALL, PIT_CrossLine, 0);
+    return Line_BoxIterator(&tmBox, LBF_ALL, PIT_CrossLine, 0);
 }
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
@@ -1240,7 +1240,7 @@ boolean P_CheckPositionXYZ(mobj_t *thing, coord_t x, coord_t y, coord_t z)
     tmBoxExpanded.maxX = tmBox.maxX;
     tmBoxExpanded.maxY = tmBox.maxY;
 
-    return !Line_BoxIterator(&tmBoxExpanded, BLF_ALL, PIT_CheckLine, 0);
+    return !Line_BoxIterator(&tmBoxExpanded, LBF_ALL, PIT_CheckLine, 0);
 }
 
 boolean P_CheckPosition(mobj_t *thing, coord_t const pos[3])

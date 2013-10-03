@@ -287,7 +287,7 @@ void ClPlayer_MoveLocal(coord_t dx, coord_t dy, coord_t z, boolean onground)
         Mobj_Unlink(mo);
         mo->origin[VX] += dx;
         mo->origin[VY] += dy;
-        Mobj_Link(mo, DDLINK_SECTOR | DDLINK_BLOCKMAP);
+        Mobj_Link(mo, MLF_SECTOR | MLF_BLOCKMAP);
     }
 
     mo->_bspLeaf = &App_World().map().bspLeafAt_FixedPrecision(Mobj_Origin(*mo));

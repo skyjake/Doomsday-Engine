@@ -459,7 +459,7 @@ public:
      * equal to this will be skipped over (can be used to avoid processing
      * a line multiple times during complex / non-linear traversals.
      *
-     * @param flags  @ref boxLineIteratorFlags
+     * @param flags  @ref lineBoxIteratorFlags
      */
     int linesBoxIterator(AABoxd const &box, int flags,
         int (*callback) (Line *, void *), void *context = 0) const;
@@ -468,7 +468,7 @@ public:
     inline int linesBoxIterator(AABoxd const &box,
         int (*callback) (Line *, void *), void *context = 0) const
     {
-        return linesBoxIterator(box, BLF_ALL, callback, context);
+        return linesBoxIterator(box, LBF_ALL, callback, context);
     }
 
     int bspLeafsBoxIterator(AABoxd const &box, Sector *sector,

@@ -421,7 +421,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
                 scanRegion.maxX = line->aaBox().maxX + bsp::DIST_EPSILON;
             }
             validCount++;
-            self.linesBoxIterator(scanRegion, BLF_SECTOR, testForWindowEffectWorker, &p);
+            self.linesBoxIterator(scanRegion, LBF_SECTOR, testForWindowEffectWorker, &p);
 
             if(p.backOpen && p.frontOpen && line->frontSectorPtr() == p.backOpen)
             {
@@ -1950,11 +1950,11 @@ int Map::unlink(mobj_t &mo)
     int links = 0;
 
     if(d->unlinkMobjFromSectors(mo))
-        links |= DDLINK_SECTOR;
+        links |= MLF_SECTOR;
     if(d->unlinkMobjInBlockmap(mo))
-        links |= DDLINK_BLOCKMAP;
+        links |= MLF_BLOCKMAP;
     if(!d->unlinkMobjFromLines(mo))
-        links |= DDLINK_NOLINE;
+        links |= MLF_NOLINE;
 
     return links;
 }
@@ -1964,7 +1964,7 @@ void Map::link(mobj_t &mo, byte flags)
     BspLeaf &bspLeafAtOrigin = bspLeafAt_FixedPrecision(mo.origin);
 
     // Link into the sector?
-    if(flags & DDLINK_SECTOR)
+    if(flags & MLF_SECTOR)
     {
         d->unlinkMobjFromSectors(mo);
         bspLeafAtOrigin.sector().link(&mo);
@@ -1972,14 +1972,14 @@ void Map::link(mobj_t &mo, byte flags)
     mo._bspLeaf = &bspLeafAtOrigin;
 
     // Link into blockmap?
-    if(flags & DDLINK_BLOCKMAP)
+    if(flags & MLF_BLOCKMAP)
     {
         d->unlinkMobjInBlockmap(mo);
         d->linkMobjInBlockmap(mo);
     }
 
     // Link into lines?
-    if(!(flags & DDLINK_NOLINE))
+    if(!(flags & MLF_NOLINE))
     {
         d->unlinkMobjFromLines(mo);
         d->linkMobjToLines(mo);
@@ -2136,7 +2136,7 @@ int Map::linesBoxIterator(AABoxd const &box, int flags,
     int (*callback) (Line *, void *), void *parameters) const
 {
     // Process polyobj lines?
-    if((flags & BLF_POLYOBJ) && polyobjCount())
+    if((flags & LBF_POLYOBJ) && polyobjCount())
     {
         if(d->polyobjBlockmap.isNull())
             /// @throw MissingBlockmapError  The polyobj blockmap is not yet initialized.
@@ -2149,7 +2149,7 @@ int Map::linesBoxIterator(AABoxd const &box, int flags,
     }
 
     // Process sector lines?
-    if(flags & BLF_SECTOR)
+    if(flags & LBF_SECTOR)
     {
         if(d->lineBlockmap.isNull())
             /// @throw MissingBlockmapError  The line blockmap is not yet initialized.

@@ -86,23 +86,24 @@ struct intercept_s;
 
 /**
  * @defgroup mobjLinkFlags Mobj Link Flags
+ * @ingroup apiFlags world
  */
 ///@{
-#define DDLINK_SECTOR       0x1 ///< Link to map sectors.
-#define DDLINK_BLOCKMAP     0x2 ///< Link in the map's mobj blockmap.
-#define DDLINK_NOLINE       0x4 ///< Do not link to map lines.
+#define MLF_SECTOR          0x1 ///< Link to map sectors.
+#define MLF_BLOCKMAP        0x2 ///< Link in the map's mobj blockmap.
+#define MLF_NOLINE          0x4 ///< Do not link to map lines.
 ///@}
 
 /**
- * @defgroup boxLineIteratorFlags Box Line Iterator Flags
- * @ingroup apiFlags map
+ * @defgroup lineBoxIteratorFlags Line Box Iterator Flags
+ * @ingroup apiFlags world
  */
 ///@{
-#define BLF_SECTOR          0x1 ///< Process map lines defining sectors
-#define BLF_POLYOBJ         0x2 ///< Process map lines defining polyobjs
+#define LBF_SECTOR          0x1 ///< Process map lines defining sectors
+#define LBF_POLYOBJ         0x2 ///< Process map lines defining polyobjs
 
 /// Process all map line types.
-#define BLF_ALL             BLF_SECTOR | BLF_POLYOBJ
+#define LBF_ALL             LBF_SECTOR | LBF_POLYOBJ
 ///@}
 
 /**
@@ -198,7 +199,7 @@ DENG_API_TYPEDEF(Map)
      * multiple mapblocks, so increment validCount before the first call, then
      * make one or more calls to it.
      *
-     * @param flags  @ref boxLineIteratorFlags
+     * @param flags  @ref lineBoxIteratorFlags
      */
     int             (*L_BoxIterator)(AABoxd const *box, int flags, int (*callback) (Line *, void *), void *context);
 
