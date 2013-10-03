@@ -445,7 +445,7 @@ static void updateBiasForWallSectionsAfterGeometryMove(HEdge *hedge)
     if(!hedge || !hedge->hasMapElement())
         return;
 
-    LineSideSegment &seg = hedge->mapElement().as<LineSideSegment>();
+    LineSideSegment &seg = hedge->mapElementAs<LineSideSegment>();
     seg.updateBiasAfterGeometryMove(LineSide::Middle);
     seg.updateBiasAfterGeometryMove(LineSide::Bottom);
     seg.updateBiasAfterGeometryMove(LineSide::Top);
@@ -478,7 +478,7 @@ static void applyBiasDigestToWallSections(HEdge *hedge, BiasDigest &changes)
 {
     if(!hedge || !hedge->hasMapElement())
         return;
-    hedge->mapElement().as<LineSideSegment>().applyBiasDigest(changes);
+    hedge->mapElementAs<LineSideSegment>().applyBiasDigest(changes);
 }
 
 void BspLeaf::applyBiasDigest(BiasDigest &changes)
@@ -545,7 +545,7 @@ static void accumReverbForWallSections(HEdge const *hedge,
     if(!hedge || !hedge->hasMapElement())
         return;
 
-    LineSideSegment const &seg = hedge->mapElement().as<LineSideSegment>();
+    LineSideSegment const &seg = hedge->mapElementAs<LineSideSegment>();
     if(!seg.lineSide().hasSections() || !seg.lineSide().middle().hasMaterial())
         return;
 

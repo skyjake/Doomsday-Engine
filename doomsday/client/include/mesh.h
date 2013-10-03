@@ -87,6 +87,16 @@ public:
         /// @copydoc mapElement()
         MapElement const &mapElement() const;
 
+        template <class MapElementType>
+        MapElementType &mapElementAs() {
+            return mapElement().as<MapElementType>();
+        }
+
+        template <class MapElementType>
+        MapElementType const &mapElementAs() const {
+            return mapElement().as<MapElementType>();
+        }
+
         /**
          * Change the map element to which the mesh element is attributed.
          *

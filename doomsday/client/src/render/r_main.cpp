@@ -1470,7 +1470,7 @@ void R_ViewerClipLumobjBySight(Lumobj *lum, BspLeaf *bspLeaf)
             continue;
 
         // Ignore half-edges facing the wrong way.
-        if(hedge->mapElement().as<LineSideSegment>().isFrontFacing())
+        if(hedge->mapElementAs<LineSideSegment>().isFrontFacing())
         {
             coord_t eyeV1[2]       = { eye.x, eye.y };
             coord_t lumOriginV1[2] = { lum->origin().x, lum->origin().y };

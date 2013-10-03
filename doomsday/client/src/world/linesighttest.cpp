@@ -260,7 +260,7 @@ DENG2_PIMPL(LineSightTest)
         {
             if(hedge->hasMapElement())
             {
-                if(!crossLine(hedge->mapElement().as<LineSideSegment>().lineSide()))
+                if(!crossLine(hedge->mapElementAs<LineSideSegment>().lineSide()))
                     return false;
             }
         } while((hedge = &hedge->next()) != base);
@@ -272,7 +272,7 @@ DENG2_PIMPL(LineSightTest)
             if(!hedge->hasMapElement())
                 continue;
 
-            if(!crossLine(hedge->mapElement().as<LineSideSegment>().lineSide()))
+            if(!crossLine(hedge->mapElementAs<LineSideSegment>().lineSide()))
                 return false;
         }
 

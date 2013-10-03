@@ -264,15 +264,15 @@ DENG2_OBSERVES(Plane, HeightChange)
                         return flags;
                     }
 
-                    BspLeaf const &backLeaf    = hedge->twin().face().mapElement().as<BspLeaf>();
+                    BspLeaf const &backLeaf    = hedge->twin().face().mapElementAs<BspLeaf>();
                     Cluster const *backCluster = backLeaf.hasCluster()? &backLeaf.cluster() : 0;
 
                     // Cluster internal edges are not considered.
                     if(backCluster == thisPublic)
                         continue;
 
-                    LineSide const &frontSide = hedge->mapElement().as<LineSideSegment>().lineSide();
-                    LineSide const &backSide  = hedge->twin().mapElement().as<LineSideSegment>().lineSide();
+                    LineSide const &frontSide = hedge->mapElementAs<LineSideSegment>().lineSide();
+                    LineSide const &backSide  = hedge->twin().mapElementAs<LineSideSegment>().lineSide();
 
                     // Similarly if no sections are defined for either side then
                     // never map planes. This can happen due to mapping errors
@@ -335,7 +335,7 @@ DENG2_OBSERVES(Plane, HeightChange)
 
                 DENG2_ASSERT(hedge->twin().hasFace()); // Sanity check.
 
-                BspLeaf &backLeaf = hedge->twin().face().mapElement().as<BspLeaf>();
+                BspLeaf &backLeaf = hedge->twin().face().mapElementAs<BspLeaf>();
                 if(!backLeaf.hasCluster())
                     continue;
 
@@ -358,7 +358,7 @@ DENG2_OBSERVES(Plane, HeightChange)
         while(iter.hasNext())
         {
             iter.next();
-            Cluster &extCluster = iter.value()->twin().face().mapElement().as<BspLeaf>().cluster();
+            Cluster &extCluster = iter.value()->twin().face().mapElementAs<BspLeaf>().cluster();
             if(!boundingRect.contains(qrectFromAABox(extCluster.aaBox())))
             {
                 boundaryInfo->uniqueOuterEdges.append(iter.value());
@@ -433,9 +433,9 @@ DENG2_OBSERVES(Plane, HeightChange)
 
             foreach(HEdge *hedge, boundaryInfo->uniqueOuterEdges)
             {
-                Cluster &extCluster = hedge->twin().face().mapElement().as<BspLeaf>().cluster();
+                Cluster &extCluster = hedge->twin().face().mapElementAs<BspLeaf>().cluster();
 
-                if(!hedge->mapElement().as<LineSideSegment>().line().isSelfReferencing())
+                if(!hedge->mapElementAs<LineSideSegment>().line().isSelfReferencing())
                     continue;
 
                 if(!(classification() & AllSelfRef) &&
@@ -458,9 +458,9 @@ DENG2_OBSERVES(Plane, HeightChange)
                 // will be selected from the boundary).
                 foreach(HEdge *hedge, boundaryInfo->uniqueInnerEdges)
                 {
-                    Cluster &extCluster = hedge->twin().face().mapElement().as<BspLeaf>().cluster();
+                    Cluster &extCluster = hedge->twin().face().mapElementAs<BspLeaf>().cluster();
 
-                    if(!hedge->mapElement().as<LineSideSegment>().line().isSelfReferencing())
+                    if(!hedge->mapElementAs<LineSideSegment>().line().isSelfReferencing())
                         continue;
 
                     if(!(classification() & AllSelfRef) &&
@@ -509,7 +509,7 @@ DENG2_OBSERVES(Plane, HeightChange)
         // Map "this" cluster to the first outer cluster found.
         foreach(HEdge *hedge, boundaryInfo->uniqueOuterEdges)
         {
-            Cluster &extCluster = hedge->twin().face().mapElement().as<BspLeaf>().cluster();
+            Cluster &extCluster = hedge->twin().face().mapElementAs<BspLeaf>().cluster();
 
             if(doFloor && !floorIsMapped())
             {
@@ -542,7 +542,7 @@ DENG2_OBSERVES(Plane, HeightChange)
         // a "ripple effect" that will remap any deeply nested dependents).
         foreach(HEdge *hedge, boundaryInfo->uniqueInnerEdges)
         {
-            Cluster &extCluster = hedge->twin().face().mapElement().as<BspLeaf>().cluster();
+            Cluster &extCluster = hedge->twin().face().mapElementAs<BspLeaf>().cluster();
 
             if(extCluster.d->classification() & NeverMapped)
                 continue;
@@ -802,9 +802,9 @@ bool Sector::Cluster::isInternalEdge(HEdge *hedge) // static
     if(!hedge->face().hasMapElement() || hedge->face().mapElement().type() != DMU_BSPLEAF) return false;
     if(!hedge->twin().face().hasMapElement() || hedge->twin().face().mapElement().type() != DMU_BSPLEAF) return false;
 
-    Cluster *frontCluster = hedge->face().mapElement().as<BspLeaf>().clusterPtr();
+    Cluster *frontCluster = hedge->face().mapElementAs<BspLeaf>().clusterPtr();
     if(!frontCluster) return false;
-    return frontCluster == hedge->twin().face().mapElement().as<BspLeaf>().clusterPtr();
+    return frontCluster == hedge->twin().face().mapElementAs<BspLeaf>().clusterPtr();
 }
 
 Sector &Sector::Cluster::sector() const
@@ -934,7 +934,7 @@ SectorCluster *SectorClusterCirculator::getCluster(HEdge &hedge) // static
     if(!hedge.hasFace()) return 0;
     if(!hedge.face().hasMapElement()) return 0;
     if(hedge.face().mapElement().type() != DMU_BSPLEAF) return 0;
-    return hedge.face().mapElement().as<BspLeaf>().clusterPtr();
+    return hedge.face().mapElementAs<BspLeaf>().clusterPtr();
 }
 
 HEdge &SectorClusterCirculator::getNeighbor(HEdge &hedge, ClockDirection direction,

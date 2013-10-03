@@ -358,14 +358,14 @@ static void maybeSpreadOverEdge(HEdge *hedge, contactfinderparams_t *parms)
 {
     DENG_ASSERT(hedge != 0 && parms != 0);
 
-    BspLeaf &leaf = hedge->face().mapElement().as<BspLeaf>();
+    BspLeaf &leaf = hedge->face().mapElementAs<BspLeaf>();
     SectorCluster &cluster = leaf.cluster();
 
     // There must be a back BSP leaf to spread to.
     if(!hedge->hasTwin() || !hedge->twin().hasFace())
         return;
 
-    BspLeaf &backLeaf = hedge->twin().face().mapElement().as<BspLeaf>();
+    BspLeaf &backLeaf = hedge->twin().face().mapElementAs<BspLeaf>();
     if(!backLeaf.hasCluster())
         return;
     SectorCluster &backCluster = backLeaf.cluster();
@@ -402,7 +402,7 @@ static void maybeSpreadOverEdge(HEdge *hedge, contactfinderparams_t *parms)
     // Are there line side surfaces which should prevent spreading?
     if(hedge->hasMapElement())
     {
-        LineSideSegment const &seg = hedge->mapElement().as<LineSideSegment>();
+        LineSideSegment const &seg = hedge->mapElementAs<LineSideSegment>();
 
         // On which side of the line are we? (distance is from segment to origin).
         LineSide const &facingLineSide = seg.line().side(seg.lineSide().sideId() ^ (distance < 0));

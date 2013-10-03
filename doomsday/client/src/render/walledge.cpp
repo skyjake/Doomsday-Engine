@@ -140,7 +140,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
 
         SectorCluster const *cluster =
             (line.definesPolyobj()? &line.polyobj().bspLeaf()
-                                  : &wallHEdge->face().mapElement().as<BspLeaf>())->clusterPtr();
+                                  : &wallHEdge->face().mapElementAs<BspLeaf>())->clusterPtr();
 
         if(seg.lineSide().considerOneSided() ||
            // Mapping errors may result in a line segment missing a back face.
@@ -167,7 +167,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
             // Two sided.
             SectorCluster const *backCluster =
                 line.definesPolyobj()? cluster
-                                     : wallHEdge->twin().face().mapElement().as<BspLeaf>().clusterPtr();
+                                     : wallHEdge->twin().face().mapElementAs<BspLeaf>().clusterPtr();
 
             Plane const *ffloor = &cluster->visFloor();
             Plane const *fceil  = &cluster->visCeiling();
@@ -347,7 +347,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
 
     inline LineSideSegment &lineSideSegment()
     {
-        return wallHEdge->mapElement().as<LineSideSegment>();
+        return wallHEdge->mapElementAs<LineSideSegment>();
     }
 
     void verifyValid() const
@@ -503,7 +503,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
         while((hedge = &SectorClusterCirculator::findBackNeighbor(*hedge, direction)) != wallHEdge)
         {
             // Stop if there is no back cluster.
-            BspLeaf *backLeaf = hedge->hasFace()? &hedge->face().mapElement().as<BspLeaf>() : 0;
+            BspLeaf *backLeaf = hedge->hasFace()? &hedge->face().mapElementAs<BspLeaf>() : 0;
             if(!backLeaf || !backLeaf->hasCluster())
                 break;
 
