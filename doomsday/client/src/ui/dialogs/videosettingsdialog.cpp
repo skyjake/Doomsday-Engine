@@ -93,20 +93,11 @@ DENG2_OBSERVES(PersistentCanvasWindow, AttributeChange)
         vsync->updateFromCVar();
 
         // Select the current resolution/size in the mode list.
-        Canvas::Size current;
-        //if(win.isFullScreen())
-        {
-            current = win.fullscreenSize();
-        }
-        /*
-        else
-        {
-            current = win.windowRect().size();
-        }*/
+        Canvas::Size current = win.fullscreenSize();
 
         // Update selected display mode.
         ui::Data::Pos closest = ui::Data::InvalidPos;
-        int delta;
+        int delta = 0;
         for(ui::Data::Pos i = 0; i < modes->items().size(); ++i)
         {
             QPoint const res = modes->items().at(i).data().toPoint();
