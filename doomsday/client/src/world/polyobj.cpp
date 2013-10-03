@@ -54,10 +54,10 @@ static void notifyGeometryChanged(Polyobj &po)
         foreach(HEdge *hedge, po.mesh().hedges())
         {
             // Is this on the back of a one-sided line?
-            if(!hedge->mapElement())
+            if(!hedge->hasMapElement())
                 continue;
 
-            hedge->mapElement()->as<LineSideSegment>().
+            hedge->mapElement().as<LineSideSegment>().
                     updateBiasAfterGeometryMove(LineSide::Middle);
         }
     }

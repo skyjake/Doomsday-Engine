@@ -1484,9 +1484,8 @@ static void writeWallSection(HEdge &hedge, int section,
     bool *retWroteOpaque = 0, coord_t *retBottomZ = 0, coord_t *retTopZ = 0)
 {
     BspLeaf *leaf = currentBspLeaf;
-    DENG_ASSERT(hedge.mapElement() != 0);
 
-    LineSideSegment &segment = hedge.mapElement()->as<LineSideSegment>();
+    LineSideSegment &segment = hedge.mapElement().as<LineSideSegment>();
     DENG_ASSERT(segment.isFrontFacing() && segment.lineSide().hasSections());
 
     if(retWroteOpaque) *retWroteOpaque = false;
@@ -1921,14 +1920,14 @@ static void writeLeafSkyMaskStrips(SkyFixEdge::FixType fixType)
         Material *skyMaterial = 0;
         if(splitOnMaterialChange)
         {
-            skyMaterial = hedge->face().mapElement()->as<BspLeaf>()
+            skyMaterial = hedge->face().mapElement().as<BspLeaf>()
                               .cluster().visPlane(relPlane).surface().materialPtr();
         }
 
         // Add a first (left) edge to the current strip?
-        if(startNode == 0 && hedge->mapElement())
+        if(startNode == 0 && hedge->hasMapElement())
         {
-            startMaterialOffset = hedge->mapElement()->as<LineSideSegment>().lineSideOffset();
+            startMaterialOffset = hedge->mapElement().as<LineSideSegment>().lineSideOffset();
 
             // Prepare the edge geometry
             SkyFixEdge skyEdge(*hedge, fixType, (direction == Anticlockwise)? Line::To : Line::From,
@@ -1955,9 +1954,9 @@ static void writeLeafSkyMaskStrips(SkyFixEdge::FixType fixType)
         {
             // Stop if we've reached a "null" edge.
             bool endStrip = false;
-            if(hedge->mapElement())
+            if(hedge->hasMapElement())
             {
-                startMaterialOffset += hedge->mapElement()->as<LineSideSegment>().length()
+                startMaterialOffset += hedge->mapElement().as<LineSideSegment>().length()
                                      * (direction == Anticlockwise? -1 : 1);
 
                 // Prepare the edge geometry
@@ -2103,7 +2102,7 @@ static void writeLeafSkyMask(int skyCap = SKYCAP_LOWER|SKYCAP_UPPER)
 static bool coveredOpenRange(HEdge &hedge, coord_t middleBottomZ, coord_t middleTopZ,
     bool wroteOpaqueMiddle)
 {
-    LineSide const &front = hedge.mapElement()->as<LineSideSegment>().lineSide();
+    LineSide const &front = hedge.mapElement().as<LineSideSegment>().lineSide();
 
     if(front.considerOneSided())
     {
@@ -2118,8 +2117,8 @@ static bool coveredOpenRange(HEdge &hedge, coord_t middleBottomZ, coord_t middle
         return wroteOpaqueMiddle;
     }
 
-    SectorCluster const &cluster     = hedge.face().mapElement()->as<BspLeaf>().cluster();
-    SectorCluster const &backCluster = hedge.twin().face().mapElement()->as<BspLeaf>().cluster();
+    SectorCluster const &cluster     = hedge.face().mapElement().as<BspLeaf>().cluster();
+    SectorCluster const &backCluster = hedge.twin().face().mapElement().as<BspLeaf>().cluster();
 
     coord_t const ffloor   = cluster.visFloor().heightSmoothed();
     coord_t const fceil    = cluster.visCeiling().heightSmoothed();
@@ -2186,11 +2185,11 @@ static bool coveredOpenRange(HEdge &hedge, coord_t middleBottomZ, coord_t middle
 static void writeAllWallSections(HEdge *hedge)
 {
     // Edges without a map line segment implicitly have no surfaces.
-    if(!hedge || !hedge->mapElement())
+    if(!hedge || !hedge->hasMapElement())
         return;
 
     // We are only interested in front facing segments with sections.
-    LineSideSegment &seg = hedge->mapElement()->as<LineSideSegment>();
+    LineSideSegment &seg = hedge->mapElement().as<LineSideSegment>();
     if(!seg.isFrontFacing() || !seg.lineSide().hasSections())
         return;
 
@@ -2259,8 +2258,8 @@ static void writeLeafPlanes()
 
 static void markFrontFacingWalls(HEdge *hedge)
 {
-    if(!hedge || !hedge->mapElement()) return;
-    LineSideSegment &seg = hedge->mapElement()->as<LineSideSegment>();
+    if(!hedge || !hedge->hasMapElement()) return;
+    LineSideSegment &seg = hedge->mapElement().as<LineSideSegment>();
     // Which way is the line segment facing?
     seg.setFrontFacing(viewFacingDot(hedge->origin(), hedge->twin().origin()) >= 0);
 }
@@ -2313,10 +2312,10 @@ static void occludeLeaf(bool frontFacing)
     do
     {
         // Edges without a line segment can never occlude.
-        if(!hedge->mapElement())
+        if(!hedge->hasMapElement())
             continue;
 
-        LineSideSegment &seg = hedge->mapElement()->as<LineSideSegment>();
+        LineSideSegment &seg = hedge->mapElement().as<LineSideSegment>();
 
         // Edges without line segment surface sections can never occlude.
         if(!seg.lineSide().hasSections())
@@ -2330,7 +2329,7 @@ static void occludeLeaf(bool frontFacing)
         if(!hedge->hasTwin() || !hedge->twin().hasFace())
             continue;
 
-        BspLeaf &backLeaf = hedge->twin().face().mapElement()->as<BspLeaf>();
+        BspLeaf &backLeaf = hedge->twin().face().mapElement().as<BspLeaf>();
         if(!backLeaf.hasCluster())
             continue;
         SectorCluster &backCluster = backLeaf.cluster();
@@ -2406,10 +2405,10 @@ static void clipLeafLumobjsBySight()
 /// If not front facing this is no-op.
 static void clipFrontFacingWalls(HEdge *hedge)
 {
-    if(!hedge || !hedge->mapElement())
+    if(!hedge || !hedge->hasMapElement())
         return;
 
-    LineSideSegment &seg = hedge->mapElement()->as<LineSideSegment>();
+    LineSideSegment &seg = hedge->mapElement().as<LineSideSegment>();
     if(seg.isFrontFacing())
     {
         if(!C_CheckRangeFromViewRelPoints(hedge->origin(), hedge->twin().origin()))
@@ -3311,10 +3310,10 @@ static void drawTangentVectorsForSurface(Surface const &suf, Vector3d const &ori
  */
 static void drawTangentVectorsForWallSections(HEdge const *hedge)
 {
-    if(!hedge || !hedge->mapElement())
+    if(!hedge || !hedge->hasMapElement())
         return;
 
-    LineSideSegment const &seg = hedge->mapElement()->as<LineSideSegment>();
+    LineSideSegment const &seg = hedge->mapElement().as<LineSideSegment>();
     LineSide const &lineSide   = seg.lineSide();
     Line const &line           = lineSide.line();
     Vector2d const center      = (hedge->twin().origin() + hedge->origin()) / 2;
@@ -3323,7 +3322,7 @@ static void drawTangentVectorsForWallSections(HEdge const *hedge)
     {
         SectorCluster &cluster =
             (line.definesPolyobj()? line.polyobj().bspLeaf()
-                                  : hedge->face().mapElement()->as<BspLeaf>()).cluster();
+                                  : hedge->face().mapElement().as<BspLeaf>()).cluster();
 
         coord_t const bottom = cluster.  visFloor().heightSmoothed();
         coord_t const top    = cluster.visCeiling().heightSmoothed();
@@ -3335,10 +3334,10 @@ static void drawTangentVectorsForWallSections(HEdge const *hedge)
     {
         SectorCluster &cluster =
             (line.definesPolyobj()? line.polyobj().bspLeaf()
-                                  : hedge->face().mapElement()->as<BspLeaf>()).cluster();
+                                  : hedge->face().mapElement().as<BspLeaf>()).cluster();
         SectorCluster &backCluster =
             (line.definesPolyobj()? line.polyobj().bspLeaf()
-                                  : hedge->twin().face().mapElement()->as<BspLeaf>()).cluster();
+                                  : hedge->twin().face().mapElement().as<BspLeaf>()).cluster();
 
         if(lineSide.middle().hasMaterial())
         {

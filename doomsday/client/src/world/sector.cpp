@@ -455,7 +455,7 @@ void Sector::buildClusters()
                 {
                     if(hedge->twin().hasFace())
                     {
-                        BspLeaf &otherLeaf = hedge->twin().face().mapElement()->as<BspLeaf>();
+                        BspLeaf &otherLeaf = hedge->twin().face().mapElement().as<BspLeaf>();
                         if(&otherLeaf.parent() == this &&
                            bspLeafSets[k].contains(&otherLeaf))
                         {

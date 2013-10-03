@@ -146,10 +146,10 @@ void ShadowEdge::prepare(int planeIndex)
 {
     int const otherPlaneIndex = planeIndex == Sector::Floor? Sector::Ceiling : Sector::Floor;
     HEdge const &hedge = *d->leftMostHEdge;
-    SectorCluster const &cluster = hedge.face().mapElement()->as<BspLeaf>().cluster();
+    SectorCluster const &cluster = hedge.face().mapElement().as<BspLeaf>().cluster();
     Plane const &plane = cluster.visPlane(planeIndex);
 
-    LineSide &lineSide  = hedge.mapElement()->as<LineSideSegment>().lineSide();
+    LineSide const &lineSide = hedge.mapElement().as<LineSideSegment>().lineSide();
 
     d->sectorOpenness = 0; // Default is fully closed.
     d->openness = 0; // Default is fully closed.
@@ -159,10 +159,10 @@ void ShadowEdge::prepare(int planeIndex)
     // in the polygon corner vertices (placement, opacity).
 
     if(hedge.twin().hasFace() &&
-       hedge.twin().face().mapElement()->as<BspLeaf>().hasCluster())
+       hedge.twin().face().mapElement().as<BspLeaf>().hasCluster())
     {
-        SectorCluster const &backCluster = hedge.twin().face().mapElement()->as<BspLeaf>().cluster();
-        Plane const &backPlane  = backCluster.visPlane(planeIndex);
+        SectorCluster const &backCluster = hedge.twin().face().mapElement().as<BspLeaf>().cluster();
+        Plane const &backPlane = backCluster.visPlane(planeIndex);
         Surface const &wallEdgeSurface =
             lineSide.back().hasSector()? lineSide.surface(planeIndex == Sector::Ceiling? LineSide::Top : LineSide::Bottom)
                                        : lineSide.middle();
@@ -204,7 +204,8 @@ void ShadowEdge::prepare(int planeIndex)
     }
 
     // Only calculate the remaining values when the edge is at least partially open.
-    if(d->sectorOpenness >= 1) return;
+    if(d->sectorOpenness >= 1)
+        return;
 
     // Find the neighbor of this wall section and determine the relative
     // 'openness' of it's plane heights vs those of "this" wall section.

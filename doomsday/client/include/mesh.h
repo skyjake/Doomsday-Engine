@@ -22,6 +22,7 @@
 
 #include <QList>
 
+#include <de/Error>
 #include <de/Vector>
 
 #include "MapElement"
@@ -57,6 +58,10 @@ public:
         DENG2_NO_ASSIGN(Element)
 
     public:
+        /// Required map element is missing. @ingroup errors
+        DENG2_ERROR(MissingMapElementError);
+
+    public:
         explicit Element(Mesh &mesh);
 
         virtual ~Element() {}
@@ -67,10 +72,20 @@ public:
         Mesh &mesh() const;
 
         /**
+         * Returns @c true iff a map element is attributed.
+         */
+        bool hasMapElement() const;
+
+        /**
          * Returns a pointer to the map element attributed to the mesh element.
          * May return @c 0 if not attributed.
+         *
+         * @see hasMapElement()
          */
-        MapElement *mapElement() const;
+        MapElement &mapElement();
+
+        /// @copydoc mapElement()
+        MapElement const &mapElement() const;
 
         /**
          * Change the map element to which the mesh element is attributed.

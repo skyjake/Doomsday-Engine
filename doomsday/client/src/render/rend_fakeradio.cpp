@@ -1091,12 +1091,12 @@ void Rend_RadioWallSection(WallEdge const &leftEdge, WallEdge const &rightEdge,
 
     LineSide &side = leftEdge.mapLineSide();
     HEdge const *hedge = side.leftHEdge();
-    SectorCluster const *cluster = &hedge->face().mapElement()->as<BspLeaf>().cluster();
+    SectorCluster const *cluster = &hedge->face().mapElement().as<BspLeaf>().cluster();
     SectorCluster const *backCluster = 0;
 
     if(leftEdge.spec().section != LineSide::Middle && hedge->twin().hasFace())
     {
-        backCluster = hedge->twin().face().mapElement()->as<BspLeaf>().clusterPtr();
+        backCluster = hedge->twin().face().mapElement().as<BspLeaf>().clusterPtr();
     }
 
     bool const haveBottomShadower = Rend_RadioPlaneCastsShadow(cluster->visFloor());
@@ -1269,7 +1269,7 @@ static void writeShadowSection(int planeIndex, LineSide &side, float shadowDark)
     /// @todo Encapsulate this logic in ShadowEdge -ds
     if(!leftHEdge->hasFace()) return;
 
-    BspLeaf &frontLeaf = leftHEdge->face().mapElement()->as<BspLeaf>();
+    BspLeaf &frontLeaf = leftHEdge->face().mapElement().as<BspLeaf>();
     if(!frontLeaf.hasCluster() || !frontLeaf.cluster().hasWorldVolume())
         return;
 

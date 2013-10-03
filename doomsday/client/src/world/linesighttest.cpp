@@ -258,9 +258,9 @@ DENG2_PIMPL(LineSightTest)
         HEdge *hedge = base;
         do
         {
-            if(hedge->mapElement())
+            if(hedge->hasMapElement())
             {
-                if(!crossLine(hedge->mapElement()->as<LineSideSegment>().lineSide()))
+                if(!crossLine(hedge->mapElement().as<LineSideSegment>().lineSide()))
                     return false;
             }
         } while((hedge = &hedge->next()) != base);
@@ -269,10 +269,10 @@ DENG2_PIMPL(LineSightTest)
         foreach(HEdge *hedge, mesh->hedges())
         {
             // Is this on the back of a one-sided line?
-            if(!hedge->mapElement())
+            if(!hedge->hasMapElement())
                 continue;
 
-            if(!crossLine(hedge->mapElement()->as<LineSideSegment>().lineSide()))
+            if(!crossLine(hedge->mapElement().as<LineSideSegment>().lineSide()))
                 return false;
         }
 

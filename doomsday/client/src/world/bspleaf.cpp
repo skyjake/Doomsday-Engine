@@ -442,10 +442,10 @@ int BspLeaf::numFanVertices() const
 
 static void updateBiasForWallSectionsAfterGeometryMove(HEdge *hedge)
 {
-    if(!hedge || !hedge->mapElement())
+    if(!hedge || !hedge->hasMapElement())
         return;
 
-    LineSideSegment &seg = hedge->mapElement()->as<LineSideSegment>();
+    LineSideSegment &seg = hedge->mapElement().as<LineSideSegment>();
     seg.updateBiasAfterGeometryMove(LineSide::Middle);
     seg.updateBiasAfterGeometryMove(LineSide::Bottom);
     seg.updateBiasAfterGeometryMove(LineSide::Top);
@@ -476,9 +476,9 @@ void BspLeaf::updateBiasAfterGeometryMove(int group)
 
 static void applyBiasDigestToWallSections(HEdge *hedge, BiasDigest &changes)
 {
-    if(!hedge || !hedge->mapElement())
+    if(!hedge || !hedge->hasMapElement())
         return;
-    hedge->mapElement()->as<LineSideSegment>().applyBiasDigest(changes);
+    hedge->mapElement().as<LineSideSegment>().applyBiasDigest(changes);
 }
 
 void BspLeaf::applyBiasDigest(BiasDigest &changes)
@@ -542,10 +542,10 @@ static void accumReverbForWallSections(HEdge const *hedge,
     float envSpaceAccum[NUM_AUDIO_ENVIRONMENTS], float &total)
 {
     // Edges with no map line segment implicitly have no surfaces.
-    if(!hedge || !hedge->mapElement())
+    if(!hedge || !hedge->hasMapElement())
         return;
 
-    LineSideSegment &seg = hedge->mapElement()->as<LineSideSegment>();
+    LineSideSegment const &seg = hedge->mapElement().as<LineSideSegment>();
     if(!seg.lineSide().hasSections() || !seg.lineSide().middle().hasMaterial())
         return;
 

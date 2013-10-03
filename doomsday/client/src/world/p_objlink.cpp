@@ -357,17 +357,15 @@ static coord_t pointOnHEdgeSide(HEdge const &hedge, const_pvec2d_t point)
 static void maybeSpreadOverEdge(HEdge *hedge, contactfinderparams_t *parms)
 {
     DENG_ASSERT(hedge != 0 && parms != 0);
-    DENG_ASSERT(hedge->face().mapElement() != 0);
 
-    BspLeaf &leaf = hedge->face().mapElement()->as<BspLeaf>();
+    BspLeaf &leaf = hedge->face().mapElement().as<BspLeaf>();
     SectorCluster &cluster = leaf.cluster();
 
     // There must be a back BSP leaf to spread to.
     if(!hedge->hasTwin() || !hedge->twin().hasFace())
         return;
 
-    DENG_ASSERT(hedge->twin().face().mapElement() != 0);
-    BspLeaf &backLeaf = hedge->twin().face().mapElement()->as<BspLeaf>();
+    BspLeaf &backLeaf = hedge->twin().face().mapElement().as<BspLeaf>();
     if(!backLeaf.hasCluster())
         return;
     SectorCluster &backCluster = backLeaf.cluster();
@@ -402,9 +400,9 @@ static void maybeSpreadOverEdge(HEdge *hedge, contactfinderparams_t *parms)
         return;
 
     // Are there line side surfaces which should prevent spreading?
-    if(hedge->mapElement())
+    if(hedge->hasMapElement())
     {
-        LineSideSegment const &seg = hedge->mapElement()->as<LineSideSegment>();
+        LineSideSegment const &seg = hedge->mapElement().as<LineSideSegment>();
 
         // On which side of the line are we? (distance is from segment to origin).
         LineSide const &facingLineSide = seg.line().side(seg.lineSide().sideId() ^ (distance < 0));

@@ -47,9 +47,29 @@ Mesh &Mesh::Element::mesh() const
     return d->mesh;
 }
 
-MapElement *Mesh::Element::mapElement() const
+bool Mesh::Element::hasMapElement() const
 {
-    return d->mapElement;
+    return d->mapElement != 0;
+}
+
+MapElement &Mesh::Element::mapElement()
+{
+    if(d->mapElement)
+    {
+        return *d->mapElement;
+    }
+    /// @throw MissingMapElement  Attempted with no map element attributed.
+    throw MissingMapElementError("Mesh::Element::mapElement", "No map element is attributed");
+}
+
+MapElement const &Mesh::Element::mapElement() const
+{
+    if(d->mapElement)
+    {
+        return *d->mapElement;
+    }
+    /// @throw MissingMapElement  Attempted with no map element attributed.
+    throw MissingMapElementError("Mesh::Element::mapElement", "No map element is attributed");
 }
 
 void Mesh::Element::setMapElement(MapElement const *newMapElement)

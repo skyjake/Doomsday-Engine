@@ -405,7 +405,7 @@ bool Line::Side::considerOneSided() const
         if(!hedge || !hedge->twin().hasFace())
             return true;
 
-        if(!hedge->twin().face().mapElement()->as<BspLeaf>().hasCluster())
+        if(!hedge->twin().face().mapElement().as<BspLeaf>().hasCluster())
             return true;
     }
 
@@ -801,7 +801,7 @@ static void addMissingMaterial(LineSide &side, int section)
     {
         if(hedge->hasFace())
         {
-            BspLeaf &bspLeaf = hedge->face().mapElement()->as<BspLeaf>();
+            BspLeaf &bspLeaf = hedge->face().mapElement().as<BspLeaf>();
             if(bspLeaf.hasCluster())
             {
                 bspLeaf.cluster().markReverbDirty();

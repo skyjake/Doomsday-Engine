@@ -423,9 +423,9 @@ int P_Iteratep(void *elPtr, uint prop, int (*callback) (void *p, void *ctx), voi
                 HEdge *hedge = base;
                 do
                 {
-                    if(hedge->mapElement())
+                    if(hedge->hasMapElement())
                     {
-                        int result = callback(&hedge->mapElement()->
+                        int result = callback(&hedge->mapElement().
                                               as<LineSideSegment>().line(), context);
                         if(result) return result;
                     }
@@ -435,10 +435,10 @@ int P_Iteratep(void *elPtr, uint prop, int (*callback) (void *p, void *ctx), voi
                 foreach(HEdge *hedge, mesh->hedges())
                 {
                     // Is this on the back of a one-sided line?
-                    if(!hedge->mapElement())
+                    if(!hedge->hasMapElement())
                         continue;
 
-                    int result = callback(&hedge->mapElement()->
+                    int result = callback(&hedge->mapElement().
                                           as<LineSideSegment>().line(), context);
                     if(result) return result;
                 }
