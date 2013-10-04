@@ -259,6 +259,9 @@ public:
     operator Vector3<ddouble> () const {
         return Vector3<ddouble>(Vector2<Type>::x, Vector2<Type>::y, z);
     }
+    Vector3<dfloat> toVector3f() const {
+        return Vector3<dfloat>(dfloat(Vector2<Type>::x), dfloat(Vector2<Type>::y), dfloat(z));
+    }
     Vector3<dint> toVector3i() const {
         return Vector3<dint>(dint(Vector2<Type>::x), dint(Vector2<Type>::y), dint(z));
     }
