@@ -33,20 +33,20 @@ extern "C" {
 #endif
 
 typedef enum savestatesegment_e {
-    ASEG_MAP_HEADER = 102, // Hexen only
+    ASEG_MAP_HEADER = 102,  // Hexen only
     ASEG_MAP_ELEMENTS,
-    ASEG_POLYOBJS, // Hexen only
-    ASEG_MOBJS, // Hexen < ver 4 only
+    ASEG_POLYOBJS,          // Hexen only
+    ASEG_MOBJS,             // Hexen < ver 4 only
     ASEG_THINKERS,
-    ASEG_SCRIPTS, // Hexen only
+    ASEG_SCRIPTS,           // Hexen only
     ASEG_PLAYERS,
-    ASEG_SOUNDS, // Hexen only
-    ASEG_MISC, // Hexen only
-    ASEG_END,
+    ASEG_SOUNDS,            // Hexen only
+    ASEG_MISC,              // Hexen only
+    ASEG_END,               // = 111
     ASEG_MATERIAL_ARCHIVE,
     ASEG_MAP_HEADER2,
     ASEG_PLAYER_HEADER,
-    ASEG_GLOBALSCRIPTDATA // Hexen only
+    ASEG_GLOBALSCRIPTDATA   // Hexen only
 } savestatesegment_t;
 
 enum {
@@ -75,6 +75,8 @@ void SV_CopyFile(Str const *srcPath, Str const *destPath);
 
 #if __JHEXEN__
 saveptr_t* SV_HxSavePtr(void);
+void SV_HxSetSaveEndPtr(void *endPtr);
+boolean SV_HxBytesLeft(void);
 #endif // __JHEXEN__
 
 /**

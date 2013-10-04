@@ -700,10 +700,11 @@ static bool recogniseNativeState(Str const *path, SaveInfo *info)
 #if __JHEXEN__
     /// @todo Do not buffer the whole file.
     byte *saveBuffer;
-    if(!M_ReadFile(Str_Text(path), (char**)&saveBuffer))
-        return false;
+    size_t fileSize = M_ReadFile(Str_Text(path), (char **) &saveBuffer);
+    if(!fileSize) return false;
     // Set the save pointer.
     SV_HxSavePtr()->b = saveBuffer;
+    SV_HxSetSaveEndPtr(saveBuffer + fileSize);
 #else
     if(!SV_OpenFile(path, "rp"))
         return false;
@@ -5542,6 +5543,7 @@ static void readMapState()
     }
 
     SV_HxSavePtr()->b = saveBuffer;
+    SV_HxSetSaveEndPtr(saveBuffer + bufferSize);
 #endif
 
     readMap();
