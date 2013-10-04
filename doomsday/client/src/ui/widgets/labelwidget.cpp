@@ -138,6 +138,11 @@ public Font::RichFormat::IStyle
         return style().richStyleFormat(contentStyle, sizeFactor, fontWeight, fontStyle, colorIndex);
     }
 
+    Font const *richStyleFont(Font::RichFormat::Style fontStyle) const
+    {
+        return style().richStyleFont(fontStyle);
+    }
+
     void glInit()
     {
         drawable.addBuffer(new VertexBuf);
