@@ -134,7 +134,7 @@ DENG2_PIMPL(Partitioner)
     /**
      * Returns the associated EdgeTips set for the given @a vertex.
      */
-    EdgeTips &edgeTips(Vertex const &vertex)
+    EdgeTips &edgeTipSet(Vertex const &vertex)
     {
         EdgeTipSetMap::iterator found = edgeTipSets.find(const_cast<Vertex *>(&vertex));
         if(found == edgeTipSets.end())
@@ -189,13 +189,14 @@ DENG2_PIMPL(Partitioner)
             }
 
             /// @todo edge tips should be created when line segments are created.
-            edgeTips(line->from()).add(angle,
-                                       seg? &seg->front() : 0,
-                                       seg && seg->back().hasSector()? &seg->back() : 0);
+            edgeTipSet(line->from())
+                << EdgeTip(angle, seg? &seg->front() : 0,
+                           seg && seg->back().hasSector()? &seg->back() : 0);
 
-            edgeTips(line->to()  ).add(M_InverseAngle(angle),
-                                       seg && seg->back().hasSector()? &seg->back() : 0,
-                                       seg? &seg->front() : 0);
+            edgeTipSet(line->to())
+                << EdgeTip(M_InverseAngle(angle),
+                           seg && seg->back().hasSector()? &seg->back() : 0,
+                           seg? &seg->front() : 0);
         }
     }
 
@@ -657,27 +658,31 @@ DENG2_PIMPL(Partitioner)
             /**
              * @todo Optimize: Avoid clearing tips by implementing update logic.
              */
-            edgeTips(oldSeg.from()).clearByLineSegment(oldSeg);
-            edgeTips(oldSeg.to()  ).clearByLineSegment(oldSeg);
+            edgeTipSet(oldSeg.from()).clearByLineSegment(oldSeg);
+            edgeTipSet(oldSeg.to()  ).clearByLineSegment(oldSeg);
 
-            edgeTips(newSeg.from()).clearByLineSegment(newSeg);
-            edgeTips(newSeg.to()  ).clearByLineSegment(newSeg);
+            edgeTipSet(newSeg.from()).clearByLineSegment(newSeg);
+            edgeTipSet(newSeg.to()  ).clearByLineSegment(newSeg);
 
-            edgeTips(oldSeg.from()).add(oldSeg.front().angle(),
-                                        oldSeg.front().hasSector()? &oldSeg.front() : 0,
-                                        oldSeg.back().hasSector()?  &oldSeg.back()  : 0);
+            edgeTipSet(oldSeg.from())
+                << EdgeTip(oldSeg.front().angle(),
+                           oldSeg.front().hasSector()? &oldSeg.front() : 0,
+                           oldSeg.back().hasSector()?  &oldSeg.back()  : 0);
 
-            edgeTips(oldSeg.to()  ).add(oldSeg.back().angle(),
-                                        oldSeg.back().hasSector()?  &oldSeg.back()  : 0,
-                                        oldSeg.front().hasSector()? &oldSeg.front() : 0);
+            edgeTipSet(oldSeg.to())
+                << EdgeTip(oldSeg.back().angle(),
+                           oldSeg.back().hasSector()?  &oldSeg.back()  : 0,
+                           oldSeg.front().hasSector()? &oldSeg.front() : 0);
 
-            edgeTips(newSeg.from()).add(newSeg.front().angle(),
-                                        newSeg.front().hasSector()? &newSeg.front() : 0,
-                                        newSeg.back().hasSector()?  &newSeg.back()  : 0);
+            edgeTipSet(newSeg.from())
+                << EdgeTip(newSeg.front().angle(),
+                           newSeg.front().hasSector()? &newSeg.front() : 0,
+                           newSeg.back().hasSector()?  &newSeg.back()  : 0);
 
-            edgeTips(newSeg.to()  ).add(newSeg.back().angle(),
-                                        newSeg.back().hasSector()?  &newSeg.back()  : 0,
-                                        newSeg.front().hasSector()? &newSeg.front() : 0);
+            edgeTipSet(newSeg.to())
+                << EdgeTip(newSeg.back().angle(),
+                           newSeg.back().hasSector()?  &newSeg.back()  : 0,
+                           newSeg.front().hasSector()? &newSeg.front() : 0);
         }
 
         return frontRight;
@@ -720,7 +725,7 @@ DENG2_PIMPL(Partitioner)
     /// @todo refactor away
     inline void interceptPartition(LineSegmentSide &seg, int edge)
     {
-        hplane.intercept(seg, edge, edgeTips(seg.vertex(edge)));
+        hplane.intercept(seg, edge, edgeTipSet(seg.vertex(edge)));
     }
 
     /**
@@ -988,8 +993,11 @@ DENG2_PIMPL(Partitioner)
                                                 sector, sector, 0 /*no map line*/,
                                                 partSeg? &partSeg->mapLine() : 0);
 
-            edgeTips(newSeg.from()).add(newSeg.front().angle(), &newSeg.front(), &newSeg.back());
-            edgeTips(newSeg.to()  ).add(newSeg.back().angle(),  &newSeg.back(),  &newSeg.front());
+            edgeTipSet(newSeg.from())
+                << EdgeTip(newSeg.front().angle(), &newSeg.front(), &newSeg.back());
+
+            edgeTipSet(newSeg.to())
+                << EdgeTip(newSeg.back().angle(),  &newSeg.back(),  &newSeg.front());
 
             // Add each new line segment to the appropriate set.
             linkSegmentInSuperBlockmap(rights, newSeg.front());

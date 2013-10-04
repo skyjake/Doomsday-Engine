@@ -114,63 +114,135 @@ private:
 };
 
 /**
+ * Provides an always-sorted EdgeTip data set.
+ *
  * @ingroup bsp
  */
 class EdgeTips
 {
 public:
-    typedef std::list<EdgeTip> All;
-
-    EdgeTips() : _tips(0) {}
-
-    ~EdgeTips() { clear(); }
-
-    bool isEmpty() const { return _tips.empty(); }
-
-    /// Clear all tips in the set.
-    void clear() { _tips.clear(); }
-
     /**
-     * Add a new edge tip to the set in it's rightful place according to
-     * an anti-clockwise (increasing angle) order.
-     *
-     * @param angleEpsilon  Smallest difference between two angles before being
-     *                      considered equal (in degrees).
+     * Construct a new edge tip set.
      */
-    EdgeTip &add(coord_t angle, LineSegment::Side *front = 0, LineSegment::Side *back = 0,
-                 coord_t angleEpsilon = 1.0 / 1024.0)
+    EdgeTips() : _tips(0)
+    {}
+
+    ~EdgeTips()
     {
-        All::reverse_iterator after;
-
-        for(after = _tips.rbegin();
-            after != _tips.rend() && angle + angleEpsilon < (*after).angle(); after++)
-        {}
-
-        return *_tips.insert(after.base(), EdgeTip(angle, front, back));
+        clear();
     }
 
+    /// @see insert()
+    inline EdgeTips &operator << (EdgeTip const &tip) {
+        insert(tip);
+        return *this;
+    }
+
+    /**
+     * Returns @c true iff the set contains zero edge tips.
+     */
+    bool isEmpty() const
+    {
+        return _tips.empty();
+    }
+
+    /**
+     * Insert a copy of @a tip into the set, in it's rightful place according to
+     * an anti-clockwise (increasing angle) order.
+     *
+     * @param epsilon  Angle equivalence threshold (in degrees).
+     */
+    void insert(EdgeTip const &tip, ddouble epsilon = 1.0 / 1024)
+    {
+        Tips::reverse_iterator after = _tips.rbegin();
+        while(after != _tips.rend() && tip.angle() + epsilon < (*after).angle())
+        {
+            after++;
+        }
+        _tips.insert(after.base(), tip);
+    }
+
+    /**
+     * Returns the tip from the set with the smallest angle; otherwise @c 0 if
+     * the set is empty.
+     */
+    EdgeTip const *smallest() const
+    {
+        return _tips.empty()? 0 : &_tips.front();
+    }
+
+    /**
+     * Returns the tip from the set with the largest angle; otherwise @c 0 if
+     * the set is empty.
+     */
+    EdgeTip const *largest() const
+    {
+        return _tips.empty()? 0 : &_tips.back();
+    }
+
+    /**
+     * @param epsilon  Angle equivalence threshold (in degrees).
+     */
+    EdgeTip const *at(ddouble angle, ddouble epsilon = 1.0 / 1024) const
+    {
+        DENG2_FOR_EACH_CONST(Tips, it, _tips)
+        {
+            coord_t delta = de::abs(it->angle() - angle);
+            if(delta < epsilon || delta > (360.0 - epsilon))
+            {
+                return &(*it);
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * @param epsilon  Angle equivalence threshold (in degrees).
+     */
+    EdgeTip const *after(ddouble angle, ddouble epsilon = 1.0 / 1024.0) const
+    {
+        DENG2_FOR_EACH_CONST(Tips, it, _tips)
+        {
+            if(angle + epsilon < it->angle())
+            {
+                return &(*it);
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * Clear all tips in the set.
+     */
+    void clear()
+    {
+        _tips.clear();
+    }
+
+    /**
+     * Clear all tips attributed to the specified line segment @a seg.
+     */
     void clearByLineSegment(LineSegment &seg)
     {
-        All::iterator i = _tips.begin();
-        while(i != _tips.end())
+        Tips::iterator it = _tips.begin();
+        while(it != _tips.end())
         {
-            EdgeTip &tip = *i;
+            EdgeTip &tip = *it;
             if((tip.hasFront() && &tip.front().line() == &seg) ||
                (tip.hasBack()  && &tip.back().line()  == &seg))
             {
-                i = _tips.erase(i);
+                it = _tips.erase(it);
             }
             else
             {
-                ++i;
+                ++it;
             }
         }
     }
 
-    All const &all() const { return _tips; }
-
 private:
-    All _tips;
+    typedef std::list<EdgeTip> Tips;
+    Tips _tips;
 };
 
 } // namespace bsp

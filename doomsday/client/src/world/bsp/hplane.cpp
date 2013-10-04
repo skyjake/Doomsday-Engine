@@ -224,36 +224,25 @@ void HPlane::configure(LineSegmentSide const &newBaseSeg)
  */
 static LineSegmentSide *lineSegAtAngle(EdgeTips const &tips, coord_t angle)
 {
-    DENG_ASSERT(!tips.isEmpty());
+    // Is there a tip exactly at this angle?
+    if(tips.at(angle))
+        return 0; // Closed.
 
-    // First check whether there's a wall_tip that lies in the exact
-    // direction of the given direction (which is relative to the vertex).
-    DENG2_FOR_EACH_CONST(EdgeTips::All, it, tips.all())
+    // Find the first tip after (larger) than this angle. If present the side
+    // we're interested in is the front.
+    if(EdgeTip const *tip = tips.after(angle))
     {
-        EdgeTip const &tip = *it;
-        coord_t diff = de::abs(tip.angle() - angle);
-        if(diff < ANG_EPSILON || diff > (360.0 - ANG_EPSILON))
-        {
-            return 0; // Yes, found one.
-        }
+        return tip->hasFront()? &tip->front() : 0;
     }
 
-    // OK, now just find the first wall_tip whose angle is greater than
-    // the angle we're interested in. Therefore we'll be on the front side
-    // of that tip edge.
-    DENG2_FOR_EACH_CONST(EdgeTips::All, it, tips.all())
+    // The open sector must therefore be on the back of the tip with the largest
+    // angle (if present).
+    if(EdgeTip const *tip = tips.largest())
     {
-        EdgeTip const &tip = *it;
-        if(angle + ANG_EPSILON < tip.angle())
-        {
-            return tip.hasFront()? &tip.front() : 0;
-        }
+        return tip->hasBack()? &tip->back() : 0;
     }
 
-    // Not found. The open sector will therefore be on the back of the tip
-    // at the greatest angle.
-    EdgeTip const &tip = tips.all().back();
-    return tip.hasBack()? &tip.back() : 0;
+    return 0; // No edge tips.
 }
 
 double HPlane::intersect(LineSegmentSide const &lineSeg, int edge)
