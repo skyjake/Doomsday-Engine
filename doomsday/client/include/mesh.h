@@ -77,8 +77,7 @@ public:
         bool hasMapElement() const;
 
         /**
-         * Returns a pointer to the map element attributed to the mesh element.
-         * May return @c 0 if not attributed.
+         * Returns the map element attributed to the mesh element.
          *
          * @see hasMapElement()
          */

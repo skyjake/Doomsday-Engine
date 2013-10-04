@@ -92,8 +92,6 @@ using namespace de;
 #define SOF_SIDE                0x04
 ///@}
 
-static void drawBiasEditingVisuals(Map &map);
-
 void Rend_DrawBBox(Vector3d const &pos, coord_t w, coord_t l, coord_t h, float a,
     float const color[3], float alpha, float br, bool alignToBase = true);
 
@@ -103,7 +101,7 @@ D_CMD(OpenRendererAppearanceEditor);
 
 int useBias; // Shadow Bias enabled? cvar
 
-boolean usingFog = false; // Is the fog in use?
+boolean usingFog; // Is the fog in use?
 float fogColor[4];
 float fieldOfView = 95.0f;
 byte smoothTexAnim = true;
@@ -132,15 +130,15 @@ coord_t vOrigin[3];
 float vang, vpitch;
 float viewsidex, viewsidey;
 
-byte freezeRLs = false;
-int devRendSkyMode = false;
-byte devRendSkyAlways = false;
+byte freezeRLs;
+int devRendSkyMode;
+byte devRendSkyAlways;
 
 // Ambient lighting, rAmbient is used within the renderer, ambientLight is
 // used to store the value of the ambient light cvar.
 // The value chosen for rAmbient occurs in Rend_UpdateLightModMatrix
 // for convenience (since we would have to recalculate the matrix anyway).
-int rAmbient = 0, ambientLight = 0;
+int rAmbient, ambientLight;
 
 int viewpw, viewph; // Viewport size, in pixels.
 int viewpx, viewpy; // Viewpoint top left corner, in pixels.
@@ -157,9 +155,9 @@ int gameDrawHUD = 1; // Set to zero when we advise that the HUD should not be dr
  * that when summed with the original light value the result remains in
  * the normalized range [0..1].
  */
-float lightRangeCompression = 0;
+float lightRangeCompression;
 float lightModRange[255];
-byte devLightModRange = 0;
+byte devLightModRange;
 
 float rendLightDistanceAttenuation = 924;
 int rendLightAttenuateFixedColormap = 1;
@@ -204,13 +202,11 @@ static void drawMobjBoundingBoxes(Map &map);
 static void drawSoundEmitters(Map &map);
 static void drawGenerators(Map &map);
 static void drawAllSurfaceTangentVectors(Map &map);
+static void drawBiasEditingVisuals(Map &map);
 static void drawLumobjs(Map &map);
 static void drawSectors(Map &map);
 static void drawThinkers(Map &map);
 static void drawVertexes(Map &map);
-
-static uint buildLeafPlaneGeometry(BspLeaf const &leaf, ClockDirection direction,
-    coord_t height, Vector3f **verts, uint *vertsSize);
 
 // Draw state:
 static Vector3d eyeOrigin; // Viewer origin.
@@ -904,7 +900,7 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
     rtexmapunit_t const *shinyRTU         = (useShinySurfaces && !(p.flags & RPF_SKYMASK) && ms.unit(RTU_REFLECTION).hasTexture())? &ms.unit(RTU_REFLECTION) : NULL;
     rtexmapunit_t const *shinyMaskRTU     = (useShinySurfaces && !(p.flags & RPF_SKYMASK) && ms.unit(RTU_REFLECTION).hasTexture() && ms.unit(RTU_REFLECTION_MASK).hasTexture())? &ms.unit(RTU_REFLECTION_MASK) : NULL;
 
-    Vector4f *colorCoords        = !skyMaskedMaterial? R_AllocRendColors(realNumVertices) : 0;
+    Vector4f *colorCoords    = !skyMaskedMaterial? R_AllocRendColors(realNumVertices) : 0;
     Vector2f *primaryCoords  = R_AllocRendTexCoords(realNumVertices);
     Vector2f *interCoords    = interRTU? R_AllocRendTexCoords(realNumVertices) : 0;
 
@@ -1664,11 +1660,10 @@ static void writeWallSection(HEdge &hedge, int section,
 }
 
 /**
- * Prepare a trifan geometry according to the edges of this BSP leaf. If a fan
- * base HEdge has been chosen it will be used as the center of the trifan, else
- * the mid point of this leaf will be used instead.
+ * Prepare a trifan geometry according to the edges of the current BSP leaf.
+ * If a fan base HEdge has been chosen it will be used as the center of the
+ * trifan, else the mid point of this leaf will be used instead.
  *
- * @param leaf       BspLeaf instance.
  * @param direction  Vertex winding direction.
  * @param height     Z map space height coordinate to be set for each vertex.
  * @param verts      Built vertices are written here.
@@ -1676,14 +1671,15 @@ static void writeWallSection(HEdge &hedge, int section,
  *
  * @return  Number of built vertices (same as written to @a vertsSize).
  */
-static uint buildLeafPlaneGeometry(BspLeaf const &leaf, ClockDirection direction,
-    coord_t height, Vector3f **verts, uint *vertsSize)
+static uint buildLeafPlaneGeometry(ClockDirection direction, coord_t height,
+    Vector3f **verts, uint *vertsSize)
 {
     DENG_ASSERT(verts != 0);
 
-    Face const &face = leaf.poly();
+    BspLeaf const *leaf = currentBspLeaf;
+    Face const &face = leaf->poly();
 
-    HEdge *fanBase  = leaf.fanBase();
+    HEdge *fanBase  = leaf->fanBase();
     uint totalVerts = face.hedgeCount() + (!fanBase? 2 : 0);
 
     *verts = R_AllocRendVertices(totalVerts);
@@ -1842,7 +1838,7 @@ static void writeLeafPlane(Plane &plane)
     // Allocate position coordinates.
     uint numVertices;
     Vector3f *posCoords;
-    buildLeafPlaneGeometry(*leaf, (plane.isSectorCeiling())? Anticlockwise : Clockwise,
+    buildLeafPlaneGeometry((plane.isSectorCeiling())? Anticlockwise : Clockwise,
                            plane.heightSmoothed(),
                            &posCoords, &numVertices);
 
@@ -1859,7 +1855,7 @@ static void writeLeafPlane(Plane &plane)
     R_FreeRendVertices(posCoords);
 }
 
-static void writeSkyFixStrip(int numElements, Vector3f const *posCoords,
+static void writeSkyMaskStrip(int numElements, Vector3f const *posCoords,
     Vector2f const *texCoords, Material *material)
 {
     DENG_ASSERT(posCoords != 0);
@@ -1998,8 +1994,8 @@ static void writeLeafSkyMaskStrips(SkyFixEdge::FixType fixType)
                 int numVerts = stripBuilder.take(&positions, &texcoords);
 
                 // Write the strip geometry to the render lists.
-                writeSkyFixStrip(numVerts, positions->constData(),
-                                 texcoords? texcoords->constData() : 0, startMaterial);
+                writeSkyMaskStrip(numVerts, positions->constData(),
+                                  texcoords? texcoords->constData() : 0, startMaterial);
 
                 delete positions;
                 delete texcoords;
@@ -2026,29 +2022,28 @@ static void writeLeafSkyMaskStrips(SkyFixEdge::FixType fixType)
 #define SKYCAP_UPPER                0x2
 ///@}
 
-static coord_t skyPlaneZ(BspLeaf *bspLeaf, int skyCap)
+static coord_t skyPlaneZ(int skyCap)
 {
-    DENG_ASSERT(bspLeaf);
+    BspLeaf *leaf = currentBspLeaf;
+
     int const relPlane = (skyCap & SKYCAP_UPPER)? Sector::Ceiling : Sector::Floor;
     if(!P_IsInVoid(viewPlayer))
-        return bspLeaf->map().skyFix(relPlane == Sector::Ceiling);
+        return leaf->map().skyFix(relPlane == Sector::Ceiling);
 
-    return bspLeaf->cluster().visPlane(relPlane).heightSmoothed();
+    return leaf->cluster().visPlane(relPlane).heightSmoothed();
 }
 
 /// @param skyCap  @ref skyCapFlags.
 static void writeLeafSkyMaskCap(int skyCap)
 {
-    BspLeaf *leaf = currentBspLeaf;
-
     // Caps are unnecessary in sky debug mode (will be drawn as regular planes).
     if(devRendSkyMode) return;
     if(!skyCap) return;
 
     Vector3f *verts;
     uint numVerts;
-    buildLeafPlaneGeometry(*leaf, (skyCap & SKYCAP_UPPER)? Anticlockwise : Clockwise,
-                           skyPlaneZ(leaf, skyCap),
+    buildLeafPlaneGeometry((skyCap & SKYCAP_UPPER)? Anticlockwise : Clockwise,
+                           skyPlaneZ(skyCap),
                            &verts, &numVerts);
 
     RL_AddPoly(PT_FAN, RPF_DEFAULT | RPF_SKYMASK, numVerts, verts, 0);
