@@ -100,44 +100,6 @@ void Vertex::setOriginComponent(int component, coord_t newPosition)
     }
 }
 
-#ifdef __CLIENT__
-
-/// @todo fixme: Should use the visual plane heights of sector clusters.
-void Vertex::planeVisHeightMinMax(coord_t *min, coord_t *max) const
-{
-    if(!min && !max)
-        return;
-
-    LineOwner const *base = firstLineOwner();
-    LineOwner const *own  = base;
-    do
-    {
-        Line *li = &own->line();
-
-        if(li->hasFrontSector())
-        {
-            if(min && li->frontSector().floor().heightSmoothed() < *min)
-                *min = li->frontSector().floor().heightSmoothed();
-
-            if(max && li->frontSector().ceiling().heightSmoothed() > *max)
-                *max = li->frontSector().ceiling().heightSmoothed();
-        }
-
-        if(li->hasBackSector())
-        {
-            if(min && li->backSector().floor().heightSmoothed() < *min)
-                *min = li->backSector().floor().heightSmoothed();
-
-            if(max && li->backSector().ceiling().heightSmoothed() > *max)
-                *max = li->backSector().ceiling().heightSmoothed();
-        }
-
-        own = &own->next();
-    } while(own != base);
-}
-
-#endif // __CLIENT__
-
 int Vertex::property(DmuArgs &args) const
 {
     switch(args.prop)

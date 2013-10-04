@@ -24,6 +24,7 @@
 #include <cmath>
 
 #include <QtAlgorithms>
+#include <QBitArray>
 
 #include <de/libdeng2.h>
 
@@ -3607,34 +3608,32 @@ static void drawGenerators(Map &map)
     gens->iterate(drawGenerator);
 }
 
-static void drawVertexPoint(const Vertex* vtx, coord_t z, float alpha)
+static void drawPoint(Vector3d const &origin, float opacity)
 {
     glBegin(GL_POINTS);
-        glColor4f(.7f, .7f, .2f, alpha * 2);
-        glVertex3f(vtx->origin().x, z, vtx->origin().y);
+        glColor4f(.7f, .7f, .2f, opacity * 2);
+        glVertex3f(origin.x, origin.z, origin.y);
     glEnd();
 }
 
-static void drawVertexBar(Vertex const *vtx, coord_t bottom, coord_t top, float alpha)
+static void drawBar(Vector3d const &origin, coord_t height, float opacity)
 {
     int const EXTEND_DIST = 64;
 
-    static const float black[4] = { 0, 0, 0, 0 };
+    static float const black[4] = { 0, 0, 0, 0 };
 
     glBegin(GL_LINES);
         glColor4fv(black);
-        glVertex3f(vtx->origin().x, bottom - EXTEND_DIST, vtx->origin().y);
-        glColor4f(1, 1, 1, alpha);
-        glVertex3f(vtx->origin().x, bottom, vtx->origin().y);
-        glVertex3f(vtx->origin().x, bottom, vtx->origin().y);
-        glVertex3f(vtx->origin().x, top, vtx->origin().y);
-        glVertex3f(vtx->origin().x, top, vtx->origin().y);
+        glVertex3f(origin.x, origin.z - EXTEND_DIST, origin.y);
+        glColor4f(1, 1, 1, opacity);
+        glVertex3f(origin.x, origin.z, origin.y);
+        glVertex3f(origin.x, origin.z, origin.y);
+        glVertex3f(origin.x, origin.z + height, origin.y);
+        glVertex3f(origin.x, origin.z + height, origin.y);
         glColor4fv(black);
-        glVertex3f(vtx->origin().x, top + EXTEND_DIST, vtx->origin().y);
+        glVertex3f(origin.x, origin.z + height + EXTEND_DIST, origin.y);
     glEnd();
 }
-
-#define MAX_VERTEX_POINT_DIST 1280
 
 static String labelForVertex(Vertex const *vtx)
 {
@@ -3642,53 +3641,140 @@ static String labelForVertex(Vertex const *vtx)
     return String("%1").arg(vtx->indexInMap());
 }
 
-static int drawPolyobjVertexes(Polyobj *po, void * /*context*/)
+struct drawVertexVisual_params_t
 {
-    DENG_ASSERT(po != 0);
-    foreach(Line *line, po->lines())
+    int maxDistance;
+    bool drawOrigin;
+    bool drawBar;
+    bool drawLabel;
+    QBitArray *drawnVerts;
+};
+
+static void drawVertexVisual(Vertex const &vertex, ddouble minHeight, ddouble maxHeight,
+    drawVertexVisual_params_t &parms)
+{
+    if(!parms.drawOrigin && !parms.drawBar && !parms.drawLabel)
+        return;
+
+    // Skip vertexes produced by the space partitioner.
+    if(vertex.indexInArchive() == MapElement::NoIndex)
+        return;
+
+    // Skip already processed verts?
+    if(parms.drawnVerts)
     {
-        if(line->validCount() == validCount)
-            continue;
+        if(parms.drawnVerts->testBit(vertex.indexInArchive()))
+            return;
+        parms.drawnVerts->setBit(vertex.indexInArchive());
+    }
 
-        line->setValidCount(validCount);
+    // Distance in 2D determines visibility/opacity.
+    ddouble distToEye = (Vector2d(eyeOrigin.x, eyeOrigin.y) - vertex.origin()).length();
+    if(distToEye >= parms.maxDistance)
+        return;
 
-        SectorCluster const &cluster = po->bspLeaf().cluster();
-        Vertex const &vtx = line->from();
+    Vector3d const origin(vertex.origin(), minHeight);
+    float const opacity = 1 - distToEye / parms.maxDistance;
 
-        coord_t dist2D = M_ApproxDistance(vOrigin[VX] - vtx.origin().x,
-                                          vOrigin[VZ] - vtx.origin().y);
-        if(dist2D < MAX_VERTEX_POINT_DIST)
+    if(parms.drawBar)
+    {
+        drawBar(origin, maxHeight - minHeight, opacity);
+    }
+    if(parms.drawOrigin)
+    {
+        drawPoint(origin, opacity * 2);
+    }
+    if(parms.drawLabel)
+    {
+        drawLabel(origin, labelForVertex(&vertex),
+                  distToEye / (DENG_GAMEVIEW_WIDTH / 2), opacity);
+    }
+}
+
+/**
+ * Find the relative next minmal and/or maximal visual height(s) of all sector
+ * planes which "interface" at the half-edge, edge vertex.
+ *
+ * @param base  Base half-edge to find heights for.
+ * @param edge  Edge of the half-edge.
+ * @param min   Current minimal height to use as a base (will be overwritten).
+ *              Use DDMAXFLOAT if the base is unknown. Can be @c 0.
+ * @param min   Current maximal height to use as a base (will be overwritten).
+ *              Use DDMINFLOAT if the base is unknown. Can be @c 0.
+ *
+ * @todo Don't stop when a zero-volume back neighbor is found; process all of
+ * the neighbors at the specified vertex (the half-edge geometry will need to
+ * be linked such that "outside" edges are neighbor-linked similarly to those
+ * with a face).
+ */
+static void findMinMaxPlaneHeightsAtVertex(HEdge *base, int edge,
+    ddouble &min, ddouble &max)
+{
+    if(!base) return;
+    if(!base->hasFace() || !base->face().hasMapElement())
+        return;
+
+    BspLeaf &bspLeaf = base->face().mapElementAs<BspLeaf>();
+    if(!bspLeaf.hasCluster())
+        return;
+
+    // Process neighbors?
+    if(!SectorCluster::isInternalEdge(base))
+    {
+        ClockDirection const direction = edge? Clockwise : Anticlockwise;
+        HEdge *hedge = base;
+        while((hedge = &SectorClusterCirculator::findBackNeighbor(*hedge, direction)) != base)
         {
-            float alpha = 1 - dist2D / MAX_VERTEX_POINT_DIST;
+            // Stop if there is no back cluster.
+            BspLeaf *backLeaf = hedge->hasFace()? &hedge->face().mapElementAs<BspLeaf>() : 0;
+            if(!backLeaf || !backLeaf->hasCluster())
+                break;
 
-            if(alpha > 0)
-            {
-                coord_t const bottom = cluster.visFloor().heightSmoothed();
-                coord_t const top    = cluster.visCeiling().heightSmoothed();
+            if(backLeaf->cluster().visFloor().heightSmoothed() < min)
+                min = backLeaf->cluster().visFloor().heightSmoothed();
 
-                glDisable(GL_DEPTH_TEST);
-
-                if(devVertexBars)
-                    drawVertexBar(&vtx, bottom, top, MIN_OF(alpha, .15f));
-
-                drawVertexPoint(&vtx, bottom, alpha * 2);
-
-                glEnable(GL_DEPTH_TEST);
-            }
-        }
-
-        if(devVertexIndices)
-        {
-            Vector3d const origin(vtx.origin(), cluster.visFloor().heightSmoothed());
-            ddouble distToEye = (eyeOrigin - origin).length();
-            if(distToEye < MAX_VERTEX_POINT_DIST)
-            {
-                drawLabel(origin, labelForVertex(&vtx),
-                          distToEye / (DENG_GAMEVIEW_WIDTH / 2),
-                          1 - distToEye / MAX_VERTEX_POINT_DIST);
-            }
+            if(backLeaf->cluster().visCeiling().heightSmoothed() > max)
+                max = backLeaf->cluster().visCeiling().heightSmoothed();
         }
     }
+}
+
+static int drawBspLeafVertexWorker(BspLeaf *bspLeaf, void *context)
+{
+    drawVertexVisual_params_t &parms = *static_cast<drawVertexVisual_params_t *>(context);
+
+    if(!bspLeaf->hasCluster())
+        return false; // Continue iteration.
+
+    ddouble min = bspLeaf->cluster().  visFloor().heightSmoothed();
+    ddouble max = bspLeaf->cluster().visCeiling().heightSmoothed();
+
+    HEdge *base  = bspLeaf->poly().hedge();
+    HEdge *hedge = base;
+    do
+    {
+        ddouble edgeMin = min;
+        ddouble edgeMax = max;
+        findMinMaxPlaneHeightsAtVertex(hedge, 0 /*left edge*/, edgeMin, edgeMax);
+
+        drawVertexVisual(hedge->vertex(), min, max, parms);
+
+    } while((hedge = &hedge->next()) != base);
+
+    foreach(Mesh *mesh, bspLeaf->extraMeshes())
+    foreach(HEdge *hedge, mesh->hedges())
+    {
+        drawVertexVisual(hedge->vertex(), min, max, parms);
+        drawVertexVisual(hedge->twin().vertex(), min, max, parms);
+    }
+
+    foreach(Polyobj *polyobj, bspLeaf->polyobjs())
+    foreach(Line *line, polyobj->lines())
+    {
+        drawVertexVisual(line->from(), min, max, parms);
+        drawVertexVisual(line->to(), min, max, parms);
+    }
+
     return false; // Continue iteration.
 }
 
@@ -3697,9 +3783,20 @@ static int drawPolyobjVertexes(Polyobj *po, void * /*context*/)
  */
 static void drawVertexes(Map &map)
 {
+#define MAX_DISTANCE            1280 ///< From the viewer.
+
     float oldLineWidth = -1;
 
-    if(!devVertexBars && !devVertexIndices) return;
+    if(!devVertexBars && !devVertexIndices)
+        return;
+
+    AABoxd box(eyeOrigin.x - MAX_DISTANCE, eyeOrigin.y - MAX_DISTANCE,
+               eyeOrigin.x + MAX_DISTANCE, eyeOrigin.y + MAX_DISTANCE);
+
+    QBitArray drawnVerts(map.vertexCount());
+    drawVertexVisual_params_t parms;
+    parms.maxDistance = MAX_DISTANCE;
+    parms.drawnVerts  = &drawnVerts;
 
     if(devVertexBars)
     {
@@ -3709,93 +3806,35 @@ static void drawVertexes(Map &map)
         oldLineWidth = DGL_GetFloat(DGL_LINE_WIDTH);
         DGL_SetFloat(DGL_LINE_WIDTH, 2);
 
-        foreach(Vertex *vertex, map.vertexes())
-        {
-            // Not a line vertex?
-            LineOwner const *own = vertex->firstLineOwner();
-            if(!own) continue;
-
-            // Ignore polyobj vertexes.
-            if(own->line().definesPolyobj()) continue;
-
-            float alpha = 1 - M_ApproxDistance(vOrigin[VX] - vertex->origin().x,
-                                               vOrigin[VZ] - vertex->origin().y) / MAX_VERTEX_POINT_DIST;
-            alpha = de::min(alpha, .15f);
-
-            if(alpha > 0)
-            {
-                coord_t bottom = DDMAXFLOAT;
-                coord_t top    = DDMINFLOAT;
-                vertex->planeVisHeightMinMax(&bottom, &top);
-
-                drawVertexBar(vertex, bottom, top, alpha);
-            }
-        }
+        parms.drawBar = true;
+        parms.drawLabel = parms.drawOrigin = false;
+        map.bspLeafsBoxIterator(box, drawBspLeafVertexWorker, &parms);
 
         glEnable(GL_DEPTH_TEST);
     }
 
-    // Draw the vertex point nodes.
+    // Draw the vertex origins.
     float const oldPointSize = DGL_GetFloat(DGL_POINT_SIZE);
 
     glEnable(GL_POINT_SMOOTH);
     DGL_SetFloat(DGL_POINT_SIZE, 6);
 
-    {
-        glDisable(GL_DEPTH_TEST);
-        foreach(Vertex *vertex, map.vertexes())
-        {
-            // Not a line vertex?
-            LineOwner const *own = vertex->firstLineOwner();
-            if(!own) continue;
+    glDisable(GL_DEPTH_TEST);
 
-            // Ignore polyobj vertexes.
-            if(own->line().definesPolyobj()) continue;
+    parms.drawnVerts->fill(false); // Process all again.
+    parms.drawOrigin = true;
+    parms.drawBar = parms.drawLabel = false;
+    map.bspLeafsBoxIterator(box, drawBspLeafVertexWorker, &parms);
 
-            coord_t dist = M_ApproxDistance(vOrigin[VX] - vertex->origin().x,
-                                            vOrigin[VZ] - vertex->origin().y);
-
-            if(dist < MAX_VERTEX_POINT_DIST)
-            {
-                coord_t bottom = DDMAXFLOAT;
-                vertex->planeVisHeightMinMax(&bottom);
-
-                drawVertexPoint(vertex, bottom, (1 - dist / MAX_VERTEX_POINT_DIST) * 2);
-            }
-        }
-        glEnable(GL_DEPTH_TEST);
-    }
+    glEnable(GL_DEPTH_TEST);
 
     if(devVertexIndices)
     {
-        foreach(Vertex *vertex, map.vertexes())
-        {
-            // Not a line vertex?
-            LineOwner const *own = vertex->firstLineOwner();
-            if(!own) continue;
-
-            // Ignore polyobj vertexes.
-            if(own->line().definesPolyobj()) continue;
-
-            Vector3d origin(vertex->origin(), DDMAXFLOAT);
-            vertex->planeVisHeightMinMax(&origin.z);
-
-            ddouble distToEye = (eyeOrigin - origin).length();
-            if(distToEye < MAX_VERTEX_POINT_DIST)
-            {
-                drawLabel(origin, labelForVertex(vertex),
-                                distToEye / (DENG_GAMEVIEW_WIDTH / 2),
-                                1 - distToEye / MAX_VERTEX_POINT_DIST);
-            }
-        }
+        parms.drawnVerts->fill(false); // Process all again.
+        parms.drawLabel = true;
+        parms.drawBar = parms.drawOrigin = false;
+        map.bspLeafsBoxIterator(box, drawBspLeafVertexWorker, &parms);
     }
-
-    // Next, the vertexes of all nearby polyobjs.
-    AABoxd box(vOrigin[VX] - MAX_VERTEX_POINT_DIST,
-               vOrigin[VY] - MAX_VERTEX_POINT_DIST,
-               vOrigin[VX] + MAX_VERTEX_POINT_DIST,
-               vOrigin[VY] + MAX_VERTEX_POINT_DIST);
-    Polyobj_BoxIterator(&box, drawPolyobjVertexes, NULL);
 
     // Restore previous state.
     if(devVertexBars)
@@ -3805,6 +3844,8 @@ static void drawVertexes(Map &map)
     }
     DGL_SetFloat(DGL_POINT_SIZE, oldPointSize);
     glDisable(GL_POINT_SMOOTH);
+
+#undef MAX_VERTEX_POINT_DIST
 }
 
 static String labelForCluster(SectorCluster const *cluster)

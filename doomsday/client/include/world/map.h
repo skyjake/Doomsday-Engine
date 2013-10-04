@@ -474,6 +474,13 @@ public:
     int bspLeafsBoxIterator(AABoxd const &box, Sector *sector,
         int (*callback) (BspLeaf *, void *), void *context = 0) const;
 
+    /// @copydoc bspLeafsBoxIterator()
+    inline int bspLeafsBoxIterator(AABoxd const &box,
+        int (*callback) (BspLeaf *, void *), void *context = 0) const
+    {
+        return bspLeafsBoxIterator(box, 0, callback, context);
+    }
+
     /**
      * @note validCount should be incremented before calling this to begin a
      * new logical traversal. Otherwise Lines marked with a validCount equal
