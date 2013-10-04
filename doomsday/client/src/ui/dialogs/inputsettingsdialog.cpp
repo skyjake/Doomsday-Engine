@@ -20,6 +20,8 @@
 #include "ui/widgets/cvarsliderwidget.h"
 #include "ui/widgets/cvartogglewidget.h"
 #include "ui/widgets/variabletogglewidget.h"
+#include "ui/widgets/gridpopupwidget.h"
+#include "ui/widgets/keygrabberwidget.h"
 
 #include "clientapp.h"
 #include "con_main.h"
@@ -38,6 +40,7 @@ DENG_GUI_PIMPL(InputSettingsDialog)
     ToggleWidget *mouseInvertX;
     ToggleWidget *mouseInvertY;
     CVarToggleWidget *joyEnable;
+    GridPopupWidget *devPopup;
 
     Instance(Public *i) : Base(i)
     {
@@ -51,6 +54,12 @@ DENG_GUI_PIMPL(InputSettingsDialog)
         area.add(mouseInvertX  = new ToggleWidget);
         area.add(mouseInvertY  = new ToggleWidget);
         area.add(joyEnable     = new CVarToggleWidget("input-joy"));
+
+        // Developer options.
+        self.add(devPopup = new GridPopupWidget);
+        *devPopup << LabelWidget::newWithText(tr("Key Grabber:"))
+                  << new KeyGrabberWidget;
+        devPopup->commit();
     }
 
     void fetch()
@@ -138,9 +147,14 @@ InputSettingsDialog::InputSettingsDialog(String const &name)
     area().setContentSize(layout.width(), layout.height());
 
     buttons()
-            << new DialogButtonItem(DialogWidget::Default | DialogWidget::Accept, tr("Close"))
-            << new DialogButtonItem(DialogWidget::Action, tr("Reset to Defaults"),
-                                    new SignalAction(this, SLOT(resetToDefaults())));
+            << new DialogButtonItem(Default | Accept, tr("Close"))
+            << new DialogButtonItem(Action, tr("Reset to Defaults"),
+                                    new SignalAction(this, SLOT(resetToDefaults())))
+            << new DialogButtonItem(Action | Id1,
+                                    style().images().image("gauge"),
+                                    new SignalAction(this, SLOT(showDeveloperPopup())));
+
+    d->devPopup->setAnchorAndOpeningDirection(buttonWidget(Id1)->rule(), ui::Up);
 
     d->fetch();
 }
@@ -173,4 +187,9 @@ void InputSettingsDialog::mouseSensitivityChanged(double value)
             d->mouseSensiX->setCVarValueFromWidget();
         }
     }
+}
+
+void InputSettingsDialog::showDeveloperPopup()
+{
+    d->devPopup->open();
 }

@@ -1,4 +1,4 @@
-/** @file inputsettingsdialog.h  Dialog for input settings.
+/** @file keygrabberwidget.h  Grabs key events and shows them.
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,31 +16,24 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_INPUTSETTINGSDIALOG_H
-#define DENG_CLIENT_INPUTSETTINGSDIALOG_H
+#ifndef DENG_CLIENT_KEYGRABBERWIDGET_H
+#define DENG_CLIENT_KEYGRABBERWIDGET_H
 
-#include "ui/widgets/dialogwidget.h"
+#include "labelwidget.h"
 
 /**
- * Dialog for modifying input settings.
+ * When focused, grabs key events and shows the key event data. However, Esc is
+ * never grabbed.
  */
-class InputSettingsDialog : public DialogWidget
+class KeyGrabberWidget : public LabelWidget
 {
-    Q_OBJECT
-
 public:
-    InputSettingsDialog(de::String const &name = "inputsettings");
+    KeyGrabberWidget(de::String const &name = "");
 
-public slots:
-    void resetToDefaults();
-
-protected slots:
-    void mouseTogglesChanged();
-    void mouseSensitivityChanged(double value);
-    void showDeveloperPopup();
+    bool handleEvent(de::Event const &event);
 
 private:
     DENG2_PRIVATE(d)
 };
 
-#endif // DENG_CLIENT_INPUTSETTINGSDIALOG_H
+#endif // DENG_CLIENT_KEYGRABBERWIDGET_H
