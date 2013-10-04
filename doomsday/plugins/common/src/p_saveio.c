@@ -44,6 +44,7 @@ static ddstring_t clientSavePath; // e.g., "savegame/client/"
 
 #if __JHEXEN__
 static saveptr_t saveptr;
+static void *saveEndPtr;
 #endif
 
 static void errorIfNotInited(const char* callerName)
@@ -211,12 +212,27 @@ saveptr_t *SV_HxSavePtr(void)
 {
     return &saveptr;
 }
+
+void SV_HxSetSaveEndPtr(void *endPtr)
+{
+    saveEndPtr = endPtr;
+}
+
+boolean SV_HxBytesLeft(void)
+{
+    return (byte *) saveEndPtr - saveptr.b;
+}
 #endif
 
 void SV_AssertSegment(int segmentId)
 {
     errorIfNotInited("SV_AssertSegment");
 #if __JHEXEN__
+    if(segmentId == ASEG_END && SV_HxBytesLeft() < 4)
+    {
+        LogBuffer_Printf(DE2_LOG_WARNING, "Savegame lacks ASEG_END marker (unexpected end-of-file)\n");
+        return;
+    }
     if(SV_ReadLong() != segmentId)
     {
         Con_Error("Corrupt save game: Segment [%d] failed alignment check", segmentId);
@@ -334,6 +350,7 @@ byte SV_ReadByte(void)
 {
     errorIfNotInited("SV_ReadByte");
 #if __JHEXEN__
+    assert((saveptr.b + 1) <= (byte *) saveEndPtr);
     return (*saveptr.b++);
 #else
     return lzGetC(savefile);
@@ -344,6 +361,7 @@ short SV_ReadShort(void)
 {
     errorIfNotInited("SV_ReadShort");
 #if __JHEXEN__
+    assert((saveptr.w + 1) <= (short *) saveEndPtr);
     return (SHORT(*saveptr.w++));
 #else
     return lzGetW(savefile);
@@ -354,6 +372,7 @@ long SV_ReadLong(void)
 {
     errorIfNotInited("SV_ReadLong");
 #if __JHEXEN__
+    assert((saveptr.l + 1) <= (int *) saveEndPtr);
     return (LONG(*saveptr.l++));
 #else
     return lzGetL(savefile);
