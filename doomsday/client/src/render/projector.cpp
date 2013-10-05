@@ -282,9 +282,9 @@ static void projectLumobj(Lumobj &lum, project_params_t &parm)
     newList(parm.listIdx, (parm.flags & PLF_SORT_LUMINOSITY_DESC) != 0) << texp;
 }
 
-static int projectLumobjWorker(void *lum, void *context)
+static int projectLumobjWorker(Lumobj &lum, void *context)
 {
-    projectLumobj(*static_cast<Lumobj *>(lum), *static_cast<project_params_t *>(context));
+    projectLumobj(lum, *static_cast<project_params_t *>(context));
     return false; // Continue iteration.
 }
 
@@ -311,7 +311,7 @@ void Rend_ProjectLumobjs(BspLeaf *bspLeaf, Vector3d const &topLeft,
     parm.bottomRight   = &bottomRight;
     parm.tangentMatrix = &tangentMatrix;
 
-    R_IterateBspLeafContacts(*bspLeaf, OT_LUMOBJ, projectLumobjWorker, &parm);
+    R_IterateBspLeafLumobjContacts(*bspLeaf, projectLumobjWorker, &parm);
 }
 
 /**
@@ -488,9 +488,9 @@ static void projectMobjShadow(mobj_t &mobj, project_params_t &parm)
     newList(parm.listIdx) << texp;
 }
 
-static int projectMobjShadowWorker(void *mobj, void *context)
+static int projectMobjShadowWorker(mobj_t &mobj, void *context)
 {
-    projectMobjShadow(*static_cast<mobj_t *>(mobj), *static_cast<project_params_t *>(context));
+    projectMobjShadow(mobj, *static_cast<project_params_t *>(context));
     return false; // Continue iteration.
 }
 
@@ -512,7 +512,7 @@ void Rend_ProjectMobjShadows(BspLeaf *bspLeaf, Vector3d const &topLeft,
     parm.bottomRight   = &bottomRight;
     parm.tangentMatrix = &tangentMatrix;
 
-    R_IterateBspLeafContacts(*bspLeaf, OT_MOBJ, projectMobjShadowWorker, &parm);
+    R_IterateBspLeafMobjContacts(*bspLeaf, projectMobjShadowWorker, &parm);
 }
 
 int Rend_IterateProjectionList(uint listIdx, int (*callback) (TexProjection const *, void *),

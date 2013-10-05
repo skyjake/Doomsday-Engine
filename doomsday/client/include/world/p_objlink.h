@@ -25,15 +25,6 @@
 class BspLeaf;
 class Lumobj;
 
-enum objtype_t
-{
-    OT_MOBJ       = 0,
-    OT_LUMOBJ     = 1,
-    NUM_OBJ_TYPES
-};
-
-#define VALID_OBJTYPE(val) ((val) >= OT_MOBJ && (val) < NUM_OBJ_TYPES)
-
 /**
  * To be called during a game change/on shutdown to destroy the objlink
  * blockmap. This is necessary because the blockmaps are allocated from
@@ -84,18 +75,25 @@ void R_LinkObjs();
 void R_InitForBspLeaf(BspLeaf &bspLeaf);
 
 /**
- * Create a new object => BspLeaf contact in the objlink blockmap.
+ * Create a new object => BspLeaf contact.
  */
 void R_LinkObjToBspLeaf(BspLeaf &bspLeaf, struct mobj_s &mobj);
 /// @copydoc R_LinkObjToBspLeaf()
 void R_LinkObjToBspLeaf(BspLeaf &bspLeaf, Lumobj &lumobj);
 
 /**
- * Traverse the list of objects of the specified @a type which have been linked
- * with @a bspLeaf for the current render frame.
+ * Traverse the list of mobj contacts which have been linked with @a bspLeaf for
+ * the current render frame.
  */
-int R_IterateBspLeafContacts(BspLeaf &bspLeaf, objtype_t type,
-    int (*func) (void *object, void *parameters), void *parameters = 0);
+int R_IterateBspLeafMobjContacts(BspLeaf &bspLeaf,
+    int (*callback) (struct mobj_s &, void *), void *context = 0);
+
+/**
+ * Traverse the list of lumobj contacts which have been linked with @a bspLeaf for
+ * the current render frame.
+ */
+int R_IterateBspLeafLumobjContacts(BspLeaf &bspLeaf,
+    int (*callback) (Lumobj &, void *), void *context = 0);
 
 #endif // __CLIENT__
 

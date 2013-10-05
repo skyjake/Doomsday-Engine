@@ -239,10 +239,10 @@ struct lightwithlumobjs_params_t
     uint listIdx;
 };
 
-static int lightWithLumobjsWorker(void *lum, void *context)
+static int lightWithLumobjsWorker(Lumobj &lum, void *context)
 {
     lightwithlumobjs_params_t *p = static_cast<lightwithlumobjs_params_t *>(context);
-    lightWithLumobj(p->origin, static_cast<Lumobj *>(lum), p->listIdx);
+    lightWithLumobj(p->origin, &lum, p->listIdx);
     return false; // Continue iteration.
 }
 
@@ -255,7 +255,7 @@ static void lightWithLumobjs(Vector3d const &origin, BspLeaf &bspLeaf, uint list
     lightwithlumobjs_params_t parms; zap(parms);
     parms.origin  = origin;
     parms.listIdx = listIdx;
-    R_IterateBspLeafContacts(bspLeaf, OT_LUMOBJ, lightWithLumobjsWorker, &parms);
+    R_IterateBspLeafLumobjContacts(bspLeaf, lightWithLumobjsWorker, &parms);
 }
 
 /**

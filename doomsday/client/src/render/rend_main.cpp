@@ -2438,18 +2438,16 @@ static void clipLeafFrontFacingWalls()
     }
 }
 
-static int projectSpriteWorker(void *ptr, void * /*parameters*/)
+static int projectSpriteWorker(mobj_t &mo, void * /*context*/)
 {
     BspLeaf const *leaf = currentBspLeaf;
     SectorCluster &cluster = leaf->cluster();
 
-    mobj_t *mo = (mobj_t *) ptr;
-
-    if(mo->addFrameCount != frameCount)
+    if(mo.addFrameCount != frameCount)
     {
-        mo->addFrameCount = frameCount;
+        mo.addFrameCount = frameCount;
 
-        R_ProjectSprite(mo);
+        R_ProjectSprite(&mo);
 
         // Hack: Sprites have a tendency to extend into the ceiling in
         // sky sectors. Here we will raise the skyfix dynamically, to make sure
@@ -2457,13 +2455,13 @@ static int projectSpriteWorker(void *ptr, void * /*parameters*/)
 
         if(cluster.visCeiling().surface().hasSkyMaskedMaterial())
         {
-            if(Material *material = R_MaterialForSprite(mo->sprite, mo->frame))
+            if(Material *material = R_MaterialForSprite(mo.sprite, mo.frame))
             {
-                if(!(mo->dPlayer && (mo->dPlayer->flags & DDPF_CAMERA))
-                   && mo->origin[VZ] <= cluster.visCeiling().heightSmoothed()
-                   && mo->origin[VZ] >= cluster.visFloor().heightSmoothed())
+                if(!(mo.dPlayer && (mo.dPlayer->flags & DDPF_CAMERA))
+                   && mo.origin[VZ] <= cluster.visCeiling().heightSmoothed()
+                   && mo.origin[VZ] >= cluster.visFloor().heightSmoothed())
                 {
-                    coord_t visibleTop = mo->origin[VZ] + material->height();
+                    coord_t visibleTop = mo.origin[VZ] + material->height();
                     if(visibleTop > cluster.sector().map().skyFixCeiling())
                     {
                         // Raise skyfix ceiling.
@@ -2485,7 +2483,7 @@ static void projectLeafSprites()
     if(leaf->lastSpriteProjectFrame() == frameCount)
         return; // Already added.
 
-    R_IterateBspLeafContacts(*leaf, OT_MOBJ, projectSpriteWorker);
+    R_IterateBspLeafMobjContacts(*leaf, projectSpriteWorker);
 
     leaf->setLastSpriteProjectFrame(frameCount);
 }

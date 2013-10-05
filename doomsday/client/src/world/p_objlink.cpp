@@ -43,28 +43,95 @@ using namespace de;
 
 #define BLOCK_SIZE              128
 
+enum objtype_t
+{
+    OT_MOBJ       = 0,
+    OT_LUMOBJ     = 1,
+    NUM_OBJ_TYPES
+};
+
+#define VALID_OBJTYPE(val) ((val) >= OT_MOBJ && (val) < NUM_OBJ_TYPES)
+
+/// @todo Obviously, polymorphism is a better solution.
 struct objlink_t
 {
     objlink_t *nextInBlock; /// Next in the same obj block, or NULL.
     objlink_t *nextUsed;
     objlink_t *next; /// Next in list of ALL objlinks.
-    objtype_t type;
-    void *obj;
+    objtype_t _type;
+    void *_object;
+
+    objtype_t type() const
+    {
+        return _type;
+    }
+
+    void *objectPtr() const
+    {
+        return _object;
+    }
+
+    template <class ObjectType>
+    ObjectType &objectAs() const {
+        DENG2_ASSERT(_object != 0);
+        return *static_cast<ObjectType *>(_object);
+    }
 
     /**
      * Returns a copy of the linked object's origin in map space.
      */
     Vector3d objectOrigin() const
     {
-        DENG2_ASSERT(obj != 0);
-        switch(type)
+        switch(_type)
         {
-        case OT_LUMOBJ: return static_cast<Lumobj *>(obj)->origin();
-        case OT_MOBJ:   return Mobj_Origin(*static_cast<mobj_t *>(obj));
+        case OT_LUMOBJ: return objectAs<Lumobj>().origin();
+        case OT_MOBJ:   return Mobj_Origin(objectAs<mobj_t>());
 
         default:
             DENG2_ASSERT(false);
             return Vector3d();
+        }
+    }
+
+    /**
+     * Returns the linked object's radius in map space.
+     */
+    ddouble objectRadius() const
+    {
+        switch(_type)
+        {
+        case OT_LUMOBJ: return objectAs<Lumobj>().radius();
+        case OT_MOBJ:   return Mobj_VisualRadius(&objectAs<mobj_t>());
+
+        default:
+            DENG2_ASSERT(false);
+            return 0;
+        }
+    }
+
+    /**
+     * Returns an axis-aligned bounding box for the linked object in map space.
+     */
+    AABoxd objectAABox() const
+    {
+        Vector2d const origin = objectOrigin();
+        ddouble const radius  = objectRadius();
+        return AABoxd(origin.x - radius, origin.y - radius,
+                      origin.x + radius, origin.y + radius);
+    }
+
+    /**
+     * Returns the BSP leaf at the linked object's origin in map space.
+     */
+    BspLeaf &objectBspLeafAtOrigin() const
+    {
+        switch(_type)
+        {
+        case OT_LUMOBJ: return objectAs<Lumobj>().bspLeafAtOrigin();
+        case OT_MOBJ:   return Mobj_BspLeafAtOrigin(objectAs<mobj_t>());
+
+        default:
+            throw Error("oblink_t::objectBspLeafAtOrigin", "Invalid type");
         }
     }
 };
@@ -213,11 +280,8 @@ static objlinkblockmap_t *blockmaps[NUM_OBJ_TYPES];
 
 struct contactfinderparams_t
 {
-    void *obj;
-    objtype_t objType;
-    coord_t objOrigin[3];
-    coord_t objRadius;
-    coord_t box[4];
+    objlink_t *objlink;
+    AABoxd objAABox;
 };
 
 struct objcontact_t
@@ -242,12 +306,6 @@ static objcontact_t *contFirst, *contCursor;
 static objcontactlist_t *bspLeafContacts;
 
 static void spreadInBspLeaf(BspLeaf *bspLeaf, contactfinderparams_t *parms);
-
-static inline objlinkblockmap_t &blockmap(objtype_t type)
-{
-    DENG2_ASSERT(VALID_OBJTYPE(type));
-    return *blockmaps[int( type )];
-}
 
 static inline void linkContact(objcontact_t *con, objcontact_t **list, uint index)
 {
@@ -301,7 +359,7 @@ static objlink_t *allocObjlink()
         objlinkCursor = objlinkCursor->nextUsed;
     }
     link->nextInBlock = 0;
-    link->obj = 0;
+    link->_object = 0;
 
     // Link it to the list of in-use objlinks.
     link->next = objlinks;
@@ -338,17 +396,17 @@ void R_DestroyObjlinkBlockmap()
     }
 }
 
-void R_ClearObjlinkBlockmap(objtype_t type)
+static inline objlinkblockmap_t &blockmap(objtype_t type)
 {
     DENG2_ASSERT(VALID_OBJTYPE(type));
-    blockmap(type).unlinkAll();
+    return *blockmaps[int( type )];
 }
 
 void R_ClearObjlinksForFrame()
 {
     for(int i = 0; i < NUM_OBJ_TYPES; ++i)
     {
-        R_ClearObjlinkBlockmap(objtype_t(i));
+        blockmap(objtype_t(i)).unlinkAll();
     }
 
     // Start reusing objlinks.
@@ -369,6 +427,11 @@ static void linkObjToBspLeaf(BspLeaf &bspLeaf, void *object, objtype_t type)
     linkContactToBspLeaf(con, type, bspLeaf.indexInMap());
 }
 
+inline static void linkObjToBspLeaf(BspLeaf &bspLeaf, objlink_t *link)
+{
+    linkObjToBspLeaf(bspLeaf, link->objectPtr(), link->type());
+}
+
 static void createObjlink(BspLeaf &bspLeaf, void *object, objtype_t type)
 {
     if(!object) return;
@@ -377,8 +440,8 @@ static void createObjlink(BspLeaf &bspLeaf, void *object, objtype_t type)
     if(!bspLeaf.hasPoly()) return;
 
     objlink_t *link = allocObjlink();
-    link->obj = object;
-    link->type = type;
+    link->_object = object;
+    link->_type   = type;
 }
 
 /**
@@ -391,15 +454,15 @@ static void createObjlink(BspLeaf &bspLeaf, void *object, objtype_t type)
  *         @c =0 Point lies directly on the segment.
  *         @c >0 Point is to the right/front of the segment.
  */
-static coord_t pointOnHEdgeSide(HEdge const &hedge, const_pvec2d_t point)
+static coord_t pointOnHEdgeSide(HEdge const &hedge, Vector2d const &point)
 {
-    DENG_ASSERT(point != 0);
     /// @todo Why are we calculating this every time?
     Vector2d direction = hedge.twin().origin() - hedge.origin();
 
-    coord_t fromOriginV1[2] = { hedge.origin().x, hedge.origin().y };
-    coord_t directionV1[2]  = { direction.x, direction.y };
-    return V2d_PointOnLineSide(point, fromOriginV1, directionV1);
+    ddouble pointV1[2]      = { point.x, point.y };
+    ddouble fromOriginV1[2] = { hedge.origin().x, hedge.origin().y };
+    ddouble directionV1[2]  = { direction.x, direction.y };
+    return V2d_PointOnLineSide(pointV1, fromOriginV1, directionV1);
 }
 
 static void maybeSpreadOverEdge(HEdge *hedge, contactfinderparams_t *parms)
@@ -427,16 +490,16 @@ static void maybeSpreadOverEdge(HEdge *hedge, contactfinderparams_t *parms)
     AABoxd const &backLeafAABox = backLeaf.poly().aaBox();
 
     // Is the leaf on the back side outside the origin's AABB?
-    if(backLeafAABox.maxX <= parms->box[BOXLEFT]   ||
-       backLeafAABox.minX >= parms->box[BOXRIGHT]  ||
-       backLeafAABox.maxY <= parms->box[BOXBOTTOM] ||
-       backLeafAABox.minY >= parms->box[BOXTOP])
+    if(backLeafAABox.maxX <= parms->objAABox.minX ||
+       backLeafAABox.minX >= parms->objAABox.maxX ||
+       backLeafAABox.maxY <= parms->objAABox.minY ||
+       backLeafAABox.minY >= parms->objAABox.maxY)
         return;
 
     // Too far from the edge?
-    coord_t const length   = Vector2d(hedge->twin().origin() - hedge->origin()).length();
-    coord_t const distance = pointOnHEdgeSide(*hedge, parms->objOrigin) / length;
-    if(de::abs(distance) >= parms->objRadius)
+    coord_t const length   = (hedge->twin().origin() - hedge->origin()).length();
+    coord_t const distance = pointOnHEdgeSide(*hedge, parms->objlink->objectOrigin()) / length;
+    if(de::abs(distance) >= parms->objlink->objectRadius())
         return;
 
     // Do not spread if the sector on the back side is closed with no height.
@@ -509,7 +572,7 @@ static void maybeSpreadOverEdge(HEdge *hedge, contactfinderparams_t *parms)
     backLeaf.setValidCount(validCount);
 
     // Link up a new contact with the back BSP leaf.
-    linkObjToBspLeaf(backLeaf, parms->obj, parms->objType);
+    linkObjToBspLeaf(backLeaf, parms->objlink);
 
     spreadInBspLeaf(&backLeaf, parms);
 }
@@ -525,7 +588,8 @@ static void maybeSpreadOverEdge(HEdge *hedge, contactfinderparams_t *parms)
  */
 static void spreadInBspLeaf(BspLeaf *bspLeaf, contactfinderparams_t *parms)
 {
-    if(!bspLeaf || !bspLeaf->hasCluster()) return;
+    if(!bspLeaf || !bspLeaf->hasCluster())
+        return;
 
     HEdge *base = bspLeaf->poly().hedge();
     HEdge *hedge = base;
@@ -545,52 +609,19 @@ static void findContacts(objlink_t *link)
 {
     DENG_ASSERT(link != 0);
 
-    Vector3d origin;
-    coord_t radius = 0;
-    BspLeaf *bspLeaf = 0;
-
-    switch(link->type)
-    {
-    case OT_LUMOBJ: {
-        Lumobj *lum = (Lumobj *) link->obj;
-
-        origin  = lum->origin();
-        radius  = lum->radius();
-        bspLeaf = &lum->bspLeafAtOrigin();
-        break; }
-
-    case OT_MOBJ: {
-        mobj_t *mo = (mobj_t *) link->obj;
-
-        origin  = Vector3d(mo->origin);
-        radius  = Mobj_VisualRadius(mo);
-        bspLeaf = &Mobj_BspLeafAtOrigin(*mo);
-        break; }
-
-    case NUM_OBJ_TYPES:
-        DENG_ASSERT(false);
-        break;
-    }
+    BspLeaf &bspLeaf = link->objectBspLeafAtOrigin();
 
     // Do the BSP leaf spread. Begin from the obj's own BspLeaf.
-    bspLeaf->setValidCount(++validCount);
+    bspLeaf.setValidCount(++validCount);
 
-    contactfinderparams_t cfParms;
-    cfParms.obj            = link->obj;
-    cfParms.objType        = link->type;
-    V3d_Set(cfParms.objOrigin, origin.x, origin.y, origin.z);
-    // Use a slightly smaller radius than what the obj really is.
-    cfParms.objRadius      = radius * .98f;
-
-    cfParms.box[BOXLEFT]   = cfParms.objOrigin[VX] - radius;
-    cfParms.box[BOXRIGHT]  = cfParms.objOrigin[VX] + radius;
-    cfParms.box[BOXBOTTOM] = cfParms.objOrigin[VY] - radius;
-    cfParms.box[BOXTOP]    = cfParms.objOrigin[VY] + radius;
+    contactfinderparams_t parms; zap(parms);
+    parms.objlink  = link;
+    parms.objAABox = link->objectAABox();
 
     // Always contact the obj's own BspLeaf.
-    linkObjToBspLeaf(*bspLeaf, link->obj, link->type);
+    linkObjToBspLeaf(bspLeaf, link);
 
-    spreadInBspLeaf(bspLeaf, &cfParms);
+    spreadInBspLeaf(&bspLeaf, &parms);
 }
 
 /**
@@ -652,7 +683,7 @@ void R_LinkObjs()
     // Link object-links into the relevant blockmap.
     for(objlink_t *link = objlinks; link; link = link->next)
     {
-        objlinkblockmap_t &bmap = blockmap(link->type);
+        objlinkblockmap_t &bmap = blockmap(link->type());
         bool clamped;
         GridmapCell cell = bmap.toCell(link->objectOrigin(), &clamped);
         if(!clamped)
@@ -672,16 +703,26 @@ void R_InitForNewFrame()
     }
 }
 
-int R_IterateBspLeafContacts(BspLeaf &bspLeaf, objtype_t type,
-    int (*callback) (void *object, void *parameters), void *parameters)
+int R_IterateBspLeafMobjContacts(BspLeaf &bspLeaf,
+    int (*callback)(mobj_s &, void *), void *context)
 {
-    DENG_ASSERT(VALID_OBJTYPE(type));
     objcontactlist_t const &conList = bspLeafContacts[bspLeaf.indexInMap()];
-
-    for(objcontact_t *con = conList.head[type]; con; con = con->next)
+    for(objcontact_t *con = conList.head[OT_MOBJ]; con; con = con->next)
     {
-        int result = callback(con->obj, parameters);
-        if(result) return result;
+        if(int result = callback(*static_cast<struct mobj_s *>(con->obj), context))
+            return result;
+    }
+    return false; // Continue iteration.
+}
+
+int R_IterateBspLeafLumobjContacts(BspLeaf &bspLeaf,
+    int (*callback)(Lumobj &, void *), void *context)
+{
+    objcontactlist_t const &conList = bspLeafContacts[bspLeaf.indexInMap()];
+    for(objcontact_t *con = conList.head[OT_LUMOBJ]; con; con = con->next)
+    {
+        if(int result = callback(*static_cast<Lumobj *>(con->obj), context))
+            return result;
     }
     return false; // Continue iteration.
 }
