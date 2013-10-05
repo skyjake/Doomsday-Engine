@@ -87,7 +87,7 @@ Finale
     music "hub";
     image back INTERPIC;
     wait 0.5; # Originally 10 tics.
-    textlump msg 10 5 CLUS1MSG;
+    textlump msg 45 5 CLUS1MSG;
       #> "having passed the seven portals\n
       which sealed this realm, a vast\n
       domain of harsh wilderness stretches\n
@@ -105,6 +105,7 @@ Finale
       distance, the ever-shifting walls\n
       of the hypostyle seem to mock\n
       your every effort."; <#
+    in 0 scale msg 0.825;
     waittext msg;
     wait 5; # Original TEXTWAIT is 140+10 tics.
   };
@@ -123,7 +124,7 @@ Finale
     music "hub";
     image back INTERPIC;
     wait 0.5; # Originally 10 tics.
-    textlump msg 10 5 CLUS2MSG;
+    textlump msg 45 5 CLUS2MSG;
       #>"your mind still reeling from your\n
       encounters within the hypostyle, you\n
       stagger toward what you hope is\n
@@ -143,6 +144,7 @@ Finale
       have you come to? by all the gods of\n
       pain, how will you ever find your\n
       way out?";<#
+    in 0 scale msg 0.825;
     waittext msg;
     wait 5; # Original TEXTWAIT is 140+10 tics.
   };
@@ -161,7 +163,7 @@ Finale
     music "hub";
     image back INTERPIC;
     wait 0.5; # Originally 10 tics.
-    textlump msg 10 5 CLUS3MSG;
+    textlump msg 45 5 CLUS3MSG;
       #>"the mightiest weapons and artifacts\n
       of the ancients barely sufficed to\n
       defeat the heresiarch and his\n
@@ -182,6 +184,7 @@ Finale
       you.\n
       somewhere within, your enemies are\n
       waiting...";<#
+    in 0 scale msg 0.825;
     waittext msg;
     wait 5; # Original TEXTWAIT is 140+10 tics.
   };
@@ -200,7 +203,7 @@ Finale
     music "hub";
     image back INTERPIC;
     wait 0.5; # Originally 10 tics.
-    textlump msg 10 5 CLUS4MSG;
+    textlump msg 45 5 CLUS4MSG;
       #>"\"... and he shall journey into the\n
       realms of the dead, and contest with\n
       the forces therein, unto the very\n
@@ -213,6 +216,7 @@ Finale
       \_                     \n
       \_                     \n
       damn.";<#
+    in 0 scale msg 0.825;
     waittext msg;
     wait 5; # Original TEXTWAIT is 140+10 tics.
   };
