@@ -23,7 +23,7 @@
 #include "de_console.h"
 #include "de_render.h"
 #include "de_graphics.h"
-#include "de_misc.h"
+//#include "de_misc.h"
 #include "de_play.h"
 #include "de_defs.h"
 
@@ -41,13 +41,7 @@
 
 using namespace de;
 
-#define BLOCK_WIDTH                 (128)
-#define BLOCK_HEIGHT                (128)
-
-BEGIN_PROF_TIMERS()
-  PROF_OBJLINK_SPREAD,
-  PROF_OBJLINK_LINK
-END_PROF_TIMERS()
+#define BLOCK_SIZE              128
 
 struct objlink_t
 {
@@ -56,20 +50,166 @@ struct objlink_t
     objlink_t *next; /// Next in list of ALL objlinks.
     objtype_t type;
     void *obj;
+
+    /**
+     * Returns a copy of the linked object's origin in map space.
+     */
+    Vector3d objectOrigin() const
+    {
+        DENG2_ASSERT(obj != 0);
+        switch(type)
+        {
+        case OT_LUMOBJ: return static_cast<Lumobj *>(obj)->origin();
+        case OT_MOBJ:   return Mobj_Origin(*static_cast<mobj_t *>(obj));
+
+        default:
+            DENG2_ASSERT(false);
+            return Vector3d();
+        }
+    }
 };
 
-struct objlinkblock_t
+class objlinkblockmap_t
 {
-    objlink_t *head;
-    /// Used to prevent repeated per-frame processing of a block.
-    bool doneSpread;
+public:
+    struct CellData
+    {
+        objlink_t *head;
+        bool doneSpread; ///< Used to prevent repeated per-frame processing of a block.
+
+        void unlinkAll()
+        {
+            head = 0;
+            doneSpread = false;
+        }
+    };
+
+public:
+    objlinkblockmap_t(AABoxd const &bounds, uint blockSize = 128)
+        : _origin(bounds.min),
+          _gridmap(Vector2ui(de::ceil((bounds.maxX - bounds.minX) / ddouble( blockSize )),
+                             de::ceil((bounds.maxY - bounds.minY) / ddouble( blockSize ))),
+                   sizeof(CellData), PU_MAPSTATIC)
+    {}
+
+    /**
+     * Returns the origin of the blockmap in map space.
+     */
+    Vector2d const &origin() const
+    {
+        return _origin;
+    }
+
+    /**
+     * Determines in which blockmap cell the specified map point lies. If the
+     * these coordinates are outside the blockmap they will be clamped within
+     * the valid range.
+     *
+     * @param retAdjusted  If specified, whether or not the @a point coordinates
+     *                     specified had to be adjusted is written back here.
+     *
+     * @return  The determined blockmap cell.
+     */
+    GridmapCell toCell(Vector2d const &point, bool *retAdjusted = 0) const
+    {
+        Vector2d const max = _origin + _gridmap.dimensions() * BLOCK_SIZE;
+
+        GridmapCell cell;
+        bool adjusted = false;
+        if(point.x < _origin.x)
+        {
+            cell.x = 0;
+            adjusted = true;
+        }
+        else if(point.x >= max.x)
+        {
+            cell.x = _gridmap.width() - 1;
+            adjusted = true;
+        }
+        else
+        {
+            cell.x = toX(point.x);
+        }
+
+        if(point.y < _origin.y)
+        {
+            cell.y = 0;
+            adjusted = true;
+        }
+        else if(point.y >= max.y)
+        {
+            cell.y = _gridmap.height() - 1;
+            adjusted = true;
+        }
+        else
+        {
+            cell.y = toY(point.y);
+        }
+
+        if(retAdjusted) *retAdjusted = adjusted;
+
+        return cell;
+    }
+
+    GridmapCellBlock toCellBlock(AABoxd const &box)
+    {
+        GridmapCellBlock cellBlock;
+        cellBlock.min = toCell(box.min);
+        cellBlock.max = toCell(box.max);
+        return cellBlock;
+    }
+
+    /// @pre  Coordinates held by @a blockXY are within valid range.
+    void link(GridmapCell cell, objlink_t *link)
+    {
+        if(!link) return;
+        CellData *block = data(cell, true/*can allocate a block*/);
+        link->nextInBlock = block->head;
+        block->head = link;
+    }
+
+    // Clear all the contact list heads and spread flags.
+    void unlinkAll()
+    {
+        iterate(unlinkAllWorker);
+    }
+
+    CellData *data(GridmapCell const &cell, bool canAlloc = false)
+    {
+        return static_cast<CellData *>(_gridmap.cellData(cell, canAlloc));
+    }
+
+private:
+    inline uint toX(ddouble x) const
+    {
+        DENG2_ASSERT(x >= _origin.x);
+        return (x - _origin.x) / ddouble( BLOCK_SIZE );
+    }
+
+    inline uint toY(ddouble y) const
+    {
+        DENG2_ASSERT(y >= _origin.y);
+        return (y - _origin.y) / ddouble( BLOCK_SIZE );
+    }
+
+    static int unlinkAllWorker(void *obj, void *context)
+    {
+        DENG2_UNUSED(context);
+        static_cast<CellData *>(obj)->unlinkAll();
+        return false; // Continue iteration.
+    }
+
+    int iterate(int (*callback) (void *obj, void *context), void *context = 0)
+    {
+        return _gridmap.iterate(callback, context);
+    }
+
+    Vector2d _origin; ///< Origin in map space.
+    Gridmap _gridmap;
 };
 
-struct objlinkblockmap_t
-{
-    coord_t origin[2]; /// Origin of the blockmap in world coordinates [x,y].
-    Gridmap *gridmap;
-};
+// Each linked object type uses a separate blockmap.
+static objlinkblockmap_t *blockmaps[NUM_OBJ_TYPES];
 
 struct contactfinderparams_t
 {
@@ -95,9 +235,6 @@ struct objcontactlist_t
 static objlink_t *objlinks;
 static objlink_t *objlinkFirst, *objlinkCursor;
 
-// Each objlink type gets its own blockmap.
-static objlinkblockmap_t blockmaps[NUM_OBJ_TYPES];
-
 // List of unused and used contacts.
 static objcontact_t *contFirst, *contCursor;
 
@@ -106,72 +243,10 @@ static objcontactlist_t *bspLeafContacts;
 
 static void spreadInBspLeaf(BspLeaf *bspLeaf, contactfinderparams_t *parms);
 
-static inline objlinkblockmap_t &chooseObjlinkBlockmap(objtype_t type)
+static inline objlinkblockmap_t &blockmap(objtype_t type)
 {
-    DENG_ASSERT(VALID_OBJTYPE(type));
-    return blockmaps[int( type )];
-}
-
-static inline uint toObjlinkBlockmapX(objlinkblockmap_t &obm, coord_t x)
-{
-    DENG_ASSERT(x >= obm.origin[0]);
-    return uint( (x - obm.origin[0]) / coord_t( BLOCK_WIDTH ) );
-}
-
-static inline uint toObjlinkBlockmapY(objlinkblockmap_t &obm, coord_t y)
-{
-    DENG_ASSERT(y >= obm.origin[1]);
-    return uint( (y - obm.origin[1]) / coord_t( BLOCK_HEIGHT ) );
-}
-
-/**
- * Given world coordinates @a x, @a y, determine the objlink blockmap block
- * [x, y] it resides in. If the coordinates are outside the blockmap they
- * are clipped within valid range.
- *
- * @return  @c true if the coordinates specified had to be adjusted.
- */
-static bool toObjlinkBlockmapCell(objlinkblockmap_t &obm, uint coords[2],
-    coord_t x, coord_t y)
-{
-    DENG_ASSERT(coords != 0);
-
-    Vector2ui const &dimensions = obm.gridmap->dimensions();
-
-    coord_t max[2] = { obm.origin[0] + dimensions.x * BLOCK_WIDTH,
-                       obm.origin[1] + dimensions.y * BLOCK_HEIGHT };
-
-    bool adjusted = false;
-    if(x < obm.origin[0])
-    {
-        coords[VX] = 0;
-        adjusted = true;
-    }
-    else if(x >= max[0])
-    {
-        coords[VX] = dimensions.x-1;
-        adjusted = true;
-    }
-    else
-    {
-        coords[VX] = toObjlinkBlockmapX(obm, x);
-    }
-
-    if(y < obm.origin[1])
-    {
-        coords[VY] = 0;
-        adjusted = true;
-    }
-    else if(y >= max[1])
-    {
-        coords[VY] = dimensions.y-1;
-        adjusted = true;
-    }
-    else
-    {
-        coords[VY] = toObjlinkBlockmapY(obm, y);
-    }
-    return adjusted;
+    DENG2_ASSERT(VALID_OBJTYPE(type));
+    return *blockmaps[int( type )];
 }
 
 static inline void linkContact(objcontact_t *con, objcontact_t **list, uint index)
@@ -237,19 +312,10 @@ static objlink_t *allocObjlink()
 
 void R_InitObjlinkBlockmapForMap(Map &map)
 {
-    // Determine the dimensions of the objlink gridmaps in cells.
-    AABoxd const &bounds = map.bounds();
-
-    Vector2ui dimensions(de::ceil((bounds.maxX - bounds.minX) / coord_t( BLOCK_WIDTH )),
-                         de::ceil((bounds.maxY - bounds.minY) / coord_t( BLOCK_HEIGHT )));
-
-    // Create the gridmaps.
     for(int i = 0; i < NUM_OBJ_TYPES; ++i)
     {
-        objlinkblockmap_t &obm = chooseObjlinkBlockmap(objtype_t( i ));
-        obm.origin[0] = bounds.minX;
-        obm.origin[1] = bounds.minY;
-        obm.gridmap = new Gridmap(dimensions, sizeof(objlinkblock_t), PU_MAPSTATIC);
+        DENG2_ASSERT(blockmaps[i] == 0);
+        blockmaps[i] = new objlinkblockmap_t(map.bounds(), BLOCK_SIZE);
     }
 
     // Initialize obj => BspLeaf contact lists.
@@ -262,10 +328,7 @@ void R_DestroyObjlinkBlockmap()
 {
     for(int i = 0; i < NUM_OBJ_TYPES; ++i)
     {
-        objlinkblockmap_t &obm = chooseObjlinkBlockmap(objtype_t( i ));
-        if(!obm.gridmap) continue;
-
-        delete obm.gridmap; obm.gridmap = 0;
+        delete blockmaps[i]; blockmaps[i] = 0;
     }
 
     if(bspLeafContacts)
@@ -275,31 +338,16 @@ void R_DestroyObjlinkBlockmap()
     }
 }
 
-static int clearObjlinkBlock(void *obj, void *parameters)
-{
-    DENG_UNUSED(parameters);
-
-    objlinkblock_t *block = (objlinkblock_t *)obj;
-    block->head = 0;
-    block->doneSpread = false;
-
-    return false; // Continue iteration.
-}
-
 void R_ClearObjlinkBlockmap(objtype_t type)
 {
-    DENG_ASSERT(VALID_OBJTYPE(type));
-    // Clear all the contact list heads and spread flags.
-    chooseObjlinkBlockmap(type).gridmap->iterate(clearObjlinkBlock);
+    DENG2_ASSERT(VALID_OBJTYPE(type));
+    blockmap(type).unlinkAll();
 }
 
 void R_ClearObjlinksForFrame()
 {
     for(int i = 0; i < NUM_OBJ_TYPES; ++i)
     {
-        objlinkblockmap_t &obm = chooseObjlinkBlockmap(objtype_t(i));
-        if(!obm.gridmap) continue;
-
         R_ClearObjlinkBlockmap(objtype_t(i));
     }
 
@@ -546,40 +594,28 @@ static void findContacts(objlink_t *link)
 }
 
 /**
- * Spread contacts in the object => BspLeaf objlink blockmap to all
- * other BspLeafs within the block.
+ * Spread contacts in the blockmap to all other BspLeafs within the block.
  *
- * @param obm        Objlink blockmap.
- * @param bspLeaf    BspLeaf to spread the contacts of.
- * @param maxRadius  Maximum radius for the spread.
+ * @param obm      Objlink blockmap.
+ * @param bspLeaf  BspLeaf to spread the contacts of.
  */
-static void spreadContactsForBspLeaf(objlinkblockmap_t &obm, BspLeaf const &bspLeaf,
-    float maxRadius)
+static void spreadContacts(objlinkblockmap_t &obm, AABoxd const &box)
 {
-    AABoxd const &leafAABox = bspLeaf.poly().aaBox();
+    GridmapCellBlock const cellBlock = obm.toCellBlock(box);
 
-    uint minBlock[2];
-    toObjlinkBlockmapCell(obm, minBlock, leafAABox.minX - maxRadius,
-                                         leafAABox.minY - maxRadius);
-
-    uint maxBlock[2];
-    toObjlinkBlockmapCell(obm, maxBlock, leafAABox.maxX + maxRadius,
-                                         leafAABox.maxY + maxRadius);
-
-    Gridmap::Cell cell;
-    for(cell.y = minBlock[1]; cell.y <= maxBlock[1]; ++cell.y)
-    for(cell.x = minBlock[0]; cell.x <= maxBlock[0]; ++cell.x)
+    GridmapCell cell;
+    for(cell.y = cellBlock.min.y; cell.y <= cellBlock.max.y; ++cell.y)
+    for(cell.x = cellBlock.min.x; cell.x <= cellBlock.max.x; ++cell.x)
     {
-        objlinkblock_t *block = (objlinkblock_t *) obm.gridmap->cellData(cell, true/*can allocate a block*/);
-        if(block->doneSpread) continue;
-
-        objlink_t *iter = block->head;
-        while(iter)
+        objlinkblockmap_t::CellData *data = obm.data(cell, true/*can allocate a block*/);
+        if(!data->doneSpread)
         {
-            findContacts(iter);
-            iter = iter->nextInBlock;
+            for(objlink_t *iter = data->head; iter; iter = iter->nextInBlock)
+            {
+                findContacts(iter);
+            }
+            data->doneSpread = true;
         }
-        block->doneSpread = true;
     }
 }
 
@@ -593,75 +629,41 @@ static inline float radiusMax(objtype_t type)
 
 void R_InitForBspLeaf(BspLeaf &bspLeaf)
 {
-    if(!bspLeaf.hasPoly())
+    if(!bspLeaf.hasCluster())
         return;
-
-BEGIN_PROF( PROF_OBJLINK_SPREAD );
 
     for(int i = 0; i < NUM_OBJ_TYPES; ++i)
     {
-        objlinkblockmap_t &obm = chooseObjlinkBlockmap(objtype_t(i));
-        spreadContactsForBspLeaf(obm, bspLeaf, radiusMax(objtype_t(i)));
+        float const maxRadius   = radiusMax(objtype_t(i));
+        objlinkblockmap_t &bmap = blockmap(objtype_t(i));
+
+        AABoxd bounds = bspLeaf.poly().aaBox();
+        bounds.minX -= maxRadius;
+        bounds.minY -= maxRadius;
+        bounds.maxX += maxRadius;
+        bounds.maxY += maxRadius;
+
+        spreadContacts(bmap, bounds);
     }
-
-END_PROF( PROF_OBJLINK_SPREAD );
-}
-
-/// @pre  Coordinates held by @a blockXY are within valid range.
-static void linkObjlinkInBlockmap(objlinkblockmap_t &obm, objlink_t &link, Gridmap::Cell cell)
-{
-    objlinkblock_t *block = (objlinkblock_t *) obm.gridmap->cellData(cell, true/*can allocate a block*/);
-    link.nextInBlock = block->head;
-    block->head = &link;
 }
 
 void R_LinkObjs()
 {
-    uint block[2];
-    Vector3d origin;
-
-BEGIN_PROF( PROF_OBJLINK_LINK );
-
-    // Link objlinks into the objlink blockmap.
-    objlink_t *link = objlinks;
-    while(link)
+    // Link object-links into the relevant blockmap.
+    for(objlink_t *link = objlinks; link; link = link->next)
     {
-        switch(link->type)
+        objlinkblockmap_t &bmap = blockmap(link->type);
+        bool clamped;
+        GridmapCell cell = bmap.toCell(link->objectOrigin(), &clamped);
+        if(!clamped)
         {
-        case OT_LUMOBJ:
-            origin = ((Lumobj *)link->obj)->origin(); break;
-
-        case OT_MOBJ:
-            origin = Vector3d(((mobj_t *)link->obj)->origin); break;
-
-        case NUM_OBJ_TYPES:
-            DENG_ASSERT(false);
-            break;
+            bmap.link(cell, link);
         }
-
-        objlinkblockmap_t &obm = chooseObjlinkBlockmap(link->type);
-        if(!toObjlinkBlockmapCell(obm, block, origin.x, origin.y))
-        {
-            linkObjlinkInBlockmap(obm, *link, block);
-        }
-        link = link->next;
     }
-
-END_PROF( PROF_OBJLINK_LINK );
 }
 
 void R_InitForNewFrame()
 {
-#ifdef DD_PROFILE
-    static int i;
-    if(++i > 40)
-    {
-        i = 0;
-        PRINT_PROF(PROF_OBJLINK_SPREAD);
-        PRINT_PROF(PROF_OBJLINK_LINK);
-    }
-#endif
-
     // Start reusing nodes from the first one in the list.
     contCursor = contFirst;
     if(bspLeafContacts)

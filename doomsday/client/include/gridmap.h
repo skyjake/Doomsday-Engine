@@ -229,6 +229,9 @@ private:
     DENG2_PRIVATE(d)
 };
 
+typedef Gridmap::Cell GridmapCell;
+typedef Gridmap::CellBlock GridmapCellBlock;
+
 } // namespace de
 
 #endif // DENG_DATA_GRIDMAP_H
