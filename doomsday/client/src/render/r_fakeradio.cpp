@@ -254,8 +254,8 @@ void Rend_RadioInitForMap(Map &map)
 
             // Link the shadowing line to all the BspLeafs whose axis-aligned
             // bounding box intersects 'bounds'.
-            map.bspLeafsBoxIterator(bounds, side.sectorPtr(),
-                                    linkShadowLineToBspLeafWorker, &side);
+            map.bspLeafBoxIterator(bounds, side.sectorPtr(),
+                                   linkShadowLineToBspLeafWorker, &side);
         }
     }
 

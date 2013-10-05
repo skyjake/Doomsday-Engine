@@ -3808,7 +3808,7 @@ static void drawVertexes(Map &map)
 
         parms.drawBar = true;
         parms.drawLabel = parms.drawOrigin = false;
-        map.bspLeafsBoxIterator(box, drawBspLeafVertexWorker, &parms);
+        map.bspLeafBoxIterator(box, drawBspLeafVertexWorker, &parms);
 
         glEnable(GL_DEPTH_TEST);
     }
@@ -3824,7 +3824,7 @@ static void drawVertexes(Map &map)
     parms.drawnVerts->fill(false); // Process all again.
     parms.drawOrigin = true;
     parms.drawBar = parms.drawLabel = false;
-    map.bspLeafsBoxIterator(box, drawBspLeafVertexWorker, &parms);
+    map.bspLeafBoxIterator(box, drawBspLeafVertexWorker, &parms);
 
     glEnable(GL_DEPTH_TEST);
 
@@ -3833,7 +3833,7 @@ static void drawVertexes(Map &map)
         parms.drawnVerts->fill(false); // Process all again.
         parms.drawLabel = true;
         parms.drawBar = parms.drawOrigin = false;
-        map.bspLeafsBoxIterator(box, drawBspLeafVertexWorker, &parms);
+        map.bspLeafBoxIterator(box, drawBspLeafVertexWorker, &parms);
     }
 
     // Restore previous state.

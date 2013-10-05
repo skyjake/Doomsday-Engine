@@ -1162,7 +1162,7 @@ static void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
     /// @todo Don't assume the current map.
 
     validCount++;
-    if(App_World().map().linesBoxIterator(mbox, PIT_CheckLinePtc))
+    if(App_World().map().lineBoxIterator(mbox, PIT_CheckLinePtc))
     {
         fixed_t normal[2], dotp;
 

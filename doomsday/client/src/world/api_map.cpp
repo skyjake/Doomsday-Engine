@@ -1553,28 +1553,28 @@ DENG_EXTERN_C void Mobj_Unlink(mobj_t *mobj)
 DENG_EXTERN_C int Mobj_TouchedLinesIterator(mobj_t *mo, int (*callback) (Line *, void *), void *context)
 {
     if(!mo || !Mobj_IsLinked(*mo)) return false; // Continue iteration.
-    return Mobj_BspLeafAtOrigin(*mo).map().mobjLinesIterator(mo, callback, context);
+    return Mobj_BspLeafAtOrigin(*mo).map().mobjTouchedLineIterator(mo, callback, context);
 }
 
 #undef Mobj_TouchedSectorsIterator
 DENG_EXTERN_C int Mobj_TouchedSectorsIterator(mobj_t *mo, int (*callback) (Sector *, void *), void *context)
 {
     if(!mo || !Mobj_IsLinked(*mo)) return false; // Continue iteration.
-    return Mobj_BspLeafAtOrigin(*mo).map().mobjSectorsIterator(mo, callback, context);
+    return Mobj_BspLeafAtOrigin(*mo).map().mobjTouchedSectorIterator(mo, callback, context);
 }
 
 #undef Line_TouchingMobjsIterator
 DENG_EXTERN_C int Line_TouchingMobjsIterator(Line *line, int (*callback) (mobj_t *, void *), void *context)
 {
     if(!line) return false; // Continue iteration.
-    return line->map().lineMobjsIterator(line, callback, context);
+    return line->map().lineTouchingMobjIterator(line, callback, context);
 }
 
 #undef Sector_TouchingMobjsIterator
 DENG_EXTERN_C int Sector_TouchingMobjsIterator(Sector *sector, int (*callback) (mobj_t *, void *), void *context)
 {
     if(!sector) return false; // Continue iteration.
-    return sector->map().sectorTouchingMobjsIterator(sector, callback, context);
+    return sector->map().sectorTouchingMobjIterator(sector, callback, context);
 }
 
 #undef Sector_AtPoint_FixedPrecision
@@ -1597,7 +1597,7 @@ DENG_EXTERN_C int Mobj_BoxIterator(AABoxd const *box,
     int (*callback) (mobj_t *, void *), void *context)
 {
     if(!box || !App_World().hasMap()) return false; // Continue iteration.
-    return App_World().map().mobjsBoxIterator(*box, callback, context);
+    return App_World().map().mobjBoxIterator(*box, callback, context);
 }
 
 #undef Polyobj_BoxIterator
@@ -1605,7 +1605,7 @@ DENG_EXTERN_C int Polyobj_BoxIterator(AABoxd const *box,
     int (*callback) (struct polyobj_s *, void *), void *context)
 {
     if(!box || !App_World().hasMap()) return false; // Continue iteration.
-    return App_World().map().polyobjsBoxIterator(*box, callback, context);
+    return App_World().map().polyobjBoxIterator(*box, callback, context);
 }
 
 #undef Line_BoxIterator
@@ -1613,7 +1613,7 @@ DENG_EXTERN_C int Line_BoxIterator(AABoxd const *box, int flags,
     int (*callback) (Line *, void *), void *context)
 {
     if(!box || !App_World().hasMap()) return false; // Continue iteration.
-    return App_World().map().linesBoxIterator(*box, flags, callback, context);
+    return App_World().map().lineBoxIterator(*box, flags, callback, context);
 }
 
 #undef BspLeaf_BoxIterator
@@ -1621,7 +1621,7 @@ DENG_EXTERN_C int BspLeaf_BoxIterator(AABoxd const *box, Sector *sector,
     int (*callback) (BspLeaf *, void *), void *context)
 {
     if(!box || !App_World().hasMap()) return false; // Continue iteration.
-    return App_World().map().bspLeafsBoxIterator(*box, sector, callback, context);
+    return App_World().map().bspLeafBoxIterator(*box, sector, callback, context);
 }
 
 #undef P_PathTraverse2

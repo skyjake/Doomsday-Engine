@@ -421,7 +421,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
                 scanRegion.maxX = line->aaBox().maxX + bsp::DIST_EPSILON;
             }
             validCount++;
-            self.linesBoxIterator(scanRegion, LBF_SECTOR, testForWindowEffectWorker, &p);
+            self.lineBoxIterator(scanRegion, LBF_SECTOR, testForWindowEffectWorker, &p);
 
             if(p.backOpen && p.frontOpen && line->frontSectorPtr() == p.backOpen)
             {
@@ -846,7 +846,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
         V2d_AddToBox(parm.box.arvec2, point);
 
         validCount++;
-        self.linesBoxIterator(parm.box, lineLinkerWorker, &parm);
+        self.lineBoxIterator(parm.box, lineLinkerWorker, &parm);
     }
 
     /**
@@ -1659,7 +1659,7 @@ static int iterateCellBlockMobjs(Blockmap &mobjBlockmap, Blockmap::CellBlock con
     return mobjBlockmap.iterate(cellBlock, blockmapCellMobjsIterator, (void *) &args);
 }
 
-int Map::mobjsBoxIterator(AABoxd const &box, int (*callback) (mobj_t *, void *),
+int Map::mobjBoxIterator(AABoxd const &box, int (*callback) (mobj_t *, void *),
                           void *parameters) const
 {
     if(!d->mobjBlockmap.isNull())
@@ -1668,7 +1668,7 @@ int Map::mobjsBoxIterator(AABoxd const &box, int (*callback) (mobj_t *, void *),
         return iterateCellBlockMobjs(*d->mobjBlockmap, cellBlock, callback, parameters);
     }
     /// @throw MissingBlockmapError  The mobj blockmap is not yet initialized.
-    throw MissingBlockmapError("Map::mobjsBoxIterator", "Mobj blockmap is not initialized");
+    throw MissingBlockmapError("Map::mobjBoxIterator", "Mobj blockmap is not initialized");
 }
 
 struct bmapiterparams_t
@@ -1794,7 +1794,7 @@ static int iterateBlockBspLeafs(Blockmap &bspLeafBlockmap,
     return bspLeafBlockmap.iterate(cellBlock, blockmapCellBspLeafsIterator, (void *) &args);
 }
 
-int Map::bspLeafsBoxIterator(AABoxd const &box, Sector *sector,
+int Map::bspLeafBoxIterator(AABoxd const &box, Sector *sector,
     int (*callback) (BspLeaf *, void *), void *parameters) const
 {
     if(!d->bspLeafBlockmap.isNull())
@@ -1808,11 +1808,11 @@ int Map::bspLeafsBoxIterator(AABoxd const &box, Sector *sector,
                                     localValidCount, callback, parameters);
     }
     /// @throw MissingBlockmapError  The BSP leaf blockmap is not yet initialized.
-    throw MissingBlockmapError("Map::bspLeafsBoxIterator", "BSP leaf blockmap is not initialized");
+    throw MissingBlockmapError("Map::bspLeafBoxIterator", "BSP leaf blockmap is not initialized");
 }
 
-int Map::mobjLinesIterator(mobj_t *mo, int (*callback) (Line *, void *),
-                           void *parameters) const
+int Map::mobjTouchedLineIterator(mobj_t *mo, int (*callback) (Line *, void *),
+                                 void *parameters) const
 {
     void *linkStore[MAXLINKED];
     void **end = linkStore, **it;
@@ -1831,8 +1831,8 @@ int Map::mobjLinesIterator(mobj_t *mo, int (*callback) (Line *, void *),
     return result;
 }
 
-int Map::mobjSectorsIterator(mobj_t *mo, int (*callback) (Sector *, void *),
-                             void *parameters) const
+int Map::mobjTouchedSectorIterator(mobj_t *mo, int (*callback) (Sector *, void *),
+                                   void *parameters) const
 {
     int result = false;
     void *linkStore[MAXLINKED];
@@ -1880,8 +1880,8 @@ int Map::mobjSectorsIterator(mobj_t *mo, int (*callback) (Sector *, void *),
     return result;
 }
 
-int Map::lineMobjsIterator(Line *line, int (*callback) (mobj_t *, void *),
-                           void *parameters) const
+int Map::lineTouchingMobjIterator(Line *line, int (*callback) (mobj_t *, void *),
+                                  void *parameters) const
 {
     void *linkStore[MAXLINKED];
     void **end = linkStore;
@@ -1902,7 +1902,7 @@ int Map::lineMobjsIterator(Line *line, int (*callback) (mobj_t *, void *),
     return result;
 }
 
-int Map::sectorTouchingMobjsIterator(Sector *sector,
+int Map::sectorTouchingMobjIterator(Sector *sector,
     int (*callback) (mobj_t *, void *), void *parameters) const
 {
     /// @todo Fixme: Remove fixed limit (use QVarLengthArray if necessary).
@@ -2065,16 +2065,16 @@ static int iterateCellBlockPolyobjs(Blockmap &polyobjBlockmap, Blockmap::CellBlo
     return polyobjBlockmap.iterate(cellBlock, blockmapCellPolyobjsIterator, (void*) &args);
 }
 
-int Map::polyobjsBoxIterator(AABoxd const &box,
-    int (*callback) (struct polyobj_s *, void *), void *parameters) const
+int Map::polyobjBoxIterator(AABoxd const &box,
+    int (*callback) (struct polyobj_s *, void *), void *context) const
 {
     if(!d->polyobjBlockmap.isNull())
     {
         Blockmap::CellBlock cellBlock = d->polyobjBlockmap->toCellBlock(box);
-        return iterateCellBlockPolyobjs(*d->polyobjBlockmap, cellBlock, callback, parameters);
+        return iterateCellBlockPolyobjs(*d->polyobjBlockmap, cellBlock, callback, context);
     }
     /// @throw MissingBlockmapError  The polyobj blockmap is not yet initialized.
-    throw MissingBlockmapError("Map::polyobjsBoxIterator", "Polyobj blockmap is not initialized");
+    throw MissingBlockmapError("Map::polyobjBoxIterator", "Polyobj blockmap is not initialized");
 }
 
 struct poiterparams_t
@@ -2099,7 +2099,7 @@ static int polyobjLineIterator(Polyobj *po, void* context)
 }
 
 /*
-static int iterateCellPolyobjLinesIterator(Blockmap &polyobjBlockmap, const_BlockmapCell cell,
+static int iterateCellPolyobjLineIterator(Blockmap &polyobjBlockmap, const_BlockmapCell cell,
     int (*callback) (Line *, void *), void *context = 0)
 {
     poiterparams_t poargs;
@@ -2132,19 +2132,19 @@ static int iterateBlockPolyobjLines(Blockmap &polyobjBlockmap,
     return polyobjBlockmap.iterate(cellBlock, blockmapCellPolyobjsIterator, (void*) &args);
 }
 
-int Map::linesBoxIterator(AABoxd const &box, int flags,
-    int (*callback) (Line *, void *), void *parameters) const
+int Map::lineBoxIterator(AABoxd const &box, int flags,
+    int (*callback) (Line *, void *), void *context) const
 {
     // Process polyobj lines?
     if((flags & LBF_POLYOBJ) && polyobjCount())
     {
         if(d->polyobjBlockmap.isNull())
             /// @throw MissingBlockmapError  The polyobj blockmap is not yet initialized.
-            throw MissingBlockmapError("Map::linesBoxIterator", "Polyobj blockmap is not initialized");
+            throw MissingBlockmapError("Map::lineBoxIterator", "Polyobj blockmap is not initialized");
 
         Blockmap::CellBlock cellBlock = d->polyobjBlockmap->toCellBlock(box);
         if(int result = iterateBlockPolyobjLines(*d->polyobjBlockmap, cellBlock,
-                                                 callback, parameters))
+                                                 callback, context))
             return result;
     }
 
@@ -2153,10 +2153,10 @@ int Map::linesBoxIterator(AABoxd const &box, int flags,
     {
         if(d->lineBlockmap.isNull())
             /// @throw MissingBlockmapError  The line blockmap is not yet initialized.
-            throw MissingBlockmapError("Map::linesBoxIterator", "Line blockmap is not initialized");
+            throw MissingBlockmapError("Map::lineBoxIterator", "Line blockmap is not initialized");
 
         Blockmap::CellBlock cellBlock = d->lineBlockmap->toCellBlock(box);
-        if(int result = iterateCellBlockLines(*d->lineBlockmap, cellBlock, callback, parameters))
+        if(int result = iterateCellBlockLines(*d->lineBlockmap, cellBlock, callback, context))
             return result;
     }
 

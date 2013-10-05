@@ -448,7 +448,7 @@ public:
     bool identifySoundEmitter(ddmobj_base_t const &emitter, Sector **sector,
         Polyobj **poly, Plane **plane, Surface **surface) const;
 
-    int mobjsBoxIterator(AABoxd const &box,
+    int mobjBoxIterator(AABoxd const &box,
         int (*callback) (struct mobj_s *, void *), void *context = 0) const;
 
     /**
@@ -461,24 +461,24 @@ public:
      *
      * @param flags  @ref lineBoxIteratorFlags
      */
-    int linesBoxIterator(AABoxd const &box, int flags,
+    int lineBoxIterator(AABoxd const &box, int flags,
         int (*callback) (Line *, void *), void *context = 0) const;
 
-    /// @copydoc linesBoxIterator()
-    inline int linesBoxIterator(AABoxd const &box,
+    /// @copydoc lineBoxIterator()
+    inline int lineBoxIterator(AABoxd const &box,
         int (*callback) (Line *, void *), void *context = 0) const
     {
-        return linesBoxIterator(box, LBF_ALL, callback, context);
+        return lineBoxIterator(box, LBF_ALL, callback, context);
     }
 
-    int bspLeafsBoxIterator(AABoxd const &box, Sector *sector,
+    int bspLeafBoxIterator(AABoxd const &box, Sector *sector,
         int (*callback) (BspLeaf *, void *), void *context = 0) const;
 
     /// @copydoc bspLeafsBoxIterator()
-    inline int bspLeafsBoxIterator(AABoxd const &box,
+    inline int bspLeafBoxIterator(AABoxd const &box,
         int (*callback) (BspLeaf *, void *), void *context = 0) const
     {
-        return bspLeafsBoxIterator(box, 0, callback, context);
+        return bspLeafBoxIterator(box, 0, callback, context);
     }
 
     /**
@@ -487,14 +487,14 @@ public:
      * to this will be skipped over (can be used to avoid processing a line
      * multiple times during complex / non-linear traversals.
      */
-    int polyobjsBoxIterator(AABoxd const &box,
+    int polyobjBoxIterator(AABoxd const &box,
         int (*callback) (struct polyobj_s *, void *), void *context = 0) const;
 
     /**
      * The callback function will be called once for each line that crosses
      * trough the object. This means all the lines will be two-sided.
      */
-    int mobjLinesIterator(struct mobj_s *mo,
+    int mobjTouchedLineIterator(struct mobj_s *mo,
         int (*callback) (Line *, void *), void *context = 0) const;
 
     /**
@@ -503,10 +503,10 @@ public:
      * partly inside). This is not a 3D check; the mobj may actually reside
      * above or under the sector.
      */
-    int mobjSectorsIterator(struct mobj_s *mo,
+    int mobjTouchedSectorIterator(struct mobj_s *mo,
         int (*callback) (Sector *, void *), void *context = 0) const;
 
-    int lineMobjsIterator(Line *line,
+    int lineTouchingMobjIterator(Line *line,
         int (*callback) (struct mobj_s *, void *), void *context = 0) const;
 
     /**
@@ -517,7 +517,7 @@ public:
      * (Lovely name; actually this is a combination of SectorMobjs and
      * a bunch of LineMobjs iterations.)
      */
-    int sectorTouchingMobjsIterator(Sector *sector,
+    int sectorTouchingMobjIterator(Sector *sector,
         int (*callback) (struct mobj_s *, void *), void *context = 0) const;
 
     /**

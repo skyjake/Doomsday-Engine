@@ -695,7 +695,7 @@ DENG2_OBSERVES(Plane, HeightChange)
 
         // Link all non-degenerate BspLeafs whose axis-aligned bounding box intersects
         // with the affection bounds to the reverb set.
-        self.sector().map().bspLeafsBoxIterator(affectionBounds, 0, addReverbBspLeafWorker, this);
+        self.sector().map().bspLeafBoxIterator(affectionBounds, 0, addReverbBspLeafWorker, this);
     }
 
     /**
