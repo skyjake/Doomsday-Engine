@@ -157,46 +157,41 @@ DENG2_PIMPL(Partitioner)
     {
         foreach(Line *line, lines)
         {
-            LineSegment *seg = 0;
-            coord_t angle = 0;
-
             //if(!line.hasZeroLength()) Screened at a higher level.
+            //    continue;
+
+            Sector *frontSec = line->frontSectorPtr();
+            Sector *backSec  = line->backSectorPtr();
+
+            // Handle the "one-way window" effect.
+            if(!backSec && line->_bspWindowSector)
             {
-                Sector *frontSec = line->frontSectorPtr();
-                Sector *backSec  = 0;
-
-                if(line->hasBackSector())
-                {
-                    backSec = line->backSectorPtr();
-                }
-                // Handle the "One-way window" effect.
-                else if(line->_bspWindowSector)
-                {
-                    backSec = line->_bspWindowSector;
-                }
-
-                seg = &buildLineSegmentBetweenVertexes(line->from(), line->to(),
-                                                       frontSec, backSec,
-                                                       &line->front());
-
-                linkSegmentInSuperBlockmap(blockmap, seg->front());
-                if(seg->back().hasSector())
-                {
-                    linkSegmentInSuperBlockmap(blockmap, seg->back());
-                }
-
-                angle = seg->front().angle();
+                backSec = line->_bspWindowSector;
             }
 
-            /// @todo edge tips should be created when line segments are created.
+            LineSegment *seg = &buildLineSegmentBetweenVertexes(
+                line->from(), line->to(), frontSec, backSec, &line->front());
+
+            if(seg->front().hasSector())
+            {
+                linkSegmentInSuperBlockmap(blockmap, seg->front());
+            }
+            if(seg->back().hasSector())
+            {
+                linkSegmentInSuperBlockmap(blockmap, seg->back());
+            }
+
+            coord_t angle = seg->front().angle();
+
             edgeTipSet(line->from())
-                << EdgeTip(angle, seg? &seg->front() : 0,
-                           seg && seg->back().hasSector()? &seg->back() : 0);
+                << EdgeTip(angle,
+                           seg->front().hasSector()? &seg->front() : 0,
+                           seg->back ().hasSector()? &seg->back () : 0);
 
             edgeTipSet(line->to())
                 << EdgeTip(M_InverseAngle(angle),
-                           seg && seg->back().hasSector()? &seg->back() : 0,
-                           seg? &seg->front() : 0);
+                           seg->back ().hasSector()? &seg->back () : 0,
+                           seg->front().hasSector()? &seg->front() : 0);
         }
     }
 
