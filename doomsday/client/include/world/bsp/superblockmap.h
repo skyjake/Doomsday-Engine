@@ -94,7 +94,7 @@ private:
 class SuperBlock
 {
 public:
-    typedef QList<LineSegment::Side *> Segments;
+    typedef QList<LineSegmentSide *> Segments;
 
     /// A SuperBlock may be subdivided with two child subblocks which are
     /// uniquely identifiable by these associated ids.
@@ -226,7 +226,7 @@ public:
      *
      * @return  SuperBlock that @a segment was linked to.
      */
-    SuperBlock &push(LineSegment::Side &segment);
+    SuperBlock &push(LineSegmentSide &segment);
 
     /**
      * Pop (unlink) the next line segment from the FIFO list of segments linked
@@ -234,7 +234,7 @@ public:
      *
      * @return  Previous top-most line segment; otherwise @c 0 (empty).
      */
-    LineSegment::Side *pop();
+    LineSegmentSide *pop();
 
     /**
      * Collate (unlink) all line segments from "this" and all child blocks

@@ -56,18 +56,18 @@ struct SuperBlock::Instance
         KdTreeNode_Delete(tree);
     }
 
-    inline void linkSegment(LineSegment::Side &seg)
+    inline void linkSegment(LineSegmentSide &seg)
     {
         segments.prepend(&seg);
     }
 
-    inline void incrementSegmentCount(LineSegment::Side const &seg)
+    inline void incrementSegmentCount(LineSegmentSide const &seg)
     {
         if(seg.hasMapSide()) mapNum++;
         else                 partNum++;
     }
 
-    inline void decrementSegmentCount(LineSegment::Side const &seg)
+    inline void decrementSegmentCount(LineSegmentSide const &seg)
     {
         if(seg.hasMapSide()) mapNum--;
         else                 partNum--;
@@ -153,7 +153,7 @@ SuperBlock::Segments SuperBlock::collateAllSegments()
     {
         while(cur)
         {
-            LineSegment::Side *seg;
+            LineSegmentSide *seg;
             while((seg = cur->pop()))
             {
                 segments << seg;
@@ -209,7 +209,7 @@ AABoxd SuperBlock::findSegmentBounds()
     AABoxd bounds;
     bool initialized = false;
 
-    foreach(LineSegment::Side *seg, d->segments)
+    foreach(LineSegmentSide *seg, d->segments)
     {
         AABoxd segBounds = seg->aaBox();
         if(initialized)
@@ -226,7 +226,7 @@ AABoxd SuperBlock::findSegmentBounds()
     return bounds;
 }
 
-SuperBlock &SuperBlock::push(LineSegment::Side &seg)
+SuperBlock &SuperBlock::push(LineSegmentSide &seg)
 {
     SuperBlock *sb = this;
     forever
@@ -280,12 +280,12 @@ SuperBlock &SuperBlock::push(LineSegment::Side &seg)
     return *sb;
 }
 
-LineSegment::Side *SuperBlock::pop()
+LineSegmentSide *SuperBlock::pop()
 {
     if(d->segments.isEmpty())
         return 0;
 
-    LineSegment::Side *seg = d->segments.takeFirst();
+    LineSegmentSide *seg = d->segments.takeFirst();
 
     // Update line segment counts.
     d->decrementSegmentCount(*seg);

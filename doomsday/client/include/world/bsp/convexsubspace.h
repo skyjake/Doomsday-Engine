@@ -43,9 +43,9 @@ namespace bsp {
  */
 struct OrderedSegment
 {
-    LineSegment::Side *segment;
-    double fromAngle;
-    double toAngle;
+    LineSegmentSide *segment;
+    ddouble fromAngle;
+    ddouble toAngle;
 
     bool operator == (OrderedSegment const &other) const
     {
@@ -97,7 +97,7 @@ public:
      *                  is @em NOT given to the subspace. Note that duplicates
      *                  are pruned automatically.
      */
-    ConvexSubspace(QList<LineSegment::Side *> const &segments);
+    ConvexSubspace(QList<LineSegmentSide *> const &segments);
 
     /**
      * Construct a convex subspace by duplicating @a other.
@@ -130,7 +130,7 @@ public:
      *
      * @see addOneSegment()
      */
-    void addSegments(QList<LineSegment::Side *> const &segments);
+    void addSegments(QList<LineSegmentSide *> const &segments);
 
     /**
      * Add a single line segment to the subspace which is assumed to conform to,
@@ -142,7 +142,7 @@ public:
      *
      * @see operator<<(), addSegments()
      */
-    void addOneSegment(LineSegment::Side const &segment);
+    void addOneSegment(LineSegmentSide const &segment);
 
     /**
      * Add @a segment to the subspace which is assumed to conform to, or is
@@ -156,7 +156,7 @@ public:
      *
      * @see addOneSegment()
      */
-    inline ConvexSubspace &operator << (LineSegment::Side const &segment) {
+    inline ConvexSubspace &operator << (LineSegmentSide const &segment) {
         addOneSegment(segment);
         return *this;
     }

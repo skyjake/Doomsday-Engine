@@ -42,20 +42,22 @@ namespace bsp {
 class EdgeTip
 {
 public:
-    enum Side
-    {
-        Front,
-        Back
-    };
+    /// Logical side identifiers.
+    enum Side { Front, Back };
 
 public:
-    explicit EdgeTip(coord_t angle = 0, LineSegment::Side *front = 0, LineSegment::Side *back = 0)
+    explicit EdgeTip(coord_t angle = 0, LineSegmentSide *front = 0, LineSegmentSide *back = 0)
         : _angle(angle), _front(front), _back(back)
     {}
+    EdgeTip(LineSegmentSide &side)
+        : _angle(side.angle()),
+          _front(side.hasSector()? &side : 0),
+          _back(side.back().hasSector()? &side.back() : 0)
+    {}
 
-    inline coord_t angle() const { return _angle; }
+    coord_t angle() const { return _angle; }
 
-    inline void setAngle(coord_t newAngle)
+    void setAngle(coord_t newAngle)
     {
         _angle = newAngle;
     }
@@ -69,7 +71,7 @@ public:
 
     inline bool hasBack() const { return hasSide(Back); }
 
-    LineSegment::Side &side(Side sid) const
+    LineSegmentSide &side(Side sid) const
     {
         if(sid == Front)
         {
@@ -83,13 +85,13 @@ public:
         }
     }
 
-    inline LineSegment::Side &front() const { return side(Front); }
-    inline LineSegment::Side &back() const  { return side(Back); }
+    inline LineSegmentSide &front() const { return side(Front); }
+    inline LineSegmentSide &back() const  { return side(Back); }
 
-    inline LineSegment::Side *frontPtr() const { return hasFront()? &front() : 0; }
-    inline LineSegment::Side *backPtr() const  { return hasBack()? &back() : 0; }
+    inline LineSegmentSide *frontPtr() const { return hasFront()? &front() : 0; }
+    inline LineSegmentSide *backPtr() const  { return hasBack() ? &back()  : 0; }
 
-    inline void setSide(Side sid, LineSegment::Side *lineSeg)
+    void setSide(Side sid, LineSegmentSide *lineSeg)
     {
         if(sid == Front)
         {
@@ -101,8 +103,8 @@ public:
         }
     }
 
-    inline void setFront(LineSegment::Side *lineSeg) { setSide(Front, lineSeg); }
-    inline void setBack(LineSegment::Side *lineSeg)  { setSide(Back, lineSeg); }
+    inline void setFront(LineSegmentSide *lineSeg) { setSide(Front, lineSeg); }
+    inline void setBack(LineSegmentSide *lineSeg)  { setSide(Back, lineSeg); }
 
 private:
     /// Angle that line makes at vertex (degrees; 0 is E, 90 is N).
@@ -110,7 +112,7 @@ private:
 
     /// Line segments on each side of the tip. Front is the side of increasing
     /// angles, back is the side of decreasing angles. Either can be @c 0.
-    LineSegment::Side *_front, *_back;
+    LineSegmentSide *_front, *_back;
 };
 
 /**
@@ -199,7 +201,7 @@ public:
     /**
      * @param epsilon  Angle equivalence threshold (in degrees).
      */
-    EdgeTip const *after(ddouble angle, ddouble epsilon = 1.0 / 1024.0) const
+    EdgeTip const *after(ddouble angle, ddouble epsilon = 1.0 / 1024) const
     {
         DENG2_FOR_EACH_CONST(Tips, it, _tips)
         {

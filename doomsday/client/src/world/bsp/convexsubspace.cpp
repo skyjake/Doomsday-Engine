@@ -42,7 +42,7 @@ static coord_t const ANG_EPSILON = 1.0 / 1024.0;
 namespace de {
 namespace bsp {
 
-typedef QList<LineSegment::Side *> SegmentList;
+typedef QList<LineSegmentSide *> SegmentList;
 
 /**
  * Represents a clockwise ordering of a subset of the line segments and
@@ -122,7 +122,7 @@ struct Continuity
         list->append(const_cast<OrderedSegment *>(&oseg));
 
         // Account for the new line segment.
-        LineSegment::Side const &seg = *oseg.segment;
+        LineSegmentSide const &seg = *oseg.segment;
         if(!seg.hasMapSide())
         {
             part += 1;
@@ -149,16 +149,16 @@ struct Continuity
         discordSegments = 0;
         for(int i = 0; i < orderedSegs.count() - 1; ++i)
         {
-            LineSegment::Side const &segA = *orderedSegs[i  ]->segment;
-            LineSegment::Side const &segB = *orderedSegs[i+1]->segment;
+            LineSegmentSide const &segA = *orderedSegs[i  ]->segment;
+            LineSegmentSide const &segB = *orderedSegs[i+1]->segment;
 
             if(segB.from().origin() != segA.to().origin())
                 discordSegments += 1;
         }
         if(orderedSegs.count() > 1)
         {
-            LineSegment::Side const &segB = *orderedSegs.last()->segment;
-            LineSegment::Side const &segA = *orderedSegs.first()->segment;
+            LineSegmentSide const &segB = *orderedSegs.last()->segment;
+            LineSegmentSide const &segA = *orderedSegs.first()->segment;
 
             if(segB.to().origin() != segA.from().origin())
                 discordSegments += 1;
@@ -188,7 +188,7 @@ struct Continuity
 
 DENG2_PIMPL_NOREF(ConvexSubspace)
 {
-    typedef QSet<LineSegment::Side *> Segments;
+    typedef QSet<LineSegmentSide *> Segments;
 
     /// The set of line segments.
     Segments segments;
@@ -221,7 +221,7 @@ DENG2_PIMPL_NOREF(ConvexSubspace)
      */
     bool haveMapLineSegment()
     {
-        foreach(LineSegment::Side *seg, segments)
+        foreach(LineSegmentSide *seg, segments)
         {
             if(seg->hasMapSide())
                 return true;
@@ -233,7 +233,7 @@ DENG2_PIMPL_NOREF(ConvexSubspace)
     {
         Vector2d center;
         int numPoints = 0;
-        foreach(LineSegment::Side *seg, segments)
+        foreach(LineSegmentSide *seg, segments)
         {
             center += seg->from().origin();
             center += seg->to().origin();
@@ -259,7 +259,7 @@ DENG2_PIMPL_NOREF(ConvexSubspace)
 
         orderedSegments.clear();
 
-        foreach(LineSegment::Side *seg, segments)
+        foreach(LineSegmentSide *seg, segments)
         {
             Vector2d fromDist = seg->from().origin() - point;
             Vector2d toDist   = seg->to().origin() - point;
@@ -322,7 +322,7 @@ ConvexSubspace::ConvexSubspace()
     : d(new Instance())
 {}
 
-ConvexSubspace::ConvexSubspace(QList<LineSegment::Side *> const &segments)
+ConvexSubspace::ConvexSubspace(QList<LineSegmentSide *> const &segments)
     : d(new Instance())
 {
     addSegments(segments);
@@ -338,11 +338,11 @@ ConvexSubspace &ConvexSubspace::operator = (ConvexSubspace const &other)
     return *this;
 }
 
-void ConvexSubspace::addSegments(QList<LineSegment::Side *> const &newSegments)
+void ConvexSubspace::addSegments(QList<LineSegmentSide *> const &newSegments)
 {
     int sizeBefore = d->segments.size();
 
-    d->segments.unite(QSet<LineSegment::Side *>::fromList(newSegments));
+    d->segments.unite(QSet<LineSegmentSide *>::fromList(newSegments));
 
     if(d->segments.size() != sizeBefore)
     {
@@ -360,11 +360,11 @@ void ConvexSubspace::addSegments(QList<LineSegment::Side *> const &newSegments)
 #endif
 }
 
-void ConvexSubspace::addOneSegment(LineSegment::Side const &newSegment)
+void ConvexSubspace::addOneSegment(LineSegmentSide const &newSegment)
 {
     int sizeBefore = d->segments.size();
 
-    d->segments.insert(const_cast<LineSegment::Side *>(&newSegment));
+    d->segments.insert(const_cast<LineSegmentSide *>(&newSegment));
 
     if(d->segments.size() != sizeBefore)
     {
@@ -428,7 +428,7 @@ void ConvexSubspace::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
 
             foreach(OrderedSegment const *oseg, conty.discordSegs)
             {
-                LineSegment::Side *lineSeg = oseg->segment;
+                LineSegmentSide *lineSeg = oseg->segment;
                 LineSide *mapSide = lineSeg->mapSidePtr();
                 if(!mapSide) continue;
 
@@ -530,7 +530,7 @@ void ConvexSubspace::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
         // Iterate backwards so that the half-edges can be linked clockwise.
         for(int i = d->orderedSegments.size(); i-- > 0; )
         {
-            LineSegment::Side *lineSeg = d->orderedSegments[i].segment;
+            LineSegmentSide *lineSeg = d->orderedSegments[i].segment;
 
             // Already added this to an extra mesh?
             if(lineSeg->hasHEdge())

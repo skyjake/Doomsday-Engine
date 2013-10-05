@@ -181,17 +181,8 @@ DENG2_PIMPL(Partitioner)
                 linkSegmentInSuperBlockmap(blockmap, seg->back());
             }
 
-            coord_t angle = seg->front().angle();
-
-            edgeTipSet(line->from())
-                << EdgeTip(angle,
-                           seg->front().hasSector()? &seg->front() : 0,
-                           seg->back ().hasSector()? &seg->back () : 0);
-
-            edgeTipSet(line->to())
-                << EdgeTip(M_InverseAngle(angle),
-                           seg->back ().hasSector()? &seg->back () : 0,
-                           seg->front().hasSector()? &seg->front() : 0);
+            edgeTipSet(line->from()) << EdgeTip(seg->front());
+            edgeTipSet(line->to())   << EdgeTip(seg->back());
         }
     }
 
@@ -659,25 +650,10 @@ DENG2_PIMPL(Partitioner)
             edgeTipSet(newSeg.from()).clearByLineSegment(newSeg);
             edgeTipSet(newSeg.to()  ).clearByLineSegment(newSeg);
 
-            edgeTipSet(oldSeg.from())
-                << EdgeTip(oldSeg.front().angle(),
-                           oldSeg.front().hasSector()? &oldSeg.front() : 0,
-                           oldSeg.back().hasSector()?  &oldSeg.back()  : 0);
-
-            edgeTipSet(oldSeg.to())
-                << EdgeTip(oldSeg.back().angle(),
-                           oldSeg.back().hasSector()?  &oldSeg.back()  : 0,
-                           oldSeg.front().hasSector()? &oldSeg.front() : 0);
-
-            edgeTipSet(newSeg.from())
-                << EdgeTip(newSeg.front().angle(),
-                           newSeg.front().hasSector()? &newSeg.front() : 0,
-                           newSeg.back().hasSector()?  &newSeg.back()  : 0);
-
-            edgeTipSet(newSeg.to())
-                << EdgeTip(newSeg.back().angle(),
-                           newSeg.back().hasSector()?  &newSeg.back()  : 0,
-                           newSeg.front().hasSector()? &newSeg.front() : 0);
+            edgeTipSet(oldSeg.from()) << EdgeTip(oldSeg.front());
+            edgeTipSet(oldSeg.to())   << EdgeTip(oldSeg.back());
+            edgeTipSet(newSeg.from()) << EdgeTip(newSeg.front());
+            edgeTipSet(newSeg.to())   << EdgeTip(newSeg.back());
         }
 
         return frontRight;
@@ -988,11 +964,8 @@ DENG2_PIMPL(Partitioner)
                                                 sector, sector, 0 /*no map line*/,
                                                 partSeg? &partSeg->mapLine() : 0);
 
-            edgeTipSet(newSeg.from())
-                << EdgeTip(newSeg.front().angle(), &newSeg.front(), &newSeg.back());
-
-            edgeTipSet(newSeg.to())
-                << EdgeTip(newSeg.back().angle(),  &newSeg.back(),  &newSeg.front());
+            edgeTipSet(newSeg.from()) << EdgeTip(newSeg.front());
+            edgeTipSet(newSeg.to())   << EdgeTip(newSeg.back());
 
             // Add each new line segment to the appropriate set.
             linkSegmentInSuperBlockmap(rights, newSeg.front());
