@@ -342,31 +342,45 @@ DENG2_OBSERVES(App, StartupComplete)
 
         bool const gotUpdate = latestVersion > currentVersion;
 
+        // Is this newer than what we're running?
         if(gotUpdate)
         {
             LOG_INFO("Found an update: " _E(b)) << latestVersion.asText();
 
-            if(!alwaysShowNotification && UpdaterSettings().autoDownload())
+            if(!alwaysShowNotification)
             {
-                startDownload();
-                return;
+                if(UpdaterSettings().autoDownload())
+                {
+                    startDownload();
+                    return;
+                }
+
+                // Show the notification so the user knows an update is
+                // available.
+                showCheckingNotification();
             }
-        }
-
-        // Is this newer than what we're running?
-        if(gotUpdate || alwaysShowNotification)
-        {
-            // Modal dialogs will interrupt gameplay.
-            ClientWindow::main().taskBar().openAndPauseGame();
-
-            availableDlg = new UpdateAvailableDialog(latestVersion, latestLogUri);
-            execAvailableDialog();
         }
         else
         {
             LOG_INFO("You are running the latest available " _E(b) "%s" _E(.) " release.")
                     << (UpdaterSettings().channel() == UpdaterSettings::Stable? "stable" : "unstable");
         }
+
+        if(alwaysShowNotification)
+        {
+            showAvailableDialogAndPause();
+        }
+    }
+
+    void showAvailableDialogAndPause()
+    {
+        if(availableDlg) return; // Just one at a time.
+
+        // Modal dialogs will interrupt gameplay.
+        ClientWindow::main().taskBar().openAndPauseGame();
+
+        availableDlg = new UpdateAvailableDialog(latestVersion, latestLogUri);
+        execAvailableDialog();
     }
 
     void execAvailableDialog()
@@ -595,6 +609,10 @@ void Updater::showCurrentDownload()
     if(d->download)
     {
         d->download->open();
+    }
+    else
+    {
+        d->showAvailableDialogAndPause();
     }
 }
 
