@@ -33,55 +33,43 @@ class Lumobj;
  * the Zone with a >= PU_MAP purge level and access to them is handled
  * with global pointers.
  *
- * @todo Encapsulate allocation of and access to the objlink blockmaps
- *       within de::Map
+ * @todo Encapsulate allocation of and access to the blockmaps in de::Map
  */
-void R_DestroyObjlinkBlockmap();
+void R_DestroyContactBlockmaps();
 
 /**
  * Construct the objlink blockmap for the current map.
  */
-void R_InitObjlinkBlockmapForMap(de::Map &map);
+void R_InitContactBlockmaps(de::Map &map);
 
 /**
  * Initialize the object => BspLeaf contact lists, ready for linking to
  * objects. To be called at the beginning of a new world frame.
  */
-void R_InitForNewFrame(de::Map &map);
-
-/**
- * To be called at the begining of a render frame to clear the objlink
- * blockmap prior to linking objects for the new viewer.
- */
-void R_ClearObjlinksForFrame();
+void R_ClearContacts(de::Map &map);
 
 /**
  * Create a new object link of the specified @a type in the objlink blockmap.
  */
-void R_ObjlinkCreate(struct mobj_s &mobj);
+void R_AddContact(struct mobj_s &mobj);
 
 /// @copydoc R_ObjlinkCreate()
-void R_ObjlinkCreate(Lumobj &lumobj);
+void R_AddContact(Lumobj &lumobj);
 
 /**
- * To be called at the beginning of a render frame to link all objects
- * into the objlink blockmap.
+ * To be called at the beginning of a render frame to link all objects into the
+ * objlink blockmap.
+ *
+ * @todo Why don't we link contacts immediately? -ds
  */
-void R_LinkObjs();
+void R_LinkContacts();
 
 /**
  * Spread object => BspLeaf links for the given @a BspLeaf. Note that all object
  * types will be spread at this time. It is assumed that the BSP leaf is @em not
  * degenerate.
  */
-void R_InitForBspLeaf(BspLeaf &bspLeaf);
-
-/**
- * Create a new object => BspLeaf contact.
- */
-void R_LinkObjToBspLeaf(BspLeaf &bspLeaf, struct mobj_s &mobj);
-/// @copydoc R_LinkObjToBspLeaf()
-void R_LinkObjToBspLeaf(BspLeaf &bspLeaf, Lumobj &lumobj);
+void R_SpreadContacts(BspLeaf &bspLeaf);
 
 /**
  * Traverse the list of mobj contacts which have been linked with @a bspLeaf for

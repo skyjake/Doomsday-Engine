@@ -1144,12 +1144,12 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
     /**
      * Create new objlinks for mobj => BSP leaf contact spreading.
      */
-    void createMobjLinks()
+    void createMobjContacts()
     {
         foreach(Sector *sector, sectors)
         for(mobj_t *iter = sector->firstMobj(); iter; iter = iter->sNext)
         {
-            R_ObjlinkCreate(*iter);
+            R_AddContact(*iter);
         }
     }
 
@@ -2694,7 +2694,7 @@ Lumobj &Map::addLumobj(Lumobj const &lumobj)
     lum.setIndexInMap(d->lumobjs.count() - 1);
 
     lum.bspLeafAtOrigin().link(lum);
-    R_ObjlinkCreate(lum); // For spreading purposes.
+    R_AddContact(lum); // For spreading purposes.
 
     return lum;
 }
@@ -2902,10 +2902,8 @@ void Map::worldFrameBegins(World &world, bool resetNextViewer)
 
         removeAllLumobjs();
 
-        R_ClearObjlinksForFrame(); // Zeroes the links.
-
-        // Clear the objlinks.
-        R_InitForNewFrame(*this);
+        // Clear the "contact" blockmaps (BSP leaf => object).
+        R_ClearContacts(*this);
 
         // Generate surface decorations for the frame.
         if(useLightDecorations)
@@ -2942,13 +2940,13 @@ void Map::worldFrameBegins(World &world, bool resetNextViewer)
         }
 
         // Create objlinks for mobjs.
-        d->createMobjLinks();
+        d->createMobjContacts();
 
         // Link all active particle generators into the world.
         P_CreatePtcGenLinks();
 
         // Link objs to all contacted surfaces.
-        R_LinkObjs();
+        R_LinkContacts();
     }
 }
 

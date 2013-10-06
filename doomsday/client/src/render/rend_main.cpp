@@ -2499,7 +2499,7 @@ static void drawCurrentLeaf()
     leaf->markVisible();
 
     markLeafFrontFacingWalls();
-    R_InitForBspLeaf(*leaf);
+    R_SpreadContacts(*leaf);
     Rend_RadioBspLeafEdges(*leaf);
 
     /*
