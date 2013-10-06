@@ -292,7 +292,6 @@ struct ListNode
 static ListNode *firstNode; ///< First unused list node.
 static ListNode *cursor;    ///< Current list node.
 
-/// @todo Make type lists external.
 struct ContactList
 {
     // Start reusing list nodes.
@@ -305,39 +304,18 @@ struct ContactList
     {
         if(!contact) return;
 
-        ListNode *list = listForType(contact->type());
         ListNode *node = newNode(contact->objectPtr());
 
-        node->next = list;
-        list = node;
+        node->next = _head;
+        _head = node;
     }
 
-    int mobjIterator(int (*callback)(mobj_s &, void *), void *context = 0)
+    ListNode *begin() const
     {
-        for(ListNode *node = listForType(ContactMobj); node; node = node->next)
-        {
-            if(int result = callback(*static_cast<struct mobj_s *>(node->obj), context))
-                return result;
-        }
-        return false; // Continue iteration.
-    }
-
-    int lumobjIterator(int (*callback)(Lumobj &, void *), void *context = 0)
-    {
-        for(ListNode *node = listForType(ContactLumobj); node; node = node->next)
-        {
-            if(int result = callback(*static_cast<Lumobj *>(node->obj), context))
-                return result;
-        }
-        return false; // Continue iteration.
+        return _head;
     }
 
 private:
-    inline ListNode *listForType(ContactType type) const
-    {
-        return _head[type];
-    }
-
     /**
      * Create a new list node. If there are none available in the list of
      * used objects a new one will be allocated and linked to the global list.
@@ -349,7 +327,7 @@ private:
         ListNode *node;
         if(!cursor)
         {
-            node = (ListNode *) Z_Malloc(sizeof *node, PU_APPSTATIC, 0);
+            node = (ListNode *) Z_Malloc(sizeof(*node), PU_APPSTATIC, 0);
 
             // Link in the global list of used nodes.
             node->nextUsed = firstNode;
@@ -362,17 +340,18 @@ private:
         }
 
         node->obj = object;
+        node->next = 0;
 
         return node;
     }
 
-    ListNode *_head[ContactTypeCount]; ///< Separate lists for each contact type.
+    ListNode *_head;
 };
 
 static Contact *contacts;
 static Contact *contactFirst, *contactCursor;
 
-// List of contacts for each BSP leaf.
+// Separate contact lists for each BSP leaf and contact type.
 static ContactList *bspLeafContactLists;
 
 static Contact *newContact(void *object, ContactType type)
@@ -416,7 +395,8 @@ void R_InitContactBlockmaps(Map &map)
 
     // Initialize object => BspLeaf contact lists.
     bspLeafContactLists = (ContactList *)
-        Z_Calloc(sizeof *bspLeafContactLists * map.bspLeafCount(), PU_MAPSTATIC, 0);
+        Z_Calloc(map.bspLeafCount() * ContactTypeCount * sizeof(*bspLeafContactLists),
+                 PU_MAPSTATIC, 0);
 }
 
 void R_DestroyContactBlockmaps()
@@ -438,9 +418,9 @@ static inline ContactBlockmap &blockmap(ContactType type)
     return *blockmaps[int( type )];
 }
 
-static inline ContactList &contactList(BspLeaf &bspLeaf)
+static inline ContactList &contactList(BspLeaf &bspLeaf, ContactType type)
 {
-    return bspLeafContactLists[bspLeaf.indexInMap()];
+    return bspLeafContactLists[bspLeaf.indexInMap() * ContactTypeCount + int( type )];
 }
 
 void R_ClearContacts(Map &map)
@@ -459,7 +439,8 @@ void R_ClearContacts(Map &map)
 
     if(bspLeafContactLists)
     {
-        std::memset(bspLeafContactLists, 0, map.bspLeafCount() * sizeof *bspLeafContactLists);
+        std::memset(bspLeafContactLists, 0,
+                    map.bspLeafCount() * ContactTypeCount * sizeof(*bspLeafContactLists));
     }
 }
 
@@ -503,12 +484,12 @@ static void maybeSpreadOverEdge(HEdge *hedge)
     SectorCluster &cluster = leaf.cluster();
 
     // There must be a back BSP leaf to spread to.
-    if(!hedge->hasTwin() || !hedge->twin().hasFace())
-        return;
+    if(!hedge->hasTwin()) return;
+    if(!hedge->twin().hasFace()) return;
 
     BspLeaf &backLeaf = hedge->twin().face().mapElementAs<BspLeaf>();
-    if(!backLeaf.hasCluster())
-        return;
+    if(!backLeaf.hasCluster()) return;
+
     SectorCluster &backCluster = backLeaf.cluster();
 
     // Which way does the spread go?
@@ -591,8 +572,8 @@ static void maybeSpreadOverEdge(HEdge *hedge)
                 WallEdge edge(WallSpec::fromMapSide(facingLineSide, LineSide::Middle),
                               *facingLineSide.leftHEdge(), Line::From);
 
-                if(edge.isValid() && edge.top().z() > edge.bottom().z()
-                   && edge.top().z() >= openTop && edge.bottom().z() <= openBottom)
+                if(edge.isValid() && edge.top().z() > edge.bottom().z() &&
+                   edge.top().z() >= openTop && edge.bottom().z() <= openBottom)
                     return;
             }
         }
@@ -601,7 +582,7 @@ static void maybeSpreadOverEdge(HEdge *hedge)
     // During the next step this contact will spread from the back leaf.
     backLeaf.setValidCount(validCount);
 
-    contactList(backLeaf).link(spread.contact);
+    contactList(backLeaf, spread.contact->type()).link(spread.contact);
 
     spreadInBspLeaf(backLeaf);
 }
@@ -639,7 +620,7 @@ static void spreadContact(Contact &contact)
     BspLeaf &bspLeaf = contact.objectBspLeafAtOrigin();
     DENG2_ASSERT(bspLeaf.hasCluster()); // Sanity check.
 
-    contactList(bspLeaf).link(&contact);
+    contactList(bspLeaf, contact.type()).link(&contact);
 
     // Spread to neighboring BSP leafs.
     bspLeaf.setValidCount(++validCount);
@@ -651,10 +632,10 @@ static void spreadContact(Contact &contact)
 }
 
 /**
- * Spread contacts in the blockmap to all other BspLeafs within the block.
+ * Spread contacts in the blockmap to any touched neighbors.
  *
- * @param bmap     Contact blockmap.
- * @param bspLeaf  BspLeaf to spread the contacts of.
+ * @param bmap  Contact blockmap.
+ * @param box   Map space region in which to perform spreading.
  */
 static void spreadAllContacts(ContactBlockmap &bmap, AABoxd const &box)
 {
@@ -739,11 +720,23 @@ void R_LinkContacts()
 int R_IterateBspLeafMobjContacts(BspLeaf &bspLeaf,
     int (*callback)(mobj_s &, void *), void *context)
 {
-    return contactList(bspLeaf).mobjIterator(callback, context);
+    ContactList &list = contactList(bspLeaf, ContactMobj);
+    for(ListNode *node = list.begin(); node; node = node->next)
+    {
+        if(int result = callback(*static_cast<mobj_t *>(node->obj), context))
+            return result;
+    }
+    return false; // Continue iteration.
 }
 
 int R_IterateBspLeafLumobjContacts(BspLeaf &bspLeaf,
     int (*callback)(Lumobj &, void *), void *context)
 {
-    return contactList(bspLeaf).lumobjIterator(callback, context);
+    ContactList &list = contactList(bspLeaf, ContactLumobj);
+    for(ListNode *node = list.begin(); node; node = node->next)
+    {
+        if(int result = callback(*static_cast<Lumobj *>(node->obj), context))
+            return result;
+    }
+    return false; // Continue iteration.
 }
