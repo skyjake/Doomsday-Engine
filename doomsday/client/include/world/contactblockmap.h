@@ -21,10 +21,50 @@
 #ifndef DENG_CLIENT_WORLD_CONTACTBLOCKMAP_H
 #define DENG_CLIENT_WORLD_CONTACTBLOCKMAP_H
 
+#include <de/aabox.h>
 #include "world/map.h"
 
 class BspLeaf;
+struct Contact;
 class Lumobj;
+
+class ContactBlockmap
+{
+public:
+    /**
+     * Construct a new contact blockmap.
+     *
+     * @param bounds     Bounding box of the blockmap.
+     * @param blockSize  Size of each block.
+     */
+    ContactBlockmap(AABoxd const &bounds, uint blockSize = 128);
+
+    /**
+     * Returns the origin of the blockmap in map space.
+     */
+    de::Vector2d const &origin() const;
+
+    /**
+     * @param contact  Contact to be linked. Note that if object's origin lies
+     *                 outside the blockmap it will not be linked!
+     */
+    void link(Contact *contact);
+
+    /**
+     * Clear all the contact list heads and spread flags.
+     */
+    void unlinkAll();
+
+    /**
+     * Spread contacts in the blockmap to any touched neighbors.
+     *
+     * @param box   Map space region in which to perform spreading.
+     */
+    void spreadAllContacts(AABoxd const &box);
+
+private:
+    DENG2_PRIVATE(d)
+};
 
 /**
  * To be called during game change/on shutdown to destroy all contact blockmaps.

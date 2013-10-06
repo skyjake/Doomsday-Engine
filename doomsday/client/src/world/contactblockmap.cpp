@@ -133,156 +133,6 @@ struct Contact
     }
 };
 
-class ContactBlockmap
-{
-public:
-    struct CellData
-    {
-        Contact *head;
-        bool doneSpread; ///< Used to prevent repeat processing.
-
-        void unlinkAll()
-        {
-            head = 0;
-            doneSpread = false;
-        }
-    };
-
-public:
-    ContactBlockmap(AABoxd const &bounds, uint blockSize = 128)
-        : _origin(bounds.min),
-          _gridmap(Vector2ui(de::ceil((bounds.maxX - bounds.minX) / ddouble( blockSize )),
-                             de::ceil((bounds.maxY - bounds.minY) / ddouble( blockSize ))),
-                   sizeof(CellData), PU_MAPSTATIC)
-    {}
-
-    /**
-     * Returns the origin of the blockmap in map space.
-     */
-    Vector2d const &origin() const
-    {
-        return _origin;
-    }
-
-    /**
-     * Determines in which blockmap cell the specified map point lies. If the
-     * these coordinates are outside the blockmap they will be clamped within
-     * the valid range.
-     *
-     * @param retAdjusted  If specified, whether or not the @a point coordinates
-     *                     specified had to be adjusted is written back here.
-     *
-     * @return  The determined blockmap cell.
-     */
-    GridmapCell toCell(Vector2d const &point, bool *retAdjusted = 0) const
-    {
-        Vector2d const max = _origin + _gridmap.dimensions() * BLOCK_SIZE;
-
-        GridmapCell cell;
-        bool adjusted = false;
-        if(point.x < _origin.x)
-        {
-            cell.x = 0;
-            adjusted = true;
-        }
-        else if(point.x >= max.x)
-        {
-            cell.x = _gridmap.width() - 1;
-            adjusted = true;
-        }
-        else
-        {
-            cell.x = toX(point.x);
-        }
-
-        if(point.y < _origin.y)
-        {
-            cell.y = 0;
-            adjusted = true;
-        }
-        else if(point.y >= max.y)
-        {
-            cell.y = _gridmap.height() - 1;
-            adjusted = true;
-        }
-        else
-        {
-            cell.y = toY(point.y);
-        }
-
-        if(retAdjusted) *retAdjusted = adjusted;
-
-        return cell;
-    }
-
-    GridmapCellBlock toCellBlock(AABoxd const &box)
-    {
-        GridmapCellBlock cellBlock;
-        cellBlock.min = toCell(box.min);
-        cellBlock.max = toCell(box.max);
-        return cellBlock;
-    }
-
-    /**
-     * @param contact  Contact to be linked. Note that if object's origin lies
-     *                 outside the blockmap it will not be linked!
-     */
-    void link(Contact *contact)
-    {
-        if(!contact) return;
-
-        bool outside;
-        GridmapCell cell = toCell(contact->objectOrigin(), &outside);
-        if(outside) return;
-
-        CellData *cellData = data(cell, true/*can allocate a block*/);
-        contact->nextInBlock = cellData->head;
-        cellData->head = contact;
-    }
-
-    // Clear all the contact list heads and spread flags.
-    void unlinkAll()
-    {
-        iterate(unlinkAllWorker);
-    }
-
-    CellData *data(GridmapCell const &cell, bool canAlloc = false)
-    {
-        return static_cast<CellData *>(_gridmap.cellData(cell, canAlloc));
-    }
-
-private:
-    inline uint toX(ddouble x) const
-    {
-        DENG2_ASSERT(x >= _origin.x);
-        return (x - _origin.x) / ddouble( BLOCK_SIZE );
-    }
-
-    inline uint toY(ddouble y) const
-    {
-        DENG2_ASSERT(y >= _origin.y);
-        return (y - _origin.y) / ddouble( BLOCK_SIZE );
-    }
-
-    static int unlinkAllWorker(void *obj, void *context)
-    {
-        DENG2_UNUSED(context);
-        static_cast<CellData *>(obj)->unlinkAll();
-        return false; // Continue iteration.
-    }
-
-    int iterate(int (*callback) (void *obj, void *context), void *context = 0)
-    {
-        return _gridmap.iterate(callback, context);
-    }
-
-    Vector2d _origin; ///< Origin in map space.
-    Gridmap _gridmap;
-};
-
-// Each contactable object type uses a separate blockmap.
-static ContactBlockmap *blockmaps[ContactTypeCount];
-
 struct ListNode
 {
     ListNode *next;     ///< Next in the BSP leaf.
@@ -348,11 +198,363 @@ private:
     ListNode *_head;
 };
 
-static Contact *contacts;
-static Contact *contactFirst, *contactCursor;
-
 // Separate contact lists for each BSP leaf and contact type.
 static ContactList *bspLeafContactLists;
+
+static inline ContactList &contactList(BspLeaf &bspLeaf, ContactType type)
+{
+    return bspLeafContactLists[bspLeaf.indexInMap() * ContactTypeCount + int( type )];
+}
+
+/**
+ * On which side of the half-edge does the specified @a point lie?
+ *
+ * @param hedge  Half-edge to test.
+ * @param point  Point to test in the map coordinate space.
+ *
+ * @return @c <0 Point is to the left/back of the segment.
+ *         @c =0 Point lies directly on the segment.
+ *         @c >0 Point is to the right/front of the segment.
+ */
+static coord_t pointOnHEdgeSide(HEdge const &hedge, Vector2d const &point)
+{
+    Vector2d const direction = hedge.twin().origin() - hedge.origin();
+
+    ddouble pointV1[2]      = { point.x, point.y };
+    ddouble fromOriginV1[2] = { hedge.origin().x, hedge.origin().y };
+    ddouble directionV1[2]  = { direction.x, direction.y };
+    return V2d_PointOnLineSide(pointV1, fromOriginV1, directionV1);
+}
+
+DENG2_PIMPL(ContactBlockmap)
+{
+    struct CellData
+    {
+        Contact *head;
+        bool doneSpread; ///< Used to prevent repeat processing.
+
+        void unlinkAll()
+        {
+            head = 0;
+            doneSpread = false;
+        }
+    };
+
+    Vector2d origin; ///< Origin in map space.
+    Gridmap gridmap;
+
+    // For perf, spread state data is "global".
+    struct SpreadState
+    {
+        Contact *contact;
+        AABoxd contactAABox;
+    };
+    SpreadState spread;
+
+    Instance(Public *i, AABoxd const &bounds, uint blockSize)
+        : Base(i),
+          origin(bounds.min),
+          gridmap(Vector2ui(de::ceil((bounds.maxX - bounds.minX) / ddouble( blockSize )),
+                            de::ceil((bounds.maxY - bounds.minY) / ddouble( blockSize ))),
+                  sizeof(CellData), PU_MAPSTATIC)
+    {}
+
+    inline uint toX(ddouble x) const
+    {
+        DENG2_ASSERT(x >= origin.x);
+        return (x - origin.x) / ddouble( BLOCK_SIZE );
+    }
+
+    inline uint toY(ddouble y) const
+    {
+        DENG2_ASSERT(y >= origin.y);
+        return (y - origin.y) / ddouble( BLOCK_SIZE );
+    }
+
+    /**
+     * Determines in which blockmap cell the specified map point lies. If the
+     * these coordinates are outside the blockmap they will be clamped within
+     * the valid range.
+     *
+     * @param retAdjusted  If specified, whether or not the @a point coordinates
+     *                     specified had to be adjusted is written back here.
+     *
+     * @return  The determined blockmap cell.
+     */
+    GridmapCell toCell(Vector2d const &point, bool *retAdjusted = 0) const
+    {
+        Vector2d const max = origin + gridmap.dimensions() * BLOCK_SIZE;
+
+        GridmapCell cell;
+        bool adjusted = false;
+        if(point.x < origin.x)
+        {
+            cell.x = 0;
+            adjusted = true;
+        }
+        else if(point.x >= max.x)
+        {
+            cell.x = gridmap.width() - 1;
+            adjusted = true;
+        }
+        else
+        {
+            cell.x = toX(point.x);
+        }
+
+        if(point.y < origin.y)
+        {
+            cell.y = 0;
+            adjusted = true;
+        }
+        else if(point.y >= max.y)
+        {
+            cell.y = gridmap.height() - 1;
+            adjusted = true;
+        }
+        else
+        {
+            cell.y = toY(point.y);
+        }
+
+        if(retAdjusted) *retAdjusted = adjusted;
+
+        return cell;
+    }
+
+    GridmapCellBlock toCellBlock(AABoxd const &box)
+    {
+        GridmapCellBlock cellBlock;
+        cellBlock.min = toCell(box.min);
+        cellBlock.max = toCell(box.max);
+        return cellBlock;
+    }
+
+    /**
+     * Returns the data for the specified cell.
+     */
+    inline CellData *cellData(GridmapCell const &cell, bool canAlloc = false)
+    {
+        return static_cast<CellData *>(gridmap.cellData(cell, canAlloc));
+    }
+
+    void maybeSpreadOverEdge(HEdge *hedge)
+    {
+        DENG2_ASSERT(spread.contact != 0);
+
+        if(!hedge) return;
+
+        BspLeaf &leaf = hedge->face().mapElementAs<BspLeaf>();
+        SectorCluster &cluster = leaf.cluster();
+
+        // There must be a back BSP leaf to spread to.
+        if(!hedge->hasTwin()) return;
+        if(!hedge->twin().hasFace()) return;
+
+        BspLeaf &backLeaf = hedge->twin().face().mapElementAs<BspLeaf>();
+        if(!backLeaf.hasCluster()) return;
+
+        SectorCluster &backCluster = backLeaf.cluster();
+
+        // Which way does the spread go?
+        if(!(leaf.validCount() == validCount && backLeaf.validCount() != validCount))
+        {
+            return; // Not eligible for spreading.
+        }
+
+        AABoxd const &backLeafAABox = backLeaf.poly().aaBox();
+
+        // Is the leaf on the back side outside the origin's AABB?
+        if(backLeafAABox.maxX <= spread.contactAABox.minX ||
+           backLeafAABox.minX >= spread.contactAABox.maxX ||
+           backLeafAABox.maxY <= spread.contactAABox.minY ||
+           backLeafAABox.minY >= spread.contactAABox.maxY)
+            return;
+
+        // Too far from the edge?
+        coord_t const length   = (hedge->twin().origin() - hedge->origin()).length();
+        coord_t const distance = pointOnHEdgeSide(*hedge, spread.contact->objectOrigin()) / length;
+        if(de::abs(distance) >= spread.contact->objectRadius())
+            return;
+
+        // Do not spread if the sector on the back side is closed with no height.
+        if(!backCluster.hasWorldVolume())
+            return;
+
+        if(backCluster.visCeiling().heightSmoothed() <= cluster.visFloor().heightSmoothed() ||
+           backCluster.visFloor().heightSmoothed() >= cluster.visCeiling().heightSmoothed())
+            return;
+
+        // Are there line side surfaces which should prevent spreading?
+        if(hedge->hasMapElement())
+        {
+            LineSideSegment const &seg = hedge->mapElementAs<LineSideSegment>();
+
+            // On which side of the line are we? (distance is from segment to origin).
+            LineSide const &facingLineSide = seg.line().side(seg.lineSide().sideId() ^ (distance < 0));
+
+            // One-way window?
+            if(!facingLineSide.back().hasSections())
+                return;
+
+            SectorCluster const &fromCluster = facingLineSide.isFront()? cluster : backCluster;
+            SectorCluster const &toCluster   = facingLineSide.isFront()? backCluster : cluster;
+
+            // Might a material cover the opening?
+            if(facingLineSide.hasSections() && facingLineSide.middle().hasMaterial())
+            {
+                // Stretched middles always cover the opening.
+                if(facingLineSide.isFlagged(SDF_MIDDLE_STRETCH))
+                    return;
+
+                // Determine the opening between the visual sector planes at this edge.
+                coord_t openBottom;
+                if(toCluster.visFloor().heightSmoothed() > fromCluster.visFloor().heightSmoothed())
+                {
+                    openBottom = toCluster.visFloor().heightSmoothed();
+                }
+                else
+                {
+                    openBottom = fromCluster.visFloor().heightSmoothed();
+                }
+
+                coord_t openTop;
+                if(toCluster.visCeiling().heightSmoothed() < fromCluster.visCeiling().heightSmoothed())
+                {
+                    openTop = toCluster.visCeiling().heightSmoothed();
+                }
+                else
+                {
+                    openTop = fromCluster.visCeiling().heightSmoothed();
+                }
+
+                // Ensure we have up to date info about the material.
+                MaterialSnapshot const &ms = facingLineSide.middle().material().prepare(Rend_MapSurfaceMaterialSpec());
+                if(ms.height() >= openTop - openBottom)
+                {
+                    // Possibly; check the placement.
+                    WallEdge edge(WallSpec::fromMapSide(facingLineSide, LineSide::Middle),
+                                  *facingLineSide.leftHEdge(), Line::From);
+
+                    if(edge.isValid() && edge.top().z() > edge.bottom().z() &&
+                       edge.top().z() >= openTop && edge.bottom().z() <= openBottom)
+                        return;
+                }
+            }
+        }
+
+        // During the next step this contact will spread from the back leaf.
+        backLeaf.setValidCount(validCount);
+
+        contactList(backLeaf, spread.contact->type()).link(spread.contact);
+
+        spreadInBspLeaf(backLeaf);
+    }
+
+    /**
+     * Attempt to spread the obj from the given contact from the source
+     * BspLeaf and into the (relative) back BspLeaf.
+     *
+     * @param bspLeaf  BspLeaf to attempt to spread over to.
+     *
+     * @return  Always @c true. (This function is also used as an iterator.)
+     */
+    void spreadInBspLeaf(BspLeaf &bspLeaf)
+    {
+        if(bspLeaf.hasCluster())
+        {
+            HEdge *base = bspLeaf.poly().hedge();
+            HEdge *hedge = base;
+            do
+            {
+                maybeSpreadOverEdge(hedge);
+
+            } while((hedge = &hedge->next()) != base);
+        }
+    }
+
+    /**
+     * Link the contact in all BspLeafs which touch the linked object (tests are
+     * done with bounding boxes and the BSP leaf spread test).
+     *
+     * @param contact  Contact to be spread.
+     */
+    void spreadContact(Contact &contact)
+    {
+        BspLeaf &bspLeaf = contact.objectBspLeafAtOrigin();
+        DENG2_ASSERT(bspLeaf.hasCluster()); // Sanity check.
+
+        contactList(bspLeaf, contact.type()).link(&contact);
+
+        // Spread to neighboring BSP leafs.
+        bspLeaf.setValidCount(++validCount);
+
+        spread.contact      = &contact;
+        spread.contactAABox = contact.objectAABox();
+
+        spreadInBspLeaf(bspLeaf);
+    }
+
+    static int unlinkAllWorker(void *obj, void *context)
+    {
+        DENG2_UNUSED(context);
+        static_cast<CellData *>(obj)->unlinkAll();
+        return false; // Continue iteration.
+    }
+};
+
+ContactBlockmap::ContactBlockmap(const AABoxd &bounds, uint blockSize)
+    : d(new Instance(this, bounds, blockSize))
+{}
+
+Vector2d const &ContactBlockmap::origin() const
+{
+    return d->origin;
+}
+
+void ContactBlockmap::link(Contact *contact)
+{
+    if(!contact) return;
+
+    bool outside;
+    GridmapCell cell = d->toCell(contact->objectOrigin(), &outside);
+    if(outside) return;
+
+    Instance::CellData *data = d->cellData(cell, true/*can allocate a block*/);
+    contact->nextInBlock = data->head;
+    data->head = contact;
+}
+
+void ContactBlockmap::unlinkAll()
+{
+    d->gridmap.iterate(Instance::unlinkAllWorker);
+}
+
+void ContactBlockmap::spreadAllContacts(AABoxd const &box)
+{
+    GridmapCellBlock const cellBlock = d->toCellBlock(box);
+
+    GridmapCell cell;
+    for(cell.y = cellBlock.min.y; cell.y <= cellBlock.max.y; ++cell.y)
+    for(cell.x = cellBlock.min.x; cell.x <= cellBlock.max.x; ++cell.x)
+    {
+        Instance::CellData *data = d->cellData(cell, true/*can allocate a block*/);
+        if(!data->doneSpread)
+        {
+            for(Contact *iter = data->head; iter; iter = iter->nextInBlock)
+            {
+                d->spreadContact(*iter);
+            }
+            data->doneSpread = true;
+        }
+    }
+}
+
+// Each contactable object type uses a separate blockmap.
+static ContactBlockmap *blockmaps[ContactTypeCount];
+
+static Contact *contacts;
+static Contact *contactFirst, *contactCursor;
 
 static Contact *newContact(void *object, ContactType type)
 {
@@ -418,11 +620,6 @@ static inline ContactBlockmap &blockmap(ContactType type)
     return *blockmaps[int( type )];
 }
 
-static inline ContactList &contactList(BspLeaf &bspLeaf, ContactType type)
-{
-    return bspLeafContactLists[bspLeaf.indexInMap() * ContactTypeCount + int( type )];
-}
-
 void R_ClearContacts(Map &map)
 {
     for(int i = 0; i < ContactTypeCount; ++i)
@@ -444,218 +641,6 @@ void R_ClearContacts(Map &map)
     }
 }
 
-/**
- * On which side of the half-edge does the specified @a point lie?
- *
- * @param hedge  Half-edge to test.
- * @param point  Point to test in the map coordinate space.
- *
- * @return @c <0 Point is to the left/back of the segment.
- *         @c =0 Point lies directly on the segment.
- *         @c >0 Point is to the right/front of the segment.
- */
-static coord_t pointOnHEdgeSide(HEdge const &hedge, Vector2d const &point)
-{
-    Vector2d const direction = hedge.twin().origin() - hedge.origin();
-
-    ddouble pointV1[2]      = { point.x, point.y };
-    ddouble fromOriginV1[2] = { hedge.origin().x, hedge.origin().y };
-    ddouble directionV1[2]  = { direction.x, direction.y };
-    return V2d_PointOnLineSide(pointV1, fromOriginV1, directionV1);
-}
-
-// For perf, spread state data is global.
-struct SpreadState
-{
-    Contact *contact;
-    AABoxd contactAABox;
-};
-static SpreadState spread;
-
-static void spreadInBspLeaf(BspLeaf &bspLeaf);
-
-static void maybeSpreadOverEdge(HEdge *hedge)
-{
-    DENG2_ASSERT(spread.contact != 0);
-
-    if(!hedge) return;
-
-    BspLeaf &leaf = hedge->face().mapElementAs<BspLeaf>();
-    SectorCluster &cluster = leaf.cluster();
-
-    // There must be a back BSP leaf to spread to.
-    if(!hedge->hasTwin()) return;
-    if(!hedge->twin().hasFace()) return;
-
-    BspLeaf &backLeaf = hedge->twin().face().mapElementAs<BspLeaf>();
-    if(!backLeaf.hasCluster()) return;
-
-    SectorCluster &backCluster = backLeaf.cluster();
-
-    // Which way does the spread go?
-    if(!(leaf.validCount() == validCount && backLeaf.validCount() != validCount))
-    {
-        return; // Not eligible for spreading.
-    }
-
-    AABoxd const &backLeafAABox = backLeaf.poly().aaBox();
-
-    // Is the leaf on the back side outside the origin's AABB?
-    if(backLeafAABox.maxX <= spread.contactAABox.minX ||
-       backLeafAABox.minX >= spread.contactAABox.maxX ||
-       backLeafAABox.maxY <= spread.contactAABox.minY ||
-       backLeafAABox.minY >= spread.contactAABox.maxY)
-        return;
-
-    // Too far from the edge?
-    coord_t const length   = (hedge->twin().origin() - hedge->origin()).length();
-    coord_t const distance = pointOnHEdgeSide(*hedge, spread.contact->objectOrigin()) / length;
-    if(de::abs(distance) >= spread.contact->objectRadius())
-        return;
-
-    // Do not spread if the sector on the back side is closed with no height.
-    if(!backCluster.hasWorldVolume())
-        return;
-
-    if(backCluster.visCeiling().heightSmoothed() <= cluster.visFloor().heightSmoothed() ||
-       backCluster.visFloor().heightSmoothed() >= cluster.visCeiling().heightSmoothed())
-        return;
-
-    // Are there line side surfaces which should prevent spreading?
-    if(hedge->hasMapElement())
-    {
-        LineSideSegment const &seg = hedge->mapElementAs<LineSideSegment>();
-
-        // On which side of the line are we? (distance is from segment to origin).
-        LineSide const &facingLineSide = seg.line().side(seg.lineSide().sideId() ^ (distance < 0));
-
-        // One-way window?
-        if(!facingLineSide.back().hasSections())
-            return;
-
-        SectorCluster const &fromCluster = facingLineSide.isFront()? cluster : backCluster;
-        SectorCluster const &toCluster   = facingLineSide.isFront()? backCluster : cluster;
-
-        // Might a material cover the opening?
-        if(facingLineSide.hasSections() && facingLineSide.middle().hasMaterial())
-        {
-            // Stretched middles always cover the opening.
-            if(facingLineSide.isFlagged(SDF_MIDDLE_STRETCH))
-                return;
-
-            // Determine the opening between the visual sector planes at this edge.
-            coord_t openBottom;
-            if(toCluster.visFloor().heightSmoothed() > fromCluster.visFloor().heightSmoothed())
-            {
-                openBottom = toCluster.visFloor().heightSmoothed();
-            }
-            else
-            {
-                openBottom = fromCluster.visFloor().heightSmoothed();
-            }
-
-            coord_t openTop;
-            if(toCluster.visCeiling().heightSmoothed() < fromCluster.visCeiling().heightSmoothed())
-            {
-                openTop = toCluster.visCeiling().heightSmoothed();
-            }
-            else
-            {
-                openTop = fromCluster.visCeiling().heightSmoothed();
-            }
-
-            // Ensure we have up to date info about the material.
-            MaterialSnapshot const &ms = facingLineSide.middle().material().prepare(Rend_MapSurfaceMaterialSpec());
-            if(ms.height() >= openTop - openBottom)
-            {
-                // Possibly; check the placement.
-                WallEdge edge(WallSpec::fromMapSide(facingLineSide, LineSide::Middle),
-                              *facingLineSide.leftHEdge(), Line::From);
-
-                if(edge.isValid() && edge.top().z() > edge.bottom().z() &&
-                   edge.top().z() >= openTop && edge.bottom().z() <= openBottom)
-                    return;
-            }
-        }
-    }
-
-    // During the next step this contact will spread from the back leaf.
-    backLeaf.setValidCount(validCount);
-
-    contactList(backLeaf, spread.contact->type()).link(spread.contact);
-
-    spreadInBspLeaf(backLeaf);
-}
-
-/**
- * Attempt to spread the obj from the given contact from the source
- * BspLeaf and into the (relative) back BspLeaf.
- *
- * @param bspLeaf  BspLeaf to attempt to spread over to.
- *
- * @return  Always @c true. (This function is also used as an iterator.)
- */
-static void spreadInBspLeaf(BspLeaf &bspLeaf)
-{
-    if(bspLeaf.hasCluster())
-    {
-        HEdge *base = bspLeaf.poly().hedge();
-        HEdge *hedge = base;
-        do
-        {
-            maybeSpreadOverEdge(hedge);
-
-        } while((hedge = &hedge->next()) != base);
-    }
-}
-
-/**
- * Link the contact in all BspLeafs which touch the linked object (tests are
- * done with bounding boxes and the BSP leaf spread test).
- *
- * @param contact  Contact to be spread.
- */
-static void spreadContact(Contact &contact)
-{
-    BspLeaf &bspLeaf = contact.objectBspLeafAtOrigin();
-    DENG2_ASSERT(bspLeaf.hasCluster()); // Sanity check.
-
-    contactList(bspLeaf, contact.type()).link(&contact);
-
-    // Spread to neighboring BSP leafs.
-    bspLeaf.setValidCount(++validCount);
-
-    spread.contact      = &contact;
-    spread.contactAABox = contact.objectAABox();
-
-    spreadInBspLeaf(bspLeaf);
-}
-
-/**
- * Spread contacts in the blockmap to any touched neighbors.
- *
- * @param bmap  Contact blockmap.
- * @param box   Map space region in which to perform spreading.
- */
-static void spreadAllContacts(ContactBlockmap &bmap, AABoxd const &box)
-{
-    GridmapCellBlock const cellBlock = bmap.toCellBlock(box);
-
-    GridmapCell cell;
-    for(cell.y = cellBlock.min.y; cell.y <= cellBlock.max.y; ++cell.y)
-    for(cell.x = cellBlock.min.x; cell.x <= cellBlock.max.x; ++cell.x)
-    {
-        ContactBlockmap::CellData *data = bmap.data(cell, true/*can allocate a block*/);
-        if(!data->doneSpread)
-        {
-            for(Contact *iter = data->head; iter; iter = iter->nextInBlock)
-            {
-                spreadContact(*iter);
-            }
-            data->doneSpread = true;
-        }
-    }
-}
 
 static inline float radiusMax(ContactType type)
 {
@@ -686,7 +671,7 @@ void R_SpreadContacts(BspLeaf &bspLeaf)
         bounds.maxX += maxRadius;
         bounds.maxY += maxRadius;
 
-        spreadAllContacts(bmap, bounds);
+        bmap.spreadAllContacts(bounds);
     }
 }
 
