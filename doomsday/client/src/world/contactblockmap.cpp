@@ -139,7 +139,7 @@ public:
     struct CellData
     {
         Contact *head;
-        bool doneSpread; ///< Used to prevent repeated per-frame processing of a block.
+        bool doneSpread; ///< Used to prevent repeat processing.
 
         void unlinkAll()
         {
@@ -414,10 +414,9 @@ void R_InitContactBlockmaps(Map &map)
         blockmaps[i] = new ContactBlockmap(map.bounds(), BLOCK_SIZE);
     }
 
-    // Initialize obj => BspLeaf contact lists.
+    // Initialize object => BspLeaf contact lists.
     bspLeafContactLists = (ContactList *)
-        Z_Calloc(sizeof *bspLeafContactLists * map.bspLeafCount(),
-                 PU_MAPSTATIC, 0);
+        Z_Calloc(sizeof *bspLeafContactLists * map.bspLeafCount(), PU_MAPSTATIC, 0);
 }
 
 void R_DestroyContactBlockmaps()
@@ -464,23 +463,6 @@ void R_ClearContacts(Map &map)
     }
 }
 
-static void linkContact(BspLeaf &bspLeaf, Contact *contact)
-{
-    DENG2_ASSERT(contact != 0);
-    // BspLeafs with no geometry cannot be contacted (zero world volume).
-    DENG2_ASSERT(bspLeaf.hasCluster());
-
-    contactList(bspLeaf).link(contact);
-}
-
-struct contactfinderparams_t
-{
-    Contact *contact;
-    AABoxd objAABox;
-};
-
-static void spreadInBspLeaf(BspLeaf &bspLeaf, contactfinderparams_t &parms);
-
 /**
  * On which side of the half-edge does the specified @a point lie?
  *
@@ -501,8 +483,20 @@ static coord_t pointOnHEdgeSide(HEdge const &hedge, Vector2d const &point)
     return V2d_PointOnLineSide(pointV1, fromOriginV1, directionV1);
 }
 
-static void maybeSpreadOverEdge(HEdge *hedge, contactfinderparams_t &parms)
+// For perf, spread state data is global.
+struct SpreadState
 {
+    Contact *contact;
+    AABoxd contactAABox;
+};
+static SpreadState spread;
+
+static void spreadInBspLeaf(BspLeaf &bspLeaf);
+
+static void maybeSpreadOverEdge(HEdge *hedge)
+{
+    DENG2_ASSERT(spread.contact != 0);
+
     if(!hedge) return;
 
     BspLeaf &leaf = hedge->face().mapElementAs<BspLeaf>();
@@ -526,16 +520,16 @@ static void maybeSpreadOverEdge(HEdge *hedge, contactfinderparams_t &parms)
     AABoxd const &backLeafAABox = backLeaf.poly().aaBox();
 
     // Is the leaf on the back side outside the origin's AABB?
-    if(backLeafAABox.maxX <= parms.objAABox.minX ||
-       backLeafAABox.minX >= parms.objAABox.maxX ||
-       backLeafAABox.maxY <= parms.objAABox.minY ||
-       backLeafAABox.minY >= parms.objAABox.maxY)
+    if(backLeafAABox.maxX <= spread.contactAABox.minX ||
+       backLeafAABox.minX >= spread.contactAABox.maxX ||
+       backLeafAABox.maxY <= spread.contactAABox.minY ||
+       backLeafAABox.minY >= spread.contactAABox.maxY)
         return;
 
     // Too far from the edge?
     coord_t const length   = (hedge->twin().origin() - hedge->origin()).length();
-    coord_t const distance = pointOnHEdgeSide(*hedge, parms.contact->objectOrigin()) / length;
-    if(de::abs(distance) >= parms.contact->objectRadius())
+    coord_t const distance = pointOnHEdgeSide(*hedge, spread.contact->objectOrigin()) / length;
+    if(de::abs(distance) >= spread.contact->objectRadius())
         return;
 
     // Do not spread if the sector on the back side is closed with no height.
@@ -604,12 +598,12 @@ static void maybeSpreadOverEdge(HEdge *hedge, contactfinderparams_t &parms)
         }
     }
 
-    // During next step, obj will continue spreading from there.
+    // During the next step this contact will spread from the back leaf.
     backLeaf.setValidCount(validCount);
 
-    linkContact(backLeaf, parms.contact);
+    contactList(backLeaf).link(spread.contact);
 
-    spreadInBspLeaf(backLeaf, parms);
+    spreadInBspLeaf(backLeaf);
 }
 
 /**
@@ -617,11 +611,10 @@ static void maybeSpreadOverEdge(HEdge *hedge, contactfinderparams_t &parms)
  * BspLeaf and into the (relative) back BspLeaf.
  *
  * @param bspLeaf  BspLeaf to attempt to spread over to.
- * @param parms    Contact finder parameters.
  *
  * @return  Always @c true. (This function is also used as an iterator.)
  */
-static void spreadInBspLeaf(BspLeaf &bspLeaf, contactfinderparams_t &parms)
+static void spreadInBspLeaf(BspLeaf &bspLeaf)
 {
     if(bspLeaf.hasCluster())
     {
@@ -629,7 +622,7 @@ static void spreadInBspLeaf(BspLeaf &bspLeaf, contactfinderparams_t &parms)
         HEdge *hedge = base;
         do
         {
-            maybeSpreadOverEdge(hedge, parms);
+            maybeSpreadOverEdge(hedge);
 
         } while((hedge = &hedge->next()) != base);
     }
@@ -641,22 +634,20 @@ static void spreadInBspLeaf(BspLeaf &bspLeaf, contactfinderparams_t &parms)
  *
  * @param contact  Contact to be spread.
  */
-static void spreadContact(Contact *contact)
+static void spreadContact(Contact &contact)
 {
-    DENG_ASSERT(contact != 0);
+    BspLeaf &bspLeaf = contact.objectBspLeafAtOrigin();
+    DENG2_ASSERT(bspLeaf.hasCluster()); // Sanity check.
 
-    BspLeaf &bspLeaf = contact->objectBspLeafAtOrigin();
-
-    linkContact(bspLeaf, contact);
+    contactList(bspLeaf).link(&contact);
 
     // Spread to neighboring BSP leafs.
     bspLeaf.setValidCount(++validCount);
 
-    contactfinderparams_t parms; zap(parms);
-    parms.contact  = contact;
-    parms.objAABox = contact->objectAABox();
+    spread.contact      = &contact;
+    spread.contactAABox = contact.objectAABox();
 
-    spreadInBspLeaf(bspLeaf, parms);
+    spreadInBspLeaf(bspLeaf);
 }
 
 /**
@@ -678,7 +669,7 @@ static void spreadAllContacts(ContactBlockmap &bmap, AABoxd const &box)
         {
             for(Contact *iter = data->head; iter; iter = iter->nextInBlock)
             {
-                spreadContact(iter);
+                spreadContact(*iter);
             }
             data->doneSpread = true;
         }
@@ -705,7 +696,7 @@ void R_SpreadContacts(BspLeaf &bspLeaf)
 
     for(int i = 0; i < ContactTypeCount; ++i)
     {
-        float const maxRadius   = radiusMax(ContactType(i));
+        float const maxRadius = radiusMax(ContactType(i));
         ContactBlockmap &bmap = blockmap(ContactType(i));
 
         AABoxd bounds = bspLeaf.poly().aaBox();
