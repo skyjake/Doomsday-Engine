@@ -1,4 +1,4 @@
-/** @file p_objlink.h World map object => BSP leaf contact blockmap.
+/** @file p_objlink.h World object => BSP leaf "contact" blockmap.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -17,10 +17,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_WORLD_OBJLINK_H
-#define DENG_CLIENT_WORLD_OBJLINK_H
-
 #ifdef __CLIENT__
+#ifndef DENG_CLIENT_WORLD_CONTACTBLOCKMAP_H
+#define DENG_CLIENT_WORLD_CONTACTBLOCKMAP_H
 
 #include "world/map.h"
 
@@ -28,63 +27,61 @@ class BspLeaf;
 class Lumobj;
 
 /**
- * To be called during a game change/on shutdown to destroy the objlink
- * blockmap. This is necessary because the blockmaps are allocated from
- * the Zone with a >= PU_MAP purge level and access to them is handled
- * with global pointers.
+ * To be called during game change/on shutdown to destroy all contact blockmaps.
+ * This is necessary because the blockmaps are allocated from the Zone using a
+ * >= PU_MAP purge level and access to them is handled with global pointers.
  *
  * @todo Encapsulate allocation of and access to the blockmaps in de::Map
  */
 void R_DestroyContactBlockmaps();
 
 /**
- * Construct the objlink blockmap for the current map.
+ * Initialize contact blockmaps for the current map.
  */
 void R_InitContactBlockmaps(de::Map &map);
 
 /**
- * Initialize the object => BspLeaf contact lists, ready for linking to
- * objects. To be called at the beginning of a new world frame.
+ * To be called at the beginning of a render frame to clear all contacts ready
+ * for the new frame.
  */
 void R_ClearContacts(de::Map &map);
 
 /**
- * Create a new object link of the specified @a type in the objlink blockmap.
+ * Add a new contact for the specified mobj, for spreading purposes.
  */
 void R_AddContact(struct mobj_s &mobj);
 
-/// @copydoc R_ObjlinkCreate()
+/**
+ * Add a new contact for the specified lumobj, for spreading purposes.
+ */
 void R_AddContact(Lumobj &lumobj);
 
 /**
- * To be called at the beginning of a render frame to link all objects into the
- * objlink blockmap.
+ * To be called to link all contacts into the contact blockmaps.
  *
  * @todo Why don't we link contacts immediately? -ds
  */
 void R_LinkContacts();
 
 /**
- * Spread object => BspLeaf links for the given @a BspLeaf. Note that all object
- * types will be spread at this time. It is assumed that the BSP leaf is @em not
- * degenerate.
+ * Perform all contact spreading for the specified @a BspLeaf. Note this should
+ * only be called once per BSP leaf per render frame!
  */
 void R_SpreadContacts(BspLeaf &bspLeaf);
 
 /**
- * Traverse the list of mobj contacts which have been linked with @a bspLeaf for
- * the current render frame.
+ * Traverse the list of mobj contacts linked directly to @a bspLeaf, for the
+ * current render frame.
  */
 int R_IterateBspLeafMobjContacts(BspLeaf &bspLeaf,
     int (*callback) (struct mobj_s &, void *), void *context = 0);
 
 /**
- * Traverse the list of lumobj contacts which have been linked with @a bspLeaf for
- * the current render frame.
+ * Traverse the list of lumobj contacts linked directly to @a bspLeaf, for the
+ * current render frame.
  */
 int R_IterateBspLeafLumobjContacts(BspLeaf &bspLeaf,
     int (*callback) (Lumobj &, void *), void *context = 0);
 
+#endif // DENG_CLIENT_WORLD_CONTACTBLOCKMAP_H
 #endif // __CLIENT__
-
-#endif // DENG_CLIENT_WORLD_OBJLINK_H

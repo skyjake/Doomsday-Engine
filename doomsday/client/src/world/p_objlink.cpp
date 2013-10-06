@@ -223,20 +223,20 @@ public:
     }
 
     /**
-     * @param objlink  Object to be linked. Note that if linked object's origin
-     *                 lies outside the blockmap it will not be linked!
+     * @param contact  Contact to be linked. Note that if object's origin lies
+     *                 outside the blockmap it will not be linked!
      */
-    void link(Contact *objlink)
+    void link(Contact *contact)
     {
-        if(!objlink) return;
+        if(!contact) return;
 
         bool outside;
-        GridmapCell cell = toCell(objlink->objectOrigin(), &outside);
+        GridmapCell cell = toCell(contact->objectOrigin(), &outside);
         if(outside) return;
 
-        CellData *block = data(cell, true/*can allocate a block*/);
-        objlink->nextInBlock = block->head;
-        block->head = objlink;
+        CellData *cellData = data(cell, true/*can allocate a block*/);
+        contact->nextInBlock = cellData->head;
+        cellData->head = contact;
     }
 
     // Clear all the contact list heads and spread flags.
@@ -300,12 +300,12 @@ struct ContactList
         cursor = firstNode;
     }
 
-    void link(Contact *objlink)
+    void link(Contact *contact)
     {
-        if(!objlink) return;
+        if(!contact) return;
 
-        ListNode *list = listForType(objlink->type());
-        ListNode *node = newNode(objlink->objectPtr());
+        ListNode *list = listForType(contact->type());
+        ListNode *node = newNode(contact->objectPtr());
 
         node->next = list;
         list = node;
@@ -374,7 +374,7 @@ static Contact *objlinkFirst, *objlinkCursor;
 // List of contacts for each BSP leaf.
 static ContactList *bspLeafContactLists;
 
-static Contact *newObjlink(void *object, ContactType type)
+static Contact *newContact(void *object, ContactType type)
 {
     DENG2_ASSERT(object != 0);
 
@@ -463,18 +463,18 @@ void R_ClearContacts(Map &map)
     }
 }
 
-static void linkContact(BspLeaf &bspLeaf, Contact *objlink)
+static void linkContact(BspLeaf &bspLeaf, Contact *contact)
 {
-    DENG2_ASSERT(objlink != 0);
+    DENG2_ASSERT(contact != 0);
     // Never link to a BspLeaf with no geometry.
     DENG2_ASSERT(bspLeaf.hasCluster());
 
-    contactList(bspLeaf).link(objlink);
+    contactList(bspLeaf).link(contact);
 }
 
 struct contactfinderparams_t
 {
-    Contact *objlink;
+    Contact *contact;
     AABoxd objAABox;
 };
 
@@ -533,8 +533,8 @@ static void maybeSpreadOverEdge(HEdge *hedge, contactfinderparams_t &parms)
 
     // Too far from the edge?
     coord_t const length   = (hedge->twin().origin() - hedge->origin()).length();
-    coord_t const distance = pointOnHEdgeSide(*hedge, parms.objlink->objectOrigin()) / length;
-    if(de::abs(distance) >= parms.objlink->objectRadius())
+    coord_t const distance = pointOnHEdgeSide(*hedge, parms.contact->objectOrigin()) / length;
+    if(de::abs(distance) >= parms.contact->objectRadius())
         return;
 
     // Do not spread if the sector on the back side is closed with no height.
@@ -607,7 +607,7 @@ static void maybeSpreadOverEdge(HEdge *hedge, contactfinderparams_t &parms)
     backLeaf.setValidCount(validCount);
 
     // Link up a new contact with the back BSP leaf.
-    linkContact(backLeaf, parms.objlink);
+    linkContact(backLeaf, parms.contact);
 
     spreadInBspLeaf(backLeaf, parms);
 }
@@ -636,26 +636,26 @@ static void spreadInBspLeaf(BspLeaf &bspLeaf, contactfinderparams_t &parms)
 }
 
 /**
- * Create a contact for the objlink in all the BspLeafs the linked obj is
- * contacting (tests done on bounding boxes and the BSP leaf spread test).
+ * Link the contact in all BspLeafs which touch the linked object (tests are
+ * done with bounding boxes and the BSP leaf spread test).
  *
- * @param oLink Ptr to objlink to find BspLeaf contacts for.
+ * @param contact  Contact to be spread.
  */
-static void findContacts(Contact *link)
+static void spreadContact(Contact *contact)
 {
-    DENG_ASSERT(link != 0);
+    DENG_ASSERT(contact != 0);
 
-    BspLeaf &bspLeaf = link->objectBspLeafAtOrigin();
+    BspLeaf &bspLeaf = contact->objectBspLeafAtOrigin();
 
     // Do the BSP leaf spread. Begin from the obj's own BspLeaf.
     bspLeaf.setValidCount(++validCount);
 
     contactfinderparams_t parms; zap(parms);
-    parms.objlink  = link;
-    parms.objAABox = link->objectAABox();
+    parms.contact  = contact;
+    parms.objAABox = contact->objectAABox();
 
     // Always contact the obj's own BspLeaf.
-    linkContact(bspLeaf, link);
+    linkContact(bspLeaf, contact);
 
     spreadInBspLeaf(bspLeaf, parms);
 }
@@ -663,23 +663,23 @@ static void findContacts(Contact *link)
 /**
  * Spread contacts in the blockmap to all other BspLeafs within the block.
  *
- * @param obm      Objlink blockmap.
+ * @param bmap     Contact blockmap.
  * @param bspLeaf  BspLeaf to spread the contacts of.
  */
-static void spreadContacts(ContactBlockmap &obm, AABoxd const &box)
+static void spreadAllContacts(ContactBlockmap &bmap, AABoxd const &box)
 {
-    GridmapCellBlock const cellBlock = obm.toCellBlock(box);
+    GridmapCellBlock const cellBlock = bmap.toCellBlock(box);
 
     GridmapCell cell;
     for(cell.y = cellBlock.min.y; cell.y <= cellBlock.max.y; ++cell.y)
     for(cell.x = cellBlock.min.x; cell.x <= cellBlock.max.x; ++cell.x)
     {
-        ContactBlockmap::CellData *data = obm.data(cell, true/*can allocate a block*/);
+        ContactBlockmap::CellData *data = bmap.data(cell, true/*can allocate a block*/);
         if(!data->doneSpread)
         {
             for(Contact *iter = data->head; iter; iter = iter->nextInBlock)
             {
-                findContacts(iter);
+                spreadContact(iter);
             }
             data->doneSpread = true;
         }
@@ -715,7 +715,7 @@ void R_SpreadContacts(BspLeaf &bspLeaf)
         bounds.maxX += maxRadius;
         bounds.maxY += maxRadius;
 
-        spreadContacts(bmap, bounds);
+        spreadAllContacts(bmap, bounds);
     }
 }
 
@@ -724,7 +724,7 @@ void R_AddContact(mobj_t &mobj)
     // Never link to a BspLeaf with no geometry.
     if(Mobj_BspLeafAtOrigin(mobj).hasCluster())
     {
-        newObjlink(&mobj, ContactMobj);
+        newContact(&mobj, ContactMobj);
     }
 }
 
@@ -733,7 +733,7 @@ void R_AddContact(Lumobj &lum)
     // Never link to a BspLeaf with no geometry.
     if(lum.bspLeafAtOrigin().hasCluster())
     {
-        newObjlink(&lum, ContactLumobj);
+        newContact(&lum, ContactLumobj);
     }
 }
 
