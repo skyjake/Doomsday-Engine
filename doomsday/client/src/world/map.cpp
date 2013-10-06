@@ -50,7 +50,7 @@
 #include "world/p_intercept.h"
 #include "world/p_object.h"
 #ifdef __CLIENT__
-#  include "world/p_objlink.h"
+#  include "ContactBlockmap"
 #endif
 #include "world/thinkers.h"
 #include "world/world.h" // ddMapSetup
@@ -1142,7 +1142,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
     }
 
     /**
-     * Create new objlinks for mobj => BSP leaf contact spreading.
+     * Create new mobj => BSP leaf contacts.
      */
     void createMobjContacts()
     {
@@ -2939,7 +2939,6 @@ void Map::worldFrameBegins(World &world, bool resetNextViewer)
             }
         }
 
-        // Create objlinks for mobjs.
         d->createMobjContacts();
 
         // Link all active particle generators into the world.

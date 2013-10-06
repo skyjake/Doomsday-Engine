@@ -1,4 +1,4 @@
-/** @file p_objlink.cpp World map object => BSP leaf contact blockmap.
+/** @file p_objlink.cpp World object => BSP leaf "contact" blockmap.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -34,7 +34,7 @@
 #include "render/rend_main.h" // Rend_MapSurfaceMaterialSpec
 #include "WallEdge"
 
-#include "world/p_objlink.h"
+#include "world/contactblockmap.h"
 
 using namespace de;
 
@@ -51,11 +51,12 @@ enum ContactType
 /// @todo Obviously, polymorphism is a better solution.
 struct Contact
 {
-    Contact *nextInBlock; /// Next in the same obj block, or NULL.
-    Contact *nextUsed;
-    Contact *next; /// Next in list of ALL objlinks.
-    ContactType _type;
-    void *_object;
+    Contact *nextInBlock; ///< Next in the same blockmap cell (if any, not owned).
+    Contact *nextUsed;    ///< Next in the used list (if any, not owned).
+    Contact *next;        ///< Next in global list of contacts (if any, not owned).
+
+    ContactType _type;    ///< Logical identifier.
+    void *_object;        ///< The contacted object.
 
     ContactType type() const
     {
@@ -127,7 +128,7 @@ struct Contact
         case ContactMobj:   return Mobj_BspLeafAtOrigin(objectAs<mobj_t>());
 
         default:
-            throw Error("oblink_t::objectBspLeafAtOrigin", "Invalid type");
+            throw Error("Contact::objectBspLeafAtOrigin", "Invalid type");
         }
     }
 };
@@ -345,31 +346,31 @@ private:
     {
         DENG2_ASSERT(object != 0);
 
-        ListNode *con;
+        ListNode *node;
         if(!cursor)
         {
-            con = (ListNode *) Z_Malloc(sizeof *con, PU_APPSTATIC, 0);
+            node = (ListNode *) Z_Malloc(sizeof *node, PU_APPSTATIC, 0);
 
-            // Link to the list of objcontact nodes.
-            con->nextUsed = firstNode;
-            firstNode = con;
+            // Link in the global list of used nodes.
+            node->nextUsed = firstNode;
+            firstNode = node;
         }
         else
         {
-            con = cursor;
+            node = cursor;
             cursor = cursor->nextUsed;
         }
 
-        con->obj = object;
+        node->obj = object;
 
-        return con;
+        return node;
     }
 
     ListNode *_head[ContactTypeCount]; ///< Separate lists for each contact type.
 };
 
-static Contact *objlinks;
-static Contact *objlinkFirst, *objlinkCursor;
+static Contact *contacts;
+static Contact *contactFirst, *contactCursor;
 
 // List of contacts for each BSP leaf.
 static ContactList *bspLeafContactLists;
@@ -378,31 +379,31 @@ static Contact *newContact(void *object, ContactType type)
 {
     DENG2_ASSERT(object != 0);
 
-    Contact *link;
-    if(!objlinkCursor)
+    Contact *contact;
+    if(!contactCursor)
     {
-        link = (Contact *) Z_Malloc(sizeof *link, PU_APPSTATIC, 0);
+        contact = (Contact *) Z_Malloc(sizeof *contact, PU_APPSTATIC, 0);
 
-        // Link the link to the global list.
-        link->nextUsed = objlinkFirst;
-        objlinkFirst = link;
+        // Link in the global list of used contacts.
+        contact->nextUsed = contactFirst;
+        contactFirst = contact;
     }
     else
     {
-        link = objlinkCursor;
-        objlinkCursor = objlinkCursor->nextUsed;
+        contact = contactCursor;
+        contactCursor = contactCursor->nextUsed;
     }
 
-    link->nextInBlock = 0;
+    contact->nextInBlock = 0;
 
-    // Link it to the list of in-use objlinks.
-    link->next = objlinks;
-    objlinks = link;
+    // Link in the list of in-use contacts.
+    contact->next = contacts;
+    contacts = contact;
 
-    link->_object = object;
-    link->_type   = type;
+    contact->_object = object;
+    contact->_type   = type;
 
-    return link;
+    return contact;
 }
 
 void R_InitContactBlockmaps(Map &map)
@@ -450,9 +451,9 @@ void R_ClearContacts(Map &map)
         blockmap(ContactType(i)).unlinkAll();
     }
 
-    // Start reusing objlinks.
-    objlinkCursor = objlinkFirst;
-    objlinks = 0;
+    // Start reusing contacts.
+    contactCursor = contactFirst;
+    contacts = 0;
 
     // Start reusing nodes from the first one in the list.
     ContactList::reset();
@@ -466,7 +467,7 @@ void R_ClearContacts(Map &map)
 static void linkContact(BspLeaf &bspLeaf, Contact *contact)
 {
     DENG2_ASSERT(contact != 0);
-    // Never link to a BspLeaf with no geometry.
+    // BspLeafs with no geometry cannot be contacted (zero world volume).
     DENG2_ASSERT(bspLeaf.hasCluster());
 
     contactList(bspLeaf).link(contact);
@@ -606,7 +607,6 @@ static void maybeSpreadOverEdge(HEdge *hedge, contactfinderparams_t &parms)
     // During next step, obj will continue spreading from there.
     backLeaf.setValidCount(validCount);
 
-    // Link up a new contact with the back BSP leaf.
     linkContact(backLeaf, parms.contact);
 
     spreadInBspLeaf(backLeaf, parms);
@@ -647,15 +647,14 @@ static void spreadContact(Contact *contact)
 
     BspLeaf &bspLeaf = contact->objectBspLeafAtOrigin();
 
-    // Do the BSP leaf spread. Begin from the obj's own BspLeaf.
+    linkContact(bspLeaf, contact);
+
+    // Spread to neighboring BSP leafs.
     bspLeaf.setValidCount(++validCount);
 
     contactfinderparams_t parms; zap(parms);
     parms.contact  = contact;
     parms.objAABox = contact->objectAABox();
-
-    // Always contact the obj's own BspLeaf.
-    linkContact(bspLeaf, contact);
 
     spreadInBspLeaf(bspLeaf, parms);
 }
@@ -721,7 +720,7 @@ void R_SpreadContacts(BspLeaf &bspLeaf)
 
 void R_AddContact(mobj_t &mobj)
 {
-    // Never link to a BspLeaf with no geometry.
+    // BspLeafs with no geometry cannot be contacted (zero world volume).
     if(Mobj_BspLeafAtOrigin(mobj).hasCluster())
     {
         newContact(&mobj, ContactMobj);
@@ -730,7 +729,7 @@ void R_AddContact(mobj_t &mobj)
 
 void R_AddContact(Lumobj &lum)
 {
-    // Never link to a BspLeaf with no geometry.
+    // BspLeafs with no geometry cannot be contacted (zero world volume).
     if(lum.bspLeafAtOrigin().hasCluster())
     {
         newContact(&lum, ContactLumobj);
@@ -739,10 +738,10 @@ void R_AddContact(Lumobj &lum)
 
 void R_LinkContacts()
 {
-    // Link object-links into the relevant blockmap.
-    for(Contact *link = objlinks; link; link = link->next)
+    // Link contacts into the relevant blockmap.
+    for(Contact *contact = contacts; contact; contact = contact->next)
     {
-        blockmap(link->type()).link(link);
+        blockmap(contact->type()).link(contact);
     }
 }
 

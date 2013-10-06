@@ -40,7 +40,7 @@
 #include "world/p_ticker.h"
 #include "world/p_players.h"
 #ifdef __CLIENT__
-#  include "world/p_objlink.h"
+#  include "ContactBlockmap"
 #endif
 #include "Material"
 #include "ui/p_control.h"

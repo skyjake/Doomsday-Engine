@@ -29,7 +29,7 @@
 #include "BspLeaf"
 #include "Surface"
 #include "world/map.h"
-#include "world/p_objlink.h"
+#include "ContactBlockmap"
 
 #include "render/vlight.h"
 

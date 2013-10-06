@@ -54,7 +54,7 @@
 #include "world/generators.h"
 #include "world/lineowner.h"
 #include "world/p_object.h"
-#include "world/p_objlink.h"
+#include "ContactBlockmap"
 #include "world/p_players.h"
 #include "world/thinkers.h"
 

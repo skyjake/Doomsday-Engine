@@ -26,7 +26,7 @@
 #include "BspLeaf"
 #include "Surface"
 #include "world/p_object.h"
-#include "world/p_objlink.h"
+#include "ContactBlockmap"
 
 #include "render/projector.h"
 

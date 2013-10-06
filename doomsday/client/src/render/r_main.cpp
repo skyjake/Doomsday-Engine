@@ -45,7 +45,7 @@
 
 #include "world/linesighttest.h"
 #include "world/p_players.h"
-#include "world/p_objlink.h"
+#include "ContactBlockmap"
 #include "world/thinkers.h"
 #include "BspLeaf"
 #include "Surface"

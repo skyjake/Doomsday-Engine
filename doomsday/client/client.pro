@@ -119,6 +119,7 @@ DENG_CONVENIENCE_HEADERS += \
     include/BspNode \
     include/CommandAction \
     include/ChildWidgetOrganizer \
+    include/ContactBlockmap \
     include/Decoration \
     include/DialogContentStylist \
     include/EntityDatabase \
@@ -464,6 +465,7 @@ DENG_HEADERS += \
     include/world/bsp/superblockmap.h \
     include/world/bspleaf.h \
     include/world/bspnode.h \
+    include/world/contactblockmap.h \
     include/world/dmuargs.h \
     include/world/entitydatabase.h \
     include/world/entitydef.h \
@@ -480,7 +482,6 @@ DENG_HEADERS += \
     include/world/maputil.h \
     include/world/p_intercept.h \
     include/world/p_object.h \
-    include/world/p_objlink.h \
     include/world/p_particle.h \
     include/world/p_players.h \
     include/world/p_ticker.h \
@@ -803,6 +804,7 @@ SOURCES += \
     src/world/bsp/superblockmap.cpp \
     src/world/bspleaf.cpp \
     src/world/bspnode.cpp \
+    src/world/contactblockmap.cpp \
     src/world/dmuargs.cpp \
     src/world/entitydatabase.cpp \
     src/world/entitydef.cpp \
@@ -818,7 +820,6 @@ SOURCES += \
     src/world/maputil.cpp \
     src/world/p_intercept.cpp \
     src/world/p_mobj.cpp \
-    src/world/p_objlink.cpp \
     src/world/p_particle.cpp \
     src/world/p_players.cpp \
     src/world/p_ticker.cpp \
