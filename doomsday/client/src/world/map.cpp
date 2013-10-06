@@ -2883,7 +2883,7 @@ void Map::worldFrameBegins(World &world, bool resetNextViewer)
 {
     DENG2_ASSERT(&world.map() == this); // Sanity check.
 
-    /// @todo optimize: Use a de::BitField instead.
+    /// @todo optimize: Use a QBitArray instead.
     foreach(BspLeaf *bspLeaf, d->bspLeafs)
     {
         bspLeaf->markVisible(false);
@@ -2905,7 +2905,7 @@ void Map::worldFrameBegins(World &world, bool resetNextViewer)
         R_ClearObjlinksForFrame(); // Zeroes the links.
 
         // Clear the objlinks.
-        R_InitForNewFrame();
+        R_InitForNewFrame(*this);
 
         // Generate surface decorations for the frame.
         if(useLightDecorations)

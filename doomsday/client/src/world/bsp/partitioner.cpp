@@ -157,7 +157,7 @@ DENG2_PIMPL(Partitioner)
     {
         foreach(Line *line, lines)
         {
-            //if(!line.hasZeroLength()) Screened at a higher level.
+            //if(line.hasZeroLength()) Screened at a higher level.
             //    continue;
 
             Sector *frontSec = line->frontSectorPtr();

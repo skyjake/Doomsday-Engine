@@ -26,6 +26,8 @@
 #ifndef DENG_WORLD_BSP_PARTITIONCOST_H
 #define DENG_WORLD_BSP_PARTITIONCOST_H
 
+#include <de/String>
+
 #include "world/bsp/linesegment.h"
 
 namespace de {
@@ -36,12 +38,6 @@ namespace bsp {
  */
 struct PartitionCost
 {
-    enum Side
-    {
-        Right,
-        Left
-    };
-
     int total;
     int splits;
     int iffy;
@@ -58,14 +54,14 @@ struct PartitionCost
 
     inline PartitionCost &addSegmentRight(LineSegmentSide const &seg)
     {
-        if(seg.hasMapSide()) mapRight += 1;
+        if(seg.hasMapSide()) mapRight  += 1;
         else                 partRight += 1;
         return *this;
     }
 
     inline PartitionCost &addSegmentLeft(LineSegmentSide const &seg)
     {
-        if(seg.hasMapSide()) mapLeft += 1;
+        if(seg.hasMapSide()) mapLeft  += 1;
         else                 partLeft += 1;
         return *this;
     }
@@ -99,6 +95,15 @@ struct PartitionCost
     bool operator < (PartitionCost const &rhs) const
     {
         return total < rhs.total;
+    }
+
+    String asText() const
+    {
+        return String("PartitionCost(Total= %1.%2; splits:%3, iffy:%4, near:%5, left:%6+%7, right:%8+%9)")
+                .arg(total / 100).arg(total % 100, 2, QChar('0'))
+                .arg(splits).arg(iffy).arg(nearMiss)
+                .arg(mapLeft).arg(partLeft)
+                .arg(mapRight).arg(partRight);
     }
 };
 

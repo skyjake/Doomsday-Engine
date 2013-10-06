@@ -19,23 +19,20 @@
 
 #include <cmath>
 
-#include "de_base.h"
-#include "de_console.h"
-#include "de_render.h"
-#include "de_graphics.h"
-//#include "de_misc.h"
-#include "de_play.h"
-#include "de_defs.h"
+#include <de/memoryzone.h>
+#include <de/vector1.h>
 
 #include "Face"
+#include "gridmap.h"
 
 #include "world/map.h"
+#include "world/p_object.h"
 #include "BspLeaf"
+#include "Surface"
 
-#include "MaterialSnapshot"
+#include "render/r_main.h" // validCount
+#include "render/rend_main.h" // Rend_MapSurfaceMaterialSpec
 #include "WallEdge"
-
-#include "gridmap.h"
 
 #include "world/p_objlink.h"
 
@@ -226,13 +223,21 @@ public:
         return cellBlock;
     }
 
-    /// @pre  Coordinates held by @a blockXY are within valid range.
-    void link(GridmapCell cell, objlink_t *link)
+    /**
+     * @param objlink  Object to be linked. Note that if linked object's origin
+     *                 lies outside the blockmap it will not be linked!
+     */
+    void link(objlink_t *objlink)
     {
-        if(!link) return;
+        if(!objlink) return;
+
+        bool outside;
+        GridmapCell cell = toCell(objlink->objectOrigin(), &outside);
+        if(outside) return;
+
         CellData *block = data(cell, true/*can allocate a block*/);
-        link->nextInBlock = block->head;
-        block->head = link;
+        objlink->nextInBlock = block->head;
+        block->head = objlink;
     }
 
     // Clear all the contact list heads and spread flags.
@@ -305,7 +310,7 @@ static objcontact_t *contFirst, *contCursor;
 // List of contacts for each BSP leaf.
 static objcontactlist_t *bspLeafContacts;
 
-static void spreadInBspLeaf(BspLeaf *bspLeaf, contactfinderparams_t *parms);
+static void spreadInBspLeaf(BspLeaf &bspLeaf, contactfinderparams_t &parms);
 
 static inline void linkContact(objcontact_t *con, objcontact_t **list, uint index)
 {
@@ -465,9 +470,9 @@ static coord_t pointOnHEdgeSide(HEdge const &hedge, Vector2d const &point)
     return V2d_PointOnLineSide(pointV1, fromOriginV1, directionV1);
 }
 
-static void maybeSpreadOverEdge(HEdge *hedge, contactfinderparams_t *parms)
+static void maybeSpreadOverEdge(HEdge *hedge, contactfinderparams_t &parms)
 {
-    DENG_ASSERT(hedge != 0 && parms != 0);
+    if(!hedge) return;
 
     BspLeaf &leaf = hedge->face().mapElementAs<BspLeaf>();
     SectorCluster &cluster = leaf.cluster();
@@ -490,16 +495,16 @@ static void maybeSpreadOverEdge(HEdge *hedge, contactfinderparams_t *parms)
     AABoxd const &backLeafAABox = backLeaf.poly().aaBox();
 
     // Is the leaf on the back side outside the origin's AABB?
-    if(backLeafAABox.maxX <= parms->objAABox.minX ||
-       backLeafAABox.minX >= parms->objAABox.maxX ||
-       backLeafAABox.maxY <= parms->objAABox.minY ||
-       backLeafAABox.minY >= parms->objAABox.maxY)
+    if(backLeafAABox.maxX <= parms.objAABox.minX ||
+       backLeafAABox.minX >= parms.objAABox.maxX ||
+       backLeafAABox.maxY <= parms.objAABox.minY ||
+       backLeafAABox.minY >= parms.objAABox.maxY)
         return;
 
     // Too far from the edge?
     coord_t const length   = (hedge->twin().origin() - hedge->origin()).length();
-    coord_t const distance = pointOnHEdgeSide(*hedge, parms->objlink->objectOrigin()) / length;
-    if(de::abs(distance) >= parms->objlink->objectRadius())
+    coord_t const distance = pointOnHEdgeSide(*hedge, parms.objlink->objectOrigin()) / length;
+    if(de::abs(distance) >= parms.objlink->objectRadius())
         return;
 
     // Do not spread if the sector on the back side is closed with no height.
@@ -572,9 +577,9 @@ static void maybeSpreadOverEdge(HEdge *hedge, contactfinderparams_t *parms)
     backLeaf.setValidCount(validCount);
 
     // Link up a new contact with the back BSP leaf.
-    linkObjToBspLeaf(backLeaf, parms->objlink);
+    linkObjToBspLeaf(backLeaf, parms.objlink);
 
-    spreadInBspLeaf(&backLeaf, parms);
+    spreadInBspLeaf(backLeaf, parms);
 }
 
 /**
@@ -586,17 +591,18 @@ static void maybeSpreadOverEdge(HEdge *hedge, contactfinderparams_t *parms)
  *
  * @return  Always @c true. (This function is also used as an iterator.)
  */
-static void spreadInBspLeaf(BspLeaf *bspLeaf, contactfinderparams_t *parms)
+static void spreadInBspLeaf(BspLeaf &bspLeaf, contactfinderparams_t &parms)
 {
-    if(!bspLeaf || !bspLeaf->hasCluster())
-        return;
-
-    HEdge *base = bspLeaf->poly().hedge();
-    HEdge *hedge = base;
-    do
+    if(bspLeaf.hasCluster())
     {
-        maybeSpreadOverEdge(hedge, parms);
-    } while((hedge = &hedge->next()) != base);
+        HEdge *base = bspLeaf.poly().hedge();
+        HEdge *hedge = base;
+        do
+        {
+            maybeSpreadOverEdge(hedge, parms);
+
+        } while((hedge = &hedge->next()) != base);
+    }
 }
 
 /**
@@ -621,7 +627,7 @@ static void findContacts(objlink_t *link)
     // Always contact the obj's own BspLeaf.
     linkObjToBspLeaf(bspLeaf, link);
 
-    spreadInBspLeaf(&bspLeaf, &parms);
+    spreadInBspLeaf(bspLeaf, parms);
 }
 
 /**
@@ -683,23 +689,17 @@ void R_LinkObjs()
     // Link object-links into the relevant blockmap.
     for(objlink_t *link = objlinks; link; link = link->next)
     {
-        objlinkblockmap_t &bmap = blockmap(link->type());
-        bool clamped;
-        GridmapCell cell = bmap.toCell(link->objectOrigin(), &clamped);
-        if(!clamped)
-        {
-            bmap.link(cell, link);
-        }
+        blockmap(link->type()).link(link);
     }
 }
 
-void R_InitForNewFrame()
+void R_InitForNewFrame(Map &map)
 {
     // Start reusing nodes from the first one in the list.
     contCursor = contFirst;
     if(bspLeafContacts)
     {
-        std::memset(bspLeafContacts, 0, App_World().map().bspLeafCount() * sizeof *bspLeafContacts);
+        std::memset(bspLeafContacts, 0, map.bspLeafCount() * sizeof *bspLeafContacts);
     }
 }
 
@@ -729,7 +729,6 @@ int R_IterateBspLeafLumobjContacts(BspLeaf &bspLeaf,
 
 void R_ObjlinkCreate(mobj_t &mobj)
 {
-    if(!Mobj_IsLinked(mobj)) return;
     createObjlink(Mobj_BspLeafAtOrigin(mobj), &mobj, OT_MOBJ);
 }
 

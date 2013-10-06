@@ -22,6 +22,8 @@
 
 #ifdef __CLIENT__
 
+#include "world/map.h"
+
 class BspLeaf;
 class Lumobj;
 
@@ -45,7 +47,7 @@ void R_InitObjlinkBlockmapForMap(de::Map &map);
  * Initialize the object => BspLeaf contact lists, ready for linking to
  * objects. To be called at the beginning of a new world frame.
  */
-void R_InitForNewFrame();
+void R_InitForNewFrame(de::Map &map);
 
 /**
  * To be called at the begining of a render frame to clear the objlink
