@@ -17,10 +17,14 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include <cmath>
+//#include <cmath>
+
+#include <QBitArray>
 
 #include <de/memoryzone.h>
 #include <de/vector1.h>
+
+#include <de/Error>
 
 #include "Face"
 #include "gridmap.h"
@@ -229,12 +233,10 @@ DENG2_PIMPL(ContactBlockmap), public Gridmap
     struct CellData
     {
         Contact *head;
-        bool doneSpread; ///< Used to prevent repeat processing.
 
         void unlinkAll()
         {
             head = 0;
-            doneSpread = false;
         }
     };
 
@@ -246,8 +248,11 @@ DENG2_PIMPL(ContactBlockmap), public Gridmap
     {
         Contact *contact;
         AABoxd contactAABox;
+
+        SpreadState() : contact(0) {}
     };
     SpreadState spread;
+    QBitArray spreadBlocks;
 
     Instance(Public *i, AABoxd const &bounds, uint blockSize)
         : Base(i),
@@ -255,8 +260,14 @@ DENG2_PIMPL(ContactBlockmap), public Gridmap
                        de::ceil((bounds.maxY - bounds.minY) / ddouble( blockSize ))),
                   sizeof(CellData), PU_MAPSTATIC),
           bounds(bounds),
-          blockSize(blockSize)
+          blockSize(blockSize),
+          spreadBlocks(Gridmap::width() * Gridmap::height())
     {}
+
+    inline int toCellIndex(uint cellX, uint cellY)
+    {
+        return int(cellY * width() + cellX);
+    }
 
     /**
      * Given map space X coordinate @a x, return the corresponding cell coordinate.
@@ -532,6 +543,7 @@ void ContactBlockmap::link(Contact *contact)
 
 void ContactBlockmap::unlinkAll()
 {
+    d->spreadBlocks.fill(false);
     d->iterate(Instance::unlinkAllWorker);
 }
 
@@ -543,12 +555,13 @@ void ContactBlockmap::spreadAllContacts(AABoxd const &box)
     for(cell.y = cellBlock.min.y; cell.y <= cellBlock.max.y; ++cell.y)
     for(cell.x = cellBlock.min.x; cell.x <= cellBlock.max.x; ++cell.x)
     {
-        if(Instance::CellData *data = d->cellData(cell))
+        int cellIndex = d->toCellIndex(cell.x, cell.y);
+        if(!d->spreadBlocks.testBit(cellIndex))
         {
-            if(!data->doneSpread)
-            {
-                data->doneSpread = true;
+            d->spreadBlocks.setBit(cellIndex);
 
+            if(Instance::CellData *data = d->cellData(cell))
+            {
                 for(Contact *iter = data->head; iter; iter = iter->nextInBlock)
                 {
                     d->spreadContact(*iter);
