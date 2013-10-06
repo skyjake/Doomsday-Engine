@@ -40,9 +40,14 @@ public:
     ContactBlockmap(AABoxd const &bounds, uint blockSize = 128);
 
     /**
-     * Returns the origin of the blockmap in map space.
+     * Returns the origin of the blockmap in the map coordinate space.
      */
-    de::Vector2d const &origin() const;
+    de::Vector2d origin() const;
+
+    /**
+     * Returns the bounds of the blockmap in the map coordinate space.
+     */
+    AABoxd const &bounds() const;
 
     /**
      * @param contact  Contact to be linked. Note that if the object's origin

@@ -224,7 +224,7 @@ static coord_t pointOnHEdgeSide(HEdge const &hedge, Vector2d const &point)
     return V2d_PointOnLineSide(pointV1, fromOriginV1, directionV1);
 }
 
-DENG2_PIMPL(ContactBlockmap)
+DENG2_PIMPL(ContactBlockmap), public Gridmap
 {
     struct CellData
     {
@@ -238,9 +238,8 @@ DENG2_PIMPL(ContactBlockmap)
         }
     };
 
-    Vector2d origin; ///< Origin in map space.
-    uint blockSize;
-    Gridmap gridmap;
+    AABoxd bounds;
+    uint blockSize; ///< In map space units.
 
     // For perf, spread state data is "global".
     struct SpreadState
@@ -252,23 +251,63 @@ DENG2_PIMPL(ContactBlockmap)
 
     Instance(Public *i, AABoxd const &bounds, uint blockSize)
         : Base(i),
-          origin(bounds.min),
-          blockSize(blockSize),
-          gridmap(Vector2ui(de::ceil((bounds.maxX - bounds.minX) / ddouble( blockSize )),
-                            de::ceil((bounds.maxY - bounds.minY) / ddouble( blockSize ))),
-                  sizeof(CellData), PU_MAPSTATIC)
+          Gridmap(Cell(de::ceil((bounds.maxX - bounds.minX) / ddouble( blockSize )),
+                       de::ceil((bounds.maxY - bounds.minY) / ddouble( blockSize ))),
+                  sizeof(CellData), PU_MAPSTATIC),
+          bounds(bounds),
+          blockSize(blockSize)
     {}
 
-    inline uint toX(ddouble x) const
+    /**
+     * Given map space X coordinate @a x, return the corresponding cell coordinate.
+     * If @a x is outside the blockmap it will be clamped to the nearest edge on
+     * the X axis.
+     *
+     * @param x        Map space X coordinate to be translated.
+     * @param didClip  Set to @c true iff clamping was necessary.
+     *
+     * @return  Translated blockmap cell X coordinate.
+     */
+    uint toCellX(ddouble x, bool &didClip) const
     {
-        DENG2_ASSERT(x >= origin.x);
-        return (x - origin.x) / ddouble( blockSize );
+        didClip = false;
+        if(x < bounds.minX)
+        {
+            x = bounds.minX;
+            didClip = true;
+        }
+        else if(x >= bounds.maxX)
+        {
+            x = bounds.maxX - 1;
+            didClip = true;
+        }
+        return uint((x - bounds.minX) / blockSize);
     }
 
-    inline uint toY(ddouble y) const
+    /**
+     * Given map space Y coordinate @a y, return the corresponding cell coordinate.
+     * If @a y is outside the blockmap it will be clamped to the nearest edge on
+     * the Y axis.
+     *
+     * @param y        Map space Y coordinate to be translated.
+     * @param didClip  Set to @c true iff clamping was necessary.
+     *
+     * @return  Translated blockmap cell Y coordinate.
+     */
+    uint toCellY(ddouble y, bool &didClip) const
     {
-        DENG2_ASSERT(y >= origin.y);
-        return (y - origin.y) / ddouble( blockSize );
+        didClip = false;
+        if(y < bounds.minY)
+        {
+            y = bounds.minY;
+            didClip = true;
+        }
+        else if(y >= bounds.maxY)
+        {
+            y = bounds.maxY - 1;
+            didClip = true;
+        }
+        return uint((y - bounds.minY) / blockSize);
     }
 
     /**
@@ -277,65 +316,29 @@ DENG2_PIMPL(ContactBlockmap)
      * the valid range.
      *
      * @param retAdjusted  If specified, whether or not the @a point coordinates
-     *                     specified had to be adjusted is written back here.
+     *                     had to be adjusted is written back here.
      *
      * @return  The determined blockmap cell.
      */
-    GridmapCell toCell(Vector2d const &point, bool *retAdjusted = 0) const
+    Cell toCell(Vector2d const &point, bool *retAdjusted = 0) const
     {
-        Vector2d const max = origin + gridmap.dimensions() *  blockSize;
-
-        GridmapCell cell;
-        bool adjusted = false;
-        if(point.x < origin.x)
-        {
-            cell.x = 0;
-            adjusted = true;
-        }
-        else if(point.x >= max.x)
-        {
-            cell.x = gridmap.width() - 1;
-            adjusted = true;
-        }
-        else
-        {
-            cell.x = toX(point.x);
-        }
-
-        if(point.y < origin.y)
-        {
-            cell.y = 0;
-            adjusted = true;
-        }
-        else if(point.y >= max.y)
-        {
-            cell.y = gridmap.height() - 1;
-            adjusted = true;
-        }
-        else
-        {
-            cell.y = toY(point.y);
-        }
-
-        if(retAdjusted) *retAdjusted = adjusted;
-
+        bool didClipX, didClipY;
+        Cell cell(toCellX(point.x, didClipX), toCellY(point.y, didClipY));
+        if(retAdjusted) *retAdjusted = didClipX | didClipY;
         return cell;
     }
 
-    GridmapCellBlock toCellBlock(AABoxd const &box)
+    inline CellBlock toCellBlock(AABoxd const &box)
     {
-        GridmapCellBlock cellBlock;
-        cellBlock.min = toCell(box.min);
-        cellBlock.max = toCell(box.max);
-        return cellBlock;
+        return CellBlock(toCell(box.min), toCell(box.max));
     }
 
     /**
      * Returns the data for the specified cell.
      */
-    inline CellData *cellData(GridmapCell const &cell, bool canAlloc = false)
+    inline CellData *cellData(Cell const &cell, bool canAlloc = false)
     {
-        return static_cast<CellData *>(gridmap.cellData(cell, canAlloc));
+        return static_cast<CellData *>(Gridmap::cellData(cell, canAlloc));
     }
 
     void maybeSpreadOverEdge(HEdge *hedge)
@@ -362,13 +365,10 @@ DENG2_PIMPL(ContactBlockmap)
             return; // Not eligible for spreading.
         }
 
-        AABoxd const &backLeafAABox = backLeaf.poly().aaBox();
-
         // Is the leaf on the back side outside the origin's AABB?
-        if(backLeafAABox.maxX <= spread.contactAABox.minX ||
-           backLeafAABox.minX >= spread.contactAABox.maxX ||
-           backLeafAABox.maxY <= spread.contactAABox.minY ||
-           backLeafAABox.minY >= spread.contactAABox.maxY)
+        AABoxd const &aaBox = backLeaf.poly().aaBox();
+        if(aaBox.maxX <= spread.contactAABox.minX || aaBox.minX >= spread.contactAABox.maxX ||
+           aaBox.maxY <= spread.contactAABox.minY || aaBox.minY >= spread.contactAABox.maxY)
             return;
 
         // Too far from the edge?
@@ -507,9 +507,14 @@ ContactBlockmap::ContactBlockmap(AABoxd const &bounds, uint blockSize)
     : d(new Instance(this, bounds, blockSize))
 {}
 
-Vector2d const &ContactBlockmap::origin() const
+Vector2d ContactBlockmap::origin() const
 {
-    return d->origin;
+    return Vector2d(d->bounds.min);
+}
+
+AABoxd const &ContactBlockmap::bounds() const
+{
+    return d->bounds;
 }
 
 void ContactBlockmap::link(Contact *contact)
@@ -517,7 +522,7 @@ void ContactBlockmap::link(Contact *contact)
     if(!contact) return;
 
     bool outside;
-    GridmapCell cell = d->toCell(contact->objectOrigin(), &outside);
+    Instance::Cell cell = d->toCell(contact->objectOrigin(), &outside);
     if(outside) return;
 
     Instance::CellData *data = d->cellData(cell, true/*can allocate a block*/);
@@ -527,14 +532,14 @@ void ContactBlockmap::link(Contact *contact)
 
 void ContactBlockmap::unlinkAll()
 {
-    d->gridmap.iterate(Instance::unlinkAllWorker);
+    d->iterate(Instance::unlinkAllWorker);
 }
 
 void ContactBlockmap::spreadAllContacts(AABoxd const &box)
 {
-    GridmapCellBlock const cellBlock = d->toCellBlock(box);
+    Instance::CellBlock const cellBlock = d->toCellBlock(box);
 
-    GridmapCell cell;
+    Instance::Cell cell;
     for(cell.y = cellBlock.min.y; cell.y <= cellBlock.max.y; ++cell.y)
     for(cell.x = cellBlock.min.x; cell.x <= cellBlock.max.x; ++cell.x)
     {
