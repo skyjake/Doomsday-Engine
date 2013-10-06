@@ -543,14 +543,17 @@ void ContactBlockmap::spreadAllContacts(AABoxd const &box)
     for(cell.y = cellBlock.min.y; cell.y <= cellBlock.max.y; ++cell.y)
     for(cell.x = cellBlock.min.x; cell.x <= cellBlock.max.x; ++cell.x)
     {
-        Instance::CellData *data = d->cellData(cell, true/*can allocate a block*/);
-        if(!data->doneSpread)
+        if(Instance::CellData *data = d->cellData(cell))
         {
-            for(Contact *iter = data->head; iter; iter = iter->nextInBlock)
+            if(!data->doneSpread)
             {
-                d->spreadContact(*iter);
+                data->doneSpread = true;
+
+                for(Contact *iter = data->head; iter; iter = iter->nextInBlock)
+                {
+                    d->spreadContact(*iter);
+                }
             }
-            data->doneSpread = true;
         }
     }
 }
