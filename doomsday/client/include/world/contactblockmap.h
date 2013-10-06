@@ -45,13 +45,13 @@ public:
     de::Vector2d const &origin() const;
 
     /**
-     * @param contact  Contact to be linked. Note that if object's origin lies
-     *                 outside the blockmap it will not be linked!
+     * @param contact  Contact to be linked. Note that if the object's origin
+     *                 lies outside the blockmap it will not be linked!
      */
     void link(Contact *contact);
 
     /**
-     * Clear all the contact list heads and spread flags.
+     * Clear all linked contacts.
      */
     void unlinkAll();
 

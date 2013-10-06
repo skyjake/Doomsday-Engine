@@ -38,8 +38,6 @@
 
 using namespace de;
 
-#define BLOCK_SIZE              128
-
 enum ContactType
 {
     ContactMobj = 0,
@@ -241,6 +239,7 @@ DENG2_PIMPL(ContactBlockmap)
     };
 
     Vector2d origin; ///< Origin in map space.
+    uint blockSize;
     Gridmap gridmap;
 
     // For perf, spread state data is "global".
@@ -254,6 +253,7 @@ DENG2_PIMPL(ContactBlockmap)
     Instance(Public *i, AABoxd const &bounds, uint blockSize)
         : Base(i),
           origin(bounds.min),
+          blockSize(blockSize),
           gridmap(Vector2ui(de::ceil((bounds.maxX - bounds.minX) / ddouble( blockSize )),
                             de::ceil((bounds.maxY - bounds.minY) / ddouble( blockSize ))),
                   sizeof(CellData), PU_MAPSTATIC)
@@ -262,13 +262,13 @@ DENG2_PIMPL(ContactBlockmap)
     inline uint toX(ddouble x) const
     {
         DENG2_ASSERT(x >= origin.x);
-        return (x - origin.x) / ddouble( BLOCK_SIZE );
+        return (x - origin.x) / ddouble( blockSize );
     }
 
     inline uint toY(ddouble y) const
     {
         DENG2_ASSERT(y >= origin.y);
-        return (y - origin.y) / ddouble( BLOCK_SIZE );
+        return (y - origin.y) / ddouble( blockSize );
     }
 
     /**
@@ -283,7 +283,7 @@ DENG2_PIMPL(ContactBlockmap)
      */
     GridmapCell toCell(Vector2d const &point, bool *retAdjusted = 0) const
     {
-        Vector2d const max = origin + gridmap.dimensions() * BLOCK_SIZE;
+        Vector2d const max = origin + gridmap.dimensions() *  blockSize;
 
         GridmapCell cell;
         bool adjusted = false;
@@ -503,7 +503,7 @@ DENG2_PIMPL(ContactBlockmap)
     }
 };
 
-ContactBlockmap::ContactBlockmap(const AABoxd &bounds, uint blockSize)
+ContactBlockmap::ContactBlockmap(AABoxd const &bounds, uint blockSize)
     : d(new Instance(this, bounds, blockSize))
 {}
 
@@ -592,7 +592,7 @@ void R_InitContactBlockmaps(Map &map)
     for(int i = 0; i < ContactTypeCount; ++i)
     {
         DENG2_ASSERT(blockmaps[i] == 0);
-        blockmaps[i] = new ContactBlockmap(map.bounds(), BLOCK_SIZE);
+        blockmaps[i] = new ContactBlockmap(map.bounds());
     }
 
     // Initialize object => BspLeaf contact lists.
@@ -640,7 +640,6 @@ void R_ClearContacts(Map &map)
                     map.bspLeafCount() * ContactTypeCount * sizeof(*bspLeafContactLists));
     }
 }
-
 
 static inline float radiusMax(ContactType type)
 {
