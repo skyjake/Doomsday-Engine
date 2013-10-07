@@ -221,6 +221,9 @@ Blockmap::Blockmap(AABoxd const &bounds, Vector2ui const &cellDimensions)
     : d(new Instance(this, bounds, cellDimensions))
 {}
 
+Blockmap::~Blockmap()
+{}
+
 Vector2d Blockmap::origin() const
 {
     return Vector2d(d->bounds.min);

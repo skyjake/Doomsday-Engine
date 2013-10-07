@@ -45,6 +45,8 @@ public:
      */
     Blockmap(AABoxd const &bounds, Vector2ui const &cellDimensions);
 
+    virtual ~Blockmap();
+
     /**
      * Returns the origin of the blockmap in the map coordinate space.
      */
