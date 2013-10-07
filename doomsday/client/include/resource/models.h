@@ -271,7 +271,7 @@ model_t* Models_ToModel(modelid_t id);
  * of the mobj. Returns the modeldefs that are in effect at the moment (interlinks
  * checked appropriately).
  */
-float Models_ModelForMobj(struct mobj_s* mo, modeldef_t** mdef, modeldef_t** nextmdef);
+float Models_ModelForMobj(struct mobj_s const *mo, modeldef_t **mdef, modeldef_t **nextmdef);
 
 /**
  * Lookup a model definition by id.

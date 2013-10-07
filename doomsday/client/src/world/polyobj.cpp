@@ -284,18 +284,14 @@ static int PTR_CheckMobjBlocking(mobj_t *mo, void *context)
         return false;
 
     // Out of range?
-    AABoxd moBox(mo->origin[VX] - mo->radius,
-                 mo->origin[VY] - mo->radius,
-                 mo->origin[VX] + mo->radius,
-                 mo->origin[VY] + mo->radius);
-
-    if(moBox.maxX <= parms->line->aaBox().minX ||
-       moBox.minX >= parms->line->aaBox().maxX ||
-       moBox.maxY <= parms->line->aaBox().minY ||
-       moBox.minY >= parms->line->aaBox().maxY)
+    AABoxd moAABox = Mobj_AABox(*mo);
+    if(moAABox.maxX <= parms->line->aaBox().minX ||
+       moAABox.minX >= parms->line->aaBox().maxX ||
+       moAABox.maxY <= parms->line->aaBox().minY ||
+       moAABox.minY >= parms->line->aaBox().maxY)
         return false;
 
-    if(parms->line->boxOnSide(moBox))
+    if(parms->line->boxOnSide(moAABox))
         return false;
 
     // This mobj blocks our path!

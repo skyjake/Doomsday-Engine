@@ -1424,7 +1424,7 @@ static bool nearFadeOpacity(WallEdge const &leftEdge, WallEdge const &rightEdge,
     if(!(pos > 0 && pos < 1))
         return false;
 
-    coord_t const maxDistance = mo->radius * .8f;
+    coord_t const maxDistance = Mobj_Radius(*mo) * .8f;
 
     Vector2d delta = Vector2d(result) - Vector2d(mo->origin);
     coord_t distance = delta.length();
@@ -3181,7 +3181,7 @@ static int drawMobjBBox(thinker_t *th, void * /*context*/)
         alpha = .25f; // Don't make them totally invisible.
 
     // Draw a bounding box in an appropriate color.
-    coord_t size = mo->radius;
+    coord_t size = Mobj_Radius(*mo);
     Rend_DrawBBox(mo->origin, size, size, mo->height/2, 0,
                   (mo->ddFlags & DDMF_MISSILE)? yellow :
                   (mo->ddFlags & DDMF_SOLID)? green : red,

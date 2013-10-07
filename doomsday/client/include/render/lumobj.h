@@ -21,6 +21,8 @@
 #ifndef DENG_CLIENT_RENDER_LUMOBJ_H
 #define DENG_CLIENT_RENDER_LUMOBJ_H
 
+#include <de/aabox.h>
+
 #include <de/Vector>
 
 #include "MapObject"
@@ -130,6 +132,14 @@ public:
      * @see radius()
      */
     Lumobj &setRadius(double newRadius);
+
+    /**
+     * Returns an axis-aligned bounding box for the lumobj in map space, centered
+     * on the origin with dimensions equal to @code radius * 2 @endcode.
+     *
+     * @see radius()
+     */
+    AABoxd aaBox() const;
 
     /**
      * Returns the z-offset of the lumobj.

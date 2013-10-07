@@ -57,7 +57,7 @@ double Contact::objectRadius() const
     switch(_type)
     {
     case ContactLumobj: return objectAs<Lumobj>().radius();
-    case ContactMobj:   return Mobj_VisualRadius(&objectAs<mobj_t>());
+    case ContactMobj:   return Mobj_VisualRadius(objectAs<mobj_t>());
 
     default:
         DENG2_ASSERT(false);
@@ -67,10 +67,15 @@ double Contact::objectRadius() const
 
 AABoxd Contact::objectAABox() const
 {
-    Vector2d const origin = objectOrigin();
-    ddouble const radius  = objectRadius();
-    return AABoxd(origin.x - radius, origin.y - radius,
-                  origin.x + radius, origin.y + radius);
+    switch(_type)
+    {
+    case ContactLumobj: return objectAs<Lumobj>().aaBox();
+    case ContactMobj:   return Mobj_AABox(objectAs<mobj_t>());
+
+    default:
+        DENG2_ASSERT(false);
+        return AABoxd();
+    }
 }
 
 BspLeaf &Contact::objectBspLeafAtOrigin() const

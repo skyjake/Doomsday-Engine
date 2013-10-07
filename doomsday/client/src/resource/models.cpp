@@ -775,12 +775,12 @@ modeldef_t* Models_Definition(char const* id)
     return 0;
 }
 
-float Models_ModelForMobj(mobj_t* mo, modeldef_t** modef, modeldef_t** nextmodef)
+float Models_ModelForMobj(mobj_t const *mo, modeldef_t **modef, modeldef_t **nextmodef)
 {
     // On the client it is possible that we don't know the mobj's state.
     if(!mo->state) return -1;
 
-    state_t& st = *mo->state;
+    state_t &st = *mo->state;
 
     // By default there are no models.
     *nextmodef = NULL;

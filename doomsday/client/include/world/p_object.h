@@ -25,7 +25,7 @@
 #  error Attempted to include internal Doomsday p_object.h from a game
 #endif
 
-//#include <de/libdeng1.h>
+#include <de/aabox.h>
 
 #include <de/Vector>
 
@@ -77,7 +77,7 @@ bool Mobj_IsLinked(mobj_t const &mobj);
 /**
  * Returns a copy of the mobj's map space origin.
  */
-de::Vector3d Mobj_Origin(mobj_t &mobj);
+de::Vector3d Mobj_Origin(mobj_t const &mobj);
 
 /**
  * Returns the mobj's visual center (i.e., origin plus z-height offset).
@@ -175,7 +175,33 @@ coord_t Mobj_BobOffset(mobj_t *mobj);
 
 float Mobj_Alpha(mobj_t *mobj);
 
-/// @return  Radius of the mobj as it would visually appear to be.
-coord_t Mobj_VisualRadius(mobj_t *mobj);
+/**
+ * Returns the physical radius of the mobj.
+ *
+ * @param mobj  Mobj instance.
+ *
+ * @see Mobj_VisualRadius()
+ */
+coord_t Mobj_Radius(mobj_t const &mobj);
+
+/**
+ * Returns the radius of the mobj as it would visually appear to be, according
+ * to the current visualization (either a sprite or a 3D model).
+ *
+ * @param mobj  Mobj instance.
+ *
+ * @see Mobj_Radius()
+ */
+coord_t Mobj_VisualRadius(mobj_t const &mobj);
+
+/**
+ * Returns an axis-aligned bounding box for the mobj in map space, centered
+ * on the origin with dimensions equal to @code radius * 2 @endcode.
+ *
+ * @param mobj  Mobj instance.
+ *
+ * @see Mobj_Radius()
+ */
+AABoxd Mobj_AABox(mobj_t const &mobj);
 
 #endif // DENG_WORLD_P_OBJECT_H

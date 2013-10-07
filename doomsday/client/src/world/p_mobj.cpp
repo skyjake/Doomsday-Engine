@@ -196,7 +196,7 @@ DENG_EXTERN_C void Mobj_SetState(mobj_t *mobj, int statenum)
     }
 }
 
-Vector3d Mobj_Origin(mobj_t &mobj)
+Vector3d Mobj_Origin(mobj_t const &mobj)
 {
     return Vector3d(mobj.origin);
 }
@@ -293,12 +293,12 @@ DENG_EXTERN_C Sector *Mobj_Sector(mobj_t const *mobj)
 
 #ifdef __CLIENT__
 
-static modeldef_t *currentModelDefForMobj(mobj_t *mo)
+static modeldef_t *currentModelDefForMobj(mobj_t const &mo)
 {
     if(useModels)
     {
         modeldef_t *mf = 0, *nextmf = 0;
-        Models_ModelForMobj(mo, &mf, &nextmf);
+        Models_ModelForMobj(&mo, &mf, &nextmf);
         return mf;
     }
     return 0;
@@ -465,7 +465,7 @@ float Mobj_ShadowStrength(mobj_t *mo)
     }
 
     // Sprites have their own shadow strength factor.
-    if(!currentModelDefForMobj(mo))
+    if(!currentModelDefForMobj(*mo))
     {
         if(Material *mat = R_MaterialForSprite(mo->sprite, mo->frame))
         {
@@ -569,18 +569,23 @@ float Mobj_Alpha(mobj_t *mo)
     return alpha;
 }
 
-coord_t Mobj_VisualRadius(mobj_t *mo)
+coord_t Mobj_Radius(mobj_t const &mobj)
+{
+    return mobj.radius;
+}
+
+coord_t Mobj_VisualRadius(mobj_t const &mobj)
 {
 #ifdef __CLIENT__
 
     // If models are being used, use the model's radius.
-    if(modeldef_t *mf = currentModelDefForMobj(mo))
+    if(modeldef_t *mf = currentModelDefForMobj(mobj))
     {
         return mf->visualRadius;
     }
 
     // Use the sprite frame's width?
-    if(Material *material = R_MaterialForSprite(mo->sprite, mo->frame))
+    if(Material *material = R_MaterialForSprite(mobj.sprite, mobj.frame))
     {
         MaterialSnapshot const &ms = material->prepare(Rend_SpriteMaterialSpec());
         return ms.width() / 2;
@@ -589,10 +594,18 @@ coord_t Mobj_VisualRadius(mobj_t *mo)
 #endif
 
     // Use the physical radius.
-    return mo->radius;
+    return Mobj_Radius(mobj);
 }
 
-void Mobj_ConsoleRegister(void)
+AABoxd Mobj_AABox(mobj_t const &mobj)
+{
+    Vector2d const origin = Mobj_Origin(mobj);
+    ddouble const radius  = Mobj_Radius(mobj);
+    return AABoxd(origin.x - radius, origin.y - radius,
+                  origin.x + radius, origin.y + radius);
+}
+
+void Mobj_ConsoleRegister()
 {
 #ifdef __CLIENT__
     C_VAR_BYTE("rend-mobj-light-auto", &mobjAutoLights, 0, 0, 1);

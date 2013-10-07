@@ -2536,21 +2536,18 @@ static int interceptMobjsWorker(mobj_t *mo, void * /*parameters*/)
     // Check a corner to corner crossection for hit.
     divline_t const &traceLos = Mobj_BspLeafAtOrigin(*mo).map().traceLine();
     vec2d_t from, to;
+    AABoxd aaBox = Mobj_AABox(*mo);
     if((traceLos.direction[VX] ^ traceLos.direction[VY]) > 0)
     {
         // \ Slope
-        V2d_Set(from, mo->origin[VX] - mo->radius,
-                      mo->origin[VY] + mo->radius);
-        V2d_Set(to,   mo->origin[VX] + mo->radius,
-                      mo->origin[VY] - mo->radius);
+        V2d_Set(from, aaBox.minX, aaBox.maxY);
+        V2d_Set(to,   aaBox.maxX, aaBox.minY);
     }
     else
     {
         // / Slope
-        V2d_Set(from, mo->origin[VX] - mo->radius,
-                      mo->origin[VY] - mo->radius);
-        V2d_Set(to,   mo->origin[VX] + mo->radius,
-                      mo->origin[VY] + mo->radius);
+        V2d_Set(from, aaBox.minX, aaBox.minY);
+        V2d_Set(to,   aaBox.maxX, aaBox.maxY);
     }
 
     // Is this line crossed?

@@ -129,6 +129,12 @@ Lumobj &Lumobj::setRadius(double newRadius)
     return *this;
 }
 
+AABoxd Lumobj::aaBox() const
+{
+    return AABoxd(origin().x - d->radius, origin().y - d->radius,
+                  origin().x + d->radius, origin().y + d->radius);
+}
+
 double Lumobj::zOffset() const
 {
     return d->zOffset;

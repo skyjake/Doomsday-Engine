@@ -237,7 +237,7 @@ void R_ProjectSprite(mobj_t *mo)
      * relative to the viewer and determining if the whole of the segment has
      * been clipped away according to the 360 degree angle clipper.
      */
-    coord_t const visWidth = Mobj_VisualRadius(mo) * 2; /// @todo ignorant of rotation...
+    coord_t const visWidth = Mobj_VisualRadius(*mo) * 2; /// @todo ignorant of rotation...
     Vector2d v1, v2;
     R_ProjectViewRelativeLine2D(moPos, mf || viewAlign, visWidth,
                                 (mf? 0 : coord_t(-tex.origin().x) - (visWidth / 2.0f)),

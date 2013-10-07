@@ -259,7 +259,7 @@ void Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj,
         return;
     }
 
-    localMobj->radius = remoteClientMobj->radius;
+    localMobj->radius = Mobj_Radius(*remoteClientMobj);
 
     if(flags & MDF_MOM_X) localMobj->mom[MX] = remoteClientMobj->mom[MX];
     if(flags & MDF_MOM_Y) localMobj->mom[MY] = remoteClientMobj->mom[MY];
@@ -617,22 +617,18 @@ boolean ClMobj_Reveal(mobj_t *mo)
  */
 static boolean ClMobj_IsStuckInsideLocalPlayer(mobj_t *mo)
 {
-    int i;
-    mobj_t* plmo;
-    float blockRadius;
-
     if(!(mo->ddFlags & DDMF_SOLID) || mo->dPlayer)
         return false;
 
-    for(i = 0; i < DDMAXPLAYERS; ++i)
+    for(int i = 0; i < DDMAXPLAYERS; ++i)
     {
         if(!ddPlayers[i].shared.inGame) continue;
         if(P_ConsoleToLocal(i) < 0) continue; // Not a local player.
 
-        plmo = ddPlayers[i].shared.mo;
+        mobj_t *plmo = ddPlayers[i].shared.mo;
         if(!plmo) continue;
 
-        blockRadius = mo->radius + plmo->radius;
+        float blockRadius = Mobj_Radius(*mo) + Mobj_Radius(*plmo);
         if(fabs(mo->origin[VX] - plmo->origin[VX]) >= blockRadius ||
            fabs(mo->origin[VY] - plmo->origin[VY]) >= blockRadius)
             continue; // Too far.
