@@ -109,8 +109,7 @@ boolean Mus_Init(void)
     }
 
     // Tell the audio driver about our soundfont config.
-    AudioDriver_Music_Set(AUDIOP_SOUNDFONT_FILENAME,
-                          de::NativePath(soundFontPath).expand().toString().toLatin1().constData());
+    Mus_UpdateSoundFont();
 
     musAvail = true;
     return true;
@@ -448,8 +447,18 @@ int Mus_Start(ded_music_t* def, boolean looped)
 
 static void Mus_UpdateSoundFont(void)
 {
+    de::NativePath path(soundFontPath);
+
+#ifdef MACOSX
+    // On OS X we can try to use the basic DLS soundfont that's part of CoreAudio.
+    if(path.isEmpty())
+    {
+        path = "/System/Library/Components/CoreAudio.component/Contents/Resources/gs_instruments.dls";
+    }
+#endif
+
     AudioDriver_Music_Set(AUDIOP_SOUNDFONT_FILENAME,
-        de::NativePath(Con_GetString("music-soundfont")).expand().toString().toLatin1().constData());
+                          path.expand().toString().toLatin1().constData());
 }
 
 /**
