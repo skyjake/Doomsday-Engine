@@ -273,7 +273,14 @@ DENG2_OBSERVES(App, StartupComplete)
         status->setRange(Rangei(0, 1));
         status->setProgress(0, 0);
         status->setImage(ClientApp::windowSystem().style().images().image("updater"));
+        status->setImageColor(ClientApp::windowSystem().style().colors().colorf("text"));
         showNotification(true);
+    }
+
+    void showUpdateAvailableNotification()
+    {
+        showCheckingNotification();
+        status->setImageColor(ClientApp::windowSystem().style().colors().colorf("accent"));
     }
 
     void showDownloadNotification()
@@ -357,7 +364,7 @@ DENG2_OBSERVES(App, StartupComplete)
 
                 // Show the notification so the user knows an update is
                 // available.
-                showCheckingNotification();
+                showUpdateAvailableNotification();
             }
         }
         else
@@ -612,6 +619,7 @@ void Updater::showCurrentDownload()
     }
     else
     {
+        d->showNotification(false);
         d->showAvailableDialogAndPause();
     }
 }
