@@ -241,6 +241,11 @@ Vector2d const &Blockmap::cellDimensions() const
     return d->cellDimensions;
 }
 
+int Blockmap::toCellIndex(uint cellX, uint cellY) const
+{
+    return d->toCellIndex(cellX, cellY);
+}
+
 BlockmapCell Blockmap::toCell(Vector2d const &point, bool *retDidClip) const
 {
     bool didClipX, didClipY;

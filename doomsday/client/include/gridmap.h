@@ -145,6 +145,11 @@ public:
     virtual ~Gridmap();
 
     /**
+     * Utility function which returns the linear index of the specified cell.
+     */
+    int toCellIndex(uint cellX, uint cellY) const;
+
+    /**
      * Returns the dimensions of the gridmap in cells.
      */
     Cell const &dimensions() const;

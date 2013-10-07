@@ -120,6 +120,7 @@ DENG_CONVENIENCE_HEADERS += \
     include/CommandAction \
     include/ChildWidgetOrganizer \
     include/ContactBlockmap \
+    include/ContactSpreader \
     include/Decoration \
     include/DialogContentStylist \
     include/EntityDatabase \
@@ -466,6 +467,7 @@ DENG_HEADERS += \
     include/world/bspleaf.h \
     include/world/bspnode.h \
     include/world/contactblockmap.h \
+    include/world/contactspreader.h \
     include/world/dmuargs.h \
     include/world/entitydatabase.h \
     include/world/entitydef.h \
@@ -805,6 +807,7 @@ SOURCES += \
     src/world/bspleaf.cpp \
     src/world/bspnode.cpp \
     src/world/contactblockmap.cpp \
+    src/world/contactspreader.cpp \
     src/world/dmuargs.cpp \
     src/world/entitydatabase.cpp \
     src/world/entitydef.cpp \

@@ -217,6 +217,11 @@ Gridmap::Gridmap(Cell const &dimensions, size_t cellSize, int zoneTag)
 Gridmap::~Gridmap()
 {}
 
+int Gridmap::toCellIndex(uint cellX, uint cellY) const
+{
+    return int(cellY * d->dimensions.x + cellX);
+}
+
 Gridmap::Cell const &Gridmap::dimensions() const
 {
     return d->dimensions;

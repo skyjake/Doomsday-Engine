@@ -86,6 +86,11 @@ public:
     inline coord_t cellHeight() const { return cellDimensions().y; }
 
     /**
+     * Utility function which returns the linear index of the specified cell.
+     */
+    int toCellIndex(uint cellX, uint cellY) const;
+
+    /**
      * Given map space XY coordinates @a pos, output the blockmap cell[x, y] it
      * resides in. If @a pos is outside the blockmap it will be clamped to the
      * nearest edge on one or more axes as necessary.
