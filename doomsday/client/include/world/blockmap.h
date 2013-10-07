@@ -122,9 +122,11 @@ public:
 
     bool unlink(CellBlock const &cellBlock, void *elem);
 
-    int iterate(Cell const &cell, int (*callback) (void *elem, void *context), void *context) const;
+    void unlinkAll();
 
-    int iterate(CellBlock const &cellBlock, int (*callback) (void *elem, void *context), void *context) const;
+    int iterate(Cell const &cell, int (*callback) (void *elem, void *context), void *context = 0) const;
+
+    int iterate(CellBlock const &cellBlock, int (*callback) (void *elem, void *context), void *context = 0) const;
 
     /**
      * Retrieve an immutable pointer to the underlying Gridmap instance

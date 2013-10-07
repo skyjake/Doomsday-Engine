@@ -27,9 +27,10 @@
 #include <de/Error>
 
 #include "Face"
-#include "gridmap.h"
+//#include "gridmap.h"
 
 #include "world/map.h"
+#include "world/blockmap.h"
 #include "world/p_object.h"
 #include "BspLeaf"
 #include "Surface"
@@ -53,7 +54,7 @@ enum ContactType
 /// @todo Obviously, polymorphism is a better solution.
 struct Contact
 {
-    Contact *nextInBlock; ///< Next in the same blockmap cell (if any, not owned).
+    //Contact *nextInBlock; ///< Next in the same blockmap cell (if any, not owned).
     Contact *nextUsed;    ///< Next in the used list (if any, not owned).
     Contact *next;        ///< Next in global list of contacts (if any, not owned).
 
@@ -228,9 +229,9 @@ static coord_t pointOnHEdgeSide(HEdge const &hedge, Vector2d const &point)
     return V2d_PointOnLineSide(pointV1, fromOriginV1, directionV1);
 }
 
-DENG2_PIMPL(ContactBlockmap), public Gridmap
+DENG2_PIMPL(ContactBlockmap)
 {
-    struct CellData
+    /*struct CellData
     {
         Contact *head;
 
@@ -238,10 +239,12 @@ DENG2_PIMPL(ContactBlockmap), public Gridmap
         {
             head = 0;
         }
-    };
+    };*/
 
-    AABoxd bounds;
-    uint blockSize; ///< In map space units.
+    //Gridmap gridmap;
+    Blockmap blockmap;
+    //AABoxd bounds;
+    //uint blockSize; ///< In map space units.
 
     // For perf, spread state data is "global".
     struct SpreadState
@@ -252,23 +255,22 @@ DENG2_PIMPL(ContactBlockmap), public Gridmap
         SpreadState() : contact(0) {}
     };
     SpreadState spread;
-    QBitArray spreadBlocks;
+    QBitArray spreadBlocks; ///< Used to prevent repeat processing.
 
     Instance(Public *i, AABoxd const &bounds, uint blockSize)
         : Base(i),
-          Gridmap(Cell(de::ceil((bounds.maxX - bounds.minX) / ddouble( blockSize )),
-                       de::ceil((bounds.maxY - bounds.minY) / ddouble( blockSize ))),
-                  sizeof(CellData), PU_MAPSTATIC),
-          bounds(bounds),
-          blockSize(blockSize),
-          spreadBlocks(Gridmap::width() * Gridmap::height())
+          blockmap(bounds, Vector2ui(blockSize, blockSize)),
+          //bounds(bounds),
+          //blockSize(blockSize),
+          spreadBlocks(blockmap.width() * blockmap.height())
     {}
 
     inline int toCellIndex(uint cellX, uint cellY)
     {
-        return int(cellY * width() + cellX);
+        return int(cellY * blockmap.width() + cellX);
     }
 
+#if 0
     /**
      * Given map space X coordinate @a x, return the corresponding cell coordinate.
      * If @a x is outside the blockmap it will be clamped to the nearest edge on
@@ -281,6 +283,7 @@ DENG2_PIMPL(ContactBlockmap), public Gridmap
      */
     uint toCellX(ddouble x, bool &didClip) const
     {
+        AABoxd const &bounds = blockmap.bounds();
         didClip = false;
         if(x < bounds.minX)
         {
@@ -292,7 +295,7 @@ DENG2_PIMPL(ContactBlockmap), public Gridmap
             x = bounds.maxX - 1;
             didClip = true;
         }
-        return uint((x - bounds.minX) / blockSize);
+        return uint((x - bounds.minX) / blockmap.cellWidth());
     }
 
     /**
@@ -307,6 +310,7 @@ DENG2_PIMPL(ContactBlockmap), public Gridmap
      */
     uint toCellY(ddouble y, bool &didClip) const
     {
+        AABoxd const &bounds = blockmap.bounds();
         didClip = false;
         if(y < bounds.minY)
         {
@@ -318,7 +322,7 @@ DENG2_PIMPL(ContactBlockmap), public Gridmap
             y = bounds.maxY - 1;
             didClip = true;
         }
-        return uint((y - bounds.minY) / blockSize);
+        return uint((y - bounds.minY) / blockmap.cellHeight());
     }
 
     /**
@@ -331,26 +335,27 @@ DENG2_PIMPL(ContactBlockmap), public Gridmap
      *
      * @return  The determined blockmap cell.
      */
-    Cell toCell(Vector2d const &point, bool *retAdjusted = 0) const
+    GridmapCell toCell(Vector2d const &point, bool *retAdjusted = 0) const
     {
         bool didClipX, didClipY;
-        Cell cell(toCellX(point.x, didClipX), toCellY(point.y, didClipY));
+        GridmapCell cell(toCellX(point.x, didClipX), toCellY(point.y, didClipY));
         if(retAdjusted) *retAdjusted = didClipX | didClipY;
         return cell;
     }
 
-    inline CellBlock toCellBlock(AABoxd const &box)
+    inline GridmapCellBlock toCellBlock(AABoxd const &box)
     {
-        return CellBlock(toCell(box.min), toCell(box.max));
+        return GridmapCellBlock(toCell(box.min), toCell(box.max));
     }
 
     /**
      * Returns the data for the specified cell.
      */
-    inline CellData *cellData(Cell const &cell, bool canAlloc = false)
+    inline CellData *cellData(GridmapCell const &cell, bool canAlloc = false)
     {
-        return static_cast<CellData *>(Gridmap::cellData(cell, canAlloc));
+        return static_cast<CellData *>(gridmap.cellData(cell, canAlloc));
     }
+#endif
 
     void maybeSpreadOverEdge(HEdge *hedge)
     {
@@ -506,12 +511,19 @@ DENG2_PIMPL(ContactBlockmap), public Gridmap
         spreadInBspLeaf(bspLeaf);
     }
 
-    static int unlinkAllWorker(void *obj, void *context)
+    static int spreadContactWorker(void *contact, void *context)
+    {
+        Instance *inst = static_cast<Instance *>(context);
+        inst->spreadContact(*static_cast<Contact *>(contact));
+        return false; // Continue iteration.
+    }
+
+    /*static int unlinkAllWorker(void *obj, void *context)
     {
         DENG2_UNUSED(context);
         static_cast<CellData *>(obj)->unlinkAll();
         return false; // Continue iteration.
-    }
+    }*/
 };
 
 ContactBlockmap::ContactBlockmap(AABoxd const &bounds, uint blockSize)
@@ -520,12 +532,12 @@ ContactBlockmap::ContactBlockmap(AABoxd const &bounds, uint blockSize)
 
 Vector2d ContactBlockmap::origin() const
 {
-    return Vector2d(d->bounds.min);
+    return d->blockmap.origin();
 }
 
 AABoxd const &ContactBlockmap::bounds() const
 {
-    return d->bounds;
+    return d->blockmap.bounds();
 }
 
 void ContactBlockmap::link(Contact *contact)
@@ -533,25 +545,28 @@ void ContactBlockmap::link(Contact *contact)
     if(!contact) return;
 
     bool outside;
-    Instance::Cell cell = d->toCell(contact->objectOrigin(), &outside);
+    BlockmapCell cell = d->blockmap.toCell(contact->objectOrigin(), &outside);
     if(outside) return;
 
-    Instance::CellData *data = d->cellData(cell, true/*can allocate a block*/);
-    contact->nextInBlock = data->head;
-    data->head = contact;
+    d->blockmap.link(cell, contact);
+
+    //Instance::CellData *data = d->cellData(cell, true/*can allocate a block*/);
+    //contact->nextInBlock = data->head;
+    //data->head = contact;
 }
 
 void ContactBlockmap::unlinkAll()
 {
     d->spreadBlocks.fill(false);
-    d->iterate(Instance::unlinkAllWorker);
+    d->blockmap.unlinkAll();
+    //d->gridmap.iterate(Instance::unlinkAllWorker);
 }
 
 void ContactBlockmap::spreadAllContacts(AABoxd const &box)
 {
-    Instance::CellBlock const cellBlock = d->toCellBlock(box);
+    BlockmapCellBlock const cellBlock = d->blockmap.toCellBlock(box);
 
-    Instance::Cell cell;
+    BlockmapCell cell;
     for(cell.y = cellBlock.min.y; cell.y <= cellBlock.max.y; ++cell.y)
     for(cell.x = cellBlock.min.x; cell.x <= cellBlock.max.x; ++cell.x)
     {
@@ -559,14 +574,14 @@ void ContactBlockmap::spreadAllContacts(AABoxd const &box)
         if(!d->spreadBlocks.testBit(cellIndex))
         {
             d->spreadBlocks.setBit(cellIndex);
-
-            if(Instance::CellData *data = d->cellData(cell))
+            d->blockmap.iterate(cell, Instance::spreadContactWorker, d);
+            /*if(Instance::CellData *data = d->cellData(cell))
             {
                 for(Contact *iter = data->head; iter; iter = iter->nextInBlock)
                 {
                     d->spreadContact(*iter);
                 }
-            }
+            }*/
         }
     }
 }
@@ -596,7 +611,7 @@ static Contact *newContact(void *object, ContactType type)
         contactCursor = contactCursor->nextUsed;
     }
 
-    contact->nextInBlock = 0;
+    //contact->nextInBlock = 0;
 
     // Link in the list of in-use contacts.
     contact->next = contacts;

@@ -41,27 +41,30 @@ struct RingNode
 struct CellData
 {
     RingNode *ringNodes;
-
-    /// Running total of the number of elements linked in this cell.
-    int elemCount;
-
-    bool link(void *elem)
-    {
-        RingNode *node = allocNode();
-        node->elem = elem;
-        elemCount++;
-        return true;
-    }
+    int elemCount; ///< Total number of linked elements.
 
     bool unlink(void *elem)
     {
         if(RingNode *node = findNode(elem))
         {
-            node->elem = 0;
-            elemCount--;
+            clearElement(*node);
             return true;
         }
         return false;
+    }
+
+    void unlinkAll()
+    {
+        for(RingNode *node = ringNodes; node; node = node->next)
+        {
+            clearElement(*node);
+        }
+    }
+
+    bool link(void *elem)
+    {
+        addElement(newNode(), elem);
+        return true;
     }
 
     int iterate(int (*callback) (void *elem, void *context), void *context)
@@ -73,8 +76,8 @@ struct CellData
 
             if(node->elem)
             {
-                int result = callback(node->elem, context);
-                if(result) return result; // Stop iteration.
+                if(int result = callback(node->elem, context))
+                    return result; // Stop iteration.
             }
 
             node = next;
@@ -83,6 +86,39 @@ struct CellData
     }
 
 private:
+    RingNode &newNode()
+    {
+        RingNode *node = 0;
+
+        if(!ringNodes)
+        {
+            // Create a new root node.
+            node = (RingNode *) Z_Malloc(sizeof(*node), PU_MAP, 0);
+            node->next = 0;
+            node->prev = 0;
+            node->elem = 0;
+            ringNodes = node;
+            return *node;
+        }
+
+        // Is there an available node in the ring we can reuse?
+        for(node = ringNodes; node->next && node->elem; node = node->next)
+        {}
+
+        if(!node->elem)
+        {
+            // This will do nicely.
+            return *node;
+        }
+
+        // Add a new node to the ring.
+        node->next = (RingNode *) Z_Malloc(sizeof(*node), PU_MAP, 0);
+        node->next->next = 0;
+        node->next->prev = node;
+        node->next->elem = 0;
+        return *node->next;
+    }
+
     RingNode *findNode(void *elem)
     {
         if(!elem) return 0;
@@ -93,35 +129,19 @@ private:
         return 0;
     }
 
-    RingNode *allocNode()
+    void clearElement(RingNode &node)
     {
-        RingNode *node = 0;
+        if(!node.elem) return;
 
-        if(!ringNodes)
-        {
-            // Create a new root node.
-            node = (RingNode *) Z_Malloc(sizeof(*node), PU_MAP, 0);
-            node->next = 0;
-            node->prev = 0;
-            ringNodes = node;
-            return node;
-        }
+        node.elem = 0;
+        elemCount--;
+    }
 
-        // Is there an available node in the ring we can reuse?
-        for(node = ringNodes; node->next && node->elem; node = node->next)
-        {}
-
-        if(!node->elem)
-        {
-            // This will do nicely.
-            return node;
-        }
-
-        // Add a new node to the ring.
-        node->next = (RingNode *) Z_Malloc(sizeof(*node), PU_MAP, 0);
-        node->next->next = 0;
-        node->next->prev = node;
-        return node->next;
+    void addElement(RingNode &node, void *elem)
+    {
+        DENG2_ASSERT(node.elem == 0);
+        node.elem = elem;
+        elemCount++;
     }
 };
 
@@ -290,10 +310,10 @@ struct BlockUnlinkWorkerParams
     bool didUnlink;
 };
 
-static int blockUnlinkWorker(void *cdPtr, void *parameters)
+static int blockUnlinkWorker(void *cdPtr, void *contaxt)
 {
     CellData *cellData = (CellData *) cdPtr;
-    BlockUnlinkWorkerParams *p = (BlockUnlinkWorkerParams *) parameters;
+    BlockUnlinkWorkerParams *p = (BlockUnlinkWorkerParams *) contaxt;
     if(cellData->unlink(p->elem))
     {
         p->didUnlink = true;
@@ -309,6 +329,21 @@ bool Blockmap::unlink(CellBlock const &cellBlock, void *elem)
     parm.didUnlink = false;
     d->iterate(cellBlock, blockUnlinkWorker, &parm);
     return parm.didUnlink;
+}
+
+static int blockUnlinkAllWorker(void *cdPtr, void *context)
+{
+    DENG2_UNUSED(context);
+    if(CellData *cellData = static_cast<CellData *>(cdPtr))
+    {
+        cellData->unlinkAll();
+    }
+    return false; // Continue iteration.
+}
+
+void Blockmap::unlinkAll()
+{
+    d->iterate(blockUnlinkAllWorker);
 }
 
 int Blockmap::cellElementCount(Cell const &cell) const
