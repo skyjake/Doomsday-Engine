@@ -35,8 +35,8 @@ namespace de {
 class Blockmap
 {
 public:
-    typedef Gridmap::Cell Cell;
-    typedef Gridmap::CellBlock CellBlock;
+    typedef GridmapCell Cell;
+    typedef GridmapCellBlock CellBlock;
 
 public:
     /**

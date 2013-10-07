@@ -21,6 +21,8 @@
  * 02110-1301 USA</small>
  */
 
+#include <QBitArray>
+
 #include <de/aabox.h>
 #include <de/vector1.h>
 
@@ -89,6 +91,284 @@
 
 static int bspSplitFactor = 7; // cvar
 
+#ifdef __CLIENT__
+
+/**
+ * On which side of the half-edge does the specified @a point lie?
+ *
+ * @param hedge  Half-edge to test.
+ * @param point  Point to test in the map coordinate space.
+ *
+ * @return @c <0 Point is to the left/back of the segment.
+ *         @c =0 Point lies directly on the segment.
+ *         @c >0 Point is to the right/front of the segment.
+ */
+static coord_t pointOnHEdgeSide(de::HEdge const &hedge, de::Vector2d const &point)
+{
+    de::Vector2d const direction = hedge.twin().origin() - hedge.origin();
+
+    ddouble pointV1[2]      = { point.x, point.y };
+    ddouble fromOriginV1[2] = { hedge.origin().x, hedge.origin().y };
+    ddouble directionV1[2]  = { direction.x, direction.y };
+    return V2d_PointOnLineSide(pointV1, fromOriginV1, directionV1);
+}
+
+struct ContactBlockmap
+{
+    /**
+     * Construct a new contact blockmap.
+     *
+     * @param bounds     Bounding box of the blockmap.
+     * @param blockSize  Size of each block.
+     */
+    ContactBlockmap(AABoxd const &bounds, uint blockSize = 128)
+        : _blockmap(bounds, de::Vector2ui(blockSize, blockSize)),
+          _spreadBlocks(_blockmap.width() * _blockmap.height())
+    {}
+
+    /**
+     * Returns the origin of the blockmap in the map coordinate space.
+     */
+    de::Vector2d origin() const
+    {
+        return _blockmap.origin();
+    }
+
+    /**
+     * Returns the bounds of the blockmap in the map coordinate space.
+     */
+    AABoxd const &bounds() const
+    {
+        return _blockmap.bounds();
+    }
+
+    /**
+     * @param contact  Contact to be linked. Note that if the object's origin
+     *                 lies outside the blockmap it will not be linked!
+     */
+    void link(Contact *contact)
+    {
+        if(!contact) return;
+
+        bool outside;
+        de::BlockmapCell cell = _blockmap.toCell(contact->objectOrigin(), &outside);
+        if(outside) return;
+
+        _blockmap.link(cell, contact);
+    }
+
+    /**
+     * Clear all linked contacts.
+     */
+    void unlinkAll()
+    {
+        _spreadBlocks.fill(false);
+        _blockmap.unlinkAll();
+    }
+
+    /**
+     * Spread contacts in the blockmap to any touched neighbors.
+     *
+     * @param box   Map space region in which to perform spreading.
+     */
+    void spreadAllContacts(AABoxd const &box)
+    {
+        de::BlockmapCellBlock const cellBlock = _blockmap.toCellBlock(box);
+
+        de::BlockmapCell cell;
+        for(cell.y = cellBlock.min.y; cell.y <= cellBlock.max.y; ++cell.y)
+        for(cell.x = cellBlock.min.x; cell.x <= cellBlock.max.x; ++cell.x)
+        {
+            int cellIndex = toCellIndex(cell.x, cell.y);
+            if(!_spreadBlocks.testBit(cellIndex))
+            {
+                _spreadBlocks.setBit(cellIndex);
+                _blockmap.iterate(cell, spreadContactWorker, this);
+            }
+        }
+    }
+
+    /**
+     * Link the contact in all BspLeafs which touch the linked object (tests are
+     * done with bounding boxes and the BSP leaf spread test).
+     *
+     * @param contact  Contact to be spread.
+     */
+    void spreadContact(Contact &contact)
+    {
+        BspLeaf &bspLeaf = contact.objectBspLeafAtOrigin();
+        DENG2_ASSERT(bspLeaf.hasCluster()); // Sanity check.
+
+        R_ContactList(bspLeaf, contact.type()).link(&contact);
+
+        // Spread to neighboring BSP leafs.
+        bspLeaf.setValidCount(++validCount);
+
+        _spread.contact      = &contact;
+        _spread.contactAABox = contact.objectAABox();
+
+        spreadInBspLeaf(bspLeaf);
+    }
+
+private:
+    de::Blockmap _blockmap;
+    struct SpreadState
+    {
+        Contact *contact;
+        AABoxd contactAABox;
+
+        SpreadState() : contact(0) {}
+    };
+    SpreadState _spread;
+    QBitArray _spreadBlocks; ///< Used to prevent repeat processing.
+
+    inline int toCellIndex(uint cellX, uint cellY)
+    {
+        return int(cellY * _blockmap.width() + cellX);
+    }
+
+    void maybeSpreadOverEdge(de::HEdge *hedge)
+    {
+        DENG2_ASSERT(_spread.contact != 0);
+
+        if(!hedge) return;
+
+        BspLeaf &leaf = hedge->face().mapElementAs<BspLeaf>();
+        SectorCluster &cluster = leaf.cluster();
+
+        // There must be a back BSP leaf to spread to.
+        if(!hedge->hasTwin()) return;
+        if(!hedge->twin().hasFace()) return;
+
+        BspLeaf &backLeaf = hedge->twin().face().mapElementAs<BspLeaf>();
+        if(!backLeaf.hasCluster()) return;
+
+        SectorCluster &backCluster = backLeaf.cluster();
+
+        // Which way does the spread go?
+        if(!(leaf.validCount() == validCount && backLeaf.validCount() != validCount))
+        {
+            return; // Not eligible for spreading.
+        }
+
+        // Is the leaf on the back side outside the origin's AABB?
+        AABoxd const &aaBox = backLeaf.poly().aaBox();
+        if(aaBox.maxX <= _spread.contactAABox.minX || aaBox.minX >= _spread.contactAABox.maxX ||
+           aaBox.maxY <= _spread.contactAABox.minY || aaBox.minY >= _spread.contactAABox.maxY)
+            return;
+
+        // Too far from the edge?
+        coord_t const length   = (hedge->twin().origin() - hedge->origin()).length();
+        coord_t const distance = pointOnHEdgeSide(*hedge, _spread.contact->objectOrigin()) / length;
+        if(de::abs(distance) >= _spread.contact->objectRadius())
+            return;
+
+        // Do not spread if the sector on the back side is closed with no height.
+        if(!backCluster.hasWorldVolume())
+            return;
+
+        if(backCluster.visCeiling().heightSmoothed() <= cluster.visFloor().heightSmoothed() ||
+           backCluster.visFloor().heightSmoothed() >= cluster.visCeiling().heightSmoothed())
+            return;
+
+        // Are there line side surfaces which should prevent spreading?
+        if(hedge->hasMapElement())
+        {
+            LineSideSegment const &seg = hedge->mapElementAs<LineSideSegment>();
+
+            // On which side of the line are we? (distance is from segment to origin).
+            LineSide const &facingLineSide = seg.line().side(seg.lineSide().sideId() ^ (distance < 0));
+
+            // One-way window?
+            if(!facingLineSide.back().hasSections())
+                return;
+
+            SectorCluster const &fromCluster = facingLineSide.isFront()? cluster : backCluster;
+            SectorCluster const &toCluster   = facingLineSide.isFront()? backCluster : cluster;
+
+            // Might a material cover the opening?
+            if(facingLineSide.hasSections() && facingLineSide.middle().hasMaterial())
+            {
+                // Stretched middles always cover the opening.
+                if(facingLineSide.isFlagged(SDF_MIDDLE_STRETCH))
+                    return;
+
+                // Determine the opening between the visual sector planes at this edge.
+                coord_t openBottom;
+                if(toCluster.visFloor().heightSmoothed() > fromCluster.visFloor().heightSmoothed())
+                {
+                    openBottom = toCluster.visFloor().heightSmoothed();
+                }
+                else
+                {
+                    openBottom = fromCluster.visFloor().heightSmoothed();
+                }
+
+                coord_t openTop;
+                if(toCluster.visCeiling().heightSmoothed() < fromCluster.visCeiling().heightSmoothed())
+                {
+                    openTop = toCluster.visCeiling().heightSmoothed();
+                }
+                else
+                {
+                    openTop = fromCluster.visCeiling().heightSmoothed();
+                }
+
+                // Ensure we have up to date info about the material.
+                de::MaterialSnapshot const &ms = facingLineSide.middle().material().prepare(Rend_MapSurfaceMaterialSpec());
+                if(ms.height() >= openTop - openBottom)
+                {
+                    // Possibly; check the placement.
+                    de::WallEdge edge(de::WallSpec::fromMapSide(facingLineSide, LineSide::Middle),
+                                     *facingLineSide.leftHEdge(), Line::From);
+
+                    if(edge.isValid() && edge.top().z() > edge.bottom().z() &&
+                       edge.top().z() >= openTop && edge.bottom().z() <= openBottom)
+                        return;
+                }
+            }
+        }
+
+        // During the next step this contact will spread from the back leaf.
+        backLeaf.setValidCount(validCount);
+
+        R_ContactList(backLeaf, _spread.contact->type()).link(_spread.contact);
+
+        spreadInBspLeaf(backLeaf);
+    }
+
+    /**
+     * Attempt to spread the obj from the given contact from the source
+     * BspLeaf and into the (relative) back BspLeaf.
+     *
+     * @param bspLeaf  BspLeaf to attempt to spread over to.
+     *
+     * @return  Always @c true. (This function is also used as an iterator.)
+     */
+    void spreadInBspLeaf(BspLeaf &bspLeaf)
+    {
+        if(bspLeaf.hasCluster())
+        {
+            de::HEdge *base = bspLeaf.poly().hedge();
+            de::HEdge *hedge = base;
+            do
+            {
+                maybeSpreadOverEdge(hedge);
+
+            } while((hedge = &hedge->next()) != base);
+        }
+    }
+
+    static int spreadContactWorker(void *contact, void *context)
+    {
+        ContactBlockmap *inst = static_cast<ContactBlockmap *>(context);
+        inst->spreadContact(*static_cast<Contact *>(contact));
+        return false; // Continue iteration.
+    }
+};
+
+#endif // __CLIENT__
+
 namespace de {
 
 struct EditableElements
@@ -140,6 +420,10 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
     QScopedPointer<Blockmap> polyobjBlockmap;
     QScopedPointer<Blockmap> lineBlockmap;
     QScopedPointer<Blockmap> bspLeafBlockmap;
+#ifdef __CLIENT__
+    QScopedPointer<ContactBlockmap> mobjContactBlockmap; /// @todo Redundant?
+    QScopedPointer<ContactBlockmap> lumobjContactBlockmap;
+#endif
 
     nodepile_t mobjNodes;
     nodepile_t lineNodes;
@@ -936,6 +1220,34 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
         }
     }
 
+#ifdef __CLIENT__
+    static int linkContactWorker(Contact &contact, void *context)
+    {
+        Instance *inst = static_cast<Instance *>(context);
+        switch(contact.type())
+        {
+        case ContactMobj:   inst->mobjContactBlockmap->link(&contact); break;
+        case ContactLumobj: inst->lumobjContactBlockmap->link(&contact); break;
+
+        default:
+            DENG2_ASSERT(false);
+            break;
+        }
+
+        return false; // Continue iteration.
+    }
+
+    /**
+     * To be called to link all contacts into the contact blockmaps.
+     *
+     * @todo Why don't we link contacts immediately? -ds
+     */
+    void linkContacts()
+    {
+        R_ContactIterator(linkContactWorker, this);
+    }
+#endif
+
     /**
      * Locate a polyobj by sound emitter.
      *
@@ -1323,6 +1635,24 @@ void Map::buildMaterialLists()
             linkInMaterialLists(&plane->surface());
         }
     }
+}
+
+void Map::initContactBlockmaps()
+{
+    d->mobjContactBlockmap.reset(new ContactBlockmap(bounds()));
+    d->lumobjContactBlockmap.reset(new ContactBlockmap(bounds()));
+}
+
+void Map::spreadAllContacts(AABoxd const &region)
+{
+    // Expand the region according by the maxium radius of each contact type.
+    d->mobjContactBlockmap->
+        spreadAllContacts(AABoxd(region.minX - DDMOBJ_RADIUS_MAX, region.minY - DDMOBJ_RADIUS_MAX,
+                                 region.maxX + DDMOBJ_RADIUS_MAX, region.maxY + DDMOBJ_RADIUS_MAX));
+
+    d->lumobjContactBlockmap->
+        spreadAllContacts(AABoxd(region.minX - Lumobj::radiusMax(), region.minY - Lumobj::radiusMax(),
+                                 region.maxX + Lumobj::radiusMax(), region.maxY + Lumobj::radiusMax()));
 }
 
 #endif // __CLIENT__
@@ -2903,7 +3233,10 @@ void Map::worldFrameBegins(World &world, bool resetNextViewer)
         removeAllLumobjs();
 
         // Clear the "contact" blockmaps (BSP leaf => object).
-        R_ClearContacts(*this);
+        d->mobjContactBlockmap->unlinkAll();
+        d->lumobjContactBlockmap->unlinkAll();
+
+        R_ClearContactLists(*this);
 
         // Generate surface decorations for the frame.
         if(useLightDecorations)
@@ -2944,8 +3277,7 @@ void Map::worldFrameBegins(World &world, bool resetNextViewer)
         // Link all active particle generators into the world.
         P_CreatePtcGenLinks();
 
-        // Link objs to all contacted surfaces.
-        R_LinkContacts();
+        d->linkContacts();
     }
 }
 

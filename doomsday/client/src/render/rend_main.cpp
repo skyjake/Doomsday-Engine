@@ -2499,7 +2499,10 @@ static void drawCurrentLeaf()
     leaf->markVisible();
 
     markLeafFrontFacingWalls();
-    R_SpreadContacts(*leaf);
+
+    // Perform contact spreading for this map region.
+    leaf->map().spreadAllContacts(leaf->poly().aaBox());
+
     Rend_RadioBspLeafEdges(*leaf);
 
     /*

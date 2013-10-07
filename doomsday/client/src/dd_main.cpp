@@ -1500,7 +1500,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
 
 #ifdef __CLIENT__
         R_ClearViewData();
-        R_DestroyContactBlockmaps();
+        R_DestroyContactLists();
         P_ControlShutdown();
 
         Con_Execute(CMDS_DDAY, "clearbindings", true, false);

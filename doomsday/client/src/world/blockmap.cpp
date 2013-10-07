@@ -273,10 +273,10 @@ struct BlockLinkWorkerParams
     bool didLink;
 };
 
-static int blockLinkWorker(void *cdPtr, void *parameters)
+static int blockLinkWorker(void *cdPtr, void *context)
 {
     CellData *cellData = (CellData *) cdPtr;
-    BlockLinkWorkerParams *p = (BlockLinkWorkerParams *) parameters;
+    BlockLinkWorkerParams *p = (BlockLinkWorkerParams *) context;
     if(cellData->link(p->elem))
     {
         p->didLink = true;
@@ -310,10 +310,10 @@ struct BlockUnlinkWorkerParams
     bool didUnlink;
 };
 
-static int blockUnlinkWorker(void *cdPtr, void *contaxt)
+static int blockUnlinkWorker(void *cdPtr, void *context)
 {
     CellData *cellData = (CellData *) cdPtr;
-    BlockUnlinkWorkerParams *p = (BlockUnlinkWorkerParams *) contaxt;
+    BlockUnlinkWorkerParams *p = (BlockUnlinkWorkerParams *) context;
     if(cellData->unlink(p->elem))
     {
         p->didUnlink = true;

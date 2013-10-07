@@ -1,4 +1,4 @@
-/** @file p_objlink.cpp World object => BSP leaf "contact" blockmap.
+/** @file contactblockmap.cpp World object => BSP leaf "contact" blockmap.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -17,9 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-//#include <cmath>
-
-#include <QBitArray>
+//#include <QBitArray>
 
 #include <de/memoryzone.h>
 #include <de/vector1.h>
@@ -27,114 +25,76 @@
 #include <de/Error>
 
 #include "Face"
-//#include "gridmap.h"
 
 #include "world/map.h"
-#include "world/blockmap.h"
+//#include "world/blockmap.h"
 #include "world/p_object.h"
 #include "BspLeaf"
-#include "Surface"
+//#include "Surface"
 
-#include "render/r_main.h" // validCount
-#include "render/rend_main.h" // Rend_MapSurfaceMaterialSpec
-#include "WallEdge"
+//#include "render/r_main.h" // validCount
+//#include "render/rend_main.h" // Rend_MapSurfaceMaterialSpec
+//#include "WallEdge"
 
 #include "world/contactblockmap.h"
 
 using namespace de;
 
-enum ContactType
+ContactType Contact::type() const
 {
-    ContactMobj = 0,
-    ContactLumobj,
+    return _type;
+}
 
-    ContactTypeCount
-};
-
-/// @todo Obviously, polymorphism is a better solution.
-struct Contact
+void *Contact::objectPtr() const
 {
-    //Contact *nextInBlock; ///< Next in the same blockmap cell (if any, not owned).
-    Contact *nextUsed;    ///< Next in the used list (if any, not owned).
-    Contact *next;        ///< Next in global list of contacts (if any, not owned).
+    return _object;
+}
 
-    ContactType _type;    ///< Logical identifier.
-    void *_object;        ///< The contacted object.
-
-    ContactType type() const
+Vector3d Contact::objectOrigin() const
+{
+    switch(_type)
     {
-        return _type;
-    }
+    case ContactLumobj: return objectAs<Lumobj>().origin();
+    case ContactMobj:   return Mobj_Origin(objectAs<mobj_t>());
 
-    void *objectPtr() const
+    default:
+        DENG2_ASSERT(false);
+        return Vector3d();
+    }
+}
+
+double Contact::objectRadius() const
+{
+    switch(_type)
     {
-        return _object;
-    }
+    case ContactLumobj: return objectAs<Lumobj>().radius();
+    case ContactMobj:   return Mobj_VisualRadius(&objectAs<mobj_t>());
 
-    template <class ObjectType>
-    ObjectType &objectAs() const {
-        DENG2_ASSERT(_object != 0);
-        return *static_cast<ObjectType *>(_object);
+    default:
+        DENG2_ASSERT(false);
+        return 0;
     }
+}
 
-    /**
-     * Returns a copy of the linked object's origin in map space.
-     */
-    Vector3d objectOrigin() const
+AABoxd Contact::objectAABox() const
+{
+    Vector2d const origin = objectOrigin();
+    ddouble const radius  = objectRadius();
+    return AABoxd(origin.x - radius, origin.y - radius,
+                  origin.x + radius, origin.y + radius);
+}
+
+BspLeaf &Contact::objectBspLeafAtOrigin() const
+{
+    switch(_type)
     {
-        switch(_type)
-        {
-        case ContactLumobj: return objectAs<Lumobj>().origin();
-        case ContactMobj:   return Mobj_Origin(objectAs<mobj_t>());
+    case ContactLumobj: return objectAs<Lumobj>().bspLeafAtOrigin();
+    case ContactMobj:   return Mobj_BspLeafAtOrigin(objectAs<mobj_t>());
 
-        default:
-            DENG2_ASSERT(false);
-            return Vector3d();
-        }
+    default:
+        throw Error("Contact::objectBspLeafAtOrigin", "Invalid type");
     }
-
-    /**
-     * Returns the linked object's radius in map space.
-     */
-    ddouble objectRadius() const
-    {
-        switch(_type)
-        {
-        case ContactLumobj: return objectAs<Lumobj>().radius();
-        case ContactMobj:   return Mobj_VisualRadius(&objectAs<mobj_t>());
-
-        default:
-            DENG2_ASSERT(false);
-            return 0;
-        }
-    }
-
-    /**
-     * Returns an axis-aligned bounding box for the linked object in map space.
-     */
-    AABoxd objectAABox() const
-    {
-        Vector2d const origin = objectOrigin();
-        ddouble const radius  = objectRadius();
-        return AABoxd(origin.x - radius, origin.y - radius,
-                      origin.x + radius, origin.y + radius);
-    }
-
-    /**
-     * Returns the BSP leaf at the linked object's origin in map space.
-     */
-    BspLeaf &objectBspLeafAtOrigin() const
-    {
-        switch(_type)
-        {
-        case ContactLumobj: return objectAs<Lumobj>().bspLeafAtOrigin();
-        case ContactMobj:   return Mobj_BspLeafAtOrigin(objectAs<mobj_t>());
-
-        default:
-            throw Error("Contact::objectBspLeafAtOrigin", "Invalid type");
-        }
-    }
-};
+}
 
 struct ListNode
 {
@@ -145,449 +105,58 @@ struct ListNode
 static ListNode *firstNode; ///< First unused list node.
 static ListNode *cursor;    ///< Current list node.
 
-struct ContactList
+void ContactList::reset() // static
 {
-    // Start reusing list nodes.
-    static void reset()
+    cursor = firstNode;
+}
+
+void ContactList::link(Contact *contact)
+{
+    if(!contact) return;
+
+    ListNode *node = newNode(contact->objectPtr());
+
+    node->next = _head;
+    _head = node;
+}
+
+ListNode *ContactList::begin() const
+{
+    return _head;
+}
+
+ListNode *ContactList::newNode(void *object) // static
+{
+    DENG2_ASSERT(object != 0);
+
+    ListNode *node;
+    if(!cursor)
     {
-        cursor = firstNode;
+        node = (ListNode *) Z_Malloc(sizeof(*node), PU_APPSTATIC, 0);
+
+        // Link in the global list of used nodes.
+        node->nextUsed = firstNode;
+        firstNode = node;
+    }
+    else
+    {
+        node = cursor;
+        cursor = cursor->nextUsed;
     }
 
-    void link(Contact *contact)
-    {
-        if(!contact) return;
+    node->obj = object;
+    node->next = 0;
 
-        ListNode *node = newNode(contact->objectPtr());
-
-        node->next = _head;
-        _head = node;
-    }
-
-    ListNode *begin() const
-    {
-        return _head;
-    }
-
-private:
-    /**
-     * Create a new list node. If there are none available in the list of
-     * used objects a new one will be allocated and linked to the global list.
-     */
-    static ListNode *newNode(void *object)
-    {
-        DENG2_ASSERT(object != 0);
-
-        ListNode *node;
-        if(!cursor)
-        {
-            node = (ListNode *) Z_Malloc(sizeof(*node), PU_APPSTATIC, 0);
-
-            // Link in the global list of used nodes.
-            node->nextUsed = firstNode;
-            firstNode = node;
-        }
-        else
-        {
-            node = cursor;
-            cursor = cursor->nextUsed;
-        }
-
-        node->obj = object;
-        node->next = 0;
-
-        return node;
-    }
-
-    ListNode *_head;
-};
+    return node;
+}
 
 // Separate contact lists for each BSP leaf and contact type.
 static ContactList *bspLeafContactLists;
 
-static inline ContactList &contactList(BspLeaf &bspLeaf, ContactType type)
+ContactList &R_ContactList(BspLeaf &bspLeaf, ContactType type)
 {
     return bspLeafContactLists[bspLeaf.indexInMap() * ContactTypeCount + int( type )];
 }
-
-/**
- * On which side of the half-edge does the specified @a point lie?
- *
- * @param hedge  Half-edge to test.
- * @param point  Point to test in the map coordinate space.
- *
- * @return @c <0 Point is to the left/back of the segment.
- *         @c =0 Point lies directly on the segment.
- *         @c >0 Point is to the right/front of the segment.
- */
-static coord_t pointOnHEdgeSide(HEdge const &hedge, Vector2d const &point)
-{
-    Vector2d const direction = hedge.twin().origin() - hedge.origin();
-
-    ddouble pointV1[2]      = { point.x, point.y };
-    ddouble fromOriginV1[2] = { hedge.origin().x, hedge.origin().y };
-    ddouble directionV1[2]  = { direction.x, direction.y };
-    return V2d_PointOnLineSide(pointV1, fromOriginV1, directionV1);
-}
-
-DENG2_PIMPL(ContactBlockmap)
-{
-    /*struct CellData
-    {
-        Contact *head;
-
-        void unlinkAll()
-        {
-            head = 0;
-        }
-    };*/
-
-    //Gridmap gridmap;
-    Blockmap blockmap;
-    //AABoxd bounds;
-    //uint blockSize; ///< In map space units.
-
-    // For perf, spread state data is "global".
-    struct SpreadState
-    {
-        Contact *contact;
-        AABoxd contactAABox;
-
-        SpreadState() : contact(0) {}
-    };
-    SpreadState spread;
-    QBitArray spreadBlocks; ///< Used to prevent repeat processing.
-
-    Instance(Public *i, AABoxd const &bounds, uint blockSize)
-        : Base(i),
-          blockmap(bounds, Vector2ui(blockSize, blockSize)),
-          //bounds(bounds),
-          //blockSize(blockSize),
-          spreadBlocks(blockmap.width() * blockmap.height())
-    {}
-
-    inline int toCellIndex(uint cellX, uint cellY)
-    {
-        return int(cellY * blockmap.width() + cellX);
-    }
-
-#if 0
-    /**
-     * Given map space X coordinate @a x, return the corresponding cell coordinate.
-     * If @a x is outside the blockmap it will be clamped to the nearest edge on
-     * the X axis.
-     *
-     * @param x        Map space X coordinate to be translated.
-     * @param didClip  Set to @c true iff clamping was necessary.
-     *
-     * @return  Translated blockmap cell X coordinate.
-     */
-    uint toCellX(ddouble x, bool &didClip) const
-    {
-        AABoxd const &bounds = blockmap.bounds();
-        didClip = false;
-        if(x < bounds.minX)
-        {
-            x = bounds.minX;
-            didClip = true;
-        }
-        else if(x >= bounds.maxX)
-        {
-            x = bounds.maxX - 1;
-            didClip = true;
-        }
-        return uint((x - bounds.minX) / blockmap.cellWidth());
-    }
-
-    /**
-     * Given map space Y coordinate @a y, return the corresponding cell coordinate.
-     * If @a y is outside the blockmap it will be clamped to the nearest edge on
-     * the Y axis.
-     *
-     * @param y        Map space Y coordinate to be translated.
-     * @param didClip  Set to @c true iff clamping was necessary.
-     *
-     * @return  Translated blockmap cell Y coordinate.
-     */
-    uint toCellY(ddouble y, bool &didClip) const
-    {
-        AABoxd const &bounds = blockmap.bounds();
-        didClip = false;
-        if(y < bounds.minY)
-        {
-            y = bounds.minY;
-            didClip = true;
-        }
-        else if(y >= bounds.maxY)
-        {
-            y = bounds.maxY - 1;
-            didClip = true;
-        }
-        return uint((y - bounds.minY) / blockmap.cellHeight());
-    }
-
-    /**
-     * Determines in which blockmap cell the specified map point lies. If the
-     * these coordinates are outside the blockmap they will be clamped within
-     * the valid range.
-     *
-     * @param retAdjusted  If specified, whether or not the @a point coordinates
-     *                     had to be adjusted is written back here.
-     *
-     * @return  The determined blockmap cell.
-     */
-    GridmapCell toCell(Vector2d const &point, bool *retAdjusted = 0) const
-    {
-        bool didClipX, didClipY;
-        GridmapCell cell(toCellX(point.x, didClipX), toCellY(point.y, didClipY));
-        if(retAdjusted) *retAdjusted = didClipX | didClipY;
-        return cell;
-    }
-
-    inline GridmapCellBlock toCellBlock(AABoxd const &box)
-    {
-        return GridmapCellBlock(toCell(box.min), toCell(box.max));
-    }
-
-    /**
-     * Returns the data for the specified cell.
-     */
-    inline CellData *cellData(GridmapCell const &cell, bool canAlloc = false)
-    {
-        return static_cast<CellData *>(gridmap.cellData(cell, canAlloc));
-    }
-#endif
-
-    void maybeSpreadOverEdge(HEdge *hedge)
-    {
-        DENG2_ASSERT(spread.contact != 0);
-
-        if(!hedge) return;
-
-        BspLeaf &leaf = hedge->face().mapElementAs<BspLeaf>();
-        SectorCluster &cluster = leaf.cluster();
-
-        // There must be a back BSP leaf to spread to.
-        if(!hedge->hasTwin()) return;
-        if(!hedge->twin().hasFace()) return;
-
-        BspLeaf &backLeaf = hedge->twin().face().mapElementAs<BspLeaf>();
-        if(!backLeaf.hasCluster()) return;
-
-        SectorCluster &backCluster = backLeaf.cluster();
-
-        // Which way does the spread go?
-        if(!(leaf.validCount() == validCount && backLeaf.validCount() != validCount))
-        {
-            return; // Not eligible for spreading.
-        }
-
-        // Is the leaf on the back side outside the origin's AABB?
-        AABoxd const &aaBox = backLeaf.poly().aaBox();
-        if(aaBox.maxX <= spread.contactAABox.minX || aaBox.minX >= spread.contactAABox.maxX ||
-           aaBox.maxY <= spread.contactAABox.minY || aaBox.minY >= spread.contactAABox.maxY)
-            return;
-
-        // Too far from the edge?
-        coord_t const length   = (hedge->twin().origin() - hedge->origin()).length();
-        coord_t const distance = pointOnHEdgeSide(*hedge, spread.contact->objectOrigin()) / length;
-        if(de::abs(distance) >= spread.contact->objectRadius())
-            return;
-
-        // Do not spread if the sector on the back side is closed with no height.
-        if(!backCluster.hasWorldVolume())
-            return;
-
-        if(backCluster.visCeiling().heightSmoothed() <= cluster.visFloor().heightSmoothed() ||
-           backCluster.visFloor().heightSmoothed() >= cluster.visCeiling().heightSmoothed())
-            return;
-
-        // Are there line side surfaces which should prevent spreading?
-        if(hedge->hasMapElement())
-        {
-            LineSideSegment const &seg = hedge->mapElementAs<LineSideSegment>();
-
-            // On which side of the line are we? (distance is from segment to origin).
-            LineSide const &facingLineSide = seg.line().side(seg.lineSide().sideId() ^ (distance < 0));
-
-            // One-way window?
-            if(!facingLineSide.back().hasSections())
-                return;
-
-            SectorCluster const &fromCluster = facingLineSide.isFront()? cluster : backCluster;
-            SectorCluster const &toCluster   = facingLineSide.isFront()? backCluster : cluster;
-
-            // Might a material cover the opening?
-            if(facingLineSide.hasSections() && facingLineSide.middle().hasMaterial())
-            {
-                // Stretched middles always cover the opening.
-                if(facingLineSide.isFlagged(SDF_MIDDLE_STRETCH))
-                    return;
-
-                // Determine the opening between the visual sector planes at this edge.
-                coord_t openBottom;
-                if(toCluster.visFloor().heightSmoothed() > fromCluster.visFloor().heightSmoothed())
-                {
-                    openBottom = toCluster.visFloor().heightSmoothed();
-                }
-                else
-                {
-                    openBottom = fromCluster.visFloor().heightSmoothed();
-                }
-
-                coord_t openTop;
-                if(toCluster.visCeiling().heightSmoothed() < fromCluster.visCeiling().heightSmoothed())
-                {
-                    openTop = toCluster.visCeiling().heightSmoothed();
-                }
-                else
-                {
-                    openTop = fromCluster.visCeiling().heightSmoothed();
-                }
-
-                // Ensure we have up to date info about the material.
-                MaterialSnapshot const &ms = facingLineSide.middle().material().prepare(Rend_MapSurfaceMaterialSpec());
-                if(ms.height() >= openTop - openBottom)
-                {
-                    // Possibly; check the placement.
-                    WallEdge edge(WallSpec::fromMapSide(facingLineSide, LineSide::Middle),
-                                  *facingLineSide.leftHEdge(), Line::From);
-
-                    if(edge.isValid() && edge.top().z() > edge.bottom().z() &&
-                       edge.top().z() >= openTop && edge.bottom().z() <= openBottom)
-                        return;
-                }
-            }
-        }
-
-        // During the next step this contact will spread from the back leaf.
-        backLeaf.setValidCount(validCount);
-
-        contactList(backLeaf, spread.contact->type()).link(spread.contact);
-
-        spreadInBspLeaf(backLeaf);
-    }
-
-    /**
-     * Attempt to spread the obj from the given contact from the source
-     * BspLeaf and into the (relative) back BspLeaf.
-     *
-     * @param bspLeaf  BspLeaf to attempt to spread over to.
-     *
-     * @return  Always @c true. (This function is also used as an iterator.)
-     */
-    void spreadInBspLeaf(BspLeaf &bspLeaf)
-    {
-        if(bspLeaf.hasCluster())
-        {
-            HEdge *base = bspLeaf.poly().hedge();
-            HEdge *hedge = base;
-            do
-            {
-                maybeSpreadOverEdge(hedge);
-
-            } while((hedge = &hedge->next()) != base);
-        }
-    }
-
-    /**
-     * Link the contact in all BspLeafs which touch the linked object (tests are
-     * done with bounding boxes and the BSP leaf spread test).
-     *
-     * @param contact  Contact to be spread.
-     */
-    void spreadContact(Contact &contact)
-    {
-        BspLeaf &bspLeaf = contact.objectBspLeafAtOrigin();
-        DENG2_ASSERT(bspLeaf.hasCluster()); // Sanity check.
-
-        contactList(bspLeaf, contact.type()).link(&contact);
-
-        // Spread to neighboring BSP leafs.
-        bspLeaf.setValidCount(++validCount);
-
-        spread.contact      = &contact;
-        spread.contactAABox = contact.objectAABox();
-
-        spreadInBspLeaf(bspLeaf);
-    }
-
-    static int spreadContactWorker(void *contact, void *context)
-    {
-        Instance *inst = static_cast<Instance *>(context);
-        inst->spreadContact(*static_cast<Contact *>(contact));
-        return false; // Continue iteration.
-    }
-
-    /*static int unlinkAllWorker(void *obj, void *context)
-    {
-        DENG2_UNUSED(context);
-        static_cast<CellData *>(obj)->unlinkAll();
-        return false; // Continue iteration.
-    }*/
-};
-
-ContactBlockmap::ContactBlockmap(AABoxd const &bounds, uint blockSize)
-    : d(new Instance(this, bounds, blockSize))
-{}
-
-Vector2d ContactBlockmap::origin() const
-{
-    return d->blockmap.origin();
-}
-
-AABoxd const &ContactBlockmap::bounds() const
-{
-    return d->blockmap.bounds();
-}
-
-void ContactBlockmap::link(Contact *contact)
-{
-    if(!contact) return;
-
-    bool outside;
-    BlockmapCell cell = d->blockmap.toCell(contact->objectOrigin(), &outside);
-    if(outside) return;
-
-    d->blockmap.link(cell, contact);
-
-    //Instance::CellData *data = d->cellData(cell, true/*can allocate a block*/);
-    //contact->nextInBlock = data->head;
-    //data->head = contact;
-}
-
-void ContactBlockmap::unlinkAll()
-{
-    d->spreadBlocks.fill(false);
-    d->blockmap.unlinkAll();
-    //d->gridmap.iterate(Instance::unlinkAllWorker);
-}
-
-void ContactBlockmap::spreadAllContacts(AABoxd const &box)
-{
-    BlockmapCellBlock const cellBlock = d->blockmap.toCellBlock(box);
-
-    BlockmapCell cell;
-    for(cell.y = cellBlock.min.y; cell.y <= cellBlock.max.y; ++cell.y)
-    for(cell.x = cellBlock.min.x; cell.x <= cellBlock.max.x; ++cell.x)
-    {
-        int cellIndex = d->toCellIndex(cell.x, cell.y);
-        if(!d->spreadBlocks.testBit(cellIndex))
-        {
-            d->spreadBlocks.setBit(cellIndex);
-            d->blockmap.iterate(cell, Instance::spreadContactWorker, d);
-            /*if(Instance::CellData *data = d->cellData(cell))
-            {
-                for(Contact *iter = data->head; iter; iter = iter->nextInBlock)
-                {
-                    d->spreadContact(*iter);
-                }
-            }*/
-        }
-    }
-}
-
-// Each contactable object type uses a separate blockmap.
-static ContactBlockmap *blockmaps[ContactTypeCount];
 
 static Contact *contacts;
 static Contact *contactFirst, *contactCursor;
@@ -611,8 +180,6 @@ static Contact *newContact(void *object, ContactType type)
         contactCursor = contactCursor->nextUsed;
     }
 
-    //contact->nextInBlock = 0;
-
     // Link in the list of in-use contacts.
     contact->next = contacts;
     contacts = contact;
@@ -623,27 +190,16 @@ static Contact *newContact(void *object, ContactType type)
     return contact;
 }
 
-void R_InitContactBlockmaps(Map &map)
+void R_InitContactLists(Map &map)
 {
-    for(int i = 0; i < ContactTypeCount; ++i)
-    {
-        DENG2_ASSERT(blockmaps[i] == 0);
-        blockmaps[i] = new ContactBlockmap(map.bounds());
-    }
-
     // Initialize object => BspLeaf contact lists.
     bspLeafContactLists = (ContactList *)
         Z_Calloc(map.bspLeafCount() * ContactTypeCount * sizeof(*bspLeafContactLists),
                  PU_MAPSTATIC, 0);
 }
 
-void R_DestroyContactBlockmaps()
+void R_DestroyContactLists()
 {
-    for(int i = 0; i < ContactTypeCount; ++i)
-    {
-        delete blockmaps[i]; blockmaps[i] = 0;
-    }
-
     if(bspLeafContactLists)
     {
         Z_Free(bspLeafContactLists);
@@ -651,18 +207,8 @@ void R_DestroyContactBlockmaps()
     }
 }
 
-static inline ContactBlockmap &blockmap(ContactType type)
+void R_ClearContactLists(Map &map)
 {
-    return *blockmaps[int( type )];
-}
-
-void R_ClearContacts(Map &map)
-{
-    for(int i = 0; i < ContactTypeCount; ++i)
-    {
-        blockmap(ContactType(i)).unlinkAll();
-    }
-
     // Start reusing contacts.
     contactCursor = contactFirst;
     contacts = 0;
@@ -674,39 +220,6 @@ void R_ClearContacts(Map &map)
     {
         std::memset(bspLeafContactLists, 0,
                     map.bspLeafCount() * ContactTypeCount * sizeof(*bspLeafContactLists));
-    }
-}
-
-static inline float radiusMax(ContactType type)
-{
-    switch(type)
-    {
-    case ContactLumobj: return Lumobj::radiusMax();
-    case ContactMobj:   return DDMOBJ_RADIUS_MAX;
-
-    default:
-        DENG2_ASSERT(false);
-        return 8;
-    }
-}
-
-void R_SpreadContacts(BspLeaf &bspLeaf)
-{
-    if(!bspLeaf.hasCluster())
-        return;
-
-    for(int i = 0; i < ContactTypeCount; ++i)
-    {
-        float const maxRadius = radiusMax(ContactType(i));
-        ContactBlockmap &bmap = blockmap(ContactType(i));
-
-        AABoxd bounds = bspLeaf.poly().aaBox();
-        bounds.minX -= maxRadius;
-        bounds.minY -= maxRadius;
-        bounds.maxX += maxRadius;
-        bounds.maxY += maxRadius;
-
-        bmap.spreadAllContacts(bounds);
     }
 }
 
@@ -728,19 +241,21 @@ void R_AddContact(Lumobj &lum)
     }
 }
 
-void R_LinkContacts()
+int R_ContactIterator(int (*callback) (Contact &, void *), void *context)
 {
     // Link contacts into the relevant blockmap.
     for(Contact *contact = contacts; contact; contact = contact->next)
     {
-        blockmap(contact->type()).link(contact);
+        if(int result = callback(*contact, context))
+            return result;
     }
+    return false; // Continue iteration.
 }
 
 int R_IterateBspLeafMobjContacts(BspLeaf &bspLeaf,
     int (*callback)(mobj_s &, void *), void *context)
 {
-    ContactList &list = contactList(bspLeaf, ContactMobj);
+    ContactList &list = R_ContactList(bspLeaf, ContactMobj);
     for(ListNode *node = list.begin(); node; node = node->next)
     {
         if(int result = callback(*static_cast<mobj_t *>(node->obj), context))
@@ -752,7 +267,7 @@ int R_IterateBspLeafMobjContacts(BspLeaf &bspLeaf,
 int R_IterateBspLeafLumobjContacts(BspLeaf &bspLeaf,
     int (*callback)(Lumobj &, void *), void *context)
 {
-    ContactList &list = contactList(bspLeaf, ContactLumobj);
+    ContactList &list = R_ContactList(bspLeaf, ContactLumobj);
     for(ListNode *node = list.begin(); node; node = node->next)
     {
         if(int result = callback(*static_cast<Lumobj *>(node->obj), context))

@@ -641,7 +641,8 @@ DENG2_PIMPL(World)
 
         Rend_RadioInitForMap(*map);
 
-        R_InitContactBlockmaps(*map);
+        map->initContactBlockmaps();
+        R_InitContactLists(*map);
         Rend_ProjectorInitForMap(*map);
         VL_InitForMap(*map); // Converted vlights (from lumobjs).
         map->initBias(); // Shadow bias sources and surfaces.
@@ -750,7 +751,7 @@ bool World::changeMap(de::Uri const &uri)
     /// for allocating memory used elsewhere so it should be repurposed for
     /// this usage specifically.
 #ifdef __CLIENT__
-    R_DestroyContactBlockmaps();
+    R_DestroyContactLists();
 #endif
     delete d->map; d->map = 0;
     Z_FreeTags(PU_MAP, PU_PURGELEVEL - 1);

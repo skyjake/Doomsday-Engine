@@ -22,74 +22,103 @@
 #define DENG_CLIENT_WORLD_CONTACTBLOCKMAP_H
 
 #include <de/aabox.h>
+
+#include <de/Vector>
+
 #include "world/map.h"
 
 class BspLeaf;
 struct Contact;
 class Lumobj;
 
-class ContactBlockmap
+enum ContactType
 {
-public:
-    /**
-     * Construct a new contact blockmap.
-     *
-     * @param bounds     Bounding box of the blockmap.
-     * @param blockSize  Size of each block.
-     */
-    ContactBlockmap(AABoxd const &bounds, uint blockSize = 128);
+    ContactMobj = 0,
+    ContactLumobj,
+
+    ContactTypeCount
+};
+
+/// @todo Obviously, polymorphism is a better solution.
+struct Contact
+{
+    Contact *nextUsed;    ///< Next in the used list (if any, not owned).
+    Contact *next;        ///< Next in global list of contacts (if any, not owned).
+
+    ContactType _type;    ///< Logical identifier.
+    void *_object;        ///< The contacted object.
+
+    ContactType type() const;
+
+    void *objectPtr() const;
+
+    template <class ObjectType>
+    ObjectType &objectAs() const {
+        DENG2_ASSERT(_object != 0);
+        return *static_cast<ObjectType *>(_object);
+    }
 
     /**
-     * Returns the origin of the blockmap in the map coordinate space.
+     * Returns a copy of the linked object's origin in map space.
      */
-    de::Vector2d origin() const;
+    de::Vector3d objectOrigin() const;
 
     /**
-     * Returns the bounds of the blockmap in the map coordinate space.
+     * Returns the linked object's radius in map space.
      */
-    AABoxd const &bounds() const;
+    double objectRadius() const;
 
     /**
-     * @param contact  Contact to be linked. Note that if the object's origin
-     *                 lies outside the blockmap it will not be linked!
+     * Returns an axis-aligned bounding box for the linked object in map space.
      */
+    AABoxd objectAABox() const;
+
+    /**
+     * Returns the BSP leaf at the linked object's origin in map space.
+     */
+    BspLeaf &objectBspLeafAtOrigin() const;
+};
+
+struct ListNode;
+
+struct ContactList
+{
+    // Start reusing list nodes.
+    static void reset();
+
     void link(Contact *contact);
 
-    /**
-     * Clear all linked contacts.
-     */
-    void unlinkAll();
-
-    /**
-     * Spread contacts in the blockmap to any touched neighbors.
-     *
-     * @param box   Map space region in which to perform spreading.
-     */
-    void spreadAllContacts(AABoxd const &box);
+    ListNode *begin() const;
 
 private:
-    DENG2_PRIVATE(d)
+    /**
+     * Create a new list node. If there are none available in the list of
+     * used objects a new one will be allocated and linked to the global list.
+     */
+    static ListNode *newNode(void *object);
+
+    ListNode *_head;
 };
 
 /**
- * To be called during game change/on shutdown to destroy all contact blockmaps.
- * This is necessary because the blockmaps are allocated from the Zone using a
+ * To be called during game change/on shutdown to destroy all contact lists.
+ * This is necessary because the lists are allocated from the Zone using a
  * >= PU_MAP purge level and access to them is handled with global pointers.
  *
- * @todo Encapsulate allocation of and access to the blockmaps in de::Map
+ * @todo Encapsulate allocation of and access to the lists in de::Map
  */
-void R_DestroyContactBlockmaps();
+void R_DestroyContactLists();
 
 /**
- * Initialize contact blockmaps for the current map.
+ * Initialize contact lists for the current map.
  */
-void R_InitContactBlockmaps(de::Map &map);
+void R_InitContactLists(de::Map &map);
 
 /**
- * To be called at the beginning of a render frame to clear all contacts ready
- * for the new frame.
+ * To be called at the beginning of a render frame to clear all contact lists
+ * ready for the new frame.
  */
-void R_ClearContacts(de::Map &map);
+void R_ClearContactLists(de::Map &map);
 
 /**
  * Add a new contact for the specified mobj, for spreading purposes.
@@ -102,30 +131,27 @@ void R_AddContact(struct mobj_s &mobj);
 void R_AddContact(Lumobj &lumobj);
 
 /**
- * To be called to link all contacts into the contact blockmaps.
- *
- * @todo Why don't we link contacts immediately? -ds
+ * Traverse the list of contacts for the current render frame.
  */
-void R_LinkContacts();
+int R_ContactIterator(int (*callback) (Contact &, void *), void *context = 0);
 
 /**
- * Perform all contact spreading for the specified @a BspLeaf. Note this should
- * only be called once per BSP leaf per render frame!
+ * Returns the contact list for the specified BSP @a leaf and contact @a type.
  */
-void R_SpreadContacts(BspLeaf &bspLeaf);
+ContactList &R_ContactList(BspLeaf &leaf, ContactType type);
 
 /**
- * Traverse the list of mobj contacts linked directly to @a bspLeaf, for the
- * current render frame.
+ * Traverse the list of mobj contacts linked directly to the specified BSP @a leaf,
+ * for the current render frame.
  */
-int R_IterateBspLeafMobjContacts(BspLeaf &bspLeaf,
+int R_IterateBspLeafMobjContacts(BspLeaf &leaf,
     int (*callback) (struct mobj_s &, void *), void *context = 0);
 
 /**
- * Traverse the list of lumobj contacts linked directly to @a bspLeaf, for the
- * current render frame.
+ * Traverse the list of lumobj contacts linked directly to the specified BSP @a leaf,
+ * for the current render frame.
  */
-int R_IterateBspLeafLumobjContacts(BspLeaf &bspLeaf,
+int R_IterateBspLeafLumobjContacts(BspLeaf &leaf,
     int (*callback) (Lumobj &, void *), void *context = 0);
 
 #endif // DENG_CLIENT_WORLD_CONTACTBLOCKMAP_H

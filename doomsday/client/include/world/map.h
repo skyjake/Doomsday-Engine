@@ -805,6 +805,11 @@ public:
      */
     void initLightGrid();
 
+    /**
+     * Perform spreading of all contacts in the specified map space @a region.
+     */
+    void spreadAllContacts(AABoxd const &region);
+
 protected:
     /// Observes World FrameBegin
     void worldFrameBegins(World &world, bool resetNextViewer);
@@ -845,6 +850,11 @@ public: /// @todo Make private:
      * Must be called before rendering a frame with bias lighting enabled.
      */
     void initBias();
+
+    /**
+     * Initialize the map object => BSP leaf "contact" blockmaps.
+     */
+    void initContactBlockmaps();
 #endif // __CLIENT__
 
 public:
