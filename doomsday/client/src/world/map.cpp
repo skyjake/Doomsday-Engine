@@ -145,9 +145,8 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
     QScopedPointer<Blockmap> bspLeafBlockmap;
 
 #ifdef __CLIENT__
-    struct ContactBlockmap
+    struct ContactBlockmap : public Blockmap
     {
-        Blockmap blockmap;
         QBitArray spreadBlocks; ///< Used to prevent repeat processing.
 
         /**
@@ -157,9 +156,15 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
          * @param blockSize  Size of each block.
          */
         ContactBlockmap(AABoxd const &bounds, uint blockSize = 128)
-            : blockmap(bounds, Vector2ui(blockSize, blockSize)),
-              spreadBlocks(blockmap.width() * blockmap.height())
+            : Blockmap(bounds, Vector2ui(blockSize, blockSize)),
+              spreadBlocks(width() * height())
         {}
+
+        void clear()
+        {
+            spreadBlocks.fill(false);
+            unlinkAll();
+        }
 
         /**
          * @param contact  Contact to be linked. Note that if the object's origin
@@ -168,17 +173,16 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
         void link(Contact &contact)
         {
             bool outside;
-            BlockmapCell cell = blockmap.toCell(contact.objectOrigin(), &outside);
+            BlockmapCell cell = toCell(contact.objectOrigin(), &outside);
             if(!outside)
             {
-                blockmap.link(cell, &contact);
+                Blockmap::link(cell, &contact);
             }
         }
 
-        void clear()
+        void spread(AABoxd const &region)
         {
-            spreadBlocks.fill(false);
-            blockmap.unlinkAll();
+            spreadContacts(*this, region, &spreadBlocks);
         }
     };
     QScopedPointer<ContactBlockmap> mobjContactBlockmap; /// @todo Redundant?
@@ -1425,15 +1429,13 @@ void Map::initContactBlockmaps()
 void Map::spreadAllContacts(AABoxd const &region)
 {
     // Expand the region according by the maxium radius of each contact type.
-    spreadContacts(d->mobjContactBlockmap->blockmap,
-                   AABoxd(region.minX - DDMOBJ_RADIUS_MAX, region.minY - DDMOBJ_RADIUS_MAX,
-                          region.maxX + DDMOBJ_RADIUS_MAX, region.maxY + DDMOBJ_RADIUS_MAX),
-                   &d->mobjContactBlockmap->spreadBlocks);
+    d->mobjContactBlockmap->
+        spread(AABoxd(region.minX - DDMOBJ_RADIUS_MAX, region.minY - DDMOBJ_RADIUS_MAX,
+                      region.maxX + DDMOBJ_RADIUS_MAX, region.maxY + DDMOBJ_RADIUS_MAX));
 
-    spreadContacts(d->lumobjContactBlockmap->blockmap,
-                   AABoxd(region.minX - Lumobj::radiusMax(), region.minY - Lumobj::radiusMax(),
-                          region.maxX + Lumobj::radiusMax(), region.maxY + Lumobj::radiusMax()),
-                   &d->lumobjContactBlockmap->spreadBlocks);
+    d->lumobjContactBlockmap->
+        spread(AABoxd(region.minX - Lumobj::radiusMax(), region.minY - Lumobj::radiusMax(),
+                      region.maxX + Lumobj::radiusMax(), region.maxY + Lumobj::radiusMax()));
 }
 
 #endif // __CLIENT__
