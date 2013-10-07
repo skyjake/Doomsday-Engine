@@ -74,7 +74,7 @@
 #include "world/entitydef.h"
 #include "world/p_players.h"
 #ifdef __CLIENT__
-#  include "ContactBlockmap"
+#  include "Contact"
 #endif
 #include "world/world.h"
 

@@ -1,4 +1,4 @@
-/** @file contactblockmap.cpp World object => BSP leaf "contact" blockmap.
+/** @file contact.cpp World object => BSP leaf "contact" and contact lists.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -17,26 +17,15 @@
  * http://www.gnu.org/licenses</small>
  */
 
-//#include <QBitArray>
-
 #include <de/memoryzone.h>
-#include <de/vector1.h>
 
 #include <de/Error>
 
-#include "Face"
-
 #include "world/map.h"
-//#include "world/blockmap.h"
 #include "world/p_object.h"
 #include "BspLeaf"
-//#include "Surface"
 
-//#include "render/r_main.h" // validCount
-//#include "render/rend_main.h" // Rend_MapSurfaceMaterialSpec
-//#include "WallEdge"
-
-#include "world/contactblockmap.h"
+#include "world/contact.h"
 
 using namespace de;
 
@@ -96,14 +85,14 @@ BspLeaf &Contact::objectBspLeafAtOrigin() const
     }
 }
 
-struct ListNode
+struct ContactList::Node
 {
-    ListNode *next;     ///< Next in the BSP leaf.
-    ListNode *nextUsed; ///< Next used contact.
+    Node *next;     ///< Next in the BSP leaf.
+    Node *nextUsed; ///< Next used contact.
     void *obj;
 };
-static ListNode *firstNode; ///< First unused list node.
-static ListNode *cursor;    ///< Current list node.
+static ContactList::Node *firstNode; ///< First unused list node.
+static ContactList::Node *cursor;    ///< Current list node.
 
 void ContactList::reset() // static
 {
@@ -114,25 +103,25 @@ void ContactList::link(Contact *contact)
 {
     if(!contact) return;
 
-    ListNode *node = newNode(contact->objectPtr());
+    Node *node = newNode(contact->objectPtr());
 
     node->next = _head;
     _head = node;
 }
 
-ListNode *ContactList::begin() const
+ContactList::Node *ContactList::begin() const
 {
     return _head;
 }
 
-ListNode *ContactList::newNode(void *object) // static
+ContactList::Node *ContactList::newNode(void *object) // static
 {
     DENG2_ASSERT(object != 0);
 
-    ListNode *node;
+    Node *node;
     if(!cursor)
     {
-        node = (ListNode *) Z_Malloc(sizeof(*node), PU_APPSTATIC, 0);
+        node = (Node *) Z_Malloc(sizeof(*node), PU_APPSTATIC, 0);
 
         // Link in the global list of used nodes.
         node->nextUsed = firstNode;
@@ -252,11 +241,11 @@ int R_ContactIterator(int (*callback) (Contact &, void *), void *context)
     return false; // Continue iteration.
 }
 
-int R_IterateBspLeafMobjContacts(BspLeaf &bspLeaf,
+int R_BspLeafMobjContactIterator(BspLeaf &bspLeaf,
     int (*callback)(mobj_s &, void *), void *context)
 {
     ContactList &list = R_ContactList(bspLeaf, ContactMobj);
-    for(ListNode *node = list.begin(); node; node = node->next)
+    for(ContactList::Node *node = list.begin(); node; node = node->next)
     {
         if(int result = callback(*static_cast<mobj_t *>(node->obj), context))
             return result;
@@ -264,11 +253,11 @@ int R_IterateBspLeafMobjContacts(BspLeaf &bspLeaf,
     return false; // Continue iteration.
 }
 
-int R_IterateBspLeafLumobjContacts(BspLeaf &bspLeaf,
+int R_BspLeafLumobjContactIterator(BspLeaf &bspLeaf,
     int (*callback)(Lumobj &, void *), void *context)
 {
     ContactList &list = R_ContactList(bspLeaf, ContactLumobj);
-    for(ListNode *node = list.begin(); node; node = node->next)
+    for(ContactList::Node *node = list.begin(); node; node = node->next)
     {
         if(int result = callback(*static_cast<Lumobj *>(node->obj), context))
             return result;

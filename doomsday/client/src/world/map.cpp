@@ -52,7 +52,7 @@
 #include "world/p_intercept.h"
 #include "world/p_object.h"
 #ifdef __CLIENT__
-#  include "ContactBlockmap"
+#  include "Contact"
 #  include "ContactSpreader"
 #endif
 #include "world/thinkers.h"

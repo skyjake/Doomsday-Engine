@@ -29,7 +29,7 @@
 #include "BspLeaf"
 #include "Surface"
 #include "world/map.h"
-#include "ContactBlockmap"
+#include "Contact"
 
 #include "render/vlight.h"
 
@@ -255,7 +255,7 @@ static void lightWithLumobjs(Vector3d const &origin, BspLeaf &bspLeaf, uint list
     lightwithlumobjs_params_t parms; zap(parms);
     parms.origin  = origin;
     parms.listIdx = listIdx;
-    R_IterateBspLeafLumobjContacts(bspLeaf, lightWithLumobjsWorker, &parms);
+    R_BspLeafLumobjContactIterator(bspLeaf, lightWithLumobjsWorker, &parms);
 }
 
 /**

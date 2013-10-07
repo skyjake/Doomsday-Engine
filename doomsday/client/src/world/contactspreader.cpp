@@ -25,7 +25,7 @@
 #include "HEdge"
 
 #include "BspLeaf"
-#include "ContactBlockmap"
+#include "Contact"
 #include "Sector"
 #include "Surface"
 

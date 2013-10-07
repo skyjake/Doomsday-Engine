@@ -1,4 +1,4 @@
-/** @file contactblockmap.h World object => BSP leaf "contact" blockmap.
+/** @file contact.h World object => BSP leaf "contact" and contact lists.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -18,8 +18,8 @@
  */
 
 #ifdef __CLIENT__
-#ifndef DENG_CLIENT_WORLD_CONTACTBLOCKMAP_H
-#define DENG_CLIENT_WORLD_CONTACTBLOCKMAP_H
+#ifndef DENG_CLIENT_WORLD_CONTACT_H
+#define DENG_CLIENT_WORLD_CONTACT_H
 
 #include <de/aabox.h>
 
@@ -79,25 +79,25 @@ struct Contact
     BspLeaf &objectBspLeafAtOrigin() const;
 };
 
-struct ListNode;
-
 struct ContactList
 {
+    struct Node;
+
     // Start reusing list nodes.
     static void reset();
 
     void link(Contact *contact);
 
-    ListNode *begin() const;
+    Node *begin() const;
 
 private:
     /**
      * Create a new list node. If there are none available in the list of
      * used objects a new one will be allocated and linked to the global list.
      */
-    static ListNode *newNode(void *object);
+    static Node *newNode(void *object);
 
-    ListNode *_head;
+    Node *_head;
 };
 
 /**
@@ -131,7 +131,7 @@ void R_AddContact(struct mobj_s &mobj);
 void R_AddContact(Lumobj &lumobj);
 
 /**
- * Traverse the list of contacts for the current render frame.
+ * Traverse the list of @em all contacts for the current render frame.
  */
 int R_ContactIterator(int (*callback) (Contact &, void *), void *context = 0);
 
@@ -144,15 +144,15 @@ ContactList &R_ContactList(BspLeaf &leaf, ContactType type);
  * Traverse the list of mobj contacts linked directly to the specified BSP @a leaf,
  * for the current render frame.
  */
-int R_IterateBspLeafMobjContacts(BspLeaf &leaf,
+int R_BspLeafMobjContactIterator(BspLeaf &leaf,
     int (*callback) (struct mobj_s &, void *), void *context = 0);
 
 /**
  * Traverse the list of lumobj contacts linked directly to the specified BSP @a leaf,
  * for the current render frame.
  */
-int R_IterateBspLeafLumobjContacts(BspLeaf &leaf,
+int R_BspLeafLumobjContactIterator(BspLeaf &leaf,
     int (*callback) (Lumobj &, void *), void *context = 0);
 
-#endif // DENG_CLIENT_WORLD_CONTACTBLOCKMAP_H
+#endif // DENG_CLIENT_WORLD_CONTACT_H
 #endif // __CLIENT__

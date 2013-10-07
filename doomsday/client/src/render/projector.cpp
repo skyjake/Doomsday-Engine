@@ -26,7 +26,7 @@
 #include "BspLeaf"
 #include "Surface"
 #include "world/p_object.h"
-#include "ContactBlockmap"
+#include "Contact"
 
 #include "render/projector.h"
 
@@ -311,7 +311,7 @@ void Rend_ProjectLumobjs(BspLeaf *bspLeaf, Vector3d const &topLeft,
     parm.bottomRight   = &bottomRight;
     parm.tangentMatrix = &tangentMatrix;
 
-    R_IterateBspLeafLumobjContacts(*bspLeaf, projectLumobjWorker, &parm);
+    R_BspLeafLumobjContactIterator(*bspLeaf, projectLumobjWorker, &parm);
 }
 
 /**
@@ -512,7 +512,7 @@ void Rend_ProjectMobjShadows(BspLeaf *bspLeaf, Vector3d const &topLeft,
     parm.bottomRight   = &bottomRight;
     parm.tangentMatrix = &tangentMatrix;
 
-    R_IterateBspLeafMobjContacts(*bspLeaf, projectMobjShadowWorker, &parm);
+    R_BspLeafMobjContactIterator(*bspLeaf, projectMobjShadowWorker, &parm);
 }
 
 int Rend_IterateProjectionList(uint listIdx, int (*callback) (TexProjection const *, void *),

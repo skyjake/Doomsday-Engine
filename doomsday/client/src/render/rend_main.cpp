@@ -54,7 +54,7 @@
 #include "world/generators.h"
 #include "world/lineowner.h"
 #include "world/p_object.h"
-#include "ContactBlockmap"
+#include "Contact"
 #include "world/p_players.h"
 #include "world/thinkers.h"
 
@@ -2483,7 +2483,7 @@ static void projectLeafSprites()
     if(leaf->lastSpriteProjectFrame() == frameCount)
         return; // Already added.
 
-    R_IterateBspLeafMobjContacts(*leaf, projectSpriteWorker);
+    R_BspLeafMobjContactIterator(*leaf, projectSpriteWorker);
 
     leaf->setLastSpriteProjectFrame(frameCount);
 }
