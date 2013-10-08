@@ -424,7 +424,7 @@ static void drawBlockmap(Blockmap const &bmap, mobj_t *followMobj,
     glPushMatrix();
     glScaled(cellDimensions.x, cellDimensions.y, 1);
 
-    bmap.gridmap().drawDebugVisual();
+    bmap.drawDebugVisual();
 
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();

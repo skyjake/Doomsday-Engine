@@ -24,10 +24,10 @@
 
 #include <de/Vector>
 
-#include "de_platform.h"
+#include "de_base.h"
 #include "de_console.h"
-#include "dd_main.h"
-#include "gridmap.h"
+#include "de_graphics.h" // For debug visual.
+#include "de_render.h" // For debug visual.
 
 #include "world/blockmap.h"
 
@@ -67,24 +67,6 @@ struct CellData
     {
         addElement(newNode(), elem);
         return true;
-    }
-
-    int iterate(int (*callback) (void *elem, void *context), void *context)
-    {
-        RingNode *node = ringNodes;
-        while(node)
-        {
-            RingNode *next = node->next;
-
-            if(node->elem)
-            {
-                if(int result = callback(node->elem, context))
-                    return result; // Stop iteration.
-            }
-
-            node = next;
-        }
-        return false; // Continue iteration.
     }
 
 private:
@@ -148,22 +130,101 @@ private:
     }
 };
 
-DENG2_PIMPL(Blockmap), public Gridmap
+template <typename Type>
+Type ceilPow2(Type unit)
 {
-    /// Minimal and Maximal points in map space coordinates.
-    AABoxd bounds;
+    Type cumul;
+    for(cumul = 1; unit > cumul; cumul <<= 1) {}
+    return cumul;
+}
 
-    /// Cell dimensions in map space coordinates.
-    Vector2d cellDimensions;
+DENG2_PIMPL(Blockmap)
+{
+    /**
+     * Quadtree node.
+     */
+    struct Node
+    {
+        /// Logical child quadrant identifiers.
+        enum Quadrant
+        {
+            TopLeft,
+            TopRight,
+            BottomLeft,
+            BottomRight
+        };
+
+        Cell cell; ///< Cell coordinates for this node.
+        uint size; ///< Size of the cell at this node (width=height).
+        union {
+            Node *children[4]; ///< One per quadrant (if any, not owned).
+            CellData *leafData; ///< Data associated with the leaf cell.
+        };
+
+        /**
+         * Construct a new node.
+         *
+         * @param cell  Cell coordinates for the node.
+         * @param size  Size of the cell.
+         */
+        Node(Cell const &cell, uint size) : cell(cell), size(size)
+        {
+            zap(children);
+        }
+
+        ~Node()
+        {
+            if(isLeaf())
+            {
+                Z_Free(leafData);
+            }
+        }
+
+        /**
+         * Returns @c true iff the cell is a leaf (i.e., equal to a unit in the
+         * gridmap coordinate space).
+         */
+        inline bool isLeaf() const { return size == 1; }
+
+        /**
+         * In which child quadrant is the given @a point?
+         */
+        Quadrant quadrant(Cell const &point) const
+        {
+            uint const subSize = size >> 1;
+            if(point.x < cell.x + subSize)
+            {
+                return (point.y < cell.y + subSize)? TopLeft  : BottomLeft;
+            }
+            else
+            {
+                return (point.y < cell.y + subSize)? TopRight : BottomRight;
+            }
+        }
+    };
+    typedef QList<Node> Nodes;
+
+    AABoxd bounds;           ///< Map space units.
+    Vector2d cellDimensions; ///< Map space units.
+    Cell dimensions;         ///< Dimensions of the indexed space, in cells.
+
+    Nodes nodes;             ///< Quadtree nodes. The first being the root.
 
     Instance(Public *i, AABoxd const &bounds, Vector2ui const &cellDimensions_)
         : Base(i),
-          Gridmap(Vector2ui(de::ceil((bounds.maxX - bounds.minX) / cellDimensions_.x),
-                            de::ceil((bounds.maxY - bounds.minY) / cellDimensions_.y)),
-                  sizeof(CellData), PU_MAPSTATIC),
           bounds(bounds),
-          cellDimensions(Vector2d(cellDimensions_.x, cellDimensions_.y))
-    {}
+          cellDimensions(Vector2d(cellDimensions_.x, cellDimensions_.y)),
+          dimensions(Vector2ui(de::ceil((bounds.maxX - bounds.minX) / cellDimensions_.x),
+                               de::ceil((bounds.maxY - bounds.minY) / cellDimensions_.y)))
+    {
+        // Quadtree must subdivide the space equally into 1x1 unit cells.
+        newNode(Cell(0, 0), ceilPow2(de::max(dimensions.x, dimensions.y)));
+    }
+
+    inline int toCellIndex(uint cellX, uint cellY) const
+    {
+        return int(cellY * dimensions.x + cellX);
+    }
 
     /**
      * Given map space X coordinate @a x, return the corresponding cell coordinate.
@@ -216,6 +277,125 @@ DENG2_PIMPL(Blockmap), public Gridmap
         }
         return uint((y - bounds.minY) / cellDimensions.y);
     }
+
+    /**
+     * Clip the cell coordinates in @a block vs the dimensions of this gridmap
+     * so that they are inside the boundary this defines.
+     *
+     * @param block  Block coordinates to be clipped.
+     *
+     * @return  @c true iff the block coordinates were changed.
+     */
+    bool clipBlock(CellBlock &block) const
+    {
+        bool didClip = false;
+        if(block.min.x >= dimensions.x)
+        {
+            block.min.x = dimensions.x - 1;
+            didClip = true;
+        }
+        if(block.min.y >= dimensions.y)
+        {
+            block.min.y = dimensions.y - 1;
+            didClip = true;
+        }
+        if(block.max.x >= dimensions.x)
+        {
+            block.max.x = dimensions.x - 1;
+            didClip = true;
+        }
+        if(block.max.y >= dimensions.y)
+        {
+            block.max.y = dimensions.y - 1;
+            didClip = true;
+        }
+        return didClip;
+    }
+
+    Node *newNode(Cell const &at, uint size)
+    {
+        nodes.append(Node(at, size));
+        return &nodes.last();
+    }
+
+    Node *findLeaf(Node *node, Cell const &at, bool canCreate)
+    {
+        if(node->isLeaf())
+            return node;
+
+        // Into which quadrant do we need to descend?
+        Node::Quadrant q = node->quadrant(at);
+
+        // Has this quadrant been initialized yet?
+        Node **childAdr = &node->children[q];
+        if(!*childAdr)
+        {
+            if(!canCreate) return 0;
+
+            // Subdivide the space.
+            uint const subSize = node->size >> 1;
+            switch(q)
+            {
+            case Node::TopLeft:
+                *childAdr = newNode(node->cell, subSize);
+                break;
+
+            case Node::TopRight:
+                *childAdr = newNode(Cell(node->cell.x + subSize, node->cell.y), subSize);
+                break;
+
+            case Node::BottomLeft:
+                *childAdr = newNode(Cell(node->cell.x, node->cell.y + subSize), subSize);
+                break;
+            case Node::BottomRight:
+                *childAdr = newNode(Cell(node->cell.x + subSize, node->cell.y + subSize), subSize);
+                break;
+            }
+        }
+
+        return findLeaf(*childAdr, at, canCreate);
+    }
+
+    inline Node *findLeaf(Cell const &at, bool canCreate = false)
+    {
+        return findLeaf(&nodes.first(), at, canCreate);
+    }
+
+    /**
+     * Retrieve the user data associated with the identified cell.
+     *
+     * @param cell       Cell coordinates to retrieve user data for.
+     * @param canCreate  @c true= allocate new data if not already present
+     *                   for the referenced cell.
+     *
+     * @return  User data for the identified cell else @c 0if an invalid
+     *          reference or no there is no data present (and not allocating).
+     */
+    CellData *cellData(Cell const &cell, bool canCreate = false)
+    {
+        // Outside our boundary?
+        if(cell.x >= dimensions.x || cell.y >= dimensions.y)
+        {
+            return 0;
+        }
+
+        // Try to locate this leaf (may fail if not present and we are
+        // not allocating user data (there will be no corresponding cell)).
+        if(Node *node = findLeaf(cell, canCreate))
+        {
+            // Exisiting user data for this cell?
+            if(!node->leafData)
+            {
+                // Can we allocate new user data?
+                if(canCreate)
+                {
+                    node->leafData = (CellData *)Z_Calloc(sizeof(CellData), PU_MAPSTATIC, 0);
+                }
+            }
+            return node->leafData;
+        }
+        return 0;
+    }
 };
 
 Blockmap::Blockmap(AABoxd const &bounds, Vector2ui const &cellDimensions)
@@ -237,7 +417,7 @@ AABoxd const &Blockmap::bounds() const
 
 BlockmapCell const &Blockmap::dimensions() const
 {
-    return d->dimensions();
+    return d->dimensions;
 }
 
 Vector2d const &Blockmap::cellDimensions() const
@@ -270,99 +450,97 @@ bool Blockmap::link(Cell const &cell, void *elem)
 {
     if(!elem) return false; // Huh?
 
-    if(CellData *cellData = (CellData *)d->cellData(cell, true /*can create*/))
+    if(CellData *cellData = d->cellData(cell, true /*can create*/))
     {
         return cellData->link(elem);
     }
     return false; // Outside the blockmap?
 }
 
-struct BlockLinkWorkerParams
-{
-    void *elem;
-    bool didLink;
-};
-
-static int blockLinkWorker(void *cdPtr, void *context)
-{
-    CellData *cellData = (CellData *) cdPtr;
-    BlockLinkWorkerParams *p = (BlockLinkWorkerParams *) context;
-    if(cellData->link(p->elem))
-    {
-        p->didLink = true;
-    }
-    return false; // Continue iteration.
-}
-
-bool Blockmap::link(CellBlock const &cellBlock, void *elem)
+bool Blockmap::link(CellBlock const &cellBlock_, void *elem)
 {
     if(!elem) return false; // Huh?
 
-    BlockLinkWorkerParams parm;
-    parm.elem    = elem;
-    parm.didLink = false;
-    d->iterate(cellBlock, blockLinkWorker, &parm);
+    bool didLink = false;
 
-    return parm.didLink;
+    CellBlock cellBlock = cellBlock_;
+    d->clipBlock(cellBlock);
+
+    Cell cell;
+    for(cell.y = cellBlock.min.y; cell.y <= cellBlock.max.y; ++cell.y)
+    for(cell.x = cellBlock.min.x; cell.x <= cellBlock.max.x; ++cell.x)
+    {
+        Instance::Node *node = d->findLeaf(cell);
+        if(!node) continue;
+
+        if(CellData *cellData = node->leafData)
+        {
+            if(cellData->link(elem))
+            {
+                didLink = true;
+            }
+        }
+    }
+
+    return didLink;
 }
 
 bool Blockmap::unlink(Cell const &cell, void *elem)
 {
     if(!elem) return false; // Huh?
 
-    if(CellData *cellData = (CellData *)d->cellData(cell))
+    if(CellData *cellData = d->cellData(cell))
     {
         return cellData->unlink(elem);
     }
     return false;
 }
 
-struct BlockUnlinkWorkerParams
-{
-    void *elem;
-    bool didUnlink;
-};
-
-static int blockUnlinkWorker(void *cdPtr, void *context)
-{
-    CellData *cellData = (CellData *) cdPtr;
-    BlockUnlinkWorkerParams *p = (BlockUnlinkWorkerParams *) context;
-    if(cellData->unlink(p->elem))
-    {
-        p->didUnlink = true;
-    }
-    return false; // Continue iteration.
-}
-
-bool Blockmap::unlink(CellBlock const &cellBlock, void *elem)
+bool Blockmap::unlink(CellBlock const &cellBlock_, void *elem)
 {
     if(!elem) return false; // Huh?
 
-    BlockUnlinkWorkerParams parm;
-    parm.elem      = elem;
-    parm.didUnlink = false;
-    d->iterate(cellBlock, blockUnlinkWorker, &parm);
+    bool didUnlink = false;
 
-    return parm.didUnlink;
-}
+    CellBlock cellBlock = cellBlock_;
+    d->clipBlock(cellBlock);
 
-static int blockUnlinkAllWorker(void *cdPtr, void * /*context*/)
-{
-    if(CellData *cellData = static_cast<CellData *>(cdPtr))
+    Cell cell;
+    for(cell.y = cellBlock.min.y; cell.y <= cellBlock.max.y; ++cell.y)
+    for(cell.x = cellBlock.min.x; cell.x <= cellBlock.max.x; ++cell.x)
     {
-        cellData->unlinkAll();
+        Instance::Node *node = d->findLeaf(cell);
+        if(!node) continue;
+
+        if(CellData *cellData = node->leafData)
+        {
+            if(cellData->unlink(elem))
+            {
+                didUnlink = true;
+            }
+        }
     }
-    return false; // Continue iteration.
+
+    return didUnlink;
 }
 
 void Blockmap::unlinkAll()
 {
-    d->iterate(blockUnlinkAllWorker);
+    foreach(Instance::Node const &node, d->nodes)
+    {
+        // Only leafs with user data.
+        if(!node.isLeaf()) continue;
+
+        if(CellData *cellData = node.leafData)
+        {
+            cellData->unlinkAll();
+        }
+    }
 }
 
 int Blockmap::cellElementCount(Cell const &cell) const
 {
-    if(CellData *cellData = (CellData *)d->cellData(cell))
+    if(CellData *cellData = d->cellData(cell))
     {
         return cellData->elemCount;
     }
@@ -374,40 +552,102 @@ int Blockmap::iterate(Cell const &cell, int (*callback) (void *, void *),
 {
     if(!callback) return false; // Huh?
 
-    if(CellData *cellData = (CellData *)d->cellData(cell))
+    if(CellData *cellData = d->cellData(cell))
     {
-        return cellData->iterate(callback, context);
+        RingNode *node = cellData->ringNodes;
+        while(node)
+        {
+            RingNode *next = node->next;
+
+            if(node->elem)
+            {
+                if(int result = callback(node->elem, context))
+                    return result; // Stop iteration.
+            }
+
+            node = next;
+        }
     }
     return false; // Continue iteration.
 }
 
-struct CellDataIterateWorkerParams
-{
-    int (*callback)(void *userData, void *context);
-    void *context;
-};
-
-static int cellDataIterateWorker(void *cdPtr, void *context)
-{
-    CellData *cellData = (CellData *) cdPtr;
-    CellDataIterateWorkerParams *p = (CellDataIterateWorkerParams *) context;
-    return cellData->iterate(p->callback, p->context);
-}
-
-int Blockmap::iterate(CellBlock const &cellBlock, int (*callback) (void *, void *),
+int Blockmap::iterate(CellBlock const &cellBlock_, int (*callback) (void *, void *),
                       void *context) const
 {
     if(!callback) return false; // Huh?
 
-    CellDataIterateWorkerParams parm;
-    parm.callback = callback;
-    parm.context  = context;
-    return d->iterate(cellBlock, cellDataIterateWorker, &parm);
+    CellBlock cellBlock = cellBlock_;
+    d->clipBlock(cellBlock);
+
+    Cell cell;
+    for(cell.y = cellBlock.min.y; cell.y <= cellBlock.max.y; ++cell.y)
+    for(cell.x = cellBlock.min.x; cell.x <= cellBlock.max.x; ++cell.x)
+    {
+        if(int result = iterate(cell, callback, context))
+            return result;
+    }
+
+    return false; // Continue iteration.
 }
 
-Gridmap const &Blockmap::gridmap() const
+// Debug visual ----------------------------------------------------------------
+
+#ifdef __CLIENT__
+
+void Blockmap::drawDebugVisual() const
 {
-    return *d;
+#define UNIT_SIZE           1
+
+    // We'll be changing the color, so query the current and restore later.
+    GLfloat oldColor[4]; glGetFloatv(GL_CURRENT_COLOR, oldColor);
+
+    /*
+     * Draw the Quadtree.
+     */
+    glColor4f(1.f, 1.f, 1.f, 1.f / d->nodes.first().size);
+    foreach(Instance::Node const &node, d->nodes)
+    {
+        // Only leafs with user data.
+        if(!node.isLeaf()) continue;
+        if(!node.leafData) continue;
+
+        Vector2f const topLeft     = node.cell * UNIT_SIZE;
+        Vector2f const bottomRight = topLeft + UNIT_SIZE;
+
+        glBegin(GL_LINE_LOOP);
+            glVertex2f(topLeft.x,     topLeft.y);
+            glVertex2f(bottomRight.x, topLeft.y);
+            glVertex2f(bottomRight.x, bottomRight.y);
+            glVertex2f(topLeft.x,     bottomRight.y);
+        glEnd();
+    }
+
+    /*
+     * Draw the bounds.
+     */
+    Vector2f start;
+    Vector2f end = start + d->dimensions * UNIT_SIZE;
+
+    glColor3f(1, .5f, .5f);
+    glBegin(GL_LINES);
+        glVertex2f(start.x, start.y);
+        glVertex2f(  end.x, start.y);
+
+        glVertex2f(  end.x, start.y);
+        glVertex2f(  end.x,   end.y);
+
+        glVertex2f(  end.x,   end.y);
+        glVertex2f(start.x,   end.y);
+
+        glVertex2f(start.x,   end.y);
+        glVertex2f(start.x, start.y);
+    glEnd();
+
+    // Restore GL state.
+    glColor4fv(oldColor);
+
+#undef UNIT_SIZE
 }
+#endif // __CLIENT__
 
 } // namespace de

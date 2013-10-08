@@ -25,7 +25,13 @@
 
 #include <de/Vector>
 
-#include "gridmap.h"
+#ifdef min
+#   undef min
+#endif
+
+#ifdef max
+#   undef max
+#endif
 
 namespace de {
 
@@ -35,8 +41,19 @@ namespace de {
 class Blockmap
 {
 public:
-    typedef GridmapCell Cell;
-    typedef GridmapCellBlock CellBlock;
+    typedef Vector2ui Cell;
+
+    /**
+     * POD structure representing a rectangular range of cells.
+     */
+    struct CellBlock
+    {
+        Cell min;
+        Cell max;
+
+        CellBlock(Cell const &min = Cell(), Cell const &max = Cell()) : min(min), max(max) {}
+        CellBlock(CellBlock const &other) : min(other.min), max(other.max) {}
+    };
 
 public:
     /**
@@ -136,10 +153,18 @@ public:
     int iterate(CellBlock const &cellBlock, int (*callback) (void *elem, void *context), void *context = 0) const;
 
     /**
-     * Retrieve an immutable pointer to the underlying Gridmap instance
-     * (primarily intended for debug purposes).
+     * Render a visual for this gridmap to assist in debugging (etc...).
+     *
+     * This visualizer assumes that the caller has already configured the GL
+     * render state (projection matrices, scale, etc...) as desired prior to
+     * calling. This function guarantees to restore the previous GL state if
+     * any changes are made to it.
+     *
+     * @note Internally this visual uses fixed unit dimensions [1x1] for cells,
+     * therefore the caller should scale the appropriate matrix to scale this
+     * visual as desired.
      */
-    Gridmap const &gridmap() const;
+    void drawDebugVisual() const;
 
 private:
     DENG2_PRIVATE(d)

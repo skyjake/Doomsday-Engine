@@ -259,7 +259,6 @@ DENG_HEADERS += \
     include/gl/svg.h \
     include/gl/sys_opengl.h \
     include/gl/texturecontent.h \
-    include/gridmap.h \
     include/hedge.h \
     include/ihplane.h \
     include/library.h \
@@ -612,7 +611,6 @@ SOURCES += \
     src/gl/gl_texmanager.cpp \
     src/gl/svg.cpp \
     src/gl/sys_opengl.cpp \
-    src/gridmap.cpp \
     src/hedge.cpp \
     src/library.cpp \
     src/m_decomp64.cpp \

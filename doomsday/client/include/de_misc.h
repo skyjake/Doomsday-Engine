@@ -27,7 +27,6 @@
 #include "m_misc.h"
 #include "m_nodepile.h"
 #include "m_profiler.h"
-#include "gridmap.h"
 #include "m_decomp64.h"
 #include <de/stack.h>
 #include <de/mathutil.h>
