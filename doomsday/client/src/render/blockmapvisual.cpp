@@ -19,15 +19,14 @@
  * 02110-1301 USA</small>
  */
 
-#include <cmath>
-
+#include <de/aabox.h>
 #include <de/concurrency.h>
 
+#include <de/Vector>
+
 #include "de_base.h"
-#include "de_console.h"
 #include "de_graphics.h"
 #include "de_render.h"
-#include "de_play.h"
 #include "de_ui.h"
 
 #include "Face"
@@ -35,159 +34,170 @@
 
 #include "world/blockmap.h"
 #include "world/map.h"
+#include "world/p_object.h"
+#include "world/p_players.h"
 #include "BspLeaf"
 
 #include "render/blockmapvisual.h"
 
 using namespace de;
 
-byte bmapShowDebug = 0; // 1 = mobjs, 2 = lines, 3 = BSP leafs, 4 = polyobjs. cvar
+byte bmapShowDebug; // 1 = mobjs, 2 = lines, 3 = BSP leafs, 4 = polyobjs. cvar
 float bmapDebugSize = 1.5f; // cvar
 
-static int drawMobj(mobj_t *mo, void * /*parameters*/)
+static void drawMobj(mobj_t const &mobj)
 {
-    if(mo->validCount != validCount)
+    AABoxd const bounds = Mobj_AABox(mobj);
+
+    glVertex2f(bounds.minX, bounds.minY);
+    glVertex2f(bounds.maxX, bounds.minY);
+    glVertex2f(bounds.maxX, bounds.maxY);
+    glVertex2f(bounds.minX, bounds.maxY);
+}
+
+static int drawMobjWorker(void *mobjPtr, void * /*context*/)
+{
+    mobj_t &mobj = *static_cast<mobj_t *>(mobjPtr);
+    if(mobj.validCount != validCount)
     {
-        vec2f_t start; V2f_Set(start, mo->origin[VX] - mo->radius, mo->origin[VY] - mo->radius);
-        vec2f_t end;   V2f_Set(end,   mo->origin[VX] + mo->radius, mo->origin[VY] + mo->radius);
-
-        glVertex2f(start[VX], start[VY]);
-        glVertex2f(  end[VX], start[VY]);
-        glVertex2f(  end[VX],   end[VY]);
-        glVertex2f(start[VX],   end[VY]);
-
-        mo->validCount = validCount;
+        mobj.validCount = validCount;
+        drawMobj(mobj);
     }
     return false; // Continue iteration.
 }
 
-static int drawLine(Line *line, void * /*parameters*/)
+static void drawLine(Line const &line)
 {
-    if(line->validCount() != validCount)
-    {
-        glVertex2f(line->fromOrigin().x, line->fromOrigin().y);
-        glVertex2f(  line->toOrigin().x,   line->toOrigin().y);
+    glVertex2f(line.fromOrigin().x, line.fromOrigin().y);
+    glVertex2f(  line.toOrigin().x,   line.toOrigin().y);
+}
 
-        line->setValidCount(validCount);
+static int drawLineWorker(void *linePtr, void * /*context*/)
+{
+    Line &line = *static_cast<Line *>(linePtr);
+    if(line.validCount() != validCount)
+    {
+        line.setValidCount(validCount);
+        drawLine(line);
     }
     return false; // Continue iteration.
 }
 
-static int drawBspLeaf(BspLeaf *bspLeaf, void * /*parameters*/)
+static void drawBspLeaf(BspLeaf const &bspLeaf)
 {
-    if(bspLeaf->hasPoly() && bspLeaf->validCount() != validCount)
+    if(!bspLeaf.hasPoly())
+        return;
+
+    float const scale = de::max(bmapDebugSize, 1.f);
+    float const width = (DENG_GAMEVIEW_WIDTH / 16) / scale;
+
+    Face const &poly = bspLeaf.poly();
+    HEdge *base = poly.hedge();
+    HEdge *hedge = base;
+    do
     {
-        float const scale = de::max(bmapDebugSize, 1.f);
-        float const width = (DENG_GAMEVIEW_WIDTH / 16) / scale;
-        float length, dx, dy, normal[2], unit[2];
-        vec2f_t start, end;
+        Vector2d start = hedge->origin();
+        Vector2d end   = hedge->twin().origin();
 
-        Face const &face = bspLeaf->poly();
+        glBegin(GL_LINES);
+            glVertex2f(start.x, start.y);
+            glVertex2f(end.x, end.y);
+        glEnd();
 
-        HEdge *hedge = face.hedge();
-        do
+        ddouble length = (end - start).length();
+        if(length > 0)
         {
-            V2f_Set(start, hedge->origin().x, hedge->origin().y);
-            V2f_Set(end,   hedge->twin().origin().x, hedge->twin().origin().y);
+            Vector2d const unit = (end - start) / length;
+            Vector2d const normal(-unit.y, unit.x);
 
-            glBegin(GL_LINES);
-                glVertex2fv(start);
-                glVertex2fv(end);
+            GL_BindTextureUnmanaged(GL_PrepareLSTexture(LST_DYNAMIC));
+            glEnable(GL_TEXTURE_2D);
+
+            GL_BlendOp(GL_FUNC_ADD);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+
+            glBegin(GL_QUADS);
+                glTexCoord2f(0.75f, 0.5f);
+                glVertex2f(start.x, start.y);
+                glTexCoord2f(0.75f, 0.5f);
+                glVertex2f(end.x, end.y);
+                glTexCoord2f(0.75f, 1);
+                glVertex2f(end.x - normal.x * width, end.y - normal.y * width);
+                glTexCoord2f(0.75f, 1);
+                glVertex2f(start.x - normal.x * width, start.y - normal.y * width);
             glEnd();
 
-            dx = end[VX] - start[VX];
-            dy = end[VY] - start[VY];
-            length = sqrt(dx * dx + dy * dy);
-            if(length > 0)
-            {
-                unit[VX] = dx / length;
-                unit[VY] = dy / length;
-                normal[VX] = -unit[VY];
-                normal[VY] = unit[VX];
+            glDisable(GL_TEXTURE_2D);
+            GL_BlendMode(BM_NORMAL);
+        }
 
-                GL_BindTextureUnmanaged(GL_PrepareLSTexture(LST_DYNAMIC));
-                glEnable(GL_TEXTURE_2D);
+        // Draw a bounding box for the leaf's face geometry.
+        start = Vector2d(poly.aaBox().minX, poly.aaBox().minY);
+        end   = Vector2d(poly.aaBox().maxX, poly.aaBox().maxY);
 
-                GL_BlendOp(GL_FUNC_ADD);
-                glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+        glBegin(GL_LINES);
+            glVertex2f(start.x, start.y);
+            glVertex2f(  end.x, start.y);
+            glVertex2f(  end.x, start.y);
+            glVertex2f(  end.x,   end.y);
+            glVertex2f(  end.x,   end.y);
+            glVertex2f(start.x,   end.y);
+            glVertex2f(start.x,   end.y);
+            glVertex2f(start.x, start.y);
+        glEnd();
 
-                glBegin(GL_QUADS);
-                    glTexCoord2f(0.75f, 0.5f);
-                    glVertex2fv(start);
-                    glTexCoord2f(0.75f, 0.5f);
-                    glVertex2fv(end);
-                    glTexCoord2f(0.75f, 1);
-                    glVertex2f(end[VX] - normal[VX] * width,
-                               end[VY] - normal[VY] * width);
-                    glTexCoord2f(0.75f, 1);
-                    glVertex2f(start[VX] - normal[VX] * width,
-                               start[VY] - normal[VY] * width);
-                glEnd();
+    } while((hedge = &hedge->next()) != base);
+}
 
-                glDisable(GL_TEXTURE_2D);
-                GL_BlendMode(BM_NORMAL);
-            }
-
-            // Draw a bounding box for the leaf's face geometry.
-            V2f_Set(start, face.aaBox().minX, face.aaBox().minY);
-            V2f_Set(end,   face.aaBox().maxX, face.aaBox().maxY);
-
-            glBegin(GL_LINES);
-                glVertex2f(start[VX], start[VY]);
-                glVertex2f(  end[VX], start[VY]);
-                glVertex2f(  end[VX], start[VY]);
-                glVertex2f(  end[VX],   end[VY]);
-                glVertex2f(  end[VX],   end[VY]);
-                glVertex2f(start[VX],   end[VY]);
-                glVertex2f(start[VX],   end[VY]);
-                glVertex2f(start[VX], start[VY]);
-            glEnd();
-
-        } while((hedge = &hedge->next()) != face.hedge());
-
-        bspLeaf->setValidCount(validCount);
+static int drawBspLeafWorker(void *bspLeafPtr, void * /*context*/)
+{
+    BspLeaf &bspLeaf = *static_cast<BspLeaf *>(bspLeafPtr);
+    if(bspLeaf.validCount() != validCount)
+    {
+        bspLeaf.setValidCount(validCount);
+        drawBspLeaf(bspLeaf);
     }
     return false; // Continue iteration.
 }
 
-static int drawCellLines(Blockmap const &bmap, BlockmapCell const &cell, void *parameters)
+static int drawCellLines(Blockmap const &bmap, BlockmapCell const &cell, void *context)
 {
     glBegin(GL_LINES);
-        bmap.iterate(cell, (int (*)(void*,void*)) drawLine, parameters);
+        bmap.iterate(cell, (int (*)(void*,void*)) drawLineWorker, context);
     glEnd();
     return false; // Continue iteration.
 }
 
-static int drawCellPolyobjLines(void *object, void *parameters)
+static int drawCellPolyobjLineWorker(void *object, void *context)
 {
     Polyobj *po = (Polyobj *)object;
     foreach(Line *line, po->lines())
     {
-        if(int result = drawLine(line, parameters))
+        if(int result = drawLineWorker(line, context))
             return result;
     }
     return false; // Continue iteration.
 }
 
-static int drawCellPolyobjs(Blockmap const &bmap, BlockmapCell const &cell, void *parameters)
+static int drawCellPolyobjs(Blockmap const &bmap, BlockmapCell const &cell, void *context)
 {
     glBegin(GL_LINES);
-        bmap.iterate(cell, (int (*)(void*,void*)) drawCellPolyobjLines, parameters);
+        bmap.iterate(cell, (int (*)(void*,void*)) drawCellPolyobjLineWorker, context);
     glEnd();
     return false; // Continue iteration.
 }
 
-static int drawCellMobjs(Blockmap const &bmap, BlockmapCell const &cell, void *parameters)
+static int drawCellMobjs(Blockmap const &bmap, BlockmapCell const &cell, void *context)
 {
     glBegin(GL_QUADS);
-        bmap.iterate(cell, (int (*)(void*,void*)) drawMobj, parameters);
+        bmap.iterate(cell, (int (*)(void*,void*)) drawMobjWorker, context);
     glEnd();
     return false; // Continue iteration.
 }
 
-static int drawCellBspLeafs(Blockmap const &bmap, BlockmapCell const &cell, void *parameters)
+static int drawCellBspLeafs(Blockmap const &bmap, BlockmapCell const &cell, void *context)
 {
-    bmap.iterate(cell, (int (*)(void*,void*)) drawBspLeaf, parameters);
+    bmap.iterate(cell, (int (*)(void*,void*)) drawBspLeafWorker, context);
     return false; // Continue iteration.
 }
 
@@ -327,7 +337,7 @@ static void drawCellInfoBox(Blockmap const *blockmap, Point2Raw const *origin,
  * @param cellDrawer  Blockmap cell content drawing callback. Can be @a NULL.
  */
 static void drawBlockmap(Blockmap const &bmap, mobj_t *followMobj,
-    int (*cellDrawer) (Blockmap const &bmap, BlockmapCell const &cell, void *parameters))
+    int (*cellDrawer) (Blockmap const &bmap, BlockmapCell const &cell, void *context))
 {
     BlockmapCellBlock vCellBlock;
     BlockmapCell vCell;
@@ -348,13 +358,12 @@ static void drawBlockmap(Blockmap const &bmap, mobj_t *followMobj,
         {
             // Determine the extended blockmap coords for the followed
             // Mobj's "touch" range.
-            float const radius = followMobj->radius + DDMOBJ_RADIUS_MAX * 2;
+            AABoxd aaBox = Mobj_AABox(*followMobj);
 
-            AABoxd aaBox;
-            vec2d_t start; V2d_Set(start, followMobj->origin[VX] - radius, followMobj->origin[VY] - radius);
-            vec2d_t end;   V2d_Set(end,   followMobj->origin[VX] + radius, followMobj->origin[VY] + radius);
-            V2d_InitBox(aaBox.arvec2, start);
-            V2d_AddToBox(aaBox.arvec2, end);
+            aaBox.minX -= DDMOBJ_RADIUS_MAX * 2;
+            aaBox.minY -= DDMOBJ_RADIUS_MAX * 2;
+            aaBox.maxX += DDMOBJ_RADIUS_MAX * 2;
+            aaBox.maxY += DDMOBJ_RADIUS_MAX * 2;
 
             vCellBlock = bmap.toCellBlock(aaBox);
         }
@@ -394,14 +403,13 @@ static void drawBlockmap(Blockmap const &bmap, mobj_t *followMobj,
                 glColor4f(.33f, .33f, .66f, .33f);
             }
 
-            vec2d_t start; V2d_Set(start, cell.x * cellDimensions.x, cell.y * cellDimensions.y);
-            vec2d_t end;   V2d_Set(end, cellDimensions.x, cellDimensions.y);
-            V2d_Sum(end, end, start);
+            Vector2d start = cellDimensions * cell;
+            Vector2d end   = start + cellDimensions;
 
-            glVertex2d(start[VX], start[VY]);
-            glVertex2d(  end[VX], start[VY]);
-            glVertex2d(  end[VX],   end[VY]);
-            glVertex2d(start[VX],   end[VY]);
+            glVertex2d(start.x, start.y);
+            glVertex2d(  end.x, start.y);
+            glVertex2d(  end.x,   end.y);
+            glVertex2d(start.x,   end.y);
         }
 
         glEnd();
@@ -447,8 +455,10 @@ static void drawBlockmap(Blockmap const &bmap, mobj_t *followMobj,
             for(cell.x = 0; cell.x < dimensions.x; ++cell.x)
             {
                 if(cell.x >= vCellBlock.min.x && cell.x <= vCellBlock.max.x &&
-                   cell.y >= vCellBlock.min.y && cell.y <= vCellBlock.max.y) continue;
-                if(!bmap.cellElementCount(cell)) continue;
+                   cell.y >= vCellBlock.min.y && cell.y <= vCellBlock.max.y)
+                    continue;
+                if(!bmap.cellElementCount(cell))
+                    continue;
 
                 cellDrawer(bmap, cell, 0/*no params*/);
             }
@@ -459,8 +469,11 @@ static void drawBlockmap(Blockmap const &bmap, mobj_t *followMobj,
             for(cell.y = vCellBlock.min.y; cell.y <= vCellBlock.max.y; ++cell.y)
             for(cell.x = vCellBlock.min.x; cell.x <= vCellBlock.max.x; ++cell.x)
             {
-                if(cell.x == vCell.x && cell.y == vCell.y) continue;
-                if(!bmap.cellElementCount(cell)) continue;
+                if(cell == vCell)
+                    continue;
+
+                if(!bmap.cellElementCount(cell))
+                    continue;
 
                 cellDrawer(bmap, cell, 0/*no params*/);
             }
@@ -497,7 +510,7 @@ static void drawBlockmap(Blockmap const &bmap, mobj_t *followMobj,
         validCount++;
         glColor3f(0, 1, 0);
         glBegin(GL_QUADS);
-            drawMobj(followMobj, NULL/*no params*/);
+            drawMobj(*followMobj);
         glEnd();
     }
 
@@ -508,7 +521,7 @@ static void drawBlockmap(Blockmap const &bmap, mobj_t *followMobj,
 
 void Rend_BlockmapDebug()
 {
-    int (*cellDrawer) (Blockmap const &blockmap, BlockmapCell const &cell, void *parameters);
+    int (*cellDrawer) (Blockmap const &blockmap, BlockmapCell const &cell, void *context);
     char const *objectTypeName;
     mobj_t *followMobj = 0;
     Blockmap const *blockmap;
