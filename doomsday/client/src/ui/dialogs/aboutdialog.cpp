@@ -82,7 +82,7 @@ AboutDialog::AboutDialog() : DialogWidget("about"), d(new Instance(this))
     title->setSizePolicy(ui::Fixed, ui::Expand);
 
     LabelWidget *info = new LabelWidget;
-    String txt = String("%1 (%2-%8)%3\n\n" _E(b) "%4 %5 #%6" _E(.) "\n%7") //)%3 %1" _E(.) " #%2\n" _E(.) "%4-bit %5%6\n\n%7")
+    String txt = String("%1 (%2-%8)%3\n\n" _E(b) "%4 %5 #%6" _E(.) "\n%7")
             .arg(ver2.operatingSystem() == "windows"? tr("Windows") :
                  ver2.operatingSystem() == "macx"? tr("Mac OS X") : tr("Unix"))
             .arg(ver2.cpuBits())
@@ -96,14 +96,9 @@ AboutDialog::AboutDialog() : DialogWidget("about"), d(new Instance(this))
     info->setText(txt);
     info->setSizePolicy(ui::Fixed, ui::Expand);
 
-    //ButtonWidget *homepage = new ButtonWidget;
-    //homepage->setText(tr("Go to Homepage"));
-    //homepage->setAction();
-
     area().add(logo);
     area().add(title);
     area().add(info);
-    //area().add(homepage);
 
     // Layout.
     RuleRectangle const &cont = area().contentRule();
@@ -111,14 +106,8 @@ AboutDialog::AboutDialog() : DialogWidget("about"), d(new Instance(this))
     layout.setOverrideWidth(style().rules().rule("dialog.about.width"));
     layout << *logo << *title << *info;
 
-    // Center the button.
-    /*homepage->rule()
-            .setInput(Rule::AnchorX, cont.left() + layout.width() / 2)
-            .setInput(Rule::Top, info->rule().bottom())
-            .setAnchorPoint(Vector2f(.5f, 0));*/
-
     // Total size of the dialog's content.
-    area().setContentSize(layout.width(), layout.height()/* + homepage->rule().height()*/);
+    area().setContentSize(layout.width(), layout.height());
 
     buttons()
             << new DialogButtonItem(DialogWidget::Accept | DialogWidget::Default, tr("Close"))
