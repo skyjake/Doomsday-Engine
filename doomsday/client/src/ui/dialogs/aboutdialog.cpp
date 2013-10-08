@@ -68,35 +68,37 @@ AboutDialog::AboutDialog() : DialogWidget("about"), d(new Instance(this))
     logo->setImage(style().images().image("logo.px256"));
     logo->setSizePolicy(ui::Fixed, ui::Expand);
 
-    // Set up the contents of the widget.
-    LabelWidget *title = LabelWidget::newWithText(DOOMSDAY_NICENAME);
-    title->margins().set("");
-    title->setFont("title");
-    title->setSizePolicy(ui::Fixed, ui::Expand);
-
     VersionInfo version;
     de::Version ver2;
 
+    // Set up the contents of the widget.
+    LabelWidget *title = LabelWidget::newWithText(String("%1 %2.%3")
+                                                  .arg(DOOMSDAY_NICENAME)
+                                                  .arg(version.major)
+                                                  .arg(version.minor));
+    title->margins().set("");
+    title->setFont("title");
+    title->setTextColor("accent");
+    title->setSizePolicy(ui::Fixed, ui::Expand);
+
     LabelWidget *info = new LabelWidget;
-    String txt = String(_E(D)_E(b) "%3 %1" _E(.) " #%2\n" _E(.) "%4-bit %5%6\n\n%7")
+    String txt = String("%1 (%2-%8)%3\n\n" _E(b) "%4 %5 #%6" _E(.) "\n%7")
+            .arg(ver2.operatingSystem() == "windows"? tr("Windows") :
+                 ver2.operatingSystem() == "macx"? tr("Mac OS X") : tr("Unix"))
+            .arg(ver2.cpuBits())
+            .arg(ver2.isDebugBuild()? tr(" Debug") : "")
+            .arg(DOOMSDAY_RELEASE_TYPE)
             .arg(version.base())
             .arg(ver2.build)
-            .arg(DOOMSDAY_RELEASE_TYPE)
-            .arg(ver2.cpuBits())
-            .arg(ver2.operatingSystem())
-            .arg(ver2.isDebugBuild()? " debug" : "")
-            .arg(__DATE__ " " __TIME__);
+            .arg(Time::fromText(__DATE__ " " __TIME__, Time::CompilerDateTime)
+                 .asDateTime().toString("MMMM d, yyyy HH:MM"))
+            .arg(tr("bit"));
     info->setText(txt);
     info->setSizePolicy(ui::Fixed, ui::Expand);
-
-    ButtonWidget *homepage = new ButtonWidget;
-    homepage->setText(tr("Go to Homepage"));
-    homepage->setAction(new SignalAction(&ClientApp::app(), SLOT(openHomepageInBrowser())));
 
     area().add(logo);
     area().add(title);
     area().add(info);
-    area().add(homepage);
 
     // Layout.
     RuleRectangle const &cont = area().contentRule();
@@ -104,19 +106,14 @@ AboutDialog::AboutDialog() : DialogWidget("about"), d(new Instance(this))
     layout.setOverrideWidth(style().rules().rule("dialog.about.width"));
     layout << *logo << *title << *info;
 
-    // Center the button.
-    homepage->rule()
-            .setInput(Rule::AnchorX, cont.left() + layout.width() / 2)
-            .setInput(Rule::Top, info->rule().bottom())
-            .setAnchorPoint(Vector2f(.5f, 0));
-
     // Total size of the dialog's content.
-    area().setContentSize(layout.width(), layout.height() + homepage->rule().height());
+    area().setContentSize(layout.width(), layout.height());
 
     buttons()
             << new DialogButtonItem(DialogWidget::Accept | DialogWidget::Default, tr("Close"))
             << new DialogButtonItem(DialogWidget::Action, tr("GL"), new SignalAction(this, SLOT(showGLInfo())))
-            << new DialogButtonItem(DialogWidget::Action, tr("Audio"), new SignalAction(this, SLOT(showAudioInfo())));
+            << new DialogButtonItem(DialogWidget::Action, tr("Audio"), new SignalAction(this, SLOT(showAudioInfo())))
+            << new DialogButtonItem(DialogWidget::Action, tr("Homepage..."), new SignalAction(&ClientApp::app(), SLOT(openHomepageInBrowser())));
 
     // The popups are anchored to their button.
     d->glPopup->setAnchorAndOpeningDirection(buttonWidget(tr("GL")).rule(), ui::Up);

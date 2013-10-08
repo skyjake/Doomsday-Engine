@@ -126,7 +126,8 @@ public:
         ISOFormat,
         BuildNumberAndTime,
         FriendlyFormat,
-        ISODateOnly
+        ISODateOnly,
+        CompilerDateTime // Oct  7 2013 03:18:36 (__DATE__ __TIME__)
     };
 
 public:

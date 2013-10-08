@@ -24,6 +24,7 @@
 #include "de/Reader"
 #include "de/HighPerformanceTimer"
 
+#include <QStringList>
 #include <QThread>
 #include <QDataStream>
 
@@ -318,7 +319,8 @@ String Time::asText(Format format) const
 
 Time Time::fromText(String const &text, Time::Format format)
 {
-    DENG2_ASSERT(format == ISOFormat || format == ISODateOnly || format == FriendlyFormat);
+    DENG2_ASSERT(format == ISOFormat || format == ISODateOnly || format == FriendlyFormat ||
+                 format == CompilerDateTime);
 
     if(format == ISOFormat)
     {
@@ -331,6 +333,30 @@ Time Time::fromText(String const &text, Time::Format format)
     else if(format == FriendlyFormat)
     {
         return Time(QDateTime::fromString(text, Qt::TextDate));
+    }
+    else if(format == CompilerDateTime)
+    {
+        // Parse the text manually as it is locale-independent.
+        QStringList const parts = text.split(" ", QString::SkipEmptyParts);
+        DENG2_ASSERT(parts.size() == 4);
+        char const *months[] = {
+            "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+        };
+        int day = parts[1].toInt();
+        int year = parts[2].toInt();
+        int month = 0;
+        for(int i = 0; i < 12; ++i)
+        {
+            if(parts[0] == months[i])
+            {
+                month = i + 1;
+                break;
+            }
+        }
+        QDate date(year, month, day);
+        QTime time = QTime::fromString(parts[3], "HH:mm:ss");
+        return Time(QDateTime(date, time));
     }
     return Time();
 }
