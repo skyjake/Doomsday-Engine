@@ -31,6 +31,8 @@
 
 #include "world/blockmap.h"
 
+namespace de {
+
 struct RingNode
 {
     void *elem;
@@ -122,6 +124,7 @@ private:
     RingNode *findNode(void *elem)
     {
         if(!elem) return 0;
+
         for(RingNode *found = ringNodes; found; found = found->next)
         {
             if(found->elem == elem) return found;
@@ -144,8 +147,6 @@ private:
         elemCount++;
     }
 };
-
-namespace de {
 
 DENG2_PIMPL(Blockmap), public Gridmap
 {
@@ -268,6 +269,7 @@ BlockmapCellBlock Blockmap::toCellBlock(AABoxd const &box, bool *retDidClip) con
 bool Blockmap::link(Cell const &cell, void *elem)
 {
     if(!elem) return false; // Huh?
+
     if(CellData *cellData = (CellData *)d->cellData(cell, true /*can create*/))
     {
         return cellData->link(elem);
@@ -295,16 +297,19 @@ static int blockLinkWorker(void *cdPtr, void *context)
 bool Blockmap::link(CellBlock const &cellBlock, void *elem)
 {
     if(!elem) return false; // Huh?
+
     BlockLinkWorkerParams parm;
     parm.elem    = elem;
     parm.didLink = false;
     d->iterate(cellBlock, blockLinkWorker, &parm);
+
     return parm.didLink;
 }
 
 bool Blockmap::unlink(Cell const &cell, void *elem)
 {
     if(!elem) return false; // Huh?
+
     if(CellData *cellData = (CellData *)d->cellData(cell))
     {
         return cellData->unlink(elem);
@@ -332,16 +337,17 @@ static int blockUnlinkWorker(void *cdPtr, void *context)
 bool Blockmap::unlink(CellBlock const &cellBlock, void *elem)
 {
     if(!elem) return false; // Huh?
+
     BlockUnlinkWorkerParams parm;
     parm.elem      = elem;
     parm.didUnlink = false;
     d->iterate(cellBlock, blockUnlinkWorker, &parm);
+
     return parm.didUnlink;
 }
 
-static int blockUnlinkAllWorker(void *cdPtr, void *context)
+static int blockUnlinkAllWorker(void *cdPtr, void * /*context*/)
 {
-    DENG2_UNUSED(context);
     if(CellData *cellData = static_cast<CellData *>(cdPtr))
     {
         cellData->unlinkAll();
@@ -363,37 +369,39 @@ int Blockmap::cellElementCount(Cell const &cell) const
     return 0;
 }
 
-int Blockmap::iterate(Cell const &cell, int (*callback) (void *elem, void *parameters),
-                      void *parameters) const
+int Blockmap::iterate(Cell const &cell, int (*callback) (void *, void *),
+                      void *context) const
 {
     if(!callback) return false; // Huh?
+
     if(CellData *cellData = (CellData *)d->cellData(cell))
     {
-        return cellData->iterate(callback, parameters);
+        return cellData->iterate(callback, context);
     }
     return false; // Continue iteration.
 }
 
 struct CellDataIterateWorkerParams
 {
-    int (*callback)(void *userData, void *parameters);
-    void *parameters;
+    int (*callback)(void *userData, void *context);
+    void *context;
 };
 
-static int cellDataIterateWorker(void *cdPtr, void *parameters)
+static int cellDataIterateWorker(void *cdPtr, void *context)
 {
     CellData *cellData = (CellData *) cdPtr;
-    CellDataIterateWorkerParams *p = (CellDataIterateWorkerParams *) parameters;
-    return cellData->iterate(p->callback, p->parameters);
+    CellDataIterateWorkerParams *p = (CellDataIterateWorkerParams *) context;
+    return cellData->iterate(p->callback, p->context);
 }
 
-int Blockmap::iterate(CellBlock const &cellBlock, int (*callback) (void *elem, void *parameters),
-                      void *parameters) const
+int Blockmap::iterate(CellBlock const &cellBlock, int (*callback) (void *, void *),
+                      void *context) const
 {
     if(!callback) return false; // Huh?
+
     CellDataIterateWorkerParams parm;
-    parm.callback   = callback;
-    parm.parameters = parameters;
+    parm.callback = callback;
+    parm.context  = context;
     return d->iterate(cellBlock, cellDataIterateWorker, &parm);
 }
 

@@ -1773,7 +1773,7 @@ static int iterateCellBlockMobjs(Blockmap &mobjBlockmap, Blockmap::CellBlock con
 }
 
 int Map::mobjBoxIterator(AABoxd const &box, int (*callback) (mobj_t *, void *),
-                          void *parameters) const
+                         void *parameters) const
 {
     if(!d->mobjBlockmap.isNull())
     {

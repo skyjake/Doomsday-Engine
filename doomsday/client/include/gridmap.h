@@ -53,7 +53,7 @@ public:
     typedef Vector2ui Cell;
 
     /**
-     * Handy POD structure for representing a rectangular range of cells (a "cell block").
+     * POD structure representing a rectangular range of grid cells.
      */
     struct CellBlock
     {
@@ -62,74 +62,6 @@ public:
 
         CellBlock(Cell const &min = Cell(), Cell const &max = Cell()) : min(min), max(max) {}
         CellBlock(CellBlock const &other) : min(other.min), max(other.max) {}
-    };
-
-    /// Quadtree child identifiers (quadrants).
-    enum Quadrant
-    {
-        TopLeft,
-        TopRight,
-        BottomLeft,
-        BottomRight
-    };
-
-    /**
-     * A node in the quadtree.
-     */
-    struct Node
-    {
-        /// Cell coordinates for this node.
-        Cell cell;
-
-        /// Size of the cell at this node (width=height).
-        uint size;
-
-        /// Child nodes, one for each quadrant:
-        Node *topLeft;
-        Node *topRight;
-        Node *bottomLeft;
-        Node *bottomRight;
-
-        /// User data associated with the cell.
-        void *userData;
-
-        /**
-         * Construct a new node.
-         *
-         * @param cell  Cell coordinates for the node.
-         * @param size  Size of the cell.
-         */
-        Node(Cell const &cell, uint size);
-
-        ~Node();
-
-        /**
-         * Returns @c true iff the cell is a leaf (i.e., equal to a unit in the
-         * gridmap coordinate space).
-         */
-        bool isLeaf() const { return size == 1; }
-
-        /**
-         * In which quadrant is the @a point?
-         */
-        Quadrant quadrant(Cell const &point) const;
-
-        Node **getChildAdr(Quadrant quadrant);
-
-        /**
-         * Depth-first traversal of the children of this tree, making a callback
-         * for each cell. Iteration ends when all selected cells have been visited
-         * or a callback returns a non-zero value.
-         *
-         * @param leafOnly      Caller is only interested in leaves.
-         * @param callback      Callback function.
-         * @param parameters    Passed to the callback.
-         *
-         * @return  Zero iff iteration completed wholly, else the value returned by the
-         *          last callback made.
-         */
-        int iterate(bool leafOnly, int (*callback) (Node &node, void *parameters),
-                    void *parameters = 0);
     };
 
 public:
@@ -189,32 +121,32 @@ public:
     /*
      * Iteration callback function.
      */
-    typedef int (*IterateCallback) (void *cellData, void *parameters);
+    typedef int (*IterateCallback) (void *cellData, void *context);
 
     /**
      * Iterate over all populated cells in the gridmap making a callback for
      * each. Iteration ends when all cells have been visited, or, a @a callback
      * returns non-zero.
      *
-     * @param callback    Callback function ptr.
-     * @param parameters  Passed to the callback.
+     * @param callback  Callback function ptr.
+     * @param context   Passed to the callback.
      *
      * @return  @c 0 iff iteration completed wholly.
      */
-    int iterate(IterateCallback callback, void *parameters = 0);
+    int iterate(IterateCallback callback, void *context = 0);
 
     /**
      * Iterate over a block of populated cells in the gridmap making a callback
      * for each. Iteration ends when all selected cells have been visited, or,
      * a @a callback returns non-zero.
      *
-     * @param block       Block cell coordinates to iterate the user data of.
-     * @param callback    Callback function ptr.
-     * @param parameters  Passed to the callback.
+     * @param block     Block cell coordinates to iterate the user data of.
+     * @param callback  Callback function ptr.
+     * @param context   Passed to the callback.
      *
      * @return  @c 0 iff iteration completed wholly.
      */
-    int iterate(CellBlock const &block, IterateCallback callback, void *paramaters = 0);
+    int iterate(CellBlock const &block, IterateCallback callback, void *context = 0);
 
     /**
      * Render a visual for this gridmap to assist in debugging (etc...).
