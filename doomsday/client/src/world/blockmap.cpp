@@ -221,7 +221,7 @@ DENG2_PIMPL(Blockmap)
         newNode(Cell(0, 0), ceilPow2(de::max(dimensions.x, dimensions.y)));
     }
 
-    inline int toCellIndex(uint cellX, uint cellY) const
+    inline int toCellIndex(uint cellX, uint cellY)
     {
         return int(cellY * dimensions.x + cellX);
     }
@@ -236,7 +236,7 @@ DENG2_PIMPL(Blockmap)
      *
      * @return  Translated blockmap cell X coordinate.
      */
-    uint toCellX(coord_t x, bool &didClip) const
+    uint toCellX(coord_t x, bool &didClip)
     {
         didClip = false;
         if(x < bounds.minX)
@@ -262,7 +262,7 @@ DENG2_PIMPL(Blockmap)
      *
      * @return  Translated blockmap cell Y coordinate.
      */
-    uint toCellY(coord_t y, bool &didClip) const
+    uint toCellY(coord_t y, bool &didClip)
     {
         didClip = false;
         if(y < bounds.minY)
@@ -278,6 +278,20 @@ DENG2_PIMPL(Blockmap)
         return uint((y - bounds.minY) / cellDimensions.y);
     }
 
+    void clipCell(Cell &cell, bool &didClip)
+    {
+        if(cell.x > dimensions.x)
+        {
+            cell.x = dimensions.x;
+            didClip = true;
+        }
+        if(cell.y > dimensions.y)
+        {
+            cell.y = dimensions.y;
+            didClip = true;
+        }
+    }
+
     /**
      * Clip the cell coordinates in @a block vs the dimensions of this gridmap
      * so that they are inside the boundary this defines.
@@ -286,30 +300,12 @@ DENG2_PIMPL(Blockmap)
      *
      * @return  @c true iff the block coordinates were changed.
      */
-    bool clipBlock(CellBlock &block) const
+    bool clipBlock(CellBlock &block)
     {
-        bool didClip = false;
-        if(block.min.x >= dimensions.x)
-        {
-            block.min.x = dimensions.x - 1;
-            didClip = true;
-        }
-        if(block.min.y >= dimensions.y)
-        {
-            block.min.y = dimensions.y - 1;
-            didClip = true;
-        }
-        if(block.max.x >= dimensions.x)
-        {
-            block.max.x = dimensions.x - 1;
-            didClip = true;
-        }
-        if(block.max.y >= dimensions.y)
-        {
-            block.max.y = dimensions.y - 1;
-            didClip = true;
-        }
-        return didClip;
+        bool didClipMin, didClipMax;
+        clipCell(block.min, didClipMin);
+        clipCell(block.max, didClipMax);
+        return didClipMin | didClipMax;
     }
 
     Node *newNode(Cell const &at, uint size)
@@ -318,10 +314,9 @@ DENG2_PIMPL(Blockmap)
         return &nodes.last();
     }
 
-    Node *findLeaf(Node *node, Cell const &at, bool canCreate)
+    Node *findLeaf(Node *node, Cell const &at, bool canSubdivide)
     {
-        if(node->isLeaf())
-            return node;
+        if(node->isLeaf()) return node;
 
         // Into which quadrant do we need to descend?
         Node::Quadrant q = node->quadrant(at);
@@ -330,7 +325,7 @@ DENG2_PIMPL(Blockmap)
         Node **childAdr = &node->children[q];
         if(!*childAdr)
         {
-            if(!canCreate) return 0;
+            if(!canSubdivide) return 0;
 
             // Subdivide the space.
             uint const subSize = node->size >> 1;
@@ -353,7 +348,7 @@ DENG2_PIMPL(Blockmap)
             }
         }
 
-        return findLeaf(*childAdr, at, canCreate);
+        return findLeaf(*childAdr, at, canSubdivide);
     }
 
     inline Node *findLeaf(Cell const &at, bool canCreate = false)
@@ -442,6 +437,7 @@ BlockmapCellBlock Blockmap::toCellBlock(AABoxd const &box, bool *retDidClip) con
 {
     bool didClipMin, didClipMax;
     CellBlock block(toCell(box.min, &didClipMin), toCell(box.max, &didClipMax));
+    block.max += Vector2ui(1, 1); // CellBlock is inclusive-exclusive.
     if(retDidClip) *retDidClip = didClipMin | didClipMax;
     return block;
 }
@@ -467,8 +463,8 @@ bool Blockmap::link(CellBlock const &cellBlock_, void *elem)
     d->clipBlock(cellBlock);
 
     Cell cell;
-    for(cell.y = cellBlock.min.y; cell.y <= cellBlock.max.y; ++cell.y)
-    for(cell.x = cellBlock.min.x; cell.x <= cellBlock.max.x; ++cell.x)
+    for(cell.y = cellBlock.min.y; cell.y < cellBlock.max.y; ++cell.y)
+    for(cell.x = cellBlock.min.x; cell.x < cellBlock.max.x; ++cell.x)
     {
         Instance::Node *node = d->findLeaf(cell);
         if(!node) continue;
@@ -506,8 +502,8 @@ bool Blockmap::unlink(CellBlock const &cellBlock_, void *elem)
     d->clipBlock(cellBlock);
 
     Cell cell;
-    for(cell.y = cellBlock.min.y; cell.y <= cellBlock.max.y; ++cell.y)
-    for(cell.x = cellBlock.min.x; cell.x <= cellBlock.max.x; ++cell.x)
+    for(cell.y = cellBlock.min.y; cell.y < cellBlock.max.y; ++cell.y)
+    for(cell.x = cellBlock.min.x; cell.x < cellBlock.max.x; ++cell.x)
     {
         Instance::Node *node = d->findLeaf(cell);
         if(!node) continue;
@@ -580,8 +576,8 @@ int Blockmap::iterate(CellBlock const &cellBlock_, int (*callback) (void *, void
     d->clipBlock(cellBlock);
 
     Cell cell;
-    for(cell.y = cellBlock.min.y; cell.y <= cellBlock.max.y; ++cell.y)
-    for(cell.x = cellBlock.min.x; cell.x <= cellBlock.max.x; ++cell.x)
+    for(cell.y = cellBlock.min.y; cell.y < cellBlock.max.y; ++cell.y)
+    for(cell.x = cellBlock.min.x; cell.x < cellBlock.max.x; ++cell.x)
     {
         if(int result = iterate(cell, callback, context))
             return result;
@@ -612,7 +608,7 @@ void Blockmap::drawDebugVisual() const
         if(!node.leafData) continue;
 
         Vector2f const topLeft     = node.cell * UNIT_SIZE;
-        Vector2f const bottomRight = topLeft + UNIT_SIZE;
+        Vector2f const bottomRight = topLeft + Vector2f(UNIT_SIZE, UNIT_SIZE);
 
         glBegin(GL_LINE_LOOP);
             glVertex2f(topLeft.x,     topLeft.y);

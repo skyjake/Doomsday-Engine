@@ -110,10 +110,7 @@ mobj_t *P_MobjCreate(thinkfunc_t function, Vector3d const &origin, angle_t angle
     mo->ddFlags = ddflags;
     mo->lumIdx = -1;
     mo->thinker.function = function;
-    if(mo->thinker.function)
-    {
-        App_World().map().thinkers().add(mo->thinker);
-    }
+    App_World().map().thinkers().add(mo->thinker);
 
     return mo;
 }

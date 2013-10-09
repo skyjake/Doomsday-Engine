@@ -1,4 +1,4 @@
-/** @file render/blockmapvisual.h Graphical Blockmap Visual.
+/** @file blockmapvisual.h Blockmap debug visualizer.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -18,8 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_RENDER_BLOCKMAPVISUAL_H
-#define DENG_RENDER_BLOCKMAPVISUAL_H
+#ifndef DENG_CLIENT_RENDER_BLOCKMAPVISUAL_H
+#define DENG_CLIENT_RENDER_BLOCKMAPVISUAL_H
 
 #include <de/libdeng1.h>
 
@@ -31,4 +31,4 @@ DENG_EXTERN_C float bmapDebugSize; ///< cvar
  */
 DENG_EXTERN_C void Rend_BlockmapDebug();
 
-#endif // DENG_RENDER_BLOCKMAPVISUAL_H
+#endif // DENG_CLIENT_RENDER_BLOCKMAPVISUAL_H

@@ -85,7 +85,7 @@
 #define DO_LINKS(it, end, _Type)   { \
     for(it = linkStore; it < end; it++) \
     { \
-        result = callback(reinterpret_cast<_Type>(*it), parameters); \
+        result = callback(reinterpret_cast<_Type>(*it), context); \
         if(result) break; \
     } \
 }
@@ -717,11 +717,11 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
         Vector2d const &cellDimensions = lineBlockmap->cellDimensions();
 
         // Determine the block of cells we'll be working within.
-        Blockmap::CellBlock cellBlock = lineBlockmap->toCellBlock(line.aaBox());
+        BlockmapCellBlock cellBlock = lineBlockmap->toCellBlock(line.aaBox());
 
-        Blockmap::Cell cell;
-        for(cell.y = cellBlock.min.y; cell.y <= cellBlock.max.y; ++cell.y)
-        for(cell.x = cellBlock.min.x; cell.x <= cellBlock.max.x; ++cell.x)
+        BlockmapCell cell;
+        for(cell.y = cellBlock.min.y; cell.y < cellBlock.max.y; ++cell.y)
+        for(cell.x = cellBlock.min.x; cell.x < cellBlock.max.x; ++cell.x)
         {
             if(line.slopeType() == ST_VERTICAL ||
                line.slopeType() == ST_HORIZONTAL)
@@ -781,13 +781,13 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
 
     bool unlinkMobjInBlockmap(mobj_t &mo)
     {
-        Blockmap::Cell cell = mobjBlockmap->toCell(mo.origin);
+        BlockmapCell cell = mobjBlockmap->toCell(mo.origin);
         return mobjBlockmap->unlink(cell, &mo);
     }
 
     void linkMobjInBlockmap(mobj_t &mo)
     {
-        Blockmap::Cell cell = mobjBlockmap->toCell(mo.origin);
+        BlockmapCell cell = mobjBlockmap->toCell(mo.origin);
         mobjBlockmap->link(cell, &mo);
     }
 
@@ -923,20 +923,14 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
 
     void unlinkPolyobjInBlockmap(Polyobj &polyobj)
     {
-        Blockmap::CellBlock cellBlock = polyobjBlockmap->toCellBlock(polyobj.aaBox);
+        BlockmapCellBlock cellBlock = polyobjBlockmap->toCellBlock(polyobj.aaBox);
         polyobjBlockmap->unlink(cellBlock, &polyobj);
     }
 
     void linkPolyobjInBlockmap(Polyobj &polyobj)
     {
-        Blockmap::CellBlock cellBlock = polyobjBlockmap->toCellBlock(polyobj.aaBox);
-
-        Blockmap::Cell cell;
-        for(cell.y = cellBlock.min.y; cell.y <= cellBlock.max.y; ++cell.y)
-        for(cell.x = cellBlock.min.x; cell.x <= cellBlock.max.x; ++cell.x)
-        {
-            polyobjBlockmap->link(cell, &polyobj);
-        }
+        BlockmapCellBlock cellBlock = polyobjBlockmap->toCellBlock(polyobj.aaBox);
+        polyobjBlockmap->link(cellBlock, &polyobj);
     }
 
     /**
@@ -974,14 +968,8 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
         // BspLeafs without sector clusters don't get in.
         if(!bspLeaf.hasCluster()) return;
 
-        Blockmap::CellBlock cellBlock = bspLeafBlockmap->toCellBlock(bspLeaf.poly().aaBox());
-
-        Blockmap::Cell cell;
-        for(cell.y = cellBlock.min.y; cell.y <= cellBlock.max.y; ++cell.y)
-        for(cell.x = cellBlock.min.x; cell.x <= cellBlock.max.x; ++cell.x)
-        {
-            bspLeafBlockmap->link(cell, &bspLeaf);
-        }
+        BlockmapCellBlock cellBlock = bspLeafBlockmap->toCellBlock(bspLeaf.poly().aaBox());
+        bspLeafBlockmap->link(cellBlock, &bspLeaf);
     }
 
 #ifdef __CLIENT__
@@ -1728,57 +1716,41 @@ Blockmap const &Map::bspLeafBlockmap() const
 struct bmapmoiterparams_t
 {
     int localValidCount;
-    int (*func) (mobj_t *, void *);
-    void *parms;
+    int (*callback) (mobj_t *, void *);
+    void *context;
 };
 
 static int blockmapCellMobjsIterator(void *object, void *context)
 {
-    mobj_t *mobj = (mobj_t *)object;
-    bmapmoiterparams_t *args = (bmapmoiterparams_t *) context;
-    if(mobj->validCount != args->localValidCount)
-    {
-        int result;
+    mobj_t *mobj = static_cast<mobj_t *>(object);
+    bmapmoiterparams_t &parm = *static_cast<bmapmoiterparams_t *>(context);
 
+    if(mobj->validCount != parm.localValidCount)
+    {
         // This mobj has now been processed for the current iteration.
-        mobj->validCount = args->localValidCount;
+        mobj->validCount = parm.localValidCount;
 
         // Action the callback.
-        result = args->func(mobj, args->parms);
-        if(result) return result; // Stop iteration.
+        if(int result = parm.callback(mobj, parm.context))
+            return result; // Stop iteration.
     }
+
     return false; // Continue iteration.
 }
 
-static int iterateCellMobjs(Blockmap &mobjBlockmap, Blockmap::Cell const &cell,
-    int (*callback) (mobj_t *, void *), void *context = 0)
-{
-    bmapmoiterparams_t args;
-    args.localValidCount = validCount;
-    args.func            = callback;
-    args.parms           = context;
-
-    return mobjBlockmap.iterate(cell, blockmapCellMobjsIterator, (void *) &args);
-}
-
-static int iterateCellBlockMobjs(Blockmap &mobjBlockmap, Blockmap::CellBlock const &cellBlock,
-    int (*callback) (mobj_t *, void *), void *context = 0)
-{
-    bmapmoiterparams_t args;
-    args.localValidCount = validCount;
-    args.func            = callback;
-    args.parms           = context;
-
-    return mobjBlockmap.iterate(cellBlock, blockmapCellMobjsIterator, (void *) &args);
-}
-
 int Map::mobjBoxIterator(AABoxd const &box, int (*callback) (mobj_t *, void *),
-                         void *parameters) const
+                         void *context) const
 {
     if(!d->mobjBlockmap.isNull())
     {
-        Blockmap::CellBlock cellBlock = d->mobjBlockmap->toCellBlock(box);
-        return iterateCellBlockMobjs(*d->mobjBlockmap, cellBlock, callback, parameters);
+        BlockmapCellBlock cellBlock = d->mobjBlockmap->toCellBlock(box);
+
+        bmapmoiterparams_t parm; zap(parm);
+        parm.localValidCount = validCount;
+        parm.callback        = callback;
+        parm.context         = context;
+
+        return d->mobjBlockmap->iterate(cellBlock, blockmapCellMobjsIterator,  &parm);
     }
     /// @throw MissingBlockmapError  The mobj blockmap is not yet initialized.
     throw MissingBlockmapError("Map::mobjBoxIterator", "Mobj blockmap is not initialized");
@@ -1788,49 +1760,25 @@ struct bmapiterparams_t
 {
     int localValidCount;
     int (*callback) (Line *, void *);
-    void *parms;
+    void *context;
 };
 
 static int blockmapCellLinesIterator(void *mapElement, void *context)
 {
     Line *line = static_cast<Line *>(mapElement);
-    bmapiterparams_t *parms = static_cast<bmapiterparams_t *>(context);
+    bmapiterparams_t &parm = *static_cast<bmapiterparams_t *>(context);
 
-    if(line->validCount() != parms->localValidCount)
+    if(line->validCount() != parm.localValidCount)
     {
-        int result;
-
         // This line has now been processed for the current iteration.
-        line->setValidCount(parms->localValidCount);
+        line->setValidCount(parm.localValidCount);
 
         // Action the callback.
-        result = parms->callback(line, parms->parms);
-        if(result) return result; // Stop iteration.
+        if(int result = parm.callback(line, parm.context))
+            return result; // Stop iteration.
     }
 
     return false; // Continue iteration.
-}
-
-static int iterateCellLines(Blockmap &lineBlockmap, Blockmap::Cell const &cell,
-    int (*callback) (Line *, void *), void *context = 0)
-{
-    bmapiterparams_t parms;
-    parms.localValidCount = validCount;
-    parms.callback        = callback;
-    parms.parms           = context;
-
-    return lineBlockmap.iterate(cell, blockmapCellLinesIterator, (void *)&parms);
-}
-
-static int iterateCellBlockLines(Blockmap &lineBlockmap, Blockmap::CellBlock const &cellBlock,
-    int (*callback) (Line *, void *), void *context = 0)
-{
-    bmapiterparams_t parms;
-    parms.localValidCount = validCount;
-    parms.callback        = callback;
-    parms.parms           = context;
-
-    return lineBlockmap.iterate(cellBlock, blockmapCellLinesIterator, (void *) &parms);
 }
 
 struct bmapbspleafiterateparams_t
@@ -1838,77 +1786,45 @@ struct bmapbspleafiterateparams_t
     AABoxd const *box;
     Sector *sector;
     int localValidCount;
-    int (*func) (BspLeaf *, void *);
-    void *parms;
+    int (*callback) (BspLeaf *, void *);
+    void *context;
 };
 
 static int blockmapCellBspLeafsIterator(void *object, void *context)
 {
-    BspLeaf *bspLeaf = (BspLeaf *)object;
-    bmapbspleafiterateparams_t *args = (bmapbspleafiterateparams_t *) context;
-    if(bspLeaf->validCount() != args->localValidCount)
-    {
-        bool ok = true;
+    BspLeaf *bspLeaf = static_cast<BspLeaf *>(object);
+    bmapbspleafiterateparams_t &parm = *static_cast<bmapbspleafiterateparams_t *>(context);
 
+    if(bspLeaf->validCount() != parm.localValidCount)
+    {
         // This BspLeaf has now been processed for the current iteration.
-        bspLeaf->setValidCount(args->localValidCount);
+        bspLeaf->setValidCount(parm.localValidCount);
 
         // Check the sector restriction.
-        if(args->sector && bspLeaf->sectorPtr() != args->sector)
-            ok = false;
+        bool ok = !(parm.sector && bspLeaf->sectorPtr() != parm.sector);
 
         // Check the bounds.
         AABoxd const &leafAABox = bspLeaf->poly().aaBox();
-        if(args->box &&
-           (leafAABox.maxX < args->box->minX ||
-            leafAABox.minX > args->box->maxX ||
-            leafAABox.minY > args->box->maxY ||
-            leafAABox.maxY < args->box->minY))
+        if(parm.box &&
+           (leafAABox.maxX < parm.box->minX ||
+            leafAABox.minX > parm.box->maxX ||
+            leafAABox.minY > parm.box->maxY ||
+            leafAABox.maxY < parm.box->minY))
             ok = false;
 
         if(ok)
         {
             // Action the callback.
-            int result = args->func(bspLeaf, args->parms);
-            if(result) return result; // Stop iteration.
+            if(int result = parm.callback(bspLeaf, parm.context))
+                return result; // Stop iteration.
         }
     }
+
     return false; // Continue iteration.
 }
 
-/*
-static int iterateCellBspLeafs(Blockmap &bspLeafBlockmap, Blockmap::const_Cell cell,
-    Sector *sector, AABoxd const &box, int localValidCount,
-    int (*callback) (BspLeaf *, void *), void *context = 0)
-{
-    bmapbspleafiterateparams_t args;
-    args.localValidCount = localValidCount;
-    args.func            = callback;
-    args.param           = context;
-    args.sector          = sector;
-    args.box             = &box;
-
-    return bspLeafBlockmap.iterateCellObjects(cell, blockmapCellBspLeafsIterator, (void*)&args);
-}
-*/
-
-static int iterateBlockBspLeafs(Blockmap &bspLeafBlockmap,
-    Blockmap::CellBlock const &cellBlock, Sector *sector,  AABoxd const &box,
-    int localValidCount,
-    int (*callback) (BspLeaf *, void *), void *context = 0)
-{
-    bmapbspleafiterateparams_t args;
-    args.localValidCount = localValidCount;
-    args.func            = callback;
-    args.parms           = context;
-    args.sector          = sector;
-    args.box             = &box;
-
-    return bspLeafBlockmap.iterate(cellBlock, blockmapCellBspLeafsIterator, (void *) &args);
-}
-
 int Map::bspLeafBoxIterator(AABoxd const &box, Sector *sector,
-    int (*callback) (BspLeaf *, void *), void *parameters) const
+    int (*callback) (BspLeaf *, void *), void *context) const
 {
     if(!d->bspLeafBlockmap.isNull())
     {
@@ -1916,16 +1832,22 @@ int Map::bspLeafBoxIterator(AABoxd const &box, Sector *sector,
         // This is only used here.
         localValidCount++;
 
-        Blockmap::CellBlock cellBlock = d->bspLeafBlockmap->toCellBlock(box);
-        return iterateBlockBspLeafs(*d->bspLeafBlockmap, cellBlock, sector, box,
-                                    localValidCount, callback, parameters);
+        bmapbspleafiterateparams_t parm;
+        parm.localValidCount = localValidCount;
+        parm.callback        = callback;
+        parm.context         = context;
+        parm.sector          = sector;
+        parm.box             = &box;
+
+        BlockmapCellBlock cellBlock = d->bspLeafBlockmap->toCellBlock(box);
+        return d->bspLeafBlockmap->iterate(cellBlock, blockmapCellBspLeafsIterator,  &parm);
     }
     /// @throw MissingBlockmapError  The BSP leaf blockmap is not yet initialized.
     throw MissingBlockmapError("Map::bspLeafBoxIterator", "BSP leaf blockmap is not initialized");
 }
 
 int Map::mobjTouchedLineIterator(mobj_t *mo, int (*callback) (Line *, void *),
-                                 void *parameters) const
+                                 void *context) const
 {
     void *linkStore[MAXLINKED];
     void **end = linkStore, **it;
@@ -1939,13 +1861,13 @@ int Map::mobjTouchedLineIterator(mobj_t *mo, int (*callback) (Line *, void *),
             nix = tn[nix].next)
             *end++ = tn[nix].ptr;
 
-        DO_LINKS(it, end, Line*);
+        DO_LINKS(it, end, Line *);
     }
     return result;
 }
 
 int Map::mobjTouchedSectorIterator(mobj_t *mo, int (*callback) (Sector *, void *),
-                                   void *parameters) const
+                                   void *context) const
 {
     int result = false;
     void *linkStore[MAXLINKED];
@@ -1994,7 +1916,7 @@ int Map::mobjTouchedSectorIterator(mobj_t *mo, int (*callback) (Sector *, void *
 }
 
 int Map::lineTouchingMobjIterator(Line *line, int (*callback) (mobj_t *, void *),
-                                  void *parameters) const
+                                  void *context) const
 {
     void *linkStore[MAXLINKED];
     void **end = linkStore;
@@ -2016,7 +1938,7 @@ int Map::lineTouchingMobjIterator(Line *line, int (*callback) (mobj_t *, void *)
 }
 
 int Map::sectorTouchingMobjIterator(Sector *sector,
-    int (*callback) (mobj_t *, void *), void *parameters) const
+    int (*callback) (mobj_t *, void *), void *context) const
 {
     /// @todo Fixme: Remove fixed limit (use QVarLengthArray if necessary).
     void *linkStore[MAXLINKED];
@@ -2025,11 +1947,13 @@ int Map::sectorTouchingMobjIterator(Sector *sector,
     // Collate mobjs that obviously are in the sector.
     for(mobj_t *mo = sector->firstMobj(); mo; mo = mo->sNext)
     {
-        if(mo->validCount == validCount) continue;
-        mo->validCount = validCount;
+        if(mo->validCount != validCount)
+        {
+            mo->validCount = validCount;
 
-        DENG_ASSERT(end < &linkStore[MAXLINKED]);
-        *end++ = mo;
+            DENG_ASSERT(end < &linkStore[MAXLINKED]);
+            *end++ = mo;
+        }
     }
 
     // Collate mobjs linked to the sector's lines.
@@ -2041,12 +1965,13 @@ int Map::sectorTouchingMobjIterator(Sector *sector,
         for(nodeindex_t nix = ln[root].next; nix != root; nix = ln[nix].next)
         {
             mobj_t *mo = (mobj_t *) ln[nix].ptr;
+            if(mo->validCount != validCount)
+            {
+                mo->validCount = validCount;
 
-            if(mo->validCount == validCount) continue;
-            mo->validCount = validCount;
-
-            DENG_ASSERT(end < &linkStore[MAXLINKED]);
-            *end++ = mo;
+                DENG_ASSERT(end < &linkStore[MAXLINKED]);
+                *end++ = mo;
+            }
         }
     }
 
@@ -2134,48 +2059,26 @@ void Map::link(Polyobj &polyobj)
 struct bmappoiterparams_t
 {
     int localValidCount;
-    int (*func) (Polyobj *, void *);
-    void *parms;
+    int (*callback) (Polyobj *, void *);
+    void *context;
 };
 
 static int blockmapCellPolyobjsIterator(void *object, void *context)
 {
-    Polyobj *polyobj = (Polyobj *)object;
-    bmappoiterparams_t *args = (bmappoiterparams_t *) context;
-    if(polyobj->validCount != args->localValidCount)
-    {
-        int result;
+    Polyobj *polyobj = static_cast<Polyobj *>(object);
+    bmappoiterparams_t &parm = *static_cast<bmappoiterparams_t *>(context);
 
+    if(polyobj->validCount != parm.localValidCount)
+    {
         // This polyobj has now been processed for the current iteration.
-        polyobj->validCount = args->localValidCount;
+        polyobj->validCount = parm.localValidCount;
 
         // Action the callback.
-        result = args->func(polyobj, args->parms);
-        if(result) return result; // Stop iteration.
+        if(int result = parm.callback(polyobj, parm.context))
+            return result; // Stop iteration.
     }
+
     return false; // Continue iteration.
-}
-
-static int iterateCellPolyobjs(Blockmap &polyobjBlockmap, Blockmap::Cell const &cell,
-    int (*callback) (Polyobj *, void *), void *context = 0)
-{
-    bmappoiterparams_t args;
-    args.localValidCount = validCount;
-    args.func            = callback;
-    args.parms           = context;
-
-    return polyobjBlockmap.iterate(cell, blockmapCellPolyobjsIterator, (void *)&args);
-}
-
-static int iterateCellBlockPolyobjs(Blockmap &polyobjBlockmap, Blockmap::CellBlock const &cellBlock,
-    int (*callback) (Polyobj *, void *), void *context = 0)
-{
-    bmappoiterparams_t args;
-    args.localValidCount = validCount;
-    args.func            = callback;
-    args.parms           = context;
-
-    return polyobjBlockmap.iterate(cellBlock, blockmapCellPolyobjsIterator, (void*) &args);
 }
 
 int Map::polyobjBoxIterator(AABoxd const &box,
@@ -2183,8 +2086,13 @@ int Map::polyobjBoxIterator(AABoxd const &box,
 {
     if(!d->polyobjBlockmap.isNull())
     {
-        Blockmap::CellBlock cellBlock = d->polyobjBlockmap->toCellBlock(box);
-        return iterateCellBlockPolyobjs(*d->polyobjBlockmap, cellBlock, callback, context);
+        bmappoiterparams_t parm; zap(parm);
+        parm.localValidCount = validCount;
+        parm.callback        = callback;
+        parm.context         = context;
+
+        BlockmapCellBlock cellBlock = d->polyobjBlockmap->toCellBlock(box);
+        return d->polyobjBlockmap->iterate(cellBlock, blockmapCellPolyobjsIterator, &parm);
     }
     /// @throw MissingBlockmapError  The polyobj blockmap is not yet initialized.
     throw MissingBlockmapError("Map::polyobjBoxIterator", "Polyobj blockmap is not initialized");
@@ -2192,57 +2100,26 @@ int Map::polyobjBoxIterator(AABoxd const &box,
 
 struct poiterparams_t
 {
-    int (*func) (Line *, void *);
-    void *parms;
+    int (*callback) (Line *, void *);
+    void *context;
 };
 
-static int polyobjLineIterator(Polyobj *po, void* context)
+static int polyobjLineIterator(Polyobj *po, void *context = 0)
 {
-    poiterparams_t *args = (poiterparams_t *) context;
+    poiterparams_t &parm = *static_cast<poiterparams_t *>(context);
+
     foreach(Line *line, po->lines())
     {
-        if(line->validCount() == validCount)
-            continue;
+        if(line->validCount() != validCount)
+        {
+            line->setValidCount(validCount);
 
-        line->setValidCount(validCount);
-        int result = args->func(line, args->parms);
-        if(result) return result;
+            if(int result = parm.callback(line, parm.context))
+                return result;
+        }
     }
+
     return false; // Continue iteration.
-}
-
-/*
-static int iterateCellPolyobjLineIterator(Blockmap &polyobjBlockmap, const_BlockmapCell cell,
-    int (*callback) (Line *, void *), void *context = 0)
-{
-    poiterparams_t poargs;
-    poargs.func  = callback;
-    poargs.param = context;
-
-    bmappoiterparams_t args;
-    args.localValidCount = validCount;
-    args.func            = PTR_PolyobjLines;
-    args.param           = &poargs;
-
-    return Blockmap_IterateCellObjects(&polyobjBlockmap, cell,
-                                       blockmapCellPolyobjsIterator, &args);
-}
-*/
-
-static int iterateBlockPolyobjLines(Blockmap &polyobjBlockmap,
-    Blockmap::CellBlock const &cellBlock,
-    int (*callback) (Line *, void *), void *context = 0)
-{
-    poiterparams_t poargs;
-    poargs.func  = callback;
-    poargs.parms = context;
-
-    bmappoiterparams_t args;
-    args.localValidCount = validCount;
-    args.func            = polyobjLineIterator;
-    args.parms           = &poargs;
-
-    return polyobjBlockmap.iterate(cellBlock, blockmapCellPolyobjsIterator, (void*) &args);
 }
 
 int Map::lineBoxIterator(AABoxd const &box, int flags,
@@ -2255,9 +2132,17 @@ int Map::lineBoxIterator(AABoxd const &box, int flags,
             /// @throw MissingBlockmapError  The polyobj blockmap is not yet initialized.
             throw MissingBlockmapError("Map::lineBoxIterator", "Polyobj blockmap is not initialized");
 
-        Blockmap::CellBlock cellBlock = d->polyobjBlockmap->toCellBlock(box);
-        if(int result = iterateBlockPolyobjLines(*d->polyobjBlockmap, cellBlock,
-                                                 callback, context))
+        poiterparams_t poItParm; zap(poItParm);
+        poItParm.callback = callback;
+        poItParm.context  = context;
+
+        bmappoiterparams_t parm; zap(parm);
+        parm.localValidCount = validCount;
+        parm.callback        = polyobjLineIterator;
+        parm.context         = &poItParm;
+
+        BlockmapCellBlock cellBlock = d->polyobjBlockmap->toCellBlock(box);
+        if(int result = d->polyobjBlockmap->iterate(cellBlock, blockmapCellPolyobjsIterator, &parm))
             return result;
     }
 
@@ -2268,17 +2153,22 @@ int Map::lineBoxIterator(AABoxd const &box, int flags,
             /// @throw MissingBlockmapError  The line blockmap is not yet initialized.
             throw MissingBlockmapError("Map::lineBoxIterator", "Line blockmap is not initialized");
 
-        Blockmap::CellBlock cellBlock = d->lineBlockmap->toCellBlock(box);
-        if(int result = iterateCellBlockLines(*d->lineBlockmap, cellBlock, callback, context))
+        bmapiterparams_t parm; zap(parm);
+        parm.localValidCount = validCount;
+        parm.callback        = callback;
+        parm.context         = context;
+
+        BlockmapCellBlock cellBlock = d->lineBlockmap->toCellBlock(box);
+        if(int result = d->lineBlockmap->iterate(cellBlock, blockmapCellLinesIterator, &parm))
             return result;
     }
 
     return 0; // Continue iteration.
 }
 
-static int traverseCellPath2(Blockmap &bmap, Blockmap::Cell const &fromCell,
-    Blockmap::Cell const &toCell, Vector2d const &from, Vector2d const &to,
-    int (*callback) (Blockmap::Cell const &cell, void *parameters), void *parameters)
+static int traverseCellPath2(Blockmap &bmap, BlockmapCell const &fromCell,
+    BlockmapCell const &toCell, Vector2d const &from, Vector2d const &to,
+    int (*callback) (BlockmapCell const &, void *), void *context)
 {
     Vector2i stepDir;
     coord_t frac;
@@ -2287,69 +2177,68 @@ static int traverseCellPath2(Blockmap &bmap, Blockmap::Cell const &fromCell,
     if(toCell.x > fromCell.x)
     {
         stepDir.x = 1;
-        frac = from.x / bmap.cellWidth();
-        frac = 1 - (frac - int( frac ));
-        delta.y = (to.y - from.y) / de::abs(to.x - from.x);
+        frac      = from.x / bmap.cellWidth();
+        frac      = 1 - (frac - int( frac ));
+        delta.y   = (to.y - from.y) / de::abs(to.x - from.x);
     }
     else if(toCell.x < fromCell.x)
     {
         stepDir.x = -1;
-        frac = from.x / bmap.cellWidth();
-        frac = (frac - int( frac ));
-        delta.y = (to.y - from.y) / de::abs(to.x - from.x);
+        frac      = from.x / bmap.cellWidth();
+        frac      = (frac - int( frac ));
+        delta.y   = (to.y - from.y) / de::abs(to.x - from.x);
     }
     else
     {
         stepDir.x = 0;
-        frac = 1;
-        delta.y = 256;
+        frac      = 1;
+        delta.y   = 256;
     }
     intercept.y = from.y / bmap.cellHeight() + frac * delta.y;
 
     if(toCell.y > fromCell.y)
     {
         stepDir.y = 1;
-        frac = from.y / bmap.cellHeight();
-        frac = 1 - (frac - int( frac ));
-        delta.x = (to.x - from.x) / de::abs(to.y - from.y);
+        frac      = from.y / bmap.cellHeight();
+        frac      = 1 - (frac - int( frac ));
+        delta.x   = (to.x - from.x) / de::abs(to.y - from.y);
     }
     else if(toCell.y < fromCell.y)
     {
         stepDir.y = -1;
-        frac = from.y / bmap.cellHeight();
-        frac = frac - int( frac );
-        delta.x = (to.x - from.x) / de::abs(to.y - from.y);
+        frac      = from.y / bmap.cellHeight();
+        frac      = frac - int( frac );
+        delta.x   = (to.x - from.x) / de::abs(to.y - from.y);
     }
     else
     {
         stepDir.y = 0;
-        frac = 1;
-        delta.x = 256;
+        frac      = 1;
+        delta.x   = 256;
     }
     intercept.x = from.x / bmap.cellWidth() + frac * delta.x;
 
     /*
      * Step through map cells.
      */
-    Blockmap::Cell cell = fromCell;
+    BlockmapCell cell = fromCell;
     for(int pass = 0; pass < 64; ++pass) // Prevent a round off error leading us into
                                          // an infinite loop...
     {
-        int result = callback(cell, parameters);
-        if(result) return result; // Early out.
+        if(int result = callback(cell, context))
+            return result; // Early out.
 
-        if(cell.x == toCell.x && cell.y == toCell.y)
-            break;
+        if(cell == toCell) break;
 
         /// @todo Replace incremental translation?
         if(cell.y == uint( intercept.y ))
         {
-            cell.x += stepDir.x;
+            cell.x      += stepDir.x;
             intercept.y += delta.y;
         }
         else if(cell.x == uint( intercept.x ))
         {
-            cell.y += stepDir.y;
+            cell.y      += stepDir.y;
             intercept.x += delta.x;
         }
     }
@@ -2359,7 +2248,7 @@ static int traverseCellPath2(Blockmap &bmap, Blockmap::Cell const &fromCell,
 
 static int traversePath(divline_t &traceLine, Blockmap &bmap,
     Vector2d const &from_, Vector2d const &to_,
-    int (*callback) (Blockmap::Cell const &cell, void *context), void *context = 0)
+    int (*callback) (BlockmapCell const &cell, void *context), void *context = 0)
 {
     // Constant terms implicitly defined by DOOM's original version of this
     // algorithm (we must honor these fudge factors for compatibility).
@@ -2438,33 +2327,12 @@ static int traversePath(divline_t &traceLine, Blockmap &bmap,
     }
 
     // Clipping already applied above, so we don't need to check it again...
-    Blockmap::Cell fromCell = bmap.toCell(from);
-    Blockmap::Cell toCell   = bmap.toCell(to);
+    BlockmapCell fromCell = bmap.toCell(from);
+    BlockmapCell toCell   = bmap.toCell(to);
 
     V2d_Subtract(from, from, min);
     V2d_Subtract(to, to, min);
     return traverseCellPath2(bmap, fromCell, toCell, from, to, callback, context);
-}
-
-struct iteratepolyobjlines_params_t
-{
-    int (*callback) (Line *, void *);
-    void *parms;
-};
-
-static int iteratePolyobjLines(Polyobj *po, void *parameters = 0)
-{
-    iteratepolyobjlines_params_t const *p = (iteratepolyobjlines_params_t *)parameters;
-    foreach(Line *line, po->lines())
-    {
-        if(line->validCount() == validCount)
-            continue;
-
-        line->setValidCount(validCount);
-        int result = p->callback(line, p->parms);
-        if(result) return result;
-    }
-    return false; // Continue iteration.
 }
 
 /**
@@ -2474,7 +2342,7 @@ static int iteratePolyobjLines(Polyobj *po, void *parameters = 0)
  *
  * @return  Non-zero if current iteration should stop.
  */
-static int interceptLinesWorker(Line *line, void * /*parameters*/)
+static int interceptLinesWorker(Line *line, void * /*context*/)
 {
     divline_t const &traceLos = line->map().traceLine();
     int s1, s2;
@@ -2513,22 +2381,34 @@ static int interceptLinesWorker(Line *line, void * /*parameters*/)
     return false;
 }
 
-static int collectPolyobjLineIntercepts(Blockmap::Cell const &cell, void *parameters)
+static int collectPolyobjLineIntercepts(BlockmapCell const &cell, void *context)
 {
-    Blockmap *polyobjBlockmap = (Blockmap *)parameters;
-    iteratepolyobjlines_params_t iplParams;
-    iplParams.callback = interceptLinesWorker;
-    iplParams.parms    = 0;
-    return iterateCellPolyobjs(*polyobjBlockmap, cell, iteratePolyobjLines, (void *)&iplParams);
+    Blockmap &polyobjBlockmap = *static_cast<Blockmap *>(context);
+
+    poiterparams_t iplParm; zap(iplParm);
+    iplParm.callback = interceptLinesWorker;
+    iplParm.context    = 0;
+
+    bmappoiterparams_t parm; zap(parm);
+    parm.localValidCount = validCount;
+    parm.callback        = polyobjLineIterator;
+    parm.context         = &iplParm;
+
+    return polyobjBlockmap.iterate(cell, blockmapCellPolyobjsIterator, &parm);
 }
 
-static int collectLineIntercepts(Blockmap::Cell const &cell, void *parameters)
+static int collectLineIntercepts(BlockmapCell const &cell, void *context)
 {
-    Blockmap *lineBlockmap = (Blockmap *)parameters;
-    return iterateCellLines(*lineBlockmap, cell, interceptLinesWorker);
+    Blockmap &lineBlockmap = *static_cast<Blockmap *>(context);
+
+    bmapiterparams_t parm; zap(parm);
+    parm.localValidCount = validCount;
+    parm.callback        = interceptLinesWorker;
+
+    return lineBlockmap.iterate(cell, blockmapCellLinesIterator, &parm);
 }
 
-static int interceptMobjsWorker(mobj_t *mo, void * /*parameters*/)
+static int interceptMobjsWorker(mobj_t *mo, void * /*context*/)
 {
     if(mo->dPlayer && (mo->dPlayer->flags & DDPF_CAMERA))
         return false; // $democam: ssshh, keep going, we're not here...
@@ -2572,10 +2452,15 @@ static int interceptMobjsWorker(mobj_t *mo, void * /*parameters*/)
     return false;
 }
 
-static int collectMobjIntercepts(Blockmap::Cell const &cell, void *parameters)
+static int collectMobjIntercepts(BlockmapCell const &cell, void *context)
 {
-    Blockmap *mobjBlockmap = (Blockmap *)parameters;
-    return iterateCellMobjs(*mobjBlockmap, cell, interceptMobjsWorker);
+    Blockmap &mobjBlockmap = *static_cast<Blockmap *>(context);
+
+    bmapmoiterparams_t parm; zap(parm);
+    parm.localValidCount = validCount;
+    parm.callback        = interceptMobjsWorker;
+
+    return mobjBlockmap.iterate(cell, blockmapCellMobjsIterator, &parm);
 }
 
 int Map::pathTraverse(Vector2d const &from, Vector2d const &to, int flags,
@@ -2592,16 +2477,16 @@ int Map::pathTraverse(Vector2d const &from, Vector2d const &to, int flags,
         {
             traversePath(d->traceLine, *d->polyobjBlockmap, from, to,
                          collectPolyobjLineIntercepts,
-                         (void *)d->polyobjBlockmap.data());
+                         d->polyobjBlockmap.data());
         }
 
         traversePath(d->traceLine, *d->lineBlockmap, from, to, collectLineIntercepts,
-                     (void *)d->lineBlockmap.data());
+                     d->lineBlockmap.data());
     }
     if(flags & PT_ADDMOBJS)
     {
         traversePath(d->traceLine, *d->mobjBlockmap, from, to, collectMobjIntercepts,
-                     (void *)d->mobjBlockmap.data());
+                     d->mobjBlockmap.data());
     }
 
     // Step #2: Process sorted intercepts.

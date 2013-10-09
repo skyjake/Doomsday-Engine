@@ -203,7 +203,7 @@ static int drawCellBspLeafs(Blockmap const &bmap, BlockmapCell const &cell, void
 
 static void drawBackground(Blockmap const &bmap)
 {
-    BlockmapCell const &bmapDimensions = bmap.dimensions();
+    BlockmapCell const &dimensions = bmap.dimensions();
 
     // Scale modelview matrix so we can express cell geometry
     // using a cell-sized unit coordinate space.
@@ -216,10 +216,10 @@ static void drawBackground(Blockmap const &bmap)
      */
     glColor4f(.25f, .25f, .25f, .66f);
     glBegin(GL_QUADS);
-        glVertex2f(0,                0);
-        glVertex2f(bmapDimensions.x, 0);
-        glVertex2f(bmapDimensions.x, bmapDimensions.y);
-        glVertex2f(0,                bmapDimensions.y);
+        glVertex2f(0,            0);
+        glVertex2f(dimensions.x, 0);
+        glVertex2f(dimensions.x, dimensions.y);
+        glVertex2f(0,            dimensions.y);
     glEnd();
 
     /*
@@ -227,8 +227,8 @@ static void drawBackground(Blockmap const &bmap)
      */
     glColor4f(0, 0, 0, .95f);
     BlockmapCell cell;
-    for(cell.y = 0; cell.y < bmapDimensions.y; ++cell.y)
-    for(cell.x = 0; cell.x < bmapDimensions.x; ++cell.x)
+    for(cell.y = 0; cell.y < dimensions.y; ++cell.y)
+    for(cell.x = 0; cell.x < dimensions.x; ++cell.x)
     {
         if(bmap.cellElementCount(cell)) continue;
 
@@ -245,10 +245,8 @@ static void drawBackground(Blockmap const &bmap)
     glPopMatrix();
 }
 
-static void drawCellInfo(Point2Raw const *_origin, char const *info)
+static void drawCellInfo(Vector2d const &origin_, char const *info)
 {
-    DENG_ASSERT(_origin != 0);
-
     glEnable(GL_TEXTURE_2D);
 
     FR_SetFont(fontFixed);
@@ -259,8 +257,7 @@ static void drawCellInfo(Point2Raw const *_origin, char const *info)
     Size2Raw size(16 + FR_TextWidth(info),
                   16 + FR_SingleLineHeight(info));
 
-    Point2Raw origin = *_origin;
-
+    Point2Raw origin(origin_.x, origin_.y);
     origin.x -= size.width / 2;
     UI_GradientEx(&origin, &size, 6, UI_Color(UIC_BG_MEDIUM), UI_Color(UIC_BG_LIGHT), .5f, .5f);
     UI_DrawRectEx(&origin, &size, 6, false, UI_Color(UIC_BRD_HI), NULL, .5f, -1);
@@ -273,13 +270,11 @@ static void drawCellInfo(Point2Raw const *_origin, char const *info)
     glDisable(GL_TEXTURE_2D);
 }
 
-static void drawBlockmapInfo(Point2Raw const *_origin, Blockmap const *blockmap)
+static void drawBlockmapInfo(Vector2d const &origin_, Blockmap const &blockmap)
 {
-    DENG_ASSERT(blockmap != 0);
-
     glEnable(GL_TEXTURE_2D);
 
-    Point2Raw origin = *_origin;
+    Point2Raw origin(origin_.x, origin_.y);
 
     FR_SetFont(fontFixed);
     FR_LoadDefaultAttrib();
@@ -302,48 +297,46 @@ static void drawBlockmapInfo(Point2Raw const *_origin, Blockmap const *blockmap)
     UI_TextOutEx2("Blockmap", &origin, UI_Color(UIC_TITLE), 1, ALIGN_LEFT, DTF_ONLY_SHADOW);
     origin.y += th;
 
-    Vector2ui const &bmapDimensions = blockmap->dimensions();
+    Vector2ui const &bmapDimensions = blockmap.dimensions();
     char buf[80];
     dd_snprintf(buf, 80, "Dimensions:(%u, %u) #%li", bmapDimensions.x, bmapDimensions.y,
                                                     (long) bmapDimensions.y * bmapDimensions.x);
     UI_TextOutEx2(buf, &origin, UI_Color(UIC_TEXT), 1, ALIGN_LEFT, DTF_ONLY_SHADOW);
     origin.y += th;
 
-    dd_snprintf(buf, 80, "Cell dimensions:(%.3f, %.3f)", blockmap->cellWidth(), blockmap->cellHeight());
+    dd_snprintf(buf, 80, "Cell dimensions:(%.3f, %.3f)", blockmap.cellWidth(), blockmap.cellHeight());
     UI_TextOutEx2(buf, &origin, UI_Color(UIC_TEXT), 1, ALIGN_LEFT, DTF_ONLY_SHADOW);
     origin.y += th;
 
     dd_snprintf(buf, 80, "(%+06.0f, %+06.0f) (%+06.0f, %+06.0f)",
-                         blockmap->bounds().minX, blockmap->bounds().minY,
-                         blockmap->bounds().maxX, blockmap->bounds().maxY);
+                         blockmap.bounds().minX, blockmap.bounds().minY,
+                         blockmap.bounds().maxX, blockmap.bounds().maxY);
     UI_TextOutEx2(buf, &origin, UI_Color(UIC_TEXT), 1, ALIGN_LEFT, DTF_ONLY_SHADOW);
 
     glDisable(GL_TEXTURE_2D);
 }
 
-static void drawCellInfoBox(Blockmap const *blockmap, Point2Raw const *origin,
+static void drawCellInfoBox(Vector2d const &origin, Blockmap const &blockmap,
     char const *objectTypeName, BlockmapCell const &cell)
 {
-    uint count = blockmap->cellElementCount(cell);
-    char info[160];
-
-    dd_snprintf(info, 160, "Cell:(%u, %u) %s:#%u", cell.x, cell.y, objectTypeName, count);
+    uint count = blockmap.cellElementCount(cell);
+    char info[160]; dd_snprintf(info, 160, "Cell:(%u, %u) %s:#%u", cell.x, cell.y, objectTypeName, count);
     drawCellInfo(origin, info);
 }
 
 /**
  * @param bmap        Blockmap to be rendered.
- * @param followMobj  Mobj to center/focus the visual on. Can be @c NULL.
- * @param cellDrawer  Blockmap cell content drawing callback. Can be @a NULL.
+ * @param followMobj  Mobj to center/focus the visual on. Can be @c 0.
+ * @param cellDrawer  Blockmap cell content drawing callback. Can be @c 0.
  */
 static void drawBlockmap(Blockmap const &bmap, mobj_t *followMobj,
-    int (*cellDrawer) (Blockmap const &bmap, BlockmapCell const &cell, void *context))
+    int (*cellDrawer) (Blockmap const &, BlockmapCell const &, void *))
 {
     BlockmapCellBlock vCellBlock;
     BlockmapCell vCell;
 
     BlockmapCell const &dimensions = bmap.dimensions();
-    Vector2d const &cellDimensions   = bmap.cellDimensions();
+    Vector2d const &cellDimensions = bmap.cellDimensions();
 
     if(followMobj)
     {
@@ -389,10 +382,10 @@ static void drawBlockmap(Blockmap const &bmap, mobj_t *followMobj,
         glBegin(GL_QUADS);
 
         BlockmapCell cell;
-        for(cell.y = vCellBlock.min.y; cell.y <= vCellBlock.max.y; ++cell.y)
-        for(cell.x = vCellBlock.min.x; cell.x <= vCellBlock.max.x; ++cell.x)
+        for(cell.y = vCellBlock.min.y; cell.y < vCellBlock.max.y; ++cell.y)
+        for(cell.x = vCellBlock.min.x; cell.x < vCellBlock.max.x; ++cell.x)
         {
-            if(cell.x == vCell.x && cell.y == vCell.y)
+            if(cell == vCell)
             {
                 // The cell the followed Mobj is actually in.
                 glColor4f(.66f, .66f, 1, .66f);
@@ -403,8 +396,8 @@ static void drawBlockmap(Blockmap const &bmap, mobj_t *followMobj,
                 glColor4f(.33f, .33f, .66f, .33f);
             }
 
-            Vector2d start = cellDimensions * cell;
-            Vector2d end   = start + cellDimensions;
+            Vector2d const start = cellDimensions * cell;
+            Vector2d const end   = start + cellDimensions;
 
             glVertex2d(start.x, start.y);
             glVertex2d(  end.x, start.y);
@@ -454,11 +447,12 @@ static void drawBlockmap(Blockmap const &bmap, mobj_t *followMobj,
             for(cell.y = 0; cell.y < dimensions.y; ++cell.y)
             for(cell.x = 0; cell.x < dimensions.x; ++cell.x)
             {
-                if(cell.x >= vCellBlock.min.x && cell.x <= vCellBlock.max.x &&
-                   cell.y >= vCellBlock.min.y && cell.y <= vCellBlock.max.y)
+                if(cell.x >= vCellBlock.min.x && cell.x < vCellBlock.max.x &&
+                   cell.y >= vCellBlock.min.y && cell.y < vCellBlock.max.y)
+                {
                     continue;
-                if(!bmap.cellElementCount(cell))
-                    continue;
+                }
+                if(!bmap.cellElementCount(cell)) continue;
 
                 cellDrawer(bmap, cell, 0/*no params*/);
             }
@@ -466,14 +460,11 @@ static void drawBlockmap(Blockmap const &bmap, mobj_t *followMobj,
             // Next, the cells within the "touch" range (orange).
             validCount++;
             glColor3f(1, .5f, 0);
-            for(cell.y = vCellBlock.min.y; cell.y <= vCellBlock.max.y; ++cell.y)
-            for(cell.x = vCellBlock.min.x; cell.x <= vCellBlock.max.x; ++cell.x)
+            for(cell.y = vCellBlock.min.y; cell.y < vCellBlock.max.y; ++cell.y)
+            for(cell.x = vCellBlock.min.x; cell.x < vCellBlock.max.x; ++cell.x)
             {
-                if(cell == vCell)
-                    continue;
-
-                if(!bmap.cellElementCount(cell))
-                    continue;
+                if(cell == vCell) continue;
+                if(!bmap.cellElementCount(cell)) continue;
 
                 cellDrawer(bmap, cell, 0/*no params*/);
             }
@@ -521,19 +512,15 @@ static void drawBlockmap(Blockmap const &bmap, mobj_t *followMobj,
 
 void Rend_BlockmapDebug()
 {
-    int (*cellDrawer) (Blockmap const &blockmap, BlockmapCell const &cell, void *context);
-    char const *objectTypeName;
-    mobj_t *followMobj = 0;
-    Blockmap const *blockmap;
-    Point2Raw origin;
-    float scale;
-
     // Disabled?
     if(!bmapShowDebug || bmapShowDebug > 4) return;
 
     if(!App_World().hasMap()) return;
-
     Map &map = App_World().map();
+
+    Blockmap const *blockmap;
+    int (*cellDrawer) (Blockmap const &, BlockmapCell const &, void *);
+    char const *objectTypeName;
     switch(bmapShowDebug)
     {
     default: // Mobjs.
@@ -575,10 +562,11 @@ void Rend_BlockmapDebug()
     glTranslatef((DENG_GAMEVIEW_WIDTH / 2), (DENG_GAMEVIEW_HEIGHT / 2), 0);
 
     // Uniform scaling factor for this visual.
-    scale = bmapDebugSize / de::max(DENG_GAMEVIEW_HEIGHT / 100, 1);
+    float scale = bmapDebugSize / de::max(DENG_GAMEVIEW_HEIGHT / 100, 1);
     glScalef(scale, -scale, 1);
 
     // If possible we'll tailor what we draw relative to the viewPlayer.
+    mobj_t *followMobj = 0;
     if(viewPlayer && viewPlayer->shared.mo)
         followMobj = viewPlayer->shared.mo;
 
@@ -603,16 +591,14 @@ void Rend_BlockmapDebug()
         BlockmapCell cell = blockmap->toCell(followMobj->origin, &didClip);
         if(!didClip)
         {
-            origin.x = DENG_GAMEVIEW_WIDTH / 2;
-            origin.y = 30;
-            drawCellInfoBox(blockmap, &origin, objectTypeName, cell);
+            drawCellInfoBox(Vector2d(DENG_GAMEVIEW_WIDTH / 2, 30), *blockmap,
+                            objectTypeName, cell);
         }
     }
 
     // About the Blockmap itself.
-    origin.x = DENG_GAMEVIEW_WIDTH  - 10;
-    origin.y = DENG_GAMEVIEW_HEIGHT - 10;
-    drawBlockmapInfo(&origin, blockmap);
+    drawBlockmapInfo(Vector2d(DENG_GAMEVIEW_WIDTH - 10, DENG_GAMEVIEW_HEIGHT - 10),
+                     *blockmap);
 
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();

@@ -87,8 +87,8 @@ struct ContactSpreader
         BlockmapCellBlock const cellBlock = _blockmap.toCellBlock(box);
 
         BlockmapCell cell;
-        for(cell.y = cellBlock.min.y; cell.y <= cellBlock.max.y; ++cell.y)
-        for(cell.x = cellBlock.min.x; cell.x <= cellBlock.max.x; ++cell.x)
+        for(cell.y = cellBlock.min.y; cell.y < cellBlock.max.y; ++cell.y)
+        for(cell.x = cellBlock.min.x; cell.x < cellBlock.max.x; ++cell.x)
         {
             if(_spreadBlocks)
             {
