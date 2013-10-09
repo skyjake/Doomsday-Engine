@@ -475,6 +475,7 @@ DENG_HEADERS += \
     include/world/hand.h \
     include/world/huecircle.h \
     include/world/line.h \
+    include/world/lineblockmap.h \
     include/world/lineowner.h \
     include/world/linesighttest.h \
     include/world/map.h \
@@ -814,6 +815,7 @@ SOURCES += \
     src/world/hand.cpp \
     src/world/huecircle.cpp \
     src/world/line.cpp \
+    src/world/lineblockmap.cpp \
     src/world/linesighttest.cpp \
     src/world/map.cpp \
     src/world/mapelement.cpp \

@@ -242,6 +242,7 @@ DENG_HEADERS += \
     $$SRC/include/world/entitydatabase.h \
     $$SRC/include/world/entitydef.h \
     $$SRC/include/world/line.h \
+    $$SRC/include/world/lineblockmap.h \
     $$SRC/include/world/lineowner.h \
     $$SRC/include/world/linesighttest.h \
     $$SRC/include/world/map.h \
@@ -410,6 +411,7 @@ SOURCES += \
     $$SRC/src/world/entitydatabase.cpp \
     $$SRC/src/world/entitydef.cpp \
     $$SRC/src/world/line.cpp \
+    $$SRC/src/world/lineblockmap.cpp \
     $$SRC/src/world/linesighttest.cpp \
     $$SRC/src/world/map.cpp \
     $$SRC/src/world/mapelement.cpp \

@@ -46,6 +46,7 @@
 #include "world/bsp/partitioner.h"
 
 #include "world/blockmap.h"
+#include "world/lineblockmap.h"
 #include "world/entitydatabase.h"
 #include "world/generators.h"
 #include "world/lineowner.h"
@@ -141,7 +142,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
     /// Blockmaps:
     QScopedPointer<Blockmap> mobjBlockmap;
     QScopedPointer<Blockmap> polyobjBlockmap;
-    QScopedPointer<Blockmap> lineBlockmap;
+    QScopedPointer<LineBlockmap> lineBlockmap;
     QScopedPointer<Blockmap> bspLeafBlockmap;
 
 #ifdef __CLIENT__
@@ -686,7 +687,6 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
     void initLineBlockmap()
     {
 #define BLOCKMAP_MARGIN      8 // size guardband
-#define CELL_SIZE            MAPBLOCKUNITS
 
         // Setup the blockmap area to enclose the whole map, plus a margin
         // (margin is needed for a map that fits entirely inside one blockmap cell).
@@ -694,65 +694,15 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
         Vector2d max(bounds.maxX + BLOCKMAP_MARGIN, bounds.maxY + BLOCKMAP_MARGIN);
         AABoxd expandedBounds(min.x, min.y, max.x, max.y);
 
-        lineBlockmap.reset(new Blockmap(expandedBounds, Vector2ui(CELL_SIZE, CELL_SIZE)));
+        lineBlockmap.reset(new LineBlockmap(expandedBounds, MAPBLOCKUNITS));
 
-        LOG_INFO("Line blockmap dimensions:") << lineBlockmap->dimensions().asText();
+        LOG_INFO("Line blockmap dimensions:")
+            << lineBlockmap->dimensions().asText();
 
         // Populate the blockmap.
-        foreach(Line *line, lines)
-        {
-            linkLineInBlockmap(*line);
-        }
+        lineBlockmap->link(lines);
 
-#undef CELL_SIZE
 #undef BLOCKMAP_MARGIN
-    }
-
-    void linkLineInBlockmap(Line &line)
-    {
-        // Lines of Polyobjs don't get into the blockmap (presently...).
-        if(line.definesPolyobj()) return;
-
-        Vector2d const &origin = lineBlockmap->origin();
-        Vector2d const &cellDimensions = lineBlockmap->cellDimensions();
-
-        // Determine the block of cells we'll be working within.
-        BlockmapCellBlock cellBlock = lineBlockmap->toCellBlock(line.aaBox());
-
-        BlockmapCell cell;
-        for(cell.y = cellBlock.min.y; cell.y < cellBlock.max.y; ++cell.y)
-        for(cell.x = cellBlock.min.x; cell.x < cellBlock.max.x; ++cell.x)
-        {
-            if(line.slopeType() == ST_VERTICAL ||
-               line.slopeType() == ST_HORIZONTAL)
-            {
-                lineBlockmap->link(cell, &line);
-                continue;
-            }
-
-            Vector2d point = origin + cellDimensions * Vector2d(cell.x, cell.y);
-
-            // Choose a cell diagonal to test.
-            Vector2d from, to;
-            if(line.slopeType() == ST_POSITIVE)
-            {
-                // Line slope / vs \ cell diagonal.
-                from = Vector2d(point.x, point.y + cellDimensions.y);
-                to   = Vector2d(point.x + cellDimensions.x, point.y);
-            }
-            else
-            {
-                // Line slope \ vs / cell diagonal.
-                from = Vector2d(point.x + cellDimensions.x, point.y + cellDimensions.y);
-                to   = Vector2d(point.x, point.y);
-            }
-
-            // Would Line intersect this?
-            if((line.pointOnSide(from) < 0) != (line.pointOnSide(to) < 0))
-            {
-                lineBlockmap->link(cell, &line);
-            }
-        }
     }
 
     /**
@@ -773,7 +723,8 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
 
         mobjBlockmap.reset(new Blockmap(expandedBounds, Vector2ui(CELL_SIZE, CELL_SIZE)));
 
-        LOG_INFO("Mobj blockmap dimensions:") << mobjBlockmap->dimensions().asText();
+        LOG_INFO("Mobj blockmap dimensions:")
+            << mobjBlockmap->dimensions().asText();
 
 #undef CELL_SIZE
 #undef BLOCKMAP_MARGIN

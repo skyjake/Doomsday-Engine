@@ -44,7 +44,10 @@ public:
     typedef Vector2ui Cell;
 
     /**
-     * POD structure representing a rectangular range of cells.
+     * POD structure for representing an inclusive-exclusive rectangular range
+     * of cells.
+     *
+     * @todo Use Rectangleui instead -ds
      */
     struct CellBlock
     {
