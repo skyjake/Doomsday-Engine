@@ -22,6 +22,7 @@
  */
 
 #include <QBitArray>
+#include <QVarLengthArray>
 
 #include <de/aabox.h>
 #include <de/vector1.h>
@@ -1732,17 +1733,16 @@ int Map::mobjTouchedLineIterator(mobj_t *mo, int (*callback) (Line *, void *),
     {
         linknode_t *tn = d->mobjNodes.nodes;
 
-        Line *linkStore[2048], **end = linkStore;
+        QVarLengthArray<Line *, 16> linkStore;
         for(nodeindex_t nix = tn[mo->lineRoot].next; nix != mo->lineRoot;
             nix = tn[nix].next)
         {
-            DENG2_ASSERT(end < &linkStore[2048]);
-            *end++ = reinterpret_cast<Line *>(tn[nix].ptr);
+            linkStore << reinterpret_cast<Line *>(tn[nix].ptr);
         }
 
-        for(Line **it = linkStore; it < end; it++)
+        foreach(Line *line, linkStore)
         {
-            if(int result = callback(*it, context))
+            if(int result = callback(line, context))
                 return result;
         }
     }
@@ -1753,11 +1753,11 @@ int Map::mobjTouchedLineIterator(mobj_t *mo, int (*callback) (Line *, void *),
 int Map::mobjTouchedSectorIterator(mobj_t *mo, int (*callback) (Sector *, void *),
                                    void *context) const
 {
-    Sector *linkStore[2048], **end = linkStore;
+    QVarLengthArray<Sector *, 16> linkStore;
 
     // Always process the mobj's own sector first.
     Sector &ownSec = Mobj_BspLeafAtOrigin(*mo).sector();
-    *end++ = &ownSec;
+    linkStore << &ownSec;
     ownSec.setValidCount(validCount);
 
     // Any good lines around here?
@@ -1775,8 +1775,7 @@ int Map::mobjTouchedSectorIterator(mobj_t *mo, int (*callback) (Sector *, void *
             Sector &frontSec = ld->frontSector();
             if(frontSec.validCount() != validCount)
             {
-                DENG2_ASSERT(end < &linkStore[2048]);
-                *end++ = &frontSec;
+                linkStore << &frontSec;
                 frontSec.setValidCount(validCount);
             }
 
@@ -1787,17 +1786,16 @@ int Map::mobjTouchedSectorIterator(mobj_t *mo, int (*callback) (Sector *, void *
                 Sector &backSec = ld->backSector();
                 if(backSec.validCount() != validCount)
                 {
-                    DENG2_ASSERT(end < &linkStore[2048]);
-                    *end++ = &backSec;
+                    linkStore << &backSec;
                     backSec.setValidCount(validCount);
                 }
             }
         }
     }
 
-    for(Sector **it = linkStore; it < end; it++)
+    foreach(Sector *sector, linkStore)
     {
-        if(int result = callback(*it, context))
+        if(int result = callback(sector, context))
             return result;
     }
 
@@ -1807,20 +1805,19 @@ int Map::mobjTouchedSectorIterator(mobj_t *mo, int (*callback) (Sector *, void *
 int Map::lineTouchingMobjIterator(Line *line, int (*callback) (mobj_t *, void *),
                                   void *context) const
 {
-    mobj_t *linkStore[2048], **end = linkStore;
+    QVarLengthArray<mobj_t *, 256> linkStore;
 
     nodeindex_t root = d->lineLinks[line->indexInMap()];
     linknode_t *ln = d->lineNodes.nodes;
 
     for(nodeindex_t nix = ln[root].next; nix != root; nix = ln[nix].next)
     {
-        DENG2_ASSERT(end < &linkStore[2048]);
-        *end++ = reinterpret_cast<mobj_t *>(ln[nix].ptr);
+        linkStore << reinterpret_cast<mobj_t *>(ln[nix].ptr);
     }
 
-    for(mobj_t **it = linkStore; it < end; it++)
+    foreach(mobj_t *mobj, linkStore)
     {
-        if(int result = callback(*it, context))
+        if(int result = callback(mobj, context))
             return result;
     }
 
@@ -1830,7 +1827,7 @@ int Map::lineTouchingMobjIterator(Line *line, int (*callback) (mobj_t *, void *)
 int Map::sectorTouchingMobjIterator(Sector *sector,
     int (*callback) (mobj_t *, void *), void *context) const
 {
-    mobj_t *linkStore[2048], **end = linkStore;
+    QVarLengthArray<mobj_t *, 256> linkStore;
 
     // Collate mobjs that obviously are in the sector.
     for(mobj_t *mo = sector->firstMobj(); mo; mo = mo->sNext)
@@ -1839,8 +1836,7 @@ int Map::sectorTouchingMobjIterator(Sector *sector,
         {
             mo->validCount = validCount;
 
-            DENG2_ASSERT(end < &linkStore[2048]);
-            *end++ = mo;
+            linkStore << mo;
         }
     }
 
@@ -1857,16 +1853,15 @@ int Map::sectorTouchingMobjIterator(Sector *sector,
             {
                 mo->validCount = validCount;
 
-                DENG2_ASSERT(end < &linkStore[2048]);
-                *end++ = mo;
+                linkStore << mo;
             }
         }
     }
 
     // Process all collected mobjs.
-    for(mobj_t **it = linkStore; it < end; it++)
+    foreach(mobj_t *mobj, linkStore)
     {
-        if(int result = callback(*it, context))
+        if(int result = callback(mobj, context))
             return result;
     }
 
