@@ -98,7 +98,7 @@ public:
     uint cellSize() const;
 
     /**
-     * Utility function which returns the dimension of a cell in map space units.
+     * Utility function which returns the dimensions of a cell in map space units.
      */
     Vector2d cellDimensions() const { return Vector2d(cellSize(), cellSize()); }
 

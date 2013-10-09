@@ -72,22 +72,6 @@
 
 #include "world/map.h"
 
-// Linkstore is list of pointers gathered when iterating stuff.
-// This is pretty much the only way to avoid *all* potential problems
-// caused by callback routines behaving badly (moving or destroying
-// mobjs). The idea is to get a snapshot of all the objects being
-// iterated before any callbacks are called. The hardcoded limit is
-// a drag, but I'd like to see you iterating 2048 mobjs/lines in one block.
-
-#define MAXLINKED           2048
-#define DO_LINKS(it, end, _Type)   { \
-    for(it = linkStore; it < end; it++) \
-    { \
-        result = callback(reinterpret_cast<_Type>(*it), context); \
-        if(result) break; \
-    } \
-}
-
 static int bspSplitFactor = 7; // cvar
 
 namespace de {
@@ -681,25 +665,19 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
      *
      * @pre Coordinate space bounds have already been determined.
      */
-    void initLineBlockmap()
+    void initLineBlockmap(ddouble margin = 8)
     {
-#define BLOCKMAP_MARGIN      8 // size guardband
-
         // Setup the blockmap area to enclose the whole map, plus a margin
         // (margin is needed for a map that fits entirely inside one blockmap cell).
-        Vector2d min(bounds.minX - BLOCKMAP_MARGIN, bounds.minY - BLOCKMAP_MARGIN);
-        Vector2d max(bounds.maxX + BLOCKMAP_MARGIN, bounds.maxY + BLOCKMAP_MARGIN);
-        AABoxd expandedBounds(min.x, min.y, max.x, max.y);
-
-        lineBlockmap.reset(new LineBlockmap(expandedBounds));
+        lineBlockmap.reset(
+            new LineBlockmap(AABoxd(bounds.minX - margin, bounds.minY - margin,
+                                    bounds.maxX + margin, bounds.maxY + margin)));
 
         LOG_INFO("Line blockmap dimensions:")
             << lineBlockmap->dimensions().asText();
 
         // Populate the blockmap.
         lineBlockmap->link(lines);
-
-#undef BLOCKMAP_MARGIN
     }
 
     /**
@@ -707,34 +685,16 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
      *
      * @pre Coordinate space bounds have already been determined.
      */
-    void initMobjBlockmap()
+    void initMobjBlockmap(ddouble margin = 8)
     {
-#define BLOCKMAP_MARGIN      8 // size guardband
-
         // Setup the blockmap area to enclose the whole map, plus a margin
         // (margin is needed for a map that fits entirely inside one blockmap cell).
-        Vector2d min(bounds.minX - BLOCKMAP_MARGIN, bounds.minY - BLOCKMAP_MARGIN);
-        Vector2d max(bounds.maxX + BLOCKMAP_MARGIN, bounds.maxY + BLOCKMAP_MARGIN);
-        AABoxd expandedBounds(min.x, min.y, max.x, max.y);
-
-        mobjBlockmap.reset(new Blockmap(expandedBounds));
+        mobjBlockmap.reset(
+            new Blockmap(AABoxd(bounds.minX - margin, bounds.minY - margin,
+                                bounds.maxX + margin, bounds.maxY + margin)));
 
         LOG_INFO("Mobj blockmap dimensions:")
             << mobjBlockmap->dimensions().asText();
-
-#undef BLOCKMAP_MARGIN
-    }
-
-    bool unlinkMobjInBlockmap(mobj_t &mo)
-    {
-        BlockmapCell cell = mobjBlockmap->toCell(mo.origin);
-        return mobjBlockmap->unlink(cell, &mo);
-    }
-
-    void linkMobjInBlockmap(mobj_t &mo)
-    {
-        BlockmapCell cell = mobjBlockmap->toCell(mo.origin);
-        mobjBlockmap->link(cell, &mo);
     }
 
     /**
@@ -791,32 +751,35 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
     {
         Map *map;
         mobj_t *mo;
-        AABoxd box;
+        AABoxd moAABox;
     };
 
     /**
      * The given line might cross the mobj. If necessary, link the mobj into
      * the line's mobj link ring.
      */
-    static int lineLinkerWorker(Line *ld, void *parameters)
+    static int lineLinkerWorker(Line *line, void *context)
     {
-        LineLinkerParams *p = reinterpret_cast<LineLinkerParams *>(parameters);
-        DENG_ASSERT(p != 0);
+        LineLinkerParams &parm = *static_cast<LineLinkerParams *>(context);
 
         // Do the bounding boxes intercept?
-        if(p->box.minX >= ld->aaBox().maxX ||
-           p->box.minY >= ld->aaBox().maxY ||
-           p->box.maxX <= ld->aaBox().minX ||
-           p->box.maxY <= ld->aaBox().minY) return false;
+        if(parm.moAABox.minX >= line->aaBox().maxX ||
+           parm.moAABox.minY >= line->aaBox().maxY ||
+           parm.moAABox.maxX <= line->aaBox().minX ||
+           parm.moAABox.maxY <= line->aaBox().minY)
+        {
+            return false;
+        }
 
         // Line does not cross the mobj's bounding box?
-        if(ld->boxOnSide(p->box)) return false;
+        if(line->boxOnSide(parm.moAABox)) return false;
 
         // Lines with only one sector will not be linked to because a mobj can't
         // legally cross one.
-        if(!ld->hasFrontSector() || !ld->hasBackSector()) return false;
+        if(!line->hasFrontSector()) return false;
+        if(!line->hasBackSector()) return false;
 
-        p->map->d->linkMobjToLine(p->mo, ld);
+        parm.map->d->linkMobjToLine(parm.mo, line);
         return false;
     }
 
@@ -829,18 +792,13 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
         mo.lineRoot = NP_New(&mobjNodes, NP_ROOT_NODE);
 
         // Set up a line iterator for doing the linking.
-        LineLinkerParams parm;
-        parm.map = &self;
-        parm.mo  = &mo;
-
-        vec2d_t point;
-        V2d_Set(point, mo.origin[VX] - mo.radius, mo.origin[VY] - mo.radius);
-        V2d_InitBox(parm.box.arvec2, point);
-        V2d_Set(point, mo.origin[VX] + mo.radius, mo.origin[VY] + mo.radius);
-        V2d_AddToBox(parm.box.arvec2, point);
+        LineLinkerParams parm; zap(parm);
+        parm.map     = &self;
+        parm.mo      = &mo;
+        parm.moAABox = Mobj_AABox(mo);
 
         validCount++;
-        self.lineBoxIterator(parm.box, lineLinkerWorker, &parm);
+        self.lineBoxIterator(parm.moAABox, lineLinkerWorker, &parm);
     }
 
     /**
@@ -848,33 +806,16 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
      *
      * @pre Coordinate space bounds have already been determined.
      */
-    void initPolyobjBlockmap()
+    void initPolyobjBlockmap(ddouble margin = 8)
     {
-#define BLOCKMAP_MARGIN      8 // size guardband
-
         // Setup the blockmap area to enclose the whole map, plus a margin
         // (margin is needed for a map that fits entirely inside one blockmap cell).
-        Vector2d min(bounds.minX - BLOCKMAP_MARGIN, bounds.minY - BLOCKMAP_MARGIN);
-        Vector2d max(bounds.maxX + BLOCKMAP_MARGIN, bounds.maxY + BLOCKMAP_MARGIN);
-        AABoxd expandedBounds(min.x, min.y, max.x, max.y);
+        polyobjBlockmap.reset(
+            new Blockmap(AABoxd(bounds.minX - margin, bounds.minY - margin,
+                                bounds.maxX + margin, bounds.maxY + margin)));
 
-        polyobjBlockmap.reset(new Blockmap(expandedBounds));
-
-        LOG_INFO("Polyobj blockmap dimensions:") << polyobjBlockmap->dimensions().asText();
-
-#undef BLOCKMAP_MARGIN
-    }
-
-    void unlinkPolyobjInBlockmap(Polyobj &polyobj)
-    {
-        BlockmapCellBlock cellBlock = polyobjBlockmap->toCellBlock(polyobj.aaBox);
-        polyobjBlockmap->unlink(cellBlock, &polyobj);
-    }
-
-    void linkPolyobjInBlockmap(Polyobj &polyobj)
-    {
-        BlockmapCellBlock cellBlock = polyobjBlockmap->toCellBlock(polyobj.aaBox);
-        polyobjBlockmap->link(cellBlock, &polyobj);
+        LOG_INFO("Polyobj blockmap dimensions:")
+            << polyobjBlockmap->dimensions().asText();
     }
 
     /**
@@ -882,19 +823,16 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
      *
      * @pre Coordinate space bounds have already been determined.
      */
-    void initBspLeafBlockmap()
+    void initBspLeafBlockmap(ddouble margin = 8)
     {
-#define BLOCKMAP_MARGIN      8 // size guardband
-
         // Setup the blockmap area to enclose the whole map, plus a margin
         // (margin is needed for a map that fits entirely inside one blockmap cell).
-        Vector2d min(bounds.minX - BLOCKMAP_MARGIN, bounds.minY - BLOCKMAP_MARGIN);
-        Vector2d max(bounds.maxX + BLOCKMAP_MARGIN, bounds.maxY + BLOCKMAP_MARGIN);
-        AABoxd expandedBounds(min.x, min.y, max.x, max.y);
+        bspLeafBlockmap.reset(
+            new Blockmap(AABoxd(bounds.minX - margin, bounds.minY - margin,
+                                bounds.maxX + margin, bounds.maxY + margin)));
 
-        bspLeafBlockmap.reset(new Blockmap(expandedBounds));
-
-        LOG_INFO("BSP leaf blockmap dimensions:") << bspLeafBlockmap->dimensions().asText();
+        LOG_INFO("BSP leaf blockmap dimensions:")
+            << bspLeafBlockmap->dimensions().asText();
 
         // Populate the blockmap.
         foreach(BspLeaf *bspLeaf, bspLeafs)
@@ -906,15 +844,18 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
                 bspLeafBlockmap->link(cellBlock, bspLeaf);
             }
         }
-
-#undef BLOCKMAP_MARGIN
     }
 
 #ifdef __CLIENT__
-    void initContactBlockmaps()
+    void initContactBlockmaps(ddouble margin = 8)
     {
-        mobjContactBlockmap.reset(new ContactBlockmap(bounds));
-        lumobjContactBlockmap.reset(new ContactBlockmap(bounds));
+        // Setup the blockmap area to enclose the whole map, plus a margin
+        // (margin is needed for a map that fits entirely inside one blockmap cell).
+        AABoxd expandedBounds(bounds.minX - margin, bounds.minY - margin,
+                              bounds.maxX + margin, bounds.maxY + margin);
+
+        mobjContactBlockmap.reset(new ContactBlockmap(expandedBounds));
+        lumobjContactBlockmap.reset(new ContactBlockmap(expandedBounds));
     }
 
     /**
@@ -1166,7 +1107,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
     /**
      * Create new mobj => BSP leaf contacts.
      */
-    void createMobjContacts()
+    void generateMobjContacts()
     {
         foreach(Sector *sector, sectors)
         for(mobj_t *iter = sector->firstMobj(); iter; iter = iter->sNext)
@@ -1787,32 +1728,32 @@ int Map::bspLeafBoxIterator(AABoxd const &box, Sector *sector,
 int Map::mobjTouchedLineIterator(mobj_t *mo, int (*callback) (Line *, void *),
                                  void *context) const
 {
-    void *linkStore[MAXLINKED];
-    void **end = linkStore, **it;
-    int result = false;
-
-    linknode_t *tn = d->mobjNodes.nodes;
     if(mo->lineRoot)
     {
-        nodeindex_t nix;
-        for(nix = tn[mo->lineRoot].next; nix != mo->lineRoot;
-            nix = tn[nix].next)
-            *end++ = tn[nix].ptr;
+        linknode_t *tn = d->mobjNodes.nodes;
 
-        DO_LINKS(it, end, Line *);
+        Line *linkStore[2048], **end = linkStore;
+        for(nodeindex_t nix = tn[mo->lineRoot].next; nix != mo->lineRoot;
+            nix = tn[nix].next)
+        {
+            DENG2_ASSERT(end < &linkStore[2048]);
+            *end++ = reinterpret_cast<Line *>(tn[nix].ptr);
+        }
+
+        for(Line **it = linkStore; it < end; it++)
+        {
+            if(int result = callback(*it, context))
+                return result;
+        }
     }
-    return result;
+
+    return false; // Continue iteration.
 }
 
 int Map::mobjTouchedSectorIterator(mobj_t *mo, int (*callback) (Sector *, void *),
                                    void *context) const
 {
-    int result = false;
-    void *linkStore[MAXLINKED];
-    void **end = linkStore, **it;
-
-    nodeindex_t nix;
-    linknode_t *tn = d->mobjNodes.nodes;
+    Sector *linkStore[2048], **end = linkStore;
 
     // Always process the mobj's own sector first.
     Sector &ownSec = Mobj_BspLeafAtOrigin(*mo).sector();
@@ -1822,26 +1763,31 @@ int Map::mobjTouchedSectorIterator(mobj_t *mo, int (*callback) (Sector *, void *
     // Any good lines around here?
     if(mo->lineRoot)
     {
-        for(nix = tn[mo->lineRoot].next; nix != mo->lineRoot;
+        linknode_t *tn = d->mobjNodes.nodes;
+
+        for(nodeindex_t nix = tn[mo->lineRoot].next; nix != mo->lineRoot;
             nix = tn[nix].next)
         {
-            Line *ld = (Line *) tn[nix].ptr;
+            Line *ld = reinterpret_cast<Line *>(tn[nix].ptr);
 
             // All these lines have sectors on both sides.
             // First, try the front.
             Sector &frontSec = ld->frontSector();
             if(frontSec.validCount() != validCount)
             {
+                DENG2_ASSERT(end < &linkStore[2048]);
                 *end++ = &frontSec;
                 frontSec.setValidCount(validCount);
             }
 
             // And then the back.
+            /// @todo Above comment suggest always twosided, which is it? -ds
             if(ld->hasBackSector())
             {
                 Sector &backSec = ld->backSector();
                 if(backSec.validCount() != validCount)
                 {
+                    DENG2_ASSERT(end < &linkStore[2048]);
                     *end++ = &backSec;
                     backSec.setValidCount(validCount);
                 }
@@ -1849,38 +1795,42 @@ int Map::mobjTouchedSectorIterator(mobj_t *mo, int (*callback) (Sector *, void *
         }
     }
 
-    DO_LINKS(it, end, Sector *);
-    return result;
+    for(Sector **it = linkStore; it < end; it++)
+    {
+        if(int result = callback(*it, context))
+            return result;
+    }
+
+    return false; // Continue iteration.
 }
 
 int Map::lineTouchingMobjIterator(Line *line, int (*callback) (mobj_t *, void *),
                                   void *context) const
 {
-    void *linkStore[MAXLINKED];
-    void **end = linkStore;
+    mobj_t *linkStore[2048], **end = linkStore;
 
     nodeindex_t root = d->lineLinks[line->indexInMap()];
     linknode_t *ln = d->lineNodes.nodes;
 
     for(nodeindex_t nix = ln[root].next; nix != root; nix = ln[nix].next)
     {
-        DENG_ASSERT(end < &linkStore[MAXLINKED]);
-        *end++ = ln[nix].ptr;
+        DENG2_ASSERT(end < &linkStore[2048]);
+        *end++ = reinterpret_cast<mobj_t *>(ln[nix].ptr);
     }
 
-    int result = false;
-    void **it;
-    DO_LINKS(it, end, mobj_t *);
+    for(mobj_t **it = linkStore; it < end; it++)
+    {
+        if(int result = callback(*it, context))
+            return result;
+    }
 
-    return result;
+    return false; // Continue iteration.
 }
 
 int Map::sectorTouchingMobjIterator(Sector *sector,
     int (*callback) (mobj_t *, void *), void *context) const
 {
-    /// @todo Fixme: Remove fixed limit (use QVarLengthArray if necessary).
-    void *linkStore[MAXLINKED];
-    void **end = linkStore;
+    mobj_t *linkStore[2048], **end = linkStore;
 
     // Collate mobjs that obviously are in the sector.
     for(mobj_t *mo = sector->firstMobj(); mo; mo = mo->sNext)
@@ -1889,7 +1839,7 @@ int Map::sectorTouchingMobjIterator(Sector *sector,
         {
             mo->validCount = validCount;
 
-            DENG_ASSERT(end < &linkStore[MAXLINKED]);
+            DENG2_ASSERT(end < &linkStore[2048]);
             *end++ = mo;
         }
     }
@@ -1902,23 +1852,25 @@ int Map::sectorTouchingMobjIterator(Sector *sector,
 
         for(nodeindex_t nix = ln[root].next; nix != root; nix = ln[nix].next)
         {
-            mobj_t *mo = (mobj_t *) ln[nix].ptr;
+            mobj_t *mo = reinterpret_cast<mobj_t *>(ln[nix].ptr);
             if(mo->validCount != validCount)
             {
                 mo->validCount = validCount;
 
-                DENG_ASSERT(end < &linkStore[MAXLINKED]);
+                DENG2_ASSERT(end < &linkStore[2048]);
                 *end++ = mo;
             }
         }
     }
 
     // Process all collected mobjs.
-    int result = false;
-    void **it;
-    DO_LINKS(it, end, mobj_t *);
+    for(mobj_t **it = linkStore; it < end; it++)
+    {
+        if(int result = callback(*it, context))
+            return result;
+    }
 
-    return result;
+    return false; // Continue iteration.
 }
 
 int Map::unlink(mobj_t &mo)
@@ -1927,8 +1879,11 @@ int Map::unlink(mobj_t &mo)
 
     if(d->unlinkMobjFromSectors(mo))
         links |= MLF_SECTOR;
-    if(d->unlinkMobjInBlockmap(mo))
+
+    BlockmapCell cell = d->mobjBlockmap->toCell(Mobj_Origin(mo));
+    if(d->mobjBlockmap->unlink(cell, &mo))
         links |= MLF_BLOCKMAP;
+
     if(!d->unlinkMobjFromLines(mo))
         links |= MLF_NOLINE;
 
@@ -1937,7 +1892,7 @@ int Map::unlink(mobj_t &mo)
 
 void Map::link(mobj_t &mo, byte flags)
 {
-    BspLeaf &bspLeafAtOrigin = bspLeafAt_FixedPrecision(mo.origin);
+    BspLeaf &bspLeafAtOrigin = bspLeafAt_FixedPrecision(Mobj_Origin(mo));
 
     // Link into the sector?
     if(flags & MLF_SECTOR)
@@ -1950,8 +1905,8 @@ void Map::link(mobj_t &mo, byte flags)
     // Link into blockmap?
     if(flags & MLF_BLOCKMAP)
     {
-        d->unlinkMobjInBlockmap(mo);
-        d->linkMobjInBlockmap(mo);
+        BlockmapCell cell = d->mobjBlockmap->toCell(Mobj_Origin(mo));
+        d->mobjBlockmap->link(cell, &mo);
     }
 
     // Link into lines?
@@ -1967,7 +1922,7 @@ void Map::link(mobj_t &mo, byte flags)
     {
         mo.dPlayer->inVoid = true;
 
-        if(!Mobj_BspLeafAtOrigin(mo).polyContains(mo.origin))
+        if(!Mobj_BspLeafAtOrigin(mo).polyContains(Mobj_Origin(mo)))
             return;
 
         SectorCluster &cluster = Mobj_Cluster(mo);
@@ -1986,12 +1941,14 @@ void Map::link(mobj_t &mo, byte flags)
 
 void Map::unlink(Polyobj &polyobj)
 {
-    d->unlinkPolyobjInBlockmap(polyobj);
+    BlockmapCellBlock cellBlock = d->polyobjBlockmap->toCellBlock(polyobj.aaBox);
+    d->polyobjBlockmap->unlink(cellBlock, &polyobj);
 }
 
 void Map::link(Polyobj &polyobj)
 {
-    d->linkPolyobjInBlockmap(polyobj);
+    BlockmapCellBlock cellBlock = d->polyobjBlockmap->toCellBlock(polyobj.aaBox);
+    d->polyobjBlockmap->link(cellBlock, &polyobj);
 }
 
 struct bmappoiterparams_t
@@ -2325,7 +2282,6 @@ static int collectPolyobjLineIntercepts(BlockmapCell const &cell, void *context)
 
     poiterparams_t iplParm; zap(iplParm);
     iplParm.callback = interceptLinesWorker;
-    iplParm.context    = 0;
 
     bmappoiterparams_t parm; zap(parm);
     parm.localValidCount = validCount;
@@ -2353,8 +2309,9 @@ static int interceptMobjsWorker(mobj_t *mo, void * /*context*/)
 
     // Check a corner to corner crossection for hit.
     divline_t const &traceLos = Mobj_BspLeafAtOrigin(*mo).map().traceLine();
+    AABoxd const aaBox = Mobj_AABox(*mo);
+
     vec2d_t from, to;
-    AABoxd aaBox = Mobj_AABox(*mo);
     if((traceLos.direction[VX] ^ traceLos.direction[VY]) > 0)
     {
         // \ Slope
@@ -2871,7 +2828,7 @@ void Map::worldFrameBegins(World &world, bool resetNextViewer)
             }
         }
 
-        d->createMobjContacts();
+        d->generateMobjContacts();
 
         // Link all active particle generators into the world.
         P_CreatePtcGenLinks();
