@@ -1217,10 +1217,10 @@ void C_DECL A_VileAttack(mobj_t *actor)
 
     // Move the fire between the Vile and the player.
     an = actor->angle >> ANGLETOFINESHIFT;
-    P_MobjUnlink(actor);
+    P_MobjUnlink(fire);
     fire->origin[VX] = actor->target->origin[VX] - 24 * FIX2FLT(finecosine[an]);
     fire->origin[VY] = actor->target->origin[VY] - 24 * FIX2FLT(finesine[an]);
-    P_MobjLink(actor);
+    P_MobjLink(fire);
     P_RadiusAttack(fire, actor, 70, 69);
 }
 
