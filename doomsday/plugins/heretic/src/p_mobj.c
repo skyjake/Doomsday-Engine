@@ -1246,10 +1246,11 @@ boolean P_HitFloor(mobj_t* thing)
  * @return  @c true, if the missile is at a valid spawn point,
  *          otherwise; explode it and return @false.
  */
-boolean P_CheckMissileSpawn(mobj_t* mo)
+boolean P_CheckMissileSpawn(mobj_t *mo)
 {
     // Move a little forward so an angle can be computed if it immediately
     // explodes
+    P_MobjUnlink(mo);
     if(mo->type == MT_BLASTERFX1)
     {
         // Ultra-fast ripper spawning missile.
@@ -1263,6 +1264,7 @@ boolean P_CheckMissileSpawn(mobj_t* mo)
         mo->origin[VY] += mo->mom[MY] / 2;
         mo->origin[VZ] += mo->mom[MZ] / 2;
     }
+    P_MobjLink(mo);
 
     if(!P_TryMoveXY(mo, mo->origin[VX], mo->origin[VY], false, false))
     {

@@ -1391,14 +1391,16 @@ void C_DECL A_BoltSpark(mobj_t* bolt)
 {
     mobj_t* spark;
 
-    if(IS_NETWORK_SERVER) return; // Would not be visible to anynoe.
+    if(IS_NETWORK_SERVER) return; // Would not be visible to anyone.
 
     if(P_Random() > 50)
     {
         if((spark = P_SpawnMobj(MT_CRBOWFX4, bolt->origin, P_Random() << 24, 0)))
         {
+            P_MobjUnlink(spark);
             spark->origin[VX] += FIX2FLT((P_Random() - P_Random()) << 10);
             spark->origin[VY] += FIX2FLT((P_Random() - P_Random()) << 10);
+            P_MobjLink(spark);
         }
     }
 }

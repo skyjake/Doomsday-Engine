@@ -1742,13 +1742,15 @@ boolean P_HealRadius(player_t* player)
  * @return  @c true, if the missile is at a valid spawn point,
  *          otherwise explodes it and return @c false.
  */
-boolean P_CheckMissileSpawn(mobj_t* mo)
+boolean P_CheckMissileSpawn(mobj_t *mo)
 {
     // Move a little forward so an angle can be computed if it
     // immediately explodes
+    P_MobjUnlink(mo);
     mo->origin[VX] += mo->mom[MX] / 2;
     mo->origin[VY] += mo->mom[MY] / 2;
     mo->origin[VZ] += mo->mom[MZ] / 2;
+    P_MobjLink(mo);
 
     if(!P_TryMoveXY(mo, mo->origin[VX], mo->origin[VY]))
     {
@@ -2032,6 +2034,7 @@ mobj_t* P_SpawnPlayerMissile(mobjtype_t type, mobj_t* source)
         movfac * MissileMobj->info->speed * FIX2FLT(finesine[an]);
     MissileMobj->mom[MZ] = MissileMobj->info->speed * slope;
 
+    P_MobjUnlink(MissileMobj);
     if(MissileMobj->type == MT_MWAND_MISSILE ||
        MissileMobj->type == MT_CFLAME_MISSILE)
     {
@@ -2047,6 +2050,7 @@ mobj_t* P_SpawnPlayerMissile(mobjtype_t type, mobj_t* source)
         MissileMobj->origin[VY] += MissileMobj->mom[MY] / 2;
         MissileMobj->origin[VZ] += MissileMobj->mom[MZ] / 2;
     }
+    P_MobjLink(MissileMobj);
 
     if(!P_TryMoveXY(MissileMobj, MissileMobj->origin[VX], MissileMobj->origin[VY]))
     {

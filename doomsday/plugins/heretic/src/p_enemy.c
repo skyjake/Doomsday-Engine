@@ -1483,9 +1483,11 @@ void C_DECL A_MinotaurAtk3(mobj_t* actor)
         {
             if(fixFloorFire)
             {
+                P_MobjUnlink(mo);
                 mo->origin[VX] += mo->mom[MX] / 2;
                 mo->origin[VY] += mo->mom[MY] / 2;
                 mo->origin[VZ] += mo->mom[MZ] / 2;
+                P_MobjLink(mo);
 
                 P_ExplodeMissile(mo);
             }

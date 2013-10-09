@@ -890,9 +890,9 @@ void C_DECL A_BruisAttack(mobj_t *actor)
     P_SpawnMissile(MT_BRUISERSHOT, actor, actor->target);
 }
 
-void C_DECL A_SkelMissile(mobj_t* actor)
+void C_DECL A_SkelMissile(mobj_t *actor)
 {
-    mobj_t* mo;
+    mobj_t *mo;
 
     if(!actor->target) return;
 
@@ -901,8 +901,10 @@ void C_DECL A_SkelMissile(mobj_t* actor)
     mo = P_SpawnMissile(MT_TRACER, actor, actor->target);
     if(mo)
     {
+        P_MobjUnlink(mo);
         mo->origin[VX] += mo->mom[MX];
         mo->origin[VY] += mo->mom[MY];
+        P_MobjLink(mo);
         mo->tracer = actor->target;
     }
 }
@@ -1150,9 +1152,10 @@ void C_DECL A_FireCrackle(mobj_t* actor)
 /**
  * Keep fire in front of player unless out of sight.
  */
-void C_DECL A_Fire(mobj_t* actor)
+void C_DECL A_Fire(mobj_t *actor)
 {
-    mobj_t* dest;
+    mobj_t *dest;
+    vec3d_t offset;
     uint an;
 
     dest = actor->tracer;
@@ -1164,9 +1167,8 @@ void C_DECL A_Fire(mobj_t* actor)
     an = dest->angle >> ANGLETOFINESHIFT;
 
     P_MobjUnlink(actor);
-    memcpy(actor->origin, dest->origin, sizeof(actor->origin));
-    actor->origin[VX] += 24 * FIX2FLT(finecosine[an]);
-    actor->origin[VY] += 24 * FIX2FLT(finesine[an]);
+    V3d_Set(offset, 24 * FIX2FLT(finecosine[an]), 24 * FIX2FLT(finesine[an]), 0);
+    V3d_Sum(actor->origin, dest->origin, offset);
     P_MobjLink(actor);
 }
 
@@ -1191,31 +1193,34 @@ void C_DECL A_VileTarget(mobj_t* actor)
     }
 }
 
-void C_DECL A_VileAttack(mobj_t* actor)
+void C_DECL A_VileAttack(mobj_t *actor)
 {
-    mobj_t* fire;
+    mobj_t *fire;
     uint an;
 
     if(!actor->target) return;
 
     A_FaceTarget(actor);
 
-    if(!P_CheckSight(actor, actor->target)) return;
+    if(!P_CheckSight(actor, actor->target))
+    {
+        return;
+    }
 
     S_StartSound(SFX_BAREXP, actor);
     P_DamageMobj(actor->target, actor, actor, 20, false);
     actor->target->mom[MZ] =
         FIX2FLT(1000 * FRACUNIT / actor->target->info->mass);
 
-    an = actor->angle >> ANGLETOFINESHIFT;
     fire = actor->tracer;
-
-    if(!fire)
-        return;
+    if(!fire) return;
 
     // Move the fire between the Vile and the player.
+    an = actor->angle >> ANGLETOFINESHIFT;
+    P_MobjUnlink(actor);
     fire->origin[VX] = actor->target->origin[VX] - 24 * FIX2FLT(finecosine[an]);
     fire->origin[VY] = actor->target->origin[VY] - 24 * FIX2FLT(finesine[an]);
+    P_MobjLink(actor);
     P_RadiusAttack(fire, actor, 70, 69);
 }
 

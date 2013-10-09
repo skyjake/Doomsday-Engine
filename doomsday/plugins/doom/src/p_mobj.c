@@ -896,9 +896,12 @@ boolean P_CheckMissileSpawn(mobj_t* th)
 
     // Move forward slightly so an angle can be computed if it explodes
     // immediately.
+    /// @todo Optimize: Why not simple spawn at this location? -ds
+    P_MobjUnlink(th);
     th->origin[VX] += th->mom[MX] / 2;
     th->origin[VY] += th->mom[MY] / 2;
     th->origin[VZ] += th->mom[MZ] / 2;
+    P_MobjLink(th);
 
     if(!P_TryMoveXY(th, th->origin[VX], th->origin[VY], false, false))
     {
