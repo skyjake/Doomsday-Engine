@@ -178,7 +178,6 @@ DENG_HEADERS += \
     $$SRC/include/filesys/sys_direc.h \
     $$SRC/include/filetype.h \
     $$SRC/include/game.h \
-    $$SRC/include/gridmap.h \
     $$SRC/include/hedge.h \
     $$SRC/include/library.h \
     $$SRC/include/m_decomp64.h \
@@ -349,7 +348,6 @@ SOURCES += \
     $$SRC/src/filesys/searchpath.cpp \
     $$SRC/src/filesys/sys_direc.cpp \
     $$SRC/src/game.cpp \
-    $$SRC/src/gridmap.cpp \
     $$SRC/src/hedge.cpp \
     $$SRC/src/library.cpp \
     $$SRC/src/m_decomp64.cpp \
