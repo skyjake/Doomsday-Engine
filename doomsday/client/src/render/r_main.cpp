@@ -21,6 +21,10 @@
 #include <cmath>
 #include <cstring>
 
+#ifdef __CLIENT__
+#include <QBitArray>
+#endif
+
 #include "de_base.h"
 #include "de_console.h"
 #include "de_system.h"
@@ -99,6 +103,7 @@ boolean loInited;
 static coord_t *luminousDist;
 static byte *luminousClipped;
 static uint *luminousOrder;
+static QBitArray bspLeafsVisible;
 #endif
 
 int psp3d;
@@ -1091,7 +1096,8 @@ DENG_EXTERN_C void R_RenderPlayerView(int num)
 
     // Too early? Game has not configured the view window?
     viewdata_t *vd = &viewDataOfConsole[num];
-    if(vd->window.size.width == 0 || vd->window.size.height == 0) return;
+    if(vd->window.size.width == 0 || vd->window.size.height == 0)
+        return;
 
     // Setup for rendering the frame.
     R_SetupFrame(player);
@@ -1304,6 +1310,18 @@ void R_ClearViewData()
     M_Free(luminousOrder); luminousOrder = 0;
 }
 
+bool R_ViewerBspLeafIsVisible(BspLeaf const &bspLeaf)
+{
+    DENG2_ASSERT(bspLeaf.indexInMap() != MapElement::NoIndex);
+    return bspLeafsVisible.testBit(bspLeaf.indexInMap());
+}
+
+void R_ViewerBspLeafMarkVisible(BspLeaf const &bspLeaf, bool yes)
+{
+    DENG2_ASSERT(bspLeaf.indexInMap() != MapElement::NoIndex);
+    bspLeafsVisible.setBit(bspLeaf.indexInMap(), yes);
+}
+
 double R_ViewerLumobjDistance(int idx)
 {
     /// @todo Do not assume the current map.
@@ -1359,6 +1377,10 @@ void R_BeginFrame()
     Rend_ProjectorReset();
 
     Map &map = App_World().map();
+
+    bspLeafsVisible.resize(map.bspLeafCount());
+    bspLeafsVisible.fill(false);
+
     int numLuminous = map.lumobjCount();
     if(!(numLuminous > 0)) return;
 

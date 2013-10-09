@@ -371,18 +371,6 @@ public:
      */
     void setLastSpriteProjectFrame(int newFrame);
 
-    /**
-     * Returns @c true iff the BSP leaf is marked as visible for the current frame.
-     * @see markVisible()
-     */
-    bool isVisible() const;
-
-    /**
-     * Mark the BSP leaf as visible for the current frame.
-     * @see isVisible()
-     */
-    void markVisible(bool yes = true);
-
 #endif // __CLIENT__
 
 private:

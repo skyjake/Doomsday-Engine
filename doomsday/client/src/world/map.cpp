@@ -1712,7 +1712,7 @@ int Map::bspLeafBoxIterator(AABoxd const &box, Sector *sector,
         // This is only used here.
         localValidCount++;
 
-        bmapbspleafiterateparams_t parm;
+        bmapbspleafiterateparams_t parm; zap(parm);
         parm.localValidCount = localValidCount;
         parm.callback        = callback;
         parm.context         = context;
@@ -1720,7 +1720,7 @@ int Map::bspLeafBoxIterator(AABoxd const &box, Sector *sector,
         parm.box             = &box;
 
         BlockmapCellBlock cellBlock = d->bspLeafBlockmap->toCellBlock(box);
-        return d->bspLeafBlockmap->iterate(cellBlock, blockmapCellBspLeafsIterator,  &parm);
+        return d->bspLeafBlockmap->iterate(cellBlock, blockmapCellBspLeafsIterator, &parm);
     }
     /// @throw MissingBlockmapError  The BSP leaf blockmap is not yet initialized.
     throw MissingBlockmapError("Map::bspLeafBoxIterator", "BSP leaf blockmap is not initialized");
@@ -2225,23 +2225,14 @@ static int traversePath(divline_t &traceLine, Blockmap &bmap,
     return traverseCellPath2(bmap, fromCell, toCell, from, to, callback, context);
 }
 
-/**
- * Looks for lines in the given block that intercept the given trace to add
- * to the intercepts list.
- * A line is crossed if its endpoints are on opposite sides of the trace.
- *
- * @return  Non-zero if current iteration should stop.
- */
-static int interceptLinesWorker(Line *line, void * /*context*/)
+static void collectLineIntercept(Line &line, divline_t const &traceLos)
 {
-    divline_t const &traceLos = line->map().traceLine();
-    int s1, s2;
-
-    fixed_t lineFromX[2] = { DBL2FIX(line->fromOrigin().x), DBL2FIX(line->fromOrigin().y) };
-    fixed_t lineToX[2]   = { DBL2FIX(  line->toOrigin().x), DBL2FIX(  line->toOrigin().y) };
+    fixed_t lineFromX[2] = { DBL2FIX(line.fromOrigin().x), DBL2FIX(line.fromOrigin().y) };
+    fixed_t lineToX[2]   = { DBL2FIX(  line.toOrigin().x), DBL2FIX(  line.toOrigin().y) };
 
     // Is this line crossed?
     // Avoid precision problems with two routines.
+    int s1, s2;
     if(traceLos.direction[VX] >  FRACUNIT * 16 || traceLos.direction[VY] >  FRACUNIT * 16 ||
        traceLos.direction[VX] < -FRACUNIT * 16 || traceLos.direction[VY] < -FRACUNIT * 16)
     {
@@ -2250,33 +2241,44 @@ static int interceptLinesWorker(Line *line, void * /*context*/)
     }
     else
     {
-        s1 = line->pointOnSide(Vector2d(FIX2FLT(traceLos.origin[VX]),
-                                        FIX2FLT(traceLos.origin[VY]))) < 0;
-        s2 = line->pointOnSide(Vector2d(FIX2FLT(traceLos.origin[VX] + traceLos.direction[VX]),
+        s1 = line.pointOnSide(Vector2d(FIX2FLT(traceLos.origin[VX]),
+                                       FIX2FLT(traceLos.origin[VY]))) < 0;
+        s2 = line.pointOnSide(Vector2d(FIX2FLT(traceLos.origin[VX] + traceLos.direction[VX]),
                                         FIX2FLT(traceLos.origin[VY] + traceLos.direction[VY]))) < 0;
     }
-    if(s1 == s2) return false;
+    if(s1 == s2) return;
 
-    fixed_t lineDirectionX[2] = { DBL2FIX(line->direction().x), DBL2FIX(line->direction().y) };
+    fixed_t lineDirectionX[2] = { DBL2FIX(line.direction().x), DBL2FIX(line.direction().y) };
 
     // On the correct side of the trace origin?
     float distance = FIX2FLT(V2x_Intersection(lineFromX, lineDirectionX,
                                               traceLos.origin, traceLos.direction));
-    if(!(distance < 0))
+    if(distance >= 0)
     {
-        P_AddIntercept(ICPT_LINE, distance, line);
+        P_AddIntercept(ICPT_LINE, distance, &line);
     }
-
-    // Continue iteration.
-    return false;
 }
 
+
+static int collectCellLineInterceptsWorker(Line *line, void * /*context*/)
+{
+    collectLineIntercept(*line, line->map().traceLine());
+    return false; // Continue iteration.
+}
+
+/**
+ * Looks for polyobj lines in the given block that intercept the given trace to
+ * add to the intercepts list. A line is crossed if its endpoints are on opposite
+ * sides of the trace.
+ *
+ * @return  Non-zero if current iteration should stop.
+ */
 static int collectPolyobjLineIntercepts(BlockmapCell const &cell, void *context)
 {
     Blockmap &polyobjBlockmap = *static_cast<Blockmap *>(context);
 
     poiterparams_t iplParm; zap(iplParm);
-    iplParm.callback = interceptLinesWorker;
+    iplParm.callback = collectCellLineInterceptsWorker;
 
     bmappoiterparams_t parm; zap(parm);
     parm.localValidCount = validCount;
@@ -2286,25 +2288,32 @@ static int collectPolyobjLineIntercepts(BlockmapCell const &cell, void *context)
     return polyobjBlockmap.iterate(cell, blockmapCellPolyobjsIterator, &parm);
 }
 
+/**
+ * Looks for lines in the given block that intercept the given trace to add to
+ * the intercepts list. A line is crossed if its endpoints are on opposite sides
+ * of the trace.
+ *
+ * @return  Non-zero if current iteration should stop.
+ */
 static int collectLineIntercepts(BlockmapCell const &cell, void *context)
 {
     Blockmap &lineBlockmap = *static_cast<Blockmap *>(context);
 
     bmapiterparams_t parm; zap(parm);
     parm.localValidCount = validCount;
-    parm.callback        = interceptLinesWorker;
+    parm.callback        = collectCellLineInterceptsWorker;
 
     return lineBlockmap.iterate(cell, blockmapCellLinesIterator, &parm);
 }
 
-static int interceptMobjsWorker(mobj_t *mo, void * /*context*/)
+static void collectMobjIntercept(mobj_t &mobj, divline_t const &traceLos)
 {
-    if(mo->dPlayer && (mo->dPlayer->flags & DDPF_CAMERA))
-        return false; // $democam: ssshh, keep going, we're not here...
+    // Ignore cameras.
+    if(mobj.dPlayer && (mobj.dPlayer->flags & DDPF_CAMERA))
+        return;
 
     // Check a corner to corner crossection for hit.
-    divline_t const &traceLos = Mobj_BspLeafAtOrigin(*mo).map().traceLine();
-    AABoxd const aaBox = Mobj_AABox(*mo);
+    AABoxd const aaBox = Mobj_AABox(mobj);
 
     vec2d_t from, to;
     if((traceLos.direction[VX] ^ traceLos.direction[VY]) > 0)
@@ -2322,7 +2331,7 @@ static int interceptMobjsWorker(mobj_t *mo, void * /*context*/)
 
     // Is this line crossed?
     if(Divline_PointOnSide(&traceLos, from) == Divline_PointOnSide(&traceLos, to))
-        return false;
+        return;
 
     // Calculate interception point.
     divline_t dl;
@@ -2333,13 +2342,16 @@ static int interceptMobjsWorker(mobj_t *mo, void * /*context*/)
     coord_t distance = FIX2FLT(Divline_Intersection(&dl, &traceLos));
 
     // On the correct side of the trace origin?
-    if(!(distance < 0))
+    if(distance >= 0)
     {
-        P_AddIntercept(ICPT_MOBJ, distance, mo);
+        P_AddIntercept(ICPT_MOBJ, distance, &mobj);
     }
+}
 
-    // Continue iteration.
-    return false;
+static int collectCellMobjInterceptsWorker(mobj_t *mobj, void * /*context*/)
+{
+    collectMobjIntercept(*mobj, Mobj_BspLeafAtOrigin(*mobj).map().traceLine());
+    return false; // Continue iteration.
 }
 
 static int collectMobjIntercepts(BlockmapCell const &cell, void *context)
@@ -2348,7 +2360,7 @@ static int collectMobjIntercepts(BlockmapCell const &cell, void *context)
 
     bmapmoiterparams_t parm; zap(parm);
     parm.localValidCount = validCount;
-    parm.callback        = interceptMobjsWorker;
+    parm.callback        = collectCellMobjInterceptsWorker;
 
     return mobjBlockmap.iterate(cell, blockmapCellMobjsIterator, &parm);
 }
@@ -2767,12 +2779,6 @@ void Map::update()
 void Map::worldFrameBegins(World &world, bool resetNextViewer)
 {
     DENG2_ASSERT(&world.map() == this); // Sanity check.
-
-    /// @todo optimize: Use a QBitArray instead.
-    foreach(BspLeaf *bspLeaf, d->bspLeafs)
-    {
-        bspLeaf->markVisible(false);
-    }
 
     // Interpolate the map ready for drawing view(s) of it.
     d->lerpTrackedPlanes(resetNextViewer);

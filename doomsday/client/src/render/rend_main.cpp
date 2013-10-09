@@ -2496,7 +2496,7 @@ static void drawCurrentLeaf()
     BspLeaf *leaf = currentBspLeaf;
 
     // Mark the leaf as visible for this frame.
-    leaf->markVisible();
+    R_ViewerBspLeafMarkVisible(*leaf);
 
     markLeafFrontFacingWalls();
 
@@ -3172,7 +3172,7 @@ static int drawMobjBBox(thinker_t *th, void * /*context*/)
     if(mo == ddPlayers[consolePlayer].shared.mo)
         return false; // Continue iteration.
     // Is it vissible?
-    if(!Mobj_IsLinked(*mo) || !Mobj_BspLeafAtOrigin(*mo).isVisible())
+    if(!Mobj_IsLinked(*mo) || !R_ViewerBspLeafIsVisible(Mobj_BspLeafAtOrigin(*mo)))
         return false; // Continue iteration.
 
     ddouble const distToEye = (eyeOrigin - Mobj_Origin(*mo)).length();

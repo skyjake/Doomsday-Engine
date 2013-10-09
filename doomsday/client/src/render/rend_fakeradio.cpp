@@ -1292,8 +1292,11 @@ void Rend_RadioBspLeafEdges(BspLeaf &bspLeaf)
 {
     DENG_ASSERT(bspLeaf.hasCluster());
 
-    if(!rendFakeRadio || levelFullBright)
-        return;
+    if(!rendFakeRadio) return;
+
+    if(levelFullBright) return;
+
+    if(bspLeaf.shadowLines().isEmpty()) return;
 
     static int doPlaneSize = 0;
     static byte *doPlanes = 0;

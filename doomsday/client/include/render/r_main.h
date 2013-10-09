@@ -161,6 +161,18 @@ void R_ClearViewData(void);
  */
 void R_BeginFrame(void);
 
+/**
+ * Returns @c true iff the BSP leaf is marked as visible for the current frame.
+ * @see markVisible()
+ */
+bool R_ViewerBspLeafIsVisible(BspLeaf const &bspLeaf);
+
+/**
+ * Mark the BSP leaf as visible for the current frame.
+ * @see isVisible()
+ */
+void R_ViewerBspLeafMarkVisible(BspLeaf const &bspLeaf, bool yes = true);
+
 /// @return  Distance in map space units between the lumobj and viewer.
 double R_ViewerLumobjDistance(int idx);
 

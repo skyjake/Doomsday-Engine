@@ -224,9 +224,6 @@ void Rend_RadioInitForMap(Map &map)
      *    shadow edges cross one of the BSP leaf's edges (not parallel),
      *    link the line to the BspLeaf.
      */
-
-    AABoxd bounds;
-
     foreach(Line *line, map.lines())
     {
         if(!Rend_RadioLineCastsShadow(*line)) continue;
@@ -236,14 +233,15 @@ void Rend_RadioInitForMap(Map &map)
         {
             LineSide &side = line->side(i);
 
-            if(!side.hasSector() || !side.hasSections()) continue;
+            if(!side.hasSector()) continue;
+            if(!side.hasSections()) continue;
 
-            Vertex &vtx0 = line->vertex(i);
-            Vertex &vtx1 = line->vertex(i^1);
-            LineOwner &vo0 = line->vertexOwner(i)->next();
-            LineOwner &vo1 = line->vertexOwner(i^1)->prev();
+            Vertex const &vtx0 = line->vertex(i);
+            Vertex const &vtx1 = line->vertex(i^1);
+            LineOwner const &vo0 = line->vertexOwner(i)->next();
+            LineOwner const &vo1 = line->vertexOwner(i^1)->prev();
 
-            V2d_CopyBox(bounds.arvec2, line->aaBox().arvec2);
+            AABoxd bounds = line->aaBox();
 
             // Use the extended points, they are wider than inoffsets.
             Vector2d point = vtx0.origin() + vo0.extendedShadowOffset();

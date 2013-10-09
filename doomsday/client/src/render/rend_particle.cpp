@@ -321,7 +321,7 @@ static int populateSortBuffer(ptcgen_t *gen, void *parameters)
             continue;
 
         // Is the particle's sector visible?
-        if(!pt->bspLeaf->isVisible())
+        if(!R_ViewerBspLeafIsVisible(*pt->bspLeaf))
             continue; // No; this particle can't be seen.
 
         // Don't allow zero distance.
