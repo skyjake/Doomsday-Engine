@@ -33,6 +33,7 @@
 #include "HEdge"
 
 #include "world/blockmap.h"
+#include "world/lineblockmap.h"
 #include "world/map.h"
 #include "world/p_object.h"
 #include "world/p_players.h"
@@ -209,7 +210,7 @@ static void drawBackground(Blockmap const &bmap)
     // using a cell-sized unit coordinate space.
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
-    glScalef(bmap.cellWidth(), bmap.cellHeight(), 1);
+    glScalef(bmap.cellSize(), bmap.cellSize(), 1);
 
     /*
      * Draw the translucent quad which represents the "used" cells.
@@ -304,7 +305,7 @@ static void drawBlockmapInfo(Vector2d const &origin_, Blockmap const &blockmap)
     UI_TextOutEx2(buf, &origin, UI_Color(UIC_TEXT), 1, ALIGN_LEFT, DTF_ONLY_SHADOW);
     origin.y += th;
 
-    dd_snprintf(buf, 80, "Cell dimensions:(%.3f, %.3f)", blockmap.cellWidth(), blockmap.cellHeight());
+    dd_snprintf(buf, 80, "Cell dimensions:(%.3f, %.3f)", blockmap.cellSize(), blockmap.cellSize());
     UI_TextOutEx2(buf, &origin, UI_Color(UIC_TEXT), 1, ALIGN_LEFT, DTF_ONLY_SHADOW);
     origin.y += th;
 
@@ -336,7 +337,7 @@ static void drawBlockmap(Blockmap const &bmap, mobj_t *followMobj,
     BlockmapCell vCell;
 
     BlockmapCell const &dimensions = bmap.dimensions();
-    Vector2d const &cellDimensions = bmap.cellDimensions();
+    Vector2d const cellDimensions = bmap.cellDimensions();
 
     if(followMobj)
     {

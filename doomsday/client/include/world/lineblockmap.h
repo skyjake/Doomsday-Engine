@@ -35,7 +35,11 @@
 class LineBlockmap : public de::Blockmap
 {
 public:
-    LineBlockmap(AABoxd const &bounds, uint cellSize);
+    /**
+     * @param bounds    Map space boundary.
+     * @param cellSize  Width and height of a cell in map space units.
+     */
+    LineBlockmap(AABoxd const &bounds, uint cellSize = 128);
 
     /// @note Assumes @a line is not yet linked!
     void link(Line &line);

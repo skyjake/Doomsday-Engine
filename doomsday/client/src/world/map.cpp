@@ -72,9 +72,6 @@
 
 #include "world/map.h"
 
-/// Size of Blockmap blocks in map units. Must be an integer power of two.
-#define MAPBLOCKUNITS               (128)
-
 // Linkstore is list of pointers gathered when iterating stuff.
 // This is pretty much the only way to avoid *all* potential problems
 // caused by callback routines behaving badly (moving or destroying
@@ -153,11 +150,11 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
         /**
          * Construct a new contact blockmap.
          *
-         * @param bounds     Bounding box of the blockmap.
-         * @param blockSize  Size of each block.
+         * @param bounds    Map space boundary.
+         * @param cellSize  Width and height of a cell in map space units.
          */
-        ContactBlockmap(AABoxd const &bounds, uint blockSize = 128)
-            : Blockmap(bounds, Vector2ui(blockSize, blockSize)),
+        ContactBlockmap(AABoxd const &bounds, uint cellSize = 128)
+            : Blockmap(bounds, cellSize),
               spreadBlocks(width() * height())
         {}
 
@@ -694,7 +691,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
         Vector2d max(bounds.maxX + BLOCKMAP_MARGIN, bounds.maxY + BLOCKMAP_MARGIN);
         AABoxd expandedBounds(min.x, min.y, max.x, max.y);
 
-        lineBlockmap.reset(new LineBlockmap(expandedBounds, MAPBLOCKUNITS));
+        lineBlockmap.reset(new LineBlockmap(expandedBounds));
 
         LOG_INFO("Line blockmap dimensions:")
             << lineBlockmap->dimensions().asText();
@@ -713,7 +710,6 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
     void initMobjBlockmap()
     {
 #define BLOCKMAP_MARGIN      8 // size guardband
-#define CELL_SIZE            MAPBLOCKUNITS
 
         // Setup the blockmap area to enclose the whole map, plus a margin
         // (margin is needed for a map that fits entirely inside one blockmap cell).
@@ -721,12 +717,11 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
         Vector2d max(bounds.maxX + BLOCKMAP_MARGIN, bounds.maxY + BLOCKMAP_MARGIN);
         AABoxd expandedBounds(min.x, min.y, max.x, max.y);
 
-        mobjBlockmap.reset(new Blockmap(expandedBounds, Vector2ui(CELL_SIZE, CELL_SIZE)));
+        mobjBlockmap.reset(new Blockmap(expandedBounds));
 
         LOG_INFO("Mobj blockmap dimensions:")
             << mobjBlockmap->dimensions().asText();
 
-#undef CELL_SIZE
 #undef BLOCKMAP_MARGIN
     }
 
@@ -856,7 +851,6 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
     void initPolyobjBlockmap()
     {
 #define BLOCKMAP_MARGIN      8 // size guardband
-#define CELL_SIZE            MAPBLOCKUNITS
 
         // Setup the blockmap area to enclose the whole map, plus a margin
         // (margin is needed for a map that fits entirely inside one blockmap cell).
@@ -864,11 +858,10 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
         Vector2d max(bounds.maxX + BLOCKMAP_MARGIN, bounds.maxY + BLOCKMAP_MARGIN);
         AABoxd expandedBounds(min.x, min.y, max.x, max.y);
 
-        polyobjBlockmap.reset(new Blockmap(expandedBounds, Vector2ui(CELL_SIZE, CELL_SIZE)));
+        polyobjBlockmap.reset(new Blockmap(expandedBounds));
 
         LOG_INFO("Polyobj blockmap dimensions:") << polyobjBlockmap->dimensions().asText();
 
-#undef CELL_SIZE
 #undef BLOCKMAP_MARGIN
     }
 
@@ -892,7 +885,6 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
     void initBspLeafBlockmap()
     {
 #define BLOCKMAP_MARGIN      8 // size guardband
-#define CELL_SIZE            MAPBLOCKUNITS
 
         // Setup the blockmap area to enclose the whole map, plus a margin
         // (margin is needed for a map that fits entirely inside one blockmap cell).
@@ -900,27 +892,22 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
         Vector2d max(bounds.maxX + BLOCKMAP_MARGIN, bounds.maxY + BLOCKMAP_MARGIN);
         AABoxd expandedBounds(min.x, min.y, max.x, max.y);
 
-        bspLeafBlockmap.reset(new Blockmap(expandedBounds, Vector2ui(CELL_SIZE, CELL_SIZE)));
+        bspLeafBlockmap.reset(new Blockmap(expandedBounds));
 
         LOG_INFO("BSP leaf blockmap dimensions:") << bspLeafBlockmap->dimensions().asText();
 
         // Populate the blockmap.
         foreach(BspLeaf *bspLeaf, bspLeafs)
         {
-            linkBspLeafInBlockmap(*bspLeaf);
+            // BspLeafs without a sector cluster don't get in.
+            if(bspLeaf->hasCluster())
+            {
+                BlockmapCellBlock cellBlock = bspLeafBlockmap->toCellBlock(bspLeaf->poly().aaBox());
+                bspLeafBlockmap->link(cellBlock, bspLeaf);
+            }
         }
 
-#undef CELL_SIZE
 #undef BLOCKMAP_MARGIN
-    }
-
-    void linkBspLeafInBlockmap(BspLeaf &bspLeaf)
-    {
-        // BspLeafs without sector clusters don't get in.
-        if(!bspLeaf.hasCluster()) return;
-
-        BlockmapCellBlock cellBlock = bspLeafBlockmap->toCellBlock(bspLeaf.poly().aaBox());
-        bspLeafBlockmap->link(cellBlock, &bspLeaf);
     }
 
 #ifdef __CLIENT__
@@ -1644,7 +1631,7 @@ Blockmap const &Map::polyobjBlockmap() const
     throw MissingBlockmapError("Map::polyobjBlockmap", "Polyobj blockmap is not initialized");
 }
 
-Blockmap const &Map::lineBlockmap() const
+LineBlockmap const &Map::lineBlockmap() const
 {
     if(!d->lineBlockmap.isNull())
     {
@@ -2128,14 +2115,14 @@ static int traverseCellPath2(Blockmap &bmap, BlockmapCell const &fromCell,
     if(toCell.x > fromCell.x)
     {
         stepDir.x = 1;
-        frac      = from.x / bmap.cellWidth();
+        frac      = from.x / bmap.cellSize();
         frac      = 1 - (frac - int( frac ));
         delta.y   = (to.y - from.y) / de::abs(to.x - from.x);
     }
     else if(toCell.x < fromCell.x)
     {
         stepDir.x = -1;
-        frac      = from.x / bmap.cellWidth();
+        frac      = from.x / bmap.cellSize();
         frac      = (frac - int( frac ));
         delta.y   = (to.y - from.y) / de::abs(to.x - from.x);
     }
@@ -2145,19 +2132,19 @@ static int traverseCellPath2(Blockmap &bmap, BlockmapCell const &fromCell,
         frac      = 1;
         delta.y   = 256;
     }
-    intercept.y = from.y / bmap.cellHeight() + frac * delta.y;
+    intercept.y = from.y / bmap.cellSize() + frac * delta.y;
 
     if(toCell.y > fromCell.y)
     {
         stepDir.y = 1;
-        frac      = from.y / bmap.cellHeight();
+        frac      = from.y / bmap.cellSize();
         frac      = 1 - (frac - int( frac ));
         delta.x   = (to.x - from.x) / de::abs(to.y - from.y);
     }
     else if(toCell.y < fromCell.y)
     {
         stepDir.y = -1;
-        frac      = from.y / bmap.cellHeight();
+        frac      = from.y / bmap.cellSize();
         frac      = frac - int( frac );
         delta.x   = (to.x - from.x) / de::abs(to.y - from.y);
     }
@@ -2167,7 +2154,7 @@ static int traverseCellPath2(Blockmap &bmap, BlockmapCell const &fromCell,
         frac      = 1;
         delta.x   = 256;
     }
-    intercept.x = from.x / bmap.cellWidth() + frac * delta.x;
+    intercept.x = from.x / bmap.cellSize() + frac * delta.x;
 
     /*
      * Step through map cells.
@@ -2233,8 +2220,8 @@ static int traversePath(divline_t &traceLine, Blockmap &bmap,
     // Lines should not be perfectly parallel to a blockmap axis.
     // We honor these so-called fudge factors for compatible behavior
     // with DOOM's algorithm.
-    coord_t dX = (from[VX] - bmap.origin().x) / bmap.cellWidth();
-    coord_t dY = (from[VY] - bmap.origin().y) / bmap.cellHeight();
+    coord_t dX = (from[VX] - bmap.origin().x) / bmap.cellSize();
+    coord_t dY = (from[VY] - bmap.origin().y) / bmap.cellSize();
     if(INRANGE_OF(dX, 0, epsilon)) from[VX] += unitOffset;
     if(INRANGE_OF(dY, 0, epsilon)) from[VY] += unitOffset;
 

@@ -23,7 +23,7 @@
 using namespace de;
 
 LineBlockmap::LineBlockmap(AABoxd const &bounds, uint cellSize)
-    : Blockmap(bounds, Vector2ui(cellSize, cellSize))
+    : Blockmap(bounds, cellSize)
 {}
 
 void LineBlockmap::link(Line &line)

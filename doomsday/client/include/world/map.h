@@ -81,6 +81,8 @@ struct clpolyobj_s;
 
 #endif // __CLIENT__
 
+class LineBlockmap;
+
 namespace de {
 
 class Blockmap;
@@ -357,7 +359,7 @@ public:
     /**
      * Provides access to the line blockmap.
      */
-    Blockmap const &lineBlockmap() const;
+    LineBlockmap const &lineBlockmap() const;
 
     /**
      * Provides access to the polyobj blockmap.

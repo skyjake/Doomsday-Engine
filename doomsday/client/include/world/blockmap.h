@@ -60,20 +60,20 @@ public:
 
 public:
     /**
-     * @param bounds
-     * @param cellDimensions  Dimensions of a cell in map coordinate space units.
+     * @param bounds    Map space boundary.
+     * @param cellSize  Width and height of a cell in map space units.
      */
-    Blockmap(AABoxd const &bounds, Vector2ui const &cellDimensions);
+    Blockmap(AABoxd const &bounds, uint cellSize = 128);
 
     virtual ~Blockmap();
 
     /**
-     * Returns the origin of the blockmap in the map coordinate space.
+     * Returns the origin of the blockmap in map space.
      */
     Vector2d origin() const;
 
     /**
-     * Returns the bounds of the blockmap in the map coordinate space.
+     * Returns the bounds of the blockmap in map space.
      */
     AABoxd const &bounds() const;
 
@@ -93,19 +93,14 @@ public:
     inline uint height() const { return dimensions().y; }
 
     /**
-     * Returns the dimension of a cell in map coordinate space units.
+     * Returns the size of a cell (width and height) in map space units.
      */
-    Vector2d const &cellDimensions() const;
+    uint cellSize() const;
 
     /**
-     * Returns the width of a cell in map coordinate space units.
+     * Utility function which returns the dimension of a cell in map space units.
      */
-    inline coord_t cellWidth() const { return cellDimensions().x; }
-
-    /**
-     * Returns the height of a cell in map coordinate space units.
-     */
-    inline coord_t cellHeight() const { return cellDimensions().y; }
+    Vector2d cellDimensions() const { return Vector2d(cellSize(), cellSize()); }
 
     /**
      * Utility function which returns the linear index of the specified cell.

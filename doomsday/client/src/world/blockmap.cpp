@@ -204,18 +204,18 @@ DENG2_PIMPL(Blockmap)
     };
     typedef QList<Node> Nodes;
 
-    AABoxd bounds;           ///< Map space units.
-    Vector2d cellDimensions; ///< Map space units.
-    Cell dimensions;         ///< Dimensions of the indexed space, in cells.
+    AABoxd bounds;    ///< Map space units.
+    uint cellSize;    ///< Map space units.
+    Cell dimensions;  ///< Dimensions of the indexed space, in cells.
 
-    Nodes nodes;             ///< Quadtree nodes. The first being the root.
+    Nodes nodes;      ///< Quadtree nodes. The first being the root.
 
-    Instance(Public *i, AABoxd const &bounds, Vector2ui const &cellDimensions_)
+    Instance(Public *i, AABoxd const &bounds, uint cellSize)
         : Base(i),
           bounds(bounds),
-          cellDimensions(Vector2d(cellDimensions_.x, cellDimensions_.y)),
-          dimensions(Vector2ui(de::ceil((bounds.maxX - bounds.minX) / cellDimensions_.x),
-                               de::ceil((bounds.maxY - bounds.minY) / cellDimensions_.y)))
+          cellSize(cellSize),
+          dimensions(Vector2ui(de::ceil((bounds.maxX - bounds.minX) / cellSize),
+                               de::ceil((bounds.maxY - bounds.minY) / cellSize)))
     {
         // Quadtree must subdivide the space equally into 1x1 unit cells.
         newNode(Cell(0, 0), ceilPow2(de::max(dimensions.x, dimensions.y)));
@@ -249,7 +249,7 @@ DENG2_PIMPL(Blockmap)
             x = bounds.maxX - 1;
             didClip = true;
         }
-        return uint((x - bounds.minX) / cellDimensions.x);
+        return uint((x - bounds.minX) / cellSize);
     }
 
     /**
@@ -275,7 +275,7 @@ DENG2_PIMPL(Blockmap)
             y = bounds.maxY - 1;
             didClip = true;
         }
-        return uint((y - bounds.minY) / cellDimensions.y);
+        return uint((y - bounds.minY) / cellSize);
     }
 
     void clipCell(Cell &cell, bool &didClip)
@@ -393,8 +393,8 @@ DENG2_PIMPL(Blockmap)
     }
 };
 
-Blockmap::Blockmap(AABoxd const &bounds, Vector2ui const &cellDimensions)
-    : d(new Instance(this, bounds, cellDimensions))
+Blockmap::Blockmap(AABoxd const &bounds, uint cellSize)
+    : d(new Instance(this, bounds, cellSize))
 {}
 
 Blockmap::~Blockmap()
@@ -415,9 +415,9 @@ BlockmapCell const &Blockmap::dimensions() const
     return d->dimensions;
 }
 
-Vector2d const &Blockmap::cellDimensions() const
+uint Blockmap::cellSize() const
 {
-    return d->cellDimensions;
+    return d->cellSize;
 }
 
 int Blockmap::toCellIndex(uint cellX, uint cellY) const
