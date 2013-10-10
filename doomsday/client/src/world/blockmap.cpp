@@ -466,10 +466,7 @@ bool Blockmap::link(CellBlock const &cellBlock_, void *elem)
     for(cell.y = cellBlock.min.y; cell.y < cellBlock.max.y; ++cell.y)
     for(cell.x = cellBlock.min.x; cell.x < cellBlock.max.x; ++cell.x)
     {
-        Instance::Node *node = d->findLeaf(cell, true/* can create*/);
-        if(!node) continue;
-
-        if(CellData *cellData = node->leafData)
+        if(CellData *cellData = d->cellData(cell))
         {
             if(cellData->link(elem))
             {
@@ -505,10 +502,7 @@ bool Blockmap::unlink(CellBlock const &cellBlock_, void *elem)
     for(cell.y = cellBlock.min.y; cell.y < cellBlock.max.y; ++cell.y)
     for(cell.x = cellBlock.min.x; cell.x < cellBlock.max.x; ++cell.x)
     {
-        Instance::Node *node = d->findLeaf(cell);
-        if(!node) continue;
-
-        if(CellData *cellData = node->leafData)
+        if(CellData *cellData = d->cellData(cell))
         {
             if(cellData->unlink(elem))
             {
