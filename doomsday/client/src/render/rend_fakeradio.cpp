@@ -20,7 +20,7 @@
 
 #include <cstring>
 
-#include <de/vector1.h>
+#include <QBitArray>
 
 #include <de/Vector>
 
@@ -117,15 +117,16 @@ void Rend_RadioUpdateForLineSide(LineSide &side)
 /**
  * Set the vertex colors in the rendpoly.
  */
-static void setRendpolyColor(Vector4f *rcolors, uint num, float darkness)
+static void setRendpolyColor(Vector4f *colorCoords, uint num, float darkness)
 {
-    DENG_ASSERT(rcolors != 0);
-    darkness = de::clamp(0.f, darkness, 1.f);
+    DENG_ASSERT(colorCoords != 0);
+    // Shadows are black.
+    Vector4f const shadowColor(0, 0, 0, de::clamp(0.f, darkness, 1.f));
 
-    for(uint i = 0; i < num; ++i)
+    Vector4f *colorIt = colorCoords;
+    for(uint i = 0; i < num; ++i, colorIt++)
     {
-        // Shadows are black.
-        rcolors[i] = Vector4f(0, 0, 0, darkness);
+        *colorIt = shadowColor;
     }
 }
 
@@ -1290,16 +1291,10 @@ static void writeShadowSection(int planeIndex, LineSide &side, float shadowDark)
  */
 void Rend_RadioBspLeafEdges(BspLeaf &bspLeaf)
 {
-    DENG_ASSERT(bspLeaf.hasCluster());
-
     if(!rendFakeRadio) return;
-
     if(levelFullBright) return;
 
     if(bspLeaf.shadowLines().isEmpty()) return;
-
-    static int doPlaneSize = 0;
-    static byte *doPlanes = 0;
 
     SectorCluster &cluster = bspLeaf.cluster();
     float sectorlight = cluster.sector().lightLevel();
@@ -1312,36 +1307,21 @@ void Rend_RadioBspLeafEdges(BspLeaf &bspLeaf)
     // Any need to continue?
     if(shadowDark < .0001f) return;
 
-    Face const &face = bspLeaf.poly();
-    Vector3f eyeToSurface(vOrigin[VX] - face.center().x,
-                          vOrigin[VZ] - face.center().y);
-
-    // Do we need to enlarge the size of the doPlanes array?
-    if(cluster.visPlaneCount() > doPlaneSize)
-    {
-        if(!doPlaneSize)
-            doPlaneSize = 2;
-        else
-            doPlaneSize *= 2;
-
-        doPlanes = (byte *) Z_Realloc(doPlanes, doPlaneSize, PU_APPSTATIC);
-    }
-
-    std::memset(doPlanes, 0, doPlaneSize);
-
-    // See if any of this BspLeaf's planes will get shadows.
     bool workToDo = false;
+
+    // Flag planes in the cluster which face the viewer.
+    QBitArray planesVisible(cluster.visPlaneCount());
+    Vector3f eyeToSurface(Vector2d(vOrigin[VX], vOrigin[VZ]) - bspLeaf.poly().center());
     for(int pln = 0; pln < cluster.visPlaneCount(); ++pln)
     {
         Plane const &plane = cluster.visPlane(pln);
 
         eyeToSurface.z = vOrigin[VY] - plane.heightSmoothed();
-
-        // Don't bother with planes facing away from the camera.
-        if(eyeToSurface.dot(plane.surface().normal()) < 0) continue;
-
-        doPlanes[pln] = true;
-        workToDo = true;
+        if(eyeToSurface.dot(plane.surface().normal()) >= 0)
+        {
+            planesVisible.setBit(pln);
+            workToDo = true;
+        }
     }
 
     if(!workToDo) return;
@@ -1352,19 +1332,18 @@ void Rend_RadioBspLeafEdges(BspLeaf &bspLeaf)
     {
         // Already rendered during the current frame? We only want to
         // render each shadow once per frame.
-        if(side->shadowVisCount() == frameCount)
-            continue;
-
-        for(int pln = 0; pln < cluster.visPlaneCount(); ++pln)
+        if(side->shadowVisCount() != frameCount)
         {
-            if(doPlanes[pln])
+            side->setShadowVisCount(frameCount);
+
+            for(int pln = 0; pln < cluster.visPlaneCount(); ++pln)
             {
-                writeShadowSection(pln, *side, shadowDark);
+                if(planesVisible.testBit(pln))
+                {
+                    writeShadowSection(pln, *side, shadowDark);
+                }
             }
         }
-
-        // Mark it rendered for this frame.
-        side->setShadowVisCount(frameCount);
     }
 }
 

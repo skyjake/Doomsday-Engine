@@ -163,13 +163,15 @@ void R_BeginFrame(void);
 
 /**
  * Returns @c true iff the BSP leaf is marked as visible for the current frame.
- * @see markVisible()
+ *
+ * @see R_ViewerBspLeafMarkVisible()
  */
 bool R_ViewerBspLeafIsVisible(BspLeaf const &bspLeaf);
 
 /**
  * Mark the BSP leaf as visible for the current frame.
- * @see isVisible()
+ *
+ * @see R_ViewerBspLeafIsVisible()
  */
 void R_ViewerBspLeafMarkVisible(BspLeaf const &bspLeaf, bool yes = true);
 
