@@ -561,12 +561,12 @@ int Blockmap::iterate(Cell const &cell, int (*callback) (void *, void *),
     return false; // Continue iteration.
 }
 
-int Blockmap::iterate(CellBlock const &cellBlock_, int (*callback) (void *, void *),
+int Blockmap::iterate(AABoxd const &region, int (*callback) (void *, void *),
                       void *context) const
 {
     if(!callback) return false; // Huh?
 
-    CellBlock cellBlock = cellBlock_;
+    CellBlock cellBlock = toCellBlock(region);
     d->clipBlock(cellBlock);
 
     Cell cell;

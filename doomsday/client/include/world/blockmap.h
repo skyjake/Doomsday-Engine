@@ -148,7 +148,7 @@ public:
 
     int iterate(Cell const &cell, int (*callback) (void *elem, void *context), void *context = 0) const;
 
-    int iterate(CellBlock const &cellBlock, int (*callback) (void *elem, void *context), void *context = 0) const;
+    int iterate(AABoxd const &region, int (*callback) (void *elem, void *context), void *context = 0) const;
 
     /**
      * Render a visual for this gridmap to assist in debugging (etc...).
