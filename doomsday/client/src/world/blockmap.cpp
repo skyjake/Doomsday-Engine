@@ -466,7 +466,7 @@ bool Blockmap::link(CellBlock const &cellBlock_, void *elem)
     for(cell.y = cellBlock.min.y; cell.y < cellBlock.max.y; ++cell.y)
     for(cell.x = cellBlock.min.x; cell.x < cellBlock.max.x; ++cell.x)
     {
-        if(CellData *cellData = d->cellData(cell))
+        if(CellData *cellData = d->cellData(cell, true))
         {
             if(cellData->link(elem))
             {
