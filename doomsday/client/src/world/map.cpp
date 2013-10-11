@@ -2050,7 +2050,7 @@ int Map::lineBoxIterator(AABoxd const &box, int flags,
 
 // Clipping already applied above, so we don't need to check it again...
 static int traverseCellPath2(Blockmap &bmap, Vector2d const &from, Vector2d const &to,
-    int (*callback) (Blockmap &, BlockmapCell const &, void *), void *context)
+    int (*callback) (void *, void *), void *context)
 {
     BlockmapCell const fromCell = bmap.toCell(from);
     BlockmapCell const toCell   = bmap.toCell(to);
@@ -2107,7 +2107,7 @@ static int traverseCellPath2(Blockmap &bmap, Vector2d const &from, Vector2d cons
     for(int pass = 0; pass < 64; ++pass) // Prevent a round off error leading us into
                                          // an infinite loop...
     {
-        if(int result = callback(bmap, cell, context))
+        if(int result = bmap.iterate(cell, callback, context))
             return result; // Early out.
 
         if(cell == toCell) break;
@@ -2129,7 +2129,7 @@ static int traverseCellPath2(Blockmap &bmap, Vector2d const &from, Vector2d cons
 
 static int traversePath(divline_t &traceLine, Blockmap &bmap,
     Vector2d const &from_, Vector2d const &to_,
-    int (*callback) (Blockmap &, BlockmapCell const &, void *), void *context = 0)
+    int (*callback) (void *, void *), void *context = 0)
 {
     // Constant terms implicitly defined by DOOM's original version of this
     // algorithm (we must honor these fudge factors for compatibility).
@@ -2247,46 +2247,6 @@ static int collectCellLineInterceptsWorker(Line *line, void *context)
     return false; // Continue iteration.
 }
 
-/**
- * Looks for polyobj lines in the given block that intercept the given trace to
- * add to the intercepts list. A line is crossed if its endpoints are on opposite
- * sides of the trace.
- *
- * @return  Non-zero if current iteration should stop.
- */
-static int collectPolyobjLineInterceptsWorker(Blockmap &polyobjBlockmap,
-    BlockmapCell const &cell, void *context)
-{
-    polyobjlineiterator_params_t pliParm; zap(pliParm);
-    pliParm.callback = collectCellLineInterceptsWorker;
-    pliParm.context  = context;
-
-    blockmapcellpolyobjsiterator_params_t parm; zap(parm);
-    parm.localValidCount = validCount;
-    parm.callback        = polyobjLineIterator;
-    parm.context         = &pliParm;
-
-    return polyobjBlockmap.iterate(cell, blockmapCellPolyobjsIterator, &parm);
-}
-
-/**
- * Looks for lines in the given block that intercept the given trace to add to
- * the intercepts list. A line is crossed if its endpoints are on opposite sides
- * of the trace.
- *
- * @return  Non-zero if current iteration should stop.
- */
-static int collectLineInterceptsWorker(Blockmap &lineBlockmap,
-    BlockmapCell const &cell, void *context)
-{
-    blockmapcelllinesiterator_params_t parm; zap(parm);
-    parm.localValidCount = validCount;
-    parm.callback        = collectCellLineInterceptsWorker;
-    parm.context         = context;
-
-    return lineBlockmap.iterate(cell, blockmapCellLinesIterator, &parm);
-}
-
 static void collectMobjIntercept(mobj_t &mobj, divline_t const &traceLos)
 {
     // Ignore cameras.
@@ -2335,17 +2295,6 @@ static int collectCellMobjInterceptsWorker(mobj_t *mobj, void *context)
     return false; // Continue iteration.
 }
 
-static int collectMobjInterceptsWorker(Blockmap &mobjBlockmap,
-    BlockmapCell const &cell, void *context)
-{
-    blockmapcellmobjsiterator_params_t parm; zap(parm);
-    parm.localValidCount = validCount;
-    parm.callback        = collectCellMobjInterceptsWorker;
-    parm.context         = context;
-
-    return mobjBlockmap.iterate(cell, blockmapCellMobjsIterator, &parm);
-}
-
 int Map::pathTraverse(Vector2d const &from, Vector2d const &to, int flags,
     traverser_t callback, void *context)
 {
@@ -2358,17 +2307,39 @@ int Map::pathTraverse(Vector2d const &from, Vector2d const &to, int flags,
     {
         if(!d->polyobjs.isEmpty())
         {
+            polyobjlineiterator_params_t pliParm; zap(pliParm);
+            pliParm.callback = collectCellLineInterceptsWorker;
+            pliParm.context  = &d->traceLine;
+
+            blockmapcellpolyobjsiterator_params_t parm; zap(parm);
+            parm.localValidCount = validCount;
+            parm.callback        = polyobjLineIterator;
+            parm.context         = &pliParm;
+
             traversePath(d->traceLine, *d->polyobjBlockmap, from, to,
-                         collectPolyobjLineInterceptsWorker, &d->traceLine);
+                         blockmapCellPolyobjsIterator, &parm);
         }
 
-        traversePath(d->traceLine, *d->lineBlockmap, from, to,
-                     collectLineInterceptsWorker, &d->traceLine);
+        {
+            blockmapcelllinesiterator_params_t parm; zap(parm);
+            parm.localValidCount = validCount;
+            parm.callback        = collectCellLineInterceptsWorker;
+            parm.context         = &d->traceLine;
+
+            traversePath(d->traceLine, *d->lineBlockmap, from, to,
+                         blockmapCellLinesIterator, &parm);
+        }
     }
+
     if(flags & PT_ADDMOBJS)
     {
+        blockmapcellmobjsiterator_params_t parm; zap(parm);
+        parm.localValidCount = validCount;
+        parm.callback        = collectCellMobjInterceptsWorker;
+        parm.context         = &d->traceLine;
+
         traversePath(d->traceLine, *d->mobjBlockmap, from, to,
-                     collectMobjInterceptsWorker, &d->traceLine);
+                     blockmapCellMobjsIterator, &parm);
     }
 
     // Step #2: Process sorted intercepts.
