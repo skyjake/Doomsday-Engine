@@ -451,7 +451,10 @@ public:
         Polyobj **poly, Plane **plane, Surface **surface) const;
 
     int mobjBoxIterator(AABoxd const &box,
-        int (*callback) (struct mobj_s *, void *), void *context = 0) const;
+        int (*callback) (struct mobj_s *mobj, void *context), void *context = 0) const;
+
+    int mobjPathIterator(Vector2d const &from, Vector2d const &to,
+        int (*callback) (struct mobj_s *mobj, void *context), void *context = 0) const;
 
     /**
      * Lines and Polyobj lines (note polyobj lines are iterated first).
@@ -461,24 +464,30 @@ public:
      * equal to this will be skipped over (can be used to avoid processing
      * a line multiple times during complex / non-linear traversals.
      *
-     * @param flags  @ref lineBoxIteratorFlags
+     * @param flags  @ref lineIteratorFlags
      */
     int lineBoxIterator(AABoxd const &box, int flags,
-        int (*callback) (Line *, void *), void *context = 0) const;
+        int (*callback) (Line *line, void *context), void *context = 0) const;
 
     /// @copydoc lineBoxIterator()
     inline int lineBoxIterator(AABoxd const &box,
-        int (*callback) (Line *, void *), void *context = 0) const
+        int (*callback) (Line *line, void *context), void *context = 0) const
     {
-        return lineBoxIterator(box, LBF_ALL, callback, context);
+        return lineBoxIterator(box, LIF_ALL, callback, context);
     }
 
+    /**
+     * @param flags  @ref lineIteratorFlags
+     */
+    int linePathIterator(Vector2d const &from, Vector2d const &to, int flags,
+        int (*callback) (Line *line, void *context), void *context = 0) const;
+
     int bspLeafBoxIterator(AABoxd const &box, Sector *sector,
-        int (*callback) (BspLeaf *, void *), void *context = 0) const;
+        int (*callback) (BspLeaf *bspLeaf, void *context), void *context = 0) const;
 
     /// @copydoc bspLeafsBoxIterator()
     inline int bspLeafBoxIterator(AABoxd const &box,
-        int (*callback) (BspLeaf *, void *), void *context = 0) const
+        int (*callback) (BspLeaf *bspLeaf, void *context), void *context = 0) const
     {
         return bspLeafBoxIterator(box, 0, callback, context);
     }
@@ -490,7 +499,8 @@ public:
      * multiple times during complex / non-linear traversals.
      */
     int polyobjBoxIterator(AABoxd const &box,
-        int (*callback) (struct polyobj_s *, void *), void *context = 0) const;
+        int (*callback) (struct polyobj_s *polyobj, void *context),
+        void *context = 0) const;
 
     /**
      * The callback function will be called once for each line that crosses
@@ -506,10 +516,10 @@ public:
      * above or under the sector.
      */
     int mobjTouchedSectorIterator(struct mobj_s *mo,
-        int (*callback) (Sector *, void *), void *context = 0) const;
+        int (*callback) (Sector *sector, void *context), void *context = 0) const;
 
     int lineTouchingMobjIterator(Line *line,
-        int (*callback) (struct mobj_s *, void *), void *context = 0) const;
+        int (*callback) (struct mobj_s *mobj, void *context), void *context = 0) const;
 
     /**
      * Increment validCount before using this. 'func' is called for each mobj
@@ -520,29 +530,21 @@ public:
      * a bunch of LineMobjs iterations.)
      */
     int sectorTouchingMobjIterator(Sector *sector,
-        int (*callback) (struct mobj_s *, void *), void *context = 0) const;
-
-    /**
-     * Trace a line between @a from and @a to, making a callback for each
-     * interceptable object linked within Blockmap cells which cover the path
-     * this defines.
-     */
-    int pathTraverse(de::Vector2d const &from, de::Vector2d const &to, int flags,
-                     traverser_t callback, void *context = 0);
+        int (*callback) (struct mobj_s *mobj, void *context), void *context = 0) const;
 
     /**
      * Retrieve an immutable copy of the LOS trace line state.
      *
      * @todo Map should not own this data.
      */
-    divline_t const &traceLine() const;
+    divline_t &traceLine() const;
 
     /**
      * Retrieve an immutable copy of the LOS TraceOpening state.
      *
      * @todo Map should not own this data.
      */
-    TraceOpening const &traceOpening() const;
+    TraceOpening &traceOpening() const;
 
     /**
      * Update the TraceOpening state for according to the opening defined by the
@@ -675,7 +677,7 @@ public:
      *
      * @note This result is not cached. May return @c 0 if no bias sources exist.
      */
-    BiasSource *biasSourceNear(de::Vector3d const &point) const;
+    BiasSource *biasSourceNear(Vector3d const &point) const;
 
     /**
      * Lookup the unique index for the given bias @a source.

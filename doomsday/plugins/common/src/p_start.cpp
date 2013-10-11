@@ -1164,7 +1164,7 @@ static int turnMobjToNearestLine(thinker_t *th, void *context)
 
     VALIDCOUNT++;
 
-    Line_BoxIterator(&aaBox, LBF_SECTOR, PIT_FindNearestFacingLine, &params);
+    Line_BoxIterator(&aaBox, LIF_SECTOR, PIT_FindNearestFacingLine, &params);
 
     if(params.line)
     {
@@ -1206,7 +1206,7 @@ static int moveMobjOutOfNearbyLines(thinker_t *th, void *paramaters)
 
     VALIDCOUNT++;
 
-    Line_BoxIterator(&aaBox, LBF_SECTOR, unstuckMobjInLine, &params);
+    Line_BoxIterator(&aaBox, LIF_SECTOR, unstuckMobjInLine, &params);
 
     if(!FEQUAL(mo->origin[VX], params.pos[VX]) || !FEQUAL(mo->origin[VY], params.pos[VY]))
     {

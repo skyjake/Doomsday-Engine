@@ -95,15 +95,15 @@ struct intercept_s;
 ///@}
 
 /**
- * @defgroup lineBoxIteratorFlags Line Box Iterator Flags
+ * @defgroup lineIteratorFlags Line Iterator Flags
  * @ingroup apiFlags world
  */
 ///@{
-#define LBF_SECTOR          0x1 ///< Process map lines defining sectors
-#define LBF_POLYOBJ         0x2 ///< Process map lines defining polyobjs
+#define LIF_SECTOR          0x1 ///< Process map lines defining sectors
+#define LIF_POLYOBJ         0x2 ///< Process map lines defining polyobjs
 
 /// Process all map line types.
-#define LBF_ALL             LBF_SECTOR | LBF_POLYOBJ
+#define LIF_ALL             LIF_SECTOR | LIF_POLYOBJ
 ///@}
 
 /**

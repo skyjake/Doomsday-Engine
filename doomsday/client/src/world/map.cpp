@@ -452,7 +452,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
                 scanRegion.maxX = line->aaBox().maxX + bsp::DIST_EPSILON;
             }
             validCount++;
-            self.lineBoxIterator(scanRegion, LBF_SECTOR, testForWindowEffectWorker, &p);
+            self.lineBoxIterator(scanRegion, LIF_SECTOR, testForWindowEffectWorker, &p);
 
             if(p.backOpen && p.frontOpen && line->frontSectorPtr() == p.backOpen)
             {
@@ -1368,12 +1368,12 @@ Map::Polyobjs const &Map::polyobjs() const
     return d->polyobjs;
 }
 
-divline_t const &Map::traceLine() const
+divline_t &Map::traceLine() const
 {
     return d->traceLine;
 }
 
-TraceOpening const &Map::traceOpening() const
+TraceOpening &Map::traceOpening() const
 {
     return d->traceOpening;
 }
@@ -1628,10 +1628,26 @@ int Map::mobjBoxIterator(AABoxd const &box, int (*callback) (mobj_t *, void *),
         parm.callback        = callback;
         parm.context         = context;
 
-        return d->mobjBlockmap->iterate(box, blockmapCellMobjsIterator,  &parm);
+        return d->mobjBlockmap->iterate(box, blockmapCellMobjsIterator, &parm);
     }
     /// @throw MissingBlockmapError  The mobj blockmap is not yet initialized.
     throw MissingBlockmapError("Map::mobjBoxIterator", "Mobj blockmap is not initialized");
+}
+
+int Map::mobjPathIterator(Vector2d const &from, Vector2d const &to,
+    int (*callback)(mobj_t *, void *), void *context) const
+{
+    if(!d->mobjBlockmap.isNull())
+    {
+        blockmapcellmobjsiterator_params_t parm; zap(parm);
+        parm.localValidCount = validCount;
+        parm.callback        = callback;
+        parm.context         = context;
+
+        return d->mobjBlockmap->iterate(from, to, blockmapCellMobjsIterator, &parm);
+    }
+    /// @throw MissingBlockmapError  The mobj blockmap is not yet initialized.
+    throw MissingBlockmapError("Map::mobjPathIterator", "Mobj blockmap is not initialized");
 }
 
 struct blockmapcelllinesiterator_params_t
@@ -2010,27 +2026,27 @@ int Map::lineBoxIterator(AABoxd const &box, int flags,
     int (*callback) (Line *, void *), void *context) const
 {
     // Process polyobj lines?
-    if((flags & LBF_POLYOBJ) && polyobjCount())
+    if((flags & LIF_POLYOBJ) && polyobjCount())
     {
         if(d->polyobjBlockmap.isNull())
             /// @throw MissingBlockmapError  The polyobj blockmap is not yet initialized.
             throw MissingBlockmapError("Map::lineBoxIterator", "Polyobj blockmap is not initialized");
 
-        polyobjlineiterator_params_t poItParm; zap(poItParm);
-        poItParm.callback = callback;
-        poItParm.context  = context;
+        polyobjlineiterator_params_t pliParm; zap(pliParm);
+        pliParm.callback = callback;
+        pliParm.context  = context;
 
         blockmapcellpolyobjsiterator_params_t parm; zap(parm);
         parm.localValidCount = validCount;
         parm.callback        = polyobjLineIterator;
-        parm.context         = &poItParm;
+        parm.context         = &pliParm;
 
         if(int result = d->polyobjBlockmap->iterate(box, blockmapCellPolyobjsIterator, &parm))
             return result;
     }
 
     // Process sector lines?
-    if(flags & LBF_SECTOR)
+    if(flags & LIF_SECTOR)
     {
         if(d->lineBlockmap.isNull())
             /// @throw MissingBlockmapError  The line blockmap is not yet initialized.
@@ -2048,145 +2064,46 @@ int Map::lineBoxIterator(AABoxd const &box, int flags,
     return 0; // Continue iteration.
 }
 
-static void collectLineIntercept(Line &line, divline_t const &traceLos)
+int Map::linePathIterator(Vector2d const &from, Vector2d const &to, int flags,
+    int (*callback)(Line *, void *), void *context) const
 {
-    fixed_t lineFromX[2] = { DBL2FIX(line.fromOrigin().x), DBL2FIX(line.fromOrigin().y) };
-    fixed_t lineToX[2]   = { DBL2FIX(  line.toOrigin().x), DBL2FIX(  line.toOrigin().y) };
-
-    // Is this line crossed?
-    // Avoid precision problems with two routines.
-    int s1, s2;
-    if(traceLos.direction[VX] >  FRACUNIT * 16 || traceLos.direction[VY] >  FRACUNIT * 16 ||
-       traceLos.direction[VX] < -FRACUNIT * 16 || traceLos.direction[VY] < -FRACUNIT * 16)
+    // Process polyobj lines?
+    if((flags & LIF_POLYOBJ) && polyobjCount())
     {
-        s1 = V2x_PointOnLineSide(lineFromX, traceLos.origin, traceLos.direction);
-        s2 = V2x_PointOnLineSide(lineToX,   traceLos.origin, traceLos.direction);
-    }
-    else
-    {
-        s1 = line.pointOnSide(Vector2d(FIX2FLT(traceLos.origin[VX]),
-                                       FIX2FLT(traceLos.origin[VY]))) < 0;
-        s2 = line.pointOnSide(Vector2d(FIX2FLT(traceLos.origin[VX] + traceLos.direction[VX]),
-                                       FIX2FLT(traceLos.origin[VY] + traceLos.direction[VY]))) < 0;
-    }
-    if(s1 == s2) return;
+        if(d->polyobjBlockmap.isNull())
+            /// @throw MissingBlockmapError  The polyobj blockmap is not yet initialized.
+            throw MissingBlockmapError("Map::linePathIterator", "Polyobj blockmap is not initialized");
 
-    fixed_t lineDirectionX[2] = { DBL2FIX(line.direction().x), DBL2FIX(line.direction().y) };
+        polyobjlineiterator_params_t pliParm; zap(pliParm);
+        pliParm.callback = callback;
+        pliParm.context  = context;
 
-    // On the correct side of the trace origin?
-    float distance = FIX2FLT(V2x_Intersection(lineFromX, lineDirectionX,
-                                              traceLos.origin, traceLos.direction));
-    if(distance >= 0)
-    {
-        P_AddIntercept(ICPT_LINE, distance, &line);
-    }
-}
-
-static int collectCellLineInterceptsWorker(Line *line, void *context)
-{
-    collectLineIntercept(*line, *static_cast<divline_t *>(context));
-    return false; // Continue iteration.
-}
-
-static void collectMobjIntercept(mobj_t &mobj, divline_t const &traceLos)
-{
-    // Ignore cameras.
-    if(mobj.dPlayer && (mobj.dPlayer->flags & DDPF_CAMERA))
-        return;
-
-    // Check a corner to corner crossection for hit.
-    AABoxd const aaBox = Mobj_AABox(mobj);
-
-    vec2d_t from, to;
-    if((traceLos.direction[VX] ^ traceLos.direction[VY]) > 0)
-    {
-        // \ Slope
-        V2d_Set(from, aaBox.minX, aaBox.maxY);
-        V2d_Set(to,   aaBox.maxX, aaBox.minY);
-    }
-    else
-    {
-        // / Slope
-        V2d_Set(from, aaBox.minX, aaBox.minY);
-        V2d_Set(to,   aaBox.maxX, aaBox.maxY);
-    }
-
-    // Is this line crossed?
-    if(Divline_PointOnSide(&traceLos, from) == Divline_PointOnSide(&traceLos, to))
-        return;
-
-    // Calculate interception point.
-    divline_t dl;
-    dl.origin[VX] = DBL2FIX(from[VX]);
-    dl.origin[VY] = DBL2FIX(from[VY]);
-    dl.direction[VX] = DBL2FIX(to[VX] - from[VX]);
-    dl.direction[VY] = DBL2FIX(to[VY] - from[VY]);
-    coord_t distance = FIX2FLT(Divline_Intersection(&dl, &traceLos));
-
-    // On the correct side of the trace origin?
-    if(distance >= 0)
-    {
-        P_AddIntercept(ICPT_MOBJ, distance, &mobj);
-    }
-}
-
-static int collectCellMobjInterceptsWorker(mobj_t *mobj, void *context)
-{
-    collectMobjIntercept(*mobj, *static_cast<divline_t *>(context));
-    return false; // Continue iteration.
-}
-
-int Map::pathTraverse(Vector2d const &from, Vector2d const &to, int flags,
-    traverser_t callback, void *context)
-{
-    // A new trace begins.
-    d->traceLine.origin[VX] = FLT2FIX(from.x);
-    d->traceLine.origin[VY] = FLT2FIX(from.y);
-    d->traceLine.direction[VX] = FLT2FIX(to.x - from.x);
-    d->traceLine.direction[VY] = FLT2FIX(to.y - from.y);
-
-    P_ClearIntercepts();
-    validCount++;
-
-    // Step #1: Collect intercepts.
-    if(flags & PT_ADDLINES)
-    {
-        if(!d->polyobjs.isEmpty())
-        {
-            polyobjlineiterator_params_t pliParm; zap(pliParm);
-            pliParm.callback = collectCellLineInterceptsWorker;
-            pliParm.context  = &d->traceLine;
-
-            blockmapcellpolyobjsiterator_params_t parm; zap(parm);
-            parm.localValidCount = validCount;
-            parm.callback        = polyobjLineIterator;
-            parm.context         = &pliParm;
-
-            d->polyobjBlockmap->iterate(from, to, blockmapCellPolyobjsIterator, &parm);
-        }
-
-        {
-            blockmapcelllinesiterator_params_t parm; zap(parm);
-            parm.localValidCount = validCount;
-            parm.callback        = collectCellLineInterceptsWorker;
-            parm.context         = &d->traceLine;
-
-            d->lineBlockmap->iterate(from, to, blockmapCellLinesIterator, &parm);
-        }
-    }
-
-    if(flags & PT_ADDMOBJS)
-    {
-        blockmapcellmobjsiterator_params_t parm; zap(parm);
+        blockmapcellpolyobjsiterator_params_t parm; zap(parm);
         parm.localValidCount = validCount;
-        parm.callback        = collectCellMobjInterceptsWorker;
-        parm.context         = &d->traceLine;
+        parm.callback        = polyobjLineIterator;
+        parm.context         = &pliParm;
 
-        d->mobjBlockmap->iterate(from, to, blockmapCellMobjsIterator, &parm);
+        if(int result = d->polyobjBlockmap->iterate(from, to, blockmapCellPolyobjsIterator, &parm))
+            return result;
     }
 
-    // Step #2: Process sorted intercepts.
-    return P_TraverseIntercepts(callback, context);
+    // Process sector lines?
+    if((flags & LIF_SECTOR))
+    {
+        if(d->lineBlockmap.isNull())
+            /// @throw MissingBlockmapError  The line blockmap is not yet initialized.
+            throw MissingBlockmapError("Map::linePathIterator", "Line blockmap is not initialized");
+
+        blockmapcelllinesiterator_params_t parm; zap(parm);
+        parm.localValidCount = validCount;
+        parm.callback        = callback;
+        parm.context         = context;
+
+        if(int result = d->lineBlockmap->iterate(from, to, blockmapCellLinesIterator, &parm))
+            return result;
+    }
+
+    return 0; // Continue iteration.
 }
 
 BspLeaf &Map::bspLeafAt(Vector2d const &point) const

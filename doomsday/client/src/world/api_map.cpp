@@ -45,6 +45,7 @@
 
 #ifdef __CLIENT__
 #  include "render/lightgrid.h"
+#  include "render/r_main.h" // validCount
 #endif
 
 using namespace de;
@@ -1624,12 +1625,128 @@ DENG_EXTERN_C int BspLeaf_BoxIterator(AABoxd const *box, Sector *sector,
     return App_World().map().bspLeafBoxIterator(*box, sector, callback, context);
 }
 
+static void collectLineIntercept(Line &line, divline_t const &traceLos)
+{
+    fixed_t lineFromX[2] = { DBL2FIX(line.fromOrigin().x), DBL2FIX(line.fromOrigin().y) };
+    fixed_t lineToX[2]   = { DBL2FIX(  line.toOrigin().x), DBL2FIX(  line.toOrigin().y) };
+
+    // Is this line crossed?
+    // Avoid precision problems with two routines.
+    int s1, s2;
+    if(traceLos.direction[VX] >  FRACUNIT * 16 || traceLos.direction[VY] >  FRACUNIT * 16 ||
+       traceLos.direction[VX] < -FRACUNIT * 16 || traceLos.direction[VY] < -FRACUNIT * 16)
+    {
+        s1 = V2x_PointOnLineSide(lineFromX, traceLos.origin, traceLos.direction);
+        s2 = V2x_PointOnLineSide(lineToX,   traceLos.origin, traceLos.direction);
+    }
+    else
+    {
+        s1 = line.pointOnSide(Vector2d(FIX2FLT(traceLos.origin[VX]),
+                                       FIX2FLT(traceLos.origin[VY]))) < 0;
+        s2 = line.pointOnSide(Vector2d(FIX2FLT(traceLos.origin[VX] + traceLos.direction[VX]),
+                                       FIX2FLT(traceLos.origin[VY] + traceLos.direction[VY]))) < 0;
+    }
+    if(s1 == s2) return;
+
+    fixed_t lineDirectionX[2] = { DBL2FIX(line.direction().x), DBL2FIX(line.direction().y) };
+
+    // On the correct side of the trace origin?
+    float distance = FIX2FLT(V2x_Intersection(lineFromX, lineDirectionX,
+                                              traceLos.origin, traceLos.direction));
+    if(distance >= 0)
+    {
+        P_AddIntercept(ICPT_LINE, distance, &line);
+    }
+}
+
+static int collectCellLineInterceptsWorker(Line *line, void *context)
+{
+    collectLineIntercept(*line, *static_cast<divline_t *>(context));
+    return false; // Continue iteration.
+}
+
+static void collectMobjIntercept(mobj_t &mobj, divline_t const &traceLos)
+{
+    // Ignore cameras.
+    if(mobj.dPlayer && (mobj.dPlayer->flags & DDPF_CAMERA))
+        return;
+
+    // Check a corner to corner crossection for hit.
+    AABoxd const aaBox = Mobj_AABox(mobj);
+
+    vec2d_t from, to;
+    if((traceLos.direction[VX] ^ traceLos.direction[VY]) > 0)
+    {
+        // \ Slope
+        V2d_Set(from, aaBox.minX, aaBox.maxY);
+        V2d_Set(to,   aaBox.maxX, aaBox.minY);
+    }
+    else
+    {
+        // / Slope
+        V2d_Set(from, aaBox.minX, aaBox.minY);
+        V2d_Set(to,   aaBox.maxX, aaBox.maxY);
+    }
+
+    // Is this line crossed?
+    if(Divline_PointOnSide(&traceLos, from) == Divline_PointOnSide(&traceLos, to))
+        return;
+
+    // Calculate interception point.
+    divline_t dl;
+    dl.origin[VX] = DBL2FIX(from[VX]);
+    dl.origin[VY] = DBL2FIX(from[VY]);
+    dl.direction[VX] = DBL2FIX(to[VX] - from[VX]);
+    dl.direction[VY] = DBL2FIX(to[VY] - from[VY]);
+    coord_t distance = FIX2FLT(Divline_Intersection(&dl, &traceLos));
+
+    // On the correct side of the trace origin?
+    if(distance >= 0)
+    {
+        P_AddIntercept(ICPT_MOBJ, distance, &mobj);
+    }
+}
+
+static int collectCellMobjInterceptsWorker(mobj_t *mobj, void *context)
+{
+    collectMobjIntercept(*mobj, *static_cast<divline_t *>(context));
+    return false; // Continue iteration.
+}
+
+static int traverseMapPath(Map &map, Vector2d const &from, Vector2d const &to,
+    int flags, traverser_t callback, void *context = 0)
+{
+    // A new trace begins.
+    divline_t &traceLine = map.traceLine();
+
+    traceLine.origin[VX] = FLT2FIX(from.x);
+    traceLine.origin[VY] = FLT2FIX(from.y);
+    traceLine.direction[VX] = FLT2FIX(to.x - from.x);
+    traceLine.direction[VY] = FLT2FIX(to.y - from.y);
+
+    P_ClearIntercepts();
+    validCount++;
+
+    // Step #1: Collect intercepts.
+    if(flags & PT_ADDLINES)
+    {
+        map.linePathIterator(from, to, LIF_ALL, collectCellLineInterceptsWorker, &traceLine);
+    }
+    if(flags & PT_ADDMOBJS)
+    {
+        map.mobjPathIterator(from, to, collectCellMobjInterceptsWorker, &traceLine);
+    }
+
+    // Step #2: Process sorted intercepts.
+    return P_TraverseIntercepts(callback, context);
+}
+
 #undef P_PathTraverse2
 DENG_EXTERN_C int P_PathTraverse2(const_pvec2d_t from, const_pvec2d_t to,
     int flags, traverser_t callback, void *context)
 {
     if(!App_World().hasMap()) return false; // Continue iteration.
-    return App_World().map().pathTraverse(from, to, flags, callback, context);
+    return traverseMapPath(App_World().map(), from, to, flags, callback, context);
 }
 
 #undef P_PathTraverse
@@ -1637,7 +1754,7 @@ DENG_EXTERN_C int P_PathTraverse(const_pvec2d_t from, const_pvec2d_t to,
     int flags, traverser_t callback)
 {
     if(!App_World().hasMap()) return false; // Continue iteration.
-    return App_World().map().pathTraverse(from, to, flags, callback);
+    return traverseMapPath(App_World().map(), from, to, flags, callback);
 }
 
 #undef P_PathXYTraverse2
@@ -1645,8 +1762,9 @@ DENG_EXTERN_C int P_PathXYTraverse2(coord_t fromX, coord_t fromY,
     coord_t toX, coord_t toY, int flags, traverser_t callback, void *context)
 {
     if(!App_World().hasMap()) return false; // Continue iteration.
-    return App_World().map().pathTraverse(Vector2d(fromX, fromY), Vector2d(toX, toY),
-                                          flags, callback, context);
+    return traverseMapPath(App_World().map(),
+                           Vector2d(fromX, fromY), Vector2d(toX, toY),
+                           flags, callback, context);
 }
 
 #undef P_PathXYTraverse
@@ -1654,8 +1772,9 @@ DENG_EXTERN_C int P_PathXYTraverse(coord_t fromX, coord_t fromY, coord_t toX, co
     traverser_t callback)
 {
     if(!App_World().hasMap()) return false; // Continue iteration.
-    return App_World().map().pathTraverse(Vector2d(fromX, fromY), Vector2d(toX, toY),
-                                          flags, callback);
+    return traverseMapPath(App_World().map(),
+                           Vector2d(fromX, fromY), Vector2d(toX, toY),
+                           flags, callback);
 }
 
 #undef P_CheckLineSight
