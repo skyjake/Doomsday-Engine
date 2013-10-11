@@ -1678,7 +1678,6 @@ static int blockmapCellLinesIterator(void *mapElement, void *context)
 struct blockmapcellbspleafsiterator_params_t
 {
     AABoxd const *box;
-    Sector *sector;
     int localValidCount;
     int (*callback) (BspLeaf *, void *);
     void *context;
@@ -1694,31 +1693,29 @@ static int blockmapCellBspLeafsIterator(void *object, void *context)
         // This BspLeaf has now been processed for the current iteration.
         bspLeaf->setValidCount(parm.localValidCount);
 
-        // Check the sector restriction.
-        bool ok = !(parm.sector && bspLeaf->sectorPtr() != parm.sector);
-
         // Check the bounds.
         AABoxd const &leafAABox = bspLeaf->poly().aaBox();
-        if(parm.box &&
-           (leafAABox.maxX < parm.box->minX ||
-            leafAABox.minX > parm.box->maxX ||
-            leafAABox.minY > parm.box->maxY ||
-            leafAABox.maxY < parm.box->minY))
-            ok = false;
-
-        if(ok)
+        if(parm.box)
         {
-            // Action the callback.
-            if(int result = parm.callback(bspLeaf, parm.context))
-                return result; // Stop iteration.
+            if(leafAABox.maxX < parm.box->minX ||
+               leafAABox.minX > parm.box->maxX ||
+               leafAABox.minY > parm.box->maxY ||
+               leafAABox.maxY < parm.box->minY)
+            {
+                return false; // Continue iteration.
+            }
         }
+
+        // Action the callback.
+        if(int result = parm.callback(bspLeaf, parm.context))
+            return result; // Stop iteration.
     }
 
     return false; // Continue iteration.
 }
 
-int Map::bspLeafBoxIterator(AABoxd const &box, Sector *sector,
-    int (*callback) (BspLeaf *, void *), void *context) const
+int Map::bspLeafBoxIterator(AABoxd const &box, int (*callback) (BspLeaf *, void *),
+                            void *context) const
 {
     if(!d->bspLeafBlockmap.isNull())
     {
@@ -1730,7 +1727,6 @@ int Map::bspLeafBoxIterator(AABoxd const &box, Sector *sector,
         parm.localValidCount = localValidCount;
         parm.callback        = callback;
         parm.context         = context;
-        parm.sector          = sector;
         parm.box             = &box;
 
         return d->bspLeafBlockmap->iterate(box, blockmapCellBspLeafsIterator, &parm);
@@ -1896,7 +1892,7 @@ int Map::unlink(mobj_t &mo)
     return links;
 }
 
-void Map::link(mobj_t &mo, byte flags)
+void Map::link(mobj_t &mo, int flags)
 {
     BspLeaf &bspLeafAtOrigin = bspLeafAt_FixedPrecision(Mobj_Origin(mo));
 
@@ -2088,7 +2084,7 @@ int Map::linePathIterator(Vector2d const &from, Vector2d const &to, int flags,
     }
 
     // Process sector lines?
-    if((flags & LIF_SECTOR))
+    if(flags & LIF_SECTOR)
     {
         if(d->lineBlockmap.isNull())
             /// @throw MissingBlockmapError  The line blockmap is not yet initialized.

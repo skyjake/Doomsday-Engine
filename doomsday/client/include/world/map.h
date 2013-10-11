@@ -404,7 +404,7 @@ public:
      * the BspLeaf pointer. Can be called without unlinking first.
      * Should be called AFTER mobj translation to (re-)insert the mobj.
      */
-    void link(struct mobj_s &mobj, byte flags);
+    void link(struct mobj_s &mobj, int flags);
 
     /**
      * Link the specified @a polyobj in any internal data structures for
@@ -489,15 +489,8 @@ public:
         return linePathIterator(from, to, LIF_ALL, callback, context);
     }
 
-    int bspLeafBoxIterator(AABoxd const &box, Sector *sector,
+    int bspLeafBoxIterator(AABoxd const &box,
         int (*callback) (BspLeaf *bspLeaf, void *context), void *context = 0) const;
-
-    /// @copydoc bspLeafsBoxIterator()
-    inline int bspLeafBoxIterator(AABoxd const &box,
-        int (*callback) (BspLeaf *bspLeaf, void *context), void *context = 0) const
-    {
-        return bspLeafBoxIterator(box, 0, callback, context);
-    }
 
     /**
      * @note validCount should be incremented before calling this to begin a

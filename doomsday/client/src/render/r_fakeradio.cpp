@@ -194,7 +194,11 @@ void Rend_RadioUpdateVertexShadowOffsets(Vertex &vtx)
 
 static int linkShadowLineToBspLeafWorker(BspLeaf *bspLeaf, void *context)
 {
-    bspLeaf->addShadowLine(*static_cast<LineSide *>(context));
+    LineSide &side = *static_cast<LineSide *>(context);
+    if(bspLeaf->sectorPtr() == side.sectorPtr())
+    {
+        bspLeaf->addShadowLine(side);
+    }
     return false; // Continue iteration.
 }
 
@@ -252,8 +256,7 @@ void Rend_RadioInitForMap(Map &map)
 
             // Link the shadowing line to all the BspLeafs whose axis-aligned
             // bounding box intersects 'bounds'.
-            map.bspLeafBoxIterator(bounds, side.sectorPtr(),
-                                   linkShadowLineToBspLeafWorker, &side);
+            map.bspLeafBoxIterator(bounds, linkShadowLineToBspLeafWorker, &side);
         }
     }
 

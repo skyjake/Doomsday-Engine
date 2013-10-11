@@ -1618,11 +1618,11 @@ DENG_EXTERN_C int Line_BoxIterator(AABoxd const *box, int flags,
 }
 
 #undef BspLeaf_BoxIterator
-DENG_EXTERN_C int BspLeaf_BoxIterator(AABoxd const *box, Sector *sector,
+DENG_EXTERN_C int BspLeaf_BoxIterator(AABoxd const *box,
     int (*callback) (BspLeaf *, void *), void *context)
 {
     if(!box || !App_World().hasMap()) return false; // Continue iteration.
-    return App_World().map().bspLeafBoxIterator(*box, sector, callback, context);
+    return App_World().map().bspLeafBoxIterator(*box, callback, context);
 }
 
 static void collectLineIntercept(Line &line, divline_t const &traceLos)
@@ -1698,7 +1698,7 @@ static void collectMobjIntercept(mobj_t &mobj, divline_t const &traceLos)
     dl.origin[VY] = DBL2FIX(from[VY]);
     dl.direction[VX] = DBL2FIX(to[VX] - from[VX]);
     dl.direction[VY] = DBL2FIX(to[VY] - from[VY]);
-    coord_t distance = FIX2FLT(Divline_Intersection(&dl, &traceLos));
+    float distance = FIX2FLT(Divline_Intersection(&dl, &traceLos));
 
     // On the correct side of the trace origin?
     if(distance >= 0)

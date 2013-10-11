@@ -710,7 +710,7 @@ static void drawMapLines(uiwidget_t *obj, int objType, boolean addToLists)
     {
         AABoxd aaBox;
         UIAutomap_PVisibleAABounds(obj, &aaBox.minX, &aaBox.maxX, &aaBox.minY, &aaBox.maxY);
-        BspLeaf_BoxIterator(&aaBox, NULL, drawMapLinesForBspLeafWorker, obj);
+        BspLeaf_BoxIterator(&aaBox, drawMapLinesForBspLeafWorker, obj);
     }
     else
     {

@@ -353,7 +353,7 @@ DENG_API_TYPEDEF(Map)
      */
     void            (*PO_SetCallback)(void (*func)(struct mobj_s *, void *, void *));
 
-    int             (*BL_BoxIterator)(AABoxd const *box, Sector *sector, int (*callback) (BspLeaf *, void *), void *context);
+    int             (*BL_BoxIterator)(AABoxd const *box, int (*callback) (BspLeaf *, void *), void *context);
 
     // Traversers
 
