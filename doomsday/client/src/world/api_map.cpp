@@ -43,9 +43,9 @@
 #include "world/world.h"
 #include "BspLeaf"
 
+#include "render/r_main.h" // validCount
 #ifdef __CLIENT__
 #  include "render/lightgrid.h"
-#  include "render/r_main.h" // validCount
 #endif
 
 using namespace de;
@@ -1730,7 +1730,7 @@ static int traverseMapPath(Map &map, Vector2d const &from, Vector2d const &to,
     // Step #1: Collect intercepts.
     if(flags & PT_ADDLINES)
     {
-        map.linePathIterator(from, to, LIF_ALL, collectCellLineInterceptsWorker, &traceLine);
+        map.linePathIterator(from, to, collectCellLineInterceptsWorker, &traceLine);
     }
     if(flags & PT_ADDMOBJS)
     {

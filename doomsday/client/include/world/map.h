@@ -482,6 +482,13 @@ public:
     int linePathIterator(Vector2d const &from, Vector2d const &to, int flags,
         int (*callback) (Line *line, void *context), void *context = 0) const;
 
+    /// @copydoc linePathIterator()
+    inline int linePathIterator(Vector2d const &from, Vector2d const &to,
+        int (*callback) (Line *line, void *context), void *context = 0) const
+    {
+        return linePathIterator(from, to, LIF_ALL, callback, context);
+    }
+
     int bspLeafBoxIterator(AABoxd const &box, Sector *sector,
         int (*callback) (BspLeaf *bspLeaf, void *context), void *context = 0) const;
 
