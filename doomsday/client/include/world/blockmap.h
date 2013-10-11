@@ -146,9 +146,27 @@ public:
 
     void unlinkAll();
 
+    /**
+     * Iterate over all elements in the specified @a cell.
+     */
     int iterate(Cell const &cell, int (*callback) (void *elem, void *context), void *context = 0) const;
 
+    /**
+     * Iterate over all elements in the specified map space @a region.
+     */
     int iterate(AABoxd const &region, int (*callback) (void *elem, void *context), void *context = 0) const;
+
+    /**
+     * Iterate over all elements in cells which intercept the line specified by
+     * the two map space points @a from and @a to. Note that if an element is
+     * processed/visited it does @em not mean that the line actually intercepts
+     * the element. Further testing between the line and the geometry of the map
+     * element is necessary if this is a requirement.
+     *
+     * @param from  Map space point defining the origin of the line.
+     * @param to    Map space point defining the destination of the line.
+     */
+    int iterate(Vector2d const &from, Vector2d const &to, int (*callback) (void *elem, void *context), void *context = 0) const;
 
     /**
      * Render a visual for this gridmap to assist in debugging (etc...).

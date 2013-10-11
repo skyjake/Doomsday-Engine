@@ -2,6 +2,7 @@
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 1993-1996 by id Software, Inc.
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -21,6 +22,7 @@
 #include <cmath>
 
 #include <de/memoryzone.h>
+#include <de/vector1.h>
 
 #include <de/Vector>
 
@@ -575,6 +577,157 @@ int Blockmap::iterate(AABoxd const &region, int (*callback) (void *, void *),
     {
         if(int result = iterate(cell, callback, context))
             return result;
+    }
+
+    return false; // Continue iteration.
+}
+
+int Blockmap::iterate(Vector2d const &from_, Vector2d const &to_,
+                      int (*callback) (void *, void *), void *context) const
+{
+    // We may need to clip and/or adjust these points.
+    Vector2d from = from_;
+    Vector2d to   = to_;
+
+    // Abort if the trace originates from outside the blockmap.
+    if(!(from.x >= d->bounds.minX && from.x <= d->bounds.maxX &&
+         from.y >= d->bounds.minY && from.y <= d->bounds.maxY))
+    {
+        return false;
+    }
+
+    // Check the easy case of a trace line completely outside the blockmap.
+    if((from.x < d->bounds.minX && to.x < d->bounds.minX) ||
+       (from.x > d->bounds.maxX && to.x > d->bounds.maxX) ||
+       (from.y < d->bounds.minY && to.y < d->bounds.minY) ||
+       (from.y > d->bounds.maxY && to.y > d->bounds.maxY))
+    {
+        return false;
+    }
+
+    /*
+     * Trace lines should not be perfectly parallel to a blockmap axis. This is
+     * because lines in the line blockmap are only linked in the blocks on one
+     * side of the axis parallel line. Note that the same logic is applied to all
+     * of the blockmaps and not just the line blockmap.
+     */
+    coord_t const epsilon = FIX2FLT(FRACUNIT);
+    coord_t const offset  = FIX2FLT(FRACUNIT);
+
+    Vector2d const delta = (to - origin()) / d->cellSize;
+    if(de::fequal(delta.x, 0, epsilon)) to.x += offset;
+    if(de::fequal(delta.y, 0, epsilon)) to.y += offset;
+
+    /*
+     * It is possible that one or both points are outside the blockmap. Clip the
+     * trace so that is wholly within the AABB of the blockmap (note we would have
+     * already abandoned if the origin of the trace is outside).
+     */
+    if(!(to.x >= d->bounds.minX && to.x <= d->bounds.maxX &&
+         to.y >= d->bounds.minY && to.y <= d->bounds.maxY))
+    {
+        // 'to' is outside the blockmap.
+        vec2d_t fromV1, toV1, bmapBounds[4], point;
+        coord_t ab;
+
+        V2d_Set(fromV1, from.x, from.y);
+        V2d_Set(toV1, to.x, to.y);
+
+        V2d_Set(bmapBounds[0], d->bounds.minX, d->bounds.minY);
+        V2d_Set(bmapBounds[1], d->bounds.minX, d->bounds.maxY);
+        V2d_Set(bmapBounds[2], d->bounds.maxX, d->bounds.maxY);
+        V2d_Set(bmapBounds[3], d->bounds.maxX, d->bounds.minY);
+
+        ab = V2d_Intercept(fromV1, toV1, bmapBounds[0], bmapBounds[1], point);
+        if(ab >= 0 && ab <= 1)
+            V2d_Copy(toV1, point);
+
+        ab = V2d_Intercept(fromV1, toV1, bmapBounds[1], bmapBounds[2], point);
+        if(ab >= 0 && ab <= 1)
+            V2d_Copy(toV1, point);
+
+        ab = V2d_Intercept(fromV1, toV1, bmapBounds[2], bmapBounds[3], point);
+        if(ab >= 0 && ab <= 1)
+            V2d_Copy(toV1, point);
+
+        ab = V2d_Intercept(fromV1, toV1, bmapBounds[3], bmapBounds[0], point);
+        if(ab >= 0 && ab <= 1)
+            V2d_Copy(toV1, point);
+
+        from = Vector2d(fromV1);
+        to   = Vector2d(toV1);
+    }
+
+    BlockmapCell const originCell = toCell(from);
+    BlockmapCell const destCell   = toCell(to);
+
+    // Determine the starting point in blockmap space (preserving the fractional part).
+    Vector2d intercept = (from - origin()) / d->cellSize;
+
+    // Determine the step deltas.
+    Vector2i cellStep;
+    Vector2d interceptStep;
+    Vector2d frac;
+    if(destCell.x == originCell.x)
+    {
+        cellStep.x      = 0;
+        interceptStep.y = 256;
+        frac.y          = 1;
+    }
+    else if(destCell.x > originCell.x)
+    {
+        cellStep.x      = 1;
+        interceptStep.y = (to.y - from.y) / de::abs(to.x - from.x);
+        frac.y          = 1 - (intercept.x - int( intercept.x ));
+    }
+    else // toCell.x < fromCell.x
+    {
+        cellStep.x      = -1;
+        interceptStep.y = (to.y - from.y) / de::abs(to.x - from.x);
+        frac.y          = intercept.x - int( intercept.x );
+    }
+
+    if(destCell.y == originCell.y)
+    {
+        cellStep.y      = 0;
+        interceptStep.x = 256;
+        frac.x          = 1;
+    }
+    else if(destCell.y > originCell.y)
+    {
+        cellStep.y      = 1;
+        interceptStep.x = (to.x - from.x) / de::abs(to.y - from.y);
+        frac.x          = 1 - (intercept.y - int( intercept.y ));
+    }
+    else // toCell.y < fromCell.y
+    {
+        cellStep.y      = -1;
+        interceptStep.x = (to.x - from.x) / de::abs(to.y - from.y);
+        frac.x          = intercept.y - int( intercept.y );
+    }
+
+    intercept += frac * interceptStep;
+
+    // Walk the cells of the blockmap.
+    BlockmapCell cell = originCell;
+    for(int pass = 0; pass < 64; ++pass) // Prevent a round off error leading us into
+                                         // an infinite loop...
+    {
+        if(int result = iterate(cell, callback, context))
+            return result; // Early out.
+
+        if(cell == destCell) break;
+
+        if(cell.y == uint( intercept.y ))
+        {
+            cell.x      += cellStep.x;
+            intercept.y += interceptStep.y;
+        }
+        else if(cell.x == uint( intercept.x ))
+        {
+            cell.y      += cellStep.y;
+            intercept.x += interceptStep.x;
+        }
     }
 
     return false; // Continue iteration.

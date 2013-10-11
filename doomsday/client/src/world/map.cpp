@@ -2048,165 +2048,6 @@ int Map::lineBoxIterator(AABoxd const &box, int flags,
     return 0; // Continue iteration.
 }
 
-// Clipping already applied above, so we don't need to check it again...
-static int traverseCellPath2(Blockmap &bmap, Vector2d const &from, Vector2d const &to,
-    int (*callback) (void *, void *), void *context)
-{
-    BlockmapCell const fromCell = bmap.toCell(from);
-    BlockmapCell const toCell   = bmap.toCell(to);
-
-    // Determine the starting point in blockmap space (preserving the fractional part).
-    Vector2d intercept = (from - bmap.origin()) / bmap.cellSize();
-
-    // Determine the step deltas.
-    Vector2i cellStep;
-    Vector2d interceptStep;
-    Vector2d frac;
-    if(toCell.x == fromCell.x)
-    {
-        cellStep.x      = 0;
-        interceptStep.y = 256;
-        frac.y          = 1;
-    }
-    else if(toCell.x > fromCell.x)
-    {
-        cellStep.x      = 1;
-        interceptStep.y = (to.y - from.y) / de::abs(to.x - from.x);
-        frac.y          = 1 - (intercept.x - int( intercept.x ));
-    }
-    else // toCell.x < fromCell.x
-    {
-        cellStep.x      = -1;
-        interceptStep.y = (to.y - from.y) / de::abs(to.x - from.x);
-        frac.y          = intercept.x - int( intercept.x );
-    }
-
-    if(toCell.y == fromCell.y)
-    {
-        cellStep.y      = 0;
-        interceptStep.x = 256;
-        frac.x          = 1;
-    }
-    else if(toCell.y > fromCell.y)
-    {
-        cellStep.y      = 1;
-        interceptStep.x = (to.x - from.x) / de::abs(to.y - from.y);
-        frac.x          = 1 - (intercept.y - int( intercept.y ));
-    }
-    else // toCell.y < fromCell.y
-    {
-        cellStep.y      = -1;
-        interceptStep.x = (to.x - from.x) / de::abs(to.y - from.y);
-        frac.x          = intercept.y - int( intercept.y );
-    }
-
-    intercept += frac * interceptStep;
-
-    // Walk the cells of the blockmap.
-    BlockmapCell cell = fromCell;
-    for(int pass = 0; pass < 64; ++pass) // Prevent a round off error leading us into
-                                         // an infinite loop...
-    {
-        if(int result = bmap.iterate(cell, callback, context))
-            return result; // Early out.
-
-        if(cell == toCell) break;
-
-        if(cell.y == uint( intercept.y ))
-        {
-            cell.x      += cellStep.x;
-            intercept.y += interceptStep.y;
-        }
-        else if(cell.x == uint( intercept.x ))
-        {
-            cell.y      += cellStep.y;
-            intercept.x += interceptStep.x;
-        }
-    }
-
-    return false; // Continue iteration.
-}
-
-static int traversePath(divline_t &traceLine, Blockmap &bmap,
-    Vector2d const &from_, Vector2d const &to_,
-    int (*callback) (void *, void *), void *context = 0)
-{
-    // Constant terms implicitly defined by DOOM's original version of this
-    // algorithm (we must honor these fudge factors for compatibility).
-    coord_t const epsilon    = FIX2FLT(FRACUNIT);
-    coord_t const unitOffset = FIX2FLT(FRACUNIT);
-
-    // We may need to clip and/or fudge these points.
-    vec2d_t from; V2d_Set(from, from_.x, from_.y);
-    vec2d_t to;   V2d_Set(to, to_.x, to_.y);
-
-    if(!(from[VX] >= bmap.bounds().minX && from[VX] <= bmap.bounds().maxX &&
-         from[VY] >= bmap.bounds().minY && from[VY] <= bmap.bounds().maxY))
-    {
-        // 'From' is outside the blockmap (really? very unusual...)
-        return true;
-    }
-
-    // Check the easy case of a path that lies completely outside the bmap.
-    if((from[VX] < bmap.bounds().minX && to[VX] < bmap.bounds().minX) ||
-       (from[VX] > bmap.bounds().maxX && to[VX] > bmap.bounds().maxX) ||
-       (from[VY] < bmap.bounds().minY && to[VY] < bmap.bounds().minY) ||
-       (from[VY] > bmap.bounds().maxY && to[VY] > bmap.bounds().maxY))
-    {
-        // Nothing intercepts outside the blockmap!
-        return true;
-    }
-
-    // Lines should not be perfectly parallel to a blockmap axis.
-    // We honor these so-called fudge factors for compatible behavior
-    // with DOOM's algorithm.
-    coord_t dX = (from[VX] - bmap.origin().x) / bmap.cellSize();
-    coord_t dY = (from[VY] - bmap.origin().y) / bmap.cellSize();
-    if(INRANGE_OF(dX, 0, epsilon)) from[VX] += unitOffset;
-    if(INRANGE_OF(dY, 0, epsilon)) from[VY] += unitOffset;
-
-    traceLine.origin[VX] = FLT2FIX(from[VX]);
-    traceLine.origin[VY] = FLT2FIX(from[VY]);
-    traceLine.direction[VX] = FLT2FIX(to[VX] - from[VX]);
-    traceLine.direction[VY] = FLT2FIX(to[VY] - from[VY]);
-
-    /*
-     * It is possible that one or both points are outside the blockmap.
-     * Clip path so that 'to' is within the AABB of the blockmap (note we
-     * would have already abandoned if 'from' lay outside..
-     */
-    if(!(to[VX] >= bmap.bounds().minX && to[VX] <= bmap.bounds().maxX &&
-         to[VY] >= bmap.bounds().minY && to[VY] <= bmap.bounds().maxY))
-    {
-        // 'to' is outside the blockmap.
-        vec2d_t bmapBounds[4], point;
-        coord_t ab;
-
-        V2d_Set(bmapBounds[0], bmap.bounds().minX, bmap.bounds().minY);
-        V2d_Set(bmapBounds[1], bmap.bounds().minX, bmap.bounds().maxY);
-        V2d_Set(bmapBounds[2], bmap.bounds().maxX, bmap.bounds().maxY);
-        V2d_Set(bmapBounds[3], bmap.bounds().maxX, bmap.bounds().minY);
-
-        ab = V2d_Intercept(from, to, bmapBounds[0], bmapBounds[1], point);
-        if(ab >= 0 && ab <= 1)
-            V2d_Copy(to, point);
-
-        ab = V2d_Intercept(from, to, bmapBounds[1], bmapBounds[2], point);
-        if(ab >= 0 && ab <= 1)
-            V2d_Copy(to, point);
-
-        ab = V2d_Intercept(from, to, bmapBounds[2], bmapBounds[3], point);
-        if(ab >= 0 && ab <= 1)
-            V2d_Copy(to, point);
-
-        ab = V2d_Intercept(from, to, bmapBounds[3], bmapBounds[0], point);
-        if(ab >= 0 && ab <= 1)
-            V2d_Copy(to, point);
-    }
-
-    return traverseCellPath2(bmap, from, to, callback, context);
-}
-
 static void collectLineIntercept(Line &line, divline_t const &traceLos)
 {
     fixed_t lineFromX[2] = { DBL2FIX(line.fromOrigin().x), DBL2FIX(line.fromOrigin().y) };
@@ -2298,7 +2139,12 @@ static int collectCellMobjInterceptsWorker(mobj_t *mobj, void *context)
 int Map::pathTraverse(Vector2d const &from, Vector2d const &to, int flags,
     traverser_t callback, void *context)
 {
-    // A new intercept trace begins...
+    // A new trace begins.
+    d->traceLine.origin[VX] = FLT2FIX(from.x);
+    d->traceLine.origin[VY] = FLT2FIX(from.y);
+    d->traceLine.direction[VX] = FLT2FIX(to.x - from.x);
+    d->traceLine.direction[VY] = FLT2FIX(to.y - from.y);
+
     P_ClearIntercepts();
     validCount++;
 
@@ -2316,8 +2162,7 @@ int Map::pathTraverse(Vector2d const &from, Vector2d const &to, int flags,
             parm.callback        = polyobjLineIterator;
             parm.context         = &pliParm;
 
-            traversePath(d->traceLine, *d->polyobjBlockmap, from, to,
-                         blockmapCellPolyobjsIterator, &parm);
+            d->polyobjBlockmap->iterate(from, to, blockmapCellPolyobjsIterator, &parm);
         }
 
         {
@@ -2326,8 +2171,7 @@ int Map::pathTraverse(Vector2d const &from, Vector2d const &to, int flags,
             parm.callback        = collectCellLineInterceptsWorker;
             parm.context         = &d->traceLine;
 
-            traversePath(d->traceLine, *d->lineBlockmap, from, to,
-                         blockmapCellLinesIterator, &parm);
+            d->lineBlockmap->iterate(from, to, blockmapCellLinesIterator, &parm);
         }
     }
 
@@ -2338,8 +2182,7 @@ int Map::pathTraverse(Vector2d const &from, Vector2d const &to, int flags,
         parm.callback        = collectCellMobjInterceptsWorker;
         parm.context         = &d->traceLine;
 
-        traversePath(d->traceLine, *d->mobjBlockmap, from, to,
-                     blockmapCellMobjsIterator, &parm);
+        d->mobjBlockmap->iterate(from, to, blockmapCellMobjsIterator, &parm);
     }
 
     // Step #2: Process sorted intercepts.
