@@ -1734,7 +1734,7 @@ int Map::mobjTouchedLineIterator(mobj_t *mo, int (*callback) (Line *, void *),
         for(nodeindex_t nix = tn[mo->lineRoot].next; nix != mo->lineRoot;
             nix = tn[nix].next)
         {
-            linkStore << reinterpret_cast<Line *>(tn[nix].ptr);
+            linkStore.append(reinterpret_cast<Line *>(tn[nix].ptr));
         }
 
         foreach(Line *line, linkStore)
@@ -1754,7 +1754,7 @@ int Map::mobjTouchedSectorIterator(mobj_t *mo, int (*callback) (Sector *, void *
 
     // Always process the mobj's own sector first.
     Sector &ownSec = Mobj_BspLeafAtOrigin(*mo).sector();
-    linkStore << &ownSec;
+    linkStore.append(&ownSec);
     ownSec.setValidCount(validCount);
 
     // Any good lines around here?
@@ -1772,8 +1772,8 @@ int Map::mobjTouchedSectorIterator(mobj_t *mo, int (*callback) (Sector *, void *
             Sector &frontSec = ld->frontSector();
             if(frontSec.validCount() != validCount)
             {
-                linkStore << &frontSec;
                 frontSec.setValidCount(validCount);
+                linkStore.append(&frontSec);
             }
 
             // And then the back.
@@ -1783,8 +1783,8 @@ int Map::mobjTouchedSectorIterator(mobj_t *mo, int (*callback) (Sector *, void *
                 Sector &backSec = ld->backSector();
                 if(backSec.validCount() != validCount)
                 {
-                    linkStore << &backSec;
                     backSec.setValidCount(validCount);
+                    linkStore.append(&backSec);
                 }
             }
         }
@@ -1809,7 +1809,7 @@ int Map::lineTouchingMobjIterator(Line *line, int (*callback) (mobj_t *, void *)
 
     for(nodeindex_t nix = ln[root].next; nix != root; nix = ln[nix].next)
     {
-        linkStore << reinterpret_cast<mobj_t *>(ln[nix].ptr);
+        linkStore.append(reinterpret_cast<mobj_t *>(ln[nix].ptr));
     }
 
     foreach(mobj_t *mobj, linkStore)
@@ -1832,8 +1832,7 @@ int Map::sectorTouchingMobjIterator(Sector *sector,
         if(mo->validCount != validCount)
         {
             mo->validCount = validCount;
-
-            linkStore << mo;
+            linkStore.append(mo);
         }
     }
 
@@ -1849,8 +1848,7 @@ int Map::sectorTouchingMobjIterator(Sector *sector,
             if(mo->validCount != validCount)
             {
                 mo->validCount = validCount;
-
-                linkStore << mo;
+                linkStore.append(mo);
             }
         }
     }
