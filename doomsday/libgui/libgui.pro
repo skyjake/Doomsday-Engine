@@ -142,7 +142,7 @@ SOURCES +=  \
     else:       SOURCES += src/displaymode_x11.cpp
 }
 else {
-    SOURCES += src/displaymode_dummy.c
+    SOURCES += src/displaymode_dummy.cpp
 }
 
 unix:!macx: SOURCES += src/imKStoUCS_x11.c
