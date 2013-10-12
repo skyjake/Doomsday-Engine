@@ -532,32 +532,6 @@ public:
     int sectorTouchingMobjIterator(Sector *sector,
         int (*callback) (struct mobj_s *mobj, void *context), void *context = 0) const;
 
-    /**
-     * Retrieve an immutable copy of the LOS trace line state.
-     *
-     * @todo Map should not own this data.
-     */
-    divline_t &traceLine() const;
-
-    /**
-     * Retrieve an immutable copy of the LOS TraceOpening state.
-     *
-     * @todo Map should not own this data.
-     */
-    TraceOpening &traceOpening() const;
-
-    /**
-     * Update the TraceOpening state for according to the opening defined by the
-     * inner-minimal planes heights which intercept @a line
-     *
-     * If @a line is not owned by the map this is a no-op.
-     *
-     * @todo Map should not own this data.
-     *
-     * @param line  Map line to configure the opening for.
-     */
-    void setTraceOpening(Line &line);
-
 #ifdef __CLIENT__
     coord_t skyFix(bool ceiling) const;
 

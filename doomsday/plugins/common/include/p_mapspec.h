@@ -24,12 +24,6 @@
 #include "doomsday.h"
 #include "p_iterlist.h"
 
-typedef struct spreadsoundtoneighborsparams_s {
-    Sector *baseSec;
-    int soundBlocks;
-    mobj_t *soundTarget;
-} spreadsoundtoneighborsparams_t;
-
 /// For crossed line specials.
 DENG_EXTERN_C iterlist_t *spechit;
 
@@ -44,4 +38,4 @@ void P_RecursiveSound(struct mobj_s *soundTarget, Sector *sec, int soundBlocks);
 } // extern "C"
 #endif
 
-#endif /* LIBCOMMON_PLAYSIM_MAP_SPECIAL_H */
+#endif // LIBCOMMON_PLAYSIM_MAP_SPECIAL_H

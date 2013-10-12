@@ -140,11 +140,11 @@ InterceptNode *P_AddIntercept(intercepttype_t type, float distance, void *object
     return newNode;
 }
 
-int P_TraverseIntercepts(traverser_t callback, void *context)
+int P_TraverseIntercepts(TraceState &trace, traverser_t callback, void *context)
 {
     for(InterceptNode *node = head.next; !isSentinel(*node); node = node->next)
     {
-        if(int result = callback(&node->intercept, context))
+        if(int result = callback(&trace, &node->intercept, context))
             return result; // Stop iteration.
     }
     return false; // Continue iteration.

@@ -20,14 +20,20 @@
 #ifndef DENG_WORLD_MAPUTIL_H
 #define DENG_WORLD_MAPUTIL_H
 
+#include "Line"
+
 #ifdef __CLIENT__
 
 #include <de/binangle.h>
 
-#include "Line" // LineSide
-
 class Sector;
 class LineOwner;
+
+#endif
+
+void TraceState_AdjustOpening(TraceState &trace, Line &line);
+
+#ifdef __CLIENT__
 
 /**
  * @param side  LineSide instance.

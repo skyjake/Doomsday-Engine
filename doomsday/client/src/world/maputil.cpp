@@ -18,11 +18,13 @@
  * 02110-1301 USA</small>
  */
 
+#include "Line"
+#include "Plane"
+#include "Sector"
+
 #ifdef __CLIENT__
 
 #include "BspLeaf"
-#include "Plane"
-#include "Sector"
 #include "Surface"
 #include "world/lineowner.h"
 
@@ -31,10 +33,70 @@
 
 #include "render/rend_main.h" // Rend_MapSurfacematerialSpec
 #include "WallEdge"
+#endif
 
 #include "world/maputil.h"
 
 using namespace de;
+
+lineopening_s::lineopening_s(Line const &line)
+{
+    if(!line.hasBackSector())
+    {
+        top = bottom = range = lowFloor = 0;
+        return;
+    }
+
+    Sector const *frontSector = line.front().sectorPtr();
+    Sector const *backSector  = line.back().sectorPtr();
+    DENG_ASSERT(frontSector != 0);
+
+    if(backSector && backSector->ceiling().height() < frontSector->ceiling().height())
+    {
+        top = backSector->ceiling().height();
+    }
+    else
+    {
+        top = frontSector->ceiling().height();
+    }
+
+    if(backSector && backSector->floor().height() > frontSector->floor().height())
+    {
+        bottom = backSector->floor().height();
+    }
+    else
+    {
+        bottom = frontSector->floor().height();
+    }
+
+    range = top - bottom;
+
+    // Determine the "low floor".
+    if(backSector && frontSector->floor().height() > backSector->floor().height())
+    {
+        lowFloor = float( backSector->floor().height() );
+    }
+    else
+    {
+        lowFloor = float( frontSector->floor().height() );
+    }
+}
+
+lineopening_s &lineopening_s::operator = (lineopening_s const &other)
+{
+    top      = other.top;
+    bottom   = other.bottom;
+    range    = other.range;
+    lowFloor = other.lowFloor;
+    return *this;
+}
+
+void TraceState_AdjustOpening(TraceState &trace, Line &line)
+{
+    trace.opening = LineOpening(line);
+}
+
+#ifdef __CLIENT__
 
 /**
  * Same as @ref R_OpenRange() but works with the "visual" (i.e., smoothed) plane

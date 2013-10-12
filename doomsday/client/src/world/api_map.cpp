@@ -40,6 +40,7 @@
 
 #include "world/dmuargs.h"
 #include "world/entitydatabase.h"
+#include "world/maputil.h"
 #include "world/world.h"
 #include "BspLeaf"
 
@@ -1625,7 +1626,7 @@ DENG_EXTERN_C int BspLeaf_BoxIterator(AABoxd const *box,
     return App_World().map().bspLeafBoxIterator(*box, callback, context);
 }
 
-static void collectLineIntercept(Line &line, divline_t const &traceLos)
+static void collectLineIntercept(Line &line, TraceState const &trace)
 {
     fixed_t lineFromX[2] = { DBL2FIX(line.fromOrigin().x), DBL2FIX(line.fromOrigin().y) };
     fixed_t lineToX[2]   = { DBL2FIX(  line.toOrigin().x), DBL2FIX(  line.toOrigin().y) };
@@ -1633,18 +1634,18 @@ static void collectLineIntercept(Line &line, divline_t const &traceLos)
     // Is this line crossed?
     // Avoid precision problems with two routines.
     int s1, s2;
-    if(traceLos.direction[VX] >  FRACUNIT * 16 || traceLos.direction[VY] >  FRACUNIT * 16 ||
-       traceLos.direction[VX] < -FRACUNIT * 16 || traceLos.direction[VY] < -FRACUNIT * 16)
+    if(trace.line.direction[VX] >  FRACUNIT * 16 || trace.line.direction[VY] >  FRACUNIT * 16 ||
+       trace.line.direction[VX] < -FRACUNIT * 16 || trace.line.direction[VY] < -FRACUNIT * 16)
     {
-        s1 = V2x_PointOnLineSide(lineFromX, traceLos.origin, traceLos.direction);
-        s2 = V2x_PointOnLineSide(lineToX,   traceLos.origin, traceLos.direction);
+        s1 = V2x_PointOnLineSide(lineFromX, trace.line.origin, trace.line.direction);
+        s2 = V2x_PointOnLineSide(lineToX,   trace.line.origin, trace.line.direction);
     }
     else
     {
-        s1 = line.pointOnSide(Vector2d(FIX2FLT(traceLos.origin[VX]),
-                                       FIX2FLT(traceLos.origin[VY]))) < 0;
-        s2 = line.pointOnSide(Vector2d(FIX2FLT(traceLos.origin[VX] + traceLos.direction[VX]),
-                                       FIX2FLT(traceLos.origin[VY] + traceLos.direction[VY]))) < 0;
+        s1 = line.pointOnSide(Vector2d(FIX2FLT(trace.line.origin[VX]),
+                                       FIX2FLT(trace.line.origin[VY]))) < 0;
+        s2 = line.pointOnSide(Vector2d(FIX2FLT(trace.line.origin[VX] + trace.line.direction[VX]),
+                                       FIX2FLT(trace.line.origin[VY] + trace.line.direction[VY]))) < 0;
     }
     if(s1 == s2) return;
 
@@ -1652,7 +1653,7 @@ static void collectLineIntercept(Line &line, divline_t const &traceLos)
 
     // On the correct side of the trace origin?
     float distance = FIX2FLT(V2x_Intersection(lineFromX, lineDirectionX,
-                                              traceLos.origin, traceLos.direction));
+                                              trace.line.origin, trace.line.direction));
     if(distance >= 0)
     {
         P_AddIntercept(ICPT_LINE, distance, &line);
@@ -1661,11 +1662,11 @@ static void collectLineIntercept(Line &line, divline_t const &traceLos)
 
 static int collectCellLineInterceptsWorker(Line *line, void *context)
 {
-    collectLineIntercept(*line, *static_cast<divline_t *>(context));
+    collectLineIntercept(*line, *static_cast<TraceState *>(context));
     return false; // Continue iteration.
 }
 
-static void collectMobjIntercept(mobj_t &mobj, divline_t const &traceLos)
+static void collectMobjIntercept(mobj_t &mobj, TraceState const &trace)
 {
     // Ignore cameras.
     if(mobj.dPlayer && (mobj.dPlayer->flags & DDPF_CAMERA))
@@ -1675,7 +1676,7 @@ static void collectMobjIntercept(mobj_t &mobj, divline_t const &traceLos)
     AABoxd const aaBox = Mobj_AABox(mobj);
 
     vec2d_t from, to;
-    if((traceLos.direction[VX] ^ traceLos.direction[VY]) > 0)
+    if((trace.line.direction[VX] ^ trace.line.direction[VY]) > 0)
     {
         // \ Slope
         V2d_Set(from, aaBox.minX, aaBox.maxY);
@@ -1689,7 +1690,7 @@ static void collectMobjIntercept(mobj_t &mobj, divline_t const &traceLos)
     }
 
     // Is this line crossed?
-    if(Divline_PointOnSide(&traceLos, from) == Divline_PointOnSide(&traceLos, to))
+    if(Divline_PointOnSide(&trace.line, from) == Divline_PointOnSide(&trace.line, to))
         return;
 
     // Calculate interception point.
@@ -1698,7 +1699,7 @@ static void collectMobjIntercept(mobj_t &mobj, divline_t const &traceLos)
     dl.origin[VY] = DBL2FIX(from[VY]);
     dl.direction[VX] = DBL2FIX(to[VX] - from[VX]);
     dl.direction[VY] = DBL2FIX(to[VY] - from[VY]);
-    float distance = FIX2FLT(Divline_Intersection(&dl, &traceLos));
+    float distance = FIX2FLT(Divline_Intersection(&dl, &trace.line));
 
     // On the correct side of the trace origin?
     if(distance >= 0)
@@ -1709,7 +1710,7 @@ static void collectMobjIntercept(mobj_t &mobj, divline_t const &traceLos)
 
 static int collectCellMobjInterceptsWorker(mobj_t *mobj, void *context)
 {
-    collectMobjIntercept(*mobj, *static_cast<divline_t *>(context));
+    collectMobjIntercept(*mobj, *static_cast<TraceState *>(context));
     return false; // Continue iteration.
 }
 
@@ -1717,12 +1718,12 @@ static int traverseMapPath(Map &map, Vector2d const &from, Vector2d const &to,
     int flags, traverser_t callback, void *context = 0)
 {
     // A new trace begins.
-    divline_t &traceLine = map.traceLine();
+    TraceState trace;
 
-    traceLine.origin[VX] = FLT2FIX(from.x);
-    traceLine.origin[VY] = FLT2FIX(from.y);
-    traceLine.direction[VX] = FLT2FIX(to.x - from.x);
-    traceLine.direction[VY] = FLT2FIX(to.y - from.y);
+    trace.line.origin[VX] = FLT2FIX(from.x);
+    trace.line.origin[VY] = FLT2FIX(from.y);
+    trace.line.direction[VX] = FLT2FIX(to.x - from.x);
+    trace.line.direction[VY] = FLT2FIX(to.y - from.y);
 
     P_ClearIntercepts();
     validCount++;
@@ -1730,15 +1731,15 @@ static int traverseMapPath(Map &map, Vector2d const &from, Vector2d const &to,
     // Step #1: Collect intercepts.
     if(flags & PT_ADDLINES)
     {
-        map.linePathIterator(from, to, collectCellLineInterceptsWorker, &traceLine);
+        map.linePathIterator(from, to, collectCellLineInterceptsWorker, &trace);
     }
     if(flags & PT_ADDMOBJS)
     {
-        map.mobjPathIterator(from, to, collectCellMobjInterceptsWorker, &traceLine);
+        map.mobjPathIterator(from, to, collectCellMobjInterceptsWorker, &trace);
     }
 
     // Step #2: Process sorted intercepts.
-    return P_TraverseIntercepts(callback, context);
+    return P_TraverseIntercepts(trace, callback, context);
 }
 
 #undef P_PathTraverse2
@@ -1786,33 +1787,11 @@ DENG_EXTERN_C boolean P_CheckLineSight(const_pvec3d_t from, const_pvec3d_t to, c
                          dfloat(bottomSlope), dfloat(topSlope), flags).trace(App_World().map().bspRoot());
 }
 
-#undef P_TraceLOS
-DENG_EXTERN_C divline_t const *P_TraceLOS()
+#undef P_TraceAdjustOpening
+DENG_EXTERN_C void P_TraceAdjustOpening(TraceState *trace, Line *line)
 {
-    static divline_t emptyLOS;
-    if(App_World().hasMap())
-    {
-        return &App_World().map().traceLine();
-    }
-    return &emptyLOS;
-}
-
-#undef P_TraceOpening
-DENG_EXTERN_C TraceOpening const *P_TraceOpening()
-{
-    static TraceOpening zeroOpening;
-    if(App_World().hasMap())
-    {
-        return &App_World().map().traceOpening();
-    }
-    return &zeroOpening;
-}
-
-#undef P_SetTraceOpening
-DENG_EXTERN_C void P_SetTraceOpening(Line *line)
-{
-    if(!line) return;
-    line->map().setTraceOpening(*line);
+    if(!trace || !line) return;
+    TraceState_AdjustOpening(*trace, *line);
 }
 
 #undef Mobj_CreateXYZ
@@ -1950,6 +1929,13 @@ DENG_EXTERN_C int Line_BoxOnSide_FixedPrecision(Line *line, AABoxd const *box)
     return line->boxOnSide_FixedPrecision(*box);
 }
 
+#undef Line_Opening
+DENG_EXTERN_C void Line_Opening(Line *line, LineOpening *opening)
+{
+    DENG2_ASSERT(line && opening);
+    *opening = LineOpening(*line);
+}
+
 DENG_DECLARE_API(Map) =
 {
     { DE_API_MAP },
@@ -1966,6 +1952,7 @@ DENG_DECLARE_API(Map) =
     Line_PointOnSide,
     Line_PointXYOnSide,
     Line_TouchingMobjsIterator,
+    Line_Opening,
 
     Sector_TouchingMobjsIterator,
     Sector_AtPoint_FixedPrecision,
@@ -2002,9 +1989,7 @@ DENG_DECLARE_API(Map) =
     P_PathXYTraverse2,
     P_PathXYTraverse,
     P_CheckLineSight,
-    P_TraceLOS,
-    P_TraceOpening,
-    P_SetTraceOpening,
+    P_TraceAdjustOpening,
 
     DMU_Str,
     DMU_GetType,

@@ -82,30 +82,6 @@
 #define DMT_LINE_DY DDVT_DOUBLE
 #define DMT_LINE_LENGTH DDVT_DOUBLE
 
-struct intercept_s;
-
-/**
- * @defgroup mobjLinkFlags Mobj Link Flags
- * @ingroup apiFlags world
- */
-///@{
-#define MLF_SECTOR          0x1 ///< Link to map sectors.
-#define MLF_BLOCKMAP        0x2 ///< Link in the map's mobj blockmap.
-#define MLF_NOLINE          0x4 ///< Do not link to map lines.
-///@}
-
-/**
- * @defgroup lineIteratorFlags Line Iterator Flags
- * @ingroup apiFlags world
- */
-///@{
-#define LIF_SECTOR          0x1 ///< Process map lines defining sectors
-#define LIF_POLYOBJ         0x2 ///< Process map lines defining polyobjs
-
-/// Process all map line types.
-#define LIF_ALL             LIF_SECTOR | LIF_POLYOBJ
-///@}
-
 /**
  * Public definitions of the internal map data pointers.  These can be
  * accessed externally, but only as identifiers to data instances.
@@ -147,6 +123,97 @@ class Material;
 class BspLeaf;
 
 #endif
+
+/**
+ * @defgroup lineSightFlags Line Sight Flags
+ * Flags used to dictate logic within P_CheckLineSight().
+ * @ingroup apiFlags map
+ */
+///@{
+#define LS_PASSLEFT            0x1 ///< Ray may cross one-sided lines from left to right.
+#define LS_PASSOVER            0x2 ///< Ray may cross over sector ceiling height on ray-entry side.
+#define LS_PASSUNDER           0x4 ///< Ray may cross under sector floor height on ray-entry side.
+///@}
+
+/**
+ * Describes the @em sharp coordinates of the opening between sectors which
+ * interface at a given map line. The open range is defined as the gap between
+ * foor and ceiling on the front side clipped by the floor and ceiling planes on
+ * the back side (if present).
+ */
+typedef struct lineopening_s {
+    /// Top and bottom z of the opening.
+    float top, bottom;
+
+    /// Distance from top to bottom.
+    float range;
+
+    /// Z height of the lowest Plane at the opening on the X|Y axis.
+    /// @todo Does not belong here?
+    float lowFloor;
+
+#ifdef __cplusplus
+    lineopening_s() : top(0), bottom(0), range(0), lowFloor(0) {}
+    lineopening_s(Line const &line);
+    lineopening_s &operator = (lineopening_s const &other);
+#endif
+} LineOpening;
+
+/**
+ * @defgroup pathTraverseFlags  Path Traverse Flags
+ * @ingroup apiFlags map
+ */
+///@{
+#define PT_ADDLINES            1 ///< Intercept with Lines.
+#define PT_ADDMOBJS            2 ///< Intercept with Mobjs.
+///@}
+
+typedef enum intercepttype_e {
+    ICPT_MOBJ,
+    ICPT_LINE
+} intercepttype_t;
+
+typedef struct intercept_s {
+    float distance; ///< Along trace vector as a fraction.
+    intercepttype_t type;
+    union {
+        struct mobj_s *mobj;
+        Line *line;
+    } d;
+} intercept_t;
+
+/**
+ * POD structure representing a line trace state. This data should @em not be
+ * modified by trace callback functions!
+ */
+typedef struct {
+    divline_t line;
+    LineOpening opening;
+} TraceState;
+
+typedef int (*traverser_t) (TraceState *trace, intercept_t const *intercept, void *context);
+
+/**
+ * @defgroup mobjLinkFlags Mobj Link Flags
+ * @ingroup apiFlags world
+ */
+///@{
+#define MLF_SECTOR          0x1 ///< Link to map sectors.
+#define MLF_BLOCKMAP        0x2 ///< Link in the map's mobj blockmap.
+#define MLF_NOLINE          0x4 ///< Do not link to map lines.
+///@}
+
+/**
+ * @defgroup lineIteratorFlags Line Iterator Flags
+ * @ingroup apiFlags world
+ */
+///@{
+#define LIF_SECTOR          0x1 ///< Process map lines defining sectors
+#define LIF_POLYOBJ         0x2 ///< Process map lines defining polyobjs
+
+/// Process all map line types.
+#define LIF_ALL             LIF_SECTOR | LIF_POLYOBJ
+///@}
 
 typedef void *MapElementPtr;
 typedef void const *MapElementPtrConst;
@@ -210,6 +277,7 @@ DENG_API_TYPEDEF(Map)
     coord_t         (*L_PointOnSide)(Line const *line, coord_t const point[2]);
     coord_t         (*L_PointXYOnSide)(Line const *line, coord_t x, coord_t y);
     int             (*L_MobjsIterator)(Line *line, int (*callback) (struct mobj_s *, void *), void *context);
+    void            (*L_Opening)(Line *line, LineOpening *opening);
 
     // Sectors
 
@@ -357,15 +425,15 @@ DENG_API_TYPEDEF(Map)
 
     // Traversers
 
-    int             (*PathTraverse2)(coord_t const from[2], coord_t const to[2], int flags, int (*callback) (struct intercept_s const *, void *context), void *context);
-    int             (*PathTraverse)(coord_t const from[2], coord_t const to[2], int flags, int (*callback) (struct intercept_s const *, void *context)/*, context=0*/);
+    int             (*PathTraverse2)(coord_t const from[2], coord_t const to[2], int flags, int (*callback) (TraceState *trace, struct intercept_s const *, void *context), void *context);
+    int             (*PathTraverse)(coord_t const from[2], coord_t const to[2], int flags, int (*callback) (TraceState *trace, struct intercept_s const *, void *context)/*, context=0*/);
 
     /**
      * Same as P_PathTraverse except 'from' and 'to' arguments are specified
      * as two sets of separate X and Y map space coordinates.
      */
-    int             (*PathXYTraverse2)(coord_t fromX, coord_t fromY, coord_t toX, coord_t toY, int flags, int (*callback) (struct intercept_s const *, void *context), void *context);
-    int             (*PathXYTraverse)(coord_t fromX, coord_t fromY, coord_t toX, coord_t toY, int flags, int (*callback) (struct intercept_s const *, void *context)/*, context=0*/);
+    int             (*PathXYTraverse2)(coord_t fromX, coord_t fromY, coord_t toX, coord_t toY, int flags, int (*callback) (TraceState *trace, struct intercept_s const *, void *context), void *context);
+    int             (*PathXYTraverse)(coord_t fromX, coord_t fromY, coord_t toX, coord_t toY, int flags, int (*callback) (TraceState *trace, struct intercept_s const *, void *context)/*, context=0*/);
 
     /**
      * Traces a line of sight.
@@ -383,24 +451,10 @@ DENG_API_TYPEDEF(Map)
                                       coord_t bottomSlope, coord_t topSlope, int flags);
 
     /**
-     * Retrieve an immutable copy of the LOS trace line for the CURRENT map.
-     *
-     * @note Always returns a valid divline_t even if there is no current map.
+     * Update the "opening" state for the specified trace according to heights
+     * defined by the minimal planes on trace side, which intercept @a line.
      */
-    Divline const  *(*TraceLOS)(void);
-
-    /**
-     * Retrieve an immutable copy of the TraceOpening state for the CURRENT map.
-     *
-     * @note Always returns a valid TraceOpening even if there is no current map.
-     */
-    struct traceopening_s const *(*traceOpening)(void);
-
-    /**
-     * Update the TraceOpening state for the CURRENT map according to the opening
-     * defined by the inner-minimal planes heights which intercept @a line.
-     */
-    void            (*SetTraceOpening)(Line *line);
+    void            (*TraceAdjustOpening)(TraceState *trace, Line *line);
 
     /*
      * Map Updates (DMU):
@@ -613,6 +667,7 @@ DENG_API_T(Map);
 #define Line_PointOnSide                    _api_Map.L_PointOnSide
 #define Line_PointXYOnSide                  _api_Map.L_PointXYOnSide
 #define Line_TouchingMobjsIterator          _api_Map.L_MobjsIterator
+#define Line_Opening                        _api_Map.L_Opening
 
 #define Sector_TouchingMobjsIterator        _api_Map.S_TouchingMobjsIterator
 #define Sector_AtPoint_FixedPrecision       _api_Map.S_AtPoint_FixedPrecision
@@ -649,8 +704,7 @@ DENG_API_T(Map);
 #define P_PathXYTraverse2                   _api_Map.PathXYTraverse2
 #define P_PathXYTraverse                    _api_Map.PathXYTraverse
 #define P_CheckLineSight                    _api_Map.CheckLineSight
-#define P_TraceLOS                          _api_Map.TraceLOS
-#define P_TraceOpening                      _api_Map.traceOpening
+#define P_TraceAdjustOpening                _api_Map.TraceAdjustOpening
 #define P_SetTraceOpening                   _api_Map.SetTraceOpening
 
 #define DMU_Str                             _api_Map.Str

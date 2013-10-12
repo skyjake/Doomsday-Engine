@@ -2501,10 +2501,6 @@ void *DD_GetVariable(int ddvalue)
         value = App_World().hasMap()? App_World().map().polyobjCount() : 0;
         return &value;
 
-    case DD_TRACE_ADDRESS:
-        /// @todo Do not cast away const.
-        return (void*)P_TraceLOS();
-
     case DD_TRANSLATIONTABLES_ADDRESS:
         return translationTables;
 
@@ -2593,26 +2589,6 @@ void *DD_GetVariable(int ddvalue)
         static timespan_t       fracTic;
         fracTic = gameTime * TICSPERSEC;
         return &fracTic; }
-
-    case DD_OPENRANGE: {
-        const TraceOpening* open = P_TraceOpening();
-        valueF = open->range;
-        return &valueF; }
-
-    case DD_OPENTOP: {
-        const TraceOpening* open = P_TraceOpening();
-        valueF = open->top;
-        return &valueF; }
-
-    case DD_OPENBOTTOM: {
-        const TraceOpening* open = P_TraceOpening();
-        valueF = open->bottom;
-        return &valueF; }
-
-    case DD_LOWFLOOR: {
-        const TraceOpening* open = P_TraceOpening();
-        valueF = open->lowFloor;
-        return &valueF; }
 
     case DD_NUMLUMPS: {
         static int count;

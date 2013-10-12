@@ -221,7 +221,7 @@ enum {
 
     // Non-integer/special values for Set/Get
     DD_TRANSLATIONTABLES_ADDRESS,
-    DD_TRACE_ADDRESS, ///< obsolete divline 'trace' used by PathTraverse.
+    DD_UNUSED4, // DD_TRACE_ADDRESS
     DD_SPRITE_REPLACEMENT, ///< Sprite <-> model replacement.
     DD_ACTION_LINK, ///< State action routine addresses.
     DD_MAP_NAME,
@@ -240,10 +240,10 @@ enum {
     DD_XGFUNC_LINK, ///< XG line classes
     DD_SHARED_FIXED_TRIGGER_OBSOLETE, ///< obsolete
     DD_GAMETIC,
-    DD_OPENRANGE, ///< obsolete
-    DD_OPENTOP, ///< obsolete
-    DD_OPENBOTTOM, ///< obsolete
-    DD_LOWFLOOR, ///< obsolete
+    DD_UNUSED5, // DD_OPENRANGE
+    DD_UNUSED6, // DD_OPENTOP
+    DD_UNUSED7, // DD_OPENBOTTOM
+    DD_UNUSED8, // DD_LOWFLOOR
     DD_CPLAYER_THRUST_MUL_OBSOLETE, ///< obsolete
     DD_GRAVITY,
     DD_PSPRITE_OFFSET_X, ///< 10x
@@ -498,57 +498,6 @@ enum {
 
 /// Environmental audio characteristics. @ingroup world
 typedef float AudioEnvironmentFactors[NUM_REVERB_DATA];
-
-/**
- * @defgroup pathTraverseFlags  Path Traverse Flags
- * @ingroup apiFlags map
- */
-///@{
-#define PT_ADDLINES            1 ///< Intercept with Lines.
-#define PT_ADDMOBJS            2 ///< Intercept with Mobjs.
-///@}
-
-/**
- * @defgroup lineSightFlags Line Sight Flags
- * Flags used to dictate logic within P_CheckLineSight().
- * @ingroup apiFlags map
- */
-///@{
-#define LS_PASSLEFT            0x1 ///< Ray may cross one-sided lines from left to right.
-#define LS_PASSOVER            0x2 ///< Ray may cross over sector ceiling height on ray-entry side.
-#define LS_PASSUNDER           0x4 ///< Ray may cross under sector floor height on ray-entry side.
-///@}
-
-typedef enum intercepttype_e {
-    ICPT_MOBJ,
-    ICPT_LINE
-} intercepttype_t;
-
-typedef struct intercept_s {
-    float distance; ///< Along trace vector as a fraction.
-    intercepttype_t type;
-    union {
-        struct mobj_s *mobj;
-        Line *line;
-    } d;
-} intercept_t;
-
-typedef int (*traverser_t) (intercept_t const *intercept, void *parameters);
-
-/**
- * A simple POD data structure for representing line trace openings.
- */
-typedef struct traceopening_s {
-    /// Top and bottom z of the opening.
-    float top, bottom;
-
-    /// Distance from top to bottom.
-    float range;
-
-    /// Z height of the lowest Plane at the opening on the X|Y axis.
-    /// @todo Does not belong here?
-    float lowFloor;
-} TraceOpening;
 
 //------------------------------------------------------------------------
 //

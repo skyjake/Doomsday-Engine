@@ -1,78 +1,48 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file p_mapspec.c World map utilities.
  *
- *\author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * Line Tag handling. Line and Sector groups. Specialized iterators, etc...
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
-/**
- * Line Tag handling. Line and Sector groups. Specialized iteration
- * routines, respective utility functions...
- */
-
-// HEADER FILES ------------------------------------------------------------
-
-#include <assert.h>
-
-#if __JDOOM__
-#  include "jdoom.h"
-#elif __JDOOM64__
-#  include "jdoom64.h"
-#elif __JHERETIC__
-#  include "jheretic.h"
-#elif __JHEXEN__
-#  include "jhexen.h"
-#endif
-
+#include "common.h"
 #include "dmu_lib.h"
 #include "p_mapsetup.h"
 #include "p_mapspec.h"
 
-// MACROS ------------------------------------------------------------------
+iterlist_t *spechit = 0; /// For crossed line specials.
 
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-iterlist_t* spechit = 0; /// For crossed line specials.
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
+typedef struct {
+    Sector *baseSec;
+    int soundBlocks;
+    mobj_t *soundTarget;
+} spreadsoundtoneighbors_params_t;
 
 /// @return  0= continue iteration; otherwise stop.
 static int spreadSoundToNeighbors(void *ptr, void *context)
 {
-    spreadsoundtoneighborsparams_t *parm = (spreadsoundtoneighborsparams_t *) context;
+    spreadsoundtoneighbors_params_t *parm = (spreadsoundtoneighbors_params_t *) context;
     Line *li = (Line *) ptr;
     xline_t *xline = P_ToXLine(li);
     Sector *frontSec, *backSec, *other;
-    assert(xline);
+    LineOpening opening;
+
+    DENG_ASSERT(xline);
 
     if(!(xline->flags & ML_TWOSIDED)) return false;
 
@@ -82,8 +52,8 @@ static int spreadSoundToNeighbors(void *ptr, void *context)
     backSec  = P_GetPtrp(li, DMU_BACK_SECTOR);
     if(!backSec) return false;
 
-    P_SetTraceOpening(li);
-    if(!(P_TraceOpening()->range > 0)) return false;
+    Line_Opening(li, &opening);
+    if(opening.range <= 0) return false;
 
     other = (frontSec == parm->baseSec? backSec : frontSec);
 
@@ -102,7 +72,7 @@ static int spreadSoundToNeighbors(void *ptr, void *context)
 
 void P_RecursiveSound(struct mobj_s *soundTarget, Sector *sec, int soundBlocks)
 {
-    spreadsoundtoneighborsparams_t params;
+    spreadsoundtoneighbors_params_t parm;
     xsector_t *xsec = P_ToXSector(sec);
 
     // Wake up all monsters in this sector.
@@ -113,8 +83,8 @@ void P_RecursiveSound(struct mobj_s *soundTarget, Sector *sec, int soundBlocks)
     xsec->soundTraversed = soundBlocks + 1;
     xsec->soundTarget = soundTarget;
 
-    params.baseSec = sec;
-    params.soundBlocks = soundBlocks;
-    params.soundTarget = soundTarget;
-    P_Iteratep(sec, DMU_LINE, spreadSoundToNeighbors, &params);
+    parm.baseSec = sec;
+    parm.soundBlocks = soundBlocks;
+    parm.soundTarget = soundTarget;
+    P_Iteratep(sec, DMU_LINE, spreadSoundToNeighbors, &parm);
 }

@@ -45,6 +45,6 @@ InterceptNode *P_AddIntercept(intercepttype_t type, float distance, void *object
 /**
  * @return  Zero if the traverser callback returns zero for all processed intercepts.
  */
-int P_TraverseIntercepts(traverser_t callback, void *parameters);
+int P_TraverseIntercepts(TraceState &trace, traverser_t callback, void *context);
 
 #endif // DENG_WORLD_P_INTERCEPT_H
