@@ -1961,7 +1961,7 @@ static void conPrintf(int flags, const char* format, va_list args)
     const char* text = 0;
 #endif
 
-    if(format && format[0] && args)
+    if(format && format[0])
     {
         if(prbuff == NULL)
             prbuff = (char *) M_Malloc(PRBUFF_SIZE);
