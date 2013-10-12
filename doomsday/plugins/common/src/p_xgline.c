@@ -1527,23 +1527,25 @@ int C_DECL XLTrav_Music(Line* line, boolean dummy, void* context,
     return false; // Only do this once!
 }
 
-int C_DECL XLTrav_LineTeleport(Line* newLine, boolean dummy,
-                               void* context, void* context2, mobj_t* mobj)
+int C_DECL XLTrav_LineTeleport(Line *newLine, boolean dummy,
+                               void *context, void* context2, mobj_t* mobj)
 {
 // Maximum units to move object to avoid hiccups.
 #define FUDGEFACTOR         10
 
     int fudge = FUDGEFACTOR;
     int side = 0, stepDown;
-    unsigned int an;
-    mobj_t* flash;
-    Line* line = (Line *) context;
-    linetype_t* info = (linetype_t *) context2;
-    Vertex* newV1, *newV2, *oldV1, *oldV2;
-    Sector* newFrontSec, *newBackSec;
-    coord_t newX, newY, newZ, pos, s, c;
+    uint an;
+    mobj_t *flash;
+    Line *line = (Line *) context;
+    linetype_t *info = (linetype_t *) context2;
+    Vertex *newV1, *newV2, *oldV1, *oldV2;
+    Sector *newFrontSec, *newBackSec;
+    coord_t newPos[3], pos, s, c;
     coord_t oldLineDelta[2], newLineDelta[2];
     angle_t angle;
+
+    DENG_UNUSED(dummy);
 
     // Don't teleport things marked noteleport!
     if(mobj->flags2 & MF2_NOTELEPORT)
@@ -1607,8 +1609,8 @@ int C_DECL XLTrav_LineTeleport(Line* newLine, boolean dummy,
              M_PointXYToAngle2(0, 0, oldLineDelta[0], oldLineDelta[1]);
 
     // Interpolate position across the exit line.
-    newX = P_GetDoublep(newV2, DMU_X) - (pos * newLineDelta[0]);
-    newY = P_GetDoublep(newV2, DMU_Y) - (pos * newLineDelta[1]);
+    newPos[VX] = P_GetDoublep(newV2, DMU_X) - (pos * newLineDelta[0]);
+    newPos[VY] = P_GetDoublep(newV2, DMU_Y) - (pos * newLineDelta[1]);
 
     // Sine, cosine of angle adjustment
     s = FIX2FLT(finesine[angle >> ANGLETOFINESHIFT]);
@@ -1622,7 +1624,7 @@ int C_DECL XLTrav_LineTeleport(Line* newLine, boolean dummy,
         stepDown = false;
 
     // Height of thing above ground.
-    newZ = mobj->origin[VZ] - mobj->floorZ;
+    newPos[VZ] = mobj->origin[VZ] - mobj->floorZ;
 
     /**
      * Side to exit the line on positionally.
@@ -1651,16 +1653,16 @@ int C_DECL XLTrav_LineTeleport(Line* newLine, boolean dummy,
         side = 1;
 
     // Make sure we are on correct side of exit line.
-    while(Line_PointXYOnSide(newLine, newX, newY) < 0 != side && --fudge >= 0)
+    while(Line_PointOnSide(newLine, newPos) < 0 != side && --fudge >= 0)
     {
         if(fabs(newLineDelta[0]) > fabs(newLineDelta[1]))
-            newY -= FIX2FLT((newLineDelta[0] < 0) != side ? -1 : 1);
+            newPos[VY] -= FIX2FLT((newLineDelta[0] < 0) != side ? -1 : 1);
         else
-            newX += FIX2FLT((newLineDelta[1] < 0) != side ? -1 : 1);
+            newPos[VX] += FIX2FLT((newLineDelta[1] < 0) != side ? -1 : 1);
     }
 
     // Do the Teleport
-    if(!P_TeleportMove(mobj, newX, newY, (info->iparm[5] > 0? true : false)))
+    if(!P_TeleportMove(mobj, newPos[VX], newPos[VY], (info->iparm[5] > 0? true : false)))
     {
         XG_Dev("XLTrav_Teleport: Something went horribly wrong... aborting.");
         return false;
@@ -1670,20 +1672,20 @@ int C_DECL XLTrav_LineTeleport(Line* newLine, boolean dummy,
     // level at the exit is measured as the higher of the two floor heights
     // at the exit line.
     if(stepDown)
-        mobj->origin[VZ] = newZ + P_GetDoublep(newFrontSec, DMU_FLOOR_HEIGHT);
+        mobj->origin[VZ] = newPos[VZ] + P_GetDoublep(newFrontSec, DMU_FLOOR_HEIGHT);
     else
-        mobj->origin[VZ] = newZ + P_GetDoublep(newBackSec, DMU_FLOOR_HEIGHT);
+        mobj->origin[VZ] = newPos[VZ] + P_GetDoublep(newBackSec, DMU_FLOOR_HEIGHT);
 
     // Rotate mobj's orientation according to difference in line angles.
     mobj->angle += angle;
 
     // Update momentum of mobj crossing teleporter line?
-    newX = mobj->mom[MX];
-    newY = mobj->mom[MY];
+    newPos[VX] = mobj->mom[MX];
+    newPos[VY] = mobj->mom[MY];
 
     // Rotate mobj's momentum to come out of exit just like it entered.
-    mobj->mom[MX] = (newX * c) - (newY * s);
-    mobj->mom[MY] = (newY * c) + (newX * s);
+    mobj->mom[MX] = (newPos[VX] * c) - (newPos[VY] * s);
+    mobj->mom[MY] = (newPos[VY] * c) + (newPos[VX] * s);
 
     // Feet clipped?
     if(mobj->flags2 & MF2_FLOORCLIP)

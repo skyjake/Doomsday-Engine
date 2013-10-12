@@ -151,6 +151,18 @@ typedef enum sidesection_e {
 extern "C" {
 #endif
 
+/**
+ * Same as P_PathTraverse except 'from' and 'to' arguments are specified
+ * as two sets of separate X and Y map space coordinates.
+ */
+int P_PathXYTraverse2(coord_t fromX, coord_t fromY, coord_t toX, coord_t toY,
+    int flags, int (*callback) (TraceState *, struct intercept_s const *, void *),
+    void *context);
+
+int P_PathXYTraverse(coord_t fromX, coord_t fromY, coord_t toX, coord_t toY,
+    int (*callback) (TraceState *, struct intercept_s const *, void *),
+    void *context);
+
 void P_BuildLineTagLists(void);
 
 void P_DestroyLineTagLists(void);

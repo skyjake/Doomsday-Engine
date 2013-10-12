@@ -164,8 +164,11 @@ typedef struct lineopening_s {
  * @ingroup apiFlags map
  */
 ///@{
-#define PT_ADDLINES            1 ///< Intercept with Lines.
-#define PT_ADDMOBJS            2 ///< Intercept with Mobjs.
+#define PTF_LINE            0x1 ///< Intercept with map lines.
+#define PTF_MOBJ            0x2 ///< Intercept with mobjs.
+
+/// Process all interceptable map element types.
+#define PTF_ALL             PTF_LINE | PTF_MOBJ
 ///@}
 
 typedef enum intercepttype_e {
@@ -273,9 +276,7 @@ DENG_API_TYPEDEF(Map)
     int             (*L_BoxOnSide)(Line *line, AABoxd const *box);
     int             (*L_BoxOnSide_FixedPrecision)(Line *line, AABoxd const *box);
     coord_t         (*L_PointDistance)(Line *line, coord_t const point[2], coord_t *offset);
-    coord_t         (*L_PointXYDistance)(Line *line, coord_t x, coord_t y, coord_t *offset);
     coord_t         (*L_PointOnSide)(Line const *line, coord_t const point[2]);
-    coord_t         (*L_PointXYOnSide)(Line const *line, coord_t x, coord_t y);
     int             (*L_MobjsIterator)(Line *line, int (*callback) (struct mobj_s *, void *), void *context);
     void            (*L_Opening)(Line *line, LineOpening *opening);
 
@@ -308,9 +309,6 @@ DENG_API_TYPEDEF(Map)
      * @return  Sector attributed to the BSP leaf at the specified point.
      */
     Sector         *(*S_AtPoint_FixedPrecision)(coord_t const point[2]);
-
-    /// @copydoc S_AtPoint_FixedPrecision()
-    Sector         *(*S_AtPoint_FixedPrecisionXY)(coord_t x, coord_t y);
 
     // Map Objects
 
@@ -425,15 +423,8 @@ DENG_API_TYPEDEF(Map)
 
     // Traversers
 
+    int             (*PathTraverse)(coord_t const from[2], coord_t const to[2], int (*callback) (TraceState *trace, struct intercept_s const *, void *context), void *context);
     int             (*PathTraverse2)(coord_t const from[2], coord_t const to[2], int flags, int (*callback) (TraceState *trace, struct intercept_s const *, void *context), void *context);
-    int             (*PathTraverse)(coord_t const from[2], coord_t const to[2], int flags, int (*callback) (TraceState *trace, struct intercept_s const *, void *context)/*, context=0*/);
-
-    /**
-     * Same as P_PathTraverse except 'from' and 'to' arguments are specified
-     * as two sets of separate X and Y map space coordinates.
-     */
-    int             (*PathXYTraverse2)(coord_t fromX, coord_t fromY, coord_t toX, coord_t toY, int flags, int (*callback) (TraceState *trace, struct intercept_s const *, void *context), void *context);
-    int             (*PathXYTraverse)(coord_t fromX, coord_t fromY, coord_t toX, coord_t toY, int flags, int (*callback) (TraceState *trace, struct intercept_s const *, void *context)/*, context=0*/);
 
     /**
      * Traces a line of sight.
@@ -663,15 +654,12 @@ DENG_API_T(Map);
 #define Line_BoxOnSide                      _api_Map.L_BoxOnSide
 #define Line_BoxOnSide_FixedPrecision       _api_Map.L_BoxOnSide_FixedPrecision
 #define Line_PointDistance                  _api_Map.L_PointDistance
-#define Line_PointXYDistance                _api_Map.L_PointXYDistance
 #define Line_PointOnSide                    _api_Map.L_PointOnSide
-#define Line_PointXYOnSide                  _api_Map.L_PointXYOnSide
 #define Line_TouchingMobjsIterator          _api_Map.L_MobjsIterator
 #define Line_Opening                        _api_Map.L_Opening
 
 #define Sector_TouchingMobjsIterator        _api_Map.S_TouchingMobjsIterator
 #define Sector_AtPoint_FixedPrecision       _api_Map.S_AtPoint_FixedPrecision
-#define Sector_AtPoint_FixedPrecisionXY     _api_Map.S_AtPoint_FixedPrecisionXY
 
 #define Mobj_CreateXYZ                      _api_Map.MO_CreateXYZ
 #define Mobj_Destroy                        _api_Map.MO_Destroy
@@ -699,10 +687,8 @@ DENG_API_T(Map);
 
 #define BspLeaf_BoxIterator                 _api_Map.BL_BoxIterator
 
-#define P_PathTraverse2                     _api_Map.PathTraverse2
 #define P_PathTraverse                      _api_Map.PathTraverse
-#define P_PathXYTraverse2                   _api_Map.PathXYTraverse2
-#define P_PathXYTraverse                    _api_Map.PathXYTraverse
+#define P_PathTraverse2                     _api_Map.PathTraverse2
 #define P_CheckLineSight                    _api_Map.CheckLineSight
 #define P_TraceAdjustOpening                _api_Map.TraceAdjustOpening
 #define P_SetTraceOpening                   _api_Map.SetTraceOpening

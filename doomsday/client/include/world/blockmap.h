@@ -138,11 +138,11 @@ public:
 
     bool link(Cell const &cell, void *elem);
 
-    bool link(CellBlock const &cellBlock, void *elem);
+    bool link(AABoxd const &region, void *elem);
 
     bool unlink(Cell const &cell, void *elem);
 
-    bool unlink(CellBlock const &cellBlock, void *elem);
+    bool unlink(AABoxd const &region, void *elem);
 
     void unlinkAll();
 
@@ -152,7 +152,8 @@ public:
     int iterate(Cell const &cell, int (*callback) (void *elem, void *context), void *context = 0) const;
 
     /**
-     * Iterate over all elements in the specified map space @a region.
+     * Iterate over all elements in cells which intercept the specified map space
+     * @a region.
      */
     int iterate(AABoxd const &region, int (*callback) (void *elem, void *context), void *context = 0) const;
 

@@ -1586,14 +1586,6 @@ DENG_EXTERN_C Sector *Sector_AtPoint_FixedPrecision(const_pvec2d_t point)
     return App_World().map().bspLeafAt_FixedPrecision(point).sectorPtr();
 }
 
-#undef Sector_AtPoint_FixedPrecisionXY
-DENG_EXTERN_C Sector *Sector_AtPoint_FixedPrecisionXY(coord_t x, coord_t y)
-{
-    if(!App_World().hasMap()) return 0;
-    coord_t point[2] = { x, y };
-    return App_World().map().bspLeafAt_FixedPrecision(point).sectorPtr();
-}
-
 #undef Mobj_BoxIterator
 DENG_EXTERN_C int Mobj_BoxIterator(AABoxd const *box,
     int (*callback) (mobj_t *, void *), void *context)
@@ -1729,11 +1721,11 @@ static int traverseMapPath(Map &map, Vector2d const &from, Vector2d const &to,
     validCount++;
 
     // Step #1: Collect intercepts.
-    if(flags & PT_ADDLINES)
+    if(flags & PTF_LINE)
     {
         map.linePathIterator(from, to, collectCellLineInterceptsWorker, &trace);
     }
-    if(flags & PT_ADDMOBJS)
+    if(flags & PTF_MOBJ)
     {
         map.mobjPathIterator(from, to, collectCellMobjInterceptsWorker, &trace);
     }
@@ -1752,30 +1744,10 @@ DENG_EXTERN_C int P_PathTraverse2(const_pvec2d_t from, const_pvec2d_t to,
 
 #undef P_PathTraverse
 DENG_EXTERN_C int P_PathTraverse(const_pvec2d_t from, const_pvec2d_t to,
-    int flags, traverser_t callback)
+    traverser_t callback, void *context)
 {
     if(!App_World().hasMap()) return false; // Continue iteration.
-    return traverseMapPath(App_World().map(), from, to, flags, callback);
-}
-
-#undef P_PathXYTraverse2
-DENG_EXTERN_C int P_PathXYTraverse2(coord_t fromX, coord_t fromY,
-    coord_t toX, coord_t toY, int flags, traverser_t callback, void *context)
-{
-    if(!App_World().hasMap()) return false; // Continue iteration.
-    return traverseMapPath(App_World().map(),
-                           Vector2d(fromX, fromY), Vector2d(toX, toY),
-                           flags, callback, context);
-}
-
-#undef P_PathXYTraverse
-DENG_EXTERN_C int P_PathXYTraverse(coord_t fromX, coord_t fromY, coord_t toX, coord_t toY, int flags,
-    traverser_t callback)
-{
-    if(!App_World().hasMap()) return false; // Continue iteration.
-    return traverseMapPath(App_World().map(),
-                           Vector2d(fromX, fromY), Vector2d(toX, toY),
-                           flags, callback);
+    return traverseMapPath(App_World().map(), from, to, PTF_ALL, callback, context);
 }
 
 #undef P_CheckLineSight
@@ -1888,13 +1860,6 @@ DENG_EXTERN_C coord_t Line_PointDistance(Line *line, coord_t const point[2], coo
     return line->pointDistance(point, offset);
 }
 
-#undef Line_PointXYDistance
-DENG_EXTERN_C coord_t Line_PointXYDistance(Line* line, coord_t x, coord_t y, coord_t* offset)
-{
-    DENG_ASSERT(line);
-    return line->pointDistance(Vector2d(x, y), offset);
-}
-
 #undef Line_PointOnSide
 DENG_EXTERN_C coord_t Line_PointOnSide(Line const *line, coord_t const point[2])
 {
@@ -1906,13 +1871,6 @@ DENG_EXTERN_C coord_t Line_PointOnSide(Line const *line, coord_t const point[2])
         return 1;
     }
     return line->pointOnSide(point);
-}
-
-#undef Line_PointXYOnSide
-DENG_EXTERN_C coord_t Line_PointXYOnSide(Line const *line, coord_t x, coord_t y)
-{
-    DENG_ASSERT(line);
-    return line->pointOnSide(Vector2d(x, y));
 }
 
 #undef Line_BoxOnSide
@@ -1948,15 +1906,12 @@ DENG_DECLARE_API(Map) =
     Line_BoxOnSide,
     Line_BoxOnSide_FixedPrecision,
     Line_PointDistance,
-    Line_PointXYDistance,
     Line_PointOnSide,
-    Line_PointXYOnSide,
     Line_TouchingMobjsIterator,
     Line_Opening,
 
     Sector_TouchingMobjsIterator,
     Sector_AtPoint_FixedPrecision,
-    Sector_AtPoint_FixedPrecisionXY,
 
     Mobj_CreateXYZ,
     Mobj_Destroy,
@@ -1984,10 +1939,8 @@ DENG_DECLARE_API(Map) =
 
     BspLeaf_BoxIterator,
 
-    P_PathTraverse2,
     P_PathTraverse,
-    P_PathXYTraverse2,
-    P_PathXYTraverse,
+    P_PathTraverse2,
     P_CheckLineSight,
     P_TraceAdjustOpening,
 

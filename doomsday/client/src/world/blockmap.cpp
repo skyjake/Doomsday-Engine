@@ -455,13 +455,13 @@ bool Blockmap::link(Cell const &cell, void *elem)
     return false; // Outside the blockmap?
 }
 
-bool Blockmap::link(CellBlock const &cellBlock_, void *elem)
+bool Blockmap::link(AABoxd const &region, void *elem)
 {
     if(!elem) return false; // Huh?
 
     bool didLink = false;
 
-    CellBlock cellBlock = cellBlock_;
+    CellBlock cellBlock = toCellBlock(region);
     d->clipBlock(cellBlock);
 
     Cell cell;
@@ -491,13 +491,13 @@ bool Blockmap::unlink(Cell const &cell, void *elem)
     return false;
 }
 
-bool Blockmap::unlink(CellBlock const &cellBlock_, void *elem)
+bool Blockmap::unlink(AABoxd const &region, void *elem)
 {
     if(!elem) return false; // Huh?
 
     bool didUnlink = false;
 
-    CellBlock cellBlock = cellBlock_;
+    CellBlock cellBlock = toCellBlock(region);
     d->clipBlock(cellBlock);
 
     Cell cell;

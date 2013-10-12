@@ -345,25 +345,29 @@ void P_TelefragMobjsTouchingPlayers(void)
  *
  * @param data          Unused.
  */
-int PIT_CrossLine(Line* ld, void* data)
+int PIT_CrossLine(Line *line, void *context)
 {
-    int flags = P_GetIntp(ld, DMU_FLAGS);
+    int flags = P_GetIntp(line, DMU_FLAGS);
+
+    DENG_UNUSED(context);
 
     if((flags & DDLF_BLOCKING) ||
-       (P_ToXLine(ld)->flags & ML_BLOCKMONSTERS) ||
-       (!P_GetPtrp(ld, DMU_FRONT_SECTOR) || !P_GetPtrp(ld, DMU_BACK_SECTOR)))
+       (P_ToXLine(line)->flags & ML_BLOCKMONSTERS) ||
+       (!P_GetPtrp(line, DMU_FRONT_SECTOR) || !P_GetPtrp(line, DMU_BACK_SECTOR)))
     {
-        AABoxd* aaBox = P_GetPtrp(ld, DMU_BOUNDING_BOX);
+        AABoxd *aaBox = P_GetPtrp(line, DMU_BOUNDING_BOX);
 
         if(!(tmBox.minX > aaBox->maxX ||
              tmBox.maxX < aaBox->minX ||
              tmBox.maxY < aaBox->minY ||
              tmBox.minY > aaBox->maxY))
         {
-            if(Line_PointXYOnSide(ld, startPos[VX], startPos[VY]) < 0 !=
-               Line_PointXYOnSide(ld,   endPos[VX],   endPos[VY]) < 0)
-                // Line blocks trajectory.
+            // Line blocks trajectory?
+            if(Line_PointOnSide(line, startPos) < 0 !=
+               Line_PointOnSide(line,   endPos) < 0)
+            {
                 return true;
+            }
         }
     }
 
@@ -1525,8 +1529,8 @@ static boolean P_TryMove2(mobj_t *thing, coord_t x, coord_t y, boolean dropoff)
             // See if the line was crossed.
             if(P_ToXLine(ld)->special)
             {
-                side = Line_PointXYOnSide(ld, thing->origin[VX], thing->origin[VY]) < 0;
-                oldSide = Line_PointXYOnSide(ld, oldpos[VX], oldpos[VY]) < 0;
+                side = Line_PointOnSide(ld, thing->origin) < 0;
+                oldSide = Line_PointOnSide(ld, oldpos) < 0;
                 if(side != oldSide)
                 {
 #if __JHEXEN__
@@ -1575,7 +1579,7 @@ static boolean P_TryMove2(mobj_t *thing, coord_t x, coord_t y, boolean dropoff)
         while((ld = IterList_MoveIterator(spechit)) != NULL)
         {
             // See if the line was crossed.
-            side = Line_PointXYOnSide(ld, thing->origin[VX], thing->origin[VY]) < 0;
+            side = Line_PointOnSide(ld, thing->origin) < 0;
             checkForPushSpecial(ld, side, thing);
         }
     }
@@ -1599,7 +1603,7 @@ boolean P_TryMoveXY(mobj_t* thing, coord_t x, coord_t y, boolean dropoff, boolea
     {
         // Move not possible, see if the thing hit a line and send a Hit
         // event to it.
-        XL_HitLine(tmHitLine, Line_PointXYOnSide(tmHitLine, thing->origin[VX], thing->origin[VY]) < 0,
+        XL_HitLine(tmHitLine, Line_PointOnSide(tmHitLine, thing->origin) < 0,
                    thing);
     }
 
@@ -1662,6 +1666,8 @@ int PTR_ShootTraverse(TraceState *trace, intercept_t const *in, void *context)
     Sector *contact, *originSector;
     boolean lineWasHit;
 
+    DENG_UNUSED(context);
+
     tracePos[VX] = FIX2FLT(trace->line.origin[VX]);
     tracePos[VY] = FIX2FLT(trace->line.origin[VY]);
     tracePos[VZ] = shootZ;
@@ -1676,7 +1682,7 @@ int PTR_ShootTraverse(TraceState *trace, intercept_t const *in, void *context)
 
         if(!backSec || !(xline->flags & ML_TWOSIDED))
         {
-            if(Line_PointXYOnSide(li, tracePos[VX], tracePos[VY]) < 0)
+            if(Line_PointOnSide(li, tracePos) < 0)
                 return false; // Continue traversal.
         }
 
@@ -1960,6 +1966,8 @@ int PTR_AimTraverse(TraceState *trace, intercept_t const *in, void *context)
     coord_t slope, thingTopSlope, thingBottomSlope, dist;
     mobj_t *th;
 
+    DENG_UNUSED(context);
+
     if(in->type == ICPT_LINE)
     {
         Line *li = in->d.line;
@@ -1977,7 +1985,7 @@ int PTR_AimTraverse(TraceState *trace, intercept_t const *in, void *context)
             tracePos[VY] = FIX2FLT(trace->line.origin[VY]);
             tracePos[VZ] = shootZ;
 
-            return !(Line_PointXYOnSide(li, tracePos[VX], tracePos[VY]) < 0);
+            return !(Line_PointOnSide(li, tracePos) < 0);
         }
 
         // Crosses a two sided line.
@@ -2111,7 +2119,7 @@ float P_AimLineAttack(mobj_t* t1, angle_t angle, coord_t distance)
     lineTarget = NULL;
     shootThing = t1;
 
-    P_PathTraverse(t1->origin, target, PT_ADDLINES | PT_ADDMOBJS, PTR_AimTraverse);
+    P_PathTraverse(t1->origin, target, PTR_AimTraverse, 0);
 
     if(lineTarget)
     {
@@ -2165,7 +2173,7 @@ void P_LineAttack(mobj_t* t1, angle_t angle, coord_t distance, coord_t slope, in
     attackRange = distance;
     aimSlope = slope;
 
-    if(!P_PathTraverse(t1->origin, target, PT_ADDLINES | PT_ADDMOBJS, PTR_ShootTraverse))
+    if(!P_PathTraverse(t1->origin, target, PTR_ShootTraverse, 0))
     {
 #if __JHEXEN__
         switch(PuffType)
@@ -2353,11 +2361,11 @@ int PTR_UseTraverse(TraceState *trace, intercept_t const *in, void *context)
  *
  * @param player        The player to test.
  */
-void P_UseLines(player_t* player)
+void P_UseLines(player_t *player)
 {
     uint an;
     coord_t pos[3];
-    mobj_t* mo;
+    mobj_t *mo;
 
     if(IS_CLIENT)
     {
@@ -2379,8 +2387,7 @@ void P_UseLines(player_t* player)
     pos[VX] += USERANGE * FIX2FLT(finecosine[an]);
     pos[VY] += USERANGE * FIX2FLT(finesine[an]);
 
-    P_PathXYTraverse(mo->origin[VX], mo->origin[VY], pos[VX], pos[VY],
-                   PT_ADDLINES, PTR_UseTraverse);
+    P_PathTraverse2(mo->origin, pos, PTF_LINE, PTR_UseTraverse, 0);
 }
 
 /**
@@ -2450,13 +2457,13 @@ static boolean P_ThingHeightClip(mobj_t* thing)
  *
  * @param ld            The line being slid along.
  */
-static void P_HitSlideLine(Line* ld)
+static void P_HitSlideLine(Line *line)
 {
     int side;
     unsigned int an;
     angle_t lineAngle, moveAngle, deltaAngle;
     coord_t moveLen, newLen, d1[2];
-    slopetype_t slopeType = P_GetIntp(ld, DMU_SLOPETYPE);
+    slopetype_t slopeType = P_GetIntp(line, DMU_SLOPETYPE);
 
     if(slopeType == ST_HORIZONTAL)
     {
@@ -2469,8 +2476,8 @@ static void P_HitSlideLine(Line* ld)
         return;
     }
 
-    side = Line_PointXYOnSide(ld, slideMo->origin[VX], slideMo->origin[VY]) < 0;
-    P_GetDoublepv(ld, DMU_DXY, d1);
+    side = Line_PointOnSide(line, slideMo->origin) < 0;
+    P_GetDoublepv(line, DMU_DXY, d1);
     lineAngle = M_PointXYToAngle2(0, 0, d1[0], d1[1]);
     moveAngle = M_PointXYToAngle2(0, 0, tmMove[MX], tmMove[MY]);
 
@@ -2491,28 +2498,30 @@ static void P_HitSlideLine(Line* ld)
 
 int PTR_SlideTraverse(TraceState *trace, intercept_t const *in, void *context)
 {
-    Line *li;
+    Line *line;
+
+    DENG_UNUSED(context);
 
     if(in->type != ICPT_LINE)
         Con_Error("PTR_SlideTraverse: Not a line?");
 
-    li = in->d.line;
+    line = in->d.line;
 
-    if(!(P_ToXLine(li)->flags & ML_TWOSIDED) ||
-       !P_GetPtrp(li, DMU_FRONT_SECTOR) || !P_GetPtrp(li, DMU_BACK_SECTOR))
+    if(!(P_ToXLine(line)->flags & ML_TWOSIDED) ||
+       !P_GetPtrp(line, DMU_FRONT_SECTOR) || !P_GetPtrp(line, DMU_BACK_SECTOR))
     {
-        if(Line_PointXYOnSide(li, slideMo->origin[VX], slideMo->origin[VY]) < 0)
+        if(Line_PointOnSide(line, slideMo->origin) < 0)
             return false; // Don't hit the back side.
 
         goto isblocking;
     }
 
 #if __JDOOM64__
-    if(P_ToXLine(li)->flags & ML_BLOCKALL) // jd64
+    if(P_ToXLine(line)->flags & ML_BLOCKALL) // jd64
         goto isblocking;
 #endif
 
-    P_TraceAdjustOpening(trace, li);
+    P_TraceAdjustOpening(trace, line);
 
     if(trace->opening.range < slideMo->height)
         goto isblocking; // Doesn't fit.
@@ -2533,7 +2542,7 @@ int PTR_SlideTraverse(TraceState *trace, intercept_t const *in, void *context)
         secondSlideDistance = bestSlideDistance;
         secondSlideLine = bestSlideLine;
         bestSlideDistance = in->distance;
-        bestSlideLine = li;
+        bestSlideLine = line;
     }
 
     return true; // Stop.
@@ -2547,64 +2556,55 @@ int PTR_SlideTraverse(TraceState *trace, intercept_t const *in, void *context)
  *
  * @param mo            The mobj to attempt the slide move.
  */
-void P_SlideMove(mobj_t* mo)
+void P_SlideMove(mobj_t *mo)
 {
-    coord_t oldPos[2] = { mo->origin[VX], mo->origin[VY] };
-    int hitcount = 3;
+#ifdef _DEBUG
+    vec2d_t oldOrigin;
+#endif
+    vec2d_t leadPos, trailPos;
+    int hitCount;
 
-    slideMo = mo;
+    if(!mo) return; // Huh?
 
+#ifdef _DEBUG
+    V2d_Copy(oldOrigin, mo->origin);
+#endif
+
+    hitCount = 3;
     do
     {
-        coord_t leadpos[3], trailpos[3], newPos[3];
-
-        if(--hitcount == 0)
+        if(--hitCount == 0)
             goto stairstep; // Don't loop forever.
 
         // Trace along the three leading corners.
-        leadpos[VX] = trailpos[VX] = mo->origin[VX];
-        leadpos[VY] = trailpos[VY] = mo->origin[VY];
-        leadpos[VZ] = trailpos[VZ] = mo->origin[VZ];
+        V2d_Set(leadPos, mo->origin[VX] + (mo->mom[MX] > 0? mo->radius : -mo->radius),
+                         mo->origin[VY] + (mo->mom[MY] > 0? mo->radius : -mo->radius));
 
-        if(mo->mom[MX] > 0)
-        {
-            leadpos[VX] += mo->radius;
-            trailpos[VX] -= mo->radius;
-        }
-        else
-        {
-            leadpos[VX] -= mo->radius;
-            trailpos[VX] += mo->radius;
-        }
+        V2d_Set(trailPos, mo->origin[VX] - (mo->mom[MX] > 0? mo->radius : -mo->radius),
+                          mo->origin[VY] - (mo->mom[MY] > 0? mo->radius : -mo->radius));
 
-        if(mo->mom[MY] > 0)
-        {
-            leadpos[VY] += mo->radius;
-            trailpos[VY] -= mo->radius;
-        }
-        else
-        {
-            leadpos[VY] -= mo->radius;
-            trailpos[VY] += mo->radius;
-        }
-
+        slideMo = mo;
         bestSlideDistance = 1;
 
-        P_PathXYTraverse(leadpos[VX], leadpos[VY],
-                       leadpos[VX] + mo->mom[MX], leadpos[VY] + mo->mom[MY],
-                       PT_ADDLINES, PTR_SlideTraverse);
-        P_PathXYTraverse(trailpos[VX], leadpos[VY],
-                       trailpos[VX] + mo->mom[MX], leadpos[VY] + mo->mom[MY],
-                       PT_ADDLINES, PTR_SlideTraverse);
-        P_PathXYTraverse(leadpos[VX], trailpos[VY],
-                       leadpos[VX] + mo->mom[MX], trailpos[VY] + mo->mom[MY],
-                       PT_ADDLINES, PTR_SlideTraverse);
+        P_PathXYTraverse2(leadPos[VX], leadPos[VY],
+                          leadPos[VX] + mo->mom[MX], leadPos[VY] + mo->mom[MY],
+                          PTF_LINE, PTR_SlideTraverse, 0);
+
+        P_PathXYTraverse2(trailPos[VX], leadPos[VY],
+                          trailPos[VX] + mo->mom[MX], leadPos[VY] + mo->mom[MY],
+                          PTF_LINE, PTR_SlideTraverse, 0);
+
+        P_PathXYTraverse2(leadPos[VX], trailPos[VY],
+                          leadPos[VX] + mo->mom[MX], trailPos[VY] + mo->mom[MY],
+                          PTF_LINE, PTR_SlideTraverse, 0);
 
         // Move up to the wall.
         if(bestSlideDistance == 1)
-        {   // The move must have hit the middle, so stairstep. $dropoff_fix
+        {
+            // The move must have hit the middle, so stairstep. $dropoff_fix
           stairstep:
-            /**
+
+            /*
              * Ideally we would set the directional momentum of the mobj to zero
              * here should a move fail (to prevent noticeable stuttering against
              * the blocking surface/thing). However due to the mechanics of the
@@ -2626,36 +2626,34 @@ void P_SlideMove(mobj_t* mo)
         bestSlideDistance -= (1.0f / 32);
         if(bestSlideDistance > 0)
         {
-            newPos[VX] = mo->mom[MX] * bestSlideDistance;
-            newPos[VY] = mo->mom[MY] * bestSlideDistance;
-            newPos[VZ] = DDMAXFLOAT; // Just initialize with *something*.
+            vec2d_t newPos = { mo->origin[VX] + mo->mom[MX] * bestSlideDistance,
+                               mo->origin[VY] + mo->mom[MY] * bestSlideDistance };
 
             // $dropoff_fix: Allow objects to drop off ledges
 #if __JHEXEN__
-            if(!P_TryMoveXY(mo, mo->origin[VX] + newPos[VX], mo->origin[VY] + newPos[VY]))
-                goto stairstep;
+            if(!P_TryMoveXY(mo, newPos[VX], newPos[VY]))
 #else
-            if(!P_TryMoveXY(mo, mo->origin[VX] + newPos[VX], mo->origin[VY] + newPos[VY],
-                          true, true))
-                goto stairstep;
+            if(!P_TryMoveXY(mo, newPos[VX], newPos[VY], true, true))
 #endif
+            {
+                goto stairstep;
+            }
         }
 
         // Now continue along the wall.
         // First calculate remainder.
-        bestSlideDistance = 1 - (bestSlideDistance + (1.0f / 32));
-        if(bestSlideDistance > 1)
-            bestSlideDistance = 1;
+        bestSlideDistance = MIN_OF(1 - (bestSlideDistance + (1.0f / 32)), 1);
         if(bestSlideDistance <= 0)
+        {
             break;
+        }
 
-        tmMove[MX] = mo->mom[MX] * bestSlideDistance;
-        tmMove[MY] = mo->mom[MY] * bestSlideDistance;
+        V2d_Set(tmMove, mo->mom[VX] * bestSlideDistance,
+                        mo->mom[VY] * bestSlideDistance);
 
         P_HitSlideLine(bestSlideLine); // Clip the move.
 
-        mo->mom[MX] = tmMove[MX];
-        mo->mom[MY] = tmMove[MY];
+        V2d_Copy(mo->mom, tmMove);
 
     // $dropoff_fix: Allow objects to drop off ledges:
 #if __JHEXEN__
@@ -2668,7 +2666,7 @@ void P_SlideMove(mobj_t* mo)
 
 #ifdef _DEBUG
     // Didn't move?
-    if(mo->player && mo->origin[VX] == oldPos[VX] && mo->origin[VY] == oldPos[VY])
+    if(mo->player && mo->origin[VX] == oldOrigin[VX] && mo->origin[VY] == oldOrigin[VY])
     {
         Con_Message("P_SlideMove: Mobj pos stays the same.");
     }
@@ -3105,22 +3103,24 @@ static void checkForPushSpecial(Line* line, int side, mobj_t* mobj)
 
 int PTR_BounceTraverse(TraceState *trace, intercept_t const *in, void *context)
 {
-    Line *li;
+    Line *line;
+
+    DENG_UNUSED(context);
 
     if(in->type != ICPT_LINE)
         Con_Error("PTR_BounceTraverse: Not a line?");
 
-    li = in->d.line;
+    line = in->d.line;
 
-    if(!P_GetPtrp(li, DMU_FRONT_SECTOR) || !P_GetPtrp(li, DMU_BACK_SECTOR))
+    if(!P_GetPtrp(line, DMU_FRONT_SECTOR) || !P_GetPtrp(line, DMU_BACK_SECTOR))
     {
-        if(Line_PointXYOnSide(li, slideMo->origin[VX], slideMo->origin[VY]) < 0)
+        if(Line_PointOnSide(line, slideMo->origin) < 0)
             return false; // Don't hit the back side.
 
         goto bounceblocking;
     }
 
-    P_TraceAdjustOpening(trace, li);
+    P_TraceAdjustOpening(trace, line);
 
     if(trace->opening.range < slideMo->height)
         goto bounceblocking; // Doesn't fit.
@@ -3137,63 +3137,51 @@ int PTR_BounceTraverse(TraceState *trace, intercept_t const *in, void *context)
         secondSlideDistance = bestSlideDistance;
         secondSlideLine = bestSlideLine;
         bestSlideDistance = in->distance;
-        bestSlideLine = li;
+        bestSlideLine = line;
     }
 
     return true; // Stop.
 }
 
-void P_BounceWall(mobj_t* mo)
+void P_BounceWall(mobj_t *mo)
 {
-    angle_t lineAngle, moveAngle, deltaAngle;
-    coord_t moveLen, leadPos[3], d1[2];
-    unsigned int an;
-    int side;
+    coord_t leadPos[2], destPos[2];
 
-    slideMo = mo;
+    // Trace a line from the origin to the would be destination point (which is
+    // apparently not reachable) to find a line from which we'll calculate the
+    // inverse "bounce" vector.
+    V2d_Set(leadPos, mo->origin[VX] + (mo->mom[MX] > 0? mo->radius : -mo->radius),
+                     mo->origin[VY] + (mo->mom[MY] > 0? mo->radius : -mo->radius));
+    V2d_Sum(destPos, leadPos, mo->mom);
 
-    // Trace along the three leading corners.
-    leadPos[VX] = mo->origin[VX];
-    leadPos[VY] = mo->origin[VY];
-    leadPos[VZ] = mo->origin[VZ];
-
-    if(mo->mom[MX] > 0)
-        leadPos[VX] += mo->radius;
-    else
-        leadPos[VX] -= mo->radius;
-
-    if(mo->mom[MY] > 0)
-        leadPos[VY] += mo->radius;
-    else
-        leadPos[VY] -= mo->radius;
-
-    bestSlideLine = NULL;
+    slideMo           = mo;
+    bestSlideLine     = 0;
     bestSlideDistance = 1;
-    P_PathXYTraverse(leadPos[VX], leadPos[VY],
-                   leadPos[VX] + mo->mom[MX], leadPos[VY] + mo->mom[MY],
-                   PT_ADDLINES, PTR_BounceTraverse);
 
-    if(!bestSlideLine)
-        return; // We don't want to crash.
+    P_PathTraverse2(leadPos, destPos, PTF_LINE, PTR_BounceTraverse, 0);
 
-    side = Line_PointXYOnSide(bestSlideLine, mo->origin[VX], mo->origin[VY]) < 0;
-    P_GetDoublepv(bestSlideLine, DMU_DXY, d1);
-    lineAngle = M_PointXYToAngle2(0, 0, d1[0], d1[1]);
-    if(side == 1)
-        lineAngle += ANG180;
+    if(bestSlideLine)
+    {
+        int const side = Line_PointOnSide(bestSlideLine, mo->origin) < 0;
+        angle_t lineAngle, moveAngle, deltaAngle;
+        coord_t lineDirection[2];
+        coord_t moveLen;
+        uint an;
 
-    moveAngle = M_PointXYToAngle2(0, 0, mo->mom[MX], mo->mom[MY]);
-    deltaAngle = (2 * lineAngle) - moveAngle;
+        P_GetDoublepv(bestSlideLine, DMU_DXY, lineDirection);
 
-    moveLen = M_ApproxDistance(mo->mom[MX], mo->mom[MY]);
-    moveLen *= 0.75f; // Friction.
+        lineAngle  = M_PointXYToAngle2(0, 0, lineDirection[0], lineDirection[1]) + side? ANG180 : 0;
+        moveAngle  = M_PointXYToAngle2(0, 0, mo->mom[MX], mo->mom[MY]);
+        deltaAngle = (2 * lineAngle) - moveAngle;
 
-    if(moveLen < 1)
-        moveLen = 2;
+        moveLen = M_ApproxDistance(mo->mom[MX], mo->mom[MY]);
+        moveLen *= 0.75f; // Friction.
+        if(moveLen < 1) moveLen = 2;
 
-    an = deltaAngle >> ANGLETOFINESHIFT;
-    mo->mom[MX] = moveLen * FIX2FLT(finecosine[an]);
-    mo->mom[MY] = moveLen * FIX2FLT(finesine[an]);
+        an = deltaAngle >> ANGLETOFINESHIFT;
+        mo->mom[MX] = moveLen * FIX2FLT(finecosine[an]);
+        mo->mom[MY] = moveLen * FIX2FLT(finesine[an]);
+    }
 }
 
 int PTR_PuzzleItemTraverse(TraceState *trace, intercept_t const *in, void *context)
@@ -3241,8 +3229,7 @@ int PTR_PuzzleItemTraverse(TraceState *trace, intercept_t const *in, void *conte
             return false; // Continue searching...
         }
 
-        if(Line_PointXYOnSide(line, puzzleItemUser->origin[VX],
-                                       puzzleItemUser->origin[VY]) < 0)
+        if(Line_PointOnSide(line, puzzleItemUser->origin) < 0)
             return true; // Don't use back sides.
 
         if(puzzleItemType != xline->arg1)
@@ -3284,25 +3271,26 @@ int PTR_PuzzleItemTraverse(TraceState *trace, intercept_t const *in, void *conte
  * @param itemType      The type of item to try to use.
  * @return boolean      true if the puzzle item was used.
  */
-boolean P_UsePuzzleItem(player_t* player, int itemType)
+boolean P_UsePuzzleItem(player_t *player, int itemType)
 {
-    int angle;
-    coord_t pos1[3], pos2[3];
+    coord_t farUsePoint[2];
+    mobj_t *mobj;
+    uint an;
 
-    puzzleItemType = itemType;
-    puzzleItemUser = player->plr->mo;
+    DENG2_ASSERT(player != 0);
+
+    mobj = player->plr->mo;
+    if(!mobj) return false; // Huh?
+
+    puzzleItemType  = itemType;
+    puzzleItemUser  = mobj;
     puzzleActivated = false;
 
-    angle = player->plr->mo->angle >> ANGLETOFINESHIFT;
+    an = mobj->angle >> ANGLETOFINESHIFT;
+    V2d_Set(farUsePoint, mobj->origin[VX] + FIX2FLT(USERANGE * finecosine[an]),
+                         mobj->origin[VY] + FIX2FLT(USERANGE * finesine  [an]));
 
-    memcpy(pos1, player->plr->mo->origin, sizeof(pos1));
-    memcpy(pos2, player->plr->mo->origin, sizeof(pos2));
-
-    pos2[VX] += FIX2FLT(USERANGE * finecosine[angle]);
-    pos2[VY] += FIX2FLT(USERANGE * finesine[angle]);
-
-    P_PathXYTraverse(pos1[VX], pos1[VY], pos2[VX], pos2[VY],
-                   PT_ADDLINES | PT_ADDMOBJS, PTR_PuzzleItemTraverse);
+    P_PathTraverse(mobj->origin, farUsePoint, PTR_PuzzleItemTraverse, 0);
 
     if(!puzzleActivated)
     {
