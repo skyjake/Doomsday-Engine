@@ -190,7 +190,8 @@ typedef struct intercept_s {
  * modified by trace callback functions!
  */
 typedef struct {
-    divline_t line;
+    fixed_t origin[2];
+    fixed_t direction[2];
     LineOpening opening;
 } TraceState;
 
@@ -314,7 +315,7 @@ DENG_API_TYPEDEF(Map)
 
     struct mobj_s  *(*MO_CreateXYZ)(thinkfunc_t function, coord_t x, coord_t y, coord_t z, angle_t angle, coord_t radius, coord_t height, int ddflags);
     void            (*MO_Destroy)(struct mobj_s *mobj);
-    struct mobj_s  *(*MO_MobjById)(int id);
+    struct mobj_s  *(*MO_ById)(int id);
     int             (*MO_BoxIterator)(AABoxd const *box, int (*callback) (struct mobj_s *, void *), void *context);
 
     /**
@@ -402,7 +403,7 @@ DENG_API_TYPEDEF(Map)
      * @param id  Unique identifier of the Polyobj to be found.
      * @return  Found Polyobj instance else @c NULL.
      */
-    struct polyobj_s *(*PO_PolyobjById)(int id);
+    struct polyobj_s *(*PO_ById)(int id);
 
     /**
      * Lookup a Polyobj on the current map by tag.
@@ -410,7 +411,7 @@ DENG_API_TYPEDEF(Map)
      * @param tag  Tag associated with the Polyobj to be found.
      * @return  Found Polyobj instance, or @c NULL.
      */
-    struct polyobj_s *(*PO_PolyobjByTag)(int tag);
+    struct polyobj_s *(*PO_ByTag)(int tag);
 
     int             (*PO_BoxIterator)(AABoxd const *box, int (*callback) (struct polyobj_s *, void *), void *context);
 
@@ -663,7 +664,7 @@ DENG_API_T(Map);
 
 #define Mobj_CreateXYZ                      _api_Map.MO_CreateXYZ
 #define Mobj_Destroy                        _api_Map.MO_Destroy
-#define Mobj_ById                           _api_Map.MO_MobjById
+#define Mobj_ById                           _api_Map.MO_ById
 #define Mobj_BoxIterator                    _api_Map.MO_BoxIterator
 #define Mobj_SetState                       _api_Map.MO_SetState
 #define Mobj_Link                           _api_Map.MO_Link
@@ -680,8 +681,8 @@ DENG_API_T(Map);
 #define Polyobj_Link                        _api_Map.PO_Link
 #define Polyobj_Unlink                      _api_Map.PO_Unlink
 #define Polyobj_FirstLine                   _api_Map.PO_FirstLine
-#define Polyobj_ById                        _api_Map.PO_PolyobjById
-#define Polyobj_ByTag                       _api_Map.PO_PolyobjByTag
+#define Polyobj_ById                        _api_Map.PO_ById
+#define Polyobj_ByTag                       _api_Map.PO_ByTag
 #define Polyobj_BoxIterator                 _api_Map.PO_BoxIterator
 #define Polyobj_SetCallback                 _api_Map.PO_SetCallback
 

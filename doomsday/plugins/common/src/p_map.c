@@ -1659,17 +1659,18 @@ int PTR_ShootTraverse(TraceState *trace, intercept_t const *in, void *context)
     extern mobj_t lavaInflictor;
 #endif
 
-    int divisor;
-    coord_t pos[3], frac, slope, dist, thingTopSlope, thingBottomSlope,
-          cTop, cBottom, d[3], step, stepv[3], tracePos[3], cFloor, cCeil;
-    mobj_t *th;
+    coord_t pos[3], d[3], stepv[3], tracePos[3];
+    coord_t frac, slope, dist, thingTopSlope, thingBottomSlope, cTop, cBottom;
+    coord_t step, cFloor, cCeil;
     Sector *contact, *originSector;
     boolean lineWasHit;
+    int divisor;
+    mobj_t *th;
 
     DENG_UNUSED(context);
 
-    tracePos[VX] = FIX2FLT(trace->line.origin[VX]);
-    tracePos[VY] = FIX2FLT(trace->line.origin[VY]);
+    tracePos[VX] = FIX2FLT(trace->origin[VX]);
+    tracePos[VY] = FIX2FLT(trace->origin[VY]);
     tracePos[VZ] = shootZ;
 
     if(in->type == ICPT_LINE)
@@ -1728,8 +1729,8 @@ int PTR_ShootTraverse(TraceState *trace, intercept_t const *in, void *context)
 
         // Position a bit closer.
         frac = in->distance - (4 / attackRange);
-        pos[VX] = tracePos[VX] + (FIX2FLT(trace->line.direction[VX]) * frac);
-        pos[VY] = tracePos[VY] + (FIX2FLT(trace->line.direction[VY]) * frac);
+        pos[VX] = tracePos[VX] + (FIX2FLT(trace->direction[VX]) * frac);
+        pos[VY] = tracePos[VY] + (FIX2FLT(trace->direction[VY]) * frac);
         pos[VZ] = tracePos[VZ] + (aimSlope * (frac * attackRange));
 
         if(backSec)
@@ -1882,8 +1883,8 @@ if(lineWasHit)
     // Position a bit closer.
     frac = in->distance - (10 / attackRange);
 
-    pos[VX] = tracePos[VX] + (FIX2FLT(trace->line.direction[VX]) * frac);
-    pos[VY] = tracePos[VY] + (FIX2FLT(trace->line.direction[VY]) * frac);
+    pos[VX] = tracePos[VX] + (FIX2FLT(trace->direction[VX]) * frac);
+    pos[VY] = tracePos[VY] + (FIX2FLT(trace->direction[VY]) * frac);
     pos[VZ] = tracePos[VZ] + (aimSlope * (frac * attackRange));
 
     // Spawn bullet puffs or blood spots, depending on target type.
@@ -1981,8 +1982,8 @@ int PTR_AimTraverse(TraceState *trace, intercept_t const *in, void *context)
         {
             coord_t tracePos[3];
 
-            tracePos[VX] = FIX2FLT(trace->line.origin[VX]);
-            tracePos[VY] = FIX2FLT(trace->line.origin[VY]);
+            tracePos[VX] = FIX2FLT(trace->origin[VX]);
+            tracePos[VY] = FIX2FLT(trace->origin[VY]);
             tracePos[VZ] = shootZ;
 
             return !(Line_PointOnSide(li, tracePos) < 0);

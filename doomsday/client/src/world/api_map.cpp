@@ -1626,18 +1626,18 @@ static void collectLineIntercept(Line &line, TraceState const &trace)
     // Is this line crossed?
     // Avoid precision problems with two routines.
     int s1, s2;
-    if(trace.line.direction[VX] >  FRACUNIT * 16 || trace.line.direction[VY] >  FRACUNIT * 16 ||
-       trace.line.direction[VX] < -FRACUNIT * 16 || trace.line.direction[VY] < -FRACUNIT * 16)
+    if(trace.direction[VX] >  FRACUNIT * 16 || trace.direction[VY] >  FRACUNIT * 16 ||
+       trace.direction[VX] < -FRACUNIT * 16 || trace.direction[VY] < -FRACUNIT * 16)
     {
-        s1 = V2x_PointOnLineSide(lineFromX, trace.line.origin, trace.line.direction);
-        s2 = V2x_PointOnLineSide(lineToX,   trace.line.origin, trace.line.direction);
+        s1 = V2x_PointOnLineSide(lineFromX, trace.origin, trace.direction);
+        s2 = V2x_PointOnLineSide(lineToX,   trace.origin, trace.direction);
     }
     else
     {
-        s1 = line.pointOnSide(Vector2d(FIX2FLT(trace.line.origin[VX]),
-                                       FIX2FLT(trace.line.origin[VY]))) < 0;
-        s2 = line.pointOnSide(Vector2d(FIX2FLT(trace.line.origin[VX] + trace.line.direction[VX]),
-                                       FIX2FLT(trace.line.origin[VY] + trace.line.direction[VY]))) < 0;
+        s1 = line.pointOnSide(Vector2d(FIX2FLT(trace.origin[VX]),
+                                       FIX2FLT(trace.origin[VY]))) < 0;
+        s2 = line.pointOnSide(Vector2d(FIX2FLT(trace.origin[VX] + trace.direction[VX]),
+                                       FIX2FLT(trace.origin[VY] + trace.direction[VY]))) < 0;
     }
     if(s1 == s2) return;
 
@@ -1645,7 +1645,7 @@ static void collectLineIntercept(Line &line, TraceState const &trace)
 
     // On the correct side of the trace origin?
     float distance = FIX2FLT(V2x_Intersection(lineFromX, lineDirectionX,
-                                              trace.line.origin, trace.line.direction));
+                                              trace.origin, trace.direction));
     if(distance >= 0)
     {
         P_AddIntercept(ICPT_LINE, distance, &line);
@@ -1667,31 +1667,28 @@ static void collectMobjIntercept(mobj_t &mobj, TraceState const &trace)
     // Check a corner to corner crossection for hit.
     AABoxd const aaBox = Mobj_AABox(mobj);
 
-    vec2d_t from, to;
-    if((trace.line.direction[VX] ^ trace.line.direction[VY]) > 0)
+    fixed_t from[2], to[2];
+    if((trace.direction[VX] ^ trace.direction[VY]) > 0)
     {
         // \ Slope
-        V2d_Set(from, aaBox.minX, aaBox.maxY);
-        V2d_Set(to,   aaBox.maxX, aaBox.minY);
+        V2x_Set(from, DBL2FIX(aaBox.minX), DBL2FIX(aaBox.maxY));
+        V2x_Set(to,   DBL2FIX(aaBox.maxX), DBL2FIX(aaBox.minY));
     }
     else
     {
         // / Slope
-        V2d_Set(from, aaBox.minX, aaBox.minY);
-        V2d_Set(to,   aaBox.maxX, aaBox.maxY);
+        V2x_Set(from, DBL2FIX(aaBox.minX), DBL2FIX(aaBox.minY));
+        V2x_Set(to,   DBL2FIX(aaBox.maxX), DBL2FIX(aaBox.maxY));
     }
 
     // Is this line crossed?
-    if(Divline_PointOnSide(&trace.line, from) == Divline_PointOnSide(&trace.line, to))
+    if(V2x_PointOnLineSide(from, trace.origin, trace.direction) ==
+       V2x_PointOnLineSide(to,   trace.origin, trace.direction))
         return;
 
     // Calculate interception point.
-    divline_t dl;
-    dl.origin[VX] = DBL2FIX(from[VX]);
-    dl.origin[VY] = DBL2FIX(from[VY]);
-    dl.direction[VX] = DBL2FIX(to[VX] - from[VX]);
-    dl.direction[VY] = DBL2FIX(to[VY] - from[VY]);
-    float distance = FIX2FLT(Divline_Intersection(&dl, &trace.line));
+    fixed_t direction[2] = { (to[VX] - from[VX]), (to[VY] - from[VY]) };
+    float distance = FIX2FLT(V2x_Intersection(from, direction, trace.origin, trace.direction));
 
     // On the correct side of the trace origin?
     if(distance >= 0)
@@ -1712,10 +1709,10 @@ static int traverseMapPath(Map &map, Vector2d const &from, Vector2d const &to,
     // A new trace begins.
     TraceState trace;
 
-    trace.line.origin[VX] = FLT2FIX(from.x);
-    trace.line.origin[VY] = FLT2FIX(from.y);
-    trace.line.direction[VX] = FLT2FIX(to.x - from.x);
-    trace.line.direction[VY] = FLT2FIX(to.y - from.y);
+    trace.origin[VX] = FLT2FIX(from.x);
+    trace.origin[VY] = FLT2FIX(from.y);
+    trace.direction[VX] = FLT2FIX(to.x - from.x);
+    trace.direction[VY] = FLT2FIX(to.y - from.y);
 
     P_ClearIntercepts();
     validCount++;

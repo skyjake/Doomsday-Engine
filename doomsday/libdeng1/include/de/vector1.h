@@ -55,6 +55,8 @@ typedef vec2d_t const *const_arvec2d_t;
 
 typedef vectorcompd_t const *pcvec2d_t; /// @todo Remove me
 
+DENG_PUBLIC void V2x_Set(fixed_t vec[2], fixed_t x, fixed_t y);
+
 DENG_PUBLIC fixed_t V2x_Intersection(fixed_t const v1[2], fixed_t const v1Delta[2], fixed_t const v2[2], fixed_t const v2Delta[2]);
 
 /// @return @c 0 or 1.

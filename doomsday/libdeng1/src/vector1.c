@@ -24,6 +24,12 @@
 
 #include "de/vector1.h"
 
+void V2x_Set(fixed_t vec[], fixed_t x, fixed_t y)
+{
+    vec[VX] = x;
+    vec[VY] = y;
+}
+
 fixed_t V2x_Intersection(fixed_t const v1[], fixed_t const v1Delta[],
                          fixed_t const v2[], fixed_t const v2Delta[])
 {
