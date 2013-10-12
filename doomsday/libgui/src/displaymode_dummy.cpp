@@ -19,7 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#include "ui/displaymode_native.h"
+#include "de/gui/displaymode_native.h"
 #include <de/libdeng2.h>
 
 void DisplayMode_Native_Init(void)
@@ -35,30 +35,30 @@ int DisplayMode_Native_Count(void)
     return 0;
 }
 
-void DisplayMode_Native_GetMode(int index, DisplayMode* mode)
+void DisplayMode_Native_GetMode(int index, DisplayMode *mode)
 {
     DENG2_UNUSED(index);
     DENG2_UNUSED(mode);
 }
 
-void DisplayMode_Native_GetCurrentMode(DisplayMode* mode)
+void DisplayMode_Native_GetCurrentMode(DisplayMode *mode)
 {
     DENG2_UNUSED(mode);
 }
 
-int DisplayMode_Native_Change(const DisplayMode* mode, boolean shouldCapture)
+int DisplayMode_Native_Change(DisplayMode const *mode, int shouldCapture)
 {
     DENG2_UNUSED(mode);
     DENG2_UNUSED(shouldCapture);
     return true;
 }
 
-void DisplayMode_Native_GetColorTransfer(displaycolortransfer_t* colors)
+void DisplayMode_Native_GetColorTransfer(DisplayColorTransfer *colors)
 {
     DENG2_UNUSED(colors);
 }
 
-void DisplayMode_Native_SetColorTransfer(const displaycolortransfer_t* colors)
+void DisplayMode_Native_SetColorTransfer(DisplayColorTransfer const *colors)
 {
     DENG2_UNUSED(colors);
 }
