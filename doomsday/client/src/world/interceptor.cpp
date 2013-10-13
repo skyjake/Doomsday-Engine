@@ -267,16 +267,32 @@ DENG2_PIMPL_NOREF(Interceptor)
         }
     }
 
-    static int interceptCellLineWorker(Line *line, void *context)
+    static int interceptPathLineWorker(Line *line, void *context)
     {
         static_cast<Instance *>(context)->intercept(*line);
         return false; // Continue iteration.
     }
 
-    static int interceptCellMobjWorker(mobj_t *mobj, void *context)
+    static int interceptPathMobjWorker(mobj_t *mobj, void *context)
     {
         static_cast<Instance *>(context)->intercept(*mobj);
         return false; // Continue iteration.
+    }
+
+    void runTrace()
+    {
+        /// @todo Store the intercept list internally?
+        clearIntercepts();
+
+        validCount++;
+        if(flags & PTF_LINE)
+        {
+            map->linePathIterator(from, to, interceptPathLineWorker, this);
+        }
+        if(flags & PTF_MOBJ)
+        {
+            map->mobjPathIterator(from, to, interceptPathMobjWorker, this);
+        }
     }
 };
 
@@ -319,23 +335,11 @@ bool Interceptor::adjustOpening(Line const *line)
 
 int Interceptor::trace(Map const &map)
 {
+    // Step #1: Collect and sort intercepts.
     d->map = const_cast<Map *>(&map);
+    d->runTrace();
 
-    // Step #1: Collect intercepts.
-    /// @todo Store the intercept list internally.
-    d->clearIntercepts();
-    validCount++;
-
-    if(d->flags & PTF_LINE)
-    {
-        d->map->linePathIterator(d->from, d->to, Instance::interceptCellLineWorker, d);
-    }
-    if(d->flags & PTF_MOBJ)
-    {
-        d->map->mobjPathIterator(d->from, d->to, Instance::interceptCellMobjWorker, d);
-    }
-
-    // Step #2: Process sorted intercepts.
+    // Step #2: Process intercepts.
     for(ListNode *node = head.next; !d->isSentinel(*node); node = node->next)
     {
         // Prepare the intercept info.

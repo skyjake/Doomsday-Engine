@@ -51,12 +51,12 @@ public:
                 void *context            = 0);
 
     /**
-     * Provides read-only access to the fixed-point map space origin of the trace.
+     * Provides read-only access to the map space origin of the trace.
      */
     coord_t const *origin() const;
 
     /**
-     * Provides read-only access to the fixed-point map space direction of the trace.
+     * Provides read-only access to the map space direction of the trace.
      */
     coord_t const *direction() const;
 
