@@ -44,11 +44,6 @@
 
 #define BODYQUESIZE         32
 
-boolean P_TestMobjLocation(mobj_t *mobj);
-
-extern boolean fellDown; //$dropoff_fix: used to flag pushed off ledge
-extern Line *blockLine; // $unstuck: blocking line
-
 // Eight directional movement speeds.
 #define MOVESPEED_DIAGONAL      (0.71716309f)
 static const coord_t dirSpeed[8][2] =

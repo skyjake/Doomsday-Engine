@@ -42,13 +42,6 @@
 
 #define SMALLSPLASHCLIP         (12);
 
-void    G_PlayerReborn(int player);
-void    P_MarkAsLeaving(mobj_t *corpse);
-mobj_t *P_CheckOnMobj(mobj_t *thing);
-void    P_BounceWall(mobj_t *mo);
-
-extern mobj_t lavaInflictor;
-
 mobjtype_t PuffType;
 mobj_t *MissileMobj;
 

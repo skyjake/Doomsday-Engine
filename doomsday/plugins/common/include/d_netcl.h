@@ -25,6 +25,10 @@
 
 #include "d_net.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void            NetCl_UpdateGameState(Reader* msg);
 void            NetCl_PlayerSpawnPosition(Reader* msg);
 void            NetCl_UpdateTotalCounts(Reader *msg);
@@ -48,5 +52,9 @@ void            NetCl_PlayerActionRequest(player_t* player, int actionType, int 
 void            NetCl_DamageRequest(mobj_t* target, mobj_t* inflictor, mobj_t* source, int damage);
 void            NetCl_CheatRequest(const char* command);
 void            NetCl_FloorHitRequest(player_t* player);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif

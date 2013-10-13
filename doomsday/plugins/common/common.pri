@@ -97,7 +97,7 @@ SOURCES += \
     $$common_src/p_floor.c \
     $$common_src/p_inventory.c \
     $$common_src/p_iterlist.c \
-    $$common_src/p_map.c \
+    $$common_src/p_map.cpp \
     $$common_src/p_mapsetup.cpp \
     $$common_src/p_mapspec.c \
     $$common_src/p_plat.c \

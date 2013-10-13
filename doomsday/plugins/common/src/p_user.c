@@ -57,10 +57,6 @@
 
 #define ANG5                (ANG90/18)
 
-#if __JHERETIC__ || __JHEXEN__
-boolean     P_TestMobjLocation(mobj_t *mobj);
-#endif
-
 boolean onground;
 
 int maxHealth; // 100
@@ -849,8 +845,7 @@ boolean P_UndoPlayerMorph(player_t* player)
     mo = P_SpawnMobj(MT_PLAYER, pos, angle, 0);
 # endif
 
-    if(!mo)
-        return false;
+    if(!mo) return false;
 
     if(P_TestMobjLocation(mo) == false)
     {
