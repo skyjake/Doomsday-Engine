@@ -1616,7 +1616,7 @@ int PTR_ShootTraverse(Interceptor *trace, intercept_t const *in, void * /*contex
     {
         bool lineWasHit = false;
 
-        Line *li = in->d.line;
+        Line *li = in->line;
         xline_t *xline = P_ToXLine(li);
 
         Sector *backSec = (Sector *)P_GetPtrp(li, DMU_BACK_SECTOR);
@@ -1796,7 +1796,7 @@ int PTR_ShootTraverse(Interceptor *trace, intercept_t const *in, void * /*contex
     }
 
     // Intercepted a mobj.
-    mobj_t *th = in->d.mobj;
+    mobj_t *th = in->mobj;
 
     if(th == shootThing) return false; // Can't shoot self.
     if(!(th->flags & MF_SHOOTABLE)) return false; // Corpse or something.
@@ -1878,10 +1878,10 @@ int PTR_ShootTraverse(Interceptor *trace, intercept_t const *in, void * /*contex
         }
 
 #if __JHEXEN__
-        if(!(in->d.mobj->flags2 & MF2_INVULNERABLE))
+        if(!(in->mobj->flags2 & MF2_INVULNERABLE))
 #endif
         {
-            if(!(in->d.mobj->flags & MF_NOBLOOD))
+            if(!(in->mobj->flags & MF_NOBLOOD))
             {
                 if(damageDone > 0)
                 {
@@ -1893,13 +1893,13 @@ int PTR_ShootTraverse(Interceptor *trace, intercept_t const *in, void * /*contex
 # if __JHEXEN__
                     if(PuffType == MT_AXEPUFF || PuffType == MT_AXEPUFF_GLOW)
                     {
-                        P_SpawnBloodSplatter2(pos[VX], pos[VY], pos[VZ], in->d.mobj);
+                        P_SpawnBloodSplatter2(pos[VX], pos[VY], pos[VZ], in->mobj);
                     }
                     else
 # endif
                     if(P_Random() < 192)
                     {
-                        P_SpawnBloodSplatter(pos[VX], pos[VY], pos[VZ], in->d.mobj);
+                        P_SpawnBloodSplatter(pos[VX], pos[VY], pos[VZ], in->mobj);
                     }
 #endif
                 }
@@ -1928,7 +1928,7 @@ int PTR_AimTraverse(Interceptor *trace, intercept_t const *in, void * /*context*
 
     if(in->type == ICPT_LINE)
     {
-        Line *li = in->d.line;
+        Line *li = in->line;
         Sector *backSec, *frontSec;
 
         if(!(P_ToXLine(li)->flags & ML_TWOSIDED) ||
@@ -1973,7 +1973,7 @@ int PTR_AimTraverse(Interceptor *trace, intercept_t const *in, void * /*context*
 
     // Intercepted a mobj.
 
-    mobj_t *th = in->d.mobj;
+    mobj_t *th = in->mobj;
 
     if(th == shootThing) return false; // Can't shoot self.
     if(!(th->flags & MF_SHOOTABLE)) return false; // Corpse or something?
@@ -2251,10 +2251,10 @@ int PTR_UseTraverse(Interceptor *trace, intercept_t const *in, void * /*context*
     if(in->type != ICPT_LINE)
         return false; // Continue iteration.
 
-    xline_t *xline = P_ToXLine(in->d.line);
+    xline_t *xline = P_ToXLine(in->line);
     if(!xline->special)
     {
-        Interceptor_AdjustOpening(trace, in->d.line);
+        Interceptor_AdjustOpening(trace, in->line);
 
         if(Interceptor_Opening(trace)->range <= 0)
         {
@@ -2281,13 +2281,13 @@ int PTR_UseTraverse(Interceptor *trace, intercept_t const *in, void * /*context*
         return false;
     }
 
-    int side = Line_PointOnSide(in->d.line, useThing->origin) < 0;
+    int side = Line_PointOnSide(in->line, useThing->origin) < 0;
 
 #if __JHERETIC__ || __JHEXEN__
     if(side == 1) return true; // Don't use back side.
 #endif
 
-    P_ActivateLine(in->d.line, useThing, side, SPAC_USE);
+    P_ActivateLine(in->line, useThing, side, SPAC_USE);
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     // Can use multiple line specials in a row with the PassThru flag.
@@ -2419,7 +2419,7 @@ int PTR_SlideTraverse(Interceptor *trace, intercept_t const *in, void * /*contex
 {
     DENG_ASSERT(in->type == ICPT_LINE);
 
-    Line *line = in->d.line;
+    Line *line = in->line;
     if(!(P_ToXLine(line)->flags & ML_TWOSIDED) ||
        !P_GetPtrp(line, DMU_FRONT_SECTOR) || !P_GetPtrp(line, DMU_BACK_SECTOR))
     {
@@ -2967,7 +2967,7 @@ int PTR_BounceTraverse(Interceptor *trace, intercept_t const *in, void * /*conte
 {
     DENG_ASSERT(in->type == ICPT_LINE);
 
-    Line *line = in->d.line;
+    Line *line = in->line;
     if(!P_GetPtrp(line, DMU_FRONT_SECTOR) || !P_GetPtrp(line, DMU_BACK_SECTOR))
     {
         if(Line_PointOnSide(line, slideMo->origin) < 0)
@@ -3039,7 +3039,7 @@ int PTR_PuzzleItemTraverse(Interceptor *trace, intercept_t const *in, void * /*c
     switch(in->type)
     {
     case ICPT_LINE: { // Line.
-        Line *line = in->d.line;
+        Line *line = in->line;
         xline_t *xline = P_ToXLine(line);
 
         if(xline->special != USE_PUZZLE_ITEM_SPECIAL)
@@ -3093,7 +3093,7 @@ int PTR_PuzzleItemTraverse(Interceptor *trace, intercept_t const *in, void * /*c
         }
 
     case ICPT_MOBJ: { // Mobj.
-        mobj_t *mo = in->d.mobj;
+        mobj_t *mo = in->mobj;
 
         if(mo->special != USE_PUZZLE_ITEM_SPECIAL)
             return false; // Wrong special...
