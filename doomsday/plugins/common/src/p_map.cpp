@@ -1487,7 +1487,7 @@ static boolean P_TryMove2(mobj_t *thing, coord_t x, coord_t y, boolean dropoff)
     if(!(thing->flags & (MF_TELEPORT | MF_NOCLIP)))
     {
         Line *line;
-        while(line = (Line *)IterList_Pop(spechit))
+        while((line = (Line *)IterList_Pop(spechit)) != 0)
         {
             // See if the line was crossed.
             if(P_ToXLine(line)->special)
@@ -1542,7 +1542,7 @@ static boolean P_TryMove2(mobj_t *thing, coord_t x, coord_t y, boolean dropoff)
         IterList_RewindIterator(spechit);
 
         Line *line;
-        while(line = (Line *)IterList_MoveIterator(spechit))
+        while((line = (Line *)IterList_MoveIterator(spechit)) != 0)
         {
             // See if the line was crossed.
             int side = Line_PointOnSide(line, thing->origin) < 0;
@@ -1634,6 +1634,10 @@ int PTR_ShootTraverse(Interceptor *trace, intercept_t const *in, void * /*contex
             P_ActivateLine(li, shootThing, 0, SPAC_IMPACT);
         }
 
+        Sector *frontSec = 0;
+        coord_t dist = 0;
+        coord_t slope = 0;
+
         if(!backSec) goto hitline;
 
 #if __JDOOM64__
@@ -1643,10 +1647,10 @@ int PTR_ShootTraverse(Interceptor *trace, intercept_t const *in, void * /*contex
         // Crosses a two sided line.
         Interceptor_AdjustOpening(trace, li);
 
-        Sector *frontSec = (Sector *)P_GetPtrp(li, DMU_FRONT_SECTOR);
+        frontSec = (Sector *)P_GetPtrp(li, DMU_FRONT_SECTOR);
 
-        coord_t dist = attackRange * in->distance;
-        coord_t slope = 0;
+        dist = attackRange * in->distance;
+        slope = 0;
         if(!FEQUAL(P_GetDoublep(frontSec, DMU_FLOOR_HEIGHT),
                    P_GetDoublep(backSec,  DMU_FLOOR_HEIGHT)))
         {
@@ -1662,7 +1666,6 @@ int PTR_ShootTraverse(Interceptor *trace, intercept_t const *in, void * /*contex
 
             if(slope < aimSlope) goto hitline;
         }
-
         // Shot continues...
         return false;
 
@@ -2479,6 +2482,9 @@ void P_SlideMove(mobj_t *mo)
     vec2d_t oldOrigin; V2d_Copy(oldOrigin, mo->origin);
 #endif
 
+    vec2d_t leadPos = { 0, 0 };
+    vec2d_t trailPos = { 0, 0 };
+
     int hitCount = 3;
     do
     {
@@ -2486,11 +2492,11 @@ void P_SlideMove(mobj_t *mo)
             goto stairstep; // Don't loop forever.
 
         // Trace along the three leading corners.
-        vec2d_t leadPos = { mo->origin[VX] + (mo->mom[MX] > 0? mo->radius : -mo->radius),
-                            mo->origin[VY] + (mo->mom[MY] > 0? mo->radius : -mo->radius) };
+        leadPos[VX] = mo->origin[VX] + (mo->mom[MX] > 0? mo->radius : -mo->radius);
+        leadPos[VY] = mo->origin[VY] + (mo->mom[MY] > 0? mo->radius : -mo->radius);
 
-        vec2d_t trailPos = { mo->origin[VX] - (mo->mom[MX] > 0? mo->radius : -mo->radius),
-                             mo->origin[VY] - (mo->mom[MY] > 0? mo->radius : -mo->radius) };
+        trailPos[VX] = mo->origin[VX] - (mo->mom[MX] > 0? mo->radius : -mo->radius);
+        trailPos[VY] = mo->origin[VY] - (mo->mom[MY] > 0? mo->radius : -mo->radius);
 
         slideMo           = mo;
         bestSlideDistance = 1;
@@ -2745,7 +2751,7 @@ static void CheckMissileImpact(mobj_t *mo)
     IterList_RewindIterator(spechit);
 
     Line *line;
-    while(line = (Line *)IterList_MoveIterator(spechit))
+    while((line = (Line *)IterList_MoveIterator(spechit)) != 0)
     {
         P_ActivateLine(line, mo->target, 0, SPAC_IMPACT);
     }
