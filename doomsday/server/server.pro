@@ -114,6 +114,7 @@ DENG_HEADERS += \
     $$SRC/include/EntityDatabase \
     $$SRC/include/Game \
     $$SRC/include/Games \
+    $$SRC/include/Interceptor \
 
 # Private headers.
 DENG_HEADERS += \
@@ -241,6 +242,7 @@ DENG_HEADERS += \
     $$SRC/include/world/bspnode.h \
     $$SRC/include/world/entitydatabase.h \
     $$SRC/include/world/entitydef.h \
+    $$SRC/include/world/interceptor.h \
     $$SRC/include/world/line.h \
     $$SRC/include/world/lineblockmap.h \
     $$SRC/include/world/lineowner.h \
@@ -410,6 +412,7 @@ SOURCES += \
     $$SRC/src/world/dmuargs.cpp \
     $$SRC/src/world/entitydatabase.cpp \
     $$SRC/src/world/entitydef.cpp \
+    $$SRC/src/world/interceptor.cpp \
     $$SRC/src/world/line.cpp \
     $$SRC/src/world/lineblockmap.cpp \
     $$SRC/src/world/linesighttest.cpp \

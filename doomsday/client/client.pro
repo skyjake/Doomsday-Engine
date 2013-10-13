@@ -138,6 +138,7 @@ DENG_CONVENIENCE_HEADERS += \
     include/HueCircle \
     include/HueCircleVisual \
     include/IHPlane \
+    include/Interceptor \
     include/LightDecoration \
     include/Line \
     include/Lumobj \
@@ -474,6 +475,7 @@ DENG_HEADERS += \
     include/world/grabbable.h \
     include/world/hand.h \
     include/world/huecircle.h \
+    include/world/interceptor.h \
     include/world/line.h \
     include/world/lineblockmap.h \
     include/world/lineowner.h \
@@ -814,6 +816,7 @@ SOURCES += \
     src/world/grabbable.cpp \
     src/world/hand.cpp \
     src/world/huecircle.cpp \
+    src/world/interceptor.cpp \
     src/world/line.cpp \
     src/world/lineblockmap.cpp \
     src/world/linesighttest.cpp \

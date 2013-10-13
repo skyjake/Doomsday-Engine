@@ -91,11 +91,6 @@ lineopening_s &lineopening_s::operator = (lineopening_s const &other)
     return *this;
 }
 
-void TraceState_AdjustOpening(TraceState &trace, Line &line)
-{
-    trace.opening = LineOpening(line);
-}
-
 #ifdef __CLIENT__
 
 /**

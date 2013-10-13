@@ -1606,10 +1606,10 @@ boolean P_TryMoveXYZ(mobj_t* thing, coord_t x, coord_t y, coord_t z)
  * @todo This routine has gotten way too big, split if(in->isaline)
  *       to a seperate routine?
  */
-int PTR_ShootTraverse(TraceState *trace, intercept_t const *in, void * /*context*/)
+int PTR_ShootTraverse(Interceptor *trace, intercept_t const *in, void * /*context*/)
 {
     vec3d_t const tracePos = {
-        FIX2FLT(trace->origin[VX]), FIX2FLT(trace->origin[VY]), shootZ
+        FIX2FLT(Interceptor_Origin(trace)[VX]), FIX2FLT(Interceptor_Origin(trace)[VY]), shootZ
     };
 
     if(in->type == ICPT_LINE)
@@ -1641,7 +1641,7 @@ int PTR_ShootTraverse(TraceState *trace, intercept_t const *in, void * /*context
 #endif
 
         // Crosses a two sided line.
-        P_TraceAdjustOpening(trace, li);
+        Interceptor_AdjustOpening(trace, li);
 
         Sector *frontSec = (Sector *)P_GetPtrp(li, DMU_FRONT_SECTOR);
 
@@ -1650,7 +1650,7 @@ int PTR_ShootTraverse(TraceState *trace, intercept_t const *in, void * /*context
         if(!FEQUAL(P_GetDoublep(frontSec, DMU_FLOOR_HEIGHT),
                    P_GetDoublep(backSec,  DMU_FLOOR_HEIGHT)))
         {
-            slope = (trace->opening.bottom - tracePos[VZ]) / dist;
+            slope = (Interceptor_Opening(trace)->bottom - tracePos[VZ]) / dist;
 
             if(slope > aimSlope) goto hitline;
         }
@@ -1658,7 +1658,7 @@ int PTR_ShootTraverse(TraceState *trace, intercept_t const *in, void * /*context
         if(!FEQUAL(P_GetDoublep(frontSec, DMU_CEILING_HEIGHT),
                    P_GetDoublep(backSec,  DMU_CEILING_HEIGHT)))
         {
-            slope = (trace->opening.top - tracePos[VZ]) / dist;
+            slope = (Interceptor_Opening(trace)->top - tracePos[VZ]) / dist;
 
             if(slope < aimSlope) goto hitline;
         }
@@ -1671,9 +1671,9 @@ int PTR_ShootTraverse(TraceState *trace, intercept_t const *in, void * /*context
 
         // Position a bit closer.
         coord_t frac = in->distance - (4 / attackRange);
-        vec3d_t pos = { tracePos[VX] + (FIX2FLT(trace->direction[VX]) * frac),
-                        tracePos[VY] + (FIX2FLT(trace->direction[VY]) * frac),
-                        tracePos[VZ] + (aimSlope * (frac * attackRange)) };
+        vec3d_t pos = { tracePos[VX] + FIX2FLT(Interceptor_Direction(trace)[VX]) * frac,
+                        tracePos[VY] + FIX2FLT(Interceptor_Direction(trace)[VY]) * frac,
+                        tracePos[VZ] + aimSlope * (frac * attackRange) };
 
         if(backSec)
         {
@@ -1834,9 +1834,9 @@ int PTR_ShootTraverse(TraceState *trace, intercept_t const *in, void * /*context
 
     // Position a bit closer.
     coord_t frac = in->distance - (10 / attackRange);
-    vec3d_t pos  = { tracePos[VX] + (FIX2FLT(trace->direction[VX]) * frac),
-                     tracePos[VY] + (FIX2FLT(trace->direction[VY]) * frac),
-                     tracePos[VZ] + (aimSlope * (frac * attackRange)) };
+    vec3d_t pos  = { tracePos[VX] + FIX2FLT(Interceptor_Direction(trace)[VX]) * frac,
+                     tracePos[VY] + FIX2FLT(Interceptor_Direction(trace)[VY]) * frac,
+                     tracePos[VZ] + aimSlope * (frac * attackRange) };
 
     // Spawn bullet puffs or blood spots, depending on target type.
 #if __JHERETIC__
@@ -1920,10 +1920,10 @@ int PTR_ShootTraverse(TraceState *trace, intercept_t const *in, void * /*context
 /**
  * Sets linetarget and aimSlope when a target is aimed at.
  */
-int PTR_AimTraverse(TraceState *trace, intercept_t const *in, void * /*context*/)
+int PTR_AimTraverse(Interceptor *trace, intercept_t const *in, void * /*context*/)
 {
     vec3d_t const tracePos = {
-        FIX2FLT(trace->origin[VX]), FIX2FLT(trace->origin[VY]), shootZ
+        FIX2FLT(Interceptor_Origin(trace)[VX]), FIX2FLT(Interceptor_Origin(trace)[VY]), shootZ
     };
 
     if(in->type == ICPT_LINE)
@@ -1940,9 +1940,9 @@ int PTR_AimTraverse(TraceState *trace, intercept_t const *in, void * /*context*/
 
         // Crosses a two sided line.
         // A two sided line will restrict the possible target ranges.
-        P_TraceAdjustOpening(trace, li);
+        Interceptor_AdjustOpening(trace, li);
 
-        if(trace->opening.bottom >= trace->opening.top)
+        if(Interceptor_Opening(trace)->bottom >= Interceptor_Opening(trace)->top)
         {
             return true; // Stop.
         }
@@ -1956,14 +1956,14 @@ int PTR_AimTraverse(TraceState *trace, intercept_t const *in, void * /*context*/
         coord_t slope;
         if(!FEQUAL(fFloor, bFloor))
         {
-            slope = (trace->opening.bottom - shootZ) / dist;
+            slope = (Interceptor_Opening(trace)->bottom - shootZ) / dist;
             if(slope > bottomSlope)
                 bottomSlope = slope;
         }
 
         if(!FEQUAL(fCeil, bCeil))
         {
-            slope = (trace->opening.top - shootZ) / dist;
+            slope = (Interceptor_Opening(trace)->top - shootZ) / dist;
             if(slope < topSlope)
                 topSlope = slope;
         }
@@ -2246,7 +2246,7 @@ void P_RadiusAttack(mobj_t *spot, mobj_t *source, int damage, int distance)
     Mobj_BoxIterator(&box, PIT_RadiusAttack, 0);
 }
 
-int PTR_UseTraverse(TraceState *trace, intercept_t const *in, void * /*context*/)
+int PTR_UseTraverse(Interceptor *trace, intercept_t const *in, void * /*context*/)
 {
     if(in->type != ICPT_LINE)
         return false; // Continue iteration.
@@ -2254,9 +2254,9 @@ int PTR_UseTraverse(TraceState *trace, intercept_t const *in, void * /*context*/
     xline_t *xline = P_ToXLine(in->d.line);
     if(!xline->special)
     {
-        P_TraceAdjustOpening(trace, in->d.line);
+        Interceptor_AdjustOpening(trace, in->d.line);
 
-        if(trace->opening.range <= 0)
+        if(Interceptor_Opening(trace)->range <= 0)
         {
             if(useThing->player)
             {
@@ -2271,7 +2271,7 @@ int PTR_UseTraverse(TraceState *trace, intercept_t const *in, void * /*context*/
         {
             coord_t pheight = useThing->origin[VZ] + useThing->height/2;
 
-            if(trace->opening.top < pheight || trace->opening.bottom > pheight)
+            if(Interceptor_Opening(trace)->top < pheight || Interceptor_Opening(trace)->bottom > pheight)
             {
                 S_StartSound(PCLASS_INFO(useThing->player->class_)->failUseSound, useThing);
             }
@@ -2415,7 +2415,7 @@ static void P_HitSlideLine(Line *line)
                     newLen * FIX2FLT(finesine  [an]));
 }
 
-int PTR_SlideTraverse(TraceState *trace, intercept_t const *in, void * /*context*/)
+int PTR_SlideTraverse(Interceptor *trace, intercept_t const *in, void * /*context*/)
 {
     DENG_ASSERT(in->type == ICPT_LINE);
 
@@ -2436,15 +2436,15 @@ int PTR_SlideTraverse(TraceState *trace, intercept_t const *in, void * /*context
         goto isblocking;
 #endif
 
-    P_TraceAdjustOpening(trace, line);
+    Interceptor_AdjustOpening(trace, line);
 
-    if(trace->opening.range < slideMo->height)
+    if(Interceptor_Opening(trace)->range < slideMo->height)
         goto isblocking; // Doesn't fit.
 
-    if(trace->opening.top - slideMo->origin[VZ] < slideMo->height)
+    if(Interceptor_Opening(trace)->top - slideMo->origin[VZ] < slideMo->height)
         goto isblocking; // mobj is too high.
 
-    if(trace->opening.bottom - slideMo->origin[VZ] > 24)
+    if(Interceptor_Opening(trace)->bottom - slideMo->origin[VZ] > 24)
         goto isblocking; // Too big a step up.
 
     // This line doesn't block movement.
@@ -2963,7 +2963,7 @@ static void checkForPushSpecial(Line *line, int side, mobj_t *mobj)
     }
 }
 
-int PTR_BounceTraverse(TraceState *trace, intercept_t const *in, void * /*context*/)
+int PTR_BounceTraverse(Interceptor *trace, intercept_t const *in, void * /*context*/)
 {
     DENG_ASSERT(in->type == ICPT_LINE);
 
@@ -2976,12 +2976,12 @@ int PTR_BounceTraverse(TraceState *trace, intercept_t const *in, void * /*contex
         goto bounceblocking;
     }
 
-    P_TraceAdjustOpening(trace, line);
+    Interceptor_AdjustOpening(trace, line);
 
-    if(trace->opening.range < slideMo->height)
+    if(Interceptor_Opening(trace)->range < slideMo->height)
         goto bounceblocking; // Doesn't fit.
 
-    if(trace->opening.top - slideMo->origin[VZ] < slideMo->height)
+    if(Interceptor_Opening(trace)->top - slideMo->origin[VZ] < slideMo->height)
         goto bounceblocking; // Mobj is too high...
 
     return false; // This line doesn't block movement...
@@ -3034,7 +3034,7 @@ void P_BounceWall(mobj_t *mo)
     }
 }
 
-int PTR_PuzzleItemTraverse(TraceState *trace, intercept_t const *in, void *context)
+int PTR_PuzzleItemTraverse(Interceptor *trace, intercept_t const *in, void * /*context*/)
 {
     switch(in->type)
     {
@@ -3044,9 +3044,9 @@ int PTR_PuzzleItemTraverse(TraceState *trace, intercept_t const *in, void *conte
 
         if(xline->special != USE_PUZZLE_ITEM_SPECIAL)
         {
-            P_TraceAdjustOpening(trace, line);
+            Interceptor_AdjustOpening(trace, line);
 
-            if(trace->opening.range <= 0)
+            if(Interceptor_Opening(trace)->range <= 0)
             {
                 sfxenum_t sound = SFX_NONE;
 

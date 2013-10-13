@@ -43,8 +43,8 @@
 #include "world/maputil.h"
 #include "world/world.h"
 #include "BspLeaf"
+#include "Interceptor"
 
-#include "render/r_main.h" // validCount
 #ifdef __CLIENT__
 #  include "render/lightgrid.h"
 #endif
@@ -1618,117 +1618,10 @@ DENG_EXTERN_C int BspLeaf_BoxIterator(AABoxd const *box,
     return App_World().map().bspLeafBoxIterator(*box, callback, context);
 }
 
-static void collectLineIntercept(Line &line, TraceState const &trace)
-{
-    fixed_t lineFromX[2] = { DBL2FIX(line.fromOrigin().x), DBL2FIX(line.fromOrigin().y) };
-    fixed_t lineToX[2]   = { DBL2FIX(  line.toOrigin().x), DBL2FIX(  line.toOrigin().y) };
-
-    // Is this line crossed?
-    // Avoid precision problems with two routines.
-    int s1, s2;
-    if(trace.direction[VX] >  FRACUNIT * 16 || trace.direction[VY] >  FRACUNIT * 16 ||
-       trace.direction[VX] < -FRACUNIT * 16 || trace.direction[VY] < -FRACUNIT * 16)
-    {
-        s1 = V2x_PointOnLineSide(lineFromX, trace.origin, trace.direction);
-        s2 = V2x_PointOnLineSide(lineToX,   trace.origin, trace.direction);
-    }
-    else
-    {
-        s1 = line.pointOnSide(Vector2d(FIX2FLT(trace.origin[VX]),
-                                       FIX2FLT(trace.origin[VY]))) < 0;
-        s2 = line.pointOnSide(Vector2d(FIX2FLT(trace.origin[VX] + trace.direction[VX]),
-                                       FIX2FLT(trace.origin[VY] + trace.direction[VY]))) < 0;
-    }
-    if(s1 == s2) return;
-
-    fixed_t lineDirectionX[2] = { DBL2FIX(line.direction().x), DBL2FIX(line.direction().y) };
-
-    // On the correct side of the trace origin?
-    float distance = FIX2FLT(V2x_Intersection(lineFromX, lineDirectionX,
-                                              trace.origin, trace.direction));
-    if(distance >= 0)
-    {
-        P_AddIntercept(ICPT_LINE, distance, &line);
-    }
-}
-
-static int collectCellLineInterceptsWorker(Line *line, void *context)
-{
-    collectLineIntercept(*line, *static_cast<TraceState *>(context));
-    return false; // Continue iteration.
-}
-
-static void collectMobjIntercept(mobj_t &mobj, TraceState const &trace)
-{
-    // Ignore cameras.
-    if(mobj.dPlayer && (mobj.dPlayer->flags & DDPF_CAMERA))
-        return;
-
-    // Check a corner to corner crossection for hit.
-    AABoxd const aaBox = Mobj_AABox(mobj);
-
-    fixed_t from[2], to[2];
-    if((trace.direction[VX] ^ trace.direction[VY]) > 0)
-    {
-        // \ Slope
-        V2x_Set(from, DBL2FIX(aaBox.minX), DBL2FIX(aaBox.maxY));
-        V2x_Set(to,   DBL2FIX(aaBox.maxX), DBL2FIX(aaBox.minY));
-    }
-    else
-    {
-        // / Slope
-        V2x_Set(from, DBL2FIX(aaBox.minX), DBL2FIX(aaBox.minY));
-        V2x_Set(to,   DBL2FIX(aaBox.maxX), DBL2FIX(aaBox.maxY));
-    }
-
-    // Is this line crossed?
-    if(V2x_PointOnLineSide(from, trace.origin, trace.direction) ==
-       V2x_PointOnLineSide(to,   trace.origin, trace.direction))
-        return;
-
-    // Calculate interception point.
-    fixed_t direction[2] = { (to[VX] - from[VX]), (to[VY] - from[VY]) };
-    float distance = FIX2FLT(V2x_Intersection(from, direction, trace.origin, trace.direction));
-
-    // On the correct side of the trace origin?
-    if(distance >= 0)
-    {
-        P_AddIntercept(ICPT_MOBJ, distance, &mobj);
-    }
-}
-
-static int collectCellMobjInterceptsWorker(mobj_t *mobj, void *context)
-{
-    collectMobjIntercept(*mobj, *static_cast<TraceState *>(context));
-    return false; // Continue iteration.
-}
-
 static int traverseMapPath(Map &map, Vector2d const &from, Vector2d const &to,
     int flags, traverser_t callback, void *context = 0)
 {
-    // A new trace begins.
-    TraceState trace;
-
-    trace.origin[VX] = FLT2FIX(from.x);
-    trace.origin[VY] = FLT2FIX(from.y);
-    trace.direction[VX] = FLT2FIX(to.x - from.x);
-    trace.direction[VY] = FLT2FIX(to.y - from.y);
-
-    P_ClearIntercepts();
-    validCount++;
-
-    // Step #1: Collect intercepts.
-    if(flags & PTF_LINE)
-    {
-        map.linePathIterator(from, to, collectCellLineInterceptsWorker, &trace);
-    }
-    if(flags & PTF_MOBJ)
-    {
-        map.mobjPathIterator(from, to, collectCellMobjInterceptsWorker, &trace);
-    }
-
-    // Step #2: Process sorted intercepts.
-    return P_TraverseIntercepts(trace, callback, context);
+    return Interceptor(callback, from, to, flags, context).trace(map);
 }
 
 #undef P_PathTraverse2
@@ -1756,11 +1649,32 @@ DENG_EXTERN_C boolean P_CheckLineSight(const_pvec3d_t from, const_pvec3d_t to, c
                          dfloat(bottomSlope), dfloat(topSlope), flags).trace(App_World().map().bspRoot());
 }
 
-#undef P_TraceAdjustOpening
-DENG_EXTERN_C void P_TraceAdjustOpening(TraceState *trace, Line *line)
+#undef Interceptor_Origin
+DENG_EXTERN_C fixed_t const *Interceptor_Origin(Interceptor const *trace)
+{
+    if(!trace) return 0;
+    return trace->origin();
+}
+
+#undef Interceptor_Direction
+DENG_EXTERN_C fixed_t const *(Interceptor_Direction)(Interceptor const *trace)
+{
+    if(!trace) return 0;
+    return trace->direction();
+}
+
+#undef Interceptor_Opening
+DENG_EXTERN_C LineOpening const *Interceptor_Opening(Interceptor const *trace)
+{
+    if(!trace) return 0;
+    return &trace->opening();
+}
+
+#undef Interceptor_AdjustOpening
+DENG_EXTERN_C void Interceptor_AdjustOpening(Interceptor *trace, Line *line)
 {
     if(!trace || !line) return;
-    TraceState_AdjustOpening(*trace, *line);
+    trace->adjustOpening(*line);
 }
 
 #undef Mobj_CreateXYZ
@@ -1939,7 +1853,11 @@ DENG_DECLARE_API(Map) =
     P_PathTraverse,
     P_PathTraverse2,
     P_CheckLineSight,
-    P_TraceAdjustOpening,
+
+    Interceptor_Origin,
+    Interceptor_Direction,
+    Interceptor_Opening,
+    Interceptor_AdjustOpening,
 
     DMU_Str,
     DMU_GetType,

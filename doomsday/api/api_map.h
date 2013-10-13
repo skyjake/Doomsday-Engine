@@ -104,6 +104,7 @@ struct sector_s;
 struct side_s;
 struct vertex_s;
 struct material_s;
+struct tracestate_s;
 
 typedef struct bspleaf_s    BspLeaf;
 typedef struct bspnode_s    BspNode;
@@ -113,6 +114,7 @@ typedef struct sector_s     Sector;
 typedef struct side_s       Side;
 typedef struct vertex_s     Vertex;
 typedef struct material_s   Material;
+typedef struct tracestate_s Interceptor;
 
 #elif defined __cplusplus
 
@@ -121,6 +123,7 @@ class Line;
 class Sector;
 class Material;
 class BspLeaf;
+class Interceptor;
 
 #endif
 
@@ -185,17 +188,7 @@ typedef struct intercept_s {
     } d;
 } intercept_t;
 
-/**
- * POD structure representing a line trace state. This data should @em not be
- * modified by trace callback functions!
- */
-typedef struct {
-    fixed_t origin[2];
-    fixed_t direction[2];
-    LineOpening opening;
-} TraceState;
-
-typedef int (*traverser_t) (TraceState *trace, intercept_t const *intercept, void *context);
+typedef int (*traverser_t) (Interceptor *trace, intercept_t const *intercept, void *context);
 
 /**
  * @defgroup mobjLinkFlags Mobj Link Flags
@@ -424,8 +417,8 @@ DENG_API_TYPEDEF(Map)
 
     // Traversers
 
-    int             (*PathTraverse)(coord_t const from[2], coord_t const to[2], int (*callback) (TraceState *trace, struct intercept_s const *, void *context), void *context);
-    int             (*PathTraverse2)(coord_t const from[2], coord_t const to[2], int flags, int (*callback) (TraceState *trace, struct intercept_s const *, void *context), void *context);
+    int             (*PathTraverse)(coord_t const from[2], coord_t const to[2], int (*callback) (Interceptor *trace, struct intercept_s const *, void *context), void *context);
+    int             (*PathTraverse2)(coord_t const from[2], coord_t const to[2], int flags, int (*callback) (Interceptor *trace, struct intercept_s const *, void *context), void *context);
 
     /**
      * Traces a line of sight.
@@ -443,10 +436,25 @@ DENG_API_TYPEDEF(Map)
                                       coord_t bottomSlope, coord_t topSlope, int flags);
 
     /**
-     * Update the "opening" state for the specified trace according to heights
-     * defined by the minimal planes on trace side, which intercept @a line.
+     * Provides read-only access to the origin in map space for the given @a trace.
      */
-    void            (*TraceAdjustOpening)(TraceState *trace, Line *line);
+    fixed_t const * (*Interceptor_Origin)(Interceptor const *trace);
+
+    /**
+     * Provides read-only access to the direction in map space for the given @a trace.
+     */
+    fixed_t const * (*Interceptor_Direction)(Interceptor const *trace);
+
+    /**
+     * Provides read-only access to the line opening state for the given @a trace.
+     */
+    LineOpening const *(*Interceptor_Opening)(Interceptor const *trace);
+
+    /**
+     * Update the "opening" state for the specified @a trace in accordance with
+     * the heights defined by the minimal planes which intercept @a line.
+     */
+    void            (*Interceptor_AdjustOpening)(Interceptor *trace, Line *line);
 
     /*
      * Map Updates (DMU):
@@ -691,8 +699,11 @@ DENG_API_T(Map);
 #define P_PathTraverse                      _api_Map.PathTraverse
 #define P_PathTraverse2                     _api_Map.PathTraverse2
 #define P_CheckLineSight                    _api_Map.CheckLineSight
-#define P_TraceAdjustOpening                _api_Map.TraceAdjustOpening
-#define P_SetTraceOpening                   _api_Map.SetTraceOpening
+
+#define Interceptor_Origin                        _api_Map.Interceptor_Origin
+#define Interceptor_Direction                     _api_Map.Interceptor_Direction
+#define Interceptor_Opening                       _api_Map.Interceptor_Opening
+#define Interceptor_AdjustOpening                 _api_Map.Interceptor_AdjustOpening
 
 #define DMU_Str                             _api_Map.Str
 #define DMU_GetType                         _api_Map.GetType
