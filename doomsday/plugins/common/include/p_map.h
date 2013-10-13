@@ -59,17 +59,55 @@ extern "C" {
  */
 boolean P_CheckSight(mobj_t const *from, mobj_t const *to);
 
-boolean P_CheckPositionXY(mobj_t *thing, coord_t x, coord_t y);
+/**
+ * This is purely informative, nothing is modified (except things picked up).
+ *
+ * in:
+ *  a mobj_t (can be valid or invalid)
+ *  a position to be checked
+ *   (doesn't need to be related to the mobj_t->x,y)
+ *
+ * during:
+ *  special things are touched if MF_PICKUP early out on solid lines?
+ *
+ * out:
+ *  newsubsec
+ *  floorz
+ *  ceilingz
+ *  tmDropoffZ
+ *   the lowest point contacted
+ *   (monsters won't move to a drop off)
+ *  speciallines[]
+ *  numspeciallines
+ */
 boolean P_CheckPositionXYZ(mobj_t *thing, coord_t x, coord_t y, coord_t z);
 boolean P_CheckPosition(mobj_t *thing, coord_t const pos[3]);
 
+boolean P_CheckPositionXY(mobj_t *thing, coord_t x, coord_t y);
+
+/**
+ * Source is the creature that caused the explosion at spot.
+ */
 #if __JHEXEN__
 void P_RadiusAttack(mobj_t *spot, mobj_t *source, int damage, int distance, boolean canDamageSource);
 #else
 void P_RadiusAttack(mobj_t *spot, mobj_t *source, int damage, int distance);
 #endif
 
-boolean P_TryMoveXYZ(mobj_t *thing, coord_t x, coord_t y, coord_t z);
+/**
+ * Attempts to move a mobj to a new 3D position, crossing special lines
+ * and picking up things.
+ *
+ * @note  This function is exported from the game plugin.
+ *
+ * @param mobj  Mobj to move.
+ * @param x     New X coordinate.
+ * @param y     New Y coordinate.
+ * @param z     New Z coordinate.
+ *
+ * @return  @c true iff the move was successful.
+ */
+boolean P_TryMoveXYZ(mobj_t *mobj, coord_t x, coord_t y, coord_t z);
 
 #if !__JHEXEN__
 boolean P_TryMoveXY(mobj_t *thing, coord_t x, coord_t y, boolean dropoff, boolean slide);
