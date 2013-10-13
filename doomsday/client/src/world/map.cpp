@@ -51,7 +51,6 @@
 #include "world/entitydatabase.h"
 #include "world/generators.h"
 #include "world/lineowner.h"
-#include "world/p_intercept.h"
 #include "world/p_object.h"
 #ifdef __CLIENT__
 #  include "Contact"
@@ -834,8 +833,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
             // BspLeafs without a sector cluster don't get in.
             if(bspLeaf->hasCluster())
             {
-                BlockmapCellBlock cellBlock = bspLeafBlockmap->toCellBlock(bspLeaf->poly().aaBox());
-                bspLeafBlockmap->link(cellBlock, bspLeaf);
+                bspLeafBlockmap->link(bspLeaf->poly().aaBox(), bspLeaf);
             }
         }
     }
@@ -1854,14 +1852,12 @@ void Map::link(mobj_t &mo, int flags)
 
 void Map::unlink(Polyobj &polyobj)
 {
-    BlockmapCellBlock cellBlock = d->polyobjBlockmap->toCellBlock(polyobj.aaBox);
-    d->polyobjBlockmap->unlink(cellBlock, &polyobj);
+    d->polyobjBlockmap->unlink(polyobj.aaBox, &polyobj);
 }
 
 void Map::link(Polyobj &polyobj)
 {
-    BlockmapCellBlock cellBlock = d->polyobjBlockmap->toCellBlock(polyobj.aaBox);
-    d->polyobjBlockmap->link(cellBlock, &polyobj);
+    d->polyobjBlockmap->link(polyobj.aaBox, &polyobj);
 }
 
 struct blockmapcellpolyobjsiterator_params_t
@@ -2050,7 +2046,6 @@ BspLeaf &Map::bspLeafAt_FixedPrecision(Vector2d const &point) const
 
         fixed_t lineOriginX[2]    = { DBL2FIX(partition.origin.x),    DBL2FIX(partition.origin.y) };
         fixed_t lineDirectionX[2] = { DBL2FIX(partition.direction.x), DBL2FIX(partition.direction.y) };
-
         int side = V2x_PointOnLineSide(pointX, lineOriginX, lineDirectionX);
 
         // Decend to the child subspace on "this" side.
@@ -2102,14 +2097,12 @@ void Map::initSkyFix()
     /// @todo Can't we defer this?
     foreach(Sector *sector, d->sectors)
     {
-        if(!sector->sideCount())
-            continue;
+        if(!sector->sideCount()) continue;
 
         bool const skyFloor = sector->floorSurface().hasSkyMaskedMaterial();
         bool const skyCeil  = sector->ceilingSurface().hasSkyMaskedMaterial();
 
-        if(!skyFloor && !skyCeil)
-            continue;
+        if(!skyFloor && !skyCeil) continue;
 
         if(skyCeil)
         {
@@ -2235,15 +2228,6 @@ void Map::removeAllLumobjs()
 Map::Lumobjs const &Map::lumobjs() const
 {
     return d->lumobjs;
-}
-
-Lumobj *Map::lumobj(int index) const
-{
-    if(index >= 0 && index < lumobjCount())
-    {
-        return lumobjs().at(index);
-    }
-    return 0;
 }
 
 BiasSource &Map::addBiasSource(BiasSource const &biasSource)
@@ -2746,13 +2730,16 @@ struct VertexInfo
 
         // Order is firstly X axis major.
         if(int(vertex->origin().x) != int(other.vertex->origin().x))
+        {
             return int(vertex->origin().x) - int(other.vertex->origin().x);
+        }
 
         // Order is secondly Y axis major.
         return int(vertex->origin().y) - int(other.vertex->origin().y);
     }
 
-    bool operator < (VertexInfo const &other) const {
+    bool operator < (VertexInfo const &other) const
+    {
         return compareVertexOrigins(other) < 0;
     }
 };
@@ -2832,8 +2819,7 @@ void pruneVertexes(Mesh &mesh, Map::Lines const &lines)
     {
         Vertex *vertex = info.vertex;
 
-        if(info.refCount)
-            continue;
+        if(info.refCount) continue;
 
         mesh.removeVertex(*vertex);
 
@@ -2846,7 +2832,9 @@ void pruneVertexes(Mesh &mesh, Map::Lines const &lines)
         // Re-index with a contiguous range of indices.
         int ord = 0;
         foreach(Vertex *vertex, mesh.vertexes())
+        {
             vertex->setIndexInMap(ord++);
+        }
 
         /// Update lines. @todo Line should handle this itself.
         foreach(Line *line, lines)
@@ -2862,8 +2850,7 @@ void pruneVertexes(Mesh &mesh, Map::Lines const &lines)
 
 bool Map::endEditing()
 {
-    if(!d->editingEnabled)
-        return true; // Huh?
+    if(!d->editingEnabled) return true; // Huh?
 
     d->editingEnabled = false;
 

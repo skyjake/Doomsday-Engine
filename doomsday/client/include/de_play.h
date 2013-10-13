@@ -35,7 +35,6 @@
 #include "Polyobj"
 #include "world/dmuargs.h"
 #include "world/p_object.h"
-#include "world/p_intercept.h"
 #include "world/p_particle.h"
 #include "world/p_ticker.h"
 #include "world/p_players.h"

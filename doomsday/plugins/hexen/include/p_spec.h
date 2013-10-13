@@ -34,6 +34,8 @@
 
 #define MO_TELEPORTMAN          14
 
+DENG_EXTERN_C mobj_t lavaInflictor;
+
 #ifdef __cplusplus
 extern "C" {
 #endif

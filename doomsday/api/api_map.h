@@ -104,6 +104,7 @@ struct sector_s;
 struct side_s;
 struct vertex_s;
 struct material_s;
+struct interceptor_s;
 
 typedef struct bspleaf_s    BspLeaf;
 typedef struct bspnode_s    BspNode;
@@ -113,6 +114,7 @@ typedef struct sector_s     Sector;
 typedef struct side_s       Side;
 typedef struct vertex_s     Vertex;
 typedef struct material_s   Material;
+typedef struct interceptor_s Interceptor;
 
 #elif defined __cplusplus
 
@@ -121,6 +123,7 @@ class Line;
 class Sector;
 class Material;
 class BspLeaf;
+class Interceptor;
 
 #endif
 
@@ -164,8 +167,11 @@ typedef struct lineopening_s {
  * @ingroup apiFlags map
  */
 ///@{
-#define PT_ADDLINES            1 ///< Intercept with Lines.
-#define PT_ADDMOBJS            2 ///< Intercept with Mobjs.
+#define PTF_LINE            0x1 ///< Intercept with map lines.
+#define PTF_MOBJ            0x2 ///< Intercept with mobjs.
+
+/// Process all interceptable map element types.
+#define PTF_ALL             PTF_LINE | PTF_MOBJ
 ///@}
 
 typedef enum intercepttype_e {
@@ -179,19 +185,10 @@ typedef struct intercept_s {
     union {
         struct mobj_s *mobj;
         Line *line;
-    } d;
+    };
 } intercept_t;
 
-/**
- * POD structure representing a line trace state. This data should @em not be
- * modified by trace callback functions!
- */
-typedef struct {
-    divline_t line;
-    LineOpening opening;
-} TraceState;
-
-typedef int (*traverser_t) (TraceState *trace, intercept_t const *intercept, void *context);
+typedef int (*traverser_t) (Interceptor *trace, intercept_t const *intercept, void *context);
 
 /**
  * @defgroup mobjLinkFlags Mobj Link Flags
@@ -273,9 +270,7 @@ DENG_API_TYPEDEF(Map)
     int             (*L_BoxOnSide)(Line *line, AABoxd const *box);
     int             (*L_BoxOnSide_FixedPrecision)(Line *line, AABoxd const *box);
     coord_t         (*L_PointDistance)(Line *line, coord_t const point[2], coord_t *offset);
-    coord_t         (*L_PointXYDistance)(Line *line, coord_t x, coord_t y, coord_t *offset);
     coord_t         (*L_PointOnSide)(Line const *line, coord_t const point[2]);
-    coord_t         (*L_PointXYOnSide)(Line const *line, coord_t x, coord_t y);
     int             (*L_MobjsIterator)(Line *line, int (*callback) (struct mobj_s *, void *), void *context);
     void            (*L_Opening)(Line *line, LineOpening *opening);
 
@@ -309,14 +304,11 @@ DENG_API_TYPEDEF(Map)
      */
     Sector         *(*S_AtPoint_FixedPrecision)(coord_t const point[2]);
 
-    /// @copydoc S_AtPoint_FixedPrecision()
-    Sector         *(*S_AtPoint_FixedPrecisionXY)(coord_t x, coord_t y);
-
     // Map Objects
 
     struct mobj_s  *(*MO_CreateXYZ)(thinkfunc_t function, coord_t x, coord_t y, coord_t z, angle_t angle, coord_t radius, coord_t height, int ddflags);
     void            (*MO_Destroy)(struct mobj_s *mobj);
-    struct mobj_s  *(*MO_MobjById)(int id);
+    struct mobj_s  *(*MO_ById)(int id);
     int             (*MO_BoxIterator)(AABoxd const *box, int (*callback) (struct mobj_s *, void *), void *context);
 
     /**
@@ -404,7 +396,7 @@ DENG_API_TYPEDEF(Map)
      * @param id  Unique identifier of the Polyobj to be found.
      * @return  Found Polyobj instance else @c NULL.
      */
-    struct polyobj_s *(*PO_PolyobjById)(int id);
+    struct polyobj_s *(*PO_ById)(int id);
 
     /**
      * Lookup a Polyobj on the current map by tag.
@@ -412,7 +404,7 @@ DENG_API_TYPEDEF(Map)
      * @param tag  Tag associated with the Polyobj to be found.
      * @return  Found Polyobj instance, or @c NULL.
      */
-    struct polyobj_s *(*PO_PolyobjByTag)(int tag);
+    struct polyobj_s *(*PO_ByTag)(int tag);
 
     int             (*PO_BoxIterator)(AABoxd const *box, int (*callback) (struct polyobj_s *, void *), void *context);
 
@@ -425,15 +417,8 @@ DENG_API_TYPEDEF(Map)
 
     // Traversers
 
-    int             (*PathTraverse2)(coord_t const from[2], coord_t const to[2], int flags, int (*callback) (TraceState *trace, struct intercept_s const *, void *context), void *context);
-    int             (*PathTraverse)(coord_t const from[2], coord_t const to[2], int flags, int (*callback) (TraceState *trace, struct intercept_s const *, void *context)/*, context=0*/);
-
-    /**
-     * Same as P_PathTraverse except 'from' and 'to' arguments are specified
-     * as two sets of separate X and Y map space coordinates.
-     */
-    int             (*PathXYTraverse2)(coord_t fromX, coord_t fromY, coord_t toX, coord_t toY, int flags, int (*callback) (TraceState *trace, struct intercept_s const *, void *context), void *context);
-    int             (*PathXYTraverse)(coord_t fromX, coord_t fromY, coord_t toX, coord_t toY, int flags, int (*callback) (TraceState *trace, struct intercept_s const *, void *context)/*, context=0*/);
+    int             (*PathTraverse)(coord_t const from[2], coord_t const to[2], int (*callback) (Interceptor *trace, struct intercept_s const *, void *context), void *context);
+    int             (*PathTraverse2)(coord_t const from[2], coord_t const to[2], int flags, int (*callback) (Interceptor *trace, struct intercept_s const *, void *context), void *context);
 
     /**
      * Traces a line of sight.
@@ -451,10 +436,25 @@ DENG_API_TYPEDEF(Map)
                                       coord_t bottomSlope, coord_t topSlope, int flags);
 
     /**
-     * Update the "opening" state for the specified trace according to heights
-     * defined by the minimal planes on trace side, which intercept @a line.
+     * Provides read-only access to the origin in map space for the given @a trace.
      */
-    void            (*TraceAdjustOpening)(TraceState *trace, Line *line);
+    fixed_t const * (*I_Origin)(Interceptor const *trace);
+
+    /**
+     * Provides read-only access to the direction in map space for the given @a trace.
+     */
+    fixed_t const * (*I_Direction)(Interceptor const *trace);
+
+    /**
+     * Provides read-only access to the line opening state for the given @a trace.
+     */
+    LineOpening const *(*I_Opening)(Interceptor const *trace);
+
+    /**
+     * Update the "opening" state for the specified @a trace in accordance with
+     * the heights defined by the minimal planes which intercept @a line.
+     */
+    void            (*I_AdjustOpening)(Interceptor *trace, Line *line);
 
     /*
      * Map Updates (DMU):
@@ -663,19 +663,16 @@ DENG_API_T(Map);
 #define Line_BoxOnSide                      _api_Map.L_BoxOnSide
 #define Line_BoxOnSide_FixedPrecision       _api_Map.L_BoxOnSide_FixedPrecision
 #define Line_PointDistance                  _api_Map.L_PointDistance
-#define Line_PointXYDistance                _api_Map.L_PointXYDistance
 #define Line_PointOnSide                    _api_Map.L_PointOnSide
-#define Line_PointXYOnSide                  _api_Map.L_PointXYOnSide
 #define Line_TouchingMobjsIterator          _api_Map.L_MobjsIterator
 #define Line_Opening                        _api_Map.L_Opening
 
 #define Sector_TouchingMobjsIterator        _api_Map.S_TouchingMobjsIterator
 #define Sector_AtPoint_FixedPrecision       _api_Map.S_AtPoint_FixedPrecision
-#define Sector_AtPoint_FixedPrecisionXY     _api_Map.S_AtPoint_FixedPrecisionXY
 
 #define Mobj_CreateXYZ                      _api_Map.MO_CreateXYZ
 #define Mobj_Destroy                        _api_Map.MO_Destroy
-#define Mobj_ById                           _api_Map.MO_MobjById
+#define Mobj_ById                           _api_Map.MO_ById
 #define Mobj_BoxIterator                    _api_Map.MO_BoxIterator
 #define Mobj_SetState                       _api_Map.MO_SetState
 #define Mobj_Link                           _api_Map.MO_Link
@@ -692,20 +689,21 @@ DENG_API_T(Map);
 #define Polyobj_Link                        _api_Map.PO_Link
 #define Polyobj_Unlink                      _api_Map.PO_Unlink
 #define Polyobj_FirstLine                   _api_Map.PO_FirstLine
-#define Polyobj_ById                        _api_Map.PO_PolyobjById
-#define Polyobj_ByTag                       _api_Map.PO_PolyobjByTag
+#define Polyobj_ById                        _api_Map.PO_ById
+#define Polyobj_ByTag                       _api_Map.PO_ByTag
 #define Polyobj_BoxIterator                 _api_Map.PO_BoxIterator
 #define Polyobj_SetCallback                 _api_Map.PO_SetCallback
 
 #define BspLeaf_BoxIterator                 _api_Map.BL_BoxIterator
 
-#define P_PathTraverse2                     _api_Map.PathTraverse2
 #define P_PathTraverse                      _api_Map.PathTraverse
-#define P_PathXYTraverse2                   _api_Map.PathXYTraverse2
-#define P_PathXYTraverse                    _api_Map.PathXYTraverse
+#define P_PathTraverse2                     _api_Map.PathTraverse2
 #define P_CheckLineSight                    _api_Map.CheckLineSight
-#define P_TraceAdjustOpening                _api_Map.TraceAdjustOpening
-#define P_SetTraceOpening                   _api_Map.SetTraceOpening
+
+#define Interceptor_Origin                  _api_Map.I_Origin
+#define Interceptor_Direction               _api_Map.I_Direction
+#define Interceptor_Opening                 _api_Map.I_Opening
+#define Interceptor_AdjustOpening           _api_Map.I_AdjustOpening
 
 #define DMU_Str                             _api_Map.Str
 #define DMU_GetType                         _api_Map.GetType

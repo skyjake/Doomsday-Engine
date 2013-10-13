@@ -43,8 +43,8 @@
 #include "world/maputil.h"
 #include "world/world.h"
 #include "BspLeaf"
+#include "Interceptor"
 
-#include "render/r_main.h" // validCount
 #ifdef __CLIENT__
 #  include "render/lightgrid.h"
 #endif
@@ -1586,14 +1586,6 @@ DENG_EXTERN_C Sector *Sector_AtPoint_FixedPrecision(const_pvec2d_t point)
     return App_World().map().bspLeafAt_FixedPrecision(point).sectorPtr();
 }
 
-#undef Sector_AtPoint_FixedPrecisionXY
-DENG_EXTERN_C Sector *Sector_AtPoint_FixedPrecisionXY(coord_t x, coord_t y)
-{
-    if(!App_World().hasMap()) return 0;
-    coord_t point[2] = { x, y };
-    return App_World().map().bspLeafAt_FixedPrecision(point).sectorPtr();
-}
-
 #undef Mobj_BoxIterator
 DENG_EXTERN_C int Mobj_BoxIterator(AABoxd const *box,
     int (*callback) (mobj_t *, void *), void *context)
@@ -1626,120 +1618,10 @@ DENG_EXTERN_C int BspLeaf_BoxIterator(AABoxd const *box,
     return App_World().map().bspLeafBoxIterator(*box, callback, context);
 }
 
-static void collectLineIntercept(Line &line, TraceState const &trace)
-{
-    fixed_t lineFromX[2] = { DBL2FIX(line.fromOrigin().x), DBL2FIX(line.fromOrigin().y) };
-    fixed_t lineToX[2]   = { DBL2FIX(  line.toOrigin().x), DBL2FIX(  line.toOrigin().y) };
-
-    // Is this line crossed?
-    // Avoid precision problems with two routines.
-    int s1, s2;
-    if(trace.line.direction[VX] >  FRACUNIT * 16 || trace.line.direction[VY] >  FRACUNIT * 16 ||
-       trace.line.direction[VX] < -FRACUNIT * 16 || trace.line.direction[VY] < -FRACUNIT * 16)
-    {
-        s1 = V2x_PointOnLineSide(lineFromX, trace.line.origin, trace.line.direction);
-        s2 = V2x_PointOnLineSide(lineToX,   trace.line.origin, trace.line.direction);
-    }
-    else
-    {
-        s1 = line.pointOnSide(Vector2d(FIX2FLT(trace.line.origin[VX]),
-                                       FIX2FLT(trace.line.origin[VY]))) < 0;
-        s2 = line.pointOnSide(Vector2d(FIX2FLT(trace.line.origin[VX] + trace.line.direction[VX]),
-                                       FIX2FLT(trace.line.origin[VY] + trace.line.direction[VY]))) < 0;
-    }
-    if(s1 == s2) return;
-
-    fixed_t lineDirectionX[2] = { DBL2FIX(line.direction().x), DBL2FIX(line.direction().y) };
-
-    // On the correct side of the trace origin?
-    float distance = FIX2FLT(V2x_Intersection(lineFromX, lineDirectionX,
-                                              trace.line.origin, trace.line.direction));
-    if(distance >= 0)
-    {
-        P_AddIntercept(ICPT_LINE, distance, &line);
-    }
-}
-
-static int collectCellLineInterceptsWorker(Line *line, void *context)
-{
-    collectLineIntercept(*line, *static_cast<TraceState *>(context));
-    return false; // Continue iteration.
-}
-
-static void collectMobjIntercept(mobj_t &mobj, TraceState const &trace)
-{
-    // Ignore cameras.
-    if(mobj.dPlayer && (mobj.dPlayer->flags & DDPF_CAMERA))
-        return;
-
-    // Check a corner to corner crossection for hit.
-    AABoxd const aaBox = Mobj_AABox(mobj);
-
-    vec2d_t from, to;
-    if((trace.line.direction[VX] ^ trace.line.direction[VY]) > 0)
-    {
-        // \ Slope
-        V2d_Set(from, aaBox.minX, aaBox.maxY);
-        V2d_Set(to,   aaBox.maxX, aaBox.minY);
-    }
-    else
-    {
-        // / Slope
-        V2d_Set(from, aaBox.minX, aaBox.minY);
-        V2d_Set(to,   aaBox.maxX, aaBox.maxY);
-    }
-
-    // Is this line crossed?
-    if(Divline_PointOnSide(&trace.line, from) == Divline_PointOnSide(&trace.line, to))
-        return;
-
-    // Calculate interception point.
-    divline_t dl;
-    dl.origin[VX] = DBL2FIX(from[VX]);
-    dl.origin[VY] = DBL2FIX(from[VY]);
-    dl.direction[VX] = DBL2FIX(to[VX] - from[VX]);
-    dl.direction[VY] = DBL2FIX(to[VY] - from[VY]);
-    float distance = FIX2FLT(Divline_Intersection(&dl, &trace.line));
-
-    // On the correct side of the trace origin?
-    if(distance >= 0)
-    {
-        P_AddIntercept(ICPT_MOBJ, distance, &mobj);
-    }
-}
-
-static int collectCellMobjInterceptsWorker(mobj_t *mobj, void *context)
-{
-    collectMobjIntercept(*mobj, *static_cast<TraceState *>(context));
-    return false; // Continue iteration.
-}
-
 static int traverseMapPath(Map &map, Vector2d const &from, Vector2d const &to,
     int flags, traverser_t callback, void *context = 0)
 {
-    // A new trace begins.
-    TraceState trace;
-
-    trace.line.origin[VX] = FLT2FIX(from.x);
-    trace.line.origin[VY] = FLT2FIX(from.y);
-    trace.line.direction[VX] = FLT2FIX(to.x - from.x);
-    trace.line.direction[VY] = FLT2FIX(to.y - from.y);
-
-    P_ClearIntercepts();
-    validCount++;
-
-    // Step #1: Collect intercepts.
-    if(flags & PT_ADDLINES)
-    {
-        map.linePathIterator(from, to, collectCellLineInterceptsWorker, &trace);
-    }
-    if(flags & PT_ADDMOBJS)
-    {
-        map.mobjPathIterator(from, to, collectCellMobjInterceptsWorker, &trace);
-    }
-
-    // Step #2: Process sorted intercepts.
-    return P_TraverseIntercepts(trace, callback, context);
+    return Interceptor(callback, from, to, flags, context).trace(map);
 }
 
 #undef P_PathTraverse2
@@ -1752,30 +1634,10 @@ DENG_EXTERN_C int P_PathTraverse2(const_pvec2d_t from, const_pvec2d_t to,
 
 #undef P_PathTraverse
 DENG_EXTERN_C int P_PathTraverse(const_pvec2d_t from, const_pvec2d_t to,
-    int flags, traverser_t callback)
+    traverser_t callback, void *context)
 {
     if(!App_World().hasMap()) return false; // Continue iteration.
-    return traverseMapPath(App_World().map(), from, to, flags, callback);
-}
-
-#undef P_PathXYTraverse2
-DENG_EXTERN_C int P_PathXYTraverse2(coord_t fromX, coord_t fromY,
-    coord_t toX, coord_t toY, int flags, traverser_t callback, void *context)
-{
-    if(!App_World().hasMap()) return false; // Continue iteration.
-    return traverseMapPath(App_World().map(),
-                           Vector2d(fromX, fromY), Vector2d(toX, toY),
-                           flags, callback, context);
-}
-
-#undef P_PathXYTraverse
-DENG_EXTERN_C int P_PathXYTraverse(coord_t fromX, coord_t fromY, coord_t toX, coord_t toY, int flags,
-    traverser_t callback)
-{
-    if(!App_World().hasMap()) return false; // Continue iteration.
-    return traverseMapPath(App_World().map(),
-                           Vector2d(fromX, fromY), Vector2d(toX, toY),
-                           flags, callback);
+    return traverseMapPath(App_World().map(), from, to, PTF_ALL, callback, context);
 }
 
 #undef P_CheckLineSight
@@ -1787,11 +1649,32 @@ DENG_EXTERN_C boolean P_CheckLineSight(const_pvec3d_t from, const_pvec3d_t to, c
                          dfloat(bottomSlope), dfloat(topSlope), flags).trace(App_World().map().bspRoot());
 }
 
-#undef P_TraceAdjustOpening
-DENG_EXTERN_C void P_TraceAdjustOpening(TraceState *trace, Line *line)
+#undef Interceptor_Origin
+DENG_EXTERN_C fixed_t const *Interceptor_Origin(Interceptor const *trace)
+{
+    if(!trace) return 0;
+    return trace->origin();
+}
+
+#undef Interceptor_Direction
+DENG_EXTERN_C fixed_t const *(Interceptor_Direction)(Interceptor const *trace)
+{
+    if(!trace) return 0;
+    return trace->direction();
+}
+
+#undef Interceptor_Opening
+DENG_EXTERN_C LineOpening const *Interceptor_Opening(Interceptor const *trace)
+{
+    if(!trace) return 0;
+    return &trace->opening();
+}
+
+#undef Interceptor_AdjustOpening
+DENG_EXTERN_C void Interceptor_AdjustOpening(Interceptor *trace, Line *line)
 {
     if(!trace || !line) return;
-    TraceState_AdjustOpening(*trace, *line);
+    trace->adjustOpening(*line);
 }
 
 #undef Mobj_CreateXYZ
@@ -1888,13 +1771,6 @@ DENG_EXTERN_C coord_t Line_PointDistance(Line *line, coord_t const point[2], coo
     return line->pointDistance(point, offset);
 }
 
-#undef Line_PointXYDistance
-DENG_EXTERN_C coord_t Line_PointXYDistance(Line* line, coord_t x, coord_t y, coord_t* offset)
-{
-    DENG_ASSERT(line);
-    return line->pointDistance(Vector2d(x, y), offset);
-}
-
 #undef Line_PointOnSide
 DENG_EXTERN_C coord_t Line_PointOnSide(Line const *line, coord_t const point[2])
 {
@@ -1906,13 +1782,6 @@ DENG_EXTERN_C coord_t Line_PointOnSide(Line const *line, coord_t const point[2])
         return 1;
     }
     return line->pointOnSide(point);
-}
-
-#undef Line_PointXYOnSide
-DENG_EXTERN_C coord_t Line_PointXYOnSide(Line const *line, coord_t x, coord_t y)
-{
-    DENG_ASSERT(line);
-    return line->pointOnSide(Vector2d(x, y));
 }
 
 #undef Line_BoxOnSide
@@ -1948,15 +1817,12 @@ DENG_DECLARE_API(Map) =
     Line_BoxOnSide,
     Line_BoxOnSide_FixedPrecision,
     Line_PointDistance,
-    Line_PointXYDistance,
     Line_PointOnSide,
-    Line_PointXYOnSide,
     Line_TouchingMobjsIterator,
     Line_Opening,
 
     Sector_TouchingMobjsIterator,
     Sector_AtPoint_FixedPrecision,
-    Sector_AtPoint_FixedPrecisionXY,
 
     Mobj_CreateXYZ,
     Mobj_Destroy,
@@ -1984,12 +1850,14 @@ DENG_DECLARE_API(Map) =
 
     BspLeaf_BoxIterator,
 
-    P_PathTraverse2,
     P_PathTraverse,
-    P_PathXYTraverse2,
-    P_PathXYTraverse,
+    P_PathTraverse2,
     P_CheckLineSight,
-    P_TraceAdjustOpening,
+
+    Interceptor_Origin,
+    Interceptor_Direction,
+    Interceptor_Opening,
+    Interceptor_AdjustOpening,
 
     DMU_Str,
     DMU_GetType,

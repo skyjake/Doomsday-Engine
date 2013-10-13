@@ -17,23 +17,15 @@
  * http://www.gnu.org/licenses</small>
  */
 
+#ifdef __CLIENT__
 #ifndef DENG_WORLD_MAPUTIL_H
 #define DENG_WORLD_MAPUTIL_H
 
-#include "Line"
-
-#ifdef __CLIENT__
-
 #include <de/binangle.h>
+#include "Line"
 
 class Sector;
 class LineOwner;
-
-#endif
-
-void TraceState_AdjustOpening(TraceState &trace, Line &line);
-
-#ifdef __CLIENT__
 
 /**
  * @param side  LineSide instance.
@@ -55,6 +47,5 @@ Line *R_FindLineNeighbor(Sector const *sector, Line const *line,
 Line *R_FindSolidLineNeighbor(Sector const *sector, Line const *line,
     LineOwner const *own, bool antiClockwise, binangle_t *diff = 0);
 
-#endif // __CLIENT__
-
 #endif // DENG_WORLD_MAPUTIL_H
+#endif // __CLIENT__

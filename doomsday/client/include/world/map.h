@@ -591,7 +591,7 @@ public:
     /**
      * Lookup a lumobj in the map by it's unique @a index.
      */
-    Lumobj *lumobj(int index) const;
+    inline Lumobj *lumobj(int index) const { return lumobjs().at(index); }
 
     /**
      * Attempt to add a new bias light source to the map (a copy is made).
