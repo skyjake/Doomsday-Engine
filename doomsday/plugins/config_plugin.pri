@@ -1,5 +1,9 @@
 include(../config.pri)
 
+deng_noclient {
+    CONFIG += libgui_headers_only
+}
+
 macx {
     CONFIG += lib_bundle
     QMAKE_BUNDLE_EXTENSION = .bundle
