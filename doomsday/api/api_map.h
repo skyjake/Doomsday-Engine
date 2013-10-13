@@ -104,7 +104,7 @@ struct sector_s;
 struct side_s;
 struct vertex_s;
 struct material_s;
-struct tracestate_s;
+struct interceptor_s;
 
 typedef struct bspleaf_s    BspLeaf;
 typedef struct bspnode_s    BspNode;
@@ -114,7 +114,7 @@ typedef struct sector_s     Sector;
 typedef struct side_s       Side;
 typedef struct vertex_s     Vertex;
 typedef struct material_s   Material;
-typedef struct tracestate_s Interceptor;
+typedef struct interceptor_s Interceptor;
 
 #elif defined __cplusplus
 
@@ -438,23 +438,23 @@ DENG_API_TYPEDEF(Map)
     /**
      * Provides read-only access to the origin in map space for the given @a trace.
      */
-    fixed_t const * (*Interceptor_Origin)(Interceptor const *trace);
+    fixed_t const * (*I_Origin)(Interceptor const *trace);
 
     /**
      * Provides read-only access to the direction in map space for the given @a trace.
      */
-    fixed_t const * (*Interceptor_Direction)(Interceptor const *trace);
+    fixed_t const * (*I_Direction)(Interceptor const *trace);
 
     /**
      * Provides read-only access to the line opening state for the given @a trace.
      */
-    LineOpening const *(*Interceptor_Opening)(Interceptor const *trace);
+    LineOpening const *(*I_Opening)(Interceptor const *trace);
 
     /**
      * Update the "opening" state for the specified @a trace in accordance with
      * the heights defined by the minimal planes which intercept @a line.
      */
-    void            (*Interceptor_AdjustOpening)(Interceptor *trace, Line *line);
+    void            (*I_AdjustOpening)(Interceptor *trace, Line *line);
 
     /*
      * Map Updates (DMU):
@@ -700,10 +700,10 @@ DENG_API_T(Map);
 #define P_PathTraverse2                     _api_Map.PathTraverse2
 #define P_CheckLineSight                    _api_Map.CheckLineSight
 
-#define Interceptor_Origin                        _api_Map.Interceptor_Origin
-#define Interceptor_Direction                     _api_Map.Interceptor_Direction
-#define Interceptor_Opening                       _api_Map.Interceptor_Opening
-#define Interceptor_AdjustOpening                 _api_Map.Interceptor_AdjustOpening
+#define Interceptor_Origin                  _api_Map.I_Origin
+#define Interceptor_Direction               _api_Map.I_Direction
+#define Interceptor_Opening                 _api_Map.I_Opening
+#define Interceptor_AdjustOpening           _api_Map.I_AdjustOpening
 
 #define DMU_Str                             _api_Map.Str
 #define DMU_GetType                         _api_Map.GetType
