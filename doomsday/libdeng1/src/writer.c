@@ -100,6 +100,12 @@ static boolean Writer_Check(Writer const *writer, size_t len)
     return true;
 }
 
+static void Writer_WriteRaw(Writer *writer, void const *buffer, size_t len)
+{
+    memcpy(writer->data + writer->pos, buffer, len);
+    writer->pos += len;
+}
+
 Writer *Writer_NewWithBuffer(byte *buffer, size_t maxLen)
 {
     Writer *w = M_Calloc(sizeof(Writer));
@@ -213,9 +219,9 @@ void Writer_WriteInt16(Writer *writer, int16_t v)
     {
         if(!writer->useCustomFuncs)
         {
+            int16_t foreign = LittleEndianByteOrder_ToForeignInt16(v);
             Writer_TypeCheck(writer, WTCC_INT16);
-            *(int16_t *) (writer->data + writer->pos) = LittleEndianByteOrder_ToForeignInt16(v);
-            writer->pos += 2;
+            Writer_WriteRaw(writer, &foreign, 2);
         }
         else
         {
@@ -231,9 +237,9 @@ void Writer_WriteUInt16(Writer *writer, uint16_t v)
     {
         if(!writer->useCustomFuncs)
         {
+            uint16_t foreign = LittleEndianByteOrder_ToForeignUInt16(v);
             Writer_TypeCheck(writer, WTCC_UINT16);
-            *(uint16_t *) (writer->data + writer->pos) = LittleEndianByteOrder_ToForeignUInt16(v);
-            writer->pos += 2;
+            Writer_WriteRaw(writer, &foreign, 2);
         }
         else
         {
@@ -249,9 +255,9 @@ void Writer_WriteInt32(Writer *writer, int32_t v)
     {
         if(!writer->useCustomFuncs)
         {
+            int32_t foreign = LittleEndianByteOrder_ToForeignInt32(v);
             Writer_TypeCheck(writer, WTCC_INT32);
-            *(int32_t *) (writer->data + writer->pos) = LittleEndianByteOrder_ToForeignInt32(v);
-            writer->pos += 4;
+            Writer_WriteRaw(writer, &foreign, 4);
         }
         else
         {
@@ -267,9 +273,9 @@ void Writer_WriteUInt32(Writer *writer, uint32_t v)
     {
         if(!writer->useCustomFuncs)
         {
+            uint32_t foreign = LittleEndianByteOrder_ToForeignUInt32(v);
             Writer_TypeCheck(writer, WTCC_UINT32);
-            *(uint32_t *) (writer->data + writer->pos) = LittleEndianByteOrder_ToForeignUInt32(v);
-            writer->pos += 4;
+            Writer_WriteRaw(writer, &foreign, 4);
         }
         else
         {
@@ -285,9 +291,9 @@ void Writer_WriteFloat(Writer *writer, float v)
     {
         if(!writer->useCustomFuncs)
         {
+            float foreign = LittleEndianByteOrder_ToForeignFloat(v);
             Writer_TypeCheck(writer, WTCC_FLOAT);
-            *(float *) (writer->data + writer->pos) = LittleEndianByteOrder_ToForeignFloat(v);
-            writer->pos += 4;
+            Writer_WriteRaw(writer, &foreign, 4);
         }
         else
         {
@@ -306,8 +312,7 @@ void Writer_Write(Writer *writer, void const *buffer, size_t len)
         if(!writer->useCustomFuncs)
         {
             Writer_TypeCheck(writer, WTCC_BLOCK);
-            memcpy(writer->data + writer->pos, buffer, len);
-            writer->pos += len;
+            Writer_WriteRaw(writer, buffer, len);
         }
         else
         {

@@ -31,6 +31,11 @@
 #  define Reader_TypeCheck(r, code)
 #endif
 
+#define Reader_8(reader, shift)  (reader->data[reader->pos++] << shift)
+#define Reader_16(reader)        (Reader_8(reader,  0) | Reader_8(reader,  8))
+#define Reader_32(reader)        (Reader_8(reader,  0) | Reader_8(reader,  8) | \
+                                  Reader_8(reader, 16) | Reader_8(reader, 24))
+
 typedef struct readerfuncs_s {
     Reader_Callback_ReadInt8  readInt8;
     Reader_Callback_ReadInt16 readInt16;
@@ -181,8 +186,7 @@ int16_t Reader_ReadInt16(Reader *reader)
         if(!reader->useCustomFuncs)
         {
             Reader_TypeCheck(reader, WTCC_INT16);
-            result = LittleEndianByteOrder_ToNativeInt16( *(int16_t *) &reader->data[reader->pos] );
-            reader->pos += 2;
+            result = LittleEndianByteOrder_ToNativeInt16(Reader_16(reader));
         }
         else
         {
@@ -201,8 +205,7 @@ uint16_t Reader_ReadUInt16(Reader *reader)
         if(!reader->useCustomFuncs)
         {
             Reader_TypeCheck(reader, WTCC_UINT16);
-            result = LittleEndianByteOrder_ToNativeUInt16( *(uint16_t *) &reader->data[reader->pos] );
-            reader->pos += 2;
+            result = LittleEndianByteOrder_ToNativeUInt16(Reader_16(reader));
         }
         else
         {
@@ -221,8 +224,7 @@ int32_t Reader_ReadInt32(Reader *reader)
         if(!reader->useCustomFuncs)
         {
             Reader_TypeCheck(reader, WTCC_INT32);
-            result = LittleEndianByteOrder_ToNativeInt32( *(int32_t *) &reader->data[reader->pos] );
-            reader->pos += 4;
+            result = LittleEndianByteOrder_ToNativeInt32(Reader_32(reader));
         }
         else
         {
@@ -241,8 +243,7 @@ uint32_t Reader_ReadUInt32(Reader *reader)
         if(!reader->useCustomFuncs)
         {
             Reader_TypeCheck(reader, WTCC_UINT32);
-            result = LittleEndianByteOrder_ToNativeUInt32( *(uint32_t *) &reader->data[reader->pos] );
-            reader->pos += 4;
+            result = LittleEndianByteOrder_ToNativeUInt32(Reader_32(reader));
         }
         else
         {
@@ -260,9 +261,11 @@ float Reader_ReadFloat(Reader *reader)
     {
         if(!reader->useCustomFuncs)
         {
+            float foreign;
             Reader_TypeCheck(reader, WTCC_FLOAT);
-            result = LittleEndianByteOrder_ToNativeFloat( *(float *) &reader->data[reader->pos] );
+            memcpy(&foreign, reader->data + reader->pos, 4);
             reader->pos += 4;
+            result = LittleEndianByteOrder_ToNativeFloat(foreign);
         }
         else
         {
