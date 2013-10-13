@@ -19,10 +19,10 @@
  * 02110-1301 USA</small>
  */
 
+#include <de/memoryzone.h>
 #include <de/vector1.h>
 
 #include "de_platform.h"
-#include "world/p_intercept.h"
 #include "world/p_object.h"
 
 #include "render/r_main.h" // validCount
@@ -30,6 +30,34 @@
 #include "world/interceptor.h"
 
 using namespace de;
+
+struct Intercept
+{
+    Intercept *next;
+    Intercept *prev;
+    intercept_t intercept; ///< Public intercept data.
+
+    void configure(intercepttype_t type = ICPT_MOBJ, float distance = 0, void *object = 0)
+    {
+        intercept.type     = type;
+        intercept.distance = distance;
+        switch(intercept.type)
+        {
+        case ICPT_MOBJ: intercept.mobj = (mobj_t *) object; break;
+        case ICPT_LINE: intercept.line =   (Line *) object; break;
+        }
+    }
+};
+
+// Blockset from which intercepts are allocated.
+static zblockset_t *interceptNodeSet;
+// Head of the used intercept list.
+static Intercept *interceptFirst;
+
+// Trace nodes.
+static Intercept head;
+static Intercept tail;
+static Intercept *mru;
 
 DENG2_PIMPL_NOREF(Interceptor)
 {
@@ -59,6 +87,106 @@ DENG2_PIMPL_NOREF(Interceptor)
         origin[VY]    = FLT2FIX(from.y);
         direction[VX] = FLT2FIX(to.x - from.x);
         direction[VY] = FLT2FIX(to.y - from.y);
+    }
+
+    inline bool isSentinel(Intercept const &node)
+    {
+        return &node == &tail || &node == &head;
+    }
+
+    /**
+     * Empties the intercepts array and makes sure it has been allocated.
+     */
+    void clearIntercepts()
+    {
+#define MININTERCEPTS       128
+
+        if(!interceptNodeSet)
+        {
+            interceptNodeSet = ZBlockSet_New(sizeof(Intercept), MININTERCEPTS, PU_APPSTATIC);
+
+            // Configure the static head and tail.
+            head.intercept.distance = 0.0f;
+            head.next = &tail;
+            head.prev = 0;
+            tail.intercept.distance = 1.0f;
+            tail.prev = &head;
+            tail.next = 0;
+        }
+
+        // Start reusing intercepts (may point to a sentinel but that is Ok).
+        if(!interceptFirst)
+        {
+            interceptFirst = head.next;
+        }
+        else if(head.next != &tail)
+        {
+            Intercept *existing = interceptFirst;
+            interceptFirst = head.next;
+            tail.prev->next = existing;
+        }
+
+        // Reset the trace.
+        head.next = &tail;
+        tail.prev = &head;
+        mru = 0;
+
+#undef MININTERCEPTS
+    }
+
+    /**
+     * You must clear intercepts before the first time this is called.
+     * The intercepts array grows if necessary.
+     *
+     * @param type      Type of interception.
+     * @param distance  Distance along the trace vector that the interception occured [0...1].
+     * @param object    Object being intercepted.
+     */
+    void addIntercept(intercepttype_t type, float distance, void *object)
+    {
+        DENG2_ASSERT(object != 0);
+
+        // First reject vs our sentinels
+        if(distance < head.intercept.distance) return;
+        if(distance > tail.intercept.distance) return;
+
+        // Find the new intercept's ordered place along the trace.
+        Intercept *before;
+        if(mru && mru->intercept.distance <= distance)
+        {
+            before = mru->next;
+        }
+        else
+        {
+            before = head.next;
+        }
+
+        while(before->next && distance >= before->intercept.distance)
+        {
+            before = before->next;
+        }
+
+        Intercept *icpt;
+        // Can we reuse an existing intercept?
+        if(!isSentinel(*interceptFirst))
+        {
+            icpt = interceptFirst;
+            interceptFirst = icpt->next;
+        }
+        else
+        {
+            icpt = (Intercept *) ZBlockSet_Allocate(interceptNodeSet);
+        }
+        icpt->configure(type, distance, object);
+
+        // Link it in.
+        icpt->next = before;
+        icpt->prev = before->prev;
+
+        icpt->prev->next = icpt;
+        icpt->next->prev = icpt;
+
+        mru = icpt;
     }
 
     void intercept(Line &line)
@@ -92,7 +220,7 @@ DENG2_PIMPL_NOREF(Interceptor)
         // On the correct side of the trace origin?
         if(distance >= 0)
         {
-            P_AddIntercept(ICPT_LINE, distance, &line);
+            addIntercept(ICPT_LINE, distance, &line);
         }
     }
 
@@ -131,7 +259,7 @@ DENG2_PIMPL_NOREF(Interceptor)
         // On the correct side of the trace origin?
         if(distance >= 0)
         {
-            P_AddIntercept(ICPT_MOBJ, distance, &mobj);
+            addIntercept(ICPT_MOBJ, distance, &mobj);
         }
     }
 
@@ -186,7 +314,7 @@ int Interceptor::trace(Map const &map)
 
     // Step #1: Collect intercepts.
     /// @todo Store the intercept list internally.
-    P_ClearIntercepts();
+    d->clearIntercepts();
     validCount++;
 
     if(d->flags & PTF_LINE)
@@ -199,5 +327,11 @@ int Interceptor::trace(Map const &map)
     }
 
     // Step #2: Process sorted intercepts.
-    return P_TraverseIntercepts(*this, d->callback, d->context);
+    for(Intercept *node = head.next; !d->isSentinel(*node); node = node->next)
+    {
+        if(int result = d->callback(this, &node->intercept, d->context))
+            return result; // Stop traversal.
+    }
+
+    return false; // Intercept traversal completed wholly.
 }

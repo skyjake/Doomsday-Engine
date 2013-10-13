@@ -51,7 +51,6 @@
 #include "world/entitydatabase.h"
 #include "world/generators.h"
 #include "world/lineowner.h"
-#include "world/p_intercept.h"
 #include "world/p_object.h"
 #ifdef __CLIENT__
 #  include "Contact"

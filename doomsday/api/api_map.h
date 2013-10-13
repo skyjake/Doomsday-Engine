@@ -185,7 +185,7 @@ typedef struct intercept_s {
     union {
         struct mobj_s *mobj;
         Line *line;
-    } d;
+    };
 } intercept_t;
 
 typedef int (*traverser_t) (Interceptor *trace, intercept_t const *intercept, void *context);

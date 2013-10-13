@@ -249,7 +249,6 @@ DENG_HEADERS += \
     $$SRC/include/world/linesighttest.h \
     $$SRC/include/world/map.h \
     $$SRC/include/world/maputil.h \
-    $$SRC/include/world/p_intercept.h \
     $$SRC/include/world/p_object.h \
     $$SRC/include/world/p_players.h \
     $$SRC/include/world/p_ticker.h \
@@ -419,7 +418,6 @@ SOURCES += \
     $$SRC/src/world/map.cpp \
     $$SRC/src/world/mapelement.cpp \
     $$SRC/src/world/maputil.cpp \
-    $$SRC/src/world/p_intercept.cpp \
     $$SRC/src/world/p_mobj.cpp \
     $$SRC/src/world/p_players.cpp \
     $$SRC/src/world/p_ticker.cpp \
