@@ -31,7 +31,6 @@
 #  define Reader_TypeCheck(r, code)
 #endif
 
-#define Reader_8(reader, shift)  (reader->data[reader->pos++] << shift)
 #define Reader_16(reader)        (Reader_8(reader,  0) | Reader_8(reader,  8))
 #define Reader_32(reader)        (Reader_8(reader,  0) | Reader_8(reader,  8) | \
                                   Reader_8(reader, 16) | Reader_8(reader, 24))
@@ -53,6 +52,11 @@ struct reader_s
     boolean useCustomFuncs;
     readerfuncs_t func;
 };
+
+static uint8_t Reader_8(Reader *reader, int shift)
+{
+    return reader->data[reader->pos++] << shift;
+}
 
 static boolean Reader_Check(Reader const *reader, size_t len)
 {
