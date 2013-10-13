@@ -1618,46 +1618,51 @@ DENG_EXTERN_C int BspLeaf_BoxIterator(AABoxd const *box,
     return App_World().map().bspLeafBoxIterator(*box, callback, context);
 }
 
-static int traverseMapPath(Map &map, Vector2d const &from, Vector2d const &to,
-    int flags, traverser_t callback, void *context = 0)
-{
-    return Interceptor(callback, from, to, flags, context).trace(map);
-}
-
 #undef P_PathTraverse2
 DENG_EXTERN_C int P_PathTraverse2(const_pvec2d_t from, const_pvec2d_t to,
     int flags, traverser_t callback, void *context)
 {
-    if(!App_World().hasMap()) return false; // Continue iteration.
-    return traverseMapPath(App_World().map(), from, to, flags, callback, context);
+    if(App_World().hasMap())
+    {
+        Map &map = App_World().map();
+        return Interceptor(callback, from, to, flags, context).trace(map);
+    }
+    return false; // Continue iteration.
 }
 
 #undef P_PathTraverse
 DENG_EXTERN_C int P_PathTraverse(const_pvec2d_t from, const_pvec2d_t to,
     traverser_t callback, void *context)
 {
-    if(!App_World().hasMap()) return false; // Continue iteration.
-    return traverseMapPath(App_World().map(), from, to, PTF_ALL, callback, context);
+    if(App_World().hasMap())
+    {
+        Map &map = App_World().map();
+        return Interceptor(callback, from, to, PTF_ALL, context).trace(map);
+    }
+    return false; // Continue iteration.
 }
 
 #undef P_CheckLineSight
 DENG_EXTERN_C boolean P_CheckLineSight(const_pvec3d_t from, const_pvec3d_t to, coord_t bottomSlope,
     coord_t topSlope, int flags)
 {
-    if(!App_World().hasMap()) return false; // I guess?
-    return LineSightTest(Vector3d(from), Vector3d(to),
-                         dfloat(bottomSlope), dfloat(topSlope), flags).trace(App_World().map().bspRoot());
+    if(App_World().hasMap())
+    {
+        Map &map = App_World().map();
+        return LineSightTest(from, to, bottomSlope, topSlope, flags).trace(map.bspRoot());
+    }
+    return false; // Continue iteration.
 }
 
 #undef Interceptor_Origin
-DENG_EXTERN_C fixed_t const *Interceptor_Origin(Interceptor const *trace)
+DENG_EXTERN_C coord_t const *Interceptor_Origin(Interceptor const *trace)
 {
     if(!trace) return 0;
     return trace->origin();
 }
 
 #undef Interceptor_Direction
-DENG_EXTERN_C fixed_t const *(Interceptor_Direction)(Interceptor const *trace)
+DENG_EXTERN_C coord_t const *(Interceptor_Direction)(Interceptor const *trace)
 {
     if(!trace) return 0;
     return trace->direction();
@@ -1671,10 +1676,10 @@ DENG_EXTERN_C LineOpening const *Interceptor_Opening(Interceptor const *trace)
 }
 
 #undef Interceptor_AdjustOpening
-DENG_EXTERN_C void Interceptor_AdjustOpening(Interceptor *trace, Line *line)
+DENG_EXTERN_C boolean Interceptor_AdjustOpening(Interceptor *trace, Line *line)
 {
-    if(!trace || !line) return;
-    trace->adjustOpening(*line);
+    if(!trace) return false;
+    return trace->adjustOpening(line);
 }
 
 #undef Mobj_CreateXYZ

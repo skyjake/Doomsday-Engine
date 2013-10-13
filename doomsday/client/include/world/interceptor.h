@@ -53,12 +53,12 @@ public:
     /**
      * Provides read-only access to the fixed-point map space origin of the trace.
      */
-    fixed_t const *origin() const;
+    coord_t const *origin() const;
 
     /**
      * Provides read-only access to the fixed-point map space direction of the trace.
      */
-    fixed_t const *direction() const;
+    coord_t const *direction() const;
 
     /**
      * Provides read-only access to the current map space opening of the trace.
@@ -66,11 +66,14 @@ public:
     LineOpening const &opening() const;
 
     /**
-     * Update the "opening" state for the specified @a trace in accordance with
-     * the heights defined by the minimal planes which intercept @a line. Only
-     * lines within the map specified at @ref trace() time will be considered.
+     * Update the "opening" state for the trace in accordance with the heights
+     * defined by the minimal planes which intercept @a line. Only lines within
+     * the map specified at @ref trace() call time will be considered.
+     *
+     * @return  @c true iff after the adjustment the opening range is positive,
+     * i.e., the top Z coordinate is greater than the bottom Z.
      */
-    void adjustOpening(Line const &line);
+    bool adjustOpening(Line const *line);
 
     /**
      * Execute the trace (i.e., cast the ray).

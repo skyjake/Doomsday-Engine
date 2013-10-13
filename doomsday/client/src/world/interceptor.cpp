@@ -31,33 +31,31 @@
 
 using namespace de;
 
-struct Intercept
+struct ListNode
 {
-    Intercept *next;
-    Intercept *prev;
-    intercept_t intercept; ///< Public intercept data.
+    ListNode *next;
+    ListNode *prev;
 
-    void configure(intercepttype_t type = ICPT_MOBJ, float distance = 0, void *object = 0)
-    {
-        intercept.type     = type;
-        intercept.distance = distance;
-        switch(intercept.type)
-        {
-        case ICPT_MOBJ: intercept.mobj = (mobj_t *) object; break;
-        case ICPT_LINE: intercept.line =   (Line *) object; break;
-        }
+    intercepttype_t type;
+    void *object;
+    float distance;
+
+    template <class ObjectType>
+    ObjectType &objectAs() const {
+        DENG2_ASSERT(object != 0);
+        return *static_cast<ObjectType *>(object);
     }
 };
 
 // Blockset from which intercepts are allocated.
 static zblockset_t *interceptNodeSet;
 // Head of the used intercept list.
-static Intercept *interceptFirst;
+static ListNode *interceptFirst;
 
 // Trace nodes.
-static Intercept head;
-static Intercept tail;
-static Intercept *mru;
+static ListNode head;
+static ListNode tail;
+static ListNode *mru;
 
 DENG2_PIMPL_NOREF(Interceptor)
 {
@@ -70,9 +68,9 @@ DENG2_PIMPL_NOREF(Interceptor)
     Map *map;
     LineOpening opening;
 
-    // Fixed-point ray representation for use with legacy code.
-    fixed_t origin[2];
-    fixed_t direction[2];
+    // Array representation for ray geometry (used with legacy code).
+    vec2d_t fromV1;
+    vec2d_t directionV1;
 
     Instance(traverser_t callback, Vector2d const &from,
              Vector2d const &to, int flags, void *context)
@@ -83,13 +81,11 @@ DENG2_PIMPL_NOREF(Interceptor)
           flags(flags),
           map(0)
     {
-        origin[VX]    = FLT2FIX(from.x);
-        origin[VY]    = FLT2FIX(from.y);
-        direction[VX] = FLT2FIX(to.x - from.x);
-        direction[VY] = FLT2FIX(to.y - from.y);
+        V2d_Set(fromV1, from.x, from.y);
+        V2d_Set(directionV1, to.x - from.x, to.y - from.y);
     }
 
-    inline bool isSentinel(Intercept const &node)
+    inline bool isSentinel(ListNode const &node)
     {
         return &node == &tail || &node == &head;
     }
@@ -103,13 +99,13 @@ DENG2_PIMPL_NOREF(Interceptor)
 
         if(!interceptNodeSet)
         {
-            interceptNodeSet = ZBlockSet_New(sizeof(Intercept), MININTERCEPTS, PU_APPSTATIC);
+            interceptNodeSet = ZBlockSet_New(sizeof(ListNode), MININTERCEPTS, PU_APPSTATIC);
 
             // Configure the static head and tail.
-            head.intercept.distance = 0.0f;
+            head.distance = 0.0f;
             head.next = &tail;
             head.prev = 0;
-            tail.intercept.distance = 1.0f;
+            tail.distance = 1.0f;
             tail.prev = &head;
             tail.next = 0;
         }
@@ -121,7 +117,7 @@ DENG2_PIMPL_NOREF(Interceptor)
         }
         else if(head.next != &tail)
         {
-            Intercept *existing = interceptFirst;
+            ListNode *existing = interceptFirst;
             interceptFirst = head.next;
             tail.prev->next = existing;
         }
@@ -147,12 +143,12 @@ DENG2_PIMPL_NOREF(Interceptor)
         DENG2_ASSERT(object != 0);
 
         // First reject vs our sentinels
-        if(distance < head.intercept.distance) return;
-        if(distance > tail.intercept.distance) return;
+        if(distance < head.distance) return;
+        if(distance > tail.distance) return;
 
         // Find the new intercept's ordered place along the trace.
-        Intercept *before;
-        if(mru && mru->intercept.distance <= distance)
+        ListNode *before;
+        if(mru && mru->distance <= distance)
         {
             before = mru->next;
         }
@@ -161,12 +157,12 @@ DENG2_PIMPL_NOREF(Interceptor)
             before = head.next;
         }
 
-        while(before->next && distance >= before->intercept.distance)
+        while(before->next && distance >= before->distance)
         {
             before = before->next;
         }
 
-        Intercept *icpt;
+        ListNode *icpt;
         // Can we reuse an existing intercept?
         if(!isSentinel(*interceptFirst))
         {
@@ -175,9 +171,11 @@ DENG2_PIMPL_NOREF(Interceptor)
         }
         else
         {
-            icpt = (Intercept *) ZBlockSet_Allocate(interceptNodeSet);
+            icpt = (ListNode *) ZBlockSet_Allocate(interceptNodeSet);
         }
-        icpt->configure(type, distance, object);
+        icpt->type     = type;
+        icpt->object   = object;
+        icpt->distance = distance;
 
         // Link it in.
         icpt->next = before;
@@ -191,6 +189,9 @@ DENG2_PIMPL_NOREF(Interceptor)
 
     void intercept(Line &line)
     {
+        fixed_t origin[2]    = { DBL2FIX(from.x), DBL2FIX(from.y) };
+        fixed_t direction[2] = { DBL2FIX(to.x - from.x), DBL2FIX(to.y - from.y) };
+
         fixed_t lineFromX[2] = { DBL2FIX(line.fromOrigin().x), DBL2FIX(line.fromOrigin().y) };
         fixed_t lineToX[2]   = { DBL2FIX(  line.toOrigin().x), DBL2FIX(  line.toOrigin().y) };
 
@@ -229,6 +230,9 @@ DENG2_PIMPL_NOREF(Interceptor)
         // Ignore cameras.
         if(mobj.dPlayer && (mobj.dPlayer->flags & DDPF_CAMERA))
             return;
+
+        fixed_t origin[2]    = { DBL2FIX(from.x), DBL2FIX(from.y) };
+        fixed_t direction[2] = { DBL2FIX(to.x - from.x), DBL2FIX(to.y - from.y) };
 
         // Check a corner to corner crossection for hit.
         AABoxd const aaBox = Mobj_AABox(mobj);
@@ -281,14 +285,14 @@ Interceptor::Interceptor(traverser_t callback, Vector2d const &from,
     : d(new Instance(callback, from, to, flags, context))
 {}
 
-fixed_t const *Interceptor::origin() const
+coord_t const *Interceptor::origin() const
 {
-    return d->origin;
+    return d->fromV1;
 }
 
-fixed_t const *Interceptor::direction() const
+coord_t const *Interceptor::direction() const
 {
-    return d->direction;
+    return d->directionV1;
 }
 
 LineOpening const &Interceptor::opening() const
@@ -296,16 +300,21 @@ LineOpening const &Interceptor::opening() const
     return d->opening;
 }
 
-void Interceptor::adjustOpening(Line const &line)
+bool Interceptor::adjustOpening(Line const *line)
 {
-    if(!d->map) return;
-    if(d->map != &line.map())
+    DENG2_ASSERT(d->map != 0);
+    if(line)
     {
-        qDebug() << "Ignoring alien line" << de::dintptr(&line) << "in Interceptor::adjustOpening";
-        return;
+        if(d->map == &line->map())
+        {
+            d->opening = LineOpening(*line);
+        }
+        else
+        {
+            qDebug() << "Ignoring alien line" << de::dintptr(line) << "in Interceptor::adjustOpening";
+        }
     }
-
-    d->opening = LineOpening(line);
+    return d->opening.range > 0;
 }
 
 int Interceptor::trace(Map const &map)
@@ -327,10 +336,22 @@ int Interceptor::trace(Map const &map)
     }
 
     // Step #2: Process sorted intercepts.
-    for(Intercept *node = head.next; !d->isSentinel(*node); node = node->next)
+    for(ListNode *node = head.next; !d->isSentinel(*node); node = node->next)
     {
-        if(int result = d->callback(this, &node->intercept, d->context))
-            return result; // Stop traversal.
+        // Prepare the intercept info.
+        Intercept icpt;
+        icpt.trace    = this;
+        icpt.distance = node->distance;
+        icpt.type     = node->type;
+        switch(node->type)
+        {
+        case ICPT_MOBJ: icpt.mobj = &node->objectAs<mobj_t>(); break;
+        case ICPT_LINE: icpt.line = &node->objectAs<Line>();   break;
+        }
+
+        // Make the callback.
+        if(int result = d->callback(&icpt, d->context))
+            return result;
     }
 
     return false; // Intercept traversal completed wholly.

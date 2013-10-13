@@ -180,15 +180,16 @@ typedef enum intercepttype_e {
 } intercepttype_t;
 
 typedef struct intercept_s {
-    float distance; ///< Along trace vector as a fraction.
     intercepttype_t type;
     union {
         struct mobj_s *mobj;
         Line *line;
     };
-} intercept_t;
+    double distance;    ///< Along trace vector as a fraction.
+    Interceptor *trace; ///< Trace which produced the intercept.
+} Intercept;
 
-typedef int (*traverser_t) (Interceptor *trace, intercept_t const *intercept, void *context);
+typedef int (*traverser_t) (Intercept const *intercept, void *context);
 
 /**
  * @defgroup mobjLinkFlags Mobj Link Flags
@@ -417,8 +418,8 @@ DENG_API_TYPEDEF(Map)
 
     // Traversers
 
-    int             (*PathTraverse)(coord_t const from[2], coord_t const to[2], int (*callback) (Interceptor *trace, struct intercept_s const *, void *context), void *context);
-    int             (*PathTraverse2)(coord_t const from[2], coord_t const to[2], int flags, int (*callback) (Interceptor *trace, struct intercept_s const *, void *context), void *context);
+    int             (*PathTraverse)(coord_t const from[2], coord_t const to[2], traverser_t callback, void *context);
+    int             (*PathTraverse2)(coord_t const from[2], coord_t const to[2], int flags, traverser_t callback, void *context);
 
     /**
      * Traces a line of sight.
@@ -438,12 +439,12 @@ DENG_API_TYPEDEF(Map)
     /**
      * Provides read-only access to the origin in map space for the given @a trace.
      */
-    fixed_t const * (*I_Origin)(Interceptor const *trace);
+    coord_t const * (*I_Origin)(Interceptor const *trace);
 
     /**
      * Provides read-only access to the direction in map space for the given @a trace.
      */
-    fixed_t const * (*I_Direction)(Interceptor const *trace);
+    coord_t const * (*I_Direction)(Interceptor const *trace);
 
     /**
      * Provides read-only access to the line opening state for the given @a trace.
@@ -453,8 +454,11 @@ DENG_API_TYPEDEF(Map)
     /**
      * Update the "opening" state for the specified @a trace in accordance with
      * the heights defined by the minimal planes which intercept @a line.
+     *
+     * @return  @c true iff after the adjustment the opening range is positive,
+     * i.e., the top Z coordinate is greater than the bottom Z.
      */
-    void            (*I_AdjustOpening)(Interceptor *trace, Line *line);
+    boolean         (*I_AdjustOpening)(Interceptor *trace, Line *line);
 
     /*
      * Map Updates (DMU):

@@ -156,12 +156,10 @@ extern "C" {
  * as two sets of separate X and Y map space coordinates.
  */
 int P_PathXYTraverse2(coord_t fromX, coord_t fromY, coord_t toX, coord_t toY,
-    int flags, int (*callback) (Interceptor *, struct intercept_s const *, void *),
-    void *context);
+    int flags, traverser_t callback, void *context);
 
 int P_PathXYTraverse(coord_t fromX, coord_t fromY, coord_t toX, coord_t toY,
-    int (*callback) (Interceptor *, struct intercept_s const *, void *),
-    void *context);
+    traverser_t callback, void *context);
 
 void P_BuildLineTagLists(void);
 
