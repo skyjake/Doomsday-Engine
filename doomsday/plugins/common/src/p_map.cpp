@@ -2397,7 +2397,7 @@ static void P_HitSlideLine(Line *line)
     vec2d_t d1; P_GetDoublepv(line, DMU_DXY, d1);
 
     angle_t moveAngle = M_PointXYToAngle2(0, 0, tmMove[MX], tmMove[MY]);
-    angle_t lineAngle = M_PointXYToAngle2(0, 0, d1[0], d1[1]) + side? ANG180 : 0;
+    angle_t lineAngle = M_PointXYToAngle2(0, 0, d1[0], d1[1]) + (side? ANG180 : 0);
 
     angle_t deltaAngle = moveAngle - lineAngle;
     if(deltaAngle > ANG180) deltaAngle += ANG180;
@@ -2995,9 +2995,9 @@ int PTR_BounceTraverse(TraceState *trace, intercept_t const *in, void * /*contex
     if(in->distance < bestSlideDistance)
     {
         secondSlideDistance = bestSlideDistance;
-        secondSlideLine = bestSlideLine;
-        bestSlideDistance = in->distance;
-        bestSlideLine = line;
+        secondSlideLine     = bestSlideLine;
+        bestSlideDistance   = in->distance;
+        bestSlideLine       = line;
     }
 
     return true; // Stop.
@@ -3005,14 +3005,14 @@ int PTR_BounceTraverse(TraceState *trace, intercept_t const *in, void * /*contex
 
 void P_BounceWall(mobj_t *mo)
 {
-    coord_t leadPos[2], destPos[2];
+    if(!mo) return;
 
     // Trace a line from the origin to the would be destination point (which is
     // apparently not reachable) to find a line from which we'll calculate the
     // inverse "bounce" vector.
-    V2d_Set(leadPos, mo->origin[VX] + (mo->mom[MX] > 0? mo->radius : -mo->radius),
-                     mo->origin[VY] + (mo->mom[MY] > 0? mo->radius : -mo->radius));
-    V2d_Sum(destPos, leadPos, mo->mom);
+    vec2d_t leadPos = { mo->origin[VX] + (mo->mom[MX] > 0? mo->radius : -mo->radius),
+                        mo->origin[VY] + (mo->mom[MY] > 0? mo->radius : -mo->radius) };
+    vec2d_t destPos; V2d_Sum(destPos, leadPos, mo->mom);
 
     slideMo           = mo;
     bestSlideLine     = 0;
@@ -3023,24 +3023,18 @@ void P_BounceWall(mobj_t *mo)
     if(bestSlideLine)
     {
         int const side = Line_PointOnSide(bestSlideLine, mo->origin) < 0;
-        angle_t lineAngle, moveAngle, deltaAngle;
-        coord_t lineDirection[2];
-        coord_t moveLen;
-        uint an;
+        vec2d_t lineDirection; P_GetDoublepv(bestSlideLine, DMU_DXY, lineDirection);
 
-        P_GetDoublepv(bestSlideLine, DMU_DXY, lineDirection);
+        angle_t lineAngle  = M_PointToAngle(lineDirection) + (side? ANG180 : 0);
+        angle_t moveAngle  = M_PointToAngle(mo->mom);
+        angle_t deltaAngle = (2 * lineAngle) - moveAngle;
 
-        lineAngle  = M_PointXYToAngle2(0, 0, lineDirection[0], lineDirection[1]) + side? ANG180 : 0;
-        moveAngle  = M_PointXYToAngle2(0, 0, mo->mom[MX], mo->mom[MY]);
-        deltaAngle = (2 * lineAngle) - moveAngle;
-
-        moveLen = M_ApproxDistance(mo->mom[MX], mo->mom[MY]);
-        moveLen *= 0.75f; // Friction.
+        coord_t moveLen = M_ApproxDistance(mo->mom[MX], mo->mom[MY]) * 0.75f /*Friction*/;
         if(moveLen < 1) moveLen = 2;
 
-        an = deltaAngle >> ANGLETOFINESHIFT;
-        mo->mom[MX] = moveLen * FIX2FLT(finecosine[an]);
-        mo->mom[MY] = moveLen * FIX2FLT(finesine[an]);
+        uint an = deltaAngle >> ANGLETOFINESHIFT;
+        V2d_Set(mo->mom, moveLen * FIX2FLT(finecosine[an]),
+                         moveLen * FIX2FLT(finesine  [an]));
     }
 }
 
@@ -3103,7 +3097,7 @@ int PTR_PuzzleItemTraverse(TraceState *trace, intercept_t const *in, void *conte
         }
 
     case ICPT_MOBJ: { // Mobj.
-        mobj_t* mo = in->d.mobj;
+        mobj_t *mo = in->d.mobj;
 
         if(mo->special != USE_PUZZLE_ITEM_SPECIAL)
             return false; // Wrong special...
@@ -3116,39 +3110,28 @@ int PTR_PuzzleItemTraverse(TraceState *trace, intercept_t const *in, void *conte
         puzzleActivated = true;
 
         return true; // Stop searching.
-      }
+        }
+
     default:
         Con_Error("PTR_PuzzleItemTraverse: Unknown intercept type %i.", in->type);
         exit(1); // Unreachable.
     }
 }
 
-/**
- * See if the specified player can use the specified puzzle item on a
- * thing or line(s) at their current world location.
- *
- * @param player        The player using the puzzle item.
- * @param itemType      The type of item to try to use.
- * @return boolean      true if the puzzle item was used.
- */
 boolean P_UsePuzzleItem(player_t *player, int itemType)
 {
-    coord_t farUsePoint[2];
-    mobj_t *mobj;
-    uint an;
-
     DENG2_ASSERT(player != 0);
 
-    mobj = player->plr->mo;
+    mobj_t *mobj = player->plr->mo;
     if(!mobj) return false; // Huh?
 
     puzzleItemType  = itemType;
     puzzleItemUser  = mobj;
     puzzleActivated = false;
 
-    an = mobj->angle >> ANGLETOFINESHIFT;
-    V2d_Set(farUsePoint, mobj->origin[VX] + FIX2FLT(USERANGE * finecosine[an]),
-                         mobj->origin[VY] + FIX2FLT(USERANGE * finesine  [an]));
+    uint an = mobj->angle >> ANGLETOFINESHIFT;
+    vec2d_t farUsePoint = { mobj->origin[VX] + FIX2FLT(USERANGE * finecosine[an]),
+                            mobj->origin[VY] + FIX2FLT(USERANGE * finesine  [an]) };
 
     P_PathTraverse(mobj->origin, farUsePoint, PTR_PuzzleItemTraverse, 0);
 

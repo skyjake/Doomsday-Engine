@@ -127,6 +127,14 @@ mobj_t *P_CheckOnMobj(mobj_t *mobj);
 
 void PIT_ThrustSpike(mobj_t *actor);
 
+/**
+ * See if the specified player can use the specified puzzle item on a
+ * thing or line(s) at their current world location.
+ *
+ * @param player    The player using the puzzle item.
+ * @param itemType  The type of item to try to use.
+ * @return boolean  true if the puzzle item was used.
+ */
 boolean P_UsePuzzleItem(player_t *player, int itemType);
 #endif
 
