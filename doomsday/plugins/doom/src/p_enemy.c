@@ -43,8 +43,6 @@
 
 braindata_t brain; // Global state of boss brain.
 
-static coord_t dropoffDelta[2], floorZ;
-
 // Eight directional movement speeds.
 #define MOVESPEED_DIAGONAL      (0.71716309)
 
@@ -160,10 +158,10 @@ static boolean checkMissileRange(mobj_t* actor)
  *
  * @return              @c false, if the move is blocked.
  */
-static boolean moveMobj(mobj_t* actor, boolean dropoff)
+static boolean moveMobj(mobj_t *actor, boolean dropoff)
 {
     coord_t pos[3], step[3];
-    Line* ld;
+    Line *ld;
     boolean good;
 
     if(actor->moveDir == DI_NODIR)
@@ -325,104 +323,135 @@ static void doNewChaseDir(mobj_t *actor, coord_t deltaX, coord_t deltaY)
         actor->moveDir = DI_NODIR;
 }
 
-/**
- * Monsters try to move away from tall dropoffs.
- *
- * In Doom, they were never allowed to hang over dropoffs, and would remain
- * stuck if involuntarily forced over one. This logic, combined with
- * p_map.c::P_TryMoveXY(), allows monsters to free themselves without making
- * them tend to hang over dropoffs.
- */
-static int PIT_AvoidDropoff(Line* line, void* data)
+typedef struct {
+    mobj_t *averterMobj;  ///< Mobj attempting to avert the drop off.
+    AABoxd averterAABox;  ///< Current axis-aligned bounding box of the averter.
+    vec2d_t direction;    ///< Direction in which to move to avoid the drop off.
+} pit_avoiddropoff_params_t;
+
+static int PIT_AvoidDropoff(Line *line, void *context)
 {
-    Sector* backsector = P_GetPtrp(line, DMU_BACK_SECTOR);
-    AABoxd* aaBox = P_GetPtrp(line, DMU_BOUNDING_BOX);
+    pit_avoiddropoff_params_t *parm = (pit_avoiddropoff_params_t *)context;
+    Sector *backsector = P_GetPtrp(line, DMU_BACK_SECTOR);
+    AABoxd *aaBox      = P_GetPtrp(line, DMU_BOUNDING_BOX);
 
     if(backsector &&
        // Line must be contacted
-       tmBox.minX < aaBox->maxX &&
-       tmBox.maxX > aaBox->minX &&
-       tmBox.minY < aaBox->maxY &&
-       tmBox.maxY > aaBox->minY &&
-       !Line_BoxOnSide(line, &tmBox))
+       parm->averterAABox.minX < aaBox->maxX &&
+       parm->averterAABox.maxX > aaBox->minX &&
+       parm->averterAABox.minY < aaBox->maxY &&
+       parm->averterAABox.maxY > aaBox->minY &&
+       !Line_BoxOnSide(line, &parm->averterAABox))
     {
-        Sector* frontsector = P_GetPtrp(line, DMU_FRONT_SECTOR);
+        Sector *frontsector = P_GetPtrp(line, DMU_FRONT_SECTOR);
         coord_t front = P_GetDoublep(frontsector, DMU_FLOOR_HEIGHT);
         coord_t back  = P_GetDoublep(backsector, DMU_FLOOR_HEIGHT);
-        coord_t d1[2];
+        vec2d_t lineDir;
         angle_t angle;
+        uint an;
 
-        P_GetDoublepv(line, DMU_DXY, d1);
+        P_GetDoublepv(line, DMU_DXY, lineDir);
 
-        // The monster must contact one of the two floors, and the other
-        // must be a tall drop off (more than 24).
-        if(back == floorZ && front < floorZ - 24)
+        // The monster must contact one of the two floors, and the other must be
+        // a tall drop off (more than 24).
+        if(FEQUAL(back, parm->averterMobj->floorZ) &&
+           front < parm->averterMobj->floorZ - 24)
         {
-            angle = M_PointXYToAngle2(0, 0, d1[0], d1[1]); // Front side drop off.
+            angle = M_PointToAngle(lineDir); // Front side drop off.
         }
         else
         {
-            if(front == floorZ && back < floorZ - 24)
-                angle = M_PointXYToAngle2(d1[0], d1[1], 0, 0); // Back side drop off.
+            if(FEQUAL(front, parm->averterMobj->floorZ) &&
+               back < parm->averterMobj->floorZ - 24)
+            {
+                angle = M_PointXYToAngle(-lineDir[0], -lineDir[1]); // Back side drop off.
+            }
             return false;
         }
 
         // Move away from drop off at a standard speed.
-        // Multiple contacted lines are cumulative (e.g. hanging over corner)
-        dropoffDelta[VX] -= FIX2FLT(finesine[angle >> ANGLETOFINESHIFT]) * 32;
-        dropoffDelta[VY] += FIX2FLT(finecosine[angle >> ANGLETOFINESHIFT]) * 32;
+        // Multiple contacted lines are cumulative (e.g., hanging over corner).
+        an = angle >> ANGLETOFINESHIFT;
+        parm->direction[VX] -= FIX2FLT(finesine  [an]) * 32;
+        parm->direction[VY] += FIX2FLT(finecosine[an]) * 32;
     }
 
     return false;
 }
 
 /**
- * Driver for above.
+ * Monsters try to move away from tall drop offs. (From PrBoom.)
+ *
+ * In Doom, they were never allowed to hang over drop offs, and would remain
+ * stuck if involuntarily forced over one. This logic, combined with
+ * p_map.c::P_TryMoveXY(), allows monsters to free themselves without making
+ * them tend to hang over drop offs.
+ *
+ * @param chaseDir  Direction in which the mobj is currently "chasing". If a
+ *                  drop off is found, this direction will be updated with a
+ *                  direction will take the mobj back onto terra firma.
+ *
+ * @return  @c true iff the direction was changed to avoid a drop off.
  */
-static boolean avoidDropoff(mobj_t* actor)
+static boolean shouldAvoidDropoff(mobj_t *mobj, pvec2d_t chaseDir)
 {
-    floorZ = actor->origin[VZ]; // Remember floor height.
+    pit_avoiddropoff_params_t parm;
 
-    dropoffDelta[VX] = dropoffDelta[VY] = 0;
+    DENG_ASSERT(mobj != 0);
+
+    // Disabled? (inverted var name!)
+    if(cfg.avoidDropoffs) return false;
+
+    if(mobj->floorZ - mobj->dropOffZ <= 24) return false;
+    if(mobj->origin[VZ] > mobj->floorZ) return false;
+    if(mobj->flags & (MF_DROPOFF | MF_FLOAT)) return false;
+
+    parm.averterMobj       = mobj;
+    parm.averterAABox.minX = mobj->origin[VX] - mobj->radius;
+    parm.averterAABox.minY = mobj->origin[VY] - mobj->radius;
+    parm.averterAABox.maxX = mobj->origin[VX] + mobj->radius;
+    parm.averterAABox.maxY = mobj->origin[VY] + mobj->radius;
+    V2d_Set(parm.direction, 0, 0);
 
     VALIDCOUNT++;
+    Mobj_TouchedLinesIterator(mobj, PIT_AvoidDropoff, &parm);
 
-    // Check lines.
-    Mobj_TouchedLinesIterator(actor, PIT_AvoidDropoff, 0);
+    if(FEQUAL(parm.direction[VX], 0) && FEQUAL(parm.direction[VY], 0))
+        return false;
 
-    // Non-zero if movement prescribed.
-    return !(FEQUAL(dropoffDelta[VX], 0) || FEQUAL(dropoffDelta[VY], 0));
+    // The mobj should attempt to move away from the dropoff.
+    V2d_Copy(chaseDir, parm.direction);
+    return true;
 }
 
-static void newChaseDir(mobj_t* actor)
+static void newChaseDir(mobj_t *mobj)
 {
-    mobj_t* target = actor->target;
-    coord_t deltaX = target->origin[VX] - actor->origin[VX];
-    coord_t deltaY = target->origin[VY] - actor->origin[VY];
+    vec2d_t chaseDir;
+    boolean avoiding;
 
-    if(actor->floorZ - actor->dropOffZ > 24 &&
-       actor->origin[VZ] <= actor->floorZ &&
-       !(actor->flags & (MF_DROPOFF | MF_FLOAT)) &&
-       !cfg.avoidDropoffs && avoidDropoff(actor))
+    DENG_ASSERT(mobj != 0);
+
+    // Nothing to chase?
+    if(!mobj->target) return;
+
+    // Chase toward the target, unless there is a drop off to avoid.
+    V2d_Subtract(chaseDir, mobj->target->origin, mobj->origin);
+    avoiding = shouldAvoidDropoff(mobj, chaseDir);
+
+    // Apply the direction change (if any).
+    doNewChaseDir(mobj, chaseDir[VX], chaseDir[VY]);
+
+    if(avoiding)
     {
-        // Move away from dropoff.
-        doNewChaseDir(actor, dropoffDelta[VX], dropoffDelta[VY]);
-
-        // $dropoff_fix
-        // If moving away from drop off, set movecount to 1 so that
-        // small steps are taken to get monster away from drop off.
-
-        actor->moveCount = 1;
-        return;
+        // Take small steps away from the drop off.
+        mobj->moveCount = 1;
     }
-
-    doNewChaseDir(actor, deltaX, deltaY);
 }
 
-static int massacreMobj(thinker_t* th, void* context)
+static int massacreMobj(thinker_t *th, void *context)
 {
-    int*                count = (int*) context;
-    mobj_t*             mo = (mobj_t *) th;
+    int *count = (int*) context;
+    mobj_t *mo = (mobj_t *) th;
 
     if(!mo->player && sentient(mo) && (mo->flags & MF_SHOOTABLE))
     {
@@ -556,7 +585,7 @@ void C_DECL A_Look(mobj_t *actor)
   seeyou:
     if(actor->info->seeSound)
     {
-        int                 sound;
+        int sound;
 
         switch(actor->info->seeSound)
         {
@@ -592,13 +621,15 @@ void C_DECL A_Look(mobj_t *actor)
 /**
  * Actor has a melee attack, so it tries to close as fast as possible.
  */
-void C_DECL A_Chase(mobj_t* actor)
+void C_DECL A_Chase(mobj_t *actor)
 {
-    int                 delta;
-    statenum_t          state;
+    int delta;
+    statenum_t state;
 
     if(actor->reactionTime)
+    {
         actor->reactionTime--;
+    }
 
     // Modify target threshold.
     if(actor->threshold)
@@ -608,7 +639,9 @@ void C_DECL A_Chase(mobj_t* actor)
             actor->threshold = 0;
         }
         else
+        {
             actor->threshold--;
+        }
     }
 
     // Turn towards movement direction if not there yet.
@@ -618,23 +651,23 @@ void C_DECL A_Chase(mobj_t* actor)
         delta = actor->angle - (actor->moveDir << 29);
 
         if(delta > 0)
+        {
             actor->angle -= ANG90 / 2;
+        }
         else if(delta < 0)
+        {
             actor->angle += ANG90 / 2;
+        }
     }
 
     if(!actor->target || !(actor->target->flags & MF_SHOOTABLE) ||
        P_MobjIsCamera(actor->target))
     {
         // Look for a new target.
-        if(Mobj_LookForPlayers(actor, true))
-        {   // Got a new target.
-        }
-        else
+        if(!Mobj_LookForPlayers(actor, true))
         {
             P_MobjChangeState(actor, P_GetState(actor->type, SN_SPAWN));
         }
-
         return;
     }
 
@@ -643,8 +676,9 @@ void C_DECL A_Chase(mobj_t* actor)
     {
         actor->flags &= ~MF_JUSTATTACKED;
         if(gameSkill != SM_NIGHTMARE && !fastParm)
+        {
             newChaseDir(actor);
-
+        }
         return;
     }
 
@@ -653,7 +687,9 @@ void C_DECL A_Chase(mobj_t* actor)
        checkMeleeRange(actor))
     {
         if(actor->info->attackSound)
+        {
             S_StartSound(actor->info->attackSound, actor);
+        }
 
         P_MobjChangeState(actor, state);
         return;
