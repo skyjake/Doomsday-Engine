@@ -103,8 +103,6 @@ static float aimSlope;
 // slopes to top and bottom of target
 static float topSlope, bottomSlope;
 
-static mobj_t *useThing;
-
 static mobj_t *bombSource, *bombSpot;
 static int bombDamage;
 static int bombDistance;
@@ -119,10 +117,6 @@ static coord_t endPos[3]; // end position for trajectory checks
 static mobj_t *tsThing;
 static boolean damageSource;
 static mobj_t *onMobj; // generic global onMobj...used for landing on pods/players
-
-static mobj_t *puzzleItemUser;
-static int puzzleItemType;
-static boolean puzzleActivated;
 #endif
 
 #if !__JHEXEN__
@@ -2241,16 +2235,17 @@ void P_RadiusAttack(mobj_t *spot, mobj_t *source, int damage, int distance)
     Mobj_BoxIterator(&box, PIT_RadiusAttack, 0);
 }
 
-int PTR_UseTraverse(Intercept const *icpt, void * /*context*/)
+int PTR_UseTraverse(Intercept const *icpt, void *context)
 {
     if(icpt->type != ICPT_LINE)
         return false; // Continue iteration.
 
-    Line *line = icpt->line;
-    xline_t *xline = P_ToXLine(line);
+    mobj_t *useThing = static_cast<mobj_t *>(context);
+
+    xline_t *xline = P_ToXLine(icpt->line);
     if(!xline->special)
     {
-        if(!Interceptor_AdjustOpening(icpt->trace, line))
+        if(!Interceptor_AdjustOpening(icpt->trace, icpt->line))
         {
             if(useThing->player)
             {
@@ -2276,13 +2271,13 @@ int PTR_UseTraverse(Intercept const *icpt, void * /*context*/)
         return false;
     }
 
-    int side = Line_PointOnSide(line, useThing->origin) < 0;
+    int side = Line_PointOnSide(icpt->line, useThing->origin) < 0;
 
 #if __JHERETIC__ || __JHEXEN__
     if(side == 1) return true; // Don't use back side.
 #endif
 
-    P_ActivateLine(line, useThing, side, SPAC_USE);
+    P_ActivateLine(icpt->line, useThing, side, SPAC_USE);
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     // Can use multiple line specials in a row with the PassThru flag.
@@ -2309,9 +2304,7 @@ void P_UseLines(player_t *player)
     vec2d_t pos = { mo->origin[VX] + USERANGE * FIX2FLT(finecosine[an]),
                     mo->origin[VY] + USERANGE * FIX2FLT(finesine  [an]) };
 
-    useThing = mo;
-
-    P_PathTraverse2(mo->origin, pos, PTF_LINE, PTR_UseTraverse, 0);
+    P_PathTraverse2(mo->origin, pos, PTF_LINE, PTR_UseTraverse, mo);
 }
 
 /**
@@ -3032,57 +3025,60 @@ void P_BounceWall(mobj_t *mo)
     }
 }
 
-int PTR_PuzzleItemTraverse(Intercept const *icpt, void * /*context*/)
+static sfxenum_t usePuzzleItemSound(mobj_t *user)
 {
+    if(Mobj_IsPlayer(user))
+    {
+        /// @todo Get this from ClassInfo.
+        switch(user->player->class_)
+        {
+        case PCLASS_FIGHTER: return SFX_PUZZLE_FAIL_FIGHTER;
+        case PCLASS_CLERIC:  return SFX_PUZZLE_FAIL_CLERIC;
+        case PCLASS_MAGE:    return SFX_PUZZLE_FAIL_MAGE;
+
+        default: break;
+        }
+    }
+    return SFX_NONE;
+}
+
+struct ptr_puzzleitemtraverse_params_t
+{
+    mobj_t *user;
+    int itemType;
+    bool activated;
+};
+
+int PTR_PuzzleItemTraverse(Intercept const *icpt, void *context)
+{
+    ptr_puzzleitemtraverse_params_t &parm = *static_cast<ptr_puzzleitemtraverse_params_t *>(context);
+
     switch(icpt->type)
     {
-    case ICPT_LINE: { // Line.
+    case ICPT_LINE: {
         xline_t *xline = P_ToXLine(icpt->line);
 
         if(xline->special != USE_PUZZLE_ITEM_SPECIAL)
         {
             if(!Interceptor_AdjustOpening(icpt->trace, icpt->line))
             {
-                sfxenum_t sound = SFX_NONE;
-
-                if(puzzleItemUser->player)
-                {
-                    switch(puzzleItemUser->player->class_)
-                    {
-                    case PCLASS_FIGHTER:
-                        sound = SFX_PUZZLE_FAIL_FIGHTER;
-                        break;
-
-                    case PCLASS_CLERIC:
-                        sound = SFX_PUZZLE_FAIL_CLERIC;
-                        break;
-
-                    case PCLASS_MAGE:
-                        sound = SFX_PUZZLE_FAIL_MAGE;
-                        break;
-
-                    default:
-                        sound = SFX_NONE;
-                        break;
-                    }
-                }
-
-                S_StartSound(sound, puzzleItemUser);
+                S_StartSound(usePuzzleItemSound(parm.user), parm.user);
                 return true; // Can't use through a wall.
             }
 
             return false; // Continue searching...
         }
 
-        if(Line_PointOnSide(icpt->line, puzzleItemUser->origin) < 0)
+        if(Line_PointOnSide(icpt->line, parm.user->origin) < 0)
             return true; // Don't use back sides.
 
-        if(puzzleItemType != xline->arg1)
+        if(parm.itemType != xline->arg1)
             return true; // Item type doesn't match.
 
-        P_StartACS(xline->arg2, 0, &xline->arg3, puzzleItemUser, icpt->line, 0);
+        P_StartACS(xline->arg2, 0, &xline->arg3, parm.user, icpt->line, 0);
         xline->special = 0;
-        puzzleActivated = true;
+
+        parm.activated = true;
 
         return true; // Stop searching.
         }
@@ -3091,12 +3087,13 @@ int PTR_PuzzleItemTraverse(Intercept const *icpt, void * /*context*/)
         if(icpt->mobj->special != USE_PUZZLE_ITEM_SPECIAL)
             return false; // Wrong special...
 
-        if(puzzleItemType != icpt->mobj->args[0])
+        if(parm.itemType != icpt->mobj->args[0])
             return false; // Item type doesn't match...
 
-        P_StartACS(icpt->mobj->args[1], 0, &icpt->mobj->args[2], puzzleItemUser, NULL, 0);
+        P_StartACS(icpt->mobj->args[1], 0, &icpt->mobj->args[2], parm.user, NULL, 0);
         icpt->mobj->special = 0;
-        puzzleActivated = true;
+
+        parm.activated = true;
 
         return true; // Stop searching.
 
@@ -3113,21 +3110,22 @@ boolean P_UsePuzzleItem(player_t *player, int itemType)
     mobj_t *mobj = player->plr->mo;
     if(!mobj) return false; // Huh?
 
-    puzzleItemType  = itemType;
-    puzzleItemUser  = mobj;
-    puzzleActivated = false;
+    ptr_puzzleitemtraverse_params_t parm;
+    parm.user      = mobj;
+    parm.itemType  = itemType;
+    parm.activated = false;
 
     uint an = mobj->angle >> ANGLETOFINESHIFT;
     vec2d_t farUsePoint = { mobj->origin[VX] + FIX2FLT(USERANGE * finecosine[an]),
                             mobj->origin[VY] + FIX2FLT(USERANGE * finesine  [an]) };
 
-    P_PathTraverse(mobj->origin, farUsePoint, PTR_PuzzleItemTraverse, 0);
+    P_PathTraverse(mobj->origin, farUsePoint, PTR_PuzzleItemTraverse, &parm);
 
-    if(!puzzleActivated)
+    if(!parm.activated)
     {
         P_SetYellowMessage(player, 0, TXT_USEPUZZLEFAILED);
     }
 
-    return puzzleActivated;
+    return parm.activated;
 }
 #endif
