@@ -1,74 +1,49 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file p_maputl.c Movement/collision map utility functions.
  *
- *\author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1999 Activision
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 1999 Activision
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
-
-/**
- * p_maputl.c: Map utility routines - jHexen specific.
- */
-
-// HEADER FILES ------------------------------------------------------------
 
 #include "jhexen.h"
-#include "r_common.h"
+#include "dmu_lib.h"
 #include "p_map.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
 typedef struct mobjtargetableparams_s {
-    mobj_t         *source;
-    mobj_t         *target;
+    mobj_t *source;
+    mobj_t *target;
 } mobjtargetableparams_t;
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
 
 int PIT_MobjTargetable(mobj_t *mo, void *data)
 {
     mobjtargetableparams_t *params = (mobjtargetableparams_t*) data;
 
     if(params->source->player)
-    {   // Minotaur looking around player.
+    {
+        // Minotaur looking around player.
         if((mo->flags & MF_COUNTKILL) || (mo->player && (mo != params->source)))
         {
             if(!(mo->flags & MF_SHOOTABLE) ||
                (mo->flags2 & MF2_DORMANT) ||
                ((mo->type == MT_MINOTAUR) && (mo->tracer == params->source)) ||
                 (IS_NETGAME && !deathmatch && mo->player))
+            {
                 return false; // Continue iteration.
+            }
 
             if(P_CheckSight(params->source, mo))
             {
@@ -78,8 +53,9 @@ int PIT_MobjTargetable(mobj_t *mo, void *data)
         }
     }
     else if(params->source->type == MT_MINOTAUR)
-    {   // Looking around minotaur.
-        mobj_t             *master = params->source->tracer;
+    {
+        // Looking around minotaur.
+        mobj_t *master = params->source->tracer;
 
         if((mo->flags & MF_COUNTKILL) ||
            (mo->player && (mo != master)))
@@ -88,7 +64,9 @@ int PIT_MobjTargetable(mobj_t *mo, void *data)
                (mo->flags2 & MF2_DORMANT) ||
                ((mo->type == MT_MINOTAUR) && (mo->tracer == params->source->tracer)) ||
                 (IS_NETGAME && !deathmatch && mo->player))
+            {
                 return false; // Continue iteration.
+            }
 
             if(P_CheckSight(params->source, mo))
             {
@@ -98,22 +76,22 @@ int PIT_MobjTargetable(mobj_t *mo, void *data)
         }
     }
     else if(params->source->type == MT_MSTAFF_FX2)
-    {   // bloodscourge.
+    {
+        // bloodscourge.
         if(((mo->flags & MF_COUNTKILL) ||
             (mo->player && mo != params->source->target)) &&
            !(mo->flags2 & MF2_DORMANT))
         {
             if(!(mo->flags & MF_SHOOTABLE) ||
                (IS_NETGAME && !deathmatch && mo->player))
+            {
                 return false; // Continue iteration.
+            }
 
             if(P_CheckSight(params->source, mo))
             {
-                angle_t angle;
-                mobj_t* master;
-
-                master = params->source->target;
-                angle = M_PointToAngle2(master->origin, mo->origin) - master->angle;
+                mobj_t *master = params->source->target;
+                angle_t angle = M_PointToAngle2(master->origin, mo->origin) - master->angle;
                 angle >>= 24;
                 if(angle > 226 || angle < 30)
                 {
@@ -124,7 +102,8 @@ int PIT_MobjTargetable(mobj_t *mo, void *data)
         }
     }
     else
-    {   // spirits.
+    {
+        // spirits.
         if(((mo->flags & MF_COUNTKILL) ||
             (mo->player && mo != params->source->target)) &&
            !(mo->flags2 & MF2_DORMANT))
@@ -132,7 +111,9 @@ int PIT_MobjTargetable(mobj_t *mo, void *data)
             if(!(mo->flags & MF_SHOOTABLE) ||
                (IS_NETGAME && !deathmatch && mo->player) ||
                mo == params->source->target)
+            {
                 return false; // Continue iteration.
+            }
 
             if(P_CheckSight(params->source, mo))
             {
@@ -145,12 +126,7 @@ int PIT_MobjTargetable(mobj_t *mo, void *data)
     return false; // Continue iteration.
 }
 
-/**
- * Searches around for targetable monsters/players near mobj.
- *
- * @return              Ptr to the targeted mobj if found, ELSE @c NULL;
- */
-mobj_t* P_RoughMonsterSearch(mobj_t* mo, int distance)
+mobj_t *P_RoughMonsterSearch(mobj_t *mo, int distance)
 {
 #define MAPBLOCKUNITS       128
 #define MAPBLOCKSHIFT       (FRACBITS+7)

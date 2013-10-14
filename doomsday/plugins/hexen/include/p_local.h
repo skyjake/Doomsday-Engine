@@ -134,10 +134,6 @@ void        P_InitCorpseQueue(void);
 void        P_AddCorpseToQueue(mobj_t* mo);
 void        P_RemoveCorpseInQueue(mobj_t* mo);
 
-mobj_t*     P_RoughMonsterSearch(mobj_t* mo, int distance);
-
-void        P_Validate();
-
 void        P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher);
 void        P_PoisonPlayer(player_t* plr, mobj_t* poisoner, int poison);
 
