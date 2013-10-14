@@ -148,131 +148,107 @@ static boolean checkReject(Sector *sec1, Sector *sec2)
     return true;
 }
 
-boolean P_CheckSight(mobj_t const *from, mobj_t const *to)
+boolean P_CheckSight(mobj_t const *beholder, mobj_t const *target)
 {
-    coord_t fPos[3];
-
-    if(!from || !to) return false;
+    if(!beholder || !target) return false;
 
     // If either is unlinked, they can't see each other.
-    if(!Mobj_Sector(from) || !Mobj_Sector(to))
-        return false;
+    if(!Mobj_Sector(beholder)) return false;
+    if(!Mobj_Sector(target)) return false;
 
-    if(to->dPlayer && (to->dPlayer->flags & DDPF_CAMERA))
-        return false; // Cameramen don't exist!
+    // Cameramen are invisible.
+    if(P_MobjIsCamera(target)) return false;
 
-    // Check for trivial rejection.
-    if(!checkReject(Mobj_Sector(from), Mobj_Sector(to)))
-        return false;
-
-    fPos[VX] = from->origin[VX];
-    fPos[VY] = from->origin[VY];
-    fPos[VZ] = from->origin[VZ];
-
-    if(!P_MobjIsCamera(from))
-        fPos[VZ] += from->height + -(from->height / 4);
-
-    return P_CheckLineSight(fPos, to->origin, 0, to->height, 0);
-}
-
-int PIT_StompThing(mobj_t *mo, void *context)
-{
-    if(!(mo->flags & MF_SHOOTABLE))
-        return false;
-
-    coord_t blockdist = mo->radius + tmThing->radius;
-    if(fabs(mo->origin[VX] - tm[VX]) >= blockdist ||
-       fabs(mo->origin[VY] - tm[VY]) >= blockdist)
-        return false; // Didn't hit it.
-
-    if(mo == tmThing)
-        return false; // Don't clip against self.
-
-    int stompAnyway = *(int *) context;
-
-    // Should we stomp anyway? unless self.
-    if(mo != tmThing && stompAnyway)
+    // Does a reject table exist and if so, should this line-of-sight fail?
+    if(!checkReject(Mobj_Sector(beholder), Mobj_Sector(target)))
     {
-        P_DamageMobj(mo, tmThing, tmThing, 10000, true);
         return false;
     }
 
-#if __JDOOM64__
-    // monsters don't stomp things
-    if(!tmThing->player)
-        return true;
-#elif __JDOOM__
-    // Monsters don't stomp things except on a boss map.
-    if(!tmThing->player && gameMap != 29)
-        return true;
-#endif
+    // The line-of-sight is from the "eyes" of the beholder.
+    vec3d_t from = { beholder->origin[VX], beholder->origin[VY], beholder->origin[VZ] };
+    if(!P_MobjIsCamera(beholder))
+    {
+        from[VZ] += beholder->height + -(beholder->height / 4);
+    }
 
-    if(!(tmThing->flags2 & MF2_TELESTOMP))
-        return true; // Not allowed to stomp things.
-
-    // Do stomp damage (unless self).
-    if(mo != tmThing)
-        P_DamageMobj(mo, tmThing, tmThing, 10000, true);
-
-    return false;
+    return P_CheckLineSight(from, target->origin, 0, target->height, 0);
 }
 
-// Kills anything occupying the position.
-boolean P_TeleportMove(mobj_t *thing, coord_t x, coord_t y, boolean alwaysStomp)
+struct pit_stompthing_params_t
 {
-    int stomping = alwaysStomp;
+    mobj_t *stompMobj; ///< Mobj doing the stomping.
+    vec2d_t location;  ///< Map space point being stomped.
+};
 
-    tmThing = thing;
+int PIT_StompThing(mobj_t *mo, void *context)
+{
+    pit_stompthing_params_t &parm = *static_cast<pit_stompthing_params_t *>(context);
 
-    tm[VX] = x;
-    tm[VY] = y;
+    // Don't ever attempt to stomp oneself.
+    if(mo == parm.stompMobj) return false;
+    // ...or non-shootables.
+    if(!(mo->flags & MF_SHOOTABLE)) return false;
 
-    tmBox.minX = tm[VX] - tmThing->radius;
-    tmBox.minY = tm[VY] - tmThing->radius;
-    tmBox.maxX = tm[VX] + tmThing->radius;
-    tmBox.maxY = tm[VY] + tmThing->radius;
+    // Within stomping distance?
+    coord_t const dist = mo->radius + parm.stompMobj->radius;
+    if(fabs(mo->origin[VX] - parm.location[VX]) < dist &&
+       fabs(mo->origin[VY] - parm.location[VY]) < dist)
+    {
+        // Stomp!
+        P_DamageMobj(mo, parm.stompMobj, parm.stompMobj, 10000, true);
+    }
 
-    Sector *newSector = Sector_AtPoint_FixedPrecision(tm);
+    return false; // Continue iteration.
+}
 
-    ceilingLine = floorLine = NULL;
-#if !__JHEXEN__
-    blockLine = NULL;
-    tmUnstuck = thing->dPlayer && thing->dPlayer->mo == thing;
+boolean P_TeleportMove(mobj_t *mobj, coord_t x, coord_t y, boolean alwaysStomp)
+{
+    if(!mobj) return false;
+
+    IterList_Clear(spechit); /// @todo necessary? -ds
+
+    if(!alwaysStomp)
+    {
+        // Is "this" mobj allowed to stomp?
+        if(!(mobj->flags2 & MF2_TELESTOMP)) return false;
+#if __JDOOM64__
+        // Monsters don't stomp.
+        if(!Mobj_IsPlayer(mobj)) return false;
+#elif __JDOOM__
+        // Monsters only stomp on a boss map.
+        if(!Mobj_IsPlayer(mobj) && gameMap != 29) return false;
 #endif
+    }
 
-    // The base floor / ceiling is from the BSP leaf that contains the
-    // point. Any contacted lines the step closer together will adjust them.
-    tmFloorZ = tmDropoffZ = P_GetDoublep(newSector, DMU_FLOOR_HEIGHT);
-    tmCeilingZ = P_GetDoublep(newSector, DMU_CEILING_HEIGHT);
-#if __JHEXEN__
-    tmFloorMaterial = (Material *)P_GetPtrp(newSector, DMU_FLOOR_MATERIAL);
-#endif
+    // Attempt to stomp any mobjs in the way.
+    pit_stompthing_params_t parm;
+    parm.stompMobj = mobj;
+    V2d_Set(parm.location, x, y);
 
-    IterList_Clear(spechit);
+    coord_t const dist = mobj->radius + MAXRADIUS;
+    AABoxd const box(x - dist, y - dist, x + dist, y + dist);
 
-    AABoxd tmBoxExpanded(tmBox.minX - MAXRADIUS, tmBox.minY - MAXRADIUS,
-                         tmBox.maxX + MAXRADIUS, tmBox.maxY + MAXRADIUS);
-
-    // Stomp on any things contacted.
     VALIDCOUNT++;
-    if(Mobj_BoxIterator(&tmBoxExpanded, PIT_StompThing, &stomping))
+    if(Mobj_BoxIterator(&box, PIT_StompThing, &parm))
         return false;
 
-    // The move is ok, so link the thing into its new position.
-    P_MobjUnlink(thing);
+    // The destination is clear.
+    P_MobjUnlink(mobj);
+    mobj->origin[VX] = parm.location[VX];
+    mobj->origin[VY] = parm.location[VY];
+    P_MobjLink(mobj);
 
-    thing->floorZ = tmFloorZ;
-    thing->ceilingZ = tmCeilingZ;
+    mobj->floorZ     = P_GetDoublep(Mobj_Sector(mobj), DMU_FLOOR_HEIGHT);
+    mobj->ceilingZ   = P_GetDoublep(Mobj_Sector(mobj), DMU_CEILING_HEIGHT);
 #if !__JHEXEN__
-    thing->dropOffZ = tmDropoffZ;
+    mobj->dropOffZ   = mobj->floorZ;
 #endif
-    thing->origin[VX] = x;
-    thing->origin[VY] = y;
 
-    P_MobjLink(thing);
-    P_MobjClearSRVO(thing);
+    // Reset movement interpolation.
+    P_MobjClearSRVO(mobj);
 
-    return true;
+    return true; // Success.
 }
 
 void P_TelefragMobjsTouchingPlayers()
@@ -336,7 +312,7 @@ boolean P_CheckSides(mobj_t *mobj, coord_t x, coord_t y)
     V2d_Set(parm.destination, x, y);
 
     VALIDCOUNT++;
-    return Line_BoxIterator(&tmBox, LIF_ALL, PIT_CrossLine, &parm);
+    return Line_BoxIterator(&parm.crossAABox, LIF_ALL, PIT_CrossLine, &parm);
 }
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
@@ -1091,7 +1067,7 @@ int PIT_CheckLine(Line *ld, void * /*context*/)
 boolean P_CheckPositionXYZ(mobj_t *thing, coord_t x, coord_t y, coord_t z)
 {
 #if !__JHEXEN__
-    thing->onMobj = 0;
+    thing->onMobj  = 0;
 #endif
     thing->wallHit = false;
 
@@ -1100,7 +1076,7 @@ boolean P_CheckPositionXYZ(mobj_t *thing, coord_t x, coord_t y, coord_t z)
     tmBox           = AABoxd(tm[VX] - tmThing->radius, tm[VY] - tmThing->radius,
                              tm[VX] + tmThing->radius, tm[VY] + tmThing->radius);
 #if !__JHEXEN__
-    tmHitLine       = NULL;
+    tmHitLine       = 0;
     tmHeight        = thing->height;
 #endif
 
@@ -1115,7 +1091,7 @@ boolean P_CheckPositionXYZ(mobj_t *thing, coord_t x, coord_t y, coord_t z)
     tmFloorMaterial = (Material *)P_GetPtrp(newSector, DMU_FLOOR_MATERIAL);
 #else
     blockLine       = 0;
-    tmUnstuck       = (thing->dPlayer && thing->dPlayer->mo == thing);
+    tmUnstuck       = Mobj_IsPlayer(thing) && !Mobj_IsVoodooDoll(thing);
 #endif
 
     IterList_Clear(spechit);

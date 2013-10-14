@@ -50,14 +50,15 @@ extern "C" {
 #endif
 
 /**
- * Look from eyes of t1 to any part of t2 (start from middle of t1).
+ * Look from eyes of the @a beholder to any part of the @a target.
  *
- * @param from  The mobj doing the looking.
- * @param to    The mobj being looked at.
+ * @param beholder  Mobj doing the looking.
+ * @param target    Mobj being looked at.
  *
- * @return  @c true iff a straight line between t1 and t2 is unobstructed.
+ * @return  @c true iff an unobstructed line of sight exists from @a beholder
+ * to the @a target.
  */
-boolean P_CheckSight(mobj_t const *from, mobj_t const *to);
+boolean P_CheckSight(mobj_t const *beholder, mobj_t const *target);
 
 /**
  * This is purely informative, nothing is modified (except things picked up).
@@ -117,6 +118,11 @@ boolean P_TryMoveXY(mobj_t *thing, coord_t x, coord_t y, boolean dropoff, boolea
 boolean P_TryMoveXY(mobj_t *thing, coord_t x, coord_t y);
 #endif
 
+/**
+ * Kills anything occupying the position.
+ *
+ * @return  @c true iff the move was successful.
+ */
 boolean P_TeleportMove(mobj_t *thing, coord_t x, coord_t y, boolean alwaysStomp);
 
 void P_TelefragMobjsTouchingPlayers(void);
