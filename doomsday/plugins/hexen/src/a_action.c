@@ -816,8 +816,7 @@ void C_DECL A_ThrustBlock(mobj_t *actor)
 
 void C_DECL A_ThrustImpale(mobj_t *actor)
 {
-    // Impale all shootables in radius.
-    PIT_ThrustSpike(actor);
+    P_ThrustSpike(actor);
 }
 
 #if MSVC

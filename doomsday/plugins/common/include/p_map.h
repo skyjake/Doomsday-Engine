@@ -150,6 +150,19 @@ void P_LineAttack(mobj_t *t1, angle_t angle, coord_t distance, coord_t slope, in
 
 coord_t P_GetGravity(void);
 
+/**
+ * This routine checks for Lost Souls trying to be spawned across 1-sided
+ * lines, impassible lines, or "monsters can't cross" lines.
+ *
+ * Draw an imaginary line between the PE and the new Lost Soul spawn spot.
+ * If that line crosses a 'blocking' line, then disallow the spawn. Only
+ * search lines in the blocks of the blockmap where the bounding box of the
+ * trajectory line resides. Then check bounding box of the trajectory vs
+ * the bounding box of each blocking line to see if the trajectory and the
+ * blocking line cross. Then check the PE and LS to see if they are on
+ * different sides of the blocking line. If so, return true otherwise
+ * false.
+ */
 boolean P_CheckSides(mobj_t *actor, coord_t x, coord_t y);
 
 #if __JHERETIC__ || __JHEXEN__
@@ -165,7 +178,10 @@ void P_BounceWall(mobj_t *mobj);
 
 mobj_t *P_CheckOnMobj(mobj_t *mobj);
 
-void PIT_ThrustSpike(mobj_t *actor);
+/**
+ * Stomp on any mobjs contacting the specified @a mobj.
+ */
+void P_ThrustSpike(mobj_t *mobj);
 
 /**
  * See if the specified player can use the specified puzzle item on a

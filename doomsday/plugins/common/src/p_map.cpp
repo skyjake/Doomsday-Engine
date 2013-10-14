@@ -106,7 +106,6 @@ static coord_t startPos[3]; // start position for trajectory line checks
 static coord_t endPos[3]; // end position for trajectory checks
 
 #if __JHEXEN__
-static mobj_t *tsThing;
 static mobj_t *onMobj; // generic global onMobj...used for landing on pods/players
 #endif
 
@@ -119,8 +118,9 @@ static byte *rejectMatrix; // For fast sight rejection.
 coord_t P_GetGravity()
 {
     if(cfg.netGravity != -1)
+    {
         return (coord_t) cfg.netGravity / 100;
-
+    }
     return *((coord_t*) DD_GetVariable(DD_GRAVITY));
 }
 
@@ -275,92 +275,68 @@ boolean P_TeleportMove(mobj_t *thing, coord_t x, coord_t y, boolean alwaysStomp)
     return true;
 }
 
-void P_TelefragMobjsTouchingPlayers(void)
+void P_TelefragMobjsTouchingPlayers()
 {
-    uint i;
-    for(i = 0; i < MAXPLAYERS; ++i)
+    for(uint i = 0; i < MAXPLAYERS; ++i)
     {
-        player_t* plr = players + i;
-        ddplayer_t* ddplr = plr->plr;
+        player_t *plr = players + i;
+        ddplayer_t *ddplr = plr->plr;
         if(!ddplr->inGame) continue;
 
         P_TeleportMove(ddplr->mo, ddplr->mo->origin[VX], ddplr->mo->origin[VY], true);
     }
 }
 
-/**
- * Checks to see if a start->end trajectory line crosses a blocking line.
- * Returns false if it does.
- *
- * tmBox holds the bounding box of the trajectory. If that box does not
- * touch the bounding box of the line in question, then the trajectory is
- * not blocked. If the start is on one side of the line and the end is on
- * the other side, then the trajectory is blocked.
- *
- * Currently this assumes an infinite line, which is not quite correct.
- * A more correct solution would be to check for an intersection of the
- * trajectory and the line, but that takes longer and probably really isn't
- * worth the effort.
- */
-int PIT_CrossLine(Line *line, void * /*context*/)
+struct pit_crossline_params_t
 {
-    int flags = P_GetIntp(line, DMU_FLAGS);
+    mobj_t *crossMobj;   ///< Mobj attempting to cross.
+    AABoxd crossAABox;   ///< Bounding box of the trajectory.
+    vec2d_t destination; ///< Would-be destination point.
+};
 
-    if((flags & DDLF_BLOCKING) ||
+int PIT_CrossLine(Line *line, void *context)
+{
+    pit_crossline_params_t &parm = *static_cast<pit_crossline_params_t *>(context);
+
+    if((P_GetIntp(line, DMU_FLAGS) & DDLF_BLOCKING) ||
        (P_ToXLine(line)->flags & ML_BLOCKMONSTERS) ||
        (!P_GetPtrp(line, DMU_FRONT_SECTOR) || !P_GetPtrp(line, DMU_BACK_SECTOR)))
     {
         AABoxd *aaBox = (AABoxd *)P_GetPtrp(line, DMU_BOUNDING_BOX);
 
-        if(!(tmBox.minX > aaBox->maxX ||
-             tmBox.maxX < aaBox->minX ||
-             tmBox.maxY < aaBox->minY ||
-             tmBox.minY > aaBox->maxY))
+        if(!(parm.crossAABox.minX > aaBox->maxX ||
+             parm.crossAABox.maxX < aaBox->minX ||
+             parm.crossAABox.maxY < aaBox->minY ||
+             parm.crossAABox.minY > aaBox->maxY))
         {
             // Line blocks trajectory?
-            if(Line_PointOnSide(line, startPos) < 0 !=
-               Line_PointOnSide(line,   endPos) < 0)
-            {
-                return true;
-            }
+            return    Line_PointOnSide(line, parm.crossMobj->origin) < 0
+                   != Line_PointOnSide(line, parm.destination)       < 0;
         }
     }
 
-    // Line doesn't block trajectory.
-    return false;
+    return false; // Continue iteration.
 }
 
-/**
- * This routine checks for Lost Souls trying to be spawned across 1-sided
- * lines, impassible lines, or "monsters can't cross" lines.
- *
- * Draw an imaginary line between the PE and the new Lost Soul spawn spot.
- * If that line crosses a 'blocking' line, then disallow the spawn. Only
- * search lines in the blocks of the blockmap where the bounding box of the
- * trajectory line resides. Then check bounding box of the trajectory vs
- * the bounding box of each blocking line to see if the trajectory and the
- * blocking line cross. Then check the PE and LS to see if they are on
- * different sides of the blocking line. If so, return true otherwise
- * false.
- */
-boolean P_CheckSides(mobj_t* actor, coord_t x, coord_t y)
+boolean P_CheckSides(mobj_t *mobj, coord_t x, coord_t y)
 {
-    startPos[VX] = actor->origin[VX];
-    startPos[VY] = actor->origin[VY];
-    startPos[VZ] = actor->origin[VZ];
-
-    endPos[VX] = x;
-    endPos[VY] = y;
-    endPos[VZ] = DDMINFLOAT; // Initialize with *something*.
-
-    // The bounding box of the trajectory
-    tmBox.minX = (startPos[VX] < endPos[VX]? startPos[VX] : endPos[VX]);
-    tmBox.minY = (startPos[VY] < endPos[VY]? startPos[VY] : endPos[VY]);
-    tmBox.maxX = (startPos[VX] > endPos[VX]? startPos[VX] : endPos[VX]);
-    tmBox.maxY = (startPos[VY] > endPos[VY]? startPos[VY] : endPos[VY]);
+    /*
+     * Check to see if the trajectory crosses a blocking map line.
+     *
+     * Currently this assumes an infinite line, which is not quite correct.
+     * A more correct solution would be to check for an intersection of the
+     * trajectory and the line, but that takes longer and probably really isn't
+     * worth the effort.
+     */
+    pit_crossline_params_t parm;
+    parm.crossMobj  = mobj;
+    parm.crossAABox =
+        AABoxd(MIN_OF(mobj->origin[VX], x), MIN_OF(mobj->origin[VY], y),
+               MAX_OF(mobj->origin[VX], x), MAX_OF(mobj->origin[VY], y));
+    V2d_Set(parm.destination, x, y);
 
     VALIDCOUNT++;
-    return Line_BoxIterator(&tmBox, LIF_ALL, PIT_CrossLine, 0);
+    return Line_BoxIterator(&tmBox, LIF_ALL, PIT_CrossLine, &parm);
 }
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
@@ -2144,9 +2120,6 @@ struct pit_radiusattack_params_t
 #endif
 };
 
-/**
- * "bombSource" is the creature that caused the explosion at "bombSpot".
- */
 int PIT_RadiusAttack(mobj_t *thing, void *context)
 {
     pit_radiusattack_params_t &parm = *static_cast<pit_radiusattack_params_t *>(context);
@@ -2761,8 +2734,10 @@ static void CheckMissileImpact(mobj_t *mo)
 #endif
 
 #if __JHEXEN__
-int PIT_ThrustStompThing(mobj_t *thing, void * /*context*/)
+int PIT_ThrustStompThing(mobj_t *thing, void *context)
 {
+    mobj_t *tsThing = static_cast<mobj_t *>(context);
+
     if(!(thing->flags & MF_SHOOTABLE))
         return false;
 
@@ -2781,18 +2756,16 @@ int PIT_ThrustStompThing(mobj_t *thing, void * /*context*/)
     return false;
 }
 
-// Stomp on any things contacted.
-void PIT_ThrustSpike(mobj_t *actor)
+void P_ThrustSpike(mobj_t *mobj)
 {
-    coord_t radius = actor->info->radius + MAXRADIUS;
-    AABoxd box(actor->origin[VX] - radius, actor->origin[VY] - radius,
-               actor->origin[VX] + radius, actor->origin[VY] + radius);
+    if(!mobj) return;
 
-    // We are the stomper.
-    tsThing = actor;
+    coord_t const radius = mobj->info->radius + MAXRADIUS;
+    AABoxd const box(mobj->origin[VX] - radius, mobj->origin[VY] - radius,
+                     mobj->origin[VX] + radius, mobj->origin[VY] + radius);
 
     VALIDCOUNT++;
-    Mobj_BoxIterator(&box, PIT_ThrustStompThing, 0);
+    Mobj_BoxIterator(&box, PIT_ThrustStompThing, mobj);
 }
 
 int PIT_CheckOnmobjZ(mobj_t* thing, void * /*context*/)
