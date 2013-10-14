@@ -99,10 +99,6 @@ static float aimSlope;
 // slopes to top and bottom of target
 static float topSlope, bottomSlope;
 
-static mobj_t *bombSource, *bombSpot;
-static int bombDamage;
-static int bombDistance;
-
 static boolean crushChange;
 static boolean noFit;
 
@@ -111,7 +107,6 @@ static coord_t endPos[3]; // end position for trajectory checks
 
 #if __JHEXEN__
 static mobj_t *tsThing;
-static boolean damageSource;
 static mobj_t *onMobj; // generic global onMobj...used for landing on pods/players
 #endif
 
@@ -2138,11 +2133,24 @@ void P_LineAttack(mobj_t* t1, angle_t angle, coord_t distance, coord_t slope, in
     }
 }
 
+struct pit_radiusattack_params_t
+{
+    mobj_t *source;     ///< Mobj which caused the attack.
+    mobj_t *bomb;       ///< Epicenter of the attack.
+    int damage;         ///< Maximum damage to inflict.
+    int distance;       ///< Maximum distance within which to afflict.
+#ifdef __JHEXEN__
+    bool afflictSource; ///< @c true= Afflict the source, also.
+#endif
+};
+
 /**
  * "bombSource" is the creature that caused the explosion at "bombSpot".
  */
-int PIT_RadiusAttack(mobj_t *thing, void * /*context*/)
+int PIT_RadiusAttack(mobj_t *thing, void *context)
 {
+    pit_radiusattack_params_t &parm = *static_cast<pit_radiusattack_params_t *>(context);
+
     if(!(thing->flags & MF_SHOOTABLE))
         return false;
 
@@ -2159,82 +2167,81 @@ int PIT_RadiusAttack(mobj_t *thing, void * /*context*/)
 #endif
 
 #if __JHEXEN__
-    if(!damageSource && thing == bombSource) // Don't damage the source of the explosion.
+    // Is the source of the explosion immune to damage?
+    if(thing == parm.source && !parm.afflictSource)
         return false;
 #endif
 
-    coord_t dx = fabs(thing->origin[VX] - bombSpot->origin[VX]);
-    coord_t dy = fabs(thing->origin[VY] - bombSpot->origin[VY]);
-    coord_t dz = fabs((thing->origin[VZ] + thing->height / 2) - bombSpot->origin[VZ]);
+    vec3d_t delta = { fabs(thing->origin[VX] - parm.bomb->origin[VX]),
+                      fabs(thing->origin[VY] - parm.bomb->origin[VY]),
+                      fabs((thing->origin[VZ] + thing->height / 2) - parm.bomb->origin[VZ]) };
 
-    coord_t dist = (dx > dy? dx : dy);
+    coord_t dist = (delta[VX] > delta[VY]? delta[VX] : delta[VY]);
 #if __JHEXEN__
     if(!cfg.netNoMaxZRadiusAttack)
     {
-        dist = (dz > dist? dz : dist);
+        dist = (delta[VZ] > dist? delta[VZ] : dist);
     }
 #else
     if(!(cfg.netNoMaxZRadiusAttack || (thing->info->flags2 & MF2_INFZBOMBDAMAGE)))
     {
-        dist = (dz > dist? dz : dist);
+        dist = (delta[VZ] > dist? delta[VZ] : dist);
     }
 #endif
 
     dist = MAX_OF(dist - thing->radius, 0);
-    if(dist >= bombDistance)
+    if(dist >= parm.distance)
     {
         return false; // Out of range.
     }
 
     // Must be in direct path.
-    if(P_CheckSight(thing, bombSpot))
+    if(P_CheckSight(thing, parm.bomb))
     {
-        int damage = (bombDamage * (bombDistance - dist) / bombDistance) + 1;
+        int damage = (parm.damage * (parm.distance - dist) / parm.distance) + 1;
 #if __JHEXEN__
         if(thing->player) damage /= 4;
 #endif
 
-        P_DamageMobj(thing, bombSpot, bombSource, damage, false);
+        P_DamageMobj(thing, parm.bomb, parm.source, damage, false);
     }
 
     return false;
 }
 
 #if __JHEXEN__
-void P_RadiusAttack(mobj_t *spot, mobj_t *source, int damage, int distance, boolean canDamageSource)
+void P_RadiusAttack(mobj_t *bomb, mobj_t *source, int damage, int distance, boolean afflictSource)
 #else
-void P_RadiusAttack(mobj_t *spot, mobj_t *source, int damage, int distance)
+void P_RadiusAttack(mobj_t *bomb, mobj_t *source, int damage, int distance)
 #endif
 {
-    coord_t dist = distance + MAXRADIUS;
-    AABoxd box(spot->origin[VX] - dist, spot->origin[VY] - dist,
-               spot->origin[VX] + dist, spot->origin[VY] + dist);
+    coord_t const dist = distance + MAXRADIUS;
+    AABoxd const box(bomb->origin[VX] - dist, bomb->origin[VY] - dist,
+                     bomb->origin[VX] + dist, bomb->origin[VY] + dist);
 
-#if __JHEXEN__
-    damageSource = canDamageSource;
-#endif
-    bombSpot     = spot;
-    bombDamage   = damage;
-    bombDistance = distance;
+    pit_radiusattack_params_t parm;
+    parm.bomb          = bomb;
+    parm.damage        = damage;
+    parm.distance      = distance;
+    parm.source        = source;
 #if __JHERETIC__
-    if(spot->type == MT_POD && spot->target)
+    if(bomb->type == MT_POD && bomb->target)
     {
-        bombSource = spot->target;
+        // The credit should go to the original source (chain-reaction kills).
+        parm.source = bomb->target;
     }
-    else
 #endif
-    {
-        bombSource = source;
-    }
+#if __JHEXEN__
+    parm.afflictSource = CPP_BOOL(afflictSource);
+#endif
 
     VALIDCOUNT++;
-    Mobj_BoxIterator(&box, PIT_RadiusAttack, 0);
+    Mobj_BoxIterator(&box, PIT_RadiusAttack, &parm);
 }
 
 int PTR_UseTraverse(Intercept const *icpt, void *context)
 {
-    if(icpt->type != ICPT_LINE)
-        return false; // Continue iteration.
+    DENG_ASSERT(icpt->type == ICPT_LINE);
 
     mobj_t *useThing = static_cast<mobj_t *>(context);
 
@@ -3043,7 +3050,7 @@ void P_BounceWall(mobj_t *mo)
     }
 }
 
-static sfxenum_t usePuzzleItemSound(mobj_t *user)
+static sfxenum_t usePuzzleItemFailSound(mobj_t *user)
 {
     if(Mobj_IsPlayer(user))
     {
@@ -3080,7 +3087,7 @@ int PTR_PuzzleItemTraverse(Intercept const *icpt, void *context)
         {
             if(!Interceptor_AdjustOpening(icpt->trace, icpt->line))
             {
-                S_StartSound(usePuzzleItemSound(parm.useMobj), parm.useMobj);
+                S_StartSound(usePuzzleItemFailSound(parm.useMobj), parm.useMobj);
                 return true; // Can't use through a wall.
             }
 

@@ -86,12 +86,14 @@ boolean P_CheckPosition(mobj_t *thing, coord_t const pos[3]);
 boolean P_CheckPositionXY(mobj_t *thing, coord_t x, coord_t y);
 
 /**
- * Source is the creature that caused the explosion at spot.
+ * Source is the creature that caused the explosion at @a bomb.
+ *
+ * @param afflictSource  @c true= the @a source is not immune to damage.
  */
 #if __JHEXEN__
-void P_RadiusAttack(mobj_t *spot, mobj_t *source, int damage, int distance, boolean canDamageSource);
+void P_RadiusAttack(mobj_t *bomb, mobj_t *source, int damage, int distance, boolean afflictSource);
 #else
-void P_RadiusAttack(mobj_t *spot, mobj_t *source, int damage, int distance);
+void P_RadiusAttack(mobj_t *bomb, mobj_t *source, int damage, int distance);
 #endif
 
 /**
