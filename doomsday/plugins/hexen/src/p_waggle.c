@@ -84,7 +84,7 @@ void T_FloorWaggle(waggle_t* waggle)
         {
             // Remove.
             P_SetDoublep(waggle->sector, DMU_FLOOR_HEIGHT, waggle->originalHeight);
-            P_ChangeSector(waggle->sector, true);
+            P_ChangeSector(waggle->sector, 1 /*crush damage*/);
             P_ToXSector(waggle->sector)->specialData = NULL;
             P_TagFinished(P_ToXSector(waggle->sector)->tag);
             Thinker_Remove(&waggle->thinker);
@@ -99,7 +99,7 @@ void T_FloorWaggle(waggle_t* waggle)
     P_SetDoublep(waggle->sector, DMU_FLOOR_HEIGHT, fh);
     P_SetDoublep(waggle->sector, DMU_FLOOR_TARGET_HEIGHT, fh);
     P_SetFloatp(waggle->sector, DMU_FLOOR_SPEED, 0);
-    P_ChangeSector(waggle->sector, true);
+    P_ChangeSector(waggle->sector, 1 /*crush damage*/);
 }
 
 boolean EV_StartFloorWaggle(int tag, int height, int speed, int offset, int timer)

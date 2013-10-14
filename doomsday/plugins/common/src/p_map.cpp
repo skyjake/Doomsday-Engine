@@ -99,9 +99,6 @@ static float aimSlope;
 // slopes to top and bottom of target
 static float topSlope, bottomSlope;
 
-static boolean crushChange;
-static boolean noFit;
-
 static coord_t startPos[3]; // start position for trajectory line checks
 static coord_t endPos[3]; // end position for trajectory checks
 
@@ -2284,9 +2281,9 @@ static boolean P_ThingHeightClip(mobj_t *thing)
     if(P_MobjIsCamera(thing)) return false;
 
     bool const onfloor = (thing->origin[VZ] == thing->floorZ);
-    P_CheckPosition(thing, thing->origin);
 
-    thing->floorZ = tmFloorZ;
+    P_CheckPosition(thing, thing->origin);
+    thing->floorZ   = tmFloorZ;
     thing->ceilingZ = tmCeilingZ;
 #if !__JHEXEN__
     thing->dropOffZ = tmDropoffZ; // $dropoff_fix: remember dropoffs.
@@ -2301,23 +2298,29 @@ static boolean P_ThingHeightClip(mobj_t *thing)
             thing->origin[VZ] = thing->floorZ;
         }
 #else
-        // Update view offset of real players $voodoodolls.
-        if(thing->player && thing->player->plr->mo == thing)
+        // Update view offset of real players.
+        if(Mobj_IsPlayer(thing) && !Mobj_IsVoodooDoll(thing))
+        {
             thing->player->viewZ += thing->floorZ - thing->origin[VZ];
+        }
 
         // Walking monsters rise and fall with the floor.
         thing->origin[VZ] = thing->floorZ;
 
         // $dropoff_fix: Possibly upset balance of objects hanging off ledges.
         if((thing->intFlags & MIF_FALLING) && thing->gear >= MAXGEAR)
+        {
             thing->gear = 0;
+        }
 #endif
     }
     else
     {
         // Don't adjust a floating monster unless forced to.
         if(thing->origin[VZ] + thing->height > thing->ceilingZ)
+        {
             thing->origin[VZ] = thing->ceilingZ - thing->height;
+        }
     }
 
     return (thing->ceilingZ - thing->floorZ) >= thing->height;
@@ -2548,18 +2551,22 @@ void P_SlideMove(mobj_t *mo)
  * to adjust the positions of all things that touch the sector.
  *
  * If anything doesn't fit anymore, true will be returned.
- * If crunch is true, they will take damage as they are being crushed.
- * If Crunch is false, you should set the sector height back the way it
+ * If crushDamage is non-zero, they will take damage as they are being crushed.
+ * If crushDamage is false, you should set the sector height back the way it
  * was and call P_ChangeSector again to undo the changes.
  */
 
-/**
- * @param thing         The thing to check against height changes.
- * @param data          Unused.
- */
-int PIT_ChangeSector(mobj_t *thing, void * /*context*/)
+struct pit_changesector_params_t
 {
-    if(!thing->info) return false; // Invalid thing?
+    int crushDamage;  ///< Damage amount;
+    bool noFit;
+};
+
+int PIT_ChangeSector(mobj_t *thing, void *context)
+{
+    pit_changesector_params_t &parm = *static_cast<pit_changesector_params_t *>(context);
+
+    DENG_ASSERT(thing->info != 0);
 
     // Don't check things that aren't blocklinked (supposedly immaterial).
     if(thing->info->flags & MF_NOBLOCKMAP)
@@ -2627,15 +2634,11 @@ int PIT_ChangeSector(mobj_t *thing, void * /*context*/)
         return false; // Keep checking...
     }
 
-    noFit = true;
+    parm.noFit = true;
 
-    if(crushChange > 0 && !(mapTime & 3))
+    if(parm.crushDamage > 0 && !(mapTime & 3))
     {
-#if __JHEXEN__
-        P_DamageMobj(thing, NULL, NULL, crushChange, false);
-#else
-        P_DamageMobj(thing, NULL, NULL, 10, false);
-#endif
+        P_DamageMobj(thing, NULL, NULL, parm.crushDamage, false);
 
 #if __JDOOM__ || __JDOOM64__
         if(!(thing->flags & MF_NOBLOOD))
@@ -2658,20 +2661,25 @@ int PIT_ChangeSector(mobj_t *thing, void * /*context*/)
     return false; // Keep checking (crush other things)...
 }
 
-boolean P_ChangeSector(Sector *sector, boolean crunch)
+boolean P_ChangeSector(Sector *sector, int crush)
 {
-    noFit       = false;
-    crushChange = crunch;
+    pit_changesector_params_t parm;
+    parm.noFit       = false;
+#if __JHEXEN__
+    parm.crushDamage = int(crush);
+#else
+    parm.crushDamage = 10;
+#endif
 
     VALIDCOUNT++;
-    Sector_TouchingMobjsIterator(sector, PIT_ChangeSector, 0);
+    Sector_TouchingMobjsIterator(sector, PIT_ChangeSector, &parm);
 
-    return noFit;
+    return parm.noFit;
 }
 
 void P_HandleSectorHeightChange(int sectorIdx)
 {
-    P_ChangeSector((Sector *)P_ToPtr(DMU_SECTOR, sectorIdx), false);
+    P_ChangeSector((Sector *)P_ToPtr(DMU_SECTOR, sectorIdx), false /*don't crush*/);
 }
 
 #if __JHERETIC__ || __JHEXEN__

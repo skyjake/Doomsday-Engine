@@ -2107,7 +2107,7 @@ int C_DECL XSTrav_MimicSector(Sector *sector, boolean ceiling,
     // Copy the properties of the target sector.
     P_CopySector(sector, from);
 
-    P_ChangeSector(sector, false);
+    P_ChangeSector(sector, false /*don't crush*/);
 
     // Copy type as well.
     XS_SetSectorType(sector, P_ToXSector(from)->special);

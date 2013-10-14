@@ -138,9 +138,10 @@ void P_UseLines(player_t *player);
 
 /**
  * @param sector  The sector to check.
- * @param crunch  @c true= crush any things in the sector.
+ * @param crush  Hexen: amount of crush damage to apply.
+ *               Other games: apply fixed crush damage if @c > 0.
  */
-boolean P_ChangeSector(Sector *sector, boolean crunch);
+boolean P_ChangeSector(Sector *sector, int crush);
 
 /**
  * This is called by the engine when it needs to change sector heights without
