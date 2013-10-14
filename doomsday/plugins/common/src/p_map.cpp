@@ -179,8 +179,10 @@ struct pit_stompthing_params_t
 {
     mobj_t *stompMobj; ///< Mobj doing the stomping.
     vec2d_t location;  ///< Map space point being stomped.
+    bool alwaysStomp;  ///< Disable per-type/monster stomp exclussions.
 };
 
+/// @return  Non-zero when the first unstompable mobj is found; otherwise @c 0.
 int PIT_StompThing(mobj_t *mo, void *context)
 {
     pit_stompthing_params_t &parm = *static_cast<pit_stompthing_params_t *>(context);
@@ -189,6 +191,19 @@ int PIT_StompThing(mobj_t *mo, void *context)
     if(mo == parm.stompMobj) return false;
     // ...or non-shootables.
     if(!(mo->flags & MF_SHOOTABLE)) return false;
+
+    if(!parm.alwaysStomp)
+    {
+        // Is "this" mobj allowed to stomp?
+        if(!(parm.stompMobj->flags2 & MF2_TELESTOMP)) return true;
+#if __JDOOM64__
+        // Monsters don't stomp.
+        if(!Mobj_IsPlayer(parm.stompMobj)) return true;
+#elif __JDOOM__
+        // Monsters only stomp on a boss map.
+        if(!Mobj_IsPlayer(parm.stompMobj) && gameMap != 29) return true;
+#endif
+    }
 
     // Within stomping distance?
     coord_t const dist = mo->radius + parm.stompMobj->radius;
@@ -208,23 +223,11 @@ boolean P_TeleportMove(mobj_t *mobj, coord_t x, coord_t y, boolean alwaysStomp)
 
     IterList_Clear(spechit); /// @todo necessary? -ds
 
-    if(!alwaysStomp)
-    {
-        // Is "this" mobj allowed to stomp?
-        if(!(mobj->flags2 & MF2_TELESTOMP)) return false;
-#if __JDOOM64__
-        // Monsters don't stomp.
-        if(!Mobj_IsPlayer(mobj)) return false;
-#elif __JDOOM__
-        // Monsters only stomp on a boss map.
-        if(!Mobj_IsPlayer(mobj) && gameMap != 29) return false;
-#endif
-    }
-
     // Attempt to stomp any mobjs in the way.
     pit_stompthing_params_t parm;
     parm.stompMobj = mobj;
     V2d_Set(parm.location, x, y);
+    parm.alwaysStomp = CPP_BOOL(alwaysStomp);
 
     coord_t const dist = mobj->radius + MAXRADIUS;
     AABoxd const box(x - dist, y - dist, x + dist, y + dist);
