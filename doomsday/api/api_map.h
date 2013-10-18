@@ -264,7 +264,7 @@ DENG_API_TYPEDEF(Map)
      * multiple mapblocks, so increment validCount before the first call, then
      * make one or more calls to it.
      *
-     * @param flags  @ref lineBoxIteratorFlags
+     * @param flags  @ref lineIteratorFlags
      */
     int             (*L_BoxIterator)(AABoxd const *box, int flags, int (*callback) (Line *, void *), void *context);
 
