@@ -300,6 +300,7 @@ DENG2_PIMPL(ClientApp)
                 .define(SReg::IntCVar,   "sound-rate",          11025)
                 .define(SReg::IntCVar,   "sound-16bit",         0)
                 .define(SReg::IntCVar,   "sound-3d",            0)
+                .define(SReg::IntCVar,   "sound-overlap-stop",  0)
                 .define(SReg::IntCVar,   "music-source",        MUSP_EXT);
     }
 };
