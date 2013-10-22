@@ -362,31 +362,31 @@ typedef struct {
 
 int PIT_ChangeMobjFlags(thinker_t *th, void *context)
 {
-    pit_changemobjflagsparams_t *params = (pit_changemobjflagsparams_t *) context;
+    pit_changemobjflagsparams_t *parm = (pit_changemobjflagsparams_t *) context;
     mobj_t *mo = (mobj_t *) th;
 
-    if(params->sec && params->sec != Mobj_Sector(mo))
-        return false; // Continue iteration.
+    if(parm->sec && parm->sec != Mobj_Sector(mo))
+        return false;
 
-    if(params->notPlayers && mo->player)
-        return false; // Continue iteration.
+    if(parm->notPlayers && mo->player)
+        return false;
 
-    switch(params->op)
+    switch(parm->op)
     {
     case BW_CLEAR:
-        mo->flags &= ~params->flags;
+        mo->flags &= ~parm->flags;
         break;
 
     case BW_SET:
-        mo->flags |= params->flags;
+        mo->flags |= parm->flags;
         break;
 
     case BW_XOR:
-        mo->flags ^= params->flags;
+        mo->flags ^= parm->flags;
         break;
 
     default:
-        Con_Error("PIT_ChangeMobjFlags: Unknown flag bit op %i\n", params->op);
+        DENG_ASSERT(false);
         break;
     }
 
@@ -398,28 +398,31 @@ int PIT_ChangeMobjFlags(thinker_t *th, void *context)
  * kaiser - removes things in tagged sector!
  * DJS - actually, no it doesn't at least not directly.
  *
- * @todo: It appears the MF_TELEPORT flag has been hijacked.
+ * @todo fixme: It appears the MF_TELEPORT flag has been hijacked.
  */
-int EV_FadeAway(Line* line, mobj_t* thing)
+int EV_FadeAway(Line *line, mobj_t *thing)
 {
-    Sector*             sec = NULL;
-    iterlist_t*         list;
+    iterlist_t *list;
 
-    list = P_GetSectorIterListForTag(P_ToXLine(line)->tag, false);
-    if(list)
+    DENG_UNUSED(thing);
+
+    if(!line) return 0;
+
+    if((list = P_GetSectorIterListForTag(P_ToXLine(line)->tag, false)) != 0)
     {
-        pit_changemobjflagsparams_t params;
+        Sector *sec = 0;
+        pit_changemobjflagsparams_t parm;
 
-        params.flags = MF_TELEPORT;
-        params.op = BW_SET;
-        params.notPlayers = true;
+        parm.flags      = MF_TELEPORT;
+        parm.op         = BW_SET;
+        parm.notPlayers = true;
 
         IterList_SetIteratorDirection(list, ITERLIST_FORWARD);
         IterList_RewindIterator(list);
         while((sec = IterList_MoveIterator(list)) != NULL)
         {
-            params.sec = sec;
-            Thinker_Iterate(P_MobjThinker, PIT_ChangeMobjFlags, &params);
+            parm.sec = sec;
+            Thinker_Iterate(P_MobjThinker, PIT_ChangeMobjFlags, &parm);
         }
     }
 
