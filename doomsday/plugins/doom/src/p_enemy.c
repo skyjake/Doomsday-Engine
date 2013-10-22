@@ -357,20 +357,20 @@ static int PIT_AvoidDropoff(Line *line, void *context)
         if(FEQUAL(back, parm->averterMobj->floorZ) &&
            front < parm->averterMobj->floorZ - 24)
         {
-            angle = M_PointToAngle(lineDir); // Front side drop off.
+            angle = M_PointToAngle(lineDir); // Front drop off.
         }
         else
         {
             if(FEQUAL(front, parm->averterMobj->floorZ) &&
                back < parm->averterMobj->floorZ - 24)
             {
-                angle = M_PointXYToAngle(-lineDir[0], -lineDir[1]); // Back side drop off.
+                angle = M_PointXYToAngle(-lineDir[0], -lineDir[1]); // Back drop off.
             }
             return false;
         }
 
         // Move away from drop off at a standard speed.
-        // Multiple contacted lines are cumulative (e.g., hanging over corner).
+        // Multiple contacted lines are cumulative (e.g., hanging over a corner).
         an = angle >> ANGLETOFINESHIFT;
         parm->direction[VX] -= FIX2FLT(finesine  [an]) * 32;
         parm->direction[VY] += FIX2FLT(finecosine[an]) * 32;
@@ -389,7 +389,7 @@ static int PIT_AvoidDropoff(Line *line, void *context)
  *
  * @param chaseDir  Direction in which the mobj is currently "chasing". If a
  *                  drop off is found, this direction will be updated with a
- *                  direction will take the mobj back onto terra firma.
+ *                  direction that will take the mobj back onto terra firma.
  *
  * @return  @c true iff the direction was changed to avoid a drop off.
  */
@@ -419,7 +419,7 @@ static boolean shouldAvoidDropoff(mobj_t *mobj, pvec2d_t chaseDir)
     if(FEQUAL(parm.direction[VX], 0) && FEQUAL(parm.direction[VY], 0))
         return false;
 
-    // The mobj should attempt to move away from the dropoff.
+    // The mobj should attempt to move away from the drop off.
     V2d_Copy(chaseDir, parm.direction);
     return true;
 }
@@ -1041,14 +1041,14 @@ void C_DECL A_SkelFist(mobj_t* actor)
  * Detect a corpse that could be raised.
  */
 typedef struct {
-    mobj_t* resurrector;
-    coord_t resurrectorOrigin[2]; ///< Use this predicted origin (factors momentum).
-    mobj_t* foundCorpse;
+    mobj_t *resurrector;
+    vec2d_t resurrectorOrigin; ///< Use this predicted origin (factors momentum).
+    mobj_t *foundCorpse;
 } pit_vilecheckparams_t;
 
-int PIT_VileCheck(mobj_t* corpse, void* parameters)
+int PIT_VileCheck(mobj_t *corpse, void *context)
 {
-    pit_vilecheckparams_t* parm = (pit_vilecheckparams_t*)parameters;
+    pit_vilecheckparams_t *parm = (pit_vilecheckparams_t*)context;
     boolean raisePointOpen;
     coord_t maxDist;
 
@@ -1059,27 +1059,35 @@ int PIT_VileCheck(mobj_t* corpse, void* parameters)
     if(corpse->tics != -1) return false;
 
     // Does this mobj type have a raise state?
-    if(P_GetState(corpse->type, SN_RAISE) == S_NULL) return false;
+    if(P_GetState(corpse->type, SN_RAISE) == S_NULL)
+    {
+        return false;
+    }
 
-    // Don't raise if its too far from the resurrector.
+    /*
+     * Don't raise if its too far from the resurrector.
+     *
+     * Compat option: The original game would always use the radius of the
+     * MT_VILE mobj type regardless of the actual type of the resurrector.
+     * This means that HacX v1.2 must have been developed and tested with
+     * a port that changes this behavior by default.
+     */
     maxDist = corpse->info->radius +
-        /**
-         * Compat option: The original game would always use the radius of the
-         * MT_VILE mobj type regardless of the actual type of the resurrector.
-         * This means that HacX v1.2 must have been developed and tested with
-         * a port that changes this behavior by default.
-         */
         (cfg.vileChaseUseVileRadius? MOBJINFO[ MT_VILE ].radius :
                                      parm->resurrector->info->radius);
+
     if(fabs(corpse->origin[VX] - parm->resurrectorOrigin[VX]) > maxDist ||
-       fabs(corpse->origin[VY] - parm->resurrectorOrigin[VY]) > maxDist) return false;
+       fabs(corpse->origin[VY] - parm->resurrectorOrigin[VY]) > maxDist)
+    {
+        return false;
+    }
 
     corpse->mom[MX] = corpse->mom[MY] = 0;
 
     if(!cfg.raiseGhosts) // Compat option.
     {
-        const coord_t oldHeight = corpse->height;
-        const coord_t oldRadius = corpse->radius;
+        coord_t const oldHeight = corpse->height;
+        coord_t const oldRadius = corpse->radius;
 
         corpse->height = corpse->info->height;
         corpse->radius = corpse->info->radius;
@@ -1106,10 +1114,10 @@ int PIT_VileCheck(mobj_t* corpse, void* parameters)
     }
 
     // Stop iteration as soon as a suitable corpse is found.
-    return !!(parm->foundCorpse);
+    return parm->foundCorpse != 0;
 }
 
-void C_DECL A_VileChase(mobj_t* actor)
+void C_DECL A_VileChase(mobj_t *actor)
 {
     if(actor->moveDir != DI_NODIR)
     {
@@ -1118,7 +1126,7 @@ void C_DECL A_VileChase(mobj_t* actor)
         AABoxd aaBB;
 
         parm.resurrector = actor;
-        parm.foundCorpse = NULL;
+        parm.foundCorpse = 0;
         V2d_Copy (parm.resurrectorOrigin, dirSpeed[actor->moveDir]);
         V2d_Scale(parm.resurrectorOrigin, actor->info->speed);
         V2d_Sum  (parm.resurrectorOrigin, parm.resurrectorOrigin, actor->origin);
@@ -1131,8 +1139,8 @@ void C_DECL A_VileChase(mobj_t* actor)
         VALIDCOUNT++;
         if(Mobj_BoxIterator(&aaBB, PIT_VileCheck, &parm))
         {
-            mobj_t* corpse = parm.foundCorpse;
-            mobj_t* oldTarget = actor->target;
+            mobj_t *corpse    = parm.foundCorpse;
+            mobj_t *oldTarget = actor->target;
 
             // Rotate the corpse to face it's new master.
             actor->target = corpse;

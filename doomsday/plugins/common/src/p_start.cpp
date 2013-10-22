@@ -1116,18 +1116,19 @@ int unstuckMobjInLine(Line *li, void *context)
     return false; // Continue iteration.
 }
 
-typedef struct nearestfacinglineparams_s {
+typedef struct {
     mobj_t *mo;
     coord_t dist;
     Line *line;
 } nearestfacinglineparams_t;
 
-static int PIT_FindNearestFacingLine(Line *line, void *ptr)
+static int PIT_FindNearestFacingLine(Line *line, void *context)
 {
-    nearestfacinglineparams_t *params = (nearestfacinglineparams_t*) ptr;
+    nearestfacinglineparams_t *params = (nearestfacinglineparams_t*) context;
 
     coord_t off;
     coord_t dist = Line_PointDistance(line, params->mo->origin, &off);
+
     if(off < 0 || off > P_GetDoublep(line, DMU_LENGTH) || dist < 0)
         return false; // Wrong way or too far.
 
@@ -1152,23 +1153,20 @@ static int turnMobjToNearestLine(thinker_t *th, void *context)
     VERBOSE( Con_Message("Checking mo %i...", mo->thinker.id) );
 #endif
 
-    nearestfacinglineparams_t params;
-    std::memset(&params, 0, sizeof(params));
-    params.mo = mo;
+    nearestfacinglineparams_t parm;
+    parm.mo   = mo;
+    parm.dist = 0;
+    parm.line = 0;
 
-    AABoxd aaBox;
-    aaBox.minX = mo->origin[VX] - 50;
-    aaBox.minY = mo->origin[VY] - 50;
-    aaBox.maxX = mo->origin[VX] + 50;
-    aaBox.maxY = mo->origin[VY] + 50;
+    AABoxd aaBox(mo->origin[VX] - 50, mo->origin[VY] - 50,
+                 mo->origin[VX] + 50, mo->origin[VY] + 50);
 
     VALIDCOUNT++;
+    Line_BoxIterator(&aaBox, LIF_SECTOR, PIT_FindNearestFacingLine, &parm);
 
-    Line_BoxIterator(&aaBox, LIF_SECTOR, PIT_FindNearestFacingLine, &params);
-
-    if(params.line)
+    if(parm.line)
     {
-        mo->angle = P_GetAnglep(params.line, DMU_ANGLE) - ANGLE_90;
+        mo->angle = P_GetAnglep(parm.line, DMU_ANGLE) - ANGLE_90;
 #ifdef _DEBUG
         VERBOSE( Con_Message("turnMobjToNearestLine: mo=%i angle=%x", mo->thinker.id, mo->angle) );
 #endif
