@@ -36,6 +36,7 @@ DENG_GUI_PIMPL(AudioSettingsDialog)
     CVarSliderWidget *musicVolume;
     CVarSliderWidget *reverbVolume;
     CVarToggleWidget *sound3D;
+    CVarToggleWidget *overlapStop;
     CVarToggleWidget *sound16bit;
     CVarChoiceWidget *sampleRate;
     CVarChoiceWidget *musicSource;
@@ -50,6 +51,7 @@ DENG_GUI_PIMPL(AudioSettingsDialog)
         area.add(musicVolume  = new CVarSliderWidget("music-volume"));
         area.add(reverbVolume = new CVarSliderWidget("sound-reverb-volume"));
         area.add(sound3D      = new CVarToggleWidget("sound-3d"));
+        area.add(overlapStop  = new CVarToggleWidget("sound-overlap-stop"));
         area.add(sound16bit   = new CVarToggleWidget("sound-16bit"));
         area.add(sampleRate   = new CVarChoiceWidget("sound-rate"));
         area.add(musicSource  = new CVarChoiceWidget("music-source"));
@@ -67,6 +69,7 @@ DENG_GUI_PIMPL(AudioSettingsDialog)
         musicVolume->updateFromCVar();
         reverbVolume->updateFromCVar();
         sound3D->updateFromCVar();
+        overlapStop->updateFromCVar();
         sound16bit->updateFromCVar();
         soundInfo->updateFromCVar();
         sampleRate->updateFromCVar();
@@ -84,6 +87,7 @@ AudioSettingsDialog::AudioSettingsDialog(String const &name)
     LabelWidget *rvbVolLabel   = LabelWidget::newWithText(tr("Reverb Volume:"), &area());
 
     d->sound3D->setText(tr("3D Effects & Reverb"));
+    d->overlapStop->setText(tr("One sound per emitter"));
     d->sound16bit->setText(tr("16-bit Resampling"));
 
     LabelWidget *rateLabel = LabelWidget::newWithText(tr("Resampling:"), &area());
@@ -109,6 +113,7 @@ AudioSettingsDialog::AudioSettingsDialog(String const &name)
            << *musicVolLabel << *d->musicVolume
            << *rvbVolLabel   << *d->reverbVolume
            << Const(0)       << *d->sound3D
+           << Const(0)       << *d->overlapStop
            << *musSrcLabel   << *d->musicSource
            << *rateLabel     << *d->sampleRate
            << Const(0)       << *d->sound16bit;
