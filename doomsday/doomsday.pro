@@ -1,6 +1,8 @@
 # The Doomsday Engine Project
 # Copyright (c) 2011-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
 
+greaterThan(QT_MAJOR_VERSION, 4): cache()
+
 include(config.pri)
 
 TEMPLATE = subdirs

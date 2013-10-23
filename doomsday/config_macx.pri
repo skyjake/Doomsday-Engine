@@ -18,7 +18,7 @@ deng_qtautoselect:!deng_nativesdk {
         # 4.8+, assume Lion and 64-bit Intel.
         CONFIG += deng_macx7_64bit
     }
-    else:contains(QT_VERSION, ^5\\.[0-2]\\..*) {
+    else:contains(QT_VERSION, ^5\\.[0-9]\\..*) {
         # 5.0+, assume Mountain Lion and 64-bit Intel.
         CONFIG += deng_macx8_64bit
     }
@@ -31,7 +31,12 @@ deng_macx8_64bit {
     echo(Using Mac OS 10.8 SDK.)
     CONFIG -= x86
     CONFIG += x86_64
-    QMAKE_MAC_SDK = $$system(xcode-select --print-path)/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.sdk
+    deng_qt5 {
+        QMAKE_MAC_SDK = macosx
+    }
+    else {
+        QMAKE_MAC_SDK = $$system(xcode-select --print-path)/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.sdk
+    }
     QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.7
     QMAKE_CFLAGS += -mmacosx-version-min=10.7
     QMAKE_CXXFLAGS += -mmacosx-version-min=10.7

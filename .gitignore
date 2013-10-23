@@ -5,6 +5,7 @@ macx_release_build
 *.user.*
 *-build-*
 *-build
+build-*
 *.dsc
 *.tar.gz
 *.deb

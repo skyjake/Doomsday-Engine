@@ -2492,6 +2492,8 @@ void *DD_GetVariable(int ddvalue)
     static float valueF;
     static double valueD;
 
+    DENG_UNUSED(valueF);
+
     switch(ddvalue)
     {
     case DD_GAME_EXPORTS:

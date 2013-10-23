@@ -59,15 +59,15 @@ DENG2_OBSERVES(App, GameChange)
             switch(type)
             {
             case IntCVar:
-                Con_SetInteger(name.toAscii(), val.toInt());
+                Con_SetInteger(name.toLatin1(), val.toInt());
                 break;
 
             case FloatCVar:
-                Con_SetFloat(name.toAscii(), val.toFloat());
+                Con_SetFloat(name.toLatin1(), val.toFloat());
                 break;
 
             case StringCVar:
-                Con_SetString(name.toAscii(), val.toString().toUtf8());
+                Con_SetString(name.toLatin1(), val.toString().toUtf8());
                 break;
 
             case ConfigVariable:
@@ -179,15 +179,15 @@ DENG2_OBSERVES(App, GameChange)
             switch(st.type)
             {
             case IntCVar:
-                val = Con_GetInteger(st.name.toAscii());
+                val = Con_GetInteger(st.name.toLatin1());
                 break;
 
             case FloatCVar:
-                val = Con_GetFloat(st.name.toAscii());
+                val = Con_GetFloat(st.name.toLatin1());
                 break;
 
             case StringCVar:
-                val = QString(Con_GetString(st.name.toAscii()));
+                val = QString(Con_GetString(st.name.toLatin1()));
                 break;
 
             case ConfigVariable:
