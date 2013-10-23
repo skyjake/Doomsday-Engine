@@ -39,6 +39,7 @@ DENG_GUI_PIMPL(CommandWidget)
         // Popup for autocompletions.
         completions = new DocumentWidget;
         completions->setMaximumLineWidth(640);
+        completions->setScrollBarColor("inverted.accent");
 
         popup = new PopupWidget;
         popup->useInfoStyle();
