@@ -16,6 +16,7 @@ color textaccent  { rgb $= gui.colorMix(text.rgb, accent.rgb, 0.6) }
 group inverted {
     color text       { rgb <0.0, 0.0, 0.0> }
     color background { rgb <1.0, 1.0, 1.0, 0.75> }
+    color accent     { rgb <0.5, 0.4, 0.2> }
     color glow       { rgb <0.0, 0.0, 0.0, 0.15> }
 }
 

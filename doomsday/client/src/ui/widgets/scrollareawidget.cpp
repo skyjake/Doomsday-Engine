@@ -48,7 +48,8 @@ DENG_GUI_PIMPL(ScrollAreaWidget), public Lockable
     int scrollBarWidth;
     Rectanglef indicatorUv;
     bool indicatorAnimating;
-    ColorBank::Colorf accent;
+    String scrollBarColorId;
+    ColorBank::Colorf scrollBarColor;
 
     // GL objects.
     bool indicatorShown;
@@ -63,6 +64,7 @@ DENG_GUI_PIMPL(ScrollAreaWidget), public Lockable
           scrollOpacity(0),
           scrollBarWidth(0),
           indicatorAnimating(false),
+          scrollBarColorId("accent"),
           indicatorShown(false),
           uMvpMatrix("uMvpMatrix", GLUniform::Mat4),
           uColor    ("uColor",     GLUniform::Vec4)
@@ -111,7 +113,7 @@ DENG_GUI_PIMPL(ScrollAreaWidget), public Lockable
         Style const &st = style();
 
         scrollBarWidth = st.rules().rule("scrollarea.bar").valuei();
-        accent         = st.colors().colorf("accent");
+        scrollBarColor = st.colors().colorf(scrollBarColorId);
     }
 
     void restartScrollOpacityFade()
@@ -140,6 +142,12 @@ ScrollAreaWidget::ScrollAreaWidget(String const &name)
     setOrigin(Top);
     setContentWidth(0);
     setContentHeight(0);
+}
+
+void ScrollAreaWidget::setScrollBarColor(DotPath const &colorId)
+{
+    d->scrollBarColorId = colorId;
+    d->updateStyle();
 }
 
 void ScrollAreaWidget::setOrigin(Origin origin)
@@ -483,7 +491,7 @@ void ScrollAreaWidget::glMakeScrollIndicatorGeometry(DefaultVertexBuf::Builder &
                                                 avail - indPos * avail + indHeight),
                               origin + Vector2f(viewSize.x + margins().left().value() - d->scrollBarWidth,
                                                 avail - indPos * avail)),
-                   Vector4f(1, 1, 1, d->scrollOpacity) * d->accent,
+                   Vector4f(1, 1, 1, d->scrollOpacity) * d->scrollBarColor,
                    d->indicatorUv);
 }
 

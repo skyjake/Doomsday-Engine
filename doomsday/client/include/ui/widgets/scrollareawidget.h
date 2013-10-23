@@ -48,6 +48,8 @@ public:
 public:
     ScrollAreaWidget(de::String const &name = "");
 
+    void setScrollBarColor(de::DotPath const &colorId);
+
     void setOrigin(Origin origin);
     Origin origin() const;
 
