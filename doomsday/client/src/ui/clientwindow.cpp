@@ -497,7 +497,22 @@ void ClientWindow::canvasGLDraw(Canvas &canvas)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
+#if 0
+    // Non-stereoscopic frame.
     root().draw();
+#else
+
+    // Left frame.
+    GLState::setActiveRect(Rectangleui(0, 0, width()/2, height()), true);
+    root().draw();
+
+    // Right frame.
+    GLState::setActiveRect(Rectangleui(width()/2, 0, width()/2, height()), true);
+    root().draw();
+
+    GLState::setActiveRect(Rectangleui(), true);
+
+#endif
 
     // Finish GL drawing and swap it on to the screen. Blocks until buffers
     // swapped.

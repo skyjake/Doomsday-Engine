@@ -230,6 +230,10 @@ DENG2_OBSERVES(ui::Margins, Change)
         // Make sure blurring is initialized.
         initBlur();
 
+        // A subrect would mess up the used viewports/scissors.
+        Rectangleui const oldSubRect = GLState::activeRect();
+        GLState::setActiveRect(Rectangleui());
+
         // Pass 1: render all the widgets behind this one onto the first blur
         // texture, downsampled.
         GLState::push()
@@ -249,6 +253,9 @@ DENG2_OBSERVES(ui::Margins, Change)
         blurring.setProgram(blurring.program());
         blurring.draw();
         GLState::pop();
+
+        // Restore the old subrect.
+        GLState::setActiveRect(oldSubRect);
 
         // Pass 3: apply the vertical blur filter, drawing the final result
         // into the original target.
