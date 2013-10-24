@@ -34,6 +34,8 @@
  */
 //#define DENG_WINDOW         (&ClientWindow::main())
 
+#define DENG_GAMEVIEW_X         ClientWindow::main().game().rule().left().valuei()
+#define DENG_GAMEVIEW_Y         ClientWindow::main().game().rule().top().valuei()
 #define DENG_GAMEVIEW_WIDTH     ClientWindow::main().game().rule().width().valuei()
 #define DENG_GAMEVIEW_HEIGHT    ClientWindow::main().game().rule().height().valuei()
 

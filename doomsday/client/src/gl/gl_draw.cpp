@@ -417,7 +417,8 @@ DENG_EXTERN_C void GL_BeginBorderedProjection(dgl_borderedprojectionstate_t* bp)
             int w = .5f + (bp->availWidth - bp->width * bp->scaleFactor) / 2;
             bp->scissorState = DGL_GetInteger(DGL_SCISSOR_TEST);
             DGL_Scissor(&bp->scissorRegion);
-            DGL_SetScissor2(w, 0, bp->width * bp->scaleFactor, bp->availHeight);
+            DGL_SetScissor2(DENG_GAMEVIEW_X + w, DENG_GAMEVIEW_Y,
+                            bp->width * bp->scaleFactor, bp->availHeight);
             DGL_Enable(DGL_SCISSOR_TEST);
         }
 
@@ -434,7 +435,8 @@ DENG_EXTERN_C void GL_BeginBorderedProjection(dgl_borderedprojectionstate_t* bp)
             int h = .5f + (bp->availHeight - bp->height * bp->scaleFactor) / 2;
             bp->scissorState = DGL_GetInteger(DGL_SCISSOR_TEST);
             DGL_Scissor(&bp->scissorRegion);
-            DGL_SetScissor2(0, h, bp->availWidth, bp->height * bp->scaleFactor);
+            DGL_SetScissor2(DENG_GAMEVIEW_X, DENG_GAMEVIEW_Y + h,
+                            bp->availWidth, bp->height * bp->scaleFactor);
             DGL_Enable(DGL_SCISSOR_TEST);
         }
 

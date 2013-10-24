@@ -34,6 +34,8 @@
 #include "gl/sys_opengl.h"
 #include "api_gl.h"
 
+#include <de/GLState>
+
 using namespace de;
 
 /**
@@ -369,7 +371,10 @@ DENG_EXTERN_C void DGL_SetScissor(RectRaw const *rect)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    glScissor(rect->origin.x, FLIP(rect->origin.y + rect->size.height - 1), rect->size.width, rect->size.height);
+    //glScissor(rect->origin.x, FLIP(rect->origin.y + rect->size.height - 1), rect->size.width, rect->size.height);
+
+    GLState::top().setScissor(Rectangleui(rect->origin.x, rect->origin.y,
+                                          rect->size.width, rect->size.height)).apply();
 }
 
 #undef DGL_SetScissor2
