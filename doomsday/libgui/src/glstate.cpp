@@ -63,6 +63,8 @@ namespace internal
     /// Currently applied GL state properties.
     static BitField currentProps;
     static GLTarget *currentTarget;
+
+    static Rectangleui subRect; /// Initially null.
 }
 
 using namespace internal;
@@ -134,6 +136,19 @@ DENG2_PIMPL(GLState)
         case gl::OneMinusDestAlpha: return GL_ONE_MINUS_DST_ALPHA;
         }
         return GL_ZERO;
+    }
+
+    Rectangleui scaleToSubRect(Rectangleui const &rectInTarget)
+    {
+        // If no sub rectangle is defined, do nothing.
+        if(subRect.isNull()) return rectInTarget;
+
+        Vector2f const scaling = Vector2f(subRect.size()) / self.target().size();
+
+        return Rectangleui(subRect.left() + scaling.x * rectInTarget.left(),
+                           subRect.top()  + scaling.y * rectInTarget.top(),
+                           rectInTarget.width()  * scaling.x,
+                           rectInTarget.height() * scaling.y);
     }
 
     void glApply(Property prop)
@@ -208,14 +223,23 @@ DENG2_PIMPL(GLState)
         case ScissorWidth:
         case ScissorHeight:
         {
-            if(self.scissor())
+            if(self.scissor() || !subRect.isNull())
             {
                 glEnable(GL_SCISSOR_TEST);
 
-                Rectangleui scr = self.scissorRect();
+                Rectangleui origScr;
+                if(self.scissor())
+                {
+                    origScr = self.scissorRect();
+                }
+                else
+                {
+                    origScr = Rectangleui::fromSize(self.target().size());
+                }
+
+                Rectangleui const scr = scaleToSubRect(origScr);
                 glScissor(scr.left(), self.target().size().y - scr.bottom(),
                           scr.width(), scr.height());
-                //glScissor(scr.left(), scr.top(), scr.width(), scr.height());
             }
             else
             {
@@ -229,7 +253,7 @@ DENG2_PIMPL(GLState)
         case ViewportWidth:
         case ViewportHeight:
         {
-            Rectangleui vp = self.viewport();
+            Rectangleui const vp = scaleToSubRect(self.viewport());
             glViewport(vp.left(), self.target().size().y - vp.bottom(),
                        vp.width(), vp.height());
             break;
@@ -549,6 +573,21 @@ GLState *GLState::take()
 {
     DENG2_ASSERT(stack.size() > 1);
     return stack.takeLast();
+}
+
+void GLState::setActiveRect(Rectangleui const &rect, bool apply)
+{
+    subRect = rect;
+    if(apply)
+    {
+        considerNativeStateUndefined();
+        top().apply();
+    }
+}
+
+Rectangleui GLState::activeRect()
+{
+    return subRect;
 }
 
 } // namespace de
