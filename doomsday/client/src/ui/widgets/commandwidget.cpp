@@ -89,6 +89,16 @@ bool CommandWidget::handleEvent(Event const &event)
     {
         KeyEvent const &key = event.as<KeyEvent>();
 
+        if(isSuggestingCompletion() && key.qtKey() == Qt::Key_Tab && !d->popup->isOpen() &&
+           suggestedCompletions().size() > 1)
+        {
+            // The completion popup has been manually dismissed, but the editor is
+            // still in autocompletion mode. Let's just reopen the popup with its
+            // old content.
+            d->popup->open();
+            return true;
+        }
+
         // Override the handling of the Enter key.
         if(key.qtKey() == Qt::Key_Return || key.qtKey() == Qt::Key_Enter)
         {
