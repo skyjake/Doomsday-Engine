@@ -112,7 +112,13 @@ public:
     GLState &setViewport(Rectangleui const &viewportRect);
     GLState &setScissor(Rectanglei const &scissorRect);
     GLState &setScissor(Rectangleui const &scissorRect);
+
+    /**
+     * Sets a scissor that is normalized within the current viewport.
+     * @param normScissorRect  Normalized scissor rectangle.
+     */
     GLState &setNormalizedScissor(Rectanglef const &normScissorRect);
+
     GLState &clearScissor();
 
     gl::Cull cull() const;
