@@ -1173,10 +1173,10 @@ static void setupGLStateForMap(uiwidget_t* obj)
 
     Rect_Raw(obj->geometry, &geometry);
 
-    // Check for scissor box (to clip the map lines and stuff).
-    // Store the old scissor state.
-    am->scissorState = DGL_GetInteger(DGL_SCISSOR_TEST);
-    DGL_Scissor(&am->scissorRegion);
+    // Store the old scissor state (to clip the map lines and stuff).
+    //am->scissorState = DGL_GetInteger(DGL_SCISSOR_TEST);
+    //DGL_Scissor(&am->scissorRegion);
+    DGL_PushState();
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
@@ -1314,7 +1314,7 @@ static void setupGLStateForMap(uiwidget_t* obj)
     clipRegion.size.height -= 2 * border;
 
     DGL_SetScissor(&clipRegion);
-    DGL_Enable(DGL_SCISSOR_TEST);
+    //DGL_Enable(DGL_SCISSOR_TEST);
     }
 }
 
@@ -1323,11 +1323,15 @@ static void setupGLStateForMap(uiwidget_t* obj)
  */
 static void restoreGLStateFromMap(uiwidget_t* obj)
 {
-    guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
-    // Restore the previous scissor state.
-    if(!am->scissorState)
-        DGL_Disable(DGL_SCISSOR_TEST);
-    DGL_SetScissor(&am->scissorRegion);
+    DENG_UNUSED(obj);
+
+    //guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
+    //if(!am->scissorState)
+        //DGL_Disable(DGL_SCISSOR_TEST);
+    //DGL_SetScissor(&am->scissorRegion);
+
+    // Restore the previous GL state.
+    DGL_PopState();
 }
 
 static void renderVertexes(uiwidget_t* obj)
