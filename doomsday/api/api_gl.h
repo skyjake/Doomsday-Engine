@@ -222,8 +222,6 @@ typedef struct {
     int availWidth, availHeight;
     boolean alignHorizontal; /// @c false: align vertically instead.
     float scaleFactor;
-    //int scissorState;
-    //RectRaw scissorRegion;
 } dgl_borderedprojectionstate_t;
 
 DENG_API_TYPEDEF(GL)

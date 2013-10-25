@@ -368,12 +368,6 @@ DENG_EXTERN_C void GL_ConfigureBorderedProjection2(dgl_borderedprojectionstate_t
         bp->availHeight, overrideMode, stretchEpsilon);
     bp->alignHorizontal = R_ChooseAlignModeAndScaleFactor(&bp->scaleFactor,
         bp->width, bp->height, bp->availWidth, bp->availHeight, bp->scaleMode);
-
-    /*
-    bp->scissorState = 0;
-    bp->scissorRegion.origin.x = bp->scissorRegion.origin.y = 0;
-    bp->scissorRegion.size.width = bp->scissorRegion.size.height = 0;
-    */
 }
 
 #undef GL_ConfigureBorderedProjection
