@@ -48,6 +48,8 @@
 #include "dd_main.h"
 #include "con_main.h"
 
+#define DENG_SIDE_BY_SIDE_STEREO
+
 using namespace de;
 
 static String const LEGACY_WIDGET_NAME = "legacy";
@@ -275,31 +277,55 @@ DENG2_OBSERVES(App,              GameChange)
 
     void mouseEvent(MouseEvent const &event)
     {
-        if(ClientApp::windowSystem().processEvent(event))
+        MouseEvent ev = event;
+
+#ifdef DENG_SIDE_BY_SIDE_STEREO
+        if(ev.type() == Event::MousePosition || ev.type() == Event::MouseButton)
+        {
+            // We need to map the real window coordinates to logical
+            // root view coordinates.
+            Vector2f pos = ev.pos();
+
+            // Make it possible to access both frames.
+            if(pos.x >= self.width()/2)
+            {
+                pos.x -= self.width()/2;
+            }
+            pos.x *= 2;
+
+            // Scale to logical size.
+            pos = pos / Vector2f(self.size()) *
+                    Vector2f(root.viewWidth().value(), root.viewHeight().value());
+
+            ev.setPos(pos.toVector2i());
+        }
+#endif
+
+        if(ClientApp::windowSystem().processEvent(ev))
         {
             // Eaten by the window system.
             return;
         }
 
         // Fall back to legacy handling.
-        switch(event.type())
+        switch(ev.type())
         {
         case Event::MouseButton:
             Mouse_Qt_SubmitButton(
-                        event.button() == MouseEvent::Left?     IMB_LEFT :
-                        event.button() == MouseEvent::Middle?   IMB_MIDDLE :
-                        event.button() == MouseEvent::Right?    IMB_RIGHT :
-                        event.button() == MouseEvent::XButton1? IMB_EXTRA1 :
-                        event.button() == MouseEvent::XButton2? IMB_EXTRA2 : IMB_MAXBUTTONS,
-                        event.state() == MouseEvent::Pressed);
+                        ev.button() == MouseEvent::Left?     IMB_LEFT :
+                        ev.button() == MouseEvent::Middle?   IMB_MIDDLE :
+                        ev.button() == MouseEvent::Right?    IMB_RIGHT :
+                        ev.button() == MouseEvent::XButton1? IMB_EXTRA1 :
+                        ev.button() == MouseEvent::XButton2? IMB_EXTRA2 : IMB_MAXBUTTONS,
+                        ev.state() == MouseEvent::Pressed);
             break;
 
         case Event::MouseMotion:
-            Mouse_Qt_SubmitMotion(IMA_POINTER, event.pos().x, event.pos().y);
+            Mouse_Qt_SubmitMotion(IMA_POINTER, ev.pos().x, ev.pos().y);
             break;
 
         case Event::MouseWheel:
-            Mouse_Qt_SubmitMotion(IMA_WHEEL, event.pos().x, event.pos().y);
+            Mouse_Qt_SubmitMotion(IMA_WHEEL, ev.pos().x, ev.pos().y);
             break;
 
         default:
@@ -497,7 +523,7 @@ void ClientWindow::canvasGLDraw(Canvas &canvas)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-#if 0
+#ifndef DENG_SIDE_BY_SIDE_STEREO
     // Non-stereoscopic frame.
     root().draw();
 #else
@@ -532,6 +558,12 @@ void ClientWindow::canvasGLResized(Canvas &canvas)
     LOG_TRACE("Canvas resized to ") << size.asText();
 
     GLState::top().setViewport(Rectangleui(0, 0, size.x, size.y));
+
+#ifdef DENG_SIDE_BY_SIDE_STEREO
+    // Adjust effective UI size for stereoscopic rendering.
+    size.y *= 2;
+    size *= .75f; // Make it a bit bigger.
+#endif
 
     // Tell the widgets.
     d->root.setViewSize(size);
