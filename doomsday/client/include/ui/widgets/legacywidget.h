@@ -32,6 +32,15 @@ class LegacyWidget : public GuiWidget
 public:
     LegacyWidget(de::String const &name = "");
 
+    /**
+     * Convenience method for changing and immediately applying a new GL
+     * viewport. The viewport is automatically normalized in relation to the
+     * root view size.
+     *
+     * This is only intended to support old graphics code that doesn't use libgui.
+     */
+    void glApplyViewport(int x, int y, int width, int height);
+
     void viewResized();
     void update();
     void drawContent();

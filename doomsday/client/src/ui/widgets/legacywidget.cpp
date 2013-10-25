@@ -165,6 +165,13 @@ LegacyWidget::LegacyWidget(String const &name)
     requestGeometry(false);
 }
 
+void LegacyWidget::glApplyViewport(int x, int y, int width, int height)
+{
+    GLState::top()
+            .setNormalizedViewport(normalizedRect(Rectanglei(x, y, width, height)))
+            .apply();
+}
+
 void LegacyWidget::viewResized()
 {
     GuiWidget::viewResized();

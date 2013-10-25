@@ -500,8 +500,8 @@ void GL_SwitchTo3DState(boolean push_state, viewport_t const *port, viewdata_t c
     viewpy = port->geometry.origin.y + viewData->window.origin.y;
     viewpw = MIN_OF(port->geometry.size.width, viewData->window.size.width);
     viewph = MIN_OF(port->geometry.size.height, viewData->window.size.height);
-    //glViewport(viewpx, FLIP(viewpy + viewph - 1), viewpw, viewph);
-    GLState::top().setViewport(Rectangleui(viewpx, viewpy, viewpw, viewph)).apply();
+
+    ClientWindow::main().game().glApplyViewport(viewpx, viewpy, viewpw, viewph);
 
     // The 3D projection matrix.
     GL_ProjectionMatrix();
@@ -564,12 +564,11 @@ void GL_Restore2DState(int step, viewport_t const *port, viewdata_t const *viewD
         break; }
 
     case 2: // After Restore Step 2 we're back in 2D rendering mode.
-        //glViewport(currentView.geometry.origin.x, FLIP(currentView.geometry.origin.y + currentView.geometry.size.height - 1),
-        //           currentView.geometry.size.width, currentView.geometry.size.height);
-        GLState::top().setViewport(Rectangleui(currentView.geometry.origin.x,
-                                               currentView.geometry.origin.y,
-                                               currentView.geometry.size.width,
-                                               currentView.geometry.size.height)).apply();
+        ClientWindow::main().game().
+                glApplyViewport(currentView.geometry.origin.x,
+                                currentView.geometry.origin.y,
+                                currentView.geometry.size.width,
+                                currentView.geometry.size.height);
         glMatrixMode(GL_PROJECTION);
         glPopMatrix();
         glMatrixMode(GL_MODELVIEW);

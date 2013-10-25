@@ -931,21 +931,18 @@ void R_UseViewPort(viewport_t *vp)
     if(!vp)
     {
         currentViewport = NULL;
-        //glViewport(0, FLIP(0 + DENG_GAMEVIEW_HEIGHT - 1),
-        //    DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT);
-        GLState::top().setViewport(Rectangleui(DENG_GAMEVIEW_X, DENG_GAMEVIEW_Y,
-                                               DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT)).apply();
+        ClientWindow::main().game().glApplyViewport(DENG_GAMEVIEW_X,
+                                                    DENG_GAMEVIEW_Y,
+                                                    DENG_GAMEVIEW_WIDTH,
+                                                    DENG_GAMEVIEW_HEIGHT);
     }
     else
     {
         currentViewport = vp;
-        /*glViewport(vp->geometry.origin.x,
-            FLIP(vp->geometry.origin.y + vp->geometry.size.height - 1),
-            vp->geometry.size.width, vp->geometry.size.height);*/
-        GLState::top().setViewport(Rectangleui(vp->geometry.origin.x,
-                                               vp->geometry.origin.y,
-                                               vp->geometry.size.width,
-                                               vp->geometry.size.height)).apply();
+        ClientWindow::main().game().glApplyViewport(vp->geometry.origin.x,
+                                                    vp->geometry.origin.y,
+                                                    vp->geometry.size.width,
+                                                    vp->geometry.size.height);
     }
 }
 
