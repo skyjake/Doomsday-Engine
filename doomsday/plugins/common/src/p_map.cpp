@@ -102,10 +102,6 @@ static float topSlope, bottomSlope;
 static coord_t startPos[3]; // start position for trajectory line checks
 static coord_t endPos[3]; // end position for trajectory checks
 
-#if __JHEXEN__
-static mobj_t *onMobj; // generic global onMobj...used for landing on pods/players
-#endif
-
 #if !__JHEXEN__
 static int tmUnstuck; // $unstuck: used to check unsticking
 #endif
@@ -2755,38 +2751,60 @@ void P_ThrustSpike(mobj_t *mobj)
     Mobj_BoxIterator(&box, PIT_ThrustStompThing, mobj);
 }
 
-int PIT_CheckOnmobjZ(mobj_t* thing, void * /*context*/)
+struct pit_checkonmobjz_params_t
 {
-    if(!(thing->flags & (MF_SOLID | MF_SPECIAL | MF_SHOOTABLE)))
+    mobj_t *riderMobj;
+    mobj_t *mountMobj;
+};
+
+/// @return  @c false= Continue iteration.
+static int PIT_CheckOnMobjZ(mobj_t *cand, void *context)
+{
+    pit_checkonmobjz_params_t &parm = *static_cast<pit_checkonmobjz_params_t *>(context);
+
+    if(!(cand->flags & (MF_SOLID | MF_SPECIAL | MF_SHOOTABLE)))
+    {
         return false; // Can't hit thing.
+    }
 
-    coord_t blockdist = thing->radius + tmThing->radius;
-    if(fabs(thing->origin[VX] - tm[VX]) >= blockdist ||
-       fabs(thing->origin[VY] - tm[VY]) >= blockdist)
+    coord_t blockdist = cand->radius + parm.riderMobj->radius;
+    if(fabs(cand->origin[VX] - tm[VX]) >= blockdist ||
+       fabs(cand->origin[VY] - tm[VY]) >= blockdist)
+    {
         return false; // Didn't hit thing.
+    }
 
-    if(thing == tmThing)
-        return false; // Don't clip against self.
+    // Don't clip against self.
+    if(cand == parm.riderMobj) return false;
 
-    if(tmThing->origin[VZ] > thing->origin[VZ] + thing->height)
+    // Above or below?
+    if(parm.riderMobj->origin[VZ] > cand->origin[VZ] + cand->height)
+    {
         return false;
-    else if(tmThing->origin[VZ] + tmThing->height < thing->origin[VZ])
-        return false; // Under thing.
+    }
+    else if(parm.riderMobj->origin[VZ] + parm.riderMobj->height < cand->origin[VZ])
+    {
+        return false;
+    }
 
     if(IS_CLIENT)
     {
-        // Players cannot hit their clmobjs.
-        if(tmThing->player)
+        // Players must not ride their clmobjs.
+        if(parm.riderMobj->player)
         {
-            if(thing == ClPlayer_ClMobj(tmThing->player - players))
+            if(cand == ClPlayer_ClMobj(parm.riderMobj->player - players))
+            {
                 return false;
+            }
         }
     }
 
-    if(thing->flags & MF_SOLID)
-        onMobj = thing;
+    if(cand->flags & MF_SOLID)
+    {
+        parm.mountMobj = cand;
+    }
 
-    return (thing->flags & MF_SOLID) != 0;
+    return (cand->flags & MF_SOLID) != 0;
 }
 
 mobj_t *P_CheckOnMobj(mobj_t *mo)
@@ -2831,15 +2849,19 @@ mobj_t *P_CheckOnMobj(mobj_t *mo)
         AABoxd tmBoxExpanded(tmBox.minX - MAXRADIUS, tmBox.minY - MAXRADIUS,
                              tmBox.maxX + MAXRADIUS, tmBox.maxY + MAXRADIUS);
 
+        pit_checkonmobjz_params_t parm;
+        parm.riderMobj = tmThing;
+        parm.mountMobj = 0;
+
         VALIDCOUNT++;
-        if(Mobj_BoxIterator(&tmBoxExpanded, PIT_CheckOnmobjZ, 0))
+        if(Mobj_BoxIterator(&tmBoxExpanded, PIT_CheckOnMobjZ, &parm))
         {
-            *tmThing = oldMo;
-            return onMobj;
+            *tmThing = oldMo; /// @todo Necessary? -ds
+            return parm.mountMobj;
         }
     }
 
-    *tmThing = oldMo;
+    *tmThing = oldMo; /// @todo Necessary? -ds
     return 0;
 }
 
