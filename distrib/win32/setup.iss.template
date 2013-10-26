@@ -137,6 +137,7 @@ Source: "data\graphics\background.pcx"; DestDir: "{app}\data\graphics"; Componen
 Source: "data\graphics\loading1.png"; DestDir: "{app}\data\graphics"; Components: Engine
 Source: "data\graphics\loading2.png"; DestDir: "{app}\data\graphics"; Components: Engine
 Source: "data\graphics\logo.png"; DestDir: "{app}\data\graphics"; Components: Engine
+Source: "res\windows\doomsday.ico"; DestDir: "{app}\data\graphics"; Components: Engine
 Source: "data\fonts\console11.dfn"; DestDir: "{app}\data\fonts"; Components: Engine
 Source: "data\fonts\console14.dfn"; DestDir: "{app}\data\fonts"; Components: Engine
 Source: "data\fonts\console18.dfn"; DestDir: "{app}\data\fonts"; Components: Engine
