@@ -56,7 +56,7 @@ win32 {
 
     QMAKE_LFLAGS += /NODEFAULTLIB:libcmt
 
-    LIBS += -lkernel32 -lgdi32 -lole32 -luser32 -lwsock32 -lopengl32 -lglu32
+    LIBS += -lkernel32 -lgdi32 -lole32 -luser32 -lwsock32 -lopengl32
 }
 else:macx {
     useFramework(Cocoa)
