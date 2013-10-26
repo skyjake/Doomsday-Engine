@@ -41,6 +41,7 @@
 #include "p_mapspec.h"
 #include "p_door.h"
 #include "p_floor.h"
+#include "p_actor.h"
 
 #define FATSPREAD               (ANG90/8)
 #define FAT_DELTAANGLE          (85*ANGLE_1) // jd64
