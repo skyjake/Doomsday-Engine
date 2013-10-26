@@ -384,6 +384,16 @@ GLState &GLState::setViewport(Rectangleui const &viewportRect)
     return *this;
 }
 
+GLState &GLState::setNormalizedViewport(Rectanglef const &normViewportRect)
+{
+    GLTarget::Size const size = target().size();
+    Rectangleui vp(Vector2ui(normViewportRect.left() * size.x,
+                             normViewportRect.top()  * size.y),
+                   Vector2ui(std::ceil(normViewportRect.right()  * size.x),
+                             std::ceil(normViewportRect.bottom() * size.y)));
+    return setViewport(vp);
+}
+
 GLState &GLState::setScissor(Rectanglei const &scissorRect)
 {
     return setScissor(scissorRect.toRectangleui());

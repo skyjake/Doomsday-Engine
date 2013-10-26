@@ -1,61 +1,57 @@
 #ifndef CLIENT_RENDER_VR_H
 #define CLIENT_RENDER_VR_H
 
+namespace VR {
+
 // The order shown here determines the integer value in the console.
 // TODO - are symbolic values possible in the console?
 enum Stereo3DMode {
-    STEREO_3D_MODE_MONO = 0,
-    STEREO_3D_MODE_GREEN_MAGENTA,
-    STEREO_3D_MODE_RED_CYAN,
-    STEREO_3D_MODE_TOP_BOTTOM,
-    STEREO_3D_MODE_SIDE_BY_SIDE,
-    STEREO_3D_MODE_LEFT,
-    STEREO_3D_MODE_RIGHT,
-    STEREO_3D_MODE_PARALLEL,
-    STEREO_3D_MODE_CROSSEYE,
-    STEREO_3D_MODE_OCULUS_RIFT,
-    STEREO_3D_MODE_ROW_INTERLEAVED,
-    STEREO_3D_MODE_COLUMN_INTERLEAVED,
-    STEREO_3D_MODE_CHECKERBOARD,
-    STEREO_3D_MODE_QUAD_BUFFERED,
-    STEREO_3D_MODE_MAX_3D_MODE
+    MODE_MONO = 0,
+    MODE_GREEN_MAGENTA,
+    MODE_RED_CYAN,
+    MODE_LEFT,
+    MODE_RIGHT,
+    MODE_TOP_BOTTOM, // 5
+    MODE_SIDE_BY_SIDE,
+    MODE_PARALLEL,
+    MODE_CROSSEYE,
+    MODE_OCULUS_RIFT,
+    MODE_ROW_INTERLEAVED, // 10
+    MODE_COLUMN_INTERLEAVED,
+    MODE_CHECKERBOARD,
+    MODE_QUAD_BUFFERED,
+    //
+    MODE_MAX_3D_MODE
 };
 
-// User configurable console variables //
+// Console variables
 
-// Which stereo 3D mode?
-extern int vr_mode;
-
-// Interpupillary distance in meters, e.g. 0.0622 for CMB
-extern float vr_ipd;
-
-// Your actual height, in meters, to help scale the world just so.
-extern float vr_player_height;
-
-// -1: left eye dominant; +1: right eye dominant; 0: middle
-// So player can look down gun sight with one eye.
-extern float vr_dominant_eye;
-
-// To reverse the stereo effect
-extern byte vr_swap_eyes;
-
+// Console variables
+extern int  mode;
+// Interpupillary distance in meters
+extern float ipd;
+extern float playerHeight;
+extern float dominantEye;
+extern byte  swapEyes;
 
 // Variables below are global, but not user visible //
 
 // Unlike most 3D modes, Oculus Rift typically uses no frustum shift.
 // (or if we did, it would be different and complicated)
-extern bool vr_apply_frustum_shift;
+extern bool applyFrustumShift;
 
 // local viewpoint relative eye position in map units,
-// vr_eyeshift is ordinarily set from VR_SetEyeView()
-extern float vr_eyeshift;
+// vr::eyeshift is ordinarily set from vr::setEyeView()
+extern float eyeShift;
 
-extern float vr_hud_distance; // in map units
-extern float vr_weapon_distance; // in map units
+extern float hudDistance; // in map units
+extern float weaponDistance; // in map units
 
 // -1 means left eye, +1 means right eye
-float VR_GetEyeShift(float eye);
+float getEyeShift(float eye);
 // Register console variables
-void VR_Register();
+void consoleRegister();
+
+} // namespace VR
 
 #endif // CLIENT_RENDER_VR_H

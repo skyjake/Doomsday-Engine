@@ -135,6 +135,7 @@ public:
     void grab(image_t &image, bool halfSized = false) const;
 
     void updateCanvasFormat();
+    void updateRootSize();
 
     // Notifications.
     bool isFPSCounterVisible() const;

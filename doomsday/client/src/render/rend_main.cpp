@@ -313,7 +313,7 @@ void Rend_Register()
     Rend_SpriteRegister();
     //Rend_ConsoleRegister();
     Vignette_Register();
-    VR_Register();
+    VR::consoleRegister();
 }
 
 static void reportWallSectionDrawn(Line &line)

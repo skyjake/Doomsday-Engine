@@ -110,9 +110,22 @@ public:
     GLState &setTarget(GLTarget &target);
     GLState &setDefaultTarget();
     GLState &setViewport(Rectangleui const &viewportRect);
+
+    /**
+     * Sets a viewport that is normalized within the current render target.
+     * @param normViewportRect  Normalized viewport rectangle.
+     */
+    GLState &setNormalizedViewport(Rectanglef const &normViewportRect);
+
     GLState &setScissor(Rectanglei const &scissorRect);
     GLState &setScissor(Rectangleui const &scissorRect);
+
+    /**
+     * Sets a scissor that is normalized within the current viewport.
+     * @param normScissorRect  Normalized scissor rectangle.
+     */
     GLState &setNormalizedScissor(Rectanglef const &normScissorRect);
+
     GLState &clearScissor();
 
     gl::Cull cull() const;

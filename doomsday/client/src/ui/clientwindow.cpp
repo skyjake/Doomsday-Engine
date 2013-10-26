@@ -276,31 +276,86 @@ DENG2_OBSERVES(App,              GameChange)
 
     void mouseEvent(MouseEvent const &event)
     {
-        if(ClientApp::windowSystem().processEvent(event))
+        MouseEvent ev = event;
+
+        switch(VR::mode)
+        {
+        // Left-right screen split modes
+        case VR::MODE_SIDE_BY_SIDE:
+        case VR::MODE_CROSSEYE:
+        case VR::MODE_PARALLEL:
+        case VR::MODE_OCULUS_RIFT:
+            if(ev.type() == Event::MousePosition || ev.type() == Event::MouseButton)
+            {
+                // We need to map the real window coordinates to logical
+                // root view coordinates.
+                Vector2f pos = ev.pos();
+
+                // Make it possible to access both frames.
+                if(pos.x >= self.width()/2)
+                {
+                    pos.x -= self.width()/2;
+                }
+                pos.x *= 2;
+
+                // Scale to logical size.
+                pos = pos / Vector2f(self.size()) *
+                        Vector2f(root.viewWidth().value(), root.viewHeight().value());
+
+                ev.setPos(pos.toVector2i());
+            }
+            break;
+        // Top-bottom screen split modes
+        case VR::MODE_TOP_BOTTOM:
+            if(ev.type() == Event::MousePosition || ev.type() == Event::MouseButton)
+            {
+                // We need to map the real window coordinates to logical
+                // root view coordinates.
+                Vector2f pos = ev.pos();
+
+                // Make it possible to access both frames.
+                if(pos.y >= self.height()/2)
+                {
+                    pos.y -= self.height()/2;
+                }
+                pos.y *= 2;
+
+                // Scale to logical size.
+                pos = pos / Vector2f(self.size()) *
+                        Vector2f(root.viewWidth().value(), root.viewHeight().value());
+
+                ev.setPos(pos.toVector2i());
+            }
+            break;
+        default:
+            break;
+        }
+
+        if(ClientApp::windowSystem().processEvent(ev))
         {
             // Eaten by the window system.
             return;
         }
 
         // Fall back to legacy handling.
-        switch(event.type())
+        switch(ev.type())
         {
         case Event::MouseButton:
             Mouse_Qt_SubmitButton(
-                        event.button() == MouseEvent::Left?     IMB_LEFT :
-                        event.button() == MouseEvent::Middle?   IMB_MIDDLE :
-                        event.button() == MouseEvent::Right?    IMB_RIGHT :
-                        event.button() == MouseEvent::XButton1? IMB_EXTRA1 :
-                        event.button() == MouseEvent::XButton2? IMB_EXTRA2 : IMB_MAXBUTTONS,
-                        event.state() == MouseEvent::Pressed);
+                        ev.button() == MouseEvent::Left?     IMB_LEFT :
+                        ev.button() == MouseEvent::Middle?   IMB_MIDDLE :
+                        ev.button() == MouseEvent::Right?    IMB_RIGHT :
+                        ev.button() == MouseEvent::XButton1? IMB_EXTRA1 :
+                        ev.button() == MouseEvent::XButton2? IMB_EXTRA2 : IMB_MAXBUTTONS,
+                        ev.state() == MouseEvent::Pressed);
             break;
 
         case Event::MouseMotion:
-            Mouse_Qt_SubmitMotion(IMA_POINTER, event.pos().x, event.pos().y);
+            Mouse_Qt_SubmitMotion(IMA_POINTER, ev.pos().x, ev.pos().y);
             break;
 
         case Event::MouseWheel:
-            Mouse_Qt_SubmitMotion(IMA_WHEEL, event.pos().x, event.pos().y);
+            Mouse_Qt_SubmitMotion(IMA_WHEEL, ev.pos().x, ev.pos().y);
             break;
 
         default:
@@ -471,7 +526,6 @@ void ClientWindow::canvasGLReady(Canvas &canvas)
     d->root.find(LEGACY_WIDGET_NAME)->enable();
 
     // Configure a viewport immediately.
-    //glViewport(0, FLIP(0 + canvas.height() - 1), canvas.width(), canvas.height());
     GLState::top().setViewport(Rectangleui(0, 0, canvas.width(), canvas.height())).apply();
 
     LOG_DEBUG("LegacyWidget enabled");
@@ -498,102 +552,102 @@ void ClientWindow::canvasGLDraw(Canvas &canvas)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    switch (vr_mode)
+    switch(VR::mode)
     {
     // A) Single view type stereo 3D modes here:
-    case STEREO_3D_MODE_MONO:
+    case VR::MODE_MONO:
         // Non-stereoscopic frame.
         root().draw();
         break;
-    case STEREO_3D_MODE_LEFT:
+    case VR::MODE_LEFT:
         // Left eye view
-        vr_eyeshift = VR_GetEyeShift(-1);
+        VR::eyeShift = VR::getEyeShift(-1);
         root().draw();
         break;
-    case STEREO_3D_MODE_RIGHT:
+    case VR::MODE_RIGHT:
         // Right eye view
-        vr_eyeshift = VR_GetEyeShift(+1);
+        VR::eyeShift = VR::getEyeShift(+1);
         root().draw();
         break;
     // B) Split-screen type stereo 3D modes here:
-    case STEREO_3D_MODE_TOP_BOTTOM: // TODO - which is on top?
+    case VR::MODE_TOP_BOTTOM: // TODO - which is on top?
         // Left eye view on top of screen.
-        vr_eyeshift = VR_GetEyeShift(-1);
+        VR::eyeShift = VR::getEyeShift(-1);
         GLState::setActiveRect(Rectangleui(0, 0, width(), height()/2), true);
         root().draw();
         // Right eye view on bottom of screen.
-        vr_eyeshift = VR_GetEyeShift(+1);
+        VR::eyeShift = VR::getEyeShift(+1);
         GLState::setActiveRect(Rectangleui(0, height()/2, width(), height()/2), true);
         root().draw();
         break;
-    case STEREO_3D_MODE_SIDE_BY_SIDE: // Squished aspect
+    case VR::MODE_SIDE_BY_SIDE: // Squished aspect
         // Left eye view on left side of screen.
-        vr_eyeshift = VR_GetEyeShift(-1);
+        VR::eyeShift = VR::getEyeShift(-1);
         GLState::setActiveRect(Rectangleui(0, 0, width()/2, height()), true);
         root().draw();
         // Right eye view on right side of screen.
-        vr_eyeshift = VR_GetEyeShift(+1);
+        VR::eyeShift = VR::getEyeShift(+1);
         GLState::setActiveRect(Rectangleui(width()/2, 0, width()/2, height()), true);
         root().draw();
         break;
-    case STEREO_3D_MODE_PARALLEL: // TODO Normal aspect
+    case VR::MODE_PARALLEL: // TODO Normal aspect
         // Left eye view on left side of screen.
-        vr_eyeshift = VR_GetEyeShift(-1);
+        VR::eyeShift = VR::getEyeShift(-1);
         GLState::setActiveRect(Rectangleui(0, 0, width()/2, height()), true);
         root().draw();
         // Right eye view on right side of screen.
-        vr_eyeshift = VR_GetEyeShift(+1);
+        VR::eyeShift = VR::getEyeShift(+1);
         GLState::setActiveRect(Rectangleui(width()/2, 0, width()/2, height()), true);
         root().draw();
         break;
-    case STEREO_3D_MODE_CROSSEYE: // TODO Normal aspect
+    case VR::MODE_CROSSEYE: // TODO Normal aspect
         // RIght eye view on left side of screen.
-        vr_eyeshift = VR_GetEyeShift(+1);
+        VR::eyeShift = VR::getEyeShift(+1);
         GLState::setActiveRect(Rectangleui(0, 0, width()/2, height()), true);
         root().draw();
         // Left eye view on right side of screen.
-        vr_eyeshift = VR_GetEyeShift(-1);
+        VR::eyeShift = VR::getEyeShift(-1);
         GLState::setActiveRect(Rectangleui(width()/2, 0, width()/2, height()), true);
         root().draw();
         break;
-    case STEREO_3D_MODE_OCULUS_RIFT: // TODO Normal aspect, head tracking, image warping
+    case VR::MODE_OCULUS_RIFT: // TODO Normal aspect, head tracking, image warping
         // Left eye view on left side of screen.
-        vr_eyeshift = VR_GetEyeShift(-1);
+        VR::eyeShift = VR::getEyeShift(-1);
         GLState::setActiveRect(Rectangleui(0, 0, width()/2, height()), true);
         root().draw();
         // Right eye view on right side of screen.
-        vr_eyeshift = VR_GetEyeShift(+1);
+        VR::eyeShift = VR::getEyeShift(+1);
         GLState::setActiveRect(Rectangleui(width()/2, 0, width()/2, height()), true);
         root().draw();
         break;
     // Overlaid type stereo 3D modes below:
-    case STEREO_3D_MODE_GREEN_MAGENTA:
+    case VR::MODE_GREEN_MAGENTA:
         // Left eye view
-        vr_eyeshift = VR_GetEyeShift(-1);
+        VR::eyeShift = VR::getEyeShift(-1);
         // save previous glColorMask
         glPushAttrib(GL_COLOR_BUFFER_BIT);
-        glColorMask(0,1,0,1); // Left eye view green
+        glColorMask(0, 1, 0, 1); // Left eye view green
         root().draw();
         // Right eye view
-        vr_eyeshift = VR_GetEyeShift(+1);
-        glColorMask(1,0,1,1); // Right eye view magenta
+        VR::eyeShift = VR::getEyeShift(+1);
+        glColorMask(1, 0, 1, 1); // Right eye view magenta
         root().draw();
         glPopAttrib(); // restore glColorMask
         break;
-    case STEREO_3D_MODE_RED_CYAN:
+    case VR::MODE_RED_CYAN:
         // Left eye view
-        vr_eyeshift = VR_GetEyeShift(-1);
+        VR::eyeShift = VR::getEyeShift(-1);
         // save previous glColorMask
         glPushAttrib(GL_COLOR_BUFFER_BIT);
-        glColorMask(1,0,0,1); // Left eye view red
+        glColorMask(1, 0, 0, 1); // Left eye view red
         root().draw();
         // Right eye view
-        vr_eyeshift = VR_GetEyeShift(+1);
-        glColorMask(0,1,1,1); // Right eye view cyan
+        VR::eyeShift = VR::getEyeShift(+1);
+        glColorMask(0, 1, 1, 1); // Right eye view cyan
         root().draw();
         glPopAttrib(); // restore glColorMask
         break;
-    case STEREO_3D_MODE_QUAD_BUFFERED:
+    case VR::MODE_QUAD_BUFFERED:
     {
         // TODO - attempt to enable stereo context at start up.
         GLboolean isStereoContext, isDoubleBuffered;
@@ -601,14 +655,14 @@ void ClientWindow::canvasGLDraw(Canvas &canvas)
         glGetBooleanv(GL_DOUBLEBUFFER, &isDoubleBuffered);
         if (isStereoContext) {
             // Left eye view
-            vr_eyeshift = VR_GetEyeShift(-1);
+            VR::eyeShift = VR::getEyeShift(-1);
             if (isDoubleBuffered)
                 glDrawBuffer(GL_BACK_LEFT);
             else
                 glDrawBuffer(GL_FRONT_LEFT);
             root().draw();
             // Right eye view
-            vr_eyeshift = VR_GetEyeShift(+1);
+            VR::eyeShift = VR::getEyeShift(+1);
             if (isDoubleBuffered)
                 glDrawBuffer(GL_BACK_RIGHT);
             else
@@ -626,24 +680,24 @@ void ClientWindow::canvasGLDraw(Canvas &canvas)
             break;
         }
     }
-    case STEREO_3D_MODE_ROW_INTERLEAVED:
+    case VR::MODE_ROW_INTERLEAVED:
     {
         // Use absolute screen position of window to determine whether the
         // first scan line is odd or even.
-        QPoint ulCorner(0,0);
+        QPoint ulCorner(0, 0);
         ulCorner = canvas.mapToGlobal(ulCorner); // widget to screen coordinates
         bool rowParityIsEven = ((ulCorner.x() % 2) == 0);
         // TODO - use parity in shader or stencil...
         // Left eye view
-        vr_eyeshift = VR_GetEyeShift(-1);
+        VR::eyeShift = VR::getEyeShift(-1);
         root().draw();
         // Right eye view
-        vr_eyeshift = VR_GetEyeShift(+1);
+        VR::eyeShift = VR::getEyeShift(+1);
         root().draw();
         break;
     }
-    case STEREO_3D_MODE_COLUMN_INTERLEAVED: // TODO
-    case STEREO_3D_MODE_CHECKERBOARD: // TODO
+    case VR::MODE_COLUMN_INTERLEAVED: // TODO
+    case VR::MODE_CHECKERBOARD: // TODO
     default:
         // Non-stereoscopic frame.
         root().draw();
@@ -652,7 +706,7 @@ void ClientWindow::canvasGLDraw(Canvas &canvas)
 
     // Restore default VR dynamic parameters
     GLState::setActiveRect(Rectangleui(), true);
-    vr_eyeshift = 0;
+    VR::eyeShift = 0;
 
     // Finish GL drawing and swap it on to the screen. Blocks until buffers
     // swapped.
@@ -673,9 +727,7 @@ void ClientWindow::canvasGLResized(Canvas &canvas)
 
     GLState::top().setViewport(Rectangleui(0, 0, size.x, size.y));
 
-    // Tell the widgets.
-    d->root.setViewSize(size);
-    d->busyRoot.setViewSize(size);
+    updateRootSize();
 }
 
 bool ClientWindow::setDefaultGLFormat() // static
@@ -795,6 +847,36 @@ void ClientWindow::updateCanvasFormat()
 
     // Save the relevant format settings.
     App::config().set("window.fsaa", Con_GetByte("vid-fsaa") != 0);
+}
+
+void ClientWindow::updateRootSize()
+{
+    Canvas::Size size = canvas().size();
+
+    switch(VR::mode)
+    {
+    // Left-right screen split modes
+    case VR::MODE_CROSSEYE:
+    case VR::MODE_PARALLEL:
+        // Adjust effective UI size for stereoscopic rendering.
+        size.y *= 2;
+        size *= .75f; // Make it a bit bigger.
+        break;
+    case VR::MODE_OCULUS_RIFT:
+        // Adjust effective UI size for stereoscopic rendering.
+        size.y *= 2;
+        size *= 2.0f; // Make it a bit smaller
+        break;
+    // Allow UI to squish in top/bottom and SBS mode: 3D hardware will unsquish them
+    case VR::MODE_TOP_BOTTOM:
+    case VR::MODE_SIDE_BY_SIDE:
+    default:
+        break;
+    }
+
+    // Tell the widgets.
+    d->root.setViewSize(size);
+    d->busyRoot.setViewSize(size);
 }
 
 ClientWindow &ClientWindow::main()

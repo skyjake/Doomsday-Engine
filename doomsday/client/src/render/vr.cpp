@@ -1,33 +1,47 @@
 #include "de_console.h"
 #include "render/vr.h"
 
-int vr_mode = 0;
+
+// Console variables
+int  VR::mode = 0;
 // Interpupillary distance in meters
-float vr_ipd = 0.0622f;
-float vr_player_height = 1.70f;
-float vr_dominant_eye = 0.0f;
-bool vr_apply_frustum_shift = true;
-float vr_eyeshift = 0;
-byte vr_swap_eyes = 0;
-float vr_hud_distance = 30.0f;
-float vr_weapon_distance = 10.0f;
+float VR::ipd = 0.0622f;
+float VR::playerHeight = 1.70f;
+float VR::dominantEye = 0.0f;
+byte  VR::swapEyes = 0;
+
+// Global variables
+bool  VR::applyFrustumShift = true;
+float  VR::eyeShift = 0;
+float  VR::hudDistance = 30.0f;
+float  VR::weaponDistance = 10.0f;
 
 // eye: -1 means left eye, +1 means right eye
 // Returns viewpoint eye shift in map units
-float VR_GetEyeShift(float eye) {
+float VR::getEyeShift(float eye)
+{
     // 0.95 because eyes are not at top of head
-    float map_units_per_meter = Con_GetInteger("player-eyeheight") / ((0.95) * vr_player_height);
-    float result = map_units_per_meter * (eye - vr_dominant_eye) * 0.5 * vr_ipd;
-    if (vr_swap_eyes != 0)
+    float mapUnitsPerMeter = Con_GetInteger("player-eyeheight") / ((0.95) *  VR::playerHeight);
+    float result = mapUnitsPerMeter * (eye -  VR::dominantEye) * 0.5 *  VR::ipd;
+    if ( VR::swapEyes != 0)
         result *= -1;
     return result;
 }
 
-void VR_Register()
+static void vrModeChanged()
 {
-    C_VAR_FLOAT ("vr_ipd",              &vr_ipd,           0, 0.02f, 0.2f);
-    C_VAR_FLOAT ("vr_player_height",    &vr_player_height, 0, 1.0f, 3.0f);
-    C_VAR_FLOAT ("vr_dominant_eye",     &vr_dominant_eye,  0, -1.0f, 1.0f);
-    C_VAR_BYTE  ("vr_swap_eyes",        &vr_swap_eyes,     0, 0, 1);
-    C_VAR_INT   ("vr_mode",             &vr_mode,          0, 0, (int)(STEREO_3D_MODE_MAX_3D_MODE - 1));
+    if(ClientWindow::hasMain())
+    {
+        // The logical UI size may need to be changed.
+        ClientWindow::main().updateRootSize();
+    }
+}
+
+void VR::consoleRegister()
+{
+    C_VAR_FLOAT ("rend-vr-ipd",              & VR::ipd,           0, 0.02f, 0.2f);
+    C_VAR_FLOAT ("rend-vr-player-height",    & VR::playerHeight,  0, 1.0f, 3.0f);
+    C_VAR_FLOAT ("rend-vr-dominant-eye",     & VR::dominantEye,   0, -1.0f, 1.0f);
+    C_VAR_BYTE  ("rend-vr-swap-eyes",        & VR::swapEyes,      0, 0, 1);
+    C_VAR_INT2  ("rend-vr-mode",             & VR::mode,          0, 0, (int)(VR::MODE_MAX_3D_MODE - 1), vrModeChanged);
 }
