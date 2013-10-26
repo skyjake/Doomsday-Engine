@@ -47,8 +47,7 @@
 
 #include "dd_main.h"
 #include "con_main.h"
-
-#define DENG_SIDE_BY_SIDE_STEREO
+#include "render/vr.h"
 
 using namespace de;
 
@@ -279,27 +278,28 @@ DENG2_OBSERVES(App,              GameChange)
     {
         MouseEvent ev = event;
 
-#ifdef DENG_SIDE_BY_SIDE_STEREO
-        if(ev.type() == Event::MousePosition || ev.type() == Event::MouseButton)
+        if(vr_mode == MODE3D_SIDE_BY_SIDE)
         {
-            // We need to map the real window coordinates to logical
-            // root view coordinates.
-            Vector2f pos = ev.pos();
-
-            // Make it possible to access both frames.
-            if(pos.x >= self.width()/2)
+            if(ev.type() == Event::MousePosition || ev.type() == Event::MouseButton)
             {
-                pos.x -= self.width()/2;
+                // We need to map the real window coordinates to logical
+                // root view coordinates.
+                Vector2f pos = ev.pos();
+
+                // Make it possible to access both frames.
+                if(pos.x >= self.width()/2)
+                {
+                    pos.x -= self.width()/2;
+                }
+                pos.x *= 2;
+
+                // Scale to logical size.
+                pos = pos / Vector2f(self.size()) *
+                        Vector2f(root.viewWidth().value(), root.viewHeight().value());
+
+                ev.setPos(pos.toVector2i());
             }
-            pos.x *= 2;
-
-            // Scale to logical size.
-            pos = pos / Vector2f(self.size()) *
-                    Vector2f(root.viewWidth().value(), root.viewHeight().value());
-
-            ev.setPos(pos.toVector2i());
         }
-#endif
 
         if(ClientApp::windowSystem().processEvent(ev))
         {
@@ -522,22 +522,41 @@ void ClientWindow::canvasGLDraw(Canvas &canvas)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-#ifndef DENG_SIDE_BY_SIDE_STEREO
-    // Non-stereoscopic frame.
-    root().draw();
-#else
+    switch (vr_mode)
+    {
+    case MODE3D_GREEN_MAGENTA:
+        // Left eye view
+        vr_eyeshift = VR_GetEyeShift(-1);
+        // save previous glColorMask
+        glPushAttrib(GL_COLOR_BUFFER_BIT);
+        glColorMask(0,1,0,1); // Left eye view green
+        root().draw();
+        // Right eye view
+        vr_eyeshift = VR_GetEyeShift(+1);
+        glColorMask(1,0,1,1); // Right eye view magenta
+        root().draw();
+        glPopAttrib(); // restore glColorMask
+        break;
+    case MODE3D_SIDE_BY_SIDE:
+        // Left eye view on left side of screen.
+        vr_eyeshift = VR_GetEyeShift(-1);
+        GLState::setActiveRect(Rectangleui(0, 0, width()/2, height()), true);
+        root().draw();
+        // Right eye view on right side of screen.
+        vr_eyeshift = VR_GetEyeShift(+1);
+        GLState::setActiveRect(Rectangleui(width()/2, 0, width()/2, height()), true);
+        root().draw();
+        break;
+    default:
+    case MODE3D_MONO:
+        // Non-stereoscopic frame.
+        root().draw();
+        break;
+    }
 
-    // Left frame.
-    GLState::setActiveRect(Rectangleui(0, 0, width()/2, height()), true);
-    root().draw();
-
-    // Right frame.
-    GLState::setActiveRect(Rectangleui(width()/2, 0, width()/2, height()), true);
-    root().draw();
-
+    // Restore default VR dynamic parameters
     GLState::setActiveRect(Rectangleui(), true);
-
-#endif
+    vr_eyeshift = 0;
 
     // Finish GL drawing and swap it on to the screen. Blocks until buffers
     // swapped.
@@ -558,11 +577,12 @@ void ClientWindow::canvasGLResized(Canvas &canvas)
 
     GLState::top().setViewport(Rectangleui(0, 0, size.x, size.y));
 
-#ifdef DENG_SIDE_BY_SIDE_STEREO
-    // Adjust effective UI size for stereoscopic rendering.
-    size.y *= 2;
-    size *= .75f; // Make it a bit bigger.
-#endif
+    if(vr_mode == MODE3D_SIDE_BY_SIDE)
+    {
+        // Adjust effective UI size for stereoscopic rendering.
+        size.y *= 2;
+        size *= .75f; // Make it a bit bigger.
+    }
 
     // Tell the widgets.
     d->root.setViewSize(size);

@@ -70,6 +70,7 @@
 #include "render/blockmapvisual.h"
 #include "render/sprite.h"
 #include "render/vissprite.h"
+#include "render/vr.h"
 
 #include "gl/sys_opengl.h"
 
@@ -312,6 +313,7 @@ void Rend_Register()
     Rend_SpriteRegister();
     //Rend_ConsoleRegister();
     Vignette_Register();
+    VR_Register();
 }
 
 static void reportWallSectionDrawn(Line &line)

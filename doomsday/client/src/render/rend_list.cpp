@@ -2049,6 +2049,8 @@ BEGIN_PROF( PROF_RL_RENDER_ALL );
 BEGIN_PROF( PROF_RL_RENDER_SKYMASK );
         // We do not want to update color and/or depth.
         glDisable(GL_DEPTH_TEST);
+        // Push, to remember former glColorMask for stereo3d
+        glPushAttrib(GL_COLOR_BUFFER_BIT);
         glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 
         // Mask out stencil buffer, setting the drawn areas to 1.
@@ -2067,7 +2069,8 @@ BEGIN_PROF( PROF_RL_RENDER_SKYMASK );
         }
 
         // Re-enable update of color and depth.
-        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+        // glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE); // No, pop to preserve stereo 3D
+        glPopAttrib();
         glEnable(GL_DEPTH_TEST);
         glDisable(GL_STENCIL_TEST);
 
