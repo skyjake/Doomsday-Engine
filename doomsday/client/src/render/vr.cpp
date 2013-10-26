@@ -29,5 +29,5 @@ void VR_Register()
     C_VAR_FLOAT ("vr_player_height",    &vr_player_height, 0, 1.0f, 3.0f);
     C_VAR_FLOAT ("vr_dominant_eye",     &vr_dominant_eye,  0, -1.0f, 1.0f);
     C_VAR_BYTE  ("vr_swap_eyes",        &vr_swap_eyes,     0, 0, 1);
-    C_VAR_INT   ("vr_mode",             &vr_mode,          0, 0, (int)(MODE3D_MAX_3D_MODE - 1));
+    C_VAR_INT   ("vr_mode",             &vr_mode,          0, 0, (int)(STEREO_3D_MODE_MAX_3D_MODE - 1));
 }

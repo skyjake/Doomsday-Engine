@@ -500,7 +500,7 @@ void ClientWindow::canvasGLDraw(Canvas &canvas)
 
     switch (vr_mode)
     {
-    case MODE3D_GREEN_MAGENTA:
+    case STEREO_3D_MODE_GREEN_MAGENTA:
         // Left eye view
         vr_eyeshift = VR_GetEyeShift(-1);
         // save previous glColorMask
@@ -513,7 +513,7 @@ void ClientWindow::canvasGLDraw(Canvas &canvas)
         root().draw();
         glPopAttrib(); // restore glColorMask
         break;
-    case MODE3D_SIDE_BY_SIDE:
+    case STEREO_3D_MODE_SIDE_BY_SIDE:
         // Left eye view on left side of screen.
         vr_eyeshift = VR_GetEyeShift(-1);
         GLState::setActiveRect(Rectangleui(0, 0, width()/2, height()), true);
@@ -524,7 +524,7 @@ void ClientWindow::canvasGLDraw(Canvas &canvas)
         root().draw();
         break;
     default:
-    case MODE3D_MONO:
+    case STEREO_3D_MODE_MONO:
         // Non-stereoscopic frame.
         root().draw();
         break;
