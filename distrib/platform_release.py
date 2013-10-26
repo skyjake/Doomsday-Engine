@@ -101,7 +101,7 @@ def mac_os_version():
 
 
 def mac_target_ext():
-    if mac_os_version() == '10.8': return '.dmg'
+    if mac_os_version() == '10.8' or mac_os_version() == '10.9': return '.dmg'
     if mac_os_version() == '10.6': return '_mac10_6.dmg'
     return '_32bit.dmg'
 
@@ -206,7 +206,7 @@ def mac_release():
     os.chdir(MAC_WORK_DIR)
 
     # Choose the appropriate compiler.
-    if mac_os_version() == '10.8':
+    if mac_os_version() == '10.8' or mac_os_version() == '10.9':
         mkspec = 'unsupported/macx-clang'
     else:
         mkspec = 'macx-g++'
