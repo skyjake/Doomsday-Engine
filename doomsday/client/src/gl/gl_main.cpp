@@ -609,7 +609,7 @@ void GL_ProjectionMatrix()
     float frustumShift = 0;
     if (VR::applyFrustumShift)
         frustumShift = VR::eyeShift * glNearClip / VR::hudDistance;
-    glFrustum(-fW - frustumShift, fW + frustumShift,
+    glFrustum(-fW - frustumShift, fW - frustumShift,
               -fH, fH,
               glNearClip, glFarClip);
     // Actually shift the player viewpoint

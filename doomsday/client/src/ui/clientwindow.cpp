@@ -863,9 +863,10 @@ void ClientWindow::updateRootSize()
         size *= .75f; // Make it a bit bigger.
         break;
     case VR::MODE_OCULUS_RIFT:
+        // TODO - taskbar needs to elevate above bottom of screen
         // Adjust effective UI size for stereoscopic rendering.
         size.y *= 2;
-        size *= 2.0f; // Make it a bit smaller
+        size *= 0.75f;
         break;
     // Allow UI to squish in top/bottom and SBS mode: 3D hardware will unsquish them
     case VR::MODE_TOP_BOTTOM:
