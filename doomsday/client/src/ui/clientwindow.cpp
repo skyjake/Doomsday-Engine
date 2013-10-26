@@ -570,7 +570,7 @@ void ClientWindow::canvasGLDraw(Canvas &canvas)
         root().draw();
         break;
     // B) Split-screen type stereo 3D modes here:
-    case VR::MODE_TOP_BOTTOM: // TODO - which is on top?
+    case VR::MODE_TOP_BOTTOM: // Left goes on top
         // Left eye view on top of screen.
         VR::eyeShift = VR::getEyeShift(-1);
         GLState::setActiveRect(Rectangleui(0, 0, width(), height()/2), true);
@@ -590,7 +590,7 @@ void ClientWindow::canvasGLDraw(Canvas &canvas)
         GLState::setActiveRect(Rectangleui(width()/2, 0, width()/2, height()), true);
         root().draw();
         break;
-    case VR::MODE_PARALLEL: // TODO Normal aspect
+    case VR::MODE_PARALLEL: // Normal aspect
         // Left eye view on left side of screen.
         VR::eyeShift = VR::getEyeShift(-1);
         GLState::setActiveRect(Rectangleui(0, 0, width()/2, height()), true);
@@ -600,7 +600,7 @@ void ClientWindow::canvasGLDraw(Canvas &canvas)
         GLState::setActiveRect(Rectangleui(width()/2, 0, width()/2, height()), true);
         root().draw();
         break;
-    case VR::MODE_CROSSEYE: // TODO Normal aspect
+    case VR::MODE_CROSSEYE: // Normal aspect
         // RIght eye view on left side of screen.
         VR::eyeShift = VR::getEyeShift(+1);
         GLState::setActiveRect(Rectangleui(0, 0, width()/2, height()), true);
@@ -610,7 +610,7 @@ void ClientWindow::canvasGLDraw(Canvas &canvas)
         GLState::setActiveRect(Rectangleui(width()/2, 0, width()/2, height()), true);
         root().draw();
         break;
-    case VR::MODE_OCULUS_RIFT: // TODO Normal aspect, head tracking, image warping
+    case VR::MODE_OCULUS_RIFT: /// @todo head tracking, image warping, shrunken hud
         // Left eye view on left side of screen.
         VR::eyeShift = VR::getEyeShift(-1);
         GLState::setActiveRect(Rectangleui(0, 0, width()/2, height()), true);
@@ -649,7 +649,7 @@ void ClientWindow::canvasGLDraw(Canvas &canvas)
         break;
     case VR::MODE_QUAD_BUFFERED:
     {
-        // TODO - attempt to enable stereo context at start up.
+        /// @todo - attempt to enable a stereo GL context at start up.
         GLboolean isStereoContext, isDoubleBuffered;
         glGetBooleanv(GL_STEREO, &isStereoContext);
         glGetBooleanv(GL_DOUBLEBUFFER, &isDoubleBuffered);
@@ -687,7 +687,7 @@ void ClientWindow::canvasGLDraw(Canvas &canvas)
         QPoint ulCorner(0, 0);
         ulCorner = canvas.mapToGlobal(ulCorner); // widget to screen coordinates
         bool rowParityIsEven = ((ulCorner.x() % 2) == 0);
-        // TODO - use parity in shader or stencil...
+        /// @todo - use row parity in shader or stencil, to actally interleave rows.
         // Left eye view
         VR::eyeShift = VR::getEyeShift(-1);
         root().draw();
@@ -696,8 +696,8 @@ void ClientWindow::canvasGLDraw(Canvas &canvas)
         root().draw();
         break;
     }
-    case VR::MODE_COLUMN_INTERLEAVED: // TODO
-    case VR::MODE_CHECKERBOARD: // TODO
+    case VR::MODE_COLUMN_INTERLEAVED: /// @todo implement column interleaved stereo 3D after row intleaved is working correctly...
+    case VR::MODE_CHECKERBOARD: /// @todo implement checker stereo 3D after row intleaved is working correctly ...
     default:
         // Non-stereoscopic frame.
         root().draw();
@@ -863,7 +863,7 @@ void ClientWindow::updateRootSize()
         size *= .75f; // Make it a bit bigger.
         break;
     case VR::MODE_OCULUS_RIFT:
-        // TODO - taskbar needs to elevate above bottom of screen
+        /// @todo - taskbar needs to elevate above bottom of screen in Rift mode
         // Adjust effective UI size for stereoscopic rendering.
         size.y *= 2;
         size *= 0.75f;

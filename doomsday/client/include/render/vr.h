@@ -4,7 +4,7 @@
 namespace VR {
 
 // The order shown here determines the integer value in the console.
-// TODO - are symbolic values possible in the console?
+/// @todo - Should rend-vr-mode console variable be a string instead of an int, for better semantics (but decreased discoverability)?
 enum Stereo3DMode {
     MODE_MONO = 0,
     MODE_GREEN_MAGENTA,
