@@ -43,5 +43,5 @@ void VR::consoleRegister()
     C_VAR_FLOAT ("rend-vr-player-height",    & VR::playerHeight,  0, 1.0f, 3.0f);
     C_VAR_FLOAT ("rend-vr-dominant-eye",     & VR::dominantEye,   0, -1.0f, 1.0f);
     C_VAR_BYTE  ("rend-vr-swap-eyes",        & VR::swapEyes,      0, 0, 1);
-    C_VAR_INT2  ("rend-vr-mode",             & VR::mode,          0, 0, (int)(VR::MODE_MAX_3D_MODE - 1), vrModeChanged);
+    C_VAR_INT2  ("rend-vr-mode",             & VR::mode,          0, 0, (int)(VR::MODE_MAX_3D_MODE_PLUS_ONE - 1), vrModeChanged);
 }

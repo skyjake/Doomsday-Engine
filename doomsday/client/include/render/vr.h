@@ -21,7 +21,7 @@ enum Stereo3DMode {
     MODE_CHECKERBOARD,
     MODE_QUAD_BUFFERED,
     //
-    MODE_MAX_3D_MODE
+    MODE_MAX_3D_MODE_PLUS_ONE
 };
 
 // Console variables
