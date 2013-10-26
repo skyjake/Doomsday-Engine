@@ -39,6 +39,7 @@
 #include "tables.h"
 
 #include "p_terraintype.h"
+#include "p_actor.h"
 #include "d_think.h"
 #include "info.h"
 
