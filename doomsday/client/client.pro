@@ -317,6 +317,7 @@ DENG_HEADERS += \
     include/render/vignette.h \
     include/render/vissprite.h \
     include/render/vlight.h \
+    include/render/vr.h \
     include/render/walledge.h \
     include/render/wallspec.h \
     include/resource/animgroups.h \
@@ -669,6 +670,7 @@ SOURCES += \
     src/render/vignette.cpp \
     src/render/vissprite.cpp \
     src/render/vlight.cpp \
+    src/render/vr.cpp \
     src/render/walledge.cpp \
     src/render/wallspec.cpp \
     src/resource/animgroups.cpp \
