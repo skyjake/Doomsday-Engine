@@ -45,6 +45,7 @@
 #include "MaterialVariantSpec"
 #include "Texture"
 #include "api_render.h"
+#include "render/vr.h"
 
 #include <de/DisplayMode>
 #include <de/GLState>
@@ -594,7 +595,20 @@ void GL_ProjectionMatrix()
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(yfov = Rend_FieldOfView() / aspect, aspect, glNearClip, glFarClip);
+
+    // Replace gluPerspective with glFrustum so we can do stereo 3D
+    yfov = Rend_FieldOfView() / aspect;
+    const float pi = 3.1415926535897932384626433832795;
+    float fH = tan(yfov / 360.0 * pi) * glNearClip;
+    float fW = fH*aspect;
+    float frustumShift = 0;
+    if (vr_apply_frustum_shift)
+        frustumShift = vr_eyeshift * glNearClip / vr_hud_distance;
+    // gluPerspective(yfov, aspect, glNearClip, glFarClip);
+    glFrustum(-fW - frustumShift, fW + frustumShift,
+              -fH, fH,
+              glNearClip, glFarClip);
+    glTranslatef(-vr_eyeshift, 0, 0);
 
     // We'd like to have a left-handed coordinate system.
     glScalef(1, 1, -1);

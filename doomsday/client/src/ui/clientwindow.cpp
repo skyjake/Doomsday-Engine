@@ -47,6 +47,7 @@
 
 #include "dd_main.h"
 #include "con_main.h"
+#include "render/vr.h"
 
 using namespace de;
 
@@ -497,7 +498,41 @@ void ClientWindow::canvasGLDraw(Canvas &canvas)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    root().draw();
+    switch (vr_mode)
+    {
+    case MODE3D_GREEN_MAGENTA:
+        // Left eye view
+        vr_eyeshift = VR_GetEyeShift(-1);
+        // save previous glColorMask
+        glPushAttrib(GL_COLOR_BUFFER_BIT);
+        glColorMask(0,1,0,1); // Left eye view green
+        root().draw();
+        // Right eye view
+        vr_eyeshift = VR_GetEyeShift(+1);
+        glColorMask(1,0,1,1); // Right eye view magenta
+        root().draw();
+        glPopAttrib(); // restore glColorMask
+        break;
+    case MODE3D_SIDE_BY_SIDE:
+        // Left eye view on left side of screen.
+        vr_eyeshift = VR_GetEyeShift(-1);
+        GLState::setActiveRect(Rectangleui(0, 0, width()/2, height()), true);
+        root().draw();
+        // Right eye view on right side of screen.
+        vr_eyeshift = VR_GetEyeShift(+1);
+        GLState::setActiveRect(Rectangleui(width()/2, 0, width()/2, height()), true);
+        root().draw();
+        break;
+    default:
+    case MODE3D_MONO:
+        // Non-stereoscopic frame.
+        root().draw();
+        break;
+    }
+
+    // Restore default VR dynamic parameters
+    GLState::setActiveRect(Rectangleui(), true);
+    vr_eyeshift = 0;
 
     // Finish GL drawing and swap it on to the screen. Blocks until buffers
     // swapped.

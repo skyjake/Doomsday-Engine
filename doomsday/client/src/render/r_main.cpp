@@ -446,8 +446,8 @@ void R_UpdateViewPortGeometry(viewport_t *port, int col, int row)
     DENG_ASSERT(port);
 
     RectRaw *rect = &port->geometry;
-    int const x = col * DENG_GAMEVIEW_WIDTH  / gridCols;
-    int const y = row * DENG_GAMEVIEW_HEIGHT / gridRows;
+    int const x = DENG_GAMEVIEW_X + col * DENG_GAMEVIEW_WIDTH  / gridCols;
+    int const y = DENG_GAMEVIEW_Y + row * DENG_GAMEVIEW_HEIGHT / gridRows;
     int const width  = (col+1) * DENG_GAMEVIEW_WIDTH  / gridCols - x;
     int const height = (row+1) * DENG_GAMEVIEW_HEIGHT / gridRows - y;
     ddhook_viewport_reshape_t p;
@@ -933,7 +933,8 @@ void R_UseViewPort(viewport_t *vp)
         currentViewport = NULL;
         //glViewport(0, FLIP(0 + DENG_GAMEVIEW_HEIGHT - 1),
         //    DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT);
-        GLState::top().setViewport(Rectangleui(0, 0, DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT)).apply();
+        GLState::top().setViewport(Rectangleui(DENG_GAMEVIEW_X, DENG_GAMEVIEW_Y,
+                                               DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT)).apply();
     }
     else
     {
