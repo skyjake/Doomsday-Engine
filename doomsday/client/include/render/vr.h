@@ -1,6 +1,8 @@
 #ifndef CLIENT_RENDER_VR_H
 #define CLIENT_RENDER_VR_H
 
+// The order shown here determines the integer value in the console.
+// TODO - are symbolic values possible in the console?
 enum Stereo3DMode {
     STEREO_3D_MODE_MONO = 0,
     STEREO_3D_MODE_GREEN_MAGENTA,

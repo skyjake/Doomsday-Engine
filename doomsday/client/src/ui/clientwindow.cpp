@@ -500,6 +500,73 @@ void ClientWindow::canvasGLDraw(Canvas &canvas)
 
     switch (vr_mode)
     {
+    // A) Single view type stereo 3D modes here:
+    case STEREO_3D_MODE_MONO:
+        // Non-stereoscopic frame.
+        root().draw();
+        break;
+    case STEREO_3D_MODE_LEFT:
+        // Left eye view
+        vr_eyeshift = VR_GetEyeShift(-1);
+        root().draw();
+        break;
+    case STEREO_3D_MODE_RIGHT:
+        // Right eye view
+        vr_eyeshift = VR_GetEyeShift(+1);
+        root().draw();
+        break;
+    // B) Split-screen type stereo 3D modes here:
+    case STEREO_3D_MODE_TOP_BOTTOM: // TODO - which is on top?
+        // Left eye view on top of screen.
+        vr_eyeshift = VR_GetEyeShift(-1);
+        GLState::setActiveRect(Rectangleui(0, 0, width(), height()/2), true);
+        root().draw();
+        // Right eye view on bottom of screen.
+        vr_eyeshift = VR_GetEyeShift(+1);
+        GLState::setActiveRect(Rectangleui(0, height()/2, width(), height()/2), true);
+        root().draw();
+        break;
+    case STEREO_3D_MODE_SIDE_BY_SIDE: // Squished aspect
+        // Left eye view on left side of screen.
+        vr_eyeshift = VR_GetEyeShift(-1);
+        GLState::setActiveRect(Rectangleui(0, 0, width()/2, height()), true);
+        root().draw();
+        // Right eye view on right side of screen.
+        vr_eyeshift = VR_GetEyeShift(+1);
+        GLState::setActiveRect(Rectangleui(width()/2, 0, width()/2, height()), true);
+        root().draw();
+        break;
+    case STEREO_3D_MODE_PARALLEL: // TODO Normal aspect
+        // Left eye view on left side of screen.
+        vr_eyeshift = VR_GetEyeShift(-1);
+        GLState::setActiveRect(Rectangleui(0, 0, width()/2, height()), true);
+        root().draw();
+        // Right eye view on right side of screen.
+        vr_eyeshift = VR_GetEyeShift(+1);
+        GLState::setActiveRect(Rectangleui(width()/2, 0, width()/2, height()), true);
+        root().draw();
+        break;
+    case STEREO_3D_MODE_CROSSEYE: // TODO Normal aspect
+        // RIght eye view on left side of screen.
+        vr_eyeshift = VR_GetEyeShift(+1);
+        GLState::setActiveRect(Rectangleui(0, 0, width()/2, height()), true);
+        root().draw();
+        // Left eye view on right side of screen.
+        vr_eyeshift = VR_GetEyeShift(-1);
+        GLState::setActiveRect(Rectangleui(width()/2, 0, width()/2, height()), true);
+        root().draw();
+        break;
+    case STEREO_3D_MODE_OCULUS_RIFT: // TODO Normal aspect, head tracking, image warping
+        // Left eye view on left side of screen.
+        vr_eyeshift = VR_GetEyeShift(-1);
+        GLState::setActiveRect(Rectangleui(0, 0, width()/2, height()), true);
+        root().draw();
+        // Right eye view on right side of screen.
+        vr_eyeshift = VR_GetEyeShift(+1);
+        GLState::setActiveRect(Rectangleui(width()/2, 0, width()/2, height()), true);
+        root().draw();
+        break;
+    // Overlaid type stereo 3D modes below:
     case STEREO_3D_MODE_GREEN_MAGENTA:
         // Left eye view
         vr_eyeshift = VR_GetEyeShift(-1);
@@ -513,18 +580,71 @@ void ClientWindow::canvasGLDraw(Canvas &canvas)
         root().draw();
         glPopAttrib(); // restore glColorMask
         break;
-    case STEREO_3D_MODE_SIDE_BY_SIDE:
-        // Left eye view on left side of screen.
+    case STEREO_3D_MODE_RED_CYAN:
+        // Left eye view
         vr_eyeshift = VR_GetEyeShift(-1);
-        GLState::setActiveRect(Rectangleui(0, 0, width()/2, height()), true);
+        // save previous glColorMask
+        glPushAttrib(GL_COLOR_BUFFER_BIT);
+        glColorMask(1,0,0,1); // Left eye view red
         root().draw();
-        // Right eye view on right side of screen.
+        // Right eye view
         vr_eyeshift = VR_GetEyeShift(+1);
-        GLState::setActiveRect(Rectangleui(width()/2, 0, width()/2, height()), true);
+        glColorMask(0,1,1,1); // Right eye view cyan
+        root().draw();
+        glPopAttrib(); // restore glColorMask
+        break;
+    case STEREO_3D_MODE_QUAD_BUFFERED:
+    {
+        // TODO - attempt to enable stereo context at start up.
+        GLboolean isStereoContext, isDoubleBuffered;
+        glGetBooleanv(GL_STEREO, &isStereoContext);
+        glGetBooleanv(GL_DOUBLEBUFFER, &isDoubleBuffered);
+        if (isStereoContext) {
+            // Left eye view
+            vr_eyeshift = VR_GetEyeShift(-1);
+            if (isDoubleBuffered)
+                glDrawBuffer(GL_BACK_LEFT);
+            else
+                glDrawBuffer(GL_FRONT_LEFT);
+            root().draw();
+            // Right eye view
+            vr_eyeshift = VR_GetEyeShift(+1);
+            if (isDoubleBuffered)
+                glDrawBuffer(GL_BACK_RIGHT);
+            else
+                glDrawBuffer(GL_FRONT_RIGHT);
+            root().draw();
+            if (isDoubleBuffered)
+                glDrawBuffer(GL_BACK);
+            else
+                glDrawBuffer(GL_FRONT);
+            break;
+        }
+        else {
+            // Non-stereoscopic frame.
+            root().draw();
+            break;
+        }
+    }
+    case STEREO_3D_MODE_ROW_INTERLEAVED:
+    {
+        // Use absolute screen position of window to determine whether the
+        // first scan line is odd or even.
+        QPoint ulCorner(0,0);
+        ulCorner = canvas.mapToGlobal(ulCorner); // widget to screen coordinates
+        bool rowParityIsEven = ((ulCorner.x() % 2) == 0);
+        // TODO - use parity in shader or stencil...
+        // Left eye view
+        vr_eyeshift = VR_GetEyeShift(-1);
+        root().draw();
+        // Right eye view
+        vr_eyeshift = VR_GetEyeShift(+1);
         root().draw();
         break;
+    }
+    case STEREO_3D_MODE_COLUMN_INTERLEAVED: // TODO
+    case STEREO_3D_MODE_CHECKERBOARD: // TODO
     default:
-    case STEREO_3D_MODE_MONO:
         // Non-stereoscopic frame.
         root().draw();
         break;
