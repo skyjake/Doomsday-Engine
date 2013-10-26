@@ -9,7 +9,6 @@ float vr_dominant_eye = 0.0f;
 bool vr_apply_frustum_shift = true;
 float vr_eyeshift = 0;
 byte vr_swap_eyes = 0;
-float vr_viewheight = 41.0; // That's what it is in zdoom...
 float vr_hud_distance = 30.0f;
 float vr_weapon_distance = 10.0f;
 
@@ -17,7 +16,7 @@ float vr_weapon_distance = 10.0f;
 // Returns viewpoint eye shift in map units
 float VR_GetEyeShift(float eye) {
     // 0.95 because eyes are not at top of head
-    float map_units_per_meter = vr_viewheight / ((0.95) * vr_player_height);
+    float map_units_per_meter = Con_GetInteger("player-eyeheight") / ((0.95) * vr_player_height);
     float result = map_units_per_meter * (eye - vr_dominant_eye) * 0.5 * vr_ipd;
     if (vr_swap_eyes != 0)
         result *= -1;

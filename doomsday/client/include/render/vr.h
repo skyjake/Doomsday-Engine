@@ -38,8 +38,6 @@ extern bool vr_apply_frustum_shift;
 // vr_eyeshift is ordinarily set from VR_SetEyeView()
 extern float vr_eyeshift;
 
-extern float vr_viewheight; // in map units
-
 extern float vr_hud_distance; // in map units
 extern float vr_weapon_distance; // in map units
 
@@ -48,4 +46,4 @@ float VR_GetEyeShift(float eye);
 // Register console variables
 void VR_Register();
 
-#endif // DDENG_VR_H
+#endif // CLIENT_RENDER_VR_H
