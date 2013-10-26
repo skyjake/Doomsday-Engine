@@ -577,16 +577,7 @@ void ClientWindow::canvasGLResized(Canvas &canvas)
 
     GLState::top().setViewport(Rectangleui(0, 0, size.x, size.y));
 
-    if(vr_mode == MODE3D_SIDE_BY_SIDE)
-    {
-        // Adjust effective UI size for stereoscopic rendering.
-        size.y *= 2;
-        size *= .75f; // Make it a bit bigger.
-    }
-
-    // Tell the widgets.
-    d->root.setViewSize(size);
-    d->busyRoot.setViewSize(size);
+    updateRootSize();
 }
 
 bool ClientWindow::setDefaultGLFormat() // static
@@ -706,6 +697,22 @@ void ClientWindow::updateCanvasFormat()
 
     // Save the relevant format settings.
     App::config().set("window.fsaa", Con_GetByte("vid-fsaa") != 0);
+}
+
+void ClientWindow::updateRootSize()
+{
+    Canvas::Size size = canvas().size();
+
+    if(vr_mode == MODE3D_SIDE_BY_SIDE)
+    {
+        // Adjust effective UI size for stereoscopic rendering.
+        size.y *= 2;
+        size *= .75f; // Make it a bit bigger.
+    }
+
+    // Tell the widgets.
+    d->root.setViewSize(size);
+    d->busyRoot.setViewSize(size);
 }
 
 ClientWindow &ClientWindow::main()
