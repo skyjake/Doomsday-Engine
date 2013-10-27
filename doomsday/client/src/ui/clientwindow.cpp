@@ -278,7 +278,7 @@ DENG2_OBSERVES(App,              GameChange)
     {
         MouseEvent ev = event;
 
-        switch(VR::mode)
+        switch(Con_GetInteger("rend-vr-mode"))
         {
         // Left-right screen split modes
         case VR::MODE_SIDE_BY_SIDE:
@@ -552,7 +552,7 @@ void ClientWindow::canvasGLDraw(Canvas &canvas)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    switch(VR::mode)
+    switch(Con_GetInteger("rend-vr-mode"))
     {
     // A) Single view type stereo 3D modes here:
     case VR::MODE_MONO:
@@ -853,7 +853,7 @@ void ClientWindow::updateRootSize()
 {
     Canvas::Size size = canvas().size();
 
-    switch(VR::mode)
+    switch(Con_GetInteger("rend-vr-mode"))
     {
     // Left-right screen split modes
     case VR::MODE_CROSSEYE:
