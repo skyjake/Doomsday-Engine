@@ -313,7 +313,7 @@ void Rend_Register()
     Rend_SpriteRegister();
     //Rend_ConsoleRegister();
     Vignette_Register();
-    VR_Register();
+    VR::consoleRegister();
 }
 
 static void reportWallSectionDrawn(Line &line)
@@ -384,8 +384,19 @@ void Rend_ModelViewMatrix(bool useAngles)
     glLoadIdentity();
     if(useAngles)
     {
-        glRotatef(vpitch, 1, 0, 0);
-        glRotatef(vang, 0, 1, 0);
+        /// Hard code Oculus Rift roll angle directly into OpenGL ModelView matrix
+        /// @todo Elevate roll angle use into viewer_t, and maybe all the way up into player model.
+        if ( (Con_GetInteger("rend-vr-mode") == VR::MODE_OCULUS_RIFT) && (VR::hasHeadOrientation()) )
+        {
+            std::vector<float> pry = VR::getHeadOrientation();
+            if (pry.size() == 3)
+            {
+                float roll = radianToDegree(pry[1]);
+                glRotatef(-roll, 0, 0, 1); // Roll
+            }
+        }
+        glRotatef(vpitch, 1, 0, 0); // Pitch
+        glRotatef(vang, 0, 1, 0); // Yaw
     }
     glScalef(1, 1.2f, 1);      // This is the aspect correction.
     glTranslatef(-vOrigin[VX], -vOrigin[VY], -vOrigin[VZ]);
