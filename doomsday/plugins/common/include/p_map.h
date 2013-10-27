@@ -24,23 +24,24 @@
 
 #include "common.h"
 
-/// @c true= move would be ok if within "tmFloorZ - tmCeilingZ".
-DENG_EXTERN_C boolean tmFloatOk;
-
+DENG_EXTERN_C boolean tmFloatOk; ///< @c true= move would be ok if within "tmFloorZ - tmCeilingZ".
 DENG_EXTERN_C coord_t tmFloorZ;
 DENG_EXTERN_C coord_t tmCeilingZ;
 DENG_EXTERN_C boolean tmFellDown;
-DENG_EXTERN_C Line *tmCeilingLine, *tmFloorLine;
+DENG_EXTERN_C Line *tmCeilingLine;
+DENG_EXTERN_C Line *tmFloorLine;
+DENG_EXTERN_C Line *tmBlockingLine;
+#if __JHEXEN__
+DENG_EXTERN_C mobj_t *tmBlockingMobj;
+#endif
 
 DENG_EXTERN_C mobj_t *lineTarget; // Who got hit (or NULL).
-DENG_EXTERN_C Line *blockLine;
 DENG_EXTERN_C mobjtype_t PuffType;
 #if __JDOOM__ || __JDOOM64__
 DENG_EXTERN_C boolean PuffNoSpark;
 #endif
 #if __JHEXEN__
 DENG_EXTERN_C mobj_t *PuffSpawned;
-DENG_EXTERN_C mobj_t *BlockingMobj;
 #endif
 
 #ifdef __cplusplus
@@ -70,14 +71,9 @@ boolean P_CheckSight(mobj_t const *beholder, mobj_t const *target);
  *  special things are touched if MF_PICKUP early out on solid lines?
  *
  * out:
- *  newsubsec
- *  floorz
- *  ceilingz
- *  tmDropoffZ
- *   the lowest point contacted
- *   (monsters won't move to a drop off)
- *  speciallines[]
- *  numspeciallines
+ *  tmFloorZ
+ *  tmCeilingZ
+ *  tmDropoffZ - the lowest point contacted (monsters won't move to a drop off)
  */
 boolean P_CheckPositionXYZ(mobj_t *thing, coord_t x, coord_t y, coord_t z);
 boolean P_CheckPosition(mobj_t *thing, coord_t const pos[3]);

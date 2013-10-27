@@ -222,7 +222,7 @@ boolean P_Move(mobj_t *actor, boolean dropoff)
              */
 
             if(P_ActivateLine(ld, actor, 0, SPAC_USE))
-                good |= ld == blockLine ? 1 : 2;
+                good |= ld == tmBlockingLine ? 1 : 2;
         }
 
         if(!good || cfg.monstersStuckInDoors)

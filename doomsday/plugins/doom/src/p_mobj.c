@@ -176,7 +176,9 @@ void P_MobjMoveXY(mobj_t* mo)
 
         // If mobj was wallrunning - stop.
         if(mo->wallRun)
+        {
             mo->wallRun = false;
+        }
 
         // $dropoff_fix.
         if(!P_TryMoveXY(mo, pos[VX], pos[VY], true, false))
@@ -189,7 +191,7 @@ void P_MobjMoveXY(mobj_t* mo)
             }
             else if(mo->flags & MF_MISSILE)
             {
-                Sector* backSec;
+                Sector *backSec;
 
                 /// @kludge Prevent missiles exploding against the sky.
                 if(tmCeilingLine &&
@@ -208,7 +210,7 @@ void P_MobjMoveXY(mobj_t* mo)
                 if(tmFloorLine &&
                    (backSec = P_GetPtrp(tmFloorLine, DMU_BACK_SECTOR)))
                 {
-                    Material* mat = P_GetPtrp(backSec, DMU_FLOOR_MATERIAL);
+                    Material *mat = P_GetPtrp(backSec, DMU_FLOOR_MATERIAL);
 
                     if((P_GetIntp(mat, DMU_FLAGS) & MATF_SKYMASK) &&
                        mo->origin[VZ] < P_GetDoublep(backSec, DMU_FLOOR_HEIGHT))

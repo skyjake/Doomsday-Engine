@@ -1463,19 +1463,19 @@ void C_DECL A_CFlameMissile(mobj_t* mo)
     A_UnHideThing(mo);
     S_StartSound(SFX_CLERIC_FLAME_EXPLODE, mo);
 
-    if(BlockingMobj && (BlockingMobj->flags & MF_SHOOTABLE))
+    if(tmBlockingMobj && (tmBlockingMobj->flags & MF_SHOOTABLE))
     {   // Hit something.
         // Spawn the flame circle around the thing
-        dist = BlockingMobj->radius + 18;
+        dist = tmBlockingMobj->radius + 18;
         for(i = 0; i < 4; ++i)
         {
             an = (i * ANG45) >> ANGLETOFINESHIFT;
             an90 = (i * ANG45 + ANG90) >> ANGLETOFINESHIFT;
 
             if((pmo = P_SpawnMobjXYZ(MT_CIRCLEFLAME,
-                                     BlockingMobj->origin[VX] + dist * FIX2FLT(finecosine[an]),
-                                     BlockingMobj->origin[VY] + dist * FIX2FLT(finesine[an]),
-                                     BlockingMobj->origin[VZ] + 5,
+                                     tmBlockingMobj->origin[VX] + dist * FIX2FLT(finecosine[an]),
+                                     tmBlockingMobj->origin[VY] + dist * FIX2FLT(finesine[an]),
+                                     tmBlockingMobj->origin[VZ] + 5,
                                      (angle_t) an << ANGLETOFINESHIFT, 0)))
             {
                 pmo->target = mo->target;
@@ -1488,9 +1488,9 @@ void C_DECL A_CFlameMissile(mobj_t* mo)
             }
 
             if((pmo = P_SpawnMobjXYZ(MT_CIRCLEFLAME,
-                                     BlockingMobj->origin[VX] - dist * FIX2FLT(finecosine[an]),
-                                     BlockingMobj->origin[VY] - dist * FIX2FLT(finesine[an]),
-                                     BlockingMobj->origin[VZ] + 5,
+                                     tmBlockingMobj->origin[VX] - dist * FIX2FLT(finecosine[an]),
+                                     tmBlockingMobj->origin[VY] - dist * FIX2FLT(finesine[an]),
+                                     tmBlockingMobj->origin[VZ] + 5,
                                      (angle_t) (ANG180 + (an << ANGLETOFINESHIFT)), 0)))
             {
                 pmo->target = mo->target;

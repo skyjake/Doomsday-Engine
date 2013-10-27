@@ -360,7 +360,7 @@ void P_MobjMoveXY(mobj_t* mo)
         {   // Blocked mom.
             if(mo->flags2 & MF2_SLIDE)
             {   // Try to slide along it.
-                if(BlockingMobj == NULL)
+                if(tmBlockingMobj == NULL)
                 {   // Slide against wall.
                     P_SlideMove(mo);
                 }
@@ -386,15 +386,15 @@ void P_MobjMoveXY(mobj_t* mo)
 
                 if(mo->flags2 & MF2_FLOORBOUNCE)
                 {
-                    if(BlockingMobj)
+                    if(tmBlockingMobj)
                     {
-                        if((BlockingMobj->flags2 & MF2_REFLECTIVE) ||
-                           ((!BlockingMobj->player) &&
-                            (!(BlockingMobj->flags & MF_COUNTKILL))))
+                        if((tmBlockingMobj->flags2 & MF2_REFLECTIVE) ||
+                           ((!tmBlockingMobj->player) &&
+                            (!(tmBlockingMobj->flags & MF_COUNTKILL))))
                         {
                             coord_t speed;
 
-                            angle = M_PointToAngle2(BlockingMobj->origin, mo->origin) +
+                            angle = M_PointToAngle2(tmBlockingMobj->origin, mo->origin) +
                                 ANGLE_1 * ((P_Random() % 16) - 8);
 
                             speed = M_ApproxDistance(mo->mom[MX], mo->mom[MY]);
@@ -437,16 +437,16 @@ void P_MobjMoveXY(mobj_t* mo)
                     }
                 }
 
-                if(BlockingMobj && (BlockingMobj->flags2 & MF2_REFLECTIVE))
+                if(tmBlockingMobj && (tmBlockingMobj->flags2 & MF2_REFLECTIVE))
                 {
-                    angle = M_PointToAngle2(BlockingMobj->origin, mo->origin);
+                    angle = M_PointToAngle2(tmBlockingMobj->origin, mo->origin);
 
                     // Change angle for delflection/reflection
-                    switch(BlockingMobj->type)
+                    switch(tmBlockingMobj->type)
                     {
                     case MT_CENTAUR:
                     case MT_CENTAURLEADER:
-                        if(abs(angle - BlockingMobj->angle) >> 24 > 45)
+                        if(abs(angle - tmBlockingMobj->angle) >> 24 > 45)
                             goto explode;
                         if(mo->type == MT_HOLY_FX)
                             goto explode;
@@ -476,7 +476,7 @@ void P_MobjMoveXY(mobj_t* mo)
                     {
                         mo->tracer = mo->target;
                     }
-                    mo->target = BlockingMobj;
+                    mo->target = tmBlockingMobj;
 
                     return;
                 }
@@ -1002,7 +1002,7 @@ void P_MobjThinker(void *thinkerPtr)
     P_UpdateHealthBits(mobj);
 
     // Handle X and Y momentums
-    BlockingMobj = NULL;
+    tmBlockingMobj = NULL;
     if(!FEQUAL(mobj->mom[MX], 0) || !FEQUAL(mobj->mom[MY], 0) ||
        (mobj->flags & MF_SKULLFLY))
     {
@@ -1030,7 +1030,7 @@ void P_MobjThinker(void *thinkerPtr)
             mobj->floorClip = -MAX_BOB_OFFSET;
         }
     }
-    else if(!FEQUAL(mobj->origin[VZ], mobj->floorZ) || !FEQUAL(mobj->mom[MZ], 0) || BlockingMobj)
+    else if(!FEQUAL(mobj->origin[VZ], mobj->floorZ) || !FEQUAL(mobj->mom[MZ], 0) || tmBlockingMobj)
     {
         // Handle Z momentum and gravity
         if(mobj->flags2 & MF2_PASSMOBJ)
