@@ -2929,11 +2929,6 @@ mobj_t *P_CheckOnMobj(mobj_t *mo)
 
     if(!(mo->flags & MF_NOCLIP))
     {
-        // Check things first, possibly picking things up the bounding box is
-        // extended by MAXRADIUS because mobj_ts are grouped into mapblocks
-        // based on their origin point, and can overlap into adjacent blocks by
-        // up to MAXRADIUS.
-
         AABoxd aaBox(mo->origin[VX] - mo->radius - MAXRADIUS, mo->origin[VY] - mo->radius - MAXRADIUS,
                      mo->origin[VX] + mo->radius + MAXRADIUS, mo->origin[VY] + mo->radius + MAXRADIUS);
 
