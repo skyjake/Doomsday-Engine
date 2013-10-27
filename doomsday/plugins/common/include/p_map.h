@@ -121,6 +121,14 @@ boolean P_TeleportMove(mobj_t *thing, coord_t x, coord_t y, boolean alwaysStomp)
 
 void P_TelefragMobjsTouchingPlayers(void);
 
+/**
+ * @todo The momx / momy move is bad, so try to slide along a wall.
+ * Find the first line hit, move flush to it, and slide along it
+ *
+ * This is a kludgy mess.
+ *
+ * @param mo  The mobj to attempt the slide move.
+ */
 void P_SlideMove(mobj_t *mo);
 
 /**
@@ -132,8 +140,8 @@ void P_UseLines(player_t *player);
 
 /**
  * @param sector  The sector to check.
- * @param crush  Hexen: amount of crush damage to apply.
- *               Other games: apply fixed crush damage if @c > 0.
+ * @param crush   Hexen: amount of crush damage to apply.
+ *                Other games: apply fixed crush damage if @c > 0.
  */
 boolean P_ChangeSector(Sector *sector, int crush);
 

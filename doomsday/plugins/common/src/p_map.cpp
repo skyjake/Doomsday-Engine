@@ -153,7 +153,7 @@ struct pit_stompthing_params_t
 };
 
 /// @return  Non-zero when the first unstompable mobj is found; otherwise @c 0.
-int PIT_StompThing(mobj_t *mo, void *context)
+static int PIT_StompThing(mobj_t *mo, void *context)
 {
     pit_stompthing_params_t &parm = *static_cast<pit_stompthing_params_t *>(context);
 
@@ -204,7 +204,9 @@ boolean P_TeleportMove(mobj_t *mobj, coord_t x, coord_t y, boolean alwaysStomp)
 
     VALIDCOUNT++;
     if(Mobj_BoxIterator(&box, PIT_StompThing, &parm))
+    {
         return false;
+    }
 
     // The destination is clear.
     P_MobjUnlink(mobj);
@@ -243,7 +245,7 @@ struct pit_crossline_params_t
     vec2d_t destination; ///< Would-be destination point.
 };
 
-int PIT_CrossLine(Line *line, void *context)
+static int PIT_CrossLine(Line *line, void *context)
 {
     pit_crossline_params_t &parm = *static_cast<pit_crossline_params_t *>(context);
 
@@ -333,16 +335,9 @@ static int untouched(Line *line, mobj_t *mobj)
 }
 #endif
 
-int PIT_CheckThing(mobj_t* thing, void * /*context*/)
+static int PIT_CheckThing(mobj_t *thing, void * /*context*/)
 {
-    int damage;
-    coord_t blockdist;
-    boolean solid;
-#if !__JHEXEN__
-    boolean overlap = false;
-#endif
-
-    // Don't clip against self.
+    // Don't clip against oneself.
     if(thing == tmThing)
     {
         return false;
@@ -364,18 +359,21 @@ int PIT_CheckThing(mobj_t* thing, void * /*context*/)
 
 #if !__JHEXEN__
     // Player only.
+    boolean overlap = false;
     if(tmThing->player && !FEQUAL(tm[VZ], DDMAXFLOAT) &&
        (cfg.moveCheckZ || (tmThing->flags2 & MF2_PASSMOBJ)))
     {
         if((thing->origin[VZ] > tm[VZ] + tmThing->height) ||
            (thing->origin[VZ] + thing->height < tm[VZ]))
+        {
             return false; // Under or over it.
+        }
 
         overlap = true;
     }
 #endif
 
-    blockdist = thing->radius + tmThing->radius;
+    coord_t blockdist = thing->radius + tmThing->radius;
     if(fabs(thing->origin[VX] - tm[VX]) >= blockdist ||
        fabs(thing->origin[VY] - tm[VY]) >= blockdist)
     {
@@ -432,7 +430,9 @@ int PIT_CheckThing(mobj_t* thing, void * /*context*/)
         {
             if(tmThing->origin[VZ] > thing->origin[VZ] + thing->height ||
                tmThing->origin[VZ] + tmThing->height < thing->origin[VZ])
+            {
                 return false; // Over/under thing.
+            }
         }
     }
 
@@ -440,7 +440,8 @@ int PIT_CheckThing(mobj_t* thing, void * /*context*/)
     if((tmThing->flags & MF_SKULLFLY) && (thing->flags & MF_SOLID))
     {
 #if __JHEXEN__
-        tmBlockingMobj = NULL;
+        tmBlockingMobj = 0;
+
         if(tmThing->type == MT_MINOTAUR)
         {
             // Slamming minotaurs shouldn't move non-creatures.
@@ -454,7 +455,9 @@ int PIT_CheckThing(mobj_t* thing, void * /*context*/)
             if((thing->flags & MF_SHOOTABLE) && thing != tmThing->target)
             {
                 if(IS_NETGAME && !deathmatch && thing->player)
+                {
                     return false; // don't attack other co-op players
+                }
 
                 if((thing->flags2 & MF2_REFLECTIVE) &&
                    (thing->player || (thing->flags2 & MF2_BOSS)))
@@ -471,7 +474,7 @@ int PIT_CheckThing(mobj_t* thing, void * /*context*/)
 
                 if(P_Random() < 96)
                 {
-                    damage = 12;
+                    int damage = 12;
                     if(thing->player || (thing->flags2 & MF2_BOSS))
                     {
                         damage = 3;
@@ -482,9 +485,9 @@ int PIT_CheckThing(mobj_t* thing, void * /*context*/)
                     P_DamageMobj(thing, tmThing, tmThing->target, damage, false);
                     if(P_Random() < 128)
                     {
-                        P_SpawnMobj(MT_HOLY_PUFF, tmThing->origin,
-                                       P_Random() << 24, 0);
+                        P_SpawnMobj(MT_HOLY_PUFF, tmThing->origin, P_Random() << 24, 0);
                         S_StartSound(SFX_SPIRIT_ATTACK, tmThing);
+
                         if((thing->flags & MF_COUNTKILL) && P_Random() < 128 &&
                            !S_IsPlaying(SFX_PUPPYBEAT, thing))
                         {
@@ -499,25 +502,26 @@ int PIT_CheckThing(mobj_t* thing, void * /*context*/)
                 }
 
                 if(thing->health <= 0)
-                    tmThing->tracer = NULL;
+                {
+                    tmThing->tracer = 0;
+                }
             }
+
             return false;
         }
 #endif
+
+        int damage = tmThing->damage;
 #if __JDOOM__
         /// @attention Kludge:
         /// Older save versions did not serialize the damage property,
         /// so here we take the damage from the current Thing definition.
         /// @fixme Do this during map state deserialization.
-        if(tmThing->damage == DDMAXINT)
+        if(damage == DDMAXINT)
         {
             damage = tmThing->info->damage;
         }
-        else
 #endif
-        {
-            damage = tmThing->damage;
-        }
 
         damage *= (P_Random() % 8) + 1;
         P_DamageMobj(thing, tmThing, tmThing, damage, false);
@@ -547,11 +551,11 @@ int PIT_CheckThing(mobj_t* thing, void * /*context*/)
 
             if((thing->mom[MX] + thing->mom[MY]) > 3)
             {
-                damage = (tmThing->info->mass / 100) + 1;
-                P_DamageMobj(thing, tmThing, tmThing, damage, false);
+                P_DamageMobj(thing, tmThing, tmThing,
+                             (tmThing->info->mass / 100) + 1, false);
 
-                damage = (thing->info->mass / 100) + 1;
-                P_DamageMobj(tmThing, thing, thing, damage >> 2, false);
+                P_DamageMobj(tmThing, thing, thing,
+                             ((thing->info->mass / 100) + 1) >> 2, false);
             }
 
             return true;
@@ -577,11 +581,8 @@ int PIT_CheckThing(mobj_t* thing, void * /*context*/)
 #endif
 
         // See if it went over / under.
-        if(tmThing->origin[VZ] > thing->origin[VZ] + thing->height)
-        {
-            return false;
-        }
-        if(tmThing->origin[VZ] + tmThing->height < thing->origin[VZ])
+        if(tmThing->origin[VZ] > thing->origin[VZ] + thing->height ||
+           tmThing->origin[VZ] + tmThing->height < thing->origin[VZ])
         {
             return false;
         }
@@ -592,8 +593,7 @@ int PIT_CheckThing(mobj_t* thing, void * /*context*/)
             return !(tmThing->target == thing || !(thing->flags & MF_SOLID));
         }
 
-        if(tmThing->type == MT_LIGHTNING_FLOOR ||
-           tmThing->type == MT_LIGHTNING_CEILING)
+        if(tmThing->type == MT_LIGHTNING_FLOOR || tmThing->type == MT_LIGHTNING_CEILING)
         {
             if((thing->flags & MF_SHOOTABLE) && thing != tmThing->target)
             {
@@ -608,9 +608,9 @@ int PIT_CheckThing(mobj_t* thing, void * /*context*/)
                 if((!thing->player && !(thing->flags2 & MF2_BOSS)) ||
                    !(mapTime & 1))
                 {
+                    // Lightning does more damage to centaurs.
                     if(thing->type == MT_CENTAUR || thing->type == MT_CENTAURLEADER)
                     {
-                        // Lightning does more damage to centaurs.
                         P_DamageMobj(thing, tmThing, tmThing->target, 9, false);
                     }
                     else
@@ -618,7 +618,7 @@ int PIT_CheckThing(mobj_t* thing, void * /*context*/)
                         P_DamageMobj(thing, tmThing, tmThing->target, 3, false);
                     }
 
-                    if(!(S_IsPlaying(SFX_MAGE_LIGHTNING_ZAP, tmThing)))
+                    if(!S_IsPlaying(SFX_MAGE_LIGHTNING_ZAP, tmThing))
                     {
                         S_StartSound(SFX_MAGE_LIGHTNING_ZAP, tmThing);
                     }
@@ -643,8 +643,7 @@ int PIT_CheckThing(mobj_t* thing, void * /*context*/)
 
                 if(tmThing->type == MT_LIGHTNING_FLOOR)
                 {
-                    if(tmThing->lastEnemy &&
-                       !tmThing->lastEnemy->tracer)
+                    if(tmThing->lastEnemy && !tmThing->lastEnemy->tracer)
                     {
                         tmThing->lastEnemy->tracer = thing;
                     }
@@ -657,31 +656,29 @@ int PIT_CheckThing(mobj_t* thing, void * /*context*/)
 
             return false; // Lightning zaps through all sprites.
         }
-        else if(tmThing->type == MT_LIGHTNING_ZAP)
+
+        if(tmThing->type == MT_LIGHTNING_ZAP)
         {
-            mobj_t *lmo;
-
-            if((thing->flags & MF_SHOOTABLE) && thing != tmThing->target)
+            if((thing->flags & MF_SHOOTABLE) && thing != tmThing->target &&
+               tmThing->lastEnemy)
             {
-                lmo = tmThing->lastEnemy;
-                if(lmo)
-                {
-                    if(lmo->type == MT_LIGHTNING_FLOOR)
-                    {
-                        if(lmo->lastEnemy && !lmo->lastEnemy->tracer)
-                        {
-                            lmo->lastEnemy->tracer = thing;
-                        }
-                    }
-                    else if(!lmo->tracer)
-                    {
-                        lmo->tracer = thing;
-                    }
+                mobj_t *lmo = tmThing->lastEnemy;
 
-                    if(!(mapTime & 3))
+                if(lmo->type == MT_LIGHTNING_FLOOR)
+                {
+                    if(lmo->lastEnemy && !lmo->lastEnemy->tracer)
                     {
-                        lmo->health--;
+                        lmo->lastEnemy->tracer = thing;
                     }
+                }
+                else if(!lmo->tracer)
+                {
+                    lmo->tracer = thing;
+                }
+
+                if(!(mapTime & 3))
+                {
+                    lmo->health--;
                 }
             }
         }
@@ -715,11 +712,15 @@ int PIT_CheckThing(mobj_t* thing, void * /*context*/)
 #endif
         {
             if(thing == tmThing->target)
+            {
                 return false;
+            }
 
 #if __JHEXEN__
             if(!thing->player)
+            {
                 return true; // Hit same species as originator, explode, no damage
+            }
 #else
             if(!monsterInfight && thing->type != MT_PLAYER)
             {
@@ -752,22 +753,19 @@ int PIT_CheckThing(mobj_t* thing, void * /*context*/)
             S_StartSound(SFX_RIPSLOP, tmThing);
 #endif
 
+            int damage = tmThing->damage;
 #if __JDOOM__
             /// @attention Kludge:
             /// Older save versions did not serialize the damage property,
             /// so here we take the damage from the current Thing definition.
             /// @fixme Do this during map state deserialization.
-            if(tmThing->damage == DDMAXINT)
+            if(damage == DDMAXINT)
             {
                 damage = tmThing->info->damage;
             }
-            else
 #endif
-            {
-                damage = tmThing->damage;
-            }
-            damage *= (P_Random() & 3) + 2;
 
+            damage *= (P_Random() & 3) + 2;
             P_DamageMobj(thing, tmThing, tmThing->target, damage, false);
 
             if((thing->flags2 & MF2_PUSHABLE) && !(tmThing->flags2 & MF2_CANNOTPUSH))
@@ -783,6 +781,7 @@ int PIT_CheckThing(mobj_t* thing, void * /*context*/)
         }
 
         // Do damage
+        int damage = tmThing->damage;
 #if __JDOOM__
         /// @attention Kludge:
         /// Older save versions did not serialize the damage property,
@@ -792,13 +791,9 @@ int PIT_CheckThing(mobj_t* thing, void * /*context*/)
         {
             damage = tmThing->info->damage;
         }
-        else
 #endif
-        {
-            damage = tmThing->damage;
-        }
-        damage *= (P_Random() % 8) + 1;
 
+        damage *= (P_Random() % 8) + 1;
 #if __JDOOM__ || __JDOOM64__
         P_DamageMobj(thing, tmThing, tmThing->target, damage, false);
 #else
@@ -823,6 +818,7 @@ int PIT_CheckThing(mobj_t* thing, void * /*context*/)
             P_DamageMobj(thing, tmThing, tmThing->target, damage, false);
         }
 #endif
+
         // Don't traverse anymore.
         return true;
     }
@@ -836,6 +832,7 @@ int PIT_CheckThing(mobj_t* thing, void * /*context*/)
     }
 
     // @fixme Kludge: Always treat blood as a solid.
+    boolean solid;
     if(tmThing->type == MT_BLOOD)
     {
         solid = true;
@@ -900,14 +897,14 @@ int PIT_CheckThing(mobj_t* thing, void * /*context*/)
 /**
  * Adjusts tmFloorZ and tmCeilingZ as lines are contacted.
  */
-int PIT_CheckLine(Line *ld, void * /*context*/)
+static int PIT_CheckLine(Line *ld, void * /*context*/)
 {
     AABoxd const *aaBox = (AABoxd *)P_GetPtrp(ld, DMU_BOUNDING_BOX);
-    if(tmBox.minX >= aaBox->maxX ||
-       tmBox.minY >= aaBox->maxY ||
-       tmBox.maxX <= aaBox->minX ||
-       tmBox.maxY <= aaBox->minY)
+    if(tmBox.minX >= aaBox->maxX || tmBox.minY >= aaBox->maxY ||
+       tmBox.maxX <= aaBox->minX || tmBox.maxY <= aaBox->minY)
+    {
         return false;
+    }
 
     /*
      * Real player mobjs are allowed to use high-precision, non-vanilla
@@ -982,14 +979,10 @@ int PIT_CheckLine(Line *ld, void * /*context*/)
 #if __JHERETIC__
     if(!P_GetPtrp(ld, DMU_BACK_SECTOR)) // one sided line
     {
-        // One sided line
-        if(tmThing->flags & MF_MISSILE)
+        // Missiles can trigger impact specials
+        if((tmThing->flags & MF_MISSILE) && xline->special)
         {
-            // Missiles can trigger impact specials
-            if(xline->special)
-            {
-                IterList_PushBack(spechit, ld);
-            }
+            IterList_PushBack(spechit, ld);
         }
         return true;
     }
@@ -1023,7 +1016,7 @@ int PIT_CheckLine(Line *ld, void * /*context*/)
            (xline->flags & ML_BLOCKMONSTERS))
 #else
         if(!tmThing->player &&
-            (xline->flags & ML_BLOCKMONSTERS))
+           (xline->flags & ML_BLOCKMONSTERS))
 #endif
         {
 #if __JHEXEN__
@@ -1037,13 +1030,10 @@ int PIT_CheckLine(Line *ld, void * /*context*/)
     }
 
 #if __JDOOM64__
-    if((tmThing->flags & MF_MISSILE))
+    if((tmThing->flags & MF_MISSILE) && (xline->flags & ML_BLOCKALL))
     {
-        if(xline->flags & ML_BLOCKALL) // Explicitly blocking everything.
-        {
-            // $unstuck: allow escape.
-            return !(tmUnstuck && !untouched(ld, tmThing));
-        }
+        // $unstuck: allow escape.
+        return !(tmUnstuck && !untouched(ld, tmThing));
     }
 #endif
 
@@ -1109,7 +1099,7 @@ boolean P_CheckPositionXYZ(mobj_t *thing, coord_t x, coord_t y, coord_t z)
 #if __JHEXEN__
     tmFloorMaterial = (Material *)P_GetPtrp(newSector, DMU_FLOOR_MATERIAL);
 #else
-    tmBlockingLine       = 0;
+    tmBlockingLine  = 0;
     tmUnstuck       = Mobj_IsPlayer(thing) && !Mobj_IsVoodooDoll(thing);
 #endif
 
@@ -1119,27 +1109,32 @@ boolean P_CheckPositionXYZ(mobj_t *thing, coord_t x, coord_t y, coord_t z)
     {
 #if __JHEXEN__
         if(!(tmThing->flags & MF_SKULLFLY))
+        {
             return true;
+        }
 #else
         return true;
 #endif
     }
 
-    // Check things first, possibly picking things up the bounding box is
-    // extended by MAXRADIUS because mobj_ts are grouped into mapblocks
-    // based on their origin point, and can overlap into adjacent blocks by
-    // up to MAXRADIUS units.
-    AABoxd tmBoxExpanded(tmBox.minX - MAXRADIUS, tmBox.minY - MAXRADIUS,
-                         tmBox.maxX + MAXRADIUS, tmBox.maxY + MAXRADIUS);
-
     VALIDCOUNT++;
+
+    // Check things first, possibly picking things up;
+#if __JHEXEN__
+    tmBlockingMobj = 0;
+#endif
 
     // The camera goes through all objects.
     if(!P_MobjIsCamera(thing))
     {
-#if __JHEXEN__
-        tmBlockingMobj = 0;
-#endif
+        /*
+         * The bounding box is extended by MAXRADIUS because mobj_ts are grouped
+         * into mapblocks based on their origin point and can overlap adjacent
+         * blocks by up to MAXRADIUS units.
+         */
+        AABoxd tmBoxExpanded(tmBox.minX - MAXRADIUS, tmBox.minY - MAXRADIUS,
+                             tmBox.maxX + MAXRADIUS, tmBox.maxY + MAXRADIUS);
+
         if(Mobj_BoxIterator(&tmBoxExpanded, PIT_CheckThing, 0))
         {
             return false;
@@ -1148,10 +1143,12 @@ boolean P_CheckPositionXYZ(mobj_t *thing, coord_t x, coord_t y, coord_t z)
 #if _DEBUG
         VERBOSE2(
             if(thing->onMobj)
+            {
                 Con_Message("thing->onMobj = %p/%i (solid:%i) [thing:%p/%i]", thing->onMobj,
                             thing->onMobj->thinker.id,
                             (thing->onMobj->flags & MF_SOLID)!=0,
-                            thing, thing->thinker.id)
+                            thing, thing->thinker.id);
+            }
         );
 #endif
     }
@@ -1164,12 +1161,11 @@ boolean P_CheckPositionXYZ(mobj_t *thing, coord_t x, coord_t y, coord_t z)
 #endif
 
     // Check lines.
-    tmBoxExpanded = tmBox;
 #if __JHEXEN__
-    tmBlockingMobj  = 0;
+    tmBlockingMobj = 0;
 #endif
 
-    return !Line_BoxIterator(&tmBoxExpanded, LIF_ALL, PIT_CheckLine, 0);
+    return !Line_BoxIterator(&tmBox, LIF_ALL, PIT_CheckLine, 0);
 }
 
 boolean P_CheckPosition(mobj_t *thing, coord_t const pos[3])
@@ -1531,9 +1527,9 @@ static boolean P_TryMove2(mobj_t *thing, coord_t x, coord_t y, boolean dropoff)
 }
 
 #if __JHEXEN__
-boolean P_TryMoveXY(mobj_t* thing, coord_t x, coord_t y)
+boolean P_TryMoveXY(mobj_t *thing, coord_t x, coord_t y)
 #else
-boolean P_TryMoveXY(mobj_t* thing, coord_t x, coord_t y, boolean dropoff, boolean slide)
+boolean P_TryMoveXY(mobj_t *thing, coord_t x, coord_t y, boolean dropoff, boolean slide)
 #endif
 {
 #if __JHEXEN__
@@ -1678,7 +1674,7 @@ struct ptr_shoottraverse_params_t
  * @todo This routine has gotten way too big, split if(in->isaline)
  *       to a seperate routine?
  */
-int PTR_ShootTraverse(Intercept const *icpt, void *context)
+static int PTR_ShootTraverse(Intercept const *icpt, void *context)
 {
     vec3d_t const tracePos = {
         Interceptor_Origin(icpt->trace)[VX], Interceptor_Origin(icpt->trace)[VY], shootZ
@@ -1975,7 +1971,7 @@ int PTR_ShootTraverse(Intercept const *icpt, void *context)
 /**
  * Sets linetarget and aimSlope when a target is aimed at.
  */
-int PTR_AimTraverse(Intercept const *icpt, void * /*context*/)
+static int PTR_AimTraverse(Intercept const *icpt, void * /*context*/)
 {
     vec3d_t const tracePos = {
         Interceptor_Origin(icpt->trace)[VX], Interceptor_Origin(icpt->trace)[VY], shootZ
@@ -2114,17 +2110,20 @@ float P_AimLineAttack(mobj_t *t1, angle_t angle, coord_t distance)
 #endif
     {
         if(!(t1->player->plr->flags & DDPF_CAMERA))
+        {
             shootZ += (cfg.plrViewHeight - 5);
+        }
     }
     else
     {
         shootZ += (t1->height / 2) + 8;
     }
+    /// @todo What about t1->floorClip ? -ds
 
     topSlope    = 100.0/160;
     bottomSlope = -100.0/160;
     attackRange = distance;
-    lineTarget  = NULL;
+    lineTarget  = 0;
     shootThing  = t1;
 
     P_PathTraverse(t1->origin, target, PTR_AimTraverse, 0);
@@ -2133,7 +2132,9 @@ float P_AimLineAttack(mobj_t *t1, angle_t angle, coord_t distance)
     {
         // While autoaiming, we accept this slope.
         if(!t1->player || !cfg.noAutoAim)
+        {
             return aimSlope;
+        }
     }
 
     if(t1->player && cfg.noAutoAim)
@@ -2165,7 +2166,9 @@ void P_LineAttack(mobj_t *t1, angle_t angle, coord_t distance, coord_t slope, in
 #endif
     {
         if(!(t1->player->plr->flags & DDPF_CAMERA))
+        {
             shootZ += cfg.plrViewHeight - 5;
+        }
     }
     else
     {
@@ -2219,12 +2222,14 @@ struct pit_radiusattack_params_t
 #endif
 };
 
-int PIT_RadiusAttack(mobj_t *thing, void *context)
+static int PIT_RadiusAttack(mobj_t *thing, void *context)
 {
     pit_radiusattack_params_t &parm = *static_cast<pit_radiusattack_params_t *>(context);
 
     if(!(thing->flags & MF_SHOOTABLE))
+    {
         return false;
+    }
 
     // Boss spider and cyborg take no damage from concussion.
 #if __JHERETIC__
@@ -2241,7 +2246,9 @@ int PIT_RadiusAttack(mobj_t *thing, void *context)
 #if __JHEXEN__
     // Is the source of the explosion immune to damage?
     if(thing == parm.source && !parm.afflictSource)
+    {
         return false;
+    }
 #endif
 
     vec3d_t delta = { fabs(thing->origin[VX] - parm.bomb->origin[VX]),
@@ -2311,34 +2318,34 @@ void P_RadiusAttack(mobj_t *bomb, mobj_t *source, int damage, int distance)
     Mobj_BoxIterator(&box, PIT_RadiusAttack, &parm);
 }
 
-int PTR_UseTraverse(Intercept const *icpt, void *context)
+static int PTR_UseTraverse(Intercept const *icpt, void *context)
 {
     DENG_ASSERT(icpt->type == ICPT_LINE);
 
-    mobj_t *useThing = static_cast<mobj_t *>(context);
+    mobj_t *activator = static_cast<mobj_t *>(context);
 
     xline_t *xline = P_ToXLine(icpt->line);
     if(!xline->special)
     {
         if(!Interceptor_AdjustOpening(icpt->trace, icpt->line))
         {
-            if(useThing->player)
+            if(Mobj_IsPlayer(activator))
             {
-                S_StartSound(PCLASS_INFO(useThing->player->class_)->failUseSound, useThing);
+                S_StartSound(PCLASS_INFO(activator->player->class_)->failUseSound, activator);
             }
 
             return true; // Can't use through a wall.
         }
 
 #if __JHEXEN__
-        if(useThing->player)
+        if(Mobj_IsPlayer(activator))
         {
-            coord_t pheight = useThing->origin[VZ] + useThing->height/2;
+            coord_t pheight = activator->origin[VZ] + activator->height/2;
 
             if(Interceptor_Opening(icpt->trace)->top < pheight ||
                Interceptor_Opening(icpt->trace)->bottom > pheight)
             {
-                S_StartSound(PCLASS_INFO(useThing->player->class_)->failUseSound, useThing);
+                S_StartSound(PCLASS_INFO(activator->player->class_)->failUseSound, activator);
             }
         }
 #endif
@@ -2346,17 +2353,20 @@ int PTR_UseTraverse(Intercept const *icpt, void *context)
         return false;
     }
 
-    int side = Line_PointOnSide(icpt->line, useThing->origin) < 0;
+    int side = Line_PointOnSide(icpt->line, activator->origin) < 0;
 
 #if __JHERETIC__ || __JHEXEN__
     if(side == 1) return true; // Don't use back side.
 #endif
 
-    P_ActivateLine(icpt->line, useThing, side, SPAC_USE);
+    P_ActivateLine(icpt->line, activator, side, SPAC_USE);
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     // Can use multiple line specials in a row with the PassThru flag.
-    if(xline->flags & ML_PASSUSE) return false;
+    if(xline->flags & ML_PASSUSE)
+    {
+        return false;
+    }
 #endif
 
     // Can't use more than one special line in a row.
@@ -2398,10 +2408,13 @@ void P_UseLines(player_t *player)
  *
  * @return  @c true iff the thing did fit.
  */
-static boolean P_ThingHeightClip(mobj_t *thing)
+static boolean heightClip(mobj_t *thing)
 {
     // Don't height clip cameras.
-    if(P_MobjIsCamera(thing)) return false;
+    if(P_MobjIsCamera(thing))
+    {
+        return false;
+    }
 
     bool const onfloor = (thing->origin[VZ] == thing->floorZ);
 
@@ -2455,7 +2468,7 @@ static boolean P_ThingHeightClip(mobj_t *thing)
  *
  * @param line  The line being slid along.
  */
-static void P_HitSlideLine(mobj_t *slideMo, Line *line, pvec2d_t move)
+static void hitSlideLine(mobj_t *slideMo, Line *line, pvec2d_t move)
 {
     DENG_ASSERT(slideMo != 0 && line != 0);
 
@@ -2495,7 +2508,7 @@ struct ptr_slidetraverse_params_t
     coord_t bestDistance;
 };
 
-int PTR_SlideTraverse(Intercept const *icpt, void *context)
+static int PTR_SlideTraverse(Intercept const *icpt, void *context)
 {
     DENG_ASSERT(icpt->type == ICPT_LINE);
 
@@ -2543,14 +2556,6 @@ int PTR_SlideTraverse(Intercept const *icpt, void *context)
     return true; // Stop.
 }
 
-/**
- * @todo The momx / momy move is bad, so try to slide along a wall.
- * Find the first line hit, move flush to it, and slide along it
- *
- * This is a kludgy mess.
- *
- * @param mo            The mobj to attempt the slide move.
- */
 void P_SlideMove(mobj_t *mo)
 {
     if(!mo) return; // Huh?
@@ -2647,7 +2652,7 @@ void P_SlideMove(mobj_t *mo)
         V2d_Set(tmMove, mo->mom[VX] * parm.bestDistance,
                         mo->mom[VY] * parm.bestDistance);
 
-        P_HitSlideLine(mo, parm.bestLine, tmMove); // Clip the move.
+        hitSlideLine(mo, parm.bestLine, tmMove); // Clip the move.
 
         V2d_Copy(mo->mom, tmMove);
 
@@ -2686,7 +2691,7 @@ struct pit_changesector_params_t
     bool noFit;
 };
 
-int PIT_ChangeSector(mobj_t *thing, void *context)
+static int PIT_ChangeSector(mobj_t *thing, void *context)
 {
     pit_changesector_params_t &parm = *static_cast<pit_changesector_params_t *>(context);
 
@@ -2698,7 +2703,7 @@ int PIT_ChangeSector(mobj_t *thing, void *context)
         return false;
     }
 
-    if(P_ThingHeightClip(thing))
+    if(heightClip(thing))
     {
         return false; // Keep checking...
     }
@@ -2825,7 +2830,7 @@ boolean P_TestMobjLocation(mobj_t *mo)
 #endif
 
 #if __JHEXEN__
-int PIT_ThrustStompThing(mobj_t *thing, void *context)
+static int PIT_ThrustStompThing(mobj_t *thing, void *context)
 {
     mobj_t *tsThing = static_cast<mobj_t *>(context);
 
@@ -3046,8 +3051,9 @@ mobj_t *P_CheckOnMobj(mobj_t *mo)
 
     if(!(mo->flags & MF_NOCLIP))
     {
-        AABoxd aaBox(mo->origin[VX] - mo->radius - MAXRADIUS, mo->origin[VY] - mo->radius - MAXRADIUS,
-                     mo->origin[VX] + mo->radius + MAXRADIUS, mo->origin[VY] + mo->radius + MAXRADIUS);
+        int blockdist = mo->radius - MAXRADIUS;
+        AABoxd aaBox(mo->origin[VX] - blockdist, mo->origin[VY] - blockdist,
+                     mo->origin[VX] + blockdist, mo->origin[VY] + blockdist);
 
         pit_checkonmobjz_params_t parm;
         parm.riderMobj = mo;
@@ -3076,7 +3082,7 @@ struct ptr_boucetraverse_params_t
     coord_t bestDistance;
 };
 
-int PTR_BounceTraverse(Intercept const *icpt, void *context)
+static int PTR_BounceTraverse(Intercept const *icpt, void *context)
 {
     DENG_ASSERT(icpt->type == ICPT_LINE);
 
@@ -3086,7 +3092,9 @@ int PTR_BounceTraverse(Intercept const *icpt, void *context)
     if(!P_GetPtrp(line, DMU_FRONT_SECTOR) || !P_GetPtrp(line, DMU_BACK_SECTOR))
     {
         if(Line_PointOnSide(line, parm.bounceMobj->origin) < 0)
+        {
             return false; // Don't hit the back side.
+        }
 
         goto bounceblocking;
     }
@@ -3094,10 +3102,13 @@ int PTR_BounceTraverse(Intercept const *icpt, void *context)
     Interceptor_AdjustOpening(icpt->trace, line);
 
     if(Interceptor_Opening(icpt->trace)->range < parm.bounceMobj->height)
+    {
         goto bounceblocking; // Doesn't fit.
-
+    }
     if(Interceptor_Opening(icpt->trace)->top - parm.bounceMobj->origin[VZ] < parm.bounceMobj->height)
+    {
         goto bounceblocking; // Mobj is too high...
+    }
 
     return false; // This line doesn't block movement...
 
@@ -3172,7 +3183,7 @@ struct ptr_puzzleitemtraverse_params_t
     bool activated;
 };
 
-int PTR_PuzzleItemTraverse(Intercept const *icpt, void *context)
+static int PTR_PuzzleItemTraverse(Intercept const *icpt, void *context)
 {
     int const USE_PUZZLE_ITEM_SPECIAL = 129;
 
@@ -3195,10 +3206,14 @@ int PTR_PuzzleItemTraverse(Intercept const *icpt, void *context)
         }
 
         if(Line_PointOnSide(icpt->line, parm.useMobj->origin) < 0)
+        {
             return true; // Don't use back sides.
+        }
 
         if(parm.itemType != xline->arg1)
+        {
             return true; // Item type doesn't match.
+        }
 
         P_StartACS(xline->arg2, 0, &xline->arg3, parm.useMobj, icpt->line, 0);
         xline->special = 0;
@@ -3210,10 +3225,14 @@ int PTR_PuzzleItemTraverse(Intercept const *icpt, void *context)
 
     case ICPT_MOBJ:
         if(icpt->mobj->special != USE_PUZZLE_ITEM_SPECIAL)
+        {
             return false; // Wrong special...
+        }
 
         if(parm.itemType != icpt->mobj->args[0])
+        {
             return false; // Item type doesn't match...
+        }
 
         P_StartACS(icpt->mobj->args[1], 0, &icpt->mobj->args[2], parm.useMobj, NULL, 0);
         icpt->mobj->special = 0;
