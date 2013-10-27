@@ -24,19 +24,21 @@
 
 #include "common.h"
 
-DENG_EXTERN_C coord_t attackRange;
+/// @c true= move would be ok if within "tmFloorZ - tmCeilingZ".
+DENG_EXTERN_C boolean tmFloatOk;
 
-// If "floatOk" true, move would be ok if within "tmFloorZ - tmCeilingZ".
-DENG_EXTERN_C boolean floatOk;
 DENG_EXTERN_C coord_t tmFloorZ;
 DENG_EXTERN_C coord_t tmCeilingZ;
-DENG_EXTERN_C boolean fellDown;
+DENG_EXTERN_C boolean tmFellDown;
+DENG_EXTERN_C Line *tmCeilingLine, *tmFloorLine;
 
-DENG_EXTERN_C Line *ceilingLine, *floorLine;
 DENG_EXTERN_C mobj_t *lineTarget; // Who got hit (or NULL).
 DENG_EXTERN_C Line *blockLine;
-#if __JHEXEN__
 DENG_EXTERN_C mobjtype_t PuffType;
+#if __JDOOM__ || __JDOOM64__
+DENG_EXTERN_C boolean PuffNoSpark;
+#endif
+#if __JHEXEN__
 DENG_EXTERN_C mobj_t *PuffSpawned;
 DENG_EXTERN_C mobj_t *BlockingMobj;
 #endif
@@ -149,6 +151,10 @@ boolean P_ChangeSector(Sector *sector, int crush);
 void P_HandleSectorHeightChange(int sectorIdx);
 
 float P_AimLineAttack(mobj_t *t1, angle_t angle, coord_t distance);
+
+/**
+ * @param damage    @c 0= Perform a test trace that will leave lineTarget set.
+ */
 void P_LineAttack(mobj_t *t1, angle_t angle, coord_t distance, coord_t slope, int damage);
 
 coord_t P_GetGravity(void);

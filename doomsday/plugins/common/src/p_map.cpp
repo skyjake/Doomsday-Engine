@@ -37,53 +37,50 @@
 
 #include "p_map.h"
 
-#if __JHEXEN__
-#define USE_PUZZLE_ITEM_SPECIAL     129
-#endif
-
+/*
+ * Try move variables:
+ */
 static AABoxd tmBox;
 static mobj_t *tmThing;
-
-// If "floatOk" true, move would be ok if within "tmFloorZ - tmCeilingZ".
-boolean floatOk;
-
+boolean tmFloatOk; ///< @c true= move would be ok if within "tmFloorZ - tmCeilingZ".
 coord_t tmFloorZ;
 coord_t tmCeilingZ;
 #if __JHEXEN__
 static Material *tmFloorMaterial;
 #endif
-
-boolean fellDown; // $dropoff_fix
-
-// The following is used to keep track of the lines that clip the open
-// height range e.g. PIT_CheckLine. They in turn are used with the &unstuck
-// logic and to prevent missiles from exploding against sky hack walls.
-Line *ceilingLine;
-Line *floorLine;
-
-mobj_t *lineTarget; // Who got hit (or NULL).
-Line *blockLine; // $unstuck: blocking line
-
-coord_t attackRange;
-
-#if __JHEXEN__
-mobjtype_t PuffType;
-mobj_t *PuffSpawned;
-mobj_t *BlockingMobj;
-#endif
-
+boolean tmFellDown; // $dropoff_fix
 static coord_t tm[3];
 static coord_t tmDropoffZ;
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-static coord_t tmHeight;
 static Line *tmHitLine;
 static int tmUnstuck; ///< $unstuck: used to check unsticking
 #endif
 
+// The following is used to keep track of the lines that clip the open
+// height range e.g. PIT_CheckLine. They in turn are used with the &unstuck
+// logic and to prevent missiles from exploding against sky hack walls.
+Line *tmCeilingLine;
+Line *tmFloorLine;
+
+/*
+ * Line aim/attack variables:
+ */
+mobj_t *lineTarget; // Who got hit (or NULL).
+Line *blockLine; // $unstuck: blocking line
+
+static coord_t attackRange;
+
+mobjtype_t PuffType;
+#if __JDOOM__ || __JDOOM64__
+boolean PuffNoSpark;
+#endif
+#if __JHEXEN__
+mobj_t *PuffSpawned;
+mobj_t *BlockingMobj;
+#endif
+
 static coord_t shootZ; ///< Height if not aiming up or down.
 static mobj_t *shootThing;
-
-static int lineAttackDamage;
 
 static float aimSlope;
 static float topSlope, bottomSlope; ///< Slopes to top and bottom of target.
@@ -363,7 +360,7 @@ int PIT_CheckThing(mobj_t* thing, void* data)
     if(tmThing->player && !FEQUAL(tm[VZ], DDMAXFLOAT) &&
        (cfg.moveCheckZ || (tmThing->flags2 & MF2_PASSMOBJ)))
     {
-        if((thing->origin[VZ] > tm[VZ] + tmHeight) ||
+        if((thing->origin[VZ] > tm[VZ] + tmThing->height) ||
            (thing->origin[VZ] + thing->height < tm[VZ]))
             return false; // Under or over it.
 
@@ -1028,7 +1025,7 @@ int PIT_CheckLine(Line *ld, void * /*context*/)
     if(opening.top < tmCeilingZ)
     {
         tmCeilingZ = opening.top;
-        ceilingLine = ld;
+        tmCeilingLine = ld;
 #if !__JHEXEN__
         blockLine = ld;
 #endif
@@ -1037,7 +1034,7 @@ int PIT_CheckLine(Line *ld, void * /*context*/)
     if(opening.bottom > tmFloorZ)
     {
         tmFloorZ = opening.bottom;
-        floorLine = ld;
+        tmFloorLine = ld;
 #if !__JHEXEN__
         blockLine = ld;
 #endif
@@ -1072,14 +1069,13 @@ boolean P_CheckPositionXYZ(mobj_t *thing, coord_t x, coord_t y, coord_t z)
                              tm[VX] + tmThing->radius, tm[VY] + tmThing->radius);
 #if !__JHEXEN__
     tmHitLine       = 0;
-    tmHeight        = thing->height;
 #endif
 
     // The base floor/ceiling is from the BSP leaf that contains the point.
     // Any contacted lines the step closer together will adjust them.
     Sector *newSector = Sector_AtPoint_FixedPrecision(tm);
 
-    ceilingLine     = floorLine = 0;
+    tmCeilingLine     = tmFloorLine = 0;
     tmFloorZ        = tmDropoffZ = P_GetDoublep(newSector, DMU_FLOOR_HEIGHT);
     tmCeilingZ      = P_GetDoublep(newSector, DMU_CEILING_HEIGHT);
 #if __JHEXEN__
@@ -1197,10 +1193,10 @@ static boolean P_TryMove2(mobj_t *thing, coord_t x, coord_t y, boolean dropoff)
 {
     boolean const isRemotePlayer = Mobj_IsRemotePlayer(thing);
 
-    // $dropoff_fix: fellDown.
-    floatOk  = false;
+    // $dropoff_fix: tmFellDown.
+    tmFloatOk  = false;
 #if !__JHEXEN__
-    fellDown = false;
+    tmFellDown = false;
 #endif
 
 #if __JHEXEN__
@@ -1240,7 +1236,7 @@ static boolean P_TryMove2(mobj_t *thing, coord_t x, coord_t y, boolean dropoff)
             goto pushline;
         }
 
-        floatOk = true;
+        tmFloatOk = true;
 
         if(!(thing->flags & MF_TELEPORT) &&
            tmCeilingZ - thing->origin[VZ] < thing->height &&
@@ -1252,8 +1248,8 @@ static boolean P_TryMove2(mobj_t *thing, coord_t x, coord_t y, boolean dropoff)
 #else
         // Possibly allow escape if otherwise stuck.
         boolean ret = (tmUnstuck &&
-            !(ceilingLine && untouched(ceilingLine)) &&
-            !(floorLine   && untouched(floorLine)));
+            !(tmCeilingLine && untouched(tmCeilingLine)) &&
+            !(tmFloorLine   && untouched(tmFloorLine)));
 
         if(tmCeilingZ - tmFloorZ < thing->height)
         {
@@ -1261,7 +1257,7 @@ static boolean P_TryMove2(mobj_t *thing, coord_t x, coord_t y, boolean dropoff)
         }
 
         // Mobj must lower to fit.
-        floatOk = true;
+        tmFloatOk = true;
         if(!(thing->flags & MF_TELEPORT) && !(thing->flags2 & MF2_FLY) &&
            tmCeilingZ - thing->origin[VZ] < thing->height)
         {
@@ -1368,7 +1364,7 @@ static boolean P_TryMove2(mobj_t *thing, coord_t x, coord_t y, boolean dropoff)
                 }
                 else
                 {
-                    fellDown = !(thing->flags & MF_NOGRAVITY) && thing->origin[VZ] - floorZ > 24;
+                    tmFellDown = !(thing->flags & MF_NOGRAVITY) && thing->origin[VZ] - floorZ > 24;
                 }
             }
         }
@@ -1555,15 +1551,110 @@ boolean P_TryMoveXYZ(mobj_t* thing, coord_t x, coord_t y, coord_t z)
     return false;
 }
 
+static mobj_t *spawnPuff(coord_t x, coord_t y, coord_t z)
+{
+    angle_t const angle = P_Random() << 24;
+
+#if !__JHEXEN__
+    // Clients do not spawn puffs.
+    if(IS_CLIENT) return 0;
+#endif
+
+    mobjtype_t type = PuffType;
+#if __JHERETIC__
+    if(PuffType == MT_BLASTERPUFF1)
+    {
+        type = MT_BLASTERPUFF2;
+    }
+    else
+#endif
+    {
+        z += FIX2FLT((P_Random() - P_Random()) << 10);
+    }
+
+    mobj_t *puff = P_SpawnMobjXYZ(type, x, y, z, angle, 0);
+    if(puff)
+    {
+#if __JHEXEN__
+        if(lineTarget && puff->info->seeSound)
+        {
+            // Hit thing sound.
+            S_StartSound(puff->info->seeSound, puff);
+        }
+        else if(puff->info->attackSound)
+        {
+            S_StartSound(puff->info->attackSound, puff);
+        }
+
+        switch(PuffType)
+        {
+        case MT_PUNCHPUFF:  puff->mom[MZ] = 1;   break;
+        case MT_HAMMERPUFF: puff->mom[MZ] = .8f; break;
+
+        default: break;
+        }
+#elif __JHERETIC__
+        if(PuffType == MT_BLASTERPUFF1)
+        {
+            S_StartSound(SFX_BLSHIT, puff);
+        }
+        else
+        {
+            if(puff->info->attackSound)
+            {
+                S_StartSound(puff->info->attackSound, puff);
+            }
+
+            switch(type)
+            {
+            case MT_BEAKPUFF:
+            case MT_STAFFPUFF:     puff->mom[MZ] = 1;   break;
+
+            case MT_GAUNTLETPUFF1:
+            case MT_GAUNTLETPUFF2: puff->mom[MZ] = .8f; break;
+
+            default: break;
+            }
+        }
+#else
+        puff->mom[MZ] = FIX2FLT(FRACUNIT);
+
+        puff->tics -= P_Random() & 3;
+        if(puff->tics < 1) puff->tics = 1; // Always at least one tic.
+
+        // Don't make punches spark on the wall.
+        if(PuffNoSpark)
+        {
+            P_MobjChangeState(puff, S_PUFF3);
+        }
+#endif
+    }
+
+#if __JHEXEN__
+    PuffSpawned = puff;
+#endif
+
+    return puff;
+}
+
+struct ptr_shoottraverse_params_t
+{
+    mobj_t *shooterMobj; ///< Mobj doing the shooting.
+    int damage;          ///< Damage to inflict.
+    coord_t range;       ///< Maximum effective range from the trace origin.
+};
+
 /**
  * @todo This routine has gotten way too big, split if(in->isaline)
  *       to a seperate routine?
  */
-int PTR_ShootTraverse(Intercept const *icpt, void * /*context*/)
+int PTR_ShootTraverse(Intercept const *icpt, void *context)
 {
     vec3d_t const tracePos = {
         Interceptor_Origin(icpt->trace)[VX], Interceptor_Origin(icpt->trace)[VY], shootZ
     };
+
+    ptr_shoottraverse_params_t &parm = *static_cast<ptr_shoottraverse_params_t *>(context);
 
     if(icpt->type == ICPT_LINE)
     {
@@ -1584,7 +1675,7 @@ int PTR_ShootTraverse(Intercept const *icpt, void * /*context*/)
 
         if(xline->special)
         {
-            P_ActivateLine(line, shootThing, 0, SPAC_IMPACT);
+            P_ActivateLine(line, parm.shooterMobj, 0, SPAC_IMPACT);
         }
 
         Sector *frontSec = 0;
@@ -1602,7 +1693,7 @@ int PTR_ShootTraverse(Intercept const *icpt, void * /*context*/)
 
         frontSec = (Sector *)P_GetPtrp(line, DMU_FRONT_SECTOR);
 
-        dist = attackRange * icpt->distance;
+        dist = parm.range * icpt->distance;
         slope = 0;
         if(!FEQUAL(P_GetDoublep(frontSec, DMU_FLOOR_HEIGHT),
                    P_GetDoublep(backSec,  DMU_FLOOR_HEIGHT)))
@@ -1626,10 +1717,10 @@ int PTR_ShootTraverse(Intercept const *icpt, void * /*context*/)
       hitline:
 
         // Position a bit closer.
-        coord_t frac = icpt->distance - (4 / attackRange);
+        coord_t frac = icpt->distance - (4 / parm.range);
         vec3d_t pos = { tracePos[VX] + Interceptor_Direction(icpt->trace)[VX] * frac,
                         tracePos[VY] + Interceptor_Direction(icpt->trace)[VY] * frac,
-                        tracePos[VZ] + aimSlope * (frac * attackRange) };
+                        tracePos[VZ] + aimSlope * (frac * parm.range) };
 
         if(backSec)
         {
@@ -1732,13 +1823,13 @@ int PTR_ShootTraverse(Intercept const *icpt, void * /*context*/)
         }
 
         // Spawn bullet puffs.
-        P_SpawnPuff(pos[VX], pos[VY], pos[VZ], P_Random() << 24);
+        spawnPuff(pos[VX], pos[VY], pos[VZ]);
 
 #if !__JHEXEN__
         if(lineWasHit && xline->special)
         {
             // Extended shoot events only happen when the bullet actually hits the line.
-            XL_ShootLine(line, 0, shootThing);
+            XL_ShootLine(line, 0, parm.shooterMobj);
         }
 #endif
         // Don't go any farther.
@@ -1748,19 +1839,20 @@ int PTR_ShootTraverse(Intercept const *icpt, void * /*context*/)
     // Intercepted a mobj.
     mobj_t *th = icpt->mobj;
 
-    if(th == shootThing) return false; // Can't shoot self.
+    if(th == parm.shooterMobj) return false; // Can't shoot oneself.
     if(!(th->flags & MF_SHOOTABLE)) return false; // Corpse or something.
 
 #if __JHERETIC__
     // Check for physical attacks on a ghost.
-    if((th->flags & MF_SHADOW) && shootThing->player->readyWeapon == WT_FIRST)
+    if((th->flags & MF_SHADOW) && Mobj_IsPlayer(parm.shooterMobj) &&
+       parm.shooterMobj->player->readyWeapon == WT_FIRST)
     {
         return false;
     }
 #endif
 
     // Check angles to see if the thing can be aimed at
-    coord_t dist = attackRange * icpt->distance;
+    coord_t dist = parm.range * icpt->distance;
     coord_t dz   = th->origin[VZ];
     if(!(th->player && (th->player->plr->flags & DDPF_CAMERA)))
     {
@@ -1783,49 +1875,33 @@ int PTR_ShootTraverse(Intercept const *icpt, void * /*context*/)
     // Hit thing.
 
     // Position a bit closer.
-    coord_t frac = icpt->distance - (10 / attackRange);
+    coord_t frac = icpt->distance - (10 / parm.range);
     vec3d_t pos  = { tracePos[VX] + Interceptor_Direction(icpt->trace)[VX] * frac,
                      tracePos[VY] + Interceptor_Direction(icpt->trace)[VY] * frac,
-                     tracePos[VZ] + aimSlope * (frac * attackRange) };
+                     tracePos[VZ] + aimSlope * (frac * parm.range) };
 
     // Spawn bullet puffs or blood spots, depending on target type.
-#if __JHERETIC__
-    if(puffType == MT_BLASTERPUFF1)
-    {
-        // Make blaster big puff.
-        if(mobj_t *mo = P_SpawnMobj(MT_BLASTERPUFF2, pos, P_Random() << 24, 0))
-        {
-            S_StartSound(SFX_BLSHIT, mo);
-        }
-    }
-    else
-    {
-        P_SpawnPuff(pos[VX], pos[VY], pos[VZ], P_Random() << 24);
-    }
-#elif __JHEXEN__
-    P_SpawnPuff(pos[VX], pos[VY], pos[VZ], P_Random() << 24);
+#if !__JDOOM__
+    spawnPuff(pos[VX], pos[VY], pos[VZ]);
 #endif
 
-    if(lineAttackDamage)
+    if(parm.damage)
     {
 #if __JDOOM__ || __JDOOM64__
-        angle_t attackAngle = M_PointToAngle2(shootThing->origin, pos);
+        angle_t attackAngle = M_PointToAngle2(parm.shooterMobj->origin, pos);
 #endif
 
-        int damageDone;
+        mobj_t *inflictor = parm.shooterMobj;
 #if __JHEXEN__
         if(PuffType == MT_FLAMEPUFF2)
         {
             // Cleric FlameStrike does fire damage.
-            damageDone = P_DamageMobj(th, &lavaInflictor, shootThing,
-                                      lineAttackDamage, false);
+            inflictor = &lavaInflictor;
         }
-        else
 #endif
-        {
-            damageDone = P_DamageMobj(th, shootThing, shootThing,
-                                      lineAttackDamage, false);
-        }
+
+        int damageDone =
+            P_DamageMobj(th, inflictor, parm.shooterMobj, parm.damage, false);
 
 #if __JHEXEN__
         if(!(icpt->mobj->flags2 & MF2_INVULNERABLE))
@@ -1837,8 +1913,7 @@ int PTR_ShootTraverse(Intercept const *icpt, void * /*context*/)
                 {
                     // Damage was inflicted, so shed some blood.
 #if __JDOOM__ || __JDOOM64__
-                    P_SpawnBlood(pos[VX], pos[VY], pos[VZ], lineAttackDamage,
-                                 attackAngle + ANG180);
+                    P_SpawnBlood(pos[VX], pos[VY], pos[VZ], parm.damage, attackAngle + ANG180);
 #else
 # if __JHEXEN__
                     if(PuffType == MT_AXEPUFF || PuffType == MT_AXEPUFF_GLOW)
@@ -1857,7 +1932,7 @@ int PTR_ShootTraverse(Intercept const *icpt, void * /*context*/)
 #if __JDOOM__ || __JDOOM64__
             else
             {
-                P_SpawnPuff(pos[VX], pos[VY], pos[VZ], P_Random() << 24);
+                spawnPuff(pos[VX], pos[VY], pos[VZ]);
             }
 #endif
         }
@@ -1923,7 +1998,7 @@ int PTR_AimTraverse(Intercept const *icpt, void * /*context*/)
 
     mobj_t *th = icpt->mobj;
 
-    if(th == shootThing) return false; // Can't shoot self.
+    if(th == shootThing) return false; // Can't aim at oneself.
     if(!(th->flags & MF_SHOOTABLE)) return false; // Corpse or something?
 #if __JHERETIC__
     if(th->type == MT_POD) return false; // Can't auto-aim at pods.
@@ -2040,14 +2115,13 @@ float P_AimLineAttack(mobj_t *t1, angle_t angle, coord_t distance)
     return 0;
 }
 
-/**
- * If damage == 0, it is just a test trace that will leave lineTarget set.
- */
-void P_LineAttack(mobj_t* t1, angle_t angle, coord_t distance, coord_t slope, int damage)
+void P_LineAttack(mobj_t *t1, angle_t angle, coord_t distance, coord_t slope, int damage)
 {
     uint an = angle >> ANGLETOFINESHIFT;
     vec2d_t target = { t1->origin[VX] + distance * FIX2FLT(finecosine[an]),
                        t1->origin[VY] + distance * FIX2FLT(finesine[an]) };
+
+    aimSlope = slope;
 
     // Determine the z trace origin.
     shootZ = t1->origin[VZ];
@@ -2069,12 +2143,17 @@ void P_LineAttack(mobj_t* t1, angle_t angle, coord_t distance, coord_t slope, in
     }
     shootZ -= t1->floorClip;
 
-    shootThing       = t1;
-    lineAttackDamage = damage;
-    attackRange      = distance;
-    aimSlope         = slope;
+#if __JDOOM__ || __JDOOM64__
+    PuffType = MT_PUFF;
+    PuffNoSpark = attackRange == MELEERANGE;
+#endif
 
-    if(!P_PathTraverse(t1->origin, target, PTR_ShootTraverse, 0))
+    ptr_shoottraverse_params_t parm;
+    parm.shooterMobj = t1;
+    parm.range       = distance;
+    parm.damage      = damage;
+
+    if(!P_PathTraverse(t1->origin, target, PTR_ShootTraverse, &parm))
     {
 #if __JHEXEN__
         switch(PuffType)
@@ -2090,12 +2169,10 @@ void P_LineAttack(mobj_t* t1, angle_t angle, coord_t distance, coord_t slope, in
             break;
 
         case MT_FLAMEPUFF:
-            P_SpawnPuff(target[VX], target[VY],
-                        shootZ + (slope * distance), P_Random() << 24);
+            spawnPuff(target[VX], target[VY], shootZ + (slope * distance));
             break;
 
-        default:
-            break;
+        default: break;
         }
 #endif
     }
@@ -2914,7 +2991,7 @@ mobj_t *P_CheckOnMobj(mobj_t *mo)
         }
     }
 
-    /*ceilingLine = floorLine = 0;
+    /*tmCeilingLine = tmFloorLine = 0;
 
     // The base floor/ceiling is from the BSP leaf that contains the point.
     // Any contacted lines the step closer together will adjust them.
@@ -3057,6 +3134,8 @@ struct ptr_puzzleitemtraverse_params_t
 
 int PTR_PuzzleItemTraverse(Intercept const *icpt, void *context)
 {
+    int const USE_PUZZLE_ITEM_SPECIAL = 129;
+
     ptr_puzzleitemtraverse_params_t &parm = *static_cast<ptr_puzzleitemtraverse_params_t *>(context);
 
     switch(icpt->type)

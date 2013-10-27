@@ -223,13 +223,11 @@ typedef struct mobj_s {
 extern "C" {
 #endif
 
-mobj_t* P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z, angle_t angle, int spawnFlags);
-mobj_t* P_SpawnMobj(mobjtype_t type, coord_t const pos[3], angle_t angle, int spawnFlags);
-
-void P_SpawnPuff(coord_t x, coord_t y, coord_t z, angle_t angle);
+mobj_t *P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z, angle_t angle, int spawnFlags);
+mobj_t *P_SpawnMobj(mobjtype_t type, coord_t const pos[3], angle_t angle, int spawnFlags);
 
 void P_SpawnBlood(coord_t x, coord_t y, coord_t z, int damage, angle_t angle);
-void P_SpawnBloodSplatter(coord_t x, coord_t y, coord_t z, mobj_t* originator);
+void P_SpawnBloodSplatter(coord_t x, coord_t y, coord_t z, mobj_t *originator);
 
 /**
  * Tries to aim at a nearby monster if source is a player. Else aim is
@@ -243,7 +241,7 @@ void P_SpawnBloodSplatter(coord_t x, coord_t y, coord_t z, mobj_t* originator);
  *
  * @return              Pointer to the newly spawned missile.
  */
-mobj_t* P_SpawnMissile(mobjtype_t type, mobj_t* source, mobj_t* dest, boolean checkSpawn);
+mobj_t *P_SpawnMissile(mobjtype_t type, mobj_t *source, mobj_t *dest, boolean checkSpawn);
 
 /**
  * Tries to aim at a nearby monster if 'source' is a player. Else aim is
@@ -256,7 +254,7 @@ mobj_t* P_SpawnMissile(mobjtype_t type, mobj_t* source, mobj_t* dest, boolean ch
  *
  * @return              Pointer to the newly spawned missile.
  */
-mobj_t* P_SpawnMissileAngle(mobjtype_t type, mobj_t* source, angle_t angle, coord_t momz);
+mobj_t *P_SpawnMissileAngle(mobjtype_t type, mobj_t *source, angle_t angle, coord_t momz);
 
 /**
  * Spawn a missile at given angle.
@@ -268,9 +266,9 @@ mobj_t* P_SpawnMissileAngle(mobjtype_t type, mobj_t* source, angle_t angle, coor
  */
 mobj_t *Vanilla_P_SpawnMissileAngle(mobj_t *source, mobjtype_t type, angle_t angle, coord_t momz);
 
-mobj_t* P_SpawnTeleFog(coord_t x, coord_t y, angle_t angle);
+mobj_t *P_SpawnTeleFog(coord_t x, coord_t y, angle_t angle);
 
-coord_t P_MobjGetFriction(mobj_t* mobj);
+coord_t P_MobjGetFriction(mobj_t *mobj);
 
 #ifdef __cplusplus
 } // extern "C"

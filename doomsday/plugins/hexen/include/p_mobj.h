@@ -212,10 +212,9 @@ typedef struct mobj_s {
 extern "C" {
 #endif
 
-mobj_t* P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z, angle_t angle, int spawnFlags);
-mobj_t* P_SpawnMobj(mobjtype_t type, coord_t const pos[3], angle_t angle, int spawnFlags);
+mobj_t *P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z, angle_t angle, int spawnFlags);
+mobj_t *P_SpawnMobj(mobjtype_t type, coord_t const pos[3], angle_t angle, int spawnFlags);
 
-void P_SpawnPuff(coord_t x, coord_t y, coord_t z, angle_t angle);
 void P_SpawnBlood(coord_t x, coord_t y, coord_t z, int damage, angle_t angle);
 
 void P_SpawnDirt(mobj_t* actor, coord_t radius);

@@ -172,7 +172,7 @@ boolean P_Move(mobj_t *actor, boolean dropoff)
     if(!P_TryMoveXY(actor, pos[VX], pos[VY], dropoff, false))
     {
         // Float up and down to the contacted floor height.
-        if((actor->flags & MF_FLOAT) && floatOk)
+        if((actor->flags & MF_FLOAT) && tmFloatOk)
         {
             coord_t oldZ = actor->origin[VZ];
 
@@ -236,8 +236,8 @@ boolean P_Move(mobj_t *actor, boolean dropoff)
         actor->flags &= ~MF_INFLOAT;
     }
 
-    // $dropoff_fix: fall more slowly, under gravity, if fellDown==true
-    if(!(actor->flags & MF_FLOAT) && !fellDown)
+    // $dropoff_fix: fall more slowly, under gravity, if tmFellDown==true
+    if(!(actor->flags & MF_FLOAT) && !tmFellDown)
     {
         if(actor->origin[VZ] > actor->floorZ)
             P_HitFloor(actor);

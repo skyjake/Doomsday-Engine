@@ -175,7 +175,7 @@ static boolean moveMobj(mobj_t *actor, boolean dropoff)
     if(!P_TryMoveXY(actor, pos[VX], pos[VY], dropoff, false))
     {
         // Float up and down to the contacted floor height.
-        if((actor->flags & MF_FLOAT) && floatOk)
+        if((actor->flags & MF_FLOAT) && tmFloatOk)
         {
             if(actor->origin[VZ] < tmFloorZ)
                 actor->origin[VZ] += FLOATSPEED;
@@ -228,8 +228,8 @@ static boolean moveMobj(mobj_t *actor, boolean dropoff)
         actor->flags &= ~MF_INFLOAT;
     }
 
-    // $dropoff_fix: fall more slowly, under gravity, if fellDown==true
-    if(!(actor->flags & MF_FLOAT) && !fellDown)
+    // $dropoff_fix: fall more slowly, under gravity, if tmFellDown==true
+    if(!(actor->flags & MF_FLOAT) && !tmFellDown)
     {
         if(actor->origin[VZ] > actor->floorZ)
             P_HitFloor(actor);
@@ -1501,29 +1501,39 @@ void C_DECL A_Tracer(mobj_t* actor)
 
     if((int) GAMETIC & 3) return;
 
-    // Spawn a puff of smoke behind the rocket.
-    P_SpawnCustomPuff(MT_ROCKETPUFF, actor->origin[VX],
-                                     actor->origin[VY],
-                                     actor->origin[VZ], actor->angle + ANG180);
+    // Clients do not spawn puffs.
+    if(!IS_CLIENT)
+    {
+        // Spawn a puff of smoke behind the rocket.
+        if((th = P_SpawnMobjXYZ(MT_ROCKETPUFF, actor->origin[VX], actor->origin[VY],
+                                actor->origin[VZ] + FIX2FLT((P_Random() - P_Random()) << 10),
+                                actor->angle + ANG180, 0)))
+        {
+            th->mom[MZ] = FIX2FLT(FRACUNIT);
+
+            th->tics -= P_Random() & 3;
+            if(th->tics < 1) th->tics = 1; // Always at least one tic.
+        }
+    }
 
     if((th = P_SpawnMobjXYZ(MT_SMOKE, actor->origin[VX] - actor->mom[MX],
-                                      actor->origin[VY] - actor->mom[MY], actor->origin[VZ],
-                                      actor->angle + ANG180, 0)))
+                            actor->origin[VY] - actor->mom[MY], actor->origin[VZ],
+                            actor->angle + ANG180, 0)))
     {
-        th->mom[MZ] = 1;
+        th->mom[MZ] = FIX2FLT(FRACUNIT);
+
         th->tics -= P_Random() & 3;
-        if(th->tics < 1)
-            th->tics = 1;
+        if(th->tics < 1) th->tics = 1;
     }
 
     // Adjust direction.
     dest = actor->tracer;
 
-    if(!dest || dest->health <= 0) return;
+    if(!dest) return;
+    if(dest->health <= 0) return;
 
     // Change angle.
     exact = M_PointToAngle2(actor->origin, dest->origin);
-
     if(exact != actor->angle)
     {
         if(exact - actor->angle > 0x80000000)

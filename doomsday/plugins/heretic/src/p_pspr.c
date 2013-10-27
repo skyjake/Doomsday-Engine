@@ -907,7 +907,7 @@ void C_DECL A_BeakAttackPL1(player_t* player, pspdef_t* psp)
     angle = player->plr->mo->angle;
     slope = P_AimLineAttack(player->plr->mo, angle, MELEERANGE);
 
-    puffType = MT_BEAKPUFF;
+    PuffType = MT_BEAKPUFF;
 
     P_LineAttack(player->plr->mo, angle, MELEERANGE, slope, damage);
     if(lineTarget)
@@ -931,7 +931,7 @@ void C_DECL A_BeakAttackPL2(player_t* player, pspdef_t* psp)
     angle = player->plr->mo->angle;
     slope = P_AimLineAttack(player->plr->mo, angle, MELEERANGE);
 
-    puffType = MT_BEAKPUFF;
+    PuffType = MT_BEAKPUFF;
 
     P_LineAttack(player->plr->mo, angle, MELEERANGE, slope, damage);
     if(lineTarget)
@@ -956,7 +956,7 @@ void C_DECL A_StaffAttackPL1(player_t* player, pspdef_t* psp)
     angle += (P_Random() - P_Random()) << 18;
     slope = P_AimLineAttack(player->plr->mo, angle, MELEERANGE);
 
-    puffType = MT_STAFFPUFF;
+    PuffType = MT_STAFFPUFF;
 
     P_LineAttack(player->plr->mo, angle, MELEERANGE, slope, damage);
     if(lineTarget)
@@ -979,7 +979,7 @@ void C_DECL A_StaffAttackPL2(player_t* player, pspdef_t* psp)
 
     slope = P_AimLineAttack(player->plr->mo, angle, MELEERANGE);
 
-    puffType = MT_STAFFPUFF2;
+    PuffType = MT_STAFFPUFF2;
 
     P_LineAttack(player->plr->mo, angle, MELEERANGE, slope, damage);
     if(lineTarget)
@@ -1007,7 +1007,7 @@ void C_DECL A_FireBlasterPL1(player_t* player, pspdef_t* psp)
         angle += (P_Random() - P_Random()) << 18;
     }
 
-    puffType = MT_BLASTERPUFF1;
+    PuffType = MT_BLASTERPUFF1;
 
     P_LineAttack(mo, angle, MISSILERANGE, bulletSlope, damage);
     S_StartSoundEx(SFX_BLSSHT, mo);
@@ -1043,7 +1043,7 @@ void C_DECL A_FireGoldWandPL1(player_t *player, pspdef_t *psp)
     {
         angle += (P_Random() - P_Random()) << 18;
     }
-    puffType = MT_GOLDWANDPUFF1;
+    PuffType = MT_GOLDWANDPUFF1;
     P_LineAttack(mo, angle, MISSILERANGE, bulletSlope, damage);
 }
 
@@ -1061,7 +1061,7 @@ void C_DECL A_FireGoldWandPL2(player_t* player, pspdef_t* psp)
 
     if(IS_CLIENT) return;
 
-    puffType = MT_GOLDWANDPUFF2;
+    PuffType = MT_GOLDWANDPUFF2;
     P_BulletSlope(mo);
     momZ = MOBJINFO[MT_GOLDWANDFX2].speed * bulletSlope;
 
@@ -1719,14 +1719,14 @@ void C_DECL A_GauntletAttack(player_t* player, pspdef_t* psp)
         damage = HITDICE(2);
         dist = 4 * MELEERANGE;
         angle += (P_Random() - P_Random()) << 17;
-        puffType = MT_GAUNTLETPUFF2;
+        PuffType = MT_GAUNTLETPUFF2;
     }
     else
     {
         damage = HITDICE(2);
         dist = MELEERANGE + 1;
         angle += (P_Random() - P_Random()) << 18;
-        puffType = MT_GAUNTLETPUFF1;
+        PuffType = MT_GAUNTLETPUFF1;
     }
 
     slope = P_AimLineAttack(player->plr->mo, angle, dist);

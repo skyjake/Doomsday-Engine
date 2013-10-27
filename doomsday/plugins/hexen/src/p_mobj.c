@@ -485,7 +485,7 @@ explode:
                 // Explode a missile
 
                 /// @kludge: Prevent missiles exploding against the sky.
-                if(ceilingLine && (backSec = P_GetPtrp(ceilingLine, DMU_BACK_SECTOR)))
+                if(tmCeilingLine && (backSec = P_GetPtrp(tmCeilingLine, DMU_BACK_SECTOR)))
                 {
                     if((P_GetIntp(P_GetPtrp(backSec, DMU_CEILING_MATERIAL), DMU_FLAGS) & MATF_SKYMASK) &&
                        mo->origin[VZ] > P_GetDoublep(backSec, DMU_CEILING_HEIGHT))
@@ -508,7 +508,7 @@ explode:
                     }
                 }
 
-                if(floorLine && (backSec = P_GetPtrp(floorLine, DMU_BACK_SECTOR)))
+                if(tmFloorLine && (backSec = P_GetPtrp(tmFloorLine, DMU_BACK_SECTOR)))
                 {
                     if((P_GetIntp(P_GetPtrp(backSec, DMU_FLOOR_MATERIAL), DMU_FLAGS) & MATF_SKYMASK) &&
                        mo->origin[VZ] < P_GetDoublep(backSec, DMU_FLOOR_HEIGHT))
@@ -1222,43 +1222,9 @@ mobj_t* P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z,
     return mo;
 }
 
-mobj_t* P_SpawnMobj(mobjtype_t type, coord_t const pos[3], angle_t angle, int spawnFlags)
+mobj_t *P_SpawnMobj(mobjtype_t type, coord_t const pos[3], angle_t angle, int spawnFlags)
 {
     return P_SpawnMobjXYZ(type, pos[VX], pos[VY], pos[VZ], angle, spawnFlags);
-}
-
-void P_SpawnPuff(coord_t x, coord_t y, coord_t z, angle_t angle)
-{
-    mobj_t* puff;
-
-    z += FIX2FLT((P_Random() - P_Random()) << 10);
-    if((puff = P_SpawnMobjXYZ(PuffType, x, y, z, angle, 0)))
-    {
-        if(lineTarget && puff->info->seeSound)
-        {   // Hit thing sound.
-            S_StartSound(puff->info->seeSound, puff);
-        }
-        else if(puff->info->attackSound)
-        {
-            S_StartSound(puff->info->attackSound, puff);
-        }
-
-        switch(PuffType)
-        {
-        case MT_PUNCHPUFF:
-            puff->mom[MZ] = 1;
-            break;
-
-        case MT_HAMMERPUFF:
-            puff->mom[MZ] = .8f;
-            break;
-
-        default:
-            break;
-        }
-    }
-
-    PuffSpawned = puff;
 }
 
 void P_SpawnBloodSplatter(coord_t x, coord_t y, coord_t z, mobj_t* originator)

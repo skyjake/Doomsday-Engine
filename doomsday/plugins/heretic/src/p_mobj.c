@@ -42,7 +42,6 @@
 #define NOMOMENTUM_THRESHOLD    (0.000001)
 #define WALKSTOP_THRESHOLD      (0.062484741) // FIX2FLT(0x1000-1)
 
-mobjtype_t puffType;
 mobj_t *missileMobj;
 
 void P_ExplodeMissile(mobj_t *mo)
@@ -328,7 +327,7 @@ void P_MobjMoveXY(mobj_t *mo)
                 Sector* backSec;
 
                 /// @kludge: Prevent missiles exploding against the sky.
-                if(ceilingLine && (backSec = P_GetPtrp(ceilingLine, DMU_BACK_SECTOR)))
+                if(tmCeilingLine && (backSec = P_GetPtrp(tmCeilingLine, DMU_BACK_SECTOR)))
                 {
                     if((P_GetIntp(P_GetPtrp(backSec, DMU_CEILING_MATERIAL), DMU_FLAGS) & MATF_SKYMASK) &&
                        mo->origin[VZ] > P_GetDoublep(backSec, DMU_CEILING_HEIGHT))
@@ -347,7 +346,7 @@ void P_MobjMoveXY(mobj_t *mo)
                     }
                 }
 
-                if(floorLine && (backSec = P_GetPtrp(floorLine, DMU_BACK_SECTOR)))
+                if(tmFloorLine && (backSec = P_GetPtrp(tmFloorLine, DMU_BACK_SECTOR)))
                 {
                     if((P_GetIntp(P_GetPtrp(backSec, DMU_FLOOR_MATERIAL), DMU_FLAGS) & MATF_SKYMASK) &&
                        mo->origin[VZ] < P_GetDoublep(backSec, DMU_FLOOR_HEIGHT))
@@ -1107,38 +1106,6 @@ void P_RepositionMace(mobj_t *mo)
     Con_Message("P_RepositionMace: Mobj [%p], thinkerId:%i - now at (%.2f, %.2f, %.2f).",
                 mo, mo->thinker.id, mo->origin[VX], mo->origin[VY], mo->origin[VZ]);
 #endif
-}
-
-void P_SpawnPuff(coord_t x, coord_t y, coord_t z, angle_t angle)
-{
-    mobj_t* puff;
-
-    // Clients do not spawn puffs.
-    if(IS_CLIENT) return;
-
-    z += FIX2FLT((P_Random() - P_Random()) << 10);
-    if((puff = P_SpawnMobjXYZ(puffType, x, y, z, angle, 0)))
-    {
-        if(puff->info->attackSound)
-        {
-            S_StartSound(puff->info->attackSound, puff);
-        }
-
-        switch(puffType)
-        {
-        case MT_BEAKPUFF:
-        case MT_STAFFPUFF:
-            puff->mom[MZ] = 1;
-            break;
-
-        case MT_GAUNTLETPUFF1:
-        case MT_GAUNTLETPUFF2:
-            puff->mom[MZ] = .8f;
-
-        default:
-            break;
-        }
-    }
 }
 
 void P_SpawnBloodSplatter(coord_t x, coord_t y, coord_t z, mobj_t* originator)

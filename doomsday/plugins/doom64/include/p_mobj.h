@@ -246,21 +246,17 @@ typedef struct mobj_s {
 extern "C" {
 #endif
 
-void P_ExplodeMissile(mobj_t* mo);
+void P_ExplodeMissile(mobj_t *mo);
 
-coord_t P_MobjGetFriction(mobj_t* mo);
+coord_t P_MobjGetFriction(mobj_t *mo);
 
-mobj_t* P_SPMAngle(mobjtype_t type, mobj_t* source, angle_t angle);
+mobj_t *P_SPMAngle(mobjtype_t type, mobj_t *source, angle_t angle);
 
 /**
  * Spawns a mobj of "type" at the specified position.
  */
-mobj_t* P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z, angle_t angle, int spawnFlags);
-mobj_t* P_SpawnMobj(mobjtype_t type, coord_t const pos[3], angle_t angle, int spawnFlags);
-
-void P_SpawnPuff(coord_t x, coord_t y, coord_t z, angle_t angle);
-
-mobj_t* P_SpawnCustomPuff(mobjtype_t type, coord_t x, coord_t y, coord_t z, angle_t angle);
+mobj_t *P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z, angle_t angle, int spawnFlags);
+mobj_t *P_SpawnMobj(mobjtype_t type, coord_t const pos[3], angle_t angle, int spawnFlags);
 
 void P_SpawnBlood(coord_t x, coord_t y, coord_t z, int damage, angle_t angle);
 
@@ -275,19 +271,19 @@ void P_SpawnBlood(coord_t x, coord_t y, coord_t z, int damage, angle_t angle);
  *
  * @return              Pointer to the newly spawned missile.
  */
-mobj_t* P_SpawnMissile(mobjtype_t type, mobj_t* source, mobj_t* dest);
+mobj_t *P_SpawnMissile(mobjtype_t type, mobj_t* source, mobj_t* dest);
 
-mobj_t* P_SpawnTeleFog(coord_t x, coord_t y, angle_t angle);
+mobj_t *P_SpawnTeleFog(coord_t x, coord_t y, angle_t angle);
 
-mobj_t* P_SpawnMotherMissile(mobjtype_t type, coord_t x, coord_t y, coord_t z, mobj_t* source, mobj_t* dest);
+mobj_t *P_SpawnMotherMissile(mobjtype_t type, coord_t x, coord_t y, coord_t z, mobj_t *source, mobj_t *dest);
 
 void P_MobjThinker(void *moThinkerPtr);
 
-void P_RipperBlood(mobj_t* mo);
+void P_RipperBlood(mobj_t *mo);
 
-void P_SetDoomsdayFlags(mobj_t* mo);
+void P_SetDoomsdayFlags(mobj_t *mo);
 
-void P_HitFloor(mobj_t* mo);
+void P_HitFloor(mobj_t *mo);
 
 #ifdef __cplusplus
 } // extern "C"

@@ -192,8 +192,8 @@ void P_MobjMoveXY(mobj_t* mo)
                 Sector* backSec;
 
                 /// @kludge Prevent missiles exploding against the sky.
-                if(ceilingLine &&
-                   (backSec = P_GetPtrp(ceilingLine, DMU_BACK_SECTOR)))
+                if(tmCeilingLine &&
+                   (backSec = P_GetPtrp(tmCeilingLine, DMU_BACK_SECTOR)))
                 {
                     Material* mat = P_GetPtrp(backSec, DMU_CEILING_MATERIAL);
 
@@ -205,8 +205,8 @@ void P_MobjMoveXY(mobj_t* mo)
                     }
                 }
 
-                if(floorLine &&
-                   (backSec = P_GetPtrp(floorLine, DMU_BACK_SECTOR)))
+                if(tmFloorLine &&
+                   (backSec = P_GetPtrp(tmFloorLine, DMU_BACK_SECTOR)))
                 {
                     Material* mat = P_GetPtrp(backSec, DMU_FLOOR_MATERIAL);
 
@@ -820,63 +820,32 @@ mobj_t* P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z, angle_t
     return mo;
 }
 
-mobj_t* P_SpawnMobj(mobjtype_t type, coord_t const pos[3], angle_t angle, int spawnFlags)
+mobj_t *P_SpawnMobj(mobjtype_t type, coord_t const pos[3], angle_t angle, int spawnFlags)
 {
     return P_SpawnMobjXYZ(type, pos[VX], pos[VY], pos[VZ], angle, spawnFlags);
 }
 
-mobj_t* P_SpawnCustomPuff(mobjtype_t type, coord_t x, coord_t y, coord_t z, angle_t angle)
-{
-    mobj_t* mo;
-
-    // Clients do not spawn puffs.
-    if(IS_CLIENT)
-        return NULL;
-
-    z += FIX2FLT((P_Random() - P_Random()) << 10);
-
-    if((mo = P_SpawnMobjXYZ(type, x, y, z, angle, 0)))
-    {
-        mo->mom[MZ] = FIX2FLT(FRACUNIT);
-        mo->tics -= P_Random() & 3;
-
-        // Make it last at least one tic.
-        if(mo->tics < 1)
-            mo->tics = 1;
-    }
-
-    return mo;
-}
-
-void P_SpawnPuff(coord_t x, coord_t y, coord_t z, angle_t angle)
-{
-    mobj_t* th;
-
-    if((th = P_SpawnCustomPuff(MT_PUFF, x, y, z, angle)))
-    {
-        // Don't make punches spark on the wall.
-        if(th && attackRange == MELEERANGE)
-            P_MobjChangeState(th, S_PUFF3);
-    }
-}
-
 void P_SpawnBlood(coord_t x, coord_t y, coord_t z, int damage, angle_t angle)
 {
-    mobj_t* th;
+    mobj_t *blood;
 
     z += FIX2FLT((P_Random() - P_Random()) << 10);
-    if((th = P_SpawnMobjXYZ(MT_BLOOD, x, y, z, angle, 0)))
-    {
-        th->mom[MZ] = 2;
-        th->tics -= P_Random() & 3;
 
-        if(th->tics < 1)
-            th->tics = 1;
+    if((blood = P_SpawnMobjXYZ(MT_BLOOD, x, y, z, angle, 0)))
+    {
+        blood->mom[MZ] = 2;
+
+        blood->tics -= P_Random() & 3;
+        if(blood->tics < 1) blood->tics = 1;
 
         if(damage <= 12 && damage >= 9)
-            P_MobjChangeState(th, S_BLOOD2);
+        {
+            P_MobjChangeState(blood, S_BLOOD2);
+        }
         else if(damage < 9)
-            P_MobjChangeState(th, S_BLOOD3);
+        {
+            P_MobjChangeState(blood, S_BLOOD3);
+        }
     }
 }
 
