@@ -41,15 +41,6 @@
 #define USE_PUZZLE_ITEM_SPECIAL     129
 #endif
 
-#if __JDOOM64__ || __JHERETIC__
-static void CheckMissileImpact(mobj_t *mobj);
-#endif
-
-#if __JHEXEN__
-static void P_FakeZMovement(mobj_t *mo);
-static void checkForPushSpecial(Line *line, int side, mobj_t *mobj);
-#endif
-
 static AABoxd tmBox;
 static mobj_t *tmThing;
 
@@ -301,6 +292,23 @@ boolean P_CheckSides(mobj_t *mobj, coord_t x, coord_t y)
     VALIDCOUNT++;
     return Line_BoxIterator(&parm.crossAABox, LIF_ALL, PIT_CrossLine, &parm);
 }
+
+#if __JHEXEN__
+static void checkForPushSpecial(Line *line, int side, mobj_t *mobj)
+{
+    if(P_ToXLine(line)->special)
+    {
+        if(mobj->flags2 & MF2_PUSHWALL)
+        {
+            P_ActivateLine(line, mobj, side, SPAC_PUSH);
+        }
+        else if(mobj->flags2 & MF2_IMPACT)
+        {
+            P_ActivateLine(line, mobj, side, SPAC_IMPACT);
+        }
+    }
+}
+#endif // __JHEXEN__
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
 /**
@@ -1156,6 +1164,27 @@ boolean Mobj_IsRemotePlayer(mobj_t *mo)
                    (IS_CLIENT && mo->player && mo->player - players != CONSOLEPLAYER)));
 }
 
+#if __JDOOM64__ || __JHERETIC__
+static void checkMissileImpact(mobj_t &mobj)
+{
+    if(IS_CLIENT) return;
+
+    if(!(mobj.flags & MF_MISSILE)) return;
+    if(!mobj.target || !mobj.target->player) return;
+
+    if(IterList_Empty(spechit)) return;
+
+    IterList_SetIteratorDirection(spechit, ITERLIST_BACKWARD);
+    IterList_RewindIterator(spechit);
+
+    Line *line;
+    while((line = (Line *)IterList_MoveIterator(spechit)) != 0)
+    {
+        P_ActivateLine(line, mobj.target, 0, SPAC_IMPACT);
+    }
+}
+#endif
+
 /**
  * Attempt to move to a new position, crossing special lines unless
  * MF_TELEPORT is set. $dropoff_fix
@@ -1195,7 +1224,7 @@ static boolean P_TryMove2(mobj_t *thing, coord_t x, coord_t y, boolean dropoff)
         }
 #else
 #  if __JHERETIC__
-        CheckMissileImpact(thing);
+        checkMissileImpact(*thing);
 #  endif
         // Would we hit another thing or a solid wall?
         if(!thing->onMobj || thing->wallHit)
@@ -1250,7 +1279,7 @@ static boolean P_TryMove2(mobj_t *thing, coord_t x, coord_t y, boolean dropoff)
             if(!isRemotePlayer && tmFloorZ - thing->origin[VZ] > 24)
             {
 # if __JHERETIC__
-                CheckMissileImpact(thing);
+                checkMissileImpact(*thing);
 # endif
                 return ret;
             }
@@ -1258,7 +1287,7 @@ static boolean P_TryMove2(mobj_t *thing, coord_t x, coord_t y, boolean dropoff)
 # if __JHERETIC__
         if((thing->flags & MF_MISSILE) && tmFloorZ > thing->origin[VZ])
         {
-            CheckMissileImpact(thing);
+            checkMissileImpact(*thing);
         }
 # endif
 #endif
@@ -1352,7 +1381,7 @@ static boolean P_TryMove2(mobj_t *thing, coord_t x, coord_t y, boolean dropoff)
             && tmFloorZ - thing->origin[VZ] > 24)
         {
             // Too big a step up
-            CheckMissileImpact(thing);
+            checkMissileImpact(*thing);
             return false;
         }
 #endif
@@ -2688,26 +2717,6 @@ boolean P_TestMobjLocation(mobj_t *mo)
 }
 #endif
 
-#if __JDOOM64__ || __JHERETIC__
-static void CheckMissileImpact(mobj_t *mo)
-{
-    DENG_ASSERT(mo != 0);
-
-    if(IS_CLIENT) return;
-    if(!mo->target || !mo->target->player || !(mo->flags & MF_MISSILE)) return;
-    if(IterList_Empty(spechit)) return;
-
-    IterList_SetIteratorDirection(spechit, ITERLIST_BACKWARD);
-    IterList_RewindIterator(spechit);
-
-    Line *line;
-    while((line = (Line *)IterList_MoveIterator(spechit)) != 0)
-    {
-        P_ActivateLine(line, mo->target, 0, SPAC_IMPACT);
-    }
-}
-#endif
-
 #if __JHEXEN__
 int PIT_ThrustStompThing(mobj_t *thing, void *context)
 {
@@ -2769,6 +2778,18 @@ static int PIT_CheckOnMobjZ(mobj_t *cand, void *context)
     // Don't clip against self.
     if(cand == parm.riderMobj) return false;
 
+    if(IS_CLIENT)
+    {
+        // Players must not ride their clmobjs.
+        if(Mobj_IsPlayer(parm.riderMobj))
+        {
+            if(cand == ClPlayer_ClMobj(parm.riderMobj->player - players))
+            {
+                return false;
+            }
+        }
+    }
+
     // Above or below?
     if(parm.riderMobj->origin[VZ] > cand->origin[VZ] + cand->height)
     {
@@ -2777,18 +2798,6 @@ static int PIT_CheckOnMobjZ(mobj_t *cand, void *context)
     else if(parm.riderMobj->origin[VZ] + parm.riderMobj->height < cand->origin[VZ])
     {
         return false;
-    }
-
-    if(IS_CLIENT)
-    {
-        // Players must not ride their clmobjs.
-        if(parm.riderMobj->player)
-        {
-            if(cand == ClPlayer_ClMobj(parm.riderMobj->player - players))
-            {
-                return false;
-            }
-        }
     }
 
     if(cand->flags & MF_SOLID)
@@ -2801,72 +2810,23 @@ static int PIT_CheckOnMobjZ(mobj_t *cand, void *context)
 
 mobj_t *P_CheckOnMobj(mobj_t *mo)
 {
-    if(!mo || Mobj_IsPlayerClMobj(mo))
-    {
-        // Players' clmobjs shouldn't do any on-mobj logic; the real player mobj
-        // will interact with (cl)mobjs.
-        return 0;
-    }
+    if(!mo) return 0;
+    if(P_MobjIsCamera(mo)) return 0;
 
+    // Players' clmobjs shouldn't do any on-mobj logic; the real player mobj
+    // will interact with (cl)mobjs.
+    if(Mobj_IsPlayerClMobj(mo)) return 0;
+
+    /**
+     * Fake the zmovement so that we can check if a move is legal.
+     *
+     * @todo Do this properly! Consolidate with how jDoom/jHeretic do on-mobj checks?
+     */
     mobj_t oldMo = *mo; // Save the old mobj before the fake z movement.
-    /// @todo Do this properly! Consolidate with how jDoom/jHeretic do on-mobj checks?
 
-    tmThing = mo;
-    P_FakeZMovement(tmThing);
-
-    V3d_Copy(tm, mo->origin);
-    tmBox = AABoxd(mo->origin[VX] - tmThing->radius, mo->origin[VY] - tmThing->radius,
-                   mo->origin[VX] + tmThing->radius, mo->origin[VY] + tmThing->radius);
-
-    ceilingLine = floorLine = 0;
-
-    // The base floor/ceiling is from the BSP leaf that contains the point.
-    // Any contacted lines the step closer together will adjust them.
-
-    Sector *newSector = Sector_AtPoint_FixedPrecision(mo->origin);
-
-    tmFloorZ        = tmDropoffZ = P_GetDoublep(newSector, DMU_FLOOR_HEIGHT);
-    tmCeilingZ      = P_GetDoublep(newSector, DMU_CEILING_HEIGHT);
-    tmFloorMaterial = (Material *)P_GetPtrp(newSector, DMU_FLOOR_MATERIAL);
-
-    IterList_Clear(spechit);
-
-    if(!(tmThing->flags & MF_NOCLIP))
-    {
-        // Check things first, possibly picking things up the bounding box is
-        // extended by MAXRADIUS because mobj_ts are grouped into mapblocks
-        // based on their origin point, and can overlap into adjacent blocks by
-        // up to MAXRADIUS.
-
-        AABoxd tmBoxExpanded(tmBox.minX - MAXRADIUS, tmBox.minY - MAXRADIUS,
-                             tmBox.maxX + MAXRADIUS, tmBox.maxY + MAXRADIUS);
-
-        pit_checkonmobjz_params_t parm;
-        parm.riderMobj = tmThing;
-        parm.mountMobj = 0;
-
-        VALIDCOUNT++;
-        if(Mobj_BoxIterator(&tmBoxExpanded, PIT_CheckOnMobjZ, &parm))
-        {
-            *tmThing = oldMo; /// @todo Necessary? -ds
-            return parm.mountMobj;
-        }
-    }
-
-    *tmThing = oldMo; /// @todo Necessary? -ds
-    return 0;
-}
-
-/**
- * Fake the zmovement so that we can check if a move is legal.
- */
-static void P_FakeZMovement(mobj_t *mo)
-{
-    if(P_MobjIsCamera(mo))
-        return;
-
-    // Adjust height.
+    // Adjust Z-origin.
     mo->origin[VZ] += mo->mom[MZ];
+
     if((mo->flags & MF_FLOAT) && mo->target)
     {
         // Float down towards target if too close.
@@ -2878,71 +2838,123 @@ static void P_FakeZMovement(mobj_t *mo)
             coord_t delta = mo->target->origin[VZ] + (mo->height / 2) - mo->origin[VZ];
 
             if(delta < 0 && dist < -(delta * 3))
+            {
                 mo->origin[VZ] -= FLOATSPEED;
+            }
             else if(delta > 0 && dist < (delta * 3))
+            {
                 mo->origin[VZ] += FLOATSPEED;
+            }
         }
     }
 
-    if(mo->player && (mo->flags2 & MF2_FLY) && !(mo->origin[VZ] <= mo->floorZ) &&
-       (mapTime & 2))
+    if(Mobj_IsPlayer(mo) && (mo->flags2 & MF2_FLY) && !(mo->origin[VZ] <= mo->floorZ))
     {
-        mo->origin[VZ] += FIX2FLT(finesine[(FINEANGLES / 20 * mapTime >> 2) & FINEMASK]);
+        if(mapTime & 2)
+        {
+            mo->origin[VZ] += FIX2FLT(finesine[(FINEANGLES / 20 * mapTime >> 2) & FINEMASK]);
+        }
     }
 
-    // Clip movement.
-    if(mo->origin[VZ] <= mo->floorZ) // Hit the floor.
+    // Clip momentum.
+
+    // Hit the floor?
+    bool hitFloor = mo->origin[VZ] <= mo->floorZ;
+    if(hitFloor)
     {
         mo->origin[VZ] = mo->floorZ;
         if(mo->mom[MZ] < 0)
+        {
             mo->mom[MZ] = 0;
+        }
 
         if(mo->flags & MF_SKULLFLY)
+        {
             mo->mom[MZ] = -mo->mom[MZ]; // The skull slammed into something
-
-        if(P_GetState(mobjtype_t(mo->type), SN_CRASH) && (mo->flags & MF_CORPSE))
-            return;
+        }
     }
     else if(mo->flags2 & MF2_LOGRAV)
     {
         if(FEQUAL(mo->mom[MZ], 0))
+        {
             mo->mom[MZ] = -(P_GetGravity() / 32) * 2;
+        }
         else
+        {
             mo->mom[MZ] -= P_GetGravity() / 32;
+        }
     }
     else if(!(mo->flags & MF_NOGRAVITY))
     {
         if(FEQUAL(mo->mom[MZ], 0))
+        {
             mo->mom[MZ] = -P_GetGravity() * 2;
+        }
         else
+        {
             mo->mom[MZ] -= P_GetGravity();
-    }
-
-    if(mo->origin[VZ] + mo->height > mo->ceilingZ) // Hit the ceiling.
-    {
-        mo->origin[VZ] = mo->ceilingZ - mo->height;
-
-        if(mo->mom[MZ] > 0)
-            mo->mom[MZ] = 0;
-
-        if(mo->flags & MF_SKULLFLY)
-            mo->mom[MZ] = -mo->mom[MZ]; // The skull slammed into something.
-    }
-}
-
-static void checkForPushSpecial(Line *line, int side, mobj_t *mobj)
-{
-    if(P_ToXLine(line)->special)
-    {
-        if(mobj->flags2 & MF2_PUSHWALL)
-        {
-            P_ActivateLine(line, mobj, side, SPAC_PUSH);
-        }
-        else if(mobj->flags2 & MF2_IMPACT)
-        {
-            P_ActivateLine(line, mobj, side, SPAC_IMPACT);
         }
     }
+
+    if(!(hitFloor && P_GetState(mobjtype_t(mo->type), SN_CRASH) && (mo->flags & MF_CORPSE)))
+    {
+        if(mo->origin[VZ] + mo->height > mo->ceilingZ)
+        {
+            mo->origin[VZ] = mo->ceilingZ - mo->height;
+
+            if(mo->mom[MZ] > 0)
+            {
+                mo->mom[MZ] = 0;
+            }
+
+            if(mo->flags & MF_SKULLFLY)
+            {
+                mo->mom[MZ] = -mo->mom[MZ]; // The skull slammed into something.
+            }
+        }
+    }
+
+    /*ceilingLine = floorLine = 0;
+
+    // The base floor/ceiling is from the BSP leaf that contains the point.
+    // Any contacted lines the step closer together will adjust them.
+
+    Sector *newSector = Sector_AtPoint_FixedPrecision(mo->origin);
+
+    tmFloorZ        = tmDropoffZ = P_GetDoublep(newSector, DMU_FLOOR_HEIGHT);
+    tmCeilingZ      = P_GetDoublep(newSector, DMU_CEILING_HEIGHT);
+    tmFloorMaterial = (Material *)P_GetPtrp(newSector, DMU_FLOOR_MATERIAL);
+
+    IterList_Clear(spechit);*/
+
+    if(!(mo->flags & MF_NOCLIP))
+    {
+        // Check things first, possibly picking things up the bounding box is
+        // extended by MAXRADIUS because mobj_ts are grouped into mapblocks
+        // based on their origin point, and can overlap into adjacent blocks by
+        // up to MAXRADIUS.
+
+        AABoxd aaBox(mo->origin[VX] - mo->radius - MAXRADIUS, mo->origin[VY] - mo->radius - MAXRADIUS,
+                     mo->origin[VX] + mo->radius + MAXRADIUS, mo->origin[VY] + mo->radius + MAXRADIUS);
+
+        pit_checkonmobjz_params_t parm;
+        parm.riderMobj = mo;
+        parm.mountMobj = 0;
+
+        VALIDCOUNT++;
+        if(Mobj_BoxIterator(&aaBox, PIT_CheckOnMobjZ, &parm))
+        {
+            // Restore the mobj back to its previous state.
+            *mo = oldMo;
+
+            return parm.mountMobj;
+        }
+    }
+
+    // Restore the mobj back to its previous state.
+    *mo = oldMo;
+
+    return 0;
 }
 
 struct ptr_boucetraverse_params_t

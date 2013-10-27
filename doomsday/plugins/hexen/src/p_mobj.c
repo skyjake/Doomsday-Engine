@@ -903,7 +903,7 @@ static void landedOnThing(mobj_t* mo)
 
 void P_MobjThinker(void *thinkerPtr)
 {
-    mobj_t* mobj = thinkerPtr;
+    mobj_t *mobj = thinkerPtr;
 
     if(IS_CLIENT && !ClMobj_IsValid(mobj))
         return; // We should not touch this right now.
@@ -1075,7 +1075,8 @@ void P_MobjThinker(void *thinkerPtr)
         }
 
         if(mobj->thinker.function == (thinkfunc_t) NOPFUNC)
-        {   // mobj was removed
+        {
+            // mobj was removed
             return;
         }
     }
