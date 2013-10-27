@@ -88,14 +88,9 @@
 // Time interval for item respawning.
 #define SPAWNQUEUE_MAX         128
 
-DENG_EXTERN_C int iquehead;
-DENG_EXTERN_C int iquetail;
+DENG_EXTERN_C coord_t *FloatBobOffset;
 
-DENG_EXTERN_C mobjtype_t PuffType;
-DENG_EXTERN_C mobj_t* MissileMobj;
-DENG_EXTERN_C coord_t* FloatBobOffset;
 DENG_EXTERN_C int clipmana[NUM_AMMO_TYPES];
-DENG_EXTERN_C int TimerGame; // Tic countdown for deathmatch.
 
 #ifdef __cplusplus
 extern "C" {

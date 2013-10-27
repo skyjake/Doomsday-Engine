@@ -42,10 +42,7 @@
 
 #define SMALLSPLASHCLIP         (12);
 
-mobjtype_t PuffType;
-mobj_t *MissileMobj;
-
-void P_ExplodeMissile(mobj_t* mo)
+void P_ExplodeMissile(mobj_t *mo)
 {
     mo->mom[MX] = mo->mom[MY] = mo->mom[MZ] = 0;
     P_MobjChangeState(mo, P_GetState(mo->type, SN_DEATH));
@@ -363,7 +360,7 @@ void P_MobjMoveXY(mobj_t* mo)
         {   // Blocked mom.
             if(mo->flags2 & MF2_SLIDE)
             {   // Try to slide along it.
-                if(blockingMobj == NULL)
+                if(BlockingMobj == NULL)
                 {   // Slide against wall.
                     P_SlideMove(mo);
                 }
@@ -389,15 +386,15 @@ void P_MobjMoveXY(mobj_t* mo)
 
                 if(mo->flags2 & MF2_FLOORBOUNCE)
                 {
-                    if(blockingMobj)
+                    if(BlockingMobj)
                     {
-                        if((blockingMobj->flags2 & MF2_REFLECTIVE) ||
-                           ((!blockingMobj->player) &&
-                            (!(blockingMobj->flags & MF_COUNTKILL))))
+                        if((BlockingMobj->flags2 & MF2_REFLECTIVE) ||
+                           ((!BlockingMobj->player) &&
+                            (!(BlockingMobj->flags & MF_COUNTKILL))))
                         {
                             coord_t speed;
 
-                            angle = M_PointToAngle2(blockingMobj->origin, mo->origin) +
+                            angle = M_PointToAngle2(BlockingMobj->origin, mo->origin) +
                                 ANGLE_1 * ((P_Random() % 16) - 8);
 
                             speed = M_ApproxDistance(mo->mom[MX], mo->mom[MY]);
@@ -440,16 +437,16 @@ void P_MobjMoveXY(mobj_t* mo)
                     }
                 }
 
-                if(blockingMobj && (blockingMobj->flags2 & MF2_REFLECTIVE))
+                if(BlockingMobj && (BlockingMobj->flags2 & MF2_REFLECTIVE))
                 {
-                    angle = M_PointToAngle2(blockingMobj->origin, mo->origin);
+                    angle = M_PointToAngle2(BlockingMobj->origin, mo->origin);
 
                     // Change angle for delflection/reflection
-                    switch(blockingMobj->type)
+                    switch(BlockingMobj->type)
                     {
                     case MT_CENTAUR:
                     case MT_CENTAURLEADER:
-                        if(abs(angle - blockingMobj->angle) >> 24 > 45)
+                        if(abs(angle - BlockingMobj->angle) >> 24 > 45)
                             goto explode;
                         if(mo->type == MT_HOLY_FX)
                             goto explode;
@@ -479,7 +476,7 @@ void P_MobjMoveXY(mobj_t* mo)
                     {
                         mo->tracer = mo->target;
                     }
-                    mo->target = blockingMobj;
+                    mo->target = BlockingMobj;
 
                     return;
                 }
@@ -1005,7 +1002,7 @@ void P_MobjThinker(void *thinkerPtr)
     P_UpdateHealthBits(mobj);
 
     // Handle X and Y momentums
-    blockingMobj = NULL;
+    BlockingMobj = NULL;
     if(!FEQUAL(mobj->mom[MX], 0) || !FEQUAL(mobj->mom[MY], 0) ||
        (mobj->flags & MF_SKULLFLY))
     {
@@ -1033,7 +1030,7 @@ void P_MobjThinker(void *thinkerPtr)
             mobj->floorClip = -MAX_BOB_OFFSET;
         }
     }
-    else if(!FEQUAL(mobj->origin[VZ], mobj->floorZ) || !FEQUAL(mobj->mom[MZ], 0) || blockingMobj)
+    else if(!FEQUAL(mobj->origin[VZ], mobj->floorZ) || !FEQUAL(mobj->mom[MZ], 0) || BlockingMobj)
     {
         // Handle Z momentum and gravity
         if(mobj->flags2 & MF2_PASSMOBJ)
@@ -1260,7 +1257,7 @@ void P_SpawnPuff(coord_t x, coord_t y, coord_t z, angle_t angle)
         }
     }
 
-    puffSpawned = puff;
+    PuffSpawned = puff;
 }
 
 void P_SpawnBloodSplatter(coord_t x, coord_t y, coord_t z, mobj_t* originator)
@@ -1962,7 +1959,7 @@ mobj_t* P_SpawnMissileAngleSpeed(mobjtype_t type, mobj_t* source, angle_t angle,
 /**
  * Tries to aim at a nearby monster.
  */
-mobj_t* P_SpawnPlayerMissile(mobjtype_t type, mobj_t* source)
+mobj_t *P_SpawnPlayerMissile(mobjtype_t type, mobj_t *source)
 {
     uint an;
     angle_t angle;
@@ -1971,6 +1968,7 @@ mobj_t* P_SpawnPlayerMissile(mobjtype_t type, mobj_t* source)
     float movfac = 1, slope;
     boolean dontAim = cfg.noAutoAim;
     int spawnFlags = 0;
+    mobj_t *missile;
 
     // Try to find a target
     angle = source->angle;
@@ -2016,43 +2014,43 @@ mobj_t* P_SpawnPlayerMissile(mobjtype_t type, mobj_t* source)
         pos[VZ] -= source->floorClip;
     }
 
-    if(!(MissileMobj = P_SpawnMobj(type, pos, angle, spawnFlags)))
+    if(!(missile = P_SpawnMobj(type, pos, angle, spawnFlags)))
         return NULL;
 
-    MissileMobj->target = source;
+    missile->target = source;
     an = angle >> ANGLETOFINESHIFT;
-    MissileMobj->mom[MX] =
-        movfac * MissileMobj->info->speed * FIX2FLT(finecosine[an]);
-    MissileMobj->mom[MY] =
-        movfac * MissileMobj->info->speed * FIX2FLT(finesine[an]);
-    MissileMobj->mom[MZ] = MissileMobj->info->speed * slope;
+    missile->mom[MX] =
+        movfac * missile->info->speed * FIX2FLT(finecosine[an]);
+    missile->mom[MY] =
+        movfac * missile->info->speed * FIX2FLT(finesine[an]);
+    missile->mom[MZ] = missile->info->speed * slope;
 
-    P_MobjUnlink(MissileMobj);
-    if(MissileMobj->type == MT_MWAND_MISSILE ||
-       MissileMobj->type == MT_CFLAME_MISSILE)
+    P_MobjUnlink(missile);
+    if(missile->type == MT_MWAND_MISSILE ||
+       missile->type == MT_CFLAME_MISSILE)
     {
         // Ultra-fast ripper spawning missile.
-        MissileMobj->origin[VX] += MissileMobj->mom[MX] / 8;
-        MissileMobj->origin[VY] += MissileMobj->mom[MY] / 8;
-        MissileMobj->origin[VZ] += MissileMobj->mom[MZ] / 8;
+        missile->origin[VX] += missile->mom[MX] / 8;
+        missile->origin[VY] += missile->mom[MY] / 8;
+        missile->origin[VZ] += missile->mom[MZ] / 8;
     }
     else
     {
         // Normal missile.
-        MissileMobj->origin[VX] += MissileMobj->mom[MX] / 2;
-        MissileMobj->origin[VY] += MissileMobj->mom[MY] / 2;
-        MissileMobj->origin[VZ] += MissileMobj->mom[MZ] / 2;
+        missile->origin[VX] += missile->mom[MX] / 2;
+        missile->origin[VY] += missile->mom[MY] / 2;
+        missile->origin[VZ] += missile->mom[MZ] / 2;
     }
-    P_MobjLink(MissileMobj);
+    P_MobjLink(missile);
 
-    if(!P_TryMoveXY(MissileMobj, MissileMobj->origin[VX], MissileMobj->origin[VY]))
+    if(!P_TryMoveXY(missile, missile->origin[VX], missile->origin[VY]))
     {
         // Exploded immediately
-        P_ExplodeMissile(MissileMobj);
+        P_ExplodeMissile(missile);
         return NULL;
     }
 
-    return MissileMobj;
+    return missile;
 }
 
 mobj_t* P_SPMAngle(mobjtype_t type, mobj_t* source, angle_t origAngle)

@@ -632,18 +632,20 @@ void AdjustPlayerAngle(mobj_t* pmo)
     pmo->player->plr->flags |= DDPF_FIXANGLES;
 }
 
-void C_DECL A_SnoutAttack(player_t* plr, pspdef_t* psp)
+void C_DECL A_SnoutAttack(player_t *plr, pspdef_t *psp)
 {
     angle_t angle;
     int damage;
     float slope;
 
+    DENG_ASSERT(plr != 0 && psp != 0);
+
     damage = 3 + (P_Random() & 3);
     angle = plr->plr->mo->angle;
     slope = P_AimLineAttack(plr->plr->mo, angle, MELEERANGE);
 
-    PuffType = MT_SNOUTPUFF;
-    puffSpawned = NULL;
+    PuffType    = MT_SNOUTPUFF;
+    PuffSpawned = NULL;
 
     P_LineAttack(plr->plr->mo, angle, MELEERANGE, slope, damage);
     S_StartSoundEx(SFX_PIG_ACTIVE1 + (P_Random() & 1), plr->plr->mo);
@@ -652,8 +654,9 @@ void C_DECL A_SnoutAttack(player_t* plr, pspdef_t* psp)
     {
         AdjustPlayerAngle(plr->plr->mo);
 
-        if(puffSpawned)
-        {   // Bit something.
+        if(PuffSpawned)
+        {
+            // Bit something.
             S_StartSoundEx(SFX_PIG_ATTACK, plr->plr->mo);
         }
     }
@@ -707,12 +710,12 @@ void C_DECL A_FHammerAttack(player_t *plr, pspdef_t *psp)
     }
 
     // Didn't find any targets in meleerange, so set to throw out a hammer.
-    puffSpawned = NULL;
+    PuffSpawned = NULL;
 
     angle = mo->angle;
     slope = P_AimLineAttack(mo, angle, HAMMER_RANGE);
     P_LineAttack(mo, angle, HAMMER_RANGE, slope, damage);
-    if(puffSpawned)
+    if(PuffSpawned)
     {
         mo->special1 = false;
     }
@@ -1460,19 +1463,19 @@ void C_DECL A_CFlameMissile(mobj_t* mo)
     A_UnHideThing(mo);
     S_StartSound(SFX_CLERIC_FLAME_EXPLODE, mo);
 
-    if(blockingMobj && (blockingMobj->flags & MF_SHOOTABLE))
+    if(BlockingMobj && (BlockingMobj->flags & MF_SHOOTABLE))
     {   // Hit something.
         // Spawn the flame circle around the thing
-        dist = blockingMobj->radius + 18;
+        dist = BlockingMobj->radius + 18;
         for(i = 0; i < 4; ++i)
         {
             an = (i * ANG45) >> ANGLETOFINESHIFT;
             an90 = (i * ANG45 + ANG90) >> ANGLETOFINESHIFT;
 
             if((pmo = P_SpawnMobjXYZ(MT_CIRCLEFLAME,
-                                     blockingMobj->origin[VX] + dist * FIX2FLT(finecosine[an]),
-                                     blockingMobj->origin[VY] + dist * FIX2FLT(finesine[an]),
-                                     blockingMobj->origin[VZ] + 5,
+                                     BlockingMobj->origin[VX] + dist * FIX2FLT(finecosine[an]),
+                                     BlockingMobj->origin[VY] + dist * FIX2FLT(finesine[an]),
+                                     BlockingMobj->origin[VZ] + 5,
                                      (angle_t) an << ANGLETOFINESHIFT, 0)))
             {
                 pmo->target = mo->target;
@@ -1485,9 +1488,9 @@ void C_DECL A_CFlameMissile(mobj_t* mo)
             }
 
             if((pmo = P_SpawnMobjXYZ(MT_CIRCLEFLAME,
-                                     blockingMobj->origin[VX] - dist * FIX2FLT(finecosine[an]),
-                                     blockingMobj->origin[VY] - dist * FIX2FLT(finesine[an]),
-                                     blockingMobj->origin[VZ] + 5,
+                                     BlockingMobj->origin[VX] - dist * FIX2FLT(finecosine[an]),
+                                     BlockingMobj->origin[VY] - dist * FIX2FLT(finesine[an]),
+                                     BlockingMobj->origin[VZ] + 5,
                                      (angle_t) (ANG180 + (an << ANGLETOFINESHIFT)), 0)))
             {
                 pmo->target = mo->target;

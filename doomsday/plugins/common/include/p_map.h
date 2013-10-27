@@ -30,20 +30,16 @@ DENG_EXTERN_C coord_t attackRange;
 DENG_EXTERN_C boolean floatOk;
 DENG_EXTERN_C coord_t tmFloorZ;
 DENG_EXTERN_C coord_t tmCeilingZ;
-DENG_EXTERN_C Material *tmFloorMaterial;
+DENG_EXTERN_C boolean fellDown;
 
 DENG_EXTERN_C Line *ceilingLine, *floorLine;
-DENG_EXTERN_C Line *blockLine;
 DENG_EXTERN_C mobj_t *lineTarget; // Who got hit (or NULL).
-DENG_EXTERN_C mobj_t *tmThing;
-
+DENG_EXTERN_C Line *blockLine;
 #if __JHEXEN__
-DENG_EXTERN_C mobj_t *puffSpawned;
-DENG_EXTERN_C mobj_t *blockingMobj;
+DENG_EXTERN_C mobjtype_t PuffType;
+DENG_EXTERN_C mobj_t *PuffSpawned;
+DENG_EXTERN_C mobj_t *BlockingMobj;
 #endif
-
-DENG_EXTERN_C AABoxd tmBox;
-DENG_EXTERN_C boolean fellDown;
 
 #ifdef __cplusplus
 extern "C" {

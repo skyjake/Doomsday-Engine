@@ -50,8 +50,8 @@ static void P_FakeZMovement(mobj_t *mo);
 static void checkForPushSpecial(Line *line, int side, mobj_t *mobj);
 #endif
 
-AABoxd tmBox;
-mobj_t *tmThing;
+static AABoxd tmBox;
+static mobj_t *tmThing;
 
 // If "floatOk" true, move would be ok if within "tmFloorZ - tmCeilingZ".
 boolean floatOk;
@@ -59,7 +59,7 @@ boolean floatOk;
 coord_t tmFloorZ;
 coord_t tmCeilingZ;
 #if __JHEXEN__
-Material *tmFloorMaterial;
+static Material *tmFloorMaterial;
 #endif
 
 boolean fellDown; // $dropoff_fix
@@ -76,37 +76,28 @@ Line *blockLine; // $unstuck: blocking line
 coord_t attackRange;
 
 #if __JHEXEN__
-mobj_t *puffSpawned;
-mobj_t *blockingMobj;
+mobjtype_t PuffType;
+mobj_t *PuffSpawned;
+mobj_t *BlockingMobj;
 #endif
 
 static coord_t tm[3];
+static coord_t tmDropoffZ;
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
 static coord_t tmHeight;
 static Line *tmHitLine;
+static int tmUnstuck; ///< $unstuck: used to check unsticking
 #endif
-static coord_t tmDropoffZ;
 
-static coord_t tmMove[3];
+static coord_t shootZ; ///< Height if not aiming up or down.
 static mobj_t *shootThing;
 
-// Height if not aiming up or down.
-static coord_t shootZ;
-
 static int lineAttackDamage;
+
 static float aimSlope;
+static float topSlope, bottomSlope; ///< Slopes to top and bottom of target.
 
-// slopes to top and bottom of target
-static float topSlope, bottomSlope;
-
-static coord_t startPos[3]; // start position for trajectory line checks
-static coord_t endPos[3]; // end position for trajectory checks
-
-#if !__JHEXEN__
-static int tmUnstuck; // $unstuck: used to check unsticking
-#endif
-
-static byte *rejectMatrix; // For fast sight rejection.
+static byte *rejectMatrix; ///< For fast sight rejection.
 
 coord_t P_GetGravity()
 {
@@ -403,7 +394,7 @@ int PIT_CheckThing(mobj_t* thing, void* data)
 #if !__JHEXEN__
     if(!tmThing->player && (tmThing->flags2 & MF2_PASSMOBJ))
 #else
-    blockingMobj = thing;
+    BlockingMobj = thing;
     if(tmThing->flags2 & MF2_PASSMOBJ)
 #endif
     {   // Check if a mobj passed over/under another object.
@@ -430,7 +421,7 @@ int PIT_CheckThing(mobj_t* thing, void* data)
     if((tmThing->flags & MF_SKULLFLY) && (thing->flags & MF_SOLID))
     {
 #if __JHEXEN__
-        blockingMobj = NULL;
+        BlockingMobj = NULL;
         if(tmThing->type == MT_MINOTAUR)
         {
             // Slamming minotaurs shouldn't move non-creatures.
@@ -1115,7 +1106,7 @@ boolean P_CheckPositionXYZ(mobj_t *thing, coord_t x, coord_t y, coord_t z)
     if(!P_MobjIsCamera(thing))
     {
 #if __JHEXEN__
-        blockingMobj = 0;
+        BlockingMobj = 0;
 #endif
         if(Mobj_BoxIterator(&tmBoxExpanded, PIT_CheckThing, 0))
         {
@@ -1143,7 +1134,7 @@ boolean P_CheckPositionXYZ(mobj_t *thing, coord_t x, coord_t y, coord_t z)
     // Check lines.
     tmBoxExpanded = tmBox;
 #if __JHEXEN__
-    blockingMobj  = 0;
+    BlockingMobj  = 0;
 #endif
 
     return !Line_BoxIterator(&tmBoxExpanded, LIF_ALL, PIT_CheckLine, 0);
@@ -1190,14 +1181,14 @@ static boolean P_TryMove2(mobj_t *thing, coord_t x, coord_t y, boolean dropoff)
 #endif
     {
 #if __JHEXEN__
-        if(!blockingMobj || blockingMobj->player || !thing->player)
+        if(!BlockingMobj || BlockingMobj->player || !thing->player)
         {
             goto pushline;
         }
-        else if(blockingMobj->origin[VZ] + blockingMobj->height - thing->origin[VZ] > 24 ||
-                (P_GetDoublep(Mobj_Sector(blockingMobj), DMU_CEILING_HEIGHT) -
-                 (blockingMobj->origin[VZ] + blockingMobj->height) < thing->height) ||
-                (tmCeilingZ - (blockingMobj->origin[VZ] + blockingMobj->height) <
+        else if(BlockingMobj->origin[VZ] + BlockingMobj->height - thing->origin[VZ] > 24 ||
+                (P_GetDoublep(Mobj_Sector(BlockingMobj), DMU_CEILING_HEIGHT) -
+                 (BlockingMobj->origin[VZ] + BlockingMobj->height) < thing->height) ||
+                (tmCeilingZ - (BlockingMobj->origin[VZ] + BlockingMobj->height) <
                  thing->height))
         {
             goto pushline;
@@ -2328,37 +2319,37 @@ static boolean P_ThingHeightClip(mobj_t *thing)
  *
  * @param line  The line being slid along.
  */
-static void P_HitSlideLine(mobj_t *slideMo, Line *line)
+static void P_HitSlideLine(mobj_t *slideMo, Line *line, pvec2d_t move)
 {
     DENG_ASSERT(slideMo != 0 && line != 0);
 
     slopetype_t slopeType = slopetype_t(P_GetIntp(line, DMU_SLOPETYPE));
     if(slopeType == ST_HORIZONTAL)
     {
-        tmMove[MY] = 0;
+        move[MY] = 0;
         return;
     }
     else if(slopeType == ST_VERTICAL)
     {
-        tmMove[MX] = 0;
+        move[MX] = 0;
         return;
     }
 
     bool side = Line_PointOnSide(line, slideMo->origin) < 0;
     vec2d_t d1; P_GetDoublepv(line, DMU_DXY, d1);
 
-    angle_t moveAngle = M_PointXYToAngle2(0, 0, tmMove[MX], tmMove[MY]);
-    angle_t lineAngle = M_PointXYToAngle2(0, 0, d1[0], d1[1]) + (side? ANG180 : 0);
+    angle_t moveAngle = M_PointToAngle(move);
+    angle_t lineAngle = M_PointToAngle(d1) + (side? ANG180 : 0);
 
     angle_t deltaAngle = moveAngle - lineAngle;
     if(deltaAngle > ANG180) deltaAngle += ANG180;
 
-    coord_t moveLen = M_ApproxDistance(tmMove[MX], tmMove[MY]);
+    coord_t moveLen = M_ApproxDistance(move[MX], move[MY]);
     coord_t newLen  = moveLen * FIX2FLT(finecosine[deltaAngle >> ANGLETOFINESHIFT]);
 
     uint an = lineAngle >> ANGLETOFINESHIFT;
-    V2d_Set(tmMove, newLen * FIX2FLT(finecosine[an]),
-                    newLen * FIX2FLT(finesine  [an]));
+    V2d_Set(move, newLen * FIX2FLT(finecosine[an]),
+                  newLen * FIX2FLT(finesine  [an]));
 }
 
 struct ptr_slidetraverse_params_t
@@ -2432,8 +2423,9 @@ void P_SlideMove(mobj_t *mo)
     vec2d_t oldOrigin; V2d_Copy(oldOrigin, mo->origin);
 #endif
 
-    vec2d_t leadPos = { 0, 0 };
+    vec2d_t leadPos  = { 0, 0 };
     vec2d_t trailPos = { 0, 0 };
+    vec2d_t tmMove   = { 0, 0 };
 
     int hitCount = 3;
     do
@@ -2519,7 +2511,7 @@ void P_SlideMove(mobj_t *mo)
         V2d_Set(tmMove, mo->mom[VX] * parm.bestDistance,
                         mo->mom[VY] * parm.bestDistance);
 
-        P_HitSlideLine(mo, parm.bestLine); // Clip the move.
+        P_HitSlideLine(mo, parm.bestLine, tmMove); // Clip the move.
 
         V2d_Copy(mo->mom, tmMove);
 
