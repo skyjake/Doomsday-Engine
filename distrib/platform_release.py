@@ -265,7 +265,7 @@ def mac_release():
 
     print 'Signing Doomsday Engine.app...'
     os.system('ln -fs Versions/2.5/Python "Doomsday Engine.app/Contents/Frameworks/Python.framework/Python"')
-    codesign("Doomsday Engine.app/Contents/Frameworks/Python.framework/Python")
+    codesign("Doomsday Engine.app/Contents/Frameworks/Python.framework")
     codesign("Doomsday Engine.app/Contents/Frameworks/libwx_macud-2.8.0.dylib")
     codesign("Doomsday Engine.app/Contents/MacOS/python")
     codesign("Doomsday Engine.app")
