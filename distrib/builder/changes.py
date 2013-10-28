@@ -314,3 +314,5 @@ class Changes:
                 qch = entry.replace('"', '\\"').replace('!', '\\!')
                 print ' *', qch
                 os.system("dch --check-dirname-level 0 -a \"%s\"" % qch)
+
+            os.system('dch --release ""')

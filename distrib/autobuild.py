@@ -156,6 +156,7 @@ def update_changes(debChanges=False):
         print "Marking new FMOD version:", debVer
         msg = 'New release: Doomsday Engine build %i.' % builder.Event().number()
         os.system('rm -f debian/changelog && dch --check-dirname-level 0 --create --package doomsday-fmod -v %s "%s"' % (debVer, msg))
+        os.system('dch --release ""')
 
     else:
         # Save version information.
