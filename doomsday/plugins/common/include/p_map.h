@@ -36,7 +36,6 @@ DENG_EXTERN_C mobj_t *tmBlockingMobj;
 #endif
 
 DENG_EXTERN_C mobj_t *lineTarget; // Who got hit (or NULL).
-DENG_EXTERN_C mobjtype_t PuffType;
 #if __JDOOM__ || __JDOOM64__
 DENG_EXTERN_C boolean PuffNoSpark;
 #endif
@@ -159,7 +158,8 @@ float P_AimLineAttack(mobj_t *t1, angle_t angle, coord_t distance);
 /**
  * @param damage    @c 0= Perform a test trace that will leave lineTarget set.
  */
-void P_LineAttack(mobj_t *t1, angle_t angle, coord_t distance, coord_t slope, int damage);
+void P_LineAttack(mobj_t *t1, angle_t angle, coord_t distance, coord_t slope,
+    int damage, mobjtype_t puffType);
 
 coord_t P_GetGravity(void);
 

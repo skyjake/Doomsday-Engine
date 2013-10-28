@@ -644,10 +644,9 @@ void C_DECL A_SnoutAttack(player_t *plr, pspdef_t *psp)
     angle = plr->plr->mo->angle;
     slope = P_AimLineAttack(plr->plr->mo, angle, MELEERANGE);
 
-    PuffType    = MT_SNOUTPUFF;
     PuffSpawned = NULL;
 
-    P_LineAttack(plr->plr->mo, angle, MELEERANGE, slope, damage);
+    P_LineAttack(plr->plr->mo, angle, MELEERANGE, slope, damage, MT_SNOUTPUFF);
     S_StartSoundEx(SFX_PIG_ACTIVE1 + (P_Random() & 1), plr->plr->mo);
 
     if(lineTarget)
@@ -664,25 +663,25 @@ void C_DECL A_SnoutAttack(player_t *plr, pspdef_t *psp)
 
 void C_DECL A_FHammerAttack(player_t *plr, pspdef_t *psp)
 {
-    int         i;
-    angle_t     angle;
-    mobj_t     *mo = plr->plr->mo;
-    int         damage;
-    float       power;
-    float       slope;
+    int i;
+    angle_t angle;
+    mobj_t *mo = plr->plr->mo;
+    int damage;
+    float power;
+    float slope;
 
     if(IS_CLIENT) return;
 
     damage = 60 + (P_Random() & 63);
     power = 10;
-    PuffType = MT_HAMMERPUFF;
+
     for(i = 0; i < 16; ++i)
     {
         angle = mo->angle + i * (ANG45 / 32);
         slope = P_AimLineAttack(mo, angle, HAMMER_RANGE);
         if(lineTarget)
         {
-            P_LineAttack(mo, angle, HAMMER_RANGE, slope, damage);
+            P_LineAttack(mo, angle, HAMMER_RANGE, slope, damage, MT_HAMMERPUFF);
             AdjustPlayerAngle(mo);
             if((lineTarget->flags & MF_COUNTKILL) || lineTarget->player)
             {
@@ -697,7 +696,7 @@ void C_DECL A_FHammerAttack(player_t *plr, pspdef_t *psp)
         slope = P_AimLineAttack(mo, angle, HAMMER_RANGE);
         if(lineTarget)
         {
-            P_LineAttack(mo, angle, HAMMER_RANGE, slope, damage);
+            P_LineAttack(mo, angle, HAMMER_RANGE, slope, damage, MT_HAMMERPUFF);
             AdjustPlayerAngle(mo);
             if((lineTarget->flags & MF_COUNTKILL) || lineTarget->player)
             {
@@ -710,11 +709,11 @@ void C_DECL A_FHammerAttack(player_t *plr, pspdef_t *psp)
     }
 
     // Didn't find any targets in meleerange, so set to throw out a hammer.
-    PuffSpawned = NULL;
+    PuffSpawned = 0;
 
     angle = mo->angle;
     slope = P_AimLineAttack(mo, angle, HAMMER_RANGE);
-    P_LineAttack(mo, angle, HAMMER_RANGE, slope, damage);
+    P_LineAttack(mo, angle, HAMMER_RANGE, slope, damage, MT_HAMMERPUFF);
     if(PuffSpawned)
     {
         mo->special1 = false;
@@ -727,7 +726,8 @@ void C_DECL A_FHammerAttack(player_t *plr, pspdef_t *psp)
   hammerdone:
     if(plr->ammo[AT_GREENMANA].owned <
        weaponInfo[plr->readyWeapon][plr->class_].mode[0].perShot[AT_GREENMANA])
-    {   // Don't spawn a hammer if the plr doesn't have enough mana.
+    {
+        // Don't spawn a hammer if the plr doesn't have enough mana.
         mo->special1 = false;
     }
 }
@@ -1103,9 +1103,7 @@ void MStaffSpawn2(mobj_t *mo, angle_t angle)
  */
 void C_DECL A_MStaffAttack2(mobj_t *mo)
 {
-    angle_t         angle;
-
-    angle = mo->angle;
+    angle_t angle = mo->angle;
     MStaffSpawn2(mo, angle);
     MStaffSpawn2(mo, angle - ANGLE_1 * 5);
     MStaffSpawn2(mo, angle + ANGLE_1 * 5);
@@ -1114,18 +1112,17 @@ void C_DECL A_MStaffAttack2(mobj_t *mo)
 
 void C_DECL A_FPunchAttack(player_t *plr, pspdef_t *psp)
 {
-    int         i;
-    angle_t     angle;
-    int         damage;
-    float       slope;
-    mobj_t     *mo = plr->plr->mo;
-    float       power;
+    int i;
+    angle_t angle;
+    int damage;
+    float slope;
+    mobj_t *mo = plr->plr->mo;
+    float power;
 
     if(IS_CLIENT) return;
 
     damage = 40 + (P_Random() & 15);
     power = 2;
-    PuffType = MT_PUNCHPUFF;
 
     for(i = 0; i < 16; ++i)
     {
@@ -1138,10 +1135,10 @@ void C_DECL A_FPunchAttack(player_t *plr, pspdef_t *psp)
             {
                 damage *= 2;
                 power = 6;
-                PuffType = MT_HAMMERPUFF;
             }
 
-            P_LineAttack(mo, angle, 2 * MELEERANGE, slope, damage);
+            P_LineAttack(mo, angle, 2 * MELEERANGE, slope, damage,
+                         mo->special1 == 3? MT_HAMMERPUFF : MT_PUNCHPUFF);
             if((lineTarget->flags & MF_COUNTKILL) || lineTarget->player)
             {
                 P_ThrustMobj(lineTarget, angle, power);
@@ -1160,10 +1157,10 @@ void C_DECL A_FPunchAttack(player_t *plr, pspdef_t *psp)
             {
                 damage *= 2;
                 power = 6;
-                PuffType = MT_HAMMERPUFF;
             }
 
-            P_LineAttack(mo, angle, 2 * MELEERANGE, slope, damage);
+            P_LineAttack(mo, angle, 2 * MELEERANGE, slope, damage,
+                         mo->special1 == 3? MT_HAMMERPUFF : MT_PUNCHPUFF);
             if((lineTarget->flags & MF_COUNTKILL) || lineTarget->player)
             {
                 P_ThrustMobj(lineTarget, angle, power);
@@ -1179,7 +1176,7 @@ void C_DECL A_FPunchAttack(player_t *plr, pspdef_t *psp)
 
     angle = mo->angle;
     slope = P_AimLineAttack(mo, angle, MELEERANGE);
-    P_LineAttack(mo, angle, MELEERANGE, slope, damage);
+    P_LineAttack(mo, angle, MELEERANGE, slope, damage, MT_PUNCHPUFF);
 
   punchdone:
     if(mo->special1 == 3)
@@ -1192,12 +1189,13 @@ void C_DECL A_FPunchAttack(player_t *plr, pspdef_t *psp)
 
 void C_DECL A_FAxeAttack(player_t *plr, pspdef_t *psp)
 {
-    int         i;
-    angle_t     angle;
-    mobj_t     *pmo = plr->plr->mo;
-    float       power;
-    float       slope;
-    int         damage, useMana;
+    int i;
+    angle_t angle;
+    mobj_t *pmo = plr->plr->mo;
+    float power;
+    float slope;
+    int damage, useMana;
+    mobjtype_t puffType;
 
     if(IS_CLIENT) return;
 
@@ -1207,12 +1205,12 @@ void C_DECL A_FAxeAttack(player_t *plr, pspdef_t *psp)
     {
         damage *= 2;
         power = 6;
-        PuffType = MT_AXEPUFF_GLOW;
+        puffType = MT_AXEPUFF_GLOW;
         useMana = 1;
     }
     else
     {
-        PuffType = MT_AXEPUFF;
+        puffType = MT_AXEPUFF;
         useMana = 0;
     }
 
@@ -1222,7 +1220,7 @@ void C_DECL A_FAxeAttack(player_t *plr, pspdef_t *psp)
         slope = P_AimLineAttack(pmo, angle, AXERANGE);
         if(lineTarget)
         {
-            P_LineAttack(pmo, angle, AXERANGE, slope, damage);
+            P_LineAttack(pmo, angle, AXERANGE, slope, damage, puffType);
             if((lineTarget->flags & MF_COUNTKILL) || lineTarget->player)
             {
                 P_ThrustMobj(lineTarget, angle, power);
@@ -1237,7 +1235,7 @@ void C_DECL A_FAxeAttack(player_t *plr, pspdef_t *psp)
         slope = P_AimLineAttack(pmo, angle, AXERANGE);
         if(lineTarget)
         {
-            P_LineAttack(pmo, angle, AXERANGE, slope, damage);
+            P_LineAttack(pmo, angle, AXERANGE, slope, damage, puffType);
             if(lineTarget->flags & MF_COUNTKILL)
             {
                 P_ThrustMobj(lineTarget, angle, power);
@@ -1254,28 +1252,29 @@ void C_DECL A_FAxeAttack(player_t *plr, pspdef_t *psp)
 
     angle = pmo->angle;
     slope = P_AimLineAttack(pmo, angle, MELEERANGE);
-    P_LineAttack(pmo, angle, MELEERANGE, slope, damage);
+    P_LineAttack(pmo, angle, MELEERANGE, slope, damage, puffType);
 
   axedone:
     if(useMana == 2)
     {
         P_ShotAmmo(plr);
         if(!(plr->ammo[AT_BLUEMANA].owned > 0))
+        {
             P_SetPsprite(plr, ps_weapon, S_FAXEATK_5);
+        }
     }
 }
 
 void C_DECL A_CMaceAttack(player_t *plr, pspdef_t *psp)
 {
-    int         i;
-    angle_t     angle;
-    int         damage;
-    float       slope;
+    int i;
+    angle_t angle;
+    int damage;
+    float slope;
 
     if(IS_CLIENT) return;
 
     damage = 25 + (P_Random() & 15);
-    PuffType = MT_HAMMERPUFF;
     for(i = 0; i < 16; ++i)
     {
         angle = plr->plr->mo->angle + i * (ANG45 / 16);
@@ -1283,7 +1282,7 @@ void C_DECL A_CMaceAttack(player_t *plr, pspdef_t *psp)
         if(lineTarget)
         {
             P_LineAttack(plr->plr->mo, angle, 2 * MELEERANGE, slope,
-                         damage);
+                         damage, MT_HAMMERPUFF);
             AdjustPlayerAngle(plr->plr->mo);
             goto macedone;
         }
@@ -1293,7 +1292,7 @@ void C_DECL A_CMaceAttack(player_t *plr, pspdef_t *psp)
         if(lineTarget)
         {
             P_LineAttack(plr->plr->mo, angle, 2 * MELEERANGE, slope,
-                         damage);
+                         damage, MT_HAMMERPUFF);
             AdjustPlayerAngle(plr->plr->mo);
             goto macedone;
         }
@@ -1304,29 +1303,30 @@ void C_DECL A_CMaceAttack(player_t *plr, pspdef_t *psp)
 
     angle = plr->plr->mo->angle;
     slope = P_AimLineAttack(plr->plr->mo, angle, MELEERANGE);
-    P_LineAttack(plr->plr->mo, angle, MELEERANGE, slope, damage);
+    P_LineAttack(plr->plr->mo, angle, MELEERANGE, slope, damage, MT_HAMMERPUFF);
+
   macedone:
     return;
 }
 
-void C_DECL A_CStaffCheck(player_t* plr, pspdef_t* psp)
+void C_DECL A_CStaffCheck(player_t *plr, pspdef_t *psp)
 {
     int i;
-    mobj_t* pmo;
+    mobj_t *pmo;
     int damage, newLife;
     angle_t angle;
     float slope;
 
     pmo = plr->plr->mo;
     damage = 20 + (P_Random() & 15);
-    PuffType = MT_CSTAFFPUFF;
+
     for(i = 0; i < 3; ++i)
     {
         angle = pmo->angle + i * (ANG45 / 16);
         slope = P_AimLineAttack(pmo, angle, 1.5 * MELEERANGE);
         if(lineTarget)
         {
-            P_LineAttack(pmo, angle, 1.5 * MELEERANGE, slope, damage);
+            P_LineAttack(pmo, angle, 1.5 * MELEERANGE, slope, damage, MT_CSTAFFPUFF);
 
             pmo->angle = M_PointToAngle2(pmo->origin, lineTarget->origin);
 
@@ -1348,7 +1348,7 @@ void C_DECL A_CStaffCheck(player_t* plr, pspdef_t* psp)
         slope = P_AimLineAttack(plr->plr->mo, angle, 1.5 * MELEERANGE);
         if(lineTarget)
         {
-            P_LineAttack(pmo, angle, 1.5 * MELEERANGE, slope, damage);
+            P_LineAttack(pmo, angle, 1.5 * MELEERANGE, slope, damage, MT_CSTAFFPUFF);
             pmo->angle = M_PointToAngle2(pmo->origin, lineTarget->origin);
 
             if(lineTarget->player || (lineTarget->flags & MF_COUNTKILL))

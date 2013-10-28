@@ -366,7 +366,7 @@ void C_DECL A_GunFlash(player_t* player, pspdef_t* psp)
     P_SetPsprite(player, ps_flash, weaponInfo[player->readyWeapon][player->class_].mode[0].states[WSN_FLASH]);
 }
 
-void C_DECL A_Punch(player_t* player, pspdef_t* psp)
+void C_DECL A_Punch(player_t *player, pspdef_t *psp)
 {
     angle_t angle;
     int damage;
@@ -378,14 +378,15 @@ void C_DECL A_Punch(player_t* player, pspdef_t* psp)
     if(IS_CLIENT) return;
 
     damage = (float) (P_Random() % 10 + 1) * 2;
-
     if(player->powers[PT_STRENGTH])
+    {
         damage *= 10;
+    }
 
     angle = player->plr->mo->angle;
     angle += (P_Random() - P_Random()) << 18;
     slope = P_AimLineAttack(player->plr->mo, angle, MELEERANGE);
-    P_LineAttack(player->plr->mo, angle, MELEERANGE, slope, damage);
+    P_LineAttack(player->plr->mo, angle, MELEERANGE, slope, damage, MT_PUFF);
 
     // Turn to face target.
     if(lineTarget)
@@ -397,7 +398,7 @@ void C_DECL A_Punch(player_t* player, pspdef_t* psp)
     }
 }
 
-void C_DECL A_Saw(player_t* player, pspdef_t* psp)
+void C_DECL A_Saw(player_t *player, pspdef_t *psp)
 {
     angle_t angle;
     int damage;
@@ -412,7 +413,7 @@ void C_DECL A_Saw(player_t* player, pspdef_t* psp)
 
     // Use meleerange + 1 se the puff doesn't skip the flash.
     slope = P_AimLineAttack(player->plr->mo, angle, MELEERANGE + 1);
-    P_LineAttack(player->plr->mo, angle, MELEERANGE + 1, slope, damage);
+    P_LineAttack(player->plr->mo, angle, MELEERANGE + 1, slope, damage, MT_PUFF);
 
     if(!lineTarget)
     {
@@ -514,16 +515,18 @@ void P_BulletSlope(mobj_t *mo)
 
 void P_GunShot(mobj_t *mo, boolean accurate)
 {
-    angle_t             angle;
-    int                 damage;
+    angle_t angle;
+    int damage;
 
     damage = 5 * (P_Random() % 3 + 1);
+
     angle = mo->angle;
-
     if(!accurate)
+    {
         angle += (P_Random() - P_Random()) << 18;
+    }
 
-    P_LineAttack(mo, angle, MISSILERANGE, bulletSlope, damage);
+    P_LineAttack(mo, angle, MISSILERANGE, bulletSlope, damage, MT_PUFF);
 }
 
 void C_DECL A_FirePistol(player_t *player, pspdef_t *psp)
@@ -571,9 +574,9 @@ void C_DECL A_FireShotgun(player_t *player, pspdef_t *psp)
 
 void C_DECL A_FireShotgun2(player_t *player, pspdef_t *psp)
 {
-    int                 i;
-    angle_t             angle;
-    int                 damage;
+    int i;
+    angle_t angle;
+    int damage;
 
     S_StartSoundEx(SFX_DSHTGN, player->plr->mo);
     P_MobjChangeState(player->plr->mo,
@@ -585,8 +588,8 @@ void C_DECL A_FireShotgun2(player_t *player, pspdef_t *psp)
                  weaponInfo[player->readyWeapon][player->class_].mode[0].states[WSN_FLASH]);
 
     player->update |= PSF_AMMO;
-    if(IS_CLIENT)
-        return;
+
+    if(IS_CLIENT) return;
 
     P_BulletSlope(player->plr->mo);
 
@@ -597,7 +600,8 @@ void C_DECL A_FireShotgun2(player_t *player, pspdef_t *psp)
         angle += (P_Random() - P_Random()) << 19;
 
         P_LineAttack(player->plr->mo, angle, MISSILERANGE,
-                     bulletSlope + FIX2FLT((P_Random() - P_Random()) << 5), damage);
+                     bulletSlope + FIX2FLT((P_Random() - P_Random()) << 5),
+                     damage, MT_PUFF);
     }
 }
 

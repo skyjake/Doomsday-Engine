@@ -70,10 +70,6 @@ Line *tmFloorLine;
  */
 mobj_t *lineTarget; // Who got hit (or NULL).
 static coord_t attackRange;
-mobjtype_t PuffType;
-#if __JDOOM__ || __JDOOM64__
-boolean PuffNoSpark;
-#endif
 #if __JHEXEN__
 mobj_t *PuffSpawned;
 #endif
@@ -1577,8 +1573,12 @@ boolean P_TryMoveXYZ(mobj_t* thing, coord_t x, coord_t y, coord_t z)
     return false;
 }
 
-static mobj_t *spawnPuff(coord_t x, coord_t y, coord_t z)
+static mobj_t *spawnPuff(mobjtype_t type, const_pvec3d_t pos, bool noSpark = false)
 {
+#if __JHERETIC__ || __JHEXEN__
+    DENG_UNUSED(noSpark);
+#endif
+
     angle_t const angle = P_Random() << 24;
 
 #if !__JHEXEN__
@@ -1586,19 +1586,20 @@ static mobj_t *spawnPuff(coord_t x, coord_t y, coord_t z)
     if(IS_CLIENT) return 0;
 #endif
 
-    mobjtype_t type = PuffType;
+    mobjtype_t puffType = type;
+    coord_t zOffset = 0;
 #if __JHERETIC__
-    if(PuffType == MT_BLASTERPUFF1)
+    if(type == MT_BLASTERPUFF1)
     {
-        type = MT_BLASTERPUFF2;
+        puffType = MT_BLASTERPUFF2;
     }
     else
 #endif
     {
-        z += FIX2FLT((P_Random() - P_Random()) << 10);
+        zOffset = FIX2FLT((P_Random() - P_Random()) << 10);
     }
 
-    mobj_t *puff = P_SpawnMobjXYZ(type, x, y, z, angle, 0);
+    mobj_t *puff = P_SpawnMobjXYZ(puffType, pos[VX], pos[VY], pos[VZ] + zOffset, angle, 0);
     if(puff)
     {
 #if __JHEXEN__
@@ -1612,7 +1613,7 @@ static mobj_t *spawnPuff(coord_t x, coord_t y, coord_t z)
             S_StartSound(puff->info->attackSound, puff);
         }
 
-        switch(PuffType)
+        switch(type)
         {
         case MT_PUNCHPUFF:  puff->mom[MZ] = 1;   break;
         case MT_HAMMERPUFF: puff->mom[MZ] = .8f; break;
@@ -1620,7 +1621,7 @@ static mobj_t *spawnPuff(coord_t x, coord_t y, coord_t z)
         default: break;
         }
 #elif __JHERETIC__
-        if(PuffType == MT_BLASTERPUFF1)
+        if(puffType == MT_BLASTERPUFF1)
         {
             S_StartSound(SFX_BLSHIT, puff);
         }
@@ -1649,7 +1650,7 @@ static mobj_t *spawnPuff(coord_t x, coord_t y, coord_t z)
         if(puff->tics < 1) puff->tics = 1; // Always at least one tic.
 
         // Don't make punches spark on the wall.
-        if(PuffNoSpark)
+        if(noSpark)
         {
             P_MobjChangeState(puff, S_PUFF3);
         }
@@ -1668,6 +1669,8 @@ struct ptr_shoottraverse_params_t
     mobj_t *shooterMobj; ///< Mobj doing the shooting.
     int damage;          ///< Damage to inflict.
     coord_t range;       ///< Maximum effective range from the trace origin.
+    mobjtype_t puffType; ///< Type of puff to spawn.
+    bool puffNoSpark;    ///< Advance the puff to the first non-spark state.
 };
 
 /**
@@ -1849,7 +1852,7 @@ static int PTR_ShootTraverse(Intercept const *icpt, void *context)
         }
 
         // Spawn bullet puffs.
-        spawnPuff(pos[VX], pos[VY], pos[VZ]);
+        spawnPuff(parm.puffType, pos, parm.puffNoSpark);
 
 #if !__JHEXEN__
         if(lineWasHit && xline->special)
@@ -1908,7 +1911,7 @@ static int PTR_ShootTraverse(Intercept const *icpt, void *context)
 
     // Spawn bullet puffs or blood spots, depending on target type.
 #if __JHERETIC__ || __JHEXEN__
-    spawnPuff(pos[VX], pos[VY], pos[VZ]);
+    spawnPuff(parm.puffType, pos, parm.puffNoSpark);
 #endif
 
     if(parm.damage)
@@ -1919,7 +1922,7 @@ static int PTR_ShootTraverse(Intercept const *icpt, void *context)
 
         mobj_t *inflictor = parm.shooterMobj;
 #if __JHEXEN__
-        if(PuffType == MT_FLAMEPUFF2)
+        if(parm.puffType == MT_FLAMEPUFF2)
         {
             // Cleric FlameStrike does fire damage.
             inflictor = &lavaInflictor;
@@ -1942,7 +1945,7 @@ static int PTR_ShootTraverse(Intercept const *icpt, void *context)
                     P_SpawnBlood(pos[VX], pos[VY], pos[VZ], parm.damage, attackAngle + ANG180);
 #else
 # if __JHEXEN__
-                    if(PuffType == MT_AXEPUFF || PuffType == MT_AXEPUFF_GLOW)
+                    if(parm.puffType == MT_AXEPUFF || parm.puffType == MT_AXEPUFF_GLOW)
                     {
                         P_SpawnBloodSplatter2(pos[VX], pos[VY], pos[VZ], icpt->mobj);
                     }
@@ -1958,7 +1961,7 @@ static int PTR_ShootTraverse(Intercept const *icpt, void *context)
 #if __JDOOM__ || __JDOOM64__
             else
             {
-                spawnPuff(pos[VX], pos[VY], pos[VZ]);
+                spawnPuff(parm.puffType, pos, parm.puffNoSpark);
             }
 #endif
         }
@@ -2146,7 +2149,8 @@ float P_AimLineAttack(mobj_t *t1, angle_t angle, coord_t distance)
     return 0;
 }
 
-void P_LineAttack(mobj_t *t1, angle_t angle, coord_t distance, coord_t slope, int damage)
+void P_LineAttack(mobj_t *t1, angle_t angle, coord_t distance, coord_t slope,
+    int damage, mobjtype_t puffType)
 {
     uint an = angle >> ANGLETOFINESHIFT;
     vec2d_t target = { t1->origin[VX] + distance * FIX2FLT(finecosine[an]),
@@ -2176,20 +2180,21 @@ void P_LineAttack(mobj_t *t1, angle_t angle, coord_t distance, coord_t slope, in
     }
     shootZ -= t1->floorClip;
 
-#if __JDOOM__ || __JDOOM64__
-    PuffType = MT_PUFF;
-    PuffNoSpark = attackRange == MELEERANGE;
-#endif
-
     ptr_shoottraverse_params_t parm;
     parm.shooterMobj = t1;
     parm.range       = distance;
     parm.damage      = damage;
+    parm.puffType    = puffType;
+#if __JDOOM__ || __JDOOM64__
+    parm.puffNoSpark = attackRange == MELEERANGE;
+#else
+    parm.puffNoSpark = false;
+#endif
 
     if(!P_PathTraverse(t1->origin, target, PTR_ShootTraverse, &parm))
     {
 #if __JHEXEN__
-        switch(PuffType)
+        switch(puffType)
         {
         case MT_PUNCHPUFF:
             S_StartSound(SFX_FIGHTER_PUNCH_MISS, t1);
@@ -2201,9 +2206,10 @@ void P_LineAttack(mobj_t *t1, angle_t angle, coord_t distance, coord_t slope, in
             S_StartSound(SFX_FIGHTER_HAMMER_MISS, t1);
             break;
 
-        case MT_FLAMEPUFF:
-            spawnPuff(target[VX], target[VY], shootZ + (slope * distance));
-            break;
+        case MT_FLAMEPUFF: {
+            vec3d_t pos = { target[VX], target[VY], shootZ + (slope * distance) };
+            spawnPuff(puffType, pos);
+            break; }
 
         default: break;
         }

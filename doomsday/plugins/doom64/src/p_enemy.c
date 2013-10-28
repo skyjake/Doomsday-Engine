@@ -1101,17 +1101,17 @@ void C_DECL A_PosAttack(mobj_t* actor)
     S_StartSound(SFX_PISTOL, actor);
     angle += (P_Random() - P_Random()) << 20;
     damage = ((P_Random() % 5) + 1) * 3;
-    P_LineAttack(actor, angle, MISSILERANGE, slope, damage);
+    P_LineAttack(actor, angle, MISSILERANGE, slope, damage, MT_PUFF);
 }
 
 void C_DECL A_SPosAttack(mobj_t *actor)
 {
-    int                 i, damage;
-    angle_t             angle, bangle;
-    float               slope;
+    int i, damage;
+    angle_t angle, bangle;
+    float slope;
 
-    if(!actor->target)
-        return;
+    if(!actor) return;
+    if(!actor->target) return;
 
     S_StartSound(SFX_SHOTGN, actor);
     A_FaceTarget(actor);
@@ -1123,7 +1123,7 @@ void C_DECL A_SPosAttack(mobj_t *actor)
         angle = bangle + ((P_Random() - P_Random()) << 20);
         damage = ((P_Random() % 5) + 1) * 3;
 
-        P_LineAttack(actor, angle, MISSILERANGE, slope, damage);
+        P_LineAttack(actor, angle, MISSILERANGE, slope, damage, MT_PUFF);
     }
 }
 

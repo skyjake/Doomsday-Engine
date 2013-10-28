@@ -743,7 +743,7 @@ void C_DECL A_FaceTarget(mobj_t *actor)
         actor->angle += (P_Random() - P_Random()) << 21;
 }
 
-void C_DECL A_PosAttack(mobj_t* actor)
+void C_DECL A_PosAttack(mobj_t *actor)
 {
     int damage;
     angle_t angle;
@@ -758,15 +758,16 @@ void C_DECL A_PosAttack(mobj_t* actor)
     S_StartSound(SFX_PISTOL, actor);
     angle += (P_Random() - P_Random()) << 20;
     damage = ((P_Random() % 5) + 1) * 3;
-    P_LineAttack(actor, angle, MISSILERANGE, slope, damage);
+    P_LineAttack(actor, angle, MISSILERANGE, slope, damage, MT_PUFF);
 }
 
-void C_DECL A_SPosAttack(mobj_t* actor)
+void C_DECL A_SPosAttack(mobj_t *actor)
 {
     int i, damage;
     angle_t angle, bangle;
     float slope;
 
+    if(!actor) return;
     if(!actor->target) return;
 
     S_StartSound(SFX_SHOTGN, actor);
@@ -779,17 +780,17 @@ void C_DECL A_SPosAttack(mobj_t* actor)
         angle = bangle + ((P_Random() - P_Random()) << 20);
         damage = ((P_Random() % 5) + 1) * 3;
 
-        P_LineAttack(actor, angle, MISSILERANGE, slope, damage);
+        P_LineAttack(actor, angle, MISSILERANGE, slope, damage, MT_PUFF);
     }
 }
 
-void C_DECL A_CPosAttack(mobj_t* actor)
+void C_DECL A_CPosAttack(mobj_t *actor)
 {
-    int                 angle, bangle, damage;
-    float               slope;
+    int angle, bangle, damage;
+    float slope;
 
-    if(!actor->target)
-        return;
+    if(!actor) return;
+    if(!actor->target) return;
 
     S_StartSound(SFX_SHOTGN, actor);
     A_FaceTarget(actor);
@@ -798,16 +799,15 @@ void C_DECL A_CPosAttack(mobj_t* actor)
 
     angle = bangle + ((P_Random() - P_Random()) << 20);
     damage = ((P_Random() % 5) + 1) * 3;
-    P_LineAttack(actor, angle, MISSILERANGE, slope, damage);
+    P_LineAttack(actor, angle, MISSILERANGE, slope, damage, MT_PUFF);
 }
 
-void C_DECL A_CPosRefire(mobj_t* actor)
+void C_DECL A_CPosRefire(mobj_t *actor)
 {
     // Keep firing unless target got out of sight.
     A_FaceTarget(actor);
 
-    if(P_Random() < 40)
-        return;
+    if(P_Random() < 40) return;
 
     if(!actor->target || actor->target->health <= 0 ||
        !P_CheckSight(actor, actor->target))

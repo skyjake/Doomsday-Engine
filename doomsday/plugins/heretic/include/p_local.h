@@ -96,7 +96,6 @@
 #define USE_MACE_AMMO_1 1
 #define USE_MACE_AMMO_2 5
 
-DENG_EXTERN_C mobjtype_t PuffType;
 DENG_EXTERN_C mobj_t *missileMobj;
 DENG_EXTERN_C float turboMul;
 
