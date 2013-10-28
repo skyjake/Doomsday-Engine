@@ -36,9 +36,6 @@ DENG_EXTERN_C mobj_t *tmBlockingMobj;
 #endif
 
 DENG_EXTERN_C mobj_t *lineTarget; // Who got hit (or NULL).
-#if __JDOOM__ || __JDOOM64__
-DENG_EXTERN_C boolean PuffNoSpark;
-#endif
 #if __JHEXEN__
 DENG_EXTERN_C mobj_t *PuffSpawned;
 #endif

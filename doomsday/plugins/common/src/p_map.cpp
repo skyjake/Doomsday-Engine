@@ -1670,7 +1670,7 @@ struct ptr_shoottraverse_params_t
     int damage;          ///< Damage to inflict.
     coord_t range;       ///< Maximum effective range from the trace origin.
     mobjtype_t puffType; ///< Type of puff to spawn.
-    bool puffNoSpark;    ///< Advance the puff to the first non-spark state.
+    bool puffNoSpark;    ///< @c true= Advance the puff to the first non-spark state.
 };
 
 /**
@@ -2403,72 +2403,6 @@ void P_UseLines(player_t *player)
 }
 
 /**
- * Takes a valid thing and adjusts the thing->floorZ, thing->ceilingZ,
- * and possibly thing->origin[VZ].
- *
- * This is called for all nearby monsters whenever a sector changes height
- * If the thing doesn't fit, the z will be set to the lowest value and
- * false will be returned
- *
- * @param thing  The mobj whoose position to adjust.
- *
- * @return  @c true iff the thing did fit.
- */
-static boolean heightClip(mobj_t *thing)
-{
-    // Don't height clip cameras.
-    if(P_MobjIsCamera(thing))
-    {
-        return false;
-    }
-
-    bool const onfloor = (thing->origin[VZ] == thing->floorZ);
-
-    P_CheckPosition(thing, thing->origin);
-    thing->floorZ   = tmFloorZ;
-    thing->ceilingZ = tmCeilingZ;
-#if !__JHEXEN__
-    thing->dropOffZ = tmDropoffZ; // $dropoff_fix: remember dropoffs.
-#endif
-
-    if(onfloor)
-    {
-#if __JHEXEN__
-        if((thing->origin[VZ] - thing->floorZ < 9) ||
-           (thing->flags & MF_NOGRAVITY))
-        {
-            thing->origin[VZ] = thing->floorZ;
-        }
-#else
-        // Update view offset of real players.
-        if(Mobj_IsPlayer(thing) && !Mobj_IsVoodooDoll(thing))
-        {
-            thing->player->viewZ += thing->floorZ - thing->origin[VZ];
-        }
-
-        // Walking monsters rise and fall with the floor.
-        thing->origin[VZ] = thing->floorZ;
-
-        // $dropoff_fix: Possibly upset balance of objects hanging off ledges.
-        if((thing->intFlags & MIF_FALLING) && thing->gear >= MAXGEAR)
-        {
-            thing->gear = 0;
-        }
-#endif
-    }
-    else
-    {
-        // Don't adjust a floating monster unless forced to.
-        if(thing->origin[VZ] + thing->height > thing->ceilingZ)
-        {
-            thing->origin[VZ] = thing->ceilingZ - thing->height;
-        }
-    }
-
-    return (thing->ceilingZ - thing->floorZ) >= thing->height;
-}
-
-/**
  * Allows the player to slide along any angled walls by adjusting the
  * xmove / ymove so that the NEXT move will slide along the wall.
  *
@@ -2697,76 +2631,120 @@ struct pit_changesector_params_t
     bool noFit;
 };
 
+/// @return  Always @c false for use as an interation callback.
 static int PIT_ChangeSector(mobj_t *thing, void *context)
 {
     pit_changesector_params_t &parm = *static_cast<pit_changesector_params_t *>(context);
 
     DENG_ASSERT(thing->info != 0);
 
-    // Don't check things that aren't blocklinked (supposedly immaterial).
+    // Skip mobjs that aren't blocklinked (supposedly immaterial).
     if(thing->info->flags & MF_NOBLOCKMAP)
     {
         return false;
     }
 
-    if(heightClip(thing))
+    // Update the Z position of the mobj and determine whether it physically
+    // fits in the opening between floor and ceiling.
+    if(!P_MobjIsCamera(thing))
     {
-        return false; // Keep checking...
+        bool const onfloor = (thing->origin[VZ] == thing->floorZ);
+
+        P_CheckPosition(thing, thing->origin);
+        thing->floorZ   = tmFloorZ;
+        thing->ceilingZ = tmCeilingZ;
+#if !__JHEXEN__
+        thing->dropOffZ = tmDropoffZ; // $dropoff_fix: remember dropoffs.
+#endif
+
+        if(onfloor)
+        {
+#if __JHEXEN__
+            if((thing->origin[VZ] - thing->floorZ < 9) ||
+               (thing->flags & MF_NOGRAVITY))
+            {
+                thing->origin[VZ] = thing->floorZ;
+            }
+#else
+            // Update view offset of real players.
+            if(Mobj_IsPlayer(thing) && !Mobj_IsVoodooDoll(thing))
+            {
+                thing->player->viewZ += thing->floorZ - thing->origin[VZ];
+            }
+
+            // Walking monsters rise and fall with the floor.
+            thing->origin[VZ] = thing->floorZ;
+
+            // $dropoff_fix: Possibly upset balance of objects hanging off ledges.
+            if((thing->intFlags & MIF_FALLING) && thing->gear >= MAXGEAR)
+            {
+                thing->gear = 0;
+            }
+#endif
+        }
+        else
+        {
+            // Don't adjust a floating monster unless forced to do so.
+            if(thing->origin[VZ] + thing->height > thing->ceilingZ)
+            {
+                thing->origin[VZ] = thing->ceilingZ - thing->height;
+            }
+        }
+
+        // Does this mobj fit in the open space?
+        if((thing->ceilingZ - thing->floorZ) >= thing->height)
+        {
+            return false;
+        }
     }
 
     // Crunch bodies to giblets.
-#if __JDOOM__ || __JDOOM64__
-    if(thing->health <= 0 && (cfg.gibCrushedNonBleeders || !(thing->flags & MF_NOBLOOD)))
-#elif __JHEXEN__
-    if(thing->health <= 0 && (thing->flags & MF_CORPSE))
-#else
-    if(thing->health <= 0)
-#endif
+    if(Mobj_IsCrunchable(thing))
     {
 #if __JHEXEN__
         if(thing->flags & MF_NOBLOOD)
         {
             P_MobjRemove(thing, false);
+            return false;
         }
-        else
-        {
-            if(thing->state != &STATES[S_GIBS1])
-            {
-                P_MobjChangeState(thing, S_GIBS1);
-                thing->height = 0;
-                thing->radius = 0;
-                S_StartSound(SFX_PLAYER_FALLING_SPLAT, thing);
-            }
-        }
-#else
-# if __JDOOM64__
-        S_StartSound(SFX_SLOP, thing);
-# endif
-
-# if __JDOOM__ || __JDOOM64__
-        P_MobjChangeState(thing, S_GIBS);
-# endif
-        thing->flags &= ~MF_SOLID;
-        thing->height = 0;
-        thing->radius = 0;
 #endif
-        return false; // Keep checking...
+
+#if __JHEXEN__
+        if(thing->state != &STATES[S_GIBS1])
+#endif
+        {
+#if __JHEXEN__
+            P_MobjChangeState(thing, S_GIBS1);
+#elif __JDOOM__ || __JDOOM64__
+            P_MobjChangeState(thing, S_GIBS);
+#endif
+
+#if !__JHEXEN__
+            thing->flags &= ~MF_SOLID;
+#endif
+            thing->height = 0;
+            thing->radius = 0;
+
+#if __JHEXEN__
+            S_StartSound(SFX_PLAYER_FALLING_SPLAT, thing);
+#elif __JDOOM64__
+            S_StartSound(SFX_SLOP, thing);
+#endif
+        }
+
+        return false;
     }
 
-    // Crunch dropped items.
-#if __JHEXEN__
-    if(thing->flags2 & MF2_DROPPED)
-#else
-    if(thing->flags & MF_DROPPED)
-#endif
+    // Remove dropped items.
+    if(Mobj_IsDroppedItem(thing))
     {
         P_MobjRemove(thing, false);
-        return false; // Keep checking...
+        return false;
     }
 
     if(!(thing->flags & MF_SHOOTABLE))
     {
-        return false; // Keep checking...
+        return false;
     }
 
     parm.noFit = true;
@@ -2793,7 +2771,7 @@ static int PIT_ChangeSector(mobj_t *thing, void *context)
         }
     }
 
-    return false; // Keep checking (crush other things)...
+    return false;
 }
 
 boolean P_ChangeSector(Sector *sector, int crush)
@@ -2801,9 +2779,9 @@ boolean P_ChangeSector(Sector *sector, int crush)
     pit_changesector_params_t parm;
     parm.noFit       = false;
 #if __JHEXEN__
-    parm.crushDamage = int(crush);
+    parm.crushDamage = crush;
 #else
-    parm.crushDamage = 10;
+    parm.crushDamage = crush > 0? 10 : 0;
 #endif
 
     VALIDCOUNT++;
