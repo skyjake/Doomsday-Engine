@@ -41,6 +41,7 @@ enum
     IDEV_JOY2,
     IDEV_JOY3,
     IDEV_JOY4,
+    IDEV_HEAD_TRACKER,
     NUM_INPUT_DEVICES       // Theoretical maximum.
 };
 
@@ -142,8 +143,9 @@ enum
 };
 
 // Input device axis flags.
-#define IDA_DISABLED 0x1    // Axis is always zero.
-#define IDA_INVERT 0x2      // Real input data should be inverted.
+#define IDA_DISABLED    0x1      // Axis is always zero.
+#define IDA_INVERT      0x2      // Real input data should be inverted.
+#define IDA_RAW         0x4      // Do not smooth the input values; always use latest received value.
 
 typedef struct inputdevaxis_s {
     char    name[20];       ///< Symbolic name of the axis.
@@ -199,6 +201,7 @@ boolean     DD_IgnoreInput(boolean ignore);
 void        DD_ReadKeyboard(void);
 void        DD_ReadMouse(void);
 void        DD_ReadJoystick(void);
+void        DD_ReadHeadTracker(void);
 
 void        DD_PostEvent(ddevent_t *ev);
 void        DD_ProcessEvents(timespan_t ticLength);

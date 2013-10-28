@@ -1,4 +1,4 @@
-/** @file
+/** @file b_main.h Event and device state bindings system.
  *
  * @authors Copyright © 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
@@ -17,12 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-/**
- * b_main.h: Bindings
- */
-
-#ifndef LIBDENG_BIND_MAIN_H
-#define LIBDENG_BIND_MAIN_H
+#ifndef DENG_CLIENT_BIND_MAIN_H
+#define DENG_CLIENT_BIND_MAIN_H
 
 #ifndef __CLIENT__
 #  error "Bindings only exist in the Client"
@@ -74,4 +70,4 @@ int B_KeyForShortName(const char* key);
 } // extern "C"
 #endif
 
-#endif // LIBDENG_BIND_MAIN_H
+#endif // DENG_CLIENT_BIND_MAIN_H

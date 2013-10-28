@@ -1618,8 +1618,11 @@ void P_PlayerThinkPowers(player_t* player)
  * original engine.
  *
  * @param player        Player doing the thinking.
+ * @param ticLength     Time to think, in seconds. Use as a multiplier.
+ *                      Note that original game logic was always using a
+ *                      tick duration of 1/35 seconds.
  */
-void P_PlayerThinkLookYaw(player_t* player)
+void P_PlayerThinkLookYaw(player_t* player, timespan_t ticLength)
 {
     int playerNum = player - players;
     ddplayer_t* plr = player->plr;
@@ -1646,7 +1649,7 @@ void P_PlayerThinkLookYaw(player_t* player)
     if(!((plr->mo->flags & MF_JUSTATTACKED) || player->brain.lunge))
     {
         P_GetControlState(playerNum, CTL_TURN, &vel, &off);
-        plr->mo->angle -= FLT2FIX(turnSpeedPerTic * vel) +
+        plr->mo->angle -= FLT2FIX(turnSpeedPerTic * vel * ticLength * TICRATE) +
             (fixed_t)(offsetSensitivity * off / 180 * ANGLE_180);
     }
 }
@@ -1910,6 +1913,8 @@ void P_PlayerThinkAssertions(player_t* player)
  */
 void P_PlayerThink(player_t *player, timespan_t ticLength)
 {
+    int useSharpInput = Con_GetInteger("input-sharp");
+
     if(Pause_IsPaused())
         return;
 
@@ -1932,6 +1937,13 @@ void P_PlayerThink(player_t *player, timespan_t ticLength)
 
     P_PlayerRemoteMove(player);
 
+    if(!useSharpInput)
+    {
+        // Adjust turn angles and look direction. This is done in fractional time.
+        P_PlayerThinkLookPitch(player, ticLength);
+        P_PlayerThinkLookYaw(player, ticLength);
+    }
+
     if(!DD_IsSharpTick())
     {
         // The rest of this function occurs only during sharp ticks.
@@ -1942,10 +1954,13 @@ void P_PlayerThink(player_t *player, timespan_t ticLength)
     player->worldTimer++;
 #endif
 
-    // Adjust turn angles and look direction. This is done in fractional time.
-    P_PlayerThinkLookPitch(player, 1.0/35.0 /*ticLength*/);
+    if(useSharpInput)
+    {
+        // Adjust turn angles and look direction. This is done in sharp time.
+        P_PlayerThinkLookPitch(player, 1.0/35.0);
+        P_PlayerThinkLookYaw(player, 1.0/35.0);
+    }
 
-    P_PlayerThinkLookYaw(player);
     P_PlayerThinkUpdateControls(player);
     P_PlayerThinkCamera(player); // $democam
 

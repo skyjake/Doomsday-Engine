@@ -171,6 +171,21 @@ boolean B_ParseMouseTypeAndId(const char* desc, ddeventtype_t* type, int* id)
     return true;
 }
 
+boolean B_ParseDeviceAxisTypeAndId(uint device, const char* desc, ddeventtype_t* type, int* id)
+{
+    inputdev_t *dev = I_GetDevice(device, false);
+
+    *type = E_AXIS;
+    *id = I_GetAxisByName(dev, desc);
+    if(*id < 0)
+    {
+        Con_Message("B_ParseDeviceAxisTypeAndId: Axis \"%s\" is not defined in device '%s'.",
+                    desc, dev->name);
+        return false;
+    }
+    return true;
+}
+
 boolean B_ParseJoystickTypeAndId(uint device, const char* desc, ddeventtype_t* type, int* id)
 {
     if(!strncasecmp(desc, "button", 6) && strlen(desc) > 6)
@@ -200,12 +215,9 @@ boolean B_ParseJoystickTypeAndId(uint device, const char* desc, ddeventtype_t* t
     }
     else
     {
-        // Try to find the axis.
-        *type = E_AXIS;
-        *id = I_GetAxisByName(I_GetDevice(device, false), desc);
-        if(*id < 0)
+        // Try to find the axis.       
+        if(!B_ParseDeviceAxisTypeAndId(device, desc, type, id))
         {
-            Con_Message("B_ParseJoystickTypeAndId: Axis \"%s\" is not defined in joystick.", desc);
             return false;
         }
     }
@@ -314,9 +326,9 @@ boolean B_ParseStateCondition(statecondition_t* cond, const char* desc)
             }
         }
     }
-    else if(!Str_CompareIgnoreCase(str, "joy"))
+    else if(!Str_CompareIgnoreCase(str, "joy") || !Str_CompareIgnoreCase(str, "head"))
     {
-        cond->device = IDEV_JOY1;
+        cond->device = (!Str_CompareIgnoreCase(str, "joy")? IDEV_JOY1 : IDEV_HEAD_TRACKER);
 
         // What is being targeted?
         desc = Str_CopyDelim(str, desc, '-');

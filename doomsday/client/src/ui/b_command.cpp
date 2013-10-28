@@ -121,9 +121,10 @@ boolean B_ParseEvent(evbinding_t* eb, const char* desc)
             }
         }
     }
-    else if(!Str_CompareIgnoreCase(str, "joy"))
+    else if(!Str_CompareIgnoreCase(str, "joy") ||
+            !Str_CompareIgnoreCase(str, "head"))
     {
-        eb->device = IDEV_JOY1;
+        eb->device = (!Str_CompareIgnoreCase(str, "joy")? IDEV_JOY1 : IDEV_HEAD_TRACKER);
 
         // Next part defined button, axis, or hat.
         desc = Str_CopyDelim(str, desc, '-');

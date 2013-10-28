@@ -72,7 +72,7 @@ void            P_PlayerThinkWeapons(player_t *player);
 void            P_PlayerThinkUse(player_t *player);
 void            P_PlayerThinkPsprites(player_t *player);
 void            P_PlayerThinkPowers(player_t *player);
-void            P_PlayerThinkLookYaw(player_t *player);
+void            P_PlayerThinkLookYaw(player_t *player, timespan_t ticLength);
 void            P_PlayerThinkLookPitch(player_t *player, timespan_t ticLength);
 void            P_PlayerThinkUpdateControls(player_t *player);
 
