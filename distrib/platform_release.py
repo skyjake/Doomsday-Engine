@@ -239,8 +239,8 @@ def mac_release():
     os.system('chmod -R o-w "Doomsday Engine.app"')
     os.system('chmod -R o-w "Doomsday Shell.app"')
 
-    def codesign(fn):
-        os.system('codesign --verbose -s "Developer ID Application: Jaakko Keranen" "%s"' % fn)
+    def codesign(fn, opts=''):
+        os.system('codesign --verbose -s "Developer ID Application: Jaakko Keranen" %s "%s"' % (opts, fn))
         
     def fw_codesign(app):
         print 'Signing libraries in %s...' % app
@@ -268,7 +268,7 @@ def mac_release():
     codesign("Doomsday Engine.app/Contents/Frameworks/Python.framework")
     codesign("Doomsday Engine.app/Contents/Frameworks/libwx_macud-2.8.0.dylib")
     codesign("Doomsday Engine.app/Contents/MacOS/python")
-    codesign("Doomsday Engine.app")
+    codesign("Doomsday Engine.app", opts='--resource-rules ../macx/ResourceRules-OmitCompiledPython.plist')
 
     print 'Signing Doomsday Shell.app...'
     codesign("Doomsday Shell.app")
