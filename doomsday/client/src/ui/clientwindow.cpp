@@ -470,7 +470,9 @@ DENG2_OBSERVES(App,              GameChange)
         }
 
         // Set render target to offscreen temporarily.
-        GLState::push().setTarget(*unwarpedTarget).apply(); // Debug on right side
+        GLState::push()
+                .setTarget(*unwarpedTarget)
+                .apply();
         unwarpedTarget->clear(GLTarget::ColorDepth);
 
         // Left eye view on left side of screen.
@@ -484,6 +486,8 @@ DENG2_OBSERVES(App,              GameChange)
         self.root().draw();
 
         GLState::pop().apply();
+
+        glEnable(GL_TEXTURE_2D); // Necessary until the legacy code uses GLState, too.
 
         // Return the drawing to the full target.
         GLState::setActiveRect(Rectangleui(), true);
@@ -502,9 +506,9 @@ DENG2_OBSERVES(App,              GameChange)
         glMatrixMode(GL_MODELVIEW);
         glPushMatrix();
         glLoadIdentity();
+        glRotatef(5, 0, 0, 1); // to make it evident (remove this)
         // if (useShader)
         //     glUseProgram(shader);
-        glColor3f(1, .5f, 1);
         glBegin(GL_TRIANGLE_STRIP);
             glTexCoord2d(0, 1); glVertex3f(-1,  1, 0.5);
             glTexCoord2d(1, 1); glVertex3f( 1,  1, 0.5);
