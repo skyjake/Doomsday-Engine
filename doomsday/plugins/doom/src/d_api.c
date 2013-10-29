@@ -220,7 +220,7 @@ game_export_t* GetGameAPI(void)
     gx.FinaleResponder = FI_PrivilegedResponder;
     gx.PrivilegedResponder = G_PrivilegedResponder;
     gx.Responder = G_Responder;
-    gx.EndFrame = D_EndFrame;
+    //gx.BeginFrame = D_BeginFrame;
     gx.MobjThinker = P_MobjThinker;
     gx.MobjFriction = (coord_t (*)(void *)) P_MobjGetFriction;
     gx.MobjCheckPositionXYZ = P_CheckPositionXYZ;

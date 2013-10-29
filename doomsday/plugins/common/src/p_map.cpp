@@ -2509,15 +2509,19 @@ void P_SlideMove(mobj_t *mo)
     int hitCount = 3;
     do
     {
+        // Scale to current time span.
+        coord_t mom[2] = { mo->mom[MX] * DD_GAME_TICKF(),
+                           mo->mom[MY] * DD_GAME_TICKF() };
+
         if(--hitCount == 0)
             goto stairstep; // Don't loop forever.
 
         // Trace along the three leading corners.
-        leadPos[VX] = mo->origin[VX] + (mo->mom[MX] > 0? mo->radius : -mo->radius);
-        leadPos[VY] = mo->origin[VY] + (mo->mom[MY] > 0? mo->radius : -mo->radius);
+        leadPos[VX] = mo->origin[VX] + (mom[MX] > 0? mo->radius : -mo->radius);
+        leadPos[VY] = mo->origin[VY] + (mom[MY] > 0? mo->radius : -mo->radius);
 
-        trailPos[VX] = mo->origin[VX] - (mo->mom[MX] > 0? mo->radius : -mo->radius);
-        trailPos[VY] = mo->origin[VY] - (mo->mom[MY] > 0? mo->radius : -mo->radius);
+        trailPos[VX] = mo->origin[VX] - (mom[MX] > 0? mo->radius : -mo->radius);
+        trailPos[VY] = mo->origin[VY] - (mom[MY] > 0? mo->radius : -mo->radius);
 
         ptr_slidetraverse_params_t parm;
         parm.slideMobj    = mo;
@@ -2525,15 +2529,15 @@ void P_SlideMove(mobj_t *mo)
         parm.bestDistance = 1;
 
         P_PathXYTraverse2(leadPos[VX], leadPos[VY],
-                          leadPos[VX] + mo->mom[MX], leadPos[VY] + mo->mom[MY],
+                          leadPos[VX] + mom[MX], leadPos[VY] + mom[MY],
                           PTF_LINE, PTR_SlideTraverse, &parm);
 
         P_PathXYTraverse2(trailPos[VX], leadPos[VY],
-                          trailPos[VX] + mo->mom[MX], leadPos[VY] + mo->mom[MY],
+                          trailPos[VX] + mom[MX], leadPos[VY] + mom[MY],
                           PTF_LINE, PTR_SlideTraverse, &parm);
 
         P_PathXYTraverse2(leadPos[VX], trailPos[VY],
-                          leadPos[VX] + mo->mom[MX], trailPos[VY] + mo->mom[MY],
+                          leadPos[VX] + mom[MX], trailPos[VY] + mom[MY],
                           PTF_LINE, PTR_SlideTraverse, &parm);
 
         // Move up to the wall.
@@ -2551,11 +2555,11 @@ void P_SlideMove(mobj_t *mo)
              * away from the wall.
              */
 #if __JHEXEN__
-            if(!P_TryMoveXY(mo, mo->origin[VX], mo->origin[VY] + mo->mom[MY]))
-                P_TryMoveXY(mo, mo->origin[VX] + mo->mom[MX], mo->origin[VY]);
+            if(!P_TryMoveXY(mo, mo->origin[VX], mo->origin[VY] + mom[MY]))
+                P_TryMoveXY(mo, mo->origin[VX] + mom[MX], mo->origin[VY]);
 #else
-            if(!P_TryMoveXY(mo, mo->origin[VX], mo->origin[VY] + mo->mom[MY], true, true))
-                P_TryMoveXY(mo, mo->origin[VX] + mo->mom[MX], mo->origin[VY], true, true);
+            if(!P_TryMoveXY(mo, mo->origin[VX], mo->origin[VY] + mom[MY], true, true))
+                P_TryMoveXY(mo, mo->origin[VX] + mom[MX], mo->origin[VY], true, true);
 #endif
             break;
         }
@@ -2565,8 +2569,8 @@ void P_SlideMove(mobj_t *mo)
 
         if(parm.bestDistance > 0)
         {
-            vec2d_t newPos = { mo->origin[VX] + mo->mom[MX] * parm.bestDistance,
-                               mo->origin[VY] + mo->mom[MY] * parm.bestDistance };
+            vec2d_t newPos = { mo->origin[VX] + mom[MX] * parm.bestDistance,
+                               mo->origin[VY] + mom[MY] * parm.bestDistance };
 
             // $dropoff_fix: Allow objects to drop off ledges
 #if __JHEXEN__
@@ -2587,6 +2591,7 @@ void P_SlideMove(mobj_t *mo)
             break;
         }
 
+        // Update momentum for sliding along the line (time-independent).
         V2d_Set(tmMove, mo->mom[VX] * parm.bestDistance,
                         mo->mom[VY] * parm.bestDistance);
 
@@ -2596,11 +2601,11 @@ void P_SlideMove(mobj_t *mo)
 
     // $dropoff_fix: Allow objects to drop off ledges:
 #if __JHEXEN__
-    } while(!P_TryMoveXY(mo, mo->origin[VX] + tmMove[MX],
-                             mo->origin[VY] + tmMove[MY]));
+    } while(!P_TryMoveXY(mo, mo->origin[VX] + tmMove[MX] * DD_GAME_TICKF(),
+                             mo->origin[VY] + tmMove[MY] * DD_GAME_TICKF()));
 #else
-    } while(!P_TryMoveXY(mo, mo->origin[VX] + tmMove[MX],
-                             mo->origin[VY] + tmMove[MY], true, true));
+    } while(!P_TryMoveXY(mo, mo->origin[VX] + tmMove[MX] * DD_GAME_TICKF(),
+                             mo->origin[VY] + tmMove[MY] * DD_GAME_TICKF(), true, true));
 #endif
 
     // Didn't move?

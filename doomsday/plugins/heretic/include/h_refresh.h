@@ -44,8 +44,6 @@ void H_DrawViewPort(int port, RectRaw const *portGeometry, RectRaw const *window
 
 void H_DrawWindow(Size2Raw const *windowSize);
 
-void H_EndFrame(void);
-
 void P_SetDoomsdayFlags(mobj_t *mo);
 
 void R_SetAllDoomsdayFlags(void);

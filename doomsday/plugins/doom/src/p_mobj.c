@@ -142,6 +142,10 @@ void P_MobjMoveXY(mobj_t* mo)
     mo->mom[MX] = mom[MX];
     mo->mom[MY] = mom[MY];
 
+    // Scale to current time span.
+    mom[MX] *= DD_GAME_TICKF();
+    mom[MY] *= DD_GAME_TICKF();
+
     player = mo->player;
 
     do
@@ -266,7 +270,7 @@ void P_MobjMoveZ(mobj_t* mo)
     if(P_CameraZMovement(mo))
         return;
 
-    targetZ = mo->origin[VZ] + mo->mom[MZ];
+    targetZ = mo->origin[VZ] + mo->mom[MZ] * DD_GAME_TICKF();
     floorZ = (mo->onMobj? mo->onMobj->origin[VZ] + mo->onMobj->height : mo->floorZ);
     ceilingZ = mo->ceilingZ;
     gravity = XS_Gravity(Mobj_Sector(mo));
@@ -312,8 +316,10 @@ void P_MobjMoveZ(mobj_t* mo)
     }
 
     if(targetZ < floorZ)
-    {   // Hit the floor (or another mobj).
+    {
+        // Hit the floor (or another mobj).
         dd_bool             movingDown;
+
         // Note (id):
         //  somebody left this after the setting momz to 0,
         //  kinda useless there.
@@ -514,10 +520,20 @@ void P_NightmareRespawn(mobj_t* corpse)
 
 void P_MobjThinker(void *thinkerPtr)
 {
+    /**
+     * @attention Normally this is called only at a fixed 35 Hz, but for player
+     * mobjs in non-vanilla input mode, it will get executed during fractional
+     * ticks. Use DD_GAME_TICKF() to determine the length of the current tick
+     * (1.0 == one regular 35 Hz tick).
+     *
+     * Only basic physics (movement) and related side effects are performed on
+     * non-sharp ticks.
+     */
+
     mobj_t *mo = thinkerPtr;
     coord_t floorZ;
 
-    if(!mo) return; // Wha?
+    if(Mobj_IsNull(mo)) return;
 
     if(IS_CLIENT && !ClMobj_IsValid(mo))
         return; // We should not touch this right now.
@@ -544,8 +560,7 @@ void P_MobjThinker(void *thinkerPtr)
     {
         P_MobjMoveXY(mo);
 
-        /// @todo decent NOP/NULL/Nil function pointer please.
-        if(mo->thinker.function == (thinkfunc_t) NOPFUNC)
+        if(Mobj_IsNull(mo))
             return; // Mobj was removed.
     }
 
@@ -573,12 +588,12 @@ void P_MobjThinker(void *thinkerPtr)
     {
         P_MobjMoveZ(mo);
 
-        //// @todo decent NOP/NULL/Nil function pointer please.
-        if(mo->thinker.function == (thinkfunc_t) NOPFUNC)
+        if(Mobj_IsNull(mo))
             return; // Mobj was removed.
     }
     // Non-sentient objects at rest.
-    else if(!sentient(mo) && !mo->player &&
+    else if(DD_IsSharpTick() &&
+            !sentient(mo) && !mo->player &&
             !(INRANGE_OF(mo->mom[MX], 0, NOMOM_THRESHOLD) &&
               INRANGE_OF(mo->mom[MY], 0, NOMOM_THRESHOLD)))
     {
@@ -598,10 +613,16 @@ void P_MobjThinker(void *thinkerPtr)
         }
     }
 
+    // The following should only be executed during sharp ticks.
+    if(!DD_IsSharpTick())
+    {
+        return;
+    }
+
     if(cfg.slidingCorpses)
     {
         if(((mo->flags & MF_CORPSE)? mo->origin[VZ] > mo->dropOffZ :
-                                       mo->origin[VZ] - mo->dropOffZ > 24) && // Only objects contacting drop off
+                                     mo->origin[VZ] - mo->dropOffZ > 24) && // Only objects contacting drop off
            !(mo->flags & MF_NOGRAVITY)) // Only objects which fall.
         {
             P_ApplyTorque(mo); // Apply torque.

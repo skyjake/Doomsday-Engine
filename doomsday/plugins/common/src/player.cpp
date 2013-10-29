@@ -772,13 +772,16 @@ int P_CameraXYMovement(mobj_t *mo)
 #if __JDOOM__ || __JDOOM64__
     if(mo->flags & MF_NOCLIP ||
        // This is a very rough check! Sometimes you get stuck in things.
-       P_CheckPositionXYZ(mo, mo->origin[VX] + mo->mom[MX], mo->origin[VY] + mo->mom[MY], mo->origin[VZ]))
+       P_CheckPositionXYZ(mo,
+                          mo->origin[VX] + mo->mom[MX] * DD_GAME_TICKF(),
+                          mo->origin[VY] + mo->mom[MY] * DD_GAME_TICKF(),
+                          mo->origin[VZ]))
     {
 #endif
 
         P_MobjUnlink(mo);
-        mo->origin[VX] += mo->mom[MX];
-        mo->origin[VY] += mo->mom[MY];
+        mo->origin[VX] += mo->mom[MX] * DD_GAME_TICKF();
+        mo->origin[VY] += mo->mom[MY] * DD_GAME_TICKF();
         P_MobjLink(mo);
         P_CheckPositionXY(mo, mo->origin[VX], mo->origin[VY]);
         mo->floorZ = tmFloorZ;
@@ -794,14 +797,16 @@ int P_CameraXYMovement(mobj_t *mo)
        !INRANGE_OF(mo->player->brain.upMove, 0, CAMERA_FRICTION_THRESHOLD))
     {
         // While moving; normal friction applies.
-        mo->mom[MX] *= FRICTION_NORMAL;
-        mo->mom[MY] *= FRICTION_NORMAL;
+        float const frictionMul = P_FrictionForTickf(FRICTION_NORMAL);
+        mo->mom[MX] *= frictionMul;
+        mo->mom[MY] *= frictionMul;
     }
     else
     {
         // Else lose momentum, quickly!.
-        mo->mom[MX] *= FRICTION_HIGH;
-        mo->mom[MY] *= FRICTION_HIGH;
+        float const frictionMul = P_FrictionForTickf(FRICTION_HIGH);
+        mo->mom[MX] *= frictionMul;
+        mo->mom[MY] *= frictionMul;
     }
 
     return true;
@@ -812,7 +817,7 @@ int P_CameraZMovement(mobj_t *mo)
     if(!P_MobjIsCamera(mo))
         return false;
 
-    mo->origin[VZ] += mo->mom[MZ];
+    mo->origin[VZ] += mo->mom[MZ] * DD_GAME_TICKF();
 
     // Friction.
     if(!INRANGE_OF(mo->player->brain.forwardMove, 0, CAMERA_FRICTION_THRESHOLD) ||
@@ -820,12 +825,12 @@ int P_CameraZMovement(mobj_t *mo)
        !INRANGE_OF(mo->player->brain.upMove, 0, CAMERA_FRICTION_THRESHOLD))
     {
         // While moving; normal friction applies.
-        mo->mom[MZ] *= FRICTION_NORMAL;
+        mo->mom[MZ] *= P_FrictionForTickf(FRICTION_NORMAL);
     }
     else
     {
-        // Lose momentum quickly!.
-        mo->mom[MZ] *= FRICTION_HIGH;
+        // Else, lose momentum quickly!.
+        mo->mom[MZ] *= P_FrictionForTickf(FRICTION_HIGH);
     }
 
     return true;

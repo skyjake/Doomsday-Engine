@@ -219,15 +219,6 @@ void P_Thrust(player_t *player, angle_t angle, coord_t move)
     mobj_t *mo = player->plr->mo;
     uint an = angle >> ANGLETOFINESHIFT;
 
-    /*coord_t xmul=1, ymul=1;
-    // How about Quake-flying? -- jk
-    if(quakeFly)
-    {
-        float ang = LOOKDIR2RAD(player->plr->lookDir);
-        xmul = ymul = cos(ang);
-        mo->mom[MZ] += sin(ang) * move;
-    }*/
-
     if(!(player->powers[PT_FLIGHT] && !(mo->origin[VZ] <= mo->floorZ)))
     {
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
@@ -398,7 +389,7 @@ void P_PlayerRemoteMove(player_t *player)
     }
 }
 
-void P_MovePlayer(player_t *player)
+void P_MovePlayer(player_t *player, timespan_t ticLength)
 {
     ddplayer_t* dp = player->plr;
     mobj_t* plrmo = player->plr->mo;
@@ -407,6 +398,7 @@ void P_MovePlayer(player_t *player)
     int speed;
     coord_t forwardMove;
     coord_t sideMove;
+    float timeFactor = ticLength * TICRATE;
 
     if(!plrmo) return;
 
@@ -429,7 +421,9 @@ void P_MovePlayer(player_t *player)
     // Slow > fast. Fast > slow.
     speed = brain->speed;
     if(cfg.alwaysRun)
+    {
         speed = !speed;
+    }
 
     // Do not let the player control movement if not onground.
     onground = P_IsPlayerOnGround(player);
@@ -440,15 +434,15 @@ void P_MovePlayer(player_t *player)
 
         // Cameramen have 3D thrusters!
         P_Thrust3D(player, plrmo->angle, dp->lookDir,
-                   brain->forwardMove * cameraSpeed[speed] * moveMul,
-                   brain->sideMove    * cameraSpeed[speed] * moveMul);
+                   brain->forwardMove * cameraSpeed[speed] * moveMul * timeFactor,
+                   brain->sideMove    * cameraSpeed[speed] * moveMul * timeFactor);
     }
     else
     {
         // 'Move while in air' hack (server doesn't know about this!!).
         // Movement while in air traditionally disabled.
-        int const movemul = (onground || (plrmo->flags2 & MF2_FLY))? pClassInfo->moveMul
-                                                                   : (cfg.airborneMovement? cfg.airborneMovement * 64 : 0);
+        int const movemul = (onground || (plrmo->flags2 & MF2_FLY))?
+                    pClassInfo->moveMul : (cfg.airborneMovement? cfg.airborneMovement * 64 : 0);
 
         if(!brain->lunge)
         {
@@ -494,12 +488,12 @@ void P_MovePlayer(player_t *player)
 
         if(!FEQUAL(forwardMove, 0) && movemul)
         {
-            P_Thrust(player, plrmo->angle, forwardMove * movemul);
+            P_Thrust(player, plrmo->angle, forwardMove * movemul * timeFactor);
         }
 
         if(!FEQUAL(sideMove, 0) && movemul)
         {
-            P_Thrust(player, plrmo->angle - ANG90, sideMove * movemul);
+            P_Thrust(player, plrmo->angle - ANG90, sideMove * movemul * timeFactor);
         }
 
         if((!FEQUAL(forwardMove, 0) || !FEQUAL(sideMove, 0)) &&
@@ -507,19 +501,8 @@ void P_MovePlayer(player_t *player)
         {
             P_MobjChangeState(plrmo, pClassInfo->runState);
         }
-
-        //P_CheckPlayerJump(player); // done in a different place
     }
 #if __JHEXEN__
-    // Look up/down using the delta.
-    /*  if(cmd->lookdirdelta)
-       {
-       float fd = cmd->lookdirdelta / DELTAMUL;
-       float delta = fd * fd;
-       if(cmd->lookdirdelta < 0) delta = -delta;
-       player->plr->lookDir += delta;
-       } */
-
     // 110 corresponds 85 degrees.
     dp->lookDir = MINMAX_OF(-LOOKDIRMAX, dp->lookDir, LOOKDIRMAX);
 #endif
@@ -987,15 +970,20 @@ void P_PlayerThinkMorph(player_t *player)
 #endif
 }
 
-void P_PlayerThinkMove(player_t *player)
+void P_PlayerThinkMove(player_t *player, timespan_t ticLength)
 {
     mobj_t* plrmo = player->plr->mo;
+
+    if(player->playerState == PST_DEAD)
+    {
+        return;
+    }
 
     // Move around.
     // Reactiontime is used to prevent movement for a bit after a teleport.
     if(plrmo && !plrmo->reactionTime)
     {
-        P_MovePlayer(player);
+        P_MovePlayer(player, ticLength);
 
 #if __JHEXEN__
         plrmo = player->plr->mo;
@@ -1005,8 +993,8 @@ void P_PlayerThinkMove(player_t *player)
             mobj_t*             speedMo;
             int                 playerNum;
 
-            if((speedMo = P_SpawnMobj(MT_PLAYER_SPEED, plrmo->origin,
-                                         plrmo->angle, 0)))
+            // Spawn a trail effect for the Speed Boots.
+            if((speedMo = P_SpawnMobj(MT_PLAYER_SPEED, plrmo->origin, plrmo->angle, 0)))
             {
                 playerNum = P_GetPlayerNum(player);
 
@@ -1037,7 +1025,10 @@ void P_PlayerThinkMove(player_t *player)
 
 void P_PlayerThinkFly(player_t *player)
 {
-    mobj_t             *plrmo = player->plr->mo;
+    mobj_t *plrmo = player->plr->mo;
+
+    if(player->playerState == PST_DEAD)
+        return;
 
     // Reactiontime is used to prevent movement for a bit after a teleport.
     if(!plrmo || plrmo->reactionTime)
@@ -1098,7 +1089,6 @@ void P_PlayerThinkView(player_t *player)
         P_CalcHeight(player);
     }
 }
-
 
 void P_PlayerThinkSpecial(player_t *player)
 {
@@ -1719,6 +1709,8 @@ void P_PlayerThinkLookPitch(player_t* player, timespan_t ticLength)
 
 void P_PlayerThinkUpdateControls(player_t* player)
 {
+    // Note: This function is not dependent on elapsed time.
+
     int                 playerNum = player - players;
     ddplayer_t         *dp = player->plr;
     float               vel, off, offsetSensitivity = 100;
@@ -1731,11 +1723,11 @@ void P_PlayerThinkUpdateControls(player_t* player)
 
     // Check for speed.
     P_GetControlState(playerNum, CTL_SPEED, &vel, 0);
-    brain->speed = (!FEQUAL(vel, 0));
+    brain->speed = !FEQUAL(vel, 0);
 
     // Check for strafe.
     P_GetControlState(playerNum, CTL_MODIFIER_1, &vel, 0);
-    strafe = (!FEQUAL(vel, 0));
+    strafe = !FEQUAL(vel, 0);
 
     // Move status.
     P_GetControlState(playerNum, CTL_WALK, &vel, &off);
@@ -1779,7 +1771,7 @@ void P_PlayerThinkUpdateControls(player_t* player)
 
     // Fire.
     P_GetControlState(playerNum, CTL_ATTACK, &vel, &off);
-    brain->attack = (vel + off != 0);
+    brain->attack = !FEQUAL(vel + off, 0);
 
     // Once dead, the intended action for a given control state change,
     // changes. Here we interpret Use and Fire as "I wish to be Reborn".
@@ -1917,7 +1909,7 @@ void P_PlayerThinkAssertions(player_t* player)
  */
 void P_PlayerThink(player_t *player, timespan_t ticLength)
 {
-    int useSharpInput = Con_GetInteger("input-sharp");
+    int useVanillaInput = Get(DD_VANILLA_INPUT);
 
     if(Pause_IsPaused())
         return;
@@ -1938,19 +1930,25 @@ void P_PlayerThink(player_t *player, timespan_t ticLength)
 #endif
 
     P_PlayerThinkState(player);
-
     P_PlayerRemoteMove(player);
 
-    if(!useSharpInput)
+    // We may be allowed to perform some processing in fractional time.
+    if(!useVanillaInput)
     {
         // Adjust turn angles and look direction. This is done in fractional time.
+        // These functions will not be called again later in the function even
+        // if this is a sharp tick.
         P_PlayerThinkLookPitch(player, ticLength);
         P_PlayerThinkLookYaw(player, ticLength);
+        P_PlayerThinkUpdateControls(player);
+        P_PlayerThinkMove(player, ticLength);
+        P_PlayerThinkFly(player);
+        P_PlayerThinkView(player);
     }
 
+    // The rest of this function occurs only during sharp ticks.
     if(!DD_IsSharpTick())
     {
-        // The rest of this function occurs only during sharp ticks.
         return;
     }
 
@@ -1958,14 +1956,14 @@ void P_PlayerThink(player_t *player, timespan_t ticLength)
     player->worldTimer++;
 #endif
 
-    if(useSharpInput)
+    if(useVanillaInput)
     {
         // Adjust turn angles and look direction. This is done in sharp time.
         P_PlayerThinkLookPitch(player, 1.0/35.0);
         P_PlayerThinkLookYaw(player, 1.0/35.0);
+        P_PlayerThinkUpdateControls(player);
     }
 
-    P_PlayerThinkUpdateControls(player);
     P_PlayerThinkCamera(player); // $democam
 
     if(!IS_CLIENT) // Only singleplayer.
@@ -1980,10 +1978,15 @@ void P_PlayerThink(player_t *player, timespan_t ticLength)
 
     P_PlayerThinkMorph(player);
     P_PlayerThinkAttackLunge(player);
-    P_PlayerThinkMove(player);
-    P_PlayerThinkFly(player);
+
+    if(useVanillaInput)
+    {
+        P_PlayerThinkMove(player, 1.0/35.0);
+        P_PlayerThinkFly(player);
+        P_PlayerThinkView(player);
+    }
+
     P_PlayerThinkJump(player);
-    P_PlayerThinkView(player);
     P_PlayerThinkSpecial(player);
 
     if(!IS_NETWORK_SERVER) // Locally only (client or singleplayer).

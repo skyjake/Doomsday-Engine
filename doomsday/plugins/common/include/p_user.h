@@ -48,7 +48,7 @@ extern "C" {
 void            P_Thrust(player_t *player, angle_t angle, coord_t move);
 dd_bool         P_IsPlayerOnGround(player_t *player);
 void            P_CheckPlayerJump(player_t *player);
-void            P_MovePlayer(player_t *player);
+void            P_MovePlayer(player_t *player, timespan_t ticLength);
 void            P_PlayerReborn(player_t *player);
 void            P_DeathThink(player_t *player);
 
@@ -58,7 +58,7 @@ void            P_PlayerThinkCheat(player_t *player);
 void            P_PlayerThinkAttackLunge(player_t *player);
 dd_bool         P_PlayerThinkDeath(player_t *player);
 void            P_PlayerThinkMorph(player_t *player);
-void            P_PlayerThinkMove(player_t *player);
+void            P_PlayerThinkMove(player_t *player, timespan_t ticLength);
 void            P_PlayerThinkFly(player_t *player);
 void            P_PlayerThinkJump(player_t *player);
 void            P_PlayerThinkView(player_t *player);

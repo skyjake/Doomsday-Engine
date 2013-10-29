@@ -29,6 +29,18 @@ extern "C" {
 #endif
 
 /**
+ * Determines if an mobj still exists.
+ *
+ * Objects that get removed are briefly marked using a special thinker function
+ * pointer.
+ *
+ * @param mo  Mobj.
+ *
+ * @return @c true, if the mobj exists; otherwise @c false.
+ */
+boolean Mobj_IsNull(mobj_t const *mo);
+
+/**
  * Handles the stopping of mobj movement. Also stops player walking animation.
  *
  * @param mobj  Mobj instance.
@@ -85,6 +97,8 @@ dd_bool P_MobjChangeState(mobj_t *mobj, statenum_t stateNum);
  * @return  @c true, if the mobj is still present.
  */
 dd_bool P_MobjChangeStateNoAction(mobj_t *mobj, statenum_t stateNum);
+
+float P_FrictionForTickf(float friction);
 
 #ifdef __cplusplus
 } // extern "C"

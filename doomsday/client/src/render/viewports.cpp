@@ -479,7 +479,6 @@ void R_NewSharpViewers()
 {
     for(int i = 0; i < DDMAXPLAYERS; ++i)
     {
-        viewer_t sharpView;
         viewdata_t *vd = &viewDataOfConsole[i];
         player_t *plr = &ddPlayers[i];
 

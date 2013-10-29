@@ -116,7 +116,7 @@ void P_CalcHeight(player_t* plr)
     }
     else
     {
-        angle_t angle = (FINEANGLES / 20 * mapTime) & FINEMASK;
+        angle_t angle = ((uint)(FINEANGLES / 20 * mapTimef)) & FINEMASK;
         target = cfg.bobView * ((plr->bob / 2) * FIX2FLT(finesine[angle]));
     }
 

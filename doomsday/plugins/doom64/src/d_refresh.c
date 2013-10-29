@@ -308,25 +308,6 @@ void D_DrawWindow(Size2Raw const *windowSize)
     }
 }
 
-void D_EndFrame()
-{
-    int i;
-
-    if(G_GameState() != GS_MAP) return;
-
-    for(i = 0; i < MAXPLAYERS; ++i)
-    {
-        player_t *plr = players + i;
-
-        if(!plr->plr->inGame) continue;
-        if(!plr->plr->mo) continue;
-
-        // View angles are updated with fractional ticks, so we can just use the current values.
-        R_SetViewAngle(i, Player_ViewYawAngle(i));
-        R_SetViewPitch(i, plr->plr->lookDir);
-    }
-}
-
 /**
  * Updates the mobj flags used by Doomsday with the state of our local flags
  * for the given mobj.

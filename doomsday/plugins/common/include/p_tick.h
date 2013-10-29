@@ -25,6 +25,7 @@
 #include "pause.h"
 
 DENG_EXTERN_C int mapTime;
+DENG_EXTERN_C timespan_t mapTimef; ///< Same as mapTime but floating point.
 DENG_EXTERN_C int actualMapTime;
 DENG_EXTERN_C int timerGame;
 
@@ -42,6 +43,8 @@ void P_RunPlayers(timespan_t ticLength);
  * The heart of play sim.
  */
 void P_DoTick(void);
+
+void P_RunThinkersForPlayerMobjs(timespan_t ticLength);
 
 #ifdef __cplusplus
 } // extern "C"

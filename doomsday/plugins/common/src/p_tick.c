@@ -63,6 +63,7 @@
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 int mapTime;
+timespan_t mapTimef;
 int actualMapTime;
 int timerGame;
 
@@ -74,6 +75,8 @@ void P_RunPlayers(timespan_t ticLength)
 {
     uint i;
 
+    mapTimef += ticLength * TICRATE;
+
     for(i = 0; i < MAXPLAYERS; ++i)
         if(players[i].plr->inGame)
         {
@@ -82,9 +85,54 @@ void P_RunPlayers(timespan_t ticLength)
         }
 }
 
+static boolean allowedToRunThinkers()
+{
+    // Pause if in menu and at least one tic has been run.
+    if(!IS_NETGAME && (Hu_MenuIsActive() || Hu_IsMessageActive()) &&
+       !Get(DD_PLAYBACK) && mapTime > 1)
+        return false;
+
+    return true;
+}
+
+static int playerMobjsOnly(thinker_t const *thinker)
+{
+    if(thinker->function == (thinkfunc_t) P_MobjThinker)
+    {
+        mobj_t const *mobj = (mobj_t const *) thinker;
+        return Mobj_IsPlayer(mobj) && !Mobj_IsVoodooDoll(mobj);
+    }
+    return false;
+}
+
+static int excludePlayerMobjs(thinker_t const *thinker)
+{
+    return !playerMobjsOnly(thinker);
+}
+
+void P_RunThinkersForPlayerMobjs(timespan_t ticLength)
+{
+    if(IS_DEDICATED) return;
+
+    DENG_ASSERT( !Get(DD_VANILLA_INPUT) );
+
+    // When paused, do nothing.
+    if(paused || !allowedToRunThinkers())
+        return;
+
+    DD_SetInteger(DD_GAME_TICK_DURATION, ticLength * TICRATE * 1000000);
+    Thinker_RunFiltered(playerMobjsOnly);
+}
+
+/**
+ * Called 35 times per second.
+ * The heart of play sim.
+ */
 void P_DoTick(void)
 {
     int i;
+
+    DENG_ASSERT(DD_IsSharpTick());
 
     Pause_Ticker();
 
@@ -102,11 +150,19 @@ void P_DoTick(void)
     }
 
     // Pause if in menu and at least one tic has been run.
-    if(!IS_NETGAME && (Hu_MenuIsActive() || Hu_IsMessageActive()) &&
-       !Get(DD_PLAYBACK) && mapTime > 1)
+    if(!allowedToRunThinkers())
         return;
 
-    Thinker_Run();
+    DD_SetInteger(DD_GAME_TICK_DURATION, 1000000 /* single 35 Hz tick */);
+    if(Get(DD_VANILLA_INPUT))
+    {
+        Thinker_Run();
+    }
+    else
+    {
+        Thinker_RunFiltered(excludePlayerMobjs);
+    }
+
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     // Extended lines and sectors.
     XG_Ticker();
@@ -127,11 +183,6 @@ void P_DoTick(void)
     P_AmbientSound();
 #endif
 
-    // Let the engine know where the local players are now.
-    for(i = 0; i < MAXPLAYERS; ++i)
-    {
-        R_UpdateConsoleView(i);
-    }
 #ifdef __JDOOM__
     G_UpdateSpecialFilter(DISPLAYPLAYER);
 #endif

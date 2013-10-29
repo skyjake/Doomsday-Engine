@@ -65,6 +65,17 @@ static coord_t getFriction(mobj_t *mo)
     return P_MobjGetFriction(mo);
 }
 
+float P_FrictionForTickf(float friction)
+{
+    if(Get(DD_GAME_TICK_DURATION) == 1000000)
+    {
+        return friction;
+    }
+    // In one tick, the friction factor is applied as is; in two ticks, the
+    // friction factor is factored in twice; it is a power function.
+    return powf(friction, DD_GAME_TICKF());
+}
+
 dd_bool Mobj_IsVoodooDoll(mobj_t const *mo)
 {
     if(!mo) return false;
@@ -157,6 +168,11 @@ void Mobj_XYMoveStopping(mobj_t *mo)
         mo->mom[MX] *= friction;
         mo->mom[MY] *= friction;
     }
+}
+
+dd_bool Mobj_IsNull(mobj_t const *mo)
+{
+    return (!mo || mo->thinker.function == (thinkfunc_t) -1);
 }
 
 dd_bool Mobj_IsPlayerClMobj(mobj_t *mo)

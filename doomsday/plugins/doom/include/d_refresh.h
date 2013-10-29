@@ -42,9 +42,8 @@ void G_InitSpecialFilter(void);
  */
 void G_UpdateSpecialFilter(int player);
 
-void D_DrawWindow(Size2Raw const *windowSize);
-
-void D_EndFrame(void);
+void D_DrawViewPort(int port, const RectRaw* portGeometry, const RectRaw* windowGeometry, int player, int layer);
+void D_DrawWindow(const Size2Raw* windowSize);
 
 /**
  * Updates the status flags for all visible things.

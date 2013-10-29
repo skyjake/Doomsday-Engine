@@ -1759,6 +1759,26 @@ static void rebornPlayers()
     }
 }
 
+/*
+void G_SetConsoleViewAngles()
+{
+    int i;
+
+    if(IS_DEDICATED || G_GameState() != GS_MAP) return;
+
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        player_t* plr = players + i;
+
+        if(!plr->plr->inGame || !plr->plr->mo) continue;
+
+        // View angles are updated with fractional ticks, so we can just use the current values.
+        R_SetViewAngle(i, plr->plr->mo->angle + (int) (ANGLE_MAX * -G_GetLookOffset(i)));
+        R_SetViewPitch(i, plr->plr->lookDir);
+    }
+}
+*/
+
 /**
  * The core of the timing loop. Game state, game actions etc occur here.
  *
@@ -1767,6 +1787,8 @@ static void rebornPlayers()
 void G_Ticker(timespan_t ticLength)
 {
     static gamestate_t oldGameState = gamestate_t(-1);
+
+    int i;
 
     // Always tic:
     Hu_FogEffectTicker(ticLength);
@@ -1781,9 +1803,6 @@ void G_Ticker(timespan_t ticLength)
     {
         // Do player reborns if needed.
         rebornPlayers();
-
-        // Update the viewer's look angle
-        //G_LookAround(CONSOLEPLAYER);
 
         if(!IS_CLIENT)
         {
@@ -1814,6 +1833,20 @@ void G_Ticker(timespan_t ticLength)
 
     // Track view window changes.
     R_ResizeViewWindow(0);
+
+    if(!Get(DD_VANILLA_INPUT))
+    {
+        // Even on non-sharp ticks, allow player mobjs to think.
+        switch(G_GameState())
+        {
+        case GS_MAP:
+            P_RunThinkersForPlayerMobjs(ticLength);
+            break;
+
+        default:
+            break;
+        }
+    }
 
     // The following is restricted to fixed 35 Hz ticks.
     if(DD_IsSharpTick())
@@ -1865,9 +1898,15 @@ void G_Ticker(timespan_t ticLength)
         // Servers will have to update player information and do such stuff.
         if(!IS_CLIENT)
             NetSv_Ticker();
-    }
+    }  
 
     oldGameState = gameState;
+
+    // Let the engine know where the local players are now.
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        R_UpdateConsoleView(i);
+    }
 }
 
 void G_PlayerLeaveMap(int player)

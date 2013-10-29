@@ -291,10 +291,11 @@ void X_DrawWindow(const Size2Raw* windowSize)
 
 void X_EndFrame(void)
 {
-    int i;
+    //int i;
 
     SN_UpdateActiveSequences();
 
+    /*
     if(G_GameState() != GS_MAP) return;
 
     for(i = 0; i < MAXPLAYERS; ++i)
@@ -307,6 +308,7 @@ void X_EndFrame(void)
         R_SetViewAngle(i, Player_ViewYawAngle(i));
         R_SetViewPitch(i, plr->plr->lookDir);
     }
+    */
 }
 
 /**
