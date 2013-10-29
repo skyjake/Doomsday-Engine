@@ -1,7 +1,6 @@
 #include "de_console.h"
 #include "render/vr.h"
 
-
 // Console variables
 static int vrMode = 0;
 // Interpupillary distance in meters
@@ -48,6 +47,10 @@ void VR::consoleRegister()
     C_VAR_INT2  ("rend-vr-mode",             & vrMode,          0, 0, (int)(VR::MODE_MAX_3D_MODE_PLUS_ONE - 1), vrModeChanged);
 }
 
+
+// Warping
+
+/// @todo warping
 
 // Head tracking
 
