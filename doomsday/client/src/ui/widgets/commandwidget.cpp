@@ -33,8 +33,9 @@ DENG_GUI_PIMPL(CommandWidget)
     shell::EditorHistory history;
     DocumentWidget *completions;
     PopupWidget *popup; ///< Popup for autocompletions.
+    bool allowReshow;   ///< Contents must still be valid.
 
-    Instance(Public *i) : Base(i), history(i)
+    Instance(Public *i) : Base(i), history(i), allowReshow(false)
     {
         // Popup for autocompletions.
         completions = new DocumentWidget;
@@ -89,7 +90,9 @@ bool CommandWidget::handleEvent(Event const &event)
     {
         KeyEvent const &key = event.as<KeyEvent>();
 
-        if(isSuggestingCompletion() && key.qtKey() == Qt::Key_Tab && !d->popup->isOpen() &&
+        if(d->allowReshow &&
+           isSuggestingCompletion() &&
+           key.qtKey() == Qt::Key_Tab && !d->popup->isOpen() &&
            suggestedCompletions().size() > 1)
         {
             // The completion popup has been manually dismissed, but the editor is
@@ -151,6 +154,7 @@ void CommandWidget::dismissContentToHistory()
 void CommandWidget::closeAutocompletionPopup()
 {
     d->popup->close();
+    d->allowReshow = false;
 }
 
 void CommandWidget::showAutocompletionPopup(String const &completionsText)
@@ -161,6 +165,8 @@ void CommandWidget::showAutocompletionPopup(String const &completionsText)
     d->popup->setAnchorX(cursorRect().middle().x);
     d->popup->setAnchorY(rule().top());
     d->popup->open();
+
+    d->allowReshow = true;
 }
 
 void CommandWidget::autoCompletionEnded(bool accepted)
