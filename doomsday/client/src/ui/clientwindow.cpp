@@ -610,16 +610,74 @@ void ClientWindow::canvasGLDraw(Canvas &canvas)
         GLState::setActiveRect(Rectangleui(width()/2, 0, width()/2, height()), true);
         root().draw();
         break;
-    case VR::MODE_OCULUS_RIFT: /// @todo head tracking, image warping, shrunken hud
+    case VR::MODE_OCULUS_RIFT: /// @todo head tracking, image warping, shrunken hud, field of view
+    {
+        // My failed attempt to render to offscreen buffer, then blit back to screen CMB Oct 29, 2013
+// #define TRY_OCULUS_OFFSCREEN 1
+#ifdef TRY_OCULUS_OFFSCREEN
+        // Allocate offscreen buffers
+        static QScopedPointer<GLTarget> unwarpedTarget;
+        static GLTexture unwarpedTexture;
+        Size screenSize(width(), height());
+        if (unwarpedTexture.size() != screenSize)
+        {
+            unwarpedTexture.setUndefinedImage(screenSize, Image::RGBA_8888);
+            unwarpedTexture.setWrap(gl::ClampToEdge, gl::ClampToEdge);
+            unwarpedTarget.reset(new GLTarget(GLTarget::ColorDepthStencil, unwarpedTexture));
+        }
+
+        // Set render target to offscreen
+        GLState::push().setTarget(*unwarpedTarget); // Debug on right side
+        unwarpedTarget->glBind();
+#endif
+
         // Left eye view on left side of screen.
         VR::eyeShift = VR::getEyeShift(-1);
         GLState::setActiveRect(Rectangleui(0, 0, width()/2, height()), true);
         root().draw();
+
         // Right eye view on right side of screen.
         VR::eyeShift = VR::getEyeShift(+1);
         GLState::setActiveRect(Rectangleui(width()/2, 0, width()/2, height()), true);
         root().draw();
+
+#ifdef TRY_OCULUS_OFFSCREEN
+        // Restore render target to regular on screen
+        unwarpedTarget->glRelease();
+        GLState::pop();
+
+        GLState::push().setViewport(Rectangleui(0, 0, width(), height()));
+        GLState::setActiveRect(Rectangleui(0, 0, width(), height()), true);
+
+        // Copy contents of offscreen buffer to normal screen
+        unwarpedTexture.glBindToUnit(0);
+        glMatrixMode(GL_PROJECTION);
+        glPushMatrix();
+        glLoadIdentity();
+        glMatrixMode(GL_MODELVIEW);
+        glPushMatrix();
+        glLoadIdentity();
+        // if (useShader)
+        //     glUseProgram(shader);
+        glBegin(GL_TRIANGLE_STRIP);
+            glTexCoord2d(0, 1); glVertex3f(-1,  1, 0.5);
+            glTexCoord2d(1, 1); glVertex3f( 1,  1, 0.5);
+            glTexCoord2d(0, 0); glVertex3f(-1, -1, 0.5);
+            glTexCoord2d(1, 0); glVertex3f( 1, -1, 0.5);
+        glEnd();
+        // if (useShader)
+        //     glUseProgram(0);
+        glMatrixMode(GL_PROJECTION);
+        glPopMatrix();
+        glMatrixMode(GL_MODELVIEW);
+        glPopMatrix();
+        glBindTexture(GL_TEXTURE_2D, 0);
+
+        GLState::pop();
+#endif
+
         break;
+    }
     // Overlaid type stereo 3D modes below:
     case VR::MODE_GREEN_MAGENTA:
         // Left eye view

@@ -51,6 +51,7 @@ public:
         Depth   = 0x2,  ///< Target has a depth attachment.
         Stencil = 0x4,  ///< Target has a stencil attachment.
 
+        ColorDepthStencil = Color | Depth | Stencil,
         ColorDepth = Color | Depth,
         DefaultFlags = ColorDepth
     };
