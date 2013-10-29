@@ -181,6 +181,9 @@ static FileTypes fileTypeMap;
 static ddstring_t **sessionResourceFileList;
 static size_t numSessionResourceFileList;
 
+/// Get/set with DD_GAME_TICK_DURATION.
+static int gameTickLengthInMicroTicks = 1000000;
+
 static void registerResourceFileTypes()
 {
     FileType *ftype;
@@ -2297,9 +2300,8 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
     {0, 0},
     {0, 0},
 #endif
-    {0, 0},
-    {0, 0}, //{&mouseInverseY, &mouseInverseY},
-#ifdef __CLIENT__
+    {&gameTickLengthInMicroTicks, &gameTickLengthInMicroTicks},
+    {0, 0}, // DD_MOUSE_INVERSE_Y (unused)
     {&levelFullBright, &levelFullBright},
 #else
     {0, 0},
@@ -2369,6 +2371,9 @@ int DD_GetInteger(int ddvalue)
 
     case DD_USING_HEAD_TRACKING:
         return vrCfg().mode() == VRConfig::OculusRift && vrCfg().oculusRift().isReady();
+
+    case DD_VANILLA_INPUT:
+        return I_UsingSharpInput();
 #endif
 
     case DD_NUMLUMPS:

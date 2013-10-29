@@ -253,6 +253,12 @@ inputdev_t* I_GetDevice(uint ident, InputDeviceGetMode mode = ActiveOrInactiveIn
 inputdev_t* I_GetDeviceByName(char const *name, InputDeviceGetMode mode = ActiveOrInactiveInputDevice);
 
 /**
+ * Determines whether input processing is sharp, i.e., input events are only
+ * processed for the 35 Hz game ticks.
+ */
+boolean I_UsingSharpInput(void);
+
+/**
  * Retrieve the user-friendly, print-ready, name for the device associated with
  * unique identifier @a ident.
  *

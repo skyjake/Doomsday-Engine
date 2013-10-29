@@ -475,6 +475,38 @@ viewer_t R_SharpViewer(player_t &player)
     return view;
 }
 
+void R_NewSharpViewers()
+{
+    for(int i = 0; i < DDMAXPLAYERS; ++i)
+    {
+        viewer_t sharpView;
+        viewdata_t *vd = &viewDataOfConsole[i];
+        player_t *plr = &ddPlayers[i];
+
+        if((!plr->shared.inGame || !plr->shared.mo))
+        {
+            continue;
+        }
+
+        viewer_t sharpView = R_SharpViewer(*plr);
+
+        if(I_UsingSharpInput())
+        {
+            // 35 Hz smoothing:
+            // When the sharp game tic changes, we have updated sharp camera positions.
+            // However, the position is at the beginning of the tic and we are most
+            // likely not at a sharp tic boundary, in time. We will move the viewer
+            // positions one step back in the buffer. The effect of this is that
+            // [0] is the previous sharp position and [1] is the current one.
+
+            std::memcpy(&vd->lastSharp[0], &vd->lastSharp[1], sizeof(viewer_t));
+            std::memcpy(&vd->lastSharp[1], &sharpView, sizeof(sharpView));
+        }
+
+        R_CheckViewerLimits(vd->lastSharp, &sharpView);
+    }
+}
+
 void R_NewSharpWorld()
 {
     if(resetNextViewer)
@@ -482,31 +514,7 @@ void R_NewSharpWorld()
         resetNextViewer = 2;
     }
 
-    for(int i = 0; i < DDMAXPLAYERS; ++i)
-    {
-        viewdata_t *vd = &viewDataOfConsole[i];
-        player_t *plr = &ddPlayers[i];
-
-        if(/*(plr->shared.flags & DDPF_LOCAL) &&*/
-           (!plr->shared.inGame || !plr->shared.mo))
-        {
-            continue;
-        }
-
-        viewer_t sharpView = R_SharpViewer(*plr);
-
-        // The game tic has changed, which means we have an updated sharp
-        // camera position.  However, the position is at the beginning of
-        // the tic and we are most likely not at a sharp tic boundary, in
-        // time.  We will move the viewer positions one step back in the
-        // buffer.  The effect of this is that [0] is the previous sharp
-        // position and [1] is the current one.
-
-        vd->lastSharp[0] = vd->lastSharp[1];
-        vd->lastSharp[1] = sharpView;
-
-        R_CheckViewerLimits(vd->lastSharp, &sharpView);
-    }
+    R_NewSharpViewers();
 
     if(ClientApp::worldSystem().hasMap())
     {
@@ -531,6 +539,8 @@ void R_UpdateViewer(int consoleNum)
     viewer_t sharpView = R_SharpViewer(*player);
 
     if(resetNextViewer ||
+       !rendCameraSmooth ||
+       !I_UsingSharpInput() ||
        (sharpView.origin - vd->current.origin).length() > VIEWPOS_MAX_SMOOTHDISTANCE)
     {
         // Keep reseting until a new sharp world has arrived.
@@ -544,9 +554,7 @@ void R_UpdateViewer(int consoleNum)
 
         vd->lastSharp[0] = vd->lastSharp[1] = sharpView;
     }
-    // While the game is paused there is no need to calculate any
-    // time offsets or interpolated camera positions.
-    else //if(!clientPaused)
+    else
     {
         // Calculate the smoothed camera position, which is somewhere between
         // the previous and current sharp positions. This introduces a slight

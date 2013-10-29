@@ -127,7 +127,9 @@ float           FloatSwap(float);
 #define ULONG(x)            ((uint32_t) LONG(x))
 ///@}
 
-/// Integer values for Set/Get
+#define DD_GAME_TICKF()     (DD_GetInteger(DD_GAME_TICK_DURATION) / 1000000.f)
+
+/// Integer values for Set/Get (some of these are obsolete)
 enum {
     DD_FIRST_VALUE = -1,
     DD_NETGAME,
@@ -140,7 +142,7 @@ enum {
     DD_SMOOTH_IMAGES,
     DD_DEFAULT_RES_X,
     DD_DEFAULT_RES_Y,
-    DD_UNUSED1,
+    DD_GAME_TICK_DURATION, ///< micro-ticks; 1000000 => one normal 35 Hz vanilla tick
     DD_MOUSE_INVERSE_Y,
     DD_FULLBRIGHT, ///< Render everything fullbright?
     DD_CCMD_RETURN,
@@ -242,7 +244,7 @@ enum {
     DD_XGFUNC_LINK, ///< XG line classes
     DD_SHARED_FIXED_TRIGGER_OBSOLETE, ///< obsolete
     DD_GAMETIC,
-    DD_UNUSED5, // DD_OPENRANGE
+    DD_VANILLA_INPUT, // DD_OPENRANGE
     DD_UNUSED6, // DD_OPENTOP
     DD_UNUSED7, // DD_OPENBOTTOM
     DD_UNUSED8, // DD_LOWFLOOR

@@ -50,7 +50,7 @@ DENG_GUI_PIMPL(InputSettingsDialog)
         ScrollAreaWidget &area = self.area();
 
         area.add(syncMouse     = new VariableToggleWidget(App::config()["input.mouse.syncSensitivity"]));
-        area.add(syncInput     = new CVarToggleWidget("input-sharp"));
+        area.add(syncInput     = new CVarToggleWidget("input-vanilla"));
         area.add(mouseSensiX   = new CVarSliderWidget("input-mouse-x-scale"));
         area.add(mouseSensiY   = new CVarSliderWidget("input-mouse-y-scale"));
         area.add(mouseDisableX = new ToggleWidget);

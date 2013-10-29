@@ -420,6 +420,24 @@ static int runThinker(thinker_t *th, void * /*context*/)
     return false; // Continue iteration.
 }
 
+static int runFilteredThinker(thinker_t *th, void *context)
+{
+    if(!context)
+    {
+        // Unfiltered.
+        return runThinker(th, 0);
+    }
+
+    typedef int (*filterfunc_t)(thinker_t const *);
+    filterfunc_t isAccepted = de::function_cast<filterfunc_t>(context);
+    if(isAccepted(th))
+    {
+        return runThinker(th, 0);
+    }
+
+    return false; // Continue iteration.
+}
+
 } // namespace de
 
 using namespace de;
@@ -443,12 +461,19 @@ void Thinker_Init()
     App_WorldSystem().map().thinkers().initLists(0x1); // Init the public thinker lists.
 }
 
-#undef Thinker_Run
-void Thinker_Run()
+#undef Thinker_RunFiltered
+void Thinker_RunFiltered(int (*isAccepted)(thinker_t const *))
 {
     /// @todo fixme: Do not assume the current map.
     if(!App_WorldSystem().hasMap()) return;
-    App_WorldSystem().map().thinkers().iterate(NULL, 0x1 | 0x2, runThinker);
+    App_WorldSystem().map().thinkers().iterate(NULL, 0x1 | 0x2, runFilteredThinker,
+                                               de::function_cast<void *>(isAccepted));
+}
+
+#undef Thinker_Run
+void Thinker_Run()
+{
+    Thinker_RunFiltered(NULL);
 }
 
 #undef Thinker_Add
@@ -486,6 +511,7 @@ DENG_DECLARE_API(Thinker) =
     { DE_API_THINKER },
     Thinker_Init,
     Thinker_Run,
+    Thinker_RunFiltered,
     Thinker_Add,
     Thinker_Remove,
     Thinker_SetStasis,

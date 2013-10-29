@@ -59,7 +59,7 @@ DENG2_PIMPL(InputSystem)
                 .define(SettingsRegister::IntCVar,        "input-mouse-x-flags", 0)
                 .define(SettingsRegister::IntCVar,        "input-mouse-y-flags", 0)
                 .define(SettingsRegister::IntCVar,        "input-joy", 1)
-                .define(SettingsRegister::IntCVar,        "input-sharp", 1);
+                .define(SettingsRegister::IntCVar,        "input-vanilla", 1);
 
         // Initialize script bindings.
         binder.initNew()

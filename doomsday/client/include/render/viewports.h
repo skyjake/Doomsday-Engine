@@ -152,6 +152,12 @@ void R_BeginFrame();
 void R_NewSharpWorld();
 
 /**
+ * Update the sharp world data by rotating the stored values of sharp camera
+ * positions.
+ */
+void R_NewSharpViewers();
+
+/**
  * Returns @c true iff the BSP leaf is marked as visible for the current frame.
  *
  * @see R_ViewerBspLeafMarkVisible()

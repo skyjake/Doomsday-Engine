@@ -64,6 +64,7 @@ DENG_API_TYPEDEF(Thinker)
 
     void (*Init)(void);
     void (*Run)(void);
+    void (*RunFiltered)(int (*isAccepted)(thinker_t const *));
     void (*Add)(thinker_t *th);
     void (*Remove)(thinker_t *th);
 
@@ -82,6 +83,7 @@ DENG_API_T(Thinker);
 #ifndef DENG_NO_API_MACROS_THINKER
 #define Thinker_Init        _api_Thinker.Init
 #define Thinker_Run         _api_Thinker.Run
+#define Thinker_RunFiltered _api_Thinker.RunFiltered
 #define Thinker_Add         _api_Thinker.Add
 #define Thinker_Remove      _api_Thinker.Remove
 #define Thinker_SetStasis   _api_Thinker.SetStasis

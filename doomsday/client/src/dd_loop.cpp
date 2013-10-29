@@ -218,8 +218,15 @@ static void baseTicker(timespan_t time)
             }
 #endif
         }
-
 #ifdef __CLIENT__
+        else if(!I_UsingSharpInput())
+        {
+            // This is a fractional tick, but we can still register new sharp
+            // viewer positions as the game is updating player controls in
+            // fractional time with non-sharp input.
+            R_NewSharpViewers();
+        }
+
         // While paused, don't modify frametime so things keep still.
         if(!clientPaused)
 #endif

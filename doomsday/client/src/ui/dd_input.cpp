@@ -134,7 +134,7 @@ void DD_RegisterInput(void)
     // Cvars
     //C_VAR_INT("input-key-delay1", &keyRepeatDelay1, CVF_NO_MAX, 50, 0);
     //C_VAR_INT("input-key-delay2", &keyRepeatDelay2, CVF_NO_MAX, 20, 0);
-    C_VAR_BYTE("input-sharp", &useSharpInputEvents, 0, 0, 1);
+    C_VAR_BYTE("input-vanilla", &useSharpInputEvents, 0, 0, 1);
 
 #if _DEBUG
     C_VAR_BYTE("rend-dev-input-joy-state", &devRendJoyState, CVF_NO_ARCHIVE, 0, 1);
@@ -154,6 +154,11 @@ void DD_RegisterInput(void)
     //C_CMD_FLAGS("setaxis", "s",      AxisPrintConfig, CMDF_NO_DEDICATED);
     //C_CMD_FLAGS("setaxis", "ss",     AxisChangeOption, CMDF_NO_DEDICATED);
     //C_CMD_FLAGS("setaxis", "sss",    AxisChangeValue, CMDF_NO_DEDICATED);
+}
+
+boolean I_UsingSharpInput(void)
+{
+    return useSharpInputEvents;
 }
 
 /**

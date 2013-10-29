@@ -134,7 +134,8 @@ enum {
     DE_API_SVG                  = DE_API_SVG_v1,
 
     DE_API_THINKER_v1           = 2200,    // 1.10
-    DE_API_THINKER              = DE_API_THINKER_v1,
+    DE_API_THINKER_v2           = 2201,    // 1.10
+    DE_API_THINKER              = DE_API_THINKER_v2,
 
     DE_API_URI_v1               = 2300,    // 1.10
     DE_API_URI_v2               = 2301,    // 1.14
