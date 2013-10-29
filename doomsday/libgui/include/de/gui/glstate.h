@@ -171,9 +171,10 @@ public:
     static GLState &push();
 
     /**
-     * Pops the topmost state off the current thread's stack.
+     * Pops the topmost state off the current thread's stack. Returns a reference
+     * to the state that has now become the new current state.
      */
-    static void pop();
+    static GLState &pop();
 
     /**
      * Pushes a state onto the current thread's GL state stack.

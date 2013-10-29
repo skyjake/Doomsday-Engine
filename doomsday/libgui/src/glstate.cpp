@@ -569,9 +569,10 @@ GLState &GLState::push()
     return top();
 }
 
-void GLState::pop()
+GLState &GLState::pop()
 {
     delete take();
+    return top();
 }
 
 void GLState::push(GLState *state)
