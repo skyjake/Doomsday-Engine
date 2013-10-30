@@ -316,6 +316,7 @@ DENG2_OBSERVES(App,              GameChange)
                 ev.setPos(pos.toVector2i());
             }
             break;
+
         // Top-bottom screen split modes
         case VR::MODE_TOP_BOTTOM:
             if(ev.type() == Event::MousePosition || ev.type() == Event::MouseButton)
@@ -338,6 +339,7 @@ DENG2_OBSERVES(App,              GameChange)
                 ev.setPos(pos.toVector2i());
             }
             break;
+
         default:
             break;
         }
@@ -704,16 +706,19 @@ void ClientWindow::canvasGLDraw(Canvas &canvas)
         // Non-stereoscopic frame.
         root().draw();
         break;
+
     case VR::MODE_LEFT:
         // Left eye view
         VR::eyeShift = VR::getEyeShift(-1);
         root().draw();
         break;
+
     case VR::MODE_RIGHT:
         // Right eye view
         VR::eyeShift = VR::getEyeShift(+1);
         root().draw();
         break;
+
     // B) Split-screen type stereo 3D modes here:
     case VR::MODE_TOP_BOTTOM: // Left goes on top
         // Left eye view on top of screen.
@@ -725,6 +730,7 @@ void ClientWindow::canvasGLDraw(Canvas &canvas)
         GLState::setActiveRect(Rectangleui(0, height()/2, width(), height()/2), true);
         root().draw();
         break;
+
     case VR::MODE_SIDE_BY_SIDE: // Squished aspect
         // Left eye view on left side of screen.
         VR::eyeShift = VR::getEyeShift(-1);
@@ -735,6 +741,7 @@ void ClientWindow::canvasGLDraw(Canvas &canvas)
         GLState::setActiveRect(Rectangleui(width()/2, 0, width()/2, height()), true);
         root().draw();
         break;
+
     case VR::MODE_PARALLEL: // Normal aspect
         // Left eye view on left side of screen.
         VR::eyeShift = VR::getEyeShift(-1);
@@ -745,6 +752,7 @@ void ClientWindow::canvasGLDraw(Canvas &canvas)
         GLState::setActiveRect(Rectangleui(width()/2, 0, width()/2, height()), true);
         root().draw();
         break;
+
     case VR::MODE_CROSSEYE: // Normal aspect
         // RIght eye view on left side of screen.
         VR::eyeShift = VR::getEyeShift(+1);
@@ -774,6 +782,7 @@ void ClientWindow::canvasGLDraw(Canvas &canvas)
         root().draw();
         glPopAttrib(); // restore glColorMask
         break;
+
     case VR::MODE_RED_CYAN:
         // Left eye view
         VR::eyeShift = VR::getEyeShift(-1);
@@ -787,6 +796,7 @@ void ClientWindow::canvasGLDraw(Canvas &canvas)
         root().draw();
         glPopAttrib(); // restore glColorMask
         break;
+
     case VR::MODE_QUAD_BUFFERED:
     {
         /// @todo - attempt to enable a stereo GL context at start up.
@@ -820,6 +830,7 @@ void ClientWindow::canvasGLDraw(Canvas &canvas)
             break;
         }
     }
+
     case VR::MODE_ROW_INTERLEAVED:
     {
         // Use absolute screen position of window to determine whether the
