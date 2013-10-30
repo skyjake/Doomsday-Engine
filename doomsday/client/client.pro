@@ -364,6 +364,7 @@ DENG_HEADERS += \
     include/ui/b_util.h \
     include/ui/busyvisual.h \
     include/ui/clientwindow.h \
+    include/ui/contenttransform.h \
     include/ui/dd_input.h \
     include/ui/dd_ui.h \
     include/ui/dialogs/aboutdialog.h \
@@ -448,7 +449,6 @@ DENG_HEADERS += \
     include/ui/widgets/taskbarwidget.h \
     include/ui/widgets/togglewidget.h \
     include/ui/widgets/variabletogglewidget.h \
-    include/ui/windowcontenttransform.h \
     include/ui/windowsystem.h \
     include/ui/zonedebug.h \
     include/updater.h \
@@ -719,6 +719,7 @@ SOURCES += \
     src/ui/b_util.cpp \
     src/ui/busyvisual.cpp \
     src/ui/clientwindow.cpp \
+    src/ui/contenttransform.cpp \
     src/ui/dd_input.cpp \
     src/ui/dialogs/aboutdialog.cpp \
     src/ui/dialogs/audiosettingsdialog.cpp \
@@ -793,7 +794,6 @@ SOURCES += \
     src/ui/widgets/taskbarwidget.cpp \
     src/ui/widgets/togglewidget.cpp \
     src/ui/widgets/variabletogglewidget.cpp \
-    src/ui/windowcontenttransform.cpp \
     src/ui/windowsystem.cpp \
     src/ui/zonedebug.cpp \
     src/updater/downloaddialog.cpp \

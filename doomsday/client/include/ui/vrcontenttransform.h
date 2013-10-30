@@ -20,9 +20,12 @@
 #ifndef DENG_CLIENT_UI_VRCONTENTTRANSFORM_H
 #define DENG_CLIENT_UI_VRCONTENTTRANSFORM_H
 
-#include "windowcontenttransform.h"
+#include "contenttransform.h"
 
-class VRContentTransform : public WindowContentTransform
+/**
+ * Window content transformation for virtual reality.
+ */
+class VRContentTransform : public ContentTransform
 {
 public:
     VRContentTransform(ClientWindow &window);

@@ -43,7 +43,7 @@ DENG2_PIMPL(VRContentTransform)
     void init()
     {
         /// @todo Only do this when Oculus Rift mode is enabled.
-        /// Free the allocated resources when non-Oculus mode in use.
+        /// Free the allocated resources when non-Rift mode in use.
 
         OculusRiftVBuf *buf = new OculusRiftVBuf;
         oculusRift.addBuffer(buf);
@@ -135,7 +135,7 @@ DENG2_PIMPL(VRContentTransform)
         glEnable(GL_TEXTURE_2D); // Necessary until the legacy code uses GLState, too.
 
         // Return the drawing to the full target.
-        GLState::setActiveRect(Rectangleui(), true);
+        GLState::setActiveRect(Rectangleui()/*, true*/);
 
         canvas().renderTarget().clear(GLTarget::Color);
         GLState::push()
@@ -155,7 +155,7 @@ DENG2_PIMPL(VRContentTransform)
 };
 
 VRContentTransform::VRContentTransform(ClientWindow &window)
-    : WindowContentTransform(window), d(new Instance(this))
+    : ContentTransform(window), d(new Instance(this))
 {}
 
 void VRContentTransform::glInit()
