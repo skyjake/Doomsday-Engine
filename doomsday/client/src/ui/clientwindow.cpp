@@ -460,6 +460,8 @@ DENG2_OBSERVES(App,              GameChange)
      */
     void vrDrawOculusRift()
     {
+        VR::applyFrustumShift = false;
+
         /// @todo head tracking, image warping, shrunken hud, field of view
         // Allocate offscreen buffers
         Size size = self.canvas().size();
@@ -476,25 +478,69 @@ DENG2_OBSERVES(App,              GameChange)
             shaderProgram = new QGLShaderProgram();
             bool success;
             success = shaderProgram->addShaderFromSourceCode(QGLShader::Vertex,
-                   "#version 120 \n"
-                   " \n"
-                   "void main() { \n"
-                   "   gl_Position = gl_Vertex; \n"
-                   "   gl_TexCoord[0] = gl_MultiTexCoord0; \n"
-                   "}; \n");
+                    "#version 120 \n"
+                    " \n"
+                    "void main() { \n"
+                    "   gl_Position = gl_Vertex; \n"
+                    "   gl_TexCoord[0] = gl_MultiTexCoord0; \n"
+                    "}; \n");
             if (! success)
             {
                 qDebug() << shaderProgram->log();
             }
             success = shaderProgram->addShaderFromSourceCode(QGLShader::Fragment,
-                   "#version 120 \n"
-                   " \n"
-                   "uniform sampler2D texture; \n"
-                   " \n"
-                   "void main() { \n"
-                   "   vec2 tcIn = gl_TexCoord[0].st; \n"
-                   "   gl_FragColor = vec4(texture2D(texture, tcIn).rg, 0.5, 1); \n"
-                   "}; \n");
+                     "#version 120 \n"
+                     " \n"
+                     "uniform sampler2D texture; \n"
+                     " \n"
+                     "const float aspectRatio = 1.0; \n"
+                     "const float distortionScale = 1.714; // TODO check this \n"
+                     "const vec2 screenSize = vec2(0.14976, 0.0936);"
+                     "const vec2 screenCenter = 0.5 * screenSize; \n"
+                     "const vec2 lensCenter = vec2(0.57265, 0.5); // left eye \n"
+                     "const vec2 inputCenter = vec2(0.5, 0.5); // I rendered center at center of unwarped image \n"
+                     "const vec2 scale = vec2(0.5/distortionScale, 0.5*aspectRatio/distortionScale); \n"
+                     "const vec2 scaleIn = vec2(2.0, 2.0/aspectRatio); \n"
+                     "const vec4 hmdWarpParam = vec4(1.0, 0.220, 0.240, 0.000); \n"
+                     "const vec4 chromAbParam = vec4(0.996, -0.004, 1.014, 0.0); \n"
+                     " \n"
+                     "void main() { \n"
+                     "   vec2 tcIn = gl_TexCoord[0].st; \n"
+                     "   vec2 uv = vec2(tcIn.x*2, tcIn.y); // unwarped image coordinates (left eye) \n"
+                     "   if (tcIn.x > 0.5) // right eye \n"
+                     "       uv.x = 2 - 2*tcIn.x; \n"
+                     "   vec2 theta = (uv - lensCenter) * scaleIn; \n"
+                     "   float rSq = theta.x * theta.x + theta.y * theta.y; \n"
+                     "   vec2 rvector = theta * ( hmdWarpParam.x + \n"
+                     "                            hmdWarpParam.y * rSq + \n"
+                     "                            hmdWarpParam.z * rSq * rSq + \n"
+                     "                            hmdWarpParam.w * rSq * rSq * rSq); \n"
+                     "   // Chromatic aberration correction \n"
+                     "   vec2 thetaBlue = rvector * (chromAbParam.z + chromAbParam.w * rSq); \n"
+                     "   vec2 tcBlue = inputCenter + scale * thetaBlue; \n"
+                     "   // Blue is farthest out \n"
+                     "   if ( (abs(tcBlue.x - 0.5) > 0.5) || (abs(tcBlue.y - 0.5) > 0.5) ) { \n"
+                     "        gl_FragColor = vec4(0, 0, 0, 1); \n"
+                     "        return; \n"
+                     "   } \n"
+                     "   vec2 thetaRed = rvector * (chromAbParam.x + chromAbParam.y * rSq); \n"
+                     "   vec2 tcRed = inputCenter + scale * thetaRed; \n"
+                     "   vec2 tcGreen = inputCenter + scale * rvector; // green \n"
+                     "   tcRed.x *= 0.5; // because output only goes to 0-0.5 (left eye) \n"
+                     "   tcGreen.x *= 0.5; // because output only goes to 0-0.5 (left eye) \n"
+                     "   tcBlue.x *= 0.5; // because output only goes to 0-0.5 (left eye) \n"
+                     "   if (tcIn.x > 0.5) { // right eye 0.5-1.0 \n"
+                     "        tcRed.x = 1 - tcRed.x; \n"
+                     "        tcGreen.x = 1 - tcGreen.x; \n"
+                     "        tcBlue.x = 1 - tcBlue.x; \n"
+                     "    } \n"
+                     "    float red = texture2D(texture, tcRed).r; \n"
+                     "    vec2 green = texture2D(texture, tcGreen).ga; \n"
+                     "    float blue = texture2D(texture, tcBlue).b; \n"
+                     "    \n"
+
+                     "   gl_FragColor = vec4(red, green.x, blue, green.y); \n"
+                     "} \n");
             if (! success)
             {
                 qDebug() << shaderProgram->log();
@@ -563,6 +609,8 @@ DENG2_OBSERVES(App,              GameChange)
         glBindTexture(GL_TEXTURE_2D, 0);
 
         GLState::pop().apply();
+
+        VR::applyFrustumShift = true; // restore default
     }
 };
 
