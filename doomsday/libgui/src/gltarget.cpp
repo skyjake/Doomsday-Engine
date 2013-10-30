@@ -252,7 +252,7 @@ QImage GLTarget::toImage() const
         QImage img(QSize(imgSize.x, imgSize.y), QImage::Format_ARGB32);
         glBind();
         glPixelStorei(GL_PACK_ALIGNMENT, 4);
-        glReadPixels(0, 0, imgSize.x, imgSize.y, GL_RGBA, GL_UNSIGNED_BYTE,
+        glReadPixels(0, 0, imgSize.x, imgSize.y, GL_BGRA, GL_UNSIGNED_BYTE,
                      (GLvoid *) img.constBits());
         // Restore the stack's target.
         GLState::top().target().glBind();
