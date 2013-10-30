@@ -62,6 +62,7 @@ DENG2_OBSERVES(App,              GameChange)
 {
     bool needMainInit;
     bool needRecreateCanvas;
+    bool needRootSizeUpdate;
 
     Mode mode;
 
@@ -86,6 +87,7 @@ DENG2_OBSERVES(App,              GameChange)
         : Base(i),
           needMainInit(true),
           needRecreateCanvas(false),
+          needRootSizeUpdate(false),
           mode(Normal),
           root(thisPublic),
           legacy(0),
@@ -444,8 +446,45 @@ DENG2_OBSERVES(App,              GameChange)
     }
 
     /*
-     * Special Viewing Modes:
+     * Special Viewing Modes: Oculus Rift and other VR
      */
+
+    void updateRootSize()
+    {
+        needRootSizeUpdate = false;
+
+        Canvas::Size size = self.canvas().size();
+
+        switch(VR::mode)
+        {
+        // Left-right screen split modes
+        case VR::MODE_CROSSEYE:
+        case VR::MODE_PARALLEL:
+            // Adjust effective UI size for stereoscopic rendering.
+            size.y *= 2;
+            size *= .75f; // Make it a bit bigger.
+            break;
+
+        case VR::MODE_OCULUS_RIFT:
+            /// @todo - taskbar needs to elevate above bottom of screen in Rift mode
+            // Adjust effective UI size for stereoscopic rendering.
+            size.y *= 2;
+            size *= 0.75f;
+            break;
+
+        // Allow UI to squish in top/bottom and SBS mode: 3D hardware will unsquish them
+        case VR::MODE_TOP_BOTTOM:
+        case VR::MODE_SIDE_BY_SIDE:
+        default:
+            break;
+        }
+
+        DENG_ASSERT_IN_MAIN_THREAD();
+
+        // Tell the widgets.
+        root.setViewSize(size);
+        busyRoot.setViewSize(size);
+    }
 
     QScopedPointer<GLTarget> unwarpedTarget;
     GLTexture unwarpedTexture;
@@ -470,7 +509,7 @@ DENG2_OBSERVES(App,              GameChange)
             unwarpedTexture.setUndefinedImage(size, Image::RGBA_8888);
             unwarpedTexture.setWrap(gl::ClampToEdge, gl::ClampToEdge);
             unwarpedTexture.setFilter(gl::Linear, gl::Linear, gl::MipNone);
-            unwarpedTarget.reset(new GLTarget(GLTarget::ColorDepthStencil, unwarpedTexture));
+            unwarpedTarget.reset(new GLTarget(unwarpedTexture, GLTarget::DepthStencil));
         }
         // TODO somehow get a shader program in here.
         static QGLShaderProgram * shaderProgram = NULL;
@@ -722,6 +761,11 @@ void ClientWindow::canvasGLDraw(Canvas &canvas)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
+    if(d->needRootSizeUpdate)
+    {
+        d->updateRootSize();
+    }
+
     switch(VR::mode)
     {
     // A) Single view type stereo 3D modes here:
@@ -892,7 +936,7 @@ void ClientWindow::canvasGLResized(Canvas &canvas)
 
     GLState::top().setViewport(Rectangleui(0, 0, size.x, size.y));
 
-    updateRootSize();
+    d->updateRootSize();
 }
 
 bool ClientWindow::setDefaultGLFormat() // static
@@ -1016,33 +1060,8 @@ void ClientWindow::updateCanvasFormat()
 
 void ClientWindow::updateRootSize()
 {
-    Canvas::Size size = canvas().size();
-
-    switch(VR::mode)
-    {
-    // Left-right screen split modes
-    case VR::MODE_CROSSEYE:
-    case VR::MODE_PARALLEL:
-        // Adjust effective UI size for stereoscopic rendering.
-        size.y *= 2;
-        size *= .75f; // Make it a bit bigger.
-        break;
-    case VR::MODE_OCULUS_RIFT:
-        /// @todo - taskbar needs to elevate above bottom of screen in Rift mode
-        // Adjust effective UI size for stereoscopic rendering.
-        size.y *= 2;
-        size *= 0.75f;
-        break;
-    // Allow UI to squish in top/bottom and SBS mode: 3D hardware will unsquish them
-    case VR::MODE_TOP_BOTTOM:
-    case VR::MODE_SIDE_BY_SIDE:
-    default:
-        break;
-    }
-
-    // Tell the widgets.
-    d->root.setViewSize(size);
-    d->busyRoot.setViewSize(size);
+    // This will be done a bit later as the call may originate from another thread.
+    d->needRootSizeUpdate = true;
 }
 
 ClientWindow &ClientWindow::main()
