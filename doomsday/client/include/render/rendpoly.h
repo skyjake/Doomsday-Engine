@@ -22,93 +22,17 @@
 #ifndef DENG_RENDER_RENDPOLY_H
 #define DENG_RENDER_RENDPOLY_H
 
-#include "api_gl.h"
-#include "color.h"
-
-#include <de/vector1.h> /// @todo remove me.
+#include <de/libdeng1.h>
 #include <de/Vector>
 
-#include "Texture"
+DENG_EXTERN_C byte rendInfoRPolys;
 
-/**
- * Symbolic identifiers for (virtual) texture units.
- */
-typedef enum {
-    RTU_PRIMARY = 0,
-    RTU_PRIMARY_DETAIL,
-    RTU_INTER,
-    RTU_INTER_DETAIL,
-    RTU_REFLECTION,
-    RTU_REFLECTION_MASK,
-    NUM_TEXMAP_UNITS
-} rtexmapunitid_t;
-
-/**
- * @defgroup textureUnitFlags  Texture Unit Flags
- * @ingroup flags
- */
-///@{
-#define TUF_TEXTURE_IS_MANAGED    0x1 ///< A managed texture is bound to this unit.
-///@}
-
-typedef struct rtexmapunit_texture_s {
-    union {
-        struct {
-            DGLuint name; ///< Texture used on this layer (if any).
-            int magMode; ///< GL texture magnification filter.
-            int wrapS; ///< GL texture S axis wrap mode.
-            int wrapT; ///< GL texture T axis wrap mode.
-        } gl;
-        de::TextureVariant *variant;
-    };
-    /// @ref textureUnitFlags
-    int flags;
-
-#ifdef __cplusplus
-    inline bool hasTexture() const
-    {
-        if(flags & TUF_TEXTURE_IS_MANAGED)
-            return variant && variant->glName() != 0;
-        return gl.name != 0;
-    }
-#endif
-} rtexmapunit_texture_t;
-
-/**
- * Texture unit state (POD).
- *
- * A simple Record data structure for storing properties used for
- * configuring a GL texture unit during render.
- */
-typedef struct rtexmapuint_s {
-    /// Info about the bound texture for this unit.
-    rtexmapunit_texture_t texture;
-
-    /// Currently used only with reflection.
-    blendmode_t blendMode;
-
-    /// Opacity of this layer [0..1].
-    float opacity;
-
-    /// Texture-space scale multiplier.
-    vec2f_t scale;
-
-    /// Texture-space origin translation (unscaled).
-    vec2f_t offset;
-
-#ifdef __cplusplus
-    bool hasTexture() const { return texture.hasTexture(); }
-#endif
-} rtexmapunit_t;
-
-extern byte rendInfoRPolys;
-
-void R_PrintRendPoolInfo(void);
+void R_PrintRendPoolInfo();
 
 /**
  * @note Should be called at the start of each map.
  */
-void R_InitRendPolyPools(void);
+void R_InitRendPolyPools();
 
 /**
  * Allocate a new contiguous range of position coordinates from the specialized
@@ -154,42 +78,5 @@ void R_FreeRendColors(de::Vector4f *colorCoords);
  * @param texCoords  Texture coordinates to mark unused.
  */
 void R_FreeRendTexCoords(de::Vector2f *texCoords);
-
-/// Manipulators, for convenience.
-void Rtu_Init(rtexmapunit_t *rtu);
-
-boolean Rtu_HasTexture(rtexmapunit_t const *rtu);
-
-/// Change the scale property.
-void Rtu_SetScale(rtexmapunit_t *rtu, de::Vector2f const &st);
-
-inline void Rtu_SetScale(rtexmapunit_t *rtu, float s, float t) {
-    Rtu_SetScale(rtu, de::Vector2f(s, t));
-}
-
-/**
- * Multiply the offset and scale properties by @a scalar.
- * @note @a scalar is applied to both scale and offset properties
- * however the offset remains independent from scale (i.e., it is
- * still considered "unscaled").
- */
-void Rtu_Scale(rtexmapunit_t *rtu, float scalar);
-
-void Rtu_ScaleST(rtexmapunit_t *rtu, de::Vector2f const &scaleST);
-
-/// Change the offset property.
-void Rtu_SetOffset(rtexmapunit_t *rtu, de::Vector2f const &st);
-
-inline void Rtu_SetOffset(rtexmapunit_t *rtu, float s, float t) {
-    Rtu_SetOffset(rtu, de::Vector2f(s, t));
-}
-
-/// Translate the offset property.
-void Rtu_TranslateOffset(rtexmapunit_t *rtu, de::Vector2f const &st);
-
-inline void Rtu_TranslateOffset(rtexmapunit_t *rtu, float s, float t)
-{
-    Rtu_TranslateOffset(rtu, de::Vector2f(s, t));
-}
 
 #endif // DENG_RENDER_RENDPOLY_H

@@ -31,6 +31,7 @@
 
 #include <de/memory.h>
 #include <de/memoryzone.h>
+#include <de/vector1.h>
 #include <cstring> // memcpy, memmove
 
 #ifdef __CLIENT__

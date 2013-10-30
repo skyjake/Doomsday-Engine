@@ -20,6 +20,8 @@
  * 02110-1301 USA</small>
  */
 
+#include <de/vector1.h>
+
 #include "de_platform.h"
 #include "de_render.h"
 #include "de_resource.h"

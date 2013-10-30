@@ -136,6 +136,11 @@ public:
         y *= scalar;
         return *this;
     }
+    inline Vector2 &operator *= (Vector2 const &other) {
+        x *= other.x;
+        y *= other.y;
+        return *this;
+    }
     inline Vector2 &operator /= (ddouble scalar) {
         return (*this) *= 1.0 / scalar;
     }

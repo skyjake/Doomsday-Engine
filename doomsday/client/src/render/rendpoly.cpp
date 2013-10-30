@@ -26,6 +26,8 @@
 #include "color.h"
 #include "WallEdge"
 
+#include "render/rendpoly.h"
+
 using namespace de;
 
 enum RPolyDataType
@@ -313,59 +315,6 @@ void R_FreeRendTexCoords(Vector2f *rtexcoords)
     }
 
     DEBUG_Message(("R_FreeRendPoly: Dangling poly ptr!\n"));
-}
-
-void Rtu_Init(rtexmapunit_t *rtu)
-{
-    DENG_ASSERT(rtu != 0);
-    rtu->texture.gl.name    = 0;
-    rtu->texture.gl.wrapS   = GL_REPEAT;
-    rtu->texture.gl.wrapT   = GL_REPEAT;
-    rtu->texture.gl.magMode = GL_LINEAR;
-    rtu->texture.flags      = 0;
-    rtu->blendMode = BM_NORMAL;
-    rtu->opacity = 1;
-    rtu->scale[0] = rtu->scale[1] = 1;
-    rtu->offset[0] = rtu->offset[1] = 0;
-}
-
-void Rtu_SetScale(rtexmapunit_t *rtu, Vector2f const &st)
-{
-    DENG_ASSERT(rtu != 0);
-    rtu->scale[0] = st.x;
-    rtu->scale[1] = st.y;
-}
-
-void Rtu_Scale(rtexmapunit_t *rtu, float scalar)
-{
-    DENG_ASSERT(rtu != 0);
-    rtu->scale[0] *= scalar;
-    rtu->scale[1] *= scalar;
-    rtu->offset[0] *= scalar;
-    rtu->offset[1] *= scalar;
-}
-
-void Rtu_ScaleST(rtexmapunit_t *rtu, Vector2f const &scalarST)
-{
-    DENG_ASSERT(rtu != 0);
-    rtu->scale[0] *= scalarST.x;
-    rtu->scale[1] *= scalarST.y;
-    rtu->offset[0] *= scalarST.x;
-    rtu->offset[1] *= scalarST.y;
-}
-
-void Rtu_SetOffset(rtexmapunit_t *rtu, Vector2f const &st)
-{
-    DENG_ASSERT(rtu != 0);
-    rtu->offset[0] = st.x;
-    rtu->offset[1] = st.y;
-}
-
-void Rtu_TranslateOffset(rtexmapunit_t *rtu, Vector2f const &st)
-{
-    DENG_ASSERT(rtu != 0);
-    rtu->offset[0] += st.x;
-    rtu->offset[1] += st.y;
 }
 
 void R_DivVerts(Vector3f *dst, Vector3f const *src,

@@ -69,6 +69,78 @@ DENG_EXTERN_C int r_detail;
 #  define LIBDENG_ASSERT_GL_TEXTURE_ISBOUND(tex)
 #endif
 
+/**
+ * Symbolic identifiers for (virtual) texture units.
+ */
+typedef enum {
+    RTU_PRIMARY = 0,
+    RTU_PRIMARY_DETAIL,
+    RTU_INTER,
+    RTU_INTER_DETAIL,
+    RTU_REFLECTION,
+    RTU_REFLECTION_MASK,
+    NUM_TEXMAP_UNITS
+} rtexmapunitid_t;
+
+/**
+ * @defgroup textureUnitFlags  Texture Unit Flags
+ * @ingroup flags
+ */
+///@{
+#define TUF_TEXTURE_IS_MANAGED    0x1 ///< A managed texture is bound to this unit.
+///@}
+
+struct rtexmapunit_texture_t
+{
+    union {
+        struct {
+            DGLuint name; ///< Texture used on this layer (if any).
+            int magMode; ///< GL texture magnification filter.
+            int wrapS; ///< GL texture S axis wrap mode.
+            int wrapT; ///< GL texture T axis wrap mode.
+        } gl;
+        de::TextureVariant *variant;
+    };
+    /// @ref textureUnitFlags
+    int flags;
+
+    rtexmapunit_texture_t() : flags(0)
+    {
+        gl.name    = 0;
+        gl.magMode = GL_LINEAR;
+        gl.wrapS   = GL_REPEAT;
+        gl.wrapT   = GL_REPEAT;
+    }
+
+    inline bool hasTexture() const
+    {
+        if(flags & TUF_TEXTURE_IS_MANAGED)
+        {
+            return variant && variant->glName() != 0;
+        }
+        return gl.name != 0;
+    }
+};
+
+/**
+ * GL Texture unit config.
+ */
+struct rtexmapunit_t
+{
+    rtexmapunit_texture_t texture; ///< Info about the bound texture for this unit.
+    blendmode_t blendMode;         ///< Currently used only with reflection.
+    float opacity;                 ///< Opacity of this layer [0..1].
+    de::Vector2f scale;            ///< Texture-space scale multiplier.
+    de::Vector2f offset;           ///< Texture-space origin translation (unscaled).
+
+    rtexmapunit_t() : blendMode(BM_NORMAL), opacity(1), scale(1, 1)
+    {}
+
+    bool hasTexture() const {
+        return texture.hasTexture();
+    }
+};
+
 void GL_AssertContextActive();
 
 /// Register the console commands, variables, etc..., of this module.
